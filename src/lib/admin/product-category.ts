@@ -51,7 +51,7 @@ export async function resolveProductCategory(input: {
   const existing = await env.DB.prepare(
     `SELECT id, status, image_asset_id
      FROM categories
-     WHERE channel_id = ?1 AND lower(trim(name)) = lower(?2)
+     WHERE channel_id = ?1 AND name = ?2 COLLATE NOCASE
      ORDER BY created_at ASC
      LIMIT 1`,
   ).bind(input.channelId, categoryName).first<CategoryRow>();
