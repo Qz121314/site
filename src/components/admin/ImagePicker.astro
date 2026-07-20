@@ -52,7 +52,7 @@ const selected = value ? images.find((image) => image.id === value) ?? null : nu
             data-name={image.originalName}
             data-meta={`${image.width}×${image.height}`}
           >
-            {image.originalName} · {image.width}×${image.height}
+            {image.originalName} · {image.width}×{image.height}
           </option>
         ))}
       </select>
