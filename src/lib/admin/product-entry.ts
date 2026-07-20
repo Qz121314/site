@@ -1,3 +1,8 @@
+import {
+  MAX_CATEGORY_FILTERS,
+  MAX_PRODUCT_IMAGES,
+} from "@/lib/admin/bulk-relations";
+
 const ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
 
 export type ProductEntryExtraResult =
@@ -33,10 +38,10 @@ export function parseProductEntryExtras(form: FormData): ProductEntryExtraResult
 
   if (categoryName.length > 80) return { ok: false, code: "category-name" };
 
-  const filterIds = readIds(form, "filterIds", 100);
+  const filterIds = readIds(form, "filterIds", MAX_CATEGORY_FILTERS);
   if (!filterIds) return { ok: false, code: "filters" };
 
-  const galleryAssetIds = readIds(form, "galleryAssetIds", 30);
+  const galleryAssetIds = readIds(form, "galleryAssetIds", MAX_PRODUCT_IMAGES);
   if (!galleryAssetIds) return { ok: false, code: "gallery" };
 
   return {
