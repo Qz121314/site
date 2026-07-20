@@ -1,19 +1,24 @@
 ---
 import AdminLayout from "@/layouts/AdminLayout.astro";
+import ImagePicker from "@/components/admin/ImagePicker.astro";
 import { loadAdminChannel } from "@/lib/db/site";
+import { loadAdminImageOptions } from "@/lib/db/image-options";
 import { loadAdminProduct, loadAdminProductOptions } from "@/lib/db/products";
+import { loadAdminProductImages } from "@/lib/db/product-images";
 
 export const prerender = false;
 
 const channelId = Astro.params.channelId ?? "";
 const productId = Astro.params.productId ?? "";
-const [channel, product, options] = channelId && productId
+const [channel, product, options, images, gallery] = channelId && productId
   ? await Promise.all([
       loadAdminChannel(channelId),
       loadAdminProduct(channelId, productId),
       loadAdminProductOptions(channelId),
+      loadAdminImageOptions(),
+      loadAdminProductImages(channelId, productId),
     ])
-  : [null, null, { categories: [], conversionGroups: [] }];
+  : [null, null, { categories: [], conversionGroups: [] }, [], []];
 
 const saved = Astro.url.searchParams.get("saved");
 const error = Astro.url.searchParams.get("error");
@@ -21,6 +26,9 @@ const error = Astro.url.searchParams.get("error");
 const savedMessages: Record<string, string> = {
   created: "产品已新增，请继续补充内容。",
   updated: "产品已保存。",
+  "image-added": "图库图片已添加。",
+  "image-updated": "图库排序已更新。",
+  "image-deleted": "图库图片已移除，R2 文件仍保留在图片库。",
 };
 
 const errorMessages: Record<string, string> = {
@@ -31,13 +39,15 @@ const errorMessages: Record<string, string> = {
   conversion: "所选转化组无效或不属于当前分区。",
   "conversion-required": "发布产品必须绑定转化组。",
   "conversion-unavailable": "发布产品时，转化组必须启用且至少包含一个启用资源。",
+  image: "所选图片不存在，请重新选择。",
+  "image-duplicate": "该图片已经在产品图库中。",
   tags: "标签最多 20 个，每个标签不能超过 40 个字符。",
   body: "正文不能超过 30000 个字符。",
   cta: "CTA 文案不能为空，且不能超过 80 个字符。",
   sort: "排序必须是 -999999 到 999999 之间的整数。",
   status: "产品状态无效。",
   duplicate: "当前分区内已经存在相同 Slug。",
-  "not-found": "找不到该分区或产品。",
+  "not-found": "找不到该分区、产品或图库图片。",
   database: "数据库操作失败，请稍后重试。",
 };
 
@@ -121,7 +131,25 @@ const formId = product ? `product-edit-${product.id}` : "product-edit";
             <label class="compact-check"><input type="checkbox" name="featured" value="1" checked={product.featured} /> 置顶推荐</label>
           </div>
 
-          <div class="admin-field admin-span-12">
+          <div class="admin-field admin-span-6 product-cover-field">
+            {images.length > 0 ? (
+              <ImagePicker
+                id="product-cover"
+                name="coverAssetId"
+                label="产品封面"
+                images={images}
+                value={product.coverAssetId}
+                help="目录卡片和详情页首图使用；清空选择即可解绑。"
+              />
+            ) : (
+              <>
+                <label>产品封面</label>
+                <a class="button secondary" href="/admin/images">先上传图片</a>
+              </>
+            )}
+          </div>
+
+          <div class="admin-field admin-span-6">
             <label for="product-tags">标签</label>
             <input id="product-tags" name="tags" maxlength="1000" value={product.tags.join(", ")} placeholder="tag-one, tag-two；最多 20 个" />
           </div>
@@ -136,15 +164,63 @@ const formId = product ? `product-edit-${product.id}` : "product-edit";
         </form>
       </section>
 
-      <section class="admin-card asset-summary">
+      <section class="admin-card product-gallery-card">
         <div class="admin-section-bar">
-          <h2>图片状态</h2>
-          <span class="admin-section-note">图片库完成后在这里接入封面和图库选择器</span>
+          <h2>产品图库</h2>
+          <span class="admin-section-note">共 {gallery.length} 张；排序数值越小越靠前，移除关系不会删除图片库文件</span>
         </div>
-        <div class="asset-grid">
-          <div><span>封面</span><strong class:list={[product.coverAssetId && "is-set"]}>{product.coverAssetId ? "已绑定" : "未设置"}</strong></div>
-          <div><span>图库</span><strong>{product.imageCount} 张</strong></div>
-        </div>
+
+        {images.length > 0 ? (
+          <form class="admin-card-body gallery-add-form" action={`/api/admin/channels/${encodeURIComponent(channelId)}/products/${encodeURIComponent(product.id)}/images/create`} method="post">
+            <ImagePicker
+              id="gallery-add-image"
+              name="imageAssetId"
+              label="添加图片"
+              images={images}
+              required
+              compact
+              emptyLabel="选择图片"
+            />
+            <div class="admin-field gallery-sort-field">
+              <label for="gallery-add-sort">排序</label>
+              <input id="gallery-add-sort" name="sortOrder" type="number" min="-999999" max="999999" step="1" value={gallery.length * 10} />
+            </div>
+            <button class="button" type="submit">添加到图库</button>
+          </form>
+        ) : (
+          <div class="admin-empty">图片库为空。<a class="button secondary" href="/admin/images">先上传图片</a></div>
+        )}
+
+        {gallery.length > 0 ? (
+          <div class="gallery-grid">
+            {gallery.map((image) => {
+              const galleryFormId = `gallery-image-${image.imageAssetId}`;
+              return (
+                <article class="gallery-item">
+                  <img src={image.previewUrl} alt={image.originalName} loading="lazy" />
+                  <div class="gallery-item-body">
+                    <strong title={image.originalName}>{image.originalName}</strong>
+                    <span>{image.width}×{image.height}</span>
+                    <div class="gallery-item-actions">
+                      <form id={galleryFormId} action={`/api/admin/channels/${encodeURIComponent(channelId)}/products/${encodeURIComponent(product.id)}/images/${encodeURIComponent(image.imageAssetId)}/update`} method="post">
+                        <label>
+                          <span>排序</span>
+                          <input name="sortOrder" type="number" min="-999999" max="999999" step="1" value={image.sortOrder} />
+                        </label>
+                        <button class="button secondary" type="submit">保存</button>
+                      </form>
+                      <form action={`/api/admin/channels/${encodeURIComponent(channelId)}/products/${encodeURIComponent(product.id)}/images/${encodeURIComponent(image.imageAssetId)}/delete`} method="post" onsubmit="return confirm('确定从该产品图库移除这张图片？图片库中的文件不会删除。')">
+                        <button class="button danger" type="submit">移除</button>
+                      </form>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        ) : (
+          <div class="admin-empty gallery-empty">当前产品尚未添加图库图片。</div>
+        )}
       </section>
 
       {product.bodyHtml && (
@@ -170,16 +246,39 @@ const formId = product ? `product-edit-${product.id}` : "product-edit";
   .compact-check input { width: .95rem; height: .95rem; margin: 0; }
   .field-label-row { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
   textarea { min-height: 9.5rem; resize: vertical; }
-  .asset-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .45rem; padding: .55rem .65rem; }
-  .asset-grid > div { display: flex; align-items: center; justify-content: space-between; min-height: 2rem; padding: 0 .55rem; border: 1px solid #2c2931; border-radius: .3rem; background: #0d0c10; }
-  .asset-grid span { color: #8b8591; }
-  .asset-grid strong { color: #aaa4b0; }
-  .asset-grid strong.is-set { color: #65d99c; }
+
+  .gallery-add-form {
+    display: grid;
+    grid-template-columns: minmax(16rem, 1fr) 6rem auto;
+    gap: .5rem;
+    align-items: end;
+  }
+
+  .gallery-sort-field input { width: 100%; }
+  .gallery-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: .55rem; padding: .65rem; }
+  .gallery-item { overflow: hidden; border: 1px solid #2d2a33; border-radius: .45rem; background: #0d0c10; }
+  .gallery-item > img { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; background: #070608; }
+  .gallery-item-body { display: grid; gap: .22rem; padding: .45rem; }
+  .gallery-item-body > strong { overflow: hidden; font-size: .75rem; text-overflow: ellipsis; white-space: nowrap; }
+  .gallery-item-body > span { color: #7f7985; font-size: .66rem; }
+  .gallery-item-actions { display: flex; align-items: end; justify-content: space-between; gap: .3rem; margin-top: .2rem; }
+  .gallery-item-actions form:first-child { display: flex; align-items: end; gap: .3rem; min-width: 0; }
+  .gallery-item-actions label { display: grid; gap: .15rem; color: #8c8692; font-size: .64rem; }
+  .gallery-item-actions input { width: 4.8rem; height: 1.75rem; }
+  .gallery-empty { border-top: 1px solid var(--line); }
+
   .body-preview > summary { cursor: pointer; padding: .55rem .65rem; font-weight: 650; }
   .body-preview article { padding: .2rem .8rem .75rem; line-height: 1.55; }
   .body-preview article :global(h2), .body-preview article :global(h3), .body-preview article :global(p), .body-preview article :global(ul) { margin: .55rem 0 0; }
+
+  @media (max-width: 959px) {
+    .gallery-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  }
+
   @media (max-width: 767px) {
     .toolbar-actions { flex-wrap: wrap; justify-content: flex-end; }
     .field-label-row { align-items: flex-start; flex-direction: column; gap: .15rem; }
+    .gallery-add-form { grid-template-columns: 1fr; }
+    .gallery-grid { grid-template-columns: 1fr; }
   }
 </style>
