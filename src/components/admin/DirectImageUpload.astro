@@ -1,0 +1,360 @@
+---
+export type ExistingUploadImage = {
+  id: string;
+  previewUrl?: string;
+  name?: string;
+  meta?: string;
+};
+
+interface Props {
+  name: string;
+  label: string;
+  id?: string;
+  form?: string;
+  multiple?: boolean;
+  required?: boolean;
+  compact?: boolean;
+  maxFiles?: number;
+  value?: string | null;
+  values?: ExistingUploadImage[];
+  help?: string;
+}
+
+const {
+  name,
+  label,
+  id = `direct-upload-${name.replace(/[^a-z0-9_-]/giu, "-")}`,
+  form,
+  multiple = false,
+  required = false,
+  compact = false,
+  maxFiles = multiple ? 30 : 1,
+  value = null,
+  values = [],
+  help,
+} = Astro.props;
+
+const initialImages: ExistingUploadImage[] = multiple
+  ? values
+  : value
+    ? [{ id: value, previewUrl: `/api/admin/images/${encodeURIComponent(value)}/content`, name: "当前图片" }]
+    : [];
+---
+
+<div
+  class:list={["direct-image-upload", compact && "is-compact"]}
+  data-direct-image-upload
+  data-field-name={name}
+  data-multiple={multiple ? "1" : "0"}
+  data-required={required ? "1" : "0"}
+  data-max-files={String(maxFiles)}
+  data-form-id={form ?? ""}
+>
+  <div class="direct-upload-heading">
+    <label for={id}>{label}</label>
+    <span data-upload-status>{initialImages.length > 0 ? `已绑定 ${initialImages.length} 张` : "尚未上传"}</span>
+  </div>
+
+  <div class="direct-upload-input-row">
+    <input
+      id={id}
+      class="direct-upload-file"
+      type="file"
+      accept="image/jpeg,image/png,image/webp"
+      multiple={multiple}
+      data-upload-input
+    />
+    <label class="button secondary direct-upload-button" for={id}>
+      {multiple ? "选择并上传图片" : "选择并上传"}
+    </label>
+    <span class="direct-upload-limit">JPEG / PNG / WebP · 自动压缩</span>
+  </div>
+
+  <div class="direct-upload-values" data-upload-values>
+    {!multiple && (
+      <input
+        type="hidden"
+        name={name}
+        value={initialImages[0]?.id ?? ""}
+        form={form}
+        data-upload-hidden
+      />
+    )}
+    {multiple && initialImages.map((image) => (
+      <input type="hidden" name={name} value={image.id} form={form} data-upload-hidden data-image-id={image.id} />
+    ))}
+  </div>
+
+  <div class="direct-upload-preview" data-upload-preview hidden={initialImages.length === 0}>
+    {initialImages.map((image) => (
+      <article class="direct-upload-item" data-upload-item data-image-id={image.id}>
+        <img
+          src={image.previewUrl ?? `/api/admin/images/${encodeURIComponent(image.id)}/content`}
+          alt={image.name ?? "已上传图片"}
+          loading="lazy"
+        />
+        <div>
+          <strong title={image.name ?? "已上传图片"}>{image.name ?? "已上传图片"}</strong>
+          <span>{image.meta ?? "已绑定到当前内容"}</span>
+        </div>
+        <button class="direct-upload-remove" type="button" data-upload-remove aria-label="移除图片">×</button>
+      </article>
+    ))}
+  </div>
+
+  {help && <small class="direct-upload-help">{help}</small>}
+</div>
+
+<script is:inline>
+  (() => {
+    const MAX_DIMENSION = 1600;
+    const WEBP_QUALITY = 0.82;
+
+    const decodeImage = async (file) => {
+      if ("createImageBitmap" in window) {
+        const bitmap = await createImageBitmap(file);
+        return {
+          source: bitmap,
+          width: bitmap.width,
+          height: bitmap.height,
+          release: () => bitmap.close(),
+        };
+      }
+
+      const url = URL.createObjectURL(file);
+      try {
+        const image = await new Promise((resolve, reject) => {
+          const element = new Image();
+          element.onload = () => resolve(element);
+          element.onerror = () => reject(new Error("decode"));
+          element.src = url;
+        });
+        return {
+          source: image,
+          width: image.naturalWidth,
+          height: image.naturalHeight,
+          release: () => URL.revokeObjectURL(url),
+        };
+      } catch (error) {
+        URL.revokeObjectURL(url);
+        throw error;
+      }
+    };
+
+    const compressImage = async (file) => {
+      const decoded = await decodeImage(file);
+      try {
+        const scale = Math.min(1, MAX_DIMENSION / Math.max(decoded.width, decoded.height));
+        const width = Math.max(1, Math.round(decoded.width * scale));
+        const height = Math.max(1, Math.round(decoded.height * scale));
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const context = canvas.getContext("2d");
+        if (!context) throw new Error("canvas");
+        context.drawImage(decoded.source, 0, 0, width, height);
+        const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/webp", WEBP_QUALITY));
+        if (!blob) throw new Error("compress");
+        return { blob, width, height };
+      } finally {
+        decoded.release();
+      }
+    };
+
+    const initialize = (root) => {
+      if (root.dataset.directUploadReady === "1") return;
+      root.dataset.directUploadReady = "1";
+
+      const input = root.querySelector("[data-upload-input]");
+      const values = root.querySelector("[data-upload-values]");
+      const preview = root.querySelector("[data-upload-preview]");
+      const status = root.querySelector("[data-upload-status]");
+      const fieldName = root.dataset.fieldName || "imageAssetId";
+      const multiple = root.dataset.multiple === "1";
+      const required = root.dataset.required === "1";
+      const maxFiles = Number(root.dataset.maxFiles || (multiple ? "30" : "1"));
+      const formId = root.dataset.formId || "";
+      let pending = 0;
+
+      if (!input || !values || !preview || !status) return;
+
+      const hiddenInputs = () => Array.from(values.querySelectorAll("[data-upload-hidden]"));
+      const currentIds = () => hiddenInputs().map((field) => field.value).filter(Boolean);
+
+      const refresh = () => {
+        const count = currentIds().length;
+        preview.hidden = count === 0;
+        status.textContent = pending > 0 ? `正在上传 ${pending} 张…` : count > 0 ? `已绑定 ${count} 张` : "尚未上传";
+        root.dataset.uploading = pending > 0 ? "1" : "0";
+      };
+
+      const removeId = (id) => {
+        for (const field of hiddenInputs()) {
+          if (field.value === id) {
+            if (multiple) field.remove();
+            else field.value = "";
+          }
+        }
+        preview.querySelector(`[data-upload-item][data-image-id="${CSS.escape(id)}"]`)?.remove();
+        refresh();
+      };
+
+      const addImage = (image, localUrl, dimensions) => {
+        if (!multiple) {
+          for (const item of Array.from(preview.querySelectorAll("[data-upload-item]"))) item.remove();
+          const field = hiddenInputs()[0];
+          if (field) field.value = image.id;
+        } else {
+          const field = document.createElement("input");
+          field.type = "hidden";
+          field.name = fieldName;
+          field.value = image.id;
+          field.dataset.uploadHidden = "";
+          field.dataset.imageId = image.id;
+          if (formId) field.setAttribute("form", formId);
+          values.appendChild(field);
+        }
+
+        const item = document.createElement("article");
+        item.className = "direct-upload-item";
+        item.dataset.uploadItem = "";
+        item.dataset.imageId = image.id;
+
+        const img = document.createElement("img");
+        img.src = localUrl;
+        img.alt = image.originalName || "已上传图片";
+
+        const body = document.createElement("div");
+        const strong = document.createElement("strong");
+        strong.textContent = image.originalName || "已上传图片";
+        strong.title = strong.textContent;
+        const meta = document.createElement("span");
+        meta.textContent = `${dimensions.width}×${dimensions.height}`;
+        body.appendChild(strong);
+        body.appendChild(meta);
+
+        const remove = document.createElement("button");
+        remove.className = "direct-upload-remove";
+        remove.type = "button";
+        remove.dataset.uploadRemove = "";
+        remove.setAttribute("aria-label", "移除图片");
+        remove.textContent = "×";
+
+        item.appendChild(img);
+        item.appendChild(body);
+        item.appendChild(remove);
+        preview.appendChild(item);
+        refresh();
+      };
+
+      preview.addEventListener("click", (event) => {
+        const button = event.target instanceof Element ? event.target.closest("[data-upload-remove]") : null;
+        if (!button) return;
+        const item = button.closest("[data-upload-item]");
+        const id = item?.dataset.imageId || "";
+        if (id) removeId(id);
+      });
+
+      input.addEventListener("change", async () => {
+        const selected = Array.from(input.files || []);
+        input.value = "";
+        if (selected.length === 0) return;
+
+        const available = multiple ? Math.max(0, maxFiles - currentIds().length) : 1;
+        const files = selected.slice(0, available);
+        if (files.length === 0) {
+          alert(`最多只能绑定 ${maxFiles} 张图片。`);
+          return;
+        }
+
+        pending += files.length;
+        refresh();
+
+        for (const file of files) {
+          try {
+            const compressed = await compressImage(file);
+            const uploadFile = new File(
+              [compressed.blob],
+              `${file.name.replace(/\.[^.]+$/u, "") || "image"}.webp`,
+              { type: "image/webp" },
+            );
+            const body = new FormData();
+            body.append("file", uploadFile);
+            body.append("originalName", file.name);
+
+            const response = await fetch("/api/admin/images/upload", {
+              method: "POST",
+              headers: { Accept: "application/json" },
+              body,
+            });
+            const result = await response.json().catch(() => null);
+            if (!response.ok || !result?.ok || !result.image?.id) {
+              throw new Error(result?.error || `HTTP ${response.status}`);
+            }
+
+            addImage(result.image, URL.createObjectURL(compressed.blob), compressed);
+          } catch (error) {
+            console.error(error);
+            alert(`图片 ${file.name} 上传失败，请重试。`);
+          } finally {
+            pending -= 1;
+            refresh();
+          }
+        }
+      });
+
+      const formElement = formId ? document.getElementById(formId) : root.closest("form");
+      if (formElement && formElement.dataset.directUploadValidation !== "1") {
+        formElement.dataset.directUploadValidation = "1";
+        formElement.addEventListener("submit", (event) => {
+          const related = Array.from(document.querySelectorAll("[data-direct-image-upload]")).filter((candidate) => {
+            const candidateFormId = candidate.dataset.formId || "";
+            return candidateFormId ? candidateFormId === formElement.id : candidate.closest("form") === formElement;
+          });
+          if (related.some((candidate) => candidate.dataset.uploading === "1")) {
+            event.preventDefault();
+            alert("图片仍在上传，请等待上传完成后再保存。");
+            return;
+          }
+          const missing = related.some((candidate) => {
+            if (candidate.dataset.required !== "1") return false;
+            return !Array.from(candidate.querySelectorAll("[data-upload-hidden]")).some((field) => field.value);
+          });
+          if (missing || (required && currentIds().length === 0)) {
+            event.preventDefault();
+            alert("请先上传必需图片。");
+          }
+        });
+      }
+
+      refresh();
+    };
+
+    document.querySelectorAll("[data-direct-image-upload]").forEach(initialize);
+  })();
+</script>
+
+<style>
+  .direct-image-upload { display: grid; min-width: 0; gap: .35rem; }
+  .direct-upload-heading { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
+  .direct-upload-heading label { color: #b9b3bf; font-size: .72rem; font-weight: 650; }
+  .direct-upload-heading span,
+  .direct-upload-limit,
+  .direct-upload-help { color: #827c88; font-size: .68rem; }
+  .direct-upload-input-row { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; }
+  .direct-upload-file { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+  .direct-upload-button { cursor: pointer; }
+  .direct-upload-preview { display: grid; grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr)); gap: .4rem; }
+  .direct-upload-preview[hidden] { display: none; }
+  .direct-upload-item { position: relative; display: grid; grid-template-columns: 3.2rem minmax(0, 1fr) 1.6rem; gap: .4rem; align-items: center; overflow: hidden; border: 1px solid #302d36; border-radius: .38rem; padding: .3rem; background: #0d0c10; }
+  .direct-upload-item img { width: 3.2rem; height: 3.2rem; border-radius: .25rem; object-fit: cover; background: #070608; }
+  .direct-upload-item > div { display: grid; min-width: 0; gap: .12rem; }
+  .direct-upload-item strong,
+  .direct-upload-item span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .direct-upload-item strong { font-size: .7rem; }
+  .direct-upload-item span { color: #817b87; font-size: .64rem; }
+  .direct-upload-remove { width: 1.45rem; height: 1.45rem; border: 0; border-radius: 999px; padding: 0; color: #ffc3cf; background: rgba(255,109,139,.12); cursor: pointer; }
+  .direct-image-upload.is-compact .direct-upload-preview { grid-template-columns: minmax(10rem, 1fr); }
+  .direct-image-upload.is-compact .direct-upload-item { grid-template-columns: 2.4rem minmax(0, 1fr) 1.5rem; }
+  .direct-image-upload.is-compact .direct-upload-item img { width: 2.4rem; height: 2.4rem; }
+</style>
