@@ -6,7 +6,7 @@ export const prerender = false;
 
 const channelId = Astro.params.channelId ?? "";
 const channel = channelId ? await loadAdminChannel(channelId) : null;
-const title = channel ? `${channel.name} · 分区设置` : "分区不存在";
+const title = channel ? `${channel.name} · 编辑分区设置` : "分区不存在";
 const saved = Astro.url.searchParams.get("saved");
 const error = Astro.url.searchParams.get("error");
 
@@ -29,8 +29,11 @@ const errorMessages: Record<string, string> = {
 
       <section class="admin-card">
         <div class="admin-section-bar">
-          <h2>基础信息</h2>
-          <span class="admin-section-note">分区 ID：{channel.id}</span>
+          <div>
+            <h2>低频结构配置</h2>
+            <span class="admin-section-note">分区 ID：{channel.id}</span>
+          </div>
+          <a class="button secondary" href="/admin/channels">返回分区管理</a>
         </div>
         <form class="admin-card-body admin-form-grid" action={`/api/admin/channels/${encodeURIComponent(channel.id)}/update`} method="post">
           <div class="admin-field admin-span-3">
@@ -41,8 +44,8 @@ const errorMessages: Record<string, string> = {
             <label for="channel-slug">Slug</label>
             <input id="channel-slug" name="slug" maxlength="64" pattern="[a-z0-9]+(?:-[a-z0-9]+)*" required autocomplete="off" value={channel.slug} />
           </div>
-          <div class="admin-field admin-span-1">
-            <label for="channel-icon">图标</label>
+          <div class="admin-field admin-span-2">
+            <label for="channel-icon">前台底部导航图标</label>
             <input id="channel-icon" name="icon" maxlength="12" autocomplete="off" value={channel.icon} />
           </div>
           <div class="admin-field admin-span-1">
@@ -57,25 +60,12 @@ const errorMessages: Record<string, string> = {
               <option value="disabled" selected={channel.status === "disabled"}>已停用</option>
             </select>
           </div>
-          <div class="admin-form-actions admin-span-2">
-            <button class="button" type="submit">保存设置</button>
+          <div class="admin-form-actions admin-span-12">
+            <button class="button" type="submit">保存分区设置</button>
+            <a class="button secondary" href={`/admin/channels/${encodeURIComponent(channel.id)}/products/new`}>进入产品录入</a>
             <a class="button secondary" href={`/${encodeURIComponent(channel.slug)}`} target="_blank" rel="noreferrer">查看前台</a>
           </div>
         </form>
-      </section>
-
-      <section class="admin-card">
-        <div class="admin-section-bar">
-          <h2>内容入口</h2>
-          <span class="admin-section-note">所有内容仅属于当前分区</span>
-        </div>
-        <div class="admin-card-body admin-inline">
-          <a class="button secondary" href={`/admin/channels/${encodeURIComponent(channel.id)}/filters`}>分类筛选</a>
-          <a class="button secondary" href={`/admin/channels/${encodeURIComponent(channel.id)}/categories`}>分类管理</a>
-          <a class="button secondary" href={`/admin/channels/${encodeURIComponent(channel.id)}/products`}>产品管理</a>
-          <a class="button secondary" href={`/admin/channels/${encodeURIComponent(channel.id)}/ads`}>Hero 广告</a>
-          <a class="button secondary" href={`/admin/channels/${encodeURIComponent(channel.id)}/conversions`}>转化池</a>
-        </div>
       </section>
     </>
   ) : (

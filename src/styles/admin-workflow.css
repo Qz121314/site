@@ -1,0 +1,38 @@
+.admin-channel-state-label {
+  display: none;
+  flex: 0 0 auto;
+  color: #7f7986;
+  font-size: .62rem;
+}
+
+.admin-sidebar-sublink.is-primary-action {
+  color: #f4d7a5;
+  border-color: rgba(231, 189, 121, .2);
+  background: rgba(142, 91, 47, .12);
+}
+
+.admin-sidebar-sublink.is-primary-action:hover,
+.admin-sidebar-sublink.is-primary-action[aria-current="page"] {
+  color: #fff4df;
+  border-color: rgba(231, 189, 121, .35);
+  background: #302417;
+}
+
+.admin-channel-summary {
+  cursor: default;
+}
+
+.admin-channel-summary:hover {
+  background: transparent;
+}
+
+.admin-channel-glyph {
+  color: #8f8995;
+  background: transparent;
+}
+
+@media (min-width: 768px) {
+  .admin-channel-state-label { display: inline; }
+  .admin-channel-summary { padding-right: .25rem; }
+  .admin-channel-subnav { margin-left: .8rem; }
+}

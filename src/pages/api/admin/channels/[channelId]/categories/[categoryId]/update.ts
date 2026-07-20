@@ -11,7 +11,7 @@ import { imageAssetsExist } from "@/lib/db/image-options";
 export const prerender = false;
 
 function redirect(request: Request, channelId: string, params: Record<string, string>): Response {
-  const url = new URL(`/admin/channels/${encodeURIComponent(channelId)}/categories`, request.url);
+  const url = new URL(`/admin/channels/${encodeURIComponent(channelId)}/filters`, request.url);
   for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);
   return Response.redirect(url, 303);
 }

@@ -6,6 +6,11 @@ import {
   parseProductForm,
   validateProductRelations,
 } from "@/lib/admin/product-form";
+import { parseProductEntryExtras } from "@/lib/admin/product-entry";
+import {
+  removeEmptyGeneratedCategory,
+  resolveProductCategory,
+} from "@/lib/admin/product-category";
 import { imageAssetsExist } from "@/lib/db/image-options";
 
 export const prerender = false;
@@ -26,10 +31,15 @@ export const POST: APIRoute = async ({ request, params }) => {
   const productId = params.productId ?? "";
   if (!channelId || !productId) return new Response("Not Found", { status: 404 });
 
-  const parsed = parseProductForm(await request.formData());
+  const form = await request.formData();
+  const parsed = parseProductForm(form);
   if (!parsed.ok) return redirect(request, channelId, productId, { error: parsed.code });
 
+  const extras = parseProductEntryExtras(form);
+  if (!extras.ok) return redirect(request, channelId, productId, { error: extras.code });
+
   const value = parsed.value;
+  let generatedCategoryId: string | null = null;
 
   try {
     const product = await env.DB.prepare(
@@ -37,52 +47,83 @@ export const POST: APIRoute = async ({ request, params }) => {
     ).bind(productId, channelId).first<{ id: string }>();
     if (!product) return redirect(request, channelId, productId, { error: "not-found" });
 
-    const relationError = await validateProductRelations(
-      channelId,
-      value.categoryId,
-      value.conversionGroupId,
-      value.status,
-    );
-    if (relationError) return redirect(request, channelId, productId, { error: relationError });
-    if (!(await imageAssetsExist([value.coverAssetId ?? ""]))) {
+    if (!(await imageAssetsExist([value.coverAssetId ?? "", ...extras.galleryAssetIds]))) {
       return redirect(request, channelId, productId, { error: "image" });
     }
 
-    await env.DB.prepare(
-      `UPDATE products
-       SET category_id = ?1,
-           conversion_group_id = ?2,
-           cover_asset_id = ?3,
-           title = ?4,
-           slug = ?5,
-           tags = ?6,
-           body_source = ?7,
-           body_html = ?8,
-           cta_label = ?9,
-           featured = ?10,
-           sort_order = ?11,
-           status = ?12,
-           updated_at = CURRENT_TIMESTAMP
-       WHERE id = ?13 AND channel_id = ?14`,
-    ).bind(
-      value.categoryId,
-      value.conversionGroupId,
-      value.coverAssetId,
-      value.title,
-      value.slug,
-      value.tagsJson,
-      value.bodySource,
-      value.bodyHtml,
-      value.ctaLabel,
-      value.featured ? 1 : 0,
-      value.sortOrder,
-      value.status,
-      productId,
+    const category = await resolveProductCategory({
       channelId,
-    ).run();
+      categoryId: value.categoryId,
+      categoryName: extras.categoryName,
+      productStatus: value.status,
+      coverAssetId: value.coverAssetId,
+    });
+    generatedCategoryId = category.created ? category.id : null;
 
+    const relationError = await validateProductRelations(
+      channelId,
+      category.id,
+      value.conversionGroupId,
+      value.status,
+    );
+    if (relationError) {
+      if (generatedCategoryId) await removeEmptyGeneratedCategory(generatedCategoryId);
+      return redirect(request, channelId, productId, { error: relationError });
+    }
+
+    const statements = [
+      env.DB.prepare(
+        `UPDATE products
+         SET category_id = ?1,
+             conversion_group_id = ?2,
+             cover_asset_id = ?3,
+             title = ?4,
+             slug = ?5,
+             tags = ?6,
+             body_source = ?7,
+             body_html = ?8,
+             cta_label = ?9,
+             featured = ?10,
+             sort_order = ?11,
+             status = ?12,
+             updated_at = CURRENT_TIMESTAMP
+         WHERE id = ?13 AND channel_id = ?14`,
+      ).bind(
+        category.id,
+        value.conversionGroupId,
+        value.coverAssetId,
+        value.title,
+        value.slug,
+        value.tagsJson,
+        value.bodySource,
+        value.bodyHtml,
+        value.ctaLabel,
+        value.featured ? 1 : 0,
+        value.sortOrder,
+        value.status,
+        productId,
+        channelId,
+      ),
+      env.DB.prepare("DELETE FROM product_images WHERE product_id = ?1").bind(productId),
+      ...extras.galleryAssetIds.map((imageAssetId, index) =>
+        env.DB.prepare(
+          `INSERT INTO product_images (product_id, image_asset_id, sort_order)
+           VALUES (?1, ?2, ?3)`,
+        ).bind(productId, imageAssetId, index * 10),
+      ),
+    ];
+
+    await env.DB.batch(statements);
     return redirect(request, channelId, productId, { saved: "updated" });
   } catch (error) {
+    if (generatedCategoryId) {
+      try {
+        await removeEmptyGeneratedCategory(generatedCategoryId);
+      } catch (cleanupError) {
+        console.error(JSON.stringify({ event: "generated_category_cleanup_failed", generatedCategoryId, error: String(cleanupError) }));
+      }
+    }
+
     console.error(JSON.stringify({ event: "admin_product_update_failed", channelId, productId, slug: value.slug, error: String(error) }));
     return redirect(request, channelId, productId, {
       error: isDuplicateProductSlugError(error) ? "duplicate" : "database",
