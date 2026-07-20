@@ -1,0 +1,21 @@
+---
+import PublicLayout from "@/layouts/PublicLayout.astro";
+import { loadSiteSummary } from "@/lib/db/site";
+
+export const prerender = false;
+const site = await loadSiteSummary();
+if (site.defaultChannelSlug) return Astro.redirect(`/${site.defaultChannelSlug}`, 302);
+---
+
+<PublicLayout title={site.siteName} description={site.siteDescription}>
+  <section class="hero panel">
+    <div class="eyebrow">Dynamic visual platform</div>
+    <h1>Content that updates without rebuilding.</h1>
+    <p>{site.databaseReady ? "The application is online. Create and publish a channel in the Chinese admin panel to activate the public catalog." : "The Worker is online. The database migration is still pending or unavailable."}</p>
+    <div class="status-row">
+      <span class:list={["badge", site.databaseReady ? "ok" : "warn"]}>{site.databaseReady ? "D1 connected" : "D1 setup pending"}</span>
+      <span class="badge ok">Astro SSR</span>
+      <span class="badge ok">R2 binding configured</span>
+    </div>
+  </section>
+</PublicLayout>

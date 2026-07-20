@@ -1,0 +1,88 @@
+@import "tailwindcss";
+
+:root {
+  color-scheme: dark;
+  --bg: #07070a;
+  --panel: rgba(19, 18, 26, 0.82);
+  --panel-strong: #14121d;
+  --line: rgba(255, 255, 255, 0.09);
+  --text: #f7f3f8;
+  --muted: #aaa2b3;
+  --accent: #e7bd79;
+  --accent-strong: #f3d29c;
+  --danger: #ff6d8b;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+* { box-sizing: border-box; }
+html { min-width: 320px; background: var(--bg); }
+body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--text);
+  background:
+    radial-gradient(circle at 50% -20%, rgba(91, 42, 112, 0.35), transparent 38rem),
+    linear-gradient(180deg, #09080d 0%, #060609 100%);
+}
+a { color: inherit; text-decoration: none; }
+button, input { font: inherit; }
+
+.shell { width: min(100%, 60rem); margin: 0 auto; padding: 1.25rem; }
+.public-shell { min-height: 100vh; padding-bottom: 6rem; }
+.admin-shell { width: min(100%, 76rem); margin: 0 auto; padding: 1.25rem; }
+
+.brand { display: inline-flex; align-items: center; gap: .7rem; font-weight: 750; letter-spacing: .02em; }
+.brand-mark {
+  display: grid; place-items: center; width: 2.3rem; aspect-ratio: 1; border-radius: .8rem;
+  background: linear-gradient(145deg, #f1d19d, #8e5b2f); color: #1b120a; box-shadow: 0 10px 35px rgba(231,189,121,.2);
+}
+
+.panel {
+  border: 1px solid var(--line);
+  border-radius: 1.35rem;
+  background: var(--panel);
+  box-shadow: 0 18px 60px rgba(0,0,0,.25);
+  backdrop-filter: blur(18px);
+}
+.hero { margin-top: 4rem; padding: clamp(1.4rem, 5vw, 3rem); }
+.eyebrow { color: var(--accent); font-size: .75rem; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; }
+h1 { margin: .75rem 0 1rem; font-size: clamp(2rem, 8vw, 4.2rem); line-height: .98; letter-spacing: -.045em; }
+h2 { margin: 0; font-size: 1.2rem; }
+p { color: var(--muted); line-height: 1.7; }
+.status-row { display: flex; flex-wrap: wrap; gap: .65rem; margin-top: 1.5rem; }
+.badge { border: 1px solid var(--line); border-radius: 999px; padding: .55rem .8rem; color: var(--muted); background: rgba(255,255,255,.03); font-size: .82rem; }
+.badge.ok { color: #bcead1; border-color: rgba(92, 219, 151, .25); background: rgba(43, 126, 82, .12); }
+.badge.warn { color: #f2d7a6; border-color: rgba(231,189,121,.25); background: rgba(142,91,47,.12); }
+
+.admin-header { display: flex; align-items: center; justify-content: space-between; gap: 1rem; margin-bottom: 1rem; }
+.admin-nav { display: flex; flex-wrap: wrap; gap: .55rem; padding: .65rem; margin-bottom: 1rem; }
+.admin-nav a { padding: .65rem .8rem; border-radius: .75rem; color: var(--muted); }
+.admin-nav a:hover, .admin-nav a[aria-current="page"] { color: var(--text); background: rgba(255,255,255,.06); }
+.grid { display: grid; gap: 1rem; }
+.grid.metrics { grid-template-columns: repeat(2, minmax(0,1fr)); }
+.metric { padding: 1.1rem; }
+.metric strong { display: block; margin-top: .45rem; font-size: 1.75rem; }
+.metric span { color: var(--muted); font-size: .85rem; }
+
+.form-card { width: min(100%, 28rem); margin: 10vh auto 0; padding: 1.35rem; }
+.field { display: grid; gap: .45rem; margin: 1rem 0; }
+.field label { font-size: .9rem; color: var(--muted); }
+.field input {
+  width: 100%; border: 1px solid var(--line); border-radius: .85rem; padding: .85rem 1rem;
+  color: var(--text); background: rgba(0,0,0,.24); outline: none;
+}
+.field input:focus { border-color: rgba(231,189,121,.6); box-shadow: 0 0 0 3px rgba(231,189,121,.09); }
+.button {
+  display: inline-flex; align-items: center; justify-content: center; min-height: 2.8rem; border: 0; border-radius: .85rem;
+  padding: .75rem 1rem; font-weight: 750; cursor: pointer; color: #1a120a;
+  background: linear-gradient(135deg, var(--accent-strong), #b77d43);
+}
+.button.secondary { color: var(--text); background: rgba(255,255,255,.07); border: 1px solid var(--line); }
+.button.full { width: 100%; }
+.error { color: #ffc3cf; border: 1px solid rgba(255,109,139,.25); background: rgba(255,109,139,.08); padding: .75rem; border-radius: .8rem; }
+.muted { color: var(--muted); }
+
+@media (min-width: 768px) {
+  .shell, .admin-shell { padding: 2rem; }
+  .grid.metrics { grid-template-columns: repeat(4, minmax(0,1fr)); }
+}
