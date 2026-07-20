@@ -84,11 +84,7 @@ const metaPixelId = site.metaPixelId;
     <header class="public-header">
       <div class="public-container public-header-inner">
         <a class="public-brand" href="/" aria-label={`${site.siteName} home`}>
-          {site.logoUrl ? (
-            <img class="public-brand-logo" src={site.logoUrl} alt="" />
-          ) : (
-            <span class="public-brand-fallback">{site.siteName.trim().slice(0, 1).toUpperCase() || "S"}</span>
-          )}
+          {site.logoUrl && <img class="public-brand-logo" src={site.logoUrl} alt="" />}
           <span class="public-brand-name">{site.siteName}</span>
         </a>
         <nav class="public-header-links" aria-label="Site information">
