@@ -1,0 +1,129 @@
+---
+import PublicLayout from "@/layouts/PublicLayout.astro";
+import HeroCarousel from "@/components/public/HeroCarousel.astro";
+import CategoryCard from "@/components/public/CategoryCard.astro";
+import ProductDirectory from "@/components/public/ProductDirectory.astro";
+import {
+  loadPublicCategories,
+  loadPublicCategoryFilters,
+  loadPublicChannel,
+  loadPublicHeroAdvertisements,
+  loadPublicProducts,
+  loadPublicSiteShell,
+} from "@/lib/db/public";
+
+export const prerender = false;
+
+const channelSlug = Astro.params.channel ?? "";
+const [site, channel] = await Promise.all([
+  loadPublicSiteShell(),
+  loadPublicChannel(channelSlug),
+]);
+
+if (!channel) Astro.response.status = 404;
+
+const [hero, filters, categories, productPage] = channel
+  ? await Promise.all([
+      loadPublicHeroAdvertisements(channel.id, site.r2PublicBaseUrl),
+      loadPublicCategoryFilters(channel.id),
+      loadPublicCategories(channel.id, site.r2PublicBaseUrl),
+      loadPublicProducts({ channelId: channel.id, baseUrl: site.r2PublicBaseUrl }),
+    ])
+  : [[], [], [], { products: [], page: 1, hasMore: false }];
+
+const canonical = new URL(`/${encodeURIComponent(channelSlug)}`, Astro.url.origin).href;
+---
+
+<PublicLayout
+  site={site}
+  title={channel?.name ?? "Page not found"}
+  description={channel ? `${channel.name} recommendations and listings.` : "The requested channel could not be found."}
+  canonical={canonical}
+  activeChannel={channel?.slug ?? null}
+>
+  {channel ? (
+    <>
+      <HeroCarousel advertisements={hero} />
+
+      <section class="public-section">
+        <form class="public-search-form" action={`/${encodeURIComponent(channel.slug)}/search`} method="get" role="search">
+          <input name="q" type="search" maxlength="100" placeholder="Search categories, products, or tags" aria-label={`Search ${channel.name}`} />
+          <button class="public-button" type="submit">Search</button>
+        </form>
+      </section>
+
+      {categories.length > 0 ? (
+        <section class="public-section" data-category-section>
+          <div class="public-section-heading">
+            <div>
+              <div class="eyebrow">Explore</div>
+              <h1>{channel.name}</h1>
+            </div>
+            <span class="public-count" data-category-count>{categories.length} categories</span>
+          </div>
+
+          {filters.length > 0 && (
+            <div class="filter-strip" aria-label="Category filters">
+              <button class="filter-button" type="button" data-category-filter="all" aria-pressed="true">{site.allFilterLabel}</button>
+              {filters.map((filter) => (
+                <button class="filter-button" type="button" data-category-filter={filter.id} aria-pressed="false">{filter.name}</button>
+              ))}
+            </div>
+          )}
+
+          <div class="category-grid" data-category-grid>
+            {categories.map((category) => <CategoryCard category={category} channelSlug={channel.slug} />)}
+          </div>
+          <div class="public-empty" data-category-empty hidden>No categories match this filter.</div>
+        </section>
+      ) : (
+        <section class="public-section">
+          <div class="public-section-heading">
+            <div>
+              <div class="eyebrow">Discover</div>
+              <h1>{channel.name}</h1>
+            </div>
+          </div>
+          <ProductDirectory channelSlug={channel.slug} page={productPage} />
+        </section>
+      )}
+    </>
+  ) : (
+    <section class="public-section">
+      <div class="public-empty">
+        <div>
+          <h1>Page not found</h1>
+          <p>This channel is unavailable or has not been published.</p>
+          <a class="public-button secondary" href="/">Return home</a>
+        </div>
+      </div>
+    </section>
+  )}
+</PublicLayout>
+
+<script is:inline>
+  (() => {
+    const section = document.querySelector('[data-category-section]');
+    if (!section) return;
+    const buttons = Array.from(section.querySelectorAll('[data-category-filter]'));
+    const cards = Array.from(section.querySelectorAll('[data-category-card]'));
+    const empty = section.querySelector('[data-category-empty]');
+    const count = section.querySelector('[data-category-count]');
+
+    buttons.forEach((button) => {
+      button.addEventListener('click', () => {
+        const filterId = button.dataset.categoryFilter || 'all';
+        let visible = 0;
+        cards.forEach((card) => {
+          const ids = (card.dataset.filterIds || '').split(',').filter(Boolean);
+          const show = filterId === 'all' || ids.includes(filterId);
+          card.hidden = !show;
+          if (show) visible += 1;
+        });
+        buttons.forEach((item) => item.setAttribute('aria-pressed', item === button ? 'true' : 'false'));
+        if (empty) empty.hidden = visible > 0;
+        if (count) count.textContent = `${visible} ${visible === 1 ? 'category' : 'categories'}`;
+      });
+    });
+  })();
+</script>

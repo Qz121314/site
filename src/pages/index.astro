@@ -1,21 +1,43 @@
 ---
 import PublicLayout from "@/layouts/PublicLayout.astro";
+import { loadPublicSiteShell } from "@/lib/db/public";
 import { loadSiteSummary } from "@/lib/db/site";
 
 export const prerender = false;
-const site = await loadSiteSummary();
-if (site.defaultChannelSlug) return Astro.redirect(`/${site.defaultChannelSlug}`, 302);
+const [site, summary] = await Promise.all([
+  loadPublicSiteShell(),
+  loadSiteSummary(),
+]);
+if (summary.defaultChannelSlug) {
+  return Astro.redirect(`/${encodeURIComponent(summary.defaultChannelSlug)}`, 302);
+}
+const canonical = new URL("/", Astro.url.origin).href;
 ---
 
-<PublicLayout title={site.siteName} description={site.siteDescription}>
-  <section class="hero panel">
-    <div class="eyebrow">Dynamic visual platform</div>
-    <h1>Content that updates without rebuilding.</h1>
-    <p>{site.databaseReady ? "The application is online. Create and publish a channel in the Chinese admin panel to activate the public catalog." : "The Worker is online. The database migration is still pending or unavailable."}</p>
-    <div class="status-row">
-      <span class:list={["badge", site.databaseReady ? "ok" : "warn"]}>{site.databaseReady ? "D1 connected" : "D1 setup pending"}</span>
-      <span class="badge ok">Astro SSR</span>
-      <span class="badge ok">R2 binding configured</span>
+<PublicLayout site={site} title={site.siteName} description={site.siteDescription} canonical={canonical}>
+  <section class="public-section">
+    <div class="public-section-heading">
+      <div>
+        <div class="eyebrow">Explore</div>
+        <h1>{site.siteName}</h1>
+        <p>{site.siteDescription}</p>
+      </div>
     </div>
+
+    {site.channels.length > 0 ? (
+      <div class="category-grid">
+        {site.channels.map((channel) => (
+          <a class="visual-card" href={`/${encodeURIComponent(channel.slug)}`}>
+            <span class="visual-card-placeholder" aria-hidden="true">{channel.icon.trim() || channel.name.trim().slice(0, 1)}</span>
+            <span class="visual-card-overlay">
+              <span class="visual-card-title">{channel.name}</span>
+              <span class="visual-card-meta">Browse channel</span>
+            </span>
+          </a>
+        ))}
+      </div>
+    ) : (
+      <div class="public-empty">No published channels are available yet.</div>
+    )}
   </section>
 </PublicLayout>

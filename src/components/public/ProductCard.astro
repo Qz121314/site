@@ -1,0 +1,27 @@
+---
+import type { PublicProductCard } from "@/lib/db/public";
+
+interface Props {
+  product: PublicProductCard;
+  channelSlug: string;
+}
+
+const { product, channelSlug } = Astro.props;
+---
+
+<a class="visual-card product-card" href={`/${encodeURIComponent(channelSlug)}/product/${encodeURIComponent(product.slug)}`}>
+  {product.coverUrl ? (
+    <img class="visual-card-media" src={product.coverUrl} alt={product.title} loading="lazy" />
+  ) : (
+    <span class="visual-card-placeholder" aria-hidden="true">{product.title.trim().slice(0, 1).toUpperCase() || "P"}</span>
+  )}
+  {product.featured && <span class="visual-card-featured">Featured</span>}
+  <span class="visual-card-overlay">
+    <span class="visual-card-title">{product.title}</span>
+    {product.tags.length > 0 && (
+      <span class="visual-card-meta">
+        {product.tags.slice(0, 3).map((tag) => <span class="visual-tag">{tag}</span>)}
+      </span>
+    )}
+  </span>
+</a>

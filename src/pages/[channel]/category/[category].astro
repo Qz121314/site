@@ -1,0 +1,88 @@
+---
+import PublicLayout from "@/layouts/PublicLayout.astro";
+import ProductDirectory from "@/components/public/ProductDirectory.astro";
+import {
+  loadPublicCategory,
+  loadPublicChannel,
+  loadPublicProducts,
+  loadPublicSiteShell,
+} from "@/lib/db/public";
+
+export const prerender = false;
+
+const channelSlug = Astro.params.channel ?? "";
+const categorySlug = Astro.params.category ?? "";
+const [site, channel] = await Promise.all([
+  loadPublicSiteShell(),
+  loadPublicChannel(channelSlug),
+]);
+const category = channel
+  ? await loadPublicCategory(channel.id, categorySlug, site.r2PublicBaseUrl)
+  : null;
+
+if (!channel || !category) Astro.response.status = 404;
+
+const productPage = channel && category
+  ? await loadPublicProducts({
+      channelId: channel.id,
+      categoryId: category.id,
+      baseUrl: site.r2PublicBaseUrl,
+    })
+  : { products: [], page: 1, hasMore: false };
+
+const canonical = new URL(
+  `/${encodeURIComponent(channelSlug)}/category/${encodeURIComponent(categorySlug)}`,
+  Astro.url.origin,
+).href;
+---
+
+<PublicLayout
+  site={site}
+  title={category?.name ?? "Page not found"}
+  description={category ? `Browse ${category.name} in ${channel?.name ?? site.siteName}.` : "The requested category could not be found."}
+  canonical={canonical}
+  ogImage={category?.imageUrl ?? site.logoUrl}
+  activeChannel={channel?.slug ?? null}
+>
+  {channel && category ? (
+    <>
+      <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <a href={`/${encodeURIComponent(channel.slug)}`}>{channel.name}</a>
+        <span aria-hidden="true">/</span>
+        <span aria-current="page">{category.name}</span>
+      </nav>
+
+      <section class="public-section">
+        <div class="public-section-heading">
+          <div>
+            <div class="eyebrow">Category</div>
+            <h1>{category.name}</h1>
+            <p>{category.productCount} {category.productCount === 1 ? "listing" : "listings"}</p>
+          </div>
+        </div>
+
+        <form class="public-search-form" action={`/${encodeURIComponent(channel.slug)}/search`} method="get" role="search">
+          <input name="q" type="search" maxlength="100" placeholder={`Search ${channel.name}`} aria-label={`Search ${channel.name}`} />
+          <button class="public-button" type="submit">Search</button>
+        </form>
+
+        <ProductDirectory
+          channelSlug={channel.slug}
+          categorySlug={category.slug}
+          page={productPage}
+          emptyMessage="No published products are available in this category."
+        />
+      </section>
+    </>
+  ) : (
+    <section class="public-section">
+      <div class="public-empty">
+        <div>
+          <h1>Category not found</h1>
+          <p>This category is unavailable or has not been published.</p>
+          <a class="public-button secondary" href={channel ? `/${encodeURIComponent(channel.slug)}` : "/"}>Return</a>
+        </div>
+      </div>
+    </section>
+  )}
+</PublicLayout>

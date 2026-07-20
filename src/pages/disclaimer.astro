@@ -1,0 +1,20 @@
+---
+import PublicLayout from "@/layouts/PublicLayout.astro";
+import { loadPublicSiteShell } from "@/lib/db/public";
+
+export const prerender = false;
+const site = await loadPublicSiteShell();
+const canonical = new URL("/disclaimer", Astro.url.origin).href;
+---
+
+<PublicLayout site={site} title="Disclaimer" description={`Disclaimer for ${site.siteName}.`} canonical={canonical}>
+  <section class="public-section">
+    <div class="public-section-heading">
+      <div>
+        <div class="eyebrow">Information</div>
+        <h1>Disclaimer</h1>
+      </div>
+    </div>
+    <div class="policy-card">{site.disclaimerContent || "No disclaimer has been published yet."}</div>
+  </section>
+</PublicLayout>

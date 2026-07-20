@@ -1,0 +1,115 @@
+---
+import PublicLayout from "@/layouts/PublicLayout.astro";
+import {
+  loadPublicProductDetail,
+  loadPublicSiteShell,
+} from "@/lib/db/public";
+
+export const prerender = false;
+
+const channelSlug = Astro.params.channel ?? "";
+const productSlug = Astro.params.product ?? "";
+const site = await loadPublicSiteShell();
+const product = await loadPublicProductDetail(channelSlug, productSlug, site.r2PublicBaseUrl);
+
+if (!product) Astro.response.status = 404;
+
+const canonical = new URL(
+  `/${encodeURIComponent(channelSlug)}/product/${encodeURIComponent(productSlug)}`,
+  Astro.url.origin,
+).href;
+const primaryImage = product?.coverUrl ?? product?.gallery[0]?.imageUrl ?? site.logoUrl;
+---
+
+<PublicLayout
+  site={site}
+  title={product?.title ?? "Page not found"}
+  description={product ? `${product.title}${product.tags.length > 0 ? ` — ${product.tags.slice(0, 3).join(", ")}` : ""}` : "The requested product could not be found."}
+  canonical={canonical}
+  ogImage={primaryImage}
+  activeChannel={product?.channelSlug ?? channelSlug}
+>
+  {product ? (
+    <article class="product-detail">
+      <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <a href={`/${encodeURIComponent(product.channelSlug)}`}>{product.channelName}</a>
+        {product.categoryName && product.categorySlug && (
+          <>
+            <span aria-hidden="true">/</span>
+            <a href={`/${encodeURIComponent(product.channelSlug)}/category/${encodeURIComponent(product.categorySlug)}`}>{product.categoryName}</a>
+          </>
+        )}
+        <span aria-hidden="true">/</span>
+        <span aria-current="page">{product.title}</span>
+      </nav>
+
+      {product.coverUrl ? (
+        <div class="product-cover">
+          <img src={product.coverUrl} alt={product.title} fetchpriority="high" />
+        </div>
+      ) : primaryImage ? (
+        <div class="product-cover">
+          <img src={primaryImage} alt={product.title} fetchpriority="high" />
+        </div>
+      ) : null}
+
+      <header class="product-detail-header">
+        <div class="eyebrow">{product.categoryName ?? product.channelName}</div>
+        <h1>{product.title}</h1>
+        {product.tags.length > 0 && (
+          <div class="product-tags" aria-label="Tags">
+            {product.tags.map((tag) => <span class="visual-tag">{tag}</span>)}
+          </div>
+        )}
+      </header>
+
+      {product.gallery.length > 0 && (
+        <section class="public-section" aria-labelledby="gallery-heading">
+          <div class="public-section-heading">
+            <h2 id="gallery-heading">Gallery</h2>
+            <span class="public-count">{product.gallery.length} photos</span>
+          </div>
+          <div class="product-gallery">
+            {product.gallery.map((image) => (
+              <a href={image.imageUrl} target="_blank" rel="noopener noreferrer" aria-label={`Open ${image.originalName}`}>
+                <img
+                  src={image.imageUrl}
+                  alt={image.originalName}
+                  width={image.width}
+                  height={image.height}
+                  loading="lazy"
+                />
+              </a>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {product.bodyHtml && (
+        <section class="product-body" set:html={product.bodyHtml}></section>
+      )}
+
+      {product.hasConversion && (
+        <div class="product-cta-bar">
+          <a
+            class="public-button"
+            href={`/go/${encodeURIComponent(product.slug)}?channel=${encodeURIComponent(product.channelSlug)}`}
+            rel="nofollow sponsored"
+          >
+            {product.ctaLabel}
+          </a>
+        </div>
+      )}
+    </article>
+  ) : (
+    <section class="public-section">
+      <div class="public-empty">
+        <div>
+          <h1>Product not found</h1>
+          <p>This product is unavailable or has not been published.</p>
+          <a class="public-button secondary" href={`/${encodeURIComponent(channelSlug)}`}>Return to channel</a>
+        </div>
+      </div>
+    </section>
+  )}
+</PublicLayout>
