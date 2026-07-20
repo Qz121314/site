@@ -1,5 +1,12 @@
 ---
-import DirectImageUpload, { type ExistingUploadImage } from "@/components/admin/DirectImageUpload.astro";
+import DirectImageUpload from "@/components/admin/DirectImageUpload.astro";
+
+type ExistingUploadImage = {
+  id: string;
+  previewUrl?: string;
+  name?: string;
+  meta?: string;
+};
 
 interface Props {
   form: string;
