@@ -1,0 +1,30 @@
+---
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import { loadAdminChannel } from "@/lib/db/site";
+
+export const prerender = false;
+
+const channelId = Astro.params.channelId ?? "";
+const channel = channelId ? await loadAdminChannel(channelId) : null;
+const title = channel ? `${channel.name} · 分区设置` : "分区不存在";
+---
+
+<AdminLayout title={title}>
+  {channel ? (
+    <section class="panel" style="padding:1.25rem">
+      <div class="eyebrow">分区独立管理</div>
+      <h2 style="margin-top:.65rem">{channel.name}</h2>
+      <p>这里管理该分区的名称、Slug、图标、排序、发布状态和 Hero 广告绑定。</p>
+      <div class="status-row">
+        <span class="badge">Slug：{channel.slug}</span>
+        <span class:list={["badge", channel.status === "published" ? "ok" : "warn"]}>状态：{channel.status}</span>
+      </div>
+    </section>
+  ) : (
+    <section class="panel" style="padding:1.25rem">
+      <h2>找不到该分区</h2>
+      <p>该分区可能已被删除，或地址中的分区 ID 不正确。</p>
+      <a class="button secondary" href="/admin/channels">返回分区管理</a>
+    </section>
+  )}
+</AdminLayout>
