@@ -10,17 +10,21 @@ type SessionPayload = {
   nonce: string;
 };
 
-function bytesToBase64Url(bytes: Uint8Array): string {
+function bytesToBase64Url(bytes: Uint8Array<ArrayBufferLike>): string {
   let binary = "";
   for (const byte of bytes) binary += String.fromCharCode(byte);
   return btoa(binary).replaceAll("+", "-").replaceAll("/", "_").replace(/=+$/u, "");
 }
 
-function base64UrlToBytes(value: string): Uint8Array {
+function base64UrlToBytes(value: string): Uint8Array<ArrayBuffer> {
   const normalized = value.replaceAll("-", "+").replaceAll("_", "/");
   const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, "=");
   const binary = atob(padded);
-  return Uint8Array.from(binary, (character) => character.charCodeAt(0));
+  const bytes = new Uint8Array(binary.length);
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index);
+  }
+  return bytes;
 }
 
 async function importHmacKey(secret: string): Promise<CryptoKey> {
@@ -32,7 +36,14 @@ export async function safeCompareText(candidate: string, expected: string): Prom
     crypto.subtle.digest("SHA-256", encoder.encode(candidate)),
     crypto.subtle.digest("SHA-256", encoder.encode(expected)),
   ]);
-  return crypto.subtle.timingSafeEqual(new Uint8Array(candidateHash), new Uint8Array(expectedHash));
+  const candidateBytes = new Uint8Array(candidateHash);
+  const expectedBytes = new Uint8Array(expectedHash);
+  let difference = candidateBytes.length ^ expectedBytes.length;
+  const length = Math.max(candidateBytes.length, expectedBytes.length);
+  for (let index = 0; index < length; index += 1) {
+    difference |= (candidateBytes[index] ?? 0) ^ (expectedBytes[index] ?? 0);
+  }
+  return difference === 0;
 }
 
 export async function createSessionToken(secret: string, now = Date.now()): Promise<string> {
