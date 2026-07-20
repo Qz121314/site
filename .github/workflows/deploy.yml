@@ -38,7 +38,18 @@ jobs:
           package-manager-cache: false
 
       - name: 安装依赖
-        run: pnpm install --no-frozen-lockfile
+        shell: bash
+        run: |
+          set -o pipefail
+          pnpm install --no-frozen-lockfile 2>&1 | tee pnpm-install.log
+
+      - name: 保存依赖安装日志
+        if: failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: pnpm-install-log-${{ github.run_id }}
+          path: pnpm-install.log
+          retention-days: 1
 
       - name: 生成 Cloudflare 类型
         run: pnpm cf-typegen
