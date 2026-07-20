@@ -1,25 +1,24 @@
 ---
 import AdminLayout from "@/layouts/AdminLayout.astro";
-import ImagePicker from "@/components/admin/ImagePicker.astro";
-import { loadAdminImageOptions } from "@/lib/db/image-options";
+import DirectImageUpload from "@/components/admin/DirectImageUpload.astro";
 import { loadAdminChannels, loadAdminSiteSettings } from "@/lib/db/site";
 
 export const prerender = false;
 
-const [settings, channels, images] = await Promise.all([
+const [settings, channels] = await Promise.all([
   loadAdminSiteSettings(),
   loadAdminChannels(),
-  loadAdminImageOptions(),
 ]);
 
 const saved = Astro.url.searchParams.get("saved");
 const error = Astro.url.searchParams.get("error");
+const formId = "site-settings-form";
 
 const errorMessages: Record<string, string> = {
   "site-name": "网站名称不能为空，且不能超过 80 个字符。",
   description: "网站描述不能超过 300 个字符。",
   "default-channel": "默认分区不存在，请重新选择。",
-  image: "所选 Logo 或 Favicon 图片不存在，请重新选择。",
+  image: "Logo 或 Favicon 图片记录无效，请重新上传。",
   "r2-url": "R2 公开域名必须是完整的 HTTPS 域名，不能包含路径、参数或账号信息。",
   ga4: "GA4 Measurement ID 格式无效，例如 G-XXXXXXXXXX。",
   meta: "Meta Pixel ID 只能包含 5 至 30 位数字。",
@@ -31,17 +30,17 @@ const errorMessages: Record<string, string> = {
 ---
 
 <AdminLayout title="站点设置">
-  <button slot="actions" class="button" type="submit" form="site-settings-form">保存设置</button>
+  <button slot="actions" class="button" type="submit" form={formId}>保存设置</button>
 
   {saved === "1" && <p class="notice" role="status">站点设置已保存，前台刷新后立即生效。</p>}
   {error && errorMessages[error] && <p class="error" role="alert">{errorMessages[error]}</p>}
   {!settings.databaseReady && <p class="error" role="alert">D1 数据暂时不可用，当前显示的是默认值。</p>}
 
-  <form id="site-settings-form" class="admin-stack" action="/api/admin/settings/update" method="post">
+  <form id={formId} class="admin-stack" action="/api/admin/settings/update" method="post">
     <section class="admin-card">
       <div class="admin-section-bar">
         <h2>基础设置</h2>
-        <span class="admin-section-note">前台系统文字使用英语</span>
+        <span class="admin-section-note">全站级低频配置</span>
       </div>
       <div class="admin-card-body admin-form-grid">
         <div class="admin-field admin-span-3">
@@ -59,9 +58,7 @@ const errorMessages: Record<string, string> = {
           <select id="default-channel" name="defaultChannelId">
             <option value="">未设置</option>
             {channels.map((channel) => (
-              <option value={channel.id} selected={settings.defaultChannelId === channel.id}>
-                {channel.name}
-              </option>
+              <option value={channel.id} selected={settings.defaultChannelId === channel.id}>{channel.name}</option>
             ))}
           </select>
         </div>
@@ -99,33 +96,29 @@ const errorMessages: Record<string, string> = {
 
     <section class="admin-card settings-assets">
       <div class="admin-section-bar">
-        <h2>Logo 与 Favicon</h2>
-        <span class="admin-section-note">从全站图片库选择；清空选择即可解绑</span>
+        <div>
+          <h2>Logo 与 Favicon</h2>
+          <span class="admin-section-note">图片在站点设置中直接上传，不经过图片库录入</span>
+        </div>
       </div>
-      {images.length > 0 ? (
-        <div class="admin-card-body settings-asset-grid">
-          <ImagePicker
-            id="site-logo-asset"
-            name="logoAssetId"
-            label="Logo"
-            images={images}
-            value={settings.logoAssetId}
-            help="建议使用横向或方形透明 WebP。"
-          />
-          <ImagePicker
-            id="site-favicon-asset"
-            name="faviconAssetId"
-            label="Favicon"
-            images={images}
-            value={settings.faviconAssetId}
-            help="建议使用方形图片，浏览器将自动缩放。"
-          />
-        </div>
-      ) : (
-        <div class="admin-empty">
-          图片库暂无可选资产。请先在实际使用图片的业务页面上传图片。
-        </div>
-      )}
+      <div class="admin-card-body settings-asset-grid">
+        <DirectImageUpload
+          id="site-logo-upload"
+          name="logoAssetId"
+          label="Logo"
+          form={formId}
+          value={settings.logoAssetId}
+          help="未上传时前台只显示网站名称；建议使用横向或方形透明图片。"
+        />
+        <DirectImageUpload
+          id="site-favicon-upload"
+          name="faviconAssetId"
+          label="Favicon"
+          form={formId}
+          value={settings.faviconAssetId}
+          help="建议使用方形图片，浏览器会自动缩放。"
+        />
+      </div>
     </section>
 
     <section class="admin-card legal-settings">
@@ -176,27 +169,9 @@ const errorMessages: Record<string, string> = {
 </AdminLayout>
 
 <style>
-  .settings-checks {
-    display: flex;
-    min-height: 2.05rem;
-    align-items: center;
-    gap: .65rem;
-    white-space: nowrap;
-  }
-
+  .settings-checks { display: flex; min-height: 2.05rem; align-items: center; gap: .65rem; white-space: nowrap; }
   .legal-settings textarea { min-height: 13rem; line-height: 1.5; }
-
-  .settings-asset-grid {
-    display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: .8rem;
-  }
-
-  @media (max-width: 767px) {
-    .settings-asset-grid { grid-template-columns: 1fr; }
-  }
-
-  @media (max-width: 959px) {
-    .settings-checks { flex-wrap: wrap; gap: .25rem .65rem; }
-  }
+  .settings-asset-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .8rem; }
+  @media (max-width: 767px) { .settings-asset-grid { grid-template-columns: 1fr; } }
+  @media (max-width: 959px) { .settings-checks { flex-wrap: wrap; gap: .25rem .65rem; } }
 </style>
