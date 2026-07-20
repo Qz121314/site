@@ -1,0 +1,91 @@
+---
+import PublicLayout from "@/layouts/PublicLayout.astro";
+import CategoryCard from "@/components/public/CategoryCard.astro";
+import ProductCard from "@/components/public/ProductCard.astro";
+import {
+  loadPublicChannel,
+  loadPublicSiteShell,
+  searchPublicCatalog,
+} from "@/lib/db/public";
+
+export const prerender = false;
+
+const channelSlug = Astro.params.channel ?? "";
+const query = (Astro.url.searchParams.get("q") ?? "").trim().slice(0, 100);
+const [site, channel] = await Promise.all([
+  loadPublicSiteShell(),
+  loadPublicChannel(channelSlug),
+]);
+
+if (!channel) Astro.response.status = 404;
+const results = channel && query
+  ? await searchPublicCatalog(channel.id, query, site.r2PublicBaseUrl)
+  : { categories: [], products: [] };
+const canonicalUrl = new URL(`/${encodeURIComponent(channelSlug)}/search`, Astro.url.origin);
+if (query) canonicalUrl.searchParams.set("q", query);
+---
+
+<PublicLayout
+  site={site}
+  title={query ? `Search: ${query}` : "Search"}
+  description={channel ? `Search categories, products, and tags in ${channel.name}.` : "Search the public catalog."}
+  canonical={canonicalUrl.href}
+  activeChannel={channel?.slug ?? null}
+>
+  {channel ? (
+    <>
+      <nav class="breadcrumbs" aria-label="Breadcrumb">
+        <a href={`/${encodeURIComponent(channel.slug)}`}>{channel.name}</a>
+        <span aria-hidden="true">/</span>
+        <span aria-current="page">Search</span>
+      </nav>
+
+      <section class="public-section">
+        <div class="public-section-heading">
+          <div>
+            <div class="eyebrow">Search results</div>
+            <h1>{query || "Search"}</h1>
+          </div>
+        </div>
+        <form class="public-search-form" action={`/${encodeURIComponent(channel.slug)}/search`} method="get" role="search">
+          <input name="q" type="search" maxlength="100" required value={query} placeholder="Search categories, products, or tags" aria-label={`Search ${channel.name}`} autofocus={!query} />
+          <button class="public-button" type="submit">Search</button>
+        </form>
+      </section>
+
+      {!query ? (
+        <div class="public-empty">Enter a category name, product name, or tag.</div>
+      ) : results.categories.length === 0 && results.products.length === 0 ? (
+        <div class="public-empty">No results found for “{query}”.</div>
+      ) : (
+        <>
+          {results.categories.length > 0 && (
+            <section class="public-section">
+              <div class="public-section-heading">
+                <h2>Categories</h2>
+                <span class="public-count">{results.categories.length}</span>
+              </div>
+              <div class="category-grid">
+                {results.categories.map((category) => <CategoryCard category={category} channelSlug={channel.slug} />)}
+              </div>
+            </section>
+          )}
+
+          {results.products.length > 0 && (
+            <section class="public-section">
+              <div class="public-section-heading">
+                <h2>Products</h2>
+                <span class="public-count">{results.products.length}</span>
+              </div>
+              <div class="product-grid">
+                {results.products.map((product) => <ProductCard product={product} channelSlug={channel.slug} />)}
+              </div>
+            </section>
+          )}
+        </>
+      )}
+    </>
+  ) : (
+    <div class="public-empty">This channel is unavailable.</div>
+  )}
+</PublicLayout>
