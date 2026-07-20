@@ -2,7 +2,7 @@ import { env } from "cloudflare:workers";
 import type { APIRoute } from "astro";
 import { isSameOriginPost } from "@/lib/auth/session";
 import { parseProductForm, validateProductRelations } from "@/lib/admin/product-form";
-import { uniqueProductSlug } from "@/lib/admin/automatic-slug";
+import { automaticSlug, uniqueProductSlug } from "@/lib/admin/automatic-slug";
 import { categoryFiltersBelongToChannel } from "@/lib/admin/category-form";
 import { parseProductEntryExtras } from "@/lib/admin/product-entry";
 import { removeEmptyGeneratedCategory, resolveProductCategory } from "@/lib/admin/product-category";
@@ -29,7 +29,7 @@ export const POST: APIRoute = async ({ request, params }) => {
   const form = await request.formData();
   const rawTitle = form.get("title");
   const title = typeof rawTitle === "string" ? rawTitle.trim() : "";
-  form.set("slug", await uniqueProductSlug(channelId, title, productId));
+  form.set("slug", automaticSlug(title, "product", 96));
 
   const parsed = parseProductForm(form);
   if (!parsed.ok) return redirect(request, channelId, productId, { error: parsed.code });
@@ -45,6 +45,8 @@ export const POST: APIRoute = async ({ request, params }) => {
       "SELECT id, category_id FROM products WHERE id = ?1 AND channel_id = ?2",
     ).bind(productId, channelId).first<{ id: string; category_id: string | null }>();
     if (!product) return redirect(request, channelId, productId, { error: "not-found" });
+
+    const slug = await uniqueProductSlug(channelId, value.title, productId);
 
     if (!(await imageAssetsExist([value.coverAssetId ?? "", ...extras.galleryAssetIds]))) {
       return redirect(request, channelId, productId, { error: "image" });
@@ -100,7 +102,7 @@ export const POST: APIRoute = async ({ request, params }) => {
         value.conversionGroupId,
         value.coverAssetId,
         value.title,
-        value.slug,
+        slug,
         value.tagsJson,
         value.bodySource,
         value.bodyHtml,
