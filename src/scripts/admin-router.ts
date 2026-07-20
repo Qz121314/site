@@ -11,7 +11,7 @@ type PageSnapshot = {
   createdAt: number;
 };
 
-type NavigationOptions = {
+type AdminNavigationOptions = {
   push: boolean;
   force?: boolean;
 };
@@ -228,7 +228,7 @@ async function fetchSnapshot(url: string, init?: RequestInit): Promise<PageSnaps
   return snapshot;
 }
 
-async function navigate(urlValue: string | URL, options: NavigationOptions): Promise<void> {
+async function navigate(urlValue: string | URL, options: AdminNavigationOptions): Promise<void> {
   const requestedUrl = canonicalUrl(urlValue);
   const cached = options.force ? null : readSnapshot(requestedUrl);
   setLoading(true);
