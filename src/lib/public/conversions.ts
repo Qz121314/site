@@ -1,12 +1,13 @@
 import { env } from "cloudflare:workers";
 import {
-  normalizeConversionTarget,
+  normalizeConversionResource,
+  type PublicConversionContact,
   type PublicConversionResource,
   type PublicConversionType,
 } from "@/lib/public/conversion-target";
 
-export { normalizeConversionTarget } from "@/lib/public/conversion-target";
-export type { PublicConversionResource } from "@/lib/public/conversion-target";
+export { normalizeConversionResource, normalizeConversionTarget } from "@/lib/public/conversion-target";
+export type { PublicConversionContact, PublicConversionResource } from "@/lib/public/conversion-target";
 
 type ConversionRow = {
   type: PublicConversionType;
@@ -26,10 +27,10 @@ function randomIndex(length: number): number {
   return value % length;
 }
 
-export async function selectProductConversionTarget(
+export async function selectProductConversionContact(
   channelSlug: string,
   productSlug: string,
-): Promise<string | null> {
+): Promise<PublicConversionContact | null> {
   const result = await env.DB.prepare(
     `SELECT r.type, r.value
      FROM products p
@@ -50,11 +51,19 @@ export async function selectProductConversionTarget(
      WHERE p.slug = ?2
        AND p.status = 'published'
        AND (p.category_id IS NULL OR category.status = 'published')
-     ORDER BY r.id ASC`,
+     ORDER BY r.sort_order ASC, r.created_at ASC, r.id ASC`,
   ).bind(channelSlug, productSlug).all<ConversionRow>();
 
-  const targets = result.results
-    .map((resource: PublicConversionResource) => normalizeConversionTarget(resource))
-    .filter((target): target is string => Boolean(target));
-  return targets.length > 0 ? targets[randomIndex(targets.length)] ?? null : null;
+  const contacts = result.results
+    .map((resource: PublicConversionResource) => normalizeConversionResource(resource))
+    .filter((contact): contact is PublicConversionContact => Boolean(contact));
+
+  return contacts.length > 0 ? contacts[randomIndex(contacts.length)] ?? null : null;
+}
+
+export async function selectProductConversionTarget(
+  channelSlug: string,
+  productSlug: string,
+): Promise<string | null> {
+  return (await selectProductConversionContact(channelSlug, productSlug))?.target ?? null;
 }
