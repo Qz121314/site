@@ -1,0 +1,177 @@
+---
+import type { AdminImageOption } from "@/lib/db/images";
+
+interface Props {
+  name: string;
+  label: string;
+  images: AdminImageOption[];
+  value?: string | null;
+  id?: string;
+  required?: boolean;
+  compact?: boolean;
+  emptyLabel?: string;
+  help?: string;
+}
+
+const {
+  name,
+  label,
+  images,
+  value = null,
+  id = `image-picker-${name}`,
+  required = false,
+  compact = false,
+  emptyLabel = "不设置",
+  help,
+} = Astro.props;
+
+const selected = value ? images.find((image) => image.id === value) ?? null : null;
+---
+
+<div class:list={["image-picker", compact && "is-compact"]} data-image-picker>
+  <label for={id}>{label}</label>
+  <div class="image-picker-control">
+    <div class="image-picker-preview" data-preview-box hidden={!selected}>
+      <img
+        src={selected?.previewUrl ?? ""}
+        alt={selected?.originalName ?? ""}
+        loading="lazy"
+        data-preview-image
+      />
+    </div>
+    <div class="image-picker-fields">
+      <select id={id} name={name} required={required} data-image-select>
+        {!required && <option value="">{emptyLabel}</option>}
+        {images.map((image) => (
+          <option
+            value={image.id}
+            selected={image.id === value}
+            data-preview={image.previewUrl}
+            data-name={image.originalName}
+            data-meta={`${image.width}×${image.height}`}
+          >
+            {image.originalName} · {image.width}×{image.height}
+          </option>
+        ))}
+      </select>
+      <span class="image-picker-meta" data-preview-meta>
+        {selected ? `${selected.originalName} · ${selected.width}×${selected.height}` : "未选择图片"}
+      </span>
+      {help && <small>{help}</small>}
+    </div>
+  </div>
+</div>
+
+<script>
+  function initializeImagePicker(root: HTMLElement): void {
+    const select = root.querySelector<HTMLSelectElement>("[data-image-select]");
+    const previewBox = root.querySelector<HTMLElement>("[data-preview-box]");
+    const previewImage = root.querySelector<HTMLImageElement>("[data-preview-image]");
+    const previewMeta = root.querySelector<HTMLElement>("[data-preview-meta]");
+    if (!select || !previewBox || !previewImage || !previewMeta) return;
+
+    const refresh = (): void => {
+      const option = select.selectedOptions[0];
+      const preview = option?.dataset.preview ?? "";
+      const name = option?.dataset.name ?? "";
+      const meta = option?.dataset.meta ?? "";
+      const hasImage = Boolean(select.value && preview);
+
+      previewBox.hidden = !hasImage;
+      previewImage.src = hasImage ? preview : "";
+      previewImage.alt = hasImage ? name : "";
+      previewMeta.textContent = hasImage ? `${name} · ${meta}` : "未选择图片";
+    };
+
+    select.addEventListener("change", refresh);
+    refresh();
+  }
+
+  document.querySelectorAll<HTMLElement>("[data-image-picker]").forEach(initializeImagePicker);
+</script>
+
+<style>
+  .image-picker {
+    display: grid;
+    gap: .28rem;
+    min-width: 0;
+  }
+
+  .image-picker > label {
+    color: #b9b3bf;
+    font-size: .72rem;
+    font-weight: 650;
+  }
+
+  .image-picker-control {
+    display: grid;
+    grid-template-columns: 4.6rem minmax(0, 1fr);
+    gap: .45rem;
+    align-items: stretch;
+    min-width: 0;
+  }
+
+  .image-picker-preview {
+    overflow: hidden;
+    min-height: 4.1rem;
+    border: 1px solid #302d36;
+    border-radius: .35rem;
+    background: #09080b;
+  }
+
+  .image-picker-preview[hidden] {
+    display: block;
+    background:
+      linear-gradient(135deg, transparent 47%, #24212a 48%, #24212a 52%, transparent 53%),
+      #0d0c10;
+  }
+
+  .image-picker-preview img {
+    width: 100%;
+    height: 100%;
+    min-height: 4.1rem;
+    object-fit: cover;
+  }
+
+  .image-picker-preview[hidden] img { display: none; }
+
+  .image-picker-fields {
+    display: flex;
+    min-width: 0;
+    flex-direction: column;
+    justify-content: center;
+    gap: .2rem;
+  }
+
+  .image-picker-fields select {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .image-picker-meta,
+  .image-picker-fields small {
+    overflow: hidden;
+    color: #827c88;
+    font-size: .68rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .image-picker.is-compact .image-picker-control {
+    grid-template-columns: 2.35rem minmax(8rem, 1fr);
+    gap: .3rem;
+  }
+
+  .image-picker.is-compact .image-picker-preview,
+  .image-picker.is-compact .image-picker-preview img {
+    min-height: 2.1rem;
+    height: 2.1rem;
+  }
+
+  .image-picker.is-compact .image-picker-meta,
+  .image-picker.is-compact small { display: none; }
+
+  @media (max-width: 767px) {
+    .image-picker-control { grid-template-columns: 3.8rem minmax(0, 1fr); }
+  }
+</style>
