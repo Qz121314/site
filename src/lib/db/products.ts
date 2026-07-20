@@ -31,6 +31,13 @@ export type AdminProductCategoryOption = {
   id: string;
   name: string;
   status: string;
+  filterIds: string[];
+};
+
+export type AdminProductFilterOption = {
+  id: string;
+  name: string;
+  status: string;
 };
 
 export type AdminProductConversionOption = {
@@ -42,6 +49,7 @@ export type AdminProductConversionOption = {
 
 export type AdminProductOptions = {
   categories: AdminProductCategoryOption[];
+  filters: AdminProductFilterOption[];
   conversionGroups: AdminProductConversionOption[];
 };
 
@@ -84,6 +92,13 @@ type AdminProductRow = AdminProductListRow & {
   body_html: string;
 };
 
+type AdminProductCategoryOptionRow = {
+  id: string;
+  name: string;
+  status: string;
+  filter_ids: string | null;
+};
+
 function parseTags(value: string): string[] {
   try {
     const parsed: unknown = JSON.parse(value);
@@ -116,13 +131,25 @@ function mapListItem(row: AdminProductListRow): AdminProductListItem {
 
 export async function loadAdminProductOptions(channelId: string): Promise<AdminProductOptions> {
   try {
-    const [categoryResult, groupResult] = await Promise.all([
+    const [categoryResult, filterResult, groupResult] = await Promise.all([
+      env.DB.prepare(
+        `SELECT
+           c.id,
+           c.name,
+           c.status,
+           GROUP_CONCAT(DISTINCT relation.filter_id) AS filter_ids
+         FROM categories c
+         LEFT JOIN category_filter_relations relation ON relation.category_id = c.id
+         WHERE c.channel_id = ?1
+         GROUP BY c.id, c.name, c.status, c.sort_order, c.created_at
+         ORDER BY c.sort_order ASC, c.created_at ASC`,
+      ).bind(channelId).all<AdminProductCategoryOptionRow>(),
       env.DB.prepare(
         `SELECT id, name, status
-         FROM categories
+         FROM category_filters
          WHERE channel_id = ?1
          ORDER BY sort_order ASC, created_at ASC`,
-      ).bind(channelId).all<AdminProductCategoryOption>(),
+      ).bind(channelId).all<AdminProductFilterOption>(),
       env.DB.prepare(
         `SELECT
            g.id,
@@ -138,7 +165,13 @@ export async function loadAdminProductOptions(channelId: string): Promise<AdminP
     ]);
 
     return {
-      categories: categoryResult.results,
+      categories: categoryResult.results.map((category) => ({
+        id: category.id,
+        name: category.name,
+        status: category.status,
+        filterIds: category.filter_ids ? category.filter_ids.split(",").filter(Boolean) : [],
+      })),
+      filters: filterResult.results,
       conversionGroups: groupResult.results.map((group) => ({
         ...group,
         enabledResourceCount: Number(group.enabledResourceCount ?? 0),
@@ -146,7 +179,7 @@ export async function loadAdminProductOptions(channelId: string): Promise<AdminP
     };
   } catch (error) {
     console.error(JSON.stringify({ event: "admin_product_options_read_failed", channelId, error: String(error) }));
-    return { categories: [], conversionGroups: [] };
+    return { categories: [], filters: [], conversionGroups: [] };
   }
 }
 
