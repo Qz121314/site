@@ -1,49 +1,68 @@
 import type { APIRoute } from "astro";
-import { selectProductConversionTarget } from "@/lib/public/conversions";
+import { selectProductConversionContact } from "@/lib/public/conversions";
 
 export const prerender = false;
 
-export const GET: APIRoute = async ({ params, url }) => {
+function responseHeaders(contentType?: string): HeadersInit {
+  return {
+    ...(contentType ? { "Content-Type": contentType } : {}),
+    "Cache-Control": "no-store, max-age=0",
+    "X-Robots-Tag": "noindex, nofollow",
+    "Referrer-Policy": "no-referrer",
+  };
+}
+
+export const GET: APIRoute = async ({ params, request, url }) => {
   const productSlug = params.productSlug ?? "";
   const channelSlug = (url.searchParams.get("channel") ?? "").trim();
+  const wantsJson = url.searchParams.get("format") === "json"
+    || (request.headers.get("Accept") ?? "").includes("application/json");
+
   if (!productSlug || !channelSlug) {
-    return new Response("Not Found", {
-      status: 404,
-      headers: { "Cache-Control": "no-store" },
-    });
+    return wantsJson
+      ? Response.json({ ok: false, error: "not-found" }, { status: 404, headers: responseHeaders() })
+      : new Response("Not Found", { status: 404, headers: responseHeaders("text/plain; charset=utf-8") });
   }
 
   try {
-    const target = await selectProductConversionTarget(channelSlug, productSlug);
-    if (!target) {
-      return new Response("No conversion resource is currently available.", {
-        status: 404,
-        headers: {
-          "Content-Type": "text/plain; charset=utf-8",
-          "Cache-Control": "no-store",
-          "X-Robots-Tag": "noindex, nofollow",
+    const contact = await selectProductConversionContact(channelSlug, productSlug);
+    if (!contact) {
+      return wantsJson
+        ? Response.json({ ok: false, error: "unavailable" }, { status: 404, headers: responseHeaders() })
+        : new Response("No contact is currently available.", {
+            status: 404,
+            headers: responseHeaders("text/plain; charset=utf-8"),
+          });
+    }
+
+    if (wantsJson) {
+      return Response.json(
+        {
+          ok: true,
+          contact: {
+            type: contact.type,
+            display: contact.display,
+            target: contact.target,
+          },
         },
-      });
+        { headers: responseHeaders() },
+      );
     }
 
     return new Response(null, {
       status: 302,
       headers: {
-        Location: target,
-        "Cache-Control": "no-store, max-age=0",
-        "X-Robots-Tag": "noindex, nofollow",
-        "Referrer-Policy": "no-referrer",
+        ...responseHeaders(),
+        Location: contact.target,
       },
     });
   } catch (error) {
-    console.error(JSON.stringify({ event: "public_conversion_redirect_failed", channelSlug, productSlug, error: String(error) }));
-    return new Response("Conversion service unavailable.", {
-      status: 503,
-      headers: {
-        "Content-Type": "text/plain; charset=utf-8",
-        "Cache-Control": "no-store",
-        "X-Robots-Tag": "noindex, nofollow",
-      },
-    });
+    console.error(JSON.stringify({ event: "public_conversion_resolve_failed", channelSlug, productSlug, error: String(error) }));
+    return wantsJson
+      ? Response.json({ ok: false, error: "unavailable" }, { status: 503, headers: responseHeaders() })
+      : new Response("Contact service unavailable.", {
+          status: 503,
+          headers: responseHeaders("text/plain; charset=utf-8"),
+        });
   }
 };
