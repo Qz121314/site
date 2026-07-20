@@ -1,0 +1,27 @@
+---
+import type { PublicCategory } from "@/lib/db/public";
+
+interface Props {
+  category: PublicCategory;
+  channelSlug: string;
+}
+
+const { category, channelSlug } = Astro.props;
+---
+
+<a
+  class="visual-card category-card"
+  href={`/${encodeURIComponent(channelSlug)}/category/${encodeURIComponent(category.slug)}`}
+  data-category-card
+  data-filter-ids={category.filterIds.join(",")}
+>
+  {category.imageUrl ? (
+    <img class="visual-card-media" src={category.imageUrl} alt={category.name} loading="lazy" />
+  ) : (
+    <span class="visual-card-placeholder" aria-hidden="true">{category.name.trim().slice(0, 1).toUpperCase() || "C"}</span>
+  )}
+  <span class="visual-card-overlay">
+    <span class="visual-card-title">{category.name}</span>
+    <span class="visual-card-meta">{category.productCount} {category.productCount === 1 ? "item" : "items"}</span>
+  </span>
+</a>
