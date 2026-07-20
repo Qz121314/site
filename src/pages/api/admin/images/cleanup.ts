@@ -1,7 +1,10 @@
 import { env } from "cloudflare:workers";
 import type { APIRoute } from "astro";
 import { isSameOriginPost } from "@/lib/auth/session";
-import { loadUnusedImagesForCleanup } from "@/lib/db/images";
+import {
+  deleteUnusedImageAssets,
+  loadUnusedImageObjectsForCleanup,
+} from "@/lib/db/images";
 
 export const prerender = false;
 
@@ -15,15 +18,19 @@ export const POST: APIRoute = async ({ request }) => {
   if (!isSameOriginPost(request)) return new Response("Forbidden", { status: 403 });
 
   try {
-    const images = await loadUnusedImagesForCleanup();
-    if (images.length === 0) return redirect(request, { saved: "clean", count: "0" });
+    const candidates = await loadUnusedImageObjectsForCleanup();
+    if (candidates.length === 0) return redirect(request, { saved: "clean", count: "0" });
 
-    await env.MEDIA_BUCKET.delete(images.map((image) => image.objectKey));
-    await env.DB.batch(
-      images.map((image) => env.DB.prepare("DELETE FROM image_assets WHERE id = ?1").bind(image.id)),
-    );
+    const result = await deleteUnusedImageAssets(candidates.map((image) => image.id));
+    if (result.deleted.length > 0) {
+      try {
+        await env.MEDIA_BUCKET.delete(result.deleted.map((image) => image.objectKey));
+      } catch (error) {
+        console.error(JSON.stringify({ event: "admin_image_cleanup_r2_deferred", error: String(error) }));
+      }
+    }
 
-    return redirect(request, { saved: "clean", count: String(images.length) });
+    return redirect(request, { saved: "clean", count: String(result.deleted.length) });
   } catch (error) {
     console.error(JSON.stringify({ event: "admin_image_cleanup_failed", error: String(error) }));
     return redirect(request, { error: "cleanup" });
