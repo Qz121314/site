@@ -1,7 +1,7 @@
 import { env } from "cloudflare:workers";
 
 export const CONVERSION_GROUP_STATUSES = ["enabled", "disabled"] as const;
-export const CONVERSION_RESOURCE_TYPES = ["url", "phone", "whatsapp", "telegram", "email"] as const;
+export const CONVERSION_RESOURCE_TYPES = ["link", "sms"] as const;
 export const CONVERSION_RESOURCE_STATUSES = ["enabled", "disabled"] as const;
 
 export type ConversionGroupStatus = (typeof CONVERSION_GROUP_STATUSES)[number];
@@ -33,45 +33,33 @@ function readText(form: FormData, name: string): string {
   return typeof value === "string" ? value.trim() : "";
 }
 
-function isHttpUrl(value: string): boolean {
+function isEmail(value: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/u.test(value);
+}
+
+function isSafeLink(value: string): boolean {
   try {
     const url = new URL(value);
-    return (
-      (url.protocol === "https:" || url.protocol === "http:") &&
-      !url.username &&
-      !url.password
-    );
+    if (url.username || url.password) return false;
+    if (url.protocol === "http:" || url.protocol === "https:") return true;
+    if (url.protocol === "mailto:") return isEmail(value.slice("mailto:".length));
+    return false;
   } catch {
     return false;
   }
 }
 
-function isPhoneLike(value: string): boolean {
+function isSmsNumber(value: string): boolean {
   if (!/^[+0-9() .-]+$/u.test(value)) return false;
   const digits = value.replace(/\D/gu, "");
   return digits.length >= 5 && digits.length <= 20;
 }
 
-function isTelegramValue(value: string): boolean {
-  if (isHttpUrl(value)) return true;
-  return /^@?[A-Za-z0-9_]{3,64}$/u.test(value);
-}
-
 function isValidResourceValue(type: ConversionResourceType, value: string): boolean {
   if (!value || value.length > 2048) return false;
-
-  switch (type) {
-    case "url":
-      return isHttpUrl(value);
-    case "phone":
-      return value.length <= 64 && isPhoneLike(value);
-    case "whatsapp":
-      return value.length <= 512 && (isPhoneLike(value) || isHttpUrl(value));
-    case "telegram":
-      return value.length <= 512 && isTelegramValue(value);
-    case "email":
-      return value.length <= 254 && /^[^\s@]+@[^\s@]+\.[^\s@]+$/u.test(value);
-  }
+  return type === "sms"
+    ? value.length <= 64 && isSmsNumber(value)
+    : isSafeLink(value);
 }
 
 export function parseConversionGroupForm(form: FormData): ConversionGroupFormResult {

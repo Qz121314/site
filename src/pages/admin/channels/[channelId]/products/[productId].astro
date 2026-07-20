@@ -1,6 +1,6 @@
 ---
 import AdminLayout from "@/layouts/AdminLayout.astro";
-import DirectImageUpload from "@/components/admin/DirectImageUpload.astro";
+import ProductGalleryUpload from "@/components/admin/ProductGalleryUpload.astro";
 import { loadAdminChannel } from "@/lib/db/site";
 import { loadAdminProduct, loadAdminProductOptions } from "@/lib/db/products";
 import { loadAdminProductImages } from "@/lib/db/product-images";
@@ -41,8 +41,8 @@ const errorMessages: Record<string, string> = {
   conversion: "所选转化组无效或不属于当前分区。",
   "conversion-required": "发布产品必须绑定转化组。",
   "conversion-unavailable": "发布产品时，转化组必须启用且至少包含一个启用资源。",
-  image: "封面或图库图片不存在，请重新上传。",
-  gallery: "产品图库最多 30 张。",
+  image: "发布产品前至少需要保留一张有效图片。",
+  gallery: "产品图片最多 30 张。",
   tags: "标签最多 20 个，每个标签不能超过 40 个字符。",
   body: "正文不能超过 30000 个字符。",
   cta: "CTA 文案不能为空，且不能超过 80 个字符。",
@@ -148,14 +148,9 @@ const errorMessages: Record<string, string> = {
 
         <section class="admin-card">
           <div class="admin-section-bar"><h2>产品图片</h2></div>
-          <div class="admin-card-body product-image-grid">
-            <DirectImageUpload name="coverAssetId" label="产品封面" form={formId} value={product.coverAssetId} />
-            <DirectImageUpload
-              name="galleryAssetIds"
-              label="产品图库"
+          <div class="admin-card-body">
+            <ProductGalleryUpload
               form={formId}
-              multiple
-              maxFiles={30}
               values={gallery.map((image) => ({
                 id: image.imageAssetId,
                 previewUrl: image.previewUrl,
@@ -170,8 +165,9 @@ const errorMessages: Record<string, string> = {
           <div class="admin-section-bar"><h2>产品正文</h2></div>
           <div class="admin-card-body">
             <div class="admin-field">
-              <label for="product-body">正文内容</label>
-              <textarea id="product-body" name="bodySource" maxlength="30000" rows="14">{product.bodySource}</textarea>
+              <label for="product-body">正文内容（支持 Markdown）</label>
+              <textarea id="product-body" name="bodySource" maxlength="30000" rows="14" spellcheck="true">{product.bodySource}</textarea>
+              <small>普通文本、换行、连续空格和表情会保留；也支持标题、列表、引用、粗体、斜体、链接和代码。</small>
             </div>
           </div>
         </section>
@@ -179,7 +175,7 @@ const errorMessages: Record<string, string> = {
         {product.bodyHtml && (
           <details class="admin-card body-preview">
             <summary>正文预览</summary>
-            <article set:html={product.bodyHtml}></article>
+            <article class="markdown-body" set:html={product.bodyHtml}></article>
           </details>
         )}
 
@@ -226,7 +222,6 @@ const errorMessages: Record<string, string> = {
   .product-toolbar { align-items: center; }
   .product-toolbar h2 { overflow: hidden; max-width: 40rem; text-overflow: ellipsis; white-space: nowrap; }
   .toolbar-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .35rem; }
-  .product-image-grid { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: 1rem; }
   .compact-check-field { justify-content: flex-end; }
   .compact-check { display: flex; min-height: 2.1rem; align-items: center; gap: .4rem; padding: 0 .55rem; border: 1px solid var(--line); border-radius: .35rem; background: #fff; }
   .compact-check input { width: .95rem; height: .95rem; margin: 0; }
@@ -236,13 +231,10 @@ const errorMessages: Record<string, string> = {
   .filter-choice.is-disabled { opacity: .55; }
   .filter-choice input { width: .9rem; height: .9rem; margin: 0; }
   .empty-control-link { display: flex; min-height: 2.1rem; align-items: center; border: 1px dashed var(--line); border-radius: .35rem; padding: 0 .55rem; color: #2563eb; }
-  textarea { min-height: 14rem; resize: vertical; }
+  textarea { min-height: 14rem; resize: vertical; font-family: ui-monospace, SFMono-Regular, Consolas, monospace; line-height: 1.55; }
+  .admin-field small { color: var(--muted); font-size: .72rem; }
   .body-preview summary { padding: .55rem .65rem; cursor: pointer; }
   .body-preview article { padding: .75rem; border-top: 1px solid var(--line); line-height: 1.65; }
   .product-entry-actions { position: sticky; z-index: 10; bottom: .5rem; display: flex; justify-content: flex-end; gap: .4rem; padding: .55rem; border: 1px solid var(--line); border-radius: .45rem; background: rgba(255,255,255,.96); }
-  @media (max-width: 767px) {
-    .product-image-grid { grid-template-columns: 1fr; }
-    .toolbar-actions { width: 100%; justify-content: flex-start; }
-    .product-entry-actions .button { flex: 1; }
-  }
+  @media (max-width: 767px) { .toolbar-actions { width: 100%; justify-content: flex-start; } .product-entry-actions .button { flex: 1; } }
 </style>

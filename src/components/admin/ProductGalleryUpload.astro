@@ -1,0 +1,171 @@
+---
+import DirectImageUpload from "@/components/admin/DirectImageUpload.astro";
+
+type ExistingUploadImage = {
+  id: string;
+  previewUrl?: string;
+  name?: string;
+  meta?: string;
+};
+
+interface Props {
+  form: string;
+  values?: ExistingUploadImage[];
+}
+
+const { form, values = [] } = Astro.props;
+---
+
+<div class="product-gallery-upload" data-product-gallery-sort>
+  <DirectImageUpload
+    id={`product-gallery-${form}`}
+    name="galleryAssetIds"
+    label="产品图片"
+    form={form}
+    multiple
+    maxFiles={30}
+    values={values}
+    help="第一张自动作为封面；可拖拽或使用箭头调整顺序。"
+  />
+</div>
+
+<script is:inline>
+  (() => {
+    const initialize = (wrapper) => {
+      if (wrapper.__gallerySortReady) return;
+      wrapper.__gallerySortReady = true;
+
+      const upload = wrapper.querySelector('[data-direct-image-upload]');
+      const preview = upload?.querySelector('[data-upload-preview]');
+      const values = upload?.querySelector('[data-upload-values]');
+      if (!upload || !preview || !values) return;
+
+      let dragged = null;
+
+      const items = () => Array.from(preview.querySelectorAll('[data-upload-item]'));
+      const hiddenFields = () => Array.from(values.querySelectorAll('[data-upload-hidden]'));
+
+      const syncOrder = () => {
+        const currentItems = items();
+        const fields = new Map(hiddenFields().map((field) => [field.dataset.imageId || field.value, field]));
+        currentItems.forEach((item, index) => {
+          const id = item.dataset.imageId || '';
+          const field = fields.get(id);
+          if (field) values.appendChild(field);
+          const badge = item.querySelector('[data-cover-badge]');
+          if (badge) {
+            badge.hidden = index !== 0;
+            badge.textContent = '封面';
+          }
+          const previous = item.querySelector('[data-move-previous]');
+          const next = item.querySelector('[data-move-next]');
+          if (previous) previous.disabled = index === 0;
+          if (next) next.disabled = index === currentItems.length - 1;
+        });
+      };
+
+      const decorate = (item) => {
+        if (item.dataset.galleryItemReady === '1') return;
+        item.dataset.galleryItemReady = '1';
+        item.draggable = true;
+
+        const badge = document.createElement('span');
+        badge.className = 'gallery-cover-badge';
+        badge.dataset.coverBadge = '';
+        badge.textContent = '封面';
+        item.appendChild(badge);
+
+        const controls = document.createElement('div');
+        controls.className = 'gallery-sort-controls';
+
+        const previous = document.createElement('button');
+        previous.type = 'button';
+        previous.className = 'gallery-sort-button';
+        previous.dataset.movePrevious = '';
+        previous.setAttribute('aria-label', '向前移动图片');
+        previous.textContent = '←';
+
+        const next = document.createElement('button');
+        next.type = 'button';
+        next.className = 'gallery-sort-button';
+        next.dataset.moveNext = '';
+        next.setAttribute('aria-label', '向后移动图片');
+        next.textContent = '→';
+
+        controls.appendChild(previous);
+        controls.appendChild(next);
+        item.appendChild(controls);
+      };
+
+      const refresh = () => {
+        items().forEach(decorate);
+        syncOrder();
+      };
+
+      preview.addEventListener('click', (event) => {
+        if (!(event.target instanceof Element)) return;
+        const item = event.target.closest('[data-upload-item]');
+        if (!item) return;
+
+        if (event.target.closest('[data-move-previous]')) {
+          const previous = item.previousElementSibling;
+          if (previous) preview.insertBefore(item, previous);
+          syncOrder();
+        }
+
+        if (event.target.closest('[data-move-next]')) {
+          const next = item.nextElementSibling;
+          if (next) preview.insertBefore(next, item);
+          syncOrder();
+        }
+      });
+
+      preview.addEventListener('dragstart', (event) => {
+        const item = event.target instanceof Element ? event.target.closest('[data-upload-item]') : null;
+        if (!item) return;
+        dragged = item;
+        item.classList.add('is-dragging');
+        if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
+      });
+
+      preview.addEventListener('dragover', (event) => {
+        if (!dragged) return;
+        event.preventDefault();
+        const target = event.target instanceof Element ? event.target.closest('[data-upload-item]') : null;
+        if (!target || target === dragged) return;
+        const rect = target.getBoundingClientRect();
+        const below = event.clientY > rect.top + rect.height / 2;
+        const sameRow = event.clientY >= rect.top && event.clientY <= rect.bottom;
+        const after = below || (sameRow && event.clientX > rect.left + rect.width / 2);
+        preview.insertBefore(dragged, after ? target.nextElementSibling : target);
+      });
+
+      preview.addEventListener('drop', (event) => {
+        if (!dragged) return;
+        event.preventDefault();
+        syncOrder();
+      });
+
+      preview.addEventListener('dragend', () => {
+        dragged?.classList.remove('is-dragging');
+        dragged = null;
+        syncOrder();
+      });
+
+      new MutationObserver(refresh).observe(preview, { childList: true });
+      refresh();
+    };
+
+    document.querySelectorAll('[data-product-gallery-sort]').forEach(initialize);
+  })();
+</script>
+
+<style is:global>
+  .product-gallery-upload .direct-upload-preview { grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr)); }
+  .product-gallery-upload .direct-upload-item { position: relative; cursor: grab; }
+  .product-gallery-upload .direct-upload-item.is-dragging { opacity: .5; }
+  .product-gallery-upload .gallery-cover-badge { position: absolute; top: .3rem; left: .3rem; z-index: 2; border-radius: 999px; padding: .12rem .4rem; color: #fff; background: #2563eb; font-size: .65rem; font-weight: 700; }
+  .product-gallery-upload .gallery-sort-controls { position: absolute; right: 1.8rem; bottom: .25rem; display: flex; gap: .15rem; }
+  .product-gallery-upload .gallery-sort-button { display: grid; width: 1.45rem; height: 1.45rem; place-items: center; border: 1px solid var(--line); border-radius: .25rem; color: var(--text); background: #fff; cursor: pointer; }
+  .product-gallery-upload .gallery-sort-button:disabled { opacity: .3; cursor: default; }
+</style>

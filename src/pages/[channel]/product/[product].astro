@@ -1,16 +1,14 @@
 ---
 import PublicLayout from "@/layouts/PublicLayout.astro";
-import {
-  loadPublicProductDetail,
-  loadPublicSiteShell,
-} from "@/lib/db/public";
+import { loadPublicSiteShell } from "@/lib/db/public";
+import { loadPublicProductDetailWithoutContactLookup } from "@/lib/db/public-product-detail";
 
 export const prerender = false;
 
 const channelSlug = Astro.params.channel ?? "";
 const productSlug = Astro.params.product ?? "";
 const site = await loadPublicSiteShell();
-const product = await loadPublicProductDetail(channelSlug, productSlug, site.r2PublicBaseUrl);
+const product = await loadPublicProductDetailWithoutContactLookup(channelSlug, productSlug, site.r2PublicBaseUrl);
 
 if (!product) Astro.response.status = 404;
 
@@ -19,6 +17,12 @@ const canonical = new URL(
   Astro.url.origin,
 ).href;
 const primaryImage = product?.coverUrl ?? product?.gallery[0]?.imageUrl ?? site.logoUrl;
+const remainingGallery = product
+  ? product.gallery.filter((image) => image.imageUrl !== primaryImage)
+  : [];
+const contactResolveUrl = product
+  ? `/go/${encodeURIComponent(product.slug)}?channel=${encodeURIComponent(product.channelSlug)}`
+  : "";
 ---
 
 <PublicLayout
@@ -43,15 +47,11 @@ const primaryImage = product?.coverUrl ?? product?.gallery[0]?.imageUrl ?? site.
         <span aria-current="page">{product.title}</span>
       </nav>
 
-      {product.coverUrl ? (
-        <div class="product-cover">
-          <img src={product.coverUrl} alt={product.title} fetchpriority="high" />
-        </div>
-      ) : primaryImage ? (
+      {primaryImage && (
         <div class="product-cover">
           <img src={primaryImage} alt={product.title} fetchpriority="high" />
         </div>
-      ) : null}
+      )}
 
       <header class="product-detail-header">
         <div class="eyebrow">{product.categoryName ?? product.channelName}</div>
@@ -63,14 +63,14 @@ const primaryImage = product?.coverUrl ?? product?.gallery[0]?.imageUrl ?? site.
         )}
       </header>
 
-      {product.gallery.length > 0 && (
+      {remainingGallery.length > 0 && (
         <section class="public-section" aria-labelledby="gallery-heading">
           <div class="public-section-heading">
             <h2 id="gallery-heading">Gallery</h2>
-            <span class="public-count">{product.gallery.length} photos</span>
+            <span class="public-count">{remainingGallery.length} photos</span>
           </div>
           <div class="product-gallery">
-            {product.gallery.map((image) => (
+            {remainingGallery.map((image) => (
               <a href={image.imageUrl} target="_blank" rel="noopener noreferrer" aria-label={`Open ${image.originalName}`}>
                 <img
                   src={image.imageUrl}
@@ -86,17 +86,20 @@ const primaryImage = product?.coverUrl ?? product?.gallery[0]?.imageUrl ?? site.
       )}
 
       {product.bodyHtml && (
-        <section class="product-body" set:html={product.bodyHtml}></section>
+        <section class="product-body markdown-body" set:html={product.bodyHtml}></section>
       )}
 
       {product.hasConversion && (
-        <div class="product-cta-bar">
+        <div class="product-cta-bar" data-contact-box>
+          <div class="contact-reveal" data-contact-value hidden></div>
           <a
             class="public-button"
-            href={`/go/${encodeURIComponent(product.slug)}?channel=${encodeURIComponent(product.channelSlug)}`}
+            href={contactResolveUrl}
             rel="nofollow sponsored"
+            data-contact-cta
+            data-resolve-url={contactResolveUrl}
           >
-            {product.ctaLabel}
+            <span data-contact-label>{product.ctaLabel}</span>
           </a>
         </div>
       )}
@@ -113,3 +116,68 @@ const primaryImage = product?.coverUrl ?? product?.gallery[0]?.imageUrl ?? site.
     </section>
   )}
 </PublicLayout>
+
+<script is:inline>
+  (() => {
+    document.querySelectorAll('[data-contact-cta]').forEach((link) => {
+      if (!(link instanceof HTMLAnchorElement)) return;
+      const resolveUrl = link.dataset.resolveUrl || link.href;
+      const box = link.closest('[data-contact-box]');
+      const value = box?.querySelector('[data-contact-value]');
+      const label = link.querySelector('[data-contact-label]');
+      let resolved = false;
+
+      link.addEventListener('click', async (event) => {
+        if (resolved) return;
+        event.preventDefault();
+        if (link.dataset.loading === '1') return;
+
+        link.dataset.loading = '1';
+        link.setAttribute('aria-busy', 'true');
+        if (label) label.textContent = 'Loading…';
+
+        try {
+          const response = await fetch(resolveUrl, {
+            headers: { Accept: 'application/json' },
+            credentials: 'same-origin',
+          });
+          const result = await response.json();
+          if (!response.ok || !result?.ok || !result.contact?.target) throw new Error('unavailable');
+
+          resolved = true;
+          link.href = result.contact.target;
+          if (value) {
+            value.textContent = result.contact.display || result.contact.target;
+            value.hidden = false;
+          }
+          if (label) label.textContent = result.contact.type === 'sms' ? 'Send message' : 'Open link';
+        } catch (error) {
+          console.error(error);
+          if (value) {
+            value.textContent = 'Contact is temporarily unavailable.';
+            value.hidden = false;
+          }
+          if (label) label.textContent = 'Try again';
+        } finally {
+          delete link.dataset.loading;
+          link.removeAttribute('aria-busy');
+        }
+      });
+    });
+  })();
+</script>
+
+<style is:global>
+  .markdown-body p,
+  .markdown-body li,
+  .markdown-body blockquote { white-space: break-spaces; overflow-wrap: anywhere; }
+  .markdown-body h1 { margin: 1rem 0 .4rem; font-size: 1.4rem; }
+  .markdown-body ol { margin: .55rem 0 0; padding-left: 1.25rem; color: #c0b8c6; }
+  .markdown-body blockquote { margin: .75rem 0 0; border-left: 3px solid rgba(231,189,121,.55); padding: .25rem 0 .25rem .75rem; color: #c7bfcc; }
+  .markdown-body pre { overflow-x: auto; margin: .75rem 0 0; border-radius: .7rem; padding: .75rem; background: #09080d; }
+  .markdown-body code { border-radius: .3rem; padding: .08rem .25rem; background: rgba(255,255,255,.07); font-family: ui-monospace, SFMono-Regular, Consolas, monospace; }
+  .markdown-body pre code { padding: 0; background: transparent; white-space: pre; }
+  .markdown-body hr { margin: 1rem 0; border: 0; border-top: 1px solid rgba(255,255,255,.12); }
+  .product-cta-bar { flex-direction: column; align-items: center; gap: .45rem; }
+  .contact-reveal { width: min(100%, 28rem); overflow-wrap: anywhere; color: #fff1d5; text-align: center; font-size: .86rem; font-weight: 700; }
+</style>
