@@ -6,6 +6,7 @@ import {
   isDuplicateCategorySlugError,
   parseCategoryForm,
 } from "@/lib/admin/category-form";
+import { imageAssetsExist } from "@/lib/db/image-options";
 
 export const prerender = false;
 
@@ -24,7 +25,7 @@ export const POST: APIRoute = async ({ request, params }) => {
   const parsed = parseCategoryForm(await request.formData());
   if (!parsed.ok) return redirect(request, channelId, { error: parsed.code });
 
-  const { name, slug, sortOrder, status, filterIds } = parsed.value;
+  const { name, slug, imageAssetId, sortOrder, status, filterIds } = parsed.value;
   const id = crypto.randomUUID();
 
   try {
@@ -36,12 +37,15 @@ export const POST: APIRoute = async ({ request, params }) => {
     if (!(await categoryFiltersBelongToChannel(channelId, filterIds))) {
       return redirect(request, channelId, { error: "filters" });
     }
+    if (!(await imageAssetsExist([imageAssetId ?? ""]))) {
+      return redirect(request, channelId, { error: "image" });
+    }
 
     const statements = [
       env.DB.prepare(
-        `INSERT INTO categories (id, channel_id, name, slug, sort_order, status)
-         VALUES (?1, ?2, ?3, ?4, ?5, ?6)`,
-      ).bind(id, channelId, name, slug, sortOrder, status),
+        `INSERT INTO categories (id, channel_id, name, slug, image_asset_id, sort_order, status)
+         VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)`,
+      ).bind(id, channelId, name, slug, imageAssetId, sortOrder, status),
       ...filterIds.map((filterId) =>
         env.DB.prepare(
           `INSERT INTO category_filter_relations (category_id, filter_id)

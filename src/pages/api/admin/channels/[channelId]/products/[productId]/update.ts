@@ -6,6 +6,7 @@ import {
   parseProductForm,
   validateProductRelations,
 } from "@/lib/admin/product-form";
+import { imageAssetsExist } from "@/lib/db/image-options";
 
 export const prerender = false;
 
@@ -43,25 +44,30 @@ export const POST: APIRoute = async ({ request, params }) => {
       value.status,
     );
     if (relationError) return redirect(request, channelId, productId, { error: relationError });
+    if (!(await imageAssetsExist([value.coverAssetId ?? ""]))) {
+      return redirect(request, channelId, productId, { error: "image" });
+    }
 
     await env.DB.prepare(
       `UPDATE products
        SET category_id = ?1,
            conversion_group_id = ?2,
-           title = ?3,
-           slug = ?4,
-           tags = ?5,
-           body_source = ?6,
-           body_html = ?7,
-           cta_label = ?8,
-           featured = ?9,
-           sort_order = ?10,
-           status = ?11,
+           cover_asset_id = ?3,
+           title = ?4,
+           slug = ?5,
+           tags = ?6,
+           body_source = ?7,
+           body_html = ?8,
+           cta_label = ?9,
+           featured = ?10,
+           sort_order = ?11,
+           status = ?12,
            updated_at = CURRENT_TIMESTAMP
-       WHERE id = ?12 AND channel_id = ?13`,
+       WHERE id = ?13 AND channel_id = ?14`,
     ).bind(
       value.categoryId,
       value.conversionGroupId,
+      value.coverAssetId,
       value.title,
       value.slug,
       value.tagsJson,

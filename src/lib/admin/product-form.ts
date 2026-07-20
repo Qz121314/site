@@ -8,6 +8,7 @@ export type ProductFormValue = {
   slug: string;
   categoryId: string | null;
   conversionGroupId: string | null;
+  coverAssetId: string | null;
   tags: string[];
   tagsJson: string;
   bodySource: string;
@@ -23,6 +24,7 @@ export type ProductFormErrorCode =
   | "slug"
   | "category"
   | "conversion"
+  | "image"
   | "tags"
   | "body"
   | "cta"
@@ -180,6 +182,7 @@ export function parseProductForm(form: FormData, quickCreate = false): ProductFo
   const slug = readText(form, "slug").toLowerCase();
   const categoryId = readOptionalId(form, "categoryId");
   const conversionGroupId = readOptionalId(form, "conversionGroupId");
+  const coverAssetId = quickCreate ? null : readOptionalId(form, "coverAssetId");
   const tags = parseTags(quickCreate ? "" : readText(form, "tags"));
   const bodySource = quickCreate ? "" : readText(form, "bodySource");
   const ctaLabel = quickCreate ? "View Details" : readText(form, "ctaLabel");
@@ -191,6 +194,7 @@ export function parseProductForm(form: FormData, quickCreate = false): ProductFo
   if (!slug || slug.length > 96 || !SLUG_PATTERN.test(slug)) return { ok: false, code: "slug" };
   if (categoryId === undefined) return { ok: false, code: "category" };
   if (conversionGroupId === undefined) return { ok: false, code: "conversion" };
+  if (coverAssetId === undefined) return { ok: false, code: "image" };
   if (!tags) return { ok: false, code: "tags" };
   if (bodySource.length > 30000) return { ok: false, code: "body" };
   if (!ctaLabel || ctaLabel.length > 80) return { ok: false, code: "cta" };
@@ -211,6 +215,7 @@ export function parseProductForm(form: FormData, quickCreate = false): ProductFo
       slug,
       categoryId,
       conversionGroupId,
+      coverAssetId,
       tags,
       tagsJson: JSON.stringify(tags),
       bodySource,

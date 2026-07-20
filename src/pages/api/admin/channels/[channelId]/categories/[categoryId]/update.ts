@@ -6,6 +6,7 @@ import {
   isDuplicateCategorySlugError,
   parseCategoryForm,
 } from "@/lib/admin/category-form";
+import { imageAssetsExist } from "@/lib/db/image-options";
 
 export const prerender = false;
 
@@ -25,7 +26,7 @@ export const POST: APIRoute = async ({ request, params }) => {
   const parsed = parseCategoryForm(await request.formData());
   if (!parsed.ok) return redirect(request, channelId, { error: parsed.code });
 
-  const { name, slug, sortOrder, status, filterIds } = parsed.value;
+  const { name, slug, imageAssetId, sortOrder, status, filterIds } = parsed.value;
 
   try {
     const category = await env.DB.prepare(
@@ -36,17 +37,21 @@ export const POST: APIRoute = async ({ request, params }) => {
     if (!(await categoryFiltersBelongToChannel(channelId, filterIds))) {
       return redirect(request, channelId, { error: "filters" });
     }
+    if (!(await imageAssetsExist([imageAssetId ?? ""]))) {
+      return redirect(request, channelId, { error: "image" });
+    }
 
     const statements = [
       env.DB.prepare(
         `UPDATE categories
          SET name = ?3,
              slug = ?4,
-             sort_order = ?5,
-             status = ?6,
+             image_asset_id = ?5,
+             sort_order = ?6,
+             status = ?7,
              updated_at = CURRENT_TIMESTAMP
          WHERE id = ?1 AND channel_id = ?2`,
-      ).bind(categoryId, channelId, name, slug, sortOrder, status),
+      ).bind(categoryId, channelId, name, slug, imageAssetId, sortOrder, status),
       env.DB.prepare("DELETE FROM category_filter_relations WHERE category_id = ?1").bind(categoryId),
       ...filterIds.map((filterId) =>
         env.DB.prepare(
