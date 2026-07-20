@@ -1,0 +1,143 @@
+---
+import type { PublicHeroAdvertisement } from "@/lib/db/public";
+
+interface Props {
+  advertisements: PublicHeroAdvertisement[];
+}
+
+const { advertisements } = Astro.props;
+const carouselId = `hero-${crypto.randomUUID()}`;
+---
+
+{advertisements.length > 0 && (
+  <section class="hero-carousel" id={carouselId} data-hero-carousel data-count={advertisements.length} aria-label="Featured promotions">
+    <div class="hero-track" data-hero-track>
+      {advertisements.map((advertisement, index) => (
+        <a
+          class="hero-slide"
+          href={advertisement.targetUrl}
+          target={advertisement.openMode === "new" ? "_blank" : undefined}
+          rel={advertisement.openMode === "new" ? "noopener noreferrer" : undefined}
+          data-hero-slide
+          aria-label={`Promotion ${index + 1} of ${advertisements.length}`}
+        >
+          <img
+            src={advertisement.imageUrl}
+            alt=""
+            loading={index === 0 ? "eager" : "lazy"}
+            fetchpriority={index === 0 ? "high" : "auto"}
+          />
+        </a>
+      ))}
+    </div>
+
+    {advertisements.length > 1 && (
+      <>
+        <button class="hero-control prev" type="button" data-hero-prev aria-label="Previous promotion">‹</button>
+        <button class="hero-control next" type="button" data-hero-next aria-label="Next promotion">›</button>
+        <div class="hero-dots" aria-label="Promotion pages">
+          {advertisements.map((_, index) => (
+            <button
+              class="hero-dot"
+              type="button"
+              data-hero-dot={index}
+              aria-label={`Show promotion ${index + 1}`}
+              aria-current={index === 0 ? "true" : "false"}
+            ></button>
+          ))}
+        </div>
+      </>
+    )}
+  </section>
+)}
+
+<script is:inline>
+  (() => {
+    const initialize = (root) => {
+      if (root.dataset.ready === '1') return;
+      root.dataset.ready = '1';
+      const track = root.querySelector('[data-hero-track]');
+      const slides = Array.from(root.querySelectorAll('[data-hero-slide]'));
+      const dots = Array.from(root.querySelectorAll('[data-hero-dot]'));
+      const previous = root.querySelector('[data-hero-prev]');
+      const next = root.querySelector('[data-hero-next]');
+      if (!track || slides.length < 2) return;
+
+      let active = 0;
+      let timer = 0;
+      let pointerStart = 0;
+      let scrollStart = 0;
+      let dragged = false;
+
+      const updateDots = () => {
+        dots.forEach((dot, index) => dot.setAttribute('aria-current', index === active ? 'true' : 'false'));
+      };
+
+      const goTo = (index, behavior = 'smooth') => {
+        active = (index + slides.length) % slides.length;
+        track.scrollTo({ left: active * track.clientWidth, behavior });
+        updateDots();
+      };
+
+      const stop = () => {
+        if (timer) window.clearInterval(timer);
+        timer = 0;
+      };
+
+      const start = () => {
+        stop();
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        timer = window.setInterval(() => goTo(active + 1), 5000);
+      };
+
+      previous?.addEventListener('click', () => { goTo(active - 1); start(); });
+      next?.addEventListener('click', () => { goTo(active + 1); start(); });
+      dots.forEach((dot, index) => dot.addEventListener('click', () => { goTo(index); start(); }));
+
+      let scrollTimer = 0;
+      track.addEventListener('scroll', () => {
+        window.clearTimeout(scrollTimer);
+        scrollTimer = window.setTimeout(() => {
+          active = Math.max(0, Math.min(slides.length - 1, Math.round(track.scrollLeft / Math.max(track.clientWidth, 1))));
+          updateDots();
+        }, 80);
+      }, { passive: true });
+
+      track.addEventListener('pointerdown', (event) => {
+        pointerStart = event.clientX;
+        scrollStart = track.scrollLeft;
+        dragged = false;
+        track.classList.add('is-dragging');
+        track.setPointerCapture(event.pointerId);
+        stop();
+      });
+      track.addEventListener('pointermove', (event) => {
+        if (!track.hasPointerCapture(event.pointerId)) return;
+        const distance = event.clientX - pointerStart;
+        if (Math.abs(distance) > 5) dragged = true;
+        track.scrollLeft = scrollStart - distance;
+      });
+      const release = (event) => {
+        if (track.hasPointerCapture(event.pointerId)) track.releasePointerCapture(event.pointerId);
+        track.classList.remove('is-dragging');
+        goTo(Math.round(track.scrollLeft / Math.max(track.clientWidth, 1)));
+        start();
+      };
+      track.addEventListener('pointerup', release);
+      track.addEventListener('pointercancel', release);
+      track.addEventListener('click', (event) => {
+        if (dragged) {
+          event.preventDefault();
+          dragged = false;
+        }
+      });
+      root.addEventListener('mouseenter', stop);
+      root.addEventListener('mouseleave', start);
+      document.addEventListener('visibilitychange', () => document.hidden ? stop() : start());
+      window.addEventListener('resize', () => goTo(active, 'auto'));
+      start();
+    };
+
+    document.querySelectorAll('[data-hero-carousel]').forEach(initialize);
+  })();
+</script>
