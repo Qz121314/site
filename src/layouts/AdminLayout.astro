@@ -1,0 +1,38 @@
+---
+import "@/styles/global.css";
+
+interface Props { title: string; }
+const { title } = Astro.props;
+const pathname = Astro.url.pathname;
+const items = [
+  ["/admin", "概览"],
+  ["/admin/settings", "站点设置"],
+  ["/admin/channels", "分区管理"],
+  ["/admin/categories", "分类管理"],
+  ["/admin/products", "产品管理"],
+  ["/admin/images", "图片库"],
+] as const;
+---
+
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex,nofollow" />
+    <meta name="color-scheme" content="dark" />
+    <title>{title} · 管理后台</title>
+  </head>
+  <body>
+    <main class="admin-shell">
+      <header class="admin-header">
+        <a class="brand" href="/admin"><span class="brand-mark">S</span><span>管理后台</span></a>
+        <form action="/api/admin/logout" method="post"><button class="button secondary" type="submit">退出登录</button></form>
+      </header>
+      <nav class="admin-nav panel" aria-label="后台导航">
+        {items.map(([href, label]) => <a href={href} aria-current={pathname === href ? "page" : undefined}>{label}</a>)}
+      </nav>
+      <slot />
+    </main>
+  </body>
+</html>
