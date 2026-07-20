@@ -76,20 +76,23 @@ function renderInline(value: string): string {
 
   for (const match of value.matchAll(linkPattern)) {
     const index = match.index ?? 0;
+    const fullMatch = match[0] ?? "";
+    const linkText = match[1] ?? "";
+    const linkTarget = match[2] ?? "";
     output += renderEmphasis(value.slice(cursor, index));
 
     try {
-      const url = new URL(match[2]);
+      const url = new URL(linkTarget);
       if ((url.protocol === "https:" || url.protocol === "http:") && !url.username && !url.password) {
-        output += `<a href="${escapeHtml(url.toString())}" rel="noopener noreferrer">${renderEmphasis(match[1])}</a>`;
+        output += `<a href="${escapeHtml(url.toString())}" rel="noopener noreferrer">${renderEmphasis(linkText)}</a>`;
       } else {
-        output += renderEmphasis(match[0]);
+        output += renderEmphasis(fullMatch);
       }
     } catch {
-      output += renderEmphasis(match[0]);
+      output += renderEmphasis(fullMatch);
     }
 
-    cursor = index + match[0].length;
+    cursor = index + fullMatch.length;
   }
 
   output += renderEmphasis(value.slice(cursor));
