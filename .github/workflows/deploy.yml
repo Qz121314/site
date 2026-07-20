@@ -14,7 +14,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: site-${{ github.workflow }}-${{ github.ref }}
@@ -27,6 +27,8 @@ jobs:
     steps:
       - name: 检出代码
         uses: actions/checkout@v6
+        with:
+          ref: ${{ github.head_ref || github.ref_name }}
 
       - name: 安装 pnpm
         uses: pnpm/action-setup@v6
@@ -72,6 +74,33 @@ jobs:
           name: ci-diagnostics-${{ github.run_id }}
           path: ci-logs/
           retention-days: 1
+
+      - name: 同步 README 技术基线
+        if: github.event_name == 'pull_request' && success()
+        shell: bash
+        env:
+          HEAD_BRANCH: ${{ github.head_ref }}
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFileSync, writeFileSync } from "node:fs";
+          const path = "README.md";
+          let content = readFileSync(path, "utf8");
+          content = content.replace(
+            "> 当前状态：需求已经冻结，下一步进入项目脚手架、数据库迁移和功能开发。",
+            "> 当前状态：第一阶段项目脚手架、D1 初始迁移、后台登录和自动部署流程已经实现；正在进入核心后台功能开发。",
+          );
+          content = content.replace("| TypeScript | 7.x | 类型系统 |", "| TypeScript | 6.0.3 | 类型系统；Astro 检查器兼容版本 |");
+          writeFileSync(path, content);
+          NODE
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add README.md
+          if git diff --cached --quiet; then
+            echo "README.md already up to date"
+            exit 0
+          fi
+          git commit -m "docs: update implementation and TypeScript baseline"
+          git push origin "HEAD:${HEAD_BRANCH}"
 
       - name: 创建临时 Worker Secrets 文件
         if: github.event_name != 'pull_request'
