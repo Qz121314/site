@@ -1,12 +1,14 @@
 import type { APIRoute } from "astro";
 import {
+  findPublicChannel,
   loadPublicCategory,
-  loadPublicChannel,
   loadPublicProducts,
   loadPublicSiteShell,
 } from "@/lib/db/public";
 
 export const prerender = false;
+
+const MAX_PUBLIC_PRODUCT_PAGE = 500;
 
 function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
@@ -22,14 +24,13 @@ function json(data: unknown, status = 200): Response {
 export const GET: APIRoute = async ({ params, url }) => {
   const channelSlug = params.channel ?? "";
   const pageValue = Number(url.searchParams.get("page") ?? "1");
-  const page = Number.isSafeInteger(pageValue) && pageValue > 0 ? Math.min(pageValue, 10_000) : 1;
+  const page = Number.isSafeInteger(pageValue) && pageValue > 0 ? pageValue : 1;
+  if (page > MAX_PUBLIC_PRODUCT_PAGE) return json({ error: "PAGE_OUT_OF_RANGE" }, 400);
+
   const categorySlug = (url.searchParams.get("category") ?? "").trim().slice(0, 96);
   const query = (url.searchParams.get("q") ?? "").trim().slice(0, 100);
-
-  const [site, channel] = await Promise.all([
-    loadPublicSiteShell(),
-    loadPublicChannel(channelSlug),
-  ]);
+  const site = await loadPublicSiteShell();
+  const channel = findPublicChannel(site, channelSlug);
   if (!channel) return json({ error: "CHANNEL_NOT_FOUND" }, 404);
 
   const category = categorySlug
