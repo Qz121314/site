@@ -13,6 +13,9 @@ export type FilterFormResult =
   | { ok: true; value: FilterFormValue }
   | { ok: false; code: "name" | "slug" | "sort" | "status" };
 
+const FILTER_NAME_MAX_LENGTH = 60;
+const FILTER_SLUG_MAX_LENGTH = 64;
+const SORT_ORDER_LIMIT = 999999;
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/u;
 
 function readText(form: FormData, name: string): string {
@@ -26,11 +29,13 @@ export function parseFilterForm(form: FormData): FilterFormResult {
   const sortText = readText(form, "sortOrder");
   const statusText = readText(form, "status");
 
-  if (!name || name.length > 60) return { ok: false, code: "name" };
-  if (!slug || slug.length > 64 || !SLUG_PATTERN.test(slug)) return { ok: false, code: "slug" };
+  if (!name || name.length > FILTER_NAME_MAX_LENGTH) return { ok: false, code: "name" };
+  if (!slug || slug.length > FILTER_SLUG_MAX_LENGTH || !SLUG_PATTERN.test(slug)) {
+    return { ok: false, code: "slug" };
+  }
 
   const sortOrder = Number(sortText || "0");
-  if (!Number.isSafeInteger(sortOrder) || sortOrder < -999999 || sortOrder > 999999) {
+  if (!Number.isSafeInteger(sortOrder) || sortOrder < -SORT_ORDER_LIMIT || sortOrder > SORT_ORDER_LIMIT) {
     return { ok: false, code: "sort" };
   }
 
