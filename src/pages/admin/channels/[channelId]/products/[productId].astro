@@ -1,0 +1,185 @@
+---
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import { loadAdminChannel } from "@/lib/db/site";
+import { loadAdminProduct, loadAdminProductOptions } from "@/lib/db/products";
+
+export const prerender = false;
+
+const channelId = Astro.params.channelId ?? "";
+const productId = Astro.params.productId ?? "";
+const [channel, product, options] = channelId && productId
+  ? await Promise.all([
+      loadAdminChannel(channelId),
+      loadAdminProduct(channelId, productId),
+      loadAdminProductOptions(channelId),
+    ])
+  : [null, null, { categories: [], conversionGroups: [] }];
+
+const saved = Astro.url.searchParams.get("saved");
+const error = Astro.url.searchParams.get("error");
+
+const savedMessages: Record<string, string> = {
+  created: "产品已新增，请继续补充内容。",
+  updated: "产品已保存。",
+};
+
+const errorMessages: Record<string, string> = {
+  title: "产品标题不能为空，且不能超过 160 个字符。",
+  slug: "Slug 只能使用小写字母、数字和连字符。",
+  category: "所选分类无效或不属于当前分区。",
+  "category-unavailable": "发布产品时，所选分类必须处于发布状态。",
+  conversion: "所选转化组无效或不属于当前分区。",
+  "conversion-required": "发布产品必须绑定转化组。",
+  "conversion-unavailable": "发布产品时，转化组必须启用且至少包含一个启用资源。",
+  tags: "标签最多 20 个，每个标签不能超过 40 个字符。",
+  body: "正文不能超过 30000 个字符。",
+  cta: "CTA 文案不能为空，且不能超过 80 个字符。",
+  sort: "排序必须是 -999999 到 999999 之间的整数。",
+  status: "产品状态无效。",
+  duplicate: "当前分区内已经存在相同 Slug。",
+  "not-found": "找不到该分区或产品。",
+  database: "数据库操作失败，请稍后重试。",
+};
+
+const statusLabels = {
+  draft: "草稿",
+  published: "发布",
+  disabled: "停用",
+} as const;
+
+const formId = product ? `product-edit-${product.id}` : "product-edit";
+---
+
+<AdminLayout title={channel && product ? `${channel.name} · 编辑产品` : "产品不存在"}>
+  {channel && product ? (
+    <>
+      {saved && savedMessages[saved] && <p class="notice" role="status">{savedMessages[saved]}</p>}
+      {error && errorMessages[error] && <p class="error" role="alert">{errorMessages[error]}</p>}
+
+      <section class="admin-card">
+        <div class="admin-toolbar product-toolbar">
+          <div>
+            <h2>{product.title}</h2>
+            <span class="admin-section-note">ID：{product.id}</span>
+          </div>
+          <div class="toolbar-actions">
+            <a class="button secondary" href={`/admin/channels/${encodeURIComponent(channelId)}/products`}>返回列表</a>
+            <button class="button" type="submit" form={formId}>保存产品</button>
+          </div>
+        </div>
+
+        <form id={formId} class="admin-card-body admin-form-grid product-form" action={`/api/admin/channels/${encodeURIComponent(channelId)}/products/${encodeURIComponent(product.id)}/update`} method="post">
+          <div class="admin-field admin-span-5">
+            <label for="product-title">标题</label>
+            <input id="product-title" name="title" maxlength="160" required value={product.title} />
+          </div>
+          <div class="admin-field admin-span-3">
+            <label for="product-slug">Slug</label>
+            <input id="product-slug" name="slug" maxlength="96" pattern="[a-z0-9]+(?:-[a-z0-9]+)*" required value={product.slug} />
+          </div>
+          <div class="admin-field admin-span-2">
+            <label for="product-status">状态</label>
+            <select id="product-status" name="status">
+              <option value="draft" selected={product.status === "draft"}>草稿</option>
+              <option value="published" selected={product.status === "published"}>发布</option>
+              <option value="disabled" selected={product.status === "disabled"}>停用</option>
+            </select>
+          </div>
+          <div class="admin-field admin-span-2">
+            <label for="product-sort">排序</label>
+            <input id="product-sort" name="sortOrder" type="number" min="-999999" max="999999" step="1" value={product.sortOrder} />
+          </div>
+
+          <div class="admin-field admin-span-3">
+            <label for="product-category">分类</label>
+            <select id="product-category" name="categoryId">
+              <option value="">不绑定分类</option>
+              {options.categories.map((category) => (
+                <option value={category.id} selected={product.categoryId === category.id}>
+                  {category.name}{category.status !== "published" ? ` · ${statusLabels[category.status as keyof typeof statusLabels] ?? category.status}` : ""}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div class="admin-field admin-span-4">
+            <label for="product-conversion">转化组</label>
+            <select id="product-conversion" name="conversionGroupId">
+              <option value="">暂不绑定</option>
+              {options.conversionGroups.map((group) => (
+                <option value={group.id} selected={product.conversionGroupId === group.id}>
+                  {group.name} · {group.status === "enabled" ? "启用" : "停用"} · {group.enabledResourceCount} 可用资源
+                </option>
+              ))}
+            </select>
+          </div>
+          <div class="admin-field admin-span-3">
+            <label for="product-cta">CTA 文案</label>
+            <input id="product-cta" name="ctaLabel" maxlength="80" required value={product.ctaLabel} />
+          </div>
+          <div class="admin-field admin-span-2 compact-check-field">
+            <label>推荐</label>
+            <label class="compact-check"><input type="checkbox" name="featured" value="1" checked={product.featured} /> 置顶推荐</label>
+          </div>
+
+          <div class="admin-field admin-span-12">
+            <label for="product-tags">标签</label>
+            <input id="product-tags" name="tags" maxlength="1000" value={product.tags.join(", ")} placeholder="tag-one, tag-two；最多 20 个" />
+          </div>
+
+          <div class="admin-field admin-span-12">
+            <div class="field-label-row">
+              <label for="product-body">正文</label>
+              <span class="admin-section-note">支持 ## 标题、### 小标题、- 列表、**粗体**、*斜体*、[文字](https://链接)</span>
+            </div>
+            <textarea id="product-body" name="bodySource" maxlength="30000" rows="11" placeholder="输入产品正文内容">{product.bodySource}</textarea>
+          </div>
+        </form>
+      </section>
+
+      <section class="admin-card asset-summary">
+        <div class="admin-section-bar">
+          <h2>图片状态</h2>
+          <span class="admin-section-note">图片库完成后在这里接入封面和图库选择器</span>
+        </div>
+        <div class="asset-grid">
+          <div><span>封面</span><strong class:list={[product.coverAssetId && "is-set"]}>{product.coverAssetId ? "已绑定" : "未设置"}</strong></div>
+          <div><span>图库</span><strong>{product.imageCount} 张</strong></div>
+        </div>
+      </section>
+
+      {product.bodyHtml && (
+        <details class="admin-card body-preview">
+          <summary>正文预览</summary>
+          <article set:html={product.bodyHtml}></article>
+        </details>
+      )}
+    </>
+  ) : (
+    <section class="admin-card"><div class="admin-empty">找不到该产品，或产品不属于当前分区。<a class="button secondary" href={channel ? `/admin/channels/${encodeURIComponent(channelId)}/products` : "/admin/channels"}>返回</a></div></section>
+  )}
+</AdminLayout>
+
+<style>
+  .product-toolbar { align-items: center; }
+  .product-toolbar > div:first-child { min-width: 0; }
+  .product-toolbar h2 { max-width: 38rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .toolbar-actions { display: flex; gap: .35rem; }
+  .product-form { padding-top: .65rem; padding-bottom: .7rem; }
+  .compact-check-field { justify-content: flex-end; }
+  .compact-check { display: flex; min-height: 2.05rem; align-items: center; gap: .35rem; padding: 0 .45rem; border: 1px solid #302d36; border-radius: .3rem; background: #0d0c10; }
+  .compact-check input { width: .95rem; height: .95rem; margin: 0; }
+  .field-label-row { display: flex; align-items: center; justify-content: space-between; gap: .75rem; }
+  textarea { min-height: 9.5rem; resize: vertical; }
+  .asset-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .45rem; padding: .55rem .65rem; }
+  .asset-grid > div { display: flex; align-items: center; justify-content: space-between; min-height: 2rem; padding: 0 .55rem; border: 1px solid #2c2931; border-radius: .3rem; background: #0d0c10; }
+  .asset-grid span { color: #8b8591; }
+  .asset-grid strong { color: #aaa4b0; }
+  .asset-grid strong.is-set { color: #65d99c; }
+  .body-preview > summary { cursor: pointer; padding: .55rem .65rem; font-weight: 650; }
+  .body-preview article { padding: .2rem .8rem .75rem; line-height: 1.55; }
+  .body-preview article :global(h2), .body-preview article :global(h3), .body-preview article :global(p), .body-preview article :global(ul) { margin: .55rem 0 0; }
+  @media (max-width: 767px) {
+    .toolbar-actions { flex-wrap: wrap; justify-content: flex-end; }
+    .field-label-row { align-items: flex-start; flex-direction: column; gap: .15rem; }
+  }
+</style>
