@@ -64,3 +64,57 @@ export async function loadAdminCounts(): Promise<AdminCounts> {
     return { channels: 0, categories: 0, products: 0, images: 0, databaseReady: false };
   }
 }
+
+export type AdminChannel = {
+  id: string;
+  name: string;
+  slug: string;
+  icon: string;
+  status: "draft" | "published" | "disabled";
+};
+
+type AdminChannelRow = {
+  id: string;
+  name: string;
+  slug: string;
+  icon: string;
+  status: AdminChannel["status"];
+};
+
+export async function loadAdminChannels(): Promise<AdminChannel[]> {
+  try {
+    const result = await env.DB.prepare(
+      `SELECT id, name, slug, icon, status
+       FROM channels
+       ORDER BY sort_order ASC, created_at ASC`,
+    ).all<AdminChannelRow>();
+
+    return result.results.map((row) => ({
+      id: row.id,
+      name: row.name,
+      slug: row.slug,
+      icon: row.icon,
+      status: row.status,
+    }));
+  } catch (error) {
+    console.error(JSON.stringify({ event: "admin_channels_read_failed", error: String(error) }));
+    return [];
+  }
+}
+
+export async function loadAdminChannel(channelId: string): Promise<AdminChannel | null> {
+  try {
+    const row = await env.DB.prepare(
+      `SELECT id, name, slug, icon, status
+       FROM channels
+       WHERE id = ?1`,
+    ).bind(channelId).first<AdminChannelRow>();
+
+    return row
+      ? { id: row.id, name: row.name, slug: row.slug, icon: row.icon, status: row.status }
+      : null;
+  } catch (error) {
+    console.error(JSON.stringify({ event: "admin_channel_read_failed", channelId, error: String(error) }));
+    return null;
+  }
+}
