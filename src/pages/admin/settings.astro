@@ -1,12 +1,15 @@
 ---
 import AdminLayout from "@/layouts/AdminLayout.astro";
+import ImagePicker from "@/components/admin/ImagePicker.astro";
+import { loadAdminImageOptions } from "@/lib/db/image-options";
 import { loadAdminChannels, loadAdminSiteSettings } from "@/lib/db/site";
 
 export const prerender = false;
 
-const [settings, channels] = await Promise.all([
+const [settings, channels, images] = await Promise.all([
   loadAdminSiteSettings(),
   loadAdminChannels(),
+  loadAdminImageOptions(),
 ]);
 
 const saved = Astro.url.searchParams.get("saved");
@@ -16,6 +19,7 @@ const errorMessages: Record<string, string> = {
   "site-name": "网站名称不能为空，且不能超过 80 个字符。",
   description: "网站描述不能超过 300 个字符。",
   "default-channel": "默认分区不存在，请重新选择。",
+  image: "所选 Logo 或 Favicon 图片不存在，请重新选择。",
   "r2-url": "R2 公开域名必须是完整的 HTTPS 域名，不能包含路径、参数或账号信息。",
   ga4: "GA4 Measurement ID 格式无效，例如 G-XXXXXXXXXX。",
   meta: "Meta Pixel ID 只能包含 5 至 30 位数字。",
@@ -107,6 +111,37 @@ const errorMessages: Record<string, string> = {
       </div>
     </section>
 
+    <section class="admin-card settings-assets">
+      <div class="admin-section-bar">
+        <h2>Logo 与 Favicon</h2>
+        <span class="admin-section-note">从全站图片库选择；清空选择即可解绑</span>
+      </div>
+      {images.length > 0 ? (
+        <div class="admin-card-body settings-asset-grid">
+          <ImagePicker
+            id="site-logo-asset"
+            name="logoAssetId"
+            label="Logo"
+            images={images}
+            value={settings.logoAssetId}
+            help="建议使用横向或方形透明 WebP。"
+          />
+          <ImagePicker
+            id="site-favicon-asset"
+            name="faviconAssetId"
+            label="Favicon"
+            images={images}
+            value={settings.faviconAssetId}
+            help="建议使用方形图片，浏览器将自动缩放。"
+          />
+        </div>
+      ) : (
+        <div class="admin-empty">
+          图片库为空。<a class="button secondary" href="/admin/images">先上传图片</a>
+        </div>
+      )}
+    </section>
+
     <details class="admin-card settings-details">
       <summary>
         <strong>政策与免责声明</strong>
@@ -123,17 +158,6 @@ const errorMessages: Record<string, string> = {
         </div>
       </div>
     </details>
-
-    <section class="admin-card settings-assets">
-      <div class="admin-section-bar">
-        <h2>Logo 与 Favicon</h2>
-        <span class="admin-section-note">将在图片库模块中选择，不允许手工输入资产 ID</span>
-      </div>
-      <div class="admin-card-body settings-asset-row">
-        <span>Logo：{settings.logoAssetId ? "已绑定" : "未设置"}</span>
-        <span>Favicon：{settings.faviconAssetId ? "已绑定" : "未设置"}</span>
-      </div>
-    </section>
   </form>
 </AdminLayout>
 
@@ -146,9 +170,7 @@ const errorMessages: Record<string, string> = {
     white-space: nowrap;
   }
 
-  .settings-details {
-    overflow: visible;
-  }
+  .settings-details { overflow: visible; }
 
   .settings-details > summary {
     display: flex;
@@ -167,18 +189,16 @@ const errorMessages: Record<string, string> = {
   .settings-details > summary strong { font-size: .9rem; }
   .settings-details > summary span { color: #8f8995; font-size: .74rem; }
   .settings-details[open] > summary { border-bottom: 1px solid var(--line); }
+  .settings-details textarea { min-height: 8rem; line-height: 1.45; }
 
-  .settings-details textarea {
-    min-height: 8rem;
-    line-height: 1.45;
+  .settings-asset-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: .8rem;
   }
 
-  .settings-asset-row {
-    display: flex;
-    flex-wrap: wrap;
-    gap: .5rem 1.25rem;
-    color: #9d97a3;
-    font-size: .75rem;
+  @media (max-width: 767px) {
+    .settings-asset-grid { grid-template-columns: 1fr; }
   }
 
   @media (max-width: 959px) {
