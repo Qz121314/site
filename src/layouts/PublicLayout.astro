@@ -1,12 +1,31 @@
 ---
 import "@/styles/global.css";
+import "@/styles/public.css";
+import type { PublicSiteShell } from "@/lib/db/public";
 
 interface Props {
+  site: PublicSiteShell;
   title: string;
   description?: string;
+  canonical?: string;
+  ogImage?: string | null;
+  activeChannel?: string | null;
 }
 
-const { title, description = "Visual recommendations, updated in real time." } = Astro.props;
+const {
+  site,
+  title,
+  description = site.siteDescription,
+  canonical = Astro.url.href,
+  ogImage = site.logoUrl,
+  activeChannel = null,
+} = Astro.props;
+
+const pageTitle = title === site.siteName ? title : `${title} · ${site.siteName}`;
+const adultConfirmed = Astro.cookies.get("site_adult_confirmed")?.value === "1";
+const showAdultGate = site.adultGateEnabled && !adultConfirmed;
+const ga4Id = site.ga4Id;
+const metaPixelId = site.metaPixelId;
 ---
 
 <!doctype html>
@@ -16,15 +35,121 @@ const { title, description = "Visual recommendations, updated in real time." } =
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
     <meta name="color-scheme" content="dark" />
-    <title>{title}</title>
+    <meta name="robots" content={site.noindexEnabled ? "noindex,nofollow" : "index,follow"} />
+    <link rel="canonical" href={canonical} />
+    {site.faviconUrl && <link rel="icon" href={site.faviconUrl} />}
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    {ogImage && <meta property="og:image" content={ogImage} />}
+    <meta name="twitter:card" content={ogImage ? "summary_large_image" : "summary"} />
+    <title>{pageTitle}</title>
+
+    {ga4Id && <script async src={`https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(ga4Id)}`}></script>}
+    {ga4Id && (
+      <script is:inline define:vars={{ ga4Id }}>
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){ window.dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', ga4Id);
+      </script>
+    )}
+
+    {metaPixelId && (
+      <script is:inline define:vars={{ metaPixelId }}>
+        !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+        n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+        n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+        t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}
+        (window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+        fbq('init', metaPixelId);
+        fbq('track', 'PageView');
+      </script>
+    )}
   </head>
-  <body>
-    <main class="shell public-shell">
-      <a class="brand" href="/" aria-label="Home">
-        <span class="brand-mark">S</span>
-        <span>{title}</span>
-      </a>
+  <body class="public-body">
+    {metaPixelId && (
+      <noscript>
+        <img
+          height="1"
+          width="1"
+          style="display:none"
+          src={`https://www.facebook.com/tr?id=${encodeURIComponent(metaPixelId)}&ev=PageView&noscript=1`}
+          alt=""
+        />
+      </noscript>
+    )}
+
+    <header class="public-header">
+      <div class="public-container public-header-inner">
+        <a class="public-brand" href="/" aria-label={`${site.siteName} home`}>
+          {site.logoUrl ? (
+            <img class="public-brand-logo" src={site.logoUrl} alt="" />
+          ) : (
+            <span class="public-brand-fallback">{site.siteName.trim().slice(0, 1).toUpperCase() || "S"}</span>
+          )}
+          <span class="public-brand-name">{site.siteName}</span>
+        </a>
+        <nav class="public-header-links" aria-label="Site information">
+          <a href="/privacy">Privacy</a>
+          <a href="/disclaimer">Disclaimer</a>
+        </nav>
+      </div>
+    </header>
+
+    <main class="public-container public-main">
       <slot />
     </main>
+
+    {site.channels.length > 0 && (
+      <nav class="public-bottom-nav" aria-label="Channels">
+        {site.channels.map((channel) => (
+          <a
+            class="public-nav-item"
+            href={`/${encodeURIComponent(channel.slug)}`}
+            aria-current={activeChannel === channel.slug ? "page" : undefined}
+          >
+            <span class="public-nav-icon" aria-hidden="true">{channel.icon.trim() || channel.name.trim().slice(0, 1)}</span>
+            <span class="public-nav-label">{channel.name}</span>
+          </a>
+        ))}
+      </nav>
+    )}
+
+    {showAdultGate && (
+      <div class="adult-gate" data-adult-gate role="dialog" aria-modal="true" aria-labelledby="adult-gate-title">
+        <div class="adult-gate-card">
+          <div class="eyebrow">Age confirmation</div>
+          <h2 id="adult-gate-title">Adults only</h2>
+          <p>You must be at least 18 years old, or the legal age in your location, to enter this site.</p>
+          <div class="adult-gate-actions">
+            <button class="public-button" type="button" data-adult-accept>I am 18 or older</button>
+            <button class="public-button secondary" type="button" data-adult-exit>Leave</button>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {showAdultGate && (
+      <script is:inline>
+        (() => {
+          const gate = document.querySelector('[data-adult-gate]');
+          const accept = document.querySelector('[data-adult-accept]');
+          const exit = document.querySelector('[data-adult-exit]');
+          if (!gate || !accept || !exit) return;
+          document.documentElement.style.overflow = 'hidden';
+          accept.addEventListener('click', () => {
+            document.cookie = 'site_adult_confirmed=1; Max-Age=31536000; Path=/; SameSite=Lax; Secure';
+            gate.remove();
+            document.documentElement.style.overflow = '';
+          });
+          exit.addEventListener('click', () => {
+            if (history.length > 1) history.back();
+            else location.replace('about:blank');
+          });
+        })();
+      </script>
+    )}
   </body>
 </html>
