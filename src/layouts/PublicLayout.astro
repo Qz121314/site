@@ -35,7 +35,7 @@ const metaPixelId = site.metaPixelId;
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
     <meta name="color-scheme" content="dark" />
-    <meta name="robots" content={site.noindexEnabled ? "noindex,nofollow" : "index,follow"} />
+    <meta name="robots" content="index,follow,max-image-preview:large" />
     <link rel="canonical" href={canonical} />
     {site.faviconUrl && <link rel="icon" href={site.faviconUrl} />}
     <meta property="og:type" content="website" />

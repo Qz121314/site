@@ -94,20 +94,6 @@ const errorMessages: Record<string, string> = {
           <label for="meta-pixel-id">Meta Pixel ID</label>
           <input id="meta-pixel-id" name="metaPixelId" maxlength="30" inputmode="numeric" autocomplete="off" value={settings.metaPixelId} />
         </div>
-
-        <div class="admin-field admin-span-2">
-          <label>全站开关</label>
-          <div class="settings-checks">
-            <label class="admin-check" title="首次进入前台时显示 18+ 确认">
-              <input type="checkbox" name="adultGateEnabled" value="1" checked={settings.adultGateEnabled} />
-              <span>18+ 提示</span>
-            </label>
-            <label class="admin-check" title="给搜索引擎返回 noindex">
-              <input type="checkbox" name="noindexEnabled" value="1" checked={settings.noindexEnabled} />
-              <span>全站 noindex</span>
-            </label>
-          </div>
-        </div>
       </div>
     </section>
 
@@ -137,27 +123,55 @@ const errorMessages: Record<string, string> = {
         </div>
       ) : (
         <div class="admin-empty">
-          图片库为空。<a class="button secondary" href="/admin/images">先上传图片</a>
+          图片库暂无可选资产。请先在实际使用图片的业务页面上传图片。
         </div>
       )}
     </section>
 
-    <details class="admin-card settings-details">
-      <summary>
-        <strong>政策与免责声明</strong>
-        <span>低频内容，点击展开编辑</span>
-      </summary>
-      <div class="admin-card-body admin-form-grid">
-        <div class="admin-field admin-span-6">
-          <label for="privacy-content">隐私政策内容</label>
-          <textarea id="privacy-content" name="privacyContent" maxlength="20000" rows="8">{settings.privacyContent}</textarea>
-        </div>
-        <div class="admin-field admin-span-6">
-          <label for="disclaimer-content">免责声明内容</label>
-          <textarea id="disclaimer-content" name="disclaimerContent" maxlength="20000" rows="8">{settings.disclaimerContent}</textarea>
+    <section class="admin-card legal-settings">
+      <div class="admin-section-bar">
+        <div>
+          <h2>法律与访问控制</h2>
+          <span class="admin-section-note">管理年龄提示、隐私政策和免责声明；公开页面固定允许搜索引擎收录</span>
         </div>
       </div>
-    </details>
+      <div class="admin-card-body admin-form-grid">
+        <div class="admin-field admin-span-12">
+          <label>访问控制</label>
+          <div class="settings-checks">
+            <label class="admin-check" title="首次进入前台时显示 18+ 确认">
+              <input type="checkbox" name="adultGateEnabled" value="1" checked={settings.adultGateEnabled} />
+              <span>开启 18+ 年龄提示</span>
+            </label>
+          </div>
+          <small>启用后，访客首次进入时需要确认已达到所在地区的法定年龄。</small>
+        </div>
+
+        <div class="admin-field admin-span-6">
+          <label for="privacy-content">Privacy 隐私政策</label>
+          <textarea
+            id="privacy-content"
+            name="privacyContent"
+            maxlength="20000"
+            rows="12"
+            placeholder="填写网站如何使用 Cookie、GA4、Meta Pixel 以及第三方服务等信息。"
+          >{settings.privacyContent}</textarea>
+          <small>保存后显示在前台 /privacy 页面。</small>
+        </div>
+
+        <div class="admin-field admin-span-6">
+          <label for="disclaimer-content">Disclaimer 免责声明</label>
+          <textarea
+            id="disclaimer-content"
+            name="disclaimerContent"
+            maxlength="20000"
+            rows="12"
+            placeholder="填写第三方服务、外部链接、年龄限制和责任边界等说明。"
+          >{settings.disclaimerContent}</textarea>
+          <small>保存后显示在前台 /disclaimer 页面。</small>
+        </div>
+      </div>
+    </section>
   </form>
 </AdminLayout>
 
@@ -170,26 +184,7 @@ const errorMessages: Record<string, string> = {
     white-space: nowrap;
   }
 
-  .settings-details { overflow: visible; }
-
-  .settings-details > summary {
-    display: flex;
-    min-height: 2.45rem;
-    align-items: center;
-    justify-content: space-between;
-    gap: .75rem;
-    padding: .38rem .55rem;
-    color: var(--text);
-    background: #17151c;
-    cursor: pointer;
-    list-style: none;
-  }
-
-  .settings-details > summary::-webkit-details-marker { display: none; }
-  .settings-details > summary strong { font-size: .9rem; }
-  .settings-details > summary span { color: #8f8995; font-size: .74rem; }
-  .settings-details[open] > summary { border-bottom: 1px solid var(--line); }
-  .settings-details textarea { min-height: 8rem; line-height: 1.45; }
+  .legal-settings textarea { min-height: 13rem; line-height: 1.5; }
 
   .settings-asset-grid {
     display: grid;

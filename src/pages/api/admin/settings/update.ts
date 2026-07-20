@@ -58,7 +58,6 @@ export const POST: APIRoute = async ({ request }) => {
   const privacyContent = readText(form, "privacyContent");
   const disclaimerContent = readText(form, "disclaimerContent");
   const adultGateEnabled = form.get("adultGateEnabled") === "1" ? 1 : 0;
-  const noindexEnabled = form.get("noindexEnabled") === "1" ? 1 : 0;
 
   if (!siteName || siteName.length > 80) return redirect(request, "error=site-name");
   if (siteDescription.length > 300) return redirect(request, "error=description");
@@ -95,10 +94,9 @@ export const POST: APIRoute = async ({ request }) => {
              ga4_id = ?7,
              meta_pixel_id = ?8,
              adult_gate_enabled = ?9,
-             noindex_enabled = ?10,
-             all_filter_label = ?11,
-             privacy_content = ?12,
-             disclaimer_content = ?13,
+             all_filter_label = ?10,
+             privacy_content = ?11,
+             disclaimer_content = ?12,
              updated_at = CURRENT_TIMESTAMP
          WHERE id = 1`,
       ).bind(
@@ -111,7 +109,6 @@ export const POST: APIRoute = async ({ request }) => {
         ga4Id,
         metaPixelId,
         adultGateEnabled,
-        noindexEnabled,
         allFilterLabel,
         privacyContent,
         disclaimerContent,

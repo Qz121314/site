@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { loadPublicSitemapEntries, loadPublicSiteShell } from "@/lib/db/public";
+import { loadPublicSitemapEntries } from "@/lib/db/public";
 
 export const prerender = false;
 
@@ -18,16 +18,7 @@ function normalizeLastModified(value: string): string {
 }
 
 export const GET: APIRoute = async ({ url }) => {
-  const [site, entries] = await Promise.all([
-    loadPublicSiteShell(),
-    loadPublicSitemapEntries(),
-  ]);
-
-  if (site.noindexEnabled) {
-    return new Response("<?xml version=\"1.0\" encoding=\"UTF-8\"?><urlset xmlns=\"http://www.sitemaps.org/schemas/sitemap/0.9\"></urlset>", {
-      headers: { "Content-Type": "application/xml; charset=utf-8", "Cache-Control": "no-store" },
-    });
-  }
+  const entries = await loadPublicSitemapEntries();
 
   const records: Array<{ location: string; updatedAt?: string }> = [
     { location: new URL("/privacy", url.origin).href },
