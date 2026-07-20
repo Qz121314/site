@@ -1,0 +1,232 @@
+---
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import { loadAdminChannel } from "@/lib/db/site";
+import { loadAdminProductOptions, loadAdminProducts } from "@/lib/db/products";
+
+export const prerender = false;
+
+const channelId = Astro.params.channelId ?? "";
+const query = (Astro.url.searchParams.get("q") ?? "").slice(0, 100);
+const status = Astro.url.searchParams.get("status") ?? "";
+const categoryId = Astro.url.searchParams.get("category") ?? "";
+const pageValue = Number(Astro.url.searchParams.get("page") ?? "1");
+
+const [channel, options, productPage] = channelId
+  ? await Promise.all([
+      loadAdminChannel(channelId),
+      loadAdminProductOptions(channelId),
+      loadAdminProducts(channelId, {
+        query,
+        status,
+        categoryId,
+        page: Number.isSafeInteger(pageValue) ? pageValue : 1,
+      }),
+    ])
+  : [null, { categories: [], conversionGroups: [] }, { products: [], total: 0, page: 1, pageCount: 1, pageSize: 50 }];
+
+const saved = Astro.url.searchParams.get("saved");
+const error = Astro.url.searchParams.get("error");
+
+const savedMessages: Record<string, string> = {
+  deleted: "产品已删除。",
+};
+
+const errorMessages: Record<string, string> = {
+  title: "产品标题不能为空，且不能超过 160 个字符。",
+  slug: "Slug 只能使用小写字母、数字和连字符。",
+  category: "所选分类无效或不属于当前分区。",
+  "category-unavailable": "发布产品时，所选分类必须处于发布状态。",
+  conversion: "所选转化组无效或不属于当前分区。",
+  "conversion-required": "发布产品必须绑定转化组。",
+  "conversion-unavailable": "发布产品时，转化组必须启用且至少包含一个启用资源。",
+  status: "产品状态无效。",
+  duplicate: "当前分区内已经存在相同 Slug。",
+  "not-found": "找不到该分区或产品。",
+  database: "数据库操作失败，请稍后重试。",
+};
+
+const statusLabels = {
+  draft: "草稿",
+  published: "发布",
+  disabled: "停用",
+} as const;
+
+function pageHref(page: number): string {
+  const params = new URLSearchParams();
+  if (query) params.set("q", query);
+  if (status) params.set("status", status);
+  if (categoryId) params.set("category", categoryId);
+  if (page > 1) params.set("page", String(page));
+  const suffix = params.toString();
+  return `/admin/channels/${encodeURIComponent(channelId)}/products${suffix ? `?${suffix}` : ""}`;
+}
+---
+
+<AdminLayout title={channel ? `${channel.name} · 产品管理` : "分区不存在"}>
+  {channel ? (
+    <>
+      {saved && savedMessages[saved] && <p class="notice" role="status">{savedMessages[saved]}</p>}
+      {error && errorMessages[error] && <p class="error" role="alert">{errorMessages[error]}</p>}
+
+      <section class="admin-card">
+        <div class="admin-section-bar">
+          <h2>快速新增产品</h2>
+          <span class="admin-section-note">先建立基础记录，再进入编辑页补充标签、正文和图片</span>
+        </div>
+        <form class="admin-card-body admin-form-grid" action={`/api/admin/channels/${encodeURIComponent(channelId)}/products/create`} method="post">
+          <div class="admin-field admin-span-3">
+            <label for="new-product-title">标题</label>
+            <input id="new-product-title" name="title" maxlength="160" required autocomplete="off" placeholder="Product title" />
+          </div>
+          <div class="admin-field admin-span-2">
+            <label for="new-product-slug">Slug</label>
+            <input id="new-product-slug" name="slug" maxlength="96" pattern="[a-z0-9]+(?:-[a-z0-9]+)*" required autocomplete="off" placeholder="product-slug" />
+          </div>
+          <div class="admin-field admin-span-2">
+            <label for="new-product-category">分类</label>
+            <select id="new-product-category" name="categoryId">
+              <option value="">不绑定分类</option>
+              {options.categories.map((category) => (
+                <option value={category.id}>{category.name}{category.status !== "published" ? ` · ${statusLabels[category.status as keyof typeof statusLabels] ?? category.status}` : ""}</option>
+              ))}
+            </select>
+          </div>
+          <div class="admin-field admin-span-2">
+            <label for="new-product-conversion">转化组</label>
+            <select id="new-product-conversion" name="conversionGroupId">
+              <option value="">暂不绑定</option>
+              {options.conversionGroups.map((group) => (
+                <option value={group.id}>{group.name} · {group.enabledResourceCount} 可用</option>
+              ))}
+            </select>
+          </div>
+          <div class="admin-field admin-span-1">
+            <label for="new-product-status">状态</label>
+            <select id="new-product-status" name="status">
+              <option value="draft" selected>草稿</option>
+              <option value="published">发布</option>
+              <option value="disabled">停用</option>
+            </select>
+          </div>
+          <div class="admin-form-actions admin-span-2">
+            <button class="button" type="submit">新增并编辑</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="admin-card">
+        <form class="admin-card-body admin-form-grid product-filters" method="get">
+          <div class="admin-field admin-span-4">
+            <label for="product-search">搜索</label>
+            <input id="product-search" name="q" value={query} maxlength="100" autocomplete="off" placeholder="标题、Slug 或标签" />
+          </div>
+          <div class="admin-field admin-span-2">
+            <label for="product-status-filter">状态</label>
+            <select id="product-status-filter" name="status">
+              <option value="">全部状态</option>
+              <option value="draft" selected={status === "draft"}>草稿</option>
+              <option value="published" selected={status === "published"}>发布</option>
+              <option value="disabled" selected={status === "disabled"}>停用</option>
+            </select>
+          </div>
+          <div class="admin-field admin-span-3">
+            <label for="product-category-filter">分类</label>
+            <select id="product-category-filter" name="category">
+              <option value="">全部分类</option>
+              {options.categories.map((category) => (
+                <option value={category.id} selected={categoryId === category.id}>{category.name}</option>
+              ))}
+            </select>
+          </div>
+          <div class="admin-form-actions admin-span-3 filter-actions">
+            <button class="button secondary" type="submit">筛选</button>
+            <a class="button secondary" href={`/admin/channels/${encodeURIComponent(channelId)}/products`}>重置</a>
+          </div>
+        </form>
+      </section>
+
+      <section class="admin-card">
+        <div class="admin-toolbar">
+          <h2>产品列表</h2>
+          <span class="admin-section-note">共 {productPage.total} 个；每页 {productPage.pageSize} 个</span>
+        </div>
+
+        {productPage.products.length === 0 ? (
+          <div class="admin-empty">当前条件下没有产品。</div>
+        ) : (
+          <div class="admin-table-wrap">
+            <table class="admin-table product-table">
+              <thead>
+                <tr>
+                  <th class="cell-grow">产品</th>
+                  <th>分类</th>
+                  <th>转化组</th>
+                  <th>标签</th>
+                  <th>图片</th>
+                  <th>推荐</th>
+                  <th>排序</th>
+                  <th>状态</th>
+                  <th style="text-align:right">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                {productPage.products.map((product) => (
+                  <tr>
+                    <td class="cell-grow product-name-cell">
+                      <strong>{product.title}</strong>
+                      <small>{product.slug}</small>
+                    </td>
+                    <td>{product.categoryName ?? <span class="table-muted">未分类</span>}</td>
+                    <td>
+                      {product.conversionGroupName ? (
+                        <span class:list={[product.conversionGroupStatus !== "enabled" && "state-warning"]}>{product.conversionGroupName}</span>
+                      ) : <span class="table-muted">未绑定</span>}
+                    </td>
+                    <td>{product.tags.length > 0 ? product.tags.slice(0, 3).join(" / ") : <span class="table-muted">—</span>}</td>
+                    <td>{product.coverAssetId ? "封面" : "—"} / {product.imageCount}</td>
+                    <td>{product.featured ? "是" : "否"}</td>
+                    <td>{product.sortOrder}</td>
+                    <td><span class:list={["status-text", `is-${product.status}`]}>{statusLabels[product.status]}</span></td>
+                    <td>
+                      <div class="admin-table-actions">
+                        <a class="button secondary" href={`/admin/channels/${encodeURIComponent(channelId)}/products/${encodeURIComponent(product.id)}`}>编辑</a>
+                        <form action={`/api/admin/channels/${encodeURIComponent(channelId)}/products/${encodeURIComponent(product.id)}/delete`} method="post" onsubmit="return confirm('确定删除该产品？产品图片关联会同步移除，但图片文件不会删除。')">
+                          <button class="button danger" type="submit">删除</button>
+                        </form>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        {productPage.pageCount > 1 && (
+          <nav class="pagination" aria-label="产品分页">
+            <a class:list={["button secondary", productPage.page <= 1 && "is-disabled"]} href={productPage.page > 1 ? pageHref(productPage.page - 1) : undefined}>上一页</a>
+            <span>第 {productPage.page} / {productPage.pageCount} 页</span>
+            <a class:list={["button secondary", productPage.page >= productPage.pageCount && "is-disabled"]} href={productPage.page < productPage.pageCount ? pageHref(productPage.page + 1) : undefined}>下一页</a>
+          </nav>
+        )}
+      </section>
+    </>
+  ) : (
+    <section class="admin-card"><div class="admin-empty">找不到该分区。<a class="button secondary" href="/admin/channels">返回分区管理</a></div></section>
+  )}
+</AdminLayout>
+
+<style>
+  .product-filters { padding-top: .55rem; padding-bottom: .55rem; }
+  .filter-actions { gap: .35rem; }
+  .product-name-cell { min-width: 13rem; }
+  .product-name-cell strong { display: block; max-width: 22rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .product-name-cell small { display: block; margin-top: .1rem; color: #817b87; font-size: .68rem; }
+  .table-muted { color: #817b87; }
+  .state-warning { color: #e7bd79; }
+  .status-text.is-published { color: #65d99c; }
+  .status-text.is-disabled { color: #dd7b7b; }
+  .pagination { display: flex; align-items: center; justify-content: flex-end; gap: .5rem; padding: .55rem .65rem; border-top: 1px solid #25222a; }
+  .pagination span { color: #9993a0; font-size: .72rem; }
+  .pagination .is-disabled { pointer-events: none; opacity: .35; }
+</style>
