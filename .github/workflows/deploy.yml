@@ -37,28 +37,48 @@ jobs:
           node-version: 24
           package-manager-cache: false
 
+      - name: 初始化诊断目录
+        run: mkdir -p ci-logs
+
       - name: 安装依赖
         shell: bash
         run: |
           set -o pipefail
-          pnpm install --no-frozen-lockfile 2>&1 | tee pnpm-install.log
+          pnpm install --no-frozen-lockfile 2>&1 | tee ci-logs/install.log
 
-      - name: 保存依赖安装日志
+      - name: 生成 Cloudflare 类型
+        shell: bash
+        run: |
+          set -o pipefail
+          pnpm cf-typegen 2>&1 | tee ci-logs/typegen.log
+
+      - name: 类型检查
+        shell: bash
+        run: |
+          set -o pipefail
+          pnpm check 2>&1 | tee ci-logs/check.log
+
+      - name: 构建 Astro SSR
+        shell: bash
+        run: |
+          set -o pipefail
+          pnpm build 2>&1 | tee ci-logs/build.log
+
+      - name: 保存失败诊断
         if: failure()
         uses: actions/upload-artifact@v6
         with:
-          name: pnpm-install-log-${{ github.run_id }}
-          path: pnpm-install.log
+          name: ci-diagnostics-${{ github.run_id }}
+          path: ci-logs/
           retention-days: 1
 
-      - name: 生成 Cloudflare 类型
-        run: pnpm cf-typegen
-
-      - name: 类型检查
-        run: pnpm check
-
-      - name: 构建 Astro SSR
-        run: pnpm build
+      - name: 导出生成的 pnpm 锁文件
+        if: github.event_name == 'pull_request' && success()
+        uses: actions/upload-artifact@v6
+        with:
+          name: pnpm-lock-${{ github.run_id }}
+          path: pnpm-lock.yaml
+          retention-days: 1
 
       - name: 创建临时 Worker Secrets 文件
         if: github.event_name != 'pull_request'
