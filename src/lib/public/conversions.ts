@@ -1,28 +1,17 @@
 import { env } from "cloudflare:workers";
-import type { ConversionResourceType } from "@/lib/admin/conversion-form";
+import {
+  normalizeConversionTarget,
+  type PublicConversionResource,
+  type PublicConversionType,
+} from "@/lib/public/conversion-target";
 
-export type PublicConversionResource = {
-  type: ConversionResourceType;
-  value: string;
-};
+export { normalizeConversionTarget } from "@/lib/public/conversion-target";
+export type { PublicConversionResource } from "@/lib/public/conversion-target";
 
 type ConversionRow = {
-  type: ConversionResourceType;
+  type: PublicConversionType;
   value: string;
 };
-
-function isHttpUrl(value: string): boolean {
-  try {
-    const url = new URL(value);
-    return (
-      (url.protocol === "https:" || url.protocol === "http:") &&
-      !url.username &&
-      !url.password
-    );
-  } catch {
-    return false;
-  }
-}
 
 function randomIndex(length: number): number {
   if (!Number.isSafeInteger(length) || length <= 0) throw new Error("Invalid random range");
@@ -35,34 +24,6 @@ function randomIndex(length: number): number {
     value = buffer[0] ?? 0;
   } while (value >= ceiling);
   return value % length;
-}
-
-export function normalizeConversionTarget(resource: PublicConversionResource): string | null {
-  const value = resource.value.trim();
-  if (!value) return null;
-
-  switch (resource.type) {
-    case "url":
-      return isHttpUrl(value) ? value : null;
-    case "phone": {
-      const phone = value.replace(/[^+0-9]/gu, "").replace(/(?!^)\+/gu, "");
-      return phone ? `tel:${phone}` : null;
-    }
-    case "whatsapp": {
-      if (isHttpUrl(value)) return value;
-      const digits = value.replace(/\D/gu, "");
-      return digits ? `https://wa.me/${digits}` : null;
-    }
-    case "telegram": {
-      if (isHttpUrl(value)) return value;
-      const handle = value.replace(/^@/u, "");
-      return /^[A-Za-z0-9_]{3,64}$/u.test(handle)
-        ? `https://t.me/${encodeURIComponent(handle)}`
-        : null;
-    }
-    case "email":
-      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/u.test(value) ? `mailto:${value}` : null;
-  }
 }
 
 export async function selectProductConversionTarget(
@@ -93,7 +54,7 @@ export async function selectProductConversionTarget(
   ).bind(channelSlug, productSlug).all<ConversionRow>();
 
   const targets = result.results
-    .map((resource) => normalizeConversionTarget(resource))
+    .map((resource: PublicConversionResource) => normalizeConversionTarget(resource))
     .filter((target): target is string => Boolean(target));
   return targets.length > 0 ? targets[randomIndex(targets.length)] ?? null : null;
 }

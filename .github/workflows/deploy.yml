@@ -60,6 +60,12 @@ jobs:
           set -o pipefail
           pnpm check 2>&1 | tee ci-logs/check.log
 
+      - name: 自动化测试
+        shell: bash
+        run: |
+          set -o pipefail
+          pnpm test 2>&1 | tee ci-logs/test.log
+
       - name: 构建 Astro SSR
         shell: bash
         run: |

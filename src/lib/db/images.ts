@@ -91,7 +91,10 @@ function normalizeFilter(value: string): AdminImageFilter {
 }
 
 function escapeLike(value: string): string {
-  return value.replace(/[\\%_]/gu, "\\$&");
+  return value
+    .replaceAll("\\", "\\\\")
+    .replaceAll("%", "\\%")
+    .replaceAll("_", "\\_");
 }
 
 function mapImage(row: AdminImageRow): AdminImageAsset {
@@ -195,6 +198,17 @@ export async function loadAdminImage(imageId: string): Promise<AdminImageAsset |
      SELECT * FROM images_with_usage WHERE id = ?1`,
   ).bind(imageId).first<AdminImageRow>();
   return row ? mapImage(row) : null;
+}
+
+export async function loadAdminImages(imageIds: readonly string[]): Promise<AdminImageAsset[]> {
+  const uniqueIds = [...new Set(imageIds.filter(Boolean))];
+  if (uniqueIds.length === 0) return [];
+  const placeholders = uniqueIds.map((_, index) => `?${index + 1}`).join(", ");
+  const result = await env.DB.prepare(
+    `WITH images_with_usage AS (${usageSelect})
+     SELECT * FROM images_with_usage WHERE id IN (${placeholders})`,
+  ).bind(...uniqueIds).all<AdminImageRow>();
+  return result.results.map(mapImage);
 }
 
 export async function loadUnusedImagesForCleanup(): Promise<AdminImageAsset[]> {
