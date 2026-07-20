@@ -273,7 +273,8 @@ const selectableCount = library.images.filter((image) => image.referenceCount ==
       name.textContent = file.name;
       const size = document.createElement("span");
       size.textContent = formatLocalBytes(file.size);
-      body.append(name, size);
+      body.appendChild(name);
+      body.appendChild(size);
 
       const remove = document.createElement("button");
       remove.type = "button";
@@ -288,8 +289,10 @@ const selectableCount = library.images.filter((image) => image.referenceCount ==
         renderUploadQueue();
       });
 
-      item.append(image, body, remove);
-      uploadQueue.append(item);
+      item.appendChild(image);
+      item.appendChild(body);
+      item.appendChild(remove);
+      uploadQueue.appendChild(item);
     });
   }
 
