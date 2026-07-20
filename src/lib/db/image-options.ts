@@ -20,8 +20,8 @@ type ImageOptionRow = {
 
 type BaseUrlRow = { r2_public_base_url: string };
 
-export async function loadAdminImageOptions(limit = 500): Promise<AdminImageOption[]> {
-  const safeLimit = Number.isSafeInteger(limit) ? Math.min(Math.max(limit, 1), 1_000) : 500;
+export async function loadAdminImageOptions(limit = 1_000): Promise<AdminImageOption[]> {
+  const safeLimit = Number.isSafeInteger(limit) ? Math.min(Math.max(limit, 1), 1_000) : 1_000;
 
   try {
     const [result, settings] = await Promise.all([
