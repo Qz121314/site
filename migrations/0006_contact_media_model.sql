@@ -48,3 +48,12 @@ INSERT OR IGNORE INTO product_images (product_id, image_asset_id, sort_order)
 SELECT id, cover_asset_id, -10
 FROM products
 WHERE cover_asset_id IS NOT NULL;
+
+UPDATE product_images
+SET sort_order = -10
+WHERE EXISTS (
+  SELECT 1
+  FROM products
+  WHERE products.id = product_images.product_id
+    AND products.cover_asset_id = product_images.image_asset_id
+);
