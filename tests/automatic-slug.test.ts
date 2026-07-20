@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { automaticSlug, selectUniqueSlug } from "../src/lib/admin/automatic-slug.ts";
+import { automaticSlug, selectUniqueSlug } from "../src/lib/admin/slug-utils.ts";
 
 test("selects the first available suffix from a fetched slug set", () => {
   assert.equal(selectUniqueSlug("product", 96, ["product", "product-2", "product-3"]), "product-4");
