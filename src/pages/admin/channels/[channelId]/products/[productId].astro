@@ -16,15 +16,19 @@ const [channel, product, options, gallery] = channelId && productId
       loadAdminProductOptions(channelId),
       loadAdminProductImages(channelId, productId),
     ])
-  : [null, null, { categories: [], conversionGroups: [] }, []];
+  : [null, null, { categories: [], filters: [], conversionGroups: [] }, []];
 
 const saved = Astro.url.searchParams.get("saved");
 const error = Astro.url.searchParams.get("error");
 const formId = product ? `product-edit-${product.id}` : "product-edit";
+const selectedCategory = product?.categoryId
+  ? options.categories.find((category) => category.id === product.categoryId) ?? null
+  : null;
+const selectedFilterIds = new Set(selectedCategory?.filterIds ?? []);
 
 const savedMessages: Record<string, string> = {
-  created: "产品已新增，可以继续编辑或直接返回列表。",
-  updated: "产品信息、分类和图片已保存。",
+  created: "产品已新增。",
+  updated: "产品已保存。",
 };
 
 const errorMessages: Record<string, string> = {
@@ -33,11 +37,13 @@ const errorMessages: Record<string, string> = {
   "category-name": "分类名称不能超过 80 个字符。",
   category: "所选分类无效或不属于当前分区。",
   "category-unavailable": "分类目录状态无效。",
+  filters: "分类筛选选择无效。",
+  "filter-category": "选择分类筛选前必须填写产品分类。",
   conversion: "所选转化组无效或不属于当前分区。",
   "conversion-required": "发布产品必须绑定转化组。",
   "conversion-unavailable": "发布产品时，转化组必须启用且至少包含一个启用资源。",
   image: "封面或图库图片不存在，请重新上传。",
-  gallery: "产品图库最多 30 张，且图片选择必须有效。",
+  gallery: "产品图库最多 30 张。",
   tags: "标签最多 20 个，每个标签不能超过 40 个字符。",
   body: "正文不能超过 30000 个字符。",
   cta: "CTA 文案不能为空，且不能超过 80 个字符。",
@@ -63,16 +69,13 @@ const errorMessages: Record<string, string> = {
       >
         <section class="admin-card">
           <div class="admin-toolbar product-toolbar">
-            <div>
-              <h2>{product.title}</h2>
-              <span class="admin-section-note">产品 ID：{product.id}</span>
-            </div>
+            <h2>{product.title}</h2>
             <div class="toolbar-actions">
               {product.status === "published" && (
-                <a class="button secondary" href={`/${encodeURIComponent(channel.slug)}/product/${encodeURIComponent(product.slug)}`} target="_blank" rel="noreferrer">查看前台</a>
+                <a class="button secondary" href={`/${encodeURIComponent(channel.slug)}/product/${encodeURIComponent(product.slug)}`} target="_blank" rel="noreferrer">前台</a>
               )}
-              <a class="button secondary" href={`/admin/channels/${encodeURIComponent(channelId)}/products`}>返回列表</a>
-              <button class="button" type="submit">保存产品</button>
+              <a class="button secondary" href={`/admin/channels/${encodeURIComponent(channelId)}/products`}>产品列表</a>
+              <button class="button" type="submit">保存</button>
             </div>
           </div>
 
@@ -111,12 +114,35 @@ const errorMessages: Record<string, string> = {
                 list="product-category-options"
                 autocomplete="off"
                 value={product.categoryName ?? ""}
-                placeholder="选择已有分类或直接输入新分类"
+                data-category-name
               />
               <datalist id="product-category-options">
-                {options.categories.map((category) => <option value={category.name}></option>)}
+                {options.categories.map((category) => (
+                  <option value={category.name} data-filter-ids={category.filterIds.join(",")}></option>
+                ))}
               </datalist>
-              <small>修改为新名称时会自动创建分类；相同名称会复用现有目录。</small>
+            </div>
+
+            <div class="admin-field admin-span-4">
+              <label>分类筛选</label>
+              {options.filters.length > 0 ? (
+                <div class="filter-choice-grid" data-category-filter-list>
+                  {options.filters.map((filter) => (
+                    <label class:list={["filter-choice", filter.status !== "enabled" && "is-disabled"]}>
+                      <input
+                        type="checkbox"
+                        name="filterIds"
+                        value={filter.id}
+                        checked={selectedFilterIds.has(filter.id)}
+                        data-category-filter
+                      />
+                      <span>{filter.name}</span>
+                    </label>
+                  ))}
+                </div>
+              ) : (
+                <a class="empty-control-link" href={`/admin/channels/${encodeURIComponent(channelId)}/filters`}>设置分类筛选</a>
+              )}
             </div>
 
             <div class="admin-field admin-span-4">
@@ -125,44 +151,33 @@ const errorMessages: Record<string, string> = {
                 <option value="">暂不绑定</option>
                 {options.conversionGroups.map((group) => (
                   <option value={group.id} selected={product.conversionGroupId === group.id}>
-                    {group.name} · {group.status === "enabled" ? "启用" : "停用"} · {group.enabledResourceCount} 可用资源
+                    {group.name} · {group.enabledResourceCount}
                   </option>
                 ))}
               </select>
             </div>
 
-            <div class="admin-field admin-span-2">
+            <div class="admin-field admin-span-3">
               <label for="product-cta">CTA 文案</label>
               <input id="product-cta" name="ctaLabel" maxlength="80" required value={product.ctaLabel} />
             </div>
 
-            <div class="admin-field admin-span-2 compact-check-field">
-              <label>推荐</label>
-              <label class="compact-check"><input type="checkbox" name="featured" value="1" checked={product.featured} /> 置顶推荐</label>
+            <div class="admin-field admin-span-7">
+              <label for="product-tags">产品标签</label>
+              <input id="product-tags" name="tags" maxlength="1000" value={product.tags.join(", ")} placeholder="tag-one, tag-two" />
             </div>
 
-            <div class="admin-field admin-span-12">
-              <label for="product-tags">产品标签</label>
-              <input id="product-tags" name="tags" maxlength="1000" value={product.tags.join(", ")} placeholder="tag-one, tag-two；最多 20 个" />
+            <div class="admin-field admin-span-2 compact-check-field">
+              <label>推荐</label>
+              <label class="compact-check"><input type="checkbox" name="featured" value="1" checked={product.featured} /> 置顶</label>
             </div>
           </div>
         </section>
 
         <section class="admin-card">
-          <div class="admin-section-bar">
-            <div>
-              <h2>产品图片</h2>
-              <span class="admin-section-note">直接上传到 R2；移除绑定不会立即删除文件</span>
-            </div>
-          </div>
+          <div class="admin-section-bar"><h2>产品图片</h2></div>
           <div class="admin-card-body product-image-grid">
-            <DirectImageUpload
-              name="coverAssetId"
-              label="产品封面"
-              form={formId}
-              value={product.coverAssetId}
-              help="用于目录卡片和详情页首图。"
-            />
+            <DirectImageUpload name="coverAssetId" label="产品封面" form={formId} value={product.coverAssetId} />
             <DirectImageUpload
               name="galleryAssetIds"
               label="产品图库"
@@ -175,16 +190,12 @@ const errorMessages: Record<string, string> = {
                 name: image.originalName,
                 meta: `${image.width}×${image.height}`,
               }))}
-              help="保存时按当前顺序重建图库关系；未绑定文件由图片库统一清理。"
             />
           </div>
         </section>
 
         <section class="admin-card">
-          <div class="admin-section-bar">
-            <h2>产品正文</h2>
-            <span class="admin-section-note">支持 ## 标题、### 小标题、- 列表、**粗体**、*斜体*、HTTPS 链接</span>
-          </div>
+          <div class="admin-section-bar"><h2>产品正文</h2></div>
           <div class="admin-card-body">
             <div class="admin-field">
               <label for="product-body">正文内容</label>
@@ -207,24 +218,56 @@ const errorMessages: Record<string, string> = {
       </form>
     </>
   ) : (
-    <section class="admin-card"><div class="admin-empty">找不到该产品，或产品不属于当前分区。<a class="button secondary" href={channel ? `/admin/channels/${encodeURIComponent(channelId)}/products` : "/admin/channels"}>返回</a></div></section>
+    <section class="admin-card"><div class="admin-empty">找不到该产品。</div></section>
   )}
 </AdminLayout>
 
+<script is:inline>
+  (() => {
+    const category = document.querySelector('[data-category-name]');
+    const optionElements = Array.from(document.querySelectorAll('#product-category-options option'));
+    const filterInputs = Array.from(document.querySelectorAll('[data-category-filter]'));
+    if (!category || filterInputs.length === 0) return;
+
+    const normalize = (value) => value.trim().replace(/\s+/g, ' ').toLocaleLowerCase('en-US');
+    const categoryFilters = new Map(optionElements.map((option) => [
+      normalize(option.value),
+      new Set((option.dataset.filterIds || '').split(',').filter(Boolean)),
+    ]));
+    let previousKey = normalize(category.value);
+
+    const syncFilters = () => {
+      const key = normalize(category.value);
+      if (key === previousKey) return;
+      previousKey = key;
+      const selected = categoryFilters.get(key) || new Set();
+      for (const input of filterInputs) input.checked = selected.has(input.value);
+    };
+
+    category.addEventListener('input', syncFilters);
+    category.addEventListener('change', syncFilters);
+  })();
+</script>
+
 <style>
-  .product-entry { display: grid; gap: .55rem; }
+  .product-entry { display: grid; gap: .65rem; }
   .product-toolbar { align-items: center; }
-  .product-toolbar > div:first-child { min-width: 0; }
-  .product-toolbar h2 { max-width: 38rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .product-toolbar h2 { overflow: hidden; max-width: 40rem; text-overflow: ellipsis; white-space: nowrap; }
   .toolbar-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .35rem; }
-  .product-image-grid { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: .8rem; }
+  .product-image-grid { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: 1rem; }
   .compact-check-field { justify-content: flex-end; }
-  .compact-check { display: flex; min-height: 2.05rem; align-items: center; gap: .35rem; padding: 0 .45rem; border: 1px solid #302d36; border-radius: .3rem; background: #0d0c10; }
+  .compact-check { display: flex; min-height: 2.1rem; align-items: center; gap: .4rem; padding: 0 .55rem; border: 1px solid var(--line); border-radius: .35rem; background: #fff; }
   .compact-check input { width: .95rem; height: .95rem; margin: 0; }
+  .filter-choice-grid { display: flex; min-height: 2.1rem; flex-wrap: wrap; align-items: center; gap: .3rem; }
+  .filter-choice { display: inline-flex; min-height: 1.85rem; align-items: center; gap: .3rem; border: 1px solid var(--line); border-radius: .35rem; padding: .25rem .5rem; background: #fff; cursor: pointer; }
+  .filter-choice:has(input:checked) { border-color: #2563eb; background: #eff6ff; color: #1d4ed8; }
+  .filter-choice.is-disabled { opacity: .55; }
+  .filter-choice input { width: .9rem; height: .9rem; margin: 0; }
+  .empty-control-link { display: flex; min-height: 2.1rem; align-items: center; border: 1px dashed var(--line); border-radius: .35rem; padding: 0 .55rem; color: #2563eb; }
   textarea { min-height: 14rem; resize: vertical; }
   .body-preview summary { padding: .55rem .65rem; cursor: pointer; }
   .body-preview article { padding: .75rem; border-top: 1px solid var(--line); line-height: 1.65; }
-  .product-entry-actions { position: sticky; z-index: 10; bottom: .5rem; display: flex; justify-content: flex-end; gap: .4rem; padding: .55rem; border: 1px solid var(--line); border-radius: .42rem; background: rgba(18,17,23,.94); backdrop-filter: blur(16px); }
+  .product-entry-actions { position: sticky; z-index: 10; bottom: .5rem; display: flex; justify-content: flex-end; gap: .4rem; padding: .55rem; border: 1px solid var(--line); border-radius: .45rem; background: rgba(255,255,255,.96); }
   @media (max-width: 767px) {
     .product-image-grid { grid-template-columns: 1fr; }
     .toolbar-actions { width: 100%; justify-content: flex-start; }

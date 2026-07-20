@@ -6,6 +6,7 @@ import {
   parseProductForm,
   validateProductRelations,
 } from "@/lib/admin/product-form";
+import { categoryFiltersBelongToChannel } from "@/lib/admin/category-form";
 import { parseProductEntryExtras } from "@/lib/admin/product-entry";
 import {
   removeEmptyGeneratedCategory,
@@ -43,12 +44,16 @@ export const POST: APIRoute = async ({ request, params }) => {
 
   try {
     const product = await env.DB.prepare(
-      "SELECT id FROM products WHERE id = ?1 AND channel_id = ?2",
-    ).bind(productId, channelId).first<{ id: string }>();
+      "SELECT id, category_id FROM products WHERE id = ?1 AND channel_id = ?2",
+    ).bind(productId, channelId).first<{ id: string; category_id: string | null }>();
     if (!product) return redirect(request, channelId, productId, { error: "not-found" });
 
     if (!(await imageAssetsExist([value.coverAssetId ?? "", ...extras.galleryAssetIds]))) {
       return redirect(request, channelId, productId, { error: "image" });
+    }
+
+    if (!(await categoryFiltersBelongToChannel(channelId, extras.filterIds))) {
+      return redirect(request, channelId, productId, { error: "filters" });
     }
 
     const category = await resolveProductCategory({
@@ -59,6 +64,10 @@ export const POST: APIRoute = async ({ request, params }) => {
       coverAssetId: value.coverAssetId,
     });
     generatedCategoryId = category.created ? category.id : null;
+
+    if (!category.id && extras.filterIds.length > 0) {
+      return redirect(request, channelId, productId, { error: "filter-category" });
+    }
 
     const relationError = await validateProductRelations(
       channelId,
@@ -111,9 +120,29 @@ export const POST: APIRoute = async ({ request, params }) => {
            VALUES (?1, ?2, ?3)`,
         ).bind(productId, imageAssetId, index * 10),
       ),
+      ...(category.id
+        ? [
+            env.DB.prepare("DELETE FROM category_filter_relations WHERE category_id = ?1").bind(category.id),
+            ...extras.filterIds.map((filterId) =>
+              env.DB.prepare(
+                `INSERT INTO category_filter_relations (category_id, filter_id)
+                 VALUES (?1, ?2)`,
+              ).bind(category.id, filterId),
+            ),
+          ]
+        : []),
     ];
 
     await env.DB.batch(statements);
+
+    if (product.category_id && product.category_id !== category.id) {
+      try {
+        await removeEmptyGeneratedCategory(product.category_id);
+      } catch (cleanupError) {
+        console.error(JSON.stringify({ event: "old_category_cleanup_failed", categoryId: product.category_id, error: String(cleanupError) }));
+      }
+    }
+
     return redirect(request, channelId, productId, { saved: "updated" });
   } catch (error) {
     if (generatedCategoryId) {
