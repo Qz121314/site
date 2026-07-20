@@ -1,14 +1,13 @@
 ---
 import PublicLayout from "@/layouts/PublicLayout.astro";
-import { loadPublicSiteShell } from "@/lib/db/public";
-import { loadPublicProductDetailWithoutContactLookup } from "@/lib/db/public-product-detail";
+import { loadPublicProductDetail, loadPublicSiteShell } from "@/lib/db/public";
 
 export const prerender = false;
 
 const channelSlug = Astro.params.channel ?? "";
 const productSlug = Astro.params.product ?? "";
 const site = await loadPublicSiteShell();
-const product = await loadPublicProductDetailWithoutContactLookup(channelSlug, productSlug, site.r2PublicBaseUrl);
+const product = await loadPublicProductDetail(channelSlug, productSlug, site.r2PublicBaseUrl);
 
 if (!product) Astro.response.status = 404;
 
