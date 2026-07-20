@@ -1,0 +1,39 @@
+import { env } from "cloudflare:workers";
+import type { APIRoute } from "astro";
+import { isSameOriginPost } from "@/lib/auth/session";
+
+export const prerender = false;
+
+function redirect(request: Request, channelId: string, params: Record<string, string>): Response {
+  const url = new URL(`/admin/channels/${encodeURIComponent(channelId)}/conversions`, request.url);
+  for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);
+  return Response.redirect(url, 303);
+}
+
+export const POST: APIRoute = async ({ request, params }) => {
+  if (!isSameOriginPost(request)) return new Response("Forbidden", { status: 403 });
+
+  const channelId = params.channelId ?? "";
+  const groupId = params.groupId ?? "";
+  const resourceId = params.resourceId ?? "";
+  if (!channelId || !groupId || !resourceId) return new Response("Not Found", { status: 404 });
+
+  try {
+    const existing = await env.DB.prepare(
+      `SELECT r.id
+       FROM conversion_resources r
+       INNER JOIN conversion_groups g ON g.id = r.group_id
+       WHERE r.id = ?1 AND r.group_id = ?2 AND g.channel_id = ?3`,
+    ).bind(resourceId, groupId, channelId).first<{ id: string }>();
+    if (!existing) return redirect(request, channelId, { error: "not-found" });
+
+    await env.DB.prepare(
+      "DELETE FROM conversion_resources WHERE id = ?1 AND group_id = ?2",
+    ).bind(resourceId, groupId).run();
+
+    return redirect(request, channelId, { saved: "resource-deleted", group: groupId });
+  } catch (error) {
+    console.error(JSON.stringify({ event: "admin_conversion_resource_delete_failed", channelId, groupId, resourceId, error: String(error) }));
+    return redirect(request, channelId, { error: "database", group: groupId });
+  }
+};
