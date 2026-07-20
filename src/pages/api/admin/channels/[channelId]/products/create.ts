@@ -2,7 +2,7 @@ import { env } from "cloudflare:workers";
 import type { APIRoute } from "astro";
 import { isSameOriginPost } from "@/lib/auth/session";
 import { parseProductForm, validateProductRelations } from "@/lib/admin/product-form";
-import { uniqueProductSlug } from "@/lib/admin/automatic-slug";
+import { automaticSlug, uniqueProductSlug } from "@/lib/admin/automatic-slug";
 import { categoryFiltersBelongToChannel } from "@/lib/admin/category-form";
 import { parseProductEntryExtras } from "@/lib/admin/product-entry";
 import { removeEmptyGeneratedCategory, resolveProductCategory } from "@/lib/admin/product-category";
@@ -34,7 +34,7 @@ export const POST: APIRoute = async ({ request, params }) => {
   const form = await request.formData();
   const rawTitle = form.get("title");
   const title = typeof rawTitle === "string" ? rawTitle.trim() : "";
-  form.set("slug", await uniqueProductSlug(channelId, title));
+  form.set("slug", automaticSlug(title, "product", 96));
 
   const parsed = parseProductForm(form);
   if (!parsed.ok) return entryRedirect(request, channelId, { error: parsed.code });
@@ -51,6 +51,8 @@ export const POST: APIRoute = async ({ request, params }) => {
       .bind(channelId)
       .first<{ id: string }>();
     if (!channel) return entryRedirect(request, channelId, { error: "not-found" });
+
+    const slug = await uniqueProductSlug(channelId, value.title);
 
     if (!(await imageAssetsExist([value.coverAssetId ?? "", ...extras.galleryAssetIds]))) {
       return entryRedirect(request, channelId, { error: "image" });
@@ -98,7 +100,7 @@ export const POST: APIRoute = async ({ request, params }) => {
         value.conversionGroupId,
         value.coverAssetId,
         value.title,
-        value.slug,
+        slug,
         value.tagsJson,
         value.bodySource,
         value.bodyHtml,
