@@ -2,7 +2,7 @@
 
 一个面向手机端和平板端的通用视觉推荐站模板。项目通过后台维护分区、分类筛选、分类、产品、Hero 广告池、随机 CTA 转化池和 R2 图片资产，以一套代码部署一个网站。
 
-> 当前状态：需求已经冻结，下一步进入项目脚手架、数据库迁移和功能开发。
+> 当前状态：第一阶段项目脚手架、D1 初始迁移、后台登录和自动部署流程已经实现；正在进入核心后台功能开发。
 
 ## 1. 项目目标
 
@@ -178,7 +178,7 @@ Cloudflare Worker
 | `@astrojs/cloudflare` | 14.x | Cloudflare Workers 适配器 |
 | Tailwind CSS | 4.3.3 | UI 和响应式样式 |
 | React | 19.2.7 | 后台交互组件和必要的交互岛 |
-| TypeScript | 7.x | 类型系统 |
+| TypeScript | 6.0.3 | 类型系统；Astro 检查器兼容版本 |
 | Wrangler | 4.x | D1、R2、Secrets 和 Worker 部署 |
 | Cloudflare D1 | 托管服务 | SQLite 关系数据库 |
 | Cloudflare R2 | 托管服务 | 图片对象存储 |

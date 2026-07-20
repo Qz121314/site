@@ -1,7 +1,12 @@
-name: Deploy Cloudflare Worker
+name: Validate and Deploy Cloudflare Worker
 
 on:
   push:
+    branches: [main]
+    paths-ignore:
+      - README.md
+      - docs/**
+  pull_request:
     branches: [main]
     paths-ignore:
       - README.md
@@ -12,11 +17,11 @@ permissions:
   contents: read
 
 concurrency:
-  group: site-production
+  group: site-${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  deploy:
+  validate-and-deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
@@ -30,27 +35,46 @@ jobs:
         uses: actions/setup-node@v6
         with:
           node-version: 24
-          package-manager-cache: false
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: 初始化诊断目录
+        run: mkdir -p ci-logs
 
       - name: 安装依赖
-        run: pnpm install --no-frozen-lockfile
+        shell: bash
+        run: |
+          set -o pipefail
+          pnpm install --frozen-lockfile 2>&1 | tee ci-logs/install.log
 
       - name: 生成 Cloudflare 类型
-        run: pnpm cf-typegen
+        shell: bash
+        run: |
+          set -o pipefail
+          pnpm cf-typegen 2>&1 | tee ci-logs/typegen.log
 
       - name: 类型检查
-        run: pnpm check
-        env:
-          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
-          SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
+        shell: bash
+        run: |
+          set -o pipefail
+          pnpm check 2>&1 | tee ci-logs/check.log
 
       - name: 构建 Astro SSR
-        run: pnpm build
-        env:
-          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
-          SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
+        shell: bash
+        run: |
+          set -o pipefail
+          pnpm build 2>&1 | tee ci-logs/build.log
+
+      - name: 保存失败诊断
+        if: failure()
+        uses: actions/upload-artifact@v6
+        with:
+          name: ci-diagnostics-${{ github.run_id }}
+          path: ci-logs/
+          retention-days: 1
 
       - name: 创建临时 Worker Secrets 文件
+        if: github.event_name != 'pull_request'
         shell: bash
         env:
           ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
@@ -69,17 +93,19 @@ jobs:
           NODE
 
       - name: 部署 Cloudflare Worker
+        if: github.event_name != 'pull_request'
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: pnpm exec wrangler deploy --secrets-file .secrets.production.json
 
       - name: 应用 D1 数据库迁移
+        if: github.event_name != 'pull_request'
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: pnpm db:migrate:remote
 
       - name: 清理临时 Secrets 文件
-        if: always()
+        if: always() && github.event_name != 'pull_request'
         run: rm -f .secrets.production.json
