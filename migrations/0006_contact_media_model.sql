@@ -48,7 +48,3 @@ INSERT OR IGNORE INTO product_images (product_id, image_asset_id, sort_order)
 SELECT id, cover_asset_id, -10
 FROM products
 WHERE cover_asset_id IS NOT NULL;
-
-UPDATE products
-SET cover_asset_id = NULL
-WHERE cover_asset_id IS NOT NULL;
