@@ -1,0 +1,53 @@
+---
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import { loadAdminChannel } from "@/lib/db/site";
+
+export const prerender = false;
+
+const sections = {
+  filters: {
+    title: "分类筛选",
+    description: "只管理当前分区的高频筛选按钮以及筛选项与分类之间的关联。",
+  },
+  categories: {
+    title: "分类管理",
+    description: "只管理当前分区的分类、分类图片、排序、发布状态和筛选关联。",
+  },
+  products: {
+    title: "产品管理",
+    description: "只管理当前分区的产品、分类归属、图片、正文、排序和转化组绑定。",
+  },
+  ads: {
+    title: "Hero 广告",
+    description: "只管理当前分区的 Hero 广告池、广告图片、跳转地址和轮播顺序。",
+  },
+  conversions: {
+    title: "转化池",
+    description: "只管理当前分区的转化组和 URL、电话、WhatsApp、Telegram、邮箱资源。",
+  },
+} as const;
+
+type SectionKey = keyof typeof sections;
+const channelId = Astro.params.channelId ?? "";
+const sectionKey = Astro.params.section as SectionKey | undefined;
+const section = sectionKey && sectionKey in sections ? sections[sectionKey] : null;
+const channel = channelId ? await loadAdminChannel(channelId) : null;
+const title = channel && section ? `${channel.name} · ${section.title}` : "页面不存在";
+---
+
+<AdminLayout title={title}>
+  {channel && section ? (
+    <section class="panel" style="padding:1.25rem">
+      <div class="eyebrow">{channel.name}</div>
+      <h2 style="margin-top:.65rem">{section.title}</h2>
+      <p>{section.description}</p>
+      <span class="badge">所有查询和写入都固定使用当前分区 ID：{channel.id}</span>
+    </section>
+  ) : (
+    <section class="panel" style="padding:1.25rem">
+      <h2>找不到该页面</h2>
+      <p>分区不存在，或访问了不支持的分区管理模块。</p>
+      <a class="button secondary" href="/admin/channels">返回分区管理</a>
+    </section>
+  )}
+</AdminLayout>

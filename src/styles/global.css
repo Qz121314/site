@@ -12,7 +12,7 @@
   --accent-strong: #f3d29c;
   --danger: #ff6d8b;
   --admin-sidebar-compact: 5rem;
-  --admin-sidebar-wide: 15rem;
+  --admin-sidebar-wide: 17rem;
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
@@ -88,12 +88,25 @@ p { color: var(--muted); line-height: 1.7; }
 .admin-sidebar-brand-text { display: none; }
 .admin-sidebar-nav {
   display: grid;
-  gap: .35rem;
+  gap: .9rem;
   min-height: 0;
   overflow-y: auto;
+  padding-right: .05rem;
   scrollbar-width: thin;
 }
-.admin-sidebar-link {
+.admin-nav-section { display: grid; gap: .35rem; }
+.admin-nav-section + .admin-nav-section { padding-top: .75rem; border-top: 1px solid var(--line); }
+.admin-nav-section-label {
+  display: none;
+  padding: 0 .65rem .2rem;
+  color: rgba(170, 162, 179, .72);
+  font-size: .68rem;
+  font-weight: 800;
+  letter-spacing: .12em;
+}
+.admin-sidebar-link,
+.admin-channel-summary,
+.admin-empty-channels {
   display: flex;
   width: 100%;
   min-height: 2.85rem;
@@ -109,12 +122,15 @@ p { color: var(--muted); line-height: 1.7; }
   text-align: left;
   transition: color .16s ease, background-color .16s ease, border-color .16s ease;
 }
-.admin-sidebar-link:hover {
+.admin-sidebar-link:hover,
+.admin-channel-summary:hover,
+.admin-empty-channels:hover {
   color: var(--text);
   border-color: var(--line);
   background: rgba(255,255,255,.045);
 }
-.admin-sidebar-link[aria-current="page"] {
+.admin-sidebar-link[aria-current="page"],
+.admin-channel-summary.is-active {
   color: var(--accent-strong);
   border-color: rgba(231,189,121,.22);
   background: linear-gradient(135deg, rgba(231,189,121,.13), rgba(142,91,47,.07));
@@ -125,13 +141,39 @@ p { color: var(--muted); line-height: 1.7; }
   flex: 0 0 2rem;
   aspect-ratio: 1;
   place-items: center;
+  overflow: hidden;
   border-radius: .7rem;
   background: rgba(255,255,255,.055);
   color: currentColor;
   font-size: .78rem;
   font-weight: 850;
 }
-.admin-sidebar-label { display: none; font-size: .9rem; font-weight: 680; }
+.admin-sidebar-label { display: none; min-width: 0; font-size: .9rem; font-weight: 680; }
+.admin-channel-group { min-width: 0; }
+.admin-channel-group > summary { list-style: none; }
+.admin-channel-group > summary::-webkit-details-marker { display: none; }
+.admin-channel-name { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.admin-channel-status {
+  width: .48rem;
+  height: .48rem;
+  flex: 0 0 .48rem;
+  border-radius: 999px;
+  background: #9b93a4;
+  box-shadow: 0 0 0 3px rgba(155,147,164,.08);
+}
+.admin-channel-status.is-published { background: #65d99c; box-shadow: 0 0 0 3px rgba(101,217,156,.1); }
+.admin-channel-status.is-draft { background: #e7bd79; box-shadow: 0 0 0 3px rgba(231,189,121,.1); }
+.admin-channel-status.is-disabled { background: #ff6d8b; box-shadow: 0 0 0 3px rgba(255,109,139,.1); }
+.admin-channel-chevron { display: none; flex: 0 0 auto; font-size: 1.25rem; transition: transform .16s ease; }
+.admin-channel-group[open] .admin-channel-chevron { transform: rotate(90deg); }
+.admin-channel-subnav {
+  display: grid;
+  gap: .25rem;
+  padding: .3rem 0 .35rem;
+}
+.admin-sidebar-sublink { min-height: 2.45rem; }
+.admin-sidebar-sublink .admin-sidebar-icon { width: 1.75rem; flex-basis: 1.75rem; font-size: .7rem; }
+.admin-empty-channels { color: rgba(170, 162, 179, .76); }
 .admin-sidebar-footer {
   display: grid;
   gap: .35rem;
@@ -194,8 +236,15 @@ p { color: var(--muted); line-height: 1.7; }
   .shell, .admin-shell { padding: 2rem; }
   .admin-sidebar { width: var(--admin-sidebar-wide); padding: 1.25rem 1rem; }
   .admin-sidebar-brand { justify-content: flex-start; padding: 0 .55rem; }
-  .admin-sidebar-brand-text, .admin-sidebar-label { display: inline; }
-  .admin-sidebar-link { justify-content: flex-start; padding: .48rem .6rem; }
+  .admin-sidebar-brand-text, .admin-sidebar-label, .admin-nav-section-label, .admin-channel-chevron { display: inline; }
+  .admin-sidebar-link, .admin-channel-summary, .admin-empty-channels { justify-content: flex-start; padding: .48rem .6rem; }
+  .admin-channel-summary { position: relative; }
+  .admin-channel-subnav {
+    margin: .2rem 0 .35rem 1.55rem;
+    padding: .2rem 0 .2rem .7rem;
+    border-left: 1px solid rgba(255,255,255,.08);
+  }
+  .admin-sidebar-sublink { border-radius: .72rem; }
   .admin-content { margin-left: var(--admin-sidebar-wide); }
   .admin-page-header { padding: 1.4rem 2rem; }
   .admin-page-body { padding: 2rem; }
