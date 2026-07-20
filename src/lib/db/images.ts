@@ -91,7 +91,10 @@ function normalizeFilter(value: string): AdminImageFilter {
 }
 
 function escapeLike(value: string): string {
-  return value.replace(/[\%_]/gu, "\$&");
+  return value
+    .replaceAll("\\", "\\\\")
+    .replaceAll("%", "\\%")
+    .replaceAll("_", "\\_");
 }
 
 function mapImage(row: AdminImageRow): AdminImageAsset {
