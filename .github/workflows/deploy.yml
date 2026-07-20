@@ -66,6 +66,12 @@ jobs:
           set -o pipefail
           pnpm build 2>&1 | tee ci-logs/build.log
 
+      - name: 验证 Cloudflare 资源绑定
+        shell: bash
+        run: |
+          set -o pipefail
+          pnpm verify:deploy-config 2>&1 | tee ci-logs/deploy-config.log
+
       - name: 创建临时 Worker Secrets 文件
         if: github.event_name != 'pull_request'
         shell: bash

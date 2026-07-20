@@ -13,6 +13,7 @@
     "preview": "astro preview",
     "check": "astro check",
     "cf-typegen": "wrangler types",
+    "verify:deploy-config": "node scripts/verify-deploy-config.mjs",
     "db:migrate:local": "wrangler d1 migrations apply DB --local",
     "db:migrate:remote": "wrangler d1 migrations apply DB --remote --yes",
     "deploy": "wrangler deploy"

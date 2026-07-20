@@ -8,6 +8,11 @@ export default defineConfig({
   adapter: cloudflare({
     imageService: "compile",
   }),
+  session: {
+    driver: {
+      entrypoint: new URL("./src/lib/astro/disabled-session-driver.ts", import.meta.url),
+    },
+  },
   integrations: [react()],
   vite: {
     plugins: [tailwindcss()],
