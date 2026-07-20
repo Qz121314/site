@@ -15,6 +15,7 @@ on:
 
 permissions:
   contents: read
+  issues: write
 
 concurrency:
   group: site-${{ github.workflow }}-${{ github.ref }}
@@ -109,3 +110,22 @@ jobs:
       - name: 清理临时 Secrets 文件
         if: always() && github.event_name != 'pull_request'
         run: rm -f .secrets.production.json
+
+      - name: 记录正式部署成功
+        if: success() && github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          STATUS_ISSUE: "3"
+        run: |
+          gh issue reopen "$STATUS_ISSUE" --repo "$GITHUB_REPOSITORY" || true
+          gh issue comment "$STATUS_ISSUE" --repo "$GITHUB_REPOSITORY" --body "✅ Cloudflare 正式部署成功。\n\n- Commit: \`$GITHUB_SHA\`\n- Actions: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID"
+          gh issue close "$STATUS_ISSUE" --repo "$GITHUB_REPOSITORY" --reason completed
+
+      - name: 记录正式部署失败
+        if: failure() && github.event_name != 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          STATUS_ISSUE: "3"
+        run: |
+          gh issue reopen "$STATUS_ISSUE" --repo "$GITHUB_REPOSITORY" || true
+          gh issue comment "$STATUS_ISSUE" --repo "$GITHUB_REPOSITORY" --body "❌ Cloudflare 正式部署失败。\n\n- Commit: \`$GITHUB_SHA\`\n- Actions: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID\n\n请检查失败步骤和 CI 诊断附件。"
