@@ -57,9 +57,9 @@ export const POST: APIRoute = async ({ request }) => {
     do {
       const result = await env.MEDIA_BUCKET.list({
         prefix: "images/",
-        cursor,
         limit: Math.min(R2_LIST_PAGE_SIZE, MAX_SCAN_OBJECTS - scanned),
         include: ["httpMetadata", "customMetadata"],
+        ...(cursor ? { cursor } : {}),
       });
 
       for (const object of result.objects) {
