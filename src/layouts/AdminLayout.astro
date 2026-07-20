@@ -133,10 +133,8 @@ const isActive = (href: string) =>
 
       <main class="admin-content">
         <header class="admin-page-header">
-          <div>
-            <div class="eyebrow">管理后台</div>
-            <h1 class="admin-page-title">{title}</h1>
-          </div>
+          <h1 class="admin-page-title">{title}</h1>
+          <div class="admin-page-actions"><slot name="actions" /></div>
         </header>
         <div class="admin-page-body">
           <slot />
