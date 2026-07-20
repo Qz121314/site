@@ -43,6 +43,11 @@ export const POST: APIRoute = async ({ request, params }) => {
   if (!extras.ok) return entryRedirect(request, channelId, { error: extras.code });
 
   const value = parsed.value;
+  const firstImageAssetId = extras.galleryAssetIds[0] ?? null;
+  if (value.status === "published" && !firstImageAssetId) {
+    return entryRedirect(request, channelId, { error: "image" });
+  }
+
   const productId = crypto.randomUUID();
   let generatedCategoryId: string | null = null;
 
@@ -54,7 +59,7 @@ export const POST: APIRoute = async ({ request, params }) => {
 
     const slug = await uniqueProductSlug(channelId, value.title);
 
-    if (!(await imageAssetsExist([value.coverAssetId ?? "", ...extras.galleryAssetIds]))) {
+    if (!(await imageAssetsExist(extras.galleryAssetIds))) {
       return entryRedirect(request, channelId, { error: "image" });
     }
 
@@ -67,7 +72,7 @@ export const POST: APIRoute = async ({ request, params }) => {
       categoryId: value.categoryId,
       categoryName: extras.categoryName,
       productStatus: value.status,
-      coverAssetId: value.coverAssetId,
+      coverAssetId: firstImageAssetId,
     });
     generatedCategoryId = category.created ? category.id : null;
 
@@ -98,7 +103,7 @@ export const POST: APIRoute = async ({ request, params }) => {
         channelId,
         category.id,
         value.conversionGroupId,
-        value.coverAssetId,
+        firstImageAssetId,
         value.title,
         slug,
         value.tagsJson,
