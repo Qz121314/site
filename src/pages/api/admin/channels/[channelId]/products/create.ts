@@ -6,6 +6,7 @@ import {
   parseProductForm,
   validateProductRelations,
 } from "@/lib/admin/product-form";
+import { categoryFiltersBelongToChannel } from "@/lib/admin/category-form";
 import { parseProductEntryExtras } from "@/lib/admin/product-entry";
 import {
   removeEmptyGeneratedCategory,
@@ -57,6 +58,10 @@ export const POST: APIRoute = async ({ request, params }) => {
       return entryRedirect(request, channelId, { error: "image" });
     }
 
+    if (!(await categoryFiltersBelongToChannel(channelId, extras.filterIds))) {
+      return entryRedirect(request, channelId, { error: "filters" });
+    }
+
     const category = await resolveProductCategory({
       channelId,
       categoryId: value.categoryId,
@@ -65,6 +70,10 @@ export const POST: APIRoute = async ({ request, params }) => {
       coverAssetId: value.coverAssetId,
     });
     generatedCategoryId = category.created ? category.id : null;
+
+    if (!category.id && extras.filterIds.length > 0) {
+      return entryRedirect(request, channelId, { error: "filter-category" });
+    }
 
     const relationError = await validateProductRelations(
       channelId,
@@ -106,6 +115,17 @@ export const POST: APIRoute = async ({ request, params }) => {
            VALUES (?1, ?2, ?3)`,
         ).bind(productId, imageAssetId, index * 10),
       ),
+      ...(category.id
+        ? [
+            env.DB.prepare("DELETE FROM category_filter_relations WHERE category_id = ?1").bind(category.id),
+            ...extras.filterIds.map((filterId) =>
+              env.DB.prepare(
+                `INSERT INTO category_filter_relations (category_id, filter_id)
+                 VALUES (?1, ?2)`,
+              ).bind(category.id, filterId),
+            ),
+          ]
+        : []),
     ];
 
     await env.DB.batch(statements);
