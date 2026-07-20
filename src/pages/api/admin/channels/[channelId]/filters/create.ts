@@ -1,7 +1,8 @@
 import { env } from "cloudflare:workers";
 import type { APIRoute } from "astro";
 import { isSameOriginPost } from "@/lib/auth/session";
-import { isDuplicateFilterSlugError, parseFilterForm } from "@/lib/admin/filter-form";
+import { parseFilterForm } from "@/lib/admin/filter-form";
+import { uniqueFilterSlug } from "@/lib/admin/automatic-slug";
 
 export const prerender = false;
 
@@ -20,7 +21,7 @@ export const POST: APIRoute = async ({ request, params }) => {
   const parsed = parseFilterForm(await request.formData());
   if (!parsed.ok) return redirect(request, channelId, { error: parsed.code });
 
-  const { name, slug, sortOrder, status } = parsed.value;
+  const { name, sortOrder, status } = parsed.value;
   const id = crypto.randomUUID();
 
   try {
@@ -29,13 +30,14 @@ export const POST: APIRoute = async ({ request, params }) => {
       .first<{ id: string }>();
     if (!channel) return redirect(request, channelId, { error: "not-found" });
 
+    const slug = await uniqueFilterSlug(channelId, name);
     await env.DB.prepare(
       `INSERT INTO category_filters (id, channel_id, name, slug, sort_order, status)
        VALUES (?1, ?2, ?3, ?4, ?5, ?6)`,
     ).bind(id, channelId, name, slug, sortOrder, status).run();
   } catch (error) {
-    console.error(JSON.stringify({ event: "admin_category_filter_create_failed", channelId, slug, error: String(error) }));
-    return redirect(request, channelId, { error: isDuplicateFilterSlugError(error) ? "duplicate" : "database" });
+    console.error(JSON.stringify({ event: "admin_category_filter_create_failed", channelId, name, error: String(error) }));
+    return redirect(request, channelId, { error: "database" });
   }
 
   return redirect(request, channelId, { saved: "created" });
