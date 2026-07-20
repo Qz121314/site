@@ -7,6 +7,7 @@ interface Props {
   images: AdminImageOption[];
   value?: string | null;
   id?: string;
+  form?: string;
   required?: boolean;
   compact?: boolean;
   emptyLabel?: string;
@@ -19,6 +20,7 @@ const {
   images,
   value = null,
   id = `image-picker-${name}`,
+  form,
   required = false,
   compact = false,
   emptyLabel = "不设置",
@@ -40,7 +42,7 @@ const selected = value ? images.find((image) => image.id === value) ?? null : nu
       />
     </div>
     <div class="image-picker-fields">
-      <select id={id} name={name} required={required} data-image-select>
+      <select id={id} name={name} form={form} required={required} data-image-select>
         {!required && <option value="">{emptyLabel}</option>}
         {images.map((image) => (
           <option
@@ -50,7 +52,7 @@ const selected = value ? images.find((image) => image.id === value) ?? null : nu
             data-name={image.originalName}
             data-meta={`${image.width}×${image.height}`}
           >
-            {image.originalName} · {image.width}×{image.height}
+            {image.originalName} · {image.width}×${image.height}
           </option>
         ))}
       </select>
