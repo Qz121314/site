@@ -10,6 +10,9 @@ type SessionPayload = {
   nonce: string;
 };
 
+let cachedHmacSecret: string | null = null;
+let cachedHmacKey: Promise<CryptoKey> | null = null;
+
 function bytesToBase64Url(bytes: Uint8Array<ArrayBufferLike>): string {
   let binary = "";
   for (const byte of bytes) binary += String.fromCharCode(byte);
@@ -27,8 +30,17 @@ function base64UrlToBytes(value: string): Uint8Array<ArrayBuffer> {
   return bytes;
 }
 
-async function importHmacKey(secret: string): Promise<CryptoKey> {
-  return crypto.subtle.importKey("raw", encoder.encode(secret), { name: "HMAC", hash: "SHA-256" }, false, ["sign", "verify"]);
+function importHmacKey(secret: string): Promise<CryptoKey> {
+  if (cachedHmacKey && cachedHmacSecret === secret) return cachedHmacKey;
+  cachedHmacSecret = secret;
+  cachedHmacKey = crypto.subtle.importKey(
+    "raw",
+    encoder.encode(secret),
+    { name: "HMAC", hash: "SHA-256" },
+    false,
+    ["sign", "verify"],
+  );
+  return cachedHmacKey;
 }
 
 export async function safeCompareText(candidate: string, expected: string): Promise<boolean> {
