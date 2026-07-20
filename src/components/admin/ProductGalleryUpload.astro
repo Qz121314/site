@@ -25,8 +25,8 @@ const { form, values = [] } = Astro.props;
 <script is:inline>
   (() => {
     const initialize = (wrapper) => {
-      if (wrapper.dataset.gallerySortReady === '1') return;
-      wrapper.dataset.gallerySortReady = '1';
+      if (wrapper.__gallerySortReady) return;
+      wrapper.__gallerySortReady = true;
 
       const upload = wrapper.querySelector('[data-direct-image-upload]');
       const preview = upload?.querySelector('[data-upload-preview]');
@@ -39,8 +39,9 @@ const { form, values = [] } = Astro.props;
       const hiddenFields = () => Array.from(values.querySelectorAll('[data-upload-hidden]'));
 
       const syncOrder = () => {
+        const currentItems = items();
         const fields = new Map(hiddenFields().map((field) => [field.dataset.imageId || field.value, field]));
-        items().forEach((item, index) => {
+        currentItems.forEach((item, index) => {
           const id = item.dataset.imageId || '';
           const field = fields.get(id);
           if (field) values.appendChild(field);
@@ -52,7 +53,7 @@ const { form, values = [] } = Astro.props;
           const previous = item.querySelector('[data-move-previous]');
           const next = item.querySelector('[data-move-next]');
           if (previous) previous.disabled = index === 0;
-          if (next) next.disabled = index === items().length - 1;
+          if (next) next.disabled = index === currentItems.length - 1;
         });
       };
 
@@ -126,7 +127,9 @@ const { form, values = [] } = Astro.props;
         const target = event.target instanceof Element ? event.target.closest('[data-upload-item]') : null;
         if (!target || target === dragged) return;
         const rect = target.getBoundingClientRect();
-        const after = event.clientX > rect.left + rect.width / 2;
+        const below = event.clientY > rect.top + rect.height / 2;
+        const sameRow = event.clientY >= rect.top && event.clientY <= rect.bottom;
+        const after = below || (sameRow && event.clientX > rect.left + rect.width / 2);
         preview.insertBefore(dragged, after ? target.nextElementSibling : target);
       });
 
