@@ -7,6 +7,7 @@ export type CategoryStatus = (typeof CATEGORY_STATUSES)[number];
 export type CategoryFormValue = {
   name: string;
   slug: string;
+  imageAssetId: string | null;
   sortOrder: number;
   status: CategoryStatus;
   filterIds: string[];
@@ -14,7 +15,7 @@ export type CategoryFormValue = {
 
 export type CategoryFormResult =
   | { ok: true; value: CategoryFormValue }
-  | { ok: false; code: "name" | "slug" | "sort" | "status" | "filters" };
+  | { ok: false; code: "name" | "slug" | "image" | "sort" | "status" | "filters" };
 
 const SLUG_PATTERN = /^[a-z0-9]+(?:-[a-z0-9]+)*$/u;
 const ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
@@ -22,6 +23,12 @@ const ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-
 function readText(form: FormData, name: string): string {
   const value = form.get(name);
   return typeof value === "string" ? value.trim() : "";
+}
+
+function readOptionalId(form: FormData, name: string): string | null | undefined {
+  const value = readText(form, name);
+  if (!value) return null;
+  return ID_PATTERN.test(value) ? value : undefined;
 }
 
 function readFilterIds(form: FormData): string[] | null {
@@ -36,12 +43,14 @@ function readFilterIds(form: FormData): string[] | null {
 export function parseCategoryForm(form: FormData): CategoryFormResult {
   const name = readText(form, "name");
   const slug = readText(form, "slug").toLowerCase();
+  const imageAssetId = readOptionalId(form, "imageAssetId");
   const sortText = readText(form, "sortOrder");
   const statusText = readText(form, "status");
   const filterIds = readFilterIds(form);
 
   if (!name || name.length > 80) return { ok: false, code: "name" };
   if (!slug || slug.length > 64 || !SLUG_PATTERN.test(slug)) return { ok: false, code: "slug" };
+  if (imageAssetId === undefined) return { ok: false, code: "image" };
 
   const sortOrder = Number(sortText || "0");
   if (!Number.isSafeInteger(sortOrder) || sortOrder < -999999 || sortOrder > 999999) {
@@ -59,6 +68,7 @@ export function parseCategoryForm(form: FormData): CategoryFormResult {
     value: {
       name,
       slug,
+      imageAssetId,
       sortOrder,
       status: statusText as CategoryStatus,
       filterIds,
