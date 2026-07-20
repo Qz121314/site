@@ -4,10 +4,26 @@ export type ProductEntryExtraResult =
   | {
       ok: true;
       categoryName: string;
+      filterIds: string[];
       galleryAssetIds: string[];
       submitAction: "save" | "continue";
     }
-  | { ok: false; code: "category-name" | "gallery" };
+  | { ok: false; code: "category-name" | "filters" | "gallery" };
+
+function readIds(form: FormData, name: string, maximum: number): string[] | null {
+  const values = [
+    ...new Set(
+      form
+        .getAll(name)
+        .filter((value): value is string => typeof value === "string")
+        .map((value) => value.trim())
+        .filter(Boolean),
+    ),
+  ];
+
+  if (values.length > maximum || values.some((id) => !ID_PATTERN.test(id))) return null;
+  return values;
+}
 
 export function parseProductEntryExtras(form: FormData): ProductEntryExtraResult {
   const rawCategoryName = form.get("categoryName");
@@ -17,23 +33,16 @@ export function parseProductEntryExtras(form: FormData): ProductEntryExtraResult
 
   if (categoryName.length > 80) return { ok: false, code: "category-name" };
 
-  const galleryAssetIds = [
-    ...new Set(
-      form
-        .getAll("galleryAssetIds")
-        .filter((value): value is string => typeof value === "string")
-        .map((value) => value.trim())
-        .filter(Boolean),
-    ),
-  ];
+  const filterIds = readIds(form, "filterIds", 100);
+  if (!filterIds) return { ok: false, code: "filters" };
 
-  if (galleryAssetIds.length > 30 || galleryAssetIds.some((id) => !ID_PATTERN.test(id))) {
-    return { ok: false, code: "gallery" };
-  }
+  const galleryAssetIds = readIds(form, "galleryAssetIds", 30);
+  if (!galleryAssetIds) return { ok: false, code: "gallery" };
 
   return {
     ok: true,
     categoryName,
+    filterIds,
     galleryAssetIds,
     submitAction: form.get("submitAction") === "continue" ? "continue" : "save",
   };
