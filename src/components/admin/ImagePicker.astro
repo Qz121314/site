@@ -64,32 +64,37 @@ const selected = value ? images.find((image) => image.id === value) ?? null : nu
   </div>
 </div>
 
-<script>
-  function initializeImagePicker(root: HTMLElement): void {
-    const select = root.querySelector<HTMLSelectElement>("[data-image-select]");
-    const previewBox = root.querySelector<HTMLElement>("[data-preview-box]");
-    const previewImage = root.querySelector<HTMLImageElement>("[data-preview-image]");
-    const previewMeta = root.querySelector<HTMLElement>("[data-preview-meta]");
-    if (!select || !previewBox || !previewImage || !previewMeta) return;
+<script is:inline>
+  (() => {
+    const initialize = (root) => {
+      const select = root.querySelector("[data-image-select]");
+      const previewBox = root.querySelector("[data-preview-box]");
+      const previewImage = root.querySelector("[data-preview-image]");
+      const previewMeta = root.querySelector("[data-preview-meta]");
+      if (!select || !previewBox || !previewImage || !previewMeta) return;
 
-    const refresh = (): void => {
-      const option = select.selectedOptions[0];
-      const preview = option?.dataset.preview ?? "";
-      const name = option?.dataset.name ?? "";
-      const meta = option?.dataset.meta ?? "";
-      const hasImage = Boolean(select.value && preview);
+      const refresh = () => {
+        const option = select.selectedOptions[0];
+        const preview = option?.dataset.preview ?? "";
+        const name = option?.dataset.name ?? "";
+        const meta = option?.dataset.meta ?? "";
+        const hasImage = Boolean(select.value && preview);
 
-      previewBox.hidden = !hasImage;
-      previewImage.src = hasImage ? preview : "";
-      previewImage.alt = hasImage ? name : "";
-      previewMeta.textContent = hasImage ? `${name} · ${meta}` : "未选择图片";
+        previewBox.hidden = !hasImage;
+        previewImage.src = hasImage ? preview : "";
+        previewImage.alt = hasImage ? name : "";
+        previewMeta.textContent = hasImage ? `${name} · ${meta}` : "未选择图片";
+      };
+
+      if (select.dataset.imagePickerReady !== "1") {
+        select.dataset.imagePickerReady = "1";
+        select.addEventListener("change", refresh);
+      }
+      refresh();
     };
 
-    select.addEventListener("change", refresh);
-    refresh();
-  }
-
-  document.querySelectorAll<HTMLElement>("[data-image-picker]").forEach(initializeImagePicker);
+    document.querySelectorAll("[data-image-picker]").forEach(initialize);
+  })();
 </script>
 
 <style>
