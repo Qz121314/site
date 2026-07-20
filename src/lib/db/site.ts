@@ -218,3 +218,56 @@ export async function loadAdminChannel(channelId: string): Promise<AdminChannel 
     return null;
   }
 }
+
+export type AdminCategoryFilter = {
+  id: string;
+  channelId: string;
+  name: string;
+  slug: string;
+  sortOrder: number;
+  status: "enabled" | "disabled";
+  categoryCount: number;
+};
+
+type AdminCategoryFilterRow = {
+  id: string;
+  channel_id: string;
+  name: string;
+  slug: string;
+  sort_order: number;
+  status: AdminCategoryFilter["status"];
+  category_count: number;
+};
+
+export async function loadAdminCategoryFilters(channelId: string): Promise<AdminCategoryFilter[]> {
+  try {
+    const result = await env.DB.prepare(
+      `SELECT
+         f.id,
+         f.channel_id,
+         f.name,
+         f.slug,
+         f.sort_order,
+         f.status,
+         COUNT(r.category_id) AS category_count
+       FROM category_filters f
+       LEFT JOIN category_filter_relations r ON r.filter_id = f.id
+       WHERE f.channel_id = ?1
+       GROUP BY f.id, f.channel_id, f.name, f.slug, f.sort_order, f.status
+       ORDER BY f.sort_order ASC, f.created_at ASC`,
+    ).bind(channelId).all<AdminCategoryFilterRow>();
+
+    return result.results.map((row) => ({
+      id: row.id,
+      channelId: row.channel_id,
+      name: row.name,
+      slug: row.slug,
+      sortOrder: row.sort_order,
+      status: row.status,
+      categoryCount: row.category_count,
+    }));
+  } catch (error) {
+    console.error(JSON.stringify({ event: "admin_category_filters_read_failed", channelId, error: String(error) }));
+    return [];
+  }
+}
