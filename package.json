@@ -14,7 +14,7 @@
     "check": "astro check",
     "cf-typegen": "wrangler types",
     "db:migrate:local": "wrangler d1 migrations apply DB --local",
-    "db:migrate:remote": "wrangler d1 migrations apply DB --remote",
+    "db:migrate:remote": "wrangler d1 migrations apply DB --remote --yes",
     "deploy": "wrangler deploy"
   },
   "dependencies": {
