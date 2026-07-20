@@ -18,14 +18,10 @@ export const POST: APIRoute = async ({ request, params }) => {
   if (!channelId || !productId) return new Response("Not Found", { status: 404 });
 
   try {
-    const product = await env.DB.prepare(
-      "SELECT id FROM products WHERE id = ?1 AND channel_id = ?2",
-    ).bind(productId, channelId).first<{ id: string }>();
-    if (!product) return redirect(request, channelId, { error: "not-found" });
-
-    await env.DB.prepare(
+    const result = await env.DB.prepare(
       "DELETE FROM products WHERE id = ?1 AND channel_id = ?2",
     ).bind(productId, channelId).run();
+    if (!result.meta.changes) return redirect(request, channelId, { error: "not-found" });
 
     return redirect(request, channelId, { saved: "deleted" });
   } catch (error) {
