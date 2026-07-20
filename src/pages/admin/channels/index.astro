@@ -1,0 +1,36 @@
+---
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import { loadAdminChannels } from "@/lib/db/site";
+
+export const prerender = false;
+const channels = await loadAdminChannels();
+---
+
+<AdminLayout title="分区管理">
+  <section class="panel" style="padding:1.25rem; margin-bottom:1rem">
+    <div class="eyebrow">全局管理</div>
+    <h2 style="margin-top:.65rem">分区列表</h2>
+    <p>这里只负责新增、排序、启用和删除分区。分区内部的分类、筛选、产品、广告和转化池统一从左侧对应分区进入。</p>
+  </section>
+
+  {channels.length === 0 ? (
+    <section class="panel" style="padding:1.25rem">
+      <h2>尚未创建分区</h2>
+      <p>完成分区新增功能后，新分区会立即出现在左侧“分区内容”区域。</p>
+    </section>
+  ) : (
+    <section class="grid">
+      {channels.map((channel) => (
+        <article class="panel" style="padding:1.1rem">
+          <div style="display:flex; align-items:center; justify-content:space-between; gap:1rem">
+            <div>
+              <h2>{channel.icon ? `${channel.icon} ` : ""}{channel.name}</h2>
+              <p style="margin:.45rem 0 0">/{channel.slug}</p>
+            </div>
+            <a class="button secondary" href={`/admin/channels/${encodeURIComponent(channel.id)}`}>管理分区</a>
+          </div>
+        </article>
+      ))}
+    </section>
+  )}
+</AdminLayout>
