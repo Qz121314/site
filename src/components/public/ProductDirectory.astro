@@ -1,0 +1,136 @@
+---
+import ProductCard from "@/components/public/ProductCard.astro";
+import type { PublicProductPage } from "@/lib/db/public";
+
+interface Props {
+  channelSlug: string;
+  page: PublicProductPage;
+  categorySlug?: string | null;
+  query?: string;
+  emptyMessage?: string;
+}
+
+const {
+  channelSlug,
+  page,
+  categorySlug = null,
+  query = "",
+  emptyMessage = "No products found.",
+} = Astro.props;
+---
+
+<div
+  data-product-directory
+  data-channel={channelSlug}
+  data-category={categorySlug ?? ""}
+  data-query={query}
+  data-next-page={page.page + 1}
+>
+  {page.products.length > 0 ? (
+    <div class="product-grid" data-product-grid>
+      {page.products.map((product) => <ProductCard product={product} channelSlug={channelSlug} />)}
+    </div>
+  ) : (
+    <div class="public-empty" data-product-empty>{emptyMessage}</div>
+  )}
+
+  {page.hasMore && (
+    <div class="load-more-row" data-load-more-row>
+      <button class="public-button secondary" type="button" data-load-more>Load More</button>
+    </div>
+  )}
+</div>
+
+<script is:inline>
+  (() => {
+    const createProductCard = (product, channelSlug) => {
+      const link = document.createElement('a');
+      link.className = 'visual-card product-card';
+      link.href = `/${encodeURIComponent(channelSlug)}/product/${encodeURIComponent(product.slug)}`;
+
+      if (product.coverUrl) {
+        const image = document.createElement('img');
+        image.className = 'visual-card-media';
+        image.src = product.coverUrl;
+        image.alt = product.title;
+        image.loading = 'lazy';
+        link.append(image);
+      } else {
+        const placeholder = document.createElement('span');
+        placeholder.className = 'visual-card-placeholder';
+        placeholder.setAttribute('aria-hidden', 'true');
+        placeholder.textContent = product.title.trim().slice(0, 1).toUpperCase() || 'P';
+        link.append(placeholder);
+      }
+
+      if (product.featured) {
+        const featured = document.createElement('span');
+        featured.className = 'visual-card-featured';
+        featured.textContent = 'Featured';
+        link.append(featured);
+      }
+
+      const overlay = document.createElement('span');
+      overlay.className = 'visual-card-overlay';
+      const title = document.createElement('span');
+      title.className = 'visual-card-title';
+      title.textContent = product.title;
+      overlay.append(title);
+
+      if (Array.isArray(product.tags) && product.tags.length > 0) {
+        const tags = document.createElement('span');
+        tags.className = 'visual-card-meta';
+        product.tags.slice(0, 3).forEach((tag) => {
+          const item = document.createElement('span');
+          item.className = 'visual-tag';
+          item.textContent = tag;
+          tags.append(item);
+        });
+        overlay.append(tags);
+      }
+
+      link.append(overlay);
+      return link;
+    };
+
+    const initialize = (root) => {
+      if (root.dataset.ready === '1') return;
+      root.dataset.ready = '1';
+      const button = root.querySelector('[data-load-more]');
+      const row = root.querySelector('[data-load-more-row]');
+      const grid = root.querySelector('[data-product-grid]');
+      if (!button || !row || !grid) return;
+
+      button.addEventListener('click', async () => {
+        button.disabled = true;
+        button.textContent = 'Loading…';
+        const page = Number(root.dataset.nextPage || '2');
+        const params = new URLSearchParams({ page: String(page) });
+        if (root.dataset.category) params.set('category', root.dataset.category);
+        if (root.dataset.query) params.set('q', root.dataset.query);
+
+        try {
+          const response = await fetch(`/api/public/channels/${encodeURIComponent(root.dataset.channel || '')}/products?${params}`, {
+            headers: { Accept: 'application/json' },
+          });
+          if (!response.ok) throw new Error(`Request failed: ${response.status}`);
+          const payload = await response.json();
+          if (!Array.isArray(payload.products)) throw new Error('Invalid response');
+          payload.products.forEach((product) => grid.append(createProductCard(product, root.dataset.channel || '')));
+          root.dataset.nextPage = String(page + 1);
+          if (!payload.hasMore) row.remove();
+          else {
+            button.disabled = false;
+            button.textContent = 'Load More';
+          }
+        } catch (error) {
+          console.error(error);
+          button.disabled = false;
+          button.textContent = 'Try Again';
+        }
+      });
+    };
+
+    document.querySelectorAll('[data-product-directory]').forEach(initialize);
+  })();
+</script>
