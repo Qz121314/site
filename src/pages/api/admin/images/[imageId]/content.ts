@@ -4,7 +4,7 @@ import { loadAdminImageObject } from "@/lib/db/images";
 
 export const prerender = false;
 
-export const GET: APIRoute = async ({ params, request }) => {
+export const GET: APIRoute = async ({ params }) => {
   const imageId = params.imageId ?? "";
   if (!imageId) return new Response("Not Found", { status: 404 });
 
@@ -12,10 +12,8 @@ export const GET: APIRoute = async ({ params, request }) => {
     const image = await loadAdminImageObject(imageId);
     if (!image) return new Response("Not Found", { status: 404 });
 
-    const object = await env.MEDIA_BUCKET.get(image.objectKey, {
-      onlyIf: { etagDoesNotMatch: request.headers.get("If-None-Match") ?? undefined },
-    });
-    if (!object) return new Response(null, { status: 304 });
+    const object = await env.MEDIA_BUCKET.get(image.objectKey);
+    if (!object) return new Response("Not Found", { status: 404 });
 
     return new Response(object.body, {
       headers: {
