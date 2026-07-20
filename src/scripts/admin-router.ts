@@ -29,17 +29,20 @@ function canonicalUrl(value: string | URL): string {
   return url.href;
 }
 
-function snapshotScript(script: HTMLScriptElement): ScriptSnapshot {
+function snapshotScript(script: HTMLScriptElement, responseUrl: string): ScriptSnapshot {
   return {
-    attributes: Array.from(script.attributes, (attribute) => [attribute.name, attribute.value]),
+    attributes: Array.from(script.attributes, (attribute): [string, string] => [
+      attribute.name,
+      attribute.name === "src" ? new URL(attribute.value, responseUrl).href : attribute.value,
+    ]),
     text: script.textContent ?? "",
   };
 }
 
-function outsideScripts(documentValue: Document, main: Element): ScriptSnapshot[] {
+function outsideScripts(documentValue: Document, main: Element, responseUrl: string): ScriptSnapshot[] {
   return Array.from(documentValue.querySelectorAll<HTMLScriptElement>("script"))
-    .filter((script) => !script.src && !main.contains(script) && !script.hasAttribute("data-admin-router"))
-    .map(snapshotScript);
+    .filter((script) => !main.contains(script) && !script.hasAttribute("data-admin-router"))
+    .map((script) => snapshotScript(script, responseUrl));
 }
 
 function cleanRuntimeState(main: HTMLElement): HTMLElement {
@@ -62,11 +65,12 @@ function createSnapshot(documentValue: Document, url: string): PageSnapshot | nu
   const main = documentValue.querySelector<HTMLElement>(".admin-content");
   if (!main) return null;
 
+  const responseUrl = canonicalUrl(url);
   return {
-    url: canonicalUrl(url),
+    url: responseUrl,
     title: documentValue.title,
     mainHtml: cleanRuntimeState(main).outerHTML,
-    outsideScripts: outsideScripts(documentValue, main),
+    outsideScripts: outsideScripts(documentValue, main, responseUrl),
     createdAt: Date.now(),
   };
 }
@@ -91,25 +95,34 @@ function readSnapshot(url: string): PageSnapshot | null {
   return snapshot;
 }
 
+function scriptSource(snapshot: ScriptSnapshot): string {
+  return snapshot.attributes.find(([name]) => name === "src")?.[1] ?? "";
+}
+
+function hasLoadedScript(src: string): boolean {
+  return Boolean(src) && Array.from(document.scripts).some((script) => script.src === src);
+}
+
 function executeScript(snapshot: ScriptSnapshot): void {
+  const src = scriptSource(snapshot);
+  if (src && hasLoadedScript(src)) return;
+
   const script = document.createElement("script");
   for (const [name, value] of snapshot.attributes) {
-    if (name === "src" || name === "data-admin-router") continue;
+    if (name === "data-admin-router") continue;
     script.setAttribute(name, value);
   }
   script.textContent = snapshot.text;
+  if (src) script.dataset.adminDynamicScript = "1";
   document.body.appendChild(script);
-  script.remove();
+  if (!src) script.remove();
 }
 
-function activateMainScripts(main: HTMLElement): void {
+function activateMainScripts(main: HTMLElement, responseUrl: string): void {
   main.querySelectorAll<HTMLScriptElement>("script").forEach((oldScript) => {
-    const newScript = document.createElement("script");
-    for (const attribute of Array.from(oldScript.attributes)) {
-      newScript.setAttribute(attribute.name, attribute.value);
-    }
-    newScript.textContent = oldScript.textContent;
-    oldScript.replaceWith(newScript);
+    const snapshot = snapshotScript(oldScript, responseUrl);
+    oldScript.remove();
+    executeScript(snapshot);
   });
 }
 
@@ -191,7 +204,7 @@ function applySnapshot(snapshot: PageSnapshot, scrollToTop: boolean): void {
   currentMain.replaceWith(nextMain);
   document.title = snapshot.title;
   updateSidebar(snapshot.url);
-  activateMainScripts(nextMain);
+  activateMainScripts(nextMain, snapshot.url);
   snapshot.outsideScripts.forEach(executeScript);
   if (scrollToTop) window.scrollTo({ top: 0, behavior: "auto" });
   document.dispatchEvent(new CustomEvent("admin:navigation", { detail: { url: snapshot.url } }));
