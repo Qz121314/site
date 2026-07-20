@@ -22,8 +22,7 @@ const {
 } = Astro.props;
 
 const pageTitle = title === site.siteName ? title : `${title} · ${site.siteName}`;
-const adultConfirmed = Astro.cookies.get("site_adult_confirmed")?.value === "1";
-const showAdultGate = site.adultGateEnabled && !adultConfirmed;
+const showAdultGate = site.adultGateEnabled;
 const ga4Id = site.ga4Id;
 const metaPixelId = site.metaPixelId;
 ---
@@ -45,6 +44,17 @@ const metaPixelId = site.metaPixelId;
     {ogImage && <meta property="og:image" content={ogImage} />}
     <meta name="twitter:card" content={ogImage ? "summary_large_image" : "summary"} />
     <title>{pageTitle}</title>
+
+    {showAdultGate && (
+      <script is:inline>
+        (() => {
+          const confirmed = document.cookie
+            .split(';')
+            .some((item) => item.trim() === 'site_adult_confirmed=1');
+          if (confirmed) document.documentElement.classList.add('adult-confirmed');
+        })();
+      </script>
+    )}
 
     {ga4Id && <script async src={`https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(ga4Id)}`}></script>}
     {ga4Id && (
@@ -134,9 +144,13 @@ const metaPixelId = site.metaPixelId;
           const accept = document.querySelector('[data-adult-accept]');
           const exit = document.querySelector('[data-adult-exit]');
           if (!gate || !accept || !exit) return;
-          document.documentElement.style.overflow = 'hidden';
+          if (!document.documentElement.classList.contains('adult-confirmed')) {
+            document.documentElement.style.overflow = 'hidden';
+          }
           accept.addEventListener('click', () => {
-            document.cookie = 'site_adult_confirmed=1; Max-Age=31536000; Path=/; SameSite=Lax; Secure';
+            const secure = location.protocol === 'https:' ? '; Secure' : '';
+            document.cookie = `site_adult_confirmed=1; Max-Age=31536000; Path=/; SameSite=Lax${secure}`;
+            document.documentElement.classList.add('adult-confirmed');
             gate.remove();
             document.documentElement.style.overflow = '';
           });
@@ -149,3 +163,7 @@ const metaPixelId = site.metaPixelId;
     )}
   </body>
 </html>
+
+<style is:global>
+  .adult-confirmed .adult-gate { display: none; }
+</style>
