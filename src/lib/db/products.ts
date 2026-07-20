@@ -1,0 +1,268 @@
+import { env } from "cloudflare:workers";
+import type { ProductStatus } from "@/lib/admin/product-form";
+
+export const ADMIN_PRODUCT_PAGE_SIZE = 50;
+
+export type AdminProductListItem = {
+  id: string;
+  channelId: string;
+  title: string;
+  slug: string;
+  categoryId: string | null;
+  categoryName: string | null;
+  conversionGroupId: string | null;
+  conversionGroupName: string | null;
+  conversionGroupStatus: string | null;
+  coverAssetId: string | null;
+  tags: string[];
+  ctaLabel: string;
+  featured: boolean;
+  sortOrder: number;
+  status: ProductStatus;
+  imageCount: number;
+};
+
+export type AdminProduct = AdminProductListItem & {
+  bodySource: string;
+  bodyHtml: string;
+};
+
+export type AdminProductCategoryOption = {
+  id: string;
+  name: string;
+  status: string;
+};
+
+export type AdminProductConversionOption = {
+  id: string;
+  name: string;
+  status: string;
+  enabledResourceCount: number;
+};
+
+export type AdminProductOptions = {
+  categories: AdminProductCategoryOption[];
+  conversionGroups: AdminProductConversionOption[];
+};
+
+export type AdminProductListFilters = {
+  query: string;
+  status: string;
+  categoryId: string;
+  page: number;
+};
+
+export type AdminProductPage = {
+  products: AdminProductListItem[];
+  total: number;
+  page: number;
+  pageCount: number;
+  pageSize: number;
+};
+
+type AdminProductListRow = {
+  id: string;
+  channel_id: string;
+  title: string;
+  slug: string;
+  category_id: string | null;
+  category_name: string | null;
+  conversion_group_id: string | null;
+  conversion_group_name: string | null;
+  conversion_group_status: string | null;
+  cover_asset_id: string | null;
+  tags: string;
+  cta_label: string;
+  featured: number;
+  sort_order: number;
+  status: ProductStatus;
+  image_count: number;
+};
+
+type AdminProductRow = AdminProductListRow & {
+  body_source: string;
+  body_html: string;
+};
+
+function parseTags(value: string): string[] {
+  try {
+    const parsed: unknown = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed.filter((item): item is string => typeof item === "string") : [];
+  } catch {
+    return [];
+  }
+}
+
+function mapListItem(row: AdminProductListRow): AdminProductListItem {
+  return {
+    id: row.id,
+    channelId: row.channel_id,
+    title: row.title,
+    slug: row.slug,
+    categoryId: row.category_id,
+    categoryName: row.category_name,
+    conversionGroupId: row.conversion_group_id,
+    conversionGroupName: row.conversion_group_name,
+    conversionGroupStatus: row.conversion_group_status,
+    coverAssetId: row.cover_asset_id,
+    tags: parseTags(row.tags),
+    ctaLabel: row.cta_label,
+    featured: row.featured === 1,
+    sortOrder: row.sort_order,
+    status: row.status,
+    imageCount: Number(row.image_count ?? 0),
+  };
+}
+
+export async function loadAdminProductOptions(channelId: string): Promise<AdminProductOptions> {
+  try {
+    const [categoryResult, groupResult] = await Promise.all([
+      env.DB.prepare(
+        `SELECT id, name, status
+         FROM categories
+         WHERE channel_id = ?1
+         ORDER BY sort_order ASC, created_at ASC`,
+      ).bind(channelId).all<AdminProductCategoryOption>(),
+      env.DB.prepare(
+        `SELECT
+           g.id,
+           g.name,
+           g.status,
+           COUNT(CASE WHEN r.status = 'enabled' THEN 1 END) AS enabledResourceCount
+         FROM conversion_groups g
+         LEFT JOIN conversion_resources r ON r.group_id = g.id
+         WHERE g.channel_id = ?1
+         GROUP BY g.id, g.name, g.status, g.created_at
+         ORDER BY g.created_at ASC`,
+      ).bind(channelId).all<AdminProductConversionOption>(),
+    ]);
+
+    return {
+      categories: categoryResult.results,
+      conversionGroups: groupResult.results.map((group) => ({
+        ...group,
+        enabledResourceCount: Number(group.enabledResourceCount ?? 0),
+      })),
+    };
+  } catch (error) {
+    console.error(JSON.stringify({ event: "admin_product_options_read_failed", channelId, error: String(error) }));
+    return { categories: [], conversionGroups: [] };
+  }
+}
+
+export async function loadAdminProducts(
+  channelId: string,
+  filters: AdminProductListFilters,
+): Promise<AdminProductPage> {
+  const query = filters.query.trim().slice(0, 100);
+  const status = filters.status.trim();
+  const categoryId = filters.categoryId.trim();
+  const requestedPage = Number.isSafeInteger(filters.page) && filters.page > 0 ? filters.page : 1;
+
+  try {
+    const countRow = await env.DB.prepare(
+      `SELECT COUNT(*) AS total
+       FROM products p
+       WHERE p.channel_id = ?1
+         AND (?2 = '' OR p.title LIKE '%' || ?2 || '%' OR p.slug LIKE '%' || ?2 || '%' OR p.tags LIKE '%' || ?2 || '%')
+         AND (?3 = '' OR p.status = ?3)
+         AND (?4 = '' OR p.category_id = ?4)`,
+    ).bind(channelId, query, status, categoryId).first<{ total: number }>();
+
+    const total = Number(countRow?.total ?? 0);
+    const pageCount = Math.max(1, Math.ceil(total / ADMIN_PRODUCT_PAGE_SIZE));
+    const page = Math.min(requestedPage, pageCount);
+    const offset = (page - 1) * ADMIN_PRODUCT_PAGE_SIZE;
+
+    const result = await env.DB.prepare(
+      `SELECT
+         p.id,
+         p.channel_id,
+         p.title,
+         p.slug,
+         p.category_id,
+         c.name AS category_name,
+         p.conversion_group_id,
+         g.name AS conversion_group_name,
+         g.status AS conversion_group_status,
+         p.cover_asset_id,
+         p.tags,
+         p.cta_label,
+         p.featured,
+         p.sort_order,
+         p.status,
+         COUNT(DISTINCT pi.image_asset_id) AS image_count
+       FROM products p
+       LEFT JOIN categories c ON c.id = p.category_id AND c.channel_id = p.channel_id
+       LEFT JOIN conversion_groups g ON g.id = p.conversion_group_id AND g.channel_id = p.channel_id
+       LEFT JOIN product_images pi ON pi.product_id = p.id
+       WHERE p.channel_id = ?1
+         AND (?2 = '' OR p.title LIKE '%' || ?2 || '%' OR p.slug LIKE '%' || ?2 || '%' OR p.tags LIKE '%' || ?2 || '%')
+         AND (?3 = '' OR p.status = ?3)
+         AND (?4 = '' OR p.category_id = ?4)
+       GROUP BY
+         p.id, p.channel_id, p.title, p.slug, p.category_id, c.name,
+         p.conversion_group_id, g.name, g.status, p.cover_asset_id,
+         p.tags, p.cta_label, p.featured, p.sort_order, p.status, p.created_at
+       ORDER BY p.featured DESC, p.sort_order ASC, p.created_at DESC
+       LIMIT ?5 OFFSET ?6`,
+    ).bind(channelId, query, status, categoryId, ADMIN_PRODUCT_PAGE_SIZE, offset).all<AdminProductListRow>();
+
+    return {
+      products: result.results.map(mapListItem),
+      total,
+      page,
+      pageCount,
+      pageSize: ADMIN_PRODUCT_PAGE_SIZE,
+    };
+  } catch (error) {
+    console.error(JSON.stringify({ event: "admin_products_read_failed", channelId, error: String(error) }));
+    return { products: [], total: 0, page: 1, pageCount: 1, pageSize: ADMIN_PRODUCT_PAGE_SIZE };
+  }
+}
+
+export async function loadAdminProduct(channelId: string, productId: string): Promise<AdminProduct | null> {
+  try {
+    const row = await env.DB.prepare(
+      `SELECT
+         p.id,
+         p.channel_id,
+         p.title,
+         p.slug,
+         p.category_id,
+         c.name AS category_name,
+         p.conversion_group_id,
+         g.name AS conversion_group_name,
+         g.status AS conversion_group_status,
+         p.cover_asset_id,
+         p.tags,
+         p.body_source,
+         p.body_html,
+         p.cta_label,
+         p.featured,
+         p.sort_order,
+         p.status,
+         COUNT(DISTINCT pi.image_asset_id) AS image_count
+       FROM products p
+       LEFT JOIN categories c ON c.id = p.category_id AND c.channel_id = p.channel_id
+       LEFT JOIN conversion_groups g ON g.id = p.conversion_group_id AND g.channel_id = p.channel_id
+       LEFT JOIN product_images pi ON pi.product_id = p.id
+       WHERE p.id = ?1 AND p.channel_id = ?2
+       GROUP BY
+         p.id, p.channel_id, p.title, p.slug, p.category_id, c.name,
+         p.conversion_group_id, g.name, g.status, p.cover_asset_id,
+         p.tags, p.body_source, p.body_html, p.cta_label,
+         p.featured, p.sort_order, p.status`,
+    ).bind(productId, channelId).first<AdminProductRow>();
+
+    if (!row) return null;
+    return {
+      ...mapListItem(row),
+      bodySource: row.body_source,
+      bodyHtml: row.body_html,
+    };
+  } catch (error) {
+    console.error(JSON.stringify({ event: "admin_product_read_failed", channelId, productId, error: String(error) }));
+    return null;
+  }
+}
