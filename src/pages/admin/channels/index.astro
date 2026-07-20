@@ -103,7 +103,7 @@ const statusLabel = {
                 <td>
                   <div class="admin-table-actions">
                     <a class="button secondary" href={`/admin/channels/${encodeURIComponent(channel.id)}`}>管理</a>
-                    <form action={`/api/admin/channels/${encodeURIComponent(channel.id)}/delete`} method="post" onsubmit={`return confirm('确定删除分区“${channel.name.replaceAll("'", "\\'")}”？')`}>
+                    <form action={`/api/admin/channels/${encodeURIComponent(channel.id)}/delete`} method="post" onsubmit="return confirm('确定删除该分区？此操作不可撤销。')">
                       <button class="button danger" type="submit">删除</button>
                     </form>
                   </div>
