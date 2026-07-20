@@ -11,22 +11,37 @@ const pathname = Astro.url.pathname;
 const channels = await loadAdminChannels();
 
 const globalItems = [
-  { href: "/admin", label: "概览", shortLabel: "概" },
-  { href: "/admin/settings", label: "站点设置", shortLabel: "站" },
-  { href: "/admin/channels", label: "分区管理", shortLabel: "区" },
+  { href: "/admin", label: "概览", icon: "⌂" },
+  { href: "/admin/settings", label: "站点设置", icon: "⚙" },
+  { href: "/admin/channels", label: "分区管理", icon: "▦" },
+  { href: "/admin/images", label: "图片库", icon: "◫" },
 ] as const;
 
 const channelItems = [
-  { segment: "", label: "分区设置", shortLabel: "设" },
-  { segment: "filters", label: "分类筛选", shortLabel: "筛" },
-  { segment: "categories", label: "分类管理", shortLabel: "类" },
-  { segment: "products", label: "产品管理", shortLabel: "产" },
-  { segment: "ads", label: "Hero 广告", shortLabel: "广" },
-  { segment: "conversions", label: "转化池", shortLabel: "转" },
+  { segment: "products/new", label: "产品信息录入", icon: "＋", primary: true },
+  { segment: "products", label: "产品列表管理", icon: "≡", primary: false },
+  { segment: "filters", label: "分类筛选", icon: "⌁", primary: false },
+  { segment: "ads", label: "Hero 广告", icon: "▣", primary: false },
+  { segment: "conversions", label: "转化池", icon: "↗", primary: false },
 ] as const;
 
 const isActive = (href: string) =>
   href === "/admin" ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
+
+function isChannelItemActive(base: string, segment: string): boolean {
+  const href = `${base}/${segment}`;
+  if (segment === "products/new") return pathname === href;
+  if (segment === "products") {
+    return pathname === href || (pathname.startsWith(`${href}/`) && pathname !== `${href}/new`);
+  }
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
+
+const statusLabels = {
+  draft: "草稿",
+  published: "已发布",
+  disabled: "已停用",
+} as const;
 ---
 
 <!doctype html>
@@ -42,21 +57,21 @@ const isActive = (href: string) =>
     <div class="admin-frame">
       <aside class="admin-sidebar">
         <a class="admin-sidebar-brand" href="/admin" aria-label="管理后台首页">
-          <span class="brand-mark">S</span>
+          <span class="brand-mark" aria-hidden="true">◆</span>
           <span class="admin-sidebar-brand-text">管理后台</span>
         </a>
 
         <nav class="admin-sidebar-nav" aria-label="后台导航">
           <div class="admin-nav-section">
             <div class="admin-nav-section-label">全局管理</div>
-            {globalItems.map(({ href, label, shortLabel }) => (
+            {globalItems.map(({ href, label, icon }) => (
               <a
                 class="admin-sidebar-link"
                 href={href}
                 aria-current={isActive(href) ? "page" : undefined}
                 title={label}
               >
-                <span class="admin-sidebar-icon" aria-hidden="true">{shortLabel}</span>
+                <span class="admin-sidebar-icon" aria-hidden="true">{icon}</span>
                 <span class="admin-sidebar-label">{label}</span>
               </a>
             ))}
@@ -72,27 +87,32 @@ const isActive = (href: string) =>
             ) : channels.map((channel) => {
               const base = `/admin/channels/${encodeURIComponent(channel.id)}`;
               const channelActive = pathname === base || pathname.startsWith(`${base}/`);
-              const channelMark = channel.icon.trim() || channel.name.trim().slice(0, 1) || "区";
 
               return (
                 <details class="admin-channel-group" open={channelActive}>
-                  <summary class:list={["admin-channel-summary", channelActive && "is-active"]} title={channel.name}>
-                    <span class="admin-sidebar-icon" aria-hidden="true">{channelMark}</span>
+                  <summary class="admin-channel-summary" title={channel.name}>
+                    <span class="admin-sidebar-icon admin-channel-glyph" aria-hidden="true">◇</span>
                     <span class="admin-sidebar-label admin-channel-name">{channel.name}</span>
-                    <span class:list={["admin-channel-status", `is-${channel.status}`]} aria-label={channel.status}></span>
+                    <span class:list={["admin-channel-status", `is-${channel.status}`]} aria-hidden="true"></span>
+                    <span class="admin-channel-state-label">{statusLabels[channel.status]}</span>
                     <span class="admin-channel-chevron" aria-hidden="true">›</span>
                   </summary>
                   <div class="admin-channel-subnav">
-                    {channelItems.map(({ segment, label, shortLabel }) => {
-                      const href = segment ? `${base}/${segment}` : base;
+                    {channelItems.map(({ segment, label, icon, primary }) => {
+                      const href = `${base}/${segment}`;
+                      const active = isChannelItemActive(base, segment);
                       return (
                         <a
-                          class="admin-sidebar-link admin-sidebar-sublink"
+                          class:list={[
+                            "admin-sidebar-link",
+                            "admin-sidebar-sublink",
+                            primary && "is-primary-action",
+                          ]}
                           href={href}
-                          aria-current={pathname === href || pathname.startsWith(`${href}/`) ? "page" : undefined}
+                          aria-current={active ? "page" : undefined}
                           title={`${channel.name} · ${label}`}
                         >
-                          <span class="admin-sidebar-icon" aria-hidden="true">{shortLabel}</span>
+                          <span class="admin-sidebar-icon" aria-hidden="true">{icon}</span>
                           <span class="admin-sidebar-label">{label}</span>
                         </a>
                       );
@@ -102,29 +122,16 @@ const isActive = (href: string) =>
               );
             })}
           </div>
-
-          <div class="admin-nav-section admin-global-assets">
-            <div class="admin-nav-section-label">全站资源</div>
-            <a
-              class="admin-sidebar-link"
-              href="/admin/images"
-              aria-current={isActive("/admin/images") ? "page" : undefined}
-              title="图片库"
-            >
-              <span class="admin-sidebar-icon" aria-hidden="true">图</span>
-              <span class="admin-sidebar-label">图片库</span>
-            </a>
-          </div>
         </nav>
 
         <div class="admin-sidebar-footer">
           <a class="admin-sidebar-link" href="/" target="_blank" rel="noreferrer" title="查看前台">
-            <span class="admin-sidebar-icon" aria-hidden="true">前</span>
+            <span class="admin-sidebar-icon" aria-hidden="true">↗</span>
             <span class="admin-sidebar-label">查看前台</span>
           </a>
           <form action="/api/admin/logout" method="post">
             <button class="admin-sidebar-link admin-sidebar-button" type="submit" title="退出登录">
-              <span class="admin-sidebar-icon" aria-hidden="true">退</span>
+              <span class="admin-sidebar-icon" aria-hidden="true">×</span>
               <span class="admin-sidebar-label">退出登录</span>
             </button>
           </form>
