@@ -26,8 +26,13 @@ const channelItems = [
   { segment: "conversions", label: "转化池", icon: "↗", primary: false },
 ] as const;
 
-const isActive = (href: string) =>
-  href === "/admin" ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
+function isGlobalItemActive(href: string): boolean {
+  if (href === "/admin") return pathname === href;
+  if (href === "/admin/channels") {
+    return pathname === href || /^\/admin\/channels\/[^/]+\/?$/u.test(pathname);
+  }
+  return pathname === href || pathname.startsWith(`${href}/`);
+}
 
 function isChannelItemActive(base: string, segment: string): boolean {
   const href = `${base}/${segment}`;
@@ -69,7 +74,7 @@ const statusLabels = {
               <a
                 class="admin-sidebar-link"
                 href={href}
-                aria-current={isActive(href) ? "page" : undefined}
+                aria-current={isGlobalItemActive(href) ? "page" : undefined}
                 title={label}
               >
                 <span class="admin-sidebar-icon" aria-hidden="true">{icon}</span>
