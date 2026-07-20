@@ -1,17 +1,26 @@
 ---
 import "@/styles/global.css";
 
-interface Props { title: string; }
+interface Props {
+  title: string;
+}
+
 const { title } = Astro.props;
 const pathname = Astro.url.pathname;
 const items = [
-  ["/admin", "概览"],
-  ["/admin/settings", "站点设置"],
-  ["/admin/channels", "分区管理"],
-  ["/admin/categories", "分类管理"],
-  ["/admin/products", "产品管理"],
-  ["/admin/images", "图片库"],
+  { href: "/admin", label: "概览", shortLabel: "概" },
+  { href: "/admin/settings", label: "站点设置", shortLabel: "站" },
+  { href: "/admin/channels", label: "分区管理", shortLabel: "区" },
+  { href: "/admin/filters", label: "分类筛选", shortLabel: "筛" },
+  { href: "/admin/categories", label: "分类管理", shortLabel: "类" },
+  { href: "/admin/products", label: "产品管理", shortLabel: "产" },
+  { href: "/admin/ads", label: "广告池", shortLabel: "广" },
+  { href: "/admin/conversions", label: "转化池", shortLabel: "转" },
+  { href: "/admin/images", label: "图片库", shortLabel: "图" },
 ] as const;
+
+const isActive = (href: string) =>
+  href === "/admin" ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
 ---
 
 <!doctype html>
@@ -23,16 +32,53 @@ const items = [
     <meta name="color-scheme" content="dark" />
     <title>{title} · 管理后台</title>
   </head>
-  <body>
-    <main class="admin-shell">
-      <header class="admin-header">
-        <a class="brand" href="/admin"><span class="brand-mark">S</span><span>管理后台</span></a>
-        <form action="/api/admin/logout" method="post"><button class="button secondary" type="submit">退出登录</button></form>
-      </header>
-      <nav class="admin-nav panel" aria-label="后台导航">
-        {items.map(([href, label]) => <a href={href} aria-current={pathname === href ? "page" : undefined}>{label}</a>)}
-      </nav>
-      <slot />
-    </main>
+  <body class="admin-body">
+    <div class="admin-frame">
+      <aside class="admin-sidebar">
+        <a class="admin-sidebar-brand" href="/admin" aria-label="管理后台首页">
+          <span class="brand-mark">S</span>
+          <span class="admin-sidebar-brand-text">管理后台</span>
+        </a>
+
+        <nav class="admin-sidebar-nav" aria-label="后台导航">
+          {items.map(({ href, label, shortLabel }) => (
+            <a
+              class="admin-sidebar-link"
+              href={href}
+              aria-current={isActive(href) ? "page" : undefined}
+              title={label}
+            >
+              <span class="admin-sidebar-icon" aria-hidden="true">{shortLabel}</span>
+              <span class="admin-sidebar-label">{label}</span>
+            </a>
+          ))}
+        </nav>
+
+        <div class="admin-sidebar-footer">
+          <a class="admin-sidebar-link" href="/" target="_blank" rel="noreferrer" title="查看前台">
+            <span class="admin-sidebar-icon" aria-hidden="true">前</span>
+            <span class="admin-sidebar-label">查看前台</span>
+          </a>
+          <form action="/api/admin/logout" method="post">
+            <button class="admin-sidebar-link admin-sidebar-button" type="submit" title="退出登录">
+              <span class="admin-sidebar-icon" aria-hidden="true">退</span>
+              <span class="admin-sidebar-label">退出登录</span>
+            </button>
+          </form>
+        </div>
+      </aside>
+
+      <main class="admin-content">
+        <header class="admin-page-header">
+          <div>
+            <div class="eyebrow">管理后台</div>
+            <h1 class="admin-page-title">{title}</h1>
+          </div>
+        </header>
+        <div class="admin-page-body">
+          <slot />
+        </div>
+      </main>
+    </div>
   </body>
 </html>
