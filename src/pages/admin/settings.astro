@@ -1,0 +1,187 @@
+---
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import { loadAdminChannels, loadAdminSiteSettings } from "@/lib/db/site";
+
+export const prerender = false;
+
+const [settings, channels] = await Promise.all([
+  loadAdminSiteSettings(),
+  loadAdminChannels(),
+]);
+
+const saved = Astro.url.searchParams.get("saved");
+const error = Astro.url.searchParams.get("error");
+
+const errorMessages: Record<string, string> = {
+  "site-name": "网站名称不能为空，且不能超过 80 个字符。",
+  description: "网站描述不能超过 300 个字符。",
+  "default-channel": "默认分区不存在，请重新选择。",
+  "r2-url": "R2 公开域名必须是完整的 HTTPS 域名，不能包含路径、参数或账号信息。",
+  ga4: "GA4 Measurement ID 格式无效，例如 G-XXXXXXXXXX。",
+  meta: "Meta Pixel ID 只能包含 5 至 30 位数字。",
+  "all-label": "分类筛选的 All 文字不能为空，且不能超过 24 个字符。",
+  privacy: "隐私政策内容不能超过 20000 个字符。",
+  disclaimer: "免责声明内容不能超过 20000 个字符。",
+  database: "数据库保存失败，请稍后重试。",
+};
+---
+
+<AdminLayout title="站点设置">
+  <button slot="actions" class="button" type="submit" form="site-settings-form">保存设置</button>
+
+  {saved === "1" && <p class="notice" role="status">站点设置已保存，前台刷新后立即生效。</p>}
+  {error && errorMessages[error] && <p class="error" role="alert">{errorMessages[error]}</p>}
+  {!settings.databaseReady && <p class="error" role="alert">D1 数据暂时不可用，当前显示的是默认值。</p>}
+
+  <form id="site-settings-form" class="admin-stack" action="/api/admin/settings/update" method="post">
+    <section class="admin-card">
+      <div class="admin-section-bar">
+        <h2>基础设置</h2>
+        <span class="admin-section-note">前台系统文字使用英语</span>
+      </div>
+      <div class="admin-card-body admin-form-grid">
+        <div class="admin-field admin-span-3">
+          <label for="site-name">网站名称</label>
+          <input id="site-name" name="siteName" maxlength="80" required value={settings.siteName} />
+        </div>
+
+        <div class="admin-field admin-span-5">
+          <label for="site-description">网站描述</label>
+          <input id="site-description" name="siteDescription" maxlength="300" value={settings.siteDescription} />
+        </div>
+
+        <div class="admin-field admin-span-2">
+          <label for="default-channel">默认分区</label>
+          <select id="default-channel" name="defaultChannelId">
+            <option value="">未设置</option>
+            {channels.map((channel) => (
+              <option value={channel.id} selected={settings.defaultChannelId === channel.id}>
+                {channel.name}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        <div class="admin-field admin-span-2">
+          <label for="all-filter-label">筛选 All 文字</label>
+          <input id="all-filter-label" name="allFilterLabel" maxlength="24" required value={settings.allFilterLabel} />
+        </div>
+
+        <div class="admin-field admin-span-6">
+          <label for="r2-public-base-url">R2 图片公开域名</label>
+          <input
+            id="r2-public-base-url"
+            name="r2PublicBaseUrl"
+            type="url"
+            maxlength="240"
+            inputmode="url"
+            placeholder="https://media.example.com"
+            value={settings.r2PublicBaseUrl}
+          />
+          <small>先在 Cloudflare R2 绑定自定义域名，再录入此处；数据库只保存图片 Object Key。</small>
+        </div>
+
+        <div class="admin-field admin-span-2">
+          <label for="ga4-id">GA4 ID</label>
+          <input id="ga4-id" name="ga4Id" maxlength="24" autocomplete="off" placeholder="G-XXXXXXXXXX" value={settings.ga4Id} />
+        </div>
+
+        <div class="admin-field admin-span-2">
+          <label for="meta-pixel-id">Meta Pixel ID</label>
+          <input id="meta-pixel-id" name="metaPixelId" maxlength="30" inputmode="numeric" autocomplete="off" value={settings.metaPixelId} />
+        </div>
+
+        <div class="admin-field admin-span-2">
+          <label>全站开关</label>
+          <div class="settings-checks">
+            <label class="admin-check" title="首次进入前台时显示 18+ 确认">
+              <input type="checkbox" name="adultGateEnabled" value="1" checked={settings.adultGateEnabled} />
+              <span>18+ 提示</span>
+            </label>
+            <label class="admin-check" title="给搜索引擎返回 noindex">
+              <input type="checkbox" name="noindexEnabled" value="1" checked={settings.noindexEnabled} />
+              <span>全站 noindex</span>
+            </label>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <details class="admin-card settings-details">
+      <summary>
+        <strong>政策与免责声明</strong>
+        <span>低频内容，点击展开编辑</span>
+      </summary>
+      <div class="admin-card-body admin-form-grid">
+        <div class="admin-field admin-span-6">
+          <label for="privacy-content">隐私政策内容</label>
+          <textarea id="privacy-content" name="privacyContent" maxlength="20000" rows="8">{settings.privacyContent}</textarea>
+        </div>
+        <div class="admin-field admin-span-6">
+          <label for="disclaimer-content">免责声明内容</label>
+          <textarea id="disclaimer-content" name="disclaimerContent" maxlength="20000" rows="8">{settings.disclaimerContent}</textarea>
+        </div>
+      </div>
+    </details>
+
+    <section class="admin-card settings-assets">
+      <div class="admin-section-bar">
+        <h2>Logo 与 Favicon</h2>
+        <span class="admin-section-note">将在图片库模块中选择，不允许手工输入资产 ID</span>
+      </div>
+      <div class="admin-card-body settings-asset-row">
+        <span>Logo：{settings.logoAssetId ? "已绑定" : "未设置"}</span>
+        <span>Favicon：{settings.faviconAssetId ? "已绑定" : "未设置"}</span>
+      </div>
+    </section>
+  </form>
+</AdminLayout>
+
+<style>
+  .settings-checks {
+    display: flex;
+    min-height: 2.05rem;
+    align-items: center;
+    gap: .65rem;
+    white-space: nowrap;
+  }
+
+  .settings-details {
+    overflow: visible;
+  }
+
+  .settings-details > summary {
+    display: flex;
+    min-height: 2.45rem;
+    align-items: center;
+    justify-content: space-between;
+    gap: .75rem;
+    padding: .38rem .55rem;
+    color: var(--text);
+    background: #17151c;
+    cursor: pointer;
+    list-style: none;
+  }
+
+  .settings-details > summary::-webkit-details-marker { display: none; }
+  .settings-details > summary strong { font-size: .9rem; }
+  .settings-details > summary span { color: #8f8995; font-size: .74rem; }
+  .settings-details[open] > summary { border-bottom: 1px solid var(--line); }
+
+  .settings-details textarea {
+    min-height: 8rem;
+    line-height: 1.45;
+  }
+
+  .settings-asset-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: .5rem 1.25rem;
+    color: #9d97a3;
+    font-size: .75rem;
+  }
+
+  @media (max-width: 959px) {
+    .settings-checks { flex-wrap: wrap; gap: .25rem .65rem; }
+  }
+</style>
