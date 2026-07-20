@@ -1,5 +1,6 @@
 import { env } from "cloudflare:workers";
 import type { ProductStatus } from "@/lib/admin/product-form";
+import { uniqueCategorySlug } from "@/lib/admin/automatic-slug";
 
 export type ResolvedProductCategory = {
   id: string | null;
@@ -14,33 +15,6 @@ type CategoryRow = {
 
 function normalizeCategoryName(value: string): string {
   return value.trim().replace(/\s+/gu, " ").slice(0, 80);
-}
-
-function slugify(value: string): string {
-  const normalized = value
-    .normalize("NFKD")
-    .replace(/[\u0300-\u036f]/gu, "")
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/gu, "-")
-    .replace(/^-+|-+$/gu, "")
-    .slice(0, 56)
-    .replace(/-+$/gu, "");
-  return normalized || `category-${crypto.randomUUID().slice(0, 8)}`;
-}
-
-async function uniqueCategorySlug(channelId: string, name: string): Promise<string> {
-  const base = slugify(name);
-
-  for (let index = 1; index <= 100; index += 1) {
-    const suffix = index === 1 ? "" : `-${index}`;
-    const slug = `${base.slice(0, Math.max(1, 64 - suffix.length))}${suffix}`;
-    const existing = await env.DB.prepare(
-      "SELECT id FROM categories WHERE channel_id = ?1 AND slug = ?2",
-    ).bind(channelId, slug).first<{ id: string }>();
-    if (!existing) return slug;
-  }
-
-  return `category-${crypto.randomUUID().replaceAll("-", "").slice(0, 16)}`;
 }
 
 export async function resolveProductCategory(input: {
