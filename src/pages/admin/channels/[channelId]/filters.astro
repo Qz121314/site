@@ -27,13 +27,6 @@ const errorMessages: Record<string, string> = {
   "not-found": "找不到该分区或分类筛选。",
   database: "数据库操作失败，请稍后重试。",
 };
-
-const statusLabel = {
-  enabled: "启用",
-  disabled: "停用",
-} as const;
-
-const basePath = `/admin/channels/${encodeURIComponent(channelId)}/filters`;
 ---
 
 <AdminLayout title={channel ? `${channel.name} · 分类筛选` : "分区不存在"}>
