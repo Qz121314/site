@@ -1,17 +1,11 @@
 import { env } from "cloudflare:workers";
 import type { APIRoute } from "astro";
 import { isSameOriginPost } from "@/lib/auth/session";
-import {
-  isDuplicateProductSlugError,
-  parseProductForm,
-  validateProductRelations,
-} from "@/lib/admin/product-form";
+import { parseProductForm, validateProductRelations } from "@/lib/admin/product-form";
+import { automaticSlug, uniqueProductSlug } from "@/lib/admin/automatic-slug";
 import { categoryFiltersBelongToChannel } from "@/lib/admin/category-form";
 import { parseProductEntryExtras } from "@/lib/admin/product-entry";
-import {
-  removeEmptyGeneratedCategory,
-  resolveProductCategory,
-} from "@/lib/admin/product-category";
+import { removeEmptyGeneratedCategory, resolveProductCategory } from "@/lib/admin/product-category";
 import { imageAssetsExist } from "@/lib/db/image-options";
 
 export const prerender = false;
@@ -38,6 +32,10 @@ export const POST: APIRoute = async ({ request, params }) => {
   if (!channelId) return new Response("Not Found", { status: 404 });
 
   const form = await request.formData();
+  const rawTitle = form.get("title");
+  const title = typeof rawTitle === "string" ? rawTitle.trim() : "";
+  form.set("slug", automaticSlug(title, "product", 96));
+
   const parsed = parseProductForm(form);
   if (!parsed.ok) return entryRedirect(request, channelId, { error: parsed.code });
 
@@ -53,6 +51,8 @@ export const POST: APIRoute = async ({ request, params }) => {
       .bind(channelId)
       .first<{ id: string }>();
     if (!channel) return entryRedirect(request, channelId, { error: "not-found" });
+
+    const slug = await uniqueProductSlug(channelId, value.title);
 
     if (!(await imageAssetsExist([value.coverAssetId ?? "", ...extras.galleryAssetIds]))) {
       return entryRedirect(request, channelId, { error: "image" });
@@ -100,7 +100,7 @@ export const POST: APIRoute = async ({ request, params }) => {
         value.conversionGroupId,
         value.coverAssetId,
         value.title,
-        value.slug,
+        slug,
         value.tagsJson,
         value.bodySource,
         value.bodyHtml,
@@ -142,9 +142,7 @@ export const POST: APIRoute = async ({ request, params }) => {
       }
     }
 
-    console.error(JSON.stringify({ event: "admin_product_create_failed", channelId, slug: value.slug, error: String(error) }));
-    return entryRedirect(request, channelId, {
-      error: isDuplicateProductSlugError(error) ? "duplicate" : "database",
-    });
+    console.error(JSON.stringify({ event: "admin_product_create_failed", channelId, title: value.title, error: String(error) }));
+    return entryRedirect(request, channelId, { error: "database" });
   }
 };

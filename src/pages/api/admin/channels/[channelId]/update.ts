@@ -1,7 +1,8 @@
 import { env } from "cloudflare:workers";
 import type { APIRoute } from "astro";
 import { isSameOriginPost } from "@/lib/auth/session";
-import { isDuplicateChannelSlugError, parseChannelForm } from "@/lib/admin/channel-form";
+import { parseChannelForm } from "@/lib/admin/channel-form";
+import { uniqueChannelSlug } from "@/lib/admin/automatic-slug";
 
 export const prerender = false;
 
@@ -20,12 +21,13 @@ export const POST: APIRoute = async ({ request, params }) => {
   const parsed = parseChannelForm(await request.formData());
   if (!parsed.ok) return redirect(request, channelId, { error: parsed.code });
 
-  const { name, slug, icon, sortOrder, status } = parsed.value;
+  const { name, icon, sortOrder, status } = parsed.value;
 
   try {
     const existing = await env.DB.prepare("SELECT id FROM channels WHERE id = ?1").bind(channelId).first<{ id: string }>();
     if (!existing) return new Response("Not Found", { status: 404 });
 
+    const slug = await uniqueChannelSlug(name, channelId);
     await env.DB.prepare(
       `UPDATE channels
        SET name = ?2,
@@ -37,8 +39,8 @@ export const POST: APIRoute = async ({ request, params }) => {
        WHERE id = ?1`,
     ).bind(channelId, name, slug, icon, sortOrder, status).run();
   } catch (error) {
-    console.error(JSON.stringify({ event: "admin_channel_update_failed", channelId, slug, error: String(error) }));
-    return redirect(request, channelId, { error: isDuplicateChannelSlugError(error) ? "duplicate" : "database" });
+    console.error(JSON.stringify({ event: "admin_channel_update_failed", channelId, name, error: String(error) }));
+    return redirect(request, channelId, { error: "database" });
   }
 
   return redirect(request, channelId, { saved: "updated" });

@@ -1,7 +1,8 @@
 import { env } from "cloudflare:workers";
 import type { APIRoute } from "astro";
 import { isSameOriginPost } from "@/lib/auth/session";
-import { isDuplicateFilterSlugError, parseFilterForm } from "@/lib/admin/filter-form";
+import { parseFilterForm } from "@/lib/admin/filter-form";
+import { uniqueFilterSlug } from "@/lib/admin/automatic-slug";
 
 export const prerender = false;
 
@@ -21,9 +22,10 @@ export const POST: APIRoute = async ({ request, params }) => {
   const parsed = parseFilterForm(await request.formData());
   if (!parsed.ok) return redirect(request, channelId, { error: parsed.code });
 
-  const { name, slug, sortOrder, status } = parsed.value;
+  const { name, sortOrder, status } = parsed.value;
 
   try {
+    const slug = await uniqueFilterSlug(channelId, name, filterId);
     const result = await env.DB.prepare(
       `UPDATE category_filters
        SET name = ?3,
@@ -36,8 +38,8 @@ export const POST: APIRoute = async ({ request, params }) => {
 
     if (result.meta.changes === 0) return redirect(request, channelId, { error: "not-found" });
   } catch (error) {
-    console.error(JSON.stringify({ event: "admin_category_filter_update_failed", channelId, filterId, slug, error: String(error) }));
-    return redirect(request, channelId, { error: isDuplicateFilterSlugError(error) ? "duplicate" : "database" });
+    console.error(JSON.stringify({ event: "admin_category_filter_update_failed", channelId, filterId, name, error: String(error) }));
+    return redirect(request, channelId, { error: "database" });
   }
 
   return redirect(request, channelId, { saved: "updated" });

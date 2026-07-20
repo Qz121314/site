@@ -17,7 +17,6 @@ const formId = "product-entry-form";
 
 const errorMessages: Record<string, string> = {
   title: "产品标题不能为空，且不能超过 160 个字符。",
-  slug: "Slug 只能使用小写字母、数字和连字符。",
   "category-name": "分类名称不能超过 80 个字符。",
   category: "所选分类无效或不属于当前分区。",
   "category-unavailable": "分类目录状态无效。",
@@ -33,7 +32,6 @@ const errorMessages: Record<string, string> = {
   cta: "CTA 文案不能为空，且不能超过 80 个字符。",
   sort: "排序必须是 -999999 到 999999 之间的整数。",
   status: "产品状态无效。",
-  duplicate: "当前分区内已经存在相同 Slug。",
   "not-found": "找不到当前分区。",
   database: "数据库保存失败，请稍后重试。",
 };
@@ -45,12 +43,7 @@ const errorMessages: Record<string, string> = {
       {saved === "created" && <p class="notice" role="status">产品已保存。</p>}
       {error && errorMessages[error] && <p class="error" role="alert">{errorMessages[error]}</p>}
 
-      <form
-        id={formId}
-        class="product-entry"
-        action={`/api/admin/channels/${encodeURIComponent(channelId)}/products/create`}
-        method="post"
-      >
+      <form id={formId} class="product-entry" action={`/api/admin/channels/${encodeURIComponent(channelId)}/products/create`} method="post">
         <section class="admin-card">
           <div class="admin-section-bar">
             <h2>基础信息</h2>
@@ -58,14 +51,9 @@ const errorMessages: Record<string, string> = {
           </div>
 
           <div class="admin-card-body admin-form-grid">
-            <div class="admin-field admin-span-5">
+            <div class="admin-field admin-span-8">
               <label for="product-title">产品名称</label>
-              <input id="product-title" name="title" maxlength="160" required autocomplete="off" data-product-title />
-            </div>
-
-            <div class="admin-field admin-span-3">
-              <label for="product-slug">Slug</label>
-              <input id="product-slug" name="slug" maxlength="96" pattern="[a-z0-9]+(?:-[a-z0-9]+)*" required autocomplete="off" data-product-slug />
+              <input id="product-title" name="title" maxlength="160" required autocomplete="off" />
             </div>
 
             <div class="admin-field admin-span-2">
@@ -85,14 +73,7 @@ const errorMessages: Record<string, string> = {
             <input type="hidden" name="categoryId" value="" />
             <div class="admin-field admin-span-4">
               <label for="product-category-name">产品分类</label>
-              <input
-                id="product-category-name"
-                name="categoryName"
-                maxlength="80"
-                list="product-category-options"
-                autocomplete="off"
-                data-category-name
-              />
+              <input id="product-category-name" name="categoryName" maxlength="80" list="product-category-options" autocomplete="off" data-category-name />
               <datalist id="product-category-options">
                 {options.categories.map((category) => (
                   <option value={category.name} data-filter-ids={category.filterIds.join(",")}></option>
@@ -174,29 +155,11 @@ const errorMessages: Record<string, string> = {
 
 <script is:inline>
   (() => {
-    const title = document.querySelector('[data-product-title]');
-    const slug = document.querySelector('[data-product-slug]');
     const category = document.querySelector('[data-category-name]');
     const optionElements = Array.from(document.querySelectorAll('#product-category-options option'));
     const filterInputs = Array.from(document.querySelectorAll('[data-category-filter]'));
-
-    if (title && slug) {
-      let slugEdited = false;
-      slug.addEventListener('input', () => { slugEdited = Boolean(slug.value); });
-      title.addEventListener('input', () => {
-        if (slugEdited) return;
-        slug.value = title.value
-          .normalize('NFKD')
-          .replace(/[\u0300-\u036f]/g, '')
-          .toLowerCase()
-          .replace(/[^a-z0-9]+/g, '-')
-          .replace(/^-+|-+$/g, '')
-          .slice(0, 96)
-          .replace(/-+$/g, '');
-      });
-    }
-
     if (!category || filterInputs.length === 0) return;
+
     const normalize = (value) => value.trim().replace(/\s+/g, ' ').toLocaleLowerCase('en-US');
     const categoryFilters = new Map(optionElements.map((option) => [
       normalize(option.value),
