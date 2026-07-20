@@ -1,0 +1,25 @@
+---
+import AdminLayout from "@/layouts/AdminLayout.astro";
+import { loadAdminCounts } from "@/lib/db/site";
+
+export const prerender = false;
+const counts = await loadAdminCounts();
+const metrics = [
+  ["分区", counts.channels],
+  ["分类", counts.categories],
+  ["产品", counts.products],
+  ["图片资产", counts.images],
+] as const;
+---
+
+<AdminLayout title="概览">
+  <section class="panel" style="padding:1.2rem; margin-bottom:1rem">
+    <div class="eyebrow">系统状态</div>
+    <h1 style="font-size:2rem">项目脚手架已启动</h1>
+    <p>{counts.databaseReady ? "D1 数据库连接正常，基础数据表已经可用。" : "Worker 已运行，但 D1 数据表尚未迁移完成。请检查 GitHub Actions 日志。"}</p>
+    <span class:list={["badge", counts.databaseReady ? "ok" : "warn"]}>{counts.databaseReady ? "数据库正常" : "数据库待初始化"}</span>
+  </section>
+  <section class="grid metrics">
+    {metrics.map(([label, value]) => <article class="metric panel"><span>{label}</span><strong>{value}</strong></article>)}
+  </section>
+</AdminLayout>
