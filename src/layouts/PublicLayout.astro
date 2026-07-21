@@ -1,7 +1,7 @@
 ---
 import "@/styles/global.css";
 import "@/styles/public.css";
-import "@/styles/public-refinement.css";
+import ChannelNavigation from "@/components/public/ChannelNavigation.astro";
 import type { PublicSiteShell } from "@/lib/db/public";
 
 interface Props {
@@ -117,19 +117,7 @@ const metaPixelId = site.metaPixelId;
       <slot />
     </main>
 
-    {site.channels.length > 0 && (
-      <nav class="public-bottom-nav" aria-label="Channels">
-        {site.channels.map((channel) => (
-          <a
-            class="public-nav-item"
-            href={`/${encodeURIComponent(channel.slug)}`}
-            aria-current={activeChannel === channel.slug ? "page" : undefined}
-          >
-            <span class="public-nav-label">{channel.name}</span>
-          </a>
-        ))}
-      </nav>
-    )}
+    <ChannelNavigation channels={site.channels} activeChannel={activeChannel} />
 
     {showAdultGate && (
       <div class="adult-gate" data-adult-gate role="dialog" aria-modal="true" aria-labelledby="adult-gate-title">
