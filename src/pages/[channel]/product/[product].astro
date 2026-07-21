@@ -15,10 +15,12 @@ const hasConversion = product ? await publicProductHasEnabledConversion(product.
 
 if (!product) Astro.response.status = 404;
 
-const canonical = new URL(
-  `/${encodeURIComponent(channelSlug)}/product/${encodeURIComponent(productSlug)}`,
-  Astro.url.origin,
-).href;
+const canonical = product
+  ? new URL(
+      `/${encodeURIComponent(product.channelSlug)}/product/${encodeURIComponent(product.slug)}`,
+      Astro.url.origin,
+    ).href
+  : null;
 const primaryImage = product?.coverUrl ?? product?.gallery[0]?.imageUrl ?? site.logoUrl;
 const galleryImages = product
   ? [
@@ -46,6 +48,7 @@ const returnUrl = product?.categorySlug
   title={product?.title ?? "Page not found"}
   description={product ? `${product.title}${product.tags.length > 0 ? ` — ${product.tags.slice(0, 3).join(", ")}` : ""}` : "The requested product could not be found."}
   canonical={canonical}
+  robots={product ? undefined : "noindex,follow"}
   ogImage={primaryImage}
   activeChannel={product?.channelSlug ?? channelSlug}
 >
