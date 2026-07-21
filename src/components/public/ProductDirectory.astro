@@ -20,6 +20,7 @@ const {
 ---
 
 <div
+  class="product-directory"
   data-product-directory
   data-channel={channelSlug}
   data-category={categorySlug ?? ""}
@@ -36,7 +37,12 @@ const {
 
   {page.hasMore && (
     <div class="load-more-row" data-load-more-row>
-      <button class="public-button secondary" type="button" data-load-more>Load More</button>
+      <button class="public-button secondary load-more-button" type="button" data-load-more>
+        <span data-load-more-label>Load More</span>
+        <svg viewBox="0 0 24 24" aria-hidden="true">
+          <path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
+        </svg>
+      </button>
     </div>
   )}
 </div>
@@ -52,7 +58,7 @@ const {
         const image = document.createElement('img');
         image.className = 'visual-card-media';
         image.src = product.coverUrl;
-        image.alt = product.title;
+        image.alt = '';
         image.loading = 'lazy';
         link.append(image);
       } else {
@@ -66,7 +72,7 @@ const {
       if (product.featured) {
         const featured = document.createElement('span');
         featured.className = 'visual-card-featured';
-        featured.textContent = 'Featured';
+        featured.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9L12 3Z" fill="currentColor"></path></svg><span>Featured</span>';
         link.append(featured);
       }
 
@@ -97,13 +103,15 @@ const {
       if (root.dataset.ready === '1') return;
       root.dataset.ready = '1';
       const button = root.querySelector('[data-load-more]');
+      const label = root.querySelector('[data-load-more-label]');
       const row = root.querySelector('[data-load-more-row]');
       const grid = root.querySelector('[data-product-grid]');
-      if (!button || !row || !grid) return;
+      if (!button || !label || !row || !grid) return;
 
       button.addEventListener('click', async () => {
         button.disabled = true;
-        button.textContent = 'Loading…';
+        button.setAttribute('aria-busy', 'true');
+        label.textContent = 'Loading…';
         const page = Number(root.dataset.nextPage || '2');
         const params = new URLSearchParams({ page: String(page) });
         if (root.dataset.category) params.set('category', root.dataset.category);
@@ -118,15 +126,18 @@ const {
           if (!Array.isArray(payload.products)) throw new Error('Invalid response');
           payload.products.forEach((product) => grid.append(createProductCard(product, root.dataset.channel || '')));
           root.dataset.nextPage = String(page + 1);
-          if (!payload.hasMore) row.remove();
-          else {
+          if (!payload.hasMore) {
+            row.innerHTML = '<p class="end-of-results">You’ve reached the end.</p>';
+          } else {
             button.disabled = false;
-            button.textContent = 'Load More';
+            button.removeAttribute('aria-busy');
+            label.textContent = 'Load More';
           }
         } catch (error) {
           console.error(error);
           button.disabled = false;
-          button.textContent = 'Try Again';
+          button.removeAttribute('aria-busy');
+          label.textContent = 'Try Again';
         }
       });
     };
