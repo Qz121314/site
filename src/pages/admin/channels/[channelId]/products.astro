@@ -1,7 +1,9 @@
 ---
 import AdminLayout from "@/layouts/AdminLayout.astro";
+import { loadAdminProductThumbnails } from "@/lib/db/product-thumbnails";
 import { loadAdminChannel } from "@/lib/db/site";
 import { loadAdminProductOptions, loadAdminProducts } from "@/lib/db/products";
+import { buildPublicImageUrl } from "@/lib/images/url";
 
 export const prerender = false;
 
@@ -24,6 +26,7 @@ const [channel, options, productPage] = channelId
     ])
   : [null, { categories: [], filters: [], conversionGroups: [] }, { products: [], total: 0, page: 1, pageCount: 1, pageSize: 50 }];
 
+const thumbnailData = await loadAdminProductThumbnails(productPage.products.map((product) => product.id));
 const saved = Astro.url.searchParams.get("saved");
 const error = Astro.url.searchParams.get("error");
 
@@ -100,9 +103,9 @@ function pageHref(page: number): string {
         ) : (
           <div class="admin-entity-grid">
             {productPage.products.map((product) => {
-              const thumbnailUrl = product.coverAssetId
-                ? `/api/admin/images/${encodeURIComponent(product.coverAssetId)}/content`
-                : null;
+              const objectKey = thumbnailData.objectKeyByProductId.get(product.id) ?? "";
+              const thumbnailUrl = buildPublicImageUrl(thumbnailData.r2PublicBaseUrl, objectKey)
+                ?? (product.coverAssetId ? `/api/admin/images/${encodeURIComponent(product.coverAssetId)}/content` : null);
               return (
                 <article class="admin-entity-card product-card">
                   <a class="admin-entity-media" href={`/admin/channels/${encodeURIComponent(channelId)}/products/${encodeURIComponent(product.id)}`} aria-label={`编辑 ${product.title}`}>
