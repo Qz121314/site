@@ -24,8 +24,8 @@ jobs:
         with:
           node-version: '24'
 
-      - name: 应用后台排版优化
-        run: node scripts/batch-21-layout.mjs
+      - name: 完成后台排版收口
+        run: node scripts/batch-21-finalize.mjs
 
       - name: 提交布局结果
         run: |
@@ -36,5 +36,5 @@ jobs:
             echo "No generated changes"
             exit 0
           fi
-          git commit -m "Refine admin density and pagination"
+          git commit -m "Finalize admin density layout"
           git push origin HEAD:${{ github.head_ref }}
