@@ -16,7 +16,7 @@ export const POST: APIRoute = async ({ request }) => {
   return new Response(null, {
     status: 303,
     headers: {
-      Location: "/admin",
+      Location: "/admin/channels",
       "Set-Cookie": sessionCookie(token, new URL(request.url).protocol === "https:"),
       "Cache-Control": "no-store",
     },

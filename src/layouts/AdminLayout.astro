@@ -16,7 +16,6 @@ const channels = partialRequest ? [] : await loadAdminChannels();
 Astro.response.headers.set("Cache-Control", "private, no-store");
 
 const globalItems = [
-  { href: "/admin", label: "概览", icon: "⌂" },
   { href: "/admin/settings", label: "站点设置", icon: "⚙" },
   { href: "/admin/channels", label: "分区管理", icon: "▦" },
   { href: "/admin/images", label: "图片库", icon: "◫" },
@@ -31,7 +30,6 @@ const channelItems = [
 ] as const;
 
 function isGlobalItemActive(href: string): boolean {
-  if (href === "/admin") return pathname === href;
   if (href === "/admin/channels") {
     return pathname === href || /^\/admin\/channels\/[^/]+\/?$/u.test(pathname);
   }
@@ -68,7 +66,7 @@ const statusLabels = {
     <div class="admin-frame">
       {!partialRequest && (
         <aside class="admin-sidebar">
-          <a class="admin-sidebar-brand" href="/admin" aria-label="管理后台首页">
+          <a class="admin-sidebar-brand" href="/admin/channels" aria-label="进入分区管理">
             <span class="brand-mark" aria-hidden="true">◆</span>
             <span class="admin-sidebar-brand-text">管理后台</span>
           </a>
