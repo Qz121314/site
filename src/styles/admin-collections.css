@@ -1,10 +1,19 @@
 /* Unified collection/list system for the admin UI. */
 .admin-body {
-  --admin-content-max: 78rem;
+  --admin-content-max: 72rem;
   --admin-card-radius: .65rem;
   --admin-control-radius: .45rem;
-  --admin-gap: .7rem;
+  --admin-gap: .6rem;
   --admin-card-shadow: 0 1px 2px rgba(15, 23, 42, .04), 0 8px 24px rgba(15, 23, 42, .035);
+  overflow-x: clip;
+}
+
+.admin-body .admin-frame,
+.admin-body .admin-content,
+.admin-body .admin-page-body,
+.admin-body .admin-page-body-inner,
+.admin-body .admin-page-header-inner {
+  min-width: 0;
 }
 
 .admin-body .admin-page-header-inner,
@@ -18,38 +27,45 @@
   box-shadow: var(--admin-card-shadow);
 }
 
-.admin-body .admin-filter-panel,
+.admin-body .admin-filter-panel {
+  width: min(100%, 68rem);
+  margin-right: auto;
+  margin-left: auto;
+}
+
 .admin-body .admin-collection-panel {
-  width: 100%;
+  width: min(100%, var(--admin-content-max));
   margin-right: auto;
   margin-left: auto;
 }
 
 .admin-body .admin-filter-form {
   display: grid;
-  grid-template-columns: minmax(20rem, 1.8fr) minmax(8rem, .45fr) minmax(9rem, .55fr) auto;
+  grid-template-columns: minmax(15rem, 24rem) minmax(6.5rem, 8rem) minmax(7.5rem, 10rem) auto;
+  justify-content: start;
   align-items: end;
-  gap: .5rem;
-  padding: .65rem;
+  gap: .4rem;
+  padding: .55rem;
 }
 
 .admin-body .admin-filter-actions {
   display: flex;
   align-items: center;
-  gap: .35rem;
+  gap: .3rem;
   white-space: nowrap;
 }
 
 .admin-body .admin-entity-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(14rem, 1fr));
-  gap: .7rem;
-  padding: .7rem;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 12.5rem), 15rem));
+  justify-content: start;
+  gap: .55rem;
+  padding: .55rem;
 }
 
 .admin-body .admin-entity-grid.is-dense {
-  grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
-  gap: .55rem;
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 10.5rem), 12rem));
+  gap: .45rem;
 }
 
 .admin-body .admin-entity-card {
@@ -65,7 +81,7 @@
 
 .admin-body .admin-entity-card:hover {
   border-color: #c6d2e1;
-  box-shadow: 0 10px 28px rgba(15, 23, 42, .08);
+  box-shadow: 0 8px 22px rgba(15, 23, 42, .07);
   transform: translateY(-1px);
 }
 
@@ -97,13 +113,13 @@
 .admin-body .admin-entity-badge {
   position: absolute;
   z-index: 2;
-  top: .45rem;
-  right: .45rem;
-  max-width: calc(100% - .9rem);
+  top: .4rem;
+  right: .4rem;
+  max-width: calc(100% - .8rem);
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, .75);
   border-radius: 999px;
-  padding: .18rem .45rem;
+  padding: .16rem .4rem;
   color: #334155;
   background: rgba(255, 255, 255, .92);
   box-shadow: 0 2px 8px rgba(15, 23, 42, .12);
@@ -133,8 +149,8 @@
 .admin-body .admin-entity-body {
   display: grid;
   min-width: 0;
-  gap: .25rem;
-  padding: .55rem .6rem;
+  gap: .2rem;
+  padding: .5rem .55rem;
 }
 
 .admin-body .admin-entity-title {
@@ -160,8 +176,8 @@
   display: grid;
   grid-auto-flow: column;
   grid-auto-columns: minmax(0, 1fr);
-  gap: .3rem;
-  padding: 0 .55rem .55rem;
+  gap: .25rem;
+  padding: 0 .5rem .5rem;
 }
 
 .admin-body .admin-entity-actions > form {
@@ -173,18 +189,18 @@
 .admin-body .admin-entity-actions a {
   width: 100%;
   min-width: 0;
-  min-height: 1.95rem;
+  min-height: 1.9rem;
   justify-content: center;
-  padding: .25rem .4rem;
+  padding: .22rem .35rem;
   font-size: .7rem;
   text-align: center;
 }
 
 .admin-body .admin-collection-empty {
   display: grid;
-  min-height: 8rem;
+  min-height: 5rem;
   place-items: center;
-  padding: 1.5rem;
+  padding: 1rem;
   color: #64748b;
   text-align: center;
 }
@@ -193,8 +209,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: .5rem;
-  padding: .6rem;
+  gap: .4rem;
+  padding: .5rem;
   border-top: 1px solid var(--admin-border);
 }
 
@@ -210,27 +226,27 @@
 
 .admin-body .admin-inline-card-form {
   display: grid;
-  gap: .45rem;
-  padding: .65rem;
+  gap: .4rem;
+  padding: .55rem;
 }
 
 .admin-body .admin-inline-card-fields {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 5.5rem 6rem;
-  gap: .4rem;
+  grid-template-columns: minmax(0, 1fr) 5rem 5.5rem;
+  gap: .35rem;
   align-items: end;
 }
 
 .admin-body .admin-card-icon {
   display: grid;
-  width: 2.2rem;
-  height: 2.2rem;
+  width: 2rem;
+  height: 2rem;
   flex: 0 0 auto;
   place-items: center;
-  border-radius: .55rem;
+  border-radius: .5rem;
   color: #1d4ed8;
   background: #eff6ff;
-  font-size: 1rem;
+  font-size: .95rem;
   font-weight: 750;
 }
 
@@ -238,14 +254,24 @@
   display: flex;
   min-width: 0;
   align-items: center;
-  gap: .55rem;
-  padding: .65rem;
+  gap: .5rem;
+  padding: .55rem;
 }
 
 .admin-body .admin-card-heading-text {
   display: grid;
   min-width: 0;
-  gap: .12rem;
+  gap: .1rem;
+}
+
+.admin-body .direct-image-upload .direct-upload-preview {
+  grid-template-columns: repeat(auto-fill, minmax(min(100%, 9rem), 12rem));
+  justify-content: start;
+}
+
+.admin-body .direct-image-upload.is-compact .direct-upload-preview {
+  grid-template-columns: minmax(min(100%, 12rem), 16rem);
+  justify-content: start;
 }
 
 @media (max-width: 900px) {
@@ -279,16 +305,21 @@
   .admin-body .admin-entity-grid,
   .admin-body .admin-entity-grid.is-dense {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: .45rem;
-    padding: .5rem;
+    gap: .4rem;
+    padding: .45rem;
   }
 
   .admin-body .admin-entity-body {
-    padding: .45rem;
+    padding: .4rem;
   }
 
   .admin-body .admin-entity-actions {
     grid-auto-flow: row;
-    padding: 0 .45rem .45rem;
+    padding: 0 .4rem .4rem;
+  }
+
+  .admin-body .direct-image-upload .direct-upload-preview,
+  .admin-body .direct-image-upload.is-compact .direct-upload-preview {
+    grid-template-columns: 1fr;
   }
 }

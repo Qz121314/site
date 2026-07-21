@@ -32,7 +32,7 @@ const errorMessages: Record<string, string> = {
   {channel && (
     <div slot="actions" class="admin-page-action-group">
       <button class="button" type="button" data-dialog-open="filter-create-dialog">新增筛选项</button>
-      <a class="button secondary" href={`/admin/channels/${encodeURIComponent(channelId)}/products/new`}>录入产品</a>
+      <a class="button secondary" href={`/admin/channels/${encodeURIComponent(channelId)}/products`}>产品管理</a>
     </div>
   )}
 
@@ -125,12 +125,12 @@ const errorMessages: Record<string, string> = {
 </AdminLayout>
 
 <style>
-  .filter-create-form { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; align-items: end; }
+  .filter-create-form { display: grid; grid-template-columns: 1fr 1fr; gap: .5rem; align-items: end; }
   .filter-name-field, .dialog-actions { grid-column: 1 / -1; }
-  .dialog-actions { display: flex; justify-content: flex-end; gap: .4rem; padding-top: .15rem; }
+  .dialog-actions { display: flex; justify-content: flex-end; gap: .35rem; padding-top: .1rem; }
   .filter-count-field { align-self: stretch; }
   .filter-count { display: flex; min-height: 2.15rem; align-items: center; color: #475569; font-size: .8rem; font-weight: 700; }
-  .filter-empty { display: grid; min-height: 14rem; place-items: center; align-content: center; gap: .55rem; }
+  .filter-empty { display: grid; min-height: 5rem; place-items: center; align-content: center; gap: .4rem; }
   .filter-empty span { color: #64748b; }
   @media (max-width: 639px) {
     .filter-create-form { grid-template-columns: 1fr; }

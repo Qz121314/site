@@ -131,14 +131,7 @@ const galleryValues = selectedImages.map((image) => ({
       {invalidEdit && <p class="error" role="alert">找不到需要编辑的产品，已切换到新产品录入。</p>}
 
       <div class="product-workbench">
-        <section class="product-entry-column" aria-labelledby="product-entry-title">
-          <header class="admin-card product-entry-header">
-            <h2 id="product-entry-title">产品信息录入</h2>
-            <div class="product-entry-actions">
-              {selectedProduct && <a class="button secondary" href={productHref({ edit: null })}>新建产品</a>}
-            </div>
-          </header>
-
+        <section class="product-entry-column">
           <form
             id={contentFormId}
             class="product-content-form"

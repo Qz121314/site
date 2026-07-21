@@ -35,9 +35,9 @@ const prefix = product ? `product-${product.id}` : "product-new";
 ---
 
 <div class="product-content-editor" data-product-editor>
-  <section class="admin-card">
+  <section class="admin-card product-editor-card">
     <div class="admin-section-bar">
-      <h2>{product ? `编辑 · ${product.title}` : "录入新产品"}</h2>
+      <h2>{product ? `编辑产品 · ${product.title}` : "产品信息录入"}</h2>
       {product && <span class="admin-section-note">/{product.slug}</span>}
     </div>
 
@@ -120,18 +120,14 @@ const prefix = product ? `product-${product.id}` : "product-new";
         </select>
       </div>
     </div>
-  </section>
 
-  <section class="admin-card">
-    <div class="admin-section-bar"><h2>产品图片</h2></div>
-    <div class="admin-card-body"><ProductGalleryUpload form={formId} values={gallery} /></div>
-  </section>
+    <div class="product-editor-section product-editor-gallery">
+      <ProductGalleryUpload form={formId} values={gallery} />
+    </div>
 
-  <section class="admin-card">
-    <div class="admin-section-bar"><h2>产品正文</h2></div>
-    <div class="admin-card-body">
+    <div class="product-editor-section product-editor-body">
       <div class="admin-field">
-        <label for={`${prefix}-body`}>正文内容（支持 Markdown）</label>
+        <label for={`${prefix}-body`}>产品正文（支持 Markdown）</label>
         <textarea id={`${prefix}-body`} name="bodySource" maxlength="30000" rows="4" spellcheck="true" data-auto-grow>{product?.bodySource ?? ""}</textarea>
       </div>
     </div>
@@ -144,3 +140,14 @@ const prefix = product ? `product-${product.id}` : "product-new";
     </details>
   )}
 </div>
+
+<style>
+  .product-editor-section {
+    border-top: 1px solid var(--admin-border);
+    padding: .55rem;
+  }
+
+  .product-editor-body textarea {
+    min-height: 5rem;
+  }
+</style>
