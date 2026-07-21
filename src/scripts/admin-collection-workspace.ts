@@ -109,13 +109,14 @@ function setSingleUploadValue(upload: HTMLElement, trigger: HTMLElement): void {
   image.alt = imageName;
   image.loading = "lazy";
 
-  const body = document.createElement("div");
+  const details = document.createElement("div");
   const title = document.createElement("strong");
   title.textContent = imageName;
   title.title = imageName;
   const meta = document.createElement("span");
   meta.textContent = imageMeta;
-  body.append(title, meta);
+  details.appendChild(title);
+  details.appendChild(meta);
 
   const remove = document.createElement("button");
   remove.className = "direct-upload-remove";
@@ -124,7 +125,9 @@ function setSingleUploadValue(upload: HTMLElement, trigger: HTMLElement): void {
   remove.setAttribute("aria-label", "移除图片");
   remove.textContent = "×";
 
-  item.append(image, body, remove);
+  item.appendChild(image);
+  item.appendChild(details);
+  item.appendChild(remove);
   preview.appendChild(item);
   preview.hidden = false;
   if (status) status.textContent = "已绑定 1 张";
@@ -142,14 +145,20 @@ function populateRecordDialog(trigger: HTMLElement): void {
   const action = trigger.dataset.recordAction;
   if (action) form.action = action;
 
-  form.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>("[name]").forEach((field) => {
-    if (field.type === "file") return;
-    const value = trigger.dataset[recordDatasetKey(field.name) as keyof DOMStringMap];
+  form.querySelectorAll("[name]").forEach((candidate) => {
+    if (!(
+      candidate instanceof HTMLInputElement
+      || candidate instanceof HTMLSelectElement
+      || candidate instanceof HTMLTextAreaElement
+    )) return;
+    if (candidate.type === "file") return;
+
+    const value = trigger.dataset[recordDatasetKey(candidate.name)];
     if (value === undefined) return;
-    if (field instanceof HTMLInputElement && field.type === "checkbox") {
-      field.checked = value === "1" || value === "true";
+    if (candidate instanceof HTMLInputElement && candidate.type === "checkbox") {
+      candidate.checked = value === "1" || value === "true";
     } else {
-      field.value = value;
+      candidate.value = value;
     }
   });
 
