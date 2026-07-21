@@ -44,6 +44,26 @@ const statusLabels = {
   disabled: "已停用",
 } as const;
 
+type PaginationToken = number | "gap";
+
+function buildPagination(current: number, total: number): PaginationToken[] {
+  if (total <= 7) return Array.from({ length: total }, (_, index) => index + 1);
+  const pages = new Set([1, total, current - 1, current, current + 1].filter((page) => page >= 1 && page <= total));
+  const sorted = Array.from(pages).sort((left, right) => left - right);
+  const tokens: PaginationToken[] = [];
+  let previous = 0;
+  for (const page of sorted) {
+    if (previous > 0 && page - previous > 1) tokens.push("gap");
+    tokens.push(page);
+    previous = page;
+  }
+  return tokens;
+}
+
+const paginationTokens = buildPagination(productPage.page, productPage.pageCount);
+const pageStart = productPage.total === 0 ? 0 : (productPage.page - 1) * productPage.pageSize + 1;
+const pageEnd = Math.min(productPage.total, productPage.page * productPage.pageSize);
+
 function pageHref(page: number): string {
   const params = new URLSearchParams();
   if (query) params.set("q", query);
@@ -103,12 +123,12 @@ function pageHref(page: number): string {
         {productPage.products.length === 0 ? (
           <div class="admin-collection-empty">没有符合条件的产品。</div>
         ) : (
-          <div class="admin-entity-grid">
+          <div class="admin-entity-grid product-admin-grid">
             {productPage.products.map((product) => {
               const thumbnailUrl = buildPublicImageUrl(productPage.r2PublicBaseUrl, product.coverObjectKey ?? "")
                 ?? (product.coverAssetId ? `/api/admin/images/${encodeURIComponent(product.coverAssetId)}/content` : null);
               return (
-                <article class="admin-entity-card product-card">
+                <article class="admin-entity-card product-card product-admin-card">
                   <a class="admin-entity-media" href={`/admin/channels/${encodeURIComponent(channelId)}/products/${encodeURIComponent(product.id)}`} aria-label={`编辑 ${product.title}`}>
                     {thumbnailUrl ? (
                       <img src={thumbnailUrl} alt="" loading="lazy" decoding="async" />
@@ -135,11 +155,22 @@ function pageHref(page: number): string {
           </div>
         )}
 
-        {productPage.pageCount > 1 && (
-          <nav class="admin-pagination" aria-label="产品分页">
-            <a class:list={["button secondary", productPage.page <= 1 && "is-disabled"]} href={productPage.page > 1 ? pageHref(productPage.page - 1) : undefined}>上一页</a>
-            <span>{productPage.page} / {productPage.pageCount}</span>
-            <a class:list={["button secondary", productPage.page >= productPage.pageCount && "is-disabled"]} href={productPage.page < productPage.pageCount ? pageHref(productPage.page + 1) : undefined}>下一页</a>
+        {productPage.total > 0 && (
+          <nav class="admin-pagination product-pagination" aria-label="产品分页">
+            <span class="pagination-summary">第 {pageStart}–{pageEnd} 个，共 {productPage.total} 个</span>
+            <div class="pagination-pages">
+              <a class:list={["button secondary", productPage.page <= 1 && "is-disabled"]} href={productPage.page > 1 ? pageHref(productPage.page - 1) : undefined}>上一页</a>
+              {paginationTokens.map((token) => token === "gap" ? (
+                <span class="pagination-gap" aria-hidden="true">…</span>
+              ) : (
+                <a
+                  class:list={["button secondary pagination-number", token === productPage.page && "is-current"]}
+                  href={pageHref(token)}
+                  aria-current={token === productPage.page ? "page" : undefined}
+                >{token}</a>
+              ))}
+              <a class:list={["button secondary", productPage.page >= productPage.pageCount && "is-disabled"]} href={productPage.page < productPage.pageCount ? pageHref(productPage.page + 1) : undefined}>下一页</a>
+            </div>
           </nav>
         )}
       </section>
@@ -148,3 +179,35 @@ function pageHref(page: number): string {
     <section class="admin-card"><div class="admin-collection-empty">找不到该分区。</div></section>
   )}
 </AdminLayout>
+
+<style>
+  .product-admin-grid {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 9.75rem), 11rem));
+    justify-content: start;
+  }
+
+  .product-admin-card .admin-entity-media { aspect-ratio: 4 / 3; }
+  .product-admin-card .admin-entity-title { font-size: .82rem; }
+  .product-admin-card .admin-entity-actions {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    grid-auto-flow: initial;
+  }
+  .product-admin-card .admin-entity-actions .button { font-size: .75rem; }
+
+  .product-pagination {
+    justify-content: space-between;
+    gap: .75rem;
+  }
+
+  .pagination-summary { white-space: nowrap; }
+  .pagination-pages { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: .3rem; }
+  .pagination-pages .button { min-width: 2.15rem; padding-right: .5rem; padding-left: .5rem; }
+  .pagination-pages .pagination-number.is-current { color: #ffffff; border-color: #2563eb; background: #2563eb; }
+  .pagination-gap { display: inline-grid; min-width: 1.4rem; place-items: center; color: #64748b; }
+
+  @media (max-width: 639px) {
+    .product-admin-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .product-pagination { align-items: flex-start; flex-direction: column; }
+    .pagination-pages { justify-content: flex-start; }
+  }
+</style>
