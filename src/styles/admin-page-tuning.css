@@ -5,6 +5,23 @@
   margin-left: auto;
 }
 
+.admin-body .admin-card:has(> form[action$="/ads/pools/create"]) {
+  width: min(100%, 60rem);
+  margin-right: auto;
+  margin-left: auto;
+}
+
+.admin-body form[action$="/ads/pools/create"] {
+  display: grid !important;
+  grid-template-columns: minmax(15rem, 1fr) 8rem auto !important;
+  align-items: end !important;
+  gap: .55rem !important;
+}
+
+.admin-body form[action$="/ads/pools/create"] > * {
+  grid-column: auto !important;
+}
+
 .admin-body .ad-pool-card,
 .admin-body .conversion-list {
   width: min(100%, 70rem);
@@ -102,6 +119,7 @@
 }
 
 @media (max-width: 639px) {
+  .admin-body form[action$="/ads/pools/create"],
   .admin-body .pool-settings-form,
   .admin-body .ad-create-form,
   .admin-body .ad-item-fields,
