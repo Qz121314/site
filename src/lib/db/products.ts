@@ -7,8 +7,11 @@ export type AdminProductListItem = {
   id: string;
   title: string;
   slug: string;
+  categoryName: string | null;
   coverAssetId: string | null;
   coverObjectKey: string | null;
+  featured: boolean;
+  sortOrder: number;
   status: ProductStatus;
 };
 
@@ -84,8 +87,11 @@ type AdminProductListRow = {
   id: string;
   title: string;
   slug: string;
+  category_name: string | null;
   cover_asset_id: string | null;
   cover_object_key: string | null;
+  featured: number;
+  sort_order: number;
   status: ProductStatus;
   r2_public_base_url: string;
 };
@@ -227,6 +233,13 @@ export async function loadAdminProductOptions(channelId: string): Promise<AdminP
   }
 }
 
+export async function loadNextAdminProductSortOrder(channelId: string): Promise<number> {
+  const row = await env.DB.prepare(
+    "SELECT COALESCE(MAX(sort_order), -10) + 10 AS next_sort_order FROM products WHERE channel_id = ?1",
+  ).bind(channelId).first<{ next_sort_order: number }>();
+  return Number(row?.next_sort_order ?? 0);
+}
+
 export async function loadAdminProducts(
   channelId: string,
   filters: AdminProductListFilters,
@@ -256,11 +269,15 @@ export async function loadAdminProducts(
          p.id,
          p.title,
          p.slug,
+         c.name AS category_name,
          p.cover_asset_id,
          cover.object_key AS cover_object_key,
+         p.featured,
+         p.sort_order,
          p.status,
          COALESCE(settings.r2_public_base_url, '') AS r2_public_base_url
        FROM products p
+       LEFT JOIN categories c ON c.id = p.category_id AND c.channel_id = p.channel_id
        LEFT JOIN image_assets cover ON cover.id = p.cover_asset_id
        LEFT JOIN site_settings settings ON settings.id = 1
        WHERE p.channel_id = ?1
@@ -276,8 +293,11 @@ export async function loadAdminProducts(
         id: row.id,
         title: row.title,
         slug: row.slug,
+        categoryName: row.category_name,
         coverAssetId: row.cover_asset_id,
         coverObjectKey: row.cover_object_key,
+        featured: row.featured === 1,
+        sortOrder: Number(row.sort_order),
         status: row.status,
       })),
       total,

@@ -69,12 +69,6 @@ function cleanRuntimeState(main: HTMLElement): HTMLElement {
   clone.querySelectorAll<HTMLElement>("[data-product-editor-ready]").forEach((element) => {
     delete element.dataset.productEditorReady;
   });
-  clone.querySelectorAll<HTMLElement>("[data-conversion-page-ready]").forEach((element) => {
-    delete element.dataset.conversionPageReady;
-  });
-  clone.querySelectorAll<HTMLElement>("[data-ad-pool-page-ready]").forEach((element) => {
-    delete element.dataset.adPoolPageReady;
-  });
   clone.querySelectorAll<HTMLDialogElement>("dialog[open]").forEach((dialog) => {
     dialog.removeAttribute("open");
   });
@@ -223,11 +217,8 @@ function updateSidebar(urlValue: string): void {
     link.removeAttribute("aria-current");
     const linkPath = new URL(link.href).pathname.replace(/\/$/u, "") || "/";
     const exact = path === linkPath || path === `${linkPath}/`;
-    const productListMatch = linkPath.endsWith("/products")
-      && path.startsWith(`${linkPath}/`)
-      && path !== `${linkPath}/new`;
     const nested = linkPath !== "/admin" && path.startsWith(`${linkPath}/`);
-    if ((exact || productListMatch || nested) && linkPath.length > bestLength) {
+    if ((exact || nested) && linkPath.length > bestLength) {
       best = link;
       bestLength = linkPath.length;
     }

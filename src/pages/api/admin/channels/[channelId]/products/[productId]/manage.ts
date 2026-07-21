@@ -1,0 +1,49 @@
+import { env } from "cloudflare:workers";
+import type { APIRoute } from "astro";
+import { adminReturnUrl, redirectAdmin } from "@/lib/admin/admin-return";
+import { parseProductManagementForm, prepareProductPublishing } from "@/lib/admin/product-form";
+import { isSameOriginPost } from "@/lib/auth/session";
+
+export const prerender = false;
+
+export const POST: APIRoute = async ({ request, params }) => {
+  if (!isSameOriginPost(request)) return new Response("Forbidden", { status: 403 });
+
+  const channelId = params.channelId ?? "";
+  const productId = params.productId ?? "";
+  if (!channelId || !productId) return new Response("Not Found", { status: 404 });
+
+  const form = await request.formData();
+  const fallbackPath = `/admin/channels/${encodeURIComponent(channelId)}/products`;
+  const returnUrl = adminReturnUrl(request, form, fallbackPath);
+  const parsed = parseProductManagementForm(form);
+  if (!parsed.ok) return redirectAdmin(returnUrl, { error: parsed.code, saved: null });
+
+  try {
+    if (parsed.value.status === "published") {
+      const publishError = await prepareProductPublishing(channelId, productId);
+      if (publishError) return redirectAdmin(returnUrl, { error: publishError, saved: null });
+    }
+
+    const result = await env.DB.prepare(
+      `UPDATE products
+       SET featured = ?1,
+           sort_order = ?2,
+           status = ?3,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = ?4 AND channel_id = ?5`,
+    ).bind(
+      parsed.value.featured ? 1 : 0,
+      parsed.value.sortOrder,
+      parsed.value.status,
+      productId,
+      channelId,
+    ).run();
+
+    if (!result.meta.changes) return redirectAdmin(returnUrl, { error: "not-found", saved: null });
+    return redirectAdmin(returnUrl, { saved: "managed", error: null });
+  } catch (error) {
+    console.error(JSON.stringify({ event: "admin_product_manage_failed", channelId, productId, error: String(error) }));
+    return redirectAdmin(returnUrl, { error: "database", saved: null });
+  }
+};

@@ -8,9 +8,10 @@ import { loadAdminChannels } from "@/lib/db/site";
 
 interface Props {
   title: string;
+  workspace?: "default" | "wide";
 }
 
-const { title } = Astro.props;
+const { title, workspace = "default" } = Astro.props;
 const pathname = Astro.url.pathname;
 const partialRequest = Astro.request.headers.get("X-Admin-Partial") === "1";
 const channels = partialRequest ? [] : await loadAdminChannels();
@@ -23,11 +24,10 @@ const globalItems = [
 ] as const;
 
 const channelItems = [
-  { segment: "products/new", label: "产品信息录入", icon: "＋", primary: true },
-  { segment: "products", label: "产品列表管理", icon: "≡", primary: false },
-  { segment: "filters", label: "分类筛选", icon: "⌁", primary: false },
-  { segment: "ads", label: "Hero 广告", icon: "▣", primary: false },
-  { segment: "conversions", label: "转化池", icon: "↗", primary: false },
+  { segment: "products", label: "产品管理", icon: "≡" },
+  { segment: "filters", label: "分类筛选", icon: "⌁" },
+  { segment: "ads", label: "Hero 广告", icon: "▣" },
+  { segment: "conversions", label: "转化池", icon: "↗" },
 ] as const;
 
 function isGlobalItemActive(href: string): boolean {
@@ -39,10 +39,6 @@ function isGlobalItemActive(href: string): boolean {
 
 function isChannelItemActive(base: string, segment: string): boolean {
   const href = `${base}/${segment}`;
-  if (segment === "products/new") return pathname === href;
-  if (segment === "products") {
-    return pathname === href || (pathname.startsWith(`${href}/`) && pathname !== `${href}/new`);
-  }
   return pathname === href || pathname.startsWith(`${href}/`);
 }
 
@@ -110,16 +106,12 @@ const statusLabels = {
                       <span class="admin-channel-chevron" aria-hidden="true">›</span>
                     </summary>
                     <div class="admin-channel-subnav">
-                      {channelItems.map(({ segment, label, icon, primary }) => {
+                      {channelItems.map(({ segment, label, icon }) => {
                         const href = `${base}/${segment}`;
                         const active = isChannelItemActive(base, segment);
                         return (
                           <a
-                            class:list={[
-                              "admin-sidebar-link",
-                              "admin-sidebar-sublink",
-                              primary && "is-primary-action",
-                            ]}
+                            class:list={["admin-sidebar-link", "admin-sidebar-sublink"]}
                             href={href}
                             aria-current={active ? "page" : undefined}
                             title={`${channel.name} · ${label}`}
@@ -153,13 +145,13 @@ const statusLabels = {
 
       <main class="admin-content">
         <header class="admin-page-header">
-          <div class="admin-page-header-inner">
+          <div class:list={["admin-page-header-inner", workspace === "wide" && "is-wide"]}>
             <h1 class="admin-page-title">{title}</h1>
             <div class="admin-page-actions"><slot name="actions" /></div>
           </div>
         </header>
         <div class="admin-page-body">
-          <div class="admin-page-body-inner">
+          <div class:list={["admin-page-body-inner", workspace === "wide" && "is-wide"]}>
             <slot />
           </div>
         </div>

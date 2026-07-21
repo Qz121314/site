@@ -11,7 +11,6 @@ export type ProductEntryExtraResult =
       categoryName: string;
       filterIds: string[];
       galleryAssetIds: string[];
-      submitAction: "save" | "continue";
     }
   | { ok: false; code: "category-name" | "filters" | "gallery" };
 
@@ -49,6 +48,5 @@ export function parseProductEntryExtras(form: FormData): ProductEntryExtraResult
     categoryName,
     filterIds,
     galleryAssetIds,
-    submitAction: form.get("submitAction") === "continue" ? "continue" : "save",
   };
 }

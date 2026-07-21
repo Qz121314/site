@@ -1,31 +1,17 @@
 import { env } from "cloudflare:workers";
 import type { APIRoute } from "astro";
-import { isSameOriginPost } from "@/lib/auth/session";
-import { parseProductForm, validateProductRelations } from "@/lib/admin/product-form";
+import { adminReturnUrl, redirectAdmin } from "@/lib/admin/admin-return";
 import { automaticSlug, uniqueProductSlug } from "@/lib/admin/automatic-slug";
-import { categoryFiltersBelongToChannel } from "@/lib/admin/category-form";
-import { parseProductEntryExtras } from "@/lib/admin/product-entry";
 import { categoryFiltersInsert, productImagesInsert } from "@/lib/admin/bulk-relations";
+import { categoryFiltersBelongToChannel } from "@/lib/admin/category-form";
+import { parseProductContentForm, validateProductRelations } from "@/lib/admin/product-form";
+import { parseProductEntryExtras } from "@/lib/admin/product-entry";
 import { removeEmptyGeneratedCategory, resolveProductCategory } from "@/lib/admin/product-category";
-import { renderProductBody } from "@/lib/admin/product-body";
+import { isSameOriginPost } from "@/lib/auth/session";
 import { imageAssetsExist } from "@/lib/db/image-options";
+import { loadNextAdminProductSortOrder } from "@/lib/db/products";
 
 export const prerender = false;
-
-function entryRedirect(request: Request, channelId: string, params: Record<string, string>): Response {
-  const url = new URL(`/admin/channels/${encodeURIComponent(channelId)}/products/new`, request.url);
-  for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);
-  return Response.redirect(url, 303);
-}
-
-function editRedirect(request: Request, channelId: string, productId: string, params: Record<string, string>): Response {
-  const url = new URL(
-    `/admin/channels/${encodeURIComponent(channelId)}/products/${encodeURIComponent(productId)}`,
-    request.url,
-  );
-  for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);
-  return Response.redirect(url, 303);
-}
 
 export const POST: APIRoute = async ({ request, params }) => {
   if (!isSameOriginPost(request)) return new Response("Forbidden", { status: 403 });
@@ -34,25 +20,20 @@ export const POST: APIRoute = async ({ request, params }) => {
   if (!channelId) return new Response("Not Found", { status: 404 });
 
   const form = await request.formData();
+  const fallbackPath = `/admin/channels/${encodeURIComponent(channelId)}/products`;
+  const returnUrl = adminReturnUrl(request, form, fallbackPath);
   const rawTitle = form.get("title");
   const title = typeof rawTitle === "string" ? rawTitle.trim() : "";
   form.set("slug", automaticSlug(title, "product", 96));
 
-  const parsed = parseProductForm(form);
-  if (!parsed.ok) return entryRedirect(request, channelId, { error: parsed.code });
+  const parsed = parseProductContentForm(form);
+  if (!parsed.ok) return redirectAdmin(returnUrl, { error: parsed.code, saved: null });
 
   const extras = parseProductEntryExtras(form);
-  if (!extras.ok) return entryRedirect(request, channelId, { error: extras.code });
+  if (!extras.ok) return redirectAdmin(returnUrl, { error: extras.code, saved: null });
 
-  const value = {
-    ...parsed.value,
-    bodyHtml: renderProductBody(parsed.value.bodySource),
-  };
+  const value = parsed.value;
   const firstImageAssetId = extras.galleryAssetIds[0] ?? null;
-  if (value.status === "published" && !firstImageAssetId) {
-    return entryRedirect(request, channelId, { error: "image" });
-  }
-
   const productId = crypto.randomUUID();
   let generatedCategoryId: string | null = null;
 
@@ -60,40 +41,43 @@ export const POST: APIRoute = async ({ request, params }) => {
     const channel = await env.DB.prepare("SELECT id FROM channels WHERE id = ?1")
       .bind(channelId)
       .first<{ id: string }>();
-    if (!channel) return entryRedirect(request, channelId, { error: "not-found" });
+    if (!channel) return redirectAdmin(returnUrl, { error: "not-found", saved: null });
 
-    const slug = await uniqueProductSlug(channelId, value.title);
+    const [slug, sortOrder] = await Promise.all([
+      uniqueProductSlug(channelId, value.title),
+      loadNextAdminProductSortOrder(channelId),
+    ]);
 
     if (!(await imageAssetsExist(extras.galleryAssetIds))) {
-      return entryRedirect(request, channelId, { error: "image" });
+      return redirectAdmin(returnUrl, { error: "image", saved: null });
     }
 
     if (!(await categoryFiltersBelongToChannel(channelId, extras.filterIds))) {
-      return entryRedirect(request, channelId, { error: "filters" });
+      return redirectAdmin(returnUrl, { error: "filters", saved: null });
     }
 
     const category = await resolveProductCategory({
       channelId,
-      categoryId: value.categoryId,
+      categoryId: null,
       categoryName: extras.categoryName,
-      productStatus: value.status,
+      productStatus: "draft",
       coverAssetId: firstImageAssetId,
     });
     generatedCategoryId = category.created ? category.id : null;
 
     if (!category.id && extras.filterIds.length > 0) {
-      return entryRedirect(request, channelId, { error: "filter-category" });
+      return redirectAdmin(returnUrl, { error: "filter-category", saved: null });
     }
 
     const relationError = await validateProductRelations(
       channelId,
       category.id,
       value.conversionGroupId,
-      value.status,
+      "draft",
     );
     if (relationError) {
       if (generatedCategoryId) await removeEmptyGeneratedCategory(generatedCategoryId);
-      return entryRedirect(request, channelId, { error: relationError });
+      return redirectAdmin(returnUrl, { error: relationError, saved: null });
     }
 
     const imageInsert = productImagesInsert(productId, extras.galleryAssetIds);
@@ -104,7 +88,7 @@ export const POST: APIRoute = async ({ request, params }) => {
            id, channel_id, category_id, conversion_group_id, cover_asset_id,
            title, slug, tags, body_source, body_html, cta_label,
            featured, sort_order, status
-         ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?14)`,
+         ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, 0, ?12, 'draft')`,
       ).bind(
         productId,
         channelId,
@@ -117,9 +101,7 @@ export const POST: APIRoute = async ({ request, params }) => {
         value.bodySource,
         value.bodyHtml,
         value.ctaLabel,
-        value.featured ? 1 : 0,
-        value.sortOrder,
-        value.status,
+        sortOrder,
       ),
       ...(imageInsert ? [env.DB.prepare(imageInsert.sql).bind(...imageInsert.bindings)] : []),
       ...(category.id
@@ -131,10 +113,7 @@ export const POST: APIRoute = async ({ request, params }) => {
     ];
 
     await env.DB.batch(statements);
-
-    return extras.submitAction === "continue"
-      ? entryRedirect(request, channelId, { saved: "created" })
-      : editRedirect(request, channelId, productId, { saved: "created" });
+    return redirectAdmin(returnUrl, { edit: productId, saved: "created", error: null });
   } catch (error) {
     if (generatedCategoryId) {
       try {
@@ -145,6 +124,6 @@ export const POST: APIRoute = async ({ request, params }) => {
     }
 
     console.error(JSON.stringify({ event: "admin_product_create_failed", channelId, title: value.title, error: String(error) }));
-    return entryRedirect(request, channelId, { error: "database" });
+    return redirectAdmin(returnUrl, { error: "database", saved: null });
   }
 };
