@@ -79,7 +79,7 @@ const canonical = new URL(`/${encodeURIComponent(channelSlug)}`, Astro.url.origi
           {productPage.products.length > 0 && (
             <section class="public-section">
               <div class="public-section-heading"><h2>More products</h2></div>
-              <ProductDirectory channelSlug={channel.slug} page={productPage} />
+              <ProductDirectory channelSlug={channel.slug} page={productPage} uncategorizedOnly />
             </section>
           )}
         </>
