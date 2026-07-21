@@ -5,6 +5,15 @@ export const ADMIN_PRODUCT_PAGE_SIZE = 50;
 
 export type AdminProductListItem = {
   id: string;
+  title: string;
+  slug: string;
+  coverAssetId: string | null;
+  coverObjectKey: string | null;
+  status: ProductStatus;
+};
+
+export type AdminProduct = {
+  id: string;
   channelId: string;
   title: string;
   slug: string;
@@ -20,9 +29,6 @@ export type AdminProductListItem = {
   sortOrder: number;
   status: ProductStatus;
   imageCount: number;
-};
-
-export type AdminProduct = AdminProductListItem & {
   bodySource: string;
   bodyHtml: string;
 };
@@ -32,6 +38,11 @@ export type AdminProductCategoryOption = {
   name: string;
   status: string;
   filterIds: string[];
+};
+
+export type AdminProductCategoryListOption = {
+  id: string;
+  name: string;
 };
 
 export type AdminProductFilterOption = {
@@ -66,9 +77,20 @@ export type AdminProductPage = {
   page: number;
   pageCount: number;
   pageSize: number;
+  r2PublicBaseUrl: string;
 };
 
 type AdminProductListRow = {
+  id: string;
+  title: string;
+  slug: string;
+  cover_asset_id: string | null;
+  cover_object_key: string | null;
+  status: ProductStatus;
+  r2_public_base_url: string;
+};
+
+type AdminProductRow = {
   id: string;
   channel_id: string;
   title: string;
@@ -80,16 +102,13 @@ type AdminProductListRow = {
   conversion_group_status: string | null;
   cover_asset_id: string | null;
   tags: string;
+  body_source: string;
+  body_html: string;
   cta_label: string;
   featured: number;
   sort_order: number;
   status: ProductStatus;
   image_count: number;
-};
-
-type AdminProductRow = AdminProductListRow & {
-  body_source: string;
-  body_html: string;
 };
 
 type AdminProductCategoryOptionRow = {
@@ -108,7 +127,7 @@ function parseTags(value: string): string[] {
   }
 }
 
-function mapListItem(row: AdminProductListRow): AdminProductListItem {
+function mapProduct(row: AdminProductRow): AdminProduct {
   return {
     id: row.id,
     channelId: row.channel_id,
@@ -126,24 +145,54 @@ function mapListItem(row: AdminProductListRow): AdminProductListItem {
     sortOrder: row.sort_order,
     status: row.status,
     imageCount: Number(row.image_count ?? 0),
+    bodySource: row.body_source,
+    bodyHtml: row.body_html,
   };
+}
+
+async function readAdminProductCategories(channelId: string): Promise<AdminProductCategoryOption[]> {
+  const result = await env.DB.prepare(
+    `SELECT
+       c.id,
+       c.name,
+       c.status,
+       GROUP_CONCAT(DISTINCT relation.filter_id) AS filter_ids
+     FROM categories c
+     LEFT JOIN category_filter_relations relation ON relation.category_id = c.id
+     WHERE c.channel_id = ?1
+     GROUP BY c.id, c.name, c.status, c.sort_order, c.created_at
+     ORDER BY c.sort_order ASC, c.created_at ASC`,
+  ).bind(channelId).all<AdminProductCategoryOptionRow>();
+
+  return result.results.map((category) => ({
+    id: category.id,
+    name: category.name,
+    status: category.status,
+    filterIds: category.filter_ids ? category.filter_ids.split(",").filter(Boolean) : [],
+  }));
+}
+
+export async function loadAdminProductCategoryList(
+  channelId: string,
+): Promise<AdminProductCategoryListOption[]> {
+  try {
+    const result = await env.DB.prepare(
+      `SELECT id, name
+       FROM categories
+       WHERE channel_id = ?1
+       ORDER BY sort_order ASC, created_at ASC`,
+    ).bind(channelId).all<AdminProductCategoryListOption>();
+    return result.results;
+  } catch (error) {
+    console.error(JSON.stringify({ event: "admin_product_category_list_read_failed", channelId, error: String(error) }));
+    return [];
+  }
 }
 
 export async function loadAdminProductOptions(channelId: string): Promise<AdminProductOptions> {
   try {
-    const [categoryResult, filterResult, groupResult] = await Promise.all([
-      env.DB.prepare(
-        `SELECT
-           c.id,
-           c.name,
-           c.status,
-           GROUP_CONCAT(DISTINCT relation.filter_id) AS filter_ids
-         FROM categories c
-         LEFT JOIN category_filter_relations relation ON relation.category_id = c.id
-         WHERE c.channel_id = ?1
-         GROUP BY c.id, c.name, c.status, c.sort_order, c.created_at
-         ORDER BY c.sort_order ASC, c.created_at ASC`,
-      ).bind(channelId).all<AdminProductCategoryOptionRow>(),
+    const [categories, filterResult, groupResult] = await Promise.all([
+      readAdminProductCategories(channelId),
       env.DB.prepare(
         `SELECT id, name, status
          FROM category_filters
@@ -165,12 +214,7 @@ export async function loadAdminProductOptions(channelId: string): Promise<AdminP
     ]);
 
     return {
-      categories: categoryResult.results.map((category) => ({
-        id: category.id,
-        name: category.name,
-        status: category.status,
-        filterIds: category.filter_ids ? category.filter_ids.split(",").filter(Boolean) : [],
-      })),
+      categories,
       filters: filterResult.results,
       conversionGroups: groupResult.results.map((group) => ({
         ...group,
@@ -210,47 +254,48 @@ export async function loadAdminProducts(
     const result = await env.DB.prepare(
       `SELECT
          p.id,
-         p.channel_id,
          p.title,
          p.slug,
-         p.category_id,
-         c.name AS category_name,
-         p.conversion_group_id,
-         g.name AS conversion_group_name,
-         g.status AS conversion_group_status,
          p.cover_asset_id,
-         p.tags,
-         p.cta_label,
-         p.featured,
-         p.sort_order,
+         cover.object_key AS cover_object_key,
          p.status,
-         COUNT(DISTINCT pi.image_asset_id) AS image_count
+         COALESCE(settings.r2_public_base_url, '') AS r2_public_base_url
        FROM products p
-       LEFT JOIN categories c ON c.id = p.category_id AND c.channel_id = p.channel_id
-       LEFT JOIN conversion_groups g ON g.id = p.conversion_group_id AND g.channel_id = p.channel_id
-       LEFT JOIN product_images pi ON pi.product_id = p.id
+       LEFT JOIN image_assets cover ON cover.id = p.cover_asset_id
+       LEFT JOIN site_settings settings ON settings.id = 1
        WHERE p.channel_id = ?1
          AND (?2 = '' OR p.title LIKE '%' || ?2 || '%' OR p.slug LIKE '%' || ?2 || '%' OR p.tags LIKE '%' || ?2 || '%')
          AND (?3 = '' OR p.status = ?3)
          AND (?4 = '' OR p.category_id = ?4)
-       GROUP BY
-         p.id, p.channel_id, p.title, p.slug, p.category_id, c.name,
-         p.conversion_group_id, g.name, g.status, p.cover_asset_id,
-         p.tags, p.cta_label, p.featured, p.sort_order, p.status, p.created_at
        ORDER BY p.featured DESC, p.sort_order ASC, p.created_at DESC
        LIMIT ?5 OFFSET ?6`,
     ).bind(channelId, query, status, categoryId, ADMIN_PRODUCT_PAGE_SIZE, offset).all<AdminProductListRow>();
 
     return {
-      products: result.results.map(mapListItem),
+      products: result.results.map((row) => ({
+        id: row.id,
+        title: row.title,
+        slug: row.slug,
+        coverAssetId: row.cover_asset_id,
+        coverObjectKey: row.cover_object_key,
+        status: row.status,
+      })),
       total,
       page,
       pageCount,
       pageSize: ADMIN_PRODUCT_PAGE_SIZE,
+      r2PublicBaseUrl: result.results[0]?.r2_public_base_url ?? "",
     };
   } catch (error) {
     console.error(JSON.stringify({ event: "admin_products_read_failed", channelId, error: String(error) }));
-    return { products: [], total: 0, page: 1, pageCount: 1, pageSize: ADMIN_PRODUCT_PAGE_SIZE };
+    return {
+      products: [],
+      total: 0,
+      page: 1,
+      pageCount: 1,
+      pageSize: ADMIN_PRODUCT_PAGE_SIZE,
+      r2PublicBaseUrl: "",
+    };
   }
 }
 
@@ -288,12 +333,7 @@ export async function loadAdminProduct(channelId: string, productId: string): Pr
          p.featured, p.sort_order, p.status`,
     ).bind(productId, channelId).first<AdminProductRow>();
 
-    if (!row) return null;
-    return {
-      ...mapListItem(row),
-      bodySource: row.body_source,
-      bodyHtml: row.body_html,
-    };
+    return row ? mapProduct(row) : null;
   } catch (error) {
     console.error(JSON.stringify({ event: "admin_product_read_failed", channelId, productId, error: String(error) }));
     return null;
