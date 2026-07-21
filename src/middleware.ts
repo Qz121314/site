@@ -36,6 +36,10 @@ function addSecurityHeaders(response: Response, request: Request, pathname: stri
   if (isAdminPath(pathname)) {
     if (!isAdminImageContent(request, pathname)) headers.set("Cache-Control", "no-store");
     headers.set("X-Robots-Tag", "noindex, nofollow");
+  } else if (pathname.startsWith("/api/") || pathname.startsWith("/go/")) {
+    headers.set("X-Robots-Tag", "noindex, nofollow");
+  } else if (response.status >= 400) {
+    headers.set("X-Robots-Tag", "noindex, follow");
   } else if (isPublicEdgeCacheable(request, pathname, response)) {
     headers.set("Cache-Control", "public, max-age=0, must-revalidate");
     headers.set(
