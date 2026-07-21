@@ -69,6 +69,13 @@ function cleanRuntimeState(main: HTMLElement): HTMLElement {
   clone.querySelectorAll<HTMLElement>("[data-product-editor-ready]").forEach((element) => {
     delete element.dataset.productEditorReady;
   });
+  clone.querySelectorAll<HTMLElement>("[data-admin-popover-trigger]").forEach((trigger) => {
+    trigger.setAttribute("aria-expanded", "false");
+  });
+  clone.querySelectorAll<HTMLElement>("[data-admin-popover-panel]").forEach((panel) => {
+    delete panel.dataset.adminPopoverFallbackOpen;
+    panel.removeAttribute("style");
+  });
   clone.querySelectorAll<HTMLDialogElement>("dialog[open]").forEach((dialog) => {
     dialog.removeAttribute("open");
   });
@@ -350,6 +357,9 @@ async function submitForm(form: HTMLFormElement, submitter: HTMLElement | null):
 
   if (method !== "POST") return;
   const wasDirty = form.dataset.adminDirty === "1";
+  const preserveScroll = form.dataset.adminScroll === "preserve";
+  const replaceHistory = form.dataset.adminHistory === "replace";
+  const scrollPosition = { left: window.scrollX, top: window.scrollY };
   form.dataset.adminDirty = "0";
   setLoading(true);
   try {
@@ -360,8 +370,12 @@ async function submitForm(form: HTMLFormElement, submitter: HTMLElement | null):
       return;
     }
     storeSnapshot(snapshot);
-    applySnapshot(snapshot, true);
-    history.pushState({ admin: true }, "", snapshot.url);
+    applySnapshot(snapshot, !preserveScroll);
+    if (replaceHistory) history.replaceState({ admin: true }, "", snapshot.url);
+    else history.pushState({ admin: true }, "", snapshot.url);
+    if (preserveScroll) {
+      requestAnimationFrame(() => window.scrollTo({ ...scrollPosition, behavior: "auto" }));
+    }
   } catch (error) {
     if (wasDirty) form.dataset.adminDirty = "1";
     throw error;
