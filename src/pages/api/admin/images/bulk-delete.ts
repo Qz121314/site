@@ -1,7 +1,8 @@
 import { env } from "cloudflare:workers";
 import type { APIRoute } from "astro";
 import { isSameOriginPost } from "@/lib/auth/session";
-import { deleteUnusedImageAssets, MAX_IMAGE_MUTATION_IDS } from "@/lib/db/images";
+import { deleteUnusedImageAssetsAtomically } from "@/lib/db/image-delete";
+import { MAX_IMAGE_MUTATION_IDS } from "@/lib/db/images";
 
 export const prerender = false;
 
@@ -33,9 +34,9 @@ export const POST: APIRoute = async ({ request }) => {
   }
 
   try {
-    const result = await deleteUnusedImageAssets(imageIds);
+    const result = await deleteUnusedImageAssetsAtomically(imageIds);
     if (result.found.length !== imageIds.length) return redirect(request, { error: "not-found" });
-    if (result.remainingIds.length > 0) return redirect(request, { error: "in-use" });
+    if (result.deleted.length !== imageIds.length) return redirect(request, { error: "in-use" });
 
     try {
       await env.MEDIA_BUCKET.delete(result.deleted.map((image) => image.objectKey));
