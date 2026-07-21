@@ -45,23 +45,26 @@ const canonical = new URL(`/${encodeURIComponent(channelSlug)}`, Astro.url.origi
     <>
       <HeroCarousel advertisements={hero} />
 
-      <section class="public-section">
+      <section class="public-section channel-search-section">
         <form class="public-search-form" action={`/${encodeURIComponent(channel.slug)}/search`} method="get" role="search">
+          <span class="public-search-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="1.7" />
+              <path d="m16 16 4 4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.7" />
+            </svg>
+          </span>
           <input name="q" type="search" maxlength="100" placeholder="Search categories, products, or tags" aria-label={`Search ${channel.name}`} />
-          <button class="public-button" type="submit">Search</button>
+          <button class="public-search-submit" type="submit" aria-label="Search">
+            <span>Search</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="m9 18 6-6-6-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
+            </svg>
+          </button>
         </form>
       </section>
 
       {categories.length > 0 ? (
-        <section class="public-section" data-category-section>
-          <div class="public-section-heading">
-            <div>
-              <div class="eyebrow">Explore</div>
-              <h1>{channel.name}</h1>
-            </div>
-            <span class="public-count" data-category-count>{categories.length} categories</span>
-          </div>
-
+        <section class="public-section category-section" data-category-section>
           {filters.length > 0 && (
             <div class="filter-strip" aria-label="Category filters">
               <button class="filter-button" type="button" data-category-filter="all" aria-pressed="true">{site.allFilterLabel}</button>
@@ -71,6 +74,14 @@ const canonical = new URL(`/${encodeURIComponent(channelSlug)}`, Astro.url.origi
             </div>
           )}
 
+          <div class="public-section-heading public-section-heading-accent">
+            <div>
+              <div class="eyebrow">Explore {channel.name}</div>
+              <h1>Browse categories</h1>
+            </div>
+            <span class="public-count" data-category-count>{categories.length} categories</span>
+          </div>
+
           <div class="category-grid" data-category-grid>
             {categories.map((category) => <CategoryCard category={category} channelSlug={channel.slug} />)}
           </div>
@@ -78,10 +89,10 @@ const canonical = new URL(`/${encodeURIComponent(channelSlug)}`, Astro.url.origi
         </section>
       ) : (
         <section class="public-section">
-          <div class="public-section-heading">
+          <div class="public-section-heading public-section-heading-accent">
             <div>
-              <div class="eyebrow">Discover</div>
-              <h1>{channel.name}</h1>
+              <div class="eyebrow">Explore {channel.name}</div>
+              <h1>Discover products</h1>
             </div>
           </div>
           <ProductDirectory channelSlug={channel.slug} page={productPage} />
@@ -90,8 +101,9 @@ const canonical = new URL(`/${encodeURIComponent(channelSlug)}`, Astro.url.origi
     </>
   ) : (
     <section class="public-section">
-      <div class="public-empty">
+      <div class="public-empty public-error-card">
         <div>
+          <div class="empty-icon" aria-hidden="true">404</div>
           <h1>Page not found</h1>
           <p>This channel is unavailable or has not been published.</p>
           <a class="public-button secondary" href="/">Return home</a>

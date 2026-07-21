@@ -97,10 +97,19 @@ const metaPixelId = site.metaPixelId;
           {site.logoUrl && <img class="public-brand-logo" src={site.logoUrl} alt="" />}
           <span class="public-brand-name">{site.siteName}</span>
         </a>
-        <nav class="public-header-links" aria-label="Site information">
-          <a href="/privacy">Privacy</a>
-          <a href="/disclaimer">Disclaimer</a>
-        </nav>
+
+        <details class="public-menu">
+          <summary class="public-menu-trigger" aria-label="Open site menu">
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+            <span aria-hidden="true"></span>
+          </summary>
+          <div class="public-menu-panel">
+            <div class="public-menu-heading">Site menu</div>
+            <a href="/privacy">Privacy</a>
+            <a href="/disclaimer">Disclaimer</a>
+          </div>
+        </details>
       </div>
     </header>
 
@@ -116,7 +125,6 @@ const metaPixelId = site.metaPixelId;
             href={`/${encodeURIComponent(channel.slug)}`}
             aria-current={activeChannel === channel.slug ? "page" : undefined}
           >
-            <span class="public-nav-icon" aria-hidden="true">{channel.icon.trim() || channel.name.trim().slice(0, 1)}</span>
             <span class="public-nav-label">{channel.name}</span>
           </a>
         ))}

@@ -7,6 +7,7 @@ interface Props {
 }
 
 const { category, channelSlug } = Astro.props;
+const itemLabel = `${category.productCount} ${category.productCount === 1 ? "item" : "items"}`;
 ---
 
 <a
@@ -14,14 +15,20 @@ const { category, channelSlug } = Astro.props;
   href={`/${encodeURIComponent(channelSlug)}/category/${encodeURIComponent(category.slug)}`}
   data-category-card
   data-filter-ids={category.filterIds.join(",")}
+  aria-label={`${category.name}, ${itemLabel}`}
 >
   {category.imageUrl ? (
-    <img class="visual-card-media" src={category.imageUrl} alt={category.name} loading="lazy" />
+    <img class="visual-card-media" src={category.imageUrl} alt="" loading="lazy" />
   ) : (
     <span class="visual-card-placeholder" aria-hidden="true">{category.name.trim().slice(0, 1).toUpperCase() || "C"}</span>
   )}
   <span class="visual-card-overlay">
     <span class="visual-card-title">{category.name}</span>
-    <span class="visual-card-meta">{category.productCount} {category.productCount === 1 ? "item" : "items"}</span>
+    <span class="visual-card-meta category-card-count">{itemLabel}</span>
+  </span>
+  <span class="visual-card-arrow" aria-hidden="true">
+    <svg viewBox="0 0 24 24">
+      <path d="m9 18 6-6-6-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
+    </svg>
   </span>
 </a>

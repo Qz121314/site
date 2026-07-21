@@ -32,34 +32,70 @@ if (query) canonicalUrl.searchParams.set("q", query);
 >
   {channel ? (
     <>
-      <nav class="breadcrumbs" aria-label="Breadcrumb">
-        <a href={`/${encodeURIComponent(channel.slug)}`}>{channel.name}</a>
-        <span aria-hidden="true">/</span>
-        <span aria-current="page">Search</span>
-      </nav>
-
-      <section class="public-section">
-        <div class="public-section-heading">
+      <header class="directory-page-header search-page-header">
+        <a class="public-back-link" href={`/${encodeURIComponent(channel.slug)}`}>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m15 18-6-6 6-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
+          </svg>
+          <span>Back to {channel.name}</span>
+        </a>
+        <div class="directory-title-row">
           <div>
             <div class="eyebrow">Search results</div>
             <h1>{query || "Search"}</h1>
+            {query && <p>Categories, products, and tags in {channel.name}</p>}
           </div>
         </div>
+      </header>
+
+      <section class="public-section">
         <form class="public-search-form" action={`/${encodeURIComponent(channel.slug)}/search`} method="get" role="search">
-          <input name="q" type="search" maxlength="100" required value={query} placeholder="Search categories, products, or tags" aria-label={`Search ${channel.name}`} autofocus={!query} />
-          <button class="public-button" type="submit">Search</button>
+          <span class="public-search-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="1.7" />
+              <path d="m16 16 4 4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.7" />
+            </svg>
+          </span>
+          <input
+            name="q"
+            type="search"
+            maxlength="100"
+            required
+            value={query}
+            placeholder="Search categories, products, or tags"
+            aria-label={`Search ${channel.name}`}
+            autofocus={!query}
+          />
+          <button class="public-search-submit" type="submit" aria-label="Search">
+            <span>Search</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="m9 18 6-6-6-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
+            </svg>
+          </button>
         </form>
       </section>
 
       {!query ? (
-        <div class="public-empty">Enter a category name, product name, or tag.</div>
+        <div class="public-empty">
+          <div>
+            <div class="empty-icon" aria-hidden="true">⌕</div>
+            <h2>Find something specific</h2>
+            <p>Enter a category name, product name, or tag.</p>
+          </div>
+        </div>
       ) : results.categories.length === 0 && results.products.length === 0 ? (
-        <div class="public-empty">No results found for “{query}”.</div>
+        <div class="public-empty">
+          <div>
+            <div class="empty-icon" aria-hidden="true">0</div>
+            <h2>No results found</h2>
+            <p>Nothing matched “{query}”. Try another search.</p>
+          </div>
+        </div>
       ) : (
         <>
           {results.categories.length > 0 && (
-            <section class="public-section">
-              <div class="public-section-heading">
+            <section class="public-section search-results-section">
+              <div class="public-section-heading public-section-heading-accent">
                 <h2>Categories</h2>
                 <span class="public-count">{results.categories.length}</span>
               </div>
@@ -70,8 +106,8 @@ if (query) canonicalUrl.searchParams.set("q", query);
           )}
 
           {results.products.length > 0 && (
-            <section class="public-section">
-              <div class="public-section-heading">
+            <section class="public-section search-results-section">
+              <div class="public-section-heading public-section-heading-accent">
                 <h2>Products</h2>
                 <span class="public-count">{results.products.length}</span>
               </div>
@@ -84,6 +120,12 @@ if (query) canonicalUrl.searchParams.set("q", query);
       )}
     </>
   ) : (
-    <div class="public-empty">This channel is unavailable.</div>
+    <div class="public-empty public-error-card">
+      <div>
+        <div class="empty-icon" aria-hidden="true">404</div>
+        <h1>Channel unavailable</h1>
+        <p>This channel is unavailable or has not been published.</p>
+      </div>
+    </div>
   )}
 </PublicLayout>
