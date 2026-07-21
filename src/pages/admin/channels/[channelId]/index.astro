@@ -24,7 +24,7 @@ const errorMessages: Record<string, string> = {
   {channel && (
     <div slot="actions" class="admin-page-action-group">
       <a class="button secondary" href="/admin/channels">分区列表</a>
-      <a class="button secondary" href={`/admin/channels/${encodeURIComponent(channel.id)}/products/new`}>产品录入</a>
+      <a class="button secondary" href={`/admin/channels/${encodeURIComponent(channel.id)}/products`}>产品管理</a>
       <a class="button secondary" href={`/${encodeURIComponent(channel.slug)}`} target="_blank" rel="noreferrer">前台</a>
       <button class="button" type="submit" form={formId}>保存设置</button>
     </div>
@@ -79,8 +79,8 @@ const errorMessages: Record<string, string> = {
 </AdminLayout>
 
 <style>
-  .channel-settings-card { width: min(100%, 64rem); margin-right: auto; margin-left: auto; }
-  .channel-settings-form { display: grid; grid-template-columns: minmax(16rem, 1fr) 9rem 6rem 8rem minmax(10rem, .7fr); gap: .55rem; align-items: end; }
+  .channel-settings-card { width: min(100%, 54rem); margin-right: auto; margin-left: auto; }
+  .channel-settings-form { display: grid; grid-template-columns: minmax(12rem, 1.2fr) 7rem 5rem 7rem minmax(8rem, .8fr); gap: .45rem; align-items: end; }
   .readonly-value { display: flex; align-items: center; padding: .42rem .55rem; background: #f8fafc; color: #64748b; }
   @media (max-width: 900px) { .channel-settings-form { grid-template-columns: repeat(2, minmax(0, 1fr)); } .channel-name-field { grid-column: 1 / -1; } }
   @media (max-width: 639px) { .channel-settings-form { grid-template-columns: 1fr; } .channel-name-field { grid-column: auto; } }
