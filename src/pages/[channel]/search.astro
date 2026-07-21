@@ -2,7 +2,7 @@
 import PublicLayout from "@/layouts/PublicLayout.astro";
 import CategoryCard from "@/components/public/CategoryCard.astro";
 import ProductCard from "@/components/public/ProductCard.astro";
-import PublicBackLink from "@/components/public/PublicBackLink.astro";
+import PublicPageHeader from "@/components/public/PublicPageHeader.astro";
 import PublicSearchForm from "@/components/public/PublicSearchForm.astro";
 import {
   findPublicChannel,
@@ -21,6 +21,7 @@ if (!channel) Astro.response.status = 404;
 const results = channel && query
   ? await searchPublicCatalog(channel.id, query, site.r2PublicBaseUrl)
   : { categories: [], products: [] };
+const categories = results.categories.filter((category) => category.productCount > 0);
 const canonicalUrl = new URL(`/${encodeURIComponent(channelSlug)}/search`, Astro.url.origin);
 if (query) canonicalUrl.searchParams.set("q", query);
 ---
@@ -34,12 +35,11 @@ if (query) canonicalUrl.searchParams.set("q", query);
 >
   {channel ? (
     <>
-      <header class="directory-page-header search-page-header">
-        <PublicBackLink href={`/${encodeURIComponent(channel.slug)}`} />
-        <div class="directory-heading">
-          <h1>{query || "Search"}</h1>
-        </div>
-      </header>
+      <PublicPageHeader
+        href={`/${encodeURIComponent(channel.slug)}`}
+        title={query || "Search"}
+        className="search-page-header"
+      />
 
       <section class="public-section">
         <PublicSearchForm
@@ -58,7 +58,7 @@ if (query) canonicalUrl.searchParams.set("q", query);
             <h2>Search</h2>
           </div>
         </div>
-      ) : results.categories.length === 0 && results.products.length === 0 ? (
+      ) : categories.length === 0 && results.products.length === 0 ? (
         <div class="public-empty">
           <div>
             <div class="empty-icon" aria-hidden="true">0</div>
@@ -67,14 +67,14 @@ if (query) canonicalUrl.searchParams.set("q", query);
         </div>
       ) : (
         <>
-          {results.categories.length > 0 && (
+          {categories.length > 0 && (
             <section class="public-section search-results-section">
               <div class="public-section-heading">
                 <h2>Categories</h2>
-                <span class="public-count">{results.categories.length}</span>
+                <span class="public-count">{categories.length}</span>
               </div>
               <div class="category-grid">
-                {results.categories.map((category) => <CategoryCard category={category} channelSlug={channel.slug} />)}
+                {categories.map((category) => <CategoryCard category={category} channelSlug={channel.slug} />)}
               </div>
             </section>
           )}
