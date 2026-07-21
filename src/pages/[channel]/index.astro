@@ -85,9 +85,6 @@ const pageTitle = channel
         <section class="public-section category-section" data-category-section>
           {filters.length > 0 && (
             <div class="filter-strip" aria-label="Category filters">
-              <button class="filter-button" type="button" data-category-filter-all aria-pressed="true">
-                {site.allFilterLabel}
-              </button>
               {filters.map((filter) => (
                 <button class="filter-button" type="button" data-category-filter={filter.id} aria-pressed="false">
                   {filter.name}
@@ -137,7 +134,6 @@ const pageTitle = channel
     const section = document.querySelector('[data-category-section]');
     if (!section) return;
 
-    const allButton = section.querySelector('[data-category-filter-all]');
     const buttons = Array.from(section.querySelectorAll('[data-category-filter]'));
     const cards = Array.from(section.querySelectorAll('[data-category-card]'));
     const empty = section.querySelector('[data-category-empty]');
@@ -145,7 +141,6 @@ const pageTitle = channel
     const applyFilter = (filterId) => {
       let visible = 0;
       buttons.forEach((item) => item.setAttribute('aria-pressed', item.dataset.categoryFilter === filterId ? 'true' : 'false'));
-      allButton?.setAttribute('aria-pressed', filterId ? 'false' : 'true');
 
       cards.forEach((card) => {
         const filterIds = (card.dataset.filterIds || '').split(',').filter(Boolean);
@@ -157,7 +152,6 @@ const pageTitle = channel
       if (empty) empty.hidden = visible > 0;
     };
 
-    allButton?.addEventListener('click', () => applyFilter(''));
     buttons.forEach((button) => {
       button.addEventListener('click', () => {
         const filterId = button.dataset.categoryFilter || '';
