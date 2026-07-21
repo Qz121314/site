@@ -1,0 +1,40 @@
+name: Batch 24 Product Cleanup
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    if: github.head_ref == 'agent/product-workbench-batch-24'
+    runs-on: ubuntu-latest
+    steps:
+      - name: 检出产品工作台分支
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 安装 Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: 清理旧产品与池页面状态
+        run: node scripts/batch-24-product-cleanup.mjs
+
+      - name: 提交清理结果
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src
+          if git diff --cached --quiet; then
+            echo "No generated changes"
+            exit 0
+          fi
+          git commit -m "Remove retired product and pool route state"
+          git push origin HEAD:${{ github.head_ref }}
