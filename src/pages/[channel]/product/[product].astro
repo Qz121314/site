@@ -3,6 +3,7 @@ import PublicLayout from "@/layouts/PublicLayout.astro";
 import ProductGallery from "@/components/public/ProductGallery.astro";
 import PublicPageHeader from "@/components/public/PublicPageHeader.astro";
 import { loadPublicProductDetail, loadPublicSiteShell } from "@/lib/db/public";
+import { publicProductHasEnabledConversion } from "@/lib/db/public-availability";
 
 export const prerender = false;
 
@@ -10,6 +11,7 @@ const channelSlug = Astro.params.channel ?? "";
 const productSlug = Astro.params.product ?? "";
 const site = await loadPublicSiteShell();
 const product = await loadPublicProductDetail(channelSlug, productSlug, site.r2PublicBaseUrl);
+const hasConversion = product ? await publicProductHasEnabledConversion(product.id) : false;
 
 if (!product) Astro.response.status = 404;
 
@@ -69,7 +71,7 @@ const returnUrl = product?.categorySlug
         </section>
       )}
 
-      {product.hasConversion && (
+      {hasConversion && (
         <div class="product-cta-bar" data-contact-box>
           <div class="contact-reveal" data-contact-value hidden></div>
           <a
@@ -109,10 +111,8 @@ const returnUrl = product?.categorySlug
       const box = link.closest('[data-contact-box]');
       const value = box?.querySelector('[data-contact-value]');
       const label = link.querySelector('[data-contact-label]');
-      let resolved = false;
 
       link.addEventListener('click', async (event) => {
-        if (resolved) return;
         event.preventDefault();
         if (link.dataset.loading === '1') return;
 
@@ -128,7 +128,6 @@ const returnUrl = product?.categorySlug
           const result = await response.json();
           if (!response.ok || !result?.ok || !result.contact?.target) throw new Error('unavailable');
 
-          resolved = true;
           link.href = result.contact.target;
           box?.setAttribute('data-contact-type', result.contact.type || 'link');
           if (value) {
@@ -136,6 +135,7 @@ const returnUrl = product?.categorySlug
             value.hidden = false;
           }
           if (label) label.textContent = result.contact.type === 'sms' ? 'Send Message' : 'Open Link';
+          window.location.assign(result.contact.target);
         } catch (error) {
           console.error(error);
           if (value) {

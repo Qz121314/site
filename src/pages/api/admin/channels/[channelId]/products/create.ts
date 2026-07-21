@@ -7,6 +7,7 @@ import { categoryFiltersBelongToChannel } from "@/lib/admin/category-form";
 import { parseProductEntryExtras } from "@/lib/admin/product-entry";
 import { categoryFiltersInsert, productImagesInsert } from "@/lib/admin/bulk-relations";
 import { removeEmptyGeneratedCategory, resolveProductCategory } from "@/lib/admin/product-category";
+import { renderProductBody } from "@/lib/admin/product-body";
 import { imageAssetsExist } from "@/lib/db/image-options";
 
 export const prerender = false;
@@ -43,7 +44,10 @@ export const POST: APIRoute = async ({ request, params }) => {
   const extras = parseProductEntryExtras(form);
   if (!extras.ok) return entryRedirect(request, channelId, { error: extras.code });
 
-  const value = parsed.value;
+  const value = {
+    ...parsed.value,
+    bodyHtml: renderProductBody(parsed.value.bodySource),
+  };
   const firstImageAssetId = extras.galleryAssetIds[0] ?? null;
   if (value.status === "published" && !firstImageAssetId) {
     return entryRedirect(request, channelId, { error: "image" });
