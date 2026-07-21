@@ -1,8 +1,7 @@
 ---
 import AdminLayout from "@/layouts/AdminLayout.astro";
-import { loadAdminProductThumbnails } from "@/lib/db/product-thumbnails";
 import { loadAdminChannel } from "@/lib/db/site";
-import { loadAdminProductOptions, loadAdminProducts } from "@/lib/db/products";
+import { loadAdminProductCategoryList, loadAdminProducts } from "@/lib/db/products";
 import { buildPublicImageUrl } from "@/lib/images/url";
 
 export const prerender = false;
@@ -13,10 +12,10 @@ const status = Astro.url.searchParams.get("status") ?? "";
 const categoryId = Astro.url.searchParams.get("category") ?? "";
 const pageValue = Number(Astro.url.searchParams.get("page") ?? "1");
 
-const [channel, options, productPage] = channelId
+const [channel, categories, productPage] = channelId
   ? await Promise.all([
       loadAdminChannel(channelId),
-      loadAdminProductOptions(channelId),
+      loadAdminProductCategoryList(channelId),
       loadAdminProducts(channelId, {
         query,
         status,
@@ -24,9 +23,12 @@ const [channel, options, productPage] = channelId
         page: Number.isSafeInteger(pageValue) ? pageValue : 1,
       }),
     ])
-  : [null, { categories: [], filters: [], conversionGroups: [] }, { products: [], total: 0, page: 1, pageCount: 1, pageSize: 50 }];
+  : [
+      null,
+      [],
+      { products: [], total: 0, page: 1, pageCount: 1, pageSize: 50, r2PublicBaseUrl: "" },
+    ];
 
-const thumbnailData = await loadAdminProductThumbnails(productPage.products.map((product) => product.id));
 const saved = Astro.url.searchParams.get("saved");
 const error = Astro.url.searchParams.get("error");
 
@@ -80,7 +82,7 @@ function pageHref(page: number): string {
             <label for="product-category-filter">分类</label>
             <select id="product-category-filter" name="category">
               <option value="">全部分类</option>
-              {options.categories.map((category) => (
+              {categories.map((category) => (
                 <option value={category.id} selected={categoryId === category.id}>{category.name}</option>
               ))}
             </select>
@@ -103,8 +105,7 @@ function pageHref(page: number): string {
         ) : (
           <div class="admin-entity-grid">
             {productPage.products.map((product) => {
-              const objectKey = thumbnailData.objectKeyByProductId.get(product.id) ?? "";
-              const thumbnailUrl = buildPublicImageUrl(thumbnailData.r2PublicBaseUrl, objectKey)
+              const thumbnailUrl = buildPublicImageUrl(productPage.r2PublicBaseUrl, product.coverObjectKey ?? "")
                 ?? (product.coverAssetId ? `/api/admin/images/${encodeURIComponent(product.coverAssetId)}/content` : null);
               return (
                 <article class="admin-entity-card product-card">

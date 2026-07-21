@@ -22,6 +22,7 @@ const pageCache = new Map<string, PageSnapshot>();
 const parser = new DOMParser();
 const progress = document.querySelector<HTMLElement>("[data-admin-route-progress]");
 let activeController: AbortController | null = null;
+let currentUrl = canonicalUrl(window.location.href);
 
 function canonicalUrl(value: string | URL): string {
   const url = new URL(value, window.location.href);
@@ -57,6 +58,13 @@ function cleanRuntimeState(main: HTMLElement): HTMLElement {
   });
   clone.querySelectorAll<HTMLElement>("[data-image-picker-ready]").forEach((element) => {
     delete element.dataset.imagePickerReady;
+  });
+  clone.querySelectorAll<HTMLElement>("[data-product-editor-ready]").forEach((element) => {
+    delete element.dataset.productEditorReady;
+  });
+  clone.querySelectorAll<HTMLFormElement>("form[data-admin-dirty-form]").forEach((form) => {
+    delete form.dataset.adminDirtyReady;
+    form.dataset.adminDirty = "0";
   });
   return clone;
 }
@@ -135,29 +143,49 @@ function styleKey(text: string): string {
 }
 
 function synchronizeStyles(documentValue: Document, responseUrl: string): void {
+  const desiredLinks = new Set<string>();
   documentValue.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"][href]').forEach((source) => {
     const hrefValue = source.getAttribute("href");
-    if (!hrefValue) return;
-    const href = new URL(hrefValue, responseUrl).href;
+    if (hrefValue) desiredLinks.add(new URL(hrefValue, responseUrl).href);
+  });
+
+  document.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"][href]').forEach((link) => {
+    if (!desiredLinks.has(link.href)) link.remove();
+  });
+
+  for (const href of desiredLinks) {
     const exists = Array.from(document.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"][href]'))
       .some((link) => link.href === href);
-    if (exists) return;
+    if (exists) continue;
     const link = document.createElement("link");
     link.rel = "stylesheet";
     link.href = href;
     document.head.appendChild(link);
-  });
+  }
 
+  const desiredInlineStyles = new Map<string, string>();
   documentValue.querySelectorAll<HTMLStyleElement>("head style").forEach((source) => {
     const text = source.textContent ?? "";
-    if (!text) return;
+    if (text) desiredInlineStyles.set(styleKey(text), text);
+  });
+
+  document.querySelectorAll<HTMLStyleElement>("head style").forEach((style) => {
+    const text = style.textContent ?? "";
     const key = styleKey(text);
-    if (document.head.querySelector(`[data-admin-dynamic-style="${CSS.escape(key)}"]`)) return;
+    if (!desiredInlineStyles.has(key)) {
+      style.remove();
+      return;
+    }
+    style.dataset.adminDynamicStyle = key;
+  });
+
+  for (const [key, text] of desiredInlineStyles) {
+    if (document.head.querySelector(`[data-admin-dynamic-style="${CSS.escape(key)}"]`)) continue;
     const style = document.createElement("style");
     style.dataset.adminDynamicStyle = key;
     style.textContent = text;
     document.head.appendChild(style);
-  });
+  }
 }
 
 function updateSidebar(urlValue: string): void {
@@ -188,7 +216,27 @@ function updateSidebar(urlValue: string): void {
 
 function setLoading(loading: boolean): void {
   if (progress) progress.hidden = !loading;
-  document.querySelector<HTMLElement>(".admin-content")?.setAttribute("aria-busy", loading ? "true" : "false");
+  const main = document.querySelector<HTMLElement>(".admin-content");
+  if (!main) return;
+  if (loading) main.setAttribute("aria-busy", "true");
+  else main.removeAttribute("aria-busy");
+}
+
+function hasDirtyForm(): boolean {
+  return Boolean(document.querySelector('form[data-admin-dirty-form][data-admin-dirty="1"]'));
+}
+
+function clearDirtyForms(): void {
+  document.querySelectorAll<HTMLFormElement>("form[data-admin-dirty-form]").forEach((form) => {
+    form.dataset.adminDirty = "0";
+  });
+}
+
+function confirmDiscardChanges(): boolean {
+  if (!hasDirtyForm()) return true;
+  const confirmed = window.confirm("当前页面有未保存的修改，确定离开？");
+  if (confirmed) clearDirtyForms();
+  return confirmed;
 }
 
 function applySnapshot(snapshot: PageSnapshot, scrollToTop: boolean): void {
@@ -203,6 +251,7 @@ function applySnapshot(snapshot: PageSnapshot, scrollToTop: boolean): void {
 
   currentMain.replaceWith(nextMain);
   document.title = snapshot.title;
+  currentUrl = snapshot.url;
   updateSidebar(snapshot.url);
   activateMainScripts(nextMain, snapshot.url);
   snapshot.outsideScripts.forEach(executeScript);
@@ -263,6 +312,11 @@ function appendSubmitter(data: FormData, submitter: HTMLElement | null): void {
   data.append(submitter.name, submitter.value);
 }
 
+function requiresShellRefresh(action: URL): boolean {
+  return action.pathname === "/api/admin/channels/create"
+    || /^\/api\/admin\/channels\/[^/]+\/(?:update|delete)$/u.test(action.pathname);
+}
+
 async function submitForm(form: HTMLFormElement, submitter: HTMLElement | null): Promise<void> {
   const method = (form.method || "get").toUpperCase();
   const action = new URL(form.action || window.location.href, window.location.href);
@@ -279,13 +333,22 @@ async function submitForm(form: HTMLFormElement, submitter: HTMLElement | null):
   }
 
   if (method !== "POST") return;
+  const wasDirty = form.dataset.adminDirty === "1";
+  form.dataset.adminDirty = "0";
   setLoading(true);
   try {
     pageCache.clear();
     const snapshot = await fetchSnapshot(action.href, { method: "POST", body: data });
+    if (requiresShellRefresh(action)) {
+      window.location.assign(snapshot.url);
+      return;
+    }
     storeSnapshot(snapshot);
     applySnapshot(snapshot, true);
     history.pushState({ admin: true }, "", snapshot.url);
+  } catch (error) {
+    if (wasDirty) form.dataset.adminDirty = "1";
+    throw error;
   } finally {
     setLoading(false);
   }
@@ -305,6 +368,7 @@ document.addEventListener("click", (event) => {
   const url = new URL(link.href, window.location.href);
   if (url.origin !== window.location.origin || !url.pathname.startsWith("/admin")) return;
   if (url.hash && url.pathname === window.location.pathname && url.search === window.location.search) return;
+  if (canonicalUrl(url) !== currentUrl && !confirmDiscardChanges()) return;
 
   event.preventDefault();
   void navigate(url, { push: true }).catch((error: unknown) => {
@@ -332,8 +396,19 @@ document.addEventListener("submit", (event) => {
   });
 });
 
+window.addEventListener("beforeunload", (event) => {
+  if (!hasDirtyForm()) return;
+  event.preventDefault();
+  event.returnValue = "";
+});
+
 window.addEventListener("popstate", () => {
-  void navigate(window.location.href, { push: false }).catch((error: unknown) => {
+  const requestedUrl = canonicalUrl(window.location.href);
+  if (!confirmDiscardChanges()) {
+    history.pushState({ admin: true }, "", currentUrl);
+    return;
+  }
+  void navigate(requestedUrl, { push: false }).catch((error: unknown) => {
     if (error instanceof DOMException && error.name === "AbortError") return;
     console.error(error);
     window.location.reload();
