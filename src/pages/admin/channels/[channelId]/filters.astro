@@ -36,10 +36,7 @@ const errorMessages: Record<string, string> = {
       {error && errorMessages[error] && <p class="error" role="alert">{errorMessages[error]}</p>}
 
       <section class="admin-card filter-create-card">
-        <div class="admin-section-bar">
-          <h2>新增筛选项</h2>
-          <span class="admin-section-note">例如区域、类型或服务标签</span>
-        </div>
+        <div class="admin-section-bar"><h2>新增筛选项</h2></div>
         <form class="admin-card-body filter-create-form" action={`/api/admin/channels/${encodeURIComponent(channelId)}/filters/create`} method="post">
           <div class="admin-field filter-name-field">
             <label for="filter-name">名称</label>
@@ -62,77 +59,66 @@ const errorMessages: Record<string, string> = {
         </form>
       </section>
 
-      <section class="admin-card">
+      <section class="admin-card admin-collection-panel">
         <div class="admin-toolbar">
           <h2>筛选项</h2>
           <span class="admin-section-note">{filters.length} 个</span>
         </div>
 
         {filters.length === 0 ? (
-          <div class="admin-empty">尚未创建分类筛选。</div>
+          <div class="admin-collection-empty">尚未创建分类筛选。</div>
         ) : (
-          <div class="admin-table-wrap compact-table-wrap filter-table-wrap">
-            <table class="admin-table filter-table">
-              <thead>
-                <tr>
-                  <th class="cell-grow">名称</th>
-                  <th>自动地址</th>
-                  <th>绑定分类</th>
-                  <th>排序</th>
-                  <th>状态</th>
-                  <th style="text-align:right">操作</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filters.map((filter) => {
-                  const formId = `filter-form-${filter.id}`;
-                  return (
-                    <tr>
-                      <td class="cell-grow"><input class="table-input" form={formId} name="name" maxlength="60" required value={filter.name} aria-label="筛选名称" /></td>
-                      <td><span class="auto-address">/{filter.slug}</span></td>
-                      <td>{filter.categoryCount}</td>
-                      <td><input class="table-input table-number" form={formId} name="sortOrder" type="number" min="-999999" max="999999" step="1" value={filter.sortOrder} aria-label="排序" /></td>
-                      <td>
-                        <select class="table-input table-status" form={formId} name="status" aria-label="状态">
+          <div class="admin-entity-grid filter-grid">
+            {filters.map((filter) => {
+              const formId = `filter-form-${filter.id}`;
+              return (
+                <article class="admin-entity-card filter-card">
+                  <form id={formId} class="admin-inline-card-form" action={`/api/admin/channels/${encodeURIComponent(channelId)}/filters/${encodeURIComponent(filter.id)}/update`} method="post">
+                    <div class="admin-field">
+                      <label for={`filter-name-${filter.id}`}>名称</label>
+                      <input id={`filter-name-${filter.id}`} name="name" maxlength="60" required value={filter.name} />
+                    </div>
+                    <div class="admin-inline-card-fields">
+                      <div class="admin-field filter-count-field">
+                        <label>绑定分类</label>
+                        <div class="filter-count">{filter.categoryCount}</div>
+                      </div>
+                      <div class="admin-field">
+                        <label for={`filter-sort-${filter.id}`}>排序</label>
+                        <input id={`filter-sort-${filter.id}`} name="sortOrder" type="number" min="-999999" max="999999" step="1" value={filter.sortOrder} />
+                      </div>
+                      <div class="admin-field">
+                        <label for={`filter-status-${filter.id}`}>状态</label>
+                        <select id={`filter-status-${filter.id}`} name="status">
                           <option value="enabled" selected={filter.status === "enabled"}>启用</option>
                           <option value="disabled" selected={filter.status === "disabled"}>停用</option>
                         </select>
-                      </td>
-                      <td>
-                        <div class="admin-table-actions">
-                          <form id={formId} action={`/api/admin/channels/${encodeURIComponent(channelId)}/filters/${encodeURIComponent(filter.id)}/update`} method="post">
-                            <button class="button secondary" type="submit">保存</button>
-                          </form>
-                          <form action={`/api/admin/channels/${encodeURIComponent(channelId)}/filters/${encodeURIComponent(filter.id)}/delete`} method="post" onsubmit="return confirm('确定删除该筛选？')">
-                            <button class="button danger" type="submit">删除</button>
-                          </form>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })}
-              </tbody>
-            </table>
+                      </div>
+                    </div>
+                  </form>
+                  <div class="admin-entity-actions">
+                    <button class="button secondary" type="submit" form={formId}>保存</button>
+                    <form action={`/api/admin/channels/${encodeURIComponent(channelId)}/filters/${encodeURIComponent(filter.id)}/delete`} method="post" onsubmit="return confirm('确定删除该筛选？')">
+                      <button class="button danger" type="submit">删除</button>
+                    </form>
+                  </div>
+                </article>
+              );
+            })}
           </div>
         )}
       </section>
     </>
   ) : (
-    <section class="admin-card"><div class="admin-empty">找不到该分区。</div></section>
+    <section class="admin-card"><div class="admin-collection-empty">找不到该分区。</div></section>
   )}
 </AdminLayout>
 
 <style>
-  .filter-create-card { width: min(100%, 60rem); margin-right: auto; margin-left: auto; }
+  .filter-create-card { width: 100%; }
   .filter-create-form { display: grid; grid-template-columns: minmax(15rem, 1fr) 6rem 8rem auto; gap: .55rem; align-items: end; }
-  .filter-table-wrap > .admin-table { width: min(100%, 60rem); }
-  .filter-table .cell-grow { width: 18rem; }
-  .table-input { width: 100%; min-width: 7rem; height: 1.9rem; border: 1px solid transparent; border-radius: .3rem; padding: .2rem .4rem; color: var(--text); background: transparent; outline: none; }
-  .table-input:hover { border-color: var(--line); background: #f8fafc; }
-  .table-input:focus { border-color: #2563eb; background: #fff; }
-  .table-number { width: 5rem; min-width: 5rem; }
-  .table-status { width: 5rem; min-width: 5rem; }
-  .auto-address { color: #64748b; font-size: .76rem; }
+  .filter-count-field { align-self: stretch; }
+  .filter-count { display: flex; min-height: 2.15rem; align-items: center; color: #475569; font-size: .8rem; font-weight: 700; }
   @media (max-width: 767px) { .filter-create-form { grid-template-columns: repeat(2, minmax(0, 1fr)); } .filter-name-field { grid-column: 1 / -1; } }
   @media (max-width: 639px) { .filter-create-form { grid-template-columns: 1fr; } .filter-name-field { grid-column: auto; } .filter-create-form .button { width: 100%; } }
 </style>
