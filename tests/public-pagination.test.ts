@@ -16,8 +16,8 @@ test("accepts omitted and valid public product pages", () => {
   });
 });
 
-test("rejects malformed and out-of-range public product pages", () => {
-  for (const value of ["0", "-1", "1.5", "abc", ` ${1}`, String(MAX_PUBLIC_PRODUCT_PAGE + 1)]) {
+test("rejects malformed, noncanonical, and out-of-range public product pages", () => {
+  for (const value of ["", "0", "01", "-1", "1.5", "abc", ` ${1}`, String(MAX_PUBLIC_PRODUCT_PAGE + 1)]) {
     assert.deepEqual(readPublicPage(value), { page: 1, valid: false });
   }
 });
