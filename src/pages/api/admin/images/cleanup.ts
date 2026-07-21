@@ -1,10 +1,11 @@
-import { env } from "cloudflare:workers";
 import type { APIRoute } from "astro";
 import { isSameOriginPost } from "@/lib/auth/session";
 import {
-  deleteUnusedImageAssets,
-  loadUnusedImageObjectsForCleanup,
-} from "@/lib/db/images";
+  deleteQueuedImageObjectsFromR2,
+  deleteUnusedImageAssetsAtomically,
+  loadQueuedImageObjects,
+} from "@/lib/db/image-delete";
+import { loadUnusedImageObjectsForCleanup } from "@/lib/db/images";
 
 export const prerender = false;
 
@@ -18,19 +19,30 @@ export const POST: APIRoute = async ({ request }) => {
   if (!isSameOriginPost(request)) return new Response("Forbidden", { status: 403 });
 
   try {
-    const candidates = await loadUnusedImageObjectsForCleanup();
-    if (candidates.length === 0) return redirect(request, { saved: "clean", count: "0" });
+    const queued = await loadQueuedImageObjects();
+    const retryResult = await deleteQueuedImageObjectsFromR2(queued);
 
-    const result = await deleteUnusedImageAssets(candidates.map((image) => image.id));
-    if (result.deleted.length > 0) {
-      try {
-        await env.MEDIA_BUCKET.delete(result.deleted.map((image) => image.objectKey));
-      } catch (error) {
-        console.error(JSON.stringify({ event: "admin_image_cleanup_r2_deferred", error: String(error) }));
-      }
+    const candidates = await loadUnusedImageObjectsForCleanup();
+    const deletion = candidates.length > 0
+      ? await deleteUnusedImageAssetsAtomically(candidates.map((image) => image.id))
+      : { found: [], deleted: [], remainingIds: [] };
+    const r2Result = await deleteQueuedImageObjectsFromR2(deletion.deleted);
+    const pending = retryResult.pending.length + r2Result.pending.length;
+
+    if (pending > 0) {
+      console.error(JSON.stringify({
+        event: "admin_image_cleanup_r2_deferred",
+        pending,
+        objectKeys: [...retryResult.pending, ...r2Result.pending].map((image) => image.objectKey),
+      }));
     }
 
-    return redirect(request, { saved: "clean", count: String(result.deleted.length) });
+    return redirect(request, {
+      saved: pending > 0 ? "clean-pending" : "clean",
+      count: String(deletion.deleted.length),
+      retried: String(retryResult.completed.length),
+      pending: String(pending),
+    });
   } catch (error) {
     console.error(JSON.stringify({ event: "admin_image_cleanup_failed", error: String(error) }));
     return redirect(request, { error: "cleanup" });
