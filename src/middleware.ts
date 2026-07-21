@@ -53,17 +53,17 @@ async function publicDataReady(): Promise<boolean> {
          s.all_filter_label,
          s.privacy_content,
          s.disclaimer_content,
-         (SELECT COUNT(*) FROM channels) AS channel_count,
-         (SELECT COUNT(*) FROM image_assets) AS image_count,
-         (SELECT COUNT(*) FROM categories) AS category_count,
-         (SELECT COUNT(*) FROM category_filters) AS filter_count,
-         (SELECT COUNT(*) FROM category_filter_relations) AS filter_relation_count,
-         (SELECT COUNT(*) FROM products) AS product_count,
-         (SELECT COUNT(*) FROM product_images) AS product_image_count,
-         (SELECT COUNT(*) FROM ad_pools) AS ad_pool_count,
-         (SELECT COUNT(*) FROM advertisements) AS advertisement_count,
-         (SELECT COUNT(*) FROM conversion_groups) AS conversion_group_count,
-         (SELECT COUNT(*) FROM conversion_resources) AS conversion_resource_count
+         EXISTS(SELECT 1 FROM channels LIMIT 1) AS channels_ready,
+         EXISTS(SELECT 1 FROM image_assets LIMIT 1) AS images_ready,
+         EXISTS(SELECT 1 FROM categories LIMIT 1) AS categories_ready,
+         EXISTS(SELECT 1 FROM category_filters LIMIT 1) AS filters_ready,
+         EXISTS(SELECT 1 FROM category_filter_relations LIMIT 1) AS filter_relations_ready,
+         EXISTS(SELECT 1 FROM products LIMIT 1) AS products_ready,
+         EXISTS(SELECT 1 FROM product_images LIMIT 1) AS product_images_ready,
+         EXISTS(SELECT 1 FROM ad_pools LIMIT 1) AS ad_pools_ready,
+         EXISTS(SELECT 1 FROM advertisements LIMIT 1) AS advertisements_ready,
+         EXISTS(SELECT 1 FROM conversion_groups LIMIT 1) AS conversion_groups_ready,
+         EXISTS(SELECT 1 FROM conversion_resources LIMIT 1) AS conversion_resources_ready
        FROM site_settings s
        WHERE s.id = 1`,
     ).first<{ id: number }>();
