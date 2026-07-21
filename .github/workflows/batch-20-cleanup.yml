@@ -1,0 +1,44 @@
+name: Batch 20 UI Cleanup
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: batch-20-cleanup-${{ github.head_ref }}
+  cancel-in-progress: true
+
+jobs:
+  apply-cleanup:
+    if: github.head_ref == 'agent/admin-ui-consistency-cleanup-batch-20'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: 检出清理分支
+        uses: actions/checkout@v6
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
+
+      - name: 安装 Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 24
+
+      - name: 应用一致性清理
+        run: node scripts/apply-batch-20-cleanup.mjs
+
+      - name: 提交清理结果
+        run: |
+          if git diff --quiet; then
+            echo "Cleanup already applied."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add src/lib/db/public.ts src/lib/db/site.ts src/middleware.ts src/styles/public.css src/styles/admin-workflow.css src/scripts/admin-router.ts src/scripts/admin-form-ui.ts
+          git commit -m "remove retired UI state and legacy styles"
+          git push origin HEAD:${GITHUB_HEAD_REF}
