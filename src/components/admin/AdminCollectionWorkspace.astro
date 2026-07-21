@@ -1,0 +1,45 @@
+---
+interface Props {
+  searchId: string;
+  searchPlaceholder: string;
+  createDialogId: string;
+  createLabel: string;
+  listLabel: string;
+  selectionParam: string;
+}
+
+const {
+  searchId,
+  searchPlaceholder,
+  createDialogId,
+  createLabel,
+  listLabel,
+  selectionParam,
+} = Astro.props;
+---
+
+<div class="admin-collection-workspace" data-admin-collection-workspace data-selection-param={selectionParam}>
+  <aside class="admin-card admin-collection-sidebar">
+    <div class="admin-collection-tools">
+      <input
+        id={searchId}
+        type="search"
+        autocomplete="off"
+        placeholder={searchPlaceholder}
+        aria-label={searchPlaceholder}
+        data-collection-search
+      />
+      <button class="button" type="button" data-dialog-open={createDialogId}>{createLabel}</button>
+    </div>
+
+    <div class="admin-collection-list" role="list" aria-label={listLabel} data-collection-list>
+      <slot name="items" />
+    </div>
+
+    <div class="admin-collection-search-empty" data-collection-search-empty hidden>没有匹配结果。</div>
+  </aside>
+
+  <section class="admin-collection-content">
+    <slot />
+  </section>
+</div>

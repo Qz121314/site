@@ -1,4 +1,5 @@
 ---
+import AdminCollectionWorkspace from "@/components/admin/AdminCollectionWorkspace.astro";
 import AdminDialog from "@/components/admin/AdminDialog.astro";
 import DirectImageUpload from "@/components/admin/DirectImageUpload.astro";
 import AdminLayout from "@/layouts/AdminLayout.astro";
@@ -20,14 +21,14 @@ const selectedPoolId = pools.some((pool) => pool.id === requestedPoolId)
   : pools.find((pool) => pool.isBound)?.id ?? pools[0]?.id ?? null;
 
 const savedMessages: Record<string, string> = {
-  "pool-created": "Hero 广告池已创建。",
-  "pool-updated": "Hero 广告池已更新。",
-  "pool-deleted": "Hero 广告池及其中广告已删除。",
-  bound: "当前分区已绑定该 Hero 广告池。",
-  unbound: "当前分区已取消 Hero 广告池绑定。",
-  "ad-created": "Hero 广告已新增。",
-  "ad-updated": "Hero 广告已更新。",
-  "ad-deleted": "Hero 广告已删除，R2 图片文件由图片库统一清理。",
+  "pool-created": "广告池已新增。",
+  "pool-updated": "广告池已更新。",
+  "pool-deleted": "广告池已删除。",
+  bound: "已设为当前 Hero 广告池。",
+  unbound: "已取消当前 Hero 广告池。",
+  "ad-created": "广告已新增。",
+  "ad-updated": "广告已更新。",
+  "ad-deleted": "广告已删除。",
 };
 
 const errorMessages: Record<string, string> = {
@@ -35,394 +36,264 @@ const errorMessages: Record<string, string> = {
   image: "广告图片不存在，请重新上传。",
   url: "目标链接必须是有效的 HTTP 或 HTTPS 地址。",
   open: "打开方式无效。",
-  sort: "排序必须是 -999999 到 999999 之间的整数。",
+  sort: "排序值无效。",
   status: "状态无效。",
   duplicate: "当前分区已经存在同名广告池。",
-  "in-use": "该广告池正在被当前分区使用，请先取消绑定。",
+  "in-use": "该广告池正在使用，请先取消当前广告池。",
   "not-found": "找不到该分区、广告池或广告。",
   database: "数据库操作失败，请稍后重试。",
 };
+
+const poolCreateAction = `/api/admin/channels/${encodeURIComponent(channelId)}/ads/pools/create`;
 ---
 
 <AdminLayout title={channel ? `${channel.name} · Hero 广告` : "分区不存在"}>
-  {channel && (
-    <button slot="actions" class="button" type="button" data-dialog-open="ad-pool-create-dialog">
-      新增广告池
-    </button>
-  )}
-
   {channel ? (
-    <div class="ad-page" data-ad-pool-page>
+    <div class="admin-stack">
       {saved && savedMessages[saved] && <p class="notice" role="status">{savedMessages[saved]}</p>}
       {error && errorMessages[error] && <p class="error" role="alert">{errorMessages[error]}</p>}
 
-      <AdminDialog id="ad-pool-create-dialog" title="新增 Hero 广告池" size="small">
-        <form class="dialog-form" action={`/api/admin/channels/${encodeURIComponent(channelId)}/ads/pools/create`} method="post">
+      <AdminCollectionWorkspace
+        searchId="ad-pool-search"
+        searchPlaceholder="搜索广告池"
+        createDialogId="ad-pool-create-dialog"
+        createLabel="新增广告池"
+        listLabel="广告池列表"
+        selectionParam="pool"
+      >
+        <Fragment slot="items">
+          {pools.map((pool) => {
+            const updateAction = `/api/admin/channels/${encodeURIComponent(channelId)}/ads/pools/${encodeURIComponent(pool.id)}/update`;
+            const deleteAction = `/api/admin/channels/${encodeURIComponent(channelId)}/ads/pools/${encodeURIComponent(pool.id)}/delete`;
+            return (
+              <div
+                class:list={["admin-collection-row", pool.id === selectedPoolId && "is-active"]}
+                role="listitem"
+                data-collection-item={pool.id}
+                data-search-text={pool.name}
+              >
+                <button class="admin-collection-select" type="button" data-collection-select aria-current={pool.id === selectedPoolId ? "true" : "false"}>
+                  <strong>{pool.name}</strong>
+                  {pool.isBound && <span class="badge ok">当前</span>}
+                </button>
+                <div class="admin-collection-row-actions">
+                  <button
+                    class="button secondary"
+                    type="button"
+                    data-dialog-open="ad-pool-edit-dialog"
+                    data-record-dialog="ad-pool-edit-dialog"
+                    data-record-title={`编辑广告池 · ${pool.name}`}
+                    data-record-action={updateAction}
+                    data-record-name={pool.name}
+                    data-record-status={pool.status}
+                  >编辑</button>
+                  <form action={deleteAction} method="post" onsubmit="return confirm('确定删除该广告池及其中全部广告？')">
+                    <button
+                      class="button danger"
+                      type="submit"
+                      disabled={pool.isBound}
+                      title={pool.isBound ? "当前使用中的广告池不能删除" : undefined}
+                    >删除</button>
+                  </form>
+                </div>
+              </div>
+            );
+          })}
+        </Fragment>
+
+        {pools.length === 0 ? (
+          <section class="admin-card admin-record-empty">尚未创建广告池。</section>
+        ) : pools.map((pool) => {
+          const createAdAction = `/api/admin/channels/${encodeURIComponent(channelId)}/ads/pools/${encodeURIComponent(pool.id)}/items/create`;
+          return (
+            <section
+              class="admin-card admin-collection-panel"
+              data-collection-panel={pool.id}
+              hidden={pool.id !== selectedPoolId}
+            >
+              <header class="admin-collection-panel-header">
+                <div class="admin-collection-panel-title">
+                  <h2>{pool.name}</h2>
+                  {pool.isBound && <span class="badge ok">当前</span>}
+                </div>
+                <div class="admin-collection-panel-actions">
+                  {pool.isBound ? (
+                    <form action={`/api/admin/channels/${encodeURIComponent(channelId)}/ads/unbind`} method="post">
+                      <button class="button secondary" type="submit">取消当前</button>
+                    </form>
+                  ) : (
+                    <form action={`/api/admin/channels/${encodeURIComponent(channelId)}/ads/pools/${encodeURIComponent(pool.id)}/bind`} method="post">
+                      <button class="button secondary" type="submit">设为当前</button>
+                    </form>
+                  )}
+                  <button
+                    class="button"
+                    type="button"
+                    data-dialog-open="ad-create-dialog"
+                    data-record-dialog="ad-create-dialog"
+                    data-record-title={`添加广告 · ${pool.name}`}
+                    data-record-action={createAdAction}
+                    data-record-image-asset-id=""
+                    data-record-target-url=""
+                    data-record-open-mode="same"
+                    data-record-sort-order={String(pool.advertisements.length * 10)}
+                    data-record-status="enabled"
+                  >添加广告</button>
+                </div>
+              </header>
+
+              {pool.advertisements.length === 0 ? (
+                <div class="admin-record-empty">该广告池尚未添加广告。</div>
+              ) : (
+                <div class="admin-record-list">
+                  {pool.advertisements.map((ad) => {
+                    const updateAction = `/api/admin/channels/${encodeURIComponent(channelId)}/ads/pools/${encodeURIComponent(pool.id)}/items/${encodeURIComponent(ad.id)}/update`;
+                    const deleteAction = `/api/admin/channels/${encodeURIComponent(channelId)}/ads/pools/${encodeURIComponent(pool.id)}/items/${encodeURIComponent(ad.id)}/delete`;
+                    return (
+                      <article class="admin-record-row">
+                        <div class="admin-record-with-thumbnail">
+                          <img class="admin-record-thumbnail" src={ad.previewUrl} alt={ad.originalName || "广告图片"} loading="lazy" />
+                          <div class="admin-record-main">
+                            <a href={ad.targetUrl} target="_blank" rel="noreferrer" title={ad.targetUrl}>{ad.targetUrl}</a>
+                            <span class="admin-record-meta">
+                              {ad.openMode === "new" ? "新窗口" : "当前窗口"}{ad.status === "disabled" ? " · 已停用" : ""}
+                            </span>
+                          </div>
+                        </div>
+                        <div class="admin-record-actions">
+                          <button
+                            class="button secondary"
+                            type="button"
+                            data-dialog-open="ad-edit-dialog"
+                            data-record-dialog="ad-edit-dialog"
+                            data-record-title={`编辑广告 · ${pool.name}`}
+                            data-record-action={updateAction}
+                            data-record-image-asset-id={ad.imageAssetId}
+                            data-record-image-preview-url={ad.previewUrl}
+                            data-record-image-name={ad.originalName || "当前图片"}
+                            data-record-image-meta={`${ad.width}×${ad.height}`}
+                            data-record-target-url={ad.targetUrl}
+                            data-record-open-mode={ad.openMode}
+                            data-record-sort-order={String(ad.sortOrder)}
+                            data-record-status={ad.status}
+                          >编辑</button>
+                          <form action={deleteAction} method="post" onsubmit="return confirm('确定删除该广告？')">
+                            <button class="button danger" type="submit">删除</button>
+                          </form>
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+          );
+        })}
+      </AdminCollectionWorkspace>
+
+      <AdminDialog id="ad-pool-create-dialog" title="新增广告池" size="small">
+        <form class="admin-dialog-form" action={poolCreateAction} method="post">
           <div class="admin-field">
-            <label for="ad-pool-name">广告池名称</label>
-            <input id="ad-pool-name" name="name" maxlength="80" required autocomplete="off" autofocus />
+            <label for="ad-pool-create-name">广告池名称</label>
+            <input id="ad-pool-create-name" name="name" maxlength="80" required autocomplete="off" autofocus />
           </div>
           <div class="admin-field">
-            <label for="ad-pool-status">状态</label>
-            <select id="ad-pool-status" name="status">
+            <label for="ad-pool-create-status">状态</label>
+            <select id="ad-pool-create-status" name="status">
               <option value="enabled" selected>启用</option>
               <option value="disabled">停用</option>
             </select>
           </div>
-          <div class="dialog-actions">
+          <div class="admin-dialog-actions">
             <button class="button secondary" type="button" data-dialog-close>取消</button>
-            <button class="button" type="submit">创建广告池</button>
+            <button class="button" type="submit">保存</button>
           </div>
         </form>
       </AdminDialog>
 
-      {pools.length === 0 ? (
-        <section class="admin-card ad-empty">
-          <div class="admin-collection-empty">
-            <strong>尚未创建 Hero 广告池</strong>
-            <span>创建广告池后，可以集中维护该分区的轮播广告。</span>
-            <button class="button" type="button" data-dialog-open="ad-pool-create-dialog">新增广告池</button>
+      <AdminDialog id="ad-pool-edit-dialog" title="编辑广告池" size="small">
+        <form class="admin-dialog-form" method="post" data-record-form>
+          <div class="admin-field">
+            <label for="ad-pool-edit-name">广告池名称</label>
+            <input id="ad-pool-edit-name" name="name" maxlength="80" required autocomplete="off" autofocus />
           </div>
-        </section>
-      ) : (
-        <div class="ad-workspace">
-          <aside class="admin-card ad-master">
-            <div class="admin-section-bar ad-master-header">
-              <h2>广告池</h2>
-              <span class="admin-section-note">{pools.length} 个</span>
+          <div class="admin-field">
+            <label for="ad-pool-edit-status">状态</label>
+            <select id="ad-pool-edit-status" name="status">
+              <option value="enabled">启用</option>
+              <option value="disabled">停用</option>
+            </select>
+          </div>
+          <div class="admin-dialog-actions">
+            <button class="button secondary" type="button" data-dialog-close>取消</button>
+            <button class="button" type="submit">保存</button>
+          </div>
+        </form>
+      </AdminDialog>
+
+      <AdminDialog id="ad-create-dialog" title="添加广告" size="large">
+        <form id="ad-create-form" class="admin-dialog-form" method="post" data-record-form>
+          <DirectImageUpload id="ad-create-image" name="imageAssetId" label="广告图片" form="ad-create-form" required compact />
+          <div class="admin-field">
+            <label for="ad-create-target-url">目标链接</label>
+            <input id="ad-create-target-url" name="targetUrl" type="url" maxlength="2000" required autocomplete="off" autofocus />
+          </div>
+          <div class="admin-dialog-form-grid">
+            <div class="admin-field">
+              <label for="ad-create-open-mode">打开方式</label>
+              <select id="ad-create-open-mode" name="openMode">
+                <option value="same">当前窗口</option>
+                <option value="new">新窗口</option>
+              </select>
             </div>
-            <nav class="ad-master-list" aria-label="Hero 广告池列表" role="tablist">
-              {pools.map((pool) => (
-                <button
-                  class:list={["ad-master-item", pool.id === selectedPoolId && "is-active"]}
-                  type="button"
-                  role="tab"
-                  aria-selected={pool.id === selectedPoolId ? "true" : "false"}
-                  aria-controls={`ad-pool-panel-${pool.id}`}
-                  data-ad-pool-select={pool.id}
-                >
-                  <span class="ad-master-title">
-                    <strong>{pool.name}</strong>
-                    <span class:list={["status-dot", pool.status === "enabled" ? "is-enabled" : "is-disabled"]} aria-hidden="true"></span>
-                  </span>
-                  <span class="ad-master-meta">
-                    {pool.isBound ? "当前使用" : "未绑定"} · {pool.advertisements.length} 条广告
-                  </span>
-                </button>
-              ))}
-            </nav>
-          </aside>
-
-          <div class="ad-detail-stack">
-            {pools.map((pool) => {
-              const newAdDialogId = `ad-create-dialog-${pool.id}`;
-              return (
-                <section
-                  id={`ad-pool-panel-${pool.id}`}
-                  class:list={["admin-card", "ad-detail", pool.isBound && "is-bound"]}
-                  role="tabpanel"
-                  data-ad-pool-panel={pool.id}
-                  hidden={pool.id !== selectedPoolId}
-                >
-                  <div class="ad-detail-header">
-                    <div class="pool-heading">
-                      <div class="pool-heading-title">
-                        <h2>{pool.name}</h2>
-                        <div class="pool-badges">
-                          {pool.isBound && <span class="badge ok">当前使用</span>}
-                          <span class:list={["badge", pool.status === "enabled" ? "ok" : "warn"]}>{pool.status === "enabled" ? "启用" : "停用"}</span>
-                        </div>
-                      </div>
-                      <span>{pool.advertisements.length} 条广告</span>
-                    </div>
-
-                    <form
-                      class="pool-settings-form"
-                      action={`/api/admin/channels/${encodeURIComponent(channelId)}/ads/pools/${encodeURIComponent(pool.id)}/update`}
-                      method="post"
-                    >
-                      <div class="admin-field pool-name-field">
-                        <label for={`pool-name-${pool.id}`}>广告池名称</label>
-                        <input id={`pool-name-${pool.id}`} name="name" maxlength="80" required value={pool.name} />
-                      </div>
-                      <div class="admin-field pool-status-field">
-                        <label for={`pool-status-${pool.id}`}>状态</label>
-                        <select id={`pool-status-${pool.id}`} name="status">
-                          <option value="enabled" selected={pool.status === "enabled"}>启用</option>
-                          <option value="disabled" selected={pool.status === "disabled"}>停用</option>
-                        </select>
-                      </div>
-                      <button class="button secondary" type="submit">保存设置</button>
-                    </form>
-
-                    <div class="pool-action-bar">
-                      {pool.isBound ? (
-                        <form action={`/api/admin/channels/${encodeURIComponent(channelId)}/ads/unbind`} method="post">
-                          <button class="button secondary" type="submit">取消绑定</button>
-                        </form>
-                      ) : (
-                        <form action={`/api/admin/channels/${encodeURIComponent(channelId)}/ads/pools/${encodeURIComponent(pool.id)}/bind`} method="post">
-                          <button class="button" type="submit">设为当前 Hero</button>
-                        </form>
-                      )}
-                      <form
-                        action={`/api/admin/channels/${encodeURIComponent(channelId)}/ads/pools/${encodeURIComponent(pool.id)}/delete`}
-                        method="post"
-                        onsubmit="return confirm('确定删除整个广告池及其中所有广告？')"
-                      >
-                        <button class="button danger" type="submit" disabled={pool.isBound}>删除广告池</button>
-                      </form>
-                    </div>
-                  </div>
-
-                  <div class="ad-section-header">
-                    <div>
-                      <h3>广告内容</h3>
-                      <span>按排序值从小到大展示</span>
-                    </div>
-                    <button class="button" type="button" data-dialog-open={newAdDialogId}>新增广告</button>
-                  </div>
-
-                  {pool.advertisements.length > 0 ? (
-                    <div class="ad-card-grid">
-                      {pool.advertisements.map((ad, index) => {
-                        const editDialogId = `ad-edit-dialog-${ad.id}`;
-                        return (
-                          <article class="ad-card">
-                            <img
-                              class="ad-card-image"
-                              src={ad.previewUrl}
-                              alt={ad.originalName || `Hero 广告 ${index + 1}`}
-                              width={ad.width}
-                              height={ad.height}
-                              loading="lazy"
-                            />
-                            <div class="ad-card-body">
-                              <div class="ad-card-title-row">
-                                <strong>广告 {index + 1}</strong>
-                                <span class:list={["badge", ad.status === "enabled" ? "ok" : "warn"]}>{ad.status === "enabled" ? "启用" : "停用"}</span>
-                              </div>
-                              <a class="ad-card-url" href={ad.targetUrl} target="_blank" rel="noreferrer" title={ad.targetUrl}>{ad.targetUrl}</a>
-                              <span class="ad-card-meta">{ad.openMode === "new" ? "新窗口" : "当前窗口"} · 排序 {ad.sortOrder}</span>
-                            </div>
-                            <div class="ad-card-actions">
-                              <button class="button secondary" type="button" data-dialog-open={editDialogId}>编辑</button>
-                              <form
-                                action={`/api/admin/channels/${encodeURIComponent(channelId)}/ads/pools/${encodeURIComponent(pool.id)}/items/${encodeURIComponent(ad.id)}/delete`}
-                                method="post"
-                                onsubmit="return confirm('确定删除这条 Hero 广告？')"
-                              >
-                                <button class="button danger" type="submit">删除</button>
-                              </form>
-                            </div>
-                          </article>
-                        );
-                      })}
-                    </div>
-                  ) : (
-                    <div class="admin-collection-empty ad-list-empty">该广告池尚未添加广告。</div>
-                  )}
-                </section>
-              );
-            })}
+            <div class="admin-field">
+              <label for="ad-create-status">状态</label>
+              <select id="ad-create-status" name="status">
+                <option value="enabled">启用</option>
+                <option value="disabled">停用</option>
+              </select>
+            </div>
           </div>
-        </div>
-      )}
+          <input type="hidden" name="sortOrder" value="0" />
+          <div class="admin-dialog-actions">
+            <button class="button secondary" type="button" data-dialog-close>取消</button>
+            <button class="button" type="submit">保存</button>
+          </div>
+        </form>
+      </AdminDialog>
 
-      {pools.map((pool) => {
-        const newAdDialogId = `ad-create-dialog-${pool.id}`;
-        const createFormId = `ad-create-${pool.id}`;
-        return (
-          <>
-            <AdminDialog id={newAdDialogId} title={`新增广告 · ${pool.name}`} size="large">
-              <form
-                id={createFormId}
-                class="ad-dialog-form"
-                action={`/api/admin/channels/${encodeURIComponent(channelId)}/ads/pools/${encodeURIComponent(pool.id)}/items/create`}
-                method="post"
-              >
-                <div class="ad-dialog-upload">
-                  <DirectImageUpload id={`new-ad-image-${pool.id}`} name="imageAssetId" label="广告图片" form={createFormId} required compact />
-                </div>
-                <div class="admin-field ad-dialog-url">
-                  <label for={`new-ad-url-${pool.id}`}>目标链接</label>
-                  <input id={`new-ad-url-${pool.id}`} name="targetUrl" type="url" maxlength="2000" required placeholder="https://example.com/offer" />
-                </div>
-                <div class="admin-field">
-                  <label for={`new-ad-open-${pool.id}`}>打开方式</label>
-                  <select id={`new-ad-open-${pool.id}`} name="openMode">
-                    <option value="same" selected>当前窗口</option>
-                    <option value="new">新窗口</option>
-                  </select>
-                </div>
-                <div class="admin-field">
-                  <label for={`new-ad-sort-${pool.id}`}>排序</label>
-                  <input id={`new-ad-sort-${pool.id}`} name="sortOrder" type="number" min="-999999" max="999999" step="1" value={pool.advertisements.length * 10} />
-                </div>
-                <div class="admin-field">
-                  <label for={`new-ad-status-${pool.id}`}>状态</label>
-                  <select id={`new-ad-status-${pool.id}`} name="status">
-                    <option value="enabled" selected>启用</option>
-                    <option value="disabled">停用</option>
-                  </select>
-                </div>
-                <div class="dialog-actions ad-dialog-actions">
-                  <button class="button secondary" type="button" data-dialog-close>取消</button>
-                  <button class="button" type="submit">新增广告</button>
-                </div>
-              </form>
-            </AdminDialog>
-
-            {pool.advertisements.map((ad, index) => {
-              const editDialogId = `ad-edit-dialog-${ad.id}`;
-              const editFormId = `ad-edit-${ad.id}`;
-              return (
-                <AdminDialog id={editDialogId} title={`编辑广告 ${index + 1} · ${pool.name}`} size="large">
-                  <form
-                    id={editFormId}
-                    class="ad-dialog-form"
-                    action={`/api/admin/channels/${encodeURIComponent(channelId)}/ads/pools/${encodeURIComponent(pool.id)}/items/${encodeURIComponent(ad.id)}/update`}
-                    method="post"
-                  >
-                    <div class="ad-dialog-upload">
-                      <DirectImageUpload id={`ad-image-${ad.id}`} form={editFormId} name="imageAssetId" label="广告图片" value={ad.imageAssetId} required compact />
-                    </div>
-                    <div class="admin-field ad-dialog-url">
-                      <label for={`ad-url-${ad.id}`}>目标链接</label>
-                      <input id={`ad-url-${ad.id}`} name="targetUrl" type="url" maxlength="2000" required value={ad.targetUrl} />
-                    </div>
-                    <div class="admin-field">
-                      <label for={`ad-open-${ad.id}`}>打开方式</label>
-                      <select id={`ad-open-${ad.id}`} name="openMode">
-                        <option value="same" selected={ad.openMode === "same"}>当前窗口</option>
-                        <option value="new" selected={ad.openMode === "new"}>新窗口</option>
-                      </select>
-                    </div>
-                    <div class="admin-field">
-                      <label for={`ad-sort-${ad.id}`}>排序</label>
-                      <input id={`ad-sort-${ad.id}`} name="sortOrder" type="number" min="-999999" max="999999" step="1" value={ad.sortOrder} />
-                    </div>
-                    <div class="admin-field">
-                      <label for={`ad-status-${ad.id}`}>状态</label>
-                      <select id={`ad-status-${ad.id}`} name="status">
-                        <option value="enabled" selected={ad.status === "enabled"}>启用</option>
-                        <option value="disabled" selected={ad.status === "disabled"}>停用</option>
-                      </select>
-                    </div>
-                    <div class="dialog-actions ad-dialog-actions">
-                      <button class="button secondary" type="button" data-dialog-close>取消</button>
-                      <button class="button" type="submit">保存广告</button>
-                    </div>
-                  </form>
-                </AdminDialog>
-              );
-            })}
-          </>
-        );
-      })}
+      <AdminDialog id="ad-edit-dialog" title="编辑广告" size="large">
+        <form id="ad-edit-form" class="admin-dialog-form" method="post" data-record-form>
+          <DirectImageUpload id="ad-edit-image" name="imageAssetId" label="广告图片" form="ad-edit-form" required compact />
+          <div class="admin-field">
+            <label for="ad-edit-target-url">目标链接</label>
+            <input id="ad-edit-target-url" name="targetUrl" type="url" maxlength="2000" required autocomplete="off" autofocus />
+          </div>
+          <div class="admin-dialog-form-grid">
+            <div class="admin-field">
+              <label for="ad-edit-open-mode">打开方式</label>
+              <select id="ad-edit-open-mode" name="openMode">
+                <option value="same">当前窗口</option>
+                <option value="new">新窗口</option>
+              </select>
+            </div>
+            <div class="admin-field">
+              <label for="ad-edit-status">状态</label>
+              <select id="ad-edit-status" name="status">
+                <option value="enabled">启用</option>
+                <option value="disabled">停用</option>
+              </select>
+            </div>
+          </div>
+          <input type="hidden" name="sortOrder" value="0" />
+          <div class="admin-dialog-actions">
+            <button class="button secondary" type="button" data-dialog-close>取消</button>
+            <button class="button" type="submit">保存</button>
+          </div>
+        </form>
+      </AdminDialog>
     </div>
   ) : (
-    <section class="admin-card"><div class="admin-collection-empty">找不到该分区。</div></section>
+    <section class="admin-card"><div class="admin-record-empty">找不到该分区。</div></section>
   )}
 </AdminLayout>
-
-<script is:inline>
-  (() => {
-    const initialize = (page) => {
-      if (page.dataset.adPoolPageReady === '1') return;
-      page.dataset.adPoolPageReady = '1';
-
-      const buttons = Array.from(page.querySelectorAll('[data-ad-pool-select]'));
-      const panels = Array.from(page.querySelectorAll('[data-ad-pool-panel]'));
-
-      const selectPool = (poolId) => {
-        buttons.forEach((button) => {
-          const selected = button.dataset.adPoolSelect === poolId;
-          button.classList.toggle('is-active', selected);
-          button.setAttribute('aria-selected', selected ? 'true' : 'false');
-        });
-        panels.forEach((panel) => {
-          panel.hidden = panel.dataset.adPoolPanel !== poolId;
-        });
-      };
-
-      buttons.forEach((button) => {
-        button.addEventListener('click', () => selectPool(button.dataset.adPoolSelect || ''));
-      });
-    };
-
-    document.querySelectorAll('[data-ad-pool-page]').forEach(initialize);
-  })();
-</script>
-
-<style>
-  .ad-page { display: grid; width: min(100%, 74rem); gap: .7rem; margin: 0 auto; }
-  .ad-workspace { display: grid; gap: .7rem; align-items: start; }
-  .ad-master { overflow: hidden; }
-  .ad-master-header { min-height: 2.8rem; }
-  .ad-master-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 11rem), 14rem)); justify-content: start; gap: .4rem; padding: .55rem; }
-  .ad-master-item { display: grid; width: 100%; min-width: 0; gap: .2rem; border: 1px solid #e2e8f0; border-radius: .55rem; padding: .58rem .62rem; color: #334155; background: #ffffff; cursor: pointer; text-align: left; }
-  .ad-master-item:hover { border-color: #cbd5e1; background: #f8fafc; }
-  .ad-master-item.is-active { color: #1d4ed8; border-color: #93c5fd; background: #eff6ff; }
-  .ad-master-title { display: flex; min-width: 0; align-items: center; justify-content: space-between; gap: .5rem; }
-  .ad-master-title strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .ad-master-meta { color: #64748b; font-size: .72rem; }
-  .status-dot { width: .48rem; flex: 0 0 .48rem; aspect-ratio: 1; border-radius: 999px; background: #94a3b8; }
-  .status-dot.is-enabled { background: #16a34a; }
-  .status-dot.is-disabled { background: #dc2626; }
-  .ad-detail-stack { width: min(100%, 70rem); min-width: 0; }
-  .ad-detail[hidden] { display: none; }
-  .ad-detail { overflow: hidden; }
-  .ad-detail.is-bound { border-color: #93c5fd; }
-  .ad-detail-header { display: grid; grid-template-columns: minmax(10rem, .55fr) minmax(18rem, 1.25fr) auto; align-items: end; gap: .55rem; padding: .6rem; border-bottom: 1px solid var(--admin-border); background: #f8fafc; }
-  .pool-heading { display: grid; align-self: center; gap: .18rem; min-width: 0; }
-  .pool-heading-title { display: flex; min-width: 0; align-items: center; gap: .5rem; }
-  .pool-heading h2 { min-width: 0; margin: 0; overflow: hidden; font-size: .95rem; text-overflow: ellipsis; white-space: nowrap; }
-  .pool-heading > span { color: #64748b; font-size: .72rem; }
-  .pool-badges { display: flex; flex-wrap: wrap; gap: .25rem; }
-  .pool-settings-form { display: grid; grid-template-columns: minmax(11rem, 1fr) 7rem auto; align-items: end; gap: .4rem; min-width: 0; }
-  .pool-action-bar { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .35rem; }
-  .ad-section-header { display: flex; min-height: 3.2rem; align-items: center; justify-content: space-between; gap: .75rem; padding: .55rem .65rem; }
-  .ad-section-header > div { display: flex; align-items: baseline; gap: .45rem; }
-  .ad-section-header h3 { margin: 0; font-size: .9rem; }
-  .ad-section-header span { color: #64748b; font-size: .72rem; }
-  .ad-card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 15rem), 18rem)); justify-content: start; gap: .55rem; padding: 0 .6rem .6rem; }
-  .ad-card { display: grid; min-width: 0; overflow: hidden; border: 1px solid #e2e8f0; border-radius: .65rem; background: #ffffff; }
-  .ad-card-image { display: block; width: 100%; aspect-ratio: 16 / 9; object-fit: cover; background: #f1f5f9; }
-  .ad-card-body { display: grid; min-width: 0; gap: .28rem; padding: .55rem; }
-  .ad-card-title-row { display: flex; align-items: center; justify-content: space-between; gap: .5rem; }
-  .ad-card-url { overflow: hidden; color: #2563eb; font-size: .72rem; text-overflow: ellipsis; white-space: nowrap; }
-  .ad-card-url:hover { text-decoration: underline; }
-  .ad-card-meta { color: #64748b; font-size: .72rem; }
-  .ad-card-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .35rem; border-top: 1px solid #e2e8f0; padding: .45rem; background: #f8fafc; }
-  .ad-card-actions .button { width: 100%; }
-  .ad-list-empty { min-height: 10rem; }
-  .ad-empty .admin-collection-empty { display: grid; min-height: 16rem; place-items: center; align-content: center; gap: .55rem; }
-  .ad-empty .admin-collection-empty span { color: #64748b; }
-  .dialog-form { display: grid; gap: .6rem; }
-  .dialog-actions { display: flex; justify-content: flex-end; gap: .4rem; padding-top: .15rem; }
-  .ad-dialog-form { display: grid; grid-template-columns: minmax(0, 1fr) 8rem 6rem 7rem; align-items: end; gap: .55rem; }
-  .ad-dialog-upload,
-  .ad-dialog-url,
-  .ad-dialog-actions { grid-column: 1 / -1; }
-  .button:disabled { opacity: .38; cursor: not-allowed; }
-
-  @media (max-width: 980px) {
-    .ad-detail-header { grid-template-columns: 1fr; }
-    .pool-heading { grid-row: 1; }
-    .pool-settings-form { grid-row: 2; }
-    .pool-action-bar { grid-row: 3; justify-content: flex-start; }
-  }
-
-  @media (max-width: 639px) {
-    .ad-master-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .pool-settings-form,
-    .ad-dialog-form { grid-template-columns: 1fr; }
-    .ad-dialog-upload,
-    .ad-dialog-url,
-    .ad-dialog-actions { grid-column: auto; }
-    .ad-card-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .ad-section-header { align-items: center; }
-    .dialog-actions { display: grid; grid-template-columns: 1fr 1fr; }
-  }
-</style>
