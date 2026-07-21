@@ -38,7 +38,6 @@ const prefix = product ? `product-${product.id}` : "product-new";
         <input id={`${prefix}-title`} name="title" maxlength="160" required autocomplete="off" value={product?.title ?? ""} autofocus />
       </div>
 
-      <input type="hidden" name="categoryId" value="" />
       <div class="admin-field">
         <label for={`${prefix}-category`}>产品分类</label>
         <input
