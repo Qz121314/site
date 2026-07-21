@@ -59,18 +59,25 @@ const selectedFilterIds = new Set(selectedCategory?.filterIds ?? []);
       <label>分类筛选</label>
       {options.filters.length > 0 ? (
         <div class="filter-choice-grid" data-category-filter-list>
-          {options.filters.map((filter) => (
-            <label class:list={["filter-choice", filter.status !== "enabled" && "is-disabled"]}>
-              <input
-                type="checkbox"
-                name="filterIds"
-                value={filter.id}
-                checked={selectedFilterIds.has(filter.id)}
-                data-category-filter
-              />
-              <span>{filter.name}</span>
-            </label>
-          ))}
+          {options.filters.map((filter) => {
+            const enabled = filter.status === "enabled";
+            return (
+              <label
+                class:list={["filter-choice", !enabled && "is-disabled"]}
+                title={enabled ? undefined : "该筛选已停用，不能再绑定"}
+              >
+                <input
+                  type="checkbox"
+                  name="filterIds"
+                  value={filter.id}
+                  checked={selectedFilterIds.has(filter.id)}
+                  disabled={!enabled}
+                  data-category-filter
+                />
+                <span>{filter.name}{!enabled ? "（已停用）" : ""}</span>
+              </label>
+            );
+          })}
         </div>
       ) : (
         <a class="empty-control-link" href={`/admin/channels/${encodeURIComponent(channelId)}/filters`}>设置分类筛选</a>
