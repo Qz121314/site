@@ -69,6 +69,15 @@ function cleanRuntimeState(main: HTMLElement): HTMLElement {
   clone.querySelectorAll<HTMLElement>("[data-product-editor-ready]").forEach((element) => {
     delete element.dataset.productEditorReady;
   });
+  clone.querySelectorAll<HTMLElement>("[data-conversion-page-ready]").forEach((element) => {
+    delete element.dataset.conversionPageReady;
+  });
+  clone.querySelectorAll<HTMLElement>("[data-ad-pool-page-ready]").forEach((element) => {
+    delete element.dataset.adPoolPageReady;
+  });
+  clone.querySelectorAll<HTMLDialogElement>("dialog[open]").forEach((dialog) => {
+    dialog.removeAttribute("open");
+  });
   clone.querySelectorAll<HTMLFormElement>("form[data-admin-dirty-form]").forEach((form) => {
     delete form.dataset.adminDirtyReady;
     form.dataset.adminDirty = "0";

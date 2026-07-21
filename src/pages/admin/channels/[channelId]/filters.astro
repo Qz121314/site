@@ -1,4 +1,5 @@
 ---
+import AdminDialog from "@/components/admin/AdminDialog.astro";
 import AdminLayout from "@/layouts/AdminLayout.astro";
 import { loadAdminCategoryFilters, loadAdminChannel } from "@/lib/db/site";
 
@@ -28,16 +29,20 @@ const errorMessages: Record<string, string> = {
 ---
 
 <AdminLayout title={channel ? `${channel.name} · 分类筛选` : "分区不存在"}>
-  {channel && <a slot="actions" class="button" href={`/admin/channels/${encodeURIComponent(channelId)}/products/new`}>录入产品</a>}
+  {channel && (
+    <div slot="actions" class="admin-page-action-group">
+      <button class="button" type="button" data-dialog-open="filter-create-dialog">新增筛选项</button>
+      <a class="button secondary" href={`/admin/channels/${encodeURIComponent(channelId)}/products/new`}>录入产品</a>
+    </div>
+  )}
 
   {channel ? (
     <>
       {saved && savedMessages[saved] && <p class="notice" role="status">{savedMessages[saved]}</p>}
       {error && errorMessages[error] && <p class="error" role="alert">{errorMessages[error]}</p>}
 
-      <section class="admin-card filter-create-card">
-        <div class="admin-section-bar"><h2>新增筛选项</h2></div>
-        <form class="admin-card-body filter-create-form" action={`/api/admin/channels/${encodeURIComponent(channelId)}/filters/create`} method="post">
+      <AdminDialog id="filter-create-dialog" title="新增分类筛选" size="small">
+        <form class="filter-create-form" action={`/api/admin/channels/${encodeURIComponent(channelId)}/filters/create`} method="post">
           <div class="admin-field filter-name-field">
             <label for="filter-name">名称</label>
             <input id="filter-name" name="name" maxlength="60" required autocomplete="off" autofocus />
@@ -53,11 +58,12 @@ const errorMessages: Record<string, string> = {
               <option value="disabled">停用</option>
             </select>
           </div>
-          <div class="admin-form-actions">
-            <button class="button" type="submit">新增</button>
+          <div class="dialog-actions">
+            <button class="button secondary" type="button" data-dialog-close>取消</button>
+            <button class="button" type="submit">创建筛选项</button>
           </div>
         </form>
-      </section>
+      </AdminDialog>
 
       <section class="admin-card admin-collection-panel">
         <div class="admin-toolbar">
@@ -66,7 +72,11 @@ const errorMessages: Record<string, string> = {
         </div>
 
         {filters.length === 0 ? (
-          <div class="admin-collection-empty">尚未创建分类筛选。</div>
+          <div class="admin-collection-empty filter-empty">
+            <strong>尚未创建分类筛选</strong>
+            <span>筛选项用于给分类建立前台快速过滤入口。</span>
+            <button class="button" type="button" data-dialog-open="filter-create-dialog">新增筛选项</button>
+          </div>
         ) : (
           <div class="admin-entity-grid filter-grid">
             {filters.map((filter) => {
@@ -115,10 +125,16 @@ const errorMessages: Record<string, string> = {
 </AdminLayout>
 
 <style>
-  .filter-create-card { width: 100%; }
-  .filter-create-form { display: grid; grid-template-columns: minmax(15rem, 1fr) 6rem 8rem auto; gap: .55rem; align-items: end; }
+  .filter-create-form { display: grid; grid-template-columns: 1fr 1fr; gap: .6rem; align-items: end; }
+  .filter-name-field, .dialog-actions { grid-column: 1 / -1; }
+  .dialog-actions { display: flex; justify-content: flex-end; gap: .4rem; padding-top: .15rem; }
   .filter-count-field { align-self: stretch; }
   .filter-count { display: flex; min-height: 2.15rem; align-items: center; color: #475569; font-size: .8rem; font-weight: 700; }
-  @media (max-width: 767px) { .filter-create-form { grid-template-columns: repeat(2, minmax(0, 1fr)); } .filter-name-field { grid-column: 1 / -1; } }
-  @media (max-width: 639px) { .filter-create-form { grid-template-columns: 1fr; } .filter-name-field { grid-column: auto; } .filter-create-form .button { width: 100%; } }
+  .filter-empty { display: grid; min-height: 14rem; place-items: center; align-content: center; gap: .55rem; }
+  .filter-empty span { color: #64748b; }
+  @media (max-width: 639px) {
+    .filter-create-form { grid-template-columns: 1fr; }
+    .filter-name-field, .dialog-actions { grid-column: auto; }
+    .dialog-actions { display: grid; grid-template-columns: 1fr 1fr; }
+  }
 </style>

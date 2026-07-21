@@ -118,6 +118,10 @@ function openAdminDialog(trigger: HTMLElement): boolean {
   const dialogId = trigger.dataset.dialogOpen ?? "";
   const dialog = dialogId ? document.getElementById(dialogId) : null;
   if (!(dialog instanceof HTMLDialogElement)) return false;
+  if (dialog.open) {
+    dialog.focus();
+    return true;
+  }
 
   dialog.showModal();
   dialog.addEventListener("close", () => trigger.focus(), { once: true });

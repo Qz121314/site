@@ -1,4 +1,5 @@
 ---
+import AdminDialog from "@/components/admin/AdminDialog.astro";
 import AdminLayout from "@/layouts/AdminLayout.astro";
 import { loadAdminChannels } from "@/lib/db/site";
 
@@ -31,12 +32,13 @@ const statusLabel = {
 ---
 
 <AdminLayout title="分区管理">
+  <button slot="actions" class="button" type="button" data-dialog-open="channel-create-dialog">新增分区</button>
+
   {saved && savedMessages[saved] && <p class="notice" role="status">{savedMessages[saved]}</p>}
   {error && errorMessages[error] && <p class="error" role="alert">{errorMessages[error]}</p>}
 
-  <section class="admin-card channel-create-card">
-    <div class="admin-section-bar"><h2>新增分区</h2></div>
-    <form class="admin-card-body channel-create-form" action="/api/admin/channels/create" method="post">
+  <AdminDialog id="channel-create-dialog" title="新增分区" size="medium">
+    <form class="channel-create-form" action="/api/admin/channels/create" method="post">
       <div class="admin-field channel-name-field">
         <label for="channel-name">名称</label>
         <input id="channel-name" name="name" maxlength="80" required autocomplete="off" autofocus />
@@ -57,11 +59,12 @@ const statusLabel = {
           <option value="disabled">已停用</option>
         </select>
       </div>
-      <div class="admin-form-actions">
-        <button class="button" type="submit">新增分区</button>
+      <div class="dialog-actions">
+        <button class="button secondary" type="button" data-dialog-close>取消</button>
+        <button class="button" type="submit">创建分区</button>
       </div>
     </form>
-  </section>
+  </AdminDialog>
 
   <section class="admin-card admin-collection-panel">
     <div class="admin-toolbar">
@@ -69,7 +72,11 @@ const statusLabel = {
       <span class="admin-section-note">{channels.length} 个</span>
     </div>
     {channels.length === 0 ? (
-      <div class="admin-collection-empty">尚未创建分区。</div>
+      <div class="admin-collection-empty channel-empty">
+        <strong>尚未创建分区</strong>
+        <span>分区用于隔离产品、筛选、广告池和转化池。</span>
+        <button class="button" type="button" data-dialog-open="channel-create-dialog">新增分区</button>
+      </div>
     ) : (
       <div class="admin-entity-grid channel-grid">
         {channels.map((channel) => (
@@ -97,13 +104,19 @@ const statusLabel = {
 </AdminLayout>
 
 <style>
-  .channel-create-card { width: 100%; }
-  .channel-create-form { display: grid; grid-template-columns: minmax(16rem, 1fr) 8rem 6rem 8rem auto; gap: .55rem; align-items: end; }
+  .channel-create-form { display: grid; grid-template-columns: minmax(0, 1fr) 8rem; gap: .6rem; align-items: end; }
+  .channel-name-field { grid-column: 1 / -1; }
+  .dialog-actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: .4rem; padding-top: .15rem; }
   .channel-card .admin-card-heading { min-height: 4rem; }
   .channel-state { margin-left: auto; border-radius: 999px; padding: .18rem .45rem; font-size: .65rem; white-space: nowrap; }
   .channel-state.is-published { color: #166534; background: #f0fdf4; }
   .channel-state.is-draft { color: #92400e; background: #fffbeb; }
   .channel-state.is-disabled { color: #991b1b; background: #fff1f2; }
-  @media (max-width: 900px) { .channel-create-form { grid-template-columns: repeat(2, minmax(0, 1fr)); } .channel-name-field { grid-column: 1 / -1; } }
-  @media (max-width: 639px) { .channel-create-form { grid-template-columns: 1fr; } .channel-name-field { grid-column: auto; } .channel-create-form .button { width: 100%; } }
+  .channel-empty { display: grid; min-height: 14rem; place-items: center; align-content: center; gap: .55rem; }
+  .channel-empty span { color: #64748b; }
+  @media (max-width: 639px) {
+    .channel-create-form { grid-template-columns: 1fr; }
+    .channel-name-field, .dialog-actions { grid-column: auto; }
+    .dialog-actions { display: grid; grid-template-columns: 1fr 1fr; }
+  }
 </style>
