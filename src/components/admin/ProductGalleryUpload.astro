@@ -161,7 +161,10 @@ const { form, values = [] } = Astro.props;
 </script>
 
 <style is:global>
-  .product-gallery-upload .direct-upload-preview { grid-template-columns: repeat(auto-fill, minmax(10rem, 1fr)); }
+  .product-gallery-upload .direct-upload-preview {
+    grid-template-columns: repeat(auto-fill, minmax(min(100%, 8.5rem), 10.5rem));
+    justify-content: start;
+  }
   .product-gallery-upload .direct-upload-item { position: relative; cursor: grab; }
   .product-gallery-upload .direct-upload-item.is-dragging { opacity: .5; }
   .product-gallery-upload .gallery-cover-badge { position: absolute; top: .3rem; left: .3rem; z-index: 2; border-radius: 999px; padding: .12rem .4rem; color: #fff; background: #2563eb; font-size: .65rem; font-weight: 700; }
