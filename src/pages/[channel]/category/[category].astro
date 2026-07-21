@@ -1,7 +1,7 @@
 ---
 import PublicLayout from "@/layouts/PublicLayout.astro";
 import ProductDirectory from "@/components/public/ProductDirectory.astro";
-import PublicBackLink from "@/components/public/PublicBackLink.astro";
+import PublicPageHeader from "@/components/public/PublicPageHeader.astro";
 import PublicSearchForm from "@/components/public/PublicSearchForm.astro";
 import {
   findPublicChannel,
@@ -46,15 +46,11 @@ const canonical = new URL(
 >
   {channel && category ? (
     <>
-      <header class="directory-page-header">
-        <PublicBackLink href={`/${encodeURIComponent(channel.slug)}`} />
-        <div class="directory-heading">
-          <h1>{category.name}</h1>
-          <span class="directory-count">
-            {category.productCount} {category.productCount === 1 ? "listing" : "listings"}
-          </span>
-        </div>
-      </header>
+      <PublicPageHeader
+        href={`/${encodeURIComponent(channel.slug)}`}
+        title={category.name}
+        className="directory-page-header"
+      />
 
       <section class="public-section">
         <PublicSearchForm

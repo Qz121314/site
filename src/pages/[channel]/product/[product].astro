@@ -1,7 +1,7 @@
 ---
 import PublicLayout from "@/layouts/PublicLayout.astro";
 import ProductGallery from "@/components/public/ProductGallery.astro";
-import PublicBackLink from "@/components/public/PublicBackLink.astro";
+import PublicPageHeader from "@/components/public/PublicPageHeader.astro";
 import { loadPublicProductDetail, loadPublicSiteShell } from "@/lib/db/public";
 
 export const prerender = false;
@@ -49,16 +49,17 @@ const returnUrl = product?.categorySlug
 >
   {product ? (
     <article class="product-detail">
-      <PublicBackLink href={returnUrl} />
+      <PublicPageHeader
+        href={returnUrl}
+        title={product.title}
+        className="product-detail-header"
+      />
 
-      <header class="product-detail-header">
-        <h1>{product.title}</h1>
-        {product.tags.length > 0 && (
-          <div class="product-tags" aria-label="Tags">
-            {product.tags.map((tag) => <span class="visual-tag">{tag}</span>)}
-          </div>
-        )}
-      </header>
+      {product.tags.length > 0 && (
+        <div class="product-tags" aria-label="Tags">
+          {product.tags.map((tag) => <span class="visual-tag">{tag}</span>)}
+        </div>
+      )}
 
       <ProductGallery images={galleryImages} />
 
