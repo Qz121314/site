@@ -84,6 +84,7 @@ p { color: var(--muted); line-height: 1.7; }
   inset: 0 auto 0 0;
   display: flex;
   width: var(--admin-sidebar-compact);
+  overflow: hidden;
   flex-direction: column;
   padding: .45rem .35rem;
   border-right: 1px solid var(--line);
@@ -110,6 +111,7 @@ p { color: var(--muted); line-height: 1.7; }
   display: grid;
   gap: .45rem;
   min-height: 0;
+  overflow-x: hidden;
   overflow-y: auto;
   scrollbar-width: thin;
 }
@@ -260,7 +262,7 @@ p { color: var(--muted); line-height: 1.7; }
 .admin-field textarea {
   width: 100%;
   min-width: 0;
-  height: 2.05rem;
+  min-height: 2.05rem;
   border: 1px solid #302d36;
   border-radius: .3rem;
   padding: .32rem .5rem;

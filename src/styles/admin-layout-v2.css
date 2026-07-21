@@ -2,8 +2,8 @@
 .admin-body {
   --admin-sidebar-compact: 3.35rem;
   --admin-sidebar-wide: 12.25rem;
-  --admin-workspace-max: 92rem;
-  --admin-workspace-narrow: 62rem;
+  --admin-workspace-max: 78rem;
+  --admin-workspace-narrow: 58rem;
   --admin-surface: #ffffff;
   --admin-canvas: #ffffff;
   --admin-border: #dbe3ed;
@@ -117,7 +117,6 @@
 .admin-body .image-search input,
 .admin-body .image-search select {
   min-height: 2.15rem;
-  height: 2.15rem;
   border-color: var(--admin-border-strong);
   border-radius: .42rem;
   padding: .34rem .52rem;
@@ -243,15 +242,13 @@
 
 @media (max-width: 900px) {
   .admin-body .admin-page-header-inner {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: .4rem;
+    gap: .5rem;
   }
 
   .admin-body .admin-page-actions,
   .admin-page-action-group {
-    width: 100%;
-    justify-content: flex-start;
+    width: auto;
+    justify-content: flex-end;
   }
 
   .admin-body .audit-overview {
@@ -263,7 +260,16 @@
 
 @media (max-width: 639px) {
   .admin-body .admin-page-body { padding: .6rem; }
-  .admin-page-header-inner { padding: .45rem .6rem; }
+  .admin-page-header-inner {
+    align-items: flex-start;
+    flex-direction: column;
+    padding: .45rem .6rem;
+  }
+  .admin-body .admin-page-actions,
+  .admin-page-action-group {
+    width: 100%;
+    justify-content: flex-start;
+  }
   .admin-body .admin-page-title { white-space: normal; }
   .admin-page-action-group .button { flex: 1 1 auto; }
   .admin-body .admin-section-bar,

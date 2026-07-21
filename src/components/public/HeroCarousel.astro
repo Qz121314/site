@@ -168,8 +168,20 @@ const carouselId = `hero-${crypto.randomUUID()}`;
 
 <style>
   .hero-dots {
-    bottom: 0;
-    gap: 0;
+    position: absolute;
+    z-index: 5;
+    left: 50%;
+    bottom: .45rem;
+    display: flex;
+    align-items: center;
+    gap: .08rem;
+    border: 1px solid rgba(216, 173, 97, .2);
+    border-radius: 999px;
+    padding: .08rem .18rem;
+    background: rgba(6, 6, 5, .58);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, .25);
+    backdrop-filter: blur(10px);
+    transform: translateX(-50%);
   }
 
   .hero-dot,

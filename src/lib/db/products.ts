@@ -1,7 +1,7 @@
 import { env } from "cloudflare:workers";
 import type { ProductStatus } from "@/lib/admin/product-form";
 
-export const ADMIN_PRODUCT_PAGE_SIZE = 50;
+export const ADMIN_PRODUCT_PAGE_SIZE = 30;
 
 export type AdminProductListItem = {
   id: string;

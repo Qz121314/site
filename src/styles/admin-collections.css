@@ -1,6 +1,6 @@
 /* Unified collection/list system for the admin UI. */
 .admin-body {
-  --admin-content-max: 92rem;
+  --admin-content-max: 78rem;
   --admin-card-radius: .65rem;
   --admin-control-radius: .45rem;
   --admin-gap: .7rem;
@@ -27,7 +27,7 @@
 
 .admin-body .admin-filter-form {
   display: grid;
-  grid-template-columns: minmax(15rem, 1fr) repeat(2, minmax(9rem, 13rem)) auto;
+  grid-template-columns: minmax(20rem, 1.8fr) minmax(8rem, .45fr) minmax(9rem, .55fr) auto;
   align-items: end;
   gap: .5rem;
   padding: .65rem;
