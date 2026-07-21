@@ -114,10 +114,46 @@ function clearForm(form: HTMLFormElement): void {
   form.querySelector<HTMLElement>("[autofocus]")?.focus();
 }
 
+function openAdminDialog(trigger: HTMLElement): boolean {
+  const dialogId = trigger.dataset.dialogOpen ?? "";
+  const dialog = dialogId ? document.getElementById(dialogId) : null;
+  if (!(dialog instanceof HTMLDialogElement)) return false;
+
+  dialog.showModal();
+  dialog.addEventListener("close", () => trigger.focus(), { once: true });
+  requestAnimationFrame(() => {
+    const focusTarget = dialog.querySelector<HTMLElement>(
+      "[autofocus], input:not([type='hidden']):not([disabled]), select:not([disabled]), textarea:not([disabled]), button:not([disabled])",
+    );
+    focusTarget?.focus();
+  });
+  return true;
+}
+
+function closeAdminDialog(trigger: HTMLElement): boolean {
+  const dialog = trigger.closest("dialog");
+  if (!(dialog instanceof HTMLDialogElement)) return false;
+  dialog.close();
+  return true;
+}
+
 initializeAdminForms();
 document.addEventListener("admin:navigation", () => initializeAdminForms());
 document.addEventListener("click", (event) => {
   if (!(event.target instanceof Element)) return;
+
+  const dialogOpener = event.target.closest<HTMLElement>("[data-dialog-open]");
+  if (dialogOpener && openAdminDialog(dialogOpener)) {
+    event.preventDefault();
+    return;
+  }
+
+  const dialogCloser = event.target.closest<HTMLElement>("[data-dialog-close]");
+  if (dialogCloser && closeAdminDialog(dialogCloser)) {
+    event.preventDefault();
+    return;
+  }
+
   const button = event.target.closest<HTMLElement>("[data-form-clear]");
   if (!button) return;
   const formId = button.dataset.formClear ?? "";
