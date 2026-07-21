@@ -46,6 +46,11 @@ function initializeProductEditors(root: ParentNode = document): void {
   });
 }
 
+function uploadBelongsToForm(upload: HTMLElement, form: HTMLFormElement): boolean {
+  const formId = upload.dataset.formId ?? "";
+  return formId ? formId === form.id : upload.closest("form") === form;
+}
+
 function initializeDirtyForms(root: ParentNode = document): void {
   root.querySelectorAll<HTMLFormElement>("form[data-admin-dirty-form]").forEach((form) => {
     if (form.dataset.adminDirtyReady === "1") return;
@@ -59,6 +64,13 @@ function initializeDirtyForms(root: ParentNode = document): void {
     form.addEventListener("submit", () => {
       form.dataset.adminDirty = "0";
     });
+
+    document.querySelectorAll<HTMLElement>("[data-direct-image-upload]").forEach((upload) => {
+      if (!uploadBelongsToForm(upload, form)) return;
+      const preview = upload.querySelector<HTMLElement>("[data-upload-preview]");
+      if (preview) new MutationObserver(markDirty).observe(preview, { childList: true });
+    });
+
     form.dataset.adminDirty = "0";
     form.dataset.adminDirtyReady = "1";
   });
@@ -68,11 +80,6 @@ function initializeAdminForms(root: ParentNode = document): void {
   initializeAutoGrow(root);
   initializeProductEditors(root);
   initializeDirtyForms(root);
-}
-
-function uploadBelongsToForm(upload: HTMLElement, form: HTMLFormElement): boolean {
-  const formId = upload.dataset.formId ?? "";
-  return formId ? formId === form.id : upload.closest("form") === form;
 }
 
 function clearDirectUploads(form: HTMLFormElement): void {
