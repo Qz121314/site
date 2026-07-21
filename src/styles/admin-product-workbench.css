@@ -19,7 +19,6 @@
   gap: .55rem;
 }
 
-.product-entry-header,
 .product-management-header {
   display: flex;
   min-height: 2.65rem;
@@ -31,17 +30,9 @@
   background: #fbfdff;
 }
 
-.product-entry-header h2,
 .product-management-header h2 {
   margin: 0;
   font-size: .9rem;
-}
-
-.product-entry-actions {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-  gap: .3rem;
 }
 
 .product-content-form,
@@ -344,8 +335,6 @@
   }
 
   .product-content-form-actions {
-    right: auto;
-    left: auto;
     width: 100%;
   }
 
