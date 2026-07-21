@@ -24,6 +24,7 @@ const count = Number(Astro.url.searchParams.get("count") ?? "0");
 const imported = Number(Astro.url.searchParams.get("imported") ?? "0");
 const skipped = Number(Astro.url.searchParams.get("skipped") ?? "0");
 const partial = Astro.url.searchParams.get("partial") === "1";
+const scanCursor = (Astro.url.searchParams.get("cursor") ?? "").trim().slice(0, 2048);
 
 const savedMessage = saved === "deleted"
   ? "图片及对应 R2 对象已删除。"
@@ -32,7 +33,7 @@ const savedMessage = saved === "deleted"
     : saved === "clean"
       ? `未引用图片清理完成，共删除 ${Number.isFinite(count) ? count : 0} 张。`
       : saved === "scanned"
-        ? `R2 扫描完成，导入 ${Number.isFinite(imported) ? imported : 0} 张，跳过 ${Number.isFinite(skipped) ? skipped : 0} 个缺少受控元数据的对象${partial ? "；本次已达到安全处理上限，请再次扫描" : ""}。`
+        ? `R2 扫描完成，导入 ${Number.isFinite(imported) ? imported : 0} 张，跳过 ${Number.isFinite(skipped) ? skipped : 0} 个缺少受控元数据的对象${partial ? "；仍有后续对象，请继续扫描" : ""}。`
         : "";
 
 const errorMessages: Record<string, string> = {
@@ -105,7 +106,8 @@ const unusedCount = library.images.filter((image) => image.referenceCount === 0)
           <button id="bulk-delete-button" class="button danger" type="submit" disabled>删除已选</button>
         </form>
         <form action="/api/admin/images/scan" method="post" onsubmit="return confirm('扫描 R2 并恢复由本系统上传、但数据库中缺失的图片记录？')">
-          <button class="button secondary" type="submit">扫描 R2</button>
+          {scanCursor && <input type="hidden" name="cursor" value={scanCursor} />}
+          <button class="button secondary" type="submit">{scanCursor ? "继续扫描 R2" : "扫描 R2"}</button>
         </form>
         <form action="/api/admin/images/cleanup" method="post" onsubmit="return confirm('删除最多 100 张上传超过 24 小时且完全未引用的图片？此操作会同时删除 R2 对象。')">
           <button class="button danger" type="submit">清理未引用</button>
