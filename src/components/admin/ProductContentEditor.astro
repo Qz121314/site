@@ -1,4 +1,5 @@
 ---
+import AdminPopover from "@/components/admin/AdminPopover.astro";
 import ProductGalleryUpload from "@/components/admin/ProductGalleryUpload.astro";
 import type { AdminProduct, AdminProductOptions } from "@/lib/db/products";
 
@@ -67,27 +68,27 @@ const prefix = product ? `product-${product.id}` : "product-new";
       <div class="admin-field product-content-filters">
         <label>分类筛选</label>
         {enabledFilters.length > 0 ? (
-          <details class="product-filter-dropdown" data-filter-dropdown>
-            <summary>
-              <span data-filter-dropdown-label>{filterSummary}</span>
-              <span class="product-filter-dropdown-arrow" aria-hidden="true">⌄</span>
-            </summary>
-            <div class="product-filter-dropdown-menu">
-              {enabledFilters.map((filter) => (
-                <label class="product-filter-dropdown-option">
-                  <input
-                    type="checkbox"
-                    name="filterIds"
-                    value={filter.id}
-                    checked={selectedFilterIds.has(filter.id)}
-                    data-category-filter
-                    data-filter-name={filter.name}
-                  />
-                  <span>{filter.name}</span>
-                </label>
-              ))}
-            </div>
-          </details>
+          <AdminPopover
+            id={`${prefix}-filter-popover`}
+            summary={filterSummary}
+            ariaLabel="选择分类筛选"
+            panelClass="product-filter-dropdown-menu"
+          >
+            {enabledFilters.map((filter) => (
+              <label class="product-filter-dropdown-option">
+                <input
+                  type="checkbox"
+                  name="filterIds"
+                  value={filter.id}
+                  checked={selectedFilterIds.has(filter.id)}
+                  form={formId}
+                  data-category-filter
+                  data-filter-name={filter.name}
+                />
+                <span>{filter.name}</span>
+              </label>
+            ))}
+          </AdminPopover>
         ) : (
           <a class="empty-control-link" href={`/admin/channels/${encodeURIComponent(channelId)}/filters`}>设置分类筛选</a>
         )}

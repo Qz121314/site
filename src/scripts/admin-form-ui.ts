@@ -23,7 +23,7 @@ function initializeProductEditors(root: ParentNode = document): void {
     const filterInputs = Array.from(editor.querySelectorAll<HTMLInputElement>("[data-category-filter]"));
     if (!category || filterInputs.length === 0) return;
 
-    const filterLabel = editor.querySelector<HTMLElement>("[data-filter-dropdown-label]");
+    const filterLabel = editor.querySelector<HTMLElement>("[data-admin-popover-summary]");
     const optionElements = Array.from(editor.querySelectorAll<HTMLOptionElement>("datalist option"));
     const categoryFilters = new Map(
       optionElements.map((option) => [

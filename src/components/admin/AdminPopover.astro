@@ -1,0 +1,33 @@
+---
+interface Props {
+  id: string;
+  summary: string;
+  ariaLabel: string;
+  panelClass?: string;
+}
+
+const { id, summary, ariaLabel, panelClass } = Astro.props;
+---
+
+<div class="admin-popover" data-admin-popover>
+  <button
+    class="admin-popover-trigger"
+    type="button"
+    aria-expanded="false"
+    aria-controls={id}
+    data-admin-popover-trigger
+  >
+    <span data-admin-popover-summary>{summary}</span>
+    <span class="admin-popover-arrow" aria-hidden="true">⌄</span>
+  </button>
+
+  <div
+    id={id}
+    class:list={["admin-popover-panel", panelClass]}
+    popover="auto"
+    aria-label={ariaLabel}
+    data-admin-popover-panel
+  >
+    <slot />
+  </div>
+</div>

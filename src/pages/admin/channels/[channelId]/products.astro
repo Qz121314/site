@@ -233,6 +233,8 @@ const galleryValues = selectedImages.map((image) => ({
                           action={manageAction}
                           method="post"
                           data-product-management-form
+                          data-admin-history="replace"
+                          data-admin-scroll="preserve"
                         >
                           <input type="hidden" name="returnTo" value={returnTo} />
                           <select name="status" aria-label={`${product.title} 发布状态`} data-product-management-autosave>
