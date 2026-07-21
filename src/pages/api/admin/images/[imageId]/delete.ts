@@ -1,7 +1,9 @@
-import { env } from "cloudflare:workers";
 import type { APIRoute } from "astro";
 import { isSameOriginPost } from "@/lib/auth/session";
-import { deleteUnusedImageAssetsAtomically } from "@/lib/db/image-delete";
+import {
+  deleteQueuedImageObjectsFromR2,
+  deleteUnusedImageAssetsAtomically,
+} from "@/lib/db/image-delete";
 
 export const prerender = false;
 
@@ -22,14 +24,16 @@ export const POST: APIRoute = async ({ request, params }) => {
     if (result.found.length === 0) return redirect(request, { error: "not-found" });
     if (result.deleted.length === 0) return redirect(request, { error: "in-use" });
 
-    const objectKey = result.deleted[0]?.objectKey;
-    if (objectKey) {
-      try {
-        await env.MEDIA_BUCKET.delete(objectKey);
-      } catch (error) {
-        console.error(JSON.stringify({ event: "admin_image_r2_cleanup_deferred", imageId, objectKey, error: String(error) }));
-      }
+    const r2 = await deleteQueuedImageObjectsFromR2(result.deleted);
+    if (r2.pending.length > 0) {
+      console.error(JSON.stringify({
+        event: "admin_image_r2_cleanup_deferred",
+        imageId,
+        objectKeys: r2.pending.map((image) => image.objectKey),
+      }));
+      return redirect(request, { saved: "delete-pending", pending: String(r2.pending.length) });
     }
+
     return redirect(request, { saved: "deleted" });
   } catch (error) {
     console.error(JSON.stringify({ event: "admin_image_delete_failed", imageId, error: String(error) }));
