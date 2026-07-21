@@ -83,17 +83,4 @@ export function isDuplicateAdPoolNameError(error: unknown): boolean {
   return message.includes("idx_ad_pools_channel_name") || message.includes("ad_pools.channel_id, ad_pools.name");
 }
 
-
-export function adPoolIntegrityErrorCode(error: unknown): "in-use" | "unavailable" | null {
-  const message = String(error);
-  if (
-    message.includes("bound hero ad pool cannot be disabled") ||
-    message.includes("bound hero ad pool requires an enabled advertisement")
-  ) {
-    return "in-use";
-  }
-  if (message.includes("hero ad pool must be enabled and contain an enabled ad")) {
-    return "unavailable";
-  }
-  return null;
-}
+export { adPoolIntegrityErrorCode } from "@/lib/admin/pool-integrity";
