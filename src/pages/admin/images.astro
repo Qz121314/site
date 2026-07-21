@@ -33,36 +33,26 @@ const savedMessage = saved === "deleted"
     : saved === "clean"
       ? `未引用图片清理完成，共删除 ${Number.isFinite(count) ? count : 0} 张。`
       : saved === "scanned"
-        ? `R2 扫描完成，导入 ${Number.isFinite(imported) ? imported : 0} 张，跳过 ${Number.isFinite(skipped) ? skipped : 0} 个缺少受控元数据的对象${partial ? "；仍有后续对象，请继续扫描" : ""}。`
+        ? `R2 扫描完成，导入 ${Number.isFinite(imported) ? imported : 0} 张，跳过 ${Number.isFinite(skipped) ? skipped : 0} 个对象${partial ? "；仍有后续对象" : ""}。`
         : "";
 
 const errorMessages: Record<string, string> = {
   "not-found": "找不到该图片记录。",
-  "in-use": "所选图片仍被站点、分类、产品或广告引用，不能删除。",
+  "in-use": "所选图片仍被引用，不能删除。",
   "bulk-selection": "请选择 1 至 100 张未引用图片。",
   delete: "删除图片失败，请稍后重试。",
   cleanup: "批量清理失败，请稍后重试。",
   scan: "扫描 R2 失败，请稍后重试。",
 };
 
-function formatBytes(value: number): string {
-  if (value < 1024) return `${value} B`;
-  if (value < 1024 * 1024) return `${(value / 1024).toFixed(1)} KB`;
-  return `${(value / (1024 * 1024)).toFixed(2)} MB`;
-}
-
-function formatCreatedAt(value: string): string {
-  return value.replace("T", " ").replace("Z", "").slice(0, 16);
-}
-
 function usageText(image: AdminImageAsset): string {
   const parts = [
-    image.logoReferences > 0 ? `Logo ${image.logoReferences}` : "",
-    image.faviconReferences > 0 ? `图标 ${image.faviconReferences}` : "",
-    image.categoryReferences > 0 ? `分类 ${image.categoryReferences}` : "",
-    image.productCoverReferences > 0 ? `封面 ${image.productCoverReferences}` : "",
-    image.productGalleryReferences > 0 ? `图库 ${image.productGalleryReferences}` : "",
-    image.advertisementReferences > 0 ? `广告 ${image.advertisementReferences}` : "",
+    image.logoReferences > 0 ? "Logo" : "",
+    image.faviconReferences > 0 ? "图标" : "",
+    image.categoryReferences > 0 ? "分类" : "",
+    image.productCoverReferences > 0 ? "封面" : "",
+    image.productGalleryReferences > 0 ? "产品" : "",
+    image.advertisementReferences > 0 ? "广告" : "",
   ].filter(Boolean);
   return parts.length > 0 ? parts.join(" · ") : "未引用";
 }
@@ -77,64 +67,68 @@ function pageHref(page: number): string {
 }
 
 const selectableCount = library.images.filter((image) => image.referenceCount === 0).length;
-const unusedCount = library.images.filter((image) => image.referenceCount === 0).length;
+const unusedCount = selectableCount;
 ---
 
-<AdminLayout title="图片库 · R2 审计">
+<AdminLayout title="图片库">
+  <div slot="actions" class="admin-page-action-group">
+    <form action="/api/admin/images/scan" method="post" onsubmit="return confirm('扫描 R2 并恢复由本系统上传、但数据库中缺失的图片记录？')">
+      {scanCursor && <input type="hidden" name="cursor" value={scanCursor} />}
+      <button class="button secondary" type="submit">{scanCursor ? "继续扫描" : "扫描 R2"}</button>
+    </form>
+    <form action="/api/admin/images/cleanup" method="post" onsubmit="return confirm('删除最多 100 张上传超过 24 小时且完全未引用的图片？')">
+      <button class="button danger" type="submit">清理未引用</button>
+    </form>
+  </div>
+
   {savedMessage && <p class="notice" role="status">{savedMessage}</p>}
   {error && errorMessages[error] && <p class="error" role="alert">{errorMessages[error]}</p>}
   {!library.databaseReady && <p class="error" role="alert">图片资产数据库查询失败。请确认最新 D1 Migration 已应用。</p>}
 
-  <section class="audit-overview">
-    <div class="admin-card audit-metric"><span>当前结果</span><strong>{library.total}</strong></div>
-    <div class:list={["admin-card", "audit-metric", unusedCount > 0 && "needs-attention"]}><span>本页未引用</span><strong>{unusedCount}</strong></div>
-    <div class="admin-card audit-explanation">
-      <strong>图片从业务页面上传</strong>
-      <span>产品、Hero、Logo 和 Favicon 页面负责上传；这里仅检查 R2、引用关系和孤立文件。</span>
-    </div>
+  <section class="admin-card admin-filter-panel">
+    <form class="admin-filter-form image-filter-form" method="get" action="/admin/images">
+      <div class="admin-field admin-search-field">
+        <label for="image-search">搜索</label>
+        <input id="image-search" name="q" value={query} maxlength="24" autocomplete="off" placeholder="文件名或 Object Key" />
+      </div>
+      <div class="admin-field">
+        <label for="image-reference-filter">引用</label>
+        <select id="image-reference-filter" name="filter">
+          <option value="all" selected={filter === "all"}>全部图片</option>
+          <option value="used" selected={filter === "used"}>已引用</option>
+          <option value="unused" selected={filter === "unused"}>未引用</option>
+        </select>
+      </div>
+      <div class="admin-filter-actions">
+        <button class="button" type="submit">筛选</button>
+        {(query || filter !== "all") && <a class="button secondary" href="/admin/images">重置</a>}
+      </div>
+    </form>
   </section>
 
-  <section class="admin-card library-card">
+  <section class="admin-card admin-collection-panel">
     <div class="admin-toolbar library-toolbar">
       <div>
-        <h2>R2 图片资产</h2>
-        <span class="admin-section-note">共 {library.total} 张；引用中的图片禁止删除</span>
+        <h2>R2 图片</h2>
+        <span class="admin-section-note">{library.total} 张 · 本页未引用 {unusedCount} 张</span>
       </div>
       <div class="library-maintenance">
-        <button id="select-unused-button" class="button secondary" type="button" disabled={selectableCount === 0}>选择本页未引用</button>
-        <form id="image-bulk-form" action="/api/admin/images/bulk-delete" method="post" onsubmit="return confirm('确定删除已选择图片及其 R2 对象？服务端会再次检查引用。')">
+        <button id="select-unused-button" class="button secondary" type="button" disabled={selectableCount === 0}>选择未引用</button>
+        <form id="image-bulk-form" action="/api/admin/images/bulk-delete" method="post" onsubmit="return confirm('确定删除已选择图片及其 R2 对象？')">
           <button id="bulk-delete-button" class="button danger" type="submit" disabled>删除已选</button>
-        </form>
-        <form action="/api/admin/images/scan" method="post" onsubmit="return confirm('扫描 R2 并恢复由本系统上传、但数据库中缺失的图片记录？')">
-          {scanCursor && <input type="hidden" name="cursor" value={scanCursor} />}
-          <button class="button secondary" type="submit">{scanCursor ? "继续扫描 R2" : "扫描 R2"}</button>
-        </form>
-        <form action="/api/admin/images/cleanup" method="post" onsubmit="return confirm('删除最多 100 张上传超过 24 小时且完全未引用的图片？此操作会同时删除 R2 对象。')">
-          <button class="button danger" type="submit">清理未引用</button>
         </form>
       </div>
     </div>
 
-    <form class="image-search" method="get" action="/admin/images">
-      <input name="q" value={query} maxlength="24" autocomplete="off" placeholder="搜索原文件名或 R2 Object Key" />
-      <select name="filter" aria-label="引用状态">
-        <option value="all" selected={filter === "all"}>全部图片</option>
-        <option value="used" selected={filter === "used"}>已引用</option>
-        <option value="unused" selected={filter === "unused"}>未引用</option>
-      </select>
-      <button class="button secondary" type="submit">筛选</button>
-      {(query || filter !== "all") && <a class="button secondary" href="/admin/images">重置</a>}
-    </form>
-
     {library.images.length === 0 ? (
-      <div class="admin-empty">没有符合条件的图片。图片会在产品、Hero 或站点设置中上传；也可以扫描 R2 恢复受控资产记录。</div>
+      <div class="admin-collection-empty">没有符合条件的图片。</div>
     ) : (
-      <div class="image-grid">
+      <div class="admin-entity-grid is-dense image-grid">
         {library.images.map((image) => {
           const previewUrl = buildPublicImageUrl(library.r2PublicBaseUrl, image.objectKey)
             ?? `/api/admin/images/${encodeURIComponent(image.id)}/content`;
           return (
-            <article class:list={["image-card", image.referenceCount === 0 && "is-selectable"]}>
+            <article class="admin-entity-card image-card">
               {image.referenceCount === 0 && (
                 <label class="image-select" title="选择用于批量删除">
                   <input
@@ -147,24 +141,15 @@ const unusedCount = library.images.filter((image) => image.referenceCount === 0)
                   />
                 </label>
               )}
-              <a class="image-preview" href={previewUrl} target="_blank" rel="noreferrer" title="打开原图">
+              <a class="admin-entity-media" href={previewUrl} target="_blank" rel="noreferrer" title={image.originalName || image.objectKey}>
                 <img src={previewUrl} alt={image.originalName || image.objectKey} loading="lazy" decoding="async" />
+                <span class:list={["admin-entity-badge", image.referenceCount > 0 ? "is-used" : "is-unused"]}>{usageText(image)}</span>
               </a>
-              <div class="image-card-body">
-                <strong title={image.originalName || image.objectKey}>{image.originalName || "未记录原文件名"}</strong>
-                <code title={image.objectKey}>{image.objectKey}</code>
-                <div class="image-meta">
-                  <span>{image.width} × {image.height}</span>
-                  <span>{formatBytes(image.sizeBytes)}</span>
-                  <span>{image.mimeType.replace("image/", "").toUpperCase()}</span>
-                </div>
-                <div class:list={["image-usage", image.referenceCount > 0 && "is-used"]} title={usageText(image)}>{usageText(image)}</div>
-                <div class="image-card-footer">
-                  <time datetime={image.createdAt}>{formatCreatedAt(image.createdAt)}</time>
-                  <form action={`/api/admin/images/${encodeURIComponent(image.id)}/delete`} method="post" onsubmit="return confirm('确定删除这张图片及其 R2 对象？此操作不可恢复。')">
-                    <button class="image-delete" type="submit" disabled={image.referenceCount > 0} title={image.referenceCount > 0 ? "图片仍有引用，不能删除" : "删除图片"}>删除</button>
-                  </form>
-                </div>
+              <div class="admin-entity-actions image-card-actions">
+                <a class="button secondary" href={previewUrl} target="_blank" rel="noreferrer">查看</a>
+                <form action={`/api/admin/images/${encodeURIComponent(image.id)}/delete`} method="post" onsubmit="return confirm('确定删除这张图片及其 R2 对象？')">
+                  <button class="button danger" type="submit" disabled={image.referenceCount > 0} title={image.referenceCount > 0 ? "图片仍有引用" : "删除图片"}>删除</button>
+                </form>
               </div>
             </article>
           );
@@ -173,9 +158,9 @@ const unusedCount = library.images.filter((image) => image.referenceCount === 0)
     )}
 
     {library.pageCount > 1 && (
-      <nav class="image-pagination" aria-label="图片分页">
+      <nav class="admin-pagination" aria-label="图片分页">
         <a class:list={["button secondary", library.page <= 1 && "is-disabled"]} href={library.page > 1 ? pageHref(library.page - 1) : undefined}>上一页</a>
-        <span>第 {library.page} / {library.pageCount} 页</span>
+        <span>{library.page} / {library.pageCount}</span>
         <a class:list={["button secondary", library.page >= library.pageCount && "is-disabled"]} href={library.page < library.pageCount ? pageHref(library.page + 1) : undefined}>下一页</a>
       </nav>
     )}
@@ -199,7 +184,7 @@ const unusedCount = library.images.filter((image) => image.referenceCount === 0)
     selectUnused?.addEventListener('click', () => {
       const shouldSelect = checkboxes.some((checkbox) => !checkbox.checked);
       checkboxes.forEach((checkbox) => { checkbox.checked = shouldSelect; });
-      selectUnused.textContent = shouldSelect ? '取消本页选择' : '选择本页未引用';
+      selectUnused.textContent = shouldSelect ? '取消选择' : '选择未引用';
       refresh();
     });
     refresh();
@@ -207,49 +192,11 @@ const unusedCount = library.images.filter((image) => image.referenceCount === 0)
 </script>
 
 <style>
-  .audit-overview { display: grid; grid-template-columns: 9rem 9rem minmax(0, 1fr); gap: .55rem; margin-bottom: .55rem; }
-  .audit-metric { display: flex; align-items: center; justify-content: space-between; padding: .65rem; }
-  .audit-metric span { color: #918b97; font-size: .72rem; }
-  .audit-metric strong { font-size: 1.2rem; }
-  .audit-metric.needs-attention { border-color: rgba(231,189,121,.35); }
-  .audit-metric.needs-attention strong { color: #e7bd79; }
-  .audit-explanation { display: grid; gap: .15rem; padding: .6rem .7rem; }
-  .audit-explanation strong { font-size: .78rem; }
-  .audit-explanation span { color: #8f8995; font-size: .7rem; }
-  .library-toolbar { align-items: flex-start; }
-  .library-maintenance { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: .3rem; }
-  .library-maintenance form { margin: 0; }
-  .image-search { display: grid; grid-template-columns: minmax(0,1fr) 8rem auto auto; gap: .35rem; padding: .55rem; border-bottom: 1px solid var(--line); }
-  .image-search input,
-  .image-search select { min-width: 0; height: 2.05rem; border: 1px solid #302d36; border-radius: .3rem; padding: .32rem .5rem; color: var(--text); background: #0d0c10; }
-  .image-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(13rem,1fr)); gap: .55rem; padding: .55rem; }
-  .image-card { position: relative; overflow: hidden; border: 1px solid #2b2831; border-radius: .42rem; background: #0d0c10; }
-  .image-card.is-selectable { border-color: rgba(231,189,121,.16); }
-  .image-select { position: absolute; z-index: 2; top: .35rem; left: .35rem; display: grid; width: 1.4rem; height: 1.4rem; place-items: center; border-radius: .3rem; background: rgba(5,4,7,.8); }
+  .image-filter-form { grid-template-columns: minmax(15rem, 1fr) 10rem auto; }
+  .library-toolbar { align-items: center; }
+  .library-maintenance { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: .35rem; }
+  .image-select { position: absolute; z-index: 3; top: .45rem; left: .45rem; display: grid; width: 1.55rem; height: 1.55rem; place-items: center; border: 1px solid rgba(255,255,255,.8); border-radius: .4rem; background: rgba(255,255,255,.94); box-shadow: 0 2px 8px rgba(15,23,42,.12); }
   .image-select input { width: .95rem; height: .95rem; margin: 0; }
-  .image-preview { display: block; background: #070608; }
-  .image-preview img { display: block; width: 100%; aspect-ratio: 4 / 3; object-fit: cover; }
-  .image-card-body { display: grid; gap: .28rem; padding: .5rem; }
-  .image-card-body strong,
-  .image-card-body code { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .image-card-body strong { font-size: .75rem; }
-  .image-card-body code { color: #77717e; font-size: .62rem; }
-  .image-meta { display: flex; flex-wrap: wrap; gap: .25rem .5rem; color: #8f8995; font-size: .64rem; }
-  .image-usage { color: #e7bd79; font-size: .67rem; }
-  .image-usage.is-used { color: #65d99c; }
-  .image-card-footer { display: flex; align-items: center; justify-content: space-between; gap: .4rem; }
-  .image-card-footer time { color: #77717e; font-size: .62rem; }
-  .image-delete { border: 0; padding: .2rem .35rem; color: #ffc3cf; background: transparent; cursor: pointer; font-size: .65rem; }
-  .image-delete:disabled { color: #625d67; cursor: not-allowed; }
-  .image-pagination { display: flex; align-items: center; justify-content: flex-end; gap: .5rem; padding: .55rem; border-top: 1px solid var(--line); }
-  .image-pagination span { color: #8f8995; font-size: .7rem; }
-  .is-disabled { pointer-events: none; opacity: .35; }
-  @media (max-width: 767px) {
-    .audit-overview { grid-template-columns: 1fr 1fr; }
-    .audit-explanation { grid-column: 1 / -1; }
-    .library-toolbar { align-items: stretch; flex-direction: column; }
-    .library-maintenance { justify-content: flex-start; }
-    .image-search { grid-template-columns: 1fr 7rem; }
-    .image-search .button { width: 100%; }
-  }
+  .image-card-actions { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  @media (max-width: 639px) { .image-filter-form { grid-template-columns: 1fr; } .library-toolbar { align-items: flex-start; flex-direction: column; } .library-maintenance { justify-content: flex-start; } }
 </style>
