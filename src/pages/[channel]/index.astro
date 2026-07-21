@@ -12,6 +12,7 @@ import {
   loadPublicProducts,
   loadPublicSiteShell,
 } from "@/lib/db/public";
+import { loadPublicUncategorizedProducts } from "@/lib/db/public-availability";
 
 export const prerender = false;
 
@@ -21,15 +22,18 @@ const channel = findPublicChannel(site, channelSlug);
 
 if (!channel) Astro.response.status = 404;
 
-const [hero, filters, categories] = channel
+const [hero, filters, loadedCategories] = channel
   ? await Promise.all([
       loadPublicHeroAdvertisements(channel.id, site.r2PublicBaseUrl),
       loadPublicCategoryFilters(channel.id),
       loadPublicCategories(channel.id, site.r2PublicBaseUrl),
     ])
   : [[], [], []];
-const productPage = channel && categories.length === 0
-  ? await loadPublicProducts({ channelId: channel.id, baseUrl: site.r2PublicBaseUrl })
+const categories = loadedCategories.filter((category) => category.productCount > 0);
+const productPage = channel
+  ? categories.length > 0
+    ? await loadPublicUncategorizedProducts({ channelId: channel.id, baseUrl: site.r2PublicBaseUrl })
+    : await loadPublicProducts({ channelId: channel.id, baseUrl: site.r2PublicBaseUrl })
   : { products: [], page: 1, hasMore: false };
 
 const canonical = new URL(`/${encodeURIComponent(channelSlug)}`, Astro.url.origin).href;
@@ -54,22 +58,31 @@ const canonical = new URL(`/${encodeURIComponent(channelSlug)}`, Astro.url.origi
       </section>
 
       {categories.length > 0 ? (
-        <section class="public-section category-section" data-category-section>
-          {filters.length > 0 && (
-            <div class="filter-strip" aria-label="Category filters">
-              {filters.map((filter) => (
-                <button class="filter-button" type="button" data-category-filter={filter.id} aria-pressed="false">
-                  {filter.name}
-                </button>
-              ))}
-            </div>
-          )}
+        <>
+          <section class="public-section category-section" data-category-section>
+            {filters.length > 0 && (
+              <div class="filter-strip" aria-label="Category filters">
+                {filters.map((filter) => (
+                  <button class="filter-button" type="button" data-category-filter={filter.id} aria-pressed="false">
+                    {filter.name}
+                  </button>
+                ))}
+              </div>
+            )}
 
-          <div class="category-grid" data-category-grid>
-            {categories.map((category) => <CategoryCard category={category} channelSlug={channel.slug} />)}
-          </div>
-          <div class="public-empty" data-category-empty hidden>No matching categories.</div>
-        </section>
+            <div class="category-grid" data-category-grid>
+              {categories.map((category) => <CategoryCard category={category} channelSlug={channel.slug} />)}
+            </div>
+            <div class="public-empty" data-category-empty hidden>No matching categories.</div>
+          </section>
+
+          {productPage.products.length > 0 && (
+            <section class="public-section">
+              <div class="public-section-heading"><h2>More products</h2></div>
+              <ProductDirectory channelSlug={channel.slug} page={productPage} />
+            </section>
+          )}
+        </>
       ) : (
         <section class="public-section">
           <ProductDirectory channelSlug={channel.slug} page={productPage} />
