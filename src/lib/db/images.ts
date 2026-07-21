@@ -230,7 +230,7 @@ export async function loadAdminImagePage(input: {
   filter?: string;
   page?: number;
 }): Promise<AdminImagePage> {
-  const query = truncateUtf8((input.query ?? "").trim(), 48);
+  const query = truncateUtf8((input.query ?? "").trim(), 24);
   const filter = normalizeFilter(input.filter ?? "all");
   const requestedPage = normalizePage(input.page ?? 1);
 
