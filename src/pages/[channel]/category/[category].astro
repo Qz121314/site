@@ -44,26 +44,41 @@ const canonical = new URL(
 >
   {channel && category ? (
     <>
-      <nav class="breadcrumbs" aria-label="Breadcrumb">
-        <a href={`/${encodeURIComponent(channel.slug)}`}>{channel.name}</a>
-        <span aria-hidden="true">/</span>
-        <span aria-current="page">{category.name}</span>
-      </nav>
-
-      <section class="public-section">
-        <div class="public-section-heading">
+      <header class="directory-page-header">
+        <a class="public-back-link" href={`/${encodeURIComponent(channel.slug)}`}>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m15 18-6-6 6-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
+          </svg>
+          <span>Back to {channel.name}</span>
+        </a>
+        <div class="directory-title-row">
           <div>
-            <div class="eyebrow">Category</div>
+            <div class="eyebrow">{channel.name}</div>
             <h1>{category.name}</h1>
             <p>{category.productCount} {category.productCount === 1 ? "listing" : "listings"}</p>
           </div>
         </div>
+      </header>
 
+      <section class="public-section">
         <form class="public-search-form" action={`/${encodeURIComponent(channel.slug)}/search`} method="get" role="search">
-          <input name="q" type="search" maxlength="100" placeholder={`Search ${channel.name}`} aria-label={`Search ${channel.name}`} />
-          <button class="public-button" type="submit">Search</button>
+          <span class="public-search-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24">
+              <circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="1.7" />
+              <path d="m16 16 4 4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.7" />
+            </svg>
+          </span>
+          <input name="q" type="search" maxlength="100" placeholder={`Search in ${category.name}`} aria-label={`Search ${channel.name}`} />
+          <button class="public-search-submit" type="submit" aria-label="Search">
+            <span>Search</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="m9 18 6-6-6-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
+            </svg>
+          </button>
         </form>
+      </section>
 
+      <section class="public-section directory-list-section">
         <ProductDirectory
           channelSlug={channel.slug}
           categorySlug={category.slug}
@@ -74,8 +89,9 @@ const canonical = new URL(
     </>
   ) : (
     <section class="public-section">
-      <div class="public-empty">
+      <div class="public-empty public-error-card">
         <div>
+          <div class="empty-icon" aria-hidden="true">404</div>
           <h1>Category not found</h1>
           <p>This category is unavailable or has not been published.</p>
           <a class="public-button secondary" href={channel ? `/${encodeURIComponent(channel.slug)}` : "/"}>Return</a>
