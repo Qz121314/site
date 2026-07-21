@@ -3,6 +3,7 @@ import { spawnSync } from "node:child_process";
 const ids = {
   channel: "audit-guard-channel",
   conversionGroup: "audit-guard-conversion-group",
+  emptyConversionGroup: "audit-guard-empty-conversion-group",
   conversionResource: "audit-guard-conversion-resource",
   product: "audit-guard-product",
   image: "audit-guard-image",
@@ -34,7 +35,7 @@ function execute(sql, expectFailure = null) {
 const cleanup = `
   UPDATE channels SET hero_ad_pool_id = NULL WHERE id = '${ids.channel}';
   DELETE FROM products WHERE id = '${ids.product}';
-  DELETE FROM conversion_groups WHERE id = '${ids.conversionGroup}';
+  DELETE FROM conversion_groups WHERE id IN ('${ids.conversionGroup}', '${ids.emptyConversionGroup}');
   DELETE FROM ad_pools WHERE id IN ('${ids.adPool}', '${ids.emptyAdPool}');
   DELETE FROM image_assets WHERE id = '${ids.image}';
   DELETE FROM channels WHERE id = '${ids.channel}';
@@ -48,7 +49,9 @@ try {
     VALUES ('${ids.channel}', 'Audit Guard Channel', 'audit-guard-channel', 'published');
 
     INSERT INTO conversion_groups (id, channel_id, name, status)
-    VALUES ('${ids.conversionGroup}', '${ids.channel}', 'Audit Guard Conversion', 'enabled');
+    VALUES
+      ('${ids.conversionGroup}', '${ids.channel}', 'Audit Guard Conversion', 'enabled'),
+      ('${ids.emptyConversionGroup}', '${ids.channel}', 'Audit Guard Empty Conversion', 'enabled');
 
     INSERT INTO conversion_resources (id, group_id, type, value, status)
     VALUES ('${ids.conversionResource}', '${ids.conversionGroup}', 'sms', '+12025550123', 'enabled');
@@ -79,6 +82,10 @@ try {
     );
   `);
 
+  execute(
+    `UPDATE products SET conversion_group_id = '${ids.emptyConversionGroup}' WHERE id = '${ids.product}'`,
+    "published product requires an available conversion group",
+  );
   execute(
     `UPDATE conversion_groups SET status = 'disabled' WHERE id = '${ids.conversionGroup}'`,
     "conversion group is used by published products",
