@@ -80,7 +80,11 @@ export const POST: APIRoute = async ({ request }) => {
   let cursor = parseCursor(form);
 
   try {
-    const existingResult = await env.DB.prepare("SELECT object_key FROM image_assets").all<ObjectKeyRow>();
+    const existingResult = await env.DB.prepare(
+      `SELECT object_key FROM image_assets
+       UNION
+       SELECT object_key FROM image_deletion_queue`,
+    ).all<ObjectKeyRow>();
     const knownKeys = new Set(existingResult.results.map((row) => row.object_key));
     const candidates: ImportCandidate[] = [];
     let skipped = 0;
