@@ -6,11 +6,11 @@ export type PublicPageInput = {
 };
 
 export function readPublicPage(value: string | null): PublicPageInput {
-  if (value === null || value === "") return { page: 1, valid: true };
-  if (!/^\d+$/u.test(value)) return { page: 1, valid: false };
+  if (value === null) return { page: 1, valid: true };
+  if (!/^[1-9]\d*$/u.test(value)) return { page: 1, valid: false };
 
   const page = Number(value);
-  return Number.isSafeInteger(page) && page >= 1 && page <= MAX_PUBLIC_PRODUCT_PAGE
+  return Number.isSafeInteger(page) && page <= MAX_PUBLIC_PRODUCT_PAGE
     ? { page, valid: true }
     : { page: 1, valid: false };
 }
