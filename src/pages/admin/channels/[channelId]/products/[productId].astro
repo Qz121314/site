@@ -1,9 +1,9 @@
 ---
 import AdminLayout from "@/layouts/AdminLayout.astro";
-import ProductGalleryUpload from "@/components/admin/ProductGalleryUpload.astro";
-import { loadAdminChannel } from "@/lib/db/site";
-import { loadAdminProduct, loadAdminProductOptions } from "@/lib/db/products";
+import ProductEditorFields from "@/components/admin/ProductEditorFields.astro";
 import { loadAdminProductImages } from "@/lib/db/product-images";
+import { loadAdminProduct, loadAdminProductOptions } from "@/lib/db/products";
+import { loadAdminChannel } from "@/lib/db/site";
 
 export const prerender = false;
 
@@ -21,10 +21,6 @@ const [channel, product, options, gallery] = channelId && productId
 const saved = Astro.url.searchParams.get("saved");
 const error = Astro.url.searchParams.get("error");
 const formId = product ? `product-edit-${product.id}` : "product-edit";
-const selectedCategory = product?.categoryId
-  ? options.categories.find((category) => category.id === product.categoryId) ?? null
-  : null;
-const selectedFilterIds = new Set(selectedCategory?.filterIds ?? []);
 
 const savedMessages: Record<string, string> = {
   created: "产品已新增。",
@@ -70,202 +66,28 @@ const errorMessages: Record<string, string> = {
       {saved && savedMessages[saved] && <p class="notice" role="status">{savedMessages[saved]}</p>}
       {error && errorMessages[error] && <p class="error" role="alert">{errorMessages[error]}</p>}
 
-      <form id={formId} class="product-entry" action={`/api/admin/channels/${encodeURIComponent(channelId)}/products/${encodeURIComponent(product.id)}/update`} method="post">
-        <section class="admin-card product-basic-card">
-          <div class="admin-section-bar">
-            <h2>{product.title}</h2>
-            <span class="admin-section-note">/{product.slug}</span>
-          </div>
-
-          <div class="admin-card-body product-basic-grid">
-            <div class="admin-field product-field-title">
-              <label for="product-title">产品名称</label>
-              <input id="product-title" name="title" maxlength="160" required value={product.title} autofocus />
-            </div>
-
-            <input type="hidden" name="categoryId" value="" />
-            <div class="admin-field product-field-category">
-              <label for="product-category-name">产品分类</label>
-              <input id="product-category-name" name="categoryName" maxlength="80" list="product-category-options" autocomplete="off" value={product.categoryName ?? ""} data-category-name />
-              <datalist id="product-category-options">
-                {options.categories.map((category) => (
-                  <option value={category.name} data-filter-ids={category.filterIds.join(",")}></option>
-                ))}
-              </datalist>
-            </div>
-
-            <div class="admin-field product-field-filters">
-              <label>分类筛选</label>
-              {options.filters.length > 0 ? (
-                <div class="filter-choice-grid" data-category-filter-list>
-                  {options.filters.map((filter) => (
-                    <label class:list={["filter-choice", filter.status !== "enabled" && "is-disabled"]}>
-                      <input type="checkbox" name="filterIds" value={filter.id} checked={selectedFilterIds.has(filter.id)} data-category-filter />
-                      <span>{filter.name}</span>
-                    </label>
-                  ))}
-                </div>
-              ) : (
-                <a class="empty-control-link" href={`/admin/channels/${encodeURIComponent(channelId)}/filters`}>设置分类筛选</a>
-              )}
-            </div>
-
-            <div class="admin-field product-field-tags">
-              <label for="product-tags">产品标签</label>
-              <input id="product-tags" name="tags" maxlength="1000" value={product.tags.join(", ")} placeholder="tag-one, tag-two" />
-            </div>
-
-            <div class="admin-field product-field-conversion">
-              <label for="product-conversion">转化组</label>
-              <select id="product-conversion" name="conversionGroupId">
-                <option value="">暂不绑定</option>
-                {options.conversionGroups.map((group) => (
-                  <option value={group.id} selected={product.conversionGroupId === group.id}>{group.name} · {group.enabledResourceCount}</option>
-                ))}
-              </select>
-            </div>
-
-            <div class="admin-field product-field-cta">
-              <label for="product-cta">CTA 文案</label>
-              <input id="product-cta" name="ctaLabel" maxlength="80" required value={product.ctaLabel} />
-            </div>
-
-            <div class="admin-field product-field-status">
-              <label for="product-status">发布状态</label>
-              <select id="product-status" name="status">
-                <option value="draft" selected={product.status === "draft"}>草稿</option>
-                <option value="published" selected={product.status === "published"}>发布</option>
-                <option value="disabled" selected={product.status === "disabled"}>停用</option>
-              </select>
-            </div>
-
-            <div class="admin-field product-field-sort">
-              <label for="product-sort">排序</label>
-              <input id="product-sort" name="sortOrder" type="number" min="-999999" max="999999" step="1" value={product.sortOrder} />
-            </div>
-
-            <div class="admin-field product-field-featured">
-              <label>推荐</label>
-              <label class="compact-check"><input type="checkbox" name="featured" value="1" checked={product.featured} /> 置顶</label>
-            </div>
-          </div>
-        </section>
-
-        <div class="product-workspace">
-          <section class="admin-card product-image-card">
-            <div class="admin-section-bar"><h2>产品图片</h2></div>
-            <div class="admin-card-body">
-              <ProductGalleryUpload
-                form={formId}
-                values={gallery.map((image) => ({
-                  id: image.imageAssetId,
-                  previewUrl: image.previewUrl,
-                  name: image.originalName,
-                  meta: `${image.width}×${image.height}`,
-                }))}
-              />
-            </div>
-          </section>
-
-          <section class="admin-card product-body-card">
-            <div class="admin-section-bar"><h2>产品正文</h2></div>
-            <div class="admin-card-body">
-              <div class="admin-field">
-                <label for="product-body">正文内容（支持 Markdown）</label>
-                <textarea id="product-body" name="bodySource" maxlength="30000" rows="2" spellcheck="true" data-auto-grow>{product.bodySource}</textarea>
-                <small>普通文本、换行、连续空格和表情会保留；也支持标题、列表、引用、粗体、斜体、链接和代码。</small>
-              </div>
-            </div>
-          </section>
-        </div>
-
-        {product.bodyHtml && (
-          <details class="admin-card body-preview">
-            <summary>正文预览</summary>
-            <article class="markdown-body" set:html={product.bodyHtml}></article>
-          </details>
-        )}
+      <form
+        id={formId}
+        class="product-entry"
+        action={`/api/admin/channels/${encodeURIComponent(channelId)}/products/${encodeURIComponent(product.id)}/update`}
+        method="post"
+        data-admin-dirty-form
+      >
+        <ProductEditorFields
+          formId={formId}
+          channelId={channelId}
+          options={options}
+          product={product}
+          gallery={gallery.map((image) => ({
+            id: image.imageAssetId,
+            previewUrl: image.previewUrl,
+            name: image.originalName,
+            meta: `${image.width}×${image.height}`,
+          }))}
+        />
       </form>
     </>
   ) : (
-    <section class="admin-card"><div class="admin-empty">找不到该产品。</div></section>
+    <section class="admin-card"><div class="admin-collection-empty">找不到该产品。</div></section>
   )}
 </AdminLayout>
-
-<script is:inline>
-  (() => {
-    const category = document.querySelector('[data-category-name]');
-    const optionElements = Array.from(document.querySelectorAll('#product-category-options option'));
-    const filterInputs = Array.from(document.querySelectorAll('[data-category-filter]'));
-    if (!category || filterInputs.length === 0) return;
-
-    const normalize = (value) => value.trim().replace(/\s+/g, ' ').toLocaleLowerCase('en-US');
-    const categoryFilters = new Map(optionElements.map((option) => [
-      normalize(option.value),
-      new Set((option.dataset.filterIds || '').split(',').filter(Boolean)),
-    ]));
-    let previousKey = normalize(category.value);
-
-    const syncFilters = () => {
-      const key = normalize(category.value);
-      if (key === previousKey) return;
-      previousKey = key;
-      const selected = categoryFilters.get(key) || new Set();
-      for (const input of filterInputs) input.checked = selected.has(input.value);
-    };
-
-    category.addEventListener('input', syncFilters);
-    category.addEventListener('change', syncFilters);
-  })();
-</script>
-
-<style>
-  .product-entry { display: grid; gap: .7rem; }
-  .product-basic-grid {
-    display: grid;
-    grid-template-columns: repeat(24, minmax(0, 1fr));
-    gap: .55rem .65rem;
-    align-items: end;
-  }
-  .product-field-title { grid-column: 1 / 8; grid-row: 1; }
-  .product-field-category { grid-column: 8 / 12; grid-row: 1; }
-  .product-field-filters { grid-column: 12 / 18; grid-row: 1; }
-  .product-field-tags { grid-column: 18 / 25; grid-row: 1; }
-  .product-field-conversion { grid-column: 1 / 8; grid-row: 2; }
-  .product-field-cta { grid-column: 8 / 14; grid-row: 2; }
-  .product-field-status { grid-column: 14 / 18; grid-row: 2; }
-  .product-field-sort { grid-column: 18 / 21; grid-row: 2; }
-  .product-field-featured { grid-column: 21 / 25; grid-row: 2; }
-  .product-field-sort input { text-align: center; }
-  .compact-check { display: flex; min-height: 2.15rem; align-items: center; gap: .4rem; padding: 0 .55rem; border: 1px solid var(--line); border-radius: .38rem; background: #fff; white-space: nowrap; }
-  .compact-check input { width: .95rem; height: .95rem; margin: 0; }
-  .filter-choice-grid { display: flex; min-height: 2.15rem; flex-wrap: wrap; align-items: center; gap: .28rem; }
-  .filter-choice { display: inline-flex; min-height: 1.85rem; align-items: center; gap: .3rem; border: 1px solid var(--line); border-radius: .38rem; padding: .25rem .48rem; background: #fff; cursor: pointer; }
-  .filter-choice:has(input:checked) { border-color: #2563eb; background: #eff6ff; color: #1d4ed8; }
-  .filter-choice.is-disabled { opacity: .55; }
-  .filter-choice input { width: .9rem; height: .9rem; margin: 0; }
-  .empty-control-link { display: flex; min-height: 2.15rem; align-items: center; border: 1px dashed var(--line); border-radius: .38rem; padding: 0 .55rem; color: #2563eb; }
-  .product-workspace { display: grid; grid-template-columns: minmax(21rem, .8fr) minmax(0, 1.2fr); gap: .7rem; align-items: start; }
-  .product-workspace .admin-card { margin-top: 0; }
-  .product-body-card textarea { font-family: ui-monospace, SFMono-Regular, Consolas, monospace; line-height: 1.55; }
-  .admin-field small { color: var(--muted); font-size: .72rem; }
-  .body-preview summary { padding: .55rem .65rem; cursor: pointer; }
-  .body-preview article { padding: .75rem; border-top: 1px solid var(--line); line-height: 1.65; }
-  @media (max-width: 1100px) {
-    .product-basic-grid { grid-template-columns: repeat(12, minmax(0, 1fr)); }
-    .product-field-title { grid-column: 1 / 7; grid-row: 1; }
-    .product-field-category { grid-column: 7 / 13; grid-row: 1; }
-    .product-field-filters { grid-column: 1 / 7; grid-row: 2; }
-    .product-field-tags { grid-column: 7 / 13; grid-row: 2; }
-    .product-field-conversion { grid-column: 1 / 7; grid-row: 3; }
-    .product-field-cta { grid-column: 7 / 13; grid-row: 3; }
-    .product-field-status { grid-column: 1 / 5; grid-row: 4; }
-    .product-field-sort { grid-column: 5 / 9; grid-row: 4; }
-    .product-field-featured { grid-column: 9 / 13; grid-row: 4; }
-  }
-  @media (max-width: 900px) { .product-workspace { grid-template-columns: 1fr; } }
-  @media (max-width: 639px) {
-    .product-basic-grid { grid-template-columns: 1fr; }
-    .product-basic-grid > * { grid-column: 1; grid-row: auto; }
-  }
-</style>
