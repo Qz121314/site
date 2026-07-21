@@ -1,0 +1,135 @@
+---
+import ProductGalleryUpload from "@/components/admin/ProductGalleryUpload.astro";
+import type { AdminProduct, AdminProductOptions } from "@/lib/db/products";
+
+type GalleryValue = {
+  id: string;
+  previewUrl?: string;
+  name?: string;
+  meta?: string;
+};
+
+interface Props {
+  formId: string;
+  channelId: string;
+  options: AdminProductOptions;
+  product?: AdminProduct | null;
+  gallery?: GalleryValue[];
+}
+
+const { formId, channelId, options, product = null, gallery = [] } = Astro.props;
+const selectedCategory = product?.categoryId
+  ? options.categories.find((category) => category.id === product.categoryId) ?? null
+  : null;
+const selectedFilterIds = new Set(selectedCategory?.filterIds ?? []);
+const prefix = product ? `product-${product.id}` : "product-new";
+---
+
+<div class="product-content-editor" data-product-editor>
+  <section class="admin-card">
+    <div class="admin-section-bar">
+      <h2>{product ? `编辑 · ${product.title}` : "录入新产品"}</h2>
+      {product && <span class="admin-section-note">/{product.slug}</span>}
+    </div>
+
+    <div class="admin-card-body product-content-fields">
+      <div class="admin-field product-content-title">
+        <label for={`${prefix}-title`}>产品名称</label>
+        <input id={`${prefix}-title`} name="title" maxlength="160" required autocomplete="off" value={product?.title ?? ""} autofocus />
+      </div>
+
+      <input type="hidden" name="categoryId" value="" />
+      <div class="admin-field">
+        <label for={`${prefix}-category`}>产品分类</label>
+        <input
+          id={`${prefix}-category`}
+          name="categoryName"
+          maxlength="80"
+          list={`${prefix}-category-options`}
+          autocomplete="off"
+          value={product?.categoryName ?? ""}
+          data-category-name
+        />
+        <datalist id={`${prefix}-category-options`}>
+          {options.categories.map((category) => (
+            <option value={category.name} data-filter-ids={category.filterIds.join(",")}></option>
+          ))}
+        </datalist>
+      </div>
+
+      <div class="admin-field">
+        <label for={`${prefix}-conversion`}>转化组</label>
+        <select id={`${prefix}-conversion`} name="conversionGroupId">
+          <option value="">暂不绑定</option>
+          {options.conversionGroups.map((group) => (
+            <option value={group.id} selected={product?.conversionGroupId === group.id}>{group.name}</option>
+          ))}
+        </select>
+      </div>
+
+      <div class="admin-field product-content-filters">
+        <label>分类筛选</label>
+        {options.filters.length > 0 ? (
+          <div class="filter-choice-grid" data-category-filter-list>
+            {options.filters.map((filter) => {
+              const enabled = filter.status === "enabled";
+              return (
+                <label class:list={["filter-choice", !enabled && "is-disabled"]} title={enabled ? undefined : "该筛选已停用"}>
+                  <input
+                    type="checkbox"
+                    name="filterIds"
+                    value={filter.id}
+                    checked={selectedFilterIds.has(filter.id)}
+                    disabled={!enabled}
+                    data-category-filter
+                  />
+                  <span>{filter.name}{!enabled ? "（已停用）" : ""}</span>
+                </label>
+              );
+            })}
+          </div>
+        ) : (
+          <a class="empty-control-link" href={`/admin/channels/${encodeURIComponent(channelId)}/filters`}>设置分类筛选</a>
+        )}
+      </div>
+
+      <div class="admin-field">
+        <label for={`${prefix}-tags`}>产品标签</label>
+        <input
+          id={`${prefix}-tags`}
+          name="tags"
+          maxlength="1000"
+          value={product?.tags.join(", ") ?? ""}
+          placeholder="tag-one, tag-two"
+        />
+      </div>
+
+      <div class="admin-field">
+        <label for={`${prefix}-cta`}>CTA 文案</label>
+        <input id={`${prefix}-cta`} name="ctaLabel" maxlength="80" required value={product?.ctaLabel ?? "View Details"} />
+      </div>
+    </div>
+  </section>
+
+  <section class="admin-card">
+    <div class="admin-section-bar"><h2>产品图片</h2></div>
+    <div class="admin-card-body"><ProductGalleryUpload form={formId} values={gallery} /></div>
+  </section>
+
+  <section class="admin-card">
+    <div class="admin-section-bar"><h2>产品正文</h2></div>
+    <div class="admin-card-body">
+      <div class="admin-field">
+        <label for={`${prefix}-body`}>正文内容（支持 Markdown）</label>
+        <textarea id={`${prefix}-body`} name="bodySource" maxlength="30000" rows="4" spellcheck="true" data-auto-grow>{product?.bodySource ?? ""}</textarea>
+      </div>
+    </div>
+  </section>
+
+  {product?.bodyHtml && (
+    <details class="admin-card product-body-preview">
+      <summary>正文预览</summary>
+      <article class="markdown-body" set:html={product.bodyHtml}></article>
+    </details>
+  )}
+</div>
