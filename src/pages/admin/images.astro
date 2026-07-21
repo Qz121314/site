@@ -10,7 +10,7 @@ import { buildPublicImageUrl } from "@/lib/images/url";
 
 export const prerender = false;
 
-const query = (Astro.url.searchParams.get("q") ?? "").trim().slice(0, 180);
+const query = (Astro.url.searchParams.get("q") ?? "").trim().slice(0, 24);
 const rawFilter = Astro.url.searchParams.get("filter") ?? "all";
 const filter: AdminImageFilter = ADMIN_IMAGE_FILTERS.includes(rawFilter as AdminImageFilter)
   ? (rawFilter as AdminImageFilter)
@@ -32,7 +32,7 @@ const savedMessage = saved === "deleted"
     : saved === "clean"
       ? `未引用图片清理完成，共删除 ${Number.isFinite(count) ? count : 0} 张。`
       : saved === "scanned"
-        ? `R2 扫描完成，导入 ${Number.isFinite(imported) ? imported : 0} 张，跳过 ${Number.isFinite(skipped) ? skipped : 0} 个缺少受控元数据的对象${partial ? "；本次达到 10,000 个对象上限，请再次扫描" : ""}。`
+        ? `R2 扫描完成，导入 ${Number.isFinite(imported) ? imported : 0} 张，跳过 ${Number.isFinite(skipped) ? skipped : 0} 个缺少受控元数据的对象${partial ? "；本次已达到安全处理上限，请再次扫描" : ""}。`
         : "";
 
 const errorMessages: Record<string, string> = {
@@ -114,7 +114,7 @@ const unusedCount = library.images.filter((image) => image.referenceCount === 0)
     </div>
 
     <form class="image-search" method="get" action="/admin/images">
-      <input name="q" value={query} maxlength="180" autocomplete="off" placeholder="搜索原文件名或 R2 Object Key" />
+      <input name="q" value={query} maxlength="24" autocomplete="off" placeholder="搜索原文件名或 R2 Object Key" />
       <select name="filter" aria-label="引用状态">
         <option value="all" selected={filter === "all"}>全部图片</option>
         <option value="used" selected={filter === "used"}>已引用</option>
