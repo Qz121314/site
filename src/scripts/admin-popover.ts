@@ -95,6 +95,12 @@ function initializePopover(root: ParentNode = document): void {
   });
 }
 
+function pruneDetachedPopovers(): void {
+  for (const panel of activePopovers) {
+    if (!panel.isConnected) activePopovers.delete(panel);
+  }
+}
+
 function closeFallbackPopoversOutside(target: EventTarget | null): void {
   if (!(target instanceof Node)) return;
   document.querySelectorAll<HTMLElement>("[data-admin-popover]").forEach((container) => {
@@ -107,7 +113,10 @@ function closeFallbackPopoversOutside(target: EventTarget | null): void {
 }
 
 initializePopover();
-document.addEventListener("admin:navigation", () => initializePopover());
+document.addEventListener("admin:navigation", () => {
+  pruneDetachedPopovers();
+  initializePopover();
+});
 document.addEventListener("pointerdown", (event) => closeFallbackPopoversOutside(event.target));
 document.addEventListener("keydown", (event) => {
   if (event.key !== "Escape") return;
@@ -118,6 +127,7 @@ document.addEventListener("keydown", (event) => {
   });
 });
 window.addEventListener("resize", () => {
+  pruneDetachedPopovers();
   for (const panel of activePopovers) {
     const container = panel.closest<HTMLElement>("[data-admin-popover]");
     const trigger = container?.querySelector<HTMLElement>("[data-admin-popover-trigger]");
@@ -125,6 +135,7 @@ window.addEventListener("resize", () => {
   }
 });
 window.addEventListener("scroll", () => {
+  pruneDetachedPopovers();
   for (const panel of activePopovers) {
     const container = panel.closest<HTMLElement>("[data-admin-popover]");
     const trigger = container?.querySelector<HTMLElement>("[data-admin-popover-trigger]");
