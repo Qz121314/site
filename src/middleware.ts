@@ -4,6 +4,15 @@ import { readCookie, SESSION_COOKIE, verifySessionToken } from "@/lib/auth/sessi
 
 const PUBLIC_ADMIN_PATHS = new Set(["/admin/login", "/api/admin/login"]);
 const PUBLIC_EDGE_CACHE_SECONDS = 30;
+const PUBLIC_READINESS_SUCCESS_TTL_MS = 30_000;
+const PUBLIC_READINESS_FAILURE_TTL_MS = 5_000;
+
+type PublicReadinessCache = {
+  ready: boolean;
+  expiresAt: number;
+};
+
+let publicReadinessCache: PublicReadinessCache | null = null;
 
 function isAdminPath(pathname: string): boolean {
   return pathname === "/admin" || pathname.startsWith("/admin/") || pathname.startsWith("/api/admin/");
@@ -13,6 +22,101 @@ function isAdminImageContent(request: Request, pathname: string): boolean {
   return request.method === "GET"
     && pathname.startsWith("/api/admin/images/")
     && pathname.endsWith("/content");
+}
+
+function requiresPublicData(request: Request, pathname: string): boolean {
+  if (request.method !== "GET" && request.method !== "HEAD") return false;
+  if (isAdminPath(pathname) || pathname === "/api/health" || pathname === "/robots.txt") return false;
+  return true;
+}
+
+async function publicDataReady(): Promise<boolean> {
+  const now = Date.now();
+  if (publicReadinessCache && publicReadinessCache.expiresAt > now) {
+    return publicReadinessCache.ready;
+  }
+
+  let ready = false;
+  try {
+    const row = await env.DB.prepare(
+      `SELECT
+         s.id,
+         s.site_name,
+         s.site_description,
+         s.logo_asset_id,
+         s.favicon_asset_id,
+         s.default_channel_id,
+         s.r2_public_base_url,
+         s.ga4_id,
+         s.meta_pixel_id,
+         s.adult_gate_enabled,
+         s.all_filter_label,
+         s.privacy_content,
+         s.disclaimer_content,
+         (SELECT COUNT(*) FROM channels) AS channel_count,
+         (SELECT COUNT(*) FROM image_assets) AS image_count,
+         (SELECT COUNT(*) FROM categories) AS category_count,
+         (SELECT COUNT(*) FROM category_filters) AS filter_count,
+         (SELECT COUNT(*) FROM category_filter_relations) AS filter_relation_count,
+         (SELECT COUNT(*) FROM products) AS product_count,
+         (SELECT COUNT(*) FROM product_images) AS product_image_count,
+         (SELECT COUNT(*) FROM ad_pools) AS ad_pool_count,
+         (SELECT COUNT(*) FROM advertisements) AS advertisement_count,
+         (SELECT COUNT(*) FROM conversion_groups) AS conversion_group_count,
+         (SELECT COUNT(*) FROM conversion_resources) AS conversion_resource_count
+       FROM site_settings s
+       WHERE s.id = 1`,
+    ).first<{ id: number }>();
+    ready = row?.id === 1;
+  } catch (error) {
+    console.error(JSON.stringify({ event: "public_readiness_check_failed", error: String(error) }));
+  }
+
+  publicReadinessCache = {
+    ready,
+    expiresAt: now + (ready ? PUBLIC_READINESS_SUCCESS_TTL_MS : PUBLIC_READINESS_FAILURE_TTL_MS),
+  };
+  return ready;
+}
+
+function serviceUnavailableResponse(request: Request, pathname: string): Response {
+  const wantsJson = pathname.startsWith("/api/")
+    || pathname.startsWith("/go/")
+    || (request.headers.get("Accept") ?? "").includes("application/json");
+  const headers = {
+    "Cache-Control": "no-store",
+    "Retry-After": "30",
+    "X-Robots-Tag": "noindex, nofollow",
+  };
+
+  if (wantsJson) {
+    return new Response(request.method === "HEAD" ? null : JSON.stringify({
+      error: "SERVICE_UNAVAILABLE",
+      message: "Public catalog data is temporarily unavailable.",
+    }), {
+      status: 503,
+      headers: { ...headers, "Content-Type": "application/json; charset=utf-8" },
+    });
+  }
+
+  const body = `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>Temporarily unavailable</title>
+  <style>
+    :root{color-scheme:dark}*{box-sizing:border-box}body{min-height:100vh;margin:0;display:grid;place-items:center;padding:1.5rem;font-family:system-ui,sans-serif;background:#080a0d;color:#f4f1ea}.card{width:min(100%,34rem);padding:2rem;border:1px solid #272b31;border-radius:1rem;background:#111419;text-align:center}h1{margin:0 0 .75rem;font-size:clamp(1.8rem,6vw,2.8rem)}p{margin:0;color:#aeb4bd;line-height:1.6}
+  </style>
+</head>
+<body><main class="card"><h1>Temporarily unavailable</h1><p>The catalog data service is unavailable. Please try again shortly.</p></main></body>
+</html>`;
+
+  return new Response(request.method === "HEAD" ? null : body, {
+    status: 503,
+    headers: { ...headers, "Content-Type": "text/html; charset=utf-8" },
+  });
 }
 
 function isPublicEdgeCacheable(request: Request, pathname: string, response: Response): boolean {
@@ -71,6 +175,10 @@ export const onRequest = defineMiddleware(async (context, next) => {
       }
       return context.redirect("/admin/login", 302);
     }
+  }
+
+  if (requiresPublicData(context.request, pathname) && !(await publicDataReady())) {
+    return addSecurityHeaders(serviceUnavailableResponse(context.request, pathname), context.request, pathname);
   }
 
   return addSecurityHeaders(await next(), context.request, pathname);
