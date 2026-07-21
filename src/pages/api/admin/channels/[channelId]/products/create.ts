@@ -58,7 +58,7 @@ export const POST: APIRoute = async ({ request, params }) => {
 
     const category = await resolveProductCategory({
       channelId,
-      categoryId: value.categoryId,
+      categoryId: null,
       categoryName: extras.categoryName,
       productStatus: "draft",
       coverAssetId: firstImageAssetId,
