@@ -137,6 +137,7 @@ function serviceUnavailableResponse(request: Request, pathname: string): Respons
 
 function isPublicEdgeCacheable(request: Request, pathname: string, response: Response): boolean {
   if (request.method !== "GET" && request.method !== "HEAD") return false;
+  if (readCookie(request.headers.get("Cookie"), SESSION_COOKIE)) return false;
   if (isAdminPath(pathname) || pathname.startsWith("/api/") || pathname.startsWith("/go/")) return false;
 
   const cacheControl = response.headers.get("Cache-Control") ?? "";
@@ -164,7 +165,7 @@ function addSecurityHeaders(response: Response, request: Request, pathname: stri
     headers.set("Cache-Control", "public, max-age=0, must-revalidate");
     headers.set(
       "Cloudflare-CDN-Cache-Control",
-      `public, max-age=${PUBLIC_EDGE_CACHE_SECONDS}, stale-while-revalidate=${PUBLIC_EDGE_CACHE_SECONDS * 2}`,
+      `public, max-age=${PUBLIC_EDGE_CACHE_SECONDS}, must-revalidate`,
     );
   }
 
