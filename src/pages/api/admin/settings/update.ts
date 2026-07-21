@@ -54,7 +54,6 @@ export const POST: APIRoute = async ({ request }) => {
   const r2PublicBaseUrl = normalizeR2BaseUrl(readText(form, "r2PublicBaseUrl"));
   const ga4Id = readText(form, "ga4Id").toUpperCase();
   const metaPixelId = readText(form, "metaPixelId");
-  const allFilterLabel = readText(form, "allFilterLabel");
   const privacyContent = readText(form, "privacyContent");
   const disclaimerContent = readText(form, "disclaimerContent");
   const adultGateEnabled = form.get("adultGateEnabled") === "1" ? 1 : 0;
@@ -65,7 +64,6 @@ export const POST: APIRoute = async ({ request }) => {
   if (r2PublicBaseUrl === null) return redirect(request, "error=r2-url");
   if (ga4Id && !/^G-[A-Z0-9]{4,20}$/u.test(ga4Id)) return redirect(request, "error=ga4");
   if (metaPixelId && !/^\d{5,30}$/u.test(metaPixelId)) return redirect(request, "error=meta");
-  if (!allFilterLabel || allFilterLabel.length > 24) return redirect(request, "error=all-label");
   if (privacyContent.length > 20_000) return redirect(request, "error=privacy");
   if (disclaimerContent.length > 20_000) return redirect(request, "error=disclaimer");
 
@@ -94,9 +92,8 @@ export const POST: APIRoute = async ({ request }) => {
              ga4_id = ?7,
              meta_pixel_id = ?8,
              adult_gate_enabled = ?9,
-             all_filter_label = ?10,
-             privacy_content = ?11,
-             disclaimer_content = ?12,
+             privacy_content = ?10,
+             disclaimer_content = ?11,
              updated_at = CURRENT_TIMESTAMP
          WHERE id = 1`,
       ).bind(
@@ -109,7 +106,6 @@ export const POST: APIRoute = async ({ request }) => {
         ga4Id,
         metaPixelId,
         adultGateEnabled,
-        allFilterLabel,
         privacyContent,
         disclaimerContent,
       ),
