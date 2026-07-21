@@ -27,13 +27,11 @@ export const POST: APIRoute = async ({ request, params }) => {
 
     const result = await env.DB.prepare(
       `UPDATE products
-       SET featured = ?1,
-           sort_order = ?2,
-           status = ?3,
+       SET sort_order = ?1,
+           status = ?2,
            updated_at = CURRENT_TIMESTAMP
-       WHERE id = ?4 AND channel_id = ?5`,
+       WHERE id = ?3 AND channel_id = ?4`,
     ).bind(
-      parsed.value.featured ? 1 : 0,
       parsed.value.sortOrder,
       parsed.value.status,
       productId,
