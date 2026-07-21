@@ -24,10 +24,11 @@ const selectedCategory = product?.categoryId
 const selectedFilterIds = new Set(selectedCategory?.filterIds ?? []);
 const enabledFilters = options.filters.filter((filter) => filter.status === "enabled");
 const selectedEnabledFilters = enabledFilters.filter((filter) => selectedFilterIds.has(filter.id));
+const selectedFilterName = selectedEnabledFilters.at(0)?.name;
 const filterSummary = selectedEnabledFilters.length === 0
   ? "未选择"
   : selectedEnabledFilters.length === 1
-    ? selectedEnabledFilters[0].name
+    ? selectedFilterName ?? "已选 1 项"
     : `已选 ${selectedEnabledFilters.length} 项`;
 const prefix = product ? `product-${product.id}` : "product-new";
 ---
