@@ -21,7 +21,7 @@ function json(data: unknown, status = 200): Response {
       "Cache-Control": status === 200 ? "public, max-age=0, must-revalidate" : "no-store",
       ...(status === 200
         ? {
-            "Cloudflare-CDN-Cache-Control": `public, max-age=${PUBLIC_EDGE_CACHE_SECONDS}, stale-while-revalidate=${PUBLIC_EDGE_CACHE_SECONDS * 2}`,
+            "Cloudflare-CDN-Cache-Control": `public, max-age=${PUBLIC_EDGE_CACHE_SECONDS}, must-revalidate`,
           }
         : {}),
       "X-Content-Type-Options": "nosniff",
