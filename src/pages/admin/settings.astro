@@ -39,7 +39,7 @@ const errorMessages: Record<string, string> = {
   {error && errorMessages[error] && <p class="error" role="alert">{errorMessages[error]}</p>}
   {!settings.databaseReady && <p class="error" role="alert">D1 数据暂时不可用，当前显示的是默认值。</p>}
 
-  <form id={formId} class="admin-stack" action="/api/admin/settings/update" method="post">
+  <form id={formId} class="admin-stack settings-form" action="/api/admin/settings/update" method="post">
     <section class="admin-card">
       <div class="admin-section-bar">
         <h2>基础设置</h2>
@@ -169,9 +169,10 @@ const errorMessages: Record<string, string> = {
 </AdminLayout>
 
 <style>
+  .settings-form { width: min(100%, 64rem); margin: 0 auto; }
   .settings-checks { display: flex; min-height: 2.15rem; align-items: center; gap: .65rem; white-space: nowrap; }
-  .legal-settings textarea { min-height: 6.5rem; line-height: 1.5; }
-  .settings-asset-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .7rem; }
+  .legal-settings textarea { min-height: 6rem; line-height: 1.5; }
+  .settings-asset-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: .55rem; }
   @media (max-width: 767px) { .settings-asset-grid { grid-template-columns: 1fr; } }
   @media (max-width: 959px) { .settings-checks { flex-wrap: wrap; gap: .25rem .65rem; } }
 </style>
