@@ -1,0 +1,26 @@
+---
+import type { PublicSiteShell } from "@/lib/db/public";
+
+interface Props {
+  channels: PublicSiteShell["channels"];
+  activeChannel?: string | null;
+}
+
+const { channels, activeChannel = null } = Astro.props;
+---
+
+{channels.length > 0 && (
+  <nav class="public-bottom-nav" aria-label="Channels">
+    <div class="public-bottom-nav-track">
+      {channels.map((channel) => (
+        <a
+          class="public-nav-item"
+          href={`/${encodeURIComponent(channel.slug)}`}
+          aria-current={activeChannel === channel.slug ? "page" : undefined}
+        >
+          <span class="public-nav-label">{channel.name}</span>
+        </a>
+      ))}
+    </div>
+  </nav>
+)}
