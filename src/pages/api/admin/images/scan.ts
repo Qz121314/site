@@ -9,10 +9,11 @@ import {
 
 export const prerender = false;
 
-const MAX_SCAN_OBJECTS = 2_000;
-const MAX_IMPORTS_PER_REQUEST = 40;
-const R2_LIST_PAGE_SIZE = 500;
+const MAX_SCAN_OBJECTS = 1_000;
+const TARGET_IMPORTS_PER_REQUEST = 100;
+const R2_LIST_PAGE_SIZE = 50;
 const D1_IMPORT_ROWS_PER_QUERY = 14;
+const MAX_CURSOR_LENGTH = 2_048;
 
 type ObjectKeyRow = { object_key: string };
 
@@ -35,6 +36,13 @@ function redirect(request: Request, params: Record<string, string>): Response {
 function parseDimension(value: string | undefined): number | null {
   const number = Number(value);
   return Number.isSafeInteger(number) && number > 0 && number <= MAX_IMAGE_DIMENSION ? number : null;
+}
+
+function parseCursor(form: FormData): string | undefined {
+  const value = form.get("cursor");
+  if (typeof value !== "string") return undefined;
+  const cursor = value.trim();
+  return cursor && cursor.length <= MAX_CURSOR_LENGTH ? cursor : undefined;
 }
 
 function chunk<T>(items: T[], size: number): T[][] {
@@ -68,14 +76,15 @@ function importStatement(images: ImportCandidate[]) {
 export const POST: APIRoute = async ({ request }) => {
   if (!isSameOriginPost(request)) return new Response("Forbidden", { status: 403 });
 
+  const form = await request.formData();
+  let cursor = parseCursor(form);
+
   try {
     const existingResult = await env.DB.prepare("SELECT object_key FROM image_assets").all<ObjectKeyRow>();
     const knownKeys = new Set(existingResult.results.map((row) => row.object_key));
     const candidates: ImportCandidate[] = [];
     let skipped = 0;
     let scanned = 0;
-    let cursor: string | undefined;
-    let partial = false;
 
     do {
       const result = await env.MEDIA_BUCKET.list({
@@ -110,23 +119,11 @@ export const POST: APIRoute = async ({ request }) => {
           sizeBytes: object.size,
         });
         knownKeys.add(object.key);
-
-        if (candidates.length >= MAX_IMPORTS_PER_REQUEST) {
-          partial = result.truncated || scanned < MAX_SCAN_OBJECTS;
-          break;
-        }
       }
 
-      if (candidates.length >= MAX_IMPORTS_PER_REQUEST) break;
-      if (!result.truncated) break;
-      if (scanned >= MAX_SCAN_OBJECTS || !result.cursor) {
-        partial = true;
-        break;
-      }
-      cursor = result.cursor;
+      cursor = result.truncated ? result.cursor : undefined;
+      if (!cursor || candidates.length >= TARGET_IMPORTS_PER_REQUEST) break;
     } while (scanned < MAX_SCAN_OBJECTS);
-
-    if (scanned >= MAX_SCAN_OBJECTS) partial = true;
 
     const groups = chunk(candidates, D1_IMPORT_ROWS_PER_QUERY);
     if (groups.length > 0) {
@@ -137,7 +134,7 @@ export const POST: APIRoute = async ({ request }) => {
       saved: "scanned",
       imported: String(candidates.length),
       skipped: String(skipped),
-      ...(partial ? { partial: "1" } : {}),
+      ...(cursor ? { partial: "1", cursor } : {}),
     });
   } catch (error) {
     console.error(JSON.stringify({ event: "admin_image_scan_failed", error: String(error) }));
