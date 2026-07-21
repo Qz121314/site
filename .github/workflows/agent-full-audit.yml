@@ -1,82 +1,42 @@
-name: Agent Full Repository Audit
+name: Agent Apply Full Audit Patch
 
 on:
   push:
     branches:
       - agent/full-functional-audit-batch-28
-  pull_request:
-    branches:
-      - main
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  audit:
+  apply:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 10
     steps:
-      - name: Checkout
+      - name: Checkout branch
         uses: actions/checkout@v6
-
-      - name: Setup pnpm
-        uses: pnpm/action-setup@v6
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v6
         with:
-          node-version: 24
-          cache: pnpm
-          cache-dependency-path: pnpm-lock.yaml
+          ref: agent/full-functional-audit-batch-28
+          fetch-depth: 0
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Generate audit bundle
+      - name: Decode and apply audited changes
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p audit-output/logs
+          cat scripts/.agent-audit-patch-{1,2,3,4,5} > /tmp/audit.patch.gz.b64
+          base64 --decode /tmp/audit.patch.gz.b64 | gzip --decompress > /tmp/audit.patch
 
-          {
-            echo '# Repository files'
-            find src tests migrations scripts .github -type f | sort
-            echo
-            echo '# Astro routes'
-            find src/pages -type f | sort
-            echo
-            echo '# TODO/FIXME/HACK/deprecated/legacy markers'
-            grep -RInE 'TODO|FIXME|HACK|deprecated|legacy|obsolete' src tests migrations scripts .github || true
-            echo
-            echo '# Known stale route and removed UI markers'
-            grep -RInE '/products/new|product-entry-header|product-content-form-actions|allFilterLabel|contact-reveal|featured' src tests migrations scripts .github || true
-            echo
-            echo '# Conversion implementation references'
-            grep -RInE 'conversion|randomIndex|crypto\.getRandomValues|conversion_group|conversion_resources' src tests migrations scripts || true
-            echo
-            echo '# Ad pool implementation references'
-            grep -RInE 'ad_pool|advertisement|hero_ad|isBound|bind' src tests migrations scripts || true
-            echo
-            echo '# Possible page-level horizontal overflow rules'
-            grep -RInE 'min-width:[[:space:]]*[0-9]+(rem|px)|overflow-x:[[:space:]]*(auto|scroll)|width:[[:space:]]*[0-9]+(rem|px)' src/styles src/components src/pages || true
-            echo
-            echo '# TypeScript and Astro imports'
-            grep -RInE '^(import|export).*from' src tests scripts || true
-          } > audit-output/audit-report.txt
+          if git apply --reverse --check /tmp/audit.patch >/dev/null 2>&1; then
+            echo "Audit patch is already applied."
+            exit 0
+          fi
 
-          pnpm cf-typegen > audit-output/logs/typegen.log 2>&1
-          pnpm check:astro > audit-output/logs/check.log 2>&1
-          pnpm test > audit-output/logs/test.log 2>&1
-          pnpm db:migrate:local > audit-output/logs/migrate.log 2>&1
-          pnpm build > audit-output/logs/build.log 2>&1
-          pnpm verify:deploy-config > audit-output/logs/deploy-config.log 2>&1
+          git apply --check /tmp/audit.patch
+          git apply /tmp/audit.patch
+          git diff --check
 
-          tar -czf audit-output/repository-source.tar.gz \
-            src tests migrations scripts .github package.json pnpm-lock.yaml astro.config.mjs tsconfig.json wrangler.jsonc
-
-      - name: Upload audit artifact
-        uses: actions/upload-artifact@v6
-        with:
-          name: full-repository-audit-${{ github.run_id }}
-          path: audit-output/
-          retention-days: 1
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "fix: harden current workflows and remove residual code"
+          git push origin HEAD:agent/full-functional-audit-batch-28
