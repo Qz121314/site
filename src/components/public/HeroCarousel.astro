@@ -165,3 +165,36 @@ const carouselId = `hero-${crypto.randomUUID()}`;
     document.querySelectorAll('[data-hero-carousel]').forEach(initialize);
   })();
 </script>
+
+<style>
+  .hero-dots {
+    bottom: 0;
+    gap: 0;
+  }
+
+  .hero-dot,
+  .hero-dot[aria-current="true"] {
+    display: grid;
+    width: 2.75rem;
+    height: 2.75rem;
+    place-items: center;
+    border: 0;
+    padding: 0;
+    background: transparent;
+    touch-action: manipulation;
+  }
+
+  .hero-dot::before {
+    width: .36rem;
+    height: .36rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, .5);
+    content: "";
+    transition: width .16s ease, background .16s ease;
+  }
+
+  .hero-dot[aria-current="true"]::before {
+    width: 1.05rem;
+    background: var(--public-gold-bright);
+  }
+</style>
