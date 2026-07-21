@@ -58,7 +58,7 @@ jobs:
         shell: bash
         run: |
           set -o pipefail
-          pnpm check 2>&1 | tee ci-logs/check.log
+          pnpm check:astro 2>&1 | tee ci-logs/check.log
 
       - name: 自动化测试
         shell: bash
