@@ -41,12 +41,6 @@ const metaPixelId = site.metaPixelId;
     <meta name="robots" content={robots} />
     {canonical && <link rel="canonical" href={canonical} />}
     {site.faviconUrl && <link rel="icon" href={site.faviconUrl} />}
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap"
-    />
     <meta property="og:type" content="website" />
     <meta property="og:title" content={pageTitle} />
     <meta property="og:description" content={description} />
@@ -173,10 +167,9 @@ const metaPixelId = site.metaPixelId;
   .adult-confirmed .adult-gate { display: none; }
 
   .public-body {
-    --public-font-display: "Cormorant Garamond", "Iowan Old Style", "Palatino Linotype", serif;
-    --public-font-ui: "Manrope", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --public-font-display: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
+    --public-font-ui: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
     font-family: var(--public-font-ui);
-    font-optical-sizing: auto;
     font-synthesis: none;
     letter-spacing: -.012em;
     text-rendering: optimizeLegibility;
