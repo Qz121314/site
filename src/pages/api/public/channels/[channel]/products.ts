@@ -6,11 +6,11 @@ import {
   loadPublicSiteShell,
 } from "@/lib/db/public";
 import { loadPublicUncategorizedProducts } from "@/lib/db/public-availability";
+import { readPublicPage } from "@/lib/public/pagination";
 import { normalizePublicSearchQuery } from "@/lib/search/query";
 
 export const prerender = false;
 
-const MAX_PUBLIC_PRODUCT_PAGE = 500;
 const PUBLIC_EDGE_CACHE_SECONDS = 30;
 
 function json(data: unknown, status = 200): Response {
@@ -31,9 +31,8 @@ function json(data: unknown, status = 200): Response {
 
 export const GET: APIRoute = async ({ params, url }) => {
   const channelSlug = params.channel ?? "";
-  const pageValue = Number(url.searchParams.get("page") ?? "1");
-  const page = Number.isSafeInteger(pageValue) && pageValue > 0 ? pageValue : 1;
-  if (page > MAX_PUBLIC_PRODUCT_PAGE) return json({ error: "PAGE_OUT_OF_RANGE" }, 400);
+  const pageInput = readPublicPage(url.searchParams.get("page"));
+  if (!pageInput.valid) return json({ error: "PAGE_OUT_OF_RANGE" }, 400);
 
   const categorySlug = (url.searchParams.get("category") ?? "").trim().slice(0, 96);
   const query = normalizePublicSearchQuery(url.searchParams.get("q") ?? "");
@@ -53,12 +52,12 @@ export const GET: APIRoute = async ({ params, url }) => {
     ? await loadPublicUncategorizedProducts({
         channelId: channel.id,
         baseUrl: site.r2PublicBaseUrl,
-        page,
+        page: pageInput.page,
       })
     : await loadPublicProducts({
         channelId: channel.id,
         baseUrl: site.r2PublicBaseUrl,
-        page,
+        page: pageInput.page,
         categoryId: category?.id ?? null,
         query,
       });
