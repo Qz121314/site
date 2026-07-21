@@ -64,7 +64,7 @@ const initialImages: ExistingUploadImage[] = multiple
       multiple={multiple}
       data-upload-input
     />
-    <label class="button secondary direct-upload-button" for={id}>
+    <label class="button secondary direct-upload-button" for={id} data-upload-button>
       {multiple ? "选择并上传图片" : "选择并上传"}
     </label>
     <span class="direct-upload-limit">JPEG / PNG / WebP · 自动压缩</span>
@@ -80,14 +80,22 @@ const initialImages: ExistingUploadImage[] = multiple
         data-upload-hidden
       />
     )}
-    {multiple && initialImages.map((image) => (
-      <input type="hidden" name={name} value={image.id} form={form} data-upload-hidden data-image-id={image.id} />
+    {multiple && initialImages.map((image, index) => (
+      <input
+        type="hidden"
+        name={name}
+        value={image.id}
+        form={form}
+        data-upload-hidden
+        data-image-id={image.id}
+        data-upload-order={index}
+      />
     ))}
   </div>
 
   <div class="direct-upload-preview" data-upload-preview hidden={initialImages.length === 0}>
-    {initialImages.map((image) => (
-      <article class="direct-upload-item" data-upload-item data-image-id={image.id}>
+    {initialImages.map((image, index) => (
+      <article class="direct-upload-item" data-upload-item data-image-id={image.id} data-upload-order={index}>
         <img
           src={image.previewUrl ?? `/api/admin/images/${encodeURIComponent(image.id)}/content`}
           alt={image.name ?? "已上传图片"}
@@ -109,6 +117,7 @@ const initialImages: ExistingUploadImage[] = multiple
   (() => {
     const MAX_DIMENSION = 1600;
     const WEBP_QUALITY = 0.82;
+    const UPLOAD_CONCURRENCY = 3;
 
     const decodeImage = async (file) => {
       if ("createImageBitmap" in window) {
@@ -161,11 +170,60 @@ const initialImages: ExistingUploadImage[] = multiple
       }
     };
 
+    const uploadImage = async (file) => {
+      const compressed = await compressImage(file);
+      const uploadFile = new File(
+        [compressed.blob],
+        `${file.name.replace(/\.[^.]+$/u, "") || "image"}.webp`,
+        { type: "image/webp" },
+      );
+      const body = new FormData();
+      body.append("file", uploadFile);
+      body.append("originalName", file.name);
+
+      const response = await fetch("/api/admin/images/upload", {
+        method: "POST",
+        headers: { Accept: "application/json" },
+        body,
+      });
+      const result = await response.json().catch(() => null);
+      if (!response.ok || !result?.ok || !result.image?.id) {
+        throw new Error(result?.error || `HTTP ${response.status}`);
+      }
+
+      return {
+        image: result.image,
+        localUrl: URL.createObjectURL(compressed.blob),
+        dimensions: compressed,
+      };
+    };
+
+    const runWithConcurrency = async (items, limit, worker) => {
+      let nextIndex = 0;
+      const workerCount = Math.min(limit, items.length);
+      await Promise.all(Array.from({ length: workerCount }, async () => {
+        while (nextIndex < items.length) {
+          const index = nextIndex;
+          nextIndex += 1;
+          await worker(items[index], index);
+        }
+      }));
+    };
+
+    const insertByOrder = (container, element, selector, order) => {
+      const before = Array.from(container.querySelectorAll(selector)).find((candidate) => {
+        const candidateOrder = Number(candidate.dataset.uploadOrder ?? Number.MAX_SAFE_INTEGER);
+        return candidateOrder > order;
+      });
+      container.insertBefore(element, before ?? null);
+    };
+
     const initialize = (root) => {
       if (root.dataset.directUploadReady === "1") return;
       root.dataset.directUploadReady = "1";
 
       const input = root.querySelector("[data-upload-input]");
+      const uploadButton = root.querySelector("[data-upload-button]");
       const values = root.querySelector("[data-upload-values]");
       const preview = root.querySelector("[data-upload-preview]");
       const status = root.querySelector("[data-upload-status]");
@@ -181,11 +239,20 @@ const initialImages: ExistingUploadImage[] = multiple
       const hiddenInputs = () => Array.from(values.querySelectorAll("[data-upload-hidden]"));
       const currentIds = () => hiddenInputs().map((field) => field.value).filter(Boolean);
 
+      hiddenInputs().forEach((field, index) => {
+        if (!field.dataset.uploadOrder) field.dataset.uploadOrder = String(index);
+      });
+      Array.from(preview.querySelectorAll("[data-upload-item]")).forEach((item, index) => {
+        if (!item.dataset.uploadOrder) item.dataset.uploadOrder = String(index);
+      });
+
       const refresh = () => {
         const count = currentIds().length;
         preview.hidden = count === 0;
         status.textContent = pending > 0 ? `正在上传 ${pending} 张…` : count > 0 ? `已绑定 ${count} 张` : "尚未上传";
         root.dataset.uploading = pending > 0 ? "1" : "0";
+        input.disabled = pending > 0;
+        uploadButton?.setAttribute("aria-disabled", pending > 0 ? "true" : "false");
       };
 
       const removeId = (id) => {
@@ -199,7 +266,7 @@ const initialImages: ExistingUploadImage[] = multiple
         refresh();
       };
 
-      const addImage = (image, localUrl, dimensions) => {
+      const addImage = (image, localUrl, dimensions, order) => {
         if (!multiple) {
           for (const item of Array.from(preview.querySelectorAll("[data-upload-item]"))) item.remove();
           const field = hiddenInputs()[0];
@@ -211,14 +278,16 @@ const initialImages: ExistingUploadImage[] = multiple
           field.value = image.id;
           field.dataset.uploadHidden = "";
           field.dataset.imageId = image.id;
+          field.dataset.uploadOrder = String(order);
           if (formId) field.setAttribute("form", formId);
-          values.appendChild(field);
+          insertByOrder(values, field, "[data-upload-hidden]", order);
         }
 
         const item = document.createElement("article");
         item.className = "direct-upload-item";
         item.dataset.uploadItem = "";
         item.dataset.imageId = image.id;
+        item.dataset.uploadOrder = String(order);
 
         const img = document.createElement("img");
         img.src = localUrl;
@@ -243,7 +312,7 @@ const initialImages: ExistingUploadImage[] = multiple
         item.appendChild(img);
         item.appendChild(body);
         item.appendChild(remove);
-        preview.appendChild(item);
+        insertByOrder(preview, item, "[data-upload-item]", order);
         refresh();
       };
 
@@ -266,33 +335,18 @@ const initialImages: ExistingUploadImage[] = multiple
           alert(`最多只能绑定 ${maxFiles} 张图片。`);
           return;
         }
+        if (selected.length > files.length) {
+          alert(`最多只能绑定 ${maxFiles} 张图片，本次仅上传前 ${files.length} 张。`);
+        }
 
+        const startOrder = multiple ? currentIds().length : 0;
         pending += files.length;
         refresh();
 
-        for (const file of files) {
+        await runWithConcurrency(files, UPLOAD_CONCURRENCY, async (file, index) => {
           try {
-            const compressed = await compressImage(file);
-            const uploadFile = new File(
-              [compressed.blob],
-              `${file.name.replace(/\.[^.]+$/u, "") || "image"}.webp`,
-              { type: "image/webp" },
-            );
-            const body = new FormData();
-            body.append("file", uploadFile);
-            body.append("originalName", file.name);
-
-            const response = await fetch("/api/admin/images/upload", {
-              method: "POST",
-              headers: { Accept: "application/json" },
-              body,
-            });
-            const result = await response.json().catch(() => null);
-            if (!response.ok || !result?.ok || !result.image?.id) {
-              throw new Error(result?.error || `HTTP ${response.status}`);
-            }
-
-            addImage(result.image, URL.createObjectURL(compressed.blob), compressed);
+            const uploaded = await uploadImage(file);
+            addImage(uploaded.image, uploaded.localUrl, uploaded.dimensions, startOrder + index);
           } catch (error) {
             console.error(error);
             alert(`图片 ${file.name} 上传失败，请重试。`);
@@ -300,7 +354,7 @@ const initialImages: ExistingUploadImage[] = multiple
             pending -= 1;
             refresh();
           }
-        }
+        });
       });
 
       const formElement = formId ? document.getElementById(formId) : root.closest("form");
@@ -344,6 +398,7 @@ const initialImages: ExistingUploadImage[] = multiple
   .direct-upload-input-row { display: flex; flex-wrap: wrap; align-items: center; gap: .4rem; }
   .direct-upload-file { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
   .direct-upload-button { cursor: pointer; }
+  .direct-upload-button[aria-disabled="true"] { opacity: .55; pointer-events: none; }
   .direct-upload-preview { display: grid; grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr)); gap: .4rem; }
   .direct-upload-preview[hidden] { display: none; }
   .direct-upload-item { position: relative; display: grid; grid-template-columns: 3.2rem minmax(0, 1fr) 1.6rem; gap: .4rem; align-items: center; overflow: hidden; border: 1px solid #302d36; border-radius: .38rem; padding: .3rem; background: #0d0c10; }
