@@ -32,7 +32,11 @@ const errorMessages: Record<string, string> = {
 <AdminLayout title="站点设置">
   <button slot="actions" class="button" type="submit" form={formId}>保存设置</button>
 
-  {saved === "1" && <p class="notice" role="status">站点设置已保存，前台刷新后立即生效。</p>}
+  {saved === "1" && (
+    <p class="notice" role="status">
+      站点设置已保存。公共页面缓存最长约 30 秒；当前后台浏览器打开前台预览时不使用公共缓存。
+    </p>
+  )}
   {error && errorMessages[error] && <p class="error" role="alert">{errorMessages[error]}</p>}
   {!settings.databaseReady && <p class="error" role="alert">D1 数据暂时不可用，当前显示的是默认值。</p>}
 
