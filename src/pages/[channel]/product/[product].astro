@@ -27,7 +27,6 @@ const returnUrl = product?.categorySlug
   : product
     ? `/${encodeURIComponent(product.channelSlug)}`
     : `/${encodeURIComponent(channelSlug)}`;
-const returnLabel = product?.categoryName ?? product?.channelName ?? "channel";
 ---
 
 <PublicLayout
@@ -44,7 +43,7 @@ const returnLabel = product?.categoryName ?? product?.channelName ?? "channel";
         <svg viewBox="0 0 24 24" aria-hidden="true">
           <path d="m15 18-6-6 6-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
         </svg>
-        <span>Back to {returnLabel}</span>
+        <span>BACK</span>
       </a>
 
       <header class="product-detail-header">
@@ -64,20 +63,13 @@ const returnLabel = product?.categoryName ?? product?.channelName ?? "channel";
       )}
 
       {product.bodyHtml && (
-        <section class="product-copy-section" aria-labelledby="about-heading">
-          <div class="public-section-heading public-section-heading-accent">
-            <h2 id="about-heading">About</h2>
-          </div>
+        <section class="product-copy-section">
           <div class="product-body markdown-body" set:html={product.bodyHtml}></div>
         </section>
       )}
 
       {remainingGallery.length > 0 && (
-        <section class="product-gallery-section" aria-labelledby="gallery-heading">
-          <div class="public-section-heading public-section-heading-accent">
-            <h2 id="gallery-heading">Gallery</h2>
-            <span class="public-count">{remainingGallery.length} photos</span>
-          </div>
+        <section class="product-gallery-section" aria-label="Gallery">
           <div class="product-gallery">
             {remainingGallery.map((image) => (
               <a href={image.imageUrl} target="_blank" rel="noopener noreferrer" aria-label={`Open ${image.originalName}`}>
