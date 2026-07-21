@@ -28,33 +28,35 @@ const errorMessages: Record<string, string> = {
 ---
 
 <AdminLayout title={channel ? `${channel.name} · 分类筛选` : "分区不存在"}>
+  {channel && <a slot="actions" class="button" href={`/admin/channels/${encodeURIComponent(channelId)}/products/new`}>录入产品</a>}
+
   {channel ? (
     <>
       {saved && savedMessages[saved] && <p class="notice" role="status">{savedMessages[saved]}</p>}
       {error && errorMessages[error] && <p class="error" role="alert">{errorMessages[error]}</p>}
 
-      <section class="admin-card">
+      <section class="admin-card filter-create-card">
         <div class="admin-section-bar">
           <h2>新增筛选项</h2>
-          <a class="button secondary" href={`/admin/channels/${encodeURIComponent(channelId)}/products/new`}>录入产品</a>
+          <span class="admin-section-note">例如区域、类型或服务标签</span>
         </div>
-        <form class="admin-card-body admin-form-grid" action={`/api/admin/channels/${encodeURIComponent(channelId)}/filters/create`} method="post">
-          <div class="admin-field admin-span-7">
+        <form class="admin-card-body filter-create-form" action={`/api/admin/channels/${encodeURIComponent(channelId)}/filters/create`} method="post">
+          <div class="admin-field filter-name-field">
             <label for="filter-name">名称</label>
-            <input id="filter-name" name="name" maxlength="60" required autocomplete="off" />
+            <input id="filter-name" name="name" maxlength="60" required autocomplete="off" autofocus />
           </div>
-          <div class="admin-field admin-span-2">
+          <div class="admin-field">
             <label for="filter-sort">排序</label>
             <input id="filter-sort" name="sortOrder" type="number" min="-999999" max="999999" step="1" value="0" />
           </div>
-          <div class="admin-field admin-span-2">
+          <div class="admin-field">
             <label for="filter-status">状态</label>
             <select id="filter-status" name="status">
               <option value="enabled" selected>启用</option>
               <option value="disabled">停用</option>
             </select>
           </div>
-          <div class="admin-form-actions admin-span-1">
+          <div class="admin-form-actions">
             <button class="button" type="submit">新增</button>
           </div>
         </form>
@@ -69,13 +71,13 @@ const errorMessages: Record<string, string> = {
         {filters.length === 0 ? (
           <div class="admin-empty">尚未创建分类筛选。</div>
         ) : (
-          <div class="admin-table-wrap">
+          <div class="admin-table-wrap compact-table-wrap filter-table-wrap">
             <table class="admin-table filter-table">
               <thead>
                 <tr>
                   <th class="cell-grow">名称</th>
                   <th>自动地址</th>
-                  <th>已绑定分类</th>
+                  <th>绑定分类</th>
                   <th>排序</th>
                   <th>状态</th>
                   <th style="text-align:right">操作</th>
@@ -121,10 +123,16 @@ const errorMessages: Record<string, string> = {
 </AdminLayout>
 
 <style>
-  .table-input { width: 100%; min-width: 7rem; height: 1.85rem; border: 1px solid transparent; border-radius: .3rem; padding: .2rem .4rem; color: var(--text); background: transparent; outline: none; }
+  .filter-create-card { width: min(100%, 60rem); margin-right: auto; margin-left: auto; }
+  .filter-create-form { display: grid; grid-template-columns: minmax(15rem, 1fr) 6rem 8rem auto; gap: .55rem; align-items: end; }
+  .filter-table-wrap > .admin-table { width: min(100%, 60rem); }
+  .filter-table .cell-grow { width: 18rem; }
+  .table-input { width: 100%; min-width: 7rem; height: 1.9rem; border: 1px solid transparent; border-radius: .3rem; padding: .2rem .4rem; color: var(--text); background: transparent; outline: none; }
   .table-input:hover { border-color: var(--line); background: #f8fafc; }
   .table-input:focus { border-color: #2563eb; background: #fff; }
   .table-number { width: 5rem; min-width: 5rem; }
   .table-status { width: 5rem; min-width: 5rem; }
   .auto-address { color: #64748b; font-size: .76rem; }
+  @media (max-width: 767px) { .filter-create-form { grid-template-columns: repeat(2, minmax(0, 1fr)); } .filter-name-field { grid-column: 1 / -1; } }
+  @media (max-width: 639px) { .filter-create-form { grid-template-columns: 1fr; } .filter-name-field { grid-column: auto; } .filter-create-form .button { width: 100%; } }
 </style>

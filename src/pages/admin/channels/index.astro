@@ -34,22 +34,25 @@ const statusLabel = {
   {saved && savedMessages[saved] && <p class="notice" role="status">{savedMessages[saved]}</p>}
   {error && errorMessages[error] && <p class="error" role="alert">{errorMessages[error]}</p>}
 
-  <section class="admin-card">
-    <div class="admin-section-bar"><h2>新增分区</h2></div>
-    <form class="admin-card-body admin-form-grid" action="/api/admin/channels/create" method="post">
-      <div class="admin-field admin-span-5">
+  <section class="admin-card channel-create-card">
+    <div class="admin-section-bar">
+      <h2>新增分区</h2>
+      <span class="admin-section-note">填写后可直接进入产品运营</span>
+    </div>
+    <form class="admin-card-body channel-create-form" action="/api/admin/channels/create" method="post">
+      <div class="admin-field channel-name-field">
         <label for="channel-name">名称</label>
-        <input id="channel-name" name="name" maxlength="80" required autocomplete="off" />
+        <input id="channel-name" name="name" maxlength="80" required autocomplete="off" autofocus />
       </div>
-      <div class="admin-field admin-span-2">
+      <div class="admin-field">
         <label for="channel-icon">前台图标</label>
         <input id="channel-icon" name="icon" maxlength="12" autocomplete="off" placeholder="◇" />
       </div>
-      <div class="admin-field admin-span-1">
+      <div class="admin-field">
         <label for="channel-sort">排序</label>
         <input id="channel-sort" name="sortOrder" type="number" min="-999999" max="999999" step="1" value="0" />
       </div>
-      <div class="admin-field admin-span-2">
+      <div class="admin-field">
         <label for="channel-status">状态</label>
         <select id="channel-status" name="status">
           <option value="draft" selected>草稿</option>
@@ -57,7 +60,7 @@ const statusLabel = {
           <option value="disabled">已停用</option>
         </select>
       </div>
-      <div class="admin-form-actions admin-span-2">
+      <div class="admin-form-actions">
         <button class="button" type="submit">新增分区</button>
       </div>
     </form>
@@ -71,8 +74,8 @@ const statusLabel = {
     {channels.length === 0 ? (
       <div class="admin-empty">尚未创建分区。</div>
     ) : (
-      <div class="admin-table-wrap">
-        <table class="admin-table">
+      <div class="admin-table-wrap compact-table-wrap">
+        <table class="admin-table channel-table">
           <thead>
             <tr>
               <th>图标</th>
@@ -94,7 +97,7 @@ const statusLabel = {
                 <td>
                   <div class="admin-table-actions">
                     <a class="button" href={`/admin/channels/${encodeURIComponent(channel.id)}/products/new`}>进入运营</a>
-                    <a class="button secondary" href={`/admin/channels/${encodeURIComponent(channel.id)}`}>编辑设置</a>
+                    <a class="button secondary" href={`/admin/channels/${encodeURIComponent(channel.id)}`}>编辑</a>
                     <form action={`/api/admin/channels/${encodeURIComponent(channel.id)}/delete`} method="post" onsubmit="return confirm('确定删除该分区？此操作不可撤销。')">
                       <button class="button danger" type="submit">删除</button>
                     </form>
@@ -110,7 +113,12 @@ const statusLabel = {
 </AdminLayout>
 
 <style>
+  .channel-create-card { width: min(100%, 64rem); margin-right: auto; margin-left: auto; }
+  .channel-create-form { display: grid; grid-template-columns: minmax(16rem, 1fr) 8rem 6rem 8rem auto; gap: .55rem; align-items: end; }
   .channel-status-text.is-published { color: #16803c; }
   .channel-status-text.is-draft { color: #9a6700; }
   .channel-status-text.is-disabled { color: #b42318; }
+  .channel-table .cell-grow { width: 18rem; }
+  @media (max-width: 900px) { .channel-create-form { grid-template-columns: repeat(2, minmax(0, 1fr)); } .channel-name-field { grid-column: 1 / -1; } }
+  @media (max-width: 639px) { .channel-create-form { grid-template-columns: 1fr; } .channel-name-field { grid-column: auto; } .channel-create-form .button { width: 100%; } }
 </style>

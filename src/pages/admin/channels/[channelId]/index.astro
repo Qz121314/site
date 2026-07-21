@@ -9,6 +9,7 @@ const channel = channelId ? await loadAdminChannel(channelId) : null;
 const title = channel ? `${channel.name} · 编辑分区设置` : "分区不存在";
 const saved = Astro.url.searchParams.get("saved");
 const error = Astro.url.searchParams.get("error");
+const formId = channel ? `channel-settings-${channel.id}` : "channel-settings";
 
 const errorMessages: Record<string, string> = {
   name: "分区名称不能为空，且不能超过 80 个字符。",
@@ -20,30 +21,39 @@ const errorMessages: Record<string, string> = {
 ---
 
 <AdminLayout title={title}>
+  {channel && (
+    <div slot="actions" class="admin-page-action-group">
+      <a class="button secondary" href="/admin/channels">分区列表</a>
+      <a class="button secondary" href={`/admin/channels/${encodeURIComponent(channel.id)}/products/new`}>产品录入</a>
+      <a class="button secondary" href={`/${encodeURIComponent(channel.slug)}`} target="_blank" rel="noreferrer">前台</a>
+      <button class="button" type="submit" form={formId}>保存设置</button>
+    </div>
+  )}
+
   {channel ? (
     <>
       {saved === "updated" && <p class="notice" role="status">分区设置已保存。</p>}
       {error && errorMessages[error] && <p class="error" role="alert">{errorMessages[error]}</p>}
 
-      <section class="admin-card">
+      <section class="admin-card channel-settings-card">
         <div class="admin-section-bar">
           <h2>分区配置</h2>
-          <a class="button secondary" href="/admin/channels">返回分区管理</a>
+          <span class="admin-section-note">/{channel.slug}</span>
         </div>
-        <form class="admin-card-body admin-form-grid" action={`/api/admin/channels/${encodeURIComponent(channel.id)}/update`} method="post">
-          <div class="admin-field admin-span-5">
+        <form id={formId} class="admin-card-body channel-settings-form" action={`/api/admin/channels/${encodeURIComponent(channel.id)}/update`} method="post">
+          <div class="admin-field channel-name-field">
             <label for="channel-name">名称</label>
-            <input id="channel-name" name="name" maxlength="80" required autocomplete="off" value={channel.name} />
+            <input id="channel-name" name="name" maxlength="80" required autocomplete="off" value={channel.name} autofocus />
           </div>
-          <div class="admin-field admin-span-2">
-            <label for="channel-icon">前台底部导航图标</label>
+          <div class="admin-field">
+            <label for="channel-icon">前台导航图标</label>
             <input id="channel-icon" name="icon" maxlength="12" autocomplete="off" value={channel.icon} />
           </div>
-          <div class="admin-field admin-span-1">
+          <div class="admin-field">
             <label for="channel-sort">排序</label>
             <input id="channel-sort" name="sortOrder" type="number" min="-999999" max="999999" step="1" value={channel.sortOrder} />
           </div>
-          <div class="admin-field admin-span-2">
+          <div class="admin-field">
             <label for="channel-status">状态</label>
             <select id="channel-status" name="status">
               <option value="draft" selected={channel.status === "draft"}>草稿</option>
@@ -51,14 +61,9 @@ const errorMessages: Record<string, string> = {
               <option value="disabled" selected={channel.status === "disabled"}>已停用</option>
             </select>
           </div>
-          <div class="admin-field admin-span-2">
+          <div class="admin-field">
             <label>自动地址</label>
             <div class="readonly-value">/{channel.slug}</div>
-          </div>
-          <div class="admin-form-actions admin-span-12">
-            <button class="button" type="submit">保存分区设置</button>
-            <a class="button secondary" href={`/admin/channels/${encodeURIComponent(channel.id)}/products/new`}>进入产品录入</a>
-            <a class="button secondary" href={`/${encodeURIComponent(channel.slug)}`} target="_blank" rel="noreferrer">查看前台</a>
           </div>
         </form>
       </section>
@@ -74,5 +79,9 @@ const errorMessages: Record<string, string> = {
 </AdminLayout>
 
 <style>
-  .readonly-value { min-height: 2.15rem; display: flex; align-items: center; padding: .42rem .55rem; border: 1px solid var(--line); border-radius: .35rem; background: #f8fafc; color: #64748b; }
+  .channel-settings-card { width: min(100%, 64rem); margin-right: auto; margin-left: auto; }
+  .channel-settings-form { display: grid; grid-template-columns: minmax(16rem, 1fr) 9rem 6rem 8rem minmax(10rem, .7fr); gap: .55rem; align-items: end; }
+  .readonly-value { display: flex; align-items: center; padding: .42rem .55rem; background: #f8fafc; color: #64748b; }
+  @media (max-width: 900px) { .channel-settings-form { grid-template-columns: repeat(2, minmax(0, 1fr)); } .channel-name-field { grid-column: 1 / -1; } }
+  @media (max-width: 639px) { .channel-settings-form { grid-template-columns: 1fr; } .channel-name-field { grid-column: auto; } }
 </style>

@@ -58,14 +58,17 @@ function pageHref(page: number): string {
       {saved && savedMessages[saved] && <p class="notice" role="status">{savedMessages[saved]}</p>}
       {error && errorMessages[error] && <p class="error" role="alert">{errorMessages[error]}</p>}
 
-      <section class="admin-card">
-        <div class="admin-section-bar"><h2>筛选</h2></div>
-        <form class="admin-card-body admin-form-grid product-filters" method="get">
-          <div class="admin-field admin-span-5">
+      <section class="admin-card product-filter-card">
+        <div class="admin-section-bar">
+          <h2>筛选</h2>
+          <span class="admin-section-note">名称、Slug 或标签</span>
+        </div>
+        <form class="admin-card-body product-filter-form" method="get">
+          <div class="admin-field product-search-field">
             <label for="product-search">搜索</label>
             <input id="product-search" name="q" value={query} maxlength="100" autocomplete="off" placeholder="产品名称、Slug 或标签" />
           </div>
-          <div class="admin-field admin-span-2">
+          <div class="admin-field">
             <label for="product-status-filter">状态</label>
             <select id="product-status-filter" name="status">
               <option value="">全部状态</option>
@@ -74,7 +77,7 @@ function pageHref(page: number): string {
               <option value="disabled" selected={status === "disabled"}>停用</option>
             </select>
           </div>
-          <div class="admin-field admin-span-3">
+          <div class="admin-field">
             <label for="product-category-filter">分类</label>
             <select id="product-category-filter" name="category">
               <option value="">全部分类</option>
@@ -83,7 +86,7 @@ function pageHref(page: number): string {
               ))}
             </select>
           </div>
-          <div class="admin-form-actions admin-span-2 filter-actions">
+          <div class="admin-form-actions filter-actions">
             <button class="button secondary" type="submit">筛选</button>
             <a class="button secondary" href={`/admin/channels/${encodeURIComponent(channelId)}/products`}>重置</a>
           </div>
@@ -155,15 +158,18 @@ function pageHref(page: number): string {
 </AdminLayout>
 
 <style>
-  .product-filters { padding-top: .55rem; padding-bottom: .55rem; }
-  .filter-actions { gap: .35rem; }
+  .product-filter-card { width: min(100%, 68rem); margin-right: auto; margin-left: auto; }
+  .product-filter-form { display: grid; grid-template-columns: minmax(16rem, 1fr) 8rem minmax(10rem, 14rem) auto; gap: .55rem; align-items: end; }
+  .filter-actions { gap: .35rem; flex-wrap: nowrap; }
   .product-name-cell { min-width: 15rem; }
-  .product-name-cell strong { display: block; max-width: 26rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .product-name-cell strong { display: block; max-width: 24rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .product-name-cell small { display: block; margin-top: .1rem; color: #64748b; font-size: .68rem; }
   .state-warning { color: #b45309; }
   .status-text.is-published { color: #15803d; }
   .status-text.is-disabled { color: #b91c1c; }
-  .pagination { display: flex; align-items: center; justify-content: flex-end; gap: .5rem; padding: .55rem .65rem; border-top: 1px solid var(--line); }
+  .pagination { display: flex; align-items: center; justify-content: center; gap: .5rem; padding: .55rem .65rem; border-top: 1px solid var(--line); }
   .pagination span { color: #64748b; font-size: .72rem; }
   .pagination .is-disabled { pointer-events: none; opacity: .35; }
+  @media (max-width: 900px) { .product-filter-form { grid-template-columns: repeat(2, minmax(0, 1fr)); } .product-search-field { grid-column: 1 / -1; } }
+  @media (max-width: 639px) { .product-filter-form { grid-template-columns: 1fr; } .product-search-field { grid-column: auto; } .filter-actions .button { flex: 1; } }
 </style>

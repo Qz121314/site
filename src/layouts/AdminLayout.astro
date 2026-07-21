@@ -1,6 +1,8 @@
 ---
 import "@/styles/global.css";
 import "@/styles/admin-workflow.css";
+import "@/styles/admin-layout-v2.css";
+import "@/styles/admin-page-tuning.css";
 import { loadAdminChannels } from "@/lib/db/site";
 
 interface Props {
@@ -151,11 +153,15 @@ const statusLabels = {
 
       <main class="admin-content">
         <header class="admin-page-header">
-          <h1 class="admin-page-title">{title}</h1>
-          <div class="admin-page-actions"><slot name="actions" /></div>
+          <div class="admin-page-header-inner">
+            <h1 class="admin-page-title">{title}</h1>
+            <div class="admin-page-actions"><slot name="actions" /></div>
+          </div>
         </header>
         <div class="admin-page-body">
-          <slot />
+          <div class="admin-page-body-inner">
+            <slot />
+          </div>
         </div>
       </main>
     </div>
@@ -163,6 +169,7 @@ const statusLabels = {
     {!partialRequest && (
       <script>
         import "@/scripts/admin-router";
+        import "@/scripts/admin-form-ui";
       </script>
     )}
   </body>
