@@ -1,6 +1,7 @@
 import { env } from "cloudflare:workers";
 import type { APIRoute } from "astro";
 import { adminReturnUrl, redirectAdmin } from "@/lib/admin/admin-return";
+import { isProductConversionAvailabilityConstraintError } from "@/lib/admin/pool-integrity";
 import { parseProductManagementForm, prepareProductPublishing } from "@/lib/admin/product-form";
 import { isSameOriginPost } from "@/lib/auth/session";
 
@@ -42,6 +43,9 @@ export const POST: APIRoute = async ({ request, params }) => {
     return redirectAdmin(returnUrl, { saved: "managed", error: null });
   } catch (error) {
     console.error(JSON.stringify({ event: "admin_product_manage_failed", channelId, productId, error: String(error) }));
-    return redirectAdmin(returnUrl, { error: "database", saved: null });
+    return redirectAdmin(returnUrl, {
+      error: isProductConversionAvailabilityConstraintError(error) ? "conversion-unavailable" : "database",
+      saved: null,
+    });
   }
 };
