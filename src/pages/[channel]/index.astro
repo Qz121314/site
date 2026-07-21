@@ -13,85 +13,109 @@ import {
   loadPublicSiteShell,
 } from "@/lib/db/public";
 import { loadPublicUncategorizedProducts } from "@/lib/db/public-availability";
+import { publicPageCanonical, readPublicPage } from "@/lib/public/pagination";
 
 export const prerender = false;
 
 const channelSlug = Astro.params.channel ?? "";
+const pageInput = readPublicPage(Astro.url.searchParams.get("page"));
 const site = await loadPublicSiteShell();
 const channel = findPublicChannel(site, channelSlug);
+const canLoadPage = Boolean(channel && pageInput.valid);
 
-if (!channel) Astro.response.status = 404;
-
-const [hero, filters, loadedCategories] = channel
+const [hero, filters, loadedCategories] = canLoadPage && channel
   ? await Promise.all([
-      loadPublicHeroAdvertisements(channel.id, site.r2PublicBaseUrl),
-      loadPublicCategoryFilters(channel.id),
+      pageInput.page === 1 ? loadPublicHeroAdvertisements(channel.id, site.r2PublicBaseUrl) : Promise.resolve([]),
+      pageInput.page === 1 ? loadPublicCategoryFilters(channel.id) : Promise.resolve([]),
       loadPublicCategories(channel.id, site.r2PublicBaseUrl),
     ])
   : [[], [], []];
 const categories = loadedCategories.filter((category) => category.productCount > 0);
-const productPage = channel
+const productPage = canLoadPage && channel
   ? categories.length > 0
-    ? await loadPublicUncategorizedProducts({ channelId: channel.id, baseUrl: site.r2PublicBaseUrl })
-    : await loadPublicProducts({ channelId: channel.id, baseUrl: site.r2PublicBaseUrl })
-  : { products: [], page: 1, hasMore: false };
+    ? await loadPublicUncategorizedProducts({
+        channelId: channel.id,
+        baseUrl: site.r2PublicBaseUrl,
+        page: pageInput.page,
+      })
+    : await loadPublicProducts({
+        channelId: channel.id,
+        baseUrl: site.r2PublicBaseUrl,
+        page: pageInput.page,
+      })
+  : { products: [], page: pageInput.page, hasMore: false };
+const pageOutOfRange = canLoadPage && pageInput.page > 1 && productPage.products.length === 0;
+const pageAvailable = canLoadPage && !pageOutOfRange;
 
-const canonical = channel
-  ? new URL(`/${encodeURIComponent(channel.slug)}`, Astro.url.origin).href
+if (!pageAvailable) Astro.response.status = 404;
+
+const canonical = pageAvailable && channel
+  ? publicPageCanonical(
+      new URL(`/${encodeURIComponent(channel.slug)}`, Astro.url.origin),
+      pageInput.page,
+    )
   : null;
+const pageTitle = channel
+  ? pageInput.page > 1 ? `${channel.name} — Page ${pageInput.page}` : channel.name
+  : "Page not found";
 ---
 
 <PublicLayout
   site={site}
-  title={channel?.name ?? "Page not found"}
-  description={channel ? `${channel.name} recommendations and listings.` : "The requested channel could not be found."}
+  title={pageTitle}
+  description={pageAvailable && channel ? `${channel.name} recommendations and listings.` : "The requested channel page could not be found."}
   canonical={canonical}
-  robots={channel ? undefined : "noindex,follow"}
-  activeChannel={channel?.slug ?? null}
+  robots={pageAvailable ? undefined : "noindex,follow"}
+  activeChannel={pageAvailable ? channel?.slug ?? null : null}
 >
-  {channel ? (
+  {pageAvailable && channel ? (
     <>
-      <HeroCarousel advertisements={hero} />
+      {pageInput.page === 1 && <HeroCarousel advertisements={hero} />}
 
-      <section class="public-section channel-search-section">
-        <PublicSearchForm
-          action={`/${encodeURIComponent(channel.slug)}/search`}
-          ariaLabel={`Search ${channel.name}`}
-        />
-      </section>
+      {pageInput.page === 1 && (
+        <section class="public-section channel-search-section">
+          <PublicSearchForm
+            action={`/${encodeURIComponent(channel.slug)}/search`}
+            ariaLabel={`Search ${channel.name}`}
+          />
+        </section>
+      )}
 
-      {categories.length > 0 ? (
-        <>
-          <section class="public-section category-section" data-category-section>
-            {filters.length > 0 && (
-              <div class="filter-strip" aria-label="Category filters">
-                <button class="filter-button" type="button" data-category-filter-all aria-pressed="true">
-                  {site.allFilterLabel}
+      {pageInput.page === 1 && categories.length > 0 && (
+        <section class="public-section category-section" data-category-section>
+          {filters.length > 0 && (
+            <div class="filter-strip" aria-label="Category filters">
+              <button class="filter-button" type="button" data-category-filter-all aria-pressed="true">
+                {site.allFilterLabel}
+              </button>
+              {filters.map((filter) => (
+                <button class="filter-button" type="button" data-category-filter={filter.id} aria-pressed="false">
+                  {filter.name}
                 </button>
-                {filters.map((filter) => (
-                  <button class="filter-button" type="button" data-category-filter={filter.id} aria-pressed="false">
-                    {filter.name}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            <div class="category-grid" data-category-grid>
-              {categories.map((category) => <CategoryCard category={category} channelSlug={channel.slug} />)}
+              ))}
             </div>
-            <div class="public-empty" data-category-empty hidden>No matching categories.</div>
-          </section>
-
-          {productPage.products.length > 0 && (
-            <section class="public-section">
-              <div class="public-section-heading"><h2>More products</h2></div>
-              <ProductDirectory channelSlug={channel.slug} page={productPage} uncategorizedOnly />
-            </section>
           )}
-        </>
-      ) : (
+
+          <div class="category-grid" data-category-grid>
+            {categories.map((category) => <CategoryCard category={category} channelSlug={channel.slug} />)}
+          </div>
+          <div class="public-empty" data-category-empty hidden>No matching categories.</div>
+        </section>
+      )}
+
+      {(categories.length === 0 || productPage.products.length > 0) && (
         <section class="public-section">
-          <ProductDirectory channelSlug={channel.slug} page={productPage} />
+          {(categories.length > 0 || pageInput.page > 1) && (
+            <div class="public-section-heading">
+              <h1>{categories.length > 0 ? "More products" : channel.name}</h1>
+              {pageInput.page > 1 && <span class="public-count">Page {pageInput.page}</span>}
+            </div>
+          )}
+          <ProductDirectory
+            channelSlug={channel.slug}
+            page={productPage}
+            uncategorizedOnly={categories.length > 0}
+          />
         </section>
       )}
     </>
@@ -101,7 +125,7 @@ const canonical = channel
         <div>
           <div class="empty-icon" aria-hidden="true">404</div>
           <h1>Page not found</h1>
-          <a class="public-button secondary" href="/">Return home</a>
+          <a class="public-button secondary" href={channel ? `/${encodeURIComponent(channel.slug)}` : "/"}>Return</a>
         </div>
       </div>
     </section>
