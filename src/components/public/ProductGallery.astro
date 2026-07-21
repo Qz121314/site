@@ -1,0 +1,92 @@
+---
+interface GalleryImage {
+  imageUrl: string;
+  alt: string;
+  width?: number | null;
+  height?: number | null;
+}
+
+interface Props {
+  images: GalleryImage[];
+}
+
+const { images } = Astro.props;
+const uniqueImages = images.filter(
+  (image, index, collection) => collection.findIndex((item) => item.imageUrl === image.imageUrl) === index,
+);
+const firstImage = uniqueImages[0] ?? null;
+const galleryId = `product-gallery-${crypto.randomUUID()}`;
+---
+
+{firstImage && (
+  <section class="product-gallery" id={galleryId} data-product-gallery aria-label="Product images">
+    <div class="product-gallery-stage">
+      <img
+        src={firstImage.imageUrl}
+        alt={firstImage.alt}
+        width={firstImage.width ?? undefined}
+        height={firstImage.height ?? undefined}
+        fetchpriority="high"
+        data-gallery-main
+      />
+    </div>
+
+    {uniqueImages.length > 1 && (
+      <div class="product-gallery-thumbnails" aria-label="Choose product image">
+        {uniqueImages.map((image, index) => (
+          <button
+            class="product-gallery-thumbnail"
+            type="button"
+            data-gallery-thumbnail
+            data-image-url={image.imageUrl}
+            data-image-alt={image.alt}
+            aria-label={`Show image ${index + 1}`}
+            aria-current={index === 0 ? "true" : "false"}
+          >
+            <img
+              src={image.imageUrl}
+              alt=""
+              width={image.width ?? undefined}
+              height={image.height ?? undefined}
+              loading={index === 0 ? "eager" : "lazy"}
+            />
+          </button>
+        ))}
+      </div>
+    )}
+  </section>
+)}
+
+<script is:inline>
+  (() => {
+    const initialize = (gallery) => {
+      if (gallery.dataset.ready === '1') return;
+      gallery.dataset.ready = '1';
+
+      const mainImage = gallery.querySelector('[data-gallery-main]');
+      const thumbnails = Array.from(gallery.querySelectorAll('[data-gallery-thumbnail]'));
+      if (!(mainImage instanceof HTMLImageElement) || thumbnails.length === 0) return;
+
+      thumbnails.forEach((thumbnail) => {
+        thumbnail.addEventListener('click', () => {
+          const nextUrl = thumbnail.dataset.imageUrl;
+          if (!nextUrl || mainImage.src === new URL(nextUrl, location.href).href) return;
+
+          thumbnails.forEach((item) => item.setAttribute('aria-current', item === thumbnail ? 'true' : 'false'));
+          mainImage.classList.add('is-changing');
+
+          const preload = new Image();
+          preload.onload = () => {
+            mainImage.src = nextUrl;
+            mainImage.alt = thumbnail.dataset.imageAlt || '';
+            requestAnimationFrame(() => mainImage.classList.remove('is-changing'));
+          };
+          preload.onerror = () => mainImage.classList.remove('is-changing');
+          preload.src = nextUrl;
+        });
+      });
+    };
+
+    document.querySelectorAll('[data-product-gallery]').forEach(initialize);
+  })();
+</script>
