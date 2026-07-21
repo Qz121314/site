@@ -18,7 +18,6 @@ export type ProductContentValue = {
 };
 
 export type ProductManagementValue = {
-  featured: boolean;
   sortOrder: number;
   status: ProductStatus;
 };
@@ -131,7 +130,6 @@ export function parseProductManagementForm(form: FormData): ProductManagementRes
   return {
     ok: true,
     value: {
-      featured: form.get("featured") === "1",
       sortOrder,
       status: statusText as ProductStatus,
     },

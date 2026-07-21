@@ -20,8 +20,11 @@ const { id, title, size = "medium" } = Astro.props;
 
 <style>
   .admin-dialog {
+    position: fixed;
+    inset: 0;
     width: min(calc(100vw - 2rem), 34rem);
     max-height: min(86vh, 52rem);
+    margin: auto;
     overflow: hidden;
     border: 1px solid #cbd5e1;
     border-radius: .8rem;
@@ -29,6 +32,7 @@ const { id, title, size = "medium" } = Astro.props;
     color: #0f172a;
     background: #ffffff;
     box-shadow: 0 28px 90px rgba(15, 23, 42, .28);
+    overscroll-behavior: contain;
   }
 
   .admin-dialog.is-small { width: min(calc(100vw - 2rem), 28rem); }

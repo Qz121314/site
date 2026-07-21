@@ -40,7 +40,7 @@ const invalidEdit = Boolean(editId && !selectedProduct);
 const savedMessages: Record<string, string> = {
   created: "产品已新增，并以草稿状态进入产品管理。",
   updated: "产品内容已保存。",
-  managed: "产品管理设置已保存。",
+  managed: "产品状态或排序已保存。",
   deleted: "产品已删除。",
 };
 
@@ -65,12 +65,6 @@ const errorMessages: Record<string, string> = {
   "not-found": "找不到该分区或产品。",
   database: "数据库操作失败，请稍后重试。",
 };
-
-const statusLabels = {
-  draft: "草稿",
-  published: "已发布",
-  disabled: "已停用",
-} as const;
 
 type ProductHrefOverrides = {
   q?: string | null;
@@ -207,58 +201,66 @@ const galleryValues = selectedImages.map((image) => ({
             {productPage.products.length === 0 ? (
               <div class="product-management-empty">没有符合条件的产品。</div>
             ) : (
-              <div class="product-management-list">
-                {productPage.products.map((product) => {
-                  const thumbnailUrl = buildPublicImageUrl(productPage.r2PublicBaseUrl, product.coverObjectKey ?? "")
-                    ?? (product.coverAssetId ? `/api/admin/images/${encodeURIComponent(product.coverAssetId)}/content` : null);
-                  const manageAction = `/api/admin/channels/${encodeURIComponent(channelId)}/products/${encodeURIComponent(product.id)}/manage`;
-                  const deleteAction = `/api/admin/channels/${encodeURIComponent(channelId)}/products/${encodeURIComponent(product.id)}/delete`;
-                  return (
-                    <article class:list={["product-management-row", selectedProduct?.id === product.id && "is-selected"]}>
-                      <div class="product-management-thumbnail">
-                        {thumbnailUrl ? <img src={thumbnailUrl} alt="" loading="lazy" decoding="async" /> : <span>无图</span>}
-                      </div>
+              <div class="product-management-table">
+                <div class="product-management-table-header" aria-hidden="true">
+                  <span>产品</span>
+                  <span>分类</span>
+                  <span class="product-management-control-headings"><span>状态</span><span>排序</span></span>
+                  <span>编辑</span>
+                  <span>删除</span>
+                </div>
+                <div class="product-management-list">
+                  {productPage.products.map((product) => {
+                    const thumbnailUrl = buildPublicImageUrl(productPage.r2PublicBaseUrl, product.coverObjectKey ?? "")
+                      ?? (product.coverAssetId ? `/api/admin/images/${encodeURIComponent(product.coverAssetId)}/content` : null);
+                    const manageAction = `/api/admin/channels/${encodeURIComponent(channelId)}/products/${encodeURIComponent(product.id)}/manage`;
+                    const deleteAction = `/api/admin/channels/${encodeURIComponent(channelId)}/products/${encodeURIComponent(product.id)}/delete`;
+                    return (
+                      <article class:list={["product-management-row", selectedProduct?.id === product.id && "is-selected"]}>
+                        <div class="product-management-product">
+                          <div class="product-management-thumbnail">
+                            {thumbnailUrl ? <img src={thumbnailUrl} alt="" loading="lazy" decoding="async" /> : <span>无图</span>}
+                          </div>
+                          <strong title={product.title}>{product.title}</strong>
+                        </div>
 
-                      <div class="product-management-identity">
-                        <strong title={product.title}>{product.title}</strong>
-                        <span>{product.categoryName ?? "未分类"} · {statusLabels[product.status]}</span>
-                      </div>
+                        <div class="product-management-category" title={product.categoryName ?? "未分类"}>
+                          {product.categoryName ?? "未分类"}
+                        </div>
 
-                      <form class="product-management-controls" action={manageAction} method="post">
-                        <input type="hidden" name="returnTo" value={returnTo} />
-                        <select name="status" aria-label={`${product.title} 发布状态`}>
-                          <option value="draft" selected={product.status === "draft"}>草稿</option>
-                          <option value="published" selected={product.status === "published"}>发布</option>
-                          <option value="disabled" selected={product.status === "disabled"}>停用</option>
-                        </select>
-                        <input
-                          name="sortOrder"
-                          type="number"
-                          min="-999999"
-                          max="999999"
-                          step="1"
-                          value={product.sortOrder}
-                          aria-label={`${product.title} 排序`}
-                        />
-                        <label class="product-featured-control" title="置顶">
-                          <input type="checkbox" name="featured" value="1" checked={product.featured} aria-label={`${product.title} 置顶`} />
-                        </label>
-                        <button class="button secondary" type="submit">保存</button>
-                      </form>
+                        <form
+                          class="product-management-controls"
+                          action={manageAction}
+                          method="post"
+                          data-product-management-form
+                        >
+                          <input type="hidden" name="returnTo" value={returnTo} />
+                          <select name="status" aria-label={`${product.title} 发布状态`} data-product-management-autosave>
+                            <option value="draft" selected={product.status === "draft"}>草稿</option>
+                            <option value="published" selected={product.status === "published"}>发布</option>
+                            <option value="disabled" selected={product.status === "disabled"}>停用</option>
+                          </select>
+                          <input
+                            name="sortOrder"
+                            type="number"
+                            min="-999999"
+                            max="999999"
+                            step="1"
+                            value={product.sortOrder}
+                            aria-label={`${product.title} 排序`}
+                            data-product-management-autosave
+                          />
+                        </form>
 
-                      <div class="product-management-row-actions">
-                        {product.status === "published" && (
-                          <a class="button secondary" href={`/${encodeURIComponent(channel.slug)}/product/${encodeURIComponent(product.slug)}`} target="_blank" rel="noreferrer">前台</a>
-                        )}
-                        <a class="button secondary" href={productHref({ edit: product.id })}>编辑</a>
-                        <form action={deleteAction} method="post" onsubmit="return confirm('确定删除该产品？')">
+                        <a class="button secondary product-management-edit" href={productHref({ edit: product.id })}>编辑</a>
+                        <form class="product-management-delete" action={deleteAction} method="post" onsubmit="return confirm('确定删除该产品？')">
                           <input type="hidden" name="returnTo" value={returnTo} />
                           <button class="button danger" type="submit">删除</button>
                         </form>
-                      </div>
-                    </article>
-                  );
-                })}
+                      </article>
+                    );
+                  })}
+                </div>
               </div>
             )}
 
@@ -288,3 +290,7 @@ const galleryValues = selectedImages.map((image) => ({
     <section class="admin-card"><div class="product-management-empty">找不到该分区。</div></section>
   )}
 </AdminLayout>
+
+<script>
+  import "@/scripts/admin-product-management";
+</script>

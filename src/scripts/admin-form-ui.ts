@@ -23,6 +23,7 @@ function initializeProductEditors(root: ParentNode = document): void {
     const filterInputs = Array.from(editor.querySelectorAll<HTMLInputElement>("[data-category-filter]"));
     if (!category || filterInputs.length === 0) return;
 
+    const filterLabel = editor.querySelector<HTMLElement>("[data-filter-dropdown-label]");
     const optionElements = Array.from(editor.querySelectorAll<HTMLOptionElement>("datalist option"));
     const categoryFilters = new Map(
       optionElements.map((option) => [
@@ -32,16 +33,34 @@ function initializeProductEditors(root: ParentNode = document): void {
     );
     let previousKey = normalizeCategoryName(category.value);
 
+    const updateFilterLabel = (): void => {
+      if (!filterLabel) return;
+      const selected = filterInputs.filter((input) => input.checked && !input.disabled);
+      if (selected.length === 0) {
+        filterLabel.textContent = "未选择";
+        return;
+      }
+      if (selected.length === 1) {
+        filterLabel.textContent = selected.at(0)?.dataset.filterName ?? "已选 1 项";
+        return;
+      }
+      filterLabel.textContent = `已选 ${selected.length} 项`;
+    };
+
     const syncFilters = (): void => {
       const key = normalizeCategoryName(category.value);
       if (key === previousKey) return;
       previousKey = key;
       const selected = categoryFilters.get(key) ?? new Set<string>();
       for (const input of filterInputs) input.checked = selected.has(input.value);
+      updateFilterLabel();
     };
 
     category.addEventListener("input", syncFilters);
     category.addEventListener("change", syncFilters);
+    filterInputs.forEach((input) => input.addEventListener("change", updateFilterLabel));
+    editor.closest("form")?.addEventListener("reset", () => requestAnimationFrame(updateFilterLabel));
+    updateFilterLabel();
     editor.dataset.productEditorReady = "1";
   });
 }
