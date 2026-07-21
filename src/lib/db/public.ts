@@ -4,6 +4,7 @@ import { buildPublicImageUrl } from "@/lib/images/url";
 export const PUBLIC_PRODUCT_PAGE_SIZE = 20;
 
 export type PublicChannelNavItem = {
+  id: string;
   name: string;
   slug: string;
   icon: string;
@@ -18,19 +19,14 @@ export type PublicSiteShell = {
   ga4Id: string;
   metaPixelId: string;
   adultGateEnabled: boolean;
-  noindexEnabled: boolean;
   allFilterLabel: string;
   privacyContent: string;
   disclaimerContent: string;
+  defaultChannelSlug: string | null;
   channels: PublicChannelNavItem[];
 };
 
-export type PublicChannel = {
-  id: string;
-  name: string;
-  slug: string;
-  icon: string;
-};
+export type PublicChannel = PublicChannelNavItem;
 
 export type PublicHeroAdvertisement = {
   id: string;
@@ -92,26 +88,26 @@ export type PublicSearchResults = {
   products: PublicProductCard[];
 };
 
-type SiteRow = {
+type SiteShellRow = {
   site_name: string;
   site_description: string;
   r2_public_base_url: string;
   ga4_id: string;
   meta_pixel_id: string;
   adult_gate_enabled: number;
-  noindex_enabled: number;
   all_filter_label: string;
-  privacy_content: string;
-  disclaimer_content: string;
   logo_object_key: string | null;
   favicon_object_key: string | null;
+  default_channel_slug: string | null;
+  channel_id: string | null;
+  channel_name: string | null;
+  channel_slug: string | null;
+  channel_icon: string | null;
 };
 
-type ChannelRow = {
-  id: string;
-  name: string;
-  slug: string;
-  icon: string;
+type LegalRow = {
+  privacy_content: string;
+  disclaimer_content: string;
 };
 
 type HeroRow = {
@@ -175,6 +171,19 @@ function parseTags(value: string): string[] {
   }
 }
 
+function truncateUtf8(value: string, maximumBytes: number): string {
+  const encoder = new TextEncoder();
+  let output = "";
+  let bytes = 0;
+  for (const character of value) {
+    const length = encoder.encode(character).byteLength;
+    if (bytes + length > maximumBytes) break;
+    output += character;
+    bytes += length;
+  }
+  return output;
+}
+
 function mapProduct(row: ProductCardRow, baseUrl: string): PublicProductCard {
   return {
     id: row.id,
@@ -197,83 +206,98 @@ function mapCategory(row: CategoryRow, baseUrl: string): PublicCategory {
   };
 }
 
-export async function loadPublicSiteShell(): Promise<PublicSiteShell> {
-  try {
-    const [site, channels] = await Promise.all([
-      env.DB.prepare(
-        `SELECT
-           s.site_name,
-           s.site_description,
-           s.r2_public_base_url,
-           s.ga4_id,
-           s.meta_pixel_id,
-           s.adult_gate_enabled,
-           s.noindex_enabled,
-           s.all_filter_label,
-           s.privacy_content,
-           s.disclaimer_content,
-           logo.object_key AS logo_object_key,
-           favicon.object_key AS favicon_object_key
-         FROM site_settings s
-         LEFT JOIN image_assets logo ON logo.id = s.logo_asset_id
-         LEFT JOIN image_assets favicon ON favicon.id = s.favicon_asset_id
-         WHERE s.id = 1`,
-      ).first<SiteRow>(),
-      env.DB.prepare(
-        `SELECT id, name, slug, icon
-         FROM channels
-         WHERE status = 'published'
-         ORDER BY sort_order ASC, created_at ASC`,
-      ).all<ChannelRow>(),
-    ]);
+function defaultSiteShell(): PublicSiteShell {
+  return {
+    siteName: "Site",
+    siteDescription: "Visual recommendations, updated in real time.",
+    logoUrl: null,
+    faviconUrl: null,
+    r2PublicBaseUrl: "",
+    ga4Id: "",
+    metaPixelId: "",
+    adultGateEnabled: false,
+    allFilterLabel: "All",
+    privacyContent: "",
+    disclaimerContent: "",
+    defaultChannelSlug: null,
+    channels: [],
+  };
+}
 
-    const baseUrl = site?.r2_public_base_url ?? "";
+export async function loadPublicSiteShell(
+  options: { includeLegalContent?: boolean } = {},
+): Promise<PublicSiteShell> {
+  try {
+    const shellPromise = env.DB.prepare(
+      `SELECT
+         s.site_name,
+         s.site_description,
+         s.r2_public_base_url,
+         s.ga4_id,
+         s.meta_pixel_id,
+         s.adult_gate_enabled,
+         s.all_filter_label,
+         logo.object_key AS logo_object_key,
+         favicon.object_key AS favicon_object_key,
+         default_channel.slug AS default_channel_slug,
+         channel.id AS channel_id,
+         channel.name AS channel_name,
+         channel.slug AS channel_slug,
+         channel.icon AS channel_icon
+       FROM site_settings s
+       LEFT JOIN image_assets logo ON logo.id = s.logo_asset_id
+       LEFT JOIN image_assets favicon ON favicon.id = s.favicon_asset_id
+       LEFT JOIN channels default_channel
+         ON default_channel.id = s.default_channel_id
+        AND default_channel.status = 'published'
+       LEFT JOIN channels channel ON channel.status = 'published'
+       WHERE s.id = 1
+       ORDER BY channel.sort_order ASC, channel.created_at ASC`,
+    ).all<SiteShellRow>();
+    const legalPromise = options.includeLegalContent
+      ? env.DB.prepare(
+          `SELECT privacy_content, disclaimer_content
+           FROM site_settings WHERE id = 1`,
+        ).first<LegalRow>()
+      : Promise.resolve(null);
+
+    const [shellResult, legal] = await Promise.all([shellPromise, legalPromise]);
+    const first = shellResult.results[0];
+    if (!first) return defaultSiteShell();
+
+    const baseUrl = first.r2_public_base_url ?? "";
     return {
-      siteName: site?.site_name ?? "Site",
-      siteDescription: site?.site_description ?? "Visual recommendations, updated in real time.",
-      logoUrl: site?.logo_object_key ? buildPublicImageUrl(baseUrl, site.logo_object_key) : null,
-      faviconUrl: site?.favicon_object_key ? buildPublicImageUrl(baseUrl, site.favicon_object_key) : null,
+      siteName: first.site_name,
+      siteDescription: first.site_description,
+      logoUrl: first.logo_object_key ? buildPublicImageUrl(baseUrl, first.logo_object_key) : null,
+      faviconUrl: first.favicon_object_key ? buildPublicImageUrl(baseUrl, first.favicon_object_key) : null,
       r2PublicBaseUrl: baseUrl,
-      ga4Id: site?.ga4_id ?? "",
-      metaPixelId: site?.meta_pixel_id ?? "",
-      adultGateEnabled: site?.adult_gate_enabled === 1,
-      noindexEnabled: site?.noindex_enabled === 1,
-      allFilterLabel: site?.all_filter_label || "All",
-      privacyContent: site?.privacy_content ?? "",
-      disclaimerContent: site?.disclaimer_content ?? "",
-      channels: channels.results.map((channel) => ({
-        name: channel.name,
-        slug: channel.slug,
-        icon: channel.icon,
-      })),
+      ga4Id: first.ga4_id ?? "",
+      metaPixelId: first.meta_pixel_id ?? "",
+      adultGateEnabled: first.adult_gate_enabled === 1,
+      allFilterLabel: first.all_filter_label || "All",
+      privacyContent: legal?.privacy_content ?? "",
+      disclaimerContent: legal?.disclaimer_content ?? "",
+      defaultChannelSlug: first.default_channel_slug,
+      channels: shellResult.results.flatMap((row) =>
+        row.channel_id && row.channel_name && row.channel_slug
+          ? [{
+              id: row.channel_id,
+              name: row.channel_name,
+              slug: row.channel_slug,
+              icon: row.channel_icon ?? "",
+            }]
+          : [],
+      ),
     };
   } catch (error) {
     console.error(JSON.stringify({ event: "public_site_shell_read_failed", error: String(error) }));
-    return {
-      siteName: "Site",
-      siteDescription: "Visual recommendations, updated in real time.",
-      logoUrl: null,
-      faviconUrl: null,
-      r2PublicBaseUrl: "",
-      ga4Id: "",
-      metaPixelId: "",
-      adultGateEnabled: false,
-      noindexEnabled: true,
-      allFilterLabel: "All",
-      privacyContent: "",
-      disclaimerContent: "",
-      channels: [],
-    };
+    return defaultSiteShell();
   }
 }
 
-export async function loadPublicChannel(channelSlug: string): Promise<PublicChannel | null> {
-  const row = await env.DB.prepare(
-    `SELECT id, name, slug, icon
-     FROM channels
-     WHERE slug = ?1 AND status = 'published'`,
-  ).bind(channelSlug).first<ChannelRow>();
-  return row ? { id: row.id, name: row.name, slug: row.slug, icon: row.icon } : null;
+export function findPublicChannel(site: PublicSiteShell, channelSlug: string): PublicChannel | null {
+  return site.channels.find((channel) => channel.slug === channelSlug) ?? null;
 }
 
 export async function loadPublicHeroAdvertisements(
@@ -313,26 +337,45 @@ export async function loadPublicCategoryFilters(channelId: string): Promise<Publ
   return result.results;
 }
 
+const categoryAggregateCtes = `
+  WITH filter_usage AS (
+    SELECT relation.category_id, GROUP_CONCAT(relation.filter_id) AS filter_ids
+    FROM category_filter_relations relation
+    INNER JOIN category_filters filter
+      ON filter.id = relation.filter_id
+     AND filter.status = 'enabled'
+    WHERE filter.channel_id = ?1
+    GROUP BY relation.category_id
+  ),
+  product_counts AS (
+    SELECT category_id, COUNT(*) AS product_count
+    FROM products
+    WHERE channel_id = ?1
+      AND status = 'published'
+      AND category_id IS NOT NULL
+    GROUP BY category_id
+  )
+`;
+
 export async function loadPublicCategories(
   channelId: string,
   baseUrl: string,
 ): Promise<PublicCategory[]> {
   const result = await env.DB.prepare(
-    `SELECT
-       c.id,
-       c.name,
-       c.slug,
-       a.object_key,
-       GROUP_CONCAT(DISTINCT CASE WHEN f.status = 'enabled' THEN r.filter_id END) AS filter_ids,
-       COUNT(DISTINCT CASE WHEN p.status = 'published' THEN p.id END) AS product_count
-     FROM categories c
-     LEFT JOIN image_assets a ON a.id = c.image_asset_id
-     LEFT JOIN category_filter_relations r ON r.category_id = c.id
-     LEFT JOIN category_filters f ON f.id = r.filter_id AND f.channel_id = c.channel_id
-     LEFT JOIN products p ON p.category_id = c.id AND p.channel_id = c.channel_id
-     WHERE c.channel_id = ?1 AND c.status = 'published'
-     GROUP BY c.id, c.name, c.slug, a.object_key, c.sort_order, c.created_at
-     ORDER BY c.sort_order ASC, c.created_at ASC`,
+    `${categoryAggregateCtes}
+     SELECT
+       category.id,
+       category.name,
+       category.slug,
+       image.object_key,
+       filter_usage.filter_ids,
+       COALESCE(product_counts.product_count, 0) AS product_count
+     FROM categories category
+     LEFT JOIN image_assets image ON image.id = category.image_asset_id
+     LEFT JOIN filter_usage ON filter_usage.category_id = category.id
+     LEFT JOIN product_counts ON product_counts.category_id = category.id
+     WHERE category.channel_id = ?1 AND category.status = 'published'
+     ORDER BY category.sort_order ASC, category.created_at ASC`,
   ).bind(channelId).all<CategoryRow>();
   return result.results.map((row) => mapCategory(row, baseUrl));
 }
@@ -343,20 +386,21 @@ export async function loadPublicCategory(
   baseUrl: string,
 ): Promise<PublicCategory | null> {
   const row = await env.DB.prepare(
-    `SELECT
-       c.id,
-       c.name,
-       c.slug,
-       a.object_key,
-       GROUP_CONCAT(DISTINCT CASE WHEN f.status = 'enabled' THEN r.filter_id END) AS filter_ids,
-       COUNT(DISTINCT CASE WHEN p.status = 'published' THEN p.id END) AS product_count
-     FROM categories c
-     LEFT JOIN image_assets a ON a.id = c.image_asset_id
-     LEFT JOIN category_filter_relations r ON r.category_id = c.id
-     LEFT JOIN category_filters f ON f.id = r.filter_id AND f.channel_id = c.channel_id
-     LEFT JOIN products p ON p.category_id = c.id AND p.channel_id = c.channel_id
-     WHERE c.channel_id = ?1 AND c.slug = ?2 AND c.status = 'published'
-     GROUP BY c.id, c.name, c.slug, a.object_key`,
+    `${categoryAggregateCtes}
+     SELECT
+       category.id,
+       category.name,
+       category.slug,
+       image.object_key,
+       filter_usage.filter_ids,
+       COALESCE(product_counts.product_count, 0) AS product_count
+     FROM categories category
+     LEFT JOIN image_assets image ON image.id = category.image_asset_id
+     LEFT JOIN filter_usage ON filter_usage.category_id = category.id
+     LEFT JOIN product_counts ON product_counts.category_id = category.id
+     WHERE category.channel_id = ?1
+       AND category.slug = ?2
+       AND category.status = 'published'`,
   ).bind(channelId, categorySlug).first<CategoryRow>();
   return row ? mapCategory(row, baseUrl) : null;
 }
@@ -371,8 +415,21 @@ export async function loadPublicProducts(input: {
   const page = Number.isSafeInteger(input.page) && (input.page ?? 0) > 0 ? input.page ?? 1 : 1;
   const offset = (page - 1) * PUBLIC_PRODUCT_PAGE_SIZE;
   const categoryId = input.categoryId ?? "";
-  const query = (input.query ?? "").trim().slice(0, 100);
-  const pattern = `%${query}%`;
+  const query = truncateUtf8((input.query ?? "").trim(), 48);
+  const bindings: Array<string | number> = [input.channelId];
+  const conditions = ["p.channel_id = ?1", "p.status = 'published'"];
+
+  if (categoryId) {
+    bindings.push(categoryId);
+    conditions.push(`p.category_id = ?${bindings.length}`);
+  }
+  if (query) {
+    bindings.push(`%${query}%`);
+    conditions.push(`(p.title LIKE ?${bindings.length} OR p.tags LIKE ?${bindings.length})`);
+  }
+  bindings.push(PUBLIC_PRODUCT_PAGE_SIZE + 1, offset);
+  const limitParameter = bindings.length - 1;
+  const offsetParameter = bindings.length;
 
   const result = await env.DB.prepare(
     `SELECT
@@ -384,22 +441,14 @@ export async function loadPublicProducts(input: {
        p.featured
      FROM products p
      LEFT JOIN image_assets cover ON cover.id = p.cover_asset_id
-     LEFT JOIN categories c ON c.id = p.category_id AND c.channel_id = p.channel_id
-     WHERE p.channel_id = ?1
-       AND p.status = 'published'
-       AND (?2 = '' OR p.category_id = ?2)
-       AND (?3 = '' OR p.title LIKE ?4 OR p.tags LIKE ?4)
-       AND (p.category_id IS NULL OR c.status = 'published')
+     LEFT JOIN categories category
+       ON category.id = p.category_id
+      AND category.channel_id = p.channel_id
+     WHERE ${conditions.join(" AND ")}
+       AND (p.category_id IS NULL OR category.status = 'published')
      ORDER BY p.featured DESC, p.sort_order ASC, p.created_at DESC
-     LIMIT ?5 OFFSET ?6`,
-  ).bind(
-    input.channelId,
-    categoryId,
-    query,
-    pattern,
-    PUBLIC_PRODUCT_PAGE_SIZE + 1,
-    offset,
-  ).all<ProductCardRow>();
+     LIMIT ?${limitParameter} OFFSET ?${offsetParameter}`,
+  ).bind(...bindings).all<ProductCardRow>();
 
   return {
     products: result.results.slice(0, PUBLIC_PRODUCT_PAGE_SIZE).map((row) => mapProduct(row, input.baseUrl)),
@@ -417,8 +466,8 @@ export async function loadPublicProductDetail(
     `SELECT
        p.id,
        p.channel_id,
-       c.name AS channel_name,
-       c.slug AS channel_slug,
+       channel.name AS channel_name,
+       channel.slug AS channel_slug,
        category.name AS category_name,
        category.slug AS category_slug,
        p.title,
@@ -428,23 +477,21 @@ export async function loadPublicProductDetail(
        p.featured,
        p.body_html,
        p.cta_label,
-       CASE WHEN EXISTS (
-         SELECT 1
-         FROM conversion_groups g
-         INNER JOIN conversion_resources r
-           ON r.group_id = g.id AND r.status = 'enabled'
-         WHERE g.id = p.conversion_group_id
-           AND g.channel_id = p.channel_id
-           AND g.status = 'enabled'
-       ) THEN 1 ELSE 0 END AS has_conversion
+       CASE WHEN conversion_group.id IS NULL THEN 0 ELSE 1 END AS has_conversion
      FROM products p
-     INNER JOIN channels c ON c.id = p.channel_id AND c.status = 'published'
+     INNER JOIN channels channel
+       ON channel.id = p.channel_id
+      AND channel.status = 'published'
      LEFT JOIN categories category
        ON category.id = p.category_id
       AND category.channel_id = p.channel_id
       AND category.status = 'published'
      LEFT JOIN image_assets cover ON cover.id = p.cover_asset_id
-     WHERE c.slug = ?1
+     LEFT JOIN conversion_groups conversion_group
+       ON conversion_group.id = p.conversion_group_id
+      AND conversion_group.channel_id = p.channel_id
+      AND conversion_group.status = 'enabled'
+     WHERE channel.slug = ?1
        AND p.slug = ?2
        AND p.status = 'published'
        AND (p.category_id IS NULL OR category.id IS NOT NULL)`,
@@ -453,15 +500,15 @@ export async function loadPublicProductDetail(
 
   const galleryResult = await env.DB.prepare(
     `SELECT
-       a.id,
-       a.object_key,
-       a.original_name,
-       a.width,
-       a.height
-     FROM product_images pi
-     INNER JOIN image_assets a ON a.id = pi.image_asset_id
-     WHERE pi.product_id = ?1
-     ORDER BY pi.sort_order ASC, a.created_at ASC`,
+       image.id,
+       image.object_key,
+       image.original_name,
+       image.width,
+       image.height
+     FROM product_images relation
+     INNER JOIN image_assets image ON image.id = relation.image_asset_id
+     WHERE relation.product_id = ?1
+     ORDER BY relation.sort_order ASC, image.created_at ASC`,
   ).bind(row.id).all<GalleryRow>();
 
   return {
@@ -494,29 +541,28 @@ export async function searchPublicCatalog(
   query: string,
   baseUrl: string,
 ): Promise<PublicSearchResults> {
-  const normalized = query.trim().slice(0, 100);
+  const normalized = truncateUtf8(query.trim(), 48);
   if (!normalized) return { categories: [], products: [] };
   const pattern = `%${normalized}%`;
 
   const [categories, products] = await Promise.all([
     env.DB.prepare(
-      `SELECT
-         c.id,
-         c.name,
-         c.slug,
-         a.object_key,
-         GROUP_CONCAT(DISTINCT CASE WHEN f.status = 'enabled' THEN r.filter_id END) AS filter_ids,
-         COUNT(DISTINCT CASE WHEN p.status = 'published' THEN p.id END) AS product_count
-       FROM categories c
-       LEFT JOIN image_assets a ON a.id = c.image_asset_id
-       LEFT JOIN category_filter_relations r ON r.category_id = c.id
-       LEFT JOIN category_filters f ON f.id = r.filter_id AND f.channel_id = c.channel_id
-       LEFT JOIN products p ON p.category_id = c.id AND p.channel_id = c.channel_id
-       WHERE c.channel_id = ?1
-         AND c.status = 'published'
-         AND c.name LIKE ?2
-       GROUP BY c.id, c.name, c.slug, a.object_key, c.sort_order, c.created_at
-       ORDER BY c.sort_order ASC, c.created_at ASC
+      `${categoryAggregateCtes}
+       SELECT
+         category.id,
+         category.name,
+         category.slug,
+         image.object_key,
+         filter_usage.filter_ids,
+         COALESCE(product_counts.product_count, 0) AS product_count
+       FROM categories category
+       LEFT JOIN image_assets image ON image.id = category.image_asset_id
+       LEFT JOIN filter_usage ON filter_usage.category_id = category.id
+       LEFT JOIN product_counts ON product_counts.category_id = category.id
+       WHERE category.channel_id = ?1
+         AND category.status = 'published'
+         AND category.name LIKE ?2
+       ORDER BY category.sort_order ASC, category.created_at ASC
        LIMIT 20`,
     ).bind(channelId, pattern).all<CategoryRow>(),
     env.DB.prepare(
@@ -529,11 +575,13 @@ export async function searchPublicCatalog(
          p.featured
        FROM products p
        LEFT JOIN image_assets cover ON cover.id = p.cover_asset_id
-       LEFT JOIN categories c ON c.id = p.category_id AND c.channel_id = p.channel_id
+       LEFT JOIN categories category
+         ON category.id = p.category_id
+        AND category.channel_id = p.channel_id
        WHERE p.channel_id = ?1
          AND p.status = 'published'
          AND (p.title LIKE ?2 OR p.tags LIKE ?2)
-         AND (p.category_id IS NULL OR c.status = 'published')
+         AND (p.category_id IS NULL OR category.status = 'published')
        ORDER BY p.featured DESC, p.sort_order ASC, p.created_at DESC
        LIMIT 40`,
     ).bind(channelId, pattern).all<ProductCardRow>(),
@@ -556,18 +604,24 @@ export async function loadPublicSitemapEntries(): Promise<{
        FROM channels WHERE status = 'published'`,
     ).all<{ slug: string; updatedAt: string }>(),
     env.DB.prepare(
-      `SELECT ch.slug AS channelSlug, c.slug, c.updated_at AS updatedAt
-       FROM categories c
-       INNER JOIN channels ch ON ch.id = c.channel_id AND ch.status = 'published'
-       WHERE c.status = 'published'`,
+      `SELECT channel.slug AS channelSlug, category.slug, category.updated_at AS updatedAt
+       FROM categories category
+       INNER JOIN channels channel
+         ON channel.id = category.channel_id
+        AND channel.status = 'published'
+       WHERE category.status = 'published'`,
     ).all<{ channelSlug: string; slug: string; updatedAt: string }>(),
     env.DB.prepare(
-      `SELECT ch.slug AS channelSlug, p.slug, p.updated_at AS updatedAt
-       FROM products p
-       INNER JOIN channels ch ON ch.id = p.channel_id AND ch.status = 'published'
-       LEFT JOIN categories c ON c.id = p.category_id AND c.channel_id = p.channel_id
-       WHERE p.status = 'published'
-         AND (p.category_id IS NULL OR c.status = 'published')`,
+      `SELECT channel.slug AS channelSlug, product.slug, product.updated_at AS updatedAt
+       FROM products product
+       INNER JOIN channels channel
+         ON channel.id = product.channel_id
+        AND channel.status = 'published'
+       LEFT JOIN categories category
+         ON category.id = product.category_id
+        AND category.channel_id = product.channel_id
+       WHERE product.status = 'published'
+         AND (product.category_id IS NULL OR category.status = 'published')`,
     ).all<{ channelSlug: string; slug: string; updatedAt: string }>(),
   ]);
 

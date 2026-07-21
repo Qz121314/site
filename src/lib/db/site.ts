@@ -49,7 +49,6 @@ export type AdminSiteSettings = {
   ga4Id: string;
   metaPixelId: string;
   adultGateEnabled: boolean;
-  noindexEnabled: boolean;
   allFilterLabel: string;
   privacyContent: string;
   disclaimerContent: string;
@@ -66,7 +65,6 @@ type AdminSiteSettingsRow = {
   ga4_id: string;
   meta_pixel_id: string;
   adult_gate_enabled: number;
-  noindex_enabled: number;
   all_filter_label: string;
   privacy_content: string;
   disclaimer_content: string;
@@ -82,7 +80,6 @@ const defaultAdminSiteSettings = (databaseReady: boolean): AdminSiteSettings => 
   ga4Id: "",
   metaPixelId: "",
   adultGateEnabled: false,
-  noindexEnabled: false,
   allFilterLabel: "All",
   privacyContent: "",
   disclaimerContent: "",
@@ -102,7 +99,6 @@ export async function loadAdminSiteSettings(): Promise<AdminSiteSettings> {
          ga4_id,
          meta_pixel_id,
          adult_gate_enabled,
-         noindex_enabled,
          all_filter_label,
          privacy_content,
          disclaimer_content
@@ -122,7 +118,6 @@ export async function loadAdminSiteSettings(): Promise<AdminSiteSettings> {
       ga4Id: row.ga4_id,
       metaPixelId: row.meta_pixel_id,
       adultGateEnabled: row.adult_gate_enabled === 1,
-      noindexEnabled: row.noindex_enabled === 1,
       allFilterLabel: row.all_filter_label,
       privacyContent: row.privacy_content,
       disclaimerContent: row.disclaimer_content,

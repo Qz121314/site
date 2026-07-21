@@ -4,9 +4,9 @@ import HeroCarousel from "@/components/public/HeroCarousel.astro";
 import CategoryCard from "@/components/public/CategoryCard.astro";
 import ProductDirectory from "@/components/public/ProductDirectory.astro";
 import {
+  findPublicChannel,
   loadPublicCategories,
   loadPublicCategoryFilters,
-  loadPublicChannel,
   loadPublicHeroAdvertisements,
   loadPublicProducts,
   loadPublicSiteShell,
@@ -15,21 +15,21 @@ import {
 export const prerender = false;
 
 const channelSlug = Astro.params.channel ?? "";
-const [site, channel] = await Promise.all([
-  loadPublicSiteShell(),
-  loadPublicChannel(channelSlug),
-]);
+const site = await loadPublicSiteShell();
+const channel = findPublicChannel(site, channelSlug);
 
 if (!channel) Astro.response.status = 404;
 
-const [hero, filters, categories, productPage] = channel
+const [hero, filters, categories] = channel
   ? await Promise.all([
       loadPublicHeroAdvertisements(channel.id, site.r2PublicBaseUrl),
       loadPublicCategoryFilters(channel.id),
       loadPublicCategories(channel.id, site.r2PublicBaseUrl),
-      loadPublicProducts({ channelId: channel.id, baseUrl: site.r2PublicBaseUrl }),
     ])
-  : [[], [], [], { products: [], page: 1, hasMore: false }];
+  : [[], [], []];
+const productPage = channel && categories.length === 0
+  ? await loadPublicProducts({ channelId: channel.id, baseUrl: site.r2PublicBaseUrl })
+  : { products: [], page: 1, hasMore: false };
 
 const canonical = new URL(`/${encodeURIComponent(channelSlug)}`, Astro.url.origin).href;
 ---

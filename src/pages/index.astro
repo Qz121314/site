@@ -1,15 +1,11 @@
 ---
 import PublicLayout from "@/layouts/PublicLayout.astro";
 import { loadPublicSiteShell } from "@/lib/db/public";
-import { loadSiteSummary } from "@/lib/db/site";
 
 export const prerender = false;
-const [site, summary] = await Promise.all([
-  loadPublicSiteShell(),
-  loadSiteSummary(),
-]);
-if (summary.defaultChannelSlug) {
-  return Astro.redirect(`/${encodeURIComponent(summary.defaultChannelSlug)}`, 302);
+const site = await loadPublicSiteShell();
+if (site.defaultChannelSlug) {
+  return Astro.redirect(`/${encodeURIComponent(site.defaultChannelSlug)}`, 302);
 }
 const canonical = new URL("/", Astro.url.origin).href;
 ---

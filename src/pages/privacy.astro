@@ -3,7 +3,7 @@ import PublicLayout from "@/layouts/PublicLayout.astro";
 import { loadPublicSiteShell } from "@/lib/db/public";
 
 export const prerender = false;
-const site = await loadPublicSiteShell();
+const site = await loadPublicSiteShell({ includeLegalContent: true });
 const canonical = new URL("/privacy", Astro.url.origin).href;
 ---
 

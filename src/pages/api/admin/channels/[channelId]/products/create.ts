@@ -5,6 +5,7 @@ import { parseProductForm, validateProductRelations } from "@/lib/admin/product-
 import { automaticSlug, uniqueProductSlug } from "@/lib/admin/automatic-slug";
 import { categoryFiltersBelongToChannel } from "@/lib/admin/category-form";
 import { parseProductEntryExtras } from "@/lib/admin/product-entry";
+import { categoryFiltersInsert, productImagesInsert } from "@/lib/admin/bulk-relations";
 import { removeEmptyGeneratedCategory, resolveProductCategory } from "@/lib/admin/product-category";
 import { imageAssetsExist } from "@/lib/db/image-options";
 
@@ -91,6 +92,8 @@ export const POST: APIRoute = async ({ request, params }) => {
       return entryRedirect(request, channelId, { error: relationError });
     }
 
+    const imageInsert = productImagesInsert(productId, extras.galleryAssetIds);
+    const filterInsert = category.id ? categoryFiltersInsert(category.id, extras.filterIds) : null;
     const statements = [
       env.DB.prepare(
         `INSERT INTO products (
@@ -114,21 +117,11 @@ export const POST: APIRoute = async ({ request, params }) => {
         value.sortOrder,
         value.status,
       ),
-      ...extras.galleryAssetIds.map((imageAssetId, index) =>
-        env.DB.prepare(
-          `INSERT INTO product_images (product_id, image_asset_id, sort_order)
-           VALUES (?1, ?2, ?3)`,
-        ).bind(productId, imageAssetId, index * 10),
-      ),
+      ...(imageInsert ? [env.DB.prepare(imageInsert.sql).bind(...imageInsert.bindings)] : []),
       ...(category.id
         ? [
             env.DB.prepare("DELETE FROM category_filter_relations WHERE category_id = ?1").bind(category.id),
-            ...extras.filterIds.map((filterId) =>
-              env.DB.prepare(
-                `INSERT INTO category_filter_relations (category_id, filter_id)
-                 VALUES (?1, ?2)`,
-              ).bind(category.id, filterId),
-            ),
+            ...(filterInsert ? [env.DB.prepare(filterInsert.sql).bind(...filterInsert.bindings)] : []),
           ]
         : []),
     ];

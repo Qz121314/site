@@ -1,6 +1,6 @@
 import { env } from "cloudflare:workers";
 import type { APIRoute } from "astro";
-import { loadAdminImage } from "@/lib/db/images";
+import { loadAdminImageObject } from "@/lib/db/images";
 
 export const prerender = false;
 
@@ -9,7 +9,7 @@ export const GET: APIRoute = async ({ params }) => {
   if (!imageId) return new Response("Not Found", { status: 404 });
 
   try {
-    const image = await loadAdminImage(imageId);
+    const image = await loadAdminImageObject(imageId);
     if (!image) return new Response("Not Found", { status: 404 });
 
     const object = await env.MEDIA_BUCKET.get(image.objectKey);
@@ -20,7 +20,7 @@ export const GET: APIRoute = async ({ params }) => {
         "Content-Type": object.httpMetadata?.contentType ?? image.mimeType,
         "Content-Length": String(object.size),
         ETag: object.httpEtag,
-        "Cache-Control": "private, max-age=300",
+        "Cache-Control": "private, max-age=31536000, immutable",
       },
     });
   } catch (error) {

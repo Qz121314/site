@@ -2,8 +2,8 @@
 import PublicLayout from "@/layouts/PublicLayout.astro";
 import ProductDirectory from "@/components/public/ProductDirectory.astro";
 import {
+  findPublicChannel,
   loadPublicCategory,
-  loadPublicChannel,
   loadPublicProducts,
   loadPublicSiteShell,
 } from "@/lib/db/public";
@@ -12,10 +12,8 @@ export const prerender = false;
 
 const channelSlug = Astro.params.channel ?? "";
 const categorySlug = Astro.params.category ?? "";
-const [site, channel] = await Promise.all([
-  loadPublicSiteShell(),
-  loadPublicChannel(channelSlug),
-]);
+const site = await loadPublicSiteShell();
+const channel = findPublicChannel(site, channelSlug);
 const category = channel
   ? await loadPublicCategory(channel.id, categorySlug, site.r2PublicBaseUrl)
   : null;

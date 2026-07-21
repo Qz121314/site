@@ -3,7 +3,7 @@ import PublicLayout from "@/layouts/PublicLayout.astro";
 import CategoryCard from "@/components/public/CategoryCard.astro";
 import ProductCard from "@/components/public/ProductCard.astro";
 import {
-  loadPublicChannel,
+  findPublicChannel,
   loadPublicSiteShell,
   searchPublicCatalog,
 } from "@/lib/db/public";
@@ -12,10 +12,8 @@ export const prerender = false;
 
 const channelSlug = Astro.params.channel ?? "";
 const query = (Astro.url.searchParams.get("q") ?? "").trim().slice(0, 100);
-const [site, channel] = await Promise.all([
-  loadPublicSiteShell(),
-  loadPublicChannel(channelSlug),
-]);
+const site = await loadPublicSiteShell();
+const channel = findPublicChannel(site, channelSlug);
 
 if (!channel) Astro.response.status = 404;
 const results = channel && query

@@ -9,9 +9,11 @@ import {
 
 export const prerender = false;
 
-const MAX_SCAN_OBJECTS = 10_000;
-const R2_LIST_PAGE_SIZE = 1_000;
-const D1_BATCH_SIZE = 50;
+const MAX_SCAN_OBJECTS = 1_000;
+const TARGET_IMPORTS_PER_REQUEST = 100;
+const R2_LIST_PAGE_SIZE = 50;
+const D1_IMPORT_ROWS_PER_QUERY = 14;
+const MAX_CURSOR_LENGTH = 2_048;
 
 type ObjectKeyRow = { object_key: string };
 
@@ -36,14 +38,46 @@ function parseDimension(value: string | undefined): number | null {
   return Number.isSafeInteger(number) && number > 0 && number <= MAX_IMAGE_DIMENSION ? number : null;
 }
 
+function parseCursor(form: FormData): string | undefined {
+  const value = form.get("cursor");
+  if (typeof value !== "string") return undefined;
+  const cursor = value.trim();
+  return cursor && cursor.length <= MAX_CURSOR_LENGTH ? cursor : undefined;
+}
+
 function chunk<T>(items: T[], size: number): T[][] {
   const output: T[][] = [];
   for (let index = 0; index < items.length; index += size) output.push(items.slice(index, index + size));
   return output;
 }
 
+function importStatement(images: ImportCandidate[]) {
+  const bindings = images.flatMap((image) => [
+    image.id,
+    image.objectKey,
+    image.originalName,
+    image.mimeType,
+    image.width,
+    image.height,
+    image.sizeBytes,
+  ]);
+  let parameter = 1;
+  const values = images.map(() => {
+    const row = Array.from({ length: 7 }, () => `?${parameter++}`);
+    return `(${row.join(", ")})`;
+  }).join(", ");
+  return env.DB.prepare(
+    `INSERT OR IGNORE INTO image_assets
+       (id, object_key, original_name, mime_type, width, height, size_bytes)
+     VALUES ${values}`,
+  ).bind(...bindings);
+}
+
 export const POST: APIRoute = async ({ request }) => {
   if (!isSameOriginPost(request)) return new Response("Forbidden", { status: 403 });
+
+  const form = await request.formData();
+  let cursor = parseCursor(form);
 
   try {
     const existingResult = await env.DB.prepare("SELECT object_key FROM image_assets").all<ObjectKeyRow>();
@@ -51,8 +85,6 @@ export const POST: APIRoute = async ({ request }) => {
     const candidates: ImportCandidate[] = [];
     let skipped = 0;
     let scanned = 0;
-    let cursor: string | undefined;
-    let partial = false;
 
     do {
       const result = await env.MEDIA_BUCKET.list({
@@ -89,39 +121,20 @@ export const POST: APIRoute = async ({ request }) => {
         knownKeys.add(object.key);
       }
 
-      if (!result.truncated) break;
-      if (scanned >= MAX_SCAN_OBJECTS || !result.cursor) {
-        partial = true;
-        break;
-      }
-      cursor = result.cursor;
+      cursor = result.truncated ? result.cursor : undefined;
+      if (!cursor || candidates.length >= TARGET_IMPORTS_PER_REQUEST) break;
     } while (scanned < MAX_SCAN_OBJECTS);
 
-    for (const group of chunk(candidates, D1_BATCH_SIZE)) {
-      await env.DB.batch(
-        group.map((image) =>
-          env.DB.prepare(
-            `INSERT OR IGNORE INTO image_assets
-               (id, object_key, original_name, mime_type, width, height, size_bytes)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)`,
-          ).bind(
-            image.id,
-            image.objectKey,
-            image.originalName,
-            image.mimeType,
-            image.width,
-            image.height,
-            image.sizeBytes,
-          ),
-        ),
-      );
+    const groups = chunk(candidates, D1_IMPORT_ROWS_PER_QUERY);
+    if (groups.length > 0) {
+      await env.DB.batch(groups.map(importStatement));
     }
 
     return redirect(request, {
       saved: "scanned",
       imported: String(candidates.length),
       skipped: String(skipped),
-      ...(partial ? { partial: "1" } : {}),
+      ...(cursor ? { partial: "1", cursor } : {}),
     });
   } catch (error) {
     console.error(JSON.stringify({ event: "admin_image_scan_failed", error: String(error) }));
