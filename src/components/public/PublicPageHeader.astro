@@ -1,0 +1,16 @@
+---
+import PublicBackLink from "@/components/public/PublicBackLink.astro";
+
+interface Props {
+  href: string;
+  title: string;
+  className?: string;
+}
+
+const { href, title, className = "" } = Astro.props;
+---
+
+<header class:list={["public-page-header", className]}>
+  <PublicBackLink href={href} />
+  <h1>{title}</h1>
+</header>
