@@ -1,6 +1,7 @@
 import { env } from "cloudflare:workers";
 import type { APIRoute } from "astro";
 import { isSameOriginPost } from "@/lib/auth/session";
+import { wouldRemoveLastEnabledConversionResource } from "@/lib/admin/conversion-resource-guard";
 
 export const prerender = false;
 
@@ -20,12 +21,19 @@ export const POST: APIRoute = async ({ request, params }) => {
 
   try {
     const existing = await env.DB.prepare(
-      `SELECT r.id
+      `SELECT r.id, r.status
        FROM conversion_resources r
        INNER JOIN conversion_groups g ON g.id = r.group_id
        WHERE r.id = ?1 AND r.group_id = ?2 AND g.channel_id = ?3`,
-    ).bind(resourceId, groupId, channelId).first<{ id: string }>();
+    ).bind(resourceId, groupId, channelId).first<{ id: string; status: string }>();
     if (!existing) return redirect(request, channelId, { error: "not-found" });
+
+    if (
+      existing.status === "enabled" &&
+      await wouldRemoveLastEnabledConversionResource(channelId, groupId, resourceId)
+    ) {
+      return redirect(request, channelId, { error: "resource-in-use", group: groupId });
+    }
 
     await env.DB.prepare(
       "DELETE FROM conversion_resources WHERE id = ?1 AND group_id = ?2",
