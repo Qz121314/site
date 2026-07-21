@@ -7,6 +7,7 @@ interface Props {
   page: PublicProductPage;
   categorySlug?: string | null;
   query?: string;
+  uncategorizedOnly?: boolean;
   emptyMessage?: string;
 }
 
@@ -15,6 +16,7 @@ const {
   page,
   categorySlug = null,
   query = "",
+  uncategorizedOnly = false,
   emptyMessage = "No products found.",
 } = Astro.props;
 ---
@@ -25,6 +27,7 @@ const {
   data-channel={channelSlug}
   data-category={categorySlug ?? ""}
   data-query={query}
+  data-uncategorized={uncategorizedOnly ? "1" : "0"}
   data-next-page={page.page + 1}
 >
   {page.products.length > 0 ? (
@@ -116,6 +119,7 @@ const {
         const params = new URLSearchParams({ page: String(page) });
         if (root.dataset.category) params.set('category', root.dataset.category);
         if (root.dataset.query) params.set('q', root.dataset.query);
+        if (root.dataset.uncategorized === '1') params.set('uncategorized', '1');
 
         try {
           const response = await fetch(`/api/public/channels/${encodeURIComponent(root.dataset.channel || '')}/products?${params}`, {
