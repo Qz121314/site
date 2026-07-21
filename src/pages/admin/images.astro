@@ -21,20 +21,31 @@ const library = await loadAdminImagePage({ query, filter, page: requestedPage })
 const saved = Astro.url.searchParams.get("saved");
 const error = Astro.url.searchParams.get("error");
 const count = Number(Astro.url.searchParams.get("count") ?? "0");
+const pending = Number(Astro.url.searchParams.get("pending") ?? "0");
+const retried = Number(Astro.url.searchParams.get("retried") ?? "0");
 const imported = Number(Astro.url.searchParams.get("imported") ?? "0");
 const skipped = Number(Astro.url.searchParams.get("skipped") ?? "0");
 const partial = Astro.url.searchParams.get("partial") === "1";
 const scanCursor = (Astro.url.searchParams.get("cursor") ?? "").trim().slice(0, 2048);
+const safeCount = Number.isFinite(count) ? count : 0;
+const safePending = Number.isFinite(pending) ? pending : 0;
+const safeRetried = Number.isFinite(retried) ? retried : 0;
 
 const savedMessage = saved === "deleted"
   ? "图片及对应 R2 对象已删除。"
-  : saved === "bulk-deleted"
-    ? `已批量删除 ${Number.isFinite(count) ? count : 0} 张未引用图片。`
-    : saved === "clean"
-      ? `未引用图片清理完成，共删除 ${Number.isFinite(count) ? count : 0} 张。`
-      : saved === "scanned"
-        ? `R2 扫描完成，导入 ${Number.isFinite(imported) ? imported : 0} 张，跳过 ${Number.isFinite(skipped) ? skipped : 0} 个对象${partial ? "；仍有后续对象" : ""}。`
-        : "";
+  : saved === "delete-pending"
+    ? "图片记录已删除；R2 对象暂时删除失败，已进入重试队列。"
+    : saved === "bulk-deleted"
+      ? `已批量删除 ${safeCount} 张未引用图片及其 R2 对象。`
+      : saved === "bulk-delete-pending"
+        ? `已移除 ${safeCount} 张图片记录，其中 ${safePending} 个 R2 对象进入重试队列。`
+        : saved === "clean"
+          ? `未引用图片清理完成，新删除 ${safeCount} 张，重试完成 ${safeRetried} 个 R2 对象。`
+          : saved === "clean-pending"
+            ? `清理已完成，新删除 ${safeCount} 张，重试完成 ${safeRetried} 个；仍有 ${safePending} 个 R2 对象等待重试。`
+            : saved === "scanned"
+              ? `R2 扫描完成，导入 ${Number.isFinite(imported) ? imported : 0} 张，跳过 ${Number.isFinite(skipped) ? skipped : 0} 个对象${partial ? "；仍有后续对象" : ""}。`
+              : "";
 
 const errorMessages: Record<string, string> = {
   "not-found": "找不到该图片记录。",
@@ -72,11 +83,11 @@ const unusedCount = selectableCount;
 
 <AdminLayout title="图片库">
   <div slot="actions" class="admin-page-action-group">
-    <form action="/api/admin/images/scan" method="post" onsubmit="return confirm('扫描 R2 并恢复由本系统上传、但数据库中缺失的图片记录？')">
+    <form action="/api/admin/images/scan" method="post" onsubmit="return confirm('扫描 R2 并恢复由本系统上传、但数据库中缺失的图片记录？删除队列中的对象不会恢复。')">
       {scanCursor && <input type="hidden" name="cursor" value={scanCursor} />}
       <button class="button secondary" type="submit">{scanCursor ? "继续扫描" : "扫描 R2"}</button>
     </form>
-    <form action="/api/admin/images/cleanup" method="post" onsubmit="return confirm('删除最多 100 张上传超过 24 小时且完全未引用的图片？')">
+    <form action="/api/admin/images/cleanup" method="post" onsubmit="return confirm('重试待删除的 R2 对象，并删除最多 100 张上传超过 24 小时且完全未引用的图片？')">
       <button class="button danger" type="submit">清理未引用</button>
     </form>
   </div>
