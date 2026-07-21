@@ -13,7 +13,9 @@ export async function categoryFiltersBelongToChannel(
   const row = await env.DB.prepare(
     `SELECT COUNT(*) AS count
      FROM category_filters
-     WHERE channel_id = ?1 AND id IN (${placeholders})`,
+     WHERE channel_id = ?1
+       AND status = 'enabled'
+       AND id IN (${placeholders})`,
   ).bind(channelId, ...uniqueIds).first<{ count: number }>();
 
   return Number(row?.count ?? 0) === uniqueIds.length;
