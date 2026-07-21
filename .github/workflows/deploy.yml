@@ -66,6 +66,12 @@ jobs:
           set -o pipefail
           pnpm test 2>&1 | tee ci-logs/test.log
 
+      - name: 验证本地 D1 迁移
+        shell: bash
+        run: |
+          set -o pipefail
+          pnpm db:migrate:local 2>&1 | tee ci-logs/migrate-local.log
+
       - name: 构建 Astro SSR
         shell: bash
         run: |
