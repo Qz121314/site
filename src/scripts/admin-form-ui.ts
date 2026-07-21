@@ -5,13 +5,8 @@ function resizeTextarea(textarea: HTMLTextAreaElement): void {
 
 function initializeAutoGrow(root: ParentNode = document): void {
   root.querySelectorAll<HTMLTextAreaElement>("textarea[data-auto-grow]").forEach((textarea) => {
-    if (textarea.dataset.autoGrowReady === "1") {
-      resizeTextarea(textarea);
-      return;
-    }
-
     textarea.dataset.autoGrowReady = "1";
-    textarea.addEventListener("input", () => resizeTextarea(textarea));
+    textarea.oninput = () => resizeTextarea(textarea);
     requestAnimationFrame(() => resizeTextarea(textarea));
   });
 }
