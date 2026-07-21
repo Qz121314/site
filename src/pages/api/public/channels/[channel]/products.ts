@@ -9,13 +9,19 @@ import {
 export const prerender = false;
 
 const MAX_PUBLIC_PRODUCT_PAGE = 500;
+const PUBLIC_EDGE_CACHE_SECONDS = 30;
 
 function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
     status,
     headers: {
       "Content-Type": "application/json; charset=utf-8",
-      "Cache-Control": "no-store",
+      "Cache-Control": status === 200 ? "public, max-age=0, must-revalidate" : "no-store",
+      ...(status === 200
+        ? {
+            "Cloudflare-CDN-Cache-Control": `public, max-age=${PUBLIC_EDGE_CACHE_SECONDS}, stale-while-revalidate=${PUBLIC_EDGE_CACHE_SECONDS * 2}`,
+          }
+        : {}),
       "X-Content-Type-Options": "nosniff",
     },
   });
