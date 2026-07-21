@@ -1,0 +1,275 @@
+/*
+ * 后台布局第二版：以屏幕中心为操作焦点，限制无意义拉伸，
+ * 将高频操作保持在表单附近，并统一桌面与移动端密度。
+ */
+.admin-body {
+  --admin-sidebar-compact: 3.35rem;
+  --admin-sidebar-wide: 12.25rem;
+  --admin-workspace-max: 74rem;
+  --admin-workspace-narrow: 62rem;
+  --admin-surface: #ffffff;
+  --admin-canvas: #f4f7fb;
+  --admin-border: #dbe3ed;
+  --admin-border-strong: #c9d4e2;
+  background: var(--admin-canvas);
+}
+
+.admin-body .admin-content,
+.admin-body .admin-page-body {
+  background: var(--admin-canvas);
+}
+
+.admin-body .admin-page-header {
+  min-height: 3.35rem;
+  padding: 0;
+  background: rgba(255, 255, 255, .97);
+  backdrop-filter: blur(10px);
+}
+
+.admin-page-header-inner {
+  display: flex;
+  width: min(100%, var(--admin-workspace-max));
+  min-height: 3.35rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: .75rem;
+  margin: 0 auto;
+  padding: .45rem .85rem;
+}
+
+.admin-body .admin-page-title {
+  min-width: 0;
+  font-size: 1.02rem;
+  font-weight: 720;
+}
+
+.admin-body .admin-page-actions:empty { display: none; }
+.admin-page-action-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: .35rem;
+}
+
+.admin-body .admin-page-body {
+  padding: .8rem 1rem 1.5rem;
+}
+
+.admin-page-body-inner {
+  width: min(100%, var(--admin-workspace-max));
+  margin: 0 auto;
+}
+
+.admin-page-body-inner > .notice,
+.admin-page-body-inner > .error {
+  width: min(100%, var(--admin-workspace-narrow));
+  margin-right: auto;
+  margin-left: auto;
+}
+
+.admin-body .admin-sidebar {
+  padding: .5rem .4rem;
+  box-shadow: 1px 0 0 rgba(15, 23, 42, .02);
+}
+
+.admin-body .admin-sidebar-brand { min-height: 2.55rem; }
+.admin-body .admin-sidebar-link,
+.admin-body .admin-channel-summary,
+.admin-body .admin-empty-channels { min-height: 2rem; }
+
+.admin-body .admin-card,
+.admin-body .panel {
+  border-color: var(--admin-border);
+  border-radius: .55rem;
+  background: var(--admin-surface);
+  box-shadow: 0 1px 2px rgba(15, 23, 42, .035);
+}
+
+.admin-body .admin-card + .admin-card { margin-top: .7rem; }
+.admin-body .admin-stack { gap: .7rem; }
+
+.admin-body .admin-section-bar,
+.admin-body .admin-toolbar {
+  min-height: 2.45rem;
+  padding: .42rem .65rem;
+  border-color: var(--admin-border);
+  background: #f8fafc;
+}
+
+.admin-body .admin-section-bar h2,
+.admin-body .admin-toolbar h2 {
+  font-size: .88rem;
+  font-weight: 720;
+}
+
+.admin-body .admin-card-body { padding: .65rem; }
+.admin-body .admin-form-grid { gap: .5rem .6rem; }
+.admin-body .admin-field { gap: .22rem; }
+
+.admin-body .admin-field > label,
+.admin-body .direct-upload-heading label {
+  font-size: .72rem;
+  font-weight: 680;
+}
+
+.admin-body .admin-control,
+.admin-body .admin-field input,
+.admin-body .admin-field select,
+.admin-body .admin-field textarea,
+.admin-body .image-search input,
+.admin-body .image-search select {
+  min-height: 2.15rem;
+  height: 2.15rem;
+  border-color: var(--admin-border-strong);
+  border-radius: .38rem;
+  padding: .34rem .52rem;
+}
+
+.admin-body .admin-field textarea {
+  height: auto;
+  min-height: 4.25rem;
+  line-height: 1.5;
+}
+
+.admin-body textarea[data-auto-grow] {
+  min-height: 4.25rem;
+  overflow-y: hidden;
+  resize: none;
+}
+
+.admin-body .admin-field small,
+.admin-body .direct-upload-help,
+.admin-body .direct-upload-limit {
+  line-height: 1.4;
+}
+
+.admin-body .admin-form-actions {
+  align-items: end;
+  justify-content: flex-start;
+}
+
+.admin-body .button {
+  min-height: 2.15rem;
+  border-radius: .38rem;
+  padding: .32rem .62rem;
+}
+
+.admin-body form { margin: 0; }
+
+.admin-body .admin-table-wrap {
+  scrollbar-width: thin;
+}
+
+.admin-body .admin-table {
+  font-size: .77rem;
+}
+
+.admin-body .admin-table th,
+.admin-body .admin-table td {
+  height: 2.35rem;
+  padding: .32rem .52rem;
+}
+
+.admin-body .admin-table .cell-grow {
+  width: auto;
+  min-width: 13rem;
+}
+
+.admin-body .admin-table-actions {
+  align-items: center;
+  white-space: nowrap;
+}
+
+.admin-body .admin-empty {
+  padding: 1rem;
+}
+
+.admin-body .compact-table-wrap {
+  display: flex;
+  justify-content: center;
+}
+
+.admin-body .compact-table-wrap > .admin-table {
+  width: min(100%, 64rem);
+}
+
+.admin-body .readonly-value {
+  min-height: 2.15rem;
+  border-color: var(--admin-border);
+  border-radius: .38rem;
+}
+
+.admin-body .direct-image-upload { gap: .3rem; }
+.admin-body .direct-upload-input-row { gap: .35rem; }
+.admin-body .direct-upload-preview { gap: .45rem; }
+.admin-body .direct-upload-item { border-color: var(--admin-border); }
+
+.admin-body .audit-overview {
+  grid-template-columns: 8rem 8rem minmax(16rem, 1fr);
+  gap: .6rem;
+  margin-bottom: .7rem;
+}
+
+.admin-body .library-toolbar,
+.admin-body .admin-toolbar {
+  flex-wrap: wrap;
+}
+
+.admin-body .library-maintenance {
+  align-items: center;
+}
+
+.admin-body .image-search {
+  grid-template-columns: minmax(14rem, 1fr) 8rem auto auto;
+  gap: .4rem;
+  padding: .6rem;
+}
+
+.admin-body .image-grid {
+  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+  gap: .6rem;
+  padding: .6rem;
+}
+
+.admin-body .grid.metrics {
+  width: min(100%, 48rem);
+  margin: 0 auto;
+}
+
+.admin-body .metric { padding: .8rem; }
+
+@media (min-width: 768px) {
+  .admin-body .admin-page-header-inner { padding-right: 1rem; padding-left: 1rem; }
+  .admin-body .admin-page-body { padding-right: 1.25rem; padding-left: 1.25rem; }
+}
+
+@media (max-width: 900px) {
+  .admin-body .admin-page-header-inner {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: .4rem;
+  }
+
+  .admin-body .admin-page-actions,
+  .admin-page-action-group {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .admin-body .audit-overview {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .admin-body .audit-explanation { grid-column: 1 / -1; }
+}
+
+@media (max-width: 639px) {
+  .admin-body .admin-page-body { padding: .6rem; }
+  .admin-page-header-inner { padding: .45rem .6rem; }
+  .admin-body .admin-page-title { white-space: normal; }
+  .admin-page-action-group .button { flex: 1 1 auto; }
+  .admin-body .admin-section-bar,
+  .admin-body .admin-toolbar { align-items: flex-start; }
+  .admin-body .image-search { grid-template-columns: 1fr; }
+}
