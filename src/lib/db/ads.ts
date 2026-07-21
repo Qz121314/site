@@ -25,14 +25,6 @@ export type AdminAdPool = {
   advertisements: AdminAdvertisement[];
 };
 
-export type AdminAdPoolOption = {
-  id: string;
-  name: string;
-  status: AdPoolStatus;
-  advertisementCount: number;
-  enabledAdvertisementCount: number;
-};
-
 type PoolRow = {
   id: string;
   channel_id: string;
@@ -125,44 +117,5 @@ export async function loadAdminAdPools(channelId: string): Promise<AdminAdPool[]
   } catch (error) {
     console.error(JSON.stringify({ event: "admin_ad_pools_read_failed", channelId, error: String(error) }));
     return [];
-  }
-}
-
-export async function loadAdminAdPoolOptions(channelId: string): Promise<AdminAdPoolOption[]> {
-  try {
-    const result = await env.DB.prepare(
-      `SELECT
-         p.id,
-         p.name,
-         p.status,
-         COUNT(ad.id) AS advertisementCount,
-         COUNT(CASE WHEN ad.status = 'enabled' THEN 1 END) AS enabledAdvertisementCount
-       FROM ad_pools p
-       LEFT JOIN advertisements ad ON ad.pool_id = p.id
-       WHERE p.channel_id = ?1
-       GROUP BY p.id, p.name, p.status, p.created_at
-       ORDER BY p.created_at ASC`,
-    ).bind(channelId).all<AdminAdPoolOption>();
-
-    return result.results.map((pool) => ({
-      ...pool,
-      advertisementCount: Number(pool.advertisementCount ?? 0),
-      enabledAdvertisementCount: Number(pool.enabledAdvertisementCount ?? 0),
-    }));
-  } catch (error) {
-    console.error(JSON.stringify({ event: "admin_ad_pool_options_read_failed", channelId, error: String(error) }));
-    return [];
-  }
-}
-
-export async function loadChannelHeroAdPoolId(channelId: string): Promise<string | null> {
-  try {
-    const row = await env.DB.prepare(
-      "SELECT hero_ad_pool_id FROM channels WHERE id = ?1",
-    ).bind(channelId).first<ChannelHeroRow>();
-    return row?.hero_ad_pool_id ?? null;
-  } catch (error) {
-    console.error(JSON.stringify({ event: "admin_channel_hero_pool_read_failed", channelId, error: String(error) }));
-    return null;
   }
 }

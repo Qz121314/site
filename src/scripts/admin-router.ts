@@ -63,9 +63,6 @@ function cleanRuntimeState(main: HTMLElement): HTMLElement {
   clone.querySelectorAll<HTMLFormElement>("form[data-direct-upload-validation]").forEach((form) => {
     delete form.dataset.directUploadValidation;
   });
-  clone.querySelectorAll<HTMLElement>("[data-image-picker-ready]").forEach((element) => {
-    delete element.dataset.imagePickerReady;
-  });
   clone.querySelectorAll<HTMLElement>("[data-product-editor-ready]").forEach((element) => {
     delete element.dataset.productEditorReady;
   });
@@ -299,6 +296,11 @@ async function fetchSnapshot(url: string, init?: RequestInit): Promise<PageSnaps
     signal: controller.signal,
   });
 
+  if (response.status === 401) {
+    pageCache.clear();
+    window.location.assign("/admin/login");
+    throw new DOMException("Session expired", "AbortError");
+  }
   if (!response.ok) throw new Error(`HTTP ${response.status}`);
   const html = await response.text();
   const nextDocument = parser.parseFromString(html, "text/html");
@@ -429,7 +431,7 @@ document.addEventListener("submit", (event) => {
 window.addEventListener("beforeunload", (event) => {
   if (!hasDirtyForm()) return;
   event.preventDefault();
-  event.returnValue = "";
+  Reflect.set(event, "returnValue", "");
 });
 
 window.addEventListener("popstate", () => {

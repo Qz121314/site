@@ -201,11 +201,6 @@
 .admin-body .direct-upload-preview { gap: .45rem; }
 .admin-body .direct-upload-item { border-color: var(--admin-border); }
 
-.admin-body .audit-overview {
-  grid-template-columns: 8rem 8rem minmax(16rem, 1fr);
-  gap: .6rem;
-  margin-bottom: .7rem;
-}
 
 .admin-body .library-toolbar,
 .admin-body .admin-toolbar {
@@ -251,11 +246,6 @@
     justify-content: flex-end;
   }
 
-  .admin-body .audit-overview {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .admin-body .audit-explanation { grid-column: 1 / -1; }
 }
 
 @media (max-width: 639px) {

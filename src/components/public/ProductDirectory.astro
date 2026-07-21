@@ -85,12 +85,6 @@ const nextPageHref = page.hasMore ? publicPageHref(Astro.url, page.page + 1) : n
         link.append(placeholder);
       }
 
-      if (product.featured) {
-        const featured = document.createElement('span');
-        featured.className = 'visual-card-featured';
-        featured.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9L12 3Z" fill="currentColor"></path></svg><span>Featured</span>';
-        link.append(featured);
-      }
 
       const overlay = document.createElement('span');
       overlay.className = 'visual-card-overlay';

@@ -16,9 +16,17 @@ interface Props {
   options: AdminProductOptions;
   product?: AdminProduct | null;
   gallery?: GalleryValue[];
+  cancelHref?: string | null;
 }
 
-const { formId, channelId, options, product = null, gallery = [] } = Astro.props;
+const {
+  formId,
+  channelId,
+  options,
+  product = null,
+  gallery = [],
+  cancelHref = null,
+} = Astro.props;
 const selectedCategory = product?.categoryId
   ? options.categories.find((category) => category.id === product.categoryId) ?? null
   : null;
@@ -36,9 +44,17 @@ const prefix = product ? `product-${product.id}` : "product-new";
 
 <div class="product-content-editor" data-product-editor>
   <section class="admin-card product-editor-card">
-    <div class="admin-section-bar">
-      <h2>{product ? `编辑产品 · ${product.title}` : "产品信息录入"}</h2>
-      {product && <span class="admin-section-note">/{product.slug}</span>}
+    <div class="admin-section-bar product-editor-header">
+      <div class="product-editor-heading">
+        <h2>{product ? `编辑产品 · ${product.title}` : "产品信息录入"}</h2>
+        {product && <span class="admin-section-note">/{product.slug}</span>}
+      </div>
+      <div class="product-editor-actions">
+        {cancelHref && <a class="button secondary" href={cancelHref}>取消编辑</a>}
+        <button class="button" type="submit" form={formId}>
+          {product ? "保存产品内容" : "保存新产品"}
+        </button>
+      </div>
     </div>
 
     <div class="admin-card-body product-content-fields">

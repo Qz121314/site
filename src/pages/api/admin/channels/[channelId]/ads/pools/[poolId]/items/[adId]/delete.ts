@@ -1,6 +1,7 @@
 import { env } from "cloudflare:workers";
 import type { APIRoute } from "astro";
 import { isSameOriginPost } from "@/lib/auth/session";
+import { adPoolIntegrityErrorCode } from "@/lib/admin/ad-form";
 
 export const prerender = false;
 
@@ -32,6 +33,6 @@ export const POST: APIRoute = async ({ request, params }) => {
     return redirect(request, channelId, { saved: "ad-deleted", pool: poolId });
   } catch (error) {
     console.error(JSON.stringify({ event: "admin_ad_delete_failed", channelId, poolId, adId, error: String(error) }));
-    return redirect(request, channelId, { error: "database", pool: poolId });
+    return redirect(request, channelId, { error: adPoolIntegrityErrorCode(error) ?? "database", pool: poolId });
   }
 };

@@ -1,7 +1,7 @@
 import { env } from "cloudflare:workers";
 import type { APIRoute } from "astro";
 import { isSameOriginPost } from "@/lib/auth/session";
-import { parseAdvertisementForm } from "@/lib/admin/ad-form";
+import { adPoolIntegrityErrorCode, parseAdvertisementForm } from "@/lib/admin/ad-form";
 import { imageAssetsExist } from "@/lib/db/image-options";
 
 export const prerender = false;
@@ -56,6 +56,6 @@ export const POST: APIRoute = async ({ request, params }) => {
     return redirect(request, channelId, { saved: "ad-updated", pool: poolId, ad: adId });
   } catch (error) {
     console.error(JSON.stringify({ event: "admin_ad_update_failed", channelId, poolId, adId, error: String(error) }));
-    return redirect(request, channelId, { error: "database", pool: poolId });
+    return redirect(request, channelId, { error: adPoolIntegrityErrorCode(error) ?? "database", pool: poolId });
   }
 };

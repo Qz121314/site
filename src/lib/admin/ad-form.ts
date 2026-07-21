@@ -82,3 +82,5 @@ export function isDuplicateAdPoolNameError(error: unknown): boolean {
   const message = String(error);
   return message.includes("idx_ad_pools_channel_name") || message.includes("ad_pools.channel_id, ad_pools.name");
 }
+
+export { adPoolIntegrityErrorCode } from "@/lib/admin/pool-integrity";

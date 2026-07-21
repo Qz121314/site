@@ -1,7 +1,7 @@
 import { env } from "cloudflare:workers";
 
 export const ADMIN_IMAGE_PAGE_SIZE = 48;
-export const UNUSED_IMAGE_CLEANUP_LIMIT = 100;
+const UNUSED_IMAGE_CLEANUP_LIMIT = 100;
 export const MAX_IMAGE_MUTATION_IDS = 100;
 
 export const ADMIN_IMAGE_FILTERS = ["all", "used", "unused"] as const;
@@ -268,30 +268,11 @@ export async function loadAdminImagePage(input: {
   }
 }
 
-export async function loadAdminImage(imageId: string): Promise<AdminImageAsset | null> {
-  const row = await env.DB.prepare(
-    `${usageCtes}
-     SELECT * FROM images_with_usage WHERE id = ?1`,
-  ).bind(imageId).first<AdminImageRow>();
-  return row ? mapImage(row) : null;
-}
-
 export async function loadAdminImageObject(imageId: string): Promise<AdminImageObject | null> {
   const row = await env.DB.prepare(
     "SELECT id, object_key, mime_type FROM image_assets WHERE id = ?1",
   ).bind(imageId).first<ImageObjectRow>();
   return row ? mapImageObject(row) : null;
-}
-
-export async function loadAdminImages(imageIds: readonly string[]): Promise<AdminImageAsset[]> {
-  const uniqueIds = [...new Set(imageIds.filter(Boolean))].slice(0, MAX_IMAGE_MUTATION_IDS);
-  if (uniqueIds.length === 0) return [];
-  const placeholders = uniqueIds.map((_, index) => `?${index + 1}`).join(", ");
-  const result = await env.DB.prepare(
-    `${usageCtes}
-     SELECT * FROM images_with_usage WHERE id IN (${placeholders})`,
-  ).bind(...uniqueIds).all<AdminImageRow>();
-  return result.results.map(mapImage);
 }
 
 export async function loadUnusedImageObjectsForCleanup(): Promise<AdminImageObject[]> {
@@ -308,43 +289,4 @@ export async function loadUnusedImageObjectsForCleanup(): Promise<AdminImageObje
      LIMIT ?1`,
   ).bind(UNUSED_IMAGE_CLEANUP_LIMIT).all<ImageObjectRow>();
   return result.results.map(mapImageObject);
-}
-
-export async function deleteUnusedImageAssets(imageIds: readonly string[]): Promise<ImageDeleteResult> {
-  const uniqueIds = [...new Set(imageIds.filter(Boolean))];
-  if (uniqueIds.length === 0 || uniqueIds.length > MAX_IMAGE_MUTATION_IDS) {
-    return { found: [], deleted: [], remainingIds: uniqueIds };
-  }
-
-  const placeholders = uniqueIds.map((_, index) => `?${index + 1}`).join(", ");
-  const foundResult = await env.DB.prepare(
-    `SELECT id, object_key, mime_type
-     FROM image_assets
-     WHERE id IN (${placeholders})`,
-  ).bind(...uniqueIds).all<ImageObjectRow>();
-  const found = foundResult.results.map(mapImageObject);
-  if (found.length === 0) return { found: [], deleted: [], remainingIds: [] };
-
-  const foundIds = found.map((image) => image.id);
-  const foundPlaceholders = foundIds.map((_, index) => `?${index + 1}`).join(", ");
-  await env.DB.prepare(
-    `DELETE FROM image_assets
-     WHERE id IN (${foundPlaceholders})
-       AND NOT EXISTS (SELECT 1 FROM site_settings s WHERE s.logo_asset_id = image_assets.id OR s.favicon_asset_id = image_assets.id)
-       AND NOT EXISTS (SELECT 1 FROM categories c WHERE c.image_asset_id = image_assets.id)
-       AND NOT EXISTS (SELECT 1 FROM products p WHERE p.cover_asset_id = image_assets.id)
-       AND NOT EXISTS (SELECT 1 FROM product_images pi WHERE pi.image_asset_id = image_assets.id)
-       AND NOT EXISTS (SELECT 1 FROM advertisements ad WHERE ad.image_asset_id = image_assets.id)`,
-  ).bind(...foundIds).run();
-
-  const remainingResult = await env.DB.prepare(
-    `SELECT id FROM image_assets WHERE id IN (${foundPlaceholders})`,
-  ).bind(...foundIds).all<{ id: string }>();
-  const remainingIds = remainingResult.results.map((row) => row.id);
-  const remaining = new Set(remainingIds);
-  return {
-    found,
-    deleted: found.filter((image) => !remaining.has(image.id)),
-    remainingIds,
-  };
 }

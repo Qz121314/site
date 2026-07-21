@@ -1,6 +1,7 @@
 import { env } from "cloudflare:workers";
 import type { APIRoute } from "astro";
 import { isSameOriginPost } from "@/lib/auth/session";
+import { adPoolIntegrityErrorCode } from "@/lib/admin/ad-form";
 
 export const prerender = false;
 
@@ -19,9 +20,22 @@ export const POST: APIRoute = async ({ request, params }) => {
 
   try {
     const pool = await env.DB.prepare(
-      "SELECT id FROM ad_pools WHERE id = ?1 AND channel_id = ?2",
-    ).bind(poolId, channelId).first<{ id: string }>();
+      `SELECT
+         pool.id,
+         pool.status,
+         EXISTS(
+           SELECT 1
+           FROM advertisements advertisement
+           WHERE advertisement.pool_id = pool.id
+             AND advertisement.status = 'enabled'
+         ) AS enabled_advertisements
+       FROM ad_pools pool
+       WHERE pool.id = ?1 AND pool.channel_id = ?2`,
+    ).bind(poolId, channelId).first<{ id: string; status: string; enabled_advertisements: number }>();
     if (!pool) return redirect(request, channelId, { error: "not-found" });
+    if (pool.status !== "enabled" || !Boolean(pool.enabled_advertisements)) {
+      return redirect(request, channelId, { error: "unavailable", pool: poolId });
+    }
 
     const result = await env.DB.prepare(
       `UPDATE channels
@@ -33,6 +47,6 @@ export const POST: APIRoute = async ({ request, params }) => {
     return redirect(request, channelId, { saved: "bound", pool: poolId });
   } catch (error) {
     console.error(JSON.stringify({ event: "admin_ad_pool_bind_failed", channelId, poolId, error: String(error) }));
-    return redirect(request, channelId, { error: "database" });
+    return redirect(request, channelId, { error: adPoolIntegrityErrorCode(error) ?? "database", pool: poolId });
   }
 };

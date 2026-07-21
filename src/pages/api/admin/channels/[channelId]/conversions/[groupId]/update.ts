@@ -3,6 +3,7 @@ import type { APIRoute } from "astro";
 import { isSameOriginPost } from "@/lib/auth/session";
 import {
   conversionGroupNameExists,
+  isConversionAvailabilityConstraintError,
   isDuplicateConversionGroupNameError,
   parseConversionGroupForm,
 } from "@/lib/admin/conversion-form";
@@ -29,9 +30,23 @@ export const POST: APIRoute = async ({ request, params }) => {
 
   try {
     const existing = await env.DB.prepare(
-      "SELECT id FROM conversion_groups WHERE id = ?1 AND channel_id = ?2",
-    ).bind(groupId, channelId).first<{ id: string }>();
+      `SELECT
+         conversion_group.id,
+         conversion_group.status,
+         EXISTS(
+           SELECT 1
+           FROM products product
+           WHERE product.channel_id = conversion_group.channel_id
+             AND product.conversion_group_id = conversion_group.id
+             AND product.status = 'published'
+         ) AS published_products
+       FROM conversion_groups conversion_group
+       WHERE conversion_group.id = ?1 AND conversion_group.channel_id = ?2`,
+    ).bind(groupId, channelId).first<{ id: string; status: string; published_products: number }>();
     if (!existing) return redirect(request, channelId, { error: "not-found" });
+    if (existing.status === "enabled" && status === "disabled" && Boolean(existing.published_products)) {
+      return redirect(request, channelId, { error: "group-in-use", group: groupId });
+    }
 
     if (await conversionGroupNameExists(channelId, name, groupId)) {
       return redirect(request, channelId, { error: "group-duplicate", group: groupId });
@@ -49,7 +64,11 @@ export const POST: APIRoute = async ({ request, params }) => {
   } catch (error) {
     console.error(JSON.stringify({ event: "admin_conversion_group_update_failed", channelId, groupId, name, error: String(error) }));
     return redirect(request, channelId, {
-      error: isDuplicateConversionGroupNameError(error) ? "group-duplicate" : "database",
+      error: isDuplicateConversionGroupNameError(error)
+        ? "group-duplicate"
+        : isConversionAvailabilityConstraintError(error)
+          ? "group-in-use"
+          : "database",
       group: groupId,
     });
   }

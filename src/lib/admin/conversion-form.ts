@@ -127,3 +127,5 @@ export function isDuplicateConversionGroupNameError(error: unknown): boolean {
     message.includes("conversion_groups.channel_id, conversion_groups.name")
   );
 }
+
+export { isConversionAvailabilityConstraintError } from "@/lib/admin/pool-integrity";

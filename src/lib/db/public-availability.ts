@@ -12,7 +12,6 @@ type ProductCardRow = {
   slug: string;
   object_key: string | null;
   tags: string;
-  featured: number;
 };
 
 type AvailabilityRow = { available: number };
@@ -35,7 +34,6 @@ function mapProduct(row: ProductCardRow, baseUrl: string): PublicProductCard {
     slug: row.slug,
     coverUrl: row.object_key ? buildPublicImageUrl(baseUrl, row.object_key) : null,
     tags: parseTags(row.tags),
-    featured: row.featured === 1,
   };
 }
 
@@ -52,14 +50,13 @@ export async function loadPublicUncategorizedProducts(input: {
        p.title,
        p.slug,
        cover.object_key,
-       p.tags,
-       p.featured
+       p.tags
      FROM products p
      LEFT JOIN image_assets cover ON cover.id = p.cover_asset_id
      WHERE p.channel_id = ?1
        AND p.status = 'published'
        AND p.category_id IS NULL
-     ORDER BY p.featured DESC, p.sort_order ASC, p.created_at DESC
+     ORDER BY p.sort_order ASC, p.created_at DESC
      LIMIT ?2 OFFSET ?3`,
   ).bind(input.channelId, PUBLIC_PRODUCT_PAGE_SIZE + 1, offset).all<ProductCardRow>();
 

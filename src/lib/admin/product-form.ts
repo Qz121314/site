@@ -210,11 +210,3 @@ export async function prepareProductPublishing(
     "published",
   );
 }
-
-export function isDuplicateProductSlugError(error: unknown): boolean {
-  const message = String(error);
-  return (
-    message.includes("UNIQUE constraint failed: products.channel_id, products.slug") ||
-    message.includes("products.channel_id, products.slug")
-  );
-}

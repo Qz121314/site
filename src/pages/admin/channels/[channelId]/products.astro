@@ -146,11 +146,8 @@ const galleryValues = selectedImages.map((image) => ({
               options={options}
               product={selectedProduct}
               gallery={galleryValues}
+              cancelHref={selectedProduct ? productHref({ edit: null }) : null}
             />
-            <div class="product-content-form-actions">
-              {selectedProduct && <a class="button secondary" href={productHref({ edit: null })}>取消编辑</a>}
-              <button class="button" type="submit">{selectedProduct ? "保存产品内容" : "保存新产品"}</button>
-            </div>
           </form>
         </section>
 
