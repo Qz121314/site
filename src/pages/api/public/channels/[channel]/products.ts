@@ -5,6 +5,7 @@ import {
   loadPublicProducts,
   loadPublicSiteShell,
 } from "@/lib/db/public";
+import { loadPublicUncategorizedProducts } from "@/lib/db/public-availability";
 
 export const prerender = false;
 
@@ -35,6 +36,9 @@ export const GET: APIRoute = async ({ params, url }) => {
 
   const categorySlug = (url.searchParams.get("category") ?? "").trim().slice(0, 96);
   const query = (url.searchParams.get("q") ?? "").trim().slice(0, 100);
+  const uncategorizedOnly = url.searchParams.get("uncategorized") === "1";
+  if (uncategorizedOnly && categorySlug) return json({ error: "INVALID_PRODUCT_FILTER" }, 400);
+
   const site = await loadPublicSiteShell();
   const channel = findPublicChannel(site, channelSlug);
   if (!channel) return json({ error: "CHANNEL_NOT_FOUND" }, 404);
@@ -44,13 +48,19 @@ export const GET: APIRoute = async ({ params, url }) => {
     : null;
   if (categorySlug && !category) return json({ error: "CATEGORY_NOT_FOUND" }, 404);
 
-  const result = await loadPublicProducts({
-    channelId: channel.id,
-    baseUrl: site.r2PublicBaseUrl,
-    page,
-    categoryId: category?.id ?? null,
-    query,
-  });
+  const result = uncategorizedOnly
+    ? await loadPublicUncategorizedProducts({
+        channelId: channel.id,
+        baseUrl: site.r2PublicBaseUrl,
+        page,
+      })
+    : await loadPublicProducts({
+        channelId: channel.id,
+        baseUrl: site.r2PublicBaseUrl,
+        page,
+        categoryId: category?.id ?? null,
+        query,
+      });
 
   return json(result);
 };
