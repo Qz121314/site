@@ -1,7 +1,7 @@
 import { env } from "cloudflare:workers";
 import type { APIRoute } from "astro";
 import { isSameOriginPost } from "@/lib/auth/session";
-import { deleteUnusedImageAssets } from "@/lib/db/images";
+import { deleteUnusedImageAssetsAtomically } from "@/lib/db/image-delete";
 
 export const prerender = false;
 
@@ -18,14 +18,17 @@ export const POST: APIRoute = async ({ request, params }) => {
   if (!imageId) return new Response("Not Found", { status: 404 });
 
   try {
-    const result = await deleteUnusedImageAssets([imageId]);
+    const result = await deleteUnusedImageAssetsAtomically([imageId]);
     if (result.found.length === 0) return redirect(request, { error: "not-found" });
     if (result.deleted.length === 0) return redirect(request, { error: "in-use" });
 
-    try {
-      await env.MEDIA_BUCKET.delete(result.deleted[0]?.objectKey ?? "");
-    } catch (error) {
-      console.error(JSON.stringify({ event: "admin_image_r2_cleanup_deferred", imageId, error: String(error) }));
+    const objectKey = result.deleted[0]?.objectKey;
+    if (objectKey) {
+      try {
+        await env.MEDIA_BUCKET.delete(objectKey);
+      } catch (error) {
+        console.error(JSON.stringify({ event: "admin_image_r2_cleanup_deferred", imageId, objectKey, error: String(error) }));
+      }
     }
     return redirect(request, { saved: "deleted" });
   } catch (error) {
