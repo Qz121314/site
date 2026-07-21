@@ -19,7 +19,7 @@ permissions:
 
 concurrency:
   group: site-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
   validate-and-deploy:
@@ -84,15 +84,28 @@ jobs:
           set -o pipefail
           pnpm verify:deploy-config 2>&1 | tee ci-logs/deploy-config.log
 
-      - name: 应用 D1 数据库迁移
+      - name: 验证生产部署凭据
         if: github.event_name != 'pull_request'
         shell: bash
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          ADMIN_PASSWORD: ${{ secrets.ADMIN_PASSWORD }}
+          SESSION_SECRET: ${{ secrets.SESSION_SECRET }}
         run: |
           set -o pipefail
-          pnpm db:migrate:remote 2>&1 | tee ci-logs/migrate.log
+          node --input-type=module <<'NODE'
+          const required = [
+            "CLOUDFLARE_API_TOKEN",
+            "CLOUDFLARE_ACCOUNT_ID",
+            "ADMIN_PASSWORD",
+            "SESSION_SECRET",
+          ];
+          for (const name of required) {
+            if (!process.env[name]) throw new Error(`Missing GitHub Secret: ${name}`);
+          }
+          NODE
+          pnpm exec wrangler whoami 2>&1 | tee ci-logs/cloudflare-auth.log
 
       - name: 创建临时 Worker Secrets 文件
         if: github.event_name != 'pull_request'
@@ -103,15 +116,31 @@ jobs:
         run: |
           node --input-type=module <<'NODE'
           import { writeFileSync } from "node:fs";
-          const required = ["ADMIN_PASSWORD", "SESSION_SECRET"];
-          for (const name of required) {
-            if (!process.env[name]) throw new Error(`Missing GitHub Secret: ${name}`);
-          }
           writeFileSync(".secrets.production.json", JSON.stringify({
             ADMIN_PASSWORD: process.env.ADMIN_PASSWORD,
             SESSION_SECRET: process.env.SESSION_SECRET,
           }));
           NODE
+
+      - name: 记录迁移前 D1 恢复书签
+        if: github.event_name != 'pull_request'
+        shell: bash
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -o pipefail
+          pnpm exec wrangler d1 time-travel info DB --json 2>&1 | tee ci-logs/d1-pre-migration-bookmark.json
+
+      - name: 应用 D1 数据库迁移
+        if: github.event_name != 'pull_request'
+        shell: bash
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -o pipefail
+          pnpm db:migrate:remote 2>&1 | tee ci-logs/migrate.log
 
       - name: 部署 Cloudflare Worker
         if: github.event_name != 'pull_request'
