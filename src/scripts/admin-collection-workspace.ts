@@ -1,3 +1,5 @@
+const initializedWorkspaces = new WeakSet<HTMLElement>();
+
 function normalizeSearch(value: string): string {
   return value.trim().replace(/\s+/gu, " ").toLocaleLowerCase("zh-CN");
 }
@@ -30,7 +32,7 @@ function selectCollectionItem(root: HTMLElement, selectedId: string, updateUrl =
 }
 
 function initializeCollectionWorkspace(root: HTMLElement): void {
-  if (root.dataset.collectionWorkspaceReady === "1") return;
+  if (initializedWorkspaces.has(root)) return;
 
   const search = root.querySelector<HTMLInputElement>("[data-collection-search]");
   const items = Array.from(root.querySelectorAll<HTMLElement>("[data-collection-item]"));
@@ -65,7 +67,7 @@ function initializeCollectionWorkspace(root: HTMLElement): void {
     selectCollectionItem(root, item.dataset.collectionItem ?? "");
   });
 
-  root.dataset.collectionWorkspaceReady = "1";
+  initializedWorkspaces.add(root);
   applySearch();
 }
 
