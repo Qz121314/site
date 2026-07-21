@@ -56,7 +56,7 @@ const metaPixelId = site.metaPixelId;
       </script>
     )}
 
-    {ga4Id && <script async src={`https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(ga4Id)}`}></script>}
+    {ga4Id && <script is:inline async src={`https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(ga4Id)}`}></script>}
     {ga4Id && (
       <script is:inline define:vars={{ ga4Id }}>
         window.dataLayer = window.dataLayer || [];
