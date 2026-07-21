@@ -7,6 +7,7 @@ type PageSnapshot = {
   url: string;
   title: string;
   mainHtml: string;
+  headStylesHtml: string;
   outsideScripts: ScriptSnapshot[];
   createdAt: number;
 };
@@ -46,6 +47,12 @@ function outsideScripts(documentValue: Document, main: Element, responseUrl: str
     .map((script) => snapshotScript(script, responseUrl));
 }
 
+function snapshotHeadStyles(documentValue: Document): string {
+  return Array.from(
+    documentValue.head.querySelectorAll<HTMLLinkElement | HTMLStyleElement>('link[rel="stylesheet"][href], style'),
+  ).map((element) => element.outerHTML).join("");
+}
+
 function cleanRuntimeState(main: HTMLElement): HTMLElement {
   const clone = main.cloneNode(true) as HTMLElement;
   clone.removeAttribute("aria-busy");
@@ -78,6 +85,7 @@ function createSnapshot(documentValue: Document, url: string): PageSnapshot | nu
     url: responseUrl,
     title: documentValue.title,
     mainHtml: cleanRuntimeState(main).outerHTML,
+    headStylesHtml: snapshotHeadStyles(documentValue),
     outsideScripts: outsideScripts(documentValue, main, responseUrl),
     createdAt: Date.now(),
   };
@@ -188,6 +196,14 @@ function synchronizeStyles(documentValue: Document, responseUrl: string): void {
   }
 }
 
+function synchronizeSnapshotStyles(snapshot: PageSnapshot): void {
+  const styleDocument = parser.parseFromString(
+    `<!doctype html><html><head>${snapshot.headStylesHtml}</head><body></body></html>`,
+    "text/html",
+  );
+  synchronizeStyles(styleDocument, snapshot.url);
+}
+
 function updateSidebar(urlValue: string): void {
   const path = new URL(urlValue).pathname;
   const links = Array.from(document.querySelectorAll<HTMLAnchorElement>('.admin-sidebar a[href^="/admin"]'));
@@ -249,6 +265,7 @@ function applySnapshot(snapshot: PageSnapshot, scrollToTop: boolean): void {
     return;
   }
 
+  synchronizeSnapshotStyles(snapshot);
   currentMain.replaceWith(nextMain);
   document.title = snapshot.title;
   currentUrl = snapshot.url;
@@ -284,7 +301,6 @@ async function fetchSnapshot(url: string, init?: RequestInit): Promise<PageSnaps
     throw new Error("Missing admin content");
   }
 
-  synchronizeStyles(nextDocument, response.url || url);
   const snapshot = createSnapshot(nextDocument, response.url || url);
   if (!snapshot) throw new Error("Invalid admin response");
   return snapshot;
