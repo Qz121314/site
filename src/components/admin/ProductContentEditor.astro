@@ -22,6 +22,13 @@ const selectedCategory = product?.categoryId
   ? options.categories.find((category) => category.id === product.categoryId) ?? null
   : null;
 const selectedFilterIds = new Set(selectedCategory?.filterIds ?? []);
+const enabledFilters = options.filters.filter((filter) => filter.status === "enabled");
+const selectedEnabledFilters = enabledFilters.filter((filter) => selectedFilterIds.has(filter.id));
+const filterSummary = selectedEnabledFilters.length === 0
+  ? "未选择"
+  : selectedEnabledFilters.length === 1
+    ? selectedEnabledFilters[0].name
+    : `已选 ${selectedEnabledFilters.length} 项`;
 const prefix = product ? `product-${product.id}` : "product-new";
 ---
 
@@ -38,7 +45,7 @@ const prefix = product ? `product-${product.id}` : "product-new";
         <input id={`${prefix}-title`} name="title" maxlength="160" required autocomplete="off" value={product?.title ?? ""} autofocus />
       </div>
 
-      <div class="admin-field">
+      <div class="admin-field product-content-category">
         <label for={`${prefix}-category`}>产品分类</label>
         <input
           id={`${prefix}-category`}
@@ -56,43 +63,36 @@ const prefix = product ? `product-${product.id}` : "product-new";
         </datalist>
       </div>
 
-      <div class="admin-field">
-        <label for={`${prefix}-conversion`}>转化组</label>
-        <select id={`${prefix}-conversion`} name="conversionGroupId">
-          <option value="">暂不绑定</option>
-          {options.conversionGroups.map((group) => (
-            <option value={group.id} selected={product?.conversionGroupId === group.id}>{group.name}</option>
-          ))}
-        </select>
-      </div>
-
       <div class="admin-field product-content-filters">
         <label>分类筛选</label>
-        {options.filters.length > 0 ? (
-          <div class="filter-choice-grid" data-category-filter-list>
-            {options.filters.map((filter) => {
-              const enabled = filter.status === "enabled";
-              return (
-                <label class:list={["filter-choice", !enabled && "is-disabled"]} title={enabled ? undefined : "该筛选已停用"}>
+        {enabledFilters.length > 0 ? (
+          <details class="product-filter-dropdown" data-filter-dropdown>
+            <summary>
+              <span data-filter-dropdown-label>{filterSummary}</span>
+              <span class="product-filter-dropdown-arrow" aria-hidden="true">⌄</span>
+            </summary>
+            <div class="product-filter-dropdown-menu">
+              {enabledFilters.map((filter) => (
+                <label class="product-filter-dropdown-option">
                   <input
                     type="checkbox"
                     name="filterIds"
                     value={filter.id}
                     checked={selectedFilterIds.has(filter.id)}
-                    disabled={!enabled}
                     data-category-filter
+                    data-filter-name={filter.name}
                   />
-                  <span>{filter.name}{!enabled ? "（已停用）" : ""}</span>
+                  <span>{filter.name}</span>
                 </label>
-              );
-            })}
-          </div>
+              ))}
+            </div>
+          </details>
         ) : (
           <a class="empty-control-link" href={`/admin/channels/${encodeURIComponent(channelId)}/filters`}>设置分类筛选</a>
         )}
       </div>
 
-      <div class="admin-field">
+      <div class="admin-field product-content-tags">
         <label for={`${prefix}-tags`}>产品标签</label>
         <input
           id={`${prefix}-tags`}
@@ -103,9 +103,19 @@ const prefix = product ? `product-${product.id}` : "product-new";
         />
       </div>
 
-      <div class="admin-field">
+      <div class="admin-field product-content-cta">
         <label for={`${prefix}-cta`}>CTA 文案</label>
         <input id={`${prefix}-cta`} name="ctaLabel" maxlength="80" required value={product?.ctaLabel ?? "View Details"} />
+      </div>
+
+      <div class="admin-field product-content-conversion">
+        <label for={`${prefix}-conversion`}>转化组绑定</label>
+        <select id={`${prefix}-conversion`} name="conversionGroupId">
+          <option value="">暂不绑定</option>
+          {options.conversionGroups.map((group) => (
+            <option value={group.id} selected={product?.conversionGroupId === group.id}>{group.name}</option>
+          ))}
+        </select>
       </div>
     </div>
   </section>
