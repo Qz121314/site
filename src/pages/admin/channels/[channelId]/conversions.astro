@@ -48,21 +48,24 @@ const typeLabels = {
       {saved && savedMessages[saved] && <p class="notice" role="status">{savedMessages[saved]}</p>}
       {error && errorMessages[error] && <p class="error" role="alert">{errorMessages[error]}</p>}
 
-      <section class="admin-card">
-        <div class="admin-section-bar"><h2>新增转化组</h2></div>
-        <form class="admin-card-body admin-form-grid" action={`/api/admin/channels/${encodeURIComponent(channelId)}/conversions/create`} method="post">
-          <div class="admin-field admin-span-7">
+      <section class="admin-card conversion-create-card">
+        <div class="admin-section-bar">
+          <h2>新增转化组</h2>
+          <span class="admin-section-note">产品绑定组，组内资源随机轮换</span>
+        </div>
+        <form class="admin-card-body conversion-create-form" action={`/api/admin/channels/${encodeURIComponent(channelId)}/conversions/create`} method="post">
+          <div class="admin-field conversion-name-field">
             <label for="conversion-group-name">名称</label>
             <input id="conversion-group-name" name="name" maxlength="80" required autocomplete="off" />
           </div>
-          <div class="admin-field admin-span-2">
+          <div class="admin-field">
             <label for="conversion-group-status">状态</label>
             <select id="conversion-group-status" name="status">
               <option value="enabled" selected>启用</option>
               <option value="disabled">停用</option>
             </select>
           </div>
-          <div class="admin-form-actions admin-span-3">
+          <div class="admin-form-actions">
             <button class="button" type="submit">新增转化组</button>
           </div>
         </form>
@@ -100,30 +103,30 @@ const typeLabels = {
 
               <details class="resource-panel" open={openGroupId === group.id || group.resources.length === 0}>
                 <summary><strong>联系方式</strong><span>用户第一次点击时随机获取一项</span></summary>
-                <form class="resource-create admin-form-grid" action={`/api/admin/channels/${encodeURIComponent(channelId)}/conversions/${encodeURIComponent(group.id)}/resources/create`} method="post">
-                  <div class="admin-field admin-span-2">
+                <form class="resource-create resource-create-form" action={`/api/admin/channels/${encodeURIComponent(channelId)}/conversions/${encodeURIComponent(group.id)}/resources/create`} method="post">
+                  <div class="admin-field">
                     <label for={`new-resource-type-${group.id}`}>类型</label>
                     <select id={`new-resource-type-${group.id}`} name="type">
                       <option value="sms">短信</option>
                       <option value="link">链接</option>
                     </select>
                   </div>
-                  <div class="admin-field admin-span-6">
+                  <div class="admin-field resource-value-field">
                     <label for={`new-resource-value-${group.id}`}>号码或链接</label>
                     <input id={`new-resource-value-${group.id}`} name="value" maxlength="2048" required autocomplete="off" placeholder="+1 212 555 0100 或 https://example.com" />
                   </div>
-                  <div class="admin-field admin-span-1">
+                  <div class="admin-field">
                     <label for={`new-resource-sort-${group.id}`}>排序</label>
                     <input id={`new-resource-sort-${group.id}`} name="sortOrder" type="number" min="-999999" max="999999" step="1" value="0" />
                   </div>
-                  <div class="admin-field admin-span-1">
+                  <div class="admin-field">
                     <label for={`new-resource-status-${group.id}`}>状态</label>
                     <select id={`new-resource-status-${group.id}`} name="status">
                       <option value="enabled" selected>启用</option>
                       <option value="disabled">停用</option>
                     </select>
                   </div>
-                  <div class="admin-form-actions admin-span-2"><button class="button" type="submit">新增</button></div>
+                  <div class="admin-form-actions"><button class="button" type="submit">新增</button></div>
                 </form>
 
                 {group.resources.length === 0 ? (
@@ -173,17 +176,26 @@ const typeLabels = {
 </AdminLayout>
 
 <style>
-  .conversion-list { display: grid; gap: .65rem; }
+  .conversion-create-card { width: min(100%, 60rem); margin-right: auto; margin-left: auto; }
+  .conversion-create-form { display: grid; grid-template-columns: minmax(15rem, 1fr) 8rem auto; align-items: end; gap: .55rem; }
+  .conversion-list { display: grid; gap: .7rem; }
   .conversion-group { overflow: visible; }
   .group-editor { display: grid; grid-template-columns: minmax(14rem,1fr) 7rem 4rem 4rem auto; align-items: end; gap: .5rem; padding: .6rem; }
-  .group-stat { display: grid; min-height: 2.1rem; align-content: center; gap: .1rem; }
+  .group-stat { display: grid; min-height: 2.15rem; align-content: center; gap: .1rem; }
   .group-stat span, .resource-panel summary span { color: var(--muted); font-size: .7rem; }
   .group-actions { display: flex; gap: .35rem; justify-content: flex-end; }
   .resource-panel { border-top: 1px solid var(--line); }
   .resource-panel > summary { display: flex; min-height: 2.4rem; align-items: center; justify-content: space-between; padding: .45rem .65rem; cursor: pointer; }
-  .resource-create { padding: .6rem; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+  .resource-create-form { display: grid; grid-template-columns: 7rem minmax(15rem, 1fr) 6rem 7rem auto; align-items: end; gap: .5rem; padding: .6rem; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
   .table-input { width: 100%; min-width: 5rem; height: 1.9rem; border: 1px solid transparent; border-radius: .3rem; padding: .2rem .4rem; background: transparent; }
   .table-input:hover, .table-input:focus { border-color: var(--line); background: #fff; }
-  .table-type { width: 6rem; } .table-value { min-width: 20rem; } .table-number, .table-status { width: 5rem; }
-  @media (max-width: 900px) { .group-editor { min-width: 48rem; } .conversion-group { overflow-x: auto; } .resource-panel { min-width: 48rem; } }
+  .table-type { width: 6rem; } .table-value { min-width: 18rem; } .table-number, .table-status { width: 5rem; }
+  @media (max-width: 820px) {
+    .conversion-create-form { grid-template-columns: 1fr 8rem auto; }
+    .group-editor { grid-template-columns: minmax(0, 1fr) 8rem repeat(2, 4rem); }
+    .group-actions { grid-column: 1 / -1; justify-content: flex-start; }
+    .resource-create-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .resource-value-field { grid-column: 1 / -1; }
+  }
+  @media (max-width: 639px) { .conversion-create-form, .group-editor, .resource-create-form { grid-template-columns: 1fr; } .group-actions, .resource-value-field { grid-column: auto; } }
 </style>
