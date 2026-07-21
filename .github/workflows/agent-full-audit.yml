@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - agent/full-functional-audit-batch-28
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: read
