@@ -1,5 +1,45 @@
 -- Preserve public conversion and Hero availability when admin records are edited concurrently.
 
+CREATE TRIGGER IF NOT EXISTS trg_products_require_available_conversion_insert
+BEFORE INSERT ON products
+WHEN NEW.status = 'published'
+  AND (
+    NEW.conversion_group_id IS NULL
+    OR NOT EXISTS (
+      SELECT 1
+      FROM conversion_groups conversion_group
+      INNER JOIN conversion_resources resource
+        ON resource.group_id = conversion_group.id
+       AND resource.status = 'enabled'
+      WHERE conversion_group.id = NEW.conversion_group_id
+        AND conversion_group.channel_id = NEW.channel_id
+        AND conversion_group.status = 'enabled'
+    )
+  )
+BEGIN
+  SELECT RAISE(ABORT, 'published product requires an available conversion group');
+END;
+
+CREATE TRIGGER IF NOT EXISTS trg_products_require_available_conversion_update
+BEFORE UPDATE OF status, conversion_group_id, channel_id ON products
+WHEN NEW.status = 'published'
+  AND (
+    NEW.conversion_group_id IS NULL
+    OR NOT EXISTS (
+      SELECT 1
+      FROM conversion_groups conversion_group
+      INNER JOIN conversion_resources resource
+        ON resource.group_id = conversion_group.id
+       AND resource.status = 'enabled'
+      WHERE conversion_group.id = NEW.conversion_group_id
+        AND conversion_group.channel_id = NEW.channel_id
+        AND conversion_group.status = 'enabled'
+    )
+  )
+BEGIN
+  SELECT RAISE(ABORT, 'published product requires an available conversion group');
+END;
+
 CREATE TRIGGER IF NOT EXISTS trg_conversion_groups_preserve_published_cta
 BEFORE UPDATE OF status ON conversion_groups
 WHEN OLD.status = 'enabled'
