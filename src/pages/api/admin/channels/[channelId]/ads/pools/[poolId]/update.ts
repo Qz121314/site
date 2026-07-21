@@ -1,7 +1,7 @@
 import { env } from "cloudflare:workers";
 import type { APIRoute } from "astro";
 import { isSameOriginPost } from "@/lib/auth/session";
-import { isDuplicateAdPoolNameError, parseAdPoolForm } from "@/lib/admin/ad-form";
+import { adPoolIntegrityErrorCode, isDuplicateAdPoolNameError, parseAdPoolForm } from "@/lib/admin/ad-form";
 
 export const prerender = false;
 
@@ -35,7 +35,9 @@ export const POST: APIRoute = async ({ request, params }) => {
   } catch (error) {
     console.error(JSON.stringify({ event: "admin_ad_pool_update_failed", channelId, poolId, name: parsed.name, error: String(error) }));
     return redirect(request, channelId, {
-      error: isDuplicateAdPoolNameError(error) ? "duplicate" : "database",
+      error: isDuplicateAdPoolNameError(error)
+        ? "duplicate"
+        : adPoolIntegrityErrorCode(error) ?? "database",
     });
   }
 };

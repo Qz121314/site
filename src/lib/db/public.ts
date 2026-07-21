@@ -55,7 +55,6 @@ export type PublicProductCard = {
   slug: string;
   coverUrl: string | null;
   tags: string[];
-  featured: boolean;
 };
 
 export type PublicProductPage = {
@@ -72,7 +71,6 @@ export type PublicProductDetail = PublicProductCard & {
   categorySlug: string | null;
   bodyHtml: string;
   ctaLabel: string;
-  hasConversion: boolean;
   gallery: Array<{
     id: string;
     imageUrl: string;
@@ -136,7 +134,6 @@ type ProductCardRow = {
   slug: string;
   object_key: string | null;
   tags: string;
-  featured: number;
 };
 
 type ProductDetailRow = ProductCardRow & {
@@ -147,7 +144,6 @@ type ProductDetailRow = ProductCardRow & {
   category_slug: string | null;
   body_html: string;
   cta_label: string;
-  has_conversion: number;
 };
 
 type GalleryRow = {
@@ -189,7 +185,6 @@ function mapProduct(row: ProductCardRow, baseUrl: string): PublicProductCard {
     slug: row.slug,
     coverUrl: row.object_key ? buildPublicImageUrl(baseUrl, row.object_key) : null,
     tags: parseTags(row.tags),
-    featured: row.featured === 1,
   };
 }
 
@@ -432,8 +427,7 @@ export async function loadPublicProducts(input: {
        p.title,
        p.slug,
        cover.object_key,
-       p.tags,
-       p.featured
+       p.tags
      FROM products p
      LEFT JOIN image_assets cover ON cover.id = p.cover_asset_id
      LEFT JOIN categories category
@@ -441,7 +435,7 @@ export async function loadPublicProducts(input: {
       AND category.channel_id = p.channel_id
      WHERE ${conditions.join(" AND ")}
        AND (p.category_id IS NULL OR category.status = 'published')
-     ORDER BY p.featured DESC, p.sort_order ASC, p.created_at DESC
+     ORDER BY p.sort_order ASC, p.created_at DESC
      LIMIT ?${limitParameter} OFFSET ?${offsetParameter}`,
   ).bind(...bindings).all<ProductCardRow>();
 
@@ -469,10 +463,8 @@ export async function loadPublicProductDetail(
        p.slug,
        cover.object_key,
        p.tags,
-       p.featured,
        p.body_html,
-       p.cta_label,
-       CASE WHEN conversion_group.id IS NULL THEN 0 ELSE 1 END AS has_conversion
+       p.cta_label
      FROM products p
      INNER JOIN channels channel
        ON channel.id = p.channel_id
@@ -482,10 +474,6 @@ export async function loadPublicProductDetail(
       AND category.channel_id = p.channel_id
       AND category.status = 'published'
      LEFT JOIN image_assets cover ON cover.id = p.cover_asset_id
-     LEFT JOIN conversion_groups conversion_group
-       ON conversion_group.id = p.conversion_group_id
-      AND conversion_group.channel_id = p.channel_id
-      AND conversion_group.status = 'enabled'
      WHERE channel.slug = ?1
        AND p.slug = ?2
        AND p.status = 'published'
@@ -515,7 +503,6 @@ export async function loadPublicProductDetail(
     categorySlug: row.category_slug,
     bodyHtml: row.body_html,
     ctaLabel: row.cta_label,
-    hasConversion: row.has_conversion === 1,
     gallery: galleryResult.results.flatMap((image) => {
       const imageUrl = buildPublicImageUrl(baseUrl, image.object_key);
       return imageUrl
@@ -566,8 +553,7 @@ export async function searchPublicCatalog(
          p.title,
          p.slug,
          cover.object_key,
-         p.tags,
-         p.featured
+         p.tags
        FROM products p
        LEFT JOIN image_assets cover ON cover.id = p.cover_asset_id
        LEFT JOIN categories category
@@ -577,7 +563,7 @@ export async function searchPublicCatalog(
          AND p.status = 'published'
          AND (p.title LIKE ?2 OR p.tags LIKE ?2)
          AND (p.category_id IS NULL OR category.status = 'published')
-       ORDER BY p.featured DESC, p.sort_order ASC, p.created_at DESC
+       ORDER BY p.sort_order ASC, p.created_at DESC
        LIMIT 40`,
     ).bind(channelId, pattern).all<ProductCardRow>(),
   ]);

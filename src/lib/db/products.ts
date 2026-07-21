@@ -10,7 +10,6 @@ export type AdminProductListItem = {
   categoryName: string | null;
   coverAssetId: string | null;
   coverObjectKey: string | null;
-  featured: boolean;
   sortOrder: number;
   status: ProductStatus;
 };
@@ -28,7 +27,6 @@ export type AdminProduct = {
   coverAssetId: string | null;
   tags: string[];
   ctaLabel: string;
-  featured: boolean;
   sortOrder: number;
   status: ProductStatus;
   imageCount: number;
@@ -41,11 +39,6 @@ export type AdminProductCategoryOption = {
   name: string;
   status: string;
   filterIds: string[];
-};
-
-export type AdminProductCategoryListOption = {
-  id: string;
-  name: string;
 };
 
 export type AdminProductFilterOption = {
@@ -90,7 +83,6 @@ type AdminProductListRow = {
   category_name: string | null;
   cover_asset_id: string | null;
   cover_object_key: string | null;
-  featured: number;
   sort_order: number;
   status: ProductStatus;
   r2_public_base_url: string;
@@ -111,7 +103,6 @@ type AdminProductRow = {
   body_source: string;
   body_html: string;
   cta_label: string;
-  featured: number;
   sort_order: number;
   status: ProductStatus;
   image_count: number;
@@ -147,7 +138,6 @@ function mapProduct(row: AdminProductRow): AdminProduct {
     coverAssetId: row.cover_asset_id,
     tags: parseTags(row.tags),
     ctaLabel: row.cta_label,
-    featured: row.featured === 1,
     sortOrder: row.sort_order,
     status: row.status,
     imageCount: Number(row.image_count ?? 0),
@@ -176,23 +166,6 @@ async function readAdminProductCategories(channelId: string): Promise<AdminProdu
     status: category.status,
     filterIds: category.filter_ids ? category.filter_ids.split(",").filter(Boolean) : [],
   }));
-}
-
-export async function loadAdminProductCategoryList(
-  channelId: string,
-): Promise<AdminProductCategoryListOption[]> {
-  try {
-    const result = await env.DB.prepare(
-      `SELECT id, name
-       FROM categories
-       WHERE channel_id = ?1
-       ORDER BY sort_order ASC, created_at ASC`,
-    ).bind(channelId).all<AdminProductCategoryListOption>();
-    return result.results;
-  } catch (error) {
-    console.error(JSON.stringify({ event: "admin_product_category_list_read_failed", channelId, error: String(error) }));
-    return [];
-  }
 }
 
 export async function loadAdminProductOptions(channelId: string): Promise<AdminProductOptions> {
@@ -272,7 +245,6 @@ export async function loadAdminProducts(
          c.name AS category_name,
          p.cover_asset_id,
          cover.object_key AS cover_object_key,
-         p.featured,
          p.sort_order,
          p.status,
          COALESCE(settings.r2_public_base_url, '') AS r2_public_base_url
@@ -284,7 +256,7 @@ export async function loadAdminProducts(
          AND (?2 = '' OR p.title LIKE '%' || ?2 || '%' OR p.slug LIKE '%' || ?2 || '%' OR p.tags LIKE '%' || ?2 || '%')
          AND (?3 = '' OR p.status = ?3)
          AND (?4 = '' OR p.category_id = ?4)
-       ORDER BY p.featured DESC, p.sort_order ASC, p.created_at DESC
+       ORDER BY p.sort_order ASC, p.created_at DESC
        LIMIT ?5 OFFSET ?6`,
     ).bind(channelId, query, status, categoryId, ADMIN_PRODUCT_PAGE_SIZE, offset).all<AdminProductListRow>();
 
@@ -296,7 +268,6 @@ export async function loadAdminProducts(
         categoryName: row.category_name,
         coverAssetId: row.cover_asset_id,
         coverObjectKey: row.cover_object_key,
-        featured: row.featured === 1,
         sortOrder: Number(row.sort_order),
         status: row.status,
       })),
@@ -337,7 +308,6 @@ export async function loadAdminProduct(channelId: string, productId: string): Pr
          p.body_source,
          p.body_html,
          p.cta_label,
-         p.featured,
          p.sort_order,
          p.status,
          COUNT(DISTINCT pi.image_asset_id) AS image_count
@@ -350,7 +320,7 @@ export async function loadAdminProduct(channelId: string, productId: string): Pr
          p.id, p.channel_id, p.title, p.slug, p.category_id, c.name,
          p.conversion_group_id, g.name, g.status, p.cover_asset_id,
          p.tags, p.body_source, p.body_html, p.cta_label,
-         p.featured, p.sort_order, p.status`,
+         p.sort_order, p.status`,
     ).bind(productId, channelId).first<AdminProductRow>();
 
     return row ? mapProduct(row) : null;

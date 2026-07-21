@@ -87,8 +87,8 @@ export const POST: APIRoute = async ({ request, params }) => {
         `INSERT INTO products (
            id, channel_id, category_id, conversion_group_id, cover_asset_id,
            title, slug, tags, body_source, body_html, cta_label,
-           featured, sort_order, status
-         ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, 0, ?12, 'draft')`,
+           sort_order, status
+         ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, 'draft')`,
       ).bind(
         productId,
         channelId,

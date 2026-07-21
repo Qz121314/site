@@ -1,6 +1,7 @@
 import { env } from "cloudflare:workers";
 import type { APIRoute } from "astro";
 import { isSameOriginPost } from "@/lib/auth/session";
+import { isConversionAvailabilityConstraintError } from "@/lib/admin/conversion-form";
 import { wouldRemoveLastEnabledConversionResource } from "@/lib/admin/conversion-resource-guard";
 
 export const prerender = false;
@@ -42,6 +43,9 @@ export const POST: APIRoute = async ({ request, params }) => {
     return redirect(request, channelId, { saved: "resource-deleted", group: groupId });
   } catch (error) {
     console.error(JSON.stringify({ event: "admin_conversion_resource_delete_failed", channelId, groupId, resourceId, error: String(error) }));
-    return redirect(request, channelId, { error: "database", group: groupId });
+    return redirect(request, channelId, {
+      error: isConversionAvailabilityConstraintError(error) ? "group-in-use" : "database",
+      group: groupId,
+    });
   }
 };

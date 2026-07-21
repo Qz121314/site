@@ -1,4 +1,5 @@
 import { env } from "cloudflare:workers";
+import { secureRandomIndex } from "@/lib/public/random-index";
 import {
   normalizeConversionResource,
   type PublicConversionContact,
@@ -13,19 +14,6 @@ type ConversionRow = {
   type: PublicConversionType;
   value: string;
 };
-
-function randomIndex(length: number): number {
-  if (!Number.isSafeInteger(length) || length <= 0) throw new Error("Invalid random range");
-  const range = 0x1_0000_0000;
-  const ceiling = range - (range % length);
-  const buffer = new Uint32Array(1);
-  let value = 0;
-  do {
-    crypto.getRandomValues(buffer);
-    value = buffer[0] ?? 0;
-  } while (value >= ceiling);
-  return value % length;
-}
 
 export async function selectProductConversionContact(
   channelSlug: string,
@@ -58,12 +46,5 @@ export async function selectProductConversionContact(
     .map((resource: PublicConversionResource) => normalizeConversionResource(resource))
     .filter((contact): contact is PublicConversionContact => Boolean(contact));
 
-  return contacts.length > 0 ? contacts[randomIndex(contacts.length)] ?? null : null;
-}
-
-export async function selectProductConversionTarget(
-  channelSlug: string,
-  productSlug: string,
-): Promise<string | null> {
-  return (await selectProductConversionContact(channelSlug, productSlug))?.target ?? null;
+  return contacts.length > 0 ? contacts[secureRandomIndex(contacts.length)] ?? null : null;
 }

@@ -226,28 +226,15 @@
 .admin-body .badge.ok { color: #166534; border-color: #bbf7d0; background: #f0fdf4; }
 .admin-body .badge.warn { color: #92400e; border-color: #fde68a; background: #fffbeb; }
 
-.admin-body .compact-check,
-.admin-body .filter-choice,
-.admin-body .filter-picker,
 .admin-body .direct-upload-item,
-.admin-body .gallery-item,
-.admin-body .ad-item,
 .admin-body .image-card,
-.admin-body .empty-control,
 .admin-body .empty-control-link {
   color: #0f172a;
   border-color: #e2e8f0;
   background: #ffffff;
 }
 
-.admin-body .filter-picker:hover,
-.admin-body .filter-picker[open] {
-  border-color: #cbd5e1;
-  background: #f8fafc;
-}
-
-.admin-body .direct-upload-item img,
-.admin-body .gallery-item > img {
+.admin-body .direct-upload-item img {
   background: #f1f5f9;
 }
 
@@ -261,57 +248,6 @@
 .admin-body .image-select { background: #ffffff; }
 
 
-.admin-body .body-preview article {
-  color: #334155;
-  border-color: #e2e8f0;
-  background: #ffffff;
-}
-
-.admin-body .compact-check {
-  display: flex;
-  min-height: 2.15rem;
-  align-items: center;
-  gap: .4rem;
-  padding: 0 .55rem;
-  border: 1px solid var(--admin-border);
-  border-radius: .42rem;
-  white-space: nowrap;
-}
-
-.admin-body .compact-check input,
-.admin-body .filter-choice input {
-  width: .9rem;
-  height: .9rem;
-  margin: 0;
-}
-
-.admin-body .filter-choice-grid {
-  display: flex;
-  min-height: 2.15rem;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: .28rem;
-}
-
-.admin-body .filter-choice {
-  display: inline-flex;
-  min-height: 1.85rem;
-  align-items: center;
-  gap: .3rem;
-  border: 1px solid var(--admin-border);
-  border-radius: .42rem;
-  padding: .25rem .48rem;
-  cursor: pointer;
-}
-
-.admin-body .filter-choice:has(input:checked) {
-  color: #1d4ed8;
-  border-color: #2563eb;
-  background: #eff6ff;
-}
-
-.admin-body .filter-choice.is-disabled { opacity: .55; }
-
 .admin-body .empty-control-link {
   display: flex;
   min-height: 2.15rem;
@@ -320,17 +256,6 @@
   border-radius: .42rem;
   padding: 0 .55rem;
   color: #2563eb;
-}
-
-.admin-body .body-preview summary {
-  padding: .55rem .65rem;
-  cursor: pointer;
-}
-
-.admin-body .body-preview article {
-  padding: .75rem;
-  border-top: 1px solid var(--admin-border);
-  line-height: 1.65;
 }
 
 @media (min-width: 768px) {

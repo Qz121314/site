@@ -186,6 +186,10 @@ const initialImages: ExistingUploadImage[] = multiple
         headers: { Accept: "application/json" },
         body,
       });
+      if (response.status === 401) {
+        window.location.assign("/admin/login");
+        throw new DOMException("Session expired", "AbortError");
+      }
       const result = await response.json().catch(() => null);
       if (!response.ok || !result?.ok || !result.image?.id) {
         throw new Error(result?.error || `HTTP ${response.status}`);
@@ -348,6 +352,7 @@ const initialImages: ExistingUploadImage[] = multiple
             const uploaded = await uploadImage(file);
             addImage(uploaded.image, uploaded.localUrl, uploaded.dimensions, startOrder + index);
           } catch (error) {
+            if (error instanceof DOMException && error.name === "AbortError") return;
             console.error(error);
             alert(`图片 ${file.name} 上传失败，请重试。`);
           } finally {

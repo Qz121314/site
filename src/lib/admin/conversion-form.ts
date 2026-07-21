@@ -127,3 +127,12 @@ export function isDuplicateConversionGroupNameError(error: unknown): boolean {
     message.includes("conversion_groups.channel_id, conversion_groups.name")
   );
 }
+
+
+export function isConversionAvailabilityConstraintError(error: unknown): boolean {
+  const message = String(error);
+  return (
+    message.includes("conversion group is used by published products") ||
+    message.includes("published product conversion group requires an enabled resource")
+  );
+}
