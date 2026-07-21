@@ -9,10 +9,20 @@ function isAdminPath(pathname: string): boolean {
   return pathname === "/admin" || pathname.startsWith("/admin/") || pathname.startsWith("/api/admin/");
 }
 
-function isPublicHtmlRequest(request: Request, pathname: string, response: Response): boolean {
+function isAdminImageContent(request: Request, pathname: string): boolean {
+  return request.method === "GET"
+    && pathname.startsWith("/api/admin/images/")
+    && pathname.endsWith("/content");
+}
+
+function isPublicEdgeCacheable(request: Request, pathname: string, response: Response): boolean {
   if (request.method !== "GET" && request.method !== "HEAD") return false;
-  if (response.status !== 200) return false;
   if (isAdminPath(pathname) || pathname.startsWith("/api/") || pathname.startsWith("/go/")) return false;
+
+  const cacheControl = response.headers.get("Cache-Control") ?? "";
+  if (/\b(?:no-store|private)\b/iu.test(cacheControl)) return false;
+  if (response.status >= 300 && response.status < 400) return response.headers.has("Location");
+  if (response.status !== 200) return false;
   return (response.headers.get("Content-Type") ?? "").includes("text/html");
 }
 
@@ -24,9 +34,9 @@ function addSecurityHeaders(response: Response, request: Request, pathname: stri
   headers.set("Permissions-Policy", "camera=(), microphone=(), geolocation=()");
 
   if (isAdminPath(pathname)) {
-    headers.set("Cache-Control", "no-store");
+    if (!isAdminImageContent(request, pathname)) headers.set("Cache-Control", "no-store");
     headers.set("X-Robots-Tag", "noindex, nofollow");
-  } else if (isPublicHtmlRequest(request, pathname, response)) {
+  } else if (isPublicEdgeCacheable(request, pathname, response)) {
     headers.set("Cache-Control", "public, max-age=0, must-revalidate");
     headers.set(
       "Cloudflare-CDN-Cache-Control",
