@@ -11,6 +11,70 @@ const { href, title, className = "" } = Astro.props;
 ---
 
 <header class:list={["public-page-header", className]}>
-  <PublicBackLink href={href} />
-  <h1>{title}</h1>
+  <div class="public-page-header-leading">
+    <PublicBackLink href={href} />
+  </div>
+  <h1 class="public-page-title">{title}</h1>
+  <span class="public-page-header-balance" aria-hidden="true"></span>
 </header>
+
+<style>
+  .public-page-header {
+    display: grid;
+    grid-template-columns: minmax(4.75rem, 1fr) minmax(0, auto) minmax(4.75rem, 1fr);
+    min-height: 3.2rem;
+    align-items: center;
+    gap: .75rem;
+    padding: .08rem 0 .24rem;
+  }
+
+  .public-page-header-leading {
+    min-width: 0;
+    justify-self: start;
+  }
+
+  .public-page-title {
+    max-width: min(62vw, 34rem);
+    margin: 0;
+    color: #fffaf0;
+    font-family: var(--public-font-display, "Cormorant Garamond", serif);
+    font-size: clamp(1.85rem, 6.5vw, 2.75rem);
+    font-weight: 600;
+    line-height: .92;
+    letter-spacing: -.05em;
+    overflow-wrap: anywhere;
+    text-align: center;
+    text-wrap: balance;
+  }
+
+  .public-page-header-balance {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .public-page-header-leading :global(.public-back-link) {
+    min-height: 2.15rem;
+  }
+
+  @media (max-width: 420px) {
+    .public-page-header {
+      grid-template-columns: minmax(4.1rem, 1fr) minmax(0, auto) minmax(4.1rem, 1fr);
+      gap: .45rem;
+    }
+
+    .public-page-title {
+      max-width: 58vw;
+      font-size: clamp(1.7rem, 7vw, 2.15rem);
+    }
+
+    .public-page-header-leading :global(.public-back-link) {
+      gap: .35rem;
+      font-size: .6rem;
+    }
+
+    .public-page-header-leading :global(.public-back-icon) {
+      width: 1.75rem;
+      height: 1.75rem;
+    }
+  }
+</style>
