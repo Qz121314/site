@@ -1,5 +1,7 @@
 ---
 import PublicLayout from "@/layouts/PublicLayout.astro";
+import ProductGallery from "@/components/public/ProductGallery.astro";
+import PublicBackLink from "@/components/public/PublicBackLink.astro";
 import { loadPublicProductDetail, loadPublicSiteShell } from "@/lib/db/public";
 
 export const prerender = false;
@@ -16,8 +18,16 @@ const canonical = new URL(
   Astro.url.origin,
 ).href;
 const primaryImage = product?.coverUrl ?? product?.gallery[0]?.imageUrl ?? site.logoUrl;
-const remainingGallery = product
-  ? product.gallery.filter((image) => image.imageUrl !== primaryImage)
+const galleryImages = product
+  ? [
+      ...(primaryImage ? [{ imageUrl: primaryImage, alt: product.title }] : []),
+      ...product.gallery.map((image) => ({
+        imageUrl: image.imageUrl,
+        alt: image.originalName || product.title,
+        width: image.width,
+        height: image.height,
+      })),
+    ]
   : [];
 const contactResolveUrl = product
   ? `/go/${encodeURIComponent(product.slug)}?channel=${encodeURIComponent(product.channelSlug)}`
@@ -39,15 +49,9 @@ const returnUrl = product?.categorySlug
 >
   {product ? (
     <article class="product-detail">
-      <a class="public-back-link" href={returnUrl}>
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="m15 18-6-6 6-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
-        </svg>
-        <span>BACK</span>
-      </a>
+      <PublicBackLink href={returnUrl} />
 
       <header class="product-detail-header">
-        <div class="eyebrow">{product.categoryName ?? product.channelName}</div>
         <h1>{product.title}</h1>
         {product.tags.length > 0 && (
           <div class="product-tags" aria-label="Tags">
@@ -56,33 +60,11 @@ const returnUrl = product?.categorySlug
         )}
       </header>
 
-      {primaryImage && (
-        <div class="product-cover">
-          <img src={primaryImage} alt={product.title} fetchpriority="high" />
-        </div>
-      )}
+      <ProductGallery images={galleryImages} />
 
       {product.bodyHtml && (
         <section class="product-copy-section">
           <div class="product-body markdown-body" set:html={product.bodyHtml}></div>
-        </section>
-      )}
-
-      {remainingGallery.length > 0 && (
-        <section class="product-gallery-section" aria-label="Gallery">
-          <div class="product-gallery">
-            {remainingGallery.map((image) => (
-              <a href={image.imageUrl} target="_blank" rel="noopener noreferrer" aria-label={`Open ${image.originalName}`}>
-                <img
-                  src={image.imageUrl}
-                  alt={image.originalName}
-                  width={image.width}
-                  height={image.height}
-                  loading="lazy"
-                />
-              </a>
-            ))}
-          </div>
         </section>
       )}
 
@@ -111,8 +93,7 @@ const returnUrl = product?.categorySlug
         <div>
           <div class="empty-icon" aria-hidden="true">404</div>
           <h1>Product not found</h1>
-          <p>This product is unavailable or has not been published.</p>
-          <a class="public-button secondary" href={`/${encodeURIComponent(channelSlug)}`}>Return to channel</a>
+          <a class="public-button secondary" href={`/${encodeURIComponent(channelSlug)}`}>Return</a>
         </div>
       </div>
     </section>
