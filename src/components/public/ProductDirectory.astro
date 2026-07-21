@@ -1,6 +1,7 @@
 ---
 import ProductCard from "@/components/public/ProductCard.astro";
 import type { PublicProductPage } from "@/lib/db/public";
+import { publicPageHref } from "@/lib/public/pagination";
 
 interface Props {
   channelSlug: string;
@@ -19,6 +20,8 @@ const {
   uncategorizedOnly = false,
   emptyMessage = "No products found.",
 } = Astro.props;
+const previousPageHref = page.page > 1 ? publicPageHref(Astro.url, page.page - 1) : null;
+const nextPageHref = page.hasMore ? publicPageHref(Astro.url, page.page + 1) : null;
 ---
 
 <div
@@ -38,15 +41,25 @@ const {
     <div class="public-empty" data-product-empty>{emptyMessage}</div>
   )}
 
-  {page.hasMore && (
-    <div class="load-more-row" data-load-more-row>
-      <button class="public-button secondary load-more-button" type="button" data-load-more>
-        <span data-load-more-label>Load More</span>
-        <svg viewBox="0 0 24 24" aria-hidden="true">
-          <path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
-        </svg>
-      </button>
-    </div>
+  {(previousPageHref || nextPageHref) && (
+    <nav class="load-more-row product-pagination" data-load-more-row aria-label="Product pages">
+      {previousPageHref && (
+        <a class="public-button secondary product-page-link" href={previousPageHref} rel="prev">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m15 18-6-6 6-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
+          </svg>
+          <span>Previous</span>
+        </a>
+      )}
+      {nextPageHref && (
+        <a class="public-button secondary load-more-button product-page-link" href={nextPageHref} rel="next" data-load-more>
+          <span data-load-more-label>Load More</span>
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="m6 9 6 6 6-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
+          </svg>
+        </a>
+      )}
+    </nav>
   )}
 </div>
 
@@ -102,18 +115,30 @@ const {
       return link;
     };
 
+    const pageHref = (page) => {
+      const url = new URL(window.location.href);
+      url.search = '';
+      if (page > 1) url.searchParams.set('page', String(page));
+      return `${url.pathname}${url.search}`;
+    };
+
     const initialize = (root) => {
       if (root.dataset.ready === '1') return;
       root.dataset.ready = '1';
-      const button = root.querySelector('[data-load-more]');
+      const nextLink = root.querySelector('[data-load-more]');
       const label = root.querySelector('[data-load-more-label]');
       const row = root.querySelector('[data-load-more-row]');
       const grid = root.querySelector('[data-product-grid]');
-      if (!button || !label || !row || !grid) return;
+      if (!nextLink || !label || !row || !grid) return;
 
-      button.addEventListener('click', async () => {
-        button.disabled = true;
-        button.setAttribute('aria-busy', 'true');
+      nextLink.addEventListener('click', async (event) => {
+        if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+        event.preventDefault();
+        if (nextLink.dataset.loading === '1') return;
+
+        nextLink.dataset.loading = '1';
+        nextLink.setAttribute('aria-busy', 'true');
+        nextLink.setAttribute('aria-disabled', 'true');
         label.textContent = 'Loading…';
         const page = Number(root.dataset.nextPage || '2');
         const params = new URLSearchParams({ page: String(page) });
@@ -130,17 +155,25 @@ const {
           if (!Array.isArray(payload.products)) throw new Error('Invalid response');
           payload.products.forEach((product) => grid.append(createProductCard(product, root.dataset.channel || '')));
           root.dataset.nextPage = String(page + 1);
+
           if (!payload.hasMore) {
-            row.innerHTML = '<p class="end-of-results">You’ve reached the end.</p>';
+            nextLink.remove();
+            const end = document.createElement('p');
+            end.className = 'end-of-results';
+            end.textContent = 'You’ve reached the end.';
+            row.append(end);
           } else {
-            button.disabled = false;
-            button.removeAttribute('aria-busy');
+            nextLink.href = pageHref(page + 1);
+            delete nextLink.dataset.loading;
+            nextLink.removeAttribute('aria-busy');
+            nextLink.removeAttribute('aria-disabled');
             label.textContent = 'Load More';
           }
         } catch (error) {
           console.error(error);
-          button.disabled = false;
-          button.removeAttribute('aria-busy');
+          delete nextLink.dataset.loading;
+          nextLink.removeAttribute('aria-busy');
+          nextLink.removeAttribute('aria-disabled');
           label.textContent = 'Try Again';
         }
       });
@@ -149,3 +182,25 @@ const {
     document.querySelectorAll('[data-product-directory]').forEach(initialize);
   })();
 </script>
+
+<style>
+  .product-pagination {
+    flex-wrap: wrap;
+    gap: .6rem;
+  }
+
+  .product-page-link {
+    min-width: 9rem;
+    flex: 0 1 19rem;
+  }
+
+  .product-page-link svg {
+    width: 1rem;
+    height: 1rem;
+  }
+
+  .product-page-link[aria-disabled="true"] {
+    opacity: .5;
+    pointer-events: none;
+  }
+</style>
