@@ -9,9 +9,7 @@ export type ProductStatus = (typeof PRODUCT_STATUSES)[number];
 export type ProductContentValue = {
   title: string;
   slug: string;
-  categoryId: string | null;
   conversionGroupId: string | null;
-  coverAssetId: string | null;
   tags: string[];
   tagsJson: string;
   bodySource: string;
@@ -28,7 +26,6 @@ export type ProductManagementValue = {
 export type ProductContentErrorCode =
   | "title"
   | "slug"
-  | "category"
   | "conversion"
   | "tags"
   | "body"
@@ -93,7 +90,6 @@ function parseTags(raw: string): string[] | null {
 export function parseProductContentForm(form: FormData): ProductContentResult {
   const title = readText(form, "title");
   const slug = readText(form, "slug").toLowerCase();
-  const categoryId = readOptionalId(form, "categoryId");
   const conversionGroupId = readOptionalId(form, "conversionGroupId");
   const tags = parseTags(readText(form, "tags"));
   const bodySource = readBodySource(form);
@@ -101,7 +97,6 @@ export function parseProductContentForm(form: FormData): ProductContentResult {
 
   if (!title || title.length > 160) return { ok: false, code: "title" };
   if (!slug || slug.length > 96 || !SLUG_PATTERN.test(slug)) return { ok: false, code: "slug" };
-  if (categoryId === undefined) return { ok: false, code: "category" };
   if (conversionGroupId === undefined) return { ok: false, code: "conversion" };
   if (!tags) return { ok: false, code: "tags" };
   if (bodySource.length > 30000) return { ok: false, code: "body" };
@@ -112,9 +107,7 @@ export function parseProductContentForm(form: FormData): ProductContentResult {
     value: {
       title,
       slug,
-      categoryId,
       conversionGroupId,
-      coverAssetId: null,
       tags,
       tagsJson: JSON.stringify(tags),
       bodySource,
@@ -180,7 +173,7 @@ export async function validateProductRelations(
   return null;
 }
 
-export async function validateProductPublishing(
+export async function prepareProductPublishing(
   channelId: string,
   productId: string,
 ): Promise<ProductPublishErrorCode | null> {
@@ -188,17 +181,30 @@ export async function validateProductPublishing(
     `SELECT
        p.category_id,
        p.conversion_group_id,
+       p.cover_asset_id,
        EXISTS(SELECT 1 FROM product_images pi WHERE pi.product_id = p.id) AS has_image
      FROM products p
      WHERE p.id = ?1 AND p.channel_id = ?2`,
   ).bind(productId, channelId).first<{
     category_id: string | null;
     conversion_group_id: string | null;
+    cover_asset_id: string | null;
     has_image: number;
   }>();
 
   if (!product) return "not-found";
   if (Number(product.has_image ?? 0) !== 1) return "image";
+
+  if (product.category_id) {
+    await env.DB.prepare(
+      `UPDATE categories
+       SET status = 'published',
+           image_asset_id = CASE WHEN image_asset_id IS NULL THEN ?3 ELSE image_asset_id END,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = ?1 AND channel_id = ?2`,
+    ).bind(product.category_id, channelId, product.cover_asset_id).run();
+  }
+
   return validateProductRelations(
     channelId,
     product.category_id,
