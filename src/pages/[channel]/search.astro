@@ -9,11 +9,12 @@ import {
   loadPublicSiteShell,
   searchPublicCatalog,
 } from "@/lib/db/public";
+import { normalizePublicSearchQuery } from "@/lib/search/query";
 
 export const prerender = false;
 
 const channelSlug = Astro.params.channel ?? "";
-const query = (Astro.url.searchParams.get("q") ?? "").trim().slice(0, 100);
+const query = normalizePublicSearchQuery(Astro.url.searchParams.get("q") ?? "");
 const site = await loadPublicSiteShell();
 const channel = findPublicChannel(site, channelSlug);
 
@@ -22,15 +23,14 @@ const results = channel && query
   ? await searchPublicCatalog(channel.id, query, site.r2PublicBaseUrl)
   : { categories: [], products: [] };
 const categories = results.categories.filter((category) => category.productCount > 0);
-const canonicalUrl = new URL(`/${encodeURIComponent(channelSlug)}/search`, Astro.url.origin);
-if (query) canonicalUrl.searchParams.set("q", query);
 ---
 
 <PublicLayout
   site={site}
   title={query ? `Search: ${query}` : "Search"}
   description={channel ? `Search categories, products, and tags in ${channel.name}.` : "Search the public catalog."}
-  canonical={canonicalUrl.href}
+  canonical={null}
+  robots="noindex,follow"
   activeChannel={channel?.slug ?? null}
 >
   {channel ? (
