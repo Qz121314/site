@@ -90,7 +90,7 @@ const statusLabel = {
               <span class:list={["channel-state", `is-${channel.status}`]}>{statusLabel[channel.status]}</span>
             </div>
             <div class="admin-entity-actions">
-              <a class="button" href={`/admin/channels/${encodeURIComponent(channel.id)}/products/new`}>运营</a>
+              <a class="button" href={`/admin/channels/${encodeURIComponent(channel.id)}/products`}>运营</a>
               <a class="button secondary" href={`/admin/channels/${encodeURIComponent(channel.id)}`}>设置</a>
               <form action={`/api/admin/channels/${encodeURIComponent(channel.id)}/delete`} method="post" onsubmit="return confirm('确定删除该分区？此操作不可撤销。')">
                 <button class="button danger" type="submit">删除</button>
@@ -104,15 +104,15 @@ const statusLabel = {
 </AdminLayout>
 
 <style>
-  .channel-create-form { display: grid; grid-template-columns: minmax(0, 1fr) 8rem; gap: .6rem; align-items: end; }
+  .channel-create-form { display: grid; grid-template-columns: minmax(0, 1fr) 7rem; gap: .5rem; align-items: end; }
   .channel-name-field { grid-column: 1 / -1; }
-  .dialog-actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: .4rem; padding-top: .15rem; }
-  .channel-card .admin-card-heading { min-height: 4rem; }
-  .channel-state { margin-left: auto; border-radius: 999px; padding: .18rem .45rem; font-size: .65rem; white-space: nowrap; }
+  .dialog-actions { grid-column: 1 / -1; display: flex; justify-content: flex-end; gap: .35rem; padding-top: .1rem; }
+  .channel-card .admin-card-heading { min-height: 3.4rem; }
+  .channel-state { margin-left: auto; border-radius: 999px; padding: .16rem .4rem; font-size: .64rem; white-space: nowrap; }
   .channel-state.is-published { color: #166534; background: #f0fdf4; }
   .channel-state.is-draft { color: #92400e; background: #fffbeb; }
   .channel-state.is-disabled { color: #991b1b; background: #fff1f2; }
-  .channel-empty { display: grid; min-height: 14rem; place-items: center; align-content: center; gap: .55rem; }
+  .channel-empty { display: grid; min-height: 5rem; place-items: center; align-content: center; gap: .4rem; }
   .channel-empty span { color: #64748b; }
   @media (max-width: 639px) {
     .channel-create-form { grid-template-columns: 1fr; }
