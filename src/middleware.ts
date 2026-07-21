@@ -3,16 +3,23 @@ import { defineMiddleware } from "astro:middleware";
 import { readCookie, SESSION_COOKIE, verifySessionToken } from "@/lib/auth/session";
 
 const PUBLIC_ADMIN_PATHS = new Set(["/admin/login", "/api/admin/login"]);
+const DATA_INDEPENDENT_PATHS = new Set([
+  "/admin/login",
+  "/api/admin/login",
+  "/api/admin/logout",
+  "/api/health",
+  "/robots.txt",
+]);
 const PUBLIC_EDGE_CACHE_SECONDS = 30;
-const PUBLIC_READINESS_SUCCESS_TTL_MS = 30_000;
-const PUBLIC_READINESS_FAILURE_TTL_MS = 5_000;
+const DATA_READINESS_SUCCESS_TTL_MS = 30_000;
+const DATA_READINESS_FAILURE_TTL_MS = 5_000;
 
-type PublicReadinessCache = {
+type DataReadinessCache = {
   ready: boolean;
   expiresAt: number;
 };
 
-let publicReadinessCache: PublicReadinessCache | null = null;
+let dataReadinessCache: DataReadinessCache | null = null;
 
 function isAdminPath(pathname: string): boolean {
   return pathname === "/admin" || pathname.startsWith("/admin/") || pathname.startsWith("/api/admin/");
@@ -24,16 +31,16 @@ function isAdminImageContent(request: Request, pathname: string): boolean {
     && pathname.endsWith("/content");
 }
 
-function requiresPublicData(request: Request, pathname: string): boolean {
-  if (request.method !== "GET" && request.method !== "HEAD") return false;
-  if (isAdminPath(pathname) || pathname === "/api/health" || pathname === "/robots.txt") return false;
-  return true;
+function requiresApplicationData(request: Request, pathname: string): boolean {
+  if (DATA_INDEPENDENT_PATHS.has(pathname)) return false;
+  if (isAdminPath(pathname)) return true;
+  return request.method === "GET" || request.method === "HEAD";
 }
 
-async function publicDataReady(): Promise<boolean> {
+async function applicationDataReady(): Promise<boolean> {
   const now = Date.now();
-  if (publicReadinessCache && publicReadinessCache.expiresAt > now) {
-    return publicReadinessCache.ready;
+  if (dataReadinessCache && dataReadinessCache.expiresAt > now) {
+    return dataReadinessCache.ready;
   }
 
   let ready = false;
@@ -55,31 +62,33 @@ async function publicDataReady(): Promise<boolean> {
          s.disclaimer_content,
          EXISTS(SELECT 1 FROM channels LIMIT 1) AS channels_ready,
          EXISTS(SELECT 1 FROM image_assets LIMIT 1) AS images_ready,
+         EXISTS(SELECT 1 FROM image_deletion_queue WHERE attempt_count >= 0 LIMIT 1) AS image_deletions_ready,
          EXISTS(SELECT 1 FROM categories LIMIT 1) AS categories_ready,
          EXISTS(SELECT 1 FROM category_filters LIMIT 1) AS filters_ready,
          EXISTS(SELECT 1 FROM category_filter_relations LIMIT 1) AS filter_relations_ready,
-         EXISTS(SELECT 1 FROM products LIMIT 1) AS products_ready,
+         EXISTS(SELECT 1 FROM products WHERE body_source IS NOT NULL LIMIT 1) AS products_ready,
          EXISTS(SELECT 1 FROM product_images LIMIT 1) AS product_images_ready,
-         EXISTS(SELECT 1 FROM ad_pools LIMIT 1) AS ad_pools_ready,
+         EXISTS(SELECT 1 FROM ad_pools WHERE channel_id IS NOT NULL LIMIT 1) AS ad_pools_ready,
          EXISTS(SELECT 1 FROM advertisements LIMIT 1) AS advertisements_ready,
-         EXISTS(SELECT 1 FROM conversion_groups LIMIT 1) AS conversion_groups_ready,
+         EXISTS(SELECT 1 FROM conversion_groups WHERE channel_id IS NOT NULL LIMIT 1) AS conversion_groups_ready,
          EXISTS(SELECT 1 FROM conversion_resources LIMIT 1) AS conversion_resources_ready
        FROM site_settings s
        WHERE s.id = 1`,
     ).first<{ id: number }>();
     ready = row?.id === 1;
   } catch (error) {
-    console.error(JSON.stringify({ event: "public_readiness_check_failed", error: String(error) }));
+    console.error(JSON.stringify({ event: "application_readiness_check_failed", error: String(error) }));
   }
 
-  publicReadinessCache = {
+  dataReadinessCache = {
     ready,
-    expiresAt: now + (ready ? PUBLIC_READINESS_SUCCESS_TTL_MS : PUBLIC_READINESS_FAILURE_TTL_MS),
+    expiresAt: now + (ready ? DATA_READINESS_SUCCESS_TTL_MS : DATA_READINESS_FAILURE_TTL_MS),
   };
   return ready;
 }
 
 function serviceUnavailableResponse(request: Request, pathname: string): Response {
+  const admin = isAdminPath(pathname);
   const wantsJson = pathname.startsWith("/api/")
     || pathname.startsWith("/go/")
     || (request.headers.get("Accept") ?? "").includes("application/json");
@@ -92,25 +101,32 @@ function serviceUnavailableResponse(request: Request, pathname: string): Respons
   if (wantsJson) {
     return new Response(request.method === "HEAD" ? null : JSON.stringify({
       error: "SERVICE_UNAVAILABLE",
-      message: "Public catalog data is temporarily unavailable.",
+      message: admin
+        ? "Admin data is temporarily unavailable."
+        : "Public catalog data is temporarily unavailable.",
     }), {
       status: 503,
       headers: { ...headers, "Content-Type": "application/json; charset=utf-8" },
     });
   }
 
+  const language = admin ? "zh-CN" : "en";
+  const title = admin ? "数据服务暂不可用" : "Temporarily unavailable";
+  const message = admin
+    ? "后台数据服务或数据库迁移状态异常，请检查健康接口和部署日志后重试。"
+    : "The catalog data service is unavailable. Please try again shortly.";
   const body = `<!doctype html>
-<html lang="en">
+<html lang="${language}">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
-  <title>Temporarily unavailable</title>
+  <title>${title}</title>
   <style>
-    :root{color-scheme:dark}*{box-sizing:border-box}body{min-height:100vh;margin:0;display:grid;place-items:center;padding:1.5rem;font-family:system-ui,sans-serif;background:#080a0d;color:#f4f1ea}.card{width:min(100%,34rem);padding:2rem;border:1px solid #272b31;border-radius:1rem;background:#111419;text-align:center}h1{margin:0 0 .75rem;font-size:clamp(1.8rem,6vw,2.8rem)}p{margin:0;color:#aeb4bd;line-height:1.6}
+    :root{color-scheme:dark}*{box-sizing:border-box}body{min-height:100vh;margin:0;display:grid;place-items:center;padding:1.5rem;font-family:system-ui,sans-serif;background:#080a0d;color:#f4f1ea}.card{width:min(100%,38rem);padding:2rem;border:1px solid #272b31;border-radius:1rem;background:#111419;text-align:center}h1{margin:0 0 .75rem;font-size:clamp(1.8rem,6vw,2.8rem)}p{margin:0;color:#aeb4bd;line-height:1.6}
   </style>
 </head>
-<body><main class="card"><h1>Temporarily unavailable</h1><p>The catalog data service is unavailable. Please try again shortly.</p></main></body>
+<body><main class="card"><h1>${title}</h1><p>${message}</p></main></body>
 </html>`;
 
   return new Response(request.method === "HEAD" ? null : body, {
@@ -177,7 +193,7 @@ export const onRequest = defineMiddleware(async (context, next) => {
     }
   }
 
-  if (requiresPublicData(context.request, pathname) && !(await publicDataReady())) {
+  if (requiresApplicationData(context.request, pathname) && !(await applicationDataReady())) {
     return addSecurityHeaders(serviceUnavailableResponse(context.request, pathname), context.request, pathname);
   }
 
