@@ -3,6 +3,7 @@ import PublicLayout from "@/layouts/PublicLayout.astro";
 import HeroCarousel from "@/components/public/HeroCarousel.astro";
 import CategoryCard from "@/components/public/CategoryCard.astro";
 import ProductDirectory from "@/components/public/ProductDirectory.astro";
+import PublicSearchForm from "@/components/public/PublicSearchForm.astro";
 import {
   findPublicChannel,
   loadPublicCategories,
@@ -32,6 +33,7 @@ const productPage = channel && categories.length === 0
   : { products: [], page: 1, hasMore: false };
 
 const canonical = new URL(`/${encodeURIComponent(channelSlug)}`, Astro.url.origin).href;
+const filterColumns = Math.min(Math.max(filters.length, 1), 4);
 ---
 
 <PublicLayout
@@ -46,28 +48,24 @@ const canonical = new URL(`/${encodeURIComponent(channelSlug)}`, Astro.url.origi
       <HeroCarousel advertisements={hero} />
 
       <section class="public-section channel-search-section">
-        <form class="public-search-form" action={`/${encodeURIComponent(channel.slug)}/search`} method="get" role="search">
-          <span class="public-search-icon" aria-hidden="true">
-            <svg viewBox="0 0 24 24">
-              <circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="1.7" />
-              <path d="m16 16 4 4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.7" />
-            </svg>
-          </span>
-          <input name="q" type="search" maxlength="100" placeholder="Search" aria-label={`Search ${channel.name}`} />
-          <button class="public-search-submit" type="submit" aria-label="Search">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="m9 18 6-6-6-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
-            </svg>
-          </button>
-        </form>
+        <PublicSearchForm
+          action={`/${encodeURIComponent(channel.slug)}/search`}
+          ariaLabel={`Search ${channel.name}`}
+        />
       </section>
 
       {categories.length > 0 ? (
         <section class="public-section category-section" data-category-section>
           {filters.length > 0 && (
-            <div class="filter-strip" aria-label="Category filters">
+            <div
+              class="filter-strip"
+              style={`--filter-columns: ${filterColumns}`}
+              aria-label="Category filters"
+            >
               {filters.map((filter) => (
-                <button class="filter-button" type="button" data-category-filter={filter.id} aria-pressed="false">{filter.name}</button>
+                <button class="filter-button" type="button" data-category-filter={filter.id} aria-pressed="false">
+                  {filter.name}
+                </button>
               ))}
             </div>
           )}
@@ -89,7 +87,6 @@ const canonical = new URL(`/${encodeURIComponent(channelSlug)}`, Astro.url.origi
         <div>
           <div class="empty-icon" aria-hidden="true">404</div>
           <h1>Page not found</h1>
-          <p>This channel is unavailable or has not been published.</p>
           <a class="public-button secondary" href="/">Return home</a>
         </div>
       </div>
@@ -101,6 +98,7 @@ const canonical = new URL(`/${encodeURIComponent(channelSlug)}`, Astro.url.origi
   (() => {
     const section = document.querySelector('[data-category-section]');
     if (!section) return;
+
     const buttons = Array.from(section.querySelectorAll('[data-category-filter]'));
     const cards = Array.from(section.querySelectorAll('[data-category-card]'));
     const empty = section.querySelector('[data-category-empty]');
@@ -108,15 +106,15 @@ const canonical = new URL(`/${encodeURIComponent(channelSlug)}`, Astro.url.origi
     buttons.forEach((button) => {
       button.addEventListener('click', () => {
         const filterId = button.dataset.categoryFilter || '';
-        const wasActive = button.getAttribute('aria-pressed') === 'true';
+        const shouldClear = button.getAttribute('aria-pressed') === 'true';
         let visible = 0;
 
         buttons.forEach((item) => item.setAttribute('aria-pressed', 'false'));
-        if (!wasActive) button.setAttribute('aria-pressed', 'true');
+        if (!shouldClear) button.setAttribute('aria-pressed', 'true');
 
         cards.forEach((card) => {
-          const ids = (card.dataset.filterIds || '').split(',').filter(Boolean);
-          const show = wasActive || ids.includes(filterId);
+          const filterIds = (card.dataset.filterIds || '').split(',').filter(Boolean);
+          const show = shouldClear || filterIds.includes(filterId);
           card.hidden = !show;
           if (show) visible += 1;
         });
