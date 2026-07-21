@@ -149,7 +149,7 @@ function synchronizeStyles(documentValue: Document, responseUrl: string): void {
     if (hrefValue) desiredLinks.add(new URL(hrefValue, responseUrl).href);
   });
 
-  document.querySelectorAll<HTMLLinkElement>('link[data-admin-dynamic-stylesheet="1"]').forEach((link) => {
+  document.querySelectorAll<HTMLLinkElement>('link[rel="stylesheet"][href]').forEach((link) => {
     if (!desiredLinks.has(link.href)) link.remove();
   });
 
@@ -160,7 +160,6 @@ function synchronizeStyles(documentValue: Document, responseUrl: string): void {
     const link = document.createElement("link");
     link.rel = "stylesheet";
     link.href = href;
-    link.dataset.adminDynamicStylesheet = "1";
     document.head.appendChild(link);
   }
 
@@ -170,9 +169,14 @@ function synchronizeStyles(documentValue: Document, responseUrl: string): void {
     if (text) desiredInlineStyles.set(styleKey(text), text);
   });
 
-  document.querySelectorAll<HTMLStyleElement>("style[data-admin-dynamic-style]").forEach((style) => {
-    const key = style.dataset.adminDynamicStyle ?? "";
-    if (!desiredInlineStyles.has(key)) style.remove();
+  document.querySelectorAll<HTMLStyleElement>("head style").forEach((style) => {
+    const text = style.textContent ?? "";
+    const key = styleKey(text);
+    if (!desiredInlineStyles.has(key)) {
+      style.remove();
+      return;
+    }
+    style.dataset.adminDynamicStyle = key;
   });
 
   for (const [key, text] of desiredInlineStyles) {
