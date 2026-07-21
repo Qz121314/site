@@ -6,6 +6,7 @@ import {
   loadPublicSiteShell,
 } from "@/lib/db/public";
 import { loadPublicUncategorizedProducts } from "@/lib/db/public-availability";
+import { normalizePublicSearchQuery } from "@/lib/search/query";
 
 export const prerender = false;
 
@@ -35,7 +36,7 @@ export const GET: APIRoute = async ({ params, url }) => {
   if (page > MAX_PUBLIC_PRODUCT_PAGE) return json({ error: "PAGE_OUT_OF_RANGE" }, 400);
 
   const categorySlug = (url.searchParams.get("category") ?? "").trim().slice(0, 96);
-  const query = (url.searchParams.get("q") ?? "").trim().slice(0, 100);
+  const query = normalizePublicSearchQuery(url.searchParams.get("q") ?? "");
   const uncategorizedOnly = url.searchParams.get("uncategorized") === "1";
   if (uncategorizedOnly && categorySlug) return json({ error: "INVALID_PRODUCT_FILTER" }, 400);
 

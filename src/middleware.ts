@@ -36,6 +36,10 @@ function addSecurityHeaders(response: Response, request: Request, pathname: stri
   if (isAdminPath(pathname)) {
     if (!isAdminImageContent(request, pathname)) headers.set("Cache-Control", "no-store");
     headers.set("X-Robots-Tag", "noindex, nofollow");
+  } else if (pathname.startsWith("/api/") || pathname.startsWith("/go/")) {
+    headers.set("X-Robots-Tag", "noindex, nofollow");
+  } else if (response.status >= 400) {
+    headers.set("X-Robots-Tag", "noindex, follow");
   } else if (isPublicEdgeCacheable(request, pathname, response)) {
     headers.set("Cache-Control", "public, max-age=0, must-revalidate");
     headers.set(
@@ -58,7 +62,11 @@ export const onRequest = defineMiddleware(async (context, next) => {
       if (pathname.startsWith("/api/admin/")) {
         return new Response(JSON.stringify({ error: "UNAUTHORIZED" }), {
           status: 401,
-          headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" },
+          headers: {
+            "Content-Type": "application/json; charset=utf-8",
+            "Cache-Control": "no-store",
+            "X-Robots-Tag": "noindex, nofollow",
+          },
         });
       }
       return context.redirect("/admin/login", 302);

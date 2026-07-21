@@ -36,7 +36,9 @@ const productPage = channel
     : await loadPublicProducts({ channelId: channel.id, baseUrl: site.r2PublicBaseUrl })
   : { products: [], page: 1, hasMore: false };
 
-const canonical = new URL(`/${encodeURIComponent(channelSlug)}`, Astro.url.origin).href;
+const canonical = channel
+  ? new URL(`/${encodeURIComponent(channel.slug)}`, Astro.url.origin).href
+  : null;
 ---
 
 <PublicLayout
@@ -44,6 +46,7 @@ const canonical = new URL(`/${encodeURIComponent(channelSlug)}`, Astro.url.origi
   title={channel?.name ?? "Page not found"}
   description={channel ? `${channel.name} recommendations and listings.` : "The requested channel could not be found."}
   canonical={canonical}
+  robots={channel ? undefined : "noindex,follow"}
   activeChannel={channel?.slug ?? null}
 >
   {channel ? (
