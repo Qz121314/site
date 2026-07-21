@@ -39,7 +39,7 @@ export const POST: APIRoute = async ({ request, params }) => {
       status === "disabled" &&
       await wouldRemoveLastEnabledConversionResource(channelId, groupId, resourceId)
     ) {
-      return redirect(request, channelId, { error: "resource-in-use", group: groupId });
+      return redirect(request, channelId, { error: "group-in-use", group: groupId });
     }
 
     await env.DB.prepare(
