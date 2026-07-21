@@ -6,6 +6,7 @@ export const prerender = false;
 const REQUIRED_TABLES = [
   "site_settings",
   "image_assets",
+  "image_deletion_queue",
   "ad_pools",
   "channels",
   "category_filters",
@@ -23,6 +24,7 @@ type ReadinessRow = {
   settings_ready: number;
   unassigned_ad_pools: number;
   unassigned_conversion_groups: number;
+  pending_image_deletions: number;
 };
 
 export const GET: APIRoute = async () => {
@@ -30,6 +32,7 @@ export const GET: APIRoute = async () => {
   let schema: "ok" | "incomplete" | "unknown" = "unknown";
   let settings: "ok" | "missing" | "unknown" = "unknown";
   let unassignedPools = 0;
+  let pendingImageDeletions = 0;
 
   try {
     await env.DB.prepare("SELECT 1").first();
@@ -46,11 +49,13 @@ export const GET: APIRoute = async () => {
         `SELECT
            EXISTS(SELECT 1 FROM site_settings WHERE id = 1) AS settings_ready,
            (SELECT COUNT(*) FROM ad_pools WHERE channel_id IS NULL) AS unassigned_ad_pools,
-           (SELECT COUNT(*) FROM conversion_groups WHERE channel_id IS NULL) AS unassigned_conversion_groups`,
+           (SELECT COUNT(*) FROM conversion_groups WHERE channel_id IS NULL) AS unassigned_conversion_groups,
+           (SELECT COUNT(*) FROM image_deletion_queue) AS pending_image_deletions`,
       ).first<ReadinessRow>();
       settings = readiness?.settings_ready ? "ok" : "missing";
       unassignedPools = Number(readiness?.unassigned_ad_pools ?? 0)
         + Number(readiness?.unassigned_conversion_groups ?? 0);
+      pendingImageDeletions = Number(readiness?.pending_image_deletions ?? 0);
     }
   } catch (error) {
     database = "unavailable";
@@ -58,13 +63,19 @@ export const GET: APIRoute = async () => {
   }
 
   const ready = database === "ok" && schema === "ok" && settings === "ok";
-  const status = ready ? (unassignedPools > 0 ? "degraded" : "ok") : "unavailable";
+  const degraded = unassignedPools > 0 || pendingImageDeletions > 0;
+  const status = ready ? (degraded ? "degraded" : "ok") : "unavailable";
+  const warnings = degraded ? {
+    ...(unassignedPools > 0 ? { unassignedPools } : {}),
+    ...(pendingImageDeletions > 0 ? { pendingImageDeletions } : {}),
+  } : undefined;
+
   return new Response(JSON.stringify({
     status,
     database,
     schema,
     settings,
-    warnings: unassignedPools > 0 ? { unassignedPools } : undefined,
+    warnings,
     timestamp: new Date().toISOString(),
   }), {
     status: ready ? 200 : 503,
