@@ -62,7 +62,11 @@ export const onRequest = defineMiddleware(async (context, next) => {
       if (pathname.startsWith("/api/admin/")) {
         return new Response(JSON.stringify({ error: "UNAUTHORIZED" }), {
           status: 401,
-          headers: { "Content-Type": "application/json; charset=utf-8", "Cache-Control": "no-store" },
+          headers: {
+            "Content-Type": "application/json; charset=utf-8",
+            "Cache-Control": "no-store",
+            "X-Robots-Tag": "noindex, nofollow",
+          },
         });
       }
       return context.redirect("/admin/login", 302);
