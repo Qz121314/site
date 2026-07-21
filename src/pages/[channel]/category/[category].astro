@@ -9,45 +9,56 @@ import {
   loadPublicProducts,
   loadPublicSiteShell,
 } from "@/lib/db/public";
+import { publicPageCanonical, readPublicPage } from "@/lib/public/pagination";
 
 export const prerender = false;
 
 const channelSlug = Astro.params.channel ?? "";
 const categorySlug = Astro.params.category ?? "";
+const pageInput = readPublicPage(Astro.url.searchParams.get("page"));
 const site = await loadPublicSiteShell();
 const channel = findPublicChannel(site, channelSlug);
-const category = channel
+const category = channel && pageInput.valid
   ? await loadPublicCategory(channel.id, categorySlug, site.r2PublicBaseUrl)
   : null;
-
-if (!channel || !category) Astro.response.status = 404;
 
 const productPage = channel && category
   ? await loadPublicProducts({
       channelId: channel.id,
       categoryId: category.id,
       baseUrl: site.r2PublicBaseUrl,
+      page: pageInput.page,
     })
-  : { products: [], page: 1, hasMore: false };
+  : { products: [], page: pageInput.page, hasMore: false };
+const pageOutOfRange = Boolean(channel && category && pageInput.page > 1 && productPage.products.length === 0);
+const pageAvailable = Boolean(channel && category && pageInput.valid && !pageOutOfRange);
 
-const canonical = channel && category
-  ? new URL(
-      `/${encodeURIComponent(channel.slug)}/category/${encodeURIComponent(category.slug)}`,
-      Astro.url.origin,
-    ).href
+if (!pageAvailable) Astro.response.status = 404;
+
+const canonical = pageAvailable && channel && category
+  ? publicPageCanonical(
+      new URL(
+        `/${encodeURIComponent(channel.slug)}/category/${encodeURIComponent(category.slug)}`,
+        Astro.url.origin,
+      ),
+      pageInput.page,
+    )
   : null;
+const pageTitle = category
+  ? pageInput.page > 1 ? `${category.name} — Page ${pageInput.page}` : category.name
+  : "Page not found";
 ---
 
 <PublicLayout
   site={site}
-  title={category?.name ?? "Page not found"}
-  description={category ? `Browse ${category.name} in ${channel?.name ?? site.siteName}.` : "The requested category could not be found."}
+  title={pageTitle}
+  description={pageAvailable && category ? `Browse ${category.name} in ${channel?.name ?? site.siteName}.` : "The requested category page could not be found."}
   canonical={canonical}
-  robots={channel && category ? undefined : "noindex,follow"}
+  robots={pageAvailable ? undefined : "noindex,follow"}
   ogImage={category?.imageUrl ?? site.logoUrl}
-  activeChannel={channel?.slug ?? null}
+  activeChannel={pageAvailable ? channel?.slug ?? null : null}
 >
-  {channel && category ? (
+  {pageAvailable && channel && category ? (
     <>
       <PublicPageHeader
         href={`/${encodeURIComponent(channel.slug)}`}
@@ -55,15 +66,23 @@ const canonical = channel && category
         className="directory-page-header"
       />
 
-      <section class="public-section">
-        <PublicSearchForm
-          action={`/${encodeURIComponent(channel.slug)}/search`}
-          ariaLabel={`Search ${category.name}`}
-          placeholder={`Search ${category.name}`}
-        />
-      </section>
+      {pageInput.page === 1 && (
+        <section class="public-section">
+          <PublicSearchForm
+            action={`/${encodeURIComponent(channel.slug)}/search`}
+            ariaLabel={`Search ${category.name}`}
+            placeholder={`Search ${category.name}`}
+          />
+        </section>
+      )}
 
       <section class="public-section directory-list-section">
+        {pageInput.page > 1 && (
+          <div class="public-section-heading">
+            <h2>Products</h2>
+            <span class="public-count">Page {pageInput.page}</span>
+          </div>
+        )}
         <ProductDirectory
           channelSlug={channel.slug}
           categorySlug={category.slug}
@@ -77,7 +96,7 @@ const canonical = channel && category
       <div class="public-empty public-error-card">
         <div>
           <div class="empty-icon" aria-hidden="true">404</div>
-          <h1>Category not found</h1>
+          <h1>Category page not found</h1>
           <a class="public-button secondary" href={channel ? `/${encodeURIComponent(channel.slug)}` : "/"}>Return</a>
         </div>
       </div>
