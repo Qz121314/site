@@ -33,14 +33,6 @@ const carouselId = `hero-${crypto.randomUUID()}`;
             loading={index === 0 ? "eager" : "lazy"}
             fetchpriority={index === 0 ? "high" : "auto"}
           />
-          <span class="hero-slide-shade" aria-hidden="true"></span>
-          <span class="hero-slide-label" aria-hidden="true">Featured</span>
-          <span class="hero-slide-action" aria-hidden="true">
-            Explore
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <path d="m9 18 6-6-6-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
-            </svg>
-          </span>
         </a>
       ))}
     </div>
