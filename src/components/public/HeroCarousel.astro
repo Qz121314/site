@@ -15,6 +15,7 @@ const carouselId = `hero-${crypto.randomUUID()}`;
     id={carouselId}
     data-hero-carousel
     aria-label="Featured promotions"
+    aria-roledescription="carousel"
   >
     <div class="hero-track" data-hero-track>
       {advertisements.map((advertisement, index) => (
@@ -63,6 +64,7 @@ const carouselId = `hero-${crypto.randomUUID()}`;
       const dots = Array.from(root.querySelectorAll('[data-hero-dot]'));
       if (!track || slides.length < 2) return;
 
+      const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
       let active = 0;
       let timer = 0;
       let pointerStart = 0;
@@ -84,9 +86,16 @@ const carouselId = `hero-${crypto.randomUUID()}`;
         timer = 0;
       };
 
+      const shouldPause = () => (
+        document.hidden
+        || reducedMotion.matches
+        || root.matches(':hover')
+        || root.contains(document.activeElement)
+      );
+
       const start = () => {
         stop();
-        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        if (shouldPause()) return;
         timer = window.setInterval(() => goTo(active + 1), 5000);
       };
 
@@ -135,9 +144,20 @@ const carouselId = `hero-${crypto.randomUUID()}`;
         dragged = false;
       });
 
+      root.addEventListener('keydown', (event) => {
+        if (event.key !== 'ArrowLeft' && event.key !== 'ArrowRight') return;
+        event.preventDefault();
+        goTo(active + (event.key === 'ArrowRight' ? 1 : -1));
+      });
       root.addEventListener('mouseenter', stop);
       root.addEventListener('mouseleave', start);
-      document.addEventListener('visibilitychange', () => document.hidden ? stop() : start());
+      root.addEventListener('focusin', stop);
+      root.addEventListener('focusout', (event) => {
+        if (event.relatedTarget instanceof Node && root.contains(event.relatedTarget)) return;
+        start();
+      });
+      document.addEventListener('visibilitychange', start);
+      reducedMotion.addEventListener('change', start);
       window.addEventListener('resize', () => goTo(active, 'auto'));
       start();
     };
