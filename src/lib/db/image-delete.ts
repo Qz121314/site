@@ -20,7 +20,7 @@ export async function deleteUnusedImageAssetsAtomically(
   }
 
   const placeholders = uniqueIds.map((_, index) => `?${index + 1}`).join(", ");
-  const [foundResult, , remainingResult] = await env.DB.batch([
+  const results = await env.DB.batch([
     env.DB.prepare(
       `SELECT id, object_key, mime_type
        FROM image_assets
@@ -47,6 +47,10 @@ export async function deleteUnusedImageAssetsAtomically(
       `SELECT id FROM image_assets WHERE id IN (${placeholders})`,
     ).bind(...uniqueIds),
   ]);
+
+  const foundResult = results[0];
+  const remainingResult = results[2];
+  if (!foundResult || !remainingResult) throw new Error("Incomplete D1 image delete batch result");
 
   const found = (foundResult.results as ImageObjectRow[]).map(mapImage);
   const remainingIds = (remainingResult.results as Array<{ id: string }>).map((row) => row.id);
