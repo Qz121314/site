@@ -1,8 +1,11 @@
 ---
+import ProductContentEditor from "@/components/admin/ProductContentEditor.astro";
 import AdminLayout from "@/layouts/AdminLayout.astro";
+import { loadAdminProductImages } from "@/lib/db/product-images";
+import { loadAdminProduct, loadAdminProductOptions, loadAdminProducts } from "@/lib/db/products";
 import { loadAdminChannel } from "@/lib/db/site";
-import { loadAdminProductCategoryList, loadAdminProducts } from "@/lib/db/products";
 import { buildPublicImageUrl } from "@/lib/images/url";
+import "@/styles/admin-product-workbench.css";
 
 export const prerender = false;
 
@@ -10,30 +13,55 @@ const channelId = Astro.params.channelId ?? "";
 const query = (Astro.url.searchParams.get("q") ?? "").slice(0, 100);
 const status = Astro.url.searchParams.get("status") ?? "";
 const categoryId = Astro.url.searchParams.get("category") ?? "";
+const editId = Astro.url.searchParams.get("edit") ?? "";
 const pageValue = Number(Astro.url.searchParams.get("page") ?? "1");
+const requestedPage = Number.isSafeInteger(pageValue) ? pageValue : 1;
 
-const [channel, categories, productPage] = channelId
+const [channel, options, productPage, selectedProduct, selectedImages] = channelId
   ? await Promise.all([
       loadAdminChannel(channelId),
-      loadAdminProductCategoryList(channelId),
-      loadAdminProducts(channelId, {
-        query,
-        status,
-        categoryId,
-        page: Number.isSafeInteger(pageValue) ? pageValue : 1,
-      }),
+      loadAdminProductOptions(channelId),
+      loadAdminProducts(channelId, { query, status, categoryId, page: requestedPage }),
+      editId ? loadAdminProduct(channelId, editId) : Promise.resolve(null),
+      editId ? loadAdminProductImages(channelId, editId) : Promise.resolve([]),
     ])
   : [
       null,
-      [],
+      { categories: [], filters: [], conversionGroups: [] },
       { products: [], total: 0, page: 1, pageCount: 1, pageSize: 30, r2PublicBaseUrl: "" },
+      null,
+      [],
     ];
 
 const saved = Astro.url.searchParams.get("saved");
 const error = Astro.url.searchParams.get("error");
+const invalidEdit = Boolean(editId && !selectedProduct);
 
-const savedMessages: Record<string, string> = { deleted: "产品已删除。" };
+const savedMessages: Record<string, string> = {
+  created: "产品已新增，并以草稿状态进入产品管理。",
+  updated: "产品内容已保存。",
+  managed: "产品管理设置已保存。",
+  deleted: "产品已删除。",
+};
+
 const errorMessages: Record<string, string> = {
+  title: "产品名称不能为空，且不能超过 160 个字符。",
+  slug: "产品标识生成失败，请调整产品名称。",
+  "category-name": "分类名称不能超过 80 个字符。",
+  category: "所选分类无效或不属于当前分区。",
+  "category-unavailable": "发布产品必须使用已发布分类。",
+  filters: "分类筛选选择无效。",
+  "filter-category": "选择分类筛选前必须填写产品分类。",
+  conversion: "所选转化组无效或不属于当前分区。",
+  "conversion-required": "发布产品必须绑定转化组。",
+  "conversion-unavailable": "发布产品时，转化组必须启用且至少包含一个启用 CTA。",
+  image: "发布产品前至少需要一张有效图片。",
+  gallery: "产品图片最多 30 张。",
+  tags: "标签最多 20 个，每个标签不能超过 40 个字符。",
+  body: "正文不能超过 30000 个字符。",
+  cta: "CTA 文案不能为空，且不能超过 80 个字符。",
+  sort: "排序必须是 -999999 到 999999 之间的整数。",
+  status: "产品状态无效。",
   "not-found": "找不到该分区或产品。",
   database: "数据库操作失败，请稍后重试。",
 };
@@ -44,8 +72,33 @@ const statusLabels = {
   disabled: "已停用",
 } as const;
 
-type PaginationToken = number | "gap";
+type ProductHrefOverrides = {
+  q?: string | null;
+  status?: string | null;
+  category?: string | null;
+  page?: number | null;
+  edit?: string | null;
+};
 
+function productHref(overrides: ProductHrefOverrides = {}): string {
+  const params = new URLSearchParams();
+  const nextQuery = overrides.q === undefined ? query : overrides.q ?? "";
+  const nextStatus = overrides.status === undefined ? status : overrides.status ?? "";
+  const nextCategory = overrides.category === undefined ? categoryId : overrides.category ?? "";
+  const nextPage = overrides.page === undefined ? productPage.page : overrides.page ?? 1;
+  const nextEdit = overrides.edit === undefined ? selectedProduct?.id ?? "" : overrides.edit ?? "";
+
+  if (nextQuery) params.set("q", nextQuery);
+  if (nextStatus) params.set("status", nextStatus);
+  if (nextCategory) params.set("category", nextCategory);
+  if (nextPage > 1) params.set("page", String(nextPage));
+  if (nextEdit) params.set("edit", nextEdit);
+
+  const suffix = params.toString();
+  return `/admin/channels/${encodeURIComponent(channelId)}/products${suffix ? `?${suffix}` : ""}`;
+}
+
+type PaginationToken = number | "gap";
 function buildPagination(current: number, total: number): PaginationToken[] {
   if (total <= 7) return Array.from({ length: total }, (_, index) => index + 1);
   const pages = new Set([1, total, current - 1, current, current + 1].filter((page) => page >= 1 && page <= total));
@@ -63,151 +116,175 @@ function buildPagination(current: number, total: number): PaginationToken[] {
 const paginationTokens = buildPagination(productPage.page, productPage.pageCount);
 const pageStart = productPage.total === 0 ? 0 : (productPage.page - 1) * productPage.pageSize + 1;
 const pageEnd = Math.min(productPage.total, productPage.page * productPage.pageSize);
-
-function pageHref(page: number): string {
-  const params = new URLSearchParams();
-  if (query) params.set("q", query);
-  if (status) params.set("status", status);
-  if (categoryId) params.set("category", categoryId);
-  if (page > 1) params.set("page", String(page));
-  const suffix = params.toString();
-  return `/admin/channels/${encodeURIComponent(channelId)}/products${suffix ? `?${suffix}` : ""}`;
-}
+const contentFormId = selectedProduct ? `product-content-${selectedProduct.id}` : "product-content-new";
+const contentAction = selectedProduct
+  ? `/api/admin/channels/${encodeURIComponent(channelId)}/products/${encodeURIComponent(selectedProduct.id)}/update`
+  : `/api/admin/channels/${encodeURIComponent(channelId)}/products/create`;
+const returnTo = productHref({ edit: selectedProduct?.id ?? null });
+const galleryValues = selectedImages.map((image) => ({
+  id: image.imageAssetId,
+  previewUrl: image.previewUrl,
+  name: image.originalName,
+  meta: `${image.width}×${image.height}`,
+}));
 ---
 
-<AdminLayout title={channel ? `${channel.name} · 产品列表管理` : "分区不存在"}>
-  {channel && <a slot="actions" class="button" href={`/admin/channels/${encodeURIComponent(channelId)}/products/new`}>录入新产品</a>}
-
+<AdminLayout title={channel ? `${channel.name} · 产品管理` : "分区不存在"} workspace="wide">
   {channel ? (
-    <>
+    <div class="admin-stack">
       {saved && savedMessages[saved] && <p class="notice" role="status">{savedMessages[saved]}</p>}
-      {error && errorMessages[error] && <p class="error" role="alert">{errorMessages[error]}</p>}
+      {(error && errorMessages[error]) && <p class="error" role="alert">{errorMessages[error]}</p>}
+      {invalidEdit && <p class="error" role="alert">找不到需要编辑的产品，已切换到新产品录入。</p>}
 
-      <section class="admin-card admin-filter-panel">
-        <form class="admin-filter-form" method="get">
-          <div class="admin-field admin-search-field">
-            <label for="product-search">搜索</label>
-            <input id="product-search" name="q" value={query} maxlength="100" autocomplete="off" placeholder="产品名称或标签" />
-          </div>
-          <div class="admin-field">
-            <label for="product-status-filter">状态</label>
-            <select id="product-status-filter" name="status">
-              <option value="">全部状态</option>
-              <option value="draft" selected={status === "draft"}>草稿</option>
-              <option value="published" selected={status === "published"}>发布</option>
-              <option value="disabled" selected={status === "disabled"}>停用</option>
-            </select>
-          </div>
-          <div class="admin-field">
-            <label for="product-category-filter">分类</label>
-            <select id="product-category-filter" name="category">
-              <option value="">全部分类</option>
-              {categories.map((category) => (
-                <option value={category.id} selected={categoryId === category.id}>{category.name}</option>
-              ))}
-            </select>
-          </div>
-          <div class="admin-filter-actions">
-            <button class="button" type="submit">筛选</button>
-            <a class="button secondary" href={`/admin/channels/${encodeURIComponent(channelId)}/products`}>重置</a>
-          </div>
-        </form>
-      </section>
-
-      <section class="admin-card admin-collection-panel">
-        <div class="admin-toolbar">
-          <h2>产品</h2>
-          <span class="admin-section-note">{productPage.total} 个</span>
-        </div>
-
-        {productPage.products.length === 0 ? (
-          <div class="admin-collection-empty">没有符合条件的产品。</div>
-        ) : (
-          <div class="admin-entity-grid product-admin-grid">
-            {productPage.products.map((product) => {
-              const thumbnailUrl = buildPublicImageUrl(productPage.r2PublicBaseUrl, product.coverObjectKey ?? "")
-                ?? (product.coverAssetId ? `/api/admin/images/${encodeURIComponent(product.coverAssetId)}/content` : null);
-              return (
-                <article class="admin-entity-card product-card product-admin-card">
-                  <a class="admin-entity-media" href={`/admin/channels/${encodeURIComponent(channelId)}/products/${encodeURIComponent(product.id)}`} aria-label={`编辑 ${product.title}`}>
-                    {thumbnailUrl ? (
-                      <img src={thumbnailUrl} alt="" loading="lazy" decoding="async" />
-                    ) : (
-                      <span class="admin-entity-placeholder">暂无图片</span>
-                    )}
-                    <span class:list={["admin-entity-badge", `is-${product.status}`]}>{statusLabels[product.status]}</span>
-                  </a>
-                  <div class="admin-entity-body">
-                    <strong class="admin-entity-title" title={product.title}>{product.title}</strong>
-                  </div>
-                  <div class="admin-entity-actions">
-                    {product.status === "published" && (
-                      <a class="button secondary" href={`/${encodeURIComponent(channel.slug)}/product/${encodeURIComponent(product.slug)}`} target="_blank" rel="noreferrer">前台</a>
-                    )}
-                    <a class="button secondary" href={`/admin/channels/${encodeURIComponent(channelId)}/products/${encodeURIComponent(product.id)}`}>编辑</a>
-                    <form action={`/api/admin/channels/${encodeURIComponent(channelId)}/products/${encodeURIComponent(product.id)}/delete`} method="post" onsubmit="return confirm('确定删除该产品？')">
-                      <button class="button danger" type="submit">删除</button>
-                    </form>
-                  </div>
-                </article>
-              );
-            })}
-          </div>
-        )}
-
-        {productPage.total > 0 && (
-          <nav class="admin-pagination product-pagination" aria-label="产品分页">
-            <span class="pagination-summary">第 {pageStart}–{pageEnd} 个，共 {productPage.total} 个</span>
-            <div class="pagination-pages">
-              <a class:list={["button secondary", productPage.page <= 1 && "is-disabled"]} href={productPage.page > 1 ? pageHref(productPage.page - 1) : undefined}>上一页</a>
-              {paginationTokens.map((token) => token === "gap" ? (
-                <span class="pagination-gap" aria-hidden="true">…</span>
-              ) : (
-                <a
-                  class:list={["button secondary pagination-number", token === productPage.page && "is-current"]}
-                  href={pageHref(token)}
-                  aria-current={token === productPage.page ? "page" : undefined}
-                >{token}</a>
-              ))}
-              <a class:list={["button secondary", productPage.page >= productPage.pageCount && "is-disabled"]} href={productPage.page < productPage.pageCount ? pageHref(productPage.page + 1) : undefined}>下一页</a>
+      <div class="product-workbench">
+        <section class="product-entry-column" aria-labelledby="product-entry-title">
+          <header class="admin-card product-entry-header">
+            <h2 id="product-entry-title">产品信息录入</h2>
+            <div class="product-entry-actions">
+              {selectedProduct && <a class="button secondary" href={productHref({ edit: null })}>新建产品</a>}
             </div>
-          </nav>
-        )}
-      </section>
-    </>
+          </header>
+
+          <form
+            id={contentFormId}
+            class="product-content-form"
+            action={contentAction}
+            method="post"
+            data-admin-dirty-form
+          >
+            <input type="hidden" name="returnTo" value={returnTo} />
+            <ProductContentEditor
+              formId={contentFormId}
+              channelId={channelId}
+              options={options}
+              product={selectedProduct}
+              gallery={galleryValues}
+            />
+            <div class="product-content-form-actions">
+              {selectedProduct && <a class="button secondary" href={productHref({ edit: null })}>取消编辑</a>}
+              <button class="button" type="submit">{selectedProduct ? "保存产品内容" : "保存新产品"}</button>
+            </div>
+          </form>
+        </section>
+
+        <section class="product-management-column" aria-labelledby="product-management-title">
+          <div class="admin-card product-management-card">
+            <header class="product-management-header">
+              <h2 id="product-management-title">产品管理</h2>
+              <span class="admin-section-note">{productPage.total} 个</span>
+            </header>
+
+            <form class="product-management-filter" method="get">
+              {selectedProduct && <input type="hidden" name="edit" value={selectedProduct.id} />}
+              <div class="admin-field">
+                <label for="product-search">搜索</label>
+                <input id="product-search" name="q" value={query} maxlength="100" autocomplete="off" placeholder="产品名称或标签" />
+              </div>
+              <div class="admin-field">
+                <label for="product-status-filter">状态</label>
+                <select id="product-status-filter" name="status">
+                  <option value="">全部</option>
+                  <option value="draft" selected={status === "draft"}>草稿</option>
+                  <option value="published" selected={status === "published"}>发布</option>
+                  <option value="disabled" selected={status === "disabled"}>停用</option>
+                </select>
+              </div>
+              <div class="admin-field">
+                <label for="product-category-filter">分类</label>
+                <select id="product-category-filter" name="category">
+                  <option value="">全部分类</option>
+                  {options.categories.map((category) => (
+                    <option value={category.id} selected={categoryId === category.id}>{category.name}</option>
+                  ))}
+                </select>
+              </div>
+              <div class="product-filter-buttons">
+                <button class="button" type="submit">筛选</button>
+                <a class="button secondary" href={productHref({ q: null, status: null, category: null, page: null })}>重置</a>
+              </div>
+            </form>
+
+            {productPage.products.length === 0 ? (
+              <div class="product-management-empty">没有符合条件的产品。</div>
+            ) : (
+              <div class="product-management-list">
+                {productPage.products.map((product) => {
+                  const thumbnailUrl = buildPublicImageUrl(productPage.r2PublicBaseUrl, product.coverObjectKey ?? "")
+                    ?? (product.coverAssetId ? `/api/admin/images/${encodeURIComponent(product.coverAssetId)}/content` : null);
+                  const manageAction = `/api/admin/channels/${encodeURIComponent(channelId)}/products/${encodeURIComponent(product.id)}/manage`;
+                  const deleteAction = `/api/admin/channels/${encodeURIComponent(channelId)}/products/${encodeURIComponent(product.id)}/delete`;
+                  return (
+                    <article class:list={["product-management-row", selectedProduct?.id === product.id && "is-selected"]}>
+                      <div class="product-management-thumbnail">
+                        {thumbnailUrl ? <img src={thumbnailUrl} alt="" loading="lazy" decoding="async" /> : <span>无图</span>}
+                      </div>
+
+                      <div class="product-management-identity">
+                        <strong title={product.title}>{product.title}</strong>
+                        <span>{product.categoryName ?? "未分类"} · {statusLabels[product.status]}</span>
+                      </div>
+
+                      <form class="product-management-controls" action={manageAction} method="post">
+                        <input type="hidden" name="returnTo" value={returnTo} />
+                        <select name="status" aria-label={`${product.title} 发布状态`}>
+                          <option value="draft" selected={product.status === "draft"}>草稿</option>
+                          <option value="published" selected={product.status === "published"}>发布</option>
+                          <option value="disabled" selected={product.status === "disabled"}>停用</option>
+                        </select>
+                        <input
+                          name="sortOrder"
+                          type="number"
+                          min="-999999"
+                          max="999999"
+                          step="1"
+                          value={product.sortOrder}
+                          aria-label={`${product.title} 排序`}
+                        />
+                        <label class="product-featured-control" title="置顶">
+                          <input type="checkbox" name="featured" value="1" checked={product.featured} aria-label={`${product.title} 置顶`} />
+                        </label>
+                        <button class="button secondary" type="submit">保存</button>
+                      </form>
+
+                      <div class="product-management-row-actions">
+                        {product.status === "published" && (
+                          <a class="button secondary" href={`/${encodeURIComponent(channel.slug)}/product/${encodeURIComponent(product.slug)}`} target="_blank" rel="noreferrer">前台</a>
+                        )}
+                        <a class="button secondary" href={productHref({ edit: product.id })}>编辑</a>
+                        <form action={deleteAction} method="post" onsubmit="return confirm('确定删除该产品？')">
+                          <input type="hidden" name="returnTo" value={returnTo} />
+                          <button class="button danger" type="submit">删除</button>
+                        </form>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            )}
+
+            {productPage.total > 0 && (
+              <footer class="product-management-footer">
+                <span class="admin-section-note">第 {pageStart}–{pageEnd} 个，共 {productPage.total} 个</span>
+                <nav class="product-pagination-pages" aria-label="产品分页">
+                  <a class:list={["button secondary", productPage.page <= 1 && "is-disabled"]} href={productPage.page > 1 ? productHref({ page: productPage.page - 1 }) : undefined}>上一页</a>
+                  {paginationTokens.map((token) => token === "gap" ? (
+                    <span class="product-pagination-gap" aria-hidden="true">…</span>
+                  ) : (
+                    <a
+                      class:list={["button secondary", token === productPage.page && "is-current"]}
+                      href={productHref({ page: token })}
+                      aria-current={token === productPage.page ? "page" : undefined}
+                    >{token}</a>
+                  ))}
+                  <a class:list={["button secondary", productPage.page >= productPage.pageCount && "is-disabled"]} href={productPage.page < productPage.pageCount ? productHref({ page: productPage.page + 1 }) : undefined}>下一页</a>
+                </nav>
+              </footer>
+            )}
+          </div>
+        </section>
+      </div>
+    </div>
   ) : (
-    <section class="admin-card"><div class="admin-collection-empty">找不到该分区。</div></section>
+    <section class="admin-card"><div class="product-management-empty">找不到该分区。</div></section>
   )}
 </AdminLayout>
-
-<style>
-  .product-admin-grid {
-    grid-template-columns: repeat(auto-fill, minmax(min(100%, 9.75rem), 11rem));
-    justify-content: start;
-  }
-
-  .product-admin-card .admin-entity-media { aspect-ratio: 4 / 3; }
-  .product-admin-card .admin-entity-title { font-size: .82rem; }
-  .product-admin-card .admin-entity-actions {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    grid-auto-flow: initial;
-  }
-  .product-admin-card .admin-entity-actions .button { font-size: .75rem; }
-
-  .product-pagination {
-    justify-content: space-between;
-    gap: .75rem;
-  }
-
-  .pagination-summary { white-space: nowrap; }
-  .pagination-pages { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: .3rem; }
-  .pagination-pages .button { min-width: 2.15rem; padding-right: .5rem; padding-left: .5rem; }
-  .pagination-pages .pagination-number.is-current { color: #ffffff; border-color: #2563eb; background: #2563eb; }
-  .pagination-gap { display: inline-grid; min-width: 1.4rem; place-items: center; color: #64748b; }
-
-  @media (max-width: 639px) {
-    .product-admin-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .product-pagination { align-items: flex-start; flex-direction: column; }
-    .pagination-pages { justify-content: flex-start; }
-  }
-</style>
