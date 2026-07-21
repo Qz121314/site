@@ -49,7 +49,7 @@ const canonical = new URL(
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="m15 18-6-6 6-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
           </svg>
-          <span>Back to {channel.name}</span>
+          <span>BACK</span>
         </a>
         <div class="directory-title-row">
           <div>
@@ -68,9 +68,8 @@ const canonical = new URL(
               <path d="m16 16 4 4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.7" />
             </svg>
           </span>
-          <input name="q" type="search" maxlength="100" placeholder={`Search in ${category.name}`} aria-label={`Search ${channel.name}`} />
+          <input name="q" type="search" maxlength="100" placeholder={`Search ${category.name}`} aria-label={`Search ${channel.name}`} />
           <button class="public-search-submit" type="submit" aria-label="Search">
-            <span>Search</span>
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="m9 18 6-6-6-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
             </svg>
