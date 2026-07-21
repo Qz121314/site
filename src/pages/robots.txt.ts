@@ -7,7 +7,7 @@ export const GET: APIRoute = async ({ url }) => {
     "User-agent: *",
     "Allow: /",
     "Disallow: /admin",
-    "Disallow: /api/admin",
+    "Disallow: /api/",
     "Disallow: /go/",
     `Sitemap: ${new URL("/sitemap.xml", url.origin).href}`,
   ];
