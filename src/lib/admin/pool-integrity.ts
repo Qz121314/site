@@ -6,6 +6,10 @@ export function isConversionAvailabilityConstraintError(error: unknown): boolean
   );
 }
 
+export function isProductConversionAvailabilityConstraintError(error: unknown): boolean {
+  return String(error).includes("published product requires an available conversion group");
+}
+
 export function adPoolIntegrityErrorCode(error: unknown): "in-use" | "unavailable" | null {
   const message = String(error);
   if (
