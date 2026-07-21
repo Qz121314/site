@@ -41,7 +41,7 @@ function initializeProductEditors(root: ParentNode = document): void {
         return;
       }
       if (selected.length === 1) {
-        filterLabel.textContent = selected[0].dataset.filterName ?? "已选 1 项";
+        filterLabel.textContent = selected.at(0)?.dataset.filterName ?? "已选 1 项";
         return;
       }
       filterLabel.textContent = `已选 ${selected.length} 项`;
