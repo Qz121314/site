@@ -61,9 +61,6 @@ function initializeDirtyForms(root: ParentNode = document): void {
 
     form.addEventListener("input", markDirty);
     form.addEventListener("change", markDirty);
-    form.addEventListener("submit", () => {
-      form.dataset.adminDirty = "0";
-    });
 
     document.querySelectorAll<HTMLElement>("[data-direct-image-upload]").forEach((upload) => {
       if (!uploadBelongsToForm(upload, form)) return;
