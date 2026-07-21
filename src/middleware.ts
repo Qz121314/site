@@ -57,7 +57,6 @@ async function applicationDataReady(): Promise<boolean> {
          s.ga4_id,
          s.meta_pixel_id,
          s.adult_gate_enabled,
-         s.all_filter_label,
          s.privacy_content,
          s.disclaimer_content,
          EXISTS(SELECT 1 FROM channels LIMIT 1) AS channels_ready,

@@ -19,7 +19,6 @@ export type PublicSiteShell = {
   ga4Id: string;
   metaPixelId: string;
   adultGateEnabled: boolean;
-  allFilterLabel: string;
   privacyContent: string;
   disclaimerContent: string;
   defaultChannelSlug: string | null;
@@ -95,7 +94,6 @@ type SiteShellRow = {
   ga4_id: string;
   meta_pixel_id: string;
   adult_gate_enabled: number;
-  all_filter_label: string;
   logo_object_key: string | null;
   favicon_object_key: string | null;
   default_channel_slug: string | null;
@@ -216,7 +214,6 @@ function defaultSiteShell(): PublicSiteShell {
     ga4Id: "",
     metaPixelId: "",
     adultGateEnabled: false,
-    allFilterLabel: "All",
     privacyContent: "",
     disclaimerContent: "",
     defaultChannelSlug: null,
@@ -236,7 +233,6 @@ export async function loadPublicSiteShell(
          s.ga4_id,
          s.meta_pixel_id,
          s.adult_gate_enabled,
-         s.all_filter_label,
          logo.object_key AS logo_object_key,
          favicon.object_key AS favicon_object_key,
          default_channel.slug AS default_channel_slug,
@@ -275,7 +271,6 @@ export async function loadPublicSiteShell(
       ga4Id: first.ga4_id ?? "",
       metaPixelId: first.meta_pixel_id ?? "",
       adultGateEnabled: first.adult_gate_enabled === 1,
-      allFilterLabel: first.all_filter_label || "All",
       privacyContent: legal?.privacy_content ?? "",
       disclaimerContent: legal?.disclaimer_content ?? "",
       defaultChannelSlug: first.default_channel_slug,

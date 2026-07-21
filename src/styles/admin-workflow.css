@@ -260,19 +260,6 @@
 
 .admin-body .image-select { background: #ffffff; }
 
-.admin-body .ad-pool-summary,
-.admin-body .pool-settings-row,
-.admin-body .compact-bar {
-  border-color: #e2e8f0;
-  background: #f8fafc;
-}
-
-.admin-body .pool-body,
-.admin-body .ad-list,
-.admin-body .pool-empty {
-  border-color: #e2e8f0;
-  background: #ffffff;
-}
 
 .admin-body .body-preview article {
   color: #334155;
