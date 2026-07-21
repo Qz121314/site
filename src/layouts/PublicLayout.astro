@@ -38,6 +38,12 @@ const metaPixelId = site.metaPixelId;
     <meta name="robots" content="index,follow,max-image-preview:large" />
     <link rel="canonical" href={canonical} />
     {site.faviconUrl && <link rel="icon" href={site.faviconUrl} />}
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap"
+    />
     <meta property="og:type" content="website" />
     <meta property="og:title" content={pageTitle} />
     <meta property="og:description" content={description} />
@@ -162,4 +168,90 @@ const metaPixelId = site.metaPixelId;
 
 <style is:global>
   .adult-confirmed .adult-gate { display: none; }
+
+  .public-body {
+    --public-font-display: "Cormorant Garamond", "Iowan Old Style", "Palatino Linotype", serif;
+    --public-font-ui: "Manrope", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    font-family: var(--public-font-ui);
+    font-optical-sizing: auto;
+    font-synthesis: none;
+    letter-spacing: -.012em;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  .public-body button,
+  .public-body input,
+  .public-body textarea,
+  .public-body select,
+  .public-body summary {
+    font: inherit;
+  }
+
+  .public-brand-name,
+  .public-section-heading h1,
+  .public-section-heading h2,
+  .visual-card-title,
+  .product-detail-header h1,
+  .product-body h1,
+  .product-body h2,
+  .public-empty h1,
+  .public-empty h2,
+  .adult-gate-card h2,
+  .empty-icon {
+    font-family: var(--public-font-display);
+    font-variant-ligatures: common-ligatures contextual;
+  }
+
+  .public-brand-name {
+    font-size: clamp(1.25rem, 4.3vw, 1.7rem);
+    font-weight: 700;
+    line-height: .92;
+    letter-spacing: -.045em;
+  }
+
+  .public-section-heading h1,
+  .public-section-heading h2,
+  .product-detail-header h1,
+  .public-empty h1,
+  .public-empty h2,
+  .adult-gate-card h2 {
+    font-weight: 600;
+    letter-spacing: -.04em;
+  }
+
+  .visual-card-title {
+    font-weight: 600;
+    letter-spacing: -.025em;
+  }
+
+  .public-search-form input,
+  .public-button,
+  .filter-button,
+  .public-back-link,
+  .public-nav-label,
+  .eyebrow,
+  .visual-tag,
+  .visual-card-featured,
+  .public-menu-panel a {
+    font-family: var(--public-font-ui);
+  }
+
+  .public-button,
+  .filter-button,
+  .public-back-link,
+  .public-nav-label,
+  .eyebrow,
+  .visual-card-featured {
+    letter-spacing: .025em;
+  }
+
+  .public-search-form input {
+    font-weight: 500;
+  }
+
+  .public-nav-label {
+    font-weight: 700;
+  }
 </style>
