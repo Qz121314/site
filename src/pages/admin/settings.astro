@@ -22,7 +22,6 @@ const errorMessages: Record<string, string> = {
   "r2-url": "R2 公开域名必须是完整的 HTTPS 域名，不能包含路径、参数或账号信息。",
   ga4: "GA4 Measurement ID 格式无效，例如 G-XXXXXXXXXX。",
   meta: "Meta Pixel ID 只能包含 5 至 30 位数字。",
-  "all-label": "分类筛选的 All 文字不能为空，且不能超过 24 个字符。",
   privacy: "隐私政策内容不能超过 20000 个字符。",
   disclaimer: "免责声明内容不能超过 20000 个字符。",
   database: "数据库保存失败，请稍后重试。",
@@ -57,7 +56,7 @@ const errorMessages: Record<string, string> = {
           <input id="site-description" name="siteDescription" maxlength="300" value={settings.siteDescription} />
         </div>
 
-        <div class="admin-field admin-span-2">
+        <div class="admin-field admin-span-4">
           <label for="default-channel">默认分区</label>
           <select id="default-channel" name="defaultChannelId">
             <option value="">未设置</option>
@@ -65,11 +64,6 @@ const errorMessages: Record<string, string> = {
               <option value={channel.id} selected={settings.defaultChannelId === channel.id}>{channel.name}</option>
             ))}
           </select>
-        </div>
-
-        <div class="admin-field admin-span-2">
-          <label for="all-filter-label">筛选 All 文字</label>
-          <input id="all-filter-label" name="allFilterLabel" maxlength="24" required value={settings.allFilterLabel} />
         </div>
 
         <div class="admin-field admin-span-8">
