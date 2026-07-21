@@ -1,7 +1,9 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { adPoolIntegrityErrorCode } from "../src/lib/admin/ad-form.ts";
-import { isConversionAvailabilityConstraintError } from "../src/lib/admin/conversion-form.ts";
+import {
+  adPoolIntegrityErrorCode,
+  isConversionAvailabilityConstraintError,
+} from "../src/lib/admin/pool-integrity.ts";
 
 test("maps conversion availability trigger errors to an in-use condition", () => {
   assert.equal(isConversionAvailabilityConstraintError(new Error("conversion group is used by published products")), true);
