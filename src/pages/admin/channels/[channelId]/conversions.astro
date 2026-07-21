@@ -1,4 +1,5 @@
 ---
+import AdminCollectionWorkspace from "@/components/admin/AdminCollectionWorkspace.astro";
 import AdminDialog from "@/components/admin/AdminDialog.astro";
 import AdminLayout from "@/layouts/AdminLayout.astro";
 import { loadAdminChannel } from "@/lib/db/site";
@@ -19,352 +20,252 @@ const selectedGroupId = groups.some((group) => group.id === requestedGroupId)
   : groups[0]?.id ?? null;
 
 const savedMessages: Record<string, string> = {
-  "group-created": "转化组已新增。",
-  "group-updated": "转化组已更新。",
-  "group-deleted": "转化组及其资源已删除。",
-  "resource-created": "联系方式已新增。",
-  "resource-updated": "联系方式已更新。",
-  "resource-deleted": "联系方式已删除。",
+  "group-created": "转化分组已新增。",
+  "group-updated": "转化分组已更新。",
+  "group-deleted": "转化分组已删除。",
+  "resource-created": "CTA 已新增。",
+  "resource-updated": "CTA 已更新。",
+  "resource-deleted": "CTA 已删除。",
 };
 
 const errorMessages: Record<string, string> = {
-  "group-name": "转化组名称不能为空，且不能超过 80 个字符。",
-  "group-status": "转化组状态无效。",
-  "group-duplicate": "当前分区内已经存在同名转化组。",
-  "group-in-use": "仍有产品绑定该转化组，不能删除。",
-  "resource-type": "联系方式类型无效。",
-  "resource-value": "短信请填写电话号码；链接请填写完整的 HTTP、HTTPS 或 mailto 地址。",
-  "resource-sort": "排序必须是 -999999 到 999999 之间的整数。",
-  "resource-status": "联系方式状态无效。",
-  "not-found": "找不到该分区、转化组或联系方式。",
+  "group-name": "分组名称不能为空，且不能超过 80 个字符。",
+  "group-status": "分组状态无效。",
+  "group-duplicate": "当前分区内已经存在同名转化分组。",
+  "group-in-use": "仍有产品绑定该转化分组，不能删除。",
+  "resource-type": "CTA 类型无效。",
+  "resource-value": "号码格式无效，或链接不是完整的 HTTP、HTTPS、mailto 地址。",
+  "resource-sort": "排序值无效。",
+  "resource-status": "CTA 状态无效。",
+  "not-found": "找不到该分区、转化分组或 CTA。",
   database: "数据库操作失败，请稍后重试。",
 };
+
+const groupCreateAction = `/api/admin/channels/${encodeURIComponent(channelId)}/conversions/create`;
 ---
 
 <AdminLayout title={channel ? `${channel.name} · 转化池` : "分区不存在"}>
-  {channel && (
-    <button slot="actions" class="button" type="button" data-dialog-open="conversion-group-create-dialog">
-      新增转化组
-    </button>
-  )}
-
   {channel ? (
-    <div class="conversion-page" data-conversion-page>
+    <div class="admin-stack">
       {saved && savedMessages[saved] && <p class="notice" role="status">{savedMessages[saved]}</p>}
       {error && errorMessages[error] && <p class="error" role="alert">{errorMessages[error]}</p>}
 
-      <AdminDialog id="conversion-group-create-dialog" title="新增转化组" size="small">
-        <form class="dialog-form" action={`/api/admin/channels/${encodeURIComponent(channelId)}/conversions/create`} method="post">
+      <AdminCollectionWorkspace
+        searchId="conversion-group-search"
+        searchPlaceholder="搜索分组"
+        createDialogId="conversion-group-create-dialog"
+        createLabel="新增分组"
+        listLabel="转化分组列表"
+        selectionParam="group"
+      >
+        <Fragment slot="items">
+          {groups.map((group) => {
+            const updateAction = `/api/admin/channels/${encodeURIComponent(channelId)}/conversions/${encodeURIComponent(group.id)}/update`;
+            const deleteAction = `/api/admin/channels/${encodeURIComponent(channelId)}/conversions/${encodeURIComponent(group.id)}/delete`;
+            return (
+              <div
+                class:list={["admin-collection-row", group.id === selectedGroupId && "is-active"]}
+                role="listitem"
+                data-collection-item={group.id}
+                data-search-text={group.name}
+              >
+                <button class="admin-collection-select" type="button" data-collection-select aria-current={group.id === selectedGroupId ? "true" : "false"}>
+                  <strong>{group.name}</strong>
+                </button>
+                <div class="admin-collection-row-actions">
+                  <button
+                    class="button secondary"
+                    type="button"
+                    data-dialog-open="conversion-group-edit-dialog"
+                    data-record-dialog="conversion-group-edit-dialog"
+                    data-record-title={`编辑分组 · ${group.name}`}
+                    data-record-action={updateAction}
+                    data-record-name={group.name}
+                    data-record-status={group.status}
+                  >编辑</button>
+                  <form action={deleteAction} method="post" onsubmit="return confirm('确定删除该转化分组及其中全部 CTA？')">
+                    <button
+                      class="button danger"
+                      type="submit"
+                      disabled={group.productCount > 0}
+                      title={group.productCount > 0 ? "仍有产品绑定该分组，不能删除" : undefined}
+                    >删除</button>
+                  </form>
+                </div>
+              </div>
+            );
+          })}
+        </Fragment>
+
+        {groups.length === 0 ? (
+          <section class="admin-card admin-record-empty">尚未创建转化分组。</section>
+        ) : groups.map((group) => {
+          const createResourceAction = `/api/admin/channels/${encodeURIComponent(channelId)}/conversions/${encodeURIComponent(group.id)}/resources/create`;
+          return (
+            <section
+              class="admin-card admin-collection-panel"
+              data-collection-panel={group.id}
+              hidden={group.id !== selectedGroupId}
+            >
+              <header class="admin-collection-panel-header">
+                <div class="admin-collection-panel-title"><h2>{group.name}</h2></div>
+                <div class="admin-collection-panel-actions">
+                  <button
+                    class="button"
+                    type="button"
+                    data-dialog-open="conversion-resource-create-dialog"
+                    data-record-dialog="conversion-resource-create-dialog"
+                    data-record-title={`添加 CTA · ${group.name}`}
+                    data-record-action={createResourceAction}
+                    data-record-sort-order={String(group.resources.length * 10)}
+                    data-record-status="enabled"
+                    data-record-type="sms"
+                  >添加 CTA</button>
+                </div>
+              </header>
+
+              {group.resources.length === 0 ? (
+                <div class="admin-record-empty">该分组尚未添加 CTA。</div>
+              ) : (
+                <div class="admin-record-list">
+                  {group.resources.map((resource) => {
+                    const updateAction = `/api/admin/channels/${encodeURIComponent(channelId)}/conversions/${encodeURIComponent(group.id)}/resources/${encodeURIComponent(resource.id)}/update`;
+                    const deleteAction = `/api/admin/channels/${encodeURIComponent(channelId)}/conversions/${encodeURIComponent(group.id)}/resources/${encodeURIComponent(resource.id)}/delete`;
+                    const typeLabel = resource.type === "sms" ? "号码" : "链接";
+                    return (
+                      <article class="admin-record-row">
+                        <div class="admin-record-main">
+                          <strong title={resource.value}>{resource.value}</strong>
+                          <span class="admin-record-meta">{typeLabel}{resource.status === "disabled" ? " · 已停用" : ""}</span>
+                        </div>
+                        <div class="admin-record-actions">
+                          <button
+                            class="button secondary"
+                            type="button"
+                            data-dialog-open="conversion-resource-edit-dialog"
+                            data-record-dialog="conversion-resource-edit-dialog"
+                            data-record-title={`编辑 CTA · ${group.name}`}
+                            data-record-action={updateAction}
+                            data-record-type={resource.type}
+                            data-record-value={resource.value}
+                            data-record-sort-order={String(resource.sortOrder)}
+                            data-record-status={resource.status}
+                          >编辑</button>
+                          <form action={deleteAction} method="post" onsubmit="return confirm('确定删除该 CTA？')">
+                            <button class="button danger" type="submit">删除</button>
+                          </form>
+                        </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              )}
+            </section>
+          );
+        })}
+      </AdminCollectionWorkspace>
+
+      <AdminDialog id="conversion-group-create-dialog" title="新增转化分组" size="small">
+        <form class="admin-dialog-form" action={groupCreateAction} method="post">
           <div class="admin-field">
-            <label for="conversion-group-name">名称</label>
-            <input id="conversion-group-name" name="name" maxlength="80" required autocomplete="off" autofocus />
+            <label for="conversion-group-create-name">分组名称</label>
+            <input id="conversion-group-create-name" name="name" maxlength="80" required autocomplete="off" autofocus />
           </div>
           <div class="admin-field">
-            <label for="conversion-group-status">状态</label>
-            <select id="conversion-group-status" name="status">
+            <label for="conversion-group-create-status">状态</label>
+            <select id="conversion-group-create-status" name="status">
               <option value="enabled" selected>启用</option>
               <option value="disabled">停用</option>
             </select>
           </div>
-          <div class="dialog-actions">
+          <div class="admin-dialog-actions">
             <button class="button secondary" type="button" data-dialog-close>取消</button>
-            <button class="button" type="submit">创建转化组</button>
+            <button class="button" type="submit">保存</button>
           </div>
         </form>
       </AdminDialog>
 
-      {groups.length === 0 ? (
-        <section class="admin-card conversion-empty">
-          <div class="admin-collection-empty">
-            <strong>尚未创建转化组</strong>
-            <span>创建一个转化组后，再添加短信号码或跳转链接。</span>
-            <button class="button" type="button" data-dialog-open="conversion-group-create-dialog">新增转化组</button>
+      <AdminDialog id="conversion-group-edit-dialog" title="编辑转化分组" size="small">
+        <form class="admin-dialog-form" method="post" data-record-form>
+          <div class="admin-field">
+            <label for="conversion-group-edit-name">分组名称</label>
+            <input id="conversion-group-edit-name" name="name" maxlength="80" required autocomplete="off" autofocus />
           </div>
-        </section>
-      ) : (
-        <div class="conversion-workspace">
-          <aside class="admin-card conversion-master">
-            <div class="admin-section-bar conversion-master-header">
-              <h2>转化组</h2>
-              <span class="admin-section-note">{groups.length} 个</span>
+          <div class="admin-field">
+            <label for="conversion-group-edit-status">状态</label>
+            <select id="conversion-group-edit-status" name="status">
+              <option value="enabled">启用</option>
+              <option value="disabled">停用</option>
+            </select>
+          </div>
+          <div class="admin-dialog-actions">
+            <button class="button secondary" type="button" data-dialog-close>取消</button>
+            <button class="button" type="submit">保存</button>
+          </div>
+        </form>
+      </AdminDialog>
+
+      <AdminDialog id="conversion-resource-create-dialog" title="添加 CTA" size="medium">
+        <form class="admin-dialog-form" method="post" data-record-form>
+          <div class="admin-dialog-form-grid">
+            <div class="admin-field">
+              <label for="conversion-resource-create-type">类型</label>
+              <select id="conversion-resource-create-type" name="type">
+                <option value="sms">号码</option>
+                <option value="link">链接</option>
+              </select>
             </div>
-            <nav class="conversion-master-list" aria-label="转化组列表" role="tablist">
-              {groups.map((group) => (
-                <button
-                  class:list={["conversion-master-item", group.id === selectedGroupId && "is-active"]}
-                  type="button"
-                  role="tab"
-                  aria-selected={group.id === selectedGroupId ? "true" : "false"}
-                  aria-controls={`conversion-panel-${group.id}`}
-                  data-conversion-group-select={group.id}
-                >
-                  <span class="conversion-master-title">
-                    <strong>{group.name}</strong>
-                    <span class:list={["status-dot", group.status === "enabled" ? "is-enabled" : "is-disabled"]} aria-hidden="true"></span>
-                  </span>
-                  <span class="conversion-master-meta">
-                    可用 {group.enabledResourceCount}/{group.resourceCount} · 产品 {group.productCount}
-                  </span>
-                </button>
-              ))}
-            </nav>
-          </aside>
-
-          <div class="conversion-detail-stack">
-            {groups.map((group) => {
-              const groupFormId = `conversion-group-${group.id}`;
-              const resourceDialogId = `conversion-resource-create-${group.id}`;
-              return (
-                <section
-                  id={`conversion-panel-${group.id}`}
-                  class="admin-card conversion-detail"
-                  role="tabpanel"
-                  data-conversion-group-panel={group.id}
-                  hidden={group.id !== selectedGroupId}
-                >
-                  <div class="conversion-detail-header">
-                    <form
-                      id={groupFormId}
-                      class="group-settings-form"
-                      action={`/api/admin/channels/${encodeURIComponent(channelId)}/conversions/${encodeURIComponent(group.id)}/update`}
-                      method="post"
-                    >
-                      <div class="admin-field group-name-field">
-                        <label for={`group-name-${group.id}`}>组名</label>
-                        <input id={`group-name-${group.id}`} name="name" maxlength="80" required value={group.name} />
-                      </div>
-                      <div class="admin-field group-status-field">
-                        <label for={`group-status-${group.id}`}>状态</label>
-                        <select id={`group-status-${group.id}`} name="status">
-                          <option value="enabled" selected={group.status === "enabled"}>启用</option>
-                          <option value="disabled" selected={group.status === "disabled"}>停用</option>
-                        </select>
-                      </div>
-                      <div class="group-stat"><span>可用资源</span><strong>{group.enabledResourceCount}/{group.resourceCount}</strong></div>
-                      <div class="group-stat"><span>绑定产品</span><strong>{group.productCount}</strong></div>
-                      <button class="button secondary" type="submit">保存组设置</button>
-                    </form>
-                    <form
-                      class="group-delete-form"
-                      action={`/api/admin/channels/${encodeURIComponent(channelId)}/conversions/${encodeURIComponent(group.id)}/delete`}
-                      method="post"
-                      onsubmit="return confirm('确定删除该转化组及其全部联系方式？')"
-                    >
-                      <button class="button danger" type="submit" disabled={group.productCount > 0}>删除组</button>
-                    </form>
-                  </div>
-
-                  <div class="resource-section-header">
-                    <div>
-                      <h3>联系方式</h3>
-                      <span>{group.resources.length} 个资源</span>
-                    </div>
-                    <button class="button" type="button" data-dialog-open={resourceDialogId}>新增联系方式</button>
-                  </div>
-
-                  {group.resources.length === 0 ? (
-                    <div class="admin-collection-empty resource-empty">尚无联系方式。</div>
-                  ) : (
-                    <div class="resource-list">
-                      {group.resources.map((resource) => {
-                        const resourceFormId = `conversion-resource-${resource.id}`;
-                        return (
-                          <article class="resource-row">
-                            <form
-                              id={resourceFormId}
-                              class="resource-row-form"
-                              action={`/api/admin/channels/${encodeURIComponent(channelId)}/conversions/${encodeURIComponent(group.id)}/resources/${encodeURIComponent(resource.id)}/update`}
-                              method="post"
-                            >
-                              <div class="admin-field resource-type-field">
-                                <label for={`resource-type-${resource.id}`}>类型</label>
-                                <select id={`resource-type-${resource.id}`} name="type">
-                                  <option value="sms" selected={resource.type === "sms"}>短信</option>
-                                  <option value="link" selected={resource.type === "link"}>链接</option>
-                                </select>
-                              </div>
-                              <div class="admin-field resource-value-field">
-                                <label for={`resource-value-${resource.id}`}>号码或链接</label>
-                                <input id={`resource-value-${resource.id}`} name="value" maxlength="2048" required value={resource.value} />
-                              </div>
-                              <div class="admin-field resource-sort-field">
-                                <label for={`resource-sort-${resource.id}`}>排序</label>
-                                <input id={`resource-sort-${resource.id}`} name="sortOrder" type="number" min="-999999" max="999999" step="1" value={resource.sortOrder} />
-                              </div>
-                              <div class="admin-field resource-status-field">
-                                <label for={`resource-status-${resource.id}`}>状态</label>
-                                <select id={`resource-status-${resource.id}`} name="status">
-                                  <option value="enabled" selected={resource.status === "enabled"}>启用</option>
-                                  <option value="disabled" selected={resource.status === "disabled"}>停用</option>
-                                </select>
-                              </div>
-                              <button class="button secondary resource-save" type="submit">保存</button>
-                            </form>
-                            <form
-                              class="resource-delete-form"
-                              action={`/api/admin/channels/${encodeURIComponent(channelId)}/conversions/${encodeURIComponent(group.id)}/resources/${encodeURIComponent(resource.id)}/delete`}
-                              method="post"
-                              onsubmit="return confirm('确定删除该联系方式？')"
-                            >
-                              <button class="button danger" type="submit">删除</button>
-                            </form>
-                          </article>
-                        );
-                      })}
-                    </div>
-                  )}
-                </section>
-              );
-            })}
+            <div class="admin-field">
+              <label for="conversion-resource-create-status">状态</label>
+              <select id="conversion-resource-create-status" name="status">
+                <option value="enabled">启用</option>
+                <option value="disabled">停用</option>
+              </select>
+            </div>
+            <div class="admin-field is-wide">
+              <label for="conversion-resource-create-value">号码或链接</label>
+              <input id="conversion-resource-create-value" name="value" maxlength="2048" required autocomplete="off" autofocus />
+            </div>
           </div>
-        </div>
-      )}
+          <input type="hidden" name="sortOrder" value="0" />
+          <div class="admin-dialog-actions">
+            <button class="button secondary" type="button" data-dialog-close>取消</button>
+            <button class="button" type="submit">保存</button>
+          </div>
+        </form>
+      </AdminDialog>
 
-      {groups.map((group) => {
-        const resourceDialogId = `conversion-resource-create-${group.id}`;
-        return (
-          <AdminDialog id={resourceDialogId} title={`新增联系方式 · ${group.name}`} size="medium">
-            <form
-              class="dialog-form resource-dialog-form"
-              action={`/api/admin/channels/${encodeURIComponent(channelId)}/conversions/${encodeURIComponent(group.id)}/resources/create`}
-              method="post"
-            >
-              <div class="admin-field">
-                <label for={`new-resource-type-${group.id}`}>类型</label>
-                <select id={`new-resource-type-${group.id}`} name="type">
-                  <option value="sms">短信</option>
-                  <option value="link">链接</option>
-                </select>
-              </div>
-              <div class="admin-field resource-dialog-value">
-                <label for={`new-resource-value-${group.id}`}>号码或链接</label>
-                <input id={`new-resource-value-${group.id}`} name="value" maxlength="2048" required autocomplete="off" placeholder="号码或 https://..." />
-              </div>
-              <div class="admin-field">
-                <label for={`new-resource-sort-${group.id}`}>排序</label>
-                <input id={`new-resource-sort-${group.id}`} name="sortOrder" type="number" min="-999999" max="999999" step="1" value="0" />
-              </div>
-              <div class="admin-field">
-                <label for={`new-resource-status-${group.id}`}>状态</label>
-                <select id={`new-resource-status-${group.id}`} name="status">
-                  <option value="enabled" selected>启用</option>
-                  <option value="disabled">停用</option>
-                </select>
-              </div>
-              <div class="dialog-actions resource-dialog-actions">
-                <button class="button secondary" type="button" data-dialog-close>取消</button>
-                <button class="button" type="submit">新增联系方式</button>
-              </div>
-            </form>
-          </AdminDialog>
-        );
-      })}
+      <AdminDialog id="conversion-resource-edit-dialog" title="编辑 CTA" size="medium">
+        <form class="admin-dialog-form" method="post" data-record-form>
+          <div class="admin-dialog-form-grid">
+            <div class="admin-field">
+              <label for="conversion-resource-edit-type">类型</label>
+              <select id="conversion-resource-edit-type" name="type">
+                <option value="sms">号码</option>
+                <option value="link">链接</option>
+              </select>
+            </div>
+            <div class="admin-field">
+              <label for="conversion-resource-edit-status">状态</label>
+              <select id="conversion-resource-edit-status" name="status">
+                <option value="enabled">启用</option>
+                <option value="disabled">停用</option>
+              </select>
+            </div>
+            <div class="admin-field is-wide">
+              <label for="conversion-resource-edit-value">号码或链接</label>
+              <input id="conversion-resource-edit-value" name="value" maxlength="2048" required autocomplete="off" autofocus />
+            </div>
+          </div>
+          <input type="hidden" name="sortOrder" value="0" />
+          <div class="admin-dialog-actions">
+            <button class="button secondary" type="button" data-dialog-close>取消</button>
+            <button class="button" type="submit">保存</button>
+          </div>
+        </form>
+      </AdminDialog>
     </div>
-  ) : <section class="admin-card"><div class="admin-collection-empty">找不到该分区。</div></section>}
+  ) : (
+    <section class="admin-card"><div class="admin-record-empty">找不到该分区。</div></section>
+  )}
 </AdminLayout>
-
-<script is:inline>
-  (() => {
-    const initialize = (page) => {
-      if (page.dataset.conversionPageReady === '1') return;
-      page.dataset.conversionPageReady = '1';
-
-      const buttons = Array.from(page.querySelectorAll('[data-conversion-group-select]'));
-      const panels = Array.from(page.querySelectorAll('[data-conversion-group-panel]'));
-
-      const selectGroup = (groupId) => {
-        buttons.forEach((button) => {
-          const selected = button.dataset.conversionGroupSelect === groupId;
-          button.classList.toggle('is-active', selected);
-          button.setAttribute('aria-selected', selected ? 'true' : 'false');
-        });
-        panels.forEach((panel) => {
-          panel.hidden = panel.dataset.conversionGroupPanel !== groupId;
-        });
-
-        const url = new URL(location.href);
-        if (groupId) url.searchParams.set('group', groupId);
-        else url.searchParams.delete('group');
-        history.replaceState(history.state, '', url);
-      };
-
-      buttons.forEach((button) => {
-        button.addEventListener('click', () => selectGroup(button.dataset.conversionGroupSelect || ''));
-      });
-    };
-
-    document.querySelectorAll('[data-conversion-page]').forEach(initialize);
-  })();
-</script>
-
-<style>
-  .conversion-page { display: grid; width: min(100%, 74rem); gap: .7rem; margin: 0 auto; }
-  .conversion-workspace { display: grid; gap: .7rem; align-items: start; }
-  .conversion-master { overflow: hidden; }
-  .conversion-master-header { min-height: 2.8rem; }
-  .conversion-master-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 11rem), 14rem)); justify-content: start; gap: .4rem; padding: .55rem; }
-  .conversion-master-item { display: grid; width: 100%; min-width: 0; gap: .2rem; border: 1px solid #e2e8f0; border-radius: .55rem; padding: .58rem .62rem; color: #334155; background: #ffffff; cursor: pointer; text-align: left; }
-  .conversion-master-item:hover { border-color: #cbd5e1; background: #f8fafc; }
-  .conversion-master-item.is-active { color: #1d4ed8; border-color: #93c5fd; background: #eff6ff; }
-  .conversion-master-title { display: flex; min-width: 0; align-items: center; justify-content: space-between; gap: .5rem; }
-  .conversion-master-title strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .conversion-master-meta { color: #64748b; font-size: .72rem; }
-  .status-dot { width: .48rem; flex: 0 0 .48rem; aspect-ratio: 1; border-radius: 999px; background: #94a3b8; }
-  .status-dot.is-enabled { background: #16a34a; }
-  .status-dot.is-disabled { background: #dc2626; }
-  .conversion-detail-stack { width: min(100%, 68rem); min-width: 0; }
-  .conversion-detail[hidden] { display: none; }
-  .conversion-detail { overflow: hidden; }
-  .conversion-detail-header { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: .45rem; padding: .6rem; border-bottom: 1px solid var(--admin-border); background: #f8fafc; }
-  .group-settings-form { display: grid; grid-template-columns: minmax(12rem, 1.5fr) minmax(6.5rem, .55fr) auto auto auto; align-items: end; gap: .4rem; min-width: 0; }
-  .group-stat { display: grid; align-content: center; gap: .05rem; padding-bottom: .15rem; }
-  .group-stat span { color: #64748b; font-size: .68rem; white-space: nowrap; }
-  .group-stat strong { font-size: .82rem; }
-  .group-delete-form { align-self: end; }
-  .resource-section-header { display: flex; min-height: 3.2rem; align-items: center; justify-content: space-between; gap: .75rem; padding: .55rem .65rem; }
-  .resource-section-header > div { display: flex; align-items: baseline; gap: .45rem; }
-  .resource-section-header h3 { margin: 0; font-size: .9rem; }
-  .resource-section-header span { color: #64748b; font-size: .72rem; }
-  .resource-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 29rem), 33rem)); justify-content: start; gap: .5rem; padding: 0 .6rem .6rem; }
-  .resource-row { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: .35rem; border: 1px solid #e2e8f0; border-radius: .55rem; padding: .45rem; background: #ffffff; }
-  .resource-row-form { display: grid; grid-template-columns: minmax(5.25rem, .5fr) minmax(9rem, 1.5fr) minmax(4.5rem, .4fr) minmax(6rem, .55fr) auto; align-items: end; gap: .35rem; min-width: 0; }
-  .resource-value-field input { min-width: 0; }
-  .resource-delete-form { align-self: end; }
-  .resource-empty { min-height: 8rem; }
-  .conversion-empty .admin-collection-empty { display: grid; min-height: 16rem; place-items: center; align-content: center; gap: .55rem; }
-  .conversion-empty .admin-collection-empty span { color: #64748b; }
-  .dialog-form { display: grid; gap: .6rem; }
-  .dialog-actions { display: flex; justify-content: flex-end; gap: .4rem; padding-top: .15rem; }
-  .resource-dialog-form { grid-template-columns: 7rem minmax(0, 1fr) 6rem 7rem; align-items: end; }
-  .resource-dialog-value { min-width: 0; }
-  .resource-dialog-actions { grid-column: 1 / -1; }
-
-  @media (max-width: 980px) {
-    .group-settings-form { grid-template-columns: minmax(12rem, 1fr) 7rem auto auto; }
-    .group-settings-form > .button { grid-column: 1 / -1; justify-self: start; }
-    .conversion-detail-header { grid-template-columns: 1fr; }
-    .group-delete-form { justify-self: start; }
-  }
-
-  @media (max-width: 720px) {
-    .resource-row-form { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .resource-value-field { grid-column: 1 / -1; }
-    .resource-save { justify-self: stretch; }
-  }
-
-  @media (max-width: 639px) {
-    .conversion-master-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    .group-settings-form,
-    .resource-row,
-    .resource-row-form,
-    .resource-dialog-form { grid-template-columns: 1fr; }
-    .group-settings-form > .button,
-    .resource-value-field,
-    .resource-save,
-    .resource-dialog-actions { grid-column: auto; justify-self: stretch; }
-    .resource-row { gap: .45rem; }
-    .resource-delete-form .button { width: 100%; }
-    .resource-section-header { align-items: center; }
-    .dialog-actions { display: grid; grid-template-columns: 1fr 1fr; }
-  }
-</style>
