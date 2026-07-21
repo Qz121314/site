@@ -1,7 +1,9 @@
-import { env } from "cloudflare:workers";
 import type { APIRoute } from "astro";
 import { isSameOriginPost } from "@/lib/auth/session";
-import { deleteUnusedImageAssetsAtomically } from "@/lib/db/image-delete";
+import {
+  deleteQueuedImageObjectsFromR2,
+  deleteUnusedImageAssetsAtomically,
+} from "@/lib/db/image-delete";
 import { MAX_IMAGE_MUTATION_IDS } from "@/lib/db/images";
 
 export const prerender = false;
@@ -38,13 +40,20 @@ export const POST: APIRoute = async ({ request }) => {
     if (result.found.length !== imageIds.length) return redirect(request, { error: "not-found" });
     if (result.deleted.length !== imageIds.length) return redirect(request, { error: "in-use" });
 
-    try {
-      await env.MEDIA_BUCKET.delete(result.deleted.map((image) => image.objectKey));
-    } catch (error) {
-      console.error(JSON.stringify({ event: "admin_image_bulk_r2_cleanup_deferred", imageIds, error: String(error) }));
+    const r2 = await deleteQueuedImageObjectsFromR2(result.deleted);
+    if (r2.pending.length > 0) {
+      console.error(JSON.stringify({
+        event: "admin_image_bulk_r2_cleanup_deferred",
+        imageIds,
+        objectKeys: r2.pending.map((image) => image.objectKey),
+      }));
     }
 
-    return redirect(request, { saved: "bulk-deleted", count: String(result.deleted.length) });
+    return redirect(request, {
+      saved: r2.pending.length > 0 ? "bulk-delete-pending" : "bulk-deleted",
+      count: String(result.deleted.length),
+      pending: String(r2.pending.length),
+    });
   } catch (error) {
     console.error(JSON.stringify({ event: "admin_image_bulk_delete_failed", imageIds, error: String(error) }));
     return redirect(request, { error: "delete" });
