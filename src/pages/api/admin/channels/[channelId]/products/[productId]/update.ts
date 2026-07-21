@@ -2,7 +2,7 @@ import { env } from "cloudflare:workers";
 import type { APIRoute } from "astro";
 import { isSameOriginPost } from "@/lib/auth/session";
 import { parseProductForm, validateProductRelations } from "@/lib/admin/product-form";
-import { automaticSlug, uniqueProductSlug } from "@/lib/admin/automatic-slug";
+import { automaticSlug } from "@/lib/admin/automatic-slug";
 import { categoryFiltersBelongToChannel } from "@/lib/admin/category-form";
 import { parseProductEntryExtras } from "@/lib/admin/product-entry";
 import { categoryFiltersInsert, productImagesInsert } from "@/lib/admin/bulk-relations";
@@ -48,11 +48,9 @@ export const POST: APIRoute = async ({ request, params }) => {
 
   try {
     const product = await env.DB.prepare(
-      "SELECT id, category_id FROM products WHERE id = ?1 AND channel_id = ?2",
-    ).bind(productId, channelId).first<{ id: string; category_id: string | null }>();
+      "SELECT id, category_id, slug FROM products WHERE id = ?1 AND channel_id = ?2",
+    ).bind(productId, channelId).first<{ id: string; category_id: string | null; slug: string }>();
     if (!product) return redirect(request, channelId, productId, { error: "not-found" });
-
-    const slug = await uniqueProductSlug(channelId, value.title, productId);
 
     if (!(await imageAssetsExist(extras.galleryAssetIds))) {
       return redirect(request, channelId, productId, { error: "image" });
@@ -110,7 +108,7 @@ export const POST: APIRoute = async ({ request, params }) => {
         value.conversionGroupId,
         firstImageAssetId,
         value.title,
-        slug,
+        product.slug,
         value.tagsJson,
         value.bodySource,
         value.bodyHtml,
@@ -132,14 +130,6 @@ export const POST: APIRoute = async ({ request, params }) => {
     ];
 
     await env.DB.batch(statements);
-
-    if (product.category_id && product.category_id !== category.id) {
-      try {
-        await removeEmptyGeneratedCategory(product.category_id);
-      } catch (cleanupError) {
-        console.error(JSON.stringify({ event: "old_category_cleanup_failed", categoryId: product.category_id, error: String(cleanupError) }));
-      }
-    }
 
     return redirect(request, channelId, productId, { saved: "updated" });
   } catch (error) {
