@@ -8,7 +8,8 @@ interface Props {
   site: PublicSiteShell;
   title: string;
   description?: string;
-  canonical?: string;
+  canonical?: string | null;
+  robots?: string;
   ogImage?: string | null;
   activeChannel?: string | null;
 }
@@ -18,11 +19,13 @@ const {
   title,
   description = site.siteDescription,
   canonical = Astro.url.href,
+  robots = "index,follow,max-image-preview:large",
   ogImage = site.logoUrl,
   activeChannel = null,
 } = Astro.props;
 
 const pageTitle = title === site.siteName ? title : `${title} · ${site.siteName}`;
+const socialUrl = canonical ?? Astro.url.href;
 const showAdultGate = site.adultGateEnabled;
 const ga4Id = site.ga4Id;
 const metaPixelId = site.metaPixelId;
@@ -35,8 +38,8 @@ const metaPixelId = site.metaPixelId;
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="description" content={description} />
     <meta name="color-scheme" content="dark" />
-    <meta name="robots" content="index,follow,max-image-preview:large" />
-    <link rel="canonical" href={canonical} />
+    <meta name="robots" content={robots} />
+    {canonical && <link rel="canonical" href={canonical} />}
     {site.faviconUrl && <link rel="icon" href={site.faviconUrl} />}
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
@@ -47,7 +50,7 @@ const metaPixelId = site.metaPixelId;
     <meta property="og:type" content="website" />
     <meta property="og:title" content={pageTitle} />
     <meta property="og:description" content={description} />
-    <meta property="og:url" content={canonical} />
+    <meta property="og:url" content={socialUrl} />
     {ogImage && <meta property="og:image" content={ogImage} />}
     <meta name="twitter:card" content={ogImage ? "summary_large_image" : "summary"} />
     <title>{pageTitle}</title>
