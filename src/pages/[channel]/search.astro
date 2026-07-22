@@ -10,6 +10,7 @@ import {
   searchPublicCatalog,
 } from "@/lib/db/public";
 import { normalizePublicSearchQuery } from "@/lib/search/query";
+import { rankSearchResults } from "@/lib/search/ranking";
 
 export const prerender = false;
 
@@ -19,9 +20,13 @@ const site = await loadPublicSiteShell();
 const channel = findPublicChannel(site, channelSlug);
 
 if (!channel) Astro.response.status = 404;
-const results = channel && query
+const rawResults = channel && query
   ? await searchPublicCatalog(channel.id, query, site.r2PublicBaseUrl)
   : { categories: [], products: [] };
+const results = {
+  categories: rankSearchResults(rawResults.categories, query, (category) => [category.name]),
+  products: rankSearchResults(rawResults.products, query, (product) => [product.title, ...product.tags]),
+};
 const categories = results.categories.filter((category) => category.productCount > 0);
 ---
 
