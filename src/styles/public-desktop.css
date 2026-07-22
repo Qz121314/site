@@ -100,6 +100,18 @@
     overflow-wrap: anywhere;
   }
 
+  .category-group-filter {
+    width: 100%;
+    min-height: 3.6rem;
+    justify-self: stretch;
+    cursor: pointer;
+    text-align: center;
+  }
+
+  .category-group-label-static {
+    text-align: center;
+  }
+
   .category-group-items {
     display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));

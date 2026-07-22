@@ -28,4 +28,25 @@ if (section) {
       applyFilter(button.getAttribute("aria-pressed") === "true" ? "" : filterId);
     });
   });
+
+  const groupButtons = Array.from(section.querySelectorAll<HTMLButtonElement>("[data-category-group-filter]"));
+  const groupRows = Array.from(section.querySelectorAll<HTMLElement>("[data-category-group-row]"));
+
+  const applyGroupFilter = (filterId: string): void => {
+    groupButtons.forEach((button) => {
+      button.setAttribute("aria-pressed", button.dataset.categoryGroupFilter === filterId ? "true" : "false");
+    });
+
+    groupRows.forEach((row) => {
+      const items = row.querySelector<HTMLElement>(".category-group-items");
+      if (items) items.hidden = Boolean(filterId && row.dataset.categoryGroupRow !== filterId);
+    });
+  };
+
+  groupButtons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const filterId = button.dataset.categoryGroupFilter || "";
+      applyGroupFilter(button.getAttribute("aria-pressed") === "true" ? "" : filterId);
+    });
+  });
 }

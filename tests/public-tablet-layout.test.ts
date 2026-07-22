@@ -12,6 +12,8 @@ test("tablet and desktop channel pages expose grouped category rows and two Hero
 
   assert.match(channel, /categoryGroups = filters\.map/u);
   assert.match(channel, /class="category-group-row"/u);
+  assert.match(channel, /class="filter-button category-group-label category-group-filter"/u);
+  assert.match(channel, /data-category-group-filter=\{filter\.id\}/u);
   assert.match(channel, /ungroupedCategories/u);
   assert.match(layout, /class="public-header-channel-name"/u);
   assert.match(hero, /\(min-width: 768px\) calc\(\(100vw - 4rem\) \/ 2\)/u);

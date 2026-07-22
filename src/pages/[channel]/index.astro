@@ -101,8 +101,16 @@ const pageTitle = channel
 
           <div class="category-grouped-directory" aria-label="Categories by filter">
             {categoryGroups.map(({ filter, categories: groupedCategories }) => (
-              <section class="category-group-row" aria-labelledby={`category-group-${filter.id}`}>
-                <h2 class="category-group-label" id={`category-group-${filter.id}`}>{filter.name}</h2>
+              <section class="category-group-row" data-category-group-row={filter.id} aria-labelledby={`category-group-${filter.id}`}>
+                <button
+                  class="filter-button category-group-label category-group-filter"
+                  id={`category-group-${filter.id}`}
+                  type="button"
+                  data-category-group-filter={filter.id}
+                  aria-pressed="false"
+                >
+                  {filter.name}
+                </button>
                 <div class="category-group-items">
                   {groupedCategories.map((category) => (
                     <CategoryCard category={category} channelSlug={channel.slug} />
@@ -112,8 +120,8 @@ const pageTitle = channel
             ))}
 
             {ungroupedCategories.length > 0 && (
-              <section class="category-group-row" aria-labelledby="category-group-other">
-                <h2 class="category-group-label" id="category-group-other">Categories</h2>
+              <section class="category-group-row" data-category-group-row="" aria-labelledby="category-group-other">
+                <h2 class="category-group-label category-group-label-static" id="category-group-other">Categories</h2>
                 <div class="category-group-items">
                   {ungroupedCategories.map((category) => (
                     <CategoryCard category={category} channelSlug={channel.slug} />
