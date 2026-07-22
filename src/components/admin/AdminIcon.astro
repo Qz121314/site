@@ -1,0 +1,92 @@
+---
+type IconName =
+  | "diamond"
+  | "settings"
+  | "channels"
+  | "images"
+  | "products"
+  | "filters"
+  | "ads"
+  | "conversions"
+  | "external"
+  | "logout"
+  | "plus"
+  | "chevron"
+  | "close";
+
+interface Props {
+  name: IconName;
+  className?: string;
+}
+
+const { name, className = "" } = Astro.props;
+---
+
+<svg class:list={["admin-icon", className]} viewBox="0 0 24 24" aria-hidden="true">
+  {name === "diamond" && <path d="m12 3 8 9-8 9-8-9 8-9Z" />}
+  {name === "settings" && (
+    <>
+      <circle cx="12" cy="12" r="3.1" />
+      <path d="M19.2 13.5a7.9 7.9 0 0 0 0-3l2-1.5-2-3.4-2.45 1a8.3 8.3 0 0 0-2.6-1.5L13.8 2h-3.9l-.35 3.1a8.3 8.3 0 0 0-2.6 1.5l-2.45-1-2 3.4 2 1.5a7.9 7.9 0 0 0 0 3l-2 1.5 2 3.4 2.45-1a8.3 8.3 0 0 0 2.6 1.5l.35 3.1h3.9l.35-3.1a8.3 8.3 0 0 0 2.6-1.5l2.45 1 2-3.4-2-1.5Z" />
+    </>
+  )}
+  {name === "channels" && (
+    <>
+      <rect x="4" y="4" width="6" height="6" rx="1.2" />
+      <rect x="14" y="4" width="6" height="6" rx="1.2" />
+      <rect x="4" y="14" width="6" height="6" rx="1.2" />
+      <rect x="14" y="14" width="6" height="6" rx="1.2" />
+    </>
+  )}
+  {name === "images" && (
+    <>
+      <rect x="3.5" y="5" width="17" height="14" rx="2" />
+      <circle cx="9" cy="10" r="1.6" />
+      <path d="m5.5 17 4.4-4.4 3.1 3 2.2-2.2 3.3 3.6" />
+    </>
+  )}
+  {name === "products" && (
+    <>
+      <path d="M5 6.5h14M5 12h14M5 17.5h14" />
+      <circle cx="3.5" cy="6.5" r=".5" fill="currentColor" stroke="none" />
+      <circle cx="3.5" cy="12" r=".5" fill="currentColor" stroke="none" />
+      <circle cx="3.5" cy="17.5" r=".5" fill="currentColor" stroke="none" />
+    </>
+  )}
+  {name === "filters" && (
+    <>
+      <path d="M4 6h16M7 12h10M10 18h4" />
+      <circle cx="8" cy="6" r="1.4" fill="currentColor" stroke="none" />
+      <circle cx="14" cy="12" r="1.4" fill="currentColor" stroke="none" />
+      <circle cx="12" cy="18" r="1.4" fill="currentColor" stroke="none" />
+    </>
+  )}
+  {name === "ads" && (
+    <>
+      <rect x="3.5" y="5" width="17" height="14" rx="2" />
+      <path d="M7 15.5 10.5 12l2.7 2.6 2.1-2.1 2.7 3" />
+      <circle cx="9" cy="9.5" r="1.2" />
+    </>
+  )}
+  {name === "conversions" && (
+    <>
+      <path d="M5 17 17 5M10 5h7v7" />
+      <path d="M19 14v4a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h4" />
+    </>
+  )}
+  {name === "external" && (
+    <>
+      <path d="M13 5h6v6M19 5l-8 8" />
+      <path d="M18 13v5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5" />
+    </>
+  )}
+  {name === "logout" && (
+    <>
+      <path d="M10 5H6a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h4" />
+      <path d="m14 8 4 4-4 4M18 12H9" />
+    </>
+  )}
+  {name === "plus" && <path d="M12 5v14M5 12h14" />}
+  {name === "chevron" && <path d="m9 6 6 6-6 6" />}
+  {name === "close" && <path d="m6 6 12 12M18 6 6 18" />}
+</svg>
