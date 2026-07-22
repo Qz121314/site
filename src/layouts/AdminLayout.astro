@@ -5,6 +5,8 @@ import "@/styles/admin-layout-v2.css";
 import "@/styles/admin-collections.css";
 import "@/styles/admin-collection-workspace.css";
 import "@/styles/admin-popover.css";
+import "@/styles/admin-premium.css";
+import AdminIcon from "@/components/admin/AdminIcon.astro";
 import { loadAdminChannels } from "@/lib/db/site";
 
 interface Props {
@@ -19,16 +21,16 @@ const channels = partialRequest ? [] : await loadAdminChannels();
 Astro.response.headers.set("Cache-Control", "private, no-store");
 
 const globalItems = [
-  { href: "/admin/settings", label: "站点设置", icon: "⚙" },
-  { href: "/admin/channels", label: "分区管理", icon: "▦" },
-  { href: "/admin/images", label: "图片库", icon: "◫" },
+  { href: "/admin/settings", label: "站点设置", icon: "settings" },
+  { href: "/admin/channels", label: "分区管理", icon: "channels" },
+  { href: "/admin/images", label: "图片库", icon: "images" },
 ] as const;
 
 const channelItems = [
-  { segment: "products", label: "产品管理", icon: "≡" },
-  { segment: "filters", label: "分类筛选", icon: "⌁" },
-  { segment: "ads", label: "Hero 广告", icon: "▣" },
-  { segment: "conversions", label: "转化池", icon: "↗" },
+  { segment: "products", label: "产品管理", icon: "products" },
+  { segment: "filters", label: "分类筛选", icon: "filters" },
+  { segment: "ads", label: "Hero 广告", icon: "ads" },
+  { segment: "conversions", label: "转化池", icon: "conversions" },
 ] as const;
 
 function isGlobalItemActive(href: string): boolean {
@@ -65,7 +67,7 @@ const statusLabels = {
       {!partialRequest && (
         <aside class="admin-sidebar">
           <a class="admin-sidebar-brand" href="/admin/channels" aria-label="进入分区管理">
-            <span class="brand-mark" aria-hidden="true">◆</span>
+            <span class="brand-mark" aria-hidden="true"><AdminIcon name="diamond" /></span>
             <span class="admin-sidebar-brand-text">管理后台</span>
           </a>
 
@@ -79,7 +81,7 @@ const statusLabels = {
                   aria-current={isGlobalItemActive(href) ? "page" : undefined}
                   title={label}
                 >
-                  <span class="admin-sidebar-icon" aria-hidden="true">{icon}</span>
+                  <span class="admin-sidebar-icon" aria-hidden="true"><AdminIcon name={icon} /></span>
                   <span class="admin-sidebar-label">{label}</span>
                 </a>
               ))}
@@ -89,7 +91,7 @@ const statusLabels = {
               <div class="admin-nav-section-label">分区内容</div>
               {channels.length === 0 ? (
                 <a class="admin-empty-channels" href="/admin/channels" title="新增分区">
-                  <span class="admin-sidebar-icon" aria-hidden="true">＋</span>
+                  <span class="admin-sidebar-icon" aria-hidden="true"><AdminIcon name="plus" /></span>
                   <span class="admin-sidebar-label">尚未创建分区</span>
                 </a>
               ) : channels.map((channel) => {
@@ -104,7 +106,7 @@ const statusLabels = {
                       <span class="admin-sidebar-label admin-channel-name">{channel.name}</span>
                       <span class:list={["admin-channel-status", `is-${channel.status}`]} aria-hidden="true"></span>
                       <span class="admin-channel-state-label">{statusLabels[channel.status]}</span>
-                      <span class="admin-channel-chevron" aria-hidden="true">›</span>
+                      <span class="admin-channel-chevron" aria-hidden="true"><AdminIcon name="chevron" /></span>
                     </summary>
                     <div class="admin-channel-subnav">
                       {channelItems.map(({ segment, label, icon }) => {
@@ -117,7 +119,7 @@ const statusLabels = {
                             aria-current={active ? "page" : undefined}
                             title={`${channel.name} · ${label}`}
                           >
-                            <span class="admin-sidebar-icon" aria-hidden="true">{icon}</span>
+                            <span class="admin-sidebar-icon" aria-hidden="true"><AdminIcon name={icon} /></span>
                             <span class="admin-sidebar-label">{label}</span>
                           </a>
                         );
@@ -131,12 +133,12 @@ const statusLabels = {
 
           <div class="admin-sidebar-footer">
             <a class="admin-sidebar-link" href="/" target="_blank" rel="noreferrer" title="查看前台">
-              <span class="admin-sidebar-icon" aria-hidden="true">↗</span>
+              <span class="admin-sidebar-icon" aria-hidden="true"><AdminIcon name="external" /></span>
               <span class="admin-sidebar-label">查看前台</span>
             </a>
             <form action="/api/admin/logout" method="post">
               <button class="admin-sidebar-link admin-sidebar-button" type="submit" title="退出登录">
-                <span class="admin-sidebar-icon" aria-hidden="true">×</span>
+                <span class="admin-sidebar-icon" aria-hidden="true"><AdminIcon name="logout" /></span>
                 <span class="admin-sidebar-label">退出登录</span>
               </button>
             </form>
