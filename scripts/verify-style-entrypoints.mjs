@@ -10,7 +10,9 @@ function assert(condition, message) {
 }
 
 assert(publicLayout.includes('import "@/styles/public-system.css";'), "PublicLayout must import public-system.css.");
-assert(!publicLayout.includes("public-base.css") && !publicLayout.includes('import "@/styles/public.css";') && !publicLayout.includes("public-premium.css"), "PublicLayout must not import internal public style layers directly.");
+for (const directImport of ["public-base.css", "public.css", "public-design-system.css"]) {
+  assert(!publicLayout.includes(`import "@/styles/${directImport}";`), `PublicLayout must not import ${directImport} directly.`);
+}
 
 assert(adminLayout.includes('import "@/styles/admin-system.css";'), "AdminLayout must import admin-system.css.");
 for (const directImport of [
@@ -23,15 +25,26 @@ for (const directImport of [
   "admin-premium.css",
   "admin-premium-details.css",
 ]) {
-  assert(!adminLayout.includes(`import \"@/styles/${directImport}\";`), `AdminLayout must not import ${directImport} directly.`);
+  assert(!adminLayout.includes(`import "@/styles/${directImport}";`), `AdminLayout must not import ${directImport} directly.`);
 }
 
-const expectedPublicOrder = ["public-base.css", "public.css", "public-premium.css"];
+const expectedPublicOrder = ["public-base.css", "public.css", "public-design-system.css"];
 let previousIndex = -1;
 for (const stylesheet of expectedPublicOrder) {
   const index = publicSystem.indexOf(stylesheet);
   assert(index > previousIndex, `public-system.css must load ${stylesheet} in the documented order.`);
   previousIndex = index;
+}
+
+for (const legacyPublicLayer of [
+  "public-premium.css",
+  "public-image-first.css",
+  "public-interface-polish.css",
+  "public-bright-motion.css",
+  "public-glass-system.css",
+  "public-sculpted-controls.css",
+]) {
+  assert(!publicSystem.includes(legacyPublicLayer), `public-system.css must not load superseded layer ${legacyPublicLayer}.`);
 }
 
 const expectedAdminOrder = [

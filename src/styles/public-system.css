@@ -1,13 +1,7 @@
 /*
  * Public visual system entrypoint.
- * Keep foundational rules first and product-specific refinements last.
- * Layouts must import only this file so cascade order stays explicit.
+ * Foundation supplies layout primitives; the converged design system owns all visual decisions.
  */
 @import "./public-base.css";
 @import "./public.css";
-@import "./public-premium.css";
-@import "./public-image-first.css";
-@import "./public-interface-polish.css";
-@import "./public-bright-motion.css";
-@import "./public-glass-system.css";
-@import "./public-sculpted-controls.css";
+@import "./public-design-system.css";
