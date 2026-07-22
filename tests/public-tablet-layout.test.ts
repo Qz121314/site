@@ -16,7 +16,8 @@ test("tablet and desktop channel pages expose grouped category rows and two Hero
   assert.match(layout, /class="public-header-channel-name"/u);
   assert.match(hero, /\(min-width: 768px\) calc\(\(100vw - 4rem\) \/ 2\)/u);
   assert.match(styles, /@media \(min-width: 768px\)/u);
-  assert.match(styles, /flex-basis: calc\(\(100% - \.9rem\) \/ 2\)/u);
+  assert.match(styles, /flex-basis: calc\(\(100% - \.8rem\) \/ 2\)/u);
+  assert.match(styles, /\.hero-slide:only-child \{[\s\S]*?flex-basis: 100%/u);
   assert.match(styles, /\.category-group-items[\s\S]*?repeat\(3, minmax\(0, 1fr\)\)/u);
 });
 
@@ -31,7 +32,8 @@ test("catalog and product detail pages use the shared tablet horizontal composit
   assert.match(category, /class="directory-page-sidebar"/u);
   assert.match(product, /class="product-detail-media"/u);
   assert.match(product, /class="product-detail-information"/u);
-  assert.match(styles, /\.directory-page-layout \{[\s\S]*?grid-template-columns:/u);
+  assert.match(styles, /\.directory-page-layout \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\)/u);
+  assert.match(styles, /\.directory-page-sidebar \{[\s\S]*?minmax\(12rem, 1fr\) minmax\(0, 2fr\)/u);
   assert.match(styles, /\.product-detail \{[\s\S]*?grid-template-columns:/u);
   assert.match(styles, /\.product-detail-media \{[\s\S]*?grid-column: 1/u);
 });

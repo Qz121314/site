@@ -60,6 +60,21 @@
   }
 }
 
+@media (min-width: 768px) {
+  .product-detail {
+    padding-bottom: 2rem !important;
+  }
+
+  .public-body .product-detail .product-cta-bar {
+    position: static !important;
+    inset: auto !important;
+    width: 100%;
+    max-width: none;
+    margin: 0 !important;
+    transform: none !important;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .public-main > .product-detail,
   .public-main > *:has(.product-detail) {
