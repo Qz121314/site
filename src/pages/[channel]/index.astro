@@ -57,25 +57,13 @@ const pageTitle = channel
 <PublicLayout
   site={site}
   title={pageTitle}
-  description={pageAvailable && channel ? `${channel.name} recommendations and listings.` : "The requested channel page could not be found."}
+  description={pageAvailable && channel ? site.siteDescription || `${channel.name} recommendations and listings.` : "The requested channel page could not be found."}
   canonical={canonical}
   robots={pageAvailable ? undefined : "noindex,follow"}
   activeChannel={pageAvailable ? channel?.slug ?? null : null}
 >
   {pageAvailable && channel ? (
     <>
-      {pageInput.page === 1 && (
-        <section class="public-section channel-intro-section">
-          <div class="public-section-heading">
-            <div>
-              <div class="eyebrow">{channel.name}</div>
-              <h1>{site.siteName}</h1>
-              {site.siteDescription && <p>{site.siteDescription}</p>}
-            </div>
-          </div>
-        </section>
-      )}
-
       {pageInput.page === 1 && <HeroCarousel advertisements={hero} />}
 
       {pageInput.page === 1 && (

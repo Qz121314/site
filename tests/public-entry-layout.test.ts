@@ -18,9 +18,10 @@ test("public entry redirects to a configured or first published channel", async 
 });
 
 test("configured channel navigation data remains visible without published products", async () => {
-  const [channel, publicDatabase] = await Promise.all([
+  const [channel, publicDatabase, settings] = await Promise.all([
     readFile(new URL("../src/pages/[channel]/index.astro", import.meta.url), "utf8"),
     readFile(new URL("../src/lib/db/public.ts", import.meta.url), "utf8"),
+    readFile(new URL("../src/pages/admin/settings.astro", import.meta.url), "utf8"),
   ]);
   const categoryLoader = publicDatabase.slice(
     publicDatabase.indexOf("export async function loadPublicCategories"),
@@ -28,10 +29,13 @@ test("configured channel navigation data remains visible without published produ
   );
 
   assert.match(channel, /categories\.length > 0 \|\| filters\.length > 0/u);
-  assert.match(channel, /<h1>\{site\.siteName\}<\/h1>/u);
-  assert.match(channel, /site\.siteDescription/u);
+  assert.match(channel, /description=\{pageAvailable && channel \? site\.siteDescription \|\|/u);
+  assert.doesNotMatch(channel, /<h1>\{site\.siteName\}<\/h1>/u);
   assert.match(publicDatabase, /category\.status != 'disabled'/u);
   assert.doesNotMatch(categoryLoader, /EXISTS|product\.status/u);
+  assert.match(settings, /<div class="admin-field admin-span-6">\s*<label for="r2-public-base-url">/u);
+  assert.match(settings, /<div class="admin-field admin-span-3">\s*<label for="ga4-id">/u);
+  assert.match(settings, /<div class="admin-field admin-span-3">\s*<label for="meta-pixel-id">/u);
 });
 
 test("Hero data displays all enabled advertisements unless a current pool is explicitly selected", async () => {

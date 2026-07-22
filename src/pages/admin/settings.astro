@@ -73,7 +73,7 @@ const errorMessages: Record<string, string> = {
           </select>
         </div>
 
-        <div class="admin-field admin-span-8">
+        <div class="admin-field admin-span-6">
           <label for="r2-public-base-url">R2 图片公开域名</label>
           <input
             id="r2-public-base-url"
@@ -87,12 +87,12 @@ const errorMessages: Record<string, string> = {
           <small>先在 Cloudflare R2 绑定自定义域名，再录入此处；数据库只保存图片 Object Key。</small>
         </div>
 
-        <div class="admin-field admin-span-2">
+        <div class="admin-field admin-span-3">
           <label for="ga4-id">GA4 ID</label>
           <input id="ga4-id" name="ga4Id" maxlength="24" autocomplete="off" placeholder="G-XXXXXXXXXX" value={settings.ga4Id} />
         </div>
 
-        <div class="admin-field admin-span-2">
+        <div class="admin-field admin-span-3">
           <label for="meta-pixel-id">Meta Pixel ID</label>
           <input id="meta-pixel-id" name="metaPixelId" maxlength="30" inputmode="numeric" autocomplete="off" value={settings.metaPixelId} />
         </div>
