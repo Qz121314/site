@@ -10,7 +10,9 @@ test("plainTextFromHtml removes markup and decodes common entities", () => {
 });
 
 test("truncateText keeps a readable word boundary", () => {
-  assert.equal(truncateText("One two three four five six", 18), "One two three four…");
+  const result = truncateText("One two three four five six", 18);
+  assert.equal(result, "One two three…");
+  assert.equal(result.length <= 18, true);
 });
 
 test("productDescription prefers body copy and falls back to metadata", () => {
