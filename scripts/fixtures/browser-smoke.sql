@@ -5,7 +5,11 @@ SET site_name = 'Template Smoke',
 WHERE id = 1;
 
 INSERT INTO channels (id, name, slug, sort_order, status)
-VALUES ('10000000-0000-4000-8000-000000000001', 'Demo', 'demo', 10, 'published');
+VALUES
+  ('10000000-0000-4000-8000-000000000001', 'Demo', 'demo', 10, 'published'),
+  ('10000000-0000-4000-8000-000000000002', 'Directory', 'directory', 20, 'published'),
+  ('10000000-0000-4000-8000-000000000003', 'Stories', 'stories', 30, 'published'),
+  ('10000000-0000-4000-8000-000000000004', 'FAQ', 'faq', 40, 'published');
 
 UPDATE site_settings
 SET default_channel_id = '10000000-0000-4000-8000-000000000001';

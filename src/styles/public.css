@@ -410,12 +410,7 @@
 .public-bottom-nav-track {
   display: flex;
   gap: .22rem;
-  overflow-x: auto;
-  scrollbar-width: none;
-}
-
-.public-bottom-nav-track::-webkit-scrollbar {
-  display: none;
+  overflow: hidden;
 }
 
 .public-nav-item {
@@ -423,6 +418,7 @@
   align-items: center;
   justify-content: center;
   gap: .52rem;
+  width: auto;
   border-radius: .9rem;
   padding: .5rem .82rem;
   text-align: center;
@@ -752,7 +748,6 @@
   }
 
   .public-nav-item {
-    min-width: 6.65rem;
     min-height: 2.9rem;
     gap: .42rem;
     padding: .46rem .68rem;

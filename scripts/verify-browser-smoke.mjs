@@ -99,6 +99,14 @@ function assertRenderedHeroLinks(path) {
   }
 }
 
+function assertChannelNavigationCount(path, expectedCount) {
+  const html = readFileSync(path, "utf8");
+  const itemCount = (html.match(/class="public-nav-item"/g) ?? []).length;
+  if (itemCount !== expectedCount) {
+    throw new Error(`${path} rendered ${itemCount} channel navigation items; expected ${expectedCount}.`);
+  }
+}
+
 mkdirSync(LOG_DIR, { recursive: true });
 assertHeroInteractionContract();
 const chrome = findChrome();
@@ -169,6 +177,8 @@ try {
 
   assertDocument(`${LOG_DIR}/public-browser-dom.html`, ["<html", "Smoke Product", "People", "aria-current=\"page\""]);
   assertDocument(`${LOG_DIR}/public-desktop-browser-dom.html`, ["<html", "Smoke Product", "data-hero-slide"]);
+  assertChannelNavigationCount(`${LOG_DIR}/public-browser-dom.html`, 4);
+  assertChannelNavigationCount(`${LOG_DIR}/public-desktop-browser-dom.html`, 4);
   assertRenderedHeroLinks(`${LOG_DIR}/public-desktop-browser-dom.html`);
   assertDocument(`${LOG_DIR}/public-product-browser-dom.html`, [
     "Smoke Product",

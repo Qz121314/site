@@ -3,10 +3,12 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 test("public entry redirects to a configured or first published channel", async () => {
-  const [home, layout, navigation] = await Promise.all([
+  const [home, layout, navigation, baseStyles, designStyles] = await Promise.all([
     readFile(new URL("../src/pages/index.astro", import.meta.url), "utf8"),
     readFile(new URL("../src/layouts/PublicLayout.astro", import.meta.url), "utf8"),
     readFile(new URL("../src/components/public/ChannelNavigation.astro", import.meta.url), "utf8"),
+    readFile(new URL("../src/styles/public.css", import.meta.url), "utf8"),
+    readFile(new URL("../src/styles/public-design-system.css", import.meta.url), "utf8"),
   ]);
 
   assert.match(home, /site\.defaultChannelSlug \?\? site\.channels\[0\]\?\.slug/u);
@@ -15,6 +17,9 @@ test("public entry redirects to a configured or first published channel", async 
   assert.match(layout, /site\.logoUrl \? \(/u);
   assert.match(layout, /class="public-brand-logo"/u);
   assert.match(navigation, /channels\.length > 0/u);
+  assert.match(baseStyles, /\.public-bottom-nav-track \{[\s\S]*?display: flex;[\s\S]*?overflow: hidden;/u);
+  assert.match(designStyles, /\.public-nav-item \{[\s\S]*?min-width: 0;[\s\S]*?flex: 1 1 0;/u);
+  assert.doesNotMatch(baseStyles, /\.public-nav-item \{[\s\S]*?min-width: 6\.65rem;/u);
 });
 
 test("channel category buttons only expose published categories with published products", async () => {
