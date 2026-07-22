@@ -145,15 +145,7 @@ const structuredData = product && canonical
             data-contact-cta
             data-resolve-url={contactResolveUrl}
           >
-            <svg class="product-cta-leading-icon" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M5 6.5h14v9H9l-4 3v-12Z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
-              <path d="M8.5 10h7M8.5 13h4.5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
-            </svg>
             <span class="product-cta-label" data-contact-label aria-live="polite">{product.ctaLabel}</span>
-            <svg class="product-cta-action-icon" viewBox="0 0 24 24" aria-hidden="true">
-              <path d="M14 5h5v5M19 5l-8 8" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
-              <path d="M18 13v5a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
-            </svg>
           </a>
         </div>
       )}
@@ -234,20 +226,19 @@ const structuredData = product && canonical
 <style>
   .product-cta-bar {
     display: block;
-    padding: .45rem;
+    padding: .42rem;
   }
 
   .product-cta-button {
     position: relative;
     isolation: isolate;
-    display: grid;
-    min-height: 3.55rem;
-    grid-template-columns: 1.2rem minmax(0, 1fr) 1.15rem;
+    display: flex;
+    min-height: 3.65rem;
     align-items: center;
-    gap: .65rem;
+    justify-content: center;
     overflow: hidden;
-    padding: .72rem .92rem;
-    border-radius: .9rem;
+    padding: .8rem 1rem;
+    border-radius: 1rem;
     transform-origin: center;
   }
 
@@ -256,15 +247,8 @@ const structuredData = product && canonical
     z-index: -1;
     inset: 0;
     content: "";
-    background: linear-gradient(112deg, rgba(255, 255, 255, .18), transparent 32%, transparent 68%, rgba(255, 255, 255, .1));
+    background: linear-gradient(112deg, rgba(255, 255, 255, .2), transparent 34%, transparent 67%, rgba(255, 255, 255, .09));
     pointer-events: none;
-  }
-
-  .product-cta-leading-icon,
-  .product-cta-action-icon {
-    width: 1.1rem;
-    height: 1.1rem;
-    flex: 0 0 auto;
   }
 
   .product-cta-label {
@@ -272,7 +256,7 @@ const structuredData = product && canonical
     overflow: hidden;
     font-variant-numeric: tabular-nums;
     font-weight: 800;
-    letter-spacing: .015em;
+    letter-spacing: .075em;
     text-align: center;
     text-overflow: ellipsis;
     white-space: nowrap;
@@ -289,15 +273,14 @@ const structuredData = product && canonical
 
   @keyframes product-cta-grow {
     0% { transform: scale(1); }
-    55% { transform: scale(1.014); }
+    55% { transform: scale(1.012); }
     100% { transform: scale(1); }
   }
 
   @media (max-width: 420px) {
     .product-cta-button {
-      gap: .48rem;
-      padding-inline: .72rem;
-      font-size: .88rem;
+      padding-inline: .8rem;
+      font-size: .9rem;
     }
   }
 
