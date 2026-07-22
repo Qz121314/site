@@ -96,7 +96,7 @@ Cloudflare Worker
 ## 主要路由
 
 ```text
-/                                      默认分区跳转或分区列表
+/                                      跳转到默认分区，未设置时进入第一个已发布分区
 /{channel}                             分区首页
 /{channel}/category/{category}         分类产品目录
 /{channel}/product/{product}           产品详情

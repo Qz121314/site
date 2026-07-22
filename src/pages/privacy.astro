@@ -14,6 +14,7 @@ const canonical = hasContent ? new URL("/privacy", Astro.url.origin).href : null
   description={`Privacy policy for ${site.siteName}.`}
   canonical={canonical}
   robots={hasContent ? undefined : "noindex,follow"}
+  backHref="/"
 >
   <section class="public-section">
     <div class="public-section-heading">

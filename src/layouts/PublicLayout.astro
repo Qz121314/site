@@ -133,14 +133,22 @@ const structuredDataJson = structuredData
               <PublicBackLink href={backHref} />
             </div>
             <a class="public-brand public-brand-centered" href="/" aria-label={`${site.siteName} home`}>
-              <span class="public-brand-name">{site.siteName}</span>
+              {site.logoUrl ? (
+                <img class="public-brand-logo" src={site.logoUrl} alt="" decoding="async" />
+              ) : (
+                <span class="public-brand-name">{site.siteName}</span>
+              )}
             </a>
             <span class="public-header-balance" aria-hidden="true"></span>
           </>
         ) : (
           <>
             <a class="public-brand" href="/" aria-label={`${site.siteName} home`}>
-              <span class="public-brand-name">{site.siteName}</span>
+              {site.logoUrl ? (
+                <img class="public-brand-logo" src={site.logoUrl} alt="" decoding="async" />
+              ) : (
+                <span class="public-brand-name">{site.siteName}</span>
+              )}
             </a>
 
             <details class="public-menu">

@@ -5,14 +5,12 @@ type CategoryEntry = { channelSlug: string; slug: string; updatedAt: string };
 type ProductEntry = { channelSlug: string; slug: string; updatedAt: string };
 type SiteUpdateRow = {
   updatedAt: string;
-  defaultChannelSlug: string | null;
   hasPrivacy: number;
   hasDisclaimer: number;
 };
 
 export type PublicSitemapEntries = {
   siteUpdatedAt: string;
-  hasDefaultChannel: boolean;
   hasPrivacy: boolean;
   hasDisclaimer: boolean;
   channels: ChannelEntry[];
@@ -26,12 +24,8 @@ export async function loadPublicSitemapEntries(): Promise<PublicSitemapEntries> 
       `SELECT
          settings.updated_at AS updatedAt,
          length(trim(settings.privacy_content)) > 0 AS hasPrivacy,
-         length(trim(settings.disclaimer_content)) > 0 AS hasDisclaimer,
-         default_channel.slug AS defaultChannelSlug
+         length(trim(settings.disclaimer_content)) > 0 AS hasDisclaimer
        FROM site_settings settings
-       LEFT JOIN channels default_channel
-         ON default_channel.id = settings.default_channel_id
-        AND default_channel.status = 'published'
        WHERE settings.id = 1`,
     ).first<SiteUpdateRow>(),
     env.DB.prepare(
@@ -166,7 +160,6 @@ export async function loadPublicSitemapEntries(): Promise<PublicSitemapEntries> 
   const fallbackUpdatedAt = new Date(0).toISOString();
   return {
     siteUpdatedAt: site?.updatedAt ?? fallbackUpdatedAt,
-    hasDefaultChannel: Boolean(site?.defaultChannelSlug),
     hasPrivacy: Boolean(site?.hasPrivacy),
     hasDisclaimer: Boolean(site?.hasDisclaimer),
     channels: channels.results,

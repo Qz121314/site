@@ -4,51 +4,21 @@ import { loadPublicSiteShell } from "@/lib/db/public";
 
 export const prerender = false;
 const site = await loadPublicSiteShell();
-if (site.defaultChannelSlug) {
-  return Astro.redirect(`/${encodeURIComponent(site.defaultChannelSlug)}`, 302);
+const entryChannelSlug = site.defaultChannelSlug ?? site.channels[0]?.slug;
+if (entryChannelSlug) {
+  return Astro.redirect(`/${encodeURIComponent(entryChannelSlug)}`, 302);
 }
-const canonical = new URL("/", Astro.url.origin).href;
-const structuredData = {
-  "@context": "https://schema.org",
-  "@type": "WebSite",
-  name: site.siteName,
-  description: site.siteDescription,
-  url: canonical,
-};
-const hasPublishedContent = site.channels.length > 0;
 ---
 
 <PublicLayout
   site={site}
   title={site.siteName}
   description={site.siteDescription}
-  canonical={canonical}
-  robots={hasPublishedContent ? undefined : "noindex,follow"}
-  structuredData={hasPublishedContent ? structuredData : null}
+  canonical={null}
+  robots="noindex,follow"
+  showChannelNavigation={false}
 >
   <section class="public-section">
-    <div class="public-section-heading">
-      <div>
-        <div class="eyebrow">Explore</div>
-        <h1>{site.siteName}</h1>
-        <p>{site.siteDescription}</p>
-      </div>
-    </div>
-
-    {site.channels.length > 0 ? (
-      <div class="category-grid">
-        {site.channels.map((channel) => (
-          <a class="visual-card" href={`/${encodeURIComponent(channel.slug)}`}>
-            <span class="visual-card-placeholder" aria-hidden="true">{channel.icon.trim() || channel.name.trim().slice(0, 1)}</span>
-            <span class="visual-card-overlay">
-              <span class="visual-card-title">{channel.name}</span>
-              <span class="visual-card-meta">Browse channel</span>
-            </span>
-          </a>
-        ))}
-      </div>
-    ) : (
-      <div class="public-empty">No published channels are available yet.</div>
-    )}
+    <div class="public-empty">No published channels are available yet.</div>
   </section>
 </PublicLayout>

@@ -225,6 +225,25 @@ body {
   font-size: clamp(1.25rem, 4.8vw, 1.62rem) !important;
 }
 
+.public-brand-logo {
+  display: block;
+  width: auto;
+  max-width: min(10rem, 48vw);
+  height: 2.35rem;
+  flex: 0 1 auto;
+  border: 0;
+  border-radius: 0;
+  object-fit: contain;
+  object-position: left center;
+  box-shadow: none;
+}
+
+.public-brand-centered .public-brand-logo {
+  max-width: min(9rem, 40vw);
+  height: 2.1rem;
+  object-position: center;
+}
+
 .public-menu-trigger,
 .filter-button,
 .category-entry,

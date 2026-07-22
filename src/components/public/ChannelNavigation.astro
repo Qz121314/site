@@ -9,7 +9,7 @@ interface Props {
 const { channels, activeChannel = null } = Astro.props;
 ---
 
-{channels.length > 0 && (
+{channels.length > 1 && (
   <nav class="public-bottom-nav" aria-label="Channels">
     <div class="public-bottom-nav-track">
       {channels.map((channel) => (
