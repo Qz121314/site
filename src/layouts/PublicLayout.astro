@@ -120,7 +120,6 @@ const structuredDataJson = structuredData
               <PublicBackLink href={backHref} />
             </div>
             <a class="public-brand public-brand-centered" href="/" aria-label={`${site.siteName} home`}>
-              {site.logoUrl && <img class="public-brand-logo" src={site.logoUrl} alt="" />}
               <span class="public-brand-name">{site.siteName}</span>
             </a>
             <span class="public-header-balance" aria-hidden="true"></span>
@@ -128,7 +127,6 @@ const structuredDataJson = structuredData
         ) : (
           <>
             <a class="public-brand" href="/" aria-label={`${site.siteName} home`}>
-              {site.logoUrl && <img class="public-brand-logo" src={site.logoUrl} alt="" />}
               <span class="public-brand-name">{site.siteName}</span>
             </a>
 
@@ -227,11 +225,12 @@ const structuredDataJson = structuredData
   .adult-confirmed .adult-gate { display: none; }
 
   .public-body {
-    --public-font-display: "Iowan Old Style", "Palatino Linotype", "Book Antiqua", Georgia, serif;
-    --public-font-ui: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    --public-font-brand: "Avenir Next Condensed", "Helvetica Neue Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
+    --public-font-display: "Avenir Next", "Segoe UI Variable Display", "SF Pro Display", "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif;
+    --public-font-ui: "Avenir Next", "Segoe UI Variable Text", "SF Pro Text", "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif;
     font-family: var(--public-font-ui);
     font-synthesis: none;
-    letter-spacing: -.012em;
+    letter-spacing: -.008em;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -245,7 +244,6 @@ const structuredDataJson = structuredData
     font: inherit;
   }
 
-  .public-brand-name,
   .public-section-heading h1,
   .public-section-heading h2,
   .visual-card-title,
@@ -261,10 +259,12 @@ const structuredDataJson = structuredData
   }
 
   .public-brand-name {
-    font-size: clamp(1.25rem, 4.3vw, 1.7rem);
-    font-weight: 700;
-    line-height: .92;
-    letter-spacing: -.045em;
+    font-family: var(--public-font-brand);
+    font-size: clamp(.88rem, 3.5vw, 1.05rem);
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: .14em;
+    text-transform: uppercase;
   }
 
   .public-section-heading h1,
@@ -273,13 +273,13 @@ const structuredDataJson = structuredData
   .public-empty h1,
   .public-empty h2,
   .adult-gate-card h2 {
-    font-weight: 600;
-    letter-spacing: -.04em;
+    font-weight: 700;
+    letter-spacing: -.035em;
   }
 
   .visual-card-title {
-    font-weight: 600;
-    letter-spacing: -.025em;
+    font-weight: 650;
+    letter-spacing: -.018em;
   }
 
   .public-search-form input,
@@ -300,7 +300,7 @@ const structuredDataJson = structuredData
   .public-back-link,
   .public-nav-label,
   .eyebrow {
-    letter-spacing: .025em;
+    letter-spacing: .02em;
   }
 
   .public-search-form input {
