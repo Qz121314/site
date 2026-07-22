@@ -13,7 +13,7 @@
     "preview": "astro preview",
     "check": "pnpm cf-typegen && pnpm check:astro",
     "check:astro": "astro check",
-    "test": "node --test --experimental-strip-types tests/*.test.ts",
+    "test": "node --test --experimental-strip-types tests/*.test.ts && node scripts/verify-style-entrypoints.mjs",
     "cf-typegen": "wrangler types",
     "verify:deploy-config": "node scripts/verify-deploy-config.mjs",
     "verify:style-entrypoints": "node scripts/verify-style-entrypoints.mjs",
