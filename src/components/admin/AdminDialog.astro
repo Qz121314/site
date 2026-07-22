@@ -1,4 +1,6 @@
 ---
+import AdminIcon from "@/components/admin/AdminIcon.astro";
+
 interface Props {
   id: string;
   title: string;
@@ -11,7 +13,9 @@ const { id, title, size = "medium" } = Astro.props;
 <dialog id={id} class:list={["admin-dialog", `is-${size}`]} data-admin-dialog aria-labelledby={`${id}-title`}>
   <header class="admin-dialog-header">
     <h2 id={`${id}-title`}>{title}</h2>
-    <button class="admin-dialog-close" type="button" data-dialog-close aria-label="关闭弹窗">×</button>
+    <button class="admin-dialog-close" type="button" data-dialog-close aria-label="关闭弹窗">
+      <AdminIcon name="close" />
+    </button>
   </header>
   <div class="admin-dialog-body">
     <slot />
@@ -70,7 +74,6 @@ const { id, title, size = "medium" } = Astro.props;
     color: #475569;
     background: #ffffff;
     cursor: pointer;
-    font-size: 1.1rem;
     line-height: 1;
   }
 
