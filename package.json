@@ -16,6 +16,8 @@
     "test": "node --test --experimental-strip-types tests/*.test.ts",
     "cf-typegen": "wrangler types",
     "verify:deploy-config": "node scripts/verify-deploy-config.mjs",
+    "verify:production-smoke": "node scripts/verify-production-smoke.mjs",
+    "write:deployment-recovery": "node scripts/write-deployment-recovery.mjs",
     "db:migrate:local": "wrangler d1 migrations apply DB --local",
     "db:migrate:remote": "wrangler d1 migrations apply DB --remote",
     "deploy": "wrangler deploy",
