@@ -30,7 +30,8 @@ const [hero, filters, loadedCategories] = canLoadPage && channel
     ])
   : [[], [], []];
 const categories = loadedCategories;
-const productPage = canLoadPage && channel && categories.length === 0
+const hasCategoryNavigation = categories.length > 0 || filters.length > 0;
+const productPage = canLoadPage && channel && !hasCategoryNavigation
   ? await loadPublicProducts({
       channelId: channel.id,
       baseUrl: site.r2PublicBaseUrl,
@@ -63,6 +64,18 @@ const pageTitle = channel
 >
   {pageAvailable && channel ? (
     <>
+      {pageInput.page === 1 && (
+        <section class="public-section channel-intro-section">
+          <div class="public-section-heading">
+            <div>
+              <div class="eyebrow">{channel.name}</div>
+              <h1>{site.siteName}</h1>
+              {site.siteDescription && <p>{site.siteDescription}</p>}
+            </div>
+          </div>
+        </section>
+      )}
+
       {pageInput.page === 1 && <HeroCarousel advertisements={hero} />}
 
       {pageInput.page === 1 && (
@@ -74,7 +87,7 @@ const pageTitle = channel
         </section>
       )}
 
-      {pageInput.page === 1 && categories.length > 0 && (
+      {pageInput.page === 1 && hasCategoryNavigation && (
         <section class="public-section category-section" data-category-section>
           {filters.length > 0 && (
             <div class="filter-strip" aria-label="Category filters">
@@ -93,7 +106,7 @@ const pageTitle = channel
         </section>
       )}
 
-      {categories.length === 0 && (
+      {!hasCategoryNavigation && (
         <section class="public-section channel-products-section">
           <ProductDirectory channelSlug={channel.slug} page={productPage} />
         </section>

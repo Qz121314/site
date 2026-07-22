@@ -14,7 +14,37 @@ test("public entry redirects to a configured or first published channel", async 
   assert.match(home, /showChannelNavigation=\{false\}/u);
   assert.match(layout, /site\.logoUrl \? \(/u);
   assert.match(layout, /class="public-brand-logo"/u);
-  assert.match(navigation, /channels\.length > 1/u);
+  assert.match(navigation, /channels\.length > 0/u);
+});
+
+test("configured channel navigation data remains visible without published products", async () => {
+  const [channel, publicDatabase] = await Promise.all([
+    readFile(new URL("../src/pages/[channel]/index.astro", import.meta.url), "utf8"),
+    readFile(new URL("../src/lib/db/public.ts", import.meta.url), "utf8"),
+  ]);
+  const categoryLoader = publicDatabase.slice(
+    publicDatabase.indexOf("export async function loadPublicCategories"),
+    publicDatabase.indexOf("export async function loadPublicCategory("),
+  );
+
+  assert.match(channel, /categories\.length > 0 \|\| filters\.length > 0/u);
+  assert.match(channel, /<h1>\{site\.siteName\}<\/h1>/u);
+  assert.match(channel, /site\.siteDescription/u);
+  assert.match(publicDatabase, /category\.status != 'disabled'/u);
+  assert.doesNotMatch(categoryLoader, /EXISTS|product\.status/u);
+});
+
+test("Hero data displays all enabled advertisements unless a current pool is explicitly selected", async () => {
+  const publicDatabase = await readFile(new URL("../src/lib/db/public.ts", import.meta.url), "utf8");
+  const heroLoader = publicDatabase.slice(
+    publicDatabase.indexOf("export async function loadPublicHeroAdvertisements"),
+    publicDatabase.indexOf("export async function loadPublicCategoryFilters"),
+  );
+
+  assert.match(heroLoader, /p\.channel_id = c\.id/u);
+  assert.match(heroLoader, /p\.status = 'enabled'/u);
+  assert.match(heroLoader, /ad\.status = 'enabled'/u);
+  assert.match(heroLoader, /c\.hero_ad_pool_id IS NULL OR p\.id = c\.hero_ad_pool_id/u);
 });
 
 test("only pages with a parent route provide back navigation", async () => {

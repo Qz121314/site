@@ -271,15 +271,15 @@ export async function loadPublicHeroAdvertisements(
     `SELECT ad.id, a.object_key, a.width, a.height, ad.target_url, ad.open_mode
      FROM channels c
      INNER JOIN ad_pools p
-       ON p.id = c.hero_ad_pool_id
-      AND p.channel_id = c.id
+       ON p.channel_id = c.id
       AND p.status = 'enabled'
      INNER JOIN advertisements ad
        ON ad.pool_id = p.id
       AND ad.status = 'enabled'
      INNER JOIN image_assets a ON a.id = ad.image_asset_id
      WHERE c.id = ?1 AND c.status = 'published'
-     ORDER BY ad.sort_order ASC, ad.created_at ASC`,
+       AND (c.hero_ad_pool_id IS NULL OR p.id = c.hero_ad_pool_id)
+     ORDER BY p.created_at ASC, ad.sort_order ASC, ad.created_at ASC`,
   ).bind(channelId).all<HeroRow>();
 
   return result.results.flatMap((row) => {
@@ -332,15 +332,7 @@ export async function loadPublicCategories(
      FROM categories category
      LEFT JOIN filter_usage ON filter_usage.category_id = category.id
      WHERE category.channel_id = ?1
-       AND category.status = 'published'
-       AND EXISTS (
-         SELECT 1
-         FROM products product
-         WHERE product.channel_id = category.channel_id
-           AND product.category_id = category.id
-           AND product.status = 'published'
-         LIMIT 1
-       )
+       AND category.status != 'disabled'
      ORDER BY category.sort_order ASC, category.created_at ASC`,
   ).bind(channelId).all<CategoryRow>();
   return result.results.map(mapCategory);
@@ -361,7 +353,7 @@ export async function loadPublicCategory(
      LEFT JOIN filter_usage ON filter_usage.category_id = category.id
      WHERE category.channel_id = ?1
        AND category.slug = ?2
-       AND category.status = 'published'`,
+       AND category.status != 'disabled'`,
   ).bind(channelId, categorySlug).first<CategoryRow>();
   return row ? mapCategory(row) : null;
 }
