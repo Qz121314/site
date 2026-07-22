@@ -1,0 +1,36 @@
+/* Premium compatibility refinements for legacy component-local styles. */
+
+.admin-body {
+  --bg: var(--admin-canvas);
+  --panel: var(--admin-surface);
+  --panel-strong: var(--admin-surface);
+  --line: var(--admin-border);
+  --text: var(--admin-text);
+  --muted: var(--admin-muted);
+  --accent: var(--admin-accent);
+  --accent-strong: var(--admin-accent-strong);
+  --danger: var(--admin-danger);
+}
+
+.admin-body .product-gallery-upload .gallery-cover-badge {
+  color: #fff;
+  background: var(--admin-accent);
+  box-shadow: 0 2px 8px rgba(78, 54, 31, .18);
+}
+
+.admin-body .product-gallery-upload .gallery-sort-button {
+  border-color: var(--admin-border);
+  border-radius: .35rem;
+  color: var(--admin-text-soft);
+  background: rgba(255, 255, 255, .94);
+}
+
+.admin-body .product-gallery-upload .gallery-sort-button:hover {
+  color: var(--admin-text);
+  border-color: var(--admin-border-strong);
+  background: var(--admin-surface-soft);
+}
+
+.admin-body .product-filter-dropdown-option:hover {
+  background: var(--admin-accent-soft);
+}
