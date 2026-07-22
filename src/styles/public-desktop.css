@@ -1,0 +1,57 @@
+/* Desktop composition layer.
+ * Keeps mobile and tablet behavior intact while giving wide screens
+ * a deliberate three-column rhythm and a shorter editorial hero.
+ */
+
+@media (min-width: 900px) {
+  .public-body {
+    --public-width: 66rem;
+  }
+
+  .public-main {
+    gap: 1.1rem;
+    padding-top: 1rem;
+  }
+
+  .hero-carousel {
+    max-height: 18rem;
+  }
+
+  .hero-track,
+  .hero-slide {
+    height: clamp(14rem, 20vw, 18rem);
+  }
+
+  .hero-slide img {
+    width: 100%;
+    height: 100%;
+    aspect-ratio: auto;
+    object-fit: cover;
+    object-position: center;
+  }
+
+  .category-grid,
+  .product-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+  }
+
+  .product-card .visual-card-title {
+    font-size: 1.05rem;
+  }
+}
+
+@media (min-width: 1280px) {
+  .public-body {
+    --public-width: 68rem;
+  }
+
+  .public-container {
+    padding-inline: 1.5rem;
+  }
+
+  .hero-track,
+  .hero-slide {
+    height: 18rem;
+  }
+}
