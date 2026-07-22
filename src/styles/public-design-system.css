@@ -425,7 +425,8 @@ body {
   text-transform: uppercase;
 }
 
-.filter-button[aria-pressed="true"] {
+.filter-button[aria-pressed="true"],
+.filter-button[aria-current="page"] {
   color: #fff;
   border-color: var(--brand-line);
   background:

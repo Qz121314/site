@@ -18,6 +18,7 @@ export const prerender = false;
 
 const channelSlug = Astro.params.channel ?? "";
 const pageInput = readPublicPage(Astro.url.searchParams.get("page"));
+const requestedCategorySlug = (Astro.url.searchParams.get("category") ?? "").trim().slice(0, 96);
 const site = await loadPublicSiteShell();
 const channel = findPublicChannel(site, channelSlug);
 const canLoadPage = Boolean(channel && pageInput.valid);
@@ -25,37 +26,48 @@ const canLoadPage = Boolean(channel && pageInput.valid);
 const [hero, filters, loadedCategories] = canLoadPage && channel
   ? await Promise.all([
       pageInput.page === 1 ? loadPublicHeroAdvertisements(channel.id, site.r2PublicBaseUrl) : Promise.resolve([]),
-      pageInput.page === 1 ? loadPublicCategoryFilters(channel.id) : Promise.resolve([]),
+      loadPublicCategoryFilters(channel.id),
       loadPublicCategories(channel.id),
     ])
   : [[], [], []];
 const categories = loadedCategories;
-const hasCategoryNavigation = categories.length > 0 || filters.length > 0;
+const hasCategoryNavigation = filters.length > 0;
+const selectedCategory = !hasCategoryNavigation && requestedCategorySlug
+  ? categories.find((category) => category.slug === requestedCategorySlug) ?? null
+  : null;
+const categorySelectionValid = hasCategoryNavigation || !requestedCategorySlug || Boolean(selectedCategory);
 const categoryGroups = filters.map((filter) => ({
   filter,
   categories: categories.filter((category) => category.filterIds.includes(filter.id)),
 }));
 const ungroupedCategories = categories.filter((category) => category.filterIds.length === 0);
-const productPage = canLoadPage && channel && !hasCategoryNavigation
+const productPage = canLoadPage && channel && !hasCategoryNavigation && categorySelectionValid
   ? await loadPublicProducts({
       channelId: channel.id,
       baseUrl: site.r2PublicBaseUrl,
       page: pageInput.page,
+      categoryId: selectedCategory?.id ?? null,
     })
   : { products: [], page: pageInput.page, hasMore: false };
 const pageOutOfRange = canLoadPage && pageInput.page > 1 && productPage.products.length === 0;
-const pageAvailable = canLoadPage && !pageOutOfRange;
+const pageAvailable = canLoadPage && categorySelectionValid && !pageOutOfRange;
 
 if (!pageAvailable) Astro.response.status = 404;
 
 const canonical = pageAvailable && channel
   ? publicPageCanonical(
-      new URL(`/${encodeURIComponent(channel.slug)}`, Astro.url.origin),
+      new URL(
+        selectedCategory
+          ? `/${encodeURIComponent(channel.slug)}/category/${encodeURIComponent(selectedCategory.slug)}`
+          : `/${encodeURIComponent(channel.slug)}`,
+        Astro.url.origin,
+      ),
       pageInput.page,
     )
   : null;
-const pageTitle = channel
-  ? pageInput.page > 1 ? `${channel.name} — Page ${pageInput.page}` : channel.name
+const directoryTitle = selectedCategory?.name ?? channel?.name;
+const pageTitle = directoryTitle
+  ? pageInput.page > 1 ? `${directoryTitle} — Page ${pageInput.page}` : directoryTitle
   : "Page not found";
 ---
 
@@ -77,6 +89,24 @@ const pageTitle = channel
             action={`/${encodeURIComponent(channel.slug)}/search`}
             ariaLabel={`Search ${channel.name}`}
           />
+
+          {!hasCategoryNavigation && categories.length > 0 && (
+            <nav class="filter-strip channel-category-filters" aria-label="Product categories">
+              {categories.map((category) => {
+                const active = selectedCategory?.id === category.id;
+                const channelHref = `/${encodeURIComponent(channel.slug)}`;
+                return (
+                  <a
+                    class="filter-button"
+                    href={active ? channelHref : `${channelHref}?category=${encodeURIComponent(category.slug)}`}
+                    aria-current={active ? "page" : undefined}
+                  >
+                    {category.name}
+                  </a>
+                );
+              })}
+            </nav>
+          )}
         </section>
       )}
 
@@ -135,7 +165,15 @@ const pageTitle = channel
 
       {!hasCategoryNavigation && (
         <section class="public-section channel-products-section">
-          <ProductDirectory channelSlug={channel.slug} page={productPage} />
+          <ProductDirectory
+            channelSlug={channel.slug}
+            categorySlug={selectedCategory?.slug ?? null}
+            preserveCategoryQuery={Boolean(selectedCategory)}
+            page={productPage}
+            emptyMessage={selectedCategory
+              ? `No published products are available in ${selectedCategory.name}.`
+              : "No published products are available in this channel."}
+          />
         </section>
       )}
     </>

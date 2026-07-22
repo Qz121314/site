@@ -61,9 +61,10 @@ function createProductCard(product: DirectoryProduct, channelSlug: string): HTML
   return link;
 }
 
-function pageHref(page: number): string {
+function pageHref(page: number, categorySlug: string, preserveCategoryQuery: boolean): string {
   const url = new URL(window.location.href);
   url.search = "";
+  if (preserveCategoryQuery && categorySlug) url.searchParams.set("category", categorySlug);
   if (page > 1) url.searchParams.set("page", String(page));
   return `${url.pathname}${url.search}`;
 }
@@ -114,7 +115,11 @@ function initializeProductDirectory(root: HTMLElement): void {
         end.textContent = "You’ve reached the end.";
         row.appendChild(end);
       } else {
-        nextLink.href = pageHref(page + 1);
+        nextLink.href = pageHref(
+          page + 1,
+          root.dataset.category || "",
+          root.dataset.preserveCategoryQuery === "1",
+        );
         delete nextLink.dataset.loading;
         nextLink.removeAttribute("aria-busy");
         nextLink.removeAttribute("aria-disabled");

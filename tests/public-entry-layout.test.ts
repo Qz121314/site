@@ -28,7 +28,13 @@ test("configured channel navigation data remains visible without published produ
     publicDatabase.indexOf("export async function loadPublicCategory("),
   );
 
-  assert.match(channel, /categories\.length > 0 \|\| filters\.length > 0/u);
+  assert.match(channel, /hasCategoryNavigation = filters\.length > 0/u);
+  assert.match(channel, /!hasCategoryNavigation && categories\.length > 0/u);
+  assert.match(channel, /class="filter-strip channel-category-filters"/u);
+  assert.match(channel, /category=\$\{encodeURIComponent\(category\.slug\)\}/u);
+  assert.match(channel, /aria-current=\{active \? "page" : undefined\}/u);
+  assert.match(channel, /categoryId: selectedCategory\?\.id \?\? null/u);
+  assert.match(channel, /preserveCategoryQuery=\{Boolean\(selectedCategory\)\}/u);
   assert.match(channel, /description=\{pageAvailable && channel \? site\.siteDescription \|\|/u);
   assert.doesNotMatch(channel, /<h1>\{site\.siteName\}<\/h1>/u);
   assert.match(publicDatabase, /category\.status != 'disabled'/u);
@@ -37,6 +43,27 @@ test("configured channel navigation data remains visible without published produ
   assert.match(settings, /<div class="admin-field admin-span-3">\s*<label for="ga4-id">/u);
   assert.match(settings, /<div class="admin-field admin-span-3">\s*<label for="meta-pixel-id">/u);
   assert.match(settings, /\.settings-form \.admin-field \{ align-content: start; \}/u);
+});
+
+test("channels without category filters degrade categories into product filters", async () => {
+  const [channel, directory, directoryScript, styles] = await Promise.all([
+    readFile(new URL("../src/pages/[channel]/index.astro", import.meta.url), "utf8"),
+    readFile(new URL("../src/components/public/ProductDirectory.astro", import.meta.url), "utf8"),
+    readFile(new URL("../src/scripts/public-product-directory.ts", import.meta.url), "utf8"),
+    readFile(new URL("../src/styles/public-design-system.css", import.meta.url), "utf8"),
+  ]);
+
+  const searchPosition = channel.indexOf("<PublicSearchForm");
+  const categoryFilterPosition = channel.indexOf('class="filter-strip channel-category-filters"');
+  const productDirectoryPosition = channel.indexOf("<ProductDirectory");
+
+  assert.ok(searchPosition >= 0 && categoryFilterPosition > searchPosition);
+  assert.ok(productDirectoryPosition > categoryFilterPosition);
+  assert.match(channel, /hasCategoryNavigation = filters\.length > 0/u);
+  assert.match(channel, /categoryId: selectedCategory\?\.id \?\? null/u);
+  assert.match(directory, /data-preserve-category-query=/u);
+  assert.match(directoryScript, /url\.searchParams\.set\("category", categorySlug\)/u);
+  assert.match(styles, /\.filter-button\[aria-current="page"\]/u);
 });
 
 test("Hero data displays all enabled advertisements unless a current pool is explicitly selected", async () => {
