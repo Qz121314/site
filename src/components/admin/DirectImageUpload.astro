@@ -15,6 +15,7 @@ interface Props {
   required?: boolean;
   compact?: boolean;
   maxFiles?: number;
+  directoryThumbnail?: boolean;
   value?: string | null;
   values?: ExistingUploadImage[];
   help?: string;
@@ -29,6 +30,7 @@ const {
   required = false,
   compact = false,
   maxFiles = multiple ? 30 : 1,
+  directoryThumbnail = false,
   value = null,
   values = [],
   help,
@@ -48,6 +50,7 @@ const initialImages: ExistingUploadImage[] = multiple
   data-multiple={multiple ? "1" : "0"}
   data-required={required ? "1" : "0"}
   data-max-files={String(maxFiles)}
+  data-directory-thumbnail={directoryThumbnail ? "1" : "0"}
   data-form-id={form ?? ""}
 >
   <div class="direct-upload-heading">
@@ -117,6 +120,8 @@ const initialImages: ExistingUploadImage[] = multiple
   (() => {
     const MAX_DIMENSION = 1600;
     const WEBP_QUALITY = 0.82;
+    const THUMBNAIL_DIMENSION = 480;
+    const THUMBNAIL_QUALITY = 0.72;
     const UPLOAD_CONCURRENCY = 3;
 
     const decodeImage = async (file) => {
@@ -150,28 +155,51 @@ const initialImages: ExistingUploadImage[] = multiple
       }
     };
 
-    const compressImage = async (file) => {
+    const renderVariant = (source, sourceWidth, sourceHeight, maximumDimension, quality) => {
+      const scale = Math.min(1, maximumDimension / Math.max(sourceWidth, sourceHeight));
+      const width = Math.max(1, Math.round(sourceWidth * scale));
+      const height = Math.max(1, Math.round(sourceHeight * scale));
+      const canvas = document.createElement("canvas");
+      canvas.width = width;
+      canvas.height = height;
+      const context = canvas.getContext("2d");
+      if (!context) throw new Error("canvas");
+      context.drawImage(source, 0, 0, width, height);
+      return new Promise((resolve, reject) => {
+        canvas.toBlob((blob) => {
+          if (!blob) reject(new Error("compress"));
+          else resolve({ blob, width, height });
+        }, "image/webp", quality);
+      });
+    };
+
+    const compressImage = async (file, includeThumbnail) => {
       const decoded = await decodeImage(file);
       try {
-        const scale = Math.min(1, MAX_DIMENSION / Math.max(decoded.width, decoded.height));
-        const width = Math.max(1, Math.round(decoded.width * scale));
-        const height = Math.max(1, Math.round(decoded.height * scale));
-        const canvas = document.createElement("canvas");
-        canvas.width = width;
-        canvas.height = height;
-        const context = canvas.getContext("2d");
-        if (!context) throw new Error("canvas");
-        context.drawImage(decoded.source, 0, 0, width, height);
-        const blob = await new Promise((resolve) => canvas.toBlob(resolve, "image/webp", WEBP_QUALITY));
-        if (!blob) throw new Error("compress");
-        return { blob, width, height };
+        const original = await renderVariant(
+          decoded.source,
+          decoded.width,
+          decoded.height,
+          MAX_DIMENSION,
+          WEBP_QUALITY,
+        );
+        const thumbnail = includeThumbnail
+          ? await renderVariant(
+              decoded.source,
+              decoded.width,
+              decoded.height,
+              THUMBNAIL_DIMENSION,
+              THUMBNAIL_QUALITY,
+            )
+          : null;
+        return { ...original, thumbnail };
       } finally {
         decoded.release();
       }
     };
 
-    const uploadImage = async (file) => {
-      const compressed = await compressImage(file);
+    const uploadImage = async (file, includeThumbnail) => {
+      const compressed = await compressImage(file, includeThumbnail);
       const uploadFile = new File(
         [compressed.blob],
         `${file.name.replace(/\.[^.]+$/u, "") || "image"}.webp`,
@@ -179,6 +207,12 @@ const initialImages: ExistingUploadImage[] = multiple
       );
       const body = new FormData();
       body.append("file", uploadFile);
+      if (compressed.thumbnail) {
+        body.append(
+          "thumbnail",
+          new File([compressed.thumbnail.blob], "thumbnail.webp", { type: "image/webp" }),
+        );
+      }
       body.append("originalName", file.name);
 
       const response = await fetch("/api/admin/images/upload", {
@@ -236,6 +270,7 @@ const initialImages: ExistingUploadImage[] = multiple
       const required = root.dataset.required === "1";
       const maxFiles = Number(root.dataset.maxFiles || (multiple ? "30" : "1"));
       const formId = root.dataset.formId || "";
+      const directoryThumbnail = root.dataset.directoryThumbnail === "1";
       let pending = 0;
 
       if (!input || !values || !preview || !status) return;
@@ -349,7 +384,7 @@ const initialImages: ExistingUploadImage[] = multiple
 
         await runWithConcurrency(files, UPLOAD_CONCURRENCY, async (file, index) => {
           try {
-            const uploaded = await uploadImage(file);
+            const uploaded = await uploadImage(file, directoryThumbnail);
             addImage(uploaded.image, uploaded.localUrl, uploaded.dimensions, startOrder + index);
           } catch (error) {
             if (error instanceof DOMException && error.name === "AbortError") return;

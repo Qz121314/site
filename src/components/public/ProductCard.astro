@@ -4,9 +4,10 @@ import type { PublicProductCard } from "@/lib/db/public";
 interface Props {
   product: PublicProductCard;
   channelSlug: string;
+  priority?: boolean;
 }
 
-const { product, channelSlug } = Astro.props;
+const { product, channelSlug, priority = false } = Astro.props;
 ---
 
 <a
@@ -20,8 +21,11 @@ const { product, channelSlug } = Astro.props;
       class="visual-card-media"
       src={product.coverUrl}
       alt=""
-      loading="lazy"
+      width={product.coverWidth ?? undefined}
+      height={product.coverHeight ?? undefined}
+      loading={priority ? "eager" : "lazy"}
       decoding="async"
+      fetchpriority={priority ? "high" : "auto"}
       draggable="false"
       data-load-reveal
       onload="this.classList.add('is-loaded');this.closest('[data-load-surface]')?.classList.add('is-loaded');this.closest('[data-load-surface]')?.removeAttribute('aria-busy')"

@@ -6,12 +6,11 @@ import {
   loadPublicSiteShell,
 } from "@/lib/db/public";
 import { loadPublicUncategorizedProducts } from "@/lib/db/public-availability";
+import { PUBLIC_API_EDGE_CACHE_SECONDS } from "@/lib/public/cache-policy";
 import { readPublicPage } from "@/lib/public/pagination";
 import { normalizePublicSearchQuery } from "@/lib/search/query";
 
 export const prerender = false;
-
-const PUBLIC_EDGE_CACHE_SECONDS = 30;
 
 function json(data: unknown, status = 200): Response {
   return new Response(JSON.stringify(data), {
@@ -21,7 +20,7 @@ function json(data: unknown, status = 200): Response {
       "Cache-Control": status === 200 ? "public, max-age=0, must-revalidate" : "no-store",
       ...(status === 200
         ? {
-            "Cloudflare-CDN-Cache-Control": `public, max-age=${PUBLIC_EDGE_CACHE_SECONDS}, must-revalidate`,
+            "Cloudflare-CDN-Cache-Control": `public, max-age=${PUBLIC_API_EDGE_CACHE_SECONDS}, must-revalidate`,
           }
         : {}),
       "X-Content-Type-Options": "nosniff",
@@ -44,7 +43,7 @@ export const GET: APIRoute = async ({ params, url }) => {
   if (!channel) return json({ error: "CHANNEL_NOT_FOUND" }, 404);
 
   const category = categorySlug
-    ? await loadPublicCategory(channel.id, categorySlug, site.r2PublicBaseUrl)
+    ? await loadPublicCategory(channel.id, categorySlug)
     : null;
   if (categorySlug && !category) return json({ error: "CATEGORY_NOT_FOUND" }, 404);
 

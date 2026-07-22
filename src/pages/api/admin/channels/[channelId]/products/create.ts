@@ -61,7 +61,6 @@ export const POST: APIRoute = async ({ request, params }) => {
       categoryId: null,
       categoryName: extras.categoryName,
       productStatus: "draft",
-      coverAssetId: firstImageAssetId,
     });
     generatedCategoryId = category.created ? category.id : null;
 

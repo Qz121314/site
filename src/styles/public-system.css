@@ -1,6 +1,6 @@
 /*
  * Public visual system entrypoint.
- * Foundation supplies layout primitives; the converged design system owns all visual decisions.
+ * Reset → structure → visual system → loading motion → wide layouts → fixed detail CTA.
  */
 @import "./public-base.css";
 @import "./public.css";

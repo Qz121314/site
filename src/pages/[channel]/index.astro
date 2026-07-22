@@ -26,10 +26,10 @@ const [hero, filters, loadedCategories] = canLoadPage && channel
   ? await Promise.all([
       pageInput.page === 1 ? loadPublicHeroAdvertisements(channel.id, site.r2PublicBaseUrl) : Promise.resolve([]),
       pageInput.page === 1 ? loadPublicCategoryFilters(channel.id) : Promise.resolve([]),
-      loadPublicCategories(channel.id, site.r2PublicBaseUrl),
+      loadPublicCategories(channel.id),
     ])
   : [[], [], []];
-const categories = loadedCategories.filter((category) => category.productCount > 0);
+const categories = loadedCategories;
 const productPage = canLoadPage && channel && categories.length === 0
   ? await loadPublicProducts({
       channelId: channel.id,

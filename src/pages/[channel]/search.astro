@@ -27,7 +27,7 @@ const results = {
   categories: rankSearchResults(rawResults.categories, query, (category) => [category.name]),
   products: rankSearchResults(rawResults.products, query, (product) => [product.title, ...product.tags]),
 };
-const categories = results.categories.filter((category) => category.productCount > 0);
+const categories = results.categories;
 ---
 
 <PublicLayout
@@ -91,7 +91,9 @@ const categories = results.categories.filter((category) => category.productCount
                 <span class="public-count">{results.products.length}</span>
               </div>
               <div class="product-grid">
-                {results.products.map((product) => <ProductCard product={product} channelSlug={channel.slug} />)}
+                {results.products.map((product, index) => (
+                  <ProductCard product={product} channelSlug={channel.slug} priority={index < 2} />
+                ))}
               </div>
             </section>
           )}

@@ -11,10 +11,10 @@ type ProductCardRow = {
   title: string;
   slug: string;
   object_key: string | null;
+  cover_width: number | null;
+  cover_height: number | null;
   tags: string;
 };
-
-type AvailabilityRow = { available: number };
 
 function parseTags(value: string): string[] {
   try {
@@ -33,6 +33,8 @@ function mapProduct(row: ProductCardRow, baseUrl: string): PublicProductCard {
     title: row.title,
     slug: row.slug,
     coverUrl: row.object_key ? buildPublicImageUrl(baseUrl, row.object_key) : null,
+    coverWidth: row.object_key ? Number(row.cover_width) || null : null,
+    coverHeight: row.object_key ? Number(row.cover_height) || null : null,
     tags: parseTags(row.tags),
   };
 }
@@ -49,7 +51,9 @@ export async function loadPublicUncategorizedProducts(input: {
        p.id,
        p.title,
        p.slug,
-       cover.object_key,
+       COALESCE(cover.thumbnail_object_key, cover.object_key) AS object_key,
+       CASE WHEN cover.thumbnail_object_key IS NOT NULL THEN cover.thumbnail_width ELSE cover.width END AS cover_width,
+       CASE WHEN cover.thumbnail_object_key IS NOT NULL THEN cover.thumbnail_height ELSE cover.height END AS cover_height,
        p.tags
      FROM products p
      LEFT JOIN image_assets cover ON cover.id = p.cover_asset_id
@@ -65,24 +69,4 @@ export async function loadPublicUncategorizedProducts(input: {
     page,
     hasMore: result.results.length > PUBLIC_PRODUCT_PAGE_SIZE,
   };
-}
-
-export async function publicProductHasEnabledConversion(productId: string): Promise<boolean> {
-  const row = await env.DB.prepare(
-    `SELECT EXISTS(
-       SELECT 1
-       FROM products product
-       INNER JOIN conversion_groups conversion_group
-         ON conversion_group.id = product.conversion_group_id
-        AND conversion_group.channel_id = product.channel_id
-        AND conversion_group.status = 'enabled'
-       INNER JOIN conversion_resources resource
-         ON resource.group_id = conversion_group.id
-        AND resource.status = 'enabled'
-       WHERE product.id = ?1
-         AND product.status = 'published'
-     ) AS available`,
-  ).bind(productId).first<AvailabilityRow>();
-
-  return Boolean(row?.available);
 }

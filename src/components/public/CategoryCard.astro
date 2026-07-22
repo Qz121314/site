@@ -7,7 +7,6 @@ interface Props {
 }
 
 const { category, channelSlug } = Astro.props;
-const itemLabel = `${category.productCount} ${category.productCount === 1 ? "item" : "items"}`;
 ---
 
 <a
@@ -15,7 +14,7 @@ const itemLabel = `${category.productCount} ${category.productCount === 1 ? "ite
   href={`/${encodeURIComponent(channelSlug)}/category/${encodeURIComponent(category.slug)}`}
   data-category-card
   data-filter-ids={category.filterIds.join(",")}
-  aria-label={`${category.name}, ${itemLabel}`}
+  aria-label={category.name}
 >
   <span class="category-entry-label">{category.name}</span>
   <span class="category-entry-arrow" aria-hidden="true">

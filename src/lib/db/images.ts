@@ -10,6 +10,7 @@ export type AdminImageFilter = (typeof ADMIN_IMAGE_FILTERS)[number];
 export type AdminImageAsset = {
   id: string;
   objectKey: string;
+  thumbnailObjectKey: string | null;
   originalName: string;
   mimeType: string;
   width: number;
@@ -18,7 +19,6 @@ export type AdminImageAsset = {
   createdAt: string;
   logoReferences: number;
   faviconReferences: number;
-  categoryReferences: number;
   productCoverReferences: number;
   productGalleryReferences: number;
   advertisementReferences: number;
@@ -28,6 +28,7 @@ export type AdminImageAsset = {
 export type AdminImageObject = {
   id: string;
   objectKey: string;
+  thumbnailObjectKey: string | null;
   mimeType: string;
 };
 
@@ -50,6 +51,7 @@ export type ImageDeleteResult = {
 type AdminImageRow = {
   id: string;
   object_key: string;
+  thumbnail_object_key: string | null;
   original_name: string;
   mime_type: string;
   width: number;
@@ -58,7 +60,6 @@ type AdminImageRow = {
   created_at: string;
   logo_references: number;
   favicon_references: number;
-  category_references: number;
   product_cover_references: number;
   product_gallery_references: number;
   advertisement_references: number;
@@ -69,6 +70,7 @@ type AdminImageRow = {
 type ImageObjectRow = {
   id: string;
   object_key: string;
+  thumbnail_object_key: string | null;
   mime_type: string;
 };
 
@@ -80,12 +82,6 @@ const usageCtes = `
     SELECT logo_asset_id, favicon_asset_id
     FROM site_settings
     WHERE id = 1
-  ),
-  category_usage AS (
-    SELECT image_asset_id, COUNT(*) AS references_count
-    FROM categories
-    WHERE image_asset_id IS NOT NULL
-    GROUP BY image_asset_id
   ),
   cover_usage AS (
     SELECT cover_asset_id AS image_asset_id, COUNT(*) AS references_count
@@ -107,6 +103,7 @@ const usageCtes = `
     SELECT
       a.id,
       a.object_key,
+      a.thumbnail_object_key,
       a.original_name,
       a.mime_type,
       a.width,
@@ -115,19 +112,16 @@ const usageCtes = `
       a.created_at,
       CASE WHEN s.logo_asset_id = a.id THEN 1 ELSE 0 END AS logo_references,
       CASE WHEN s.favicon_asset_id = a.id THEN 1 ELSE 0 END AS favicon_references,
-      COALESCE(c.references_count, 0) AS category_references,
       COALESCE(pc.references_count, 0) AS product_cover_references,
       COALESCE(pg.references_count, 0) AS product_gallery_references,
       COALESCE(ad.references_count, 0) AS advertisement_references,
       CASE WHEN s.logo_asset_id = a.id THEN 1 ELSE 0 END +
       CASE WHEN s.favicon_asset_id = a.id THEN 1 ELSE 0 END +
-      COALESCE(c.references_count, 0) +
       COALESCE(pc.references_count, 0) +
       COALESCE(pg.references_count, 0) +
       COALESCE(ad.references_count, 0) AS reference_count
     FROM image_assets a
     LEFT JOIN site_usage s ON 1 = 1
-    LEFT JOIN category_usage c ON c.image_asset_id = a.id
     LEFT JOIN cover_usage pc ON pc.image_asset_id = a.id
     LEFT JOIN gallery_usage pg ON pg.image_asset_id = a.id
     LEFT JOIN advertisement_usage ad ON ad.image_asset_id = a.id
@@ -166,6 +160,7 @@ function mapImage(row: AdminImageRow): AdminImageAsset {
   return {
     id: row.id,
     objectKey: row.object_key,
+    thumbnailObjectKey: row.thumbnail_object_key,
     originalName: row.original_name,
     mimeType: row.mime_type,
     width: Number(row.width),
@@ -174,7 +169,6 @@ function mapImage(row: AdminImageRow): AdminImageAsset {
     createdAt: row.created_at,
     logoReferences: Number(row.logo_references),
     faviconReferences: Number(row.favicon_references),
-    categoryReferences: Number(row.category_references),
     productCoverReferences: Number(row.product_cover_references),
     productGalleryReferences: Number(row.product_gallery_references),
     advertisementReferences: Number(row.advertisement_references),
@@ -183,7 +177,12 @@ function mapImage(row: AdminImageRow): AdminImageAsset {
 }
 
 function mapImageObject(row: ImageObjectRow): AdminImageObject {
-  return { id: row.id, objectKey: row.object_key, mimeType: row.mime_type };
+  return {
+    id: row.id,
+    objectKey: row.object_key,
+    thumbnailObjectKey: row.thumbnail_object_key,
+    mimeType: row.mime_type,
+  };
 }
 
 function buildWhere(query: string, filter: AdminImageFilter): { sql: string; bindings: string[] } {
@@ -270,18 +269,17 @@ export async function loadAdminImagePage(input: {
 
 export async function loadAdminImageObject(imageId: string): Promise<AdminImageObject | null> {
   const row = await env.DB.prepare(
-    "SELECT id, object_key, mime_type FROM image_assets WHERE id = ?1",
+    "SELECT id, object_key, thumbnail_object_key, mime_type FROM image_assets WHERE id = ?1",
   ).bind(imageId).first<ImageObjectRow>();
   return row ? mapImageObject(row) : null;
 }
 
 export async function loadUnusedImageObjectsForCleanup(): Promise<AdminImageObject[]> {
   const result = await env.DB.prepare(
-    `SELECT a.id, a.object_key, a.mime_type
+    `SELECT a.id, a.object_key, a.thumbnail_object_key, a.mime_type
      FROM image_assets a
      WHERE a.created_at <= datetime('now', '-24 hours')
        AND NOT EXISTS (SELECT 1 FROM site_settings s WHERE s.logo_asset_id = a.id OR s.favicon_asset_id = a.id)
-       AND NOT EXISTS (SELECT 1 FROM categories c WHERE c.image_asset_id = a.id)
        AND NOT EXISTS (SELECT 1 FROM products p WHERE p.cover_asset_id = a.id)
        AND NOT EXISTS (SELECT 1 FROM product_images pi WHERE pi.image_asset_id = a.id)
        AND NOT EXISTS (SELECT 1 FROM advertisements ad WHERE ad.image_asset_id = a.id)

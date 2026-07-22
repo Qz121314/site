@@ -1,6 +1,7 @@
 import { env } from "cloudflare:workers";
 import { defineMiddleware } from "astro:middleware";
 import { readCookie, SESSION_COOKIE, verifySessionToken } from "@/lib/auth/session";
+import { publicHtmlEdgeCacheSeconds } from "@/lib/public/cache-policy";
 
 const PUBLIC_ADMIN_PATHS = new Set(["/admin/login", "/api/admin/login"]);
 const DATA_INDEPENDENT_PATHS = new Set([
@@ -10,7 +11,6 @@ const DATA_INDEPENDENT_PATHS = new Set([
   "/api/health",
   "/robots.txt",
 ]);
-const PUBLIC_EDGE_CACHE_SECONDS = 30;
 const DATA_READINESS_SUCCESS_TTL_MS = 30_000;
 const DATA_READINESS_FAILURE_TTL_MS = 5_000;
 
@@ -61,6 +61,7 @@ async function applicationDataReady(): Promise<boolean> {
          s.disclaimer_content,
          EXISTS(SELECT 1 FROM channels LIMIT 1) AS channels_ready,
          EXISTS(SELECT 1 FROM image_assets LIMIT 1) AS images_ready,
+         (SELECT thumbnail_object_key FROM image_assets LIMIT 1) AS image_thumbnail_schema_ready,
          EXISTS(SELECT 1 FROM image_deletion_queue WHERE attempt_count >= 0 LIMIT 1) AS image_deletions_ready,
          EXISTS(SELECT 1 FROM categories LIMIT 1) AS categories_ready,
          EXISTS(SELECT 1 FROM category_filters LIMIT 1) AS filters_ready,
@@ -164,7 +165,7 @@ function addSecurityHeaders(response: Response, request: Request, pathname: stri
     headers.set("Cache-Control", "public, max-age=0, must-revalidate");
     headers.set(
       "Cloudflare-CDN-Cache-Control",
-      `public, max-age=${PUBLIC_EDGE_CACHE_SECONDS}, must-revalidate`,
+      `public, max-age=${publicHtmlEdgeCacheSeconds(pathname)}, must-revalidate`,
     );
   }
 

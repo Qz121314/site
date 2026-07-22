@@ -4,6 +4,7 @@ import { MAX_IMAGE_MUTATION_IDS, type AdminImageObject, type ImageDeleteResult }
 type ImageObjectRow = {
   id: string;
   object_key: string;
+  thumbnail_object_key: string | null;
   mime_type: string;
 };
 
@@ -19,15 +20,29 @@ export type R2ImageDeleteResult = {
 };
 
 function mapImage(row: ImageObjectRow): AdminImageObject {
-  return { id: row.id, objectKey: row.object_key, mimeType: row.mime_type };
+  return {
+    id: row.id,
+    objectKey: row.object_key,
+    thumbnailObjectKey: row.thumbnail_object_key,
+    mimeType: row.mime_type,
+  };
 }
 
 function mapQueuedImage(row: QueuedImageRow): AdminImageObject {
-  return { id: row.image_id, objectKey: row.object_key, mimeType: row.mime_type };
+  return {
+    id: row.image_id,
+    objectKey: row.object_key,
+    thumbnailObjectKey: null,
+    mimeType: row.mime_type,
+  };
 }
 
 function uniqueImages(images: readonly AdminImageObject[]): AdminImageObject[] {
   return [...new Map(images.filter((image) => image.objectKey).map((image) => [image.objectKey, image])).values()];
+}
+
+function imageObjectKeys(images: readonly AdminImageObject[]): string[] {
+  return [...new Set(images.flatMap((image) => [image.objectKey, image.thumbnailObjectKey].filter(Boolean) as string[]))];
 }
 
 function placeholders(count: number, start = 1): string {
@@ -64,7 +79,7 @@ export async function deleteQueuedImageObjectsFromR2(
   const unique = uniqueImages(images);
   if (unique.length === 0) return { completed: [], pending: [] };
 
-  const objectKeys = unique.map((image) => image.objectKey);
+  const objectKeys = imageObjectKeys(unique);
   try {
     await env.MEDIA_BUCKET.delete(objectKeys);
     await clearDeletionQueue(objectKeys);
@@ -112,7 +127,6 @@ export async function deleteUnusedImageAssetsAtomically(
     WHERE candidate.id IN (${idPlaceholders})
       AND (
         EXISTS (SELECT 1 FROM site_settings s WHERE s.logo_asset_id = candidate.id OR s.favicon_asset_id = candidate.id)
-        OR EXISTS (SELECT 1 FROM categories c WHERE c.image_asset_id = candidate.id)
         OR EXISTS (SELECT 1 FROM products p WHERE p.cover_asset_id = candidate.id)
         OR EXISTS (SELECT 1 FROM product_images pi WHERE pi.image_asset_id = candidate.id)
         OR EXISTS (SELECT 1 FROM advertisements ad WHERE ad.image_asset_id = candidate.id)
@@ -121,7 +135,7 @@ export async function deleteUnusedImageAssetsAtomically(
 
   const results = await env.DB.batch([
     env.DB.prepare(
-      `SELECT id, object_key, mime_type
+      `SELECT id, object_key, thumbnail_object_key, mime_type
        FROM image_assets
        WHERE id IN (${idPlaceholders})`,
     ).bind(...uniqueIds),
@@ -130,6 +144,13 @@ export async function deleteUnusedImageAssetsAtomically(
        SELECT object_key, id, mime_type
        FROM image_assets
        WHERE id IN (${idPlaceholders})
+         AND ${allCandidatesExist}
+         AND NOT ${anyCandidateReferenced}
+       UNION ALL
+       SELECT thumbnail_object_key, id, 'image/webp'
+       FROM image_assets
+       WHERE id IN (${idPlaceholders})
+         AND thumbnail_object_key IS NOT NULL
          AND ${allCandidatesExist}
          AND NOT ${anyCandidateReferenced}`,
     ).bind(...uniqueIds),

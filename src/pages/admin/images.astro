@@ -60,7 +60,6 @@ function usageText(image: AdminImageAsset): string {
   const parts = [
     image.logoReferences > 0 ? "Logo" : "",
     image.faviconReferences > 0 ? "图标" : "",
-    image.categoryReferences > 0 ? "分类" : "",
     image.productCoverReferences > 0 ? "封面" : "",
     image.productGalleryReferences > 0 ? "产品" : "",
     image.advertisementReferences > 0 ? "广告" : "",
@@ -138,6 +137,9 @@ const unusedCount = selectableCount;
         {library.images.map((image) => {
           const previewUrl = buildPublicImageUrl(library.r2PublicBaseUrl, image.objectKey)
             ?? `/api/admin/images/${encodeURIComponent(image.id)}/content`;
+          const thumbnailUrl = image.thumbnailObjectKey
+            ? buildPublicImageUrl(library.r2PublicBaseUrl, image.thumbnailObjectKey) ?? previewUrl
+            : previewUrl;
           return (
             <article class="admin-entity-card image-card">
               {image.referenceCount === 0 && (
@@ -153,7 +155,7 @@ const unusedCount = selectableCount;
                 </label>
               )}
               <a class="admin-entity-media" href={previewUrl} target="_blank" rel="noreferrer" title={image.originalName || image.objectKey}>
-                <img src={previewUrl} alt={image.originalName || image.objectKey} loading="lazy" decoding="async" />
+                <img src={thumbnailUrl} alt={image.originalName || image.objectKey} loading="lazy" decoding="async" />
                 <span class:list={["admin-entity-badge", image.referenceCount > 0 ? "is-used" : "is-unused"]}>{usageText(image)}</span>
               </a>
               <div class="admin-entity-actions image-card-actions">

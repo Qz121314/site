@@ -1,6 +1,8 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  MAX_THUMBNAIL_DIMENSION,
+  createImageThumbnailObjectKey,
   inspectImage,
   normalizeOriginalName,
 } from "../src/lib/admin/image-form.ts";
@@ -87,4 +89,10 @@ test("normalizes uploaded file names", () => {
   assert.equal(normalizeOriginalName("C:\\uploads\\  hero   image.webp  "), "hero image.webp");
   assert.equal(normalizeOriginalName("\u0000\u0001"), "image");
   assert.equal(normalizeOriginalName(`/${"a".repeat(200)}.png`).length, 180);
+});
+
+test("creates isolated WebP keys for directory thumbnails", () => {
+  const key = createImageThumbnailObjectKey(new Date("2026-07-22T00:00:00Z"));
+  assert.match(key, /^images\/2026\/07\/thumbnails\/[0-9a-f-]+\.webp$/u);
+  assert.equal(MAX_THUMBNAIL_DIMENSION, 640);
 });

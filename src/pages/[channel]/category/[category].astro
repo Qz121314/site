@@ -19,7 +19,7 @@ const pageInput = readPublicPage(Astro.url.searchParams.get("page"));
 const site = await loadPublicSiteShell();
 const channel = findPublicChannel(site, channelSlug);
 const category = channel && pageInput.valid
-  ? await loadPublicCategory(channel.id, categorySlug, site.r2PublicBaseUrl)
+  ? await loadPublicCategory(channel.id, categorySlug)
   : null;
 
 const productPage = channel && category
@@ -103,7 +103,7 @@ const returnUrl = pageAvailable && channel ? `/${encodeURIComponent(channel.slug
   description={description}
   canonical={canonical}
   robots={pageAvailable ? undefined : "noindex,follow"}
-  ogImage={category?.imageUrl ?? site.logoUrl}
+  ogImage={site.logoUrl}
   activeChannel={pageAvailable ? channel?.slug ?? null : null}
   backHref={returnUrl}
   structuredData={structuredData}

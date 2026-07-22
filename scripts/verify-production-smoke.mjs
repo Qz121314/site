@@ -34,7 +34,7 @@ async function pause(milliseconds) {
   await new Promise((resolve) => setTimeout(resolve, milliseconds));
 }
 
-async function requestWithRetries(pathname, validate) {
+async function requestWithRetries(pathname, validate, options = {}) {
   let lastError = null;
 
   for (const delay of RETRY_DELAYS_MS) {
@@ -43,7 +43,7 @@ async function requestWithRetries(pathname, validate) {
       const response = await fetch(new URL(pathname, origin), {
         redirect: "follow",
         headers: {
-          Accept: pathname === "/api/health" ? "application/json" : "*/*",
+          Accept: options.accept ?? (pathname === "/api/health" ? "application/json" : "*/*"),
           "User-Agent": "site-deployment-smoke/1.0",
         },
         signal: AbortSignal.timeout(12_000),
@@ -57,6 +57,7 @@ async function requestWithRetries(pathname, validate) {
           status: response.status,
           contentType: response.headers.get("content-type"),
           detail: result.detail ?? null,
+          body: options.includeBody ? body : undefined,
         };
       }
       lastError = new Error(result.error);
@@ -66,6 +67,32 @@ async function requestWithRetries(pathname, validate) {
   }
 
   throw new Error(`${pathname}: ${lastError?.message ?? "smoke verification failed"}`);
+}
+
+function findInternalHref(html, predicate) {
+  for (const match of html.matchAll(/\bhref=["']([^"']+)["']/giu)) {
+    const value = match[1]?.replaceAll("&amp;", "&");
+    if (!value) continue;
+    try {
+      const url = new URL(value, origin);
+      if (url.origin === origin && predicate(url.pathname)) return `${url.pathname}${url.search}`;
+    } catch {
+      // Ignore malformed links; the page request itself is still validated below.
+    }
+  }
+  return null;
+}
+
+function validateHtml(response) {
+  if (response.status !== 200) return { ok: false, error: `expected final 200 response, received ${response.status}` };
+  const contentType = response.headers.get("content-type") ?? "";
+  if (!contentType.includes("text/html")) return { ok: false, error: `unexpected content type: ${contentType}` };
+  return { ok: true };
+}
+
+function publicResult(result) {
+  const { body: _body, ...summary } = result;
+  return summary;
 }
 
 const origin = resolveOrigin();
@@ -93,12 +120,6 @@ const checks = [
     }
     return { ok: true };
   }),
-  requestWithRetries("/", (response) => {
-    if (response.status !== 200) return { ok: false, error: `expected final 200 response, received ${response.status}` };
-    const contentType = response.headers.get("content-type") ?? "";
-    if (!contentType.includes("text/html")) return { ok: false, error: `unexpected content type: ${contentType}` };
-    return { ok: true };
-  }),
 ];
 
 const startedAt = new Date().toISOString();
@@ -106,6 +127,49 @@ mkdirSync("ci-logs", { recursive: true });
 
 try {
   const results = await Promise.all(checks);
+  const homepage = await requestWithRetries("/", validateHtml, { includeBody: true, accept: "text/html" });
+  results.push(publicResult(homepage));
+
+  let directory = homepage;
+  const homepagePath = new URL(homepage.url).pathname;
+  if (homepagePath === "/") {
+    const channelHref = findInternalHref(homepage.body ?? "", (pathname) => /^\/[^/]+\/?$/u.test(pathname));
+    if (channelHref) {
+      directory = await requestWithRetries(channelHref, validateHtml, { includeBody: true, accept: "text/html" });
+      results.push({ ...publicResult(directory), detail: "channel entry" });
+    }
+  }
+
+  const categoryHref = findInternalHref(
+    directory.body ?? "",
+    (pathname) => /^\/[^/]+\/category\/[^/]+\/?$/u.test(pathname),
+  );
+  if (categoryHref) {
+    directory = await requestWithRetries(categoryHref, validateHtml, { includeBody: true, accept: "text/html" });
+    results.push({ ...publicResult(directory), detail: "category directory" });
+  }
+
+  const productHref = findInternalHref(
+    directory.body ?? "",
+    (pathname) => /^\/[^/]+\/product\/[^/]+\/?$/u.test(pathname),
+  );
+  if (productHref) {
+    const product = await requestWithRetries(productHref, validateHtml, { includeBody: true, accept: "text/html" });
+    const contactHref = findInternalHref(product.body ?? "", (pathname) => /^\/go\/[^/]+\/?$/u.test(pathname));
+    results.push({
+      ...publicResult(product),
+      detail: contactHref ? "product detail with contact action" : "product detail; no contact action configured",
+    });
+  } else {
+    results.push({
+      pathname: categoryHref ?? new URL(directory.url).pathname,
+      url: directory.url,
+      status: directory.status,
+      contentType: directory.contentType,
+      detail: "no published product available; product/contact traversal skipped",
+    });
+  }
+
   writeFileSync(OUTPUT_PATH, JSON.stringify({ ok: true, origin, startedAt, completedAt: new Date().toISOString(), results }, null, 2));
   console.log(`Production smoke verification passed for ${origin}`);
   for (const result of results) console.log(`- ${result.pathname}: ${result.status} ${result.detail ?? ""}`.trim());

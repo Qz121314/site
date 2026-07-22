@@ -33,9 +33,11 @@ const carouselId = `hero-${crypto.randomUUID()}`;
           <img
             src={advertisement.imageUrl}
             alt=""
-            loading={index === 0 ? "eager" : "lazy"}
+            width={advertisement.width ?? undefined}
+            height={advertisement.height ?? undefined}
+            loading="lazy"
             decoding="async"
-            fetchpriority={index === 0 ? "high" : "auto"}
+            fetchpriority="low"
             data-load-reveal
             draggable="false"
             onload="this.classList.add('is-loaded');this.closest('[data-load-surface]')?.classList.add('is-loaded');this.closest('[data-load-surface]')?.removeAttribute('aria-busy')"

@@ -2,7 +2,6 @@
 import PublicLayout from "@/layouts/PublicLayout.astro";
 import ProductGallery from "@/components/public/ProductGallery.astro";
 import { loadPublicProductDetail, loadPublicSiteShell } from "@/lib/db/public";
-import { publicProductHasEnabledConversion } from "@/lib/db/public-availability";
 import { productDescription } from "@/lib/public/seo";
 
 export const prerender = false;
@@ -11,7 +10,6 @@ const channelSlug = Astro.params.channel ?? "";
 const productSlug = Astro.params.product ?? "";
 const site = await loadPublicSiteShell();
 const product = await loadPublicProductDetail(channelSlug, productSlug, site.r2PublicBaseUrl);
-const hasConversion = product ? await publicProductHasEnabledConversion(product.id) : false;
 
 if (!product) Astro.response.status = 404;
 
@@ -24,7 +22,14 @@ const canonical = product
 const primaryImage = product?.coverUrl ?? product?.gallery[0]?.imageUrl ?? site.logoUrl;
 const galleryImages = product
   ? [
-      ...(primaryImage ? [{ imageUrl: primaryImage, alt: product.title }] : []),
+      ...(primaryImage
+        ? [{
+            imageUrl: primaryImage,
+            alt: product.title,
+            width: product.coverUrl === primaryImage ? product.coverWidth : (product.gallery[0]?.width ?? null),
+            height: product.coverUrl === primaryImage ? product.coverHeight : (product.gallery[0]?.height ?? null),
+          }]
+        : []),
       ...product.gallery.map((image) => ({
         imageUrl: image.imageUrl,
         alt: image.originalName || product.title,
@@ -136,7 +141,7 @@ const structuredData = product && canonical
         </section>
       )}
 
-      {hasConversion && (
+      {product.hasConversion && (
         <div class="product-cta-bar">
           <a
             class="public-button product-cta-button"

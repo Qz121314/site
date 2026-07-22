@@ -10,7 +10,6 @@ export type ResolvedProductCategory = {
 type CategoryRow = {
   id: string;
   status: string;
-  image_asset_id: string | null;
 };
 
 function normalizeCategoryName(value: string): string {
@@ -22,7 +21,6 @@ export async function resolveProductCategory(input: {
   categoryId: string | null;
   categoryName: string;
   productStatus: ProductStatus;
-  coverAssetId: string | null;
 }): Promise<ResolvedProductCategory> {
   const categoryName = normalizeCategoryName(input.categoryName);
 
@@ -30,26 +28,24 @@ export async function resolveProductCategory(input: {
     if (!input.categoryId) return { id: null, created: false };
 
     const existing = await env.DB.prepare(
-      "SELECT id, status, image_asset_id FROM categories WHERE id = ?1 AND channel_id = ?2",
+      "SELECT id, status FROM categories WHERE id = ?1 AND channel_id = ?2",
     ).bind(input.categoryId, input.channelId).first<CategoryRow>();
     if (!existing) return { id: input.categoryId, created: false };
 
     const shouldPublish = input.productStatus === "published" && existing.status !== "published";
-    const shouldSetImage = Boolean(input.coverAssetId && !existing.image_asset_id);
-    if (shouldPublish || shouldSetImage) {
+    if (shouldPublish) {
       await env.DB.prepare(
         `UPDATE categories
-         SET status = CASE WHEN ?3 = 1 THEN 'published' ELSE status END,
-             image_asset_id = CASE WHEN image_asset_id IS NULL THEN ?4 ELSE image_asset_id END,
+         SET status = 'published',
              updated_at = CURRENT_TIMESTAMP
          WHERE id = ?1 AND channel_id = ?2`,
-      ).bind(existing.id, input.channelId, shouldPublish ? 1 : 0, input.coverAssetId).run();
+      ).bind(existing.id, input.channelId).run();
     }
     return { id: existing.id, created: false };
   }
 
   const existing = await env.DB.prepare(
-    `SELECT id, status, image_asset_id
+    `SELECT id, status
      FROM categories
      WHERE channel_id = ?1 AND name = ?2 COLLATE NOCASE
      ORDER BY created_at ASC
@@ -58,15 +54,13 @@ export async function resolveProductCategory(input: {
 
   if (existing) {
     const shouldPublish = input.productStatus === "published" && existing.status !== "published";
-    const shouldSetImage = Boolean(input.coverAssetId && !existing.image_asset_id);
-    if (shouldPublish || shouldSetImage) {
+    if (shouldPublish) {
       await env.DB.prepare(
         `UPDATE categories
-         SET status = CASE WHEN ?3 = 1 THEN 'published' ELSE status END,
-             image_asset_id = CASE WHEN image_asset_id IS NULL THEN ?4 ELSE image_asset_id END,
+         SET status = 'published',
              updated_at = CURRENT_TIMESTAMP
          WHERE id = ?1 AND channel_id = ?2`,
-      ).bind(existing.id, input.channelId, shouldPublish ? 1 : 0, input.coverAssetId).run();
+      ).bind(existing.id, input.channelId).run();
     }
     return { id: existing.id, created: false };
   }
@@ -77,12 +71,12 @@ export async function resolveProductCategory(input: {
 
   await env.DB.prepare(
     `INSERT INTO categories (
-       id, channel_id, name, slug, image_asset_id, sort_order, status
+       id, channel_id, name, slug, sort_order, status
      )
-     SELECT ?1, ?2, ?3, ?4, ?5, COALESCE(MAX(sort_order), 0) + 10, ?6
+     SELECT ?1, ?2, ?3, ?4, COALESCE(MAX(sort_order), 0) + 10, ?5
      FROM categories
      WHERE channel_id = ?2`,
-  ).bind(id, input.channelId, categoryName, slug, input.coverAssetId, status).run();
+  ).bind(id, input.channelId, categoryName, slug, status).run();
 
   return { id, created: true };
 }

@@ -179,14 +179,12 @@ export async function prepareProductPublishing(
     `SELECT
        p.category_id,
        p.conversion_group_id,
-       p.cover_asset_id,
        EXISTS(SELECT 1 FROM product_images pi WHERE pi.product_id = p.id) AS has_image
      FROM products p
      WHERE p.id = ?1 AND p.channel_id = ?2`,
   ).bind(productId, channelId).first<{
     category_id: string | null;
     conversion_group_id: string | null;
-    cover_asset_id: string | null;
     has_image: number;
   }>();
 
@@ -197,10 +195,9 @@ export async function prepareProductPublishing(
     await env.DB.prepare(
       `UPDATE categories
        SET status = 'published',
-           image_asset_id = CASE WHEN image_asset_id IS NULL THEN ?3 ELSE image_asset_id END,
            updated_at = CURRENT_TIMESTAMP
        WHERE id = ?1 AND channel_id = ?2`,
-    ).bind(product.category_id, channelId, product.cover_asset_id).run();
+    ).bind(product.category_id, channelId).run();
   }
 
   return validateProductRelations(

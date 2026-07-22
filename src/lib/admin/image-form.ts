@@ -1,5 +1,7 @@
 export const MAX_IMAGE_BYTES = 8 * 1024 * 1024;
-export const MAX_UPLOAD_REQUEST_BYTES = MAX_IMAGE_BYTES + 512 * 1024;
+export const MAX_THUMBNAIL_BYTES = 512 * 1024;
+export const MAX_THUMBNAIL_DIMENSION = 640;
+export const MAX_UPLOAD_REQUEST_BYTES = MAX_IMAGE_BYTES + MAX_THUMBNAIL_BYTES + 512 * 1024;
 export const MAX_IMAGE_DIMENSION = 12_000;
 
 export const SUPPORTED_IMAGE_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
@@ -152,6 +154,12 @@ export function createImageObjectKey(extension: InspectedImage["extension"], now
   const year = String(now.getUTCFullYear());
   const month = String(now.getUTCMonth() + 1).padStart(2, "0");
   return `images/${year}/${month}/${crypto.randomUUID()}.${extension}`;
+}
+
+export function createImageThumbnailObjectKey(now = new Date()): string {
+  const year = String(now.getUTCFullYear());
+  const month = String(now.getUTCMonth() + 1).padStart(2, "0");
+  return `images/${year}/${month}/thumbnails/${crypto.randomUUID()}.webp`;
 }
 
 export function isSupportedImageType(value: string): value is SupportedImageType {

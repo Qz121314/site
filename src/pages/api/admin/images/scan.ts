@@ -83,6 +83,8 @@ export const POST: APIRoute = async ({ request }) => {
     const existingResult = await env.DB.prepare(
       `SELECT object_key FROM image_assets
        UNION
+       SELECT thumbnail_object_key AS object_key FROM image_assets WHERE thumbnail_object_key IS NOT NULL
+       UNION
        SELECT object_key FROM image_deletion_queue`,
     ).all<ObjectKeyRow>();
     const knownKeys = new Set(existingResult.results.map((row) => row.object_key));
@@ -101,6 +103,10 @@ export const POST: APIRoute = async ({ request }) => {
       for (const object of result.objects) {
         scanned += 1;
         if (knownKeys.has(object.key)) continue;
+        if (object.customMetadata?.variant === "directory-thumbnail") {
+          skipped += 1;
+          continue;
+        }
 
         const mimeType = object.httpMetadata?.contentType ?? "";
         const width = parseDimension(object.customMetadata?.width);

@@ -64,7 +64,7 @@ const structuredDataJson = structuredData
     <meta name="twitter:description" content={description} />
     {ogImage && <meta name="twitter:image" content={ogImage} />}
     <title>{pageTitle}</title>
-    {structuredDataJson && <script type="application/ld+json" set:html={structuredDataJson}></script>}
+    {structuredDataJson && <script is:inline type="application/ld+json" set:html={structuredDataJson}></script>}
 
     {showAdultGate && (
       <script is:inline>
@@ -289,7 +289,6 @@ const structuredDataJson = structuredData
   .public-back-link,
   .public-nav-label,
   .eyebrow,
-  .visual-tag,
   .public-menu-panel a {
     font-family: var(--public-font-ui);
   }
