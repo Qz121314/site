@@ -76,6 +76,8 @@ const nextPageHref = page.hasMore ? publicPageHref(Astro.url, page.page + 1) : n
         image.src = product.coverUrl;
         image.alt = '';
         image.loading = 'lazy';
+        image.decoding = 'async';
+        image.draggable = false;
         link.append(image);
       } else {
         const placeholder = document.createElement('span');
@@ -85,25 +87,12 @@ const nextPageHref = page.hasMore ? publicPageHref(Astro.url, page.page + 1) : n
         link.append(placeholder);
       }
 
-
       const overlay = document.createElement('span');
       overlay.className = 'visual-card-overlay';
       const title = document.createElement('span');
       title.className = 'visual-card-title';
       title.textContent = product.title;
       overlay.append(title);
-
-      if (Array.isArray(product.tags) && product.tags.length > 0) {
-        const tags = document.createElement('span');
-        tags.className = 'visual-card-meta';
-        product.tags.slice(0, 3).forEach((tag) => {
-          const item = document.createElement('span');
-          item.className = 'visual-tag';
-          item.textContent = tag;
-          tags.append(item);
-        });
-        overlay.append(tags);
-      }
 
       link.append(overlay);
       return link;

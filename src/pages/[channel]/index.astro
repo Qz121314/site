@@ -12,7 +12,6 @@ import {
   loadPublicProducts,
   loadPublicSiteShell,
 } from "@/lib/db/public";
-import { loadPublicUncategorizedProducts } from "@/lib/db/public-availability";
 import { publicPageCanonical, readPublicPage } from "@/lib/public/pagination";
 
 export const prerender = false;
@@ -31,18 +30,12 @@ const [hero, filters, loadedCategories] = canLoadPage && channel
     ])
   : [[], [], []];
 const categories = loadedCategories.filter((category) => category.productCount > 0);
-const productPage = canLoadPage && channel
-  ? categories.length > 0
-    ? await loadPublicUncategorizedProducts({
-        channelId: channel.id,
-        baseUrl: site.r2PublicBaseUrl,
-        page: pageInput.page,
-      })
-    : await loadPublicProducts({
-        channelId: channel.id,
-        baseUrl: site.r2PublicBaseUrl,
-        page: pageInput.page,
-      })
+const productPage = canLoadPage && channel && categories.length === 0
+  ? await loadPublicProducts({
+      channelId: channel.id,
+      baseUrl: site.r2PublicBaseUrl,
+      page: pageInput.page,
+    })
   : { products: [], page: pageInput.page, hasMore: false };
 const pageOutOfRange = canLoadPage && pageInput.page > 1 && productPage.products.length === 0;
 const pageAvailable = canLoadPage && !pageOutOfRange;
@@ -100,19 +93,9 @@ const pageTitle = channel
         </section>
       )}
 
-      {(categories.length === 0 || productPage.products.length > 0) && (
-        <section class="public-section">
-          {(categories.length > 0 || pageInput.page > 1) && (
-            <div class="public-section-heading">
-              <h1>{categories.length > 0 ? "More products" : channel.name}</h1>
-              {pageInput.page > 1 && <span class="public-count">Page {pageInput.page}</span>}
-            </div>
-          )}
-          <ProductDirectory
-            channelSlug={channel.slug}
-            page={productPage}
-            uncategorizedOnly={categories.length > 0}
-          />
+      {categories.length === 0 && (
+        <section class="public-section channel-products-section">
+          <ProductDirectory channelSlug={channel.slug} page={productPage} />
         </section>
       )}
     </>

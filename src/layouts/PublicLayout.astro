@@ -1,6 +1,7 @@
 ---
 import "@/styles/public-system.css";
 import ChannelNavigation from "@/components/public/ChannelNavigation.astro";
+import PublicBackLink from "@/components/public/PublicBackLink.astro";
 import type { PublicSiteShell } from "@/lib/db/public";
 
 interface Props {
@@ -11,6 +12,8 @@ interface Props {
   robots?: string | undefined;
   ogImage?: string | null;
   activeChannel?: string | null;
+  backHref?: string | null;
+  showChannelNavigation?: boolean;
   structuredData?: Record<string, unknown> | Array<Record<string, unknown>> | null;
 }
 
@@ -22,6 +25,8 @@ const {
   robots = "index,follow,max-image-preview:large",
   ogImage = site.logoUrl,
   activeChannel = null,
+  backHref = null,
+  showChannelNavigation = true,
   structuredData = null,
 } = Astro.props;
 
@@ -39,7 +44,10 @@ const structuredDataJson = structuredData
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+    />
     <meta name="description" content={description} />
     <meta name="color-scheme" content="dark" />
     <meta name="robots" content={robots} />
@@ -104,24 +112,39 @@ const structuredDataJson = structuredData
       </noscript>
     )}
 
-    <header class="public-header">
-      <div class="public-container public-header-inner">
-        <a class="public-brand" href="/" aria-label={`${site.siteName} home`}>
-          {site.logoUrl && <img class="public-brand-logo" src={site.logoUrl} alt="" />}
-          <span class="public-brand-name">{site.siteName}</span>
-        </a>
+    <header class:list={["public-header", backHref && "public-header-subpage"]}>
+      <div class:list={["public-container", "public-header-inner", backHref && "public-header-inner-subpage"]}>
+        {backHref ? (
+          <>
+            <div class="public-header-leading">
+              <PublicBackLink href={backHref} />
+            </div>
+            <a class="public-brand public-brand-centered" href="/" aria-label={`${site.siteName} home`}>
+              {site.logoUrl && <img class="public-brand-logo" src={site.logoUrl} alt="" />}
+              <span class="public-brand-name">{site.siteName}</span>
+            </a>
+            <span class="public-header-balance" aria-hidden="true"></span>
+          </>
+        ) : (
+          <>
+            <a class="public-brand" href="/" aria-label={`${site.siteName} home`}>
+              {site.logoUrl && <img class="public-brand-logo" src={site.logoUrl} alt="" />}
+              <span class="public-brand-name">{site.siteName}</span>
+            </a>
 
-        <details class="public-menu">
-          <summary class="public-menu-trigger" aria-label="Open site menu">
-            <span aria-hidden="true"></span>
-            <span aria-hidden="true"></span>
-            <span aria-hidden="true"></span>
-          </summary>
-          <div class="public-menu-panel">
-            <a href="/privacy">Privacy</a>
-            <a href="/disclaimer">Disclaimer</a>
-          </div>
-        </details>
+            <details class="public-menu">
+              <summary class="public-menu-trigger" aria-label="Open site menu">
+                <span aria-hidden="true"></span>
+                <span aria-hidden="true"></span>
+                <span aria-hidden="true"></span>
+              </summary>
+              <div class="public-menu-panel">
+                <a href="/privacy">Privacy</a>
+                <a href="/disclaimer">Disclaimer</a>
+              </div>
+            </details>
+          </>
+        )}
       </div>
     </header>
 
@@ -129,7 +152,35 @@ const structuredDataJson = structuredData
       <slot />
     </main>
 
-    <ChannelNavigation channels={site.channels} activeChannel={activeChannel} />
+    {showChannelNavigation && <ChannelNavigation channels={site.channels} activeChannel={activeChannel} />}
+
+    <script is:inline>
+      (() => {
+        const activationWindow = 650;
+
+        document.addEventListener('click', (event) => {
+          if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+          if (!(event.target instanceof Element)) return;
+
+          const control = event.target.closest('a[href], button[type="submit"]');
+          if (!(control instanceof HTMLElement)) return;
+          if (control.closest('[data-hero-track]') || control.matches('[target="_blank"], [download]')) return;
+
+          const now = performance.now();
+          const lastActivation = Number(control.dataset.lastActivation || '0');
+          if (now - lastActivation < activationWindow) {
+            event.preventDefault();
+            event.stopPropagation();
+            return;
+          }
+
+          control.dataset.lastActivation = String(now);
+          window.setTimeout(() => {
+            delete control.dataset.lastActivation;
+          }, activationWindow);
+        }, true);
+      })();
+    </script>
 
     {showAdultGate && (
       <div class="adult-gate" data-adult-gate role="dialog" aria-modal="true" aria-labelledby="adult-gate-title">
@@ -198,7 +249,7 @@ const structuredDataJson = structuredData
   .public-section-heading h1,
   .public-section-heading h2,
   .visual-card-title,
-  .product-detail-header h1,
+  .product-detail-title h1,
   .product-body h1,
   .product-body h2,
   .public-empty h1,
@@ -218,7 +269,7 @@ const structuredDataJson = structuredData
 
   .public-section-heading h1,
   .public-section-heading h2,
-  .product-detail-header h1,
+  .product-detail-title h1,
   .public-empty h1,
   .public-empty h2,
   .adult-gate-card h2 {
@@ -234,6 +285,7 @@ const structuredDataJson = structuredData
   .public-search-form input,
   .public-button,
   .filter-button,
+  .category-entry,
   .public-back-link,
   .public-nav-label,
   .eyebrow,
@@ -244,6 +296,7 @@ const structuredDataJson = structuredData
 
   .public-button,
   .filter-button,
+  .category-entry,
   .public-back-link,
   .public-nav-label,
   .eyebrow {
