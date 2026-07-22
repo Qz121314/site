@@ -24,7 +24,7 @@ concurrency:
 jobs:
   validate-and-deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 25
+    timeout-minutes: 30
     steps:
       - name: 检出代码
         uses: actions/checkout@v6
@@ -83,6 +83,12 @@ jobs:
         run: |
           set -o pipefail
           pnpm build 2>&1 | tee ci-logs/build.log
+
+      - name: 验证真实浏览器渲染
+        shell: bash
+        run: |
+          set -o pipefail
+          pnpm verify:browser-smoke 2>&1 | tee ci-logs/browser-smoke.log
 
       - name: 验证 Cloudflare 资源绑定
         shell: bash
