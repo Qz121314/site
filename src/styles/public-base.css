@@ -10,7 +10,7 @@
 
 html {
   min-width: 320px;
-  background: #080706;
+  background: #090b10;
 }
 
 body {
@@ -26,7 +26,8 @@ a {
 button,
 input,
 select,
-textarea {
+textarea,
+summary {
   font: inherit;
 }
 
@@ -36,7 +37,7 @@ svg {
 }
 
 .eyebrow {
-  color: var(--public-gold, #d8ad61);
+  color: var(--public-accent-bright, #ff9aad);
   font-size: .75rem;
   font-weight: 800;
   letter-spacing: .16em;
