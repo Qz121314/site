@@ -9,9 +9,24 @@ interface Props {
 const { product, channelSlug } = Astro.props;
 ---
 
-<a class="visual-card product-card" href={`/${encodeURIComponent(channelSlug)}/product/${encodeURIComponent(product.slug)}`}>
+<a
+  class={`visual-card product-card${product.coverUrl ? "" : " is-loaded"}`}
+  href={`/${encodeURIComponent(channelSlug)}/product/${encodeURIComponent(product.slug)}`}
+  data-load-surface
+  aria-busy={product.coverUrl ? "true" : undefined}
+>
   {product.coverUrl ? (
-    <img class="visual-card-media" src={product.coverUrl} alt="" loading="lazy" decoding="async" draggable="false" />
+    <img
+      class="visual-card-media"
+      src={product.coverUrl}
+      alt=""
+      loading="lazy"
+      decoding="async"
+      draggable="false"
+      data-load-reveal
+      onload="this.classList.add('is-loaded');this.closest('[data-load-surface]')?.classList.add('is-loaded');this.closest('[data-load-surface]')?.removeAttribute('aria-busy')"
+      onerror="this.classList.add('is-load-error');this.closest('[data-load-surface]')?.classList.add('is-load-error');this.closest('[data-load-surface]')?.removeAttribute('aria-busy')"
+    />
   ) : (
     <span class="visual-card-placeholder" aria-hidden="true">{product.title.trim().slice(0, 1).toUpperCase() || "P"}</span>
   )}
