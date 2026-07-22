@@ -122,6 +122,10 @@ const structuredData = product && canonical
   canonical={canonical}
   robots={product ? undefined : "noindex,follow"}
   ogImage={primaryImage}
+  ogImageAlt={product?.title ?? null}
+  ogImageWidth={product?.coverUrl === primaryImage ? product.coverWidth : (product?.gallery[0]?.width ?? null)}
+  ogImageHeight={product?.coverUrl === primaryImage ? product.coverHeight : (product?.gallery[0]?.height ?? null)}
+  ogType="product"
   activeChannel={product?.channelSlug ?? channelSlug}
   backHref={product ? returnUrl : null}
   showChannelNavigation={false}
@@ -168,64 +172,7 @@ const structuredData = product && canonical
   )}
 </PublicLayout>
 
-<script is:inline>
-  (() => {
-    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-
-    document.querySelectorAll('[data-contact-cta]').forEach((link) => {
-      if (!(link instanceof HTMLAnchorElement)) return;
-      const resolveUrl = link.dataset.resolveUrl || link.href;
-      const label = link.querySelector('[data-contact-label]');
-      const defaultLabel = label?.textContent?.trim() || 'View Details';
-
-      link.addEventListener('click', async (event) => {
-        event.preventDefault();
-        if (link.dataset.loading === '1') return;
-
-        link.dataset.loading = '1';
-        link.setAttribute('aria-busy', 'true');
-        link.classList.remove('is-resolved');
-        if (label) label.textContent = 'Connecting…';
-
-        try {
-          const response = await fetch(resolveUrl, {
-            headers: { Accept: 'application/json' },
-            credentials: 'same-origin',
-          });
-          const result = await response.json();
-          if (!response.ok || !result?.ok || !result.contact?.target) throw new Error('unavailable');
-
-          const target = String(result.contact.target);
-          const type = result.contact.type === 'sms' ? 'sms' : 'link';
-          const rawDisplay = String(result.contact.display || target).trim();
-          const display = type === 'sms' ? rawDisplay.replace(/^sms:/iu, '') : rawDisplay;
-
-          link.href = target;
-          link.dataset.contactType = type;
-          if (label) label.textContent = type === 'sms' ? `SMS · ${display}` : `OPEN · ${display || defaultLabel}`;
-          void link.offsetWidth;
-          link.classList.add('is-resolved');
-          if (!reducedMotion.matches) {
-            await new Promise((resolve) => window.setTimeout(resolve, 220));
-          }
-          window.location.assign(target);
-        } catch (error) {
-          console.error(error);
-          link.classList.remove('is-resolved');
-          if (label) {
-            label.textContent = 'Temporarily unavailable';
-            window.setTimeout(() => {
-              if (link.dataset.loading !== '1') label.textContent = defaultLabel;
-            }, 1600);
-          }
-        } finally {
-          delete link.dataset.loading;
-          link.removeAttribute('aria-busy');
-        }
-      });
-    });
-  })();
-</script>
+<script>import "@/scripts/public-product-cta";</script>
 
 <style>
   .product-detail-title {

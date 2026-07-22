@@ -1,5 +1,12 @@
 import { env } from "cloudflare:workers";
 import { buildPublicImageUrl } from "@/lib/images/url";
+import {
+  mapPublicProductRow,
+  type PublicProductCard,
+  type PublicProductRow,
+} from "@/lib/db/public-product-map";
+
+export type { PublicProductCard } from "@/lib/db/public-product-map";
 
 export const PUBLIC_PRODUCT_PAGE_SIZE = 20;
 
@@ -47,16 +54,6 @@ export type PublicCategory = {
   name: string;
   slug: string;
   filterIds: string[];
-};
-
-export type PublicProductCard = {
-  id: string;
-  title: string;
-  slug: string;
-  coverUrl: string | null;
-  coverWidth: number | null;
-  coverHeight: number | null;
-  tags: string[];
 };
 
 export type PublicProductPage = {
@@ -131,17 +128,7 @@ type CategoryRow = {
   filter_ids: string | null;
 };
 
-type ProductCardRow = {
-  id: string;
-  title: string;
-  slug: string;
-  object_key: string | null;
-  cover_width: number | null;
-  cover_height: number | null;
-  tags: string;
-};
-
-type ProductDetailRow = ProductCardRow & {
+type ProductDetailRow = PublicProductRow & {
   channel_id: string;
   channel_name: string;
   channel_slug: string;
@@ -160,17 +147,6 @@ type GalleryRow = {
   height: number;
 };
 
-function parseTags(value: string): string[] {
-  try {
-    const parsed: unknown = JSON.parse(value);
-    return Array.isArray(parsed)
-      ? parsed.filter((tag): tag is string => typeof tag === "string").slice(0, 20)
-      : [];
-  } catch {
-    return [];
-  }
-}
-
 function truncateUtf8(value: string, maximumBytes: number): string {
   const encoder = new TextEncoder();
   let output = "";
@@ -184,18 +160,6 @@ function truncateUtf8(value: string, maximumBytes: number): string {
   return output;
 }
 
-function mapProduct(row: ProductCardRow, baseUrl: string): PublicProductCard {
-  return {
-    id: row.id,
-    title: row.title,
-    slug: row.slug,
-    coverUrl: row.object_key ? buildPublicImageUrl(baseUrl, row.object_key) : null,
-    coverWidth: row.object_key ? Number(row.cover_width) || null : null,
-    coverHeight: row.object_key ? Number(row.cover_height) || null : null,
-    tags: parseTags(row.tags),
-  };
-}
-
 function mapCategory(row: CategoryRow): PublicCategory {
   return {
     id: row.id,
@@ -207,7 +171,6 @@ function mapCategory(row: CategoryRow): PublicCategory {
 
 const SITE_SHELL_CACHE_TTL_MS = 60_000;
 const siteShellCache = new Map<boolean, { value: PublicSiteShell; expiresAt: number }>();
-const pendingSiteShellReads = new Map<boolean, Promise<PublicSiteShell>>();
 
 function defaultSiteShell(): PublicSiteShell {
   return {
@@ -234,13 +197,9 @@ export async function loadPublicSiteShell(
   const now = Date.now();
   if (cached && cached.expiresAt > now) return cached.value;
 
-  const pending = pendingSiteShellReads.get(includeLegalContent);
-  if (pending) return pending;
-
-  const read = (async () => {
-    try {
-      const shellPromise = env.DB.prepare(
-        `SELECT
+  try {
+    const shellPromise = env.DB.prepare(
+      `SELECT
          s.site_name,
          s.site_description,
          s.r2_public_base_url,
@@ -263,20 +222,20 @@ export async function loadPublicSiteShell(
        LEFT JOIN channels channel ON channel.status = 'published'
        WHERE s.id = 1
          ORDER BY channel.sort_order ASC, channel.created_at ASC`,
-      ).all<SiteShellRow>();
-      const legalPromise = includeLegalContent
-        ? env.DB.prepare(
-            `SELECT privacy_content, disclaimer_content
-             FROM site_settings WHERE id = 1`,
-          ).first<LegalRow>()
-        : Promise.resolve(null);
+    ).all<SiteShellRow>();
+    const legalPromise = includeLegalContent
+      ? env.DB.prepare(
+          `SELECT privacy_content, disclaimer_content
+           FROM site_settings WHERE id = 1`,
+        ).first<LegalRow>()
+      : Promise.resolve(null);
 
-      const [shellResult, legal] = await Promise.all([shellPromise, legalPromise]);
-      const first = shellResult.results[0];
-      if (!first) return defaultSiteShell();
+    const [shellResult, legal] = await Promise.all([shellPromise, legalPromise]);
+    const first = shellResult.results[0];
+    if (!first) return defaultSiteShell();
 
-      const baseUrl = first.r2_public_base_url ?? "";
-      const value: PublicSiteShell = {
+    const baseUrl = first.r2_public_base_url ?? "";
+    const value: PublicSiteShell = {
         siteName: first.site_name,
         siteDescription: first.site_description,
         logoUrl: first.logo_object_key ? buildPublicImageUrl(baseUrl, first.logo_object_key) : null,
@@ -298,22 +257,16 @@ export async function loadPublicSiteShell(
               }]
             : [],
         ),
-      };
-      siteShellCache.set(includeLegalContent, {
-        value,
-        expiresAt: Date.now() + SITE_SHELL_CACHE_TTL_MS,
-      });
-      return value;
-    } catch (error) {
-      console.error(JSON.stringify({ event: "public_site_shell_read_failed", error: String(error) }));
-      return defaultSiteShell();
-    } finally {
-      pendingSiteShellReads.delete(includeLegalContent);
-    }
-  })();
-
-  pendingSiteShellReads.set(includeLegalContent, read);
-  return read;
+    };
+    siteShellCache.set(includeLegalContent, {
+      value,
+      expiresAt: Date.now() + SITE_SHELL_CACHE_TTL_MS,
+    });
+    return value;
+  } catch (error) {
+    console.error(JSON.stringify({ event: "public_site_shell_read_failed", error: String(error) }));
+    return defaultSiteShell();
+  }
 }
 
 export function findPublicChannel(site: PublicSiteShell, channelSlug: string): PublicChannel | null {
@@ -454,12 +407,14 @@ export async function loadPublicProducts(input: {
        p.id,
        p.title,
        p.slug,
-       COALESCE(cover.thumbnail_object_key, cover.object_key) AS object_key,
-       CASE WHEN cover.thumbnail_object_key IS NOT NULL THEN cover.thumbnail_width ELSE cover.width END AS cover_width,
-       CASE WHEN cover.thumbnail_object_key IS NOT NULL THEN cover.thumbnail_height ELSE cover.height END AS cover_height,
+       cover.thumbnail_object_key AS object_key,
+       cover.thumbnail_width AS cover_width,
+       cover.thumbnail_height AS cover_height,
        p.tags
      FROM products p
-     LEFT JOIN image_assets cover ON cover.id = p.cover_asset_id
+     INNER JOIN image_assets cover
+       ON cover.id = p.cover_asset_id
+      AND cover.thumbnail_object_key IS NOT NULL
      LEFT JOIN categories category
        ON category.id = p.category_id
       AND category.channel_id = p.channel_id
@@ -467,10 +422,10 @@ export async function loadPublicProducts(input: {
        AND (p.category_id IS NULL OR category.status = 'published')
      ORDER BY p.sort_order ASC, p.created_at DESC
      LIMIT ?${limitParameter} OFFSET ?${offsetParameter}`,
-  ).bind(...bindings).all<ProductCardRow>();
+  ).bind(...bindings).all<PublicProductRow>();
 
   return {
-    products: result.results.slice(0, PUBLIC_PRODUCT_PAGE_SIZE).map((row) => mapProduct(row, input.baseUrl)),
+    products: result.results.slice(0, PUBLIC_PRODUCT_PAGE_SIZE).map((row) => mapPublicProductRow(row, input.baseUrl)),
     page,
     hasMore: result.results.length > PUBLIC_PRODUCT_PAGE_SIZE,
   };
@@ -538,7 +493,7 @@ export async function loadPublicProductDetail(
   ).bind(row.id).all<GalleryRow>();
 
   return {
-    ...mapProduct(row, baseUrl),
+    ...mapPublicProductRow(row, baseUrl),
     channelId: row.channel_id,
     channelName: row.channel_name,
     channelSlug: row.channel_slug,
@@ -600,12 +555,14 @@ export async function searchPublicCatalog(
          p.id,
          p.title,
          p.slug,
-         COALESCE(cover.thumbnail_object_key, cover.object_key) AS object_key,
-         CASE WHEN cover.thumbnail_object_key IS NOT NULL THEN cover.thumbnail_width ELSE cover.width END AS cover_width,
-         CASE WHEN cover.thumbnail_object_key IS NOT NULL THEN cover.thumbnail_height ELSE cover.height END AS cover_height,
+         cover.thumbnail_object_key AS object_key,
+         cover.thumbnail_width AS cover_width,
+         cover.thumbnail_height AS cover_height,
          p.tags
        FROM products p
-       LEFT JOIN image_assets cover ON cover.id = p.cover_asset_id
+       INNER JOIN image_assets cover
+         ON cover.id = p.cover_asset_id
+        AND cover.thumbnail_object_key IS NOT NULL
        LEFT JOIN categories category
          ON category.id = p.category_id
         AND category.channel_id = p.channel_id
@@ -615,11 +572,11 @@ export async function searchPublicCatalog(
          AND (p.category_id IS NULL OR category.status = 'published')
        ORDER BY p.sort_order ASC, p.created_at DESC
        LIMIT 40`,
-    ).bind(channelId, pattern).all<ProductCardRow>(),
+    ).bind(channelId, pattern).all<PublicProductRow>(),
   ]);
 
   return {
     categories: categories.results.map(mapCategory),
-    products: products.results.map((row) => mapProduct(row, baseUrl)),
+    products: products.results.map((row) => mapPublicProductRow(row, baseUrl)),
   };
 }

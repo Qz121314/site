@@ -8,9 +8,24 @@ if (site.defaultChannelSlug) {
   return Astro.redirect(`/${encodeURIComponent(site.defaultChannelSlug)}`, 302);
 }
 const canonical = new URL("/", Astro.url.origin).href;
+const structuredData = {
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: site.siteName,
+  description: site.siteDescription,
+  url: canonical,
+};
+const hasPublishedContent = site.channels.length > 0;
 ---
 
-<PublicLayout site={site} title={site.siteName} description={site.siteDescription} canonical={canonical}>
+<PublicLayout
+  site={site}
+  title={site.siteName}
+  description={site.siteDescription}
+  canonical={canonical}
+  robots={hasPublishedContent ? undefined : "noindex,follow"}
+  structuredData={hasPublishedContent ? structuredData : null}
+>
   <section class="public-section">
     <div class="public-section-heading">
       <div>

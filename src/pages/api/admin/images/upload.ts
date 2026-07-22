@@ -49,9 +49,13 @@ export const POST: APIRoute = async ({ request }) => {
   if (!(file instanceof File) || file.size === 0) return fail(request, "file");
   if (file.size > MAX_IMAGE_BYTES) return fail(request, "too-large", 413);
   const thumbnail = form.get("thumbnail");
+  const variant = form.get("variant");
+  const productVariant = variant === "product";
+  if (variant !== null && !productVariant) return fail(request, "variant");
   if (thumbnail !== null && (!(thumbnail instanceof File) || thumbnail.size === 0)) {
     return fail(request, "thumbnail");
   }
+  if (productVariant && !(thumbnail instanceof File)) return fail(request, "thumbnail-required");
   if (thumbnail instanceof File && thumbnail.size > MAX_THUMBNAIL_BYTES) {
     return fail(request, "thumbnail-too-large", 413);
   }

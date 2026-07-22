@@ -4,10 +4,17 @@ import { loadPublicSiteShell } from "@/lib/db/public";
 
 export const prerender = false;
 const site = await loadPublicSiteShell({ includeLegalContent: true });
-const canonical = new URL("/privacy", Astro.url.origin).href;
+const hasContent = site.privacyContent.trim().length > 0;
+const canonical = hasContent ? new URL("/privacy", Astro.url.origin).href : null;
 ---
 
-<PublicLayout site={site} title="Privacy Policy" description={`Privacy policy for ${site.siteName}.`} canonical={canonical}>
+<PublicLayout
+  site={site}
+  title="Privacy Policy"
+  description={`Privacy policy for ${site.siteName}.`}
+  canonical={canonical}
+  robots={hasContent ? undefined : "noindex,follow"}
+>
   <section class="public-section">
     <div class="public-section-heading">
       <div>

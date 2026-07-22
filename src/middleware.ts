@@ -46,34 +46,7 @@ async function applicationDataReady(): Promise<boolean> {
   let ready = false;
   try {
     const row = await env.DB.prepare(
-      `SELECT
-         s.id,
-         s.site_name,
-         s.site_description,
-         s.logo_asset_id,
-         s.favicon_asset_id,
-         s.default_channel_id,
-         s.r2_public_base_url,
-         s.ga4_id,
-         s.meta_pixel_id,
-         s.adult_gate_enabled,
-         s.privacy_content,
-         s.disclaimer_content,
-         EXISTS(SELECT 1 FROM channels LIMIT 1) AS channels_ready,
-         EXISTS(SELECT 1 FROM image_assets LIMIT 1) AS images_ready,
-         (SELECT thumbnail_object_key FROM image_assets LIMIT 1) AS image_thumbnail_schema_ready,
-         EXISTS(SELECT 1 FROM image_deletion_queue WHERE attempt_count >= 0 LIMIT 1) AS image_deletions_ready,
-         EXISTS(SELECT 1 FROM categories LIMIT 1) AS categories_ready,
-         EXISTS(SELECT 1 FROM category_filters LIMIT 1) AS filters_ready,
-         EXISTS(SELECT 1 FROM category_filter_relations LIMIT 1) AS filter_relations_ready,
-         EXISTS(SELECT 1 FROM products WHERE body_source IS NOT NULL LIMIT 1) AS products_ready,
-         EXISTS(SELECT 1 FROM product_images LIMIT 1) AS product_images_ready,
-         EXISTS(SELECT 1 FROM ad_pools WHERE channel_id IS NOT NULL LIMIT 1) AS ad_pools_ready,
-         EXISTS(SELECT 1 FROM advertisements LIMIT 1) AS advertisements_ready,
-         EXISTS(SELECT 1 FROM conversion_groups WHERE channel_id IS NOT NULL LIMIT 1) AS conversion_groups_ready,
-         EXISTS(SELECT 1 FROM conversion_resources LIMIT 1) AS conversion_resources_ready
-       FROM site_settings s
-       WHERE s.id = 1`,
+      "SELECT id FROM site_settings WHERE id = 1",
     ).first<{ id: number }>();
     ready = row?.id === 1;
   } catch (error) {

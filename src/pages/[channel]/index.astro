@@ -112,34 +112,4 @@ const pageTitle = channel
   )}
 </PublicLayout>
 
-<script is:inline>
-  (() => {
-    const section = document.querySelector('[data-category-section]');
-    if (!section) return;
-
-    const buttons = Array.from(section.querySelectorAll('[data-category-filter]'));
-    const cards = Array.from(section.querySelectorAll('[data-category-card]'));
-    const empty = section.querySelector('[data-category-empty]');
-
-    const applyFilter = (filterId) => {
-      let visible = 0;
-      buttons.forEach((item) => item.setAttribute('aria-pressed', item.dataset.categoryFilter === filterId ? 'true' : 'false'));
-
-      cards.forEach((card) => {
-        const filterIds = (card.dataset.filterIds || '').split(',').filter(Boolean);
-        const show = !filterId || filterIds.includes(filterId);
-        card.hidden = !show;
-        if (show) visible += 1;
-      });
-
-      if (empty) empty.hidden = visible > 0;
-    };
-
-    buttons.forEach((button) => {
-      button.addEventListener('click', () => {
-        const filterId = button.dataset.categoryFilter || '';
-        applyFilter(button.getAttribute('aria-pressed') === 'true' ? '' : filterId);
-      });
-    });
-  })();
-</script>
+<script>import "@/scripts/public-category-filters";</script>

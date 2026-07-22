@@ -56,18 +56,26 @@ try {
     INSERT INTO conversion_resources (id, group_id, type, value, status)
     VALUES ('${ids.conversionResource}', '${ids.conversionGroup}', 'sms', '+12025550123', 'enabled');
 
-    INSERT INTO products (
-      id, channel_id, conversion_group_id, title, slug, body_source, body_html, status
+    INSERT INTO image_assets (
+      id, object_key, original_name, mime_type, width, height, size_bytes,
+      thumbnail_object_key, thumbnail_width, thumbnail_height, thumbnail_size_bytes
     ) VALUES (
-      '${ids.product}', '${ids.channel}', '${ids.conversionGroup}',
-      'Audit Guard Product', 'audit-guard-product', '', '', 'published'
+      '${ids.image}', 'audit/guard.webp', 'guard.webp', 'image/webp', 1, 1, 1,
+      'audit/guard-thumbnail.webp', 1, 1, 1
     );
 
-    INSERT INTO image_assets (
-      id, object_key, original_name, mime_type, width, height, size_bytes
+    INSERT INTO products (
+      id, channel_id, conversion_group_id, cover_asset_id,
+      title, slug, body_source, body_html, status
     ) VALUES (
-      '${ids.image}', 'audit/guard.webp', 'guard.webp', 'image/webp', 1, 1, 1
+      '${ids.product}', '${ids.channel}', '${ids.conversionGroup}', '${ids.image}',
+      'Audit Guard Product', 'audit-guard-product', '', '', 'draft'
     );
+
+    INSERT INTO product_images (product_id, image_asset_id, sort_order)
+    VALUES ('${ids.product}', '${ids.image}', 0);
+
+    UPDATE products SET status = 'published' WHERE id = '${ids.product}';
 
     INSERT INTO ad_pools (id, channel_id, name, status)
     VALUES

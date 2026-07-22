@@ -8,7 +8,7 @@ import { parseProductContentForm, validateProductRelations } from "@/lib/admin/p
 import { parseProductEntryExtras } from "@/lib/admin/product-entry";
 import { removeEmptyGeneratedCategory, resolveProductCategory } from "@/lib/admin/product-category";
 import { isSameOriginPost } from "@/lib/auth/session";
-import { imageAssetsExist } from "@/lib/db/image-options";
+import { productImageAssetsReady } from "@/lib/db/image-options";
 import { loadNextAdminProductSortOrder } from "@/lib/db/products";
 
 export const prerender = false;
@@ -48,7 +48,7 @@ export const POST: APIRoute = async ({ request, params }) => {
       loadNextAdminProductSortOrder(channelId),
     ]);
 
-    if (!(await imageAssetsExist(extras.galleryAssetIds))) {
+    if (!(await productImageAssetsReady(extras.galleryAssetIds))) {
       return redirectAdmin(returnUrl, { error: "image", saved: null });
     }
 

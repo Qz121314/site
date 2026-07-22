@@ -8,7 +8,7 @@ import { parseProductContentForm, validateProductRelations } from "@/lib/admin/p
 import { parseProductEntryExtras } from "@/lib/admin/product-entry";
 import { removeEmptyGeneratedCategory, resolveProductCategory } from "@/lib/admin/product-category";
 import { isSameOriginPost } from "@/lib/auth/session";
-import { imageAssetsExist } from "@/lib/db/image-options";
+import { productImageAssetsReady } from "@/lib/db/image-options";
 import type { ProductStatus } from "@/lib/admin/product-form";
 
 export const prerender = false;
@@ -48,7 +48,7 @@ export const POST: APIRoute = async ({ request, params }) => {
     }>();
     if (!product) return redirectAdmin(returnUrl, { edit: null, error: "not-found", saved: null });
 
-    if (!(await imageAssetsExist(extras.galleryAssetIds))) {
+    if (!(await productImageAssetsReady(extras.galleryAssetIds))) {
       return redirectAdmin(returnUrl, { edit: productId, error: "image", saved: null });
     }
     if (product.status === "published" && !firstImageAssetId) {
@@ -85,6 +85,13 @@ export const POST: APIRoute = async ({ request, params }) => {
     const imageInsert = productImagesInsert(productId, extras.galleryAssetIds);
     const filterInsert = category.id ? categoryFiltersInsert(category.id, extras.filterIds) : null;
     const statements = [
+      ...(product.status === "published"
+        ? [env.DB.prepare(
+            `UPDATE products
+             SET status = 'draft', updated_at = CURRENT_TIMESTAMP
+             WHERE id = ?1 AND channel_id = ?2`,
+          ).bind(productId, channelId)]
+        : []),
       env.DB.prepare(
         `UPDATE products
          SET category_id = ?1,
@@ -118,6 +125,13 @@ export const POST: APIRoute = async ({ request, params }) => {
             env.DB.prepare("DELETE FROM category_filter_relations WHERE category_id = ?1").bind(category.id),
             ...(filterInsert ? [env.DB.prepare(filterInsert.sql).bind(...filterInsert.bindings)] : []),
           ]
+        : []),
+      ...(product.status === "published"
+        ? [env.DB.prepare(
+            `UPDATE products
+             SET status = 'published', updated_at = CURRENT_TIMESTAMP
+             WHERE id = ?1 AND channel_id = ?2`,
+          ).bind(productId, channelId)]
         : []),
     ];
 

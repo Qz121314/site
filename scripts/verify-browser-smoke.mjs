@@ -61,18 +61,24 @@ function assertDocument(path, requirements) {
 }
 
 function assertHeroInteractionContract() {
-  const source = readFileSync("src/components/public/HeroCarousel.astro", "utf8");
+  const templateSource = readFileSync("src/components/public/HeroCarousel.astro", "utf8");
+  const interactionSource = readFileSync("src/scripts/public-hero-carousel.ts", "utf8");
   const requirements = [
     'href={advertisement.targetUrl}',
     'draggable="false"',
-    'const DRAG_START_THRESHOLD = 6',
-    'if (!dragging && Math.abs(distance) >= DRAG_START_THRESHOLD)',
+  ];
+  const interactionRequirements = [
+    'const dragStartThreshold = 6',
+    'if (!dragging && Math.abs(distance) >= dragStartThreshold)',
     "track.setPointerCapture(event.pointerId)",
     "if (!suppressClick) return",
   ];
 
   for (const requirement of requirements) {
-    if (!source.includes(requirement)) throw new Error(`Hero carousel interaction contract is missing: ${requirement}`);
+    if (!templateSource.includes(requirement)) throw new Error(`Hero carousel template contract is missing: ${requirement}`);
+  }
+  for (const requirement of interactionRequirements) {
+    if (!interactionSource.includes(requirement)) throw new Error(`Hero carousel interaction contract is missing: ${requirement}`);
   }
 }
 

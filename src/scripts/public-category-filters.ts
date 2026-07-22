@@ -1,0 +1,30 @@
+const section = document.querySelector<HTMLElement>("[data-category-section]");
+
+if (section) {
+  const buttons = Array.from(section.querySelectorAll<HTMLButtonElement>("[data-category-filter]"));
+  const cards = Array.from(section.querySelectorAll<HTMLElement>("[data-category-card]"));
+  const empty = section.querySelector<HTMLElement>("[data-category-empty]");
+
+  const applyFilter = (filterId: string): void => {
+    let visible = 0;
+    buttons.forEach((item) => {
+      item.setAttribute("aria-pressed", item.dataset.categoryFilter === filterId ? "true" : "false");
+    });
+
+    cards.forEach((card) => {
+      const filterIds = (card.dataset.filterIds || "").split(",").filter(Boolean);
+      const show = !filterId || filterIds.includes(filterId);
+      card.hidden = !show;
+      if (show) visible += 1;
+    });
+
+    if (empty) empty.hidden = visible > 0;
+  };
+
+  buttons.forEach((button) => {
+    button.addEventListener("click", () => {
+      const filterId = button.dataset.categoryFilter || "";
+      applyFilter(button.getAttribute("aria-pressed") === "true" ? "" : filterId);
+    });
+  });
+}

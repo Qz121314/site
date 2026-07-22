@@ -3,11 +3,18 @@ import { env } from "cloudflare:workers";
 type ChannelEntry = { slug: string; updatedAt: string };
 type CategoryEntry = { channelSlug: string; slug: string; updatedAt: string };
 type ProductEntry = { channelSlug: string; slug: string; updatedAt: string };
-type SiteUpdateRow = { updatedAt: string; defaultChannelSlug: string | null };
+type SiteUpdateRow = {
+  updatedAt: string;
+  defaultChannelSlug: string | null;
+  hasPrivacy: number;
+  hasDisclaimer: number;
+};
 
 export type PublicSitemapEntries = {
   siteUpdatedAt: string;
   hasDefaultChannel: boolean;
+  hasPrivacy: boolean;
+  hasDisclaimer: boolean;
   channels: ChannelEntry[];
   categories: CategoryEntry[];
   products: ProductEntry[];
@@ -18,6 +25,8 @@ export async function loadPublicSitemapEntries(): Promise<PublicSitemapEntries> 
     env.DB.prepare(
       `SELECT
          settings.updated_at AS updatedAt,
+         length(trim(settings.privacy_content)) > 0 AS hasPrivacy,
+         length(trim(settings.disclaimer_content)) > 0 AS hasDisclaimer,
          default_channel.slug AS defaultChannelSlug
        FROM site_settings settings
        LEFT JOIN channels default_channel
@@ -30,42 +39,45 @@ export async function loadPublicSitemapEntries(): Promise<PublicSitemapEntries> 
        category_updates AS (
          SELECT channel_id, MAX(updated_at) AS updated_at
          FROM categories
+         WHERE status = 'published'
          GROUP BY channel_id
        ),
        product_updates AS (
          SELECT channel_id, MAX(updated_at) AS updated_at
          FROM products
+         WHERE status = 'published'
          GROUP BY channel_id
        ),
        filter_updates AS (
          SELECT channel_id, MAX(updated_at) AS updated_at
          FROM category_filters
+         WHERE status = 'enabled'
          GROUP BY channel_id
        ),
        pool_updates AS (
          SELECT channel_id, MAX(updated_at) AS updated_at
          FROM ad_pools
-         WHERE channel_id IS NOT NULL
+         WHERE status = 'enabled'
          GROUP BY channel_id
        ),
        advertisement_updates AS (
          SELECT pool.channel_id, MAX(advertisement.updated_at) AS updated_at
          FROM advertisements advertisement
          INNER JOIN ad_pools pool ON pool.id = advertisement.pool_id
-         WHERE pool.channel_id IS NOT NULL
+         WHERE pool.status = 'enabled' AND advertisement.status = 'enabled'
          GROUP BY pool.channel_id
        ),
        conversion_group_updates AS (
          SELECT channel_id, MAX(updated_at) AS updated_at
          FROM conversion_groups
-         WHERE channel_id IS NOT NULL
+         WHERE status = 'enabled'
          GROUP BY channel_id
        ),
        conversion_resource_updates AS (
          SELECT conversion_group.channel_id, MAX(resource.updated_at) AS updated_at
          FROM conversion_resources resource
          INNER JOIN conversion_groups conversion_group ON conversion_group.id = resource.group_id
-         WHERE conversion_group.channel_id IS NOT NULL
+         WHERE conversion_group.status = 'enabled' AND resource.status = 'enabled'
          GROUP BY conversion_group.channel_id
        )
        SELECT
@@ -96,7 +108,7 @@ export async function loadPublicSitemapEntries(): Promise<PublicSitemapEntries> 
       `WITH product_updates AS (
          SELECT category_id, MAX(updated_at) AS updated_at
          FROM products
-         WHERE category_id IS NOT NULL
+         WHERE category_id IS NOT NULL AND status = 'published'
          GROUP BY category_id
        )
        SELECT
@@ -120,6 +132,7 @@ export async function loadPublicSitemapEntries(): Promise<PublicSitemapEntries> 
       `WITH resource_updates AS (
          SELECT group_id, MAX(updated_at) AS updated_at
          FROM conversion_resources
+         WHERE status = 'enabled'
          GROUP BY group_id
        )
        SELECT
@@ -154,6 +167,8 @@ export async function loadPublicSitemapEntries(): Promise<PublicSitemapEntries> 
   return {
     siteUpdatedAt: site?.updatedAt ?? fallbackUpdatedAt,
     hasDefaultChannel: Boolean(site?.defaultChannelSlug),
+    hasPrivacy: Boolean(site?.hasPrivacy),
+    hasDisclaimer: Boolean(site?.hasDisclaimer),
     channels: channels.results,
     categories: categories.results,
     products: products.results,

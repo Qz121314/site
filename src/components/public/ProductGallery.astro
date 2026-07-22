@@ -66,36 +66,4 @@ const galleryId = `product-gallery-${crypto.randomUUID()}`;
   </section>
 )}
 
-<script is:inline>
-  (() => {
-    const initialize = (gallery) => {
-      if (gallery.dataset.ready === '1') return;
-      gallery.dataset.ready = '1';
-
-      const mainImage = gallery.querySelector('[data-gallery-main]');
-      const thumbnails = Array.from(gallery.querySelectorAll('[data-gallery-thumbnail]'));
-      if (!(mainImage instanceof HTMLImageElement) || thumbnails.length === 0) return;
-
-      thumbnails.forEach((thumbnail) => {
-        thumbnail.addEventListener('click', () => {
-          const nextUrl = thumbnail.dataset.imageUrl;
-          if (!nextUrl || mainImage.src === new URL(nextUrl, location.href).href) return;
-
-          thumbnails.forEach((item) => item.setAttribute('aria-current', item === thumbnail ? 'true' : 'false'));
-          mainImage.classList.add('is-changing');
-
-          const preload = new Image();
-          preload.onload = () => {
-            mainImage.src = nextUrl;
-            mainImage.alt = thumbnail.dataset.imageAlt || '';
-            requestAnimationFrame(() => mainImage.classList.remove('is-changing'));
-          };
-          preload.onerror = () => mainImage.classList.remove('is-changing');
-          preload.src = nextUrl;
-        });
-      });
-    };
-
-    document.querySelectorAll('[data-product-gallery]').forEach(initialize);
-  })();
-</script>
+<script>import "@/scripts/public-product-gallery";</script>

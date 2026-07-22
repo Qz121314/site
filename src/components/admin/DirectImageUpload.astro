@@ -212,6 +212,7 @@ const initialImages: ExistingUploadImage[] = multiple
           "thumbnail",
           new File([compressed.thumbnail.blob], "thumbnail.webp", { type: "image/webp" }),
         );
+        body.append("variant", "product");
       }
       body.append("originalName", file.name);
 
