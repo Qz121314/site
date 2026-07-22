@@ -198,7 +198,6 @@ const structuredData = product && canonical
           link.href = target;
           link.dataset.contactType = type;
           if (label) label.textContent = type === 'sms' ? `SMS · ${display}` : `OPEN · ${display || defaultLabel}`;
-
           void link.offsetWidth;
           link.classList.add('is-resolved');
           if (!reducedMotion.matches) {
@@ -224,6 +223,20 @@ const structuredData = product && canonical
 </script>
 
 <style>
+  .product-detail-title {
+    display: grid;
+    justify-items: center;
+    padding-inline: 1rem;
+    text-align: center;
+  }
+
+  .product-detail-title h1 {
+    max-width: min(100%, 38rem);
+    margin-inline: auto;
+    overflow-wrap: anywhere;
+    text-wrap: balance;
+  }
+
   .product-cta-bar {
     display: block;
     padding: .42rem;

@@ -110,7 +110,9 @@ const returnUrl = pageAvailable && channel ? `/${encodeURIComponent(channel.slug
 >
   {pageAvailable && channel && category ? (
     <>
-      <h1 class="public-visually-hidden">{category.name}</h1>
+      <header class="directory-page-title">
+        <h1>{category.name}</h1>
+      </header>
 
       {pageInput.page === 1 && (
         <section class="public-section directory-search-section">
@@ -144,3 +146,25 @@ const returnUrl = pageAvailable && channel ? `/${encodeURIComponent(channel.slug
     </section>
   )}
 </PublicLayout>
+
+<style>
+  .directory-page-title {
+    display: grid;
+    justify-items: center;
+    padding: .1rem 1rem 0;
+    text-align: center;
+  }
+
+  .directory-page-title h1 {
+    max-width: min(100%, 34rem);
+    margin: 0;
+    color: var(--public-text);
+    font-family: var(--public-font-display);
+    font-size: clamp(1.35rem, 5.8vw, 2rem);
+    font-weight: 760;
+    line-height: 1.08;
+    letter-spacing: -.035em;
+    overflow-wrap: anywhere;
+    text-wrap: balance;
+  }
+</style>
