@@ -11,16 +11,11 @@ const { product, channelSlug } = Astro.props;
 
 <a class="visual-card product-card" href={`/${encodeURIComponent(channelSlug)}/product/${encodeURIComponent(product.slug)}`}>
   {product.coverUrl ? (
-    <img class="visual-card-media" src={product.coverUrl} alt="" loading="lazy" />
+    <img class="visual-card-media" src={product.coverUrl} alt="" loading="lazy" decoding="async" draggable="false" />
   ) : (
     <span class="visual-card-placeholder" aria-hidden="true">{product.title.trim().slice(0, 1).toUpperCase() || "P"}</span>
   )}
   <span class="visual-card-overlay">
     <span class="visual-card-title">{product.title}</span>
-    {product.tags.length > 0 && (
-      <span class="visual-card-meta">
-        {product.tags.slice(0, 3).map((tag) => <span class="visual-tag">{tag}</span>)}
-      </span>
-    )}
   </span>
 </a>
