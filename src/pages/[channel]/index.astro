@@ -31,6 +31,11 @@ const [hero, filters, loadedCategories] = canLoadPage && channel
   : [[], [], []];
 const categories = loadedCategories;
 const hasCategoryNavigation = categories.length > 0 || filters.length > 0;
+const categoryGroups = filters.map((filter) => ({
+  filter,
+  categories: categories.filter((category) => category.filterIds.includes(filter.id)),
+}));
+const ungroupedCategories = categories.filter((category) => category.filterIds.length === 0);
 const productPage = canLoadPage && channel && !hasCategoryNavigation
   ? await loadPublicProducts({
       channelId: channel.id,
@@ -77,20 +82,46 @@ const pageTitle = channel
 
       {pageInput.page === 1 && hasCategoryNavigation && (
         <section class="public-section category-section" data-category-section>
-          {filters.length > 0 && (
-            <div class="filter-strip" aria-label="Category filters">
-              {filters.map((filter) => (
-                <button class="filter-button" type="button" data-category-filter={filter.id} aria-pressed="false">
-                  {filter.name}
-                </button>
-              ))}
-            </div>
-          )}
+          <div class="category-mobile-directory" data-category-mobile>
+            {filters.length > 0 && (
+              <div class="filter-strip" aria-label="Category filters">
+                {filters.map((filter) => (
+                  <button class="filter-button" type="button" data-category-filter={filter.id} aria-pressed="false">
+                    {filter.name}
+                  </button>
+                ))}
+              </div>
+            )}
 
-          <div class="category-grid" data-category-grid>
-            {categories.map((category) => <CategoryCard category={category} channelSlug={channel.slug} />)}
+            <div class="category-grid" data-category-grid>
+              {categories.map((category) => <CategoryCard category={category} channelSlug={channel.slug} />)}
+            </div>
+            <div class="public-empty" data-category-empty hidden>No matching categories.</div>
           </div>
-          <div class="public-empty" data-category-empty hidden>No matching categories.</div>
+
+          <div class="category-grouped-directory" aria-label="Categories by filter">
+            {categoryGroups.map(({ filter, categories: groupedCategories }) => (
+              <section class="category-group-row" aria-labelledby={`category-group-${filter.id}`}>
+                <h2 class="category-group-label" id={`category-group-${filter.id}`}>{filter.name}</h2>
+                <div class="category-group-items">
+                  {groupedCategories.map((category) => (
+                    <CategoryCard category={category} channelSlug={channel.slug} />
+                  ))}
+                </div>
+              </section>
+            ))}
+
+            {ungroupedCategories.length > 0 && (
+              <section class="category-group-row" aria-labelledby="category-group-other">
+                <h2 class="category-group-label" id="category-group-other">Categories</h2>
+                <div class="category-group-items">
+                  {ungroupedCategories.map((category) => (
+                    <CategoryCard category={category} channelSlug={channel.slug} />
+                  ))}
+                </div>
+              </section>
+            )}
+          </div>
         </section>
       )}
 

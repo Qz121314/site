@@ -1,9 +1,8 @@
-/* Desktop composition layer.
- * Keeps mobile and tablet behavior intact while giving wide screens
- * a deliberate three-column rhythm and a shorter editorial hero.
+/* Tablet composition layer.
+ * The same horizontal composition is retained on wider desktop screens.
  */
 
-@media (min-width: 900px) {
+@media (min-width: 768px) {
   .public-body {
     --public-width: 66rem;
   }
@@ -13,27 +12,162 @@
     padding-top: 1rem;
   }
 
-  .hero-carousel {
-    max-height: 18rem;
+  .public-header-identity {
+    display: flex;
+    min-width: 0;
+    align-items: center;
+    gap: .9rem;
   }
 
-  .hero-track,
+  .public-header-channel-name {
+    display: inline-flex;
+    min-width: 0;
+    align-items: center;
+    padding-left: .9rem;
+    border-left: 1px solid var(--public-line);
+    color: var(--public-text);
+    font-size: 1rem;
+    font-weight: 760;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+  }
+
+  .hero-carousel {
+    overflow: visible;
+    border: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .hero-track {
+    gap: .9rem;
+  }
+
   .hero-slide {
-    height: clamp(14rem, 20vw, 18rem);
+    flex-basis: calc((100% - .9rem) / 2);
+    overflow: hidden;
+    border: 1px solid var(--public-line);
+    border-radius: var(--radius-feature);
+    background: var(--public-canvas-raised);
+    box-shadow: var(--shadow-card);
   }
 
   .hero-slide img {
     width: 100%;
-    height: 100%;
-    aspect-ratio: auto;
-    object-fit: cover;
+    height: auto;
+    aspect-ratio: 16 / 9;
+    object-fit: contain;
     object-position: center;
   }
 
-  .category-grid,
-  .product-grid {
+  .hero-dots {
+    position: static !important;
+    width: max-content;
+    margin: .55rem auto 0;
+    transform: none !important;
+  }
+
+  .category-mobile-directory {
+    display: none;
+  }
+
+  .category-grouped-directory {
+    display: grid;
+    gap: .85rem;
+  }
+
+  .category-group-row {
+    display: grid;
+    grid-template-columns: minmax(7.5rem, .65fr) minmax(0, 2.35fr);
+    align-items: start;
+    gap: .85rem;
+  }
+
+  .category-group-label {
+    min-width: 0;
+    margin: 0;
+    padding: 1rem .25rem;
+    color: var(--public-text);
+    font-family: var(--public-font-display);
+    font-size: .96rem;
+    font-weight: 760;
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+  }
+
+  .category-group-items {
+    display: grid;
     grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: .8rem;
+  }
+
+  .directory-page-layout {
+    grid-template-columns: minmax(11rem, .72fr) minmax(0, 2.28fr);
+    align-items: start;
     gap: 1rem;
+  }
+
+  .directory-page-title {
+    justify-items: start !important;
+    padding: .35rem 0 0 !important;
+    text-align: left !important;
+  }
+
+  .directory-page-title h1 {
+    font-size: clamp(1.45rem, 3vw, 2rem) !important;
+  }
+
+  .directory-search-section .public-search-form {
+    grid-template-columns: 2.6rem minmax(0, 1fr) 2.6rem;
+  }
+
+  .directory-search-section .public-search-form input {
+    font-size: .9rem;
+  }
+
+  .directory-page-layout .product-grid,
+  .channel-products-section .product-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: .8rem;
+  }
+
+  .product-detail {
+    width: 100%;
+    grid-template-columns: minmax(0, 1.55fr) minmax(16rem, .85fr);
+    align-items: start;
+    column-gap: 1.25rem;
+    row-gap: .9rem;
+  }
+
+  .product-detail-title {
+    grid-column: 2;
+    grid-row: 1;
+    justify-items: start !important;
+    padding: .35rem 0 0 !important;
+    text-align: left !important;
+  }
+
+  .product-detail-title h1 {
+    margin-inline: 0 !important;
+    font-size: clamp(1.7rem, 3.4vw, 2.45rem) !important;
+  }
+
+  .product-detail-media {
+    grid-column: 1;
+    grid-row: 1 / span 2;
+  }
+
+  .product-detail-information {
+    grid-column: 2;
+    grid-row: 2;
+  }
+
+  .product-detail .product-gallery-stage {
+    width: 100%;
+  }
+
+  .product-detail .product-body > :last-child {
+    text-align: left;
   }
 
   .product-card .visual-card-title {
@@ -50,8 +184,11 @@
     padding-inline: 1.5rem;
   }
 
-  .hero-track,
-  .hero-slide {
-    height: 18rem;
+}
+
+@media (max-width: 767px) {
+  .public-header-channel-name,
+  .category-grouped-directory {
+    display: none;
   }
 }

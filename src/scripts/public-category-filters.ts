@@ -1,9 +1,10 @@
 const section = document.querySelector<HTMLElement>("[data-category-section]");
 
 if (section) {
-  const buttons = Array.from(section.querySelectorAll<HTMLButtonElement>("[data-category-filter]"));
-  const cards = Array.from(section.querySelectorAll<HTMLElement>("[data-category-card]"));
-  const empty = section.querySelector<HTMLElement>("[data-category-empty]");
+  const mobileDirectory = section.querySelector<HTMLElement>("[data-category-mobile]");
+  const buttons = Array.from(mobileDirectory?.querySelectorAll<HTMLButtonElement>("[data-category-filter]") ?? []);
+  const cards = Array.from(mobileDirectory?.querySelectorAll<HTMLElement>("[data-category-card]") ?? []);
+  const empty = mobileDirectory?.querySelector<HTMLElement>("[data-category-empty]") ?? null;
 
   const applyFilter = (filterId: string): void => {
     let visible = 0;

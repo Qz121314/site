@@ -38,7 +38,7 @@ function sourceSet(advertisement: PublicHeroAdvertisement): string | undefined {
           <img
             src={advertisement.responsiveImageUrl ?? advertisement.imageUrl}
             srcset={sourceSet(advertisement)}
-            sizes="(min-width: 1100px) 1056px, calc(100vw - 2rem)"
+            sizes="(min-width: 1100px) 516px, (min-width: 768px) calc((100vw - 4rem) / 2), calc(100vw - 2rem)"
             alt=""
             width={advertisement.width ?? undefined}
             height={advertisement.height ?? undefined}

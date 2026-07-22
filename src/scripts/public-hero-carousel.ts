@@ -18,7 +18,12 @@ function initializeHeroCarousel(root: HTMLElement): void {
   let dragging = false;
   let suppressClick = false;
 
-  const slideWidth = (): number => Math.max(track.clientWidth, 1);
+  const slideWidth = (): number => {
+    const firstSlide = slides[0];
+    if (!firstSlide) return Math.max(track.clientWidth, 1);
+    const gap = Number.parseFloat(window.getComputedStyle(track).columnGap) || 0;
+    return Math.max(firstSlide.getBoundingClientRect().width + gap, 1);
+  };
   const updateDots = (): void => {
     dots.forEach((dot, index) => dot.setAttribute("aria-current", index === active ? "true" : "false"));
   };

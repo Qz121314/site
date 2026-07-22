@@ -143,27 +143,31 @@ const structuredData = product && canonical
         <h1>{product.title}</h1>
       </header>
 
-      <ProductGallery images={galleryImages} />
+      <div class="product-detail-media">
+        <ProductGallery images={galleryImages} />
+      </div>
 
-      {product.bodyHtml && (
-        <section class="product-copy-section">
-          <div class="product-body markdown-body" set:html={product.bodyHtml}></div>
-        </section>
-      )}
+      <div class="product-detail-information">
+        {product.bodyHtml && (
+          <section class="product-copy-section">
+            <div class="product-body markdown-body" set:html={product.bodyHtml}></div>
+          </section>
+        )}
 
-      {product.hasConversion && (
-        <div class="product-cta-bar">
-          <a
-            class="public-button product-cta-button"
-            href={contactResolveUrl}
-            rel="nofollow sponsored"
-            data-contact-cta
-            data-resolve-url={contactResolveUrl}
-          >
-            <span class="product-cta-label" data-contact-label aria-live="polite">{product.ctaLabel}</span>
-          </a>
-        </div>
-      )}
+        {product.hasConversion && (
+          <div class="product-cta-bar">
+            <a
+              class="public-button product-cta-button"
+              href={contactResolveUrl}
+              rel="nofollow sponsored"
+              data-contact-cta
+              data-resolve-url={contactResolveUrl}
+            >
+              <span class="product-cta-label" data-contact-label aria-live="polite">{product.ctaLabel}</span>
+            </a>
+          </div>
+        )}
+      </div>
     </article>
   ) : (
     <section class="public-section">
@@ -193,6 +197,13 @@ const structuredData = product && canonical
     margin-inline: auto;
     overflow-wrap: anywhere;
     text-wrap: balance;
+  }
+
+  .product-detail-media,
+  .product-detail-information {
+    display: grid;
+    min-width: 0;
+    gap: 1rem;
   }
 
   .product-cta-bar {

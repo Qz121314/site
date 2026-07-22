@@ -109,20 +109,22 @@ const returnUrl = pageAvailable && channel ? `/${encodeURIComponent(channel.slug
   structuredData={structuredData}
 >
   {pageAvailable && channel && category ? (
-    <>
-      <header class="directory-page-title">
-        <h1>{category.name}</h1>
-      </header>
+    <div class="directory-page-layout">
+      <aside class="directory-page-sidebar">
+        <header class="directory-page-title">
+          <h1>{category.name}</h1>
+        </header>
 
-      {pageInput.page === 1 && (
-        <section class="public-section directory-search-section">
-          <PublicSearchForm
-            action={`/${encodeURIComponent(channel.slug)}/search`}
-            ariaLabel={`Search ${category.name}`}
-            placeholder={`Search ${category.name}`}
-          />
-        </section>
-      )}
+        {pageInput.page === 1 && (
+          <section class="public-section directory-search-section">
+            <PublicSearchForm
+              action={`/${encodeURIComponent(channel.slug)}/search`}
+              ariaLabel={`Search ${category.name}`}
+              placeholder={`Search ${category.name}`}
+            />
+          </section>
+        )}
+      </aside>
 
       <section class="public-section directory-list-section" aria-label={category.name}>
         {pageInput.page > 1 && <span class="directory-page-count">Page {pageInput.page}</span>}
@@ -133,7 +135,7 @@ const returnUrl = pageAvailable && channel ? `/${encodeURIComponent(channel.slug
           emptyMessage="No published products are available in this category."
         />
       </section>
-    </>
+    </div>
   ) : (
     <section class="public-section">
       <div class="public-empty public-error-card">
@@ -166,5 +168,12 @@ const returnUrl = pageAvailable && channel ? `/${encodeURIComponent(channel.slug
     letter-spacing: -.035em;
     overflow-wrap: anywhere;
     text-wrap: balance;
+  }
+
+  .directory-page-layout,
+  .directory-page-sidebar {
+    display: grid;
+    min-width: 0;
+    gap: .9rem;
   }
 </style>
