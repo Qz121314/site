@@ -65,7 +65,18 @@ const chrome = findChrome();
 const userDataDir = join(tmpdir(), `site-browser-smoke-${process.pid}`);
 const serverStdout = openSync(`${LOG_DIR}/browser-worker.log`, "w");
 const serverStderr = openSync(`${LOG_DIR}/browser-worker-error.log`, "w");
-const server = spawn("pnpm", ["exec", "wrangler", "dev", "--local", "--port", "8787"], {
+const server = spawn("pnpm", [
+  "exec",
+  "wrangler",
+  "dev",
+  "--local",
+  "--port",
+  "8787",
+  "--var",
+  "ADMIN_PASSWORD:browser-smoke-password",
+  "--var",
+  "SESSION_SECRET:browser-smoke-session-secret-0123456789",
+], {
   env: { ...process.env, FORCE_COLOR: "0" },
   stdio: ["ignore", serverStdout, serverStderr],
 });
@@ -104,6 +115,6 @@ try {
 } finally {
   server.kill("SIGTERM");
   await new Promise((resolve) => setTimeout(resolve, 500));
-  if (!server.killed) server.kill("SIGKILL");
+  if (server.exitCode === null) server.kill("SIGKILL");
   rmSync(userDataDir, { recursive: true, force: true });
 }
