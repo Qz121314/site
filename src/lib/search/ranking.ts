@@ -24,7 +24,9 @@ export function rankSearchResults<T>(
     .map((item, index) => ({
       item,
       index,
-      score: Math.min(...values(item).map((value) => scoreValue(value, normalizedQuery))),
+      score: Math.min(
+        ...values(item).map((value, valueIndex) => scoreValue(value, normalizedQuery) + valueIndex * 4),
+      ),
     }))
     .sort((left, right) => left.score - right.score || left.index - right.index)
     .map(({ item }) => item);
