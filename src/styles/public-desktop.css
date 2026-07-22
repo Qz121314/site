@@ -12,26 +12,6 @@
     padding-top: 1.1rem;
   }
 
-  .public-header-identity {
-    display: flex;
-    min-width: 0;
-    align-items: center;
-    gap: .9rem;
-  }
-
-  .public-header-channel-name {
-    display: inline-flex;
-    min-width: 0;
-    align-items: center;
-    padding-left: .9rem;
-    border-left: 1px solid var(--public-line);
-    color: var(--public-text);
-    font-size: 1rem;
-    font-weight: 760;
-    line-height: 1.2;
-    overflow-wrap: anywhere;
-  }
-
   .hero-carousel {
     overflow: visible;
     border: 0;
@@ -257,7 +237,6 @@
 }
 
 @media (max-width: 767px) {
-  .public-header-channel-name,
   .category-grouped-directory {
     display: none;
   }

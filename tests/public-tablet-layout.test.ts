@@ -15,7 +15,7 @@ test("tablet and desktop channel pages expose grouped category rows and two Hero
   assert.match(channel, /class="filter-button category-group-label category-group-filter"/u);
   assert.match(channel, /data-category-group-filter=\{filter\.id\}/u);
   assert.match(channel, /ungroupedCategories/u);
-  assert.match(layout, /class="public-header-channel-name"/u);
+  assert.doesNotMatch(layout, /public-header-channel-name/u);
   assert.match(hero, /\(min-width: 768px\) calc\(\(100vw - 4rem\) \/ 2\)/u);
   assert.match(styles, /@media \(min-width: 768px\)/u);
   assert.match(styles, /flex-basis: calc\(\(100% - \.8rem\) \/ 2\)/u);

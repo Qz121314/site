@@ -43,9 +43,6 @@ const socialUrl = canonical ?? Astro.url.href;
 const showAdultGate = site.adultGateEnabled;
 const ga4Id = site.ga4Id;
 const metaPixelId = site.metaPixelId;
-const activeChannelItem = activeChannel
-  ? site.channels.find((channel) => channel.slug === activeChannel) ?? null
-  : null;
 const structuredDataJson = structuredData
   ? JSON.stringify(structuredData).replaceAll("<", "\\u003c")
   : null;
@@ -167,16 +164,13 @@ const structuredDataJson = structuredData
           </>
         ) : (
           <>
-            <div class="public-header-identity">
-              <a class="public-brand" href="/" aria-label={`${site.siteName} home`}>
-                {site.logoUrl ? (
-                  <img class="public-brand-logo" src={site.logoUrl} alt="" decoding="async" />
-                ) : (
-                  <span class="public-brand-name">{site.siteName}</span>
-                )}
-              </a>
-              {activeChannelItem && <span class="public-header-channel-name">{activeChannelItem.name}</span>}
-            </div>
+            <a class="public-brand" href="/" aria-label={`${site.siteName} home`}>
+              {site.logoUrl ? (
+                <img class="public-brand-logo" src={site.logoUrl} alt="" decoding="async" />
+              ) : (
+                <span class="public-brand-name">{site.siteName}</span>
+              )}
+            </a>
 
             <details class="public-menu">
               <summary class="public-menu-trigger" aria-label="Open site menu">
