@@ -21,7 +21,9 @@ export const GET: APIRoute = async ({ url }) => {
   const entries = await loadPublicSitemapEntries();
 
   const records: Array<{ location: string; updatedAt: string }> = [
-    { location: new URL("/", url.origin).href, updatedAt: entries.siteUpdatedAt },
+    ...(!entries.hasDefaultChannel
+      ? [{ location: new URL("/", url.origin).href, updatedAt: entries.siteUpdatedAt }]
+      : []),
     { location: new URL("/privacy", url.origin).href, updatedAt: entries.siteUpdatedAt },
     { location: new URL("/disclaimer", url.origin).href, updatedAt: entries.siteUpdatedAt },
     ...entries.channels.map((entry) => ({
