@@ -27,12 +27,17 @@ function sourceSet(image: GalleryImage): string | undefined {
 ---
 
 {firstImage && (
-  <section class="product-gallery" id={galleryId} data-product-gallery aria-label="Product images">
+  <section
+    class:list={["product-gallery", uniqueImages.length > 1 && "has-thumbnails"]}
+    id={galleryId}
+    data-product-gallery
+    aria-label="Product images"
+  >
     <div class="product-gallery-stage">
       <img
         src={firstImage.responsiveImageUrl ?? firstImage.imageUrl}
         srcset={sourceSet(firstImage)}
-        sizes="(min-width: 1100px) 1056px, calc(100vw - 2rem)"
+        sizes="(min-width: 1100px) 500px, (min-width: 768px) 48vw, calc(100vw - 2rem)"
         alt={firstImage.alt}
         width={firstImage.width ?? undefined}
         height={firstImage.height ?? undefined}

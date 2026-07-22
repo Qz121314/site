@@ -24,9 +24,10 @@ test("tablet and desktop channel pages expose grouped category rows and two Hero
 });
 
 test("catalog and product detail pages use the shared tablet horizontal composition", async () => {
-  const [category, product, styles] = await Promise.all([
+  const [category, product, gallery, styles] = await Promise.all([
     readFile(new URL("../src/pages/[channel]/category/[category].astro", import.meta.url), "utf8"),
     readFile(new URL("../src/pages/[channel]/product/[product].astro", import.meta.url), "utf8"),
+    readFile(new URL("../src/components/public/ProductGallery.astro", import.meta.url), "utf8"),
     readFile(new URL("../src/styles/public-desktop.css", import.meta.url), "utf8"),
   ]);
 
@@ -34,8 +35,11 @@ test("catalog and product detail pages use the shared tablet horizontal composit
   assert.match(category, /class="directory-page-sidebar"/u);
   assert.match(product, /class="product-detail-media"/u);
   assert.match(product, /class="product-detail-information"/u);
+  assert.match(gallery, /uniqueImages\.length > 1 && "has-thumbnails"/u);
   assert.match(styles, /\.directory-page-layout \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\)/u);
   assert.match(styles, /\.directory-page-sidebar \{[\s\S]*?minmax\(12rem, 1fr\) minmax\(0, 2fr\)/u);
   assert.match(styles, /\.product-detail \{[\s\S]*?grid-template-columns:/u);
   assert.match(styles, /\.product-detail-media \{[\s\S]*?grid-column: 1/u);
+  assert.match(styles, /\.product-gallery\.has-thumbnails[\s\S]*?grid-template-columns: minmax\(0, 1fr\) 4\.75rem/u);
+  assert.match(styles, /\.product-gallery-thumbnails[\s\S]*?grid-auto-flow: row/u);
 });
