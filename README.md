@@ -231,7 +231,8 @@ PRODUCTION_ORIGIN
 - Load More 每次加载 20 条
 - 目录查询不读取正文和完整图库
 - 目录只读取 480px 独立 WebP 缩略图，详情读取主图
-- 公共 HTML 使用短时 Cloudflare Edge Cache
+- 公共 HTML、Sitemap 和公开目录接口使用一年 Cloudflare Edge Cache，内容更新后由后台手动全局刷新
+- 浏览器始终重新验证 HTML，避免长期缓存副本绕过后台刷新
 - 图片直接从 R2 自定义域名加载
 - 视口外图片懒加载
 - Hero 第一张图片优先加载

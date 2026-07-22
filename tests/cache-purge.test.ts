@@ -16,9 +16,7 @@ test("admin cache refresh is authenticated, same-origin, and globally purges Wor
   assert.match(endpoint, /isSameOriginPost\(request\)/u);
   assert.match(endpoint, /cache\.purge\(\{ purgeEverything: true \}\)/u);
   assert.match(endpoint, /if \(!result\.success\)/u);
-  assert.match(endpoint, /clearPublicSiteShellCache\(\)/u);
-  assert.match(publicDb, /export function clearPublicSiteShellCache\(\): void/u);
-  assert.match(publicDb, /siteShellCache\.clear\(\)/u);
+  assert.doesNotMatch(publicDb, /siteShellCache/u);
   assert.match(layout, /action="\/api\/admin\/cache\/purge" method="post"/u);
   assert.match(layout, />刷新前台缓存</u);
 });

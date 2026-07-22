@@ -169,13 +169,6 @@ function mapCategory(row: CategoryRow): PublicCategory {
   };
 }
 
-const SITE_SHELL_CACHE_TTL_MS = 60_000;
-const siteShellCache = new Map<boolean, { value: PublicSiteShell; expiresAt: number }>();
-
-export function clearPublicSiteShellCache(): void {
-  siteShellCache.clear();
-}
-
 function defaultSiteShell(): PublicSiteShell {
   return {
     siteName: "Site",
@@ -197,9 +190,6 @@ export async function loadPublicSiteShell(
   options: { includeLegalContent?: boolean } = {},
 ): Promise<PublicSiteShell> {
   const includeLegalContent = options.includeLegalContent === true;
-  const cached = siteShellCache.get(includeLegalContent);
-  const now = Date.now();
-  if (cached && cached.expiresAt > now) return cached.value;
 
   try {
     const shellPromise = env.DB.prepare(
@@ -262,10 +252,6 @@ export async function loadPublicSiteShell(
             : [],
         ),
     };
-    siteShellCache.set(includeLegalContent, {
-      value,
-      expiresAt: Date.now() + SITE_SHELL_CACHE_TTL_MS,
-    });
     return value;
   } catch (error) {
     console.error(JSON.stringify({ event: "public_site_shell_read_failed", error: String(error) }));
