@@ -25,13 +25,19 @@ const carouselId = `hero-${crypto.randomUUID()}`;
           target={advertisement.openMode === "new" ? "_blank" : undefined}
           rel={advertisement.openMode === "new" ? "noopener noreferrer" : undefined}
           data-hero-slide
+          data-load-surface
           aria-label={`Promotion ${index + 1} of ${advertisements.length}`}
+          aria-busy="true"
         >
           <img
             src={advertisement.imageUrl}
             alt=""
             loading={index === 0 ? "eager" : "lazy"}
+            decoding="async"
             fetchpriority={index === 0 ? "high" : "auto"}
+            data-load-reveal
+            onload="this.classList.add('is-loaded');this.closest('[data-load-surface]')?.classList.add('is-loaded');this.closest('[data-load-surface]')?.removeAttribute('aria-busy')"
+            onerror="this.classList.add('is-load-error');this.closest('[data-load-surface]')?.classList.add('is-load-error');this.closest('[data-load-surface]')?.removeAttribute('aria-busy')"
           />
         </a>
       ))}

@@ -20,7 +20,7 @@ const galleryId = `product-gallery-${crypto.randomUUID()}`;
 
 {firstImage && (
   <section class="product-gallery" id={galleryId} data-product-gallery aria-label="Product images">
-    <div class="product-gallery-stage">
+    <div class="product-gallery-stage" data-load-surface aria-busy="true">
       <img
         src={firstImage.imageUrl}
         alt={firstImage.alt}
@@ -28,6 +28,9 @@ const galleryId = `product-gallery-${crypto.randomUUID()}`;
         height={firstImage.height ?? undefined}
         fetchpriority="high"
         data-gallery-main
+        data-load-reveal
+        onload="this.classList.add('is-loaded');this.closest('[data-load-surface]')?.classList.add('is-loaded');this.closest('[data-load-surface]')?.removeAttribute('aria-busy')"
+        onerror="this.classList.add('is-load-error');this.closest('[data-load-surface]')?.classList.add('is-load-error');this.closest('[data-load-surface]')?.removeAttribute('aria-busy')"
       />
     </div>
 
@@ -40,8 +43,10 @@ const galleryId = `product-gallery-${crypto.randomUUID()}`;
             data-gallery-thumbnail
             data-image-url={image.imageUrl}
             data-image-alt={image.alt}
+            data-load-surface
             aria-label={`Show image ${index + 1}`}
             aria-current={index === 0 ? "true" : "false"}
+            aria-busy="true"
           >
             <img
               src={image.imageUrl}
@@ -49,6 +54,10 @@ const galleryId = `product-gallery-${crypto.randomUUID()}`;
               width={image.width ?? undefined}
               height={image.height ?? undefined}
               loading={index === 0 ? "eager" : "lazy"}
+              decoding="async"
+              data-load-reveal
+              onload="this.classList.add('is-loaded');this.closest('[data-load-surface]')?.classList.add('is-loaded');this.closest('[data-load-surface]')?.removeAttribute('aria-busy')"
+              onerror="this.classList.add('is-load-error');this.closest('[data-load-surface]')?.classList.add('is-load-error');this.closest('[data-load-surface]')?.removeAttribute('aria-busy')"
             />
           </button>
         ))}
