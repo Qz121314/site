@@ -1,7 +1,6 @@
 ---
 import PublicLayout from "@/layouts/PublicLayout.astro";
 import ProductGallery from "@/components/public/ProductGallery.astro";
-import PublicPageHeader from "@/components/public/PublicPageHeader.astro";
 import { loadPublicProductDetail, loadPublicSiteShell } from "@/lib/db/public";
 import { publicProductHasEnabledConversion } from "@/lib/db/public-availability";
 import { productDescription } from "@/lib/public/seo";
@@ -119,21 +118,15 @@ const structuredData = product && canonical
   robots={product ? undefined : "noindex,follow"}
   ogImage={primaryImage}
   activeChannel={product?.channelSlug ?? channelSlug}
+  backHref={product ? returnUrl : null}
+  showChannelNavigation={false}
   structuredData={structuredData}
 >
   {product ? (
     <article class="product-detail">
-      <PublicPageHeader
-        href={returnUrl}
-        title={product.title}
-        className="product-detail-header"
-      />
-
-      {product.tags.length > 0 && (
-        <div class="product-tags" aria-label="Tags">
-          {product.tags.map((tag) => <span class="visual-tag">{tag}</span>)}
-        </div>
-      )}
+      <header class="product-detail-title">
+        <h1>{product.title}</h1>
+      </header>
 
       <ProductGallery images={galleryImages} />
 
@@ -154,7 +147,7 @@ const structuredData = product && canonical
           >
             <svg class="product-cta-leading-icon" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M5 6.5h14v9H9l-4 3v-12Z" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
-              <path d="M8.5 10h7M8.5 13h4.5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.8" />
+              <path d="M8.5 10h7M8.5 13h4.5" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
             </svg>
             <span class="product-cta-label" data-contact-label aria-live="polite">{product.ctaLabel}</span>
             <svg class="product-cta-action-icon" viewBox="0 0 24 24" aria-hidden="true">
@@ -255,9 +248,6 @@ const structuredData = product && canonical
     overflow: hidden;
     padding: .72rem .92rem;
     border-radius: .9rem;
-    box-shadow:
-      inset 0 1px 0 rgba(255, 255, 255, .42),
-      0 14px 34px rgba(154, 95, 28, .26);
     transform-origin: center;
   }
 
@@ -266,7 +256,7 @@ const structuredData = product && canonical
     z-index: -1;
     inset: 0;
     content: "";
-    background: linear-gradient(112deg, rgba(255, 255, 255, .22), transparent 32%, transparent 68%, rgba(255, 255, 255, .12));
+    background: linear-gradient(112deg, rgba(255, 255, 255, .18), transparent 32%, transparent 68%, rgba(255, 255, 255, .1));
     pointer-events: none;
   }
 
@@ -281,7 +271,7 @@ const structuredData = product && canonical
     min-width: 0;
     overflow: hidden;
     font-variant-numeric: tabular-nums;
-    font-weight: 850;
+    font-weight: 800;
     letter-spacing: .015em;
     text-align: center;
     text-overflow: ellipsis;
@@ -299,7 +289,7 @@ const structuredData = product && canonical
 
   @keyframes product-cta-grow {
     0% { transform: scale(1); }
-    55% { transform: scale(1.018); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .48), 0 18px 42px rgba(186, 119, 38, .34); }
+    55% { transform: scale(1.014); }
     100% { transform: scale(1); }
   }
 
@@ -307,7 +297,7 @@ const structuredData = product && canonical
     .product-cta-button {
       gap: .48rem;
       padding-inline: .72rem;
-      font-size: .82rem;
+      font-size: .88rem;
     }
   }
 
