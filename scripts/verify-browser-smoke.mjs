@@ -60,7 +60,33 @@ function assertDocument(path, requirements) {
   }
 }
 
+function assertHeroInteractionContract() {
+  const source = readFileSync("src/components/public/HeroCarousel.astro", "utf8");
+  const requirements = [
+    'href={advertisement.targetUrl}',
+    'draggable="false"',
+    'const DRAG_START_THRESHOLD = 6',
+    'if (!dragging && Math.abs(distance) >= DRAG_START_THRESHOLD)',
+    "track.setPointerCapture(event.pointerId)",
+    "if (!suppressClick) return",
+  ];
+
+  for (const requirement of requirements) {
+    if (!source.includes(requirement)) throw new Error(`Hero carousel interaction contract is missing: ${requirement}`);
+  }
+}
+
+function assertRenderedHeroLinks(path) {
+  const html = readFileSync(path, "utf8");
+  const slideTags = html.match(/<a\b[^>]*data-hero-slide[^>]*>/g) ?? [];
+  for (const tag of slideTags) {
+    const href = tag.match(/\shref="([^"]*)"/)?.[1]?.trim() ?? "";
+    if (!href || href === "#") throw new Error(`${path} contains a hero slide without a valid href.`);
+  }
+}
+
 mkdirSync(LOG_DIR, { recursive: true });
+assertHeroInteractionContract();
 const chrome = findChrome();
 const userDataDir = join(tmpdir(), `site-browser-smoke-${process.pid}`);
 const serverStdout = openSync(`${LOG_DIR}/browser-worker.log`, "w");
@@ -104,14 +130,22 @@ try {
   ], `${LOG_DIR}/public-browser-dom.html`);
   runChrome(chrome, [
     `--user-data-dir=${userDataDir}`,
+    "--window-size=1440,1000",
+    "--dump-dom",
+    `${ORIGIN}/`,
+  ], `${LOG_DIR}/public-desktop-browser-dom.html`);
+  runChrome(chrome, [
+    `--user-data-dir=${userDataDir}`,
     "--window-size=390,844",
     "--dump-dom",
     `${ORIGIN}/admin/login`,
   ], `${LOG_DIR}/admin-login-browser-dom.html`);
 
   assertDocument(`${LOG_DIR}/public-browser-dom.html`, ["<html", "<main"]);
+  assertDocument(`${LOG_DIR}/public-desktop-browser-dom.html`, ["<html", "<main"]);
+  assertRenderedHeroLinks(`${LOG_DIR}/public-desktop-browser-dom.html`);
   assertDocument(`${LOG_DIR}/admin-login-browser-dom.html`, ["<html", "<form"]);
-  console.log("Headless Chrome verified public and admin entry pages.");
+  console.log("Headless Chrome verified public and admin entry pages, including the desktop hero link contract.");
 } finally {
   server.kill("SIGTERM");
   await new Promise((resolve) => setTimeout(resolve, 500));
