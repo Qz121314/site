@@ -1,7 +1,10 @@
 export const MAX_PUBLIC_SEARCH_QUERY_BYTES = 48;
 
 export function normalizePublicSearchQuery(value: string): string {
-  const input = value.trim();
+  const input = value
+    .trim()
+    .replace(/[%_]+/gu, " ")
+    .replace(/\s+/gu, " ");
   const encoder = new TextEncoder();
   let output = "";
   let bytes = 0;
@@ -13,5 +16,5 @@ export function normalizePublicSearchQuery(value: string): string {
     bytes += length;
   }
 
-  return output;
+  return output.trim();
 }
