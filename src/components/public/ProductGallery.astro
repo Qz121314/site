@@ -1,9 +1,12 @@
 ---
 interface GalleryImage {
   imageUrl: string;
+  responsiveImageUrl?: string | null;
   alt: string;
   width?: number | null;
   height?: number | null;
+  responsiveWidth?: number | null;
+  responsiveHeight?: number | null;
 }
 
 interface Props {
@@ -16,21 +19,27 @@ const uniqueImages = images.filter(
 );
 const firstImage = uniqueImages[0] ?? null;
 const galleryId = `product-gallery-${crypto.randomUUID()}`;
+
+function sourceSet(image: GalleryImage): string | undefined {
+  if (!image.responsiveImageUrl || !image.responsiveWidth || !image.width) return undefined;
+  return `${image.responsiveImageUrl} ${image.responsiveWidth}w, ${image.imageUrl} ${image.width}w`;
+}
 ---
 
 {firstImage && (
   <section class="product-gallery" id={galleryId} data-product-gallery aria-label="Product images">
-    <div class="product-gallery-stage" data-load-surface aria-busy="true">
+    <div class="product-gallery-stage">
       <img
-        src={firstImage.imageUrl}
+        src={firstImage.responsiveImageUrl ?? firstImage.imageUrl}
+        srcset={sourceSet(firstImage)}
+        sizes="(min-width: 1100px) 1056px, calc(100vw - 2rem)"
         alt={firstImage.alt}
         width={firstImage.width ?? undefined}
         height={firstImage.height ?? undefined}
+        loading="eager"
+        decoding="async"
         fetchpriority="high"
         data-gallery-main
-        data-load-reveal
-        onload="this.classList.add('is-loaded');this.closest('[data-load-surface]')?.classList.add('is-loaded');this.closest('[data-load-surface]')?.removeAttribute('aria-busy')"
-        onerror="this.classList.add('is-load-error');this.closest('[data-load-surface]')?.classList.add('is-load-error');this.closest('[data-load-surface]')?.removeAttribute('aria-busy')"
       />
     </div>
 
@@ -42,19 +51,23 @@ const galleryId = `product-gallery-${crypto.randomUUID()}`;
             type="button"
             data-gallery-thumbnail
             data-image-url={image.imageUrl}
+            data-image-srcset={sourceSet(image) ?? ""}
             data-image-alt={image.alt}
+            data-image-width={image.width ?? ""}
+            data-image-height={image.height ?? ""}
             data-load-surface
             aria-label={`Show image ${index + 1}`}
             aria-current={index === 0 ? "true" : "false"}
             aria-busy="true"
           >
             <img
-              src={image.imageUrl}
+              src={image.responsiveImageUrl ?? image.imageUrl}
               alt=""
-              width={image.width ?? undefined}
-              height={image.height ?? undefined}
-              loading={index === 0 ? "eager" : "lazy"}
+              width={image.responsiveWidth ?? image.width ?? undefined}
+              height={image.responsiveHeight ?? image.height ?? undefined}
+              loading="lazy"
               decoding="async"
+              fetchpriority="low"
               data-load-reveal
               onload="this.classList.add('is-loaded');this.closest('[data-load-surface]')?.classList.add('is-loaded');this.closest('[data-load-surface]')?.removeAttribute('aria-busy')"
               onerror="this.classList.add('is-load-error');this.closest('[data-load-surface]')?.classList.add('is-load-error');this.closest('[data-load-surface]')?.removeAttribute('aria-busy')"
@@ -66,4 +79,4 @@ const galleryId = `product-gallery-${crypto.randomUUID()}`;
   </section>
 )}
 
-<script>import "@/scripts/public-product-gallery";</script>
+{uniqueImages.length > 1 && <script>import "@/scripts/public-product-gallery";</script>}

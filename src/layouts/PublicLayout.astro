@@ -90,25 +90,46 @@ const structuredDataJson = structuredData
       </script>
     )}
 
-    {ga4Id && <script is:inline async src={`https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(ga4Id)}`}></script>}
-    {ga4Id && (
-      <script is:inline define:vars={{ ga4Id }}>
-        window.dataLayer = window.dataLayer || [];
-        function gtag(){ window.dataLayer.push(arguments); }
-        gtag('js', new Date());
-        gtag('config', ga4Id);
-      </script>
-    )}
+    {(ga4Id || metaPixelId) && (
+      <script is:inline define:vars={{ ga4Id, metaPixelId }}>
+        (() => {
+          let started = false;
+          let timer = 0;
+          const events = ['pointerdown', 'keydown', 'scroll'];
 
-    {metaPixelId && (
-      <script is:inline define:vars={{ metaPixelId }}>
-        !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
-        n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
-        n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
-        t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}
-        (window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
-        fbq('init', metaPixelId);
-        fbq('track', 'PageView');
+          const start = () => {
+            if (started) return;
+            started = true;
+            if (timer) window.clearTimeout(timer);
+            events.forEach((eventName) => window.removeEventListener(eventName, start));
+
+            if (ga4Id) {
+              window.dataLayer = window.dataLayer || [];
+              window.gtag = window.gtag || function(){ window.dataLayer.push(arguments); };
+              window.gtag('js', new Date());
+              window.gtag('config', ga4Id);
+              const script = document.createElement('script');
+              script.async = true;
+              script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(ga4Id)}`;
+              document.head.appendChild(script);
+            }
+
+            if (metaPixelId) {
+              !function(f,b,e,v,n,t,s){if(f.fbq)return;n=f.fbq=function(){n.callMethod?
+              n.callMethod.apply(n,arguments):n.queue.push(arguments)};if(!f._fbq)f._fbq=n;
+              n.push=n;n.loaded=!0;n.version='2.0';n.queue=[];t=b.createElement(e);t.async=!0;
+              t.src=v;s=b.getElementsByTagName(e)[0];s.parentNode.insertBefore(t,s)}
+              (window,document,'script','https://connect.facebook.net/en_US/fbevents.js');
+              fbq('init', metaPixelId);
+              fbq('track', 'PageView');
+            }
+          };
+
+          events.forEach((eventName) => window.addEventListener(eventName, start, { once: true, passive: true }));
+          window.addEventListener('load', () => {
+            timer = window.setTimeout(start, 5000);
+          }, { once: true });
+        })();
       </script>
     )}
   </head>

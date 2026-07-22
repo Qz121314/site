@@ -8,7 +8,9 @@ function initializeProductGallery(gallery: HTMLElement): void {
 
   thumbnails.forEach((thumbnail) => {
     thumbnail.addEventListener("click", () => {
+      if (thumbnail.getAttribute("aria-current") === "true") return;
       const nextUrl = thumbnail.dataset.imageUrl;
+      const nextSrcset = thumbnail.dataset.imageSrcset || "";
       if (!nextUrl || mainImage.src === new URL(nextUrl, location.href).href) return;
 
       thumbnails.forEach((item) => {
@@ -17,9 +19,17 @@ function initializeProductGallery(gallery: HTMLElement): void {
       mainImage.classList.add("is-changing");
 
       const preload = new Image();
+      if (nextSrcset) preload.srcset = nextSrcset;
+      preload.sizes = mainImage.sizes || "100vw";
       preload.onload = () => {
+        if (nextSrcset) mainImage.srcset = nextSrcset;
+        else mainImage.removeAttribute("srcset");
         mainImage.src = nextUrl;
         mainImage.alt = thumbnail.dataset.imageAlt || "";
+        const width = Number(thumbnail.dataset.imageWidth || "0");
+        const height = Number(thumbnail.dataset.imageHeight || "0");
+        if (width > 0) mainImage.width = width;
+        if (height > 0) mainImage.height = height;
         requestAnimationFrame(() => mainImage.classList.remove("is-changing"));
       };
       preload.onerror = () => mainImage.classList.remove("is-changing");

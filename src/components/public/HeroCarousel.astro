@@ -7,6 +7,11 @@ interface Props {
 
 const { advertisements } = Astro.props;
 const carouselId = `hero-${crypto.randomUUID()}`;
+
+function sourceSet(advertisement: PublicHeroAdvertisement): string | undefined {
+  if (!advertisement.responsiveImageUrl || !advertisement.responsiveWidth || !advertisement.width) return undefined;
+  return `${advertisement.responsiveImageUrl} ${advertisement.responsiveWidth}w, ${advertisement.imageUrl} ${advertisement.width}w`;
+}
 ---
 
 {advertisements.length > 0 && (
@@ -25,20 +30,22 @@ const carouselId = `hero-${crypto.randomUUID()}`;
           target={advertisement.openMode === "new" ? "_blank" : undefined}
           rel={advertisement.openMode === "new" ? "noopener noreferrer" : undefined}
           data-hero-slide
-          data-load-surface
+          data-load-surface={index === 0 ? undefined : ""}
           aria-label={`Promotion ${index + 1} of ${advertisements.length}`}
-          aria-busy="true"
+          aria-busy={index === 0 ? undefined : "true"}
           draggable="false"
         >
           <img
-            src={advertisement.imageUrl}
+            src={advertisement.responsiveImageUrl ?? advertisement.imageUrl}
+            srcset={sourceSet(advertisement)}
+            sizes="(min-width: 1100px) 1056px, calc(100vw - 2rem)"
             alt=""
             width={advertisement.width ?? undefined}
             height={advertisement.height ?? undefined}
-            loading="lazy"
+            loading={index === 0 ? "eager" : "lazy"}
             decoding="async"
-            fetchpriority="low"
-            data-load-reveal
+            fetchpriority={index === 0 ? "high" : "low"}
+            data-load-reveal={index === 0 ? undefined : ""}
             draggable="false"
             onload="this.classList.add('is-loaded');this.closest('[data-load-surface]')?.classList.add('is-loaded');this.closest('[data-load-surface]')?.removeAttribute('aria-busy')"
             onerror="this.classList.add('is-load-error');this.closest('[data-load-surface]')?.classList.add('is-load-error');this.closest('[data-load-surface]')?.removeAttribute('aria-busy')"

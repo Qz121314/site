@@ -16,6 +16,7 @@ interface Props {
   compact?: boolean;
   maxFiles?: number;
   directoryThumbnail?: boolean;
+  heroResponsive?: boolean;
   value?: string | null;
   values?: ExistingUploadImage[];
   help?: string;
@@ -31,6 +32,7 @@ const {
   compact = false,
   maxFiles = multiple ? 30 : 1,
   directoryThumbnail = false,
+  heroResponsive = false,
   value = null,
   values = [],
   help,
@@ -51,6 +53,7 @@ const initialImages: ExistingUploadImage[] = multiple
   data-required={required ? "1" : "0"}
   data-max-files={String(maxFiles)}
   data-directory-thumbnail={directoryThumbnail ? "1" : "0"}
+  data-hero-responsive={heroResponsive ? "1" : "0"}
   data-form-id={form ?? ""}
 >
   <div class="direct-upload-heading">
@@ -122,6 +125,8 @@ const initialImages: ExistingUploadImage[] = multiple
     const WEBP_QUALITY = 0.82;
     const THUMBNAIL_DIMENSION = 480;
     const THUMBNAIL_QUALITY = 0.72;
+    const HERO_RESPONSIVE_DIMENSION = 720;
+    const HERO_RESPONSIVE_QUALITY = 0.76;
     const UPLOAD_CONCURRENCY = 3;
 
     const decodeImage = async (file) => {
@@ -173,7 +178,7 @@ const initialImages: ExistingUploadImage[] = multiple
       });
     };
 
-    const compressImage = async (file, includeThumbnail) => {
+    const compressImage = async (file, variant) => {
       const decoded = await decodeImage(file);
       try {
         const original = await renderVariant(
@@ -183,13 +188,13 @@ const initialImages: ExistingUploadImage[] = multiple
           MAX_DIMENSION,
           WEBP_QUALITY,
         );
-        const thumbnail = includeThumbnail
+        const thumbnail = variant
           ? await renderVariant(
               decoded.source,
               decoded.width,
               decoded.height,
-              THUMBNAIL_DIMENSION,
-              THUMBNAIL_QUALITY,
+              variant === "hero" ? HERO_RESPONSIVE_DIMENSION : THUMBNAIL_DIMENSION,
+              variant === "hero" ? HERO_RESPONSIVE_QUALITY : THUMBNAIL_QUALITY,
             )
           : null;
         return { ...original, thumbnail };
@@ -198,8 +203,8 @@ const initialImages: ExistingUploadImage[] = multiple
       }
     };
 
-    const uploadImage = async (file, includeThumbnail) => {
-      const compressed = await compressImage(file, includeThumbnail);
+    const uploadImage = async (file, variant) => {
+      const compressed = await compressImage(file, variant);
       const uploadFile = new File(
         [compressed.blob],
         `${file.name.replace(/\.[^.]+$/u, "") || "image"}.webp`,
@@ -212,7 +217,7 @@ const initialImages: ExistingUploadImage[] = multiple
           "thumbnail",
           new File([compressed.thumbnail.blob], "thumbnail.webp", { type: "image/webp" }),
         );
-        body.append("variant", "product");
+        body.append("variant", variant);
       }
       body.append("originalName", file.name);
 
@@ -272,6 +277,8 @@ const initialImages: ExistingUploadImage[] = multiple
       const maxFiles = Number(root.dataset.maxFiles || (multiple ? "30" : "1"));
       const formId = root.dataset.formId || "";
       const directoryThumbnail = root.dataset.directoryThumbnail === "1";
+      const heroResponsive = root.dataset.heroResponsive === "1";
+      const uploadVariant = heroResponsive ? "hero" : directoryThumbnail ? "product" : "";
       let pending = 0;
 
       if (!input || !values || !preview || !status) return;
@@ -385,7 +392,7 @@ const initialImages: ExistingUploadImage[] = multiple
 
         await runWithConcurrency(files, UPLOAD_CONCURRENCY, async (file, index) => {
           try {
-            const uploaded = await uploadImage(file, directoryThumbnail);
+            const uploaded = await uploadImage(file, uploadVariant);
             addImage(uploaded.image, uploaded.localUrl, uploaded.dimensions, startOrder + index);
           } catch (error) {
             if (error instanceof DOMException && error.name === "AbortError") return;

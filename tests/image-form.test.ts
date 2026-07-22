@@ -94,5 +94,5 @@ test("normalizes uploaded file names", () => {
 test("creates isolated WebP keys for directory thumbnails", () => {
   const key = createImageThumbnailObjectKey(new Date("2026-07-22T00:00:00Z"));
   assert.match(key, /^images\/2026\/07\/thumbnails\/[0-9a-f-]+\.webp$/u);
-  assert.equal(MAX_THUMBNAIL_DIMENSION, 640);
+  assert.equal(MAX_THUMBNAIL_DIMENSION, 768);
 });

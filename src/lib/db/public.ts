@@ -39,6 +39,9 @@ export type PublicHeroAdvertisement = {
   imageUrl: string;
   width: number | null;
   height: number | null;
+  responsiveImageUrl: string | null;
+  responsiveWidth: number | null;
+  responsiveHeight: number | null;
   targetUrl: string;
   openMode: "same" | "new";
 };
@@ -63,6 +66,9 @@ export type PublicProductPage = {
 };
 
 export type PublicProductDetail = PublicProductCard & {
+  coverResponsiveUrl: string | null;
+  coverResponsiveWidth: number | null;
+  coverResponsiveHeight: number | null;
   channelId: string;
   channelName: string;
   channelSlug: string;
@@ -74,9 +80,12 @@ export type PublicProductDetail = PublicProductCard & {
   gallery: Array<{
     id: string;
     imageUrl: string;
+    responsiveImageUrl: string | null;
     originalName: string;
     width: number;
     height: number;
+    responsiveWidth: number | null;
+    responsiveHeight: number | null;
   }>;
 };
 
@@ -111,6 +120,9 @@ type HeroRow = {
   object_key: string;
   width: number | null;
   height: number | null;
+  responsive_object_key: string | null;
+  responsive_width: number | null;
+  responsive_height: number | null;
   target_url: string;
   open_mode: "same" | "new";
 };
@@ -129,6 +141,9 @@ type CategoryRow = {
 };
 
 type ProductDetailRow = PublicProductRow & {
+  cover_responsive_object_key: string | null;
+  cover_responsive_width: number | null;
+  cover_responsive_height: number | null;
   channel_id: string;
   channel_name: string;
   channel_slug: string;
@@ -142,9 +157,12 @@ type ProductDetailRow = PublicProductRow & {
 type GalleryRow = {
   id: string;
   object_key: string;
+  responsive_object_key: string | null;
   original_name: string;
   width: number;
   height: number;
+  responsive_width: number | null;
+  responsive_height: number | null;
 };
 
 function truncateUtf8(value: string, maximumBytes: number): string {
@@ -268,7 +286,16 @@ export async function loadPublicHeroAdvertisements(
   baseUrl: string,
 ): Promise<PublicHeroAdvertisement[]> {
   const result = await env.DB.prepare(
-    `SELECT ad.id, a.object_key, a.width, a.height, ad.target_url, ad.open_mode
+    `SELECT
+       ad.id,
+       a.object_key,
+       a.width,
+       a.height,
+       a.thumbnail_object_key AS responsive_object_key,
+       a.thumbnail_width AS responsive_width,
+       a.thumbnail_height AS responsive_height,
+       ad.target_url,
+       ad.open_mode
      FROM channels c
      INNER JOIN ad_pools p
        ON p.channel_id = c.id
@@ -290,6 +317,11 @@ export async function loadPublicHeroAdvertisements(
           imageUrl,
           width: Number(row.width) || null,
           height: Number(row.height) || null,
+          responsiveImageUrl: row.responsive_object_key
+            ? buildPublicImageUrl(baseUrl, row.responsive_object_key)
+            : null,
+          responsiveWidth: Number(row.responsive_width) || null,
+          responsiveHeight: Number(row.responsive_height) || null,
           targetUrl: row.target_url,
           openMode: row.open_mode,
         }]
@@ -431,6 +463,9 @@ export async function loadPublicProductDetail(
        cover.object_key,
        cover.width AS cover_width,
        cover.height AS cover_height,
+       cover.thumbnail_object_key AS cover_responsive_object_key,
+       cover.thumbnail_width AS cover_responsive_width,
+       cover.thumbnail_height AS cover_responsive_height,
        p.tags,
        p.body_html,
        p.cta_label,
@@ -465,9 +500,12 @@ export async function loadPublicProductDetail(
     `SELECT
        image.id,
        image.object_key,
+       image.thumbnail_object_key AS responsive_object_key,
        image.original_name,
        image.width,
-       image.height
+       image.height,
+       image.thumbnail_width AS responsive_width,
+       image.thumbnail_height AS responsive_height
      FROM product_images relation
      INNER JOIN image_assets image ON image.id = relation.image_asset_id
      WHERE relation.product_id = ?1
@@ -476,6 +514,11 @@ export async function loadPublicProductDetail(
 
   return {
     ...mapPublicProductRow(row, baseUrl),
+    coverResponsiveUrl: row.cover_responsive_object_key
+      ? buildPublicImageUrl(baseUrl, row.cover_responsive_object_key)
+      : null,
+    coverResponsiveWidth: Number(row.cover_responsive_width) || null,
+    coverResponsiveHeight: Number(row.cover_responsive_height) || null,
     channelId: row.channel_id,
     channelName: row.channel_name,
     channelSlug: row.channel_slug,
@@ -490,9 +533,14 @@ export async function loadPublicProductDetail(
         ? [{
             id: image.id,
             imageUrl,
+            responsiveImageUrl: image.responsive_object_key
+              ? buildPublicImageUrl(baseUrl, image.responsive_object_key)
+              : null,
             originalName: image.original_name,
             width: Number(image.width),
             height: Number(image.height),
+            responsiveWidth: Number(image.responsive_width) || null,
+            responsiveHeight: Number(image.responsive_height) || null,
           }]
         : [];
     }),

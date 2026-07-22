@@ -25,16 +25,22 @@ const galleryImages = product
       ...(primaryImage
         ? [{
             imageUrl: primaryImage,
+            responsiveImageUrl: product.coverUrl === primaryImage ? product.coverResponsiveUrl : (product.gallery[0]?.responsiveImageUrl ?? null),
             alt: product.title,
             width: product.coverUrl === primaryImage ? product.coverWidth : (product.gallery[0]?.width ?? null),
             height: product.coverUrl === primaryImage ? product.coverHeight : (product.gallery[0]?.height ?? null),
+            responsiveWidth: product.coverUrl === primaryImage ? product.coverResponsiveWidth : (product.gallery[0]?.responsiveWidth ?? null),
+            responsiveHeight: product.coverUrl === primaryImage ? product.coverResponsiveHeight : (product.gallery[0]?.responsiveHeight ?? null),
           }]
         : []),
       ...product.gallery.map((image) => ({
         imageUrl: image.imageUrl,
+        responsiveImageUrl: image.responsiveImageUrl,
         alt: image.originalName || product.title,
         width: image.width,
         height: image.height,
+        responsiveWidth: image.responsiveWidth,
+        responsiveHeight: image.responsiveHeight,
       })),
     ]
   : [];
@@ -172,7 +178,7 @@ const structuredData = product && canonical
   )}
 </PublicLayout>
 
-<script>import "@/scripts/public-product-cta";</script>
+{product?.hasConversion && <script>import "@/scripts/public-product-cta";</script>}
 
 <style>
   .product-detail-title {

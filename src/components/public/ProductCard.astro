@@ -13,8 +13,8 @@ const { product, channelSlug, priority = false } = Astro.props;
 <a
   class={`visual-card product-card${product.coverUrl ? "" : " is-loaded"}`}
   href={`/${encodeURIComponent(channelSlug)}/product/${encodeURIComponent(product.slug)}`}
-  data-load-surface
-  aria-busy={product.coverUrl ? "true" : undefined}
+  data-load-surface={priority ? undefined : ""}
+  aria-busy={product.coverUrl && !priority ? "true" : undefined}
 >
   {product.coverUrl ? (
     <img
@@ -27,7 +27,7 @@ const { product, channelSlug, priority = false } = Astro.props;
       decoding="async"
       fetchpriority={priority ? "high" : "auto"}
       draggable="false"
-      data-load-reveal
+      data-load-reveal={priority ? undefined : ""}
       onload="this.classList.add('is-loaded');this.closest('[data-load-surface]')?.classList.add('is-loaded');this.closest('[data-load-surface]')?.removeAttribute('aria-busy')"
       onerror="this.classList.add('is-load-error');this.closest('[data-load-surface]')?.classList.add('is-load-error');this.closest('[data-load-surface]')?.removeAttribute('aria-busy')"
     />

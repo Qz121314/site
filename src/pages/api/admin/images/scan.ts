@@ -103,7 +103,7 @@ export const POST: APIRoute = async ({ request }) => {
       for (const object of result.objects) {
         scanned += 1;
         if (knownKeys.has(object.key)) continue;
-        if (object.customMetadata?.variant === "directory-thumbnail") {
+        if (["directory-thumbnail", "hero-responsive"].includes(object.customMetadata?.variant ?? "")) {
           skipped += 1;
           continue;
         }
