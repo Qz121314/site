@@ -1,0 +1,144 @@
+/* Content loading and media reveal motion.
+ * Tracks real image load events where available and falls back gracefully.
+ */
+
+[data-load-surface] {
+  position: relative;
+  isolation: isolate;
+}
+
+[data-load-surface]::after {
+  position: absolute;
+  z-index: 4;
+  inset: 0;
+  border-radius: inherit;
+  content: "";
+  pointer-events: none;
+  opacity: 1;
+  background:
+    linear-gradient(
+      108deg,
+      transparent 18%,
+      rgba(255, 255, 255, .025) 34%,
+      rgba(255, 255, 255, .12) 47%,
+      rgba(255, 154, 173, .075) 53%,
+      rgba(255, 255, 255, .025) 66%,
+      transparent 82%
+    ),
+    linear-gradient(145deg, rgba(255,255,255,.045), rgba(255,255,255,.012) 48%, rgba(0,0,0,.1));
+  background-position: 165% 0, 0 0;
+  background-size: 230% 100%, 100% 100%;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
+  animation:
+    public-loading-shimmer 1.15s cubic-bezier(.4, 0, .2, 1) infinite,
+    public-loading-timeout .3s ease 2.4s forwards;
+  transition: opacity .3s ease, visibility 0s linear .3s;
+}
+
+[data-load-surface].is-loaded::after,
+[data-load-surface].is-load-error::after {
+  visibility: hidden;
+  opacity: 0;
+  animation-play-state: paused;
+}
+
+[data-load-reveal] {
+  opacity: .18;
+  filter: saturate(.78) blur(5px);
+  transform: scale(1.018);
+  animation: public-media-timeout .38s ease 2.15s forwards;
+  will-change: opacity, filter, transform;
+}
+
+[data-load-reveal].is-loaded,
+[data-load-reveal].is-load-error {
+  animation: public-media-reveal .52s cubic-bezier(.2, .75, .2, 1) both;
+}
+
+.product-gallery-stage [data-load-reveal] {
+  transform: scale(1.01);
+}
+
+.product-gallery-thumbnail [data-load-reveal] {
+  filter: saturate(.72) blur(3px);
+  transform: scale(1.04);
+}
+
+.public-main > * {
+  animation: public-content-enter .42s cubic-bezier(.2, .75, .2, 1) both;
+}
+
+.public-main > *:nth-child(2) { animation-delay: 35ms; }
+.public-main > *:nth-child(3) { animation-delay: 70ms; }
+.public-main > *:nth-child(4) { animation-delay: 105ms; }
+
+.product-grid > .product-card {
+  animation: public-card-enter .4s cubic-bezier(.2, .75, .2, 1) both;
+}
+
+.product-grid > .product-card:nth-child(2n) { animation-delay: 35ms; }
+.product-grid > .product-card:nth-child(3n) { animation-delay: 65ms; }
+.product-grid > .product-card:nth-child(4n) { animation-delay: 90ms; }
+
+@keyframes public-loading-shimmer {
+  from { background-position: 165% 0, 0 0; }
+  to { background-position: -70% 0, 0 0; }
+}
+
+@keyframes public-loading-timeout {
+  to { visibility: hidden; opacity: 0; }
+}
+
+@keyframes public-media-reveal {
+  from {
+    opacity: .2;
+    filter: saturate(.8) blur(5px);
+    transform: scale(1.018);
+  }
+  to {
+    opacity: 1;
+    filter: none;
+    transform: none;
+  }
+}
+
+@keyframes public-media-timeout {
+  to {
+    opacity: 1;
+    filter: none;
+    transform: none;
+  }
+}
+
+@keyframes public-content-enter {
+  from { opacity: 0; transform: translateY(7px); }
+  to { opacity: 1; transform: none; }
+}
+
+@keyframes public-card-enter {
+  from { opacity: 0; transform: translateY(8px) scale(.992); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-load-surface]::after,
+  [data-load-reveal],
+  [data-load-reveal].is-loaded,
+  [data-load-reveal].is-load-error,
+  .public-main > *,
+  .product-grid > .product-card {
+    animation: none !important;
+    transition: none !important;
+  }
+
+  [data-load-surface]::after {
+    visibility: hidden;
+    opacity: 0;
+  }
+
+  [data-load-reveal] {
+    opacity: 1;
+    filter: none;
+    transform: none;
+  }
+}
