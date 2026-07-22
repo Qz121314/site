@@ -136,7 +136,7 @@ const nextPageHref = page.hasMore ? publicPageHref(Astro.url, page.page + 1) : n
           if (!response.ok) throw new Error(`Request failed: ${response.status}`);
           const payload = await response.json();
           if (!Array.isArray(payload.products)) throw new Error('Invalid response');
-          payload.products.forEach((product) => grid.append(createProductCard(product, root.dataset.channel || ''));
+          payload.products.forEach((product) => grid.append(createProductCard(product, root.dataset.channel || '')));
           root.dataset.nextPage = String(page + 1);
 
           if (!payload.hasMore) {
