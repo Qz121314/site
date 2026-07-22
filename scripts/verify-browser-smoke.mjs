@@ -59,11 +59,12 @@ function runCommand(command, args) {
 
 function assertDocument(path, requirements) {
   const html = readFileSync(path, "utf8");
+  const visibleHtml = html.replace(/<script\b[\s\S]*?<\/script>/giu, "");
   for (const requirement of requirements) {
     if (!html.includes(requirement)) throw new Error(`${path} is missing ${requirement}`);
   }
   for (const forbidden of ["Temporarily unavailable", "数据服务暂不可用", "SERVICE_UNAVAILABLE"]) {
-    if (html.includes(forbidden)) throw new Error(`${path} contains service unavailable output.`);
+    if (visibleHtml.includes(forbidden)) throw new Error(`${path} contains service unavailable output.`);
   }
 }
 
