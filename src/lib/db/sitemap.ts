@@ -3,10 +3,11 @@ import { env } from "cloudflare:workers";
 type ChannelEntry = { slug: string; updatedAt: string };
 type CategoryEntry = { channelSlug: string; slug: string; updatedAt: string };
 type ProductEntry = { channelSlug: string; slug: string; updatedAt: string };
-type SiteUpdateRow = { updatedAt: string };
+type SiteUpdateRow = { updatedAt: string; defaultChannelSlug: string | null };
 
 export type PublicSitemapEntries = {
   siteUpdatedAt: string;
+  hasDefaultChannel: boolean;
   channels: ChannelEntry[];
   categories: CategoryEntry[];
   products: ProductEntry[];
@@ -15,9 +16,14 @@ export type PublicSitemapEntries = {
 export async function loadPublicSitemapEntries(): Promise<PublicSitemapEntries> {
   const [site, channels, categories, products] = await Promise.all([
     env.DB.prepare(
-      `SELECT updated_at AS updatedAt
-       FROM site_settings
-       WHERE id = 1`,
+      `SELECT
+         settings.updated_at AS updatedAt,
+         default_channel.slug AS defaultChannelSlug
+       FROM site_settings settings
+       LEFT JOIN channels default_channel
+         ON default_channel.id = settings.default_channel_id
+        AND default_channel.status = 'published'
+       WHERE settings.id = 1`,
     ).first<SiteUpdateRow>(),
     env.DB.prepare(
       `WITH
@@ -147,6 +153,7 @@ export async function loadPublicSitemapEntries(): Promise<PublicSitemapEntries> 
   const fallbackUpdatedAt = new Date(0).toISOString();
   return {
     siteUpdatedAt: site?.updatedAt ?? fallbackUpdatedAt,
+    hasDefaultChannel: Boolean(site?.defaultChannelSlug),
     channels: channels.results,
     categories: categories.results,
     products: products.results,
