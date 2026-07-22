@@ -4,6 +4,7 @@ import ProductGallery from "@/components/public/ProductGallery.astro";
 import PublicPageHeader from "@/components/public/PublicPageHeader.astro";
 import { loadPublicProductDetail, loadPublicSiteShell } from "@/lib/db/public";
 import { publicProductHasEnabledConversion } from "@/lib/db/public-availability";
+import { productDescription } from "@/lib/public/seo";
 
 export const prerender = false;
 
@@ -41,16 +42,84 @@ const returnUrl = product?.categorySlug
   : product
     ? `/${encodeURIComponent(product.channelSlug)}`
     : `/${encodeURIComponent(channelSlug)}`;
+const description = product
+  ? productDescription({
+      title: product.title,
+      bodyHtml: product.bodyHtml,
+      tags: product.tags,
+      siteDescription: site.siteDescription,
+    })
+  : "The requested product could not be found.";
+const channelUrl = product
+  ? new URL(`/${encodeURIComponent(product.channelSlug)}`, Astro.url.origin).href
+  : null;
+const categoryUrl = product?.categorySlug
+  ? new URL(
+      `/${encodeURIComponent(product.channelSlug)}/category/${encodeURIComponent(product.categorySlug)}`,
+      Astro.url.origin,
+    ).href
+  : null;
+const breadcrumbItems = product && canonical && channelUrl
+  ? [
+      {
+        "@type": "ListItem",
+        position: 1,
+        name: product.channelName,
+        item: channelUrl,
+      },
+      ...(product.categoryName && categoryUrl
+        ? [{
+            "@type": "ListItem",
+            position: 2,
+            name: product.categoryName,
+            item: categoryUrl,
+          }]
+        : []),
+      {
+        "@type": "ListItem",
+        position: product.categoryName && categoryUrl ? 3 : 2,
+        name: product.title,
+        item: canonical,
+      },
+    ]
+  : [];
+const structuredData = product && canonical
+  ? {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Product",
+          "@id": `${canonical}#product`,
+          name: product.title,
+          description,
+          url: canonical,
+          category: product.categoryName ?? product.channelName,
+          brand: {
+            "@type": "Brand",
+            name: site.siteName,
+          },
+          ...(galleryImages.length > 0
+            ? { image: galleryImages.map((image) => image.imageUrl) }
+            : {}),
+        },
+        {
+          "@type": "BreadcrumbList",
+          itemListElement: breadcrumbItems,
+        },
+      ],
+    }
+  : null;
 ---
 
 <PublicLayout
   site={site}
   title={product?.title ?? "Page not found"}
-  description={product ? `${product.title}${product.tags.length > 0 ? ` — ${product.tags.slice(0, 3).join(", ")}` : ""}` : "The requested product could not be found."}
+  description={description}
   canonical={canonical}
   robots={product ? undefined : "noindex,follow"}
   ogImage={primaryImage}
   activeChannel={product?.channelSlug ?? channelSlug}
+  structuredData={structuredData}
 >
   {product ? (
     <article class="product-detail">

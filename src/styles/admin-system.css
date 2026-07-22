@@ -1,0 +1,13 @@
+/*
+ * Admin visual system entrypoint.
+ * Structural modules load first; premium tokens and detail corrections load last.
+ * Layouts must import only this file so cascade order stays explicit.
+ */
+@import "./global.css";
+@import "./admin-workflow.css";
+@import "./admin-layout-v2.css";
+@import "./admin-collections.css";
+@import "./admin-collection-workspace.css";
+@import "./admin-popover.css";
+@import "./admin-premium.css";
+@import "./admin-premium-details.css";

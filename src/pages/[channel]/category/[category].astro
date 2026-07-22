@@ -8,6 +8,7 @@ import {
   loadPublicCategory,
   loadPublicProducts,
   loadPublicSiteShell,
+  PUBLIC_PRODUCT_PAGE_SIZE,
 } from "@/lib/db/public";
 import { publicPageCanonical, readPublicPage } from "@/lib/public/pagination";
 
@@ -47,16 +48,64 @@ const canonical = pageAvailable && channel && category
 const pageTitle = category
   ? pageInput.page > 1 ? `${category.name} — Page ${pageInput.page}` : category.name
   : "Page not found";
+const description = pageAvailable && category
+  ? `Browse ${category.name} in ${channel?.name ?? site.siteName}${pageInput.page > 1 ? ` — page ${pageInput.page}` : ""}.`
+  : "The requested category page could not be found.";
+const channelUrl = pageAvailable && channel
+  ? new URL(`/${encodeURIComponent(channel.slug)}`, Astro.url.origin).href
+  : null;
+const structuredData = pageAvailable && channel && category && canonical && channelUrl
+  ? {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "ItemList",
+          name: pageTitle,
+          url: canonical,
+          numberOfItems: productPage.products.length,
+          itemListOrder: "https://schema.org/ItemListOrderAscending",
+          itemListElement: productPage.products.map((product, index) => ({
+            "@type": "ListItem",
+            position: (pageInput.page - 1) * PUBLIC_PRODUCT_PAGE_SIZE + index + 1,
+            name: product.title,
+            url: new URL(
+              `/${encodeURIComponent(channel.slug)}/product/${encodeURIComponent(product.slug)}`,
+              Astro.url.origin,
+            ).href,
+            ...(product.coverUrl ? { image: product.coverUrl } : {}),
+          })),
+        },
+        {
+          "@type": "BreadcrumbList",
+          itemListElement: [
+            {
+              "@type": "ListItem",
+              position: 1,
+              name: channel.name,
+              item: channelUrl,
+            },
+            {
+              "@type": "ListItem",
+              position: 2,
+              name: category.name,
+              item: canonical,
+            },
+          ],
+        },
+      ],
+    }
+  : null;
 ---
 
 <PublicLayout
   site={site}
   title={pageTitle}
-  description={pageAvailable && category ? `Browse ${category.name} in ${channel?.name ?? site.siteName}.` : "The requested category page could not be found."}
+  description={description}
   canonical={canonical}
   robots={pageAvailable ? undefined : "noindex,follow"}
   ogImage={category?.imageUrl ?? site.logoUrl}
   activeChannel={pageAvailable ? channel?.slug ?? null : null}
+  structuredData={structuredData}
 >
   {pageAvailable && channel && category ? (
     <>

@@ -1,0 +1,8 @@
+/*
+ * Public visual system entrypoint.
+ * Keep foundational rules first and premium refinements last.
+ * Layouts must import only this file so cascade order stays explicit.
+ */
+@import "./public-base.css";
+@import "./public.css";
+@import "./public-premium.css";
