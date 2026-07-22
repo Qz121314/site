@@ -36,6 +36,7 @@ test("configured channel navigation data remains visible without published produ
   assert.match(settings, /<div class="admin-field admin-span-6">\s*<label for="r2-public-base-url">/u);
   assert.match(settings, /<div class="admin-field admin-span-3">\s*<label for="ga4-id">/u);
   assert.match(settings, /<div class="admin-field admin-span-3">\s*<label for="meta-pixel-id">/u);
+  assert.match(settings, /\.settings-form \.admin-field \{ align-content: start; \}/u);
 });
 
 test("Hero data displays all enabled advertisements unless a current pool is explicitly selected", async () => {
