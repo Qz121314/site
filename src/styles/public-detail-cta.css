@@ -1,0 +1,68 @@
+/* Detail-page fixed conversion dock.
+ * Keeps the CTA attached to the viewport rather than an animated content wrapper.
+ */
+
+@keyframes public-detail-page-enter {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* A transformed ancestor changes the containing block of position: fixed.
+ * Detail pages therefore use an opacity-only entrance animation.
+ */
+.public-main > .product-detail,
+.public-main > *:has(.product-detail) {
+  animation: public-detail-page-enter .32s ease both !important;
+  transform: none !important;
+  filter: none !important;
+  perspective: none !important;
+}
+
+.product-detail {
+  padding-bottom: calc(5.25rem + max(.75rem, env(safe-area-inset-bottom))) !important;
+}
+
+.public-body .product-detail .product-cta-bar {
+  position: fixed !important;
+  z-index: 80;
+  inset: auto auto max(.5rem, env(safe-area-inset-bottom)) 50%;
+  width: min(30rem, calc(100vw - 1rem));
+  max-width: none;
+  margin: 0 !important;
+  padding: .34rem;
+  border-radius: 1rem;
+  transform: translate3d(-50%, 0, 0) !important;
+  pointer-events: auto;
+  isolation: isolate;
+}
+
+.public-body .product-detail .product-cta-button {
+  width: 100%;
+  min-height: 3.5rem;
+  border-radius: .82rem;
+}
+
+@media (min-width: 640px) {
+  .public-body .product-detail .product-cta-bar {
+    bottom: max(.75rem, env(safe-area-inset-bottom));
+    width: min(34rem, calc(100vw - 1.5rem));
+  }
+}
+
+@media (min-width: 900px) {
+  .product-detail {
+    padding-bottom: 6rem !important;
+  }
+
+  .public-body .product-detail .product-cta-bar {
+    bottom: 1rem;
+    width: min(36rem, calc(100vw - 2rem));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .public-main > .product-detail,
+  .public-main > *:has(.product-detail) {
+    animation: none !important;
+  }
+}

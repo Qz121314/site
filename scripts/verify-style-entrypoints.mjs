@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 const publicLayout = readFileSync("src/layouts/PublicLayout.astro", "utf8");
 const adminLayout = readFileSync("src/layouts/AdminLayout.astro", "utf8");
 const publicSystem = readFileSync("src/styles/public-system.css", "utf8");
+const publicDetailCta = readFileSync("src/styles/public-detail-cta.css", "utf8");
 const adminSystem = readFileSync("src/styles/admin-system.css", "utf8");
 
 function assert(condition, message) {
@@ -28,13 +29,29 @@ for (const directImport of [
   assert(!adminLayout.includes(`import "@/styles/${directImport}";`), `AdminLayout must not import ${directImport} directly.`);
 }
 
-const expectedPublicOrder = ["public-base.css", "public.css", "public-design-system.css"];
+const expectedPublicOrder = [
+  "public-base.css",
+  "public.css",
+  "public-design-system.css",
+  "public-loading.css",
+  "public-desktop.css",
+  "public-detail-cta.css",
+];
 let previousIndex = -1;
 for (const stylesheet of expectedPublicOrder) {
   const index = publicSystem.indexOf(stylesheet);
   assert(index > previousIndex, `public-system.css must load ${stylesheet} in the documented order.`);
   previousIndex = index;
 }
+
+assert(
+  publicDetailCta.includes("position: fixed !important"),
+  "The detail CTA must remain fixed to the viewport.",
+);
+assert(
+  publicDetailCta.includes(".public-main > .product-detail") && publicDetailCta.includes("transform: none !important"),
+  "The detail page must not create a transformed containing block around the fixed CTA.",
+);
 
 for (const legacyPublicLayer of [
   "public-premium.css",
