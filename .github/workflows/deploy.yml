@@ -154,16 +154,6 @@ jobs:
           set -o pipefail
           pnpm exec wrangler d1 time-travel info DB --json 2>&1 | tee ci-logs/d1-pre-migration-bookmark.json
 
-      - name: 一次性清空测试数据与图片
-        if: github.event_name != 'pull_request'
-        shell: bash
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: |
-          set -o pipefail
-          node scripts/reset-production-storage.mjs 2>&1 | tee ci-logs/storage-reset.log
-
       - name: 应用 D1 数据库迁移
         if: github.event_name != 'pull_request'
         shell: bash

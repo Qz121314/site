@@ -3,6 +3,7 @@ import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 const DEPLOY_LOG = "ci-logs/deploy.log";
 const OUTPUT_PATH = "ci-logs/production-smoke.json";
 const RETRY_DELAYS_MS = [0, 2_000, 4_000, 7_000, 10_000];
+const RESERVED_TOP_LEVEL_PATHS = new Set(["admin", "api", "disclaimer", "go", "media", "privacy", "robots.txt", "sitemap.xml"]);
 
 function normalizeOrigin(value) {
   if (!value) return null;
@@ -133,7 +134,10 @@ try {
   let directory = homepage;
   const homepagePath = new URL(homepage.url).pathname;
   if (homepagePath === "/") {
-    const channelHref = findInternalHref(homepage.body ?? "", (pathname) => /^\/[^/]+\/?$/u.test(pathname));
+    const channelHref = findInternalHref(homepage.body ?? "", (pathname) => {
+      const match = pathname.match(/^\/([^/]+)\/?$/u);
+      return Boolean(match?.[1] && !RESERVED_TOP_LEVEL_PATHS.has(match[1]));
+    });
     if (channelHref) {
       directory = await requestWithRetries(channelHref, validateHtml, { includeBody: true, accept: "text/html" });
       results.push({ ...publicResult(directory), detail: "channel entry" });
