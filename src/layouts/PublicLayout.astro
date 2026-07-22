@@ -1,7 +1,5 @@
 ---
-import "@/styles/public-base.css";
-import "@/styles/public.css";
-import "@/styles/public-premium.css";
+import "@/styles/public-system.css";
 import ChannelNavigation from "@/components/public/ChannelNavigation.astro";
 import type { PublicSiteShell } from "@/lib/db/public";
 
@@ -13,6 +11,7 @@ interface Props {
   robots?: string | undefined;
   ogImage?: string | null;
   activeChannel?: string | null;
+  structuredData?: Record<string, unknown> | Array<Record<string, unknown>> | null;
 }
 
 const {
@@ -23,6 +22,7 @@ const {
   robots = "index,follow,max-image-preview:large",
   ogImage = site.logoUrl,
   activeChannel = null,
+  structuredData = null,
 } = Astro.props;
 
 const pageTitle = title === site.siteName ? title : `${title} · ${site.siteName}`;
@@ -30,6 +30,9 @@ const socialUrl = canonical ?? Astro.url.href;
 const showAdultGate = site.adultGateEnabled;
 const ga4Id = site.ga4Id;
 const metaPixelId = site.metaPixelId;
+const structuredDataJson = structuredData
+  ? JSON.stringify(structuredData).replaceAll("<", "\\u003c")
+  : null;
 ---
 
 <!doctype html>
@@ -43,12 +46,17 @@ const metaPixelId = site.metaPixelId;
     {canonical && <link rel="canonical" href={canonical} />}
     {site.faviconUrl && <link rel="icon" href={site.faviconUrl} />}
     <meta property="og:type" content="website" />
+    <meta property="og:site_name" content={site.siteName} />
     <meta property="og:title" content={pageTitle} />
     <meta property="og:description" content={description} />
     <meta property="og:url" content={socialUrl} />
     {ogImage && <meta property="og:image" content={ogImage} />}
     <meta name="twitter:card" content={ogImage ? "summary_large_image" : "summary"} />
+    <meta name="twitter:title" content={pageTitle} />
+    <meta name="twitter:description" content={description} />
+    {ogImage && <meta name="twitter:image" content={ogImage} />}
     <title>{pageTitle}</title>
+    {structuredDataJson && <script type="application/ld+json" set:html={structuredDataJson}></script>}
 
     {showAdultGate && (
       <script is:inline>
