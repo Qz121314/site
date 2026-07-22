@@ -8,6 +8,7 @@ type IconName =
   | "filters"
   | "ads"
   | "conversions"
+  | "refresh"
   | "external"
   | "logout"
   | "plus"
@@ -72,6 +73,12 @@ const { name, className = "" } = Astro.props;
     <>
       <path d="M5 17 17 5M10 5h7v7" />
       <path d="M19 14v4a1 1 0 0 1-1 1H6a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h4" />
+    </>
+  )}
+  {name === "refresh" && (
+    <>
+      <path d="M20 6v5h-5M4 18v-5h5" />
+      <path d="M18.2 9A7 7 0 0 0 6.3 6.3L4 9M5.8 15A7 7 0 0 0 17.7 17.7L20 15" />
     </>
   )}
   {name === "external" && (

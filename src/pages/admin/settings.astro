@@ -12,6 +12,7 @@ const [settings, channels] = await Promise.all([
 
 const saved = Astro.url.searchParams.get("saved");
 const error = Astro.url.searchParams.get("error");
+const cacheStatus = Astro.url.searchParams.get("cache");
 const formId = "site-settings-form";
 
 const errorMessages: Record<string, string> = {
@@ -33,8 +34,14 @@ const errorMessages: Record<string, string> = {
 
   {saved === "1" && (
     <p class="notice" role="status">
-      站点设置已保存。公共页面缓存最长约 30 秒；当前后台浏览器打开前台预览时不使用公共缓存。
+      站点设置已保存。如需立即让所有访客看到更新，请点击侧边栏的“刷新前台缓存”。
     </p>
+  )}
+  {cacheStatus === "refreshed" && (
+    <p class="notice" role="status">前台缓存已刷新，后续访问将读取最新数据。</p>
+  )}
+  {cacheStatus === "error" && (
+    <p class="error" role="alert">前台缓存刷新失败，请稍后重试；现有缓存仍会按有效期自动更新。</p>
   )}
   {error && errorMessages[error] && <p class="error" role="alert">{errorMessages[error]}</p>}
   {!settings.databaseReady && <p class="error" role="alert">D1 数据暂时不可用，当前显示的是默认值。</p>}

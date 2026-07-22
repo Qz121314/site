@@ -126,6 +126,12 @@ const statusLabels = {
           </nav>
 
           <div class="admin-sidebar-footer">
+            <form action="/api/admin/cache/purge" method="post">
+              <button class="admin-sidebar-link admin-sidebar-button" type="submit" title="刷新前台缓存">
+                <span class="admin-sidebar-icon" aria-hidden="true"><AdminIcon name="refresh" /></span>
+                <span class="admin-sidebar-label">刷新前台缓存</span>
+              </button>
+            </form>
             <a class="admin-sidebar-link" href="/" target="_blank" rel="noreferrer" title="查看前台">
               <span class="admin-sidebar-icon" aria-hidden="true"><AdminIcon name="external" /></span>
               <span class="admin-sidebar-label">查看前台</span>

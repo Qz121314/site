@@ -172,6 +172,10 @@ function mapCategory(row: CategoryRow): PublicCategory {
 const SITE_SHELL_CACHE_TTL_MS = 60_000;
 const siteShellCache = new Map<boolean, { value: PublicSiteShell; expiresAt: number }>();
 
+export function clearPublicSiteShellCache(): void {
+  siteShellCache.clear();
+}
+
 function defaultSiteShell(): PublicSiteShell {
   return {
     siteName: "Site",
