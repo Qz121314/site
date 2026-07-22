@@ -61,7 +61,7 @@ export const POST: APIRoute = async ({ request }) => {
   if (!siteName || siteName.length > 80) return redirect(request, "error=site-name");
   if (siteDescription.length > 300) return redirect(request, "error=description");
   if (logoAssetId === undefined || faviconAssetId === undefined) return redirect(request, "error=image");
-  if (r2PublicBaseUrl === null) return redirect(request, "error=r2-url");
+  if (!r2PublicBaseUrl) return redirect(request, "error=r2-url");
   if (ga4Id && !/^G-[A-Z0-9]{4,20}$/u.test(ga4Id)) return redirect(request, "error=ga4");
   if (metaPixelId && !/^\d{5,30}$/u.test(metaPixelId)) return redirect(request, "error=meta");
   if (privacyContent.length > 20_000) return redirect(request, "error=privacy");
@@ -69,7 +69,9 @@ export const POST: APIRoute = async ({ request }) => {
 
   try {
     if (defaultChannelId) {
-      const channel = await env.DB.prepare("SELECT id FROM channels WHERE id = ?1")
+      const channel = await env.DB.prepare(
+        "SELECT id FROM channels WHERE id = ?1 AND status = 'published'",
+      )
         .bind(defaultChannelId)
         .first<{ id: string }>();
       if (!channel) return redirect(request, "error=default-channel");

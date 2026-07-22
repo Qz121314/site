@@ -29,11 +29,7 @@ test("enforces dedicated product thumbnails and publishable relations", async ()
 });
 
 test("public catalog queries never fall back to original media", async () => {
-  const sources = await Promise.all([
-    readFile(new URL("../src/lib/db/public.ts", import.meta.url), "utf8"),
-    readFile(new URL("../src/lib/db/public-availability.ts", import.meta.url), "utf8"),
-  ]);
-  const publicQueries = sources.join("\n");
+  const publicQueries = await readFile(new URL("../src/lib/db/public.ts", import.meta.url), "utf8");
   assert.doesNotMatch(publicQueries, /COALESCE\(cover\.thumbnail_object_key/u);
   assert.match(publicQueries, /cover\.thumbnail_object_key AS object_key/u);
 });

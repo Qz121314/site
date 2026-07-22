@@ -25,8 +25,13 @@ const accept = document.querySelector<HTMLButtonElement>("[data-adult-accept]");
 const exit = document.querySelector<HTMLButtonElement>("[data-adult-exit]");
 
 if (gate && accept && exit) {
+  const background = Array.from(document.body.children).filter(
+    (element): element is HTMLElement => element instanceof HTMLElement && element !== gate,
+  );
   if (!document.documentElement.classList.contains("adult-confirmed")) {
     document.documentElement.style.overflow = "hidden";
+    background.forEach((element) => { element.inert = true; });
+    window.requestAnimationFrame(() => accept.focus());
   }
 
   accept.addEventListener("click", () => {
@@ -34,6 +39,7 @@ if (gate && accept && exit) {
     document.cookie = `site_adult_confirmed=1; Max-Age=31536000; Path=/; SameSite=Lax${secure}`;
     document.documentElement.classList.add("adult-confirmed");
     gate.remove();
+    background.forEach((element) => { element.inert = false; });
     document.documentElement.style.overflow = "";
   });
 

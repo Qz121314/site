@@ -5,10 +5,8 @@ import {
   loadPublicProducts,
   loadPublicSiteShell,
 } from "@/lib/db/public";
-import { loadPublicUncategorizedProducts } from "@/lib/db/public-availability";
 import { PUBLIC_API_EDGE_CACHE_SECONDS } from "@/lib/public/cache-policy";
 import { readPublicPage } from "@/lib/public/pagination";
-import { normalizePublicSearchQuery } from "@/lib/search/query";
 
 export const prerender = false;
 
@@ -34,9 +32,6 @@ export const GET: APIRoute = async ({ params, url }) => {
   if (!pageInput.valid) return json({ error: "PAGE_OUT_OF_RANGE" }, 400);
 
   const categorySlug = (url.searchParams.get("category") ?? "").trim().slice(0, 96);
-  const query = normalizePublicSearchQuery(url.searchParams.get("q") ?? "");
-  const uncategorizedOnly = url.searchParams.get("uncategorized") === "1";
-  if (uncategorizedOnly && categorySlug) return json({ error: "INVALID_PRODUCT_FILTER" }, 400);
 
   const site = await loadPublicSiteShell();
   const channel = findPublicChannel(site, channelSlug);
@@ -47,19 +42,12 @@ export const GET: APIRoute = async ({ params, url }) => {
     : null;
   if (categorySlug && !category) return json({ error: "CATEGORY_NOT_FOUND" }, 404);
 
-  const result = uncategorizedOnly
-    ? await loadPublicUncategorizedProducts({
-        channelId: channel.id,
-        baseUrl: site.r2PublicBaseUrl,
-        page: pageInput.page,
-      })
-    : await loadPublicProducts({
-        channelId: channel.id,
-        baseUrl: site.r2PublicBaseUrl,
-        page: pageInput.page,
-        categoryId: category?.id ?? null,
-        query,
-      });
+  const result = await loadPublicProducts({
+    channelId: channel.id,
+    baseUrl: site.r2PublicBaseUrl,
+    page: pageInput.page,
+    categoryId: category?.id ?? null,
+  });
 
   return json(result);
 };

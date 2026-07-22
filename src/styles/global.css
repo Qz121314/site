@@ -328,7 +328,6 @@ p { color: var(--muted); line-height: 1.7; }
 
 @media (min-width: 640px) {
   .admin-form-grid { grid-template-columns: repeat(6, minmax(0, 1fr)); }
-  .admin-span-2 { grid-column: span 2; }
   .admin-span-3 { grid-column: span 3; }
   .admin-span-4 { grid-column: span 4; }
   .admin-span-6 { grid-column: span 6; }
@@ -357,15 +356,9 @@ p { color: var(--muted); line-height: 1.7; }
 @media (min-width: 960px) {
   .admin-form-grid { grid-template-columns: repeat(12, minmax(0, 1fr)); }
   .admin-span-1 { grid-column: span 1; }
-  .admin-span-2 { grid-column: span 2; }
   .admin-span-3 { grid-column: span 3; }
   .admin-span-4 { grid-column: span 4; }
   .admin-span-5 { grid-column: span 5; }
   .admin-span-6 { grid-column: span 6; }
-  .admin-span-7 { grid-column: span 7; }
-  .admin-span-8 { grid-column: span 8; }
-  .admin-span-9 { grid-column: span 9; }
-  .admin-span-10 { grid-column: span 10; }
-  .admin-span-11 { grid-column: span 11; }
   .admin-span-12 { grid-column: span 12; }
 }

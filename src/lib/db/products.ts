@@ -202,7 +202,7 @@ export async function loadAdminProductOptions(channelId: string): Promise<AdminP
     };
   } catch (error) {
     console.error(JSON.stringify({ event: "admin_product_options_read_failed", channelId, error: String(error) }));
-    return { categories: [], filters: [], conversionGroups: [] };
+    throw error;
   }
 }
 
@@ -279,14 +279,7 @@ export async function loadAdminProducts(
     };
   } catch (error) {
     console.error(JSON.stringify({ event: "admin_products_read_failed", channelId, error: String(error) }));
-    return {
-      products: [],
-      total: 0,
-      page: 1,
-      pageCount: 1,
-      pageSize: ADMIN_PRODUCT_PAGE_SIZE,
-      r2PublicBaseUrl: "",
-    };
+    throw error;
   }
 }
 
@@ -326,6 +319,6 @@ export async function loadAdminProduct(channelId: string, productId: string): Pr
     return row ? mapProduct(row) : null;
   } catch (error) {
     console.error(JSON.stringify({ event: "admin_product_read_failed", channelId, productId, error: String(error) }));
-    return null;
+    throw error;
   }
 }

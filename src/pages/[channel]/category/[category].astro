@@ -5,6 +5,7 @@ import PublicSearchForm from "@/components/public/PublicSearchForm.astro";
 import {
   findPublicChannel,
   loadPublicCategory,
+  loadPublicCategoryFilters,
   loadPublicProducts,
   loadPublicSiteShell,
   PUBLIC_PRODUCT_PAGE_SIZE,
@@ -18,9 +19,19 @@ const categorySlug = Astro.params.category ?? "";
 const pageInput = readPublicPage(Astro.url.searchParams.get("page"));
 const site = await loadPublicSiteShell();
 const channel = findPublicChannel(site, channelSlug);
-const category = channel && pageInput.valid
-  ? await loadPublicCategory(channel.id, categorySlug)
-  : null;
+const [category, categoryFilters] = channel && pageInput.valid
+  ? await Promise.all([
+      loadPublicCategory(channel.id, categorySlug),
+      loadPublicCategoryFilters(channel.id),
+    ])
+  : [null, []];
+
+if (channel && category && categoryFilters.length === 0) {
+  const target = new URL(`/${encodeURIComponent(channel.slug)}`, Astro.url.origin);
+  target.searchParams.set("category", category.slug);
+  if (pageInput.page > 1) target.searchParams.set("page", String(pageInput.page));
+  return Astro.redirect(`${target.pathname}${target.search}`, 301);
+}
 
 const productPage = channel && category
   ? await loadPublicProducts({

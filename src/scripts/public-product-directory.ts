@@ -90,8 +90,6 @@ function initializeProductDirectory(root: HTMLElement): void {
     const page = Number(root.dataset.nextPage || "2");
     const params = new URLSearchParams({ page: String(page) });
     if (root.dataset.category) params.set("category", root.dataset.category);
-    if (root.dataset.query) params.set("q", root.dataset.query);
-    if (root.dataset.uncategorized === "1") params.set("uncategorized", "1");
 
     try {
       const response = await fetch(

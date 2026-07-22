@@ -90,6 +90,10 @@ function sourceSet(advertisement: PublicHeroAdvertisement): string | undefined {
     transform: translateX(-50%);
   }
 
+  .hero-carousel.is-static .hero-dots {
+    display: none;
+  }
+
   .hero-dot,
   .hero-dot[aria-current="true"] {
     display: grid;

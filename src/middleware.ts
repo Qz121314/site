@@ -46,7 +46,21 @@ async function applicationDataReady(): Promise<boolean> {
   let ready = false;
   try {
     const row = await env.DB.prepare(
-      "SELECT id FROM site_settings WHERE id = 1",
+      `SELECT
+         settings.id,
+         settings.r2_public_base_url,
+         (SELECT thumbnail_object_key FROM image_assets LIMIT 1) AS image_probe,
+         (SELECT hero_ad_pool_id FROM channels LIMIT 1) AS channel_probe,
+         (SELECT status FROM category_filters LIMIT 1) AS filter_probe,
+         (SELECT status FROM categories LIMIT 1) AS category_probe,
+         (SELECT status FROM ad_pools LIMIT 1) AS ad_pool_probe,
+         (SELECT status FROM advertisements LIMIT 1) AS ad_probe,
+         (SELECT status FROM conversion_groups LIMIT 1) AS conversion_group_probe,
+         (SELECT status FROM conversion_resources LIMIT 1) AS conversion_resource_probe,
+         (SELECT cover_asset_id FROM products LIMIT 1) AS product_probe,
+         (SELECT image_asset_id FROM product_images LIMIT 1) AS product_image_probe
+       FROM site_settings settings
+       WHERE settings.id = 1`,
     ).first<{ id: number }>();
     ready = row?.id === 1;
   } catch (error) {

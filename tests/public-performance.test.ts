@@ -32,10 +32,10 @@ test("uses stored responsive derivatives for Hero and product detail images", as
 
   assert.match(publicDatabase, /a\.thumbnail_object_key AS responsive_object_key/u);
   assert.match(publicDatabase, /image\.thumbnail_object_key AS responsive_object_key/u);
-  assert.match(upload, /heroVariant \? "hero-responsive" : "directory-thumbnail"/u);
-  assert.match(directUpload, /HERO_RESPONSIVE_DIMENSION = 720/u);
+  assert.match(upload, /heroVariant[\s\S]*"hero-responsive"[\s\S]*"site-logo"[\s\S]*"site-favicon"/u);
+  assert.match(directUpload, /HERO_RESPONSIVE_DIMENSION = 960/u);
   assert.match(ads, /compact heroResponsive/u);
-  assert.match(scan, /"directory-thumbnail", "hero-responsive"/u);
+  assert.match(scan, /"directory-thumbnail", "hero-responsive", "site-logo", "site-favicon"/u);
 });
 
 test("defers third-party analytics until interaction or after the load-critical window", async () => {

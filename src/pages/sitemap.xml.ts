@@ -33,7 +33,9 @@ export const GET: APIRoute = async ({ url }) => {
       updatedAt: entry.updatedAt,
     })),
     ...entries.categories.map((entry) => ({
-      location: new URL(`/${encodeURIComponent(entry.channelSlug)}/category/${encodeURIComponent(entry.slug)}`, url.origin).href,
+      location: entry.hasCategoryNavigation
+        ? new URL(`/${encodeURIComponent(entry.channelSlug)}/category/${encodeURIComponent(entry.slug)}`, url.origin).href
+        : new URL(`/${encodeURIComponent(entry.channelSlug)}?category=${encodeURIComponent(entry.slug)}`, url.origin).href,
       updatedAt: entry.updatedAt,
     })),
     ...entries.products.map((entry) => ({

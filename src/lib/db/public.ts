@@ -77,6 +77,7 @@ export type PublicProductDetail = PublicProductCard & {
   bodyHtml: string;
   ctaLabel: string;
   hasConversion: boolean;
+  hasCategoryNavigation: boolean;
   gallery: Array<{
     id: string;
     imageUrl: string;
@@ -152,6 +153,7 @@ type ProductDetailRow = PublicProductRow & {
   body_html: string;
   cta_label: string;
   has_conversion: number;
+  has_category_navigation: number;
 };
 
 type GalleryRow = {
@@ -187,23 +189,6 @@ function mapCategory(row: CategoryRow): PublicCategory {
   };
 }
 
-function defaultSiteShell(): PublicSiteShell {
-  return {
-    siteName: "Site",
-    siteDescription: "Visual recommendations, updated in real time.",
-    logoUrl: null,
-    faviconUrl: null,
-    r2PublicBaseUrl: "",
-    ga4Id: "",
-    metaPixelId: "",
-    adultGateEnabled: false,
-    privacyContent: "",
-    disclaimerContent: "",
-    defaultChannelSlug: null,
-    channels: [],
-  };
-}
-
 export async function loadPublicSiteShell(
   options: { includeLegalContent?: boolean } = {},
 ): Promise<PublicSiteShell> {
@@ -218,8 +203,8 @@ export async function loadPublicSiteShell(
          s.ga4_id,
          s.meta_pixel_id,
          s.adult_gate_enabled,
-         logo.object_key AS logo_object_key,
-         favicon.object_key AS favicon_object_key,
+         COALESCE(logo.thumbnail_object_key, logo.object_key) AS logo_object_key,
+         COALESCE(favicon.thumbnail_object_key, favicon.object_key) AS favicon_object_key,
          default_channel.slug AS default_channel_slug,
          channel.id AS channel_id,
          channel.name AS channel_name,
@@ -244,7 +229,7 @@ export async function loadPublicSiteShell(
 
     const [shellResult, legal] = await Promise.all([shellPromise, legalPromise]);
     const first = shellResult.results[0];
-    if (!first) return defaultSiteShell();
+    if (!first) throw new Error("site_settings row is missing");
 
     const baseUrl = first.r2_public_base_url ?? "";
     const value: PublicSiteShell = {
@@ -273,7 +258,7 @@ export async function loadPublicSiteShell(
     return value;
   } catch (error) {
     console.error(JSON.stringify({ event: "public_site_shell_read_failed", error: String(error) }));
-    return defaultSiteShell();
+    throw error;
   }
 }
 
@@ -364,7 +349,13 @@ export async function loadPublicCategories(
      FROM categories category
      LEFT JOIN filter_usage ON filter_usage.category_id = category.id
      WHERE category.channel_id = ?1
-       AND category.status != 'disabled'
+       AND category.status = 'published'
+       AND EXISTS (
+         SELECT 1 FROM products product
+         WHERE product.channel_id = category.channel_id
+           AND product.category_id = category.id
+           AND product.status = 'published'
+       )
      ORDER BY category.sort_order ASC, category.created_at ASC`,
   ).bind(channelId).all<CategoryRow>();
   return result.results.map(mapCategory);
@@ -385,7 +376,13 @@ export async function loadPublicCategory(
      LEFT JOIN filter_usage ON filter_usage.category_id = category.id
      WHERE category.channel_id = ?1
        AND category.slug = ?2
-       AND category.status != 'disabled'`,
+       AND category.status = 'published'
+       AND EXISTS (
+         SELECT 1 FROM products product
+         WHERE product.channel_id = category.channel_id
+           AND product.category_id = category.id
+           AND product.status = 'published'
+       )`,
   ).bind(channelId, categorySlug).first<CategoryRow>();
   return row ? mapCategory(row) : null;
 }
@@ -395,22 +392,16 @@ export async function loadPublicProducts(input: {
   baseUrl: string;
   page?: number;
   categoryId?: string | null;
-  query?: string;
 }): Promise<PublicProductPage> {
   const page = Number.isSafeInteger(input.page) && (input.page ?? 0) > 0 ? input.page ?? 1 : 1;
   const offset = (page - 1) * PUBLIC_PRODUCT_PAGE_SIZE;
   const categoryId = input.categoryId ?? "";
-  const query = truncateUtf8((input.query ?? "").trim(), 48);
   const bindings: Array<string | number> = [input.channelId];
   const conditions = ["p.channel_id = ?1", "p.status = 'published'"];
 
   if (categoryId) {
     bindings.push(categoryId);
     conditions.push(`p.category_id = ?${bindings.length}`);
-  }
-  if (query) {
-    bindings.push(`%${query}%`);
-    conditions.push(`(p.title LIKE ?${bindings.length} OR p.tags LIKE ?${bindings.length})`);
   }
   bindings.push(PUBLIC_PRODUCT_PAGE_SIZE + 1, offset);
   const limitParameter = bindings.length - 1;
@@ -479,7 +470,13 @@ export async function loadPublicProductDetail(
            AND conversion_group.channel_id = p.channel_id
            AND conversion_group.status = 'enabled'
          LIMIT 1
-       ) AS has_conversion
+       ) AS has_conversion,
+       EXISTS(
+         SELECT 1 FROM category_filters category_filter
+         WHERE category_filter.channel_id = p.channel_id
+           AND category_filter.status = 'enabled'
+         LIMIT 1
+       ) AS has_category_navigation
      FROM products p
      INNER JOIN channels channel
        ON channel.id = p.channel_id
@@ -527,6 +524,7 @@ export async function loadPublicProductDetail(
     bodyHtml: row.body_html,
     ctaLabel: row.cta_label,
     hasConversion: Boolean(row.has_conversion),
+    hasCategoryNavigation: Boolean(row.has_category_navigation),
     gallery: galleryResult.results.flatMap((image) => {
       const imageUrl = buildPublicImageUrl(baseUrl, image.object_key);
       return imageUrl

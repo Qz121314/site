@@ -1,7 +1,7 @@
 import { env } from "cloudflare:workers";
 
 type ChannelEntry = { slug: string; updatedAt: string };
-type CategoryEntry = { channelSlug: string; slug: string; updatedAt: string };
+type CategoryEntry = { channelSlug: string; slug: string; updatedAt: string; hasCategoryNavigation: number };
 type ProductEntry = { channelSlug: string; slug: string; updatedAt: string };
 type SiteUpdateRow = {
   updatedAt: string;
@@ -108,6 +108,11 @@ export async function loadPublicSitemapEntries(): Promise<PublicSitemapEntries> 
        SELECT
          channel.slug AS channelSlug,
          category.slug,
+         EXISTS(
+           SELECT 1 FROM category_filters category_filter
+           WHERE category_filter.channel_id = category.channel_id
+             AND category_filter.status = 'enabled'
+         ) AS hasCategoryNavigation,
          MAX(
            category.updated_at,
            channel.updated_at,
@@ -120,7 +125,12 @@ export async function loadPublicSitemapEntries(): Promise<PublicSitemapEntries> 
         AND channel.status = 'published'
        LEFT JOIN site_settings settings ON settings.id = 1
        LEFT JOIN product_updates ON product_updates.category_id = category.id
-       WHERE category.status = 'published'`,
+       WHERE category.status = 'published'
+         AND EXISTS (
+           SELECT 1 FROM products product
+           WHERE product.category_id = category.id
+             AND product.status = 'published'
+         )`,
     ).all<CategoryEntry>(),
     env.DB.prepare(
       `WITH resource_updates AS (

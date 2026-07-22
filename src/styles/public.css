@@ -334,13 +334,6 @@
   -webkit-line-clamp: 2;
 }
 
-.visual-card-meta {
-  display: flex;
-  min-width: 0;
-  flex-wrap: wrap;
-  gap: .25rem;
-}
-
 .load-more-row {
   display: flex;
   min-height: 3.1rem;
@@ -467,11 +460,6 @@
 .public-back-link {
   display: inline-flex;
   white-space: nowrap;
-}
-
-.directory-page-header,
-.product-detail-header {
-  margin-bottom: .05rem;
 }
 
 
@@ -757,10 +745,6 @@
 
   .product-card .visual-card-title {
     font-size: .87rem;
-  }
-
-  .product-card .visual-card-meta {
-    gap: .2rem;
   }
 
   .public-bottom-nav {

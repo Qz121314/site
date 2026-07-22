@@ -12,7 +12,7 @@ import {
   loadPublicProducts,
   loadPublicSiteShell,
 } from "@/lib/db/public";
-import { publicPageCanonical, readPublicPage } from "@/lib/public/pagination";
+import { readPublicPage } from "@/lib/public/pagination";
 
 export const prerender = false;
 
@@ -55,15 +55,12 @@ const pageAvailable = canLoadPage && categorySelectionValid && !pageOutOfRange;
 if (!pageAvailable) Astro.response.status = 404;
 
 const canonical = pageAvailable && channel
-  ? publicPageCanonical(
-      new URL(
-        selectedCategory
-          ? `/${encodeURIComponent(channel.slug)}/category/${encodeURIComponent(selectedCategory.slug)}`
-          : `/${encodeURIComponent(channel.slug)}`,
-        Astro.url.origin,
-      ),
-      pageInput.page,
-    )
+  ? (() => {
+      const value = new URL(`/${encodeURIComponent(channel.slug)}`, Astro.url.origin);
+      if (selectedCategory) value.searchParams.set("category", selectedCategory.slug);
+      if (pageInput.page > 1) value.searchParams.set("page", String(pageInput.page));
+      return value.href;
+    })()
   : null;
 const directoryTitle = selectedCategory?.name ?? channel?.name;
 const pageTitle = directoryTitle
@@ -170,6 +167,7 @@ const pageTitle = directoryTitle
             categorySlug={selectedCategory?.slug ?? null}
             preserveCategoryQuery={Boolean(selectedCategory)}
             page={productPage}
+            priorityCount={hero.length > 0 ? 0 : 2}
             emptyMessage={selectedCategory
               ? `No published products are available in ${selectedCategory.name}.`
               : "No published products are available in this channel."}

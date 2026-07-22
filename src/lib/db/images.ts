@@ -255,15 +255,7 @@ export async function loadAdminImagePage(input: {
     };
   } catch (error) {
     console.error(JSON.stringify({ event: "admin_images_read_failed", error: String(error) }));
-    return {
-      images: [],
-      total: 0,
-      page: 1,
-      pageCount: 1,
-      pageSize: ADMIN_IMAGE_PAGE_SIZE,
-      databaseReady: false,
-      r2PublicBaseUrl: "",
-    };
+    throw error;
   }
 }
 

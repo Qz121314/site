@@ -8,9 +8,8 @@ interface Props {
   page: PublicProductPage;
   categorySlug?: string | null;
   preserveCategoryQuery?: boolean;
-  query?: string;
-  uncategorizedOnly?: boolean;
   emptyMessage?: string;
+  priorityCount?: number;
 }
 
 const {
@@ -18,9 +17,8 @@ const {
   page,
   categorySlug = null,
   preserveCategoryQuery = false,
-  query = "",
-  uncategorizedOnly = false,
   emptyMessage = "No products found.",
+  priorityCount = 2,
 } = Astro.props;
 
 function directoryPageHref(pageNumber: number): string {
@@ -42,14 +40,12 @@ const nextPageHref = page.hasMore ? directoryPageHref(page.page + 1) : null;
   data-channel={channelSlug}
   data-category={categorySlug ?? ""}
   data-preserve-category-query={preserveCategoryQuery ? "1" : "0"}
-  data-query={query}
-  data-uncategorized={uncategorizedOnly ? "1" : "0"}
   data-next-page={page.page + 1}
 >
   {page.products.length > 0 ? (
     <div class="product-grid" data-product-grid>
       {page.products.map((product, index) => (
-        <ProductCard product={product} channelSlug={channelSlug} priority={index < 2} />
+        <ProductCard product={product} channelSlug={channelSlug} priority={index < priorityCount} />
       ))}
     </div>
   ) : (

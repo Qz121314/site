@@ -24,11 +24,21 @@ function initializeHeroCarousel(root: HTMLElement): void {
     const gap = Number.parseFloat(window.getComputedStyle(track).columnGap) || 0;
     return Math.max(firstSlide.getBoundingClientRect().width + gap, 1);
   };
+  const maxIndex = (): number => Math.max(
+    0,
+    Math.ceil((track.scrollWidth - track.clientWidth - 1) / slideWidth()),
+  );
   const updateDots = (): void => {
-    dots.forEach((dot, index) => dot.setAttribute("aria-current", index === active ? "true" : "false"));
+    const maximum = maxIndex();
+    root.classList.toggle("is-static", maximum === 0);
+    dots.forEach((dot, index) => {
+      dot.hidden = index > maximum;
+      dot.setAttribute("aria-current", index === active ? "true" : "false");
+    });
   };
   const goTo = (index: number, behavior: ScrollBehavior = "smooth"): void => {
-    active = (index + slides.length) % slides.length;
+    const pageCount = maxIndex() + 1;
+    active = (index + pageCount) % pageCount;
     track.scrollTo({ left: active * slideWidth(), behavior });
     updateDots();
   };
@@ -41,7 +51,7 @@ function initializeHeroCarousel(root: HTMLElement): void {
   );
   const start = (): void => {
     stop();
-    if (!shouldPause()) timer = window.setInterval(() => goTo(active + 1), 5000);
+    if (maxIndex() > 0 && !shouldPause()) timer = window.setInterval(() => goTo(active + 1), 5000);
   };
 
   dots.forEach((dot, index) => dot.addEventListener("click", () => {
@@ -53,7 +63,7 @@ function initializeHeroCarousel(root: HTMLElement): void {
   track.addEventListener("scroll", () => {
     window.clearTimeout(scrollTimer);
     scrollTimer = window.setTimeout(() => {
-      active = Math.max(0, Math.min(slides.length - 1, Math.round(track.scrollLeft / slideWidth())));
+      active = Math.max(0, Math.min(maxIndex(), Math.round(track.scrollLeft / slideWidth())));
       updateDots();
     }, 80);
   }, { passive: true });
@@ -129,7 +139,12 @@ function initializeHeroCarousel(root: HTMLElement): void {
   });
   document.addEventListener("visibilitychange", start);
   reducedMotion.addEventListener("change", start);
-  window.addEventListener("resize", () => goTo(active, "auto"));
+  window.addEventListener("resize", () => {
+    active = Math.min(active, maxIndex());
+    goTo(active, "auto");
+    start();
+  });
+  updateDots();
   start();
 }
 

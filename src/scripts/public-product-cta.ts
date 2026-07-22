@@ -15,8 +15,6 @@ function isContactResponse(value: unknown): value is ContactResponse {
   return typeof contact.target === "string" && (contact.type === "link" || contact.type === "sms");
 }
 
-const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
-
 document.querySelectorAll<HTMLAnchorElement>("[data-contact-cta]").forEach((link) => {
   const resolveUrl = link.dataset.resolveUrl || link.href;
   const label = link.querySelector<HTMLElement>("[data-contact-label]");
@@ -49,9 +47,6 @@ document.querySelectorAll<HTMLAnchorElement>("[data-contact-cta]").forEach((link
       if (label) label.textContent = type === "sms" ? `SMS · ${display}` : `OPEN · ${display || defaultLabel}`;
       void link.offsetWidth;
       link.classList.add("is-resolved");
-      if (!reducedMotion.matches) {
-        await new Promise<void>((resolve) => window.setTimeout(resolve, 220));
-      }
       window.location.assign(target);
     } catch (error) {
       console.error(error);

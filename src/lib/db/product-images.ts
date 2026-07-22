@@ -59,6 +59,6 @@ export async function loadAdminProductImages(
     }));
   } catch (error) {
     console.error(JSON.stringify({ event: "admin_product_images_read_failed", channelId, productId, error: String(error) }));
-    return [];
+    throw error;
   }
 }

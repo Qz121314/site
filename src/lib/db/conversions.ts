@@ -100,6 +100,6 @@ export async function loadAdminConversionGroups(channelId: string): Promise<Admi
     return groups;
   } catch (error) {
     console.error(JSON.stringify({ event: "admin_conversion_groups_read_failed", channelId, error: String(error) }));
-    return [];
+    throw error;
   }
 }

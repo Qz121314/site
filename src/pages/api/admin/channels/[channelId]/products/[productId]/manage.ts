@@ -26,20 +26,24 @@ export const POST: APIRoute = async ({ request, params }) => {
       if (publishError) return redirectAdmin(returnUrl, { error: publishError, saved: null });
     }
 
-    const result = await env.DB.prepare(
+    const statements = [];
+    if (parsed.value.status === "published") {
+      statements.push(env.DB.prepare(
+        `UPDATE categories
+         SET status = 'published', updated_at = CURRENT_TIMESTAMP
+         WHERE id = (SELECT category_id FROM products WHERE id = ?1 AND channel_id = ?2)`,
+      ).bind(productId, channelId));
+    }
+    statements.push(env.DB.prepare(
       `UPDATE products
        SET sort_order = ?1,
            status = ?2,
            updated_at = CURRENT_TIMESTAMP
        WHERE id = ?3 AND channel_id = ?4`,
-    ).bind(
-      parsed.value.sortOrder,
-      parsed.value.status,
-      productId,
-      channelId,
-    ).run();
+    ).bind(parsed.value.sortOrder, parsed.value.status, productId, channelId));
 
-    if (!result.meta.changes) return redirectAdmin(returnUrl, { error: "not-found", saved: null });
+    const results = await env.DB.batch(statements);
+    if (!results.at(-1)?.meta.changes) return redirectAdmin(returnUrl, { error: "not-found", saved: null });
     return redirectAdmin(returnUrl, { saved: "managed", error: null });
   } catch (error) {
     console.error(JSON.stringify({ event: "admin_product_manage_failed", channelId, productId, error: String(error) }));

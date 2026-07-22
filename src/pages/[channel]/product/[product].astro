@@ -20,7 +20,7 @@ const canonical = product
     ).href
   : null;
 const primaryImage = product?.coverUrl ?? product?.gallery[0]?.imageUrl ?? site.logoUrl;
-const galleryImages = product
+const galleryImagesWithDuplicates = product
   ? [
       ...(primaryImage
         ? [{
@@ -44,11 +44,16 @@ const galleryImages = product
       })),
     ]
   : [];
+const galleryImages = Array.from(
+  new Map(galleryImagesWithDuplicates.map((image) => [image.imageUrl, image])).values(),
+);
 const contactResolveUrl = product
   ? `/go/${encodeURIComponent(product.slug)}?channel=${encodeURIComponent(product.channelSlug)}`
   : "";
 const returnUrl = product?.categorySlug
-  ? `/${encodeURIComponent(product.channelSlug)}/category/${encodeURIComponent(product.categorySlug)}`
+  ? product.hasCategoryNavigation
+    ? `/${encodeURIComponent(product.channelSlug)}/category/${encodeURIComponent(product.categorySlug)}`
+    : `/${encodeURIComponent(product.channelSlug)}?category=${encodeURIComponent(product.categorySlug)}`
   : product
     ? `/${encodeURIComponent(product.channelSlug)}`
     : `/${encodeURIComponent(channelSlug)}`;
@@ -65,7 +70,9 @@ const channelUrl = product
   : null;
 const categoryUrl = product?.categorySlug
   ? new URL(
-      `/${encodeURIComponent(product.channelSlug)}/category/${encodeURIComponent(product.categorySlug)}`,
+      product.hasCategoryNavigation
+        ? `/${encodeURIComponent(product.channelSlug)}/category/${encodeURIComponent(product.categorySlug)}`
+        : `/${encodeURIComponent(product.channelSlug)}?category=${encodeURIComponent(product.categorySlug)}`,
       Astro.url.origin,
     ).href
   : null;

@@ -50,6 +50,13 @@ function runChrome(chrome, args, outputPath = null) {
   if (outputPath) writeFileSync(outputPath, result.stdout ?? "");
 }
 
+function runCommand(command, args) {
+  const result = spawnSync(command, args, { encoding: "utf8", env: { ...process.env, FORCE_COLOR: "0" } });
+  if (result.status !== 0) {
+    throw new Error(`${command} ${args.join(" ")} failed:\n${result.stdout}\n${result.stderr}`);
+  }
+}
+
 function assertDocument(path, requirements) {
   const html = readFileSync(path, "utf8");
   for (const requirement of requirements) {
@@ -95,6 +102,10 @@ mkdirSync(LOG_DIR, { recursive: true });
 assertHeroInteractionContract();
 const chrome = findChrome();
 const userDataDir = join(tmpdir(), `site-browser-smoke-${process.pid}`);
+const persistDir = join(tmpdir(), `site-browser-smoke-d1-${process.pid}`);
+mkdirSync(persistDir, { recursive: true });
+runCommand("pnpm", ["exec", "wrangler", "d1", "migrations", "apply", "DB", "--local", "--persist-to", persistDir]);
+runCommand("pnpm", ["exec", "wrangler", "d1", "execute", "DB", "--local", "--persist-to", persistDir, "--file", "scripts/fixtures/browser-smoke.sql"]);
 const serverStdout = openSync(`${LOG_DIR}/browser-worker.log`, "w");
 const serverStderr = openSync(`${LOG_DIR}/browser-worker-error.log`, "w");
 const server = spawn("pnpm", [
@@ -104,6 +115,8 @@ const server = spawn("pnpm", [
   "--local",
   "--port",
   "8787",
+  "--persist-to",
+  persistDir,
   "--var",
   "ADMIN_PASSWORD:browser-smoke-password",
   "--var",
@@ -132,14 +145,20 @@ try {
     `--user-data-dir=${userDataDir}`,
     "--window-size=390,844",
     "--dump-dom",
-    `${ORIGIN}/`,
+    `${ORIGIN}/demo?category=people`,
   ], `${LOG_DIR}/public-browser-dom.html`);
   runChrome(chrome, [
     `--user-data-dir=${userDataDir}`,
     "--window-size=1440,1000",
     "--dump-dom",
-    `${ORIGIN}/`,
+    `${ORIGIN}/demo?category=people`,
   ], `${LOG_DIR}/public-desktop-browser-dom.html`);
+  runChrome(chrome, [
+    `--user-data-dir=${userDataDir}`,
+    "--window-size=1440,1000",
+    "--dump-dom",
+    `${ORIGIN}/demo/product/smoke-product`,
+  ], `${LOG_DIR}/public-product-browser-dom.html`);
   runChrome(chrome, [
     `--user-data-dir=${userDataDir}`,
     "--window-size=390,844",
@@ -147,9 +166,15 @@ try {
     `${ORIGIN}/admin/login`,
   ], `${LOG_DIR}/admin-login-browser-dom.html`);
 
-  assertDocument(`${LOG_DIR}/public-browser-dom.html`, ["<html", "<main"]);
-  assertDocument(`${LOG_DIR}/public-desktop-browser-dom.html`, ["<html", "<main"]);
+  assertDocument(`${LOG_DIR}/public-browser-dom.html`, ["<html", "Smoke Product", "People", "aria-current=\"page\""]);
+  assertDocument(`${LOG_DIR}/public-desktop-browser-dom.html`, ["<html", "Smoke Product", "data-hero-slide"]);
   assertRenderedHeroLinks(`${LOG_DIR}/public-desktop-browser-dom.html`);
+  assertDocument(`${LOG_DIR}/public-product-browser-dom.html`, [
+    "Smoke Product",
+    "Smoke product body",
+    "data-contact-cta",
+    "href=\"/demo?category=people\"",
+  ]);
   assertDocument(`${LOG_DIR}/admin-login-browser-dom.html`, ["<html", "<form"]);
   console.log("Headless Chrome verified public and admin entry pages, including the desktop hero link contract.");
 } finally {
@@ -157,4 +182,5 @@ try {
   await new Promise((resolve) => setTimeout(resolve, 500));
   if (server.exitCode === null) server.kill("SIGKILL");
   rmSync(userDataDir, { recursive: true, force: true });
+  rmSync(persistDir, { recursive: true, force: true });
 }

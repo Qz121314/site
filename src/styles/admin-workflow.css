@@ -80,27 +80,12 @@
   background: #eff6ff;
 }
 
-.admin-body .admin-sidebar-sublink.is-primary-action {
-  color: #1d4ed8;
-  border-color: #bfdbfe;
-  background: #eff6ff;
-}
-
-.admin-body .admin-sidebar-sublink.is-primary-action:hover,
-.admin-body .admin-sidebar-sublink.is-primary-action[aria-current="page"] {
-  color: #ffffff;
-  border-color: #2563eb;
-  background: #2563eb;
-}
-
 .admin-body .admin-sidebar-icon {
   color: currentColor;
   background: #f1f5f9;
 }
 
-.admin-body .admin-sidebar-link[aria-current="page"] .admin-sidebar-icon,
-.admin-body .admin-sidebar-sublink.is-primary-action:hover .admin-sidebar-icon,
-.admin-body .admin-sidebar-sublink.is-primary-action[aria-current="page"] .admin-sidebar-icon {
+.admin-body .admin-sidebar-link[aria-current="page"] .admin-sidebar-icon {
   background: rgba(255, 255, 255, .72);
 }
 
@@ -263,6 +248,5 @@
   .admin-channel-summary { padding-right: .25rem; }
   .admin-channel-subnav { margin-left: .8rem; }
 }
-
 
 

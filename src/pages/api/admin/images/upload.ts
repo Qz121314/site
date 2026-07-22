@@ -52,11 +52,14 @@ export const POST: APIRoute = async ({ request }) => {
   const variant = form.get("variant");
   const productVariant = variant === "product";
   const heroVariant = variant === "hero";
-  if (variant !== null && !productVariant && !heroVariant) return fail(request, "variant");
+  const logoVariant = variant === "logo";
+  const faviconVariant = variant === "favicon";
+  const responsiveVariant = productVariant || heroVariant || logoVariant || faviconVariant;
+  if (variant !== null && !responsiveVariant) return fail(request, "variant");
   if (thumbnail !== null && (!(thumbnail instanceof File) || thumbnail.size === 0)) {
     return fail(request, "thumbnail");
   }
-  if ((productVariant || heroVariant) && !(thumbnail instanceof File)) return fail(request, "thumbnail-required");
+  if (responsiveVariant && !(thumbnail instanceof File)) return fail(request, "thumbnail-required");
   if (thumbnail instanceof File && thumbnail.size > MAX_THUMBNAIL_BYTES) {
     return fail(request, "thumbnail-too-large", 413);
   }
@@ -124,7 +127,13 @@ export const POST: APIRoute = async ({ request }) => {
           width: String(inspectedThumbnail.width),
           height: String(inspectedThumbnail.height),
           originalName,
-          variant: heroVariant ? "hero-responsive" : "directory-thumbnail",
+          variant: heroVariant
+            ? "hero-responsive"
+            : logoVariant
+              ? "site-logo"
+              : faviconVariant
+                ? "site-favicon"
+                : "directory-thumbnail",
         },
       }));
     }

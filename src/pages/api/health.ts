@@ -22,8 +22,6 @@ const REQUIRED_TABLES = [
 type SchemaRow = { table_count: number };
 type ReadinessRow = {
   settings_ready: number;
-  unassigned_ad_pools: number;
-  unassigned_conversion_groups: number;
   pending_image_deletions: number;
 };
 
@@ -31,7 +29,6 @@ export const GET: APIRoute = async () => {
   let database: "ok" | "unavailable" = "ok";
   let schema: "ok" | "incomplete" | "unknown" = "unknown";
   let settings: "ok" | "missing" | "unknown" = "unknown";
-  let unassignedPools = 0;
   let pendingImageDeletions = 0;
 
   try {
@@ -48,13 +45,9 @@ export const GET: APIRoute = async () => {
       const readiness = await env.DB.prepare(
         `SELECT
            EXISTS(SELECT 1 FROM site_settings WHERE id = 1) AS settings_ready,
-           (SELECT COUNT(*) FROM ad_pools WHERE channel_id IS NULL) AS unassigned_ad_pools,
-           (SELECT COUNT(*) FROM conversion_groups WHERE channel_id IS NULL) AS unassigned_conversion_groups,
            (SELECT COUNT(*) FROM image_deletion_queue) AS pending_image_deletions`,
       ).first<ReadinessRow>();
       settings = readiness?.settings_ready ? "ok" : "missing";
-      unassignedPools = Number(readiness?.unassigned_ad_pools ?? 0)
-        + Number(readiness?.unassigned_conversion_groups ?? 0);
       pendingImageDeletions = Number(readiness?.pending_image_deletions ?? 0);
     }
   } catch (error) {
@@ -63,10 +56,9 @@ export const GET: APIRoute = async () => {
   }
 
   const ready = database === "ok" && schema === "ok" && settings === "ok";
-  const degraded = unassignedPools > 0 || pendingImageDeletions > 0;
+  const degraded = pendingImageDeletions > 0;
   const status = ready ? (degraded ? "degraded" : "ok") : "unavailable";
   const warnings = degraded ? {
-    ...(unassignedPools > 0 ? { unassignedPools } : {}),
     ...(pendingImageDeletions > 0 ? { pendingImageDeletions } : {}),
   } : undefined;
 

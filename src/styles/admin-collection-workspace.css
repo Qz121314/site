@@ -165,10 +165,6 @@
   padding: .5rem;
 }
 
-.admin-record-list.is-media {
-  grid-template-columns: repeat(auto-fill, minmax(min(100%, 18rem), 21rem));
-}
-
 .admin-record-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
@@ -279,8 +275,7 @@
     max-height: 16rem;
   }
 
-  .admin-record-list,
-  .admin-record-list.is-media {
+  .admin-record-list {
     grid-template-columns: repeat(auto-fill, minmax(min(100%, 13rem), 1fr));
   }
 }
@@ -301,8 +296,7 @@
     justify-content: flex-start;
   }
 
-  .admin-record-list,
-  .admin-record-list.is-media {
+  .admin-record-list {
     grid-template-columns: 1fr;
     padding: .4rem;
   }

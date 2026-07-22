@@ -116,6 +116,6 @@ export async function loadAdminAdPools(channelId: string): Promise<AdminAdPool[]
     }));
   } catch (error) {
     console.error(JSON.stringify({ event: "admin_ad_pools_read_failed", channelId, error: String(error) }));
-    return [];
+    throw error;
   }
 }

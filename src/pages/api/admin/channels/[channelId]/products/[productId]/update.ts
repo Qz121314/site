@@ -61,9 +61,7 @@ export const POST: APIRoute = async ({ request, params }) => {
 
     const category = await resolveProductCategory({
       channelId,
-      categoryId: null,
       categoryName: extras.categoryName,
-      productStatus: product.status,
     });
     generatedCategoryId = category.created ? category.id : null;
 
@@ -126,12 +124,26 @@ export const POST: APIRoute = async ({ request, params }) => {
             ...(filterInsert ? [env.DB.prepare(filterInsert.sql).bind(...filterInsert.bindings)] : []),
           ]
         : []),
+      ...(product.status === "published" && category.id
+        ? [env.DB.prepare(
+            `UPDATE categories
+             SET status = 'published', updated_at = CURRENT_TIMESTAMP
+             WHERE id = ?1 AND channel_id = ?2`,
+          ).bind(category.id, channelId)]
+        : []),
       ...(product.status === "published"
         ? [env.DB.prepare(
             `UPDATE products
              SET status = 'published', updated_at = CURRENT_TIMESTAMP
              WHERE id = ?1 AND channel_id = ?2`,
           ).bind(productId, channelId)]
+        : []),
+      ...(product.category_id && product.category_id !== category.id
+        ? [env.DB.prepare(
+            `DELETE FROM categories
+             WHERE id = ?1 AND channel_id = ?2
+               AND NOT EXISTS (SELECT 1 FROM products WHERE category_id = ?1)`,
+          ).bind(product.category_id, channelId)]
         : []),
     ];
 

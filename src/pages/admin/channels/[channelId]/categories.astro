@@ -1,9 +1,0 @@
----
-export const prerender = false;
-return Astro.redirect(
-  Astro.params.channelId
-    ? `/admin/channels/${encodeURIComponent(Astro.params.channelId)}/filters`
-    : "/admin/channels",
-  302,
-);
----

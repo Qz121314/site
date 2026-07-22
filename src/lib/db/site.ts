@@ -29,21 +29,6 @@ type AdminSiteSettingsRow = {
   disclaimer_content: string;
 };
 
-const defaultAdminSiteSettings = (databaseReady: boolean): AdminSiteSettings => ({
-  siteName: "Site",
-  siteDescription: "Visual recommendations, updated in real time.",
-  logoAssetId: null,
-  faviconAssetId: null,
-  defaultChannelId: null,
-  r2PublicBaseUrl: "",
-  ga4Id: "",
-  metaPixelId: "",
-  adultGateEnabled: false,
-  privacyContent: "",
-  disclaimerContent: "",
-  databaseReady,
-});
-
 export async function loadAdminSiteSettings(): Promise<AdminSiteSettings> {
   try {
     const row = await env.DB.prepare(
@@ -63,7 +48,7 @@ export async function loadAdminSiteSettings(): Promise<AdminSiteSettings> {
        WHERE id = 1`,
     ).first<AdminSiteSettingsRow>();
 
-    if (!row) return defaultAdminSiteSettings(true);
+    if (!row) throw new Error("site_settings row is missing");
 
     return {
       siteName: row.site_name,
@@ -81,7 +66,7 @@ export async function loadAdminSiteSettings(): Promise<AdminSiteSettings> {
     };
   } catch (error) {
     console.error(JSON.stringify({ event: "admin_site_settings_read_failed", error: String(error) }));
-    return defaultAdminSiteSettings(false);
+    throw error;
   }
 }
 
@@ -125,7 +110,7 @@ export async function loadAdminChannels(): Promise<AdminChannel[]> {
     return result.results.map(mapAdminChannel);
   } catch (error) {
     console.error(JSON.stringify({ event: "admin_channels_read_failed", error: String(error) }));
-    return [];
+    throw error;
   }
 }
 
@@ -140,7 +125,7 @@ export async function loadAdminChannel(channelId: string): Promise<AdminChannel 
     return row ? mapAdminChannel(row) : null;
   } catch (error) {
     console.error(JSON.stringify({ event: "admin_channel_read_failed", channelId, error: String(error) }));
-    return null;
+    throw error;
   }
 }
 
@@ -193,6 +178,6 @@ export async function loadAdminCategoryFilters(channelId: string): Promise<Admin
     }));
   } catch (error) {
     console.error(JSON.stringify({ event: "admin_category_filters_read_failed", channelId, error: String(error) }));
-    return [];
+    throw error;
   }
 }

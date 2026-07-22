@@ -17,10 +17,22 @@ export const POST: APIRoute = async ({ request, params }) => {
   const returnUrl = adminReturnUrl(request, form, fallbackPath);
 
   try {
-    const result = await env.DB.prepare(
-      "DELETE FROM products WHERE id = ?1 AND channel_id = ?2",
-    ).bind(productId, channelId).run();
-    if (!result.meta.changes) return redirectAdmin(returnUrl, { error: "not-found", saved: null });
+    const product = await env.DB.prepare(
+      "SELECT category_id FROM products WHERE id = ?1 AND channel_id = ?2",
+    ).bind(productId, channelId).first<{ category_id: string | null }>();
+    if (!product) return redirectAdmin(returnUrl, { error: "not-found", saved: null });
+
+    const statements = [
+      env.DB.prepare("DELETE FROM products WHERE id = ?1 AND channel_id = ?2").bind(productId, channelId),
+    ];
+    if (product.category_id) {
+      statements.push(env.DB.prepare(
+        `DELETE FROM categories
+         WHERE id = ?1 AND channel_id = ?2
+           AND NOT EXISTS (SELECT 1 FROM products WHERE category_id = ?1)`,
+      ).bind(product.category_id, channelId));
+    }
+    await env.DB.batch(statements);
 
     if (returnUrl.searchParams.get("edit") === productId) returnUrl.searchParams.delete("edit");
     return redirectAdmin(returnUrl, { saved: "deleted", error: null });

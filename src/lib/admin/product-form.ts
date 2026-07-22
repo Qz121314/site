@@ -34,12 +34,12 @@ export type ProductManagementErrorCode = "sort" | "status";
 
 export type ProductRelationErrorCode =
   | "category"
-  | "category-unavailable"
   | "conversion"
   | "conversion-required"
-  | "conversion-unavailable";
+  | "conversion-unavailable"
+  | "r2-url";
 
-export type ProductPublishErrorCode = ProductRelationErrorCode | "image" | "not-found";
+export type ProductPublishErrorCode = ProductRelationErrorCode | "image" | "not-found" | "r2-url";
 
 export type ProductContentResult =
   | { ok: true; value: ProductContentValue }
@@ -142,13 +142,19 @@ export async function validateProductRelations(
   conversionGroupId: string | null,
   status: ProductStatus,
 ): Promise<ProductRelationErrorCode | null> {
+  if (status === "published") {
+    const settings = await env.DB.prepare(
+      "SELECT r2_public_base_url FROM site_settings WHERE id = 1",
+    ).first<{ r2_public_base_url: string }>();
+    if (!settings?.r2_public_base_url.trim()) return "r2-url";
+  }
+
   if (categoryId) {
     const category = await env.DB.prepare(
       "SELECT status FROM categories WHERE id = ?1 AND channel_id = ?2",
     ).bind(categoryId, channelId).first<{ status: string }>();
 
     if (!category) return "category";
-    if (status === "published" && category.status !== "published") return "category-unavailable";
   }
 
   if (!conversionGroupId) {
@@ -179,26 +185,23 @@ export async function prepareProductPublishing(
     `SELECT
        p.category_id,
        p.conversion_group_id,
+       p.cover_asset_id,
+       settings.r2_public_base_url,
        EXISTS(SELECT 1 FROM product_images pi WHERE pi.product_id = p.id) AS has_image
      FROM products p
+     LEFT JOIN site_settings settings ON settings.id = 1
      WHERE p.id = ?1 AND p.channel_id = ?2`,
   ).bind(productId, channelId).first<{
     category_id: string | null;
     conversion_group_id: string | null;
+    cover_asset_id: string | null;
+    r2_public_base_url: string | null;
     has_image: number;
   }>();
 
   if (!product) return "not-found";
-  if (Number(product.has_image ?? 0) !== 1) return "image";
-
-  if (product.category_id) {
-    await env.DB.prepare(
-      `UPDATE categories
-       SET status = 'published',
-           updated_at = CURRENT_TIMESTAMP
-       WHERE id = ?1 AND channel_id = ?2`,
-    ).bind(product.category_id, channelId).run();
-  }
+  if (!product.r2_public_base_url?.trim()) return "r2-url";
+  if (!product.cover_asset_id || Number(product.has_image ?? 0) !== 1) return "image";
 
   return validateProductRelations(
     channelId,

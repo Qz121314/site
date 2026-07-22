@@ -18,9 +18,9 @@ const formId = "site-settings-form";
 const errorMessages: Record<string, string> = {
   "site-name": "网站名称不能为空，且不能超过 80 个字符。",
   description: "网站描述不能超过 300 个字符。",
-  "default-channel": "默认分区不存在，请重新选择。",
+  "default-channel": "默认分区必须是已发布分区，请重新选择。",
   image: "Logo 或 Favicon 图片记录无效，请重新上传。",
-  "r2-url": "R2 公开域名必须是完整的 HTTPS 域名，不能包含路径、参数或账号信息。",
+  "r2-url": "R2 图片公开域名为必填项，必须是完整的 HTTPS 域名，不能包含路径或参数。",
   ga4: "GA4 Measurement ID 格式无效，例如 G-XXXXXXXXXX。",
   meta: "Meta Pixel ID 只能包含 5 至 30 位数字。",
   privacy: "隐私政策内容不能超过 20000 个字符。",
@@ -67,7 +67,7 @@ const errorMessages: Record<string, string> = {
           <label for="default-channel">默认分区</label>
           <select id="default-channel" name="defaultChannelId">
             <option value="">未设置</option>
-            {channels.map((channel) => (
+            {channels.filter((channel) => channel.status === "published").map((channel) => (
               <option value={channel.id} selected={settings.defaultChannelId === channel.id}>{channel.name}</option>
             ))}
           </select>
@@ -82,6 +82,7 @@ const errorMessages: Record<string, string> = {
             maxlength="240"
             inputmode="url"
             placeholder="https://media.example.com"
+            required
             value={settings.r2PublicBaseUrl}
           />
           <small>先在 Cloudflare R2 绑定自定义域名，再录入此处；数据库只保存图片 Object Key。</small>
@@ -113,6 +114,7 @@ const errorMessages: Record<string, string> = {
           label="Logo"
           form={formId}
           value={settings.logoAssetId}
+          assetVariant="logo"
           help="未上传时前台只显示网站名称；建议使用横向或方形透明图片。"
         />
         <DirectImageUpload
@@ -121,6 +123,7 @@ const errorMessages: Record<string, string> = {
           label="Favicon"
           form={formId}
           value={settings.faviconAssetId}
+          assetVariant="favicon"
           help="建议使用方形图片，浏览器会自动缩放。"
         />
       </div>
