@@ -45,10 +45,19 @@ VALUES (
 INSERT INTO image_assets (
   id, object_key, original_name, mime_type, width, height, size_bytes,
   thumbnail_object_key, thumbnail_width, thumbnail_height, thumbnail_size_bytes
-) VALUES
-  ('40000000-0000-4000-8000-000000000001', 'smoke/product.webp', 'Product', 'image/webp', 900, 1200, 1000, 'smoke/product-thumb.webp', 360, 480, 500),
-  ('40000000-0000-4000-8000-000000000002', 'smoke/hero-a.webp', 'Hero A', 'image/webp', 1200, 700, 1000, 'smoke/hero-a-responsive.webp', 960, 560, 500),
-  ('40000000-0000-4000-8000-000000000003', 'smoke/hero-b.webp', 'Hero B', 'image/webp', 1200, 700, 1000, 'smoke/hero-b-responsive.webp', 960, 560, 500);
+) VALUES (
+  '40000000-0000-4000-8000-000000000001',
+  'smoke/product.webp',
+  'Product',
+  'image/webp',
+  900,
+  1200,
+  1000,
+  'smoke/product-thumb.webp',
+  360,
+  480,
+  500
+);
 
 INSERT INTO products (
   id, channel_id, category_id, conversion_group_id, cover_asset_id,
@@ -80,20 +89,56 @@ UPDATE products
 SET status = 'published'
 WHERE id = '50000000-0000-4000-8000-000000000001';
 
-INSERT INTO ad_pools (id, channel_id, name, status)
-VALUES (
-  '60000000-0000-4000-8000-000000000001',
-  '10000000-0000-4000-8000-000000000001',
-  'Hero',
-  'enabled'
-);
+INSERT INTO ad_pools (id, channel_id, name, device_type, status)
+VALUES
+  (
+    '60000000-0000-4000-8000-000000000001',
+    '10000000-0000-4000-8000-000000000001',
+    'Mobile Affiliate Ads',
+    'mobile',
+    'enabled'
+  ),
+  (
+    '60000000-0000-4000-8000-000000000002',
+    '10000000-0000-4000-8000-000000000001',
+    'Desktop Affiliate Ads',
+    'desktop',
+    'enabled'
+  );
 
 INSERT INTO advertisements (
-  id, pool_id, image_asset_id, target_url, open_mode, sort_order, status
+  id,
+  pool_id,
+  name,
+  display_type,
+  creative_type,
+  embed_code,
+  declared_width,
+  declared_height,
+  open_mode,
+  status
 ) VALUES
-  ('61000000-0000-4000-8000-000000000001', '60000000-0000-4000-8000-000000000001', '40000000-0000-4000-8000-000000000002', 'https://example.com/a', 'same', 10, 'enabled'),
-  ('61000000-0000-4000-8000-000000000002', '60000000-0000-4000-8000-000000000001', '40000000-0000-4000-8000-000000000003', 'https://example.com/b', 'same', 20, 'enabled');
-
-UPDATE channels
-SET hero_ad_pool_id = '60000000-0000-4000-8000-000000000001'
-WHERE id = '10000000-0000-4000-8000-000000000001';
+  (
+    '61000000-0000-4000-8000-000000000001',
+    '60000000-0000-4000-8000-000000000001',
+    'Mobile Smoke Banner',
+    'banner',
+    'embed_code',
+    '<div data-smoke-affiliate style="box-sizing:border-box;width:300px;height:100px;display:grid;place-items:center;font:700 18px sans-serif;background:#eee;color:#111">Mobile Smoke Ad</div>',
+    300,
+    100,
+    'new',
+    'enabled'
+  ),
+  (
+    '61000000-0000-4000-8000-000000000002',
+    '60000000-0000-4000-8000-000000000002',
+    'Desktop Smoke Banner',
+    'banner',
+    'embed_code',
+    '<div data-smoke-affiliate style="box-sizing:border-box;width:970px;height:90px;display:grid;place-items:center;font:700 18px sans-serif;background:#eee;color:#111">Desktop Smoke Ad</div>',
+    970,
+    90,
+    'new',
+    'enabled'
+  );
