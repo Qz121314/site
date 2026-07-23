@@ -94,8 +94,9 @@ test("channels without effective category groups degrade categories into product
   assert.ok(productDirectoryPosition > categoryFilterPosition);
   assert.match(channel, /hasCategoryNavigation = categoryGroups\.length > 0/u);
   assert.match(channel, /categoryId: selectedCategory\?\.id \?\? null/u);
-  assert.match(categoryPage, /hasPublicCategoryNavigation\(channel\.id\)/u);
-  assert.match(categoryPage, /category && !hasCategoryNavigation/u);
+  assert.match(categoryPage, /buildEffectiveCategoryGroups\(filters, categories\)/u);
+  assert.match(categoryPage, /categoryGroups\.length > 0/u);
+  assert.match(categoryPage, /channel && category && !hasCategoryNavigation/u);
   assert.match(directory, /data-preserve-category-query=/u);
   assert.match(directoryScript, /url\.searchParams\.set\("category", categorySlug\)/u);
   assert.match(directoryScript, /sessionStorage\.setItem/u);
