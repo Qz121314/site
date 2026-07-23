@@ -18,11 +18,6 @@ export const POST: APIRoute = async ({ request, params }) => {
   if (!channelId || !poolId) return new Response("Not Found", { status: 404 });
 
   try {
-    const bound = await env.DB.prepare(
-      "SELECT id FROM channels WHERE id = ?1 AND hero_ad_pool_id = ?2",
-    ).bind(channelId, poolId).first<{ id: string }>();
-    if (bound) return redirect(request, channelId, { error: "in-use" });
-
     const result = await env.DB.prepare(
       "DELETE FROM ad_pools WHERE id = ?1 AND channel_id = ?2",
     ).bind(poolId, channelId).run();
@@ -31,6 +26,6 @@ export const POST: APIRoute = async ({ request, params }) => {
     return redirect(request, channelId, { saved: "pool-deleted" });
   } catch (error) {
     console.error(JSON.stringify({ event: "admin_ad_pool_delete_failed", channelId, poolId, error: String(error) }));
-    return redirect(request, channelId, { error: "database" });
+    return redirect(request, channelId, { error: "database", pool: poolId });
   }
 };
