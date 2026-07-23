@@ -38,8 +38,7 @@ if (section) {
     });
 
     groupRows.forEach((row) => {
-      const items = row.querySelector<HTMLElement>(".category-group-items");
-      if (items) items.hidden = Boolean(filterId && row.dataset.categoryGroupRow !== filterId);
+      row.hidden = Boolean(filterId && row.dataset.categoryGroupRow !== filterId);
     });
   };
 

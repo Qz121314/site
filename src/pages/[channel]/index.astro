@@ -32,6 +32,8 @@ const categories = loadedCategories;
 const categoryGroups = buildEffectiveCategoryGroups(filters, categories);
 const activeFilters = categoryGroups.map(({ filter }) => filter);
 const hasCategoryNavigation = categoryGroups.length > 0;
+const categoryFilterColumns = Math.min(Math.max(activeFilters.length, 1), 4);
+const categoryFilterStyle = `--category-filter-columns: ${categoryFilterColumns}`;
 const selectedCategory = !hasCategoryNavigation && requestedCategorySlug
   ? categories.find((category) => category.slug === requestedCategorySlug) ?? null
   : null;
@@ -105,13 +107,22 @@ const adSurface = hasCategoryNavigation
         <section class="public-section category-section" data-category-section>
           <div class="category-mobile-directory" data-category-mobile>
             {activeFilters.length > 0 && (
-              <div class="filter-strip" aria-label="Category filters">
+              <nav
+                class="category-filter-bar"
+                aria-label="Category filters"
+                style={categoryFilterStyle}
+              >
                 {activeFilters.map((filter) => (
-                  <button class="filter-button" type="button" data-category-filter={filter.id} aria-pressed="false">
-                    {filter.name}
+                  <button
+                    class="category-filter-button"
+                    type="button"
+                    data-category-filter={filter.id}
+                    aria-pressed="false"
+                  >
+                    <span>{filter.name}</span>
                   </button>
                 ))}
-              </div>
+              </nav>
             )}
 
             <div class="category-grid" data-category-grid>
@@ -121,35 +132,48 @@ const adSurface = hasCategoryNavigation
           </div>
 
           <div class="category-grouped-directory" aria-label="Categories by filter">
-            {categoryGroups.map(({ filter, categories: groupedCategories }) => (
-              <section class="category-group-row" data-category-group-row={filter.id} aria-labelledby={`category-group-${filter.id}`}>
-                <button
-                  class="filter-button category-group-label category-group-filter"
-                  id={`category-group-${filter.id}`}
-                  type="button"
-                  data-category-group-filter={filter.id}
-                  aria-pressed="false"
-                >
-                  {filter.name}
-                </button>
-                <div class="category-group-items">
-                  {groupedCategories.map((category) => (
-                    <CategoryCard category={category} channelSlug={channel.slug} />
-                  ))}
-                </div>
-              </section>
-            ))}
-
-            {ungroupedCategories.length > 0 && (
-              <section class="category-group-row" data-category-group-row="" aria-labelledby="category-group-other">
-                <h2 class="category-group-label category-group-label-static" id="category-group-other">Categories</h2>
-                <div class="category-group-items">
-                  {ungroupedCategories.map((category) => (
-                    <CategoryCard category={category} channelSlug={channel.slug} />
-                  ))}
-                </div>
-              </section>
+            {activeFilters.length > 0 && (
+              <nav
+                class="category-filter-bar category-filter-bar-desktop"
+                aria-label="Category filters"
+                style={categoryFilterStyle}
+              >
+                {activeFilters.map((filter) => (
+                  <button
+                    class="category-filter-button"
+                    type="button"
+                    data-category-group-filter={filter.id}
+                    aria-pressed="false"
+                  >
+                    <span>{filter.name}</span>
+                  </button>
+                ))}
+              </nav>
             )}
+
+            <div class="category-group-list">
+              {categoryGroups.map(({ filter, categories: groupedCategories }) => (
+                <section class="category-group-row" data-category-group-row={filter.id} aria-labelledby={`category-group-${filter.id}`}>
+                  <h2 class="category-group-heading" id={`category-group-${filter.id}`}>{filter.name}</h2>
+                  <div class="category-group-items">
+                    {groupedCategories.map((category) => (
+                      <CategoryCard category={category} channelSlug={channel.slug} />
+                    ))}
+                  </div>
+                </section>
+              ))}
+
+              {ungroupedCategories.length > 0 && (
+                <section class="category-group-row" data-category-group-row="" aria-labelledby="category-group-other">
+                  <h2 class="category-group-heading" id="category-group-other">Categories</h2>
+                  <div class="category-group-items">
+                    {ungroupedCategories.map((category) => (
+                      <CategoryCard category={category} channelSlug={channel.slug} />
+                    ))}
+                  </div>
+                </section>
+              )}
+            </div>
           </div>
         </section>
       )}
