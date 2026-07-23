@@ -13,9 +13,11 @@ test("tablet and desktop channel pages keep distinct category grids and affiliat
   ]);
 
   assert.match(channel, /categoryGroups = buildEffectiveCategoryGroups\(filters, categories\)/u);
+  assert.match(channel, /class="category-filter-bar category-filter-bar-desktop"/u);
   assert.match(channel, /class="category-group-row"/u);
-  assert.match(channel, /class="filter-button category-group-label category-group-filter"/u);
+  assert.match(channel, /class="category-group-heading"/u);
   assert.match(channel, /data-category-group-filter=\{filter\.id\}/u);
+  assert.doesNotMatch(channel, /class="filter-button category-group-label category-group-filter"/u);
   assert.match(channel, /ungroupedCategories/u);
   assert.match(channel, /surface=\{adSurface\}/u);
   assert.doesNotMatch(layout, /public-header-channel-name/u);
