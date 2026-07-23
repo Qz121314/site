@@ -97,7 +97,8 @@ test("only pages with a parent route provide back navigation", async () => {
   assert.doesNotMatch(channel, /backHref=/u);
   assert.match(category, /backHref=\{returnUrl\}/u);
   assert.match(product, /backHref=\{product \? returnUrl : null\}/u);
-  assert.match(search, /<PublicPageHeader[\s\S]*?href=\{`\/\$\{encodeURIComponent\(channel\.slug\)\}`\}/u);
+  assert.match(search, /const returnUrl = channel \? `\/\$\{encodeURIComponent\(channel\.slug\)\}` : null/u);
+  assert.match(search, /backHref=\{returnUrl\}/u);
   assert.match(privacy, /backHref="\/"/u);
   assert.match(disclaimer, /backHref="\/"/u);
 });

@@ -28,21 +28,24 @@ test("tablet and desktop channel pages expose grouped category rows and two Hero
   assert.match(styles, /\.category-group-items[\s\S]*?repeat\(3, minmax\(0, 1fr\)\)/u);
 });
 
-test("catalog and product detail pages use the shared tablet horizontal composition", async () => {
-  const [category, product, gallery, styles] = await Promise.all([
+test("catalog titles and product detail pages use the shared tablet composition", async () => {
+  const [category, product, gallery, styles, headerStyles] = await Promise.all([
     readFile(new URL("../src/pages/[channel]/category/[category].astro", import.meta.url), "utf8"),
     readFile(new URL("../src/pages/[channel]/product/[product].astro", import.meta.url), "utf8"),
     readFile(new URL("../src/components/public/ProductGallery.astro", import.meta.url), "utf8"),
     readFile(new URL("../src/styles/public-desktop.css", import.meta.url), "utf8"),
+    readFile(new URL("../src/styles/public-header-refinement.css", import.meta.url), "utf8"),
   ]);
 
   assert.match(category, /class="directory-page-layout"/u);
-  assert.match(category, /class="directory-page-sidebar"/u);
+  assert.match(category, /class="directory-page-title"/u);
+  assert.doesNotMatch(category, /class="directory-page-sidebar"/u);
   assert.match(product, /class="product-detail-media"/u);
   assert.match(product, /class="product-detail-information"/u);
   assert.match(gallery, /uniqueImages\.length > 1 && "has-thumbnails"/u);
   assert.match(styles, /\.directory-page-layout \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\)/u);
-  assert.match(styles, /\.directory-page-sidebar \{[\s\S]*?minmax\(12rem, 1fr\) minmax\(0, 2fr\)/u);
+  assert.match(styles, /\.directory-page-layout \.product-grid,[\s\S]*?repeat\(3, minmax\(0, 1fr\)\)/u);
+  assert.match(headerStyles, /\.directory-page-title,[\s\S]*?justify-items: center !important/u);
   assert.match(styles, /\.product-detail \{[\s\S]*?grid-template-columns:/u);
   assert.match(styles, /\.product-detail-media \{[\s\S]*?grid-column: 1/u);
   assert.match(styles, /\.product-gallery\.has-thumbnails[\s\S]*?grid-template-columns: minmax\(0, 1fr\) 4\.75rem/u);

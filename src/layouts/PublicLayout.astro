@@ -2,7 +2,7 @@
 import "@/styles/public-system.css";
 import ChannelNavigation from "@/components/public/ChannelNavigation.astro";
 import PublicBackLink from "@/components/public/PublicBackLink.astro";
-import PublicSearchForm from "@/components/public/PublicSearchForm.astro";
+import PublicHeaderSearch from "@/components/public/PublicHeaderSearch.astro";
 import type { PublicSiteShell } from "@/lib/db/public";
 
 interface Props {
@@ -47,8 +47,8 @@ const metaPixelId = site.metaPixelId;
 const structuredDataJson = structuredData
   ? JSON.stringify(structuredData).replaceAll("<", "\\u003c")
   : null;
-const showSubpageHeader = Boolean(backHref && !showChannelNavigation);
-const headerSearchAction = !showSubpageHeader && activeChannel
+const hasBack = Boolean(backHref);
+const headerSearchAction = activeChannel
   ? `/${encodeURIComponent(activeChannel)}/search`
   : null;
 const headerSearchValue = headerSearchAction && Astro.url.pathname.endsWith("/search")
@@ -154,47 +154,63 @@ const headerSearchValue = headerSearchAction && Astro.url.pathname.endsWith("/se
       </noscript>
     )}
 
-    <header class:list={["public-header", showSubpageHeader && "public-header-subpage"]}>
-      <div class:list={[
-        "public-container",
-        "public-header-inner",
-        showSubpageHeader ? "public-header-inner-subpage" : "public-header-inner-catalog",
-      ]}>
-        {showSubpageHeader ? (
-          <>
-            <div class="public-header-leading">
+    <header class="public-header" data-public-header data-search-open="false">
+      <div class="public-container public-header-shell">
+        <div class="public-header-default" data-header-default>
+          <div class="public-header-leading">
+            {hasBack ? (
               <PublicBackLink href={backHref ?? "/"} />
-            </div>
-            <a class="public-brand public-brand-centered" href="/" aria-label={`${site.siteName} home`}>
-              {site.logoUrl ? (
-                <img class="public-brand-logo" src={site.logoUrl} alt="" decoding="async" />
-              ) : (
-                <span class="public-brand-name">{site.siteName}</span>
-              )}
-            </a>
-            <span class="public-header-balance" aria-hidden="true"></span>
-          </>
-        ) : (
-          <>
-            <a class="public-brand" href="/" aria-label={`${site.siteName} home`}>
-              {site.logoUrl ? (
-                <img class="public-brand-logo" src={site.logoUrl} alt="" decoding="async" />
-              ) : (
-                <span class="public-brand-name">{site.siteName}</span>
-              )}
-            </a>
-
-            {headerSearchAction && (
-              <div class="public-header-search">
-                <PublicSearchForm
-                  action={headerSearchAction}
-                  ariaLabel={`Search ${site.siteName}`}
-                  value={headerSearchValue}
-                  autofocus={Astro.url.pathname.endsWith("/search") && !headerSearchValue}
-                />
-              </div>
+            ) : (
+              <details class="public-menu" data-public-menu>
+                <summary class="public-menu-trigger" aria-label="Open site menu">
+                  <span aria-hidden="true"></span>
+                  <span aria-hidden="true"></span>
+                  <span aria-hidden="true"></span>
+                </summary>
+                <nav class="public-menu-panel" aria-label="Site links">
+                  <a href="/privacy">Privacy</a>
+                  <a href="/disclaimer">Disclaimer</a>
+                </nav>
+              </details>
             )}
-          </>
+          </div>
+
+          <a class="public-brand public-brand-centered" href="/" aria-label={`${site.siteName} home`}>
+            {site.logoUrl ? (
+              <img class="public-brand-logo" src={site.logoUrl} alt="" decoding="async" />
+            ) : (
+              <span class="public-brand-name">{site.siteName}</span>
+            )}
+          </a>
+
+          <div class="public-header-trailing">
+            {headerSearchAction ? (
+              <button
+                class="public-header-search-trigger"
+                type="button"
+                aria-label="Open search"
+                aria-expanded="false"
+                data-header-search-open
+              >
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="1.7" />
+                  <path d="m16 16 4 4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.7" />
+                </svg>
+              </button>
+            ) : (
+              <span class="public-header-balance" aria-hidden="true"></span>
+            )}
+          </div>
+        </div>
+
+        {headerSearchAction && (
+          <div class="public-header-search-layer" data-header-search-layer aria-hidden="true" inert>
+            <PublicHeaderSearch
+              action={headerSearchAction}
+              ariaLabel={`Search ${site.siteName}`}
+              value={headerSearchValue}
+            />
+          </div>
         )}
       </div>
     </header>
@@ -202,12 +218,6 @@ const headerSearchValue = headerSearchAction && Astro.url.pathname.endsWith("/se
     <main class="public-container public-main">
       <slot />
     </main>
-
-    <footer class="public-container public-footer">
-      <a href="/privacy">Privacy</a>
-      <span aria-hidden="true">·</span>
-      <a href="/disclaimer">Disclaimer</a>
-    </footer>
 
     {showChannelNavigation && <ChannelNavigation channels={site.channels} activeChannel={activeChannel} />}
 
@@ -292,6 +302,7 @@ const headerSearchValue = headerSearchAction && Astro.url.pathname.endsWith("/se
   }
 
   .public-search-form input,
+  .public-header-search-form input,
   .public-button,
   .filter-button,
   .category-entry,
@@ -311,7 +322,8 @@ const headerSearchValue = headerSearchAction && Astro.url.pathname.endsWith("/se
     letter-spacing: .02em;
   }
 
-  .public-search-form input {
+  .public-search-form input,
+  .public-header-search-form input {
     font-weight: 500;
   }
 
