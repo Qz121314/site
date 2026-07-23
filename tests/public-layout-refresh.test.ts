@@ -3,10 +3,11 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 test("catalog pages use a compact header search and footer policy links", async () => {
-  const [layout, system, refresh] = await Promise.all([
+  const [layout, system, refresh, categoryPolish] = await Promise.all([
     readFile(new URL("../src/layouts/PublicLayout.astro", import.meta.url), "utf8"),
     readFile(new URL("../src/styles/public-system.css", import.meta.url), "utf8"),
     readFile(new URL("../src/styles/public-layout-refresh.css", import.meta.url), "utf8"),
+    readFile(new URL("../src/styles/public-category-polish.css", import.meta.url), "utf8"),
   ]);
 
   assert.match(layout, /import PublicSearchForm/u);
@@ -19,8 +20,12 @@ test("catalog pages use a compact header search and footer policy links", async 
   assert.match(layout, /href="\/disclaimer"/u);
   assert.match(system, /@import "\.\/public-layout-refresh\.css";/u);
   assert.match(system, /@import "\.\/public-gallery-rail\.css";/u);
+  assert.match(system, /@import "\.\/public-category-polish\.css";/u);
   assert.match(refresh, /\.channel-search-section > \.public-search-form/u);
   assert.match(refresh, /\.directory-search-section/u);
+  assert.match(categoryPolish, /\.category-mobile-directory \{[\s\S]*?gap: \.9rem/u);
+  assert.match(categoryPolish, /\.category-entry-label \{[\s\S]*?color: #fff/u);
+  assert.match(categoryPolish, /\.category-entry-arrow \{[\s\S]*?color: #fff/u);
 });
 
 test("product detail pages place the gallery before the title and keep thumbnails beside the main image on every viewport", async () => {
