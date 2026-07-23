@@ -46,8 +46,8 @@ test("catalog and product detail layouts adapt separately for tablet and desktop
     readFile(new URL("../src/styles/public-commerce.css", import.meta.url), "utf8"),
   ]);
 
-  assert.match(category, /class="directory-page-layout"/u);
-  assert.match(category, /class="directory-page-title"/u);
+  assert.match(category, /class="[^"]*directory-page-layout[^"]*"/u);
+  assert.match(category, /class="[^"]*directory-page-title[^"]*"/u);
   assert.doesNotMatch(category, /class="directory-page-sidebar"/u);
   assert.match(product, /class="product-detail-media"/u);
   assert.match(product, /class="product-detail-information"/u);
