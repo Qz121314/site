@@ -1,6 +1,6 @@
 /*
  * Public visual system entrypoint.
- * Reset → structure → visual system → loading motion → wide layouts → fixed detail CTA → final layout refinement.
+ * Reset → structure → visual system → loading motion → wide layouts → fixed detail CTA → final layout refinement → gallery rail.
  */
 @import "./public-base.css";
 @import "./public.css";
@@ -9,3 +9,4 @@
 @import "./public-desktop.css";
 @import "./public-detail-cta.css";
 @import "./public-layout-refresh.css";
+@import "./public-gallery-rail.css";
