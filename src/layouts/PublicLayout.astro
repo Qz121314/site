@@ -187,6 +187,19 @@ const currentYear = new Date().getUTCFullYear();
             )}
           </a>
 
+          <nav class="public-header-desktop-nav" aria-label="Primary navigation">
+            {site.channels.map((channel) => (
+              <a
+                href={`/${encodeURIComponent(channel.slug)}`}
+                aria-current={activeChannel === channel.slug ? "page" : undefined}
+              >
+                {channel.name}
+              </a>
+            ))}
+            <a href="/privacy">Privacy</a>
+            <a href="/disclaimer">Disclaimer</a>
+          </nav>
+
           <div class="public-header-trailing">
             {headerSearchAction ? (
               <button
@@ -283,5 +296,77 @@ const currentYear = new Date().getUTCFullYear();
   .public-body select,
   .public-body summary {
     font: inherit;
+  }
+
+  .public-header-desktop-nav {
+    display: none;
+  }
+
+  @media (min-width: 768px) {
+    .public-header-default {
+      display: flex;
+      align-items: center;
+      gap: clamp(.8rem, 2vw, 1.5rem);
+    }
+
+    .public-header-leading {
+      display: none;
+    }
+
+    .public-header-default .public-brand-centered {
+      max-width: min(20rem, 28vw);
+      flex: 0 1 auto;
+      justify-self: auto;
+    }
+
+    .public-header-default .public-brand-logo {
+      object-position: left center;
+    }
+
+    .public-header-default .public-brand-name {
+      max-width: min(20rem, 28vw);
+      text-align: left;
+    }
+
+    .public-header-desktop-nav {
+      display: flex;
+      min-width: 0;
+      flex: 1 1 auto;
+      align-items: center;
+      justify-content: flex-end;
+      gap: .15rem;
+      overflow-x: auto;
+      scrollbar-width: none;
+    }
+
+    .public-header-desktop-nav::-webkit-scrollbar {
+      display: none;
+    }
+
+    .public-header-desktop-nav a {
+      flex: 0 0 auto;
+      border-radius: .4rem;
+      padding: .55rem .65rem;
+      color: var(--text-2);
+      font-size: .78rem;
+      font-weight: 650;
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    .public-header-desktop-nav a:hover,
+    .public-header-desktop-nav a[aria-current="page"] {
+      color: var(--text-1);
+      background: var(--surface-2);
+    }
+
+    .public-header-desktop-nav a[aria-current="page"] {
+      font-weight: 780;
+    }
+
+    .public-header-trailing {
+      flex: 0 0 auto;
+      margin-left: -.15rem;
+    }
   }
 </style>
