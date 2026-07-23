@@ -3,11 +3,12 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 test("form image selection stays local until the user saves", async () => {
-  const [component, uploader, workspace, gallery] = await Promise.all([
+  const [component, uploader, workspace, gallery, uploadApi] = await Promise.all([
     readFile(new URL("../src/components/admin/DirectImageUpload.astro", import.meta.url), "utf8"),
     readFile(new URL("../src/scripts/admin-direct-image-upload.ts", import.meta.url), "utf8"),
     readFile(new URL("../src/scripts/admin-collection-workspace.ts", import.meta.url), "utf8"),
     readFile(new URL("../src/components/admin/ProductGalleryUpload.astro", import.meta.url), "utf8"),
+    readFile(new URL("../src/pages/api/admin/images/upload.ts", import.meta.url), "utf8"),
   ]);
 
   assert.match(component, /import "@\/scripts\/admin-direct-image-upload"/u);
@@ -40,4 +41,8 @@ test("form image selection stays local until the user saves", async () => {
   assert.match(gallery, /item\.dataset\.uploadOrder = String\(index\)/u);
   assert.match(gallery, /field\.dataset\.uploadOrder = String\(index\)/u);
   assert.match(gallery, /values\.appendChild\(field\)/u);
+
+  assert.match(uploadApi, /env\.MEDIA_BUCKET\.put\(objectKey/u);
+  assert.match(uploadApi, /INSERT INTO image_assets/u);
+  assert.match(uploadApi, /catch \(error\) \{[\s\S]*env\.MEDIA_BUCKET\.delete/u);
 });
