@@ -96,7 +96,7 @@ FROM advertisements_affiliate;
 DROP TABLE advertisements_affiliate;
 
 CREATE INDEX idx_advertisements_pool_status_type
-ON advertisements(pool_id, status, display_type, created_at);
+ON advertisements(pool_id, status, display_type, id);
 
 CREATE INDEX idx_advertisements_image_asset
 ON advertisements(image_asset_id)
