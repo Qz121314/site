@@ -3,6 +3,7 @@ export {};
 type AffiliateAdSurface = "channel" | "catalog" | "channel-catalog" | "search";
 type DisplayType = "banner" | "vertical" | "modal";
 type CreativeType = "uploaded_image" | "external_media" | "embed_code";
+type AdDevice = "mobile" | "desktop";
 
 type AffiliateAdContext = {
   channelSlug: string;
@@ -15,6 +16,7 @@ type AffiliateAdvertisement = {
   displayType: DisplayType;
   creativeType: CreativeType;
   imageUrl: string | null;
+  fallbackImageUrl: string | null;
   mediaUrl: string;
   embedCode: string;
   targetUrl: string;
@@ -47,6 +49,7 @@ function validAdvertisement(value: unknown): value is AffiliateAdvertisement {
     && ["banner", "vertical", "modal"].includes(String(ad.displayType))
     && ["uploaded_image", "external_media", "embed_code"].includes(String(ad.creativeType))
     && (ad.imageUrl === null || typeof ad.imageUrl === "string")
+    && (ad.fallbackImageUrl === null || typeof ad.fallbackImageUrl === "string")
     && typeof ad.mediaUrl === "string"
     && typeof ad.embedCode === "string"
     && typeof ad.targetUrl === "string"
@@ -73,38 +76,25 @@ function parseContext(node: HTMLScriptElement): AffiliateAdContext | null {
   }
 }
 
-function currentDevice(): "mobile" | "desktop" {
+function currentDevice(): AdDevice {
   return window.matchMedia("(min-width: 1100px)").matches ? "desktop" : "mobile";
 }
 
 function waitForAdvertisementStart(): Promise<void> {
-  if (document.readyState === "complete" && userInteracted) return Promise.resolve();
   return new Promise((resolve) => {
-    let settled = false;
-    let timer = 0;
-    const finish = (): void => {
-      if (settled) return;
-      settled = true;
-      if (timer) window.clearTimeout(timer);
-      userEvents.forEach((eventName) => window.removeEventListener(eventName, onInteraction));
-      window.removeEventListener("load", scheduleFallback);
-      resolve();
-    };
-    const onInteraction = (): void => {
-      userInteracted = true;
-      finish();
-    };
-    const scheduleFallback = (): void => {
-      timer = window.setTimeout(finish, 2500);
+    const afterInitialPaint = (): void => {
+      window.requestAnimationFrame(() => window.requestAnimationFrame(() => resolve()));
     };
 
-    userEvents.forEach((eventName) => window.addEventListener(eventName, onInteraction, { once: true, passive: true }));
-    if (document.readyState === "complete") scheduleFallback();
-    else window.addEventListener("load", scheduleFallback, { once: true });
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", afterInitialPaint, { once: true });
+    } else {
+      afterInitialPaint();
+    }
   });
 }
 
-function loadCandidates(channelSlug: string, device: "mobile" | "desktop"): Promise<AffiliateCandidates> {
+function loadCandidates(channelSlug: string, device: AdDevice): Promise<AffiliateCandidates> {
   const key = `${channelSlug}:${device}`;
   const existing = candidatePromises.get(key);
   if (existing) return existing;
@@ -123,9 +113,6 @@ function loadCandidates(channelSlug: string, device: "mobile" | "desktop"): Prom
     const verticals = Array.isArray(record.verticals) ? record.verticals.filter(validAdvertisement) : [];
     const modals = Array.isArray(record.modals) ? record.modals.filter(validAdvertisement) : [];
     return { banners, verticals, modals };
-  }).catch((error) => {
-    console.error(error);
-    return { banners: [], verticals: [], modals: [] };
   });
 
   candidatePromises.set(key, promise);
@@ -135,7 +122,10 @@ function loadCandidates(channelSlug: string, device: "mobile" | "desktop"): Prom
 function waitForImage(source: string, width: number, height: number): Promise<HTMLImageElement> {
   return new Promise((resolve, reject) => {
     const image = new Image();
-    const timeout = window.setTimeout(() => reject(new Error("Advertisement image timed out")), 8000);
+    const timeout = window.setTimeout(() => {
+      image.src = "";
+      reject(new Error("Advertisement image timed out"));
+    }, 8000);
     image.alt = "";
     image.width = width;
     image.height = height;
@@ -151,6 +141,23 @@ function waitForImage(source: string, width: number, height: number): Promise<HT
     }, { once: true });
     image.src = source;
   });
+}
+
+async function waitForFirstImage(
+  sources: Array<string | null>,
+  width: number,
+  height: number,
+): Promise<HTMLImageElement> {
+  const uniqueSources = [...new Set(sources.filter((source): source is string => Boolean(source)))];
+  let lastError: unknown = new Error("Advertisement image source is missing");
+  for (const source of uniqueSources) {
+    try {
+      return await waitForImage(source, width, height);
+    } catch (error) {
+      lastError = error;
+    }
+  }
+  throw lastError;
 }
 
 function embedDocument(code: string): string {
@@ -194,11 +201,14 @@ async function loadCreative(advertisement: AffiliateAdvertisement): Promise<Load
       return { advertisement, element: await waitForEmbed(advertisement) };
     }
 
-    const source = advertisement.creativeType === "external_media"
-      ? advertisement.mediaUrl
-      : advertisement.imageUrl ?? "";
-    if (!source || !advertisement.targetUrl) return null;
-    const image = await waitForImage(source, advertisement.width, advertisement.height);
+    if (!advertisement.targetUrl) return null;
+    const image = advertisement.creativeType === "external_media"
+      ? await waitForFirstImage([advertisement.mediaUrl], advertisement.width, advertisement.height)
+      : await waitForFirstImage(
+          [advertisement.imageUrl, advertisement.fallbackImageUrl],
+          advertisement.width,
+          advertisement.height,
+        );
     image.className = "affiliate-ad-image";
 
     const link = document.createElement("a");
@@ -209,7 +219,12 @@ async function loadCreative(advertisement: AffiliateAdvertisement): Promise<Load
     link.appendChild(image);
     return { advertisement, element: link };
   } catch (error) {
-    console.error(error);
+    console.error(JSON.stringify({
+      event: "affiliate_ad_creative_failed",
+      advertisementId: advertisement.id,
+      creativeType: advertisement.creativeType,
+      error: String(error),
+    }));
     return null;
   }
 }
@@ -338,7 +353,7 @@ function tryMountDesktopRail(shell: HTMLElement, advertisement: AffiliateAdverti
   return true;
 }
 
-async function mountVertical(candidates: AffiliateAdvertisement[], used: Set<string>, device: "mobile" | "desktop"): Promise<void> {
+async function mountVertical(candidates: AffiliateAdvertisement[], used: Set<string>, device: AdDevice): Promise<void> {
   const loaded = await loadFirstAvailable(candidates, used, true);
   if (!loaded) return;
   const shell = createShell(loaded, "vertical");
@@ -362,7 +377,7 @@ async function mountModal(
   candidates: AffiliateAdvertisement[],
   used: Set<string>,
   channelSlug: string,
-  device: "mobile" | "desktop",
+  device: AdDevice,
 ): Promise<void> {
   if (candidates.length === 0) return;
   const storageKey = `affiliate-ad-modal-dismissed:${channelSlug}:${device}`;
@@ -416,27 +431,74 @@ async function mountModal(
   close.focus();
 }
 
+function candidateCount(candidates: AffiliateCandidates): number {
+  return candidates.banners.length + candidates.verticals.length + candidates.modals.length;
+}
+
+function writeContextDiagnostics(
+  node: HTMLScriptElement,
+  device: AdDevice,
+  candidates: AffiliateCandidates,
+): void {
+  node.dataset.affiliateAdDevice = device;
+  node.dataset.affiliateAdBannerCount = String(candidates.banners.length);
+  node.dataset.affiliateAdVerticalCount = String(candidates.verticals.length);
+  node.dataset.affiliateAdModalCount = String(candidates.modals.length);
+}
+
 async function initializeContext(node: HTMLScriptElement): Promise<void> {
   if (initializedContexts.has(node)) return;
   initializedContexts.add(node);
   const context = parseContext(node);
-  if (!context) return;
+  if (!context) {
+    node.dataset.affiliateAdState = "invalid-context";
+    return;
+  }
 
-  await waitForAdvertisementStart();
+  node.dataset.affiliateAdState = "loading";
   const device = currentDevice();
-  const candidates = await loadCandidates(context.channelSlug, device);
-  const used = new Set<string>();
-  const showsChannelTop = context.surface === "channel" || context.surface === "channel-catalog";
-  const showsCatalogInline = context.surface === "catalog" || context.surface === "channel-catalog" || context.surface === "search";
 
-  if (showsChannelTop) await mountTopBanner(candidates.banners, used);
-  if (showsCatalogInline) await mountInlineBanners(candidates.banners, used);
-  await mountVertical(candidates.verticals, used, device);
+  try {
+    await waitForAdvertisementStart();
+    const candidates = await loadCandidates(context.channelSlug, device);
+    writeContextDiagnostics(node, device, candidates);
+    if (candidateCount(candidates) === 0) {
+      node.dataset.affiliateAdState = "empty";
+      return;
+    }
 
-  document.addEventListener("public:products-appended", () => {
-    void mountInlineBanners(candidates.banners, used);
-  });
-  void mountModal(candidates.modals, used, context.channelSlug, device);
+    const used = new Set<string>();
+    const showsChannelTop = context.surface === "channel" || context.surface === "channel-catalog";
+    const showsCatalogInline = context.surface === "catalog" || context.surface === "channel-catalog" || context.surface === "search";
+    const mountedBefore = document.querySelectorAll("[data-affiliate-ad]").length;
+
+    if (showsChannelTop) await mountTopBanner(candidates.banners, used);
+    if (showsCatalogInline) await mountInlineBanners(candidates.banners, used);
+    await mountVertical(candidates.verticals, used, device);
+
+    const mountedAfter = document.querySelectorAll("[data-affiliate-ad]").length;
+    node.dataset.affiliateAdState = mountedAfter > mountedBefore
+      ? "mounted"
+      : candidates.modals.length > 0
+        ? "waiting-modal"
+        : "creative-failed";
+
+    document.addEventListener("public:products-appended", () => {
+      void mountInlineBanners(candidates.banners, used);
+    });
+    void mountModal(candidates.modals, used, context.channelSlug, device).then(() => {
+      if (document.querySelector("[data-affiliate-ad-modal]")) node.dataset.affiliateAdState = "mounted";
+    });
+  } catch (error) {
+    node.dataset.affiliateAdDevice = device;
+    node.dataset.affiliateAdState = "request-failed";
+    console.error(JSON.stringify({
+      event: "affiliate_ad_initialization_failed",
+      channelSlug: context.channelSlug,
+      device,
+      error: String(error),
+    }));
+  }
 }
 
 function initializeAffiliateAds(root: ParentNode = document): void {
