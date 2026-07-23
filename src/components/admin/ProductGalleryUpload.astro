@@ -52,7 +52,11 @@ const { form, values = [] } = Astro.props;
         currentItems.forEach((item, index) => {
           const id = item.dataset.imageId || '';
           const field = fields.get(id);
-          if (field) values.appendChild(field);
+          item.dataset.uploadOrder = String(index);
+          if (field) {
+            field.dataset.uploadOrder = String(index);
+            values.appendChild(field);
+          }
           const badge = item.querySelector('[data-cover-badge]');
           if (badge) {
             badge.hidden = index !== 0;
