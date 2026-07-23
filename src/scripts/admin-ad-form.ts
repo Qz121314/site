@@ -3,14 +3,21 @@ export {};
 const initializedAdForms = new WeakSet<HTMLFormElement>();
 
 type CreativeType = "uploaded_image" | "external_media" | "embed_code";
+type ValueControl = HTMLElement & { value: string };
+type ToggleControl = HTMLElement & { disabled: boolean; type?: string };
+
+function readCreativeType(form: HTMLFormElement): CreativeType {
+  const control = form.querySelector<HTMLElement>("[data-ad-creative-type]") as ValueControl | null;
+  return (control?.value || "uploaded_image") as CreativeType;
+}
 
 function setPanelEnabled(panel: HTMLElement, enabled: boolean): void {
   panel.hidden = !enabled;
-  panel.querySelectorAll<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>("input, select, textarea")
-    .forEach((field) => {
-      if (field.type === "file") return;
-      field.disabled = !enabled;
-    });
+  panel.querySelectorAll<HTMLElement>("input, select, textarea").forEach((node) => {
+    const field = node as ToggleControl;
+    if (field.type === "file") return;
+    field.disabled = !enabled;
+  });
 }
 
 function resetPreview(form: HTMLFormElement): void {
@@ -23,9 +30,8 @@ function resetPreview(form: HTMLFormElement): void {
 }
 
 function syncAdForm(form: HTMLFormElement): void {
-  const typeSelect = form.querySelector<HTMLSelectElement>("[data-ad-creative-type]");
   const target = form.querySelector<HTMLInputElement>("[data-ad-target-url]");
-  const creativeType = (typeSelect?.value || "uploaded_image") as CreativeType;
+  const creativeType = readCreativeType(form);
 
   form.querySelectorAll<HTMLElement>("[data-ad-creative-panel]").forEach((panel) => {
     setPanelEnabled(panel, panel.dataset.adCreativePanel === creativeType);
@@ -47,7 +53,7 @@ function createEmbedPreview(code: string, width: number, height: number): HTMLIF
 }
 
 function previewAdvertisement(form: HTMLFormElement): void {
-  const creativeType = (form.querySelector<HTMLSelectElement>("[data-ad-creative-type]")?.value || "uploaded_image") as CreativeType;
+  const creativeType = readCreativeType(form);
   const preview = form.querySelector<HTMLElement>("[data-ad-preview]");
   const stage = form.querySelector<HTMLElement>("[data-ad-preview-stage]");
   const status = form.querySelector<HTMLElement>("[data-ad-preview-status]");
@@ -110,7 +116,7 @@ function initializeAdForm(form: HTMLFormElement): void {
   if (initializedAdForms.has(form)) return;
   initializedAdForms.add(form);
 
-  const creativeType = form.querySelector<HTMLSelectElement>("[data-ad-creative-type]");
+  const creativeType = form.querySelector<HTMLElement>("[data-ad-creative-type]");
   creativeType?.addEventListener("change", () => syncAdForm(form));
   form.querySelector<HTMLElement>("[data-ad-preview-button]")?.addEventListener("click", () => previewAdvertisement(form));
   form.addEventListener("reset", () => queueMicrotask(() => syncAdForm(form)));
