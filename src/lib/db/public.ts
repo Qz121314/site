@@ -34,18 +34,6 @@ export type PublicSiteShell = {
 
 export type PublicChannel = PublicChannelNavItem;
 
-export type PublicHeroAdvertisement = {
-  id: string;
-  imageUrl: string;
-  width: number | null;
-  height: number | null;
-  responsiveImageUrl: string | null;
-  responsiveWidth: number | null;
-  responsiveHeight: number | null;
-  targetUrl: string;
-  openMode: "same" | "new";
-};
-
 export type PublicCategoryFilter = {
   id: string;
   name: string;
@@ -114,18 +102,6 @@ type SiteShellRow = {
 type LegalRow = {
   privacy_content: string;
   disclaimer_content: string;
-};
-
-type HeroRow = {
-  id: string;
-  object_key: string;
-  width: number | null;
-  height: number | null;
-  responsive_object_key: string | null;
-  responsive_width: number | null;
-  responsive_height: number | null;
-  target_url: string;
-  open_mode: "same" | "new";
 };
 
 type FilterRow = {
@@ -218,7 +194,7 @@ export async function loadPublicSiteShell(
         AND default_channel.status = 'published'
        LEFT JOIN channels channel ON channel.status = 'published'
        WHERE s.id = 1
-         ORDER BY channel.sort_order ASC, channel.created_at ASC`,
+       ORDER BY channel.sort_order ASC, channel.created_at ASC`,
     ).all<SiteShellRow>();
     const legalPromise = includeLegalContent
       ? env.DB.prepare(
@@ -233,27 +209,27 @@ export async function loadPublicSiteShell(
 
     const baseUrl = first.r2_public_base_url ?? "";
     const value: PublicSiteShell = {
-        siteName: first.site_name,
-        siteDescription: first.site_description,
-        logoUrl: first.logo_object_key ? buildPublicImageUrl(baseUrl, first.logo_object_key) : null,
-        faviconUrl: first.favicon_object_key ? buildPublicImageUrl(baseUrl, first.favicon_object_key) : null,
-        r2PublicBaseUrl: baseUrl,
-        ga4Id: first.ga4_id ?? "",
-        metaPixelId: first.meta_pixel_id ?? "",
-        adultGateEnabled: first.adult_gate_enabled === 1,
-        privacyContent: legal?.privacy_content ?? "",
-        disclaimerContent: legal?.disclaimer_content ?? "",
-        defaultChannelSlug: first.default_channel_slug,
-        channels: shellResult.results.flatMap((row) =>
-          row.channel_id && row.channel_name && row.channel_slug
-            ? [{
-                id: row.channel_id,
-                name: row.channel_name,
-                slug: row.channel_slug,
-                icon: row.channel_icon ?? "",
-              }]
-            : [],
-        ),
+      siteName: first.site_name,
+      siteDescription: first.site_description,
+      logoUrl: first.logo_object_key ? buildPublicImageUrl(baseUrl, first.logo_object_key) : null,
+      faviconUrl: first.favicon_object_key ? buildPublicImageUrl(baseUrl, first.favicon_object_key) : null,
+      r2PublicBaseUrl: baseUrl,
+      ga4Id: first.ga4_id ?? "",
+      metaPixelId: first.meta_pixel_id ?? "",
+      adultGateEnabled: first.adult_gate_enabled === 1,
+      privacyContent: legal?.privacy_content ?? "",
+      disclaimerContent: legal?.disclaimer_content ?? "",
+      defaultChannelSlug: first.default_channel_slug,
+      channels: shellResult.results.flatMap((row) =>
+        row.channel_id && row.channel_name && row.channel_slug
+          ? [{
+              id: row.channel_id,
+              name: row.channel_name,
+              slug: row.channel_slug,
+              icon: row.channel_icon ?? "",
+            }]
+          : [],
+      ),
     };
     return value;
   } catch (error) {
@@ -264,54 +240,6 @@ export async function loadPublicSiteShell(
 
 export function findPublicChannel(site: PublicSiteShell, channelSlug: string): PublicChannel | null {
   return site.channels.find((channel) => channel.slug === channelSlug) ?? null;
-}
-
-export async function loadPublicHeroAdvertisements(
-  channelId: string,
-  baseUrl: string,
-): Promise<PublicHeroAdvertisement[]> {
-  const result = await env.DB.prepare(
-    `SELECT
-       ad.id,
-       a.object_key,
-       a.width,
-       a.height,
-       a.thumbnail_object_key AS responsive_object_key,
-       a.thumbnail_width AS responsive_width,
-       a.thumbnail_height AS responsive_height,
-       ad.target_url,
-       ad.open_mode
-     FROM channels c
-     INNER JOIN ad_pools p
-       ON p.channel_id = c.id
-      AND p.status = 'enabled'
-     INNER JOIN advertisements ad
-       ON ad.pool_id = p.id
-      AND ad.status = 'enabled'
-     INNER JOIN image_assets a ON a.id = ad.image_asset_id
-     WHERE c.id = ?1 AND c.status = 'published'
-       AND (c.hero_ad_pool_id IS NULL OR p.id = c.hero_ad_pool_id)
-     ORDER BY p.created_at ASC, ad.sort_order ASC, ad.created_at ASC`,
-  ).bind(channelId).all<HeroRow>();
-
-  return result.results.flatMap((row) => {
-    const imageUrl = buildPublicImageUrl(baseUrl, row.object_key);
-    return imageUrl
-      ? [{
-          id: row.id,
-          imageUrl,
-          width: Number(row.width) || null,
-          height: Number(row.height) || null,
-          responsiveImageUrl: row.responsive_object_key
-            ? buildPublicImageUrl(baseUrl, row.responsive_object_key)
-            : null,
-          responsiveWidth: Number(row.responsive_width) || null,
-          responsiveHeight: Number(row.responsive_height) || null,
-          targetUrl: row.target_url,
-          openMode: row.open_mode,
-        }]
-      : [];
-  });
 }
 
 export async function loadPublicCategoryFilters(channelId: string): Promise<PublicCategoryFilter[]> {
