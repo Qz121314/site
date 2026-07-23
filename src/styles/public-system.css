@@ -1,6 +1,6 @@
 /*
  * Public visual system entrypoint.
- * Reset → structural layout → loading states → inline header interaction → neutral commerce theme → affiliate ads → responsive compositions.
+ * Reset → structural layout → loading states → inline header interaction → neutral commerce theme → affiliate ads → responsive compositions → editorial polish.
  */
 @import "./public-base.css";
 @import "./public.css";
@@ -9,3 +9,4 @@
 @import "./public-commerce.css";
 @import "./public-ads.css";
 @import "./public-desktop.css";
+@import "./public-editorial.css";
