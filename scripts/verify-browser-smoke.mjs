@@ -187,6 +187,12 @@ try {
   ]);
   runChrome(chrome, [
     `--user-data-dir=${userDataDir}`,
+    "--window-size=834,1112",
+    `--screenshot=${LOG_DIR}/public-tablet.png`,
+    `${ORIGIN}/`,
+  ]);
+  runChrome(chrome, [
+    `--user-data-dir=${userDataDir}`,
     "--window-size=1440,1000",
     `--screenshot=${LOG_DIR}/public-desktop.png`,
     `${ORIGIN}/`,
@@ -197,6 +203,12 @@ try {
     "--dump-dom",
     `${ORIGIN}/demo?category=people`,
   ], `${LOG_DIR}/public-browser-dom.html`);
+  runChrome(chrome, [
+    `--user-data-dir=${userDataDir}`,
+    "--window-size=834,1112",
+    "--dump-dom",
+    `${ORIGIN}/demo?category=people`,
+  ], `${LOG_DIR}/public-tablet-browser-dom.html`);
   runChrome(chrome, [
     `--user-data-dir=${userDataDir}`,
     "--window-size=1440,1000",
@@ -217,9 +229,12 @@ try {
   ], `${LOG_DIR}/admin-login-browser-dom.html`);
 
   assertDocument(`${LOG_DIR}/public-browser-dom.html`, ["<html", "Smoke Product", "People", "aria-current=\"page\""]);
-  assertDocument(`${LOG_DIR}/public-desktop-browser-dom.html`, ["<html", "Smoke Product", "data-hero-slide"]);
+  assertDocument(`${LOG_DIR}/public-tablet-browser-dom.html`, ["<html", "Smoke Product", "data-hero-slide", "public-footer"]);
+  assertDocument(`${LOG_DIR}/public-desktop-browser-dom.html`, ["<html", "Smoke Product", "data-hero-slide", "public-footer"]);
   assertChannelNavigationCount(`${LOG_DIR}/public-browser-dom.html`, 4);
+  assertChannelNavigationCount(`${LOG_DIR}/public-tablet-browser-dom.html`, 4);
   assertChannelNavigationCount(`${LOG_DIR}/public-desktop-browser-dom.html`, 4);
+  assertRenderedHeroLinks(`${LOG_DIR}/public-tablet-browser-dom.html`);
   assertRenderedHeroLinks(`${LOG_DIR}/public-desktop-browser-dom.html`);
   assertDocument(`${LOG_DIR}/public-product-browser-dom.html`, [
     "Smoke Product",
@@ -228,7 +243,7 @@ try {
     "href=\"/demo?category=people\"",
   ]);
   assertDocument(`${LOG_DIR}/admin-login-browser-dom.html`, ["<html", "<form"]);
-  console.log("Headless Chrome and local Worker routes verified public search, pagination API, conversion resolution, public pages, and admin entry.");
+  console.log("Headless Chrome and local Worker routes verified search, pagination, conversion, and mobile/tablet/desktop rendering.");
 } finally {
   server.kill("SIGTERM");
   await new Promise((resolve) => setTimeout(resolve, 500));
