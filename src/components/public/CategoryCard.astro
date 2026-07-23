@@ -4,17 +4,19 @@ import type { PublicCategory } from "@/lib/db/public";
 interface Props {
   category: PublicCategory;
   channelSlug: string;
+  active?: boolean;
 }
 
-const { category, channelSlug } = Astro.props;
+const { category, channelSlug, active = false } = Astro.props;
 ---
 
 <a
-  class="category-entry"
+  class={`category-entry${active ? " is-active" : ""}`}
   href={`/${encodeURIComponent(channelSlug)}/category/${encodeURIComponent(category.slug)}`}
   data-category-card
   data-filter-ids={category.filterIds.join(",")}
   aria-label={category.name}
+  aria-current={active ? "page" : undefined}
 >
   <span class="category-entry-label">{category.name}</span>
   <span class="category-entry-arrow" aria-hidden="true">
