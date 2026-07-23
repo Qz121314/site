@@ -3,21 +3,37 @@ interface Props {
   action: string;
   ariaLabel: string;
   value?: string;
+  variant?: "overlay" | "inline";
 }
 
 const {
   action,
   ariaLabel,
   value = "",
+  variant = "overlay",
 } = Astro.props;
+const inline = variant === "inline";
 ---
 
-<form class="public-header-search-form" action={action} method="get" role="search" data-header-search-form>
-  <button class="public-header-search-close" type="button" aria-label="Close search" data-header-search-close>
-    <svg viewBox="0 0 24 24" aria-hidden="true">
-      <path d="m7 7 10 10M17 7 7 17" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.8" />
-    </svg>
-  </button>
+<form
+  class:list={[
+    "public-header-search-form",
+    inline ? "public-header-search-form-inline" : "public-header-search-form-overlay",
+  ]}
+  action={action}
+  method="get"
+  role="search"
+  data-public-search-form
+  data-header-search-form={inline ? undefined : ""}
+  data-desktop-search-form={inline ? "" : undefined}
+>
+  {!inline && (
+    <button class="public-header-search-close" type="button" aria-label="Close search" data-header-search-close>
+      <svg viewBox="0 0 24 24" aria-hidden="true">
+        <path d="m7 7 10 10M17 7 7 17" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.8" />
+      </svg>
+    </button>
+  )}
 
   <span class="public-header-search-glyph" aria-hidden="true">
     <svg viewBox="0 0 24 24">
@@ -36,7 +52,9 @@ const {
     enterkeyhint="search"
     autocomplete="off"
     required
-    data-header-search-input
+    data-public-search-input
+    data-header-search-input={inline ? undefined : ""}
+    data-desktop-search-input={inline ? "" : undefined}
   />
 
   <button class="public-header-search-submit" type="submit" aria-label="Submit search">
