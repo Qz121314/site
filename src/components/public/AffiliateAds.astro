@@ -1,0 +1,14 @@
+---
+type AffiliateAdSurface = "channel" | "catalog" | "channel-catalog" | "search";
+
+interface Props {
+  channelSlug: string;
+  surface: AffiliateAdSurface;
+}
+
+const { channelSlug, surface } = Astro.props;
+const contextJson = JSON.stringify({ channelSlug, surface }).replaceAll("<", "\\u003c");
+---
+
+<script type="application/json" data-affiliate-ad-context set:html={contextJson}></script>
+<script>import "@/scripts/public-affiliate-ads";</script>
