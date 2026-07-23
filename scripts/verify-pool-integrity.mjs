@@ -8,7 +8,6 @@ const ids = {
   product: "audit-guard-product",
   image: "audit-guard-image",
   adPool: "audit-guard-ad-pool",
-  emptyAdPool: "audit-guard-empty-ad-pool",
   advertisement: "audit-guard-advertisement",
 };
 
@@ -33,10 +32,9 @@ function execute(sql, expectFailure = null) {
 }
 
 const cleanup = `
-  UPDATE channels SET hero_ad_pool_id = NULL WHERE id = '${ids.channel}';
   DELETE FROM products WHERE id = '${ids.product}';
   DELETE FROM conversion_groups WHERE id IN ('${ids.conversionGroup}', '${ids.emptyConversionGroup}');
-  DELETE FROM ad_pools WHERE id IN ('${ids.adPool}', '${ids.emptyAdPool}');
+  DELETE FROM ad_pools WHERE id = '${ids.adPool}';
   DELETE FROM image_assets WHERE id = '${ids.image}';
   DELETE FROM channels WHERE id = '${ids.channel}';
 `;
@@ -77,16 +75,15 @@ try {
 
     UPDATE products SET status = 'published' WHERE id = '${ids.product}';
 
-    INSERT INTO ad_pools (id, channel_id, name, status)
-    VALUES
-      ('${ids.adPool}', '${ids.channel}', 'Audit Guard Hero', 'enabled'),
-      ('${ids.emptyAdPool}', '${ids.channel}', 'Audit Guard Empty Hero', 'enabled');
+    INSERT INTO ad_pools (id, channel_id, name, device_type)
+    VALUES ('${ids.adPool}', '${ids.channel}', 'Audit Guard Ads', 'mobile');
 
     INSERT INTO advertisements (
-      id, pool_id, image_asset_id, target_url, open_mode, status
+      id, pool_id, name, display_type, creative_type,
+      image_asset_id, target_url, open_mode
     ) VALUES (
-      '${ids.advertisement}', '${ids.adPool}', '${ids.image}',
-      'https://example.com/', 'same', 'enabled'
+      '${ids.advertisement}', '${ids.adPool}', 'Audit Guard Banner',
+      'banner', 'uploaded_image', '${ids.image}', 'https://example.com/', 'new'
     );
   `);
 
@@ -107,25 +104,11 @@ try {
     "published product conversion group requires an enabled resource",
   );
 
-  execute(
-    `UPDATE channels SET hero_ad_pool_id = '${ids.emptyAdPool}' WHERE id = '${ids.channel}'`,
-    "hero ad pool must be enabled and contain an enabled ad",
-  );
-  execute(`UPDATE channels SET hero_ad_pool_id = '${ids.adPool}' WHERE id = '${ids.channel}'`);
-  execute(
-    `UPDATE ad_pools SET status = 'disabled' WHERE id = '${ids.adPool}'`,
-    "bound hero ad pool cannot be disabled",
-  );
-  execute(
-    `UPDATE advertisements SET status = 'disabled' WHERE id = '${ids.advertisement}'`,
-    "bound hero ad pool requires an enabled advertisement",
-  );
-  execute(
-    `DELETE FROM advertisements WHERE id = '${ids.advertisement}'`,
-    "bound hero ad pool requires an enabled advertisement",
-  );
+  execute(`UPDATE ad_pools SET status = 'disabled' WHERE id = '${ids.adPool}'`);
+  execute(`UPDATE advertisements SET status = 'disabled' WHERE id = '${ids.advertisement}'`);
+  execute(`DELETE FROM advertisements WHERE id = '${ids.advertisement}'`);
 } finally {
   execute(cleanup);
 }
 
-console.log("Pool availability integrity guards verified.");
+console.log("Conversion guards and open affiliate ad group lifecycle verified.");
