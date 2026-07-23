@@ -79,9 +79,10 @@ test("product detail pages place the gallery before the title and keep thumbnail
 });
 
 test("conversion resolution reveals one-line open and copy actions", async () => {
-  const [productPage, ctaScript] = await Promise.all([
+  const [productPage, ctaScript, browserSmoke] = await Promise.all([
     readFile(new URL("../src/pages/[channel]/product/[product].astro", import.meta.url), "utf8"),
     readFile(new URL("../src/scripts/public-product-cta.ts", import.meta.url), "utf8"),
+    readFile(new URL("../scripts/verify-browser-smoke.mjs", import.meta.url), "utf8"),
   ]);
 
   assert.match(productPage, /data-contact-box/u);
@@ -96,6 +97,7 @@ test("conversion resolution reveals one-line open and copy actions", async () =>
   assert.doesNotMatch(productPage, /Could not open/u);
 
   assert.match(ctaScript, /navigator\.clipboard\?\.writeText/u);
+  assert.match(ctaScript, /document\.execCommand\("copy"\)/u);
   assert.match(ctaScript, /function formatVisibleValue/u);
   assert.match(ctaScript, /copyValue: type === "sms" \? display : target/u);
   assert.match(ctaScript, /resolveButton\.hidden = true/u);
@@ -104,4 +106,9 @@ test("conversion resolution reveals one-line open and copy actions", async () =>
   assert.doesNotMatch(ctaScript, /window\.location\.assign/u);
   assert.doesNotMatch(ctaScript, /scheduleFallback/u);
   assert.doesNotMatch(ctaScript, /visibilitychange/u);
+
+  assert.match(browserSmoke, /\/demo\/search\?q=Smoke/u);
+  assert.match(browserSmoke, /\/api\/public\/channels\/demo\/products\?page=1/u);
+  assert.match(browserSmoke, /\/go\/smoke-product\?channel=demo/u);
+  assert.match(browserSmoke, /Conversion resolver did not return the configured fixture target\./u);
 });
