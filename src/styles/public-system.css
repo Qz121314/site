@@ -1,10 +1,11 @@
 /*
  * Public visual system entrypoint.
- * Reset → structural layout → loading states → inline header interaction → neutral commerce theme → responsive compositions.
+ * Reset → structural layout → loading states → inline header interaction → neutral commerce theme → affiliate ads → responsive compositions.
  */
 @import "./public-base.css";
 @import "./public.css";
 @import "./public-loading.css";
 @import "./public-header-refinement.css";
 @import "./public-commerce.css";
+@import "./public-ads.css";
 @import "./public-desktop.css";
