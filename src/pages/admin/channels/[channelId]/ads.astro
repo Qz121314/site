@@ -18,37 +18,45 @@ const error = Astro.url.searchParams.get("error");
 const requestedPoolId = Astro.url.searchParams.get("pool");
 const selectedPoolId = pools.some((pool) => pool.id === requestedPoolId)
   ? requestedPoolId
-  : pools.find((pool) => pool.isBound)?.id ?? pools[0]?.id ?? null;
+  : pools[0]?.id ?? null;
 
 const savedMessages: Record<string, string> = {
-  "pool-created": "广告池已新增。",
-  "pool-updated": "广告池已更新。",
-  "pool-deleted": "广告池已删除。",
-  bound: "已设为当前 Hero 广告池。",
-  unbound: "已取消当前 Hero 广告池。",
+  "pool-created": "广告组已新增。",
+  "pool-updated": "广告组已更新。",
+  "pool-deleted": "广告组已删除。",
   "ad-created": "广告已新增。",
   "ad-updated": "广告已更新。",
   "ad-deleted": "广告已删除。",
 };
 
 const errorMessages: Record<string, string> = {
-  name: "广告池名称不能为空，且不能超过 80 个字符。",
-  image: "广告图片不存在，请重新上传。",
+  name: "名称不能为空或超过允许长度。",
+  device: "设备类型无效。",
+  display: "展示类型无效。",
+  creative: "广告类型无效。",
+  image: "上传图片不存在，请重新上传。",
+  media: "外部图片或 GIF 地址必须是有效的 HTTP 或 HTTPS 地址。",
+  code: "联盟代码不能为空，且不能超过 100,000 个字符。",
   url: "目标链接必须是有效的 HTTP 或 HTTPS 地址。",
+  size: "声明宽度和高度必须是 1–4096 的整数。",
   open: "打开方式无效。",
-  sort: "排序值无效。",
   status: "状态无效。",
-  duplicate: "当前分区已经存在同名广告池。",
-  "in-use": "该广告池正在使用，请先取消当前广告池。",
-  unavailable: "设为当前广告池前，广告池必须启用并至少包含一条启用广告。",
-  "not-found": "找不到该分区、广告池或广告。",
+  duplicate: "当前分区已经存在同名广告组。",
+  "not-found": "找不到该分区、广告组或广告。",
   database: "数据库操作失败，请稍后重试。",
 };
 
+const deviceLabels = { mobile: "移动端", desktop: "PC 端" } as const;
+const displayLabels = { banner: "横幅", vertical: "竖版", modal: "弹窗" } as const;
+const creativeLabels = {
+  uploaded_image: "上传图片",
+  external_media: "外部图片 / GIF",
+  embed_code: "联盟代码",
+} as const;
 const poolCreateAction = `/api/admin/channels/${encodeURIComponent(channelId)}/ads/pools/create`;
 ---
 
-<AdminLayout title={channel ? `${channel.name} · Hero 广告` : "分区不存在"}>
+<AdminLayout title={channel ? `${channel.name} · 联盟广告` : "分区不存在"} workspace="wide">
   {channel ? (
     <div class="admin-stack">
       {saved && savedMessages[saved] && <p class="notice" role="status">{savedMessages[saved]}</p>}
@@ -56,26 +64,27 @@ const poolCreateAction = `/api/admin/channels/${encodeURIComponent(channelId)}/a
 
       <AdminCollectionWorkspace
         searchId="ad-pool-search"
-        searchPlaceholder="搜索广告池"
+        searchPlaceholder="搜索广告组"
         createDialogId="ad-pool-create-dialog"
-        createLabel="新增广告池"
-        listLabel="广告池列表"
+        createLabel="新增广告组"
+        listLabel="广告组列表"
         selectionParam="pool"
       >
         <Fragment slot="items">
           {pools.map((pool) => {
             const updateAction = `/api/admin/channels/${encodeURIComponent(channelId)}/ads/pools/${encodeURIComponent(pool.id)}/update`;
             const deleteAction = `/api/admin/channels/${encodeURIComponent(channelId)}/ads/pools/${encodeURIComponent(pool.id)}/delete`;
+            const enabledCount = pool.advertisements.filter((ad) => ad.status === "enabled").length;
             return (
               <div
                 class:list={["admin-collection-row", pool.id === selectedPoolId && "is-active"]}
                 role="listitem"
                 data-collection-item={pool.id}
-                data-search-text={pool.name}
+                data-search-text={`${pool.name} ${deviceLabels[pool.deviceType]}`}
               >
                 <button class="admin-collection-select" type="button" data-collection-select aria-current={pool.id === selectedPoolId ? "true" : "false"}>
                   <strong>{pool.name}</strong>
-                  {pool.isBound && <span class="badge ok">当前</span>}
+                  <span class="admin-record-meta">{deviceLabels[pool.deviceType]} · {enabledCount}/{pool.advertisements.length} 条启用</span>
                 </button>
                 <div class="admin-collection-row-actions">
                   <button
@@ -83,18 +92,14 @@ const poolCreateAction = `/api/admin/channels/${encodeURIComponent(channelId)}/a
                     type="button"
                     data-dialog-open="ad-pool-edit-dialog"
                     data-record-dialog="ad-pool-edit-dialog"
-                    data-record-title={`编辑广告池 · ${pool.name}`}
+                    data-record-title={`编辑广告组 · ${pool.name}`}
                     data-record-action={updateAction}
                     data-record-name={pool.name}
+                    data-record-device-type={pool.deviceType}
                     data-record-status={pool.status}
                   >编辑</button>
-                  <form action={deleteAction} method="post" onsubmit="return confirm('确定删除该广告池及其中全部广告？')">
-                    <button
-                      class="button danger"
-                      type="submit"
-                      disabled={pool.isBound}
-                      title={pool.isBound ? "当前使用中的广告池不能删除" : undefined}
-                    >删除</button>
+                  <form action={deleteAction} method="post" onsubmit="return confirm('确定删除该广告组及其中全部广告？')">
+                    <button class="button danger" type="submit">删除</button>
                   </form>
                 </div>
               </div>
@@ -103,7 +108,7 @@ const poolCreateAction = `/api/admin/channels/${encodeURIComponent(channelId)}/a
         </Fragment>
 
         {pools.length === 0 ? (
-          <section class="admin-card admin-record-empty">尚未创建广告池。</section>
+          <section class="admin-card admin-record-empty">尚未创建广告组。</section>
         ) : pools.map((pool) => {
           const createAdAction = `/api/admin/channels/${encodeURIComponent(channelId)}/ads/pools/${encodeURIComponent(pool.id)}/items/create`;
           return (
@@ -115,18 +120,11 @@ const poolCreateAction = `/api/admin/channels/${encodeURIComponent(channelId)}/a
               <header class="admin-collection-panel-header">
                 <div class="admin-collection-panel-title">
                   <h2>{pool.name}</h2>
-                  {pool.isBound && <span class="badge ok">当前</span>}
+                  <span class:list={["badge", pool.status === "enabled" ? "ok" : undefined]}>
+                    {deviceLabels[pool.deviceType]} · {pool.status === "enabled" ? "启用" : "停用"}
+                  </span>
                 </div>
                 <div class="admin-collection-panel-actions">
-                  {pool.isBound ? (
-                    <form action={`/api/admin/channels/${encodeURIComponent(channelId)}/ads/unbind`} method="post">
-                      <button class="button secondary" type="submit">取消当前</button>
-                    </form>
-                  ) : (
-                    <form action={`/api/admin/channels/${encodeURIComponent(channelId)}/ads/pools/${encodeURIComponent(pool.id)}/bind`} method="post">
-                      <button class="button secondary" type="submit">设为当前</button>
-                    </form>
-                  )}
                   <button
                     class="button"
                     type="button"
@@ -134,31 +132,44 @@ const poolCreateAction = `/api/admin/channels/${encodeURIComponent(channelId)}/a
                     data-record-dialog="ad-create-dialog"
                     data-record-title={`添加广告 · ${pool.name}`}
                     data-record-action={createAdAction}
+                    data-record-name=""
+                    data-record-display-type="banner"
+                    data-record-creative-type="uploaded_image"
                     data-record-image-asset-id=""
+                    data-record-media-url=""
+                    data-record-embed-code=""
                     data-record-target-url=""
-                    data-record-open-mode="same"
-                    data-record-sort-order={String(pool.advertisements.length * 10)}
+                    data-record-declared-width=""
+                    data-record-declared-height=""
+                    data-record-open-mode="new"
                     data-record-status="enabled"
                   >添加广告</button>
                 </div>
               </header>
 
               {pool.advertisements.length === 0 ? (
-                <div class="admin-record-empty">该广告池尚未添加广告。</div>
+                <div class="admin-record-empty">该广告组尚未添加广告。</div>
               ) : (
                 <div class="admin-record-list">
                   {pool.advertisements.map((ad) => {
                     const updateAction = `/api/admin/channels/${encodeURIComponent(channelId)}/ads/pools/${encodeURIComponent(pool.id)}/items/${encodeURIComponent(ad.id)}/update`;
                     const deleteAction = `/api/admin/channels/${encodeURIComponent(channelId)}/ads/pools/${encodeURIComponent(pool.id)}/items/${encodeURIComponent(ad.id)}/delete`;
+                    const dimensionLabel = ad.width && ad.height ? `${ad.width}×${ad.height}` : "未声明尺寸";
                     return (
                       <article class="admin-record-row">
                         <div class="admin-record-with-thumbnail">
-                          <img class="admin-record-thumbnail" src={ad.previewUrl} alt={ad.originalName || "广告图片"} loading="lazy" />
+                          {ad.previewUrl ? (
+                            <img class="admin-record-thumbnail" src={ad.previewUrl} alt="" loading="lazy" />
+                          ) : (
+                            <div class="admin-record-thumbnail admin-ad-code-thumbnail" aria-hidden="true">CODE</div>
+                          )}
                           <div class="admin-record-main">
-                            <a href={ad.targetUrl} target="_blank" rel="noreferrer" title={ad.targetUrl}>{ad.targetUrl}</a>
+                            <strong>{ad.name}</strong>
                             <span class="admin-record-meta">
-                              {ad.openMode === "new" ? "新窗口" : "当前窗口"}{ad.status === "disabled" ? " · 已停用" : ""}
+                              {displayLabels[ad.displayType]} · {creativeLabels[ad.creativeType]} · {dimensionLabel}
+                              {ad.status === "disabled" ? " · 已停用" : ""}
                             </span>
+                            {ad.targetUrl && <a href={ad.targetUrl} target="_blank" rel="noreferrer" title={ad.targetUrl}>{ad.targetUrl}</a>}
                           </div>
                         </div>
                         <div class="admin-record-actions">
@@ -167,15 +178,21 @@ const poolCreateAction = `/api/admin/channels/${encodeURIComponent(channelId)}/a
                             type="button"
                             data-dialog-open="ad-edit-dialog"
                             data-record-dialog="ad-edit-dialog"
-                            data-record-title={`编辑广告 · ${pool.name}`}
+                            data-record-title={`编辑广告 · ${ad.name}`}
                             data-record-action={updateAction}
-                            data-record-image-asset-id={ad.imageAssetId}
-                            data-record-image-preview-url={ad.previewUrl}
+                            data-record-name={ad.name}
+                            data-record-display-type={ad.displayType}
+                            data-record-creative-type={ad.creativeType}
+                            data-record-image-asset-id={ad.imageAssetId ?? ""}
+                            data-record-image-preview-url={ad.creativeType === "uploaded_image" ? ad.previewUrl ?? "" : ""}
                             data-record-image-name={ad.originalName || "当前图片"}
-                            data-record-image-meta={`${ad.width}×${ad.height}`}
+                            data-record-image-meta={dimensionLabel}
+                            data-record-media-url={ad.mediaUrl}
+                            data-record-embed-code={ad.embedCode}
                             data-record-target-url={ad.targetUrl}
+                            data-record-declared-width={ad.declaredWidth ? String(ad.declaredWidth) : ""}
+                            data-record-declared-height={ad.declaredHeight ? String(ad.declaredHeight) : ""}
                             data-record-open-mode={ad.openMode}
-                            data-record-sort-order={String(ad.sortOrder)}
                             data-record-status={ad.status}
                           >编辑</button>
                           <form action={deleteAction} method="post" onsubmit="return confirm('确定删除该广告？')">
@@ -192,18 +209,27 @@ const poolCreateAction = `/api/admin/channels/${encodeURIComponent(channelId)}/a
         })}
       </AdminCollectionWorkspace>
 
-      <AdminDialog id="ad-pool-create-dialog" title="新增广告池" size="small">
+      <AdminDialog id="ad-pool-create-dialog" title="新增广告组" size="small">
         <form class="admin-dialog-form" action={poolCreateAction} method="post">
           <div class="admin-field">
-            <label for="ad-pool-create-name">广告池名称</label>
+            <label for="ad-pool-create-name">广告组名称</label>
             <input id="ad-pool-create-name" name="name" maxlength="80" required autocomplete="off" autofocus />
           </div>
-          <div class="admin-field">
-            <label for="ad-pool-create-status">状态</label>
-            <select id="ad-pool-create-status" name="status">
-              <option value="enabled" selected>启用</option>
-              <option value="disabled">停用</option>
-            </select>
+          <div class="admin-dialog-form-grid">
+            <div class="admin-field">
+              <label for="ad-pool-create-device">设备类型</label>
+              <select id="ad-pool-create-device" name="deviceType">
+                <option value="mobile" selected>移动端（含平板）</option>
+                <option value="desktop">PC 端</option>
+              </select>
+            </div>
+            <div class="admin-field">
+              <label for="ad-pool-create-status">状态</label>
+              <select id="ad-pool-create-status" name="status">
+                <option value="enabled" selected>启用</option>
+                <option value="disabled">停用</option>
+              </select>
+            </div>
           </div>
           <div class="admin-dialog-actions">
             <button class="button secondary" type="button" data-dialog-close>取消</button>
@@ -212,18 +238,27 @@ const poolCreateAction = `/api/admin/channels/${encodeURIComponent(channelId)}/a
         </form>
       </AdminDialog>
 
-      <AdminDialog id="ad-pool-edit-dialog" title="编辑广告池" size="small">
+      <AdminDialog id="ad-pool-edit-dialog" title="编辑广告组" size="small">
         <form class="admin-dialog-form" method="post" data-record-form>
           <div class="admin-field">
-            <label for="ad-pool-edit-name">广告池名称</label>
+            <label for="ad-pool-edit-name">广告组名称</label>
             <input id="ad-pool-edit-name" name="name" maxlength="80" required autocomplete="off" autofocus />
           </div>
-          <div class="admin-field">
-            <label for="ad-pool-edit-status">状态</label>
-            <select id="ad-pool-edit-status" name="status">
-              <option value="enabled">启用</option>
-              <option value="disabled">停用</option>
-            </select>
+          <div class="admin-dialog-form-grid">
+            <div class="admin-field">
+              <label for="ad-pool-edit-device">设备类型</label>
+              <select id="ad-pool-edit-device" name="deviceType">
+                <option value="mobile">移动端（含平板）</option>
+                <option value="desktop">PC 端</option>
+              </select>
+            </div>
+            <div class="admin-field">
+              <label for="ad-pool-edit-status">状态</label>
+              <select id="ad-pool-edit-status" name="status">
+                <option value="enabled">启用</option>
+                <option value="disabled">停用</option>
+              </select>
+            </div>
           </div>
           <div class="admin-dialog-actions">
             <button class="button secondary" type="button" data-dialog-close>取消</button>
@@ -232,87 +267,159 @@ const poolCreateAction = `/api/admin/channels/${encodeURIComponent(channelId)}/a
         </form>
       </AdminDialog>
 
-      <AdminDialog id="ad-create-dialog" title="添加广告" size="large">
-        <form id="ad-create-form" class="admin-dialog-form" method="post" data-record-form>
-          <DirectImageUpload
-            id="ad-create-image"
-            name="imageAssetId"
-            label="广告图片"
-            form="ad-create-form"
-            required
-            compact
-            heroResponsive
-            help="建议上传 1200 × 500 px（12:5）图片，主体和文字距离边缘至少保留 10%。"
-          />
-          <div class="admin-field">
-            <label for="ad-create-target-url">目标链接</label>
-            <input id="ad-create-target-url" name="targetUrl" type="url" maxlength="2000" required autocomplete="off" autofocus />
-          </div>
-          <div class="admin-dialog-form-grid">
-            <div class="admin-field">
-              <label for="ad-create-open-mode">打开方式</label>
-              <select id="ad-create-open-mode" name="openMode">
-                <option value="same">当前窗口</option>
-                <option value="new">新窗口</option>
-              </select>
-            </div>
-            <div class="admin-field">
-              <label for="ad-create-status">状态</label>
-              <select id="ad-create-status" name="status">
-                <option value="enabled">启用</option>
-                <option value="disabled">停用</option>
-              </select>
-            </div>
-          </div>
-          <input type="hidden" name="sortOrder" value="0" />
-          <div class="admin-dialog-actions">
-            <button class="button secondary" type="button" data-dialog-close>取消</button>
-            <button class="button" type="submit">保存</button>
-          </div>
-        </form>
-      </AdminDialog>
+      {["create", "edit"].map((mode) => {
+        const formId = `ad-${mode}-form`;
+        const dialogId = `ad-${mode}-dialog`;
+        const prefix = `ad-${mode}`;
+        return (
+          <AdminDialog id={dialogId} title={mode === "create" ? "添加广告" : "编辑广告"} size="large">
+            <form id={formId} class="admin-dialog-form" method="post" data-record-form data-ad-form>
+              <div class="admin-field">
+                <label for={`${prefix}-name`}>广告名称</label>
+                <input id={`${prefix}-name`} name="name" maxlength="120" required autocomplete="off" autofocus />
+              </div>
 
-      <AdminDialog id="ad-edit-dialog" title="编辑广告" size="large">
-        <form id="ad-edit-form" class="admin-dialog-form" method="post" data-record-form>
-          <DirectImageUpload
-            id="ad-edit-image"
-            name="imageAssetId"
-            label="广告图片"
-            form="ad-edit-form"
-            required
-            compact
-            heroResponsive
-            help="建议上传 1200 × 500 px（12:5）图片，主体和文字距离边缘至少保留 10%。"
-          />
-          <div class="admin-field">
-            <label for="ad-edit-target-url">目标链接</label>
-            <input id="ad-edit-target-url" name="targetUrl" type="url" maxlength="2000" required autocomplete="off" autofocus />
-          </div>
-          <div class="admin-dialog-form-grid">
-            <div class="admin-field">
-              <label for="ad-edit-open-mode">打开方式</label>
-              <select id="ad-edit-open-mode" name="openMode">
-                <option value="same">当前窗口</option>
-                <option value="new">新窗口</option>
-              </select>
-            </div>
-            <div class="admin-field">
-              <label for="ad-edit-status">状态</label>
-              <select id="ad-edit-status" name="status">
-                <option value="enabled">启用</option>
-                <option value="disabled">停用</option>
-              </select>
-            </div>
-          </div>
-          <input type="hidden" name="sortOrder" value="0" />
-          <div class="admin-dialog-actions">
-            <button class="button secondary" type="button" data-dialog-close>取消</button>
-            <button class="button" type="submit">保存</button>
-          </div>
-        </form>
-      </AdminDialog>
+              <div class="admin-dialog-form-grid">
+                <div class="admin-field">
+                  <label for={`${prefix}-display-type`}>展示类型</label>
+                  <select id={`${prefix}-display-type`} name="displayType">
+                    <option value="banner">横幅广告</option>
+                    <option value="vertical">竖版广告</option>
+                    <option value="modal">弹窗广告</option>
+                  </select>
+                </div>
+                <div class="admin-field">
+                  <label for={`${prefix}-creative-type`}>广告类型</label>
+                  <select id={`${prefix}-creative-type`} name="creativeType" data-ad-creative-type>
+                    <option value="uploaded_image">上传图片</option>
+                    <option value="external_media">外部图片 / GIF</option>
+                    <option value="embed_code">联盟代码</option>
+                  </select>
+                </div>
+              </div>
+
+              <div data-ad-creative-panel="uploaded_image">
+                <DirectImageUpload
+                  id={`${prefix}-image`}
+                  name="imageAssetId"
+                  label="广告图片"
+                  form={formId}
+                  compact
+                  help="支持 JPG、PNG、WebP。GIF 请使用外部素材地址。"
+                />
+              </div>
+
+              <div class="admin-dialog-form-grid" data-ad-creative-panel="external_media" hidden>
+                <div class="admin-field admin-span-2">
+                  <label for={`${prefix}-media-url`}>外部图片 / GIF 地址</label>
+                  <input id={`${prefix}-media-url`} name="mediaUrl" type="url" maxlength="2000" autocomplete="off" />
+                </div>
+                <div class="admin-field">
+                  <label for={`${prefix}-external-width`}>声明宽度</label>
+                  <input id={`${prefix}-external-width`} name="declaredWidth" type="number" min="1" max="4096" inputmode="numeric" />
+                </div>
+                <div class="admin-field">
+                  <label for={`${prefix}-external-height`}>声明高度</label>
+                  <input id={`${prefix}-external-height`} name="declaredHeight" type="number" min="1" max="4096" inputmode="numeric" />
+                </div>
+              </div>
+
+              <div data-ad-creative-panel="embed_code" hidden>
+                <div class="admin-field">
+                  <label for={`${prefix}-embed-code`}>联盟代码</label>
+                  <textarea id={`${prefix}-embed-code`} name="embedCode" rows="10" maxlength="100000" spellcheck="false"></textarea>
+                  <small>支持 HTML、iframe、JavaScript 和追踪像素组合；前台通过隔离 iframe 运行。</small>
+                </div>
+                <div class="admin-dialog-form-grid">
+                  <div class="admin-field">
+                    <label for={`${prefix}-embed-width`}>声明宽度</label>
+                    <input id={`${prefix}-embed-width`} name="declaredWidth" type="number" min="1" max="4096" inputmode="numeric" />
+                  </div>
+                  <div class="admin-field">
+                    <label for={`${prefix}-embed-height`}>声明高度</label>
+                    <input id={`${prefix}-embed-height`} name="declaredHeight" type="number" min="1" max="4096" inputmode="numeric" />
+                  </div>
+                </div>
+              </div>
+
+              <div class="admin-field">
+                <label for={`${prefix}-target-url`}>目标链接</label>
+                <input id={`${prefix}-target-url`} name="targetUrl" type="url" maxlength="2000" autocomplete="off" data-ad-target-url />
+                <small>上传图片和外部素材必填；联盟代码已包含跳转链接时可以留空。</small>
+              </div>
+
+              <div class="admin-dialog-form-grid">
+                <div class="admin-field">
+                  <label for={`${prefix}-open-mode`}>打开方式</label>
+                  <select id={`${prefix}-open-mode`} name="openMode">
+                    <option value="new">新窗口</option>
+                    <option value="same">当前窗口</option>
+                  </select>
+                </div>
+                <div class="admin-field">
+                  <label for={`${prefix}-status`}>状态</label>
+                  <select id={`${prefix}-status`} name="status">
+                    <option value="enabled">启用</option>
+                    <option value="disabled">停用</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="admin-ad-preview" data-ad-preview hidden>
+                <div class="admin-ad-preview-stage" data-ad-preview-stage></div>
+                <p data-ad-preview-status></p>
+              </div>
+
+              <div class="admin-dialog-actions">
+                <button class="button secondary" type="button" data-ad-preview-button>预览素材</button>
+                <button class="button secondary" type="button" data-dialog-close>取消</button>
+                <button class="button" type="submit">保存</button>
+              </div>
+            </form>
+          </AdminDialog>
+        );
+      })}
     </div>
   ) : (
     <section class="admin-card"><div class="admin-record-empty">找不到该分区。</div></section>
   )}
 </AdminLayout>
+
+<style>
+  .admin-ad-code-thumbnail {
+    display: grid;
+    place-items: center;
+    background: #f2f2f2;
+    color: #555;
+    font-size: .68rem;
+    font-weight: 800;
+    letter-spacing: .08em;
+  }
+
+  .admin-ad-preview {
+    border: 1px solid var(--admin-border, #d8d8d8);
+    border-radius: .75rem;
+    padding: .75rem;
+    background: #f7f7f7;
+  }
+
+  .admin-ad-preview-stage {
+    display: grid;
+    min-height: 8rem;
+    place-items: center;
+    overflow: auto;
+  }
+
+  .admin-ad-preview-stage img,
+  .admin-ad-preview-stage iframe {
+    display: block;
+    max-width: 100%;
+    border: 0;
+  }
+
+  .admin-ad-preview p {
+    margin: .5rem 0 0;
+    color: #666;
+    font-size: .78rem;
+  }
+</style>
