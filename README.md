@@ -36,7 +36,9 @@
   ↓
 点击 CTA
   ↓
-转化池实时选择可用资源并跳转
+转化池实时选择一个可用资源
+  ↓
+用户选择打开短信/链接或复制号码/链接
 ```
 
 Hero 广告保持简单模型：**图片 + 跳转链接**。按钮和广告文案直接制作在图片中，系统不维护额外广告标题或按钮文案。
@@ -178,6 +180,8 @@ pnpm deploy
 /{channel}/category/{category}
 /{channel}/product/{product}
 ```
+
+部署前的本地 Worker 与 Headless Chrome Smoke Test 还会验证搜索结果、公开产品分页 API 和 CTA 转化解析接口。
 
 如果 Worker 已部署但 Smoke Test 失败，工作流会执行 Worker 自动回滚。D1 不会自动恢复，因为 Time Travel Restore 会覆盖生产数据库并取消进行中的查询。
 
