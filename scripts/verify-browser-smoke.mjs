@@ -29,6 +29,25 @@ async function waitForServer() {
   throw new Error(`Local Worker did not become ready: ${String(lastError)}`);
 }
 
+async function requestText(pathname, accept = "text/html") {
+  const response = await fetch(`${ORIGIN}${pathname}`, {
+    headers: { Accept: accept },
+    signal: AbortSignal.timeout(5_000),
+  });
+  const body = await response.text();
+  if (!response.ok) throw new Error(`${pathname} returned ${response.status}: ${body.slice(0, 300)}`);
+  return { response, body };
+}
+
+async function requestJson(pathname) {
+  const { response, body } = await requestText(pathname, "application/json");
+  try {
+    return { response, payload: JSON.parse(body) };
+  } catch {
+    throw new Error(`${pathname} did not return valid JSON.`);
+  }
+}
+
 function runChrome(chrome, args, outputPath = null) {
   const result = spawnSync(chrome, [
     "--headless=new",
@@ -138,6 +157,28 @@ const server = spawn("pnpm", [
 try {
   await waitForServer();
 
+  const searchResult = await requestText("/demo/search?q=Smoke");
+  if (!searchResult.body.includes("Smoke Product")) {
+    throw new Error("Public search did not return the fixture product.");
+  }
+
+  const productApi = await requestJson("/api/public/channels/demo/products?page=1");
+  if (
+    !Array.isArray(productApi.payload?.products)
+    || productApi.payload.products[0]?.slug !== "smoke-product"
+  ) {
+    throw new Error("Public product API did not return the fixture product.");
+  }
+
+  const contact = await requestJson("/go/smoke-product?channel=demo");
+  if (
+    contact.payload?.ok !== true
+    || contact.payload.contact?.type !== "link"
+    || contact.payload.contact?.target !== "https://example.com/contact"
+  ) {
+    throw new Error("Conversion resolver did not return the configured fixture target.");
+  }
+
   runChrome(chrome, [
     `--user-data-dir=${userDataDir}`,
     "--window-size=390,844",
@@ -187,7 +228,7 @@ try {
     "href=\"/demo?category=people\"",
   ]);
   assertDocument(`${LOG_DIR}/admin-login-browser-dom.html`, ["<html", "<form"]);
-  console.log("Headless Chrome verified public and admin entry pages, including the desktop hero link contract.");
+  console.log("Headless Chrome and local Worker routes verified public search, pagination API, conversion resolution, public pages, and admin entry.");
 } finally {
   server.kill("SIGTERM");
   await new Promise((resolve) => setTimeout(resolve, 500));

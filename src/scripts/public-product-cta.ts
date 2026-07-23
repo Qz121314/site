@@ -36,14 +36,42 @@ function formatVisibleValue(type: "link" | "sms", target: string, display: strin
   }
 }
 
-async function copyText(value: string): Promise<boolean> {
-  if (!value || !navigator.clipboard?.writeText) return false;
+function copyTextWithSelection(value: string): boolean {
+  const textarea = document.createElement("textarea");
+  textarea.value = value;
+  textarea.readOnly = true;
+  textarea.setAttribute("aria-hidden", "true");
+  textarea.style.position = "fixed";
+  textarea.style.inset = "0 auto auto -9999px";
+  textarea.style.opacity = "0";
+  textarea.style.pointerEvents = "none";
+  document.body.appendChild(textarea);
+
   try {
-    await navigator.clipboard.writeText(value);
-    return true;
+    textarea.focus({ preventScroll: true });
+    textarea.select();
+    textarea.setSelectionRange(0, value.length);
+    return document.execCommand("copy");
   } catch {
     return false;
+  } finally {
+    textarea.remove();
   }
+}
+
+async function copyText(value: string): Promise<boolean> {
+  if (!value) return false;
+
+  if (navigator.clipboard?.writeText) {
+    try {
+      await navigator.clipboard.writeText(value);
+      return true;
+    } catch {
+      // Some embedded browsers expose Clipboard API but reject the write.
+    }
+  }
+
+  return copyTextWithSelection(value);
 }
 
 document.querySelectorAll<HTMLElement>("[data-contact-box]").forEach((box) => {
