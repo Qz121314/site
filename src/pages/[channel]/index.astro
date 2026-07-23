@@ -3,7 +3,6 @@ import PublicLayout from "@/layouts/PublicLayout.astro";
 import AffiliateAds from "@/components/public/AffiliateAds.astro";
 import CategoryCard from "@/components/public/CategoryCard.astro";
 import ProductDirectory from "@/components/public/ProductDirectory.astro";
-import PublicSearchForm from "@/components/public/PublicSearchForm.astro";
 import {
   findPublicChannel,
   loadPublicCategories,
@@ -82,30 +81,23 @@ const adSurface = hasCategoryNavigation
     <>
       <AffiliateAds channelSlug={channel.slug} surface={adSurface} />
 
-      {pageInput.page === 1 && (
-        <section class="public-section channel-search-section">
-          <PublicSearchForm
-            action={`/${encodeURIComponent(channel.slug)}/search`}
-            ariaLabel={`Search ${channel.name}`}
-          />
-
-          {!hasCategoryNavigation && categories.length > 0 && (
-            <nav class="filter-strip channel-category-filters" aria-label="Product categories">
-              {categories.map((category) => {
-                const active = selectedCategory?.id === category.id;
-                const channelHref = `/${encodeURIComponent(channel.slug)}`;
-                return (
-                  <a
-                    class="filter-button"
-                    href={active ? channelHref : `${channelHref}?category=${encodeURIComponent(category.slug)}`}
-                    aria-current={active ? "page" : undefined}
-                  >
-                    {category.name}
-                  </a>
-                );
-              })}
-            </nav>
-          )}
+      {pageInput.page === 1 && !hasCategoryNavigation && categories.length > 0 && (
+        <section class="public-section channel-category-section">
+          <nav class="filter-strip channel-category-filters" aria-label="Product categories">
+            {categories.map((category) => {
+              const active = selectedCategory?.id === category.id;
+              const channelHref = `/${encodeURIComponent(channel.slug)}`;
+              return (
+                <a
+                  class="filter-button"
+                  href={active ? channelHref : `${channelHref}?category=${encodeURIComponent(category.slug)}`}
+                  aria-current={active ? "page" : undefined}
+                >
+                  {category.name}
+                </a>
+              );
+            })}
+          </nav>
         </section>
       )}
 
