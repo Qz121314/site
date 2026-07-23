@@ -24,6 +24,14 @@ a {
   text-decoration: none;
 }
 
+a,
+button,
+summary,
+label,
+[role="button"] {
+  -webkit-tap-highlight-color: transparent;
+}
+
 h1,
 h2,
 h3,
@@ -54,6 +62,14 @@ svg {
 
 img {
   height: auto;
+}
+
+a img,
+button img,
+[role="button"] img {
+  -webkit-user-drag: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
 
 [hidden] {
