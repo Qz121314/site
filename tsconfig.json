@@ -3,6 +3,7 @@
   "compilerOptions": {
     "types": ["./worker-configuration.d.ts", "node"],
     "baseUrl": ".",
+    "allowImportingTsExtensions": true,
     "paths": {
       "@/*": ["src/*"]
     },

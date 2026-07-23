@@ -306,28 +306,34 @@ function mountInlineVertical(shell: HTMLElement): void {
 function tryMountDesktopRail(shell: HTMLElement, advertisement: AffiliateAdvertisement): boolean {
   const main = document.querySelector<HTMLElement>(".public-main");
   if (!main) return false;
-  const rect = main.getBoundingClientRect();
+  const initialRect = main.getBoundingClientRect();
   const railWidth = Math.min(advertisement.width, 320);
-  if (window.innerWidth - rect.right < railWidth + 24) return false;
+  if (window.innerWidth - initialRect.right < railWidth + 24) return false;
 
   shell.classList.add("affiliate-ad-rail");
-  shell.style.left = `${Math.round(rect.right + 16)}px`;
-  shell.style.top = `${Math.max(76, Math.round(document.querySelector(".public-header")?.getBoundingClientRect().bottom ?? 76) + 12)}px`;
   document.body.appendChild(shell);
 
+  let animationFrame = 0;
   const update = (): void => {
+    animationFrame = 0;
     const currentRect = main.getBoundingClientRect();
+    const headerBottom = document.querySelector<HTMLElement>(".public-header")?.getBoundingClientRect().bottom ?? 76;
+    const footerTop = document.querySelector<HTMLElement>(".public-footer")?.getBoundingClientRect().top ?? Number.POSITIVE_INFINITY;
+    const shellBottom = shell.getBoundingClientRect().bottom;
     const space = window.innerWidth - currentRect.right;
+
     shell.hidden = space < railWidth + 24;
     shell.style.left = `${Math.round(currentRect.right + 16)}px`;
-    const footer = document.querySelector<HTMLElement>(".public-footer");
-    if (footer) {
-      const footerTop = footer.getBoundingClientRect().top;
-      shell.classList.toggle("is-footer-overlap", footerTop < shell.getBoundingClientRect().bottom + 12);
-    }
+    shell.style.top = `${Math.max(76, Math.round(headerBottom) + 12)}px`;
+    shell.classList.toggle("is-footer-overlap", footerTop < shellBottom + 12);
   };
-  window.addEventListener("resize", update, { passive: true });
-  window.addEventListener("scroll", update, { passive: true });
+  const scheduleUpdate = (): void => {
+    if (animationFrame) return;
+    animationFrame = window.requestAnimationFrame(update);
+  };
+
+  window.addEventListener("resize", scheduleUpdate, { passive: true });
+  window.addEventListener("scroll", scheduleUpdate, { passive: true });
   update();
   return true;
 }
@@ -366,15 +372,18 @@ async function mountModal(
     // Storage can be unavailable in restricted browsers; keep the per-page guard below.
   }
 
-  const loadedPromise = loadFirstAvailable(candidates, used, true);
   await Promise.all([
     interactionPromise(),
     new Promise((resolve) => window.setTimeout(resolve, 8000)),
   ]);
   if (document.hidden || document.querySelector("[data-affiliate-ad-modal]")) return;
-  const loaded = await loadedPromise;
-  if (!loaded) return;
 
+  // Do not create an iframe, execute affiliate JavaScript, or request modal media
+  // until every display condition has been satisfied.
+  const loaded = await loadFirstAvailable(candidates, used, true);
+  if (!loaded || document.hidden || document.querySelector("[data-affiliate-ad-modal]")) return;
+
+  const previouslyFocused = document.activeElement instanceof HTMLElement ? document.activeElement : null;
   const backdrop = document.createElement("div");
   backdrop.className = "affiliate-ad-modal-backdrop";
   backdrop.dataset.affiliateAdModal = "";
@@ -388,13 +397,18 @@ async function mountModal(
   close.type = "button";
   close.setAttribute("aria-label", "Close advertisement");
   close.textContent = "×";
+  const onKeydown = (event: KeyboardEvent): void => {
+    if (event.key === "Escape" && backdrop.isConnected) dismiss();
+  };
   const dismiss = (): void => {
+    document.removeEventListener("keydown", onKeydown);
     backdrop.remove();
     try { sessionStorage.setItem(storageKey, "1"); } catch { /* ignore */ }
+    previouslyFocused?.focus();
   };
   close.addEventListener("click", dismiss);
   backdrop.addEventListener("click", (event) => { if (event.target === backdrop) dismiss(); });
-  document.addEventListener("keydown", (event) => { if (event.key === "Escape" && backdrop.isConnected) dismiss(); });
+  document.addEventListener("keydown", onKeydown);
 
   card.insertBefore(close, card.firstChild);
   backdrop.appendChild(card);

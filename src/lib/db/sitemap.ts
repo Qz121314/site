@@ -109,9 +109,14 @@ export async function loadPublicSitemapEntries(): Promise<PublicSitemapEntries> 
          channel.slug AS channelSlug,
          category.slug,
          EXISTS(
-           SELECT 1 FROM category_filters category_filter
-           WHERE category_filter.channel_id = category.channel_id
-             AND category_filter.status = 'enabled'
+           SELECT 1
+           FROM category_filter_relations relation
+           INNER JOIN category_filters category_filter
+             ON category_filter.id = relation.filter_id
+            AND category_filter.channel_id = category.channel_id
+            AND category_filter.status = 'enabled'
+           WHERE relation.category_id = category.id
+           LIMIT 1
          ) AS hasCategoryNavigation,
          MAX(
            category.updated_at,

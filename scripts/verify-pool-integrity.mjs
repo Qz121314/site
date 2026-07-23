@@ -9,6 +9,7 @@ const ids = {
   image: "audit-guard-image",
   adPool: "audit-guard-ad-pool",
   advertisement: "audit-guard-advertisement",
+  legacyAdvertisement: "audit-guard-legacy-advertisement",
 };
 
 function execute(sql, expectFailure = null) {
@@ -107,8 +108,35 @@ try {
   execute(`UPDATE ad_pools SET status = 'disabled' WHERE id = '${ids.adPool}'`);
   execute(`UPDATE advertisements SET status = 'disabled' WHERE id = '${ids.advertisement}'`);
   execute(`DELETE FROM advertisements WHERE id = '${ids.advertisement}'`);
+
+  // The immediately previous Worker writes only the legacy Hero advertisement fields.
+  // Defaults added by the compatibility migration must make that insert valid.
+  execute(`
+    INSERT INTO advertisements (
+      id, pool_id, image_asset_id, target_url, open_mode, sort_order, status
+    ) VALUES (
+      '${ids.legacyAdvertisement}', '${ids.adPool}', '${ids.image}',
+      'https://example.com/legacy', 'same', 10, 'enabled'
+    );
+
+    DELETE FROM advertisements
+    WHERE id = '${ids.legacyAdvertisement}'
+      AND name = 'Advertisement'
+      AND display_type = 'banner'
+      AND creative_type = 'uploaded_image'
+      AND sort_order = 10;
+
+    INSERT INTO advertisements (
+      id, pool_id, image_asset_id, target_url, open_mode, sort_order, status
+    ) VALUES (
+      '${ids.legacyAdvertisement}', '${ids.adPool}', '${ids.image}',
+      'https://example.com/legacy', 'same', 20, 'enabled'
+    );
+
+    DELETE FROM advertisements WHERE id = '${ids.legacyAdvertisement}';
+  `);
 } finally {
   execute(cleanup);
 }
 
-console.log("Conversion guards and open affiliate ad group lifecycle verified.");
+console.log("Conversion guards, affiliate lifecycle, and legacy Worker rollback compatibility verified.");

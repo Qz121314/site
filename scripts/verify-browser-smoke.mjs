@@ -5,6 +5,7 @@ import { join } from "node:path";
 
 const ORIGIN = "http://127.0.0.1:8787";
 const LOG_DIR = "ci-logs";
+const CHROME_TIMEOUT_MS = 30_000;
 
 function findChrome() {
   for (const candidate of ["google-chrome", "google-chrome-stable", "chromium", "chromium-browser"]) {
@@ -61,8 +62,13 @@ function runChrome(chrome, args, outputPath = null) {
   ], {
     encoding: outputPath ? "utf8" : undefined,
     maxBuffer: 10 * 1024 * 1024,
+    timeout: CHROME_TIMEOUT_MS,
+    killSignal: "SIGKILL",
   });
 
+  if (result.error) {
+    throw new Error(`Chrome process failed: ${result.error.message}`);
+  }
   if (result.status !== 0) {
     throw new Error(`Chrome failed with status ${result.status}: ${result.stderr?.toString() ?? ""}`);
   }

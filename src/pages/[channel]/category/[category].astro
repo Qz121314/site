@@ -2,10 +2,10 @@
 import PublicLayout from "@/layouts/PublicLayout.astro";
 import AffiliateAds from "@/components/public/AffiliateAds.astro";
 import ProductDirectory from "@/components/public/ProductDirectory.astro";
+import { hasPublicCategoryNavigation } from "@/lib/db/public-category-navigation";
 import {
   findPublicChannel,
   loadPublicCategory,
-  loadPublicCategoryFilters,
   loadPublicProducts,
   loadPublicSiteShell,
   PUBLIC_PRODUCT_PAGE_SIZE,
@@ -19,14 +19,14 @@ const categorySlug = Astro.params.category ?? "";
 const pageInput = readPublicPage(Astro.url.searchParams.get("page"));
 const site = await loadPublicSiteShell();
 const channel = findPublicChannel(site, channelSlug);
-const [category, categoryFilters] = channel && pageInput.valid
+const [category, hasCategoryNavigation] = channel && pageInput.valid
   ? await Promise.all([
       loadPublicCategory(channel.id, categorySlug),
-      loadPublicCategoryFilters(channel.id),
+      hasPublicCategoryNavigation(channel.id),
     ])
-  : [null, []];
+  : [null, false];
 
-if (channel && category && categoryFilters.length === 0) {
+if (channel && category && !hasCategoryNavigation) {
   const target = new URL(`/${encodeURIComponent(channel.slug)}`, Astro.url.origin);
   target.searchParams.set("category", category.slug);
   if (pageInput.page > 1) target.searchParams.set("page", String(pageInput.page));

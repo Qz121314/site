@@ -38,17 +38,20 @@ test("publishing requires a public image origin and updates category and product
 });
 
 test("category degradation uses one canonical route and product back target", async () => {
-  const [channelPage, categoryPage, productPage, sitemap] = await Promise.all([
+  const [channelPage, categoryPage, productPage, sitemap, sitemapDatabase] = await Promise.all([
     source("src/pages/[channel]/index.astro"),
     source("src/pages/[channel]/category/[category].astro"),
     source("src/pages/[channel]/product/[product].astro"),
     source("src/pages/sitemap.xml.ts"),
+    source("src/lib/db/sitemap.ts"),
   ]);
 
   assert.match(channelPage, /value\.searchParams\.set\("category", selectedCategory\.slug\)/u);
-  assert.match(categoryPage, /categoryFilters\.length === 0[\s\S]*Astro\.redirect/u);
-  assert.match(productPage, /product\.hasCategoryNavigation[\s\S]*\?category=/u);
+  assert.match(categoryPage, /category && !hasCategoryNavigation[\s\S]*Astro\.redirect/u);
+  assert.match(productPage, /hasPublicCategoryNavigation\(product\.channelId\)/u);
+  assert.match(productPage, /hasCategoryNavigation[\s\S]*\?category=/u);
   assert.match(sitemap, /entry\.hasCategoryNavigation[\s\S]*\?category=/u);
+  assert.match(sitemapDatabase, /category_filter_relations[\s\S]*category_filter\.status = 'enabled'/u);
 });
 
 test("public image and interaction closeout removes avoidable load and click delays", async () => {
@@ -67,6 +70,8 @@ test("public image and interaction closeout removes avoidable load and click del
   assert.doesNotMatch(cta, /setTimeout\(resolve, 220\)/u);
   assert.match(affiliateAds, /waitForAdvertisementStart/u);
   assert.match(affiliateAds, /new Image\(\)/u);
+  assert.match(affiliateAds, /Do not create an iframe[\s\S]*loadFirstAvailable/u);
+  assert.match(affiliateAds, /requestAnimationFrame\(update\)/u);
   assert.doesNotMatch(affiliateAds, /ORDER BY RANDOM|\.sort\(/u);
 });
 
@@ -79,6 +84,8 @@ test("legacy catalog branches and redirect-only category admin route are removed
 
   assert.doesNotMatch(directory, /uncategorizedOnly|data-query/u);
   assert.doesNotMatch(directoryScript, /uncategorized|dataset\.query/u);
+  assert.match(directoryScript, /isBackForwardNavigation/u);
+  assert.match(directoryScript, /historyStorageKey/u);
   assert.doesNotMatch(productsApi, /public-availability|normalizePublicSearchQuery/u);
   await assert.rejects(access(new URL("../src/lib/db/public-availability.ts", import.meta.url)));
   await assert.rejects(access(new URL("../src/pages/admin/channels/[channelId]/categories.astro", import.meta.url)));

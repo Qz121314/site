@@ -18,8 +18,16 @@ const REQUIRED_TABLES = [
   "product_images",
   "advertisements",
 ] as const;
+const REQUIRED_ADVERTISEMENT_COLUMNS = [
+  "name",
+  "display_type",
+  "creative_type",
+  "sort_order",
+] as const;
+const SCHEMA_REVISION = "affiliate-v2-rollback-compatible";
 
 type SchemaRow = { table_count: number };
+type ColumnRow = { column_count: number };
 type ReadinessRow = {
   settings_ready: number;
   pending_image_deletions: number;
@@ -40,7 +48,17 @@ export const GET: APIRoute = async () => {
        WHERE type = 'table' AND name IN (${placeholders})`,
     ).bind(...REQUIRED_TABLES).first<SchemaRow>();
 
-    schema = Number(schemaRow?.table_count ?? 0) === REQUIRED_TABLES.length ? "ok" : "incomplete";
+    const columnPlaceholders = REQUIRED_ADVERTISEMENT_COLUMNS.map((_, index) => `?${index + 1}`).join(", ");
+    const advertisementColumns = await env.DB.prepare(
+      `SELECT COUNT(*) AS column_count
+       FROM pragma_table_info('advertisements')
+       WHERE name IN (${columnPlaceholders})`,
+    ).bind(...REQUIRED_ADVERTISEMENT_COLUMNS).first<ColumnRow>();
+
+    schema = Number(schemaRow?.table_count ?? 0) === REQUIRED_TABLES.length
+      && Number(advertisementColumns?.column_count ?? 0) === REQUIRED_ADVERTISEMENT_COLUMNS.length
+      ? "ok"
+      : "incomplete";
     if (schema === "ok") {
       const readiness = await env.DB.prepare(
         `SELECT
@@ -66,6 +84,7 @@ export const GET: APIRoute = async () => {
     status,
     database,
     schema,
+    schemaRevision: ready ? SCHEMA_REVISION : null,
     settings,
     warnings,
     timestamp: new Date().toISOString(),
