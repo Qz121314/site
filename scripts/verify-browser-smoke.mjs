@@ -90,6 +90,7 @@ function assertDocument(path, requirements) {
 function assertAffiliateAdContract() {
   const componentSource = readFileSync("src/components/public/AffiliateAds.astro", "utf8");
   const interactionSource = readFileSync("src/scripts/public-affiliate-ads.ts", "utf8");
+  const candidateSource = readFileSync("src/lib/db/public-ads.ts", "utf8");
   const productSource = readFileSync("src/pages/[channel]/product/[product].astro", "utf8");
 
   for (const requirement of [
@@ -100,12 +101,17 @@ function assertAffiliateAdContract() {
   }
   for (const requirement of [
     "waitForAdvertisementStart",
-    "Math.random()",
     "public:products-appended",
     "affiliate-ad-modal-dismissed",
     "allow-popups-to-escape-sandbox",
   ]) {
     if (!interactionSource.includes(requirement)) throw new Error(`Affiliate ad interaction contract is missing: ${requirement}`);
+  }
+  if (!candidateSource.includes("Math.random()")) {
+    throw new Error("Affiliate ad candidate resolution must randomize in Worker code.");
+  }
+  if (/ORDER BY RANDOM\(\)|\.sort\(/u.test(candidateSource)) {
+    throw new Error("Affiliate ad candidate resolution must not use random SQL ordering or full array sorting.");
   }
   if (/AffiliateAds|affiliate-ad-context/u.test(productSource)) {
     throw new Error("Product detail must not bootstrap affiliate advertising.");
