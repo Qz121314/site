@@ -4,11 +4,14 @@ import test from "node:test";
 
 const migrationDirectory = new URL("../migrations/", import.meta.url);
 
-test("ships one clean initial migration without legacy fields", async () => {
-  const files = (await readdir(migrationDirectory)).filter((name) => name.endsWith(".sql"));
-  assert.deepEqual(files, ["0001_initial.sql"]);
+test("ships an ordered clean template schema plus the affiliate ad upgrade", async () => {
+  const files = (await readdir(migrationDirectory)).filter((name) => name.endsWith(".sql")).sort();
+  assert.deepEqual(files, ["0001_initial.sql", "0002_affiliate_ad_system.sql"]);
 
-  const schema = await readFile(new URL("0001_initial.sql", migrationDirectory), "utf8");
+  const [schema, advertising] = await Promise.all([
+    readFile(new URL("0001_initial.sql", migrationDirectory), "utf8"),
+    readFile(new URL("0002_affiliate_ad_system.sql", migrationDirectory), "utf8"),
+  ]);
   assert.doesNotMatch(schema, /\bfeatured\b/u);
   assert.doesNotMatch(schema, /\bnoindex_enabled\b/u);
   assert.doesNotMatch(schema, /\ball_filter_label\b/u);
@@ -16,6 +19,12 @@ test("ships one clean initial migration without legacy fields", async () => {
   const categories = schema.match(/CREATE TABLE categories \([\s\S]*?\n\);/u)?.[0] ?? "";
   assert.doesNotMatch(categories, /image_asset_id/u);
   assert.match(categories, /UNIQUE \(id, channel_id\)/u);
+
+  assert.match(advertising, /device_type TEXT NOT NULL DEFAULT 'mobile'/u);
+  assert.match(advertising, /display_type TEXT NOT NULL CHECK/u);
+  assert.match(advertising, /creative_type TEXT NOT NULL CHECK/u);
+  assert.match(advertising, /idx_ad_pools_channel_device_status/u);
+  assert.match(advertising, /idx_advertisements_pool_status_type/u);
 });
 
 test("enforces dedicated product thumbnails and publishable relations", async () => {
