@@ -2,8 +2,6 @@
 import PublicLayout from "@/layouts/PublicLayout.astro";
 import CategoryCard from "@/components/public/CategoryCard.astro";
 import ProductCard from "@/components/public/ProductCard.astro";
-import PublicPageHeader from "@/components/public/PublicPageHeader.astro";
-import PublicSearchForm from "@/components/public/PublicSearchForm.astro";
 import {
   findPublicChannel,
   loadPublicSiteShell,
@@ -28,6 +26,7 @@ const results = {
   products: rankSearchResults(rawResults.products, query, (product) => [product.title, ...product.tags]),
 };
 const categories = results.categories;
+const returnUrl = channel ? `/${encodeURIComponent(channel.slug)}` : null;
 ---
 
 <PublicLayout
@@ -37,24 +36,13 @@ const categories = results.categories;
   canonical={null}
   robots="noindex,follow"
   activeChannel={channel?.slug ?? null}
+  backHref={returnUrl}
 >
   {channel ? (
     <>
-      <PublicPageHeader
-        href={`/${encodeURIComponent(channel.slug)}`}
-        title={query || "Search"}
-        className="search-page-header"
-      />
-
-      <section class="public-section">
-        <PublicSearchForm
-          action={`/${encodeURIComponent(channel.slug)}/search`}
-          ariaLabel={`Search ${channel.name}`}
-          value={query}
-          required
-          autofocus={!query}
-        />
-      </section>
+      <header class="search-page-title">
+        <h1>{query || "Search"}</h1>
+      </header>
 
       {!query ? (
         <div class="public-empty">
