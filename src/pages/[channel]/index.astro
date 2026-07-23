@@ -1,6 +1,6 @@
 ---
 import PublicLayout from "@/layouts/PublicLayout.astro";
-import HeroCarousel from "@/components/public/HeroCarousel.astro";
+import AffiliateAds from "@/components/public/AffiliateAds.astro";
 import CategoryCard from "@/components/public/CategoryCard.astro";
 import ProductDirectory from "@/components/public/ProductDirectory.astro";
 import PublicSearchForm from "@/components/public/PublicSearchForm.astro";
@@ -8,7 +8,6 @@ import {
   findPublicChannel,
   loadPublicCategories,
   loadPublicCategoryFilters,
-  loadPublicHeroAdvertisements,
   loadPublicProducts,
   loadPublicSiteShell,
 } from "@/lib/db/public";
@@ -23,13 +22,12 @@ const site = await loadPublicSiteShell();
 const channel = findPublicChannel(site, channelSlug);
 const canLoadPage = Boolean(channel && pageInput.valid);
 
-const [hero, filters, loadedCategories] = canLoadPage && channel
+const [filters, loadedCategories] = canLoadPage && channel
   ? await Promise.all([
-      pageInput.page === 1 ? loadPublicHeroAdvertisements(channel.id, site.r2PublicBaseUrl) : Promise.resolve([]),
       loadPublicCategoryFilters(channel.id),
       loadPublicCategories(channel.id),
     ])
-  : [[], [], []];
+  : [[], []];
 const categories = loadedCategories;
 const hasCategoryNavigation = filters.length > 0;
 const selectedCategory = !hasCategoryNavigation && requestedCategorySlug
@@ -66,6 +64,11 @@ const directoryTitle = selectedCategory?.name ?? channel?.name;
 const pageTitle = directoryTitle
   ? pageInput.page > 1 ? `${directoryTitle} — Page ${pageInput.page}` : directoryTitle
   : "Page not found";
+const adSurface = hasCategoryNavigation
+  ? "channel"
+  : pageInput.page === 1 && !selectedCategory
+    ? "channel-catalog"
+    : "catalog";
 ---
 
 <PublicLayout
@@ -78,7 +81,7 @@ const pageTitle = directoryTitle
 >
   {pageAvailable && channel ? (
     <>
-      {pageInput.page === 1 && <HeroCarousel advertisements={hero} />}
+      <AffiliateAds channelSlug={channel.slug} surface={adSurface} />
 
       {pageInput.page === 1 && (
         <section class="public-section channel-search-section">
@@ -167,7 +170,7 @@ const pageTitle = directoryTitle
             categorySlug={selectedCategory?.slug ?? null}
             preserveCategoryQuery={Boolean(selectedCategory)}
             page={productPage}
-            priorityCount={hero.length > 0 ? 0 : 2}
+            priorityCount={2}
             emptyMessage={selectedCategory
               ? `No published products are available in ${selectedCategory.name}.`
               : "No published products are available in this channel."}
