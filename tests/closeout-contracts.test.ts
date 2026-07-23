@@ -48,7 +48,8 @@ test("category degradation uses one canonical route and product back target", as
 
   assert.match(channelPage, /value\.searchParams\.set\("category", selectedCategory\.slug\)/u);
   assert.match(categoryPage, /category && !hasCategoryNavigation[\s\S]*Astro\.redirect/u);
-  assert.match(productPage, /product\.hasCategoryNavigation[\s\S]*\?category=/u);
+  assert.match(productPage, /hasPublicCategoryNavigation\(product\.channelId\)/u);
+  assert.match(productPage, /hasCategoryNavigation[\s\S]*\?category=/u);
   assert.match(sitemap, /entry\.hasCategoryNavigation[\s\S]*\?category=/u);
   assert.match(sitemapDatabase, /category_filter_relations[\s\S]*category_filter\.status = 'enabled'/u);
 });
