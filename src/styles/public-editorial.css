@@ -270,6 +270,57 @@
     letter-spacing: .005em;
   }
 
+  .public-header-search-form-inline {
+    display: grid;
+    width: 100%;
+    min-height: 2.65rem;
+    grid-template-columns: 2.3rem minmax(0, 1fr) 2.6rem;
+    align-items: center;
+    overflow: hidden;
+    border: 1px solid #dededb;
+    border-radius: .68rem;
+    color: #222220;
+    background: rgba(255, 255, 255, .86);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .035);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+  }
+
+  .public-header-search-form-inline:focus-within {
+    border-color: #999994;
+    box-shadow: 0 0 0 3px rgba(0, 0, 0, .055);
+  }
+
+  .public-header-search-form-inline .public-header-search-glyph {
+    color: #777773;
+  }
+
+  .public-header-search-form-inline input {
+    min-height: 2.55rem;
+    padding: 0 .25rem;
+    color: #20201f;
+    font-size: .82rem;
+  }
+
+  .public-header-search-form-inline input::placeholder {
+    color: #898985;
+  }
+
+  .public-header-search-form-inline input::-webkit-search-cancel-button {
+    filter: none;
+  }
+
+  .public-header-search-form-inline .public-header-search-submit {
+    border-left: 1px solid #e7e7e4;
+    color: #4d4d49;
+    background: transparent;
+  }
+
+  .public-header-search-form-inline .public-header-search-submit:hover {
+    color: #111110;
+    background: #f3f3f1;
+  }
+
   .public-main {
     padding-bottom: clamp(3rem, 5vw, 4.5rem);
   }
@@ -277,6 +328,12 @@
   .public-footer-inner {
     padding-top: 1.8rem;
     padding-bottom: 1.8rem;
+  }
+}
+
+@media (min-width: 1200px) {
+  .public-header-trailing {
+    min-width: 16rem;
   }
 }
 

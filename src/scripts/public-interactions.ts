@@ -21,23 +21,49 @@ document.addEventListener("click", (event) => {
   window.setTimeout(() => delete control.dataset.lastActivation, ACTIVATION_WINDOW_MS);
 }, true);
 
+function bindSearchValidation(
+  form: HTMLFormElement,
+  searchInput: HTMLInputElement,
+): () => void {
+  const syncValidity = (): void => {
+    searchInput.setCustomValidity(searchInput.value.trim() ? "" : SEARCH_REQUIRED_MESSAGE);
+  };
+
+  syncValidity();
+  searchInput.addEventListener("invalid", syncValidity);
+  searchInput.addEventListener("input", syncValidity);
+  form.addEventListener("submit", (event) => {
+    searchInput.value = searchInput.value.trim();
+    syncValidity();
+    if (searchInput.checkValidity()) return;
+
+    event.preventDefault();
+    searchInput.reportValidity();
+    searchInput.focus({ preventScroll: true });
+  });
+  return syncValidity;
+}
+
+const searchValidity = new WeakMap<HTMLInputElement, () => void>();
+document.querySelectorAll<HTMLFormElement>("[data-public-search-form]").forEach((form) => {
+  const searchInput = form.querySelector<HTMLInputElement>("[data-public-search-input]");
+  if (!searchInput) return;
+  searchValidity.set(searchInput, bindSearchValidation(form, searchInput));
+});
+
 const header = document.querySelector<HTMLElement>("[data-public-header]");
 const headerDefault = header?.querySelector<HTMLElement>("[data-header-default]");
 const searchLayer = header?.querySelector<HTMLElement>("[data-header-search-layer]");
 const searchOpen = header?.querySelector<HTMLButtonElement>("[data-header-search-open]");
 const searchClose = header?.querySelector<HTMLButtonElement>("[data-header-search-close]");
-const searchForm = header?.querySelector<HTMLFormElement>("[data-header-search-form]");
-const searchInput = header?.querySelector<HTMLInputElement>("[data-header-search-input]");
+const overlaySearchInput = header?.querySelector<HTMLInputElement>("[data-header-search-input]");
 const publicMenu = header?.querySelector<HTMLDetailsElement>("[data-public-menu]");
 
-if (header && headerDefault && searchLayer && searchOpen && searchClose && searchForm && searchInput) {
+if (header && headerDefault && searchLayer && searchOpen && searchClose && overlaySearchInput) {
   let isSearchOpen = false;
+  const syncSearchValidity = searchValidity.get(overlaySearchInput) ?? (() => {});
 
-  const syncSearchValidity = () => {
-    searchInput.setCustomValidity(searchInput.value.trim() ? "" : SEARCH_REQUIRED_MESSAGE);
-  };
-
-  const setSearchOpen = (nextOpen: boolean) => {
+  const setSearchOpen = (nextOpen: boolean): void => {
     if (isSearchOpen === nextOpen) return;
     isSearchOpen = nextOpen;
 
@@ -51,10 +77,10 @@ if (header && headerDefault && searchLayer && searchOpen && searchClose && searc
       if (publicMenu) publicMenu.open = false;
       syncSearchValidity();
       window.requestAnimationFrame(() => {
-        searchInput.focus({ preventScroll: true });
+        overlaySearchInput.focus({ preventScroll: true });
         try {
-          const end = searchInput.value.length;
-          searchInput.setSelectionRange(end, end);
+          const end = overlaySearchInput.value.length;
+          overlaySearchInput.setSelectionRange(end, end);
         } catch {
           // Some browsers can reject selection changes on search inputs.
         }
@@ -65,22 +91,8 @@ if (header && headerDefault && searchLayer && searchOpen && searchClose && searc
     window.requestAnimationFrame(() => searchOpen.focus({ preventScroll: true }));
   };
 
-  syncSearchValidity();
   searchOpen.addEventListener("click", () => setSearchOpen(true));
   searchClose.addEventListener("click", () => setSearchOpen(false));
-
-  searchInput.addEventListener("invalid", syncSearchValidity);
-  searchInput.addEventListener("input", syncSearchValidity);
-
-  searchForm.addEventListener("submit", (event) => {
-    searchInput.value = searchInput.value.trim();
-    syncSearchValidity();
-    if (searchInput.checkValidity()) return;
-
-    event.preventDefault();
-    searchInput.reportValidity();
-    searchInput.focus({ preventScroll: true });
-  });
 
   document.addEventListener("keydown", (event) => {
     if (event.key !== "Escape") return;
@@ -92,6 +104,11 @@ if (header && headerDefault && searchLayer && searchOpen && searchClose && searc
     }
 
     if (publicMenu?.open) publicMenu.open = false;
+  });
+
+  const desktopMedia = window.matchMedia("(min-width: 768px)");
+  desktopMedia.addEventListener("change", (event) => {
+    if (event.matches && isSearchOpen) setSearchOpen(false);
   });
 }
 

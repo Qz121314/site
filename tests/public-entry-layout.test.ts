@@ -158,3 +158,30 @@ test("public editorial polish uses local fonts and completes empty-page composit
   assert.match(directory, /class="public-empty public-empty-products"/u);
   assert.match(directory, /New listings will appear here when they are published\./u);
 });
+
+test("desktop header keeps search inline while mobile retains the expandable control", async () => {
+  const [layout, searchComponent, interactions, editorial] = await Promise.all([
+    readFile(new URL("../src/layouts/PublicLayout.astro", import.meta.url), "utf8"),
+    readFile(new URL("../src/components/public/PublicHeaderSearch.astro", import.meta.url), "utf8"),
+    readFile(new URL("../src/scripts/public-interactions.ts", import.meta.url), "utf8"),
+    readFile(new URL("../src/styles/public-editorial.css", import.meta.url), "utf8"),
+  ]);
+
+  const brandPosition = layout.indexOf('class="public-brand public-brand-centered"');
+  const navigationPosition = layout.indexOf('class="public-header-desktop-nav"');
+  const desktopSearchPosition = layout.indexOf('class="public-header-search-desktop"');
+  assert.ok(brandPosition >= 0);
+  assert.ok(navigationPosition > brandPosition);
+  assert.ok(desktopSearchPosition > navigationPosition);
+
+  assert.match(layout, /variant="inline"/u);
+  assert.match(layout, /public-header-search-trigger-mobile/u);
+  assert.match(layout, /public-header-search-trigger-mobile,[\s\S]*?public-header-search-layer[\s\S]*?display: none !important;/u);
+  assert.match(searchComponent, /variant\?: "overlay" \| "inline"/u);
+  assert.match(searchComponent, /inline \? "public-header-search-form-inline"/u);
+  assert.match(searchComponent, /\{!inline && \(/u);
+  assert.match(interactions, /querySelectorAll<HTMLFormElement>\("\[data-public-search-form\]"\)/u);
+  assert.match(interactions, /desktopMedia\.addEventListener\("change"/u);
+  assert.match(editorial, /\.public-header-search-form-inline \{[\s\S]*?grid-template-columns: 2\.3rem minmax\(0, 1fr\) 2\.6rem;/u);
+  assert.match(editorial, /\.public-header-search-form-inline:focus-within/u);
+});

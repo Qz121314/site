@@ -202,18 +202,28 @@ const currentYear = new Date().getUTCFullYear();
 
           <div class="public-header-trailing">
             {headerSearchAction ? (
-              <button
-                class="public-header-search-trigger"
-                type="button"
-                aria-label="Open search"
-                aria-expanded="false"
-                data-header-search-open
-              >
-                <svg viewBox="0 0 24 24" aria-hidden="true">
-                  <circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="1.7" />
-                  <path d="m16 16 4 4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.7" />
-                </svg>
-              </button>
+              <>
+                <div class="public-header-search-desktop">
+                  <PublicHeaderSearch
+                    action={headerSearchAction}
+                    ariaLabel={`Search ${site.siteName}`}
+                    value={headerSearchValue}
+                    variant="inline"
+                  />
+                </div>
+                <button
+                  class="public-header-search-trigger public-header-search-trigger-mobile"
+                  type="button"
+                  aria-label="Open search"
+                  aria-expanded="false"
+                  data-header-search-open
+                >
+                  <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <circle cx="11" cy="11" r="6.5" fill="none" stroke="currentColor" stroke-width="1.7" />
+                    <path d="m16 16 4 4" fill="none" stroke="currentColor" stroke-linecap="round" stroke-width="1.7" />
+                  </svg>
+                </button>
+              </>
             ) : (
               <span class="public-header-balance" aria-hidden="true"></span>
             )}
@@ -226,6 +236,7 @@ const currentYear = new Date().getUTCFullYear();
               action={headerSearchAction}
               ariaLabel={`Search ${site.siteName}`}
               value={headerSearchValue}
+              variant="overlay"
             />
           </div>
         )}
@@ -298,7 +309,8 @@ const currentYear = new Date().getUTCFullYear();
     font: inherit;
   }
 
-  .public-header-desktop-nav {
+  .public-header-desktop-nav,
+  .public-header-search-desktop {
     display: none;
   }
 
@@ -306,7 +318,7 @@ const currentYear = new Date().getUTCFullYear();
     .public-header-default {
       display: flex;
       align-items: center;
-      gap: clamp(.8rem, 2vw, 1.5rem);
+      gap: clamp(.65rem, 1.45vw, 1.15rem);
     }
 
     .public-header-leading {
@@ -314,7 +326,7 @@ const currentYear = new Date().getUTCFullYear();
     }
 
     .public-header-default .public-brand-centered {
-      max-width: min(20rem, 28vw);
+      max-width: min(20rem, 24vw);
       flex: 0 1 auto;
       justify-self: auto;
     }
@@ -324,7 +336,7 @@ const currentYear = new Date().getUTCFullYear();
     }
 
     .public-header-default .public-brand-name {
-      max-width: min(20rem, 28vw);
+      max-width: min(20rem, 24vw);
       text-align: left;
     }
 
@@ -333,7 +345,7 @@ const currentYear = new Date().getUTCFullYear();
       min-width: 0;
       flex: 1 1 auto;
       align-items: center;
-      justify-content: flex-end;
+      justify-content: flex-start;
       gap: .15rem;
       overflow-x: auto;
       scrollbar-width: none;
@@ -365,8 +377,26 @@ const currentYear = new Date().getUTCFullYear();
     }
 
     .public-header-trailing {
-      flex: 0 0 auto;
-      margin-left: -.15rem;
+      min-width: 11.5rem;
+      flex: 0 1 clamp(11.5rem, 23vw, 22.5rem);
+      margin-left: auto;
+    }
+
+    .public-header-search-desktop {
+      display: block;
+      width: 100%;
+    }
+
+    .public-header-search-trigger-mobile,
+    .public-header-search-layer {
+      display: none !important;
+    }
+
+    .public-header[data-search-open="true"] .public-header-default {
+      opacity: 1;
+      pointer-events: auto;
+      filter: none;
+      transform: none;
     }
   }
 </style>
