@@ -33,6 +33,10 @@ const publicMenu = header?.querySelector<HTMLDetailsElement>("[data-public-menu]
 if (header && headerDefault && searchLayer && searchOpen && searchClose && searchForm && searchInput) {
   let isSearchOpen = false;
 
+  const syncSearchValidity = () => {
+    searchInput.setCustomValidity(searchInput.value.trim() ? "" : SEARCH_REQUIRED_MESSAGE);
+  };
+
   const setSearchOpen = (nextOpen: boolean) => {
     if (isSearchOpen === nextOpen) return;
     isSearchOpen = nextOpen;
@@ -45,6 +49,7 @@ if (header && headerDefault && searchLayer && searchOpen && searchClose && searc
 
     if (nextOpen) {
       if (publicMenu) publicMenu.open = false;
+      syncSearchValidity();
       window.requestAnimationFrame(() => {
         searchInput.focus({ preventScroll: true });
         try {
@@ -60,26 +65,19 @@ if (header && headerDefault && searchLayer && searchOpen && searchClose && searc
     window.requestAnimationFrame(() => searchOpen.focus({ preventScroll: true }));
   };
 
+  syncSearchValidity();
   searchOpen.addEventListener("click", () => setSearchOpen(true));
   searchClose.addEventListener("click", () => setSearchOpen(false));
 
-  searchInput.addEventListener("invalid", () => {
-    searchInput.setCustomValidity(SEARCH_REQUIRED_MESSAGE);
-  });
-
-  searchInput.addEventListener("input", () => {
-    searchInput.setCustomValidity("");
-  });
+  searchInput.addEventListener("invalid", syncSearchValidity);
+  searchInput.addEventListener("input", syncSearchValidity);
 
   searchForm.addEventListener("submit", (event) => {
     searchInput.value = searchInput.value.trim();
-    if (searchInput.value) {
-      searchInput.setCustomValidity("");
-      return;
-    }
+    syncSearchValidity();
+    if (searchInput.checkValidity()) return;
 
     event.preventDefault();
-    searchInput.setCustomValidity(SEARCH_REQUIRED_MESSAGE);
     searchInput.reportValidity();
     searchInput.focus({ preventScroll: true });
   });
