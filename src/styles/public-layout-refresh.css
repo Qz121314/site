@@ -121,6 +121,8 @@
   grid-column: 1 !important;
   grid-row: 3 !important;
   order: 3;
+  align-self: start !important;
+  grid-template-rows: auto !important;
 }
 
 .product-detail .product-gallery {
@@ -140,6 +142,7 @@
   .product-detail .product-gallery.has-thumbnails {
     display: grid;
     width: min(100%, 40rem);
+    min-height: 0;
     grid-template-columns: minmax(0, 1fr) 5rem;
     align-items: stretch;
     column-gap: .65rem;
@@ -157,7 +160,8 @@
     grid-column: 2;
     grid-row: 1;
     height: 100%;
-    max-height: none;
+    min-height: 0;
+    max-height: 100%;
     grid-auto-flow: row;
     grid-auto-columns: auto;
     grid-auto-rows: 5rem;
