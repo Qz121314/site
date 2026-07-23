@@ -21,28 +21,34 @@ document.addEventListener("click", (event) => {
   window.setTimeout(() => delete control.dataset.lastActivation, ACTIVATION_WINDOW_MS);
 }, true);
 
-const searchValidity = new WeakMap<HTMLInputElement, () => void>();
-document.querySelectorAll<HTMLFormElement>("[data-public-search-form]").forEach((form) => {
-  const input = form.querySelector<HTMLInputElement>("[data-public-search-input]");
-  if (!input) return;
-
+function bindSearchValidation(
+  form: HTMLFormElement,
+  searchInput: HTMLInputElement,
+): () => void {
   const syncValidity = (): void => {
-    input.setCustomValidity(input.value.trim() ? "" : SEARCH_REQUIRED_MESSAGE);
+    searchInput.setCustomValidity(searchInput.value.trim() ? "" : SEARCH_REQUIRED_MESSAGE);
   };
 
-  searchValidity.set(input, syncValidity);
   syncValidity();
-  input.addEventListener("invalid", syncValidity);
-  input.addEventListener("input", syncValidity);
+  searchInput.addEventListener("invalid", syncValidity);
+  searchInput.addEventListener("input", syncValidity);
   form.addEventListener("submit", (event) => {
-    input.value = input.value.trim();
+    searchInput.value = searchInput.value.trim();
     syncValidity();
-    if (input.checkValidity()) return;
+    if (searchInput.checkValidity()) return;
 
     event.preventDefault();
-    input.reportValidity();
-    input.focus({ preventScroll: true });
+    searchInput.reportValidity();
+    searchInput.focus({ preventScroll: true });
   });
+  return syncValidity;
+}
+
+const searchValidity = new WeakMap<HTMLInputElement, () => void>();
+document.querySelectorAll<HTMLFormElement>("[data-public-search-form]").forEach((form) => {
+  const searchInput = form.querySelector<HTMLInputElement>("[data-public-search-input]");
+  if (!searchInput) return;
+  searchValidity.set(searchInput, bindSearchValidation(form, searchInput));
 });
 
 const header = document.querySelector<HTMLElement>("[data-public-header]");
@@ -50,12 +56,12 @@ const headerDefault = header?.querySelector<HTMLElement>("[data-header-default]"
 const searchLayer = header?.querySelector<HTMLElement>("[data-header-search-layer]");
 const searchOpen = header?.querySelector<HTMLButtonElement>("[data-header-search-open]");
 const searchClose = header?.querySelector<HTMLButtonElement>("[data-header-search-close]");
-const searchInput = header?.querySelector<HTMLInputElement>("[data-header-search-input]");
+const overlaySearchInput = header?.querySelector<HTMLInputElement>("[data-header-search-input]");
 const publicMenu = header?.querySelector<HTMLDetailsElement>("[data-public-menu]");
 
-if (header && headerDefault && searchLayer && searchOpen && searchClose && searchInput) {
+if (header && headerDefault && searchLayer && searchOpen && searchClose && overlaySearchInput) {
   let isSearchOpen = false;
-  const syncSearchValidity = searchValidity.get(searchInput) ?? (() => {});
+  const syncSearchValidity = searchValidity.get(overlaySearchInput) ?? (() => {});
 
   const setSearchOpen = (nextOpen: boolean): void => {
     if (isSearchOpen === nextOpen) return;
@@ -71,10 +77,10 @@ if (header && headerDefault && searchLayer && searchOpen && searchClose && searc
       if (publicMenu) publicMenu.open = false;
       syncSearchValidity();
       window.requestAnimationFrame(() => {
-        searchInput.focus({ preventScroll: true });
+        overlaySearchInput.focus({ preventScroll: true });
         try {
-          const end = searchInput.value.length;
-          searchInput.setSelectionRange(end, end);
+          const end = overlaySearchInput.value.length;
+          overlaySearchInput.setSelectionRange(end, end);
         } catch {
           // Some browsers can reject selection changes on search inputs.
         }
