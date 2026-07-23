@@ -52,21 +52,22 @@ test("category degradation uses one canonical route and product back target", as
 });
 
 test("public image and interaction closeout removes avoidable load and click delays", async () => {
-  const [uploader, uploadApi, directory, cta, hero] = await Promise.all([
+  const [uploader, uploadApi, directory, cta, affiliateAds] = await Promise.all([
     source("src/components/admin/DirectImageUpload.astro"),
     source("src/pages/api/admin/images/upload.ts"),
     source("src/components/public/ProductDirectory.astro"),
     source("src/scripts/public-product-cta.ts"),
-    source("src/scripts/public-hero-carousel.ts"),
+    source("src/scripts/public-affiliate-ads.ts"),
   ]);
 
-  assert.match(uploader, /HERO_RESPONSIVE_DIMENSION = 960/u);
   assert.match(uploader, /LOGO_DIMENSION = 320/u);
   assert.match(uploader, /FAVICON_DIMENSION = 128/u);
   assert.match(uploadApi, /logoVariant[\s\S]*faviconVariant/u);
   assert.match(directory, /priorityCount/u);
   assert.doesNotMatch(cta, /setTimeout\(resolve, 220\)/u);
-  assert.match(hero, /maxIndex\(\) > 0/u);
+  assert.match(affiliateAds, /waitForAdvertisementStart/u);
+  assert.match(affiliateAds, /new Image\(\)/u);
+  assert.doesNotMatch(affiliateAds, /ORDER BY RANDOM|\.sort\(/u);
 });
 
 test("legacy catalog branches and redirect-only category admin route are removed", async () => {
