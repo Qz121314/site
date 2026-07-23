@@ -66,13 +66,13 @@ function previewAdvertisement(form: HTMLFormElement): void {
   if (creativeType === "uploaded_image") {
     const source = form.querySelector<HTMLImageElement>("[data-direct-image-upload] [data-upload-preview] img");
     if (!source?.src) {
-      status.textContent = "请先选择并完成图片上传。";
+      status.textContent = "请先选择图片。";
       return;
     }
     const image = new Image();
     image.alt = "";
-    image.onload = () => { status.textContent = `${image.naturalWidth}×${image.naturalHeight} · 图片加载成功`; };
-    image.onerror = () => { stage.replaceChildren(); status.textContent = "图片加载失败。"; };
+    image.onload = () => { status.textContent = `${image.naturalWidth}×${image.naturalHeight} · 本地预览成功`; };
+    image.onerror = () => { stage.replaceChildren(); status.textContent = "图片预览失败。"; };
     image.src = source.src;
     stage.appendChild(image);
     return;
