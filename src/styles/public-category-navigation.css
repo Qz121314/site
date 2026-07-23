@@ -1,0 +1,89 @@
+/* High-density mobile category directory.
+ * Category links remain easy to tap while keeping 50+ entries scannable.
+ */
+
+@media (max-width: 767px) {
+  .category-mobile-directory {
+    gap: .7rem;
+  }
+
+  .category-mobile-directory .category-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-auto-rows: 3.25rem;
+    gap: .45rem;
+  }
+
+  .category-mobile-directory .category-entry {
+    display: grid;
+    width: 100%;
+    min-width: 0;
+    min-height: 3.25rem;
+    height: 3.25rem;
+    grid-template-columns: minmax(0, 1fr) .9rem;
+    align-items: center;
+    gap: .4rem;
+    overflow: hidden;
+    border: 1px solid #e2e2df;
+    border-radius: .58rem;
+    padding: .52rem .58rem;
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, .025);
+  }
+
+  .category-mobile-directory .category-entry:hover {
+    border-color: #c8c8c3;
+    background: #fafaf8;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, .045);
+    transform: none;
+  }
+
+  .category-mobile-directory .category-entry:active {
+    transform: scale(.985);
+  }
+
+  .category-mobile-directory .category-entry-label {
+    display: -webkit-box;
+    min-width: 0;
+    overflow: hidden;
+    color: #292927;
+    font-size: .78rem;
+    font-weight: 650;
+    line-height: 1.18;
+    letter-spacing: 0;
+    overflow-wrap: anywhere;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .category-mobile-directory .category-entry-arrow {
+    display: grid;
+    width: .9rem;
+    height: .9rem;
+    place-items: center;
+    justify-self: end;
+    color: #777773;
+    border: 0;
+    background: transparent;
+  }
+
+  .category-mobile-directory .category-entry-arrow svg {
+    width: .82rem;
+    height: .82rem;
+    max-width: none;
+  }
+}
+
+@media (max-width: 360px) {
+  .category-mobile-directory .category-grid {
+    gap: .38rem;
+  }
+
+  .category-mobile-directory .category-entry {
+    gap: .28rem;
+    padding-inline: .5rem;
+  }
+
+  .category-mobile-directory .category-entry-label {
+    font-size: .74rem;
+  }
+}
