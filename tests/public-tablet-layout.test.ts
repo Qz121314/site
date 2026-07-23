@@ -2,13 +2,13 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-test("tablet and desktop channel pages expose grouped category rows and two Hero advertisements", async () => {
-  const [channel, layout, hero, styles, designStyles, ads] = await Promise.all([
+test("tablet and desktop channel pages use full-width Hero and distinct grouped category grids", async () => {
+  const [channel, layout, hero, styles, commerce, ads] = await Promise.all([
     readFile(new URL("../src/pages/[channel]/index.astro", import.meta.url), "utf8"),
     readFile(new URL("../src/layouts/PublicLayout.astro", import.meta.url), "utf8"),
     readFile(new URL("../src/components/public/HeroCarousel.astro", import.meta.url), "utf8"),
     readFile(new URL("../src/styles/public-desktop.css", import.meta.url), "utf8"),
-    readFile(new URL("../src/styles/public-design-system.css", import.meta.url), "utf8"),
+    readFile(new URL("../src/styles/public-commerce.css", import.meta.url), "utf8"),
     readFile(new URL("../src/pages/admin/channels/[channelId]/ads.astro", import.meta.url), "utf8"),
   ]);
 
@@ -18,23 +18,25 @@ test("tablet and desktop channel pages expose grouped category rows and two Hero
   assert.match(channel, /data-category-group-filter=\{filter\.id\}/u);
   assert.match(channel, /ungroupedCategories/u);
   assert.doesNotMatch(layout, /public-header-channel-name/u);
-  assert.match(hero, /\(min-width: 768px\) calc\(\(100vw - 4rem\) \/ 2\)/u);
-  assert.match(styles, /@media \(min-width: 768px\)/u);
-  assert.match(styles, /flex-basis: calc\(\(100% - \.8rem\) \/ 2\)/u);
-  assert.doesNotMatch(styles, /\.hero-slide:only-child/u);
-  assert.match(styles, /\.hero-slide img \{[\s\S]*?aspect-ratio: 12 \/ 5/u);
-  assert.match(designStyles, /\.hero-slide img \{[\s\S]*?aspect-ratio: 12 \/ 5/u);
+  assert.match(hero, /\(min-width: 1100px\) 1344px/u);
+  assert.match(hero, /\(min-width: 768px\) calc\(100vw - 3rem\)/u);
+  assert.match(commerce, /\.hero-slide \{[\s\S]*?flex-basis: 100%/u);
+  assert.match(styles, /@media \(min-width: 768px\) and \(max-width: 1099px\)/u);
+  assert.match(styles, /@media \(min-width: 1100px\)/u);
+  assert.match(styles, /@media \(min-width: 768px\) and \(max-width: 1099px\) \{[\s\S]*?\.hero-slide img \{[\s\S]*?aspect-ratio: 12 \/ 5/u);
+  assert.match(styles, /@media \(min-width: 1100px\) \{[\s\S]*?\.hero-slide img \{[\s\S]*?aspect-ratio: 3 \/ 1/u);
+  assert.match(styles, /@media \(min-width: 768px\) and \(max-width: 1099px\) \{[\s\S]*?\.category-group-items \{[\s\S]*?repeat\(3, minmax\(0, 1fr\)\)/u);
+  assert.match(styles, /@media \(min-width: 1100px\) \{[\s\S]*?\.category-group-items \{[\s\S]*?repeat\(4, minmax\(0, 1fr\)\)/u);
   assert.match(ads, /1200 × 500 px（12:5）/u);
-  assert.match(styles, /\.category-group-items[\s\S]*?repeat\(3, minmax\(0, 1fr\)\)/u);
 });
 
-test("catalog titles and product detail pages use the shared tablet composition", async () => {
-  const [category, product, gallery, styles, headerStyles] = await Promise.all([
+test("catalog and product detail layouts adapt separately for tablet and desktop", async () => {
+  const [category, product, gallery, styles, commerce] = await Promise.all([
     readFile(new URL("../src/pages/[channel]/category/[category].astro", import.meta.url), "utf8"),
     readFile(new URL("../src/pages/[channel]/product/[product].astro", import.meta.url), "utf8"),
     readFile(new URL("../src/components/public/ProductGallery.astro", import.meta.url), "utf8"),
     readFile(new URL("../src/styles/public-desktop.css", import.meta.url), "utf8"),
-    readFile(new URL("../src/styles/public-header-refinement.css", import.meta.url), "utf8"),
+    readFile(new URL("../src/styles/public-commerce.css", import.meta.url), "utf8"),
   ]);
 
   assert.match(category, /class="directory-page-layout"/u);
@@ -43,11 +45,11 @@ test("catalog titles and product detail pages use the shared tablet composition"
   assert.match(product, /class="product-detail-media"/u);
   assert.match(product, /class="product-detail-information"/u);
   assert.match(gallery, /uniqueImages\.length > 1 && "has-thumbnails"/u);
-  assert.match(styles, /\.directory-page-layout \{[\s\S]*?grid-template-columns: minmax\(0, 1fr\)/u);
-  assert.match(styles, /\.directory-page-layout \.product-grid,[\s\S]*?repeat\(3, minmax\(0, 1fr\)\)/u);
-  assert.match(headerStyles, /\.directory-page-title,[\s\S]*?justify-items: center !important/u);
-  assert.match(styles, /\.product-detail \{[\s\S]*?grid-template-columns:/u);
-  assert.match(styles, /\.product-detail-media \{[\s\S]*?grid-column: 1/u);
-  assert.match(styles, /\.product-gallery\.has-thumbnails[\s\S]*?grid-template-columns: minmax\(0, 1fr\) 4\.75rem/u);
-  assert.match(styles, /\.product-gallery-thumbnails[\s\S]*?grid-auto-flow: row/u);
+  assert.match(commerce, /\.directory-page-title,[\s\S]*?text-align: center/u);
+  assert.match(styles, /@media \(min-width: 768px\) and \(max-width: 1099px\) \{[\s\S]*?\.product-detail \{[\s\S]*?max-width: 50rem/u);
+  assert.match(styles, /@media \(min-width: 768px\) and \(max-width: 1099px\) \{[\s\S]*?repeat\(3, minmax\(0, 1fr\)\)/u);
+  assert.match(styles, /@media \(min-width: 1100px\) \{[\s\S]*?\.product-detail \{[\s\S]*?grid-template-columns:/u);
+  assert.match(styles, /@media \(min-width: 1100px\) \{[\s\S]*?\.product-detail-media \{[\s\S]*?grid-column: 1/u);
+  assert.match(commerce, /\.product-gallery\.has-thumbnails \{[\s\S]*?padding-right:/u);
+  assert.match(commerce, /\.product-gallery\.has-thumbnails \.product-gallery-thumbnails \{[\s\S]*?grid-auto-flow: row/u);
 });

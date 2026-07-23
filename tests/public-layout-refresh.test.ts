@@ -2,8 +2,8 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-test("public pages use a centered three-control header with an inline expanding search", async () => {
-  const [layout, headerSearch, interactions, categoryPage, searchPage, system, headerStyles, desktop, categoryPolish] = await Promise.all([
+test("public pages use a light commerce shell with centered inline search and a standard footer", async () => {
+  const [layout, headerSearch, interactions, categoryPage, searchPage, system, headerStyles, commerce] = await Promise.all([
     readFile(new URL("../src/layouts/PublicLayout.astro", import.meta.url), "utf8"),
     readFile(new URL("../src/components/public/PublicHeaderSearch.astro", import.meta.url), "utf8"),
     readFile(new URL("../src/scripts/public-interactions.ts", import.meta.url), "utf8"),
@@ -11,8 +11,7 @@ test("public pages use a centered three-control header with an inline expanding 
     readFile(new URL("../src/pages/[channel]/search.astro", import.meta.url), "utf8"),
     readFile(new URL("../src/styles/public-system.css", import.meta.url), "utf8"),
     readFile(new URL("../src/styles/public-header-refinement.css", import.meta.url), "utf8"),
-    readFile(new URL("../src/styles/public-desktop.css", import.meta.url), "utf8"),
-    readFile(new URL("../src/styles/public-category-polish.css", import.meta.url), "utf8"),
+    readFile(new URL("../src/styles/public-commerce.css", import.meta.url), "utf8"),
   ]);
 
   assert.match(layout, /import PublicHeaderSearch/u);
@@ -23,7 +22,9 @@ test("public pages use a centered three-control header with an inline expanding 
   assert.match(layout, /class="public-brand public-brand-centered"/u);
   assert.match(layout, /data-header-search-open/u);
   assert.match(layout, /data-header-search-layer/u);
-  assert.doesNotMatch(layout, /class="public-container public-footer"/u);
+  assert.match(layout, /<meta name="color-scheme" content="light"/u);
+  assert.match(layout, /<footer class="public-footer">/u);
+  assert.match(layout, /class="public-footer-links"/u);
 
   assert.match(headerSearch, /data-header-search-form/u);
   assert.match(headerSearch, /data-header-search-close/u);
@@ -32,17 +33,19 @@ test("public pages use a centered three-control header with an inline expanding 
   assert.match(interactions, /searchLayer\.inert = !nextOpen/u);
   assert.match(interactions, /event\.key !== "Escape"/u);
   assert.match(interactions, /Please enter a search term\./u);
-  assert.match(interactions, /const syncSearchValidity = \(\) =>/u);
-  assert.match(interactions, /searchInput\.setCustomValidity\(searchInput\.value\.trim\(\) \? "" : SEARCH_REQUIRED_MESSAGE\)/u);
-  assert.match(interactions, /syncSearchValidity\(\);[\s\S]*?searchOpen\.addEventListener/u);
-  assert.match(interactions, /searchInput\.addEventListener\("invalid", syncSearchValidity\)/u);
   assert.match(interactions, /searchInput\.reportValidity\(\)/u);
 
-  assert.match(system, /@import "\.\/public-header-refinement\.css";/u);
-  assert.match(headerStyles, /grid-template-columns: minmax\(5\.25rem, 1fr\) minmax\(0, auto\) minmax\(5\.25rem, 1fr\)/u);
+  assert.match(system, /@import "\.\/public-commerce\.css";/u);
+  assert.doesNotMatch(system, /public-design-system\.css/u);
+  assert.doesNotMatch(system, /public-layout-refresh\.css/u);
+  assert.doesNotMatch(system, /public-gallery-rail\.css/u);
   assert.match(headerStyles, /transform: scaleX\(\.1\)/u);
   assert.match(headerStyles, /\.public-header\[data-search-open="true"\] \.public-header-search-layer/u);
-  assert.match(headerStyles, /@media \(prefers-reduced-motion: reduce\)/u);
+
+  assert.match(commerce, /--canvas-0: #ffffff/u);
+  assert.match(commerce, /background: #ffffff/u);
+  assert.match(commerce, /\.visual-card-overlay \{[\s\S]*?position: static/u);
+  assert.match(commerce, /\.product-grid \{[\s\S]*?repeat\(2, minmax\(0, 1fr\)\)/u);
 
   assert.doesNotMatch(categoryPage, /import PublicBackLink/u);
   assert.doesNotMatch(categoryPage, /import PublicSearchForm/u);
@@ -50,32 +53,32 @@ test("public pages use a centered three-control header with an inline expanding 
   assert.match(categoryPage, /<header class="directory-page-title">[\s\S]*?<h1>\{category\.name\}<\/h1>/u);
   assert.match(searchPage, /backHref=\{returnUrl\}/u);
   assert.match(searchPage, /class="search-page-title"/u);
-
-  assert.match(
-    desktop,
-    /@media \(min-width: 768px\) \{[\s\S]*?\.category-mobile-directory \{[\s\S]*?display: none/u,
-  );
-  assert.match(
-    categoryPolish,
-    /@media \(max-width: 767px\) \{[\s\S]*?\.category-mobile-directory \{[\s\S]*?display: grid/u,
-  );
 });
 
-test("product detail pages place the gallery before the title and keep thumbnails beside the main image on every viewport", async () => {
-  const [refresh, rail] = await Promise.all([
-    readFile(new URL("../src/styles/public-layout-refresh.css", import.meta.url), "utf8"),
-    readFile(new URL("../src/styles/public-gallery-rail.css", import.meta.url), "utf8"),
+test("mobile, tablet, and desktop use distinct commerce compositions", async () => {
+  const [commerce, desktop] = await Promise.all([
+    readFile(new URL("../src/styles/public-commerce.css", import.meta.url), "utf8"),
+    readFile(new URL("../src/styles/public-desktop.css", import.meta.url), "utf8"),
   ]);
 
-  assert.match(refresh, /\.product-detail-media \{[\s\S]*?grid-row: 1 !important/u);
-  assert.match(refresh, /\.product-detail-title \{[\s\S]*?grid-row: 2 !important/u);
-  assert.match(refresh, /\.product-detail-information \{[\s\S]*?grid-row: 3 !important/u);
-  assert.match(rail, /^\.product-detail \.product-gallery\.has-thumbnails \{/mu);
-  assert.match(rail, /padding-right: calc\(var\(--gallery-thumbnail-size\) \+ var\(--gallery-thumbnail-gap\)\)/u);
-  assert.match(rail, /position: absolute/u);
-  assert.match(rail, /inset: 0 0 0 auto/u);
-  assert.match(rail, /grid-auto-flow: row/u);
-  assert.match(rail, /overflow-y: auto/u);
+  assert.match(commerce, /\.product-grid \{[\s\S]*?repeat\(2, minmax\(0, 1fr\)\)/u);
+  assert.match(
+    desktop,
+    /@media \(min-width: 768px\) and \(max-width: 1099px\) \{[\s\S]*?repeat\(3, minmax\(0, 1fr\)\)/u,
+  );
+  assert.match(
+    desktop,
+    /@media \(min-width: 1100px\) \{[\s\S]*?--public-width: 88rem[\s\S]*?repeat\(4, minmax\(0, 1fr\)\)/u,
+  );
+  assert.match(
+    desktop,
+    /@media \(min-width: 1400px\) \{[\s\S]*?--public-width: 94rem[\s\S]*?repeat\(5, minmax\(0, 1fr\)\)/u,
+  );
+  assert.match(desktop, /@media \(min-width: 1100px\) \{[\s\S]*?\.product-detail \{[\s\S]*?grid-template-columns:/u);
+  assert.match(desktop, /@media \(min-width: 768px\) and \(max-width: 1099px\) \{[\s\S]*?\.product-detail \{[\s\S]*?max-width: 50rem/u);
+  assert.match(commerce, /padding-right: calc\(var\(--gallery-thumbnail-size\) \+ var\(--gallery-thumbnail-gap\)\)/u);
+  assert.match(commerce, /\.product-gallery\.has-thumbnails \.product-gallery-thumbnails \{[\s\S]*?position: absolute/u);
+  assert.match(commerce, /overflow-y: auto/u);
 });
 
 test("conversion resolution reveals one-line open and copy actions", async () => {

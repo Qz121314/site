@@ -38,7 +38,7 @@ function sourceSet(advertisement: PublicHeroAdvertisement): string | undefined {
           <img
             src={advertisement.responsiveImageUrl ?? advertisement.imageUrl}
             srcset={sourceSet(advertisement)}
-            sizes="(min-width: 1100px) 516px, (min-width: 768px) calc((100vw - 4rem) / 2), calc(100vw - 2rem)"
+            sizes="(min-width: 1100px) 1344px, (min-width: 768px) calc(100vw - 3rem), calc(100vw - 2rem)"
             alt=""
             width={advertisement.width ?? undefined}
             height={advertisement.height ?? undefined}
@@ -77,16 +77,15 @@ function sourceSet(advertisement: PublicHeroAdvertisement): string | undefined {
     position: absolute;
     z-index: 5;
     left: 50%;
-    bottom: .45rem;
+    bottom: .55rem;
     display: flex;
     align-items: center;
-    gap: .08rem;
-    border: 1px solid rgba(216, 173, 97, .2);
+    gap: .12rem;
+    border: 1px solid rgba(255, 255, 255, .64);
     border-radius: 999px;
-    padding: .08rem .18rem;
-    background: rgba(6, 6, 5, .58);
-    box-shadow: 0 8px 24px rgba(0, 0, 0, .25);
-    backdrop-filter: blur(10px);
+    padding: .1rem .2rem;
+    background: rgba(255, 255, 255, .9);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, .12);
     transform: translateX(-50%);
   }
 
@@ -97,8 +96,8 @@ function sourceSet(advertisement: PublicHeroAdvertisement): string | undefined {
   .hero-dot,
   .hero-dot[aria-current="true"] {
     display: grid;
-    width: 2.75rem;
-    height: 2.75rem;
+    width: 2.5rem;
+    height: 2.5rem;
     place-items: center;
     border: 0;
     padding: 0;
@@ -107,16 +106,16 @@ function sourceSet(advertisement: PublicHeroAdvertisement): string | undefined {
   }
 
   .hero-dot::before {
-    width: .36rem;
-    height: .36rem;
+    width: .34rem;
+    height: .34rem;
     border-radius: 999px;
-    background: rgba(255, 255, 255, .5);
+    background: #999999;
     content: "";
     transition: width .16s ease, background .16s ease;
   }
 
   .hero-dot[aria-current="true"]::before {
-    width: 1.05rem;
-    background: var(--public-gold-bright);
+    width: 1rem;
+    background: #111111;
   }
 </style>

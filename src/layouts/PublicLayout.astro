@@ -54,6 +54,7 @@ const headerSearchAction = activeChannel
 const headerSearchValue = headerSearchAction && Astro.url.pathname.endsWith("/search")
   ? Astro.url.searchParams.get("q") ?? ""
   : "";
+const currentYear = new Date().getUTCFullYear();
 ---
 
 <!doctype html>
@@ -65,8 +66,8 @@ const headerSearchValue = headerSearchAction && Astro.url.pathname.endsWith("/se
       content="width=device-width, initial-scale=1, viewport-fit=cover"
     />
     <meta name="description" content={description} />
-    <meta name="color-scheme" content="dark" />
-    <meta name="theme-color" content="#08090d" />
+    <meta name="color-scheme" content="light" />
+    <meta name="theme-color" content="#ffffff" />
     <meta name="robots" content={robots} />
     {canonical && <link rel="canonical" href={canonical} />}
     {site.faviconUrl && <link rel="icon" href={site.faviconUrl} />}
@@ -168,6 +169,9 @@ const headerSearchValue = headerSearchAction && Astro.url.pathname.endsWith("/se
                   <span aria-hidden="true"></span>
                 </summary>
                 <nav class="public-menu-panel" aria-label="Site links">
+                  {site.channels.map((channel) => (
+                    <a href={`/${encodeURIComponent(channel.slug)}`}>{channel.name}</a>
+                  ))}
                   <a href="/privacy">Privacy</a>
                   <a href="/disclaimer">Disclaimer</a>
                 </nav>
@@ -221,6 +225,25 @@ const headerSearchValue = headerSearchAction && Astro.url.pathname.endsWith("/se
 
     {showChannelNavigation && <ChannelNavigation channels={site.channels} activeChannel={activeChannel} />}
 
+    <footer class="public-footer">
+      <div class="public-container public-footer-inner">
+        <div class="public-footer-brand">
+          <strong>{site.siteName}</strong>
+          {site.siteDescription && <p>{site.siteDescription}</p>}
+        </div>
+
+        <nav class="public-footer-links" aria-label="Footer links">
+          {site.channels.map((channel) => (
+            <a href={`/${encodeURIComponent(channel.slug)}`}>{channel.name}</a>
+          ))}
+          <a href="/privacy">Privacy</a>
+          <a href="/disclaimer">Disclaimer</a>
+        </nav>
+
+        <p class="public-footer-meta">© {currentYear} {site.siteName}. All rights reserved.</p>
+      </div>
+    </footer>
+
     <script>import "@/scripts/public-interactions";</script>
 
     {showAdultGate && (
@@ -236,7 +259,6 @@ const headerSearchValue = headerSearchAction && Astro.url.pathname.endsWith("/se
         </div>
       </div>
     )}
-
   </body>
 </html>
 
@@ -244,12 +266,12 @@ const headerSearchValue = headerSearchAction && Astro.url.pathname.endsWith("/se
   .adult-confirmed .adult-gate { display: none; }
 
   .public-body {
-    --public-font-brand: "Avenir Next Condensed", "Helvetica Neue Condensed", "Arial Narrow", "Roboto Condensed", sans-serif;
-    --public-font-display: "Avenir Next", "Segoe UI Variable Display", "SF Pro Display", "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif;
-    --public-font-ui: "Avenir Next", "Segoe UI Variable Text", "SF Pro Text", "Helvetica Neue", "PingFang SC", "Microsoft YaHei", sans-serif;
+    --public-font-brand: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --public-font-display: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    --public-font-ui: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
     font-family: var(--public-font-ui);
     font-synthesis: none;
-    letter-spacing: -.008em;
+    letter-spacing: 0;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -261,73 +283,5 @@ const headerSearchValue = headerSearchAction && Astro.url.pathname.endsWith("/se
   .public-body select,
   .public-body summary {
     font: inherit;
-  }
-
-  .public-section-heading h1,
-  .public-section-heading h2,
-  .visual-card-title,
-  .product-detail-title h1,
-  .product-body h1,
-  .product-body h2,
-  .public-empty h1,
-  .public-empty h2,
-  .adult-gate-card h2,
-  .empty-icon {
-    font-family: var(--public-font-display);
-    font-variant-ligatures: common-ligatures contextual;
-  }
-
-  .public-brand-name {
-    font-family: var(--public-font-brand);
-    font-size: clamp(.88rem, 3.5vw, 1.05rem);
-    font-weight: 800;
-    line-height: 1;
-    letter-spacing: .14em;
-    text-transform: uppercase;
-  }
-
-  .public-section-heading h1,
-  .public-section-heading h2,
-  .product-detail-title h1,
-  .public-empty h1,
-  .public-empty h2,
-  .adult-gate-card h2 {
-    font-weight: 700;
-    letter-spacing: -.035em;
-  }
-
-  .visual-card-title {
-    font-weight: 650;
-    letter-spacing: -.018em;
-  }
-
-  .public-search-form input,
-  .public-header-search-form input,
-  .public-button,
-  .filter-button,
-  .category-entry,
-  .public-back-link,
-  .public-nav-label,
-  .eyebrow,
-  .public-menu-panel a {
-    font-family: var(--public-font-ui);
-  }
-
-  .public-button,
-  .filter-button,
-  .category-entry,
-  .public-back-link,
-  .public-nav-label,
-  .eyebrow {
-    letter-spacing: .02em;
-  }
-
-  .public-search-form input,
-  .public-header-search-form input {
-    font-weight: 500;
-  }
-
-  .public-nav-label {
-    font-weight: 700;
   }
 </style>

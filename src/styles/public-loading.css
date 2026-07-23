@@ -19,16 +19,15 @@
     linear-gradient(
       108deg,
       transparent 18%,
-      rgba(255, 255, 255, .025) 34%,
-      rgba(255, 255, 255, .12) 47%,
-      rgba(255, 154, 173, .075) 53%,
-      rgba(255, 255, 255, .025) 66%,
+      rgba(255, 255, 255, .18) 34%,
+      rgba(255, 255, 255, .72) 47%,
+      rgba(255, 255, 255, .3) 53%,
+      rgba(255, 255, 255, .18) 66%,
       transparent 82%
     ),
-    linear-gradient(145deg, rgba(255,255,255,.045), rgba(255,255,255,.012) 48%, rgba(0,0,0,.1));
+    #eeeeee;
   background-position: 165% 0, 0 0;
   background-size: 230% 100%, 100% 100%;
-  box-shadow: inset 0 1px 0 rgba(255,255,255,.05);
   animation:
     public-loading-shimmer 1.15s cubic-bezier(.4, 0, .2, 1) infinite,
     public-loading-timeout .3s ease 2.4s forwards;
@@ -43,25 +42,25 @@
 }
 
 [data-load-reveal] {
-  opacity: .18;
-  filter: saturate(.78) blur(5px);
-  transform: scale(1.018);
+  opacity: .24;
+  filter: grayscale(.08) blur(4px);
+  transform: scale(1.012);
   animation: public-media-timeout .38s ease 2.15s forwards;
   will-change: opacity, filter, transform;
 }
 
 [data-load-reveal].is-loaded,
 [data-load-reveal].is-load-error {
-  animation: public-media-reveal .52s cubic-bezier(.2, .75, .2, 1) both;
+  animation: public-media-reveal .42s cubic-bezier(.2, .75, .2, 1) both;
 }
 
 .product-gallery-stage [data-load-reveal] {
-  transform: scale(1.01);
+  transform: scale(1.006);
 }
 
 .product-gallery-thumbnail [data-load-reveal] {
-  filter: saturate(.72) blur(3px);
-  transform: scale(1.04);
+  filter: grayscale(.08) blur(2px);
+  transform: scale(1.02);
 }
 
 @keyframes public-loading-shimmer {
@@ -75,9 +74,9 @@
 
 @keyframes public-media-reveal {
   from {
-    opacity: .2;
-    filter: saturate(.8) blur(5px);
-    transform: scale(1.018);
+    opacity: .24;
+    filter: grayscale(.08) blur(4px);
+    transform: scale(1.012);
   }
   to {
     opacity: 1;
