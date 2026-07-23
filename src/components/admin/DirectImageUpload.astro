@@ -61,7 +61,7 @@ const initialImages: ExistingUploadImage[] = multiple
 >
   <div class="direct-upload-heading">
     <label for={id}>{label}</label>
-    <span data-upload-status>{initialImages.length > 0 ? `已绑定 ${initialImages.length} 张` : "尚未上传"}</span>
+    <span data-upload-status>{initialImages.length > 0 ? `已绑定 ${initialImages.length} 张` : "尚未选择"}</span>
   </div>
 
   <div class="direct-upload-input-row">
@@ -74,9 +74,9 @@ const initialImages: ExistingUploadImage[] = multiple
       data-upload-input
     />
     <label class="button secondary direct-upload-button" for={id} data-upload-button>
-      {multiple ? "选择并上传图片" : "选择并上传"}
+      {multiple ? "选择多张图片" : "选择图片"}
     </label>
-    <span class="direct-upload-limit">JPEG / PNG / WebP · 自动压缩</span>
+    <span class="direct-upload-limit">JPEG / PNG / WebP · 浏览器压缩 · 保存时上传</span>
   </div>
 
   <div class="direct-upload-values" data-upload-values>
@@ -87,6 +87,7 @@ const initialImages: ExistingUploadImage[] = multiple
         value={initialImages[0]?.id ?? ""}
         form={form}
         data-upload-hidden
+        data-image-id={initialImages[0]?.id ?? ""}
       />
     )}
     {multiple && initialImages.map((image, index) => (
@@ -122,331 +123,7 @@ const initialImages: ExistingUploadImage[] = multiple
   {help && <small class="direct-upload-help">{help}</small>}
 </div>
 
-<script is:inline>
-  (() => {
-    const MAX_DIMENSION = 1600;
-    const WEBP_QUALITY = 0.82;
-    const THUMBNAIL_DIMENSION = 480;
-    const THUMBNAIL_QUALITY = 0.72;
-    const HERO_RESPONSIVE_DIMENSION = 960;
-    const HERO_RESPONSIVE_QUALITY = 0.76;
-    const LOGO_DIMENSION = 320;
-    const FAVICON_DIMENSION = 128;
-    const UPLOAD_CONCURRENCY = 3;
-
-    const decodeImage = async (file) => {
-      if ("createImageBitmap" in window) {
-        const bitmap = await createImageBitmap(file);
-        return {
-          source: bitmap,
-          width: bitmap.width,
-          height: bitmap.height,
-          release: () => bitmap.close(),
-        };
-      }
-
-      const url = URL.createObjectURL(file);
-      try {
-        const image = await new Promise((resolve, reject) => {
-          const element = new Image();
-          element.onload = () => resolve(element);
-          element.onerror = () => reject(new Error("decode"));
-          element.src = url;
-        });
-        return {
-          source: image,
-          width: image.naturalWidth,
-          height: image.naturalHeight,
-          release: () => URL.revokeObjectURL(url),
-        };
-      } catch (error) {
-        URL.revokeObjectURL(url);
-        throw error;
-      }
-    };
-
-    const renderVariant = (source, sourceWidth, sourceHeight, maximumDimension, quality) => {
-      const scale = Math.min(1, maximumDimension / Math.max(sourceWidth, sourceHeight));
-      const width = Math.max(1, Math.round(sourceWidth * scale));
-      const height = Math.max(1, Math.round(sourceHeight * scale));
-      const canvas = document.createElement("canvas");
-      canvas.width = width;
-      canvas.height = height;
-      const context = canvas.getContext("2d");
-      if (!context) throw new Error("canvas");
-      context.drawImage(source, 0, 0, width, height);
-      return new Promise((resolve, reject) => {
-        canvas.toBlob((blob) => {
-          if (!blob) reject(new Error("compress"));
-          else resolve({ blob, width, height });
-        }, "image/webp", quality);
-      });
-    };
-
-    const compressImage = async (file, variant) => {
-      const decoded = await decodeImage(file);
-      try {
-        const original = await renderVariant(
-          decoded.source,
-          decoded.width,
-          decoded.height,
-          MAX_DIMENSION,
-          WEBP_QUALITY,
-        );
-        const variantDimension = variant === "hero"
-          ? HERO_RESPONSIVE_DIMENSION
-          : variant === "logo"
-            ? LOGO_DIMENSION
-            : variant === "favicon"
-              ? FAVICON_DIMENSION
-              : THUMBNAIL_DIMENSION;
-        const thumbnail = variant
-          ? await renderVariant(
-              decoded.source,
-              decoded.width,
-              decoded.height,
-              variantDimension,
-              variant === "hero" ? HERO_RESPONSIVE_QUALITY : THUMBNAIL_QUALITY,
-            )
-          : null;
-        return { ...original, thumbnail };
-      } finally {
-        decoded.release();
-      }
-    };
-
-    const uploadImage = async (file, variant) => {
-      const compressed = await compressImage(file, variant);
-      const uploadFile = new File(
-        [compressed.blob],
-        `${file.name.replace(/\.[^.]+$/u, "") || "image"}.webp`,
-        { type: "image/webp" },
-      );
-      const body = new FormData();
-      body.append("file", uploadFile);
-      if (compressed.thumbnail) {
-        body.append(
-          "thumbnail",
-          new File([compressed.thumbnail.blob], "thumbnail.webp", { type: "image/webp" }),
-        );
-        body.append("variant", variant);
-      }
-      body.append("originalName", file.name);
-
-      const response = await fetch("/api/admin/images/upload", {
-        method: "POST",
-        headers: { Accept: "application/json" },
-        body,
-      });
-      if (response.status === 401) {
-        window.location.assign("/admin/login");
-        throw new DOMException("Session expired", "AbortError");
-      }
-      const result = await response.json().catch(() => null);
-      if (!response.ok || !result?.ok || !result.image?.id) {
-        throw new Error(result?.error || `HTTP ${response.status}`);
-      }
-
-      return {
-        image: result.image,
-        localUrl: URL.createObjectURL(compressed.blob),
-        dimensions: compressed,
-      };
-    };
-
-    const runWithConcurrency = async (items, limit, worker) => {
-      let nextIndex = 0;
-      const workerCount = Math.min(limit, items.length);
-      await Promise.all(Array.from({ length: workerCount }, async () => {
-        while (nextIndex < items.length) {
-          const index = nextIndex;
-          nextIndex += 1;
-          await worker(items[index], index);
-        }
-      }));
-    };
-
-    const insertByOrder = (container, element, selector, order) => {
-      const before = Array.from(container.querySelectorAll(selector)).find((candidate) => {
-        const candidateOrder = Number(candidate.dataset.uploadOrder ?? Number.MAX_SAFE_INTEGER);
-        return candidateOrder > order;
-      });
-      container.insertBefore(element, before ?? null);
-    };
-
-    const initialize = (root) => {
-      if (root.dataset.directUploadReady === "1") return;
-      root.dataset.directUploadReady = "1";
-
-      const input = root.querySelector("[data-upload-input]");
-      const uploadButton = root.querySelector("[data-upload-button]");
-      const values = root.querySelector("[data-upload-values]");
-      const preview = root.querySelector("[data-upload-preview]");
-      const status = root.querySelector("[data-upload-status]");
-      const fieldName = root.dataset.fieldName || "imageAssetId";
-      const multiple = root.dataset.multiple === "1";
-      const required = root.dataset.required === "1";
-      const maxFiles = Number(root.dataset.maxFiles || (multiple ? "30" : "1"));
-      const formId = root.dataset.formId || "";
-      const directoryThumbnail = root.dataset.directoryThumbnail === "1";
-      const heroResponsive = root.dataset.heroResponsive === "1";
-      const uploadVariant = root.dataset.assetVariant || (heroResponsive ? "hero" : directoryThumbnail ? "product" : "");
-      let pending = 0;
-
-      if (!input || !values || !preview || !status) return;
-
-      const hiddenInputs = () => Array.from(values.querySelectorAll("[data-upload-hidden]"));
-      const currentIds = () => hiddenInputs().map((field) => field.value).filter(Boolean);
-
-      hiddenInputs().forEach((field, index) => {
-        if (!field.dataset.uploadOrder) field.dataset.uploadOrder = String(index);
-      });
-      Array.from(preview.querySelectorAll("[data-upload-item]")).forEach((item, index) => {
-        if (!item.dataset.uploadOrder) item.dataset.uploadOrder = String(index);
-      });
-
-      const refresh = () => {
-        const count = currentIds().length;
-        preview.hidden = count === 0;
-        status.textContent = pending > 0 ? `正在上传 ${pending} 张…` : count > 0 ? `已绑定 ${count} 张` : "尚未上传";
-        root.dataset.uploading = pending > 0 ? "1" : "0";
-        input.disabled = pending > 0;
-        uploadButton?.setAttribute("aria-disabled", pending > 0 ? "true" : "false");
-      };
-
-      const removeId = (id) => {
-        for (const field of hiddenInputs()) {
-          if (field.value === id) {
-            if (multiple) field.remove();
-            else field.value = "";
-          }
-        }
-        preview.querySelector(`[data-upload-item][data-image-id="${CSS.escape(id)}"]`)?.remove();
-        refresh();
-      };
-
-      const addImage = (image, localUrl, dimensions, order) => {
-        if (!multiple) {
-          for (const item of Array.from(preview.querySelectorAll("[data-upload-item]"))) item.remove();
-          const field = hiddenInputs()[0];
-          if (field) field.value = image.id;
-        } else {
-          const field = document.createElement("input");
-          field.type = "hidden";
-          field.name = fieldName;
-          field.value = image.id;
-          field.dataset.uploadHidden = "";
-          field.dataset.imageId = image.id;
-          field.dataset.uploadOrder = String(order);
-          if (formId) field.setAttribute("form", formId);
-          insertByOrder(values, field, "[data-upload-hidden]", order);
-        }
-
-        const item = document.createElement("article");
-        item.className = "direct-upload-item";
-        item.dataset.uploadItem = "";
-        item.dataset.imageId = image.id;
-        item.dataset.uploadOrder = String(order);
-
-        const img = document.createElement("img");
-        img.src = localUrl;
-        img.alt = image.originalName || "已上传图片";
-
-        const body = document.createElement("div");
-        const strong = document.createElement("strong");
-        strong.textContent = image.originalName || "已上传图片";
-        strong.title = strong.textContent;
-        const meta = document.createElement("span");
-        meta.textContent = `${dimensions.width}×${dimensions.height}`;
-        body.appendChild(strong);
-        body.appendChild(meta);
-
-        const remove = document.createElement("button");
-        remove.className = "direct-upload-remove";
-        remove.type = "button";
-        remove.dataset.uploadRemove = "";
-        remove.setAttribute("aria-label", "移除图片");
-        remove.textContent = "×";
-
-        item.appendChild(img);
-        item.appendChild(body);
-        item.appendChild(remove);
-        insertByOrder(preview, item, "[data-upload-item]", order);
-        refresh();
-      };
-
-      preview.addEventListener("click", (event) => {
-        const button = event.target instanceof Element ? event.target.closest("[data-upload-remove]") : null;
-        if (!button) return;
-        const item = button.closest("[data-upload-item]");
-        const id = item?.dataset.imageId || "";
-        if (id) removeId(id);
-      });
-
-      input.addEventListener("change", async () => {
-        const selected = Array.from(input.files || []);
-        input.value = "";
-        if (selected.length === 0) return;
-
-        const available = multiple ? Math.max(0, maxFiles - currentIds().length) : 1;
-        const files = selected.slice(0, available);
-        if (files.length === 0) {
-          alert(`最多只能绑定 ${maxFiles} 张图片。`);
-          return;
-        }
-        if (selected.length > files.length) {
-          alert(`最多只能绑定 ${maxFiles} 张图片，本次仅上传前 ${files.length} 张。`);
-        }
-
-        const startOrder = multiple ? currentIds().length : 0;
-        pending += files.length;
-        refresh();
-
-        await runWithConcurrency(files, UPLOAD_CONCURRENCY, async (file, index) => {
-          try {
-            const uploaded = await uploadImage(file, uploadVariant);
-            addImage(uploaded.image, uploaded.localUrl, uploaded.dimensions, startOrder + index);
-          } catch (error) {
-            if (error instanceof DOMException && error.name === "AbortError") return;
-            console.error(error);
-            alert(`图片 ${file.name} 上传失败，请重试。`);
-          } finally {
-            pending -= 1;
-            refresh();
-          }
-        });
-      });
-
-      const formElement = formId ? document.getElementById(formId) : root.closest("form");
-      if (formElement && formElement.dataset.directUploadValidation !== "1") {
-        formElement.dataset.directUploadValidation = "1";
-        formElement.addEventListener("submit", (event) => {
-          const related = Array.from(document.querySelectorAll("[data-direct-image-upload]")).filter((candidate) => {
-            const candidateFormId = candidate.dataset.formId || "";
-            return candidateFormId ? candidateFormId === formElement.id : candidate.closest("form") === formElement;
-          });
-          if (related.some((candidate) => candidate.dataset.uploading === "1")) {
-            event.preventDefault();
-            alert("图片仍在上传，请等待上传完成后再保存。");
-            return;
-          }
-          const missing = related.some((candidate) => {
-            if (candidate.dataset.required !== "1") return false;
-            return !Array.from(candidate.querySelectorAll("[data-upload-hidden]")).some((field) => field.value);
-          });
-          if (missing || (required && currentIds().length === 0)) {
-            event.preventDefault();
-            alert("请先上传必需图片。");
-          }
-        });
-      }
-
-      refresh();
-    };
-
-    document.querySelectorAll("[data-direct-image-upload]").forEach(initialize);
-  })();
-</script>
+<script>import "@/scripts/admin-direct-image-upload";</script>
 
 <style>
   .direct-image-upload { display: grid; min-width: 0; gap: .35rem; }
@@ -462,6 +139,7 @@ const initialImages: ExistingUploadImage[] = multiple
   .direct-upload-preview { display: grid; grid-template-columns: repeat(auto-fill, minmax(9rem, 1fr)); gap: .4rem; }
   .direct-upload-preview[hidden] { display: none; }
   .direct-upload-item { position: relative; display: grid; grid-template-columns: 3.2rem minmax(0, 1fr) 1.6rem; gap: .4rem; align-items: center; overflow: hidden; border: 1px solid #302d36; border-radius: .38rem; padding: .3rem; background: #0d0c10; }
+  .direct-upload-item[data-upload-pending] { border-color: rgba(37, 99, 235, .55); }
   .direct-upload-item img { width: 3.2rem; height: 3.2rem; border-radius: .25rem; object-fit: cover; background: #070608; }
   .direct-upload-item > div { display: grid; min-width: 0; gap: .12rem; }
   .direct-upload-item strong,
@@ -469,6 +147,7 @@ const initialImages: ExistingUploadImage[] = multiple
   .direct-upload-item strong { font-size: .7rem; }
   .direct-upload-item span { color: #817b87; font-size: .64rem; }
   .direct-upload-remove { width: 1.45rem; height: 1.45rem; border: 0; border-radius: 999px; padding: 0; color: #ffc3cf; background: rgba(255,109,139,.12); cursor: pointer; }
+  .direct-upload-remove:disabled { opacity: .45; cursor: wait; }
   .direct-image-upload.is-compact .direct-upload-preview { grid-template-columns: minmax(10rem, 1fr); }
   .direct-image-upload.is-compact .direct-upload-item { grid-template-columns: 2.4rem minmax(0, 1fr) 1.5rem; }
   .direct-image-upload.is-compact .direct-upload-item img { width: 2.4rem; height: 2.4rem; }

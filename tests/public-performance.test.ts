@@ -27,7 +27,7 @@ test("uses stored responsive derivatives for product and site images", async () 
   const [publicDatabase, upload, directUpload, ads] = await Promise.all([
     readFile(new URL("../src/lib/db/public.ts", import.meta.url), "utf8"),
     readFile(new URL("../src/pages/api/admin/images/upload.ts", import.meta.url), "utf8"),
-    readFile(new URL("../src/components/admin/DirectImageUpload.astro", import.meta.url), "utf8"),
+    readFile(new URL("../src/scripts/admin-direct-image-upload.ts", import.meta.url), "utf8"),
     readFile(new URL("../src/pages/admin/channels/[channelId]/ads.astro", import.meta.url), "utf8"),
   ]);
 

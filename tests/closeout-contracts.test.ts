@@ -56,7 +56,7 @@ test("category degradation uses one canonical route and product back target", as
 
 test("public image and interaction closeout removes avoidable load and click delays", async () => {
   const [uploader, uploadApi, directory, cta, affiliateAds] = await Promise.all([
-    source("src/components/admin/DirectImageUpload.astro"),
+    source("src/scripts/admin-direct-image-upload.ts"),
     source("src/pages/api/admin/images/upload.ts"),
     source("src/components/public/ProductDirectory.astro"),
     source("src/scripts/public-product-cta.ts"),
