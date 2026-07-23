@@ -2,6 +2,7 @@
 import "@/styles/public-system.css";
 import ChannelNavigation from "@/components/public/ChannelNavigation.astro";
 import PublicBackLink from "@/components/public/PublicBackLink.astro";
+import PublicSearchForm from "@/components/public/PublicSearchForm.astro";
 import type { PublicSiteShell } from "@/lib/db/public";
 
 interface Props {
@@ -46,6 +47,13 @@ const metaPixelId = site.metaPixelId;
 const structuredDataJson = structuredData
   ? JSON.stringify(structuredData).replaceAll("<", "\\u003c")
   : null;
+const showSubpageHeader = Boolean(backHref && !showChannelNavigation);
+const headerSearchAction = !showSubpageHeader && activeChannel
+  ? `/${encodeURIComponent(activeChannel)}/search`
+  : null;
+const headerSearchValue = headerSearchAction && Astro.url.pathname.endsWith("/search")
+  ? Astro.url.searchParams.get("q") ?? ""
+  : "";
 ---
 
 <!doctype html>
@@ -146,12 +154,16 @@ const structuredDataJson = structuredData
       </noscript>
     )}
 
-    <header class:list={["public-header", backHref && "public-header-subpage"]}>
-      <div class:list={["public-container", "public-header-inner", backHref && "public-header-inner-subpage"]}>
-        {backHref ? (
+    <header class:list={["public-header", showSubpageHeader && "public-header-subpage"]}>
+      <div class:list={[
+        "public-container",
+        "public-header-inner",
+        showSubpageHeader ? "public-header-inner-subpage" : "public-header-inner-catalog",
+      ]}>
+        {showSubpageHeader ? (
           <>
             <div class="public-header-leading">
-              <PublicBackLink href={backHref} />
+              <PublicBackLink href={backHref ?? "/"} />
             </div>
             <a class="public-brand public-brand-centered" href="/" aria-label={`${site.siteName} home`}>
               {site.logoUrl ? (
@@ -172,17 +184,16 @@ const structuredDataJson = structuredData
               )}
             </a>
 
-            <details class="public-menu">
-              <summary class="public-menu-trigger" aria-label="Open site menu">
-                <span aria-hidden="true"></span>
-                <span aria-hidden="true"></span>
-                <span aria-hidden="true"></span>
-              </summary>
-              <div class="public-menu-panel">
-                <a href="/privacy">Privacy</a>
-                <a href="/disclaimer">Disclaimer</a>
+            {headerSearchAction && (
+              <div class="public-header-search">
+                <PublicSearchForm
+                  action={headerSearchAction}
+                  ariaLabel={`Search ${site.siteName}`}
+                  value={headerSearchValue}
+                  autofocus={Astro.url.pathname.endsWith("/search") && !headerSearchValue}
+                />
               </div>
-            </details>
+            )}
           </>
         )}
       </div>
@@ -191,6 +202,12 @@ const structuredDataJson = structuredData
     <main class="public-container public-main">
       <slot />
     </main>
+
+    <footer class="public-container public-footer">
+      <a href="/privacy">Privacy</a>
+      <span aria-hidden="true">·</span>
+      <a href="/disclaimer">Disclaimer</a>
+    </footer>
 
     {showChannelNavigation && <ChannelNavigation channels={site.channels} activeChannel={activeChannel} />}
 
