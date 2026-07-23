@@ -141,3 +141,20 @@ test("only pages with a parent route provide back navigation", async () => {
   assert.match(privacy, /backHref="\/"/u);
   assert.match(disclaimer, /backHref="\/"/u);
 });
+
+test("public editorial polish uses local fonts and completes empty-page composition", async () => {
+  const [system, editorial, directory] = await Promise.all([
+    readFile(new URL("../src/styles/public-system.css", import.meta.url), "utf8"),
+    readFile(new URL("../src/styles/public-editorial.css", import.meta.url), "utf8"),
+    readFile(new URL("../src/components/public/ProductDirectory.astro", import.meta.url), "utf8"),
+  ]);
+
+  assert.match(system, /@import "\.\/public-editorial\.css";/u);
+  assert.match(editorial, /min-height: 100dvh/u);
+  assert.match(editorial, /font-family: var\(--public-font-brand\)/u);
+  assert.match(editorial, /\.public-footer \{[\s\S]*?margin-top: auto;/u);
+  assert.match(editorial, /\.public-bottom-nav-track \{[\s\S]*?backdrop-filter: blur/u);
+  assert.doesNotMatch(editorial, /@font-face|https?:\/\//u);
+  assert.match(directory, /class="public-empty public-empty-products"/u);
+  assert.match(directory, /New listings will appear here when they are published\./u);
+});
