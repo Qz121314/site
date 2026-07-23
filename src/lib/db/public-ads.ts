@@ -2,6 +2,8 @@ import { env } from "cloudflare:workers";
 import type { AdCreativeType, AdDeviceType, AdDisplayType, AdOpenMode } from "@/lib/admin/ad-form";
 import { buildPublicImageUrl } from "@/lib/images/url";
 
+export const PUBLIC_AD_CANDIDATE_LIMIT_PER_TYPE = 10;
+
 export type PublicAffiliateAdvertisement = {
   id: string;
   name: string;
@@ -50,42 +52,8 @@ function shuffled<T>(values: T[]): T[] {
   return output;
 }
 
-export async function loadPublicAffiliateAdCandidates(
-  channelSlug: string,
-  deviceType: AdDeviceType,
-): Promise<PublicAffiliateAdCandidates> {
-  const result = await env.DB.prepare(
-    `SELECT
-       advertisement.id,
-       advertisement.name,
-       advertisement.display_type,
-       advertisement.creative_type,
-       image.object_key,
-       image.width AS image_width,
-       image.height AS image_height,
-       advertisement.media_url,
-       advertisement.embed_code,
-       advertisement.target_url,
-       advertisement.declared_width,
-       advertisement.declared_height,
-       advertisement.open_mode,
-       settings.r2_public_base_url
-     FROM channels channel
-     INNER JOIN ad_pools pool
-       ON pool.channel_id = channel.id
-      AND pool.device_type = ?2
-      AND pool.status = 'enabled'
-     INNER JOIN advertisements advertisement
-       ON advertisement.pool_id = pool.id
-      AND advertisement.status = 'enabled'
-     LEFT JOIN image_assets image ON image.id = advertisement.image_asset_id
-     INNER JOIN site_settings settings ON settings.id = 1
-     WHERE channel.slug = ?1
-       AND channel.status = 'published'
-     ORDER BY pool.created_at ASC, advertisement.created_at ASC`,
-  ).bind(channelSlug, deviceType).all<AdvertisementRow>();
-
-  const mapped = result.results.flatMap((row): PublicAffiliateAdvertisement[] => {
+function mapAdvertisementRows(rows: AdvertisementRow[]): PublicAffiliateAdvertisement[] {
+  return rows.flatMap((row): PublicAffiliateAdvertisement[] => {
     const imageUrl = row.creative_type === "uploaded_image" && row.object_key
       ? buildPublicImageUrl(row.r2_public_base_url, row.object_key)
       : null;
@@ -112,10 +80,69 @@ export async function loadPublicAffiliateAdCandidates(
       openMode: row.open_mode,
     }];
   });
+}
+
+async function loadCandidateRows(
+  channelSlug: string,
+  deviceType: AdDeviceType,
+  displayType: AdDisplayType,
+): Promise<AdvertisementRow[]> {
+  const pivot = crypto.randomUUID();
+  const query = (comparison: ">=" | "<", limit: number) => env.DB.prepare(
+    `SELECT
+       advertisement.id,
+       advertisement.name,
+       advertisement.display_type,
+       advertisement.creative_type,
+       image.object_key,
+       image.width AS image_width,
+       image.height AS image_height,
+       advertisement.media_url,
+       advertisement.embed_code,
+       advertisement.target_url,
+       advertisement.declared_width,
+       advertisement.declared_height,
+       advertisement.open_mode,
+       settings.r2_public_base_url
+     FROM channels channel
+     INNER JOIN ad_pools pool
+       ON pool.channel_id = channel.id
+      AND pool.device_type = ?2
+      AND pool.status = 'enabled'
+     INNER JOIN advertisements advertisement
+       ON advertisement.pool_id = pool.id
+      AND advertisement.status = 'enabled'
+      AND advertisement.display_type = ?3
+      AND advertisement.id ${comparison} ?4
+     LEFT JOIN image_assets image ON image.id = advertisement.image_asset_id
+     INNER JOIN site_settings settings ON settings.id = 1
+     WHERE channel.slug = ?1
+       AND channel.status = 'published'
+     ORDER BY advertisement.id ASC
+     LIMIT ?5`,
+  ).bind(channelSlug, deviceType, displayType, pivot, limit).all<AdvertisementRow>();
+
+  const first = await query(">=", PUBLIC_AD_CANDIDATE_LIMIT_PER_TYPE);
+  const remaining = PUBLIC_AD_CANDIDATE_LIMIT_PER_TYPE - first.results.length;
+  if (remaining <= 0) return first.results;
+
+  const wrapped = await query("<", remaining);
+  return [...first.results, ...wrapped.results];
+}
+
+export async function loadPublicAffiliateAdCandidates(
+  channelSlug: string,
+  deviceType: AdDeviceType,
+): Promise<PublicAffiliateAdCandidates> {
+  const [bannerRows, verticalRows, modalRows] = await Promise.all([
+    loadCandidateRows(channelSlug, deviceType, "banner"),
+    loadCandidateRows(channelSlug, deviceType, "vertical"),
+    loadCandidateRows(channelSlug, deviceType, "modal"),
+  ]);
 
   return {
-    banners: shuffled(mapped.filter((advertisement) => advertisement.displayType === "banner")),
-    verticals: shuffled(mapped.filter((advertisement) => advertisement.displayType === "vertical")),
-    modals: shuffled(mapped.filter((advertisement) => advertisement.displayType === "modal")),
+    banners: shuffled(mapAdvertisementRows(bannerRows)),
+    verticals: shuffled(mapAdvertisementRows(verticalRows)),
+    modals: shuffled(mapAdvertisementRows(modalRows)),
   };
 }
