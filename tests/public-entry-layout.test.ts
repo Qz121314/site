@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
+import {
+  buildEffectiveCategoryGroups,
+  hasEffectiveCategoryNavigation,
+} from "../src/lib/public/category-navigation.ts";
 
 test("public entry redirects to a configured or first published channel", async () => {
   const [home, layout, navigation, baseStyles, commerceStyles] = await Promise.all([
@@ -22,6 +26,23 @@ test("public entry redirects to a configured or first published channel", async 
   assert.doesNotMatch(baseStyles, /\.public-nav-item \{[\s\S]*?min-width: 6\.65rem;/u);
 });
 
+test("empty category filters do not activate category navigation", () => {
+  const filters = [
+    { id: "empty", name: "Empty" },
+    { id: "used", name: "Used" },
+  ];
+  const categories = [
+    { id: "ungrouped", filterIds: [] },
+    { id: "grouped", filterIds: ["used"] },
+  ];
+
+  assert.equal(hasEffectiveCategoryNavigation(filters.slice(0, 1), categories), false);
+  assert.equal(hasEffectiveCategoryNavigation(filters, categories), true);
+  assert.deepEqual(buildEffectiveCategoryGroups(filters, categories), [
+    { filter: filters[1], categories: [categories[1]] },
+  ]);
+});
+
 test("channel category buttons only expose published categories with published products", async () => {
   const [channel, publicDatabase, settings] = await Promise.all([
     readFile(new URL("../src/pages/[channel]/index.astro", import.meta.url), "utf8"),
@@ -33,7 +54,8 @@ test("channel category buttons only expose published categories with published p
     publicDatabase.indexOf("export async function loadPublicCategory("),
   );
 
-  assert.match(channel, /hasCategoryNavigation = filters\.length > 0/u);
+  assert.match(channel, /buildEffectiveCategoryGroups\(filters, categories\)/u);
+  assert.match(channel, /hasCategoryNavigation = categoryGroups\.length > 0/u);
   assert.match(channel, /!hasCategoryNavigation && categories\.length > 0/u);
   assert.match(channel, /class="filter-strip channel-category-filters"/u);
   assert.match(channel, /category=\$\{encodeURIComponent\(category\.slug\)\}/u);
@@ -50,9 +72,10 @@ test("channel category buttons only expose published categories with published p
   assert.match(settings, /\.settings-form \.admin-field \{ align-content: start; \}/u);
 });
 
-test("channels without category filters degrade categories into product filters", async () => {
-  const [channel, directory, directoryScript, styles] = await Promise.all([
+test("channels without effective category groups degrade categories into product filters", async () => {
+  const [channel, categoryPage, directory, directoryScript, styles] = await Promise.all([
     readFile(new URL("../src/pages/[channel]/index.astro", import.meta.url), "utf8"),
+    readFile(new URL("../src/pages/[channel]/category/[category].astro", import.meta.url), "utf8"),
     readFile(new URL("../src/components/public/ProductDirectory.astro", import.meta.url), "utf8"),
     readFile(new URL("../src/scripts/public-product-directory.ts", import.meta.url), "utf8"),
     readFile(new URL("../src/styles/public-commerce.css", import.meta.url), "utf8"),
@@ -64,10 +87,13 @@ test("channels without category filters degrade categories into product filters"
 
   assert.ok(searchPosition >= 0 && categoryFilterPosition > searchPosition);
   assert.ok(productDirectoryPosition > categoryFilterPosition);
-  assert.match(channel, /hasCategoryNavigation = filters\.length > 0/u);
+  assert.match(channel, /hasCategoryNavigation = categoryGroups\.length > 0/u);
   assert.match(channel, /categoryId: selectedCategory\?\.id \?\? null/u);
+  assert.match(categoryPage, /hasPublicCategoryNavigation\(channel\.id\)/u);
+  assert.match(categoryPage, /category && !hasCategoryNavigation/u);
   assert.match(directory, /data-preserve-category-query=/u);
   assert.match(directoryScript, /url\.searchParams\.set\("category", categorySlug\)/u);
+  assert.match(directoryScript, /sessionStorage\.setItem/u);
   assert.match(styles, /\.filter-button\[aria-current="page"\]/u);
 });
 
@@ -85,8 +111,9 @@ test("allowed list pages bootstrap the shared affiliate ad system", async () => 
   assert.match(category, /<AffiliateAds channelSlug=\{channel\.slug\} surface="catalog"/u);
   assert.match(search, /<AffiliateAds channelSlug=\{channel\.slug\} surface="search"/u);
   assert.doesNotMatch(product, /AffiliateAds|affiliate-ad-context/u);
-  assert.match(publicAds, /pool\.device_type = \?2/u);
-  assert.match(publicAds, /Math\.floor\(Math\.random\(\) \* \(index \+ 1\)\)/u);
+  assert.match(publicAds, /PUBLIC_AD_CANDIDATE_LIMIT_PER_TYPE = 10/u);
+  assert.match(publicAds, /advertisement\.id \$\{comparison\} \?4/u);
+  assert.match(publicAds, /crypto\.randomUUID\(\)/u);
   assert.doesNotMatch(publicAds, /ORDER BY RANDOM\(\)|\.sort\(/u);
   assert.match(endpoint, /Cache-Control": "private, no-store"/u);
 });
