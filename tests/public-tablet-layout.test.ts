@@ -12,7 +12,7 @@ test("tablet and desktop channel pages keep distinct category grids and affiliat
     readFile(new URL("../src/pages/admin/channels/[channelId]/ads.astro", import.meta.url), "utf8"),
   ]);
 
-  assert.match(channel, /categoryGroups = filters\.map/u);
+  assert.match(channel, /categoryGroups = buildEffectiveCategoryGroups\(filters, categories\)/u);
   assert.match(channel, /class="category-group-row"/u);
   assert.match(channel, /class="filter-button category-group-label category-group-filter"/u);
   assert.match(channel, /data-category-group-filter=\{filter\.id\}/u);
