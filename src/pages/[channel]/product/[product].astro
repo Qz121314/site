@@ -1,6 +1,7 @@
 ---
 import PublicLayout from "@/layouts/PublicLayout.astro";
 import ProductGallery from "@/components/public/ProductGallery.astro";
+import { hasPublicCategoryNavigation } from "@/lib/db/public-category-navigation";
 import { loadPublicProductDetail, loadPublicSiteShell } from "@/lib/db/public";
 import { productDescription } from "@/lib/public/seo";
 
@@ -10,6 +11,9 @@ const channelSlug = Astro.params.channel ?? "";
 const productSlug = Astro.params.product ?? "";
 const site = await loadPublicSiteShell();
 const product = await loadPublicProductDetail(channelSlug, productSlug, site.r2PublicBaseUrl);
+const hasCategoryNavigation = product
+  ? await hasPublicCategoryNavigation(product.channelId)
+  : false;
 
 if (!product) Astro.response.status = 404;
 
@@ -51,7 +55,7 @@ const contactResolveUrl = product
   ? `/go/${encodeURIComponent(product.slug)}?channel=${encodeURIComponent(product.channelSlug)}`
   : "";
 const returnUrl = product?.categorySlug
-  ? product.hasCategoryNavigation
+  ? hasCategoryNavigation
     ? `/${encodeURIComponent(product.channelSlug)}/category/${encodeURIComponent(product.categorySlug)}`
     : `/${encodeURIComponent(product.channelSlug)}?category=${encodeURIComponent(product.categorySlug)}`
   : product
@@ -70,7 +74,7 @@ const channelUrl = product
   : null;
 const categoryUrl = product?.categorySlug
   ? new URL(
-      product.hasCategoryNavigation
+      hasCategoryNavigation
         ? `/${encodeURIComponent(product.channelSlug)}/category/${encodeURIComponent(product.categorySlug)}`
         : `/${encodeURIComponent(product.channelSlug)}?category=${encodeURIComponent(product.categorySlug)}`,
       Astro.url.origin,
