@@ -6,6 +6,16 @@ type DirectoryProduct = {
   coverHeight: number | null;
 };
 
+type DirectoryPayload = {
+  products: DirectoryProduct[];
+  hasMore: boolean;
+};
+
+type DirectoryHistoryState = {
+  loadedPage: number;
+  scrollY: number;
+};
+
 function isDirectoryProduct(value: unknown): value is DirectoryProduct {
   if (!value || typeof value !== "object") return false;
   const product = value as Record<string, unknown>;
@@ -70,6 +80,42 @@ function pageHref(page: number, categorySlug: string, preserveCategoryQuery: boo
   return `${url.pathname}${url.search}`;
 }
 
+function historyStorageKey(root: HTMLElement): string {
+  const category = root.dataset.preserveCategoryQuery === "1" ? root.dataset.category ?? "" : "";
+  return `public-directory:${window.location.pathname}:${category}`;
+}
+
+function readHistoryState(root: HTMLElement): DirectoryHistoryState | null {
+  try {
+    const raw = sessionStorage.getItem(historyStorageKey(root));
+    if (!raw) return null;
+    const value: unknown = JSON.parse(raw);
+    if (!value || typeof value !== "object") return null;
+    const record = value as Record<string, unknown>;
+    if (!Number.isSafeInteger(record.loadedPage) || Number(record.loadedPage) < 1) return null;
+    if (typeof record.scrollY !== "number" || record.scrollY < 0) return null;
+    return { loadedPage: Number(record.loadedPage), scrollY: record.scrollY };
+  } catch {
+    return null;
+  }
+}
+
+function writeHistoryState(root: HTMLElement, loadedPage: number): void {
+  try {
+    sessionStorage.setItem(historyStorageKey(root), JSON.stringify({
+      loadedPage,
+      scrollY: Math.max(0, window.scrollY),
+    } satisfies DirectoryHistoryState));
+  } catch {
+    // Browsing storage may be disabled; normal pagination remains available.
+  }
+}
+
+function isBackForwardNavigation(): boolean {
+  const navigation = performance.getEntriesByType("navigation")[0] as PerformanceNavigationTiming | undefined;
+  return navigation?.type === "back_forward";
+}
+
 function initializeProductDirectory(root: HTMLElement): void {
   if (root.dataset.ready === "1") return;
   root.dataset.ready = "1";
@@ -79,40 +125,51 @@ function initializeProductDirectory(root: HTMLElement): void {
   const grid = root.querySelector<HTMLElement>("[data-product-grid]");
   if (!nextLink || !label || !row || !grid) return;
 
-  nextLink.addEventListener("click", async (event) => {
-    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
-    event.preventDefault();
-    if (nextLink.dataset.loading === "1") return;
+  let loading = false;
 
-    nextLink.dataset.loading = "1";
-    nextLink.setAttribute("aria-busy", "true");
-    nextLink.setAttribute("aria-disabled", "true");
-    label.textContent = "Loading…";
-    const page = Number(root.dataset.nextPage || "2");
+  const requestPage = async (page: number): Promise<DirectoryPayload> => {
     const params = new URLSearchParams({ page: String(page) });
     if (root.dataset.category) params.set("category", root.dataset.category);
+    const response = await fetch(
+      `/api/public/channels/${encodeURIComponent(root.dataset.channel || "")}/products?${params}`,
+      { headers: { Accept: "application/json" } },
+    );
+    if (!response.ok) throw new Error(`Request failed: ${response.status}`);
+    const payload: unknown = await response.json();
+    if (!payload || typeof payload !== "object") throw new Error("Invalid response");
+    const record = payload as Record<string, unknown>;
+    if (!Array.isArray(record.products) || !record.products.every(isDirectoryProduct)) {
+      throw new Error("Invalid response");
+    }
+    return {
+      products: record.products,
+      hasMore: record.hasMore === true,
+    };
+  };
+
+  const appendPage = async (page: number, interactive: boolean): Promise<boolean> => {
+    if (loading) return false;
+    loading = true;
+    if (interactive) {
+      nextLink.dataset.loading = "1";
+      nextLink.setAttribute("aria-busy", "true");
+      nextLink.setAttribute("aria-disabled", "true");
+      label.textContent = "Loading…";
+    }
 
     try {
-      const response = await fetch(
-        `/api/public/channels/${encodeURIComponent(root.dataset.channel || "")}/products?${params}`,
-        { headers: { Accept: "application/json" } },
-      );
-      if (!response.ok) throw new Error(`Request failed: ${response.status}`);
-      const payload: unknown = await response.json();
-      if (!payload || typeof payload !== "object") throw new Error("Invalid response");
-      const record = payload as Record<string, unknown>;
-      if (!Array.isArray(record.products) || !record.products.every(isDirectoryProduct)) {
-        throw new Error("Invalid response");
-      }
-      record.products.forEach((product) => grid.appendChild(createProductCard(product, root.dataset.channel || "")));
+      const payload = await requestPage(page);
+      payload.products.forEach((product) => grid.appendChild(createProductCard(product, root.dataset.channel || "")));
       root.dataset.nextPage = String(page + 1);
 
-      if (record.hasMore !== true) {
+      if (!payload.hasMore) {
         nextLink.remove();
-        const end = document.createElement("p");
-        end.className = "end-of-results";
-        end.textContent = "You’ve reached the end.";
-        row.appendChild(end);
+        if (!row.querySelector(".end-of-results")) {
+          const end = document.createElement("p");
+          end.className = "end-of-results";
+          end.textContent = "You’ve reached the end.";
+          row.appendChild(end);
+        }
       } else {
         nextLink.href = pageHref(
           page + 1,
@@ -125,17 +182,51 @@ function initializeProductDirectory(root: HTMLElement): void {
         label.textContent = "Load More";
       }
 
+      writeHistoryState(root, page);
       document.dispatchEvent(new CustomEvent("public:products-appended", {
         detail: { grid, directory: root },
       }));
+      return true;
     } catch (error) {
       console.error(error);
       delete nextLink.dataset.loading;
       nextLink.removeAttribute("aria-busy");
       nextLink.removeAttribute("aria-disabled");
       label.textContent = "Try Again";
+      return false;
+    } finally {
+      loading = false;
     }
+  };
+
+  nextLink.addEventListener("click", async (event) => {
+    if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+    event.preventDefault();
+    const page = Number(root.dataset.nextPage || "2");
+    await appendPage(page, true);
   });
+
+  grid.addEventListener("click", (event) => {
+    const target = event.target instanceof Element ? event.target.closest<HTMLAnchorElement>("[data-product-card]") : null;
+    if (!target) return;
+    const loadedPage = Math.max(1, Number(root.dataset.nextPage || "2") - 1);
+    writeHistoryState(root, loadedPage);
+  });
+
+  if (isBackForwardNavigation()) {
+    const state = readHistoryState(root);
+    const currentLoadedPage = Math.max(1, Number(root.dataset.nextPage || "2") - 1);
+    if (state && state.loadedPage > currentLoadedPage) {
+      void (async () => {
+        if ("scrollRestoration" in history) history.scrollRestoration = "manual";
+        for (let page = currentLoadedPage + 1; page <= state.loadedPage; page += 1) {
+          const appended = await appendPage(page, false);
+          if (!appended) break;
+        }
+        window.requestAnimationFrame(() => window.scrollTo({ top: state.scrollY, behavior: "instant" }));
+      })();
+    }
+  }
 }
 
 document.querySelectorAll<HTMLElement>("[data-product-directory]").forEach(initializeProductDirectory);
