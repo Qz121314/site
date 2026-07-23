@@ -1,3 +1,5 @@
+export {};
+
 type AffiliateAdSurface = "channel" | "catalog" | "channel-catalog" | "search";
 type DisplayType = "banner" | "vertical" | "modal";
 type CreativeType = "uploaded_image" | "external_media" | "embed_code";
@@ -229,7 +231,8 @@ function createShell(loaded: LoadedCreative, placement: "top" | "inline" | "vert
   frame.style.setProperty("--affiliate-ad-height", `${loaded.advertisement.height}px`);
   frame.appendChild(loaded.element);
 
-  shell.append(label, frame);
+  shell.appendChild(label);
+  shell.appendChild(frame);
   return shell;
 }
 
@@ -261,7 +264,7 @@ async function mountTopBanner(candidates: AffiliateAdvertisement[], used: Set<st
   if (!main || main.querySelector(".affiliate-ad-top")) return;
   const loaded = await loadFirstAvailable(candidates, used, true);
   if (!loaded) return;
-  main.prepend(createShell(loaded, "top"));
+  main.insertBefore(createShell(loaded, "top"), main.firstChild);
 }
 
 async function mountInlineBanners(candidates: AffiliateAdvertisement[], used: Set<string>): Promise<void> {
@@ -393,7 +396,7 @@ async function mountModal(
   backdrop.addEventListener("click", (event) => { if (event.target === backdrop) dismiss(); });
   document.addEventListener("keydown", (event) => { if (event.key === "Escape" && backdrop.isConnected) dismiss(); });
 
-  card.prepend(close);
+  card.insertBefore(close, card.firstChild);
   backdrop.appendChild(card);
   document.body.appendChild(backdrop);
   close.focus();
@@ -412,16 +415,14 @@ async function initializeContext(node: HTMLScriptElement): Promise<void> {
   const showsChannelTop = context.surface === "channel" || context.surface === "channel-catalog";
   const showsCatalogInline = context.surface === "catalog" || context.surface === "channel-catalog" || context.surface === "search";
 
-  const tasks: Promise<void>[] = [];
-  if (showsChannelTop) tasks.push(mountTopBanner(candidates.banners, used));
-  if (showsCatalogInline) tasks.push(mountInlineBanners(candidates.banners, used));
-  tasks.push(mountVertical(candidates.verticals, used, device));
-  tasks.push(mountModal(candidates.modals, used, context.channelSlug, device));
-  await Promise.all(tasks);
+  if (showsChannelTop) await mountTopBanner(candidates.banners, used);
+  if (showsCatalogInline) await mountInlineBanners(candidates.banners, used);
+  await mountVertical(candidates.verticals, used, device);
 
   document.addEventListener("public:products-appended", () => {
     void mountInlineBanners(candidates.banners, used);
   });
+  void mountModal(candidates.modals, used, context.channelSlug, device);
 }
 
 function initializeAffiliateAds(root: ParentNode = document): void {
