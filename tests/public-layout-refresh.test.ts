@@ -32,7 +32,10 @@ test("public pages use a centered three-control header with an inline expanding 
   assert.match(interactions, /searchLayer\.inert = !nextOpen/u);
   assert.match(interactions, /event\.key !== "Escape"/u);
   assert.match(interactions, /Please enter a search term\./u);
-  assert.match(interactions, /searchInput\.setCustomValidity\(SEARCH_REQUIRED_MESSAGE\)/u);
+  assert.match(interactions, /const syncSearchValidity = \(\) =>/u);
+  assert.match(interactions, /searchInput\.setCustomValidity\(searchInput\.value\.trim\(\) \? "" : SEARCH_REQUIRED_MESSAGE\)/u);
+  assert.match(interactions, /syncSearchValidity\(\);[\s\S]*?searchOpen\.addEventListener/u);
+  assert.match(interactions, /searchInput\.addEventListener\("invalid", syncSearchValidity\)/u);
   assert.match(interactions, /searchInput\.reportValidity\(\)/u);
 
   assert.match(system, /@import "\.\/public-header-refinement\.css";/u);
