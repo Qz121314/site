@@ -21,23 +21,43 @@ document.addEventListener("click", (event) => {
   window.setTimeout(() => delete control.dataset.lastActivation, ACTIVATION_WINDOW_MS);
 }, true);
 
+const searchValidity = new WeakMap<HTMLInputElement, () => void>();
+document.querySelectorAll<HTMLFormElement>("[data-public-search-form]").forEach((form) => {
+  const input = form.querySelector<HTMLInputElement>("[data-public-search-input]");
+  if (!input) return;
+
+  const syncValidity = (): void => {
+    input.setCustomValidity(input.value.trim() ? "" : SEARCH_REQUIRED_MESSAGE);
+  };
+
+  searchValidity.set(input, syncValidity);
+  syncValidity();
+  input.addEventListener("invalid", syncValidity);
+  input.addEventListener("input", syncValidity);
+  form.addEventListener("submit", (event) => {
+    input.value = input.value.trim();
+    syncValidity();
+    if (input.checkValidity()) return;
+
+    event.preventDefault();
+    input.reportValidity();
+    input.focus({ preventScroll: true });
+  });
+});
+
 const header = document.querySelector<HTMLElement>("[data-public-header]");
 const headerDefault = header?.querySelector<HTMLElement>("[data-header-default]");
 const searchLayer = header?.querySelector<HTMLElement>("[data-header-search-layer]");
 const searchOpen = header?.querySelector<HTMLButtonElement>("[data-header-search-open]");
 const searchClose = header?.querySelector<HTMLButtonElement>("[data-header-search-close]");
-const searchForm = header?.querySelector<HTMLFormElement>("[data-header-search-form]");
 const searchInput = header?.querySelector<HTMLInputElement>("[data-header-search-input]");
 const publicMenu = header?.querySelector<HTMLDetailsElement>("[data-public-menu]");
 
-if (header && headerDefault && searchLayer && searchOpen && searchClose && searchForm && searchInput) {
+if (header && headerDefault && searchLayer && searchOpen && searchClose && searchInput) {
   let isSearchOpen = false;
+  const syncSearchValidity = searchValidity.get(searchInput) ?? (() => {});
 
-  const syncSearchValidity = () => {
-    searchInput.setCustomValidity(searchInput.value.trim() ? "" : SEARCH_REQUIRED_MESSAGE);
-  };
-
-  const setSearchOpen = (nextOpen: boolean) => {
+  const setSearchOpen = (nextOpen: boolean): void => {
     if (isSearchOpen === nextOpen) return;
     isSearchOpen = nextOpen;
 
@@ -65,22 +85,8 @@ if (header && headerDefault && searchLayer && searchOpen && searchClose && searc
     window.requestAnimationFrame(() => searchOpen.focus({ preventScroll: true }));
   };
 
-  syncSearchValidity();
   searchOpen.addEventListener("click", () => setSearchOpen(true));
   searchClose.addEventListener("click", () => setSearchOpen(false));
-
-  searchInput.addEventListener("invalid", syncSearchValidity);
-  searchInput.addEventListener("input", syncSearchValidity);
-
-  searchForm.addEventListener("submit", (event) => {
-    searchInput.value = searchInput.value.trim();
-    syncSearchValidity();
-    if (searchInput.checkValidity()) return;
-
-    event.preventDefault();
-    searchInput.reportValidity();
-    searchInput.focus({ preventScroll: true });
-  });
 
   document.addEventListener("keydown", (event) => {
     if (event.key !== "Escape") return;
@@ -92,6 +98,11 @@ if (header && headerDefault && searchLayer && searchOpen && searchClose && searc
     }
 
     if (publicMenu?.open) publicMenu.open = false;
+  });
+
+  const desktopMedia = window.matchMedia("(min-width: 768px)");
+  desktopMedia.addEventListener("change", (event) => {
+    if (event.matches && isSearchOpen) setSearchOpen(false);
   });
 }
 
