@@ -1,6 +1,6 @@
-const section = document.querySelector<HTMLElement>("[data-category-section]");
+const sections = Array.from(document.querySelectorAll<HTMLElement>("[data-category-section]"));
 
-if (section) {
+function initializeCategorySection(section: HTMLElement): void {
   const mobileDirectory = section.querySelector<HTMLElement>("[data-category-mobile]");
   const buttons = Array.from(mobileDirectory?.querySelectorAll<HTMLButtonElement>("[data-category-filter]") ?? []);
   const cards = Array.from(mobileDirectory?.querySelectorAll<HTMLElement>("[data-category-card]") ?? []);
@@ -49,3 +49,5 @@ if (section) {
     });
   });
 }
+
+sections.forEach(initializeCategorySection);

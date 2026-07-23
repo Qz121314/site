@@ -1,6 +1,6 @@
 /*
  * Public visual system entrypoint.
- * Reset → structural layout → loading states → inline header interaction → neutral commerce theme → affiliate ads → responsive compositions → editorial polish → compact category navigation → product detail refinements → category filter bar.
+ * Reset → structural layout → loading states → inline header interaction → neutral commerce theme → affiliate ads → responsive compositions → editorial polish → compact category navigation → product detail refinements → category filter bar → desktop catalog workspace.
  */
 @import "./public-base.css";
 @import "./public.css";
@@ -13,3 +13,4 @@
 @import "./public-category-navigation.css";
 @import "./public-product-detail-refinement.css";
 @import "./public-category-filter-bar.css";
+@import "./public-desktop-catalog.css";
