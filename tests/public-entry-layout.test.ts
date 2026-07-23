@@ -20,7 +20,12 @@ test("public entry redirects to a configured or first published channel", async 
   assert.match(home, /showChannelNavigation=\{false\}/u);
   assert.match(layout, /site\.logoUrl \? \(/u);
   assert.match(layout, /class="public-brand-logo"/u);
+  assert.match(layout, /class="public-header-desktop-nav"/u);
+  assert.match(layout, /aria-current=\{activeChannel === channel\.slug \? "page" : undefined\}/u);
+  assert.match(layout, /<a href="\/privacy">Privacy<\/a>[\s\S]*<a href="\/disclaimer">Disclaimer<\/a>/u);
+  assert.match(layout, /@media \(min-width: 768px\)[\s\S]*?\.public-header-leading \{[\s\S]*?display: none;/u);
   assert.match(navigation, /channels\.length > 0/u);
+  assert.match(navigation, /@media \(min-width: 768px\)[\s\S]*?\.public-bottom-nav \{[\s\S]*?display: none;/u);
   assert.match(baseStyles, /\.public-bottom-nav-track \{[\s\S]*?display: flex;[\s\S]*?overflow: hidden;/u);
   assert.match(commerceStyles, /\.public-nav-item \{[\s\S]*?min-width: 0;[\s\S]*?flex: 1 1 0;/u);
   assert.doesNotMatch(baseStyles, /\.public-nav-item \{[\s\S]*?min-width: 6\.65rem;/u);
@@ -81,11 +86,11 @@ test("channels without effective category groups degrade categories into product
     readFile(new URL("../src/styles/public-commerce.css", import.meta.url), "utf8"),
   ]);
 
-  const searchPosition = channel.indexOf("<PublicSearchForm");
   const categoryFilterPosition = channel.indexOf('class="filter-strip channel-category-filters"');
   const productDirectoryPosition = channel.indexOf("<ProductDirectory");
 
-  assert.ok(searchPosition >= 0 && categoryFilterPosition > searchPosition);
+  assert.doesNotMatch(channel, /PublicSearchForm/u);
+  assert.ok(categoryFilterPosition >= 0);
   assert.ok(productDirectoryPosition > categoryFilterPosition);
   assert.match(channel, /hasCategoryNavigation = categoryGroups\.length > 0/u);
   assert.match(channel, /categoryId: selectedCategory\?\.id \?\? null/u);
