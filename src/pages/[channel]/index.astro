@@ -11,6 +11,7 @@ import {
   loadPublicProducts,
   loadPublicSiteShell,
 } from "@/lib/db/public";
+import { buildEffectiveCategoryGroups } from "@/lib/public/category-navigation";
 import { readPublicPage } from "@/lib/public/pagination";
 
 export const prerender = false;
@@ -29,15 +30,13 @@ const [filters, loadedCategories] = canLoadPage && channel
     ])
   : [[], []];
 const categories = loadedCategories;
-const hasCategoryNavigation = filters.length > 0;
+const categoryGroups = buildEffectiveCategoryGroups(filters, categories);
+const activeFilters = categoryGroups.map(({ filter }) => filter);
+const hasCategoryNavigation = categoryGroups.length > 0;
 const selectedCategory = !hasCategoryNavigation && requestedCategorySlug
   ? categories.find((category) => category.slug === requestedCategorySlug) ?? null
   : null;
 const categorySelectionValid = hasCategoryNavigation || !requestedCategorySlug || Boolean(selectedCategory);
-const categoryGroups = filters.map((filter) => ({
-  filter,
-  categories: categories.filter((category) => category.filterIds.includes(filter.id)),
-}));
 const ungroupedCategories = categories.filter((category) => category.filterIds.length === 0);
 const productPage = canLoadPage && channel && !hasCategoryNavigation && categorySelectionValid
   ? await loadPublicProducts({
@@ -113,9 +112,9 @@ const adSurface = hasCategoryNavigation
       {pageInput.page === 1 && hasCategoryNavigation && (
         <section class="public-section category-section" data-category-section>
           <div class="category-mobile-directory" data-category-mobile>
-            {filters.length > 0 && (
+            {activeFilters.length > 0 && (
               <div class="filter-strip" aria-label="Category filters">
-                {filters.map((filter) => (
+                {activeFilters.map((filter) => (
                   <button class="filter-button" type="button" data-category-filter={filter.id} aria-pressed="false">
                     {filter.name}
                   </button>
