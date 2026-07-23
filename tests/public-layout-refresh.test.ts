@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 test("public pages use a light commerce shell with centered inline search and a standard footer", async () => {
-  const [layout, headerSearch, interactions, categoryPage, searchPage, system, headerStyles, commerce] = await Promise.all([
+  const [layout, headerSearch, interactions, categoryPage, searchPage, system, headerStyles, commerce, ads] = await Promise.all([
     readFile(new URL("../src/layouts/PublicLayout.astro", import.meta.url), "utf8"),
     readFile(new URL("../src/components/public/PublicHeaderSearch.astro", import.meta.url), "utf8"),
     readFile(new URL("../src/scripts/public-interactions.ts", import.meta.url), "utf8"),
@@ -12,6 +12,7 @@ test("public pages use a light commerce shell with centered inline search and a 
     readFile(new URL("../src/styles/public-system.css", import.meta.url), "utf8"),
     readFile(new URL("../src/styles/public-header-refinement.css", import.meta.url), "utf8"),
     readFile(new URL("../src/styles/public-commerce.css", import.meta.url), "utf8"),
+    readFile(new URL("../src/styles/public-ads.css", import.meta.url), "utf8"),
   ]);
 
   assert.match(layout, /import PublicHeaderSearch/u);
@@ -36,6 +37,7 @@ test("public pages use a light commerce shell with centered inline search and a 
   assert.match(interactions, /searchInput\.reportValidity\(\)/u);
 
   assert.match(system, /@import "\.\/public-commerce\.css";/u);
+  assert.match(system, /@import "\.\/public-ads\.css";/u);
   assert.doesNotMatch(system, /public-design-system\.css/u);
   assert.doesNotMatch(system, /public-layout-refresh\.css/u);
   assert.doesNotMatch(system, /public-gallery-rail\.css/u);
@@ -46,6 +48,8 @@ test("public pages use a light commerce shell with centered inline search and a 
   assert.match(commerce, /background: #ffffff/u);
   assert.match(commerce, /\.visual-card-overlay \{[\s\S]*?position: static/u);
   assert.match(commerce, /\.product-grid \{[\s\S]*?repeat\(2, minmax\(0, 1fr\)\)/u);
+  assert.match(ads, /\.affiliate-ad-inline \{[\s\S]*?grid-column: 1 \/ -1/u);
+  assert.match(ads, /\.affiliate-ad-modal-backdrop/u);
 
   assert.doesNotMatch(categoryPage, /import PublicBackLink/u);
   assert.doesNotMatch(categoryPage, /import PublicSearchForm/u);
@@ -112,6 +116,7 @@ test("conversion resolution reveals one-line open and copy actions", async () =>
 
   assert.match(browserSmoke, /\/demo\/search\?q=Smoke/u);
   assert.match(browserSmoke, /\/api\/public\/channels\/demo\/products\?page=1/u);
+  assert.match(browserSmoke, /\/api\/public\/channels\/demo\/ads\?device=mobile/u);
   assert.match(browserSmoke, /\/go\/smoke-product\?channel=demo/u);
   assert.match(browserSmoke, /Conversion resolver did not return the configured fixture target\./u);
 });
