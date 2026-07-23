@@ -32,14 +32,10 @@
     box-shadow: var(--shadow-card);
   }
 
-  .hero-slide:only-child {
-    flex-basis: 100%;
-  }
-
   .hero-slide img {
     width: 100%;
     height: auto;
-    aspect-ratio: 16 / 9;
+    aspect-ratio: 12 / 5;
     object-fit: cover;
     object-position: center;
   }

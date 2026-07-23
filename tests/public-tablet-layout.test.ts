@@ -3,11 +3,13 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 test("tablet and desktop channel pages expose grouped category rows and two Hero advertisements", async () => {
-  const [channel, layout, hero, styles] = await Promise.all([
+  const [channel, layout, hero, styles, designStyles, ads] = await Promise.all([
     readFile(new URL("../src/pages/[channel]/index.astro", import.meta.url), "utf8"),
     readFile(new URL("../src/layouts/PublicLayout.astro", import.meta.url), "utf8"),
     readFile(new URL("../src/components/public/HeroCarousel.astro", import.meta.url), "utf8"),
     readFile(new URL("../src/styles/public-desktop.css", import.meta.url), "utf8"),
+    readFile(new URL("../src/styles/public-design-system.css", import.meta.url), "utf8"),
+    readFile(new URL("../src/pages/admin/channels/[channelId]/ads.astro", import.meta.url), "utf8"),
   ]);
 
   assert.match(channel, /categoryGroups = filters\.map/u);
@@ -19,7 +21,10 @@ test("tablet and desktop channel pages expose grouped category rows and two Hero
   assert.match(hero, /\(min-width: 768px\) calc\(\(100vw - 4rem\) \/ 2\)/u);
   assert.match(styles, /@media \(min-width: 768px\)/u);
   assert.match(styles, /flex-basis: calc\(\(100% - \.8rem\) \/ 2\)/u);
-  assert.match(styles, /\.hero-slide:only-child \{[\s\S]*?flex-basis: 100%/u);
+  assert.doesNotMatch(styles, /\.hero-slide:only-child/u);
+  assert.match(styles, /\.hero-slide img \{[\s\S]*?aspect-ratio: 12 \/ 5/u);
+  assert.match(designStyles, /\.hero-slide img \{[\s\S]*?aspect-ratio: 12 \/ 5/u);
+  assert.match(ads, /1200 × 500 px（12:5）/u);
   assert.match(styles, /\.category-group-items[\s\S]*?repeat\(3, minmax\(0, 1fr\)\)/u);
 });
 

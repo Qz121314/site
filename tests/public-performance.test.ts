@@ -34,7 +34,7 @@ test("uses stored responsive derivatives for Hero and product detail images", as
   assert.match(publicDatabase, /image\.thumbnail_object_key AS responsive_object_key/u);
   assert.match(upload, /heroVariant[\s\S]*"hero-responsive"[\s\S]*"site-logo"[\s\S]*"site-favicon"/u);
   assert.match(directUpload, /HERO_RESPONSIVE_DIMENSION = 960/u);
-  assert.match(ads, /compact heroResponsive/u);
+  assert.match(ads, /compact\s+heroResponsive/u);
   assert.match(scan, /"directory-thumbnail", "hero-responsive", "site-logo", "site-favicon"/u);
 });
 

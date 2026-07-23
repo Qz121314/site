@@ -336,7 +336,7 @@ body {
 }
 
 .hero-slide img {
-  aspect-ratio: 16 / 9;
+  aspect-ratio: 12 / 5;
   object-fit: cover;
 }
 
@@ -917,9 +917,6 @@ body {
     gap: .9rem;
   }
 
-  .hero-slide img {
-    aspect-ratio: 2.2 / 1;
-  }
 }
 
 @media (max-width: 420px) {

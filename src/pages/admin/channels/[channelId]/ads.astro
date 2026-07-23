@@ -234,7 +234,16 @@ const poolCreateAction = `/api/admin/channels/${encodeURIComponent(channelId)}/a
 
       <AdminDialog id="ad-create-dialog" title="添加广告" size="large">
         <form id="ad-create-form" class="admin-dialog-form" method="post" data-record-form>
-          <DirectImageUpload id="ad-create-image" name="imageAssetId" label="广告图片" form="ad-create-form" required compact heroResponsive />
+          <DirectImageUpload
+            id="ad-create-image"
+            name="imageAssetId"
+            label="广告图片"
+            form="ad-create-form"
+            required
+            compact
+            heroResponsive
+            help="建议上传 1200 × 500 px（12:5）图片，主体和文字距离边缘至少保留 10%。"
+          />
           <div class="admin-field">
             <label for="ad-create-target-url">目标链接</label>
             <input id="ad-create-target-url" name="targetUrl" type="url" maxlength="2000" required autocomplete="off" autofocus />
@@ -265,7 +274,16 @@ const poolCreateAction = `/api/admin/channels/${encodeURIComponent(channelId)}/a
 
       <AdminDialog id="ad-edit-dialog" title="编辑广告" size="large">
         <form id="ad-edit-form" class="admin-dialog-form" method="post" data-record-form>
-          <DirectImageUpload id="ad-edit-image" name="imageAssetId" label="广告图片" form="ad-edit-form" required compact heroResponsive />
+          <DirectImageUpload
+            id="ad-edit-image"
+            name="imageAssetId"
+            label="广告图片"
+            form="ad-edit-form"
+            required
+            compact
+            heroResponsive
+            help="建议上传 1200 × 500 px（12:5）图片，主体和文字距离边缘至少保留 10%。"
+          />
           <div class="admin-field">
             <label for="ad-edit-target-url">目标链接</label>
             <input id="ad-edit-target-url" name="targetUrl" type="url" maxlength="2000" required autocomplete="off" autofocus />
