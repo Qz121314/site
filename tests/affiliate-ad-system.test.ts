@@ -51,23 +51,39 @@ test("admin advertising uses dynamic creative fields and no Hero binding", async
   assert.match(adminLayout, /import "@\/scripts\/admin-ad-form"/u);
 });
 
-test("public advertising loads late with no placeholder and excludes product detail", async () => {
-  const [component, script, styles, productPage] = await Promise.all([
+test("public advertising starts after initial paint, retries uploaded media, and exposes delivery state", async () => {
+  const [component, script, styles, productPage, publicAds, mediaEndpoint, candidateEndpoint] = await Promise.all([
     readFile(new URL("../src/components/public/AffiliateAds.astro", import.meta.url), "utf8"),
     readFile(new URL("../src/scripts/public-affiliate-ads.ts", import.meta.url), "utf8"),
     readFile(new URL("../src/styles/public-ads.css", import.meta.url), "utf8"),
     readFile(new URL("../src/pages/[channel]/product/[product].astro", import.meta.url), "utf8"),
+    readFile(new URL("../src/lib/db/public-ads.ts", import.meta.url), "utf8"),
+    readFile(new URL("../src/pages/api/public/ads/[adId]/media/[imageId].ts", import.meta.url), "utf8"),
+    readFile(new URL("../src/pages/api/public/channels/[channel]/ads.ts", import.meta.url), "utf8"),
   ]);
 
   assert.match(component, /type="application\/json" data-affiliate-ad-context/u);
   assert.doesNotMatch(component, /placeholder|skeleton|affiliate-ad-frame/u);
   assert.match(script, /waitForAdvertisementStart/u);
-  assert.match(script, /new Image\(\)/u);
+  assert.match(script, /requestAnimationFrame\(\(\) => window\.requestAnimationFrame/u);
+  assert.doesNotMatch(script, /setTimeout\(finish, 2500\)/u);
+  assert.match(script, /fallbackImageUrl/u);
+  assert.match(script, /waitForFirstImage/u);
+  assert.match(script, /affiliateAdState/u);
+  assert.match(script, /affiliate_ad_initialization_failed/u);
   assert.match(script, /loadFirstAvailable/u);
   assert.match(script, /productInterval/u);
   assert.match(script, /sessionStorage\.setItem/u);
   assert.match(script, /rel = "sponsored noopener noreferrer"/u);
   assert.doesNotMatch(script, /ORDER BY RANDOM|\.sort\(/u);
+
+  assert.match(publicAds, /fallbackImageUrl/u);
+  assert.match(publicAds, /loadPublicAdvertisementImage/u);
+  assert.match(publicAds, /advertisement\.image_asset_id/u);
+  assert.match(mediaEndpoint, /env\.MEDIA_BUCKET\.get\(image\.object_key\)/u);
+  assert.match(mediaEndpoint, /Cloudflare-CDN-Cache-Control/u);
+  assert.match(candidateEndpoint, /meta:[\s\S]*counts:/u);
+
   assert.match(styles, /\.affiliate-ad-inline \{[\s\S]*?grid-column: 1 \/ -1/u);
   assert.doesNotMatch(productPage, /AffiliateAds|affiliate-ad-context/u);
 });

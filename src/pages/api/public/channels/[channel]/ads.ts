@@ -15,7 +15,19 @@ export const GET: APIRoute = async ({ params, url }) => {
   try {
     const candidates = await loadPublicAffiliateAdCandidates(channelSlug, deviceType as AdDeviceType);
     return Response.json(
-      { ok: true, candidates },
+      {
+        ok: true,
+        candidates,
+        meta: {
+          channelSlug,
+          device: deviceType,
+          counts: {
+            banners: candidates.banners.length,
+            verticals: candidates.verticals.length,
+            modals: candidates.modals.length,
+          },
+        },
+      },
       { headers: { "Cache-Control": "private, no-store" } },
     );
   } catch (error) {
