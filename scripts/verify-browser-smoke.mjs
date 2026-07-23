@@ -56,7 +56,7 @@ function runChrome(chrome, args, outputPath = null) {
     "--disable-dev-shm-usage",
     "--hide-scrollbars",
     "--run-all-compositor-stages-before-draw",
-    "--virtual-time-budget=3000",
+    "--virtual-time-budget=7000",
     ...args,
   ], {
     encoding: outputPath ? "utf8" : undefined,
@@ -87,34 +87,34 @@ function assertDocument(path, requirements) {
   }
 }
 
-function assertHeroInteractionContract() {
-  const templateSource = readFileSync("src/components/public/HeroCarousel.astro", "utf8");
-  const interactionSource = readFileSync("src/scripts/public-hero-carousel.ts", "utf8");
-  const requirements = [
-    'href={advertisement.targetUrl}',
-    'draggable="false"',
-  ];
-  const interactionRequirements = [
-    'const dragStartThreshold = 6',
-    'if (!dragging && Math.abs(distance) >= dragStartThreshold)',
-    "track.setPointerCapture(event.pointerId)",
-    "if (!suppressClick) return",
-  ];
+function assertAffiliateAdContract() {
+  const componentSource = readFileSync("src/components/public/AffiliateAds.astro", "utf8");
+  const interactionSource = readFileSync("src/scripts/public-affiliate-ads.ts", "utf8");
+  const candidateSource = readFileSync("src/lib/db/public-ads.ts", "utf8");
+  const productSource = readFileSync("src/pages/[channel]/product/[product].astro", "utf8");
 
-  for (const requirement of requirements) {
-    if (!templateSource.includes(requirement)) throw new Error(`Hero carousel template contract is missing: ${requirement}`);
+  for (const requirement of [
+    "data-affiliate-ad-context",
+    'import "@/scripts/public-affiliate-ads"',
+  ]) {
+    if (!componentSource.includes(requirement)) throw new Error(`Affiliate ad component contract is missing: ${requirement}`);
   }
-  for (const requirement of interactionRequirements) {
-    if (!interactionSource.includes(requirement)) throw new Error(`Hero carousel interaction contract is missing: ${requirement}`);
+  for (const requirement of [
+    "waitForAdvertisementStart",
+    "public:products-appended",
+    "affiliate-ad-modal-dismissed",
+    "allow-popups-to-escape-sandbox",
+  ]) {
+    if (!interactionSource.includes(requirement)) throw new Error(`Affiliate ad interaction contract is missing: ${requirement}`);
   }
-}
-
-function assertRenderedHeroLinks(path) {
-  const html = readFileSync(path, "utf8");
-  const slideTags = html.match(/<a\b[^>]*data-hero-slide[^>]*>/g) ?? [];
-  for (const tag of slideTags) {
-    const href = tag.match(/\shref="([^"]*)"/)?.[1]?.trim() ?? "";
-    if (!href || href === "#") throw new Error(`${path} contains a hero slide without a valid href.`);
+  if (!candidateSource.includes("Math.random()")) {
+    throw new Error("Affiliate ad candidate resolution must randomize in Worker code.");
+  }
+  if (/ORDER BY RANDOM\(\)|\.sort\(/u.test(candidateSource)) {
+    throw new Error("Affiliate ad candidate resolution must not use random SQL ordering or full array sorting.");
+  }
+  if (/AffiliateAds|affiliate-ad-context/u.test(productSource)) {
+    throw new Error("Product detail must not bootstrap affiliate advertising.");
   }
 }
 
@@ -127,7 +127,7 @@ function assertChannelNavigationCount(path, expectedCount) {
 }
 
 mkdirSync(LOG_DIR, { recursive: true });
-assertHeroInteractionContract();
+assertAffiliateAdContract();
 const chrome = findChrome();
 const userDataDir = join(tmpdir(), `site-browser-smoke-${process.pid}`);
 const persistDir = join(tmpdir(), `site-browser-smoke-d1-${process.pid}`);
@@ -168,6 +168,17 @@ try {
     || productApi.payload.products[0]?.slug !== "smoke-product"
   ) {
     throw new Error("Public product API did not return the fixture product.");
+  }
+
+  const mobileAds = await requestJson("/api/public/channels/demo/ads?device=mobile");
+  const desktopAds = await requestJson("/api/public/channels/demo/ads?device=desktop");
+  if (
+    mobileAds.payload?.ok !== true
+    || mobileAds.payload?.candidates?.banners?.[0]?.name !== "Mobile Smoke Banner"
+    || desktopAds.payload?.ok !== true
+    || desktopAds.payload?.candidates?.banners?.[0]?.name !== "Desktop Smoke Banner"
+  ) {
+    throw new Error("Affiliate ad resolver did not return device-scoped fixture candidates.");
   }
 
   const contact = await requestJson("/go/smoke-product?channel=demo");
@@ -228,22 +239,23 @@ try {
     `${ORIGIN}/admin/login`,
   ], `${LOG_DIR}/admin-login-browser-dom.html`);
 
-  assertDocument(`${LOG_DIR}/public-browser-dom.html`, ["<html", "Smoke Product", "People", "aria-current=\"page\""]);
-  assertDocument(`${LOG_DIR}/public-tablet-browser-dom.html`, ["<html", "Smoke Product", "data-hero-slide", "public-footer"]);
-  assertDocument(`${LOG_DIR}/public-desktop-browser-dom.html`, ["<html", "Smoke Product", "data-hero-slide", "public-footer"]);
+  assertDocument(`${LOG_DIR}/public-browser-dom.html`, ["<html", "Smoke Product", "People", "aria-current=\"page\"", "data-affiliate-ad"]);
+  assertDocument(`${LOG_DIR}/public-tablet-browser-dom.html`, ["<html", "Smoke Product", "data-affiliate-ad", "public-footer"]);
+  assertDocument(`${LOG_DIR}/public-desktop-browser-dom.html`, ["<html", "Smoke Product", "data-affiliate-ad", "public-footer"]);
   assertChannelNavigationCount(`${LOG_DIR}/public-browser-dom.html`, 4);
   assertChannelNavigationCount(`${LOG_DIR}/public-tablet-browser-dom.html`, 4);
   assertChannelNavigationCount(`${LOG_DIR}/public-desktop-browser-dom.html`, 4);
-  assertRenderedHeroLinks(`${LOG_DIR}/public-tablet-browser-dom.html`);
-  assertRenderedHeroLinks(`${LOG_DIR}/public-desktop-browser-dom.html`);
   assertDocument(`${LOG_DIR}/public-product-browser-dom.html`, [
     "Smoke Product",
     "Smoke product body",
     "data-contact-cta",
     "href=\"/demo?category=people\"",
   ]);
+  if (readFileSync(`${LOG_DIR}/public-product-browser-dom.html`, "utf8").includes("data-affiliate-ad")) {
+    throw new Error("Product detail rendered affiliate advertising.");
+  }
   assertDocument(`${LOG_DIR}/admin-login-browser-dom.html`, ["<html", "<form"]);
-  console.log("Headless Chrome and local Worker routes verified search, pagination, conversion, and mobile/tablet/desktop rendering.");
+  console.log("Headless Chrome and local Worker routes verified search, pagination, affiliate ads, conversion, and mobile/tablet/desktop rendering.");
 } finally {
   server.kill("SIGTERM");
   await new Promise((resolve) => setTimeout(resolve, 500));

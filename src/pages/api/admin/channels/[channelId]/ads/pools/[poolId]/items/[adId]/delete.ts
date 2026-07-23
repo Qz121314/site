@@ -1,7 +1,6 @@
 import { env } from "cloudflare:workers";
 import type { APIRoute } from "astro";
 import { isSameOriginPost } from "@/lib/auth/session";
-import { adPoolIntegrityErrorCode } from "@/lib/admin/ad-form";
 
 export const prerender = false;
 
@@ -25,14 +24,14 @@ export const POST: APIRoute = async ({ request, params }) => {
        WHERE id = ?1
          AND pool_id = ?2
          AND EXISTS (
-           SELECT 1 FROM ad_pools p WHERE p.id = ?2 AND p.channel_id = ?3
+           SELECT 1 FROM ad_pools pool WHERE pool.id = ?2 AND pool.channel_id = ?3
          )`,
     ).bind(adId, poolId, channelId).run();
 
-    if (!result.meta.changes) return redirect(request, channelId, { error: "not-found" });
+    if (!result.meta.changes) return redirect(request, channelId, { error: "not-found", pool: poolId });
     return redirect(request, channelId, { saved: "ad-deleted", pool: poolId });
   } catch (error) {
     console.error(JSON.stringify({ event: "admin_ad_delete_failed", channelId, poolId, adId, error: String(error) }));
-    return redirect(request, channelId, { error: adPoolIntegrityErrorCode(error) ?? "database", pool: poolId });
+    return redirect(request, channelId, { error: "database", pool: poolId, ad: adId });
   }
 };

@@ -20,6 +20,7 @@ function createProductCard(product: DirectoryProduct, channelSlug: string): HTML
   const link = document.createElement("a");
   link.className = "visual-card product-card";
   link.href = `/${encodeURIComponent(channelSlug)}/product/${encodeURIComponent(product.slug)}`;
+  link.dataset.productCard = "";
   link.dataset.loadSurface = "";
 
   if (product.coverUrl) {
@@ -123,6 +124,10 @@ function initializeProductDirectory(root: HTMLElement): void {
         nextLink.removeAttribute("aria-disabled");
         label.textContent = "Load More";
       }
+
+      document.dispatchEvent(new CustomEvent("public:products-appended", {
+        detail: { grid, directory: root },
+      }));
     } catch (error) {
       console.error(error);
       delete nextLink.dataset.loading;

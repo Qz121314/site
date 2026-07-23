@@ -28,13 +28,19 @@ export const POST: APIRoute = async ({ request, params }) => {
     if (!channel) return redirect(request, channelId, { error: "not-found" });
 
     await env.DB.prepare(
-      `INSERT INTO ad_pools (id, channel_id, name, status)
-       VALUES (?1, ?2, ?3, ?4)`,
-    ).bind(id, channelId, parsed.name, parsed.status).run();
+      `INSERT INTO ad_pools (id, channel_id, name, device_type, status)
+       VALUES (?1, ?2, ?3, ?4, ?5)`,
+    ).bind(id, channelId, parsed.name, parsed.deviceType, parsed.status).run();
 
     return redirect(request, channelId, { saved: "pool-created", pool: id });
   } catch (error) {
-    console.error(JSON.stringify({ event: "admin_ad_pool_create_failed", channelId, name: parsed.name, error: String(error) }));
+    console.error(JSON.stringify({
+      event: "admin_ad_pool_create_failed",
+      channelId,
+      name: parsed.name,
+      deviceType: parsed.deviceType,
+      error: String(error),
+    }));
     return redirect(request, channelId, {
       error: isDuplicateAdPoolNameError(error) ? "duplicate" : "database",
     });

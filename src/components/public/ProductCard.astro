@@ -13,6 +13,7 @@ const { product, channelSlug, priority = false } = Astro.props;
 <a
   class={`visual-card product-card${product.coverUrl ? "" : " is-loaded"}`}
   href={`/${encodeURIComponent(channelSlug)}/product/${encodeURIComponent(product.slug)}`}
+  data-product-card
   data-load-surface={priority ? undefined : ""}
   aria-busy={product.coverUrl && !priority ? "true" : undefined}
 >

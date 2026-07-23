@@ -1,5 +1,6 @@
 ---
 import PublicLayout from "@/layouts/PublicLayout.astro";
+import AffiliateAds from "@/components/public/AffiliateAds.astro";
 import ProductDirectory from "@/components/public/ProductDirectory.astro";
 import {
   findPublicChannel,
@@ -120,6 +121,8 @@ const returnUrl = pageAvailable && channel ? `/${encodeURIComponent(channel.slug
 >
   {pageAvailable && channel && category ? (
     <div class="directory-page-layout">
+      <AffiliateAds channelSlug={channel.slug} surface="catalog" />
+
       <header class="directory-page-title">
         <h1>{category.name}</h1>
       </header>

@@ -71,17 +71,24 @@ test("channels without category filters degrade categories into product filters"
   assert.match(styles, /\.filter-button\[aria-current="page"\]/u);
 });
 
-test("Hero data displays all enabled advertisements unless a current pool is explicitly selected", async () => {
-  const publicDatabase = await readFile(new URL("../src/lib/db/public.ts", import.meta.url), "utf8");
-  const heroLoader = publicDatabase.slice(
-    publicDatabase.indexOf("export async function loadPublicHeroAdvertisements"),
-    publicDatabase.indexOf("export async function loadPublicCategoryFilters"),
-  );
+test("allowed list pages bootstrap the shared affiliate ad system", async () => {
+  const [channel, category, search, product, publicAds, endpoint] = await Promise.all([
+    readFile(new URL("../src/pages/[channel]/index.astro", import.meta.url), "utf8"),
+    readFile(new URL("../src/pages/[channel]/category/[category].astro", import.meta.url), "utf8"),
+    readFile(new URL("../src/pages/[channel]/search.astro", import.meta.url), "utf8"),
+    readFile(new URL("../src/pages/[channel]/product/[product].astro", import.meta.url), "utf8"),
+    readFile(new URL("../src/lib/db/public-ads.ts", import.meta.url), "utf8"),
+    readFile(new URL("../src/pages/api/public/channels/[channel]/ads.ts", import.meta.url), "utf8"),
+  ]);
 
-  assert.match(heroLoader, /p\.channel_id = c\.id/u);
-  assert.match(heroLoader, /p\.status = 'enabled'/u);
-  assert.match(heroLoader, /ad\.status = 'enabled'/u);
-  assert.match(heroLoader, /c\.hero_ad_pool_id IS NULL OR p\.id = c\.hero_ad_pool_id/u);
+  assert.match(channel, /<AffiliateAds channelSlug=\{channel\.slug\} surface=\{adSurface\}/u);
+  assert.match(category, /<AffiliateAds channelSlug=\{channel\.slug\} surface="catalog"/u);
+  assert.match(search, /<AffiliateAds channelSlug=\{channel\.slug\} surface="search"/u);
+  assert.doesNotMatch(product, /AffiliateAds|affiliate-ad-context/u);
+  assert.match(publicAds, /pool\.device_type = \?2/u);
+  assert.match(publicAds, /Math\.floor\(Math\.random\(\) \* \(index \+ 1\)\)/u);
+  assert.doesNotMatch(publicAds, /ORDER BY RANDOM\(\)|\.sort\(/u);
+  assert.match(endpoint, /Cache-Control": "private, no-store"/u);
 });
 
 test("only pages with a parent route provide back navigation", async () => {

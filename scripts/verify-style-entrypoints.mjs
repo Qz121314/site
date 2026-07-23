@@ -4,6 +4,7 @@ const publicLayout = readFileSync("src/layouts/PublicLayout.astro", "utf8");
 const adminLayout = readFileSync("src/layouts/AdminLayout.astro", "utf8");
 const publicSystem = readFileSync("src/styles/public-system.css", "utf8");
 const publicCommerce = readFileSync("src/styles/public-commerce.css", "utf8");
+const publicAds = readFileSync("src/styles/public-ads.css", "utf8");
 const publicDesktop = readFileSync("src/styles/public-desktop.css", "utf8");
 const adminSystem = readFileSync("src/styles/admin-system.css", "utf8");
 
@@ -12,7 +13,7 @@ function assert(condition, message) {
 }
 
 assert(publicLayout.includes('import "@/styles/public-system.css";'), "PublicLayout must import public-system.css.");
-for (const directImport of ["public-base.css", "public.css", "public-commerce.css", "public-desktop.css"]) {
+for (const directImport of ["public-base.css", "public.css", "public-commerce.css", "public-ads.css", "public-desktop.css"]) {
   assert(!publicLayout.includes(`import "@/styles/${directImport}";`), `PublicLayout must not import ${directImport} directly.`);
 }
 
@@ -36,6 +37,7 @@ const expectedPublicOrder = [
   "public-loading.css",
   "public-header-refinement.css",
   "public-commerce.css",
+  "public-ads.css",
   "public-desktop.css",
 ];
 let previousIndex = -1;
@@ -63,6 +65,8 @@ for (const supersededPublicLayer of [
 
 assert(publicCommerce.includes("--canvas-0: #ffffff"), "The public commerce theme must use the neutral light canvas.");
 assert(publicCommerce.includes("position: fixed !important"), "The mobile detail CTA must remain attached to the viewport.");
+assert(publicAds.includes(".affiliate-ad-modal-backdrop"), "The public ad layer must include an isolated modal presentation.");
+assert(publicAds.includes(".affiliate-ad-inline"), "The public ad layer must support full-row catalog ads.");
 assert(
   publicDesktop.includes("@media (min-width: 768px) and (max-width: 1099px)")
     && publicDesktop.includes("@media (min-width: 1100px)")
