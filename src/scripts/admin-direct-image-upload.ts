@@ -14,6 +14,7 @@ type PendingUpload = {
   fileName: string;
   original: RenderedImage;
   thumbnail: RenderedImage | null;
+  preview: RenderedImage;
   variant: UploadVariant;
   localUrl: string;
 };
@@ -47,6 +48,8 @@ type DecodedImage = {
 
 const MAX_DIMENSION = 1600;
 const WEBP_QUALITY = 0.82;
+const PREVIEW_DIMENSION = 480;
+const PREVIEW_QUALITY = 0.72;
 const THUMBNAIL_DIMENSION = 480;
 const THUMBNAIL_QUALITY = 0.72;
 const HERO_RESPONSIVE_DIMENSION = 960;
@@ -145,6 +148,15 @@ async function prepareImage(file: File, variant: UploadVariant): Promise<Pending
           settings.quality,
         )
       : null;
+    const preview = thumbnail && Math.max(thumbnail.width, thumbnail.height) <= PREVIEW_DIMENSION
+      ? thumbnail
+      : await renderVariant(
+          decoded.source,
+          decoded.width,
+          decoded.height,
+          PREVIEW_DIMENSION,
+          PREVIEW_QUALITY,
+        );
     const baseName = file.name.replace(/\.[^.]+$/u, "") || "image";
     return {
       clientId: `pending-${crypto.randomUUID()}`,
@@ -152,8 +164,9 @@ async function prepareImage(file: File, variant: UploadVariant): Promise<Pending
       fileName: `${baseName}.webp`,
       original,
       thumbnail,
+      preview,
       variant,
-      localUrl: URL.createObjectURL(original.blob),
+      localUrl: URL.createObjectURL(preview.blob),
     };
   } finally {
     decoded.release();
@@ -275,14 +288,16 @@ function ensureFormCoordinator(form: HTMLFormElement): void {
     }
 
     const controllers = relatedControllers(form).filter((controller) => controller.isActive());
-    const missingRequired = controllers.some((controller) => controller.required && !controller.hasSelection());
-    if (missingRequired) {
-      event.preventDefault();
-      window.alert("请先选择必需图片。");
+    const hasWork = controllers.some((controller) => controller.hasWork());
+    if (!hasWork) {
+      const missingRequired = controllers.some((controller) => controller.required && !controller.hasSelection());
+      if (missingRequired) {
+        event.preventDefault();
+        window.alert("请先选择必需图片。");
+      }
       return;
     }
 
-    if (!controllers.some((controller) => controller.hasWork())) return;
     event.preventDefault();
     if (form.dataset.directUploadCommitting === "1") return;
 
@@ -294,7 +309,11 @@ function ensureFormCoordinator(form: HTMLFormElement): void {
 
     void Promise.all(controllers.map((controller) => controller.commit())).then(() => {
       const stillMissing = controllers.some((controller) => controller.required && !controller.hasSelection());
-      if (stillMissing) throw new Error("Required image is missing after upload");
+      if (stillMissing) {
+        window.alert("请先选择必需图片。");
+        return;
+      }
+
       form.dataset.directUploadResume = "1";
       if (
         submitter instanceof HTMLButtonElement
@@ -338,6 +357,7 @@ function initializeUpload(root: UploadRoot): void {
   const pendingUploads = new Map<string, PendingUpload>();
   const preparationTasks = new Set<Promise<void>>();
   const localUrls = new Set<string>();
+  let preparationGeneration = 0;
   let preparing = 0;
   let uploading = 0;
 
@@ -405,7 +425,7 @@ function initializeUpload(root: UploadRoot): void {
     refresh();
   };
 
-  const clearPending = (): void => {
+  const discardPending = (): void => {
     for (const pending of Array.from(pendingUploads.values())) {
       removeByKey(pending.clientId);
     }
@@ -413,9 +433,14 @@ function initializeUpload(root: UploadRoot): void {
     refresh();
   };
 
+  const clearPending = (): void => {
+    preparationGeneration += 1;
+    discardPending();
+  };
+
   const addPending = (pending: PendingUpload, order: number): void => {
     if (!multiple) {
-      clearPending();
+      discardPending();
       items().forEach((item) => item.remove());
     }
 
@@ -440,6 +465,8 @@ function initializeUpload(root: UploadRoot): void {
     item.dataset.uploadPending = "";
     item.dataset.imageId = pending.clientId;
     item.dataset.uploadOrder = String(order);
+    item.dataset.previewWidth = String(pending.preview.width);
+    item.dataset.previewHeight = String(pending.preview.height);
 
     const image = document.createElement("img");
     image.src = pending.localUrl;
@@ -450,7 +477,7 @@ function initializeUpload(root: UploadRoot): void {
     title.textContent = pending.originalName || "待保存图片";
     title.title = title.textContent;
     const meta = document.createElement("span");
-    meta.textContent = `${pending.original.width}×${pending.original.height} · 待保存`;
+    meta.textContent = `${pending.original.width}×${pending.original.height} · 本地缩略图 · 待保存`;
     details.appendChild(title);
     details.appendChild(meta);
 
@@ -552,14 +579,20 @@ function initializeUpload(root: UploadRoot): void {
       window.alert(`最多只能绑定 ${maxFiles} 张图片，本次仅处理前 ${files.length} 张。`);
     }
 
+    const generation = preparationGeneration;
     const startOrder = multiple ? items().length : 0;
     preparing += files.length;
     refresh();
     const task = runWithConcurrency(files, LOCAL_PROCESSING_CONCURRENCY, async (file, index) => {
       try {
         const pending = await prepareImage(file, variant);
+        if (generation !== preparationGeneration) {
+          URL.revokeObjectURL(pending.localUrl);
+          return;
+        }
         addPending(pending, startOrder + index);
       } catch (error) {
+        if (generation !== preparationGeneration) return;
         console.error(error);
         window.alert(`图片 ${file.name} 本地处理失败，请重新选择。`);
       } finally {
@@ -579,6 +612,7 @@ function initializeUpload(root: UploadRoot): void {
   }
 
   const cleanupLocalUrls = (): void => {
+    preparationGeneration += 1;
     localUrls.forEach((url) => URL.revokeObjectURL(url));
     localUrls.clear();
   };
