@@ -1,5 +1,6 @@
 ---
 import PublicLayout from "@/layouts/PublicLayout.astro";
+import AffiliateAds from "@/components/public/AffiliateAds.astro";
 import CategoryCard from "@/components/public/CategoryCard.astro";
 import ProductCard from "@/components/public/ProductCard.astro";
 import {
@@ -40,6 +41,8 @@ const returnUrl = channel ? `/${encodeURIComponent(channel.slug)}` : null;
 >
   {channel ? (
     <>
+      {query && <AffiliateAds channelSlug={channel.slug} surface="search" />}
+
       <header class="search-page-title">
         <h1>{query || "Search"}</h1>
       </header>
