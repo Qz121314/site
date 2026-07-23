@@ -1,5 +1,5 @@
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 *,
@@ -10,7 +10,7 @@
 
 html {
   min-width: 320px;
-  background: #090b10;
+  background: #ffffff;
   line-height: 1.5;
 }
 
