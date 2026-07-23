@@ -2,11 +2,13 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-test("catalog pages use a compact header search and footer policy links", async () => {
-  const [layout, system, refresh, categoryPolish] = await Promise.all([
+test("catalog pages use a compact header search, category back navigation, and one responsive directory", async () => {
+  const [layout, categoryPage, system, refresh, desktop, categoryPolish] = await Promise.all([
     readFile(new URL("../src/layouts/PublicLayout.astro", import.meta.url), "utf8"),
+    readFile(new URL("../src/pages/[channel]/category/[category].astro", import.meta.url), "utf8"),
     readFile(new URL("../src/styles/public-system.css", import.meta.url), "utf8"),
     readFile(new URL("../src/styles/public-layout-refresh.css", import.meta.url), "utf8"),
+    readFile(new URL("../src/styles/public-desktop.css", import.meta.url), "utf8"),
     readFile(new URL("../src/styles/public-category-polish.css", import.meta.url), "utf8"),
   ]);
 
@@ -18,12 +20,22 @@ test("catalog pages use a compact header search and footer policy links", async 
   assert.match(layout, /class="public-container public-footer"/u);
   assert.match(layout, /href="\/privacy"/u);
   assert.match(layout, /href="\/disclaimer"/u);
+  assert.match(categoryPage, /import PublicBackLink/u);
+  assert.match(categoryPage, /class="directory-page-title-leading"/u);
+  assert.match(categoryPage, /<PublicBackLink href=/u);
   assert.match(system, /@import "\.\/public-layout-refresh\.css";/u);
   assert.match(system, /@import "\.\/public-gallery-rail\.css";/u);
   assert.match(system, /@import "\.\/public-category-polish\.css";/u);
   assert.match(refresh, /\.channel-search-section > \.public-search-form/u);
   assert.match(refresh, /\.directory-search-section/u);
-  assert.match(categoryPolish, /\.category-mobile-directory \{[\s\S]*?gap: \.9rem/u);
+  assert.match(
+    desktop,
+    /@media \(min-width: 768px\) \{[\s\S]*?\.category-mobile-directory \{[\s\S]*?display: none/u,
+  );
+  assert.match(
+    categoryPolish,
+    /@media \(max-width: 767px\) \{[\s\S]*?\.category-mobile-directory \{[\s\S]*?display: grid/u,
+  );
   assert.match(categoryPolish, /\.category-entry-label \{[\s\S]*?color: #fff/u);
   assert.match(categoryPolish, /\.category-entry-arrow \{[\s\S]*?color: #fff/u);
 });
