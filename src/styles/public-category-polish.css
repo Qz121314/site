@@ -2,13 +2,15 @@
  * Separates filter controls from category entries and keeps labels legible on dark surfaces.
  */
 
-.category-mobile-directory {
-  display: grid;
-  gap: .9rem;
-}
+@media (max-width: 767px) {
+  .category-mobile-directory {
+    display: grid;
+    gap: .9rem;
+  }
 
-.category-mobile-directory .filter-strip {
-  padding-bottom: 0;
+  .category-mobile-directory .filter-strip {
+    padding-bottom: 0;
+  }
 }
 
 .category-section .filter-button {
