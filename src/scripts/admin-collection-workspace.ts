@@ -77,6 +77,8 @@ function recordDatasetKey(fieldName: string): string {
 }
 
 function setSingleUploadValue(upload: HTMLElement, trigger: HTMLElement): void {
+  upload.dispatchEvent(new CustomEvent("direct-upload:reset"));
+
   const imageId = trigger.dataset.recordImageAssetId ?? "";
   const previewUrl = trigger.dataset.recordImagePreviewUrl ?? "";
   const imageName = trigger.dataset.recordImageName ?? "当前图片";
@@ -87,14 +89,20 @@ function setSingleUploadValue(upload: HTMLElement, trigger: HTMLElement): void {
   const input = upload.querySelector<HTMLInputElement>("[data-upload-input]");
   const hidden = values?.querySelector<HTMLInputElement>("[data-upload-hidden]");
 
-  if (hidden) hidden.value = imageId;
+  if (hidden) {
+    hidden.value = imageId;
+    hidden.dataset.imageId = imageId;
+    delete hidden.dataset.uploadPending;
+  }
   preview?.querySelectorAll("[data-upload-item]").forEach((item) => item.remove());
   if (input) input.value = "";
   upload.dataset.uploading = "0";
+  upload.dataset.preparing = "0";
+  upload.dataset.pendingUploads = "0";
 
   if (!imageId || !preview) {
     if (preview) preview.hidden = true;
-    if (status) status.textContent = "尚未上传";
+    if (status) status.textContent = "尚未选择";
     return;
   }
 
