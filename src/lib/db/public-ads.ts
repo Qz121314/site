@@ -10,6 +10,7 @@ export type PublicAffiliateAdvertisement = {
   displayType: AdDisplayType;
   creativeType: AdCreativeType;
   imageUrl: string | null;
+  fallbackImageUrl: string | null;
   mediaUrl: string;
   embedCode: string;
   targetUrl: string;
@@ -29,6 +30,7 @@ type AdvertisementRow = {
   name: string;
   display_type: AdDisplayType;
   creative_type: AdCreativeType;
+  image_asset_id: string | null;
   object_key: string | null;
   image_width: number | null;
   image_height: number | null;
@@ -39,6 +41,11 @@ type AdvertisementRow = {
   declared_height: number | null;
   open_mode: AdOpenMode;
   r2_public_base_url: string;
+};
+
+type PublicAdvertisementImageRow = {
+  object_key: string;
+  mime_type: string;
 };
 
 function shuffled<T>(values: T[]): T[] {
@@ -52,19 +59,28 @@ function shuffled<T>(values: T[]): T[] {
   return output;
 }
 
+function fallbackImageUrl(advertisementId: string, imageAssetId: string): string {
+  return `/api/public/ads/${encodeURIComponent(advertisementId)}/media/${encodeURIComponent(imageAssetId)}`;
+}
+
 function mapAdvertisementRows(rows: AdvertisementRow[]): PublicAffiliateAdvertisement[] {
   return rows.flatMap((row): PublicAffiliateAdvertisement[] => {
-    const imageUrl = row.creative_type === "uploaded_image" && row.object_key
+    const uploadedImage = row.creative_type === "uploaded_image";
+    const imageUrl = uploadedImage && row.object_key
       ? buildPublicImageUrl(row.r2_public_base_url, row.object_key)
       : null;
-    const width = row.creative_type === "uploaded_image"
+    const fallbackUrl = uploadedImage && row.image_asset_id && row.object_key
+      ? fallbackImageUrl(row.id, row.image_asset_id)
+      : null;
+    const width = uploadedImage
       ? Number(row.image_width)
       : Number(row.declared_width);
-    const height = row.creative_type === "uploaded_image"
+    const height = uploadedImage
       ? Number(row.image_height)
       : Number(row.declared_height);
+
     if (!Number.isFinite(width) || width < 1 || !Number.isFinite(height) || height < 1) return [];
-    if (row.creative_type === "uploaded_image" && !imageUrl) return [];
+    if (uploadedImage && !fallbackUrl) return [];
 
     return [{
       id: row.id,
@@ -72,6 +88,7 @@ function mapAdvertisementRows(rows: AdvertisementRow[]): PublicAffiliateAdvertis
       displayType: row.display_type,
       creativeType: row.creative_type,
       imageUrl,
+      fallbackImageUrl: fallbackUrl,
       mediaUrl: row.media_url,
       embedCode: row.embed_code,
       targetUrl: row.target_url,
@@ -94,6 +111,7 @@ async function loadCandidateRows(
        advertisement.name,
        advertisement.display_type,
        advertisement.creative_type,
+       advertisement.image_asset_id,
        image.object_key,
        image.width AS image_width,
        image.height AS image_height,
@@ -128,6 +146,28 @@ async function loadCandidateRows(
 
   const wrapped = await query("<", remaining);
   return [...first.results, ...wrapped.results];
+}
+
+export async function loadPublicAdvertisementImage(
+  advertisementId: string,
+  imageAssetId: string,
+): Promise<PublicAdvertisementImageRow | null> {
+  return env.DB.prepare(
+    `SELECT image.object_key, image.mime_type
+     FROM advertisements advertisement
+     INNER JOIN ad_pools pool
+       ON pool.id = advertisement.pool_id
+      AND pool.status = 'enabled'
+     INNER JOIN channels channel
+       ON channel.id = pool.channel_id
+      AND channel.status = 'published'
+     INNER JOIN image_assets image
+       ON image.id = advertisement.image_asset_id
+     WHERE advertisement.id = ?1
+       AND image.id = ?2
+       AND advertisement.status = 'enabled'
+       AND advertisement.creative_type = 'uploaded_image'`,
+  ).bind(advertisementId, imageAssetId).first<PublicAdvertisementImageRow>();
 }
 
 export async function loadPublicAffiliateAdCandidates(
