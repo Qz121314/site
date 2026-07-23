@@ -78,24 +78,30 @@ test("product detail pages place the gallery before the title and keep thumbnail
   assert.match(rail, /overflow-y: auto/u);
 });
 
-test("conversion navigation exposes a copy fallback for SMS numbers and links", async () => {
+test("conversion resolution reveals one-line open and copy actions", async () => {
   const [productPage, ctaScript] = await Promise.all([
     readFile(new URL("../src/pages/[channel]/product/[product].astro", import.meta.url), "utf8"),
     readFile(new URL("../src/scripts/public-product-cta.ts", import.meta.url), "utf8"),
   ]);
 
   assert.match(productPage, /data-contact-box/u);
-  assert.match(productPage, /data-contact-fallback/u);
-  assert.match(productPage, /data-contact-copy-value/u);
+  assert.match(productPage, /data-contact-resolved/u);
+  assert.match(productPage, /data-contact-open/u);
+  assert.match(productPage, /data-contact-sms-icon/u);
+  assert.match(productPage, /data-contact-link-icon/u);
+  assert.match(productPage, /data-contact-value/u);
   assert.match(productPage, /data-contact-copy/u);
-  assert.match(productPage, /If it did not open, copy the contact below\./u);
+  assert.match(productPage, /data-contact-copy-label/u);
+  assert.doesNotMatch(productPage, /data-contact-fallback/u);
+  assert.doesNotMatch(productPage, /Could not open/u);
 
   assert.match(ctaScript, /navigator\.clipboard\?\.writeText/u);
-  assert.match(ctaScript, /document\.execCommand\("copy"\)/u);
-  assert.match(ctaScript, /Copy number/u);
-  assert.match(ctaScript, /Copy link/u);
-  assert.match(ctaScript, /window\.location\.assign\(target\)/u);
-  assert.match(ctaScript, /scheduleFallback\(\)/u);
-  assert.match(ctaScript, /document\.visibilityState === "visible"/u);
-  assert.match(ctaScript, /window\.addEventListener\("pageshow"/u);
+  assert.match(ctaScript, /function formatVisibleValue/u);
+  assert.match(ctaScript, /copyValue: type === "sms" \? display : target/u);
+  assert.match(ctaScript, /resolveButton\.hidden = true/u);
+  assert.match(ctaScript, /resolvedRow\.hidden = false/u);
+  assert.match(ctaScript, /copyLabel\.textContent = copied \? "Copied" : "Copy failed"/u);
+  assert.doesNotMatch(ctaScript, /window\.location\.assign/u);
+  assert.doesNotMatch(ctaScript, /scheduleFallback/u);
+  assert.doesNotMatch(ctaScript, /visibilitychange/u);
 });
