@@ -1,6 +1,7 @@
 ---
 import PublicLayout from "@/layouts/PublicLayout.astro";
 import ProductDirectory from "@/components/public/ProductDirectory.astro";
+import PublicBackLink from "@/components/public/PublicBackLink.astro";
 import PublicSearchForm from "@/components/public/PublicSearchForm.astro";
 import {
   findPublicChannel,
@@ -123,7 +124,11 @@ const returnUrl = pageAvailable && channel ? `/${encodeURIComponent(channel.slug
     <div class="directory-page-layout">
       <aside class="directory-page-sidebar">
         <header class="directory-page-title">
+          <div class="directory-page-title-leading">
+            <PublicBackLink href={returnUrl ?? `/${encodeURIComponent(channel.slug)}`} />
+          </div>
           <h1>{category.name}</h1>
+          <span class="directory-page-title-balance" aria-hidden="true"></span>
         </header>
 
         {pageInput.page === 1 && (
@@ -163,9 +168,22 @@ const returnUrl = pageAvailable && channel ? `/${encodeURIComponent(channel.slug
 <style>
   .directory-page-title {
     display: grid;
-    justify-items: center;
-    padding: .1rem 1rem 0;
+    grid-template-columns: minmax(4.75rem, 1fr) minmax(0, auto) minmax(4.75rem, 1fr);
+    min-height: 3.2rem;
+    align-items: center;
+    gap: .75rem;
+    padding: .1rem 0 0;
     text-align: center;
+  }
+
+  .directory-page-title-leading {
+    min-width: 0;
+    justify-self: start;
+  }
+
+  .directory-page-title-balance {
+    width: 100%;
+    min-width: 0;
   }
 
   .directory-page-title h1 {
@@ -186,5 +204,24 @@ const returnUrl = pageAvailable && channel ? `/${encodeURIComponent(channel.slug
     display: grid;
     min-width: 0;
     gap: .9rem;
+  }
+
+  @media (min-width: 768px) {
+    .directory-page-title {
+      grid-template-columns: auto minmax(0, 1fr);
+      justify-items: start;
+      text-align: left;
+    }
+
+    .directory-page-title-balance {
+      display: none;
+    }
+  }
+
+  @media (max-width: 420px) {
+    .directory-page-title {
+      grid-template-columns: minmax(4.1rem, 1fr) minmax(0, auto) minmax(4.1rem, 1fr);
+      gap: .45rem;
+    }
   }
 </style>
