@@ -101,7 +101,9 @@ function assertAffiliateAdContract() {
 
   for (const requirement of [
     "data-affiliate-ad-context",
-    'import "@/scripts/public-affiliate-ads"',
+    "AFFILIATE_AD_REQUEST_DELAY_MS = 2500",
+    'import("@/scripts/public-affiliate-ads")',
+    "DOMContentLoaded",
   ]) {
     if (!componentSource.includes(requirement)) throw new Error(`Affiliate ad component contract is missing: ${requirement}`);
   }

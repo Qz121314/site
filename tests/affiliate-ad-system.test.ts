@@ -51,7 +51,7 @@ test("admin advertising uses dynamic creative fields and no Hero binding", async
   assert.match(adminLayout, /import "@\/scripts\/admin-ad-form"/u);
 });
 
-test("public advertising starts after initial paint, retries uploaded media, and exposes delivery state", async () => {
+test("public advertising defers the script request, retries uploaded media, and exposes delivery state", async () => {
   const [component, script, styles, productPage, publicAds, mediaEndpoint, candidateEndpoint] = await Promise.all([
     readFile(new URL("../src/components/public/AffiliateAds.astro", import.meta.url), "utf8"),
     readFile(new URL("../src/scripts/public-affiliate-ads.ts", import.meta.url), "utf8"),
@@ -64,9 +64,14 @@ test("public advertising starts after initial paint, retries uploaded media, and
 
   assert.match(component, /type="application\/json" data-affiliate-ad-context/u);
   assert.doesNotMatch(component, /placeholder|skeleton|affiliate-ad-frame/u);
+  assert.match(component, /AFFILIATE_AD_REQUEST_DELAY_MS = 2500/u);
+  assert.match(component, /DOMContentLoaded/u);
+  assert.match(component, /import\("@\/scripts\/public-affiliate-ads"\)/u);
+  assert.match(component, /affiliateAdState = "deferred"/u);
+  assert.match(component, /affiliate_ad_script_load_failed/u);
+
   assert.match(script, /waitForAdvertisementStart/u);
   assert.match(script, /requestAnimationFrame\(\(\) => window\.requestAnimationFrame/u);
-  assert.doesNotMatch(script, /setTimeout\(finish, 2500\)/u);
   assert.match(script, /fallbackImageUrl/u);
   assert.match(script, /waitForFirstImage/u);
   assert.match(script, /affiliateAdState/u);
