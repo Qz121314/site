@@ -2,32 +2,49 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-test("catalog pages use a compact header search, category back navigation, and one responsive directory", async () => {
-  const [layout, categoryPage, system, refresh, desktop, categoryPolish] = await Promise.all([
+test("public pages use a centered three-control header with an inline expanding search", async () => {
+  const [layout, headerSearch, interactions, categoryPage, searchPage, system, headerStyles, desktop, categoryPolish] = await Promise.all([
     readFile(new URL("../src/layouts/PublicLayout.astro", import.meta.url), "utf8"),
+    readFile(new URL("../src/components/public/PublicHeaderSearch.astro", import.meta.url), "utf8"),
+    readFile(new URL("../src/scripts/public-interactions.ts", import.meta.url), "utf8"),
     readFile(new URL("../src/pages/[channel]/category/[category].astro", import.meta.url), "utf8"),
+    readFile(new URL("../src/pages/[channel]/search.astro", import.meta.url), "utf8"),
     readFile(new URL("../src/styles/public-system.css", import.meta.url), "utf8"),
-    readFile(new URL("../src/styles/public-layout-refresh.css", import.meta.url), "utf8"),
+    readFile(new URL("../src/styles/public-header-refinement.css", import.meta.url), "utf8"),
     readFile(new URL("../src/styles/public-desktop.css", import.meta.url), "utf8"),
     readFile(new URL("../src/styles/public-category-polish.css", import.meta.url), "utf8"),
   ]);
 
-  assert.match(layout, /import PublicSearchForm/u);
-  assert.match(layout, /headerSearchAction/u);
-  assert.match(layout, /public-header-inner-catalog/u);
-  assert.match(layout, /class="public-header-search"/u);
-  assert.doesNotMatch(layout, /class="public-menu"/u);
-  assert.match(layout, /class="public-container public-footer"/u);
-  assert.match(layout, /href="\/privacy"/u);
-  assert.match(layout, /href="\/disclaimer"/u);
-  assert.match(categoryPage, /import PublicBackLink/u);
-  assert.match(categoryPage, /class="directory-page-title-leading"/u);
-  assert.match(categoryPage, /<PublicBackLink href=/u);
-  assert.match(system, /@import "\.\/public-layout-refresh\.css";/u);
-  assert.match(system, /@import "\.\/public-gallery-rail\.css";/u);
-  assert.match(system, /@import "\.\/public-category-polish\.css";/u);
-  assert.match(refresh, /\.channel-search-section > \.public-search-form/u);
-  assert.match(refresh, /\.directory-search-section/u);
+  assert.match(layout, /import PublicHeaderSearch/u);
+  assert.match(layout, /const hasBack = Boolean\(backHref\)/u);
+  assert.match(layout, /data-public-header/u);
+  assert.match(layout, /class="public-menu"/u);
+  assert.match(layout, /<PublicBackLink href=/u);
+  assert.match(layout, /class="public-brand public-brand-centered"/u);
+  assert.match(layout, /data-header-search-open/u);
+  assert.match(layout, /data-header-search-layer/u);
+  assert.doesNotMatch(layout, /class="public-container public-footer"/u);
+
+  assert.match(headerSearch, /data-header-search-form/u);
+  assert.match(headerSearch, /data-header-search-close/u);
+  assert.match(headerSearch, /data-header-search-input/u);
+  assert.match(interactions, /const setSearchOpen = \(nextOpen: boolean\)/u);
+  assert.match(interactions, /searchLayer\.inert = !nextOpen/u);
+  assert.match(interactions, /event\.key !== "Escape"/u);
+
+  assert.match(system, /@import "\.\/public-header-refinement\.css";/u);
+  assert.match(headerStyles, /grid-template-columns: minmax\(5\.25rem, 1fr\) minmax\(0, auto\) minmax\(5\.25rem, 1fr\)/u);
+  assert.match(headerStyles, /transform: scaleX\(\.1\)/u);
+  assert.match(headerStyles, /\.public-header\[data-search-open="true"\] \.public-header-search-layer/u);
+  assert.match(headerStyles, /@media \(prefers-reduced-motion: reduce\)/u);
+
+  assert.doesNotMatch(categoryPage, /import PublicBackLink/u);
+  assert.doesNotMatch(categoryPage, /import PublicSearchForm/u);
+  assert.match(categoryPage, /backHref=\{returnUrl\}/u);
+  assert.match(categoryPage, /<header class="directory-page-title">[\s\S]*?<h1>\{category\.name\}<\/h1>/u);
+  assert.match(searchPage, /backHref=\{returnUrl\}/u);
+  assert.match(searchPage, /class="search-page-title"/u);
+
   assert.match(
     desktop,
     /@media \(min-width: 768px\) \{[\s\S]*?\.category-mobile-directory \{[\s\S]*?display: none/u,
@@ -36,8 +53,6 @@ test("catalog pages use a compact header search, category back navigation, and o
     categoryPolish,
     /@media \(max-width: 767px\) \{[\s\S]*?\.category-mobile-directory \{[\s\S]*?display: grid/u,
   );
-  assert.match(categoryPolish, /\.category-entry-label \{[\s\S]*?color: #fff/u);
-  assert.match(categoryPolish, /\.category-entry-arrow \{[\s\S]*?color: #fff/u);
 });
 
 test("product detail pages place the gallery before the title and keep thumbnails beside the main image on every viewport", async () => {
