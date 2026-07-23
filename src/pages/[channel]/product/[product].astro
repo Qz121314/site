@@ -162,7 +162,7 @@ const structuredData = product && canonical
         )}
 
         {product.hasConversion && (
-          <div class="product-cta-bar">
+          <div class="product-cta-bar" data-contact-box>
             <a
               class="public-button product-cta-button"
               href={contactResolveUrl}
@@ -172,6 +172,23 @@ const structuredData = product && canonical
             >
               <span class="product-cta-label" data-contact-label aria-live="polite">{product.ctaLabel}</span>
             </a>
+
+            <div class="product-cta-fallback" data-contact-fallback hidden>
+              <div class="product-cta-fallback-message" data-contact-fallback-message aria-live="polite">
+                If it did not open, copy the contact below.
+              </div>
+              <div class="product-cta-copy-row">
+                <input
+                  class="product-cta-copy-value"
+                  type="text"
+                  readonly
+                  spellcheck="false"
+                  aria-label="Contact value"
+                  data-contact-copy-value
+                />
+                <button class="product-cta-copy-button" type="button" data-contact-copy>Copy</button>
+              </div>
+            </div>
           </div>
         )}
       </div>
@@ -260,16 +277,102 @@ const structuredData = product && canonical
     animation: product-cta-grow 220ms cubic-bezier(.2, .8, .25, 1);
   }
 
+  .product-cta-fallback[hidden] {
+    display: none;
+  }
+
+  .product-cta-fallback {
+    position: absolute;
+    left: .42rem;
+    right: .42rem;
+    bottom: calc(100% + .5rem);
+    display: grid;
+    gap: .55rem;
+    padding: .72rem;
+    border: 1px solid var(--line-2);
+    border-radius: .92rem;
+    color: var(--text-1);
+    background:
+      linear-gradient(180deg, rgba(255, 255, 255, .07), transparent),
+      rgba(14, 17, 24, .97);
+    box-shadow: 0 18px 48px rgba(0, 0, 0, .46);
+    -webkit-backdrop-filter: blur(18px) saturate(120%);
+    backdrop-filter: blur(18px) saturate(120%);
+  }
+
+  .product-cta-fallback-message {
+    color: var(--text-2);
+    font-size: .76rem;
+    font-weight: 650;
+    line-height: 1.35;
+  }
+
+  .product-cta-copy-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: center;
+    gap: .5rem;
+  }
+
+  .product-cta-copy-value {
+    width: 100%;
+    min-width: 0;
+    height: 2.65rem;
+    border: 1px solid var(--line-2);
+    border-radius: .72rem;
+    padding: 0 .72rem;
+    color: var(--text-1);
+    background: rgba(255, 255, 255, .045);
+    font: inherit;
+    font-size: .78rem;
+    font-variant-numeric: tabular-nums;
+    outline: none;
+  }
+
+  .product-cta-copy-value:focus {
+    border-color: var(--brand-line);
+    box-shadow: 0 0 0 3px rgba(255, 107, 130, .08);
+  }
+
+  .product-cta-copy-button {
+    min-height: 2.65rem;
+    border: 1px solid var(--brand-line);
+    border-radius: .72rem;
+    padding: .55rem .82rem;
+    color: #fff;
+    background: var(--brand-soft);
+    cursor: pointer;
+    font: inherit;
+    font-size: .75rem;
+    font-weight: 780;
+    white-space: nowrap;
+  }
+
+  .product-cta-copy-button:active {
+    transform: translateY(1px);
+  }
+
   @keyframes product-cta-grow {
     0% { transform: scale(1); }
     55% { transform: scale(1.012); }
     100% { transform: scale(1); }
   }
 
+  @media (min-width: 768px) {
+    .product-cta-fallback {
+      position: static;
+      margin-top: .55rem;
+    }
+  }
+
   @media (max-width: 420px) {
     .product-cta-button {
       padding-inline: .8rem;
       font-size: .9rem;
+    }
+
+    .product-cta-copy-row {
+      grid-template-columns: minmax(0, 1fr) 5.5rem;
     }
   }
 
