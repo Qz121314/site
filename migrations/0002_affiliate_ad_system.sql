@@ -1,3 +1,4 @@
+-- Existing Hero pools are retained as mobile ad groups; their image ads become banner creatives.
 DROP TRIGGER IF EXISTS trg_channels_hero_pool_requires_available_ad;
 DROP TRIGGER IF EXISTS trg_ad_pools_preserve_bound_hero;
 DROP TRIGGER IF EXISTS trg_advertisements_preserve_bound_hero_update;
