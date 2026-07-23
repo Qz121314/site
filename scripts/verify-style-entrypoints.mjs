@@ -3,7 +3,8 @@ import { readFileSync } from "node:fs";
 const publicLayout = readFileSync("src/layouts/PublicLayout.astro", "utf8");
 const adminLayout = readFileSync("src/layouts/AdminLayout.astro", "utf8");
 const publicSystem = readFileSync("src/styles/public-system.css", "utf8");
-const publicDetailCta = readFileSync("src/styles/public-detail-cta.css", "utf8");
+const publicCommerce = readFileSync("src/styles/public-commerce.css", "utf8");
+const publicDesktop = readFileSync("src/styles/public-desktop.css", "utf8");
 const adminSystem = readFileSync("src/styles/admin-system.css", "utf8");
 
 function assert(condition, message) {
@@ -11,7 +12,7 @@ function assert(condition, message) {
 }
 
 assert(publicLayout.includes('import "@/styles/public-system.css";'), "PublicLayout must import public-system.css.");
-for (const directImport of ["public-base.css", "public.css", "public-design-system.css"]) {
+for (const directImport of ["public-base.css", "public.css", "public-commerce.css", "public-desktop.css"]) {
   assert(!publicLayout.includes(`import "@/styles/${directImport}";`), `PublicLayout must not import ${directImport} directly.`);
 }
 
@@ -32,10 +33,10 @@ for (const directImport of [
 const expectedPublicOrder = [
   "public-base.css",
   "public.css",
-  "public-design-system.css",
   "public-loading.css",
+  "public-header-refinement.css",
+  "public-commerce.css",
   "public-desktop.css",
-  "public-detail-cta.css",
 ];
 let previousIndex = -1;
 for (const stylesheet of expectedPublicOrder) {
@@ -44,16 +45,12 @@ for (const stylesheet of expectedPublicOrder) {
   previousIndex = index;
 }
 
-assert(
-  publicDetailCta.includes("position: fixed !important"),
-  "The detail CTA must remain fixed to the viewport.",
-);
-assert(
-  publicDetailCta.includes(".public-main > .product-detail") && publicDetailCta.includes("transform: none !important"),
-  "The detail page must not create a transformed containing block around the fixed CTA.",
-);
-
-for (const legacyPublicLayer of [
+for (const supersededPublicLayer of [
+  "public-design-system.css",
+  "public-detail-cta.css",
+  "public-layout-refresh.css",
+  "public-gallery-rail.css",
+  "public-category-polish.css",
   "public-premium.css",
   "public-image-first.css",
   "public-interface-polish.css",
@@ -61,8 +58,17 @@ for (const legacyPublicLayer of [
   "public-glass-system.css",
   "public-sculpted-controls.css",
 ]) {
-  assert(!publicSystem.includes(legacyPublicLayer), `public-system.css must not load superseded layer ${legacyPublicLayer}.`);
+  assert(!publicSystem.includes(supersededPublicLayer), `public-system.css must not load superseded layer ${supersededPublicLayer}.`);
 }
+
+assert(publicCommerce.includes("--canvas-0: #ffffff"), "The public commerce theme must use the neutral light canvas.");
+assert(publicCommerce.includes("position: fixed !important"), "The mobile detail CTA must remain attached to the viewport.");
+assert(
+  publicDesktop.includes("@media (min-width: 768px) and (max-width: 1099px)")
+    && publicDesktop.includes("@media (min-width: 1100px)")
+    && publicDesktop.includes("@media (min-width: 1400px)"),
+  "Tablet, desktop, and wide desktop layouts must use distinct breakpoints.",
+);
 
 const expectedAdminOrder = [
   "global.css",
