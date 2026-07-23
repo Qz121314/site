@@ -1,8 +1,6 @@
 ---
 import PublicLayout from "@/layouts/PublicLayout.astro";
 import ProductDirectory from "@/components/public/ProductDirectory.astro";
-import PublicBackLink from "@/components/public/PublicBackLink.astro";
-import PublicSearchForm from "@/components/public/PublicSearchForm.astro";
 import {
   findPublicChannel,
   loadPublicCategory,
@@ -122,25 +120,9 @@ const returnUrl = pageAvailable && channel ? `/${encodeURIComponent(channel.slug
 >
   {pageAvailable && channel && category ? (
     <div class="directory-page-layout">
-      <aside class="directory-page-sidebar">
-        <header class="directory-page-title">
-          <div class="directory-page-title-leading">
-            <PublicBackLink href={returnUrl ?? `/${encodeURIComponent(channel.slug)}`} />
-          </div>
-          <h1>{category.name}</h1>
-          <span class="directory-page-title-balance" aria-hidden="true"></span>
-        </header>
-
-        {pageInput.page === 1 && (
-          <section class="public-section directory-search-section">
-            <PublicSearchForm
-              action={`/${encodeURIComponent(channel.slug)}/search`}
-              ariaLabel={`Search ${category.name}`}
-              placeholder={`Search ${category.name}`}
-            />
-          </section>
-        )}
-      </aside>
+      <header class="directory-page-title">
+        <h1>{category.name}</h1>
+      </header>
 
       <section class="public-section directory-list-section" aria-label={category.name}>
         {pageInput.page > 1 && <span class="directory-page-count">Page {pageInput.page}</span>}
@@ -166,62 +148,9 @@ const returnUrl = pageAvailable && channel ? `/${encodeURIComponent(channel.slug
 </PublicLayout>
 
 <style>
-  .directory-page-title {
-    display: grid;
-    grid-template-columns: minmax(4.75rem, 1fr) minmax(0, auto) minmax(4.75rem, 1fr);
-    min-height: 3.2rem;
-    align-items: center;
-    gap: .75rem;
-    padding: .1rem 0 0;
-    text-align: center;
-  }
-
-  .directory-page-title-leading {
-    min-width: 0;
-    justify-self: start;
-  }
-
-  .directory-page-title-balance {
-    width: 100%;
-    min-width: 0;
-  }
-
-  .directory-page-title h1 {
-    max-width: min(100%, 34rem);
-    margin: 0;
-    color: var(--public-text);
-    font-family: var(--public-font-display);
-    font-size: clamp(1.35rem, 5.8vw, 2rem);
-    font-weight: 760;
-    line-height: 1.08;
-    letter-spacing: -.035em;
-    overflow-wrap: anywhere;
-    text-wrap: balance;
-  }
-
-  .directory-page-layout,
-  .directory-page-sidebar {
+  .directory-page-layout {
     display: grid;
     min-width: 0;
     gap: .9rem;
-  }
-
-  @media (min-width: 768px) {
-    .directory-page-title {
-      grid-template-columns: auto minmax(0, 1fr);
-      justify-items: start;
-      text-align: left;
-    }
-
-    .directory-page-title-balance {
-      display: none;
-    }
-  }
-
-  @media (max-width: 420px) {
-    .directory-page-title {
-      grid-template-columns: minmax(4.1rem, 1fr) minmax(0, auto) minmax(4.1rem, 1fr);
-      gap: .45rem;
-    }
   }
 </style>
