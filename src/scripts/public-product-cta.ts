@@ -7,6 +7,13 @@ type ContactResponse = {
   };
 };
 
+type ResolvedContact = {
+  target: string;
+  type: "link" | "sms";
+  copyValue: string;
+  visibleValue: string;
+};
+
 function isContactResponse(value: unknown): value is ContactResponse {
   if (!value || typeof value !== "object") return false;
   const record = value as Record<string, unknown>;
@@ -15,110 +22,68 @@ function isContactResponse(value: unknown): value is ContactResponse {
   return typeof contact.target === "string" && (contact.type === "link" || contact.type === "sms");
 }
 
-async function copyContactValue(input: HTMLInputElement): Promise<boolean> {
-  const value = input.value;
-  if (!value) return false;
-
-  if (navigator.clipboard?.writeText) {
-    try {
-      await navigator.clipboard.writeText(value);
-      return true;
-    } catch {
-      // Fall through to the selection-based copy path.
-    }
-  }
-
-  input.focus({ preventScroll: true });
-  input.select();
-  input.setSelectionRange(0, value.length);
+function formatVisibleValue(type: "link" | "sms", target: string, display: string): string {
+  if (type === "sms") return display.replace(/^sms:/iu, "");
+  if (target.startsWith("mailto:")) return display.replace(/^mailto:/iu, "");
 
   try {
-    return document.execCommand("copy");
+    const url = new URL(target);
+    const hostname = url.hostname.replace(/^www\./iu, "");
+    const pathname = url.pathname === "/" ? "" : url.pathname.replace(/\/$/u, "");
+    return `${hostname}${pathname}` || display || target;
+  } catch {
+    return display || target;
+  }
+}
+
+async function copyText(value: string): Promise<boolean> {
+  if (!value || !navigator.clipboard?.writeText) return false;
+  try {
+    await navigator.clipboard.writeText(value);
+    return true;
   } catch {
     return false;
   }
 }
 
-document.querySelectorAll<HTMLAnchorElement>("[data-contact-cta]").forEach((link) => {
-  const resolveUrl = link.dataset.resolveUrl || link.href;
-  const box = link.closest<HTMLElement>("[data-contact-box]");
-  const label = link.querySelector<HTMLElement>("[data-contact-label]");
-  const fallback = box?.querySelector<HTMLElement>("[data-contact-fallback]");
-  const fallbackMessage = box?.querySelector<HTMLElement>("[data-contact-fallback-message]");
-  const copyValue = box?.querySelector<HTMLInputElement>("[data-contact-copy-value]");
-  const copyButton = box?.querySelector<HTMLButtonElement>("[data-contact-copy]");
-  const defaultLabel = label?.textContent?.trim() || "View Details";
-  let fallbackTimer = 0;
+document.querySelectorAll<HTMLElement>("[data-contact-box]").forEach((box) => {
+  const resolveButton = box.querySelector<HTMLAnchorElement>("[data-contact-cta]");
+  const label = box.querySelector<HTMLElement>("[data-contact-label]");
+  const resolvedRow = box.querySelector<HTMLElement>("[data-contact-resolved]");
+  const openLink = box.querySelector<HTMLAnchorElement>("[data-contact-open]");
+  const visibleValue = box.querySelector<HTMLElement>("[data-contact-value]");
+  const smsIcon = box.querySelector<HTMLElement>("[data-contact-sms-icon]");
+  const linkIcon = box.querySelector<HTMLElement>("[data-contact-link-icon]");
+  const copyButton = box.querySelector<HTMLButtonElement>("[data-contact-copy]");
+  const copyLabel = box.querySelector<HTMLElement>("[data-contact-copy-label]");
+  if (!resolveButton || !label || !resolvedRow || !openLink || !visibleValue || !copyButton || !copyLabel) return;
+
+  const resolveUrl = resolveButton.dataset.resolveUrl || resolveButton.href;
+  const defaultLabel = label.textContent?.trim() || "View Details";
+  let resolvedContact: ResolvedContact | null = null;
   let copyResetTimer = 0;
-  let pendingFallback = false;
-  let defaultCopyLabel = "Copy";
 
-  const hideFallback = () => {
-    pendingFallback = false;
-    if (fallbackTimer) window.clearTimeout(fallbackTimer);
-    fallbackTimer = 0;
-    if (fallback) fallback.hidden = true;
-  };
-
-  const revealFallback = () => {
-    pendingFallback = false;
-    if (fallback) fallback.hidden = false;
-  };
-
-  const prepareFallback = (type: "link" | "sms", target: string, display: string) => {
-    if (!fallback || !fallbackMessage || !copyValue || !copyButton) return;
-
-    const isSms = type === "sms";
-    copyValue.value = isSms ? display : target;
-    copyValue.setAttribute("aria-label", isSms ? "Phone number" : "Link");
-    fallbackMessage.textContent = isSms
-      ? "Could not open messages automatically. Copy the number below."
-      : "Could not open the link automatically. Copy it below.";
-    defaultCopyLabel = isSms ? "Copy number" : "Copy link";
-    copyButton.textContent = defaultCopyLabel;
-  };
-
-  const scheduleFallback = () => {
-    pendingFallback = true;
-    if (fallbackTimer) window.clearTimeout(fallbackTimer);
-    fallbackTimer = window.setTimeout(() => {
-      if (document.visibilityState === "visible") revealFallback();
-    }, 1100);
-  };
-
-  copyButton?.addEventListener("click", async () => {
-    if (!copyValue || !copyButton) return;
+  copyButton.addEventListener("click", async () => {
+    if (!resolvedContact) return;
     if (copyResetTimer) window.clearTimeout(copyResetTimer);
 
-    const copied = await copyContactValue(copyValue);
-    copyButton.textContent = copied ? "Copied" : "Select and copy";
-    if (!copied) {
-      copyValue.focus({ preventScroll: true });
-      copyValue.select();
-    }
+    const copied = await copyText(resolvedContact.copyValue);
+    copyLabel.textContent = copied ? "Copied" : "Copy failed";
+    copyButton.setAttribute("aria-label", copied ? "Copied" : "Copy failed");
 
     copyResetTimer = window.setTimeout(() => {
-      copyButton.textContent = defaultCopyLabel;
-    }, 1600);
+      copyLabel.textContent = "Copy";
+      copyButton.setAttribute("aria-label", resolvedContact?.type === "sms" ? "Copy number" : "Copy link");
+    }, 1400);
   });
 
-  document.addEventListener("visibilitychange", () => {
-    if (pendingFallback && document.visibilityState === "visible") revealFallback();
-  });
-
-  window.addEventListener("pageshow", () => {
-    if (pendingFallback) revealFallback();
-  });
-
-  link.addEventListener("click", async (event) => {
+  resolveButton.addEventListener("click", async (event) => {
     event.preventDefault();
-    if (link.dataset.loading === "1") return;
+    if (resolvedContact || resolveButton.dataset.loading === "1") return;
 
-    hideFallback();
-    link.dataset.loading = "1";
-    link.setAttribute("aria-busy", "true");
-    link.classList.remove("is-resolved");
-    if (label) label.textContent = "Connecting…";
+    resolveButton.dataset.loading = "1";
+    resolveButton.setAttribute("aria-busy", "true");
+    label.textContent = "Connecting…";
 
     try {
       const response = await fetch(resolveUrl, {
@@ -132,32 +97,33 @@ document.querySelectorAll<HTMLAnchorElement>("[data-contact-cta]").forEach((link
       const type = result.contact.type;
       const rawDisplay = String(result.contact.display || target).trim();
       const display = type === "sms" ? rawDisplay.replace(/^sms:/iu, "") : rawDisplay;
+      resolvedContact = {
+        target,
+        type,
+        copyValue: type === "sms" ? display : target,
+        visibleValue: formatVisibleValue(type, target, display),
+      };
 
-      link.href = target;
-      link.dataset.contactType = type;
-      prepareFallback(type, target, display);
-      if (label) label.textContent = type === "sms" ? `SMS · ${display}` : `OPEN · ${display || defaultLabel}`;
-      void link.offsetWidth;
-      link.classList.add("is-resolved");
+      openLink.href = target;
+      openLink.setAttribute("aria-label", type === "sms" ? `Open messages for ${resolvedContact.visibleValue}` : `Open ${resolvedContact.visibleValue}`);
+      visibleValue.textContent = resolvedContact.visibleValue;
+      if (smsIcon) smsIcon.hidden = type !== "sms";
+      if (linkIcon) linkIcon.hidden = type !== "link";
+      copyButton.setAttribute("aria-label", type === "sms" ? "Copy number" : "Copy link");
 
-      try {
-        window.location.assign(target);
-        scheduleFallback();
-      } catch {
-        revealFallback();
-      }
+      resolveButton.hidden = true;
+      resolvedRow.hidden = false;
+      void resolvedRow.offsetWidth;
+      resolvedRow.classList.add("is-resolved");
     } catch (error) {
       console.error(error);
-      link.classList.remove("is-resolved");
-      if (label) {
-        label.textContent = "Temporarily unavailable";
-        window.setTimeout(() => {
-          if (link.dataset.loading !== "1") label.textContent = defaultLabel;
-        }, 1600);
-      }
+      label.textContent = "Temporarily unavailable";
+      window.setTimeout(() => {
+        if (resolveButton.dataset.loading !== "1") label.textContent = defaultLabel;
+      }, 1600);
     } finally {
-      delete link.dataset.loading;
-      link.removeAttribute("aria-busy");
+      delete resolveButton.dataset.loading;
+      resolveButton.removeAttribute("aria-busy");
     }
   });
 });
