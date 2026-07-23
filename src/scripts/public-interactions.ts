@@ -1,4 +1,5 @@
 const ACTIVATION_WINDOW_MS = 650;
+const SEARCH_REQUIRED_MESSAGE = "Please enter a search term.";
 
 document.addEventListener("click", (event) => {
   if (event.defaultPrevented || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
@@ -62,10 +63,24 @@ if (header && headerDefault && searchLayer && searchOpen && searchClose && searc
   searchOpen.addEventListener("click", () => setSearchOpen(true));
   searchClose.addEventListener("click", () => setSearchOpen(false));
 
+  searchInput.addEventListener("invalid", () => {
+    searchInput.setCustomValidity(SEARCH_REQUIRED_MESSAGE);
+  });
+
+  searchInput.addEventListener("input", () => {
+    searchInput.setCustomValidity("");
+  });
+
   searchForm.addEventListener("submit", (event) => {
     searchInput.value = searchInput.value.trim();
-    if (searchInput.value) return;
+    if (searchInput.value) {
+      searchInput.setCustomValidity("");
+      return;
+    }
+
     event.preventDefault();
+    searchInput.setCustomValidity(SEARCH_REQUIRED_MESSAGE);
+    searchInput.reportValidity();
     searchInput.focus({ preventScroll: true });
   });
 
