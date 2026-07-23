@@ -1,5 +1,3 @@
-PRAGMA foreign_keys = OFF;
-
 DROP TRIGGER IF EXISTS trg_channels_hero_pool_requires_available_ad;
 DROP TRIGGER IF EXISTS trg_ad_pools_preserve_bound_hero;
 DROP TRIGGER IF EXISTS trg_advertisements_preserve_bound_hero_update;
@@ -104,5 +102,3 @@ ON advertisements(pool_id, status, display_type, created_at);
 CREATE INDEX idx_advertisements_image_asset
 ON advertisements(image_asset_id)
 WHERE image_asset_id IS NOT NULL;
-
-PRAGMA foreign_keys = ON;
