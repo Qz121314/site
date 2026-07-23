@@ -26,10 +26,6 @@ function initializeProductGallery(gallery: HTMLElement): void {
         else mainImage.removeAttribute("srcset");
         mainImage.src = nextUrl;
         mainImage.alt = thumbnail.dataset.imageAlt || "";
-        const width = Number(thumbnail.dataset.imageWidth || "0");
-        const height = Number(thumbnail.dataset.imageHeight || "0");
-        if (width > 0) mainImage.width = width;
-        if (height > 0) mainImage.height = height;
         requestAnimationFrame(() => mainImage.classList.remove("is-changing"));
       };
       preload.onerror = () => mainImage.classList.remove("is-changing");
