@@ -43,7 +43,9 @@ function shuffled<T>(values: T[]): T[] {
   const output = [...values];
   for (let index = output.length - 1; index > 0; index -= 1) {
     const other = Math.floor(Math.random() * (index + 1));
-    [output[index], output[other]] = [output[other] as T, output[index] as T];
+    const current = output[index] as T;
+    output[index] = output[other] as T;
+    output[other] = current;
   }
   return output;
 }
@@ -51,7 +53,7 @@ function shuffled<T>(values: T[]): T[] {
 export async function loadPublicAffiliateAdCandidates(
   channelSlug: string,
   deviceType: AdDeviceType,
-): Promise<PublicAffiliateAdCandidates | null> {
+): Promise<PublicAffiliateAdCandidates> {
   const result = await env.DB.prepare(
     `SELECT
        advertisement.id,
@@ -82,11 +84,6 @@ export async function loadPublicAffiliateAdCandidates(
        AND channel.status = 'published'
      ORDER BY pool.created_at ASC, advertisement.created_at ASC`,
   ).bind(channelSlug, deviceType).all<AdvertisementRow>();
-
-  const channel = await env.DB.prepare(
-    "SELECT id FROM channels WHERE slug = ?1 AND status = 'published'",
-  ).bind(channelSlug).first<{ id: string }>();
-  if (!channel) return null;
 
   const mapped = result.results.flatMap((row): PublicAffiliateAdvertisement[] => {
     const imageUrl = row.creative_type === "uploaded_image" && row.object_key
