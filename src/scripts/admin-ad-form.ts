@@ -1,3 +1,5 @@
+export {};
+
 const initializedAdForms = new WeakSet<HTMLFormElement>();
 
 type CreativeType = "uploaded_image" | "external_media" | "embed_code";
