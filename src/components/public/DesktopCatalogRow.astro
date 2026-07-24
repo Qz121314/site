@@ -10,6 +10,7 @@ interface Props {
   channelSlug: string;
   activeCategoryId?: string | null;
   priorityCount?: number;
+  active?: boolean;
 }
 
 const {
@@ -19,14 +20,18 @@ const {
   channelSlug,
   activeCategoryId = null,
   priorityCount = 0,
+  active = false,
 } = Astro.props;
 ---
 
 <section
-  class="desktop-density-row"
+  class="desktop-density-row desktop-catalog-panel"
   id={`filter-${filter.slug}`}
   data-desktop-filter-row={filter.slug}
+  data-desktop-filter-panel={filter.slug}
   aria-labelledby={`desktop-filter-title-${filter.id}`}
+  aria-hidden={active ? "false" : "true"}
+  hidden={!active}
 >
   <div class="desktop-density-category-panel">
     <h2 id={`desktop-filter-title-${filter.id}`}>{filter.name}</h2>
