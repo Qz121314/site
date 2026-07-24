@@ -23,15 +23,22 @@ const categorySlug = Astro.params.category ?? "";
 const pageInput = readPublicPage(Astro.url.searchParams.get("page"));
 const site = await loadPublicSiteShell();
 const channel = findPublicChannel(site, channelSlug);
-const [filters, categories, filtersByChannel] = channel && pageInput.valid
+const desktopFilterChannelIds = channel
+  ? site.channels.flatMap((item) => item.id === channel.id ? [] : [item.id])
+  : [];
+const [filters, categories, otherFiltersByChannel] = channel && pageInput.valid
   ? await Promise.all([
       loadPublicCategoryFilters(channel.id),
       loadPublicCategories(channel.id),
-      loadPublicDesktopFilterMap(site.channels.map((item) => item.id)),
+      loadPublicDesktopFilterMap(desktopFilterChannelIds),
     ])
   : [[], [], {}];
 const category = categories.find((item) => item.slug === categorySlug) ?? null;
 const categoryGroups = buildEffectiveCategoryGroups(filters, categories);
+const activeFilters = categoryGroups.map(({ filter }) => filter);
+const filtersByChannel = channel
+  ? { ...otherFiltersByChannel, [channel.id]: activeFilters }
+  : otherFiltersByChannel;
 const hasCategoryNavigation = categoryGroups.length > 0;
 const activeGroup = category
   ? categoryGroups.find(({ categories: groupedCategories }) => groupedCategories.some((item) => item.id === category.id)) ?? null
