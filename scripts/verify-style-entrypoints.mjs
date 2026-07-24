@@ -68,6 +68,16 @@ assert(!publicDesktop.includes(".hero-"), "Desktop styles must not retain select
 assert(!publicDesktop.includes(".category-group-label"), "Desktop styles must not retain the removed category group button label.");
 assert(!publicDesktop.includes(".category-group-filter"), "Desktop styles must not retain the removed category group button wrapper.");
 
+assert(!publicCommerce.includes(".hero-"), "Commerce styles must not retain selectors for the removed Hero carousel.");
+for (const removedSearchSelector of [
+  ".channel-search-section",
+  ".public-search-form",
+  ".public-search-icon",
+  ".public-search-submit",
+]) {
+  assert(!publicCommerce.includes(removedSearchSelector), `Commerce styles must not retain ${removedSearchSelector}.`);
+}
+
 assert(publicCommerce.includes("--canvas-0: #ffffff"), "The public commerce theme must use the neutral light canvas.");
 assert(publicCommerce.includes("position: fixed !important"), "The mobile detail CTA must remain attached to the viewport.");
 assert(publicAds.includes(".affiliate-ad-modal-backdrop"), "The public ad layer must include an isolated modal presentation.");
