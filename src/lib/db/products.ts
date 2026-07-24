@@ -244,7 +244,7 @@ export async function loadAdminProducts(
          p.slug,
          c.name AS category_name,
          p.cover_asset_id,
-         cover.object_key AS cover_object_key,
+         COALESCE(cover.thumbnail_object_key, cover.object_key) AS cover_object_key,
          p.sort_order,
          p.status,
          COALESCE(settings.r2_public_base_url, '') AS r2_public_base_url
