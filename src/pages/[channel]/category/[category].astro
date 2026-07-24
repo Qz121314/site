@@ -1,6 +1,7 @@
 ---
 import PublicLayout from "@/layouts/PublicLayout.astro";
 import AffiliateAds from "@/components/public/AffiliateAds.astro";
+import CategoryCard from "@/components/public/CategoryCard.astro";
 import DesktopCatalogSidebar from "@/components/public/DesktopCatalogSidebar.astro";
 import ProductDirectory from "@/components/public/ProductDirectory.astro";
 import {
@@ -12,6 +13,7 @@ import {
   loadPublicSiteShell,
   PUBLIC_PRODUCT_PAGE_SIZE,
 } from "@/lib/db/public";
+import { loadPublicDesktopFilterMap } from "@/lib/db/public-desktop";
 import { buildEffectiveCategoryGroups } from "@/lib/public/category-navigation";
 import { publicPageCanonical, readPublicPage } from "@/lib/public/pagination";
 
@@ -22,16 +24,22 @@ const categorySlug = Astro.params.category ?? "";
 const pageInput = readPublicPage(Astro.url.searchParams.get("page"));
 const site = await loadPublicSiteShell();
 const channel = findPublicChannel(site, channelSlug);
-const [category, filters, categories] = channel && pageInput.valid
+const [category, filters, categories, filtersByChannel] = channel && pageInput.valid
   ? await Promise.all([
       loadPublicCategory(channel.id, categorySlug),
       loadPublicCategoryFilters(channel.id),
       loadPublicCategories(channel.id),
+      loadPublicDesktopFilterMap(site.channels.map((item) => item.id)),
     ])
-  : [null, [], []];
+  : [null, [], [], {}];
 const categoryGroups = buildEffectiveCategoryGroups(filters, categories);
 const hasCategoryNavigation = categoryGroups.length > 0;
-const ungroupedCategories = categories.filter((item) => item.filterIds.length === 0);
+const activeGroup = category
+  ? categoryGroups.find(({ categories: groupedCategories }) => groupedCategories.some((item) => item.id === category.id)) ?? null
+  : null;
+const focusCategories = activeGroup?.categories ?? categories;
+const focusFilterName = activeGroup?.filter.name ?? "Categories";
+const focusFilterSlug = activeGroup?.filter.slug ?? "categories";
 
 if (channel && category && !hasCategoryNavigation) {
   const target = new URL(`/${encodeURIComponent(channel.slug)}`, Astro.url.origin);
@@ -130,30 +138,52 @@ const returnUrl = pageAvailable && channel ? `/${encodeURIComponent(channel.slug
     <>
       <AffiliateAds channelSlug={channel.slug} surface="catalog" />
 
-      <div class="directory-page-layout catalog-workspace category-catalog-workspace">
+      <div
+        class="directory-page-layout catalog-workspace category-catalog-workspace desktop-density-workspace"
+        data-desktop-density-workspace
+      >
         <DesktopCatalogSidebar
           site={site}
           channel={channel}
-          categoryGroups={categoryGroups}
-          ungroupedCategories={ungroupedCategories}
-          activeCategoryId={category.id}
+          filtersByChannel={filtersByChannel}
         />
 
-        <div class="desktop-catalog-main category-catalog-main">
-          <header class="directory-page-title desktop-catalog-heading">
-            <span>Product directory</span>
-            <h1>{category.name}</h1>
-            {pageInput.page > 1 && <small>Page {pageInput.page}</small>}
-          </header>
+        <div class="desktop-density-content">
+          <section
+            class="desktop-density-row desktop-density-row-focus"
+            id={`filter-${focusFilterSlug}`}
+            data-desktop-filter-row={focusFilterSlug}
+            aria-labelledby={`desktop-focus-filter-${category.id}`}
+          >
+            <div class="desktop-density-category-panel">
+              <h2 id={`desktop-focus-filter-${category.id}`}>{focusFilterName}</h2>
+              <div class="desktop-density-category-grid">
+                {focusCategories.map((item) => (
+                  <CategoryCard
+                    category={item}
+                    channelSlug={channel.slug}
+                    active={item.id === category.id}
+                  />
+                ))}
+              </div>
+            </div>
 
-          <section class="public-section directory-list-section" aria-label={category.name}>
-            <ProductDirectory
-              channelSlug={channel.slug}
-              categorySlug={category.slug}
-              page={productPage}
-              priorityCount={4}
-              emptyMessage="No published products are available in this category."
-            />
+            <div class="desktop-density-product-panel">
+              <header class="directory-page-title desktop-directory-title">
+                <h1>{category.name}</h1>
+                {pageInput.page > 1 && <span class="directory-page-count">Page {pageInput.page}</span>}
+              </header>
+
+              <section class="public-section directory-list-section" aria-label={category.name}>
+                <ProductDirectory
+                  channelSlug={channel.slug}
+                  categorySlug={category.slug}
+                  page={productPage}
+                  priorityCount={4}
+                  emptyMessage="No published products are available in this category."
+                />
+              </section>
+            </div>
           </section>
         </div>
       </div>
@@ -171,11 +201,11 @@ const returnUrl = pageAvailable && channel ? `/${encodeURIComponent(channel.slug
   )}
 </PublicLayout>
 
-<script>import "@/scripts/public-category-filters";</script>
+<script>import "@/scripts/public-desktop-workspace";</script>
 
 <style>
   .directory-page-layout,
-  .desktop-catalog-main {
+  .desktop-density-content {
     display: grid;
     min-width: 0;
     gap: .9rem;

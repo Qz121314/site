@@ -1,0 +1,55 @@
+---
+import CategoryCard from "@/components/public/CategoryCard.astro";
+import ProductCard from "@/components/public/ProductCard.astro";
+import type { PublicCategory, PublicCategoryFilter, PublicProductCard } from "@/lib/db/public";
+
+interface Props {
+  filter: PublicCategoryFilter;
+  categories: PublicCategory[];
+  products: PublicProductCard[];
+  channelSlug: string;
+  activeCategoryId?: string | null;
+  priorityCount?: number;
+}
+
+const {
+  filter,
+  categories,
+  products,
+  channelSlug,
+  activeCategoryId = null,
+  priorityCount = 0,
+} = Astro.props;
+---
+
+<section
+  class="desktop-density-row"
+  id={`filter-${filter.slug}`}
+  data-desktop-filter-row={filter.slug}
+  aria-labelledby={`desktop-filter-title-${filter.id}`}
+>
+  <div class="desktop-density-category-panel">
+    <h2 id={`desktop-filter-title-${filter.id}`}>{filter.name}</h2>
+    <div class="desktop-density-category-grid">
+      {categories.map((category) => (
+        <CategoryCard
+          category={category}
+          channelSlug={channelSlug}
+          active={category.id === activeCategoryId}
+        />
+      ))}
+    </div>
+  </div>
+
+  <div class="desktop-density-product-panel">
+    {products.length > 0 ? (
+      <div class="desktop-density-product-grid">
+        {products.map((product, index) => (
+          <ProductCard product={product} channelSlug={channelSlug} priority={index < priorityCount} />
+        ))}
+      </div>
+    ) : (
+      <div class="desktop-density-empty">No published products are available in this filter.</div>
+    )}
+  </div>
+</section>
