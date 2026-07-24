@@ -1,6 +1,6 @@
 /*
  * Public visual system entrypoint.
- * Reset → structural layout → loading states → inline header interaction → neutral commerce theme → affiliate ads → responsive compositions → editorial polish → compact category navigation → product detail refinements → category filter bar → desktop density workspace → product card consistency.
+ * Reset → structural layout → loading states → inline header interaction → neutral commerce theme → affiliate ads → responsive compositions → editorial polish → compact category navigation → product detail refinements → category filter bar → desktop catalog frame → product card consistency.
  */
 @import "./public-base.css";
 @import "./public.css";
@@ -20,4 +20,3 @@
 @import "./public-desktop-product-detail.css";
 @import "./public-desktop-header-layout.css";
 @import "./public-desktop-ui-polish.css";
-@import "./public-desktop-density-finish.css";
