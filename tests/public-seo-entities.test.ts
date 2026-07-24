@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { plainTextFromHtml } from "../src/lib/public/seo";
+import { plainTextFromHtml } from "../src/lib/public/seo.ts";
 
 test("SEO text extraction tolerates invalid numeric entities", () => {
   assert.equal(plainTextFromHtml("<p>Valid &#x1f642; entity</p>"), "Valid 🙂 entity");
