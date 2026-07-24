@@ -17,7 +17,7 @@
     "cf-typegen": "wrangler types",
     "verify:deploy-config": "node scripts/verify-deploy-config.mjs",
     "verify:style-entrypoints": "node scripts/verify-style-entrypoints.mjs",
-    "verify:browser-smoke": "node scripts/verify-browser-smoke.mjs",
+    "verify:browser-smoke": "node scripts/verify-browser-smoke.mjs && node scripts/verify-admin-crud-smoke.mjs",
     "verify:production-smoke": "node scripts/verify-production-smoke.mjs",
     "verify:d1-query-plans": "node scripts/verify-public-query-plans.mjs",
     "write:deployment-recovery": "node scripts/write-deployment-recovery.mjs",
