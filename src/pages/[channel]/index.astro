@@ -20,6 +20,7 @@ import {
 } from "@/lib/db/public-desktop";
 import { buildEffectiveCategoryGroups } from "@/lib/public/category-navigation";
 import { readPublicPage } from "@/lib/public/pagination";
+import { truncateText } from "@/lib/public/seo";
 
 export const prerender = false;
 
@@ -127,6 +128,14 @@ const directoryTitle = selectedCategory?.name ?? channel?.name;
 const pageTitle = directoryTitle
   ? pageInput.page > 1 ? `${directoryTitle} — Page ${pageInput.page}` : directoryTitle
   : "Page not found";
+const description = pageAvailable && channel
+  ? truncateText([
+      selectedCategory
+        ? `Browse ${selectedCategory.name} in ${channel.name}${pageInput.page > 1 ? ` — page ${pageInput.page}` : ""}.`
+        : `${channel.name} recommendations and listings${pageInput.page > 1 ? ` — page ${pageInput.page}` : ""}.`,
+      site.siteDescription,
+    ].filter(Boolean).join(" "), 160)
+  : "The requested channel page could not be found.";
 const adSurface = hasCategoryNavigation
   ? "channel"
   : pageInput.page === 1 && !selectedCategory
@@ -137,7 +146,7 @@ const adSurface = hasCategoryNavigation
 <PublicLayout
   site={site}
   title={pageTitle}
-  description={pageAvailable && channel ? site.siteDescription || `${channel.name} recommendations and listings.` : "The requested channel page could not be found."}
+  description={description}
   canonical={canonical}
   robots={pageAvailable ? undefined : "noindex,follow"}
   activeChannel={pageAvailable ? channel?.slug ?? null : null}

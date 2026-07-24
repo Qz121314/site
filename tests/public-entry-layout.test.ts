@@ -67,7 +67,8 @@ test("channel category buttons only expose published categories with published p
   assert.match(channel, /aria-current=\{active \? "page" : undefined\}/u);
   assert.match(channel, /categoryId: selectedCategory\?\.id \?\? null/u);
   assert.match(channel, /preserveCategoryQuery=\{Boolean\(selectedCategory\)\}/u);
-  assert.match(channel, /description=\{pageAvailable && channel \? site\.siteDescription \|\|/u);
+  assert.match(channel, /const description = pageAvailable && channel[\s\S]*truncateText/u);
+  assert.match(channel, /description=\{description\}/u);
   assert.doesNotMatch(channel, /<h1>\{site\.siteName\}<\/h1>/u);
   assert.match(publicDatabase, /category\.status = 'published'/u);
   assert.match(categoryLoader, /EXISTS[\s\S]*product\.status = 'published'/u);
