@@ -7,7 +7,6 @@ import ProductDirectory from "@/components/public/ProductDirectory.astro";
 import {
   findPublicChannel,
   loadPublicCategories,
-  loadPublicCategory,
   loadPublicCategoryFilters,
   loadPublicProducts,
   loadPublicSiteShell,
@@ -24,14 +23,14 @@ const categorySlug = Astro.params.category ?? "";
 const pageInput = readPublicPage(Astro.url.searchParams.get("page"));
 const site = await loadPublicSiteShell();
 const channel = findPublicChannel(site, channelSlug);
-const [category, filters, categories, filtersByChannel] = channel && pageInput.valid
+const [filters, categories, filtersByChannel] = channel && pageInput.valid
   ? await Promise.all([
-      loadPublicCategory(channel.id, categorySlug),
       loadPublicCategoryFilters(channel.id),
       loadPublicCategories(channel.id),
       loadPublicDesktopFilterMap(site.channels.map((item) => item.id)),
     ])
-  : [null, [], [], {}];
+  : [[], [], {}];
+const category = categories.find((item) => item.slug === categorySlug) ?? null;
 const categoryGroups = buildEffectiveCategoryGroups(filters, categories);
 const hasCategoryNavigation = categoryGroups.length > 0;
 const activeGroup = category
