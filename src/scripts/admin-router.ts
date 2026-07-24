@@ -23,6 +23,7 @@ const pageCache = new Map<string, PageSnapshot>();
 const parser = new DOMParser();
 const progress = document.querySelector<HTMLElement>("[data-admin-route-progress]");
 let activeController: AbortController | null = null;
+let loadingOperations = 0;
 let currentUrl = canonicalUrl(window.location.href);
 
 function canonicalUrl(value: string | URL): string {
@@ -235,10 +236,12 @@ function updateSidebar(urlValue: string): void {
 }
 
 function setLoading(loading: boolean): void {
-  if (progress) progress.hidden = !loading;
+  loadingOperations = Math.max(0, loadingOperations + (loading ? 1 : -1));
+  const active = loadingOperations > 0;
+  if (progress) progress.hidden = !active;
   const main = document.querySelector<HTMLElement>(".admin-content");
   if (!main) return;
-  if (loading) main.setAttribute("aria-busy", "true");
+  if (active) main.setAttribute("aria-busy", "true");
   else main.removeAttribute("aria-busy");
 }
 
