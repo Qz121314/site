@@ -65,13 +65,15 @@ test("desktop catalog integrates sections, active filters, categories, and produ
   assert.match(desktopQueries, /queries\.join\(" UNION ALL "\)/u);
   assert.match(desktopQueries, /\.bind\(\.\.\.bindings\)[\s\S]*\.all<PublicProductPreviewRow>/u);
 
-  assert.match(integratedStyles, /--desktop-nav-width/u);
-  assert.match(integratedStyles, /--desktop-category-width/u);
+  assert.match(integratedStyles, /--desktop-nav-width: 12rem/u);
+  assert.match(integratedStyles, /--desktop-category-width: 11rem/u);
   assert.match(integratedStyles, /grid-template-columns: var\(--desktop-nav-width\) minmax\(0, 1fr\)/u);
   assert.match(integratedStyles, /\.desktop-catalog-panel/u);
   assert.match(integratedStyles, /grid-template-columns: var\(--desktop-category-width\) minmax\(0, 1fr\)/u);
-  assert.match(integratedStyles, /repeat\(auto-fill, minmax\(9\.5rem, 10\.5rem\)\)/u);
+  assert.match(integratedStyles, /repeat\(auto-fill, minmax\(12\.5rem, 13\.75rem\)\)/u);
+  assert.match(integratedStyles, /\.product-card \{[\s\S]*?max-width: 13\.75rem/u);
   assert.match(integratedStyles, /\.product-card \.visual-card-overlay \{[\s\S]*?position: absolute/u);
+  assert.match(integratedStyles, /--desktop-accent: #b69058/u);
 
   assert.match(productCard, /class="visual-card-media-frame"/u);
   assert.match(productCard, /public-product-links/u);
