@@ -1,3 +1,5 @@
+export {};
+
 const desktopMedia = window.matchMedia("(min-width: 1100px)");
 const workspace = document.querySelector<HTMLElement>("[data-desktop-density-workspace]");
 
