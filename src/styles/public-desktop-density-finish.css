@@ -1,0 +1,228 @@
+/* Final desktop density pass.
+ * Keeps the integrated navigation/catalog model while removing unnecessary
+ * rail height, wide controls, stretched category surfaces, and detached titles.
+ */
+
+@media (min-width: 1100px) {
+  .public-body:has(.integrated-desktop-catalog) {
+    --desktop-nav-width: clamp(8.5rem, 8.8vw, 9.5rem);
+    --desktop-frame-gap: .65rem;
+  }
+
+  .public-body:has(.integrated-desktop-catalog) .public-header-default {
+    min-height: 4.7rem;
+    gap: .65rem;
+    border-radius: .75rem .75rem 0 0;
+    padding: .62rem .72rem;
+  }
+
+  .public-body:has(.integrated-desktop-catalog) .public-brand-centered {
+    justify-content: flex-start;
+    padding-left: .18rem;
+  }
+
+  .public-body:has(.integrated-desktop-catalog) .public-brand-name {
+    text-align: left !important;
+  }
+
+  .public-body:has(.integrated-desktop-catalog) .public-brand-logo {
+    margin-inline: 0;
+  }
+
+  .integrated-desktop-catalog,
+  .desktop-density-workspace.integrated-desktop-catalog,
+  .catalog-workspace.integrated-desktop-catalog {
+    gap: var(--desktop-frame-gap);
+  }
+
+  /* The navigation rail follows its content instead of filling the viewport. */
+  .desktop-nav-rail {
+    min-height: 0;
+    max-height: calc(100dvh - 4.7rem);
+    top: 4.7rem;
+    align-self: start;
+    border-radius: 0 0 .75rem .75rem;
+    padding: .5rem .45rem .65rem;
+  }
+
+  .desktop-nav-menu {
+    gap: .18rem;
+  }
+
+  .desktop-nav-section {
+    gap: .08rem;
+  }
+
+  .desktop-nav-section-link,
+  .desktop-nav-filter-link {
+    width: max-content;
+    max-width: 100%;
+    min-height: 0;
+    justify-content: flex-start;
+    box-sizing: border-box;
+  }
+
+  .desktop-nav-section-link {
+    border: 1px solid transparent;
+    border-radius: .42rem;
+    padding: .43rem .56rem;
+    font-size: .76rem;
+    line-height: 1.18;
+  }
+
+  .desktop-nav-section-link[aria-current="page"] {
+    border-color: rgb(var(--section-accent));
+    box-shadow: 0 3px 9px rgb(var(--section-accent) / .14);
+  }
+
+  .desktop-nav-filter-list {
+    gap: .06rem;
+    margin: 0;
+    border-left: 0;
+    padding: 0;
+  }
+
+  .desktop-nav-filter-link {
+    border: 1px solid transparent;
+    border-radius: .38rem;
+    padding: .3rem .56rem;
+    color: rgb(var(--section-accent));
+    background: rgb(var(--section-accent) / .045);
+    font-size: .69rem;
+    line-height: 1.16;
+  }
+
+  .desktop-nav-filter-link:hover,
+  .desktop-nav-filter-link.is-active {
+    border-color: rgb(var(--section-accent) / .2);
+    background: rgb(var(--section-accent) / .11);
+  }
+
+  .desktop-nav-filter-link.is-active {
+    box-shadow: none;
+  }
+
+  .integrated-desktop-content {
+    padding-top: var(--desktop-frame-gap);
+  }
+
+  /* Category controls occupy only the width and height required by their text. */
+  .desktop-catalog-panel,
+  .desktop-density-row.desktop-catalog-panel {
+    grid-template-columns: clamp(6.75rem, 7.2vw, 8rem) minmax(0, 1fr);
+    align-items: start;
+    border-radius: .75rem;
+  }
+
+  .desktop-catalog-panel .desktop-density-category-panel {
+    align-self: start;
+    gap: .3rem;
+    border-right: 1px solid #dfe2e6;
+    border-bottom: 1px solid #dfe2e6;
+    border-radius: 0 0 .62rem 0;
+    padding: .52rem .42rem .62rem;
+    background: #f0f2f4;
+  }
+
+  .desktop-catalog-panel .desktop-density-category-panel h2 {
+    min-height: 1.85rem;
+    margin-bottom: .08rem;
+    padding: .26rem .35rem .42rem;
+    font-size: .68rem;
+    letter-spacing: .035em;
+  }
+
+  .desktop-catalog-panel .desktop-density-category-grid {
+    gap: .27rem;
+  }
+
+  .desktop-catalog-panel .category-entry {
+    min-height: 2.05rem;
+    border: 1px solid #cbd2da;
+    border-radius: .4rem;
+    padding: .34rem .42rem;
+    color: #3f4854;
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgb(15 23 42 / .06);
+    transition: border-color .15s ease, box-shadow .15s ease, transform .15s ease;
+  }
+
+  .desktop-catalog-panel .category-entry:hover {
+    border-color: #8994a1;
+    color: #111827;
+    background: #ffffff;
+    box-shadow: 0 3px 8px rgb(15 23 42 / .09);
+    transform: translateY(-1px);
+  }
+
+  .desktop-catalog-panel .category-entry.is-active,
+  .desktop-catalog-panel .category-entry[aria-current="page"] {
+    border-color: #273142;
+    background: #273142;
+    box-shadow: 0 3px 8px rgb(15 23 42 / .14);
+  }
+
+  .desktop-catalog-panel .category-entry-label {
+    font-size: .69rem;
+    font-weight: 720;
+    line-height: 1.18;
+  }
+
+  .desktop-catalog-panel .desktop-density-product-panel {
+    padding: .7rem .8rem .9rem;
+  }
+
+  .desktop-catalog-heading {
+    min-height: 2.2rem;
+    margin-bottom: .55rem;
+    padding: 0 .05rem .5rem;
+  }
+
+  .desktop-catalog-heading h1 {
+    font-size: 1.05rem;
+  }
+
+  .desktop-catalog-panel .desktop-density-product-grid,
+  .desktop-catalog-panel .product-grid {
+    grid-template-columns: repeat(auto-fill, minmax(9rem, 10.5rem));
+    gap: .78rem .65rem;
+  }
+
+  .desktop-catalog-panel .product-card {
+    position: relative;
+    width: 100%;
+    max-width: 10.5rem;
+  }
+
+  .desktop-catalog-panel .product-card .visual-card-media-frame {
+    border-radius: .5rem;
+  }
+
+  /* Desktop product names sit on the image rather than creating a second row. */
+  .desktop-catalog-panel .product-card .visual-card-overlay {
+    position: absolute;
+    z-index: 2;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    display: block;
+    border-radius: 0 0 .5rem .5rem;
+    padding: 1.8rem .5rem .46rem;
+    pointer-events: none;
+    background: linear-gradient(180deg, transparent 0%, rgb(0 0 0 / .72) 100%);
+  }
+
+  .desktop-catalog-panel .product-card .visual-card-title {
+    display: block;
+    min-height: 0;
+    overflow: hidden;
+    color: #ffffff;
+    font-size: .78rem;
+    font-weight: 760;
+    line-height: 1.2;
+    text-overflow: ellipsis;
+    text-shadow: 0 1px 2px rgb(0 0 0 / .45);
+    white-space: nowrap;
+    -webkit-line-clamp: unset;
+  }
+}
