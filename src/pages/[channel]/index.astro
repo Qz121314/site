@@ -15,7 +15,7 @@ import {
 } from "@/lib/db/public";
 import {
   loadPublicDesktopFilterMap,
-  loadPublicProductPreview,
+  loadPublicProductPreviewGroups,
 } from "@/lib/db/public-desktop";
 import { buildEffectiveCategoryGroups } from "@/lib/public/category-navigation";
 import { readPublicPage } from "@/lib/public/pagination";
@@ -71,18 +71,22 @@ const desktopGroupInputs = hasCategoryNavigation && pageInput.page === 1
         : []),
     ]
   : [];
-const desktopGroups = channel
-  ? await Promise.all(desktopGroupInputs.map(async ({ filter, categories: groupedCategories }) => ({
-      filter,
-      categories: groupedCategories,
-      products: await loadPublicProductPreview({
-        channelId: channel.id,
+const desktopProductsByFilter = channel && desktopGroupInputs.length > 0
+  ? await loadPublicProductPreviewGroups({
+      channelId: channel.id,
+      baseUrl: site.r2PublicBaseUrl,
+      groups: desktopGroupInputs.map(({ filter, categories: groupedCategories }) => ({
+        key: filter.id,
         categoryIds: groupedCategories.map((category) => category.id),
-        baseUrl: site.r2PublicBaseUrl,
         limit: 8,
-      }),
-    })))
-  : [];
+      })),
+    })
+  : {};
+const desktopGroups = desktopGroupInputs.map(({ filter, categories: groupedCategories }) => ({
+  filter,
+  categories: groupedCategories,
+  products: desktopProductsByFilter[filter.id] ?? [],
+}));
 
 const pageOutOfRange = canLoadPage && (
   hasCategoryNavigation
