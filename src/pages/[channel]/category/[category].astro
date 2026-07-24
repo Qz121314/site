@@ -67,14 +67,14 @@ const pageAvailable = Boolean(channel && category && pageInput.valid && !pageOut
 
 if (!pageAvailable) Astro.response.status = 404;
 
-const canonical = pageAvailable && channel && category
-  ? publicPageCanonical(
-      new URL(
-        `/${encodeURIComponent(channel.slug)}/category/${encodeURIComponent(category.slug)}`,
-        Astro.url.origin,
-      ),
-      pageInput.page,
-    )
+const categoryUrl = pageAvailable && channel && category
+  ? new URL(
+      `/${encodeURIComponent(channel.slug)}/category/${encodeURIComponent(category.slug)}`,
+      Astro.url.origin,
+    ).href
+  : null;
+const canonical = categoryUrl
+  ? publicPageCanonical(new URL(categoryUrl), pageInput.page)
   : null;
 const pageTitle = category
   ? pageInput.page > 1 ? `${category.name} — Page ${pageInput.page}` : category.name
@@ -85,7 +85,7 @@ const description = pageAvailable && category
 const channelUrl = pageAvailable && channel
   ? new URL(`/${encodeURIComponent(channel.slug)}`, Astro.url.origin).href
   : null;
-const structuredData = pageAvailable && channel && category && canonical && channelUrl
+const structuredData = pageAvailable && channel && category && canonical && channelUrl && categoryUrl
   ? {
       "@context": "https://schema.org",
       "@graph": [
@@ -119,8 +119,16 @@ const structuredData = pageAvailable && channel && category && canonical && chan
               "@type": "ListItem",
               position: 2,
               name: category.name,
-              item: canonical,
+              item: categoryUrl,
             },
+            ...(pageInput.page > 1
+              ? [{
+                  "@type": "ListItem",
+                  position: 3,
+                  name: `Page ${pageInput.page}`,
+                  item: canonical,
+                }]
+              : []),
           ],
         },
       ],
