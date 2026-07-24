@@ -12,7 +12,7 @@ export type AdminProductImage = {
 
 type ProductImageRow = {
   image_asset_id: string;
-  object_key: string;
+  preview_object_key: string;
   original_name: string;
   width: number;
   height: number;
@@ -30,7 +30,7 @@ export async function loadAdminProductImages(
       env.DB.prepare(
         `SELECT
            pi.image_asset_id,
-           a.object_key,
+           COALESCE(a.thumbnail_object_key, a.object_key) AS preview_object_key,
            a.original_name,
            a.width,
            a.height,
@@ -54,7 +54,7 @@ export async function loadAdminProductImages(
       height: Number(image.height),
       sortOrder: Number(image.sort_order),
       previewUrl:
-        buildPublicImageUrl(baseUrl, image.object_key) ??
+        buildPublicImageUrl(baseUrl, image.preview_object_key) ??
         `/api/admin/images/${encodeURIComponent(image.image_asset_id)}/content`,
     }));
   } catch (error) {
