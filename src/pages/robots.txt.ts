@@ -1,16 +1,18 @@
 import type { APIRoute } from "astro";
 import { PUBLIC_EDGE_CACHE_SECONDS } from "@/lib/public/cache-policy";
+import { resolvePublicOrigin } from "@/lib/public/origin";
 
 export const prerender = false;
 
-export const GET: APIRoute = async ({ url }) => {
+export const GET: APIRoute = async ({ request, url }) => {
+  const origin = resolvePublicOrigin(url, request.headers);
   const lines = [
     "User-agent: *",
     "Allow: /",
     "Disallow: /admin",
     "Disallow: /api/",
     "Disallow: /go/",
-    `Sitemap: ${new URL("/sitemap.xml", url.origin).href}`,
+    `Sitemap: ${new URL("/sitemap.xml", origin).href}`,
   ];
 
   return new Response(`${lines.join("\n")}\n`, {

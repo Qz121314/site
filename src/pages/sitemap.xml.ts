@@ -1,6 +1,7 @@
 import type { APIRoute } from "astro";
 import { loadPublicSitemapEntries } from "@/lib/db/sitemap";
 import { PUBLIC_EDGE_CACHE_SECONDS } from "@/lib/public/cache-policy";
+import { resolvePublicOrigin } from "@/lib/public/origin";
 import { normalizeSitemapLastModified } from "@/lib/public/sitemap";
 
 export const prerender = false;
@@ -14,28 +15,29 @@ function escapeXml(value: string): string {
     .replaceAll("'", "&apos;");
 }
 
-export const GET: APIRoute = async ({ url }) => {
+export const GET: APIRoute = async ({ request, url }) => {
   const entries = await loadPublicSitemapEntries();
+  const origin = resolvePublicOrigin(url, request.headers);
 
   const records: Array<{ location: string; updatedAt: string }> = [
     ...(entries.hasPrivacy
-      ? [{ location: new URL("/privacy", url.origin).href, updatedAt: entries.siteUpdatedAt }]
+      ? [{ location: new URL("/privacy", origin).href, updatedAt: entries.siteUpdatedAt }]
       : []),
     ...(entries.hasDisclaimer
-      ? [{ location: new URL("/disclaimer", url.origin).href, updatedAt: entries.siteUpdatedAt }]
+      ? [{ location: new URL("/disclaimer", origin).href, updatedAt: entries.siteUpdatedAt }]
       : []),
     ...entries.channels.map((entry) => ({
-      location: new URL(`/${encodeURIComponent(entry.slug)}`, url.origin).href,
+      location: new URL(`/${encodeURIComponent(entry.slug)}`, origin).href,
       updatedAt: entry.updatedAt,
     })),
     ...entries.categories.map((entry) => ({
       location: entry.hasCategoryNavigation
-        ? new URL(`/${encodeURIComponent(entry.channelSlug)}/category/${encodeURIComponent(entry.slug)}`, url.origin).href
-        : new URL(`/${encodeURIComponent(entry.channelSlug)}?category=${encodeURIComponent(entry.slug)}`, url.origin).href,
+        ? new URL(`/${encodeURIComponent(entry.channelSlug)}/category/${encodeURIComponent(entry.slug)}`, origin).href
+        : new URL(`/${encodeURIComponent(entry.channelSlug)}?category=${encodeURIComponent(entry.slug)}`, origin).href,
       updatedAt: entry.updatedAt,
     })),
     ...entries.products.map((entry) => ({
-      location: new URL(`/${encodeURIComponent(entry.channelSlug)}/product/${encodeURIComponent(entry.slug)}`, url.origin).href,
+      location: new URL(`/${encodeURIComponent(entry.channelSlug)}/product/${encodeURIComponent(entry.slug)}`, origin).href,
       updatedAt: entry.updatedAt,
     })),
   ];

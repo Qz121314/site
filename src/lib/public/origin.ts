@@ -3,23 +3,36 @@ function headerValue(headers: Headers, name: string): string {
 }
 
 function forwardedProtocol(headers: Headers): "http:" | "https:" | null {
-  const forwarded = headerValue(headers, "x-forwarded-proto").toLowerCase();
-  if (forwarded === "http" || forwarded === "https") return `${forwarded}:`;
-
   const visitor = headers.get("cf-visitor");
-  if (!visitor) return null;
-  try {
-    const scheme = String((JSON.parse(visitor) as { scheme?: unknown }).scheme ?? "").toLowerCase();
-    return scheme === "http" || scheme === "https" ? `${scheme}:` : null;
-  } catch {
-    return null;
+  if (visitor) {
+    try {
+      const scheme = String((JSON.parse(visitor) as { scheme?: unknown }).scheme ?? "").toLowerCase();
+      if (scheme === "http" || scheme === "https") return `${scheme}:`;
+    } catch {
+      // Fall back to X-Forwarded-Proto or the request URL below.
+    }
   }
+
+  const forwarded = headerValue(headers, "x-forwarded-proto").toLowerCase();
+  return forwarded === "http" || forwarded === "https" ? `${forwarded}:` : null;
+}
+
+function isLocalHostname(hostname: string): boolean {
+  const normalized = hostname.toLowerCase();
+  return normalized === "localhost"
+    || normalized === "127.0.0.1"
+    || normalized === "[::1]"
+    || normalized.endsWith(".localhost");
 }
 
 export function resolvePublicOrigin(url: URL, headers: Headers): string {
   const origin = new URL(url.origin);
-  const protocol = forwardedProtocol(headers);
-  if (protocol) origin.protocol = protocol;
+  if (isLocalHostname(origin.hostname)) {
+    const protocol = forwardedProtocol(headers);
+    if (protocol) origin.protocol = protocol;
+  } else {
+    origin.protocol = "https:";
+  }
   return origin.origin;
 }
 
