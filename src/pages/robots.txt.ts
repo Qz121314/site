@@ -1,5 +1,5 @@
 import type { APIRoute } from "astro";
-import { PUBLIC_EDGE_CACHE_SECONDS } from "@/lib/public/cache-policy";
+import { PUBLIC_DISCOVERY_EDGE_CACHE_SECONDS } from "@/lib/public/cache-policy";
 import { resolvePublicOrigin } from "@/lib/public/origin";
 
 export const prerender = false;
@@ -19,7 +19,7 @@ export const GET: APIRoute = async ({ request, url }) => {
     headers: {
       "Content-Type": "text/plain; charset=utf-8",
       "Cache-Control": "public, max-age=0, must-revalidate",
-      "Cloudflare-CDN-Cache-Control": `public, max-age=${PUBLIC_EDGE_CACHE_SECONDS}, must-revalidate`,
+      "Cloudflare-CDN-Cache-Control": `public, max-age=${PUBLIC_DISCOVERY_EDGE_CACHE_SECONDS}, must-revalidate`,
     },
   });
 };
