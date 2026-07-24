@@ -1,6 +1,7 @@
 import type { APIRoute } from "astro";
 import { loadPublicSitemapEntries } from "@/lib/db/sitemap";
 import { PUBLIC_EDGE_CACHE_SECONDS } from "@/lib/public/cache-policy";
+import { normalizeSitemapLastModified } from "@/lib/public/sitemap";
 
 export const prerender = false;
 
@@ -11,11 +12,6 @@ function escapeXml(value: string): string {
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;")
     .replaceAll("'", "&apos;");
-}
-
-function normalizeLastModified(value: string): string {
-  const normalized = value.includes("T") ? value : value.replace(" ", "T");
-  return normalized.endsWith("Z") ? normalized : `${normalized}Z`;
 }
 
 export const GET: APIRoute = async ({ url }) => {
@@ -47,9 +43,10 @@ export const GET: APIRoute = async ({ url }) => {
   const body = [
     '<?xml version="1.0" encoding="UTF-8"?>',
     '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
-    ...records.map((record) =>
-      `  <url><loc>${escapeXml(record.location)}</loc><lastmod>${escapeXml(normalizeLastModified(record.updatedAt))}</lastmod></url>`,
-    ),
+    ...records.map((record) => {
+      const lastModified = normalizeSitemapLastModified(record.updatedAt);
+      return `  <url><loc>${escapeXml(record.location)}</loc>${lastModified ? `<lastmod>${escapeXml(lastModified)}</lastmod>` : ""}</url>`;
+    }),
     "</urlset>",
   ].join("\n");
 
