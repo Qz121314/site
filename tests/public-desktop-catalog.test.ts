@@ -33,7 +33,7 @@ test("desktop catalog presents section filters, categories, and products without
     readFile(new URL("../src/styles/public-system.css", import.meta.url), "utf8"),
   ]);
 
-  assert.match(channel, /loadPublicDesktopFilterMap\(site\.channels\.map/u);
+  assert.match(channel, /loadPublicDesktopFilterMap\(desktopFilterChannelIds\)/u);
   assert.match(channel, /loadPublicProductPreviewGroups/u);
   assert.doesNotMatch(channel, /Promise\.all\(desktopGroupInputs\.map/u);
   assert.match(channel, /class="desktop-density-workspace desktop-channel-catalog"/u);
