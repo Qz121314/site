@@ -33,6 +33,9 @@ function createProductCard(product: DirectoryProduct, channelSlug: string): HTML
   link.dataset.productCard = "";
   link.dataset.loadSurface = "";
 
+  const frame = document.createElement("span");
+  frame.className = "visual-card-media-frame";
+
   if (product.coverUrl) {
     link.setAttribute("aria-busy", "true");
     const image = document.createElement("img");
@@ -52,15 +55,17 @@ function createProductCard(product: DirectoryProduct, channelSlug: string): HTML
     image.addEventListener("load", () => settle("is-loaded"), { once: true });
     image.addEventListener("error", () => settle("is-load-error"), { once: true });
     image.src = product.coverUrl;
-    link.appendChild(image);
+    frame.appendChild(image);
   } else {
     link.classList.add("is-loaded");
     const placeholder = document.createElement("span");
     placeholder.className = "visual-card-placeholder";
     placeholder.setAttribute("aria-hidden", "true");
     placeholder.textContent = product.title.trim().slice(0, 1).toUpperCase() || "P";
-    link.appendChild(placeholder);
+    frame.appendChild(placeholder);
   }
+
+  link.appendChild(frame);
 
   const overlay = document.createElement("span");
   overlay.className = "visual-card-overlay";
