@@ -1,4 +1,6 @@
 ---
+import DesktopProductAd from "@/components/public/DesktopProductAd.astro";
+
 interface GalleryImage {
   imageUrl: string;
   responsiveImageUrl?: string | null;
@@ -19,6 +21,7 @@ const uniqueImages = images.filter(
 );
 const firstImage = uniqueImages[0] ?? null;
 const galleryId = `product-gallery-${crypto.randomUUID()}`;
+const channelSlug = Astro.params.channel ?? "";
 
 function sourceSet(image: GalleryImage): string | undefined {
   if (!image.responsiveImageUrl || !image.responsiveWidth || !image.width) return undefined;
@@ -82,4 +85,5 @@ function sourceSet(image: GalleryImage): string | undefined {
   </section>
 )}
 
+{channelSlug && <DesktopProductAd channelSlug={channelSlug} />}
 {uniqueImages.length > 1 && <script>import "@/scripts/public-product-gallery";</script>}
