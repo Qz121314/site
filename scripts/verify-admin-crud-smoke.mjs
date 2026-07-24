@@ -10,6 +10,10 @@ const CHANNEL_NAME = "Browser Smoke Channel";
 const UPDATED_CHANNEL_NAME = "Browser Smoke Channel Updated";
 const PRODUCT_NAME = "Browser Smoke Product";
 const UPDATED_PRODUCT_NAME = "Browser Smoke Product Updated";
+const SMOKE_PNG = Buffer.from(
+  "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9ZBmwAAAAASUVORK5CYII=",
+  "base64",
+);
 
 function runCommand(command, args) {
   const result = spawnSync(command, args, {
@@ -100,7 +104,7 @@ async function refreshPublicCache(cookie, label) {
 }
 
 function productContentForm(overrides = {}) {
-  return new URLSearchParams({
+  const form = new URLSearchParams({
     returnTo: overrides.returnTo ?? "",
     title: overrides.title ?? PRODUCT_NAME,
     categoryName: overrides.categoryName ?? "Browser Smoke Category",
@@ -109,6 +113,8 @@ function productContentForm(overrides = {}) {
     conversionGroupId: "",
     bodySource: overrides.bodySource ?? "Browser smoke product body.",
   });
+  for (const imageId of overrides.galleryAssetIds ?? []) form.append("galleryAssetIds", imageId);
+  return form;
 }
 
 mkdirSync(LOG_DIR, { recursive: true });
@@ -160,6 +166,33 @@ try {
   const initialList = await request("/admin/channels", { cookie });
   expectStatus(initialList, 200, "Authenticated channel list");
 
+  const uploadForm = new FormData();
+  uploadForm.set("file", new File([SMOKE_PNG], "browser-smoke.png", { type: "image/png" }));
+  uploadForm.set("originalName", "Browser Smoke Upload.png");
+  const upload = await request("/api/admin/images/upload", {
+    method: "POST",
+    cookie,
+    accept: "application/json",
+    body: uploadForm,
+  });
+  expectStatus(upload, 200, "Admin image upload");
+  const uploadPayload = JSON.parse(upload.body);
+  const imageId = uploadPayload?.ok === true && typeof uploadPayload.image?.id === "string"
+    ? uploadPayload.image.id
+    : null;
+  if (!imageId || uploadPayload.image?.mimeType !== "image/png" || uploadPayload.image?.width !== 1 || uploadPayload.image?.height !== 1) {
+    throw new Error(`Admin image upload returned an invalid payload: ${upload.body.slice(0, 300)}`);
+  }
+
+  const imageContent = await request(`/api/admin/images/${encodeURIComponent(imageId)}/content`, {
+    cookie,
+    accept: "image/png",
+  });
+  expectStatus(imageContent, 200, "Admin image content");
+  if (!(imageContent.response.headers.get("content-type") ?? "").includes("image/png") || imageContent.body.length === 0) {
+    throw new Error("Uploaded R2 image content could not be read through the admin preview route.");
+  }
+
   const create = await request("/api/admin/channels/create", {
     method: "POST",
     cookie,
@@ -193,7 +226,7 @@ try {
   const createProduct = await request(`/api/admin/channels/${encodeURIComponent(channelId)}/products/create`, {
     method: "POST",
     cookie,
-    body: productContentForm({ returnTo: productsPath }),
+    body: productContentForm({ returnTo: productsPath, galleryAssetIds: [imageId] }),
   });
   const createProductLocation = redirectUrl(createProduct, productsPath, "Admin product create");
   if (createProductLocation.searchParams.get("saved") !== "created") {
@@ -204,8 +237,12 @@ try {
 
   const createdProductPage = await request(`${productsPath}?edit=${encodeURIComponent(productId)}`, { cookie });
   expectStatus(createdProductPage, 200, "Created product editor");
-  if (!createdProductPage.body.includes(PRODUCT_NAME) || !createdProductPage.body.includes("Browser smoke product body.")) {
-    throw new Error("Created product content was not persisted after navigation.");
+  if (
+    !createdProductPage.body.includes(PRODUCT_NAME)
+    || !createdProductPage.body.includes("Browser smoke product body.")
+    || !createdProductPage.body.includes(imageId)
+  ) {
+    throw new Error("Created product content or image binding was not persisted after navigation.");
   }
 
   const productReturnTo = `${productsPath}?edit=${encodeURIComponent(productId)}`;
@@ -221,6 +258,7 @@ try {
         tags: "integration, updated",
         ctaLabel: "Open Updated",
         bodySource: "Browser smoke product body updated.",
+        galleryAssetIds: [imageId],
       }),
     },
   );
@@ -258,8 +296,9 @@ try {
     !managedProductPage.body.includes(UPDATED_PRODUCT_NAME)
     || !managedProductPage.body.includes("Browser smoke product body updated.")
     || !managedProductPage.body.includes('value="654"')
+    || !managedProductPage.body.includes(imageId)
   ) {
-    throw new Error("Updated product content, status, or sort order was not persisted after refresh.");
+    throw new Error("Updated product content, image, status, or sort order was not persisted after refresh.");
   }
 
   const deleteProduct = await request(
@@ -280,6 +319,22 @@ try {
   if (finalProductPage.body.includes(UPDATED_PRODUCT_NAME) || finalProductPage.body.includes("Browser Smoke Category Updated")) {
     throw new Error("Deleted product or its empty generated category remained visible after refresh.");
   }
+
+  const deleteImage = await request(`/api/admin/images/${encodeURIComponent(imageId)}/delete`, {
+    method: "POST",
+    cookie,
+    body: new URLSearchParams(),
+  });
+  const deleteImageLocation = redirectUrl(deleteImage, "/admin/images", "Admin image delete");
+  if (!new Set(["deleted", "delete-pending"]).has(deleteImageLocation.searchParams.get("saved"))) {
+    throw new Error("Admin image delete did not report a successful or queued R2 cleanup.");
+  }
+
+  const deletedImageContent = await request(`/api/admin/images/${encodeURIComponent(imageId)}/content`, {
+    cookie,
+    accept: "image/png",
+  });
+  expectStatus(deletedImageContent, 404, "Deleted admin image content");
 
   const update = await request(`/api/admin/channels/${encodeURIComponent(channelId)}/update`, {
     method: "POST",
@@ -333,7 +388,7 @@ try {
   const deletedPublicPage = await request(`/${encodeURIComponent(channelSlug)}`);
   expectStatus(deletedPublicPage, 404, "Deleted channel public route");
 
-  console.log("Authenticated admin channel and product CRUD, cache refresh, and propagation flows verified.");
+  console.log("Authenticated admin channel, product, image/R2, cache refresh, and propagation flows verified.");
 } finally {
   server.kill("SIGTERM");
   await new Promise((resolve) => setTimeout(resolve, 500));
