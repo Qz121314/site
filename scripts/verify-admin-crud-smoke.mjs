@@ -88,6 +88,18 @@ function channelSlugFromList(html, channelName) {
   return match[1];
 }
 
+async function refreshPublicCache(cookie, label) {
+  const result = await request("/api/admin/cache/purge", {
+    method: "POST",
+    cookie,
+    body: new URLSearchParams(),
+  });
+  const location = redirectUrl(result, "/admin/settings", label);
+  if (!new Set(["refreshed", "error"]).has(location.searchParams.get("cache"))) {
+    throw new Error(`${label} did not report a cache refresh result.`);
+  }
+}
+
 mkdirSync(LOG_DIR, { recursive: true });
 const persistDir = join(tmpdir(), `site-admin-smoke-d1-${process.pid}`);
 mkdirSync(persistDir, { recursive: true });
@@ -186,6 +198,7 @@ try {
     throw new Error("Updated channel settings were not persisted after navigation.");
   }
 
+  await refreshPublicCache(cookie, "Published channel cache refresh");
   const publishedPublicPage = await request(`/${encodeURIComponent(channelSlug)}`);
   expectStatus(publishedPublicPage, 200, "Published channel public route");
   if (!publishedPublicPage.body.includes(UPDATED_CHANNEL_NAME)) {
@@ -208,10 +221,11 @@ try {
     throw new Error("Deleted channel remained visible after refreshing the channel list.");
   }
 
+  await refreshPublicCache(cookie, "Deleted channel cache refresh");
   const deletedPublicPage = await request(`/${encodeURIComponent(channelSlug)}`);
   expectStatus(deletedPublicPage, 404, "Deleted channel public route");
 
-  console.log("Authenticated admin login, channel create, update, publish, refresh, and delete flows verified.");
+  console.log("Authenticated admin login, channel CRUD, public cache refresh, and propagation flows verified.");
 } finally {
   server.kill("SIGTERM");
   await new Promise((resolve) => setTimeout(resolve, 500));
