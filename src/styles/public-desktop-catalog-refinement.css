@@ -1,92 +1,130 @@
 /* Final desktop catalog proportions.
- * Keeps mobile and tablet layouts unchanged while preventing navigation columns
- * and product cards from expanding to fill wide monitors.
+ * Keeps mobile and tablet layouts unchanged while aligning the header, navigation,
+ * category rail, and product workspace inside one compact desktop frame.
  */
 
 @media (min-width: 1100px) {
   .public-body {
-    --public-width: 90rem;
+    --public-width: 100rem;
+  }
+
+  .public-body .public-container {
+    padding-inline: clamp(1rem, 2vw, 2rem);
+  }
+
+  .public-body .public-header-default {
+    display: grid;
+    grid-template-columns: max-content minmax(16rem, 27rem) minmax(0, 1fr);
+    align-items: center;
+    column-gap: clamp(1.25rem, 2.5vw, 2.75rem);
+  }
+
+  .public-body .public-header-default .public-brand-centered {
+    grid-column: 1;
+    max-width: 16rem;
+  }
+
+  .public-body .public-header-trailing {
+    grid-column: 2;
+    width: 100%;
+    min-width: 0;
+    max-width: 27rem;
+    margin-left: 0;
+    justify-self: start;
+  }
+
+  .public-body .public-header-desktop-nav {
+    grid-column: 3;
+    min-width: 0;
+    width: auto;
+    flex: none;
+    justify-self: end;
+    justify-content: flex-end;
+  }
+
+  .public-body .public-main {
+    padding-top: 1rem;
   }
 
   .desktop-density-workspace,
   .catalog-workspace {
-    max-width: 90rem;
+    max-width: 100rem;
     margin-inline: auto;
-    grid-template-columns: clamp(9.5rem, 10vw, 10.75rem) minmax(0, 1fr);
-    gap: clamp(1rem, 1.35vw, 1.25rem);
+    grid-template-columns: clamp(8.5rem, 9vw, 9rem) minmax(0, 1fr);
+    gap: clamp(.85rem, 1.1vw, 1.1rem);
   }
 
   .desktop-density-sidebar {
-    padding: .42rem;
-    border-radius: .62rem;
+    padding: .36rem;
+    border-radius: .58rem;
   }
 
   .desktop-density-navigation {
-    gap: .18rem;
+    gap: .14rem;
   }
 
   .desktop-density-section-group {
-    gap: .1rem;
-    padding-bottom: .34rem;
+    gap: .08rem;
+    padding-bottom: .3rem;
   }
 
   .desktop-density-section-group + .desktop-density-section-group {
-    padding-top: .18rem;
+    padding-top: .16rem;
   }
 
   .desktop-density-section-link {
-    min-height: 2.45rem;
-    grid-template-columns: minmax(0, 1fr) .78rem;
-    gap: .35rem;
-    padding: .48rem .52rem;
-    font-size: .78rem;
+    min-height: 2.35rem;
+    grid-template-columns: minmax(0, 1fr) .72rem;
+    gap: .3rem;
+    padding: .44rem .48rem;
+    font-size: .76rem;
   }
 
   .desktop-density-section-link svg {
-    width: .72rem;
-    height: .72rem;
+    width: .68rem;
+    height: .68rem;
   }
 
   .desktop-density-filter-list {
-    gap: .04rem;
-    padding: .08rem 0 .02rem .22rem;
+    gap: .02rem;
+    padding: .06rem 0 .02rem .18rem;
   }
 
   .desktop-density-filter-link {
-    min-height: 2rem;
-    padding: .34rem .42rem;
-    font-size: .72rem;
+    min-height: 1.9rem;
+    padding: .3rem .38rem;
+    font-size: .7rem;
   }
 
   .desktop-density-row {
-    grid-template-columns: clamp(6.75rem, 7.5vw, 7.75rem) minmax(0, 1fr);
-    gap: clamp(.8rem, 1vw, 1rem);
-    padding: .9rem 0 1rem;
+    grid-template-columns: clamp(6.5rem, 6.8vw, 7.25rem) minmax(0, 1fr);
+    gap: clamp(.7rem, .9vw, .9rem);
+    padding: .82rem 0 .95rem;
   }
 
   .desktop-density-category-panel {
-    gap: .5rem;
-    padding-right: clamp(.65rem, .85vw, .8rem);
+    gap: .44rem;
+    padding-right: clamp(.55rem, .7vw, .7rem);
   }
 
   .desktop-density-category-panel h2 {
-    font-size: .7rem;
-    letter-spacing: .055em;
+    font-size: .68rem;
+    letter-spacing: .05em;
   }
 
   .desktop-density-category-grid {
     grid-template-columns: minmax(0, 1fr);
-    gap: .28rem;
+    gap: .24rem;
   }
 
   .desktop-density-category-grid .category-entry {
-    min-height: 2.3rem;
+    min-height: 2.2rem;
     height: auto;
-    padding: .34rem .4rem;
+    padding: .31rem .36rem;
   }
 
   .desktop-density-category-grid .category-entry-label {
-    font-size: .68rem;
+    font-size: .66rem;
   }
 
   .desktop-density-product-grid,
