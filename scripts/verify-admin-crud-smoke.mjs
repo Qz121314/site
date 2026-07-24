@@ -81,12 +81,9 @@ function sessionCookie(result) {
   return cookie;
 }
 
-function channelSlugFromList(html, channelName) {
-  const title = `<strong class="admin-entity-title" title="${channelName}">${channelName}</strong>`;
-  const position = html.indexOf(title);
-  if (position < 0) throw new Error(`Admin channel list did not include ${channelName}.`);
-  const match = html.slice(position, position + 700).match(/<span class="admin-entity-subtitle">\/([^<]+)<\/span>/u);
-  if (!match?.[1]) throw new Error(`Admin channel list did not expose the slug for ${channelName}.`);
+function channelSlugFromSettings(html) {
+  const match = html.match(/<div class="readonly-value"[^>]*>\/([^<]+)<\/div>/u);
+  if (!match?.[1]) throw new Error("Admin channel settings did not expose the automatic slug.");
   return match[1];
 }
 
@@ -182,7 +179,12 @@ try {
 
   const createdList = await request("/admin/channels", { cookie });
   expectStatus(createdList, 200, "Created channel list");
-  const channelSlug = channelSlugFromList(createdList.body, CHANNEL_NAME);
+  if (!createdList.body.includes(CHANNEL_NAME)) {
+    throw new Error("Created channel did not appear after refreshing the channel list.");
+  }
+  const createdSettings = await request(`/admin/channels/${encodeURIComponent(channelId)}`, { cookie });
+  expectStatus(createdSettings, 200, "Created channel settings");
+  const channelSlug = channelSlugFromSettings(createdSettings.body);
 
   const draftPublicPage = await request(`/${encodeURIComponent(channelSlug)}`);
   expectStatus(draftPublicPage, 404, "Draft channel public route");
