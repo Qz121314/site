@@ -321,6 +321,10 @@ async function fetchSnapshot(url: string, init?: RequestInit): Promise<PageSnaps
 async function navigate(urlValue: string | URL, options: AdminNavigationOptions): Promise<void> {
   const requestedUrl = canonicalUrl(urlValue);
   const cached = options.force ? null : readSnapshot(requestedUrl);
+  if (cached) {
+    activeController?.abort();
+    activeController = null;
+  }
   setLoading(true);
 
   try {
