@@ -8,6 +8,7 @@ type SiteUpdateRow = {
   hasPrivacy: number;
   hasDisclaimer: number;
 };
+type SitemapBatchRow = Partial<SiteUpdateRow & ChannelEntry & CategoryEntry & ProductEntry>;
 
 export type PublicSitemapEntries = {
   siteUpdatedAt: string;
@@ -18,8 +19,12 @@ export type PublicSitemapEntries = {
   products: ProductEntry[];
 };
 
+function readBatchRows<T>(result: { results: SitemapBatchRow[] } | undefined): T[] {
+  return (result?.results ?? []) as T[];
+}
+
 export async function loadPublicSitemapEntries(): Promise<PublicSitemapEntries> {
-  const [site, channels, categories, products] = await Promise.all([
+  const [siteResult, channelResult, categoryResult, productResult] = await env.DB.batch<SitemapBatchRow>([
     env.DB.prepare(
       `SELECT
          settings.updated_at AS updatedAt,
@@ -27,7 +32,7 @@ export async function loadPublicSitemapEntries(): Promise<PublicSitemapEntries> 
          length(trim(settings.disclaimer_content)) > 0 AS hasDisclaimer
        FROM site_settings settings
        WHERE settings.id = 1`,
-    ).first<SiteUpdateRow>(),
+    ),
     env.DB.prepare(
       `WITH
        category_updates AS (
@@ -97,7 +102,7 @@ export async function loadPublicSitemapEntries(): Promise<PublicSitemapEntries> 
        LEFT JOIN conversion_group_updates ON conversion_group_updates.channel_id = channel.id
        LEFT JOIN conversion_resource_updates ON conversion_resource_updates.channel_id = channel.id
        WHERE channel.status = 'published'`,
-    ).all<ChannelEntry>(),
+    ),
     env.DB.prepare(
       `WITH product_updates AS (
          SELECT category_id, MAX(updated_at) AS updated_at
@@ -136,7 +141,7 @@ export async function loadPublicSitemapEntries(): Promise<PublicSitemapEntries> 
            WHERE product.category_id = category.id
              AND product.status = 'published'
          )`,
-    ).all<CategoryEntry>(),
+    ),
     env.DB.prepare(
       `WITH resource_updates AS (
          SELECT group_id, MAX(updated_at) AS updated_at
@@ -169,16 +174,17 @@ export async function loadPublicSitemapEntries(): Promise<PublicSitemapEntries> 
        LEFT JOIN resource_updates ON resource_updates.group_id = conversion_group.id
        WHERE product.status = 'published'
          AND (product.category_id IS NULL OR category.status = 'published')`,
-    ).all<ProductEntry>(),
+    ),
   ]);
 
+  const site = readBatchRows<SiteUpdateRow>(siteResult)[0];
   const fallbackUpdatedAt = new Date(0).toISOString();
   return {
     siteUpdatedAt: site?.updatedAt ?? fallbackUpdatedAt,
     hasPrivacy: Boolean(site?.hasPrivacy),
     hasDisclaimer: Boolean(site?.hasDisclaimer),
-    channels: channels.results,
-    categories: categories.results,
-    products: products.results,
+    channels: readBatchRows<ChannelEntry>(channelResult),
+    categories: readBatchRows<CategoryEntry>(categoryResult),
+    products: readBatchRows<ProductEntry>(productResult),
   };
 }
