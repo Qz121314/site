@@ -14,6 +14,7 @@ test("desktop catalog presents section filters, categories, and products without
     mobileStyles,
     productCard,
     productLinks,
+    productDirectory,
     baseStyles,
     system,
   ] = await Promise.all([
@@ -27,6 +28,7 @@ test("desktop catalog presents section filters, categories, and products without
     readFile(new URL("../src/styles/public-category-navigation.css", import.meta.url), "utf8"),
     readFile(new URL("../src/components/public/ProductCard.astro", import.meta.url), "utf8"),
     readFile(new URL("../src/scripts/public-product-links.ts", import.meta.url), "utf8"),
+    readFile(new URL("../src/scripts/public-product-directory.ts", import.meta.url), "utf8"),
     readFile(new URL("../src/styles/public-base.css", import.meta.url), "utf8"),
     readFile(new URL("../src/styles/public-system.css", import.meta.url), "utf8"),
   ]);
@@ -66,6 +68,10 @@ test("desktop catalog presents section filters, categories, and products without
 
   assert.match(productCard, /class="visual-card-media-frame"/u);
   assert.match(productCard, /public-product-links/u);
+  assert.match(productDirectory, /frame\.className = "visual-card-media-frame"/u);
+  assert.match(productDirectory, /frame\.appendChild\(image\)/u);
+  assert.match(productDirectory, /frame\.appendChild\(placeholder\)/u);
+  assert.doesNotMatch(productLinks, /visual-card-media-frame/u);
   assert.match(consistencyStyles, /aspect-ratio: 4 \/ 5/u);
   assert.match(consistencyStyles, /height: 100%/u);
   assert.match(consistencyStyles, /object-fit: cover/u);
