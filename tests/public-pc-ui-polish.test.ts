@@ -2,33 +2,27 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-test("PC navigation forms a compact integrated logo rail and nested section menu", async () => {
-  const [entrypoint, source, density, sidebar] = await Promise.all([
+test("PC navigation uses one flat logo rail, section menu, and catalog surface", async () => {
+  const [entrypoint, source, sidebar] = await Promise.all([
     readFile(new URL("../src/styles/public-system.css", import.meta.url), "utf8"),
     readFile(new URL("../src/styles/public-desktop-ui-polish.css", import.meta.url), "utf8"),
-    readFile(new URL("../src/styles/public-desktop-density-finish.css", import.meta.url), "utf8"),
     readFile(new URL("../src/components/public/DesktopCatalogSidebarV2.astro", import.meta.url), "utf8"),
   ]);
 
-  assert.match(entrypoint, /@import "\.\/public-desktop-density-finish\.css";\s*$/u);
-  assert.match(source, /--desktop-nav-width/u);
+  assert.match(entrypoint, /@import "\.\/public-desktop-ui-polish\.css";\s*$/u);
+  assert.doesNotMatch(entrypoint, /public-desktop-density-finish/u);
+  assert.match(source, /--desktop-nav-width: clamp\(10\.5rem, 11vw, 11\.75rem\)/u);
   assert.match(source, /grid-template-areas: "brand search \. navigation"/u);
   assert.match(source, /grid-template-columns: var\(--desktop-nav-width\) minmax\(0, 1fr\)/u);
-  assert.match(source, /\.desktop-nav-section-1/u);
-  assert.match(source, /\.desktop-nav-section-4/u);
-  assert.match(source, /\.desktop-nav-section-link\[aria-current="page"\]/u);
-  assert.match(source, /\.desktop-nav-filter-list/u);
-  assert.match(source, /\.desktop-catalog-panel/u);
-  assert.match(source, /border-right: 1px solid #dfe2e6/u);
-
-  assert.match(density, /--desktop-nav-width: clamp\(8\.5rem, 8\.8vw, 9\.5rem\)/u);
-  assert.match(density, /\.desktop-nav-section-link,[\s\S]*?width: max-content/u);
-  assert.match(density, /\.desktop-nav-filter-list \{[\s\S]*?margin: 0;[\s\S]*?border-left: 0;/u);
-  assert.match(density, /\.desktop-nav-filter-link \{[\s\S]*?color: rgb\(var\(--section-accent\)\)/u);
-  assert.match(density, /grid-template-columns: clamp\(6\.75rem, 7\.2vw, 8rem\) minmax\(0, 1fr\)/u);
-  assert.match(density, /\.category-entry \{[\s\S]*?border: 1px solid #cbd2da;[\s\S]*?background: #ffffff;/u);
-  assert.match(density, /\.product-card \.visual-card-overlay \{[\s\S]*?position: absolute;[\s\S]*?bottom: 0;/u);
-  assert.match(density, /linear-gradient\(180deg, transparent 0%, rgb\(0 0 0 \/ \.72\) 100%\)/u);
+  assert.match(source, /border-right: 1px solid #e2e5e9/u);
+  assert.match(source, /border-radius: 0;/u);
+  assert.match(source, /box-shadow: none;/u);
+  assert.match(source, /\.desktop-nav-section-link\[aria-current="page"\][\s\S]*?border-left-color: rgb\(var\(--section-accent\)\)/u);
+  assert.match(source, /\.desktop-nav-filter-link\.is-active[\s\S]*?background: rgb\(var\(--section-accent\) \/ \.075\)/u);
+  assert.match(source, /grid-template-columns: var\(--desktop-category-width\) minmax\(0, 1fr\)/u);
+  assert.match(source, /\.category-entry \{[\s\S]*?border: 1px solid #d4d9e0;[\s\S]*?background: #ffffff;/u);
+  assert.match(source, /\.product-card \.visual-card-overlay \{[\s\S]*?position: absolute;[\s\S]*?bottom: 0;/u);
+  assert.match(source, /linear-gradient\(180deg, transparent 0%, rgb\(0 0 0 \/ \.7\) 100%\)/u);
 
   assert.match(sidebar, /active && filters\.length > 0/u);
   assert.doesNotMatch(sidebar, /<svg/u);
