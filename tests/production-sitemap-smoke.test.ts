@@ -19,6 +19,14 @@ test("production sitemap validation accepts canonical same-origin entries", () =
   assert.deepEqual(result, { ok: true, detail: "2 sitemap URLs" });
 });
 
+test("production sitemap validation accepts an empty initial sitemap", () => {
+  const result = validateSitemapResponse(response(), `<?xml version="1.0" encoding="UTF-8"?>
+    <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+    </urlset>`, origin);
+
+  assert.deepEqual(result, { ok: true, detail: "0 sitemap URLs" });
+});
+
 test("production sitemap validation rejects malformed metadata and foreign origins", () => {
   assert.equal(validateSitemapResponse(response(), `
     <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
