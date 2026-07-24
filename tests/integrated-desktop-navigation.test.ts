@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-test("desktop catalog uses an integrated premium logo, section, category, and product frame", async () => {
+test("desktop catalog keeps navigation sticky while products stay centered", async () => {
   const [
     channelPage,
     categoryPage,
@@ -29,6 +29,8 @@ test("desktop catalog uses an integrated premium logo, section, category, and pr
   assert.doesNotMatch(categoryPage, /loadPublicDesktopFilterMap/u);
 
   assert.match(sidebar, /site\.channels\.map/u);
+  assert.match(sidebar, /longestNavigationLabel/u);
+  assert.match(sidebar, /navigationStyle = `--desktop-nav-fit:/u);
   assert.match(sidebar, /const expanded = active && filters\.length > 0/u);
   assert.match(sidebar, /aria-expanded=\{expanded \? "true" : undefined\}/u);
   assert.match(sidebar, /data-desktop-filter-link/u);
@@ -41,17 +43,13 @@ test("desktop catalog uses an integrated premium logo, section, category, and pr
   assert.doesNotMatch(interaction, /scrollIntoView/u);
   assert.doesNotMatch(interaction, /IntersectionObserver/u);
 
-  assert.match(styles, /--desktop-nav-width: 12rem/u);
-  assert.match(styles, /--desktop-category-width: 11rem/u);
   assert.match(styles, /grid-template-areas: "brand search \. navigation"/u);
-  assert.match(styles, /\.desktop-nav-rail/u);
-  assert.match(styles, /grid-template-columns: var\(--desktop-nav-width\) minmax\(0, 1fr\)/u);
   assert.match(styles, /background:[\s\S]*?var\(--desktop-ink\)/u);
-  assert.match(styles, /border-radius: 1\.2rem/u);
-  assert.match(styles, /box-shadow:[\s\S]*?0 24px 64px/u);
-  assert.match(styles, /\.desktop-catalog-panel/u);
-  assert.match(styles, /grid-template-columns: var\(--desktop-category-width\) minmax\(0, 1fr\)/u);
-  assert.match(styles, /background:[\s\S]*?var\(--desktop-paper\)/u);
-  assert.match(hierarchy, /\.desktop-nav-filter-link \{[\s\S]*?min-height: 2\.55rem/u);
+  assert.match(hierarchy, /--desktop-content-width: 50rem/u);
+  assert.match(hierarchy, /grid-template-columns:[\s\S]*?minmax\(var\(--desktop-side-min\), 1fr\)[\s\S]*?minmax\(0, var\(--desktop-content-width\)\)[\s\S]*?minmax\(var\(--desktop-side-min\), 1fr\)/u);
+  assert.match(hierarchy, /\.desktop-nav-rail \{[\s\S]*?position: sticky;/u);
+  assert.match(hierarchy, /\.integrated-desktop-content \{[\s\S]*?grid-column: 2;/u);
+  assert.match(hierarchy, /\.integrated-desktop-catalog::after \{[\s\S]*?grid-column: 3;/u);
+  assert.match(hierarchy, /grid-template-columns: var\(--desktop-category-width\) minmax\(0, 1fr\)/u);
   assert.match(hierarchy, /\.desktop-catalog-heading \{[\s\S]*?position: absolute/u);
 });
