@@ -1,103 +1,53 @@
 ---
-import CategoryCard from "@/components/public/CategoryCard.astro";
 import type {
-  PublicCategory,
   PublicCategoryFilter,
   PublicChannel,
   PublicSiteShell,
 } from "@/lib/db/public";
 
-interface CategoryGroup {
-  filter: PublicCategoryFilter;
-  categories: PublicCategory[];
-}
-
 interface Props {
   site: PublicSiteShell;
   channel: PublicChannel;
-  categoryGroups: CategoryGroup[];
-  ungroupedCategories: PublicCategory[];
-  activeCategoryId?: string | null;
+  filtersByChannel: Record<string, PublicCategoryFilter[]>;
 }
 
-const {
-  site,
-  channel,
-  categoryGroups,
-  ungroupedCategories,
-  activeCategoryId = null,
-} = Astro.props;
-const channelColumns = Math.min(Math.max(site.channels.length, 1), 4);
-const filterColumns = Math.min(Math.max(categoryGroups.length, 1), 4);
+const { site, channel, filtersByChannel } = Astro.props;
 ---
 
-<aside class="desktop-catalog-sidebar" aria-label={`${channel.name} navigation`} data-category-section>
-  {site.channels.length > 1 && (
-    <nav
-      class="desktop-channel-switcher"
-      aria-label="Sections"
-      style={`--desktop-channel-columns: ${channelColumns}`}
-    >
-      {site.channels.map((item) => (
-        <a
-          class="desktop-channel-switcher-item"
-          href={`/${encodeURIComponent(item.slug)}`}
-          aria-current={item.slug === channel.slug ? "page" : undefined}
-        >
-          <span>{item.name}</span>
-        </a>
-      ))}
-    </nav>
-  )}
+<aside class="desktop-density-sidebar" aria-label="Section and filter navigation">
+  <nav class="desktop-density-navigation">
+    {site.channels.map((item) => {
+      const filters = filtersByChannel[item.id] ?? [];
+      const active = item.id === channel.id;
+      return (
+        <section class="desktop-density-section-group" aria-labelledby={`desktop-section-${item.id}`}>
+          <a
+            class="desktop-density-section-link"
+            id={`desktop-section-${item.id}`}
+            href={`/${encodeURIComponent(item.slug)}`}
+            aria-current={active ? "page" : undefined}
+          >
+            <span>{item.name}</span>
+            <svg viewBox="0 0 24 24" aria-hidden="true">
+              <path d="m9 18 6-6-6-6" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" />
+            </svg>
+          </a>
 
-  {categoryGroups.length > 0 && (
-    <nav
-      class="category-filter-bar desktop-catalog-filter-bar"
-      aria-label="Category filters"
-      style={`--category-filter-columns: ${filterColumns}`}
-    >
-      {categoryGroups.map(({ filter }) => (
-        <button
-          class="category-filter-button"
-          type="button"
-          data-category-group-filter={filter.id}
-          aria-pressed="false"
-        >
-          <span>{filter.name}</span>
-        </button>
-      ))}
-    </nav>
-  )}
-
-  <div class="desktop-category-groups">
-    {categoryGroups.map(({ filter, categories }) => (
-      <section class="desktop-category-group" data-category-group-row={filter.id} aria-labelledby={`desktop-category-group-${filter.id}`}>
-        <h2 class="desktop-category-group-title" id={`desktop-category-group-${filter.id}`}>{filter.name}</h2>
-        <div class="desktop-category-grid">
-          {categories.map((category) => (
-            <CategoryCard
-              category={category}
-              channelSlug={channel.slug}
-              active={category.id === activeCategoryId}
-            />
-          ))}
-        </div>
-      </section>
-    ))}
-
-    {ungroupedCategories.length > 0 && (
-      <section class="desktop-category-group" data-category-group-row="" aria-labelledby="desktop-category-group-other">
-        <h2 class="desktop-category-group-title" id="desktop-category-group-other">Categories</h2>
-        <div class="desktop-category-grid">
-          {ungroupedCategories.map((category) => (
-            <CategoryCard
-              category={category}
-              channelSlug={channel.slug}
-              active={category.id === activeCategoryId}
-            />
-          ))}
-        </div>
-      </section>
-    )}
-  </div>
+          {filters.length > 0 && (
+            <div class="desktop-density-filter-list">
+              {filters.map((filter) => (
+                <a
+                  class="desktop-density-filter-link"
+                  href={`/${encodeURIComponent(item.slug)}#filter-${encodeURIComponent(filter.slug)}`}
+                  data-desktop-filter-link={active ? filter.slug : undefined}
+                >
+                  <span>{filter.name}</span>
+                </a>
+              ))}
+            </div>
+          )}
+        </section>
+      );
+    })}
+  </nav>
 </aside>
