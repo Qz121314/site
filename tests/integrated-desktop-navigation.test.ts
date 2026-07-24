@@ -31,7 +31,7 @@ test("desktop catalog uses an integrated logo, section, category, and product fr
   assert.doesNotMatch(sidebar, /<svg/u);
 
   assert.match(row, /data-desktop-filter-panel/u);
-  assert.match(row, /hidden=!\{active\}/u);
+  assert.match(row, /hidden=\{!active\}/u);
   assert.match(interaction, /panel\.hidden = !active/u);
   assert.match(interaction, /history\.replaceState/u);
   assert.doesNotMatch(interaction, /scrollIntoView/u);
