@@ -114,13 +114,13 @@ export async function loadPublicSitemapEntries(): Promise<PublicSitemapEntries> 
        category_navigation AS (
          SELECT navigation_category.channel_id
          FROM category_filter_relations relation
+         INNER JOIN categories navigation_category
+           ON navigation_category.id = relation.category_id
+          AND navigation_category.status = 'published'
          INNER JOIN category_filters category_filter
            ON category_filter.id = relation.filter_id
           AND category_filter.channel_id = navigation_category.channel_id
           AND category_filter.status = 'enabled'
-         INNER JOIN categories navigation_category
-           ON navigation_category.id = relation.category_id
-          AND navigation_category.status = 'published'
          WHERE EXISTS (
            SELECT 1
            FROM products navigation_product
