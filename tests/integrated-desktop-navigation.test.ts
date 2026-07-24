@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-test("desktop catalog uses an integrated logo, section, category, and product frame", async () => {
+test("desktop catalog uses an integrated premium logo, section, category, and product frame", async () => {
   const [
     channelPage,
     categoryPage,
@@ -37,14 +37,15 @@ test("desktop catalog uses an integrated logo, section, category, and product fr
   assert.doesNotMatch(interaction, /scrollIntoView/u);
   assert.doesNotMatch(interaction, /IntersectionObserver/u);
 
-  assert.match(styles, /--desktop-nav-width/u);
-  assert.match(styles, /--desktop-category-width/u);
+  assert.match(styles, /--desktop-nav-width: 12rem/u);
+  assert.match(styles, /--desktop-category-width: 11rem/u);
   assert.match(styles, /grid-template-areas: "brand search \. navigation"/u);
   assert.match(styles, /\.desktop-nav-rail/u);
   assert.match(styles, /grid-template-columns: var\(--desktop-nav-width\) minmax\(0, 1fr\)/u);
-  assert.match(styles, /background:[\s\S]*?linear-gradient\([\s\S]*?#f0f2f5/u);
+  assert.match(styles, /background:[\s\S]*?var\(--desktop-ink\)/u);
+  assert.match(styles, /border-radius: 1\.2rem/u);
+  assert.match(styles, /box-shadow:[\s\S]*?0 24px 64px/u);
   assert.match(styles, /\.desktop-catalog-panel/u);
   assert.match(styles, /grid-template-columns: var\(--desktop-category-width\) minmax\(0, 1fr\)/u);
-  assert.match(styles, /border-radius: 0;/u);
-  assert.match(styles, /box-shadow: none;/u);
+  assert.match(styles, /background:[\s\S]*?var\(--desktop-paper\)/u);
 });
