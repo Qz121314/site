@@ -1,6 +1,6 @@
 import type { APIRoute } from "astro";
 import { loadPublicSitemapEntries } from "@/lib/db/sitemap";
-import { PUBLIC_EDGE_CACHE_SECONDS } from "@/lib/public/cache-policy";
+import { PUBLIC_DISCOVERY_EDGE_CACHE_SECONDS } from "@/lib/public/cache-policy";
 import { resolvePublicOrigin } from "@/lib/public/origin";
 import { normalizeSitemapLastModified } from "@/lib/public/sitemap";
 
@@ -56,7 +56,7 @@ export const GET: APIRoute = async ({ request, url }) => {
     headers: {
       "Content-Type": "application/xml; charset=utf-8",
       "Cache-Control": "public, max-age=0, must-revalidate",
-      "Cloudflare-CDN-Cache-Control": `public, max-age=${PUBLIC_EDGE_CACHE_SECONDS}, must-revalidate`,
+      "Cloudflare-CDN-Cache-Control": `public, max-age=${PUBLIC_DISCOVERY_EDGE_CACHE_SECONDS}, must-revalidate`,
     },
   });
 };
