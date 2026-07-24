@@ -7,11 +7,11 @@ document.addEventListener("click", (event) => {
 
   const control = event.target.closest<HTMLElement>('a[href], button[type="submit"]');
   if (!control) return;
-  if (control.closest("[data-hero-track]") || control.matches('[target="_blank"], [download]')) return;
+  if (control.matches('[target="_blank"], [download]')) return;
 
   const now = performance.now();
   const lastActivation = Number(control.dataset.lastActivation || "0");
-  if (now - lastActivation < ACTIVATION_WINDOW_MS) {
+  if (lastActivation > 0 && now - lastActivation < ACTIVATION_WINDOW_MS) {
     event.preventDefault();
     event.stopPropagation();
     return;
