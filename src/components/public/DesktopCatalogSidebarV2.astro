@@ -18,9 +18,13 @@ const {
   filters,
   activeFilterSlug = filters[0]?.slug ?? null,
 } = Astro.props;
+const longestNavigationLabel = [...site.channels.map((item) => item.name), ...filters.map((item) => item.name)]
+  .reduce((longest, label) => Math.max(longest, Array.from(label.trim()).length), 0);
+const navigationCharacterWidth = Math.min(Math.max(longestNavigationLabel + 5, 13), 24);
+const navigationStyle = `--desktop-nav-fit: ${navigationCharacterWidth}ch`;
 ---
 
-<aside class="desktop-nav-rail" aria-label="Section navigation">
+<aside class="desktop-nav-rail" aria-label="Section navigation" style={navigationStyle}>
   <nav class="desktop-nav-menu">
     {site.channels.map((item, index) => {
       const active = item.id === channel.id;
