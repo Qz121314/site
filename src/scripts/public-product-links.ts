@@ -2,18 +2,7 @@ export {};
 
 const desktopMedia = window.matchMedia("(min-width: 1100px)");
 
-function normalizeProductCard(link: HTMLAnchorElement): void {
-  const existingFrame = link.querySelector<HTMLElement>(":scope > .visual-card-media-frame");
-  if (!existingFrame) {
-    const media = link.querySelector<HTMLElement>(":scope > .visual-card-media, :scope > .visual-card-placeholder");
-    if (media) {
-      const frame = document.createElement("span");
-      frame.className = "visual-card-media-frame";
-      link.insertBefore(frame, media);
-      frame.appendChild(media);
-    }
-  }
-
+function syncProductLink(link: HTMLAnchorElement): void {
   if (desktopMedia.matches) {
     link.target = "_blank";
     link.rel = "noopener";
@@ -25,15 +14,15 @@ function normalizeProductCard(link: HTMLAnchorElement): void {
   }
 }
 
-function syncProductCards(root: ParentNode = document): void {
-  root.querySelectorAll<HTMLAnchorElement>("[data-product-card]").forEach(normalizeProductCard);
+function syncProductLinks(root: ParentNode = document): void {
+  root.querySelectorAll<HTMLAnchorElement>("[data-product-card]").forEach(syncProductLink);
 }
 
-syncProductCards();
-desktopMedia.addEventListener("change", () => syncProductCards());
+syncProductLinks();
+desktopMedia.addEventListener("change", () => syncProductLinks());
 document.addEventListener("public:products-appended", (event) => {
   const detail = event instanceof CustomEvent
     ? event.detail as { grid?: ParentNode } | undefined
     : undefined;
-  syncProductCards(detail?.grid ?? document);
+  syncProductLinks(detail?.grid ?? document);
 });
