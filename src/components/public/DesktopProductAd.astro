@@ -1,0 +1,46 @@
+---
+interface Props {
+  channelSlug: string;
+}
+
+const { channelSlug } = Astro.props;
+const contextJson = JSON.stringify({ channelSlug }).replaceAll("<", "\\u003c");
+---
+
+<script is:inline type="application/json" data-product-detail-ad-context set:html={contextJson}></script>
+<script>
+  const PRODUCT_DETAIL_AD_MIN_WIDTH = 1400;
+  const PRODUCT_DETAIL_AD_DELAY_MS = 2500;
+
+  function scheduleProductDetailAd(): void {
+    const context = document.querySelector<HTMLScriptElement>("script[data-product-detail-ad-context]");
+    const slot = document.querySelector<HTMLElement>("[data-product-detail-ad-slot]");
+    if (!context || !slot) return;
+    if (window.innerWidth < PRODUCT_DETAIL_AD_MIN_WIDTH) {
+      context.dataset.productDetailAdState = "viewport-skipped";
+      return;
+    }
+    if (context.dataset.productDetailAdState) return;
+    context.dataset.productDetailAdState = "deferred";
+
+    window.setTimeout(() => {
+      if (window.innerWidth < PRODUCT_DETAIL_AD_MIN_WIDTH) {
+        context.dataset.productDetailAdState = "viewport-skipped";
+        return;
+      }
+      void import("@/scripts/public-product-detail-ad").catch((error) => {
+        context.dataset.productDetailAdState = "script-failed";
+        console.error(JSON.stringify({
+          event: "product_detail_ad_script_load_failed",
+          error: String(error),
+        }));
+      });
+    }, PRODUCT_DETAIL_AD_DELAY_MS);
+  }
+
+  if (document.readyState === "loading") {
+    document.addEventListener("DOMContentLoaded", scheduleProductDetailAd, { once: true });
+  } else {
+    scheduleProductDetailAd();
+  }
+</script>
