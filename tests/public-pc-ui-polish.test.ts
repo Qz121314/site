@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-test("PC navigation uses one flat logo rail, section menu, and catalog surface", async () => {
+test("PC navigation uses one premium brand, navigation, category, and product frame", async () => {
   const [entrypoint, source, editorial, sidebar] = await Promise.all([
     readFile(new URL("../src/styles/public-system.css", import.meta.url), "utf8"),
     readFile(new URL("../src/styles/public-desktop-ui-polish.css", import.meta.url), "utf8"),
@@ -12,20 +12,23 @@ test("PC navigation uses one flat logo rail, section menu, and catalog surface",
 
   assert.match(entrypoint, /@import "\.\/public-desktop-ui-polish\.css";\s*$/u);
   assert.doesNotMatch(entrypoint, /public-desktop-density-finish/u);
-  assert.match(source, /--desktop-nav-width: clamp\(10\.5rem, 11vw, 11\.75rem\)/u);
+  assert.match(source, /--public-width: 90rem/u);
+  assert.match(source, /--desktop-nav-width: 12rem/u);
+  assert.match(source, /--desktop-category-width: 11rem/u);
+  assert.match(source, /--desktop-accent: #b69058/u);
   assert.match(source, /grid-template-areas: "brand search \. navigation"/u);
   assert.match(source, /grid-template-columns: var\(--desktop-nav-width\) minmax\(0, 1fr\)/u);
-  assert.match(source, /border-right: 1px solid #e2e5e9/u);
-  assert.match(source, /border-radius: 0;/u);
-  assert.match(source, /box-shadow: none;/u);
+  assert.match(source, /border-radius: 1\.2rem/u);
+  assert.match(source, /0 24px 64px rgb\(58 44 28 \/ \.12\)/u);
+  assert.match(source, /background:[\s\S]*?var\(--desktop-ink\)/u);
   assert.match(source, /\.desktop-nav-section-link\[aria-current="page"\][\s\S]*?border-left-color: rgb\(var\(--section-accent\)\)/u);
-  assert.match(source, /\.desktop-nav-filter-link\.is-active[\s\S]*?background: rgb\(var\(--section-accent\) \/ \.075\)/u);
+  assert.match(source, /\.desktop-nav-filter-link\.is-active::before[\s\S]*?background: rgb\(var\(--section-accent\)\)/u);
   assert.match(source, /grid-template-columns: var\(--desktop-category-width\) minmax\(0, 1fr\)/u);
-  assert.match(source, /\.category-entry \{[\s\S]*?border: 1px solid #d4d9e0;[\s\S]*?background: #ffffff;/u);
-  assert.match(source, /\.product-card \.visual-card-overlay \{[\s\S]*?position: absolute;[\s\S]*?bottom: 0;/u);
-  assert.match(source, /linear-gradient\(180deg, transparent 0%, rgb\(0 0 0 \/ \.7\) 100%\)/u);
+  assert.match(source, /\.category-entry \{[\s\S]*?border-radius: \.65rem;[\s\S]*?background: transparent;/u);
+  assert.match(source, /\.product-card \{[\s\S]*?max-width: 13\.75rem;[\s\S]*?border-radius: \.9rem;/u);
+  assert.match(source, /linear-gradient\(180deg, transparent 0%, rgb\(13 11 9 \/ \.18\) 28%, rgb\(13 11 9 \/ \.88\) 100%\)/u);
+  assert.match(source, /\.public-footer \{[\s\S]*?background: var\(--desktop-ink\)/u);
   assert.match(editorial, /\.public-body:has\(\.integrated-desktop-catalog\) \.public-main \{[\s\S]*?flex: 0 0 auto;/u);
-  assert.match(editorial, /\.public-body:has\(\.integrated-desktop-catalog\) \.public-footer \{[\s\S]*?margin-top: 0;/u);
 
   assert.match(sidebar, /active && filters\.length > 0/u);
   assert.doesNotMatch(sidebar, /<svg/u);
