@@ -2,6 +2,7 @@
 import PublicLayout from "@/layouts/PublicLayout.astro";
 import AffiliateAds from "@/components/public/AffiliateAds.astro";
 import CategoryCard from "@/components/public/CategoryCard.astro";
+import DesktopCatalogRow from "@/components/public/DesktopCatalogRow.astro";
 import DesktopCatalogSidebar from "@/components/public/DesktopCatalogSidebar.astro";
 import ProductDirectory from "@/components/public/ProductDirectory.astro";
 import {
@@ -10,7 +11,12 @@ import {
   loadPublicCategoryFilters,
   loadPublicProducts,
   loadPublicSiteShell,
+  type PublicCategoryFilter,
 } from "@/lib/db/public";
+import {
+  loadPublicDesktopFilterMap,
+  loadPublicProductPreview,
+} from "@/lib/db/public-desktop";
 import { buildEffectiveCategoryGroups } from "@/lib/public/category-navigation";
 import { readPublicPage } from "@/lib/public/pagination";
 
@@ -23,12 +29,13 @@ const site = await loadPublicSiteShell();
 const channel = findPublicChannel(site, channelSlug);
 const canLoadPage = Boolean(channel && pageInput.valid);
 
-const [filters, loadedCategories] = canLoadPage && channel
+const [filters, loadedCategories, filtersByChannel] = canLoadPage && channel
   ? await Promise.all([
       loadPublicCategoryFilters(channel.id),
       loadPublicCategories(channel.id),
+      loadPublicDesktopFilterMap(site.channels.map((item) => item.id)),
     ])
-  : [[], []];
+  : [[], [], {}];
 const categories = loadedCategories;
 const categoryGroups = buildEffectiveCategoryGroups(filters, categories);
 const activeFilters = categoryGroups.map(({ filter }) => filter);
@@ -40,7 +47,7 @@ const selectedCategory = !hasCategoryNavigation && requestedCategorySlug
   : null;
 const categorySelectionValid = hasCategoryNavigation || !requestedCategorySlug || Boolean(selectedCategory);
 const ungroupedCategories = categories.filter((category) => category.filterIds.length === 0);
-const productPage = canLoadPage && channel && categorySelectionValid
+const productPage = canLoadPage && channel && !hasCategoryNavigation && categorySelectionValid
   ? await loadPublicProducts({
       channelId: channel.id,
       baseUrl: site.r2PublicBaseUrl,
@@ -48,7 +55,40 @@ const productPage = canLoadPage && channel && categorySelectionValid
       categoryId: selectedCategory?.id ?? null,
     })
   : { products: [], page: pageInput.page, hasMore: false };
-const pageOutOfRange = canLoadPage && pageInput.page > 1 && productPage.products.length === 0;
+
+const desktopGroupInputs = hasCategoryNavigation && pageInput.page === 1
+  ? [
+      ...categoryGroups,
+      ...(ungroupedCategories.length > 0
+        ? [{
+            filter: {
+              id: "desktop-ungrouped",
+              name: "Categories",
+              slug: "categories",
+            } satisfies PublicCategoryFilter,
+            categories: ungroupedCategories,
+          }]
+        : []),
+    ]
+  : [];
+const desktopGroups = channel
+  ? await Promise.all(desktopGroupInputs.map(async ({ filter, categories: groupedCategories }) => ({
+      filter,
+      categories: groupedCategories,
+      products: await loadPublicProductPreview({
+        channelId: channel.id,
+        categoryIds: groupedCategories.map((category) => category.id),
+        baseUrl: site.r2PublicBaseUrl,
+        limit: 8,
+      }),
+    })))
+  : [];
+
+const pageOutOfRange = canLoadPage && (
+  hasCategoryNavigation
+    ? pageInput.page > 1
+    : pageInput.page > 1 && productPage.products.length === 0
+);
 const pageAvailable = canLoadPage && categorySelectionValid && !pageOutOfRange;
 
 if (!pageAvailable) Astro.response.status = 404;
@@ -179,26 +219,27 @@ const adSurface = hasCategoryNavigation
         </section>
       )}
 
-      {hasCategoryNavigation && (
-        <section class="desktop-catalog-workspace desktop-channel-catalog" aria-label={`${channel.name} catalog`}>
+      {hasCategoryNavigation && pageInput.page === 1 && (
+        <section
+          class="desktop-density-workspace desktop-channel-catalog"
+          aria-label={`${channel.name} catalog`}
+          data-desktop-density-workspace
+        >
           <DesktopCatalogSidebar
             site={site}
             channel={channel}
-            categoryGroups={categoryGroups}
-            ungroupedCategories={ungroupedCategories}
+            filtersByChannel={filtersByChannel}
           />
-          <div class="desktop-catalog-main">
-            <header class="desktop-catalog-heading">
-              <span>Product directory</span>
-              <h1>{channel.name}</h1>
-              {pageInput.page > 1 && <small>Page {pageInput.page}</small>}
-            </header>
-            <ProductDirectory
-              channelSlug={channel.slug}
-              page={productPage}
-              priorityCount={4}
-              emptyMessage="No published products are available in this channel."
-            />
+          <div class="desktop-density-content">
+            {desktopGroups.map(({ filter, categories: groupedCategories, products }, index) => (
+              <DesktopCatalogRow
+                filter={filter}
+                categories={groupedCategories}
+                products={products}
+                channelSlug={channel.slug}
+                priorityCount={index === 0 ? 4 : 0}
+              />
+            ))}
           </div>
         </section>
       )}
@@ -232,3 +273,4 @@ const adSurface = hasCategoryNavigation
 </PublicLayout>
 
 <script>import "@/scripts/public-category-filters";</script>
+<script>import "@/scripts/public-desktop-workspace";</script>
