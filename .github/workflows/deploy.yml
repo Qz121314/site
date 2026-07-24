@@ -42,6 +42,15 @@ jobs:
       - name: 初始化诊断目录
         run: mkdir -p ci-logs
 
+      - name: 输出最近生产失败记录
+        if: github.event_name == 'pull_request'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          echo '--- latest deployment status comment ---'
+          gh api "repos/$GITHUB_REPOSITORY/issues/3/comments?per_page=100&page=2" --jq '.[-1].body'
+          echo '--- end deployment status comment ---'
+
       - name: 安装依赖
         shell: bash
         run: |
