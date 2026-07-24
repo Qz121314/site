@@ -17,25 +17,29 @@ const { product, channelSlug, priority = false } = Astro.props;
   data-load-surface={priority ? undefined : ""}
   aria-busy={product.coverUrl && !priority ? "true" : undefined}
 >
-  {product.coverUrl ? (
-    <img
-      class="visual-card-media"
-      src={product.coverUrl}
-      alt=""
-      width={product.coverWidth ?? undefined}
-      height={product.coverHeight ?? undefined}
-      loading={priority ? "eager" : "lazy"}
-      decoding="async"
-      fetchpriority={priority ? "high" : "auto"}
-      draggable="false"
-      data-load-reveal={priority ? undefined : ""}
-      onload="this.classList.add('is-loaded');this.closest('[data-load-surface]')?.classList.add('is-loaded');this.closest('[data-load-surface]')?.removeAttribute('aria-busy')"
-      onerror="this.classList.add('is-load-error');this.closest('[data-load-surface]')?.classList.add('is-load-error');this.closest('[data-load-surface]')?.removeAttribute('aria-busy')"
-    />
-  ) : (
-    <span class="visual-card-placeholder" aria-hidden="true">{product.title.trim().slice(0, 1).toUpperCase() || "P"}</span>
-  )}
+  <span class="visual-card-media-frame">
+    {product.coverUrl ? (
+      <img
+        class="visual-card-media"
+        src={product.coverUrl}
+        alt=""
+        width={product.coverWidth ?? undefined}
+        height={product.coverHeight ?? undefined}
+        loading={priority ? "eager" : "lazy"}
+        decoding="async"
+        fetchpriority={priority ? "high" : "auto"}
+        draggable="false"
+        data-load-reveal={priority ? undefined : ""}
+        onload="this.classList.add('is-loaded');this.closest('[data-load-surface]')?.classList.add('is-loaded');this.closest('[data-load-surface]')?.removeAttribute('aria-busy')"
+        onerror="this.classList.add('is-load-error');this.closest('[data-load-surface]')?.classList.add('is-load-error');this.closest('[data-load-surface]')?.removeAttribute('aria-busy')"
+      />
+    ) : (
+      <span class="visual-card-placeholder" aria-hidden="true">{product.title.trim().slice(0, 1).toUpperCase() || "P"}</span>
+    )}
+  </span>
   <span class="visual-card-overlay">
     <span class="visual-card-title">{product.title}</span>
   </span>
 </a>
+
+<script>import "@/scripts/public-product-links";</script>
