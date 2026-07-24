@@ -258,23 +258,160 @@ const structuredData = product && canonical
     align-items: center;
     justify-content: center;
     overflow: hidden;
+    padding: .8rem 1rem;
+    border-radius: 1rem;
+    transform-origin: center;
   }
 
-  .product-cta-button::before {
+  .product-cta-button::before,
+  .product-cta-resolved::before {
     position: absolute;
     z-index: -1;
     inset: 0;
-    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .22), transparent);
     content: "";
-    transform: translateX(-110%);
-    transition: transform .45s ease;
-  }
-
-  .product-cta-button:hover::before {
-    transform: translateX(110%);
+    background: linear-gradient(112deg, rgba(255, 255, 255, .2), transparent 34%, transparent 67%, rgba(255, 255, 255, .09));
+    pointer-events: none;
   }
 
   .product-cta-label {
+    min-width: 0;
+    overflow: hidden;
+    font-variant-numeric: tabular-nums;
+    font-weight: 800;
+    letter-spacing: .075em;
+    text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .product-cta-button[aria-busy="true"] {
+    cursor: progress;
+    filter: saturate(.82) brightness(.98);
+  }
+
+  .product-cta-button[hidden],
+  .product-cta-resolved[hidden],
+  .product-cta-action-kind[hidden] {
+    display: none;
+  }
+
+  .product-cta-resolved {
     position: relative;
+    isolation: isolate;
+    display: grid;
+    min-height: 3.65rem;
+    grid-template-columns: minmax(0, 1fr) auto;
+    align-items: stretch;
+    overflow: hidden;
+    border: 1px solid var(--brand-line);
+    border-radius: 1rem;
+    color: #fff;
+    background: var(--brand-soft);
+    box-shadow:
+      inset 0 1px 0 rgba(255, 255, 255, .24),
+      0 12px 30px rgba(0, 0, 0, .24);
+    transform-origin: center;
+  }
+
+  .product-cta-open {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: 1.15rem minmax(0, 1fr) 1.05rem;
+    align-items: center;
+    gap: .62rem;
+    padding: .72rem .9rem;
+    color: inherit;
+    text-decoration: none;
+  }
+
+  .product-cta-action-kind,
+  .product-cta-action-kind svg,
+  .product-cta-open-arrow,
+  .product-cta-copy-button svg {
+    width: 1.05rem;
+    height: 1.05rem;
+    flex: 0 0 auto;
+  }
+
+  .product-cta-resolved-value {
+    min-width: 0;
+    overflow: hidden;
+    font-size: .84rem;
+    font-variant-numeric: tabular-nums;
+    font-weight: 800;
+    letter-spacing: .02em;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .product-cta-open-arrow {
+    opacity: .82;
+  }
+
+  .product-cta-copy-button {
+    display: flex;
+    min-width: 5.75rem;
+    align-items: center;
+    justify-content: center;
+    gap: .42rem;
+    border: 0;
+    border-left: 1px solid rgba(255, 255, 255, .18);
+    padding: .7rem .82rem;
+    color: #fff;
+    background: rgba(255, 255, 255, .075);
+    cursor: pointer;
+    font: inherit;
+    font-size: .73rem;
+    font-weight: 800;
+    letter-spacing: .035em;
+    text-transform: uppercase;
+    white-space: nowrap;
+  }
+
+  .product-cta-open:hover,
+  .product-cta-copy-button:hover {
+    background: rgba(255, 255, 255, .075);
+  }
+
+  .product-cta-open:active,
+  .product-cta-copy-button:active {
+    background: rgba(255, 255, 255, .12);
+  }
+
+  .product-cta-resolved.is-resolved {
+    animation: product-cta-grow 220ms cubic-bezier(.2, .8, .25, 1);
+  }
+
+  @keyframes product-cta-grow {
+    0% { transform: scale(.985); opacity: .72; }
+    60% { transform: scale(1.01); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  @media (max-width: 420px) {
+    .product-cta-button {
+      padding-inline: .8rem;
+      font-size: .9rem;
+    }
+
+    .product-cta-open {
+      gap: .48rem;
+      padding-inline: .72rem;
+    }
+
+    .product-cta-resolved-value {
+      font-size: .78rem;
+    }
+
+    .product-cta-copy-button {
+      min-width: 5rem;
+      gap: .32rem;
+      padding-inline: .62rem;
+      font-size: .68rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .product-cta-resolved.is-resolved { animation: none; }
   }
 </style>
