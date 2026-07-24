@@ -15,6 +15,7 @@ import {
 import { loadPublicDesktopFilterMap } from "@/lib/db/public-desktop";
 import { buildEffectiveCategoryGroups } from "@/lib/public/category-navigation";
 import { publicPageCanonical, readPublicPage } from "@/lib/public/pagination";
+import { truncateText } from "@/lib/public/seo";
 
 export const prerender = false;
 
@@ -76,11 +77,14 @@ const categoryUrl = pageAvailable && channel && category
 const canonical = categoryUrl
   ? publicPageCanonical(new URL(categoryUrl), pageInput.page)
   : null;
-const pageTitle = category
-  ? pageInput.page > 1 ? `${category.name} — Page ${pageInput.page}` : category.name
+const pageTitle = category && channel
+  ? `${category.name} — ${channel.name}${pageInput.page > 1 ? ` — Page ${pageInput.page}` : ""}`
   : "Page not found";
-const description = pageAvailable && category
-  ? `Browse ${category.name} in ${channel?.name ?? site.siteName}${pageInput.page > 1 ? ` — page ${pageInput.page}` : ""}.`
+const description = pageAvailable && category && channel
+  ? truncateText([
+      `Browse ${category.name} in ${channel.name}${pageInput.page > 1 ? ` — page ${pageInput.page}` : ""}.`,
+      site.siteDescription,
+    ].filter(Boolean).join(" "), 160)
   : "The requested category page could not be found.";
 const channelUrl = pageAvailable && channel
   ? new URL(`/${encodeURIComponent(channel.slug)}`, Astro.url.origin).href
