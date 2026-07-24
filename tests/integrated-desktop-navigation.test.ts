@@ -38,9 +38,13 @@ test("desktop catalog uses an integrated logo, section, category, and product fr
   assert.doesNotMatch(interaction, /IntersectionObserver/u);
 
   assert.match(styles, /--desktop-nav-width/u);
+  assert.match(styles, /--desktop-category-width/u);
   assert.match(styles, /grid-template-areas: "brand search \. navigation"/u);
   assert.match(styles, /\.desktop-nav-rail/u);
   assert.match(styles, /grid-template-columns: var\(--desktop-nav-width\) minmax\(0, 1fr\)/u);
+  assert.match(styles, /background:[\s\S]*?linear-gradient\([\s\S]*?#f0f2f5/u);
   assert.match(styles, /\.desktop-catalog-panel/u);
-  assert.match(styles, /grid-template-columns: clamp\(8\.5rem, 10vw, 10\.5rem\) minmax\(0, 1fr\)/u);
+  assert.match(styles, /grid-template-columns: var\(--desktop-category-width\) minmax\(0, 1fr\)/u);
+  assert.match(styles, /border-radius: 0;/u);
+  assert.match(styles, /box-shadow: none;/u);
 });
