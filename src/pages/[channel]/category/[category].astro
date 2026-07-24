@@ -51,7 +51,7 @@ if (channel && category && !hasCategoryNavigation) {
   const target = new URL(`/${encodeURIComponent(channel.slug)}`, Astro.url.origin);
   target.searchParams.set("category", category.slug);
   if (pageInput.page > 1) target.searchParams.set("page", String(pageInput.page));
-  return Astro.redirect(`${target.pathname}${target.search}`, 301);
+  return Astro.redirect(`${target.pathname}${target.search}`, 302);
 }
 
 const productPage = channel && category
