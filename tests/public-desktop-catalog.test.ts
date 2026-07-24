@@ -11,6 +11,7 @@ test("desktop catalog integrates sections, active filters, categories, and produ
     interaction,
     desktopQueries,
     integratedStyles,
+    hierarchyStyles,
     consistencyStyles,
     mobileStyles,
     productCard,
@@ -26,6 +27,7 @@ test("desktop catalog integrates sections, active filters, categories, and produ
     readFile(new URL("../src/scripts/public-desktop-workspace.ts", import.meta.url), "utf8"),
     readFile(new URL("../src/lib/db/public-desktop.ts", import.meta.url), "utf8"),
     readFile(new URL("../src/styles/public-desktop-ui-polish.css", import.meta.url), "utf8"),
+    readFile(new URL("../src/styles/public-desktop-navigation-hierarchy.css", import.meta.url), "utf8"),
     readFile(new URL("../src/styles/public-product-card-consistency.css", import.meta.url), "utf8"),
     readFile(new URL("../src/styles/public-category-navigation.css", import.meta.url), "utf8"),
     readFile(new URL("../src/components/public/ProductCard.astro", import.meta.url), "utf8"),
@@ -50,7 +52,8 @@ test("desktop catalog integrates sections, active filters, categories, and produ
   assert.match(category, /active=\{item\.id === category\.id\}/u);
 
   assert.match(sidebar, /site\.channels\.map/u);
-  assert.match(sidebar, /active && filters\.length > 0/u);
+  assert.match(sidebar, /const expanded = active && filters\.length > 0/u);
+  assert.match(sidebar, /aria-expanded=\{expanded \? "true" : undefined\}/u);
   assert.match(sidebar, /data-desktop-filter-link/u);
   assert.match(row, /class="desktop-density-category-panel"/u);
   assert.match(row, /class="desktop-density-product-panel"/u);
@@ -74,6 +77,9 @@ test("desktop catalog integrates sections, active filters, categories, and produ
   assert.match(integratedStyles, /\.product-card \{[\s\S]*?max-width: 13\.75rem/u);
   assert.match(integratedStyles, /\.product-card \.visual-card-overlay \{[\s\S]*?position: absolute/u);
   assert.match(integratedStyles, /--desktop-accent: #b69058/u);
+  assert.match(hierarchyStyles, /\.desktop-nav-section-link::after[\s\S]*?content: "›"/u);
+  assert.match(hierarchyStyles, /\.desktop-nav-filter-link\.is-active[\s\S]*?border-left-color: rgb\(var\(--section-accent\)\)/u);
+  assert.match(hierarchyStyles, /\.desktop-catalog-heading \{[\s\S]*?clip: rect\(0 0 0 0\)/u);
 
   assert.match(productCard, /class="visual-card-media-frame"/u);
   assert.match(productCard, /public-product-links/u);
@@ -93,6 +99,7 @@ test("desktop catalog integrates sections, active filters, categories, and produ
   assert.match(mobileStyles, /height: 3\.25rem/u);
   assert.match(system, /@import "\.\/public-desktop-catalog\.css";/u);
   assert.match(system, /@import "\.\/public-desktop-ui-polish\.css";/u);
+  assert.match(system, /@import "\.\/public-desktop-navigation-hierarchy\.css";/u);
   assert.match(system, /@import "\.\/public-product-card-consistency\.css";/u);
   assert.doesNotMatch(system, /public-desktop-density-finish/u);
 
