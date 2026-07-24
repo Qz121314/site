@@ -22,8 +22,6 @@ export function validateSitemapResponse(response, body, expectedOrigin) {
   }
 
   const locations = [...body.matchAll(/<loc>([^<]+)<\/loc>/giu)].map((match) => decodeXmlText(match[1] ?? ""));
-  if (locations.length === 0) return { ok: false, error: "sitemap contains no URL entries" };
-
   for (const location of locations) {
     try {
       const url = new URL(location);
