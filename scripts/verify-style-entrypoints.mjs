@@ -63,6 +63,10 @@ for (const supersededPublicLayer of [
   assert(!publicSystem.includes(supersededPublicLayer), `public-system.css must not load superseded layer ${supersededPublicLayer}.`);
 }
 
+assert(!publicDesktop.includes(".hero-"), "Desktop styles must not retain selectors for the removed Hero carousel.");
+assert(!publicDesktop.includes(".category-group-label"), "Desktop styles must not retain the removed category group button label.");
+assert(!publicDesktop.includes(".category-group-filter"), "Desktop styles must not retain the removed category group button wrapper.");
+
 assert(publicCommerce.includes("--canvas-0: #ffffff"), "The public commerce theme must use the neutral light canvas.");
 assert(publicCommerce.includes("position: fixed !important"), "The mobile detail CTA must remain attached to the viewport.");
 assert(publicAds.includes(".affiliate-ad-modal-backdrop"), "The public ad layer must include an isolated modal presentation.");
