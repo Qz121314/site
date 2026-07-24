@@ -85,6 +85,11 @@ test("public advertising defers the script request, retries uploaded media, and 
   assert.match(publicAds, /fallbackImageUrl/u);
   assert.match(publicAds, /loadPublicAdvertisementImage/u);
   assert.match(publicAds, /advertisement\.image_asset_id/u);
+  assert.match(publicAds, /PUBLIC_AD_DISPLAY_TYPES\.map/u);
+  assert.match(publicAds, /env\.DB\.batch<AdvertisementRow>/u);
+  assert.match(publicAds, /PUBLIC_AD_CANDIDATE_LIMIT_PER_TYPE - \(firstResults\[index\]\?\.results\.length \?\? 0\)/u);
+  assert.match(publicAds, /wrappedRequests\.length > 0/u);
+  assert.doesNotMatch(publicAds, /Promise\.all\(\[\s*loadCandidateRows/u);
   assert.match(mediaEndpoint, /env\.MEDIA_BUCKET\.get\(image\.object_key\)/u);
   assert.match(mediaEndpoint, /Cloudflare-CDN-Cache-Control/u);
   assert.match(candidateEndpoint, /meta:[\s\S]*counts:/u);

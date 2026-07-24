@@ -4,6 +4,8 @@ import { buildPublicImageUrl } from "@/lib/images/url";
 
 export const PUBLIC_AD_CANDIDATE_LIMIT_PER_TYPE = 10;
 
+const PUBLIC_AD_DISPLAY_TYPES: AdDisplayType[] = ["banner", "vertical", "modal"];
+
 export type PublicAffiliateAdvertisement = {
   id: string;
   name: string;
@@ -99,13 +101,15 @@ function mapAdvertisementRows(rows: AdvertisementRow[]): PublicAffiliateAdvertis
   });
 }
 
-async function loadCandidateRows(
+function prepareCandidateQuery(
   channelSlug: string,
   deviceType: AdDeviceType,
   displayType: AdDisplayType,
-): Promise<AdvertisementRow[]> {
-  const pivot = crypto.randomUUID();
-  const query = (comparison: ">=" | "<", limit: number) => env.DB.prepare(
+  pivot: string,
+  comparison: ">=" | "<",
+  limit: number,
+) {
+  return env.DB.prepare(
     `SELECT
        advertisement.id,
        advertisement.name,
@@ -138,14 +142,57 @@ async function loadCandidateRows(
        AND channel.status = 'published'
      ORDER BY advertisement.id ASC
      LIMIT ?5`,
-  ).bind(channelSlug, deviceType, displayType, pivot, limit).all<AdvertisementRow>();
+  ).bind(channelSlug, deviceType, displayType, pivot, limit);
+}
 
-  const first = await query(">=", PUBLIC_AD_CANDIDATE_LIMIT_PER_TYPE);
-  const remaining = PUBLIC_AD_CANDIDATE_LIMIT_PER_TYPE - first.results.length;
-  if (remaining <= 0) return first.results;
+async function loadCandidateRowsByType(
+  channelSlug: string,
+  deviceType: AdDeviceType,
+): Promise<Record<AdDisplayType, AdvertisementRow[]>> {
+  const firstRequests = PUBLIC_AD_DISPLAY_TYPES.map((displayType) => ({
+    displayType,
+    pivot: crypto.randomUUID(),
+  }));
+  const firstResults = await env.DB.batch<AdvertisementRow>(
+    firstRequests.map(({ displayType, pivot }) => prepareCandidateQuery(
+      channelSlug,
+      deviceType,
+      displayType,
+      pivot,
+      ">=",
+      PUBLIC_AD_CANDIDATE_LIMIT_PER_TYPE,
+    )),
+  );
 
-  const wrapped = await query("<", remaining);
-  return [...first.results, ...wrapped.results];
+  const wrappedRequests = firstRequests.flatMap((request, index) => {
+    const remaining = PUBLIC_AD_CANDIDATE_LIMIT_PER_TYPE - (firstResults[index]?.results.length ?? 0);
+    return remaining > 0 ? [{ ...request, remaining }] : [];
+  });
+  const wrappedResults = wrappedRequests.length > 0
+    ? await env.DB.batch<AdvertisementRow>(
+        wrappedRequests.map(({ displayType, pivot, remaining }) => prepareCandidateQuery(
+          channelSlug,
+          deviceType,
+          displayType,
+          pivot,
+          "<",
+          remaining,
+        )),
+      )
+    : [];
+
+  const rowsByType: Record<AdDisplayType, AdvertisementRow[]> = {
+    banner: [],
+    vertical: [],
+    modal: [],
+  };
+  firstRequests.forEach(({ displayType }, index) => {
+    rowsByType[displayType].push(...(firstResults[index]?.results ?? []));
+  });
+  wrappedRequests.forEach(({ displayType }, index) => {
+    rowsByType[displayType].push(...(wrappedResults[index]?.results ?? []));
+  });
+  return rowsByType;
 }
 
 export async function loadPublicAdvertisementImage(
@@ -174,15 +221,10 @@ export async function loadPublicAffiliateAdCandidates(
   channelSlug: string,
   deviceType: AdDeviceType,
 ): Promise<PublicAffiliateAdCandidates> {
-  const [bannerRows, verticalRows, modalRows] = await Promise.all([
-    loadCandidateRows(channelSlug, deviceType, "banner"),
-    loadCandidateRows(channelSlug, deviceType, "vertical"),
-    loadCandidateRows(channelSlug, deviceType, "modal"),
-  ]);
-
+  const rowsByType = await loadCandidateRowsByType(channelSlug, deviceType);
   return {
-    banners: shuffled(mapAdvertisementRows(bannerRows)),
-    verticals: shuffled(mapAdvertisementRows(verticalRows)),
-    modals: shuffled(mapAdvertisementRows(modalRows)),
+    banners: shuffled(mapAdvertisementRows(rowsByType.banner)),
+    verticals: shuffled(mapAdvertisementRows(rowsByType.vertical)),
+    modals: shuffled(mapAdvertisementRows(rowsByType.modal)),
   };
 }
