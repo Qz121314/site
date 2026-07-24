@@ -117,6 +117,9 @@ function assertAffiliateAdContract() {
   const interactionSource = readFileSync("src/scripts/public-affiliate-ads.ts", "utf8");
   const candidateSource = readFileSync("src/lib/db/public-ads.ts", "utf8");
   const productSource = readFileSync("src/pages/[channel]/product/[product].astro", "utf8");
+  const gallerySource = readFileSync("src/components/public/ProductGallery.astro", "utf8");
+  const productAdComponentSource = readFileSync("src/components/public/DesktopProductAd.astro", "utf8");
+  const productAdInteractionSource = readFileSync("src/scripts/public-product-detail-ad.ts", "utf8");
 
   for (const requirement of [
     "data-affiliate-ad-context",
@@ -140,8 +143,19 @@ function assertAffiliateAdContract() {
   if (/ORDER BY RANDOM\(\)|\.sort\(/u.test(candidateSource)) {
     throw new Error("Affiliate ad candidate resolution must not use random SQL ordering or full array sorting.");
   }
-  if (/AffiliateAds|affiliate-ad-context/u.test(productSource)) {
-    throw new Error("Product detail must not bootstrap affiliate advertising.");
+  if (/AffiliateAds|data-affiliate-ad-context/u.test(productSource)) {
+    throw new Error("Product detail must not use the generic catalog advertising bootstrap.");
+  }
+  for (const requirement of [
+    "DesktopProductAd",
+    "PRODUCT_DETAIL_AD_MIN_WIDTH = 1400",
+    'import("@/scripts/public-product-detail-ad")',
+    "ads?device=desktop",
+  ]) {
+    const sources = [gallerySource, productAdComponentSource, productAdInteractionSource];
+    if (!sources.some((source) => source.includes(requirement))) {
+      throw new Error(`Desktop product advertisement contract is missing: ${requirement}`);
+    }
   }
 }
 
@@ -256,6 +270,12 @@ try {
   ], `${LOG_DIR}/public-desktop-browser-dom.html`);
   runChrome(chrome, [
     `--user-data-dir=${userDataDir}`,
+    "--window-size=390,844",
+    "--dump-dom",
+    `${ORIGIN}/demo/product/smoke-product`,
+  ], `${LOG_DIR}/public-product-mobile-browser-dom.html`);
+  runChrome(chrome, [
+    `--user-data-dir=${userDataDir}`,
     "--window-size=1440,1000",
     "--dump-dom",
     `${ORIGIN}/demo/product/smoke-product`,
@@ -273,17 +293,29 @@ try {
   assertChannelNavigationCount(`${LOG_DIR}/public-browser-dom.html`, 4);
   assertChannelNavigationCount(`${LOG_DIR}/public-tablet-browser-dom.html`, 4);
   assertChannelNavigationCount(`${LOG_DIR}/public-desktop-browser-dom.html`, 4);
-  assertDocument(`${LOG_DIR}/public-product-browser-dom.html`, [
+  assertDocument(`${LOG_DIR}/public-product-mobile-browser-dom.html`, [
     "Smoke Product",
     "Smoke product body",
     "data-contact-cta",
     "href=\"/demo?category=people\"",
   ]);
-  if (readFileSync(`${LOG_DIR}/public-product-browser-dom.html`, "utf8").includes("data-affiliate-ad")) {
-    throw new Error("Product detail rendered affiliate advertising.");
+  const mobileProductHtml = readFileSync(`${LOG_DIR}/public-product-mobile-browser-dom.html`, "utf8");
+  if (
+    mobileProductHtml.includes("data-affiliate-ad-type=\"product-detail\"")
+    || mobileProductHtml.includes("<aside class=\"product-detail-ad-slot\"")
+  ) {
+    throw new Error("Mobile product detail mounted a desktop advertisement.");
   }
+  assertDocument(`${LOG_DIR}/public-product-browser-dom.html`, [
+    "Smoke Product",
+    "Smoke product body",
+    "data-contact-cta",
+    "href=\"/demo?category=people\"",
+    "data-product-detail-ad-slot",
+    "data-affiliate-ad-type=\"product-detail\"",
+  ]);
   assertDocument(`${LOG_DIR}/admin-login-browser-dom.html`, ["<html", "<form"]);
-  console.log("Headless Chrome and local Worker routes verified search, pagination, affiliate ads, conversion, and mobile/tablet/desktop rendering.");
+  console.log("Headless Chrome and local Worker routes verified search, pagination, catalog ads, desktop-only product ads, conversion, and mobile/tablet/desktop rendering.");
 } finally {
   server.kill("SIGTERM");
   await new Promise((resolve) => setTimeout(resolve, 500));
