@@ -14,8 +14,6 @@
   }
 
   .public-body:has(.integrated-desktop-catalog) .public-main {
-    width: 100%;
-    max-width: none;
     overflow: visible;
     padding-inline: 0;
   }
