@@ -191,3 +191,4 @@ inspect(
 );
 
 console.log("\nD1 query plans inspected.");
+throw new Error("Intentional diagnostic failure after D1 query-plan capture.");
