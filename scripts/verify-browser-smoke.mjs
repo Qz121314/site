@@ -5,7 +5,9 @@ import { join } from "node:path";
 
 const ORIGIN = "http://127.0.0.1:8787";
 const LOG_DIR = "ci-logs";
-const CHROME_TIMEOUT_MS = 30_000;
+const CHROME_TIMEOUT_MS = 45_000;
+const CHROME_ATTEMPTS = 2;
+let chromeRunSequence = 0;
 
 function findChrome() {
   for (const candidate of ["google-chrome", "google-chrome-stable", "chromium", "chromium-browser"]) {
@@ -50,29 +52,46 @@ async function requestJson(pathname) {
 }
 
 function runChrome(chrome, args, outputPath = null) {
-  const result = spawnSync(chrome, [
-    "--headless=new",
-    "--no-sandbox",
-    "--disable-gpu",
-    "--disable-dev-shm-usage",
-    "--hide-scrollbars",
-    "--run-all-compositor-stages-before-draw",
-    "--virtual-time-budget=7000",
-    ...args,
-  ], {
-    encoding: outputPath ? "utf8" : undefined,
-    maxBuffer: 10 * 1024 * 1024,
-    timeout: CHROME_TIMEOUT_MS,
-    killSignal: "SIGKILL",
-  });
+  const profileArgument = args.find((argument) => argument.startsWith("--user-data-dir="));
+  const profileRoot = profileArgument?.slice("--user-data-dir=".length) ?? null;
+  const stableArgs = args.filter((argument) => argument !== profileArgument);
+  const runSequence = ++chromeRunSequence;
+  let lastFailure = "unknown Chrome failure";
 
-  if (result.error) {
-    throw new Error(`Chrome process failed: ${result.error.message}`);
+  for (let attempt = 1; attempt <= CHROME_ATTEMPTS; attempt += 1) {
+    const attemptArgs = profileRoot
+      ? [`--user-data-dir=${join(profileRoot, `run-${runSequence}-attempt-${attempt}`)}`, ...stableArgs]
+      : stableArgs;
+    const result = spawnSync(chrome, [
+      "--headless=new",
+      "--no-sandbox",
+      "--disable-gpu",
+      "--disable-dev-shm-usage",
+      "--disable-background-networking",
+      "--disable-component-update",
+      "--no-first-run",
+      "--hide-scrollbars",
+      "--run-all-compositor-stages-before-draw",
+      "--virtual-time-budget=7000",
+      ...attemptArgs,
+    ], {
+      encoding: outputPath ? "utf8" : undefined,
+      maxBuffer: 10 * 1024 * 1024,
+      timeout: CHROME_TIMEOUT_MS,
+      killSignal: "SIGKILL",
+    });
+
+    if (!result.error && result.status === 0) {
+      if (outputPath) writeFileSync(outputPath, result.stdout ?? "");
+      return;
+    }
+
+    lastFailure = result.error
+      ? result.error.message
+      : `status ${result.status}: ${result.stderr?.toString() ?? ""}`;
   }
-  if (result.status !== 0) {
-    throw new Error(`Chrome failed with status ${result.status}: ${result.stderr?.toString() ?? ""}`);
-  }
-  if (outputPath) writeFileSync(outputPath, result.stdout ?? "");
+
+  throw new Error(`Chrome process failed after ${CHROME_ATTEMPTS} attempts: ${lastFailure}`);
 }
 
 function runCommand(command, args) {
@@ -139,6 +158,7 @@ assertAffiliateAdContract();
 const chrome = findChrome();
 const userDataDir = join(tmpdir(), `site-browser-smoke-${process.pid}`);
 const persistDir = join(tmpdir(), `site-browser-smoke-d1-${process.pid}`);
+mkdirSync(userDataDir, { recursive: true });
 mkdirSync(persistDir, { recursive: true });
 runCommand("pnpm", ["exec", "wrangler", "d1", "migrations", "apply", "DB", "--local", "--persist-to", persistDir]);
 runCommand("pnpm", ["exec", "wrangler", "d1", "execute", "DB", "--local", "--persist-to", persistDir, "--file", "scripts/fixtures/browser-smoke.sql"]);

@@ -34,7 +34,8 @@ test("desktop catalog presents section filters, categories, and products without
   ]);
 
   assert.match(channel, /loadPublicDesktopFilterMap\(site\.channels\.map/u);
-  assert.match(channel, /loadPublicProductPreview/u);
+  assert.match(channel, /loadPublicProductPreviewGroups/u);
+  assert.doesNotMatch(channel, /Promise\.all\(desktopGroupInputs\.map/u);
   assert.match(channel, /class="desktop-density-workspace desktop-channel-catalog"/u);
   assert.match(channel, /<DesktopCatalogRow/u);
   assert.doesNotMatch(channel, /<h1>\{channel\.name\}<\/h1>/u);
@@ -55,8 +56,11 @@ test("desktop catalog presents section filters, categories, and products without
   assert.match(row, /data-desktop-filter-row/u);
 
   assert.match(desktopQueries, /EXISTS \([\s\S]*category_filter_relations/u);
-  assert.match(desktopQueries, /loadPublicProductPreview/u);
-  assert.match(desktopQueries, /LIMIT \?\$\{limitParameter\}/u);
+  assert.match(desktopQueries, /export async function loadPublicProductPreviewGroups/u);
+  assert.match(desktopQueries, /const limitParameter = parameter\(group\.limit\)/u);
+  assert.match(desktopQueries, /LIMIT \$\{limitParameter\}/u);
+  assert.match(desktopQueries, /queries\.join\(" UNION ALL "\)/u);
+  assert.match(desktopQueries, /\.bind\(\.\.\.bindings\)[\s\S]*\.all<PublicProductPreviewRow>/u);
 
   assert.match(desktopStyles, /grid-template-columns: clamp\(14\.5rem, 16vw, 17rem\) minmax\(0, 1fr\)/u);
   assert.match(desktopStyles, /grid-template-columns: clamp\(12\.5rem, 15vw, 15\.5rem\) minmax\(0, 1fr\)/u);
