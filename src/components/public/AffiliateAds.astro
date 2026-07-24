@@ -11,6 +11,8 @@ const contextJson = JSON.stringify({ channelSlug, surface }).replaceAll("<", "\\
 ---
 
 <script is:inline type="application/json" data-affiliate-ad-context set:html={contextJson}></script>
+<div class="desktop-portal-banner-slot" data-affiliate-ad-banner-slot hidden></div>
+<aside class="desktop-portal-ad-slot" data-affiliate-ad-vertical-slot aria-label="Sponsored advertisement" hidden></aside>
 <script>
   const AFFILIATE_AD_REQUEST_DELAY_MS = 2500;
 
@@ -18,10 +20,23 @@ const contextJson = JSON.stringify({ channelSlug, surface }).replaceAll("<", "\\
     return document.querySelectorAll<HTMLScriptElement>("script[data-affiliate-ad-context]");
   }
 
+  function placeDesktopAdvertisementSlots(): void {
+    if (!window.matchMedia("(min-width: 1100px)").matches) return;
+    const frame = document.querySelector<HTMLElement>(".integrated-desktop-catalog");
+    if (!frame) return;
+    frame.dataset.desktopPortalFrame = "";
+
+    const banner = document.querySelector<HTMLElement>("[data-affiliate-ad-banner-slot]");
+    const vertical = document.querySelector<HTMLElement>("[data-affiliate-ad-vertical-slot]");
+    if (banner && banner.parentElement !== frame) frame.appendChild(banner);
+    if (vertical && vertical.parentElement !== frame) frame.appendChild(vertical);
+  }
+
   function scheduleAffiliateAds(): void {
     const root = document.documentElement;
     if (root.dataset.affiliateAdsScheduled === "1") return;
     root.dataset.affiliateAdsScheduled = "1";
+    placeDesktopAdvertisementSlots();
 
     advertisementContexts().forEach((node) => {
       if (!node.dataset.affiliateAdState) node.dataset.affiliateAdState = "deferred";
