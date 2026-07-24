@@ -14,6 +14,7 @@ type PendingRestoration = {
 };
 
 let pendingRestoration: PendingRestoration | null = null;
+let positionSaveFrame = 0;
 
 function canonicalUrl(value: string | URL): string {
   const url = new URL(value, window.location.href);
@@ -45,9 +46,21 @@ function preserveCurrentPosition(): void {
   replaceCurrentEntry(window.location.href, window.scrollX, window.scrollY);
 }
 
+function schedulePositionSave(): void {
+  if (positionSaveFrame) return;
+  const url = canonicalUrl(window.location.href);
+  const left = window.scrollX;
+  const top = window.scrollY;
+  positionSaveFrame = window.requestAnimationFrame(() => {
+    positionSaveFrame = 0;
+    if (canonicalUrl(window.location.href) === url) replaceCurrentEntry(url, left, top);
+  });
+}
+
 if ("scrollRestoration" in history) history.scrollRestoration = "manual";
 
 queueMicrotask(preserveCurrentPosition);
+window.addEventListener("scroll", schedulePositionSave, { passive: true });
 
 // Capture the page being left before the router pushes or replaces the next entry.
 document.addEventListener("click", (event) => {
