@@ -331,6 +331,17 @@
   }
 }
 
+@media (min-width: 1100px) {
+  .public-body:has(.integrated-desktop-catalog) .public-main {
+    flex: 0 0 auto;
+    padding-bottom: 1.5rem;
+  }
+
+  .public-body:has(.integrated-desktop-catalog) .public-footer {
+    margin-top: 0;
+  }
+}
+
 @media (min-width: 1200px) {
   .public-header-trailing {
     min-width: 16rem;
