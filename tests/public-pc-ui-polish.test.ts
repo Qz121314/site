@@ -3,9 +3,10 @@ import { readFile } from "node:fs/promises";
 import test from "node:test";
 
 test("PC navigation uses one flat logo rail, section menu, and catalog surface", async () => {
-  const [entrypoint, source, sidebar] = await Promise.all([
+  const [entrypoint, source, editorial, sidebar] = await Promise.all([
     readFile(new URL("../src/styles/public-system.css", import.meta.url), "utf8"),
     readFile(new URL("../src/styles/public-desktop-ui-polish.css", import.meta.url), "utf8"),
+    readFile(new URL("../src/styles/public-editorial.css", import.meta.url), "utf8"),
     readFile(new URL("../src/components/public/DesktopCatalogSidebarV2.astro", import.meta.url), "utf8"),
   ]);
 
@@ -23,6 +24,8 @@ test("PC navigation uses one flat logo rail, section menu, and catalog surface",
   assert.match(source, /\.category-entry \{[\s\S]*?border: 1px solid #d4d9e0;[\s\S]*?background: #ffffff;/u);
   assert.match(source, /\.product-card \.visual-card-overlay \{[\s\S]*?position: absolute;[\s\S]*?bottom: 0;/u);
   assert.match(source, /linear-gradient\(180deg, transparent 0%, rgb\(0 0 0 \/ \.7\) 100%\)/u);
+  assert.match(editorial, /\.public-body:has\(\.integrated-desktop-catalog\) \.public-main \{[\s\S]*?flex: 0 0 auto;/u);
+  assert.match(editorial, /\.public-body:has\(\.integrated-desktop-catalog\) \.public-footer \{[\s\S]*?margin-top: 0;/u);
 
   assert.match(sidebar, /active && filters\.length > 0/u);
   assert.doesNotMatch(sidebar, /<svg/u);
