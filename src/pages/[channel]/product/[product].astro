@@ -11,7 +11,7 @@ const channelSlug = Astro.params.channel ?? "";
 const productSlug = Astro.params.product ?? "";
 const site = await loadPublicSiteShell();
 const product = await loadPublicProductDetail(channelSlug, productSlug, site.r2PublicBaseUrl);
-const hasCategoryNavigation = product
+const hasCategoryNavigation = product?.hasCategoryNavigation
   ? await hasPublicCategoryNavigation(product.channelId)
   : false;
 
