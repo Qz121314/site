@@ -1,0 +1,119 @@
+/* Final desktop catalog proportions.
+ * Keeps mobile and tablet layouts unchanged while preventing navigation columns
+ * and product cards from expanding to fill wide monitors.
+ */
+
+@media (min-width: 1100px) {
+  .public-body {
+    --public-width: 90rem;
+  }
+
+  .desktop-density-workspace,
+  .catalog-workspace {
+    max-width: 90rem;
+    margin-inline: auto;
+    grid-template-columns: clamp(9.5rem, 10vw, 10.75rem) minmax(0, 1fr);
+    gap: clamp(1rem, 1.35vw, 1.25rem);
+  }
+
+  .desktop-density-sidebar {
+    padding: .42rem;
+    border-radius: .62rem;
+  }
+
+  .desktop-density-navigation {
+    gap: .18rem;
+  }
+
+  .desktop-density-section-group {
+    gap: .1rem;
+    padding-bottom: .34rem;
+  }
+
+  .desktop-density-section-group + .desktop-density-section-group {
+    padding-top: .18rem;
+  }
+
+  .desktop-density-section-link {
+    min-height: 2.45rem;
+    grid-template-columns: minmax(0, 1fr) .78rem;
+    gap: .35rem;
+    padding: .48rem .52rem;
+    font-size: .78rem;
+  }
+
+  .desktop-density-section-link svg {
+    width: .72rem;
+    height: .72rem;
+  }
+
+  .desktop-density-filter-list {
+    gap: .04rem;
+    padding: .08rem 0 .02rem .22rem;
+  }
+
+  .desktop-density-filter-link {
+    min-height: 2rem;
+    padding: .34rem .42rem;
+    font-size: .72rem;
+  }
+
+  .desktop-density-row {
+    grid-template-columns: clamp(6.75rem, 7.5vw, 7.75rem) minmax(0, 1fr);
+    gap: clamp(.8rem, 1vw, 1rem);
+    padding: .9rem 0 1rem;
+  }
+
+  .desktop-density-category-panel {
+    gap: .5rem;
+    padding-right: clamp(.65rem, .85vw, .8rem);
+  }
+
+  .desktop-density-category-panel h2 {
+    font-size: .7rem;
+    letter-spacing: .055em;
+  }
+
+  .desktop-density-category-grid {
+    grid-template-columns: minmax(0, 1fr);
+    gap: .28rem;
+  }
+
+  .desktop-density-category-grid .category-entry {
+    min-height: 2.3rem;
+    height: auto;
+    padding: .34rem .4rem;
+  }
+
+  .desktop-density-category-grid .category-entry-label {
+    font-size: .68rem;
+  }
+
+  .desktop-density-product-grid,
+  .desktop-density-product-panel .product-grid,
+  .directory-page-layout .product-grid,
+  .channel-products-section .product-grid,
+  .search-results-section .product-grid {
+    grid-template-columns: repeat(auto-fill, minmax(11rem, 12.75rem));
+    justify-content: start;
+    align-items: start;
+    gap: 1.05rem .8rem;
+  }
+
+  .desktop-density-product-grid > .product-card,
+  .desktop-density-product-panel .product-grid > .product-card,
+  .directory-page-layout .product-grid > .product-card,
+  .channel-products-section .product-grid > .product-card,
+  .search-results-section .product-grid > .product-card {
+    width: 100%;
+    max-width: 12.75rem;
+  }
+
+  .desktop-density-product-grid .visual-card-title,
+  .desktop-density-product-panel .visual-card-title,
+  .directory-page-layout .visual-card-title,
+  .channel-products-section .visual-card-title,
+  .search-results-section .visual-card-title {
+    font-size: .8rem;
+  }
+}
