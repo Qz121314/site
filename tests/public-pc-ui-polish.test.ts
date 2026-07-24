@@ -2,22 +2,25 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-test("PC navigation reads as centered colored menus", async () => {
-  const [entrypoint, source] = await Promise.all([
+test("PC navigation forms an integrated logo rail and nested section menu", async () => {
+  const [entrypoint, source, sidebar] = await Promise.all([
     readFile(new URL("../src/styles/public-system.css", import.meta.url), "utf8"),
     readFile(new URL("../src/styles/public-desktop-ui-polish.css", import.meta.url), "utf8"),
+    readFile(new URL("../src/components/public/DesktopCatalogSidebarV2.astro", import.meta.url), "utf8"),
   ]);
 
   assert.match(entrypoint, /@import "\.\/public-desktop-ui-polish\.css";\s*$/u);
-  assert.match(source, /\.public-header-default \{\s*display: grid;/u);
-  assert.match(source, /grid-template-areas: "leading brand search \. navigation"/u);
-  assert.match(source, /\.desktop-density-section-group:nth-child\(4n \+ 1\)/u);
-  assert.match(source, /\.desktop-density-section-group:nth-child\(4n \+ 4\)/u);
-  assert.match(source, /\.desktop-density-section-link \{[\s\S]*?justify-content: center;[\s\S]*?text-align: center;/u);
-  assert.match(source, /\.desktop-density-section-link svg \{\s*display: none;/u);
-  assert.match(source, /\.desktop-density-filter-link span \{[\s\S]*?text-align: center;/u);
-  assert.match(source, /\.desktop-density-category-grid \.category-entry-arrow \{\s*display: none;/u);
-  assert.match(source, /\.desktop-density-category-grid \.category-entry-label \{[\s\S]*?text-align: center;/u);
+  assert.match(source, /--desktop-nav-width/u);
+  assert.match(source, /grid-template-areas: "brand search \. navigation"/u);
+  assert.match(source, /grid-template-columns: var\(--desktop-nav-width\) minmax\(0, 1fr\)/u);
+  assert.match(source, /\.desktop-nav-section-1/u);
+  assert.match(source, /\.desktop-nav-section-4/u);
+  assert.match(source, /\.desktop-nav-section-link\[aria-current="page"\]/u);
+  assert.match(source, /\.desktop-nav-filter-list/u);
+  assert.match(source, /\.desktop-catalog-panel/u);
+  assert.match(source, /border-right: 1px solid #dfe2e6/u);
+  assert.match(sidebar, /active && filters\.length > 0/u);
+  assert.doesNotMatch(sidebar, /<svg/u);
 });
 
 test("PC product detail keeps the gallery and title compact", async () => {
