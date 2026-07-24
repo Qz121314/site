@@ -23,7 +23,8 @@ const canonical = product
       Astro.url.origin,
     ).href
   : null;
-const primaryImage = product?.coverUrl ?? product?.gallery[0]?.imageUrl ?? site.logoUrl;
+const productPrimaryImage = product?.coverUrl ?? product?.gallery[0]?.imageUrl ?? null;
+const primaryImage = productPrimaryImage ?? site.logoUrl;
 const galleryImagesWithDuplicates = product
   ? [
       ...(primaryImage
@@ -115,11 +116,7 @@ const structuredData = product && canonical
           description,
           url: canonical,
           category: product.categoryName ?? product.channelName,
-          brand: {
-            "@type": "Brand",
-            name: site.siteName,
-          },
-          ...(galleryImages.length > 0
+          ...(productPrimaryImage && galleryImages.length > 0
             ? { image: galleryImages.map((image) => image.imageUrl) }
             : {}),
         },
@@ -139,9 +136,9 @@ const structuredData = product && canonical
   canonical={canonical}
   robots={product ? undefined : "noindex,follow"}
   ogImage={primaryImage}
-  ogImageAlt={product?.title ?? null}
-  ogImageWidth={product?.coverUrl === primaryImage ? product.coverWidth : (product?.gallery[0]?.width ?? null)}
-  ogImageHeight={product?.coverUrl === primaryImage ? product.coverHeight : (product?.gallery[0]?.height ?? null)}
+  ogImageAlt={product ? (productPrimaryImage ? product.title : site.siteName) : null}
+  ogImageWidth={productPrimaryImage && product?.coverUrl === productPrimaryImage ? product.coverWidth : (productPrimaryImage ? product?.gallery[0]?.width ?? null : null)}
+  ogImageHeight={productPrimaryImage && product?.coverUrl === productPrimaryImage ? product.coverHeight : (productPrimaryImage ? product?.gallery[0]?.height ?? null : null)}
   ogType="product"
   activeChannel={product?.channelSlug ?? channelSlug}
   backHref={product ? returnUrl : null}
