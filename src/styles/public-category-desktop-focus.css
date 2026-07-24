@@ -1,0 +1,9 @@
+.category-catalog-workspace .desktop-density-category-panel {
+  display: none;
+}
+
+@media (min-width: 1100px) {
+  .category-catalog-workspace .desktop-density-category-panel {
+    display: grid;
+  }
+}
