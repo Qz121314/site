@@ -2,17 +2,17 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-test("desktop catalog integrates adaptive navigation, centered products, and fixed advertising without changing mobile navigation", async () => {
+test("desktop catalog integrates navigation, a centered content screen, and explicit advertising rails without changing mobile navigation", async () => {
   const [
     channel,
     category,
     sidebar,
+    advertisements,
     row,
     interaction,
     desktopQueries,
     integratedStyles,
-    hierarchyStyles,
-    adStyles,
+    screenStyles,
     consistencyStyles,
     mobileStyles,
     productCard,
@@ -24,12 +24,12 @@ test("desktop catalog integrates adaptive navigation, centered products, and fix
     readFile(new URL("../src/pages/[channel]/index.astro", import.meta.url), "utf8"),
     readFile(new URL("../src/pages/[channel]/category/[category].astro", import.meta.url), "utf8"),
     readFile(new URL("../src/components/public/DesktopCatalogSidebarV2.astro", import.meta.url), "utf8"),
+    readFile(new URL("../src/components/public/AffiliateAds.astro", import.meta.url), "utf8"),
     readFile(new URL("../src/components/public/DesktopCatalogRow.astro", import.meta.url), "utf8"),
     readFile(new URL("../src/scripts/public-desktop-workspace.ts", import.meta.url), "utf8"),
     readFile(new URL("../src/lib/db/public-desktop.ts", import.meta.url), "utf8"),
     readFile(new URL("../src/styles/public-desktop-ui-polish.css", import.meta.url), "utf8"),
-    readFile(new URL("../src/styles/public-desktop-navigation-hierarchy.css", import.meta.url), "utf8"),
-    readFile(new URL("../src/styles/public-ads.css", import.meta.url), "utf8"),
+    readFile(new URL("../src/styles/public-desktop-content-screen.css", import.meta.url), "utf8"),
     readFile(new URL("../src/styles/public-product-card-consistency.css", import.meta.url), "utf8"),
     readFile(new URL("../src/styles/public-category-navigation.css", import.meta.url), "utf8"),
     readFile(new URL("../src/components/public/ProductCard.astro", import.meta.url), "utf8"),
@@ -55,11 +55,18 @@ test("desktop catalog integrates adaptive navigation, centered products, and fix
 
   assert.match(sidebar, /site\.channels\.map/u);
   assert.match(sidebar, /longestNavigationLabel/u);
-  assert.match(sidebar, /navigationCharacterWidth/u);
   assert.match(sidebar, /--desktop-nav-fit/u);
+  assert.match(sidebar, /class="desktop-nav-brand"/u);
+  assert.match(sidebar, /class="desktop-nav-tools"/u);
   assert.match(sidebar, /const expanded = active && filters\.length > 0/u);
-  assert.match(sidebar, /aria-expanded=\{expanded \? "true" : undefined\}/u);
   assert.match(sidebar, /data-desktop-filter-link/u);
+
+  assert.match(advertisements, /data-affiliate-ad-banner-slot/u);
+  assert.match(advertisements, /data-affiliate-ad-vertical-slot/u);
+  assert.match(advertisements, /new MutationObserver\(adoptMountedAdvertisements\)/u);
+  assert.match(advertisements, /bannerSlot\.replaceChildren\(banner\)/u);
+  assert.match(advertisements, /verticalSlot\.replaceChildren\(vertical\)/u);
+
   assert.match(row, /class="desktop-density-category-panel"/u);
   assert.match(row, /class="desktop-density-product-panel"/u);
   assert.match(row, /data-desktop-filter-panel/u);
@@ -68,25 +75,19 @@ test("desktop catalog integrates adaptive navigation, centered products, and fix
 
   assert.match(desktopQueries, /EXISTS \([\s\S]*category_filter_relations/u);
   assert.match(desktopQueries, /export async function loadPublicProductPreviewGroups/u);
-  assert.match(desktopQueries, /const limitParameter = parameter\(group\.limit\)/u);
-  assert.match(desktopQueries, /LIMIT \$\{limitParameter\}/u);
   assert.match(desktopQueries, /queries\.join\(" UNION ALL "\)/u);
   assert.match(desktopQueries, /\.bind\(\.\.\.bindings\)[\s\S]*\.all<PublicProductPreviewRow>/u);
 
   assert.match(integratedStyles, /--desktop-accent: #b69058/u);
   assert.match(integratedStyles, /\.product-card \.visual-card-overlay \{[\s\S]*?position: absolute/u);
-  assert.match(hierarchyStyles, /--desktop-content-width: 50rem/u);
-  assert.match(hierarchyStyles, /width: 100vw;/u);
-  assert.match(hierarchyStyles, /margin-inline: calc\(50% - 50vw\)/u);
-  assert.match(hierarchyStyles, /grid-template-columns:[\s\S]*?minmax\(var\(--desktop-side-min\), 1fr\)[\s\S]*?minmax\(0, var\(--desktop-content-width\)\)[\s\S]*?minmax\(var\(--desktop-side-min\), 1fr\)/u);
-  assert.match(hierarchyStyles, /\.desktop-nav-rail \{[\s\S]*?max-height: calc\(100vh - var\(--desktop-header-height\) - 2rem\)/u);
-  assert.match(hierarchyStyles, /\.desktop-nav-rail \{[\s\S]*?position: sticky;/u);
-  assert.match(hierarchyStyles, /\.integrated-desktop-content \{[\s\S]*?grid-column: 2;[\s\S]*?justify-self: center;/u);
-  assert.match(hierarchyStyles, /grid-template-columns: var\(--desktop-category-width\) minmax\(0, 1fr\)/u);
-  assert.match(hierarchyStyles, /repeat\(auto-fill, minmax\(11\.25rem, 11\.75rem\)\)/u);
-  assert.match(hierarchyStyles, /\.product-card \{[\s\S]*?max-width: 11\.75rem/u);
-  assert.match(hierarchyStyles, /\.desktop-catalog-heading \{[\s\S]*?clip: rect\(0 0 0 0\)/u);
-  assert.match(adStyles, /\.affiliate-ad-rail \{[\s\S]*?position: fixed;/u);
+  assert.match(screenStyles, /--desktop-screen-width/u);
+  assert.match(screenStyles, /width: 100vw;/u);
+  assert.match(screenStyles, /margin: 0 calc\(50% - 50vw\)/u);
+  assert.match(screenStyles, /grid-template-columns:[\s\S]*?minmax\(var\(--desktop-side-track\), 1fr\)[\s\S]*?minmax\(0, var\(--desktop-screen-width\)\)[\s\S]*?minmax\(var\(--desktop-side-track\), 1fr\)/u);
+  assert.match(screenStyles, /\.desktop-nav-rail \{[\s\S]*?position: sticky;[\s\S]*?top: 1rem;/u);
+  assert.match(screenStyles, /\.desktop-portal-banner-slot \{[\s\S]*?grid-column: 2;/u);
+  assert.match(screenStyles, /\.desktop-portal-ad-slot \{[\s\S]*?grid-column: 3;[\s\S]*?position: sticky;/u);
+  assert.match(screenStyles, /\.integrated-desktop-content,[\s\S]*?\.desktop-portal-screen \{[\s\S]*?grid-column: 2;/u);
 
   assert.match(productCard, /class="visual-card-media-frame"/u);
   assert.match(productCard, /public-product-links/u);
@@ -104,9 +105,7 @@ test("desktop catalog integrates adaptive navigation, centered products, and fix
   assert.match(mobileStyles, /@media \(max-width: 767px\)/u);
   assert.match(mobileStyles, /grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/u);
   assert.match(mobileStyles, /height: 3\.25rem/u);
-  assert.match(system, /@import "\.\/public-desktop-catalog\.css";/u);
-  assert.match(system, /@import "\.\/public-desktop-ui-polish\.css";/u);
-  assert.match(system, /@import "\.\/public-desktop-navigation-hierarchy\.css";/u);
+  assert.match(system, /@import "\.\/public-desktop-content-screen\.css";\s*$/u);
   assert.match(system, /@import "\.\/public-product-card-consistency\.css";/u);
   assert.doesNotMatch(system, /public-desktop-density-finish/u);
 
