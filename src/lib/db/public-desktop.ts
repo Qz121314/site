@@ -144,10 +144,16 @@ export async function loadPublicProductPreview(input: {
   limit?: number;
 }): Promise<PublicProductCard[]> {
   const key = "preview";
+  const group: PublicDesktopPreviewGroup = {
+    key,
+    categoryIds: input.categoryIds,
+  };
+  if (input.limit !== undefined) group.limit = input.limit;
+
   const previews = await loadPublicProductPreviewGroups({
     channelId: input.channelId,
     baseUrl: input.baseUrl,
-    groups: [{ key, categoryIds: input.categoryIds, limit: input.limit }],
+    groups: [group],
   });
   return previews[key] ?? [];
 }
