@@ -1,19 +1,17 @@
-/* Desktop catalog composition.
- * Mobile and tablet keep the existing category and product flows. At desktop
- * widths, navigation becomes a restrained left rail and the product directory
- * receives the majority of the page width.
+/* Desktop information-dense catalog workspace.
+ * Mobile and tablet retain their existing category and directory compositions.
  */
 
-.desktop-catalog-sidebar,
+.desktop-density-sidebar,
 .desktop-channel-catalog {
   display: none;
 }
 
-.catalog-workspace {
-  min-width: 0;
-}
-
-.desktop-catalog-main {
+.desktop-density-workspace,
+.desktop-density-content,
+.desktop-density-row,
+.desktop-density-category-panel,
+.desktop-density-product-panel {
   min-width: 0;
 }
 
@@ -26,264 +24,311 @@
     display: none !important;
   }
 
-  .desktop-catalog-workspace,
+  .desktop-density-workspace,
   .catalog-workspace {
     display: grid;
     width: 100%;
     min-width: 0;
-    grid-template-columns: clamp(19rem, 25vw, 24rem) minmax(0, 1fr);
+    grid-template-columns: clamp(14.5rem, 16vw, 17rem) minmax(0, 1fr);
     align-items: start;
-    gap: clamp(1.6rem, 2.4vw, 2.5rem);
+    gap: clamp(1rem, 1.7vw, 1.5rem);
   }
 
-  .desktop-catalog-sidebar {
-    display: grid;
+  .desktop-density-sidebar {
+    display: block;
     min-width: 0;
-    max-height: calc(100dvh - 7rem);
-    align-content: start;
-    gap: 1.15rem;
+    max-height: calc(100dvh - 6.4rem);
     overflow-y: auto;
     overscroll-behavior: contain;
     position: sticky;
-    top: 5.75rem;
-    border: 1px solid #e1ddd5;
-    border-radius: .9rem;
-    padding: .9rem;
-    background: #f7f4ee;
+    top: 5.35rem;
+    border: 1px solid #dfe3e8;
+    border-radius: .7rem;
+    padding: .55rem;
+    background: #f4f5f7;
+    box-shadow: 0 8px 24px rgba(17, 24, 39, .045);
     scrollbar-width: thin;
-    scrollbar-color: #c9c2b7 transparent;
+    scrollbar-color: #c7ccd3 transparent;
   }
 
-  .desktop-catalog-sidebar::-webkit-scrollbar {
-    width: .45rem;
+  .desktop-density-sidebar::-webkit-scrollbar {
+    width: .4rem;
   }
 
-  .desktop-catalog-sidebar::-webkit-scrollbar-thumb {
+  .desktop-density-sidebar::-webkit-scrollbar-thumb {
     border-radius: 999px;
-    background: #c9c2b7;
+    background: #c7ccd3;
   }
 
-  .desktop-channel-switcher {
+  .desktop-density-navigation {
     display: grid;
-    width: 100%;
-    min-width: 0;
-    grid-template-columns: repeat(var(--desktop-channel-columns, 1), minmax(0, 1fr));
-    gap: .3rem;
-    border: 1px solid #d6d0c6;
-    border-radius: .72rem;
-    padding: .3rem;
-    background: #e9e4da;
+    gap: .25rem;
   }
 
-  .desktop-channel-switcher-item {
+  .desktop-density-section-group {
     display: grid;
     min-width: 0;
-    min-height: 2.9rem;
-    place-items: center;
-    overflow: hidden;
-    border: 1px solid transparent;
-    border-radius: .52rem;
-    padding: .42rem .35rem;
-    color: #625d55;
-    font-size: .76rem;
-    font-weight: 720;
-    line-height: 1.15;
-    text-align: center;
+    gap: .18rem;
+    border-bottom: 1px solid #e1e4e8;
+    padding-bottom: .45rem;
   }
 
-  .desktop-channel-switcher-item span {
-    display: -webkit-box;
-    min-width: 0;
-    overflow: hidden;
-    overflow-wrap: anywhere;
-    -webkit-box-orient: vertical;
-    -webkit-line-clamp: 2;
+  .desktop-density-section-group + .desktop-density-section-group {
+    padding-top: .25rem;
   }
 
-  .desktop-channel-switcher-item:hover {
-    color: #24211d;
-    background: rgba(255, 255, 255, .72);
+  .desktop-density-section-group:last-child {
+    border-bottom: 0;
+    padding-bottom: 0;
   }
 
-  .desktop-channel-switcher-item[aria-current="page"] {
-    border-color: #28251f;
-    color: #ffffff;
-    background: #28251f;
-    box-shadow: 0 2px 8px rgba(40, 37, 31, .15);
-  }
-
-  .desktop-catalog-filter-bar {
-    margin: 0;
-    border-color: #ded8ce;
-    background: #efebe4;
-    box-shadow: none;
-  }
-
-  .desktop-catalog-filter-bar .category-filter-button {
-    min-height: 2.65rem;
-    padding: .4rem .3rem;
-    font-size: .72rem;
-  }
-
-  .desktop-category-groups {
+  .desktop-density-section-link {
     display: grid;
     min-width: 0;
-    gap: 1.15rem;
-  }
-
-  .desktop-category-group {
-    display: grid;
-    min-width: 0;
-    gap: .55rem;
-  }
-
-  .desktop-category-group + .desktop-category-group {
-    border-top: 1px solid #e2ddd4;
-    padding-top: 1rem;
-  }
-
-  .desktop-category-group-title {
-    margin: 0;
-    color: #625d55;
-    font-family: var(--font-ui);
-    font-size: .7rem;
-    font-weight: 780;
+    min-height: 2.7rem;
+    grid-template-columns: minmax(0, 1fr) .9rem;
+    align-items: center;
+    gap: .5rem;
+    border-radius: .5rem;
+    padding: .55rem .65rem;
+    color: #303844;
+    font-size: .82rem;
+    font-weight: 760;
     line-height: 1.2;
-    letter-spacing: .075em;
+  }
+
+  .desktop-density-section-link svg {
+    width: .82rem;
+    height: .82rem;
+    justify-self: end;
+    opacity: .58;
+  }
+
+  .desktop-density-section-link:hover {
+    color: #111827;
+    background: #ffffff;
+  }
+
+  .desktop-density-section-link[aria-current="page"] {
+    color: #ffffff;
+    background: #202733;
+    box-shadow: 0 3px 10px rgba(17, 24, 39, .12);
+  }
+
+  .desktop-density-filter-list {
+    display: grid;
+    gap: .1rem;
+    padding: .12rem 0 .05rem .38rem;
+  }
+
+  .desktop-density-filter-link {
+    display: flex;
+    min-width: 0;
+    min-height: 2.35rem;
+    align-items: center;
+    border-left: 3px solid transparent;
+    border-radius: .32rem;
+    padding: .42rem .55rem;
+    color: #606a77;
+    font-size: .76rem;
+    font-weight: 650;
+    line-height: 1.2;
+  }
+
+  .desktop-density-filter-link span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .desktop-density-filter-link:hover,
+  .desktop-density-filter-link.is-active {
+    border-left-color: #d97706;
+    color: #1f2937;
+    background: #ffffff;
+  }
+
+  .desktop-density-filter-link.is-active {
+    font-weight: 760;
+    box-shadow: 0 1px 3px rgba(17, 24, 39, .05);
+  }
+
+  .desktop-density-content {
+    display: grid;
+    align-content: start;
+  }
+
+  .desktop-density-row {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: clamp(12.5rem, 15vw, 15.5rem) minmax(0, 1fr);
+    align-items: start;
+    gap: clamp(.9rem, 1.5vw, 1.3rem);
+    scroll-margin-top: 5.5rem;
+    border-bottom: 1px solid #e5e7eb;
+    padding: 1rem 0 1.15rem;
+  }
+
+  .desktop-density-row:first-child {
+    padding-top: 0;
+  }
+
+  .desktop-density-row:last-child {
+    border-bottom: 0;
+  }
+
+  .desktop-density-category-panel {
+    display: grid;
+    align-content: start;
+    gap: .62rem;
+    border-right: 1px solid #e5e7eb;
+    padding-right: clamp(.8rem, 1.2vw, 1.1rem);
+  }
+
+  .desktop-density-category-panel h2 {
+    margin: 0;
+    color: #4b5563;
+    font-family: var(--font-ui);
+    font-size: .74rem;
+    font-weight: 790;
+    line-height: 1.2;
+    letter-spacing: .065em;
     text-transform: uppercase;
   }
 
-  .desktop-category-grid {
+  .desktop-density-category-grid {
     display: grid;
     min-width: 0;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: .42rem;
+    gap: .34rem;
   }
 
-  .desktop-category-grid .category-entry {
+  .desktop-density-category-grid .category-entry {
     display: grid;
     width: 100%;
     min-width: 0;
-    min-height: 2.75rem;
-    height: 2.75rem;
-    grid-template-columns: minmax(0, 1fr) .8rem;
+    min-height: 2.45rem;
+    height: 2.45rem;
+    grid-template-columns: minmax(0, 1fr) .7rem;
     align-items: center;
-    gap: .32rem;
+    gap: .25rem;
     overflow: hidden;
-    border: 1px solid #ddd8cf;
-    border-radius: .5rem;
-    padding: .42rem .5rem;
-    color: #312e29;
+    border: 1px solid #e0e3e7;
+    border-radius: .4rem;
+    padding: .36rem .45rem;
+    color: #374151;
     background: #ffffff;
-    box-shadow: 0 1px 2px rgba(35, 31, 26, .025);
-  }
-
-  .desktop-category-grid .category-entry:hover {
-    border-color: #bbb3a7;
-    background: #fcfbf8;
-    box-shadow: 0 3px 8px rgba(35, 31, 26, .055);
-    transform: translateY(-1px);
-  }
-
-  .desktop-category-grid .category-entry:active {
-    transform: scale(.985);
-  }
-
-  .desktop-category-grid .category-entry.is-active,
-  .desktop-category-grid .category-entry[aria-current="page"] {
-    border-color: #28251f;
-    color: #ffffff;
-    background: #28251f;
     box-shadow: none;
   }
 
-  .desktop-category-grid .category-entry-label {
+  .desktop-density-category-grid .category-entry:hover {
+    border-color: #bdc3cb;
+    color: #111827;
+    background: #f9fafb;
+    transform: none;
+  }
+
+  .desktop-density-category-grid .category-entry:active {
+    transform: scale(.985);
+  }
+
+  .desktop-density-category-grid .category-entry.is-active,
+  .desktop-density-category-grid .category-entry[aria-current="page"] {
+    border-color: #202733;
+    color: #ffffff;
+    background: #202733;
+  }
+
+  .desktop-density-category-grid .category-entry-label {
     display: -webkit-box;
     min-width: 0;
     overflow: hidden;
     color: inherit;
-    font-size: .74rem;
+    font-size: .7rem;
     font-weight: 650;
-    line-height: 1.14;
+    line-height: 1.12;
     overflow-wrap: anywhere;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
   }
 
-  .desktop-category-grid .category-entry-arrow {
+  .desktop-density-category-grid .category-entry-arrow {
     display: grid;
-    width: .8rem;
-    height: .8rem;
+    width: .7rem;
+    height: .7rem;
     place-items: center;
     justify-self: end;
     color: currentColor;
-    opacity: .58;
+    opacity: .55;
   }
 
-  .desktop-category-grid .category-entry-arrow svg {
-    width: .72rem;
-    height: .72rem;
+  .desktop-density-category-grid .category-entry-arrow svg {
+    width: .66rem;
+    height: .66rem;
     max-width: none;
   }
 
-  .desktop-catalog-main {
+  .desktop-density-product-panel {
+    min-width: 0;
+  }
+
+  .desktop-density-product-grid,
+  .desktop-density-product-panel .product-grid {
     display: grid;
     min-width: 0;
-    align-content: start;
-    gap: 1.15rem;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem .75rem;
   }
 
-  .desktop-catalog-heading,
-  .directory-page-title.desktop-catalog-heading {
+  .desktop-density-product-grid .visual-card-title,
+  .desktop-density-product-panel .visual-card-title {
+    font-size: .82rem;
+    -webkit-line-clamp: 1;
+  }
+
+  .desktop-density-empty {
     display: grid;
+    min-height: 8rem;
+    place-items: center;
+    border: 1px dashed #d7dbe0;
+    border-radius: .55rem;
+    padding: 1rem;
+    color: #7a838e;
+    background: #fafbfc;
+    font-size: .8rem;
+    text-align: center;
+  }
+
+  .desktop-density-row-focus {
+    padding-top: 0;
+  }
+
+  .desktop-density-product-panel .product-directory,
+  .desktop-density-product-panel .directory-list-section {
     width: 100%;
-    min-width: 0;
-    justify-items: start;
-    gap: .15rem;
-    text-align: left;
   }
 
-  .desktop-catalog-heading > span {
-    color: #777168;
-    font-size: .7rem;
-    font-weight: 760;
-    line-height: 1.2;
-    letter-spacing: .08em;
-    text-transform: uppercase;
-  }
-
-  .desktop-catalog-heading h1 {
-    margin: 0;
-    color: #1e1c19;
-    font-size: clamp(1.45rem, 2vw, 2rem);
-    line-height: 1.12;
-    text-align: left;
-  }
-
-  .desktop-catalog-heading small {
-    color: #7c766d;
-    font-size: .75rem;
-    font-weight: 600;
-  }
-
-  .desktop-catalog-main .directory-list-section {
-    min-width: 0;
-  }
-
-  .desktop-catalog-main .product-grid {
-    grid-template-columns: repeat(auto-fill, minmax(13rem, 1fr));
-    gap: 1.55rem 1rem;
-  }
-
-  .desktop-catalog-main .product-directory,
-  .desktop-catalog-main .directory-list-section {
-    width: 100%;
+  .directory-page-title.desktop-directory-title {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 }
 
-@media (min-width: 1500px) {
-  .desktop-catalog-workspace,
-  .catalog-workspace {
-    grid-template-columns: 23rem minmax(0, 1fr);
+@media (min-width: 1360px) {
+  .desktop-density-product-grid,
+  .desktop-density-product-panel .product-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1760px) {
+  .desktop-density-product-grid,
+  .desktop-density-product-panel .product-grid {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
   }
 }
