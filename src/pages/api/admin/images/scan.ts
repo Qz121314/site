@@ -3,6 +3,7 @@ import type { APIRoute } from "astro";
 import { isSameOriginPost } from "@/lib/auth/session";
 import {
   MAX_IMAGE_DIMENSION,
+  MAX_THUMBNAIL_DIMENSION,
   isSupportedImageType,
   normalizeOriginalName,
 } from "@/lib/admin/image-form";
@@ -10,12 +11,23 @@ import {
 export const prerender = false;
 
 const MAX_SCAN_OBJECTS = 1_000;
-const TARGET_IMPORTS_PER_REQUEST = 100;
+const TARGET_MUTATIONS_PER_REQUEST = 50;
 const R2_LIST_PAGE_SIZE = 50;
 const D1_IMPORT_ROWS_PER_QUERY = 14;
 const MAX_CURSOR_LENGTH = 2_048;
+const ASSET_ID_PATTERN = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
+const RESTORABLE_DERIVATIVE_VARIANTS = new Set([
+  "directory-thumbnail",
+  "hero-responsive",
+  "site-logo",
+  "site-favicon",
+]);
 
-type ObjectKeyRow = { object_key: string };
+type KnownObjectRow = {
+  image_id: string;
+  object_key: string;
+  has_thumbnail: number;
+};
 
 type ImportCandidate = {
   id: string;
@@ -27,15 +39,28 @@ type ImportCandidate = {
   sizeBytes: number;
 };
 
+type ThumbnailCandidate = {
+  assetId: string;
+  objectKey: string;
+  width: number;
+  height: number;
+  sizeBytes: number;
+};
+
 function redirect(request: Request, params: Record<string, string>): Response {
   const url = new URL("/admin/images", request.url);
   for (const [key, value] of Object.entries(params)) url.searchParams.set(key, value);
   return Response.redirect(url, 303);
 }
 
-function parseDimension(value: string | undefined): number | null {
+function parseDimension(value: string | undefined, maximum = MAX_IMAGE_DIMENSION): number | null {
   const number = Number(value);
-  return Number.isSafeInteger(number) && number > 0 && number <= MAX_IMAGE_DIMENSION ? number : null;
+  return Number.isSafeInteger(number) && number > 0 && number <= maximum ? number : null;
+}
+
+function parseAssetId(value: string | undefined): string | null {
+  const assetId = value?.trim() ?? "";
+  return ASSET_ID_PATTERN.test(assetId) ? assetId : null;
 }
 
 function parseCursor(form: FormData): string | undefined {
@@ -73,6 +98,18 @@ function importStatement(images: ImportCandidate[]) {
   ).bind(...bindings);
 }
 
+function thumbnailStatement(image: ThumbnailCandidate) {
+  return env.DB.prepare(
+    `UPDATE image_assets
+     SET thumbnail_object_key = ?2,
+         thumbnail_width = ?3,
+         thumbnail_height = ?4,
+         thumbnail_size_bytes = ?5
+     WHERE id = ?1
+       AND thumbnail_object_key IS NULL`,
+  ).bind(image.assetId, image.objectKey, image.width, image.height, image.sizeBytes);
+}
+
 export const POST: APIRoute = async ({ request }) => {
   if (!isSameOriginPost(request)) return new Response("Forbidden", { status: 403 });
 
@@ -81,14 +118,26 @@ export const POST: APIRoute = async ({ request }) => {
 
   try {
     const existingResult = await env.DB.prepare(
-      `SELECT object_key FROM image_assets
-       UNION
-       SELECT thumbnail_object_key AS object_key FROM image_assets WHERE thumbnail_object_key IS NOT NULL
-       UNION
-       SELECT object_key FROM image_deletion_queue`,
-    ).all<ObjectKeyRow>();
+      `SELECT
+         id AS image_id,
+         object_key,
+         CASE WHEN thumbnail_object_key IS NULL THEN 0 ELSE 1 END AS has_thumbnail
+       FROM image_assets
+       UNION ALL
+       SELECT id AS image_id, thumbnail_object_key AS object_key, 1 AS has_thumbnail
+       FROM image_assets
+       WHERE thumbnail_object_key IS NOT NULL
+       UNION ALL
+       SELECT image_id, object_key, 1 AS has_thumbnail
+       FROM image_deletion_queue`,
+    ).all<KnownObjectRow>();
     const knownKeys = new Set(existingResult.results.map((row) => row.object_key));
+    const knownIds = new Set(existingResult.results.map((row) => row.image_id));
+    const idsWithThumbnail = new Set(
+      existingResult.results.filter((row) => row.has_thumbnail === 1).map((row) => row.image_id),
+    );
     const candidates: ImportCandidate[] = [];
+    const thumbnails: ThumbnailCandidate[] = [];
     let skipped = 0;
     let scanned = 0;
 
@@ -99,14 +148,14 @@ export const POST: APIRoute = async ({ request }) => {
         include: ["httpMetadata", "customMetadata"],
         ...(cursor ? { cursor } : {}),
       });
-
-      for (const object of result.objects) {
+      const unknownObjects = result.objects.filter((object) => {
         scanned += 1;
-        if (knownKeys.has(object.key)) continue;
-        if (["directory-thumbnail", "hero-responsive", "site-logo", "site-favicon"].includes(object.customMetadata?.variant ?? "")) {
-          skipped += 1;
-          continue;
-        }
+        return !knownKeys.has(object.key);
+      });
+
+      for (const object of unknownObjects) {
+        const variant = object.customMetadata?.variant ?? "";
+        if (RESTORABLE_DERIVATIVE_VARIANTS.has(variant)) continue;
 
         const mimeType = object.httpMetadata?.contentType ?? "";
         const width = parseDimension(object.customMetadata?.width);
@@ -116,11 +165,17 @@ export const POST: APIRoute = async ({ request }) => {
           continue;
         }
 
+        const metadataAssetId = parseAssetId(object.customMetadata?.assetId);
+        if (metadataAssetId && knownIds.has(metadataAssetId)) {
+          skipped += 1;
+          continue;
+        }
+        const id = metadataAssetId ?? crypto.randomUUID();
         const originalName = normalizeOriginalName(
           object.customMetadata?.originalName ?? object.key.split("/").pop() ?? "image",
         );
         candidates.push({
-          id: crypto.randomUUID(),
+          id,
           objectKey: object.key,
           originalName,
           mimeType,
@@ -128,17 +183,51 @@ export const POST: APIRoute = async ({ request }) => {
           height,
           sizeBytes: object.size,
         });
+        knownIds.add(id);
+        knownKeys.add(object.key);
+      }
+
+      for (const object of unknownObjects) {
+        const variant = object.customMetadata?.variant ?? "";
+        if (!RESTORABLE_DERIVATIVE_VARIANTS.has(variant)) continue;
+
+        const assetId = parseAssetId(object.customMetadata?.assetId);
+        const width = parseDimension(object.customMetadata?.width, MAX_THUMBNAIL_DIMENSION);
+        const height = parseDimension(object.customMetadata?.height, MAX_THUMBNAIL_DIMENSION);
+        const mimeType = object.httpMetadata?.contentType ?? "";
+        if (
+          !assetId
+          || !knownIds.has(assetId)
+          || idsWithThumbnail.has(assetId)
+          || mimeType !== "image/webp"
+          || !width
+          || !height
+        ) {
+          skipped += 1;
+          continue;
+        }
+
+        thumbnails.push({
+          assetId,
+          objectKey: object.key,
+          width,
+          height,
+          sizeBytes: object.size,
+        });
+        idsWithThumbnail.add(assetId);
         knownKeys.add(object.key);
       }
 
       cursor = result.truncated ? result.cursor : undefined;
-      if (!cursor || candidates.length >= TARGET_IMPORTS_PER_REQUEST) break;
+      if (!cursor || candidates.length + thumbnails.length >= TARGET_MUTATIONS_PER_REQUEST) break;
     } while (scanned < MAX_SCAN_OBJECTS);
 
     const groups = chunk(candidates, D1_IMPORT_ROWS_PER_QUERY);
-    if (groups.length > 0) {
-      await env.DB.batch(groups.map(importStatement));
-    }
+    const statements = [
+      ...groups.map(importStatement),
+      ...thumbnails.map(thumbnailStatement),
+    ];
+    if (statements.length > 0) await env.DB.batch(statements);
 
     return redirect(request, {
       saved: "scanned",
