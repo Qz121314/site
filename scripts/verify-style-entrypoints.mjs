@@ -1,4 +1,4 @@
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 
 const publicLayout = readFileSync("src/layouts/PublicLayout.astro", "utf8");
 const adminLayout = readFileSync("src/layouts/AdminLayout.astro", "utf8");
@@ -12,6 +12,7 @@ function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
 
+assert(!existsSync("src/components/public/PublicSearchForm.astro"), "The removed standalone public search form must not return.");
 assert(publicLayout.includes('import "@/styles/public-system.css";'), "PublicLayout must import public-system.css.");
 for (const directImport of ["public-base.css", "public.css", "public-commerce.css", "public-ads.css", "public-desktop.css"]) {
   assert(!publicLayout.includes(`import "@/styles/${directImport}";`), `PublicLayout must not import ${directImport} directly.`);
