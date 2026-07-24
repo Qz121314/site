@@ -10,6 +10,7 @@ test("desktop catalog uses an integrated premium logo, section, category, and pr
     row,
     interaction,
     styles,
+    hierarchy,
   ] = await Promise.all([
     readFile(new URL("../src/pages/[channel]/index.astro", import.meta.url), "utf8"),
     readFile(new URL("../src/pages/[channel]/category/[category].astro", import.meta.url), "utf8"),
@@ -17,6 +18,7 @@ test("desktop catalog uses an integrated premium logo, section, category, and pr
     readFile(new URL("../src/components/public/DesktopCatalogRow.astro", import.meta.url), "utf8"),
     readFile(new URL("../src/scripts/public-desktop-workspace.ts", import.meta.url), "utf8"),
     readFile(new URL("../src/styles/public-desktop-ui-polish.css", import.meta.url), "utf8"),
+    readFile(new URL("../src/styles/public-desktop-navigation-hierarchy.css", import.meta.url), "utf8"),
   ]);
 
   assert.match(channelPage, /DesktopCatalogSidebarV2/u);
@@ -26,7 +28,9 @@ test("desktop catalog uses an integrated premium logo, section, category, and pr
   assert.match(categoryPage, /DesktopCatalogSidebarV2/u);
   assert.doesNotMatch(categoryPage, /loadPublicDesktopFilterMap/u);
 
-  assert.match(sidebar, /active && filters\.length > 0/u);
+  assert.match(sidebar, /site\.channels\.map/u);
+  assert.match(sidebar, /const expanded = active && filters\.length > 0/u);
+  assert.match(sidebar, /aria-expanded=\{expanded \? "true" : undefined\}/u);
   assert.match(sidebar, /data-desktop-filter-link/u);
   assert.doesNotMatch(sidebar, /<svg/u);
 
@@ -48,4 +52,6 @@ test("desktop catalog uses an integrated premium logo, section, category, and pr
   assert.match(styles, /\.desktop-catalog-panel/u);
   assert.match(styles, /grid-template-columns: var\(--desktop-category-width\) minmax\(0, 1fr\)/u);
   assert.match(styles, /background:[\s\S]*?var\(--desktop-paper\)/u);
+  assert.match(hierarchy, /\.desktop-nav-filter-link \{[\s\S]*?min-height: 2\.55rem/u);
+  assert.match(hierarchy, /\.desktop-catalog-heading \{[\s\S]*?position: absolute/u);
 });
