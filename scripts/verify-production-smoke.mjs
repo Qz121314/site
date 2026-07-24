@@ -1,4 +1,5 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { validateSitemapResponse } from "./lib/sitemap-smoke.mjs";
 
 const DEPLOY_LOG = "ci-logs/deploy.log";
 const OUTPUT_PATH = "ci-logs/production-smoke.json";
@@ -140,6 +141,11 @@ const checks = [
     }
     return { ok: true };
   }),
+  requestWithRetries(
+    "/sitemap.xml",
+    (response, body) => validateSitemapResponse(response, body, origin),
+    { accept: "application/xml,text/xml;q=0.9,*/*;q=0.8" },
+  ),
 ];
 
 const startedAt = new Date().toISOString();
@@ -234,7 +240,7 @@ try {
       url: directory.url,
       status: directory.status,
       contentType: directory.contentType,
-      detail: "no published product available; schema, affiliate API, catalog API, and search were still verified",
+      detail: "no published product available; schema, sitemap, affiliate API, catalog API, and search were still verified",
     });
   }
 
