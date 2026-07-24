@@ -2,6 +2,7 @@ import { env } from "cloudflare:workers";
 import { defineMiddleware } from "astro:middleware";
 import { readCookie, SESSION_COOKIE, verifySessionToken } from "@/lib/auth/session";
 import { publicHtmlEdgeCacheSeconds } from "@/lib/public/cache-policy";
+import { resolvePublicOrigin } from "@/lib/public/origin";
 
 const PUBLIC_ADMIN_PATHS = new Set(["/admin/login", "/api/admin/login"]);
 const DATA_INDEPENDENT_PATHS = new Set([
@@ -159,6 +160,16 @@ function addSecurityHeaders(response: Response, request: Request, pathname: stri
   return new Response(response.body, { status: response.status, statusText: response.statusText, headers });
 }
 
+function downstreamRequest(context: Parameters<Parameters<typeof defineMiddleware>[0]>[0]): Request {
+  if (context.request.method !== "GET" && context.request.method !== "HEAD") return context.request;
+
+  const origin = resolvePublicOrigin(context.url, context.request.headers);
+  if (origin === context.url.origin) return context.request;
+
+  const url = new URL(`${context.url.pathname}${context.url.search}${context.url.hash}`, origin);
+  return new Request(url, context.request);
+}
+
 export const onRequest = defineMiddleware(async (context, next) => {
   const pathname = context.url.pathname;
   const requiresAdmin = isAdminPath(pathname) && !PUBLIC_ADMIN_PATHS.has(pathname);
@@ -185,5 +196,6 @@ export const onRequest = defineMiddleware(async (context, next) => {
     return addSecurityHeaders(serviceUnavailableResponse(context.request, pathname), context.request, pathname);
   }
 
-  return addSecurityHeaders(await next(), context.request, pathname);
+  const request = downstreamRequest(context);
+  return addSecurityHeaders(await next(request), request, pathname);
 });
