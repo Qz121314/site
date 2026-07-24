@@ -3,7 +3,7 @@ import PublicLayout from "@/layouts/PublicLayout.astro";
 import AffiliateAds from "@/components/public/AffiliateAds.astro";
 import CategoryCard from "@/components/public/CategoryCard.astro";
 import DesktopCatalogRow from "@/components/public/DesktopCatalogRow.astro";
-import DesktopCatalogSidebar from "@/components/public/DesktopCatalogSidebar.astro";
+import DesktopCatalogSidebarV2 from "@/components/public/DesktopCatalogSidebarV2.astro";
 import ProductDirectory from "@/components/public/ProductDirectory.astro";
 import SemanticPageHeading from "@/components/public/SemanticPageHeading.astro";
 import {
@@ -14,10 +14,7 @@ import {
   loadPublicSiteShell,
   type PublicCategoryFilter,
 } from "@/lib/db/public";
-import {
-  loadPublicDesktopFilterMap,
-  loadPublicProductPreviewGroups,
-} from "@/lib/db/public-desktop";
+import { loadPublicProductPreviewGroups } from "@/lib/db/public-desktop";
 import { buildEffectiveCategoryGroups } from "@/lib/public/category-navigation";
 import { readPublicPage } from "@/lib/public/pagination";
 import { truncateText } from "@/lib/public/seo";
@@ -30,23 +27,16 @@ const requestedCategorySlug = (Astro.url.searchParams.get("category") ?? "").tri
 const site = await loadPublicSiteShell();
 const channel = findPublicChannel(site, channelSlug);
 const canLoadPage = Boolean(channel && pageInput.valid);
-const desktopFilterChannelIds = channel
-  ? site.channels.flatMap((item) => item.id === channel.id ? [] : [item.id])
-  : [];
 
-const [filters, loadedCategories, otherFiltersByChannel] = canLoadPage && channel
+const [filters, loadedCategories] = canLoadPage && channel
   ? await Promise.all([
       loadPublicCategoryFilters(channel.id),
       loadPublicCategories(channel.id),
-      loadPublicDesktopFilterMap(desktopFilterChannelIds),
     ])
-  : [[], [], {}];
+  : [[], []];
 const categories = loadedCategories;
 const categoryGroups = buildEffectiveCategoryGroups(filters, categories);
 const activeFilters = categoryGroups.map(({ filter }) => filter);
-const filtersByChannel = channel
-  ? { ...otherFiltersByChannel, [channel.id]: activeFilters }
-  : otherFiltersByChannel;
 const hasCategoryNavigation = categoryGroups.length > 0;
 const categoryFilterColumns = Math.min(Math.max(activeFilters.length, 1), 4);
 const categoryFilterStyle = `--category-filter-columns: ${categoryFilterColumns}`;
@@ -106,6 +96,7 @@ const desktopGroups = desktopGroupInputs.map(({ filter, categories: groupedCateg
   categories: groupedCategories,
   products: desktopProductsByFilter[filter.id] ?? [],
 }));
+const initialDesktopFilterSlug = desktopGroups[0]?.filter.slug ?? null;
 
 const pageOutOfRange = canLoadPage && (
   hasCategoryNavigation
@@ -141,6 +132,7 @@ const adSurface = hasCategoryNavigation
   : pageInput.page === 1 && !selectedCategory
     ? "channel-catalog"
     : "catalog";
+const channelHref = channel ? `/${encodeURIComponent(channel.slug)}` : "/";
 ---
 
 <PublicLayout
@@ -161,7 +153,6 @@ const adSurface = hasCategoryNavigation
           <nav class="filter-strip channel-category-filters" aria-label="Product categories">
             {categories.map((category) => {
               const active = selectedCategory?.id === category.id;
-              const channelHref = `/${encodeURIComponent(channel.slug)}`;
               return (
                 <a
                   class="filter-button"
@@ -251,30 +242,83 @@ const adSurface = hasCategoryNavigation
         </section>
       )}
 
-      {hasCategoryNavigation && pageInput.page === 1 && (
-        <section
-          class="desktop-density-workspace desktop-channel-catalog"
-          aria-label={`${channel.name} catalog`}
-          data-desktop-density-workspace
-        >
-          <DesktopCatalogSidebar
-            site={site}
-            channel={channel}
-            filtersByChannel={filtersByChannel}
-          />
-          <div class="desktop-density-content">
-            {desktopGroups.map(({ filter, categories: groupedCategories, products }, index) => (
+      <section
+        class="desktop-density-workspace desktop-channel-catalog integrated-desktop-catalog"
+        aria-label={`${channel.name} catalog`}
+        data-desktop-density-workspace
+      >
+        <DesktopCatalogSidebarV2
+          site={site}
+          channel={channel}
+          filters={activeFilters}
+          activeFilterSlug={initialDesktopFilterSlug}
+        />
+
+        <div class="desktop-density-content integrated-desktop-content">
+          {hasCategoryNavigation ? (
+            desktopGroups.map(({ filter, categories: groupedCategories, products }, index) => (
               <DesktopCatalogRow
                 filter={filter}
                 categories={groupedCategories}
                 products={products}
                 channelSlug={channel.slug}
                 priorityCount={index === 0 ? 4 : 0}
+                active={index === 0}
               />
-            ))}
-          </div>
-        </section>
-      )}
+            ))
+          ) : (
+            <section
+              class="desktop-density-row desktop-catalog-panel desktop-direct-catalog-panel"
+              data-desktop-filter-row="all"
+              data-desktop-filter-panel="all"
+              aria-labelledby="desktop-direct-category-title"
+              aria-hidden="false"
+            >
+              <div class="desktop-density-category-panel">
+                <h2 id="desktop-direct-category-title">{channel.name}</h2>
+                <div class="desktop-density-category-grid">
+                  <a
+                    class={`category-entry${selectedCategory ? "" : " is-active"}`}
+                    href={channelHref}
+                    aria-current={selectedCategory ? undefined : "page"}
+                  >
+                    <span class="category-entry-label">All</span>
+                  </a>
+                  {categories.map((category) => {
+                    const active = selectedCategory?.id === category.id;
+                    return (
+                      <a
+                        class={`category-entry${active ? " is-active" : ""}`}
+                        href={`${channelHref}?category=${encodeURIComponent(category.slug)}`}
+                        aria-current={active ? "page" : undefined}
+                      >
+                        <span class="category-entry-label">{category.name}</span>
+                      </a>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div class="desktop-density-product-panel">
+                <header class="desktop-catalog-heading">
+                  <h1>{directoryTitle}</h1>
+                  {pageInput.page > 1 && <span>Page {pageInput.page}</span>}
+                </header>
+                <ProductDirectory
+                  channelSlug={channel.slug}
+                  categorySlug={selectedCategory?.slug ?? null}
+                  preserveCategoryQuery={Boolean(selectedCategory)}
+                  page={productPage}
+                  priorityCount={4}
+                  emptyMessage={selectedCategory
+                    ? `No published products are available in ${selectedCategory.name}.`
+                    : "No published products are available in this channel."}
+                />
+              </div>
+            </section>
+          )}
+        </div>
+      </section>
 
       {!hasCategoryNavigation && (
         <section class="public-section channel-products-section">
