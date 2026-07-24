@@ -19,11 +19,12 @@
     "verify:style-entrypoints": "node scripts/verify-style-entrypoints.mjs",
     "verify:browser-smoke": "node scripts/verify-browser-smoke.mjs",
     "verify:production-smoke": "node scripts/verify-production-smoke.mjs",
+    "verify:d1-query-plans": "node scripts/verify-public-query-plans.mjs",
     "write:deployment-recovery": "node scripts/write-deployment-recovery.mjs",
     "db:migrate:local": "wrangler d1 migrations apply DB --local",
     "db:migrate:remote": "wrangler d1 migrations apply DB --remote",
     "deploy": "wrangler deploy",
-    "verify:pool-integrity": "node scripts/verify-pool-integrity.mjs"
+    "verify:pool-integrity": "node scripts/verify-pool-integrity.mjs && pnpm verify:d1-query-plans"
   },
   "dependencies": {
     "@astrojs/cloudflare": "14.1.3",

@@ -4,18 +4,20 @@ import test from "node:test";
 
 const migrationDirectory = new URL("../migrations/", import.meta.url);
 
-test("ships ordered schema, affiliate upgrade, and rollback compatibility", async () => {
+test("ships ordered schema, affiliate upgrade, rollback compatibility, and planner optimization", async () => {
   const files = (await readdir(migrationDirectory)).filter((name) => name.endsWith(".sql")).sort();
   assert.deepEqual(files, [
     "0001_initial.sql",
     "0002_affiliate_ad_system.sql",
     "0003_affiliate_ad_rollback_compatibility.sql",
+    "0004_optimize_query_planner.sql",
   ]);
 
-  const [schema, advertising, compatibility] = await Promise.all([
+  const [schema, advertising, compatibility, planner] = await Promise.all([
     readFile(new URL("0001_initial.sql", migrationDirectory), "utf8"),
     readFile(new URL("0002_affiliate_ad_system.sql", migrationDirectory), "utf8"),
     readFile(new URL("0003_affiliate_ad_rollback_compatibility.sql", migrationDirectory), "utf8"),
+    readFile(new URL("0004_optimize_query_planner.sql", migrationDirectory), "utf8"),
   ]);
   assert.doesNotMatch(schema, /\bfeatured\b/u);
   assert.doesNotMatch(schema, /\bnoindex_enabled\b/u);
@@ -36,6 +38,8 @@ test("ships ordered schema, affiliate upgrade, and rollback compatibility", asyn
   assert.match(compatibility, /creative_type TEXT NOT NULL DEFAULT 'uploaded_image'/u);
   assert.match(compatibility, /sort_order INTEGER NOT NULL DEFAULT 0/u);
   assert.match(compatibility, /idx_advertisements_pool_status_type[\s\S]*?display_type, id/u);
+
+  assert.match(planner, /PRAGMA optimize;/u);
 });
 
 test("enforces dedicated product thumbnails and publishable relations", async () => {
