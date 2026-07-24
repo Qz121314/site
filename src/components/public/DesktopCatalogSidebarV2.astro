@@ -24,17 +24,19 @@ const {
   <nav class="desktop-nav-menu">
     {site.channels.map((item, index) => {
       const active = item.id === channel.id;
+      const expanded = active && filters.length > 0;
       return (
         <section class={`desktop-nav-section desktop-nav-section-${(index % 4) + 1}`}>
           <a
             class="desktop-nav-section-link"
             href={`/${encodeURIComponent(item.slug)}`}
             aria-current={active ? "page" : undefined}
+            aria-expanded={expanded ? "true" : undefined}
           >
-            <span>{item.name}</span>
+            <span class="desktop-nav-section-label">{item.name}</span>
           </a>
 
-          {active && filters.length > 0 && (
+          {expanded && (
             <div class="desktop-nav-filter-list" aria-label={`${item.name} filters`}>
               {filters.map((filter) => (
                 <a
@@ -43,7 +45,7 @@ const {
                   data-desktop-filter-link={filter.slug}
                   aria-current={activeFilterSlug === filter.slug ? "location" : undefined}
                 >
-                  <span>{filter.name}</span>
+                  <span class="desktop-nav-filter-label">{filter.name}</span>
                 </a>
               ))}
             </div>
