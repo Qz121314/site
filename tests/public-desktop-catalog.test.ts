@@ -66,10 +66,12 @@ test("desktop catalog integrates sections, active filters, categories, and produ
   assert.match(desktopQueries, /\.bind\(\.\.\.bindings\)[\s\S]*\.all<PublicProductPreviewRow>/u);
 
   assert.match(integratedStyles, /--desktop-nav-width/u);
+  assert.match(integratedStyles, /--desktop-category-width/u);
   assert.match(integratedStyles, /grid-template-columns: var\(--desktop-nav-width\) minmax\(0, 1fr\)/u);
   assert.match(integratedStyles, /\.desktop-catalog-panel/u);
-  assert.match(integratedStyles, /grid-template-columns: clamp\(8\.5rem, 10vw, 10\.5rem\) minmax\(0, 1fr\)/u);
-  assert.match(integratedStyles, /repeat\(auto-fill, minmax\(10\.5rem, 12rem\)\)/u);
+  assert.match(integratedStyles, /grid-template-columns: var\(--desktop-category-width\) minmax\(0, 1fr\)/u);
+  assert.match(integratedStyles, /repeat\(auto-fill, minmax\(9\.5rem, 10\.5rem\)\)/u);
+  assert.match(integratedStyles, /\.product-card \.visual-card-overlay \{[\s\S]*?position: absolute/u);
 
   assert.match(productCard, /class="visual-card-media-frame"/u);
   assert.match(productCard, /public-product-links/u);
@@ -90,6 +92,7 @@ test("desktop catalog integrates sections, active filters, categories, and produ
   assert.match(system, /@import "\.\/public-desktop-catalog\.css";/u);
   assert.match(system, /@import "\.\/public-desktop-ui-polish\.css";/u);
   assert.match(system, /@import "\.\/public-product-card-consistency\.css";/u);
+  assert.doesNotMatch(system, /public-desktop-density-finish/u);
 
   assert.match(baseStyles, /-webkit-tap-highlight-color: transparent/u);
   assert.match(baseStyles, /-webkit-user-drag: none/u);
