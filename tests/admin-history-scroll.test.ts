@@ -13,6 +13,8 @@ test("admin history entries preserve and restore scroll positions", async () => 
   assert.match(navigationState, /history\.scrollRestoration = "manual"/u);
   assert.match(navigationState, /adminScrollX/u);
   assert.match(navigationState, /adminScrollY/u);
+  assert.match(navigationState, /addEventListener\("scroll", schedulePositionSave/u);
+  assert.match(navigationState, /requestAnimationFrame\([\s\S]*replaceCurrentEntry\(url, left, top\)/u);
   assert.match(navigationState, /addEventListener\("popstate"/u);
   assert.match(navigationState, /addEventListener\("admin:navigation"[\s\S]*requestAnimationFrame[\s\S]*scrollTo/u);
   assert.match(navigationState, /canonicalUrl\(window\.location\.href\) !== targetUrl/u);
