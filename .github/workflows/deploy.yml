@@ -220,12 +220,22 @@ jobs:
           STATUS_ISSUE: "3"
         run: |
           gh issue reopen "$STATUS_ISSUE" --repo "$GITHUB_REPOSITORY" || true
+          gh issue edit "$STATUS_ISSUE" --repo "$GITHUB_REPOSITORY" --body-file - <<EOF
+          该 Issue 由 GitHub Actions 自动维护，请勿手动删除。
+
+          ## 最新状态：部署成功
+
+          - Commit: \`$GITHUB_SHA\`
+          - Actions: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
+          - Checks: /api/health, /robots.txt, /sitemap.xml, /, public APIs, search, category and product routes
+          - Rollback: 未执行
+          EOF
           gh issue comment "$STATUS_ISSUE" --repo "$GITHUB_REPOSITORY" --body-file - <<EOF
           ✅ Cloudflare 正式部署成功，并通过生产 Smoke Test。
 
           - Commit: \`$GITHUB_SHA\`
           - Actions: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
-          - Checks: /api/health, /robots.txt, /
+          - Checks: /api/health, /robots.txt, /sitemap.xml, /, public APIs, search, category and product routes
           EOF
           gh issue close "$STATUS_ISSUE" --repo "$GITHUB_REPOSITORY" --reason completed
 
@@ -240,12 +250,67 @@ jobs:
           if [ -f ci-logs/worker-rollback-attempted ]; then
             ROLLBACK_NOTE="已执行 Worker 自动回滚；请检查诊断附件中的回滚和恢复记录。"
           fi
+
+          FAILURE_STAGE="构建、集成验证、凭据、迁移或部署步骤"
+          FAILURE_DETAIL="未生成生产 Smoke 错误摘要；请打开 Actions 的首个失败步骤。"
+          if [ -f ci-logs/production-smoke.json ]; then
+            FAILURE_STAGE="生产 Smoke Test"
+            FAILURE_DETAIL="$(node --input-type=module <<'NODE'
+          import { readFileSync } from "node:fs";
+          try {
+            const payload = JSON.parse(readFileSync("ci-logs/production-smoke.json", "utf8"));
+            const detail = String(payload.error ?? "Production smoke verification failed")
+              .replace(/\s+/gu, " ")
+              .slice(0, 600);
+            process.stdout.write(detail);
+          } catch {
+            process.stdout.write("production-smoke.json 无法解析；请检查诊断附件。");
+          }
+          NODE
+          )"
+          elif [ -f ci-logs/deploy.log ] && [ ! -f ci-logs/deploy-complete ]; then
+            FAILURE_STAGE="Cloudflare Worker 部署"
+          elif [ -f ci-logs/migrate.log ]; then
+            FAILURE_STAGE="D1 远程迁移或后续部署步骤"
+          elif [ -f ci-logs/browser-smoke.log ]; then
+            FAILURE_STAGE="Cloudflare 绑定、部署凭据或后续步骤"
+          elif [ -f ci-logs/build.log ]; then
+            FAILURE_STAGE="真实浏览器/后台集成验证"
+          elif [ -f ci-logs/pool-integrity.log ]; then
+            FAILURE_STAGE="Astro SSR 构建"
+          elif [ -f ci-logs/migrate-local.log ]; then
+            FAILURE_STAGE="池约束或查询计划验证"
+          elif [ -f ci-logs/test.log ]; then
+            FAILURE_STAGE="本地 D1 迁移验证"
+          elif [ -f ci-logs/check.log ]; then
+            FAILURE_STAGE="自动化测试"
+          elif [ -f ci-logs/typegen.log ]; then
+            FAILURE_STAGE="类型检查"
+          elif [ -f ci-logs/install.log ]; then
+            FAILURE_STAGE="Cloudflare 类型生成"
+          else
+            FAILURE_STAGE="依赖安装或工作流初始化"
+          fi
+
+          gh issue edit "$STATUS_ISSUE" --repo "$GITHUB_REPOSITORY" --body-file - <<EOF
+          该 Issue 由 GitHub Actions 自动维护，请勿手动删除。
+
+          ## 最新状态：部署失败
+
+          - Commit: \`$GITHUB_SHA\`
+          - Actions: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
+          - Failed stage: $FAILURE_STAGE
+          - Error: $FAILURE_DETAIL
+          - Recovery: $ROLLBACK_NOTE
+
+          完整日志保存在本次 Actions 的 \`ci-diagnostics-$GITHUB_RUN_ID\` 附件中。
+          EOF
           gh issue comment "$STATUS_ISSUE" --repo "$GITHUB_REPOSITORY" --body-file - <<EOF
           ❌ Cloudflare 正式部署或生产 Smoke Test 失败。
 
           - Commit: \`$GITHUB_SHA\`
           - Actions: $GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/runs/$GITHUB_RUN_ID
+          - Failed stage: $FAILURE_STAGE
+          - Error: $FAILURE_DETAIL
           - Recovery: $ROLLBACK_NOTE
-
-          请检查失败步骤、\`recovery.md\` 和 CI 诊断附件。
           EOF
