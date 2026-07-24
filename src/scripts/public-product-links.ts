@@ -1,3 +1,5 @@
+export {};
+
 const desktopMedia = window.matchMedia("(min-width: 1100px)");
 
 function normalizeProductCard(link: HTMLAnchorElement): void {
@@ -30,6 +32,8 @@ function syncProductCards(root: ParentNode = document): void {
 syncProductCards();
 desktopMedia.addEventListener("change", () => syncProductCards());
 document.addEventListener("public:products-appended", (event) => {
-  const detail = event instanceof CustomEvent ? event.detail as { grid?: ParentNode } | undefined : undefined;
+  const detail = event instanceof CustomEvent
+    ? event.detail as { grid?: ParentNode } | undefined
+    : undefined;
   syncProductCards(detail?.grid ?? document);
 });
