@@ -14,17 +14,28 @@ const contextJson = JSON.stringify({ channelSlug }).replaceAll("<", "\\u003c");
 
   function scheduleProductDetailAd(): void {
     const context = document.querySelector<HTMLScriptElement>("script[data-product-detail-ad-context]");
-    if (!context || !document.querySelector(".product-detail")) return;
+    const detail = document.querySelector<HTMLElement>(".product-detail");
+    if (!context || !detail) return;
     if (window.innerWidth < PRODUCT_DETAIL_AD_MIN_WIDTH) {
       context.dataset.productDetailAdState = "viewport-skipped";
       return;
     }
+
+    if (!detail.querySelector("[data-product-detail-ad-slot]")) {
+      const slot = document.createElement("aside");
+      slot.className = "product-detail-ad-slot";
+      slot.dataset.productDetailAdSlot = "";
+      slot.setAttribute("aria-label", "Sponsored advertisement");
+      detail.appendChild(slot);
+    }
+
     if (context.dataset.productDetailAdState) return;
     context.dataset.productDetailAdState = "deferred";
 
     window.setTimeout(() => {
       if (window.innerWidth < PRODUCT_DETAIL_AD_MIN_WIDTH) {
         context.dataset.productDetailAdState = "viewport-skipped";
+        document.querySelector("[data-product-detail-ad-slot]")?.remove();
         return;
       }
       void import("@/scripts/public-product-detail-ad").catch((error) => {
