@@ -22,11 +22,3 @@ document.addEventListener("change", (event) => {
     alert(`图片 ${oversized.name} 超过 25 MB，请先缩小文件后再上传。`);
   }
 }, true);
-
-document.addEventListener("load", (event) => {
-  const image = event.target;
-  if (!(image instanceof HTMLImageElement)) return;
-  if (!image.closest("[data-direct-image-upload]") || !image.src.startsWith("blob:")) return;
-
-  URL.revokeObjectURL(image.src);
-}, true);
