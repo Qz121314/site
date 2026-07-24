@@ -1,10 +1,70 @@
-/* Desktop navigation hierarchy and catalog-density refinements.
- * Sections are always visible as primary navigation. Only the current section
- * expands its filter controls. Product headings stay semantic but do not repeat
- * the category already selected in the adjacent rail.
+/* Desktop navigation hierarchy and centered catalog composition.
+ * Sections remain visible as primary navigation. Only the current section
+ * expands its filters. The navigation rail is sticky, the product catalog is
+ * centered on the viewport, and the right side remains available for the
+ * existing fixed vertical advertising rail.
  */
 
 @media (min-width: 1100px) {
+  .public-body {
+    --desktop-content-width: 50rem;
+    --desktop-side-min: 8.5rem;
+    --desktop-category-width: 9rem;
+    --desktop-rail-gap: clamp(.85rem, 1.8vw, 2rem);
+  }
+
+  .public-body:has(.integrated-desktop-catalog) .public-main {
+    overflow: visible;
+    padding-inline: 0;
+  }
+
+  .integrated-desktop-catalog,
+  .desktop-density-workspace.integrated-desktop-catalog,
+  .catalog-workspace.integrated-desktop-catalog {
+    display: grid !important;
+    width: 100vw;
+    max-width: none;
+    grid-template-columns:
+      minmax(var(--desktop-side-min), 1fr)
+      minmax(0, var(--desktop-content-width))
+      minmax(var(--desktop-side-min), 1fr);
+    grid-template-rows: auto;
+    align-items: start;
+    column-gap: var(--desktop-rail-gap);
+    overflow: visible;
+    box-sizing: border-box;
+    margin-inline: calc(50% - 50vw);
+    border: 0;
+    border-radius: 0;
+    padding-inline: clamp(.75rem, 2vw, 2rem);
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .integrated-desktop-catalog::after {
+    grid-column: 3;
+    grid-row: 1;
+    min-width: 0;
+    content: "";
+  }
+
+  .desktop-nav-rail {
+    grid-column: 1;
+    grid-row: 1;
+    width: clamp(9.5rem, var(--desktop-nav-fit, 12rem), 14rem);
+    max-width: calc(100% - .25rem);
+    max-height: calc(100vh - var(--desktop-header-height) - 2rem);
+    align-self: start;
+    justify-self: start;
+    position: sticky;
+    top: calc(var(--desktop-header-height) + 1rem);
+    overflow-x: hidden;
+    overflow-y: auto;
+    border-radius: 1rem;
+    padding: .85rem;
+    scrollbar-width: thin;
+  }
+
   .desktop-nav-menu {
     gap: .55rem;
   }
@@ -131,6 +191,46 @@
     outline-offset: 2px;
   }
 
+  .integrated-desktop-content {
+    grid-column: 2;
+    grid-row: 1;
+    width: 100%;
+    max-width: var(--desktop-content-width);
+    min-width: 0;
+    justify-self: center;
+    overflow: hidden;
+    border: 1px solid rgb(73 59 42 / .16);
+    border-radius: 1.2rem;
+    background: var(--desktop-paper);
+    box-shadow:
+      0 1px 0 rgb(255 255 255 / .8) inset,
+      0 24px 64px rgb(58 44 28 / .12);
+  }
+
+  .desktop-catalog-panel,
+  .desktop-density-row.desktop-catalog-panel {
+    grid-template-columns: var(--desktop-category-width) minmax(0, 1fr);
+    overflow: visible;
+  }
+
+  .desktop-catalog-panel .desktop-density-category-panel {
+    padding: 1.15rem .72rem 1.35rem;
+  }
+
+  .desktop-catalog-panel .desktop-density-product-panel {
+    padding: 1.2rem 1.25rem 1.6rem;
+  }
+
+  .desktop-catalog-panel .desktop-density-product-grid,
+  .desktop-catalog-panel .product-grid {
+    grid-template-columns: repeat(auto-fill, minmax(11.25rem, 11.75rem));
+    gap: 1rem .85rem;
+  }
+
+  .desktop-catalog-panel .product-card {
+    max-width: 11.75rem;
+  }
+
   /* The selected category is already visible in the category rail. Keep the H1
    * for document semantics without repeating it visually above the products. */
   .desktop-catalog-heading {
@@ -144,12 +244,33 @@
     white-space: nowrap;
   }
 
-  .desktop-catalog-panel .desktop-density-product-panel {
-    padding-top: 1.35rem;
-  }
-
   .desktop-catalog-panel .directory-list-section,
   .desktop-catalog-panel .product-directory {
     margin-top: 0;
+  }
+}
+
+@media (min-width: 1100px) and (max-width: 1279px) {
+  .public-body {
+    --desktop-content-width: min(46rem, calc(100vw - 18rem));
+    --desktop-side-min: 7rem;
+    --desktop-category-width: 8.25rem;
+    --desktop-rail-gap: .8rem;
+  }
+
+  .desktop-nav-rail {
+    width: clamp(8.75rem, var(--desktop-nav-fit, 10rem), 11rem);
+    padding: .72rem;
+  }
+
+  .desktop-catalog-panel .desktop-density-product-panel {
+    padding-inline: 1rem;
+  }
+}
+
+@media (min-width: 1600px) {
+  .public-body {
+    --desktop-content-width: 54rem;
+    --desktop-side-min: 10rem;
   }
 }
