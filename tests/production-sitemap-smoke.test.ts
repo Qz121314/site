@@ -9,6 +9,14 @@ function response(status = 200, contentType = "application/xml; charset=utf-8"):
   return new Response(null, { status, headers: { "Content-Type": contentType } });
 }
 
+function redirectedResponse(url: string): Response {
+  return {
+    status: 200,
+    url,
+    headers: new Headers({ "Content-Type": "application/xml; charset=utf-8" }),
+  } as Response;
+}
+
 test("production sitemap validation accepts canonical same-origin entries", () => {
   const result = validateSitemapResponse(response(), `<?xml version="1.0" encoding="UTF-8"?>
     <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
@@ -17,6 +25,18 @@ test("production sitemap validation accepts canonical same-origin entries", () =
     </urlset>`, origin);
 
   assert.deepEqual(result, { ok: true, detail: "2 sitemap URLs" });
+});
+
+test("production sitemap validation follows the final response origin", () => {
+  const result = validateSitemapResponse(
+    redirectedResponse("https://www.example.com/sitemap.xml"),
+    `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+      <url><loc>https://www.example.com/demo</loc></url>
+    </urlset>`,
+    origin,
+  );
+
+  assert.deepEqual(result, { ok: true, detail: "1 sitemap URLs" });
 });
 
 test("production sitemap validation accepts an empty initial sitemap", () => {
