@@ -29,10 +29,6 @@
     padding-bottom: 3.5rem;
   }
 
-  .hero-slide img {
-    aspect-ratio: 12 / 5;
-  }
-
   .category-mobile-directory {
     display: none;
   }
@@ -48,19 +44,6 @@
     align-items: start;
     gap: 1rem;
     padding-block: .35rem;
-  }
-
-  .category-group-label {
-    min-height: 3.55rem;
-    margin: 0;
-    padding: .8rem .65rem;
-    font-size: .9rem;
-    line-height: 1.25;
-    text-align: center;
-  }
-
-  .category-group-filter {
-    width: 100%;
   }
 
   .category-group-items {
@@ -181,14 +164,6 @@
     padding-bottom: 4.5rem;
   }
 
-  .hero-carousel {
-    border-radius: .75rem;
-  }
-
-  .hero-slide img {
-    aspect-ratio: 3 / 1;
-  }
-
   .category-mobile-directory {
     display: none;
   }
@@ -204,19 +179,6 @@
     align-items: start;
     gap: 1.25rem;
     padding-block: .35rem;
-  }
-
-  .category-group-label {
-    min-height: 3.7rem;
-    margin: 0;
-    padding: .85rem .75rem;
-    font-size: .92rem;
-    line-height: 1.25;
-    text-align: center;
-  }
-
-  .category-group-filter {
-    width: 100%;
   }
 
   .category-group-items {
