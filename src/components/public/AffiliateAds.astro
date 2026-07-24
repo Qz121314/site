@@ -1,21 +1,36 @@
 ---
-type AffiliateAdSurface = "channel" | "catalog" | "channel-catalog" | "search";
+type AffiliateAdSurface = "channel" | "catalog" | "channel-catalog" | "search" | "product";
 
 interface Props {
   channelSlug: string;
   surface: AffiliateAdSurface;
+  minimumWidth?: number;
 }
 
-const { channelSlug, surface } = Astro.props;
-const contextJson = JSON.stringify({ channelSlug, surface }).replaceAll("<", "\\u003c");
+const { channelSlug, surface, minimumWidth = 0 } = Astro.props;
+const contextJson = JSON.stringify({ channelSlug, surface, minimumWidth }).replaceAll("<", "\\u003c");
 ---
 
 <script is:inline type="application/json" data-affiliate-ad-context set:html={contextJson}></script>
 <script>
   const AFFILIATE_AD_REQUEST_DELAY_MS = 2500;
 
+  type AffiliateAdViewportContext = {
+    minimumWidth?: unknown;
+  };
+
   function advertisementContexts(): NodeListOf<HTMLScriptElement> {
     return document.querySelectorAll<HTMLScriptElement>("script[data-affiliate-ad-context]");
+  }
+
+  function viewportEligible(node: HTMLScriptElement): boolean {
+    try {
+      const context = JSON.parse(node.textContent || "null") as AffiliateAdViewportContext | null;
+      const minimumWidth = Number(context?.minimumWidth ?? 0);
+      return !Number.isFinite(minimumWidth) || minimumWidth <= 0 || window.innerWidth >= minimumWidth;
+    } catch {
+      return true;
+    }
   }
 
   function scheduleAffiliateAds(): void {
@@ -23,13 +38,17 @@ const contextJson = JSON.stringify({ channelSlug, surface }).replaceAll("<", "\\
     if (root.dataset.affiliateAdsScheduled === "1") return;
     root.dataset.affiliateAdsScheduled = "1";
 
-    advertisementContexts().forEach((node) => {
-      if (!node.dataset.affiliateAdState) node.dataset.affiliateAdState = "deferred";
+    const contexts = advertisementContexts();
+    const eligible = Array.from(contexts).filter(viewportEligible);
+    contexts.forEach((node) => {
+      if (!viewportEligible(node)) node.dataset.affiliateAdState = "viewport-skipped";
+      else if (!node.dataset.affiliateAdState) node.dataset.affiliateAdState = "deferred";
     });
+    if (eligible.length === 0) return;
 
     window.setTimeout(() => {
       void import("@/scripts/public-affiliate-ads").catch((error) => {
-        advertisementContexts().forEach((node) => {
+        eligible.forEach((node) => {
           node.dataset.affiliateAdState = "script-failed";
         });
         console.error(JSON.stringify({
