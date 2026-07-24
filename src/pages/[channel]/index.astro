@@ -5,6 +5,7 @@ import CategoryCard from "@/components/public/CategoryCard.astro";
 import DesktopCatalogRow from "@/components/public/DesktopCatalogRow.astro";
 import DesktopCatalogSidebar from "@/components/public/DesktopCatalogSidebar.astro";
 import ProductDirectory from "@/components/public/ProductDirectory.astro";
+import SemanticPageHeading from "@/components/public/SemanticPageHeading.astro";
 import {
   findPublicChannel,
   loadPublicCategories,
@@ -132,6 +133,7 @@ const adSurface = hasCategoryNavigation
 >
   {pageAvailable && channel ? (
     <>
+      <SemanticPageHeading text={pageTitle} />
       <AffiliateAds channelSlug={channel.slug} surface={adSurface} />
 
       {pageInput.page === 1 && !hasCategoryNavigation && categories.length > 0 && (
