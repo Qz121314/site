@@ -1,3 +1,4 @@
+import assert from "node:assert/strict";
 import { readdirSync } from "node:fs";
 import { spawnSync } from "node:child_process";
 
@@ -5,8 +6,23 @@ const migrations = readdirSync("migrations")
   .filter((name) => name.endsWith(".sql"))
   .sort();
 
-console.log("D1 migrations:");
-for (const migration of migrations) console.log(`- ${migration}`);
+assert.deepEqual(migrations, [
+  "0001_initial.sql",
+  "0002_affiliate_ad_system.sql",
+  "0003_affiliate_ad_rollback_compatibility.sql",
+  "0004_optimize_query_planner.sql",
+]);
+
+const labels = [
+  "indexes",
+  "public categories",
+  "public product list",
+  "public product detail",
+  "product gallery",
+  "public product search",
+  "desktop filter map",
+  "affiliate ad candidates",
+];
 
 const sql = `
 SELECT '=== indexes ===' AS audit_section;
@@ -169,8 +185,73 @@ const result = spawnSync(
 );
 
 const output = `${result.stdout ?? ""}${result.stderr ?? ""}`.trim();
-console.log(output);
-if (result.status !== 0) throw new Error("D1 query-plan inspection failed.");
+if (result.status !== 0) {
+  console.error(output);
+  throw new Error("D1 query-plan inspection failed.");
+}
 
-console.log("\nD1 query plans inspected.");
-throw new Error("Intentional diagnostic failure after D1 query-plan capture.");
+function readSection(label) {
+  const marker = `=== ${label} ===`;
+  const start = output.indexOf(marker);
+  assert.notEqual(start, -1, `Missing D1 query-plan section: ${label}`);
+  const labelIndex = labels.indexOf(label);
+  const nextPositions = labels
+    .slice(labelIndex + 1)
+    .map((nextLabel) => output.indexOf(`=== ${nextLabel} ===`, start + marker.length))
+    .filter((position) => position >= 0);
+  const end = nextPositions.length > 0 ? Math.min(...nextPositions) : output.length;
+  return output.slice(start, end);
+}
+
+function assertUses(label, indexNames) {
+  const section = readSection(label);
+  for (const indexName of indexNames) {
+    assert.match(section, new RegExp(indexName, "u"), `${label} must use ${indexName}`);
+  }
+  assert.doesNotMatch(
+    section,
+    /"detail": "SCAN (?:p|product|category|filter|relation|channel|pool|advertisement)\b/u,
+    `${label} must not fall back to a hot-table scan`,
+  );
+}
+
+const indexSection = readSection("indexes");
+for (const indexName of [
+  "idx_categories_public",
+  "idx_category_filters_public",
+  "idx_category_filter_relations_filter",
+  "idx_products_admin_list",
+  "idx_products_channel_listing",
+  "idx_product_images_order",
+  "idx_ad_pools_channel_device_status",
+  "idx_advertisements_pool_status_type",
+]) {
+  assert.match(indexSection, new RegExp(indexName, "u"), `Missing required D1 index: ${indexName}`);
+}
+
+assertUses("public categories", [
+  "idx_category_filters_public",
+  "idx_category_filter_relations_filter",
+  "idx_categories_public",
+  "idx_products_admin_list",
+]);
+assertUses("public product list", ["idx_products_admin_list"]);
+assertUses("public product detail", [
+  "sqlite_autoindex_channels_2",
+  "sqlite_autoindex_products_2",
+  "idx_conversion_resources_group",
+  "idx_category_filters_public",
+]);
+assertUses("product gallery", ["idx_product_images_order"]);
+assertUses("public product search", ["idx_products_channel_listing"]);
+assertUses("desktop filter map", [
+  "idx_category_filters_public",
+  "idx_categories_public",
+  "idx_products_admin_list",
+]);
+assertUses("affiliate ad candidates", [
+  "idx_ad_pools_channel_device_status",
+  "idx_advertisements_pool_status_type",
+]);
+
+console.log("D1 public query plans use the expected indexes.");
