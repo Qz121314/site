@@ -119,11 +119,20 @@ function waitForEmbed(advertisement: ProductAdvertisement): Promise<HTMLIFrameEl
     frame.referrerPolicy = "strict-origin-when-cross-origin";
     frame.sandbox.add("allow-scripts", "allow-forms", "allow-popups", "allow-popups-to-escape-sandbox");
     frame.className = "affiliate-ad-embed";
+    frame.style.position = "fixed";
+    frame.style.left = "-10000px";
+    frame.style.top = "0";
+    frame.style.visibility = "hidden";
     frame.addEventListener("load", () => {
       window.clearTimeout(timeout);
+      frame.style.position = "";
+      frame.style.left = "";
+      frame.style.top = "";
+      frame.style.visibility = "";
       resolve(frame);
     }, { once: true });
     frame.srcdoc = embedDocument(advertisement.embedCode);
+    document.body.appendChild(frame);
   });
 }
 
