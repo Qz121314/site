@@ -11,7 +11,16 @@ function updateSelectionUrl(root: HTMLElement, selectedId: string): void {
   const url = new URL(window.location.href);
   if (selectedId) url.searchParams.set(parameter, selectedId);
   else url.searchParams.delete(parameter);
-  history.replaceState(history.state, "", url);
+  const state = history.state && typeof history.state === "object"
+    ? history.state as Record<string, unknown>
+    : {};
+  history.replaceState({
+    ...state,
+    admin: true,
+    adminUrl: url.href,
+    adminScrollX: Math.max(0, window.scrollX),
+    adminScrollY: Math.max(0, window.scrollY),
+  }, "", url);
 }
 
 function selectCollectionItem(root: HTMLElement, selectedId: string, updateUrl = true): void {
