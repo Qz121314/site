@@ -14,6 +14,12 @@ const SMOKE_PNG = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAusB9Y9ZBmwAAAAASUVORK5CYII=",
   "base64",
 );
+const SMOKE_WEBP = Buffer.alloc(30);
+SMOKE_WEBP.write("RIFF", 0, "ascii");
+SMOKE_WEBP.writeUInt32LE(22, 4);
+SMOKE_WEBP.write("WEBP", 8, "ascii");
+SMOKE_WEBP.write("VP8X", 12, "ascii");
+SMOKE_WEBP.writeUInt32LE(10, 16);
 
 function runCommand(command, args) {
   const result = spawnSync(command, args, {
@@ -168,6 +174,8 @@ try {
 
   const uploadForm = new FormData();
   uploadForm.set("file", new File([SMOKE_PNG], "browser-smoke.png", { type: "image/png" }));
+  uploadForm.set("thumbnail", new File([SMOKE_WEBP], "thumbnail.webp", { type: "image/webp" }));
+  uploadForm.set("variant", "product");
   uploadForm.set("originalName", "Browser Smoke Upload.png");
   const upload = await request("/api/admin/images/upload", {
     method: "POST",
@@ -180,7 +188,14 @@ try {
   const imageId = uploadPayload?.ok === true && typeof uploadPayload.image?.id === "string"
     ? uploadPayload.image.id
     : null;
-  if (!imageId || uploadPayload.image?.mimeType !== "image/png" || uploadPayload.image?.width !== 1 || uploadPayload.image?.height !== 1) {
+  if (
+    !imageId
+    || uploadPayload.image?.mimeType !== "image/png"
+    || uploadPayload.image?.width !== 1
+    || uploadPayload.image?.height !== 1
+    || uploadPayload.image?.thumbnailWidth !== 1
+    || uploadPayload.image?.thumbnailHeight !== 1
+  ) {
     throw new Error(`Admin image upload returned an invalid payload: ${upload.body.slice(0, 300)}`);
   }
 
@@ -230,7 +245,7 @@ try {
   });
   const createProductLocation = redirectUrl(createProduct, productsPath, "Admin product create");
   if (createProductLocation.searchParams.get("saved") !== "created") {
-    throw new Error("Admin product create did not report a successful save.");
+    throw new Error(`Admin product create failed: ${createLocation.search}`);
   }
   const productId = createProductLocation.searchParams.get("edit");
   if (!productId) throw new Error("Admin product create did not return the created product id.");
