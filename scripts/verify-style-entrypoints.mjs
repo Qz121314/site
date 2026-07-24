@@ -3,6 +3,7 @@ import { existsSync, readFileSync } from "node:fs";
 const publicLayout = readFileSync("src/layouts/PublicLayout.astro", "utf8");
 const adminLayout = readFileSync("src/layouts/AdminLayout.astro", "utf8");
 const publicSystem = readFileSync("src/styles/public-system.css", "utf8");
+const publicStructural = readFileSync("src/styles/public.css", "utf8");
 const publicCommerce = readFileSync("src/styles/public-commerce.css", "utf8");
 const publicAds = readFileSync("src/styles/public-ads.css", "utf8");
 const publicDesktop = readFileSync("src/styles/public-desktop.css", "utf8");
@@ -62,6 +63,16 @@ for (const supersededPublicLayer of [
   "public-sculpted-controls.css",
 ]) {
   assert(!publicSystem.includes(supersededPublicLayer), `public-system.css must not load superseded layer ${supersededPublicLayer}.`);
+}
+
+for (const removedStructuralSelector of [
+  ".public-header-inner",
+  ".hero-",
+  ".public-search-form",
+  ".public-search-icon",
+  ".public-search-submit",
+]) {
+  assert(!publicStructural.includes(removedStructuralSelector), `Structural styles must not retain ${removedStructuralSelector}.`);
 }
 
 assert(!publicDesktop.includes(".hero-"), "Desktop styles must not retain selectors for the removed Hero carousel.");
