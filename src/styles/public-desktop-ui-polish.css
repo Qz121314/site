@@ -1,0 +1,332 @@
+/* Final PC visual hierarchy.
+ * Desktop-only refinements for header placement, section/category menu semantics,
+ * and a denser product-detail composition. Mobile and tablet remain unchanged.
+ */
+
+@media (min-width: 1100px) {
+  .public-body {
+    --public-width: 96rem;
+  }
+
+  /* Header: back control (when present), brand, search, flexible space, legal links. */
+  .public-header-default {
+    display: grid;
+    grid-template-columns: max-content minmax(8rem, 12rem) minmax(18rem, 28rem) minmax(0, 1fr) max-content;
+    grid-template-areas: "leading brand search . navigation";
+    align-items: center;
+    justify-content: stretch;
+    gap: clamp(.85rem, 1.4vw, 1.35rem);
+  }
+
+  .public-header-leading {
+    grid-area: leading;
+  }
+
+  .public-header-default .public-brand-centered {
+    grid-area: brand;
+  }
+
+  .public-header-trailing {
+    grid-area: search;
+    width: 100%;
+    min-width: 0;
+    justify-self: stretch;
+  }
+
+  .public-header-desktop-nav {
+    grid-area: navigation;
+    justify-self: end;
+  }
+
+  /* Section navigation: distinct menu groups with deterministic 1–4 color accents. */
+  .desktop-density-workspace,
+  .catalog-workspace {
+    grid-template-columns: 9rem minmax(0, 1fr);
+    gap: 1rem;
+  }
+
+  .desktop-density-sidebar {
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .desktop-density-navigation {
+    gap: .62rem;
+  }
+
+  .desktop-density-section-group {
+    --section-accent: 37 99 235;
+    display: grid;
+    gap: .28rem;
+    border: 1px solid rgb(var(--section-accent) / .2);
+    border-radius: .72rem;
+    padding: .34rem;
+    background: rgb(var(--section-accent) / .045);
+    box-shadow: 0 4px 14px rgb(15 23 42 / .045);
+  }
+
+  .desktop-density-section-group:nth-child(4n + 1) {
+    --section-accent: 37 99 235;
+  }
+
+  .desktop-density-section-group:nth-child(4n + 2) {
+    --section-accent: 5 150 105;
+  }
+
+  .desktop-density-section-group:nth-child(4n + 3) {
+    --section-accent: 124 58 237;
+  }
+
+  .desktop-density-section-group:nth-child(4n + 4) {
+    --section-accent: 217 119 6;
+  }
+
+  .desktop-density-section-group + .desktop-density-section-group {
+    padding-top: .34rem;
+  }
+
+  .desktop-density-section-group:last-child {
+    padding-bottom: .34rem;
+  }
+
+  .desktop-density-section-link {
+    display: flex;
+    min-height: 2.7rem;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid transparent;
+    border-radius: .55rem;
+    padding: .52rem .55rem;
+    color: rgb(var(--section-accent));
+    background: rgb(255 255 255 / .76);
+    font-size: .77rem;
+    font-weight: 780;
+    line-height: 1.18;
+    text-align: center;
+  }
+
+  .desktop-density-section-link svg {
+    display: none;
+  }
+
+  .desktop-density-section-link:hover {
+    border-color: rgb(var(--section-accent) / .34);
+    color: rgb(var(--section-accent));
+    background: #ffffff;
+  }
+
+  .desktop-density-section-link[aria-current="page"] {
+    border-color: rgb(var(--section-accent));
+    color: #ffffff;
+    background: rgb(var(--section-accent));
+    box-shadow: 0 5px 14px rgb(var(--section-accent) / .2);
+  }
+
+  .desktop-density-filter-list {
+    gap: .18rem;
+    margin-top: .02rem;
+    border-top: 1px solid rgb(var(--section-accent) / .14);
+    padding: .28rem 0 0;
+  }
+
+  .desktop-density-filter-link {
+    min-height: 2.12rem;
+    justify-content: center;
+    border: 1px solid transparent;
+    border-radius: .48rem;
+    padding: .36rem .42rem;
+    color: #586170;
+    background: rgb(255 255 255 / .62);
+    font-size: .7rem;
+    font-weight: 670;
+    line-height: 1.18;
+    text-align: center;
+  }
+
+  .desktop-density-filter-link span {
+    width: 100%;
+    text-align: center;
+  }
+
+  .desktop-density-filter-link:hover,
+  .desktop-density-filter-link.is-active {
+    border-color: rgb(var(--section-accent) / .28);
+    color: rgb(var(--section-accent));
+    background: #ffffff;
+  }
+
+  .desktop-density-filter-link.is-active {
+    box-shadow: inset 3px 0 0 rgb(var(--section-accent));
+    font-weight: 760;
+  }
+
+  /* Category rail: compact list panel instead of a second set of product cards. */
+  .desktop-density-row {
+    grid-template-columns: 7.5rem minmax(0, 1fr);
+    gap: .9rem;
+    padding: .85rem 0 1rem;
+  }
+
+  .desktop-density-category-panel {
+    gap: .42rem;
+    border: 1px solid #dfe4ea;
+    border-radius: .7rem;
+    padding: .42rem;
+    background: #f6f7f9;
+    box-shadow: 0 3px 12px rgb(15 23 42 / .035);
+  }
+
+  .desktop-density-category-panel h2 {
+    display: flex;
+    min-height: 2rem;
+    align-items: center;
+    justify-content: center;
+    border-radius: .48rem;
+    padding: .36rem .38rem;
+    color: #273142;
+    background: #e9edf2;
+    font-size: .68rem;
+    font-weight: 800;
+    line-height: 1.16;
+    letter-spacing: .045em;
+    text-align: center;
+  }
+
+  .desktop-density-category-grid {
+    gap: .28rem;
+  }
+
+  .desktop-density-category-grid .category-entry {
+    display: flex;
+    min-height: 2.3rem;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid #dde2e8;
+    border-radius: .5rem;
+    padding: .38rem .42rem;
+    color: #4b5563;
+    background: #ffffff;
+    text-align: center;
+  }
+
+  .desktop-density-category-grid .category-entry:hover {
+    border-color: #aeb7c2;
+    color: #111827;
+    background: #fbfcfd;
+  }
+
+  .desktop-density-category-grid .category-entry.is-active,
+  .desktop-density-category-grid .category-entry[aria-current="page"] {
+    border-color: #273142;
+    color: #ffffff;
+    background: #273142;
+  }
+
+  .desktop-density-category-grid .category-entry-label {
+    display: block;
+    width: 100%;
+    color: inherit;
+    font-size: .68rem;
+    font-weight: 700;
+    line-height: 1.2;
+    text-align: center;
+    -webkit-line-clamp: unset;
+  }
+
+  .desktop-density-category-grid .category-entry-arrow {
+    display: none;
+  }
+
+  /* Product detail: smaller gallery, tight title row, compact commerce card. */
+  .product-detail {
+    width: min(100%, 58rem);
+    max-width: 58rem;
+    grid-template-columns: minmax(0, 26.5rem) minmax(18rem, 21.5rem);
+    grid-template-rows: max-content auto;
+    align-content: start;
+    column-gap: 1.25rem;
+  }
+
+  .product-detail-media {
+    max-width: 26.5rem;
+  }
+
+  .product-detail-title {
+    min-height: 0;
+    height: max-content;
+    align-self: start;
+    padding: .82rem 1rem .68rem !important;
+  }
+
+  .product-detail-title h1 {
+    font-size: clamp(1.85rem, 2.25vw, 2.2rem) !important;
+    line-height: 1.08;
+  }
+
+  .product-detail-information {
+    align-self: start;
+    gap: .72rem;
+    padding: 0 1rem 1rem;
+  }
+
+  .product-copy-section {
+    padding-top: .72rem;
+  }
+
+  .product-body {
+    font-size: .92rem;
+    line-height: 1.56;
+  }
+
+  .public-body .product-detail .product-cta-button,
+  .public-body .product-detail .product-cta-resolved {
+    min-height: 3.25rem;
+  }
+
+  .product-gallery-stage {
+    height: clamp(23rem, 30vw, 27.5rem) !important;
+    max-height: 27.5rem;
+  }
+
+  .product-gallery.has-thumbnails {
+    --gallery-thumbnail-size: 3.5rem;
+    --gallery-thumbnail-gap: .5rem;
+  }
+
+  .product-gallery.has-thumbnails .product-gallery-thumbnails {
+    gap: .42rem;
+  }
+
+  .product-gallery-thumbnail {
+    border-radius: .42rem;
+  }
+}
+
+@media (min-width: 1100px) and (max-width: 1279px) {
+  .public-header-default {
+    grid-template-columns: max-content minmax(7rem, 10rem) minmax(15rem, 22rem) minmax(0, 1fr) max-content;
+    gap: .75rem;
+  }
+}
+
+@media (min-width: 1400px) {
+  .product-detail {
+    width: min(100%, 60rem);
+    max-width: 60rem;
+    grid-template-columns: minmax(0, 27rem) minmax(19rem, 22rem);
+  }
+
+  .product-detail-media {
+    max-width: 27rem;
+  }
+
+  .product-detail:has(.product-detail-ad-slot:not(:empty)) {
+    width: min(100%, 80rem);
+    max-width: 80rem;
+    grid-template-columns: minmax(0, 27rem) minmax(19rem, 22rem) minmax(15rem, 18.75rem);
+    column-gap: 1.2rem;
+  }
+}
