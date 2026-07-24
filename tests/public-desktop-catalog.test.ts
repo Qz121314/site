@@ -79,7 +79,8 @@ test("desktop catalog integrates adaptive navigation, centered products, and fix
   assert.match(hierarchyStyles, /width: 100vw;/u);
   assert.match(hierarchyStyles, /margin-inline: calc\(50% - 50vw\)/u);
   assert.match(hierarchyStyles, /grid-template-columns:[\s\S]*?minmax\(var\(--desktop-side-min\), 1fr\)[\s\S]*?minmax\(0, var\(--desktop-content-width\)\)[\s\S]*?minmax\(var\(--desktop-side-min\), 1fr\)/u);
-  assert.match(hierarchyStyles, /\.desktop-nav-rail \{[\s\S]*?position: sticky;[\s\S]*?max-height: calc\(100vh - var\(--desktop-header-height\) - 2rem\)/u);
+  assert.match(hierarchyStyles, /\.desktop-nav-rail \{[\s\S]*?max-height: calc\(100vh - var\(--desktop-header-height\) - 2rem\)/u);
+  assert.match(hierarchyStyles, /\.desktop-nav-rail \{[\s\S]*?position: sticky;/u);
   assert.match(hierarchyStyles, /\.integrated-desktop-content \{[\s\S]*?grid-column: 2;[\s\S]*?justify-self: center;/u);
   assert.match(hierarchyStyles, /grid-template-columns: var\(--desktop-category-width\) minmax\(0, 1fr\)/u);
   assert.match(hierarchyStyles, /repeat\(auto-fill, minmax\(11\.25rem, 11\.75rem\)\)/u);
