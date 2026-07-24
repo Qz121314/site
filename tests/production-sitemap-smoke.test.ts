@@ -1,4 +1,5 @@
 import assert from "node:assert/strict";
+import { readFile } from "node:fs/promises";
 import test from "node:test";
 import { validateSitemapResponse } from "../scripts/lib/sitemap-smoke.mjs";
 
@@ -30,4 +31,14 @@ test("production sitemap validation rejects malformed metadata and foreign origi
     </urlset>`, origin).ok, false);
 
   assert.equal(validateSitemapResponse(response(200, "text/html"), "<html></html>", origin).ok, false);
+});
+
+test("production deployment smoke invokes sitemap validation", async () => {
+  const source = await readFile(
+    new URL("../scripts/verify-production-smoke.mjs", import.meta.url),
+    "utf8",
+  );
+
+  assert.match(source, /import \{ validateSitemapResponse \} from "\.\/lib\/sitemap-smoke\.mjs"/u);
+  assert.match(source, /requestWithRetries\(\s*"\/sitemap\.xml"[\s\S]*validateSitemapResponse\(response, body, origin\)/u);
 });
