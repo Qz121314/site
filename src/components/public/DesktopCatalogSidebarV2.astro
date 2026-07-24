@@ -1,0 +1,55 @@
+---
+import type {
+  PublicCategoryFilter,
+  PublicChannel,
+  PublicSiteShell,
+} from "@/lib/db/public";
+
+interface Props {
+  site: PublicSiteShell;
+  channel: PublicChannel;
+  filters: PublicCategoryFilter[];
+  activeFilterSlug?: string | null;
+}
+
+const {
+  site,
+  channel,
+  filters,
+  activeFilterSlug = filters[0]?.slug ?? null,
+} = Astro.props;
+---
+
+<aside class="desktop-nav-rail" aria-label="Section navigation">
+  <nav class="desktop-nav-menu">
+    {site.channels.map((item, index) => {
+      const active = item.id === channel.id;
+      return (
+        <section class={`desktop-nav-section desktop-nav-section-${(index % 4) + 1}`}>
+          <a
+            class="desktop-nav-section-link"
+            href={`/${encodeURIComponent(item.slug)}`}
+            aria-current={active ? "page" : undefined}
+          >
+            <span>{item.name}</span>
+          </a>
+
+          {active && filters.length > 0 && (
+            <div class="desktop-nav-filter-list" aria-label={`${item.name} filters`}>
+              {filters.map((filter) => (
+                <a
+                  class={`desktop-nav-filter-link${activeFilterSlug === filter.slug ? " is-active" : ""}`}
+                  href={`/${encodeURIComponent(item.slug)}#filter-${encodeURIComponent(filter.slug)}`}
+                  data-desktop-filter-link={filter.slug}
+                  aria-current={activeFilterSlug === filter.slug ? "location" : undefined}
+                >
+                  <span>{filter.name}</span>
+                </a>
+              ))}
+            </div>
+          )}
+        </section>
+      );
+    })}
+  </nav>
+</aside>

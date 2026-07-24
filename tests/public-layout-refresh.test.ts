@@ -54,7 +54,7 @@ test("public pages use a light commerce shell with centered inline search and a 
   assert.doesNotMatch(categoryPage, /import PublicBackLink/u);
   assert.doesNotMatch(categoryPage, /import PublicSearchForm/u);
   assert.match(categoryPage, /backHref=\{returnUrl\}/u);
-  assert.match(categoryPage, /<header class="[^"]*directory-page-title[^"]*">[\s\S]*?<h1>\{category\.name\}<\/h1>/u);
+  assert.match(categoryPage, /<header class="desktop-catalog-heading">[\s\S]*?<h1>\{category\.name\}<\/h1>/u);
   assert.match(searchPage, /backHref=\{returnUrl\}/u);
   assert.match(searchPage, /class="search-page-title"/u);
 });

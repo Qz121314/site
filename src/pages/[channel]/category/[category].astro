@@ -2,7 +2,7 @@
 import PublicLayout from "@/layouts/PublicLayout.astro";
 import AffiliateAds from "@/components/public/AffiliateAds.astro";
 import CategoryCard from "@/components/public/CategoryCard.astro";
-import DesktopCatalogSidebar from "@/components/public/DesktopCatalogSidebar.astro";
+import DesktopCatalogSidebarV2 from "@/components/public/DesktopCatalogSidebarV2.astro";
 import ProductDirectory from "@/components/public/ProductDirectory.astro";
 import {
   findPublicChannel,
@@ -12,7 +12,6 @@ import {
   loadPublicSiteShell,
   PUBLIC_PRODUCT_PAGE_SIZE,
 } from "@/lib/db/public";
-import { loadPublicDesktopFilterMap } from "@/lib/db/public-desktop";
 import { buildEffectiveCategoryGroups } from "@/lib/public/category-navigation";
 import { publicPageCanonical, readPublicPage } from "@/lib/public/pagination";
 import { truncateText } from "@/lib/public/seo";
@@ -24,22 +23,15 @@ const categorySlug = Astro.params.category ?? "";
 const pageInput = readPublicPage(Astro.url.searchParams.get("page"));
 const site = await loadPublicSiteShell();
 const channel = findPublicChannel(site, channelSlug);
-const desktopFilterChannelIds = channel
-  ? site.channels.flatMap((item) => item.id === channel.id ? [] : [item.id])
-  : [];
-const [filters, categories, otherFiltersByChannel] = channel && pageInput.valid
+const [filters, categories] = channel && pageInput.valid
   ? await Promise.all([
       loadPublicCategoryFilters(channel.id),
       loadPublicCategories(channel.id),
-      loadPublicDesktopFilterMap(desktopFilterChannelIds),
     ])
-  : [[], [], {}];
+  : [[], []];
 const category = categories.find((item) => item.slug === categorySlug) ?? null;
 const categoryGroups = buildEffectiveCategoryGroups(filters, categories);
 const activeFilters = categoryGroups.map(({ filter }) => filter);
-const filtersByChannel = channel
-  ? { ...otherFiltersByChannel, [channel.id]: activeFilters }
-  : otherFiltersByChannel;
 const hasCategoryNavigation = categoryGroups.length > 0;
 const activeGroup = category
   ? categoryGroups.find(({ categories: groupedCategories }) => groupedCategories.some((item) => item.id === category.id)) ?? null
@@ -157,21 +149,24 @@ const returnUrl = pageAvailable && channel ? `/${encodeURIComponent(channel.slug
       <AffiliateAds channelSlug={channel.slug} surface="catalog" />
 
       <div
-        class="directory-page-layout catalog-workspace category-catalog-workspace desktop-density-workspace"
+        class="directory-page-layout catalog-workspace category-catalog-workspace desktop-density-workspace integrated-desktop-catalog"
         data-desktop-density-workspace
       >
-        <DesktopCatalogSidebar
+        <DesktopCatalogSidebarV2
           site={site}
           channel={channel}
-          filtersByChannel={filtersByChannel}
+          filters={activeFilters}
+          activeFilterSlug={focusFilterSlug}
         />
 
-        <div class="desktop-density-content">
+        <div class="desktop-density-content integrated-desktop-content">
           <section
-            class="desktop-density-row desktop-density-row-focus"
+            class="desktop-density-row desktop-density-row-focus desktop-catalog-panel"
             id={`filter-${focusFilterSlug}`}
             data-desktop-filter-row={focusFilterSlug}
+            data-desktop-filter-panel={focusFilterSlug}
             aria-labelledby={`desktop-focus-filter-${category.id}`}
+            aria-hidden="false"
           >
             <div class="desktop-density-category-panel">
               <h2 id={`desktop-focus-filter-${category.id}`}>{focusFilterName}</h2>
@@ -187,9 +182,9 @@ const returnUrl = pageAvailable && channel ? `/${encodeURIComponent(channel.slug
             </div>
 
             <div class="desktop-density-product-panel">
-              <header class="directory-page-title desktop-directory-title">
+              <header class="desktop-catalog-heading">
                 <h1>{category.name}</h1>
-                {pageInput.page > 1 && <span class="directory-page-count">Page {pageInput.page}</span>}
+                {pageInput.page > 1 && <span>Page {pageInput.page}</span>}
               </header>
 
               <section class="public-section directory-list-section" aria-label={category.name}>
@@ -226,6 +221,5 @@ const returnUrl = pageAvailable && channel ? `/${encodeURIComponent(channel.slug
   .desktop-density-content {
     display: grid;
     min-width: 0;
-    gap: .9rem;
   }
 </style>

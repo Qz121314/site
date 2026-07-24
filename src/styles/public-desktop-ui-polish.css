@@ -1,246 +1,382 @@
-/* Final PC visual hierarchy.
- * Desktop-only refinements for header placement, section/category menu semantics,
- * and a denser product-detail composition. Mobile and tablet remain unchanged.
+/* Integrated PC navigation and catalog frame.
+ * The desktop logo/header rail and section navigation share one axis, while
+ * category names and products share one continuous content surface.
+ * Mobile and tablet behavior remains unchanged.
  */
+
+.desktop-nav-rail {
+  display: none;
+}
 
 @media (min-width: 1100px) {
   .public-body {
     --public-width: 96rem;
+    --desktop-nav-width: clamp(11.5rem, 13vw, 13.5rem);
+    --desktop-frame-gap: clamp(.9rem, 1.2vw, 1.2rem);
   }
 
-  /* Header: back control (when present), brand, search, flexible space, legal links. */
-  .public-header-default {
-    display: grid;
-    grid-template-columns: max-content minmax(8rem, 12rem) minmax(18rem, 28rem) minmax(0, 1fr) max-content;
-    grid-template-areas: "leading brand search . navigation";
-    align-items: center;
-    justify-content: stretch;
-    gap: clamp(.85rem, 1.4vw, 1.35rem);
-  }
-
-  .public-header-leading {
-    grid-area: leading;
-  }
-
-  .public-header-default .public-brand-centered {
-    grid-area: brand;
-  }
-
-  .public-header-trailing {
-    grid-area: search;
-    width: 100%;
-    min-width: 0;
-    justify-self: stretch;
-  }
-
-  .public-header-desktop-nav {
-    grid-area: navigation;
-    justify-self: end;
-  }
-
-  /* Section navigation: distinct menu groups with deterministic 1–4 color accents. */
-  .desktop-density-workspace,
-  .catalog-workspace {
-    grid-template-columns: 9rem minmax(0, 1fr);
-    gap: 1rem;
-  }
-
-  .desktop-density-sidebar {
-    padding: 0;
-    border: 0;
-    border-radius: 0;
-    background: transparent;
+  /* Only catalog surfaces use the L-shaped header/navigation frame. */
+  .public-body:has(.integrated-desktop-catalog) .public-header {
+    border-bottom: 0;
+    background: #ffffff;
     box-shadow: none;
   }
 
-  .desktop-density-navigation {
-    gap: .62rem;
+  .public-body:has(.integrated-desktop-catalog) .public-header-shell {
+    padding-inline: clamp(.75rem, 3vw, 1.35rem);
   }
 
-  .desktop-density-section-group {
-    --section-accent: 37 99 235;
+  .public-body:has(.integrated-desktop-catalog) .public-header-default {
     display: grid;
-    gap: .28rem;
-    border: 1px solid rgb(var(--section-accent) / .2);
-    border-radius: .72rem;
-    padding: .34rem;
-    background: rgb(var(--section-accent) / .045);
-    box-shadow: 0 4px 14px rgb(15 23 42 / .045);
-  }
-
-  .desktop-density-section-group:nth-child(4n + 1) {
-    --section-accent: 37 99 235;
-  }
-
-  .desktop-density-section-group:nth-child(4n + 2) {
-    --section-accent: 5 150 105;
-  }
-
-  .desktop-density-section-group:nth-child(4n + 3) {
-    --section-accent: 124 58 237;
-  }
-
-  .desktop-density-section-group:nth-child(4n + 4) {
-    --section-accent: 217 119 6;
-  }
-
-  .desktop-density-section-group + .desktop-density-section-group {
-    padding-top: .34rem;
-  }
-
-  .desktop-density-section-group:last-child {
-    padding-bottom: .34rem;
-  }
-
-  .desktop-density-section-link {
-    display: flex;
-    min-height: 2.7rem;
+    min-height: 5.35rem;
+    grid-template-columns: var(--desktop-nav-width) minmax(18rem, 30rem) minmax(0, 1fr) max-content;
+    grid-template-areas: "brand search . navigation";
     align-items: center;
-    justify-content: center;
-    border: 1px solid transparent;
-    border-radius: .55rem;
-    padding: .52rem .55rem;
-    color: rgb(var(--section-accent));
-    background: rgb(255 255 255 / .76);
-    font-size: .77rem;
-    font-weight: 780;
-    line-height: 1.18;
-    text-align: center;
+    gap: var(--desktop-frame-gap);
+    border: 1px solid #e2e4e7;
+    border-bottom: 0;
+    border-radius: 1rem 1rem 0 0;
+    padding: .78rem 1rem;
+    background: #f2f3f4;
+    box-shadow: 0 8px 28px rgb(15 23 42 / .045);
   }
 
-  .desktop-density-section-link svg {
+  .public-body:has(.integrated-desktop-catalog) .public-header-leading {
     display: none;
   }
 
-  .desktop-density-section-link:hover {
-    border-color: rgb(var(--section-accent) / .34);
+  .public-body:has(.integrated-desktop-catalog) .public-brand-centered {
+    grid-area: brand;
+    width: 100%;
+    max-width: none;
+    justify-content: center;
+  }
+
+  .public-body:has(.integrated-desktop-catalog) .public-brand-name {
+    width: 100%;
+    max-width: none !important;
+    font-size: 1.34rem !important;
+    font-weight: 820 !important;
+    text-align: center !important;
+  }
+
+  .public-body:has(.integrated-desktop-catalog) .public-brand-logo {
+    max-width: calc(var(--desktop-nav-width) - 2rem);
+    height: 2.6rem;
+    margin-inline: auto;
+    object-fit: contain;
+    object-position: center;
+  }
+
+  .public-body:has(.integrated-desktop-catalog) .public-header-trailing {
+    grid-area: search;
+    width: 100%;
+    min-width: 0;
+    max-width: 30rem;
+    margin: 0;
+    justify-self: start;
+  }
+
+  .public-body:has(.integrated-desktop-catalog) .public-header-desktop-nav {
+    grid-area: navigation;
+    min-width: max-content;
+    justify-self: end;
+    overflow: visible;
+  }
+
+  .public-body:has(.integrated-desktop-catalog) .public-header-desktop-nav a:not([href="/privacy"]):not([href="/disclaimer"]) {
+    display: none;
+  }
+
+  .public-body:has(.integrated-desktop-catalog) .public-header-desktop-nav a {
+    padding: .55rem .45rem;
+    color: #343a44;
+    background: transparent;
+    font-size: .8rem;
+    font-weight: 700;
+  }
+
+  .public-body:has(.integrated-desktop-catalog) .public-main {
+    gap: 0;
+    padding-top: 0;
+  }
+
+  .public-body:has(.integrated-desktop-catalog) .channel-category-section,
+  .public-body:has(.integrated-desktop-catalog) .channel-category-navigation,
+  .public-body:has(.integrated-desktop-catalog) .channel-products-section {
+    display: none !important;
+  }
+
+  .integrated-desktop-catalog,
+  .desktop-density-workspace.integrated-desktop-catalog,
+  .catalog-workspace.integrated-desktop-catalog {
+    display: grid !important;
+    width: 100%;
+    max-width: none;
+    grid-template-columns: var(--desktop-nav-width) minmax(0, 1fr);
+    align-items: stretch;
+    gap: var(--desktop-frame-gap);
+    margin: 0;
+  }
+
+  /* Logo and section navigation form one continuous left rail. */
+  .desktop-nav-rail {
+    display: block;
+    min-width: 0;
+    min-height: calc(100dvh - 5.35rem);
+    max-height: calc(100dvh - 5.35rem);
+    position: sticky;
+    top: 5.35rem;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    border: 1px solid #e2e4e7;
+    border-top: 0;
+    border-radius: 0 0 1rem 1rem;
+    padding: .7rem .58rem 1rem;
+    background: #f2f3f4;
+    box-shadow: 0 14px 28px rgb(15 23 42 / .045);
+    scrollbar-width: thin;
+  }
+
+  .desktop-nav-menu {
+    display: grid;
+    gap: .42rem;
+  }
+
+  .desktop-nav-section {
+    --section-accent: 37 99 235;
+    display: grid;
+    gap: .2rem;
+  }
+
+  .desktop-nav-section-1 { --section-accent: 37 99 235; }
+  .desktop-nav-section-2 { --section-accent: 5 150 105; }
+  .desktop-nav-section-3 { --section-accent: 124 58 237; }
+  .desktop-nav-section-4 { --section-accent: 217 119 6; }
+
+  .desktop-nav-section-link,
+  .desktop-nav-filter-link {
+    display: flex;
+    width: 100%;
+    align-items: center;
+    justify-content: flex-start;
+    text-align: left;
+  }
+
+  .desktop-nav-section-link {
+    min-height: 2.65rem;
+    border-radius: .55rem;
+    padding: .54rem .68rem;
+    color: #343b47;
+    font-size: .8rem;
+    font-weight: 780;
+    line-height: 1.2;
+  }
+
+  .desktop-nav-section-link:hover {
     color: rgb(var(--section-accent));
     background: #ffffff;
   }
 
-  .desktop-density-section-link[aria-current="page"] {
-    border-color: rgb(var(--section-accent));
+  .desktop-nav-section-link[aria-current="page"] {
     color: #ffffff;
     background: rgb(var(--section-accent));
-    box-shadow: 0 5px 14px rgb(var(--section-accent) / .2);
+    box-shadow: 0 5px 14px rgb(var(--section-accent) / .18);
   }
 
-  .desktop-density-filter-list {
-    gap: .18rem;
-    margin-top: .02rem;
-    border-top: 1px solid rgb(var(--section-accent) / .14);
-    padding: .28rem 0 0;
+  .desktop-nav-filter-list {
+    display: grid;
+    gap: .08rem;
+    margin: .05rem 0 .15rem .65rem;
+    border-left: 2px solid rgb(var(--section-accent) / .24);
+    padding-left: .35rem;
   }
 
-  .desktop-density-filter-link {
-    min-height: 2.12rem;
-    justify-content: center;
-    border: 1px solid transparent;
-    border-radius: .48rem;
-    padding: .36rem .42rem;
-    color: #586170;
-    background: rgb(255 255 255 / .62);
-    font-size: .7rem;
-    font-weight: 670;
+  .desktop-nav-filter-link {
+    min-height: 2.08rem;
+    border-radius: .42rem;
+    padding: .36rem .55rem;
+    color: #626b77;
+    font-size: .71rem;
+    font-weight: 660;
     line-height: 1.18;
-    text-align: center;
   }
 
-  .desktop-density-filter-link span {
-    width: 100%;
-    text-align: center;
-  }
-
-  .desktop-density-filter-link:hover,
-  .desktop-density-filter-link.is-active {
-    border-color: rgb(var(--section-accent) / .28);
+  .desktop-nav-filter-link:hover,
+  .desktop-nav-filter-link.is-active {
     color: rgb(var(--section-accent));
     background: #ffffff;
   }
 
-  .desktop-density-filter-link.is-active {
+  .desktop-nav-filter-link.is-active {
     box-shadow: inset 3px 0 0 rgb(var(--section-accent));
-    font-weight: 760;
+    font-weight: 780;
   }
 
-  /* Category rail: compact list panel instead of a second set of product cards. */
-  .desktop-density-row {
-    grid-template-columns: 7.5rem minmax(0, 1fr);
-    gap: .9rem;
-    padding: .85rem 0 1rem;
+  /* Category names and products share one content frame. */
+  .integrated-desktop-content {
+    display: grid;
+    min-width: 0;
+    align-content: start;
+    padding-top: var(--desktop-frame-gap);
   }
 
-  .desktop-density-category-panel {
-    gap: .42rem;
-    border: 1px solid #dfe4ea;
-    border-radius: .7rem;
-    padding: .42rem;
-    background: #f6f7f9;
-    box-shadow: 0 3px 12px rgb(15 23 42 / .035);
-  }
-
-  .desktop-density-category-panel h2 {
-    display: flex;
-    min-height: 2rem;
-    align-items: center;
-    justify-content: center;
-    border-radius: .48rem;
-    padding: .36rem .38rem;
-    color: #273142;
-    background: #e9edf2;
-    font-size: .68rem;
-    font-weight: 800;
-    line-height: 1.16;
-    letter-spacing: .045em;
-    text-align: center;
-  }
-
-  .desktop-density-category-grid {
-    gap: .28rem;
-  }
-
-  .desktop-density-category-grid .category-entry {
-    display: flex;
-    min-height: 2.3rem;
-    align-items: center;
-    justify-content: center;
-    border: 1px solid #dde2e8;
-    border-radius: .5rem;
-    padding: .38rem .42rem;
-    color: #4b5563;
+  .desktop-catalog-panel,
+  .desktop-density-row.desktop-catalog-panel {
+    display: grid;
+    min-width: 0;
+    grid-template-columns: clamp(8.5rem, 10vw, 10.5rem) minmax(0, 1fr);
+    align-items: stretch;
+    gap: 0;
+    overflow: hidden;
+    border: 1px solid #e0e3e7;
+    border-radius: 1rem;
+    padding: 0;
     background: #ffffff;
-    text-align: center;
+    box-shadow: 0 10px 30px rgb(15 23 42 / .045);
   }
 
-  .desktop-density-category-grid .category-entry:hover {
-    border-color: #aeb7c2;
+  .desktop-catalog-panel[hidden] {
+    display: none !important;
+  }
+
+  .desktop-catalog-panel .desktop-density-category-panel {
+    display: grid;
+    min-width: 0;
+    align-content: start;
+    gap: .28rem;
+    border: 0;
+    border-right: 1px solid #dfe2e6;
+    border-radius: 0;
+    padding: .72rem .55rem 1rem;
+    background: #eceeef;
+    box-shadow: none;
+  }
+
+  .desktop-catalog-panel .desktop-density-category-panel h2 {
+    display: flex;
+    min-height: 2.45rem;
+    align-items: center;
+    justify-content: flex-start;
+    margin: 0 0 .18rem;
+    border-bottom: 1px solid #d7dade;
+    border-radius: 0;
+    padding: .35rem .45rem .55rem;
+    color: #222a35;
+    background: transparent;
+    font-size: .75rem;
+    font-weight: 820;
+    letter-spacing: .045em;
+    line-height: 1.18;
+    text-align: left;
+    text-transform: uppercase;
+  }
+
+  .desktop-catalog-panel .desktop-density-category-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: .08rem;
+  }
+
+  .desktop-catalog-panel .category-entry {
+    display: flex;
+    width: 100%;
+    min-width: 0;
+    min-height: 2.35rem;
+    align-items: center;
+    justify-content: flex-start;
+    border: 0;
+    border-radius: .42rem;
+    padding: .4rem .48rem;
+    color: #505966;
+    background: transparent;
+    box-shadow: none;
+    text-align: left;
+  }
+
+  .desktop-catalog-panel .category-entry:hover {
     color: #111827;
-    background: #fbfcfd;
+    background: rgb(255 255 255 / .76);
+    transform: none;
   }
 
-  .desktop-density-category-grid .category-entry.is-active,
-  .desktop-density-category-grid .category-entry[aria-current="page"] {
-    border-color: #273142;
+  .desktop-catalog-panel .category-entry.is-active,
+  .desktop-catalog-panel .category-entry[aria-current="page"] {
     color: #ffffff;
     background: #273142;
   }
 
-  .desktop-density-category-grid .category-entry-label {
+  .desktop-catalog-panel .category-entry-label {
     display: block;
     width: 100%;
+    min-width: 0;
     color: inherit;
-    font-size: .68rem;
-    font-weight: 700;
+    font-size: .72rem;
+    font-weight: 690;
     line-height: 1.2;
-    text-align: center;
+    text-align: left;
     -webkit-line-clamp: unset;
   }
 
-  .desktop-density-category-grid .category-entry-arrow {
+  .desktop-catalog-panel .category-entry-arrow {
     display: none;
   }
 
-  /* Product detail: smaller gallery, tight title row, compact commerce card. */
+  .desktop-catalog-panel .desktop-density-product-panel {
+    min-width: 0;
+    padding: .9rem 1rem 1.2rem;
+    background: #ffffff;
+  }
+
+  .desktop-catalog-heading {
+    display: flex;
+    min-height: 2.65rem;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: .75rem;
+    border-bottom: 1px solid #eceef1;
+    padding: 0 .1rem .65rem;
+  }
+
+  .desktop-catalog-heading h1 {
+    margin: 0;
+    color: #202733;
+    font-size: 1.2rem;
+    font-weight: 820;
+    line-height: 1.2;
+  }
+
+  .desktop-catalog-heading span {
+    color: #747d89;
+    font-size: .72rem;
+    font-weight: 680;
+  }
+
+  .desktop-catalog-panel .desktop-density-product-grid,
+  .desktop-catalog-panel .product-grid {
+    grid-template-columns: repeat(auto-fill, minmax(10.5rem, 12rem));
+    justify-content: start;
+    align-items: start;
+    gap: 1rem .78rem;
+  }
+
+  .desktop-catalog-panel .product-card {
+    width: 100%;
+    max-width: 12rem;
+  }
+
+  .desktop-catalog-panel .directory-list-section,
+  .desktop-catalog-panel .product-directory {
+    width: 100%;
+    gap: .8rem;
+  }
+
+  .desktop-density-empty {
+    min-height: 12rem;
+  }
+
+  /* Product detail remains compact and information-led. */
   .product-detail {
     width: min(100%, 58rem);
     max-width: 58rem;
@@ -299,16 +435,17 @@
   .product-gallery.has-thumbnails .product-gallery-thumbnails {
     gap: .42rem;
   }
-
-  .product-gallery-thumbnail {
-    border-radius: .42rem;
-  }
 }
 
 @media (min-width: 1100px) and (max-width: 1279px) {
-  .public-header-default {
-    grid-template-columns: max-content minmax(7rem, 10rem) minmax(15rem, 22rem) minmax(0, 1fr) max-content;
+  .public-body:has(.integrated-desktop-catalog) .public-header-default {
+    grid-template-columns: var(--desktop-nav-width) minmax(15rem, 22rem) minmax(0, 1fr) max-content;
     gap: .75rem;
+  }
+
+  .desktop-catalog-panel,
+  .desktop-density-row.desktop-catalog-panel {
+    grid-template-columns: 8.5rem minmax(0, 1fr);
   }
 }
 
