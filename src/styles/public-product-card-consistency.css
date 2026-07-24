@@ -1,0 +1,34 @@
+/* Stable product-card geometry across every list surface. */
+
+.visual-card-media-frame {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  aspect-ratio: 4 / 5;
+  overflow: hidden;
+  border: 1px solid var(--line-1);
+  border-radius: var(--radius-card);
+  background: #f1f2f3;
+}
+
+.visual-card-media-frame .visual-card-media,
+.visual-card-media-frame .visual-card-placeholder {
+  width: 100%;
+  height: 100%;
+  max-width: none;
+  aspect-ratio: auto;
+  border: 0;
+  border-radius: 0;
+  object-fit: cover;
+  object-position: center;
+}
+
+.visual-card-media-frame .visual-card-placeholder {
+  display: grid;
+  place-items: center;
+}
+
+.visual-card-title {
+  min-height: 1.35em;
+  -webkit-line-clamp: 1;
+}
