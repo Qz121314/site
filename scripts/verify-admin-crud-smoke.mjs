@@ -8,6 +8,8 @@ const LOG_DIR = "ci-logs";
 const ADMIN_PASSWORD = "browser-smoke-password";
 const CHANNEL_NAME = "Browser Smoke Channel";
 const UPDATED_CHANNEL_NAME = "Browser Smoke Channel Updated";
+const PRODUCT_NAME = "Browser Smoke Product";
+const UPDATED_PRODUCT_NAME = "Browser Smoke Product Updated";
 
 function runCommand(command, args) {
   const result = spawnSync(command, args, {
@@ -100,6 +102,18 @@ async function refreshPublicCache(cookie, label) {
   }
 }
 
+function productContentForm(overrides = {}) {
+  return new URLSearchParams({
+    returnTo: overrides.returnTo ?? "",
+    title: overrides.title ?? PRODUCT_NAME,
+    categoryName: overrides.categoryName ?? "Browser Smoke Category",
+    tags: overrides.tags ?? "integration, smoke",
+    ctaLabel: overrides.ctaLabel ?? "View Details",
+    conversionGroupId: "",
+    bodySource: overrides.bodySource ?? "Browser smoke product body.",
+  });
+}
+
 mkdirSync(LOG_DIR, { recursive: true });
 const persistDir = join(tmpdir(), `site-admin-smoke-d1-${process.pid}`);
 mkdirSync(persistDir, { recursive: true });
@@ -173,6 +187,98 @@ try {
   const draftPublicPage = await request(`/${encodeURIComponent(channelSlug)}`);
   expectStatus(draftPublicPage, 404, "Draft channel public route");
 
+  const productsPath = `/admin/channels/${encodeURIComponent(channelId)}/products`;
+  const createProduct = await request(`/api/admin/channels/${encodeURIComponent(channelId)}/products/create`, {
+    method: "POST",
+    cookie,
+    body: productContentForm({ returnTo: productsPath }),
+  });
+  const createProductLocation = redirectUrl(createProduct, productsPath, "Admin product create");
+  if (createProductLocation.searchParams.get("saved") !== "created") {
+    throw new Error("Admin product create did not report a successful save.");
+  }
+  const productId = createProductLocation.searchParams.get("edit");
+  if (!productId) throw new Error("Admin product create did not return the created product id.");
+
+  const createdProductPage = await request(`${productsPath}?edit=${encodeURIComponent(productId)}`, { cookie });
+  expectStatus(createdProductPage, 200, "Created product editor");
+  if (!createdProductPage.body.includes(PRODUCT_NAME) || !createdProductPage.body.includes("Browser smoke product body.")) {
+    throw new Error("Created product content was not persisted after navigation.");
+  }
+
+  const productReturnTo = `${productsPath}?edit=${encodeURIComponent(productId)}`;
+  const updateProduct = await request(
+    `/api/admin/channels/${encodeURIComponent(channelId)}/products/${encodeURIComponent(productId)}/update`,
+    {
+      method: "POST",
+      cookie,
+      body: productContentForm({
+        returnTo: productReturnTo,
+        title: UPDATED_PRODUCT_NAME,
+        categoryName: "Browser Smoke Category Updated",
+        tags: "integration, updated",
+        ctaLabel: "Open Updated",
+        bodySource: "Browser smoke product body updated.",
+      }),
+    },
+  );
+  const updateProductLocation = redirectUrl(updateProduct, productsPath, "Admin product update");
+  if (
+    updateProductLocation.searchParams.get("saved") !== "updated"
+    || updateProductLocation.searchParams.get("edit") !== productId
+  ) {
+    throw new Error("Admin product update did not preserve the edited product and save status.");
+  }
+
+  const manageProduct = await request(
+    `/api/admin/channels/${encodeURIComponent(channelId)}/products/${encodeURIComponent(productId)}/manage`,
+    {
+      method: "POST",
+      cookie,
+      body: new URLSearchParams({
+        returnTo: productReturnTo,
+        status: "disabled",
+        sortOrder: "654",
+      }),
+    },
+  );
+  const manageProductLocation = redirectUrl(manageProduct, productsPath, "Admin product manage");
+  if (
+    manageProductLocation.searchParams.get("saved") !== "managed"
+    || manageProductLocation.searchParams.get("edit") !== productId
+  ) {
+    throw new Error("Admin product management did not preserve the edited product and save status.");
+  }
+
+  const managedProductPage = await request(productReturnTo, { cookie });
+  expectStatus(managedProductPage, 200, "Managed product editor");
+  if (
+    !managedProductPage.body.includes(UPDATED_PRODUCT_NAME)
+    || !managedProductPage.body.includes("Browser smoke product body updated.")
+    || !managedProductPage.body.includes('value="654"')
+  ) {
+    throw new Error("Updated product content, status, or sort order was not persisted after refresh.");
+  }
+
+  const deleteProduct = await request(
+    `/api/admin/channels/${encodeURIComponent(channelId)}/products/${encodeURIComponent(productId)}/delete`,
+    {
+      method: "POST",
+      cookie,
+      body: new URLSearchParams({ returnTo: productReturnTo }),
+    },
+  );
+  const deleteProductLocation = redirectUrl(deleteProduct, productsPath, "Admin product delete");
+  if (deleteProductLocation.searchParams.get("saved") !== "deleted") {
+    throw new Error("Admin product delete did not report a successful save.");
+  }
+
+  const finalProductPage = await request(productsPath, { cookie });
+  expectStatus(finalProductPage, 200, "Final product management page");
+  if (finalProductPage.body.includes(UPDATED_PRODUCT_NAME) || finalProductPage.body.includes("Browser Smoke Category Updated")) {
+    throw new Error("Deleted product or its empty generated category remained visible after refresh.");
+  }
+
   const update = await request(`/api/admin/channels/${encodeURIComponent(channelId)}/update`, {
     method: "POST",
     cookie,
@@ -225,7 +331,7 @@ try {
   const deletedPublicPage = await request(`/${encodeURIComponent(channelSlug)}`);
   expectStatus(deletedPublicPage, 404, "Deleted channel public route");
 
-  console.log("Authenticated admin login, channel CRUD, public cache refresh, and propagation flows verified.");
+  console.log("Authenticated admin channel and product CRUD, cache refresh, and propagation flows verified.");
 } finally {
   server.kill("SIGTERM");
   await new Promise((resolve) => setTimeout(resolve, 500));
