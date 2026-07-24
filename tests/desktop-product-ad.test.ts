@@ -23,6 +23,12 @@ test("product detail ads stay desktop-only and mount in a dedicated column", asy
   assert.doesNotMatch(script, /device=mobile/u);
   assert.match(script, /TARGET_RATIO = 300 \/ 250/u);
   assert.match(script, /affiliate-ad-detail/u);
+  assert.match(script, /function createEmbed/u);
+  assert.match(script, /frame\.srcdoc = embedDocument\(advertisement\.embedCode\)/u);
+  assert.match(script, /return createEmbed\(advertisement\)/u);
+  assert.doesNotMatch(script, /waitForEmbed/u);
+  assert.doesNotMatch(script, /document\.body\.appendChild\(frame\)/u);
+  assert.doesNotMatch(script, /frame\.style\.position/u);
 
   assert.match(styles, /@media \(min-width: 1400px\)/u);
   assert.match(styles, /:has\(\.product-detail-ad-slot:not\(:empty\)\)/u);
