@@ -14,8 +14,7 @@ const contextJson = JSON.stringify({ channelSlug }).replaceAll("<", "\\u003c");
 
   function scheduleProductDetailAd(): void {
     const context = document.querySelector<HTMLScriptElement>("script[data-product-detail-ad-context]");
-    const slot = document.querySelector<HTMLElement>("[data-product-detail-ad-slot]");
-    if (!context || !slot) return;
+    if (!context || !document.querySelector(".product-detail")) return;
     if (window.innerWidth < PRODUCT_DETAIL_AD_MIN_WIDTH) {
       context.dataset.productDetailAdState = "viewport-skipped";
       return;
