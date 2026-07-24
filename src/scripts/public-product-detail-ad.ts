@@ -175,7 +175,8 @@ function shell(advertisement: ProductAdvertisement, element: HTMLElement): HTMLE
   frame.style.setProperty("--affiliate-ad-height", `${advertisement.height}px`);
   frame.appendChild(element);
 
-  root.append(label, frame);
+  root.appendChild(label);
+  root.appendChild(frame);
   return root;
 }
 
