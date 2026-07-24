@@ -104,25 +104,37 @@ export async function loadPublicSitemapEntries(): Promise<PublicSitemapEntries> 
        WHERE channel.status = 'published'`,
     ),
     env.DB.prepare(
-      `WITH product_updates AS (
+      `WITH
+       product_updates AS (
          SELECT category_id, MAX(updated_at) AS updated_at
          FROM products
          WHERE category_id IS NOT NULL AND status = 'published'
          GROUP BY category_id
+       ),
+       category_navigation AS (
+         SELECT navigation_category.channel_id
+         FROM category_filter_relations relation
+         INNER JOIN categories navigation_category
+           ON navigation_category.id = relation.category_id
+          AND navigation_category.status = 'published'
+         INNER JOIN category_filters category_filter
+           ON category_filter.id = relation.filter_id
+          AND category_filter.channel_id = navigation_category.channel_id
+          AND category_filter.status = 'enabled'
+         WHERE EXISTS (
+           SELECT 1
+           FROM products navigation_product
+           WHERE navigation_product.channel_id = navigation_category.channel_id
+             AND navigation_product.category_id = navigation_category.id
+             AND navigation_product.status = 'published'
+           LIMIT 1
+         )
+         GROUP BY navigation_category.channel_id
        )
        SELECT
          channel.slug AS channelSlug,
          category.slug,
-         EXISTS(
-           SELECT 1
-           FROM category_filter_relations relation
-           INNER JOIN category_filters category_filter
-             ON category_filter.id = relation.filter_id
-            AND category_filter.channel_id = category.channel_id
-            AND category_filter.status = 'enabled'
-           WHERE relation.category_id = category.id
-           LIMIT 1
-         ) AS hasCategoryNavigation,
+         category_navigation.channel_id IS NOT NULL AS hasCategoryNavigation,
          MAX(
            category.updated_at,
            channel.updated_at,
@@ -135,6 +147,7 @@ export async function loadPublicSitemapEntries(): Promise<PublicSitemapEntries> 
         AND channel.status = 'published'
        LEFT JOIN site_settings settings ON settings.id = 1
        LEFT JOIN product_updates ON product_updates.category_id = category.id
+       LEFT JOIN category_navigation ON category_navigation.channel_id = category.channel_id
        WHERE category.status = 'published'
          AND EXISTS (
            SELECT 1 FROM products product

@@ -49,10 +49,21 @@ const filtersByChannel = channel
 const hasCategoryNavigation = categoryGroups.length > 0;
 const categoryFilterColumns = Math.min(Math.max(activeFilters.length, 1), 4);
 const categoryFilterStyle = `--category-filter-columns: ${categoryFilterColumns}`;
-const selectedCategory = !hasCategoryNavigation && requestedCategorySlug
+const requestedCategory = requestedCategorySlug
   ? categories.find((category) => category.slug === requestedCategorySlug) ?? null
   : null;
-const categorySelectionValid = hasCategoryNavigation || !requestedCategorySlug || Boolean(selectedCategory);
+const selectedCategory = !hasCategoryNavigation ? requestedCategory : null;
+const categorySelectionValid = !requestedCategorySlug || Boolean(requestedCategory);
+
+if (channel && hasCategoryNavigation && requestedCategory) {
+  const target = new URL(
+    `/${encodeURIComponent(channel.slug)}/category/${encodeURIComponent(requestedCategory.slug)}`,
+    Astro.url.origin,
+  );
+  if (pageInput.page > 1) target.searchParams.set("page", String(pageInput.page));
+  return Astro.redirect(`${target.pathname}${target.search}`, 302);
+}
+
 const ungroupedCategories = categories.filter((category) => category.filterIds.length === 0);
 const productPage = canLoadPage && channel && !hasCategoryNavigation && categorySelectionValid
   ? await loadPublicProducts({
@@ -63,7 +74,7 @@ const productPage = canLoadPage && channel && !hasCategoryNavigation && category
     })
   : { products: [], page: pageInput.page, hasMore: false };
 
-const desktopGroupInputs = hasCategoryNavigation && pageInput.page === 1
+const desktopGroupInputs = hasCategoryNavigation && categorySelectionValid && pageInput.page === 1
   ? [
       ...categoryGroups,
       ...(ungroupedCategories.length > 0
