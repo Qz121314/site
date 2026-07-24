@@ -11,6 +11,8 @@ const contextJson = JSON.stringify({ channelSlug, surface }).replaceAll("<", "\\
 ---
 
 <script is:inline type="application/json" data-affiliate-ad-context set:html={contextJson}></script>
+<div class="desktop-portal-banner-slot" data-affiliate-ad-banner-slot hidden></div>
+<aside class="desktop-portal-ad-slot" data-affiliate-ad-vertical-slot aria-label="Sponsored advertisement" hidden></aside>
 <script>
   const AFFILIATE_AD_REQUEST_DELAY_MS = 2500;
 
@@ -18,17 +20,56 @@ const contextJson = JSON.stringify({ channelSlug, surface }).replaceAll("<", "\\
     return document.querySelectorAll<HTMLScriptElement>("script[data-affiliate-ad-context]");
   }
 
+  function placeDesktopAdvertisementSlots(): void {
+    if (!window.matchMedia("(min-width: 1100px)").matches) return;
+    const frame = document.querySelector<HTMLElement>(".integrated-desktop-catalog");
+    if (!frame) return;
+    frame.dataset.desktopPortalFrame = "";
+
+    const banner = document.querySelector<HTMLElement>("[data-affiliate-ad-banner-slot]");
+    const vertical = document.querySelector<HTMLElement>("[data-affiliate-ad-vertical-slot]");
+    if (banner && banner.parentElement !== frame) frame.appendChild(banner);
+    if (vertical && vertical.parentElement !== frame) frame.appendChild(vertical);
+  }
+
+  function adoptMountedAdvertisements(): void {
+    if (!window.matchMedia("(min-width: 1100px)").matches) return;
+    const bannerSlot = document.querySelector<HTMLElement>("[data-affiliate-ad-banner-slot]");
+    const verticalSlot = document.querySelector<HTMLElement>("[data-affiliate-ad-vertical-slot]");
+    const banner = document.querySelector<HTMLElement>(".affiliate-ad-top");
+    const vertical = Array.from(document.querySelectorAll<HTMLElement>(".affiliate-ad-vertical"))
+      .find((element) => !verticalSlot?.contains(element));
+
+    if (bannerSlot && banner && !bannerSlot.contains(banner)) {
+      bannerSlot.hidden = false;
+      bannerSlot.replaceChildren(banner);
+    }
+
+    if (verticalSlot && vertical) {
+      vertical.classList.remove("affiliate-ad-rail", "affiliate-ad-inline", "is-footer-overlap");
+      vertical.hidden = false;
+      vertical.removeAttribute("style");
+      verticalSlot.hidden = false;
+      verticalSlot.replaceChildren(vertical);
+    }
+  }
+
   function scheduleAffiliateAds(): void {
     const root = document.documentElement;
     if (root.dataset.affiliateAdsScheduled === "1") return;
     root.dataset.affiliateAdsScheduled = "1";
+    placeDesktopAdvertisementSlots();
+
+    const observer = new MutationObserver(adoptMountedAdvertisements);
+    observer.observe(document.body, { childList: true, subtree: true });
+    window.addEventListener("pagehide", () => observer.disconnect(), { once: true });
 
     advertisementContexts().forEach((node) => {
       if (!node.dataset.affiliateAdState) node.dataset.affiliateAdState = "deferred";
     });
 
     window.setTimeout(() => {
-      void import("@/scripts/public-affiliate-ads").catch((error) => {
+      void import("@/scripts/public-affiliate-ads").then(adoptMountedAdvertisements).catch((error) => {
         advertisementContexts().forEach((node) => {
           node.dataset.affiliateAdState = "script-failed";
         });

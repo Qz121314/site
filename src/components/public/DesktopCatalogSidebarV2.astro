@@ -22,10 +22,19 @@ const longestNavigationLabel = [...site.channels.map((item) => item.name), ...fi
   .reduce((longest, label) => Math.max(longest, Array.from(label.trim()).length), 0);
 const navigationCharacterWidth = Math.min(Math.max(longestNavigationLabel + 5, 13), 24);
 const navigationStyle = `--desktop-nav-fit: ${navigationCharacterWidth}ch`;
+const searchHref = `/${encodeURIComponent(channel.slug)}/search`;
 ---
 
-<aside class="desktop-nav-rail" aria-label="Section navigation" style={navigationStyle}>
-  <nav class="desktop-nav-menu">
+<aside class="desktop-nav-rail" aria-label="Site and section navigation" style={navigationStyle}>
+  <a class="desktop-nav-brand" href="/" aria-label={`${site.siteName} home`}>
+    {site.logoUrl ? (
+      <img class="desktop-nav-brand-logo" src={site.logoUrl} alt="" decoding="async" />
+    ) : (
+      <span class="desktop-nav-brand-name">{site.siteName}</span>
+    )}
+  </a>
+
+  <nav class="desktop-nav-menu" aria-label="Sections">
     {site.channels.map((item, index) => {
       const active = item.id === channel.id;
       const expanded = active && filters.length > 0;
@@ -57,5 +66,11 @@ const navigationStyle = `--desktop-nav-fit: ${navigationCharacterWidth}ch`;
         </section>
       );
     })}
+  </nav>
+
+  <nav class="desktop-nav-tools" aria-label="Site tools">
+    <a class="desktop-nav-tool-link desktop-nav-search-link" href={searchHref}>Search</a>
+    <a class="desktop-nav-tool-link" href="/privacy">Privacy</a>
+    <a class="desktop-nav-tool-link" href="/disclaimer">Disclaimer</a>
   </nav>
 </aside>

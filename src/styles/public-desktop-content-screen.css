@@ -1,0 +1,266 @@
+/* Final PC composition: a centered content screen surrounded by persistent
+ * navigation and advertising controls. Mobile and tablet layouts are unchanged.
+ */
+
+@media (min-width: 1100px) {
+  .public-body {
+    --desktop-screen-width: min(58rem, calc(100vw - 25rem));
+    --desktop-side-track: 9rem;
+    --desktop-portal-gap: clamp(.85rem, 1.45vw, 1.5rem);
+  }
+
+  .public-body:has(.integrated-desktop-catalog) {
+    background:
+      radial-gradient(circle at 50% -10rem, rgb(182 144 88 / .12), transparent 31rem),
+      #f5f1ea;
+  }
+
+  .public-body:has(.integrated-desktop-catalog) .public-header {
+    display: none;
+  }
+
+  .public-body:has(.integrated-desktop-catalog) .public-main {
+    width: min(100%, 100rem);
+    max-width: 100rem;
+    overflow: visible;
+    padding: 1rem 0 2rem;
+  }
+
+  .integrated-desktop-catalog,
+  .desktop-density-workspace.integrated-desktop-catalog,
+  .catalog-workspace.integrated-desktop-catalog {
+    display: grid !important;
+    width: 100vw;
+    max-width: none;
+    grid-template-columns:
+      minmax(var(--desktop-side-track), 1fr)
+      minmax(0, var(--desktop-screen-width))
+      minmax(var(--desktop-side-track), 1fr);
+    grid-template-rows: auto auto;
+    align-items: start;
+    column-gap: var(--desktop-portal-gap);
+    row-gap: .9rem;
+    overflow: visible;
+    box-sizing: border-box;
+    margin: 0 calc(50% - 50vw);
+    border: 0;
+    border-radius: 0;
+    padding-inline: clamp(.8rem, 2vw, 2.25rem);
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .desktop-nav-rail {
+    grid-column: 1;
+    grid-row: 1 / 3;
+    display: grid;
+    width: clamp(9.5rem, var(--desktop-nav-fit, 12rem), 14rem);
+    max-width: calc(100% - .25rem);
+    max-height: calc(100vh - 2rem);
+    grid-template-rows: auto auto auto;
+    align-self: start;
+    justify-self: start;
+    position: sticky;
+    top: 1rem;
+    overflow-x: hidden;
+    overflow-y: auto;
+    border: 1px solid rgb(255 255 255 / .08);
+    border-radius: 1.15rem;
+    padding: .75rem;
+    background:
+      linear-gradient(180deg, #201d19, #151412 72%);
+    box-shadow:
+      0 1px 0 rgb(255 255 255 / .05) inset,
+      0 22px 56px rgb(37 28 18 / .18);
+    scrollbar-width: thin;
+  }
+
+  .desktop-nav-brand {
+    display: flex;
+    min-height: 4.6rem;
+    align-items: center;
+    justify-content: flex-start;
+    overflow: hidden;
+    border-bottom: 1px solid rgb(255 255 255 / .09);
+    padding: .35rem .55rem .85rem;
+    color: #fffaf1;
+    text-decoration: none;
+  }
+
+  .desktop-nav-brand-logo {
+    display: block;
+    width: auto;
+    max-width: 100%;
+    height: 2.65rem;
+    object-fit: contain;
+    object-position: left center;
+  }
+
+  .desktop-nav-brand-name {
+    overflow: hidden;
+    font-size: clamp(.98rem, 1.15vw, 1.2rem);
+    font-weight: 830;
+    letter-spacing: -.025em;
+    line-height: 1.05;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .desktop-nav-menu {
+    display: grid;
+    gap: .55rem;
+    padding-block: .8rem;
+  }
+
+  .desktop-nav-tools {
+    display: grid;
+    gap: .18rem;
+    border-top: 1px solid rgb(255 255 255 / .09);
+    padding: .75rem .25rem .1rem;
+  }
+
+  .desktop-nav-tool-link {
+    display: flex;
+    min-height: 2rem;
+    align-items: center;
+    border-radius: .45rem;
+    padding: .35rem .5rem;
+    color: #9f978c;
+    font-size: .68rem;
+    font-weight: 640;
+    letter-spacing: .015em;
+    text-decoration: none;
+    transition: color .15s ease, background .15s ease;
+  }
+
+  .desktop-nav-tool-link:hover,
+  .desktop-nav-tool-link:focus-visible {
+    color: #fff8ed;
+    background: rgb(255 255 255 / .07);
+  }
+
+  .desktop-nav-search-link {
+    color: #d9c6a8;
+  }
+
+  .desktop-portal-banner-slot {
+    grid-column: 2;
+    grid-row: 1;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .desktop-portal-banner-slot[hidden],
+  .desktop-portal-ad-slot[hidden] {
+    display: none !important;
+  }
+
+  .desktop-portal-banner-slot:not([hidden]) {
+    display: grid;
+    min-height: 0;
+    place-items: center;
+  }
+
+  .desktop-portal-banner-slot .affiliate-ad-top {
+    width: 100%;
+    margin: 0;
+  }
+
+  .desktop-portal-banner-slot .affiliate-ad-frame {
+    max-width: min(100%, 970px);
+    border-color: rgb(73 59 42 / .13);
+    border-radius: .9rem;
+    background: #fffdf9;
+    box-shadow: 0 12px 30px rgb(58 44 28 / .09);
+  }
+
+  .integrated-desktop-content,
+  .desktop-portal-screen {
+    grid-column: 2;
+    grid-row: 2;
+    width: 100%;
+    max-width: var(--desktop-screen-width);
+    min-width: 0;
+    justify-self: center;
+    overflow: hidden;
+    border: 1px solid rgb(73 59 42 / .15);
+    border-radius: 1.25rem;
+    background: #fffdf9;
+    box-shadow:
+      0 1px 0 rgb(255 255 255 / .88) inset,
+      0 26px 70px rgb(58 44 28 / .12);
+  }
+
+  .desktop-portal-screen > .integrated-desktop-content {
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .desktop-portal-ad-slot {
+    grid-column: 3;
+    grid-row: 2;
+    width: min(100%, 320px);
+    max-height: calc(100vh - 2rem);
+    align-self: start;
+    justify-self: end;
+    position: sticky;
+    top: 1rem;
+    overflow: auto;
+    overscroll-behavior: contain;
+  }
+
+  .desktop-portal-ad-slot:not([hidden]) {
+    display: block;
+  }
+
+  .desktop-portal-ad-slot .affiliate-ad-vertical {
+    width: 100%;
+    margin: 0;
+  }
+
+  .desktop-portal-ad-slot .affiliate-ad-frame {
+    border-color: rgb(73 59 42 / .13);
+    border-radius: .95rem;
+    background: #fffdf9;
+    box-shadow: 0 18px 46px rgb(58 44 28 / .12);
+  }
+
+  .desktop-catalog-panel,
+  .desktop-density-row.desktop-catalog-panel {
+    grid-template-columns: clamp(7.75rem, 8.6vw, 9rem) minmax(0, 1fr);
+    overflow: visible;
+  }
+
+  .desktop-catalog-panel .desktop-density-category-panel {
+    padding: 1rem .65rem 1.25rem;
+  }
+
+  .desktop-catalog-panel .desktop-density-product-panel {
+    padding: 1.15rem 1.2rem 1.55rem;
+  }
+}
+
+@media (min-width: 1100px) and (max-width: 1279px) {
+  .public-body {
+    --desktop-screen-width: min(46rem, calc(100vw - 18rem));
+    --desktop-side-track: 7rem;
+    --desktop-portal-gap: .75rem;
+  }
+
+  .desktop-nav-rail {
+    width: clamp(8.75rem, var(--desktop-nav-fit, 10rem), 11rem);
+    padding: .65rem;
+  }
+
+  .desktop-portal-ad-slot {
+    display: none !important;
+  }
+}
+
+@media (min-width: 1600px) {
+  .public-body {
+    --desktop-screen-width: 60rem;
+    --desktop-side-track: 11rem;
+  }
+}
