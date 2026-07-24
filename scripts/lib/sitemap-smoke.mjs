@@ -21,11 +21,20 @@ export function validateSitemapResponse(response, body, expectedOrigin) {
     return { ok: false, error: "sitemap is missing the standard urlset namespace" };
   }
 
+  let sitemapOrigin = expectedOrigin;
+  if (response.url) {
+    try {
+      sitemapOrigin = new URL(response.url).origin;
+    } catch {
+      return { ok: false, error: `sitemap response uses an invalid final URL: ${response.url}` };
+    }
+  }
+
   const locations = [...body.matchAll(/<loc>([^<]+)<\/loc>/giu)].map((match) => decodeXmlText(match[1] ?? ""));
   for (const location of locations) {
     try {
       const url = new URL(location);
-      if (url.origin !== expectedOrigin) {
+      if (url.origin !== sitemapOrigin) {
         return { ok: false, error: `sitemap URL uses unexpected origin: ${url.origin}` };
       }
     } catch {
