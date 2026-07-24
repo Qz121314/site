@@ -1,6 +1,7 @@
 export {};
 
 const initializedAdForms = new WeakSet<HTMLFormElement>();
+const previewVersions = new WeakMap<HTMLFormElement, number>();
 
 type CreativeType = "uploaded_image" | "external_media" | "embed_code";
 type ValueControl = HTMLElement & { value: string };
@@ -20,7 +21,18 @@ function setPanelEnabled(panel: HTMLElement, enabled: boolean): void {
   });
 }
 
+function invalidatePreview(form: HTMLFormElement): number {
+  const version = (previewVersions.get(form) ?? 0) + 1;
+  previewVersions.set(form, version);
+  return version;
+}
+
+function previewIsCurrent(form: HTMLFormElement, version: number): boolean {
+  return previewVersions.get(form) === version;
+}
+
 function resetPreview(form: HTMLFormElement): void {
+  invalidatePreview(form);
   const preview = form.querySelector<HTMLElement>("[data-ad-preview]");
   const stage = form.querySelector<HTMLElement>("[data-ad-preview-stage]");
   const status = form.querySelector<HTMLElement>("[data-ad-preview-status]");
@@ -59,6 +71,7 @@ function previewAdvertisement(form: HTMLFormElement): void {
   const status = form.querySelector<HTMLElement>("[data-ad-preview-status]");
   if (!preview || !stage || !status) return;
 
+  const version = invalidatePreview(form);
   stage.replaceChildren();
   preview.hidden = false;
   status.textContent = "正在加载预览…";
@@ -71,8 +84,14 @@ function previewAdvertisement(form: HTMLFormElement): void {
     }
     const image = new Image();
     image.alt = "";
-    image.onload = () => { status.textContent = `${image.naturalWidth}×${image.naturalHeight} · 本地预览成功`; };
-    image.onerror = () => { stage.replaceChildren(); status.textContent = "图片预览失败。"; };
+    image.onload = () => {
+      if (previewIsCurrent(form, version)) status.textContent = `${image.naturalWidth}×${image.naturalHeight} · 本地预览成功`;
+    };
+    image.onerror = () => {
+      if (!previewIsCurrent(form, version)) return;
+      stage.replaceChildren();
+      status.textContent = "图片预览失败。";
+    };
     image.src = source.src;
     stage.appendChild(image);
     return;
@@ -95,8 +114,14 @@ function previewAdvertisement(form: HTMLFormElement): void {
     image.alt = "";
     image.width = width;
     image.height = height;
-    image.onload = () => { status.textContent = `${image.naturalWidth}×${image.naturalHeight} · 外部素材加载成功`; };
-    image.onerror = () => { stage.replaceChildren(); status.textContent = "外部素材加载失败。"; };
+    image.onload = () => {
+      if (previewIsCurrent(form, version)) status.textContent = `${image.naturalWidth}×${image.naturalHeight} · 外部素材加载成功`;
+    };
+    image.onerror = () => {
+      if (!previewIsCurrent(form, version)) return;
+      stage.replaceChildren();
+      status.textContent = "外部素材加载失败。";
+    };
     image.src = mediaUrl;
     stage.appendChild(image);
     return;
@@ -108,7 +133,9 @@ function previewAdvertisement(form: HTMLFormElement): void {
     return;
   }
   const frame = createEmbedPreview(code, width, height);
-  frame.addEventListener("load", () => { status.textContent = `${width}×${height} · 联盟代码已载入隔离预览`; }, { once: true });
+  frame.addEventListener("load", () => {
+    if (previewIsCurrent(form, version)) status.textContent = `${width}×${height} · 联盟代码已载入隔离预览`;
+  }, { once: true });
   stage.appendChild(frame);
 }
 
