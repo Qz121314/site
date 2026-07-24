@@ -105,39 +105,21 @@ function embedDocument(code: string): string {
   return `<!doctype html><html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><base target="_blank"><style>html,body{margin:0;padding:0;background:transparent;overflow:hidden}body{display:grid;place-items:center;min-height:100vh}img,video,iframe{display:block;max-width:100%;height:auto}</style></head><body>${code}</body></html>`;
 }
 
-function waitForEmbed(advertisement: ProductAdvertisement): Promise<HTMLIFrameElement> {
-  return new Promise((resolve, reject) => {
-    const frame = document.createElement("iframe");
-    const timeout = window.setTimeout(() => {
-      frame.remove();
-      reject(new Error("Product advertisement code timed out"));
-    }, 8000);
-    frame.title = advertisement.name || "Sponsored content";
-    frame.width = String(advertisement.width);
-    frame.height = String(advertisement.height);
-    frame.loading = "eager";
-    frame.referrerPolicy = "strict-origin-when-cross-origin";
-    frame.sandbox.add("allow-scripts", "allow-forms", "allow-popups", "allow-popups-to-escape-sandbox");
-    frame.className = "affiliate-ad-embed";
-    frame.style.position = "fixed";
-    frame.style.left = "-10000px";
-    frame.style.top = "0";
-    frame.style.visibility = "hidden";
-    frame.addEventListener("load", () => {
-      window.clearTimeout(timeout);
-      frame.style.position = "";
-      frame.style.left = "";
-      frame.style.top = "";
-      frame.style.visibility = "";
-      resolve(frame);
-    }, { once: true });
-    frame.srcdoc = embedDocument(advertisement.embedCode);
-    document.body.appendChild(frame);
-  });
+function createEmbed(advertisement: ProductAdvertisement): HTMLIFrameElement {
+  const frame = document.createElement("iframe");
+  frame.title = advertisement.name || "Sponsored content";
+  frame.width = String(advertisement.width);
+  frame.height = String(advertisement.height);
+  frame.loading = "eager";
+  frame.referrerPolicy = "strict-origin-when-cross-origin";
+  frame.sandbox.add("allow-scripts", "allow-forms", "allow-popups", "allow-popups-to-escape-sandbox");
+  frame.className = "affiliate-ad-embed";
+  frame.srcdoc = embedDocument(advertisement.embedCode);
+  return frame;
 }
 
 async function creative(advertisement: ProductAdvertisement): Promise<HTMLElement> {
-  if (advertisement.creativeType === "embed_code") return waitForEmbed(advertisement);
+  if (advertisement.creativeType === "embed_code") return createEmbed(advertisement);
   if (!advertisement.targetUrl) throw new Error("Product advertisement target URL is missing");
 
   const image = advertisement.creativeType === "external_media"
