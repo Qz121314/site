@@ -1,0 +1,98 @@
+/* Explicit desktop header composition.
+ * Mobile and tablet keep the centered brand and compact controls.
+ */
+
+@media (min-width: 1100px) {
+  .public-header-shell,
+  .public-header-default {
+    min-height: 4.65rem;
+  }
+
+  .public-header-default {
+    grid-template-columns: max-content minmax(8rem, 12rem) minmax(18rem, 28rem) max-content;
+    grid-template-areas: "leading brand search navigation";
+    justify-content: space-between;
+    gap: clamp(1rem, 1.8vw, 1.75rem);
+  }
+
+  .public-header-leading {
+    grid-area: leading;
+  }
+
+  .public-header-leading .public-menu {
+    display: none;
+  }
+
+  .public-header-default .public-brand-centered {
+    grid-area: brand;
+    max-width: 12rem;
+    justify-self: start;
+  }
+
+  .public-header-default .public-brand-name {
+    max-width: 12rem;
+    font-size: 1.28rem !important;
+    text-align: left;
+  }
+
+  .public-header-default .public-brand-logo {
+    max-width: 11rem;
+    height: 2.2rem;
+    object-position: left center;
+  }
+
+  .public-header-trailing {
+    grid-area: search;
+    width: min(100%, 28rem);
+    min-width: 18rem;
+    justify-self: center;
+  }
+
+  .public-header-search-desktop,
+  .public-header-search-form-inline {
+    width: 100%;
+  }
+
+  .public-header-desktop-nav {
+    grid-area: navigation;
+    display: flex;
+    min-width: max-content;
+    align-items: center;
+    justify-self: end;
+    gap: clamp(1rem, 1.6vw, 1.5rem);
+  }
+
+  .public-header-desktop-nav a {
+    color: #3f3f3c;
+    font-size: .8rem;
+    font-weight: 650;
+    line-height: 1;
+    white-space: nowrap;
+  }
+
+  .public-header-desktop-nav a:hover {
+    color: #111110;
+    text-decoration: underline;
+    text-underline-offset: .22rem;
+  }
+
+  .public-header-leading:has(.public-back-link) {
+    min-width: 4.5rem;
+  }
+}
+
+@media (min-width: 1100px) and (max-width: 1279px) {
+  .public-header-default {
+    grid-template-columns: max-content minmax(7rem, 10rem) minmax(15rem, 22rem) max-content;
+    gap: .9rem;
+  }
+
+  .public-header-trailing {
+    width: min(100%, 22rem);
+    min-width: 15rem;
+  }
+
+  .public-header-desktop-nav {
+    gap: .85rem;
+  }
+}
