@@ -2,7 +2,7 @@ import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
 
-test("desktop catalog integrates sections, active filters, categories, and products without changing mobile navigation", async () => {
+test("desktop catalog integrates adaptive navigation, centered products, and fixed advertising without changing mobile navigation", async () => {
   const [
     channel,
     category,
@@ -12,6 +12,7 @@ test("desktop catalog integrates sections, active filters, categories, and produ
     desktopQueries,
     integratedStyles,
     hierarchyStyles,
+    adStyles,
     consistencyStyles,
     mobileStyles,
     productCard,
@@ -28,6 +29,7 @@ test("desktop catalog integrates sections, active filters, categories, and produ
     readFile(new URL("../src/lib/db/public-desktop.ts", import.meta.url), "utf8"),
     readFile(new URL("../src/styles/public-desktop-ui-polish.css", import.meta.url), "utf8"),
     readFile(new URL("../src/styles/public-desktop-navigation-hierarchy.css", import.meta.url), "utf8"),
+    readFile(new URL("../src/styles/public-ads.css", import.meta.url), "utf8"),
     readFile(new URL("../src/styles/public-product-card-consistency.css", import.meta.url), "utf8"),
     readFile(new URL("../src/styles/public-category-navigation.css", import.meta.url), "utf8"),
     readFile(new URL("../src/components/public/ProductCard.astro", import.meta.url), "utf8"),
@@ -52,6 +54,9 @@ test("desktop catalog integrates sections, active filters, categories, and produ
   assert.match(category, /active=\{item\.id === category\.id\}/u);
 
   assert.match(sidebar, /site\.channels\.map/u);
+  assert.match(sidebar, /longestNavigationLabel/u);
+  assert.match(sidebar, /navigationCharacterWidth/u);
+  assert.match(sidebar, /--desktop-nav-fit/u);
   assert.match(sidebar, /const expanded = active && filters\.length > 0/u);
   assert.match(sidebar, /aria-expanded=\{expanded \? "true" : undefined\}/u);
   assert.match(sidebar, /data-desktop-filter-link/u);
@@ -68,18 +73,19 @@ test("desktop catalog integrates sections, active filters, categories, and produ
   assert.match(desktopQueries, /queries\.join\(" UNION ALL "\)/u);
   assert.match(desktopQueries, /\.bind\(\.\.\.bindings\)[\s\S]*\.all<PublicProductPreviewRow>/u);
 
-  assert.match(integratedStyles, /--desktop-nav-width: 12rem/u);
-  assert.match(integratedStyles, /--desktop-category-width: 11rem/u);
-  assert.match(integratedStyles, /grid-template-columns: var\(--desktop-nav-width\) minmax\(0, 1fr\)/u);
-  assert.match(integratedStyles, /\.desktop-catalog-panel/u);
-  assert.match(integratedStyles, /grid-template-columns: var\(--desktop-category-width\) minmax\(0, 1fr\)/u);
-  assert.match(integratedStyles, /repeat\(auto-fill, minmax\(12\.5rem, 13\.75rem\)\)/u);
-  assert.match(integratedStyles, /\.product-card \{[\s\S]*?max-width: 13\.75rem/u);
-  assert.match(integratedStyles, /\.product-card \.visual-card-overlay \{[\s\S]*?position: absolute/u);
   assert.match(integratedStyles, /--desktop-accent: #b69058/u);
-  assert.match(hierarchyStyles, /\.desktop-nav-section-link::after[\s\S]*?content: "›"/u);
-  assert.match(hierarchyStyles, /\.desktop-nav-filter-link\.is-active[\s\S]*?border-left-color: rgb\(var\(--section-accent\)\)/u);
+  assert.match(integratedStyles, /\.product-card \.visual-card-overlay \{[\s\S]*?position: absolute/u);
+  assert.match(hierarchyStyles, /--desktop-content-width: 50rem/u);
+  assert.match(hierarchyStyles, /width: 100vw;/u);
+  assert.match(hierarchyStyles, /margin-inline: calc\(50% - 50vw\)/u);
+  assert.match(hierarchyStyles, /grid-template-columns:[\s\S]*?minmax\(var\(--desktop-side-min\), 1fr\)[\s\S]*?minmax\(0, var\(--desktop-content-width\)\)[\s\S]*?minmax\(var\(--desktop-side-min\), 1fr\)/u);
+  assert.match(hierarchyStyles, /\.desktop-nav-rail \{[\s\S]*?position: sticky;[\s\S]*?max-height: calc\(100vh - var\(--desktop-header-height\) - 2rem\)/u);
+  assert.match(hierarchyStyles, /\.integrated-desktop-content \{[\s\S]*?grid-column: 2;[\s\S]*?justify-self: center;/u);
+  assert.match(hierarchyStyles, /grid-template-columns: var\(--desktop-category-width\) minmax\(0, 1fr\)/u);
+  assert.match(hierarchyStyles, /repeat\(auto-fill, minmax\(11\.25rem, 11\.75rem\)\)/u);
+  assert.match(hierarchyStyles, /\.product-card \{[\s\S]*?max-width: 11\.75rem/u);
   assert.match(hierarchyStyles, /\.desktop-catalog-heading \{[\s\S]*?clip: rect\(0 0 0 0\)/u);
+  assert.match(adStyles, /\.affiliate-ad-rail \{[\s\S]*?position: fixed;/u);
 
   assert.match(productCard, /class="visual-card-media-frame"/u);
   assert.match(productCard, /public-product-links/u);
