@@ -28,17 +28,23 @@ const requestedCategorySlug = (Astro.url.searchParams.get("category") ?? "").tri
 const site = await loadPublicSiteShell();
 const channel = findPublicChannel(site, channelSlug);
 const canLoadPage = Boolean(channel && pageInput.valid);
+const desktopFilterChannelIds = channel
+  ? site.channels.flatMap((item) => item.id === channel.id ? [] : [item.id])
+  : [];
 
-const [filters, loadedCategories, filtersByChannel] = canLoadPage && channel
+const [filters, loadedCategories, otherFiltersByChannel] = canLoadPage && channel
   ? await Promise.all([
       loadPublicCategoryFilters(channel.id),
       loadPublicCategories(channel.id),
-      loadPublicDesktopFilterMap(site.channels.map((item) => item.id)),
+      loadPublicDesktopFilterMap(desktopFilterChannelIds),
     ])
   : [[], [], {}];
 const categories = loadedCategories;
 const categoryGroups = buildEffectiveCategoryGroups(filters, categories);
 const activeFilters = categoryGroups.map(({ filter }) => filter);
+const filtersByChannel = channel
+  ? { ...otherFiltersByChannel, [channel.id]: activeFilters }
+  : otherFiltersByChannel;
 const hasCategoryNavigation = categoryGroups.length > 0;
 const categoryFilterColumns = Math.min(Math.max(activeFilters.length, 1), 4);
 const categoryFilterStyle = `--category-filter-columns: ${categoryFilterColumns}`;
