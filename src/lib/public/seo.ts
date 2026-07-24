@@ -8,16 +8,25 @@ const NAMED_ENTITIES: Readonly<Record<string, string>> = {
   quot: '"',
 };
 
+function decodeNumericEntity(value: number, fallback: string): string {
+  if (
+    !Number.isSafeInteger(value)
+    || value < 0
+    || value > 0x10ffff
+    || (value >= 0xd800 && value <= 0xdfff)
+  ) return fallback;
+
+  return String.fromCodePoint(value);
+}
+
 function decodeHtmlEntities(value: string): string {
   return value.replace(/&(#x?[0-9a-f]+|[a-z]+);/giu, (entity, token: string) => {
     const normalized = token.toLowerCase();
     if (normalized.startsWith("#x")) {
-      const codePoint = Number.parseInt(normalized.slice(2), 16);
-      return Number.isFinite(codePoint) ? String.fromCodePoint(codePoint) : entity;
+      return decodeNumericEntity(Number.parseInt(normalized.slice(2), 16), entity);
     }
     if (normalized.startsWith("#")) {
-      const codePoint = Number.parseInt(normalized.slice(1), 10);
-      return Number.isFinite(codePoint) ? String.fromCodePoint(codePoint) : entity;
+      return decodeNumericEntity(Number.parseInt(normalized.slice(1), 10), entity);
     }
     return NAMED_ENTITIES[normalized] ?? entity;
   });
