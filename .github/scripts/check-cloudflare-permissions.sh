@@ -1,0 +1,204 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+API="https://api.cloudflare.com/client/v4"
+RUN_SUFFIX="${GITHUB_RUN_ID:-manual}-${GITHUB_RUN_ATTEMPT:-1}"
+WORKER_NAME="site-cf-check-${RUN_SUFFIX}"
+D1_NAME="site-cf-check-${RUN_SUFFIX}"
+R2_NAME="site-cf-check-${RUN_SUFFIX}"
+KV_NAME="site-cf-check-${RUN_SUFFIX}"
+QUEUE_NAME="site-cf-check-${RUN_SUFFIX}"
+
+if [[ -z "${CLOUDFLARE_API_TOKEN:-}" ]]; then
+  echo "::error::CLOUDFLARE_API_TOKEN is not available to this workflow."
+  exit 1
+fi
+if [[ -z "${CLOUDFLARE_ACCOUNT_ID:-}" ]]; then
+  echo "::error::CLOUDFLARE_ACCOUNT_ID is not available to this workflow."
+  exit 1
+fi
+if [[ ! "$CLOUDFLARE_ACCOUNT_ID" =~ ^[a-f0-9]{32}$ ]]; then
+  echo "::error::CLOUDFLARE_ACCOUNT_ID format is invalid."
+  exit 1
+fi
+
+D1_ID=""
+KV_ID=""
+QUEUE_ID=""
+WORKER_CREATED=0
+R2_CREATED=0
+
+api_call() {
+  local method="$1"
+  local url="$2"
+  local data="${3:-}"
+  local body
+  local status
+  body="$(mktemp)"
+
+  if [[ -n "$data" ]]; then
+    status="$(curl --silent --show-error --output "$body" --write-out '%{http_code}' \
+      --request "$method" "$url" \
+      --header "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+      --header 'Content-Type: application/json' \
+      --data "$data")"
+  else
+    status="$(curl --silent --show-error --output "$body" --write-out '%{http_code}' \
+      --request "$method" "$url" \
+      --header "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}")"
+  fi
+
+  if [[ ! "$status" =~ ^2 ]]; then
+    echo "::error::Cloudflare API request failed: ${method} ${url} (HTTP ${status})" >&2
+    jq '{success, errors, messages}' "$body" 2>/dev/null >&2 || cat "$body" >&2
+    rm -f "$body"
+    return 1
+  fi
+
+  if jq -e '.success == false' "$body" >/dev/null 2>&1; then
+    echo "::error::Cloudflare API returned success=false: ${method} ${url}" >&2
+    jq '{success, errors, messages}' "$body" >&2
+    rm -f "$body"
+    return 1
+  fi
+
+  cat "$body"
+  rm -f "$body"
+}
+
+cleanup() {
+  set +e
+  if [[ "$WORKER_CREATED" == "1" ]]; then
+    curl --silent --output /dev/null --request DELETE \
+      "${API}/accounts/${CLOUDFLARE_ACCOUNT_ID}/workers/scripts/${WORKER_NAME}?force=true" \
+      --header "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}"
+  fi
+  if [[ -n "$D1_ID" ]]; then
+    curl --silent --output /dev/null --request DELETE \
+      "${API}/accounts/${CLOUDFLARE_ACCOUNT_ID}/d1/database/${D1_ID}" \
+      --header "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}"
+  fi
+  if [[ "$R2_CREATED" == "1" ]]; then
+    curl --silent --output /dev/null --request DELETE \
+      "${API}/accounts/${CLOUDFLARE_ACCOUNT_ID}/r2/buckets/${R2_NAME}" \
+      --header "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}"
+  fi
+  if [[ -n "$KV_ID" ]]; then
+    curl --silent --output /dev/null --request DELETE \
+      "${API}/accounts/${CLOUDFLARE_ACCOUNT_ID}/storage/kv/namespaces/${KV_ID}" \
+      --header "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}"
+  fi
+  if [[ -n "$QUEUE_ID" ]]; then
+    curl --silent --output /dev/null --request DELETE \
+      "${API}/accounts/${CLOUDFLARE_ACCOUNT_ID}/queues/${QUEUE_ID}" \
+      --header "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}"
+  fi
+}
+trap cleanup EXIT
+
+echo "Checking token validity..."
+api_call GET "${API}/user/tokens/verify" >/dev/null
+echo "PASS: API token is active"
+
+echo "Checking account access..."
+api_call GET "${API}/accounts/${CLOUDFLARE_ACCOUNT_ID}" >/dev/null
+echo "PASS: Account ID and account access"
+
+echo "Checking Workers Scripts write access..."
+mkdir -p /tmp/cf-worker-check
+cat >/tmp/cf-worker-check/index.js <<'JS'
+export default {
+  fetch() {
+    return new Response("ok");
+  }
+};
+JS
+cat >/tmp/cf-worker-check/wrangler.jsonc <<JSON
+{
+  "name": "${WORKER_NAME}",
+  "main": "index.js",
+  "compatibility_date": "2026-08-05",
+  "workers_dev": false,
+  "preview_urls": false
+}
+JSON
+(
+  cd /tmp/cf-worker-check
+  npx --yes wrangler@latest deploy --config wrangler.jsonc
+)
+WORKER_CREATED=1
+api_call DELETE "${API}/accounts/${CLOUDFLARE_ACCOUNT_ID}/workers/scripts/${WORKER_NAME}?force=true" >/dev/null
+WORKER_CREATED=0
+echo "PASS: Workers Scripts create/update/delete"
+
+echo "Checking D1 write access..."
+D1_RESPONSE="$(api_call POST "${API}/accounts/${CLOUDFLARE_ACCOUNT_ID}/d1/database" "{\"name\":\"${D1_NAME}\"}")"
+D1_ID="$(jq -r '.result.uuid // empty' <<<"$D1_RESPONSE")"
+[[ -n "$D1_ID" ]] || { echo "::error::D1 create response did not contain a database UUID."; exit 1; }
+api_call POST "${API}/accounts/${CLOUDFLARE_ACCOUNT_ID}/d1/database/${D1_ID}/query" '{"sql":"CREATE TABLE permission_check (id INTEGER PRIMARY KEY);"}' >/dev/null
+api_call DELETE "${API}/accounts/${CLOUDFLARE_ACCOUNT_ID}/d1/database/${D1_ID}" >/dev/null
+D1_ID=""
+echo "PASS: D1 create/query/delete"
+
+echo "Checking R2 write access..."
+api_call POST "${API}/accounts/${CLOUDFLARE_ACCOUNT_ID}/r2/buckets" "{\"name\":\"${R2_NAME}\"}" >/dev/null
+R2_CREATED=1
+curl --fail --silent --show-error --request PUT \
+  "${API}/accounts/${CLOUDFLARE_ACCOUNT_ID}/r2/buckets/${R2_NAME}/objects/permission-check.txt" \
+  --header "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+  --header 'Content-Type: text/plain' \
+  --data 'ok' >/dev/null
+api_call DELETE "${API}/accounts/${CLOUDFLARE_ACCOUNT_ID}/r2/buckets/${R2_NAME}/objects/permission-check.txt" >/dev/null
+api_call DELETE "${API}/accounts/${CLOUDFLARE_ACCOUNT_ID}/r2/buckets/${R2_NAME}" >/dev/null
+R2_CREATED=0
+echo "PASS: R2 bucket and object create/delete"
+
+echo "Checking Workers KV write access..."
+KV_RESPONSE="$(api_call POST "${API}/accounts/${CLOUDFLARE_ACCOUNT_ID}/storage/kv/namespaces" "{\"title\":\"${KV_NAME}\"}")"
+KV_ID="$(jq -r '.result.id // empty' <<<"$KV_RESPONSE")"
+[[ -n "$KV_ID" ]] || { echo "::error::KV create response did not contain a namespace ID."; exit 1; }
+curl --fail --silent --show-error --request PUT \
+  "${API}/accounts/${CLOUDFLARE_ACCOUNT_ID}/storage/kv/namespaces/${KV_ID}/values/permission-check" \
+  --header "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" \
+  --header 'Content-Type: text/plain' \
+  --data 'ok' >/dev/null
+api_call DELETE "${API}/accounts/${CLOUDFLARE_ACCOUNT_ID}/storage/kv/namespaces/${KV_ID}" >/dev/null
+KV_ID=""
+echo "PASS: Workers KV namespace and value write/delete"
+
+echo "Checking Queues write access..."
+QUEUE_RESPONSE="$(api_call POST "${API}/accounts/${CLOUDFLARE_ACCOUNT_ID}/queues" "{\"queue_name\":\"${QUEUE_NAME}\"}")"
+QUEUE_ID="$(jq -r '.result.queue_id // .result.id // empty' <<<"$QUEUE_RESPONSE")"
+[[ -n "$QUEUE_ID" ]] || { echo "::error::Queue create response did not contain a queue ID."; exit 1; }
+api_call DELETE "${API}/accounts/${CLOUDFLARE_ACCOUNT_ID}/queues/${QUEUE_ID}" >/dev/null
+QUEUE_ID=""
+echo "PASS: Queues create/delete"
+
+if [[ -n "${CLOUDFLARE_ZONE_ID:-}" ]]; then
+  if [[ ! "$CLOUDFLARE_ZONE_ID" =~ ^[a-f0-9]{32}$ ]]; then
+    echo "::error::CLOUDFLARE_ZONE_ID format is invalid."
+    exit 1
+  fi
+  echo "Checking Zone read access..."
+  api_call GET "${API}/zones/${CLOUDFLARE_ZONE_ID}" >/dev/null
+  echo "PASS: Zone ID and Zone read access"
+else
+  echo "SKIP: CLOUDFLARE_ZONE_ID is not configured; Zone access was not tested."
+fi
+
+if [[ -n "${GITHUB_STEP_SUMMARY:-}" ]]; then
+  cat >>"$GITHUB_STEP_SUMMARY" <<'MD'
+## Cloudflare permission check
+
+- API token: passed
+- Account access: passed
+- Workers Scripts write: passed
+- D1 write: passed
+- R2 bucket/object write: passed
+- Workers KV write: passed
+- Queues write: passed
+- Zone read: tested only when `CLOUDFLARE_ZONE_ID` is configured
+
+R2 custom-domain binding was intentionally not modified.
+MD
+fi
