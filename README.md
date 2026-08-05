@@ -77,7 +77,6 @@ Español: Inicio / Servicios / Tiendas / Mensajes / Cuenta
 - 在线客服服务商绑定；
 - R2 存储与公开域名设置；
 - 用户、角色与权限；
-- AI 管理；
 - 系统设置；
 - 操作日志与审计。
 
@@ -144,8 +143,7 @@ Cloudflare Worker（单一主项目部署）
 ├─ Queues                   低频异步任务
 ├─ Analytics Engine         转化事件与运营事件
 ├─ Web Analytics            页面访问与性能数据
-├─ Turnstile                防机器人
-└─ Workers AI               可选、受限的后台 AI 能力
+└─ Turnstile                防机器人
 ```
 
 主项目保持一个 Worker 部署，代码内部模块化。在线客服系统未来作为独立第三方项目、独立仓库、独立 Worker 和独立数据库开发。
@@ -194,7 +192,6 @@ Cloudflare Worker（单一主项目部署）
 | KV | 100,000 读/天；1,000 写/天；1GB | 极少量配置与短缓存 |
 | Queues | 10,000 次操作/天；免费层消息最多保留 24 小时 | 发布、Webhook、清理任务 |
 | Analytics Engine | 100,000 数据点写入/天；10,000 查询/天 | 业务点击与转化事件 |
-| Workers AI | 10,000 Neurons/天 | 后台内容辅助，默认受限 |
 | Turnstile | 最多 20 个 Widget；验证请求不限量 | 登录、表单和高风险操作 |
 | Workers Builds | 3,000 构建分钟/月；1 个并发构建 | CI/CD |
 | Web Analytics | 免费、隐私优先 | 页面访问和 Web 性能 |
@@ -211,7 +208,6 @@ Cloudflare Worker（单一主项目部署）
 - [Workers KV pricing](https://developers.cloudflare.com/kv/platform/pricing/)
 - [Queues pricing](https://developers.cloudflare.com/queues/platform/pricing/)
 - [Analytics Engine pricing](https://developers.cloudflare.com/analytics/analytics-engine/pricing/)
-- [Workers AI pricing](https://developers.cloudflare.com/workers-ai/platform/pricing/)
 - [Turnstile plans](https://developers.cloudflare.com/turnstile/plans/)
 - [Workers Builds limits](https://developers.cloudflare.com/workers/ci-cd/builds/limits-and-pricing/)
 - [Cloudflare Web Analytics](https://developers.cloudflare.com/web-analytics/about/)
@@ -534,29 +530,7 @@ interface SupportCapabilities {
 
 这样客服消息不会消耗主项目每天的 Worker 动态请求额度。
 
-## 10. AI 管理
-
-Workers AI 是可选能力，默认关闭公开端调用。
-
-可用于：
-
-- 后台生成内容摘要；
-- 英语与西班牙语草稿辅助；
-- 标签建议；
-- FAQ 草稿；
-- 内容质量检查。
-
-必须支持：
-
-- 总开关；
-- 功能级开关；
-- 每日调用或 Neuron 预算；
-- 管理员权限；
-- 超额后自动停用；
-- 调用日志；
-- 不在用户每次打开页面时自动调用 AI。
-
-## 11. 安全设计
+## 10. 安全设计
 
 - 管理后台建议使用 Cloudflare Access 作为第一层保护；
 - 应用内部仍保留 RBAC；
@@ -575,7 +549,7 @@ Workers AI 是可选能力，默认关闭公开端调用。
 
 部署者必须自行确认所在司法辖区的年龄限制、内容规范、隐私政策、数据保留、约会交友、成人内容、游戏、直播和博彩相关法律，以及 Cloudflare 和第三方服务商的可接受使用政策。
 
-## 12. 主要数据模型
+## 11. 主要数据模型
 
 计划的核心表：
 
@@ -623,7 +597,7 @@ soft_delete_records
 
 具体字段在数据库设计阶段通过迁移文件确定。
 
-## 13. 计划仓库结构
+## 12. 计划仓库结构
 
 ```text
 site/
@@ -657,9 +631,9 @@ site/
 └─ package.json
 ```
 
-## 14. 部署与环境
+## 13. 部署与环境
 
-### 14.1 GitHub 配置
+### 13.1 GitHub 配置
 
 已使用项目专用 Cloudflare API Token，并验证以下权限：
 
@@ -683,7 +657,7 @@ CLOUDFLARE_ACCOUNT_ID
 
 不得把真实密钥写入源码、README、Issue 或聊天记录。
 
-### 14.2 环境
+### 13.2 环境
 
 ```text
 local       本地开发
@@ -707,7 +681,7 @@ push/merge main
 
 数据库迁移必须向前兼容。高风险迁移采用“先加字段、再迁移数据、最后删除旧字段”的多阶段方式。
 
-## 15. 开发阶段计划
+## 14. 开发阶段计划
 
 ### 阶段 0：工程初始化
 
@@ -788,7 +762,6 @@ push/merge main
 - [ ] 数据仪表盘；
 - [ ] Web Analytics；
 - [ ] Turnstile；
-- [ ] AI 管理与每日预算；
 - [ ] 备份和恢复流程；
 - [ ] 安全检查。
 
@@ -820,7 +793,7 @@ push/merge main
 - API、SDK 和 Webhook；
 - 与本模板的 `custom` Provider 对接。
 
-## 16. 免费额度监控与升级触发条件
+## 15. 免费额度监控与升级触发条件
 
 建议设置内部预警线，而不是等到额度耗尽：
 
@@ -833,21 +806,19 @@ push/merge main
 | KV 写入 | 达到 500/天检查误用 |
 | Queue 操作 | 达到 6,000/天减少非关键任务 |
 | Analytics Engine | 达到 70,000 数据点/天开始采样 |
-| Workers AI | 达到每日预算的 80% 自动限制 |
 
 高流量降级顺序：
 
-1. 停止非关键 AI；
-2. 降低非关键事件采样率；
-3. 暂停低优先级后台任务；
-4. 将部分 tracked 跳转切换为 direct；
-5. 延长公开快照缓存；
-6. 禁止高成本筛选或导出；
-7. 必要时升级 Workers Paid。
+1. 降低非关键事件采样率；
+2. 暂停低优先级后台任务；
+3. 将部分 tracked 跳转切换为 direct；
+4. 延长公开快照缓存；
+5. 禁止高成本筛选或导出；
+6. 必要时升级 Workers Paid。
 
 当动态业务长期接近免费额度，或需要更复杂的实时功能时，优先升级 Cloudflare Workers Paid，而不是破坏架构或牺牲安全性。
 
-## 17. 验收标准
+## 16. 验收标准
 
 项目主版本完成必须满足：
 
@@ -867,7 +838,7 @@ push/merge main
 - 免费额度监控和降级策略完成；
 - 无密钥、账户 ID、真实域名或敏感数据进入源码。
 
-## 18. 开发原则
+## 17. 开发原则
 
 1. **先做正确的数据边界，再做 UI。**
 2. **公开读取静态化，后台写入动态化。**
