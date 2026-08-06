@@ -2,23 +2,16 @@ import { AdminApiError } from '../api';
 
 export type AdminFaq = {
   id: string;
-  question: string;
-  answer: string;
-  sortOrder: number;
-  isEnabled: boolean;
+  title: string;
+  body: string;
   createdAt: string;
   updatedAt: string;
-  deletedAt: string | null;
 };
 
 export type FaqInput = {
-  question: string;
-  answer: string;
-  sortOrder: number;
-  isEnabled: boolean;
+  title: string;
+  body: string;
 };
-
-export type FaqScope = 'active' | 'trash' | 'all';
 
 type ErrorEnvelope = {
   error?: {
@@ -78,26 +71,20 @@ function parseFaq(value: unknown): AdminFaq {
   if (
     !faq ||
     typeof faq.id !== 'string' ||
-    typeof faq.question !== 'string' ||
-    typeof faq.answer !== 'string' ||
-    typeof faq.sortOrder !== 'number' ||
-    typeof faq.isEnabled !== 'boolean' ||
+    typeof faq.title !== 'string' ||
+    typeof faq.body !== 'string' ||
     typeof faq.createdAt !== 'string' ||
-    typeof faq.updatedAt !== 'string' ||
-    (typeof faq.deletedAt !== 'string' && faq.deletedAt !== null)
+    typeof faq.updatedAt !== 'string'
   ) {
     throw new AdminApiError(500, 'INVALID_RESPONSE', 'FAQ 返回数据无效。');
   }
 
   return {
     id: faq.id,
-    question: faq.question,
-    answer: faq.answer,
-    sortOrder: faq.sortOrder,
-    isEnabled: faq.isEnabled,
+    title: faq.title,
+    body: faq.body,
     createdAt: faq.createdAt,
     updatedAt: faq.updatedAt,
-    deletedAt: faq.deletedAt,
   };
 }
 
@@ -114,8 +101,8 @@ function parseFaqList(value: unknown): AdminFaq[] {
   return envelope.faqs.map(parseFaq);
 }
 
-export function fetchFaqs(scope: FaqScope = 'active'): Promise<AdminFaq[]> {
-  return requestJson(`/api/admin/faqs/?scope=${encodeURIComponent(scope)}`).then(parseFaqList);
+export function fetchFaqs(): Promise<AdminFaq[]> {
+  return requestJson('/api/admin/faqs/').then(parseFaqList);
 }
 
 export function createFaq(input: FaqInput): Promise<AdminFaq> {
@@ -128,53 +115,11 @@ export function updateFaq(id: string, input: FaqInput): Promise<AdminFaq> {
   );
 }
 
-export function deleteFaq(id: string): Promise<AdminFaq> {
-  return writeRequest(`/api/admin/faqs/${encodeURIComponent(id)}`, 'DELETE').then(
-    parseFaqEnvelope,
-  );
-}
-
-export function restoreFaq(id: string): Promise<AdminFaq> {
-  return writeRequest(`/api/admin/faqs/${encodeURIComponent(id)}/restore`, 'POST').then(
-    parseFaqEnvelope,
-  );
-}
-
-export async function batchDeleteFaqs(ids: string[]): Promise<string[]> {
-  const body = await requestJson('/api/admin/faqs/batch-delete', {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      'x-admin-request': '1',
-      'x-idempotency-key': crypto.randomUUID(),
-    },
-    body: JSON.stringify({ ids }),
-  });
+export async function deleteFaq(id: string): Promise<string> {
+  const body = await writeRequest(`/api/admin/faqs/${encodeURIComponent(id)}`, 'DELETE');
   const result = asRecord(body);
-  if (
-    !result ||
-    !Array.isArray(result.deletedIds) ||
-    !result.deletedIds.every((id) => typeof id === 'string')
-  ) {
-    throw new AdminApiError(500, 'INVALID_RESPONSE', 'FAQ 批量删除返回数据无效。');
+  if (!result || typeof result.deletedId !== 'string') {
+    throw new AdminApiError(500, 'INVALID_RESPONSE', 'FAQ 删除返回数据无效。');
   }
-  return result.deletedIds;
-}
-
-export async function reorderFaqs(
-  items: Array<{ id: string; sortOrder: number }>,
-): Promise<void> {
-  const body = await requestJson('/api/admin/faqs/reorder', {
-    method: 'POST',
-    headers: {
-      'content-type': 'application/json',
-      'x-admin-request': '1',
-      'x-idempotency-key': crypto.randomUUID(),
-    },
-    body: JSON.stringify({ items }),
-  });
-  const result = asRecord(body);
-  if (!result || result.reordered !== true) {
-    throw new AdminApiError(500, 'INVALID_RESPONSE', 'FAQ 排序返回数据无效。');
-  }
+  return result.deletedId;
 }
