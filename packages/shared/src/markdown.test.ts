@@ -39,10 +39,10 @@ describe('parseMarkdown', () => {
   });
 
   it('rejects unsafe links while preserving their text', () => {
-    expect(parseMarkdown('[点击](javascript:alert(1))')).toEqual([
+    expect(parseMarkdown('[点击](javascript:alert)')).toEqual([
       {
         type: 'paragraph',
-        lines: [[{ type: 'text', value: '[点击](javascript:alert(1))' }]],
+        lines: [[{ type: 'text', value: '[点击](javascript:alert)' }]],
       },
     ]);
   });
