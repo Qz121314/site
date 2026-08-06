@@ -26,15 +26,17 @@ export type MediaDomainTestResponse = {
   responseStatus: number;
 };
 
+type ApiErrorDetails = {
+  retryAfterSeconds?: number;
+  field?: string;
+  responseStatus?: number;
+};
+
 type ApiErrorEnvelope = {
   error?: {
     code?: string;
     message?: string;
-    details?: {
-      retryAfterSeconds?: number;
-      field?: string;
-      responseStatus?: number;
-    };
+    details?: ApiErrorDetails;
   };
 };
 
@@ -45,16 +47,7 @@ export class AdminApiError extends Error {
   readonly field: string | undefined;
   readonly responseStatus: number | undefined;
 
-  constructor(
-    status: number,
-    code: string,
-    message: string,
-    details?: ApiErrorEnvelope['error'] extends infer ErrorBody
-      ? ErrorBody extends { details?: infer Details }
-        ? Details
-        : never
-      : never,
-  ) {
+  constructor(status: number, code: string, message: string, details?: ApiErrorDetails) {
     super(message);
     this.name = 'AdminApiError';
     this.status = status;
