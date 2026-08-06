@@ -17,7 +17,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Remove historical preview and dev Workers
+      - name: Remove historical project Workers
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
@@ -32,7 +32,7 @@ jobs:
           printf '%s' "$before" | jq -e '.result[] | select(.id == "service-catalog-site")' >/dev/null
 
           removed='[]'
-          for stale in service-catalog-site-preview service-catalog-site-dev; do
+          for stale in service-catalog-site-preview service-catalog-site-dev service-catalog-site-production; do
             if printf '%s' "$before" | jq -e --arg stale "$stale" '.result[] | select(.id == $stale)' >/dev/null; then
               echo "Deleting stale Worker: $stale"
               status="$(curl --silent --show-error -o /tmp/cloudflare-delete.json -w '%{http_code}' -X DELETE "${auth[@]}" "$api/$stale?force=true")"
@@ -44,7 +44,7 @@ jobs:
           after="$(curl --fail --silent --show-error "${auth[@]}" "$api")"
           printf '%s' "$after" | jq -e '.success == true' >/dev/null
           printf '%s' "$after" | jq -e '.result[] | select(.id == "service-catalog-site")' >/dev/null
-          ! printf '%s' "$after" | jq -e '.result[] | select(.id == "service-catalog-site-preview" or .id == "service-catalog-site-dev")' >/dev/null
+          ! printf '%s' "$after" | jq -e '.result[] | select(.id == "service-catalog-site-preview" or .id == "service-catalog-site-dev" or .id == "service-catalog-site-production")' >/dev/null
 
           mkdir -p ops
           jq -n \
