@@ -12,6 +12,7 @@ import './conversion-pool.css';
 import './product-management.css';
 import './product-local-images.css';
 import './branding-media.css';
+import './ai-management.css';
 
 const root = document.getElementById('root');
 if (!root) {
