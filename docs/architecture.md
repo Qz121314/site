@@ -5,9 +5,10 @@
 ```text
 Storefront   React English 用户前端
 Admin        React 中文运营后台
-Worker       Hono API、认证、R2 与 D1 访问
-D1           业务数据和配置
+Worker       Hono API、认证、R2、D1 与 Workers AI 访问
+D1           业务数据、配置、匿名 AI 用量和审计
 R2           图片对象
+Workers AI   受后台开关与配额保护的文本生成
 ```
 
 ## 1. Cloudflare 资源
@@ -16,6 +17,7 @@ R2           图片对象
 Worker: service-catalog-site
 D1:     service-catalog-site-db
 R2:     service-catalog-site-assets
+AI:     Worker Binding `AI`
 ```
 
 只维护一套正式资源。部署使用 `keep_vars`，保留 Cloudflare Dashboard 手动绑定的变量。
@@ -26,6 +28,7 @@ R2:     service-catalog-site-assets
 
 ```text
 站点设置
+AI 管理
 素材库管理
 客服管理
 FAQ 管理
@@ -57,7 +60,40 @@ R2 自定义域名
 前端入口开关
 ```
 
-Logo 由站点设置从 R2 已有对象中选择。素材库不负责上传。
+Logo 由站点设置在浏览器压缩并于保存时上传 R2。素材库不负责上传。
+
+### AI 管理
+
+AI 管理只负责 Workers AI 的运行配置和公开入口限制：
+
+```text
+总开关
+访客使用开关
+Workers AI 模型标识
+系统提示词
+全站每日请求额度
+单访客每日请求额度
+输入字符上限
+输出 Token 上限
+生成温度
+后台模型测试
+```
+
+公开接口固定为：
+
+```text
+POST /api/public/ai/ask
+```
+
+约束：
+
+- AI 默认关闭，访客入口默认关闭；
+- 只允许 `@cf/` Workers AI 模型；
+- 后台测试不占访客额度；
+- 公开请求同时执行全站和单访客 UTC 日额度；
+- 访客身份由 IP 与 User-Agent 生成 SHA-256 哈希，D1 不保存原始 IP；
+- D1 不保存公开请求的提示词或模型回答；
+- 模型失败返回 503，不暴露模型内部错误。
 
 ### 素材库管理
 
@@ -88,7 +124,7 @@ Logo 由站点设置从 R2 已有对象中选择。素材库不负责上传。
 
 ### FAQ 管理
 
-FAQ 是全站公共内容，不属于分区。支持新增、编辑、排序、启停、批量删除和恢复。
+FAQ 是全站公共内容，不属于分区。支持新增、编辑、搜索和单项物理删除。
 
 ### 分区管理
 
@@ -106,7 +142,7 @@ FAQ 是全站公共内容，不属于分区。支持新增、编辑、排序、�
 
 ### 转化池
 
-转化池只属于一个分区，支持 URL、电话、邮箱和自定义转化配置。产品不能引用其他分区的转化项。
+转化池只属于一个分区，支持在线客服或外部链接分组及轮换入口。产品不能引用其他分区的转化分组。
 
 ## 5. 数据模型
 
@@ -114,11 +150,14 @@ FAQ 是全站公共内容，不属于分区。支持新增、编辑、排序、�
 
 ```text
 site_settings                 站点、统计代码、联盟检测和 R2 域名
+ai_settings                   Workers AI 配置、开关和配额
+ai_request_usage              仅保存日期、匿名访客哈希和请求时间
 customer_service_settings     外部客服系统配置
 sections                      分区
 categories                    分区内分类
 products                      分区内产品
-conversion_methods            分区内转化池
+conversion_groups             分区内转化分组
+conversion_targets            分组内轮换入口
 media_assets                  R2 对象元数据
 product_media                 产品图片关联
 faqs                          全站 FAQ
@@ -126,7 +165,7 @@ audit_logs                    内部审计
 idempotency_keys              批量写入防重
 ```
 
-所有分区业务必须通过 `section_id` 隔离。产品分类关系由数据库触发器阻止跨分区引用。
+所有分区业务必须通过 `section_id` 隔离。产品分类和转化关系由数据库与 Worker 领域校验共同保护。
 
 ## 6. R2 访问模型
 
@@ -159,19 +198,7 @@ SESSION_SECRET
 
 ## 8. 删除规则
 
-所有可删除模块统一支持：
-
-```text
-选择
-当前页全选
-批量删除
-确认
-软删除
-恢复
-审计
-```
-
-素材库清理 R2 对象属于物理删除，必须在删除前重新确认对象没有 D1 引用。
+所有可删除模块统一支持其业务范围内需要的选择、批量删除、确认、软删除、恢复和审计。素材库清理 R2 对象属于物理删除，必须在删除前重新确认对象没有 D1 引用。FAQ 按简化模型执行单项物理删除。
 
 ## 9. 开发顺序
 
@@ -182,6 +209,7 @@ SESSION_SECRET
 4. 分区内分类管理
 5. 分区内转化池
 6. 分区内产品录入
-7. Logo 选择与业务图片上传
-8. English Storefront
+7. Logo 与业务图片上传
+8. Workers AI 管理与受限公开接口
+9. English Storefront
 ```
