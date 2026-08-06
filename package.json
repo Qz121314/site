@@ -17,10 +17,9 @@
     "test": "pnpm -r --if-present test",
     "format": "prettier --check .",
     "format:write": "prettier --write .",
-    "cf:types": "wrangler types apps/worker/src/worker-configuration.d.ts --env production",
-    "cf:check": "wrangler deploy --dry-run --env production",
-    "deploy": "pnpm build && wrangler deploy --env production",
-    "deploy:preview": "pnpm build && wrangler deploy --env preview"
+    "cf:types": "wrangler types apps/worker/src/worker-configuration.d.ts",
+    "cf:check": "wrangler deploy --dry-run",
+    "deploy": "pnpm build && wrangler deploy"
   },
   "devDependencies": {
     "@eslint/js": "^9.0.0",
