@@ -8,12 +8,6 @@
   ],
   "workers_dev": true,
   "keep_vars": true,
-  "secrets": {
-    "required": [
-      "ADMIN_PASSWORD",
-      "SESSION_SECRET"
-    ]
-  },
   "assets": {
     "directory": "./dist",
     "binding": "ASSETS",
