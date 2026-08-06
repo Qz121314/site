@@ -1,10 +1,11 @@
 {
   "kept": "service-catalog-site",
-  "removed": [],
+  "removed": [
+    "service-catalog-site-production"
+  ],
   "remaining": [
     "service-catalog-site",
-    "service-catalog-site-production",
     "tg"
   ],
-  "completedAt": "2026-08-06T06:42:05Z"
+  "completedAt": "2026-08-06T06:43:02Z"
 }
