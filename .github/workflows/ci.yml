@@ -14,47 +14,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  sync-lockfile:
-    if: >-
-      github.event_name == 'pull_request' &&
-      github.event.pull_request.head.repo.full_name == github.repository
-    runs-on: ubuntu-latest
-    timeout-minutes: 10
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout pull request branch
-        uses: actions/checkout@v6
-        with:
-          ref: ${{ github.head_ref }}
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v6
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: 22
-
-      - name: Generate lockfile
-        run: pnpm install --lockfile-only
-
-      - name: Commit lockfile when changed
-        run: |
-          git add pnpm-lock.yaml
-          if git diff --cached --quiet; then
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git commit -m "chore: update pnpm lockfile"
-          git push origin "HEAD:${{ github.head_ref }}"
-
   validate:
-    needs: sync-lockfile
-    if: >-
-      always() &&
-      (needs.sync-lockfile.result == 'success' || needs.sync-lockfile.result == 'skipped')
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
