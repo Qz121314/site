@@ -27,19 +27,13 @@ app.use('*', async (context, next) => {
   );
 });
 
-app.get('/', (context) => {
-  const preferredLanguage = context.req.header('accept-language')?.toLowerCase() ?? '';
-  context.header('vary', 'Accept-Language');
-  context.header('cache-control', 'private, no-store');
-  return context.redirect(preferredLanguage.includes('es') ? '/es/' : '/en/', 302);
-});
-
 app.get('/api/health', (context) =>
   context.json({
     ok: true,
     service: 'service-catalog-site',
     environment: context.env.ENVIRONMENT,
     version: context.env.APP_VERSION,
+    publicLanguage: 'en',
     timestamp: new Date().toISOString(),
     requestId: context.get('requestId'),
   }),
@@ -49,6 +43,7 @@ app.get('/api/public/version', (context) =>
   context.json({
     appVersion: context.env.APP_VERSION,
     environment: context.env.ENVIRONMENT,
+    publicLanguage: 'en',
   }),
 );
 
@@ -57,7 +52,7 @@ app.get('/go/:code', (context) =>
     {
       error: {
         code: 'REDIRECT_NOT_CONFIGURED',
-        message: 'Tracked redirects will be enabled in the conversion phase.',
+        message: 'Tracked redirects are not configured yet.',
         requestId: context.get('requestId'),
       },
     },

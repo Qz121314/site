@@ -10,7 +10,7 @@
     "binding": "ASSETS",
     "html_handling": "auto-trailing-slash",
     "not_found_handling": "none",
-    "run_worker_first": ["/", "/api/*", "/go/*"]
+    "run_worker_first": ["/api/*", "/go/*"]
   },
   "vars": {
     "ENVIRONMENT": "production",
