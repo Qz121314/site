@@ -53,7 +53,7 @@ export type ConversionTargetInput = {
 };
 
 type ErrorEnvelope = {
-  error?: { code?: string; message?: string; details?: Record<string, unknown> };
+  error?: { code?: string; message?: string };
 };
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -80,7 +80,6 @@ async function requestJson(path: string, init?: RequestInit): Promise<unknown> {
       response.status,
       envelope?.error?.code ?? 'CONVERSION_REQUEST_FAILED',
       envelope?.error?.message ?? '转化池请求失败。',
-      envelope?.error?.details,
     );
   }
   return body;
