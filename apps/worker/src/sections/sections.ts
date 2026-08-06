@@ -88,6 +88,10 @@ function readOptionalText(
   return { ok: true, value: normalized };
 }
 
+function optionalAssetUrl(mediaBaseUrl: string | null, key: string | null): string | null {
+  return key ? buildAssetPublicUrl(mediaBaseUrl, key) : null;
+}
+
 export function validateSectionInput(value: unknown): ValidationResult {
   if (!isRecord(value)) {
     return { ok: false, field: 'form', message: '分区数据无效。' };
@@ -135,7 +139,7 @@ function mapSection(row: SectionRow): SectionRecord {
     iconType: row.icon_type,
     iconValue: row.icon_value,
     iconAssetId: row.icon_asset_id,
-    iconUrl: buildAssetPublicUrl(row.media_base_url, row.icon_object_key),
+    iconUrl: optionalAssetUrl(row.media_base_url, row.icon_object_key),
     sortOrder: row.sort_order,
     isEnabled: row.is_enabled === 1,
     createdAt: row.created_at,
