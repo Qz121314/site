@@ -9,6 +9,7 @@ import './asset-library.css';
 import './faq-management.css';
 import './category-management.css';
 import './conversion-pool.css';
+import './product-management.css';
 
 const root = document.getElementById('root');
 if (!root) {
