@@ -109,6 +109,9 @@ jobs:
           auth_session="$(curl --fail --silent --show-error "$BASE_URL/api/admin/auth/session")"
           printf '%s' "$auth_session" | grep -F '"authenticated":false'
 
+          auth_session_with_slash="$(curl --fail --silent --show-error "$BASE_URL/api/admin/auth/session/")"
+          printf '%s' "$auth_session_with_slash" | grep -F '"authenticated":false'
+
           for path in / /admin/; do
             curl --fail --silent --show-error "$BASE_URL$path" | grep -F '<div id="root"></div>'
           done
