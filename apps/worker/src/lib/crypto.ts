@@ -1,3 +1,5 @@
+import { timingSafeEqual } from 'node:crypto';
+
 const encoder = new TextEncoder();
 
 export const PASSWORD_HASH_ITERATIONS = 600_000;
@@ -33,11 +35,12 @@ export async function derivePasswordHash(
   const key = await crypto.subtle.importKey('raw', encoder.encode(password), 'PBKDF2', false, [
     'deriveBits',
   ]);
+  const saltBuffer = Uint8Array.from(salt).buffer;
   const bits = await crypto.subtle.deriveBits(
     {
       name: 'PBKDF2',
       hash: 'SHA-256',
-      salt,
+      salt: saltBuffer,
       iterations,
     },
     key,
@@ -56,7 +59,7 @@ export async function verifyPassword(
   const expected = base64UrlToBytes(expectedHash);
   const actual = await derivePasswordHash(password, base64UrlToBytes(salt), iterations);
 
-  return expected.byteLength === actual.byteLength && crypto.subtle.timingSafeEqual(expected, actual);
+  return expected.byteLength === actual.byteLength && timingSafeEqual(expected, actual);
 }
 
 export async function sha256Base64Url(value: string): Promise<string> {
