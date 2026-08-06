@@ -3,6 +3,8 @@ import { apiError } from './http/api-response';
 import { requireAdmin } from './middleware/require-admin';
 import { adminAssetRoutes } from './routes/admin-assets';
 import { adminAuthRoutes } from './routes/admin-auth';
+import { adminCategoryBatchRoutes } from './routes/admin-category-batch';
+import { adminCategoryRoutes } from './routes/admin-categories';
 import { adminCustomerServiceRoutes } from './routes/admin-customer-service';
 import { adminFaqRoutes } from './routes/admin-faqs';
 import { adminSectionBatchRoutes } from './routes/admin-section-batch';
@@ -73,6 +75,8 @@ app.route('/api/admin/settings', adminSiteSettingsRoutes);
 app.route('/api/admin/customer-service', adminCustomerServiceRoutes);
 app.route('/api/admin/assets', adminAssetRoutes);
 app.route('/api/admin/faqs', adminFaqRoutes);
+app.route('/api/admin/sections', adminCategoryBatchRoutes);
+app.route('/api/admin/sections', adminCategoryRoutes);
 app.route('/api/admin/sections', adminSectionBatchRoutes);
 app.route('/api/admin/sections', adminSectionRoutes);
 
