@@ -23,7 +23,8 @@ R2 binding:  ASSETS_BUCKET
 - 关联数据通过外键限制，禁止形成跨分区或悬空引用；
 - 删除、恢复、启停和排序等写操作必须记录 `audit_logs`；
 - 批量写操作使用 `idempotency_keys` 防止重复提交；
-- 后台密码不进入 D1，由 Cloudflare Worker Secret 提供。
+- 后台密码和会话签名值不进入 D1，由 Cloudflare Worker 普通变量或 Secret 提供；
+- 认证绑定不限制字符长度，部署通过 `keep_vars` 保留 Dashboard 手动配置。
 
 ## 3. 表结构边界
 
@@ -162,7 +163,7 @@ Pull Request 校验：
 ```text
 构建
 → 对正式 D1 应用尚未执行的 migration
-→ 部署唯一正式 Worker
+→ 使用 keep_vars 部署唯一正式 Worker
 → 执行生产烟雾测试
 ```
 
