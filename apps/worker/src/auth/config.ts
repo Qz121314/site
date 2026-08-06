@@ -1,20 +1,19 @@
 import type { AppBindings } from '../types';
 
-export type AdminAuthSecrets = {
+export type AdminAuthBindings = {
   adminPassword: string;
   sessionSecret: string;
 };
 
-export function getAdminAuthSecrets(bindings: AppBindings): AdminAuthSecrets | null {
-  const adminPassword = bindings.ADMIN_PASSWORD;
-  const sessionSecret = bindings.SESSION_SECRET;
+function readNonEmptyBinding(value: unknown): string | null {
+  return typeof value === 'string' && value.length > 0 ? value : null;
+}
 
-  if (
-    typeof adminPassword !== 'string' ||
-    adminPassword.length < 12 ||
-    typeof sessionSecret !== 'string' ||
-    sessionSecret.length < 32
-  ) {
+export function getAdminAuthBindings(bindings: AppBindings): AdminAuthBindings | null {
+  const adminPassword = readNonEmptyBinding(bindings.ADMIN_PASSWORD);
+  const sessionSecret = readNonEmptyBinding(bindings.SESSION_SECRET);
+
+  if (!adminPassword || !sessionSecret) {
     return null;
   }
 
