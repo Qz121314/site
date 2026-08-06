@@ -19,6 +19,10 @@
     "format:write": "prettier --write .",
     "cf:types": "wrangler types apps/worker/src/worker-configuration.d.ts --env production",
     "cf:check": "wrangler deploy --dry-run --env production",
+    "db:migrate:local": "wrangler d1 migrations apply DB --local --env preview",
+    "db:migrate:preview": "wrangler d1 migrations apply DB --remote --env preview",
+    "db:migrate:production": "wrangler d1 migrations apply DB --remote --env production",
+    "admin:create-sql": "node scripts/generate-admin-sql.mjs",
     "deploy": "pnpm build && wrangler deploy --env production",
     "deploy:preview": "pnpm build && wrangler deploy --env preview"
   },

@@ -45,6 +45,9 @@ jobs:
       - name: Build
         run: pnpm build
 
+      - name: Validate D1 migrations
+        run: pnpm exec wrangler d1 migrations apply DB --local --env preview
+
       - name: Validate Worker bundle
         run: pnpm cf:check
 
@@ -88,6 +91,12 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
 
+      - name: Apply preview D1 migrations
+        run: pnpm exec wrangler d1 migrations apply DB --remote --env preview
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
+
       - name: Smoke test preview
         env:
           BASE_URL: ${{ steps.deploy.outputs.url }}
@@ -101,6 +110,9 @@ jobs:
           done
           curl --fail --silent --show-error "$BASE_URL/en/manifest.webmanifest" | grep -F '"lang": "en"'
           curl --fail --silent --show-error "$BASE_URL/es/manifest.webmanifest" | grep -F '"lang": "es"'
+          auth_status="$(curl --silent --output /tmp/admin-session.json --write-out '%{http_code}' "$BASE_URL/api/admin/auth/session")"
+          test "$auth_status" = '401'
+          grep -F '"code":"AUTH_REQUIRED"' /tmp/admin-session.json
 
   deploy-production:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -142,6 +154,12 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
 
+      - name: Apply production D1 migrations
+        run: pnpm exec wrangler d1 migrations apply DB --remote --env production
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
+
       - name: Smoke test production
         env:
           BASE_URL: ${{ steps.deploy.outputs.url }}
@@ -153,3 +171,6 @@ jobs:
           for path in /en/ /es/ /admin/; do
             curl --fail --silent --show-error "$BASE_URL$path" | grep -F '<div id="root"></div>'
           done
+          auth_status="$(curl --silent --output /tmp/admin-session.json --write-out '%{http_code}' "$BASE_URL/api/admin/auth/session")"
+          test "$auth_status" = '401'
+          grep -F '"code":"AUTH_REQUIRED"' /tmp/admin-session.json

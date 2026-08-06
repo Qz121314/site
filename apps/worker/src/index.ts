@@ -1,11 +1,12 @@
 import { Hono } from 'hono';
+import { secureHeaders } from 'hono/secure-headers';
+import adminAuthRoutes from './routes/admin-auth';
+import adminSystemRoutes from './routes/admin-system';
+import type { AppEnvironment } from './types';
 
-type Variables = {
-  requestId: string;
-};
+export const app = new Hono<AppEnvironment>();
 
-export const app = new Hono<{ Bindings: Env; Variables: Variables }>();
-
+app.use('*', secureHeaders());
 app.use('*', async (context, next) => {
   const requestId = context.req.header('cf-ray') ?? crypto.randomUUID();
   const startedAt = Date.now();
@@ -25,6 +26,11 @@ app.use('*', async (context, next) => {
       durationMs: Date.now() - startedAt,
     }),
   );
+});
+
+app.use('/api/admin/*', async (context, next) => {
+  context.header('cache-control', 'no-store');
+  await next();
 });
 
 app.get('/', (context) => {
@@ -51,6 +57,9 @@ app.get('/api/public/version', (context) =>
     environment: context.env.ENVIRONMENT,
   }),
 );
+
+app.route('/api/admin/auth', adminAuthRoutes);
+app.route('/api/admin', adminSystemRoutes);
 
 app.get('/go/:code', (context) =>
   context.json(
