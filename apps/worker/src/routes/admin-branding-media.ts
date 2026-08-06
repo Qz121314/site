@@ -8,7 +8,42 @@ import {
 import type { AppEnvironment } from '../types';
 import { hasAdminRequestHeader } from './admin-section-shared';
 
+type MediaPreviewRow = {
+  object_key: string;
+  mime_type: string;
+};
+
 export const adminBrandingMediaRoutes = new Hono<AppEnvironment>();
+
+adminBrandingMediaRoutes.get('/assets/:id', async (context) => {
+  const asset = await context.env.DB
+    .prepare(
+      `SELECT object_key, mime_type
+       FROM media_assets
+       WHERE id = ?
+         AND status = 'ready'
+         AND deleted_at IS NULL
+         AND mime_type LIKE 'image/%'`,
+    )
+    .bind(context.req.param('id'))
+    .first<MediaPreviewRow>();
+  if (!asset) {
+    return apiError(context, 404, 'MEDIA_ASSET_NOT_FOUND', '图片素材不存在或已删除。');
+  }
+
+  const object = await context.env.ASSETS_BUCKET.get(asset.object_key);
+  if (!object) {
+    return apiError(context, 404, 'R2_OBJECT_NOT_FOUND', 'R2 中不存在对应图片对象。');
+  }
+
+  return new Response(object.body, {
+    headers: {
+      'content-type': object.httpMetadata?.contentType ?? asset.mime_type,
+      'cache-control': 'private, max-age=300',
+      etag: object.httpEtag,
+    },
+  });
+});
 
 adminBrandingMediaRoutes.post('/branding', async (context) => {
   context.header('Cache-Control', 'no-store');
