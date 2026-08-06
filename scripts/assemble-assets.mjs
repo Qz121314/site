@@ -1,4 +1,4 @@
-import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdir, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -11,13 +11,6 @@ await rm(dist, { recursive: true, force: true });
 await mkdir(dist, { recursive: true });
 await cp(storefrontDist, dist, { recursive: true });
 
-const storefrontHtml = await readFile(path.join(dist, 'index.html'));
-for (const locale of ['en', 'es']) {
-  const localeDirectory = path.join(dist, locale);
-  await mkdir(localeDirectory, { recursive: true });
-  await writeFile(path.join(localeDirectory, 'index.html'), storefrontHtml);
-}
-
 await mkdir(path.join(dist, 'admin'), { recursive: true });
 await cp(adminDist, path.join(dist, 'admin'), { recursive: true });
 
@@ -29,10 +22,7 @@ await writeFile(
 /icons/*
   Cache-Control: public, max-age=31536000, immutable
 
-/en/sw.js
-  Cache-Control: no-cache
-
-/es/sw.js
+/sw.js
   Cache-Control: no-cache
 
 /admin/assets/*
@@ -49,6 +39,7 @@ await writeFile(
   `${JSON.stringify(
     {
       appVersion: '0.1.0',
+      publicLanguage: 'en',
       generatedAt: new Date().toISOString(),
     },
     null,
@@ -56,4 +47,4 @@ await writeFile(
   )}\n`,
 );
 
-console.log('Assembled Storefront and Admin assets in dist/.');
+console.log('Assembled English Storefront and Chinese Admin assets in dist/.');
