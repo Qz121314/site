@@ -44,9 +44,10 @@ export function decodeJsonPayload(value: string): unknown | null {
 }
 
 export async function hmacSha256Base64Url(secret: string, value: string): Promise<string> {
+  const keyMaterial = await crypto.subtle.digest('SHA-256', encoder.encode(secret));
   const key = await crypto.subtle.importKey(
     'raw',
-    encoder.encode(secret),
+    keyMaterial,
     { name: 'HMAC', hash: 'SHA-256' },
     false,
     ['sign'],
