@@ -3,6 +3,11 @@ export type SiteSettings = {
   locationLabel: string;
   mediaBaseUrl: string | null;
   logoAssetId: string | null;
+  ga4MeasurementId: string | null;
+  facebookPixelId: string | null;
+  affiliateDetectionEnabled: boolean;
+  affiliatePlatform: string | null;
+  affiliateDetectionConfig: string | null;
   homeSectionLimit: number;
   showHot: boolean;
   showLatest: boolean;
@@ -19,6 +24,11 @@ type SiteSettingsRow = {
   location_label: string;
   media_base_url: string | null;
   logo_asset_id: string | null;
+  ga4_measurement_id: string | null;
+  facebook_pixel_id: string | null;
+  affiliate_detection_enabled: number;
+  affiliate_platform: string | null;
+  affiliate_detection_config_json: string | null;
   home_section_limit: number;
   show_hot: number;
   show_latest: number;
@@ -62,6 +72,29 @@ function readTrimmedString(
   return { ok: true, value: normalized };
 }
 
+function readOptionalString(
+  value: unknown,
+  field: string,
+  maxLength: number,
+): FieldValidation<string | null> {
+  if (value === null || value === undefined || value === '') {
+    return { ok: true, value: null };
+  }
+  if (typeof value !== 'string') {
+    return { ok: false, field, message: '必须填写文本。' };
+  }
+
+  const normalized = value.trim();
+  if (!normalized) {
+    return { ok: true, value: null };
+  }
+  if (normalized.length > maxLength) {
+    return { ok: false, field, message: `不能超过 ${maxLength} 个字符。` };
+  }
+
+  return { ok: true, value: normalized };
+}
+
 function readBoolean(value: unknown, field: string): FieldValidation<boolean> {
   if (typeof value !== 'boolean') {
     return { ok: false, field, message: '必须选择启用或停用。' };
@@ -78,7 +111,7 @@ function isIpAddress(hostname: string): boolean {
   const parts = hostname.split('.');
   return (
     parts.length === 4 &&
-    parts.every((part) => /^\d{1,3}$/.test(part) && Number(part) >= 0 && Number(part) <= 255)
+    parts.every((part) => /^\d{1,3}$/u.test(part) && Number(part) >= 0 && Number(part) <= 255)
   );
 }
 
@@ -136,20 +169,35 @@ export function normalizeMediaBaseUrl(value: unknown): string | null {
   return url.origin;
 }
 
+function readAffiliateConfig(value: unknown): FieldValidation<string | null> {
+  const normalized = readOptionalString(value, 'affiliateDetectionConfig', 8000);
+  if (!normalized.ok || normalized.value === null) {
+    return normalized;
+  }
+
+  try {
+    JSON.parse(normalized.value);
+  } catch {
+    return {
+      ok: false,
+      field: 'affiliateDetectionConfig',
+      message: '联盟检测配置必须是有效 JSON。',
+    };
+  }
+
+  return normalized;
+}
+
 export function validateSiteSettingsInput(value: unknown): ValidationResult {
   if (!isRecord(value)) {
     return { ok: false, field: 'form', message: '站点设置数据无效。' };
   }
 
   const siteName = readTrimmedString(value.siteName, 'siteName', 1, 120);
-  if (!siteName.ok) {
-    return siteName;
-  }
+  if (!siteName.ok) return siteName;
 
   const locationLabel = readTrimmedString(value.locationLabel, 'locationLabel', 1, 80);
-  if (!locationLabel.ok) {
-    return locationLabel;
-  }
+  if (!locationLabel.ok) return locationLabel;
 
   let mediaBaseUrl: string | null;
   try {
@@ -161,6 +209,24 @@ export function validateSiteSettingsInput(value: unknown): ValidationResult {
       message: error instanceof Error ? error.message : 'R2 自定义域名无效。',
     };
   }
+
+  const ga4MeasurementId = readOptionalString(value.ga4MeasurementId, 'ga4MeasurementId', 80);
+  if (!ga4MeasurementId.ok) return ga4MeasurementId;
+
+  const facebookPixelId = readOptionalString(value.facebookPixelId, 'facebookPixelId', 80);
+  if (!facebookPixelId.ok) return facebookPixelId;
+
+  const affiliateDetectionEnabled = readBoolean(
+    value.affiliateDetectionEnabled,
+    'affiliateDetectionEnabled',
+  );
+  if (!affiliateDetectionEnabled.ok) return affiliateDetectionEnabled;
+
+  const affiliatePlatform = readOptionalString(value.affiliatePlatform, 'affiliatePlatform', 120);
+  if (!affiliatePlatform.ok) return affiliatePlatform;
+
+  const affiliateDetectionConfig = readAffiliateConfig(value.affiliateDetectionConfig);
+  if (!affiliateDetectionConfig.ok) return affiliateDetectionConfig;
 
   if (
     typeof value.homeSectionLimit !== 'number' ||
@@ -176,29 +242,15 @@ export function validateSiteSettingsInput(value: unknown): ValidationResult {
   }
 
   const showHot = readBoolean(value.showHot, 'showHot');
-  if (!showHot.ok) {
-    return showHot;
-  }
-
+  if (!showHot.ok) return showHot;
   const showLatest = readBoolean(value.showLatest, 'showLatest');
-  if (!showLatest.ok) {
-    return showLatest;
-  }
-
+  if (!showLatest.ok) return showLatest;
   const showMore = readBoolean(value.showMore, 'showMore');
-  if (!showMore.ok) {
-    return showMore;
-  }
-
+  if (!showMore.ok) return showMore;
   const showMessages = readBoolean(value.showMessages, 'showMessages');
-  if (!showMessages.ok) {
-    return showMessages;
-  }
-
+  if (!showMessages.ok) return showMessages;
   const showFaq = readBoolean(value.showFaq, 'showFaq');
-  if (!showFaq.ok) {
-    return showFaq;
-  }
+  if (!showFaq.ok) return showFaq;
 
   return {
     ok: true,
@@ -206,6 +258,11 @@ export function validateSiteSettingsInput(value: unknown): ValidationResult {
       siteName: siteName.value,
       locationLabel: locationLabel.value,
       mediaBaseUrl,
+      ga4MeasurementId: ga4MeasurementId.value,
+      facebookPixelId: facebookPixelId.value,
+      affiliateDetectionEnabled: affiliateDetectionEnabled.value,
+      affiliatePlatform: affiliatePlatform.value,
+      affiliateDetectionConfig: affiliateDetectionConfig.value,
       homeSectionLimit: value.homeSectionLimit,
       showHot: showHot.value,
       showLatest: showLatest.value,
@@ -222,6 +279,11 @@ function fromRow(row: SiteSettingsRow): SiteSettings {
     locationLabel: row.location_label,
     mediaBaseUrl: row.media_base_url,
     logoAssetId: row.logo_asset_id,
+    ga4MeasurementId: row.ga4_measurement_id,
+    facebookPixelId: row.facebook_pixel_id,
+    affiliateDetectionEnabled: row.affiliate_detection_enabled === 1,
+    affiliatePlatform: row.affiliate_platform,
+    affiliateDetectionConfig: row.affiliate_detection_config_json,
     homeSectionLimit: row.home_section_limit,
     showHot: row.show_hot === 1,
     showLatest: row.show_latest === 1,
@@ -240,6 +302,11 @@ export async function getSiteSettings(db: D1Database): Promise<SiteSettings> {
          location_label,
          media_base_url,
          logo_asset_id,
+         ga4_measurement_id,
+         facebook_pixel_id,
+         affiliate_detection_enabled,
+         affiliate_platform,
+         affiliate_detection_config_json,
          home_section_limit,
          show_hot,
          show_latest,
@@ -270,6 +337,11 @@ export function createUpdateSiteSettingsStatement(
        SET site_name = ?,
            location_label = ?,
            media_base_url = ?,
+           ga4_measurement_id = ?,
+           facebook_pixel_id = ?,
+           affiliate_detection_enabled = ?,
+           affiliate_platform = ?,
+           affiliate_detection_config_json = ?,
            home_section_limit = ?,
            show_hot = ?,
            show_latest = ?,
@@ -283,6 +355,11 @@ export function createUpdateSiteSettingsStatement(
       input.siteName,
       input.locationLabel,
       input.mediaBaseUrl,
+      input.ga4MeasurementId,
+      input.facebookPixelId,
+      input.affiliateDetectionEnabled ? 1 : 0,
+      input.affiliatePlatform,
+      input.affiliateDetectionConfig,
       input.homeSectionLimit,
       input.showHot ? 1 : 0,
       input.showLatest ? 1 : 0,
