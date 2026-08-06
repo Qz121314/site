@@ -5,15 +5,15 @@ export type AdminAuthBindings = {
   sessionSecret: string;
 };
 
-function readNonEmptyBinding(value: unknown): string | null {
-  return typeof value === 'string' && value.length > 0 ? value : null;
+function readBinding(value: unknown): string | null {
+  return typeof value === 'string' ? value : null;
 }
 
 export function getAdminAuthBindings(bindings: AppBindings): AdminAuthBindings | null {
-  const adminPassword = readNonEmptyBinding(bindings.ADMIN_PASSWORD);
-  const sessionSecret = readNonEmptyBinding(bindings.SESSION_SECRET);
+  const adminPassword = readBinding(bindings.ADMIN_PASSWORD);
+  const sessionSecret = readBinding(bindings.SESSION_SECRET);
 
-  if (!adminPassword || !sessionSecret) {
+  if (adminPassword === null || sessionSecret === null) {
     return null;
   }
 
