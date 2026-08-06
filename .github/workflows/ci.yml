@@ -144,23 +144,38 @@ jobs:
 
           login_payload="$(EMAIL="$email" PASSWORD="$password" node -e "process.stdout.write(JSON.stringify({ email: process.env.EMAIL, password: process.env.PASSWORD }))")"
           login_status="$(curl --silent --show-error --cookie-jar /tmp/admin-cookies.txt --output /tmp/admin-login.json --write-out '%{http_code}' --header "Origin: $BASE_URL" --header 'Content-Type: application/json' --data "$login_payload" "$BASE_URL/api/admin/auth/login")"
+          printf 'login status: %s\n' "$login_status"
+          cat /tmp/admin-login.json
+          printf '\n'
           test "$login_status" = '200'
           grep -F '"email":"'"$email"'"' /tmp/admin-login.json
 
           session_status="$(curl --silent --show-error --cookie /tmp/admin-cookies.txt --output /tmp/admin-authenticated-session.json --write-out '%{http_code}' "$BASE_URL/api/admin/auth/session")"
+          printf 'authenticated session status: %s\n' "$session_status"
+          cat /tmp/admin-authenticated-session.json
+          printf '\n'
           test "$session_status" = '200'
           grep -F '"roleKeys":["super_admin"]' /tmp/admin-authenticated-session.json
           grep -F '"audit.read"' /tmp/admin-authenticated-session.json
 
           audit_status="$(curl --silent --show-error --cookie /tmp/admin-cookies.txt --output /tmp/admin-audit.json --write-out '%{http_code}' "$BASE_URL/api/admin/audit-logs?limit=10")"
+          printf 'audit status: %s\n' "$audit_status"
+          cat /tmp/admin-audit.json
+          printf '\n'
           test "$audit_status" = '200'
           grep -F '"action":"admin.login.succeeded"' /tmp/admin-audit.json
 
           logout_status="$(curl --silent --show-error --cookie /tmp/admin-cookies.txt --output /tmp/admin-logout.json --write-out '%{http_code}' --request POST --header "Origin: $BASE_URL" "$BASE_URL/api/admin/auth/logout")"
+          printf 'logout status: %s\n' "$logout_status"
+          cat /tmp/admin-logout.json
+          printf '\n'
           test "$logout_status" = '200'
           grep -F '"ok":true' /tmp/admin-logout.json
 
           revoked_status="$(curl --silent --show-error --cookie /tmp/admin-cookies.txt --output /tmp/admin-revoked-session.json --write-out '%{http_code}' "$BASE_URL/api/admin/auth/session")"
+          printf 'revoked session status: %s\n' "$revoked_status"
+          cat /tmp/admin-revoked-session.json
+          printf '\n'
           test "$revoked_status" = '401'
           grep -F '"code":"AUTH_REQUIRED"' /tmp/admin-revoked-session.json
 
