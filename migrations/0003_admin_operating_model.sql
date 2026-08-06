@@ -26,38 +26,6 @@ ALTER TABLE products
 CREATE INDEX products_category_idx
   ON products(section_id, category_id, status, deleted_at);
 
-CREATE TRIGGER products_category_section_insert
-BEFORE INSERT ON products
-WHEN NEW.category_id IS NOT NULL
-BEGIN
-  SELECT CASE
-    WHEN NOT EXISTS (
-      SELECT 1
-      FROM categories
-      WHERE id = NEW.category_id
-        AND section_id = NEW.section_id
-        AND deleted_at IS NULL
-    )
-    THEN RAISE(ABORT, 'PRODUCT_CATEGORY_SECTION_MISMATCH')
-  END;
-END;
-
-CREATE TRIGGER products_category_section_update
-BEFORE UPDATE OF section_id, category_id ON products
-WHEN NEW.category_id IS NOT NULL
-BEGIN
-  SELECT CASE
-    WHEN NOT EXISTS (
-      SELECT 1
-      FROM categories
-      WHERE id = NEW.category_id
-        AND section_id = NEW.section_id
-        AND deleted_at IS NULL
-    )
-    THEN RAISE(ABORT, 'PRODUCT_CATEGORY_SECTION_MISMATCH')
-  END;
-END;
-
 ALTER TABLE site_settings
   ADD COLUMN ga4_measurement_id TEXT;
 
