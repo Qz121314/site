@@ -2,6 +2,11 @@ import { Hono } from 'hono';
 import { createAuditLogStatement } from '../audit/write-audit-log';
 import { apiError } from '../http/api-response';
 import {
+  createIdempotencyStatement,
+  normalizeIdempotencyKey,
+  readIdempotentResponse,
+} from '../idempotency/idempotency';
+import {
   createDeleteSectionStatement,
   createReorderSectionStatement,
   getSection,
@@ -19,10 +24,6 @@ import {
 
 const IDEMPOTENCY_HEADER = 'x-idempotency-key';
 const MAX_BATCH_SIZE = 100;
-
-type IdempotencyRow = {
-  response_body: string;
-};
 
 function parseBatchIds(value: unknown): string[] | null {
   if (!isRecord(value) || !Array.isArray(value.ids)) {
@@ -65,61 +66,6 @@ function parseReorderItems(value: unknown): Array<{ id: string; sortOrder: numbe
   return new Set(items.map((item) => item.id)).size === items.length ? items : null;
 }
 
-function readIdempotencyKey(context: Parameters<typeof apiError>[0]): string | null {
-  const value = context.req.header(IDEMPOTENCY_HEADER);
-  return value && value.length <= 128 ? value : null;
-}
-
-async function readIdempotentResponse(
-  db: D1Database,
-  scope: string,
-  key: string,
-  now: string,
-): Promise<Record<string, unknown> | null> {
-  const row = await db
-    .prepare(
-      `SELECT response_body
-       FROM idempotency_keys
-       WHERE key = ? AND scope = ? AND expires_at > ?`,
-    )
-    .bind(key, scope, now)
-    .first<IdempotencyRow>();
-
-  if (!row) {
-    return null;
-  }
-
-  try {
-    const value = JSON.parse(row.response_body) as unknown;
-    return isRecord(value) ? value : null;
-  } catch {
-    return null;
-  }
-}
-
-function createIdempotencyStatement(
-  db: D1Database,
-  scope: string,
-  key: string,
-  responseBody: Record<string, unknown>,
-  now: string,
-): D1PreparedStatement {
-  const expiresAt = new Date(Date.parse(now) + 24 * 60 * 60 * 1000).toISOString();
-  return db
-    .prepare(
-      `INSERT INTO idempotency_keys (
-         key, scope, response_status, response_body, expires_at, created_at
-       ) VALUES (?, ?, 200, ?, ?, ?)
-       ON CONFLICT(key) DO UPDATE SET
-         scope = excluded.scope,
-         response_status = excluded.response_status,
-         response_body = excluded.response_body,
-         expires_at = excluded.expires_at,
-         created_at = excluded.created_at`,
-    )
-    .bind(key, scope, JSON.stringify(responseBody), expiresAt, now);
-}
-
 export const adminSectionBatchRoutes = new Hono<AppEnvironment>();
 
 adminSectionBatchRoutes.post('/batch-delete', async (context) => {
@@ -128,7 +74,7 @@ adminSectionBatchRoutes.post('/batch-delete', async (context) => {
     return apiError(context, 403, 'ADMIN_REQUEST_REQUIRED', '后台请求标识无效。');
   }
 
-  const idempotencyKey = readIdempotencyKey(context);
+  const idempotencyKey = normalizeIdempotencyKey(context.req.header(IDEMPOTENCY_HEADER));
   if (!idempotencyKey) {
     return apiError(context, 400, 'IDEMPOTENCY_KEY_REQUIRED', '批量删除缺少幂等键。');
   }
@@ -140,7 +86,7 @@ adminSectionBatchRoutes.post('/batch-delete', async (context) => {
     idempotencyKey,
     now,
   );
-  if (prior) {
+  if (isRecord(prior)) {
     return context.json(prior);
   }
 
@@ -205,7 +151,7 @@ adminSectionBatchRoutes.post('/reorder', async (context) => {
     return apiError(context, 403, 'ADMIN_REQUEST_REQUIRED', '后台请求标识无效。');
   }
 
-  const idempotencyKey = readIdempotencyKey(context);
+  const idempotencyKey = normalizeIdempotencyKey(context.req.header(IDEMPOTENCY_HEADER));
   if (!idempotencyKey) {
     return apiError(context, 400, 'IDEMPOTENCY_KEY_REQUIRED', '排序请求缺少幂等键。');
   }
@@ -217,7 +163,7 @@ adminSectionBatchRoutes.post('/reorder', async (context) => {
     idempotencyKey,
     now,
   );
-  if (prior) {
+  if (isRecord(prior)) {
     return context.json(prior);
   }
 
