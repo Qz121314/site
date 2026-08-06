@@ -166,10 +166,19 @@ adminSiteSettingsRoutes.post('/media-domain/test', async (context) => {
     const response = await fetch(publicUrl, {
       method: 'GET',
       headers: { 'cache-control': 'no-cache' },
-      redirect: 'error',
+      redirect: 'manual',
       signal: AbortSignal.timeout(10_000),
     });
     responseStatus = response.status;
+
+    if (response.status >= 300 && response.status < 400) {
+      const location = response.headers.get('location');
+      throw new Error(
+        location
+          ? `自定义域名发生 HTTP ${response.status} 跳转：${location}`
+          : `自定义域名发生 HTTP ${response.status} 跳转。`,
+      );
+    }
 
     if (!response.ok) {
       throw new Error(`自定义域名返回 HTTP ${response.status}。`);
