@@ -18,6 +18,10 @@ type MediaDomainTestBody = {
   mediaBaseUrl: unknown;
 };
 
+type ReadyImageAsset = {
+  object_key: string;
+};
+
 function hasAdminRequestHeader(context: Parameters<typeof apiError>[0]): boolean {
   return context.req.header(ADMIN_REQUEST_HEADER) === '1';
 }
@@ -40,11 +44,25 @@ async function readJsonBody(context: Parameters<typeof apiError>[0]): Promise<un
 }
 
 function parseMediaDomainTestBody(value: unknown): MediaDomainTestBody | null {
-  if (!isRecord(value) || !('mediaBaseUrl' in value)) {
-    return null;
-  }
-
+  if (!isRecord(value) || !('mediaBaseUrl' in value)) return null;
   return { mediaBaseUrl: value.mediaBaseUrl };
+}
+
+async function getReadyImageAsset(
+  db: D1Database,
+  id: string,
+): Promise<ReadyImageAsset | null> {
+  return db
+    .prepare(
+      `SELECT object_key
+       FROM media_assets
+       WHERE id = ?
+         AND status = 'ready'
+         AND deleted_at IS NULL
+         AND mime_type LIKE 'image/%'`,
+    )
+    .bind(id)
+    .first<ReadyImageAsset>();
 }
 
 export const adminSiteSettingsRoutes = new Hono<AppEnvironment>();
@@ -85,9 +103,18 @@ adminSiteSettingsRoutes.put('/', async (context) => {
     });
   }
 
+  const logoAsset = validation.value.logoAssetId
+    ? await getReadyImageAsset(context.env.DB, validation.value.logoAssetId)
+    : null;
+  if (validation.value.logoAssetId && !logoAsset) {
+    return apiError(context, 409, 'LOGO_ASSET_INVALID', 'Logo 图片不存在、已删除或状态异常。', {
+      field: 'logoAssetId',
+    });
+  }
+
   const current = await getSiteSettings(context.env.DB);
   const updatedAt = new Date().toISOString();
-  const updated = toSiteSettings(validation.value, current.logoAssetId, updatedAt);
+  const updated = toSiteSettings(validation.value, logoAsset?.object_key ?? null, updatedAt);
 
   await context.env.DB.batch([
     createUpdateSiteSettingsStatement(context.env.DB, validation.value, updatedAt),
@@ -194,10 +221,7 @@ adminSiteSettingsRoutes.post('/media-domain/test', async (context) => {
       entityType: 'site_settings',
       entityId: '1',
       requestId: context.get('requestId'),
-      metadata: {
-        mediaBaseUrl,
-        responseStatus,
-      },
+      metadata: { mediaBaseUrl, responseStatus },
     });
 
     return context.json({
@@ -215,11 +239,7 @@ adminSiteSettingsRoutes.post('/media-domain/test', async (context) => {
       entityType: 'site_settings',
       entityId: '1',
       requestId: context.get('requestId'),
-      metadata: {
-        mediaBaseUrl,
-        responseStatus,
-        message,
-      },
+      metadata: { mediaBaseUrl, responseStatus, message },
     });
 
     return apiError(context, 400, 'MEDIA_DOMAIN_TEST_FAILED', message, {
