@@ -14,12 +14,6 @@ const queryClient = new QueryClient({
   },
 });
 
-if ('serviceWorker' in navigator && import.meta.env.PROD) {
-  window.addEventListener('load', () => {
-    void navigator.serviceWorker.register('./sw.js', { scope: './' });
-  });
-}
-
 const root = document.getElementById('root');
 if (!root) {
   throw new Error('Missing #root element.');

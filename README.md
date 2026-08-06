@@ -128,6 +128,5 @@ Storefront、Admin 和 Worker 分别构建，但共同部署为一个业务平�
 
 - [项目架构基线](docs/architecture.md)
 - [开发阶段与交付计划](docs/development-plan.md)
-- [公开快照协议](docs/public-snapshot-contract.md)
 
 架构和实现发生冲突时，以 `docs/architecture.md` 为准。
