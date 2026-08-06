@@ -1,7 +1,7 @@
 import type { Context } from 'hono';
 import type { AppEnvironment } from '../types';
 
-type ApiErrorStatus = 400 | 401 | 403 | 429 | 500 | 503;
+type ApiErrorStatus = 400 | 401 | 403 | 404 | 409 | 429 | 500 | 503;
 
 type ApiErrorDetails = Record<string, string | number | boolean>;
 

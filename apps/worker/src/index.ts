@@ -2,6 +2,8 @@ import { Hono } from 'hono';
 import { apiError } from './http/api-response';
 import { requireAdmin } from './middleware/require-admin';
 import { adminAuthRoutes } from './routes/admin-auth';
+import { adminSectionBatchRoutes } from './routes/admin-section-batch';
+import { adminSectionRoutes } from './routes/admin-sections';
 import { adminSiteSettingsRoutes } from './routes/admin-site-settings';
 import type { AppEnvironment } from './types';
 
@@ -65,6 +67,8 @@ app.get('/api/admin/health', (context) => {
 });
 
 app.route('/api/admin/settings', adminSiteSettingsRoutes);
+app.route('/api/admin/sections', adminSectionBatchRoutes);
+app.route('/api/admin/sections', adminSectionRoutes);
 
 app.get('/go/:code', (context) =>
   context.json(
