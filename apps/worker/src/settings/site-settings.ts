@@ -116,6 +116,10 @@ function isIpAddress(hostname: string): boolean {
   );
 }
 
+function optionalAssetUrl(mediaBaseUrl: string | null, key: string | null): string | null {
+  return key ? buildAssetPublicUrl(mediaBaseUrl, key) : null;
+}
+
 export function normalizeMediaBaseUrl(value: unknown): string | null {
   if (value === null || value === undefined) return null;
   if (typeof value !== 'string') {
@@ -266,7 +270,7 @@ function fromRow(row: SiteSettingsRow): SiteSettings {
     locationLabel: row.location_label,
     mediaBaseUrl: row.media_base_url,
     logoAssetId: row.logo_asset_id,
-    logoUrl: buildAssetPublicUrl(row.media_base_url, row.logo_object_key),
+    logoUrl: optionalAssetUrl(row.media_base_url, row.logo_object_key),
     ga4MeasurementId: row.ga4_measurement_id,
     facebookPixelId: row.facebook_pixel_id,
     affiliateDetectionEnabled: row.affiliate_detection_enabled === 1,
@@ -369,7 +373,7 @@ export function toSiteSettings(
 ): SiteSettings {
   return {
     ...input,
-    logoUrl: buildAssetPublicUrl(input.mediaBaseUrl, logoObjectKey),
+    logoUrl: optionalAssetUrl(input.mediaBaseUrl, logoObjectKey),
     updatedAt,
   };
 }
