@@ -29,10 +29,10 @@ const now = Math.floor(Date.now() / 1000);
 const encode = (value) => value.toString('base64url');
 const quote = (value) => `'${String(value).replaceAll("'", "''")}'`;
 
-process.stdout.write(`PRAGMA foreign_keys = ON;\nBEGIN TRANSACTION;\n\n`);
+process.stdout.write('PRAGMA foreign_keys = ON;\n\n');
 process.stdout.write(
   `INSERT INTO admin_users (id, email, normalized_email, display_name, password_hash, password_salt, password_iterations, status, created_at, updated_at) VALUES (${quote(adminId)}, ${quote(email)}, ${quote(email)}, ${quote(displayName)}, ${quote(encode(hash))}, ${quote(encode(salt))}, ${iterations}, 'active', ${now}, ${now});\n`,
 );
 process.stdout.write(
-  `INSERT INTO admin_user_roles (admin_user_id, role_key, assigned_at, assigned_by) VALUES (${quote(adminId)}, 'super_admin', ${now}, NULL);\n\nCOMMIT;\n`,
+  `INSERT INTO admin_user_roles (admin_user_id, role_key, assigned_at, assigned_by) VALUES (${quote(adminId)}, 'super_admin', ${now}, NULL);\n`,
 );
