@@ -26,6 +26,10 @@ function normalizeEmail(value: string): string {
   return value.trim().toLowerCase();
 }
 
+function useSecureCookies(environment: string): boolean {
+  return environment !== 'local';
+}
+
 router.post('/login', requireSameOrigin, async (context) => {
   let payload: unknown;
   try {
@@ -134,7 +138,7 @@ router.post('/login', requireSameOrigin, async (context) => {
   setCookie(context, ADMIN_SESSION_COOKIE, token, {
     path: '/api/admin',
     httpOnly: true,
-    secure: context.env.ENVIRONMENT !== 'local',
+    secure: useSecureCookies(context.env.ENVIRONMENT),
     sameSite: 'Strict',
     maxAge: SESSION_TTL_SECONDS,
   });
@@ -174,7 +178,7 @@ router.post('/logout', requireSameOrigin, requireAdminSession, async (context) =
   });
   deleteCookie(context, ADMIN_SESSION_COOKIE, {
     path: '/api/admin',
-    secure: context.env.ENVIRONMENT !== 'local',
+    secure: useSecureCookies(context.env.ENVIRONMENT),
   });
   context.header('cache-control', 'no-store');
   return context.json({ ok: true });
