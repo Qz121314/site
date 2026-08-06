@@ -1,0 +1,10 @@
+{
+  "databaseName": "service-catalog-site-db",
+  "databaseId": "cdd6642d-6114-4340-8fd8-b72b5d947e69",
+  "bucketName": "service-catalog-site-assets",
+  "removedD1": [
+    "service-catalog-site-preview-db"
+  ],
+  "removedR2": [],
+  "completedAt": "2026-08-06T07:48:00Z"
+}
