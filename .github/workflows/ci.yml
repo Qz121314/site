@@ -95,6 +95,7 @@ jobs:
           health="$(curl --fail --silent --show-error "$BASE_URL/api/health")"
           printf '%s' "$health" | grep -F '"ok":true'
           printf '%s' "$health" | grep -F '"environment":"production"'
-          for path in /en/ /es/ /admin/; do
+          printf '%s' "$health" | grep -F '"publicLanguage":"en"'
+          for path in / /admin/; do
             curl --fail --silent --show-error "$BASE_URL$path" | grep -F '<div id="root"></div>'
           done
