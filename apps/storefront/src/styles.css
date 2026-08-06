@@ -1,0 +1,346 @@
+:root {
+  font-family:
+    Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #241d1a;
+  background: #fffaf7;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  --brand: #ff5a1f;
+  --brand-dark: #d93f09;
+  --ink: #241d1a;
+  --muted: #786b65;
+  --surface: #ffffff;
+  --line: #eadfd9;
+  --radius-lg: 24px;
+  --radius-md: 18px;
+  --shadow: 0 18px 45px rgb(82 43 22 / 10%);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+  background:
+    radial-gradient(circle at 80% 0%, rgb(255 210 184 / 55%), transparent 28rem),
+    #fffaf7;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+button,
+a {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button {
+  font: inherit;
+}
+
+.app-shell {
+  min-height: 100vh;
+  padding-bottom: calc(82px + env(safe-area-inset-bottom));
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 64px;
+  padding: 10px 18px;
+  border-bottom: 1px solid rgb(234 223 217 / 80%);
+  background: rgb(255 250 247 / 88%);
+  backdrop-filter: blur(18px);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+}
+
+.brand-mark {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border-radius: 12px;
+  color: white;
+  background: linear-gradient(145deg, #ff7a3d, var(--brand-dark));
+  box-shadow: 0 8px 18px rgb(255 90 31 / 28%);
+}
+
+.language-switch {
+  padding: 9px 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+main {
+  width: min(1180px, 100%);
+  margin: 0 auto;
+  padding: 20px 16px 48px;
+}
+
+.hero {
+  display: grid;
+  gap: 18px;
+  padding: 26px 0 34px;
+}
+
+.eyebrow {
+  margin: 0 0 10px;
+  color: var(--brand-dark);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin-top: 0;
+}
+
+h1 {
+  max-width: 720px;
+  margin-bottom: 16px;
+  font-size: clamp(2.4rem, 9vw, 5rem);
+  line-height: 0.98;
+  letter-spacing: -0.055em;
+}
+
+.hero-copy {
+  max-width: 650px;
+  color: var(--muted);
+  font-size: 1.05rem;
+  line-height: 1.7;
+}
+
+.hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.button {
+  display: inline-flex;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 18px;
+  border-radius: 14px;
+  font-weight: 800;
+}
+
+.button-primary {
+  color: white;
+  background: var(--brand);
+  box-shadow: 0 12px 24px rgb(255 90 31 / 24%);
+}
+
+.button-secondary {
+  border: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.hero-panel {
+  display: grid;
+  min-height: 220px;
+  align-content: end;
+  gap: 8px;
+  padding: 24px;
+  overflow: hidden;
+  border-radius: var(--radius-lg);
+  color: white;
+  background:
+    linear-gradient(145deg, rgb(53 24 13 / 12%), rgb(53 24 13 / 72%)),
+    linear-gradient(135deg, #ff9467, #4b2117);
+  box-shadow: var(--shadow);
+}
+
+.hero-panel-icon {
+  font-size: 3.5rem;
+}
+
+.hero-panel strong {
+  font-size: 1.55rem;
+}
+
+.hero-panel span:last-child {
+  color: rgb(255 255 255 / 76%);
+}
+
+.content-section {
+  padding-top: 28px;
+}
+
+.section-heading {
+  display: grid;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.section-heading h2 {
+  margin-bottom: 0;
+  font-size: clamp(1.75rem, 6vw, 2.7rem);
+  letter-spacing: -0.04em;
+}
+
+.section-heading > p {
+  max-width: 560px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+
+.listing-grid {
+  display: grid;
+  gap: 16px;
+}
+
+.listing-card {
+  overflow: hidden;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  box-shadow: 0 10px 30px rgb(81 48 31 / 7%);
+}
+
+.listing-media {
+  display: grid;
+  aspect-ratio: 16 / 10;
+  place-items: center;
+  color: rgb(255 255 255 / 90%);
+  background:
+    radial-gradient(circle at 30% 20%, rgb(255 255 255 / 34%), transparent 34%),
+    linear-gradient(135deg, #ff8755, #7b3622);
+}
+
+.listing-media span {
+  font-size: 3.2rem;
+}
+
+.listing-body {
+  padding: 18px;
+}
+
+.listing-meta {
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.listing-body h3 {
+  margin-bottom: 18px;
+  font-size: 1.25rem;
+}
+
+.listing-body button {
+  width: 100%;
+  min-height: 44px;
+  border: 0;
+  border-radius: 12px;
+  color: white;
+  background: var(--ink);
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.bottom-nav {
+  position: fixed;
+  right: 10px;
+  bottom: 8px;
+  left: 10px;
+  z-index: 30;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  padding: 8px 4px calc(8px + env(safe-area-inset-bottom));
+  border: 1px solid rgb(234 223 217 / 88%);
+  border-radius: 22px;
+  background: rgb(255 255 255 / 94%);
+  box-shadow: 0 18px 42px rgb(56 36 26 / 16%);
+  backdrop-filter: blur(18px);
+}
+
+.bottom-nav a {
+  display: grid;
+  place-items: center;
+  gap: 3px;
+  min-width: 0;
+  color: var(--muted);
+}
+
+.bottom-nav a > span {
+  font-size: 1.15rem;
+}
+
+.bottom-nav small {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 0.62rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.bottom-nav .is-active {
+  color: var(--brand-dark);
+  font-weight: 800;
+}
+
+@media (min-width: 760px) {
+  main {
+    padding: 36px 28px 72px;
+  }
+
+  .hero {
+    grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.65fr);
+    align-items: stretch;
+    padding-top: 54px;
+  }
+
+  .section-heading {
+    grid-template-columns: 1fr 1fr;
+    align-items: end;
+  }
+
+  .listing-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 980px) {
+  .app-shell {
+    padding-bottom: 0;
+  }
+
+  .topbar {
+    padding-inline: max(28px, calc((100vw - 1180px) / 2));
+  }
+
+  .bottom-nav {
+    position: static;
+    width: min(640px, calc(100% - 40px));
+    margin: 0 auto 28px;
+  }
+}

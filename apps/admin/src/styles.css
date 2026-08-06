@@ -1,0 +1,235 @@
+:root {
+  font-family:
+    Inter, "PingFang SC", "Microsoft YaHei", ui-sans-serif, system-ui, sans-serif;
+  color: #172033;
+  background: #f4f6f9;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  --nav: #111827;
+  --brand: #ff5a1f;
+  --muted: #697386;
+  --line: #e4e8ef;
+  --surface: #ffffff;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  min-width: 320px;
+  min-height: 100vh;
+}
+
+button {
+  font: inherit;
+}
+
+.admin-shell {
+  min-height: 100vh;
+}
+
+.sidebar {
+  padding: 18px;
+  color: #e5e7eb;
+  background: var(--nav);
+}
+
+.admin-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 22px;
+}
+
+.admin-brand > span {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 13px;
+  color: white;
+  background: var(--brand);
+  font-weight: 900;
+}
+
+.admin-brand div {
+  display: grid;
+  gap: 2px;
+}
+
+.admin-brand small {
+  color: #9ca3af;
+}
+
+.sidebar nav {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.sidebar nav button {
+  min-height: 42px;
+  border: 0;
+  border-radius: 10px;
+  color: #aeb6c4;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+}
+
+.sidebar nav button.is-active {
+  padding-inline: 12px;
+  color: white;
+  background: rgb(255 255 255 / 10%);
+}
+
+.admin-main {
+  padding: 22px 16px 50px;
+}
+
+.admin-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.admin-header p,
+.section-title p {
+  margin: 0 0 6px;
+  color: var(--brand);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.admin-header h1,
+.section-title h2 {
+  margin: 0;
+  letter-spacing: -0.035em;
+}
+
+.environment-badge {
+  padding: 8px 11px;
+  border: 1px solid #cbd5e1;
+  border-radius: 999px;
+  color: #526078;
+  background: white;
+  font-size: 0.72rem;
+  font-weight: 800;
+}
+
+.status-grid,
+.module-grid {
+  display: grid;
+  gap: 14px;
+}
+
+.status-grid article,
+.module-grid article {
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+  box-shadow: 0 8px 24px rgb(21 31 51 / 5%);
+}
+
+.status-grid article {
+  display: grid;
+  gap: 6px;
+  padding: 20px;
+}
+
+.status-grid span,
+.status-grid small,
+.module-grid p {
+  color: var(--muted);
+}
+
+.status-grid strong {
+  font-size: 2rem;
+}
+
+.module-section {
+  margin-top: 30px;
+}
+
+.section-title {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  justify-content: space-between;
+  gap: 14px;
+  margin-bottom: 16px;
+}
+
+.section-title button {
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: white;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.module-grid article {
+  padding: 20px;
+}
+
+.module-grid article > span {
+  color: var(--brand);
+  font-size: 0.75rem;
+  font-weight: 900;
+}
+
+.module-grid h3 {
+  margin: 14px 0 8px;
+}
+
+.module-grid p {
+  margin: 0;
+  line-height: 1.6;
+}
+
+@media (min-width: 720px) {
+  .status-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .module-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .admin-shell {
+    display: grid;
+    grid-template-columns: 250px minmax(0, 1fr);
+  }
+
+  .sidebar {
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    padding: 24px 18px;
+  }
+
+  .sidebar nav {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-main {
+    width: min(1220px, 100%);
+    margin: 0 auto;
+    padding: 34px 32px 70px;
+  }
+
+  .module-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}

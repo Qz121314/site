@@ -1,0 +1,36 @@
+{
+  "name": "cloudflare-service-catalog",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "packageManager": "pnpm@10.0.0",
+  "engines": {
+    "node": ">=22.0.0",
+    "pnpm": ">=10.0.0"
+  },
+  "scripts": {
+    "dev": "pnpm --parallel --filter @site/storefront --filter @site/admin --filter @site/worker run dev",
+    "build": "pnpm cf:types && pnpm run build:apps && node scripts/assemble-assets.mjs",
+    "build:apps": "pnpm --filter @site/storefront build && pnpm --filter @site/admin build && pnpm --filter @site/worker build",
+    "lint": "eslint .",
+    "typecheck": "pnpm cf:types && pnpm -r --if-present typecheck",
+    "test": "pnpm -r --if-present test",
+    "format": "prettier --check .",
+    "format:write": "prettier --write .",
+    "cf:types": "wrangler types apps/worker/src/worker-configuration.d.ts --env production",
+    "cf:check": "wrangler deploy --dry-run --env production",
+    "deploy": "pnpm build && wrangler deploy --env production",
+    "deploy:preview": "pnpm build && wrangler deploy --env preview"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "eslint": "^9.0.0",
+    "eslint-plugin-react-hooks": "^5.0.0",
+    "eslint-plugin-react-refresh": "^0.4.0",
+    "globals": "^16.0.0",
+    "prettier": "^3.0.0",
+    "typescript": "^5.9.0",
+    "typescript-eslint": "^8.0.0",
+    "wrangler": "^4.20.0"
+  }
+}
