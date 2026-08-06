@@ -42,6 +42,47 @@ export type MediaDomainTestResponse = {
   responseStatus: number;
 };
 
+export type AssetReferenceCounts = {
+  logo: number;
+  sectionIcon: number;
+  productCover: number;
+  productGallery: number;
+};
+
+export type AdminAsset = {
+  key: string;
+  size: number;
+  uploadedAt: string;
+  etag: string;
+  contentType: string | null;
+  isImage: boolean;
+  trackingStatus: 'tracked' | 'untracked';
+  usageStatus: 'used' | 'unused';
+  databaseStatus: string | null;
+  assetId: string | null;
+  referenceCount: number;
+  references: AssetReferenceCounts;
+  cleanupEligible: boolean;
+  cleanupBlockedReason: 'IN_USE' | 'RECENT_UPLOAD' | 'NOT_IMAGE' | null;
+  publicUrl: string | null;
+};
+
+export type AssetScanPage = {
+  assets: AdminAsset[];
+  cursor: string | null;
+  truncated: boolean;
+  mediaBaseUrl: string | null;
+  scannedCount: number;
+  prefix: 'media/';
+};
+
+export type AssetCleanupResponse = {
+  deletedKeys: string[];
+  deletedCount: number;
+  alreadyMissingCount: number;
+  freedBytes: number;
+};
+
 export type AdminSection = {
   id: string;
   slug: string;
@@ -73,6 +114,8 @@ type ApiErrorDetails = {
   responseStatus?: number;
   productCount?: number;
   conversionMethodCount?: number;
+  blockedKey?: string;
+  blockedReason?: string;
 };
 
 type ApiErrorEnvelope = {
@@ -91,6 +134,8 @@ export class AdminApiError extends Error {
   readonly responseStatus: number | undefined;
   readonly productCount: number | undefined;
   readonly conversionMethodCount: number | undefined;
+  readonly blockedKey: string | undefined;
+  readonly blockedReason: string | undefined;
 
   constructor(status: number, code: string, message: string, details?: ApiErrorDetails) {
     super(message);
@@ -102,6 +147,8 @@ export class AdminApiError extends Error {
     this.responseStatus = details?.responseStatus;
     this.productCount = details?.productCount;
     this.conversionMethodCount = details?.conversionMethodCount;
+    this.blockedKey = details?.blockedKey;
+    this.blockedReason = details?.blockedReason;
   }
 }
 
@@ -225,6 +272,122 @@ function parseCustomerServiceSettings(value: unknown): CustomerServiceSettings {
   return settings as CustomerServiceSettings;
 }
 
+function parseAssetReferences(value: unknown): AssetReferenceCounts {
+  const references = asRecord(value);
+  if (
+    !references ||
+    typeof references.logo !== 'number' ||
+    typeof references.sectionIcon !== 'number' ||
+    typeof references.productCover !== 'number' ||
+    typeof references.productGallery !== 'number'
+  ) {
+    throw new AdminApiError(500, 'INVALID_RESPONSE', '素材引用数据无效。');
+  }
+
+  return {
+    logo: references.logo,
+    sectionIcon: references.sectionIcon,
+    productCover: references.productCover,
+    productGallery: references.productGallery,
+  };
+}
+
+function parseAdminAsset(value: unknown): AdminAsset {
+  const asset = asRecord(value);
+  if (!asset) {
+    throw new AdminApiError(500, 'INVALID_RESPONSE', '素材数据无效。');
+  }
+
+  const blockedReason = asset.cleanupBlockedReason;
+  const validBlockedReason =
+    blockedReason === null ||
+    blockedReason === 'IN_USE' ||
+    blockedReason === 'RECENT_UPLOAD' ||
+    blockedReason === 'NOT_IMAGE';
+  const valid =
+    typeof asset.key === 'string' &&
+    typeof asset.size === 'number' &&
+    typeof asset.uploadedAt === 'string' &&
+    typeof asset.etag === 'string' &&
+    (typeof asset.contentType === 'string' || asset.contentType === null) &&
+    typeof asset.isImage === 'boolean' &&
+    (asset.trackingStatus === 'tracked' || asset.trackingStatus === 'untracked') &&
+    (asset.usageStatus === 'used' || asset.usageStatus === 'unused') &&
+    (typeof asset.databaseStatus === 'string' || asset.databaseStatus === null) &&
+    (typeof asset.assetId === 'string' || asset.assetId === null) &&
+    typeof asset.referenceCount === 'number' &&
+    typeof asset.cleanupEligible === 'boolean' &&
+    validBlockedReason &&
+    (typeof asset.publicUrl === 'string' || asset.publicUrl === null);
+
+  if (!valid) {
+    throw new AdminApiError(500, 'INVALID_RESPONSE', '素材数据无效。');
+  }
+
+  return {
+    key: asset.key,
+    size: asset.size,
+    uploadedAt: asset.uploadedAt,
+    etag: asset.etag,
+    contentType: asset.contentType,
+    isImage: asset.isImage,
+    trackingStatus: asset.trackingStatus,
+    usageStatus: asset.usageStatus,
+    databaseStatus: asset.databaseStatus,
+    assetId: asset.assetId,
+    referenceCount: asset.referenceCount,
+    references: parseAssetReferences(asset.references),
+    cleanupEligible: asset.cleanupEligible,
+    cleanupBlockedReason: blockedReason,
+    publicUrl: asset.publicUrl,
+  };
+}
+
+function parseAssetScanPage(value: unknown): AssetScanPage {
+  const page = asRecord(value);
+  if (
+    !page ||
+    !Array.isArray(page.assets) ||
+    (typeof page.cursor !== 'string' && page.cursor !== null) ||
+    typeof page.truncated !== 'boolean' ||
+    (typeof page.mediaBaseUrl !== 'string' && page.mediaBaseUrl !== null) ||
+    typeof page.scannedCount !== 'number' ||
+    page.prefix !== 'media/'
+  ) {
+    throw new AdminApiError(500, 'INVALID_RESPONSE', '素材扫描返回数据无效。');
+  }
+
+  return {
+    assets: page.assets.map(parseAdminAsset),
+    cursor: page.cursor,
+    truncated: page.truncated,
+    mediaBaseUrl: page.mediaBaseUrl,
+    scannedCount: page.scannedCount,
+    prefix: 'media/',
+  };
+}
+
+function parseAssetCleanupResponse(value: unknown): AssetCleanupResponse {
+  const result = asRecord(value);
+  if (
+    !result ||
+    !Array.isArray(result.deletedKeys) ||
+    !result.deletedKeys.every((key) => typeof key === 'string') ||
+    typeof result.deletedCount !== 'number' ||
+    typeof result.alreadyMissingCount !== 'number' ||
+    typeof result.freedBytes !== 'number'
+  ) {
+    throw new AdminApiError(500, 'INVALID_RESPONSE', '素材清理返回数据无效。');
+  }
+
+  return {
+    deletedKeys: result.deletedKeys,
+    deletedCount: result.deletedCount,
+    alreadyMissingCount: result.alreadyMissingCount,
+    freedBytes: result.freedBytes,
+  };
+}
+
 function parseSectionRecord(value: unknown): AdminSection {
   const section = asRecord(value);
   if (!section) {
@@ -322,6 +485,27 @@ export function updateCustomerServiceSettings(
   return adminJsonRequest('/api/admin/customer-service/', 'PUT', input).then(
     parseCustomerServiceSettings,
   );
+}
+
+export function fetchAssetPage(cursor?: string): Promise<AssetScanPage> {
+  const query = new URLSearchParams({ limit: '100' });
+  if (cursor) {
+    query.set('cursor', cursor);
+  }
+
+  return requestJson(`/api/admin/assets/?${query.toString()}`).then(parseAssetScanPage);
+}
+
+export function cleanupAssets(keys: string[]): Promise<AssetCleanupResponse> {
+  return requestJson('/api/admin/assets/cleanup', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'x-admin-request': '1',
+      'x-idempotency-key': crypto.randomUUID(),
+    },
+    body: JSON.stringify({ keys }),
+  }).then(parseAssetCleanupResponse);
 }
 
 export async function testMediaDomain(mediaBaseUrl: string): Promise<MediaDomainTestResponse> {
