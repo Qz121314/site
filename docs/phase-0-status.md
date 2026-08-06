@@ -1,8 +1,10 @@
 # 阶段 0 状态
 
-更新时间：2026-08-05
+完成日期：2026-08-05
 
-## 已完成
+状态：**已完成**
+
+## 已交付
 
 - pnpm workspace 与统一 TypeScript 基线；
 - Storefront、Admin、Worker 三个应用边界；
@@ -12,16 +14,31 @@
 - Cloudflare Static Assets 合并构建；
 - 分语言 PWA Manifest 与 Service Worker 基础实现；
 - ESLint、Prettier、Vitest 与 GitHub Actions；
-- main 分支验证后自动部署到 Cloudflare production 环境。
+- pnpm 11 固定版本、依赖锁文件和受控依赖构建脚本；
+- Preview 与 Production 独立部署任务；
+- Cloudflare Preview 真实部署；
+- `/api/health`、`/en/`、`/es/`、`/admin/` 和双语 Manifest 烟雾测试；
+- main 分支验证后自动部署到 Cloudflare Production。
 
-## 当前验证目标
+## 已通过验证
 
-- 依赖安装成功；
-- lint、TypeScript 和单元测试通过；
-- Storefront 与 Admin 构建成功；
-- Wrangler 类型生成和 dry-run 通过；
-- Cloudflare 自动部署成功。
+- 冻结依赖安装；
+- ESLint；
+- TypeScript；
+- Vitest；
+- Storefront、Admin 与 Worker 构建；
+- Wrangler 类型生成；
+- Wrangler deployment dry-run；
+- Cloudflare Preview 部署；
+- 部署后健康检查和静态入口检查。
 
-## 下一步
+## 阶段 1
 
-验证稳定后进入阶段 1：D1 schema、迁移机制、管理员鉴权、RBAC 与审计基础。
+下一开发阶段：
+
+- 领域类型与 API 契约；
+- D1 schema 和迁移机制；
+- 管理员身份与会话；
+- RBAC 权限矩阵；
+- 审计日志；
+- 数据库测试与迁移验证。
