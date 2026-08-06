@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AssetLibraryView } from './AssetLibraryView';
 import { AdminApiError, fetchSections, type AdminSection } from './api';
+import { CategoryManagementView } from './CategoryManagementView';
 import { CustomerServiceView } from './CustomerServiceView';
 import { FaqManagementView } from './FaqManagementView';
 import { SectionManagementView } from './SectionManagementView';
@@ -272,22 +273,21 @@ export function Dashboard({
           />
         ) : activeView === 'faq' ? (
           <FaqManagementView onSessionExpired={onSessionExpired} />
+        ) : currentSection?.kind === 'categories' ? (
+          <CategoryManagementView
+            section={currentSection.section}
+            onSessionExpired={onSessionExpired}
+          />
         ) : currentSection ? (
           <PlaceholderView
             title={`${currentSection.section.name} · ${
-              currentSection.kind === 'products'
-                ? '产品录入'
-                : currentSection.kind === 'categories'
-                  ? '分类管理'
-                  : '转化池'
+              currentSection.kind === 'products' ? '产品录入' : '转化池'
             }`}
             description="当前分区上下文已经固定，后续数据只允许写入本分区。"
             items={
               currentSection.kind === 'products'
                 ? ['产品内容与图片', '所属分类', '转化池选择', '发布与热门状态']
-                : currentSection.kind === 'categories'
-                  ? ['分类名称', '排序与启停', '删除与恢复']
-                  : ['链接、电话、邮箱或自定义转化', '排序与启停', '产品引用保护']
+                : ['链接、电话、邮箱或自定义转化', '排序与启停', '产品引用保护']
             }
           />
         ) : null}
