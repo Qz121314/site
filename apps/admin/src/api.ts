@@ -8,6 +8,11 @@ export type SiteSettings = {
   locationLabel: string;
   mediaBaseUrl: string | null;
   logoAssetId: string | null;
+  ga4MeasurementId: string | null;
+  facebookPixelId: string | null;
+  affiliateDetectionEnabled: boolean;
+  affiliatePlatform: string | null;
+  affiliateDetectionConfig: string | null;
   homeSectionLimit: number;
   showHot: boolean;
   showLatest: boolean;
@@ -18,6 +23,17 @@ export type SiteSettings = {
 };
 
 export type SiteSettingsUpdateInput = Omit<SiteSettings, 'logoAssetId' | 'updatedAt'>;
+
+export type CustomerServiceSettings = {
+  isEnabled: boolean;
+  provider: string | null;
+  endpointUrl: string | null;
+  projectId: string | null;
+  config: string | null;
+  updatedAt: string;
+};
+
+export type CustomerServiceSettingsInput = Omit<CustomerServiceSettings, 'updatedAt'>;
 
 export type MediaDomainTestResponse = {
   connected: true;
@@ -166,6 +182,12 @@ function parseSiteSettings(value: unknown): SiteSettings {
     typeof settings.locationLabel === 'string' &&
     (typeof settings.mediaBaseUrl === 'string' || settings.mediaBaseUrl === null) &&
     (typeof settings.logoAssetId === 'string' || settings.logoAssetId === null) &&
+    (typeof settings.ga4MeasurementId === 'string' || settings.ga4MeasurementId === null) &&
+    (typeof settings.facebookPixelId === 'string' || settings.facebookPixelId === null) &&
+    typeof settings.affiliateDetectionEnabled === 'boolean' &&
+    (typeof settings.affiliatePlatform === 'string' || settings.affiliatePlatform === null) &&
+    (typeof settings.affiliateDetectionConfig === 'string' ||
+      settings.affiliateDetectionConfig === null) &&
     typeof settings.homeSectionLimit === 'number' &&
     typeof settings.showHot === 'boolean' &&
     typeof settings.showLatest === 'boolean' &&
@@ -179,6 +201,28 @@ function parseSiteSettings(value: unknown): SiteSettings {
   }
 
   return settings as SiteSettings;
+}
+
+function parseCustomerServiceSettings(value: unknown): CustomerServiceSettings {
+  const envelope = asRecord(value);
+  const settings = envelope ? asRecord(envelope.settings) : null;
+  if (!settings) {
+    throw new AdminApiError(500, 'INVALID_RESPONSE', '客服设置返回数据无效。');
+  }
+
+  const valid =
+    typeof settings.isEnabled === 'boolean' &&
+    (typeof settings.provider === 'string' || settings.provider === null) &&
+    (typeof settings.endpointUrl === 'string' || settings.endpointUrl === null) &&
+    (typeof settings.projectId === 'string' || settings.projectId === null) &&
+    (typeof settings.config === 'string' || settings.config === null) &&
+    typeof settings.updatedAt === 'string';
+
+  if (!valid) {
+    throw new AdminApiError(500, 'INVALID_RESPONSE', '客服设置返回数据无效。');
+  }
+
+  return settings as CustomerServiceSettings;
 }
 
 function parseSectionRecord(value: unknown): AdminSection {
@@ -248,9 +292,7 @@ export async function logoutAdmin(): Promise<void> {
     },
   });
 
-  if (response.status === 204) {
-    return;
-  }
+  if (response.status === 204) return;
 
   const body = await readJson(response);
   const envelope = asErrorEnvelope(body);
@@ -268,6 +310,18 @@ export function fetchSiteSettings(): Promise<SiteSettings> {
 
 export function updateSiteSettings(input: SiteSettingsUpdateInput): Promise<SiteSettings> {
   return adminJsonRequest('/api/admin/settings/', 'PUT', input).then(parseSiteSettings);
+}
+
+export function fetchCustomerServiceSettings(): Promise<CustomerServiceSettings> {
+  return requestJson('/api/admin/customer-service/').then(parseCustomerServiceSettings);
+}
+
+export function updateCustomerServiceSettings(
+  input: CustomerServiceSettingsInput,
+): Promise<CustomerServiceSettings> {
+  return adminJsonRequest('/api/admin/customer-service/', 'PUT', input).then(
+    parseCustomerServiceSettings,
+  );
 }
 
 export async function testMediaDomain(mediaBaseUrl: string): Promise<MediaDomainTestResponse> {
@@ -295,7 +349,9 @@ export async function testMediaDomain(mediaBaseUrl: string): Promise<MediaDomain
 }
 
 export function fetchSections(scope: SectionScope = 'active'): Promise<AdminSection[]> {
-  return requestJson(`/api/admin/sections/?scope=${encodeURIComponent(scope)}`).then(parseSectionList);
+  return requestJson(`/api/admin/sections/?scope=${encodeURIComponent(scope)}`).then(
+    parseSectionList,
+  );
 }
 
 export function createSection(input: SectionInput): Promise<AdminSection> {
@@ -331,14 +387,20 @@ export async function batchDeleteSections(ids: string[]): Promise<string[]> {
     body: JSON.stringify({ ids }),
   });
   const result = asRecord(body);
-  if (!result || !Array.isArray(result.deletedIds) || !result.deletedIds.every((id) => typeof id === 'string')) {
+  if (
+    !result ||
+    !Array.isArray(result.deletedIds) ||
+    !result.deletedIds.every((id) => typeof id === 'string')
+  ) {
     throw new AdminApiError(500, 'INVALID_RESPONSE', '批量删除返回数据无效。');
   }
 
   return result.deletedIds;
 }
 
-export async function reorderSections(items: Array<{ id: string; sortOrder: number }>): Promise<void> {
+export async function reorderSections(
+  items: Array<{ id: string; sortOrder: number }>,
+): Promise<void> {
   const body = await requestJson('/api/admin/sections/reorder', {
     method: 'POST',
     headers: {
