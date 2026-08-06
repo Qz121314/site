@@ -32,6 +32,10 @@ type ValidationResult =
   | { ok: true; value: SiteSettingsInput }
   | { ok: false; field: string; message: string };
 
+type FieldValidation<T> =
+  | { ok: true; value: T }
+  | { ok: false; field: string; message: string };
+
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
@@ -41,7 +45,7 @@ function readTrimmedString(
   field: string,
   minLength: number,
   maxLength: number,
-): { ok: true; value: string } | { ok: false; field: string; message: string } {
+): FieldValidation<string> {
   if (typeof value !== 'string') {
     return { ok: false, field, message: '必须填写文本。' };
   }
@@ -56,6 +60,14 @@ function readTrimmedString(
   }
 
   return { ok: true, value: normalized };
+}
+
+function readBoolean(value: unknown, field: string): FieldValidation<boolean> {
+  if (typeof value !== 'boolean') {
+    return { ok: false, field, message: '必须选择启用或停用。' };
+  }
+
+  return { ok: true, value };
 }
 
 function isIpAddress(hostname: string): boolean {
@@ -163,18 +175,29 @@ export function validateSiteSettingsInput(value: unknown): ValidationResult {
     };
   }
 
-  const booleanFields = [
-    'showHot',
-    'showLatest',
-    'showMore',
-    'showMessages',
-    'showFaq',
-  ] as const;
+  const showHot = readBoolean(value.showHot, 'showHot');
+  if (!showHot.ok) {
+    return showHot;
+  }
 
-  for (const field of booleanFields) {
-    if (typeof value[field] !== 'boolean') {
-      return { ok: false, field, message: '必须选择启用或停用。' };
-    }
+  const showLatest = readBoolean(value.showLatest, 'showLatest');
+  if (!showLatest.ok) {
+    return showLatest;
+  }
+
+  const showMore = readBoolean(value.showMore, 'showMore');
+  if (!showMore.ok) {
+    return showMore;
+  }
+
+  const showMessages = readBoolean(value.showMessages, 'showMessages');
+  if (!showMessages.ok) {
+    return showMessages;
+  }
+
+  const showFaq = readBoolean(value.showFaq, 'showFaq');
+  if (!showFaq.ok) {
+    return showFaq;
   }
 
   return {
@@ -184,11 +207,11 @@ export function validateSiteSettingsInput(value: unknown): ValidationResult {
       locationLabel: locationLabel.value,
       mediaBaseUrl,
       homeSectionLimit: value.homeSectionLimit,
-      showHot: value.showHot,
-      showLatest: value.showLatest,
-      showMore: value.showMore,
-      showMessages: value.showMessages,
-      showFaq: value.showFaq,
+      showHot: showHot.value,
+      showLatest: showLatest.value,
+      showMore: showMore.value,
+      showMessages: showMessages.value,
+      showFaq: showFaq.value,
     },
   };
 }
