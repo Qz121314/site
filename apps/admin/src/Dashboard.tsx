@@ -4,15 +4,15 @@ import { CustomerServiceView } from './CustomerServiceView';
 import { SectionManagementView } from './SectionManagementView';
 import { SiteSettingsView } from './SiteSettingsView';
 
+type DynamicViewKind = 'products' | 'categories' | 'conversion-pool';
+
 type AdminView =
   | 'settings'
   | 'assets'
   | 'customer-service'
   | 'faq'
   | 'sections'
-  | `products:${string}`
-  | `categories:${string}`
-  | `conversion-pool:${string}`;
+  | `${DynamicViewKind}:${string}`;
 
 type DashboardProps = {
   expiresAt: string | undefined;
@@ -21,8 +21,29 @@ type DashboardProps = {
   onSessionExpired: () => void;
 };
 
+type DynamicView = {
+  kind: DynamicViewKind;
+  sectionId: string;
+};
+
 function isSessionError(error: unknown): boolean {
   return error instanceof AdminApiError && (error.status === 401 || error.code === 'SESSION_INVALID');
+}
+
+function parseDynamicView(view: AdminView): DynamicView | null {
+  const separatorIndex = view.indexOf(':');
+  if (separatorIndex < 0) return null;
+
+  const kind = view.slice(0, separatorIndex);
+  const sectionId = view.slice(separatorIndex + 1);
+  if (
+    (kind !== 'products' && kind !== 'categories' && kind !== 'conversion-pool') ||
+    !sectionId
+  ) {
+    return null;
+  }
+
+  return { kind, sectionId };
 }
 
 function getViewContext(view: AdminView, sections: AdminSection[]) {
@@ -33,22 +54,33 @@ function getViewContext(view: AdminView, sections: AdminSection[]) {
     faq: { eyebrow: '公共内容', title: 'FAQ 管理' },
     sections: { eyebrow: '业务结构', title: '分区管理' },
   };
-  if (fixed[view]) return fixed[view];
+  const fixedContext = fixed[view];
+  if (fixedContext) return fixedContext;
 
-  const [kind, sectionId] = view.split(':');
-  const section = sections.find((item) => item.id === sectionId);
-  const labels: Record<string, string> = {
+  const dynamic = parseDynamicView(view);
+  if (!dynamic) return { eyebrow: '分区业务', title: '分区业务' };
+
+  const section = sections.find((item) => item.id === dynamic.sectionId);
+  const labels: Record<DynamicViewKind, string> = {
     products: '产品录入',
     categories: '分类管理',
     'conversion-pool': '转化池',
   };
   return {
     eyebrow: '分区业务',
-    title: section ? `${section.name} · ${labels[kind] ?? '业务管理'}` : '分区业务',
+    title: section ? `${section.name} · ${labels[dynamic.kind]}` : '分区业务',
   };
 }
 
-function PlaceholderView({ title, description, items }: { title: string; description: string; items: string[] }) {
+function PlaceholderView({
+  title,
+  description,
+  items,
+}: {
+  title: string;
+  description: string;
+  items: string[];
+}) {
   return (
     <section className="settings-card operation-placeholder">
       <p className="eyebrow">模块边界已确定</p>
@@ -95,19 +127,19 @@ export function Dashboard({
   }, [loadSections]);
 
   useEffect(() => {
-    if (!activeView.includes(':')) return;
-    const sectionId = activeView.split(':')[1];
-    if (!sectionsLoading && !sections.some((section) => section.id === sectionId)) {
+    const dynamic = parseDynamicView(activeView);
+    if (!dynamic) return;
+    if (!sectionsLoading && !sections.some((section) => section.id === dynamic.sectionId)) {
       setActiveView('sections');
     }
   }, [activeView, sections, sectionsLoading]);
 
   const heading = useMemo(() => getViewContext(activeView, sections), [activeView, sections]);
   const currentSection = useMemo(() => {
-    if (!activeView.includes(':')) return null;
-    const [kind, id] = activeView.split(':');
-    const section = sections.find((item) => item.id === id);
-    return section ? { kind, section } : null;
+    const dynamic = parseDynamicView(activeView);
+    if (!dynamic) return null;
+    const section = sections.find((item) => item.id === dynamic.sectionId);
+    return section ? { kind: dynamic.kind, section } : null;
   }, [activeView, sections]);
 
   return (
