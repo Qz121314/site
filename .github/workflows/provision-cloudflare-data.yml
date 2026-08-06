@@ -1,4 +1,4 @@
-name: Provision clean Cloudflare data resources
+name: Initialize clean Cloudflare data baseline
 
 on:
   push:
@@ -10,106 +10,98 @@ permissions:
   contents: write
 
 jobs:
-  provision:
+  initialize:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - name: Checkout
         uses: actions/checkout@v6
 
-      - name: Recreate project D1 and R2 resources
+      - name: Install pnpm
+        uses: pnpm/action-setup@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Apply initial D1 migration
+        run: pnpm db:migrate:remote
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Verify D1 schema and R2 bucket
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           set -euo pipefail
 
-          test -n "${CLOUDFLARE_API_TOKEN}"
-          test -n "${CLOUDFLARE_ACCOUNT_ID}"
-
+          database_id="cdd6642d-6114-4340-8fd8-b72b5d947e69"
+          d1_query_api="https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/d1/database/${database_id}/query"
+          r2_bucket_api="https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/r2/buckets/service-catalog-site-assets"
           auth=(
             -H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}"
             -H "Content-Type: application/json"
           )
-          d1_api="https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/d1/database"
-          r2_api="https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/r2/buckets"
 
-          d1_list="$(curl --fail --silent --show-error "${auth[@]}" "${d1_api}?per_page=100")"
-          printf '%s' "$d1_list" | jq -e '.success == true' >/dev/null
+          query_d1() {
+            local sql="$1"
+            curl --fail --silent --show-error -X POST "${auth[@]}" \
+              --data "$(jq -n --arg sql "$sql" '{sql: $sql}')" \
+              "$d1_query_api"
+          }
 
-          removed_d1='[]'
-          for name in \
-            service-catalog-site-preview-db \
-            service-catalog-site-production-db \
-            service-catalog-site-db
+          tables_response="$(query_d1 "SELECT name FROM sqlite_master WHERE type = 'table' AND name NOT LIKE 'sqlite_%' ORDER BY name")"
+          printf '%s' "$tables_response" | jq -e '.success == true' >/dev/null
+          tables="$(printf '%s' "$tables_response" | jq -c '[.result[0].results[].name]')"
+
+          for table in \
+            audit_logs \
+            conversion_events \
+            conversion_methods \
+            faqs \
+            idempotency_keys \
+            media_assets \
+            product_media \
+            products \
+            publish_jobs \
+            publish_versions \
+            sections \
+            site_settings
           do
-            database_id="$(printf '%s' "$d1_list" | jq -r --arg name "$name" '.result[]? | select(.name == $name) | (.uuid // .id)' | head -n 1)"
-            if [ -n "$database_id" ] && [ "$database_id" != "null" ]; then
-              echo "Deleting D1 database: $name ($database_id)"
-              delete_response="$(curl --fail --silent --show-error -X DELETE "${auth[@]}" "${d1_api}/${database_id}")"
-              printf '%s' "$delete_response" | jq -e '.success == true' >/dev/null
-              removed_d1="$(printf '%s' "$removed_d1" | jq --arg name "$name" '. + [$name]')"
-            fi
+            printf '%s' "$tables" | jq -e --arg table "$table" 'index($table) != null' >/dev/null
           done
 
-          d1_create="$(curl --fail --silent --show-error -X POST "${auth[@]}" \
-            --data '{"name":"service-catalog-site-db"}' \
-            "$d1_api")"
-          printf '%s' "$d1_create" | jq -e '.success == true' >/dev/null
-          database_id="$(printf '%s' "$d1_create" | jq -r '.result.uuid // .result.id')"
-          test -n "$database_id"
-          test "$database_id" != "null"
+          foreign_key_response="$(query_d1 "PRAGMA foreign_key_check")"
+          printf '%s' "$foreign_key_response" | jq -e '.success == true and (.result[0].results | length) == 0' >/dev/null
 
-          r2_list="$(curl --fail --silent --show-error "${auth[@]}" "${r2_api}?per_page=100")"
-          printf '%s' "$r2_list" | jq -e '.success == true' >/dev/null
-          r2_buckets="$(printf '%s' "$r2_list" | jq -c '(.result.buckets // .result // [])')"
+          settings_response="$(query_d1 "SELECT id, site_name, location_label FROM site_settings WHERE id = 1")"
+          printf '%s' "$settings_response" | jq -e '.success == true and .result[0].results[0].site_name == "Service Catalog"' >/dev/null
 
-          removed_r2='[]'
-          for bucket in \
-            service-catalog-site-preview-assets \
-            service-catalog-site-production-assets \
-            service-catalog-site-assets
-          do
-            if printf '%s' "$r2_buckets" | jq -e --arg bucket "$bucket" '.[]? | select(.name == $bucket)' >/dev/null; then
-              echo "Deleting empty R2 bucket: $bucket"
-              status="$(curl --silent --show-error -o /tmp/r2-delete.json -w '%{http_code}' \
-                -X DELETE "${auth[@]}" "${r2_api}/${bucket}")"
-              if [ "$status" != "200" ] && [ "$status" != "204" ]; then
-                cat /tmp/r2-delete.json
-                echo "Refusing to force-delete a non-empty or protected R2 bucket: $bucket"
-                exit 1
-              fi
-              removed_r2="$(printf '%s' "$removed_r2" | jq --arg bucket "$bucket" '. + [$bucket]')"
-            fi
-          done
-
-          r2_create="$(curl --fail --silent --show-error -X POST "${auth[@]}" \
-            --data '{"name":"service-catalog-site-assets","storageClass":"Standard"}' \
-            "$r2_api")"
-          printf '%s' "$r2_create" | jq -e '.success == true' >/dev/null
-
-          d1_verify="$(curl --fail --silent --show-error "${auth[@]}" "${d1_api}/${database_id}")"
-          printf '%s' "$d1_verify" | jq -e '.success == true and .result.name == "service-catalog-site-db"' >/dev/null
-
-          r2_verify="$(curl --fail --silent --show-error "${auth[@]}" "${r2_api}/service-catalog-site-assets")"
-          printf '%s' "$r2_verify" | jq -e '.success == true and .result.name == "service-catalog-site-assets"' >/dev/null
+          r2_response="$(curl --fail --silent --show-error "${auth[@]}" "$r2_bucket_api")"
+          printf '%s' "$r2_response" | jq -e '.success == true and .result.name == "service-catalog-site-assets"' >/dev/null
 
           mkdir -p ops
           jq -n \
             --arg databaseName "service-catalog-site-db" \
             --arg databaseId "$database_id" \
             --arg bucketName "service-catalog-site-assets" \
-            --argjson removedD1 "$removed_d1" \
-            --argjson removedR2 "$removed_r2" \
+            --argjson tables "$tables" \
             --arg completedAt "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
-            '{databaseName: $databaseName, databaseId: $databaseId, bucketName: $bucketName, removedD1: $removedD1, removedR2: $removedR2, completedAt: $completedAt}' \
+            '{databaseName: $databaseName, databaseId: $databaseId, bucketName: $bucketName, tables: $tables, foreignKeyCheck: "clean", siteSettingsSeed: "verified", r2Bucket: "verified", completedAt: $completedAt}' \
             > ops/cloudflare-data-resources.json
 
-      - name: Commit provisioning result
+      - name: Commit verification result
         run: |
           set -euo pipefail
           git config user.name github-actions[bot]
           git config user.email 41898282+github-actions[bot]@users.noreply.github.com
           git add ops/cloudflare-data-resources.json
-          git commit -m "ops: record clean Cloudflare data resources"
+          git commit -m "ops: verify clean Cloudflare data baseline"
           git push origin HEAD:agent/cloudflare-data-baseline
