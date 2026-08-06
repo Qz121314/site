@@ -110,7 +110,10 @@ jobs:
           done
           curl --fail --silent --show-error "$BASE_URL/en/manifest.webmanifest" | grep -F '"lang": "en"'
           curl --fail --silent --show-error "$BASE_URL/es/manifest.webmanifest" | grep -F '"lang": "es"'
-          auth_status="$(curl --silent --output /tmp/admin-session.json --write-out '%{http_code}' "$BASE_URL/api/admin/auth/session")"
+          auth_status="$(curl --silent --show-error --output /tmp/admin-session.json --write-out '%{http_code}' "$BASE_URL/api/admin/auth/session")"
+          printf 'admin session status: %s\n' "$auth_status"
+          cat /tmp/admin-session.json
+          printf '\n'
           test "$auth_status" = '401'
           grep -F '"code":"AUTH_REQUIRED"' /tmp/admin-session.json
 
@@ -171,6 +174,9 @@ jobs:
           for path in /en/ /es/ /admin/; do
             curl --fail --silent --show-error "$BASE_URL$path" | grep -F '<div id="root"></div>'
           done
-          auth_status="$(curl --silent --output /tmp/admin-session.json --write-out '%{http_code}' "$BASE_URL/api/admin/auth/session")"
+          auth_status="$(curl --silent --show-error --output /tmp/admin-session.json --write-out '%{http_code}' "$BASE_URL/api/admin/auth/session")"
+          printf 'admin session status: %s\n' "$auth_status"
+          cat /tmp/admin-session.json
+          printf '\n'
           test "$auth_status" = '401'
           grep -F '"code":"AUTH_REQUIRED"' /tmp/admin-session.json
