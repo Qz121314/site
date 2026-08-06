@@ -1,6 +1,3 @@
-const MEDIA_PREFIX = 'media/';
-const CLEANUP_GRACE_MS = 24 * 60 * 60 * 1000;
-
 const IMAGE_EXTENSION_PATTERN = /\.(?:avif|bmp|gif|heic|heif|ico|jpe?g|png|svg|webp)$/i;
 
 export type AssetReferenceCounts = {
@@ -10,7 +7,7 @@ export type AssetReferenceCounts = {
   productGallery: number;
 };
 
-export type AssetCleanupBlockedReason = 'IN_USE' | 'RECENT_UPLOAD' | 'NOT_IMAGE' | null;
+export type AssetCleanupBlockedReason = 'IN_USE' | 'NOT_IMAGE' | null;
 
 export type AdminAsset = {
   key: string;
@@ -18,15 +15,10 @@ export type AdminAsset = {
   uploadedAt: string;
   etag: string;
   contentType: string | null;
-  isImage: boolean;
-  trackingStatus: 'tracked' | 'untracked';
   usageStatus: 'used' | 'unused';
-  databaseStatus: string | null;
-  assetId: string | null;
   referenceCount: number;
   references: AssetReferenceCounts;
   cleanupEligible: boolean;
-  cleanupBlockedReason: AssetCleanupBlockedReason;
   publicUrl: string | null;
 };
 
@@ -53,7 +45,6 @@ export type CleanupEvaluation = {
   key: string;
   object: R2Object | null;
   row: MediaAssetReferenceRow | null;
-  isImage: boolean;
   referenceCount: number;
   blockedReason: AssetCleanupBlockedReason;
 };
@@ -80,8 +71,8 @@ export function countReferences(references: AssetReferenceCounts): number {
   );
 }
 
-export function isManagedMediaKey(key: string): boolean {
-  return key.startsWith(MEDIA_PREFIX) && key.length > MEDIA_PREFIX.length;
+export function isValidR2ObjectKey(key: string): boolean {
+  return key.length > 0 && key.length <= 1024 && !key.includes('\0');
 }
 
 function inferContentType(key: string): string | null {
@@ -163,35 +154,14 @@ export async function getMediaAssetReferenceRows(
   return new Map(result.results.map((row) => [row.object_key, row]));
 }
 
-function cleanupBlockedReason(
-  object: R2Object,
-  isImage: boolean,
-  referenceCount: number,
-  nowMs: number,
-): AssetCleanupBlockedReason {
-  if (referenceCount > 0) {
-    return 'IN_USE';
-  }
-  if (!isImage) {
-    return 'NOT_IMAGE';
-  }
-  if (nowMs - object.uploaded.getTime() < CLEANUP_GRACE_MS) {
-    return 'RECENT_UPLOAD';
-  }
-  return null;
-}
-
 function toAdminAsset(
   object: R2Object,
   row: MediaAssetReferenceRow | null,
   mediaBaseUrl: string | null,
-  nowMs: number,
 ): AdminAsset {
   const contentType = object.httpMetadata?.contentType ?? inferContentType(object.key);
-  const isImage = isImageObject(object.key, contentType);
   const references = toReferenceCounts(row);
   const referenceCount = countReferences(references);
-  const blockedReason = cleanupBlockedReason(object, isImage, referenceCount, nowMs);
 
   return {
     key: object.key,
@@ -199,15 +169,10 @@ function toAdminAsset(
     uploadedAt: object.uploaded.toISOString(),
     etag: object.etag,
     contentType,
-    isImage,
-    trackingStatus: row ? 'tracked' : 'untracked',
     usageStatus: referenceCount > 0 ? 'used' : 'unused',
-    databaseStatus: row?.status ?? null,
-    assetId: row?.id ?? null,
     referenceCount,
     references,
-    cleanupEligible: blockedReason === null,
-    cleanupBlockedReason: blockedReason,
+    cleanupEligible: referenceCount === 0,
     publicUrl: buildAssetPublicUrl(mediaBaseUrl, object.key),
   };
 }
@@ -218,7 +183,6 @@ export async function scanAssetPage(
   input: { cursor?: string; limit: number },
 ): Promise<AssetScanPage> {
   const options: R2ListOptions = {
-    prefix: MEDIA_PREFIX,
     limit: input.limit,
     include: ['httpMetadata'],
   };
@@ -227,15 +191,17 @@ export async function scanAssetPage(
   }
 
   const [listed, mediaBaseUrl] = await Promise.all([bucket.list(options), getMediaBaseUrl(db)]);
+  const imageObjects = listed.objects.filter((object) =>
+    isImageObject(object.key, object.httpMetadata?.contentType ?? inferContentType(object.key)),
+  );
   const rows = await getMediaAssetReferenceRows(
     db,
-    listed.objects.map((object) => object.key),
+    imageObjects.map((object) => object.key),
   );
-  const nowMs = Date.now();
 
   return {
-    assets: listed.objects.map((object) =>
-      toAdminAsset(object, rows.get(object.key) ?? null, mediaBaseUrl, nowMs),
+    assets: imageObjects.map((object) =>
+      toAdminAsset(object, rows.get(object.key) ?? null, mediaBaseUrl),
     ),
     cursor: listed.truncated ? (listed.cursor ?? null) : null,
     truncated: listed.truncated,
@@ -252,13 +218,11 @@ export async function evaluateCleanupCandidates(
     Promise.all(keys.map((key) => bucket.head(key))),
     getMediaAssetReferenceRows(db, keys),
   ]);
-  const nowMs = Date.now();
 
   return keys.map((key, index) => {
     const object = objects[index] ?? null;
     const row = rows.get(key) ?? null;
-    const references = toReferenceCounts(row);
-    const referenceCount = countReferences(references);
+    const referenceCount = countReferences(toReferenceCounts(row));
     const contentType = object?.httpMetadata?.contentType ?? inferContentType(key);
     const isImage = isImageObject(key, contentType);
 
@@ -267,11 +231,9 @@ export async function evaluateCleanupCandidates(
       blockedReason = 'IN_USE';
     } else if (!isImage) {
       blockedReason = 'NOT_IMAGE';
-    } else if (object && nowMs - object.uploaded.getTime() < CLEANUP_GRACE_MS) {
-      blockedReason = 'RECENT_UPLOAD';
     }
 
-    return { key, object, row, isImage, referenceCount, blockedReason };
+    return { key, object, row, referenceCount, blockedReason };
   });
 }
 

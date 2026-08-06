@@ -3,7 +3,7 @@ import {
   createMarkMediaAssetDeletedStatement,
   createRestoreMediaAssetStatement,
   evaluateCleanupCandidates,
-  isManagedMediaKey,
+  isValidR2ObjectKey,
   scanAssetPage,
 } from '../assets/asset-library';
 import { createAuditLogStatement, writeAuditLog } from '../audit/write-audit-log';
@@ -21,8 +21,8 @@ import {
   readJsonBody,
 } from './admin-section-shared';
 
-const MAX_PAGE_SIZE = 200;
-const DEFAULT_PAGE_SIZE = 100;
+const MAX_PAGE_SIZE = 1000;
+const DEFAULT_PAGE_SIZE = 500;
 const MAX_CLEANUP_SIZE = 100;
 const IDEMPOTENCY_HEADER = 'x-idempotency-key';
 const CLEANUP_SCOPE = 'assets.cleanup';
@@ -44,7 +44,7 @@ function parseCleanupKeys(value: unknown): string[] | null {
   }
 
   const keys = value.keys.filter(
-    (key): key is string => typeof key === 'string' && isManagedMediaKey(key),
+    (key): key is string => typeof key === 'string' && isValidR2ObjectKey(key),
   );
   if (keys.length === 0 || keys.length !== value.keys.length || keys.length > MAX_CLEANUP_SIZE) {
     return null;
@@ -69,7 +69,6 @@ adminAssetRoutes.get('/', async (context) => {
   return context.json({
     ...page,
     scannedCount: page.assets.length,
-    prefix: 'media/',
   });
 });
 
@@ -108,7 +107,7 @@ adminAssetRoutes.post('/cleanup', async (context) => {
       context,
       400,
       'INVALID_ASSET_KEYS',
-      `请选择 1 到 ${MAX_CLEANUP_SIZE} 个有效的 media/ 图片对象。`,
+      `请选择 1 到 ${MAX_CLEANUP_SIZE} 个有效的 R2 图片对象。`,
     );
   }
 
@@ -119,7 +118,7 @@ adminAssetRoutes.post('/cleanup', async (context) => {
   );
   const blocked = evaluations.find((item) => item.blockedReason !== null);
   if (blocked) {
-    return apiError(context, 409, 'ASSET_CLEANUP_BLOCKED', '部分对象当前不可清理，请重新扫描。', {
+    return apiError(context, 409, 'ASSET_CLEANUP_BLOCKED', '部分图片正在使用或不是图片，请重新扫描。', {
       blockedKey: blocked.key,
       blockedReason: blocked.blockedReason ?? 'UNKNOWN',
     });
@@ -151,7 +150,7 @@ adminAssetRoutes.post('/cleanup', async (context) => {
       context,
       409,
       'ASSET_REFERENCE_CHANGED',
-      '对象引用在清理前发生变化，已停止本次操作，请重新扫描。',
+      '图片引用在清理前发生变化，已停止本次操作，请重新扫描。',
     );
   }
 
@@ -181,7 +180,7 @@ adminAssetRoutes.post('/cleanup', async (context) => {
     );
     await context.env.DB.batch(restoreStatements);
 
-    return apiError(context, 503, 'R2_DELETE_FAILED', 'R2 对象删除失败，数据库状态已恢复。');
+    return apiError(context, 503, 'R2_DELETE_FAILED', 'R2 图片物理删除失败，数据库状态已恢复。');
   }
 
   const responseBody = {
@@ -202,6 +201,7 @@ adminAssetRoutes.post('/cleanup', async (context) => {
           ...responseBody,
           trackedCount: tracked.length,
           untrackedCount: keys.length - tracked.length,
+          physicalDelete: true,
         },
         createdAt: now,
       }),
