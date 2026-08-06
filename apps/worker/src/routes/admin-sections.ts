@@ -15,7 +15,6 @@ import {
   type SectionScope,
 } from '../sections/sections';
 import type { AppEnvironment } from '../types';
-import { adminSectionBatchRoutes } from './admin-section-batch';
 import {
   dependencyError,
   hasAdminRequestHeader,
@@ -34,8 +33,6 @@ function parseScope(value: string | undefined): SectionScope | null {
 }
 
 export const adminSectionRoutes = new Hono<AppEnvironment>();
-
-adminSectionRoutes.route('/', adminSectionBatchRoutes);
 
 adminSectionRoutes.get('/', async (context) => {
   context.header('Cache-Control', 'no-store');
