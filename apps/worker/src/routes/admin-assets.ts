@@ -136,15 +136,14 @@ adminAssetRoutes.post('/cleanup', async (context) => {
       )
     : [];
 
-  const changedIndexes = markResults
-    .map((result, index) => (result.meta.changes === 1 ? index : -1))
-    .filter((index) => index >= 0);
-  if (changedIndexes.length !== tracked.length) {
-    if (changedIndexes.length > 0) {
+  const changedRows = markResults.flatMap((result, index) => {
+    const item = tracked[index];
+    return result.meta.changes === 1 && item ? [item.row] : [];
+  });
+  if (changedRows.length !== tracked.length) {
+    if (changedRows.length > 0) {
       await context.env.DB.batch(
-        changedIndexes.map((index) =>
-          createRestoreMediaAssetStatement(context.env.DB, tracked[index].row, now),
-        ),
+        changedRows.map((row) => createRestoreMediaAssetStatement(context.env.DB, row, now)),
       );
     }
 
