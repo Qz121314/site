@@ -5,7 +5,7 @@
 ```text
 Storefront   English 用户前端
 Admin        中文管理后台
-Worker       业务 API、认证、发布和静态资源路由
+Worker       业务 API、认证、上传、发布和静态资源路由
 D1           业务数据、状态、审计和发布记录
 R2           图片与不可变公开内容版本
 ```
@@ -15,8 +15,9 @@ R2           图片与不可变公开内容版本
 ## 当前开发顺序
 
 ```text
-D1 / R2 正式数据基线
+D1 / R2 / R2 Custom Domain 数据基线
 → Worker Secret 单管理员登录
+→ 站点设置与媒体域名
 → 分区管理
 → 动态分区菜单
 → 分区内产品管理
@@ -37,6 +38,38 @@ R2:     service-catalog-site-assets
 ```
 
 当前项目只有一个正式环境，不建立 Preview 或 Production 后缀资源。
+
+## R2 图片访问
+
+R2 使用两种不同用途的访问方式：
+
+```text
+ASSETS_BUCKET Worker Binding
+→ 后台上传、删除和校验对象
+
+R2 Custom Domain
+→ 用户前端公开读取图片
+```
+
+管理员需要在 R2 Bucket 设置中手动连接图片域名，例如：
+
+```text
+https://assets.example.com
+```
+
+随后在后台“站点设置”中录入同一个 Origin。数据库字段为：
+
+```text
+site_settings.media_base_url
+```
+
+数据库中的媒体记录只保存 `object_key`。公开图片 URL 统一生成：
+
+```text
+{media_base_url}/{object_key}
+```
+
+生产环境不使用 `r2.dev`，也不在每条媒体记录中保存完整 URL。
 
 ## 单管理员登录
 
@@ -122,7 +155,8 @@ Storefront、Admin 和 Worker 分别构建，但共同部署为一个业务平�
 
 ## 数据库规则
 
-- 表结构只能通过 `migrations/*.sql` 修改；
+- 当前无业务数据，初始设计修正通过重建 D1 完成；
+- 本次基线冻结后，表结构只能通过新的 `migrations/*.sql` 修改；
 - PR 必须在全新的本地 D1 上完整执行所有 migration；
 - `main` 部署前自动应用尚未执行的正式 D1 migration；
 - 不允许在 Cloudflare Dashboard 中手工改表；
