@@ -31,7 +31,7 @@ export function LoginView({
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (submitting || password.length === 0) {
+    if (submitting) {
       return;
     }
 
@@ -59,7 +59,7 @@ export function LoginView({
           <p className="eyebrow">业务展示模板</p>
           <h1 id="login-title">管理后台登录</h1>
           <p className="login-description">
-            使用 Cloudflare Worker Secret 中配置的后台密码登录。
+            使用 Cloudflare Worker 中配置的 ADMIN_PASSWORD 登录。
           </p>
         </div>
 
@@ -67,7 +67,7 @@ export function LoginView({
           <div className="notice notice-error" role="alert">
             <strong>后台认证配置尚未生效</strong>
             <span>
-              请确认 ADMIN_PASSWORD 至少 12 位、SESSION_SECRET 至少 32 位，并且两项都以 Secret 类型绑定到当前正式 Worker。配置完成后可直接在下方重试。
+              请确认 ADMIN_PASSWORD 和 SESSION_SECRET 已绑定到当前正式 Worker。两项可以使用普通变量或 Secret，不限制字符长度。配置完成后可直接在下方重试。
             </span>
           </div>
         ) : null}
@@ -83,7 +83,6 @@ export function LoginView({
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             disabled={submitting}
-            required
           />
 
           {errorMessage ? (
@@ -92,11 +91,7 @@ export function LoginView({
             </p>
           ) : null}
 
-          <button
-            className="primary-button"
-            type="submit"
-            disabled={submitting || password.length === 0}
-          >
+          <button className="primary-button" type="submit" disabled={submitting}>
             {submitting ? '正在验证…' : '登录后台'}
           </button>
         </form>

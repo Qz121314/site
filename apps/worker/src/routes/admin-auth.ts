@@ -1,7 +1,7 @@
 import { Hono } from 'hono';
 import { deleteCookie, getCookie, setCookie } from 'hono/cookie';
 import { writeAuditLog } from '../audit/write-audit-log';
-import { getAdminAuthSecrets } from '../auth/config';
+import { getAdminAuthBindings } from '../auth/config';
 import { constantTimeSecretEqual } from '../auth/crypto';
 import {
   clearLoginRateLimit,
@@ -31,7 +31,7 @@ function isLoginBody(value: unknown): value is LoginBody {
   }
 
   const password = (value as Record<string, unknown>).password;
-  return typeof password === 'string' && password.length > 0 && password.length <= 512;
+  return typeof password === 'string';
 }
 
 function hasAdminRequestHeader(context: Parameters<typeof apiError>[0]): boolean {
@@ -53,13 +53,13 @@ export const adminAuthRoutes = new Hono<AppEnvironment>();
 adminAuthRoutes.get('/session', async (context) => {
   context.header('Cache-Control', 'no-store');
 
-  const secrets = getAdminAuthSecrets(context.env);
-  if (!secrets) {
+  const authBindings = getAdminAuthBindings(context.env);
+  if (!authBindings) {
     return apiError(
       context,
       503,
       'AUTH_NOT_CONFIGURED',
-      '请在 Cloudflare Worker Secrets 中配置 ADMIN_PASSWORD 和 SESSION_SECRET。',
+      '请在 Cloudflare Worker 中配置 ADMIN_PASSWORD 和 SESSION_SECRET。',
     );
   }
 
@@ -68,7 +68,7 @@ adminAuthRoutes.get('/session', async (context) => {
     return context.json({ authenticated: false });
   }
 
-  const session = await verifyAdminSessionToken(token, secrets.sessionSecret);
+  const session = await verifyAdminSessionToken(token, authBindings.sessionSecret);
   if (!session) {
     deleteCookie(context, ADMIN_SESSION_COOKIE, { path: '/' });
     return context.json({ authenticated: false });
@@ -87,13 +87,13 @@ adminAuthRoutes.post('/login', async (context) => {
     return apiError(context, 403, 'ADMIN_REQUEST_REQUIRED', '后台请求标识无效。');
   }
 
-  const secrets = getAdminAuthSecrets(context.env);
-  if (!secrets) {
+  const authBindings = getAdminAuthBindings(context.env);
+  if (!authBindings) {
     return apiError(
       context,
       503,
       'AUTH_NOT_CONFIGURED',
-      '请在 Cloudflare Worker Secrets 中配置 ADMIN_PASSWORD 和 SESSION_SECRET。',
+      '请在 Cloudflare Worker 中配置 ADMIN_PASSWORD 和 SESSION_SECRET。',
     );
   }
 
@@ -110,12 +110,12 @@ adminAuthRoutes.post('/login', async (context) => {
   }
 
   if (!isLoginBody(body)) {
-    return apiError(context, 400, 'INVALID_PASSWORD_INPUT', '请输入有效的后台密码。');
+    return apiError(context, 400, 'INVALID_PASSWORD_INPUT', '请输入后台密码。');
   }
 
   const now = new Date();
   const clientAddress = context.req.header('cf-connecting-ip') ?? 'unknown';
-  const keyHash = await createLoginRateLimitKey(clientAddress, secrets.sessionSecret);
+  const keyHash = await createLoginRateLimitKey(clientAddress, authBindings.sessionSecret);
 
   await pruneExpiredLoginRateLimits(context.env.DB, now);
   const currentLimit = await getLoginRateLimitStatus(context.env.DB, keyHash, now);
@@ -136,7 +136,10 @@ adminAuthRoutes.post('/login', async (context) => {
     );
   }
 
-  const passwordMatches = await constantTimeSecretEqual(body.password, secrets.adminPassword);
+  const passwordMatches = await constantTimeSecretEqual(
+    body.password,
+    authBindings.adminPassword,
+  );
   if (!passwordMatches) {
     const updatedLimit = await recordFailedLogin(context.env.DB, keyHash, now);
     await writeAuditLog(context.env.DB, {
@@ -160,7 +163,10 @@ adminAuthRoutes.post('/login', async (context) => {
     return apiError(context, 401, 'INVALID_CREDENTIALS', '后台密码不正确。');
   }
 
-  const { token, session } = await createAdminSessionToken(secrets.sessionSecret, now.getTime());
+  const { token, session } = await createAdminSessionToken(
+    authBindings.sessionSecret,
+    now.getTime(),
+  );
   await clearLoginRateLimit(context.env.DB, keyHash);
   await writeAuditLog(context.env.DB, {
     action: 'auth.login.succeeded',
@@ -183,10 +189,10 @@ adminAuthRoutes.post('/logout', async (context) => {
     return apiError(context, 403, 'ADMIN_REQUEST_REQUIRED', '后台请求标识无效。');
   }
 
-  const secrets = getAdminAuthSecrets(context.env);
+  const authBindings = getAdminAuthBindings(context.env);
   const token = getCookie(context, ADMIN_SESSION_COOKIE);
-  if (secrets && token) {
-    const session = await verifyAdminSessionToken(token, secrets.sessionSecret);
+  if (authBindings && token) {
+    const session = await verifyAdminSessionToken(token, authBindings.sessionSecret);
     if (session) {
       await writeAuditLog(context.env.DB, {
         action: 'auth.logout',
