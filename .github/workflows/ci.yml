@@ -88,7 +88,7 @@ jobs:
         id: deploy
         run: |
           set -euo pipefail
-          pnpm exec wrangler deploy | tee /tmp/wrangler-deploy.log
+          pnpm exec wrangler deploy --keep-vars | tee /tmp/wrangler-deploy.log
           url="$(grep -Eo 'https://[A-Za-z0-9.-]+\.workers\.dev' /tmp/wrangler-deploy.log | tail -n 1)"
           test -n "$url"
           echo "url=$url" >> "$GITHUB_OUTPUT"
@@ -105,6 +105,10 @@ jobs:
           printf '%s' "$health" | grep -F '"ok":true'
           printf '%s' "$health" | grep -F '"environment":"production"'
           printf '%s' "$health" | grep -F '"publicLanguage":"en"'
+
+          auth_session="$(curl --fail --silent --show-error "$BASE_URL/api/admin/auth/session")"
+          printf '%s' "$auth_session" | grep -F '"authenticated":false'
+
           for path in / /admin/; do
             curl --fail --silent --show-error "$BASE_URL$path" | grep -F '<div id="root"></div>'
           done
