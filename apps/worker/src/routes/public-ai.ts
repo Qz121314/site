@@ -36,9 +36,12 @@ async function hashIdentity(context: Parameters<typeof apiError>[0]): Promise<st
   return [...new Uint8Array(digest)].map((item) => item.toString(16).padStart(2, '0')).join('');
 }
 
+function nextUtcDay(now: Date): Date {
+  return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1));
+}
+
 function secondsUntilNextUtcDay(now: Date): number {
-  const next = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() + 1);
-  return Math.max(1, Math.ceil((next - now.getTime()) / 1000));
+  return Math.max(1, Math.ceil((nextUtcDay(now).getTime() - now.getTime()) / 1000));
 }
 
 async function readUsageCounts(
@@ -179,7 +182,7 @@ publicAiRoutes.post('/ask', async (context) => {
       limits: {
         remainingToday,
         remainingForVisitor,
-        resetsAt: `${usageDate}T24:00:00Z`,
+        resetsAt: nextUtcDay(now).toISOString(),
       },
     });
   } catch (error) {
