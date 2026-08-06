@@ -292,35 +292,37 @@ function parseAssetReferences(value: unknown): AssetReferenceCounts {
   };
 }
 
+function parseCleanupBlockedReason(
+  value: unknown,
+): AdminAsset['cleanupBlockedReason'] {
+  if (value === null || value === 'IN_USE' || value === 'RECENT_UPLOAD' || value === 'NOT_IMAGE') {
+    return value;
+  }
+
+  throw new AdminApiError(500, 'INVALID_RESPONSE', '素材清理状态无效。');
+}
+
 function parseAdminAsset(value: unknown): AdminAsset {
   const asset = asRecord(value);
   if (!asset) {
     throw new AdminApiError(500, 'INVALID_RESPONSE', '素材数据无效。');
   }
 
-  const blockedReason = asset.cleanupBlockedReason;
-  const validBlockedReason =
-    blockedReason === null ||
-    blockedReason === 'IN_USE' ||
-    blockedReason === 'RECENT_UPLOAD' ||
-    blockedReason === 'NOT_IMAGE';
-  const valid =
-    typeof asset.key === 'string' &&
-    typeof asset.size === 'number' &&
-    typeof asset.uploadedAt === 'string' &&
-    typeof asset.etag === 'string' &&
-    (typeof asset.contentType === 'string' || asset.contentType === null) &&
-    typeof asset.isImage === 'boolean' &&
-    (asset.trackingStatus === 'tracked' || asset.trackingStatus === 'untracked') &&
-    (asset.usageStatus === 'used' || asset.usageStatus === 'unused') &&
-    (typeof asset.databaseStatus === 'string' || asset.databaseStatus === null) &&
-    (typeof asset.assetId === 'string' || asset.assetId === null) &&
-    typeof asset.referenceCount === 'number' &&
-    typeof asset.cleanupEligible === 'boolean' &&
-    validBlockedReason &&
-    (typeof asset.publicUrl === 'string' || asset.publicUrl === null);
-
-  if (!valid) {
+  if (
+    typeof asset.key !== 'string' ||
+    typeof asset.size !== 'number' ||
+    typeof asset.uploadedAt !== 'string' ||
+    typeof asset.etag !== 'string' ||
+    (typeof asset.contentType !== 'string' && asset.contentType !== null) ||
+    typeof asset.isImage !== 'boolean' ||
+    (asset.trackingStatus !== 'tracked' && asset.trackingStatus !== 'untracked') ||
+    (asset.usageStatus !== 'used' && asset.usageStatus !== 'unused') ||
+    (typeof asset.databaseStatus !== 'string' && asset.databaseStatus !== null) ||
+    (typeof asset.assetId !== 'string' && asset.assetId !== null) ||
+    typeof asset.referenceCount !== 'number' ||
+    typeof asset.cleanupEligible !== 'boolean' ||
+    (typeof asset.publicUrl !== 'string' && asset.publicUrl !== null)
+  ) {
     throw new AdminApiError(500, 'INVALID_RESPONSE', '素材数据无效。');
   }
 
@@ -338,7 +340,7 @@ function parseAdminAsset(value: unknown): AdminAsset {
     referenceCount: asset.referenceCount,
     references: parseAssetReferences(asset.references),
     cleanupEligible: asset.cleanupEligible,
-    cleanupBlockedReason: blockedReason,
+    cleanupBlockedReason: parseCleanupBlockedReason(asset.cleanupBlockedReason),
     publicUrl: asset.publicUrl,
   };
 }
