@@ -1,0 +1,90 @@
+.ai-management {
+  display: grid;
+  gap: 20px;
+}
+
+.ai-toggle-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+}
+
+.ai-toggle-grid .toggle-row {
+  height: 100%;
+  margin: 0;
+  border: 1px solid rgba(148, 163, 184, 0.22);
+  border-radius: 16px;
+  padding: 18px;
+  background: rgba(248, 250, 252, 0.72);
+}
+
+.ai-number-grid {
+  margin-top: 18px;
+}
+
+.ai-number-grid input {
+  font-variant-numeric: tabular-nums;
+}
+
+.ai-test-card {
+  overflow: hidden;
+}
+
+.ai-test-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-top: 14px;
+}
+
+.ai-test-actions small {
+  color: #64748b;
+}
+
+.ai-test-result {
+  margin-top: 18px;
+  border: 1px solid rgba(15, 118, 110, 0.2);
+  border-radius: 16px;
+  padding: 18px;
+  background: rgba(240, 253, 250, 0.76);
+}
+
+.ai-test-result > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 10px;
+  color: #0f766e;
+}
+
+.ai-test-result span {
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+}
+
+.ai-test-result p {
+  margin: 0;
+  white-space: pre-wrap;
+  line-height: 1.7;
+  color: #1e293b;
+}
+
+.ai-management code {
+  border-radius: 6px;
+  padding: 2px 6px;
+  background: rgba(15, 23, 42, 0.07);
+  font-size: 12px;
+}
+
+@media (max-width: 860px) {
+  .ai-toggle-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .ai-test-actions {
+    align-items: stretch;
+    flex-direction: column;
+  }
+}
