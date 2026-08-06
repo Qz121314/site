@@ -31,7 +31,7 @@ function isLoginBody(value: unknown): value is LoginBody {
   }
 
   const password = (value as Record<string, unknown>).password;
-  return typeof password === 'string' && password.length > 0;
+  return typeof password === 'string';
 }
 
 function hasAdminRequestHeader(context: Parameters<typeof apiError>[0]): boolean {
