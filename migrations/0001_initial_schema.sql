@@ -158,6 +158,7 @@ CREATE TABLE site_settings (
   id INTEGER PRIMARY KEY CHECK (id = 1),
   site_name TEXT NOT NULL,
   location_label TEXT NOT NULL,
+  media_base_url TEXT,
   logo_asset_id TEXT,
   home_section_limit INTEGER NOT NULL DEFAULT 5
     CHECK (home_section_limit BETWEEN 1 AND 20),
@@ -167,13 +168,23 @@ CREATE TABLE site_settings (
   show_messages INTEGER NOT NULL DEFAULT 0 CHECK (show_messages IN (0, 1)),
   show_faq INTEGER NOT NULL DEFAULT 1 CHECK (show_faq IN (0, 1)),
   updated_at TEXT NOT NULL,
-  FOREIGN KEY (logo_asset_id) REFERENCES media_assets(id) ON DELETE RESTRICT
+  FOREIGN KEY (logo_asset_id) REFERENCES media_assets(id) ON DELETE RESTRICT,
+  CHECK (
+    media_base_url IS NULL
+    OR (
+      media_base_url LIKE 'https://%'
+      AND substr(media_base_url, -1) <> '/'
+      AND instr(media_base_url, '?') = 0
+      AND instr(media_base_url, '#') = 0
+    )
+  )
 );
 
 INSERT INTO site_settings (
   id,
   site_name,
   location_label,
+  media_base_url,
   home_section_limit,
   show_hot,
   show_latest,
@@ -185,6 +196,7 @@ INSERT INTO site_settings (
   1,
   'Service Catalog',
   'Location / City',
+  NULL,
   5,
   1,
   1,
