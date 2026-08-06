@@ -1,18 +1,25 @@
-type AuditMetadata = Record<string, string | number | boolean | null>;
+type AuditJson = Record<string, unknown>;
 
 type WriteAuditLogInput = {
   action: string;
   entityType: string;
   entityId?: string;
   requestId: string;
-  metadata?: AuditMetadata;
+  before?: AuditJson;
+  after?: AuditJson;
+  metadata?: AuditJson;
+  createdAt?: string;
 };
 
-export async function writeAuditLog(
+function encodeJson(value: AuditJson | undefined): string | null {
+  return value ? JSON.stringify(value) : null;
+}
+
+export function createAuditLogStatement(
   db: D1Database,
   input: WriteAuditLogInput,
-): Promise<void> {
-  await db
+): D1PreparedStatement {
+  return db
     .prepare(
       `INSERT INTO audit_logs (
          id,
@@ -21,9 +28,11 @@ export async function writeAuditLog(
          entity_type,
          entity_id,
          request_id,
+         before_json,
+         after_json,
          metadata_json,
          created_at
-       ) VALUES (?, 'single_admin', ?, ?, ?, ?, ?, ?)`,
+       ) VALUES (?, 'single_admin', ?, ?, ?, ?, ?, ?, ?, ?)`,
     )
     .bind(
       crypto.randomUUID(),
@@ -31,8 +40,16 @@ export async function writeAuditLog(
       input.entityType,
       input.entityId ?? null,
       input.requestId,
-      input.metadata ? JSON.stringify(input.metadata) : null,
-      new Date().toISOString(),
-    )
-    .run();
+      encodeJson(input.before),
+      encodeJson(input.after),
+      encodeJson(input.metadata),
+      input.createdAt ?? new Date().toISOString(),
+    );
+}
+
+export async function writeAuditLog(
+  db: D1Database,
+  input: WriteAuditLogInput,
+): Promise<void> {
+  await createAuditLogStatement(db, input).run();
 }

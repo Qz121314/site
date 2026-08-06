@@ -61,24 +61,24 @@ R2:     service-catalog-site-assets
 - [x] `site_settings` 建立 `media_base_url`；
 - [x] 建立默认 `site_settings`；
 - [x] PR 在全新本地 D1 上执行全部 migration；
-- [x] `main` 部署前自动应用正式 D1 pending migration。
+- [x] `main` 部署前自动应用正式 D1 pending migration；
+- [x] 站点设置中的 R2 自定义域名录入；
+- [x] HTTPS Origin 规范化和校验；
+- [x] 通过临时 R2 探针对象测试自定义域名；
+- [x] 统一媒体 URL Builder。
 
 需要管理员手动完成：
 
 - [ ] 在 R2 Bucket 的 Custom Domains 中连接图片域名；
 - [ ] 等待 Custom Domain 状态变为 Active；
 - [ ] 保持生产 `r2.dev` 访问关闭；
-- [ ] 后台站点设置完成后录入相同的 HTTPS Origin；
-- [ ] 验证 `{media_base_url}/{object_key}` 可公开访问图片。
+- [ ] 在后台站点设置录入相同的 HTTPS Origin；
+- [ ] 使用后台“测试连接”验证完整链路。
 
-代码待完成：
+媒体阶段继续完成：
 
-- [ ] 站点设置中的“R2 自定义域名”录入；
-- [ ] HTTPS Origin 规范化和校验；
-- [ ] 自定义域名连接测试；
-- [ ] 统一媒体 URL Builder；
 - [ ] 发布前检查 `media_base_url`；
-- [ ] 上传对象设置不可变缓存头。
+- [ ] 上传正式对象时设置不可变缓存头。
 
 完成标准：
 
@@ -88,8 +88,6 @@ R2:     service-catalog-site-assets
 → 站点设置保存 media_base_url
 → 所有图片 URL 由 media_base_url + object_key 统一生成
 ```
-
-当前数据库尚无业务数据，因此初始设计修正通过重建 D1 完成，不新增补丁 migration。此次基线冻结后禁止修改 `0001_initial_schema.sql`。
 
 ## 4. 阶段 1B：单管理员认证与后台安全基础
 
@@ -102,19 +100,19 @@ ADMIN_PASSWORD
 SESSION_SECRET
 ```
 
-任务：
+已完成：
 
-- [ ] 实现密码登录页；
-- [ ] 实现 `POST /api/admin/auth/login`；
-- [ ] 实现 `POST /api/admin/auth/logout`；
-- [ ] 实现 `GET /api/admin/auth/session`；
-- [ ] 使用签名 Cookie 保存短期会话；
-- [ ] Cookie 使用 `HttpOnly`、`Secure`、`SameSite=Strict`；
-- [ ] 使用恒定时间方式比较敏感值；
-- [ ] 限制登录尝试频率；
-- [ ] 建立统一后台鉴权中间件；
-- [ ] 统一请求 ID 和错误格式；
-- [ ] 登录、退出和后台写操作进入 `audit_logs`。
+- [x] 密码登录页；
+- [x] `POST /api/admin/auth/login`；
+- [x] `POST /api/admin/auth/logout`；
+- [x] `GET /api/admin/auth/session`；
+- [x] HMAC 签名短期会话 Cookie；
+- [x] `HttpOnly`、`Secure`、`SameSite=Strict`；
+- [x] 敏感值恒定时间比较；
+- [x] D1 登录失败限流；
+- [x] 统一后台鉴权中间件；
+- [x] 统一请求 ID 和错误格式；
+- [x] 登录、退出和后台写操作审计。
 
 明确不做：
 
@@ -126,28 +124,19 @@ admin_sessions
 数据库密码重置
 ```
 
-完成标准：
-
-```text
-管理员输入 Worker Secret 中配置的密码
-→ 登录成功
-→ 获得安全会话 Cookie
-→ 可以访问后台 API
-→ 修改 SESSION_SECRET 后旧会话全部失效
-```
-
 ## 5. 阶段 2：站点设置、分区管理和动态菜单
 
-站点设置第一批字段：
+站点设置已完成字段：
 
 ```text
 站点名称
 位置文案
 R2 自定义域名
-Logo
 首页分区数量
 Hot / Latest / More / Messages / FAQ 开关
 ```
+
+Logo 上传统一放在媒体管理阶段，不在站点设置重复建设上传逻辑。
 
 分区字段：
 
@@ -158,14 +147,19 @@ Hot / Latest / More / Messages / FAQ 开关
 是否启用
 ```
 
-任务：
+已完成：
 
-- [ ] 站点设置读取和保存 API；
-- [ ] R2 自定义域名验证和测试；
+- [x] 站点设置读取和保存 API；
+- [x] 中文站点设置页面；
+- [x] R2 自定义域名验证和连接测试；
+- [x] 站点设置更新写入审计日志。
+
+下一任务：
+
 - [ ] 分区新增、编辑、列表和详情 API；
 - [ ] 分区启用、停用和排序；
 - [ ] 分区软删除和恢复；
-- [ ] 选择、全选和批量删除；
+- [ ] 选择、当前页全选和批量删除；
 - [ ] 创建分区后动态菜单立即出现；
 - [ ] 分区菜单内固定显示“产品管理”和“转化方式”；
 - [ ] 停用分区不进入前端发布数据；
@@ -185,8 +179,6 @@ Hot / Latest / More / Messages / FAQ 开关
 
 ## 6. 阶段 3：分区内产品管理
 
-任务：
-
 - [ ] 分区范围内的产品列表；
 - [ ] 新增和编辑表单；
 - [ ] 根据标题生成唯一 slug；
@@ -198,8 +190,6 @@ Hot / Latest / More / Messages / FAQ 开关
 - [ ] 软删除、恢复和产品预览。
 
 ## 7. 阶段 4：分区内转化方式
-
-任务：
 
 - [ ] 新增、编辑、启停和排序；
 - [ ] 支持 url、phone、email 和 custom；
@@ -217,7 +207,7 @@ Hot / Latest / More / Messages / FAQ 开关
 - [ ] 上传预约和对象确认；
 - [ ] MIME、大小和尺寸校验；
 - [ ] 使用统一 R2 Object Key；
-- [ ] 使用统一媒体 URL Builder；
+- [x] 建立统一媒体 URL Builder；
 - [ ] 封面优先、产品图第一张回退；
 - [ ] 引用保护和垃圾对象清理。
 
@@ -252,11 +242,10 @@ Hot / Latest / More / Messages / FAQ 开关
 ## 12. 当前优先级
 
 ```text
-P0  单管理员 Secret 认证
-P1  站点设置 + R2 自定义域名 + 分区管理
-P2  动态菜单 + 产品 + 转化方式
-P3  媒体 + 热门 + FAQ
-P4  发布管线
-P5  English Storefront
-P6  项目完成后单独建设客服系统
+P0  分区管理 + 动态菜单
+P1  产品 + 转化方式
+P2  媒体 + 热门 + FAQ
+P3  发布管线
+P4  English Storefront
+P5  项目完成后单独建设客服系统
 ```
