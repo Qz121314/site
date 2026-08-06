@@ -6,7 +6,9 @@
 
 ## 项目状态
 
-当前阶段：**架构基线已优化，准备开始阶段 0 工程初始化。**
+当前阶段：**阶段 0 工程初始化已完成，开始阶段 1：领域模型、D1、管理员鉴权和审计。**
+
+阶段 0 已建立 pnpm workspace、Storefront、Admin、Hono Worker、共享包、PWA 基础、冻结依赖、Cloudflare Preview/Production 流水线和部署烟雾测试。
 
 本仓库是可重复部署的项目模板，不绑定具体品牌、域名、地区或行业。频道、分类、标签、地区、门店、展示项目、广告位和转化方式均由中文后台动态配置，不在源码中写死。
 
@@ -15,6 +17,7 @@
 - [项目架构基线](docs/architecture.md)
 - [开发阶段与交付计划](docs/development-plan.md)
 - [公开快照协议](docs/public-snapshot-contract.md)
+- [阶段 0 完成状态](docs/phase-0-status.md)
 
 README 只保留项目入口和关键决策。详细规则以上述文档为准。
 
@@ -330,8 +333,8 @@ site/
 ## 优化后的开发顺序
 
 ```text
-阶段 0：工程初始化
-阶段 1：领域模型、D1、管理员鉴权和审计
+阶段 0：工程初始化（已完成）
+阶段 1：领域模型、D1、管理员鉴权和审计（进行中）
 阶段 2：R2 媒体系统
 阶段 3：最小 D1 → R2 发布管线
 阶段 4：双语 Storefront 与 PWA
@@ -373,7 +376,7 @@ production
 
 ```text
 push/merge main
-→ install
+→ frozen install
 → lint
 → typecheck
 → unit and contract tests
