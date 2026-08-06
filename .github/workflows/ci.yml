@@ -140,7 +140,7 @@ jobs:
           ADMIN_PASSWORD="$password" \
           ADMIN_DISPLAY_NAME='CI Administrator' \
           pnpm admin:create-sql > /tmp/create-ci-admin.sql
-          pnpm exec wrangler d1 execute DB --remote --env preview --file /tmp/create-ci-admin.sql > /dev/null
+          pnpm exec wrangler d1 execute DB --remote --env preview --file /tmp/create-ci-admin.sql
 
           login_payload="$(EMAIL="$email" PASSWORD="$password" node -e "process.stdout.write(JSON.stringify({ email: process.env.EMAIL, password: process.env.PASSWORD }))")"
           login_status="$(curl --silent --show-error --cookie-jar /tmp/admin-cookies.txt --output /tmp/admin-login.json --write-out '%{http_code}' --header "Origin: $BASE_URL" --header 'Content-Type: application/json' --data "$login_payload" "$BASE_URL/api/admin/auth/login")"
