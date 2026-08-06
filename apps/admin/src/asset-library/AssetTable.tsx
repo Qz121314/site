@@ -1,4 +1,4 @@
-import type { AdminAsset, AssetReferenceCounts } from '../api';
+import type { AdminAsset, AssetReferenceCounts } from './api';
 
 function formatBytes(value: number): string {
   if (value < 1024) return `${value} B`;
@@ -21,23 +21,10 @@ function referenceLabels(references: AssetReferenceCounts): string[] {
   return labels;
 }
 
-function cleanupLabel(asset: AdminAsset): string {
-  switch (asset.cleanupBlockedReason) {
-    case 'IN_USE':
-      return '正在使用';
-    case 'RECENT_UPLOAD':
-      return '24 小时保护';
-    case 'NOT_IMAGE':
-      return '非图片对象';
-    default:
-      return '可清理';
-  }
-}
-
 type AssetTableProps = {
   assets: AdminAsset[];
   selectedKeys: Set<string>;
-  allEligibleSelected: boolean;
+  allUnusedSelected: boolean;
   working: boolean;
   onToggle: (key: string) => void;
   onToggleAll: () => void;
@@ -46,12 +33,12 @@ type AssetTableProps = {
 export function AssetTable({
   assets,
   selectedKeys,
-  allEligibleSelected,
+  allUnusedSelected,
   working,
   onToggle,
   onToggleAll,
 }: AssetTableProps) {
-  const eligibleCount = assets.filter((asset) => asset.cleanupEligible).length;
+  const unusedCount = assets.filter((asset) => asset.usageStatus === 'unused').length;
 
   return (
     <div className="asset-table-wrap">
@@ -61,23 +48,23 @@ export function AssetTable({
             <th className="asset-select-cell">
               <input
                 type="checkbox"
-                aria-label="选择当前筛选结果中的全部可清理对象"
-                checked={eligibleCount > 0 && allEligibleSelected}
-                disabled={working || eligibleCount === 0}
+                aria-label="选择当前列表中的全部未使用图片"
+                checked={unusedCount > 0 && allUnusedSelected}
+                disabled={working || unusedCount === 0}
                 onChange={onToggleAll}
               />
             </th>
             <th>预览</th>
-            <th>R2 对象</th>
+            <th>R2 图片</th>
             <th>大小与时间</th>
-            <th>数据库状态</th>
-            <th>引用检测</th>
-            <th>清理状态</th>
+            <th>使用状态</th>
+            <th>引用位置</th>
           </tr>
         </thead>
         <tbody>
           {assets.map((asset) => {
             const references = referenceLabels(asset.references);
+            const isUnused = asset.usageStatus === 'unused';
             return (
               <tr key={asset.key}>
                 <td className="asset-select-cell">
@@ -85,13 +72,13 @@ export function AssetTable({
                     type="checkbox"
                     aria-label={`选择 ${asset.key}`}
                     checked={selectedKeys.has(asset.key)}
-                    disabled={working || !asset.cleanupEligible}
+                    disabled={working || !isUnused}
                     onChange={() => onToggle(asset.key)}
                   />
                 </td>
                 <td>
                   <div className="asset-preview">
-                    {asset.isImage && asset.publicUrl ? (
+                    {asset.publicUrl ? (
                       <img src={asset.publicUrl} alt="" loading="lazy" />
                     ) : (
                       <span aria-hidden="true">IMG</span>
@@ -111,12 +98,9 @@ export function AssetTable({
                   </div>
                 </td>
                 <td>
-                  <div className="asset-status-stack">
-                    <span className={`asset-chip ${asset.trackingStatus}`}>
-                      {asset.trackingStatus === 'tracked' ? 'D1 已登记' : 'R2 未登记'}
-                    </span>
-                    {asset.databaseStatus ? <small>{asset.databaseStatus}</small> : null}
-                  </div>
+                  <span className={`asset-cleanup-status ${isUnused ? 'eligible' : 'blocked'}`}>
+                    {isUnused ? '未使用' : '使用中'}
+                  </span>
                 </td>
                 <td>
                   {references.length > 0 ? (
@@ -126,15 +110,8 @@ export function AssetTable({
                       ))}
                     </div>
                   ) : (
-                    <span className="asset-muted">无引用</span>
+                    <span className="asset-muted">无业务引用，可物理清理</span>
                   )}
-                </td>
-                <td>
-                  <span
-                    className={`asset-cleanup-status ${asset.cleanupEligible ? 'eligible' : 'blocked'}`}
-                  >
-                    {cleanupLabel(asset)}
-                  </span>
                 </td>
               </tr>
             );
