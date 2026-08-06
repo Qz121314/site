@@ -13,7 +13,7 @@ import { adminSectionRoutes } from './routes/admin-sections';
 import { adminSiteSettingsRoutes } from './routes/admin-site-settings';
 import type { AppEnvironment } from './types';
 
-export const app = new Hono<AppEnvironment>();
+export const app = new Hono<AppEnvironment>({ strict: false });
 
 app.use('*', async (context, next) => {
   const requestId = context.req.header('cf-ray') ?? crypto.randomUUID();
