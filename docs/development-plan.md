@@ -14,7 +14,7 @@
 - 产品和转化方式在所属分区内管理；
 - 当前只部署一个正式 Worker、一个正式 D1 和一个正式 R2；
 - 数据关系由外键和约束保护；
-- 表结构只能通过顺序 migration 修改；
+- 数据库冻结后，表结构只能通过顺序 migration 修改；
 - 所有删除功能支持选择、全选、批量删除、软删除、恢复和审计。
 
 ## 2. 阶段 0：产品体验与数据定义
@@ -38,7 +38,7 @@
 - [ ] 分区内产品录入；
 - [ ] 分区内转化方式录入。
 
-## 3. 阶段 1A：D1 与 R2 正式基线
+## 3. 阶段 1A：D1、R2 与媒体域名基线
 
 正式资源：
 
@@ -54,19 +54,42 @@ R2:     service-catalog-site-assets
 - [x] 创建全新的正式 D1；
 - [x] 创建全新的正式 R2 Bucket；
 - [x] 在 `wrangler.jsonc` 中固定 `DB` 与 `ASSETS_BUCKET` 绑定；
-- [x] 建立 `0001_initial_schema.sql`；
+- [x] 建立完整 `0001_initial_schema.sql`；
 - [x] 一次建立媒体、分区、转化方式、产品、FAQ、站点设置、发布、转化、审计和幂等表；
 - [x] 建立外键、唯一约束、状态约束和查询索引；
+- [x] `media_assets` 只保存 R2 `object_key`；
+- [x] `site_settings` 建立 `media_base_url`；
 - [x] 建立默认 `site_settings`；
-- [x] 对正式 D1 执行 migration；
-- [x] 验证正式 D1 外键完整性；
-- [x] 验证正式 R2 Bucket；
 - [x] PR 在全新本地 D1 上执行全部 migration；
 - [x] `main` 部署前自动应用正式 D1 pending migration。
 
-完成标准：已满足。
+需要管理员手动完成：
 
-后续禁止修改 `0001_initial_schema.sql`。结构变化必须创建新的顺序 migration。
+- [ ] 在 R2 Bucket 的 Custom Domains 中连接图片域名；
+- [ ] 等待 Custom Domain 状态变为 Active；
+- [ ] 保持生产 `r2.dev` 访问关闭；
+- [ ] 后台站点设置完成后录入相同的 HTTPS Origin；
+- [ ] 验证 `{media_base_url}/{object_key}` 可公开访问图片。
+
+代码待完成：
+
+- [ ] 站点设置中的“R2 自定义域名”录入；
+- [ ] HTTPS Origin 规范化和校验；
+- [ ] 自定义域名连接测试；
+- [ ] 统一媒体 URL Builder；
+- [ ] 发布前检查 `media_base_url`；
+- [ ] 上传对象设置不可变缓存头。
+
+完成标准：
+
+```text
+后台通过 ASSETS_BUCKET 写入对象
+→ R2 Custom Domain 公开读取对象
+→ 站点设置保存 media_base_url
+→ 所有图片 URL 由 media_base_url + object_key 统一生成
+```
+
+当前数据库尚无业务数据，因此初始设计修正通过重建 D1 完成，不新增补丁 migration。此次基线冻结后禁止修改 `0001_initial_schema.sql`。
 
 ## 4. 阶段 1B：单管理员认证与后台安全基础
 
@@ -113,7 +136,18 @@ admin_sessions
 → 修改 SESSION_SECRET 后旧会话全部失效
 ```
 
-## 5. 阶段 2：分区管理和动态菜单
+## 5. 阶段 2：站点设置、分区管理和动态菜单
+
+站点设置第一批字段：
+
+```text
+站点名称
+位置文案
+R2 自定义域名
+Logo
+首页分区数量
+Hot / Latest / More / Messages / FAQ 开关
+```
 
 分区字段：
 
@@ -126,6 +160,8 @@ admin_sessions
 
 任务：
 
+- [ ] 站点设置读取和保存 API；
+- [ ] R2 自定义域名验证和测试；
 - [ ] 分区新增、编辑、列表和详情 API；
 - [ ] 分区启用、停用和排序；
 - [ ] 分区软删除和恢复；
@@ -140,6 +176,7 @@ admin_sessions
 
 ```text
 登录后台
+→ 配置站点和 R2 图片域名
 → 新增分区
 → 数据写入正式 D1
 → 刷新后仍然存在
@@ -180,22 +217,20 @@ admin_sessions
 - [ ] 上传预约和对象确认；
 - [ ] MIME、大小和尺寸校验；
 - [ ] 使用统一 R2 Object Key；
+- [ ] 使用统一媒体 URL Builder；
 - [ ] 封面优先、产品图第一张回退；
 - [ ] 引用保护和垃圾对象清理。
 
-## 9. 阶段 6：热门推荐、FAQ 和站点设置
+## 9. 阶段 6：热门推荐和 FAQ
 
 - [ ] 热门产品和排序；
 - [ ] FAQ 管理；
-- [ ] 站点名称和 Logo；
-- [ ] 首页分区数量；
-- [ ] Hot、Latest、More 开关；
-- [ ] Location / City 配置。
+- [ ] 首页内容配置。
 
 ## 10. 阶段 7：公开发布
 
 - [ ] 创建发布任务；
-- [ ] 校验公开数据；
+- [ ] 校验公开数据和媒体域名；
 - [ ] 生成版本化 JSON；
 - [ ] 写入 R2 不可变版本目录；
 - [ ] 验证文件、哈希和字节数；
@@ -218,8 +253,8 @@ admin_sessions
 
 ```text
 P0  单管理员 Secret 认证
-P1  分区管理 + 动态菜单
-P2  产品 + 转化方式
+P1  站点设置 + R2 自定义域名 + 分区管理
+P2  动态菜单 + 产品 + 转化方式
 P3  媒体 + 热门 + FAQ
 P4  发布管线
 P5  English Storefront
