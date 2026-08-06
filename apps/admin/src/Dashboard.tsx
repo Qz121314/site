@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { AssetLibraryView } from './AssetLibraryView';
 import { AdminApiError, fetchSections, type AdminSection } from './api';
 import { CustomerServiceView } from './CustomerServiceView';
 import { SectionManagementView } from './SectionManagementView';
@@ -258,6 +259,8 @@ export function Dashboard({
 
         {activeView === 'settings' ? (
           <SiteSettingsView onSessionExpired={onSessionExpired} />
+        ) : activeView === 'assets' ? (
+          <AssetLibraryView onSessionExpired={onSessionExpired} />
         ) : activeView === 'customer-service' ? (
           <CustomerServiceView onSessionExpired={onSessionExpired} />
         ) : activeView === 'sections' ? (
@@ -265,12 +268,6 @@ export function Dashboard({
             activeSections={sections}
             onActiveSectionsChange={setSections}
             onSessionExpired={onSessionExpired}
-          />
-        ) : activeView === 'assets' ? (
-          <PlaceholderView
-            title="素材库只负责 R2 扫描与清理"
-            description="该模块不会提供上传功能。图片由产品录入或站点设置写入 R2，素材库只负责识别引用关系和清理未使用对象。"
-            items={['扫描 R2 对象', '对比 D1 引用', '筛选未使用图片', '选择、全选和批量清理']}
           />
         ) : activeView === 'faq' ? (
           <PlaceholderView
