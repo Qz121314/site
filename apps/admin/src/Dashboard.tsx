@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AssetLibraryView } from './AssetLibraryView';
 import { AdminApiError, fetchSections, type AdminSection } from './api';
+import { brandingAssetPreviewUrl } from './branding-media/api';
 import { CategoryManagementView } from './CategoryManagementView';
 import { ConversionPoolView } from './ConversionPoolView';
 import { CustomerServiceView } from './CustomerServiceView';
@@ -177,7 +178,16 @@ export function Dashboard({
           {sections.map((section) => (
             <div className="dynamic-menu" key={section.id}>
               <button type="button" onClick={() => setActiveView(`products:${section.id}`)}>
-                <span aria-hidden="true">{section.iconValue ?? '◈'}</span>
+                <span
+                  className={`dynamic-menu-icon${section.iconAssetId ? ' has-image' : ''}`}
+                  aria-hidden="true"
+                >
+                  {section.iconAssetId ? (
+                    <img src={brandingAssetPreviewUrl(section.iconAssetId)} alt="" />
+                  ) : (
+                    section.iconValue ?? '◈'
+                  )}
+                </span>
                 {section.name}
               </button>
               <div>
