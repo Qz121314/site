@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { AiManagementView } from './AiManagementView';
 import { AssetLibraryView } from './AssetLibraryView';
 import { AdminApiError, fetchSections, type AdminSection } from './api';
 import { brandingAssetPreviewUrl } from './branding-media/api';
@@ -14,6 +15,7 @@ type DynamicViewKind = 'products' | 'categories' | 'conversion-pool';
 
 type AdminView =
   | 'settings'
+  | 'ai'
   | 'assets'
   | 'customer-service'
   | 'faq'
@@ -55,6 +57,7 @@ function parseDynamicView(view: AdminView): DynamicView | null {
 function getViewContext(view: AdminView, sections: AdminSection[]) {
   const fixed: Partial<Record<AdminView, { eyebrow: string; title: string }>> = {
     settings: { eyebrow: '全站配置', title: '站点设置' },
+    ai: { eyebrow: 'Workers AI 与使用限制', title: 'AI 管理' },
     assets: { eyebrow: 'R2 扫描与清理', title: '素材库管理' },
     'customer-service': { eyebrow: '外部系统对接', title: '客服管理' },
     faq: { eyebrow: '公共内容', title: 'FAQ 管理' },
@@ -143,6 +146,13 @@ export function Dashboard({
             onClick={() => setActiveView('settings')}
           >
             站点设置
+          </button>
+          <button
+            className={activeView === 'ai' ? 'is-active' : undefined}
+            type="button"
+            onClick={() => setActiveView('ai')}
+          >
+            AI 管理
           </button>
           <button
             className={activeView === 'assets' ? 'is-active' : undefined}
@@ -250,6 +260,8 @@ export function Dashboard({
 
         {activeView === 'settings' ? (
           <SiteSettingsView onSessionExpired={onSessionExpired} />
+        ) : activeView === 'ai' ? (
+          <AiManagementView onSessionExpired={onSessionExpired} />
         ) : activeView === 'assets' ? (
           <AssetLibraryView onSessionExpired={onSessionExpired} />
         ) : activeView === 'customer-service' ? (
