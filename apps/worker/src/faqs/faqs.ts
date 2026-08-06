@@ -1,32 +1,22 @@
 export type FaqRecord = {
   id: string;
-  question: string;
-  answer: string;
-  sortOrder: number;
-  isEnabled: boolean;
+  title: string;
+  body: string;
   createdAt: string;
   updatedAt: string;
-  deletedAt: string | null;
 };
 
 export type FaqInput = {
-  question: string;
-  answer: string;
-  sortOrder: number;
-  isEnabled: boolean;
+  title: string;
+  body: string;
 };
-
-export type FaqScope = 'active' | 'trash' | 'all';
 
 type FaqRow = {
   id: string;
   question: string;
   answer: string;
-  sort_order: number;
-  is_enabled: number;
   created_at: string;
   updated_at: string;
-  deleted_at: string | null;
 };
 
 type ValidationResult =
@@ -37,11 +27,10 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-function readText(
+function readRequiredText(
   value: unknown,
   field: string,
   label: string,
-  maxLength: number,
 ): { ok: true; value: string } | { ok: false; field: string; message: string } {
   if (typeof value !== 'string') {
     return { ok: false, field, message: `${label}必须是文本。` };
@@ -50,9 +39,6 @@ function readText(
   const normalized = value.trim();
   if (!normalized) {
     return { ok: false, field, message: `请填写${label}。` };
-  }
-  if (normalized.length > maxLength) {
-    return { ok: false, field, message: `${label}不能超过 ${maxLength} 个字符。` };
   }
 
   return { ok: true, value: normalized };
@@ -63,36 +49,17 @@ export function validateFaqInput(value: unknown): ValidationResult {
     return { ok: false, field: 'form', message: 'FAQ 数据无效。' };
   }
 
-  const question = readText(value.question, 'question', '问题', 300);
-  if (!question.ok) return question;
+  const title = readRequiredText(value.title, 'title', '标题');
+  if (!title.ok) return title;
 
-  const answer = readText(value.answer, 'answer', '答案', 5000);
-  if (!answer.ok) return answer;
-
-  if (
-    typeof value.sortOrder !== 'number' ||
-    !Number.isInteger(value.sortOrder) ||
-    value.sortOrder < 0 ||
-    value.sortOrder > 1_000_000
-  ) {
-    return {
-      ok: false,
-      field: 'sortOrder',
-      message: '排序必须是 0 到 1000000 的整数。',
-    };
-  }
-
-  if (typeof value.isEnabled !== 'boolean') {
-    return { ok: false, field: 'isEnabled', message: '必须选择启用或停用。' };
-  }
+  const body = readRequiredText(value.body, 'body', '正文');
+  if (!body.ok) return body;
 
   return {
     ok: true,
     value: {
-      question: question.value,
-      answer: answer.value,
-      sortOrder: value.sortOrder,
-      isEnabled: value.isEnabled,
+      title: title.value,
+      body: body.value,
     },
   };
 }
@@ -100,13 +67,10 @@ export function validateFaqInput(value: unknown): ValidationResult {
 function mapFaq(row: FaqRow): FaqRecord {
   return {
     id: row.id,
-    question: row.question,
-    answer: row.answer,
-    sortOrder: row.sort_order,
-    isEnabled: row.is_enabled === 1,
+    title: row.question,
+    body: row.answer,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
-    deletedAt: row.deleted_at,
   };
 }
 
@@ -114,29 +78,27 @@ const FAQ_SELECT = `SELECT
   id,
   question,
   answer,
-  sort_order,
-  is_enabled,
   created_at,
-  updated_at,
-  deleted_at
+  updated_at
 FROM faqs`;
 
-export async function listFaqs(db: D1Database, scope: FaqScope): Promise<FaqRecord[]> {
-  const whereClause =
-    scope === 'active'
-      ? 'WHERE deleted_at IS NULL'
-      : scope === 'trash'
-        ? 'WHERE deleted_at IS NOT NULL'
-        : '';
+export async function listFaqs(db: D1Database): Promise<FaqRecord[]> {
   const result = await db
-    .prepare(`${FAQ_SELECT} ${whereClause} ORDER BY sort_order ASC, question COLLATE NOCASE ASC`)
+    .prepare(
+      `${FAQ_SELECT}
+       WHERE deleted_at IS NULL
+       ORDER BY updated_at DESC, question COLLATE NOCASE ASC`,
+    )
     .all<FaqRow>();
 
   return result.results.map(mapFaq);
 }
 
 export async function getFaq(db: D1Database, id: string): Promise<FaqRecord | null> {
-  const row = await db.prepare(`${FAQ_SELECT} WHERE id = ?`).bind(id).first<FaqRow>();
+  const row = await db
+    .prepare(`${FAQ_SELECT} WHERE id = ? AND deleted_at IS NULL`)
+    .bind(id)
+    .first<FaqRow>();
   return row ? mapFaq(row) : null;
 }
 
@@ -147,13 +109,10 @@ export function createFaq(
 ): { faq: FaqRecord; statement: D1PreparedStatement } {
   const faq: FaqRecord = {
     id: crypto.randomUUID(),
-    question: input.question,
-    answer: input.answer,
-    sortOrder: input.sortOrder,
-    isEnabled: input.isEnabled,
+    title: input.title,
+    body: input.body,
     createdAt: now,
     updatedAt: now,
-    deletedAt: null,
   };
 
   return {
@@ -162,17 +121,9 @@ export function createFaq(
       .prepare(
         `INSERT INTO faqs (
            id, question, answer, sort_order, is_enabled, created_at, updated_at, deleted_at
-         ) VALUES (?, ?, ?, ?, ?, ?, ?, NULL)`,
+         ) VALUES (?, ?, ?, 0, 1, ?, ?, NULL)`,
       )
-      .bind(
-        faq.id,
-        faq.question,
-        faq.answer,
-        faq.sortOrder,
-        faq.isEnabled ? 1 : 0,
-        faq.createdAt,
-        faq.updatedAt,
-      ),
+      .bind(faq.id, faq.title, faq.body, faq.createdAt, faq.updatedAt),
   };
 }
 
@@ -185,53 +136,14 @@ export function createUpdateFaqStatement(
   return db
     .prepare(
       `UPDATE faqs
-       SET question = ?, answer = ?, sort_order = ?, is_enabled = ?, updated_at = ?
+       SET question = ?, answer = ?, is_enabled = 1, updated_at = ?
        WHERE id = ? AND deleted_at IS NULL`,
     )
-    .bind(input.question, input.answer, input.sortOrder, input.isEnabled ? 1 : 0, now, id);
+    .bind(input.title, input.body, now, id);
 }
 
-export function createDeleteFaqStatement(
-  db: D1Database,
-  id: string,
-  now: string,
-): D1PreparedStatement {
-  return db
-    .prepare(
-      `UPDATE faqs
-       SET is_enabled = 0, deleted_at = ?, updated_at = ?
-       WHERE id = ? AND deleted_at IS NULL`,
-    )
-    .bind(now, now, id);
-}
-
-export function createRestoreFaqStatement(
-  db: D1Database,
-  id: string,
-  now: string,
-): D1PreparedStatement {
-  return db
-    .prepare(
-      `UPDATE faqs
-       SET deleted_at = NULL, updated_at = ?
-       WHERE id = ? AND deleted_at IS NOT NULL`,
-    )
-    .bind(now, id);
-}
-
-export function createReorderFaqStatement(
-  db: D1Database,
-  id: string,
-  sortOrder: number,
-  now: string,
-): D1PreparedStatement {
-  return db
-    .prepare(
-      `UPDATE faqs
-       SET sort_order = ?, updated_at = ?
-       WHERE id = ? AND deleted_at IS NULL`,
-    )
-    .bind(sortOrder, now, id);
+export function createDeleteFaqStatement(db: D1Database, id: string): D1PreparedStatement {
+  return db.prepare('DELETE FROM faqs WHERE id = ? AND deleted_at IS NULL').bind(id);
 }
 
 export function isFaqConflictError(error: unknown): boolean {
