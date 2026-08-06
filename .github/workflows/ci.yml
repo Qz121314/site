@@ -19,16 +19,20 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        run: |
+          set -euo pipefail
+          git init .
+          git remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
+          git fetch --no-tags --depth=1 origin "${GITHUB_REF}"
+          git checkout --detach FETCH_HEAD
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v6
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: 22
-          cache: pnpm
+      - name: Set up Node.js and pnpm
+        run: |
+          set -euo pipefail
+          node --version
+          node -e "if (Number(process.versions.node.split('.')[0]) < 22) { throw new Error('Node.js 22 or newer is required') }"
+          npm install --global pnpm@11.19.0
+          pnpm --version
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -61,16 +65,20 @@ jobs:
       cancel-in-progress: false
     steps:
       - name: Checkout
-        uses: actions/checkout@v6
+        run: |
+          set -euo pipefail
+          git init .
+          git remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
+          git fetch --no-tags --depth=1 origin "${GITHUB_REF}"
+          git checkout --detach FETCH_HEAD
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v6
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v6
-        with:
-          node-version: 22
-          cache: pnpm
+      - name: Set up Node.js and pnpm
+        run: |
+          set -euo pipefail
+          node --version
+          node -e "if (Number(process.versions.node.split('.')[0]) < 22) { throw new Error('Node.js 22 or newer is required') }"
+          npm install --global pnpm@11.19.0
+          pnpm --version
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
