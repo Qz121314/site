@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AssetLibraryView } from './AssetLibraryView';
 import { AdminApiError, fetchSections, type AdminSection } from './api';
 import { CategoryManagementView } from './CategoryManagementView';
+import { ConversionPoolView } from './ConversionPoolView';
 import { CustomerServiceView } from './CustomerServiceView';
 import { FaqManagementView } from './FaqManagementView';
 import { SectionManagementView } from './SectionManagementView';
@@ -278,17 +279,16 @@ export function Dashboard({
             section={currentSection.section}
             onSessionExpired={onSessionExpired}
           />
+        ) : currentSection?.kind === 'conversion-pool' ? (
+          <ConversionPoolView
+            section={currentSection.section}
+            onSessionExpired={onSessionExpired}
+          />
         ) : currentSection ? (
           <PlaceholderView
-            title={`${currentSection.section.name} · ${
-              currentSection.kind === 'products' ? '产品录入' : '转化池'
-            }`}
-            description="当前分区上下文已经固定，后续数据只允许写入本分区。"
-            items={
-              currentSection.kind === 'products'
-                ? ['产品内容与图片', '所属分类', '转化池选择', '发布与热门状态']
-                : ['链接、电话、邮箱或自定义转化', '排序与启停', '产品引用保护']
-            }
+            title={`${currentSection.section.name} · 产品录入`}
+            description="当前分区上下文已经固定，产品只能选择本分区的分类和转化分组。"
+            items={['产品内容与图片', '所属分类', '转化分组选择', '发布与热门状态']}
           />
         ) : null}
       </main>
