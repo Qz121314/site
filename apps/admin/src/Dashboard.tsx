@@ -1,16 +1,14 @@
-import { useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { AdminApiError, fetchSections, type AdminSection } from './api';
+import { SectionManagementView } from './SectionManagementView';
 import { SiteSettingsView } from './SiteSettingsView';
 
-type AdminSection = {
-  id: string;
-  name: string;
-  icon: string;
-  enabled: boolean;
-};
-
-type AdminView = 'dashboard' | 'settings';
-
-const sections: readonly AdminSection[] = [];
+type AdminView =
+  | 'dashboard'
+  | 'settings'
+  | 'sections'
+  | `products:${string}`
+  | `conversions:${string}`;
 
 const coreModules = [
   ['站点设置', '配置站点名称、位置文案和 R2 自定义域名'],
@@ -28,16 +26,30 @@ type DashboardProps = {
   onSessionExpired: () => void;
 };
 
-const viewTitles: Record<AdminView, { eyebrow: string; title: string }> = {
-  dashboard: {
-    eyebrow: '当前阶段 · 后台数据录入核心',
-    title: '平台管理后台',
-  },
-  settings: {
-    eyebrow: '系统配置 · 单一数据源',
-    title: '站点设置',
-  },
-};
+function isSessionError(error: unknown): boolean {
+  return error instanceof AdminApiError && (error.status === 401 || error.code === 'SESSION_INVALID');
+}
+
+function getViewContext(view: AdminView, sections: AdminSection[]) {
+  if (view === 'dashboard') {
+    return { eyebrow: '当前阶段 · 后台数据录入核心', title: '平台管理后台' };
+  }
+  if (view === 'settings') {
+    return { eyebrow: '系统配置 · 单一数据源', title: '站点设置' };
+  }
+  if (view === 'sections') {
+    return { eyebrow: '业务结构 · 动态菜单来源', title: '分区管理' };
+  }
+
+  const [kind, sectionId] = view.split(':');
+  const section = sections.find((item) => item.id === sectionId);
+  return {
+    eyebrow: kind === 'products' ? '分区业务 · 产品录入' : '分区业务 · 转化配置',
+    title: section
+      ? `${section.name} · ${kind === 'products' ? '产品管理' : '转化方式'}`
+      : '分区业务',
+  };
+}
 
 export function Dashboard({
   expiresAt,
@@ -46,7 +58,52 @@ export function Dashboard({
   onSessionExpired,
 }: DashboardProps) {
   const [activeView, setActiveView] = useState<AdminView>('dashboard');
-  const heading = viewTitles[activeView];
+  const [sections, setSections] = useState<AdminSection[]>([]);
+  const [sectionsLoading, setSectionsLoading] = useState(true);
+  const [sectionsError, setSectionsError] = useState('');
+
+  const loadSections = useCallback(async () => {
+    setSectionsLoading(true);
+    setSectionsError('');
+    try {
+      setSections(await fetchSections('active'));
+    } catch (error) {
+      if (isSessionError(error)) {
+        onSessionExpired();
+        return;
+      }
+      setSectionsError(error instanceof Error ? error.message : '分区加载失败。');
+    } finally {
+      setSectionsLoading(false);
+    }
+  }, [onSessionExpired]);
+
+  useEffect(() => {
+    void loadSections();
+  }, [loadSections]);
+
+  useEffect(() => {
+    if (!activeView.startsWith('products:') && !activeView.startsWith('conversions:')) {
+      return;
+    }
+    const sectionId = activeView.split(':')[1];
+    if (!sectionsLoading && !sections.some((section) => section.id === sectionId)) {
+      setActiveView('sections');
+    }
+  }, [activeView, sections, sectionsLoading]);
+
+  const heading = useMemo(() => getViewContext(activeView, sections), [activeView, sections]);
+  const currentSectionContext = useMemo(() => {
+    if (!activeView.includes(':')) {
+      return null;
+    }
+    const [kind, id] = activeView.split(':');
+    const section = sections.find((item) => item.id === id);
+    if (!section || (kind !== 'products' && kind !== 'conversions')) {
+      return null;
+    }
+    return { kind, section } as const;
+  }, [activeView, sections]);
 
   return (
     <div className="admin-shell">
@@ -76,19 +133,36 @@ export function Dashboard({
           >
             站点设置
           </button>
-          <button type="button" disabled>
+          <button
+            className={activeView === 'sections' ? 'is-active' : undefined}
+            type="button"
+            aria-current={activeView === 'sections' ? 'page' : undefined}
+            onClick={() => setActiveView('sections')}
+          >
             分区管理
           </button>
 
           {sections.map((section) => (
             <div className="dynamic-menu" key={section.id}>
-              <button type="button">
-                <span aria-hidden="true">{section.icon}</span>
+              <button type="button" onClick={() => setActiveView(`products:${section.id}`)}>
+                <span aria-hidden="true">{section.iconValue ?? '◈'}</span>
                 {section.name}
               </button>
               <div>
-                <button type="button">产品管理</button>
-                <button type="button">转化方式</button>
+                <button
+                  className={activeView === `products:${section.id}` ? 'is-active' : undefined}
+                  type="button"
+                  onClick={() => setActiveView(`products:${section.id}`)}
+                >
+                  产品管理
+                </button>
+                <button
+                  className={activeView === `conversions:${section.id}` ? 'is-active' : undefined}
+                  type="button"
+                  onClick={() => setActiveView(`conversions:${section.id}`)}
+                >
+                  转化方式
+                </button>
               </div>
             </div>
           ))}
@@ -104,9 +178,6 @@ export function Dashboard({
           </button>
           <button type="button" disabled>
             发布管理
-          </button>
-          <button type="button" disabled>
-            回收站
           </button>
           <button type="button" disabled>
             操作日志
@@ -133,8 +204,34 @@ export function Dashboard({
           </div>
         </header>
 
+        {sectionsError ? (
+          <div className="notice notice-error" role="alert">
+            {sectionsError}
+            <button type="button" onClick={() => void loadSections()}>
+              重新加载
+            </button>
+          </div>
+        ) : null}
+
         {activeView === 'settings' ? (
           <SiteSettingsView onSessionExpired={onSessionExpired} />
+        ) : activeView === 'sections' ? (
+          <SectionManagementView
+            activeSections={sections}
+            onActiveSectionsChange={setSections}
+            onSessionExpired={onSessionExpired}
+          />
+        ) : currentSectionContext ? (
+          <section className="section-context-placeholder">
+            <h2>
+              {currentSectionContext.section.iconValue ?? '◈'} {currentSectionContext.section.name}
+            </h2>
+            <p>
+              当前已经进入该分区的
+              {currentSectionContext.kind === 'products' ? '产品管理' : '转化方式'}上下文。
+              分区 ID、菜单和 D1 关系已经固定，下一阶段会直接在这里实现真实录入和管理。
+            </p>
+          </section>
         ) : (
           <>
             <section className="status-grid">
@@ -149,13 +246,13 @@ export function Dashboard({
               </article>
               <article>
                 <span>已创建分区</span>
-                <strong>{sections.length}</strong>
+                <strong>{sectionsLoading ? '—' : sections.length}</strong>
                 <small>创建后自动生成业务菜单</small>
               </article>
               <article>
-                <span>公开语言</span>
-                <strong>English</strong>
-                <small>后台使用中文操作</small>
+                <span>已启用分区</span>
+                <strong>{sections.filter((section) => section.isEnabled).length}</strong>
+                <small>停用分区不会公开发布</small>
               </article>
             </section>
 
@@ -165,9 +262,14 @@ export function Dashboard({
                   <p>数据驱动模板</p>
                   <h2>后台第一批核心模块</h2>
                 </div>
-                <button type="button" onClick={() => setActiveView('settings')}>
-                  配置站点
-                </button>
+                <div className="header-actions">
+                  <button type="button" onClick={() => setActiveView('settings')}>
+                    配置站点
+                  </button>
+                  <button type="button" onClick={() => setActiveView('sections')}>
+                    管理分区
+                  </button>
+                </div>
               </div>
 
               <div className="module-grid">
@@ -181,12 +283,13 @@ export function Dashboard({
               </div>
             </section>
 
-            {sections.length === 0 ? (
+            {!sectionsLoading && sections.length === 0 ? (
               <section className="empty-admin-state">
                 <strong>尚未创建分区</strong>
-                <p>
-                  当前先完成站点设置。下一阶段开发分区管理，创建分区后左侧会自动生成该分区的产品管理和转化方式菜单。
-                </p>
+                <p>创建第一个分区后，左侧会立即生成该分区的产品管理和转化方式菜单。</p>
+                <button className="primary-button" type="button" onClick={() => setActiveView('sections')}>
+                  新增分区
+                </button>
               </section>
             ) : null}
           </>
