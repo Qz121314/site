@@ -16,7 +16,7 @@ R2           图片与不可变公开内容版本
 
 ```text
 D1 / R2 / R2 Custom Domain 数据基线
-→ Worker Secret 单管理员登录
+→ Worker 变量单管理员登录
 → 站点设置与媒体域名
 → 分区管理
 → 动态分区菜单
@@ -82,7 +82,9 @@ ADMIN_PASSWORD
 SESSION_SECRET
 ```
 
-密码和会话密钥不写入 GitHub、D1 或 `wrangler.jsonc`。登录成功后使用签名安全 Cookie 维持短期会话。
+两项可以使用普通变量或 Secret，不限制字符长度。绑定值不写入 GitHub、D1 或 `wrangler.jsonc`。登录成功后使用签名安全 Cookie 维持短期会话。
+
+部署配置启用 `keep_vars`，重新部署时保留 Cloudflare Dashboard 中手动绑定的变量。
 
 ## 分区驱动模型
 
