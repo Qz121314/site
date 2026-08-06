@@ -110,12 +110,72 @@ jobs:
           done
           curl --fail --silent --show-error "$BASE_URL/en/manifest.webmanifest" | grep -F '"lang": "en"'
           curl --fail --silent --show-error "$BASE_URL/es/manifest.webmanifest" | grep -F '"lang": "es"'
-          auth_status="$(curl --silent --show-error --output /tmp/admin-session.json --write-out '%{http_code}' "$BASE_URL/api/admin/auth/session")"
+
+          auth_status=''
+          for attempt in 1 2 3 4 5; do
+            auth_status="$(curl --silent --show-error --output /tmp/admin-session.json --write-out '%{http_code}' "$BASE_URL/api/admin/auth/session")"
+            if test "$auth_status" = '401' && grep -qF '"code":"AUTH_REQUIRED"' /tmp/admin-session.json; then
+              break
+            fi
+            sleep 2
+          done
           printf 'admin session status: %s\n' "$auth_status"
           cat /tmp/admin-session.json
           printf '\n'
           test "$auth_status" = '401'
           grep -F '"code":"AUTH_REQUIRED"' /tmp/admin-session.json
+
+      - name: Smoke test administrator login and RBAC
+        env:
+          BASE_URL: ${{ steps.deploy.outputs.url }}
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          email="ci-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}@example.invalid"
+          password="$(node -e "process.stdout.write(require('node:crypto').randomBytes(32).toString('base64url'))")"
+          printf '%s' "$email" > /tmp/ci-admin-email
+
+          ADMIN_EMAIL="$email" \
+          ADMIN_PASSWORD="$password" \
+          ADMIN_DISPLAY_NAME='CI Administrator' \
+          pnpm admin:create-sql > /tmp/create-ci-admin.sql
+          pnpm exec wrangler d1 execute DB --remote --env preview --file /tmp/create-ci-admin.sql > /dev/null
+
+          login_payload="$(EMAIL="$email" PASSWORD="$password" node -e "process.stdout.write(JSON.stringify({ email: process.env.EMAIL, password: process.env.PASSWORD }))")"
+          login_status="$(curl --silent --show-error --cookie-jar /tmp/admin-cookies.txt --output /tmp/admin-login.json --write-out '%{http_code}' --header "Origin: $BASE_URL" --header 'Content-Type: application/json' --data "$login_payload" "$BASE_URL/api/admin/auth/login")"
+          test "$login_status" = '200'
+          grep -F '"email":"'"$email"'"' /tmp/admin-login.json
+
+          session_status="$(curl --silent --show-error --cookie /tmp/admin-cookies.txt --output /tmp/admin-authenticated-session.json --write-out '%{http_code}' "$BASE_URL/api/admin/auth/session")"
+          test "$session_status" = '200'
+          grep -F '"roleKeys":["super_admin"]' /tmp/admin-authenticated-session.json
+          grep -F '"audit.read"' /tmp/admin-authenticated-session.json
+
+          audit_status="$(curl --silent --show-error --cookie /tmp/admin-cookies.txt --output /tmp/admin-audit.json --write-out '%{http_code}' "$BASE_URL/api/admin/audit-logs?limit=10")"
+          test "$audit_status" = '200'
+          grep -F '"action":"admin.login.succeeded"' /tmp/admin-audit.json
+
+          logout_status="$(curl --silent --show-error --cookie /tmp/admin-cookies.txt --output /tmp/admin-logout.json --write-out '%{http_code}' --request POST --header "Origin: $BASE_URL" "$BASE_URL/api/admin/auth/logout")"
+          test "$logout_status" = '200'
+          grep -F '"ok":true' /tmp/admin-logout.json
+
+          revoked_status="$(curl --silent --show-error --cookie /tmp/admin-cookies.txt --output /tmp/admin-revoked-session.json --write-out '%{http_code}' "$BASE_URL/api/admin/auth/session")"
+          test "$revoked_status" = '401'
+          grep -F '"code":"AUTH_REQUIRED"' /tmp/admin-revoked-session.json
+
+      - name: Clean preview smoke administrator
+        if: always()
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          if ! test -s /tmp/ci-admin-email; then
+            exit 0
+          fi
+          email="$(cat /tmp/ci-admin-email)"
+          pnpm exec wrangler d1 execute DB --remote --env preview --command "DELETE FROM audit_logs WHERE actor_admin_user_id IN (SELECT id FROM admin_users WHERE normalized_email = '$email'); DELETE FROM admin_users WHERE normalized_email = '$email';" > /dev/null
 
   deploy-production:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
@@ -174,7 +234,15 @@ jobs:
           for path in /en/ /es/ /admin/; do
             curl --fail --silent --show-error "$BASE_URL$path" | grep -F '<div id="root"></div>'
           done
-          auth_status="$(curl --silent --show-error --output /tmp/admin-session.json --write-out '%{http_code}' "$BASE_URL/api/admin/auth/session")"
+
+          auth_status=''
+          for attempt in 1 2 3 4 5; do
+            auth_status="$(curl --silent --show-error --output /tmp/admin-session.json --write-out '%{http_code}' "$BASE_URL/api/admin/auth/session")"
+            if test "$auth_status" = '401' && grep -qF '"code":"AUTH_REQUIRED"' /tmp/admin-session.json; then
+              break
+            fi
+            sleep 2
+          done
           printf 'admin session status: %s\n' "$auth_status"
           cat /tmp/admin-session.json
           printf '\n'
