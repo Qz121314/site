@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { apiError } from './http/api-response';
 import { requireAdmin } from './middleware/require-admin';
 import { adminAuthRoutes } from './routes/admin-auth';
+import { adminCustomerServiceRoutes } from './routes/admin-customer-service';
 import { adminSectionBatchRoutes } from './routes/admin-section-batch';
 import { adminSectionRoutes } from './routes/admin-sections';
 import { adminSiteSettingsRoutes } from './routes/admin-site-settings';
@@ -67,6 +68,7 @@ app.get('/api/admin/health', (context) => {
 });
 
 app.route('/api/admin/settings', adminSiteSettingsRoutes);
+app.route('/api/admin/customer-service', adminCustomerServiceRoutes);
 app.route('/api/admin/sections', adminSectionBatchRoutes);
 app.route('/api/admin/sections', adminSectionRoutes);
 
