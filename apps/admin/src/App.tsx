@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   AdminApiError,
   fetchAdminSession,
@@ -23,6 +23,14 @@ type SessionState =
 export function App() {
   const [sessionState, setSessionState] = useState<SessionState>({ status: 'loading' });
   const [loggingOut, setLoggingOut] = useState(false);
+
+  const handleSessionExpired = useCallback(() => {
+    setSessionState({
+      status: 'unauthenticated',
+      configurationMissing: false,
+      errorMessage: '登录会话已失效，请重新登录。',
+    });
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -84,6 +92,11 @@ export function App() {
         errorMessage: undefined,
       });
     } catch (error) {
+      if (error instanceof AdminApiError && error.status === 401) {
+        handleSessionExpired();
+        return;
+      }
+
       window.alert(error instanceof Error ? error.message : '退出登录失败。');
     } finally {
       setLoggingOut(false);
@@ -113,6 +126,7 @@ export function App() {
       expiresAt={sessionState.expiresAt}
       loggingOut={loggingOut}
       onLogout={() => void handleLogout()}
+      onSessionExpired={handleSessionExpired}
     />
   );
 }
