@@ -15,9 +15,14 @@ export const sectionIconOptions = [
   '◫',
 ] as const;
 
-export const emptySectionForm: SectionInput = {
+export type SectionEditorInput = SectionInput & {
+  iconAssetId: string | null;
+};
+
+export const emptySectionForm: SectionEditorInput = {
   name: '',
   iconValue: sectionIconOptions[0],
+  iconAssetId: null,
   sortOrder: 0,
   isEnabled: true,
 };
