@@ -5,7 +5,7 @@
 ```text
 Storefront   English 用户前端
 Admin        中文管理后台
-Worker       业务 API、认证、发布和静态资源路由
+Worker       业务 API、认证、上传、发布和静态资源路由
 D1           业务数据、状态、审计和发布记录
 R2           图片与不可变公开内容版本
 ```
@@ -83,13 +83,13 @@ migrations/0001_initial_schema.sql
 它一次建立全部已确定的核心数据边界：
 
 ```text
-media_assets          R2 对象元数据
+media_assets          R2 对象元数据，仅保存 object_key
 sections              动态业务分区
 conversion_methods    分区内转化方式
 products              分区内产品或服务
 product_media         产品图片关联和顺序
 faqs                   FAQ 内容
-site_settings          单例站点设置
+site_settings          单例站点设置与媒体公开域名
 publish_jobs           发布任务状态
 publish_versions       已发布内容版本
 conversion_events      转化事件
@@ -187,9 +187,54 @@ is_enabled
 
 产品只能选择本分区的转化方式，该规则由数据库组合外键和 API 双重校验。
 
-## 8. R2 对象结构
+## 8. R2 公共媒体架构
 
-R2 Bucket 默认保持私有，不直接开放整个 Bucket。
+R2 使用两条职责明确的通道：
+
+```text
+ASSETS_BUCKET Worker Binding
+→ 后台上传、确认、删除和校验对象
+
+R2 Custom Domain
+→ 用户前端公开读取图片和公开版本文件
+```
+
+管理员在 Cloudflare Dashboard 中为 `service-catalog-site-assets` 手动连接自定义域名，例如：
+
+```text
+https://assets.example.com
+```
+
+然后在后台“站点设置”中录入同一个 Origin，保存到：
+
+```text
+site_settings.media_base_url
+```
+
+规范：
+
+- 必须使用 HTTPS；
+- 只保存 Origin，不允许路径、查询参数和片段；
+- 末尾不保存 `/`；
+- 初始允许为空；
+- 发布包含媒体的内容前必须完成配置与验证；
+- 生产图片链接禁止使用 `r2.dev`。
+
+数据库只保存媒体对象 Key：
+
+```text
+media_assets.object_key
+```
+
+公开 URL 统一由共享 URL Builder 生成：
+
+```text
+{media_base_url}/{object_key}
+```
+
+更换图片域名时只修改 `site_settings.media_base_url`，禁止批量改写媒体记录或在页面组件中分别拼接域名。
+
+R2 对象结构：
 
 ```text
 media/{asset_id}/original/{safe_filename}
@@ -244,6 +289,14 @@ More     展示全部启用分区
 
 ## 11. 迁移与部署
 
+当前数据库尚无业务数据，因此在初始设计冻结前允许重建正式 D1，以保证 `0001` 完整正确。
+
+本次基线冻结后：
+
+- 禁止修改已经执行的 migration；
+- 新结构必须使用新的顺序 migration；
+- 禁止在 Cloudflare Dashboard 手工修改表结构。
+
 Pull Request：
 
 ```text
@@ -262,8 +315,6 @@ build
 → production smoke test
 ```
 
-所有结构变化必须形成新的顺序 migration。禁止修改已经在正式 D1 执行过的 migration 文件。
-
 ## 12. 路由
 
 ```text
@@ -278,14 +329,15 @@ Storefront 与 Admin 分别构建，但共同由唯一正式 Worker 提供。
 ## 13. 当前开发顺序
 
 ```text
-1. 完成并验证 D1 / R2 正式基线
+1. 完成 D1 / R2 与 R2 Custom Domain 数据基线
 2. 配置 ADMIN_PASSWORD 与 SESSION_SECRET
 3. 实现密码登录和签名 Cookie
-4. 实现分区管理 API
-5. 实现中文分区管理页面
-6. 创建分区后动态菜单立即出现
-7. 开发分区内产品和转化方式
-8. 开发媒体、热门推荐和 FAQ
-9. 开发发布管线和 English Storefront
-10. 项目完成后再建设独立客服系统
+4. 实现站点设置中的 R2 自定义域名录入与验证
+5. 实现分区管理 API
+6. 实现中文分区管理页面
+7. 创建分区后动态菜单立即出现
+8. 开发分区内产品和转化方式
+9. 开发媒体、热门推荐和 FAQ
+10. 开发发布管线和 English Storefront
+11. 项目完成后再建设独立客服系统
 ```
