@@ -1,16 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { isLocale, resolveLocale } from './index';
+import { appVersion, publicLanguage } from './index';
 
-describe('locale helpers', () => {
-  it('recognizes supported locales', () => {
-    expect(isLocale('en')).toBe(true);
-    expect(isLocale('es')).toBe(true);
-    expect(isLocale('fr')).toBe(false);
+describe('shared platform constants', () => {
+  it('uses English as the only public language', () => {
+    expect(publicLanguage).toBe('en');
   });
 
-  it('resolves a locale from the first path segment', () => {
-    expect(resolveLocale('/es/services')).toBe('es');
-    expect(resolveLocale('/en/')).toBe('en');
-    expect(resolveLocale('/')).toBe('en');
+  it('exposes the application version', () => {
+    expect(appVersion).toMatch(/^\d+\.\d+\.\d+$/);
   });
 });
