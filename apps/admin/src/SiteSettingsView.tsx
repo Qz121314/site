@@ -7,6 +7,13 @@ import {
   type SiteSettings,
   type SiteSettingsUpdateInput,
 } from './api';
+import { brandingAssetPreviewUrl, uploadBrandingImage } from './branding-media/api';
+import {
+  formatBrandingBytes,
+  prepareBrandingImage,
+  releaseBrandingImage,
+  type LocalBrandingImage,
+} from './branding-media/local-branding-image';
 
 type SiteSettingsViewProps = {
   onSessionExpired: () => void;
@@ -20,6 +27,7 @@ type SettingsDraft = Omit<
   | 'affiliatePlatform'
   | 'affiliateDetectionConfig'
 > & {
+  logoAssetId: string | null;
   mediaBaseUrl: string;
   ga4MeasurementId: string;
   facebookPixelId: string;
@@ -27,16 +35,21 @@ type SettingsDraft = Omit<
   affiliateDetectionConfig: string;
 };
 
+type SettingsPayload = SiteSettingsUpdateInput & { logoAssetId: string | null };
+
 type DomainTestState =
   | { status: 'idle' }
   | { status: 'testing' }
   | { status: 'success'; message: string }
   | { status: 'error'; message: string };
 
+type SaveStage = 'idle' | 'uploading-logo' | 'saving';
+
 function createDraft(settings: SiteSettings): SettingsDraft {
   return {
     siteName: settings.siteName,
     locationLabel: settings.locationLabel,
+    logoAssetId: settings.logoAssetId,
     mediaBaseUrl: settings.mediaBaseUrl ?? '',
     ga4MeasurementId: settings.ga4MeasurementId ?? '',
     facebookPixelId: settings.facebookPixelId ?? '',
@@ -52,7 +65,7 @@ function createDraft(settings: SiteSettings): SettingsDraft {
   };
 }
 
-function toInput(draft: SettingsDraft): SiteSettingsUpdateInput {
+function toInput(draft: SettingsDraft): SettingsPayload {
   return {
     ...draft,
     mediaBaseUrl: draft.mediaBaseUrl.trim() || null,
@@ -71,11 +84,15 @@ function formatUpdatedAt(value: string): string {
 export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
   const [settings, setSettings] = useState<SiteSettings | null>(null);
   const [draft, setDraft] = useState<SettingsDraft | null>(null);
+  const [localLogo, setLocalLogo] = useState<LocalBrandingImage | null>(null);
+  const [processingLogo, setProcessingLogo] = useState(false);
+  const [saveStage, setSaveStage] = useState<SaveStage>('idle');
   const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [domainTest, setDomainTest] = useState<DomainTestState>({ status: 'idle' });
+
+  useEffect(() => () => releaseBrandingImage(localLogo), [localLogo]);
 
   const loadSettings = useCallback(async () => {
     setLoading(true);
@@ -84,6 +101,7 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
       const result = await fetchSiteSettings();
       setSettings(result);
       setDraft(createDraft(result));
+      setLocalLogo(null);
     } catch (error) {
       if (error instanceof AdminApiError && error.status === 401) {
         onSessionExpired();
@@ -105,18 +123,44 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
     if (field === 'mediaBaseUrl') setDomainTest({ status: 'idle' });
   }
 
-  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!draft || saving) return;
-
-    setSaving(true);
+  async function selectLogo(file: File) {
+    if (processingLogo || saveStage !== 'idle') return;
+    setProcessingLogo(true);
     setErrorMessage(null);
     setSuccessMessage(null);
     try {
-      const updated = await updateSiteSettings(toInput(draft));
+      const prepared = await prepareBrandingImage(file, 'logo');
+      setLocalLogo(prepared);
+      updateDraft('logoAssetId', null);
+      setSuccessMessage('Logo 已在浏览器压缩并预览，点击保存站点设置后才会上传到 R2。');
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'Logo 本地处理失败。');
+    } finally {
+      setProcessingLogo(false);
+    }
+  }
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!draft || saveStage !== 'idle' || processingLogo) return;
+
+    setErrorMessage(null);
+    setSuccessMessage(null);
+    let input = toInput(draft);
+    try {
+      if (localLogo) {
+        setSaveStage('uploading-logo');
+        const uploaded = await uploadBrandingImage('logo', localLogo.compressedFile);
+        input = { ...input, logoAssetId: uploaded.media.id };
+        setDraft((current) => (current ? { ...current, logoAssetId: uploaded.media.id } : current));
+        setLocalLogo(null);
+      }
+
+      setSaveStage('saving');
+      const updated = await updateSiteSettings(input);
       setSettings(updated);
       setDraft(createDraft(updated));
-      setSuccessMessage('站点设置已保存。');
+      setSuccessMessage('站点设置与 Logo 已保存。');
     } catch (error) {
       if (error instanceof AdminApiError && error.status === 401) {
         onSessionExpired();
@@ -124,7 +168,7 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
       }
       setErrorMessage(error instanceof Error ? error.message : '保存站点设置失败。');
     } finally {
-      setSaving(false);
+      setSaveStage('idle');
     }
   }
 
@@ -156,9 +200,7 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
     }
   }
 
-  if (loading) {
-    return <section className="settings-card">正在读取站点设置…</section>;
-  }
+  if (loading) return <section className="settings-card">正在读取站点设置…</section>;
 
   if (!draft || !settings) {
     return (
@@ -171,6 +213,10 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
       </section>
     );
   }
+
+  const busy = saveStage !== 'idle' || processingLogo;
+  const logoPreviewUrl = localLogo?.previewUrl ??
+    (draft.logoAssetId ? brandingAssetPreviewUrl(draft.logoAssetId) : null);
 
   return (
     <form className="settings-form" onSubmit={(event) => void handleSubmit(event)}>
@@ -189,7 +235,7 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
             <input
               type="text"
               value={draft.siteName}
-              disabled={saving}
+              disabled={busy}
               onChange={(event) => updateDraft('siteName', event.target.value)}
             />
           </label>
@@ -199,7 +245,7 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
             <input
               type="text"
               value={draft.locationLabel}
-              disabled={saving}
+              disabled={busy}
               onChange={(event) => updateDraft('locationLabel', event.target.value)}
             />
           </label>
@@ -212,19 +258,56 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
               min={1}
               max={20}
               step={1}
-              disabled={saving}
+              disabled={busy}
               onChange={(event) => updateDraft('homeSectionLimit', Number(event.target.value))}
             />
           </label>
         </div>
 
-        <div className="settings-note">
-          <strong>Logo</strong>
-          <p>
-            {settings.logoAssetId
-              ? `当前 Logo 素材 ID：${settings.logoAssetId}`
-              : '当前未设置 Logo。素材库扫描功能完成后，可在这里从 R2 已有对象中选择，不在素材库提供上传。'}
-          </p>
+        <div className="branding-upload-card">
+          <div className="branding-preview branding-logo-preview">
+            {logoPreviewUrl ? <img src={logoPreviewUrl} alt="站点 Logo 预览" /> : <span>未设置 Logo</span>}
+          </div>
+          <div className="branding-upload-copy">
+            <strong>站点 Logo</strong>
+            <p>支持 JPG、PNG、WebP。浏览器最长边压缩至 1200px，原图不会上传。</p>
+            {localLogo ? (
+              <small>
+                压缩后 {localLogo.width} × {localLogo.height} · {formatBrandingBytes(localLogo.compressedFile.size)}
+                {'；'}原图 {formatBrandingBytes(localLogo.originalByteSize)}
+              </small>
+            ) : draft.logoAssetId ? (
+              <small>已绑定 R2 图片素材。</small>
+            ) : null}
+            <div className="branding-upload-actions">
+              <label className={`branding-file-button${busy ? ' is-disabled' : ''}`}>
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  disabled={busy}
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    event.currentTarget.value = '';
+                    if (file) void selectLogo(file);
+                  }}
+                />
+                {processingLogo ? '浏览器压缩中…' : logoPreviewUrl ? '更换 Logo' : '上传 Logo'}
+              </label>
+              {logoPreviewUrl ? (
+                <button
+                  type="button"
+                  className="secondary-button"
+                  disabled={busy}
+                  onClick={() => {
+                    setLocalLogo(null);
+                    updateDraft('logoAssetId', null);
+                  }}
+                >
+                  移除 Logo
+                </button>
+              ) : null}
+            </div>
+          </div>
         </div>
       </section>
 
@@ -243,7 +326,7 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
               type="text"
               value={draft.ga4MeasurementId}
               placeholder="G-XXXXXXXXXX"
-              disabled={saving}
+              disabled={busy}
               onChange={(event) => updateDraft('ga4MeasurementId', event.target.value)}
             />
           </label>
@@ -254,7 +337,7 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
               type="text"
               value={draft.facebookPixelId}
               placeholder="1234567890"
-              disabled={saving}
+              disabled={busy}
               onChange={(event) => updateDraft('facebookPixelId', event.target.value)}
             />
           </label>
@@ -280,7 +363,7 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
           <input
             type="checkbox"
             checked={draft.affiliateDetectionEnabled}
-            disabled={saving}
+            disabled={busy}
             onChange={(event) => updateDraft('affiliateDetectionEnabled', event.target.checked)}
           />
         </label>
@@ -292,7 +375,7 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
               type="text"
               value={draft.affiliatePlatform}
               placeholder="例如：Impact / CJ / 自定义"
-              disabled={saving}
+              disabled={busy}
               onChange={(event) => updateDraft('affiliatePlatform', event.target.value)}
             />
           </label>
@@ -305,7 +388,7 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
             value={draft.affiliateDetectionConfig}
             placeholder={'{\n  "scriptSelector": "..."\n}'}
             spellCheck={false}
-            disabled={saving}
+            disabled={busy}
             onChange={(event) => updateDraft('affiliateDetectionConfig', event.target.value)}
           />
         </label>
@@ -329,14 +412,14 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
               type="url"
               value={draft.mediaBaseUrl}
               placeholder="https://assets.example.com"
-              disabled={saving || domainTest.status === 'testing'}
+              disabled={busy || domainTest.status === 'testing'}
               onChange={(event) => updateDraft('mediaBaseUrl', event.target.value)}
             />
           </label>
           <button
             className="secondary-button domain-test-button"
             type="button"
-            disabled={saving || domainTest.status === 'testing' || !draft.mediaBaseUrl.trim()}
+            disabled={busy || domainTest.status === 'testing' || !draft.mediaBaseUrl.trim()}
             onClick={() => void handleDomainTest()}
           >
             {domainTest.status === 'testing' ? '正在测试…' : '测试连接'}
@@ -376,7 +459,7 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
               <input
                 type="checkbox"
                 checked={draft[field]}
-                disabled={saving}
+                disabled={busy}
                 onChange={(event) => updateDraft(field, event.target.checked)}
               />
             </label>
@@ -389,8 +472,12 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
 
       <div className="settings-actions">
         <span>站点级配置统一在此保存。</span>
-        <button className="primary-button settings-save-button" type="submit" disabled={saving}>
-          {saving ? '正在保存…' : '保存站点设置'}
+        <button className="primary-button settings-save-button" type="submit" disabled={busy}>
+          {saveStage === 'uploading-logo'
+            ? '正在上传压缩 Logo…'
+            : saveStage === 'saving'
+              ? '正在保存…'
+              : '保存站点设置'}
         </button>
       </div>
     </form>

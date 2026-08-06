@@ -9,13 +9,22 @@ import {
   restoreSection,
   updateSection,
   type AdminSection,
-  type SectionInput,
   type SectionScope,
 } from './api';
+import { brandingAssetPreviewUrl, uploadBrandingImage } from './branding-media/api';
+import {
+  prepareBrandingImage,
+  releaseBrandingImage,
+  type LocalBrandingImage,
+} from './branding-media/local-branding-image';
 import { DeleteSectionDialog } from './section-management/DeleteSectionDialog';
 import { SectionEditorDialog } from './section-management/SectionEditorDialog';
 import { SectionTable } from './section-management/SectionTable';
-import { emptySectionForm, sectionIconOptions } from './section-management/config';
+import {
+  emptySectionForm,
+  sectionIconOptions,
+  type SectionEditorInput,
+} from './section-management/config';
 
 type SectionManagementViewProps = {
   activeSections: AdminSection[];
@@ -31,7 +40,7 @@ function sortSections(sections: AdminSection[]): AdminSection[] {
 
 function describeError(error: unknown): string {
   if (!(error instanceof AdminApiError)) {
-    return '操作失败，请稍后重试。';
+    return error instanceof Error ? error.message : '操作失败，请稍后重试。';
   }
 
   if (error.code === 'SECTION_HAS_DEPENDENCIES') {
@@ -56,13 +65,17 @@ export function SectionManagementView({
   const [search, setSearch] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [editingSection, setEditingSection] = useState<AdminSection | null>(null);
-  const [form, setForm] = useState<SectionInput>(emptySectionForm);
+  const [form, setForm] = useState<SectionEditorInput>(emptySectionForm);
+  const [localIcon, setLocalIcon] = useState<LocalBrandingImage | null>(null);
+  const [processingIcon, setProcessingIcon] = useState(false);
   const [editorOpen, setEditorOpen] = useState(false);
   const [saving, setSaving] = useState(false);
   const [working, setWorking] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [pendingDeleteIds, setPendingDeleteIds] = useState<string[]>([]);
+
+  useEffect(() => () => releaseBrandingImage(localIcon), [localIcon]);
 
   const sourceSections = scope === 'trash' ? trashSections : activeSections;
   const filteredSections = useMemo(() => {
@@ -112,9 +125,7 @@ export function SectionManagementView({
 
   async function changeScope(nextScope: SectionScope) {
     setScope(nextScope);
-    if (nextScope === 'trash') {
-      await loadTrash();
-    }
+    if (nextScope === 'trash') await loadTrash();
   }
 
   function openCreateEditor() {
@@ -123,6 +134,7 @@ export function SectionManagementView({
       : 0;
     setEditingSection(null);
     setForm({ ...emptySectionForm, sortOrder });
+    setLocalIcon(null);
     setErrorMessage('');
     setEditorOpen(true);
   }
@@ -132,28 +144,76 @@ export function SectionManagementView({
     setForm({
       name: section.name,
       iconValue: section.iconValue ?? sectionIconOptions[0],
+      iconAssetId: section.iconAssetId,
       sortOrder: section.sortOrder,
       isEnabled: section.isEnabled,
     });
+    setLocalIcon(null);
     setErrorMessage('');
     setEditorOpen(true);
   }
 
+  function closeEditor() {
+    if (saving || processingIcon) return;
+    setLocalIcon(null);
+    setEditorOpen(false);
+  }
+
+  async function selectIconFile(file: File) {
+    if (saving || processingIcon) return;
+    setProcessingIcon(true);
+    setErrorMessage('');
+    setSuccessMessage('');
+    try {
+      const prepared = await prepareBrandingImage(file, 'section-icon');
+      setLocalIcon(prepared);
+      setForm((current) => ({ ...current, iconAssetId: null }));
+      setSuccessMessage('分区图标已在浏览器压缩，保存分区时才会上传到 R2。');
+    } catch (error) {
+      handleOperationError(error);
+    } finally {
+      setProcessingIcon(false);
+    }
+  }
+
+  function removeImageIcon() {
+    setLocalIcon(null);
+    setForm((current) => ({
+      ...current,
+      iconAssetId: null,
+      iconValue: current.iconValue || sectionIconOptions[0],
+    }));
+  }
+
+  function selectFallbackIcon(icon: string) {
+    setLocalIcon(null);
+    setForm((current) => ({ ...current, iconAssetId: null, iconValue: icon }));
+  }
+
   async function handleSave(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (saving || processingIcon) return;
     setSaving(true);
     setErrorMessage('');
     setSuccessMessage('');
 
+    let input: SectionEditorInput = form;
     try {
+      if (localIcon) {
+        const uploaded = await uploadBrandingImage('section-icon', localIcon.compressedFile);
+        input = { ...input, iconAssetId: uploaded.media.id };
+        setForm(input);
+        setLocalIcon(null);
+      }
+
       if (editingSection) {
-        const updated = await updateSection(editingSection.id, form);
+        const updated = await updateSection(editingSection.id, input);
         onActiveSectionsChange(
           sortSections(activeSections.map((section) => (section.id === updated.id ? updated : section))),
         );
-        setSuccessMessage(`分区“${updated.name}”已更新。`);
+        setSuccessMessage(`分区“${updated.name}”及图标已更新。`);
       } else {
-        const created = await createSection(form);
+        const created = await createSection(input);
         onActiveSectionsChange(sortSections([...activeSections, created]));
         setSuccessMessage(`分区“${created.name}”已创建，左侧业务菜单已生成。`);
       }
@@ -169,12 +229,14 @@ export function SectionManagementView({
     setWorking(true);
     setErrorMessage('');
     try {
-      const updated = await updateSection(section.id, {
+      const input: SectionEditorInput = {
         name: section.name,
         iconValue: section.iconValue ?? sectionIconOptions[0],
+        iconAssetId: section.iconAssetId,
         sortOrder: section.sortOrder,
         isEnabled: !section.isEnabled,
-      });
+      };
+      const updated = await updateSection(section.id, input);
       onActiveSectionsChange(
         activeSections.map((item) => (item.id === updated.id ? updated : item)),
       );
@@ -187,9 +249,7 @@ export function SectionManagementView({
   }
 
   async function confirmDelete() {
-    if (!pendingDeleteIds.length) {
-      return;
-    }
+    if (!pendingDeleteIds.length) return;
 
     const deletingIds = [...pendingDeleteIds];
     setWorking(true);
@@ -197,9 +257,7 @@ export function SectionManagementView({
     try {
       if (deletingIds.length === 1) {
         const id = deletingIds[0];
-        if (id) {
-          await deleteSection(id);
-        }
+        if (id) await deleteSection(id);
       } else {
         await batchDeleteSections(deletingIds);
       }
@@ -238,9 +296,7 @@ export function SectionManagementView({
     const targetIndex = currentIndex + direction;
     const current = ordered[currentIndex];
     const target = ordered[targetIndex];
-    if (!current || !target) {
-      return;
-    }
+    if (!current || !target) return;
 
     const currentOrder = current.sortOrder;
     current.sortOrder = target.sortOrder;
@@ -266,11 +322,8 @@ export function SectionManagementView({
   function toggleSelect(id: string) {
     setSelectedIds((current) => {
       const next = new Set(current);
-      if (next.has(id)) {
-        next.delete(id);
-      } else {
-        next.add(id);
-      }
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   }
@@ -279,15 +332,15 @@ export function SectionManagementView({
     setSelectedIds((current) => {
       const next = new Set(current);
       filteredSections.forEach((section) => {
-        if (allVisibleSelected) {
-          next.delete(section.id);
-        } else {
-          next.add(section.id);
-        }
+        if (allVisibleSelected) next.delete(section.id);
+        else next.add(section.id);
       });
       return next;
     });
   }
+
+  const iconPreviewUrl = localIcon?.previewUrl ??
+    (form.iconAssetId ? brandingAssetPreviewUrl(form.iconAssetId) : null);
 
   return (
     <section className="section-management" aria-labelledby="section-management-title">
@@ -367,10 +420,16 @@ export function SectionManagementView({
         <SectionEditorDialog
           editingSection={editingSection}
           form={form}
+          iconPreviewUrl={iconPreviewUrl}
+          localIcon={localIcon}
           saving={saving}
+          processingIcon={processingIcon}
           onFormChange={setForm}
-          onClose={() => setEditorOpen(false)}
-          onSubmit={handleSave}
+          onSelectIconFile={(file) => void selectIconFile(file)}
+          onRemoveImageIcon={removeImageIcon}
+          onSelectFallbackIcon={selectFallbackIcon}
+          onClose={closeEditor}
+          onSubmit={(event) => void handleSave(event)}
         />
       ) : null}
 

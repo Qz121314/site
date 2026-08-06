@@ -3,6 +3,7 @@ import { apiError } from './http/api-response';
 import { requireAdmin } from './middleware/require-admin';
 import { adminAssetRoutes } from './routes/admin-assets';
 import { adminAuthRoutes } from './routes/admin-auth';
+import { adminBrandingMediaRoutes } from './routes/admin-branding-media';
 import { adminCategoryBatchRoutes } from './routes/admin-category-batch';
 import { adminCategoryRoutes } from './routes/admin-categories';
 import { adminConversionPoolRoutes } from './routes/admin-conversion-pool';
@@ -77,6 +78,7 @@ app.get('/api/admin/health', (context) => {
 app.route('/api/admin/settings', adminSiteSettingsRoutes);
 app.route('/api/admin/customer-service', adminCustomerServiceRoutes);
 app.route('/api/admin/assets', adminAssetRoutes);
+app.route('/api/admin/media', adminBrandingMediaRoutes);
 app.route('/api/admin/faqs', adminFaqRoutes);
 app.route('/api/admin/sections', adminProductBatchRoutes);
 app.route('/api/admin/sections', adminProductRoutes);

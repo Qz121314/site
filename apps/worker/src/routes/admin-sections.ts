@@ -23,13 +23,24 @@ import {
 } from './admin-section-shared';
 
 function parseScope(value: string | undefined): SectionScope | null {
-  if (!value || value === 'active') {
-    return 'active';
-  }
-  if (value === 'trash' || value === 'all') {
-    return value;
-  }
+  if (!value || value === 'active') return 'active';
+  if (value === 'trash' || value === 'all') return value;
   return null;
+}
+
+async function isReadyImageAsset(db: D1Database, id: string): Promise<boolean> {
+  const row = await db
+    .prepare(
+      `SELECT id
+       FROM media_assets
+       WHERE id = ?
+         AND status = 'ready'
+         AND deleted_at IS NULL
+         AND mime_type LIKE 'image/%'`,
+    )
+    .bind(id)
+    .first<{ id: string }>();
+  return Boolean(row);
 }
 
 export const adminSectionRoutes = new Hono<AppEnvironment>();
@@ -40,18 +51,13 @@ adminSectionRoutes.get('/', async (context) => {
   if (!scope) {
     return apiError(context, 400, 'INVALID_SECTION_SCOPE', '分区列表范围无效。');
   }
-
-  const sections = await listSections(context.env.DB, scope);
-  return context.json({ sections });
+  return context.json({ sections: await listSections(context.env.DB, scope) });
 });
 
 adminSectionRoutes.get('/:id', async (context) => {
   context.header('Cache-Control', 'no-store');
   const section = await getSection(context.env.DB, context.req.param('id'));
-  if (!section) {
-    return apiError(context, 404, 'SECTION_NOT_FOUND', '分区不存在。');
-  }
-
+  if (!section) return apiError(context, 404, 'SECTION_NOT_FOUND', '分区不存在。');
   return context.json({ section });
 });
 
@@ -74,10 +80,17 @@ adminSectionRoutes.post('/', async (context) => {
       field: validation.field,
     });
   }
+  if (
+    validation.value.iconAssetId &&
+    !(await isReadyImageAsset(context.env.DB, validation.value.iconAssetId))
+  ) {
+    return apiError(context, 409, 'SECTION_ICON_ASSET_INVALID', '分区图标不存在、已删除或状态异常。', {
+      field: 'iconAssetId',
+    });
+  }
 
   const now = new Date().toISOString();
   const created = await createSectionStatements(context.env.DB, validation.value, now);
-
   try {
     await context.env.DB.batch([
       ...created.statements,
@@ -97,7 +110,10 @@ adminSectionRoutes.post('/', async (context) => {
     throw error;
   }
 
-  return context.json({ section: created.section }, 201);
+  return context.json(
+    { section: (await getSection(context.env.DB, created.section.id)) ?? created.section },
+    201,
+  );
 });
 
 adminSectionRoutes.put('/:id', async (context) => {
@@ -124,14 +140,23 @@ adminSectionRoutes.put('/:id', async (context) => {
       field: validation.field,
     });
   }
+  if (
+    validation.value.iconAssetId &&
+    !(await isReadyImageAsset(context.env.DB, validation.value.iconAssetId))
+  ) {
+    return apiError(context, 409, 'SECTION_ICON_ASSET_INVALID', '分区图标不存在、已删除或状态异常。', {
+      field: 'iconAssetId',
+    });
+  }
 
   const now = new Date().toISOString();
   const updated: SectionRecord = {
     ...current,
     name: validation.value.name,
-    iconType: 'icon',
-    iconValue: validation.value.iconValue,
-    iconAssetId: null,
+    iconType: validation.value.iconAssetId ? 'asset' : 'icon',
+    iconValue: validation.value.iconAssetId ? null : validation.value.iconValue,
+    iconAssetId: validation.value.iconAssetId,
+    iconUrl: null,
     sortOrder: validation.value.sortOrder,
     isEnabled: validation.value.isEnabled,
     updatedAt: now,
@@ -157,7 +182,7 @@ adminSectionRoutes.put('/:id', async (context) => {
     throw error;
   }
 
-  return context.json({ section: updated });
+  return context.json({ section: (await getSection(context.env.DB, current.id)) ?? updated });
 });
 
 adminSectionRoutes.delete('/:id', async (context) => {
@@ -170,9 +195,7 @@ adminSectionRoutes.delete('/:id', async (context) => {
   if (!current || current.deletedAt) {
     return apiError(context, 404, 'SECTION_NOT_FOUND', '分区不存在或已进入回收站。');
   }
-  if (hasSectionDependencies(current)) {
-    return dependencyError(context, current);
-  }
+  if (hasSectionDependencies(current)) return dependencyError(context, current);
 
   const now = new Date().toISOString();
   const deleted = { ...current, isEnabled: false, deletedAt: now, updatedAt: now };
@@ -188,7 +211,6 @@ adminSectionRoutes.delete('/:id', async (context) => {
       createdAt: now,
     }),
   ]);
-
   return context.json({ section: deleted });
 });
 
@@ -230,5 +252,5 @@ adminSectionRoutes.post('/:id/restore', async (context) => {
     throw error;
   }
 
-  return context.json({ section: restored });
+  return context.json({ section: (await getSection(context.env.DB, current.id)) ?? restored });
 });

@@ -1,4 +1,5 @@
 import type { AdminSection, SectionScope } from '../api';
+import { brandingAssetPreviewUrl } from '../branding-media/api';
 
 type SectionTableProps = {
   scope: SectionScope;
@@ -68,8 +69,12 @@ export function SectionTable({
               </td>
               <td>
                 <div className="section-identity">
-                  <span className="section-icon" aria-hidden="true">
-                    {section.iconValue ?? '◈'}
+                  <span className={`section-icon${section.iconAssetId ? ' has-image' : ''}`} aria-hidden="true">
+                    {section.iconAssetId ? (
+                      <img src={brandingAssetPreviewUrl(section.iconAssetId)} alt="" />
+                    ) : (
+                      section.iconValue ?? '◈'
+                    )}
                   </span>
                   <div>
                     <strong>{section.name}</strong>

@@ -1,8 +1,11 @@
+import { buildAssetPublicUrl } from '../assets/asset-library';
+
 export type SiteSettings = {
   siteName: string;
   locationLabel: string;
   mediaBaseUrl: string | null;
   logoAssetId: string | null;
+  logoUrl: string | null;
   ga4MeasurementId: string | null;
   facebookPixelId: string | null;
   affiliateDetectionEnabled: boolean;
@@ -17,13 +20,14 @@ export type SiteSettings = {
   updatedAt: string;
 };
 
-export type SiteSettingsInput = Omit<SiteSettings, 'logoAssetId' | 'updatedAt'>;
+export type SiteSettingsInput = Omit<SiteSettings, 'logoUrl' | 'updatedAt'>;
 
 type SiteSettingsRow = {
   site_name: string;
   location_label: string;
   media_base_url: string | null;
   logo_asset_id: string | null;
+  logo_object_key: string | null;
   ga4_measurement_id: string | null;
   facebook_pixel_id: string | null;
   affiliate_detection_enabled: number;
@@ -104,10 +108,7 @@ function readBoolean(value: unknown, field: string): FieldValidation<boolean> {
 }
 
 function isIpAddress(hostname: string): boolean {
-  if (hostname.includes(':')) {
-    return true;
-  }
-
+  if (hostname.includes(':')) return true;
   const parts = hostname.split('.');
   return (
     parts.length === 4 &&
@@ -115,19 +116,18 @@ function isIpAddress(hostname: string): boolean {
   );
 }
 
-export function normalizeMediaBaseUrl(value: unknown): string | null {
-  if (value === null || value === undefined) {
-    return null;
-  }
+function optionalAssetUrl(mediaBaseUrl: string | null, key: string | null): string | null {
+  return key ? buildAssetPublicUrl(mediaBaseUrl, key) : null;
+}
 
+export function normalizeMediaBaseUrl(value: unknown): string | null {
+  if (value === null || value === undefined) return null;
   if (typeof value !== 'string') {
     throw new Error('R2 自定义域名必须是 HTTPS 地址。');
   }
 
   const trimmed = value.trim();
-  if (!trimmed) {
-    return null;
-  }
+  if (!trimmed) return null;
 
   let url: URL;
   try {
@@ -139,11 +139,9 @@ export function normalizeMediaBaseUrl(value: unknown): string | null {
   if (url.protocol !== 'https:') {
     throw new Error('R2 自定义域名必须使用 HTTPS。');
   }
-
   if (url.username || url.password || url.port || url.search || url.hash) {
     throw new Error('R2 自定义域名只能填写 HTTPS Origin。');
   }
-
   if (url.pathname !== '/' && url.pathname !== '') {
     throw new Error('R2 自定义域名不能包含路径。');
   }
@@ -157,11 +155,9 @@ export function normalizeMediaBaseUrl(value: unknown): string | null {
   ) {
     throw new Error('R2 自定义域名必须使用有效的公开域名。');
   }
-
   if (hostname === 'r2.dev' || hostname.endsWith('.r2.dev')) {
     throw new Error('生产图片域名不能使用 r2.dev。');
   }
-
   if (hostname.endsWith('.r2.cloudflarestorage.com')) {
     throw new Error('请填写已绑定到 R2 Bucket 的自定义域名。');
   }
@@ -171,9 +167,7 @@ export function normalizeMediaBaseUrl(value: unknown): string | null {
 
 function readAffiliateConfig(value: unknown): FieldValidation<string | null> {
   const normalized = readOptionalString(value, 'affiliateDetectionConfig', 8000);
-  if (!normalized.ok || normalized.value === null) {
-    return normalized;
-  }
+  if (!normalized.ok || normalized.value === null) return normalized;
 
   try {
     JSON.parse(normalized.value);
@@ -184,7 +178,6 @@ function readAffiliateConfig(value: unknown): FieldValidation<string | null> {
       message: '联盟检测配置必须是有效 JSON。',
     };
   }
-
   return normalized;
 }
 
@@ -195,9 +188,10 @@ export function validateSiteSettingsInput(value: unknown): ValidationResult {
 
   const siteName = readTrimmedString(value.siteName, 'siteName', 1, 120);
   if (!siteName.ok) return siteName;
-
   const locationLabel = readTrimmedString(value.locationLabel, 'locationLabel', 1, 80);
   if (!locationLabel.ok) return locationLabel;
+  const logoAssetId = readOptionalString(value.logoAssetId, 'logoAssetId', 100);
+  if (!logoAssetId.ok) return logoAssetId;
 
   let mediaBaseUrl: string | null;
   try {
@@ -212,19 +206,15 @@ export function validateSiteSettingsInput(value: unknown): ValidationResult {
 
   const ga4MeasurementId = readOptionalString(value.ga4MeasurementId, 'ga4MeasurementId', 80);
   if (!ga4MeasurementId.ok) return ga4MeasurementId;
-
   const facebookPixelId = readOptionalString(value.facebookPixelId, 'facebookPixelId', 80);
   if (!facebookPixelId.ok) return facebookPixelId;
-
   const affiliateDetectionEnabled = readBoolean(
     value.affiliateDetectionEnabled,
     'affiliateDetectionEnabled',
   );
   if (!affiliateDetectionEnabled.ok) return affiliateDetectionEnabled;
-
   const affiliatePlatform = readOptionalString(value.affiliatePlatform, 'affiliatePlatform', 120);
   if (!affiliatePlatform.ok) return affiliatePlatform;
-
   const affiliateDetectionConfig = readAffiliateConfig(value.affiliateDetectionConfig);
   if (!affiliateDetectionConfig.ok) return affiliateDetectionConfig;
 
@@ -258,6 +248,7 @@ export function validateSiteSettingsInput(value: unknown): ValidationResult {
       siteName: siteName.value,
       locationLabel: locationLabel.value,
       mediaBaseUrl,
+      logoAssetId: logoAssetId.value,
       ga4MeasurementId: ga4MeasurementId.value,
       facebookPixelId: facebookPixelId.value,
       affiliateDetectionEnabled: affiliateDetectionEnabled.value,
@@ -279,6 +270,7 @@ function fromRow(row: SiteSettingsRow): SiteSettings {
     locationLabel: row.location_label,
     mediaBaseUrl: row.media_base_url,
     logoAssetId: row.logo_asset_id,
+    logoUrl: optionalAssetUrl(row.media_base_url, row.logo_object_key),
     ga4MeasurementId: row.ga4_measurement_id,
     facebookPixelId: row.facebook_pixel_id,
     affiliateDetectionEnabled: row.affiliate_detection_enabled === 1,
@@ -298,31 +290,33 @@ export async function getSiteSettings(db: D1Database): Promise<SiteSettings> {
   const row = await db
     .prepare(
       `SELECT
-         site_name,
-         location_label,
-         media_base_url,
-         logo_asset_id,
-         ga4_measurement_id,
-         facebook_pixel_id,
-         affiliate_detection_enabled,
-         affiliate_platform,
-         affiliate_detection_config_json,
-         home_section_limit,
-         show_hot,
-         show_latest,
-         show_more,
-         show_messages,
-         show_faq,
-         updated_at
-       FROM site_settings
-       WHERE id = 1`,
+         s.site_name,
+         s.location_label,
+         s.media_base_url,
+         s.logo_asset_id,
+         logo.object_key AS logo_object_key,
+         s.ga4_measurement_id,
+         s.facebook_pixel_id,
+         s.affiliate_detection_enabled,
+         s.affiliate_platform,
+         s.affiliate_detection_config_json,
+         s.home_section_limit,
+         s.show_hot,
+         s.show_latest,
+         s.show_more,
+         s.show_messages,
+         s.show_faq,
+         s.updated_at
+       FROM site_settings s
+       LEFT JOIN media_assets logo
+         ON logo.id = s.logo_asset_id
+        AND logo.status = 'ready'
+        AND logo.deleted_at IS NULL
+       WHERE s.id = 1`,
     )
     .first<SiteSettingsRow>();
 
-  if (!row) {
-    throw new Error('SITE_SETTINGS_MISSING');
-  }
-
+  if (!row) throw new Error('SITE_SETTINGS_MISSING');
   return fromRow(row);
 }
 
@@ -337,6 +331,7 @@ export function createUpdateSiteSettingsStatement(
        SET site_name = ?,
            location_label = ?,
            media_base_url = ?,
+           logo_asset_id = ?,
            ga4_measurement_id = ?,
            facebook_pixel_id = ?,
            affiliate_detection_enabled = ?,
@@ -355,6 +350,7 @@ export function createUpdateSiteSettingsStatement(
       input.siteName,
       input.locationLabel,
       input.mediaBaseUrl,
+      input.logoAssetId,
       input.ga4MeasurementId,
       input.facebookPixelId,
       input.affiliateDetectionEnabled ? 1 : 0,
@@ -372,12 +368,12 @@ export function createUpdateSiteSettingsStatement(
 
 export function toSiteSettings(
   input: SiteSettingsInput,
-  logoAssetId: string | null,
+  logoObjectKey: string | null,
   updatedAt: string,
 ): SiteSettings {
   return {
     ...input,
-    logoAssetId,
+    logoUrl: optionalAssetUrl(input.mediaBaseUrl, logoObjectKey),
     updatedAt,
   };
 }

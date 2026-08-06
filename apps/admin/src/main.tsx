@@ -11,6 +11,7 @@ import './category-management.css';
 import './conversion-pool.css';
 import './product-management.css';
 import './product-local-images.css';
+import './branding-media.css';
 
 const root = document.getElementById('root');
 if (!root) {
