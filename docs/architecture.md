@@ -46,17 +46,20 @@ ASSETS          Workers Static Assets
 
 第一版采用单管理员密码模式，不建设账号体系。
 
-Cloudflare Worker 手动绑定两个 Secret：
+Cloudflare Worker 手动绑定：
 
 ```text
 ADMIN_PASSWORD   后台登录密码
-SESSION_SECRET   登录会话签名密钥
+SESSION_SECRET   登录会话签名值
 ```
+
+两项可以使用普通变量或 Secret。系统不限制字符长度，也不要求特定 Cloudflare 变量类型，只判断绑定名称是否存在。
 
 约束：
 
 - 登录页只输入密码；
-- 密码不得写入 GitHub、`wrangler.jsonc`、D1 或普通变量；
+- 绑定值不得写入 GitHub、`wrangler.jsonc` 或 D1；
+- 部署使用 `keep_vars`，保留 Cloudflare Dashboard 中手动绑定的变量；
 - 不建立 `admin_users`、角色、权限和持久化会话表；
 - 登录成功后签发短期签名 Cookie；
 - Cookie 使用 `HttpOnly`、`Secure`、`SameSite=Strict`；
@@ -311,7 +314,7 @@ Pull Request：
 ```text
 build
 → apply pending D1 migrations
-→ deploy service-catalog-site
+→ deploy service-catalog-site --keep-vars
 → production smoke test
 ```
 
