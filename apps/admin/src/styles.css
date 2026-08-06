@@ -7,9 +7,11 @@
   text-rendering: optimizeLegibility;
   --nav: #111827;
   --brand: #ff5a1f;
+  --brand-dark: #d9480f;
   --muted: #697386;
   --line: #e4e8ef;
   --surface: #ffffff;
+  --danger: #b42318;
 }
 
 * {
@@ -22,8 +24,171 @@ body {
   min-height: 100vh;
 }
 
-button {
+button,
+input {
   font: inherit;
+}
+
+button:disabled,
+input:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.login-shell,
+.loading-shell {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 24px;
+  background:
+    radial-gradient(circle at top left, rgb(255 90 31 / 12%), transparent 34rem),
+    #f4f6f9;
+}
+
+.loading-shell {
+  align-content: center;
+  gap: 12px;
+  color: var(--muted);
+}
+
+.loading-indicator {
+  width: 34px;
+  height: 34px;
+  border: 3px solid #d9dee7;
+  border-top-color: var(--brand);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.login-card {
+  display: grid;
+  width: min(440px, 100%);
+  gap: 24px;
+  padding: 30px;
+  border: 1px solid var(--line);
+  border-radius: 22px;
+  background: var(--surface);
+  box-shadow: 0 24px 70px rgb(21 31 51 / 12%);
+}
+
+.login-brand {
+  display: grid;
+  width: 52px;
+  height: 52px;
+  place-items: center;
+  border-radius: 16px;
+  color: white;
+  background: var(--brand);
+  font-weight: 900;
+  letter-spacing: -0.04em;
+}
+
+.eyebrow,
+.admin-header p,
+.section-title p {
+  margin: 0 0 6px;
+  color: var(--brand);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.login-card h1,
+.admin-header h1,
+.section-title h2 {
+  margin: 0;
+  letter-spacing: -0.035em;
+}
+
+.login-description {
+  margin: 10px 0 0;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.notice {
+  display: grid;
+  gap: 5px;
+  padding: 14px 16px;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  line-height: 1.55;
+}
+
+.notice-error {
+  border: 1px solid #f5c2bd;
+  color: #7a271a;
+  background: #fff4f2;
+}
+
+.login-form {
+  display: grid;
+  gap: 10px;
+}
+
+.login-form label {
+  font-size: 0.88rem;
+  font-weight: 750;
+}
+
+.login-form input {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 13px;
+  border: 1px solid #cbd2dc;
+  border-radius: 11px;
+  color: #172033;
+  background: white;
+  outline: none;
+}
+
+.login-form input:focus {
+  border-color: var(--brand);
+  box-shadow: 0 0 0 3px rgb(255 90 31 / 13%);
+}
+
+.form-error {
+  margin: 2px 0 0;
+  color: var(--danger);
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.primary-button,
+.secondary-button,
+.section-title button {
+  min-height: 42px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 750;
+}
+
+.primary-button {
+  margin-top: 6px;
+  border: 1px solid var(--brand);
+  color: white;
+  background: var(--brand);
+}
+
+.primary-button:not(:disabled):hover {
+  border-color: var(--brand-dark);
+  background: var(--brand-dark);
+}
+
+.secondary-button,
+.section-title button {
+  padding: 0 14px;
+  border: 1px solid var(--line);
+  color: #334155;
+  background: white;
 }
 
 .admin-shell {
@@ -98,20 +263,11 @@ button {
   margin-bottom: 24px;
 }
 
-.admin-header p,
-.section-title p {
-  margin: 0 0 6px;
-  color: var(--brand);
-  font-size: 0.75rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.admin-header h1,
-.section-title h2 {
-  margin: 0;
-  letter-spacing: -0.035em;
+.header-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
 }
 
 .environment-badge {
@@ -131,7 +287,8 @@ button {
 }
 
 .status-grid article,
-.module-grid article {
+.module-grid article,
+.empty-admin-state {
   border: 1px solid var(--line);
   border-radius: 16px;
   background: var(--surface);
@@ -146,7 +303,8 @@ button {
 
 .status-grid span,
 .status-grid small,
-.module-grid p {
+.module-grid p,
+.empty-admin-state p {
   color: var(--muted);
 }
 
@@ -167,16 +325,6 @@ button {
   margin-bottom: 16px;
 }
 
-.section-title button {
-  min-height: 40px;
-  padding: 0 14px;
-  border: 1px solid var(--line);
-  border-radius: 10px;
-  background: white;
-  cursor: pointer;
-  font-weight: 700;
-}
-
 .module-grid article {
   padding: 20px;
 }
@@ -191,9 +339,17 @@ button {
   margin: 14px 0 8px;
 }
 
-.module-grid p {
+.module-grid p,
+.empty-admin-state p {
   margin: 0;
   line-height: 1.6;
+}
+
+.empty-admin-state {
+  display: grid;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 20px;
 }
 
 @media (min-width: 720px) {
