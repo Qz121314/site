@@ -2,9 +2,16 @@ import { useMemo, useState, type FormEvent } from 'react';
 import type { AdminCategory } from '../category-management/api';
 import type { AdminConversionGroup } from '../conversion-pool/api';
 import { MarkdownPreview } from '../faq-management/MarkdownPreview';
+import {
+  formatImageBytes,
+  getEditorImageByteSize,
+  getEditorImageDimensions,
+  getEditorImageFileName,
+  getEditorImagePreviewUrl,
+  type ProductEditorImage,
+} from './local-product-image';
 import type {
   AdminProduct,
-  AdminProductMedia,
   ProductInput,
   ProductServiceMode,
   ProductStatus,
@@ -14,16 +21,19 @@ type ProductEditorDialogProps = {
   sectionName: string;
   editingProduct: AdminProduct | null;
   form: ProductInput;
-  media: AdminProductMedia[];
+  media: ProductEditorImage[];
+  coverKey: string | null;
   categories: AdminCategory[];
   groups: AdminConversionGroup[];
-  saving: boolean;
-  uploading: boolean;
+  saveStage: 'idle' | 'uploading' | 'saving';
+  processingImages: boolean;
+  rotatingImageKey: string | null;
   onFormChange: (next: ProductInput) => void;
-  onUpload: (files: File[]) => void;
-  onRemoveMedia: (id: string) => void;
-  onMoveMedia: (id: string, direction: -1 | 1) => void;
-  onSetCover: (id: string | null) => void;
+  onSelectLocalImages: (files: File[]) => void;
+  onRotateLocalImage: (key: string, direction: -1 | 1) => void;
+  onRemoveMedia: (key: string) => void;
+  onMoveMedia: (key: string, direction: -1 | 1) => void;
+  onSetCover: (key: string | null) => void;
   onClose: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 };
@@ -49,17 +59,29 @@ function expectedConversionMode(mode: ProductServiceMode) {
   return mode === 'online' ? 'link' : 'customer_service';
 }
 
+function saveButtonLabel(
+  saveStage: ProductEditorDialogProps['saveStage'],
+  editingProduct: AdminProduct | null,
+): string {
+  if (saveStage === 'uploading') return '正在上传压缩图片…';
+  if (saveStage === 'saving') return '正在保存产品…';
+  return editingProduct ? '保存修改' : '创建产品';
+}
+
 export function ProductEditorDialog({
   sectionName,
   editingProduct,
   form,
   media,
+  coverKey,
   categories,
   groups,
-  saving,
-  uploading,
+  saveStage,
+  processingImages,
+  rotatingImageKey,
   onFormChange,
-  onUpload,
+  onSelectLocalImages,
+  onRotateLocalImage,
   onRemoveMedia,
   onMoveMedia,
   onSetCover,
@@ -71,7 +93,9 @@ export function ProductEditorDialog({
     () => groups.filter((group) => group.mode === expectedConversionMode(form.serviceMode)),
     [form.serviceMode, groups],
   );
-  const effectiveCoverId = form.coverAssetId ?? media[0]?.id ?? null;
+  const effectiveCoverKey = coverKey ?? media[0]?.key ?? null;
+  const saving = saveStage !== 'idle';
+  const busy = saving || processingImages || rotatingImageKey !== null;
 
   function patch(patchValue: Partial<ProductInput>) {
     onFormChange({ ...form, ...patchValue });
@@ -100,7 +124,7 @@ export function ProductEditorDialog({
             <p>{sectionName} · 产品内容</p>
             <h3 id="product-editor-title">{editingProduct ? '编辑产品' : '新增产品'}</h3>
           </div>
-          <button type="button" aria-label="关闭" disabled={saving || uploading} onClick={onClose}>
+          <button type="button" aria-label="关闭" disabled={busy} onClick={onClose}>
             ×
           </button>
         </div>
@@ -236,86 +260,132 @@ export function ProductEditorDialog({
               <div>
                 <strong id="product-media-title">产品图片</strong>
                 <small>
-                  最多 12 张；支持 JPG、PNG、WebP、GIF；单张不超过 10 MB。未指定封面时使用第一张。
+                  选择后在浏览器压缩为最长边 1400px、质量 0.82 的 WebP；可本地旋转、排序、删除和设封面。只有点击保存产品后才上传压缩图，原图不会上传到 R2。
                 </small>
               </div>
-              <label className={`product-upload-button${uploading ? ' is-disabled' : ''}`}>
+              <label className={`product-upload-button${busy ? ' is-disabled' : ''}`}>
                 <input
                   type="file"
-                  accept="image/jpeg,image/png,image/webp,image/gif"
+                  accept="image/jpeg,image/png,image/webp"
                   multiple
-                  disabled={uploading || media.length >= 12}
+                  disabled={busy || media.length >= 12}
                   onChange={(event) => {
                     const files = Array.from(event.target.files ?? []);
                     event.currentTarget.value = '';
-                    if (files.length > 0) onUpload(files);
+                    if (files.length > 0) onSelectLocalImages(files);
                   }}
                 />
-                {uploading ? '正在上传…' : '上传图片'}
+                {processingImages ? '浏览器压缩中…' : '选择本地图片'}
               </label>
+            </div>
+
+            <div className="product-local-first-note">
+              <strong>本地优先</strong>
+              <span>支持 JPG、PNG、WebP，最多 12 张。GIF 和 SVG 不上传原图，请先转换为静态图片。</span>
             </div>
 
             {media.length > 0 ? (
               <div className="product-media-grid">
-                {media.map((item, index) => (
-                  <article
-                    className={`product-media-card${effectiveCoverId === item.id ? ' is-cover' : ''}`}
-                    key={item.id}
-                  >
-                    <div className="product-media-preview">
-                      {item.publicUrl ? (
-                        <img src={item.publicUrl} alt={item.fileName} />
-                      ) : (
-                        <span>无公开预览</span>
-                      )}
-                      {effectiveCoverId === item.id ? <b>封面</b> : null}
-                    </div>
-                    <div className="product-media-meta">
-                      <strong title={item.fileName}>{item.fileName}</strong>
-                      <small>
-                        {item.width && item.height ? `${item.width} × ${item.height}` : '尺寸未知'}
-                      </small>
-                    </div>
-                    <div className="product-media-actions">
-                      <button
-                        type="button"
-                        disabled={index === 0 || uploading}
-                        onClick={() => onMoveMedia(item.id, -1)}
-                      >
-                        前移
-                      </button>
-                      <button
-                        type="button"
-                        disabled={index === media.length - 1 || uploading}
-                        onClick={() => onMoveMedia(item.id, 1)}
-                      >
-                        后移
-                      </button>
-                      <button
-                        type="button"
-                        disabled={effectiveCoverId === item.id || uploading}
-                        onClick={() => onSetCover(item.id)}
-                      >
-                        设为封面
-                      </button>
-                      <button
-                        className="text-danger"
-                        type="button"
-                        disabled={uploading}
-                        onClick={() => onRemoveMedia(item.id)}
-                      >
-                        移除
-                      </button>
-                    </div>
-                  </article>
-                ))}
+                {media.map((item, index) => {
+                  const previewUrl = getEditorImagePreviewUrl(item);
+                  const dimensions = getEditorImageDimensions(item);
+                  const fileName = getEditorImageFileName(item);
+                  const isCover = effectiveCoverKey === item.key;
+                  const rotating = rotatingImageKey === item.key;
+                  return (
+                    <article
+                      className={`product-media-card${isCover ? ' is-cover' : ''}${
+                        item.kind === 'local' ? ' is-local' : ''
+                      }`}
+                      key={item.key}
+                    >
+                      <div className="product-media-preview">
+                        {previewUrl ? (
+                          <img src={previewUrl} alt={fileName} />
+                        ) : (
+                          <span>无公开预览</span>
+                        )}
+                        <div className="product-media-badges">
+                          {isCover ? <b>封面</b> : null}
+                          {item.kind === 'local' ? <b className="is-local-badge">本地待保存</b> : null}
+                        </div>
+                      </div>
+                      <div className="product-media-meta">
+                        <strong title={fileName}>{fileName}</strong>
+                        <small>
+                          {dimensions.width && dimensions.height
+                            ? `${dimensions.width} × ${dimensions.height}`
+                            : '尺寸未知'}
+                          {' · '}
+                          {formatImageBytes(getEditorImageByteSize(item))}
+                        </small>
+                        {item.kind === 'local' ? (
+                          <small>
+                            原图 {formatImageBytes(item.originalByteSize)}，仅保留在当前浏览器会话
+                          </small>
+                        ) : (
+                          <small>已存储于 R2</small>
+                        )}
+                      </div>
+                      <div className="product-media-actions">
+                        <button
+                          type="button"
+                          disabled={index === 0 || busy}
+                          onClick={() => onMoveMedia(item.key, -1)}
+                        >
+                          前移
+                        </button>
+                        <button
+                          type="button"
+                          disabled={index === media.length - 1 || busy}
+                          onClick={() => onMoveMedia(item.key, 1)}
+                        >
+                          后移
+                        </button>
+                        {item.kind === 'local' ? (
+                          <>
+                            <button
+                              type="button"
+                              disabled={busy}
+                              onClick={() => onRotateLocalImage(item.key, -1)}
+                            >
+                              左转
+                            </button>
+                            <button
+                              type="button"
+                              disabled={busy}
+                              onClick={() => onRotateLocalImage(item.key, 1)}
+                            >
+                              {rotating ? '处理中…' : '右转'}
+                            </button>
+                          </>
+                        ) : null}
+                        <button
+                          type="button"
+                          disabled={isCover || busy}
+                          onClick={() => onSetCover(item.key)}
+                        >
+                          设为封面
+                        </button>
+                        <button
+                          className="text-danger"
+                          type="button"
+                          disabled={busy}
+                          onClick={() => onRemoveMedia(item.key)}
+                        >
+                          移除
+                        </button>
+                      </div>
+                    </article>
+                  );
+                })}
               </div>
             ) : (
-              <div className="product-media-empty">尚未上传产品图片。</div>
+              <div className="product-media-empty">尚未选择产品图片。</div>
             )}
 
-            {form.coverAssetId ? (
-              <button className="product-auto-cover" type="button" onClick={() => onSetCover(null)}>
+            {coverKey ? (
+              <button className="product-auto-cover" type="button" disabled={busy} onClick={() => onSetCover(null)}>
                 改为自动使用第一张图片作为封面
               </button>
             ) : null}
@@ -382,11 +452,11 @@ export function ProductEditorDialog({
           </div>
 
           <div className="admin-dialog-actions">
-            <button type="button" disabled={saving || uploading} onClick={onClose}>
+            <button type="button" disabled={busy} onClick={onClose}>
               取消
             </button>
-            <button className="primary-button" type="submit" disabled={saving || uploading}>
-              {saving ? '正在保存…' : editingProduct ? '保存修改' : '创建产品'}
+            <button className="primary-button" type="submit" disabled={busy}>
+              {saveButtonLabel(saveStage, editingProduct)}
             </button>
           </div>
         </form>
