@@ -1,23 +1,18 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AdminApiError, fetchSections, type AdminSection } from './api';
+import { CustomerServiceView } from './CustomerServiceView';
 import { SectionManagementView } from './SectionManagementView';
 import { SiteSettingsView } from './SiteSettingsView';
 
 type AdminView =
-  | 'dashboard'
   | 'settings'
+  | 'assets'
+  | 'customer-service'
+  | 'faq'
   | 'sections'
   | `products:${string}`
-  | `conversions:${string}`;
-
-const coreModules = [
-  ['站点设置', '配置站点名称、位置文案和 R2 自定义域名'],
-  ['分区管理', '新增分区并设置名称、图标、排序和启用状态'],
-  ['产品管理', '产品在所属分区菜单中录入和管理'],
-  ['转化方式', '转化方式在所属分区菜单中录入并供产品复用'],
-  ['媒体管理', '管理分区图标、产品封面和产品图片'],
-  ['热门推荐', '选择热门产品并设置首页推荐顺序'],
-] as const;
+  | `categories:${string}`
+  | `conversion-pool:${string}`;
 
 type DashboardProps = {
   expiresAt: string | undefined;
@@ -31,24 +26,41 @@ function isSessionError(error: unknown): boolean {
 }
 
 function getViewContext(view: AdminView, sections: AdminSection[]) {
-  if (view === 'dashboard') {
-    return { eyebrow: '当前阶段 · 后台数据录入核心', title: '平台管理后台' };
-  }
-  if (view === 'settings') {
-    return { eyebrow: '系统配置 · 单一数据源', title: '站点设置' };
-  }
-  if (view === 'sections') {
-    return { eyebrow: '业务结构 · 动态菜单来源', title: '分区管理' };
-  }
+  const fixed: Partial<Record<AdminView, { eyebrow: string; title: string }>> = {
+    settings: { eyebrow: '全站配置', title: '站点设置' },
+    assets: { eyebrow: 'R2 扫描与清理', title: '素材库管理' },
+    'customer-service': { eyebrow: '外部系统对接', title: '客服管理' },
+    faq: { eyebrow: '公共内容', title: 'FAQ 管理' },
+    sections: { eyebrow: '业务结构', title: '分区管理' },
+  };
+  if (fixed[view]) return fixed[view];
 
   const [kind, sectionId] = view.split(':');
   const section = sections.find((item) => item.id === sectionId);
-  return {
-    eyebrow: kind === 'products' ? '分区业务 · 产品录入' : '分区业务 · 转化配置',
-    title: section
-      ? `${section.name} · ${kind === 'products' ? '产品管理' : '转化方式'}`
-      : '分区业务',
+  const labels: Record<string, string> = {
+    products: '产品录入',
+    categories: '分类管理',
+    'conversion-pool': '转化池',
   };
+  return {
+    eyebrow: '分区业务',
+    title: section ? `${section.name} · ${labels[kind] ?? '业务管理'}` : '分区业务',
+  };
+}
+
+function PlaceholderView({ title, description, items }: { title: string; description: string; items: string[] }) {
+  return (
+    <section className="settings-card operation-placeholder">
+      <p className="eyebrow">模块边界已确定</p>
+      <h2>{title}</h2>
+      <p>{description}</p>
+      <ul>
+        {items.map((item) => (
+          <li key={item}>{item}</li>
+        ))}
+      </ul>
+    </section>
+  );
 }
 
 export function Dashboard({
@@ -57,7 +69,7 @@ export function Dashboard({
   onLogout,
   onSessionExpired,
 }: DashboardProps) {
-  const [activeView, setActiveView] = useState<AdminView>('dashboard');
+  const [activeView, setActiveView] = useState<AdminView>('settings');
   const [sections, setSections] = useState<AdminSection[]>([]);
   const [sectionsLoading, setSectionsLoading] = useState(true);
   const [sectionsError, setSectionsError] = useState('');
@@ -83,9 +95,7 @@ export function Dashboard({
   }, [loadSections]);
 
   useEffect(() => {
-    if (!activeView.startsWith('products:') && !activeView.startsWith('conversions:')) {
-      return;
-    }
+    if (!activeView.includes(':')) return;
     const sectionId = activeView.split(':')[1];
     if (!sectionsLoading && !sections.some((section) => section.id === sectionId)) {
       setActiveView('sections');
@@ -93,16 +103,11 @@ export function Dashboard({
   }, [activeView, sections, sectionsLoading]);
 
   const heading = useMemo(() => getViewContext(activeView, sections), [activeView, sections]);
-  const currentSectionContext = useMemo(() => {
-    if (!activeView.includes(':')) {
-      return null;
-    }
+  const currentSection = useMemo(() => {
+    if (!activeView.includes(':')) return null;
     const [kind, id] = activeView.split(':');
     const section = sections.find((item) => item.id === id);
-    if (!section || (kind !== 'products' && kind !== 'conversions')) {
-      return null;
-    }
-    return { kind, section } as const;
+    return section ? { kind, section } : null;
   }, [activeView, sections]);
 
   return (
@@ -111,37 +116,50 @@ export function Dashboard({
         <div className="admin-brand">
           <span>SP</span>
           <div>
-            <strong>业务展示模板</strong>
-            <small>中文管理后台</small>
+            <strong>业务运营后台</strong>
+            <small>React 管理系统</small>
           </div>
         </div>
 
         <nav aria-label="后台导航">
           <button
-            className={activeView === 'dashboard' ? 'is-active' : undefined}
-            type="button"
-            aria-current={activeView === 'dashboard' ? 'page' : undefined}
-            onClick={() => setActiveView('dashboard')}
-          >
-            仪表盘
-          </button>
-          <button
             className={activeView === 'settings' ? 'is-active' : undefined}
             type="button"
-            aria-current={activeView === 'settings' ? 'page' : undefined}
             onClick={() => setActiveView('settings')}
           >
             站点设置
           </button>
           <button
+            className={activeView === 'assets' ? 'is-active' : undefined}
+            type="button"
+            onClick={() => setActiveView('assets')}
+          >
+            素材库管理
+          </button>
+          <button
+            className={activeView === 'customer-service' ? 'is-active' : undefined}
+            type="button"
+            onClick={() => setActiveView('customer-service')}
+          >
+            客服管理
+          </button>
+          <button
+            className={activeView === 'faq' ? 'is-active' : undefined}
+            type="button"
+            onClick={() => setActiveView('faq')}
+          >
+            FAQ 管理
+          </button>
+          <button
             className={activeView === 'sections' ? 'is-active' : undefined}
             type="button"
-            aria-current={activeView === 'sections' ? 'page' : undefined}
             onClick={() => setActiveView('sections')}
           >
             分区管理
           </button>
 
+          <div className="sidebar-section-label">已创建分区</div>
+          {sectionsLoading ? <small className="sidebar-loading">正在读取分区…</small> : null}
           {sections.map((section) => (
             <div className="dynamic-menu" key={section.id}>
               <button type="button" onClick={() => setActiveView(`products:${section.id}`)}>
@@ -154,34 +172,25 @@ export function Dashboard({
                   type="button"
                   onClick={() => setActiveView(`products:${section.id}`)}
                 >
-                  产品管理
+                  产品录入
                 </button>
                 <button
-                  className={activeView === `conversions:${section.id}` ? 'is-active' : undefined}
+                  className={activeView === `categories:${section.id}` ? 'is-active' : undefined}
                   type="button"
-                  onClick={() => setActiveView(`conversions:${section.id}`)}
+                  onClick={() => setActiveView(`categories:${section.id}`)}
                 >
-                  转化方式
+                  分类管理
+                </button>
+                <button
+                  className={activeView === `conversion-pool:${section.id}` ? 'is-active' : undefined}
+                  type="button"
+                  onClick={() => setActiveView(`conversion-pool:${section.id}`)}
+                >
+                  转化池
                 </button>
               </div>
             </div>
           ))}
-
-          <button type="button" disabled>
-            媒体管理
-          </button>
-          <button type="button" disabled>
-            热门推荐
-          </button>
-          <button type="button" disabled>
-            FAQ 管理
-          </button>
-          <button type="button" disabled>
-            发布管理
-          </button>
-          <button type="button" disabled>
-            操作日志
-          </button>
         </nav>
       </aside>
 
@@ -192,7 +201,9 @@ export function Dashboard({
             <h1>{heading.title}</h1>
           </div>
           <div className="header-actions">
-            <span className="environment-badge">PRODUCTION</span>
+            <span className="environment-badge">
+              {expiresAt ? `会话至 ${new Date(expiresAt).toLocaleTimeString('zh-CN')}` : 'PRODUCTION'}
+            </span>
             <button
               className="secondary-button"
               type="button"
@@ -215,85 +226,45 @@ export function Dashboard({
 
         {activeView === 'settings' ? (
           <SiteSettingsView onSessionExpired={onSessionExpired} />
+        ) : activeView === 'customer-service' ? (
+          <CustomerServiceView onSessionExpired={onSessionExpired} />
         ) : activeView === 'sections' ? (
           <SectionManagementView
             activeSections={sections}
             onActiveSectionsChange={setSections}
             onSessionExpired={onSessionExpired}
           />
-        ) : currentSectionContext ? (
-          <section className="section-context-placeholder">
-            <h2>
-              {currentSectionContext.section.iconValue ?? '◈'} {currentSectionContext.section.name}
-            </h2>
-            <p>
-              当前已经进入该分区的
-              {currentSectionContext.kind === 'products' ? '产品管理' : '转化方式'}上下文。
-              分区 ID、菜单和 D1 关系已经固定，下一阶段会直接在这里实现真实录入和管理。
-            </p>
-          </section>
-        ) : (
-          <>
-            <section className="status-grid">
-              <article>
-                <span>登录状态</span>
-                <strong>安全</strong>
-                <small>
-                  {expiresAt
-                    ? `会话有效至 ${new Date(expiresAt).toLocaleString('zh-CN')}`
-                    : '短期签名会话'}
-                </small>
-              </article>
-              <article>
-                <span>已创建分区</span>
-                <strong>{sectionsLoading ? '—' : sections.length}</strong>
-                <small>创建后自动生成业务菜单</small>
-              </article>
-              <article>
-                <span>已启用分区</span>
-                <strong>{sections.filter((section) => section.isEnabled).length}</strong>
-                <small>停用分区不会公开发布</small>
-              </article>
-            </section>
-
-            <section className="module-section">
-              <div className="section-title">
-                <div>
-                  <p>数据驱动模板</p>
-                  <h2>后台第一批核心模块</h2>
-                </div>
-                <div className="header-actions">
-                  <button type="button" onClick={() => setActiveView('settings')}>
-                    配置站点
-                  </button>
-                  <button type="button" onClick={() => setActiveView('sections')}>
-                    管理分区
-                  </button>
-                </div>
-              </div>
-
-              <div className="module-grid">
-                {coreModules.map(([title, description], index) => (
-                  <article key={title}>
-                    <span>{String(index + 1).padStart(2, '0')}</span>
-                    <h3>{title}</h3>
-                    <p>{description}</p>
-                  </article>
-                ))}
-              </div>
-            </section>
-
-            {!sectionsLoading && sections.length === 0 ? (
-              <section className="empty-admin-state">
-                <strong>尚未创建分区</strong>
-                <p>创建第一个分区后，左侧会立即生成该分区的产品管理和转化方式菜单。</p>
-                <button className="primary-button" type="button" onClick={() => setActiveView('sections')}>
-                  新增分区
-                </button>
-              </section>
-            ) : null}
-          </>
-        )}
+        ) : activeView === 'assets' ? (
+          <PlaceholderView
+            title="素材库只负责 R2 扫描与清理"
+            description="该模块不会提供上传功能。图片由产品录入或站点设置写入 R2，素材库只负责识别引用关系和清理未使用对象。"
+            items={['扫描 R2 对象', '对比 D1 引用', '筛选未使用图片', '选择、全选和批量清理']}
+          />
+        ) : activeView === 'faq' ? (
+          <PlaceholderView
+            title="FAQ 是全站公共内容"
+            description="FAQ 不属于任何分区，后续在这里实现问题、答案、排序、启停、批量删除和恢复。"
+            items={['新增与编辑', '排序与启停', '批量删除', '回收站恢复']}
+          />
+        ) : currentSection ? (
+          <PlaceholderView
+            title={`${currentSection.section.name} · ${
+              currentSection.kind === 'products'
+                ? '产品录入'
+                : currentSection.kind === 'categories'
+                  ? '分类管理'
+                  : '转化池'
+            }`}
+            description="当前分区上下文已经固定，后续数据只允许写入本分区。"
+            items={
+              currentSection.kind === 'products'
+                ? ['产品内容与图片', '所属分类', '转化池选择', '发布与热门状态']
+                : currentSection.kind === 'categories'
+                  ? ['分类名称', '排序与启停', '删除与恢复']
+                  : ['链接、电话、邮箱或自定义转化', '排序与启停', '产品引用保护']
+            }
+          />
+        ) : null}
       </main>
     </div>
   );
