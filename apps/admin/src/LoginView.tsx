@@ -31,7 +31,7 @@ export function LoginView({
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (configurationMissing || submitting || password.length === 0) {
+    if (submitting || password.length === 0) {
       return;
     }
 
@@ -65,9 +65,9 @@ export function LoginView({
 
         {configurationMissing ? (
           <div className="notice notice-error" role="alert">
-            <strong>后台登录尚未配置</strong>
+            <strong>后台认证配置尚未生效</strong>
             <span>
-              请在 Worker Secrets 中添加 ADMIN_PASSWORD（至少 12 位）和 SESSION_SECRET（至少 32 位）。
+              请确认 ADMIN_PASSWORD 至少 12 位、SESSION_SECRET 至少 32 位，并且两项都以 Secret 类型绑定到当前正式 Worker。配置完成后可直接在下方重试。
             </span>
           </div>
         ) : null}
@@ -79,9 +79,10 @@ export function LoginView({
             name="password"
             type="password"
             autoComplete="current-password"
+            autoFocus
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            disabled={configurationMissing || submitting}
+            disabled={submitting}
             required
           />
 
@@ -94,7 +95,7 @@ export function LoginView({
           <button
             className="primary-button"
             type="submit"
-            disabled={configurationMissing || submitting || password.length === 0}
+            disabled={submitting || password.length === 0}
           >
             {submitting ? '正在验证…' : '登录后台'}
           </button>
