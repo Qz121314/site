@@ -5,6 +5,7 @@ import { CategoryManagementView } from './CategoryManagementView';
 import { ConversionPoolView } from './ConversionPoolView';
 import { CustomerServiceView } from './CustomerServiceView';
 import { FaqManagementView } from './FaqManagementView';
+import { ProductManagementView } from './ProductManagementView';
 import { SectionManagementView } from './SectionManagementView';
 import { SiteSettingsView } from './SiteSettingsView';
 
@@ -74,29 +75,6 @@ function getViewContext(view: AdminView, sections: AdminSection[]) {
     eyebrow: '分区业务',
     title: section ? `${section.name} · ${labels[dynamic.kind]}` : '分区业务',
   };
-}
-
-function PlaceholderView({
-  title,
-  description,
-  items,
-}: {
-  title: string;
-  description: string;
-  items: string[];
-}) {
-  return (
-    <section className="settings-card operation-placeholder">
-      <p className="eyebrow">模块边界已确定</p>
-      <h2>{title}</h2>
-      <p>{description}</p>
-      <ul>
-        {items.map((item) => (
-          <li key={item}>{item}</li>
-        ))}
-      </ul>
-    </section>
-  );
 }
 
 export function Dashboard({
@@ -274,6 +252,11 @@ export function Dashboard({
           />
         ) : activeView === 'faq' ? (
           <FaqManagementView onSessionExpired={onSessionExpired} />
+        ) : currentSection?.kind === 'products' ? (
+          <ProductManagementView
+            section={currentSection.section}
+            onSessionExpired={onSessionExpired}
+          />
         ) : currentSection?.kind === 'categories' ? (
           <CategoryManagementView
             section={currentSection.section}
@@ -283,12 +266,6 @@ export function Dashboard({
           <ConversionPoolView
             section={currentSection.section}
             onSessionExpired={onSessionExpired}
-          />
-        ) : currentSection ? (
-          <PlaceholderView
-            title={`${currentSection.section.name} · 产品录入`}
-            description="当前分区上下文已经固定，产品只能选择本分区的分类和转化分组。"
-            items={['产品内容与图片', '所属分类', '转化分组选择', '发布与热门状态']}
           />
         ) : null}
       </main>
