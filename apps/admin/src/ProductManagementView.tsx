@@ -1,4 +1,11 @@
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+} from 'react';
 import { AdminApiError, type AdminSection } from './api';
 import { fetchCategories, type AdminCategory } from './category-management/api';
 import {
@@ -8,6 +15,14 @@ import {
 import { DeleteProductDialog } from './product-management/DeleteProductDialog';
 import { ProductEditorDialog } from './product-management/ProductEditorDialog';
 import { ProductTable } from './product-management/ProductTable';
+import {
+  prepareLocalProductImage,
+  releaseLocalProductImage,
+  releaseLocalProductImages,
+  rotateLocalProductImage,
+  toRemoteProductImage,
+  type ProductEditorImage,
+} from './product-management/local-product-image';
 import {
   batchDeleteProducts,
   createProduct,
@@ -19,7 +34,6 @@ import {
   updateProduct,
   uploadProductImage,
   type AdminProduct,
-  type AdminProductMedia,
   type ProductInput,
   type ProductStatus,
 } from './product-management/api';
@@ -31,6 +45,7 @@ type ProductManagementViewProps = {
 
 type ProductScope = 'active' | 'trash';
 type StatusFilter = 'all' | ProductStatus;
+type SaveStage = 'idle' | 'uploading' | 'saving';
 
 const emptyProductForm: ProductInput = {
   serviceMode: 'offline',
@@ -58,8 +73,10 @@ function isSessionError(error: unknown): boolean {
 }
 
 function describeError(error: unknown): string {
-  if (!(error instanceof AdminApiError)) return '产品操作失败，请稍后重试。';
-  return error.field ? `${error.message}（字段：${error.field}）` : error.message;
+  if (error instanceof AdminApiError) {
+    return error.field ? `${error.message}（字段：${error.field}）` : error.message;
+  }
+  return error instanceof Error ? error.message : '产品操作失败，请稍后重试。';
 }
 
 function productToInput(product: AdminProduct): ProductInput {
@@ -79,6 +96,44 @@ function productToInput(product: AdminProduct): ProductInput {
   };
 }
 
+function validateBeforeImageUpload(
+  form: ProductInput,
+  media: ProductEditorImage[],
+  categories: AdminCategory[],
+  groups: AdminConversionGroup[],
+): string | null {
+  if (!form.title.trim()) return '请填写产品标题。';
+  if (!form.body.trim()) return '请填写产品正文。';
+  if (form.status !== 'published') return null;
+
+  const category = categories.find((item) => item.id === form.categoryId);
+  if (!category || !category.isEnabled) return '发布产品前必须选择一个启用分类。';
+
+  const group = groups.find((item) => item.id === form.conversionGroupId);
+  const expectedMode = form.serviceMode === 'online' ? 'link' : 'customer_service';
+  if (!group || !group.isEnabled || group.mode !== expectedMode) {
+    return form.serviceMode === 'online'
+      ? '线上产品必须选择一个启用的外部链接分组。'
+      : '线下产品必须选择一个启用的在线客服分组。';
+  }
+  if (group.activeTargetCount < 1) return '所选转化分组至少需要一个启用入口。';
+  if (media.length < 1) return '发布产品前至少需要一张产品图片。';
+  if (form.serviceMode === 'offline' && !form.address?.trim()) {
+    return '发布线下产品前必须填写服务地址。';
+  }
+  return null;
+}
+
+function dedupeRemoteImages(images: ProductEditorImage[]): ProductEditorImage[] {
+  const seen = new Set<string>();
+  return images.filter((image) => {
+    if (image.kind !== 'remote') return true;
+    if (seen.has(image.media.id)) return false;
+    seen.add(image.media.id);
+    return true;
+  });
+}
+
 export function ProductManagementView({
   section,
   onSessionExpired,
@@ -94,14 +149,28 @@ export function ProductManagementView({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [editingProduct, setEditingProduct] = useState<AdminProduct | null>(null);
   const [form, setForm] = useState<ProductInput>(emptyProductForm);
-  const [media, setMedia] = useState<AdminProductMedia[]>([]);
+  const [media, setMedia] = useState<ProductEditorImage[]>([]);
+  const mediaRef = useRef<ProductEditorImage[]>([]);
+  const [coverKey, setCoverKey] = useState<string | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [uploading, setUploading] = useState(false);
+  const [saveStage, setSaveStage] = useState<SaveStage>('idle');
+  const [processingImages, setProcessingImages] = useState(false);
+  const [rotatingImageKey, setRotatingImageKey] = useState<string | null>(null);
   const [working, setWorking] = useState(false);
   const [pendingDeleteIds, setPendingDeleteIds] = useState<string[]>([]);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+
+  useEffect(() => {
+    mediaRef.current = media;
+  }, [media]);
+
+  useEffect(
+    () => () => {
+      releaseLocalProductImages(mediaRef.current);
+    },
+    [],
+  );
 
   const handleError = useCallback(
     (error: unknown) => {
@@ -134,6 +203,9 @@ export function ProductManagementView({
   }, [handleError, section.id]);
 
   useEffect(() => {
+    releaseLocalProductImages(mediaRef.current);
+    setMedia([]);
+    setCoverKey(null);
     setScope('active');
     setSearch('');
     setStatusFilter('all');
@@ -165,6 +237,7 @@ export function ProductManagementView({
 
   const allVisibleSelected =
     filteredProducts.length > 0 && filteredProducts.every((product) => selectedIds.has(product.id));
+  const saving = saveStage !== 'idle';
 
   async function changeScope(nextScope: ProductScope) {
     setScope(nextScope);
@@ -180,13 +253,19 @@ export function ProductManagementView({
     }
   }
 
+  function resetEditorImages(next: ProductEditorImage[], nextCoverKey: string | null) {
+    releaseLocalProductImages(mediaRef.current);
+    setMedia(next);
+    setCoverKey(nextCoverKey);
+  }
+
   function openCreateEditor() {
     const sortOrder = activeProducts.length
       ? Math.max(...activeProducts.map((product) => product.sortOrder)) + 10
       : 0;
     setEditingProduct(null);
     setForm({ ...emptyProductForm, sortOrder });
-    setMedia([]);
+    resetEditorImages([], null);
     setErrorMessage('');
     setSuccessMessage('');
     setEditorOpen(true);
@@ -200,7 +279,10 @@ export function ProductManagementView({
       const detailed = await fetchProduct(section.id, product.id);
       setEditingProduct(detailed);
       setForm(productToInput(detailed));
-      setMedia(detailed.media);
+      resetEditorImages(
+        detailed.media.map(toRemoteProductImage),
+        detailed.coverAssetId ? `remote:${detailed.coverAssetId}` : null,
+      );
       setEditorOpen(true);
     } catch (error) {
       handleError(error);
@@ -209,67 +291,133 @@ export function ProductManagementView({
     }
   }
 
-  async function handleUpload(files: File[]) {
-    const allowed = files.slice(0, Math.max(0, 12 - media.length));
-    if (allowed.length === 0) return;
-    setUploading(true);
+  function closeEditor() {
+    if (saving || processingImages || rotatingImageKey) return;
+    releaseLocalProductImages(mediaRef.current);
+    setMedia([]);
+    setCoverKey(null);
+    setEditorOpen(false);
+  }
+
+  async function handleSelectLocalImages(files: File[]) {
+    const availableSlots = Math.max(0, 12 - mediaRef.current.length);
+    const selected = files.slice(0, availableSlots);
+    if (selected.length === 0) return;
+
+    setProcessingImages(true);
     setErrorMessage('');
     setSuccessMessage('');
-    let uploadedCount = 0;
+    const next = [...mediaRef.current];
+    let preparedCount = 0;
     try {
-      for (const file of allowed) {
-        const result = await uploadProductImage(section.id, file);
-        setMedia((current) =>
-          current.some((item) => item.id === result.media.id)
-            ? current
-            : [...current, { ...result.media, sortOrder: current.length * 10 }],
-        );
-        uploadedCount += 1;
+      for (const file of selected) {
+        next.push(await prepareLocalProductImage(file));
+        preparedCount += 1;
       }
-      setSuccessMessage(`已上传 ${uploadedCount} 张产品图片。`);
+      setMedia(next);
+      const skipped = Math.max(0, files.length - selected.length);
+      setSuccessMessage(
+        `已在浏览器压缩 ${preparedCount} 张图片，点击保存产品后才会上传到 R2。${
+          skipped > 0 ? ` 另有 ${skipped} 张因超过 12 张上限未加入。` : ''
+        }`,
+      );
     } catch (error) {
+      setMedia(next);
       handleError(error);
     } finally {
-      setUploading(false);
+      setProcessingImages(false);
     }
   }
 
-  function removeMedia(id: string) {
-    setMedia((current) => current.filter((item) => item.id !== id));
-    setForm((current) => ({
-      ...current,
-      coverAssetId: current.coverAssetId === id ? null : current.coverAssetId,
-    }));
+  function removeMedia(key: string) {
+    const target = mediaRef.current.find((item) => item.key === key);
+    if (target?.kind === 'local') releaseLocalProductImage(target);
+    setMedia((current) => current.filter((item) => item.key !== key));
+    if (coverKey === key) setCoverKey(null);
   }
 
-  function moveMedia(id: string, direction: -1 | 1) {
+  function moveMedia(key: string, direction: -1 | 1) {
     setMedia((current) => {
       const next = [...current];
-      const index = next.findIndex((item) => item.id === id);
+      const index = next.findIndex((item) => item.key === key);
       const targetIndex = index + direction;
       if (index < 0 || targetIndex < 0 || targetIndex >= next.length) return current;
       const [item] = next.splice(index, 1);
       if (!item) return current;
       next.splice(targetIndex, 0, item);
-      return next.map((mediaItem, mediaIndex) => ({ ...mediaItem, sortOrder: mediaIndex * 10 }));
+      return next;
     });
+  }
+
+  async function rotateMedia(key: string, direction: -1 | 1) {
+    const current = mediaRef.current.find((item) => item.key === key);
+    if (!current || current.kind !== 'local' || rotatingImageKey) return;
+    setRotatingImageKey(key);
+    setErrorMessage('');
+    try {
+      const rotated = await rotateLocalProductImage(current, direction);
+      setMedia((items) => items.map((item) => (item.key === key ? rotated : item)));
+      releaseLocalProductImage(current);
+    } catch (error) {
+      handleError(error);
+    } finally {
+      setRotatingImageKey(null);
+    }
   }
 
   async function handleSave(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (saving || uploading) return;
-    setSaving(true);
+    if (saving || processingImages || rotatingImageKey) return;
+
+    const localValidation = validateBeforeImageUpload(form, mediaRef.current, categories, groups);
+    if (localValidation) {
+      setErrorMessage(localValidation);
+      setSuccessMessage('');
+      return;
+    }
+
     setErrorMessage('');
     setSuccessMessage('');
-    const input: ProductInput = {
-      ...form,
-      mediaAssetIds: media.map((item) => item.id),
-      coverAssetId:
-        form.coverAssetId && media.some((item) => item.id === form.coverAssetId)
-          ? form.coverAssetId
-          : null,
-    };
+    let resolvedImages = [...mediaRef.current];
+    let resolvedCoverKey = coverKey;
+
     try {
+      if (resolvedImages.some((image) => image.kind === 'local')) {
+        setSaveStage('uploading');
+      } else {
+        setSaveStage('saving');
+      }
+
+      for (let index = 0; index < resolvedImages.length; index += 1) {
+        const image = resolvedImages[index];
+        if (!image || image.kind !== 'local') continue;
+        const result = await uploadProductImage(section.id, image.compressedFile);
+        const remote = toRemoteProductImage(result.media);
+        resolvedImages[index] = remote;
+        if (resolvedCoverKey === image.key) resolvedCoverKey = remote.key;
+        releaseLocalProductImage(image);
+        setMedia([...resolvedImages]);
+        setCoverKey(resolvedCoverKey);
+      }
+
+      resolvedImages = dedupeRemoteImages(resolvedImages);
+      setMedia(resolvedImages);
+      const selectedCover = resolvedCoverKey
+        ? resolvedImages.find((image) => image.key === resolvedCoverKey)
+        : null;
+      const mediaAssetIds = resolvedImages.flatMap((image) =>
+        image.kind === 'remote' ? [image.media.id] : [],
+      );
+      const input: ProductInput = {
+        ...form,
+        mediaAssetIds,
+        coverAssetId:
+          selectedCover?.kind === 'remote' && mediaAssetIds.includes(selectedCover.media.id)
+            ? selectedCover.media.id
+            : null,
+      };
+
+      setSaveStage('saving');
       if (editingProduct) {
         const updated = await updateProduct(section.id, editingProduct.id, input);
         setActiveProducts((current) =>
@@ -281,11 +429,13 @@ export function ProductManagementView({
         setActiveProducts((current) => sortProducts([...current, created]));
         setSuccessMessage(`产品“${created.title}”已创建。`);
       }
+      setMedia([]);
+      setCoverKey(null);
       setEditorOpen(false);
     } catch (error) {
       handleError(error);
     } finally {
-      setSaving(false);
+      setSaveStage('idle');
     }
   }
 
@@ -474,16 +624,19 @@ export function ProductManagementView({
           editingProduct={editingProduct}
           form={form}
           media={media}
+          coverKey={coverKey}
           categories={categories}
           groups={groups}
-          saving={saving}
-          uploading={uploading}
+          saveStage={saveStage}
+          processingImages={processingImages}
+          rotatingImageKey={rotatingImageKey}
           onFormChange={setForm}
-          onUpload={(files) => void handleUpload(files)}
+          onSelectLocalImages={(files) => void handleSelectLocalImages(files)}
+          onRotateLocalImage={(key, direction) => void rotateMedia(key, direction)}
           onRemoveMedia={removeMedia}
           onMoveMedia={moveMedia}
-          onSetCover={(id) => setForm((current) => ({ ...current, coverAssetId: id }))}
-          onClose={() => setEditorOpen(false)}
+          onSetCover={setCoverKey}
+          onClose={closeEditor}
           onSubmit={(event) => void handleSave(event)}
         />
       ) : null}
