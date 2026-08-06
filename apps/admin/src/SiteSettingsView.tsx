@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import {
   AdminApiError,
   fetchSiteSettings,
@@ -50,7 +50,7 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [domainTest, setDomainTest] = useState<DomainTestState>({ status: 'idle' });
 
-  async function loadSettings() {
+  const loadSettings = useCallback(async () => {
     setLoading(true);
     setErrorMessage(null);
 
@@ -68,13 +68,11 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
     } finally {
       setLoading(false);
     }
-  }
+  }, [onSessionExpired]);
 
   useEffect(() => {
     void loadSettings();
-    // onSessionExpired is stable in App and must remain the only external dependency.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [onSessionExpired]);
+  }, [loadSettings]);
 
   function updateDraft<K extends keyof SettingsDraft>(field: K, value: SettingsDraft[K]) {
     setDraft((current) => (current ? { ...current, [field]: value } : current));
@@ -85,7 +83,7 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
     }
   }
 
-  async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (!draft || saving) {
       return;
