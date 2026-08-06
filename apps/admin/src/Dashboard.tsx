@@ -17,7 +17,7 @@ const coreModules = [
 ] as const;
 
 type DashboardProps = {
-  expiresAt?: string;
+  expiresAt: string | undefined;
   loggingOut: boolean;
   onLogout: () => void;
 };
@@ -86,7 +86,11 @@ export function Dashboard({ expiresAt, loggingOut, onLogout }: DashboardProps) {
           <article>
             <span>登录状态</span>
             <strong>安全</strong>
-            <small>{expiresAt ? `会话有效至 ${new Date(expiresAt).toLocaleString('zh-CN')}` : '短期签名会话'}</small>
+            <small>
+              {expiresAt
+                ? `会话有效至 ${new Date(expiresAt).toLocaleString('zh-CN')}`
+                : '短期签名会话'}
+            </small>
           </article>
           <article>
             <span>已创建分区</span>
