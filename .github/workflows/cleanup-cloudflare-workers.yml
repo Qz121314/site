@@ -1,0 +1,50 @@
+name: Cleanup stale Cloudflare Workers
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/cleanup-cloudflare-workers.yml
+
+permissions:
+  contents: read
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Remove historical preview and dev Workers
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+
+          api="https://api.cloudflare.com/client/v4/accounts/${CLOUDFLARE_ACCOUNT_ID}/workers/scripts"
+          auth=(-H "Authorization: Bearer ${CLOUDFLARE_API_TOKEN}" -H "Content-Type: application/json")
+
+          before="$(curl --fail --silent --show-error "${auth[@]}" "$api")"
+          printf '%s' "$before" | jq -e '.success == true' >/dev/null
+
+          echo "Workers before cleanup:"
+          printf '%s' "$before" | jq -r '.result[].id'
+
+          printf '%s' "$before" | jq -e '.result[] | select(.id == "service-catalog-site")' >/dev/null
+
+          for stale in service-catalog-site-preview service-catalog-site-dev; do
+            if printf '%s' "$before" | jq -e --arg stale "$stale" '.result[] | select(.id == $stale)' >/dev/null; then
+              echo "Deleting stale Worker: $stale"
+              response="$(curl --fail --silent --show-error -X DELETE "${auth[@]}" "$api/$stale?force=true")"
+              printf '%s' "$response" | jq -e '.success == true' >/dev/null
+            fi
+          done
+
+          after="$(curl --fail --silent --show-error "${auth[@]}" "$api")"
+          printf '%s' "$after" | jq -e '.success == true' >/dev/null
+
+          echo "Workers after cleanup:"
+          printf '%s' "$after" | jq -r '.result[].id'
+
+          printf '%s' "$after" | jq -e '.result[] | select(.id == "service-catalog-site")' >/dev/null
+          ! printf '%s' "$after" | jq -e '.result[] | select(.id == "service-catalog-site-preview" or .id == "service-catalog-site-dev")' >/dev/null
