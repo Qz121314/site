@@ -2,7 +2,7 @@
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "service-catalog-site",
   "main": "apps/worker/src/index.ts",
-  "compatibility_date": "2026-08-05",
+  "compatibility_date": "2026-08-06",
   "compatibility_flags": ["nodejs_compat"],
   "workers_dev": true,
   "assets": {
@@ -12,6 +12,20 @@
     "not_found_handling": "none",
     "run_worker_first": ["/api/*", "/go/*"]
   },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "service-catalog-site-db",
+      "database_id": "cdd6642d-6114-4340-8fd8-b72b5d947e69",
+      "migrations_dir": "./migrations"
+    }
+  ],
+  "r2_buckets": [
+    {
+      "binding": "ASSETS_BUCKET",
+      "bucket_name": "service-catalog-site-assets"
+    }
+  ],
   "vars": {
     "ENVIRONMENT": "production",
     "APP_VERSION": "0.1.0"
