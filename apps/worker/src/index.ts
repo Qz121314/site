@@ -1,30 +1,32 @@
 import { Hono } from 'hono';
+import { apiError } from './http/api-response';
+import { requireAdmin } from './middleware/require-admin';
+import { adminAuthRoutes } from './routes/admin-auth';
+import type { AppEnvironment } from './types';
 
-type Variables = {
-  requestId: string;
-};
-
-export const app = new Hono<{ Bindings: Env; Variables: Variables }>();
+export const app = new Hono<AppEnvironment>();
 
 app.use('*', async (context, next) => {
   const requestId = context.req.header('cf-ray') ?? crypto.randomUUID();
   const startedAt = Date.now();
   context.set('requestId', requestId);
 
-  await next();
-
-  context.header('x-request-id', requestId);
-  console.log(
-    JSON.stringify({
-      level: 'info',
-      event: 'request.complete',
-      requestId,
-      method: context.req.method,
-      path: context.req.path,
-      status: context.res.status,
-      durationMs: Date.now() - startedAt,
-    }),
-  );
+  try {
+    await next();
+  } finally {
+    context.header('x-request-id', requestId);
+    console.log(
+      JSON.stringify({
+        level: 'info',
+        event: 'request.complete',
+        requestId,
+        method: context.req.method,
+        path: context.req.path,
+        status: context.res.status,
+        durationMs: Date.now() - startedAt,
+      }),
+    );
+  }
 });
 
 app.get('/api/health', (context) =>
@@ -46,6 +48,20 @@ app.get('/api/public/version', (context) =>
     publicLanguage: 'en',
   }),
 );
+
+app.route('/api/admin/auth', adminAuthRoutes);
+
+app.use('/api/admin/*', requireAdmin);
+
+app.get('/api/admin/health', (context) => {
+  const session = context.get('adminSession');
+  return context.json({
+    ok: true,
+    authenticated: true,
+    expiresAt: new Date(session.expiresAt * 1000).toISOString(),
+    requestId: context.get('requestId'),
+  });
+});
 
 app.get('/go/:code', (context) =>
   context.json(
@@ -90,16 +106,7 @@ app.onError((error, context) => {
     }),
   );
 
-  return context.json(
-    {
-      error: {
-        code: 'INTERNAL_ERROR',
-        message: 'An unexpected server error occurred.',
-        requestId,
-      },
-    },
-    500,
-  );
+  return apiError(context, 500, 'INTERNAL_ERROR', '服务器发生未预期错误。');
 });
 
 export default app;
