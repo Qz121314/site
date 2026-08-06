@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AssetLibraryView } from './AssetLibraryView';
 import { AdminApiError, fetchSections, type AdminSection } from './api';
 import { CustomerServiceView } from './CustomerServiceView';
+import { FaqManagementView } from './FaqManagementView';
 import { SectionManagementView } from './SectionManagementView';
 import { SiteSettingsView } from './SiteSettingsView';
 
@@ -270,11 +271,7 @@ export function Dashboard({
             onSessionExpired={onSessionExpired}
           />
         ) : activeView === 'faq' ? (
-          <PlaceholderView
-            title="FAQ 是全站公共内容"
-            description="FAQ 不属于任何分区，后续在这里实现问题、答案、排序、启停、批量删除和恢复。"
-            items={['新增与编辑', '排序与启停', '批量删除', '回收站恢复']}
-          />
+          <FaqManagementView onSessionExpired={onSessionExpired} />
         ) : currentSection ? (
           <PlaceholderView
             title={`${currentSection.section.name} · ${
