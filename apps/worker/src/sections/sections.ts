@@ -1,3 +1,5 @@
+import { buildAssetPublicUrl } from '../assets/asset-library';
+
 export type SectionRecord = {
   id: string;
   slug: string;
@@ -5,6 +7,7 @@ export type SectionRecord = {
   iconType: 'icon' | 'asset';
   iconValue: string | null;
   iconAssetId: string | null;
+  iconUrl: string | null;
   sortOrder: number;
   isEnabled: boolean;
   createdAt: string;
@@ -16,7 +19,8 @@ export type SectionRecord = {
 
 export type SectionInput = {
   name: string;
-  iconValue: string;
+  iconValue: string | null;
+  iconAssetId: string | null;
   sortOrder: number;
   isEnabled: boolean;
 };
@@ -30,6 +34,8 @@ type SectionRow = {
   icon_type: 'icon' | 'asset';
   icon_value: string | null;
   icon_asset_id: string | null;
+  icon_object_key: string | null;
+  media_base_url: string | null;
   sort_order: number;
   is_enabled: number;
   created_at: string;
@@ -56,15 +62,29 @@ function readText(
   if (typeof value !== 'string') {
     return { ok: false, field, message: `${label}必须是文本。` };
   }
-
   const normalized = value.trim();
-  if (!normalized) {
-    return { ok: false, field, message: `请填写${label}。` };
-  }
+  if (!normalized) return { ok: false, field, message: `请填写${label}。` };
   if (normalized.length > maxLength) {
     return { ok: false, field, message: `${label}不能超过 ${maxLength} 个字符。` };
   }
+  return { ok: true, value: normalized };
+}
 
+function readOptionalText(
+  value: unknown,
+  field: string,
+  label: string,
+  maxLength: number,
+): { ok: true; value: string | null } | { ok: false; field: string; message: string } {
+  if (value === null || value === undefined || value === '') return { ok: true, value: null };
+  if (typeof value !== 'string') {
+    return { ok: false, field, message: `${label}必须是文本。` };
+  }
+  const normalized = value.trim();
+  if (!normalized) return { ok: true, value: null };
+  if (normalized.length > maxLength) {
+    return { ok: false, field, message: `${label}不能超过 ${maxLength} 个字符。` };
+  }
   return { ok: true, value: normalized };
 }
 
@@ -74,13 +94,13 @@ export function validateSectionInput(value: unknown): ValidationResult {
   }
 
   const name = readText(value.name, 'name', '分区名称', 100);
-  if (!name.ok) {
-    return name;
-  }
-
-  const iconValue = readText(value.iconValue, 'iconValue', '分区图标', 80);
-  if (!iconValue.ok) {
-    return iconValue;
+  if (!name.ok) return name;
+  const iconValue = readOptionalText(value.iconValue, 'iconValue', '分区字符图标', 80);
+  if (!iconValue.ok) return iconValue;
+  const iconAssetId = readOptionalText(value.iconAssetId, 'iconAssetId', '分区图片图标', 100);
+  if (!iconAssetId.ok) return iconAssetId;
+  if (!iconAssetId.value && !iconValue.value) {
+    return { ok: false, field: 'iconValue', message: '请上传分区图标或选择一个备用字符图标。' };
   }
 
   if (
@@ -89,13 +109,8 @@ export function validateSectionInput(value: unknown): ValidationResult {
     value.sortOrder < 0 ||
     value.sortOrder > 1_000_000
   ) {
-    return {
-      ok: false,
-      field: 'sortOrder',
-      message: '排序必须是 0 到 1000000 的整数。',
-    };
+    return { ok: false, field: 'sortOrder', message: '排序必须是 0 到 1000000 的整数。' };
   }
-
   if (typeof value.isEnabled !== 'boolean') {
     return { ok: false, field: 'isEnabled', message: '必须选择启用或停用。' };
   }
@@ -105,6 +120,7 @@ export function validateSectionInput(value: unknown): ValidationResult {
     value: {
       name: name.value,
       iconValue: iconValue.value,
+      iconAssetId: iconAssetId.value,
       sortOrder: value.sortOrder,
       isEnabled: value.isEnabled,
     },
@@ -119,6 +135,7 @@ function mapSection(row: SectionRow): SectionRecord {
     iconType: row.icon_type,
     iconValue: row.icon_value,
     iconAssetId: row.icon_asset_id,
+    iconUrl: buildAssetPublicUrl(row.media_base_url, row.icon_object_key),
     sortOrder: row.sort_order,
     isEnabled: row.is_enabled === 1,
     createdAt: row.created_at,
@@ -136,6 +153,8 @@ const SECTION_SELECT = `SELECT
   s.icon_type,
   s.icon_value,
   s.icon_asset_id,
+  icon.object_key AS icon_object_key,
+  settings.media_base_url,
   s.sort_order,
   s.is_enabled,
   s.created_at,
@@ -143,7 +162,12 @@ const SECTION_SELECT = `SELECT
   s.deleted_at,
   (SELECT COUNT(*) FROM products p WHERE p.section_id = s.id AND p.deleted_at IS NULL) AS product_count,
   (SELECT COUNT(*) FROM conversion_methods c WHERE c.section_id = s.id AND c.deleted_at IS NULL) AS conversion_method_count
-FROM sections s`;
+FROM sections s
+LEFT JOIN media_assets icon
+  ON icon.id = s.icon_asset_id
+ AND icon.status = 'ready'
+ AND icon.deleted_at IS NULL
+LEFT JOIN site_settings settings ON settings.id = 1`;
 
 export async function listSections(
   db: D1Database,
@@ -155,11 +179,9 @@ export async function listSections(
       : scope === 'trash'
         ? 'WHERE s.deleted_at IS NOT NULL'
         : '';
-
   const result = await db
     .prepare(`${SECTION_SELECT} ${whereClause} ORDER BY s.sort_order ASC, s.name COLLATE NOCASE ASC`)
     .all<SectionRow>();
-
   return result.results.map(mapSection);
 }
 
@@ -171,7 +193,6 @@ export async function getSection(
     .prepare(`${SECTION_SELECT} WHERE s.id = ?`)
     .bind(id)
     .first<SectionRow>();
-
   return row ? mapSection(row) : null;
 }
 
@@ -187,19 +208,14 @@ function slugify(value: string): string {
 
 async function createUniqueSlug(db: D1Database, name: string, id: string): Promise<string> {
   const base = slugify(name) || `section-${id.slice(0, 8)}`;
-
   for (let suffix = 0; suffix < 1000; suffix += 1) {
     const candidate = suffix === 0 ? base : `${base}-${suffix + 1}`;
     const existing = await db
       .prepare('SELECT id FROM sections WHERE lower(slug) = lower(?) AND deleted_at IS NULL')
       .bind(candidate)
       .first<{ id: string }>();
-
-    if (!existing) {
-      return candidate;
-    }
+    if (!existing) return candidate;
   }
-
   return `${base}-${id.slice(0, 8)}`;
 }
 
@@ -210,13 +226,15 @@ export async function createSectionStatements(
 ): Promise<{ section: SectionRecord; statements: D1PreparedStatement[] }> {
   const id = crypto.randomUUID();
   const slug = await createUniqueSlug(db, input.name, id);
+  const iconType = input.iconAssetId ? 'asset' : 'icon';
   const section: SectionRecord = {
     id,
     slug,
     name: input.name,
-    iconType: 'icon',
-    iconValue: input.iconValue,
-    iconAssetId: null,
+    iconType,
+    iconValue: input.iconAssetId ? null : input.iconValue,
+    iconAssetId: input.iconAssetId,
+    iconUrl: null,
     sortOrder: input.sortOrder,
     isEnabled: input.isEnabled,
     createdAt: now,
@@ -232,24 +250,17 @@ export async function createSectionStatements(
       db
         .prepare(
           `INSERT INTO sections (
-             id,
-             slug,
-             name,
-             icon_type,
-             icon_value,
-             icon_asset_id,
-             sort_order,
-             is_enabled,
-             created_at,
-             updated_at,
-             deleted_at
-           ) VALUES (?, ?, ?, 'icon', ?, NULL, ?, ?, ?, ?, NULL)`,
+             id, slug, name, icon_type, icon_value, icon_asset_id,
+             sort_order, is_enabled, created_at, updated_at, deleted_at
+           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)`,
         )
         .bind(
           section.id,
           section.slug,
           section.name,
+          section.iconType,
           section.iconValue,
+          section.iconAssetId,
           section.sortOrder,
           section.isEnabled ? 1 : 0,
           section.createdAt,
@@ -265,19 +276,24 @@ export function createUpdateSectionStatement(
   input: SectionInput,
   now: string,
 ): D1PreparedStatement {
+  const iconType = input.iconAssetId ? 'asset' : 'icon';
   return db
     .prepare(
       `UPDATE sections
-       SET name = ?,
-           icon_type = 'icon',
-           icon_value = ?,
-           icon_asset_id = NULL,
-           sort_order = ?,
-           is_enabled = ?,
-           updated_at = ?
+       SET name = ?, icon_type = ?, icon_value = ?, icon_asset_id = ?,
+           sort_order = ?, is_enabled = ?, updated_at = ?
        WHERE id = ? AND deleted_at IS NULL`,
     )
-    .bind(input.name, input.iconValue, input.sortOrder, input.isEnabled ? 1 : 0, now, id);
+    .bind(
+      input.name,
+      iconType,
+      input.iconAssetId ? null : input.iconValue,
+      input.iconAssetId,
+      input.sortOrder,
+      input.isEnabled ? 1 : 0,
+      now,
+      id,
+    );
 }
 
 export function createDeleteSectionStatement(
@@ -288,9 +304,7 @@ export function createDeleteSectionStatement(
   return db
     .prepare(
       `UPDATE sections
-       SET is_enabled = 0,
-           deleted_at = ?,
-           updated_at = ?
+       SET is_enabled = 0, deleted_at = ?, updated_at = ?
        WHERE id = ? AND deleted_at IS NULL`,
     )
     .bind(now, now, id);
@@ -303,9 +317,7 @@ export function createRestoreSectionStatement(
 ): D1PreparedStatement {
   return db
     .prepare(
-      `UPDATE sections
-       SET deleted_at = NULL,
-           updated_at = ?
+      `UPDATE sections SET deleted_at = NULL, updated_at = ?
        WHERE id = ? AND deleted_at IS NOT NULL`,
     )
     .bind(now, id);
@@ -319,8 +331,7 @@ export function createReorderSectionStatement(
 ): D1PreparedStatement {
   return db
     .prepare(
-      `UPDATE sections
-       SET sort_order = ?, updated_at = ?
+      `UPDATE sections SET sort_order = ?, updated_at = ?
        WHERE id = ? AND deleted_at IS NULL`,
     )
     .bind(sortOrder, now, id);
