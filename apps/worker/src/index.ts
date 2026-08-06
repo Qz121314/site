@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { apiError } from './http/api-response';
 import { requireAdmin } from './middleware/require-admin';
 import { adminAuthRoutes } from './routes/admin-auth';
+import { adminSiteSettingsRoutes } from './routes/admin-site-settings';
 import type { AppEnvironment } from './types';
 
 export const app = new Hono<AppEnvironment>();
@@ -62,6 +63,8 @@ app.get('/api/admin/health', (context) => {
     requestId: context.get('requestId'),
   });
 });
+
+app.route('/api/admin/settings', adminSiteSettingsRoutes);
 
 app.get('/go/:code', (context) =>
   context.json(
