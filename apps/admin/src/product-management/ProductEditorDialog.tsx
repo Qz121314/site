@@ -259,13 +259,10 @@ export function ProductEditorDialog({
                     disabled={!group.isEnabled || group.activeTargetCount < 1}
                   >
                     {group.name} · {group.buttonLabel} · {group.activeTargetCount} 个启用入口
-                    {!group.isEnabled ? '（已停用）' : ''}
+                    {!group.isEnabled ? '（已停用）'}
                   </option>
                 ))}
               </select>
-              {matchingGroups.length === 0 ? (
-                <small className="field-warning">当前分区还没有可匹配的转化分组。</small>
-              ) : null}
             </div>
 
             {form.serviceMode === 'offline' ? (
@@ -379,8 +376,6 @@ export function ProductEditorDialog({
 
           <div className="product-publish-checklist">
             <strong>发布检查</strong>
-            <span className={form.categoryId ? 'is-ready' : undefined}>分类</span>
-            <span className={form.conversionGroupId ? 'is-ready' : undefined}>转化分组</span>
             <span className={media.length > 0 ? 'is-ready' : undefined}>产品图片</span>
             {form.serviceMode === 'offline' ? <span className={form.address ? 'is-ready' : undefined}>服务地址</span> : null}
           </div>
