@@ -97,7 +97,7 @@ function createConversionDb({
             nextIndex += 1;
             return { selected_index: selected };
           }
-          if (this.sql.includes('FROM customer_service_connections c')) {
+          if (/FROM customer_service_connections c(?:\s|$)/u.test(this.sql)) {
             return connection;
           }
           if (this.sql.includes('FROM conversion_targets t')) {
