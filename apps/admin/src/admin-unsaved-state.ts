@@ -21,6 +21,8 @@ type MutationDetail = {
   path?: string;
 };
 
+type SerializedField = [string, unknown];
+
 const baselines = new WeakMap<HTMLFormElement, string>();
 const dirtyForms = new Set<HTMLFormElement>();
 const listeners = new Set<() => void>();
@@ -39,33 +41,37 @@ function formLabel(form: HTMLFormElement): string {
 }
 
 function serializeForm(form: HTMLFormElement): string {
-  const values = Array.from(form.elements).flatMap((element) => {
+  const values: SerializedField[] = [];
+  for (const element of Array.from(form.elements)) {
     if (element instanceof HTMLInputElement) {
-      if (element.type === 'button' || element.type === 'submit' || element.type === 'reset') return [];
+      if (element.type === 'button' || element.type === 'submit' || element.type === 'reset') continue;
       if (element.type === 'file') {
-        return [[
+        values.push([
           element.name || `file:${element.accept}`,
           Array.from(element.files ?? []).map((file) => [file.name, file.size, file.lastModified]),
-        ]];
+        ]);
+        continue;
       }
       if (element.type === 'checkbox' || element.type === 'radio') {
-        return [[element.name || element.outerHTML, element.checked]];
+        values.push([element.name || element.outerHTML, element.checked]);
+        continue;
       }
-      return [[element.name || element.outerHTML, element.value]];
+      values.push([element.name || element.outerHTML, element.value]);
+      continue;
     }
     if (element instanceof HTMLTextAreaElement) {
-      return [[element.name || element.outerHTML, element.value]];
+      values.push([element.name || element.outerHTML, element.value]);
+      continue;
     }
     if (element instanceof HTMLSelectElement) {
-      return [[
+      values.push([
         element.name || element.outerHTML,
         element.multiple
           ? Array.from(element.selectedOptions).map((option) => option.value)
           : element.value,
-      ]];
+      ]);
     }
-    return [];
-  });
+  }
   return JSON.stringify(values);
 }
 
