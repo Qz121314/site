@@ -9,12 +9,26 @@ export type BoundProductTag = {
   isEnabled: boolean;
 };
 
+export type PublicProductTag = {
+  id: string;
+  sectionId: string;
+  name: string;
+  sortOrder: number;
+};
+
 type BoundProductTagRow = {
   product_id: string;
   id: string;
   name: string;
   sort_order: number;
   is_enabled: number;
+};
+
+type PublicProductTagRow = {
+  id: string;
+  section_id: string;
+  name: string;
+  sort_order: number;
 };
 
 type TagValidationRow = {
@@ -177,6 +191,31 @@ export async function listProductTagsByProductIds(
     result.set(row.product_id, current);
   }
   return result;
+}
+
+export async function listEnabledPublicProductTags(
+  db: D1Database,
+): Promise<PublicProductTag[]> {
+  const rows = (
+    await db
+      .prepare(
+        `SELECT t.id, t.section_id, t.name, t.sort_order
+         FROM product_tags_catalog t
+         JOIN sections s ON s.id = t.section_id
+         WHERE t.deleted_at IS NULL
+           AND t.is_enabled = 1
+           AND s.deleted_at IS NULL
+           AND s.is_enabled = 1
+         ORDER BY t.section_id, t.sort_order ASC, t.name COLLATE NOCASE ASC`,
+      )
+      .all<PublicProductTagRow>()
+  ).results;
+  return rows.map((row) => ({
+    id: row.id,
+    sectionId: row.section_id,
+    name: row.name,
+    sortOrder: row.sort_order,
+  }));
 }
 
 export type ProductWithTags<T> = T & {
