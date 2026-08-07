@@ -656,7 +656,6 @@ async function loadV2Bootstrap(
     affiliate: rawSite.site.affiliate,
   };
   const sections = rawIndex.sections.map((section) => resolveV2Section(section, mediaBaseUrl));
-  const sectionById = new Map(sections.map((section) => [section.id, section]));
 
   const loadedSections = await Promise.all(
     sections.map(async (section) => {
