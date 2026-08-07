@@ -119,12 +119,8 @@ type SiteRow = {
   show_hot: number;
   show_latest: number;
   show_more: number;
-  show_messages: number;
   show_faq: number;
   ga4_measurement_id: string | null;
-  facebook_pixel_id: string | null;
-  affiliate_detection_enabled: number;
-  affiliate_platform: string | null;
 };
 
 type SectionRow = {
@@ -419,12 +415,8 @@ async function loadSource(db: D1Database): Promise<Source> {
          ss.show_hot,
          ss.show_latest,
          ss.show_more,
-         ss.show_messages,
          ss.show_faq,
-         ss.ga4_measurement_id,
-         ss.facebook_pixel_id,
-         ss.affiliate_detection_enabled,
-         ss.affiliate_platform
+         ss.ga4_measurement_id
        FROM site_settings ss
        LEFT JOIN media_assets ma
          ON ma.id = ss.logo_asset_id
@@ -572,16 +564,10 @@ function sitePublicModel(site: SiteRow) {
       showHot: site.show_hot === 1,
       showLatest: site.show_latest === 1,
       showMore: site.show_more === 1,
-      showMessages: site.show_messages === 1,
       showFaq: site.show_faq === 1,
     },
     analytics: {
       ga4MeasurementId: site.ga4_measurement_id,
-      facebookPixelId: site.facebook_pixel_id,
-    },
-    affiliate: {
-      enabled: site.affiliate_detection_enabled === 1,
-      platform: site.affiliate_platform,
     },
   };
 }
