@@ -1,5 +1,4 @@
 import { Hono, type Context } from 'hono';
-import { recordConversionEvent, type ConversionEventInput } from '../conversion/conversion-events';
 import { getConversionGroup, selectNextConversionTarget } from '../conversion-pool/conversion-pool';
 import { getCustomerServiceConnectionInternal } from '../customer-service/customer-service-connections';
 import {
@@ -46,25 +45,6 @@ async function getRoutableProduct(db: D1Database, productId: string): Promise<Ro
     .first<RoutableProductRow>();
 }
 
-async function safeRecordEvent(db: D1Database, input: ConversionEventInput): Promise<void> {
-  try {
-    await recordConversionEvent(db, input);
-  } catch (error) {
-    console.error(
-      JSON.stringify({
-        level: 'error',
-        event: 'conversion.event_write_failed',
-        requestId: input.requestId,
-        productId: input.productId,
-        conversionGroupId: input.conversionGroupId,
-        conversionTargetId: input.conversionTargetId,
-        errorName: error instanceof Error ? error.name : 'UnknownError',
-        errorMessage: error instanceof Error ? error.message : 'Unknown conversion event write failure',
-      }),
-    );
-  }
-}
-
 export const publicConversionRoutes = new Hono<AppEnvironment>();
 
 publicConversionRoutes.get('/:code', async (context) => {
@@ -83,17 +63,6 @@ publicConversionRoutes.get('/:code', async (context) => {
   }
 
   if (!product.conversion_group_id) {
-    await safeRecordEvent(context.env.DB, {
-      sectionId: product.section_id,
-      productId: product.id,
-      conversionGroupId: null,
-      conversionTargetId: null,
-      mode: null,
-      outcome: 'not_ready',
-      requestId,
-      metadata: { reason: 'conversion_group_missing' },
-      createdAt: now,
-    });
     return unavailable(context, 409, 'This contact option is temporarily unavailable.');
   }
 
@@ -103,17 +72,6 @@ publicConversionRoutes.get('/:code', async (context) => {
     product.conversion_group_id,
   );
   if (!group || group.deletedAt || !group.isEnabled || group.activeTargetCount < 1) {
-    await safeRecordEvent(context.env.DB, {
-      sectionId: product.section_id,
-      productId: product.id,
-      conversionGroupId: product.conversion_group_id,
-      conversionTargetId: null,
-      mode: group?.mode ?? null,
-      outcome: 'not_ready',
-      requestId,
-      metadata: { reason: 'conversion_group_not_ready' },
-      createdAt: now,
-    });
     return unavailable(context, 409, 'This contact option is temporarily unavailable.');
   }
 
@@ -121,47 +79,13 @@ publicConversionRoutes.get('/:code', async (context) => {
   // The selector advances the D1 cursor atomically before resolving the target.
   const target = await selectNextConversionTarget(context.env.DB, group, now);
   if (!target) {
-    await safeRecordEvent(context.env.DB, {
-      sectionId: product.section_id,
-      productId: product.id,
-      conversionGroupId: group.id,
-      conversionTargetId: null,
-      mode: group.mode,
-      outcome: 'not_ready',
-      requestId,
-      metadata: { reason: 'conversion_target_missing_after_rotation' },
-      createdAt: now,
-    });
     return unavailable(context, 409, 'This contact option is temporarily unavailable.');
   }
 
   if (group.mode === 'link') {
     if (target.bindingKind !== 'link' || !target.endpointUrl) {
-      await safeRecordEvent(context.env.DB, {
-        sectionId: product.section_id,
-        productId: product.id,
-        conversionGroupId: group.id,
-        conversionTargetId: target.id,
-        mode: group.mode,
-        outcome: 'not_ready',
-        requestId,
-        metadata: { reason: 'link_target_invalid' },
-        createdAt: now,
-      });
       return unavailable(context, 409, 'This contact option is temporarily unavailable.');
     }
-
-    await safeRecordEvent(context.env.DB, {
-      sectionId: product.section_id,
-      productId: product.id,
-      conversionGroupId: group.id,
-      conversionTargetId: target.id,
-      mode: group.mode,
-      outcome: 'redirected',
-      requestId,
-      metadata: { targetName: target.name },
-      createdAt: now,
-    });
     return context.redirect(target.endpointUrl, 302);
   }
 
@@ -170,17 +94,6 @@ publicConversionRoutes.get('/:code', async (context) => {
     !target.customerServiceConnectionId ||
     !target.remoteGroupId
   ) {
-    await safeRecordEvent(context.env.DB, {
-      sectionId: product.section_id,
-      productId: product.id,
-      conversionGroupId: group.id,
-      conversionTargetId: target.id,
-      mode: group.mode,
-      outcome: 'not_ready',
-      requestId,
-      metadata: { reason: 'customer_service_target_invalid' },
-      createdAt: now,
-    });
     return unavailable(context, 409, 'Customer service is temporarily unavailable.');
   }
 
@@ -189,17 +102,6 @@ publicConversionRoutes.get('/:code', async (context) => {
     target.customerServiceConnectionId,
   );
   if (!connection || connection.deletedAt || !connection.isEnabled) {
-    await safeRecordEvent(context.env.DB, {
-      sectionId: product.section_id,
-      productId: product.id,
-      conversionGroupId: group.id,
-      conversionTargetId: target.id,
-      mode: group.mode,
-      outcome: 'provider_error',
-      requestId,
-      metadata: { reason: 'customer_service_connection_unavailable' },
-      createdAt: now,
-    });
     return unavailable(context, 503, 'Customer service is temporarily unavailable.');
   }
 
@@ -209,40 +111,10 @@ publicConversionRoutes.get('/:code', async (context) => {
       productId: product.id,
       sectionId: product.section_id,
     });
-    await safeRecordEvent(context.env.DB, {
-      sectionId: product.section_id,
-      productId: product.id,
-      conversionGroupId: group.id,
-      conversionTargetId: target.id,
-      mode: group.mode,
-      outcome: 'redirected',
-      requestId,
-      metadata: {
-        customerServiceConnectionId: connection.id,
-        remoteGroupId: target.remoteGroupId,
-        remoteGroupName: target.remoteGroupName,
-      },
-      createdAt: now,
-    });
     return context.redirect(entry.url, 302);
   } catch (error) {
     const providerCode =
       error instanceof CustomerServiceProviderError ? error.code : 'CUSTOMER_SERVICE_UNKNOWN_ERROR';
-    await safeRecordEvent(context.env.DB, {
-      sectionId: product.section_id,
-      productId: product.id,
-      conversionGroupId: group.id,
-      conversionTargetId: target.id,
-      mode: group.mode,
-      outcome: 'provider_error',
-      requestId,
-      metadata: {
-        providerCode,
-        customerServiceConnectionId: connection.id,
-        remoteGroupId: target.remoteGroupId,
-      },
-      createdAt: now,
-    });
     console.warn(
       JSON.stringify({
         level: 'warn',
