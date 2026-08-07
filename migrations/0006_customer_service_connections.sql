@@ -51,6 +51,15 @@ FROM customer_service_settings
 WHERE endpoint_url IS NOT NULL
   AND trim(endpoint_url) <> '';
 
+UPDATE customer_service_settings
+SET is_enabled = 0,
+    provider = NULL,
+    endpoint_url = NULL,
+    project_id = NULL,
+    config_json = NULL,
+    updated_at = strftime('%Y-%m-%dT%H:%M:%fZ', 'now')
+WHERE id = 1;
+
 CREATE TABLE conversion_targets_v2 (
   id TEXT PRIMARY KEY,
   section_id TEXT NOT NULL,
