@@ -1,85 +1,329 @@
 import { Hono } from 'hono';
 import { createAuditLogStatement } from '../audit/write-audit-log';
+import {
+  createCustomerServiceConnection,
+  createDeleteCustomerServiceConnectionStatement,
+  createRestoreCustomerServiceConnectionStatement,
+  createUpdateCustomerServiceConnectionStatement,
+  getCustomerServiceConnection,
+  getCustomerServiceConnectionInternal,
+  isCustomerServiceConnectionConflict,
+  listCustomerServiceConnections,
+  toPublicCustomerServiceConnection,
+  validateCustomerServiceConnectionInput,
+  type CustomerServiceConnectionRecord,
+  type CustomerServiceScope,
+} from '../customer-service/customer-service-connections';
+import {
+  CustomerServiceProviderError,
+  listRemoteCustomerServiceGroups,
+  testCustomerServiceConnection,
+} from '../customer-service/customer-service-provider';
 import { apiError } from '../http/api-response';
 import {
-  createUpdateCustomerServiceSettingsStatement,
-  getCustomerServiceSettings,
-  toCustomerServiceSettings,
-  validateCustomerServiceSettingsInput,
-} from '../settings/customer-service-settings';
+  createIdempotencyStatement,
+  normalizeIdempotencyKey,
+  readIdempotentResponse,
+} from '../idempotency/idempotency';
 import type { AppEnvironment } from '../types';
+import {
+  hasAdminRequestHeader,
+  isRecord,
+  jsonBodyError,
+  readJsonBody,
+} from './admin-section-shared';
 
-const ADMIN_REQUEST_HEADER = 'x-admin-request';
-
-function hasAdminRequestHeader(context: Parameters<typeof apiError>[0]): boolean {
-  return context.req.header(ADMIN_REQUEST_HEADER) === '1';
-}
-
-async function readJsonBody(context: Parameters<typeof apiError>[0]): Promise<unknown> {
-  const contentType = context.req.header('content-type') ?? '';
-  if (!contentType.toLowerCase().startsWith('application/json')) {
-    throw new Error('INVALID_CONTENT_TYPE');
-  }
-
-  try {
-    return await context.req.json<unknown>();
-  } catch {
-    throw new Error('INVALID_JSON');
-  }
-}
+const IDEMPOTENCY_HEADER = 'x-idempotency-key';
+const MAX_BATCH_SIZE = 100;
 
 export const adminCustomerServiceRoutes = new Hono<AppEnvironment>();
 
-adminCustomerServiceRoutes.get('/', async (context) => {
+function parseScope(value: string | undefined): CustomerServiceScope | null {
+  if (!value || value === 'active') return 'active';
+  if (value === 'trash' || value === 'all') return value;
+  return null;
+}
+
+function parseBatchIds(value: unknown): string[] | null {
+  if (!isRecord(value) || !Array.isArray(value.ids)) return null;
+  const ids = value.ids.filter((id): id is string => typeof id === 'string' && id.length > 0);
+  if (ids.length === 0 || ids.length !== value.ids.length || ids.length > MAX_BATCH_SIZE) return null;
+  const unique = [...new Set(ids)];
+  return unique.length === ids.length ? unique : null;
+}
+
+async function readBody(context: Parameters<typeof apiError>[0]): Promise<unknown | Response> {
+  try {
+    return await readJsonBody(context);
+  } catch (error) {
+    return jsonBodyError(context, error);
+  }
+}
+
+function isResponse(value: unknown): value is Response {
+  return value instanceof Response;
+}
+
+function connectionNotFound(context: Parameters<typeof apiError>[0]) {
+  return apiError(context, 404, 'CUSTOMER_SERVICE_CONNECTION_NOT_FOUND', '客服系统连接不存在。');
+}
+
+function connectionDeleteBlocked(
+  context: Parameters<typeof apiError>[0],
+  connection: CustomerServiceConnectionRecord,
+) {
+  return apiError(
+    context,
+    409,
+    'CUSTOMER_SERVICE_CONNECTION_IN_USE',
+    `客服系统“${connection.name}”仍被 ${connection.targetCount} 个转化入口使用，不能删除。`,
+    { targetCount: connection.targetCount },
+  );
+}
+
+function connectionAuditValue(connection: CustomerServiceConnectionRecord) {
+  return {
+    id: connection.id,
+    name: connection.name,
+    provider: connection.provider,
+    baseUrl: connection.baseUrl,
+    projectId: connection.projectId,
+    hasApiToken: connection.hasApiToken,
+    isEnabled: connection.isEnabled,
+    deletedAt: connection.deletedAt,
+    targetCount: connection.targetCount,
+  };
+}
+
+function providerFailure(context: Parameters<typeof apiError>[0], error: CustomerServiceProviderError) {
+  return apiError(context, 503, error.code, error.message);
+}
+
+adminCustomerServiceRoutes.get('/connections', async (context) => {
   context.header('Cache-Control', 'no-store');
-  const settings = await getCustomerServiceSettings(context.env.DB);
-  return context.json({ settings });
+  const scope = parseScope(context.req.query('scope'));
+  if (!scope) {
+    return apiError(context, 400, 'INVALID_CUSTOMER_SERVICE_SCOPE', '客服系统列表范围无效。');
+  }
+  return context.json({ connections: await listCustomerServiceConnections(context.env.DB, scope) });
 });
 
-adminCustomerServiceRoutes.put('/', async (context) => {
+adminCustomerServiceRoutes.post('/connections/batch-delete', async (context) => {
   context.header('Cache-Control', 'no-store');
-
   if (!hasAdminRequestHeader(context)) {
     return apiError(context, 403, 'ADMIN_REQUEST_REQUIRED', '后台请求标识无效。');
   }
+  const idempotencyKey = normalizeIdempotencyKey(context.req.header(IDEMPOTENCY_HEADER));
+  if (!idempotencyKey) {
+    return apiError(context, 400, 'IDEMPOTENCY_KEY_REQUIRED', '批量删除缺少幂等键。');
+  }
+  const now = new Date().toISOString();
+  const scope = 'customer-service-connections.batch-delete';
+  const prior = await readIdempotentResponse(context.env.DB, scope, idempotencyKey, now);
+  if (isRecord(prior)) return context.json(prior);
+  const body = await readBody(context);
+  if (isResponse(body)) return body;
+  const ids = parseBatchIds(body);
+  if (!ids) {
+    return apiError(context, 400, 'INVALID_CUSTOMER_SERVICE_CONNECTION_IDS', '请选择有效的客服系统连接。');
+  }
+  const connections = await Promise.all(ids.map((id) => getCustomerServiceConnection(context.env.DB, id)));
+  const active = connections.filter((item): item is CustomerServiceConnectionRecord => Boolean(item));
+  if (active.length !== ids.length || active.some((item) => item.deletedAt)) return connectionNotFound(context);
+  const blocked = active.find((item) => item.targetCount > 0);
+  if (blocked) return connectionDeleteBlocked(context, blocked);
 
-  let body: unknown;
-  try {
-    body = await readJsonBody(context);
-  } catch (error) {
-    const invalidContentType =
-      error instanceof Error && error.message === 'INVALID_CONTENT_TYPE';
-    return apiError(
-      context,
-      400,
-      invalidContentType ? 'INVALID_CONTENT_TYPE' : 'INVALID_JSON',
-      invalidContentType ? '客服设置请求必须使用 JSON。' : '客服设置请求 JSON 无效。',
+  const responseBody = { deletedIds: ids };
+  const statements: D1PreparedStatement[] = [];
+  for (const connection of active) {
+    statements.push(
+      createDeleteCustomerServiceConnectionStatement(context.env.DB, connection.id, now),
+      createAuditLogStatement(context.env.DB, {
+        action: 'customer-service-connection.deleted',
+        entityType: 'customer_service_connection',
+        entityId: connection.id,
+        requestId: context.get('requestId'),
+        before: connectionAuditValue(connection),
+        after: { ...connectionAuditValue(connection), isEnabled: false, deletedAt: now },
+        metadata: { batch: true },
+        createdAt: now,
+      }),
     );
   }
+  statements.push(createIdempotencyStatement(context.env.DB, scope, idempotencyKey, responseBody, now));
+  await context.env.DB.batch(statements);
+  return context.json(responseBody);
+});
 
-  const validation = validateCustomerServiceSettingsInput(body);
+adminCustomerServiceRoutes.post('/connections', async (context) => {
+  context.header('Cache-Control', 'no-store');
+  if (!hasAdminRequestHeader(context)) {
+    return apiError(context, 403, 'ADMIN_REQUEST_REQUIRED', '后台请求标识无效。');
+  }
+  const body = await readBody(context);
+  if (isResponse(body)) return body;
+  const validation = validateCustomerServiceConnectionInput(body);
   if (!validation.ok) {
-    return apiError(context, 400, 'INVALID_CUSTOMER_SERVICE_SETTINGS', validation.message, {
+    return apiError(context, 400, 'INVALID_CUSTOMER_SERVICE_CONNECTION', validation.message, {
       field: validation.field,
     });
   }
+  const now = new Date().toISOString();
+  const created = createCustomerServiceConnection(context.env.DB, validation.value, now);
+  try {
+    await context.env.DB.batch([
+      created.statement,
+      createAuditLogStatement(context.env.DB, {
+        action: 'customer-service-connection.created',
+        entityType: 'customer_service_connection',
+        entityId: created.connection.id,
+        requestId: context.get('requestId'),
+        after: connectionAuditValue(created.connection),
+        createdAt: now,
+      }),
+    ]);
+  } catch (error) {
+    if (isCustomerServiceConnectionConflict(error)) {
+      return apiError(context, 409, 'CUSTOMER_SERVICE_CONNECTION_NAME_CONFLICT', '已存在同名客服系统连接。');
+    }
+    throw error;
+  }
+  return context.json({ connection: created.connection }, 201);
+});
 
-  const current = await getCustomerServiceSettings(context.env.DB);
-  const updatedAt = new Date().toISOString();
-  const updated = toCustomerServiceSettings(validation.value, updatedAt);
+adminCustomerServiceRoutes.put('/connections/:id', async (context) => {
+  context.header('Cache-Control', 'no-store');
+  if (!hasAdminRequestHeader(context)) {
+    return apiError(context, 403, 'ADMIN_REQUEST_REQUIRED', '后台请求标识无效。');
+  }
+  const current = await getCustomerServiceConnectionInternal(context.env.DB, context.req.param('id'));
+  if (!current || current.deletedAt) return connectionNotFound(context);
+  const body = await readBody(context);
+  if (isResponse(body)) return body;
+  const validation = validateCustomerServiceConnectionInput(body);
+  if (!validation.ok) {
+    return apiError(context, 400, 'INVALID_CUSTOMER_SERVICE_CONNECTION', validation.message, {
+      field: validation.field,
+    });
+  }
+  const now = new Date().toISOString();
+  const resolvedApiToken = validation.value.apiToken === undefined ? current.apiToken : validation.value.apiToken;
+  const updatedInternal = {
+    ...current,
+    ...validation.value,
+    apiToken: resolvedApiToken,
+    hasApiToken: Boolean(resolvedApiToken),
+    updatedAt: now,
+  };
+  const updated = toPublicCustomerServiceConnection(updatedInternal);
+  try {
+    await context.env.DB.batch([
+      createUpdateCustomerServiceConnectionStatement(
+        context.env.DB,
+        current.id,
+        validation.value,
+        current.apiToken,
+        now,
+      ),
+      createAuditLogStatement(context.env.DB, {
+        action: 'customer-service-connection.updated',
+        entityType: 'customer_service_connection',
+        entityId: current.id,
+        requestId: context.get('requestId'),
+        before: connectionAuditValue(toPublicCustomerServiceConnection(current)),
+        after: connectionAuditValue(updated),
+        createdAt: now,
+      }),
+    ]);
+  } catch (error) {
+    if (isCustomerServiceConnectionConflict(error)) {
+      return apiError(context, 409, 'CUSTOMER_SERVICE_CONNECTION_NAME_CONFLICT', '已存在同名客服系统连接。');
+    }
+    throw error;
+  }
+  return context.json({ connection: updated });
+});
 
+adminCustomerServiceRoutes.delete('/connections/:id', async (context) => {
+  context.header('Cache-Control', 'no-store');
+  if (!hasAdminRequestHeader(context)) {
+    return apiError(context, 403, 'ADMIN_REQUEST_REQUIRED', '后台请求标识无效。');
+  }
+  const current = await getCustomerServiceConnection(context.env.DB, context.req.param('id'));
+  if (!current || current.deletedAt) return connectionNotFound(context);
+  if (current.targetCount > 0) return connectionDeleteBlocked(context, current);
+  const now = new Date().toISOString();
+  const deleted = { ...current, isEnabled: false, deletedAt: now, updatedAt: now };
   await context.env.DB.batch([
-    createUpdateCustomerServiceSettingsStatement(context.env.DB, validation.value, updatedAt),
+    createDeleteCustomerServiceConnectionStatement(context.env.DB, current.id, now),
     createAuditLogStatement(context.env.DB, {
-      action: 'customer_service_settings.updated',
-      entityType: 'customer_service_settings',
-      entityId: '1',
+      action: 'customer-service-connection.deleted',
+      entityType: 'customer_service_connection',
+      entityId: current.id,
       requestId: context.get('requestId'),
-      before: { ...current },
-      after: { ...updated },
-      createdAt: updatedAt,
+      before: connectionAuditValue(current),
+      after: connectionAuditValue(deleted),
+      createdAt: now,
     }),
   ]);
+  return context.json({ connection: deleted });
+});
 
-  return context.json({ settings: updated });
+adminCustomerServiceRoutes.post('/connections/:id/restore', async (context) => {
+  context.header('Cache-Control', 'no-store');
+  if (!hasAdminRequestHeader(context)) {
+    return apiError(context, 403, 'ADMIN_REQUEST_REQUIRED', '后台请求标识无效。');
+  }
+  const current = await getCustomerServiceConnection(context.env.DB, context.req.param('id'));
+  if (!current || !current.deletedAt) return connectionNotFound(context);
+  const now = new Date().toISOString();
+  const restored = { ...current, deletedAt: null, updatedAt: now };
+  try {
+    await context.env.DB.batch([
+      createRestoreCustomerServiceConnectionStatement(context.env.DB, current.id, now),
+      createAuditLogStatement(context.env.DB, {
+        action: 'customer-service-connection.restored',
+        entityType: 'customer_service_connection',
+        entityId: current.id,
+        requestId: context.get('requestId'),
+        before: connectionAuditValue(current),
+        after: connectionAuditValue(restored),
+        createdAt: now,
+      }),
+    ]);
+  } catch (error) {
+    if (isCustomerServiceConnectionConflict(error)) {
+      return apiError(context, 409, 'CUSTOMER_SERVICE_CONNECTION_RESTORE_CONFLICT', '已有同名客服系统连接。');
+    }
+    throw error;
+  }
+  return context.json({ connection: restored });
+});
+
+adminCustomerServiceRoutes.post('/connections/:id/test', async (context) => {
+  context.header('Cache-Control', 'no-store');
+  if (!hasAdminRequestHeader(context)) {
+    return apiError(context, 403, 'ADMIN_REQUEST_REQUIRED', '后台请求标识无效。');
+  }
+  const connection = await getCustomerServiceConnectionInternal(context.env.DB, context.req.param('id'));
+  if (!connection || connection.deletedAt) return connectionNotFound(context);
+  try {
+    const result = await testCustomerServiceConnection({ ...connection, isEnabled: true });
+    return context.json(result);
+  } catch (error) {
+    if (error instanceof CustomerServiceProviderError) return providerFailure(context, error);
+    throw error;
+  }
+});
+
+adminCustomerServiceRoutes.get('/connections/:id/groups', async (context) => {
+  context.header('Cache-Control', 'no-store');
+  const connection = await getCustomerServiceConnectionInternal(context.env.DB, context.req.param('id'));
+  if (!connection || connection.deletedAt) return connectionNotFound(context);
+  try {
+    return context.json({ groups: await listRemoteCustomerServiceGroups(connection) });
+  } catch (error) {
+    if (error instanceof CustomerServiceProviderError) return providerFailure(context, error);
+    throw error;
+  }
 });
