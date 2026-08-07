@@ -1,4 +1,5 @@
 const IMAGE_EXTENSION_PATTERN = /\.(?:avif|bmp|gif|heic|heif|ico|jpe?g|png|svg|webp)$/i;
+const GUARD_BATCH_SIZE = 100;
 
 export type AssetReferenceCounts = {
   logo: number;
@@ -7,7 +8,11 @@ export type AssetReferenceCounts = {
   productGallery: number;
 };
 
-export type AssetCleanupBlockedReason = 'IN_USE' | 'NOT_IMAGE' | null;
+export type AssetCleanupBlockedReason =
+  | 'IN_USE'
+  | 'NOT_IMAGE'
+  | 'SNAPSHOT_RETENTION'
+  | null;
 
 export type AdminAsset = {
   key: string;
@@ -19,6 +24,7 @@ export type AdminAsset = {
   referenceCount: number;
   references: AssetReferenceCounts;
   cleanupEligible: boolean;
+  cleanupBlockedReason: AssetCleanupBlockedReason;
   publicUrl: string | null;
 };
 
@@ -32,6 +38,17 @@ export type MediaAssetReferenceRow = {
   section_icon_count: number;
   product_cover_count: number;
   product_gallery_count: number;
+};
+
+type AssetCleanupGuardRow = {
+  object_key: string;
+  media_asset_id: string;
+  guard_content_version: string;
+  first_seen_at: string;
+};
+
+type RetainedVersionRow = {
+  content_version: string;
 };
 
 export type AssetScanPage = {
@@ -51,6 +68,23 @@ export type CleanupEvaluation = {
 
 function buildPlaceholders(count: number): string {
   return Array.from({ length: count }, () => '?').join(', ');
+}
+
+function chunk<T>(items: T[], size: number): T[][] {
+  const chunks: T[][] = [];
+  for (let index = 0; index < items.length; index += size) {
+    chunks.push(items.slice(index, index + size));
+  }
+  return chunks;
+}
+
+async function runStatementChunks(
+  db: D1Database,
+  statements: D1PreparedStatement[],
+): Promise<void> {
+  for (const batch of chunk(statements, GUARD_BATCH_SIZE)) {
+    if (batch.length > 0) await db.batch(batch);
+  }
 }
 
 function toReferenceCounts(row: MediaAssetReferenceRow | null): AssetReferenceCounts {
@@ -124,6 +158,99 @@ export async function getMediaBaseUrl(db: D1Database): Promise<string | null> {
   return row?.media_base_url ?? null;
 }
 
+async function listRetainedPublishVersions(db: D1Database): Promise<string[]> {
+  const rows = (
+    await db
+      .prepare(
+        `SELECT content_version
+         FROM publish_versions
+         ORDER BY is_current DESC, published_at DESC, content_version DESC
+         LIMIT 3`,
+      )
+      .all<RetainedVersionRow>()
+  ).results;
+  return rows.map((row) => row.content_version);
+}
+
+async function getCleanupGuardRows(
+  db: D1Database,
+  keys: string[],
+): Promise<Map<string, AssetCleanupGuardRow>> {
+  if (keys.length === 0) return new Map();
+  const result = await db
+    .prepare(
+      `SELECT object_key, media_asset_id, guard_content_version, first_seen_at
+       FROM asset_cleanup_guards
+       WHERE object_key IN (${buildPlaceholders(keys.length)})`,
+    )
+    .bind(...keys)
+    .all<AssetCleanupGuardRow>();
+  return new Map(result.results.map((row) => [row.object_key, row]));
+}
+
+async function synchronizeCleanupGuards(
+  db: D1Database,
+  rows: Map<string, MediaAssetReferenceRow>,
+  retainedVersions: string[],
+  now: string,
+): Promise<Map<string, AssetCleanupGuardRow>> {
+  const keys = [...rows.keys()];
+  const guards = await getCleanupGuardRows(db, keys);
+  const guardVersion = retainedVersions[0] ?? null;
+  const statements: D1PreparedStatement[] = [];
+
+  for (const row of rows.values()) {
+    const referenceCount = countReferences(toReferenceCounts(row));
+    const existing = guards.get(row.object_key);
+
+    if (referenceCount > 0 || !guardVersion) {
+      if (existing) {
+        statements.push(
+          db.prepare('DELETE FROM asset_cleanup_guards WHERE object_key = ?').bind(row.object_key),
+        );
+        guards.delete(row.object_key);
+      }
+      continue;
+    }
+
+    if (!existing) {
+      const guard: AssetCleanupGuardRow = {
+        object_key: row.object_key,
+        media_asset_id: row.id,
+        guard_content_version: guardVersion,
+        first_seen_at: now,
+      };
+      statements.push(
+        db
+          .prepare(
+            `INSERT INTO asset_cleanup_guards (
+               object_key, media_asset_id, guard_content_version, first_seen_at
+             ) VALUES (?, ?, ?, ?)
+             ON CONFLICT(object_key) DO NOTHING`,
+          )
+          .bind(row.object_key, row.id, guardVersion, now),
+      );
+      guards.set(row.object_key, guard);
+    }
+  }
+
+  await runStatementChunks(db, statements);
+  return guards;
+}
+
+function retentionBlocked(
+  row: MediaAssetReferenceRow | null,
+  guard: AssetCleanupGuardRow | null,
+  retainedVersions: Set<string>,
+): boolean {
+  return Boolean(
+    row &&
+      guard &&
+      retainedVersions.has(guard.guard_content_version) &&
+      countReferences(toReferenceCounts(row)) === 0,
+  );
+}
+
 export async function getMediaAssetReferenceRows(
   db: D1Database,
   keys: string[],
@@ -157,11 +284,16 @@ export async function getMediaAssetReferenceRows(
 function toAdminAsset(
   object: R2Object,
   row: MediaAssetReferenceRow | null,
+  guard: AssetCleanupGuardRow | null,
+  retainedVersions: Set<string>,
   mediaBaseUrl: string | null,
 ): AdminAsset {
   const contentType = object.httpMetadata?.contentType ?? inferContentType(object.key);
   const references = toReferenceCounts(row);
   const referenceCount = countReferences(references);
+  const snapshotProtected = retentionBlocked(row, guard, retainedVersions);
+  const cleanupBlockedReason: AssetCleanupBlockedReason =
+    referenceCount > 0 ? 'IN_USE' : snapshotProtected ? 'SNAPSHOT_RETENTION' : null;
 
   return {
     key: object.key,
@@ -172,7 +304,8 @@ function toAdminAsset(
     usageStatus: referenceCount > 0 ? 'used' : 'unused',
     referenceCount,
     references,
-    cleanupEligible: referenceCount === 0,
+    cleanupEligible: cleanupBlockedReason === null,
+    cleanupBlockedReason,
     publicUrl: buildAssetPublicUrl(mediaBaseUrl, object.key),
   };
 }
@@ -190,7 +323,11 @@ export async function scanAssetPage(
     options.cursor = input.cursor;
   }
 
-  const [listed, mediaBaseUrl] = await Promise.all([bucket.list(options), getMediaBaseUrl(db)]);
+  const [listed, mediaBaseUrl, retainedVersions] = await Promise.all([
+    bucket.list(options),
+    getMediaBaseUrl(db),
+    listRetainedPublishVersions(db),
+  ]);
   const imageObjects = listed.objects.filter((object) =>
     isImageObject(object.key, object.httpMetadata?.contentType ?? inferContentType(object.key)),
   );
@@ -198,10 +335,23 @@ export async function scanAssetPage(
     db,
     imageObjects.map((object) => object.key),
   );
+  const guards = await synchronizeCleanupGuards(
+    db,
+    rows,
+    retainedVersions,
+    new Date().toISOString(),
+  );
+  const retainedSet = new Set(retainedVersions);
 
   return {
     assets: imageObjects.map((object) =>
-      toAdminAsset(object, rows.get(object.key) ?? null, mediaBaseUrl),
+      toAdminAsset(
+        object,
+        rows.get(object.key) ?? null,
+        guards.get(object.key) ?? null,
+        retainedSet,
+        mediaBaseUrl,
+      ),
     ),
     cursor: listed.truncated ? (listed.cursor ?? null) : null,
     truncated: listed.truncated,
@@ -214,10 +364,18 @@ export async function evaluateCleanupCandidates(
   db: D1Database,
   keys: string[],
 ): Promise<CleanupEvaluation[]> {
-  const [objects, rows] = await Promise.all([
+  const [objects, rows, retainedVersions] = await Promise.all([
     Promise.all(keys.map((key) => bucket.head(key))),
     getMediaAssetReferenceRows(db, keys),
+    listRetainedPublishVersions(db),
   ]);
+  const guards = await synchronizeCleanupGuards(
+    db,
+    rows,
+    retainedVersions,
+    new Date().toISOString(),
+  );
+  const retainedSet = new Set(retainedVersions);
 
   return keys.map((key, index) => {
     const object = objects[index] ?? null;
@@ -225,12 +383,19 @@ export async function evaluateCleanupCandidates(
     const referenceCount = countReferences(toReferenceCounts(row));
     const contentType = object?.httpMetadata?.contentType ?? inferContentType(key);
     const isImage = isImageObject(key, contentType);
+    const snapshotProtected = retentionBlocked(
+      row,
+      guards.get(key) ?? null,
+      retainedSet,
+    );
 
     let blockedReason: AssetCleanupBlockedReason = null;
     if (referenceCount > 0) {
       blockedReason = 'IN_USE';
     } else if (!isImage) {
       blockedReason = 'NOT_IMAGE';
+    } else if (snapshotProtected) {
+      blockedReason = 'SNAPSHOT_RETENTION';
     }
 
     return { key, object, row, referenceCount, blockedReason };
