@@ -7,6 +7,7 @@ import { adminBrandingMediaRoutes } from './routes/admin-branding-media';
 import { adminCategoryBatchRoutes } from './routes/admin-category-batch';
 import { adminCategoryRoutes } from './routes/admin-categories';
 import { adminConversionPoolRoutes } from './routes/admin-conversion-pool';
+import { adminConversionPreviewRoutes } from './routes/admin-conversion-preview';
 import { adminCustomerServiceRoutes } from './routes/admin-customer-service';
 import { adminFaqRoutes } from './routes/admin-faqs';
 import { adminPublishRoutes } from './routes/admin-publish';
@@ -15,6 +16,7 @@ import { adminProductRoutes } from './routes/admin-products';
 import { adminSectionBatchRoutes } from './routes/admin-section-batch';
 import { adminSectionRoutes } from './routes/admin-sections';
 import { adminSiteSettingsRoutes } from './routes/admin-site-settings';
+import { publicConversionRoutes } from './routes/public-conversion';
 import type { AppEnvironment } from './types';
 
 export const app = new Hono<AppEnvironment>({ strict: false });
@@ -84,24 +86,14 @@ app.route('/api/admin/faqs', adminFaqRoutes);
 app.route('/api/admin/publish', adminPublishRoutes);
 app.route('/api/admin/sections', adminProductBatchRoutes);
 app.route('/api/admin/sections', adminProductRoutes);
+app.route('/api/admin/sections', adminConversionPreviewRoutes);
 app.route('/api/admin/sections', adminConversionPoolRoutes);
 app.route('/api/admin/sections', adminCategoryBatchRoutes);
 app.route('/api/admin/sections', adminCategoryRoutes);
 app.route('/api/admin/sections', adminSectionBatchRoutes);
 app.route('/api/admin/sections', adminSectionRoutes);
 
-app.get('/go/:code', (context) =>
-  context.json(
-    {
-      error: {
-        code: 'REDIRECT_NOT_CONFIGURED',
-        message: 'Tracked redirects are not configured yet.',
-        requestId: context.get('requestId'),
-      },
-    },
-    501,
-  ),
-);
+app.route('/go', publicConversionRoutes);
 
 app.notFound((context) => {
   if (context.req.path.startsWith('/api/')) {
