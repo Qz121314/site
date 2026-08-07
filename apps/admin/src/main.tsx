@@ -1,6 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
+import { installAdminMutationObserver } from './admin-mutation-observer';
 import './styles.css';
 import './site-settings.css';
 import './sections.css';
@@ -20,6 +21,8 @@ import './admin-centered-layout.css';
 import './admin-section-workspace-nav.css';
 import './admin-publish.css';
 import './customer-service-connections.css';
+
+installAdminMutationObserver();
 
 const root = document.getElementById('root');
 if (!root) {
