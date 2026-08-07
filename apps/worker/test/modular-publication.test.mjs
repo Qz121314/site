@@ -217,24 +217,19 @@ test('modular rollback refuses a version whose retained R2 manifest is missing',
   assert.equal(db.batches.length, 0);
 });
 
-test('public storefront discovery exposes only the configured public content origin', async () => {
+test('public storefront discovery returns the request origin without reading D1', async () => {
   const db = {
-    prepare(sql) {
-      assert.match(sql, /SELECT media_base_url FROM site_settings/);
-      return {
-        async first() {
-          return { media_base_url: 'https://content.example.com' };
-        },
-      };
+    prepare() {
+      throw new Error('Storefront content-origin discovery must not read D1');
     },
   };
 
   const response = await publicStorefrontConfigRoutes.request(
-    'http://local.test/content-origin',
+    'https://storefront.example.com/content-origin',
     {},
     { DB: db },
   );
   assert.equal(response.status, 200);
-  assert.deepEqual(await response.json(), { contentOrigin: 'https://content.example.com' });
+  assert.deepEqual(await response.json(), { contentOrigin: 'https://storefront.example.com' });
   assert.equal(response.headers.get('cache-control'), 'public, max-age=300, stale-while-revalidate=3600');
 });
