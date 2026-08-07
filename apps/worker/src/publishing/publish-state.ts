@@ -1,4 +1,8 @@
 import { createAuditLogStatement } from '../audit/write-audit-log';
+import {
+  listEnabledPublicProductTags,
+  listProductTagsByProductIds,
+} from '../products/product-tags';
 
 const CURRENT_KEY = 'public/current.json';
 const POINTER_CACHE = 'public, max-age=30, must-revalidate';
@@ -367,6 +371,15 @@ export async function computeStorefrontStateRevision(db: D1Database): Promise<st
       .all<FaqRow>()
   ).results;
 
+  const [publicTags, tagsByProduct] = await Promise.all([
+    listEnabledPublicProductTags(db),
+    listProductTagsByProductIds(
+      db,
+      products.map((product) => product.id),
+      true,
+    ),
+  ]);
+
   const mediaByProduct = new Map<string, ProductMediaRow[]>();
   for (const item of productMedia) {
     const current = mediaByProduct.get(item.product_id) ?? [];
@@ -402,6 +415,11 @@ export async function computeStorefrontStateRevision(db: D1Database): Promise<st
     serviceMode: product.service_mode,
     address: product.address,
     category: { id: product.category_id, name: product.category_name },
+    tags: (tagsByProduct.get(product.id) ?? []).map((tag) => ({
+      id: tag.id,
+      name: tag.name,
+      sortOrder: tag.sortOrder,
+    })),
     coverUrl: buildPublicUrl(site.media_base_url, product.effective_cover_object_key),
     isFeatured: product.is_featured === 1,
     featuredOrder: product.featured_order,
@@ -458,6 +476,7 @@ export async function computeStorefrontStateRevision(db: D1Database): Promise<st
     },
     sections: publicSections,
     categories: publicCategories,
+    tags: publicTags,
     products: publicProducts,
     faqs: faqs.map((faq) => ({
       id: faq.id,

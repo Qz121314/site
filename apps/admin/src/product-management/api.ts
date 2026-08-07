@@ -17,6 +17,13 @@ export type AdminProductMedia = {
   publicUrl: string | null;
 };
 
+export type AdminProductTag = {
+  id: string;
+  name: string;
+  sortOrder: number;
+  isEnabled: boolean;
+};
+
 export type AdminProduct = {
   id: string;
   sectionId: string;
@@ -27,6 +34,8 @@ export type AdminProduct = {
   address: string | null;
   categoryId: string | null;
   categoryName: string | null;
+  tags: AdminProductTag[];
+  tagIds: string[];
   conversionGroupId: string | null;
   conversionGroupName: string | null;
   conversionMode: 'customer_service' | 'link' | null;
@@ -51,6 +60,7 @@ export type ProductInput = {
   body: string;
   address: string | null;
   categoryId: string | null;
+  tagIds: string[];
   conversionGroupId: string | null;
   coverAssetId: string | null;
   mediaAssetIds: string[];
@@ -129,6 +139,20 @@ function parseMedia(value: unknown): AdminProductMedia {
   return media as AdminProductMedia;
 }
 
+function parseProductTag(value: unknown): AdminProductTag {
+  const tag = asRecord(value);
+  if (
+    !tag ||
+    typeof tag.id !== 'string' ||
+    typeof tag.name !== 'string' ||
+    typeof tag.sortOrder !== 'number' ||
+    typeof tag.isEnabled !== 'boolean'
+  ) {
+    throw new AdminApiError(500, 'INVALID_RESPONSE', '产品标签返回数据无效。');
+  }
+  return tag as AdminProductTag;
+}
+
 function parseProduct(value: unknown): AdminProduct {
   const product = asRecord(value);
   if (
@@ -142,6 +166,9 @@ function parseProduct(value: unknown): AdminProduct {
     (typeof product.address !== 'string' && product.address !== null) ||
     (typeof product.categoryId !== 'string' && product.categoryId !== null) ||
     (typeof product.categoryName !== 'string' && product.categoryName !== null) ||
+    !Array.isArray(product.tags) ||
+    !Array.isArray(product.tagIds) ||
+    !product.tagIds.every((id) => typeof id === 'string') ||
     (typeof product.conversionGroupId !== 'string' && product.conversionGroupId !== null) ||
     (typeof product.conversionGroupName !== 'string' && product.conversionGroupName !== null) ||
     (product.conversionMode !== 'customer_service' &&
@@ -164,8 +191,9 @@ function parseProduct(value: unknown): AdminProduct {
     throw new AdminApiError(500, 'INVALID_RESPONSE', '产品返回数据无效。');
   }
   return {
-    ...(product as Omit<AdminProduct, 'media'>),
+    ...(product as Omit<AdminProduct, 'media' | 'tags'>),
     media: product.media.map(parseMedia),
+    tags: product.tags.map(parseProductTag),
   };
 }
 

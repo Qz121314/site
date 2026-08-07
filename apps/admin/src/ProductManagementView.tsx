@@ -37,6 +37,7 @@ import {
   type ProductInput,
   type ProductStatus,
 } from './product-management/api';
+import { fetchProductTags, type AdminProductTag } from './tag-management/api';
 
 type ProductManagementMode = 'manage' | 'entry';
 
@@ -57,6 +58,7 @@ const emptyProductForm: ProductInput = {
   body: '',
   address: null,
   categoryId: null,
+  tagIds: [],
   conversionGroupId: null,
   coverAssetId: null,
   mediaAssetIds: [],
@@ -90,6 +92,7 @@ function productToInput(product: AdminProduct): ProductInput {
     body: product.body,
     address: product.address,
     categoryId: product.categoryId,
+    tagIds: product.tagIds,
     conversionGroupId: product.conversionGroupId,
     coverAssetId: product.coverAssetId,
     mediaAssetIds: product.media.map((item) => item.id),
@@ -104,14 +107,20 @@ function validateBeforeImageUpload(
   form: ProductInput,
   media: ProductEditorImage[],
   categories: AdminCategory[],
+  tags: AdminProductTag[],
   groups: AdminConversionGroup[],
 ): string | null {
   if (!form.title.trim()) return '请填写产品标题。';
   if (!form.body.trim()) return '请填写产品正文。';
+  if (form.tagIds.length > 12) return '每个产品最多选择 12 个标签。';
   if (form.status !== 'published') return null;
 
   const category = categories.find((item) => item.id === form.categoryId);
   if (!category || !category.isEnabled) return '发布产品前必须选择一个启用分类。';
+
+  if (form.tagIds.some((id) => !tags.some((tag) => tag.id === id && tag.isEnabled))) {
+    return '发布产品不能使用已停用或不存在的标签。';
+  }
 
   const group = groups.find((item) => item.id === form.conversionGroupId);
   const expectedMode = form.serviceMode === 'online' ? 'link' : 'customer_service';
@@ -148,6 +157,7 @@ export function ProductManagementView({
   const [activeProducts, setActiveProducts] = useState<AdminProduct[]>([]);
   const [trashProducts, setTrashProducts] = useState<AdminProduct[]>([]);
   const [categories, setCategories] = useState<AdminCategory[]>([]);
+  const [tags, setTags] = useState<AdminProductTag[]>([]);
   const [groups, setGroups] = useState<AdminConversionGroup[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -194,13 +204,15 @@ export function ProductManagementView({
     setLoading(true);
     setErrorMessage('');
     try {
-      const [products, nextCategories, nextGroups] = await Promise.all([
+      const [products, nextCategories, nextTags, nextGroups] = await Promise.all([
         fetchProducts(section.id, 'active'),
         fetchCategories(section.id, 'active'),
+        fetchProductTags(section.id, 'active'),
         fetchConversionGroups(section.id, 'active'),
       ]);
       setActiveProducts(sortProducts(products));
       setCategories(nextCategories);
+      setTags(nextTags);
       setGroups(nextGroups);
     } catch (error) {
       handleError(error);
@@ -258,7 +270,7 @@ export function ProductManagementView({
     return sourceProducts.filter((product) => {
       if (statusFilter !== 'all' && product.status !== statusFilter) return false;
       if (!keyword) return true;
-      return `${product.title} ${product.categoryName ?? ''} ${product.conversionGroupName ?? ''}`
+      return `${product.title} ${product.categoryName ?? ''} ${product.tags.map((tag) => tag.name).join(' ')} ${product.conversionGroupName ?? ''}`
         .toLowerCase()
         .includes(keyword);
     });
@@ -399,7 +411,7 @@ export function ProductManagementView({
     event.preventDefault();
     if (saving || processingImages || rotatingImageKey) return;
 
-    const localValidation = validateBeforeImageUpload(form, mediaRef.current, categories, groups);
+    const localValidation = validateBeforeImageUpload(form, mediaRef.current, categories, tags, groups);
     if (localValidation) {
       setErrorMessage(localValidation);
       setSuccessMessage('');
@@ -412,11 +424,8 @@ export function ProductManagementView({
     let resolvedCoverKey = coverKey;
 
     try {
-      if (resolvedImages.some((image) => image.kind === 'local')) {
-        setSaveStage('uploading');
-      } else {
-        setSaveStage('saving');
-      }
+      if (resolvedImages.some((image) => image.kind === 'local')) setSaveStage('uploading');
+      else setSaveStage('saving');
 
       for (let index = 0; index < resolvedImages.length; index += 1) {
         const image = resolvedImages[index];
@@ -507,14 +516,9 @@ export function ProductManagementView({
     setSuccessMessage('');
     try {
       const firstId = deletingIds[0];
-      if (deletingIds.length === 1 && firstId) {
-        await deleteProduct(section.id, firstId);
-      } else {
-        await batchDeleteProducts(section.id, deletingIds);
-      }
-      setActiveProducts((current) =>
-        current.filter((product) => !deletingIds.includes(product.id)),
-      );
+      if (deletingIds.length === 1 && firstId) await deleteProduct(section.id, firstId);
+      else await batchDeleteProducts(section.id, deletingIds);
+      setActiveProducts((current) => current.filter((product) => !deletingIds.includes(product.id)));
       setSelectedIds(new Set());
       setPendingDeleteIds([]);
       setSuccessMessage(`已将 ${deletingIds.length} 个产品移入回收站。`);
@@ -570,6 +574,7 @@ export function ProductManagementView({
       media={media}
       coverKey={coverKey}
       categories={categories}
+      tags={tags}
       groups={groups}
       saveStage={saveStage}
       processingImages={processingImages}
@@ -602,47 +607,25 @@ export function ProductManagementView({
         <div>
           <p>当前分区</p>
           <h2 id="product-management-title">{section.name} · 产品管理</h2>
-          <span>产品、分类和转化分组全部限制在“{section.name}”分区内。</span>
+          <span>产品、分类、标签和转化分组全部限制在“{section.name}”分区内。</span>
         </div>
-        <button className="primary-button" type="button" onClick={openCreateEditor}>
-          新增产品
-        </button>
+        <button className="primary-button" type="button" onClick={openCreateEditor}>新增产品</button>
       </div>
 
       <div className="product-filter-bar">
         <div className="scope-tabs" role="tablist" aria-label="产品范围">
-          <button
-            type="button"
-            className={scope === 'active' ? 'is-active' : undefined}
-            onClick={() => void changeScope('active')}
-          >
-            当前产品 <span>{activeProducts.length}</span>
-          </button>
-          <button
-            type="button"
-            className={scope === 'trash' ? 'is-active' : undefined}
-            onClick={() => void changeScope('trash')}
-          >
-            回收站 <span>{trashProducts.length}</span>
-          </button>
+          <button type="button" className={scope === 'active' ? 'is-active' : undefined} onClick={() => void changeScope('active')}>当前产品 <span>{activeProducts.length}</span></button>
+          <button type="button" className={scope === 'trash' ? 'is-active' : undefined} onClick={() => void changeScope('trash')}>回收站 <span>{trashProducts.length}</span></button>
         </div>
 
         <label className="product-search">
           <span>搜索</span>
-          <input
-            type="search"
-            value={search}
-            placeholder="标题、分类或转化分组"
-            onChange={(event) => setSearch(event.target.value)}
-          />
+          <input type="search" value={search} placeholder="标题、分类、标签或转化分组" onChange={(event) => setSearch(event.target.value)} />
         </label>
 
         <label className="product-status-filter">
           <span>状态</span>
-          <select
-            value={statusFilter}
-            onChange={(event) => setStatusFilter(event.target.value as StatusFilter)}
-          >
+          <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as StatusFilter)}>
             <option value="all">全部状态</option>
             <option value="draft">草稿</option>
             <option value="published">已发布</option>
@@ -655,17 +638,7 @@ export function ProductManagementView({
       {successMessage ? <div className="notice notice-success" role="status">{successMessage}</div> : null}
 
       {scope === 'active' && selectedIds.size > 0 ? (
-        <div className="selection-toolbar">
-          <span>已选择 {selectedIds.size} 个产品</span>
-          <button
-            className="danger-button"
-            type="button"
-            disabled={working}
-            onClick={() => setPendingDeleteIds([...selectedIds])}
-          >
-            批量删除
-          </button>
-        </div>
+        <div className="selection-toolbar"><span>已选择 {selectedIds.size} 个产品</span><button className="danger-button" type="button" disabled={working} onClick={() => setPendingDeleteIds([...selectedIds])}>批量删除</button></div>
       ) : null}
 
       <ProductTable
@@ -686,12 +659,7 @@ export function ProductManagementView({
       {editorDialog}
 
       {pendingDeleteIds.length > 0 ? (
-        <DeleteProductDialog
-          count={pendingDeleteIds.length}
-          working={working}
-          onCancel={() => setPendingDeleteIds([])}
-          onConfirm={() => void confirmDelete()}
-        />
+        <DeleteProductDialog count={pendingDeleteIds.length} working={working} onCancel={() => setPendingDeleteIds([])} onConfirm={() => void confirmDelete()} />
       ) : null}
     </section>
   );
