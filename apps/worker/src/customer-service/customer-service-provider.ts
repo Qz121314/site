@@ -24,8 +24,12 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-function buildHeaders(connection: CustomerServiceConnectionInternal): Headers {
-  const headers = new Headers({ Accept: 'application/json' });
+function buildHeaders(
+  connection: CustomerServiceConnectionInternal,
+  extraHeaders?: HeadersInit,
+): Headers {
+  const headers = new Headers(extraHeaders);
+  headers.set('Accept', 'application/json');
   if (connection.apiToken) headers.set('Authorization', `Bearer ${connection.apiToken}`);
   if (connection.projectId) headers.set('X-Project-Id', connection.projectId);
   return headers;
@@ -48,7 +52,7 @@ async function providerFetch(
   try {
     const response = await fetch(`${connection.baseUrl}${path}`, {
       ...init,
-      headers: buildHeaders(connection),
+      headers: buildHeaders(connection, init?.headers),
       signal: controller.signal,
       redirect: 'error',
     });
@@ -140,7 +144,7 @@ export async function resolveCustomerServiceGroupEntry(
     `/groups/${encodeURIComponent(remoteGroupId)}/entry`,
     {
       method: 'POST',
-      headers: buildHeaders(connection),
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     },
   );
