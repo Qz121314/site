@@ -1,6 +1,6 @@
-# 前台 R2 快照发布
+# 前台 R2 模块化发布
 
-前台公开内容采用手动发布的不可变 R2 快照，不在普通页面访问时通过 Worker 动态读取 D1。
+前台公开内容采用手动发布的不可变 R2 模块快照。D1 是后台编辑态数据源；普通 Storefront 内容访问不通过 Worker 动态读取 D1。
 
 ## 角色边界
 
@@ -8,89 +8,305 @@
 D1
 → 后台编辑态数据源
 
-R2 public/versions/*
-→ 前台已发布数据源
+R2 public/modules/*
+→ 已发布的不可变模块版本
 
-public/current.json
-→ 当前线上版本指针
+R2 public/current.json
+→ 当前线上各模块版本的组合指针
 
 Worker
-→ 后台 CRUD、手动发布、图片写入/清理，以及需要动态处理的转化跳转
+→ 后台 CRUD / 手动发布 / 图片写入与清理 / /go 动态转化
+→ 仅提供一个窄的公开 R2 域名发现接口，不提供产品/FAQ/分区内容 API
 ```
 
-后台的保存动作只修改 D1，不自动改变用户前台。管理员完成一批内容修改后，在后台顶部点击“发布前台”生成新的完整快照。
+后台保存只修改 D1，不会自动改变用户前台。发布动作把指定模块的当前 D1 公开态生成一个新的不可变 R2 版本，然后原子式更新组合指针。
 
-## 手动发布流程
+## 发布模块
+
+前台发布拆成以下独立单元：
 
 ```text
-管理员点击“发布前台”
-→ 校验 R2 自定义域名
-→ 读取当前 D1 公开态数据
-→ 校验已发布产品的分类、转化分组、启用入口和图片
-→ 计算 source revision
-→ 创建唯一 content version
-→ 写入 public/versions/{contentVersion}/...
-→ 写入 manifest.json
-→ 所有不可变对象成功
-→ 记录 publish_versions
-→ 最后更新 public/current.json
-→ 标记 publish_job published
-→ 自动执行发布历史保留清理
+site
+→ 站点名称、Location、Logo、媒体域名、导航开关、公开 Analytics/Affiliate 开关
+
+sections-index
+→ 已启用分区的名称、slug、图标、顺序
+
+faq
+→ 已启用 FAQ
+
+section:{sectionId}
+→ 该分区的分类
+→ 该分区的标签
+→ 该分区的已发布产品摘要
+→ 该分区产品详情文件
+→ CTA 文案 / 模式 / /go/{productId}
 ```
 
-任何校验或对象写入失败，都不得把 `public/current.json` 切换到新版本。最终状态写回 D1 失败时，发布器会尽量恢复旧指针。
+产品、分类、标签属于所在业务分区，因此这些高频变化只要求发布对应 `section:{sectionId}`。站点设置、FAQ 和其他业务分区不会因为某个产品变化而重新生成版本。
 
-## 对象结构
+## 首次从旧快照迁移
+
+旧 schema-v1 `public/current.json` 和 `public/versions/*` 仍可由 Storefront 读取，避免部署代码后立即中断旧前台。
+
+第一次使用模块化发布时：
+
+```text
+检测到没有 schema-v2 组合指针
+→ 读取当前 D1 公开态
+→ 一次性生成 site
+→ 生成 sections-index
+→ 生成 faq
+→ 为每个当前启用分区生成 section:{id}
+→ 所有必要模块就绪
+→ 最后把 public/current.json 切换为 schemaVersion: 2
+```
+
+完成这次 bootstrap 后，后续即可单独发布任意板块。
+
+## R2 对象结构
 
 ```text
 public/
 ├─ current.json
-└─ versions/
-   └─ {contentVersion}/
-      ├─ manifest.json
-      ├─ site.json
-      ├─ home.json
-      ├─ faq.json
-      ├─ sections/{sectionId}.json
-      └─ products/{productId}.json
+└─ modules/
+   ├─ site/
+   │  └─ {contentVersion}/
+   │     ├─ manifest.json
+   │     └─ site.json
+   ├─ sections-index/
+   │  └─ {contentVersion}/
+   │     ├─ manifest.json
+   │     └─ sections.json
+   ├─ faq/
+   │  └─ {contentVersion}/
+   │     ├─ manifest.json
+   │     └─ faq.json
+   └─ sections/
+      └─ {sectionId}/
+         └─ {contentVersion}/
+            ├─ manifest.json
+            ├─ section.json
+            └─ products/{productId}.json
 ```
 
-版本目录一经生成不得覆盖。后续修改必须生成新的 `contentVersion`。
+任何 `{contentVersion}` 目录一经生成不得覆盖。修改必须生成新的版本。
+
+## schema-v2 组合指针
+
+`public/current.json` 不再代表“整个站点只有一个内容版本”，而是一个很小的当前组合：
+
+```json
+{
+  "schemaVersion": 2,
+  "contentVersion": "pointer-revision",
+  "publishedAt": "...",
+  "site": { "contentVersion": "...", "manifestKey": "...", "sourceRevision": "...", "publishedAt": "..." },
+  "sectionsIndex": { "contentVersion": "...", "manifestKey": "...", "sourceRevision": "...", "publishedAt": "..." },
+  "faq": { "contentVersion": "...", "manifestKey": "...", "sourceRevision": "...", "publishedAt": "..." },
+  "sections": {
+    "section-a": { "contentVersion": "...", "manifestKey": "...", "sourceRevision": "...", "publishedAt": "..." }
+  }
+}
+```
+
+例如只发布 `section:section-a` 时，新的 `public/current.json` 只会替换 `sections.section-a` 的引用；site、FAQ 和其他分区引用保持原版本。
 
 ## Storefront 读取流程
 
-Storefront 使用固定的 R2 Custom Domain 作为内容源。构建时通过 GitHub Actions Repository Variable 配置：
+优先使用构建变量：
 
 ```text
 PUBLIC_CONTENT_ORIGIN=https://content.example.com
+→ GitHub Actions 映射为 VITE_PUBLIC_CONTENT_ORIGIN
 ```
 
-CI / Deploy 会把它映射成 Vite 的：
+如果生产构建没有该变量，Storefront 会调用：
 
 ```text
-VITE_PUBLIC_CONTENT_ORIGIN
+GET /api/public/storefront/content-origin
 ```
 
-浏览器读取顺序固定为：
+这个接口只返回已经公开的 R2 Custom Domain：
+
+```json
+{ "contentOrigin": "https://content.example.com" }
+```
+
+它不返回站点内容、D1 产品数据、客服配置、Token 或转化目标。拿到域名之后，实际公开内容仍然全部直接从 R2 读取。
+
+schema-v2 浏览器读取流程：
 
 ```text
 R2 Custom Domain
 → GET /public/current.json
-→ 取得 contentVersion
-→ GET /public/versions/{contentVersion}/site.json
-→ GET /public/versions/{contentVersion}/home.json
-→ 按页面读取 sections/{id}.json / products/{id}.json / faq.json
+→ GET 当前 site 模块
+→ GET 当前 sections-index 模块
+→ GET pointer 中每个当前分区的 section.json
+→ 前端组合 Home 的热门 / 最新产品
+→ 产品详情按产品所属分区的当前 module version 读取
+→ FAQ 按当前 faq module version 读取
 ```
 
-`current.json` 使用 revalidate；版本文件使用 immutable cache。Storefront 不通过普通 Worker 内容 API 读取 D1。
+`current.json` 使用 revalidate；所有具体模块版本使用 immutable cache。
 
-R2 Custom Domain 与 Storefront 如果不是同源，R2 Bucket CORS 必须允许 Storefront 的生产 Origin 发起 `GET` / `HEAD` 请求。不要使用 `*` 配合未来可能出现的 credential 请求；当前公开快照请求本身不携带 credentials。
+## 媒体域名解耦
 
-开发环境未设置 `VITE_PUBLIC_CONTENT_ORIGIN` 时，Storefront 允许 localhost 同源读取，方便本地联调；生产环境缺少该变量时会显示明确的未配置状态，而不是自动回退到 Worker/D1。
+模块化快照中的分区图标、产品封面和图库保存 **R2 object key**，不把完整媒体 URL 重复固化进每个高频分区版本。
 
-## 前台路由
+```text
+site module
+→ mediaBaseUrl
 
-Storefront 使用浏览器 History 路由：
+section module
+→ products/.../cover.webp
+
+Storefront
+→ mediaBaseUrl + object key
+```
+
+因此修改 R2 Custom Domain 时只需要发布 `site`，不需要重新生成所有产品分区版本。
+
+## 独立发布与回退
+
+后台顶部保留汇总状态，同时主发布按钮跟随当前工作区：
+
+```text
+站点设置
+→ 发布站点设置
+
+FAQ 管理
+→ 发布 FAQ
+
+分区管理
+→ 发布分区导航
+
+某业务分区的 产品管理 / 产品录入 / 分类 / 标签 / 转化池
+→ 发布当前分区
+```
+
+弹出的板块发布面板可以：
+
+```text
+选择任意发布模块
+查看该模块当前状态
+发布该模块
+查看该模块最近 3 个成功版本
+只回退该模块
+发布全部待更新模块
+```
+
+未保存到 D1 的浏览器编辑态仍然禁止发布和回退。
+
+## 每个模块独立保留最近 3 版
+
+保留预算不再由整个站点共享，而是按 `module_key` 独立计算：
+
+```text
+site                     最近 3 版
+sections-index           最近 3 版
+faq                      最近 3 版
+section:section-a        最近 3 版
+section:section-b        最近 3 版
+...
+```
+
+因此高频发布 `section:section-a` 100 次，不会挤掉低频 `site` 或 `section:section-b` 的回退版本。
+
+自动清理范围：
+
+```text
+该模块第 4 版及更早的 R2 module objects
+对应 publish_module_versions
+对应 publish_module_jobs 的超预算历史
+```
+
+当前正在使用的模块版本永远受保护。
+
+## 图片清理保护
+
+素材是否允许物理删除，需要同时检查：
+
+```text
+当前 D1 引用
++
+所有仍保留的模块版本 media_keys_json
+```
+
+只要任意最近保留的模块版本仍引用该图片，就属于“快照保护”，不能物理删除。这样频繁发布某个产品分区不会导致另一个低频分区或站点 Logo 的可回退历史失去图片。
+
+## 发布安全顺序
+
+单模块发布：
+
+```text
+读取并校验 D1 当前公开态
+→ 计算该模块 source revision
+→ 如果与该模块线上 revision 相同：no-op
+→ 写入新的 immutable module objects
+→ 写入 manifest
+→ 记录 D1 module version
+→ 最后更新 public/current.json 对应模块引用
+→ 更新 D1 current marker / job published
+→ 清理该模块超出最近 3 版的历史
+```
+
+如果不可变对象生成失败，不能修改当前 pointer。如果 pointer 已切换但最终 D1 状态写入失败，发布器必须恢复旧 `public/current.json`。
+
+## 公开 / 私有数据边界
+
+允许进入 R2：
+
+```text
+站点名称 / Location
+Logo 与产品媒体 object key
+公开媒体域名
+导航开关
+GA4 Measurement ID / Facebook Pixel ID
+Affiliate 启用状态与平台名称
+分区 / 分类 / 标签 / 产品 / FAQ
+CTA 文案、模式、/go/{productId}
+```
+
+不得进入 R2：
+
+```text
+客服 API Token / Secret
+客服 private base URL / project private config
+客服连接原始配置 JSON
+Affiliate 原始配置 JSON
+转化池最终 URL
+远程客服私有路由细节
+后台审计信息
+```
+
+客服连接和最终转化目标始终由 Worker + D1 在 `/go/:code` 请求时动态解析。
+
+## 缓存
+
+模块版本文件：
+
+```text
+Cache-Control: public, max-age=31536000, immutable
+```
+
+当前组合指针：
+
+```text
+Cache-Control: public, max-age=30, must-revalidate
+```
+
+公开 R2 域名发现接口：
+
+```text
+Cache-Control: public, max-age=300, stale-while-revalidate=3600
+```
+
+## CORS 与前台路由
+
+R2 Custom Domain 与 Storefront 如果不是同源，R2 Bucket CORS 必须允许 Storefront 生产 Origin 的 `GET` / `HEAD`。公开快照请求不携带 credentials。
+
+Storefront 浏览器路由：
 
 ```text
 /
@@ -98,86 +314,15 @@ Storefront 使用浏览器 History 路由：
 /products/{productId}/
 ```
 
-Cloudflare Static Assets 使用 `not_found_handling = "single-page-application"`，并继续通过 `run_worker_first` 只让 `/api/*`、`/go/*` 进入 Worker。普通前台深链接由静态 `index.html` 接管。
+Cloudflare Static Assets 使用 SPA fallback。`/api/*` 和 `/go/*` Worker-first；`/sections/*` 和 `/products/*` 明确走 Static Assets，避免普通前台深链接产生 Worker 内容请求。
 
-## 公开 / 私有数据边界
+## 不受“三版”规则影响的数据
 
-R2 快照只允许包含前台展示所需的公开 DTO。
-
-允许公开：
+以下属于独立业务 / 安全数据，不属于发布版本历史：
 
 ```text
-站点名称 / Location
-Logo 与媒体公开 URL
-导航开关
-GA4 Measurement ID / Facebook Pixel ID
-Affiliate 启用状态与平台名称
-分区 / 分类 / 标签 / 产品 / FAQ
-产品 CTA 文案、模式、/go/{productId}
+audit_logs
+conversion_events
 ```
 
-不得进入 R2：
-
-```text
-客服 API Token / Secret
-客服系统 private base URL / project private config
-客服连接原始配置 JSON
-Affiliate 原始配置 JSON
-转化池最终 URL / 远程客服私有路由细节
-后台审计信息
-```
-
-客服连接和最终转化目标始终由 Worker + D1 在 `/go/:code` 请求时动态解析。
-
-## 发布历史保留
-
-所有发布更新历史统一采用最近 3 次保留策略：
-
-```text
-最近第 1 次发布  保留
-最近第 2 次发布  保留
-最近第 3 次发布  保留
-第 4 次及更早   自动清理
-```
-
-自动清理范围：
-
-```text
-R2 public/versions/{contentVersion}/... 快照对象
-D1 publish_versions 发布版本记录
-D1 publish_jobs 对应的发布更新记录
-失败发布留下、但没有成为正式版本的 R2 孤立对象
-```
-
-`public/current.json` 永远只指向当前版本，不计入 3 次历史。清理不得删除当前版本；发布失败也不能因为清理动作影响已经在线的当前版本。
-
-操作审计 `audit_logs` 属于安全审计数据，不按发布版本保留规则删除。
-
-## 缓存
-
-版本文件：
-
-```text
-Cache-Control: public, max-age=31536000, immutable
-```
-
-当前版本指针：
-
-```text
-Cache-Control: public, max-age=30, must-revalidate
-```
-
-## 转化数据
-
-R2 快照不暴露转化池中的最终目标地址。产品快照只保存 CTA 文案、模式和动态 `/go/:code` 路径。最终入口轮换和转化事件记录继续由 Worker 动态处理。
-
-## 后台交互
-
-后台不建立独立“发布中心”主菜单。全局顶部固定提供：
-
-```text
-最近发布状态
-发布前台
-```
-
-发布始终针对整个前台状态，而不是只发布当前页面或当前分区，避免用户看到不同版本的数据组合。
+它们不按模块最近 3 版规则删除。

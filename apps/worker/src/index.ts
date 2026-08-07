@@ -18,6 +18,7 @@ import { adminSectionRoutes } from './routes/admin-sections';
 import { adminSiteSettingsRoutes } from './routes/admin-site-settings';
 import { adminTagRoutes } from './routes/admin-tags';
 import { publicConversionRoutes } from './routes/public-conversion';
+import { publicStorefrontConfigRoutes } from './routes/public-storefront-config';
 import type { AppEnvironment } from './types';
 
 export const app = new Hono<AppEnvironment>({ strict: false });
@@ -64,6 +65,7 @@ app.get('/api/public/version', (context) =>
     publicLanguage: 'en',
   }),
 );
+app.route('/api/public/storefront', publicStorefrontConfigRoutes);
 
 app.route('/api/admin/auth', adminAuthRoutes);
 

@@ -1,4 +1,4 @@
-/* Manual storefront publication stays in the global header because it publishes the whole D1 state. */
+/* Storefront publication is split into independently versioned public modules. */
 
 .publish-version-control {
   position: relative;
@@ -45,7 +45,7 @@
   z-index: 220;
   top: calc(100% + 8px);
   right: 0;
-  width: 330px;
+  width: 380px;
   padding: 10px;
   border: 1px solid #dfe5ec;
   border-radius: 12px;
@@ -55,17 +55,28 @@
 
 .publish-version-popover-title {
   display: flex;
-  min-height: 28px;
-  align-items: center;
+  min-height: 36px;
+  align-items: flex-start;
   justify-content: space-between;
+  gap: 12px;
   padding: 0 2px 8px;
+}
+
+.publish-version-popover-title > div {
+  display: grid;
+  gap: 2px;
 }
 
 .publish-version-popover-title strong {
   font-size: 0.78rem;
 }
 
-.publish-version-popover-title button {
+.publish-version-popover-title small {
+  color: #7a8494;
+  font-size: 0.64rem;
+}
+
+.publish-version-popover-title > button {
   width: 26px;
   height: 26px;
   border: 0;
@@ -73,6 +84,69 @@
   background: transparent;
   font-size: 1rem;
   cursor: pointer;
+}
+
+.publish-module-selector {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  align-items: end;
+  padding: 8px;
+  border: 1px solid #e7ebf0;
+  border-radius: 9px;
+  background: #f8fafc;
+}
+
+.publish-module-selector label {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.publish-module-selector label > span {
+  color: #7a8494;
+  font-size: 0.62rem;
+  font-weight: 700;
+}
+
+.publish-module-selector select {
+  width: 100%;
+  min-height: 30px;
+  padding: 0 28px 0 8px;
+  border: 1px solid #d8dee7;
+  border-radius: 7px;
+  background: #fff;
+  font: inherit;
+  font-size: 0.7rem;
+}
+
+.publish-module-selector button {
+  min-height: 30px;
+  padding-inline: 9px;
+  font-size: 0.68rem;
+  white-space: nowrap;
+}
+
+.publish-module-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 9px 2px 6px;
+}
+
+.publish-module-summary > span {
+  color: #334155;
+  font-size: 0.68rem;
+  font-weight: 750;
+}
+
+.publish-module-summary > small {
+  overflow: hidden;
+  color: #7a8494;
+  font-size: 0.62rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .publish-version-list {
@@ -138,6 +212,27 @@
   font-size: 0.72rem;
 }
 
+.publish-module-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid #edf0f4;
+}
+
+.publish-module-footer > span {
+  color: #7a8494;
+  font-size: 0.64rem;
+}
+
+.publish-module-footer button {
+  min-height: 30px;
+  padding-inline: 10px;
+  font-size: 0.68rem;
+}
+
 .publish-feedback {
   position: fixed;
   z-index: 190;
@@ -165,7 +260,7 @@
     position: fixed;
     top: 64px;
     right: 16px;
-    width: min(330px, calc(100vw - 32px));
+    width: min(380px, calc(100vw - 32px));
   }
 
   .storefront-publish-button {

@@ -118,6 +118,9 @@ jobs:
           printf '%s' "$health" | grep -F '"environment":"production"'
           printf '%s' "$health" | grep -F '"publicLanguage":"en"'
 
+          content_origin="$(curl --fail --silent --show-error "$BASE_URL/api/public/storefront/content-origin")"
+          printf '%s' "$content_origin" | grep -Eq '"contentOrigin":"https?://[^\"]+"'
+
           auth_session="$(curl --fail --silent --show-error "$BASE_URL/api/admin/auth/session")"
           printf '%s' "$auth_session" | grep -F '"authenticated":false'
 

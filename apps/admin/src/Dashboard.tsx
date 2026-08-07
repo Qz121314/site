@@ -12,6 +12,7 @@ import {
   fetchPublishStatus,
   publishStorefront,
   rollbackStorefront,
+  type PublishModuleStatus,
   type PublishStatus,
   type PublishVersion,
 } from './publish-api';
@@ -42,6 +43,11 @@ type DynamicView = {
 };
 
 type PublishFeedback = { type: 'success' | 'error'; message: string } | null;
+type RollbackTarget = {
+  moduleKey: string;
+  moduleLabel: string;
+  version: PublishVersion;
+} | null;
 type PendingDiscardAction =
   | { kind: 'navigate'; view: AdminView }
   | { kind: 'logout' }
@@ -92,16 +98,26 @@ function getViewContext(view: AdminView, sections: AdminSection[]) {
   };
 }
 
+function publishKeyForView(view: AdminView): string {
+  if (view === 'settings') return 'site';
+  if (view === 'faq') return 'faq';
+  if (view === 'sections') return 'sections-index';
+  const dynamic = parseDynamicView(view);
+  return dynamic ? `section:${dynamic.sectionId}` : 'all';
+}
+
 function publishStatusLabel(
   status: PublishStatus | null,
   publishing: boolean,
   hasUnsavedChanges: boolean,
 ): string {
-  if (publishing) return '正在生成快照';
+  if (publishing) return '正在发布';
   if (hasUnsavedChanges) return '有未保存修改';
-  if (status?.lastJob?.status === 'failed') return '上次发布失败';
-  if (!status?.publishedAt) return '尚未发布';
-  return status.isCurrent ? '前台已是最新' : '有未发布修改';
+  if (!status) return '读取发布状态';
+  if (status.bootstrapRequired) return '需要首次发布';
+  if (status.modules.some((module) => module.lastJob?.status === 'failed')) return '部分板块发布失败';
+  if (status.dirtyCount > 0) return `${status.dirtyCount} 项待发布`;
+  return '前台已是最新';
 }
 
 function formatVersionTime(value: string): string {
@@ -119,6 +135,27 @@ function versionCode(version: PublishVersion): string {
   return version.contentVersion.slice(-8);
 }
 
+function modulePublishButtonLabel(module: PublishModuleStatus | null, key: string): string {
+  if (key === 'all') return '发布全部';
+  if (!module) return '发布当前板块';
+  switch (module.kind) {
+    case 'site':
+      return '发布站点设置';
+    case 'sections-index':
+      return '发布分区导航';
+    case 'faq':
+      return '发布 FAQ';
+    default:
+      return '发布当前分区';
+  }
+}
+
+function moduleStateLabel(module: PublishModuleStatus): string {
+  if (module.lastJob?.status === 'failed') return '上次失败';
+  if (!module.currentVersion) return '未发布';
+  return module.isCurrent ? '已是最新' : '有修改';
+}
+
 export function Dashboard({
   expiresAt,
   loggingOut,
@@ -130,10 +167,11 @@ export function Dashboard({
   const [sectionsLoading, setSectionsLoading] = useState(true);
   const [sectionsError, setSectionsError] = useState('');
   const [publishStatus, setPublishStatus] = useState<PublishStatus | null>(null);
-  const [publishing, setPublishing] = useState(false);
+  const [publishingKey, setPublishingKey] = useState<string | null>(null);
   const [publishFeedback, setPublishFeedback] = useState<PublishFeedback>(null);
   const [publishPanelOpen, setPublishPanelOpen] = useState(false);
-  const [rollbackTarget, setRollbackTarget] = useState<PublishVersion | null>(null);
+  const [historyModuleKey, setHistoryModuleKey] = useState('site');
+  const [rollbackTarget, setRollbackTarget] = useState<RollbackTarget>(null);
   const [rollingBack, setRollingBack] = useState(false);
   const [pendingDiscardAction, setPendingDiscardAction] = useState<PendingDiscardAction>(null);
   const unsaved = useAdminUnsavedState();
@@ -191,6 +229,27 @@ export function Dashboard({
     }
   }, [activeView, sections, sectionsLoading]);
 
+  const contextPublishKey = publishKeyForView(activeView);
+  const contextPublishModule = useMemo(
+    () => publishStatus?.modules.find((module) => module.key === contextPublishKey) ?? null,
+    [contextPublishKey, publishStatus?.modules],
+  );
+  const historyModule = useMemo(
+    () => publishStatus?.modules.find((module) => module.key === historyModuleKey) ?? null,
+    [historyModuleKey, publishStatus?.modules],
+  );
+
+  useEffect(() => {
+    if (!publishStatus?.modules.length) return;
+    if (contextPublishKey !== 'all' && publishStatus.modules.some((module) => module.key === contextPublishKey)) {
+      setHistoryModuleKey(contextPublishKey);
+      return;
+    }
+    if (!publishStatus.modules.some((module) => module.key === historyModuleKey)) {
+      setHistoryModuleKey(publishStatus.modules.find((module) => !module.isCurrent)?.key ?? publishStatus.modules[0]?.key ?? 'site');
+    }
+  }, [contextPublishKey, historyModuleKey, publishStatus]);
+
   function requestView(nextView: AdminView) {
     if (nextView === activeView) return;
     setPublishPanelOpen(false);
@@ -217,8 +276,8 @@ export function Dashboard({
     else onLogout();
   }
 
-  async function handlePublish() {
-    if (publishing || rollingBack) return;
+  async function handlePublish(moduleKey: string) {
+    if (publishingKey || rollingBack) return;
     if (unsaved.isDirty) {
       setPublishFeedback({
         type: 'error',
@@ -226,15 +285,23 @@ export function Dashboard({
       });
       return;
     }
-    setPublishing(true);
+    setPublishingKey(moduleKey);
     setPublishFeedback(null);
     try {
-      const result = await publishStorefront();
+      const result = await publishStorefront(moduleKey);
       await loadPublishStatus();
       setPublishPanelOpen(false);
+      const changed = result.publications.filter((publication) => !publication.unchanged);
+      const unchanged = result.publications.length > 0 && changed.length === 0;
       setPublishFeedback({
         type: 'success',
-        message: result.unchanged ? '前台已是最新，未生成重复快照。' : '前台快照已发布。',
+        message: result.bootstrapped
+          ? '模块化前台已完成首次发布；后续可以按板块独立发布。'
+          : unchanged
+            ? '该板块前台已是最新，未生成重复版本。'
+            : moduleKey === 'all'
+              ? `已发布 ${changed.length} 个有修改的板块。`
+              : `${changed[0]?.label ?? '当前板块'}已发布。`,
       });
     } catch (error) {
       if (isSessionError(error)) {
@@ -247,12 +314,12 @@ export function Dashboard({
       });
       void loadPublishStatus();
     } finally {
-      setPublishing(false);
+      setPublishingKey(null);
     }
   }
 
   async function handleRollback() {
-    if (!rollbackTarget || rollingBack || publishing) return;
+    if (!rollbackTarget || rollingBack || publishingKey) return;
     if (unsaved.isDirty) {
       setRollbackTarget(null);
       setPublishFeedback({
@@ -264,13 +331,13 @@ export function Dashboard({
     setRollingBack(true);
     setPublishFeedback(null);
     try {
-      await rollbackStorefront(rollbackTarget.contentVersion);
+      await rollbackStorefront(rollbackTarget.moduleKey, rollbackTarget.version.contentVersion);
       await loadPublishStatus();
       setPublishPanelOpen(false);
       setRollbackTarget(null);
       setPublishFeedback({
         type: 'success',
-        message: `前台已回退到 ${formatVersionTime(rollbackTarget.publishedAt)} 的快照。`,
+        message: `${rollbackTarget.moduleLabel}已回退到 ${formatVersionTime(rollbackTarget.version.publishedAt)} 的版本。`,
       });
     } catch (error) {
       if (isSessionError(error)) {
@@ -279,7 +346,7 @@ export function Dashboard({
       }
       setPublishFeedback({
         type: 'error',
-        message: error instanceof Error ? error.message : '回退前台版本失败。',
+        message: error instanceof Error ? error.message : '回退板块版本失败。',
       });
     } finally {
       setRollingBack(false);
@@ -296,6 +363,10 @@ export function Dashboard({
   const unsavedTitle = unsaved.labels.length > 0
     ? `未保存：${unsaved.labels.join('、')}`
     : '当前有未保存修改';
+  const contextIsCurrent = contextPublishKey === 'all'
+    ? publishStatus?.isCurrent === true
+    : contextPublishModule?.isCurrent === true;
+  const publishing = publishingKey !== null;
 
   return (
     <div className="admin-shell">
@@ -352,7 +423,7 @@ export function Dashboard({
             {unsaved.isDirty ? <span className="admin-unsaved-chip" title={unsavedTitle}>未保存修改</span> : null}
             <div className="publish-version-control">
               <button
-                className={`publish-status-chip${publishStatus?.lastJob?.status === 'failed' ? ' is-error' : ''}${(publishStatus && !publishStatus.isCurrent) || unsaved.isDirty ? ' is-dirty' : ''}`}
+                className={`publish-status-chip${publishStatus?.modules.some((module) => module.lastJob?.status === 'failed') ? ' is-error' : ''}${(publishStatus && !publishStatus.isCurrent) || unsaved.isDirty ? ' is-dirty' : ''}`}
                 type="button"
                 aria-expanded={publishPanelOpen}
                 onClick={() => {
@@ -365,22 +436,58 @@ export function Dashboard({
               </button>
               {publishPanelOpen ? (
                 <div className="publish-version-popover">
-                  <div className="publish-version-popover-title"><strong>最近版本</strong><button type="button" onClick={() => setPublishPanelOpen(false)} aria-label="关闭">×</button></div>
+                  <div className="publish-version-popover-title">
+                    <div><strong>板块发布</strong><small>每个板块独立保留最近 3 版</small></div>
+                    <button type="button" onClick={() => setPublishPanelOpen(false)} aria-label="关闭">×</button>
+                  </div>
+                  <div className="publish-module-selector">
+                    <label>
+                      <span>查看板块</span>
+                      <select value={historyModuleKey} onChange={(event) => setHistoryModuleKey(event.target.value)}>
+                        {publishStatus?.modules.map((module) => (
+                          <option key={module.key} value={module.key}>{module.label} · {moduleStateLabel(module)}</option>
+                        ))}
+                      </select>
+                    </label>
+                    <button
+                      className="secondary-button"
+                      type="button"
+                      disabled={!historyModule || historyModule.isCurrent || publishing || rollingBack || unsaved.isDirty}
+                      onClick={() => historyModule && void handlePublish(historyModule.key)}
+                    >
+                      发布此板块
+                    </button>
+                  </div>
+                  <div className="publish-module-summary">
+                    <span>{historyModule ? moduleStateLabel(historyModule) : '未选择'}</span>
+                    <small>{historyModule?.publishedAt ? `当前版本 ${formatVersionTime(historyModule.publishedAt)}` : '尚无当前版本'}</small>
+                  </div>
                   <div className="publish-version-list">
-                    {publishStatus?.versions.length ? publishStatus.versions.map((version) => (
+                    {historyModule?.versions.length ? historyModule.versions.map((version) => (
                       <div className={`publish-version-row${version.isCurrent ? ' is-current' : ''}`} key={version.contentVersion}>
                         <div><strong>{formatVersionTime(version.publishedAt)}</strong><small>{versionCode(version)}</small></div>
                         <span>{version.isCurrent ? '当前' : `${version.objectCount} 项`}</span>
                         <button
                           type="button"
                           disabled={version.isCurrent || publishing || rollingBack || unsaved.isDirty}
-                          onClick={() => setRollbackTarget(version)}
+                          onClick={() => setRollbackTarget({ moduleKey: historyModule.key, moduleLabel: historyModule.label, version })}
                           title={unsaved.isDirty ? '请先处理未保存修改' : undefined}
                         >
                           {version.isCurrent ? '使用中' : '回退'}
                         </button>
                       </div>
-                    )) : <div className="publish-version-empty">尚无前台快照</div>}
+                    )) : <div className="publish-version-empty">该板块尚无发布版本</div>}
+                  </div>
+                  <div className="publish-module-footer">
+                    <span>{publishStatus?.dirtyCount ?? 0} 个板块待发布</span>
+                    <button
+                      className="primary-button"
+                      type="button"
+                      disabled={publishStatus?.isCurrent === true || publishing || rollingBack || unsaved.isDirty}
+                      onClick={() => void handlePublish('all')}
+                    >
+                      发布全部待更新
+                    </button>
                   </div>
                 </div>
               ) : null}
@@ -388,11 +495,17 @@ export function Dashboard({
             <button
               className="primary-button storefront-publish-button"
               type="button"
-              onClick={() => void handlePublish()}
-              disabled={publishing || loggingOut || rollingBack || unsaved.isDirty || publishStatus?.isCurrent === true}
+              onClick={() => void handlePublish(contextPublishKey)}
+              disabled={publishing || loggingOut || rollingBack || unsaved.isDirty || contextIsCurrent}
               title={unsaved.isDirty ? unsavedTitle : undefined}
             >
-              {publishing ? '发布中…' : unsaved.isDirty ? '请先保存' : publishStatus?.isCurrent ? '前台已最新' : '发布前台'}
+              {publishingKey === contextPublishKey || (contextPublishKey === 'all' && publishingKey === 'all')
+                ? '发布中…'
+                : unsaved.isDirty
+                  ? '请先保存'
+                  : contextIsCurrent
+                    ? '当前板块已最新'
+                    : modulePublishButtonLabel(contextPublishModule, contextPublishKey)}
             </button>
             <span className="environment-badge">{expiresAt ? `会话至 ${new Date(expiresAt).toLocaleTimeString('zh-CN')}` : 'PRODUCTION'}</span>
             <button className="secondary-button" type="button" onClick={requestLogout} disabled={loggingOut || publishing || rollingBack}>{loggingOut ? '正在退出…' : '退出登录'}</button>
@@ -427,8 +540,8 @@ export function Dashboard({
         {rollbackTarget ? (
           <div className="admin-dialog-backdrop" role="presentation">
             <section className="admin-dialog admin-dialog-small" role="dialog" aria-modal="true" aria-labelledby="publish-rollback-title">
-              <div className="admin-dialog-header"><div><p>前台版本</p><h3 id="publish-rollback-title">回退到 {formatVersionTime(rollbackTarget.publishedAt)}？</h3></div><button type="button" aria-label="关闭" disabled={rollingBack} onClick={() => setRollbackTarget(null)}>×</button></div>
-              <p className="delete-warning">前台会立即切换到该 R2 快照；后台当前数据不会改变。</p>
+              <div className="admin-dialog-header"><div><p>{rollbackTarget.moduleLabel}</p><h3 id="publish-rollback-title">回退到 {formatVersionTime(rollbackTarget.version.publishedAt)}？</h3></div><button type="button" aria-label="关闭" disabled={rollingBack} onClick={() => setRollbackTarget(null)}>×</button></div>
+              <p className="delete-warning">只会切换该板块的 R2 版本；其他板块和后台当前数据都不会改变。</p>
               <div className="admin-dialog-actions"><button className="secondary-button" type="button" disabled={rollingBack} onClick={() => setRollbackTarget(null)}>取消</button><button className="primary-button" type="button" disabled={rollingBack} onClick={() => void handleRollback()}>{rollingBack ? '正在回退…' : '确认回退'}</button></div>
             </section>
           </div>

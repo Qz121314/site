@@ -39,6 +39,7 @@ export type PublicProductSummary = {
   tags: Array<Pick<PublicTag, 'id' | 'name' | 'sortOrder'>>;
   coverUrl: string | null;
   isFeatured: boolean;
+  featuredOrder: number;
   publishedAt: string | null;
   sortOrder: number;
 };
@@ -65,6 +66,7 @@ export type PublicSite = {
   locationLabel: string;
   mediaBaseUrl: string;
   logoUrl: string | null;
+  homeSectionLimit?: number;
   navigation: {
     showHot: boolean;
     showLatest: boolean;
@@ -82,7 +84,7 @@ export type PublicSite = {
   };
 };
 
-export type CurrentPointer = {
+export type CurrentPointerV1 = {
   schemaVersion: 1;
   contentVersion: string;
   manifestKey: string;
@@ -90,15 +92,34 @@ export type CurrentPointer = {
   publishedAt: string;
 };
 
+export type ModuleReference = {
+  contentVersion: string;
+  manifestKey: string;
+  sourceRevision: string;
+  publishedAt: string;
+};
+
+export type CurrentPointerV2 = {
+  schemaVersion: 2;
+  contentVersion: string;
+  publishedAt: string;
+  site: ModuleReference;
+  sectionsIndex: ModuleReference;
+  faq: ModuleReference;
+  sections: Record<string, ModuleReference>;
+};
+
+export type CurrentPointer = CurrentPointerV1 | CurrentPointerV2;
+
 export type SiteSnapshot = {
-  schemaVersion: 1;
+  schemaVersion: 1 | 2;
   contentVersion: string;
   publishedAt: string;
   site: PublicSite;
 };
 
 export type HomeSnapshot = {
-  schemaVersion: 1;
+  schemaVersion: 1 | 2;
   contentVersion: string;
   publishedAt: string;
   sections: PublicSection[];
@@ -108,7 +129,7 @@ export type HomeSnapshot = {
 };
 
 export type SectionSnapshot = {
-  schemaVersion: 1;
+  schemaVersion: 1 | 2;
   contentVersion: string;
   publishedAt: string;
   section: PublicSection;
@@ -118,14 +139,14 @@ export type SectionSnapshot = {
 };
 
 export type ProductSnapshot = {
-  schemaVersion: 1;
+  schemaVersion: 1 | 2;
   contentVersion: string;
   publishedAt: string;
   product: PublicProduct;
 };
 
 export type FaqSnapshot = {
-  schemaVersion: 1;
+  schemaVersion: 1 | 2;
   contentVersion: string;
   publishedAt: string;
   faqs: Array<{ id: string; title: string; body: string }>;
@@ -136,6 +157,8 @@ export type StorefrontBootstrap = {
   pointer: CurrentPointer;
   site: SiteSnapshot;
   home: HomeSnapshot;
+  sectionSnapshots: Record<string, SectionSnapshot>;
+  productSectionIds: Record<string, string>;
 };
 
 export class PublicContentError extends Error {
@@ -148,7 +171,101 @@ export class PublicContentError extends Error {
   }
 }
 
+type V2SiteSnapshot = {
+  schemaVersion: 2;
+  moduleKey: 'site';
+  contentVersion: string;
+  publishedAt: string;
+  site: {
+    name: string;
+    locationLabel: string;
+    mediaBaseUrl: string | null;
+    logoObjectKey: string | null;
+    homeSectionLimit: number;
+    navigation: PublicSite['navigation'];
+    analytics: PublicSite['analytics'];
+    affiliate: PublicSite['affiliate'];
+  };
+};
+
+type V2SectionsIndexSnapshot = {
+  schemaVersion: 2;
+  moduleKey: 'sections-index';
+  contentVersion: string;
+  publishedAt: string;
+  sections: Array<{
+    id: string;
+    slug: string;
+    name: string;
+    icon: {
+      type: 'image' | 'icon';
+      objectKey: string | null;
+      value: string | null;
+    };
+    sortOrder: number;
+  }>;
+};
+
+type V2ProductSummary = {
+  id: string;
+  slug: string;
+  sectionId: string;
+  title: string;
+  serviceMode: 'online' | 'offline';
+  address: string | null;
+  category: { id: string | null; name: string | null };
+  tags: Array<Pick<PublicTag, 'id' | 'name' | 'sortOrder'>>;
+  coverObjectKey: string | null;
+  isFeatured: boolean;
+  featuredOrder: number;
+  publishedAt: string | null;
+  sortOrder: number;
+};
+
+type V2SectionSnapshot = {
+  schemaVersion: 2;
+  moduleKey: string;
+  contentVersion: string;
+  publishedAt: string;
+  sectionId: string;
+  categories: PublicCategory[];
+  tags: PublicTag[];
+  products: V2ProductSummary[];
+};
+
+type V2ProductSnapshot = {
+  schemaVersion: 2;
+  moduleKey: string;
+  contentVersion: string;
+  publishedAt: string;
+  product: V2ProductSummary & {
+    conversionGroupId?: string | null;
+    body: string;
+    media: Array<{
+      id: string;
+      objectKey: string;
+      width: number | null;
+      height: number | null;
+      altText: string | null;
+      sortOrder: number;
+    }>;
+    cta: PublicProduct['cta'];
+  };
+};
+
+type V2FaqSnapshot = {
+  schemaVersion: 2;
+  moduleKey: 'faq';
+  contentVersion: string;
+  publishedAt: string;
+  faqs: Array<{ id: string; title: string; body: string; sortOrder?: number }>;
+};
+
 const VERSION_PATTERN = /^[A-Za-z0-9-]{12,180}$/;
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
 
 export function normalizeContentOrigin(value: string | undefined | null): string | null {
   const raw = value?.trim();
@@ -164,9 +281,32 @@ export function normalizeContentOrigin(value: string | undefined | null): string
   }
 }
 
-export function resolveContentOrigin(): string {
+async function discoverContentOrigin(signal?: AbortSignal): Promise<string | null> {
+  const init: RequestInit = {
+    method: 'GET',
+    cache: 'no-cache',
+    credentials: 'same-origin',
+    headers: { Accept: 'application/json' },
+  };
+  if (signal) init.signal = signal;
+
+  try {
+    const response = await fetch('/api/public/storefront/content-origin', init);
+    if (!response.ok) return null;
+    const value = await response.json() as unknown;
+    if (!isRecord(value)) return null;
+    return normalizeContentOrigin(typeof value.contentOrigin === 'string' ? value.contentOrigin : null);
+  } catch {
+    return null;
+  }
+}
+
+export async function resolveContentOrigin(signal?: AbortSignal): Promise<string> {
   const configured = normalizeContentOrigin(import.meta.env?.VITE_PUBLIC_CONTENT_ORIGIN);
   if (configured) return configured;
+
+  const discovered = await discoverContentOrigin(signal);
+  if (discovered) return discovered;
 
   if (typeof window !== 'undefined') {
     const host = window.location.hostname.toLowerCase();
@@ -177,7 +317,7 @@ export function resolveContentOrigin(): string {
 
   throw new PublicContentError(
     'CONTENT_ORIGIN_REQUIRED',
-    'Public content is not configured yet. Please try again later.',
+    'Public content has been published, but its R2 content domain is not available yet.',
   );
 }
 
@@ -187,80 +327,141 @@ function assertContentVersion(value: unknown): asserts value is string {
   }
 }
 
-function assertPointer(value: unknown): asserts value is CurrentPointer {
-  if (!value || typeof value !== 'object') {
+function validModuleReference(value: unknown): value is ModuleReference {
+  if (!isRecord(value)) return false;
+  if (
+    typeof value.contentVersion !== 'string' ||
+    typeof value.manifestKey !== 'string' ||
+    typeof value.sourceRevision !== 'string' ||
+    typeof value.publishedAt !== 'string'
+  ) {
+    return false;
+  }
+  return VERSION_PATTERN.test(value.contentVersion);
+}
+
+function parsePointer(value: unknown): CurrentPointer {
+  if (!isRecord(value)) {
     throw new PublicContentError('INVALID_POINTER', 'The published content pointer is invalid.');
   }
-  const pointer = value as Partial<CurrentPointer>;
+
+  if (value.schemaVersion === 1) {
+    if (
+      typeof value.manifestKey !== 'string' ||
+      typeof value.sourceRevision !== 'string' ||
+      typeof value.publishedAt !== 'string'
+    ) {
+      throw new PublicContentError('INVALID_POINTER', 'The published content pointer is invalid.');
+    }
+    assertContentVersion(value.contentVersion);
+    return {
+      schemaVersion: 1,
+      contentVersion: value.contentVersion,
+      manifestKey: value.manifestKey,
+      sourceRevision: value.sourceRevision,
+      publishedAt: value.publishedAt,
+    };
+  }
+
   if (
-    pointer.schemaVersion !== 1 ||
-    typeof pointer.manifestKey !== 'string' ||
-    typeof pointer.sourceRevision !== 'string' ||
-    typeof pointer.publishedAt !== 'string'
+    value.schemaVersion !== 2 ||
+    typeof value.publishedAt !== 'string' ||
+    !validModuleReference(value.site) ||
+    !validModuleReference(value.sectionsIndex) ||
+    !validModuleReference(value.faq) ||
+    !isRecord(value.sections)
   ) {
     throw new PublicContentError('INVALID_POINTER', 'The published content pointer is invalid.');
   }
-  assertContentVersion(pointer.contentVersion);
+  assertContentVersion(value.contentVersion);
+  const sections: Record<string, ModuleReference> = {};
+  for (const [sectionId, reference] of Object.entries(value.sections)) {
+    if (!sectionId || sectionId.length > 120 || !validModuleReference(reference)) {
+      throw new PublicContentError('INVALID_POINTER', 'The published content pointer is invalid.');
+    }
+    sections[sectionId] = reference;
+  }
+  return {
+    schemaVersion: 2,
+    contentVersion: value.contentVersion,
+    publishedAt: value.publishedAt,
+    site: value.site,
+    sectionsIndex: value.sectionsIndex,
+    faq: value.faq,
+    sections,
+  };
 }
 
-function assertEnvelope(value: unknown, contentVersion: string): asserts value is { schemaVersion: 1; contentVersion: string } {
-  if (!value || typeof value !== 'object') {
-    throw new PublicContentError('INVALID_SNAPSHOT', 'The published content snapshot is invalid.');
-  }
-  const envelope = value as { schemaVersion?: unknown; contentVersion?: unknown };
-  if (envelope.schemaVersion !== 1 || envelope.contentVersion !== contentVersion) {
+function assertV1Envelope(value: unknown, contentVersion: string): void {
+  if (!isRecord(value) || value.schemaVersion !== 1 || value.contentVersion !== contentVersion) {
     throw new PublicContentError('SNAPSHOT_VERSION_MISMATCH', 'The published content snapshot is inconsistent.');
+  }
+}
+
+function assertV2Envelope(value: unknown, moduleKey: string, contentVersion: string): void {
+  if (
+    !isRecord(value) ||
+    value.schemaVersion !== 2 ||
+    value.moduleKey !== moduleKey ||
+    value.contentVersion !== contentVersion
+  ) {
+    throw new PublicContentError('SNAPSHOT_VERSION_MISMATCH', 'The published content module is inconsistent.');
   }
 }
 
 function normalizeTags(value: unknown): PublicProductSummary['tags'] {
   if (!Array.isArray(value)) return [];
   return value.filter((tag): tag is PublicProductSummary['tags'][number] => {
-    if (!tag || typeof tag !== 'object') return false;
-    const candidate = tag as { id?: unknown; name?: unknown; sortOrder?: unknown };
+    if (!isRecord(tag)) return false;
     return (
-      typeof candidate.id === 'string' &&
-      typeof candidate.name === 'string' &&
-      typeof candidate.sortOrder === 'number'
+      typeof tag.id === 'string' &&
+      typeof tag.name === 'string' &&
+      typeof tag.sortOrder === 'number'
     );
   });
 }
 
-function normalizeSummary(product: PublicProductSummary): PublicProductSummary {
-  return { ...product, tags: normalizeTags((product as { tags?: unknown }).tags) };
+function normalizeV1Summary(product: PublicProductSummary): PublicProductSummary {
+  const featuredOrder = (product as PublicProductSummary & { featuredOrder?: unknown }).featuredOrder;
+  return {
+    ...product,
+    tags: normalizeTags((product as { tags?: unknown }).tags),
+    featuredOrder: typeof featuredOrder === 'number' ? featuredOrder : 0,
+  };
 }
 
-function normalizeHomeSnapshot(snapshot: HomeSnapshot): HomeSnapshot {
+function normalizeV1HomeSnapshot(snapshot: HomeSnapshot): HomeSnapshot {
   return {
     ...snapshot,
     sections: Array.isArray(snapshot.sections) ? snapshot.sections : [],
     allSections: Array.isArray(snapshot.allSections) ? snapshot.allSections : [],
     featuredProducts: Array.isArray(snapshot.featuredProducts)
-      ? snapshot.featuredProducts.map(normalizeSummary)
+      ? snapshot.featuredProducts.map(normalizeV1Summary)
       : [],
     latestProducts: Array.isArray(snapshot.latestProducts)
-      ? snapshot.latestProducts.map(normalizeSummary)
+      ? snapshot.latestProducts.map(normalizeV1Summary)
       : [],
   };
 }
 
-function normalizeSectionSnapshot(snapshot: SectionSnapshot): SectionSnapshot {
+function normalizeV1SectionSnapshot(snapshot: SectionSnapshot): SectionSnapshot {
   return {
     ...snapshot,
     categories: Array.isArray(snapshot.categories) ? snapshot.categories : [],
     tags: Array.isArray(snapshot.tags) ? snapshot.tags : [],
-    products: Array.isArray(snapshot.products) ? snapshot.products.map(normalizeSummary) : [],
+    products: Array.isArray(snapshot.products) ? snapshot.products.map(normalizeV1Summary) : [],
   };
 }
 
-function normalizeProductSnapshot(snapshot: ProductSnapshot): ProductSnapshot {
+function normalizeV1ProductSnapshot(snapshot: ProductSnapshot): ProductSnapshot {
   const product = snapshot.product;
   return {
     ...snapshot,
     product: {
-      ...product,
-      tags: normalizeTags((product as { tags?: unknown }).tags),
+      ...normalizeV1Summary(product),
+      body: product.body,
       media: Array.isArray(product.media) ? product.media : [],
+      cta: product.cta,
     },
   };
 }
@@ -274,10 +475,19 @@ export function publicContentUrl(origin: string, path: string): string {
   return `${normalized}/${normalizedPath}`;
 }
 
+function encodeObjectKey(key: string): string {
+  return key.split('/').map((segment) => encodeURIComponent(segment)).join('/');
+}
+
+function mediaUrl(mediaBaseUrl: string, objectKey: string | null): string | null {
+  return objectKey ? `${mediaBaseUrl}/${encodeObjectKey(objectKey)}` : null;
+}
+
 async function fetchJson(url: string, cache: RequestCache, signal?: AbortSignal): Promise<unknown> {
   const init: RequestInit = {
     method: 'GET',
     cache,
+    credentials: 'omit',
     headers: { Accept: 'application/json' },
   };
   if (signal) init.signal = signal;
@@ -286,14 +496,17 @@ async function fetchJson(url: string, cache: RequestCache, signal?: AbortSignal)
   try {
     response = await fetch(url, init);
   } catch {
-    throw new PublicContentError('CONTENT_UNAVAILABLE', 'Published content is temporarily unavailable.');
+    throw new PublicContentError(
+      'CONTENT_UNAVAILABLE',
+      'Published content could not be reached. Please try again shortly.',
+    );
   }
 
   if (!response.ok) {
     throw new PublicContentError(
       response.status === 404 ? 'CONTENT_NOT_PUBLISHED' : 'CONTENT_UNAVAILABLE',
       response.status === 404
-        ? 'No storefront version has been published yet.'
+        ? 'No published content is available for this page yet.'
         : 'Published content is temporarily unavailable.',
     );
   }
@@ -311,15 +524,14 @@ async function fetchJson(url: string, cache: RequestCache, signal?: AbortSignal)
 }
 
 export async function loadCurrentPointer(
-  origin = resolveContentOrigin(),
+  origin: string,
   signal?: AbortSignal,
 ): Promise<CurrentPointer> {
   const value = await fetchJson(publicContentUrl(origin, 'public/current.json'), 'no-cache', signal);
-  assertPointer(value);
-  return value;
+  return parsePointer(value);
 }
 
-async function loadVersionFile<T extends { schemaVersion: 1; contentVersion: string }>(
+async function loadV1File<T>(
   origin: string,
   contentVersion: string,
   relativePath: string,
@@ -331,66 +543,327 @@ async function loadVersionFile<T extends { schemaVersion: 1; contentVersion: str
     'force-cache',
     signal,
   );
-  assertEnvelope(value, contentVersion);
+  assertV1Envelope(value, contentVersion);
   return value as T;
 }
 
-export async function loadStorefrontBootstrap(
-  origin = resolveContentOrigin(),
+async function loadV2File<T>(
+  origin: string,
+  moduleKey: string,
+  reference: ModuleReference,
+  path: string,
+  signal?: AbortSignal,
+): Promise<T> {
+  assertContentVersion(reference.contentVersion);
+  const value = await fetchJson(publicContentUrl(origin, path), 'force-cache', signal);
+  assertV2Envelope(value, moduleKey, reference.contentVersion);
+  return value as T;
+}
+
+function v2ModulePath(moduleKey: string, reference: ModuleReference, relativePath: string): string {
+  if (moduleKey === 'site') {
+    return `public/modules/site/${reference.contentVersion}/${relativePath}`;
+  }
+  if (moduleKey === 'sections-index') {
+    return `public/modules/sections-index/${reference.contentVersion}/${relativePath}`;
+  }
+  if (moduleKey === 'faq') {
+    return `public/modules/faq/${reference.contentVersion}/${relativePath}`;
+  }
+  const sectionId = moduleKey.startsWith('section:') ? moduleKey.slice('section:'.length) : '';
+  if (!sectionId) {
+    throw new PublicContentError('INVALID_POINTER', 'The published section module is invalid.');
+  }
+  return `public/modules/sections/${encodeURIComponent(sectionId)}/${reference.contentVersion}/${relativePath}`;
+}
+
+function resolveV2Section(
+  section: V2SectionsIndexSnapshot['sections'][number],
+  mediaBaseUrl: string,
+): PublicSection {
+  return {
+    id: section.id,
+    slug: section.slug,
+    name: section.name,
+    icon: {
+      type: section.icon.type,
+      value: section.icon.type === 'image'
+        ? mediaUrl(mediaBaseUrl, section.icon.objectKey)
+        : section.icon.value,
+    },
+    sortOrder: section.sortOrder,
+  };
+}
+
+function resolveV2Summary(
+  product: V2ProductSummary,
+  section: PublicSection,
+  mediaBaseUrl: string,
+): PublicProductSummary {
+  return {
+    id: product.id,
+    slug: product.slug,
+    sectionId: product.sectionId,
+    sectionSlug: section.slug,
+    sectionName: section.name,
+    title: product.title,
+    serviceMode: product.serviceMode,
+    address: product.address,
+    category: product.category,
+    tags: normalizeTags(product.tags),
+    coverUrl: mediaUrl(mediaBaseUrl, product.coverObjectKey),
+    isFeatured: product.isFeatured,
+    featuredOrder: product.featuredOrder,
+    publishedAt: product.publishedAt,
+    sortOrder: product.sortOrder,
+  };
+}
+
+async function loadV2Bootstrap(
+  origin: string,
+  pointer: CurrentPointerV2,
   signal?: AbortSignal,
 ): Promise<StorefrontBootstrap> {
-  const normalizedOrigin = normalizeContentOrigin(origin);
-  if (!normalizedOrigin) {
+  const [rawSite, rawIndex] = await Promise.all([
+    loadV2File<V2SiteSnapshot>(
+      origin,
+      'site',
+      pointer.site,
+      v2ModulePath('site', pointer.site, 'site.json'),
+      signal,
+    ),
+    loadV2File<V2SectionsIndexSnapshot>(
+      origin,
+      'sections-index',
+      pointer.sectionsIndex,
+      v2ModulePath('sections-index', pointer.sectionsIndex, 'sections.json'),
+      signal,
+    ),
+  ]);
+
+  const mediaBaseUrl = normalizeContentOrigin(rawSite.site.mediaBaseUrl);
+  if (!mediaBaseUrl) {
+    throw new PublicContentError('INVALID_MEDIA_ORIGIN', 'The published media domain is invalid.');
+  }
+  const site: PublicSite = {
+    name: rawSite.site.name,
+    locationLabel: rawSite.site.locationLabel,
+    mediaBaseUrl,
+    logoUrl: mediaUrl(mediaBaseUrl, rawSite.site.logoObjectKey),
+    homeSectionLimit: rawSite.site.homeSectionLimit,
+    navigation: rawSite.site.navigation,
+    analytics: rawSite.site.analytics,
+    affiliate: rawSite.site.affiliate,
+  };
+  const sections = rawIndex.sections.map((section) => resolveV2Section(section, mediaBaseUrl));
+
+  const loadedSections = await Promise.all(
+    sections.map(async (section) => {
+      const reference = pointer.sections[section.id];
+      if (!reference) return null;
+      const moduleKey = `section:${section.id}`;
+      const raw = await loadV2File<V2SectionSnapshot>(
+        origin,
+        moduleKey,
+        reference,
+        v2ModulePath(moduleKey, reference, 'section.json'),
+        signal,
+      );
+      if (raw.sectionId !== section.id) {
+        throw new PublicContentError('SNAPSHOT_VERSION_MISMATCH', 'The published section is inconsistent.');
+      }
+      const products = Array.isArray(raw.products)
+        ? raw.products.map((product) => resolveV2Summary(product, section, mediaBaseUrl))
+        : [];
+      const snapshot: SectionSnapshot = {
+        schemaVersion: 2,
+        contentVersion: reference.contentVersion,
+        publishedAt: raw.publishedAt,
+        section,
+        categories: Array.isArray(raw.categories) ? raw.categories : [],
+        tags: Array.isArray(raw.tags) ? raw.tags : [],
+        products,
+      };
+      return snapshot;
+    }),
+  );
+
+  const sectionSnapshots: Record<string, SectionSnapshot> = {};
+  const productSectionIds: Record<string, string> = {};
+  const allProducts: PublicProductSummary[] = [];
+  for (const snapshot of loadedSections) {
+    if (!snapshot) continue;
+    sectionSnapshots[snapshot.section.id] = snapshot;
+    for (const product of snapshot.products) {
+      productSectionIds[product.id] = snapshot.section.id;
+      allProducts.push(product);
+    }
+  }
+
+  const homeLimit = Math.max(1, Math.min(20, rawSite.site.homeSectionLimit || 5));
+  const featuredProducts = allProducts
+    .filter((product) => product.isFeatured)
+    .sort((left, right) => left.featuredOrder - right.featuredOrder || left.sortOrder - right.sortOrder)
+    .slice(0, 30);
+  const latestProducts = [...allProducts]
+    .sort((left, right) => (right.publishedAt ?? '').localeCompare(left.publishedAt ?? ''))
+    .slice(0, 30);
+
+  return {
+    origin,
+    pointer,
+    site: {
+      schemaVersion: 2,
+      contentVersion: pointer.site.contentVersion,
+      publishedAt: pointer.site.publishedAt,
+      site,
+    },
+    home: {
+      schemaVersion: 2,
+      contentVersion: pointer.contentVersion,
+      publishedAt: pointer.publishedAt,
+      sections: sections.slice(0, homeLimit),
+      allSections: sections,
+      featuredProducts,
+      latestProducts,
+    },
+    sectionSnapshots,
+    productSectionIds,
+  };
+}
+
+async function loadV1Bootstrap(
+  origin: string,
+  pointer: CurrentPointerV1,
+  signal?: AbortSignal,
+): Promise<StorefrontBootstrap> {
+  const [site, rawHome] = await Promise.all([
+    loadV1File<SiteSnapshot>(origin, pointer.contentVersion, 'site.json', signal),
+    loadV1File<HomeSnapshot>(origin, pointer.contentVersion, 'home.json', signal),
+  ]);
+  return {
+    origin,
+    pointer,
+    site,
+    home: normalizeV1HomeSnapshot(rawHome),
+    sectionSnapshots: {},
+    productSectionIds: {},
+  };
+}
+
+export async function loadStorefrontBootstrap(
+  origin?: string,
+  signal?: AbortSignal,
+): Promise<StorefrontBootstrap> {
+  const resolvedOrigin = origin
+    ? normalizeContentOrigin(origin)
+    : await resolveContentOrigin(signal);
+  if (!resolvedOrigin) {
     throw new PublicContentError('INVALID_CONTENT_ORIGIN', 'The public content origin is invalid.');
   }
-  const pointer = await loadCurrentPointer(normalizedOrigin, signal);
-  const [site, rawHome] = await Promise.all([
-    loadVersionFile<SiteSnapshot>(normalizedOrigin, pointer.contentVersion, 'site.json', signal),
-    loadVersionFile<HomeSnapshot>(normalizedOrigin, pointer.contentVersion, 'home.json', signal),
-  ]);
-  return { origin: normalizedOrigin, pointer, site, home: normalizeHomeSnapshot(rawHome) };
+  const pointer = await loadCurrentPointer(resolvedOrigin, signal);
+  return pointer.schemaVersion === 2
+    ? loadV2Bootstrap(resolvedOrigin, pointer, signal)
+    : loadV1Bootstrap(resolvedOrigin, pointer, signal);
 }
 
 export async function loadSectionSnapshot(
-  origin: string,
-  contentVersion: string,
+  bootstrap: StorefrontBootstrap,
   sectionId: string,
   signal?: AbortSignal,
 ): Promise<SectionSnapshot> {
   if (!sectionId || sectionId.length > 120) {
     throw new PublicContentError('INVALID_SECTION', 'The requested service section is invalid.');
   }
-  const snapshot = await loadVersionFile<SectionSnapshot>(
-    origin,
-    contentVersion,
+  if (bootstrap.pointer.schemaVersion === 2) {
+    const snapshot = bootstrap.sectionSnapshots[sectionId];
+    if (!snapshot) {
+      throw new PublicContentError('CONTENT_NOT_PUBLISHED', 'This service section has not been published yet.');
+    }
+    return snapshot;
+  }
+  const snapshot = await loadV1File<SectionSnapshot>(
+    bootstrap.origin,
+    bootstrap.pointer.contentVersion,
     `sections/${encodeURIComponent(sectionId)}.json`,
     signal,
   );
-  return normalizeSectionSnapshot(snapshot);
+  return normalizeV1SectionSnapshot(snapshot);
 }
 
 export async function loadProductSnapshot(
-  origin: string,
-  contentVersion: string,
+  bootstrap: StorefrontBootstrap,
   productId: string,
   signal?: AbortSignal,
 ): Promise<ProductSnapshot> {
   if (!productId || productId.length > 120) {
     throw new PublicContentError('INVALID_PRODUCT', 'The requested service is invalid.');
   }
-  const snapshot = await loadVersionFile<ProductSnapshot>(
-    origin,
-    contentVersion,
-    `products/${encodeURIComponent(productId)}.json`,
+  if (bootstrap.pointer.schemaVersion === 1) {
+    const snapshot = await loadV1File<ProductSnapshot>(
+      bootstrap.origin,
+      bootstrap.pointer.contentVersion,
+      `products/${encodeURIComponent(productId)}.json`,
+      signal,
+    );
+    return normalizeV1ProductSnapshot(snapshot);
+  }
+
+  const sectionId = bootstrap.productSectionIds[productId];
+  const section = sectionId ? bootstrap.home.allSections.find((item) => item.id === sectionId) : null;
+  const reference = sectionId ? bootstrap.pointer.sections[sectionId] : null;
+  if (!sectionId || !section || !reference) {
+    throw new PublicContentError('CONTENT_NOT_PUBLISHED', 'This service is not part of the current published section versions.');
+  }
+  const moduleKey = `section:${sectionId}`;
+  const raw = await loadV2File<V2ProductSnapshot>(
+    bootstrap.origin,
+    moduleKey,
+    reference,
+    v2ModulePath(moduleKey, reference, `products/${encodeURIComponent(productId)}.json`),
     signal,
   );
-  return normalizeProductSnapshot(snapshot);
+  const summary = resolveV2Summary(raw.product, section, bootstrap.site.site.mediaBaseUrl);
+  return {
+    schemaVersion: 2,
+    contentVersion: reference.contentVersion,
+    publishedAt: raw.publishedAt,
+    product: {
+      ...summary,
+      body: raw.product.body,
+      media: Array.isArray(raw.product.media)
+        ? raw.product.media.map((media) => ({
+            id: media.id,
+            url: mediaUrl(bootstrap.site.site.mediaBaseUrl, media.objectKey),
+            width: media.width,
+            height: media.height,
+            altText: media.altText,
+            sortOrder: media.sortOrder,
+          }))
+        : [],
+      cta: raw.product.cta,
+    },
+  };
 }
 
-export function loadFaqSnapshot(
-  origin: string,
-  contentVersion: string,
+export async function loadFaqSnapshot(
+  bootstrap: StorefrontBootstrap,
   signal?: AbortSignal,
 ): Promise<FaqSnapshot> {
-  return loadVersionFile<FaqSnapshot>(origin, contentVersion, 'faq.json', signal);
+  if (bootstrap.pointer.schemaVersion === 1) {
+    return loadV1File<FaqSnapshot>(
+      bootstrap.origin,
+      bootstrap.pointer.contentVersion,
+      'faq.json',
+      signal,
+    );
+  }
+  const reference = bootstrap.pointer.faq;
+  return loadV2File<V2FaqSnapshot>(
+    bootstrap.origin,
+    'faq',
+    reference,
+    v2ModulePath('faq', reference, 'faq.json'),
+    signal,
+  );
 }

@@ -2,18 +2,184 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   PublicContentError,
+  loadFaqSnapshot,
+  loadProductSnapshot,
+  loadSectionSnapshot,
   loadStorefrontBootstrap,
   normalizeContentOrigin,
   publicContentUrl,
 } from '../src/content.ts';
 
-const VERSION = '20260807074900-abcdef123456-deadbeef';
+const LEGACY_VERSION = '20260807074900-abcdef123456-deadbeef';
+const POINTER_VERSION = '20260807090000-pointer-feedbeef';
+const SITE_VERSION = '20260807085000-site12345678-acde1234';
+const INDEX_VERSION = '20260807085100-index1234567-acde1235';
+const FAQ_VERSION = '20260807085200-faq123456789-acde1236';
+const SECTION_A_VERSION = '20260807085300-sectiona12345-acde1237';
+const SECTION_B_VERSION = '20260807085400-sectionb12345-acde1238';
 
 function jsonResponse(value, status = 200) {
   return new Response(JSON.stringify(value), {
     status,
     headers: { 'content-type': 'application/json; charset=utf-8' },
   });
+}
+
+function reference(contentVersion, modulePath) {
+  return {
+    contentVersion,
+    manifestKey: `${modulePath}/${contentVersion}/manifest.json`,
+    sourceRevision: `source-${contentVersion}`,
+    publishedAt: '2026-08-07T08:55:00.000Z',
+  };
+}
+
+function modularPointer() {
+  return {
+    schemaVersion: 2,
+    contentVersion: POINTER_VERSION,
+    publishedAt: '2026-08-07T09:00:00.000Z',
+    site: reference(SITE_VERSION, 'public/modules/site'),
+    sectionsIndex: reference(INDEX_VERSION, 'public/modules/sections-index'),
+    faq: reference(FAQ_VERSION, 'public/modules/faq'),
+    sections: {
+      'section-a': reference(SECTION_A_VERSION, 'public/modules/sections/section-a'),
+      'section-b': reference(SECTION_B_VERSION, 'public/modules/sections/section-b'),
+    },
+  };
+}
+
+function siteModule() {
+  return {
+    schemaVersion: 2,
+    moduleKey: 'site',
+    contentVersion: SITE_VERSION,
+    publishedAt: '2026-08-07T08:50:00.000Z',
+    site: {
+      name: 'Directory',
+      locationLabel: 'City',
+      mediaBaseUrl: 'https://media.example.com',
+      logoObjectKey: 'branding/logo.webp',
+      homeSectionLimit: 8,
+      navigation: {
+        showHot: true,
+        showLatest: true,
+        showMore: true,
+        showMessages: false,
+        showFaq: true,
+      },
+      analytics: { ga4MeasurementId: null, facebookPixelId: null },
+      affiliate: { enabled: false, platform: null },
+    },
+  };
+}
+
+function sectionsIndexModule() {
+  return {
+    schemaVersion: 2,
+    moduleKey: 'sections-index',
+    contentVersion: INDEX_VERSION,
+    publishedAt: '2026-08-07T08:51:00.000Z',
+    sections: [
+      {
+        id: 'section-a',
+        slug: 'alpha',
+        name: 'Alpha',
+        icon: { type: 'image', objectKey: 'sections/alpha.webp', value: null },
+        sortOrder: 0,
+      },
+      {
+        id: 'section-b',
+        slug: 'beta',
+        name: 'Beta',
+        icon: { type: 'icon', objectKey: null, value: 'B' },
+        sortOrder: 10,
+      },
+    ],
+  };
+}
+
+function sectionModule(sectionId, version, productId, featuredOrder) {
+  return {
+    schemaVersion: 2,
+    moduleKey: `section:${sectionId}`,
+    contentVersion: version,
+    publishedAt: '2026-08-07T08:53:00.000Z',
+    sectionId,
+    categories: [{ id: `category-${sectionId}`, sectionId, name: 'Primary', sortOrder: 0 }],
+    tags: [{ id: `tag-${sectionId}`, sectionId, name: 'Verified', sortOrder: 0 }],
+    products: [{
+      id: productId,
+      slug: productId,
+      sectionId,
+      title: `Product ${productId}`,
+      serviceMode: 'online',
+      address: null,
+      category: { id: `category-${sectionId}`, name: 'Primary' },
+      tags: [{ id: `tag-${sectionId}`, name: 'Verified', sortOrder: 0 }],
+      coverObjectKey: `products/${productId}/cover.webp`,
+      isFeatured: true,
+      featuredOrder,
+      publishedAt: `2026-08-07T08:${featuredOrder === 1 ? '54' : '55'}:00.000Z`,
+      sortOrder: 0,
+    }],
+  };
+}
+
+function installModularFetch(requests = []) {
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (input, init) => {
+    const url = String(input);
+    requests.push({ url, cache: init?.cache, credentials: init?.credentials });
+    if (url === '/api/public/storefront/content-origin') {
+      return jsonResponse({ contentOrigin: 'https://content.example.com' });
+    }
+    if (url.endsWith('/public/current.json')) return jsonResponse(modularPointer());
+    if (url.endsWith(`/public/modules/site/${SITE_VERSION}/site.json`)) return jsonResponse(siteModule());
+    if (url.endsWith(`/public/modules/sections-index/${INDEX_VERSION}/sections.json`)) {
+      return jsonResponse(sectionsIndexModule());
+    }
+    if (url.endsWith(`/public/modules/sections/section-a/${SECTION_A_VERSION}/section.json`)) {
+      return jsonResponse(sectionModule('section-a', SECTION_A_VERSION, 'product-a', 2));
+    }
+    if (url.endsWith(`/public/modules/sections/section-b/${SECTION_B_VERSION}/section.json`)) {
+      return jsonResponse(sectionModule('section-b', SECTION_B_VERSION, 'product-b', 1));
+    }
+    if (url.endsWith(`/public/modules/sections/section-a/${SECTION_A_VERSION}/products/product-a.json`)) {
+      return jsonResponse({
+        schemaVersion: 2,
+        moduleKey: 'section:section-a',
+        contentVersion: SECTION_A_VERSION,
+        publishedAt: '2026-08-07T08:53:00.000Z',
+        product: {
+          ...sectionModule('section-a', SECTION_A_VERSION, 'product-a', 2).products[0],
+          body: '**Details**',
+          media: [{
+            id: 'media-a',
+            objectKey: 'products/product-a/gallery-1.webp',
+            width: 800,
+            height: 800,
+            altText: 'Gallery',
+            sortOrder: 0,
+          }],
+          cta: { label: 'Contact', mode: 'link', path: '/go/product-a' },
+        },
+      });
+    }
+    if (url.endsWith(`/public/modules/faq/${FAQ_VERSION}/faq.json`)) {
+      return jsonResponse({
+        schemaVersion: 2,
+        moduleKey: 'faq',
+        contentVersion: FAQ_VERSION,
+        publishedAt: '2026-08-07T08:52:00.000Z',
+        faqs: [{ id: 'faq-1', title: 'Question', body: 'Answer', sortOrder: 0 }],
+      });
+    }
+    return jsonResponse({}, 404);
+  };
+  return () => {
+    globalThis.fetch = originalFetch;
+  };
 }
 
 test('content origin normalization accepts public HTTP(S) URLs and removes the trailing slash', () => {
@@ -32,17 +198,15 @@ test('public content URLs stay on the configured R2 custom domain', () => {
   );
 });
 
-test('bootstrap reads current.json first and then immutable site/home files from the selected version', async () => {
+test('legacy schema-v1 bootstrap remains readable and normalizes missing tags/featured order', async () => {
   const originalFetch = globalThis.fetch;
-  const requests = [];
-  globalThis.fetch = async (input, init) => {
+  globalThis.fetch = async (input) => {
     const url = String(input);
-    requests.push({ url, cache: init?.cache });
     if (url.endsWith('/public/current.json')) {
       return jsonResponse({
         schemaVersion: 1,
-        contentVersion: VERSION,
-        manifestKey: `public/versions/${VERSION}/manifest.json`,
+        contentVersion: LEGACY_VERSION,
+        manifestKey: `public/versions/${LEGACY_VERSION}/manifest.json`,
         sourceRevision: 'source-revision',
         publishedAt: '2026-08-07T07:49:00.000Z',
       });
@@ -50,20 +214,14 @@ test('bootstrap reads current.json first and then immutable site/home files from
     if (url.endsWith('/site.json')) {
       return jsonResponse({
         schemaVersion: 1,
-        contentVersion: VERSION,
+        contentVersion: LEGACY_VERSION,
         publishedAt: '2026-08-07T07:49:00.000Z',
         site: {
           name: 'Directory',
           locationLabel: 'City',
           mediaBaseUrl: 'https://cdn.example.com',
           logoUrl: null,
-          navigation: {
-            showHot: true,
-            showLatest: true,
-            showMore: true,
-            showMessages: false,
-            showFaq: true,
-          },
+          navigation: { showHot: true, showLatest: true, showMore: true, showMessages: false, showFaq: true },
           analytics: { ga4MeasurementId: null, facebookPixelId: null },
           affiliate: { enabled: false, platform: null },
         },
@@ -72,7 +230,7 @@ test('bootstrap reads current.json first and then immutable site/home files from
     if (url.endsWith('/home.json')) {
       return jsonResponse({
         schemaVersion: 1,
-        contentVersion: VERSION,
+        contentVersion: LEGACY_VERSION,
         publishedAt: '2026-08-07T07:49:00.000Z',
         sections: [],
         allSections: [],
@@ -99,48 +257,85 @@ test('bootstrap reads current.json first and then immutable site/home files from
 
   try {
     const result = await loadStorefrontBootstrap('https://cdn.example.com');
-    assert.equal(result.pointer.contentVersion, VERSION);
-    assert.equal(result.site.site.name, 'Directory');
-    assert.equal(result.origin, 'https://cdn.example.com');
+    assert.equal(result.pointer.schemaVersion, 1);
     assert.deepEqual(result.home.featuredProducts[0].tags, []);
-    assert.deepEqual(requests, [
-      { url: 'https://cdn.example.com/public/current.json', cache: 'no-cache' },
-      { url: `https://cdn.example.com/public/versions/${VERSION}/site.json`, cache: 'force-cache' },
-      { url: `https://cdn.example.com/public/versions/${VERSION}/home.json`, cache: 'force-cache' },
-    ]);
+    assert.equal(result.home.featuredProducts[0].featuredOrder, 0);
   } finally {
     globalThis.fetch = originalFetch;
   }
 });
 
-test('bootstrap rejects a snapshot whose contentVersion does not match current.json', async () => {
+test('missing build-time origin discovers the public R2 custom domain from the Worker and then reads R2 directly', async () => {
+  const requests = [];
+  const restore = installModularFetch(requests);
+  try {
+    const bootstrap = await loadStorefrontBootstrap();
+    assert.equal(bootstrap.origin, 'https://content.example.com');
+    assert.equal(requests[0].url, '/api/public/storefront/content-origin');
+    assert.equal(requests[1].url, 'https://content.example.com/public/current.json');
+    assert.ok(requests.slice(1).every((request) => request.url.startsWith('https://content.example.com/')));
+  } finally {
+    restore();
+  }
+});
+
+test('schema-v2 bootstrap composes independent section versions into the current home view', async () => {
+  const requests = [];
+  const restore = installModularFetch(requests);
+  try {
+    const bootstrap = await loadStorefrontBootstrap('https://content.example.com');
+    assert.equal(bootstrap.pointer.schemaVersion, 2);
+    assert.equal(bootstrap.sectionSnapshots['section-a'].contentVersion, SECTION_A_VERSION);
+    assert.equal(bootstrap.sectionSnapshots['section-b'].contentVersion, SECTION_B_VERSION);
+    assert.deepEqual(bootstrap.home.featuredProducts.map((product) => product.id), ['product-b', 'product-a']);
+    assert.deepEqual(bootstrap.home.latestProducts.map((product) => product.id), ['product-a', 'product-b']);
+    assert.equal(bootstrap.home.allSections[0].icon.value, 'https://media.example.com/sections/alpha.webp');
+    assert.equal(bootstrap.sectionSnapshots['section-a'].products[0].coverUrl, 'https://media.example.com/products/product-a/cover.webp');
+    assert.ok(requests.some((request) => request.url.includes(SECTION_A_VERSION)));
+    assert.ok(requests.some((request) => request.url.includes(SECTION_B_VERSION)));
+  } finally {
+    restore();
+  }
+});
+
+test('section, product and FAQ reads follow their own module version references', async () => {
+  const requests = [];
+  const restore = installModularFetch(requests);
+  try {
+    const bootstrap = await loadStorefrontBootstrap('https://content.example.com');
+    const section = await loadSectionSnapshot(bootstrap, 'section-a');
+    assert.equal(section.contentVersion, SECTION_A_VERSION);
+
+    const product = await loadProductSnapshot(bootstrap, 'product-a');
+    assert.equal(product.contentVersion, SECTION_A_VERSION);
+    assert.equal(product.product.media[0].url, 'https://media.example.com/products/product-a/gallery-1.webp');
+    assert.equal(product.product.cta.path, '/go/product-a');
+
+    const faq = await loadFaqSnapshot(bootstrap);
+    assert.equal(faq.contentVersion, FAQ_VERSION);
+    assert.equal(faq.faqs[0].title, 'Question');
+  } finally {
+    restore();
+  }
+});
+
+test('schema-v2 bootstrap rejects a module whose contentVersion does not match the pointer', async () => {
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async (input) => {
     const url = String(input);
-    if (url.endsWith('/public/current.json')) {
-      return jsonResponse({
-        schemaVersion: 1,
-        contentVersion: VERSION,
-        manifestKey: `public/versions/${VERSION}/manifest.json`,
-        sourceRevision: 'source-revision',
-        publishedAt: '2026-08-07T07:49:00.000Z',
-      });
+    if (url.endsWith('/public/current.json')) return jsonResponse(modularPointer());
+    if (url.endsWith(`/public/modules/site/${SITE_VERSION}/site.json`)) {
+      return jsonResponse({ ...siteModule(), contentVersion: '20260807090000-wrongversion-acde9999' });
     }
-    return jsonResponse({
-      schemaVersion: 1,
-      contentVersion: '20260807075000-other-version-12345678',
-      publishedAt: '2026-08-07T07:50:00.000Z',
-      site: {},
-      sections: [],
-      allSections: [],
-      featuredProducts: [],
-      latestProducts: [],
-    });
+    if (url.endsWith(`/public/modules/sections-index/${INDEX_VERSION}/sections.json`)) {
+      return jsonResponse(sectionsIndexModule());
+    }
+    return jsonResponse({}, 404);
   };
 
   try {
     await assert.rejects(
-      loadStorefrontBootstrap('https://cdn.example.com'),
+      loadStorefrontBootstrap('https://content.example.com'),
       (error) => error instanceof PublicContentError && error.code === 'SNAPSHOT_VERSION_MISMATCH',
     );
   } finally {

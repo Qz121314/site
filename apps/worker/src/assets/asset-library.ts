@@ -51,6 +51,10 @@ type RetainedVersionRow = {
   content_version: string;
 };
 
+type ModularMediaRow = {
+  media_keys_json: string;
+};
+
 export type AssetScanPage = {
   assets: AdminAsset[];
   cursor: string | null;
@@ -64,6 +68,12 @@ export type CleanupEvaluation = {
   row: MediaAssetReferenceRow | null;
   referenceCount: number;
   blockedReason: AssetCleanupBlockedReason;
+};
+
+type SnapshotProtection = {
+  modular: boolean;
+  protectedKeys: Set<string>;
+  retainedLegacyVersions: string[];
 };
 
 function buildPlaceholders(count: number): string {
@@ -172,6 +182,47 @@ async function listRetainedPublishVersions(db: D1Database): Promise<string[]> {
   return rows.map((row) => row.content_version);
 }
 
+function parseMediaKeys(value: string): string[] {
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    return Array.isArray(parsed)
+      ? parsed.filter((key): key is string => typeof key === 'string' && key.length > 0)
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+async function getSnapshotProtection(db: D1Database): Promise<SnapshotProtection> {
+  try {
+    const rows = (
+      await db
+        .prepare(
+          `SELECT v.media_keys_json
+           FROM publish_module_versions v
+           JOIN publish_module_jobs j ON j.id = v.publish_job_id
+           WHERE j.status = 'published'`,
+        )
+        .all<ModularMediaRow>()
+    ).results;
+    if (rows.length > 0) {
+      return {
+        modular: true,
+        protectedKeys: new Set(rows.flatMap((row) => parseMediaKeys(row.media_keys_json))),
+        retainedLegacyVersions: [],
+      };
+    }
+  } catch {
+    // During local test mocks or a pre-migration rollout, fall back to legacy guards.
+  }
+
+  return {
+    modular: false,
+    protectedKeys: new Set(),
+    retainedLegacyVersions: await listRetainedPublishVersions(db),
+  };
+}
+
 async function getCleanupGuardRows(
   db: D1Database,
   keys: string[],
@@ -238,7 +289,7 @@ async function synchronizeCleanupGuards(
   return guards;
 }
 
-function retentionBlocked(
+function legacyRetentionBlocked(
   row: MediaAssetReferenceRow | null,
   guard: AssetCleanupGuardRow | null,
   retainedVersions: Set<string>,
@@ -248,6 +299,18 @@ function retentionBlocked(
       guard &&
       retainedVersions.has(guard.guard_content_version) &&
       countReferences(toReferenceCounts(row)) === 0,
+  );
+}
+
+function modularRetentionBlocked(
+  row: MediaAssetReferenceRow | null,
+  key: string,
+  protectedKeys: Set<string>,
+): boolean {
+  return Boolean(
+    row &&
+      countReferences(toReferenceCounts(row)) === 0 &&
+      protectedKeys.has(key),
   );
 }
 
@@ -284,14 +347,12 @@ export async function getMediaAssetReferenceRows(
 function toAdminAsset(
   object: R2Object,
   row: MediaAssetReferenceRow | null,
-  guard: AssetCleanupGuardRow | null,
-  retainedVersions: Set<string>,
+  snapshotProtected: boolean,
   mediaBaseUrl: string | null,
 ): AdminAsset {
   const contentType = object.httpMetadata?.contentType ?? inferContentType(object.key);
   const references = toReferenceCounts(row);
   const referenceCount = countReferences(references);
-  const snapshotProtected = retentionBlocked(row, guard, retainedVersions);
   const cleanupBlockedReason: AssetCleanupBlockedReason =
     referenceCount > 0 ? 'IN_USE' : snapshotProtected ? 'SNAPSHOT_RETENTION' : null;
 
@@ -323,10 +384,10 @@ export async function scanAssetPage(
     options.cursor = input.cursor;
   }
 
-  const [listed, mediaBaseUrl, retainedVersions] = await Promise.all([
+  const [listed, mediaBaseUrl, protection] = await Promise.all([
     bucket.list(options),
     getMediaBaseUrl(db),
-    listRetainedPublishVersions(db),
+    getSnapshotProtection(db),
   ]);
   const imageObjects = listed.objects.filter((object) =>
     isImageObject(object.key, object.httpMetadata?.contentType ?? inferContentType(object.key)),
@@ -335,24 +396,27 @@ export async function scanAssetPage(
     db,
     imageObjects.map((object) => object.key),
   );
-  const guards = await synchronizeCleanupGuards(
-    db,
-    rows,
-    retainedVersions,
-    new Date().toISOString(),
-  );
-  const retainedSet = new Set(retainedVersions);
+
+  let guards = new Map<string, AssetCleanupGuardRow>();
+  let legacyRetainedSet = new Set<string>();
+  if (!protection.modular) {
+    guards = await synchronizeCleanupGuards(
+      db,
+      rows,
+      protection.retainedLegacyVersions,
+      new Date().toISOString(),
+    );
+    legacyRetainedSet = new Set(protection.retainedLegacyVersions);
+  }
 
   return {
-    assets: imageObjects.map((object) =>
-      toAdminAsset(
-        object,
-        rows.get(object.key) ?? null,
-        guards.get(object.key) ?? null,
-        retainedSet,
-        mediaBaseUrl,
-      ),
-    ),
+    assets: imageObjects.map((object) => {
+      const row = rows.get(object.key) ?? null;
+      const snapshotProtected = protection.modular
+        ? modularRetentionBlocked(row, object.key, protection.protectedKeys)
+        : legacyRetentionBlocked(row, guards.get(object.key) ?? null, legacyRetainedSet);
+      return toAdminAsset(object, row, snapshotProtected, mediaBaseUrl);
+    }),
     cursor: listed.truncated ? (listed.cursor ?? null) : null,
     truncated: listed.truncated,
     mediaBaseUrl,
@@ -364,18 +428,23 @@ export async function evaluateCleanupCandidates(
   db: D1Database,
   keys: string[],
 ): Promise<CleanupEvaluation[]> {
-  const [objects, rows, retainedVersions] = await Promise.all([
+  const [objects, rows, protection] = await Promise.all([
     Promise.all(keys.map((key) => bucket.head(key))),
     getMediaAssetReferenceRows(db, keys),
-    listRetainedPublishVersions(db),
+    getSnapshotProtection(db),
   ]);
-  const guards = await synchronizeCleanupGuards(
-    db,
-    rows,
-    retainedVersions,
-    new Date().toISOString(),
-  );
-  const retainedSet = new Set(retainedVersions);
+
+  let guards = new Map<string, AssetCleanupGuardRow>();
+  let legacyRetainedSet = new Set<string>();
+  if (!protection.modular) {
+    guards = await synchronizeCleanupGuards(
+      db,
+      rows,
+      protection.retainedLegacyVersions,
+      new Date().toISOString(),
+    );
+    legacyRetainedSet = new Set(protection.retainedLegacyVersions);
+  }
 
   return keys.map((key, index) => {
     const object = objects[index] ?? null;
@@ -383,11 +452,9 @@ export async function evaluateCleanupCandidates(
     const referenceCount = countReferences(toReferenceCounts(row));
     const contentType = object?.httpMetadata?.contentType ?? inferContentType(key);
     const isImage = isImageObject(key, contentType);
-    const snapshotProtected = retentionBlocked(
-      row,
-      guards.get(key) ?? null,
-      retainedSet,
-    );
+    const snapshotProtected = protection.modular
+      ? modularRetentionBlocked(row, key, protection.protectedKeys)
+      : legacyRetentionBlocked(row, guards.get(key) ?? null, legacyRetainedSet);
 
     let blockedReason: AssetCleanupBlockedReason = null;
     if (referenceCount > 0) {
