@@ -304,11 +304,13 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
                     checked={allVisibleSelected}
                     aria-label="选择当前结果"
                     onChange={(event) => {
+                      const checked = event.target.checked;
                       setSelectedIds((current) => {
                         const next = new Set(current);
-                        filtered.forEach((item) =>
-                          event.target.checked ? next.add(item.id) : next.delete(item.id),
-                        );
+                        filtered.forEach((item) => {
+                          if (checked) next.add(item.id);
+                          else next.delete(item.id);
+                        });
                         return next;
                       });
                     }}
@@ -339,9 +341,11 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
                         checked={selectedIds.has(connection.id)}
                         aria-label={`选择 ${connection.name}`}
                         onChange={(event) => {
+                          const checked = event.target.checked;
                           setSelectedIds((current) => {
                             const next = new Set(current);
-                            event.target.checked ? next.add(connection.id) : next.delete(connection.id);
+                            if (checked) next.add(connection.id);
+                            else next.delete(connection.id);
                             return next;
                           });
                         }}
