@@ -97,12 +97,12 @@ function createConversionDb({
             nextIndex += 1;
             return { selected_index: selected };
           }
+          if (this.sql.includes('FROM customer_service_connections c')) {
+            return connection;
+          }
           if (this.sql.includes('FROM conversion_targets t')) {
             const offset = Number(this.args.at(-1));
             return targets[offset % Math.max(1, targets.length)] ?? null;
-          }
-          if (this.sql.includes('FROM customer_service_connections c')) {
-            return connection;
           }
           throw new Error(`Unexpected first SQL: ${this.sql}`);
         },
@@ -151,7 +151,7 @@ test('GET /go/:code performs the full link round-robin and records the selected 
 
   const locations = [];
   for (let index = 0; index < 4; index += 1) {
-    const response = await app.request(`http://local.test/go/product-1`, undefined, env(db));
+    const response = await app.request('http://local.test/go/product-1', undefined, env(db));
     assert.equal(response.status, 302);
     locations.push(response.headers.get('location'));
     assert.equal(response.headers.get('cache-control'), 'no-store, private');
