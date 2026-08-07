@@ -128,6 +128,9 @@ jobs:
             curl --fail --silent --show-error "$BASE_URL$path" | grep -F '<div id="root"></div>'
           done
 
-          curl --fail --silent --show-error \
-            -H 'Sec-Fetch-Mode: navigate' \
-            "$BASE_URL/products/storefront-smoke-test/" | grep -F '<div id="root"></div>'
+          for path in "/sections/storefront-smoke-${GITHUB_SHA}/" "/products/storefront-smoke-${GITHUB_SHA}/"; do
+            curl --fail --silent --show-error \
+              -H 'Accept: text/html' \
+              -H 'Sec-Fetch-Mode: navigate' \
+              "$BASE_URL$path" | grep -F '<div id="root"></div>'
+          done
