@@ -136,7 +136,8 @@ export function Dashboard({
           </div>
         </div>
 
-        <nav aria-label="后台导航">
+        <nav className="admin-nav" aria-label="后台导航">
+          <div className="sidebar-section-label sidebar-section-label-first">全局管理</div>
           <button
             className={activeView === 'settings' ? 'is-active' : undefined}
             type="button"
@@ -173,48 +174,58 @@ export function Dashboard({
             分区管理
           </button>
 
-          <div className="sidebar-section-label">已创建分区</div>
+          <div className="sidebar-section-label">业务分区</div>
           {sectionsLoading ? <small className="sidebar-loading">正在读取分区…</small> : null}
-          {sections.map((section) => (
-            <div className="dynamic-menu" key={section.id}>
-              <button type="button" onClick={() => setActiveView(`products:${section.id}`)}>
-                <span
-                  className={`dynamic-menu-icon${section.iconAssetId ? ' has-image' : ''}`}
-                  aria-hidden="true"
-                >
-                  {section.iconAssetId ? (
-                    <img src={brandingAssetPreviewUrl(section.iconAssetId)} alt="" />
-                  ) : (
-                    section.iconValue ?? '◈'
-                  )}
-                </span>
-                {section.name}
-              </button>
-              <div>
+          {sections.map((section) => {
+            const sectionIsCurrent = currentSection?.section.id === section.id;
+            return (
+              <div
+                className={`dynamic-menu${sectionIsCurrent ? ' is-current-section' : ''}`}
+                key={section.id}
+              >
                 <button
-                  className={activeView === `products:${section.id}` ? 'is-active' : undefined}
+                  className={sectionIsCurrent ? 'is-current-section' : undefined}
                   type="button"
                   onClick={() => setActiveView(`products:${section.id}`)}
                 >
-                  产品录入
+                  <span
+                    className={`dynamic-menu-icon${section.iconAssetId ? ' has-image' : ''}`}
+                    aria-hidden="true"
+                  >
+                    {section.iconAssetId ? (
+                      <img src={brandingAssetPreviewUrl(section.iconAssetId)} alt="" />
+                    ) : (
+                      section.iconValue ?? '◈'
+                    )}
+                  </span>
+                  {section.name}
                 </button>
-                <button
-                  className={activeView === `categories:${section.id}` ? 'is-active' : undefined}
-                  type="button"
-                  onClick={() => setActiveView(`categories:${section.id}`)}
-                >
-                  分类管理
-                </button>
-                <button
-                  className={activeView === `conversion-pool:${section.id}` ? 'is-active' : undefined}
-                  type="button"
-                  onClick={() => setActiveView(`conversion-pool:${section.id}`)}
-                >
-                  转化池
-                </button>
+                <div>
+                  <button
+                    className={activeView === `products:${section.id}` ? 'is-active' : undefined}
+                    type="button"
+                    onClick={() => setActiveView(`products:${section.id}`)}
+                  >
+                    产品录入
+                  </button>
+                  <button
+                    className={activeView === `categories:${section.id}` ? 'is-active' : undefined}
+                    type="button"
+                    onClick={() => setActiveView(`categories:${section.id}`)}
+                  >
+                    分类管理
+                  </button>
+                  <button
+                    className={activeView === `conversion-pool:${section.id}` ? 'is-active' : undefined}
+                    type="button"
+                    onClick={() => setActiveView(`conversion-pool:${section.id}`)}
+                  >
+                    转化池
+                  </button>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
         </nav>
       </aside>
 

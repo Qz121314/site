@@ -13,6 +13,7 @@ import './product-management.css';
 import './product-local-images.css';
 import './branding-media.css';
 import './admin-polish.css';
+import './admin-polish-2.css';
 
 const root = document.getElementById('root');
 if (!root) {
