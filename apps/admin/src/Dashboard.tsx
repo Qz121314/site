@@ -67,14 +67,9 @@ function getViewContext(view: AdminView, sections: AdminSection[]) {
   if (!dynamic) return { eyebrow: '分区业务', title: '分区业务' };
 
   const section = sections.find((item) => item.id === dynamic.sectionId);
-  const labels: Record<DynamicViewKind, string> = {
-    products: '产品录入',
-    categories: '分类管理',
-    'conversion-pool': '转化池',
-  };
   return {
     eyebrow: '分区业务',
-    title: section ? `${section.name} · ${labels[dynamic.kind]}` : '分区业务',
+    title: section?.name ?? '分区业务',
   };
 }
 
@@ -200,29 +195,6 @@ export function Dashboard({
                   </span>
                   {section.name}
                 </button>
-                <div>
-                  <button
-                    className={activeView === `products:${section.id}` ? 'is-active' : undefined}
-                    type="button"
-                    onClick={() => setActiveView(`products:${section.id}`)}
-                  >
-                    产品录入
-                  </button>
-                  <button
-                    className={activeView === `categories:${section.id}` ? 'is-active' : undefined}
-                    type="button"
-                    onClick={() => setActiveView(`categories:${section.id}`)}
-                  >
-                    分类管理
-                  </button>
-                  <button
-                    className={activeView === `conversion-pool:${section.id}` ? 'is-active' : undefined}
-                    type="button"
-                    onClick={() => setActiveView(`conversion-pool:${section.id}`)}
-                  >
-                    转化池
-                  </button>
-                </div>
               </div>
             );
           })}
@@ -230,10 +202,40 @@ export function Dashboard({
       </aside>
 
       <main className="admin-main">
-        <header className="admin-header">
-          <div>
-            <p>{heading.eyebrow}</p>
-            <h1>{heading.title}</h1>
+        <header className={`admin-header${currentSection ? ' has-section-nav' : ''}`}>
+          <div className="admin-header-workspace">
+            <div className="admin-header-title">
+              <p>{heading.eyebrow}</p>
+              <h1>{heading.title}</h1>
+            </div>
+            {currentSection ? (
+              <nav className="section-workspace-nav" aria-label={`${currentSection.section.name} 管理`}>
+                <button
+                  className={currentSection.kind === 'products' ? 'is-active' : undefined}
+                  type="button"
+                  aria-current={currentSection.kind === 'products' ? 'page' : undefined}
+                  onClick={() => setActiveView(`products:${currentSection.section.id}`)}
+                >
+                  产品
+                </button>
+                <button
+                  className={currentSection.kind === 'categories' ? 'is-active' : undefined}
+                  type="button"
+                  aria-current={currentSection.kind === 'categories' ? 'page' : undefined}
+                  onClick={() => setActiveView(`categories:${currentSection.section.id}`)}
+                >
+                  分类
+                </button>
+                <button
+                  className={currentSection.kind === 'conversion-pool' ? 'is-active' : undefined}
+                  type="button"
+                  aria-current={currentSection.kind === 'conversion-pool' ? 'page' : undefined}
+                  onClick={() => setActiveView(`conversion-pool:${currentSection.section.id}`)}
+                >
+                  转化池
+                </button>
+              </nav>
+            ) : null}
           </div>
           <div className="header-actions">
             <span className="environment-badge">
