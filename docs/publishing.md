@@ -35,6 +35,7 @@ Worker
 → 记录 publish_versions
 → 最后更新 public/current.json
 → 标记 publish_job published
+→ 自动执行发布历史保留清理
 ```
 
 任何校验或对象写入失败，都不得把 `public/current.json` 切换到新版本。最终状态写回 D1 失败时，发布器会尽量恢复旧指针。
@@ -55,6 +56,30 @@ public/
 ```
 
 版本目录一经生成不得覆盖。后续修改必须生成新的 `contentVersion`。
+
+## 发布历史保留
+
+所有发布更新历史统一采用最近 3 次保留策略：
+
+```text
+最近第 1 次发布  保留
+最近第 2 次发布  保留
+最近第 3 次发布  保留
+第 4 次及更早   自动清理
+```
+
+自动清理范围：
+
+```text
+R2 public/versions/{contentVersion}/... 快照对象
+D1 publish_versions 发布版本记录
+D1 publish_jobs 对应的发布更新记录
+失败发布留下、但没有成为正式版本的 R2 孤立对象
+```
+
+`public/current.json` 永远只指向当前版本，不计入 3 次历史。清理不得删除当前版本；发布失败也不能因为清理动作影响已经在线的当前版本。
+
+操作审计 `audit_logs` 属于安全审计数据，不按发布版本保留规则删除。
 
 ## 缓存
 
