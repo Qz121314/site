@@ -76,7 +76,7 @@ async function pruneVersionRecords(
          FROM publish_versions pv
          JOIN publish_jobs pj ON pj.id = pv.publish_job_id
          WHERE pj.status = 'published'
-         ORDER BY pv.published_at DESC, pv.content_version DESC`,
+         ORDER BY pv.is_current DESC, pv.published_at DESC, pv.content_version DESC`,
       )
       .all<PublishedVersionRow>()
   ).results;
