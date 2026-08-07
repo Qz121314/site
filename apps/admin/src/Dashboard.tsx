@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AssetLibraryView } from './AssetLibraryView';
 import { AdminApiError, fetchSections, type AdminSection } from './api';
+import { useAdminUnsavedState } from './admin-unsaved-state';
 import { brandingAssetPreviewUrl } from './branding-media/api';
 import { CategoryManagementView } from './CategoryManagementView';
 import { ConversionPoolView } from './ConversionPoolView';
@@ -41,6 +42,10 @@ type DynamicView = {
 };
 
 type PublishFeedback = { type: 'success' | 'error'; message: string } | null;
+type PendingDiscardAction =
+  | { kind: 'navigate'; view: AdminView }
+  | { kind: 'logout' }
+  | null;
 
 function isSessionError(error: unknown): boolean {
   return error instanceof AdminApiError && (error.status === 401 || error.code === 'SESSION_INVALID');
@@ -87,8 +92,13 @@ function getViewContext(view: AdminView, sections: AdminSection[]) {
   };
 }
 
-function publishStatusLabel(status: PublishStatus | null, publishing: boolean): string {
+function publishStatusLabel(
+  status: PublishStatus | null,
+  publishing: boolean,
+  hasUnsavedChanges: boolean,
+): string {
   if (publishing) return '正在生成快照';
+  if (hasUnsavedChanges) return '有未保存修改';
   if (status?.lastJob?.status === 'failed') return '上次发布失败';
   if (!status?.publishedAt) return '尚未发布';
   return status.isCurrent ? '前台已是最新' : '有未发布修改';
@@ -125,6 +135,8 @@ export function Dashboard({
   const [publishPanelOpen, setPublishPanelOpen] = useState(false);
   const [rollbackTarget, setRollbackTarget] = useState<PublishVersion | null>(null);
   const [rollingBack, setRollingBack] = useState(false);
+  const [pendingDiscardAction, setPendingDiscardAction] = useState<PendingDiscardAction>(null);
+  const unsaved = useAdminUnsavedState();
 
   const loadSections = useCallback(async () => {
     setSectionsLoading(true);
@@ -162,6 +174,16 @@ export function Dashboard({
   }, [loadPublishStatus]);
 
   useEffect(() => {
+    if (!unsaved.isDirty) return;
+    const handleBeforeUnload = (event: BeforeUnloadEvent) => {
+      event.preventDefault();
+      event.returnValue = '';
+    };
+    window.addEventListener('beforeunload', handleBeforeUnload);
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
+  }, [unsaved.isDirty]);
+
+  useEffect(() => {
     const dynamic = parseDynamicView(activeView);
     if (!dynamic) return;
     if (!sectionsLoading && !sections.some((section) => section.id === dynamic.sectionId)) {
@@ -169,8 +191,41 @@ export function Dashboard({
     }
   }, [activeView, sections, sectionsLoading]);
 
+  function requestView(nextView: AdminView) {
+    if (nextView === activeView) return;
+    setPublishPanelOpen(false);
+    if (unsaved.isDirty) {
+      setPendingDiscardAction({ kind: 'navigate', view: nextView });
+      return;
+    }
+    setActiveView(nextView);
+  }
+
+  function requestLogout() {
+    if (unsaved.isDirty) {
+      setPendingDiscardAction({ kind: 'logout' });
+      return;
+    }
+    onLogout();
+  }
+
+  function confirmDiscardAndContinue() {
+    const action = pendingDiscardAction;
+    if (!action) return;
+    setPendingDiscardAction(null);
+    if (action.kind === 'navigate') setActiveView(action.view);
+    else onLogout();
+  }
+
   async function handlePublish() {
     if (publishing || rollingBack) return;
+    if (unsaved.isDirty) {
+      setPublishFeedback({
+        type: 'error',
+        message: '当前存在未保存修改。请先保存或取消编辑，再发布前台。',
+      });
+      return;
+    }
     setPublishing(true);
     setPublishFeedback(null);
     try {
@@ -198,6 +253,14 @@ export function Dashboard({
 
   async function handleRollback() {
     if (!rollbackTarget || rollingBack || publishing) return;
+    if (unsaved.isDirty) {
+      setRollbackTarget(null);
+      setPublishFeedback({
+        type: 'error',
+        message: '当前存在未保存修改。请先处理当前编辑内容，再回退前台版本。',
+      });
+      return;
+    }
     setRollingBack(true);
     setPublishFeedback(null);
     try {
@@ -230,6 +293,9 @@ export function Dashboard({
     const section = sections.find((item) => item.id === dynamic.sectionId);
     return section ? { kind: dynamic.kind, section } : null;
   }, [activeView, sections]);
+  const unsavedTitle = unsaved.labels.length > 0
+    ? `未保存：${unsaved.labels.join('、')}`
+    : '当前有未保存修改';
 
   return (
     <div className="admin-shell">
@@ -244,11 +310,11 @@ export function Dashboard({
 
         <nav className="admin-nav" aria-label="后台导航">
           <div className="sidebar-section-label sidebar-section-label-first">全局管理</div>
-          <button className={activeView === 'settings' ? 'is-active' : undefined} type="button" onClick={() => setActiveView('settings')}>站点设置</button>
-          <button className={activeView === 'assets' ? 'is-active' : undefined} type="button" onClick={() => setActiveView('assets')}>素材库管理</button>
-          <button className={activeView === 'customer-service' ? 'is-active' : undefined} type="button" onClick={() => setActiveView('customer-service')}>客服管理</button>
-          <button className={activeView === 'faq' ? 'is-active' : undefined} type="button" onClick={() => setActiveView('faq')}>FAQ 管理</button>
-          <button className={activeView === 'sections' ? 'is-active' : undefined} type="button" onClick={() => setActiveView('sections')}>分区管理</button>
+          <button className={activeView === 'settings' ? 'is-active' : undefined} type="button" onClick={() => requestView('settings')}>站点设置</button>
+          <button className={activeView === 'assets' ? 'is-active' : undefined} type="button" onClick={() => requestView('assets')}>素材库管理</button>
+          <button className={activeView === 'customer-service' ? 'is-active' : undefined} type="button" onClick={() => requestView('customer-service')}>客服管理</button>
+          <button className={activeView === 'faq' ? 'is-active' : undefined} type="button" onClick={() => requestView('faq')}>FAQ 管理</button>
+          <button className={activeView === 'sections' ? 'is-active' : undefined} type="button" onClick={() => requestView('sections')}>分区管理</button>
 
           <div className="sidebar-section-label">业务分区</div>
           {sectionsLoading ? <small className="sidebar-loading">正在读取分区…</small> : null}
@@ -256,7 +322,7 @@ export function Dashboard({
             const sectionIsCurrent = currentSection?.section.id === section.id;
             return (
               <div className={`dynamic-menu${sectionIsCurrent ? ' is-current-section' : ''}`} key={section.id}>
-                <button className={sectionIsCurrent ? 'is-current-section' : undefined} type="button" onClick={() => setActiveView(`products:${section.id}`)}>
+                <button className={sectionIsCurrent ? 'is-current-section' : undefined} type="button" onClick={() => requestView(`products:${section.id}`)}>
                   <span className={`dynamic-menu-icon${section.iconAssetId ? ' has-image' : ''}`} aria-hidden="true">
                     {section.iconAssetId ? <img src={brandingAssetPreviewUrl(section.iconAssetId)} alt="" /> : section.iconValue ?? '◈'}
                   </span>
@@ -274,18 +340,19 @@ export function Dashboard({
             <div className="admin-header-title"><p>{heading.eyebrow}</p><h1>{heading.title}</h1></div>
             {currentSection ? (
               <nav className="section-workspace-nav" aria-label={`${currentSection.section.name} 管理`}>
-                <button className={currentSection.kind === 'products' ? 'is-active' : undefined} type="button" aria-current={currentSection.kind === 'products' ? 'page' : undefined} onClick={() => setActiveView(`products:${currentSection.section.id}`)}>产品管理</button>
-                <button className={currentSection.kind === 'product-entry' ? 'is-active' : undefined} type="button" aria-current={currentSection.kind === 'product-entry' ? 'page' : undefined} onClick={() => setActiveView(`product-entry:${currentSection.section.id}`)}>产品录入</button>
-                <button className={currentSection.kind === 'categories' ? 'is-active' : undefined} type="button" aria-current={currentSection.kind === 'categories' ? 'page' : undefined} onClick={() => setActiveView(`categories:${currentSection.section.id}`)}>分类管理</button>
-                <button className={currentSection.kind === 'tags' ? 'is-active' : undefined} type="button" aria-current={currentSection.kind === 'tags' ? 'page' : undefined} onClick={() => setActiveView(`tags:${currentSection.section.id}`)}>标签管理</button>
-                <button className={currentSection.kind === 'conversion-pool' ? 'is-active' : undefined} type="button" aria-current={currentSection.kind === 'conversion-pool' ? 'page' : undefined} onClick={() => setActiveView(`conversion-pool:${currentSection.section.id}`)}>转化池</button>
+                <button className={currentSection.kind === 'products' ? 'is-active' : undefined} type="button" aria-current={currentSection.kind === 'products' ? 'page' : undefined} onClick={() => requestView(`products:${currentSection.section.id}`)}>产品管理</button>
+                <button className={currentSection.kind === 'product-entry' ? 'is-active' : undefined} type="button" aria-current={currentSection.kind === 'product-entry' ? 'page' : undefined} onClick={() => requestView(`product-entry:${currentSection.section.id}`)}>产品录入</button>
+                <button className={currentSection.kind === 'categories' ? 'is-active' : undefined} type="button" aria-current={currentSection.kind === 'categories' ? 'page' : undefined} onClick={() => requestView(`categories:${currentSection.section.id}`)}>分类管理</button>
+                <button className={currentSection.kind === 'tags' ? 'is-active' : undefined} type="button" aria-current={currentSection.kind === 'tags' ? 'page' : undefined} onClick={() => requestView(`tags:${currentSection.section.id}`)}>标签管理</button>
+                <button className={currentSection.kind === 'conversion-pool' ? 'is-active' : undefined} type="button" aria-current={currentSection.kind === 'conversion-pool' ? 'page' : undefined} onClick={() => requestView(`conversion-pool:${currentSection.section.id}`)}>转化池</button>
               </nav>
             ) : null}
           </div>
           <div className="header-actions">
+            {unsaved.isDirty ? <span className="admin-unsaved-chip" title={unsavedTitle}>未保存修改</span> : null}
             <div className="publish-version-control">
               <button
-                className={`publish-status-chip${publishStatus?.lastJob?.status === 'failed' ? ' is-error' : ''}${publishStatus && !publishStatus.isCurrent ? ' is-dirty' : ''}`}
+                className={`publish-status-chip${publishStatus?.lastJob?.status === 'failed' ? ' is-error' : ''}${(publishStatus && !publishStatus.isCurrent) || unsaved.isDirty ? ' is-dirty' : ''}`}
                 type="button"
                 aria-expanded={publishPanelOpen}
                 onClick={() => {
@@ -294,7 +361,7 @@ export function Dashboard({
                   if (next) void loadPublishStatus();
                 }}
               >
-                {publishStatusLabel(publishStatus, publishing)}
+                {publishStatusLabel(publishStatus, publishing, unsaved.isDirty)}
               </button>
               {publishPanelOpen ? (
                 <div className="publish-version-popover">
@@ -304,16 +371,31 @@ export function Dashboard({
                       <div className={`publish-version-row${version.isCurrent ? ' is-current' : ''}`} key={version.contentVersion}>
                         <div><strong>{formatVersionTime(version.publishedAt)}</strong><small>{versionCode(version)}</small></div>
                         <span>{version.isCurrent ? '当前' : `${version.objectCount} 项`}</span>
-                        <button type="button" disabled={version.isCurrent || publishing || rollingBack} onClick={() => setRollbackTarget(version)}>{version.isCurrent ? '使用中' : '回退'}</button>
+                        <button
+                          type="button"
+                          disabled={version.isCurrent || publishing || rollingBack || unsaved.isDirty}
+                          onClick={() => setRollbackTarget(version)}
+                          title={unsaved.isDirty ? '请先处理未保存修改' : undefined}
+                        >
+                          {version.isCurrent ? '使用中' : '回退'}
+                        </button>
                       </div>
                     )) : <div className="publish-version-empty">尚无前台快照</div>}
                   </div>
                 </div>
               ) : null}
             </div>
-            <button className="primary-button storefront-publish-button" type="button" onClick={() => void handlePublish()} disabled={publishing || loggingOut || rollingBack || publishStatus?.isCurrent === true}>{publishing ? '发布中…' : publishStatus?.isCurrent ? '前台已最新' : '发布前台'}</button>
+            <button
+              className="primary-button storefront-publish-button"
+              type="button"
+              onClick={() => void handlePublish()}
+              disabled={publishing || loggingOut || rollingBack || unsaved.isDirty || publishStatus?.isCurrent === true}
+              title={unsaved.isDirty ? unsavedTitle : undefined}
+            >
+              {publishing ? '发布中…' : unsaved.isDirty ? '请先保存' : publishStatus?.isCurrent ? '前台已最新' : '发布前台'}
+            </button>
             <span className="environment-badge">{expiresAt ? `会话至 ${new Date(expiresAt).toLocaleTimeString('zh-CN')}` : 'PRODUCTION'}</span>
-            <button className="secondary-button" type="button" onClick={onLogout} disabled={loggingOut || publishing || rollingBack}>{loggingOut ? '正在退出…' : '退出登录'}</button>
+            <button className="secondary-button" type="button" onClick={requestLogout} disabled={loggingOut || publishing || rollingBack}>{loggingOut ? '正在退出…' : '退出登录'}</button>
           </div>
         </header>
 
@@ -321,25 +403,25 @@ export function Dashboard({
         {sectionsError ? <div className="notice notice-error" role="alert">{sectionsError}<button type="button" onClick={() => void loadSections()}>重新加载</button></div> : null}
 
         {activeView === 'settings' ? (
-          <SiteSettingsView onSessionExpired={onSessionExpired} />
+          <SiteSettingsView key={activeView} onSessionExpired={onSessionExpired} />
         ) : activeView === 'assets' ? (
-          <AssetLibraryView onSessionExpired={onSessionExpired} />
+          <AssetLibraryView key={activeView} onSessionExpired={onSessionExpired} />
         ) : activeView === 'customer-service' ? (
-          <CustomerServiceView onSessionExpired={onSessionExpired} />
+          <CustomerServiceView key={activeView} onSessionExpired={onSessionExpired} />
         ) : activeView === 'sections' ? (
-          <SectionManagementView activeSections={sections} onActiveSectionsChange={setSections} onSessionExpired={onSessionExpired} />
+          <SectionManagementView key={activeView} activeSections={sections} onActiveSectionsChange={setSections} onSessionExpired={onSessionExpired} />
         ) : activeView === 'faq' ? (
-          <FaqManagementView onSessionExpired={onSessionExpired} />
+          <FaqManagementView key={activeView} onSessionExpired={onSessionExpired} />
         ) : currentSection?.kind === 'products' ? (
-          <ProductManagementView section={currentSection.section} mode="manage" onSessionExpired={onSessionExpired} />
+          <ProductManagementView key={activeView} section={currentSection.section} mode="manage" onSessionExpired={onSessionExpired} />
         ) : currentSection?.kind === 'product-entry' ? (
-          <ProductManagementView section={currentSection.section} mode="entry" onEntryExit={() => setActiveView(`products:${currentSection.section.id}`)} onSessionExpired={onSessionExpired} />
+          <ProductManagementView key={activeView} section={currentSection.section} mode="entry" onEntryExit={() => setActiveView(`products:${currentSection.section.id}`)} onSessionExpired={onSessionExpired} />
         ) : currentSection?.kind === 'categories' ? (
-          <CategoryManagementView section={currentSection.section} onSessionExpired={onSessionExpired} />
+          <CategoryManagementView key={activeView} section={currentSection.section} onSessionExpired={onSessionExpired} />
         ) : currentSection?.kind === 'tags' ? (
-          <TagManagementView section={currentSection.section} onSessionExpired={onSessionExpired} />
+          <TagManagementView key={activeView} section={currentSection.section} onSessionExpired={onSessionExpired} />
         ) : currentSection?.kind === 'conversion-pool' ? (
-          <ConversionPoolView section={currentSection.section} onSessionExpired={onSessionExpired} />
+          <ConversionPoolView key={activeView} section={currentSection.section} onSessionExpired={onSessionExpired} />
         ) : null}
 
         {rollbackTarget ? (
@@ -348,6 +430,24 @@ export function Dashboard({
               <div className="admin-dialog-header"><div><p>前台版本</p><h3 id="publish-rollback-title">回退到 {formatVersionTime(rollbackTarget.publishedAt)}？</h3></div><button type="button" aria-label="关闭" disabled={rollingBack} onClick={() => setRollbackTarget(null)}>×</button></div>
               <p className="delete-warning">前台会立即切换到该 R2 快照；后台当前数据不会改变。</p>
               <div className="admin-dialog-actions"><button className="secondary-button" type="button" disabled={rollingBack} onClick={() => setRollbackTarget(null)}>取消</button><button className="primary-button" type="button" disabled={rollingBack} onClick={() => void handleRollback()}>{rollingBack ? '正在回退…' : '确认回退'}</button></div>
+            </section>
+          </div>
+        ) : null}
+
+        {pendingDiscardAction ? (
+          <div className="admin-dialog-backdrop" role="presentation">
+            <section className="admin-dialog admin-dialog-small" role="alertdialog" aria-modal="true" aria-labelledby="admin-unsaved-title">
+              <div className="admin-dialog-header">
+                <div><p>未保存修改</p><h3 id="admin-unsaved-title">放弃当前修改？</h3></div>
+              </div>
+              <div className="admin-unsaved-dialog-copy">
+                <p>当前编辑内容尚未保存到后台。</p>
+                {unsaved.labels.length > 0 ? <div className="admin-unsaved-list">{unsaved.labels.map((label) => <span key={label}>{label}</span>)}</div> : null}
+              </div>
+              <div className="admin-dialog-actions">
+                <button className="secondary-button" type="button" onClick={() => setPendingDiscardAction(null)}>继续编辑</button>
+                <button className="danger-button" type="button" onClick={confirmDiscardAndContinue}>{pendingDiscardAction.kind === 'logout' ? '放弃修改并退出' : '放弃修改并切换'}</button>
+              </div>
             </section>
           </div>
         ) : null}

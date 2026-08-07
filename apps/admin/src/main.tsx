@@ -2,6 +2,7 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import { installAdminMutationObserver } from './admin-mutation-observer';
+import { installAdminUnsavedStateObserver } from './admin-unsaved-state';
 import './styles.css';
 import './site-settings.css';
 import './sections.css';
@@ -22,9 +23,11 @@ import './admin-no-scroll.css';
 import './admin-centered-layout.css';
 import './admin-section-workspace-nav.css';
 import './admin-publish.css';
+import './admin-unsaved.css';
 import './customer-service-connections.css';
 
 installAdminMutationObserver();
+installAdminUnsavedStateObserver();
 
 const root = document.getElementById('root');
 if (!root) {
