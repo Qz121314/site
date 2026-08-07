@@ -1,0 +1,133 @@
+@media (min-width: 901px) {
+  .customer-service-workbench {
+    width: min(980px, calc(100vw - 300px));
+    min-height: 0;
+    margin: 0 auto;
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 10px;
+    overflow: hidden;
+  }
+
+  .customer-service-commandbar {
+    display: grid;
+    grid-template-columns: auto minmax(240px, 1fr) auto;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border: 1px solid var(--border-color, #dfe5ec);
+    border-radius: 12px;
+    background: #fff;
+  }
+
+  .customer-service-search {
+    min-width: 0;
+  }
+
+  .customer-service-table-wrap {
+    min-height: 0;
+    max-height: calc(100dvh - 132px);
+    overflow: auto;
+    border: 1px solid var(--border-color, #dfe5ec);
+    border-radius: 12px;
+    background: #fff;
+  }
+
+  .customer-service-table {
+    width: 100%;
+    min-width: 900px;
+    border-collapse: collapse;
+  }
+
+  .customer-service-table th,
+  .customer-service-table td {
+    padding: 9px 10px;
+    vertical-align: middle;
+    border-bottom: 1px solid #edf1f5;
+  }
+
+  .customer-service-table th {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: #f8fafc;
+    text-align: left;
+    font-size: 12px;
+    font-weight: 700;
+  }
+
+  .customer-service-table .selection-cell {
+    width: 36px;
+    text-align: center;
+  }
+
+  .customer-service-table .actions-cell {
+    width: 170px;
+    text-align: right;
+  }
+
+  .customer-service-table .row-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 6px;
+  }
+
+  .customer-service-url {
+    max-width: 260px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .customer-service-selection-toolbar {
+    width: fit-content;
+    align-self: center;
+  }
+
+  .customer-service-editor {
+    width: min(720px, calc(100vw - 48px));
+  }
+
+  .customer-service-editor-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .customer-service-editor-form > label {
+    display: grid;
+    gap: 6px;
+  }
+
+  .customer-service-editor-wide {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 900px) {
+  .customer-service-workbench {
+    display: grid;
+    gap: 10px;
+  }
+
+  .customer-service-commandbar {
+    display: grid;
+    gap: 8px;
+  }
+
+  .customer-service-table-wrap {
+    overflow-x: auto;
+    border: 1px solid var(--border-color, #dfe5ec);
+    border-radius: 12px;
+  }
+
+  .customer-service-table {
+    min-width: 860px;
+  }
+
+  .customer-service-editor-form {
+    display: grid;
+    gap: 10px;
+  }
+}
