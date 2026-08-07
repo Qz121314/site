@@ -4,7 +4,8 @@ type AnalyticsWindow = Window & {
   dataLayer?: unknown[];
 };
 
-let initializedMeasurementId: string | null = null;
+const GOOGLE_TAG_SCRIPT_ID = 'storefront-ga4-script';
+const initializedMeasurementIds = new Set<string>();
 
 function dataLayer(): unknown[] {
   const target = window as AnalyticsWindow;
@@ -12,27 +13,23 @@ function dataLayer(): unknown[] {
   return target.dataLayer;
 }
 
-function gtag(...args: unknown[]) {
-  dataLayer().push(args);
+function gtag(..._args: unknown[]) {
+  dataLayer().push(arguments);
 }
 
 function ensureGoogleTag(measurementId: string) {
-  if (initializedMeasurementId === measurementId) return;
-
-  const existing = document.querySelector<HTMLScriptElement>(
-    `script[data-ga4-measurement-id="${CSS.escape(measurementId)}"]`,
-  );
-  if (!existing) {
+  if (!document.getElementById(GOOGLE_TAG_SCRIPT_ID)) {
     const script = document.createElement('script');
+    script.id = GOOGLE_TAG_SCRIPT_ID;
     script.async = true;
     script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(measurementId)}`;
-    script.dataset.ga4MeasurementId = measurementId;
     document.head.append(script);
   }
 
+  if (initializedMeasurementIds.has(measurementId)) return;
   gtag('js', new Date());
   gtag('config', measurementId, { send_page_view: false });
-  initializedMeasurementId = measurementId;
+  initializedMeasurementIds.add(measurementId);
 }
 
 function trackHomepage(measurementId: string) {
@@ -40,7 +37,6 @@ function trackHomepage(measurementId: string) {
   ensureGoogleTag(measurementId);
   gtag('event', 'page_view', {
     page_location: window.location.href,
-    page_title: document.title,
   });
 }
 
