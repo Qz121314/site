@@ -7,7 +7,11 @@ import {
   type FormEvent,
 } from 'react';
 import { AdminApiError, type AdminSection } from './api';
-import { fetchCategories, type AdminCategory } from './category-management/api';
+import {
+  createCategory,
+  fetchCategories,
+  type AdminCategory,
+} from './category-management/api';
 import {
   fetchConversionGroups,
   type AdminConversionGroup,
@@ -37,7 +41,11 @@ import {
   type ProductInput,
   type ProductStatus,
 } from './product-management/api';
-import { fetchProductTags, type AdminProductTag } from './tag-management/api';
+import {
+  createProductTag,
+  fetchProductTags,
+  type AdminProductTag,
+} from './tag-management/api';
 
 export type ProductDependencyTarget = 'categories' | 'tags' | 'conversion-pool';
 export type ProductResumeRequest = {
@@ -159,6 +167,10 @@ function dedupeRemoteImages(images: ProductEditorImage[]): ProductEditorImage[] 
     seen.add(image.media.id);
     return true;
   });
+}
+
+function normalizeInlineName(value: string): string {
+  return value.trim().replace(/\s+/g, ' ');
 }
 
 export function ProductManagementView({
@@ -560,6 +572,52 @@ export function ProductManagementView({
     });
   }
 
+  async function handleCreateCategory(name: string): Promise<AdminCategory> {
+    const normalized = normalizeInlineName(name);
+    const existing = categories.find(
+      (category) => category.name.localeCompare(normalized, undefined, { sensitivity: 'accent' }) === 0,
+    );
+    if (existing) return existing;
+
+    const sortOrder = categories.length
+      ? Math.max(...categories.map((category) => category.sortOrder)) + 10
+      : 0;
+    try {
+      const created = await createCategory(section.id, {
+        name: normalized,
+        sortOrder,
+        isEnabled: true,
+      });
+      setCategories((current) => [...current, created].sort((a, b) => a.sortOrder - b.sortOrder));
+      return created;
+    } catch (error) {
+      if (isSessionError(error)) onSessionExpired();
+      throw error;
+    }
+  }
+
+  async function handleCreateTag(name: string): Promise<AdminProductTag> {
+    const normalized = normalizeInlineName(name);
+    const existing = tags.find(
+      (tag) => tag.name.localeCompare(normalized, undefined, { sensitivity: 'accent' }) === 0,
+    );
+    if (existing) return existing;
+
+    const sortOrder = tags.length ? Math.max(...tags.map((tag) => tag.sortOrder)) + 10 : 0;
+    try {
+      const created = await createProductTag(section.id, {
+        name: normalized,
+        sortOrder,
+        isEnabled: true,
+      });
+      setTags((current) => [...current, created].sort((a, b) => a.sortOrder - b.sortOrder));
+      return created;
+    } catch (error) {
+      if (isSessionError(error)) onSessionExpired();
+      throw error;
+    }
+  }
+
   async function moveProduct(product: AdminProduct, direction: -1 | 1) {
     const ordered = sortProducts(activeProducts);
     const index = ordered.findIndex((item) => item.id === product.id);
@@ -668,6 +726,8 @@ export function ProductManagementView({
       onRemoveMedia={removeMedia}
       onMoveMedia={moveMedia}
       onSetCover={setCoverKey}
+      onCreateCategory={handleCreateCategory}
+      onCreateTag={handleCreateTag}
       onConfigureDependency={(target) => void handleConfigureDependency(target)}
       onClose={closeEditor}
       onSubmit={(event) => void handleSave(event)}
