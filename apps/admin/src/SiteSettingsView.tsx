@@ -36,6 +36,7 @@ type SettingsDraft = Omit<
 };
 
 type SettingsPayload = SiteSettingsUpdateInput & { logoAssetId: string | null };
+type SettingsPanel = 'basic' | 'tracking' | 'affiliate' | 'media' | 'navigation';
 
 type DomainTestState =
   | { status: 'idle' }
@@ -44,6 +45,14 @@ type DomainTestState =
   | { status: 'error'; message: string };
 
 type SaveStage = 'idle' | 'uploading-logo' | 'saving';
+
+const settingsPanels: Array<{ id: SettingsPanel; label: string }> = [
+  { id: 'basic', label: '基础' },
+  { id: 'tracking', label: '统计' },
+  { id: 'affiliate', label: '联盟' },
+  { id: 'media', label: '媒体' },
+  { id: 'navigation', label: '导航' },
+];
 
 function createDraft(settings: SiteSettings): SettingsDraft {
   return {
@@ -84,6 +93,7 @@ function formatUpdatedAt(value: string): string {
 export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
   const [settings, setSettings] = useState<SiteSettings | null>(null);
   const [draft, setDraft] = useState<SettingsDraft | null>(null);
+  const [activePanel, setActivePanel] = useState<SettingsPanel>('basic');
   const [localLogo, setLocalLogo] = useState<LocalBrandingImage | null>(null);
   const [processingLogo, setProcessingLogo] = useState(false);
   const [saveStage, setSaveStage] = useState<SaveStage>('idle');
@@ -132,7 +142,6 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
       const prepared = await prepareBrandingImage(file, 'logo');
       setLocalLogo(prepared);
       updateDraft('logoAssetId', null);
-      setSuccessMessage('Logo 已在浏览器压缩并预览，点击保存站点设置后才会上传到 R2。');
     } catch (error) {
       setErrorMessage(error instanceof Error ? error.message : 'Logo 本地处理失败。');
     } finally {
@@ -160,7 +169,7 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
       const updated = await updateSiteSettings(input);
       setSettings(updated);
       setDraft(createDraft(updated));
-      setSuccessMessage('站点设置与 Logo 已保存。');
+      setSuccessMessage('站点设置已保存。');
     } catch (error) {
       if (error instanceof AdminApiError && error.status === 401) {
         onSessionExpired();
@@ -186,7 +195,7 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
       updateDraft('mediaBaseUrl', result.mediaBaseUrl);
       setDomainTest({
         status: 'success',
-        message: `连接成功，测试对象返回 HTTP ${result.responseStatus}。`,
+        message: `连接成功 · HTTP ${result.responseStatus}`,
       });
     } catch (error) {
       if (error instanceof AdminApiError && error.status === 401) {
@@ -200,7 +209,7 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
     }
   }
 
-  if (loading) return <section className="settings-card">正在读取站点设置…</section>;
+  if (loading) return <section className="settings-card settings-loading">正在读取站点设置…</section>;
 
   if (!draft || !settings) {
     return (
@@ -219,264 +228,244 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
     (draft.logoAssetId ? brandingAssetPreviewUrl(draft.logoAssetId) : null);
 
   return (
-    <form className="settings-form" onSubmit={(event) => void handleSubmit(event)}>
-      <section className="settings-card">
-        <div className="settings-card-heading">
-          <div>
-            <p className="eyebrow">基础设置</p>
-            <h2>站点与 Logo</h2>
-          </div>
-          <small>最后更新：{formatUpdatedAt(settings.updatedAt)}</small>
-        </div>
-
-        <div className="settings-grid">
-          <label className="field-group">
-            <span>站点名称</span>
-            <input
-              type="text"
-              value={draft.siteName}
-              disabled={busy}
-              onChange={(event) => updateDraft('siteName', event.target.value)}
-            />
-          </label>
-
-          <label className="field-group">
-            <span>位置文案</span>
-            <input
-              type="text"
-              value={draft.locationLabel}
-              disabled={busy}
-              onChange={(event) => updateDraft('locationLabel', event.target.value)}
-            />
-          </label>
-
-          <label className="field-group field-group-compact">
-            <span>首页分区数量</span>
-            <input
-              type="number"
-              value={draft.homeSectionLimit}
-              min={1}
-              max={20}
-              step={1}
-              disabled={busy}
-              onChange={(event) => updateDraft('homeSectionLimit', Number(event.target.value))}
-            />
-          </label>
-        </div>
-
-        <div className="branding-upload-card">
-          <div className="branding-preview branding-logo-preview">
-            {logoPreviewUrl ? <img src={logoPreviewUrl} alt="站点 Logo 预览" /> : <span>未设置 Logo</span>}
-          </div>
-          <div className="branding-upload-copy">
-            <strong>站点 Logo</strong>
-            <p>支持 JPG、PNG、WebP。浏览器最长边压缩至 1200px，原图不会上传。</p>
-            {localLogo ? (
-              <small>
-                压缩后 {localLogo.width} × {localLogo.height} · {formatBrandingBytes(localLogo.compressedFile.size)}
-                {'；'}原图 {formatBrandingBytes(localLogo.originalByteSize)}
-              </small>
-            ) : draft.logoAssetId ? (
-              <small>已绑定 R2 图片素材。</small>
-            ) : null}
-            <div className="branding-upload-actions">
-              <label className={`branding-file-button${busy ? ' is-disabled' : ''}`}>
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  disabled={busy}
-                  onChange={(event) => {
-                    const file = event.target.files?.[0];
-                    event.currentTarget.value = '';
-                    if (file) void selectLogo(file);
-                  }}
-                />
-                {processingLogo ? '浏览器压缩中…' : logoPreviewUrl ? '更换 Logo' : '上传 Logo'}
-              </label>
-              {logoPreviewUrl ? (
-                <button
-                  type="button"
-                  className="secondary-button"
-                  disabled={busy}
-                  onClick={() => {
-                    setLocalLogo(null);
-                    updateDraft('logoAssetId', null);
-                  }}
-                >
-                  移除 Logo
-                </button>
-              ) : null}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="settings-card">
-        <div className="settings-card-heading">
-          <div>
-            <p className="eyebrow">统计代码</p>
-            <h2>GA4 与 Facebook Pixel</h2>
-          </div>
-        </div>
-
-        <div className="settings-grid">
-          <label className="field-group">
-            <span>GA4 Measurement ID</span>
-            <input
-              type="text"
-              value={draft.ga4MeasurementId}
-              placeholder="G-XXXXXXXXXX"
-              disabled={busy}
-              onChange={(event) => updateDraft('ga4MeasurementId', event.target.value)}
-            />
-          </label>
-
-          <label className="field-group">
-            <span>Facebook Pixel ID</span>
-            <input
-              type="text"
-              value={draft.facebookPixelId}
-              placeholder="1234567890"
-              disabled={busy}
-              onChange={(event) => updateDraft('facebookPixelId', event.target.value)}
-            />
-          </label>
-        </div>
-      </section>
-
-      <section className="settings-card">
-        <div className="settings-card-heading">
-          <div>
-            <p className="eyebrow">联盟平台</p>
-            <h2>联盟检测</h2>
-          </div>
-          <span className={draft.affiliateDetectionEnabled ? 'status-chip is-configured' : 'status-chip'}>
-            {draft.affiliateDetectionEnabled ? '已启用' : '未启用'}
-          </span>
-        </div>
-
-        <label className="toggle-row">
-          <span>
-            <strong>启用联盟平台检测</strong>
-            <small>用于前端检测联盟脚本或平台配置是否正确加载。</small>
-          </span>
-          <input
-            type="checkbox"
-            checked={draft.affiliateDetectionEnabled}
-            disabled={busy}
-            onChange={(event) => updateDraft('affiliateDetectionEnabled', event.target.checked)}
-          />
-        </label>
-
-        <div className="settings-grid">
-          <label className="field-group">
-            <span>联盟平台名称</span>
-            <input
-              type="text"
-              value={draft.affiliatePlatform}
-              placeholder="例如：Impact / CJ / 自定义"
-              disabled={busy}
-              onChange={(event) => updateDraft('affiliatePlatform', event.target.value)}
-            />
-          </label>
-        </div>
-
-        <label className="field-group">
-          <span>检测配置 JSON</span>
-          <textarea
-            rows={7}
-            value={draft.affiliateDetectionConfig}
-            placeholder={'{\n  "scriptSelector": "..."\n}'}
-            spellCheck={false}
-            disabled={busy}
-            onChange={(event) => updateDraft('affiliateDetectionConfig', event.target.value)}
-          />
-        </label>
-      </section>
-
-      <section className="settings-card">
-        <div className="settings-card-heading">
-          <div>
-            <p className="eyebrow">R2 公共媒体</p>
-            <h2>图片自定义域名</h2>
-          </div>
-          <span className={draft.mediaBaseUrl ? 'status-chip is-configured' : 'status-chip'}>
-            {draft.mediaBaseUrl ? '已填写' : '未配置'}
-          </span>
-        </div>
-
-        <div className="domain-field-row">
-          <label className="field-group">
-            <span>R2 自定义域名</span>
-            <input
-              type="url"
-              value={draft.mediaBaseUrl}
-              placeholder="https://assets.example.com"
-              disabled={busy || domainTest.status === 'testing'}
-              onChange={(event) => updateDraft('mediaBaseUrl', event.target.value)}
-            />
-          </label>
-          <button
-            className="secondary-button domain-test-button"
-            type="button"
-            disabled={busy || domainTest.status === 'testing' || !draft.mediaBaseUrl.trim()}
-            onClick={() => void handleDomainTest()}
-          >
-            {domainTest.status === 'testing' ? '正在测试…' : '测试连接'}
-          </button>
-        </div>
-
-        {domainTest.status === 'success' ? (
-          <p className="inline-status is-success">{domainTest.message}</p>
-        ) : null}
-        {domainTest.status === 'error' ? (
-          <p className="inline-status is-error">{domainTest.message}</p>
-        ) : null}
-      </section>
-
-      <section className="settings-card">
-        <div className="settings-card-heading">
-          <div>
-            <p className="eyebrow">用户前端入口</p>
-            <h2>导航显示开关</h2>
-          </div>
-        </div>
-        <div className="toggle-grid">
-          {(
-            [
-              ['showHot', 'Hot', '显示热门产品入口'],
-              ['showLatest', 'Latest', '显示最新产品入口'],
-              ['showMore', 'More', '显示更多分区入口'],
-              ['showMessages', 'Messages', '显示客服入口'],
-              ['showFaq', 'FAQ', '显示 FAQ 入口'],
-            ] as const
-          ).map(([field, label, description]) => (
-            <label className="toggle-row" key={field}>
-              <span>
-                <strong>{label}</strong>
-                <small>{description}</small>
-              </span>
-              <input
-                type="checkbox"
-                checked={draft[field]}
-                disabled={busy}
-                onChange={(event) => updateDraft(field, event.target.checked)}
-              />
-            </label>
+    <form className="settings-form settings-workbench" onSubmit={(event) => void handleSubmit(event)}>
+      <div className="settings-workbench-bar">
+        <div className="settings-tabs" role="tablist" aria-label="站点设置分组">
+          {settingsPanels.map((panel) => (
+            <button
+              key={panel.id}
+              type="button"
+              className={activePanel === panel.id ? 'is-active' : undefined}
+              aria-selected={activePanel === panel.id}
+              onClick={() => setActivePanel(panel.id)}
+            >
+              {panel.label}
+            </button>
           ))}
         </div>
-      </section>
+        <small>更新于 {formatUpdatedAt(settings.updatedAt)}</small>
+      </div>
 
-      {errorMessage ? <p className="inline-status is-error">{errorMessage}</p> : null}
-      {successMessage ? <p className="inline-status is-success">{successMessage}</p> : null}
+      <div className="settings-panel-frame">
+        {activePanel === 'basic' ? (
+          <section className="settings-card settings-panel" aria-label="基础设置">
+            <div className="settings-grid settings-basic-grid">
+              <label className="field-group">
+                <span>站点名称</span>
+                <input
+                  type="text"
+                  value={draft.siteName}
+                  disabled={busy}
+                  onChange={(event) => updateDraft('siteName', event.target.value)}
+                />
+              </label>
 
-      <div className="settings-actions">
-        <span>站点级配置统一在此保存。</span>
+              <label className="field-group">
+                <span>位置文案</span>
+                <input
+                  type="text"
+                  value={draft.locationLabel}
+                  disabled={busy}
+                  onChange={(event) => updateDraft('locationLabel', event.target.value)}
+                />
+              </label>
+
+              <label className="field-group">
+                <span>首页分区数量</span>
+                <input
+                  type="number"
+                  value={draft.homeSectionLimit}
+                  min={1}
+                  max={20}
+                  step={1}
+                  disabled={busy}
+                  onChange={(event) => updateDraft('homeSectionLimit', Number(event.target.value))}
+                />
+              </label>
+            </div>
+
+            <div className="branding-upload-card branding-upload-compact">
+              <div className="branding-preview branding-logo-preview">
+                {logoPreviewUrl ? <img src={logoPreviewUrl} alt="站点 Logo 预览" /> : <span>Logo</span>}
+              </div>
+              <div className="branding-upload-copy">
+                <strong>站点 Logo</strong>
+                {localLogo ? (
+                  <small>
+                    {localLogo.width} × {localLogo.height} · {formatBrandingBytes(localLogo.compressedFile.size)}
+                  </small>
+                ) : draft.logoAssetId ? (
+                  <small>已设置</small>
+                ) : (
+                  <small>未设置</small>
+                )}
+              </div>
+              <div className="branding-upload-actions">
+                <label className={`branding-file-button${busy ? ' is-disabled' : ''}`}>
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    disabled={busy}
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      event.currentTarget.value = '';
+                      if (file) void selectLogo(file);
+                    }}
+                  />
+                  {processingLogo ? '处理中…' : logoPreviewUrl ? '更换' : '上传'}
+                </label>
+                {logoPreviewUrl ? (
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    disabled={busy}
+                    onClick={() => {
+                      setLocalLogo(null);
+                      updateDraft('logoAssetId', null);
+                    }}
+                  >
+                    移除
+                  </button>
+                ) : null}
+              </div>
+            </div>
+          </section>
+        ) : null}
+
+        {activePanel === 'tracking' ? (
+          <section className="settings-card settings-panel" aria-label="统计设置">
+            <div className="settings-grid">
+              <label className="field-group">
+                <span>GA4 Measurement ID</span>
+                <input
+                  type="text"
+                  value={draft.ga4MeasurementId}
+                  placeholder="G-XXXXXXXXXX"
+                  disabled={busy}
+                  onChange={(event) => updateDraft('ga4MeasurementId', event.target.value)}
+                />
+              </label>
+
+              <label className="field-group">
+                <span>Facebook Pixel ID</span>
+                <input
+                  type="text"
+                  value={draft.facebookPixelId}
+                  placeholder="1234567890"
+                  disabled={busy}
+                  onChange={(event) => updateDraft('facebookPixelId', event.target.value)}
+                />
+              </label>
+            </div>
+          </section>
+        ) : null}
+
+        {activePanel === 'affiliate' ? (
+          <section className="settings-card settings-panel settings-affiliate-panel" aria-label="联盟设置">
+            <div className="settings-affiliate-topline">
+              <label className="toggle-row">
+                <span><strong>联盟检测</strong></span>
+                <input
+                  type="checkbox"
+                  checked={draft.affiliateDetectionEnabled}
+                  disabled={busy}
+                  onChange={(event) => updateDraft('affiliateDetectionEnabled', event.target.checked)}
+                />
+              </label>
+              <label className="field-group">
+                <span>联盟平台</span>
+                <input
+                  type="text"
+                  value={draft.affiliatePlatform}
+                  placeholder="Impact / CJ / 自定义"
+                  disabled={busy}
+                  onChange={(event) => updateDraft('affiliatePlatform', event.target.value)}
+                />
+              </label>
+            </div>
+
+            <label className="field-group settings-config-field">
+              <span>检测配置 JSON</span>
+              <textarea
+                rows={10}
+                value={draft.affiliateDetectionConfig}
+                placeholder={'{\n  "scriptSelector": "..."\n}'}
+                spellCheck={false}
+                disabled={busy}
+                onChange={(event) => updateDraft('affiliateDetectionConfig', event.target.value)}
+              />
+            </label>
+          </section>
+        ) : null}
+
+        {activePanel === 'media' ? (
+          <section className="settings-card settings-panel" aria-label="媒体设置">
+            <div className="domain-field-row">
+              <label className="field-group">
+                <span>R2 自定义域名</span>
+                <input
+                  type="url"
+                  value={draft.mediaBaseUrl}
+                  placeholder="https://assets.example.com"
+                  disabled={busy || domainTest.status === 'testing'}
+                  onChange={(event) => updateDraft('mediaBaseUrl', event.target.value)}
+                />
+              </label>
+              <button
+                className="secondary-button domain-test-button"
+                type="button"
+                disabled={busy || domainTest.status === 'testing' || !draft.mediaBaseUrl.trim()}
+                onClick={() => void handleDomainTest()}
+              >
+                {domainTest.status === 'testing' ? '测试中…' : '测试连接'}
+              </button>
+            </div>
+
+            {domainTest.status === 'success' ? (
+              <p className="inline-status is-success">{domainTest.message}</p>
+            ) : null}
+            {domainTest.status === 'error' ? (
+              <p className="inline-status is-error">{domainTest.message}</p>
+            ) : null}
+          </section>
+        ) : null}
+
+        {activePanel === 'navigation' ? (
+          <section className="settings-card settings-panel" aria-label="导航设置">
+            <div className="toggle-grid settings-navigation-grid">
+              {(
+                [
+                  ['showHot', 'Hot'],
+                  ['showLatest', 'Latest'],
+                  ['showMore', 'More'],
+                  ['showMessages', 'Messages'],
+                  ['showFaq', 'FAQ'],
+                ] as const
+              ).map(([field, label]) => (
+                <label className="toggle-row" key={field}>
+                  <span><strong>{label}</strong></span>
+                  <input
+                    type="checkbox"
+                    checked={draft[field]}
+                    disabled={busy}
+                    onChange={(event) => updateDraft(field, event.target.checked)}
+                  />
+                </label>
+              ))}
+            </div>
+          </section>
+        ) : null}
+      </div>
+
+      {errorMessage ? <p className="inline-status is-error settings-toast">{errorMessage}</p> : null}
+      {successMessage ? <p className="inline-status is-success settings-toast">{successMessage}</p> : null}
+
+      <div className="settings-actions settings-workbench-actions">
         <button className="primary-button settings-save-button" type="submit" disabled={busy}>
           {saveStage === 'uploading-logo'
-            ? '正在上传压缩 Logo…'
+            ? '上传 Logo…'
             : saveStage === 'saving'
-              ? '正在保存…'
+              ? '保存中…'
               : '保存站点设置'}
         </button>
       </div>

@@ -15,6 +15,7 @@ import './branding-media.css';
 import './admin-polish.css';
 import './admin-polish-2.css';
 import './admin-density.css';
+import './admin-no-scroll.css';
 
 const root = document.getElementById('root');
 if (!root) {

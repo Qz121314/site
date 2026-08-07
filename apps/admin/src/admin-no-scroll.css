@@ -1,0 +1,375 @@
+/* Desktop admin workbench: keep the browser viewport fixed and spend height on work, not chrome. */
+
+@media (min-width: 1024px) {
+  html,
+  body,
+  #root {
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .admin-shell {
+    width: 100%;
+    height: 100dvh;
+    min-height: 0;
+    grid-template-columns: 224px minmax(0, 1fr);
+    overflow: hidden;
+  }
+
+  .sidebar {
+    height: 100dvh;
+    min-height: 0;
+    padding: 10px 8px;
+    overflow: hidden;
+  }
+
+  .admin-brand {
+    margin: 0 2px 5px;
+    padding: 2px 3px 7px;
+  }
+
+  .admin-brand > span {
+    width: 32px;
+    height: 32px;
+  }
+
+  .admin-nav {
+    min-height: 0;
+    padding-right: 1px;
+    overflow-y: auto;
+  }
+
+  .sidebar-section-label {
+    margin-top: 4px;
+    padding: 6px 8px 3px;
+  }
+
+  .sidebar nav > button,
+  .dynamic-menu > button {
+    min-height: 32px;
+  }
+
+  .dynamic-menu > div button {
+    min-height: 25px;
+  }
+
+  .admin-main {
+    display: flex;
+    width: 100%;
+    height: 100dvh;
+    min-height: 0;
+    max-width: none;
+    flex-direction: column;
+    margin: 0;
+    padding: 10px 16px 10px;
+    overflow: hidden;
+  }
+
+  .admin-header {
+    position: relative;
+    top: auto;
+    min-height: 42px;
+    flex: 0 0 42px;
+    margin: 0;
+    padding: 0 2px 7px;
+    border-bottom: 1px solid var(--border-color);
+    background: transparent;
+    backdrop-filter: none;
+  }
+
+  .admin-header p {
+    display: none !important;
+  }
+
+  .admin-header h1 {
+    font-size: 1.18rem;
+    line-height: 1.2;
+  }
+
+  .header-actions {
+    gap: 6px;
+  }
+
+  .environment-badge,
+  .header-actions .secondary-button {
+    min-height: 30px;
+  }
+
+  .environment-badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 4px 8px;
+  }
+
+  .header-actions .secondary-button {
+    padding-inline: 10px;
+  }
+
+  .admin-main > .notice {
+    position: fixed;
+    z-index: 170;
+    top: 10px;
+    left: 50%;
+    width: max-content;
+    max-width: min(560px, calc(100vw - 40px));
+    margin: 0;
+    transform: translateX(-50%);
+  }
+
+  .admin-main > .settings-form,
+  .admin-main > .section-management,
+  .admin-main > .category-management,
+  .admin-main > .product-management,
+  .admin-main > .conversion-pool,
+  .admin-main > .faq-management,
+  .admin-main > .asset-library-page {
+    min-height: 0;
+    flex: 1 1 auto;
+    overflow: hidden;
+  }
+
+  /* Lists scroll inside their data surface instead of moving the whole browser page. */
+  .section-table-wrap,
+  .category-table-wrap,
+  .product-table-wrap,
+  .asset-table-wrap {
+    min-height: 0;
+    max-height: calc(100dvh - 104px);
+    overflow: auto;
+    overscroll-behavior: contain;
+  }
+
+  .faq-list {
+    min-height: 0;
+    max-height: calc(100dvh - 104px);
+    overflow-y: auto;
+  }
+
+  .conversion-pool {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+}
+
+/* Site settings are a single-screen control desk, not a long document. */
+.settings-workbench {
+  position: relative;
+  display: grid;
+  grid-template-rows: 38px minmax(0, 1fr) 42px;
+  gap: 7px;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+}
+
+.settings-workbench-bar {
+  position: relative;
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+}
+
+.settings-workbench-bar > small {
+  position: absolute;
+  right: 3px;
+  color: var(--muted-text);
+  font-size: 0.67rem;
+  white-space: nowrap;
+}
+
+.settings-tabs {
+  display: inline-flex;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid var(--border-color);
+  border-radius: 9px;
+  background: #eef1f5;
+}
+
+.settings-tabs button {
+  min-width: 64px;
+  min-height: 30px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 7px;
+  color: #667085;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.76rem;
+  font-weight: 720;
+}
+
+.settings-tabs button.is-active {
+  color: #fff;
+  background: #202632;
+  box-shadow: 0 2px 6px rgb(16 24 40 / 12%);
+}
+
+.settings-panel-frame {
+  display: grid;
+  min-height: 0;
+  place-items: start stretch;
+  overflow: hidden;
+}
+
+.settings-panel {
+  width: 100%;
+  min-height: 0;
+  margin: 0;
+  padding: 14px 16px;
+  border-radius: 12px;
+}
+
+.settings-basic-grid {
+  grid-template-columns: minmax(0, 1.35fr) minmax(0, 1.35fr) minmax(150px, 0.45fr);
+  align-items: end;
+}
+
+.settings-panel .field-group input,
+.settings-panel .field-group select {
+  min-height: 36px;
+}
+
+.branding-upload-card.branding-upload-compact {
+  display: grid;
+  grid-template-columns: 72px minmax(120px, 1fr) auto;
+  min-height: 72px;
+  align-items: center;
+  gap: 12px;
+  margin-top: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+}
+
+.branding-upload-compact .branding-logo-preview {
+  width: 64px;
+  height: 52px;
+  min-height: 52px;
+  border-radius: 8px;
+}
+
+.branding-upload-compact .branding-preview img {
+  max-height: 52px;
+}
+
+.branding-upload-compact .branding-upload-copy {
+  gap: 2px;
+}
+
+.branding-upload-compact .branding-upload-copy strong {
+  font-size: 0.8rem;
+}
+
+.branding-upload-compact .branding-upload-copy small {
+  font-size: 0.67rem;
+}
+
+.branding-upload-compact .branding-upload-actions {
+  flex-wrap: nowrap;
+  margin: 0;
+}
+
+.branding-upload-compact .branding-file-button,
+.branding-upload-compact .secondary-button {
+  min-height: 32px;
+  padding-inline: 10px;
+}
+
+.settings-affiliate-panel {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 10px;
+}
+
+.settings-affiliate-topline {
+  display: grid;
+  grid-template-columns: minmax(180px, 0.55fr) minmax(260px, 1fr);
+  align-items: end;
+  gap: 10px;
+}
+
+.settings-affiliate-topline .toggle-row {
+  min-height: 36px;
+}
+
+.settings-config-field textarea {
+  min-height: 220px;
+  max-height: 42vh;
+  resize: none;
+}
+
+.settings-navigation-grid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.settings-navigation-grid .toggle-row {
+  min-height: 52px;
+}
+
+.settings-workbench-actions {
+  position: relative;
+  inset: auto;
+  display: flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: flex-end;
+  margin: 0;
+  padding: 3px 0 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  backdrop-filter: none;
+}
+
+.settings-workbench-actions .settings-save-button {
+  min-width: 132px;
+  min-height: 34px;
+}
+
+.settings-toast {
+  position: fixed !important;
+  z-index: 180;
+  top: 10px;
+  left: 50%;
+  width: max-content;
+  max-width: min(560px, calc(100vw - 40px));
+  margin: 0 !important;
+  transform: translateX(-50%);
+}
+
+@media (max-width: 1023px) {
+  .settings-workbench {
+    height: auto;
+    overflow: visible;
+  }
+
+  .settings-workbench-bar {
+    justify-content: flex-start;
+    overflow-x: auto;
+  }
+
+  .settings-workbench-bar > small {
+    display: none;
+  }
+
+  .settings-tabs {
+    flex: 0 0 auto;
+  }
+
+  .settings-basic-grid,
+  .settings-affiliate-topline,
+  .settings-navigation-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .branding-upload-card.branding-upload-compact {
+    grid-template-columns: 64px minmax(0, 1fr);
+  }
+
+  .branding-upload-compact .branding-upload-actions {
+    grid-column: 1 / -1;
+  }
+}
