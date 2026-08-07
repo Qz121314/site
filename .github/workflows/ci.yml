@@ -89,8 +89,8 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
 
-      - name: Resolve active R2 media domain
-        id: media_origin
+      - name: Resolve active R2 custom domain
+        id: r2_origin
         run: |
           set -euo pipefail
           preferred_result="$(pnpm exec wrangler d1 execute DB --remote --command "SELECT media_base_url FROM site_settings WHERE id = 1;" --json)"
@@ -106,7 +106,7 @@ jobs:
             node scripts/resolve-r2-public-origin.mjs)"
           test -n "$origin"
           echo "origin=$origin" >> "$GITHUB_OUTPUT"
-          echo "Resolved active R2 media read origin from bucket binding: $origin"
+          echo "Resolved active R2 custom-domain read origin: $origin"
 
           escaped_origin="${origin//\'/\'\'}"
           pnpm exec wrangler d1 execute DB --remote \
@@ -115,18 +115,78 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
 
-      - name: Verify selected R2 media domain
+      - name: Verify selected R2 custom domain
         env:
-          MEDIA_ORIGIN: ${{ steps.media_origin.outputs.origin }}
+          R2_ORIGIN: ${{ steps.r2_origin.outputs.origin }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           set -euo pipefail
-          domain="$(node -e 'process.stdout.write(new URL(process.env.MEDIA_ORIGIN).hostname)')"
+          domain="$(node -e 'process.stdout.write(new URL(process.env.R2_ORIGIN).hostname)')"
           pnpm exec wrangler r2 bucket domain get service-catalog-site-assets --domain "$domain"
+
+      - name: Configure public R2 CORS
+        run: |
+          set -euo pipefail
+          pnpm exec wrangler r2 bucket cors set service-catalog-site-assets \
+            --file config/r2-public-cors.json \
+            --force
+          pnpm exec wrangler r2 bucket cors list service-catalog-site-assets
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Probe direct R2 snapshot reads
+        id: r2_probe
+        env:
+          R2_ORIGIN: ${{ steps.r2_origin.outputs.origin }}
+        run: |
+          set -euo pipefail
+          probe_origin='https://storefront-probe.invalid'
+          headers="$(mktemp)"
+          body="$(mktemp)"
+          status="$(curl --silent --show-error \
+            --connect-timeout 10 \
+            --max-time 20 \
+            -H "Origin: $probe_origin" \
+            -D "$headers" \
+            -o "$body" \
+            -w '%{http_code}' \
+            "$R2_ORIGIN/public/current.json" || true)"
+          cors="$(awk 'BEGIN{IGNORECASE=1} /^access-control-allow-origin:/ {gsub("\r", ""); sub(/^[^:]+:[[:space:]]*/, ""); print; exit}' "$headers")"
+          json_ok=false
+          if [[ "$status" =~ ^2 ]] && node -e '
+            const fs = require("fs");
+            const value = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+            if (value.schemaVersion !== 1 && value.schemaVersion !== 2) process.exit(1);
+          ' "$body"; then
+            json_ok=true
+          fi
+
+          ready=false
+          if [[ "$json_ok" == true && ( "$cors" == '*' || "$cors" == "$probe_origin" ) ]]; then
+            ready=true
+          fi
+          echo "ready=$ready" >> "$GITHUB_OUTPUT"
+          echo "status=$status" >> "$GITHUB_OUTPUT"
+          echo "Direct R2 probe: HTTP $status, CORS='${cors:-missing}', ready=$ready"
+
+          if [[ "$ready" != true ]]; then
+            echo '::warning::DIRECT_R2_BLOCKED - Storefront will use its same-origin /public/* runtime fallback until the R2 custom domain becomes directly readable.'
+            if grep -Eqi '^cf-mitigated:[[:space:]]*challenge' "$headers"; then
+              echo 'Direct R2 diagnosis: Cloudflare challenge (cf-mitigated: challenge).'
+            fi
+            echo '--- direct R2 response headers ---'
+            cat "$headers"
+            echo '--- direct R2 response body preview ---'
+            head -c 800 "$body" || true
+            echo
+          fi
 
       - name: Build production assets
         run: pnpm build
+        env:
+          VITE_PUBLIC_CONTENT_ORIGIN: ${{ steps.r2_origin.outputs.origin }}
 
       - name: Deploy business platform Worker
         id: deploy
@@ -143,6 +203,8 @@ jobs:
       - name: Smoke test production
         env:
           BASE_URL: ${{ steps.deploy.outputs.url }}
+          R2_ORIGIN: ${{ steps.r2_origin.outputs.origin }}
+          DIRECT_R2_READY: ${{ steps.r2_probe.outputs.ready }}
         run: |
           set -euo pipefail
 
@@ -165,8 +227,34 @@ jobs:
           grep -Eqi '^content-type: application/json' /tmp/storefront-current.headers
           grep -Eqi '^cache-control: public, max-age=30, must-revalidate' /tmp/storefront-current.headers
           node -e "const fs=require('fs'); const value=JSON.parse(fs.readFileSync('/tmp/storefront-current.json','utf8')); if(value.schemaVersion!==1&&value.schemaVersion!==2) process.exit(1);"
-
           curl --fail --silent --show-error --head "$BASE_URL/public/current.json" >/dev/null
+
+          direct_headers="$(mktemp)"
+          direct_body="$(mktemp)"
+          direct_status="$(curl --silent --show-error \
+            --connect-timeout 10 \
+            --max-time 20 \
+            -H "Origin: $BASE_URL" \
+            -D "$direct_headers" \
+            -o "$direct_body" \
+            -w '%{http_code}' \
+            "$R2_ORIGIN/public/current.json" || true)"
+          direct_cors="$(awk 'BEGIN{IGNORECASE=1} /^access-control-allow-origin:/ {gsub("\r", ""); sub(/^[^:]+:[[:space:]]*/, ""); print; exit}' "$direct_headers")"
+          if [[ "$direct_status" =~ ^2 ]] \
+            && [[ "$direct_cors" == '*' || "$direct_cors" == "$BASE_URL" ]] \
+            && node -e '
+              const fs = require("fs");
+              const value = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
+              if (value.schemaVersion !== 1 && value.schemaVersion !== 2) process.exit(1);
+            ' "$direct_body"; then
+            echo 'DIRECT_R2_READ=ready'
+          else
+            echo '::warning::DIRECT_R2_READ=blocked - production remains available through the tested same-origin /public/* fallback.'
+            echo "Direct R2 post-deploy status: HTTP $direct_status, CORS='${direct_cors:-missing}', predeploy_ready=$DIRECT_R2_READY"
+            if grep -Eqi '^cf-mitigated:[[:space:]]*challenge' "$direct_headers"; then
+              echo 'Direct R2 diagnosis: Cloudflare challenge (cf-mitigated: challenge).'
+            fi
+          fi
 
           auth_session="$(curl --fail --silent --show-error "$BASE_URL/api/admin/auth/session")"
           printf '%s' "$auth_session" | grep -F '"authenticated":false'
