@@ -124,21 +124,26 @@ function validateBeforeImageUpload(
   if (form.tagIds.length > 12) return '每个产品最多选择 12 个标签。';
   if (form.status !== 'published') return null;
 
-  const category = categories.find((item) => item.id === form.categoryId);
-  if (!category || !category.isEnabled) return '发布产品前必须选择一个启用分类。';
+  if (form.categoryId) {
+    const category = categories.find((item) => item.id === form.categoryId);
+    if (!category || !category.isEnabled) return '所选分类不存在或已停用。';
+  }
 
   if (form.tagIds.some((id) => !tags.some((tag) => tag.id === id && tag.isEnabled))) {
     return '发布产品不能使用已停用或不存在的标签。';
   }
 
-  const group = groups.find((item) => item.id === form.conversionGroupId);
-  const expectedMode = form.serviceMode === 'online' ? 'link' : 'customer_service';
-  if (!group || !group.isEnabled || group.mode !== expectedMode) {
-    return form.serviceMode === 'online'
-      ? '线上产品必须选择一个启用的外部链接分组。'
-      : '线下产品必须选择一个启用的在线客服分组。';
+  if (form.conversionGroupId) {
+    const group = groups.find((item) => item.id === form.conversionGroupId);
+    const expectedMode = form.serviceMode === 'online' ? 'link' : 'customer_service';
+    if (!group || !group.isEnabled || group.mode !== expectedMode) {
+      return form.serviceMode === 'online'
+        ? '所选转化分组必须是启用的外部链接分组。'
+        : '所选转化分组必须是启用的在线客服分组。';
+    }
+    if (group.activeTargetCount < 1) return '所选转化分组至少需要一个启用入口。';
   }
-  if (group.activeTargetCount < 1) return '所选转化分组至少需要一个启用入口。';
+
   if (media.length < 1) return '发布产品前至少需要一张产品图片。';
   if (form.serviceMode === 'offline' && !form.address?.trim()) {
     return '发布线下产品前必须填写服务地址。';

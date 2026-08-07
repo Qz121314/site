@@ -504,21 +504,25 @@ function ProductPage({ bootstrap, productId }: { bootstrap: StorefrontBootstrap;
               </section>
             </div>
 
-            <aside className="contact-card">
-              <span>Ready to connect?</span>
-              <strong>{query.data.product.cta.label}</strong>
-              <p>The available contact destination is selected when you continue.</p>
+            {query.data.product.cta ? (
+              <aside className="contact-card">
+                <span>Ready to connect?</span>
+                <strong>{query.data.product.cta.label}</strong>
+                <p>The available contact destination is selected when you continue.</p>
+                <a className="cta-button" href={query.data.product.cta.path} rel="nofollow">
+                  {query.data.product.cta.label}
+                </a>
+              </aside>
+            ) : null}
+          </div>
+
+          {query.data.product.cta ? (
+            <div className="mobile-cta-bar">
               <a className="cta-button" href={query.data.product.cta.path} rel="nofollow">
                 {query.data.product.cta.label}
               </a>
-            </aside>
-          </div>
-
-          <div className="mobile-cta-bar">
-            <a className="cta-button" href={query.data.product.cta.path} rel="nofollow">
-              {query.data.product.cta.label}
-            </a>
-          </div>
+            </div>
+          ) : null}
         </article>
       ) : null}
     </SiteShell>

@@ -676,6 +676,14 @@ function sectionPublicData(source: Source, sectionId: string) {
       publishedAt: product.published_at,
       sortOrder: product.sort_order,
     };
+    const cta =
+      product.conversion_group_id && product.conversion_mode && product.button_label
+        ? {
+            label: product.button_label,
+            mode: product.conversion_mode,
+            path: `/go/${encodeURIComponent(product.id)}`,
+          }
+        : null;
     return {
       row: product,
       summary,
@@ -684,11 +692,7 @@ function sectionPublicData(source: Source, sectionId: string) {
         conversionGroupId: product.conversion_group_id,
         body: product.body,
         media,
-        cta: {
-          label: product.button_label,
-          mode: product.conversion_mode,
-          path: `/go/${encodeURIComponent(product.id)}`,
-        },
+        cta,
       },
     };
   });
@@ -841,22 +845,22 @@ function validatePayload(source: Source, payload: ModulePayload): void {
   if (payload.kind !== 'section' || !payload.sectionId) return;
   const products = source.products.filter((product) => product.section_id === payload.sectionId);
   for (const product of products) {
-    if (!product.category_id || !product.category_name || product.category_enabled !== 1) {
+    if (product.category_id && (!product.category_name || product.category_enabled !== 1)) {
       throw new ModularPublicationError(
         'PRODUCT_CATEGORY_INVALID',
-        `产品“${product.title}”没有可用分类，当前分区无法发布。`,
+        `产品“${product.title}”选择的分类已不可用，当前分区无法发布。`,
       );
     }
     if (
-      !product.conversion_group_id ||
-      !product.conversion_mode ||
-      !product.button_label ||
-      product.conversion_group_enabled !== 1 ||
-      product.active_target_count < 1
+      product.conversion_group_id &&
+      (!product.conversion_mode ||
+        !product.button_label ||
+        product.conversion_group_enabled !== 1 ||
+        product.active_target_count < 1)
     ) {
       throw new ModularPublicationError(
         'PRODUCT_CONVERSION_INVALID',
-        `产品“${product.title}”没有可用的转化分组或启用入口，当前分区无法发布。`,
+        `产品“${product.title}”选择的转化分组或启用入口已不可用，当前分区无法发布。`,
       );
     }
     if (product.service_mode === 'offline' && !product.address) {
