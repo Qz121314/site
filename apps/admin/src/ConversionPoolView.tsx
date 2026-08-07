@@ -45,9 +45,10 @@ const emptyGroupForm: ConversionGroupInput = {
 
 const emptyTargetForm: ConversionTargetInput = {
   name: '',
-  endpointUrl: '',
-  projectId: null,
-  config: null,
+  endpointUrl: null,
+  customerServiceConnectionId: null,
+  remoteGroupId: null,
+  remoteGroupName: null,
   sortOrder: 0,
   isEnabled: true,
 };
@@ -69,7 +70,7 @@ function isSessionError(error: unknown): boolean {
 }
 
 function modeLabel(group: AdminConversionGroup): string {
-  return group.mode === 'customer_service' ? '在线客服' : '外部链接';
+  return group.mode === 'customer_service' ? '在线客服' : '链接跳转';
 }
 
 function readinessLabel(group: AdminConversionGroup): string {
@@ -78,13 +79,38 @@ function readinessLabel(group: AdminConversionGroup): string {
   return `可轮换 ${group.activeTargetCount} 个入口`;
 }
 
-function shortUrl(value: string): string {
+function shortUrl(value: string | null): string {
+  if (!value) return '—';
   try {
     const url = new URL(value);
     return `${url.host}${url.pathname === '/' ? '' : url.pathname}`;
   } catch {
     return value;
   }
+}
+
+function targetSearchText(target: AdminConversionTarget): string {
+  return [
+    target.name,
+    target.endpointUrl,
+    target.customerServiceConnectionName,
+    target.remoteGroupName,
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase();
+}
+
+function targetToInput(target: AdminConversionTarget): ConversionTargetInput {
+  return {
+    name: target.name,
+    endpointUrl: target.endpointUrl,
+    customerServiceConnectionId: target.customerServiceConnectionId,
+    remoteGroupId: target.remoteGroupId,
+    remoteGroupName: target.remoteGroupName,
+    sortOrder: target.sortOrder,
+    isEnabled: target.isEnabled,
+  };
 }
 
 export function ConversionPoolView({ section, onSessionExpired }: Props) {
@@ -148,20 +174,6 @@ export function ConversionPoolView({ section, onSessionExpired }: Props) {
     }
   }, [handleError, section.id]);
 
-  useEffect(() => {
-    setGroupScope('active');
-    setGroupSearch('');
-    setSelectedGroupIds(new Set());
-    setSelectedGroupId(null);
-    setTrashGroups([]);
-    setActiveTargets([]);
-    setTrashTargets([]);
-    setErrorMessage('');
-    setSuccessMessage('');
-    setRotationMessage('');
-    void loadActiveGroups();
-  }, [loadActiveGroups]);
-
   const loadActiveTargets = useCallback(
     async (groupId: string) => {
       setTargetsLoading(true);
@@ -176,6 +188,20 @@ export function ConversionPoolView({ section, onSessionExpired }: Props) {
     },
     [handleError, section.id],
   );
+
+  useEffect(() => {
+    setGroupScope('active');
+    setGroupSearch('');
+    setSelectedGroupIds(new Set());
+    setSelectedGroupId(null);
+    setTrashGroups([]);
+    setActiveTargets([]);
+    setTrashTargets([]);
+    setErrorMessage('');
+    setSuccessMessage('');
+    setRotationMessage('');
+    void loadActiveGroups();
+  }, [loadActiveGroups]);
 
   useEffect(() => {
     setTargetScope('active');
@@ -200,13 +226,7 @@ export function ConversionPoolView({ section, onSessionExpired }: Props) {
   const sourceTargets = targetScope === 'active' ? activeTargets : trashTargets;
   const filteredTargets = useMemo(() => {
     const keyword = targetSearch.trim().toLowerCase();
-    return keyword
-      ? sourceTargets.filter((target) =>
-          `${target.name} ${target.endpointUrl} ${target.projectId ?? ''}`
-            .toLowerCase()
-            .includes(keyword),
-        )
-      : sourceTargets;
+    return keyword ? sourceTargets.filter((target) => targetSearchText(target).includes(keyword)) : sourceTargets;
   }, [sourceTargets, targetSearch]);
 
   const allGroupsSelected =
@@ -375,14 +395,7 @@ export function ConversionPoolView({ section, onSessionExpired }: Props) {
 
   function openEditTarget(target: AdminConversionTarget) {
     setEditingTarget(target);
-    setTargetForm({
-      name: target.name,
-      endpointUrl: target.endpointUrl,
-      projectId: target.projectId,
-      config: target.config,
-      sortOrder: target.sortOrder,
-      isEnabled: target.isEnabled,
-    });
+    setTargetForm(targetToInput(target));
     setTargetEditorOpen(true);
     setErrorMessage('');
     setSuccessMessage('');
@@ -420,15 +433,11 @@ export function ConversionPoolView({ section, onSessionExpired }: Props) {
   }
 
   async function toggleTarget(target: AdminConversionTarget) {
-    if (!selectedGroup) return;
+    if (!selectedGroup || target.bindingKind === 'legacy_customer_service') return;
     setWorking(true);
     try {
       const updated = await updateConversionTarget(section.id, selectedGroup.id, target.id, {
-        name: target.name,
-        endpointUrl: target.endpointUrl,
-        projectId: target.projectId,
-        config: target.config,
-        sortOrder: target.sortOrder,
+        ...targetToInput(target),
         isEnabled: !target.isEnabled,
       });
       setActiveTargets((current) =>
@@ -491,7 +500,11 @@ export function ConversionPoolView({ section, onSessionExpired }: Props) {
     setErrorMessage('');
     try {
       const target = await previewRotation(section.id, group.id);
-      setRotationMessage(`本次轮换命中：${target.name} · ${target.endpointUrl}`);
+      setRotationMessage(
+        group.mode === 'customer_service'
+          ? `本次轮换命中：${target.customerServiceConnectionName ?? '客服系统'} / ${target.remoteGroupName ?? target.name}`
+          : `本次轮换命中：${target.name} · ${shortUrl(target.endpointUrl)}`,
+      );
     } catch (error) {
       handleError(error);
     } finally {
@@ -511,9 +524,7 @@ export function ConversionPoolView({ section, onSessionExpired }: Props) {
         } else {
           await batchDeleteConversionGroups(section.id, deleteState.ids);
         }
-        setActiveGroups((current) =>
-          current.filter((group) => !deleteState.ids.includes(group.id)),
-        );
+        setActiveGroups((current) => current.filter((group) => !deleteState.ids.includes(group.id)));
         if (selectedGroupId && deleteState.ids.includes(selectedGroupId)) setSelectedGroupId(null);
         setSelectedGroupIds(new Set());
         setSuccessMessage(`已将 ${deleteState.ids.length} 个转化分组移入回收站。`);
@@ -524,9 +535,7 @@ export function ConversionPoolView({ section, onSessionExpired }: Props) {
         } else {
           await batchDeleteConversionTargets(section.id, selectedGroup.id, deleteState.ids);
         }
-        setActiveTargets((current) =>
-          current.filter((target) => !deleteState.ids.includes(target.id)),
-        );
+        setActiveTargets((current) => current.filter((target) => !deleteState.ids.includes(target.id)));
         setSelectedTargetIds(new Set());
         setSuccessMessage(`已将 ${deleteState.ids.length} 个转化入口移入回收站。`);
         await loadActiveGroups();
@@ -564,7 +573,6 @@ export function ConversionPoolView({ section, onSessionExpired }: Props) {
         <div>
           <p>当前分区</p>
           <h2 id="conversion-pool-title">{section.name} · 转化池</h2>
-          <span>产品绑定转化分组；CTA 点击后在分组内按顺序轮换可用入口。</span>
         </div>
         <button className="primary-button" type="button" onClick={openCreateGroup}>
           新增转化分组
@@ -621,33 +629,28 @@ export function ConversionPoolView({ section, onSessionExpired }: Props) {
         {groupsLoading ? (
           <div className="conversion-empty">正在读取转化分组…</div>
         ) : filteredGroups.length === 0 ? (
-          <div className="conversion-empty">
-            <strong>{groupSearch ? '没有符合条件的转化分组' : '还没有转化分组'}</strong>
-            <p>{groupSearch ? '调整搜索内容后重试。' : '新增分组后，再为分组绑定客服或链接入口。'}</p>
-          </div>
+          <div className="conversion-empty"><strong>暂无转化分组</strong></div>
         ) : (
           <table className="conversion-table">
             <thead>
               <tr>
-                {groupScope === 'active' ? (
-                  <th className="checkbox-cell">
-                    <input
-                      type="checkbox"
-                      checked={allGroupsSelected}
-                      aria-label="全选当前转化分组"
-                      onChange={() => {
-                        setSelectedGroupIds((current) => {
-                          const next = new Set(current);
-                          filteredGroups.forEach((group) => {
-                            if (allGroupsSelected) next.delete(group.id);
-                            else next.add(group.id);
-                          });
-                          return next;
+                {groupScope === 'active' ? <th className="checkbox-cell">
+                  <input
+                    type="checkbox"
+                    checked={allGroupsSelected}
+                    aria-label="全选当前转化分组"
+                    onChange={() => {
+                      setSelectedGroupIds((current) => {
+                        const next = new Set(current);
+                        filteredGroups.forEach((group) => {
+                          if (allGroupsSelected) next.delete(group.id);
+                          else next.add(group.id);
                         });
-                      }}
-                    />
-                  </th>
-                ) : null}
+                        return next;
+                      });
+                    }}
+                  />
+                </th> : null}
                 <th>转化分组</th>
                 <th>入口</th>
                 <th>产品</th>
@@ -659,76 +662,35 @@ export function ConversionPoolView({ section, onSessionExpired }: Props) {
             <tbody>
               {filteredGroups.map((group, index) => (
                 <tr key={group.id} className={selectedGroupId === group.id ? 'is-selected-row' : undefined}>
-                  {groupScope === 'active' ? (
-                    <td className="checkbox-cell">
-                      <input
-                        type="checkbox"
-                        checked={selectedGroupIds.has(group.id)}
-                        aria-label={`选择 ${group.name}`}
-                        onChange={() => toggleGroupSelection(group.id)}
-                      />
-                    </td>
-                  ) : null}
+                  {groupScope === 'active' ? <td className="checkbox-cell">
+                    <input type="checkbox" checked={selectedGroupIds.has(group.id)} aria-label={`选择 ${group.name}`} onChange={() => toggleGroupSelection(group.id)} />
+                  </td> : null}
                   <td>
                     <div className="conversion-group-identity">
-                      <span className={`conversion-mode-icon is-${group.mode}`} aria-hidden="true">
-                        {group.mode === 'customer_service' ? 'CS' : 'URL'}
-                      </span>
-                      <div>
-                        <strong>{group.name}</strong>
-                        <small>{modeLabel(group)} · CTA: {group.buttonLabel}</small>
-                      </div>
+                      <span className={`conversion-mode-icon is-${group.mode}`} aria-hidden="true">{group.mode === 'customer_service' ? 'CS' : 'URL'}</span>
+                      <div><strong>{group.name}</strong><small>{modeLabel(group)} · CTA: {group.buttonLabel}</small></div>
                     </div>
                   </td>
-                  <td>
-                    <strong>{group.activeTargetCount}</strong> / {group.targetCount}
-                    <small className="conversion-cell-note">启用 / 全部</small>
-                  </td>
+                  <td><strong>{group.activeTargetCount}</strong> / {group.targetCount}<small className="conversion-cell-note">启用 / 全部</small></td>
                   <td>{group.productCount}</td>
                   <td>
                     {groupScope === 'active' ? (
-                      <button
-                        className={`status-pill ${group.isEnabled ? 'is-enabled' : 'is-disabled'}`}
-                        type="button"
-                        disabled={working}
-                        onClick={() => void toggleGroup(group)}
-                      >
-                        {readinessLabel(group)}
-                      </button>
-                    ) : (
-                      <span className="status-pill is-deleted">已删除</span>
-                    )}
+                      <button className={`status-pill ${group.isEnabled ? 'is-enabled' : 'is-disabled'}`} type="button" disabled={working} onClick={() => void toggleGroup(group)}>{readinessLabel(group)}</button>
+                    ) : <span className="status-pill is-deleted">已删除</span>}
                   </td>
                   <td>
-                    {groupScope === 'active' ? (
-                      <div className="sort-controls">
-                        <span>{group.sortOrder}</span>
-                        <div>
-                          <button type="button" disabled={working || index === 0} onClick={() => void moveGroup(group, -1)}>↑</button>
-                          <button type="button" disabled={working || index === filteredGroups.length - 1} onClick={() => void moveGroup(group, 1)}>↓</button>
-                        </div>
-                      </div>
-                    ) : group.sortOrder}
+                    {groupScope === 'active' ? <div className="sort-controls"><span>{group.sortOrder}</span><div>
+                      <button type="button" disabled={working || index === 0} onClick={() => void moveGroup(group, -1)}>↑</button>
+                      <button type="button" disabled={working || index === filteredGroups.length - 1} onClick={() => void moveGroup(group, 1)}>↓</button>
+                    </div></div> : group.sortOrder}
                   </td>
                   <td className="actions-cell">
-                    {groupScope === 'active' ? (
-                      <>
-                        <button type="button" onClick={() => setSelectedGroupId(group.id)}>管理入口</button>
-                        <button type="button" disabled={working || group.activeTargetCount === 0 || !group.isEnabled} onClick={() => void runRotationPreview(group)}>测试轮换</button>
-                        <button type="button" onClick={() => openEditGroup(group)}>编辑</button>
-                        <button
-                          className="text-danger"
-                          type="button"
-                          disabled={working || group.productCount > 0 || group.targetCount > 0}
-                          title={group.productCount > 0 || group.targetCount > 0 ? '需先解除产品引用并删除全部入口' : undefined}
-                          onClick={() => setDeleteState({ kind: 'group', ids: [group.id] })}
-                        >
-                          删除
-                        </button>
-                      </>
-                    ) : (
-                      <button type="button" disabled={working} onClick={() => void restoreGroup(group)}>恢复</button>
-                    )}
+                    {groupScope === 'active' ? <>
+                      <button type="button" onClick={() => setSelectedGroupId(group.id)}>管理入口</button>
+                      <button type="button" disabled={working || group.activeTargetCount === 0 || !group.isEnabled} onClick={() => void runRotationPreview(group)}>测试轮换</button>
+                      <button type="button" onClick={() => openEditGroup(group)}>编辑</button>
+                      <button className="text-danger" type="button" disabled={working || group.productCount > 0 || group.targetCount > 0} onClick={() => setDeleteState({ kind: 'group', ids: [group.id] })}>删除</button>
+                    </> : <button type="button" disabled={working} onClick={() => void restoreGroup(group)}>恢复</button>}
                   </td>
                 </tr>
               ))}
@@ -743,35 +705,30 @@ export function ConversionPoolView({ section, onSessionExpired }: Props) {
             <div>
               <p>{modeLabel(selectedGroup)}分组</p>
               <h3 id="conversion-target-title">{selectedGroup.name} · 入口管理</h3>
-              <span>轮换顺序按排序值从小到大循环，停用和回收站入口不会参与。</span>
             </div>
             <div className="conversion-target-heading-actions">
               <button className="secondary-button" type="button" onClick={() => setSelectedGroupId(null)}>关闭</button>
-              <button className="primary-button" type="button" onClick={openCreateTarget}>新增入口</button>
+              <button className="primary-button" type="button" onClick={openCreateTarget}>
+                {selectedGroup.mode === 'customer_service' ? '添加客服分组' : '添加链接'}
+              </button>
             </div>
           </div>
 
           <div className="conversion-filter-bar">
             <div className="scope-tabs" role="tablist" aria-label="转化入口状态">
-              <button type="button" className={targetScope === 'active' ? 'is-active' : undefined} onClick={() => void changeTargetScope('active')}>
-                当前入口 <span>{activeTargets.length}</span>
-              </button>
-              <button type="button" className={targetScope === 'trash' ? 'is-active' : undefined} onClick={() => void changeTargetScope('trash')}>
-                回收站 <span>{trashTargets.length}</span>
-              </button>
+              <button type="button" className={targetScope === 'active' ? 'is-active' : undefined} onClick={() => void changeTargetScope('active')}>当前入口 <span>{activeTargets.length}</span></button>
+              <button type="button" className={targetScope === 'trash' ? 'is-active' : undefined} onClick={() => void changeTargetScope('trash')}>回收站 <span>{trashTargets.length}</span></button>
             </div>
             <label className="conversion-search">
               <span>搜索</span>
-              <input type="search" value={targetSearch} placeholder="入口名称或地址" onChange={(event) => setTargetSearch(event.target.value)} />
+              <input type="search" value={targetSearch} placeholder={selectedGroup.mode === 'customer_service' ? '客服系统或客服分组' : '链接名称或地址'} onChange={(event) => setTargetSearch(event.target.value)} />
             </label>
           </div>
 
           {targetScope === 'active' && selectedTargetIds.size > 0 ? (
             <div className="selection-toolbar">
               <span>已选择 {selectedTargetIds.size} 个转化入口</span>
-              <button className="danger-button" type="button" disabled={working} onClick={() => setDeleteState({ kind: 'target', ids: [...selectedTargetIds] })}>
-                批量删除
-              </button>
+              <button className="danger-button" type="button" disabled={working} onClick={() => setDeleteState({ kind: 'target', ids: [...selectedTargetIds] })}>批量删除</button>
             </div>
           ) : null}
 
@@ -779,35 +736,23 @@ export function ConversionPoolView({ section, onSessionExpired }: Props) {
             {targetsLoading ? (
               <div className="conversion-empty">正在读取转化入口…</div>
             ) : filteredTargets.length === 0 ? (
-              <div className="conversion-empty">
-                <strong>{targetSearch ? '没有符合条件的入口' : '还没有转化入口'}</strong>
-                <p>{targetSearch ? '调整搜索内容后重试。' : '至少新增并启用一个入口，分组才能轮换。'}</p>
-              </div>
+              <div className="conversion-empty"><strong>暂无转化入口</strong></div>
             ) : (
               <table className="conversion-table conversion-target-table">
                 <thead>
                   <tr>
-                    {targetScope === 'active' ? (
-                      <th className="checkbox-cell">
-                        <input
-                          type="checkbox"
-                          checked={allTargetsSelected}
-                          aria-label="全选当前转化入口"
-                          onChange={() => {
-                            setSelectedTargetIds((current) => {
-                              const next = new Set(current);
-                              filteredTargets.forEach((target) => {
-                                if (allTargetsSelected) next.delete(target.id);
-                                else next.add(target.id);
-                              });
-                              return next;
-                            });
-                          }}
-                        />
-                      </th>
-                    ) : null}
-                    <th>入口名称</th>
-                    <th>地址</th>
+                    {targetScope === 'active' ? <th className="checkbox-cell"><input type="checkbox" checked={allTargetsSelected} aria-label="全选当前转化入口" onChange={() => {
+                      setSelectedTargetIds((current) => {
+                        const next = new Set(current);
+                        filteredTargets.forEach((target) => {
+                          if (allTargetsSelected) next.delete(target.id);
+                          else next.add(target.id);
+                        });
+                        return next;
+                      });
+                    }} /></th> : null}
+                    <th>{selectedGroup.mode === 'customer_service' ? '客服分组' : '链接名称'}</th>
+                    <th>{selectedGroup.mode === 'customer_service' ? '客服系统' : '跳转地址'}</th>
                     <th>状态</th>
                     <th>排序</th>
                     <th className="actions-cell">操作</th>
@@ -816,43 +761,39 @@ export function ConversionPoolView({ section, onSessionExpired }: Props) {
                 <tbody>
                   {filteredTargets.map((target, index) => (
                     <tr key={target.id}>
-                      {targetScope === 'active' ? (
-                        <td className="checkbox-cell">
-                          <input type="checkbox" checked={selectedTargetIds.has(target.id)} aria-label={`选择 ${target.name}`} onChange={() => toggleTargetSelection(target.id)} />
-                        </td>
-                      ) : null}
+                      {targetScope === 'active' ? <td className="checkbox-cell"><input type="checkbox" checked={selectedTargetIds.has(target.id)} aria-label={`选择 ${target.name}`} onChange={() => toggleTargetSelection(target.id)} /></td> : null}
                       <td>
-                        <strong>{target.name}</strong>
-                        {target.projectId ? <small className="conversion-cell-note">项目 ID: {target.projectId}</small> : null}
+                        <strong>{target.remoteGroupName ?? target.name}</strong>
+                        {target.bindingKind === 'legacy_customer_service' ? <small className="conversion-cell-note">旧入口 · 待重新绑定</small> : null}
                       </td>
-                      <td className="conversion-url-cell" title={target.endpointUrl}>{shortUrl(target.endpointUrl)}</td>
+                      <td className="conversion-url-cell" title={target.endpointUrl ?? target.customerServiceConnectionName ?? undefined}>
+                        {selectedGroup.mode === 'customer_service'
+                          ? target.customerServiceConnectionName ?? '待重新绑定'
+                          : shortUrl(target.endpointUrl)}
+                      </td>
                       <td>
                         {targetScope === 'active' ? (
-                          <button className={`status-pill ${target.isEnabled ? 'is-enabled' : 'is-disabled'}`} type="button" disabled={working} onClick={() => void toggleTarget(target)}>
-                            {target.isEnabled ? '参与轮换' : '已停用'}
+                          <button
+                            className={`status-pill ${target.isEnabled ? 'is-enabled' : 'is-disabled'}`}
+                            type="button"
+                            disabled={working || target.bindingKind === 'legacy_customer_service'}
+                            onClick={() => void toggleTarget(target)}
+                          >
+                            {target.bindingKind === 'legacy_customer_service' ? '待重新绑定' : target.isEnabled ? '参与轮换' : '已停用'}
                           </button>
                         ) : <span className="status-pill is-deleted">已删除</span>}
                       </td>
                       <td>
-                        {targetScope === 'active' ? (
-                          <div className="sort-controls">
-                            <span>{target.sortOrder}</span>
-                            <div>
-                              <button type="button" disabled={working || index === 0} onClick={() => void moveTarget(target, -1)}>↑</button>
-                              <button type="button" disabled={working || index === filteredTargets.length - 1} onClick={() => void moveTarget(target, 1)}>↓</button>
-                            </div>
-                          </div>
-                        ) : target.sortOrder}
+                        {targetScope === 'active' ? <div className="sort-controls"><span>{target.sortOrder}</span><div>
+                          <button type="button" disabled={working || index === 0} onClick={() => void moveTarget(target, -1)}>↑</button>
+                          <button type="button" disabled={working || index === filteredTargets.length - 1} onClick={() => void moveTarget(target, 1)}>↓</button>
+                        </div></div> : target.sortOrder}
                       </td>
                       <td className="actions-cell">
-                        {targetScope === 'active' ? (
-                          <>
-                            <button type="button" onClick={() => openEditTarget(target)}>编辑</button>
-                            <button className="text-danger" type="button" disabled={working} onClick={() => setDeleteState({ kind: 'target', ids: [target.id] })}>删除</button>
-                          </>
-                        ) : (
-                          <button type="button" disabled={working} onClick={() => void restoreTarget(target)}>恢复</button>
-                        )}
+                        {targetScope === 'active' ? <>
+                          <button type="button" onClick={() => openEditTarget(target)}>编辑</button>
+                          <button className="text-danger" type="button" disabled={working} onClick={() => setDeleteState({ kind: 'target', ids: [target.id] })}>删除</button>
+                        </> : <button type="button" disabled={working} onClick={() => void restoreTarget(target)}>恢复</button>}
                       </td>
                     </tr>
                   ))}
@@ -884,6 +825,7 @@ export function ConversionPoolView({ section, onSessionExpired }: Props) {
           onFormChange={setTargetForm}
           onClose={() => setTargetEditorOpen(false)}
           onSubmit={(event) => void saveTarget(event)}
+          onSessionExpired={onSessionExpired}
         />
       ) : null}
 
@@ -891,17 +833,9 @@ export function ConversionPoolView({ section, onSessionExpired }: Props) {
         <div className="admin-dialog-backdrop" role="presentation">
           <section className="admin-dialog admin-dialog-small" role="dialog" aria-modal="true" aria-labelledby="conversion-delete-title">
             <div className="admin-dialog-header">
-              <div>
-                <p>移入回收站</p>
-                <h3 id="conversion-delete-title">确认删除 {deleteState.ids.length} 项？</h3>
-              </div>
+              <div><p>移入回收站</p><h3 id="conversion-delete-title">确认删除 {deleteState.ids.length} 项？</h3></div>
               <button type="button" aria-label="关闭" disabled={working} onClick={() => setDeleteState(null)}>×</button>
             </div>
-            <p className="delete-warning">
-              {deleteState.kind === 'group'
-                ? '转化分组存在产品引用或入口时不能删除。删除后可在分组回收站恢复。'
-                : '删除的入口不会参与 CTA 轮换，可在当前分组的入口回收站恢复。'}
-            </p>
             <div className="admin-dialog-actions">
               <button className="secondary-button" type="button" disabled={working} onClick={() => setDeleteState(null)}>取消</button>
               <button className="danger-button" type="button" disabled={working} onClick={() => void confirmDelete()}>{working ? '正在删除…' : '确认删除'}</button>
