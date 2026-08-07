@@ -1,5 +1,9 @@
 /* Manual storefront publication stays in the global header because it publishes the whole D1 state. */
 
+.publish-version-control {
+  position: relative;
+}
+
 .publish-status-chip {
   display: inline-flex;
   min-height: 28px;
@@ -9,9 +13,17 @@
   border-radius: 999px;
   color: #687386;
   background: #f8fafc;
+  font: inherit;
   font-size: 0.68rem;
   font-weight: 700;
   white-space: nowrap;
+  cursor: pointer;
+}
+
+.publish-status-chip.is-dirty {
+  border-color: #f4c96b;
+  color: #8a5a00;
+  background: #fffaf0;
 }
 
 .publish-status-chip.is-error {
@@ -28,6 +40,104 @@
   white-space: nowrap;
 }
 
+.publish-version-popover {
+  position: absolute;
+  z-index: 220;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 330px;
+  padding: 10px;
+  border: 1px solid #dfe5ec;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 18px 48px rgb(16 24 40 / 16%);
+}
+
+.publish-version-popover-title {
+  display: flex;
+  min-height: 28px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 2px 8px;
+}
+
+.publish-version-popover-title strong {
+  font-size: 0.78rem;
+}
+
+.publish-version-popover-title button {
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  font-size: 1rem;
+  cursor: pointer;
+}
+
+.publish-version-list {
+  display: grid;
+  gap: 6px;
+}
+
+.publish-version-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
+  gap: 8px;
+  align-items: center;
+  min-height: 48px;
+  padding: 6px 8px;
+  border: 1px solid #e7ebf0;
+  border-radius: 9px;
+  background: #fff;
+}
+
+.publish-version-row.is-current {
+  background: #f8fafc;
+}
+
+.publish-version-row > div {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.publish-version-row strong {
+  overflow: hidden;
+  font-size: 0.72rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.publish-version-row small,
+.publish-version-row > span {
+  color: #7a8494;
+  font-size: 0.64rem;
+}
+
+.publish-version-row button {
+  min-height: 28px;
+  padding: 0 8px;
+  border: 1px solid #d8dee7;
+  border-radius: 7px;
+  background: #fff;
+  font-size: 0.68rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.publish-version-row button:disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.publish-version-empty {
+  padding: 16px 8px;
+  color: #7a8494;
+  text-align: center;
+  font-size: 0.72rem;
+}
+
 .publish-feedback {
   position: fixed;
   z-index: 190;
@@ -41,14 +151,21 @@
 }
 
 @media (max-width: 1180px) and (min-width: 1024px) {
-  .publish-status-chip {
+  .publish-version-control {
     display: none;
   }
 }
 
 @media (max-width: 1023px) {
-  .publish-status-chip {
+  .publish-version-control {
     order: -1;
+  }
+
+  .publish-version-popover {
+    position: fixed;
+    top: 64px;
+    right: 16px;
+    width: min(330px, calc(100vw - 32px));
   }
 
   .storefront-publish-button {
