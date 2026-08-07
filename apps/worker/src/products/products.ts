@@ -260,8 +260,6 @@ export async function validateProductDependencies(
     if (input.status === 'published' && !category.isEnabled) {
       return { ok: false, field: 'categoryId', code: 'CATEGORY_DISABLED', message: '发布产品不能使用已停用分类。' };
     }
-  } else if (input.status === 'published') {
-    return { ok: false, field: 'categoryId', code: 'CATEGORY_REQUIRED', message: '发布产品必须选择分类。' };
   }
 
   if (input.conversionGroupId) {
@@ -288,8 +286,6 @@ export async function validateProductDependencies(
     if (input.status === 'published' && group.activeTargetCount < 1) {
       return { ok: false, field: 'conversionGroupId', code: 'CONVERSION_TARGET_REQUIRED', message: '发布前请为转化分组配置至少一个启用入口。' };
     }
-  } else if (input.status === 'published') {
-    return { ok: false, field: 'conversionGroupId', code: 'CONVERSION_GROUP_REQUIRED', message: '发布产品必须选择转化分组。' };
   }
 
   if (input.status === 'published' && input.serviceMode === 'offline' && !input.address) {
