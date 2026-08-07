@@ -7,6 +7,7 @@ import {
   PublishStateError,
   rollbackStorefrontVersion,
   setPublishVersionStateRevision,
+  type PublishVersionRecord,
 } from '../publishing/publish-state';
 import {
   getPublishStatus,
@@ -51,7 +52,7 @@ async function pruneHistoryBestEffort(context: Parameters<typeof apiError>[0]): 
   }
 }
 
-function publicVersion(version: Awaited<ReturnType<typeof listPublishVersions>>[number]) {
+function publicVersion(version: PublishVersionRecord) {
   return {
     contentVersion: version.contentVersion,
     publishedAt: version.publishedAt,
@@ -176,7 +177,10 @@ adminPublishRoutes.post('/', async (context) => {
     return context.json({ publication: { ...publication, unchanged: false } }, 201);
   } catch (error) {
     await pruneHistoryBestEffort(context);
-    if (error instanceof PublicationError || error instanceof PublishStateError) {
+    if (error instanceof PublicationError) {
+      return apiError(context, 409, error.code, error.message);
+    }
+    if (error instanceof PublishStateError) {
       return apiError(context, error.status, error.code, error.message);
     }
     throw error;
