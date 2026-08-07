@@ -255,7 +255,7 @@ function NotFoundPage({ site }: { site: PublicSite }) {
 function FaqSection({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
   const query = useQuery({
     queryKey: ['storefront-faq', bootstrap.pointer.contentVersion],
-    queryFn: ({ signal }) => loadFaqSnapshot(bootstrap.origin, bootstrap.pointer.contentVersion, signal),
+    queryFn: ({ signal }) => loadFaqSnapshot(bootstrap, signal),
     staleTime: Number.POSITIVE_INFINITY,
   });
 
@@ -348,12 +348,7 @@ function SectionPage({ bootstrap, sectionId }: { bootstrap: StorefrontBootstrap;
   const [selectedTags, setSelectedTags] = useState<Set<string>>(() => new Set());
   const query = useQuery({
     queryKey: ['storefront-section', bootstrap.pointer.contentVersion, sectionId],
-    queryFn: ({ signal }) => loadSectionSnapshot(
-      bootstrap.origin,
-      bootstrap.pointer.contentVersion,
-      sectionId,
-      signal,
-    ),
+    queryFn: ({ signal }) => loadSectionSnapshot(bootstrap, sectionId, signal),
     staleTime: Number.POSITIVE_INFINITY,
   });
 
@@ -462,12 +457,7 @@ function SectionPage({ bootstrap, sectionId }: { bootstrap: StorefrontBootstrap;
 function ProductPage({ bootstrap, productId }: { bootstrap: StorefrontBootstrap; productId: string }) {
   const query = useQuery({
     queryKey: ['storefront-product', bootstrap.pointer.contentVersion, productId],
-    queryFn: ({ signal }) => loadProductSnapshot(
-      bootstrap.origin,
-      bootstrap.pointer.contentVersion,
-      productId,
-      signal,
-    ),
+    queryFn: ({ signal }) => loadProductSnapshot(bootstrap, productId, signal),
     staleTime: Number.POSITIVE_INFINITY,
   });
 
