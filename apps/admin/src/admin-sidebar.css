@@ -1,0 +1,186 @@
+/* Sidebar navigation: quiet hierarchy, numbered wayfinding, no pictogram badges. */
+
+@media (min-width: 1024px) {
+  .admin-shell {
+    grid-template-columns: 208px minmax(0, 1fr) !important;
+  }
+}
+
+.sidebar {
+  background: linear-gradient(180deg, #171a22 0%, #12161e 100%) !important;
+  border-right: 1px solid rgb(255 255 255 / 5%) !important;
+}
+
+.admin-brand {
+  display: flex !important;
+  min-height: 52px !important;
+  align-items: center !important;
+  gap: 10px !important;
+  margin: 0 4px 10px !important;
+  padding: 4px 3px 12px !important;
+  border-bottom: 1px solid rgb(255 255 255 / 7%) !important;
+}
+
+.admin-brand > span {
+  display: grid !important;
+  width: 34px !important;
+  height: 34px !important;
+  flex: 0 0 34px !important;
+  place-items: center !important;
+  border: 1px solid rgb(255 122 74 / 28%) !important;
+  border-radius: 8px !important;
+  color: #fff !important;
+  background: #f45a26 !important;
+  box-shadow: none !important;
+  font-size: 0.78rem !important;
+  font-weight: 800 !important;
+  letter-spacing: 0 !important;
+}
+
+.admin-brand strong {
+  color: #f4f6f8 !important;
+  font-size: 0.86rem !important;
+  font-weight: 720 !important;
+  letter-spacing: 0 !important;
+}
+
+.admin-nav {
+  counter-reset: admin-global-nav admin-section-nav;
+  display: flex !important;
+  min-height: 0 !important;
+  flex-direction: column !important;
+  gap: 2px !important;
+  padding: 0 3px 8px !important;
+}
+
+.sidebar-section-label {
+  margin: 8px 0 3px !important;
+  padding: 7px 8px 4px !important;
+  border: 0 !important;
+  color: #697383 !important;
+  font-size: 0.61rem !important;
+  font-weight: 650 !important;
+  letter-spacing: 0.06em !important;
+  line-height: 1.2 !important;
+  text-transform: none !important;
+}
+
+.sidebar-section-label-first {
+  margin-top: 0 !important;
+  padding-top: 4px !important;
+}
+
+.admin-nav > button,
+.dynamic-menu > button,
+.dynamic-menu > button.is-current-section {
+  position: relative !important;
+  display: flex !important;
+  width: 100% !important;
+  min-height: 38px !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  gap: 9px !important;
+  padding: 0 10px !important;
+  border: 1px solid transparent !important;
+  border-radius: 7px !important;
+  color: #aeb6c2 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  font-size: 0.8rem !important;
+  font-weight: 650 !important;
+  text-align: left !important;
+  transition: color 120ms ease, background 120ms ease, border-color 120ms ease !important;
+}
+
+.admin-nav > button::before,
+.dynamic-menu > button::before {
+  display: inline-flex !important;
+  width: 22px !important;
+  height: auto !important;
+  min-width: 22px !important;
+  flex: 0 0 22px !important;
+  align-items: center !important;
+  justify-content: flex-start !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  color: #626c7b !important;
+  background: transparent !important;
+  box-shadow: none !important;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
+  font-size: 0.62rem !important;
+  font-weight: 700 !important;
+  line-height: 1 !important;
+  letter-spacing: 0.02em !important;
+}
+
+.admin-nav > button {
+  counter-increment: admin-global-nav;
+}
+
+.admin-nav > button::before {
+  content: counter(admin-global-nav, decimal-leading-zero) !important;
+}
+
+.admin-nav > button:hover,
+.dynamic-menu > button:hover {
+  color: #eef1f5 !important;
+  border-color: transparent !important;
+  background: rgb(255 255 255 / 4.5%) !important;
+}
+
+.admin-nav > button.is-active,
+.dynamic-menu > button.is-current-section {
+  color: #fff !important;
+  border-color: rgb(255 255 255 / 5%) !important;
+  background: rgb(255 255 255 / 5.5%) !important;
+  box-shadow: inset 2px 0 0 #ff5a1f !important;
+}
+
+.admin-nav > button.is-active::before,
+.dynamic-menu > button.is-current-section::before {
+  color: #ff7546 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.dynamic-menu,
+.dynamic-menu:hover,
+.dynamic-menu.is-current-section {
+  counter-increment: admin-section-nav;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+}
+
+.dynamic-menu > button::before {
+  content: counter(admin-section-nav, decimal-leading-zero) !important;
+}
+
+.dynamic-menu-icon {
+  display: none !important;
+}
+
+.sidebar-loading {
+  padding: 7px 10px 8px 41px !important;
+  color: #626c7b !important;
+  font-size: 0.69rem !important;
+}
+
+/* The old decorative pseudo-icons are deliberately neutralized here. */
+.sidebar nav > button:nth-of-type(1)::before,
+.sidebar nav > button:nth-of-type(2)::before,
+.sidebar nav > button:nth-of-type(3)::before,
+.sidebar nav > button:nth-of-type(4)::before,
+.sidebar nav > button:nth-of-type(5)::before {
+  background: transparent !important;
+}
+
+@media (max-width: 1023px) {
+  .admin-nav > button,
+  .dynamic-menu > button,
+  .dynamic-menu > button.is-current-section {
+    min-height: 40px !important;
+  }
+}
