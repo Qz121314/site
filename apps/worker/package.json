@@ -7,7 +7,8 @@
     "dev": "wrangler dev --config ../../wrangler.jsonc",
     "build": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
-    "lint": "eslint src"
+    "lint": "eslint src test",
+    "test": "node --test --experimental-strip-types test/*.test.mjs"
   },
   "dependencies": {
     "hono": "^4.0.0"
