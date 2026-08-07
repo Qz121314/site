@@ -25,6 +25,7 @@ import './admin-section-workspace-nav.css';
 import './admin-publish.css';
 import './admin-unsaved.css';
 import './customer-service-connections.css';
+import './product-editor-compact.css';
 
 installAdminMutationObserver();
 installAdminUnsavedStateObserver();
