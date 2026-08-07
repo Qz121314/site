@@ -213,6 +213,58 @@ function assertEnvelope(value: unknown, contentVersion: string): asserts value i
   }
 }
 
+function normalizeTags(value: unknown): PublicProductSummary['tags'] {
+  if (!Array.isArray(value)) return [];
+  return value.filter((tag): tag is PublicProductSummary['tags'][number] => {
+    if (!tag || typeof tag !== 'object') return false;
+    const candidate = tag as { id?: unknown; name?: unknown; sortOrder?: unknown };
+    return (
+      typeof candidate.id === 'string' &&
+      typeof candidate.name === 'string' &&
+      typeof candidate.sortOrder === 'number'
+    );
+  });
+}
+
+function normalizeSummary(product: PublicProductSummary): PublicProductSummary {
+  return { ...product, tags: normalizeTags((product as { tags?: unknown }).tags) };
+}
+
+function normalizeHomeSnapshot(snapshot: HomeSnapshot): HomeSnapshot {
+  return {
+    ...snapshot,
+    sections: Array.isArray(snapshot.sections) ? snapshot.sections : [],
+    allSections: Array.isArray(snapshot.allSections) ? snapshot.allSections : [],
+    featuredProducts: Array.isArray(snapshot.featuredProducts)
+      ? snapshot.featuredProducts.map(normalizeSummary)
+      : [],
+    latestProducts: Array.isArray(snapshot.latestProducts)
+      ? snapshot.latestProducts.map(normalizeSummary)
+      : [],
+  };
+}
+
+function normalizeSectionSnapshot(snapshot: SectionSnapshot): SectionSnapshot {
+  return {
+    ...snapshot,
+    categories: Array.isArray(snapshot.categories) ? snapshot.categories : [],
+    tags: Array.isArray(snapshot.tags) ? snapshot.tags : [],
+    products: Array.isArray(snapshot.products) ? snapshot.products.map(normalizeSummary) : [],
+  };
+}
+
+function normalizeProductSnapshot(snapshot: ProductSnapshot): ProductSnapshot {
+  const product = snapshot.product;
+  return {
+    ...snapshot,
+    product: {
+      ...product,
+      tags: normalizeTags((product as { tags?: unknown }).tags),
+      media: Array.isArray(product.media) ? product.media : [],
+    },
+  };
+}
+
 export function publicContentUrl(origin: string, path: string): string {
   const normalized = normalizeContentOrigin(origin);
   if (!normalized) {
@@ -290,45 +342,47 @@ export async function loadStorefrontBootstrap(
     throw new PublicContentError('INVALID_CONTENT_ORIGIN', 'The public content origin is invalid.');
   }
   const pointer = await loadCurrentPointer(normalizedOrigin, signal);
-  const [site, home] = await Promise.all([
+  const [site, rawHome] = await Promise.all([
     loadVersionFile<SiteSnapshot>(normalizedOrigin, pointer.contentVersion, 'site.json', signal),
     loadVersionFile<HomeSnapshot>(normalizedOrigin, pointer.contentVersion, 'home.json', signal),
   ]);
-  return { origin: normalizedOrigin, pointer, site, home };
+  return { origin: normalizedOrigin, pointer, site, home: normalizeHomeSnapshot(rawHome) };
 }
 
-export function loadSectionSnapshot(
+export async function loadSectionSnapshot(
   origin: string,
   contentVersion: string,
   sectionId: string,
   signal?: AbortSignal,
 ): Promise<SectionSnapshot> {
   if (!sectionId || sectionId.length > 120) {
-    return Promise.reject(new PublicContentError('INVALID_SECTION', 'The requested service section is invalid.'));
+    throw new PublicContentError('INVALID_SECTION', 'The requested service section is invalid.');
   }
-  return loadVersionFile<SectionSnapshot>(
+  const snapshot = await loadVersionFile<SectionSnapshot>(
     origin,
     contentVersion,
     `sections/${encodeURIComponent(sectionId)}.json`,
     signal,
   );
+  return normalizeSectionSnapshot(snapshot);
 }
 
-export function loadProductSnapshot(
+export async function loadProductSnapshot(
   origin: string,
   contentVersion: string,
   productId: string,
   signal?: AbortSignal,
 ): Promise<ProductSnapshot> {
   if (!productId || productId.length > 120) {
-    return Promise.reject(new PublicContentError('INVALID_PRODUCT', 'The requested service is invalid.'));
+    throw new PublicContentError('INVALID_PRODUCT', 'The requested service is invalid.');
   }
-  return loadVersionFile<ProductSnapshot>(
+  const snapshot = await loadVersionFile<ProductSnapshot>(
     origin,
     contentVersion,
     `products/${encodeURIComponent(productId)}.json`,
     signal,
   );
+  return normalizeProductSnapshot(snapshot);
 }
 
 export function loadFaqSnapshot(
