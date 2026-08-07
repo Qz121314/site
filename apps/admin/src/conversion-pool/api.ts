@@ -2,6 +2,7 @@ import { AdminApiError } from '../api';
 
 export type ConversionMode = 'customer_service' | 'link';
 export type ConversionScope = 'active' | 'trash' | 'all';
+export type ConversionTargetBindingKind = 'link' | 'customer_service' | 'legacy_customer_service';
 
 export type AdminConversionGroup = {
   id: string;
@@ -25,9 +26,12 @@ export type AdminConversionTarget = {
   sectionId: string;
   groupId: string;
   name: string;
-  endpointUrl: string;
-  projectId: string | null;
-  config: string | null;
+  bindingKind: ConversionTargetBindingKind;
+  endpointUrl: string | null;
+  customerServiceConnectionId: string | null;
+  customerServiceConnectionName: string | null;
+  remoteGroupId: string | null;
+  remoteGroupName: string | null;
   sortOrder: number;
   isEnabled: boolean;
   createdAt: string;
@@ -45,9 +49,10 @@ export type ConversionGroupInput = {
 
 export type ConversionTargetInput = {
   name: string;
-  endpointUrl: string;
-  projectId: string | null;
-  config: string | null;
+  endpointUrl: string | null;
+  customerServiceConnectionId: string | null;
+  remoteGroupId: string | null;
+  remoteGroupName: string | null;
   sortOrder: number;
   isEnabled: boolean;
 };
@@ -140,9 +145,12 @@ function parseTarget(value: unknown): AdminConversionTarget {
     typeof target.sectionId !== 'string' ||
     typeof target.groupId !== 'string' ||
     typeof target.name !== 'string' ||
-    typeof target.endpointUrl !== 'string' ||
-    (typeof target.projectId !== 'string' && target.projectId !== null) ||
-    (typeof target.config !== 'string' && target.config !== null) ||
+    !['link', 'customer_service', 'legacy_customer_service'].includes(String(target.bindingKind)) ||
+    (typeof target.endpointUrl !== 'string' && target.endpointUrl !== null) ||
+    (typeof target.customerServiceConnectionId !== 'string' && target.customerServiceConnectionId !== null) ||
+    (typeof target.customerServiceConnectionName !== 'string' && target.customerServiceConnectionName !== null) ||
+    (typeof target.remoteGroupId !== 'string' && target.remoteGroupId !== null) ||
+    (typeof target.remoteGroupName !== 'string' && target.remoteGroupName !== null) ||
     typeof target.sortOrder !== 'number' ||
     typeof target.isEnabled !== 'boolean' ||
     typeof target.createdAt !== 'string' ||
