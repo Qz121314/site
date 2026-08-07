@@ -21,15 +21,7 @@ function notFound(context: Context<AppEnvironment>) {
   );
 }
 
-async function servePublicContent(context: Context<AppEnvironment>, headOnly: boolean) {
-  const objectKey = publicSnapshotObjectKey(context.req.param('*'));
-  if (!objectKey) return notFound(context);
-
-  const object = headOnly
-    ? await context.env.ASSETS_BUCKET.head(objectKey)
-    : await context.env.ASSETS_BUCKET.get(objectKey);
-  if (!object) return notFound(context);
-
+function responseHeaders(objectKey: string, object: R2Object): Headers {
   const headers = new Headers();
   headers.set('Content-Type', object.httpMetadata?.contentType ?? 'application/json; charset=utf-8');
   headers.set(
@@ -40,10 +32,32 @@ async function servePublicContent(context: Context<AppEnvironment>, headOnly: bo
   headers.set('ETag', object.httpEtag);
   headers.set('X-Content-Type-Options', 'nosniff');
   headers.set('Cross-Origin-Resource-Policy', 'same-origin');
-
-  if (headOnly) return new Response(null, { status: 200, headers });
-  return new Response(object.body, { status: 200, headers });
+  return headers;
 }
 
-publicContentRoutes.get('/*', (context) => servePublicContent(context, false));
-publicContentRoutes.head('/*', (context) => servePublicContent(context, true));
+async function serveGet(context: Context<AppEnvironment>) {
+  const objectKey = publicSnapshotObjectKey(context.req.param('*'));
+  if (!objectKey) return notFound(context);
+
+  const object = await context.env.ASSETS_BUCKET.get(objectKey);
+  if (!object) return notFound(context);
+  return new Response(object.body, {
+    status: 200,
+    headers: responseHeaders(objectKey, object),
+  });
+}
+
+async function serveHead(context: Context<AppEnvironment>) {
+  const objectKey = publicSnapshotObjectKey(context.req.param('*'));
+  if (!objectKey) return notFound(context);
+
+  const object = await context.env.ASSETS_BUCKET.head(objectKey);
+  if (!object) return notFound(context);
+  return new Response(null, {
+    status: 200,
+    headers: responseHeaders(objectKey, object),
+  });
+}
+
+publicContentRoutes.get('/*', serveGet);
+publicContentRoutes.on('HEAD', '/*', serveHead);
