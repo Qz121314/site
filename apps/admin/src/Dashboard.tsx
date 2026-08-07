@@ -1,6 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AssetLibraryView } from './AssetLibraryView';
-import { AdminApiError, fetchSections, type AdminSection } from './api';
+import {
+  AdminApiError,
+  fetchPublishStatus,
+  fetchSections,
+  publishStorefront,
+  type AdminSection,
+  type PublishStatus,
+} from './api';
 import { brandingAssetPreviewUrl } from './branding-media/api';
 import { CategoryManagementView } from './CategoryManagementView';
 import { ConversionPoolView } from './ConversionPoolView';
@@ -31,6 +38,8 @@ type DynamicView = {
   kind: DynamicViewKind;
   sectionId: string;
 };
+
+type PublishFeedback = { type: 'success' | 'error'; message: string } | null;
 
 function isSessionError(error: unknown): boolean {
   return error instanceof AdminApiError && (error.status === 401 || error.code === 'SESSION_INVALID');
@@ -76,6 +85,15 @@ function getViewContext(view: AdminView, sections: AdminSection[]) {
   };
 }
 
+function publishStatusLabel(status: PublishStatus | null, publishing: boolean): string {
+  if (publishing) return '正在生成快照';
+  if (status?.lastJob?.status === 'failed') return '上次发布失败';
+  if (!status?.publishedAt) return '尚未发布';
+  const date = new Date(status.publishedAt);
+  if (Number.isNaN(date.getTime())) return '已发布';
+  return `已发布 ${date.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })}`;
+}
+
 export function Dashboard({
   expiresAt,
   loggingOut,
@@ -86,6 +104,9 @@ export function Dashboard({
   const [sections, setSections] = useState<AdminSection[]>([]);
   const [sectionsLoading, setSectionsLoading] = useState(true);
   const [sectionsError, setSectionsError] = useState('');
+  const [publishStatus, setPublishStatus] = useState<PublishStatus | null>(null);
+  const [publishing, setPublishing] = useState(false);
+  const [publishFeedback, setPublishFeedback] = useState<PublishFeedback>(null);
 
   const loadSections = useCallback(async () => {
     setSectionsLoading(true);
@@ -103,9 +124,18 @@ export function Dashboard({
     }
   }, [onSessionExpired]);
 
+  const loadPublishStatus = useCallback(async () => {
+    try {
+      setPublishStatus(await fetchPublishStatus());
+    } catch (error) {
+      if (isSessionError(error)) onSessionExpired();
+    }
+  }, [onSessionExpired]);
+
   useEffect(() => {
     void loadSections();
-  }, [loadSections]);
+    void loadPublishStatus();
+  }, [loadPublishStatus, loadSections]);
 
   useEffect(() => {
     const dynamic = parseDynamicView(activeView);
@@ -114,6 +144,41 @@ export function Dashboard({
       setActiveView('sections');
     }
   }, [activeView, sections, sectionsLoading]);
+
+  async function handlePublish() {
+    if (publishing) return;
+    setPublishing(true);
+    setPublishFeedback(null);
+    try {
+      const result = await publishStorefront();
+      setPublishStatus({
+        currentVersion: result.contentVersion,
+        publishedAt: result.publishedAt,
+        lastJob: {
+          id: result.jobId,
+          status: 'published',
+          contentVersion: result.contentVersion,
+          errorCode: null,
+          errorMessage: null,
+          requestedAt: result.publishedAt,
+          completedAt: result.publishedAt,
+        },
+      });
+      setPublishFeedback({ type: 'success', message: '前台快照已发布。' });
+    } catch (error) {
+      if (isSessionError(error)) {
+        onSessionExpired();
+        return;
+      }
+      setPublishFeedback({
+        type: 'error',
+        message: error instanceof Error ? error.message : '发布前台失败。',
+      });
+      void loadPublishStatus();
+    } finally {
+      setPublishing(false);
+    }
+  }
 
   const heading = useMemo(() => getViewContext(activeView, sections), [activeView, sections]);
   const currentSection = useMemo(() => {
@@ -249,6 +314,19 @@ export function Dashboard({
             ) : null}
           </div>
           <div className="header-actions">
+            <span
+              className={`publish-status-chip${publishStatus?.lastJob?.status === 'failed' ? ' is-error' : ''}`}
+            >
+              {publishStatusLabel(publishStatus, publishing)}
+            </span>
+            <button
+              className="primary-button storefront-publish-button"
+              type="button"
+              onClick={() => void handlePublish()}
+              disabled={publishing || loggingOut}
+            >
+              {publishing ? '发布中…' : '发布前台'}
+            </button>
             <span className="environment-badge">
               {expiresAt ? `会话至 ${new Date(expiresAt).toLocaleTimeString('zh-CN')}` : 'PRODUCTION'}
             </span>
@@ -256,12 +334,21 @@ export function Dashboard({
               className="secondary-button"
               type="button"
               onClick={onLogout}
-              disabled={loggingOut}
+              disabled={loggingOut || publishing}
             >
               {loggingOut ? '正在退出…' : '退出登录'}
             </button>
           </div>
         </header>
+
+        {publishFeedback ? (
+          <div
+            className={`notice ${publishFeedback.type === 'success' ? 'notice-success' : 'notice-error'} publish-feedback`}
+            role={publishFeedback.type === 'error' ? 'alert' : 'status'}
+          >
+            {publishFeedback.message}
+          </div>
+        ) : null}
 
         {sectionsError ? (
           <div className="notice notice-error" role="alert">
