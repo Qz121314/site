@@ -16,6 +16,7 @@ import { adminProductRoutes } from './routes/admin-products';
 import { adminSectionBatchRoutes } from './routes/admin-section-batch';
 import { adminSectionRoutes } from './routes/admin-sections';
 import { adminSiteSettingsRoutes } from './routes/admin-site-settings';
+import { adminTagRoutes } from './routes/admin-tags';
 import { publicConversionRoutes } from './routes/public-conversion';
 import type { AppEnvironment } from './types';
 
@@ -88,6 +89,7 @@ app.route('/api/admin/sections', adminProductBatchRoutes);
 app.route('/api/admin/sections', adminProductRoutes);
 app.route('/api/admin/sections', adminConversionPreviewRoutes);
 app.route('/api/admin/sections', adminConversionPoolRoutes);
+app.route('/api/admin/sections', adminTagRoutes);
 app.route('/api/admin/sections', adminCategoryBatchRoutes);
 app.route('/api/admin/sections', adminCategoryRoutes);
 app.route('/api/admin/sections', adminSectionBatchRoutes);
