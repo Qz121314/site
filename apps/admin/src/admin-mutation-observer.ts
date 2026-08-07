@@ -34,9 +34,16 @@ export function installAdminMutationObserver(): void {
       ['POST', 'PUT', 'PATCH', 'DELETE'].includes(method) &&
       path?.startsWith('/api/admin/') &&
       !path.startsWith('/api/admin/auth/') &&
-      !path.startsWith('/api/admin/publish')
+      !path.startsWith('/api/admin/publish') &&
+      path !== '/api/admin/settings/media-domain/test'
     ) {
-      queueMicrotask(() => window.dispatchEvent(new Event('admin:data-mutated')));
+      queueMicrotask(() =>
+        window.dispatchEvent(
+          new CustomEvent('admin:data-mutated', {
+            detail: { method, path },
+          }),
+        ),
+      );
     }
 
     return response;
