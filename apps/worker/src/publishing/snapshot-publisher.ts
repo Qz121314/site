@@ -1,4 +1,8 @@
 import { createAuditLogStatement } from '../audit/write-audit-log';
+import {
+  listEnabledPublicProductTags,
+  listProductTagsByProductIds,
+} from '../products/product-tags';
 
 const CURRENT_KEY = 'public/current.json';
 const IMMUTABLE_CACHE = 'public, max-age=31536000, immutable';
@@ -505,6 +509,14 @@ export async function publishSnapshot(
 
   const source = await loadSnapshotSource(db);
   const mediaBaseUrl = source.site.media_base_url as string;
+  const [publicTags, tagsByProduct] = await Promise.all([
+    listEnabledPublicProductTags(db),
+    listProductTagsByProductIds(
+      db,
+      source.products.map((product) => product.id),
+      true,
+    ),
+  ]);
 
   const publicSections = source.sections.map((section) => ({
     id: section.id,
@@ -533,8 +545,14 @@ export async function publishSnapshot(
       altText: item.alt_text,
       sortOrder: item.sort_order,
     }));
+    const tags = (tagsByProduct.get(product.id) ?? []).map((tag) => ({
+      id: tag.id,
+      name: tag.name,
+      sortOrder: tag.sortOrder,
+    }));
     return {
       ...productSummary(product, mediaBaseUrl),
+      tags,
       body: product.body,
       media,
       cta: {
@@ -581,6 +599,7 @@ export async function publishSnapshot(
     site: siteData,
     sections: publicSections,
     categories: publicCategories,
+    tags: publicTags,
     products: publicProducts,
     faqs: source.faqs.map((faq) => ({ id: faq.id, title: faq.question, body: faq.answer })),
   };
@@ -614,6 +633,7 @@ export async function publishSnapshot(
       serviceMode: product.serviceMode,
       address: product.address,
       category: product.category,
+      tags: product.tags,
       coverUrl: product.coverUrl,
       isFeatured: product.isFeatured,
       publishedAt: product.publishedAt,
@@ -670,6 +690,7 @@ export async function publishSnapshot(
           publishedAt,
           section,
           categories: publicCategories.filter((category) => category.sectionId === section.id),
+          tags: publicTags.filter((tag) => tag.sectionId === section.id),
           products: summaries.filter((product) => product.sectionId === section.id),
         }),
       );
@@ -694,6 +715,7 @@ export async function publishSnapshot(
       counts: {
         sections: publicSections.length,
         categories: publicCategories.length,
+        tags: publicTags.length,
         products: publicProducts.length,
         faqs: source.faqs.length,
       },
