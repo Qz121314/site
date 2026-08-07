@@ -85,16 +85,41 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build
-        run: pnpm build
-        env:
-          VITE_PUBLIC_CONTENT_ORIGIN: ${{ vars.PUBLIC_CONTENT_ORIGIN }}
-
       - name: Apply D1 migrations
         run: pnpm db:migrate:remote
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Resolve production public content origin
+        id: public_content
+        run: |
+          set -euo pipefail
+          result="$(pnpm exec wrangler d1 execute DB --remote --command "SELECT media_base_url FROM site_settings WHERE id = 1;" --json)"
+          origin="$(printf '%s' "$result" | node -e '
+            const fs = require("fs");
+            const payload = JSON.parse(fs.readFileSync(0, "utf8"));
+            const entries = Array.isArray(payload) ? payload : [payload];
+            const row = entries.flatMap((entry) => Array.isArray(entry?.results) ? entry.results : []).find(Boolean);
+            const raw = typeof row?.media_base_url === "string" ? row.media_base_url.trim() : "";
+            if (!raw) throw new Error("site_settings.media_base_url is empty");
+            const url = new URL(raw);
+            if ((url.protocol !== "https:" && url.protocol !== "http:") || url.username || url.password || url.search || url.hash || (url.pathname !== "/" && url.pathname !== "")) {
+              throw new Error("site_settings.media_base_url is not a valid public origin");
+            }
+            process.stdout.write(url.origin);
+          ')"
+          test -n "$origin"
+          echo "origin=$origin" >> "$GITHUB_OUTPUT"
+          echo "Resolved Storefront content origin: $origin"
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Build production assets
+        run: pnpm build
+        env:
+          VITE_PUBLIC_CONTENT_ORIGIN: ${{ steps.public_content.outputs.origin }}
 
       - name: Configure public R2 CORS
         run: |
@@ -122,6 +147,7 @@ jobs:
       - name: Smoke test production
         env:
           BASE_URL: ${{ steps.deploy.outputs.url }}
+          PUBLIC_CONTENT_ORIGIN: ${{ steps.public_content.outputs.origin }}
         run: |
           set -euo pipefail
           health="$(curl --fail --silent --show-error "$BASE_URL/api/health")"
@@ -129,16 +155,13 @@ jobs:
           printf '%s' "$health" | grep -F '"environment":"production"'
           printf '%s' "$health" | grep -F '"publicLanguage":"en"'
 
-          content_config="$(curl --fail --silent --show-error "$BASE_URL/api/public/storefront/content-origin")"
-          content_origin="$(printf '%s' "$content_config" | node -e "const fs=require('fs'); const value=JSON.parse(fs.readFileSync(0,'utf8')).contentOrigin; if(typeof value!=='string'||!/^https?:\/\//.test(value)) process.exit(1); process.stdout.write(value.replace(/\/$/,''));")"
-          test -n "$content_origin"
-
+          test -n "$PUBLIC_CONTENT_ORIGIN"
           cors_headers="$(mktemp)"
           curl --fail --silent --show-error \
             -H "Origin: $BASE_URL" \
             -D "$cors_headers" \
             -o /tmp/storefront-current.json \
-            "$content_origin/public/current.json"
+            "$PUBLIC_CONTENT_ORIGIN/public/current.json"
           grep -Eqi '^access-control-allow-origin: (\*|https://[^[:space:]]+)\r?$' "$cors_headers"
           node -e "const fs=require('fs'); const value=JSON.parse(fs.readFileSync('/tmp/storefront-current.json','utf8')); if(value.schemaVersion!==1&&value.schemaVersion!==2) process.exit(1);"
 
