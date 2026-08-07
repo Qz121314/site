@@ -19,17 +19,6 @@ export type SiteSettings = {
 
 export type SiteSettingsUpdateInput = Omit<SiteSettings, 'logoAssetId' | 'updatedAt'>;
 
-export type CustomerServiceSettings = {
-  isEnabled: boolean;
-  provider: string | null;
-  endpointUrl: string | null;
-  projectId: string | null;
-  config: string | null;
-  updatedAt: string;
-};
-
-export type CustomerServiceSettingsInput = Omit<CustomerServiceSettings, 'updatedAt'>;
-
 export type MediaDomainTestResponse = {
   connected: true;
   mediaBaseUrl: string;
@@ -198,28 +187,6 @@ function parseSiteSettings(value: unknown): SiteSettings {
   return settings as SiteSettings;
 }
 
-function parseCustomerServiceSettings(value: unknown): CustomerServiceSettings {
-  const envelope = asRecord(value);
-  const settings = envelope ? asRecord(envelope.settings) : null;
-  if (!settings) {
-    throw new AdminApiError(500, 'INVALID_RESPONSE', '客服设置返回数据无效。');
-  }
-
-  const valid =
-    typeof settings.isEnabled === 'boolean' &&
-    (typeof settings.provider === 'string' || settings.provider === null) &&
-    (typeof settings.endpointUrl === 'string' || settings.endpointUrl === null) &&
-    (typeof settings.projectId === 'string' || settings.projectId === null) &&
-    (typeof settings.config === 'string' || settings.config === null) &&
-    typeof settings.updatedAt === 'string';
-
-  if (!valid) {
-    throw new AdminApiError(500, 'INVALID_RESPONSE', '客服设置返回数据无效。');
-  }
-
-  return settings as CustomerServiceSettings;
-}
-
 function parseSectionRecord(value: unknown): AdminSection {
   const section = asRecord(value);
   if (!section) {
@@ -305,18 +272,6 @@ export function fetchSiteSettings(): Promise<SiteSettings> {
 
 export function updateSiteSettings(input: SiteSettingsUpdateInput): Promise<SiteSettings> {
   return adminJsonRequest('/api/admin/settings/', 'PUT', input).then(parseSiteSettings);
-}
-
-export function fetchCustomerServiceSettings(): Promise<CustomerServiceSettings> {
-  return requestJson('/api/admin/customer-service/').then(parseCustomerServiceSettings);
-}
-
-export function updateCustomerServiceSettings(
-  input: CustomerServiceSettingsInput,
-): Promise<CustomerServiceSettings> {
-  return adminJsonRequest('/api/admin/customer-service/', 'PUT', input).then(
-    parseCustomerServiceSettings,
-  );
 }
 
 export async function testMediaDomain(mediaBaseUrl: string): Promise<MediaDomainTestResponse> {
@@ -409,78 +364,4 @@ export async function reorderSections(
   if (!result || result.reordered !== true) {
     throw new AdminApiError(500, 'INVALID_RESPONSE', '分区排序返回数据无效。');
   }
-}
-
-export type PublishStatus = {
-  currentVersion: string | null;
-  publishedAt: string | null;
-  lastJob: {
-    id: string;
-    status: 'queued' | 'building' | 'published' | 'failed' | 'cancelled';
-    contentVersion: string | null;
-    errorCode: string | null;
-    errorMessage: string | null;
-    requestedAt: string;
-    completedAt: string | null;
-  } | null;
-};
-
-export type PublishResult = {
-  jobId: string;
-  contentVersion: string;
-  sourceRevision: string;
-  publishedAt: string;
-  objectCount: number;
-  totalBytes: number;
-};
-
-function parsePublishStatus(value: unknown): PublishStatus {
-  const envelope = asRecord(value);
-  const status = envelope ? asRecord(envelope.status) : null;
-  if (!status) {
-    throw new AdminApiError(500, 'INVALID_RESPONSE', '发布状态返回数据无效。');
-  }
-  const lastJob = status.lastJob === null ? null : asRecord(status.lastJob);
-  const currentVersion = status.currentVersion;
-  const publishedAt = status.publishedAt;
-  if (
-    (typeof currentVersion !== 'string' && currentVersion !== null) ||
-    (typeof publishedAt !== 'string' && publishedAt !== null) ||
-    (lastJob !== null &&
-      (typeof lastJob.id !== 'string' ||
-        !['queued', 'building', 'published', 'failed', 'cancelled'].includes(String(lastJob.status)) ||
-        (typeof lastJob.contentVersion !== 'string' && lastJob.contentVersion !== null) ||
-        (typeof lastJob.errorCode !== 'string' && lastJob.errorCode !== null) ||
-        (typeof lastJob.errorMessage !== 'string' && lastJob.errorMessage !== null) ||
-        typeof lastJob.requestedAt !== 'string' ||
-        (typeof lastJob.completedAt !== 'string' && lastJob.completedAt !== null)))
-  ) {
-    throw new AdminApiError(500, 'INVALID_RESPONSE', '发布状态返回数据无效。');
-  }
-  return status as PublishStatus;
-}
-
-function parsePublishResult(value: unknown): PublishResult {
-  const envelope = asRecord(value);
-  const publication = envelope ? asRecord(envelope.publication) : null;
-  if (
-    !publication ||
-    typeof publication.jobId !== 'string' ||
-    typeof publication.contentVersion !== 'string' ||
-    typeof publication.sourceRevision !== 'string' ||
-    typeof publication.publishedAt !== 'string' ||
-    typeof publication.objectCount !== 'number' ||
-    typeof publication.totalBytes !== 'number'
-  ) {
-    throw new AdminApiError(500, 'INVALID_RESPONSE', '发布结果返回数据无效。');
-  }
-  return publication as PublishResult;
-}
-
-export function fetchPublishStatus(): Promise<PublishStatus> {
-  return requestJson('/api/admin/publish/').then(parsePublishStatus);
-}
-
-export function publishStorefront(): Promise<PublishResult> {
-  return adminJsonRequest('/api/admin/publish/', 'POST').then(parsePublishResult);
 }
