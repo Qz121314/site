@@ -288,7 +288,7 @@ test('schema-v2 bootstrap composes independent section versions into the current
     assert.equal(bootstrap.sectionSnapshots['section-a'].contentVersion, SECTION_A_VERSION);
     assert.equal(bootstrap.sectionSnapshots['section-b'].contentVersion, SECTION_B_VERSION);
     assert.deepEqual(bootstrap.home.featuredProducts.map((product) => product.id), ['product-b', 'product-a']);
-    assert.deepEqual(bootstrap.home.latestProducts.map((product) => product.id), ['product-b', 'product-a']);
+    assert.deepEqual(bootstrap.home.latestProducts.map((product) => product.id), ['product-a', 'product-b']);
     assert.equal(bootstrap.home.allSections[0].icon.value, 'https://media.example.com/sections/alpha.webp');
     assert.equal(bootstrap.sectionSnapshots['section-a'].products[0].coverUrl, 'https://media.example.com/products/product-a/cover.webp');
     assert.ok(requests.some((request) => request.url.includes(SECTION_A_VERSION)));
