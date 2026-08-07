@@ -30,7 +30,7 @@ adminPublishRoutes.post('/', async (context) => {
     return context.json({ publication }, 201);
   } catch (error) {
     if (error instanceof PublicationError) {
-      return apiError(context, error.status, error.code, error.message);
+      return apiError(context, 409, error.code, error.message);
     }
     throw error;
   }
