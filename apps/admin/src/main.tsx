@@ -25,6 +25,7 @@ import './customer-service-connections.css';
 import './product-editor-compact.css';
 import './product-dependency-handoff.css';
 import './admin-ui-system.css';
+import './admin-sidebar.css';
 
 installAdminMutationObserver();
 installAdminUnsavedStateObserver();
