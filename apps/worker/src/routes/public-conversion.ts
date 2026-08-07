@@ -1,4 +1,4 @@
-import { Hono } from 'hono';
+import { Hono, type Context } from 'hono';
 import { recordConversionEvent, type ConversionEventInput } from '../conversion/conversion-events';
 import { getConversionGroup, selectNextConversionTarget } from '../conversion-pool/conversion-pool';
 import { getCustomerServiceConnectionInternal } from '../customer-service/customer-service-connections';
@@ -14,7 +14,7 @@ type RoutableProductRow = {
   conversion_group_id: string | null;
 };
 
-function setRedirectHeaders(context: Parameters<typeof unavailable>[0]) {
+function setRedirectHeaders(context: Context<AppEnvironment>) {
   context.header('Cache-Control', 'no-store, private');
   context.header('Pragma', 'no-cache');
   context.header('Referrer-Policy', 'no-referrer');
@@ -22,7 +22,7 @@ function setRedirectHeaders(context: Parameters<typeof unavailable>[0]) {
 }
 
 function unavailable(
-  context: import('hono').Context<AppEnvironment>,
+  context: Context<AppEnvironment>,
   status: 404 | 409 | 502 | 503,
   message: string,
 ) {
