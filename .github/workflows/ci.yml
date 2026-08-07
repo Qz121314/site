@@ -91,128 +91,41 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
 
-      - name: Resolve production public content origin
+      - name: Resolve active R2 custom domain
         id: public_content
         run: |
           set -euo pipefail
-          result="$(pnpm exec wrangler d1 execute DB --remote --command "SELECT media_base_url FROM site_settings WHERE id = 1;" --json)"
-          origin="$(printf '%s' "$result" | node -e '
+          preferred_result="$(pnpm exec wrangler d1 execute DB --remote --command "SELECT media_base_url FROM site_settings WHERE id = 1;" --json)"
+          preferred="$(printf '%s' "$preferred_result" | node -e '
             const fs = require("fs");
             const payload = JSON.parse(fs.readFileSync(0, "utf8"));
             const entries = Array.isArray(payload) ? payload : [payload];
             const row = entries.flatMap((entry) => Array.isArray(entry?.results) ? entry.results : []).find(Boolean);
-            const raw = typeof row?.media_base_url === "string" ? row.media_base_url.trim() : "";
-            if (!raw) throw new Error("site_settings.media_base_url is empty");
-            const url = new URL(raw);
-            if ((url.protocol !== "https:" && url.protocol !== "http:") || url.username || url.password || url.search || url.hash || (url.pathname !== "/" && url.pathname !== "")) {
-              throw new Error("site_settings.media_base_url is not a valid public origin");
-            }
-            process.stdout.write(url.origin);
+            if (typeof row?.media_base_url === "string") process.stdout.write(row.media_base_url.trim());
           ')"
+          origin="$(PREFERRED_R2_PUBLIC_ORIGIN="$preferred" \
+            R2_BUCKET_NAME='service-catalog-site-assets' \
+            node scripts/resolve-r2-public-origin.mjs)"
           test -n "$origin"
           echo "origin=$origin" >> "$GITHUB_OUTPUT"
-          echo "Resolved Storefront content origin: $origin"
+          echo "Resolved active R2 read origin from bucket binding: $origin"
+
+          escaped_origin="${origin//\'/\'\'}"
+          pnpm exec wrangler d1 execute DB --remote \
+            --command "UPDATE site_settings SET media_base_url = '$escaped_origin' WHERE id = 1 AND COALESCE(media_base_url, '') <> '$escaped_origin';"
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
 
-      - name: Ensure R2 custom domain is public and active
+      - name: Verify selected R2 custom domain
         env:
           PUBLIC_CONTENT_ORIGIN: ${{ steps.public_content.outputs.origin }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           set -euo pipefail
-          bucket='service-catalog-site-assets'
           domain="$(node -e 'process.stdout.write(new URL(process.env.PUBLIC_CONTENT_ORIGIN).hostname)')"
-          encoded_domain="$(DOMAIN="$domain" node -e 'process.stdout.write(encodeURIComponent(process.env.DOMAIN))')"
-          domain_api="https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/r2/buckets/$bucket/domains/custom/$encoded_domain"
-          auth_header="Authorization: Bearer $CLOUDFLARE_API_TOKEN"
-
-          get_domain() {
-            curl --silent --show-error \
-              --header "$auth_header" \
-              --output /tmp/r2-domain.json \
-              --write-out '%{http_code}' \
-              "$domain_api"
-          }
-
-          status="$(get_domain)"
-          if [[ "$status" == '404' ]]; then
-            echo "R2 custom domain $domain is not attached to $bucket; attempting to attach it."
-            zone_name="$(DOMAIN="$domain" node -e 'const p=process.env.DOMAIN.split("."); if(p.length<2) process.exit(1); process.stdout.write(p.slice(-2).join("."))')"
-            zone_status="$(curl --silent --show-error \
-              --get \
-              --header "$auth_header" \
-              --data-urlencode "name=$zone_name" \
-              --data-urlencode "account.id=$CLOUDFLARE_ACCOUNT_ID" \
-              --output /tmp/cloudflare-zone.json \
-              --write-out '%{http_code}' \
-              'https://api.cloudflare.com/client/v4/zones')"
-            if [[ ! "$zone_status" =~ ^2 ]]; then
-              echo "Unable to resolve Cloudflare Zone ID for $zone_name (HTTP $zone_status)."
-              cat /tmp/cloudflare-zone.json || true
-              exit 1
-            fi
-            zone_id="$(node -e 'const fs=require("fs"); const v=JSON.parse(fs.readFileSync("/tmp/cloudflare-zone.json","utf8")); const rows=Array.isArray(v.result)?v.result:[]; if(rows.length!==1||typeof rows[0].id!=="string") throw new Error("Expected exactly one matching Cloudflare zone"); process.stdout.write(rows[0].id)')"
-            attach_body="$(DOMAIN="$domain" ZONE_ID="$zone_id" node -e 'process.stdout.write(JSON.stringify({domain:process.env.DOMAIN,enabled:true,zoneId:process.env.ZONE_ID}))')"
-            attach_status="$(curl --silent --show-error \
-              --request POST \
-              --header "$auth_header" \
-              --header 'Content-Type: application/json' \
-              --data "$attach_body" \
-              --output /tmp/r2-domain-attach.json \
-              --write-out '%{http_code}' \
-              "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/r2/buckets/$bucket/domains/custom")"
-            if [[ ! "$attach_status" =~ ^2 ]]; then
-              echo "Failed to attach R2 custom domain $domain (HTTP $attach_status)."
-              cat /tmp/r2-domain-attach.json || true
-              exit 1
-            fi
-            cat /tmp/r2-domain-attach.json
-          elif [[ ! "$status" =~ ^2 ]]; then
-            echo "Unable to read R2 custom domain settings for $domain (HTTP $status)."
-            cat /tmp/r2-domain.json || true
-            exit 1
-          fi
-
-          status="$(get_domain)"
-          [[ "$status" =~ ^2 ]] || { cat /tmp/r2-domain.json || true; exit 1; }
-          enabled="$(node -e 'const fs=require("fs"); const v=JSON.parse(fs.readFileSync("/tmp/r2-domain.json","utf8")); process.stdout.write(v.result?.enabled===true?"true":"false")')"
-          if [[ "$enabled" != 'true' ]]; then
-            echo "R2 custom domain $domain is attached but public access is disabled; enabling it."
-            enable_status="$(curl --silent --show-error \
-              --request PUT \
-              --header "$auth_header" \
-              --header 'Content-Type: application/json' \
-              --data '{"enabled":true}' \
-              --output /tmp/r2-domain-enable.json \
-              --write-out '%{http_code}' \
-              "$domain_api")"
-            if [[ ! "$enable_status" =~ ^2 ]]; then
-              echo "Failed to enable R2 custom domain $domain (HTTP $enable_status)."
-              cat /tmp/r2-domain-enable.json || true
-              exit 1
-            fi
-            cat /tmp/r2-domain-enable.json
-          fi
-
-          for attempt in $(seq 1 12); do
-            status="$(get_domain)"
-            if [[ "$status" =~ ^2 ]]; then
-              state="$(node -e 'const fs=require("fs"); const v=JSON.parse(fs.readFileSync("/tmp/r2-domain.json","utf8")); const r=v.result||{}; process.stdout.write(`${r.enabled===true}|${r.status?.ownership||"unknown"}|${r.status?.ssl||"unknown"}`)')"
-              echo "R2 custom domain state: $state"
-              if [[ "$state" == 'true|active|active' ]]; then
-                pnpm exec wrangler r2 bucket domain get "$bucket" --domain "$domain"
-                exit 0
-              fi
-            fi
-            sleep 5
-          done
-
-          echo "R2 custom domain $domain did not become enabled/active within the deployment window."
-          cat /tmp/r2-domain.json || true
-          exit 1
+          pnpm exec wrangler r2 bucket domain get service-catalog-site-assets --domain "$domain"
 
       - name: Build production assets
         run: pnpm build
