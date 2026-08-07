@@ -20,7 +20,7 @@ import { SectionManagementView } from './SectionManagementView';
 import { SiteSettingsView } from './SiteSettingsView';
 import { TagManagementView } from './TagManagementView';
 
-type DynamicViewKind = 'products' | 'product-entry' | 'categories' | 'tags' | 'conversion-pool';
+type DynamicViewKind = 'products' | 'categories' | 'tags' | 'conversion-pool';
 
 type AdminView =
   | 'settings'
@@ -65,7 +65,6 @@ function parseDynamicView(view: AdminView): DynamicView | null {
   const sectionId = view.slice(separatorIndex + 1);
   if (
     (kind !== 'products' &&
-      kind !== 'product-entry' &&
       kind !== 'categories' &&
       kind !== 'tags' &&
       kind !== 'conversion-pool') ||
@@ -412,7 +411,6 @@ export function Dashboard({
             {currentSection ? (
               <nav className="section-workspace-nav" aria-label={`${currentSection.section.name} 管理`}>
                 <button className={currentSection.kind === 'products' ? 'is-active' : undefined} type="button" aria-current={currentSection.kind === 'products' ? 'page' : undefined} onClick={() => requestView(`products:${currentSection.section.id}`)}>产品管理</button>
-                <button className={currentSection.kind === 'product-entry' ? 'is-active' : undefined} type="button" aria-current={currentSection.kind === 'product-entry' ? 'page' : undefined} onClick={() => requestView(`product-entry:${currentSection.section.id}`)}>产品录入</button>
                 <button className={currentSection.kind === 'categories' ? 'is-active' : undefined} type="button" aria-current={currentSection.kind === 'categories' ? 'page' : undefined} onClick={() => requestView(`categories:${currentSection.section.id}`)}>分类管理</button>
                 <button className={currentSection.kind === 'tags' ? 'is-active' : undefined} type="button" aria-current={currentSection.kind === 'tags' ? 'page' : undefined} onClick={() => requestView(`tags:${currentSection.section.id}`)}>标签管理</button>
                 <button className={currentSection.kind === 'conversion-pool' ? 'is-active' : undefined} type="button" aria-current={currentSection.kind === 'conversion-pool' ? 'page' : undefined} onClick={() => requestView(`conversion-pool:${currentSection.section.id}`)}>转化池</button>
@@ -526,9 +524,7 @@ export function Dashboard({
         ) : activeView === 'faq' ? (
           <FaqManagementView key={activeView} onSessionExpired={onSessionExpired} />
         ) : currentSection?.kind === 'products' ? (
-          <ProductManagementView key={activeView} section={currentSection.section} mode="manage" onSessionExpired={onSessionExpired} />
-        ) : currentSection?.kind === 'product-entry' ? (
-          <ProductManagementView key={activeView} section={currentSection.section} mode="entry" onEntryExit={() => setActiveView(`products:${currentSection.section.id}`)} onSessionExpired={onSessionExpired} />
+          <ProductManagementView key={activeView} section={currentSection.section} onSessionExpired={onSessionExpired} />
         ) : currentSection?.kind === 'categories' ? (
           <CategoryManagementView key={activeView} section={currentSection.section} onSessionExpired={onSessionExpired} />
         ) : currentSection?.kind === 'tags' ? (
