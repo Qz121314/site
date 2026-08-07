@@ -156,11 +156,6 @@ type ProductRow = {
   category_id: string | null;
   category_name: string | null;
   category_enabled: number | null;
-  conversion_group_id: string | null;
-  conversion_mode: 'customer_service' | 'link' | null;
-  button_label: string | null;
-  conversion_group_enabled: number | null;
-  active_target_count: number;
   effective_cover_object_key: string | null;
   is_featured: number;
   featured_order: number;
@@ -488,32 +483,6 @@ async function loadSource(db: D1Database): Promise<Source> {
            p.category_id,
            c.name AS category_name,
            c.is_enabled AS category_enabled,
-           p.conversion_group_id,
-           cg.mode AS conversion_mode,
-           cg.button_label,
-           cg.is_enabled AS conversion_group_enabled,
-           (
-             SELECT COUNT(*)
-             FROM conversion_targets ct
-             LEFT JOIN customer_service_connections csc
-               ON csc.id = ct.customer_service_connection_id
-              AND csc.deleted_at IS NULL
-              AND csc.is_enabled = 1
-             WHERE ct.group_id = cg.id
-               AND ct.deleted_at IS NULL
-               AND ct.is_enabled = 1
-               AND (
-                 (cg.mode = 'link' AND ct.endpoint_url IS NOT NULL AND trim(ct.endpoint_url) <> '')
-                 OR
-                 (
-                   cg.mode = 'customer_service'
-                   AND ct.customer_service_connection_id IS NOT NULL
-                   AND ct.remote_group_id IS NOT NULL
-                   AND trim(ct.remote_group_id) <> ''
-                   AND csc.id IS NOT NULL
-                 )
-               )
-           ) AS active_target_count,
            cover.object_key AS effective_cover_object_key,
            p.is_featured,
            p.featured_order,
@@ -525,7 +494,6 @@ async function loadSource(db: D1Database): Promise<Source> {
           AND s.deleted_at IS NULL
           AND s.is_enabled = 1
          LEFT JOIN categories c ON c.id = p.category_id AND c.deleted_at IS NULL
-         LEFT JOIN conversion_groups cg ON cg.id = p.conversion_group_id AND cg.deleted_at IS NULL
          LEFT JOIN media_assets cover ON cover.id = COALESCE(
            p.cover_asset_id,
            (SELECT pm.media_asset_id FROM product_media pm
@@ -676,23 +644,13 @@ function sectionPublicData(source: Source, sectionId: string) {
       publishedAt: product.published_at,
       sortOrder: product.sort_order,
     };
-    const cta =
-      product.conversion_group_id && product.conversion_mode && product.button_label
-        ? {
-            label: product.button_label,
-            mode: product.conversion_mode,
-            path: `/go/${encodeURIComponent(product.id)}`,
-          }
-        : null;
     return {
       row: product,
       summary,
       detail: {
         ...summary,
-        conversionGroupId: product.conversion_group_id,
         body: product.body,
         media,
-        cta,
       },
     };
   });
@@ -849,18 +807,6 @@ function validatePayload(source: Source, payload: ModulePayload): void {
       throw new ModularPublicationError(
         'PRODUCT_CATEGORY_INVALID',
         `产品“${product.title}”选择的分类已不可用，当前分区无法发布。`,
-      );
-    }
-    if (
-      product.conversion_group_id &&
-      (!product.conversion_mode ||
-        !product.button_label ||
-        product.conversion_group_enabled !== 1 ||
-        product.active_target_count < 1)
-    ) {
-      throw new ModularPublicationError(
-        'PRODUCT_CONVERSION_INVALID',
-        `产品“${product.title}”选择的转化分组或启用入口已不可用，当前分区无法发布。`,
       );
     }
     if (product.service_mode === 'offline' && !product.address) {

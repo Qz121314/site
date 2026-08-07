@@ -1,17 +1,12 @@
 import { Hono, type Context } from 'hono';
 import { getConversionGroup, selectNextConversionTarget } from '../conversion-pool/conversion-pool';
+import { getRoutableProduct } from '../conversion-pool/public-cta';
 import { getCustomerServiceConnectionInternal } from '../customer-service/customer-service-connections';
 import {
   CustomerServiceProviderError,
   resolveCustomerServiceGroupEntry,
 } from '../customer-service/customer-service-provider';
 import type { AppEnvironment } from '../types';
-
-type RoutableProductRow = {
-  id: string;
-  section_id: string;
-  conversion_group_id: string | null;
-};
 
 function setRedirectHeaders(context: Context<AppEnvironment>) {
   context.header('Cache-Control', 'no-store, private');
@@ -27,22 +22,6 @@ function unavailable(
 ) {
   setRedirectHeaders(context);
   return context.text(message, status);
-}
-
-async function getRoutableProduct(db: D1Database, productId: string): Promise<RoutableProductRow | null> {
-  return db
-    .prepare(
-      `SELECT p.id, p.section_id, p.conversion_group_id
-       FROM products p
-       JOIN sections s ON s.id = p.section_id
-       WHERE p.id = ?
-         AND p.deleted_at IS NULL
-         AND p.status = 'published'
-         AND s.deleted_at IS NULL
-         AND s.is_enabled = 1`,
-    )
-    .bind(productId)
-    .first<RoutableProductRow>();
 }
 
 export const publicConversionRoutes = new Hono<AppEnvironment>();
@@ -62,14 +41,14 @@ publicConversionRoutes.get('/:code', async (context) => {
     return unavailable(context, 404, 'This contact option is unavailable.');
   }
 
-  if (!product.conversion_group_id) {
+  if (!product.conversionGroupId) {
     return unavailable(context, 409, 'This contact option is temporarily unavailable.');
   }
 
   const group = await getConversionGroup(
     context.env.DB,
-    product.section_id,
-    product.conversion_group_id,
+    product.sectionId,
+    product.conversionGroupId,
   );
   if (!group || group.deletedAt || !group.isEnabled || group.activeTargetCount < 1) {
     return unavailable(context, 409, 'This contact option is temporarily unavailable.');
@@ -109,7 +88,7 @@ publicConversionRoutes.get('/:code', async (context) => {
     const entry = await resolveCustomerServiceGroupEntry(connection, target.remoteGroupId, {
       requestId,
       productId: product.id,
-      sectionId: product.section_id,
+      sectionId: product.sectionId,
     });
     return context.redirect(entry.url, 302);
   } catch (error) {

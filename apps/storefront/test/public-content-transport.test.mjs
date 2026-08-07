@@ -24,6 +24,65 @@ test('public snapshot reads stay on the R2 custom domain when direct access succ
   assert.deepEqual(calls, ['https://media.example.com/public/current.json']);
 });
 
+test('product snapshots are hydrated with realtime CTA state from the Worker', async () => {
+  const calls = [];
+  const wrapped = createPublicContentFetch(async (input) => {
+    const url = String(input);
+    calls.push(url);
+    if (url === 'https://app.example.com/api/public/storefront/cta/product-1') {
+      return jsonResponse({
+        available: true,
+        label: 'Contact now',
+        mode: 'link',
+        path: '/go/product-1',
+      });
+    }
+    return jsonResponse({
+      schemaVersion: 2,
+      moduleKey: 'section:section-1',
+      product: { id: 'product-1', title: 'Product' },
+    }, 200, { etag: 'snapshot-etag' });
+  }, 'https://app.example.com');
+
+  const response = await wrapped(
+    'https://media.example.com/public/modules/sections/section-1/version-1/products/product-1.json',
+  );
+  const body = await response.json();
+  assert.deepEqual(body.product.cta, {
+    label: 'Contact now',
+    mode: 'link',
+    path: '/go/product-1',
+  });
+  assert.equal(response.headers.get('cache-control'), 'no-store');
+  assert.equal(response.headers.get('etag'), null);
+  assert.deepEqual(calls, [
+    'https://media.example.com/public/modules/sections/section-1/version-1/products/product-1.json',
+    'https://app.example.com/api/public/storefront/cta/product-1',
+  ]);
+});
+
+test('unavailable realtime CTA removes stale CTA data from an older snapshot', async () => {
+  const wrapped = createPublicContentFetch(async (input) => {
+    const url = String(input);
+    if (url === 'https://app.example.com/api/public/storefront/cta/product-1') {
+      return jsonResponse({ available: false });
+    }
+    return jsonResponse({
+      schemaVersion: 1,
+      product: {
+        id: 'product-1',
+        cta: { label: 'Old CTA', mode: 'link', path: '/go/product-1' },
+      },
+    });
+  }, 'https://app.example.com');
+
+  const response = await wrapped(
+    'https://media.example.com/public/versions/version-1/products/product-1.json',
+  );
+  const body = await response.json();
+  assert.equal(body.product.cta, null);
+});
+
 test('Cloudflare challenge falls back to same-origin Worker and opens a short circuit breaker', async () => {
   let now = 1_000;
   const calls = [];
