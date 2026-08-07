@@ -296,13 +296,6 @@ export function normalizePublishModuleKey(value: unknown): string | null {
   return sectionModuleKey(sectionId);
 }
 
-function moduleKind(moduleKey: string): PublishModuleKind {
-  if (moduleKey === 'site') return 'site';
-  if (moduleKey === 'sections-index') return 'sections-index';
-  if (moduleKey === 'faq') return 'faq';
-  return 'section';
-}
-
 function moduleBasePrefix(moduleKey: string): string {
   if (moduleKey === 'site') return 'public/modules/site';
   if (moduleKey === 'sections-index') return 'public/modules/sections-index';
@@ -919,12 +912,13 @@ function blankPointer(
 async function preparePublication(
   db: D1Database,
   bucket: R2Bucket,
+  source: Source,
   payload: ModulePayload,
   sourceRevision: string,
   previousReference: ModuleReference | null,
   now: string,
 ): Promise<PreparedPublication> {
-  validatePayload(awaitSourceForValidation(payload, db), payload);
+  validatePayload(source, payload);
   const jobId = crypto.randomUUID();
   const contentVersion = newVersion(sourceRevision, now);
   const prefix = `${moduleBasePrefix(payload.moduleKey)}/${contentVersion}`;
@@ -1021,16 +1015,6 @@ async function preparePublication(
     await deleteR2PrefixBestEffort(bucket, prefix);
     throw error;
   }
-}
-
-// The payload already came from the same loaded source. This indirection exists so validation stays
-// in one place without changing the publication preparation contract.
-let activeValidationSource: Source | null = null;
-function awaitSourceForValidation(_payload: ModulePayload, _db: D1Database): Source {
-  if (!activeValidationSource) {
-    throw new ModularPublicationError('PUBLISH_SOURCE_MISSING', '发布源数据已失效，请重试。', 503);
-  }
-  return activeValidationSource;
 }
 
 async function markJobFailed(db: D1Database, jobId: string, error: unknown): Promise<void> {
@@ -1307,190 +1291,186 @@ export async function publishModularStorefront(
   await ensureNoActivePublish(db, now);
 
   const [source, pointerResult] = await Promise.all([loadSource(db), readModularPointer(bucket)]);
-  activeValidationSource = source;
-  try {
-    const allKeys = desiredModuleKeys(source);
-    const enabledSectionIds = new Set(source.sections.map((section) => section.id));
-    const requestedKeys = new Set<string>();
-    const bootstrapped = pointerResult.pointer === null;
+  const allKeys = desiredModuleKeys(source);
+  const enabledSectionIds = new Set(source.sections.map((section) => section.id));
+  const requestedKeys = new Set<string>();
+  const bootstrapped = pointerResult.pointer === null;
 
-    if (bootstrapped || normalized === 'all') {
-      allKeys.forEach((key) => requestedKeys.add(key));
-    } else if (normalized === 'sections-index') {
-      requestedKeys.add('sections-index');
-      for (const section of source.sections) {
-        if (!pointerResult.pointer?.sections[section.id]) requestedKeys.add(sectionModuleKey(section.id));
-      }
-    } else {
-      if (normalized.startsWith(SECTION_PREFIX)) {
-        const sectionId = parseSectionModuleKey(normalized);
-        if (!sectionId || !enabledSectionIds.has(sectionId)) {
-          throw new ModularPublicationError('SECTION_NOT_FOUND', '当前分区不存在、已停用或已进入回收站。', 404);
-        }
-      }
-      requestedKeys.add(normalized);
+  if (bootstrapped || normalized === 'all') {
+    allKeys.forEach((key) => requestedKeys.add(key));
+  } else if (normalized === 'sections-index') {
+    requestedKeys.add('sections-index');
+    for (const section of source.sections) {
+      if (!pointerResult.pointer?.sections[section.id]) requestedKeys.add(sectionModuleKey(section.id));
     }
-
-    const payloads = new Map<string, ModulePayload>();
-    const revisions = new Map<string, string>();
-    await Promise.all(
-      [...requestedKeys].map(async (key) => {
-        const payload = modulePayload(source, key);
-        payloads.set(key, payload);
-        revisions.set(key, await payloadRevision(payload));
-      }),
-    );
-
-    const prepared: PreparedPublication[] = [];
-    const results: PublishModuleResult[] = [];
-    const references = new Map<string, ModuleReference>();
-    if (pointerResult.pointer) {
-      references.set('site', pointerResult.pointer.site);
-      references.set('sections-index', pointerResult.pointer.sectionsIndex);
-      references.set('faq', pointerResult.pointer.faq);
-      for (const [sectionId, reference] of Object.entries(pointerResult.pointer.sections)) {
-        references.set(sectionModuleKey(sectionId), reference);
+  } else {
+    if (normalized.startsWith(SECTION_PREFIX)) {
+      const sectionId = parseSectionModuleKey(normalized);
+      if (!sectionId || !enabledSectionIds.has(sectionId)) {
+        throw new ModularPublicationError('SECTION_NOT_FOUND', '当前分区不存在、已停用或已进入回收站。', 404);
       }
     }
+    requestedKeys.add(normalized);
+  }
 
-    for (const key of requestedKeys) {
-      const payload = payloads.get(key);
-      const revision = revisions.get(key);
-      if (!payload || !revision) continue;
-      const currentReference = references.get(key) ?? null;
-      if (currentReference?.sourceRevision === revision) {
-        results.push({
-          moduleKey: key,
-          label: payload.label,
-          contentVersion: currentReference.contentVersion,
-          sourceRevision: revision,
-          publishedAt: currentReference.publishedAt,
-          objectCount: 0,
-          totalBytes: 0,
-          unchanged: true,
-        });
-        continue;
-      }
-      const publication = await preparePublication(
-        db,
-        bucket,
-        payload,
-        revision,
-        currentReference,
-        now,
-      );
-      prepared.push(publication);
-      references.set(key, referenceFromPrepared(publication));
+  const payloads = new Map<string, ModulePayload>();
+  const revisions = new Map<string, string>();
+  await Promise.all(
+    [...requestedKeys].map(async (key) => {
+      const payload = modulePayload(source, key);
+      payloads.set(key, payload);
+      revisions.set(key, await payloadRevision(payload));
+    }),
+  );
+
+  const prepared: PreparedPublication[] = [];
+  const results: PublishModuleResult[] = [];
+  const references = new Map<string, ModuleReference>();
+  if (pointerResult.pointer) {
+    references.set('site', pointerResult.pointer.site);
+    references.set('sections-index', pointerResult.pointer.sectionsIndex);
+    references.set('faq', pointerResult.pointer.faq);
+    for (const [sectionId, reference] of Object.entries(pointerResult.pointer.sections)) {
+      references.set(sectionModuleKey(sectionId), reference);
+    }
+  }
+
+  for (const key of requestedKeys) {
+    const payload = payloads.get(key);
+    const revision = revisions.get(key);
+    if (!payload || !revision) continue;
+    const currentReference = references.get(key) ?? null;
+    if (currentReference?.sourceRevision === revision) {
       results.push({
         moduleKey: key,
         label: payload.label,
-        contentVersion: publication.contentVersion,
-        sourceRevision: publication.sourceRevision,
-        publishedAt: publication.publishedAt,
-        objectCount: publication.objectCount,
-        totalBytes: publication.totalBytes,
-        unchanged: false,
+        contentVersion: currentReference.contentVersion,
+        sourceRevision: revision,
+        publishedAt: currentReference.publishedAt,
+        objectCount: 0,
+        totalBytes: 0,
+        unchanged: true,
       });
+      continue;
     }
-
-    if (prepared.length === 0 && pointerResult.pointer) {
-      return {
-        pointerVersion: pointerResult.pointer.contentVersion,
-        publishedAt: pointerResult.pointer.publishedAt,
-        bootstrapped: false,
-        publications: results,
-      };
-    }
-
-    let nextPointer = pointerResult.pointer
-      ? {
-          ...pointerResult.pointer,
-          contentVersion: newPointerVersion(now),
-          publishedAt: now,
-          sections: { ...pointerResult.pointer.sections },
-        }
-      : blankPointer(now, references, source);
-    for (const publication of prepared) {
-      nextPointer = pointerWithModule(nextPointer, publication.moduleKey, referenceFromPrepared(publication));
-    }
-
-    if (requestedKeys.has('sections-index') || bootstrapped || normalized === 'all') {
-      const sections: Record<string, ModuleReference> = {};
-      for (const section of source.sections) {
-        const reference = references.get(sectionModuleKey(section.id));
-        if (reference) sections[section.id] = reference;
-      }
-      nextPointer = { ...nextPointer, sections };
-    }
-
-    await bucket.put(CURRENT_KEY, JSON.stringify(nextPointer), {
-      httpMetadata: { contentType: 'application/json; charset=utf-8', cacheControl: POINTER_CACHE },
+    const publication = await preparePublication(
+      db,
+      bucket,
+      source,
+      payload,
+      revision,
+      currentReference,
+      now,
+    );
+    prepared.push(publication);
+    references.set(key, referenceFromPrepared(publication));
+    results.push({
+      moduleKey: key,
+      label: payload.label,
+      contentVersion: publication.contentVersion,
+      sourceRevision: publication.sourceRevision,
+      publishedAt: publication.publishedAt,
+      objectCount: publication.objectCount,
+      totalBytes: publication.totalBytes,
+      unchanged: false,
     });
+  }
 
-    try {
-      const statements: D1PreparedStatement[] = [];
-      for (const publication of prepared) {
-        statements.push(
-          db
-            .prepare('UPDATE publish_module_versions SET is_current = 0 WHERE module_key = ? AND is_current = 1')
-            .bind(publication.moduleKey),
-          db
-            .prepare('UPDATE publish_module_versions SET is_current = 1 WHERE content_version = ?')
-            .bind(publication.contentVersion),
-          db
-            .prepare(
-              `UPDATE publish_module_jobs
-               SET status = 'published', completed_at = ?, error_code = NULL, error_message = NULL
-               WHERE id = ?`,
-            )
-            .bind(now, publication.jobId),
-          createAuditLogStatement(db, {
-            action: 'storefront.module_published',
-            entityType: 'publish_module',
-            entityId: publication.moduleKey,
-            requestId,
-            metadata: {
-              contentVersion: publication.contentVersion,
-              sourceRevision: publication.sourceRevision,
-              previousContentVersion: moduleReference(pointerResult.pointer, publication.moduleKey)?.contentVersion ?? null,
-              objectCount: publication.objectCount,
-              totalBytes: publication.totalBytes,
-              bootstrapped,
-            },
-            createdAt: now,
-          }),
-        );
-      }
-      if (statements.length > 0) await db.batch(statements);
-    } catch (error) {
-      if (pointerResult.body !== null) {
-        await bucket.put(CURRENT_KEY, pointerResult.body, {
-          httpMetadata: { contentType: 'application/json; charset=utf-8', cacheControl: POINTER_CACHE },
-        });
-      } else {
-        await bucket.delete(CURRENT_KEY);
-      }
-      for (const publication of prepared) await markJobFailed(db, publication.jobId, error);
-      throw error;
-    }
-
-    if (bootstrapped) {
-      try {
-        await db.prepare('DELETE FROM asset_cleanup_guards').run();
-      } catch {
-        // Modular retained-version media indexes supersede legacy cleanup guards.
-      }
-    }
-    await pruneModulesBestEffort(db, bucket, prepared.map((publication) => publication.moduleKey));
+  if (prepared.length === 0 && pointerResult.pointer) {
     return {
-      pointerVersion: nextPointer.contentVersion,
-      publishedAt: nextPointer.publishedAt,
-      bootstrapped,
+      pointerVersion: pointerResult.pointer.contentVersion,
+      publishedAt: pointerResult.pointer.publishedAt,
+      bootstrapped: false,
       publications: results,
     };
-  } finally {
-    activeValidationSource = null;
   }
+
+  let nextPointer = pointerResult.pointer
+    ? {
+        ...pointerResult.pointer,
+        contentVersion: newPointerVersion(now),
+        publishedAt: now,
+        sections: { ...pointerResult.pointer.sections },
+      }
+    : blankPointer(now, references, source);
+  for (const publication of prepared) {
+    nextPointer = pointerWithModule(nextPointer, publication.moduleKey, referenceFromPrepared(publication));
+  }
+
+  if (requestedKeys.has('sections-index') || bootstrapped || normalized === 'all') {
+    const sections: Record<string, ModuleReference> = {};
+    for (const section of source.sections) {
+      const reference = references.get(sectionModuleKey(section.id));
+      if (reference) sections[section.id] = reference;
+    }
+    nextPointer = { ...nextPointer, sections };
+  }
+
+  await bucket.put(CURRENT_KEY, JSON.stringify(nextPointer), {
+    httpMetadata: { contentType: 'application/json; charset=utf-8', cacheControl: POINTER_CACHE },
+  });
+
+  try {
+    const statements: D1PreparedStatement[] = [];
+    for (const publication of prepared) {
+      statements.push(
+        db
+          .prepare('UPDATE publish_module_versions SET is_current = 0 WHERE module_key = ? AND is_current = 1')
+          .bind(publication.moduleKey),
+        db
+          .prepare('UPDATE publish_module_versions SET is_current = 1 WHERE content_version = ?')
+          .bind(publication.contentVersion),
+        db
+          .prepare(
+            `UPDATE publish_module_jobs
+             SET status = 'published', completed_at = ?, error_code = NULL, error_message = NULL
+             WHERE id = ?`,
+          )
+          .bind(now, publication.jobId),
+        createAuditLogStatement(db, {
+          action: 'storefront.module_published',
+          entityType: 'publish_module',
+          entityId: publication.moduleKey,
+          requestId,
+          metadata: {
+            contentVersion: publication.contentVersion,
+            sourceRevision: publication.sourceRevision,
+            previousContentVersion: moduleReference(pointerResult.pointer, publication.moduleKey)?.contentVersion ?? null,
+            objectCount: publication.objectCount,
+            totalBytes: publication.totalBytes,
+            bootstrapped,
+          },
+          createdAt: now,
+        }),
+      );
+    }
+    if (statements.length > 0) await db.batch(statements);
+  } catch (error) {
+    if (pointerResult.body !== null) {
+      await bucket.put(CURRENT_KEY, pointerResult.body, {
+        httpMetadata: { contentType: 'application/json; charset=utf-8', cacheControl: POINTER_CACHE },
+      });
+    } else {
+      await bucket.delete(CURRENT_KEY);
+    }
+    for (const publication of prepared) await markJobFailed(db, publication.jobId, error);
+    throw error;
+  }
+
+  if (bootstrapped) {
+    try {
+      await db.prepare('DELETE FROM asset_cleanup_guards').run();
+    } catch {
+      // Modular retained-version media indexes supersede legacy cleanup guards.
+    }
+  }
+  await pruneModulesBestEffort(db, bucket, prepared.map((publication) => publication.moduleKey));
+  return {
+    pointerVersion: nextPointer.contentVersion,
+    publishedAt: nextPointer.publishedAt,
+    bootstrapped,
+    publications: results,
+  };
 }
 
 export async function rollbackModularModule(
