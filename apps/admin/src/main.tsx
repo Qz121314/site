@@ -16,6 +16,7 @@ import './admin-polish.css';
 import './admin-polish-2.css';
 import './admin-density.css';
 import './admin-no-scroll.css';
+import './admin-centered-layout.css';
 
 const root = document.getElementById('root');
 if (!root) {
