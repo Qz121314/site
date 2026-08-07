@@ -1,5 +1,5 @@
 export type CustomerServiceScope = 'active' | 'trash' | 'all';
-export type CustomerServiceProvider = 'generic_v1';
+export type CustomerServiceProvider = 'generic_v1' | 'generic_rest_v2';
 
 export type CustomerServiceConnectionRecord = {
   id: string;
@@ -104,19 +104,19 @@ function isIpAddress(hostname: string): boolean {
 }
 
 function normalizeBaseUrl(value: unknown) {
-  const raw = readText(value, 'baseUrl', 'API 根地址', 1000, true);
+  const raw = readText(value, 'baseUrl', 'API 地址', 1000, true);
   if (!raw.ok) return raw;
   let url: URL;
   try {
     url = new URL(raw.value);
   } catch {
-    return { ok: false as const, field: 'baseUrl', message: 'API 根地址格式无效。' };
+    return { ok: false as const, field: 'baseUrl', message: 'API 地址格式无效。' };
   }
   if (url.protocol !== 'https:') {
     return { ok: false as const, field: 'baseUrl', message: '客服系统 API 必须使用 HTTPS。' };
   }
   if (url.username || url.password || url.search || url.hash) {
-    return { ok: false as const, field: 'baseUrl', message: 'API 根地址不能包含账号、查询参数或锚点。' };
+    return { ok: false as const, field: 'baseUrl', message: 'API 地址不能包含账号、查询参数或锚点。' };
   }
   const hostname = url.hostname.toLowerCase();
   if (
@@ -130,31 +130,39 @@ function normalizeBaseUrl(value: unknown) {
   return { ok: true as const, value: url.toString().replace(/\/$/u, '') };
 }
 
+function readProvider(value: unknown): CustomerServiceProvider | null {
+  return value === 'generic_v1' || value === 'generic_rest_v2' ? value : null;
+}
+
 export function validateCustomerServiceConnectionInput(value: unknown): ValidationResult {
   if (!isRecord(value)) {
     return { ok: false, field: 'form', message: '客服系统连接数据无效。' };
   }
   const name = readText(value.name, 'name', '连接名称', 120, true);
   if (!name.ok) return name;
-  if (value.provider !== 'generic_v1') {
-    return { ok: false, field: 'provider', message: '当前只支持标准客服接口 v1。' };
+  const provider = readProvider(value.provider);
+  if (!provider) {
+    return { ok: false, field: 'provider', message: '请选择有效的客服系统接入方式。' };
   }
   const baseUrl = normalizeBaseUrl(value.baseUrl);
   if (!baseUrl.ok) return baseUrl;
   const projectId = readText(value.projectId, 'projectId', '项目 ID', 200, false);
   if (!projectId.ok) return projectId;
-  const privateConfig = readText(value.privateConfig, 'privateConfig', '私有扩展配置', 8000, false);
+  const privateConfig = readText(value.privateConfig, 'privateConfig', '高级配置', 12000, false);
   if (!privateConfig.ok) return privateConfig;
   if (privateConfig.value !== null) {
     try {
-      JSON.parse(privateConfig.value);
+      const parsed = JSON.parse(privateConfig.value) as unknown;
+      if (!isRecord(parsed)) {
+        return { ok: false, field: 'privateConfig', message: '高级配置必须是 JSON 对象。' };
+      }
     } catch {
-      return { ok: false, field: 'privateConfig', message: '私有扩展配置必须是有效 JSON。' };
+      return { ok: false, field: 'privateConfig', message: '高级配置必须是有效 JSON。' };
     }
   }
   let apiToken: string | null | undefined;
   if (Object.hasOwn(value, 'apiToken')) {
-    const token = readText(value.apiToken, 'apiToken', 'API Token', 4000, false);
+    const token = readText(value.apiToken, 'apiToken', '访问凭证', 4000, false);
     if (!token.ok) return token;
     apiToken = token.value;
   }
@@ -165,7 +173,7 @@ export function validateCustomerServiceConnectionInput(value: unknown): Validati
     ok: true,
     value: {
       name: name.value,
-      provider: 'generic_v1',
+      provider,
       baseUrl: baseUrl.value,
       projectId: projectId.value,
       ...(apiToken !== undefined ? { apiToken } : {}),
@@ -192,13 +200,14 @@ const CONNECTION_SELECT = `SELECT
 FROM customer_service_connections c`;
 
 function mapConnection(row: ConnectionRow): CustomerServiceConnectionInternal {
-  if (row.provider !== 'generic_v1') {
+  const provider = readProvider(row.provider);
+  if (!provider) {
     throw new Error(`UNSUPPORTED_CUSTOMER_SERVICE_PROVIDER:${row.provider}`);
   }
   return {
     id: row.id,
     name: row.name,
-    provider: row.provider,
+    provider,
     baseUrl: row.base_url,
     projectId: row.project_id,
     apiToken: row.api_token,

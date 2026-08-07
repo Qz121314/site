@@ -1,4 +1,9 @@
 import type { CustomerServiceConnectionInternal } from './customer-service-connections';
+import {
+  listRestV2Groups,
+  resolveRestV2Entry,
+  RestV2AdapterError,
+} from './customer-service-rest-v2';
 
 export type RemoteCustomerServiceGroup = {
   id: string;
@@ -24,7 +29,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-function buildHeaders(
+function buildLegacyHeaders(
   connection: CustomerServiceConnectionInternal,
   extraHeaders?: HeadersInit,
 ): Headers {
@@ -35,24 +40,17 @@ function buildHeaders(
   return headers;
 }
 
-async function providerFetch(
+async function legacyProviderFetch(
   connection: CustomerServiceConnectionInternal,
   path: string,
   init?: RequestInit,
 ): Promise<unknown> {
-  if (connection.provider !== 'generic_v1') {
-    throw new CustomerServiceProviderError(
-      'CUSTOMER_SERVICE_PROVIDER_UNSUPPORTED',
-      '当前客服系统类型尚未实现适配器。',
-    );
-  }
-
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 8_000);
   try {
     const response = await fetch(`${connection.baseUrl}${path}`, {
       ...init,
-      headers: buildHeaders(connection, init?.headers),
+      headers: buildLegacyHeaders(connection, init?.headers),
       signal: controller.signal,
       redirect: 'error',
     });
@@ -87,7 +85,7 @@ async function providerFetch(
   }
 }
 
-function parseGroups(value: unknown): RemoteCustomerServiceGroup[] {
+function parseLegacyGroups(value: unknown): RemoteCustomerServiceGroup[] {
   const envelope = isRecord(value) ? value : null;
   if (!envelope || !Array.isArray(envelope.groups)) {
     throw new CustomerServiceProviderError(
@@ -115,16 +113,38 @@ function parseGroups(value: unknown): RemoteCustomerServiceGroup[] {
   return groups;
 }
 
-export async function listRemoteCustomerServiceGroups(
-  connection: CustomerServiceConnectionInternal,
-): Promise<RemoteCustomerServiceGroup[]> {
+function providerError(error: unknown): CustomerServiceProviderError {
+  if (error instanceof CustomerServiceProviderError) return error;
+  if (error instanceof RestV2AdapterError) {
+    return new CustomerServiceProviderError(error.code, error.message);
+  }
+  return new CustomerServiceProviderError(
+    'CUSTOMER_SERVICE_UNKNOWN_ERROR',
+    '客服系统接口发生未知错误。',
+  );
+}
+
+function assertConnectionEnabled(connection: CustomerServiceConnectionInternal) {
   if (!connection.isEnabled || connection.deletedAt) {
     throw new CustomerServiceProviderError(
       'CUSTOMER_SERVICE_CONNECTION_DISABLED',
       '该客服系统连接当前未启用。',
     );
   }
-  return parseGroups(await providerFetch(connection, '/groups'));
+}
+
+export async function listRemoteCustomerServiceGroups(
+  connection: CustomerServiceConnectionInternal,
+): Promise<RemoteCustomerServiceGroup[]> {
+  assertConnectionEnabled(connection);
+  try {
+    if (connection.provider === 'generic_rest_v2') {
+      return await listRestV2Groups(connection);
+    }
+    return parseLegacyGroups(await legacyProviderFetch(connection, '/groups'));
+  } catch (error) {
+    throw providerError(error);
+  }
 }
 
 export async function testCustomerServiceConnection(
@@ -139,7 +159,16 @@ export async function resolveCustomerServiceGroupEntry(
   remoteGroupId: string,
   payload: { requestId: string; productId: string; sectionId: string },
 ): Promise<ResolvedCustomerServiceEntry> {
-  const value = await providerFetch(
+  assertConnectionEnabled(connection);
+  if (connection.provider === 'generic_rest_v2') {
+    try {
+      return await resolveRestV2Entry(connection, remoteGroupId, payload);
+    } catch (error) {
+      throw providerError(error);
+    }
+  }
+
+  const value = await legacyProviderFetch(
     connection,
     `/groups/${encodeURIComponent(remoteGroupId)}/entry`,
     {
