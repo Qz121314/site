@@ -1,200 +1,262 @@
-/* Product editor: keep core operating controls in the first viewport and spend vertical space on content, not form chrome. */
+/* Product editor: compact core controls, naturally sized content areas, and one scroll surface. */
 
 .product-dialog-backdrop {
   align-items: center;
-  padding: 12px;
-}
-
-.product-editor-dialog {
-  display: grid;
-  width: min(1240px, calc(100vw - 24px));
-  max-height: calc(100dvh - 24px);
-  grid-template-rows: auto minmax(0, 1fr);
+  padding: 10px;
   overflow: hidden;
 }
 
+.product-editor-dialog {
+  display: block;
+  width: min(1320px, calc(100vw - 20px));
+  max-height: calc(100dvh - 20px);
+  padding: 14px 16px 10px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  border-radius: 16px;
+}
+
 .product-editor-dialog > .admin-dialog-header {
-  margin-bottom: 8px;
-  padding-bottom: 10px;
+  position: sticky;
+  z-index: 12;
+  top: -14px;
+  margin: -2px 0 8px;
+  padding: 4px 0 9px;
+  background: #fff;
 }
 
 .product-editor-form {
   display: grid;
-  min-height: 0;
-  grid-template-columns: minmax(0, 1.08fr) minmax(380px, 0.92fr);
-  grid-auto-flow: row dense;
-  gap: 10px 12px;
-  padding-right: 3px;
-  overflow-y: auto;
-  overscroll-behavior: contain;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 8px;
+  min-height: auto;
+  padding: 0;
+  overflow: visible;
 }
 
-.product-editor-form > .product-form-grid:not(.product-publishing-grid) {
-  grid-column: 1 / -1;
-  grid-row: 1;
-}
-
-.product-editor-form > .product-publishing-grid {
-  grid-column: 1 / -1;
-  grid-row: 2;
-}
-
-.product-editor-form > .product-body-field {
-  grid-column: 1;
-  grid-row: 3;
-}
-
-.product-editor-form > .product-media-section {
-  grid-column: 2;
-  grid-row: 3;
-}
-
-.product-editor-form > .admin-dialog-actions {
-  position: sticky;
-  z-index: 6;
-  bottom: 0;
-  grid-column: 1 / -1;
-  grid-row: 4;
+.product-handoff-notice {
   margin: 0;
-  padding: 8px 0 1px;
-  border-top: 1px solid #e5eaf1;
-  background: #fff;
+  padding: 7px 10px;
+  font-size: 0.74rem;
 }
 
-.product-editor-dialog .product-form-grid:not(.product-publishing-grid) {
-  grid-template-columns:
-    minmax(250px, 1.55fr)
-    minmax(180px, 0.9fr)
-    minmax(150px, 0.72fr)
-    minmax(180px, 0.86fr);
-  gap: 8px 10px;
+.product-core-grid {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  grid-auto-flow: row dense;
+  align-items: end;
+  gap: 7px 9px;
+  padding: 8px 10px;
+  border: 1px solid #e4e8ef;
+  border-radius: 11px;
+  background: #fbfcfe;
 }
 
-.product-editor-dialog .product-form-grid:not(.product-publishing-grid) > .product-field-wide {
-  grid-column: auto;
+.product-core-title {
+  grid-column: 1 / 5;
 }
 
-.product-editor-dialog .product-form-grid:not(.product-publishing-grid) > :nth-child(1) {
-  grid-column: 1 / span 2;
+.product-core-service-mode {
+  grid-column: 5 / 7;
 }
 
-.product-editor-dialog .product-form-grid:not(.product-publishing-grid) > :nth-child(2) {
-  grid-column: 3;
+.product-core-category {
+  grid-column: 7 / 10;
 }
 
-.product-editor-dialog .product-form-grid:not(.product-publishing-grid) > :nth-child(3) {
-  grid-column: 4;
+.product-core-conversion {
+  grid-column: 10 / 13;
 }
 
-.product-editor-dialog .product-form-grid:not(.product-publishing-grid) > :nth-child(4) {
-  grid-column: 1 / span 2;
+.product-core-tags {
+  grid-column: 1 / 5;
 }
 
-.product-editor-dialog .product-form-grid:not(.product-publishing-grid) > :nth-child(5) {
-  grid-column: 3 / span 2;
+.product-core-address {
+  grid-column: 5 / 8;
 }
 
-.product-editor-dialog .product-form-grid:not(.product-publishing-grid) > :nth-child(6) {
-  grid-column: 1 / span 2;
+.product-core-status {
+  grid-column: 8 / 10;
+}
+
+.product-core-sort {
+  grid-column: 10 / 11;
+}
+
+.product-core-featured {
+  grid-column: 11 / 12;
+}
+
+.product-core-featured-sort {
+  grid-column: 12 / 13;
+}
+
+.product-core-grid:not(:has(.product-core-address)) .product-core-status {
+  grid-column: 5 / 7;
+}
+
+.product-core-grid:not(:has(.product-core-address)) .product-core-sort {
+  grid-column: 7 / 9;
+}
+
+.product-core-grid:not(:has(.product-core-address)) .product-core-featured {
+  grid-column: 9 / 11;
+}
+
+.product-core-grid:not(:has(.product-core-address)) .product-core-featured-sort {
+  grid-column: 11 / 13;
 }
 
 .product-editor-dialog .product-field,
 .product-editor-dialog .product-switch-field {
-  gap: 4px;
+  gap: 3px;
+  min-width: 0;
 }
 
 .product-editor-dialog .product-field > span,
-.product-editor-dialog .product-tags-heading,
+.product-editor-dialog .product-field-heading > span,
+.product-editor-dialog .product-tags-heading > span,
 .product-editor-dialog .product-body-heading strong,
 .product-editor-dialog .product-media-heading strong {
-  font-size: 0.75rem;
+  color: #243047;
+  font-size: 0.72rem;
+  font-weight: 760;
   line-height: 1.2;
+}
+
+.product-editor-dialog .product-field-heading,
+.product-editor-dialog .product-tags-heading {
+  min-height: 17px;
+  align-items: center;
+}
+
+.product-editor-dialog .product-field-heading button {
+  padding: 0;
+  border: 0;
+  color: var(--brand);
+  background: transparent;
+  font-size: 0.68rem;
+  font-weight: 720;
 }
 
 .product-editor-dialog .product-editor-form input,
 .product-editor-dialog .product-editor-form select {
-  min-height: 36px;
-  padding-inline: 10px;
-  border-radius: 8px;
-  font-size: 0.78rem;
+  min-height: 33px;
+  padding: 0 9px;
+  border-radius: 7px;
+  font-size: 0.76rem;
 }
 
-.product-editor-dialog .product-tag-options {
-  min-height: 36px;
-  max-height: 72px;
-  gap: 5px;
-  padding: 4px 6px;
-  overflow-y: auto;
-  border-radius: 8px;
-}
-
-.product-editor-dialog .product-tag-option {
-  min-height: 25px;
-  padding-inline: 8px;
-  font-size: 0.7rem;
-}
-
-.product-editor-dialog .product-tags-heading small {
-  font-size: 0.68rem;
-}
-
-.product-editor-dialog .field-warning {
-  margin-top: 1px;
-  font-size: 0.68rem;
-  line-height: 1.25;
-}
-
-.product-editor-dialog .product-publishing-grid {
+.product-inline-entry {
   display: grid;
-  grid-template-columns: minmax(150px, 0.85fr) 130px minmax(160px, 0.9fr) 130px;
-  align-items: end;
-  gap: 8px;
-  padding: 8px 10px;
-  border-radius: 10px;
-  background: #f8fafc;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 4px;
+  min-width: 0;
 }
 
-.product-editor-dialog .product-publishing-grid .product-field > small,
-.product-editor-dialog .product-publishing-grid .product-switch-field small {
-  display: none !important;
+.product-inline-entry > button {
+  min-width: 48px;
+  min-height: 33px;
+  padding: 0 8px;
+  border: 1px solid #d8dee8;
+  border-radius: 7px;
+  color: #334155;
+  background: #fff;
+  font-size: 0.7rem;
+  font-weight: 720;
+}
+
+.product-tag-entry > button {
+  min-width: 44px;
+}
+
+.product-selected-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+
+.product-selected-tags button {
+  display: inline-flex;
+  min-height: 23px;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border: 1px solid #fed7c6;
+  border-radius: 999px;
+  color: #9a3412;
+  background: #fff7ed;
+  font-size: 0.68rem;
+}
+
+.product-selected-tags button span {
+  font-size: 0.85rem;
+  line-height: 1;
+}
+
+.product-tags-heading small {
+  color: #64748b;
+  font-size: 0.65rem;
 }
 
 .product-editor-dialog .product-switch-field {
   display: flex;
-  min-height: 36px;
+  min-height: 33px;
   align-items: center;
-  gap: 8px;
-  padding: 0 10px;
-  border: 1px solid var(--border-color);
-  border-radius: 8px;
+  align-self: end;
+  gap: 5px;
+  padding: 0 7px;
+  border: 1px solid #cbd2dc;
+  border-radius: 7px;
   background: #fff;
 }
 
 .product-editor-dialog .product-switch-field input {
-  width: 16px;
-  min-height: 16px;
+  width: 15px;
+  min-height: 15px;
   margin: 0;
 }
 
-.product-editor-dialog .product-switch-field span {
-  display: block;
+.product-editor-dialog .product-switch-field strong {
+  white-space: nowrap;
+  font-size: 0.69rem;
 }
 
-.product-editor-dialog .product-switch-field strong {
-  font-size: 0.76rem;
+.product-inline-error {
+  margin: 0;
+  padding: 6px 9px;
+  border: 1px solid #f5c2bd;
+  border-radius: 8px;
+  color: #7a271a;
+  background: #fff4f2;
+  font-size: 0.72rem;
+}
+
+.product-content-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.02fr) minmax(0, 0.98fr);
+  align-items: start;
+  gap: 8px;
 }
 
 .product-editor-dialog .product-body-field,
 .product-editor-dialog .product-media-section {
-  min-height: 250px;
-  align-self: stretch;
+  min-height: 0;
+  height: auto;
+  align-self: start;
+  overflow: visible;
+  border: 1px solid #e4e8ef;
   border-radius: 10px;
+  background: #fff;
 }
 
 .product-editor-dialog .product-body-heading,
 .product-editor-dialog .product-media-heading {
-  min-height: 42px;
-  padding: 7px 10px;
+  min-height: 38px;
+  padding: 6px 9px;
 }
 
 .product-editor-dialog .product-editor-tabs {
@@ -203,166 +265,202 @@
 }
 
 .product-editor-dialog .product-editor-tabs button {
-  min-height: 28px;
-  padding: 4px 9px;
-  border-radius: 6px;
-  font-size: 0.72rem;
-}
-
-.product-editor-dialog .product-body-field textarea {
-  min-height: 205px;
-  height: 205px;
-  padding: 10px 12px;
-  resize: vertical;
-  font-size: 0.8rem;
-  line-height: 1.55;
-}
-
-.product-editor-dialog .product-markdown-preview {
-  min-height: 205px;
-  max-height: 310px;
-  padding: 12px;
-  overflow-y: auto;
-  font-size: 0.8rem;
-}
-
-.product-editor-dialog .product-upload-button {
-  min-height: 30px;
-  padding-inline: 10px;
-  border-radius: 7px;
-  font-size: 0.72rem;
-}
-
-.product-editor-dialog .product-media-empty {
-  display: grid;
-  min-height: 205px;
-  place-items: center;
-  padding: 12px;
-  font-size: 0.76rem;
-}
-
-.product-editor-dialog .product-media-grid {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-  max-height: 310px;
-  padding: 8px;
-  overflow-y: auto;
-}
-
-.product-editor-dialog .product-media-card {
-  border-radius: 9px;
-}
-
-.product-editor-dialog .product-media-preview {
-  height: 112px;
-}
-
-.product-editor-dialog .product-media-meta {
-  padding: 7px 8px 2px;
-}
-
-.product-editor-dialog .product-media-meta strong {
-  font-size: 0.72rem;
-}
-
-.product-editor-dialog .product-media-meta small {
-  font-size: 0.66rem;
-}
-
-.product-editor-dialog .product-media-actions {
-  gap: 4px;
-  padding: 6px 8px 8px;
-}
-
-.product-editor-dialog .product-media-actions button,
-.product-editor-dialog .product-auto-cover {
-  min-height: 25px;
-  padding: 3px 6px;
+  min-height: 26px;
+  padding: 3px 8px;
   border-radius: 6px;
   font-size: 0.68rem;
 }
 
-.product-editor-dialog .product-auto-cover {
-  margin: 0 8px 8px;
+.product-editor-dialog .product-body-field textarea {
+  field-sizing: content;
+  display: block;
+  width: 100%;
+  min-height: 105px;
+  height: auto;
+  padding: 9px 11px;
+  overflow: hidden;
+  resize: vertical;
+  border: 0;
+  border-top: 1px solid #edf0f4;
+  border-radius: 0 0 9px 9px;
+  font-size: 0.78rem;
+  line-height: 1.5;
+  outline: none;
 }
 
-.product-editor-dialog .admin-dialog-actions button {
-  min-height: 36px;
-  padding-inline: 16px;
+.product-editor-dialog .product-markdown-preview {
+  min-height: 82px;
+  max-height: none;
+  padding: 10px 11px;
+  overflow: visible;
+  border-top: 1px solid #edf0f4;
   font-size: 0.78rem;
 }
 
-@media (max-width: 1099px) {
+.product-editor-dialog .product-upload-button {
+  min-height: 28px;
+  padding-inline: 9px;
+  border-radius: 7px;
+  font-size: 0.68rem;
+}
+
+.product-editor-dialog .product-media-empty {
+  display: grid;
+  min-height: 88px;
+  height: auto;
+  place-items: center;
+  padding: 10px;
+  color: #94a3b8;
+  font-size: 0.72rem;
+}
+
+.product-editor-dialog .product-media-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(138px, 158px));
+  justify-content: start;
+  gap: 6px;
+  max-height: none;
+  padding: 7px;
+  overflow: visible;
+}
+
+.product-editor-dialog .product-media-card {
+  min-width: 0;
+  overflow: hidden;
+  border-radius: 8px;
+}
+
+.product-editor-dialog .product-media-preview {
+  height: auto;
+  aspect-ratio: 4 / 3;
+}
+
+.product-editor-dialog .product-media-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.product-editor-dialog .product-media-badges {
+  top: 5px;
+  left: 5px;
+  gap: 3px;
+}
+
+.product-editor-dialog .product-media-preview .product-media-badges b {
+  padding: 2px 5px;
+  font-size: 0.58rem;
+}
+
+.product-editor-dialog .product-media-meta {
+  display: grid;
+  gap: 1px;
+  padding: 5px 6px 2px;
+}
+
+.product-editor-dialog .product-media-meta strong {
+  overflow: hidden;
+  font-size: 0.66rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.product-editor-dialog .product-media-meta small {
+  overflow: hidden;
+  color: #64748b;
+  font-size: 0.6rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.product-editor-dialog .product-media-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  padding: 4px 6px 6px;
+}
+
+.product-editor-dialog .product-media-actions button,
+.product-editor-dialog .product-auto-cover {
+  min-height: 22px;
+  padding: 2px 5px;
+  border-radius: 5px;
+  font-size: 0.61rem;
+}
+
+.product-editor-dialog .product-auto-cover {
+  margin: 0 7px 7px;
+}
+
+.product-editor-form > .admin-dialog-actions {
+  position: sticky;
+  z-index: 10;
+  bottom: -10px;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin: 0;
+  padding: 7px 0 1px;
+  border-top: 1px solid #e5eaf1;
+  background: #fff;
+}
+
+.product-editor-dialog .admin-dialog-actions button {
+  min-height: 34px;
+  padding-inline: 15px;
+  font-size: 0.75rem;
+}
+
+@media (max-width: 1120px) {
   .product-editor-dialog {
-    width: min(920px, calc(100vw - 20px));
+    width: min(980px, calc(100vw - 16px));
   }
 
-  .product-editor-form {
-    grid-template-columns: minmax(0, 1fr);
+  .product-core-grid {
+    grid-template-columns: repeat(6, minmax(0, 1fr));
   }
 
-  .product-editor-form > .product-form-grid:not(.product-publishing-grid) {
-    grid-column: 1;
-    grid-row: 1;
+  .product-core-grid > * {
+    grid-column: auto !important;
   }
 
-  .product-editor-form > .product-publishing-grid {
-    grid-column: 1;
-    grid-row: 2;
+  .product-core-title,
+  .product-core-tags,
+  .product-core-address {
+    grid-column: span 3 !important;
   }
 
-  .product-editor-form > .product-body-field {
-    grid-column: 1;
-    grid-row: 3;
+  .product-core-category,
+  .product-core-conversion {
+    grid-column: span 2 !important;
   }
 
-  .product-editor-form > .product-media-section {
-    grid-column: 1;
-    grid-row: 4;
-  }
-
-  .product-editor-form > .admin-dialog-actions {
-    grid-column: 1;
-    grid-row: 5;
-  }
-
-  .product-editor-dialog .product-form-grid:not(.product-publishing-grid) {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .product-editor-dialog .product-form-grid:not(.product-publishing-grid) > :nth-child(n) {
-    grid-column: auto;
-  }
-
-  .product-editor-dialog .product-form-grid:not(.product-publishing-grid) > :nth-child(1),
-  .product-editor-dialog .product-form-grid:not(.product-publishing-grid) > :nth-child(4),
-  .product-editor-dialog .product-form-grid:not(.product-publishing-grid) > :nth-child(5),
-  .product-editor-dialog .product-form-grid:not(.product-publishing-grid) > :nth-child(6) {
-    grid-column: 1 / -1;
+  .product-content-grid {
+    grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 700px) {
   .product-dialog-backdrop {
     align-items: flex-start;
-    padding: 6px;
+    padding: 5px;
   }
 
   .product-editor-dialog {
-    width: calc(100vw - 12px);
-    max-height: calc(100dvh - 12px);
+    width: calc(100vw - 10px);
+    max-height: calc(100dvh - 10px);
+    padding: 10px;
   }
 
-  .product-editor-dialog .product-form-grid:not(.product-publishing-grid),
-  .product-editor-dialog .product-publishing-grid {
+  .product-core-grid {
     grid-template-columns: 1fr;
   }
 
-  .product-editor-dialog .product-form-grid:not(.product-publishing-grid) > :nth-child(n) {
-    grid-column: 1;
+  .product-core-grid > * {
+    grid-column: 1 !important;
   }
 
   .product-editor-dialog .product-media-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(auto-fill, minmax(122px, 1fr));
   }
 }
