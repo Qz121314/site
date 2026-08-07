@@ -21,6 +21,12 @@ function notFound(context: Context<AppEnvironment>) {
   );
 }
 
+function requestSnapshotPath(context: Context<AppEnvironment>): string {
+  const pathname = new URL(context.req.url).pathname;
+  if (pathname.startsWith('/public/')) return pathname.slice('/public/'.length);
+  return pathname.replace(/^\/+/, '');
+}
+
 function responseHeaders(objectKey: string, object: R2Object): Headers {
   const headers = new Headers();
   headers.set('Content-Type', object.httpMetadata?.contentType ?? 'application/json; charset=utf-8');
@@ -36,7 +42,7 @@ function responseHeaders(objectKey: string, object: R2Object): Headers {
 }
 
 async function serveGet(context: Context<AppEnvironment>) {
-  const objectKey = publicSnapshotObjectKey(context.req.param('*'));
+  const objectKey = publicSnapshotObjectKey(requestSnapshotPath(context));
   if (!objectKey) return notFound(context);
 
   const object = await context.env.ASSETS_BUCKET.get(objectKey);
@@ -48,7 +54,7 @@ async function serveGet(context: Context<AppEnvironment>) {
 }
 
 async function serveHead(context: Context<AppEnvironment>) {
-  const objectKey = publicSnapshotObjectKey(context.req.param('*'));
+  const objectKey = publicSnapshotObjectKey(requestSnapshotPath(context));
   if (!objectKey) return notFound(context);
 
   const object = await context.env.ASSETS_BUCKET.head(objectKey);
@@ -59,5 +65,5 @@ async function serveHead(context: Context<AppEnvironment>) {
   });
 }
 
-publicContentRoutes.get('/*', serveGet);
-publicContentRoutes.on('HEAD', '/*', serveHead);
+publicContentRoutes.get('*', serveGet);
+publicContentRoutes.on('HEAD', '*', serveHead);
