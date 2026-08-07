@@ -1,0 +1,57 @@
+/* Manual storefront publication stays in the global header because it publishes the whole D1 state. */
+
+.publish-status-chip {
+  display: inline-flex;
+  min-height: 28px;
+  align-items: center;
+  padding: 0 8px;
+  border: 1px solid #dde3ea;
+  border-radius: 999px;
+  color: #687386;
+  background: #f8fafc;
+  font-size: 0.68rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.publish-status-chip.is-error {
+  border-color: #fecaca;
+  color: #b42318;
+  background: #fff7f7;
+}
+
+.storefront-publish-button {
+  min-height: 30px;
+  padding-inline: 12px;
+  border-radius: 8px;
+  font-size: 0.76rem;
+  white-space: nowrap;
+}
+
+.publish-feedback {
+  position: fixed;
+  z-index: 190;
+  top: 10px;
+  left: 50%;
+  width: max-content;
+  max-width: min(560px, calc(100vw - 40px));
+  margin: 0;
+  transform: translateX(-50%);
+  box-shadow: 0 10px 30px rgb(16 24 40 / 14%);
+}
+
+@media (max-width: 1180px) and (min-width: 1024px) {
+  .publish-status-chip {
+    display: none;
+  }
+}
+
+@media (max-width: 1023px) {
+  .publish-status-chip {
+    order: -1;
+  }
+
+  .storefront-publish-button {
+    min-height: 36px;
+  }
+}
