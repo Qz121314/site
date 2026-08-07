@@ -1,8 +1,3 @@
-import {
-  ensureR2PublicReadRule,
-  printR2PublicReadRuleFailure,
-} from './ensure-r2-public-read-rule.mjs';
-
 const accountId = process.env.CLOUDFLARE_ACCOUNT_ID?.trim();
 const apiToken = process.env.CLOUDFLARE_API_TOKEN?.trim();
 const bucket = process.env.R2_BUCKET_NAME?.trim();
@@ -78,16 +73,8 @@ if (!selected && activeDomains.length === 1) {
 if (!selected) {
   throw new Error(
     `R2 bucket ${bucket} has multiple active custom domains (${activeDomains.map((entry) => entry.domain).join(', ')}). ` +
-    'Set the admin media domain to one of those domains to disambiguate; the deployment will still verify it against the actual R2 binding.',
+    'Set the admin media domain to one of those domains to disambiguate; deployment only reads the actual R2 binding.',
   );
 }
 
-const origin = `https://${selected.domain.toLowerCase()}`;
-try {
-  await ensureR2PublicReadRule(origin, bucket);
-} catch (error) {
-  printR2PublicReadRuleFailure(error);
-  throw error;
-}
-
-process.stdout.write(origin);
+process.stdout.write(`https://${selected.domain.toLowerCase()}`);
