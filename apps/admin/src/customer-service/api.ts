@@ -1,7 +1,7 @@
 import { AdminApiError } from '../api';
 
 export type CustomerServiceScope = 'active' | 'trash' | 'all';
-export type CustomerServiceProvider = 'generic_v1' | 'generic_rest_v2';
+export type CustomerServiceProvider = 'generic_v1';
 
 export type CustomerServiceConnection = {
   id: string;
@@ -78,17 +78,13 @@ function writeRequest(path: string, method: 'POST' | 'PUT' | 'DELETE', body?: un
   });
 }
 
-function isProvider(value: unknown): value is CustomerServiceProvider {
-  return value === 'generic_v1' || value === 'generic_rest_v2';
-}
-
 function parseConnection(value: unknown): CustomerServiceConnection {
   const connection = asRecord(value);
   if (
     !connection ||
     typeof connection.id !== 'string' ||
     typeof connection.name !== 'string' ||
-    !isProvider(connection.provider) ||
+    connection.provider !== 'generic_v1' ||
     typeof connection.baseUrl !== 'string' ||
     (typeof connection.projectId !== 'string' && connection.projectId !== null) ||
     typeof connection.hasApiToken !== 'boolean' ||
