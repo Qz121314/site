@@ -54,6 +54,10 @@ function parseCleanupKeys(value: unknown): string[] | null {
   return uniqueKeys.length === keys.length ? uniqueKeys : null;
 }
 
+function buildPlaceholders(count: number): string {
+  return Array.from({ length: count }, () => '?').join(', ');
+}
+
 export const adminAssetRoutes = new Hono<AppEnvironment>();
 
 adminAssetRoutes.get('/', async (context) => {
@@ -118,10 +122,16 @@ adminAssetRoutes.post('/cleanup', async (context) => {
   );
   const blocked = evaluations.find((item) => item.blockedReason !== null);
   if (blocked) {
-    return apiError(context, 409, 'ASSET_CLEANUP_BLOCKED', '部分图片正在使用或不是图片，请重新扫描。', {
-      blockedKey: blocked.key,
-      blockedReason: blocked.blockedReason ?? 'UNKNOWN',
-    });
+    return apiError(
+      context,
+      409,
+      'ASSET_CLEANUP_BLOCKED',
+      '部分图片仍在使用、仍受最近 3 个可回退快照保护或不是图片，请重新扫描。',
+      {
+        blockedKey: blocked.key,
+        blockedReason: blocked.blockedReason ?? 'UNKNOWN',
+      },
+    );
   }
 
   const tracked = evaluations.filter(
@@ -202,9 +212,16 @@ adminAssetRoutes.post('/cleanup', async (context) => {
           trackedCount: tracked.length,
           untrackedCount: keys.length - tracked.length,
           physicalDelete: true,
+          snapshotRetentionChecked: true,
         },
         createdAt: now,
       }),
+      context.env.DB
+        .prepare(
+          `DELETE FROM asset_cleanup_guards
+           WHERE object_key IN (${buildPlaceholders(keys.length)})`,
+        )
+        .bind(...keys),
       createIdempotencyStatement(
         context.env.DB,
         CLEANUP_SCOPE,
