@@ -345,17 +345,6 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
                   onChange={(event) => updateDraft('ga4MeasurementId', event.target.value)}
                 />
               </label>
-
-              <label className="field-group">
-                <span>Facebook Pixel ID</span>
-                <input
-                  type="text"
-                  value={draft.facebookPixelId}
-                  placeholder="1234567890"
-                  disabled={busy}
-                  onChange={(event) => updateDraft('facebookPixelId', event.target.value)}
-                />
-              </label>
             </div>
           </section>
         ) : null}
