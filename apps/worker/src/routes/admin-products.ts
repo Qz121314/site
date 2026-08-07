@@ -2,6 +2,13 @@ import { Hono } from 'hono';
 import { createAuditLogStatement, writeAuditLog } from '../audit/write-audit-log';
 import { apiError } from '../http/api-response';
 import {
+  createReplaceProductTagStatements,
+  hydrateProductsWithTags,
+  hydrateProductWithTags,
+  parseProductTagIds,
+  validateProductTagBindings,
+} from '../products/product-tags';
+import {
   createDeleteProductStatement,
   createProduct,
   createRestoreProductStatement,
@@ -20,6 +27,7 @@ import { getSection } from '../sections/sections';
 import type { AppEnvironment } from '../types';
 import {
   hasAdminRequestHeader,
+  isRecord,
   jsonBodyError,
   readJsonBody,
 } from './admin-section-shared';
@@ -63,7 +71,8 @@ adminProductRoutes.get('/:sectionId/products', async (context) => {
   if (!scope) {
     return apiError(context, 400, 'INVALID_PRODUCT_SCOPE', '产品列表范围无效。');
   }
-  return context.json({ products: await listProducts(context.env.DB, sectionId, scope) });
+  const products = await listProducts(context.env.DB, sectionId, scope);
+  return context.json({ products: await hydrateProductsWithTags(context.env.DB, products) });
 });
 
 adminProductRoutes.get('/:sectionId/products/:id', async (context) => {
@@ -74,7 +83,7 @@ adminProductRoutes.get('/:sectionId/products/:id', async (context) => {
     context.req.param('id'),
   );
   if (!product) return apiError(context, 404, 'PRODUCT_NOT_FOUND', '产品不存在。');
-  return context.json({ product });
+  return context.json({ product: await hydrateProductWithTags(context.env.DB, product) });
 });
 
 adminProductRoutes.post('/:sectionId/products/media', async (context) => {
@@ -148,14 +157,30 @@ adminProductRoutes.post('/:sectionId/products', async (context) => {
       field: validation.field,
     });
   }
+  const tagIds = parseProductTagIds(isRecord(body) ? body.tagIds : undefined);
+  if (!tagIds.ok) {
+    return apiError(context, 400, 'INVALID_PRODUCT_TAGS', tagIds.message, { field: tagIds.field });
+  }
   const dependencies = await validateProductDependencies(context.env.DB, sectionId, validation.value);
   if (!dependencies.ok) return dependencyError(context, dependencies);
+  const tagDependencies = await validateProductTagBindings(
+    context.env.DB,
+    sectionId,
+    tagIds.value,
+    validation.value.status,
+  );
+  if (!tagDependencies.ok) {
+    return apiError(context, 409, tagDependencies.code, tagDependencies.message, {
+      field: tagDependencies.field,
+    });
+  }
 
   const now = new Date().toISOString();
   const created = createProduct(context.env.DB, sectionId, validation.value, now);
   try {
     await context.env.DB.batch([
       ...created.statements,
+      ...createReplaceProductTagStatements(context.env.DB, created.product.id, tagIds.value, now),
       createAuditLogStatement(context.env.DB, {
         action: 'product.created',
         entityType: 'product',
@@ -164,6 +189,7 @@ adminProductRoutes.post('/:sectionId/products', async (context) => {
         after: {
           ...created.product,
           mediaAssetIds: validation.value.mediaAssetIds,
+          tagIds: tagIds.value,
         },
         metadata: { sectionId },
         createdAt: now,
@@ -176,7 +202,8 @@ adminProductRoutes.post('/:sectionId/products', async (context) => {
     throw error;
   }
 
-  return context.json({ product: await hydrateProduct(context.env.DB, created.product) }, 201);
+  const product = await hydrateProduct(context.env.DB, created.product);
+  return context.json({ product: await hydrateProductWithTags(context.env.DB, product) }, 201);
 });
 
 adminProductRoutes.put('/:sectionId/products/:id', async (context) => {
@@ -200,8 +227,23 @@ adminProductRoutes.put('/:sectionId/products/:id', async (context) => {
       field: validation.field,
     });
   }
+  const tagIds = parseProductTagIds(isRecord(body) ? body.tagIds : undefined);
+  if (!tagIds.ok) {
+    return apiError(context, 400, 'INVALID_PRODUCT_TAGS', tagIds.message, { field: tagIds.field });
+  }
   const dependencies = await validateProductDependencies(context.env.DB, sectionId, validation.value);
   if (!dependencies.ok) return dependencyError(context, dependencies);
+  const tagDependencies = await validateProductTagBindings(
+    context.env.DB,
+    sectionId,
+    tagIds.value,
+    validation.value.status,
+  );
+  if (!tagDependencies.ok) {
+    return apiError(context, 409, tagDependencies.code, tagDependencies.message, {
+      field: tagDependencies.field,
+    });
+  }
 
   const now = new Date().toISOString();
   const updated: ProductRecord = {
@@ -215,19 +257,26 @@ adminProductRoutes.put('/:sectionId/products/:id', async (context) => {
   };
   await context.env.DB.batch([
     ...createUpdateProductStatements(context.env.DB, current, validation.value, now),
+    ...createReplaceProductTagStatements(context.env.DB, current.id, tagIds.value, now),
     createAuditLogStatement(context.env.DB, {
       action: 'product.updated',
       entityType: 'product',
       entityId: current.id,
       requestId: context.get('requestId'),
       before: { ...current },
-      after: { ...updated, mediaAssetIds: validation.value.mediaAssetIds },
+      after: {
+        ...updated,
+        mediaAssetIds: validation.value.mediaAssetIds,
+        tagIds: tagIds.value,
+      },
       metadata: { sectionId },
       createdAt: now,
     }),
   ]);
 
-  return context.json({ product: await getProduct(context.env.DB, sectionId, current.id) });
+  const product = await getProduct(context.env.DB, sectionId, current.id);
+  if (!product) return productNotFound(context);
+  return context.json({ product: await hydrateProductWithTags(context.env.DB, product) });
 });
 
 adminProductRoutes.delete('/:sectionId/products/:id', async (context) => {
@@ -253,7 +302,7 @@ adminProductRoutes.delete('/:sectionId/products/:id', async (context) => {
       createdAt: now,
     }),
   ]);
-  return context.json({ product: deleted });
+  return context.json({ product: await hydrateProductWithTags(context.env.DB, deleted) });
 });
 
 adminProductRoutes.post('/:sectionId/products/:id/restore', async (context) => {
@@ -300,5 +349,7 @@ adminProductRoutes.post('/:sectionId/products/:id/restore', async (context) => {
     }
     throw error;
   }
-  return context.json({ product: await getProduct(context.env.DB, sectionId, current.id) });
+  const product = await getProduct(context.env.DB, sectionId, current.id);
+  if (!product) return productNotFound(context);
+  return context.json({ product: await hydrateProductWithTags(context.env.DB, product) });
 });
