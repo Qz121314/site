@@ -36,7 +36,6 @@ type SettingsDraft = Omit<
 };
 
 type SettingsPayload = SiteSettingsUpdateInput & { logoAssetId: string | null };
-type SettingsPanel = 'basic' | 'tracking' | 'affiliate' | 'media' | 'navigation';
 
 type DomainTestState =
   | { status: 'idle' }
@@ -45,14 +44,6 @@ type DomainTestState =
   | { status: 'error'; message: string };
 
 type SaveStage = 'idle' | 'uploading-logo' | 'saving';
-
-const settingsPanels: Array<{ id: SettingsPanel; label: string }> = [
-  { id: 'basic', label: '基础' },
-  { id: 'tracking', label: '统计' },
-  { id: 'affiliate', label: '联盟' },
-  { id: 'media', label: '媒体' },
-  { id: 'navigation', label: '导航' },
-];
 
 function createDraft(settings: SiteSettings): SettingsDraft {
   return {
@@ -93,7 +84,6 @@ function formatUpdatedAt(value: string): string {
 export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
   const [settings, setSettings] = useState<SiteSettings | null>(null);
   const [draft, setDraft] = useState<SettingsDraft | null>(null);
-  const [activePanel, setActivePanel] = useState<SettingsPanel>('basic');
   const [localLogo, setLocalLogo] = useState<LocalBrandingImage | null>(null);
   const [processingLogo, setProcessingLogo] = useState(false);
   const [saveStage, setSaveStage] = useState<SaveStage>('idle');
@@ -228,63 +218,49 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
     (draft.logoAssetId ? brandingAssetPreviewUrl(draft.logoAssetId) : null);
 
   return (
-    <form className="settings-form settings-workbench" onSubmit={(event) => void handleSubmit(event)}>
-      <div className="settings-workbench-bar">
-        <div className="settings-tabs" role="tablist" aria-label="站点设置分组">
-          {settingsPanels.map((panel) => (
-            <button
-              key={panel.id}
-              type="button"
-              className={activePanel === panel.id ? 'is-active' : undefined}
-              aria-selected={activePanel === panel.id}
-              onClick={() => setActivePanel(panel.id)}
-            >
-              {panel.label}
-            </button>
-          ))}
+    <form className="settings-form settings-single-page-form" onSubmit={(event) => void handleSubmit(event)}>
+      <section className="settings-card settings-single-page" aria-label="站点设置">
+        <div className="settings-page-meta">
+          <small>更新于 {formatUpdatedAt(settings.updatedAt)}</small>
         </div>
-        <small>更新于 {formatUpdatedAt(settings.updatedAt)}</small>
-      </div>
 
-      <div className="settings-panel-frame">
-        {activePanel === 'basic' ? (
-          <section className="settings-card settings-panel" aria-label="基础设置">
-            <div className="settings-grid settings-basic-grid">
-              <label className="field-group">
-                <span>站点名称</span>
-                <input
-                  type="text"
-                  value={draft.siteName}
-                  disabled={busy}
-                  onChange={(event) => updateDraft('siteName', event.target.value)}
-                />
-              </label>
+        <div className="settings-block settings-basic-block">
+          <strong className="settings-block-title">基础信息</strong>
+          <div className="settings-basic-row">
+            <label className="field-group settings-field-site-name">
+              <span>站点名称</span>
+              <input
+                type="text"
+                value={draft.siteName}
+                disabled={busy}
+                onChange={(event) => updateDraft('siteName', event.target.value)}
+              />
+            </label>
 
-              <label className="field-group">
-                <span>位置文案</span>
-                <input
-                  type="text"
-                  value={draft.locationLabel}
-                  disabled={busy}
-                  onChange={(event) => updateDraft('locationLabel', event.target.value)}
-                />
-              </label>
+            <label className="field-group settings-field-location">
+              <span>位置文案</span>
+              <input
+                type="text"
+                value={draft.locationLabel}
+                disabled={busy}
+                onChange={(event) => updateDraft('locationLabel', event.target.value)}
+              />
+            </label>
 
-              <label className="field-group">
-                <span>首页分区数量</span>
-                <input
-                  type="number"
-                  value={draft.homeSectionLimit}
-                  min={1}
-                  max={20}
-                  step={1}
-                  disabled={busy}
-                  onChange={(event) => updateDraft('homeSectionLimit', Number(event.target.value))}
-                />
-              </label>
-            </div>
+            <label className="field-group settings-field-home-limit">
+              <span>首页分区数量</span>
+              <input
+                type="number"
+                value={draft.homeSectionLimit}
+                min={1}
+                max={20}
+                step={1}
+                disabled={busy}
+                onChange={(event) => updateDraft('homeSectionLimit', Number(event.target.value))}
+              />
+            </label>
 
-            <div className="branding-upload-card branding-upload-compact">
+            <div className="branding-upload-card branding-upload-compact settings-logo-card">
               <div className="branding-preview branding-logo-preview">
                 {logoPreviewUrl ? <img src={logoPreviewUrl} alt="站点 Logo 预览" /> : <span>Logo</span>}
               </div>
@@ -329,99 +305,24 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
                 ) : null}
               </div>
             </div>
-          </section>
-        ) : null}
+          </div>
+        </div>
 
-        {activePanel === 'tracking' ? (
-          <section className="settings-card settings-panel" aria-label="统计设置">
-            <div className="settings-grid">
-              <label className="field-group">
-                <span>GA4 Measurement ID</span>
-                <input
-                  type="text"
-                  value={draft.ga4MeasurementId}
-                  placeholder="G-XXXXXXXXXX"
-                  disabled={busy}
-                  onChange={(event) => updateDraft('ga4MeasurementId', event.target.value)}
-                />
-              </label>
-            </div>
-          </section>
-        ) : null}
-
-        {activePanel === 'affiliate' ? (
-          <section className="settings-card settings-panel settings-affiliate-panel" aria-label="联盟设置">
-            <div className="settings-affiliate-topline">
-              <label className="toggle-row">
-                <span><strong>联盟检测</strong></span>
-                <input
-                  type="checkbox"
-                  checked={draft.affiliateDetectionEnabled}
-                  disabled={busy}
-                  onChange={(event) => updateDraft('affiliateDetectionEnabled', event.target.checked)}
-                />
-              </label>
-              <label className="field-group">
-                <span>联盟平台</span>
-                <input
-                  type="text"
-                  value={draft.affiliatePlatform}
-                  placeholder="Impact / CJ / 自定义"
-                  disabled={busy}
-                  onChange={(event) => updateDraft('affiliatePlatform', event.target.value)}
-                />
-              </label>
-            </div>
-
-            <label className="field-group settings-config-field">
-              <span>检测配置 JSON</span>
-              <textarea
-                rows={10}
-                value={draft.affiliateDetectionConfig}
-                placeholder={'{\n  "scriptSelector": "..."\n}'}
-                spellCheck={false}
+        <div className="settings-block settings-frontend-block">
+          <strong className="settings-block-title">前端设置</strong>
+          <div className="settings-frontend-row">
+            <label className="field-group settings-field-ga4">
+              <span>GA4 Measurement ID</span>
+              <input
+                type="text"
+                value={draft.ga4MeasurementId}
+                placeholder="G-XXXXXXXXXX"
                 disabled={busy}
-                onChange={(event) => updateDraft('affiliateDetectionConfig', event.target.value)}
+                onChange={(event) => updateDraft('ga4MeasurementId', event.target.value)}
               />
             </label>
-          </section>
-        ) : null}
 
-        {activePanel === 'media' ? (
-          <section className="settings-card settings-panel" aria-label="媒体设置">
-            <div className="domain-field-row">
-              <label className="field-group">
-                <span>R2 自定义域名</span>
-                <input
-                  type="url"
-                  value={draft.mediaBaseUrl}
-                  placeholder="https://assets.example.com"
-                  disabled={busy || domainTest.status === 'testing'}
-                  onChange={(event) => updateDraft('mediaBaseUrl', event.target.value)}
-                />
-              </label>
-              <button
-                className="secondary-button domain-test-button"
-                type="button"
-                disabled={busy || domainTest.status === 'testing' || !draft.mediaBaseUrl.trim()}
-                onClick={() => void handleDomainTest()}
-              >
-                {domainTest.status === 'testing' ? '测试中…' : '测试连接'}
-              </button>
-            </div>
-
-            {domainTest.status === 'success' ? (
-              <p className="inline-status is-success">{domainTest.message}</p>
-            ) : null}
-            {domainTest.status === 'error' ? (
-              <p className="inline-status is-error">{domainTest.message}</p>
-            ) : null}
-          </section>
-        ) : null}
-
-        {activePanel === 'navigation' ? (
-          <section className="settings-card settings-panel" aria-label="导航设置">
-            <div className="toggle-grid settings-navigation-grid">
+            <div className="settings-navigation-row" aria-label="前端导航">
               {(
                 [
                   ['showHot', 'Hot'],
@@ -431,7 +332,7 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
                   ['showFaq', 'FAQ'],
                 ] as const
               ).map(([field, label]) => (
-                <label className="toggle-row" key={field}>
+                <label className="toggle-row settings-mini-toggle" key={field}>
                   <span><strong>{label}</strong></span>
                   <input
                     type="checkbox"
@@ -442,14 +343,82 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
                 </label>
               ))}
             </div>
-          </section>
-        ) : null}
-      </div>
+          </div>
+        </div>
+
+        <div className="settings-block settings-media-block">
+          <strong className="settings-block-title">媒体</strong>
+          <div className="settings-media-row">
+            <label className="field-group settings-field-media-domain">
+              <span>R2 自定义域名</span>
+              <input
+                type="url"
+                value={draft.mediaBaseUrl}
+                placeholder="https://assets.example.com"
+                disabled={busy || domainTest.status === 'testing'}
+                onChange={(event) => updateDraft('mediaBaseUrl', event.target.value)}
+              />
+            </label>
+            <button
+              className="secondary-button domain-test-button"
+              type="button"
+              disabled={busy || domainTest.status === 'testing' || !draft.mediaBaseUrl.trim()}
+              onClick={() => void handleDomainTest()}
+            >
+              {domainTest.status === 'testing' ? '测试中…' : '测试连接'}
+            </button>
+          </div>
+          {domainTest.status === 'success' ? (
+            <p className="inline-status is-success">{domainTest.message}</p>
+          ) : null}
+          {domainTest.status === 'error' ? (
+            <p className="inline-status is-error">{domainTest.message}</p>
+          ) : null}
+        </div>
+
+        <div className="settings-block settings-affiliate-block">
+          <strong className="settings-block-title">联盟设置</strong>
+          <div className="settings-affiliate-row">
+            <label className="toggle-row settings-mini-toggle settings-affiliate-toggle">
+              <span><strong>联盟检测</strong></span>
+              <input
+                type="checkbox"
+                checked={draft.affiliateDetectionEnabled}
+                disabled={busy}
+                onChange={(event) => updateDraft('affiliateDetectionEnabled', event.target.checked)}
+              />
+            </label>
+
+            <label className="field-group settings-field-affiliate-platform">
+              <span>联盟平台</span>
+              <input
+                type="text"
+                value={draft.affiliatePlatform}
+                placeholder="Impact / CJ / 自定义"
+                disabled={busy}
+                onChange={(event) => updateDraft('affiliatePlatform', event.target.value)}
+              />
+            </label>
+
+            <label className="field-group settings-field-affiliate-config">
+              <span>检测配置 JSON</span>
+              <textarea
+                rows={4}
+                value={draft.affiliateDetectionConfig}
+                placeholder={'{\n  "scriptSelector": "..."\n}'}
+                spellCheck={false}
+                disabled={busy}
+                onChange={(event) => updateDraft('affiliateDetectionConfig', event.target.value)}
+              />
+            </label>
+          </div>
+        </div>
+      </section>
 
       {errorMessage ? <p className="inline-status is-error settings-toast">{errorMessage}</p> : null}
       {successMessage ? <p className="inline-status is-success settings-toast">{successMessage}</p> : null}
 
-      <div className="settings-actions settings-workbench-actions">
+      <div className="settings-actions settings-workbench-actions settings-single-page-actions">
         <button className="primary-button settings-save-button" type="submit" disabled={busy}>
           {saveStage === 'uploading-logo'
             ? '上传 Logo…'
