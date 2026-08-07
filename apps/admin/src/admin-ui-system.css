@@ -716,9 +716,7 @@ textarea {
 .admin-field-location,
 .admin-field-home-limit,
 .admin-field-ga4,
-.admin-field-media-domain,
-.admin-field-affiliate-platform,
-.admin-field-affiliate-config {
+.admin-field-media-domain {
   min-width: 0;
 }
 
@@ -879,26 +877,6 @@ textarea {
 .admin-settings-media-row .domain-test-button {
   min-width: 88px;
   margin: 0 !important;
-}
-
-.admin-settings-advanced {
-  gap: 9px;
-}
-
-.admin-settings-affiliate-row {
-  display: grid;
-  grid-template-columns: 220px minmax(300px, 440px);
-  align-items: start;
-  gap: 12px;
-}
-
-.admin-field-affiliate-config textarea {
-  min-height: 74px !important;
-  height: 74px;
-  max-height: 160px;
-  resize: vertical;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
-  font-size: 0.72rem !important;
 }
 
 .admin-settings-actions {
@@ -1079,8 +1057,7 @@ textarea {
     justify-content: flex-start;
   }
 
-  .admin-settings-basic-row,
-  .admin-settings-affiliate-row {
+  .admin-settings-basic-row {
     grid-template-columns: 1fr;
   }
 
@@ -1090,9 +1067,7 @@ textarea {
 
   .admin-logo-field,
   .admin-field-ga4,
-  .admin-field-media-domain,
-  .admin-field-affiliate-platform,
-  .admin-field-affiliate-config {
+  .admin-field-media-domain {
     width: 100%;
     max-width: none;
     flex-basis: 100%;
