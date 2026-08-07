@@ -32,7 +32,7 @@ CTA 和转化池不是发布内容。修改产品绑定的转化分组、转化�
 
 ```text
 site
-→ 站点名称、Location、Logo、媒体域名、导航开关、公开 Analytics/Affiliate 开关
+→ 站点名称、Location、Logo、媒体域名、导航开关、GA4 Measurement ID
 
 sections-index
 → 已启用分区的名称、slug、图标、顺序
@@ -273,8 +273,7 @@ section:section-b        最近 3 版
 Logo 与产品媒体 object key
 公开媒体域名
 导航开关
-GA4 Measurement ID / Facebook Pixel ID
-Affiliate 启用状态与平台名称
+GA4 Measurement ID
 分区 / 分类 / 标签 / 产品内容 / FAQ
 ```
 
@@ -291,11 +290,14 @@ CTA 文案 / 模式 / 可用状态
 客服 API Token / Secret
 客服 private base URL / project private config
 客服连接原始配置 JSON
-Affiliate 原始配置 JSON
 后台审计信息
 ```
 
 产品详情只在打开时读取一次实时 CTA 状态；真正点击 CTA 时进入 `/go/{productId}`，再次读取当前 D1 转化配置并执行 round-robin。因此首页和产品列表仍然不产生 CTA Worker 请求。
+
+## 已退役站点设置
+
+Facebook Pixel、Messages 导航和 Affiliate 检测已经从运行时模型、后台表单和新 R2 快照中移除。历史 D1 migration 中的旧列仅作为兼容遗留保留，不再读取、写入或发布；不为删除这些旧列重建生产表。
 
 ## 缓存
 
