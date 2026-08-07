@@ -62,7 +62,6 @@ export function ProductTable({
     return (
       <div className="product-empty-state">
         <strong>{scope === 'active' ? '当前没有产品' : '回收站为空'}</strong>
-        <p>{scope === 'active' ? '点击“新增产品”开始录入。' : '删除的产品会显示在这里。'}</p>
       </div>
     );
   }
