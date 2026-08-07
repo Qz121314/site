@@ -24,7 +24,7 @@ function referenceLabels(references: AssetReferenceCounts): string[] {
 function cleanupStatus(asset: AdminAsset): { label: string; className: string } {
   if (asset.usageStatus === 'used') return { label: '使用中', className: 'blocked' };
   if (asset.cleanupBlockedReason === 'SNAPSHOT_RETENTION') {
-    return { label: '快照保护', className: 'protected' };
+    return { label: '快照保护', className: 'blocked' };
   }
   return { label: '可清理', className: 'eligible' };
 }
