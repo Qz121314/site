@@ -21,18 +21,11 @@ type SiteSettingsViewProps = {
 
 type SettingsDraft = Omit<
   SiteSettingsUpdateInput,
-  | 'mediaBaseUrl'
-  | 'ga4MeasurementId'
-  | 'facebookPixelId'
-  | 'affiliatePlatform'
-  | 'affiliateDetectionConfig'
+  'mediaBaseUrl' | 'ga4MeasurementId'
 > & {
   logoAssetId: string | null;
   mediaBaseUrl: string;
   ga4MeasurementId: string;
-  facebookPixelId: string;
-  affiliatePlatform: string;
-  affiliateDetectionConfig: string;
 };
 
 type SettingsPayload = SiteSettingsUpdateInput & { logoAssetId: string | null };
@@ -52,15 +45,10 @@ function createDraft(settings: SiteSettings): SettingsDraft {
     logoAssetId: settings.logoAssetId,
     mediaBaseUrl: settings.mediaBaseUrl ?? '',
     ga4MeasurementId: settings.ga4MeasurementId ?? '',
-    facebookPixelId: settings.facebookPixelId ?? '',
-    affiliateDetectionEnabled: settings.affiliateDetectionEnabled,
-    affiliatePlatform: settings.affiliatePlatform ?? '',
-    affiliateDetectionConfig: settings.affiliateDetectionConfig ?? '',
     homeSectionLimit: settings.homeSectionLimit,
     showHot: settings.showHot,
     showLatest: settings.showLatest,
     showMore: settings.showMore,
-    showMessages: settings.showMessages,
     showFaq: settings.showFaq,
   };
 }
@@ -70,9 +58,6 @@ function toInput(draft: SettingsDraft): SettingsPayload {
     ...draft,
     mediaBaseUrl: draft.mediaBaseUrl.trim() || null,
     ga4MeasurementId: draft.ga4MeasurementId.trim() || null,
-    facebookPixelId: draft.facebookPixelId.trim() || null,
-    affiliatePlatform: draft.affiliatePlatform.trim() || null,
-    affiliateDetectionConfig: draft.affiliateDetectionConfig.trim() || null,
   };
 }
 
@@ -329,7 +314,6 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
                     ['showHot', 'Hot'],
                     ['showLatest', 'Latest'],
                     ['showMore', 'More'],
-                    ['showMessages', 'Messages'],
                     ['showFaq', 'FAQ'],
                   ] as const
                 ).map(([field, label]) => (
@@ -375,48 +359,6 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
           ) : null}
           {domainTest.status === 'error' ? (
             <p className="inline-status is-error">{domainTest.message}</p>
-          ) : null}
-        </section>
-
-        <section className="admin-settings-section admin-settings-advanced" aria-labelledby="settings-affiliate-title">
-          <div className="admin-settings-section-heading">
-            <h2 id="settings-affiliate-title">联盟设置</h2>
-            <label className="admin-inline-switch">
-              <input
-                type="checkbox"
-                checked={draft.affiliateDetectionEnabled}
-                disabled={busy}
-                onChange={(event) => updateDraft('affiliateDetectionEnabled', event.target.checked)}
-              />
-              <span>联盟检测</span>
-            </label>
-          </div>
-
-          {draft.affiliateDetectionEnabled ? (
-            <div className="admin-settings-row admin-settings-affiliate-row">
-              <label className="field-group admin-field-affiliate-platform">
-                <span>联盟平台</span>
-                <input
-                  type="text"
-                  value={draft.affiliatePlatform}
-                  placeholder="Impact / CJ / 自定义"
-                  disabled={busy}
-                  onChange={(event) => updateDraft('affiliatePlatform', event.target.value)}
-                />
-              </label>
-
-              <label className="field-group admin-field-affiliate-config">
-                <span>检测配置 JSON</span>
-                <textarea
-                  rows={3}
-                  value={draft.affiliateDetectionConfig}
-                  placeholder={'{\n  "scriptSelector": "..."\n}'}
-                  spellCheck={false}
-                  disabled={busy}
-                  onChange={(event) => updateDraft('affiliateDetectionConfig', event.target.value)}
-                />
-              </label>
-            </div>
           ) : null}
         </section>
       </section>
