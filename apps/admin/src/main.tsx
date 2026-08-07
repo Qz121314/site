@@ -14,6 +14,7 @@ import './product-local-images.css';
 import './branding-media.css';
 import './admin-polish.css';
 import './admin-polish-2.css';
+import './admin-density.css';
 
 const root = document.getElementById('root');
 if (!root) {
