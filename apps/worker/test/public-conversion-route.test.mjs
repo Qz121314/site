@@ -109,16 +109,7 @@ function createConversionDb({
         async run() {
           statements.push({ kind: 'run', sql: this.sql, args: this.args });
           if (this.sql.includes('INSERT INTO conversion_events')) {
-            events.push({
-              sectionId: this.args[1],
-              productId: this.args[2],
-              conversionGroupId: this.args[3],
-              conversionTargetId: this.args[4],
-              mode: this.args[5],
-              outcome: this.args[6],
-              requestId: this.args[7],
-              metadata: this.args[8] ? JSON.parse(this.args[8]) : null,
-            });
+            events.push({ sql: this.sql, args: this.args });
             return { success: true, meta: { changes: 1 } };
           }
           throw new Error(`Unexpected run SQL: ${this.sql}`);
@@ -141,7 +132,7 @@ function env(db) {
   };
 }
 
-test('GET /go/:code performs the full link round-robin and records the selected target', async () => {
+test('GET /go/:code performs the full link round-robin without analytics writes', async () => {
   const targets = [
     targetRow({ id: 'a', name: 'A', sortOrder: 10, endpointUrl: 'https://a.example/path' }),
     targetRow({ id: 'b', name: 'B', sortOrder: 20, endpointUrl: 'https://b.example/path' }),
@@ -165,12 +156,10 @@ test('GET /go/:code performs the full link round-robin and records the selected 
     'https://a.example/path',
   ]);
   assert.equal(db.cursor, 4);
-  assert.deepEqual(db.events.map((event) => event.conversionTargetId), ['a', 'b', 'c', 'a']);
-  assert.ok(db.events.every((event) => event.outcome === 'redirected' && event.mode === 'link'));
-  assert.ok(db.events.every((event) => typeof event.requestId === 'string' && event.requestId.length > 0));
+  assert.equal(db.events.length, 0);
 });
 
-test('GET /go/:code resolves a customer-service group through its private connection and records the remote binding', async () => {
+test('GET /go/:code resolves a customer-service group without analytics writes', async () => {
   const db = createConversionDb({
     group: groupRow({ mode: 'customer_service', activeTargetCount: 1 }),
     targets: [
@@ -209,28 +198,14 @@ test('GET /go/:code resolves a customer-service group through its private connec
     assert.equal(payload.productId, 'product-1');
     assert.equal(payload.sectionId, 'section-1');
     assert.equal(typeof payload.requestId, 'string');
-
-    assert.equal(db.events.length, 1);
-    assert.deepEqual(db.events[0], {
-      sectionId: 'section-1',
-      productId: 'product-1',
-      conversionGroupId: 'group-1',
-      conversionTargetId: 'sales-target',
-      mode: 'customer_service',
-      outcome: 'redirected',
-      requestId: db.events[0].requestId,
-      metadata: {
-        customerServiceConnectionId: 'connection-1',
-        remoteGroupId: 'sales/team',
-        remoteGroupName: 'Sales',
-      },
-    });
+    assert.equal(db.cursor, 1);
+    assert.equal(db.events.length, 0);
   } finally {
     globalThis.fetch = originalFetch;
   }
 });
 
-test('provider failure returns 502 but still records the exact selected customer-service target', async () => {
+test('provider failure returns 502 without analytics writes', async () => {
   const db = createConversionDb({
     group: groupRow({ mode: 'customer_service', activeTargetCount: 1 }),
     targets: [
@@ -253,10 +228,7 @@ test('provider failure returns 502 but still records the exact selected customer
     assert.equal(response.status, 502);
     assert.equal(await response.text(), 'Customer service is temporarily unavailable.');
     assert.equal(db.cursor, 1);
-    assert.equal(db.events.length, 1);
-    assert.equal(db.events[0].conversionTargetId, 'support-target');
-    assert.equal(db.events[0].outcome, 'provider_error');
-    assert.equal(db.events[0].metadata.providerCode, 'CUSTOMER_SERVICE_UPSTREAM_ERROR');
+    assert.equal(db.events.length, 0);
   } finally {
     globalThis.fetch = originalFetch;
   }
