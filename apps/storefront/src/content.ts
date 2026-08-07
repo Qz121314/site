@@ -58,7 +58,7 @@ export type PublicProduct = PublicProductSummary & {
     label: string;
     mode: 'customer_service' | 'link';
     path: string;
-  };
+  } | null;
 };
 
 export type PublicSite = {
@@ -71,16 +71,10 @@ export type PublicSite = {
     showHot: boolean;
     showLatest: boolean;
     showMore: boolean;
-    showMessages: boolean;
     showFaq: boolean;
   };
   analytics: {
     ga4MeasurementId: string | null;
-    facebookPixelId: string | null;
-  };
-  affiliate: {
-    enabled: boolean;
-    platform: string | null;
   };
 };
 
@@ -184,7 +178,6 @@ type V2SiteSnapshot = {
     homeSectionLimit: number;
     navigation: PublicSite['navigation'];
     analytics: PublicSite['analytics'];
-    affiliate: PublicSite['affiliate'];
   };
 };
 
@@ -239,7 +232,6 @@ type V2ProductSnapshot = {
   contentVersion: string;
   publishedAt: string;
   product: V2ProductSummary & {
-    conversionGroupId?: string | null;
     body: string;
     media: Array<{
       id: string;
@@ -653,7 +645,6 @@ async function loadV2Bootstrap(
     homeSectionLimit: rawSite.site.homeSectionLimit,
     navigation: rawSite.site.navigation,
     analytics: rawSite.site.analytics,
-    affiliate: rawSite.site.affiliate,
   };
   const sections = rawIndex.sections.map((section) => resolveV2Section(section, mediaBaseUrl));
 

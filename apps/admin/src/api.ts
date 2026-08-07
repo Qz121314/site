@@ -9,15 +9,10 @@ export type SiteSettings = {
   mediaBaseUrl: string | null;
   logoAssetId: string | null;
   ga4MeasurementId: string | null;
-  facebookPixelId: string | null;
-  affiliateDetectionEnabled: boolean;
-  affiliatePlatform: string | null;
-  affiliateDetectionConfig: string | null;
   homeSectionLimit: number;
   showHot: boolean;
   showLatest: boolean;
   showMore: boolean;
-  showMessages: boolean;
   showFaq: boolean;
   updatedAt: string;
 };
@@ -189,16 +184,10 @@ function parseSiteSettings(value: unknown): SiteSettings {
     (typeof settings.mediaBaseUrl === 'string' || settings.mediaBaseUrl === null) &&
     (typeof settings.logoAssetId === 'string' || settings.logoAssetId === null) &&
     (typeof settings.ga4MeasurementId === 'string' || settings.ga4MeasurementId === null) &&
-    (typeof settings.facebookPixelId === 'string' || settings.facebookPixelId === null) &&
-    typeof settings.affiliateDetectionEnabled === 'boolean' &&
-    (typeof settings.affiliatePlatform === 'string' || settings.affiliatePlatform === null) &&
-    (typeof settings.affiliateDetectionConfig === 'string' ||
-      settings.affiliateDetectionConfig === null) &&
     typeof settings.homeSectionLimit === 'number' &&
     typeof settings.showHot === 'boolean' &&
     typeof settings.showLatest === 'boolean' &&
     typeof settings.showMore === 'boolean' &&
-    typeof settings.showMessages === 'boolean' &&
     typeof settings.showFaq === 'boolean' &&
     typeof settings.updatedAt === 'string';
 
