@@ -67,7 +67,10 @@ export async function validateProductTagBindings(
       .bind(...tagIds)
       .all<TagValidationRow>()
   ).results;
-  if (rows.length !== tagIds.length || rows.some((tag) => tag.section_id !== sectionId || tag.deleted_at)) {
+  if (
+    rows.length !== tagIds.length ||
+    rows.some((tag) => tag.section_id !== sectionId || tag.deleted_at)
+  ) {
     return {
       ok: false,
       field: 'tagIds',
@@ -174,4 +177,31 @@ export async function listProductTagsByProductIds(
     result.set(row.product_id, current);
   }
   return result;
+}
+
+export type ProductWithTags<T> = T & {
+  tags: BoundProductTag[];
+  tagIds: string[];
+};
+
+export async function hydrateProductWithTags<T extends { id: string }>(
+  db: D1Database,
+  product: T,
+): Promise<ProductWithTags<T>> {
+  const tags = await getProductTags(db, product.id);
+  return { ...product, tags, tagIds: tags.map((tag) => tag.id) };
+}
+
+export async function hydrateProductsWithTags<T extends { id: string }>(
+  db: D1Database,
+  products: T[],
+): Promise<Array<ProductWithTags<T>>> {
+  const tagsByProduct = await listProductTagsByProductIds(
+    db,
+    products.map((product) => product.id),
+  );
+  return products.map((product) => {
+    const tags = tagsByProduct.get(product.id) ?? [];
+    return { ...product, tags, tagIds: tags.map((tag) => tag.id) };
+  });
 }
