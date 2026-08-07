@@ -10,7 +10,7 @@ import { ProductManagementView } from './ProductManagementView';
 import { SectionManagementView } from './SectionManagementView';
 import { SiteSettingsView } from './SiteSettingsView';
 
-type DynamicViewKind = 'products' | 'categories' | 'conversion-pool';
+type DynamicViewKind = 'products' | 'product-entry' | 'categories' | 'conversion-pool';
 
 type AdminView =
   | 'settings'
@@ -43,7 +43,10 @@ function parseDynamicView(view: AdminView): DynamicView | null {
   const kind = view.slice(0, separatorIndex);
   const sectionId = view.slice(separatorIndex + 1);
   if (
-    (kind !== 'products' && kind !== 'categories' && kind !== 'conversion-pool') ||
+    (kind !== 'products' &&
+      kind !== 'product-entry' &&
+      kind !== 'categories' &&
+      kind !== 'conversion-pool') ||
     !sectionId
   ) {
     return null;
@@ -216,7 +219,15 @@ export function Dashboard({
                   aria-current={currentSection.kind === 'products' ? 'page' : undefined}
                   onClick={() => setActiveView(`products:${currentSection.section.id}`)}
                 >
-                  产品
+                  产品管理
+                </button>
+                <button
+                  className={currentSection.kind === 'product-entry' ? 'is-active' : undefined}
+                  type="button"
+                  aria-current={currentSection.kind === 'product-entry' ? 'page' : undefined}
+                  onClick={() => setActiveView(`product-entry:${currentSection.section.id}`)}
+                >
+                  产品录入
                 </button>
                 <button
                   className={currentSection.kind === 'categories' ? 'is-active' : undefined}
@@ -224,7 +235,7 @@ export function Dashboard({
                   aria-current={currentSection.kind === 'categories' ? 'page' : undefined}
                   onClick={() => setActiveView(`categories:${currentSection.section.id}`)}
                 >
-                  分类
+                  分类管理
                 </button>
                 <button
                   className={currentSection.kind === 'conversion-pool' ? 'is-active' : undefined}
@@ -278,6 +289,14 @@ export function Dashboard({
         ) : currentSection?.kind === 'products' ? (
           <ProductManagementView
             section={currentSection.section}
+            mode="manage"
+            onSessionExpired={onSessionExpired}
+          />
+        ) : currentSection?.kind === 'product-entry' ? (
+          <ProductManagementView
+            section={currentSection.section}
+            mode="entry"
+            onEntryExit={() => setActiveView(`products:${currentSection.section.id}`)}
             onSessionExpired={onSessionExpired}
           />
         ) : currentSection?.kind === 'categories' ? (
