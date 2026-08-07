@@ -159,6 +159,48 @@ test('GET /go/:code performs the full link round-robin without analytics writes'
   assert.equal(db.events.length, 0);
 });
 
+test('GET realtime CTA state reads current D1 configuration without consuming round-robin', async () => {
+  const db = createConversionDb({ group: groupRow({ mode: 'link', activeTargetCount: 2 }) });
+  const response = await app.request(
+    'http://local.test/api/public/storefront/cta/product-1',
+    undefined,
+    env(db),
+  );
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), {
+    available: true,
+    label: 'Contact',
+    mode: 'link',
+    path: '/go/product-1',
+  });
+  assert.equal(response.headers.get('cache-control'), 'no-store');
+  assert.equal(db.cursor, 0);
+  assert.equal(db.events.length, 0);
+});
+
+test('GET realtime CTA state hides unavailable or unbound conversion configuration', async () => {
+  const disabledDb = createConversionDb({ group: groupRow({ activeTargetCount: 0 }) });
+  const disabled = await app.request(
+    'http://local.test/api/public/storefront/cta/product-1',
+    undefined,
+    env(disabledDb),
+  );
+  assert.deepEqual(await disabled.json(), { available: false });
+  assert.equal(disabledDb.cursor, 0);
+
+  const unboundDb = createConversionDb({
+    product: { id: 'product-1', section_id: 'section-1', conversion_group_id: null },
+  });
+  const unbound = await app.request(
+    'http://local.test/api/public/storefront/cta/product-1',
+    undefined,
+    env(unboundDb),
+  );
+  assert.deepEqual(await unbound.json(), { available: false });
+  assert.equal(unboundDb.cursor, 0);
+});
+
 test('GET /go/:code resolves a customer-service group without analytics writes', async () => {
   const db = createConversionDb({
     group: groupRow({ mode: 'customer_service', activeTargetCount: 1 }),
