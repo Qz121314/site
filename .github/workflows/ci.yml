@@ -51,8 +51,6 @@ jobs:
 
       - name: Build
         run: pnpm build
-        env:
-          VITE_PUBLIC_CONTENT_ORIGIN: ${{ vars.PUBLIC_CONTENT_ORIGIN }}
 
       - name: Validate Worker bundle
         run: pnpm cf:check
@@ -91,8 +89,8 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
 
-      - name: Resolve active R2 custom domain
-        id: public_content
+      - name: Resolve active R2 media domain
+        id: media_origin
         run: |
           set -euo pipefail
           preferred_result="$(pnpm exec wrangler d1 execute DB --remote --command "SELECT media_base_url FROM site_settings WHERE id = 1;" --json)"
@@ -108,7 +106,7 @@ jobs:
             node scripts/resolve-r2-public-origin.mjs)"
           test -n "$origin"
           echo "origin=$origin" >> "$GITHUB_OUTPUT"
-          echo "Resolved active R2 read origin from bucket binding: $origin"
+          echo "Resolved active R2 media read origin from bucket binding: $origin"
 
           escaped_origin="${origin//\'/\'\'}"
           pnpm exec wrangler d1 execute DB --remote \
@@ -117,31 +115,18 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
 
-      - name: Verify selected R2 custom domain
+      - name: Verify selected R2 media domain
         env:
-          PUBLIC_CONTENT_ORIGIN: ${{ steps.public_content.outputs.origin }}
+          MEDIA_ORIGIN: ${{ steps.media_origin.outputs.origin }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
         run: |
           set -euo pipefail
-          domain="$(node -e 'process.stdout.write(new URL(process.env.PUBLIC_CONTENT_ORIGIN).hostname)')"
+          domain="$(node -e 'process.stdout.write(new URL(process.env.MEDIA_ORIGIN).hostname)')"
           pnpm exec wrangler r2 bucket domain get service-catalog-site-assets --domain "$domain"
 
       - name: Build production assets
         run: pnpm build
-        env:
-          VITE_PUBLIC_CONTENT_ORIGIN: ${{ steps.public_content.outputs.origin }}
-
-      - name: Configure public R2 CORS
-        run: |
-          set -euo pipefail
-          pnpm exec wrangler r2 bucket cors set service-catalog-site-assets \
-            --file config/r2-public-cors.json \
-            --force
-          pnpm exec wrangler r2 bucket cors list service-catalog-site-assets
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
 
       - name: Deploy business platform Worker
         id: deploy
@@ -158,65 +143,30 @@ jobs:
       - name: Smoke test production
         env:
           BASE_URL: ${{ steps.deploy.outputs.url }}
-          PUBLIC_CONTENT_ORIGIN: ${{ steps.public_content.outputs.origin }}
         run: |
           set -euo pipefail
+
           health="$(curl --fail --silent --show-error "$BASE_URL/api/health")"
           printf '%s' "$health" | grep -F '"ok":true'
           printf '%s' "$health" | grep -F '"environment":"production"'
           printf '%s' "$health" | grep -F '"publicLanguage":"en"'
 
-          test -n "$PUBLIC_CONTENT_ORIGIN"
-          r2_url="$PUBLIC_CONTENT_ORIGIN/public/current.json"
+          content_config="$(curl --fail --silent --show-error "$BASE_URL/api/public/storefront/content-origin")"
+          printf '%s' "$content_config" | BASE_URL="$BASE_URL" node -e '
+            const fs = require("fs");
+            const value = JSON.parse(fs.readFileSync(0, "utf8"));
+            if (value.contentOrigin !== process.env.BASE_URL) process.exit(1);
+          '
 
-          plain_headers="$(mktemp)"
-          plain_status="$(curl --silent --show-error \
-            -D "$plain_headers" \
-            -o /tmp/storefront-current-plain.json \
-            -w '%{http_code}' \
-            "$r2_url")"
-          echo "R2 direct GET without Origin: HTTP $plain_status"
-          if [[ ! "$plain_status" =~ ^2 ]]; then
-            echo '--- R2 response headers (without Origin) ---'
-            cat "$plain_headers"
-            echo '--- R2 response body preview (without Origin) ---'
-            head -c 1600 /tmp/storefront-current-plain.json || true
-            echo
-            if grep -Eqi '^cf-mitigated:' "$plain_headers"; then
-              echo 'R2_DIAGNOSIS=WAF_OR_CHALLENGE'
-            elif ! grep -Eqi '^cf-cache-status:' "$plain_headers"; then
-              echo 'R2_DIAGNOSIS=HOTLINK_PROTECTION_OR_PRE_R2_BLOCK'
-            else
-              echo 'R2_DIAGNOSIS=R2_CUSTOM_DOMAIN_HTTP_ERROR'
-            fi
-            exit 22
-          fi
-
-          cors_headers="$(mktemp)"
-          cors_status="$(curl --silent --show-error \
-            -H "Origin: $BASE_URL" \
-            -D "$cors_headers" \
+          curl --fail --silent --show-error \
+            -D /tmp/storefront-current.headers \
             -o /tmp/storefront-current.json \
-            -w '%{http_code}' \
-            "$r2_url")"
-          echo "R2 cross-origin GET: HTTP $cors_status"
-          if [[ ! "$cors_status" =~ ^2 ]]; then
-            echo '--- R2 response headers (with Origin) ---'
-            cat "$cors_headers"
-            echo '--- R2 response body preview (with Origin) ---'
-            head -c 1600 /tmp/storefront-current.json || true
-            echo
-            if grep -Eqi '^cf-mitigated:' "$cors_headers"; then
-              echo 'R2_DIAGNOSIS=WAF_OR_CHALLENGE'
-            elif ! grep -Eqi '^cf-cache-status:' "$cors_headers"; then
-              echo 'R2_DIAGNOSIS=HOTLINK_PROTECTION_OR_PRE_R2_BLOCK'
-            else
-              echo 'R2_DIAGNOSIS=R2_CUSTOM_DOMAIN_HTTP_ERROR'
-            fi
-            exit 22
-          fi
-          grep -Eqi '^access-control-allow-origin: (\*|https://[^[:space:]]+)\r?$' "$cors_headers"
+            "$BASE_URL/public/current.json"
+          grep -Eqi '^content-type: application/json' /tmp/storefront-current.headers
+          grep -Eqi '^cache-control: public, max-age=30, must-revalidate' /tmp/storefront-current.headers
           node -e "const fs=require('fs'); const value=JSON.parse(fs.readFileSync('/tmp/storefront-current.json','utf8')); if(value.schemaVersion!==1&&value.schemaVersion!==2) process.exit(1);"
+
+          curl --fail --silent --show-error --head "$BASE_URL/public/current.json" >/dev/null
 
           auth_session="$(curl --fail --silent --show-error "$BASE_URL/api/admin/auth/session")"
           printf '%s' "$auth_session" | grep -F '"authenticated":false'
