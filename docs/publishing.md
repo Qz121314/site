@@ -7,19 +7,24 @@
 ```text
 D1
 → 后台编辑态数据源
+→ CTA / 转化池实时业务状态
 
 R2 public/modules/*
-→ 已发布的不可变模块版本
+→ 已发布的不可变内容模块版本
 
 R2 public/current.json
-→ 当前线上各模块版本的组合指针
+→ 当前线上各内容模块版本的组合指针
 
 Worker
-→ 后台 CRUD / 手动发布 / 图片写入与清理 / /go 动态转化
-→ 仅提供一个窄的公开 R2 域名发现接口，不提供产品/FAQ/分区内容 API
+→ 后台 CRUD / 手动发布 / 图片写入与清理
+→ /api/public/storefront/cta/{productId} 实时 CTA 可用状态
+→ /go/{productId} 实时转化与跳转
+→ 公开 R2 域名发现与 R2 读取 fallback
 ```
 
-后台保存只修改 D1，不会自动改变用户前台。发布动作把指定模块的当前 D1 公开态生成一个新的不可变 R2 版本，然后原子式更新组合指针。
+后台保存内容只修改 D1，不会自动改变用户前台；发布动作把指定模块的当前 D1 公开内容生成一个新的不可变 R2 版本，然后原子式更新组合指针。
+
+CTA 和转化池不是发布内容。修改产品绑定的转化分组、转化入口、客服分组或链接后保存即实时生效，不需要重新发布 R2。
 
 ## 发布模块
 
@@ -40,10 +45,11 @@ section:{sectionId}
 → 该分区的标签
 → 该分区的已发布产品摘要
 → 该分区产品详情文件
-→ CTA 文案 / 模式 / /go/{productId}
 ```
 
-产品、分类、标签属于所在业务分区，因此这些高频变化只要求发布对应 `section:{sectionId}`。站点设置、FAQ 和其他业务分区不会因为某个产品变化而重新生成版本。
+产品、分类、标签属于所在业务分区，因此这些内容变化只要求发布对应 `section:{sectionId}`。站点设置、FAQ 和其他业务分区不会因为某个产品内容变化而重新生成版本。
+
+转化配置不参与 section source revision，所以只修改 CTA / 转化池不会产生“待发布”。
 
 ## 首次从旧快照迁移
 
@@ -133,7 +139,7 @@ GET /api/public/storefront/content-origin
 { "contentOrigin": "https://content.example.com" }
 ```
 
-它不返回站点内容、D1 产品数据、客服配置、Token 或转化目标。拿到域名之后，实际公开内容仍然全部直接从 R2 读取。
+拿到域名之后，普通站点内容直接从 R2 读取。
 
 schema-v2 浏览器读取流程：
 
@@ -145,10 +151,13 @@ R2 Custom Domain
 → GET pointer 中每个当前分区的 section.json
 → 前端组合 Home 的热门 / 最新产品
 → 产品详情按产品所属分区的当前 module version 读取
+→ 产品详情同时 GET /api/public/storefront/cta/{productId} 获取实时 CTA
 → FAQ 按当前 faq module version 读取
 ```
 
-`current.json` 使用 revalidate；所有具体模块版本使用 immutable cache。
+`current.json` 使用 revalidate；所有具体模块版本使用 immutable cache。CTA 响应使用 `no-store`，不进入 R2 immutable 缓存。
+
+旧 schema-v1 产品快照如果带有历史 CTA 字段，Storefront 也会用实时 CTA 响应覆盖，避免旧快照继续使用过期转化配置。
 
 ## 媒体域名解耦
 
@@ -181,9 +190,11 @@ FAQ 管理
 分区管理
 → 发布分区导航
 
-某业务分区的 产品管理 / 产品录入 / 分类 / 标签 / 转化池
+某业务分区的 产品管理 / 分类 / 标签 / 转化池
 → 发布当前分区
 ```
+
+其中转化池本身是实时业务配置；从转化池工作区点击“发布当前分区”只会发布该分区的内容变化，转化池变化本身不会生成新快照。
 
 弹出的板块发布面板可以：
 
@@ -240,7 +251,7 @@ section:section-b        最近 3 版
 单模块发布：
 
 ```text
-读取并校验 D1 当前公开态
+读取并校验 D1 当前公开内容
 → 计算该模块 source revision
 → 如果与该模块线上 revision 相同：no-op
 → 写入新的 immutable module objects
@@ -264,23 +275,27 @@ Logo 与产品媒体 object key
 导航开关
 GA4 Measurement ID / Facebook Pixel ID
 Affiliate 启用状态与平台名称
-分区 / 分类 / 标签 / 产品 / FAQ
-CTA 文案、模式、/go/{productId}
+分区 / 分类 / 标签 / 产品内容 / FAQ
 ```
 
-不得进入 R2：
+不进入 R2、由 Worker + D1 实时处理：
 
 ```text
+产品 conversion_group_id
+CTA 文案 / 模式 / 可用状态
+转化分组启停状态
+转化池最终 URL
+轮换状态
+客服分组绑定
+客服连接状态
 客服 API Token / Secret
 客服 private base URL / project private config
 客服连接原始配置 JSON
 Affiliate 原始配置 JSON
-转化池最终 URL
-远程客服私有路由细节
 后台审计信息
 ```
 
-客服连接和最终转化目标始终由 Worker + D1 在 `/go/:code` 请求时动态解析。
+产品详情只在打开时读取一次实时 CTA 状态；真正点击 CTA 时进入 `/go/{productId}`，再次读取当前 D1 转化配置并执行 round-robin。因此首页和产品列表仍然不产生 CTA Worker 请求。
 
 ## 缓存
 
@@ -300,6 +315,12 @@ Cache-Control: public, max-age=30, must-revalidate
 
 ```text
 Cache-Control: public, max-age=300, stale-while-revalidate=3600
+```
+
+实时 CTA 状态：
+
+```text
+Cache-Control: no-store
 ```
 
 ## CORS 与前台路由
