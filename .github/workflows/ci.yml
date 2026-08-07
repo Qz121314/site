@@ -51,6 +51,8 @@ jobs:
 
       - name: Build
         run: pnpm build
+        env:
+          VITE_PUBLIC_CONTENT_ORIGIN: ${{ vars.PUBLIC_CONTENT_ORIGIN }}
 
       - name: Validate Worker bundle
         run: pnpm cf:check
@@ -85,6 +87,8 @@ jobs:
 
       - name: Build
         run: pnpm build
+        env:
+          VITE_PUBLIC_CONTENT_ORIGIN: ${{ vars.PUBLIC_CONTENT_ORIGIN }}
 
       - name: Apply D1 migrations
         run: pnpm db:migrate:remote
@@ -123,3 +127,7 @@ jobs:
           for path in / /admin/; do
             curl --fail --silent --show-error "$BASE_URL$path" | grep -F '<div id="root"></div>'
           done
+
+          curl --fail --silent --show-error \
+            -H 'Sec-Fetch-Mode: navigate' \
+            "$BASE_URL/products/storefront-smoke-test/" | grep -F '<div id="root"></div>'

@@ -61,16 +61,6 @@ type SiteRow = {
   facebook_pixel_id: string | null;
   affiliate_detection_enabled: number;
   affiliate_platform: string | null;
-  affiliate_detection_config_json: string | null;
-  updated_at: string;
-};
-
-type CustomerServiceRow = {
-  is_enabled: number;
-  provider: string | null;
-  endpoint_url: string | null;
-  project_id: string | null;
-  config_json: string | null;
   updated_at: string;
 };
 
@@ -168,15 +158,6 @@ type EncodedFile = {
   sha256: string;
 };
 
-function parseOptionalJson(value: string | null): unknown {
-  if (!value) return null;
-  try {
-    return JSON.parse(value) as unknown;
-  } catch {
-    return null;
-  }
-}
-
 function buildPublicUrl(baseUrl: string, objectKey: string | null): string | null {
   return objectKey ? `${baseUrl}/${objectKey}` : null;
 }
@@ -238,7 +219,6 @@ async function loadSnapshotSource(db: D1Database) {
          ss.facebook_pixel_id,
          ss.affiliate_detection_enabled,
          ss.affiliate_platform,
-         ss.affiliate_detection_config_json,
          ss.updated_at
        FROM site_settings ss
        LEFT JOIN media_assets ma
@@ -256,13 +236,6 @@ async function loadSnapshotSource(db: D1Database) {
   if (site.logo_asset_id && !site.logo_object_key) {
     throw new PublicationError('SITE_LOGO_INVALID', '当前站点 Logo 已不可用，请重新设置后再发布。');
   }
-
-  const customerService = await db
-    .prepare(
-      `SELECT is_enabled, provider, endpoint_url, project_id, config_json, updated_at
-       FROM customer_service_settings WHERE id = 1`,
-    )
-    .first<CustomerServiceRow>();
 
   const sections = (
     await db
@@ -428,7 +401,7 @@ async function loadSnapshotSource(db: D1Database) {
     }
   }
 
-  return { site, customerService, sections, categories, products, mediaByProduct, faqs };
+  return { site, sections, categories, products, mediaByProduct, faqs };
 }
 
 function productSummary(product: ProductRow, mediaBaseUrl: string) {
@@ -582,17 +555,7 @@ export async function publishSnapshot(
     affiliate: {
       enabled: source.site.affiliate_detection_enabled === 1,
       platform: source.site.affiliate_platform,
-      config: parseOptionalJson(source.site.affiliate_detection_config_json),
     },
-    customerService: source.customerService
-      ? {
-          enabled: source.customerService.is_enabled === 1,
-          provider: source.customerService.provider,
-          endpointUrl: source.customerService.endpoint_url,
-          projectId: source.customerService.project_id,
-          config: parseOptionalJson(source.customerService.config_json),
-        }
-      : null,
   };
 
   const sourceModel = {

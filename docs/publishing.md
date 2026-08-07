@@ -57,6 +57,78 @@ public/
 
 版本目录一经生成不得覆盖。后续修改必须生成新的 `contentVersion`。
 
+## Storefront 读取流程
+
+Storefront 使用固定的 R2 Custom Domain 作为内容源。构建时通过 GitHub Actions Repository Variable 配置：
+
+```text
+PUBLIC_CONTENT_ORIGIN=https://content.example.com
+```
+
+CI / Deploy 会把它映射成 Vite 的：
+
+```text
+VITE_PUBLIC_CONTENT_ORIGIN
+```
+
+浏览器读取顺序固定为：
+
+```text
+R2 Custom Domain
+→ GET /public/current.json
+→ 取得 contentVersion
+→ GET /public/versions/{contentVersion}/site.json
+→ GET /public/versions/{contentVersion}/home.json
+→ 按页面读取 sections/{id}.json / products/{id}.json / faq.json
+```
+
+`current.json` 使用 revalidate；版本文件使用 immutable cache。Storefront 不通过普通 Worker 内容 API 读取 D1。
+
+R2 Custom Domain 与 Storefront 如果不是同源，R2 Bucket CORS 必须允许 Storefront 的生产 Origin 发起 `GET` / `HEAD` 请求。不要使用 `*` 配合未来可能出现的 credential 请求；当前公开快照请求本身不携带 credentials。
+
+开发环境未设置 `VITE_PUBLIC_CONTENT_ORIGIN` 时，Storefront 允许 localhost 同源读取，方便本地联调；生产环境缺少该变量时会显示明确的未配置状态，而不是自动回退到 Worker/D1。
+
+## 前台路由
+
+Storefront 使用浏览器 History 路由：
+
+```text
+/
+/sections/{sectionId}/
+/products/{productId}/
+```
+
+Cloudflare Static Assets 使用 `not_found_handling = "single-page-application"`，并继续通过 `run_worker_first` 只让 `/api/*`、`/go/*` 进入 Worker。普通前台深链接由静态 `index.html` 接管。
+
+## 公开 / 私有数据边界
+
+R2 快照只允许包含前台展示所需的公开 DTO。
+
+允许公开：
+
+```text
+站点名称 / Location
+Logo 与媒体公开 URL
+导航开关
+GA4 Measurement ID / Facebook Pixel ID
+Affiliate 启用状态与平台名称
+分区 / 分类 / 标签 / 产品 / FAQ
+产品 CTA 文案、模式、/go/{productId}
+```
+
+不得进入 R2：
+
+```text
+客服 API Token / Secret
+客服系统 private base URL / project private config
+客服连接原始配置 JSON
+Affiliate 原始配置 JSON
+转化池最终 URL / 远程客服私有路由细节
+后台审计信息
+```
+
+客服连接和最终转化目标始终由 Worker + D1 在 `/go/:code` 请求时动态解析。
+
 ## 发布历史保留
 
 所有发布更新历史统一采用最近 3 次保留策略：
@@ -94,8 +166,6 @@ Cache-Control: public, max-age=31536000, immutable
 ```text
 Cache-Control: public, max-age=30, must-revalidate
 ```
-
-Storefront 后续只需要从 R2 Custom Domain 读取 `public/current.json`，再读取该版本下的 JSON。普通导航、分区、分类、产品、热门内容和 FAQ 不建立 D1 动态公开 API。
 
 ## 转化数据
 
