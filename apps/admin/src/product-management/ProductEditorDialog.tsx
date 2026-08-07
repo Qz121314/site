@@ -18,6 +18,8 @@ import type {
   ProductStatus,
 } from './api';
 
+type ProductDependencyTarget = 'categories' | 'tags' | 'conversion-pool';
+
 type ProductEditorDialogProps = {
   sectionName: string;
   editingProduct: AdminProduct | null;
@@ -30,12 +32,15 @@ type ProductEditorDialogProps = {
   saveStage: 'idle' | 'uploading' | 'saving';
   processingImages: boolean;
   rotatingImageKey: string | null;
+  handoffBusy?: boolean;
+  resumeNotice?: boolean;
   onFormChange: (next: ProductInput) => void;
   onSelectLocalImages: (files: File[]) => void;
   onRotateLocalImage: (key: string, direction: -1 | 1) => void;
   onRemoveMedia: (key: string) => void;
   onMoveMedia: (key: string, direction: -1 | 1) => void;
   onSetCover: (key: string | null) => void;
+  onConfigureDependency?: (target: ProductDependencyTarget) => void;
   onClose: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 };
@@ -82,12 +87,15 @@ export function ProductEditorDialog({
   saveStage,
   processingImages,
   rotatingImageKey,
+  handoffBusy = false,
+  resumeNotice = false,
   onFormChange,
   onSelectLocalImages,
   onRotateLocalImage,
   onRemoveMedia,
   onMoveMedia,
   onSetCover,
+  onConfigureDependency,
   onClose,
   onSubmit,
 }: ProductEditorDialogProps) {
@@ -98,7 +106,7 @@ export function ProductEditorDialog({
   );
   const effectiveCoverKey = coverKey ?? media[0]?.key ?? null;
   const saving = saveStage !== 'idle';
-  const busy = saving || processingImages || rotatingImageKey !== null;
+  const busy = saving || processingImages || rotatingImageKey !== null || handoffBusy;
 
   function patch(patchValue: Partial<ProductInput>) {
     onFormChange({ ...form, ...patchValue });
@@ -141,6 +149,12 @@ export function ProductEditorDialog({
         </div>
 
         <form className="product-editor-form" onSubmit={onSubmit}>
+          {resumeNotice ? (
+            <div className="product-handoff-notice" role="status">
+              已从依赖配置返回。为保证跨页配置安全，该产品已暂存为草稿；完成编辑并保存后会按你原先选择的发布状态处理。
+            </div>
+          ) : null}
+
           <div className="product-form-grid">
             <label className="product-field product-field-wide">
               <span>产品标题</span>
@@ -170,9 +184,17 @@ export function ProductEditorDialog({
               </small>
             </label>
 
-            <label className="product-field">
-              <span>所属分类</span>
+            <div className="product-field">
+              <div className="product-field-heading">
+                <span>所属分类</span>
+                {onConfigureDependency ? (
+                  <button type="button" disabled={busy} onClick={() => onConfigureDependency('categories')}>
+                    管理分类
+                  </button>
+                ) : null}
+              </div>
               <select
+                aria-label="所属分类"
                 value={form.categoryId ?? ''}
                 onChange={(event) => patch({ categoryId: event.target.value || null })}
               >
@@ -183,12 +205,19 @@ export function ProductEditorDialog({
                   </option>
                 ))}
               </select>
-            </label>
+            </div>
 
             <div className="product-field product-field-wide product-tags-field">
               <div className="product-tags-heading">
                 <span>产品标签</span>
-                <small>{form.tagIds.length}/12</small>
+                <div className="product-field-inline-actions">
+                  <small>{form.tagIds.length}/12</small>
+                  {onConfigureDependency ? (
+                    <button type="button" disabled={busy} onClick={() => onConfigureDependency('tags')}>
+                      管理标签
+                    </button>
+                  ) : null}
+                </div>
               </div>
               <div className="product-tag-options">
                 {tags.length > 0 ? tags.map((tag) => {
@@ -208,9 +237,17 @@ export function ProductEditorDialog({
               </div>
             </div>
 
-            <label className="product-field product-field-wide">
-              <span>{modeLabel(form.serviceMode)}转化分组</span>
+            <div className="product-field product-field-wide">
+              <div className="product-field-heading">
+                <span>{modeLabel(form.serviceMode)}转化分组</span>
+                {onConfigureDependency ? (
+                  <button type="button" disabled={busy} onClick={() => onConfigureDependency('conversion-pool')}>
+                    管理转化池
+                  </button>
+                ) : null}
+              </div>
               <select
+                aria-label={`${modeLabel(form.serviceMode)}转化分组`}
                 value={form.conversionGroupId ?? ''}
                 onChange={(event) => patch({ conversionGroupId: event.target.value || null })}
               >
@@ -227,11 +264,9 @@ export function ProductEditorDialog({
                 ))}
               </select>
               {matchingGroups.length === 0 ? (
-                <small className="field-warning">
-                  当前分区还没有可匹配的转化分组，请先到“转化池”创建。
-                </small>
+                <small className="field-warning">当前分区还没有可匹配的转化分组。</small>
               ) : null}
-            </label>
+            </div>
 
             {form.serviceMode === 'offline' ? (
               <label className="product-field product-field-wide">
