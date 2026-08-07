@@ -275,14 +275,16 @@ export function publicContentUrl(origin: string, path: string): string {
 }
 
 async function fetchJson(url: string, cache: RequestCache, signal?: AbortSignal): Promise<unknown> {
+  const init: RequestInit = {
+    method: 'GET',
+    cache,
+    headers: { Accept: 'application/json' },
+  };
+  if (signal) init.signal = signal;
+
   let response: Response;
   try {
-    response = await fetch(url, {
-      method: 'GET',
-      cache,
-      signal,
-      headers: { Accept: 'application/json' },
-    });
+    response = await fetch(url, init);
   } catch {
     throw new PublicContentError('CONTENT_UNAVAILABLE', 'Published content is temporarily unavailable.');
   }
