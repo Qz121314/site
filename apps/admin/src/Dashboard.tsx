@@ -7,7 +7,11 @@ import { CategoryManagementView } from './CategoryManagementView';
 import { ConversionPoolView } from './ConversionPoolView';
 import { CustomerServiceView } from './CustomerServiceView';
 import { FaqManagementView } from './FaqManagementView';
-import { ProductManagementView } from './ProductManagementView';
+import {
+  ProductManagementView,
+  type ProductDependencyTarget,
+  type ProductResumeRequest,
+} from './ProductManagementView';
 import {
   fetchPublishStatus,
   publishStorefront,
@@ -40,6 +44,11 @@ type DashboardProps = {
 type DynamicView = {
   kind: DynamicViewKind;
   sectionId: string;
+};
+
+type ProductHandoff = ProductResumeRequest & {
+  sectionId: string;
+  target: ProductDependencyTarget;
 };
 
 type PublishFeedback = { type: 'success' | 'error'; message: string } | null;
@@ -173,6 +182,7 @@ export function Dashboard({
   const [rollbackTarget, setRollbackTarget] = useState<RollbackTarget>(null);
   const [rollingBack, setRollingBack] = useState(false);
   const [pendingDiscardAction, setPendingDiscardAction] = useState<PendingDiscardAction>(null);
+  const [productHandoff, setProductHandoff] = useState<ProductHandoff | null>(null);
   const unsaved = useAdminUnsavedState();
 
   const loadSections = useCallback(async () => {
@@ -366,6 +376,9 @@ export function Dashboard({
     ? publishStatus?.isCurrent === true
     : contextPublishModule?.isCurrent === true;
   const publishing = publishingKey !== null;
+  const currentSectionHandoff = currentSection && productHandoff?.sectionId === currentSection.section.id
+    ? productHandoff
+    : null;
 
   return (
     <div className="admin-shell">
@@ -414,6 +427,11 @@ export function Dashboard({
                 <button className={currentSection.kind === 'categories' ? 'is-active' : undefined} type="button" aria-current={currentSection.kind === 'categories' ? 'page' : undefined} onClick={() => requestView(`categories:${currentSection.section.id}`)}>分类管理</button>
                 <button className={currentSection.kind === 'tags' ? 'is-active' : undefined} type="button" aria-current={currentSection.kind === 'tags' ? 'page' : undefined} onClick={() => requestView(`tags:${currentSection.section.id}`)}>标签管理</button>
                 <button className={currentSection.kind === 'conversion-pool' ? 'is-active' : undefined} type="button" aria-current={currentSection.kind === 'conversion-pool' ? 'page' : undefined} onClick={() => requestView(`conversion-pool:${currentSection.section.id}`)}>转化池</button>
+                {currentSectionHandoff && currentSection.kind !== 'products' ? (
+                  <button className="product-handoff-return" type="button" onClick={() => requestView(`products:${currentSection.section.id}`)}>
+                    ← 返回产品草稿
+                  </button>
+                ) : null}
               </nav>
             ) : null}
           </div>
@@ -524,7 +542,18 @@ export function Dashboard({
         ) : activeView === 'faq' ? (
           <FaqManagementView key={activeView} onSessionExpired={onSessionExpired} />
         ) : currentSection?.kind === 'products' ? (
-          <ProductManagementView key={activeView} section={currentSection.section} onSessionExpired={onSessionExpired} />
+          <ProductManagementView
+            key={activeView}
+            section={currentSection.section}
+            resumeRequest={currentSectionHandoff}
+            onResumeHandled={() => setProductHandoff(null)}
+            onConfigureDependency={(target, request) => {
+              setProductHandoff({ ...request, sectionId: currentSection.section.id, target });
+              setPublishPanelOpen(false);
+              setActiveView(`${target}:${currentSection.section.id}`);
+            }}
+            onSessionExpired={onSessionExpired}
+          />
         ) : currentSection?.kind === 'categories' ? (
           <CategoryManagementView key={activeView} section={currentSection.section} onSessionExpired={onSessionExpired} />
         ) : currentSection?.kind === 'tags' ? (
