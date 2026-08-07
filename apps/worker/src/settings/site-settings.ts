@@ -7,15 +7,10 @@ export type SiteSettings = {
   logoAssetId: string | null;
   logoUrl: string | null;
   ga4MeasurementId: string | null;
-  facebookPixelId: string | null;
-  affiliateDetectionEnabled: boolean;
-  affiliatePlatform: string | null;
-  affiliateDetectionConfig: string | null;
   homeSectionLimit: number;
   showHot: boolean;
   showLatest: boolean;
   showMore: boolean;
-  showMessages: boolean;
   showFaq: boolean;
   updatedAt: string;
 };
@@ -29,15 +24,10 @@ type SiteSettingsRow = {
   logo_asset_id: string | null;
   logo_object_key: string | null;
   ga4_measurement_id: string | null;
-  facebook_pixel_id: string | null;
-  affiliate_detection_enabled: number;
-  affiliate_platform: string | null;
-  affiliate_detection_config_json: string | null;
   home_section_limit: number;
   show_hot: number;
   show_latest: number;
   show_more: number;
-  show_messages: number;
   show_faq: number;
   updated_at: string;
 };
@@ -165,22 +155,6 @@ export function normalizeMediaBaseUrl(value: unknown): string | null {
   return url.origin;
 }
 
-function readAffiliateConfig(value: unknown): FieldValidation<string | null> {
-  const normalized = readOptionalString(value, 'affiliateDetectionConfig', 8000);
-  if (!normalized.ok || normalized.value === null) return normalized;
-
-  try {
-    JSON.parse(normalized.value);
-  } catch {
-    return {
-      ok: false,
-      field: 'affiliateDetectionConfig',
-      message: '联盟检测配置必须是有效 JSON。',
-    };
-  }
-  return normalized;
-}
-
 export function validateSiteSettingsInput(value: unknown): ValidationResult {
   if (!isRecord(value)) {
     return { ok: false, field: 'form', message: '站点设置数据无效。' };
@@ -206,17 +180,6 @@ export function validateSiteSettingsInput(value: unknown): ValidationResult {
 
   const ga4MeasurementId = readOptionalString(value.ga4MeasurementId, 'ga4MeasurementId', 80);
   if (!ga4MeasurementId.ok) return ga4MeasurementId;
-  const facebookPixelId = readOptionalString(value.facebookPixelId, 'facebookPixelId', 80);
-  if (!facebookPixelId.ok) return facebookPixelId;
-  const affiliateDetectionEnabled = readBoolean(
-    value.affiliateDetectionEnabled,
-    'affiliateDetectionEnabled',
-  );
-  if (!affiliateDetectionEnabled.ok) return affiliateDetectionEnabled;
-  const affiliatePlatform = readOptionalString(value.affiliatePlatform, 'affiliatePlatform', 120);
-  if (!affiliatePlatform.ok) return affiliatePlatform;
-  const affiliateDetectionConfig = readAffiliateConfig(value.affiliateDetectionConfig);
-  if (!affiliateDetectionConfig.ok) return affiliateDetectionConfig;
 
   if (
     typeof value.homeSectionLimit !== 'number' ||
@@ -237,8 +200,6 @@ export function validateSiteSettingsInput(value: unknown): ValidationResult {
   if (!showLatest.ok) return showLatest;
   const showMore = readBoolean(value.showMore, 'showMore');
   if (!showMore.ok) return showMore;
-  const showMessages = readBoolean(value.showMessages, 'showMessages');
-  if (!showMessages.ok) return showMessages;
   const showFaq = readBoolean(value.showFaq, 'showFaq');
   if (!showFaq.ok) return showFaq;
 
@@ -250,15 +211,10 @@ export function validateSiteSettingsInput(value: unknown): ValidationResult {
       mediaBaseUrl,
       logoAssetId: logoAssetId.value,
       ga4MeasurementId: ga4MeasurementId.value,
-      facebookPixelId: facebookPixelId.value,
-      affiliateDetectionEnabled: affiliateDetectionEnabled.value,
-      affiliatePlatform: affiliatePlatform.value,
-      affiliateDetectionConfig: affiliateDetectionConfig.value,
       homeSectionLimit: value.homeSectionLimit,
       showHot: showHot.value,
       showLatest: showLatest.value,
       showMore: showMore.value,
-      showMessages: showMessages.value,
       showFaq: showFaq.value,
     },
   };
@@ -272,15 +228,10 @@ function fromRow(row: SiteSettingsRow): SiteSettings {
     logoAssetId: row.logo_asset_id,
     logoUrl: optionalAssetUrl(row.media_base_url, row.logo_object_key),
     ga4MeasurementId: row.ga4_measurement_id,
-    facebookPixelId: row.facebook_pixel_id,
-    affiliateDetectionEnabled: row.affiliate_detection_enabled === 1,
-    affiliatePlatform: row.affiliate_platform,
-    affiliateDetectionConfig: row.affiliate_detection_config_json,
     homeSectionLimit: row.home_section_limit,
     showHot: row.show_hot === 1,
     showLatest: row.show_latest === 1,
     showMore: row.show_more === 1,
-    showMessages: row.show_messages === 1,
     showFaq: row.show_faq === 1,
     updatedAt: row.updated_at,
   };
@@ -296,15 +247,10 @@ export async function getSiteSettings(db: D1Database): Promise<SiteSettings> {
          s.logo_asset_id,
          logo.object_key AS logo_object_key,
          s.ga4_measurement_id,
-         s.facebook_pixel_id,
-         s.affiliate_detection_enabled,
-         s.affiliate_platform,
-         s.affiliate_detection_config_json,
          s.home_section_limit,
          s.show_hot,
          s.show_latest,
          s.show_more,
-         s.show_messages,
          s.show_faq,
          s.updated_at
        FROM site_settings s
@@ -333,15 +279,10 @@ export function createUpdateSiteSettingsStatement(
            media_base_url = ?,
            logo_asset_id = ?,
            ga4_measurement_id = ?,
-           facebook_pixel_id = ?,
-           affiliate_detection_enabled = ?,
-           affiliate_platform = ?,
-           affiliate_detection_config_json = ?,
            home_section_limit = ?,
            show_hot = ?,
            show_latest = ?,
            show_more = ?,
-           show_messages = ?,
            show_faq = ?,
            updated_at = ?
        WHERE id = 1`,
@@ -352,15 +293,10 @@ export function createUpdateSiteSettingsStatement(
       input.mediaBaseUrl,
       input.logoAssetId,
       input.ga4MeasurementId,
-      input.facebookPixelId,
-      input.affiliateDetectionEnabled ? 1 : 0,
-      input.affiliatePlatform,
-      input.affiliateDetectionConfig,
       input.homeSectionLimit,
       input.showHot ? 1 : 0,
       input.showLatest ? 1 : 0,
       input.showMore ? 1 : 0,
-      input.showMessages ? 1 : 0,
       input.showFaq ? 1 : 0,
       updatedAt,
     );
