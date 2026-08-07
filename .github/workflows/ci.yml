@@ -96,6 +96,17 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
 
+      - name: Configure public R2 CORS
+        run: |
+          set -euo pipefail
+          pnpm exec wrangler r2 bucket cors set service-catalog-site-assets \
+            --file config/r2-public-cors.json \
+            --force
+          pnpm exec wrangler r2 bucket cors list service-catalog-site-assets
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
+
       - name: Deploy business platform Worker
         id: deploy
         run: |
@@ -118,8 +129,18 @@ jobs:
           printf '%s' "$health" | grep -F '"environment":"production"'
           printf '%s' "$health" | grep -F '"publicLanguage":"en"'
 
-          content_origin="$(curl --fail --silent --show-error "$BASE_URL/api/public/storefront/content-origin")"
-          printf '%s' "$content_origin" | grep -Eq '"contentOrigin":"https?://[^\"]+"'
+          content_config="$(curl --fail --silent --show-error "$BASE_URL/api/public/storefront/content-origin")"
+          content_origin="$(printf '%s' "$content_config" | node -e "const fs=require('fs'); const value=JSON.parse(fs.readFileSync(0,'utf8')).contentOrigin; if(typeof value!=='string'||!/^https?:\/\//.test(value)) process.exit(1); process.stdout.write(value.replace(/\/$/,''));")"
+          test -n "$content_origin"
+
+          cors_headers="$(mktemp)"
+          curl --fail --silent --show-error \
+            -H "Origin: $BASE_URL" \
+            -D "$cors_headers" \
+            -o /tmp/storefront-current.json \
+            "$content_origin/public/current.json"
+          grep -Eqi '^access-control-allow-origin: (\*|https://[^[:space:]]+)\r?$' "$cors_headers"
+          node -e "const fs=require('fs'); const value=JSON.parse(fs.readFileSync('/tmp/storefront-current.json','utf8')); if(value.schemaVersion!==1&&value.schemaVersion!==2) process.exit(1);"
 
           auth_session="$(curl --fail --silent --show-error "$BASE_URL/api/admin/auth/session")"
           printf '%s' "$auth_session" | grep -F '"authenticated":false'
