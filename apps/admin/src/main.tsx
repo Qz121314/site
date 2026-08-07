@@ -18,6 +18,7 @@ import './admin-density.css';
 import './admin-no-scroll.css';
 import './admin-centered-layout.css';
 import './admin-section-workspace-nav.css';
+import './admin-publish.css';
 
 const root = document.getElementById('root');
 if (!root) {
