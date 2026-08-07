@@ -38,8 +38,12 @@ import {
   type ProductStatus,
 } from './product-management/api';
 
+type ProductManagementMode = 'manage' | 'entry';
+
 type ProductManagementViewProps = {
   section: AdminSection;
+  mode?: ProductManagementMode;
+  onEntryExit?: () => void;
   onSessionExpired: () => void;
 };
 
@@ -136,6 +140,8 @@ function dedupeRemoteImages(images: ProductEditorImage[]): ProductEditorImage[] 
 
 export function ProductManagementView({
   section,
+  mode = 'manage',
+  onEntryExit,
   onSessionExpired,
 }: ProductManagementViewProps) {
   const [scope, setScope] = useState<ProductScope>('active');
@@ -151,6 +157,7 @@ export function ProductManagementView({
   const [form, setForm] = useState<ProductInput>(emptyProductForm);
   const [media, setMedia] = useState<ProductEditorImage[]>([]);
   const mediaRef = useRef<ProductEditorImage[]>([]);
+  const entryOpenedRef = useRef<string | null>(null);
   const [coverKey, setCoverKey] = useState<string | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
   const [saveStage, setSaveStage] = useState<SaveStage>('idle');
@@ -214,6 +221,7 @@ export function ProductManagementView({
     setEditorOpen(false);
     setErrorMessage('');
     setSuccessMessage('');
+    entryOpenedRef.current = null;
     void loadActive();
   }, [loadActive]);
 
@@ -222,6 +230,27 @@ export function ProductManagementView({
     setErrorMessage('');
     setSuccessMessage('');
   }, [scope]);
+
+  useEffect(() => {
+    if (mode !== 'entry') {
+      entryOpenedRef.current = null;
+      return;
+    }
+    if (loading || entryOpenedRef.current === section.id) return;
+
+    entryOpenedRef.current = section.id;
+    const sortOrder = activeProducts.length
+      ? Math.max(...activeProducts.map((product) => product.sortOrder)) + 10
+      : 0;
+    releaseLocalProductImages(mediaRef.current);
+    setEditingProduct(null);
+    setForm({ ...emptyProductForm, sortOrder });
+    setMedia([]);
+    setCoverKey(null);
+    setErrorMessage('');
+    setSuccessMessage('');
+    setEditorOpen(true);
+  }, [activeProducts, loading, mode, section.id]);
 
   const sourceProducts = scope === 'active' ? activeProducts : trashProducts;
   const filteredProducts = useMemo(() => {
@@ -297,6 +326,7 @@ export function ProductManagementView({
     setMedia([]);
     setCoverKey(null);
     setEditorOpen(false);
+    if (mode === 'entry') onEntryExit?.();
   }
 
   async function handleSelectLocalImages(files: File[]) {
@@ -432,6 +462,7 @@ export function ProductManagementView({
       setMedia([]);
       setCoverKey(null);
       setEditorOpen(false);
+      if (mode === 'entry') onEntryExit?.();
     } catch (error) {
       handleError(error);
     } finally {
@@ -531,12 +562,46 @@ export function ProductManagementView({
     });
   }
 
+  const editorDialog = editorOpen ? (
+    <ProductEditorDialog
+      sectionName={section.name}
+      editingProduct={editingProduct}
+      form={form}
+      media={media}
+      coverKey={coverKey}
+      categories={categories}
+      groups={groups}
+      saveStage={saveStage}
+      processingImages={processingImages}
+      rotatingImageKey={rotatingImageKey}
+      onFormChange={setForm}
+      onSelectLocalImages={(files) => void handleSelectLocalImages(files)}
+      onRotateLocalImage={(key, direction) => void rotateMedia(key, direction)}
+      onRemoveMedia={removeMedia}
+      onMoveMedia={moveMedia}
+      onSetCover={setCoverKey}
+      onClose={closeEditor}
+      onSubmit={(event) => void handleSave(event)}
+    />
+  ) : null;
+
+  if (mode === 'entry') {
+    return (
+      <section className="product-management product-entry-route" aria-label={`${section.name} 产品录入`}>
+        {errorMessage ? <div className="notice notice-error" role="alert">{errorMessage}</div> : null}
+        {successMessage ? <div className="notice notice-success" role="status">{successMessage}</div> : null}
+        {!editorOpen && loading ? <div className="product-entry-loading">正在准备产品录入…</div> : null}
+        {editorDialog}
+      </section>
+    );
+  }
+
   return (
     <section className="product-management" aria-labelledby="product-management-title">
       <div className="product-management-toolbar">
         <div>
           <p>当前分区</p>
-          <h2 id="product-management-title">{section.name} · 产品录入</h2>
+          <h2 id="product-management-title">{section.name} · 产品管理</h2>
           <span>产品、分类和转化分组全部限制在“{section.name}”分区内。</span>
         </div>
         <button className="primary-button" type="button" onClick={openCreateEditor}>
@@ -618,28 +683,7 @@ export function ProductManagementView({
         onMove={(product, direction) => void moveProduct(product, direction)}
       />
 
-      {editorOpen ? (
-        <ProductEditorDialog
-          sectionName={section.name}
-          editingProduct={editingProduct}
-          form={form}
-          media={media}
-          coverKey={coverKey}
-          categories={categories}
-          groups={groups}
-          saveStage={saveStage}
-          processingImages={processingImages}
-          rotatingImageKey={rotatingImageKey}
-          onFormChange={setForm}
-          onSelectLocalImages={(files) => void handleSelectLocalImages(files)}
-          onRotateLocalImage={(key, direction) => void rotateMedia(key, direction)}
-          onRemoveMedia={removeMedia}
-          onMoveMedia={moveMedia}
-          onSetCover={setCoverKey}
-          onClose={closeEditor}
-          onSubmit={(event) => void handleSave(event)}
-        />
-      ) : null}
+      {editorDialog}
 
       {pendingDeleteIds.length > 0 ? (
         <DeleteProductDialog
