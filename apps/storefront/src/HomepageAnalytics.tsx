@@ -13,8 +13,8 @@ function dataLayer(): unknown[] {
   return target.dataLayer;
 }
 
-function gtag(..._args: unknown[]) {
-  dataLayer().push(arguments);
+function gtag(...args: unknown[]) {
+  dataLayer().push(args);
 }
 
 function ensureGoogleTag(measurementId: string) {
