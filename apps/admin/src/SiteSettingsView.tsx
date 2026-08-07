@@ -218,16 +218,16 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
     (draft.logoAssetId ? brandingAssetPreviewUrl(draft.logoAssetId) : null);
 
   return (
-    <form className="settings-form settings-single-page-form" onSubmit={(event) => void handleSubmit(event)}>
-      <section className="settings-card settings-single-page" aria-label="站点设置">
-        <div className="settings-page-meta">
-          <small>更新于 {formatUpdatedAt(settings.updatedAt)}</small>
+    <form className="settings-form admin-settings-page" onSubmit={(event) => void handleSubmit(event)}>
+      <section className="settings-card admin-settings-surface" aria-label="站点设置">
+        <div className="admin-settings-meta">
+          <span>更新于 {formatUpdatedAt(settings.updatedAt)}</span>
         </div>
 
-        <div className="settings-block settings-basic-block">
-          <strong className="settings-block-title">基础信息</strong>
-          <div className="settings-basic-row">
-            <label className="field-group settings-field-site-name">
+        <section className="admin-settings-section" aria-labelledby="settings-basic-title">
+          <h2 id="settings-basic-title">基础信息</h2>
+          <div className="admin-settings-row admin-settings-basic-row">
+            <label className="field-group admin-field-site-name">
               <span>站点名称</span>
               <input
                 type="text"
@@ -237,7 +237,7 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
               />
             </label>
 
-            <label className="field-group settings-field-location">
+            <label className="field-group admin-field-location">
               <span>位置文案</span>
               <input
                 type="text"
@@ -247,7 +247,7 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
               />
             </label>
 
-            <label className="field-group settings-field-home-limit">
+            <label className="field-group admin-field-home-limit">
               <span>首页分区数量</span>
               <input
                 type="number"
@@ -260,58 +260,57 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
               />
             </label>
 
-            <div className="branding-upload-card branding-upload-compact settings-logo-card">
-              <div className="branding-preview branding-logo-preview">
-                {logoPreviewUrl ? <img src={logoPreviewUrl} alt="站点 Logo 预览" /> : <span>Logo</span>}
-              </div>
-              <div className="branding-upload-copy">
-                <strong>站点 Logo</strong>
-                {localLogo ? (
-                  <small>
-                    {localLogo.width} × {localLogo.height} · {formatBrandingBytes(localLogo.compressedFile.size)}
-                  </small>
-                ) : draft.logoAssetId ? (
-                  <small>已设置</small>
-                ) : (
-                  <small>未设置</small>
-                )}
-              </div>
-              <div className="branding-upload-actions">
-                <label className={`branding-file-button${busy ? ' is-disabled' : ''}`}>
-                  <input
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    disabled={busy}
-                    onChange={(event) => {
-                      const file = event.target.files?.[0];
-                      event.currentTarget.value = '';
-                      if (file) void selectLogo(file);
-                    }}
-                  />
-                  {processingLogo ? '处理中…' : logoPreviewUrl ? '更换' : '上传'}
-                </label>
-                {logoPreviewUrl ? (
-                  <button
-                    type="button"
-                    className="secondary-button"
-                    disabled={busy}
-                    onClick={() => {
-                      setLocalLogo(null);
-                      updateDraft('logoAssetId', null);
-                    }}
-                  >
-                    移除
-                  </button>
-                ) : null}
+            <div className="admin-logo-field">
+              <span className="admin-field-label">站点 Logo</span>
+              <div className="admin-logo-control">
+                <div className="admin-logo-preview">
+                  {logoPreviewUrl ? <img src={logoPreviewUrl} alt="站点 Logo 预览" /> : <span>Logo</span>}
+                </div>
+                <div className="admin-logo-state">
+                  <strong>{localLogo ? '待保存' : draft.logoAssetId ? '已设置' : '未设置'}</strong>
+                  {localLogo ? (
+                    <small>
+                      {localLogo.width} × {localLogo.height} · {formatBrandingBytes(localLogo.compressedFile.size)}
+                    </small>
+                  ) : null}
+                </div>
+                <div className="admin-logo-actions">
+                  <label className={`branding-file-button${busy ? ' is-disabled' : ''}`}>
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      disabled={busy}
+                      onChange={(event) => {
+                        const file = event.target.files?.[0];
+                        event.currentTarget.value = '';
+                        if (file) void selectLogo(file);
+                      }}
+                    />
+                    {processingLogo ? '处理中…' : logoPreviewUrl ? '更换' : '上传'}
+                  </label>
+                  {logoPreviewUrl ? (
+                    <button
+                      type="button"
+                      className="admin-text-button"
+                      disabled={busy}
+                      onClick={() => {
+                        setLocalLogo(null);
+                        updateDraft('logoAssetId', null);
+                      }}
+                    >
+                      移除
+                    </button>
+                  ) : null}
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        </section>
 
-        <div className="settings-block settings-frontend-block">
-          <strong className="settings-block-title">前端设置</strong>
-          <div className="settings-frontend-row">
-            <label className="field-group settings-field-ga4">
+        <section className="admin-settings-section" aria-labelledby="settings-frontend-title">
+          <h2 id="settings-frontend-title">前端设置</h2>
+          <div className="admin-settings-row admin-settings-frontend-row">
+            <label className="field-group admin-field-ga4">
               <span>GA4 Measurement ID</span>
               <input
                 type="text"
@@ -322,34 +321,37 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
               />
             </label>
 
-            <div className="settings-navigation-row" aria-label="前端导航">
-              {(
-                [
-                  ['showHot', 'Hot'],
-                  ['showLatest', 'Latest'],
-                  ['showMore', 'More'],
-                  ['showMessages', 'Messages'],
-                  ['showFaq', 'FAQ'],
-                ] as const
-              ).map(([field, label]) => (
-                <label className="toggle-row settings-mini-toggle" key={field}>
-                  <span><strong>{label}</strong></span>
-                  <input
-                    type="checkbox"
-                    checked={draft[field]}
-                    disabled={busy}
-                    onChange={(event) => updateDraft(field, event.target.checked)}
-                  />
-                </label>
-              ))}
-            </div>
+            <fieldset className="admin-toggle-group">
+              <legend>导航显示</legend>
+              <div className="admin-toggle-list">
+                {(
+                  [
+                    ['showHot', 'Hot'],
+                    ['showLatest', 'Latest'],
+                    ['showMore', 'More'],
+                    ['showMessages', 'Messages'],
+                    ['showFaq', 'FAQ'],
+                  ] as const
+                ).map(([field, label]) => (
+                  <label className="admin-toggle-item" key={field}>
+                    <input
+                      type="checkbox"
+                      checked={draft[field]}
+                      disabled={busy}
+                      onChange={(event) => updateDraft(field, event.target.checked)}
+                    />
+                    <span>{label}</span>
+                  </label>
+                ))}
+              </div>
+            </fieldset>
           </div>
-        </div>
+        </section>
 
-        <div className="settings-block settings-media-block">
-          <strong className="settings-block-title">媒体</strong>
-          <div className="settings-media-row">
-            <label className="field-group settings-field-media-domain">
+        <section className="admin-settings-section" aria-labelledby="settings-media-title">
+          <h2 id="settings-media-title">媒体</h2>
+          <div className="admin-settings-row admin-settings-media-row">
+            <label className="field-group admin-field-media-domain">
               <span>R2 自定义域名</span>
               <input
                 type="url"
@@ -374,51 +376,55 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
           {domainTest.status === 'error' ? (
             <p className="inline-status is-error">{domainTest.message}</p>
           ) : null}
-        </div>
+        </section>
 
-        <div className="settings-block settings-affiliate-block">
-          <strong className="settings-block-title">联盟设置</strong>
-          <div className="settings-affiliate-row">
-            <label className="toggle-row settings-mini-toggle settings-affiliate-toggle">
-              <span><strong>联盟检测</strong></span>
+        <section className="admin-settings-section admin-settings-advanced" aria-labelledby="settings-affiliate-title">
+          <div className="admin-settings-section-heading">
+            <h2 id="settings-affiliate-title">联盟设置</h2>
+            <label className="admin-inline-switch">
               <input
                 type="checkbox"
                 checked={draft.affiliateDetectionEnabled}
                 disabled={busy}
                 onChange={(event) => updateDraft('affiliateDetectionEnabled', event.target.checked)}
               />
-            </label>
-
-            <label className="field-group settings-field-affiliate-platform">
-              <span>联盟平台</span>
-              <input
-                type="text"
-                value={draft.affiliatePlatform}
-                placeholder="Impact / CJ / 自定义"
-                disabled={busy}
-                onChange={(event) => updateDraft('affiliatePlatform', event.target.value)}
-              />
-            </label>
-
-            <label className="field-group settings-field-affiliate-config">
-              <span>检测配置 JSON</span>
-              <textarea
-                rows={4}
-                value={draft.affiliateDetectionConfig}
-                placeholder={'{\n  "scriptSelector": "..."\n}'}
-                spellCheck={false}
-                disabled={busy}
-                onChange={(event) => updateDraft('affiliateDetectionConfig', event.target.value)}
-              />
+              <span>联盟检测</span>
             </label>
           </div>
-        </div>
+
+          {draft.affiliateDetectionEnabled ? (
+            <div className="admin-settings-row admin-settings-affiliate-row">
+              <label className="field-group admin-field-affiliate-platform">
+                <span>联盟平台</span>
+                <input
+                  type="text"
+                  value={draft.affiliatePlatform}
+                  placeholder="Impact / CJ / 自定义"
+                  disabled={busy}
+                  onChange={(event) => updateDraft('affiliatePlatform', event.target.value)}
+                />
+              </label>
+
+              <label className="field-group admin-field-affiliate-config">
+                <span>检测配置 JSON</span>
+                <textarea
+                  rows={3}
+                  value={draft.affiliateDetectionConfig}
+                  placeholder={'{\n  "scriptSelector": "..."\n}'}
+                  spellCheck={false}
+                  disabled={busy}
+                  onChange={(event) => updateDraft('affiliateDetectionConfig', event.target.value)}
+                />
+              </label>
+            </div>
+          ) : null}
+        </section>
       </section>
 
       {errorMessage ? <p className="inline-status is-error settings-toast">{errorMessage}</p> : null}
       {successMessage ? <p className="inline-status is-success settings-toast">{successMessage}</p> : null}
 
-      <div className="settings-actions settings-workbench-actions settings-single-page-actions">
+      <div className="settings-actions admin-settings-actions">
         <button className="primary-button settings-save-button" type="submit" disabled={busy}>
           {saveStage === 'uploading-logo'
             ? '上传 Logo…'

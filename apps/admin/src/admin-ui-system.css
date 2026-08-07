@@ -1,0 +1,1116 @@
+/* Unified admin UI system.
+ * This is the single authoritative refinement layer for shared admin layout,
+ * density and interaction. Page-specific styles provide structure; this file
+ * normalizes scale, spacing, hierarchy and responsive behavior.
+ */
+
+:root {
+  --admin-canvas: #f5f6f8;
+  --admin-surface: #ffffff;
+  --admin-surface-subtle: #f8f9fb;
+  --admin-border: #e2e6ec;
+  --admin-border-strong: #cfd5df;
+  --admin-text: #172033;
+  --admin-text-muted: #667085;
+  --admin-text-subtle: #8a94a6;
+  --admin-brand: #ff5a1f;
+  --admin-brand-hover: #e84b12;
+  --admin-brand-soft: #fff2ec;
+  --admin-danger: #b42318;
+  --admin-success: #067647;
+  --admin-radius-xs: 6px;
+  --admin-radius-sm: 8px;
+  --admin-radius-md: 10px;
+  --admin-radius-lg: 12px;
+  --admin-control-h: 36px;
+  --admin-row-h: 44px;
+  --admin-gap-1: 4px;
+  --admin-gap-2: 8px;
+  --admin-gap-3: 12px;
+  --admin-gap-4: 16px;
+  --admin-shadow-card: 0 1px 2px rgb(16 24 40 / 3%);
+  --admin-shadow-float: 0 18px 44px rgb(16 24 40 / 16%);
+}
+
+html,
+body {
+  background: var(--admin-canvas);
+}
+
+body {
+  color: var(--admin-text);
+  background: var(--admin-canvas);
+}
+
+/* ---------- Shell ---------- */
+
+@media (min-width: 1024px) {
+  .admin-shell {
+    grid-template-columns: 220px minmax(0, 1fr) !important;
+  }
+
+  .sidebar {
+    padding: 12px 10px !important;
+  }
+
+  .admin-main {
+    width: 100% !important;
+    max-width: none !important;
+    padding: 12px 22px 14px !important;
+  }
+
+  .admin-header,
+  .admin-main > .settings-form,
+  .admin-main > .section-management,
+  .admin-main > .category-management,
+  .admin-main > .product-management,
+  .admin-main > .conversion-pool,
+  .admin-main > .faq-management,
+  .admin-main > .asset-library-page,
+  .admin-main > .customer-service-page,
+  .admin-main > .customer-service-view {
+    width: min(1280px, 100%) !important;
+    margin-inline: auto !important;
+  }
+
+  .admin-main > .settings-form {
+    width: min(1120px, 100%) !important;
+  }
+
+  .admin-main > .section-management,
+  .admin-main > .category-management,
+  .admin-main > .faq-management {
+    width: min(1120px, 100%) !important;
+  }
+
+  .admin-main > .conversion-pool,
+  .admin-main > .asset-library-page,
+  .admin-main > .product-management {
+    width: min(1280px, 100%) !important;
+  }
+}
+
+.admin-brand {
+  margin-bottom: 8px !important;
+  padding-bottom: 10px !important;
+}
+
+.admin-brand > span {
+  width: 32px !important;
+  height: 32px !important;
+  border-radius: 9px !important;
+  box-shadow: none !important;
+}
+
+.admin-brand strong {
+  font-size: 0.86rem !important;
+  font-weight: 760 !important;
+}
+
+.admin-brand small {
+  display: none !important;
+}
+
+.sidebar-section-label {
+  margin-top: 6px !important;
+  padding: 8px 8px 4px !important;
+  font-size: 0.62rem !important;
+  letter-spacing: 0.08em !important;
+}
+
+.sidebar nav,
+.admin-nav {
+  gap: 3px !important;
+}
+
+.sidebar nav > button,
+.dynamic-menu > button {
+  min-height: 34px !important;
+  border-radius: 8px !important;
+  font-size: 0.79rem !important;
+}
+
+.sidebar nav > button::before,
+.dynamic-menu-icon {
+  width: 22px !important;
+  height: 22px !important;
+  flex-basis: 22px !important;
+  border-radius: 6px !important;
+}
+
+.dynamic-menu {
+  margin-block: 1px !important;
+  padding: 3px !important;
+  border-radius: 9px !important;
+}
+
+.dynamic-menu > div {
+  display: grid !important;
+  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+  gap: 2px !important;
+  margin: 2px 0 0 !important;
+  padding: 2px !important;
+  border: 0 !important;
+  border-radius: 7px !important;
+  background: rgb(255 255 255 / 2.5%) !important;
+}
+
+.dynamic-menu > div button,
+.dynamic-menu > div button.is-active {
+  min-height: 26px !important;
+  padding: 0 4px !important;
+  border-radius: 6px !important;
+  font-size: 0.67rem !important;
+  text-align: center !important;
+}
+
+.dynamic-menu > div button.is-active::before {
+  display: none !important;
+}
+
+.admin-header {
+  min-height: 44px !important;
+  flex: 0 0 44px !important;
+  margin-bottom: 8px !important;
+  padding: 0 1px 8px !important;
+}
+
+.admin-header p {
+  display: none !important;
+}
+
+.admin-header h1 {
+  font-size: 1.22rem !important;
+  font-weight: 760 !important;
+  letter-spacing: -0.02em !important;
+}
+
+.header-actions {
+  gap: 6px !important;
+}
+
+.environment-badge,
+.header-actions .secondary-button {
+  min-height: 32px !important;
+  padding-inline: 10px !important;
+  border-radius: 8px !important;
+  font-size: 0.72rem !important;
+}
+
+/* ---------- Shared controls ---------- */
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+}
+
+input,
+select,
+textarea {
+  color: var(--admin-text);
+}
+
+.field-group,
+.product-field,
+.section-editor-form label,
+.category-editor-form label,
+.faq-editor-form label,
+.conversion-editor-form label {
+  gap: 5px !important;
+}
+
+.field-group > span,
+.product-field > span,
+.product-field-heading > span,
+.product-tags-heading > span,
+.section-editor-form label > span,
+.category-editor-form label > span,
+.faq-editor-form label > span,
+.conversion-editor-form label > span,
+.admin-field-label {
+  color: #344054 !important;
+  font-size: 0.73rem !important;
+  font-weight: 700 !important;
+  line-height: 1.2 !important;
+}
+
+.field-group input,
+.field-group select,
+.field-group textarea,
+.section-editor-form input,
+.section-editor-form select,
+.category-editor-form input,
+.category-editor-form select,
+.faq-editor-form input,
+.faq-editor-form textarea,
+.conversion-editor-form input,
+.conversion-editor-form select,
+.conversion-editor-form textarea,
+.product-editor-form input,
+.product-editor-form select,
+.product-editor-form textarea {
+  min-height: var(--admin-control-h) !important;
+  border: 1px solid var(--admin-border-strong) !important;
+  border-radius: var(--admin-radius-sm) !important;
+  background: #fff !important;
+  box-shadow: none !important;
+  font-size: 0.8rem !important;
+}
+
+.field-group input,
+.field-group select,
+.section-editor-form input,
+.section-editor-form select,
+.category-editor-form input,
+.category-editor-form select,
+.faq-editor-form input,
+.conversion-editor-form input,
+.conversion-editor-form select,
+.product-editor-form input,
+.product-editor-form select {
+  padding-inline: 10px !important;
+}
+
+.field-group textarea,
+.faq-editor-form textarea,
+.conversion-editor-form textarea,
+.product-editor-form textarea {
+  padding: 8px 10px !important;
+  line-height: 1.5 !important;
+}
+
+.field-group input:focus,
+.field-group select:focus,
+.field-group textarea:focus,
+.section-editor-form input:focus,
+.category-editor-form input:focus,
+.faq-editor-form input:focus,
+.faq-editor-form textarea:focus,
+.conversion-editor-form input:focus,
+.conversion-editor-form textarea:focus,
+.product-editor-form input:focus,
+.product-editor-form select:focus,
+.product-editor-form textarea:focus {
+  border-color: #ff9a76 !important;
+  outline: 0 !important;
+  box-shadow: 0 0 0 3px rgb(255 90 31 / 10%) !important;
+}
+
+.primary-button,
+.secondary-button,
+.danger-button,
+.section-title button,
+.branding-file-button,
+.product-upload-button,
+.domain-test-button {
+  min-height: 34px !important;
+  padding: 0 12px !important;
+  border-radius: var(--admin-radius-sm) !important;
+  font-size: 0.76rem !important;
+  font-weight: 720 !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.primary-button {
+  border-color: var(--admin-brand) !important;
+  background: var(--admin-brand) !important;
+}
+
+.primary-button:not(:disabled):hover {
+  border-color: var(--admin-brand-hover) !important;
+  background: var(--admin-brand-hover) !important;
+  box-shadow: none !important;
+  transform: none !important;
+}
+
+.secondary-button,
+.section-title button,
+.branding-file-button,
+.product-upload-button,
+.domain-test-button {
+  border-color: var(--admin-border-strong) !important;
+  color: #344054 !important;
+  background: #fff !important;
+}
+
+.secondary-button:not(:disabled):hover,
+.section-title button:not(:disabled):hover,
+.branding-file-button:not(.is-disabled):hover,
+.product-upload-button:not(.is-disabled):hover,
+.domain-test-button:not(:disabled):hover {
+  border-color: #b9c0cb !important;
+  background: #f8f9fb !important;
+  transform: none !important;
+}
+
+.admin-text-button {
+  min-height: 30px;
+  padding: 0 6px;
+  border: 0;
+  color: #667085;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.admin-text-button:not(:disabled):hover {
+  color: var(--admin-danger);
+}
+
+/* ---------- Shared surfaces / command bars ---------- */
+
+.settings-card,
+.section-filter-bar,
+.category-filter-bar,
+.conversion-filter-bar,
+.product-filter-bar,
+.faq-search,
+.asset-toolbar,
+.section-table-wrap,
+.category-table-wrap,
+.conversion-table-wrap,
+.product-table-wrap,
+.asset-table-wrap,
+.conversion-target-panel,
+.faq-card,
+.empty-admin-state {
+  border: 1px solid var(--admin-border) !important;
+  border-radius: var(--admin-radius-md) !important;
+  background: var(--admin-surface) !important;
+  box-shadow: var(--admin-shadow-card) !important;
+}
+
+.section-management,
+.category-management,
+.product-management,
+.conversion-pool,
+.faq-management,
+.asset-library-page,
+.settings-form {
+  gap: var(--admin-gap-2) !important;
+}
+
+.section-filter-bar,
+.category-filter-bar,
+.conversion-filter-bar,
+.product-filter-bar,
+.faq-search,
+.asset-toolbar {
+  min-height: 44px !important;
+  padding: 5px 7px !important;
+  gap: 7px !important;
+  border-radius: var(--admin-radius-md) !important;
+}
+
+.scope-tabs,
+.asset-filter-group,
+.faq-editor-tabs,
+.product-editor-tabs {
+  gap: 2px !important;
+  padding: 2px !important;
+  border: 1px solid var(--admin-border) !important;
+  border-radius: 8px !important;
+  background: #f0f2f5 !important;
+}
+
+.scope-tabs button,
+.asset-filter-group button,
+.faq-editor-tabs button,
+.product-editor-tabs button {
+  min-height: 29px !important;
+  padding-inline: 9px !important;
+  border-radius: 6px !important;
+  font-size: 0.71rem !important;
+}
+
+.scope-tabs button.is-active,
+.asset-filter-group button.is-active {
+  color: #fff !important;
+  background: #202632 !important;
+  box-shadow: none !important;
+}
+
+.faq-editor-tabs button.is-active,
+.product-editor-tabs button.is-active {
+  background: #fff !important;
+  box-shadow: 0 1px 2px rgb(16 24 40 / 8%) !important;
+}
+
+.section-search span,
+.category-search span,
+.conversion-search span,
+.faq-search span,
+.product-search span,
+.product-status-filter span {
+  display: none !important;
+}
+
+.section-search input,
+.category-search input,
+.conversion-search input,
+.faq-search input,
+.asset-toolbar > input,
+.product-search input,
+.product-status-filter select {
+  min-height: 34px !important;
+  border-radius: 7px !important;
+  font-size: 0.77rem !important;
+}
+
+@media (min-width: 1024px) {
+  .section-filter-bar,
+  .category-filter-bar,
+  .conversion-filter-bar {
+    display: grid !important;
+    grid-template-columns: auto minmax(220px, 340px) !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    padding-right: 124px !important;
+  }
+
+  .product-filter-bar {
+    display: grid !important;
+    grid-template-columns: auto minmax(260px, 1fr) 150px !important;
+    align-items: center !important;
+    padding-right: 124px !important;
+  }
+
+  .faq-search {
+    display: grid !important;
+    grid-template-columns: minmax(260px, 420px) !important;
+    justify-content: start !important;
+    padding-right: 124px !important;
+  }
+
+  .asset-toolbar {
+    display: grid !important;
+    grid-template-columns: minmax(300px, 480px) auto !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+  }
+}
+
+/* Primary create actions sit on the command-bar line. */
+.section-management,
+.category-management,
+.product-management,
+.conversion-pool,
+.faq-management {
+  position: relative;
+}
+
+.section-management-toolbar,
+.category-management-toolbar,
+.product-management-toolbar,
+.conversion-pool-heading,
+.faq-management-heading {
+  position: absolute !important;
+  z-index: 4 !important;
+  top: 5px !important;
+  right: 7px !important;
+  min-height: 0 !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.section-management-toolbar > div,
+.category-management-toolbar > div,
+.product-management-toolbar > div,
+.conversion-pool-heading > div,
+.faq-management-heading > div {
+  display: none !important;
+}
+
+.section-management-toolbar .primary-button,
+.category-management-toolbar .primary-button,
+.product-management-toolbar .primary-button,
+.conversion-pool-heading .primary-button,
+.faq-management-heading .primary-button {
+  min-height: 34px !important;
+}
+
+/* ---------- Tables ---------- */
+
+.section-table-wrap,
+.category-table-wrap,
+.product-table-wrap,
+.asset-table-wrap,
+.conversion-table-wrap {
+  overflow: auto !important;
+}
+
+.section-table,
+.category-table,
+.product-table,
+.asset-table,
+.conversion-table {
+  border-collapse: collapse !important;
+}
+
+.section-table th,
+.category-table th,
+.product-table th,
+.asset-table th,
+.conversion-table th {
+  height: 36px !important;
+  padding: 7px 9px !important;
+  color: #667085 !important;
+  background: #f8f9fb !important;
+  font-size: 0.65rem !important;
+  font-weight: 760 !important;
+  letter-spacing: 0.02em !important;
+  white-space: nowrap !important;
+}
+
+.section-table td,
+.category-table td,
+.product-table td,
+.asset-table td,
+.conversion-table td {
+  min-height: var(--admin-row-h) !important;
+  padding: 7px 9px !important;
+  border-bottom-color: #edf0f4 !important;
+  font-size: 0.76rem !important;
+}
+
+.section-table tbody tr:hover td,
+.category-table tbody tr:hover td,
+.product-table tbody tr:hover td,
+.asset-table tbody tr:hover td,
+.conversion-table tbody tr:hover td {
+  background: #fafbfc !important;
+}
+
+.section-table tbody tr:focus-within td,
+.category-table tbody tr:focus-within td,
+.product-table tbody tr:focus-within td,
+.asset-table tbody tr:focus-within td,
+.conversion-table tbody tr:focus-within td {
+  background: #fffaf7 !important;
+}
+
+.actions-cell button,
+.product-row-actions button,
+.faq-card-actions button {
+  min-height: 27px !important;
+  padding: 3px 7px !important;
+  border-radius: 6px !important;
+  font-size: 0.7rem !important;
+}
+
+.product-table-cover {
+  width: 52px !important;
+  height: 40px !important;
+  border-radius: 6px !important;
+}
+
+.section-icon,
+.conversion-mode-icon {
+  width: 34px !important;
+  height: 34px !important;
+  flex-basis: 34px !important;
+  border-radius: 8px !important;
+}
+
+.status-pill,
+.status-chip,
+.product-status-badge,
+.category-reference,
+.asset-chip,
+.asset-cleanup-status,
+.asset-reference-list span {
+  padding: 3px 7px !important;
+  border-radius: 999px !important;
+  font-size: 0.65rem !important;
+}
+
+.selection-toolbar {
+  min-height: 38px !important;
+  padding: 5px 8px !important;
+  border-radius: 8px !important;
+}
+
+.section-table-empty,
+.category-table-empty,
+.conversion-empty,
+.product-empty-state,
+.asset-empty-state,
+.faq-empty-state {
+  min-height: 120px !important;
+  padding: 24px 16px !important;
+}
+
+/* ---------- Site settings ---------- */
+
+.admin-settings-page {
+  display: grid !important;
+  gap: 8px !important;
+  overflow: visible !important;
+}
+
+.admin-settings-surface {
+  display: grid !important;
+  gap: 0 !important;
+  width: 100% !important;
+  padding: 8px 16px 12px !important;
+  overflow: visible !important;
+  border-radius: 12px !important;
+}
+
+.admin-settings-meta {
+  display: flex;
+  min-height: 20px;
+  align-items: center;
+  justify-content: flex-end;
+  color: var(--admin-text-subtle);
+  font-size: 0.66rem;
+}
+
+.admin-settings-section {
+  display: grid;
+  gap: 8px;
+  padding: 12px 0;
+  border-bottom: 1px solid #edf0f4;
+}
+
+.admin-settings-section:last-child {
+  border-bottom: 0;
+  padding-bottom: 2px;
+}
+
+.admin-settings-section > h2,
+.admin-settings-section-heading h2 {
+  margin: 0;
+  color: #263244;
+  font-size: 0.76rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.admin-settings-section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.admin-settings-row {
+  min-width: 0;
+}
+
+.admin-settings-basic-row {
+  display: grid;
+  grid-template-columns: 220px 260px 104px minmax(250px, 1fr);
+  align-items: end;
+  gap: 12px;
+}
+
+.admin-field-site-name,
+.admin-field-location,
+.admin-field-home-limit,
+.admin-field-ga4,
+.admin-field-media-domain,
+.admin-field-affiliate-platform,
+.admin-field-affiliate-config {
+  min-width: 0;
+}
+
+.admin-field-home-limit input {
+  width: 104px !important;
+}
+
+.admin-logo-field {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+}
+
+.admin-logo-control {
+  display: grid;
+  grid-template-columns: 42px minmax(70px, 1fr) auto;
+  min-height: 36px;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 6px;
+  border: 1px solid var(--admin-border-strong);
+  border-radius: 8px;
+  background: #fff;
+}
+
+.admin-logo-preview {
+  display: grid;
+  width: 34px;
+  height: 28px;
+  place-items: center;
+  overflow: hidden;
+  border: 1px dashed #d5dae2;
+  border-radius: 6px;
+  color: #98a2b3;
+  background: #fafbfc;
+  font-size: 0.63rem;
+}
+
+.admin-logo-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.admin-logo-state {
+  display: grid;
+  gap: 1px;
+  min-width: 0;
+}
+
+.admin-logo-state strong {
+  color: #344054;
+  font-size: 0.71rem;
+  font-weight: 700;
+}
+
+.admin-logo-state small {
+  overflow: hidden;
+  color: var(--admin-text-subtle);
+  font-size: 0.62rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-logo-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.admin-logo-actions .branding-file-button {
+  min-height: 28px !important;
+  padding-inline: 8px !important;
+  font-size: 0.69rem !important;
+}
+
+.admin-settings-frontend-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 12px;
+}
+
+.admin-field-ga4 {
+  flex: 0 0 230px;
+}
+
+.admin-toggle-group {
+  display: grid;
+  flex: 1 1 520px;
+  gap: 5px;
+  min-width: 0;
+  margin: 0;
+  padding: 0;
+  border: 0;
+}
+
+.admin-toggle-group legend {
+  padding: 0;
+  color: #344054;
+  font-size: 0.73rem;
+  font-weight: 700;
+}
+
+.admin-toggle-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.admin-toggle-item,
+.admin-inline-switch {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  gap: 7px;
+  padding: 0 9px;
+  border: 1px solid var(--admin-border);
+  border-radius: 8px;
+  background: #fff;
+  color: #344054;
+  font-size: 0.72rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.admin-toggle-item:hover,
+.admin-inline-switch:hover {
+  background: #fafbfc;
+}
+
+.admin-toggle-item:has(input:checked),
+.admin-inline-switch:has(input:checked) {
+  border-color: #ffb79d;
+  background: var(--admin-brand-soft);
+}
+
+.admin-toggle-item input,
+.admin-inline-switch input {
+  width: 15px;
+  height: 15px;
+  margin: 0;
+  accent-color: var(--admin-brand);
+}
+
+.admin-settings-media-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 7px;
+}
+
+.admin-field-media-domain {
+  flex: 0 1 470px;
+  width: min(470px, 100%);
+}
+
+.admin-settings-media-row .domain-test-button {
+  min-width: 88px;
+  margin: 0 !important;
+}
+
+.admin-settings-advanced {
+  gap: 9px;
+}
+
+.admin-settings-affiliate-row {
+  display: grid;
+  grid-template-columns: 220px minmax(300px, 440px);
+  align-items: start;
+  gap: 12px;
+}
+
+.admin-field-affiliate-config textarea {
+  min-height: 74px !important;
+  height: 74px;
+  max-height: 160px;
+  resize: vertical;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace !important;
+  font-size: 0.72rem !important;
+}
+
+.admin-settings-actions {
+  position: static !important;
+  display: flex !important;
+  min-height: 38px !important;
+  justify-content: flex-end !important;
+  margin: 0 !important;
+  padding: 2px 0 0 !important;
+  border: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
+}
+
+.admin-settings-actions .settings-save-button {
+  min-width: 138px !important;
+  min-height: 34px !important;
+  margin: 0 !important;
+}
+
+.settings-toast,
+.notice-success,
+.inline-status.is-success {
+  position: fixed !important;
+  z-index: 180 !important;
+  top: 10px !important;
+  left: 50% !important;
+  width: max-content !important;
+  max-width: min(560px, calc(100vw - 32px)) !important;
+  margin: 0 !important;
+  transform: translateX(-50%) !important;
+  pointer-events: none;
+}
+
+.inline-status.is-error,
+.notice-error {
+  margin: 0 !important;
+  padding: 8px 10px !important;
+  border-radius: 8px !important;
+  font-size: 0.75rem !important;
+}
+
+/* ---------- Dialogs ---------- */
+
+.admin-dialog-backdrop {
+  padding: 14px !important;
+  background: rgb(15 23 42 / 46%) !important;
+}
+
+.admin-dialog {
+  border: 1px solid var(--admin-border) !important;
+  border-radius: 12px !important;
+  background: #fff !important;
+  box-shadow: var(--admin-shadow-float) !important;
+}
+
+.admin-dialog-header {
+  min-height: 42px !important;
+  margin-bottom: 8px !important;
+  padding-bottom: 9px !important;
+  border-bottom: 1px solid #edf0f4 !important;
+}
+
+.admin-dialog-header p {
+  display: none !important;
+}
+
+.admin-dialog-header h3 {
+  font-size: 0.98rem !important;
+  font-weight: 760 !important;
+}
+
+.admin-dialog-header > button {
+  width: 32px !important;
+  min-height: 32px !important;
+  border-radius: 8px !important;
+}
+
+.admin-dialog-actions {
+  gap: 7px !important;
+  padding-top: 8px !important;
+  border-top: 1px solid #edf0f4 !important;
+  box-shadow: none !important;
+}
+
+.admin-dialog-actions button {
+  min-width: 82px !important;
+  min-height: 34px !important;
+}
+
+.section-editor-dialog,
+.category-editor-dialog,
+.conversion-editor-dialog {
+  width: min(600px, calc(100vw - 32px)) !important;
+}
+
+.faq-editor-dialog {
+  width: min(760px, calc(100vw - 32px)) !important;
+}
+
+/* FAQ should scan like a list rather than oversized cards. */
+.faq-list {
+  gap: 5px !important;
+}
+
+.faq-card {
+  min-height: 56px !important;
+  padding: 8px 10px !important;
+  border-radius: 8px !important;
+}
+
+.faq-card-content {
+  align-items: center !important;
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 1180px) {
+  .admin-settings-basic-row {
+    grid-template-columns: minmax(190px, 1fr) minmax(220px, 1.15fr) 104px;
+  }
+
+  .admin-logo-field {
+    grid-column: 1 / -1;
+    width: min(360px, 100%);
+  }
+}
+
+@media (max-width: 1023px) {
+  html,
+  body,
+  #root {
+    height: auto !important;
+    overflow: auto !important;
+  }
+
+  .admin-main {
+    padding: 14px !important;
+  }
+
+  .admin-header,
+  .admin-main > .settings-form,
+  .admin-main > .section-management,
+  .admin-main > .category-management,
+  .admin-main > .product-management,
+  .admin-main > .conversion-pool,
+  .admin-main > .faq-management,
+  .admin-main > .asset-library-page {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .section-management-toolbar,
+  .category-management-toolbar,
+  .product-management-toolbar,
+  .conversion-pool-heading,
+  .faq-management-heading {
+    position: static !important;
+    display: flex !important;
+    justify-content: flex-end !important;
+  }
+
+  .section-filter-bar,
+  .category-filter-bar,
+  .conversion-filter-bar,
+  .product-filter-bar,
+  .faq-search {
+    padding-right: 7px !important;
+  }
+}
+
+@media (max-width: 760px) {
+  .admin-settings-surface {
+    padding: 8px 12px 12px !important;
+  }
+
+  .admin-settings-meta {
+    justify-content: flex-start;
+  }
+
+  .admin-settings-basic-row,
+  .admin-settings-affiliate-row {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-field-home-limit input {
+    width: 120px !important;
+  }
+
+  .admin-logo-field,
+  .admin-field-ga4,
+  .admin-field-media-domain,
+  .admin-field-affiliate-platform,
+  .admin-field-affiliate-config {
+    width: 100%;
+    max-width: none;
+    flex-basis: 100%;
+  }
+
+  .admin-logo-control {
+    grid-template-columns: 42px minmax(0, 1fr) auto;
+  }
+
+  .admin-toggle-group {
+    flex-basis: 100%;
+  }
+
+  .admin-toggle-list {
+    gap: 5px;
+  }
+
+  .admin-toggle-item {
+    min-height: 32px;
+  }
+}

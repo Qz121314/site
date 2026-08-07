@@ -17,17 +17,14 @@ import './product-tags.css';
 import './product-local-images.css';
 import './branding-media.css';
 import './admin-polish.css';
-import './admin-polish-2.css';
-import './admin-density.css';
 import './admin-no-scroll.css';
-import './admin-centered-layout.css';
 import './admin-section-workspace-nav.css';
 import './admin-publish.css';
 import './admin-unsaved.css';
 import './customer-service-connections.css';
 import './product-editor-compact.css';
 import './product-dependency-handoff.css';
-import './site-settings-single-page.css';
+import './admin-ui-system.css';
 
 installAdminMutationObserver();
 installAdminUnsavedStateObserver();
