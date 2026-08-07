@@ -76,7 +76,21 @@ test('bootstrap reads current.json first and then immutable site/home files from
         publishedAt: '2026-08-07T07:49:00.000Z',
         sections: [],
         allSections: [],
-        featuredProducts: [],
+        featuredProducts: [{
+          id: 'legacy-product',
+          slug: 'legacy-product',
+          sectionId: 'section-1',
+          sectionSlug: 'main',
+          sectionName: 'Main',
+          title: 'Legacy product',
+          serviceMode: 'online',
+          address: null,
+          category: { id: 'category-1', name: 'Primary' },
+          coverUrl: null,
+          isFeatured: true,
+          publishedAt: '2026-08-07T07:40:00.000Z',
+          sortOrder: 0,
+        }],
         latestProducts: [],
       });
     }
@@ -88,6 +102,7 @@ test('bootstrap reads current.json first and then immutable site/home files from
     assert.equal(result.pointer.contentVersion, VERSION);
     assert.equal(result.site.site.name, 'Directory');
     assert.equal(result.origin, 'https://cdn.example.com');
+    assert.deepEqual(result.home.featuredProducts[0].tags, []);
     assert.deepEqual(requests, [
       { url: 'https://cdn.example.com/public/current.json', cache: 'no-cache' },
       { url: `https://cdn.example.com/public/versions/${VERSION}/site.json`, cache: 'force-cache' },
