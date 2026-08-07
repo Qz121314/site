@@ -19,6 +19,7 @@ import {
   type PublicSite,
   type StorefrontBootstrap,
 } from './content';
+import { HomepageAnalytics } from './HomepageAnalytics';
 import { MarkdownContent } from './MarkdownContent';
 
 type Route =
@@ -296,6 +297,7 @@ function HomePage({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
 
   return (
     <SiteShell site={site}>
+      <HomepageAnalytics measurementId={site.analytics.ga4MeasurementId} />
       <section className="hero-panel">
         <div>
           <p className="eyebrow">Discover nearby</p>
