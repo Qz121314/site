@@ -8,6 +8,7 @@ import './sections.css';
 import './operating-admin.css';
 import './asset-library.css';
 import './faq-management.css';
+import './faq-lifecycle.css';
 import './category-management.css';
 import './conversion-pool.css';
 import './product-management.css';
