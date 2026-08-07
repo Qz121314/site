@@ -1,3 +1,5 @@
+import { pathToFileURL } from 'node:url';
+
 const API_BASE = 'https://api.cloudflare.com/client/v4';
 const RULE_DESCRIPTION = 'service-catalog-site: allow public R2 GET/HEAD without web challenges';
 
@@ -87,7 +89,7 @@ async function getEntryPoint(zoneId) {
   }
 }
 
-function printApiFailure(error) {
+export function printR2PublicReadRuleFailure(error) {
   console.error(error instanceof Error ? error.message : String(error));
   if (error?.payload) console.error(JSON.stringify(error.payload, null, 2));
   if (error?.status === 403) {
@@ -97,18 +99,19 @@ function printApiFailure(error) {
   }
 }
 
-async function main() {
-  const publicOrigin = requiredEnv('PUBLIC_CONTENT_ORIGIN');
-  const bucketName = requiredEnv('R2_BUCKET_NAME');
+export async function ensureR2PublicReadRule(publicOrigin, bucketName) {
+  if (!publicOrigin?.trim()) throw new Error('PUBLIC_CONTENT_ORIGIN is required');
+  if (!bucketName?.trim()) throw new Error('R2_BUCKET_NAME is required');
+
   const url = new URL(publicOrigin);
   if (url.protocol !== 'https:') throw new Error('PUBLIC_CONTENT_ORIGIN must use HTTPS');
   const hostname = url.hostname.toLowerCase();
   const zone = await findZoneId(hostname);
   const rule = desiredRule(hostname);
 
-  console.log(`R2 bucket: ${bucketName}`);
-  console.log(`R2 public hostname: ${hostname}`);
-  console.log(`Cloudflare zone: ${zone.name} (${zone.id})`);
+  console.error(`R2 bucket: ${bucketName}`);
+  console.error(`R2 public hostname: ${hostname}`);
+  console.error(`Cloudflare zone: ${zone.name} (${zone.id})`);
 
   const entryPoint = await getEntryPoint(zone.id);
   if (!entryPoint) {
@@ -122,7 +125,7 @@ async function main() {
         rules: [rule],
       }),
     });
-    console.log(`Created R2 public-read skip rule in ruleset ${created?.result?.id ?? 'unknown'}.`);
+    console.error(`Created R2 public-read skip rule in ruleset ${created?.result?.id ?? 'unknown'}.`);
     return;
   }
 
@@ -139,7 +142,7 @@ async function main() {
       method: 'PATCH',
       body: JSON.stringify({ ...rule, position: { index: 1 } }),
     });
-    console.log(`Updated R2 public-read skip rule ${existing.id} and moved it to priority 1.`);
+    console.error(`Updated R2 public-read skip rule ${existing.id} and moved it to priority 1.`);
     return;
   }
 
@@ -147,10 +150,16 @@ async function main() {
     method: 'POST',
     body: JSON.stringify({ ...rule, position: { index: 1 } }),
   });
-  console.log(`Created R2 public-read skip rule ${created?.result?.id ?? 'unknown'} at priority 1.`);
+  console.error(`Created R2 public-read skip rule ${created?.result?.id ?? 'unknown'} at priority 1.`);
 }
 
-main().catch((error) => {
-  printApiFailure(error);
-  process.exitCode = 1;
-});
+const invokedAsScript = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href;
+if (invokedAsScript) {
+  ensureR2PublicReadRule(
+    requiredEnv('PUBLIC_CONTENT_ORIGIN'),
+    requiredEnv('R2_BUCKET_NAME'),
+  ).catch((error) => {
+    printR2PublicReadRuleFailure(error);
+    process.exitCode = 1;
+  });
+}
