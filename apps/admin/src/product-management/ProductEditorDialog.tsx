@@ -259,7 +259,7 @@ export function ProductEditorDialog({
                     disabled={!group.isEnabled || group.activeTargetCount < 1}
                   >
                     {group.name} · {group.buttonLabel} · {group.activeTargetCount} 个启用入口
-                    {!group.isEnabled ? '（已停用）'}
+                    {!group.isEnabled ? '（已停用）' : ''}
                   </option>
                 ))}
               </select>
