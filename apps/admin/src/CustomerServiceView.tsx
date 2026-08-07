@@ -13,10 +13,7 @@ import {
   type CustomerServiceProvider,
 } from './customer-service/api';
 
-type CustomerServiceViewProps = {
-  onSessionExpired: () => void;
-};
-
+type CustomerServiceViewProps = { onSessionExpired: () => void };
 type Scope = 'active' | 'trash';
 type AuthType = 'bearer' | 'basic' | 'api_key' | 'none';
 type EntryMode = 'request' | 'template';
@@ -49,32 +46,32 @@ type Draft = {
 type RestV2ConfigShape = {
   auth?: { type?: AuthType; headerName?: string; username?: string };
   projectHeaderName?: string;
-  groups?: {
-    path?: string;
-    itemsPath?: string;
-    idPath?: string;
-    namePath?: string;
-    enabledPath?: string;
-  };
-  entry?: {
-    mode?: EntryMode;
-    method?: EntryMethod;
-    pathTemplate?: string;
-    urlPath?: string;
-    urlTemplate?: string;
-  };
+  groups?: { path?: string; itemsPath?: string; idPath?: string; namePath?: string; enabledPath?: string };
+  entry?: { mode?: EntryMode; method?: EntryMethod; pathTemplate?: string; urlPath?: string; urlTemplate?: string };
 };
 
-const restDefaults = {
-  authType: 'bearer' as const,
+const restDefaults: {
+  authType: AuthType;
+  apiKeyHeader: string;
+  groupsPath: string;
+  itemsPath: string;
+  idPath: string;
+  namePath: string;
+  enabledPath: string;
+  entryMode: EntryMode;
+  entryMethod: EntryMethod;
+  entryPathTemplate: string;
+  entryUrlPath: string;
+} = {
+  authType: 'bearer',
   apiKeyHeader: 'X-API-Key',
   groupsPath: '/groups',
   itemsPath: 'auto',
   idPath: 'auto',
   namePath: 'auto',
   enabledPath: 'auto',
-  entryMode: 'request' as const,
-  entryMethod: 'POST' as const,
+  entryMode: 'request',
+  entryMethod: 'POST',
   entryPathTemplate: '/groups/{groupId}/entry',
   entryUrlPath: 'auto',
 };
@@ -120,8 +117,7 @@ function asRecord(value: unknown): Record<string, unknown> | null {
 function parseRestConfig(value: string | null): RestV2ConfigShape {
   if (!value) return {};
   try {
-    const parsed = JSON.parse(value) as unknown;
-    return (asRecord(parsed) ?? {}) as RestV2ConfigShape;
+    return (asRecord(JSON.parse(value) as unknown) ?? {}) as RestV2ConfigShape;
   } catch {
     return {};
   }
@@ -139,12 +135,10 @@ function toDraft(connection: CustomerServiceConnection): Draft {
       isEnabled: connection.isEnabled,
     };
   }
-
   const config = parseRestConfig(connection.privateConfig);
   return {
     ...emptyDraft,
     name: connection.name,
-    provider: 'generic_rest_v2',
     baseUrl: connection.baseUrl,
     authType: config.auth?.type ?? restDefaults.authType,
     apiKeyHeader: config.auth?.headerName ?? restDefaults.apiKeyHeader,
@@ -161,25 +155,20 @@ function toDraft(connection: CustomerServiceConnection): Draft {
     entryPathTemplate: config.entry?.pathTemplate ?? restDefaults.entryPathTemplate,
     entryUrlPath: config.entry?.urlPath ?? restDefaults.entryUrlPath,
     entryUrlTemplate: config.entry?.urlTemplate ?? '',
-    legacyPrivateConfig: '',
     isEnabled: connection.isEnabled,
   };
 }
 
 function buildRestPrivateConfig(draft: Draft): string | null {
   const config: RestV2ConfigShape = {};
-  if (
-    draft.authType !== restDefaults.authType ||
-    (draft.authType === 'api_key' && draft.apiKeyHeader.trim() !== restDefaults.apiKeyHeader) ||
-    (draft.authType === 'basic' && draft.basicUsername.trim())
-  ) {
-    config.auth = { type: draft.authType };
-    if (draft.authType === 'api_key' && draft.apiKeyHeader.trim()) {
-      config.auth.headerName = draft.apiKeyHeader.trim();
-    }
-    if (draft.authType === 'basic' && draft.basicUsername.trim()) {
-      config.auth.username = draft.basicUsername.trim();
-    }
+  const customAuth = draft.authType !== restDefaults.authType;
+  const customApiHeader = draft.authType === 'api_key' && draft.apiKeyHeader.trim() !== restDefaults.apiKeyHeader;
+  const customBasicUser = draft.authType === 'basic' && Boolean(draft.basicUsername.trim());
+  if (customAuth || customApiHeader || customBasicUser) {
+    const auth: NonNullable<RestV2ConfigShape['auth']> = { type: draft.authType };
+    if (draft.authType === 'api_key' && draft.apiKeyHeader.trim()) auth.headerName = draft.apiKeyHeader.trim();
+    if (draft.authType === 'basic' && draft.basicUsername.trim()) auth.username = draft.basicUsername.trim();
+    config.auth = auth;
   }
   if (draft.projectHeaderName.trim()) config.projectHeaderName = draft.projectHeaderName.trim();
 
@@ -197,13 +186,10 @@ function buildRestPrivateConfig(draft: Draft): string | null {
     if (draft.entryUrlTemplate.trim()) entry.urlTemplate = draft.entryUrlTemplate.trim();
   } else {
     if (draft.entryMethod !== restDefaults.entryMethod) entry.method = draft.entryMethod;
-    if (draft.entryPathTemplate.trim() !== restDefaults.entryPathTemplate) {
-      entry.pathTemplate = draft.entryPathTemplate.trim();
-    }
+    if (draft.entryPathTemplate.trim() !== restDefaults.entryPathTemplate) entry.pathTemplate = draft.entryPathTemplate.trim();
     if (draft.entryUrlPath.trim() !== restDefaults.entryUrlPath) entry.urlPath = draft.entryUrlPath.trim();
   }
   if (Object.keys(entry).length > 0) config.entry = entry;
-
   return Object.keys(config).length > 0 ? JSON.stringify(config) : null;
 }
 
@@ -215,10 +201,9 @@ function toInput(draft: Draft, editing: CustomerServiceConnection | null): Custo
     baseUrl: draft.baseUrl.trim(),
     projectId: draft.projectId.trim() || null,
     ...(editing && !token ? {} : { apiToken: token || null }),
-    privateConfig:
-      draft.provider === 'generic_v1'
-        ? draft.legacyPrivateConfig.trim() || null
-        : buildRestPrivateConfig(draft),
+    privateConfig: draft.provider === 'generic_v1'
+      ? draft.legacyPrivateConfig.trim() || null
+      : buildRestPrivateConfig(draft),
     isEnabled: draft.isEnabled,
   };
 }
@@ -228,25 +213,18 @@ function providerLabel(provider: CustomerServiceProvider): string {
 }
 
 function needsCredential(draft: Draft, editing: CustomerServiceConnection | null): boolean {
-  if (draft.provider === 'generic_v1') return !editing?.hasApiToken;
-  if (draft.authType === 'none') return false;
+  if (draft.provider === 'generic_rest_v2' && draft.authType === 'none') return false;
   return !editing?.hasApiToken;
 }
 
 function hasAdvancedRestConfig(draft: Draft): boolean {
   return Boolean(
-    draft.projectId ||
-      draft.projectHeaderName ||
-      draft.groupsPath !== restDefaults.groupsPath ||
-      draft.itemsPath !== restDefaults.itemsPath ||
-      draft.idPath !== restDefaults.idPath ||
-      draft.namePath !== restDefaults.namePath ||
-      draft.enabledPath !== restDefaults.enabledPath ||
-      draft.entryMode !== restDefaults.entryMode ||
-      draft.entryMethod !== restDefaults.entryMethod ||
-      draft.entryPathTemplate !== restDefaults.entryPathTemplate ||
-      draft.entryUrlPath !== restDefaults.entryUrlPath ||
-      draft.entryUrlTemplate,
+    draft.projectId || draft.projectHeaderName ||
+    draft.groupsPath !== restDefaults.groupsPath || draft.itemsPath !== restDefaults.itemsPath ||
+    draft.idPath !== restDefaults.idPath || draft.namePath !== restDefaults.namePath ||
+    draft.enabledPath !== restDefaults.enabledPath || draft.entryMode !== restDefaults.entryMode ||
+    draft.entryMethod !== restDefaults.entryMethod || draft.entryPathTemplate !== restDefaults.entryPathTemplate ||
+    draft.entryUrlPath !== restDefaults.entryUrlPath || draft.entryUrlTemplate,
   );
 }
 
@@ -267,16 +245,10 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
-  const handleError = useCallback(
-    (error: unknown) => {
-      if (isSessionError(error)) {
-        onSessionExpired();
-        return;
-      }
-      setErrorMessage(error instanceof Error ? error.message : '客服系统操作失败。');
-    },
-    [onSessionExpired],
-  );
+  const handleError = useCallback((error: unknown) => {
+    if (isSessionError(error)) return onSessionExpired();
+    setErrorMessage(error instanceof Error ? error.message : '客服系统操作失败。');
+  }, [onSessionExpired]);
 
   const loadActive = useCallback(async () => {
     setLoading(true);
@@ -290,10 +262,7 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
     }
   }, [handleError]);
 
-  useEffect(() => {
-    void loadActive();
-  }, [loadActive]);
-
+  useEffect(() => { void loadActive(); }, [loadActive]);
   useEffect(() => {
     setSelectedIds(new Set());
     setSearch('');
@@ -304,27 +273,22 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
   const source = scope === 'active' ? activeConnections : trashConnections;
   const filtered = useMemo(() => {
     const keyword = search.trim().toLowerCase();
-    if (!keyword) return source;
-    return source.filter((connection) =>
-      `${connection.name} ${connection.baseUrl} ${connection.projectId ?? ''} ${providerLabel(connection.provider)}`
-        .toLowerCase()
-        .includes(keyword),
-    );
+    return keyword
+      ? source.filter((connection) => `${connection.name} ${connection.baseUrl} ${providerLabel(connection.provider)}`.toLowerCase().includes(keyword))
+      : source;
   }, [search, source]);
-  const allVisibleSelected =
-    filtered.length > 0 && filtered.every((connection) => selectedIds.has(connection.id));
+  const allVisibleSelected = filtered.length > 0 && filtered.every((connection) => selectedIds.has(connection.id));
 
   async function changeScope(next: Scope) {
     setScope(next);
-    if (next === 'trash') {
-      setLoading(true);
-      try {
-        setTrashConnections(sortConnections(await fetchCustomerServiceConnections('trash')));
-      } catch (error) {
-        handleError(error);
-      } finally {
-        setLoading(false);
-      }
+    if (next !== 'trash') return;
+    setLoading(true);
+    try {
+      setTrashConnections(sortConnections(await fetchCustomerServiceConnections('trash')));
+    } catch (error) {
+      handleError(error);
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -341,7 +305,9 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
     const nextDraft = toDraft(connection);
     setEditingConnection(connection);
     setDraft(nextDraft);
-    setAdvancedOpen(connection.provider === 'generic_v1' ? Boolean(connection.privateConfig || connection.projectId) : hasAdvancedRestConfig(nextDraft));
+    setAdvancedOpen(connection.provider === 'generic_v1'
+      ? Boolean(connection.privateConfig || connection.projectId)
+      : hasAdvancedRestConfig(nextDraft));
     setEditorOpen(true);
     setErrorMessage('');
     setSuccessMessage('');
@@ -355,13 +321,8 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
     setSuccessMessage('');
     try {
       if (editingConnection) {
-        const updated = await updateCustomerServiceConnection(
-          editingConnection.id,
-          toInput(draft, editingConnection),
-        );
-        setActiveConnections((current) =>
-          sortConnections(current.map((item) => (item.id === updated.id ? updated : item))),
-        );
+        const updated = await updateCustomerServiceConnection(editingConnection.id, toInput(draft, editingConnection));
+        setActiveConnections((current) => sortConnections(current.map((item) => item.id === updated.id ? updated : item)));
         setSuccessMessage(`客服系统“${updated.name}”已更新。`);
       } else {
         const created = await createCustomerServiceConnection(toInput(draft, null));
@@ -410,11 +371,8 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
     setSuccessMessage('');
     try {
       const ids = [...pendingDeleteIds];
-      if (ids.length === 1) {
-        await deleteCustomerServiceConnection(ids[0] as string);
-      } else {
-        await batchDeleteCustomerServiceConnections(ids);
-      }
+      if (ids.length === 1) await deleteCustomerServiceConnection(ids[0] as string);
+      else await batchDeleteCustomerServiceConnections(ids);
       setActiveConnections((current) => current.filter((item) => !ids.includes(item.id)));
       setSelectedIds((current) => {
         const next = new Set(current);
@@ -436,12 +394,8 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
     <section className="customer-service-workbench">
       <div className="customer-service-commandbar">
         <div className="segmented-control" aria-label="客服系统范围">
-          <button type="button" className={scope === 'active' ? 'is-active' : undefined} onClick={() => void changeScope('active')}>
-            客服系统
-          </button>
-          <button type="button" className={scope === 'trash' ? 'is-active' : undefined} onClick={() => void changeScope('trash')}>
-            回收站
-          </button>
+          <button type="button" className={scope === 'active' ? 'is-active' : undefined} onClick={() => void changeScope('active')}>客服系统</button>
+          <button type="button" className={scope === 'trash' ? 'is-active' : undefined} onClick={() => void changeScope('trash')}>回收站</button>
         </div>
         <input className="customer-service-search" type="search" value={search} placeholder="搜索名称 / API 地址" onChange={(event) => setSearch(event.target.value)} />
         {scope === 'active' ? <button className="primary-button" type="button" onClick={openCreate}>添加客服系统</button> : null}
@@ -449,7 +403,6 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
 
       {errorMessage ? <p className="inline-status is-error">{errorMessage}</p> : null}
       {successMessage ? <p className="inline-status is-success">{successMessage}</p> : null}
-
       {scope === 'active' && selectedIds.size > 0 ? (
         <div className="selection-toolbar customer-service-selection-toolbar">
           <strong>已选择 {selectedIds.size} 项</strong>
@@ -459,268 +412,94 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
 
       <div className="customer-service-table-wrap">
         <table className="customer-service-table">
-          <thead>
-            <tr>
-              <th className="selection-cell">
-                {scope === 'active' ? (
-                  <input
-                    type="checkbox"
-                    checked={allVisibleSelected}
-                    aria-label="选择当前结果"
-                    onChange={(event) => {
-                      const checked = event.target.checked;
-                      setSelectedIds((current) => {
-                        const next = new Set(current);
-                        filtered.forEach((item) => {
-                          if (checked) next.add(item.id);
-                          else next.delete(item.id);
-                        });
-                        return next;
-                      });
-                    }}
-                  />
-                ) : null}
-              </th>
-              <th>客服系统</th>
-              <th>接入方式</th>
-              <th>API 地址</th>
-              <th>凭证</th>
-              <th>转化入口</th>
-              <th>状态</th>
-              <th className="actions-cell">操作</th>
-            </tr>
-          </thead>
+          <thead><tr>
+            <th className="selection-cell">{scope === 'active' ? <input type="checkbox" checked={allVisibleSelected} aria-label="选择当前结果" onChange={(event) => {
+              const checked = event.target.checked;
+              setSelectedIds((current) => {
+                const next = new Set(current);
+                filtered.forEach((item) => checked ? next.add(item.id) : next.delete(item.id));
+                return next;
+              });
+            }} /> : null}</th>
+            <th>客服系统</th><th>接入方式</th><th>API 地址</th><th>凭证</th><th>转化入口</th><th>状态</th><th className="actions-cell">操作</th>
+          </tr></thead>
           <tbody>
-            {loading ? (
-              <tr><td colSpan={8}>正在读取客服系统…</td></tr>
-            ) : filtered.length === 0 ? (
-              <tr><td colSpan={8}>暂无客服系统。</td></tr>
-            ) : (
-              filtered.map((connection) => (
-                <tr key={connection.id}>
-                  <td className="selection-cell">
-                    {scope === 'active' ? (
-                      <input
-                        type="checkbox"
-                        checked={selectedIds.has(connection.id)}
-                        aria-label={`选择 ${connection.name}`}
-                        onChange={(event) => {
-                          const checked = event.target.checked;
-                          setSelectedIds((current) => {
-                            const next = new Set(current);
-                            if (checked) next.add(connection.id);
-                            else next.delete(connection.id);
-                            return next;
-                          });
-                        }}
-                      />
-                    ) : null}
-                  </td>
-                  <td><strong>{connection.name}</strong></td>
-                  <td><span className="customer-service-provider-chip">{providerLabel(connection.provider)}</span></td>
-                  <td className="customer-service-url">{connection.baseUrl}</td>
-                  <td>{connection.hasApiToken ? '已配置' : '无需 / 未配置'}</td>
-                  <td>{connection.targetCount}</td>
-                  <td><span className={connection.isEnabled ? 'status-chip is-configured' : 'status-chip'}>{connection.isEnabled ? '启用' : '停用'}</span></td>
-                  <td className="actions-cell">
-                    {scope === 'active' ? (
-                      <div className="row-actions">
-                        <button type="button" disabled={testingId === connection.id} onClick={() => void testConnection(connection)}>{testingId === connection.id ? '测试中…' : '测试'}</button>
-                        <button type="button" onClick={() => openEdit(connection)}>编辑</button>
-                        <button className="danger-link" type="button" disabled={connection.targetCount > 0} onClick={() => setPendingDeleteIds([connection.id])}>删除</button>
-                      </div>
-                    ) : <button type="button" onClick={() => void restore(connection)}>恢复</button>}
-                  </td>
-                </tr>
-              ))
-            )}
+            {loading ? <tr><td colSpan={8}>正在读取客服系统…</td></tr> : filtered.length === 0 ? <tr><td colSpan={8}>暂无客服系统。</td></tr> : filtered.map((connection) => (
+              <tr key={connection.id}>
+                <td className="selection-cell">{scope === 'active' ? <input type="checkbox" checked={selectedIds.has(connection.id)} aria-label={`选择 ${connection.name}`} onChange={(event) => {
+                  const checked = event.target.checked;
+                  setSelectedIds((current) => {
+                    const next = new Set(current);
+                    if (checked) next.add(connection.id); else next.delete(connection.id);
+                    return next;
+                  });
+                }} /> : null}</td>
+                <td><strong>{connection.name}</strong></td>
+                <td><span className="customer-service-provider-chip">{providerLabel(connection.provider)}</span></td>
+                <td className="customer-service-url">{connection.baseUrl}</td>
+                <td>{connection.hasApiToken ? '已配置' : '无需 / 未配置'}</td>
+                <td>{connection.targetCount}</td>
+                <td><span className={connection.isEnabled ? 'status-chip is-configured' : 'status-chip'}>{connection.isEnabled ? '启用' : '停用'}</span></td>
+                <td className="actions-cell">{scope === 'active' ? <div className="row-actions">
+                  <button type="button" disabled={testingId === connection.id} onClick={() => void testConnection(connection)}>{testingId === connection.id ? '测试中…' : '测试'}</button>
+                  <button type="button" onClick={() => openEdit(connection)}>编辑</button>
+                  <button className="danger-link" type="button" disabled={connection.targetCount > 0} onClick={() => setPendingDeleteIds([connection.id])}>删除</button>
+                </div> : <button type="button" onClick={() => void restore(connection)}>恢复</button>}</td>
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
 
-      {editorOpen ? (
-        <div className="admin-dialog-backdrop" role="presentation">
-          <section className="admin-dialog customer-service-editor" role="dialog" aria-modal="true">
-            <div className="admin-dialog-header">
-              <div><p>客服管理</p><h3>{editingConnection ? '编辑客服系统' : '添加客服系统'}</h3></div>
-              <button type="button" aria-label="关闭" disabled={saving} onClick={() => setEditorOpen(false)}>×</button>
+      {editorOpen ? <div className="admin-dialog-backdrop" role="presentation">
+        <section className="admin-dialog customer-service-editor" role="dialog" aria-modal="true">
+          <div className="admin-dialog-header"><div><p>客服管理</p><h3>{editingConnection ? '编辑客服系统' : '添加客服系统'}</h3></div><button type="button" aria-label="关闭" disabled={saving} onClick={() => setEditorOpen(false)}>×</button></div>
+          <form className="customer-service-editor-form" onSubmit={(event) => void submit(event)}>
+            <label><span>连接名称</span><input type="text" autoFocus required maxLength={120} value={draft.name} placeholder="例如：主站客服" onChange={(event) => setDraft((current) => ({ ...current, name: event.target.value }))} /></label>
+            <label><span>接入方式</span><select value={draft.provider} onChange={(event) => {
+              const provider = event.target.value as CustomerServiceProvider;
+              setDraft((current) => ({ ...current, provider }));
+              setAdvancedOpen(provider === 'generic_v1');
+            }}><option value="generic_rest_v2">通用 REST / JSON（推荐）</option><option value="generic_v1">标准客服接口 v1（旧版）</option></select></label>
+            <label className="customer-service-editor-wide"><span>API 地址</span><input type="url" required placeholder="https://support.example.com/api" value={draft.baseUrl} onChange={(event) => setDraft((current) => ({ ...current, baseUrl: event.target.value }))} /></label>
+
+            {draft.provider === 'generic_rest_v2' ? <>
+              <label><span>认证方式</span><select value={draft.authType} onChange={(event) => setDraft((current) => ({ ...current, authType: event.target.value as AuthType }))}><option value="bearer">Bearer / OAuth Token</option><option value="api_key">API Key Header</option><option value="basic">Basic Auth</option><option value="none">无需认证</option></select></label>
+              {draft.authType !== 'none' ? <label><span>{draft.authType === 'basic' ? '密码 / API Key' : draft.authType === 'api_key' ? 'API Key' : `Token${editingConnection?.hasApiToken ? '（已配置）' : ''}`}</span><input type="password" autoComplete="new-password" required={credentialRequired} maxLength={4000} value={draft.apiToken} placeholder={editingConnection?.hasApiToken ? '留空保持原凭证' : undefined} onChange={(event) => setDraft((current) => ({ ...current, apiToken: event.target.value }))} /></label> : <div />}
+              {draft.authType === 'api_key' ? <label><span>Header 名称</span><input type="text" value={draft.apiKeyHeader} placeholder="X-API-Key" onChange={(event) => setDraft((current) => ({ ...current, apiKeyHeader: event.target.value }))} /></label> : null}
+              {draft.authType === 'basic' ? <label><span>用户名</span><input type="text" value={draft.basicUsername} onChange={(event) => setDraft((current) => ({ ...current, basicUsername: event.target.value }))} /></label> : null}
+            </> : <>
+              <label><span>项目 ID</span><input type="text" maxLength={200} value={draft.projectId} onChange={(event) => setDraft((current) => ({ ...current, projectId: event.target.value }))} /></label>
+              <label><span>API Token{editingConnection?.hasApiToken ? '（已配置）' : ''}</span><input type="password" autoComplete="new-password" maxLength={4000} value={draft.apiToken} placeholder={editingConnection?.hasApiToken ? '留空保持原凭证' : undefined} onChange={(event) => setDraft((current) => ({ ...current, apiToken: event.target.value }))} /></label>
+            </>}
+
+            <div className="customer-service-editor-wide customer-service-simple-options">
+              <label className="switch-row customer-service-enable-row"><span><strong>启用连接</strong></span><input type="checkbox" checked={draft.isEnabled} onChange={(event) => setDraft((current) => ({ ...current, isEnabled: event.target.checked }))} /></label>
+              <button className="customer-service-advanced-toggle" type="button" onClick={() => setAdvancedOpen((value) => !value)} aria-expanded={advancedOpen}>{advancedOpen ? '收起高级设置' : '高级设置'}</button>
             </div>
-            <form className="customer-service-editor-form" onSubmit={(event) => void submit(event)}>
-              <label>
-                <span>连接名称</span>
-                <input type="text" autoFocus required maxLength={120} value={draft.name} placeholder="例如：主站客服" onChange={(event) => setDraft((current) => ({ ...current, name: event.target.value }))} />
-              </label>
-              <label>
-                <span>接入方式</span>
-                <select value={draft.provider} onChange={(event) => {
-                  const provider = event.target.value as CustomerServiceProvider;
-                  setDraft((current) => ({ ...current, provider }));
-                  setAdvancedOpen(provider === 'generic_v1');
-                }}>
-                  <option value="generic_rest_v2">通用 REST / JSON（推荐）</option>
-                  <option value="generic_v1">标准客服接口 v1（旧版）</option>
-                </select>
-              </label>
 
-              <label className="customer-service-editor-wide">
-                <span>API 地址</span>
-                <input type="url" required placeholder="https://support.example.com/api" value={draft.baseUrl} onChange={(event) => setDraft((current) => ({ ...current, baseUrl: event.target.value }))} />
-              </label>
+            {advancedOpen ? draft.provider === 'generic_v1' ? <label className="customer-service-editor-wide"><span>旧版扩展配置 JSON</span><textarea rows={4} spellCheck={false} value={draft.legacyPrivateConfig} onChange={(event) => setDraft((current) => ({ ...current, legacyPrivateConfig: event.target.value }))} /></label> : <div className="customer-service-editor-wide customer-service-advanced-panel"><div className="customer-service-advanced-grid">
+              <label><span>项目 / 工作区 ID</span><input type="text" value={draft.projectId} onChange={(event) => setDraft((current) => ({ ...current, projectId: event.target.value }))} /></label>
+              <label><span>项目 Header</span><input type="text" value={draft.projectHeaderName} placeholder="例如 X-Project-Id" onChange={(event) => setDraft((current) => ({ ...current, projectHeaderName: event.target.value }))} /></label>
+              <label><span>分组接口</span><input type="text" value={draft.groupsPath} placeholder="/groups" onChange={(event) => setDraft((current) => ({ ...current, groupsPath: event.target.value }))} /></label>
+              <label><span>列表路径</span><input type="text" value={draft.itemsPath} placeholder="auto" onChange={(event) => setDraft((current) => ({ ...current, itemsPath: event.target.value }))} /></label>
+              <label><span>ID 字段</span><input type="text" value={draft.idPath} placeholder="auto" onChange={(event) => setDraft((current) => ({ ...current, idPath: event.target.value }))} /></label>
+              <label><span>名称字段</span><input type="text" value={draft.namePath} placeholder="auto" onChange={(event) => setDraft((current) => ({ ...current, namePath: event.target.value }))} /></label>
+              <label><span>状态字段</span><input type="text" value={draft.enabledPath} placeholder="auto" onChange={(event) => setDraft((current) => ({ ...current, enabledPath: event.target.value }))} /></label>
+              <label><span>会话入口方式</span><select value={draft.entryMode} onChange={(event) => setDraft((current) => ({ ...current, entryMode: event.target.value as EntryMode }))}><option value="request">接口请求</option><option value="template">URL 模板</option></select></label>
+              {draft.entryMode === 'request' ? <>
+                <label><span>请求方法</span><select value={draft.entryMethod} onChange={(event) => setDraft((current) => ({ ...current, entryMethod: event.target.value as EntryMethod }))}><option value="POST">POST</option><option value="GET">GET</option></select></label>
+                <label className="customer-service-advanced-wide"><span>会话入口路径</span><input type="text" value={draft.entryPathTemplate} placeholder="/groups/{groupId}/entry" onChange={(event) => setDraft((current) => ({ ...current, entryPathTemplate: event.target.value }))} /></label>
+                <label><span>返回 URL 字段</span><input type="text" value={draft.entryUrlPath} placeholder="auto" onChange={(event) => setDraft((current) => ({ ...current, entryUrlPath: event.target.value }))} /></label>
+              </> : <label className="customer-service-advanced-wide"><span>会话 URL 模板</span><input type="url" value={draft.entryUrlTemplate} placeholder="https://chat.example.com/?group={groupId}" onChange={(event) => setDraft((current) => ({ ...current, entryUrlTemplate: event.target.value }))} /></label>}
+            </div></div> : null}
 
-              {draft.provider === 'generic_rest_v2' ? (
-                <>
-                  <label>
-                    <span>认证方式</span>
-                    <select value={draft.authType} onChange={(event) => setDraft((current) => ({ ...current, authType: event.target.value as AuthType }))}>
-                      <option value="bearer">Bearer / OAuth Token</option>
-                      <option value="api_key">API Key Header</option>
-                      <option value="basic">Basic Auth</option>
-                      <option value="none">无需认证</option>
-                    </select>
-                  </label>
-                  {draft.authType !== 'none' ? (
-                    <label>
-                      <span>{draft.authType === 'basic' ? '密码 / API Key' : draft.authType === 'api_key' ? 'API Key' : `Token${editingConnection?.hasApiToken ? '（已配置）' : ''}`}</span>
-                      <input
-                        type="password"
-                        autoComplete="new-password"
-                        required={credentialRequired}
-                        maxLength={4000}
-                        value={draft.apiToken}
-                        placeholder={editingConnection?.hasApiToken ? '留空保持原凭证' : undefined}
-                        onChange={(event) => setDraft((current) => ({ ...current, apiToken: event.target.value }))}
-                      />
-                    </label>
-                  ) : <div />}
-                  {draft.authType === 'api_key' ? (
-                    <label>
-                      <span>Header 名称</span>
-                      <input type="text" value={draft.apiKeyHeader} placeholder="X-API-Key" onChange={(event) => setDraft((current) => ({ ...current, apiKeyHeader: event.target.value }))} />
-                    </label>
-                  ) : null}
-                  {draft.authType === 'basic' ? (
-                    <label>
-                      <span>用户名</span>
-                      <input type="text" value={draft.basicUsername} onChange={(event) => setDraft((current) => ({ ...current, basicUsername: event.target.value }))} />
-                    </label>
-                  ) : null}
-                </>
-              ) : (
-                <>
-                  <label>
-                    <span>项目 ID</span>
-                    <input type="text" maxLength={200} value={draft.projectId} onChange={(event) => setDraft((current) => ({ ...current, projectId: event.target.value }))} />
-                  </label>
-                  <label>
-                    <span>API Token{editingConnection?.hasApiToken ? '（已配置）' : ''}</span>
-                    <input type="password" autoComplete="new-password" maxLength={4000} value={draft.apiToken} placeholder={editingConnection?.hasApiToken ? '留空保持原凭证' : undefined} onChange={(event) => setDraft((current) => ({ ...current, apiToken: event.target.value }))} />
-                  </label>
-                </>
-              )}
+            <div className="admin-dialog-actions customer-service-editor-wide"><button className="secondary-button" type="button" disabled={saving} onClick={() => setEditorOpen(false)}>取消</button><button className="primary-button" type="submit" disabled={saving}>{saving ? '正在保存…' : '保存连接'}</button></div>
+          </form>
+        </section>
+      </div> : null}
 
-              <div className="customer-service-editor-wide customer-service-simple-options">
-                <label className="switch-row customer-service-enable-row">
-                  <span><strong>启用连接</strong></span>
-                  <input type="checkbox" checked={draft.isEnabled} onChange={(event) => setDraft((current) => ({ ...current, isEnabled: event.target.checked }))} />
-                </label>
-                <button className="customer-service-advanced-toggle" type="button" onClick={() => setAdvancedOpen((value) => !value)} aria-expanded={advancedOpen}>
-                  {advancedOpen ? '收起高级设置' : '高级设置'}
-                </button>
-              </div>
-
-              {advancedOpen ? (
-                draft.provider === 'generic_v1' ? (
-                  <label className="customer-service-editor-wide">
-                    <span>旧版扩展配置 JSON</span>
-                    <textarea rows={4} spellCheck={false} value={draft.legacyPrivateConfig} onChange={(event) => setDraft((current) => ({ ...current, legacyPrivateConfig: event.target.value }))} />
-                  </label>
-                ) : (
-                  <div className="customer-service-editor-wide customer-service-advanced-panel">
-                    <div className="customer-service-advanced-grid">
-                      <label>
-                        <span>项目 / 工作区 ID</span>
-                        <input type="text" value={draft.projectId} onChange={(event) => setDraft((current) => ({ ...current, projectId: event.target.value }))} />
-                      </label>
-                      <label>
-                        <span>项目 Header</span>
-                        <input type="text" value={draft.projectHeaderName} placeholder="例如 X-Project-Id" onChange={(event) => setDraft((current) => ({ ...current, projectHeaderName: event.target.value }))} />
-                      </label>
-                      <label>
-                        <span>分组接口</span>
-                        <input type="text" value={draft.groupsPath} placeholder="/groups" onChange={(event) => setDraft((current) => ({ ...current, groupsPath: event.target.value }))} />
-                      </label>
-                      <label>
-                        <span>列表路径</span>
-                        <input type="text" value={draft.itemsPath} placeholder="auto" onChange={(event) => setDraft((current) => ({ ...current, itemsPath: event.target.value }))} />
-                      </label>
-                      <label>
-                        <span>ID 字段</span>
-                        <input type="text" value={draft.idPath} placeholder="auto" onChange={(event) => setDraft((current) => ({ ...current, idPath: event.target.value }))} />
-                      </label>
-                      <label>
-                        <span>名称字段</span>
-                        <input type="text" value={draft.namePath} placeholder="auto" onChange={(event) => setDraft((current) => ({ ...current, namePath: event.target.value }))} />
-                      </label>
-                      <label>
-                        <span>状态字段</span>
-                        <input type="text" value={draft.enabledPath} placeholder="auto" onChange={(event) => setDraft((current) => ({ ...current, enabledPath: event.target.value }))} />
-                      </label>
-                      <label>
-                        <span>会话入口方式</span>
-                        <select value={draft.entryMode} onChange={(event) => setDraft((current) => ({ ...current, entryMode: event.target.value as EntryMode }))}>
-                          <option value="request">接口请求</option>
-                          <option value="template">URL 模板</option>
-                        </select>
-                      </label>
-                      {draft.entryMode === 'request' ? (
-                        <>
-                          <label>
-                            <span>请求方法</span>
-                            <select value={draft.entryMethod} onChange={(event) => setDraft((current) => ({ ...current, entryMethod: event.target.value as EntryMethod }))}>
-                              <option value="POST">POST</option>
-                              <option value="GET">GET</option>
-                            </select>
-                          </label>
-                          <label className="customer-service-advanced-wide">
-                            <span>会话入口路径</span>
-                            <input type="text" value={draft.entryPathTemplate} placeholder="/groups/{groupId}/entry" onChange={(event) => setDraft((current) => ({ ...current, entryPathTemplate: event.target.value }))} />
-                          </label>
-                          <label>
-                            <span>返回 URL 字段</span>
-                            <input type="text" value={draft.entryUrlPath} placeholder="auto" onChange={(event) => setDraft((current) => ({ ...current, entryUrlPath: event.target.value }))} />
-                          </label>
-                        </>
-                      ) : (
-                        <label className="customer-service-advanced-wide">
-                          <span>会话 URL 模板</span>
-                          <input type="url" value={draft.entryUrlTemplate} placeholder="https://chat.example.com/?group={groupId}" onChange={(event) => setDraft((current) => ({ ...current, entryUrlTemplate: event.target.value }))} />
-                        </label>
-                      )}
-                    </div>
-                  </div>
-                )
-              ) : null}
-
-              <div className="admin-dialog-actions customer-service-editor-wide">
-                <button className="secondary-button" type="button" disabled={saving} onClick={() => setEditorOpen(false)}>取消</button>
-                <button className="primary-button" type="submit" disabled={saving}>{saving ? '正在保存…' : '保存连接'}</button>
-              </div>
-            </form>
-          </section>
-        </div>
-      ) : null}
-
-      {pendingDeleteIds.length > 0 ? (
-        <div className="admin-dialog-backdrop" role="presentation">
-          <section className="admin-dialog compact-confirm-dialog" role="dialog" aria-modal="true">
-            <div className="admin-dialog-header"><div><p>客服管理</p><h3>确认删除 {pendingDeleteIds.length} 项</h3></div></div>
-            <div className="admin-dialog-actions">
-              <button className="secondary-button" type="button" disabled={saving} onClick={() => setPendingDeleteIds([])}>取消</button>
-              <button className="danger-button" type="button" disabled={saving} onClick={() => void confirmDelete()}>{saving ? '正在删除…' : '确认删除'}</button>
-            </div>
-          </section>
-        </div>
-      ) : null}
+      {pendingDeleteIds.length > 0 ? <div className="admin-dialog-backdrop" role="presentation"><section className="admin-dialog compact-confirm-dialog" role="dialog" aria-modal="true"><div className="admin-dialog-header"><div><p>客服管理</p><h3>确认删除 {pendingDeleteIds.length} 项</h3></div></div><div className="admin-dialog-actions"><button className="secondary-button" type="button" disabled={saving} onClick={() => setPendingDeleteIds([])}>取消</button><button className="danger-button" type="button" disabled={saving} onClick={() => void confirmDelete()}>{saving ? '正在删除…' : '确认删除'}</button></div></section></div> : null}
     </section>
   );
 }
