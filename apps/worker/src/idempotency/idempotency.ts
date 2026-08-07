@@ -2,6 +2,8 @@ type IdempotencyRow = {
   response_body: string;
 };
 
+const PRUNE_BATCH_SIZE = 250;
+
 export function normalizeIdempotencyKey(value: string | undefined): string | null {
   if (!value || value.length > 128) {
     return null;
@@ -14,12 +16,35 @@ function storageKey(scope: string, key: string): string {
   return `${scope}:${key}`;
 }
 
+export async function pruneExpiredIdempotencyKeys(
+  db: D1Database,
+  now: string,
+): Promise<number> {
+  const result = await db
+    .prepare(
+      `DELETE FROM idempotency_keys
+       WHERE key IN (
+         SELECT key
+         FROM idempotency_keys
+         WHERE expires_at <= ?
+         ORDER BY expires_at ASC
+         LIMIT ?
+       )`,
+    )
+    .bind(now, PRUNE_BATCH_SIZE)
+    .run();
+
+  return result.meta.changes;
+}
+
 export async function readIdempotentResponse(
   db: D1Database,
   scope: string,
   key: string,
   now: string,
 ): Promise<unknown | null> {
+  await pruneExpiredIdempotencyKeys(db, now);
+
   const row = await db
     .prepare(
       `SELECT response_body

@@ -7,6 +7,12 @@ export type AssetReferenceCounts = {
   productGallery: number;
 };
 
+export type AssetCleanupBlockedReason =
+  | 'IN_USE'
+  | 'NOT_IMAGE'
+  | 'SNAPSHOT_RETENTION'
+  | null;
+
 export type AdminAsset = {
   key: string;
   size: number;
@@ -17,6 +23,7 @@ export type AdminAsset = {
   referenceCount: number;
   references: AssetReferenceCounts;
   cleanupEligible: boolean;
+  cleanupBlockedReason: AssetCleanupBlockedReason;
   publicUrl: string | null;
 };
 
@@ -58,6 +65,10 @@ async function readJson(response: Response): Promise<unknown> {
   return contentType.includes('application/json') ? response.json() : null;
 }
 
+function readError(value: unknown): ApiErrorEnvelope {
+  return asRecord(value) ? (value as ApiErrorEnvelope) : {};
+}
+
 async function requestJson(path: string, init?: RequestInit): Promise<unknown> {
   const response = await fetch(path, {
     credentials: 'same-origin',
@@ -67,7 +78,7 @@ async function requestJson(path: string, init?: RequestInit): Promise<unknown> {
   const body = await readJson(response);
 
   if (!response.ok) {
-    const envelope = (asRecord(body) ?? {}) as ApiErrorEnvelope;
+    const envelope = readError(body);
     throw new AdminApiError(
       response.status,
       envelope.error?.code ?? 'REQUEST_FAILED',
@@ -99,6 +110,18 @@ function parseReferences(value: unknown): AssetReferenceCounts {
   };
 }
 
+function parseCleanupBlockedReason(value: unknown): AssetCleanupBlockedReason {
+  if (
+    value === null ||
+    value === 'IN_USE' ||
+    value === 'NOT_IMAGE' ||
+    value === 'SNAPSHOT_RETENTION'
+  ) {
+    return value;
+  }
+  throw new AdminApiError(500, 'INVALID_RESPONSE', '图片清理状态返回数据无效。');
+}
+
 function parseAsset(value: unknown): AdminAsset {
   const asset = asRecord(value);
   if (
@@ -126,6 +149,7 @@ function parseAsset(value: unknown): AdminAsset {
     referenceCount: asset.referenceCount,
     references: parseReferences(asset.references),
     cleanupEligible: asset.cleanupEligible,
+    cleanupBlockedReason: parseCleanupBlockedReason(asset.cleanupBlockedReason),
     publicUrl: asset.publicUrl,
   };
 }

@@ -21,6 +21,14 @@ function referenceLabels(references: AssetReferenceCounts): string[] {
   return labels;
 }
 
+function cleanupStatus(asset: AdminAsset): { label: string; className: string } {
+  if (asset.usageStatus === 'used') return { label: '使用中', className: 'blocked' };
+  if (asset.cleanupBlockedReason === 'SNAPSHOT_RETENTION') {
+    return { label: '快照保护', className: 'blocked' };
+  }
+  return { label: '可清理', className: 'eligible' };
+}
+
 type AssetTableProps = {
   assets: AdminAsset[];
   selectedKeys: Set<string>;
@@ -38,7 +46,7 @@ export function AssetTable({
   onToggle,
   onToggleAll,
 }: AssetTableProps) {
-  const unusedCount = assets.filter((asset) => asset.usageStatus === 'unused').length;
+  const eligibleCount = assets.filter((asset) => asset.cleanupEligible).length;
 
   return (
     <div className="asset-table-wrap">
@@ -48,9 +56,9 @@ export function AssetTable({
             <th className="asset-select-cell">
               <input
                 type="checkbox"
-                aria-label="选择当前列表中的全部未使用图片"
-                checked={unusedCount > 0 && allUnusedSelected}
-                disabled={working || unusedCount === 0}
+                aria-label="选择当前列表中的全部可清理图片"
+                checked={eligibleCount > 0 && allUnusedSelected}
+                disabled={working || eligibleCount === 0}
                 onChange={onToggleAll}
               />
             </th>
@@ -64,7 +72,7 @@ export function AssetTable({
         <tbody>
           {assets.map((asset) => {
             const references = referenceLabels(asset.references);
-            const isUnused = asset.usageStatus === 'unused';
+            const status = cleanupStatus(asset);
             return (
               <tr key={asset.key}>
                 <td className="asset-select-cell">
@@ -72,7 +80,7 @@ export function AssetTable({
                     type="checkbox"
                     aria-label={`选择 ${asset.key}`}
                     checked={selectedKeys.has(asset.key)}
-                    disabled={working || !isUnused}
+                    disabled={working || !asset.cleanupEligible}
                     onChange={() => onToggle(asset.key)}
                   />
                 </td>
@@ -98,8 +106,8 @@ export function AssetTable({
                   </div>
                 </td>
                 <td>
-                  <span className={`asset-cleanup-status ${isUnused ? 'eligible' : 'blocked'}`}>
-                    {isUnused ? '未使用' : '使用中'}
+                  <span className={`asset-cleanup-status ${status.className}`}>
+                    {status.label}
                   </span>
                 </td>
                 <td>
@@ -109,6 +117,8 @@ export function AssetTable({
                         <span key={label}>{label}</span>
                       ))}
                     </div>
+                  ) : asset.cleanupBlockedReason === 'SNAPSHOT_RETENTION' ? (
+                    <span className="asset-muted">最近 3 个可回退快照仍处于保护窗口</span>
                   ) : (
                     <span className="asset-muted">无业务引用，可物理清理</span>
                   )}

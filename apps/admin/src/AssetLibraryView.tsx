@@ -103,14 +103,14 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
     });
   }, [assets, filter, query]);
 
-  const visibleUnusedKeys = useMemo(
-    () => filteredAssets.filter((asset) => asset.usageStatus === 'unused').map((asset) => asset.key),
+  const visibleCleanupKeys = useMemo(
+    () => filteredAssets.filter((asset) => asset.cleanupEligible).map((asset) => asset.key),
     [filteredAssets],
   );
   const allUnusedSelected =
-    visibleUnusedKeys.length > 0 && visibleUnusedKeys.every((key) => selectedKeys.has(key));
+    visibleCleanupKeys.length > 0 && visibleCleanupKeys.every((key) => selectedKeys.has(key));
   const selectedAssets = useMemo(
-    () => assets.filter((asset) => selectedKeys.has(asset.key) && asset.usageStatus === 'unused'),
+    () => assets.filter((asset) => selectedKeys.has(asset.key) && asset.cleanupEligible),
     [assets, selectedKeys],
   );
   const selectedBytes = selectedAssets.reduce((total, asset) => total + asset.size, 0);
@@ -119,7 +119,10 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
     () => ({
       total: assets.length,
       used: assets.filter((asset) => asset.usageStatus === 'used').length,
-      unused: assets.filter((asset) => asset.usageStatus === 'unused').length,
+      protected: assets.filter(
+        (asset) => asset.cleanupBlockedReason === 'SNAPSHOT_RETENTION',
+      ).length,
+      eligible: assets.filter((asset) => asset.cleanupEligible).length,
       bytes: assets.reduce((total, asset) => total + asset.size, 0),
     }),
     [assets],
@@ -137,7 +140,7 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
   function toggleAll() {
     setSelectedKeys((current) => {
       const next = new Set(current);
-      visibleUnusedKeys.forEach((key) => {
+      visibleCleanupKeys.forEach((key) => {
         if (allUnusedSelected) next.delete(key);
         else next.add(key);
       });
@@ -191,7 +194,7 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
         <div>
           <p className="eyebrow">R2 存储管理</p>
           <h2>R2 图片管理</h2>
-          <p>扫描 Bucket 中的全部图片，按使用中和未使用分类；未使用图片可以物理清理。</p>
+          <p>扫描 Bucket 中的全部图片；当前业务引用和最近 3 个可回退快照都会参与清理保护。</p>
         </div>
         <div className="asset-library-actions">
           <button className="secondary-button" type="button" onClick={() => void scan()}>
@@ -209,20 +212,20 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
       </div>
 
       <div className="asset-summary-grid">
-        <article><span>全部图片</span><strong>{stats.total}</strong><small>整个 Bucket 扫描结果</small></article>
-        <article><span>使用中</span><strong>{stats.used}</strong><small>D1 中存在业务引用</small></article>
-        <article><span>未使用</span><strong>{stats.unused}</strong><small>可以选择物理清理</small></article>
-        <article><span>图片容量</span><strong>{formatBytes(stats.bytes)}</strong><small>全部已扫描图片</small></article>
+        <article><span>全部图片</span><strong>{stats.total}</strong><small>{formatBytes(stats.bytes)}</small></article>
+        <article><span>当前使用</span><strong>{stats.used}</strong><small>D1 中存在业务引用</small></article>
+        <article><span>快照保护</span><strong>{stats.protected}</strong><small>等待最近 3 版自然淘汰</small></article>
+        <article><span>可物理清理</span><strong>{stats.eligible}</strong><small>当前引用和回退窗口均已释放</small></article>
       </div>
 
       <div className="asset-safety-note">
         <strong>清理规则</strong>
-        <span>清理只允许删除未使用图片。确认时会再次检查 D1 引用，删除后 R2 对象不可恢复。</span>
+        <span>图片变成未使用后不会立即物理删除；必须等首次发现它未使用时对应的发布版本退出最近 3 个可回退快照，才会开放清理。</span>
       </div>
 
       {!mediaBaseUrl ? (
         <div className="notice notice-error" role="alert">
-          尚未配置 R2 自定义域名，图片预览不可用，但扫描、使用检测和物理清理仍可执行。
+          尚未配置 R2 自定义域名，图片预览不可用，但扫描和引用保护仍可执行。
         </div>
       ) : null}
       {errorMessage ? <p className="inline-status is-error" role="alert">{errorMessage}</p> : null}
@@ -248,7 +251,7 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
             className={filter === 'unused' ? 'is-active' : undefined}
             onClick={() => setFilter('unused')}
           >
-            未使用 ({stats.unused})
+            未使用 ({stats.protected + stats.eligible})
           </button>
         </div>
       </div>
