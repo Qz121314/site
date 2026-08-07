@@ -39,12 +39,21 @@ import {
 } from './product-management/api';
 import { fetchProductTags, type AdminProductTag } from './tag-management/api';
 
-type ProductManagementMode = 'manage' | 'entry';
+export type ProductDependencyTarget = 'categories' | 'tags' | 'conversion-pool';
+export type ProductResumeRequest = {
+  productId: string;
+  intendedStatus: ProductStatus;
+  wasDowngradedToDraft: boolean;
+};
 
 type ProductManagementViewProps = {
   section: AdminSection;
-  mode?: ProductManagementMode;
-  onEntryExit?: () => void;
+  resumeRequest?: ProductResumeRequest | null;
+  onResumeHandled?: () => void;
+  onConfigureDependency?: (
+    target: ProductDependencyTarget,
+    request: ProductResumeRequest,
+  ) => void;
   onSessionExpired: () => void;
 };
 
@@ -149,8 +158,9 @@ function dedupeRemoteImages(images: ProductEditorImage[]): ProductEditorImage[] 
 
 export function ProductManagementView({
   section,
-  mode = 'manage',
-  onEntryExit,
+  resumeRequest = null,
+  onResumeHandled,
+  onConfigureDependency,
   onSessionExpired,
 }: ProductManagementViewProps) {
   const [scope, setScope] = useState<ProductScope>('active');
@@ -167,10 +177,12 @@ export function ProductManagementView({
   const [form, setForm] = useState<ProductInput>(emptyProductForm);
   const [media, setMedia] = useState<ProductEditorImage[]>([]);
   const mediaRef = useRef<ProductEditorImage[]>([]);
-  const entryOpenedRef = useRef<string | null>(null);
+  const resumeOpenedRef = useRef<string | null>(null);
   const [coverKey, setCoverKey] = useState<string | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
+  const [resumeNotice, setResumeNotice] = useState(false);
   const [saveStage, setSaveStage] = useState<SaveStage>('idle');
+  const [handoffTarget, setHandoffTarget] = useState<ProductDependencyTarget | null>(null);
   const [processingImages, setProcessingImages] = useState(false);
   const [rotatingImageKey, setRotatingImageKey] = useState<string | null>(null);
   const [working, setWorking] = useState(false);
@@ -231,9 +243,10 @@ export function ProductManagementView({
     setSelectedIds(new Set());
     setTrashProducts([]);
     setEditorOpen(false);
+    setResumeNotice(false);
     setErrorMessage('');
     setSuccessMessage('');
-    entryOpenedRef.current = null;
+    resumeOpenedRef.current = null;
     void loadActive();
   }, [loadActive]);
 
@@ -243,26 +256,47 @@ export function ProductManagementView({
     setSuccessMessage('');
   }, [scope]);
 
+  const openProductEditor = useCallback(
+    async (productId: string, statusOverride?: ProductStatus): Promise<boolean> => {
+      setWorking(true);
+      setErrorMessage('');
+      setSuccessMessage('');
+      try {
+        const detailed = await fetchProduct(section.id, productId);
+        setEditingProduct(detailed);
+        setForm({
+          ...productToInput(detailed),
+          ...(statusOverride ? { status: statusOverride } : {}),
+        });
+        releaseLocalProductImages(mediaRef.current);
+        setMedia(detailed.media.map(toRemoteProductImage));
+        setCoverKey(detailed.coverAssetId ? `remote:${detailed.coverAssetId}` : null);
+        setEditorOpen(true);
+        return true;
+      } catch (error) {
+        handleError(error);
+        return false;
+      } finally {
+        setWorking(false);
+      }
+    },
+    [handleError, section.id],
+  );
+
   useEffect(() => {
-    if (mode !== 'entry') {
-      entryOpenedRef.current = null;
+    if (!resumeRequest) {
+      resumeOpenedRef.current = null;
       return;
     }
-    if (loading || entryOpenedRef.current === section.id) return;
+    if (loading || resumeOpenedRef.current === resumeRequest.productId) return;
 
-    entryOpenedRef.current = section.id;
-    const sortOrder = activeProducts.length
-      ? Math.max(...activeProducts.map((product) => product.sortOrder)) + 10
-      : 0;
-    releaseLocalProductImages(mediaRef.current);
-    setEditingProduct(null);
-    setForm({ ...emptyProductForm, sortOrder });
-    setMedia([]);
-    setCoverKey(null);
-    setErrorMessage('');
-    setSuccessMessage('');
-    setEditorOpen(true);
-  }, [activeProducts, loading, mode, section.id]);
+    resumeOpenedRef.current = resumeRequest.productId;
+    void openProductEditor(resumeRequest.productId, resumeRequest.intendedStatus).then((opened) => {
+      if (!opened) return;
+      setResumeNotice(resumeRequest.wasDowngradedToDraft);
+      onResumeHandled?.();
+    });
+  }, [loading, onResumeHandled, openProductEditor, resumeRequest]);
 
   const sourceProducts = scope === 'active' ? activeProducts : trashProducts;
   const filteredProducts = useMemo(() => {
@@ -307,38 +341,19 @@ export function ProductManagementView({
     setEditingProduct(null);
     setForm({ ...emptyProductForm, sortOrder });
     resetEditorImages([], null);
+    setResumeNotice(false);
     setErrorMessage('');
     setSuccessMessage('');
     setEditorOpen(true);
   }
 
-  async function openEditEditor(product: AdminProduct) {
-    setWorking(true);
-    setErrorMessage('');
-    setSuccessMessage('');
-    try {
-      const detailed = await fetchProduct(section.id, product.id);
-      setEditingProduct(detailed);
-      setForm(productToInput(detailed));
-      resetEditorImages(
-        detailed.media.map(toRemoteProductImage),
-        detailed.coverAssetId ? `remote:${detailed.coverAssetId}` : null,
-      );
-      setEditorOpen(true);
-    } catch (error) {
-      handleError(error);
-    } finally {
-      setWorking(false);
-    }
-  }
-
   function closeEditor() {
-    if (saving || processingImages || rotatingImageKey) return;
+    if (saving || processingImages || rotatingImageKey || handoffTarget) return;
     releaseLocalProductImages(mediaRef.current);
     setMedia([]);
     setCoverKey(null);
+    setResumeNotice(false);
     setEditorOpen(false);
-    if (mode === 'entry') onEntryExit?.();
   }
 
   async function handleSelectLocalImages(files: File[]) {
@@ -407,15 +422,20 @@ export function ProductManagementView({
     }
   }
 
-  async function handleSave(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (saving || processingImages || rotatingImageKey) return;
+  async function persistEditor(nextForm: ProductInput): Promise<AdminProduct | null> {
+    if (saving || processingImages || rotatingImageKey) return null;
 
-    const localValidation = validateBeforeImageUpload(form, mediaRef.current, categories, tags, groups);
+    const localValidation = validateBeforeImageUpload(
+      nextForm,
+      mediaRef.current,
+      categories,
+      tags,
+      groups,
+    );
     if (localValidation) {
       setErrorMessage(localValidation);
       setSuccessMessage('');
-      return;
+      return null;
     }
 
     setErrorMessage('');
@@ -440,7 +460,6 @@ export function ProductManagementView({
       }
 
       resolvedImages = dedupeRemoteImages(resolvedImages);
-      setMedia(resolvedImages);
       const selectedCover = resolvedCoverKey
         ? resolvedImages.find((image) => image.key === resolvedCoverKey)
         : null;
@@ -448,7 +467,7 @@ export function ProductManagementView({
         image.kind === 'remote' ? [image.media.id] : [],
       );
       const input: ProductInput = {
-        ...form,
+        ...nextForm,
         mediaAssetIds,
         coverAssetId:
           selectedCover?.kind === 'remote' && mediaAssetIds.includes(selectedCover.media.id)
@@ -457,26 +476,83 @@ export function ProductManagementView({
       };
 
       setSaveStage('saving');
-      if (editingProduct) {
-        const updated = await updateProduct(section.id, editingProduct.id, input);
-        setActiveProducts((current) =>
-          sortProducts(current.map((product) => (product.id === updated.id ? updated : product))),
+      const saved = editingProduct
+        ? await updateProduct(section.id, editingProduct.id, input)
+        : await createProduct(section.id, input);
+
+      setActiveProducts((current) => {
+        const exists = current.some((product) => product.id === saved.id);
+        return sortProducts(
+          exists
+            ? current.map((product) => (product.id === saved.id ? saved : product))
+            : [...current, saved],
         );
-        setSuccessMessage(`产品“${updated.title}”已更新。`);
-      } else {
-        const created = await createProduct(section.id, input);
-        setActiveProducts((current) => sortProducts([...current, created]));
-        setSuccessMessage(`产品“${created.title}”已创建。`);
-      }
-      setMedia([]);
-      setCoverKey(null);
-      setEditorOpen(false);
-      if (mode === 'entry') onEntryExit?.();
+      });
+      setEditingProduct(saved);
+      setForm(productToInput(saved));
+      setMedia(saved.media.map(toRemoteProductImage));
+      setCoverKey(saved.coverAssetId ? `remote:${saved.coverAssetId}` : null);
+      return saved;
     } catch (error) {
       handleError(error);
+      return null;
     } finally {
       setSaveStage('idle');
     }
+  }
+
+  async function handleSave(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const saved = await persistEditor(form);
+    if (!saved) return;
+
+    setSuccessMessage(`产品“${saved.title}”已${editingProduct ? '更新' : '创建'}。`);
+    setMedia([]);
+    setCoverKey(null);
+    setResumeNotice(false);
+    setEditorOpen(false);
+    setEditingProduct(null);
+  }
+
+  async function handleConfigureDependency(target: ProductDependencyTarget) {
+    if (!onConfigureDependency || handoffTarget || saving || processingImages || rotatingImageKey) return;
+
+    const intendedStatus = form.status;
+    const currentValidation = validateBeforeImageUpload(form, mediaRef.current, categories, tags, groups);
+    const handoffForm = currentValidation && intendedStatus === 'published'
+      ? { ...form, status: 'draft' as const }
+      : form;
+    const handoffValidation = validateBeforeImageUpload(
+      handoffForm,
+      mediaRef.current,
+      categories,
+      tags,
+      groups,
+    );
+    if (handoffValidation) {
+      setErrorMessage(`暂存产品后才能切换配置：${handoffValidation}`);
+      setSuccessMessage('');
+      return;
+    }
+
+    setHandoffTarget(target);
+    const saved = await persistEditor(handoffForm);
+    if (!saved) {
+      setHandoffTarget(null);
+      return;
+    }
+
+    setMedia([]);
+    setCoverKey(null);
+    setResumeNotice(false);
+    setEditorOpen(false);
+    setEditingProduct(null);
+    setHandoffTarget(null);
+    onConfigureDependency(target, {
+      productId: saved.id,
+      intendedStatus,
+      wasDowngradedToDraft: handoffForm.status !== intendedStatus,
+    });
   }
 
   async function moveProduct(product: AdminProduct, direction: -1 | 1) {
@@ -579,27 +655,19 @@ export function ProductManagementView({
       saveStage={saveStage}
       processingImages={processingImages}
       rotatingImageKey={rotatingImageKey}
+      handoffBusy={handoffTarget !== null}
+      resumeNotice={resumeNotice}
       onFormChange={setForm}
       onSelectLocalImages={(files) => void handleSelectLocalImages(files)}
       onRotateLocalImage={(key, direction) => void rotateMedia(key, direction)}
       onRemoveMedia={removeMedia}
       onMoveMedia={moveMedia}
       onSetCover={setCoverKey}
+      onConfigureDependency={(target) => void handleConfigureDependency(target)}
       onClose={closeEditor}
       onSubmit={(event) => void handleSave(event)}
     />
   ) : null;
-
-  if (mode === 'entry') {
-    return (
-      <section className="product-management product-entry-route" aria-label={`${section.name} 产品录入`}>
-        {errorMessage ? <div className="notice notice-error" role="alert">{errorMessage}</div> : null}
-        {successMessage ? <div className="notice notice-success" role="status">{successMessage}</div> : null}
-        {!editorOpen && loading ? <div className="product-entry-loading">正在准备产品录入…</div> : null}
-        {editorDialog}
-      </section>
-    );
-  }
 
   return (
     <section className="product-management" aria-labelledby="product-management-title">
@@ -650,7 +718,7 @@ export function ProductManagementView({
         working={working}
         onToggleSelect={toggleSelect}
         onToggleSelectAll={toggleSelectAll}
-        onEdit={(product) => void openEditEditor(product)}
+        onEdit={(product) => void openProductEditor(product.id)}
         onDelete={(product) => setPendingDeleteIds([product.id])}
         onRestore={(product) => void handleRestore(product)}
         onMove={(product, direction) => void moveProduct(product, direction)}
