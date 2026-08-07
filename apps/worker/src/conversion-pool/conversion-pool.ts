@@ -1,5 +1,6 @@
 export type ConversionMode = 'customer_service' | 'link';
 export type ConversionScope = 'active' | 'trash' | 'all';
+export type ConversionTargetBindingKind = 'link' | 'customer_service' | 'legacy_customer_service';
 
 export type ConversionGroupRecord = {
   id: string;
@@ -23,9 +24,12 @@ export type ConversionTargetRecord = {
   sectionId: string;
   groupId: string;
   name: string;
-  endpointUrl: string;
-  projectId: string | null;
-  config: string | null;
+  bindingKind: ConversionTargetBindingKind;
+  endpointUrl: string | null;
+  customerServiceConnectionId: string | null;
+  customerServiceConnectionName: string | null;
+  remoteGroupId: string | null;
+  remoteGroupName: string | null;
   sortOrder: number;
   isEnabled: boolean;
   createdAt: string;
@@ -43,9 +47,10 @@ export type ConversionGroupInput = {
 
 export type ConversionTargetInput = {
   name: string;
-  endpointUrl: string;
-  projectId: string | null;
-  config: string | null;
+  endpointUrl: string | null;
+  customerServiceConnectionId: string | null;
+  remoteGroupId: string | null;
+  remoteGroupName: string | null;
   sortOrder: number;
   isEnabled: boolean;
 };
@@ -71,10 +76,13 @@ type ConversionTargetRow = {
   id: string;
   section_id: string;
   group_id: string;
+  group_mode: ConversionMode;
   name: string;
-  endpoint_url: string;
-  project_id: string | null;
-  config_json: string | null;
+  endpoint_url: string | null;
+  customer_service_connection_id: string | null;
+  customer_service_connection_name: string | null;
+  remote_group_id: string | null;
+  remote_group_name: string | null;
   sort_order: number;
   is_enabled: number;
   created_at: string;
@@ -111,15 +119,13 @@ function readRequiredText(
   return { ok: true, value: normalized };
 }
 
-function readOptionalText(
+function readNullableText(
   value: unknown,
   field: string,
   label: string,
   maxLength: number,
 ): ValidationResult<string | null> {
-  if (value === null || value === undefined || value === '') {
-    return { ok: true, value: null };
-  }
+  if (value === null || value === undefined || value === '') return { ok: true, value: null };
   if (typeof value !== 'string') {
     return { ok: false, field, message: `${label}必须是文本。` };
   }
@@ -180,51 +186,69 @@ export function validateConversionTargetInput(
   if (!isRecord(value)) {
     return { ok: false, field: 'form', message: '转化入口数据无效。' };
   }
-  const name = readRequiredText(value.name, 'name', '入口名称', 100);
-  if (!name.ok) return name;
-  const endpoint = readRequiredText(value.endpointUrl, 'endpointUrl', '入口地址', 1000);
-  if (!endpoint.ok) return endpoint;
-  try {
-    const parsed = new URL(endpoint.value);
-    if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
-      return { ok: false, field: 'endpointUrl', message: '入口地址必须使用 HTTP 或 HTTPS。' };
-    }
-  } catch {
-    return { ok: false, field: 'endpointUrl', message: '入口地址格式无效。' };
-  }
-
-  const projectId = readOptionalText(value.projectId, 'projectId', '客服项目 ID', 200);
-  if (!projectId.ok) return projectId;
-  const config = readOptionalText(value.config, 'config', '扩展配置', 8000);
-  if (!config.ok) return config;
-  if (config.value !== null) {
-    try {
-      JSON.parse(config.value);
-    } catch {
-      return { ok: false, field: 'config', message: '扩展配置必须是有效 JSON。' };
-    }
-  }
-  if (mode === 'link' && (projectId.value !== null || config.value !== null)) {
-    return {
-      ok: false,
-      field: 'form',
-      message: '链接分组的入口只需要名称和跳转地址。',
-    };
-  }
-
   const sortOrder = readSortOrder(value.sortOrder);
   if (!sortOrder.ok) return sortOrder;
   if (typeof value.isEnabled !== 'boolean') {
     return { ok: false, field: 'isEnabled', message: '必须选择启用或停用。' };
   }
 
+  if (mode === 'link') {
+    const name = readRequiredText(value.name, 'name', '链接名称', 100);
+    if (!name.ok) return name;
+    const endpoint = readRequiredText(value.endpointUrl, 'endpointUrl', '跳转链接', 1000);
+    if (!endpoint.ok) return endpoint;
+    try {
+      const parsed = new URL(endpoint.value);
+      if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
+        return { ok: false, field: 'endpointUrl', message: '跳转链接必须使用 HTTP 或 HTTPS。' };
+      }
+    } catch {
+      return { ok: false, field: 'endpointUrl', message: '跳转链接格式无效。' };
+    }
+    return {
+      ok: true,
+      value: {
+        name: name.value,
+        endpointUrl: endpoint.value,
+        customerServiceConnectionId: null,
+        remoteGroupId: null,
+        remoteGroupName: null,
+        sortOrder: sortOrder.value,
+        isEnabled: value.isEnabled,
+      },
+    };
+  }
+
+  const connectionId = readRequiredText(
+    value.customerServiceConnectionId,
+    'customerServiceConnectionId',
+    '客服系统',
+    100,
+  );
+  if (!connectionId.ok) return connectionId;
+  const remoteGroupId = readRequiredText(value.remoteGroupId, 'remoteGroupId', '客服分组', 300);
+  if (!remoteGroupId.ok) return remoteGroupId;
+  const remoteGroupName = readRequiredText(
+    value.remoteGroupName,
+    'remoteGroupName',
+    '客服分组名称',
+    300,
+  );
+  if (!remoteGroupName.ok) return remoteGroupName;
+  const endpoint = readNullableText(value.endpointUrl, 'endpointUrl', '跳转链接', 1000);
+  if (!endpoint.ok) return endpoint;
+  if (endpoint.value !== null) {
+    return { ok: false, field: 'endpointUrl', message: '在线客服入口不能手工填写跳转链接。' };
+  }
+
   return {
     ok: true,
     value: {
-      name: name.value,
-      endpointUrl: endpoint.value,
-      projectId: mode === 'customer_service' ? projectId.value : null,
-      config: mode === 'customer_service' ? config.value : null,
+      name: remoteGroupName.value,
+      endpointUrl: null,
+      customerServiceConnectionId: connectionId.value,
+      remoteGroupId: remoteGroupId.value,
+      remoteGroupName: remoteGroupName.value,
       sortOrder: sortOrder.value,
       isEnabled: value.isEnabled,
     },
@@ -251,14 +275,23 @@ function mapGroup(row: ConversionGroupRow): ConversionGroupRecord {
 }
 
 function mapTarget(row: ConversionTargetRow): ConversionTargetRecord {
+  const bindingKind: ConversionTargetBindingKind =
+    row.group_mode === 'link'
+      ? 'link'
+      : row.customer_service_connection_id && row.remote_group_id
+        ? 'customer_service'
+        : 'legacy_customer_service';
   return {
     id: row.id,
     sectionId: row.section_id,
     groupId: row.group_id,
     name: row.name,
+    bindingKind,
     endpointUrl: row.endpoint_url,
-    projectId: row.project_id,
-    config: row.config_json,
+    customerServiceConnectionId: row.customer_service_connection_id,
+    customerServiceConnectionName: row.customer_service_connection_name,
+    remoteGroupId: row.remote_group_id,
+    remoteGroupName: row.remote_group_name,
     sortOrder: row.sort_order,
     isEnabled: row.is_enabled === 1,
     createdAt: row.created_at,
@@ -282,25 +315,45 @@ const GROUP_SELECT = `SELECT
   (SELECT COUNT(*) FROM conversion_targets t
     WHERE t.group_id = g.id AND t.deleted_at IS NULL) AS target_count,
   (SELECT COUNT(*) FROM conversion_targets t
-    WHERE t.group_id = g.id AND t.deleted_at IS NULL AND t.is_enabled = 1) AS active_target_count,
+    WHERE t.group_id = g.id
+      AND t.deleted_at IS NULL
+      AND t.is_enabled = 1
+      AND (
+        g.mode = 'link'
+        OR (
+          t.customer_service_connection_id IS NOT NULL
+          AND t.remote_group_id IS NOT NULL
+          AND EXISTS (
+            SELECT 1 FROM customer_service_connections c
+            WHERE c.id = t.customer_service_connection_id
+              AND c.deleted_at IS NULL
+              AND c.is_enabled = 1
+          )
+        )
+      )) AS active_target_count,
   (SELECT COUNT(*) FROM products p
     WHERE p.conversion_group_id = g.id) AS product_count
 FROM conversion_groups g`;
 
 const TARGET_SELECT = `SELECT
-  id,
-  section_id,
-  group_id,
-  name,
-  endpoint_url,
-  project_id,
-  config_json,
-  sort_order,
-  is_enabled,
-  created_at,
-  updated_at,
-  deleted_at
-FROM conversion_targets`;
+  t.id,
+  t.section_id,
+  t.group_id,
+  g.mode AS group_mode,
+  t.name,
+  t.endpoint_url,
+  t.customer_service_connection_id,
+  c.name AS customer_service_connection_name,
+  t.remote_group_id,
+  t.remote_group_name,
+  t.sort_order,
+  t.is_enabled,
+  t.created_at,
+  t.updated_at,
+  t.deleted_at
+FROM conversion_targets t
+JOIN conversion_groups g ON g.id = t.group_id
+LEFT JOIN customer_service_connections c ON c.id = t.customer_service_connection_id`;
 
 export async function listConversionGroups(
   db: D1Database,
@@ -460,15 +513,15 @@ export async function listConversionTargets(
 ): Promise<ConversionTargetRecord[]> {
   const scopeClause =
     scope === 'active'
-      ? 'AND deleted_at IS NULL'
+      ? 'AND t.deleted_at IS NULL'
       : scope === 'trash'
-        ? 'AND deleted_at IS NOT NULL'
+        ? 'AND t.deleted_at IS NOT NULL'
         : '';
   const result = await db
     .prepare(
       `${TARGET_SELECT}
-       WHERE section_id = ? AND group_id = ? ${scopeClause}
-       ORDER BY sort_order ASC, name COLLATE NOCASE ASC`,
+       WHERE t.section_id = ? AND t.group_id = ? ${scopeClause}
+       ORDER BY t.sort_order ASC, t.name COLLATE NOCASE ASC`,
     )
     .bind(sectionId, groupId)
     .all<ConversionTargetRow>();
@@ -482,7 +535,7 @@ export async function getConversionTarget(
   targetId: string,
 ): Promise<ConversionTargetRecord | null> {
   const row = await db
-    .prepare(`${TARGET_SELECT} WHERE section_id = ? AND group_id = ? AND id = ?`)
+    .prepare(`${TARGET_SELECT} WHERE t.section_id = ? AND t.group_id = ? AND t.id = ?`)
     .bind(sectionId, groupId, targetId)
     .first<ConversionTargetRow>();
   return row ? mapTarget(row) : null;
@@ -500,9 +553,12 @@ export function createConversionTarget(
     sectionId,
     groupId,
     name: input.name,
+    bindingKind: input.customerServiceConnectionId ? 'customer_service' : 'link',
     endpointUrl: input.endpointUrl,
-    projectId: input.projectId,
-    config: input.config,
+    customerServiceConnectionId: input.customerServiceConnectionId,
+    customerServiceConnectionName: null,
+    remoteGroupId: input.remoteGroupId,
+    remoteGroupName: input.remoteGroupName,
     sortOrder: input.sortOrder,
     isEnabled: input.isEnabled,
     createdAt: now,
@@ -514,9 +570,11 @@ export function createConversionTarget(
     statement: db
       .prepare(
         `INSERT INTO conversion_targets (
-           id, section_id, group_id, name, endpoint_url, project_id, config_json,
+           id, section_id, group_id, name, endpoint_url,
+           customer_service_connection_id, remote_group_id, remote_group_name,
+           legacy_project_id, legacy_config_json,
            sort_order, is_enabled, created_at, updated_at, deleted_at
-         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)`,
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL, ?, ?, ?, ?, NULL)`,
       )
       .bind(
         target.id,
@@ -524,8 +582,9 @@ export function createConversionTarget(
         target.groupId,
         target.name,
         target.endpointUrl,
-        target.projectId,
-        target.config,
+        target.customerServiceConnectionId,
+        target.remoteGroupId,
+        target.remoteGroupName,
         target.sortOrder,
         target.isEnabled ? 1 : 0,
         target.createdAt,
@@ -545,15 +604,18 @@ export function createUpdateConversionTargetStatement(
   return db
     .prepare(
       `UPDATE conversion_targets
-       SET name = ?, endpoint_url = ?, project_id = ?, config_json = ?,
+       SET name = ?, endpoint_url = ?, customer_service_connection_id = ?,
+           remote_group_id = ?, remote_group_name = ?,
+           legacy_project_id = NULL, legacy_config_json = NULL,
            sort_order = ?, is_enabled = ?, updated_at = ?
        WHERE section_id = ? AND group_id = ? AND id = ? AND deleted_at IS NULL`,
     )
     .bind(
       input.name,
       input.endpointUrl,
-      input.projectId,
-      input.config,
+      input.customerServiceConnectionId,
+      input.remoteGroupId,
+      input.remoteGroupName,
       input.sortOrder,
       input.isEnabled ? 1 : 0,
       now,
@@ -633,11 +695,24 @@ export async function selectNextConversionTarget(
   if (!rotation) return null;
 
   const offset = rotation.selected_index % group.activeTargetCount;
+  const customerServiceFilter =
+    group.mode === 'customer_service'
+      ? `AND t.customer_service_connection_id IS NOT NULL
+         AND t.remote_group_id IS NOT NULL
+         AND EXISTS (
+           SELECT 1 FROM customer_service_connections c2
+           WHERE c2.id = t.customer_service_connection_id
+             AND c2.deleted_at IS NULL
+             AND c2.is_enabled = 1
+         )`
+      : 'AND t.endpoint_url IS NOT NULL';
   const row = await db
     .prepare(
       `${TARGET_SELECT}
-       WHERE section_id = ? AND group_id = ? AND deleted_at IS NULL AND is_enabled = 1
-       ORDER BY sort_order ASC, name COLLATE NOCASE ASC
+       WHERE t.section_id = ? AND t.group_id = ?
+         AND t.deleted_at IS NULL AND t.is_enabled = 1
+         ${customerServiceFilter}
+       ORDER BY t.sort_order ASC, t.name COLLATE NOCASE ASC
        LIMIT 1 OFFSET ?`,
     )
     .bind(group.sectionId, group.id, offset)

@@ -19,6 +19,7 @@ import './admin-no-scroll.css';
 import './admin-centered-layout.css';
 import './admin-section-workspace-nav.css';
 import './admin-publish.css';
+import './customer-service-connections.css';
 
 const root = document.getElementById('root');
 if (!root) {
