@@ -1,0 +1,40 @@
+.admin-unsaved-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 30px;
+  padding: 0 10px;
+  border: 1px solid #f6c453;
+  border-radius: 999px;
+  color: #7a4b00;
+  background: #fff8df;
+  font-size: 12px;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.admin-unsaved-dialog-copy {
+  display: grid;
+  gap: 8px;
+  margin: 18px 0 0;
+  color: #475569;
+  line-height: 1.6;
+}
+
+.admin-unsaved-dialog-copy p {
+  margin: 0;
+}
+
+.admin-unsaved-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.admin-unsaved-list span {
+  padding: 5px 8px;
+  border-radius: 999px;
+  color: #7a4b00;
+  background: #fff4d8;
+  font-size: 12px;
+  font-weight: 750;
+}
