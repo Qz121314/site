@@ -1,0 +1,241 @@
+import { useSyncExternalStore } from 'react';
+
+const PROTECTED_FORM_SELECTOR = '.settings-form, .admin-dialog form';
+const SPECIAL_DRAFT_ACTION_SELECTOR = [
+  '.product-tag-option',
+  '.product-media-actions button',
+  '.product-auto-cover',
+  '.icon-picker button',
+  '.section-icon-upload-actions button',
+  '.branding-upload-actions button',
+].join(', ');
+
+export type AdminUnsavedSnapshot = {
+  isDirty: boolean;
+  count: number;
+  labels: string[];
+};
+
+type MutationDetail = {
+  method?: string;
+  path?: string;
+};
+
+const baselines = new WeakMap<HTMLFormElement, string>();
+const dirtyForms = new Set<HTMLFormElement>();
+const listeners = new Set<() => void>();
+let installed = false;
+let snapshot: AdminUnsavedSnapshot = { isDirty: false, count: 0, labels: [] };
+
+function protectedForm(element: Element | null): HTMLFormElement | null {
+  const form = element?.closest('form');
+  return form instanceof HTMLFormElement && form.matches(PROTECTED_FORM_SELECTOR) ? form : null;
+}
+
+function formLabel(form: HTMLFormElement): string {
+  if (form.matches('.settings-form')) return '站点设置';
+  const title = form.closest('.admin-dialog')?.querySelector('h3')?.textContent?.trim();
+  return title || '当前编辑内容';
+}
+
+function serializeForm(form: HTMLFormElement): string {
+  const values = Array.from(form.elements).flatMap((element) => {
+    if (element instanceof HTMLInputElement) {
+      if (element.type === 'button' || element.type === 'submit' || element.type === 'reset') return [];
+      if (element.type === 'file') {
+        return [[
+          element.name || `file:${element.accept}`,
+          Array.from(element.files ?? []).map((file) => [file.name, file.size, file.lastModified]),
+        ]];
+      }
+      if (element.type === 'checkbox' || element.type === 'radio') {
+        return [[element.name || element.outerHTML, element.checked]];
+      }
+      return [[element.name || element.outerHTML, element.value]];
+    }
+    if (element instanceof HTMLTextAreaElement) {
+      return [[element.name || element.outerHTML, element.value]];
+    }
+    if (element instanceof HTMLSelectElement) {
+      return [[
+        element.name || element.outerHTML,
+        element.multiple
+          ? Array.from(element.selectedOptions).map((option) => option.value)
+          : element.value,
+      ]];
+    }
+    return [];
+  });
+  return JSON.stringify(values);
+}
+
+function updateSnapshot(): void {
+  for (const form of [...dirtyForms]) {
+    if (!form.isConnected) dirtyForms.delete(form);
+  }
+  const labels = [...new Set([...dirtyForms].map(formLabel))];
+  const next: AdminUnsavedSnapshot = {
+    isDirty: dirtyForms.size > 0,
+    count: dirtyForms.size,
+    labels,
+  };
+  if (
+    next.isDirty === snapshot.isDirty &&
+    next.count === snapshot.count &&
+    next.labels.join('\u0000') === snapshot.labels.join('\u0000')
+  ) {
+    return;
+  }
+  snapshot = next;
+  listeners.forEach((listener) => listener());
+}
+
+function registerForm(form: HTMLFormElement): void {
+  if (baselines.has(form)) return;
+  baselines.set(form, serializeForm(form));
+}
+
+function registerForms(root: ParentNode): void {
+  if (root instanceof HTMLFormElement && root.matches(PROTECTED_FORM_SELECTOR)) registerForm(root);
+  root.querySelectorAll<HTMLFormElement>(PROTECTED_FORM_SELECTOR).forEach(registerForm);
+}
+
+function evaluateForm(form: HTMLFormElement): void {
+  const baseline = baselines.get(form);
+  if (baseline === undefined) {
+    registerForm(form);
+    return;
+  }
+  if (serializeForm(form) === baseline) dirtyForms.delete(form);
+  else dirtyForms.add(form);
+  updateSnapshot();
+}
+
+function markFormDirty(form: HTMLFormElement): void {
+  registerForm(form);
+  dirtyForms.add(form);
+  updateSnapshot();
+}
+
+function resetFormBaseline(form: HTMLFormElement): void {
+  baselines.set(form, serializeForm(form));
+  dirtyForms.delete(form);
+  updateSnapshot();
+}
+
+function shouldGuardDialogClose(button: HTMLButtonElement): HTMLFormElement | null {
+  const dialog = button.closest('.admin-dialog');
+  if (!dialog) return null;
+  const form = dialog.querySelector('form');
+  if (!(form instanceof HTMLFormElement) || !dirtyForms.has(form)) return null;
+  const label = button.getAttribute('aria-label');
+  const text = button.textContent?.trim();
+  return label === '关闭' || text === '取消' ? form : null;
+}
+
+function confirmLocalDiscard(form: HTMLFormElement): boolean {
+  return window.confirm(`“${formLabel(form)}”存在未保存修改，确认放弃这些修改吗？`);
+}
+
+export function installAdminUnsavedStateObserver(): void {
+  if (installed) return;
+  installed = true;
+
+  registerForms(document);
+
+  const observer = new MutationObserver((records) => {
+    records.forEach((record) => {
+      record.addedNodes.forEach((node) => {
+        if (node instanceof Element) registerForms(node);
+      });
+    });
+    updateSnapshot();
+  });
+  observer.observe(document.documentElement, { childList: true, subtree: true });
+
+  document.addEventListener(
+    'focusin',
+    (event) => {
+      if (event.target instanceof Element) {
+        const form = protectedForm(event.target);
+        if (form) registerForm(form);
+      }
+    },
+    true,
+  );
+
+  document.addEventListener(
+    'input',
+    (event) => {
+      if (!(event.target instanceof Element)) return;
+      const form = protectedForm(event.target);
+      if (form) queueMicrotask(() => evaluateForm(form));
+    },
+    true,
+  );
+
+  document.addEventListener(
+    'change',
+    (event) => {
+      if (!(event.target instanceof Element)) return;
+      const form = protectedForm(event.target);
+      if (!form) return;
+      if (event.target instanceof HTMLInputElement && event.target.type === 'file' && event.target.files?.length) {
+        markFormDirty(form);
+        return;
+      }
+      queueMicrotask(() => evaluateForm(form));
+    },
+    true,
+  );
+
+  document.addEventListener(
+    'click',
+    (event) => {
+      if (!(event.target instanceof Element)) return;
+      const button = event.target.closest('button');
+      if (!(button instanceof HTMLButtonElement)) return;
+
+      const dirtyDialogForm = shouldGuardDialogClose(button);
+      if (dirtyDialogForm && !confirmLocalDiscard(dirtyDialogForm)) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        return;
+      }
+
+      if (!event.target.closest(SPECIAL_DRAFT_ACTION_SELECTOR)) return;
+      const form = protectedForm(event.target);
+      if (form) queueMicrotask(() => markFormDirty(form));
+    },
+    true,
+  );
+
+  window.addEventListener('admin:data-mutated', (event) => {
+    const detail = event instanceof CustomEvent ? (event.detail as MutationDetail | undefined) : undefined;
+    if (detail?.method !== 'PUT' || detail.path !== '/api/admin/settings/') return;
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        document
+          .querySelectorAll<HTMLFormElement>('.settings-form')
+          .forEach((form) => resetFormBaseline(form));
+      });
+    });
+  });
+}
+
+export function getAdminUnsavedSnapshot(): AdminUnsavedSnapshot {
+  return snapshot;
+}
+
+export function subscribeAdminUnsavedState(listener: () => void): () => void {
+  listeners.add(listener);
+  return () => listeners.delete(listener);
+}
+
+export function useAdminUnsavedState(): AdminUnsavedSnapshot {
+  return useSyncExternalStore(
+    subscribeAdminUnsavedState,
+    getAdminUnsavedSnapshot,
+    getAdminUnsavedSnapshot,
+  );
+}
