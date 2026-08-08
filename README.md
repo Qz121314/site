@@ -668,7 +668,10 @@ site/
 │  ├─ storefront/       English 用户前端
 │  ├─ admin/            中文运营后台
 │  └─ worker/           Cloudflare Worker / API
-├─ packages/            共享包
+├─ packages/
+│  ├─ shared/           通用 Markdown / 数据工具
+│  ├─ config/           跨应用配置
+│  └─ storefront-ui/    Storefront 与主题预览共用的真实展示组件 / CSS
 ├─ migrations/          D1 migrations
 ├─ scripts/             构建 / 发布辅助脚本
 ├─ config/              Cloudflare / R2 配置

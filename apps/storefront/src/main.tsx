@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import { installPublicContentFetchFallback } from './public-content-transport';
 import { installStorefrontTheme } from './theme-runtime';
+import '@site/storefront-ui/styles.css';
 import './styles.css';
 import './theme-runtime.css';
 import './media-runtime.css';
