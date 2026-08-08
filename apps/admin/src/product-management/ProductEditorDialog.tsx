@@ -32,14 +32,11 @@ type ProductEditorDialogProps = {
   categories: AdminCategory[];
   tags: AdminProductTag[];
   groups: AdminConversionGroup[];
-  saveStage: 'idle' | 'uploading' | 'saving';
-  processingImages: boolean;
-  rotatingImageKey: string | null;
+  saveStage: 'idle' | 'saving';
   handoffBusy?: boolean;
   resumeNotice?: boolean;
   onFormChange: (next: ProductInput) => void;
-  onSelectLocalImages: (files: File[]) => void;
-  onRotateLocalImage: (key: string, direction: -1 | 1) => void;
+  onOpenMediaPicker: () => void;
   onRemoveMedia: (key: string) => void;
   onMoveMedia: (key: string, direction: -1 | 1) => void;
   onSetCover: (key: string | null) => void;
@@ -65,7 +62,6 @@ function saveButtonLabel(
   saveStage: ProductEditorDialogProps['saveStage'],
   editingProduct: AdminProduct | null,
 ): string {
-  if (saveStage === 'uploading') return '正在上传媒体…';
   if (saveStage === 'saving') return '正在保存…';
   return editingProduct ? '保存修改' : '创建产品';
 }
@@ -88,13 +84,10 @@ export function ProductEditorDialog({
   tags,
   groups,
   saveStage,
-  processingImages,
-  rotatingImageKey,
   handoffBusy = false,
   resumeNotice = false,
   onFormChange,
-  onSelectLocalImages,
-  onRotateLocalImage,
+  onOpenMediaPicker,
   onRemoveMedia,
   onMoveMedia,
   onSetCover,
@@ -125,7 +118,7 @@ export function ProductEditorDialog({
   );
   const effectiveCoverKey = coverKey ?? media.find(isEditorMediaCoverEligible)?.key ?? null;
   const saving = saveStage !== 'idle';
-  const busy = saving || processingImages || rotatingImageKey !== null || handoffBusy || creatingInline !== null;
+  const busy = saving || handoffBusy || creatingInline !== null;
 
   function patch(patchValue: Partial<ProductInput>) {
     onFormChange({ ...form, ...patchValue });
@@ -429,22 +422,16 @@ export function ProductEditorDialog({
               <div className="product-media-heading">
                 <div>
                   <strong id="product-media-title">产品媒体</strong>
-                  <small>支持静态图片、GIF、MP4 和 WebM；产品封面使用图片或 GIF。</small>
+                  <small>素材请先上传到素材中心；这里仅负责选择、排序和设置封面。</small>
                 </div>
-                <label className={`product-upload-button${busy ? ' is-disabled' : ''}`}>
-                  <input
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm"
-                    multiple
-                    disabled={busy || media.length >= 12}
-                    onChange={(event) => {
-                      const files = Array.from(event.target.files ?? []);
-                      event.currentTarget.value = '';
-                      if (files.length > 0) onSelectLocalImages(files);
-                    }}
-                  />
-                  {processingImages ? '处理中…' : '选择媒体'}
-                </label>
+                <button
+                  type="button"
+                  className="product-upload-button"
+                  disabled={busy || media.length >= 12}
+                  onClick={onOpenMediaPicker}
+                >
+                  从素材中心选择
+                </button>
               </div>
 
               {media.length > 0 ? (
@@ -456,9 +443,8 @@ export function ProductEditorDialog({
                     const video = isEditorMediaVideo(item);
                     const coverEligible = isEditorMediaCoverEligible(item);
                     const isCover = effectiveCoverKey === item.key;
-                    const rotating = rotatingImageKey === item.key;
                     return (
-                      <article className={`product-media-card${isCover ? ' is-cover' : ''}${item.kind === 'local' ? ' is-local' : ''}`} key={item.key}>
+                      <article className={`product-media-card${isCover ? ' is-cover' : ''}`} key={item.key}>
                         <div className="product-media-preview">
                           {previewUrl ? (
                             video ? (
@@ -470,7 +456,6 @@ export function ProductEditorDialog({
                           <div className="product-media-badges">
                             <b className="is-kind-badge">{editorMediaKindLabel(item)}</b>
                             {isCover ? <b>封面</b> : null}
-                            {item.kind === 'local' ? <b className="is-local-badge">待保存</b> : null}
                           </div>
                         </div>
                         <div className="product-media-meta">
@@ -482,12 +467,6 @@ export function ProductEditorDialog({
                         <div className="product-media-actions">
                           <button type="button" disabled={index === 0 || busy} onClick={() => onMoveMedia(item.key, -1)}>前移</button>
                           <button type="button" disabled={index === media.length - 1 || busy} onClick={() => onMoveMedia(item.key, 1)}>后移</button>
-                          {item.kind === 'local' ? (
-                            <>
-                              <button type="button" disabled={busy} onClick={() => onRotateLocalImage(item.key, -1)}>左转</button>
-                              <button type="button" disabled={busy} onClick={() => onRotateLocalImage(item.key, 1)}>{rotating ? '处理中…' : '右转'}</button>
-                            </>
-                          ) : null}
                           <button
                             type="button"
                             disabled={!coverEligible || isCover || busy}
@@ -502,7 +481,12 @@ export function ProductEditorDialog({
                     );
                   })}
                 </div>
-              ) : <div className="product-media-empty">尚未选择产品媒体</div>}
+              ) : (
+                <div className="product-media-empty">
+                  <strong>尚未选择产品媒体</strong>
+                  <p>先在素材中心完成上传和分组，再从这里查看缩略图并选择。</p>
+                </div>
+              )}
 
               {coverKey ? (
                 <button className="product-auto-cover" type="button" disabled={busy} onClick={() => onSetCover(null)}>

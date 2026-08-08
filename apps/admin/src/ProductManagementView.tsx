@@ -1,31 +1,14 @@
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type FormEvent,
-} from 'react';
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { AdminApiError, type AdminSection } from './api';
-import { uploadMediaAsset, type ManagedMediaAsset } from './asset-library/api';
-import {
-  createCategory,
-  fetchCategories,
-  type AdminCategory,
-} from './category-management/api';
-import {
-  fetchConversionGroups,
-  type AdminConversionGroup,
-} from './conversion-pool/api';
+import { MediaLibraryPickerDialog } from './asset-library/MediaLibraryPickerDialog';
+import type { ManagedMediaAsset } from './asset-library/api';
+import { createCategory, fetchCategories, type AdminCategory } from './category-management/api';
+import { fetchConversionGroups, type AdminConversionGroup } from './conversion-pool/api';
 import { DeleteProductDialog } from './product-management/DeleteProductDialog';
 import { ProductEditorDialog } from './product-management/ProductEditorDialog';
 import { ProductTable } from './product-management/ProductTable';
 import {
   isEditorMediaCoverEligible,
-  prepareLocalProductImage,
-  releaseLocalProductImage,
-  releaseLocalProductImages,
-  rotateLocalProductImage,
   toRemoteProductImage,
   type ProductEditorImage,
 } from './product-management/local-product-image';
@@ -43,11 +26,7 @@ import {
   type ProductInput,
   type ProductStatus,
 } from './product-management/api';
-import {
-  createProductTag,
-  fetchProductTags,
-  type AdminProductTag,
-} from './tag-management/api';
+import { createProductTag, fetchProductTags, type AdminProductTag } from './tag-management/api';
 
 export type ProductDependencyTarget = 'categories' | 'tags' | 'conversion-pool';
 export type ProductResumeRequest = {
@@ -69,10 +48,7 @@ type ProductManagementViewProps = {
 
 type ProductScope = 'active' | 'trash';
 type StatusFilter = 'all' | ProductStatus;
-type SaveStage = 'idle' | 'uploading' | 'saving';
-
-const STATIC_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
-const DIRECT_MEDIA_TYPES = new Set(['image/gif', 'video/mp4', 'video/webm']);
+type SaveStage = 'idle' | 'saving';
 
 const emptyProductForm: ProductInput = {
   serviceMode: 'offline',
@@ -140,32 +116,7 @@ function managedMediaToProductMedia(media: ManagedMediaAsset, sortOrder: number)
   };
 }
 
-function inspectVideo(file: File): Promise<{ width: number; height: number; durationMs: number }> {
-  return new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(file);
-    const video = document.createElement('video');
-    video.preload = 'metadata';
-    video.muted = true;
-    video.onloadedmetadata = () => {
-      const width = video.videoWidth;
-      const height = video.videoHeight;
-      const durationMs = Number.isFinite(video.duration) ? Math.max(0, Math.round(video.duration * 1000)) : 0;
-      URL.revokeObjectURL(url);
-      if (width < 1 || height < 1) {
-        reject(new Error(`无法读取视频“${file.name}”的尺寸。`));
-        return;
-      }
-      resolve({ width, height, durationMs });
-    };
-    video.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error(`无法读取视频“${file.name}”。`));
-    };
-    video.src = url;
-  });
-}
-
-function validateBeforeImageUpload(
+function validateProductDraft(
   form: ProductInput,
   media: ProductEditorImage[],
   categories: AdminCategory[],
@@ -205,16 +156,6 @@ function validateBeforeImageUpload(
   return null;
 }
 
-function dedupeRemoteImages(images: ProductEditorImage[]): ProductEditorImage[] {
-  const seen = new Set<string>();
-  return images.filter((image) => {
-    if (image.kind !== 'remote') return true;
-    if (seen.has(image.media.id)) return false;
-    seen.add(image.media.id);
-    return true;
-  });
-}
-
 function normalizeInlineName(value: string): string {
   return value.trim().replace(/\s+/g, ' ');
 }
@@ -239,30 +180,17 @@ export function ProductManagementView({
   const [editingProduct, setEditingProduct] = useState<AdminProduct | null>(null);
   const [form, setForm] = useState<ProductInput>(emptyProductForm);
   const [media, setMedia] = useState<ProductEditorImage[]>([]);
-  const mediaRef = useRef<ProductEditorImage[]>([]);
-  const resumeOpenedRef = useRef<string | null>(null);
   const [coverKey, setCoverKey] = useState<string | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
+  const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
   const [resumeNotice, setResumeNotice] = useState(false);
   const [saveStage, setSaveStage] = useState<SaveStage>('idle');
   const [handoffTarget, setHandoffTarget] = useState<ProductDependencyTarget | null>(null);
-  const [processingImages, setProcessingImages] = useState(false);
-  const [rotatingImageKey, setRotatingImageKey] = useState<string | null>(null);
   const [working, setWorking] = useState(false);
   const [pendingDeleteIds, setPendingDeleteIds] = useState<string[]>([]);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
-
-  useEffect(() => {
-    mediaRef.current = media;
-  }, [media]);
-
-  useEffect(
-    () => () => {
-      releaseLocalProductImages(mediaRef.current);
-    },
-    [],
-  );
+  const [resumeOpenedProductId, setResumeOpenedProductId] = useState<string | null>(null);
 
   const handleError = useCallback(
     (error: unknown) => {
@@ -297,7 +225,6 @@ export function ProductManagementView({
   }, [handleError, section.id]);
 
   useEffect(() => {
-    releaseLocalProductImages(mediaRef.current);
     setMedia([]);
     setCoverKey(null);
     setScope('active');
@@ -306,10 +233,11 @@ export function ProductManagementView({
     setSelectedIds(new Set());
     setTrashProducts([]);
     setEditorOpen(false);
+    setMediaPickerOpen(false);
     setResumeNotice(false);
     setErrorMessage('');
     setSuccessMessage('');
-    resumeOpenedRef.current = null;
+    setResumeOpenedProductId(null);
     void loadActive();
   }, [loadActive]);
 
@@ -331,7 +259,6 @@ export function ProductManagementView({
           ...productToInput(detailed),
           ...(statusOverride ? { status: statusOverride } : {}),
         });
-        releaseLocalProductImages(mediaRef.current);
         setMedia(detailed.media.map(toRemoteProductImage));
         setCoverKey(detailed.coverAssetId ? `remote:${detailed.coverAssetId}` : null);
         setEditorOpen(true);
@@ -348,18 +275,18 @@ export function ProductManagementView({
 
   useEffect(() => {
     if (!resumeRequest) {
-      resumeOpenedRef.current = null;
+      setResumeOpenedProductId(null);
       return;
     }
-    if (loading || resumeOpenedRef.current === resumeRequest.productId) return;
+    if (loading || resumeOpenedProductId === resumeRequest.productId) return;
 
-    resumeOpenedRef.current = resumeRequest.productId;
+    setResumeOpenedProductId(resumeRequest.productId);
     void openProductEditor(resumeRequest.productId, resumeRequest.intendedStatus).then((opened) => {
       if (!opened) return;
       setResumeNotice(resumeRequest.wasDowngradedToDraft);
       onResumeHandled?.();
     });
-  }, [loading, onResumeHandled, openProductEditor, resumeRequest]);
+  }, [loading, onResumeHandled, openProductEditor, resumeOpenedProductId, resumeRequest]);
 
   const sourceProducts = scope === 'active' ? activeProducts : trashProducts;
   const filteredProducts = useMemo(() => {
@@ -375,8 +302,7 @@ export function ProductManagementView({
 
   const allVisibleSelected =
     filteredProducts.length > 0 && filteredProducts.every((product) => selectedIds.has(product.id));
-  const reorderBlocked =
-    scope !== 'active' || Boolean(search.trim()) || statusFilter !== 'all';
+  const reorderBlocked = scope !== 'active' || Boolean(search.trim()) || statusFilter !== 'all';
   const saving = saveStage !== 'idle';
 
   async function changeScope(nextScope: ProductScope) {
@@ -393,19 +319,14 @@ export function ProductManagementView({
     }
   }
 
-  function resetEditorImages(next: ProductEditorImage[], nextCoverKey: string | null) {
-    releaseLocalProductImages(mediaRef.current);
-    setMedia(next);
-    setCoverKey(nextCoverKey);
-  }
-
   function openCreateEditor() {
     const sortOrder = activeProducts.length
       ? Math.max(...activeProducts.map((product) => product.sortOrder)) + 10
       : 0;
     setEditingProduct(null);
     setForm({ ...emptyProductForm, sortOrder });
-    resetEditorImages([], null);
+    setMedia([]);
+    setCoverKey(null);
     setResumeNotice(false);
     setErrorMessage('');
     setSuccessMessage('');
@@ -413,66 +334,24 @@ export function ProductManagementView({
   }
 
   function closeEditor() {
-    if (saving || processingImages || rotatingImageKey || handoffTarget) return;
-    releaseLocalProductImages(mediaRef.current);
+    if (saving || handoffTarget) return;
+    setMediaPickerOpen(false);
     setMedia([]);
     setCoverKey(null);
     setResumeNotice(false);
     setEditorOpen(false);
   }
 
-  async function handleSelectLocalImages(files: File[]) {
-    const availableSlots = Math.max(0, 12 - mediaRef.current.length);
-    const selected = files.slice(0, availableSlots);
-    if (selected.length === 0) return;
-
-    setProcessingImages(true);
-    setErrorMessage('');
-    setSuccessMessage('');
-    const next = [...mediaRef.current];
-    let preparedCount = 0;
-    let directUploadCount = 0;
-    try {
-      for (const file of selected) {
-        const mimeType = file.type.toLowerCase();
-        if (STATIC_IMAGE_TYPES.has(mimeType)) {
-          next.push(await prepareLocalProductImage(file));
-          preparedCount += 1;
-          continue;
-        }
-        if (!DIRECT_MEDIA_TYPES.has(mimeType)) {
-          throw new Error(`不支持素材“${file.name}”的格式。`);
-        }
-        const metadata = mimeType.startsWith('video/') ? await inspectVideo(file) : null;
-        const result = await uploadMediaAsset({
-          file,
-          role: 'product',
-          width: metadata?.width,
-          height: metadata?.height,
-          durationMs: metadata?.durationMs,
-        });
-        next.push(toRemoteProductImage(managedMediaToProductMedia(result.media, next.length * 10)));
-        directUploadCount += 1;
+  function addMediaFromLibrary(asset: ManagedMediaAsset) {
+    setMedia((current) => {
+      if (current.length >= 12 || current.some((item) => item.kind === 'remote' && item.media.id === asset.id)) {
+        return current;
       }
-      setMedia(dedupeRemoteImages(next));
-      const skipped = Math.max(0, files.length - selected.length);
-      const parts = [
-        preparedCount > 0 ? `${preparedCount} 张静态图已完成浏览器压缩，保存产品时上传` : '',
-        directUploadCount > 0 ? `${directUploadCount} 个 GIF/视频已进入素材中心` : '',
-        skipped > 0 ? `${skipped} 个因超过 12 个媒体上限未加入` : '',
-      ].filter(Boolean);
-      setSuccessMessage(`${parts.join('；')}。`);
-    } catch (error) {
-      setMedia(dedupeRemoteImages(next));
-      handleError(error);
-    } finally {
-      setProcessingImages(false);
-    }
+      return [...current, toRemoteProductImage(managedMediaToProductMedia(asset, current.length * 10))];
+    });
   }
 
   function removeMedia(key: string) {
-    const target = mediaRef.current.find((item) => item.key === key);
-    if (target?.kind === 'local') releaseLocalProductImage(target);
     setMedia((current) => current.filter((item) => item.key !== key));
     if (coverKey === key) setCoverKey(null);
   }
@@ -490,84 +369,34 @@ export function ProductManagementView({
     });
   }
 
-  async function rotateMedia(key: string, direction: -1 | 1) {
-    const current = mediaRef.current.find((item) => item.key === key);
-    if (!current || current.kind !== 'local' || rotatingImageKey) return;
-    setRotatingImageKey(key);
-    setErrorMessage('');
-    try {
-      const rotated = await rotateLocalProductImage(current, direction);
-      setMedia((items) => items.map((item) => (item.key === key ? rotated : item)));
-      releaseLocalProductImage(current);
-    } catch (error) {
-      handleError(error);
-    } finally {
-      setRotatingImageKey(null);
-    }
-  }
-
   async function persistEditor(nextForm: ProductInput): Promise<AdminProduct | null> {
-    if (saving || processingImages || rotatingImageKey) return null;
+    if (saving) return null;
 
-    const localValidation = validateBeforeImageUpload(
-      nextForm,
-      mediaRef.current,
-      categories,
-      tags,
-      groups,
-    );
+    const localValidation = validateProductDraft(nextForm, media, categories, tags, groups);
     if (localValidation) {
       setErrorMessage(localValidation);
       setSuccessMessage('');
       return null;
     }
 
+    const requestedCover = coverKey ? media.find((item) => item.key === coverKey) ?? null : null;
+    const selectedCover = requestedCover && isEditorMediaCoverEligible(requestedCover)
+      ? requestedCover
+      : media.find(isEditorMediaCoverEligible) ?? null;
+    const mediaAssetIds = media.flatMap((item) => item.kind === 'remote' ? [item.media.id] : []);
+    const input: ProductInput = {
+      ...nextForm,
+      mediaAssetIds,
+      coverAssetId:
+        selectedCover?.kind === 'remote' && mediaAssetIds.includes(selectedCover.media.id)
+          ? selectedCover.media.id
+          : null,
+    };
+
     setErrorMessage('');
     setSuccessMessage('');
-    let resolvedImages = [...mediaRef.current];
-    let resolvedCoverKey = coverKey;
-
+    setSaveStage('saving');
     try {
-      if (resolvedImages.some((image) => image.kind === 'local')) setSaveStage('uploading');
-      else setSaveStage('saving');
-
-      for (let index = 0; index < resolvedImages.length; index += 1) {
-        const image = resolvedImages[index];
-        if (!image || image.kind !== 'local') continue;
-        const result = await uploadMediaAsset({
-          file: image.compressedFile,
-          role: 'product',
-          width: image.width,
-          height: image.height,
-        });
-        const remote = toRemoteProductImage(managedMediaToProductMedia(result.media, index * 10));
-        resolvedImages[index] = remote;
-        if (resolvedCoverKey === image.key) resolvedCoverKey = remote.key;
-        releaseLocalProductImage(image);
-        setMedia([...resolvedImages]);
-        setCoverKey(resolvedCoverKey);
-      }
-
-      resolvedImages = dedupeRemoteImages(resolvedImages);
-      const requestedCover = resolvedCoverKey
-        ? resolvedImages.find((image) => image.key === resolvedCoverKey) ?? null
-        : null;
-      const selectedCover = requestedCover && isEditorMediaCoverEligible(requestedCover)
-        ? requestedCover
-        : resolvedImages.find(isEditorMediaCoverEligible) ?? null;
-      const mediaAssetIds = resolvedImages.flatMap((image) =>
-        image.kind === 'remote' ? [image.media.id] : [],
-      );
-      const input: ProductInput = {
-        ...nextForm,
-        mediaAssetIds,
-        coverAssetId:
-          selectedCover?.kind === 'remote' && mediaAssetIds.includes(selectedCover.media.id)
-            ? selectedCover.media.id
-            : null,
-      };
-
-      setSaveStage('saving');
       const saved = editingProduct
         ? await updateProduct(section.id, editingProduct.id, input)
         : await createProduct(section.id, input);
@@ -595,10 +424,11 @@ export function ProductManagementView({
 
   async function handleSave(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    const wasEditing = editingProduct !== null;
     const saved = await persistEditor(form);
     if (!saved) return;
 
-    setSuccessMessage(`产品“${saved.title}”已${editingProduct ? '更新' : '创建'}。`);
+    setSuccessMessage(`产品“${saved.title}”已${wasEditing ? '更新' : '创建'}。`);
     setMedia([]);
     setCoverKey(null);
     setResumeNotice(false);
@@ -607,20 +437,14 @@ export function ProductManagementView({
   }
 
   async function handleConfigureDependency(target: ProductDependencyTarget) {
-    if (!onConfigureDependency || handoffTarget || saving || processingImages || rotatingImageKey) return;
+    if (!onConfigureDependency || handoffTarget || saving) return;
 
     const intendedStatus = form.status;
-    const currentValidation = validateBeforeImageUpload(form, mediaRef.current, categories, tags, groups);
+    const currentValidation = validateProductDraft(form, media, categories, tags, groups);
     const handoffForm = currentValidation && intendedStatus === 'published'
       ? { ...form, status: 'draft' as const }
       : form;
-    const handoffValidation = validateBeforeImageUpload(
-      handoffForm,
-      mediaRef.current,
-      categories,
-      tags,
-      groups,
-    );
+    const handoffValidation = validateProductDraft(handoffForm, media, categories, tags, groups);
     if (handoffValidation) {
       setErrorMessage(`暂存产品后才能切换配置：${handoffValidation}`);
       setSuccessMessage('');
@@ -634,6 +458,7 @@ export function ProductManagementView({
       return;
     }
 
+    setMediaPickerOpen(false);
     setMedia([]);
     setCoverKey(null);
     setResumeNotice(false);
@@ -658,11 +483,7 @@ export function ProductManagementView({
       ? Math.max(...categories.map((category) => category.sortOrder)) + 10
       : 0;
     try {
-      const created = await createCategory(section.id, {
-        name: normalized,
-        sortOrder,
-        isEnabled: true,
-      });
+      const created = await createCategory(section.id, { name: normalized, sortOrder, isEnabled: true });
       setCategories((current) => [...current, created].sort((a, b) => a.sortOrder - b.sortOrder));
       return created;
     } catch (error) {
@@ -680,11 +501,7 @@ export function ProductManagementView({
 
     const sortOrder = tags.length ? Math.max(...tags.map((tag) => tag.sortOrder)) + 10 : 0;
     try {
-      const created = await createProductTag(section.id, {
-        name: normalized,
-        sortOrder,
-        isEnabled: true,
-      });
+      const created = await createProductTag(section.id, { name: normalized, sortOrder, isEnabled: true });
       setTags((current) => [...current, created].sort((a, b) => a.sortOrder - b.sortOrder));
       return created;
     } catch (error) {
@@ -709,10 +526,7 @@ export function ProductManagementView({
     setErrorMessage('');
     setSuccessMessage('');
     try {
-      await reorderProducts(
-        section.id,
-        normalized.map((item) => ({ id: item.id, sortOrder: item.sortOrder })),
-      );
+      await reorderProducts(section.id, normalized.map((item) => ({ id: item.id, sortOrder: item.sortOrder })));
       setActiveProducts(normalized);
       setSuccessMessage('产品顺序已更新。');
     } catch (error) {
@@ -781,34 +595,7 @@ export function ProductManagementView({
     });
   }
 
-  const editorDialog = editorOpen ? (
-    <ProductEditorDialog
-      sectionName={section.name}
-      editingProduct={editingProduct}
-      form={form}
-      media={media}
-      coverKey={coverKey}
-      categories={categories}
-      tags={tags}
-      groups={groups}
-      saveStage={saveStage}
-      processingImages={processingImages}
-      rotatingImageKey={rotatingImageKey}
-      handoffBusy={handoffTarget !== null}
-      resumeNotice={resumeNotice}
-      onFormChange={setForm}
-      onSelectLocalImages={(files) => void handleSelectLocalImages(files)}
-      onRotateLocalImage={(key, direction) => void rotateMedia(key, direction)}
-      onRemoveMedia={removeMedia}
-      onMoveMedia={moveMedia}
-      onSetCover={setCoverKey}
-      onCreateCategory={handleCreateCategory}
-      onCreateTag={handleCreateTag}
-      onConfigureDependency={(target) => void handleConfigureDependency(target)}
-      onClose={closeEditor}
-      onSubmit={(event) => void handleSave(event)}
-    />
-  ) : null;
+  const selectedMediaIds = media.flatMap((item) => item.kind === 'remote' ? [item.media.id] : []);
 
   return (
     <section className="product-management" aria-labelledby="product-management-title">
@@ -826,12 +613,10 @@ export function ProductManagementView({
           <button type="button" className={scope === 'active' ? 'is-active' : undefined} onClick={() => void changeScope('active')}>当前产品 <span>{activeProducts.length}</span></button>
           <button type="button" className={scope === 'trash' ? 'is-active' : undefined} onClick={() => void changeScope('trash')}>回收站 <span>{trashProducts.length}</span></button>
         </div>
-
         <label className="product-search">
           <span>搜索</span>
           <input type="search" value={search} placeholder="标题、分类、标签或转化分组" onChange={(event) => setSearch(event.target.value)} />
         </label>
-
         <label className="product-status-filter">
           <span>状态</span>
           <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as StatusFilter)}>
@@ -866,7 +651,45 @@ export function ProductManagementView({
         onMove={(product, direction) => void moveProduct(product, direction)}
       />
 
-      {editorDialog}
+      {editorOpen ? (
+        <ProductEditorDialog
+          sectionName={section.name}
+          editingProduct={editingProduct}
+          form={form}
+          media={media}
+          coverKey={coverKey}
+          categories={categories}
+          tags={tags}
+          groups={groups}
+          saveStage={saveStage}
+          handoffBusy={handoffTarget !== null}
+          resumeNotice={resumeNotice}
+          onFormChange={setForm}
+          onOpenMediaPicker={() => setMediaPickerOpen(true)}
+          onRemoveMedia={removeMedia}
+          onMoveMedia={moveMedia}
+          onSetCover={setCoverKey}
+          onCreateCategory={handleCreateCategory}
+          onCreateTag={handleCreateTag}
+          onConfigureDependency={(target) => void handleConfigureDependency(target)}
+          onClose={closeEditor}
+          onSubmit={(event) => void handleSave(event)}
+        />
+      ) : null}
+
+      {editorOpen && mediaPickerOpen ? (
+        <MediaLibraryPickerDialog
+          title="选择产品媒体"
+          role="product"
+          allowedKinds={['image', 'animated_image', 'video']}
+          selectedIds={selectedMediaIds}
+          maxSelections={12}
+          onSessionExpired={onSessionExpired}
+          onClose={() => setMediaPickerOpen(false)}
+          onDone={() => setMediaPickerOpen(false)}
+          onSelect={addMediaFromLibrary}
+        />
+      ) : null}
 
       {pendingDeleteIds.length > 0 ? (
         <DeleteProductDialog count={pendingDeleteIds.length} working={working} onCancel={() => setPendingDeleteIds([])} onConfirm={() => void confirmDelete()} />
