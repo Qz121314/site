@@ -13,6 +13,8 @@ type MediaPreviewRow = {
   mime_type: string;
 };
 
+const BRANDING_IMAGE_COMPRESSION_PROFILE = 'browser-branding-image-v1';
+
 export const adminBrandingMediaRoutes = new Hono<AppEnvironment>();
 
 adminBrandingMediaRoutes.get('/assets/:id', async (context) => {
@@ -60,11 +62,21 @@ adminBrandingMediaRoutes.post('/branding', async (context) => {
 
   const kindValue = formData.get('kind');
   const file = formData.get('file');
+  const compressionProfile = formData.get('compressionProfile');
   if (kindValue !== 'logo' && kindValue !== 'section-icon') {
     return apiError(context, 400, 'BRANDING_KIND_INVALID', '图片用途无效。', { field: 'kind' });
   }
   if (!(file instanceof File)) {
     return apiError(context, 400, 'IMAGE_REQUIRED', '请选择需要上传的图片。', { field: 'file' });
+  }
+  if (compressionProfile !== BRANDING_IMAGE_COMPRESSION_PROFILE) {
+    return apiError(
+      context,
+      400,
+      'BRANDING_COMPRESSION_REQUIRED',
+      'Logo 和分区图标必须先在浏览器压缩，原图不会上传到 R2。',
+      { field: 'file' },
+    );
   }
 
   const kind: BrandingImageKind = kindValue;
@@ -100,6 +112,7 @@ adminBrandingMediaRoutes.post('/branding', async (context) => {
       byteSize: result.media.byteSize,
       width: result.media.width,
       height: result.media.height,
+      compressionProfile,
       reused: result.reused,
     },
   });
