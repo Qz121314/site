@@ -1,0 +1,209 @@
+/* Media Center density pass.
+ * Keep the page operationally dense: upload, folders and filtering stay above the
+ * asset grid without reserving large decorative rows.
+ */
+
+.media-center-page {
+  gap: 8px !important;
+}
+
+.media-center-page .media-center-select-all {
+  min-height: 24px;
+}
+
+.media-center-page .media-center-empty {
+  min-height: 112px;
+}
+
+@media (min-width: 1024px) {
+  body:has(.media-center-page) .admin-header,
+  .admin-main > .media-center-page {
+    width: 100% !important;
+    max-width: none !important;
+  }
+
+  body:has(.media-center-page) .admin-header {
+    align-items: center !important;
+    margin-bottom: 6px !important;
+  }
+
+  body:has(.media-center-page) .admin-header-title {
+    display: flex;
+    min-width: 0;
+    flex: 1 1 auto;
+    align-items: center;
+    gap: 14px;
+  }
+
+  body:has(.media-center-page) .admin-header-title::after {
+    display: inline-flex;
+    min-height: 28px;
+    align-items: center;
+    padding: 0 10px;
+    border: 1px solid #dbe5f0;
+    border-radius: 999px;
+    color: #526078;
+    background: #f8fafc;
+    content: '静态图片先压缩再上传 · 原图不进入 R2';
+    font-size: 0.66rem;
+    font-weight: 720;
+    white-space: nowrap;
+  }
+
+  /* On the normal library tab, place the mode switch into the folder command row. */
+  .media-center-page:has(.media-folder-create-bar) .media-center-heading {
+    position: relative;
+    z-index: 6;
+    min-height: 0 !important;
+    height: 0 !important;
+    margin: 0 !important;
+    overflow: visible;
+  }
+
+  .media-center-page:has(.media-folder-create-bar) .media-center-tabs {
+    position: absolute;
+    top: 6px;
+    left: 7px;
+  }
+
+  .media-center-page:has(.media-folder-create-bar) .media-folder-create-bar {
+    min-height: 44px;
+    flex-wrap: nowrap;
+    gap: 6px;
+    padding: 5px 7px 5px 174px;
+  }
+
+  .media-center-page .media-folder-create-bar > div {
+    display: none !important;
+  }
+
+  .media-center-page .media-folder-create-bar input {
+    width: min(280px, 26vw);
+    height: 32px;
+  }
+
+  .media-center-page .media-folder-create-bar .secondary-button,
+  .media-center-page .media-folder-create-bar .danger-button {
+    min-height: 32px !important;
+    padding-inline: 9px !important;
+    white-space: nowrap;
+  }
+
+  .media-center-page .media-center-upload-bar-v2 {
+    min-height: 44px;
+    grid-template-columns: minmax(125px, 160px) minmax(150px, 190px) auto auto minmax(240px, 1fr);
+    align-items: center;
+    gap: 6px;
+    padding: 5px 7px;
+  }
+
+  .media-center-page .media-center-upload-bar-v2 > label {
+    gap: 0 !important;
+  }
+
+  .media-center-page .media-center-upload-bar-v2 > label > span {
+    display: none !important;
+  }
+
+  .media-center-page .media-center-upload-bar-v2 select,
+  .media-center-page .media-center-upload-button {
+    min-height: 32px;
+    height: 32px;
+  }
+
+  .media-center-page .media-center-upload-bar-v2 > small {
+    align-self: center;
+    overflow: hidden;
+    color: transparent;
+    font-size: 0;
+    line-height: 1.3;
+  }
+
+  .media-center-page .media-center-upload-bar-v2 > small::after {
+    color: #667085;
+    content: 'JPG / PNG / WebP 在浏览器压缩到最长边 1200px 后上传；R2 不保存原图。GIF / 视频保留动画与视频编码。';
+    font-size: 0.63rem;
+  }
+
+  /* Counts are secondary information; the asset grid is the primary work surface. */
+  .media-center-page .media-summary-grid {
+    display: none !important;
+  }
+
+  .media-center-page .media-center-toolbar-v2 {
+    min-height: 40px;
+    grid-template-columns: minmax(280px, 1fr) minmax(140px, 190px) 135px 145px auto;
+    gap: 6px;
+    padding: 3px 4px;
+  }
+
+  .media-center-page .media-center-toolbar-v2 input,
+  .media-center-page .media-center-toolbar-v2 select,
+  .media-center-page .media-center-toolbar-v2 button {
+    min-height: 32px !important;
+    height: 32px;
+  }
+
+  .media-center-page .media-center-selection-toolbar {
+    min-height: 38px;
+    padding: 4px 7px;
+  }
+
+  .media-center-page .media-center-grid {
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 8px;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding-right: 2px;
+    scrollbar-width: thin;
+  }
+
+  .media-center-page .media-center-card-body {
+    gap: 4px;
+    padding: 7px 8px;
+  }
+
+  .media-center-page .media-center-card-actions {
+    padding: 0 8px 7px;
+  }
+
+  .media-center-page .media-center-card-actions button {
+    min-height: 24px;
+  }
+
+  /* Cleanup stays compact but keeps its own visible mode switch. */
+  .media-center-page:has(.media-cleanup-actions) .media-center-heading {
+    min-height: 32px !important;
+    height: 32px !important;
+  }
+
+  .media-center-page:has(.media-cleanup-actions) .media-cleanup-actions {
+    min-height: 42px;
+    padding: 5px 7px;
+  }
+}
+
+@media (min-width: 1024px) and (max-width: 1399px) {
+  body:has(.media-center-page) .admin-header-title::after {
+    display: none;
+  }
+
+  .media-center-page:has(.media-folder-create-bar) .media-folder-create-bar {
+    flex-wrap: wrap;
+  }
+
+  .media-center-page .media-center-upload-bar-v2 {
+    grid-template-columns: minmax(130px, 1fr) minmax(150px, 1.2fr) auto auto;
+  }
+
+  .media-center-page .media-center-upload-bar-v2 > small {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: 760px) {
+  .media-center-page {
+    gap: 7px !important;
+  }
+}
