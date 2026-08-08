@@ -7,6 +7,7 @@ type ProductTableProps = {
   selectedIds: Set<string>;
   allVisibleSelected: boolean;
   working: boolean;
+  reorderDisabled: boolean;
   onToggleSelect: (id: string) => void;
   onToggleSelectAll: () => void;
   onEdit: (product: AdminProduct) => void;
@@ -42,6 +43,7 @@ export function ProductTable({
   selectedIds,
   allVisibleSelected,
   working,
+  reorderDisabled,
   onToggleSelect,
   onToggleSelectAll,
   onEdit,
@@ -119,7 +121,7 @@ export function ProductTable({
               <td>
                 <div className="product-order-cell">
                   <span>{product.sortOrder}</span>
-                  {scope === 'active' ? <div><button type="button" aria-label="上移产品" disabled={working || index === 0} onClick={() => onMove(product, -1)}>↑</button><button type="button" aria-label="下移产品" disabled={working || index === products.length - 1} onClick={() => onMove(product, 1)}>↓</button></div> : null}
+                  {scope === 'active' ? <div><button type="button" aria-label="上移产品" disabled={working || reorderDisabled || index === 0} onClick={() => onMove(product, -1)}>↑</button><button type="button" aria-label="下移产品" disabled={working || reorderDisabled || index === products.length - 1} onClick={() => onMove(product, 1)}>↓</button></div> : null}
                 </div>
               </td>
               <td>{formatDate(product.updatedAt)}</td>
