@@ -682,5 +682,6 @@ site/
 - [项目架构基线](docs/architecture.md)
 - [D1 与 R2 数据存储基线](docs/data-storage.md)
 - [开发阶段与交付计划](docs/development-plan.md)
+- [发布验收清单](docs/acceptance-checklist.md)
 
 README 用于说明**当前产品范围、已实现能力和运行方式**；`docs/` 保留更细的架构 / 数据设计背景。功能行为、migration 与文档发生变化时，应同步维护，避免 README 重新变成历史版本。
