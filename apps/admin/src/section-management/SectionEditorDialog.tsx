@@ -15,6 +15,7 @@ type SectionEditorDialogProps = {
   processingIcon: boolean;
   onFormChange: (form: SectionEditorInput) => void;
   onSelectIconFile: (file: File) => void;
+  onOpenMediaPicker: () => void;
   onRemoveImageIcon: () => void;
   onSelectFallbackIcon: (icon: string) => void;
   onClose: () => void;
@@ -30,6 +31,7 @@ export function SectionEditorDialog({
   processingIcon,
   onFormChange,
   onSelectIconFile,
+  onOpenMediaPicker,
   onRemoveImageIcon,
   onSelectFallbackIcon,
   onClose,
@@ -81,7 +83,7 @@ export function SectionEditorDialog({
               </div>
               <div className="section-icon-upload-copy">
                 <strong>{iconPreviewUrl ? '当前使用图片图标' : '当前使用字符图标'}</strong>
-                <p>支持 JPG、PNG、WebP。浏览器最长边压缩至 512px，保存分区时才上传压缩图。</p>
+                <p>支持 JPG、PNG、WebP。可直接上传，也可从全站素材中心复用已有图片。</p>
                 {localIcon ? (
                   <small>
                     压缩后 {localIcon.width} × {localIcon.height} ·{' '}
@@ -89,7 +91,7 @@ export function SectionEditorDialog({
                     {formatBrandingBytes(localIcon.originalByteSize)}
                   </small>
                 ) : form.iconAssetId ? (
-                  <small>已绑定 R2 图片素材。</small>
+                  <small>已绑定素材中心图片。</small>
                 ) : null}
                 <div className="section-icon-upload-actions">
                   <label className={`branding-file-button${busy ? ' is-disabled' : ''}`}>
@@ -103,15 +105,13 @@ export function SectionEditorDialog({
                         if (file) onSelectIconFile(file);
                       }}
                     />
-                    {processingIcon ? '浏览器压缩中…' : iconPreviewUrl ? '更换图片图标' : '上传图片图标'}
+                    {processingIcon ? '浏览器压缩中…' : iconPreviewUrl ? '上传替换' : '上传图片图标'}
                   </label>
+                  <button type="button" className="secondary-button" disabled={busy} onClick={onOpenMediaPicker}>
+                    从素材中心选择
+                  </button>
                   {iconPreviewUrl ? (
-                    <button
-                      type="button"
-                      className="secondary-button"
-                      disabled={busy}
-                      onClick={onRemoveImageIcon}
-                    >
+                    <button type="button" className="secondary-button" disabled={busy} onClick={onRemoveImageIcon}>
                       移除图片图标
                     </button>
                   ) : null}
@@ -147,9 +147,7 @@ export function SectionEditorDialog({
               step="1"
               value={form.sortOrder}
               disabled={busy}
-              onChange={(event) =>
-                onFormChange({ ...form, sortOrder: Number(event.target.value) })
-              }
+              onChange={(event) => onFormChange({ ...form, sortOrder: Number(event.target.value) })}
             />
             <small>数字越小越靠前，也可以在列表中使用上下移动。</small>
           </label>
