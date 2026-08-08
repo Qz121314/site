@@ -329,6 +329,8 @@ export function ProductManagementView({
 
   const allVisibleSelected =
     filteredProducts.length > 0 && filteredProducts.every((product) => selectedIds.has(product.id));
+  const reorderBlocked =
+    scope !== 'active' || Boolean(search.trim()) || statusFilter !== 'all';
   const saving = saveStage !== 'idle';
 
   async function changeScope(nextScope: ProductScope) {
@@ -619,6 +621,7 @@ export function ProductManagementView({
   }
 
   async function moveProduct(product: AdminProduct, direction: -1 | 1) {
+    if (reorderBlocked) return;
     const ordered = sortProducts(activeProducts);
     const index = ordered.findIndex((item) => item.id === product.id);
     const targetIndex = index + direction;
@@ -781,6 +784,7 @@ export function ProductManagementView({
         selectedIds={selectedIds}
         allVisibleSelected={allVisibleSelected}
         working={working}
+        reorderDisabled={reorderBlocked}
         onToggleSelect={toggleSelect}
         onToggleSelectAll={toggleSelectAll}
         onEdit={(product) => void openProductEditor(product.id)}
