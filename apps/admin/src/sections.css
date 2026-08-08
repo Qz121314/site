@@ -543,3 +543,310 @@ button.status-pill {
     border-radius: 22px 22px 0 0;
   }
 }
+
+/* Section management follows the compact command-bar/table language used by the
+ * rest of the Admin workbenches. The semantic heading remains in the DOM for
+ * accessibility, while Dashboard owns the visible page title. */
+.section-management {
+  width: 100%;
+  min-height: 0;
+  grid-template-columns: auto minmax(260px, 1fr) max-content;
+  align-content: start;
+  gap: 8px;
+}
+
+.section-management-toolbar,
+.section-management .section-filter-bar {
+  display: contents;
+}
+
+.section-management-toolbar > div {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.section-management-toolbar > .primary-button {
+  grid-column: 3;
+  grid-row: 1;
+  min-height: 34px;
+  align-self: center;
+  padding: 0 12px;
+}
+
+.section-management .scope-tabs {
+  display: inline-flex;
+  grid-column: 1;
+  grid-row: 1;
+  width: fit-content;
+  align-items: center;
+  gap: 2px;
+  align-self: center;
+  padding: 3px;
+  border: 1px solid var(--admin-border, #e2e6ec);
+  border-radius: 9px;
+  background: #f1f3f6;
+}
+
+.section-management .scope-tabs button {
+  min-height: 28px;
+  gap: 6px;
+  padding: 0 10px;
+  border-radius: 6px;
+  color: #667085;
+  font-size: 0.71rem;
+  font-weight: 720;
+  line-height: 1;
+}
+
+.section-management .scope-tabs button span {
+  min-width: 18px;
+  padding: 2px 5px;
+  background: rgb(255 255 255 / 72%);
+  color: #667085;
+  font-size: 0.63rem;
+}
+
+.section-management .scope-tabs button.is-active {
+  color: #fff;
+  background: #202632;
+  box-shadow: 0 1px 3px rgb(16 24 40 / 18%);
+}
+
+.section-management .scope-tabs button.is-active span {
+  color: #fff;
+  background: rgb(255 255 255 / 14%);
+}
+
+.section-management .section-search {
+  display: block;
+  grid-column: 2;
+  grid-row: 1;
+  width: 100%;
+  min-width: 0;
+  align-self: center;
+}
+
+.section-management .section-search span {
+  display: none;
+}
+
+.section-management .section-search input {
+  width: 100%;
+  min-height: 34px;
+  box-sizing: border-box;
+  padding: 0 10px;
+  border: 1px solid var(--admin-border-strong, #cfd5df);
+  border-radius: 7px;
+  outline: 0;
+  font-size: 0.77rem;
+}
+
+.section-management .section-search input:focus {
+  border-color: #ff9a76;
+  box-shadow: 0 0 0 3px rgb(255 90 31 / 10%);
+}
+
+.section-management > .notice,
+.section-management > .selection-toolbar,
+.section-management > .section-table-wrap {
+  grid-column: 1 / -1;
+}
+
+.section-management > .selection-toolbar {
+  min-height: 38px;
+  padding: 4px 7px;
+  border-radius: 8px;
+}
+
+.section-management .section-table-wrap {
+  min-height: 0;
+  overflow: auto;
+  border-color: var(--admin-border, #e2e6ec);
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(16 24 40 / 3%);
+}
+
+.section-management .section-table-wrap:has(.section-table-empty) .section-table {
+  display: none;
+}
+
+.section-management .section-table {
+  min-width: 820px;
+}
+
+.section-management .section-table th,
+.section-management .section-table td {
+  padding: 7px 9px;
+  border-bottom-color: #edf0f4;
+}
+
+.section-management .section-table th {
+  height: 36px;
+  color: #667085;
+  background: #f8f9fb;
+  font-size: 0.65rem;
+  font-weight: 760;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.section-management .section-table td {
+  font-size: 0.76rem;
+}
+
+.section-management .section-table tbody tr:hover td {
+  background: #fafbfc;
+}
+
+.section-management .checkbox-cell {
+  width: 36px;
+}
+
+.section-management .checkbox-cell input {
+  width: 16px;
+  height: 16px;
+}
+
+.section-management .section-identity {
+  gap: 8px;
+}
+
+.section-management .section-icon {
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  border-radius: 8px;
+  font-size: 17px;
+}
+
+.section-management .section-identity small {
+  margin-top: 2px;
+  font-size: 0.66rem;
+}
+
+.section-management .sort-controls {
+  gap: 6px;
+}
+
+.section-management .sort-controls strong {
+  min-width: 24px;
+  color: #475467;
+  font-size: 0.71rem;
+}
+
+.section-management .sort-controls button {
+  width: 28px;
+  height: 28px;
+  border-color: #dfe4eb;
+  border-radius: 6px;
+  color: #475467;
+  box-shadow: 0 1px 1px rgb(16 24 40 / 3%);
+}
+
+.section-management .sort-controls button:not(:disabled):hover {
+  border-color: #c7ced8;
+  color: #172033;
+  background: #f8fafc;
+}
+
+.section-management .status-pill {
+  padding: 5px 8px;
+  font-size: 0.68rem;
+}
+
+.section-management .relation-count {
+  margin-right: 6px;
+  font-size: 0.68rem;
+}
+
+.section-management .actions-cell {
+  width: 150px;
+}
+
+.section-management .actions-cell button {
+  min-height: 27px;
+  margin-left: 4px;
+  padding: 3px 8px;
+  border: 1px solid #dfe4eb;
+  border-radius: 6px;
+  color: #475467;
+  background: #fff;
+  box-shadow: 0 1px 1px rgb(16 24 40 / 3%);
+  font-size: 0.69rem;
+  font-weight: 700;
+}
+
+.section-management .actions-cell button:not(:disabled):hover {
+  border-color: #c7ced8;
+  color: #172033;
+  background: #f8fafc;
+}
+
+.section-management .actions-cell .text-danger {
+  border-color: transparent;
+  color: #b42318 !important;
+  background: transparent;
+  box-shadow: none;
+}
+
+.section-management .actions-cell .text-danger:not(:disabled):hover {
+  border-color: #fecdca;
+  color: #912018 !important;
+  background: #fff1f0;
+}
+
+.section-management .section-table-empty {
+  display: grid;
+  min-height: 112px;
+  place-items: center;
+  align-content: center;
+  gap: 4px;
+  padding: 24px 16px;
+  color: #667085;
+}
+
+.section-management .section-table-empty strong {
+  margin: 0;
+  color: #344054;
+  font-size: 0.8rem;
+}
+
+.section-management .section-table-empty p {
+  font-size: 0.7rem;
+}
+
+@media (max-width: 900px) {
+  .section-management {
+    grid-template-columns: 1fr;
+  }
+
+  .section-management .scope-tabs {
+    grid-column: 1;
+    grid-row: 1;
+    width: 100%;
+  }
+
+  .section-management .scope-tabs button {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .section-management .section-search {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .section-management-toolbar > .primary-button {
+    grid-column: 1;
+    grid-row: 3;
+    width: 100%;
+  }
+}
