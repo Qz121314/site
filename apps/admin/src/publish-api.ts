@@ -237,12 +237,12 @@ function parsePublishResult(value: unknown): PublishResult {
 export function fetchPublishStatus(): Promise<PublishStatus> {
   if (publishStatusInFlight) return publishStatusInFlight;
 
-  const request = requestJson('/api/admin/publish/')
-    .then(parseStatus)
-    .finally(() => {
-      if (publishStatusInFlight === request) publishStatusInFlight = null;
-    });
+  const request = requestJson('/api/admin/publish/').then(parseStatus);
   publishStatusInFlight = request;
+  const clearInFlight = () => {
+    if (publishStatusInFlight === request) publishStatusInFlight = null;
+  };
+  void request.then(clearInFlight, clearInFlight);
   return request;
 }
 
