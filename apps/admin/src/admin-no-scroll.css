@@ -81,6 +81,14 @@
     scrollbar-width: thin;
   }
 
+  /* The shared settings UI declares overflow:visible!important. Override it here
+   * at the viewport-policy layer so shorter pages stay compact and taller pages
+   * remain reachable without introducing inner panel scrollbars. */
+  .admin-main > .settings-form {
+    align-content: start;
+    overflow-y: auto !important;
+  }
+
   /* List workbenches use a stable vertical flow. This deliberately overrides
    * older page-level CSS Grid roots whose auto rows stretched into blank space. */
   .admin-main > .section-management,
