@@ -110,7 +110,7 @@ function sectionModule(sectionId, version, productId, featuredOrder) {
     tags: [{ id: `tag-${sectionId}`, sectionId, name: 'Verified', sortOrder: 0 }],
     products: [{
       id: productId,
-      slug: productId,
+      slug: `${productId}-slug`,
       sectionId,
       title: `Product ${productId}`,
       serviceMode: 'online',
@@ -305,11 +305,18 @@ test('section, product and FAQ reads follow their own module version references'
     const bootstrap = await loadStorefrontBootstrap('https://content.example.com');
     const section = await loadSectionSnapshot(bootstrap, 'section-a');
     assert.equal(section.contentVersion, SECTION_A_VERSION);
+    const sectionBySlug = await loadSectionSnapshot(bootstrap, 'alpha');
+    assert.equal(sectionBySlug.section.id, 'section-a');
 
     const product = await loadProductSnapshot(bootstrap, 'product-a');
     assert.equal(product.contentVersion, SECTION_A_VERSION);
     assert.equal(product.product.media[0].url, 'https://media.example.com/products/product-a/gallery-1.webp');
     assert.equal(product.product.cta.path, '/go/product-a');
+
+    const productBySlug = await loadProductSnapshot(bootstrap, 'product-a-slug', undefined, 'alpha');
+    assert.equal(productBySlug.product.id, 'product-a');
+    const globallyUniqueSlug = await loadProductSnapshot(bootstrap, 'product-a-slug');
+    assert.equal(globallyUniqueSlug.product.id, 'product-a');
 
     const faq = await loadFaqSnapshot(bootstrap);
     assert.equal(faq.contentVersion, FAQ_VERSION);

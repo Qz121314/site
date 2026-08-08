@@ -302,7 +302,9 @@ jobs:
             curl --fail --silent --show-error "$BASE_URL$path" | grep -F '<div id="root"></div>'
           done
 
-          for path in "/sections/storefront-smoke-${GITHUB_SHA}/" "/products/storefront-smoke-${GITHUB_SHA}/"; do
+          for path in "/sections/storefront-smoke-${GITHUB_SHA}/" \
+            "/sections/storefront-smoke-${GITHUB_SHA}/products/product-smoke-${GITHUB_SHA}/" \
+            "/products/storefront-smoke-${GITHUB_SHA}/"; do
             curl --fail --silent --show-error \
               -H 'Accept: text/html' \
               -H 'Sec-Fetch-Mode: navigate' \

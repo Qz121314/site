@@ -760,12 +760,19 @@ export async function loadStorefrontBootstrap(
 
 export async function loadSectionSnapshot(
   bootstrap: StorefrontBootstrap,
-  sectionId: string,
+  sectionRef: string,
   signal?: AbortSignal,
 ): Promise<SectionSnapshot> {
-  if (!sectionId || sectionId.length > 120) {
+  if (!sectionRef || sectionRef.length > 120) {
     throw new PublicContentError('INVALID_SECTION', 'The requested service section is invalid.');
   }
+  const section = bootstrap.home.allSections.find(
+    (item) => item.id === sectionRef || item.slug === sectionRef,
+  );
+  if (!section) {
+    throw new PublicContentError('CONTENT_NOT_PUBLISHED', 'This service section has not been published yet.');
+  }
+  const sectionId = section.id;
   if (bootstrap.pointer.schemaVersion === 2) {
     const snapshot = bootstrap.sectionSnapshots[sectionId];
     if (!snapshot) {
@@ -784,13 +791,34 @@ export async function loadSectionSnapshot(
 
 export async function loadProductSnapshot(
   bootstrap: StorefrontBootstrap,
-  productId: string,
+  productRef: string,
   signal?: AbortSignal,
+  sectionRef?: string | null,
 ): Promise<ProductSnapshot> {
-  if (!productId || productId.length > 120) {
+  if (!productRef || productRef.length > 120 || (sectionRef && sectionRef.length > 120)) {
     throw new PublicContentError('INVALID_PRODUCT', 'The requested service is invalid.');
   }
   if (bootstrap.pointer.schemaVersion === 1) {
+    let productId = productRef;
+    if (sectionRef) {
+      const section = await loadSectionSnapshot(bootstrap, sectionRef, signal);
+      const product = section.products.find(
+        (item) => item.id === productRef || item.slug === productRef,
+      );
+      if (!product) {
+        throw new PublicContentError('CONTENT_NOT_PUBLISHED', 'This service has not been published yet.');
+      }
+      productId = product.id;
+    } else {
+      const homeProducts = [
+        ...bootstrap.home.featuredProducts,
+        ...bootstrap.home.latestProducts,
+      ];
+      const exactId = homeProducts.find((item) => item.id === productRef);
+      const slugMatches = homeProducts.filter((item) => item.slug === productRef);
+      if (exactId) productId = exactId.id;
+      else if (slugMatches.length === 1 && slugMatches[0]) productId = slugMatches[0].id;
+    }
     const snapshot = await loadV1File<ProductSnapshot>(
       bootstrap.origin,
       bootstrap.pointer.contentVersion,
@@ -800,10 +828,23 @@ export async function loadProductSnapshot(
     return normalizeV1ProductSnapshot(snapshot);
   }
 
-  const sectionId = bootstrap.productSectionIds[productId];
+  const requestedSection = sectionRef
+    ? bootstrap.home.allSections.find((item) => item.id === sectionRef || item.slug === sectionRef)
+    : null;
+  if (sectionRef && !requestedSection) {
+    throw new PublicContentError('CONTENT_NOT_PUBLISHED', 'This service section has not been published yet.');
+  }
+  const publishedProducts = Object.values(bootstrap.sectionSnapshots)
+    .filter((snapshot) => !requestedSection || snapshot.section.id === requestedSection.id)
+    .flatMap((snapshot) => snapshot.products);
+  const exactId = publishedProducts.find((product) => product.id === productRef);
+  const slugMatches = publishedProducts.filter((product) => product.slug === productRef);
+  const matchedProduct = exactId ?? (slugMatches.length === 1 ? slugMatches[0] : null);
+  const productId = matchedProduct?.id;
+  const sectionId = productId ? bootstrap.productSectionIds[productId] : null;
   const section = sectionId ? bootstrap.home.allSections.find((item) => item.id === sectionId) : null;
   const reference = sectionId ? bootstrap.pointer.sections[sectionId] : null;
-  if (!sectionId || !section || !reference) {
+  if (!productId || !sectionId || !section || !reference) {
     throw new PublicContentError('CONTENT_NOT_PUBLISHED', 'This service is not part of the current published section versions.');
   }
   const moduleKey = `section:${sectionId}`;
@@ -814,6 +855,9 @@ export async function loadProductSnapshot(
     v2ModulePath(moduleKey, reference, `products/${encodeURIComponent(productId)}.json`),
     signal,
   );
+  if (raw.product.id !== productId || raw.product.sectionId !== sectionId) {
+    throw new PublicContentError('SNAPSHOT_VERSION_MISMATCH', 'The published service is inconsistent.');
+  }
   const summary = resolveV2Summary(raw.product, section, bootstrap.site.site.mediaBaseUrl);
   return {
     schemaVersion: 2,

@@ -22,12 +22,7 @@ import {
 import { HomepageAnalytics } from './HomepageAnalytics';
 import { MarkdownContent } from './MarkdownContent';
 import { ResilientImage, ResilientVideo } from './ResilientMedia';
-
-type Route =
-  | { type: 'home' }
-  | { type: 'section'; id: string }
-  | { type: 'product'; id: string }
-  | { type: 'not-found' };
+import { parseStorefrontRoute, productHref, sectionHref } from './routing';
 
 type RouteResource = 'section' | 'product';
 
@@ -48,30 +43,6 @@ function currentPathname() {
 
 function usePathname() {
   return useSyncExternalStore(subscribePathname, currentPathname, () => '/');
-}
-
-function decodeRoutePart(value: string): string | null {
-  try {
-    const decoded = decodeURIComponent(value);
-    return decoded && decoded.length <= 120 ? decoded : null;
-  } catch {
-    return null;
-  }
-}
-
-function parseRoute(pathname: string): Route {
-  if (pathname === '/' || pathname === '') return { type: 'home' };
-  const sectionMatch = /^\/sections\/([^/]+)\/?$/.exec(pathname);
-  if (sectionMatch) {
-    const id = decodeRoutePart(sectionMatch[1] ?? '');
-    return id ? { type: 'section', id } : { type: 'not-found' };
-  }
-  const productMatch = /^\/products\/([^/]+)\/?$/.exec(pathname);
-  if (productMatch) {
-    const id = decodeRoutePart(productMatch[1] ?? '');
-    return id ? { type: 'product', id } : { type: 'not-found' };
-  }
-  return { type: 'not-found' };
 }
 
 function navigate(href: string) {
@@ -135,7 +106,7 @@ function SectionIcon({ section }: { section: PublicSection }) {
 
 function ProductCard({ product }: { product: PublicProductSummary }) {
   return (
-    <AppLink className="product-card" href={`/products/${encodeURIComponent(product.id)}/`}>
+    <AppLink className="product-card" href={productHref(product)}>
       <div className="product-card-media">
         <ResilientImage
           alt=""
@@ -391,7 +362,7 @@ function HomePage({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
         {visibleSections.length > 0 ? (
           <div className="section-grid">
             {visibleSections.map((section) => (
-              <AppLink className="section-item" href={`/sections/${encodeURIComponent(section.id)}/`} key={section.id}>
+              <AppLink className="section-item" href={sectionHref(section)} key={section.id}>
                 <span className="section-icon"><SectionIcon section={section} /></span>
                 <span>{section.name}</span>
               </AppLink>
@@ -413,13 +384,13 @@ function HomePage({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
   );
 }
 
-function SectionPage({ bootstrap, sectionId }: { bootstrap: StorefrontBootstrap; sectionId: string }) {
+function SectionPage({ bootstrap, sectionRef }: { bootstrap: StorefrontBootstrap; sectionRef: string }) {
   const [search, setSearch] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [selectedTags, setSelectedTags] = useState<Set<string>>(() => new Set());
   const query = useQuery({
-    queryKey: ['storefront-section', bootstrap.pointer.contentVersion, sectionId],
-    queryFn: ({ signal }) => loadSectionSnapshot(bootstrap, sectionId, signal),
+    queryKey: ['storefront-section', bootstrap.pointer.contentVersion, sectionRef],
+    queryFn: ({ signal }) => loadSectionSnapshot(bootstrap, sectionRef, signal),
     staleTime: Number.POSITIVE_INFINITY,
   });
 
@@ -527,10 +498,18 @@ function SectionPage({ bootstrap, sectionId }: { bootstrap: StorefrontBootstrap;
   );
 }
 
-function ProductPage({ bootstrap, productId }: { bootstrap: StorefrontBootstrap; productId: string }) {
+function ProductPage({
+  bootstrap,
+  productRef,
+  sectionRef,
+}: {
+  bootstrap: StorefrontBootstrap;
+  productRef: string;
+  sectionRef: string | null;
+}) {
   const query = useQuery({
-    queryKey: ['storefront-product', bootstrap.pointer.contentVersion, productId],
-    queryFn: ({ signal }) => loadProductSnapshot(bootstrap, productId, signal),
+    queryKey: ['storefront-product', bootstrap.pointer.contentVersion, sectionRef, productRef],
+    queryFn: ({ signal }) => loadProductSnapshot(bootstrap, productRef, signal, sectionRef),
     staleTime: Number.POSITIVE_INFINITY,
   });
   const productMedia = query.data?.product.media.filter((media) => Boolean(media.url)) ?? [];
@@ -547,7 +526,10 @@ function ProductPage({ bootstrap, productId }: { bootstrap: StorefrontBootstrap;
       ) : null}
       {query.data ? (
         <article className="product-detail">
-          <AppLink className="back-link" href={`/sections/${encodeURIComponent(query.data.product.sectionId)}/`}>
+          <AppLink
+            className="back-link"
+            href={sectionHref({ id: query.data.product.sectionId, slug: query.data.product.sectionSlug })}
+          >
             ← {query.data.product.sectionName}
           </AppLink>
 
@@ -632,7 +614,7 @@ function ProductPage({ bootstrap, productId }: { bootstrap: StorefrontBootstrap;
 
 export function App() {
   const pathname = usePathname();
-  const route = useMemo(() => parseRoute(pathname), [pathname]);
+  const route = useMemo(() => parseStorefrontRoute(pathname), [pathname]);
   const bootstrapQuery = useQuery({
     queryKey: ['storefront-bootstrap'],
     queryFn: ({ signal }) => loadStorefrontBootstrap(undefined, signal),
@@ -650,9 +632,15 @@ export function App() {
     case 'home':
       return <HomePage bootstrap={bootstrapQuery.data} />;
     case 'section':
-      return <SectionPage bootstrap={bootstrapQuery.data} sectionId={route.id} />;
+      return <SectionPage bootstrap={bootstrapQuery.data} sectionRef={route.sectionRef} />;
     case 'product':
-      return <ProductPage bootstrap={bootstrapQuery.data} productId={route.id} />;
+      return (
+        <ProductPage
+          bootstrap={bootstrapQuery.data}
+          productRef={route.productRef}
+          sectionRef={route.sectionRef}
+        />
+      );
     default:
       return <NotFoundPage site={bootstrapQuery.data.site.site} />;
   }
