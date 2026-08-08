@@ -61,6 +61,34 @@ test('publish status validates the response and uses authenticated no-cache read
   );
 });
 
+test('concurrent publish status reads share one worker request', async () => {
+  let requestCount = 0;
+  let releaseRequest;
+  const gate = new Promise((resolve) => {
+    releaseRequest = resolve;
+  });
+
+  await withBrowserFetch(
+    async () => {
+      requestCount += 1;
+      await gate;
+      return Response.json(statusEnvelope());
+    },
+    async () => {
+      const first = fetchPublishStatus();
+      const second = fetchPublishStatus();
+      assert.equal(first, second);
+      assert.equal(requestCount, 1);
+
+      releaseRequest();
+      await Promise.all([first, second]);
+
+      await fetchPublishStatus();
+      assert.equal(requestCount, 2);
+    },
+  );
+});
+
 test('publish status rejects malformed successful responses', async () => {
   await withBrowserFetch(
     async () => Response.json({ status: { modules: [] } }),
