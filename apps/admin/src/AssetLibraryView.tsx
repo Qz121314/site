@@ -4,6 +4,8 @@ import { AssetTable } from './asset-library/AssetTable';
 import { CleanupAssetDialog } from './asset-library/CleanupAssetDialog';
 import { deleteMediaAssets } from './asset-library/media-delete-api';
 import { fetchMediaLibraryPage } from './asset-library/media-library-page-api';
+import { MediaUploadQueuePanel } from './asset-library/MediaUploadQueuePanel';
+import { useMediaUploadQueue, type MediaUploadBatchSummary } from './asset-library/media-upload-queue';
 import {
   cleanupAssets,
   createMediaFolder,
@@ -12,7 +14,6 @@ import {
   fetchMediaFolders,
   moveMediaAssets,
   renameMediaFolder,
-  uploadMediaAsset,
   type AdminAsset,
   type ManagedMediaAsset,
   type MediaFolder,
@@ -45,15 +46,6 @@ const KIND_OPTIONS: Array<{ value: MediaKind | ''; label: string }> = [
   { value: 'animated_image', label: 'GIF / 动图' },
   { value: 'video', label: '视频' },
 ];
-
-const SUPPORTED_MEDIA_TYPES = new Set([
-  'image/jpeg',
-  'image/png',
-  'image/webp',
-  'image/gif',
-  'video/mp4',
-  'video/webm',
-]);
 
 function formatBytes(value: number): string {
   if (value < 1024) return `${value} B`;
@@ -90,31 +82,6 @@ function mergeAssets(current: AdminAsset[], incoming: AdminAsset[]): AdminAsset[
   return [...byKey.values()].sort((left, right) => left.key.localeCompare(right.key));
 }
 
-function inspectVideo(file: File): Promise<{ width: number; height: number; durationMs: number }> {
-  return new Promise((resolve, reject) => {
-    const url = URL.createObjectURL(file);
-    const video = document.createElement('video');
-    video.preload = 'metadata';
-    video.muted = true;
-    video.onloadedmetadata = () => {
-      const width = video.videoWidth;
-      const height = video.videoHeight;
-      const durationMs = Number.isFinite(video.duration) ? Math.round(video.duration * 1000) : 0;
-      URL.revokeObjectURL(url);
-      if (width < 1 || height < 1) {
-        reject(new Error(`无法读取视频“${file.name}”的尺寸。`));
-        return;
-      }
-      resolve({ width, height, durationMs });
-    };
-    video.onerror = () => {
-      URL.revokeObjectURL(url);
-      reject(new Error(`无法读取视频“${file.name}”。`));
-    };
-    video.src = url;
-  });
-}
-
 function rootFolderName(files: File[]): string {
   const path = files.find((file) => file.webkitRelativePath)?.webkitRelativePath ?? '';
   const root = path.split('/').filter(Boolean)[0]?.trim();
@@ -139,7 +106,6 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
   const [uploadFolderId, setUploadFolderId] = useState('');
   const [newFolderName, setNewFolderName] = useState('');
   const [moveFolderId, setMoveFolderId] = useState('');
-  const [uploading, setUploading] = useState(false);
   const [folderWorking, setFolderWorking] = useState(false);
   const [deletingMedia, setDeletingMedia] = useState(false);
   const [selectedMediaIds, setSelectedMediaIds] = useState<Set<string>>(new Set());
@@ -209,6 +175,15 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
       if (mediaRequestVersionRef.current === version) setMediaLoading(false);
     }
   }, [debouncedMediaQuery, folderFilter, mediaKind, mediaRole, onSessionExpired]);
+
+  const refreshMediaAndFolders = useCallback(async () => {
+    await Promise.all([loadMedia(), loadFolders()]);
+  }, [loadFolders, loadMedia]);
+
+  const uploadQueue = useMediaUploadQueue({
+    onSessionExpired,
+    onBatchComplete: refreshMediaAndFolders,
+  });
 
   useEffect(() => {
     void loadFolders();
@@ -363,60 +338,48 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
     });
   }
 
-  async function refreshMediaAndFolders() {
-    await Promise.all([loadMedia(), loadFolders()]);
+  function reportUploadSummary(summary: MediaUploadBatchSummary, retry = false) {
+    const successful = summary.uploaded + summary.reused;
+    const parts = [
+      summary.uploaded > 0 ? `新增 ${summary.uploaded} 个` : '',
+      summary.reused > 0 ? `复用 ${summary.reused} 个` : '',
+      summary.skipped > 0 ? `忽略不支持文件 ${summary.skipped} 个` : '',
+    ].filter(Boolean);
+    if (successful > 0 || summary.skipped > 0) {
+      setMediaSuccess(`${retry ? '重试' : '素材处理'}完成${parts.length ? `：${parts.join('，')}` : ''}。`);
+    }
+    if (summary.failed > 0) {
+      setMediaError(`${summary.failed} 个素材处理失败，失败项已保留在上传队列中，可直接重试。`);
+    } else if (summary.total === 0 && summary.skipped > 0) {
+      setMediaError('所选内容中没有支持的 JPG、PNG、WebP、GIF、MP4 或 WebM。');
+    }
   }
 
   async function uploadFiles(files: File[], folderId: string | null) {
-    const supported = files.filter((file) => SUPPORTED_MEDIA_TYPES.has(file.type.toLowerCase()));
-    if (supported.length === 0 || uploading) {
-      if (files.length > 0) setMediaError('所选文件夹中没有支持的 JPG、PNG、WebP、GIF、MP4 或 WebM。');
-      return;
-    }
-    setUploading(true);
+    if (files.length === 0 || uploadQueue.running) return;
     setMediaError(null);
     setMediaSuccess(null);
-    let uploaded = 0;
-    let reused = 0;
-    try {
-      for (const file of supported) {
-        const metadata = file.type === 'video/mp4' || file.type === 'video/webm'
-          ? await inspectVideo(file)
-          : null;
-        const result = await uploadMediaAsset({
-          file,
-          role: uploadRole,
-          folderId,
-          width: metadata?.width,
-          height: metadata?.height,
-          durationMs: metadata?.durationMs,
-        });
-        if (result.reused) reused += 1;
-        else uploaded += 1;
-      }
-      await refreshMediaAndFolders();
-      const skipped = files.length - supported.length;
-      setMediaSuccess(`素材处理完成：新增 ${uploaded} 个${reused > 0 ? `，复用 ${reused} 个` : ''}${skipped > 0 ? `，忽略不支持文件 ${skipped} 个` : ''}。`);
-    } catch (error) {
-      if (isSessionError(error)) {
-        onSessionExpired();
-        return;
-      }
-      setMediaError(error instanceof Error ? error.message : '素材上传失败。');
-      await refreshMediaAndFolders();
-    } finally {
-      setUploading(false);
-    }
+    const summary = await uploadQueue.enqueue(files, uploadRole, folderId);
+    reportUploadSummary(summary);
+  }
+
+  async function retryFailedUploads() {
+    if (uploadQueue.running) return;
+    setMediaError(null);
+    setMediaSuccess(null);
+    const summary = await uploadQueue.retryFailed();
+    reportUploadSummary(summary, true);
   }
 
   async function handleFolderUpload(files: File[]) {
-    if (files.length === 0 || uploading) return;
+    if (files.length === 0 || uploadQueue.running) return;
     setFolderWorking(true);
     setMediaError(null);
     try {
       const result = await createMediaFolder(rootFolderName(files));
       setUploadFolderId(result.folder.id);
       setFolderFilter(result.folder.id);
+      await loadFolders();
       await uploadFiles(files, result.folder.id);
     } catch (error) {
       if (isSessionError(error)) {
@@ -594,40 +557,40 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
               <small>一层分组即可；文件夹上传会自动使用本地顶层目录名。</small>
             </div>
             <input value={newFolderName} maxLength={80} placeholder="新建文件夹，例如 Product A" onChange={(event) => setNewFolderName(event.target.value)} />
-            <button className="secondary-button" type="button" disabled={!newFolderName.trim() || folderWorking} onClick={() => void handleCreateFolder()}>新建文件夹</button>
-            {activeFolder ? <button type="button" className="secondary-button" disabled={folderWorking} onClick={() => void handleRenameFolder()}>重命名当前文件夹</button> : null}
-            {activeFolder ? <button type="button" className="danger-button" disabled={folderWorking} onClick={() => void handleDeleteFolder()}>删除当前文件夹</button> : null}
+            <button className="secondary-button" type="button" disabled={!newFolderName.trim() || folderWorking || uploadQueue.running} onClick={() => void handleCreateFolder()}>新建文件夹</button>
+            {activeFolder ? <button type="button" className="secondary-button" disabled={folderWorking || uploadQueue.running} onClick={() => void handleRenameFolder()}>重命名当前文件夹</button> : null}
+            {activeFolder ? <button type="button" className="danger-button" disabled={folderWorking || uploadQueue.running} onClick={() => void handleDeleteFolder()}>删除当前文件夹</button> : null}
           </div>
 
           <div className="media-center-upload-bar media-center-upload-bar-v2">
             <label>
               <span>素材用途</span>
-              <select value={uploadRole} disabled={uploading} onChange={(event) => setUploadRole(event.target.value as MediaRole)}>
+              <select value={uploadRole} disabled={uploadQueue.running} onChange={(event) => setUploadRole(event.target.value as MediaRole)}>
                 {ROLE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
               </select>
             </label>
             <label>
               <span>上传到文件夹</span>
-              <select value={uploadFolderId} disabled={uploading} onChange={(event) => setUploadFolderId(event.target.value)}>
+              <select value={uploadFolderId} disabled={uploadQueue.running} onChange={(event) => setUploadFolderId(event.target.value)}>
                 <option value="">未分组</option>
                 {folders.map((folder) => <option key={folder.id} value={folder.id}>{folder.name}</option>)}
               </select>
             </label>
-            <label className={`media-center-upload-button${uploading ? ' is-disabled' : ''}`}>
+            <label className={`media-center-upload-button${uploadQueue.running ? ' is-disabled' : ''}`}>
               <input
                 type="file"
                 accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm"
                 multiple
-                disabled={uploading}
+                disabled={uploadQueue.running}
                 onChange={(event) => {
                   const files = Array.from(event.currentTarget.files ?? []);
                   event.currentTarget.value = '';
                   void uploadFiles(files, uploadFolderId || null);
                 }}
               />
-              {uploading ? '正在上传…' : '上传文件'}
+              {uploadQueue.running ? '队列处理中…' : '上传文件'}
             </label>
-            <label className={`media-center-upload-button is-folder-upload${uploading || folderWorking ? ' is-disabled' : ''}`}>
+            <label className={`media-center-upload-button is-folder-upload${uploadQueue.running || folderWorking ? ' is-disabled' : ''}`}>
               <input
                 ref={(node) => {
                   if (!node) return;
@@ -636,17 +599,25 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
                 }}
                 type="file"
                 multiple
-                disabled={uploading || folderWorking}
+                disabled={uploadQueue.running || folderWorking}
                 onChange={(event) => {
                   const files = Array.from(event.currentTarget.files ?? []);
                   event.currentTarget.value = '';
                   void handleFolderUpload(files);
                 }}
               />
-              {uploading || folderWorking ? '处理中…' : '上传文件夹'}
+              {uploadQueue.running || folderWorking ? '处理中…' : '上传文件夹'}
             </label>
-            <small>图片/GIF ≤ 20 MB；MP4/WebM ≤ 60 MB。文件夹上传按顶层文件夹自动分组，子目录不会额外创建多级树。</small>
+            <small>静态图片先在浏览器压缩；队列最多并发处理 3 个文件。单个失败不会中断后续文件。</small>
           </div>
+
+          <MediaUploadQueuePanel
+            items={uploadQueue.items}
+            running={uploadQueue.running}
+            progress={uploadQueue.progress}
+            onRetryFailed={() => void retryFailedUploads()}
+            onClearFinished={uploadQueue.clearFinished}
+          />
 
           {mediaError ? <p className="inline-status is-error" role="alert">{mediaError}</p> : null}
           {mediaSuccess ? <p className="inline-status is-success" role="status">{mediaSuccess}</p> : null}
@@ -665,7 +636,7 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
               <option value="">全部用途</option>
               {ROLE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
             </select>
-            <button type="button" className="secondary-button" onClick={() => void loadMedia()} disabled={mediaLoading || uploading}>刷新</button>
+            <button type="button" className="secondary-button" onClick={() => void loadMedia()} disabled={mediaLoading || uploadQueue.running}>刷新</button>
           </div>
 
           {selectedManagedAssets.length > 0 ? (
@@ -675,8 +646,8 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
                 <option value="">移动到未分组</option>
                 {folders.map((folder) => <option key={folder.id} value={folder.id}>移动到 {folder.name}</option>)}
               </select>
-              <button type="button" className="secondary-button" disabled={folderWorking} onClick={() => void handleMoveSelected()}>移动已选</button>
-              <button type="button" className="danger-button" disabled={deletingMedia} onClick={() => void handleDeleteManaged()}>{deletingMedia ? '删除中…' : '删除已选'}</button>
+              <button type="button" className="secondary-button" disabled={folderWorking || uploadQueue.running} onClick={() => void handleMoveSelected()}>移动已选</button>
+              <button type="button" className="danger-button" disabled={deletingMedia || uploadQueue.running} onClick={() => void handleDeleteManaged()}>{deletingMedia ? '删除中…' : '删除已选'}</button>
             </div>
           ) : null}
 
