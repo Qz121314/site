@@ -106,10 +106,7 @@ export async function prepareCompressedMediaImage(
     context.imageSmoothingQuality = 'high';
     context.drawImage(bitmap, 0, 0, width, height);
 
-    const file = await encodeCompressedImage(
-      canvas,
-      `${safeBaseName(sourceFile.name)}-${crypto.randomUUID().slice(0, 8)}`,
-    );
+    const file = await encodeCompressedImage(canvas, safeBaseName(sourceFile.name));
     if (file.size > MAX_OUTPUT_BYTES) {
       throw new Error(`图片“${sourceFile.name}”压缩后仍超过 20 MB，请先降低图片复杂度。`);
     }
