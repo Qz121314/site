@@ -37,6 +37,7 @@ export type MediaUploadResult =
 const MAX_IMAGE_BYTES = 20 * 1024 * 1024;
 const MAX_VIDEO_BYTES = 60 * 1024 * 1024;
 const MAX_IMAGE_EDGE = 12_000;
+const MAX_STATIC_IMAGE_EDGE = 1200;
 const MIN_IMAGE_EDGE = 16;
 
 const MEDIA_TYPES: Record<string, { extension: string; kind: MediaKind }> = {
@@ -394,13 +395,21 @@ export async function uploadMediaCenterAsset(
     if (!dimensions) {
       return { ok: false, field: 'file', code: 'MEDIA_CONTENT_INVALID', message: '无法识别图片或 GIF 内容。' };
     }
+    const maximumEdge = type.kind === 'image' ? MAX_STATIC_IMAGE_EDGE : MAX_IMAGE_EDGE;
     if (
       dimensions.width < MIN_IMAGE_EDGE ||
       dimensions.height < MIN_IMAGE_EDGE ||
-      dimensions.width > MAX_IMAGE_EDGE ||
-      dimensions.height > MAX_IMAGE_EDGE
+      dimensions.width > maximumEdge ||
+      dimensions.height > maximumEdge
     ) {
-      return { ok: false, field: 'file', code: 'MEDIA_DIMENSIONS_INVALID', message: '图片宽高必须在 16 到 12000 像素之间。' };
+      return {
+        ok: false,
+        field: 'file',
+        code: 'MEDIA_DIMENSIONS_INVALID',
+        message: type.kind === 'image'
+          ? `压缩后的静态图片最长边不能超过 ${MAX_STATIC_IMAGE_EDGE} 像素。`
+          : '图片宽高必须在 16 到 12000 像素之间。',
+      };
     }
     width = dimensions.width;
     height = dimensions.height;
@@ -429,8 +438,11 @@ export async function uploadMediaCenterAsset(
   const id = crypto.randomUUID();
   const now = new Date().toISOString();
   const safeName = safeObjectName(fileStem(file.name));
-  const objectKey = `media/${id}/original/${safeName}.${type.extension}`;
+  const storageVariant = type.kind === 'image' ? 'optimized' : 'media';
+  const objectKey = `media/${id}/${storageVariant}/${safeName}.${type.extension}`;
   const fileName = sanitizeFileName(file.name);
+  const compressionProfile = formData.get('compressionProfile');
+  const sourceByteSize = formData.get('sourceByteSize');
 
   await bucket.put(objectKey, imageData ?? file.stream(), {
     httpMetadata: {
@@ -442,6 +454,12 @@ export async function uploadMediaCenterAsset(
       mediaKind: type.kind,
       role,
       ...(folderId ? { folderId } : {}),
+      ...(typeof compressionProfile === 'string' && compressionProfile
+        ? { compressionProfile }
+        : {}),
+      ...(typeof sourceByteSize === 'string' && sourceByteSize
+        ? { sourceByteSize }
+        : {}),
     },
   });
 
