@@ -33,6 +33,7 @@ import './markdown-media.css';
 import './media-center.css';
 import './media-upload-queue.css';
 import './admin-error-boundary.css';
+import './admin-dialog-service.css';
 
 installAdminMutationObserver();
 installAdminUnsavedStateObserver();
