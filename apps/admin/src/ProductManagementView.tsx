@@ -11,7 +11,7 @@ import {
   isEditorMediaCoverEligible,
   toRemoteProductImage,
   type ProductEditorImage,
-} from './product-management/local-product-image';
+} from './product-management/product-editor-media';
 import {
   batchDeleteProducts,
   createProduct,

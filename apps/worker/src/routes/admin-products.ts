@@ -1,5 +1,5 @@
 import { Hono } from 'hono';
-import { createAuditLogStatement, writeAuditLog } from '../audit/write-audit-log';
+import { createAuditLogStatement } from '../audit/write-audit-log';
 import { apiError } from '../http/api-response';
 import {
   createReplaceProductTagStatements,
@@ -22,7 +22,6 @@ import {
   type ProductRecord,
   type ProductScope,
 } from '../products/products';
-import { uploadProductImage } from '../products/product-image-upload';
 import { getSection } from '../sections/sections';
 import type { AppEnvironment } from '../types';
 import {
@@ -84,56 +83,6 @@ adminProductRoutes.get('/:sectionId/products/:id', async (context) => {
   );
   if (!product) return apiError(context, 404, 'PRODUCT_NOT_FOUND', '产品不存在。');
   return context.json({ product: await hydrateProductWithTags(context.env.DB, product) });
-});
-
-adminProductRoutes.post('/:sectionId/products/media', async (context) => {
-  context.header('Cache-Control', 'no-store');
-  if (!hasAdminRequestHeader(context)) {
-    return apiError(context, 403, 'ADMIN_REQUEST_REQUIRED', '后台请求标识无效。');
-  }
-  const sectionId = context.req.param('sectionId');
-  const sectionError = await requireSection(context, sectionId);
-  if (sectionError) return sectionError;
-
-  let formData: FormData;
-  try {
-    formData = await context.req.raw.formData();
-  } catch {
-    return apiError(context, 400, 'INVALID_MULTIPART_FORM', '图片上传表单无效。');
-  }
-  const file = formData.get('file');
-  if (!(file instanceof File)) {
-    return apiError(context, 400, 'IMAGE_REQUIRED', '请选择需要上传的产品图片。', {
-      field: 'file',
-    });
-  }
-
-  const result = await uploadProductImage(
-    context.env.ASSETS_BUCKET,
-    context.env.DB,
-    sectionId,
-    file,
-  );
-  if (!result.ok) {
-    return apiError(context, 400, result.code, result.message, { field: result.field });
-  }
-
-  await writeAuditLog(context.env.DB, {
-    action: result.reused ? 'product_media.reused' : 'product_media.uploaded',
-    entityType: 'media_asset',
-    entityId: result.media.id,
-    requestId: context.get('requestId'),
-    metadata: {
-      sectionId,
-      objectKey: result.media.objectKey,
-      byteSize: result.media.byteSize,
-      width: result.media.width ?? 0,
-      height: result.media.height ?? 0,
-      reused: result.reused,
-    },
-  });
-
-  return context.json({ media: result.media, reused: result.reused }, result.reused ? 200 : 201);
 });
 
 adminProductRoutes.post('/:sectionId/products', async (context) => {

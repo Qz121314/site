@@ -15,7 +15,7 @@ import {
   isEditorMediaCoverEligible,
   isEditorMediaVideo,
   type ProductEditorImage,
-} from './local-product-image';
+} from './product-editor-media';
 import type {
   AdminProduct,
   ProductInput,
@@ -117,7 +117,7 @@ function baselineForm(product: AdminProduct | null, currentSortOrder: number): R
 }
 
 function mediaIds(media: ProductEditorImage[]): string[] {
-  return media.map((item) => item.kind === 'remote' ? item.media.id : item.key);
+  return media.map((item) => item.media.id);
 }
 
 export function ProductEditorDialog({

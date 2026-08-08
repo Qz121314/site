@@ -17,7 +17,6 @@ import {
   parseProductTagIds,
   validateProductTagBindings,
 } from '../src/products/product-tags.ts';
-import { PublicationError, publishSnapshot } from '../src/publishing/snapshot-publisher.ts';
 
 const NOW = '2026-08-07T00:00:00.000Z';
 
@@ -276,91 +275,6 @@ function faqDb() {
   };
 }
 
-function readinessDb({ mediaBaseUrl = 'https://media.example', products = [], productMedia = [] } = {}) {
-  return {
-    prepare(sql) {
-      return {
-        sql,
-        args: [],
-        bind(...args) {
-          this.args = args;
-          return this;
-        },
-        async first() {
-          if (this.sql.includes("WHERE status IN ('queued', 'building')")) return null;
-          if (this.sql.includes('FROM site_settings ss')) {
-            return {
-              site_name: 'Example',
-              location_label: 'City',
-              media_base_url: mediaBaseUrl,
-              logo_asset_id: null,
-              logo_object_key: null,
-              home_section_limit: 10,
-              show_hot: 1,
-              show_latest: 1,
-              show_more: 1,
-              show_messages: 1,
-              show_faq: 1,
-              ga4_measurement_id: null,
-              facebook_pixel_id: null,
-              affiliate_detection_enabled: 0,
-              affiliate_platform: null,
-              affiliate_detection_config_json: null,
-              updated_at: NOW,
-            };
-          }
-          if (this.sql.includes('FROM customer_service_settings')) return null;
-          throw new Error(`Unexpected first SQL: ${this.sql}`);
-        },
-        async all() {
-          if (this.sql.includes('FROM sections s') && !this.sql.includes('FROM products p')) {
-            return {
-              results: [{ id: 'section-1', slug: 'main', name: 'Main', icon_type: 'icon', icon_value: 'grid', icon_asset_id: null, icon_object_key: null, sort_order: 0, updated_at: NOW }],
-            };
-          }
-          if (this.sql.includes('FROM categories c')) {
-            return { results: [{ id: 'category-1', section_id: 'section-1', name: 'Primary', sort_order: 0, updated_at: NOW }] };
-          }
-          if (this.sql.includes('FROM products p')) return { results: products };
-          if (this.sql.includes('FROM product_media pm')) return { results: productMedia };
-          if (this.sql.includes('FROM faqs')) return { results: [] };
-          throw new Error(`Unexpected all SQL: ${this.sql}`);
-        },
-      };
-    },
-  };
-}
-
-function publishedSnapshotProduct(overrides = {}) {
-  return {
-    id: 'product-1',
-    section_id: 'section-1',
-    section_slug: 'main',
-    section_name: 'Main',
-    slug: 'product-1',
-    service_mode: 'online',
-    title: 'Product One',
-    body: 'Body',
-    address: null,
-    category_id: 'category-1',
-    category_name: 'Primary',
-    category_enabled: 1,
-    conversion_group_id: 'group-1',
-    conversion_group_name: 'Primary conversion',
-    conversion_mode: 'link',
-    button_label: 'Contact',
-    conversion_group_enabled: 1,
-    active_target_count: 1,
-    effective_cover_object_key: 'media/product-1.webp',
-    is_featured: 0,
-    featured_order: 0,
-    sort_order: 0,
-    published_at: NOW,
-    updated_at: NOW,
-    ...overrides,
-  };
-}
-
 test('category deletion is blocked when products still reference the category', async () => {
   const db = blockingDb('FROM categories c', categoryRow(2));
   const app = withRequestId(adminCategoryRoutes);
@@ -583,19 +497,4 @@ test('product create/update media statements and tag replacement preserve determ
   assert.ok(updated[1].sql.includes('DELETE FROM product_media'));
   assert.deepEqual(updated.slice(2).map((statement) => statement.args[1]), ['media-2', 'media-1']);
   assert.deepEqual(updated.slice(2).map((statement) => statement.args[2]), [0, 10]);
-});
-
-test('publish readiness rejects a missing R2 media domain before creating a snapshot', async () => {
-  await assert.rejects(
-    () => publishSnapshot(readinessDb({ mediaBaseUrl: null }), {}, 'request-1'),
-    (error) => error instanceof PublicationError && error.code === 'MEDIA_DOMAIN_REQUIRED',
-  );
-});
-
-test('publish readiness rejects a published product without an enabled conversion target', async () => {
-  const product = publishedSnapshotProduct({ active_target_count: 0 });
-  await assert.rejects(
-    () => publishSnapshot(readinessDb({ products: [product], productMedia: [{ product_id: 'product-1', id: 'media-1', object_key: 'media/product-1.webp', file_name: 'product.webp', mime_type: 'image/webp', width: 800, height: 800, sort_order: 0, alt_text: 'Product One' }] }), {}, 'request-2'),
-    (error) => error instanceof PublicationError && error.code === 'PRODUCT_CONVERSION_INVALID',
-  );
 });

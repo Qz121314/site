@@ -44,7 +44,7 @@ product_media                 产品结构化媒体顺序和关联
 faqs                          Markdown FAQ
 publish_module_jobs           模块发布任务
 publish_module_versions       模块发布版本
-conversion_events             转化事件
+conversion_events             预留转化事件表（当前 /go 不写入）
 audit_logs                    后台操作审计
 idempotency_keys              防重复写入记录
 ```
