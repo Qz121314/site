@@ -1,4 +1,5 @@
 import { AdminApiError } from '../api';
+import { adminFetch } from '../admin-fetch';
 
 export type MediaDeleteResponse = {
   deletedIds: string[];
@@ -22,7 +23,7 @@ function asRecord(value: unknown): Record<string, unknown> | null {
 }
 
 export async function deleteMediaAssets(ids: string[]): Promise<MediaDeleteResponse> {
-  const response = await fetch('/api/admin/assets/library/delete', {
+  const response = await adminFetch('/api/admin/assets/library/delete', {
     method: 'POST',
     credentials: 'same-origin',
     cache: 'no-store',
