@@ -184,6 +184,10 @@ function safeObjectName(value: string): string {
   return normalized || 'media';
 }
 
+function fileStem(value: string): string {
+  return value.replace(/\.[^.]+$/, '');
+}
+
 function toHex(buffer: ArrayBuffer): string {
   return [...new Uint8Array(buffer)].map((byte) => byte.toString(16).padStart(2, '0')).join('');
 }
@@ -386,7 +390,7 @@ export async function uploadMediaCenterAsset(
 
   const id = crypto.randomUUID();
   const now = new Date().toISOString();
-  const safeName = safeObjectName(file.name);
+  const safeName = safeObjectName(fileStem(file.name));
   const objectKey = `media/${id}/original/${safeName}.${type.extension}`;
   const fileName = sanitizeFileName(file.name);
 
