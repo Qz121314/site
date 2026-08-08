@@ -13,12 +13,13 @@ test('read requests never notify', () => {
   assert.equal(shouldNotifyAdminMutation('HEAD', '/api/admin/settings/'), false);
 });
 
-test('auth, publish and media-domain probe requests stay excluded', () => {
+test('auth, publish, probes and preview-only imports stay excluded', () => {
   assert.equal(shouldNotifyAdminMutation('POST', '/api/admin/auth/login'), false);
   assert.equal(shouldNotifyAdminMutation('POST', '/api/admin/auth/logout'), false);
   assert.equal(shouldNotifyAdminMutation('POST', '/api/admin/publish'), false);
   assert.equal(shouldNotifyAdminMutation('POST', '/api/admin/publish/rollback'), false);
   assert.equal(shouldNotifyAdminMutation('POST', '/api/admin/settings/media-domain/test'), false);
+  assert.equal(shouldNotifyAdminMutation('POST', '/api/admin/theme/import'), false);
 });
 
 test('non-admin mutation paths do not notify', () => {
