@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { AdminApiError } from './api';
 import {
   fetchThemeCenter,
@@ -189,7 +189,7 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
                 '--preview-line': selectedPreset.tokens.line,
                 '--preview-hero-start': selectedPreset.tokens.heroStart,
                 '--preview-hero-end': selectedPreset.tokens.heroEnd,
-              } as React.CSSProperties}
+              } as CSSProperties}
             >
               <div className="theme-preview-hero">
                 <span>Theme preview</span>
