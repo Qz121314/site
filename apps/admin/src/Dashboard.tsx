@@ -64,6 +64,18 @@ type PendingDiscardAction =
   | { kind: 'logout' }
   | null;
 
+type HistoryMode = 'push' | 'replace';
+
+const ADMIN_VIEW_STORAGE_KEY = 'site.admin.lastView';
+const FIXED_ADMIN_VIEWS = new Set<AdminView>([
+  'settings',
+  'theme',
+  'assets',
+  'customer-service',
+  'faq',
+  'sections',
+]);
+
 function isSessionError(error: unknown): boolean {
   return error instanceof AdminApiError && (error.status === 401 || error.code === 'SESSION_INVALID');
 }
@@ -85,6 +97,54 @@ function parseDynamicView(view: AdminView): DynamicView | null {
   }
 
   return { kind, sectionId };
+}
+
+function parseAdminView(value: string | null): AdminView | null {
+  if (!value) return null;
+  let normalized = value.startsWith('#') ? value.slice(1) : value;
+  try {
+    normalized = decodeURIComponent(normalized);
+  } catch {
+    return null;
+  }
+  if (FIXED_ADMIN_VIEWS.has(normalized as AdminView)) return normalized as AdminView;
+  const candidate = normalized as AdminView;
+  return parseDynamicView(candidate) ? candidate : null;
+}
+
+function readInitialAdminView(): AdminView {
+  if (typeof window === 'undefined') return 'settings';
+  const fromHash = parseAdminView(window.location.hash);
+  if (fromHash) return fromHash;
+  try {
+    const stored = parseAdminView(window.localStorage.getItem(ADMIN_VIEW_STORAGE_KEY));
+    if (stored) return stored;
+  } catch {
+    // Storage may be unavailable in privacy-restricted contexts.
+  }
+  return 'settings';
+}
+
+function adminViewHash(view: AdminView): string {
+  return `#${encodeURIComponent(view)}`;
+}
+
+function rememberAdminView(view: AdminView): void {
+  try {
+    window.localStorage.setItem(ADMIN_VIEW_STORAGE_KEY, view);
+  } catch {
+    // Navigation remains usable even when localStorage is unavailable.
+  }
+}
+
+function writeAdminViewLocation(view: AdminView, mode: HistoryMode): void {
+  if (typeof window === 'undefined') return;
+  const hash = adminViewHash(view);
+  rememberAdminView(view);
+  if (window.location.hash === hash) return;
+  const nextUrl = `${window.location.pathname}${window.location.search}${hash}`;
+  if (mode === 'push') window.history.pushState(null, '', nextUrl);
+  else window.history.replaceState(null, '', nextUrl);
 }
 
 function getViewContext(view: AdminView, sections: AdminSection[]) {
@@ -173,7 +233,7 @@ export function Dashboard({
   onLogout,
   onSessionExpired,
 }: DashboardProps) {
-  const [activeView, setActiveView] = useState<AdminView>('settings');
+  const [activeView, setActiveView] = useState<AdminView>(readInitialAdminView);
   const [sections, setSections] = useState<AdminSection[]>([]);
   const [sectionsLoading, setSectionsLoading] = useState(true);
   const [sectionsError, setSectionsError] = useState('');
@@ -213,6 +273,10 @@ export function Dashboard({
   }, [onSessionExpired]);
 
   useEffect(() => {
+    writeAdminViewLocation(activeView, 'replace');
+  }, []);
+
+  useEffect(() => {
     void loadSections();
     void loadPublishStatus();
   }, [loadPublishStatus, loadSections]);
@@ -234,10 +298,34 @@ export function Dashboard({
   }, [unsaved.isDirty]);
 
   useEffect(() => {
+    const handleHashChange = () => {
+      const nextView = parseAdminView(window.location.hash);
+      if (!nextView) {
+        writeAdminViewLocation(activeView, 'replace');
+        return;
+      }
+      if (nextView === activeView) {
+        rememberAdminView(activeView);
+        return;
+      }
+      if (unsaved.isDirty) {
+        writeAdminViewLocation(activeView, 'replace');
+        setPendingDiscardAction({ kind: 'navigate', view: nextView });
+        return;
+      }
+      setPublishPanelOpen(false);
+      rememberAdminView(nextView);
+      setActiveView(nextView);
+    };
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, [activeView, unsaved.isDirty]);
+
+  useEffect(() => {
     const dynamic = parseDynamicView(activeView);
     if (!dynamic) return;
     if (!sectionsLoading && !sections.some((section) => section.id === dynamic.sectionId)) {
-      setActiveView('sections');
+      commitView('sections', 'replace');
     }
   }, [activeView, sections, sectionsLoading]);
 
@@ -262,6 +350,16 @@ export function Dashboard({
     }
   }, [contextPublishKey, historyModuleKey, publishStatus]);
 
+  function commitView(nextView: AdminView, mode: HistoryMode = 'push') {
+    if (nextView === activeView) {
+      writeAdminViewLocation(nextView, 'replace');
+      return;
+    }
+    setPublishPanelOpen(false);
+    setActiveView(nextView);
+    writeAdminViewLocation(nextView, mode);
+  }
+
   function requestView(nextView: AdminView) {
     if (nextView === activeView) return;
     setPublishPanelOpen(false);
@@ -269,7 +367,7 @@ export function Dashboard({
       setPendingDiscardAction({ kind: 'navigate', view: nextView });
       return;
     }
-    setActiveView(nextView);
+    commitView(nextView);
   }
 
   function requestLogout() {
@@ -284,7 +382,7 @@ export function Dashboard({
     const action = pendingDiscardAction;
     if (!action) return;
     setPendingDiscardAction(null);
-    if (action.kind === 'navigate') setActiveView(action.view);
+    if (action.kind === 'navigate') commitView(action.view);
     else onLogout();
   }
 
@@ -555,8 +653,7 @@ export function Dashboard({
             onResumeHandled={() => setProductHandoff(null)}
             onConfigureDependency={(target, request) => {
               setProductHandoff({ ...request, sectionId: currentSection.section.id, target });
-              setPublishPanelOpen(false);
-              setActiveView(`${target}:${currentSection.section.id}`);
+              commitView(`${target}:${currentSection.section.id}`);
             }}
             onSessionExpired={onSessionExpired}
           />
