@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AssetLibraryView } from './AssetLibraryView';
 import { AdminApiError, fetchSections, type AdminSection } from './api';
 import { useAdminUnsavedState } from './admin-unsaved-state';
@@ -234,6 +234,7 @@ export function Dashboard({
   onSessionExpired,
 }: DashboardProps) {
   const [activeView, setActiveView] = useState<AdminView>(readInitialAdminView);
+  const initialViewRef = useRef(activeView);
   const [sections, setSections] = useState<AdminSection[]>([]);
   const [sectionsLoading, setSectionsLoading] = useState(true);
   const [sectionsError, setSectionsError] = useState('');
@@ -272,8 +273,18 @@ export function Dashboard({
     }
   }, [onSessionExpired]);
 
+  const commitView = useCallback((nextView: AdminView, mode: HistoryMode = 'push') => {
+    if (nextView === activeView) {
+      writeAdminViewLocation(nextView, 'replace');
+      return;
+    }
+    setPublishPanelOpen(false);
+    setActiveView(nextView);
+    writeAdminViewLocation(nextView, mode);
+  }, [activeView]);
+
   useEffect(() => {
-    writeAdminViewLocation(activeView, 'replace');
+    writeAdminViewLocation(initialViewRef.current, 'replace');
   }, []);
 
   useEffect(() => {
@@ -327,7 +338,7 @@ export function Dashboard({
     if (!sectionsLoading && !sections.some((section) => section.id === dynamic.sectionId)) {
       commitView('sections', 'replace');
     }
-  }, [activeView, sections, sectionsLoading]);
+  }, [activeView, commitView, sections, sectionsLoading]);
 
   const contextPublishKey = publishKeyForView(activeView);
   const contextPublishModule = useMemo(
@@ -349,16 +360,6 @@ export function Dashboard({
       setHistoryModuleKey(publishStatus.modules.find((module) => !module.isCurrent)?.key ?? publishStatus.modules[0]?.key ?? 'site');
     }
   }, [contextPublishKey, historyModuleKey, publishStatus]);
-
-  function commitView(nextView: AdminView, mode: HistoryMode = 'push') {
-    if (nextView === activeView) {
-      writeAdminViewLocation(nextView, 'replace');
-      return;
-    }
-    setPublishPanelOpen(false);
-    setActiveView(nextView);
-    writeAdminViewLocation(nextView, mode);
-  }
 
   function requestView(nextView: AdminView) {
     if (nextView === activeView) return;
