@@ -20,8 +20,6 @@ type PublicTheme = {
   tokens: ThemeTokens;
 };
 
-type ThemeEnvelope = { theme: PublicTheme };
-
 const CACHE_KEY = 'storefront-theme-v1';
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -65,7 +63,7 @@ function applyTheme(theme: PublicTheme): void {
   root.style.setProperty('--hero-end', theme.tokens.heroEnd);
   root.style.setProperty('--hero-glow', theme.tokens.heroGlow);
   root.style.setProperty('--shadow', theme.tokens.shadow);
-  root.style.setProperty('--product-media-ratio', theme.productMediaRatio === '1:1' ? '1 / 1' : '1 / 1');
+  root.style.setProperty('--product-media-ratio', '1 / 1');
 }
 
 function readCachedTheme(): PublicTheme | null {
