@@ -1,4 +1,5 @@
 import { buildAssetPublicUrl, getMediaBaseUrl } from '../assets/asset-library';
+import { getMediaFolder } from './media-folders';
 
 export type MediaKind = 'image' | 'animated_image' | 'video';
 export type MediaRole =
@@ -21,6 +22,8 @@ export type MediaCenterAsset = {
   width: number | null;
   height: number | null;
   durationMs: number | null;
+  folderId: string | null;
+  folderName: string | null;
   roles: MediaRole[];
   publicUrl: string | null;
   createdAt: string;
@@ -29,7 +32,7 @@ export type MediaCenterAsset = {
 
 export type MediaUploadResult =
   | { ok: true; media: MediaCenterAsset; reused: boolean }
-  | { ok: false; field: 'file' | 'role'; code: string; message: string };
+  | { ok: false; field: 'file' | 'role' | 'folderId'; code: string; message: string };
 
 const MAX_IMAGE_BYTES = 20 * 1024 * 1024;
 const MAX_VIDEO_BYTES = 60 * 1024 * 1024;
@@ -66,6 +69,8 @@ type MediaRow = {
   width: number | null;
   height: number | null;
   duration_ms: number | null;
+  folder_id: string | null;
+  folder_name: string | null;
   created_at: string;
   updated_at: string;
 };
@@ -74,6 +79,23 @@ type RoleRow = {
   media_asset_id: string;
   role: MediaRole;
 };
+
+const MEDIA_SELECT = `SELECT
+  ma.id,
+  ma.object_key,
+  ma.file_name,
+  ma.mime_type,
+  ma.byte_size,
+  ma.media_kind,
+  ma.width,
+  ma.height,
+  ma.duration_ms,
+  ma.folder_id,
+  mf.name AS folder_name,
+  ma.created_at,
+  ma.updated_at
+FROM media_assets ma
+LEFT JOIN media_folders mf ON mf.id = ma.folder_id`;
 
 function uint16Little(bytes: Uint8Array, offset: number): number {
   return bytes[offset]! | (bytes[offset + 1]! << 8);
@@ -223,6 +245,8 @@ function mapMedia(row: MediaRow, roles: MediaRole[], mediaBaseUrl: string | null
     width: row.width,
     height: row.height,
     durationMs: row.duration_ms,
+    folderId: row.folder_id,
+    folderName: row.folder_name,
     roles,
     publicUrl: buildAssetPublicUrl(mediaBaseUrl, row.object_key),
     createdAt: row.created_at,
@@ -249,10 +273,8 @@ async function getRoleRows(db: D1Database, ids: string[]): Promise<RoleRow[]> {
 async function getMediaRow(db: D1Database, id: string): Promise<MediaRow | null> {
   return db
     .prepare(
-      `SELECT id, object_key, file_name, mime_type, byte_size, media_kind,
-              width, height, duration_ms, created_at, updated_at
-       FROM media_assets
-       WHERE id = ? AND status = 'ready' AND deleted_at IS NULL`,
+      `${MEDIA_SELECT}
+       WHERE ma.id = ? AND ma.status = 'ready' AND ma.deleted_at IS NULL`,
     )
     .bind(id)
     .first<MediaRow>();
@@ -272,10 +294,8 @@ async function addRole(db: D1Database, id: string, role: MediaRole, now: string)
 async function findImageByHash(db: D1Database, hash: string): Promise<MediaRow | null> {
   return db
     .prepare(
-      `SELECT id, object_key, file_name, mime_type, byte_size, media_kind,
-              width, height, duration_ms, created_at, updated_at
-       FROM media_assets
-       WHERE content_hash = ? AND status = 'ready' AND deleted_at IS NULL`,
+      `${MEDIA_SELECT}
+       WHERE ma.content_hash = ? AND ma.status = 'ready' AND ma.deleted_at IS NULL`,
     )
     .bind(hash)
     .first<MediaRow>();
@@ -283,7 +303,7 @@ async function findImageByHash(db: D1Database, hash: string): Promise<MediaRow |
 
 export async function listMediaCenterAssets(
   db: D1Database,
-  options: { kind?: MediaKind | null; role?: MediaRole | null } = {},
+  options: { kind?: MediaKind | null; role?: MediaRole | null; folderId?: string | null } = {},
 ): Promise<MediaCenterAsset[]> {
   const clauses = ["ma.status = 'ready'", 'ma.deleted_at IS NULL'];
   const bindings: string[] = [];
@@ -295,13 +315,15 @@ export async function listMediaCenterAssets(
     clauses.push('EXISTS (SELECT 1 FROM media_asset_roles rf WHERE rf.media_asset_id = ma.id AND rf.role = ?)');
     bindings.push(options.role);
   }
+  if (options.folderId) {
+    clauses.push('ma.folder_id = ?');
+    bindings.push(options.folderId);
+  }
 
   const rows = (
     await db
       .prepare(
-        `SELECT ma.id, ma.object_key, ma.file_name, ma.mime_type, ma.byte_size, ma.media_kind,
-                ma.width, ma.height, ma.duration_ms, ma.created_at, ma.updated_at
-         FROM media_assets ma
+        `${MEDIA_SELECT}
          WHERE ${clauses.join(' AND ')}
          ORDER BY ma.created_at DESC
          LIMIT 1000`,
@@ -329,11 +351,16 @@ export async function uploadMediaCenterAsset(
 ): Promise<MediaUploadResult> {
   const file = formData.get('file');
   const role = parseMediaRole(formData.get('role'));
+  const rawFolderId = formData.get('folderId');
+  const folderId = typeof rawFolderId === 'string' && rawFolderId.trim() ? rawFolderId.trim() : null;
   if (!(file instanceof File)) {
     return { ok: false, field: 'file', code: 'MEDIA_FILE_REQUIRED', message: '请选择需要上传的素材文件。' };
   }
   if (!role) {
     return { ok: false, field: 'role', code: 'MEDIA_ROLE_INVALID', message: '请选择素材用途。' };
+  }
+  if (folderId && (folderId.length > 100 || !(await getMediaFolder(db, folderId)))) {
+    return { ok: false, field: 'folderId', code: 'MEDIA_FOLDER_INVALID', message: '所选素材文件夹不存在。' };
   }
 
   const type = MEDIA_TYPES[file.type.toLowerCase()];
@@ -381,7 +408,18 @@ export async function uploadMediaCenterAsset(
     const existing = await findImageByHash(db, contentHash);
     if (existing) {
       const now = new Date().toISOString();
-      await addRole(db, existing.id, role, now);
+      await db.batch([
+        db
+          .prepare('UPDATE media_assets SET folder_id = COALESCE(?, folder_id), updated_at = ? WHERE id = ?')
+          .bind(folderId, now, existing.id),
+        db
+          .prepare(
+            `INSERT INTO media_asset_roles (media_asset_id, role, created_at)
+             VALUES (?, ?, ?)
+             ON CONFLICT(media_asset_id, role) DO NOTHING`,
+          )
+          .bind(existing.id, role, now),
+      ]);
       const media = await getMediaCenterAsset(db, existing.id);
       if (!media) throw new Error('MEDIA_REUSE_READ_FAILED');
       return { ok: true, media, reused: true };
@@ -403,6 +441,7 @@ export async function uploadMediaCenterAsset(
       mediaAssetId: id,
       mediaKind: type.kind,
       role,
+      ...(folderId ? { folderId } : {}),
     },
   });
 
@@ -412,8 +451,9 @@ export async function uploadMediaCenterAsset(
         .prepare(
           `INSERT INTO media_assets (
              id, object_key, file_name, mime_type, byte_size, width, height,
-             content_hash, status, created_at, updated_at, deleted_at, media_kind, duration_ms
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'ready', ?, ?, NULL, ?, ?)`,
+             content_hash, status, created_at, updated_at, deleted_at, media_kind, duration_ms,
+             folder_id
+           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'ready', ?, ?, NULL, ?, ?, ?)`,
         )
         .bind(
           id,
@@ -428,6 +468,7 @@ export async function uploadMediaCenterAsset(
           now,
           type.kind,
           durationMs,
+          folderId,
         ),
       db
         .prepare(
@@ -442,6 +483,9 @@ export async function uploadMediaCenterAsset(
       const raced = await findImageByHash(db, contentHash);
       if (raced) {
         await addRole(db, raced.id, role, now);
+        if (folderId) {
+          await db.prepare('UPDATE media_assets SET folder_id = ?, updated_at = ? WHERE id = ?').bind(folderId, now, raced.id).run();
+        }
         const media = await getMediaCenterAsset(db, raced.id);
         if (media) return { ok: true, media, reused: true };
       }

@@ -5,17 +5,24 @@ import { CleanupAssetDialog } from './asset-library/CleanupAssetDialog';
 import { deleteMediaAssets } from './asset-library/media-delete-api';
 import {
   cleanupAssets,
+  createMediaFolder,
+  deleteMediaFolder,
   fetchAssetPage,
+  fetchMediaFolders,
   fetchMediaLibrary,
+  moveMediaAssets,
+  renameMediaFolder,
   uploadMediaAsset,
   type AdminAsset,
   type ManagedMediaAsset,
+  type MediaFolder,
   type MediaKind,
   type MediaRole,
 } from './asset-library/api';
 
 type AssetFilter = 'used' | 'unused';
 type WorkbenchTab = 'library' | 'cleanup';
+type FolderFilter = 'all' | 'unfiled' | string;
 
 type AssetLibraryViewProps = {
   onSessionExpired: () => void;
@@ -38,6 +45,15 @@ const KIND_OPTIONS: Array<{ value: MediaKind | ''; label: string }> = [
   { value: 'animated_image', label: 'GIF / 动图' },
   { value: 'video', label: '视频' },
 ];
+
+const SUPPORTED_MEDIA_TYPES = new Set([
+  'image/jpeg',
+  'image/png',
+  'image/webp',
+  'image/gif',
+  'video/mp4',
+  'video/webm',
+]);
 
 function formatBytes(value: number): string {
   if (value < 1024) return `${value} B`;
@@ -99,16 +115,28 @@ function inspectVideo(file: File): Promise<{ width: number; height: number; dura
   });
 }
 
+function rootFolderName(files: File[]): string {
+  const path = files.find((file) => file.webkitRelativePath)?.webkitRelativePath ?? '';
+  const root = path.split('/').filter(Boolean)[0]?.trim();
+  return root || '导入文件夹';
+}
+
 export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
   const [tab, setTab] = useState<WorkbenchTab>('library');
 
   const [managedAssets, setManagedAssets] = useState<ManagedMediaAsset[]>([]);
+  const [folders, setFolders] = useState<MediaFolder[]>([]);
   const [mediaLoading, setMediaLoading] = useState(true);
   const [mediaQuery, setMediaQuery] = useState('');
   const [mediaKind, setMediaKind] = useState<MediaKind | ''>('');
   const [mediaRole, setMediaRole] = useState<MediaRole | ''>('');
+  const [folderFilter, setFolderFilter] = useState<FolderFilter>('all');
   const [uploadRole, setUploadRole] = useState<MediaRole>('general');
+  const [uploadFolderId, setUploadFolderId] = useState('');
+  const [newFolderName, setNewFolderName] = useState('');
+  const [moveFolderId, setMoveFolderId] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [folderWorking, setFolderWorking] = useState(false);
   const [deletingMedia, setDeletingMedia] = useState(false);
   const [selectedMediaIds, setSelectedMediaIds] = useState<Set<string>>(new Set());
   const [mediaError, setMediaError] = useState<string | null>(null);
@@ -131,7 +159,9 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
     setMediaLoading(true);
     setMediaError(null);
     try {
-      setManagedAssets(await fetchMediaLibrary());
+      const [nextAssets, nextFolders] = await Promise.all([fetchMediaLibrary(), fetchMediaFolders()]);
+      setManagedAssets(nextAssets);
+      setFolders(nextFolders);
     } catch (error) {
       if (isSessionError(error)) {
         onSessionExpired();
@@ -165,11 +195,8 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
         setAssets(allAssets);
         setScannedImages(allAssets.length);
         setMediaBaseUrl(page.mediaBaseUrl);
-
         if (!page.truncated || !page.cursor) break;
-        if (visitedCursors.has(page.cursor)) {
-          throw new Error('R2 返回了重复游标，扫描已停止。');
-        }
+        if (visitedCursors.has(page.cursor)) throw new Error('R2 返回了重复游标，扫描已停止。');
         visitedCursors.add(page.cursor);
         cursor = page.cursor;
       }
@@ -193,20 +220,27 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
     setSelectedKeys(new Set());
   }, [filter]);
 
+  useEffect(() => {
+    setSelectedMediaIds(new Set());
+  }, [folderFilter, mediaKind, mediaRole]);
+
   const filteredManagedAssets = useMemo(() => {
     const keyword = mediaQuery.trim().toLowerCase();
     return managedAssets.filter((asset) => {
       if (mediaKind && asset.mediaKind !== mediaKind) return false;
       if (mediaRole && !asset.roles.includes(mediaRole)) return false;
+      if (folderFilter === 'unfiled' && asset.folderId !== null) return false;
+      if (folderFilter !== 'all' && folderFilter !== 'unfiled' && asset.folderId !== folderFilter) return false;
       if (!keyword) return true;
       return (
         asset.fileName.toLowerCase().includes(keyword) ||
         asset.objectKey.toLowerCase().includes(keyword) ||
         asset.mimeType.toLowerCase().includes(keyword) ||
+        (asset.folderName?.toLowerCase().includes(keyword) ?? false) ||
         asset.roles.some((role) => roleLabel(role).toLowerCase().includes(keyword))
       );
     });
-  }, [managedAssets, mediaKind, mediaQuery, mediaRole]);
+  }, [folderFilter, managedAssets, mediaKind, mediaQuery, mediaRole]);
 
   const allManagedSelected =
     filteredManagedAssets.length > 0 && filteredManagedAssets.every((asset) => selectedMediaIds.has(asset.id));
@@ -261,6 +295,8 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
     [assets],
   );
 
+  const activeFolder = folders.find((folder) => folder.id === folderFilter) ?? null;
+
   function toggleMedia(id: string) {
     setSelectedMediaIds((current) => {
       const next = new Set(current);
@@ -281,21 +317,26 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
     });
   }
 
-  async function handleUpload(files: File[]) {
-    if (files.length === 0 || uploading) return;
+  async function uploadFiles(files: File[], folderId: string | null) {
+    const supported = files.filter((file) => SUPPORTED_MEDIA_TYPES.has(file.type.toLowerCase()));
+    if (supported.length === 0 || uploading) {
+      if (files.length > 0) setMediaError('所选文件夹中没有支持的 JPG、PNG、WebP、GIF、MP4 或 WebM。');
+      return;
+    }
     setUploading(true);
     setMediaError(null);
     setMediaSuccess(null);
     let uploaded = 0;
     let reused = 0;
     try {
-      for (const file of files) {
+      for (const file of supported) {
         const metadata = file.type === 'video/mp4' || file.type === 'video/webm'
           ? await inspectVideo(file)
           : null;
         const result = await uploadMediaAsset({
           file,
           role: uploadRole,
+          folderId,
           width: metadata?.width,
           height: metadata?.height,
           durationMs: metadata?.durationMs,
@@ -304,7 +345,8 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
         else uploaded += 1;
       }
       await loadMedia();
-      setMediaSuccess(`素材处理完成：新增 ${uploaded} 个${reused > 0 ? `，复用已有 ${reused} 个` : ''}。`);
+      const skipped = files.length - supported.length;
+      setMediaSuccess(`素材处理完成：新增 ${uploaded} 个${reused > 0 ? `，复用 ${reused} 个` : ''}${skipped > 0 ? `，忽略不支持文件 ${skipped} 个` : ''}。`);
     } catch (error) {
       if (isSessionError(error)) {
         onSessionExpired();
@@ -317,11 +359,103 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
     }
   }
 
+  async function handleFolderUpload(files: File[]) {
+    if (files.length === 0 || uploading) return;
+    setFolderWorking(true);
+    setMediaError(null);
+    try {
+      const result = await createMediaFolder(rootFolderName(files));
+      setUploadFolderId(result.folder.id);
+      setFolderFilter(result.folder.id);
+      await uploadFiles(files, result.folder.id);
+    } catch (error) {
+      if (isSessionError(error)) {
+        onSessionExpired();
+        return;
+      }
+      setMediaError(error instanceof Error ? error.message : '文件夹上传失败。');
+    } finally {
+      setFolderWorking(false);
+    }
+  }
+
+  async function handleCreateFolder() {
+    const name = newFolderName.trim();
+    if (!name || folderWorking) return;
+    setFolderWorking(true);
+    setMediaError(null);
+    try {
+      const result = await createMediaFolder(name);
+      setNewFolderName('');
+      await loadMedia();
+      setFolderFilter(result.folder.id);
+      setUploadFolderId(result.folder.id);
+      setMediaSuccess(result.reused ? `已切换到已有文件夹“${result.folder.name}”。` : `已创建文件夹“${result.folder.name}”。`);
+    } catch (error) {
+      if (isSessionError(error)) onSessionExpired();
+      else setMediaError(error instanceof Error ? error.message : '创建文件夹失败。');
+    } finally {
+      setFolderWorking(false);
+    }
+  }
+
+  async function handleRenameFolder() {
+    if (!activeFolder || folderWorking) return;
+    const name = window.prompt('新的文件夹名称', activeFolder.name)?.trim();
+    if (!name || name === activeFolder.name) return;
+    setFolderWorking(true);
+    try {
+      const updated = await renameMediaFolder(activeFolder.id, name);
+      await loadMedia();
+      setMediaSuccess(`文件夹已重命名为“${updated.name}”。`);
+    } catch (error) {
+      if (isSessionError(error)) onSessionExpired();
+      else setMediaError(error instanceof Error ? error.message : '重命名文件夹失败。');
+    } finally {
+      setFolderWorking(false);
+    }
+  }
+
+  async function handleDeleteFolder() {
+    if (!activeFolder || folderWorking) return;
+    if (!window.confirm(`删除文件夹“${activeFolder.name}”？其中素材不会删除，只会移动到“未分组”。`)) return;
+    setFolderWorking(true);
+    try {
+      await deleteMediaFolder(activeFolder.id);
+      setFolderFilter('unfiled');
+      if (uploadFolderId === activeFolder.id) setUploadFolderId('');
+      await loadMedia();
+      setMediaSuccess('文件夹已删除，原有素材已移动到“未分组”。');
+    } catch (error) {
+      if (isSessionError(error)) onSessionExpired();
+      else setMediaError(error instanceof Error ? error.message : '删除文件夹失败。');
+    } finally {
+      setFolderWorking(false);
+    }
+  }
+
+  async function handleMoveSelected() {
+    if (selectedManagedAssets.length === 0 || folderWorking) return;
+    const targetId = moveFolderId || null;
+    setFolderWorking(true);
+    setMediaError(null);
+    try {
+      const movedCount = await moveMediaAssets(selectedManagedAssets.map((asset) => asset.id), targetId);
+      setSelectedMediaIds(new Set());
+      await loadMedia();
+      const target = targetId ? folders.find((folder) => folder.id === targetId)?.name ?? '目标文件夹' : '未分组';
+      setMediaSuccess(`已将 ${movedCount} 个素材移动到“${target}”。`);
+    } catch (error) {
+      if (isSessionError(error)) onSessionExpired();
+      else setMediaError(error instanceof Error ? error.message : '移动素材失败。');
+    } finally {
+      setFolderWorking(false);
+    }
+  }
+
   async function handleDeleteManaged() {
     if (selectedManagedAssets.length === 0 || deletingMedia) return;
-    if (!window.confirm(`确认删除已选 ${selectedManagedAssets.length} 个素材？仍在使用或受发布快照保护的素材不会被删除。`)) {
-      return;
-    }
+    if (!window.confirm(`确认删除已选 ${selectedManagedAssets.length} 个素材？仍在使用或受发布快照保护的素材不会被删除。`)) return;
     setDeletingMedia(true);
     setMediaError(null);
     setMediaSuccess(null);
@@ -330,15 +464,15 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
       const deleted = new Set(result.deletedIds);
       setManagedAssets((current) => current.filter((asset) => !deleted.has(asset.id)));
       setSelectedMediaIds(new Set());
+      await loadMedia();
       setMediaSuccess(`已删除 ${result.deletedCount} 个素材，释放 ${formatBytes(result.freedBytes)}。`);
     } catch (error) {
-      if (isSessionError(error)) {
-        onSessionExpired();
-        return;
+      if (isSessionError(error)) onSessionExpired();
+      else {
+        setSelectedMediaIds(new Set());
+        setMediaError(error instanceof Error ? error.message : '素材删除失败。');
+        await loadMedia();
       }
-      setSelectedMediaIds(new Set());
-      setMediaError(error instanceof Error ? error.message : '素材删除失败。');
-      await loadMedia();
     } finally {
       setDeletingMedia(false);
     }
@@ -369,7 +503,6 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
     setCleaning(true);
     setCleanupError(null);
     setCleanupSuccess(null);
-
     try {
       const result = await cleanupAssets(selectedAssets.map((asset) => asset.key));
       const deleted = new Set(result.deletedKeys);
@@ -379,14 +512,13 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
       setCleanupSuccess(`已从 R2 物理删除 ${result.deletedCount} 张图片，释放 ${formatBytes(result.freedBytes)}。`);
       await loadMedia();
     } catch (error) {
-      if (isSessionError(error)) {
-        onSessionExpired();
-        return;
+      if (isSessionError(error)) onSessionExpired();
+      else {
+        setShowCleanupDialog(false);
+        setSelectedKeys(new Set());
+        setCleanupError(error instanceof Error ? error.message : 'R2 图片清理失败。');
+        if (error instanceof AdminApiError && error.status === 409) await scan();
       }
-      setShowCleanupDialog(false);
-      setSelectedKeys(new Set());
-      setCleanupError(error instanceof Error ? error.message : 'R2 图片清理失败。');
-      if (error instanceof AdminApiError && error.status === 409) await scan();
     } finally {
       setCleaning(false);
     }
@@ -398,7 +530,7 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
         <div>
           <p className="eyebrow">全站媒体管理</p>
           <h2>素材中心</h2>
-          <p>统一管理产品图片、GIF、视频、Logo、图标、Hero、背景和正文素材。</p>
+          <p>所有图片、GIF 和视频统一在这里上传，再由产品、Logo、图标和正文引用。</p>
         </div>
         <div className="media-center-tabs" role="tablist" aria-label="素材中心模式">
           <button type="button" className={tab === 'library' ? 'is-active' : undefined} onClick={() => setTab('library')}>素材中心</button>
@@ -408,11 +540,29 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
 
       {tab === 'library' ? (
         <>
-          <div className="media-center-upload-bar">
+          <div className="media-folder-create-bar">
+            <div>
+              <strong>素材文件夹</strong>
+              <small>一层分组即可；文件夹上传会自动使用本地顶层目录名。</small>
+            </div>
+            <input value={newFolderName} maxLength={80} placeholder="新建文件夹，例如 Product A" onChange={(event) => setNewFolderName(event.target.value)} />
+            <button className="secondary-button" type="button" disabled={!newFolderName.trim() || folderWorking} onClick={() => void handleCreateFolder()}>新建文件夹</button>
+            {activeFolder ? <button type="button" className="secondary-button" disabled={folderWorking} onClick={() => void handleRenameFolder()}>重命名当前文件夹</button> : null}
+            {activeFolder ? <button type="button" className="danger-button" disabled={folderWorking} onClick={() => void handleDeleteFolder()}>删除当前文件夹</button> : null}
+          </div>
+
+          <div className="media-center-upload-bar media-center-upload-bar-v2">
             <label>
               <span>素材用途</span>
               <select value={uploadRole} disabled={uploading} onChange={(event) => setUploadRole(event.target.value as MediaRole)}>
                 {ROLE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+              </select>
+            </label>
+            <label>
+              <span>上传到文件夹</span>
+              <select value={uploadFolderId} disabled={uploading} onChange={(event) => setUploadFolderId(event.target.value)}>
+                <option value="">未分组</option>
+                {folders.map((folder) => <option key={folder.id} value={folder.id}>{folder.name}</option>)}
               </select>
             </label>
             <label className={`media-center-upload-button${uploading ? ' is-disabled' : ''}`}>
@@ -424,17 +574,35 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
                 onChange={(event) => {
                   const files = Array.from(event.currentTarget.files ?? []);
                   event.currentTarget.value = '';
-                  void handleUpload(files);
+                  void uploadFiles(files, uploadFolderId || null);
                 }}
               />
-              {uploading ? '正在上传…' : '上传素材'}
+              {uploading ? '正在上传…' : '上传文件'}
             </label>
-            <small>图片/GIF ≤ 20 MB；MP4/WebM ≤ 60 MB。上传时选择的是用途，文件类型由系统自动识别。</small>
+            <label className={`media-center-upload-button is-folder-upload${uploading || folderWorking ? ' is-disabled' : ''}`}>
+              <input
+                ref={(node) => {
+                  if (!node) return;
+                  node.setAttribute('webkitdirectory', '');
+                  node.setAttribute('directory', '');
+                }}
+                type="file"
+                multiple
+                disabled={uploading || folderWorking}
+                onChange={(event) => {
+                  const files = Array.from(event.currentTarget.files ?? []);
+                  event.currentTarget.value = '';
+                  void handleFolderUpload(files);
+                }}
+              />
+              {uploading || folderWorking ? '处理中…' : '上传文件夹'}
+            </label>
+            <small>图片/GIF ≤ 20 MB；MP4/WebM ≤ 60 MB。文件夹上传按顶层文件夹自动分组，子目录不会额外创建多级树。</small>
           </div>
 
           <div className="asset-summary-grid media-summary-grid">
             <article><span>全部素材</span><strong>{mediaStats.total}</strong><small>{formatBytes(mediaStats.bytes)}</small></article>
-            <article><span>静态图片</span><strong>{mediaStats.images}</strong><small>JPG / PNG / WebP</small></article>
+            <article><span>素材文件夹</span><strong>{folders.length}</strong><small>另有未分组素材</small></article>
             <article><span>GIF / 动图</span><strong>{mediaStats.animated}</strong><small>保留原始动画</small></article>
             <article><span>视频</span><strong>{mediaStats.videos}</strong><small>MP4 / WebM</small></article>
           </div>
@@ -442,8 +610,13 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
           {mediaError ? <p className="inline-status is-error" role="alert">{mediaError}</p> : null}
           {mediaSuccess ? <p className="inline-status is-success" role="status">{mediaSuccess}</p> : null}
 
-          <div className="media-center-toolbar">
-            <input type="search" value={mediaQuery} placeholder="搜索文件名、路径、格式或用途" onChange={(event) => setMediaQuery(event.target.value)} />
+          <div className="media-center-toolbar media-center-toolbar-v2">
+            <input type="search" value={mediaQuery} placeholder="搜索文件名、文件夹、格式或用途" onChange={(event) => setMediaQuery(event.target.value)} />
+            <select value={folderFilter} onChange={(event) => setFolderFilter(event.target.value)}>
+              <option value="all">全部文件夹</option>
+              <option value="unfiled">未分组</option>
+              {folders.map((folder) => <option key={folder.id} value={folder.id}>{folder.name} ({folder.assetCount})</option>)}
+            </select>
             <select value={mediaKind} onChange={(event) => setMediaKind(event.target.value as MediaKind | '')}>
               {KIND_OPTIONS.map((option) => <option key={option.value || 'all'} value={option.value}>{option.label}</option>)}
             </select>
@@ -452,10 +625,19 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
               {ROLE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
             </select>
             <button type="button" className="secondary-button" onClick={() => void loadMedia()} disabled={mediaLoading || uploading}>刷新</button>
-            <button type="button" className="danger-button" disabled={selectedManagedAssets.length === 0 || deletingMedia} onClick={() => void handleDeleteManaged()}>
-              {deletingMedia ? '删除中…' : `删除已选 (${selectedManagedAssets.length})`}
-            </button>
           </div>
+
+          {selectedManagedAssets.length > 0 ? (
+            <div className="media-center-selection-toolbar">
+              <span>已选择 {selectedManagedAssets.length} 个素材</span>
+              <select value={moveFolderId} onChange={(event) => setMoveFolderId(event.target.value)}>
+                <option value="">移动到未分组</option>
+                {folders.map((folder) => <option key={folder.id} value={folder.id}>移动到 {folder.name}</option>)}
+              </select>
+              <button type="button" className="secondary-button" disabled={folderWorking} onClick={() => void handleMoveSelected()}>移动已选</button>
+              <button type="button" className="danger-button" disabled={deletingMedia} onClick={() => void handleDeleteManaged()}>{deletingMedia ? '删除中…' : '删除已选'}</button>
+            </div>
+          ) : null}
 
           <div className="media-center-select-all">
             <label>
@@ -489,18 +671,13 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
                     </div>
                     <div className="media-center-card-body">
                       <strong title={asset.fileName}>{asset.fileName}</strong>
-                      <small>
-                        {asset.width && asset.height ? `${asset.width} × ${asset.height}` : '尺寸未知'}
-                        {duration ? ` · ${duration}` : ''} · {formatBytes(asset.byteSize)}
-                      </small>
+                      <small>{asset.folderName ? `📁 ${asset.folderName} · ` : '未分组 · '}{asset.width && asset.height ? `${asset.width} × ${asset.height}` : '尺寸未知'}{duration ? ` · ${duration}` : ''} · {formatBytes(asset.byteSize)}</small>
                       <div className="media-center-role-list">
                         {(asset.roles.length > 0 ? asset.roles : ['general' as MediaRole]).map((role) => <span key={role}>{roleLabel(role)}</span>)}
                       </div>
                     </div>
                     <div className="media-center-card-actions">
-                      {asset.publicUrl ? (
-                        <button type="button" onClick={() => void navigator.clipboard.writeText(asset.publicUrl ?? '')}>复制链接</button>
-                      ) : null}
+                      {asset.publicUrl ? <button type="button" onClick={() => void navigator.clipboard.writeText(asset.publicUrl ?? '')}>复制链接</button> : null}
                       <button type="button" onClick={() => setSelectedMediaIds(new Set([asset.id]))}>选择</button>
                     </div>
                   </article>
@@ -508,7 +685,7 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
               })}
             </div>
           ) : (
-            <div className="media-center-empty"><strong>没有匹配的素材</strong><p>调整筛选条件，或者上传新的素材。</p></div>
+            <div className="media-center-empty"><strong>没有匹配的素材</strong><p>调整文件夹或筛选条件，或者上传新的素材。</p></div>
           )}
         </>
       ) : cleanupLoading ? (
@@ -519,14 +696,9 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
       ) : (
         <>
           <div className="asset-library-actions media-cleanup-actions">
-            <div>
-              <strong>底层存储清理</strong>
-              <span>仅用于清理没有业务引用、且已经退出最近 3 个可回退快照的图片对象。</span>
-            </div>
+            <div><strong>底层存储清理</strong><span>仅用于清理没有业务引用、且已经退出最近 3 个可回退快照的图片对象。</span></div>
             <button className="secondary-button" type="button" onClick={() => void scan()}>重新扫描全部图片</button>
-            <button className="danger-button" type="button" disabled={selectedAssets.length === 0} onClick={() => setShowCleanupDialog(true)}>
-              物理清理已选 ({selectedAssets.length})
-            </button>
+            <button className="danger-button" type="button" disabled={selectedAssets.length === 0} onClick={() => setShowCleanupDialog(true)}>物理清理已选 ({selectedAssets.length})</button>
           </div>
 
           <div className="asset-summary-grid">
@@ -536,11 +708,7 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
             <article><span>可物理清理</span><strong>{cleanupStats.eligible}</strong><small>引用和回退窗口均已释放</small></article>
           </div>
 
-          <div className="asset-safety-note">
-            <strong>清理规则</strong>
-            <span>日常删除请优先在素材中心操作。这里保留原始 R2 扫描，用于发现和清理历史孤立图片。</span>
-          </div>
-
+          <div className="asset-safety-note"><strong>清理规则</strong><span>日常删除请优先在素材中心操作。这里保留原始 R2 扫描，用于发现和清理历史孤立图片。</span></div>
           {!mediaBaseUrl ? <div className="notice notice-error" role="alert">尚未配置 R2 自定义域名，图片预览不可用，但扫描和引用保护仍可执行。</div> : null}
           {cleanupError ? <p className="inline-status is-error" role="alert">{cleanupError}</p> : null}
           {cleanupSuccess ? <p className="inline-status is-success" role="status">{cleanupSuccess}</p> : null}

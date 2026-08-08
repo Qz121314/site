@@ -11,6 +11,7 @@ import { adminConversionPreviewRoutes } from './routes/admin-conversion-preview'
 import { adminCustomerServiceRoutes } from './routes/admin-customer-service';
 import { adminFaqRoutes } from './routes/admin-faqs';
 import { adminMediaDeleteRoutes } from './routes/admin-media-delete';
+import { adminMediaFolderRoutes } from './routes/admin-media-folders';
 import { adminMediaRoleRoutes } from './routes/admin-media-roles';
 import { adminPublishRoutes } from './routes/admin-publish';
 import { adminProductBatchRoutes } from './routes/admin-product-batch';
@@ -94,6 +95,7 @@ app.route('/api/admin/customer-service', adminCustomerServiceRoutes);
 app.route('/api/admin/assets', adminAssetRoutes);
 app.route('/api/admin/assets', adminMediaDeleteRoutes);
 app.route('/api/admin/assets', adminMediaRoleRoutes);
+app.route('/api/admin/assets', adminMediaFolderRoutes);
 app.route('/api/admin/media', adminBrandingMediaRoutes);
 app.route('/api/admin/faqs', adminFaqRoutes);
 app.route('/api/admin/publish', adminPublishRoutes);
