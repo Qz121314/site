@@ -1,167 +1,7 @@
+/* Category management is a dense data workbench. Dashboard owns the visible
+ * page title; the semantic heading remains in the DOM for accessibility. */
 .category-management {
   display: grid;
-  gap: 20px;
-}
-
-.category-management-toolbar,
-.category-filter-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.category-management-toolbar > div > p {
-  margin: 0 0 6px;
-  color: var(--muted-text);
-  font-size: 12px;
-  font-weight: 700;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.category-management-toolbar h2 {
-  margin: 0;
-}
-
-.category-management-toolbar > div > span {
-  display: block;
-  margin-top: 8px;
-  color: var(--muted-text);
-  font-size: 14px;
-}
-
-.category-filter-bar {
-  padding: 14px;
-  border: 1px solid var(--border-color);
-  border-radius: 18px;
-  background: var(--surface-color);
-}
-
-.category-search {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  min-width: 280px;
-}
-
-.category-search span {
-  color: var(--muted-text);
-  font-size: 13px;
-}
-
-.category-search input {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid var(--border-color);
-  border-radius: 11px;
-  background: #fff;
-  font: inherit;
-}
-
-.category-table-wrap {
-  overflow: hidden;
-  border: 1px solid var(--border-color);
-  border-radius: 20px;
-  background: var(--surface-color);
-}
-
-.category-table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.category-table th,
-.category-table td {
-  padding: 15px 14px;
-  border-bottom: 1px solid var(--border-color);
-  text-align: left;
-  vertical-align: middle;
-}
-
-.category-table th {
-  color: var(--muted-text);
-  background: #f8fafc;
-  font-size: 12px;
-  letter-spacing: 0.04em;
-}
-
-.category-table tbody tr:last-child td {
-  border-bottom: 0;
-}
-
-.category-table-empty {
-  display: grid;
-  min-height: 220px;
-  place-items: center;
-  align-content: center;
-  gap: 10px;
-  padding: 40px 20px;
-  text-align: center;
-}
-
-.category-table-empty strong {
-  display: block;
-}
-
-.category-table-empty p {
-  margin: 0;
-  color: var(--muted-text);
-}
-
-.category-name-cell strong,
-.category-name-cell small {
-  display: block;
-}
-
-.category-name-cell small {
-  margin-top: 5px;
-  color: var(--muted-text);
-  font-size: 12px;
-}
-
-.category-reference {
-  display: inline-flex;
-  padding: 6px 10px;
-  border-radius: 999px;
-  background: #f1f5f9;
-  color: #64748b;
-  font-size: 12px;
-  font-weight: 700;
-}
-
-.category-reference.is-used {
-  background: #fff7ed;
-  color: #9a3412;
-}
-
-.category-editor-dialog {
-  width: min(560px, 100%);
-}
-
-@media (max-width: 900px) {
-  .category-management-toolbar,
-  .category-filter-bar {
-    align-items: stretch;
-    flex-direction: column;
-  }
-
-  .category-search {
-    min-width: 0;
-  }
-
-  .category-table-wrap {
-    overflow-x: auto;
-  }
-
-  .category-table {
-    min-width: 760px;
-  }
-}
-
-/* Category management uses the same compact command-bar and row-action rhythm
- * as section/customer-service workbenches. Dashboard owns the visible title. */
-.category-management {
   width: 100%;
   min-height: 0;
   grid-template-columns: auto minmax(260px, 1fr) max-content;
@@ -170,7 +10,7 @@
 }
 
 .category-management-toolbar,
-.category-management .category-filter-bar {
+.category-filter-bar {
   display: contents;
 }
 
@@ -212,8 +52,12 @@
   min-height: 28px;
   gap: 6px;
   padding: 0 10px;
+  border: 0;
   border-radius: 6px;
   color: #667085;
+  background: transparent;
+  cursor: pointer;
+  font: inherit;
   font-size: 0.71rem;
   font-weight: 720;
   line-height: 1;
@@ -222,9 +66,11 @@
 .category-management .scope-tabs button span {
   min-width: 18px;
   padding: 2px 5px;
+  border-radius: 999px;
   background: rgb(255 255 255 / 72%);
   color: #667085;
   font-size: 0.63rem;
+  text-align: center;
 }
 
 .category-management .scope-tabs button.is-active {
@@ -238,7 +84,7 @@
   background: rgb(255 255 255 / 14%);
 }
 
-.category-management .category-search {
+.category-search {
   display: block;
   grid-column: 2;
   grid-row: 1;
@@ -247,22 +93,24 @@
   align-self: center;
 }
 
-.category-management .category-search span {
+.category-search span {
   display: none;
 }
 
-.category-management .category-search input {
+.category-search input {
   width: 100%;
   min-height: 34px;
   box-sizing: border-box;
   padding: 0 10px;
   border: 1px solid var(--admin-border-strong, #cfd5df);
   border-radius: 7px;
+  background: #fff;
   outline: 0;
+  font: inherit;
   font-size: 0.77rem;
 }
 
-.category-management .category-search input:focus {
+.category-search input:focus {
   border-color: #ff9a76;
   box-shadow: 0 0 0 3px rgb(255 90 31 / 10%);
 }
@@ -279,26 +127,30 @@
   border-radius: 8px;
 }
 
-.category-management .category-table-wrap {
+.category-table-wrap {
   min-height: 0;
   overflow: auto;
-  border-color: var(--admin-border, #e2e6ec);
+  border: 1px solid var(--admin-border, #e2e6ec);
   border-radius: 10px;
   background: #fff;
   box-shadow: 0 1px 2px rgb(16 24 40 / 3%);
 }
 
-.category-management .category-table {
+.category-table {
+  width: 100%;
   min-width: 760px;
+  border-collapse: collapse;
 }
 
-.category-management .category-table th,
-.category-management .category-table td {
+.category-table th,
+.category-table td {
   padding: 7px 9px;
-  border-bottom-color: #edf0f4;
+  border-bottom: 1px solid #edf0f4;
+  text-align: left;
+  vertical-align: middle;
 }
 
-.category-management .category-table th {
+.category-table th {
   height: 36px;
   color: #667085;
   background: #f8f9fb;
@@ -308,11 +160,15 @@
   white-space: nowrap;
 }
 
-.category-management .category-table td {
+.category-table td {
   font-size: 0.76rem;
 }
 
-.category-management .category-table tbody tr:hover td {
+.category-table tbody tr:last-child td {
+  border-bottom: 0;
+}
+
+.category-table tbody tr:hover td {
   background: #fafbfc;
 }
 
@@ -325,14 +181,53 @@
   height: 16px;
 }
 
-.category-management .category-name-cell small {
+.category-table-empty {
+  display: grid;
+  min-height: 112px;
+  place-items: center;
+  align-content: center;
+  gap: 4px;
+  padding: 24px 16px;
+  color: #667085;
+  text-align: center;
+}
+
+.category-table-empty strong {
+  display: block;
+  color: #344054;
+  font-size: 0.8rem;
+}
+
+.category-table-empty p {
+  margin: 0;
+  color: var(--muted-text);
+  font-size: 0.7rem;
+}
+
+.category-name-cell strong,
+.category-name-cell small {
+  display: block;
+}
+
+.category-name-cell small {
   margin-top: 2px;
+  color: var(--muted-text);
   font-size: 0.66rem;
 }
 
-.category-management .category-reference {
+.category-reference {
+  display: inline-flex;
   padding: 4px 7px;
+  border-radius: 999px;
+  background: #f1f5f9;
+  color: #64748b;
   font-size: 0.67rem;
+  font-weight: 700;
+}
+
+.category-reference.is-used {
+  background: #fff7ed;
+  color: #9a3412;
 }
 
 .category-management .sort-controls {
@@ -378,6 +273,8 @@
   color: #475467;
   background: #fff;
   box-shadow: 0 1px 1px rgb(16 24 40 / 3%);
+  cursor: pointer;
+  font: inherit;
   font-size: 0.69rem;
   font-weight: 700;
 }
@@ -401,20 +298,14 @@
   background: #fff1f0;
 }
 
-.category-management .category-table-empty {
-  min-height: 112px;
-  gap: 4px;
-  padding: 24px 16px;
-  color: #667085;
+.category-management .actions-cell button:disabled,
+.category-management .sort-controls button:disabled {
+  cursor: not-allowed;
+  opacity: 0.4;
 }
 
-.category-management .category-table-empty strong {
-  color: #344054;
-  font-size: 0.8rem;
-}
-
-.category-management .category-table-empty p {
-  font-size: 0.7rem;
+.category-editor-dialog {
+  width: min(560px, 100%);
 }
 
 @media (max-width: 900px) {
@@ -433,7 +324,7 @@
     justify-content: center;
   }
 
-  .category-management .category-search {
+  .category-search {
     grid-column: 1;
     grid-row: 2;
   }
@@ -442,5 +333,9 @@
     grid-column: 1;
     grid-row: 3;
     width: 100%;
+  }
+
+  .category-table-wrap {
+    overflow-x: auto;
   }
 }
