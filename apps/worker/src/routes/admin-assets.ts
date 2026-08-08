@@ -19,6 +19,7 @@ import {
   uploadMediaCenterAsset,
   type MediaKind,
 } from '../media/media-center';
+import { listMediaLibraryPage } from '../media/media-library-page';
 import type { AppEnvironment } from '../types';
 import {
   hasAdminRequestHeader,
@@ -46,6 +47,16 @@ function parsePageSize(value: string | undefined): number {
   return Number.isInteger(parsed) && parsed >= 1 && parsed <= MAX_PAGE_SIZE
     ? parsed
     : DEFAULT_PAGE_SIZE;
+}
+
+function parseLibraryKinds(value: string | undefined): MediaKind[] {
+  if (!value) return [];
+  return [...new Set(
+    value
+      .split(',')
+      .map((item) => item.trim())
+      .filter((item): item is MediaKind => MEDIA_KINDS.has(item as MediaKind)),
+  )];
 }
 
 function parseCleanupKeys(value: unknown): string[] | null {
@@ -93,6 +104,27 @@ adminAssetRoutes.get('/library', async (context) => {
   const role = parseMediaRole(context.req.query('role'));
   const assets = await listMediaCenterAssets(context.env.DB, { kind, role });
   return context.json({ assets });
+});
+
+adminAssetRoutes.get('/library/page', async (context) => {
+  context.header('Cache-Control', 'no-store');
+  const kinds = parseLibraryKinds(context.req.query('kinds') || context.req.query('kind'));
+  const role = parseMediaRole(context.req.query('role'));
+  const folder = context.req.query('folder')?.trim() || 'all';
+  const query = context.req.query('q')?.trim() ?? '';
+  const cursor = context.req.query('cursor')?.trim() || null;
+  const requestedLimit = Number(context.req.query('limit'));
+  const limit = Number.isInteger(requestedLimit) ? requestedLimit : undefined;
+
+  const page = await listMediaLibraryPage(context.env.DB, {
+    kinds,
+    role,
+    folder,
+    query,
+    cursor,
+    ...(limit ? { limit } : {}),
+  });
+  return context.json(page);
 });
 
 adminAssetRoutes.post('/upload', async (context) => {
