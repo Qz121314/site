@@ -191,7 +191,6 @@ select:disabled {
 
 /* Shared cards and headings */
 .settings-card,
-.asset-summary-grid article,
 .section-filter-bar,
 .category-filter-bar,
 .conversion-filter-bar,
@@ -217,7 +216,6 @@ select:disabled {
 .category-management,
 .conversion-pool,
 .product-management,
-.asset-library-page,
 .settings-form {
   gap: 16px;
 }
@@ -225,16 +223,14 @@ select:disabled {
 .section-management-toolbar,
 .category-management-toolbar,
 .conversion-pool-heading,
-.product-management-toolbar,
-.asset-library-heading {
+.product-management-toolbar {
   min-height: 72px;
 }
 
 .section-management-toolbar h2,
 .category-management-toolbar h2,
 .conversion-pool-heading h2,
-.product-management-toolbar h2,
-.asset-library-heading h2 {
+.product-management-toolbar h2 {
   color: var(--heading-color);
   font-size: 1.25rem;
   font-weight: 760;
@@ -254,8 +250,7 @@ select:disabled {
 .section-management-toolbar > div > span,
 .category-management-toolbar > div > span,
 .conversion-pool-heading > div > span,
-.product-management-toolbar span,
-.asset-library-heading > div:first-child > p:last-child {
+.product-management-toolbar span {
   color: var(--muted-text);
   font-size: 0.86rem;
   line-height: 1.55;
@@ -265,15 +260,13 @@ select:disabled {
 .section-filter-bar,
 .category-filter-bar,
 .conversion-filter-bar,
-.product-filter-bar,
-.asset-toolbar {
+.product-filter-bar {
   min-height: 62px;
   padding: 12px;
   border-radius: var(--radius-md);
 }
 
 .scope-tabs,
-.asset-filter-group,
 .product-editor-tabs {
   gap: 3px;
   padding: 3px;
@@ -283,7 +276,6 @@ select:disabled {
 }
 
 .scope-tabs button,
-.asset-filter-group button,
 .product-editor-tabs button {
   min-height: 34px;
   padding: 0 11px;
@@ -293,8 +285,7 @@ select:disabled {
   font-weight: 700;
 }
 
-.scope-tabs button.is-active,
-.asset-filter-group button.is-active {
+.scope-tabs button.is-active {
   color: #fff;
   background: #202632;
   box-shadow: 0 3px 9px rgb(16 24 40 / 12%);
@@ -325,7 +316,6 @@ select:disabled {
 .section-search input,
 .category-search input,
 .conversion-search input,
-.asset-toolbar > input,
 .field-group input,
 .field-group textarea,
 .section-editor-form input[type='text'],
@@ -350,7 +340,6 @@ select:disabled {
 .section-search input:focus,
 .category-search input:focus,
 .conversion-search input:focus,
-.asset-toolbar > input:focus,
 .field-group input:focus,
 .field-group textarea:focus,
 .section-editor-form input:focus,
@@ -756,8 +745,7 @@ select:disabled {
 .section-table-empty,
 .category-table-empty,
 .conversion-empty,
-.product-empty-state,
-.asset-empty-state {
+.product-empty-state {
   min-height: 190px;
   padding: 42px 20px;
   border-color: var(--border-strong);
@@ -838,8 +826,7 @@ select:disabled {
   .section-management-toolbar,
   .category-management-toolbar,
   .conversion-pool-heading,
-  .product-management-toolbar,
-  .asset-library-heading {
+  .product-management-toolbar {
     min-height: 0;
     align-items: stretch;
     flex-direction: column;
@@ -849,7 +836,6 @@ select:disabled {
   .category-filter-bar,
   .conversion-filter-bar,
   .product-filter-bar,
-  .asset-toolbar,
   .selection-toolbar {
     align-items: stretch;
     flex-direction: column;
@@ -857,8 +843,7 @@ select:disabled {
 
   .section-search,
   .category-search,
-  .conversion-search,
-  .asset-toolbar > input {
+  .conversion-search {
     width: 100%;
     min-width: 0;
   }

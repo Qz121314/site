@@ -1,24 +1,24 @@
 .media-center-page {
-  display: flex !important;
+  display: flex;
   min-height: 0;
   flex-direction: column;
-  gap: 8px !important;
+  gap: 8px;
 }
 
 /* Shared mode navigation: one location and one visual language in both modes. */
 .media-center-heading {
-  display: flex !important;
-  min-height: 38px !important;
-  align-items: center !important;
-  justify-content: flex-start !important;
-  gap: 16px !important;
-  margin: 0 !important;
-  padding: 0 2px 6px !important;
+  display: flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 16px;
+  margin: 0;
+  padding: 0 2px 6px;
   border-bottom: 1px solid #e7eaf0;
 }
 
 .media-center-heading > div:first-child {
-  display: none !important;
+  display: none;
 }
 
 .media-center-heading::after {
@@ -81,7 +81,7 @@
 
 /* Folder commands are a compact command row, not a content card. */
 .media-center-page .media-folder-create-bar {
-  display: flex !important;
+  display: flex;
   min-height: 42px;
   align-items: center;
   flex-wrap: nowrap;
@@ -94,7 +94,7 @@
 }
 
 .media-center-page .media-folder-create-bar > div {
-  display: flex !important;
+  display: flex;
   min-width: auto;
   flex: 0 0 auto;
   align-items: center;
@@ -135,17 +135,16 @@
 
 .media-center-page .media-folder-create-bar .secondary-button,
 .media-center-page .media-folder-create-bar .danger-button {
-  min-height: 31px !important;
-  padding: 0 9px !important;
-  border-radius: 7px !important;
-  font-size: 0.66rem !important;
+  --admin-button-min-height: 31px;
+  --admin-button-padding-inline: 9px;
+  --admin-button-radius: 7px;
+  --admin-button-font-size: 0.66rem;
   white-space: nowrap;
 }
 
 /* Upload row: labels are inline so the row stays short but remains self-explanatory. */
-.media-center-upload-bar,
-.media-center-upload-bar-v2 {
-  display: flex !important;
+.media-center-upload-bar {
+  display: flex;
   min-height: 44px;
   align-items: center;
   flex-wrap: nowrap;
@@ -157,19 +156,17 @@
   box-shadow: 0 1px 2px rgb(16 24 40 / 2%);
 }
 
-.media-center-upload-bar > label,
-.media-center-upload-bar-v2 > label:nth-child(2) {
-  display: inline-flex !important;
+.media-center-upload-bar > label {
+  display: inline-flex;
   min-width: 0;
   align-items: center;
-  gap: 6px !important;
+  gap: 6px;
 }
 
-.media-center-upload-bar > label > span,
-.media-center-upload-bar-v2 > label:nth-child(2) > span {
-  color: #7a8492 !important;
-  font-size: 0.62rem !important;
-  font-weight: 700 !important;
+.media-center-upload-bar > label > span {
+  color: #7a8492;
+  font-size: 0.62rem;
+  font-weight: 700;
   white-space: nowrap;
 }
 
@@ -197,7 +194,7 @@
   width: 130px;
 }
 
-.media-center-upload-bar-v2 > label:nth-child(2) select {
+.media-center-upload-bar > label:nth-child(2) select {
   width: 160px;
 }
 
@@ -253,9 +250,8 @@
 }
 
 /* Search is dominant; filters are subordinate and align to one baseline. */
-.media-center-toolbar,
-.media-center-toolbar-v2 {
-  display: grid !important;
+.media-center-toolbar {
+  display: grid;
   grid-template-columns: minmax(280px, 1fr) minmax(145px, 190px) 135px 145px auto;
   min-height: 38px;
   align-items: center;
@@ -272,10 +268,10 @@
 }
 
 .media-center-toolbar .secondary-button {
-  min-height: 31px !important;
-  padding-inline: 10px !important;
-  border-radius: 7px !important;
-  font-size: 0.67rem !important;
+  --admin-button-min-height: 31px;
+  --admin-button-padding-inline: 10px;
+  --admin-button-radius: 7px;
+  --admin-button-font-size: 0.67rem;
 }
 
 .media-center-selection-toolbar {
@@ -302,10 +298,10 @@
 
 .media-center-selection-toolbar .secondary-button,
 .media-center-selection-toolbar .danger-button {
-  min-height: 29px !important;
-  padding-inline: 9px !important;
-  border-radius: 7px !important;
-  font-size: 0.64rem !important;
+  --admin-button-min-height: 29px;
+  --admin-button-padding-inline: 9px;
+  --admin-button-radius: 7px;
+  --admin-button-font-size: 0.64rem;
 }
 
 .media-center-select-all {
@@ -482,7 +478,7 @@
 .media-center-empty,
 .media-center-page .asset-empty-state {
   display: grid;
-  min-height: 96px !important;
+  min-height: 96px;
   flex: 0 0 auto;
   place-items: center;
   align-content: center;
@@ -507,11 +503,11 @@
 
 /* Cleanup mode is an operational utility, not a dashboard. */
 .media-cleanup-actions {
-  display: flex !important;
+  display: flex;
   min-height: 42px;
   align-items: center;
   gap: 7px;
-  padding: 5px 7px !important;
+  padding: 5px 7px;
   border: 1px solid #e2e6ec;
   border-radius: 9px;
   background: #fff;
@@ -519,11 +515,11 @@
 }
 
 .media-cleanup-actions > div {
-  display: flex !important;
+  display: flex;
   min-width: 0;
   flex: 1 1 auto;
   align-items: baseline;
-  gap: 8px !important;
+  gap: 8px;
 }
 
 .media-cleanup-actions strong {
@@ -542,17 +538,17 @@
 
 .media-cleanup-actions .secondary-button,
 .media-cleanup-actions .danger-button {
-  min-height: 31px !important;
-  padding-inline: 9px !important;
-  border-radius: 7px !important;
-  font-size: 0.65rem !important;
+  --admin-button-min-height: 31px;
+  --admin-button-padding-inline: 9px;
+  --admin-button-radius: 7px;
+  --admin-button-font-size: 0.65rem;
   white-space: nowrap;
 }
 
 .media-center-page > .asset-summary-grid {
-  display: grid !important;
+  display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0 !important;
+  gap: 0;
   overflow: hidden;
   border: 1px solid #e2e6ec;
   border-radius: 9px;
@@ -560,21 +556,21 @@
 }
 
 .media-center-page > .asset-summary-grid article {
-  display: flex !important;
+  display: flex;
   min-width: 0;
   align-items: baseline;
   justify-content: space-between;
   gap: 8px;
-  padding: 7px 10px !important;
-  border: 0 !important;
-  border-right: 1px solid #edf0f4 !important;
-  border-radius: 0 !important;
-  background: transparent !important;
-  box-shadow: none !important;
+  padding: 7px 10px;
+  border: 0;
+  border-right: 1px solid #edf0f4;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .media-center-page > .asset-summary-grid article:last-child {
-  border-right: 0 !important;
+  border-right: 0;
 }
 
 .media-center-page > .asset-summary-grid span {
@@ -590,7 +586,7 @@
 }
 
 .media-center-page > .asset-summary-grid small {
-  display: none !important;
+  display: none;
 }
 
 .media-center-page .asset-safety-note {
@@ -598,7 +594,7 @@
 }
 
 .media-center-page .asset-toolbar {
-  display: flex !important;
+  display: flex;
   min-height: 38px;
   align-items: center;
   flex-wrap: nowrap;
@@ -644,7 +640,7 @@
 }
 
 .media-center-page .settings-loading {
-  min-height: 110px !important;
+  min-height: 110px;
   align-content: center;
 }
 
@@ -665,8 +661,7 @@
   }
 
   .media-center-page .media-folder-create-bar,
-  .media-center-upload-bar,
-  .media-center-upload-bar-v2 {
+  .media-center-upload-bar {
     flex-wrap: wrap;
   }
 
@@ -676,15 +671,13 @@
     padding-left: 0;
   }
 
-  .media-center-toolbar,
-  .media-center-toolbar-v2 {
+  .media-center-toolbar {
     grid-template-columns: minmax(220px, 1fr) 160px 130px 140px auto;
   }
 }
 
 @media (max-width: 920px) {
-  .media-center-toolbar,
-  .media-center-toolbar-v2 {
+  .media-center-toolbar {
     grid-template-columns: 1fr 1fr;
   }
 
@@ -701,11 +694,11 @@
   }
 
   .media-center-page > .asset-summary-grid article:nth-child(2) {
-    border-right: 0 !important;
+    border-right: 0;
   }
 
   .media-center-page > .asset-summary-grid article:nth-child(-n + 2) {
-    border-bottom: 1px solid #edf0f4 !important;
+    border-bottom: 1px solid #edf0f4;
   }
 
   .media-cleanup-actions {
@@ -721,11 +714,11 @@
 
 @media (max-width: 760px) {
   .media-center-page {
-    gap: 7px !important;
+    gap: 7px;
   }
 
   .media-center-heading {
-    min-height: 36px !important;
+    min-height: 36px;
   }
 
   .media-center-tabs {
@@ -735,7 +728,6 @@
 
   .media-center-page .media-folder-create-bar,
   .media-center-upload-bar,
-  .media-center-upload-bar-v2,
   .media-center-selection-toolbar,
   .media-cleanup-actions,
   .media-cleanup-actions > div,
@@ -757,11 +749,10 @@
   .media-center-selection-toolbar button,
   .media-cleanup-actions button,
   .media-center-page .asset-toolbar > input {
-    width: 100% !important;
+    width: 100%;
   }
 
-  .media-center-upload-bar > label,
-  .media-center-upload-bar-v2 > label:nth-child(2) {
+  .media-center-upload-bar > label {
     justify-content: space-between;
   }
 
