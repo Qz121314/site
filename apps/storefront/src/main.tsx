@@ -7,6 +7,7 @@ import { installStorefrontTheme } from './theme-runtime';
 import './styles.css';
 import './theme-runtime.css';
 import './media-runtime.css';
+import './storefront-resilience.css';
 
 installPublicContentFetchFallback();
 void installStorefrontTheme();
