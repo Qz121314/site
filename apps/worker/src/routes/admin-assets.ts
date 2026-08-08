@@ -33,6 +33,9 @@ const MAX_CLEANUP_SIZE = 100;
 const IDEMPOTENCY_HEADER = 'x-idempotency-key';
 const CLEANUP_SCOPE = 'assets.cleanup';
 const MEDIA_KINDS = new Set<MediaKind>(['image', 'animated_image', 'video']);
+const STATIC_IMAGE_SOURCE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+const STATIC_IMAGE_OUTPUT_TYPES = new Set(['image/jpeg', 'image/webp']);
+const STATIC_IMAGE_COMPRESSION_PROFILE = 'browser-static-image-v1';
 
 function parsePageSize(value: string | undefined): number {
   if (!value) {
@@ -105,6 +108,27 @@ adminAssetRoutes.post('/upload', async (context) => {
     return apiError(context, 400, 'INVALID_MULTIPART_FORM', '素材上传表单无效。');
   }
 
+  const uploadFile = formData.get('file');
+  const compressionProfile = formData.get('compressionProfile');
+  const rawSourceByteSize = formData.get('sourceByteSize');
+  const sourceByteSize = typeof rawSourceByteSize === 'string' ? Number(rawSourceByteSize) : null;
+  if (uploadFile instanceof File && STATIC_IMAGE_SOURCE_TYPES.has(uploadFile.type.toLowerCase())) {
+    if (
+      compressionProfile !== STATIC_IMAGE_COMPRESSION_PROFILE ||
+      !STATIC_IMAGE_OUTPUT_TYPES.has(uploadFile.type.toLowerCase()) ||
+      !Number.isInteger(sourceByteSize) ||
+      (sourceByteSize ?? 0) <= 0
+    ) {
+      return apiError(
+        context,
+        400,
+        'MEDIA_COMPRESSION_REQUIRED',
+        '静态图片必须先在浏览器压缩，原图不会上传到 R2。',
+        { field: 'file' },
+      );
+    }
+  }
+
   const result = await uploadMediaCenterAsset(context.env.ASSETS_BUCKET, context.env.DB, formData);
   if (!result.ok) {
     return apiError(context, 400, result.code, result.message, { field: result.field });
@@ -121,6 +145,9 @@ adminAssetRoutes.post('/upload', async (context) => {
       mimeType: result.media.mimeType,
       byteSize: result.media.byteSize,
       objectKey: result.media.objectKey,
+      compressionProfile:
+        typeof compressionProfile === 'string' ? compressionProfile : null,
+      sourceByteSize: Number.isInteger(sourceByteSize) ? sourceByteSize : null,
       reused: result.reused,
     },
   });
