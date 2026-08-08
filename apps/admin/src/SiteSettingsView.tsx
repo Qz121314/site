@@ -7,6 +7,7 @@ import {
   type SiteSettings,
   type SiteSettingsUpdateInput,
 } from './api';
+import { useAdminDirtySource } from './admin-unsaved-state';
 import { MediaPickerDialog } from './asset-library/MediaPickerDialog';
 import { brandingAssetPreviewUrl, uploadBrandingImage } from './branding-media/api';
 import {
@@ -62,6 +63,16 @@ function toInput(draft: SettingsDraft): SettingsPayload {
   };
 }
 
+function settingsDirty(
+  settings: SiteSettings | null,
+  draft: SettingsDraft | null,
+  localLogo: LocalBrandingImage | null,
+): boolean {
+  if (!settings || !draft) return false;
+  if (localLogo) return true;
+  return JSON.stringify(toInput(draft)) !== JSON.stringify(toInput(createDraft(settings)));
+}
+
 function formatUpdatedAt(value: string): string {
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? value : date.toLocaleString('zh-CN');
@@ -78,6 +89,8 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [domainTest, setDomainTest] = useState<DomainTestState>({ status: 'idle' });
+
+  useAdminDirtySource('site-settings', '站点设置', settingsDirty(settings, draft, localLogo));
 
   useEffect(() => () => releaseBrandingImage(localLogo), [localLogo]);
 
