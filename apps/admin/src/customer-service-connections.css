@@ -10,9 +10,10 @@
 
 .customer-service-commandbar {
   display: grid;
-  grid-template-columns: auto minmax(240px, 420px) auto;
+  grid-template-columns: auto minmax(260px, 420px) max-content;
   min-height: 44px;
   align-items: center;
+  justify-content: space-between;
   gap: 8px;
   padding: 5px 7px;
   border: 1px solid var(--admin-border, #e2e6ec);
@@ -22,20 +23,20 @@
 }
 
 .customer-service-search {
-  min-width: 0;
-}
-
-.customer-service-search input {
   width: 100%;
+  min-width: 0;
   min-height: 34px;
+  box-sizing: border-box;
   padding: 0 10px;
   border: 1px solid var(--admin-border-strong, #cfd5df);
   border-radius: 7px;
+  background: #fff;
+  color: var(--admin-text, #172033);
   outline: 0;
   font-size: 0.77rem;
 }
 
-.customer-service-search input:focus {
+.customer-service-search:focus {
   border-color: #ff9a76;
   box-shadow: 0 0 0 3px rgb(255 90 31 / 10%);
 }
@@ -141,13 +142,23 @@
 }
 
 .customer-service-editor-form input,
-.customer-service-editor-form select {
+.customer-service-editor-form select,
+.customer-service-editor-form textarea {
+  box-sizing: border-box;
+  width: 100%;
   min-height: 36px;
   padding-inline: 10px;
   border: 1px solid var(--admin-border-strong, #cfd5df);
   border-radius: 8px;
   background: #fff;
+  color: var(--admin-text, #172033);
   font-size: 0.8rem;
+}
+
+.customer-service-editor-form textarea {
+  min-height: 88px;
+  padding-block: 8px;
+  resize: vertical;
 }
 
 .customer-service-editor-wide {
@@ -167,12 +178,9 @@
 }
 
 @media (max-width: 900px) {
-  .customer-service-workbench {
-    display: grid;
-  }
-
   .customer-service-commandbar {
     grid-template-columns: 1fr;
+    justify-content: stretch;
   }
 
   .customer-service-table-wrap {
