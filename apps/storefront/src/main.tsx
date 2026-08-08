@@ -6,6 +6,7 @@ import { installPublicContentFetchFallback } from './public-content-transport';
 import { installStorefrontTheme } from './theme-runtime';
 import './styles.css';
 import './theme-runtime.css';
+import './media-runtime.css';
 
 installPublicContentFetchFallback();
 void installStorefrontTheme();
