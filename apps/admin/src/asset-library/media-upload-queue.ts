@@ -43,6 +43,14 @@ const SUPPORTED_MEDIA_TYPES = new Set([
   'video/webm',
 ]);
 
+const EMPTY_BATCH_SUMMARY: MediaUploadBatchSummary = {
+  total: 0,
+  uploaded: 0,
+  reused: 0,
+  failed: 0,
+  skipped: 0,
+};
+
 function isSessionError(error: unknown): boolean {
   return error instanceof AdminApiError && (error.status === 401 || error.code === 'SESSION_INVALID');
 }
@@ -78,6 +86,7 @@ export function useMediaUploadQueue({
 }: UseMediaUploadQueueOptions) {
   const [items, setItems] = useState<MediaUploadQueueItem[]>([]);
   const [running, setRunning] = useState(false);
+  const runningRef = useRef(false);
   const callbacksRef = useRef({ onSessionExpired, onBatchComplete });
   callbacksRef.current = { onSessionExpired, onBatchComplete };
 
@@ -93,9 +102,11 @@ export function useMediaUploadQueue({
   const runEntries = useCallback(
     async (entries: MediaUploadQueueItem[], skipped: number): Promise<MediaUploadBatchSummary> => {
       if (entries.length === 0) {
-        return { total: 0, uploaded: 0, reused: 0, failed: 0, skipped };
+        return { ...EMPTY_BATCH_SUMMARY, skipped };
       }
+      if (runningRef.current) return EMPTY_BATCH_SUMMARY;
 
+      runningRef.current = true;
       setRunning(true);
       let nextIndex = 0;
       let uploaded = 0;
@@ -148,6 +159,7 @@ export function useMediaUploadQueue({
         await Promise.all(Array.from({ length: concurrency }, () => worker()));
         if (!sessionExpired) await callbacksRef.current.onBatchComplete();
       } finally {
+        runningRef.current = false;
         setRunning(false);
       }
 
@@ -168,9 +180,7 @@ export function useMediaUploadQueue({
       role: MediaRole,
       folderId: string | null,
     ): Promise<MediaUploadBatchSummary> => {
-      if (running) {
-        return { total: 0, uploaded: 0, reused: 0, failed: 0, skipped: files.length };
-      }
+      if (runningRef.current) return EMPTY_BATCH_SUMMARY;
       const supported = files.filter((file) => SUPPORTED_MEDIA_TYPES.has(file.type.toLowerCase()));
       const entries: MediaUploadQueueItem[] = supported.map((file) => ({
         id: crypto.randomUUID(),
@@ -185,17 +195,15 @@ export function useMediaUploadQueue({
       setItems(entries);
       return runEntries(entries, files.length - supported.length);
     },
-    [runEntries, running],
+    [runEntries],
   );
 
   const retryFailed = useCallback(async (): Promise<MediaUploadBatchSummary> => {
-    if (running) return { total: 0, uploaded: 0, reused: 0, failed: 0, skipped: 0 };
+    if (runningRef.current) return EMPTY_BATCH_SUMMARY;
     const failedEntries = items
       .filter((item) => item.status === 'error')
       .map((item) => ({ ...item, status: 'queued' as const, message: null }));
-    if (failedEntries.length === 0) {
-      return { total: 0, uploaded: 0, reused: 0, failed: 0, skipped: 0 };
-    }
+    if (failedEntries.length === 0) return EMPTY_BATCH_SUMMARY;
     const failedIds = new Set(failedEntries.map((item) => item.id));
     setItems((current) =>
       current.map((item) =>
@@ -203,14 +211,14 @@ export function useMediaUploadQueue({
       ),
     );
     return runEntries(failedEntries, 0);
-  }, [items, runEntries, running]);
+  }, [items, runEntries]);
 
   const clearFinished = useCallback(() => {
-    if (running) return;
+    if (runningRef.current) return;
     setItems((current) =>
       current.filter((item) => item.status === 'queued' || item.status === 'processing' || item.status === 'error'),
     );
-  }, [running]);
+  }, []);
 
   const progress = useMemo(() => {
     const done = items.filter(
