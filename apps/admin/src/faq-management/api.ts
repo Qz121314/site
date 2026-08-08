@@ -1,4 +1,5 @@
 import { AdminApiError } from '../api';
+import { adminFetch } from '../admin-fetch';
 
 export type FaqScope = 'active' | 'trash' | 'all';
 
@@ -34,7 +35,7 @@ async function readJson(response: Response): Promise<unknown> {
 }
 
 async function requestJson(path: string, init?: RequestInit): Promise<unknown> {
-  const response = await fetch(path, { credentials: 'same-origin', cache: 'no-store', ...init });
+  const response = await adminFetch(path, { credentials: 'same-origin', cache: 'no-store', ...init });
   const body = await readJson(response);
   if (!response.ok) {
     const envelope = asRecord(body) as ErrorEnvelope | null;
