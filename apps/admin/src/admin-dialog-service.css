@@ -1,0 +1,42 @@
+.admin-service-dialog-backdrop {
+  z-index: 1200;
+}
+
+.admin-service-dialog {
+  gap: 14px;
+}
+
+.admin-service-dialog-message {
+  margin: 0;
+  color: #667085;
+  font-size: 0.75rem;
+  line-height: 1.65;
+}
+
+.admin-service-dialog-field {
+  display: grid;
+  gap: 5px;
+}
+
+.admin-service-dialog-field input {
+  width: 100%;
+  min-height: 38px;
+  padding: 0 10px;
+  border: 1px solid #d7dde5;
+  border-radius: 8px;
+  outline: 0;
+  color: #172033;
+  background: #fff;
+  font: inherit;
+  font-size: 0.76rem;
+}
+
+.admin-service-dialog-field input:focus {
+  border-color: #98a2b3;
+  box-shadow: 0 0 0 3px rgb(52 64 84 / 8%);
+}
+
+.admin-service-dialog-field input[aria-invalid='true'] {
+  border-color: #d92d20;
+  box-shadow: 0 0 0 3px rgb(217 45 32 / 8%);
+}
