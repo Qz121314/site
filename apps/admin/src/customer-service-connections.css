@@ -130,6 +130,21 @@
   background: #fafbfc;
 }
 
+.customer-service-table tbody tr:only-child td[colspan='8'] {
+  height: 118px;
+  padding: 24px;
+  color: #667085;
+  background: #fff;
+  text-align: center;
+  font-size: 0.76rem;
+  font-weight: 650;
+  letter-spacing: 0.01em;
+}
+
+.customer-service-table tbody tr:only-child:hover td[colspan='8'] {
+  background: #fff;
+}
+
 .customer-service-table .selection-cell {
   width: 36px;
   text-align: center;
@@ -146,11 +161,50 @@
   gap: 4px;
 }
 
-.customer-service-table .row-actions button {
+.customer-service-table .row-actions button,
+.customer-service-table .actions-cell > button {
+  appearance: none;
   min-height: 27px;
-  padding: 3px 7px;
+  margin-left: 0;
+  padding: 3px 8px;
+  border: 1px solid #dfe4eb;
   border-radius: 6px;
-  font-size: 0.7rem;
+  color: #475467;
+  background: #fff;
+  box-shadow: 0 1px 1px rgb(16 24 40 / 3%);
+  cursor: pointer;
+  font-size: 0.69rem;
+  font-weight: 700;
+  transition:
+    color 120ms ease,
+    border-color 120ms ease,
+    background 120ms ease;
+}
+
+.customer-service-table .row-actions button:not(:disabled):hover,
+.customer-service-table .actions-cell > button:not(:disabled):hover {
+  border-color: #c7ced8;
+  color: #172033;
+  background: #f8fafc;
+}
+
+.customer-service-table .row-actions .danger-link {
+  border-color: transparent;
+  color: #b42318;
+  background: transparent;
+  box-shadow: none;
+}
+
+.customer-service-table .row-actions .danger-link:not(:disabled):hover {
+  border-color: #fecdca;
+  color: #912018;
+  background: #fff1f0;
+}
+
+.customer-service-table .row-actions button:disabled,
+.customer-service-table .actions-cell > button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
 }
 
 .customer-service-url {
