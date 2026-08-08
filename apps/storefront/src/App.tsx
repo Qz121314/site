@@ -21,12 +21,15 @@ import {
 } from './content';
 import { HomepageAnalytics } from './HomepageAnalytics';
 import { MarkdownContent } from './MarkdownContent';
+import { ResilientImage, ResilientVideo } from './ResilientMedia';
 
 type Route =
   | { type: 'home' }
   | { type: 'section'; id: string }
   | { type: 'product'; id: string }
   | { type: 'not-found' };
+
+type RouteResource = 'section' | 'product';
 
 const NAVIGATION_EVENT = 'storefront:navigate';
 
@@ -85,6 +88,14 @@ function isVideoMediaUrl(value: string): boolean {
   }
 }
 
+function isNotPublishedError(error: unknown): boolean {
+  return error instanceof PublicContentError && (
+    error.code === 'CONTENT_NOT_PUBLISHED'
+    || error.code === 'INVALID_SECTION'
+    || error.code === 'INVALID_PRODUCT'
+  );
+}
+
 function AppLink({ href = '/', onClick, ...props }: AnchorHTMLAttributes<HTMLAnchorElement>) {
   const handleClick = (event: ReactMouseEvent<HTMLAnchorElement>) => {
     onClick?.(event);
@@ -108,8 +119,16 @@ function AppLink({ href = '/', onClick, ...props }: AnchorHTMLAttributes<HTMLAnc
 }
 
 function SectionIcon({ section }: { section: PublicSection }) {
+  const fallback = <span aria-hidden="true">{section.name.slice(0, 1)}</span>;
   if (section.icon.type === 'image' && section.icon.value) {
-    return <img alt="" loading="lazy" src={section.icon.value} />;
+    return (
+      <ResilientImage
+        alt=""
+        fallback={fallback}
+        loading="lazy"
+        src={section.icon.value}
+      />
+    );
   }
   return <span aria-hidden="true">{section.icon.value || section.name.slice(0, 1)}</span>;
 }
@@ -118,11 +137,12 @@ function ProductCard({ product }: { product: PublicProductSummary }) {
   return (
     <AppLink className="product-card" href={`/products/${encodeURIComponent(product.id)}/`}>
       <div className="product-card-media">
-        {product.coverUrl ? (
-          <img alt="" loading="lazy" src={product.coverUrl} />
-        ) : (
-          <div className="image-fallback" aria-hidden="true" />
-        )}
+        <ResilientImage
+          alt=""
+          fallback={<div className="image-fallback" aria-hidden="true" />}
+          loading="lazy"
+          src={product.coverUrl}
+        />
         <span className="service-mode-badge">
           {product.serviceMode === 'online' ? 'Online' : 'In person'}
         </span>
@@ -201,7 +221,11 @@ function SiteShell({ site, children }: { site: PublicSite; children: ReactNode }
       <header className="topbar">
         <AppLink className="brand-lockup" href="/">
           <span className="brand-logo">
-            {site.logoUrl ? <img alt="" src={site.logoUrl} /> : site.name.slice(0, 1)}
+            <ResilientImage
+              alt=""
+              fallback={site.name.slice(0, 1)}
+              src={site.logoUrl}
+            />
           </span>
           <span>
             <strong>{site.name}</strong>
@@ -262,6 +286,36 @@ function NotFoundPage({ site }: { site: PublicSite }) {
   );
 }
 
+function RouteErrorState({
+  error,
+  resource,
+  onRetry,
+}: {
+  error: unknown;
+  resource: RouteResource;
+  onRetry: () => void;
+}) {
+  const notPublished = isNotPublishedError(error);
+  const resourceLabel = resource === 'section' ? 'Service section' : 'Service';
+  const missingMessage = resource === 'section'
+    ? 'This service section is not part of the current published version.'
+    : 'This service is not part of the current published version.';
+
+  return (
+    <div className="standalone-state embedded-state" role="status">
+      <div className="state-mark">{notPublished ? '404' : '!'}</div>
+      <h1>{notPublished ? `${resourceLabel} not found` : `${resourceLabel} unavailable`}</h1>
+      <p>{notPublished ? missingMessage : 'The latest published data could not be loaded. Please try again.'}</p>
+      <div className="state-actions">
+        {!notPublished ? (
+          <button className="primary-button" type="button" onClick={onRetry}>Try again</button>
+        ) : null}
+        <AppLink className={notPublished ? 'primary-button' : 'secondary-button'} href="/">Back to home</AppLink>
+      </div>
+    </div>
+  );
+}
+
 function FaqSection({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
   const query = useQuery({
     queryKey: ['storefront-faq', bootstrap.pointer.contentVersion],
@@ -278,8 +332,14 @@ function FaqSection({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
           <h2>Frequently asked questions</h2>
         </div>
       </div>
-      {query.isLoading ? <div className="inline-loading">Loading FAQ…</div> : null}
-      {query.error ? <div className="inline-error">FAQ is temporarily unavailable.</div> : null}
+      {query.isLoading && !query.data ? <div className="inline-loading">Loading FAQ…</div> : null}
+      {query.error && !query.data ? (
+        <div className="inline-error inline-error-action">
+          <span>FAQ is temporarily unavailable.</span>
+          <button type="button" onClick={() => void query.refetch()}>Try again</button>
+        </div>
+      ) : null}
+      {query.data?.faqs.length === 0 ? <div className="inline-empty">No FAQs are published yet.</div> : null}
       <div className="faq-list">
         {query.data?.faqs.map((faq) => (
           <details key={faq.id}>
@@ -397,8 +457,10 @@ function SectionPage({ bootstrap, sectionId }: { bootstrap: StorefrontBootstrap;
 
   return (
     <SiteShell site={bootstrap.site.site}>
-      {query.isLoading ? <div className="inline-loading page-loading">Loading services…</div> : null}
-      {query.error ? <div className="inline-error page-loading">This service section is unavailable.</div> : null}
+      {query.isLoading && !query.data ? <div className="inline-loading page-loading">Loading services…</div> : null}
+      {query.error && !query.data ? (
+        <RouteErrorState error={query.error} resource="section" onRetry={() => void query.refetch()} />
+      ) : null}
       {query.data ? (
         <>
           <section className="section-page-header">
@@ -471,6 +533,7 @@ function ProductPage({ bootstrap, productId }: { bootstrap: StorefrontBootstrap;
     queryFn: ({ signal }) => loadProductSnapshot(bootstrap, productId, signal),
     staleTime: Number.POSITIVE_INFINITY,
   });
+  const productMedia = query.data?.product.media.filter((media) => Boolean(media.url)) ?? [];
 
   useEffect(() => {
     if (query.data) document.title = `${query.data.product.title} · ${bootstrap.site.site.name}`;
@@ -478,8 +541,10 @@ function ProductPage({ bootstrap, productId }: { bootstrap: StorefrontBootstrap;
 
   return (
     <SiteShell site={bootstrap.site.site}>
-      {query.isLoading ? <div className="inline-loading page-loading">Loading service…</div> : null}
-      {query.error ? <div className="inline-error page-loading">This service is unavailable.</div> : null}
+      {query.isLoading && !query.data ? <div className="inline-loading page-loading">Loading service…</div> : null}
+      {query.error && !query.data ? (
+        <RouteErrorState error={query.error} resource="product" onRetry={() => void query.refetch()} />
+      ) : null}
       {query.data ? (
         <article className="product-detail">
           <AppLink className="back-link" href={`/sections/${encodeURIComponent(query.data.product.sectionId)}/`}>
@@ -487,23 +552,36 @@ function ProductPage({ bootstrap, productId }: { bootstrap: StorefrontBootstrap;
           </AppLink>
 
           <div className="detail-gallery">
-            {query.data.product.media.length > 0 ? query.data.product.media.map((media) => {
+            {productMedia.length > 0 ? productMedia.map((media) => {
               if (!media.url) return null;
+              const fallback = <div className="detail-media-fallback">Media unavailable</div>;
               return isVideoMediaUrl(media.url) ? (
-                <video
+                <ResilientVideo
                   aria-label={media.altText || query.data.product.title}
                   controls
+                  fallback={fallback}
                   key={media.id}
                   playsInline
                   preload="metadata"
                   src={media.url}
                 />
               ) : (
-                <img alt={media.altText || query.data.product.title} key={media.id} src={media.url} />
+                <ResilientImage
+                  alt={media.altText || query.data.product.title}
+                  fallback={fallback}
+                  key={media.id}
+                  src={media.url}
+                />
               );
             }) : query.data.product.coverUrl ? (
-              <img alt={query.data.product.title} src={query.data.product.coverUrl} />
-            ) : null}
+              <ResilientImage
+                alt={query.data.product.title}
+                fallback={<div className="detail-media-fallback">Image unavailable</div>}
+                src={query.data.product.coverUrl}
+              />
+            ) : (
+              <div className="detail-media-fallback">No media available</div>
+            )}
           </div>
 
           <div className="detail-layout">

@@ -1,5 +1,6 @@
 import { parseMarkdown, type MarkdownBlock, type MarkdownInlineNode } from '@site/shared';
 import { Fragment, type ReactNode } from 'react';
+import { ResilientImage } from './ResilientMedia';
 
 function renderInline(nodes: MarkdownInlineNode[]): ReactNode {
   return nodes.map((node, index) => {
@@ -27,7 +28,15 @@ function renderInline(nodes: MarkdownInlineNode[]): ReactNode {
         );
       }
       case 'image':
-        return <img alt={node.alt} key={key} loading="lazy" src={node.src} />;
+        return (
+          <ResilientImage
+            alt={node.alt}
+            fallback={<span className="markdown-image-fallback">Image unavailable</span>}
+            key={key}
+            loading="lazy"
+            src={node.src}
+          />
+        );
       default:
         return <Fragment key={key}>{node.value}</Fragment>;
     }
