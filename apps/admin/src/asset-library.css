@@ -34,9 +34,9 @@
 
 .asset-library-actions .secondary-button,
 .asset-library-actions .danger-button {
-  min-height: 32px;
-  padding-inline: 10px;
-  font-size: 0.72rem;
+  --admin-button-min-height: 32px;
+  --admin-button-padding-inline: 10px;
+  --admin-button-font-size: 0.72rem;
 }
 
 .asset-summary-grid {
@@ -183,7 +183,7 @@
 
 .asset-select-cell {
   width: 40px;
-  text-align: center !important;
+  text-align: center;
 }
 
 .asset-preview {

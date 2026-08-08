@@ -584,7 +584,7 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
             {activeFolder ? <button type="button" className="danger-button" disabled={folderWorking || uploadQueue.running} onClick={() => void handleDeleteFolder()}>删除当前文件夹</button> : null}
           </div>
 
-          <div className="media-center-upload-bar media-center-upload-bar-v2">
+          <div className="media-center-upload-bar">
             <label>
               <span>素材用途</span>
               <select value={uploadRole} disabled={uploadQueue.running} onChange={(event) => setUploadRole(event.target.value as MediaRole)}>
@@ -644,7 +644,7 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
           {mediaError ? <p className="inline-status is-error" role="alert">{mediaError}</p> : null}
           {mediaSuccess ? <p className="inline-status is-success" role="status">{mediaSuccess}</p> : null}
 
-          <div className="media-center-toolbar media-center-toolbar-v2">
+          <div className="media-center-toolbar">
             <input type="search" value={mediaQuery} placeholder="搜索文件名、文件夹或格式" onChange={(event) => setMediaQuery(event.target.value)} />
             <select value={folderFilter} onChange={(event) => setFolderFilter(event.target.value)}>
               <option value="all">全部文件夹</option>
