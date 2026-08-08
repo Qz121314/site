@@ -5,10 +5,17 @@ import {
   shouldNotifyAdminSessionExpired,
 } from '../src/admin-fetch.ts';
 
-test('successful business mutations are eligible for admin change notification', () => {
+test('published storefront source mutations notify the dashboard', () => {
   for (const method of ['POST', 'PUT', 'PATCH', 'DELETE']) {
     assert.equal(shouldNotifyAdminMutation(method, '/api/admin/sections/abc/products'), true, method);
   }
+
+  assert.equal(shouldNotifyAdminMutation('PUT', '/api/admin/settings/'), true);
+  assert.equal(shouldNotifyAdminMutation('POST', '/api/admin/media/logo'), true);
+  assert.equal(shouldNotifyAdminMutation('POST', '/api/admin/faqs'), true);
+  assert.equal(shouldNotifyAdminMutation('POST', '/api/admin/sections/batch-delete'), true);
+  assert.equal(shouldNotifyAdminMutation('POST', '/api/admin/sections/abc/categories'), true);
+  assert.equal(shouldNotifyAdminMutation('POST', '/api/admin/sections/abc/tags'), true);
 });
 
 test('read requests never notify', () => {
@@ -16,13 +23,28 @@ test('read requests never notify', () => {
   assert.equal(shouldNotifyAdminMutation('HEAD', '/api/admin/settings/'), false);
 });
 
-test('auth, publish, probes and preview-only imports stay excluded', () => {
+test('mutations outside immutable publish sources do not trigger a publish-status refresh', () => {
   assert.equal(shouldNotifyAdminMutation('POST', '/api/admin/auth/login'), false);
   assert.equal(shouldNotifyAdminMutation('POST', '/api/admin/auth/logout'), false);
   assert.equal(shouldNotifyAdminMutation('POST', '/api/admin/publish'), false);
   assert.equal(shouldNotifyAdminMutation('POST', '/api/admin/publish/rollback'), false);
   assert.equal(shouldNotifyAdminMutation('POST', '/api/admin/settings/media-domain/test'), false);
   assert.equal(shouldNotifyAdminMutation('POST', '/api/admin/theme/import'), false);
+  assert.equal(shouldNotifyAdminMutation('PUT', '/api/admin/theme/'), false);
+  assert.equal(shouldNotifyAdminMutation('POST', '/api/admin/assets/upload'), false);
+  assert.equal(shouldNotifyAdminMutation('POST', '/api/admin/assets/folders'), false);
+  assert.equal(shouldNotifyAdminMutation('POST', '/api/admin/customer-service'), false);
+  assert.equal(
+    shouldNotifyAdminMutation('POST', '/api/admin/sections/abc/conversion-groups'),
+    false,
+  );
+  assert.equal(
+    shouldNotifyAdminMutation(
+      'POST',
+      '/api/admin/sections/abc/conversion-groups/group-1/rotate-preview',
+    ),
+    false,
+  );
 });
 
 test('non-admin mutation paths do not notify', () => {
