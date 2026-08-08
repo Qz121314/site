@@ -3,6 +3,12 @@ export type AdminMutationDetail = {
   path: string;
 };
 
+export type AdminSessionExpiredDetail = {
+  path: string;
+};
+
+export const ADMIN_SESSION_EXPIRED_EVENT = 'admin:session-expired';
+
 const MUTATION_METHODS = new Set(['POST', 'PUT', 'PATCH', 'DELETE']);
 
 function requestMethod(input: RequestInfo | URL, init?: RequestInit): string {
@@ -36,8 +42,20 @@ export function shouldNotifyAdminMutation(method: string, path: string | null): 
   );
 }
 
+export function shouldNotifyAdminSessionExpired(status: number, path: string | null): path is string {
+  return (
+    status === 401 &&
+    path?.startsWith('/api/admin/') === true &&
+    !path.startsWith('/api/admin/auth/')
+  );
+}
+
 export function notifyAdminChanged(detail: AdminMutationDetail): void {
   window.dispatchEvent(new CustomEvent('admin:data-mutated', { detail }));
+}
+
+export function notifyAdminSessionExpired(detail: AdminSessionExpiredDetail): void {
+  window.dispatchEvent(new CustomEvent(ADMIN_SESSION_EXPIRED_EVENT, { detail }));
 }
 
 export async function adminFetch(
@@ -47,6 +65,10 @@ export async function adminFetch(
   const method = requestMethod(input, init);
   const path = requestPath(input);
   const response = await fetch(input, init);
+
+  if (shouldNotifyAdminSessionExpired(response.status, path)) {
+    queueMicrotask(() => notifyAdminSessionExpired({ path }));
+  }
 
   if (response.ok && shouldNotifyAdminMutation(method, path)) {
     queueMicrotask(() => notifyAdminChanged({ method, path }));
