@@ -253,6 +253,14 @@ type V2FaqSnapshot = {
   faqs: Array<{ id: string; title: string; body: string; sortOrder?: number }>;
 };
 
+type V2DerivedHomeSnapshot = {
+  schemaVersion: 2;
+  pointerVersion: string;
+  publishedAt: string;
+  featuredProducts: V2ProductSummary[];
+  latestProducts: V2ProductSummary[];
+};
+
 const VERSION_PATTERN = /^[A-Za-z0-9-]{12,180}$/;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -399,6 +407,20 @@ function assertV2Envelope(value: unknown, moduleKey: string, contentVersion: str
   ) {
     throw new PublicContentError('SNAPSHOT_VERSION_MISMATCH', 'The published content module is inconsistent.');
   }
+}
+
+function parseV2DerivedHome(value: unknown, pointerVersion: string): V2DerivedHomeSnapshot {
+  if (
+    !isRecord(value) ||
+    value.schemaVersion !== 2 ||
+    value.pointerVersion !== pointerVersion ||
+    typeof value.publishedAt !== 'string' ||
+    !Array.isArray(value.featuredProducts) ||
+    !Array.isArray(value.latestProducts)
+  ) {
+    throw new PublicContentError('SNAPSHOT_VERSION_MISMATCH', 'The published home summary is inconsistent.');
+  }
+  return value as V2DerivedHomeSnapshot;
 }
 
 function normalizeTags(value: unknown): PublicProductSummary['tags'] {
@@ -611,6 +633,85 @@ function resolveV2Summary(
   };
 }
 
+async function loadV2SectionFile(
+  origin: string,
+  pointer: CurrentPointerV2,
+  mediaBaseUrl: string,
+  section: PublicSection,
+  signal?: AbortSignal,
+): Promise<SectionSnapshot> {
+  const reference = pointer.sections[section.id];
+  if (!reference) {
+    throw new PublicContentError('CONTENT_NOT_PUBLISHED', 'This service section has not been published yet.');
+  }
+  const moduleKey = `section:${section.id}`;
+  const raw = await loadV2File<V2SectionSnapshot>(
+    origin,
+    moduleKey,
+    reference,
+    v2ModulePath(moduleKey, reference, 'section.json'),
+    signal,
+  );
+  if (raw.sectionId !== section.id) {
+    throw new PublicContentError('SNAPSHOT_VERSION_MISMATCH', 'The published section is inconsistent.');
+  }
+  return {
+    schemaVersion: 2,
+    contentVersion: reference.contentVersion,
+    publishedAt: raw.publishedAt,
+    section,
+    categories: Array.isArray(raw.categories) ? raw.categories : [],
+    tags: Array.isArray(raw.tags) ? raw.tags : [],
+    products: Array.isArray(raw.products)
+      ? raw.products.map((product) => resolveV2Summary(product, section, mediaBaseUrl))
+      : [],
+  };
+}
+
+function composeHomeProducts(
+  rawProducts: V2ProductSummary[],
+  sections: PublicSection[],
+  mediaBaseUrl: string,
+): PublicProductSummary[] {
+  const sectionsById = new Map(sections.map((section) => [section.id, section]));
+  const products: PublicProductSummary[] = [];
+  for (const product of rawProducts) {
+    const section = sectionsById.get(product.sectionId);
+    if (!section) continue;
+    products.push(resolveV2Summary(product, section, mediaBaseUrl));
+  }
+  return products;
+}
+
+async function loadDerivedV2Home(
+  origin: string,
+  pointer: CurrentPointerV2,
+  sections: PublicSection[],
+  mediaBaseUrl: string,
+  signal?: AbortSignal,
+): Promise<Pick<HomeSnapshot, 'featuredProducts' | 'latestProducts'>> {
+  const raw = parseV2DerivedHome(
+    await fetchJson(
+      publicContentUrl(origin, `public/home/${encodeURIComponent(pointer.contentVersion)}/home.json`),
+      'force-cache',
+      signal,
+    ),
+    pointer.contentVersion,
+  );
+  return {
+    featuredProducts: composeHomeProducts(raw.featuredProducts, sections, mediaBaseUrl),
+    latestProducts: composeHomeProducts(raw.latestProducts, sections, mediaBaseUrl),
+  };
+}
+
+function indexBootstrapProducts(
+  bootstrap: Pick<StorefrontBootstrap, 'home' | 'productSectionIds'>,
+): void {
+  for (const product of [...bootstrap.home.featuredProducts, ...bootstrap.home.latestProducts]) {
+    bootstrap.productSectionIds[product.id] = product.sectionId;
+  }
+}
+
 async function loadV2Bootstrap(
   origin: string,
   pointer: CurrentPointerV2,
@@ -647,60 +748,43 @@ async function loadV2Bootstrap(
     analytics: rawSite.site.analytics,
   };
   const sections = rawIndex.sections.map((section) => resolveV2Section(section, mediaBaseUrl));
-
-  const loadedSections = await Promise.all(
-    sections.map(async (section) => {
-      const reference = pointer.sections[section.id];
-      if (!reference) return null;
-      const moduleKey = `section:${section.id}`;
-      const raw = await loadV2File<V2SectionSnapshot>(
-        origin,
-        moduleKey,
-        reference,
-        v2ModulePath(moduleKey, reference, 'section.json'),
-        signal,
-      );
-      if (raw.sectionId !== section.id) {
-        throw new PublicContentError('SNAPSHOT_VERSION_MISMATCH', 'The published section is inconsistent.');
-      }
-      const products = Array.isArray(raw.products)
-        ? raw.products.map((product) => resolveV2Summary(product, section, mediaBaseUrl))
-        : [];
-      const snapshot: SectionSnapshot = {
-        schemaVersion: 2,
-        contentVersion: reference.contentVersion,
-        publishedAt: raw.publishedAt,
-        section,
-        categories: Array.isArray(raw.categories) ? raw.categories : [],
-        tags: Array.isArray(raw.tags) ? raw.tags : [],
-        products,
-      };
-      return snapshot;
-    }),
-  );
-
   const sectionSnapshots: Record<string, SectionSnapshot> = {};
   const productSectionIds: Record<string, string> = {};
-  const allProducts: PublicProductSummary[] = [];
-  for (const snapshot of loadedSections) {
-    if (!snapshot) continue;
-    sectionSnapshots[snapshot.section.id] = snapshot;
-    for (const product of snapshot.products) {
-      productSectionIds[product.id] = snapshot.section.id;
-      allProducts.push(product);
+
+  let featuredProducts: PublicProductSummary[] = [];
+  let latestProducts: PublicProductSummary[] = [];
+  try {
+    const derivedHome = await loadDerivedV2Home(origin, pointer, sections, mediaBaseUrl, signal);
+    featuredProducts = derivedHome.featuredProducts;
+    latestProducts = derivedHome.latestProducts;
+  } catch (error) {
+    if (signal?.aborted) throw error;
+    const loadedSections = await Promise.all(
+      sections.map(async (section) => {
+        if (!pointer.sections[section.id]) return null;
+        return loadV2SectionFile(origin, pointer, mediaBaseUrl, section, signal);
+      }),
+    );
+    const allProducts: PublicProductSummary[] = [];
+    for (const snapshot of loadedSections) {
+      if (!snapshot) continue;
+      sectionSnapshots[snapshot.section.id] = snapshot;
+      for (const product of snapshot.products) {
+        productSectionIds[product.id] = snapshot.section.id;
+        allProducts.push(product);
+      }
     }
+    featuredProducts = allProducts
+      .filter((product) => product.isFeatured)
+      .sort((left, right) => left.featuredOrder - right.featuredOrder || left.sortOrder - right.sortOrder)
+      .slice(0, 30);
+    latestProducts = [...allProducts]
+      .sort((left, right) => (right.publishedAt ?? '').localeCompare(left.publishedAt ?? ''))
+      .slice(0, 30);
   }
 
   const homeLimit = Math.max(1, Math.min(20, rawSite.site.homeSectionLimit || 5));
-  const featuredProducts = allProducts
-    .filter((product) => product.isFeatured)
-    .sort((left, right) => left.featuredOrder - right.featuredOrder || left.sortOrder - right.sortOrder)
-    .slice(0, 30);
-  const latestProducts = [...allProducts]
-    .sort((left, right) => (right.publishedAt ?? '').localeCompare(left.publishedAt ?? ''))
-    .slice(0, 30);
-
-  return {
+  const bootstrap: StorefrontBootstrap = {
     origin,
     pointer,
     site: {
@@ -721,6 +805,8 @@ async function loadV2Bootstrap(
     sectionSnapshots,
     productSectionIds,
   };
+  indexBootstrapProducts(bootstrap);
+  return bootstrap;
 }
 
 async function loadV1Bootstrap(
@@ -774,9 +860,18 @@ export async function loadSectionSnapshot(
   }
   const sectionId = section.id;
   if (bootstrap.pointer.schemaVersion === 2) {
-    const snapshot = bootstrap.sectionSnapshots[sectionId];
-    if (!snapshot) {
-      throw new PublicContentError('CONTENT_NOT_PUBLISHED', 'This service section has not been published yet.');
+    const cached = bootstrap.sectionSnapshots[sectionId];
+    if (cached) return cached;
+    const snapshot = await loadV2SectionFile(
+      bootstrap.origin,
+      bootstrap.pointer,
+      bootstrap.site.site.mediaBaseUrl,
+      section,
+      signal,
+    );
+    bootstrap.sectionSnapshots[sectionId] = snapshot;
+    for (const product of snapshot.products) {
+      bootstrap.productSectionIds[product.id] = sectionId;
     }
     return snapshot;
   }
@@ -787,6 +882,13 @@ export async function loadSectionSnapshot(
     signal,
   );
   return normalizeV1SectionSnapshot(snapshot);
+}
+
+function findPublishedProduct(products: PublicProductSummary[], productRef: string): PublicProductSummary | null {
+  const exactId = products.find((product) => product.id === productRef);
+  if (exactId) return exactId;
+  const slugMatches = products.filter((product) => product.slug === productRef);
+  return slugMatches.length === 1 ? (slugMatches[0] ?? null) : null;
 }
 
 export async function loadProductSnapshot(
@@ -802,22 +904,17 @@ export async function loadProductSnapshot(
     let productId = productRef;
     if (sectionRef) {
       const section = await loadSectionSnapshot(bootstrap, sectionRef, signal);
-      const product = section.products.find(
-        (item) => item.id === productRef || item.slug === productRef,
-      );
+      const product = findPublishedProduct(section.products, productRef);
       if (!product) {
         throw new PublicContentError('CONTENT_NOT_PUBLISHED', 'This service has not been published yet.');
       }
       productId = product.id;
     } else {
-      const homeProducts = [
-        ...bootstrap.home.featuredProducts,
-        ...bootstrap.home.latestProducts,
-      ];
-      const exactId = homeProducts.find((item) => item.id === productRef);
-      const slugMatches = homeProducts.filter((item) => item.slug === productRef);
-      if (exactId) productId = exactId.id;
-      else if (slugMatches.length === 1 && slugMatches[0]) productId = slugMatches[0].id;
+      const product = findPublishedProduct(
+        [...bootstrap.home.featuredProducts, ...bootstrap.home.latestProducts],
+        productRef,
+      );
+      if (product) productId = product.id;
     }
     const snapshot = await loadV1File<ProductSnapshot>(
       bootstrap.origin,
@@ -828,34 +925,43 @@ export async function loadProductSnapshot(
     return normalizeV1ProductSnapshot(snapshot);
   }
 
-  const requestedSection = sectionRef
-    ? bootstrap.home.allSections.find((item) => item.id === sectionRef || item.slug === sectionRef)
-    : null;
-  if (sectionRef && !requestedSection) {
-    throw new PublicContentError('CONTENT_NOT_PUBLISHED', 'This service section has not been published yet.');
+  let matchedProduct: PublicProductSummary | null = null;
+  let section: PublicSection | null = null;
+
+  if (sectionRef) {
+    const sectionSnapshot = await loadSectionSnapshot(bootstrap, sectionRef, signal);
+    matchedProduct = findPublishedProduct(sectionSnapshot.products, productRef);
+    section = sectionSnapshot.section;
+  } else {
+    const snapshots = await Promise.all(
+      bootstrap.home.allSections.map((item) => loadSectionSnapshot(bootstrap, item.id, signal)),
+    );
+    matchedProduct = findPublishedProduct(
+      snapshots.flatMap((snapshot) => snapshot.products),
+      productRef,
+    );
+    if (matchedProduct) {
+      section = bootstrap.home.allSections.find((item) => item.id === matchedProduct?.sectionId) ?? null;
+    }
   }
-  const publishedProducts = Object.values(bootstrap.sectionSnapshots)
-    .filter((snapshot) => !requestedSection || snapshot.section.id === requestedSection.id)
-    .flatMap((snapshot) => snapshot.products);
-  const exactId = publishedProducts.find((product) => product.id === productRef);
-  const slugMatches = publishedProducts.filter((product) => product.slug === productRef);
-  const matchedProduct = exactId ?? (slugMatches.length === 1 ? slugMatches[0] : null);
-  const productId = matchedProduct?.id;
-  const sectionId = productId ? bootstrap.productSectionIds[productId] : null;
-  const section = sectionId ? bootstrap.home.allSections.find((item) => item.id === sectionId) : null;
-  const reference = sectionId ? bootstrap.pointer.sections[sectionId] : null;
-  if (!productId || !sectionId || !section || !reference) {
+
+  if (!matchedProduct || !section) {
     throw new PublicContentError('CONTENT_NOT_PUBLISHED', 'This service is not part of the current published section versions.');
   }
-  const moduleKey = `section:${sectionId}`;
+  const reference = bootstrap.pointer.sections[section.id];
+  if (!reference) {
+    throw new PublicContentError('CONTENT_NOT_PUBLISHED', 'This service is not part of the current published section versions.');
+  }
+
+  const moduleKey = `section:${section.id}`;
   const raw = await loadV2File<V2ProductSnapshot>(
     bootstrap.origin,
     moduleKey,
     reference,
-    v2ModulePath(moduleKey, reference, `products/${encodeURIComponent(productId)}.json`),
+    v2ModulePath(moduleKey, reference, `products/${encodeURIComponent(matchedProduct.id)}.json`),
     signal,
   );
-  if (raw.product.id !== productId || raw.product.sectionId !== sectionId) {
+  if (raw.product.id !== matchedProduct.id || raw.product.sectionId !== section.id) {
     throw new PublicContentError('SNAPSHOT_VERSION_MISMATCH', 'The published service is inconsistent.');
   }
   const summary = resolveV2Summary(raw.product, section, bootstrap.site.site.mediaBaseUrl);
