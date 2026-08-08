@@ -7,6 +7,7 @@ import {
   type FormEvent,
 } from 'react';
 import { AdminApiError, type AdminSection } from './api';
+import { uploadMediaAsset, type ManagedMediaAsset } from './asset-library/api';
 import {
   createCategory,
   fetchCategories,
@@ -20,6 +21,7 @@ import { DeleteProductDialog } from './product-management/DeleteProductDialog';
 import { ProductEditorDialog } from './product-management/ProductEditorDialog';
 import { ProductTable } from './product-management/ProductTable';
 import {
+  isEditorMediaCoverEligible,
   prepareLocalProductImage,
   releaseLocalProductImage,
   releaseLocalProductImages,
@@ -36,8 +38,8 @@ import {
   reorderProducts,
   restoreProduct,
   updateProduct,
-  uploadProductImage,
   type AdminProduct,
+  type AdminProductMedia,
   type ProductInput,
   type ProductStatus,
 } from './product-management/api';
@@ -68,6 +70,9 @@ type ProductManagementViewProps = {
 type ProductScope = 'active' | 'trash';
 type StatusFilter = 'all' | ProductStatus;
 type SaveStage = 'idle' | 'uploading' | 'saving';
+
+const STATIC_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
+const DIRECT_MEDIA_TYPES = new Set(['image/gif', 'video/mp4', 'video/webm']);
 
 const emptyProductForm: ProductInput = {
   serviceMode: 'offline',
@@ -120,6 +125,46 @@ function productToInput(product: AdminProduct): ProductInput {
   };
 }
 
+function managedMediaToProductMedia(media: ManagedMediaAsset, sortOrder: number): AdminProductMedia {
+  return {
+    id: media.id,
+    objectKey: media.objectKey,
+    fileName: media.fileName,
+    mimeType: media.mimeType,
+    byteSize: media.byteSize,
+    width: media.width,
+    height: media.height,
+    sortOrder,
+    altText: null,
+    publicUrl: media.publicUrl,
+  };
+}
+
+function inspectVideo(file: File): Promise<{ width: number; height: number; durationMs: number }> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const video = document.createElement('video');
+    video.preload = 'metadata';
+    video.muted = true;
+    video.onloadedmetadata = () => {
+      const width = video.videoWidth;
+      const height = video.videoHeight;
+      const durationMs = Number.isFinite(video.duration) ? Math.max(0, Math.round(video.duration * 1000)) : 0;
+      URL.revokeObjectURL(url);
+      if (width < 1 || height < 1) {
+        reject(new Error(`无法读取视频“${file.name}”的尺寸。`));
+        return;
+      }
+      resolve({ width, height, durationMs });
+    };
+    video.onerror = () => {
+      URL.revokeObjectURL(url);
+      reject(new Error(`无法读取视频“${file.name}”。`));
+    };
+    video.src = url;
+  });
+}
+
 function validateBeforeImageUpload(
   form: ProductInput,
   media: ProductEditorImage[],
@@ -152,7 +197,8 @@ function validateBeforeImageUpload(
     if (group.activeTargetCount < 1) return '所选转化分组至少需要一个启用入口。';
   }
 
-  if (media.length < 1) return '发布产品前至少需要一张产品图片。';
+  if (media.length < 1) return '发布产品前至少需要一个产品媒体。';
+  if (!media.some(isEditorMediaCoverEligible)) return '发布产品前至少需要一张图片或 GIF 作为封面。';
   if (form.serviceMode === 'offline' && !form.address?.trim()) {
     return '发布线下产品前必须填写服务地址。';
   }
@@ -385,20 +431,39 @@ export function ProductManagementView({
     setSuccessMessage('');
     const next = [...mediaRef.current];
     let preparedCount = 0;
+    let directUploadCount = 0;
     try {
       for (const file of selected) {
-        next.push(await prepareLocalProductImage(file));
-        preparedCount += 1;
+        const mimeType = file.type.toLowerCase();
+        if (STATIC_IMAGE_TYPES.has(mimeType)) {
+          next.push(await prepareLocalProductImage(file));
+          preparedCount += 1;
+          continue;
+        }
+        if (!DIRECT_MEDIA_TYPES.has(mimeType)) {
+          throw new Error(`不支持素材“${file.name}”的格式。`);
+        }
+        const metadata = mimeType.startsWith('video/') ? await inspectVideo(file) : null;
+        const result = await uploadMediaAsset({
+          file,
+          role: 'product',
+          width: metadata?.width,
+          height: metadata?.height,
+          durationMs: metadata?.durationMs,
+        });
+        next.push(toRemoteProductImage(managedMediaToProductMedia(result.media, next.length * 10)));
+        directUploadCount += 1;
       }
-      setMedia(next);
+      setMedia(dedupeRemoteImages(next));
       const skipped = Math.max(0, files.length - selected.length);
-      setSuccessMessage(
-        `已在浏览器压缩 ${preparedCount} 张图片，点击保存产品后才会上传到 R2。${
-          skipped > 0 ? ` 另有 ${skipped} 张因超过 12 张上限未加入。` : ''
-        }`,
-      );
+      const parts = [
+        preparedCount > 0 ? `${preparedCount} 张静态图已完成浏览器压缩，保存产品时上传` : '',
+        directUploadCount > 0 ? `${directUploadCount} 个 GIF/视频已进入素材中心` : '',
+        skipped > 0 ? `${skipped} 个因超过 12 个媒体上限未加入` : '',
+      ].filter(Boolean);
+      setSuccessMessage(`${parts.join('；')}。`);
     } catch (error) {
-      setMedia(next);
+      setMedia(dedupeRemoteImages(next));
       handleError(error);
     } finally {
       setProcessingImages(false);
@@ -469,8 +534,13 @@ export function ProductManagementView({
       for (let index = 0; index < resolvedImages.length; index += 1) {
         const image = resolvedImages[index];
         if (!image || image.kind !== 'local') continue;
-        const result = await uploadProductImage(section.id, image.compressedFile);
-        const remote = toRemoteProductImage(result.media);
+        const result = await uploadMediaAsset({
+          file: image.compressedFile,
+          role: 'product',
+          width: image.width,
+          height: image.height,
+        });
+        const remote = toRemoteProductImage(managedMediaToProductMedia(result.media, index * 10));
         resolvedImages[index] = remote;
         if (resolvedCoverKey === image.key) resolvedCoverKey = remote.key;
         releaseLocalProductImage(image);
@@ -479,9 +549,12 @@ export function ProductManagementView({
       }
 
       resolvedImages = dedupeRemoteImages(resolvedImages);
-      const selectedCover = resolvedCoverKey
-        ? resolvedImages.find((image) => image.key === resolvedCoverKey)
+      const requestedCover = resolvedCoverKey
+        ? resolvedImages.find((image) => image.key === resolvedCoverKey) ?? null
         : null;
+      const selectedCover = requestedCover && isEditorMediaCoverEligible(requestedCover)
+        ? requestedCover
+        : resolvedImages.find(isEditorMediaCoverEligible) ?? null;
       const mediaAssetIds = resolvedImages.flatMap((image) =>
         image.kind === 'remote' ? [image.media.id] : [],
       );

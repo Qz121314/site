@@ -46,4 +46,32 @@ describe('parseMarkdown', () => {
       },
     ]);
   });
+
+  it('parses safe Markdown images', () => {
+    expect(parseMarkdown('![封面](https://assets.example.com/media/demo.webp)')).toEqual([
+      {
+        type: 'paragraph',
+        lines: [[{
+          type: 'image',
+          alt: '封面',
+          src: 'https://assets.example.com/media/demo.webp',
+        }]],
+      },
+    ]);
+  });
+
+  it('rejects unsafe Markdown image sources as plain text', () => {
+    expect(parseMarkdown('![bad](javascript:alert)')).toEqual([
+      {
+        type: 'paragraph',
+        lines: [[{ type: 'text', value: '![bad](javascript:alert)' }]],
+      },
+    ]);
+    expect(parseMarkdown('![bad](data:image/png;base64,abc)')).toEqual([
+      {
+        type: 'paragraph',
+        lines: [[{ type: 'text', value: '![bad](data:image/png;base64,abc)' }]],
+      },
+    ]);
+  });
 });

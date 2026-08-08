@@ -42,6 +42,33 @@ export type AssetCleanupResponse = {
   freedBytes: number;
 };
 
+export type MediaKind = 'image' | 'animated_image' | 'video';
+export type MediaRole =
+  | 'general'
+  | 'product'
+  | 'logo'
+  | 'icon'
+  | 'favicon'
+  | 'hero'
+  | 'background'
+  | 'content';
+
+export type ManagedMediaAsset = {
+  id: string;
+  objectKey: string;
+  fileName: string;
+  mimeType: string;
+  byteSize: number;
+  mediaKind: MediaKind;
+  width: number | null;
+  height: number | null;
+  durationMs: number | null;
+  roles: MediaRole[];
+  publicUrl: string | null;
+  createdAt: string;
+  updatedAt: string;
+};
+
 type ApiErrorEnvelope = {
   error?: {
     code?: string;
@@ -49,6 +76,7 @@ type ApiErrorEnvelope = {
     details?: {
       blockedKey?: string;
       blockedReason?: string;
+      field?: string;
     };
   };
 };
@@ -82,7 +110,7 @@ async function requestJson(path: string, init?: RequestInit): Promise<unknown> {
     throw new AdminApiError(
       response.status,
       envelope.error?.code ?? 'REQUEST_FAILED',
-      envelope.error?.message ?? '素材库请求失败。',
+      envelope.error?.message ?? '素材中心请求失败。',
       envelope.error?.details,
     );
   }
@@ -197,6 +225,59 @@ function parseCleanupResponse(value: unknown): AssetCleanupResponse {
   };
 }
 
+function parseMediaRole(value: unknown): MediaRole {
+  if (
+    value === 'general' ||
+    value === 'product' ||
+    value === 'logo' ||
+    value === 'icon' ||
+    value === 'favicon' ||
+    value === 'hero' ||
+    value === 'background' ||
+    value === 'content'
+  ) {
+    return value;
+  }
+  throw new AdminApiError(500, 'INVALID_RESPONSE', '素材用途返回数据无效。');
+}
+
+function parseManagedMedia(value: unknown): ManagedMediaAsset {
+  const media = asRecord(value);
+  if (
+    !media ||
+    typeof media.id !== 'string' ||
+    typeof media.objectKey !== 'string' ||
+    typeof media.fileName !== 'string' ||
+    typeof media.mimeType !== 'string' ||
+    typeof media.byteSize !== 'number' ||
+    (media.mediaKind !== 'image' && media.mediaKind !== 'animated_image' && media.mediaKind !== 'video') ||
+    (typeof media.width !== 'number' && media.width !== null) ||
+    (typeof media.height !== 'number' && media.height !== null) ||
+    (typeof media.durationMs !== 'number' && media.durationMs !== null) ||
+    !Array.isArray(media.roles) ||
+    (typeof media.publicUrl !== 'string' && media.publicUrl !== null) ||
+    typeof media.createdAt !== 'string' ||
+    typeof media.updatedAt !== 'string'
+  ) {
+    throw new AdminApiError(500, 'INVALID_RESPONSE', '素材数据无效。');
+  }
+  return {
+    id: media.id,
+    objectKey: media.objectKey,
+    fileName: media.fileName,
+    mimeType: media.mimeType,
+    byteSize: media.byteSize,
+    mediaKind: media.mediaKind,
+    width: media.width,
+    height: media.height,
+    durationMs: media.durationMs,
+    roles: media.roles.map(parseMediaRole),
+    publicUrl: media.publicUrl,
+    createdAt: media.createdAt,
+    updatedAt: media.updatedAt,
+  };
+}
+
 export function fetchAssetPage(cursor?: string): Promise<AssetScanPage> {
   const query = new URLSearchParams({ limit: '500' });
   if (cursor) {
@@ -216,4 +297,48 @@ export function cleanupAssets(keys: string[]): Promise<AssetCleanupResponse> {
     },
     body: JSON.stringify({ keys }),
   }).then(parseCleanupResponse);
+}
+
+export async function fetchMediaLibrary(filters?: {
+  kind?: MediaKind | '';
+  role?: MediaRole | '';
+}): Promise<ManagedMediaAsset[]> {
+  const query = new URLSearchParams();
+  if (filters?.kind) query.set('kind', filters.kind);
+  if (filters?.role) query.set('role', filters.role);
+  const suffix = query.size > 0 ? `?${query.toString()}` : '';
+  const body = await requestJson(`/api/admin/assets/library${suffix}`);
+  const assets = asRecord(body)?.assets;
+  if (!Array.isArray(assets)) {
+    throw new AdminApiError(500, 'INVALID_RESPONSE', '素材列表返回数据无效。');
+  }
+  return assets.map(parseManagedMedia);
+}
+
+export async function uploadMediaAsset(input: {
+  file: File;
+  role: MediaRole;
+  width?: number | null | undefined;
+  height?: number | null | undefined;
+  durationMs?: number | null | undefined;
+}): Promise<{ media: ManagedMediaAsset; reused: boolean }> {
+  const formData = new FormData();
+  formData.set('file', input.file);
+  formData.set('role', input.role);
+  if (input.width !== undefined && input.width !== null) formData.set('width', String(input.width));
+  if (input.height !== undefined && input.height !== null) formData.set('height', String(input.height));
+  if (input.durationMs !== undefined && input.durationMs !== null) {
+    formData.set('durationMs', String(input.durationMs));
+  }
+
+  const body = await requestJson('/api/admin/assets/upload', {
+    method: 'POST',
+    headers: { 'x-admin-request': '1' },
+    body: formData,
+  });
+  const envelope = asRecord(body);
+  return {
+    media: parseManagedMedia(envelope?.media),
+    reused: envelope?.reused === true,
+  };
 }

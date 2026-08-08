@@ -1,0 +1,10 @@
+.faq-markdown-preview img,
+.product-markdown-preview img {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  max-height: min(58vh, 620px);
+  margin: 12px auto;
+  border-radius: 9px;
+  object-fit: contain;
+}

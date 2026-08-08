@@ -4,11 +4,14 @@ import type { AdminConversionGroup } from '../conversion-pool/api';
 import { MarkdownPreview } from '../faq-management/MarkdownPreview';
 import type { AdminProductTag } from '../tag-management/api';
 import {
+  editorMediaKindLabel,
   formatImageBytes,
   getEditorImageByteSize,
   getEditorImageDimensions,
   getEditorImageFileName,
   getEditorImagePreviewUrl,
+  isEditorMediaCoverEligible,
+  isEditorMediaVideo,
   type ProductEditorImage,
 } from './local-product-image';
 import type {
@@ -62,7 +65,7 @@ function saveButtonLabel(
   saveStage: ProductEditorDialogProps['saveStage'],
   editingProduct: AdminProduct | null,
 ): string {
-  if (saveStage === 'uploading') return '正在上传图片…';
+  if (saveStage === 'uploading') return '正在上传媒体…';
   if (saveStage === 'saving') return '正在保存…';
   return editingProduct ? '保存修改' : '创建产品';
 }
@@ -120,7 +123,7 @@ export function ProductEditorDialog({
     }),
     [form.tagIds, tags],
   );
-  const effectiveCoverKey = coverKey ?? media[0]?.key ?? null;
+  const effectiveCoverKey = coverKey ?? media.find(isEditorMediaCoverEligible)?.key ?? null;
   const saving = saveStage !== 'idle';
   const busy = saving || processingImages || rotatingImageKey !== null || handoffBusy || creatingInline !== null;
 
@@ -402,7 +405,7 @@ export function ProductEditorDialog({
           <div className="product-content-grid">
             <div className="product-body-field">
               <div className="product-body-heading">
-                <strong>产品正文</strong>
+                <strong>产品正文 · Markdown</strong>
                 <div className="product-editor-tabs" role="tablist" aria-label="正文编辑模式">
                   <button type="button" className={bodyMode === 'edit' ? 'is-active' : undefined} onClick={() => setBodyMode('edit')}>编辑</button>
                   <button type="button" className={bodyMode === 'preview' ? 'is-active' : undefined} onClick={() => setBodyMode('preview')}>预览</button>
@@ -412,7 +415,7 @@ export function ProductEditorDialog({
                 <textarea
                   value={form.body}
                   maxLength={20_000}
-                  placeholder="输入产品介绍、服务内容和注意事项"
+                  placeholder={'支持 Markdown：标题、粗体、列表、引用、链接和代码等。\n\n输入产品介绍、服务内容和注意事项。'}
                   onChange={(event) => patch({ body: event.target.value })}
                 />
               ) : (
@@ -424,11 +427,14 @@ export function ProductEditorDialog({
 
             <section className="product-media-section" aria-labelledby="product-media-title">
               <div className="product-media-heading">
-                <strong id="product-media-title">产品图片</strong>
+                <div>
+                  <strong id="product-media-title">产品媒体</strong>
+                  <small>支持静态图片、GIF、MP4 和 WebM；产品封面使用图片或 GIF。</small>
+                </div>
                 <label className={`product-upload-button${busy ? ' is-disabled' : ''}`}>
                   <input
                     type="file"
-                    accept="image/jpeg,image/png,image/webp"
+                    accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm"
                     multiple
                     disabled={busy || media.length >= 12}
                     onChange={(event) => {
@@ -437,7 +443,7 @@ export function ProductEditorDialog({
                       if (files.length > 0) onSelectLocalImages(files);
                     }}
                   />
-                  {processingImages ? '处理中…' : '选择图片'}
+                  {processingImages ? '处理中…' : '选择媒体'}
                 </label>
               </div>
 
@@ -447,13 +453,22 @@ export function ProductEditorDialog({
                     const previewUrl = getEditorImagePreviewUrl(item);
                     const dimensions = getEditorImageDimensions(item);
                     const fileName = getEditorImageFileName(item);
+                    const video = isEditorMediaVideo(item);
+                    const coverEligible = isEditorMediaCoverEligible(item);
                     const isCover = effectiveCoverKey === item.key;
                     const rotating = rotatingImageKey === item.key;
                     return (
                       <article className={`product-media-card${isCover ? ' is-cover' : ''}${item.kind === 'local' ? ' is-local' : ''}`} key={item.key}>
                         <div className="product-media-preview">
-                          {previewUrl ? <img src={previewUrl} alt={fileName} /> : <span>无预览</span>}
+                          {previewUrl ? (
+                            video ? (
+                              <video src={previewUrl} controls muted playsInline preload="metadata" />
+                            ) : (
+                              <img src={previewUrl} alt={fileName} />
+                            )
+                          ) : <span>无预览</span>}
                           <div className="product-media-badges">
+                            <b className="is-kind-badge">{editorMediaKindLabel(item)}</b>
                             {isCover ? <b>封面</b> : null}
                             {item.kind === 'local' ? <b className="is-local-badge">待保存</b> : null}
                           </div>
@@ -473,18 +488,25 @@ export function ProductEditorDialog({
                               <button type="button" disabled={busy} onClick={() => onRotateLocalImage(item.key, 1)}>{rotating ? '处理中…' : '右转'}</button>
                             </>
                           ) : null}
-                          <button type="button" disabled={isCover || busy} onClick={() => onSetCover(item.key)}>封面</button>
-                          <button className="text-danger" type="button" disabled={busy} onClick={() => onRemoveMedia(item.key)}>删除</button>
+                          <button
+                            type="button"
+                            disabled={!coverEligible || isCover || busy}
+                            title={!coverEligible ? '视频不能作为产品封面' : undefined}
+                            onClick={() => onSetCover(item.key)}
+                          >
+                            封面
+                          </button>
+                          <button className="text-danger" type="button" disabled={busy} onClick={() => onRemoveMedia(item.key)}>移除</button>
                         </div>
                       </article>
                     );
                   })}
                 </div>
-              ) : <div className="product-media-empty">尚未选择图片</div>}
+              ) : <div className="product-media-empty">尚未选择产品媒体</div>}
 
               {coverKey ? (
                 <button className="product-auto-cover" type="button" disabled={busy} onClick={() => onSetCover(null)}>
-                  自动使用第一张图
+                  自动使用第一张图片或 GIF
                 </button>
               ) : null}
             </section>

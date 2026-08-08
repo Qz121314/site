@@ -13,6 +13,12 @@ import {
   normalizeIdempotencyKey,
   readIdempotentResponse,
 } from '../idempotency/idempotency';
+import {
+  listMediaCenterAssets,
+  parseMediaRole,
+  uploadMediaCenterAsset,
+  type MediaKind,
+} from '../media/media-center';
 import type { AppEnvironment } from '../types';
 import {
   hasAdminRequestHeader,
@@ -26,6 +32,7 @@ const DEFAULT_PAGE_SIZE = 500;
 const MAX_CLEANUP_SIZE = 100;
 const IDEMPOTENCY_HEADER = 'x-idempotency-key';
 const CLEANUP_SCOPE = 'assets.cleanup';
+const MEDIA_KINDS = new Set<MediaKind>(['image', 'animated_image', 'video']);
 
 function parsePageSize(value: string | undefined): number {
   if (!value) {
@@ -74,6 +81,51 @@ adminAssetRoutes.get('/', async (context) => {
     ...page,
     scannedCount: page.assets.length,
   });
+});
+
+adminAssetRoutes.get('/library', async (context) => {
+  context.header('Cache-Control', 'no-store');
+  const kindValue = context.req.query('kind');
+  const kind = kindValue && MEDIA_KINDS.has(kindValue as MediaKind) ? (kindValue as MediaKind) : null;
+  const role = parseMediaRole(context.req.query('role'));
+  const assets = await listMediaCenterAssets(context.env.DB, { kind, role });
+  return context.json({ assets });
+});
+
+adminAssetRoutes.post('/upload', async (context) => {
+  context.header('Cache-Control', 'no-store');
+  if (!hasAdminRequestHeader(context)) {
+    return apiError(context, 403, 'ADMIN_REQUEST_REQUIRED', '后台请求标识无效。');
+  }
+
+  let formData: FormData;
+  try {
+    formData = await context.req.raw.formData();
+  } catch {
+    return apiError(context, 400, 'INVALID_MULTIPART_FORM', '素材上传表单无效。');
+  }
+
+  const result = await uploadMediaCenterAsset(context.env.ASSETS_BUCKET, context.env.DB, formData);
+  if (!result.ok) {
+    return apiError(context, 400, result.code, result.message, { field: result.field });
+  }
+
+  await writeAuditLog(context.env.DB, {
+    action: result.reused ? 'media.reused' : 'media.uploaded',
+    entityType: 'media_asset',
+    entityId: result.media.id,
+    requestId: context.get('requestId'),
+    metadata: {
+      mediaKind: result.media.mediaKind,
+      roles: result.media.roles,
+      mimeType: result.media.mimeType,
+      byteSize: result.media.byteSize,
+      objectKey: result.media.objectKey,
+      reused: result.reused,
+    },
+  });
+
+  return context.json({ media: result.media, reused: result.reused }, result.reused ? 200 : 201);
 });
 
 adminAssetRoutes.post('/cleanup', async (context) => {

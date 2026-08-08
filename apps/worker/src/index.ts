@@ -10,6 +10,8 @@ import { adminConversionPoolRoutes } from './routes/admin-conversion-pool';
 import { adminConversionPreviewRoutes } from './routes/admin-conversion-preview';
 import { adminCustomerServiceRoutes } from './routes/admin-customer-service';
 import { adminFaqRoutes } from './routes/admin-faqs';
+import { adminMediaDeleteRoutes } from './routes/admin-media-delete';
+import { adminMediaRoleRoutes } from './routes/admin-media-roles';
 import { adminPublishRoutes } from './routes/admin-publish';
 import { adminProductBatchRoutes } from './routes/admin-product-batch';
 import { adminProductRoutes } from './routes/admin-products';
@@ -17,9 +19,11 @@ import { adminSectionBatchRoutes } from './routes/admin-section-batch';
 import { adminSectionRoutes } from './routes/admin-sections';
 import { adminSiteSettingsRoutes } from './routes/admin-site-settings';
 import { adminTagRoutes } from './routes/admin-tags';
+import { adminThemeRoutes } from './routes/admin-theme';
 import { publicContentRoutes } from './routes/public-content';
 import { publicConversionRoutes } from './routes/public-conversion';
 import { publicStorefrontConfigRoutes } from './routes/public-storefront-config';
+import { publicThemeRoutes } from './routes/public-theme';
 import type { AppEnvironment } from './types';
 
 export const app = new Hono<AppEnvironment>({ strict: false });
@@ -67,6 +71,7 @@ app.get('/api/public/version', (context) =>
   }),
 );
 app.route('/api/public/storefront', publicStorefrontConfigRoutes);
+app.route('/api/public/theme', publicThemeRoutes);
 app.route('/public', publicContentRoutes);
 
 app.route('/api/admin/auth', adminAuthRoutes);
@@ -84,8 +89,11 @@ app.get('/api/admin/health', (context) => {
 });
 
 app.route('/api/admin/settings', adminSiteSettingsRoutes);
+app.route('/api/admin/theme', adminThemeRoutes);
 app.route('/api/admin/customer-service', adminCustomerServiceRoutes);
 app.route('/api/admin/assets', adminAssetRoutes);
+app.route('/api/admin/assets', adminMediaDeleteRoutes);
+app.route('/api/admin/assets', adminMediaRoleRoutes);
 app.route('/api/admin/media', adminBrandingMediaRoutes);
 app.route('/api/admin/faqs', adminFaqRoutes);
 app.route('/api/admin/publish', adminPublishRoutes);

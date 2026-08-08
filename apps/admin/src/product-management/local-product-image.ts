@@ -63,6 +63,24 @@ export function getEditorImageByteSize(image: ProductEditorImage): number {
   return image.kind === 'remote' ? image.media.byteSize : image.compressedFile.size;
 }
 
+export function isEditorMediaVideo(image: ProductEditorImage): boolean {
+  return image.kind === 'remote' && image.media.mimeType.toLowerCase().startsWith('video/');
+}
+
+export function isEditorMediaAnimated(image: ProductEditorImage): boolean {
+  return image.kind === 'remote' && image.media.mimeType.toLowerCase() === 'image/gif';
+}
+
+export function isEditorMediaCoverEligible(image: ProductEditorImage): boolean {
+  return !isEditorMediaVideo(image);
+}
+
+export function editorMediaKindLabel(image: ProductEditorImage): string {
+  if (isEditorMediaVideo(image)) return '视频';
+  if (isEditorMediaAnimated(image)) return 'GIF';
+  return '图片';
+}
+
 export function formatImageBytes(bytes: number): string {
   if (bytes < 1024) return `${bytes} B`;
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
@@ -147,7 +165,7 @@ export async function prepareLocalProductImage(
   localId: string = crypto.randomUUID(),
 ): Promise<LocalProductImage> {
   if (!ACCEPTED_SOURCE_TYPES.has(sourceFile.type)) {
-    throw new Error('只支持 JPG、PNG 或 WebP。GIF 和 SVG 不会上传原图，请先转换为静态图片。');
+    throw new Error('浏览器压缩只处理 JPG、PNG 或 WebP；GIF 和视频会直接进入素材中心。');
   }
   if (sourceFile.size <= 0) throw new Error('图片文件为空。');
   if (sourceFile.size > MAX_LOCAL_SOURCE_BYTES) {

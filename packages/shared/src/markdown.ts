@@ -4,7 +4,8 @@ export type MarkdownInlineNode =
   | { type: 'strong'; value: string }
   | { type: 'emphasis'; value: string }
   | { type: 'strike'; value: string }
-  | { type: 'link'; value: string; href: string };
+  | { type: 'link'; value: string; href: string }
+  | { type: 'image'; alt: string; src: string };
 
 export type MarkdownBlock =
   | { type: 'paragraph'; lines: MarkdownInlineNode[][] }
@@ -16,7 +17,7 @@ export type MarkdownBlock =
   | { type: 'divider' };
 
 const INLINE_PATTERN =
-  /(`[^`\n]+`|\*\*[^*\n]+\*\*|__[^_\n]+__|~~[^~\n]+~~|\[[^\]\n]+\]\([^)\n]+\)|\*[^*\n]+\*|_[^_\n]+_)/g;
+  /(!\[[^\]\n]*\]\([^)\n]+\)|`[^`\n]+`|\*\*[^*\n]+\*\*|__[^_\n]+__|~~[^~\n]+~~|\[[^\]\n]+\]\([^)\n]+\)|\*[^*\n]+\*|_[^_\n]+_)/g;
 
 function safeHref(value: string): string | null {
   const href = value.trim();
@@ -31,7 +32,28 @@ function safeHref(value: string): string | null {
   }
 }
 
+function safeImageSrc(value: string): string | null {
+  const src = value.trim();
+  if (!src) return null;
+  if (src.startsWith('/')) return src;
+
+  try {
+    const parsed = new URL(src);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:' ? src : null;
+  } catch {
+    return null;
+  }
+}
+
 function parseInlineToken(token: string): MarkdownInlineNode {
+  if (token.startsWith('![')) {
+    const match = /^!\[([^\]]*)\]\(([^)]+)\)$/.exec(token);
+    const src = match ? safeImageSrc(match[2] ?? '') : null;
+    if (match && src) {
+      return { type: 'image', alt: match[1] ?? '', src };
+    }
+    return { type: 'text', value: token };
+  }
   if (token.startsWith('`') && token.endsWith('`')) {
     return { type: 'code', value: token.slice(1, -1) };
   }

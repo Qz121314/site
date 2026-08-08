@@ -78,6 +78,16 @@ adminBrandingMediaRoutes.post('/branding', async (context) => {
     return apiError(context, 400, result.code, result.message, { field: result.field });
   }
 
+  const role = kind === 'logo' ? 'logo' : 'icon';
+  await context.env.DB
+    .prepare(
+      `INSERT INTO media_asset_roles (media_asset_id, role, created_at)
+       VALUES (?, ?, ?)
+       ON CONFLICT(media_asset_id, role) DO NOTHING`,
+    )
+    .bind(result.media.id, role, new Date().toISOString())
+    .run();
+
   await writeAuditLog(context.env.DB, {
     action: result.reused ? 'branding_media.reused' : 'branding_media.uploaded',
     entityType: 'media_asset',
@@ -85,6 +95,7 @@ adminBrandingMediaRoutes.post('/branding', async (context) => {
     requestId: context.get('requestId'),
     metadata: {
       kind,
+      mediaRole: role,
       objectKey: result.media.objectKey,
       byteSize: result.media.byteSize,
       width: result.media.width,

@@ -3,9 +3,13 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import { installPublicContentFetchFallback } from './public-content-transport';
+import { installStorefrontTheme } from './theme-runtime';
 import './styles.css';
+import './theme-runtime.css';
+import './media-runtime.css';
 
 installPublicContentFetchFallback();
+void installStorefrontTheme();
 
 const queryClient = new QueryClient({
   defaultOptions: {

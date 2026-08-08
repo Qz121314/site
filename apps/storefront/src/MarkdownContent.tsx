@@ -26,6 +26,8 @@ function renderInline(nodes: MarkdownInlineNode[]): ReactNode {
           </a>
         );
       }
+      case 'image':
+        return <img alt={node.alt} key={key} loading="lazy" src={node.src} />;
       default:
         return <Fragment key={key}>{node.value}</Fragment>;
     }

@@ -1,0 +1,75 @@
+:root {
+  --page-bg: #f5f6f7;
+  --hero-start: #ff6a2f;
+  --hero-end: #f24b18;
+  --hero-glow: #ffd6c8;
+  --product-media-ratio: 1 / 1;
+}
+
+body {
+  color: var(--text);
+  background: var(--page-bg);
+}
+
+.product-card-media {
+  aspect-ratio: var(--product-media-ratio);
+}
+
+.hero-panel {
+  background:
+    radial-gradient(circle at 88% 10%, color-mix(in srgb, var(--hero-glow) 36%, transparent), transparent 36%),
+    linear-gradient(135deg, var(--hero-start), var(--hero-end));
+  box-shadow: var(--shadow);
+}
+
+html[data-color-scheme='dark'] .topbar {
+  border-color: color-mix(in srgb, var(--line) 90%, transparent);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+}
+
+html[data-color-scheme='dark'] .product-card-media,
+html[data-color-scheme='dark'] .image-fallback {
+  background: var(--surface-soft);
+}
+
+html[data-color-scheme='dark'] .product-type {
+  color: color-mix(in srgb, var(--text) 86%, var(--muted));
+}
+
+html[data-color-scheme='dark'] .tag-row span {
+  color: var(--brand-strong);
+  background: color-mix(in srgb, var(--brand) 15%, var(--surface));
+}
+
+html[data-color-scheme='dark'] .inline-error {
+  color: #ffb4a8;
+  background: color-mix(in srgb, #7f1d1d 24%, var(--surface));
+}
+
+html[data-theme='noir'] .product-card,
+html[data-theme='live'] .product-card,
+html[data-theme='tech'] .product-card {
+  box-shadow: 0 8px 24px rgb(0 0 0 / 20%);
+}
+
+html[data-theme='saas'] .product-card,
+html[data-theme='saas'] .section-item,
+html[data-theme='saas'] .filter-panel {
+  border-radius: 12px;
+}
+
+html[data-theme='travel'] .product-card {
+  border-radius: 22px;
+}
+
+html[data-theme='tech'] .product-card,
+html[data-theme='tech'] .filter-panel,
+html[data-theme='tech'] .faq-list details {
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  backdrop-filter: blur(14px);
+}
+
+/*
+ * Product listing media uses 1:1 as the cross-theme baseline. Detail media,
+ * logos, icons, hero imagery and future video keep role-specific proportions.
+ */
