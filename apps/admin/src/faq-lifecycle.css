@@ -1,26 +1,69 @@
+/* FAQ workbench layout.
+ * Loaded after the shared admin system so this page keeps a stable flex-column
+ * workbench instead of stretching CSS Grid auto rows across the viewport.
+ */
+
+.faq-management {
+  display: flex !important;
+  min-height: 0;
+  flex-direction: column;
+  gap: 8px !important;
+}
+
 .faq-filter-bar {
-  display: grid;
+  display: grid !important;
   grid-template-columns: auto minmax(260px, 1fr);
-  align-items: end;
-  gap: 16px;
+  min-height: 44px;
+  align-items: center !important;
+  gap: 8px !important;
+  padding: 5px 124px 5px 7px;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-md);
+  background: var(--admin-surface);
+  box-shadow: var(--admin-shadow-card);
+}
+
+.faq-filter-bar .scope-tabs {
+  align-self: center;
 }
 
 .faq-filter-bar .faq-search {
+  display: block !important;
   min-width: 0;
+  min-height: 34px !important;
+  padding: 0 !important;
+  border: 0 !important;
+  border-radius: 0 !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
 
 .faq-filter-bar .faq-search input {
-  width: 100%;
+  width: min(520px, 100%) !important;
+  min-height: 34px !important;
 }
 
 .faq-select-all {
   display: flex;
+  min-height: 32px;
   align-items: center;
-  gap: 9px;
-  padding: 0 4px 2px;
-  color: #64748b;
-  font-size: 13px;
+  gap: 8px;
+  padding: 0 8px;
+  color: #667085;
+  font-size: 0.72rem;
   font-weight: 700;
+}
+
+.faq-list {
+  display: grid;
+  min-height: 0;
+  flex: 1 1 auto;
+  align-content: start;
+  gap: 5px !important;
+  padding-right: 2px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
 }
 
 .faq-card {
@@ -57,32 +100,44 @@
   opacity: 0.45;
 }
 
+.faq-empty-state {
+  display: grid;
+  min-height: 112px !important;
+  flex: 0 0 auto;
+  place-items: center;
+  padding: 24px 20px !important;
+  border: 1px dashed var(--admin-border) !important;
+  border-radius: var(--admin-radius-md) !important;
+  background: var(--admin-surface) !important;
+  box-sizing: border-box;
+  text-align: center;
+}
+
+.faq-empty-state strong {
+  font-size: 0.9rem;
+}
+
 .faq-editor-meta-grid {
   display: grid;
-  grid-template-columns: minmax(160px, 220px) minmax(200px, 1fr);
-  gap: 16px;
+  grid-template-columns: minmax(120px, 180px) minmax(200px, 1fr);
   align-items: end;
+  gap: 10px;
 }
 
 .faq-editor-meta-grid input[type='number'] {
   width: 100%;
+  min-height: 36px;
   box-sizing: border-box;
-  min-height: 44px;
-  padding: 0 12px;
-  border: 1px solid var(--border-color);
-  border-radius: 11px;
-  background: #fff;
-  font: inherit;
 }
 
 .faq-enabled-field {
   display: flex;
+  min-height: 36px;
   align-items: center;
-  min-height: 44px;
-  gap: 10px;
-  padding: 0 12px;
-  border: 1px solid var(--border-color);
-  border-radius: 11px;
+  gap: 9px;
+  padding: 0 10px;
+  border: 1px solid var(--admin-border-strong);
+  border-radius: var(--admin-radius-sm);
   background: #fff;
 }
 
@@ -90,11 +145,45 @@
   margin: 0 !important;
 }
 
+@media (min-width: 1024px) {
+  .faq-management-heading .primary-button {
+    min-width: 98px;
+  }
+}
+
+@media (max-width: 1023px) {
+  .faq-management {
+    overflow: visible !important;
+  }
+
+  .faq-filter-bar {
+    grid-template-columns: auto minmax(220px, 1fr);
+    padding-right: 7px;
+  }
+
+  .faq-list {
+    overflow: visible;
+  }
+}
+
 @media (max-width: 760px) {
   .faq-filter-bar,
   .faq-editor-meta-grid,
   .faq-card {
     grid-template-columns: 1fr;
+  }
+
+  .faq-filter-bar {
+    align-items: stretch !important;
+  }
+
+  .faq-filter-bar .scope-tabs {
+    width: max-content;
+    max-width: 100%;
+  }
+
+  .faq-filter-bar .faq-search input {
+    width: 100% !important;
   }
 
   .faq-card-select {
