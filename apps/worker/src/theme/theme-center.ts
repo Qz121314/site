@@ -307,10 +307,10 @@ export function parseThemeSettings(themeKey: unknown, overridesJson: unknown): T
       overrides = {};
     }
   }
-  if (requestedKey === 'custom' && !overrides.imported) {
-    return { key: 'marketplace', overrides: {} };
+  if (overrides.imported) {
+    return { key: 'custom', overrides };
   }
-  return { key: requestedKey, overrides };
+  return { key: requestedKey === 'custom' ? 'marketplace' : requestedKey, overrides };
 }
 
 function applyAccent(tokens: ThemeTokens, accent: string | undefined): ThemeTokens {
@@ -362,6 +362,10 @@ export function validateThemeUpdate(value: unknown):
   return { ok: true, settings: { key: value.themeKey, overrides } };
 }
 
+export function persistedThemeKey(settings: ThemeSettings): OfficialThemeKey {
+  return settings.key === 'custom' ? 'marketplace' : settings.key;
+}
+
 export async function getThemeSettings(db: D1Database): Promise<ThemeSettings> {
   const row = await db
     .prepare('SELECT theme_key, theme_overrides_json FROM site_settings WHERE id = 1')
@@ -381,5 +385,5 @@ export function createUpdateThemeStatement(
        SET theme_key = ?, theme_overrides_json = ?, updated_at = ?
        WHERE id = 1`,
     )
-    .bind(settings.key, JSON.stringify(settings.overrides), updatedAt);
+    .bind(persistedThemeKey(settings), JSON.stringify(settings.overrides), updatedAt);
 }
