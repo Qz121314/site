@@ -79,35 +79,26 @@
 }
 
 .product-core-status {
-  grid-column: 8 / 10;
+  grid-column: var(--product-core-status-column, 8 / 10);
 }
 
 .product-core-sort {
-  grid-column: 10 / 11;
+  grid-column: var(--product-core-sort-column, 10 / 11);
 }
 
 .product-core-featured {
-  grid-column: 11 / 12;
+  grid-column: var(--product-core-featured-column, 11 / 12);
 }
 
 .product-core-featured-sort {
-  grid-column: 12 / 13;
+  grid-column: var(--product-core-featured-sort-column, 12 / 13);
 }
 
-.product-core-grid:not(:has(.product-core-address)) .product-core-status {
-  grid-column: 5 / 7;
-}
-
-.product-core-grid:not(:has(.product-core-address)) .product-core-sort {
-  grid-column: 7 / 9;
-}
-
-.product-core-grid:not(:has(.product-core-address)) .product-core-featured {
-  grid-column: 9 / 11;
-}
-
-.product-core-grid:not(:has(.product-core-address)) .product-core-featured-sort {
-  grid-column: 11 / 13;
+.product-core-grid:not(:has(.product-core-address)) {
+  --product-core-status-column: 5 / 7;
+  --product-core-sort-column: 7 / 9;
+  --product-core-featured-column: 9 / 11;
+  --product-core-featured-sort-column: 11 / 13;
 }
 
 .product-editor-dialog .product-field,
@@ -488,13 +479,13 @@
 
 .product-editor-dialog .product-media-actions .text-danger {
   border-color: transparent;
-  color: #b42318 !important;
+  color: #b42318;
   background: transparent;
 }
 
 .product-editor-dialog .product-media-actions .text-danger:not(:disabled):hover {
   border-color: #fecdca;
-  color: #912018 !important;
+  color: #912018;
   background: #fff1f0;
 }
 
@@ -536,18 +527,18 @@
   }
 
   .product-core-grid > * {
-    grid-column: auto !important;
+    grid-column: auto;
   }
 
   .product-core-title,
   .product-core-tags,
   .product-core-address {
-    grid-column: span 3 !important;
+    grid-column: span 3;
   }
 
   .product-core-category,
   .product-core-conversion {
-    grid-column: span 2 !important;
+    grid-column: span 2;
   }
 
   .product-content-grid {
@@ -572,7 +563,7 @@
   }
 
   .product-core-grid > * {
-    grid-column: 1 !important;
+    grid-column: 1;
   }
 
   .product-editor-dialog .product-media-grid {
