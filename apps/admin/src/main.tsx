@@ -30,6 +30,7 @@ import './theme-center.css';
 import './faq-management.css';
 import './markdown-media.css';
 import './media-center.css';
+import './media-upload-queue.css';
 
 installAdminMutationObserver();
 installAdminUnsavedStateObserver();
