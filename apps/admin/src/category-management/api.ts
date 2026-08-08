@@ -1,4 +1,5 @@
 import { AdminApiError } from '../api';
+import { adminFetch } from '../admin-fetch';
 
 export type AdminCategory = {
   id: string;
@@ -47,7 +48,7 @@ function readError(value: unknown): ErrorEnvelope {
 }
 
 async function requestJson(path: string, init?: RequestInit): Promise<unknown> {
-  const response = await fetch(path, {
+  const response = await adminFetch(path, {
     credentials: 'same-origin',
     cache: 'no-store',
     ...init,
