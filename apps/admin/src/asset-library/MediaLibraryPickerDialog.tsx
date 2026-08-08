@@ -1,14 +1,14 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { AdminApiError } from '../api';
 import { brandingAssetPreviewUrl } from '../branding-media/api';
 import {
   fetchMediaFolders,
-  fetchMediaLibrary,
   type ManagedMediaAsset,
   type MediaFolder,
   type MediaKind,
   type MediaRole,
 } from './api';
+import { fetchMediaLibraryPage } from './media-library-page-api';
 import { assignMediaRole } from './media-role-api';
 
 type MediaLibraryPickerDialogProps = {
@@ -55,33 +55,36 @@ export function MediaLibraryPickerDialog({
   const [assets, setAssets] = useState<ManagedMediaAsset[]>([]);
   const [folders, setFolders] = useState<MediaFolder[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [total, setTotal] = useState(0);
   const [workingId, setWorkingId] = useState<string | null>(null);
   const [query, setQuery] = useState('');
+  const [debouncedQuery, setDebouncedQuery] = useState('');
   const [folderFilter, setFolderFilter] = useState<FolderFilter>('all');
   const [kindFilter, setKindFilter] = useState<MediaKind | 'all'>('all');
   const [errorMessage, setErrorMessage] = useState('');
+  const requestVersionRef = useRef(0);
+  const allowedKindsKey = allowedKinds.join(',');
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => setDebouncedQuery(query.trim()), 220);
+    return () => window.clearTimeout(timeout);
+  }, [query]);
 
   useEffect(() => {
     let active = true;
     void (async () => {
-      setLoading(true);
       try {
-        const [nextAssets, nextFolders] = await Promise.all([
-          fetchMediaLibrary(),
-          fetchMediaFolders(),
-        ]);
-        if (!active) return;
-        setAssets(nextAssets);
-        setFolders(nextFolders);
+        const nextFolders = await fetchMediaFolders();
+        if (active) setFolders(nextFolders);
       } catch (error) {
         if (!active) return;
         if (isSessionError(error)) {
           onSessionExpired();
           return;
         }
-        setErrorMessage(error instanceof Error ? error.message : '素材列表加载失败。');
-      } finally {
-        if (active) setLoading(false);
+        setErrorMessage(error instanceof Error ? error.message : '素材文件夹加载失败。');
       }
     })();
     return () => {
@@ -89,21 +92,76 @@ export function MediaLibraryPickerDialog({
     };
   }, [onSessionExpired]);
 
-  const selected = useMemo(() => new Set(selectedIds), [selectedIds]);
-  const filtered = useMemo(() => {
-    const allowed = new Set(allowedKinds);
-    const keyword = query.trim().toLowerCase();
-    return assets.filter((asset) => {
-      if (!allowed.has(asset.mediaKind)) return false;
-      if (kindFilter !== 'all' && asset.mediaKind !== kindFilter) return false;
-      if (folderFilter === 'unfiled' && asset.folderId !== null) return false;
-      if (folderFilter !== 'all' && folderFilter !== 'unfiled' && asset.folderId !== folderFilter) return false;
-      if (!keyword) return true;
-      return `${asset.fileName} ${asset.mimeType} ${asset.folderName ?? ''}`.toLowerCase().includes(keyword);
-    });
-  }, [allowedKinds, assets, folderFilter, kindFilter, query]);
+  useEffect(() => {
+    const version = requestVersionRef.current + 1;
+    requestVersionRef.current = version;
+    setLoading(true);
+    setErrorMessage('');
+    setNextCursor(null);
+    void (async () => {
+      try {
+        const kinds = kindFilter === 'all' ? allowedKinds : [kindFilter];
+        const page = await fetchMediaLibraryPage({
+          kinds,
+          folder: folderFilter,
+          query: debouncedQuery,
+          limit: 80,
+        });
+        if (requestVersionRef.current !== version) return;
+        setAssets(page.assets);
+        setNextCursor(page.nextCursor);
+        setTotal(page.total);
+      } catch (error) {
+        if (requestVersionRef.current !== version) return;
+        if (isSessionError(error)) {
+          onSessionExpired();
+          return;
+        }
+        setAssets([]);
+        setTotal(0);
+        setErrorMessage(error instanceof Error ? error.message : '素材列表加载失败。');
+      } finally {
+        if (requestVersionRef.current === version) setLoading(false);
+      }
+    })();
+  }, [allowedKindsKey, debouncedQuery, folderFilter, kindFilter, onSessionExpired]);
 
+  const selected = useMemo(() => new Set(selectedIds), [selectedIds]);
   const selectionLimitReached = maxSelections !== undefined && selectedIds.length >= maxSelections;
+
+  async function loadMore() {
+    if (!nextCursor || loading || loadingMore) return;
+    const version = requestVersionRef.current;
+    setLoadingMore(true);
+    setErrorMessage('');
+    try {
+      const kinds = kindFilter === 'all' ? allowedKinds : [kindFilter];
+      const page = await fetchMediaLibraryPage({
+        kinds,
+        folder: folderFilter,
+        query: debouncedQuery,
+        cursor: nextCursor,
+        limit: 80,
+      });
+      if (requestVersionRef.current !== version) return;
+      setAssets((current) => {
+        const byId = new Map(current.map((asset) => [asset.id, asset]));
+        page.assets.forEach((asset) => byId.set(asset.id, asset));
+        return [...byId.values()];
+      });
+      setNextCursor(page.nextCursor);
+      setTotal(page.total);
+    } catch (error) {
+      if (requestVersionRef.current !== version) return;
+      if (isSessionError(error)) {
+        onSessionExpired();
+        return;
+      }
+      setErrorMessage(error instanceof Error ? error.message : '继续加载素材失败。');
+    } finally {
+      if (requestVersionRef.current === version) setLoadingMore(false);
+    }
+  }
 
   async function choose(asset: ManagedMediaAsset) {
     if (workingId || selected.has(asset.id) || selectionLimitReached) return;
@@ -173,36 +231,45 @@ export function MediaLibraryPickerDialog({
 
           {loading ? (
             <div className="media-picker-empty">正在读取素材…</div>
-          ) : filtered.length > 0 ? (
-            <div className="media-picker-grid">
-              {filtered.map((asset) => {
-                const isSelected = selected.has(asset.id);
-                return (
-                  <button
-                    className={`media-picker-card${isSelected ? ' is-selected' : ''}`}
-                    type="button"
-                    key={asset.id}
-                    disabled={workingId !== null || isSelected || selectionLimitReached}
-                    onClick={() => void choose(asset)}
-                  >
-                    <span className="media-picker-preview">
-                      {asset.mediaKind === 'video' ? (
-                        asset.publicUrl ? <video src={asset.publicUrl} muted playsInline preload="metadata" /> : <i>视频</i>
-                      ) : (
-                        <img src={brandingAssetPreviewUrl(asset.id)} alt="" loading="lazy" />
-                      )}
-                      <b>{kindLabel(asset.mediaKind)}</b>
-                      {isSelected ? <em className="media-picker-selected-mark">✓</em> : null}
-                    </span>
-                    <span className="media-picker-copy">
-                      <strong title={asset.fileName}>{asset.fileName}</strong>
-                      <small>{asset.folderName ? `${asset.folderName} · ` : '未分组 · '}{asset.width && asset.height ? `${asset.width} × ${asset.height} · ` : ''}{formatBytes(asset.byteSize)}</small>
-                      <em>{isSelected ? '已选择' : workingId === asset.id ? '正在选择…' : '选择此素材'}</em>
-                    </span>
+          ) : assets.length > 0 ? (
+            <>
+              <div className="media-picker-grid">
+                {assets.map((asset) => {
+                  const isSelected = selected.has(asset.id);
+                  return (
+                    <button
+                      className={`media-picker-card${isSelected ? ' is-selected' : ''}`}
+                      type="button"
+                      key={asset.id}
+                      disabled={workingId !== null || isSelected || selectionLimitReached}
+                      onClick={() => void choose(asset)}
+                    >
+                      <span className="media-picker-preview">
+                        {asset.mediaKind === 'video' ? (
+                          asset.publicUrl ? <video src={asset.publicUrl} muted playsInline preload="metadata" /> : <i>视频</i>
+                        ) : (
+                          <img src={brandingAssetPreviewUrl(asset.id)} alt="" loading="lazy" />
+                        )}
+                        <b>{kindLabel(asset.mediaKind)}</b>
+                        {isSelected ? <em className="media-picker-selected-mark">✓</em> : null}
+                      </span>
+                      <span className="media-picker-copy">
+                        <strong title={asset.fileName}>{asset.fileName}</strong>
+                        <small>{asset.folderName ? `${asset.folderName} · ` : '未分组 · '}{asset.width && asset.height ? `${asset.width} × ${asset.height} · ` : ''}{formatBytes(asset.byteSize)}</small>
+                        <em>{isSelected ? '已选择' : workingId === asset.id ? '正在选择…' : '选择此素材'}</em>
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+              {nextCursor ? (
+                <div className="media-picker-load-more">
+                  <button type="button" className="secondary-button" disabled={loadingMore} onClick={() => void loadMore()}>
+                    {loadingMore ? '正在加载…' : `加载更多（已显示 ${assets.length} / ${total}）`}
                   </button>
-                );
-              })}
-            </div>
+                </div>
+              ) : null}
+            </>
           ) : (
             <div className="media-picker-empty">
               <strong>没有匹配的素材</strong>
@@ -212,7 +279,7 @@ export function MediaLibraryPickerDialog({
         </div>
 
         <div className="media-picker-footer">
-          <span>{filtered.length} 个当前结果</span>
+          <span>{total} 个当前结果{assets.length < total ? ` · 已加载 ${assets.length}` : ''}</span>
           <button type="button" className="primary-button" disabled={workingId !== null} onClick={onDone}>完成选择</button>
         </div>
       </section>
