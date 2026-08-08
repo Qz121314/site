@@ -6,7 +6,6 @@ import { installAdminUnsavedStateObserver } from './admin-unsaved-state';
 import './styles.css';
 import './site-settings.css';
 import './sections.css';
-import './operating-admin.css';
 import './asset-library.css';
 import './media-picker.css';
 import './media-folders.css';

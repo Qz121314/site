@@ -11,31 +11,6 @@
   box-shadow: 0 8px 24px rgb(21 31 51 / 5%);
 }
 
-.settings-card-heading {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: start;
-  justify-content: space-between;
-  gap: 14px;
-  margin-bottom: 20px;
-}
-
-.settings-card-heading h2 {
-  margin: 0;
-  font-size: 1.25rem;
-  letter-spacing: -0.025em;
-}
-
-.settings-card-heading > small {
-  color: var(--muted);
-  line-height: 1.5;
-}
-
-.settings-grid {
-  display: grid;
-  gap: 18px;
-}
-
 .field-group {
   display: grid;
   gap: 8px;
@@ -68,15 +43,6 @@
   color: var(--muted);
   font-size: 0.82rem;
   line-height: 1.55;
-}
-
-.field-group-compact {
-  max-width: 260px;
-}
-
-.domain-field-row {
-  display: grid;
-  gap: 12px;
 }
 
 .domain-test-button {
@@ -119,67 +85,6 @@
   background: #fff4f2;
 }
 
-.settings-note {
-  display: grid;
-  gap: 8px;
-  margin-top: 18px;
-  padding: 15px;
-  border: 1px solid #dbe3ee;
-  border-radius: 12px;
-  color: #334155;
-  background: #f8fafc;
-}
-
-.settings-note code {
-  width: fit-content;
-  max-width: 100%;
-  padding: 5px 8px;
-  overflow-wrap: anywhere;
-  border-radius: 7px;
-  color: #9a3412;
-  background: #fff7ed;
-}
-
-.settings-note p {
-  margin: 0;
-  color: var(--muted);
-  line-height: 1.6;
-}
-
-.toggle-grid {
-  display: grid;
-  gap: 10px;
-}
-
-.toggle-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 18px;
-  min-height: 62px;
-  padding: 12px 14px;
-  border: 1px solid var(--line);
-  border-radius: 12px;
-  background: #fbfcfe;
-}
-
-.toggle-row > span {
-  display: grid;
-  gap: 4px;
-}
-
-.toggle-row small {
-  color: var(--muted);
-  line-height: 1.45;
-}
-
-.toggle-row input {
-  width: 20px;
-  height: 20px;
-  flex: 0 0 auto;
-  accent-color: var(--brand);
-}
-
 .settings-actions {
   display: flex;
   flex-wrap: wrap;
@@ -217,23 +122,4 @@
 .settings-error-state p {
   margin: 0;
   line-height: 1.6;
-}
-
-@media (min-width: 720px) {
-  .settings-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .domain-field-row {
-    grid-template-columns: minmax(0, 1fr) auto;
-    align-items: end;
-  }
-
-  .domain-test-button {
-    margin-bottom: 31px;
-  }
-
-  .toggle-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
 }

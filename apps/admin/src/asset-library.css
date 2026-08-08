@@ -8,8 +8,7 @@
 .asset-library-heading,
 .asset-library-actions,
 .asset-toolbar,
-.asset-filter-group,
-.asset-load-more {
+.asset-filter-group {
   display: flex;
   align-items: center;
 }
@@ -62,8 +61,7 @@
 .asset-summary-grid small,
 .asset-muted,
 .asset-key-cell small,
-.asset-meta-cell small,
-.asset-status-stack small {
+.asset-meta-cell small {
   color: var(--admin-text-muted, #667085);
 }
 
@@ -210,7 +208,6 @@
 
 .asset-key-cell,
 .asset-meta-cell,
-.asset-status-stack,
 .asset-reference-list {
   display: grid;
   gap: 4px;
@@ -226,7 +223,6 @@
   font-size: 0.72rem;
 }
 
-.asset-chip,
 .asset-cleanup-status,
 .asset-reference-list span {
   width: fit-content;
@@ -234,16 +230,6 @@
   border-radius: 999px;
   font-size: 0.65rem;
   font-weight: 720;
-}
-
-.asset-chip.tracked {
-  color: #17663a;
-  background: #eaf8ef;
-}
-
-.asset-chip.untracked {
-  color: #7a4b00;
-  background: #fff4d8;
 }
 
 .asset-reference-list span {
@@ -276,10 +262,6 @@
 
 .asset-empty-state p {
   display: none;
-}
-
-.asset-load-more {
-  justify-content: center;
 }
 
 @media (min-width: 1024px) {

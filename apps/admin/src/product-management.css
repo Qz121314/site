@@ -467,20 +467,10 @@
   gap: 22px;
 }
 
-.product-form-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 16px;
-}
-
 .product-field,
 .product-switch-field {
   display: grid;
   gap: 7px;
-}
-
-.product-field-wide {
-  grid-column: 1 / -1;
 }
 
 .product-field > span,
@@ -497,13 +487,8 @@
   line-height: 1.5;
 }
 
-.field-warning {
-  color: #c2410c !important;
-}
-
 .product-body-field,
-.product-media-section,
-.product-publish-checklist {
+.product-media-section {
   border: 1px solid #e2e8f0;
   border-radius: 15px;
   background: #fbfdff;
@@ -685,13 +670,6 @@
   margin: 0 16px 16px;
 }
 
-.product-publishing-grid {
-  padding: 16px;
-  border: 1px solid #e2e8f0;
-  border-radius: 15px;
-  background: #fff;
-}
-
 .product-switch-field {
   grid-template-columns: auto 1fr;
   align-items: start;
@@ -711,33 +689,6 @@
 
 .product-switch-field small {
   color: #64748b;
-}
-
-.product-publish-checklist {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-  padding: 13px 15px;
-}
-
-.product-publish-checklist strong {
-  margin-right: 4px;
-  color: #334155;
-}
-
-.product-publish-checklist span {
-  padding: 5px 9px;
-  border-radius: 999px;
-  background: #fee2e2;
-  color: #b91c1c;
-  font-size: 12px;
-  font-weight: 800;
-}
-
-.product-publish-checklist span.is-ready {
-  background: #dcfce7;
-  color: #15803d;
 }
 
 .product-delete-dialog {
@@ -793,13 +744,8 @@
     flex-direction: column;
   }
 
-  .product-form-grid,
   .product-media-grid {
     grid-template-columns: 1fr;
-  }
-
-  .product-field-wide {
-    grid-column: auto;
   }
 
   .product-media-preview {

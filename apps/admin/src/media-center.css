@@ -248,11 +248,6 @@
   white-space: nowrap;
 }
 
-/* Library statistics are intentionally omitted: they add height but do not change the next action. */
-.media-center-page .media-summary-grid {
-  display: none !important;
-}
-
 .media-center-page .inline-status {
   margin: 0;
 }
@@ -554,7 +549,7 @@
   white-space: nowrap;
 }
 
-.media-center-page > .asset-summary-grid:not(.media-summary-grid) {
+.media-center-page > .asset-summary-grid {
   display: grid !important;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0 !important;
@@ -564,7 +559,7 @@
   background: #fff;
 }
 
-.media-center-page > .asset-summary-grid:not(.media-summary-grid) article {
+.media-center-page > .asset-summary-grid article {
   display: flex !important;
   min-width: 0;
   align-items: baseline;
@@ -578,23 +573,23 @@
   box-shadow: none !important;
 }
 
-.media-center-page > .asset-summary-grid:not(.media-summary-grid) article:last-child {
+.media-center-page > .asset-summary-grid article:last-child {
   border-right: 0 !important;
 }
 
-.media-center-page > .asset-summary-grid:not(.media-summary-grid) span {
+.media-center-page > .asset-summary-grid span {
   color: #737f90;
   font-size: 0.62rem;
   font-weight: 680;
 }
 
-.media-center-page > .asset-summary-grid:not(.media-summary-grid) strong {
+.media-center-page > .asset-summary-grid strong {
   color: #172033;
   font-size: 0.86rem;
   font-variant-numeric: tabular-nums;
 }
 
-.media-center-page > .asset-summary-grid:not(.media-summary-grid) small {
+.media-center-page > .asset-summary-grid small {
   display: none !important;
 }
 
@@ -701,15 +696,15 @@
     width: 100%;
   }
 
-  .media-center-page > .asset-summary-grid:not(.media-summary-grid) {
+  .media-center-page > .asset-summary-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
-  .media-center-page > .asset-summary-grid:not(.media-summary-grid) article:nth-child(2) {
+  .media-center-page > .asset-summary-grid article:nth-child(2) {
     border-right: 0 !important;
   }
 
-  .media-center-page > .asset-summary-grid:not(.media-summary-grid) article:nth-child(-n + 2) {
+  .media-center-page > .asset-summary-grid article:nth-child(-n + 2) {
     border-bottom: 1px solid #edf0f4 !important;
   }
 
