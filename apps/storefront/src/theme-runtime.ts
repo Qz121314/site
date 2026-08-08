@@ -21,6 +21,20 @@ type PublicTheme = {
 };
 
 const CACHE_KEY = 'storefront-theme-v1';
+const TOKEN_KEYS: Array<keyof ThemeTokens> = [
+  'brand',
+  'brandStrong',
+  'text',
+  'muted',
+  'surface',
+  'surfaceSoft',
+  'line',
+  'pageBg',
+  'heroStart',
+  'heroEnd',
+  'heroGlow',
+  'shadow',
+];
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -29,21 +43,10 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function validTheme(value: unknown): value is PublicTheme {
   if (!isRecord(value) || typeof value.key !== 'string') return false;
   if (value.colorScheme !== 'light' && value.colorScheme !== 'dark') return false;
-  if (value.productMediaRatio !== '1:1' || !isRecord(value.tokens)) return false;
-  return [
-    'brand',
-    'brandStrong',
-    'text',
-    'muted',
-    'surface',
-    'surfaceSoft',
-    'line',
-    'pageBg',
-    'heroStart',
-    'heroEnd',
-    'heroGlow',
-    'shadow',
-  ].every((key) => typeof value.tokens[key] === 'string');
+  if (value.productMediaRatio !== '1:1') return false;
+  const tokens = value.tokens;
+  if (!isRecord(tokens)) return false;
+  return TOKEN_KEYS.every((key) => typeof tokens[key] === 'string');
 }
 
 function applyTheme(theme: PublicTheme): void {
