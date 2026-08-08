@@ -8,7 +8,6 @@ export type CustomerServiceConnectionRecord = {
   baseUrl: string;
   projectId: string | null;
   hasApiToken: boolean;
-  privateConfig: string | null;
   isEnabled: boolean;
   createdAt: string;
   updatedAt: string;
@@ -22,7 +21,6 @@ export type CustomerServiceConnectionInput = {
   baseUrl: string;
   projectId: string | null;
   apiToken?: string | null;
-  privateConfig: string | null;
   isEnabled: boolean;
 };
 
@@ -37,7 +35,6 @@ type ConnectionRow = {
   base_url: string;
   project_id: string | null;
   api_token: string | null;
-  private_config_json: string | null;
   is_enabled: number;
   created_at: string;
   updated_at: string;
@@ -143,15 +140,6 @@ export function validateCustomerServiceConnectionInput(value: unknown): Validati
   if (!baseUrl.ok) return baseUrl;
   const projectId = readText(value.projectId, 'projectId', '项目 ID', 200, false);
   if (!projectId.ok) return projectId;
-  const privateConfig = readText(value.privateConfig, 'privateConfig', '私有扩展配置', 8000, false);
-  if (!privateConfig.ok) return privateConfig;
-  if (privateConfig.value !== null) {
-    try {
-      JSON.parse(privateConfig.value);
-    } catch {
-      return { ok: false, field: 'privateConfig', message: '私有扩展配置必须是有效 JSON。' };
-    }
-  }
   let apiToken: string | null | undefined;
   if (Object.hasOwn(value, 'apiToken')) {
     const token = readText(value.apiToken, 'apiToken', 'API Token', 4000, false);
@@ -169,7 +157,6 @@ export function validateCustomerServiceConnectionInput(value: unknown): Validati
       baseUrl: baseUrl.value,
       projectId: projectId.value,
       ...(apiToken !== undefined ? { apiToken } : {}),
-      privateConfig: privateConfig.value,
       isEnabled: value.isEnabled,
     },
   };
@@ -182,7 +169,6 @@ const CONNECTION_SELECT = `SELECT
   c.base_url,
   c.project_id,
   c.api_token,
-  c.private_config_json,
   c.is_enabled,
   c.created_at,
   c.updated_at,
@@ -203,7 +189,6 @@ function mapConnection(row: ConnectionRow): CustomerServiceConnectionInternal {
     projectId: row.project_id,
     apiToken: row.api_token,
     hasApiToken: Boolean(row.api_token),
-    privateConfig: row.private_config_json,
     isEnabled: row.is_enabled === 1,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -270,7 +255,6 @@ export function createCustomerServiceConnection(
     projectId: input.projectId,
     apiToken: input.apiToken ?? null,
     hasApiToken: Boolean(input.apiToken),
-    privateConfig: input.privateConfig,
     isEnabled: input.isEnabled,
     createdAt: now,
     updatedAt: now,
@@ -282,9 +266,9 @@ export function createCustomerServiceConnection(
     statement: db
       .prepare(
         `INSERT INTO customer_service_connections (
-           id, name, provider, base_url, project_id, api_token, private_config_json,
+           id, name, provider, base_url, project_id, api_token,
            is_enabled, created_at, updated_at, deleted_at
-         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)`,
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)`,
       )
       .bind(
         internal.id,
@@ -293,7 +277,6 @@ export function createCustomerServiceConnection(
         internal.baseUrl,
         internal.projectId,
         internal.apiToken,
-        internal.privateConfig,
         internal.isEnabled ? 1 : 0,
         internal.createdAt,
         internal.updatedAt,
@@ -313,7 +296,7 @@ export function createUpdateCustomerServiceConnectionStatement(
     .prepare(
       `UPDATE customer_service_connections
        SET name = ?, provider = ?, base_url = ?, project_id = ?, api_token = ?,
-           private_config_json = ?, is_enabled = ?, updated_at = ?
+           is_enabled = ?, updated_at = ?
        WHERE id = ? AND deleted_at IS NULL`,
     )
     .bind(
@@ -322,7 +305,6 @@ export function createUpdateCustomerServiceConnectionStatement(
       input.baseUrl,
       input.projectId,
       apiToken,
-      input.privateConfig,
       input.isEnabled ? 1 : 0,
       now,
       id,
