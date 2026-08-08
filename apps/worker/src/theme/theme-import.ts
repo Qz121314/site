@@ -47,9 +47,16 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+function stripControlCharacters(value: string): string {
+  return Array.from(value, (character) => {
+    const code = character.charCodeAt(0);
+    return code < 32 || code === 127 ? ' ' : character;
+  }).join('');
+}
+
 function cleanText(value: unknown, fallback: string, maxLength: number): string {
   if (typeof value !== 'string') return fallback;
-  const text = value.replace(/[\u0000-\u001f\u007f]/gu, ' ').replace(/\s+/gu, ' ').trim();
+  const text = stripControlCharacters(value).replace(/\s+/gu, ' ').trim();
   return text ? text.slice(0, maxLength) : fallback;
 }
 
