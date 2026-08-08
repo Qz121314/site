@@ -6,7 +6,11 @@ export type AdminAuthBindings = {
 };
 
 function readBinding(value: unknown): string | null {
-  return typeof value === 'string' ? value : null;
+  if (typeof value !== 'string' || value.trim().length === 0) {
+    return null;
+  }
+
+  return value;
 }
 
 export function getAdminAuthBindings(bindings: AppBindings): AdminAuthBindings | null {

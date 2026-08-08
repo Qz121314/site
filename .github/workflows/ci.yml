@@ -213,6 +213,12 @@ jobs:
           printf '%s' "$health" | grep -F '"environment":"production"'
           printf '%s' "$health" | grep -F '"publicLanguage":"en"'
 
+          curl --fail --silent --show-error -D /tmp/security.headers -o /dev/null "$BASE_URL/"
+          grep -Eqi '^content-security-policy: .*frame-ancestors '\''none'\''' /tmp/security.headers
+          grep -Eqi '^x-content-type-options: nosniff' /tmp/security.headers
+          grep -Eqi '^x-frame-options: DENY' /tmp/security.headers
+          grep -Eqi '^referrer-policy: strict-origin-when-cross-origin' /tmp/security.headers
+
           content_config="$(curl --fail --silent --show-error "$BASE_URL/api/public/storefront/content-origin")"
           printf '%s' "$content_config" | BASE_URL="$BASE_URL" node -e '
             const fs = require("fs");

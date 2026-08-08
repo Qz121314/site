@@ -1,5 +1,6 @@
 import { Hono } from 'hono';
 import { apiError } from './http/api-response';
+import { securityHeaders } from './http/security-headers';
 import { requireAdmin } from './middleware/require-admin';
 import { adminAssetRoutes } from './routes/admin-assets';
 import { adminAuthRoutes } from './routes/admin-auth';
@@ -28,6 +29,8 @@ import { publicThemeRoutes } from './routes/public-theme';
 import type { AppEnvironment } from './types';
 
 export const app = new Hono<AppEnvironment>({ strict: false });
+
+app.use('*', securityHeaders);
 
 app.use('*', async (context, next) => {
   const requestId = context.req.header('cf-ray') ?? crypto.randomUUID();
