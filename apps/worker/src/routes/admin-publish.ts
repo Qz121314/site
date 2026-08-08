@@ -6,7 +6,7 @@ import {
   normalizePublishModuleKey,
   publishModularStorefront,
   rollbackModularModule,
-} from '../publishing/modular-publisher';
+} from '../publishing/storefront-publisher';
 import type { AppEnvironment } from '../types';
 import { hasAdminRequestHeader, isRecord } from './admin-section-shared';
 
