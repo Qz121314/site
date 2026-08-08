@@ -1,4 +1,5 @@
 import { AdminApiError } from '../api';
+import { adminFetch } from '../admin-fetch';
 import type { MediaRole } from './api';
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -8,7 +9,7 @@ function asRecord(value: unknown): Record<string, unknown> | null {
 }
 
 export async function assignMediaRole(id: string, role: MediaRole): Promise<void> {
-  const response = await fetch('/api/admin/assets/library/role', {
+  const response = await adminFetch('/api/admin/assets/library/role', {
     method: 'POST',
     credentials: 'same-origin',
     cache: 'no-store',
