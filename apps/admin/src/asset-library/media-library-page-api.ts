@@ -12,12 +12,12 @@ export type MediaLibraryPage = {
 };
 
 export type MediaLibraryPageFilters = {
-  kinds?: MediaKind[];
-  role?: MediaRole | '';
-  folder?: string;
-  query?: string;
-  cursor?: string | null;
-  limit?: number;
+  kinds?: MediaKind[] | undefined;
+  role?: MediaRole | '' | undefined;
+  folder?: string | undefined;
+  query?: string | undefined;
+  cursor?: string | null | undefined;
+  limit?: number | undefined;
 };
 
 type ErrorEnvelope = {
