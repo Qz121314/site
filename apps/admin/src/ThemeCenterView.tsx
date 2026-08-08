@@ -158,7 +158,7 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
       setErrorMessage('品牌强调色请输入 6 位十六进制颜色，例如 #ff5a1f。');
       return;
     }
-    const imported = selectedKey === 'custom' ? selectedPreset.overrides.imported : undefined;
+    const imported = selectedKey === 'custom' ? importedTheme?.overrides.imported : undefined;
     if (selectedKey === 'custom' && !imported) {
       setErrorMessage('请先从主题库或 JSON 导入一个有效主题。');
       return;
