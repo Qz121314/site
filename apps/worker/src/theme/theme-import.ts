@@ -53,19 +53,23 @@ function cleanText(value: unknown, fallback: string, maxLength: number): string 
   return text ? text.slice(0, maxLength) : fallback;
 }
 
-function isSafeCssColor(value: unknown): value is string {
-  if (typeof value !== 'string') return false;
+function normalizeCssColor(value: unknown): string | null {
+  if (typeof value !== 'string') return null;
   const color = value.trim();
-  if (!color || color.length > 120) return false;
-  if (/^(?:#[0-9a-f]{3,8})$/iu.test(color)) return true;
-  if (/^(?:rgb|rgba|hsl|hsla|oklch|oklab|lab|lch)\([0-9a-z.%+\-/,\s]+\)$/iu.test(color)) return true;
-  return /^(?:transparent|black|white)$/iu.test(color);
+  if (!color || color.length > 120) return null;
+  if (/^(?:#[0-9a-f]{3,8})$/iu.test(color)) return color;
+  if (/^(?:rgb|rgba|hsl|hsla|oklch|oklab|lab|lch)\([0-9a-z.%+\-/,\s]+\)$/iu.test(color)) return color;
+  if (/^(?:transparent|black|white)$/iu.test(color)) return color;
+  if (/^-?\d+(?:\.\d+)?(?:deg)?\s+-?\d+(?:\.\d+)?%\s+-?\d+(?:\.\d+)?%(?:\s*\/\s*\d+(?:\.\d+)?%?)?$/u.test(color)) {
+    return `hsl(${color})`;
+  }
+  return null;
 }
 
 function readColor(record: Record<string, unknown>, keys: string[], fallback: string): string {
   for (const key of keys) {
-    const value = record[key];
-    if (isSafeCssColor(value)) return value.trim();
+    const value = normalizeCssColor(record[key]);
+    if (value) return value;
   }
   return fallback;
 }
