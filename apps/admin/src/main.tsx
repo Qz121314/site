@@ -24,6 +24,7 @@ import './product-editor-compact.css';
 import './product-dependency-handoff.css';
 import './admin-ui-system.css';
 import './admin-sidebar.css';
+import './theme-center.css';
 import './faq-management.css';
 
 installAdminMutationObserver();
