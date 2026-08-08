@@ -333,8 +333,9 @@ Storefront 浏览器路由：
 
 ```text
 /
-/sections/{sectionId}/
-/products/{productId}/
+/sections/{sectionSlug}/
+/sections/{sectionSlug}/products/{productSlug}/
+/products/{productId-or-uniqueSlug}/  兼容旧链接
 ```
 
 Cloudflare Static Assets 使用 SPA fallback。`/api/*` 和 `/go/*` Worker-first；`/sections/*` 和 `/products/*` 明确走 Static Assets，避免普通前台深链接产生 Worker 内容请求。
@@ -345,7 +346,7 @@ Cloudflare Static Assets 使用 SPA fallback。`/api/*` 和 `/go/*` Worker-first
 
 ```text
 audit_logs
-conversion_events
+conversion_events（预留表；当前 /go 不写入）
 ```
 
 它们不按模块最近 3 版规则删除。

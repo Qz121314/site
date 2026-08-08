@@ -256,24 +256,6 @@ export function restoreProduct(sectionId: string, productId: string): Promise<Ad
   ).then(parseProductEnvelope);
 }
 
-export async function uploadProductImage(
-  sectionId: string,
-  file: File,
-): Promise<{ media: AdminProductMedia; reused: boolean }> {
-  const formData = new FormData();
-  formData.set('file', file);
-  const body = await requestJson(`${basePath(sectionId)}/media`, {
-    method: 'POST',
-    headers: { 'x-admin-request': '1' },
-    body: formData,
-  });
-  const envelope = asRecord(body);
-  return {
-    media: parseMedia(envelope?.media),
-    reused: envelope?.reused === true,
-  };
-}
-
 export async function batchDeleteProducts(sectionId: string, ids: string[]): Promise<string[]> {
   const body = await requestJson(`${basePath(sectionId)}/batch-delete`, {
     method: 'POST',
