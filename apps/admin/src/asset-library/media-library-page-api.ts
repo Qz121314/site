@@ -1,4 +1,5 @@
 import { AdminApiError } from '../api';
+import { adminFetch } from '../admin-fetch';
 import {
   type ManagedMediaAsset,
   type MediaKind,
@@ -103,7 +104,7 @@ export async function fetchMediaLibraryPage(
   if (filters.cursor) query.set('cursor', filters.cursor);
   if (filters.limit) query.set('limit', String(filters.limit));
 
-  const response = await fetch(`/api/admin/assets/library/page?${query.toString()}`, {
+  const response = await adminFetch(`/api/admin/assets/library/page?${query.toString()}`, {
     credentials: 'same-origin',
     cache: 'no-store',
   });

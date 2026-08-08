@@ -24,12 +24,18 @@ function sampleAsset(overrides = {}) {
 }
 
 async function withFetch(handler, run) {
-  const previous = globalThis.fetch;
+  const previousFetch = globalThis.fetch;
+  const previousWindow = globalThis.window;
   globalThis.fetch = handler;
+  globalThis.window = {
+    location: { href: 'https://admin.example.com/' },
+    dispatchEvent() {},
+  };
   try {
     return await run();
   } finally {
-    globalThis.fetch = previous;
+    globalThis.fetch = previousFetch;
+    globalThis.window = previousWindow;
   }
 }
 

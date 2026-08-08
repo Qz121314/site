@@ -589,7 +589,7 @@ export function ProductManagementView({
         </label>
       </div>
 
-      {errorMessage ? <div className="notice notice-error" role="alert">{errorMessage}</div> : null}
+      {!editorOpen && errorMessage ? <div className="notice notice-error" role="alert">{errorMessage}</div> : null}
       {successMessage ? <div className="notice notice-success" role="status">{successMessage}</div> : null}
 
       {scope === 'active' && selectedIds.size > 0 ? (
@@ -622,14 +622,30 @@ export function ProductManagementView({
           categories={categories}
           tags={tags}
           groups={groups}
+          errorMessage={errorMessage}
           saveStage={saveStage}
           handoffBusy={handoffTarget !== null}
           resumeNotice={resumeNotice}
-          onFormChange={setForm}
-          onOpenMediaPicker={() => setMediaPickerOpen(true)}
-          onRemoveMedia={removeMedia}
-          onMoveMedia={moveMedia}
-          onSetCover={setCoverKey}
+          onFormChange={(nextForm) => {
+            setErrorMessage('');
+            setForm(nextForm);
+          }}
+          onOpenMediaPicker={() => {
+            setErrorMessage('');
+            setMediaPickerOpen(true);
+          }}
+          onRemoveMedia={(key) => {
+            setErrorMessage('');
+            removeMedia(key);
+          }}
+          onMoveMedia={(key, direction) => {
+            setErrorMessage('');
+            moveMedia(key, direction);
+          }}
+          onSetCover={(key) => {
+            setErrorMessage('');
+            setCoverKey(key);
+          }}
           onCreateCategory={handleCreateCategory}
           onCreateTag={handleCreateTag}
           onConfigureDependency={(target) => void handleConfigureDependency(target)}

@@ -272,7 +272,7 @@ export function FaqManagementView({ onSessionExpired }: FaqManagementViewProps) 
         <button className="primary-button faq-create-button" type="button" onClick={openCreateEditor}>新增 FAQ</button>
       </div>
 
-      {errorMessage ? <div className="notice notice-error" role="alert">{errorMessage}</div> : null}
+      {!editorOpen && errorMessage ? <div className="notice notice-error" role="alert">{errorMessage}</div> : null}
       {successMessage ? <div className="notice notice-success" role="status">{successMessage}</div> : null}
 
       {scope === 'active' && selectedIds.size > 0 ? (
@@ -334,10 +334,11 @@ export function FaqManagementView({ onSessionExpired }: FaqManagementViewProps) 
               <button type="button" aria-label="关闭" disabled={saving} onClick={() => setEditorOpen(false)}>×</button>
             </div>
             <form className="faq-editor-form" onSubmit={(event) => void handleSave(event)}>
-              <label><span>标题</span><input type="text" value={form.title} autoFocus maxLength={300} onChange={(event) => setForm((current) => ({ ...current, title: event.target.value }))} /></label>
+              {errorMessage ? <div className="notice notice-error" role="alert">{errorMessage}</div> : null}
+              <label><span>标题</span><input type="text" value={form.title} autoFocus required maxLength={300} onChange={(event) => { setForm((current) => ({ ...current, title: event.target.value })); setErrorMessage(''); }} /></label>
               <div className="faq-editor-meta-grid">
-                <label><span>排序</span><input type="number" min={0} max={1_000_000} value={form.sortOrder} onChange={(event) => setForm((current) => ({ ...current, sortOrder: Number(event.target.value) }))} /></label>
-                <label className="faq-enabled-field"><input type="checkbox" checked={form.isEnabled} onChange={(event) => setForm((current) => ({ ...current, isEnabled: event.target.checked }))} /><span>启用前台展示</span></label>
+                <label><span>排序</span><input type="number" min={0} max={1_000_000} step={1} required value={form.sortOrder} onChange={(event) => { setForm((current) => ({ ...current, sortOrder: Number(event.target.value) })); setErrorMessage(''); }} /></label>
+                <label className="faq-enabled-field"><input type="checkbox" checked={form.isEnabled} onChange={(event) => { setForm((current) => ({ ...current, isEnabled: event.target.checked })); setErrorMessage(''); }} /><span>启用前台展示</span></label>
               </div>
               <div className="faq-body-field">
                 <div className="faq-body-label">
@@ -348,7 +349,7 @@ export function FaqManagementView({ onSessionExpired }: FaqManagementViewProps) 
                   </div>
                 </div>
                 {editorMode === 'edit' ? (
-                  <textarea value={form.body} maxLength={20_000} onChange={(event) => setForm((current) => ({ ...current, body: event.target.value }))} />
+                  <textarea value={form.body} required maxLength={20_000} onChange={(event) => { setForm((current) => ({ ...current, body: event.target.value })); setErrorMessage(''); }} />
                 ) : <MarkdownPreview source={form.body} />}
               </div>
               <div className="admin-dialog-actions">

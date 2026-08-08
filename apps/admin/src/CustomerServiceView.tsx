@@ -273,7 +273,7 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
         ) : null}
       </div>
 
-      {errorMessage ? <p className="inline-status is-error">{errorMessage}</p> : null}
+      {!editorOpen && errorMessage ? <p className="inline-status is-error" role="alert">{errorMessage}</p> : null}
       {successMessage ? <p className="inline-status is-success">{successMessage}</p> : null}
 
       {scope === 'active' && selectedIds.size > 0 ? (
@@ -400,14 +400,16 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
               <button type="button" aria-label="关闭" disabled={saving} onClick={() => setEditorOpen(false)}>×</button>
             </div>
             <form className="customer-service-editor-form" onSubmit={(event) => void submit(event)}>
+              {errorMessage ? <div className="notice notice-error customer-service-editor-wide" role="alert">{errorMessage}</div> : null}
               <label>
                 <span>连接名称</span>
                 <input
                   type="text"
                   autoFocus
+                  required
                   maxLength={120}
                   value={draft.name}
-                  onChange={(event) => setDraft((current) => ({ ...current, name: event.target.value }))}
+                  onChange={(event) => { setDraft((current) => ({ ...current, name: event.target.value })); setErrorMessage(''); }}
                 />
               </label>
               <label>
@@ -416,16 +418,18 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
                   type="text"
                   maxLength={200}
                   value={draft.projectId}
-                  onChange={(event) => setDraft((current) => ({ ...current, projectId: event.target.value }))}
+                  onChange={(event) => { setDraft((current) => ({ ...current, projectId: event.target.value })); setErrorMessage(''); }}
                 />
               </label>
               <label className="customer-service-editor-wide">
                 <span>API 根地址</span>
                 <input
                   type="url"
+                  required
+                  maxLength={1000}
                   placeholder="https://support.example.com/api/integration/v1"
                   value={draft.baseUrl}
-                  onChange={(event) => setDraft((current) => ({ ...current, baseUrl: event.target.value }))}
+                  onChange={(event) => { setDraft((current) => ({ ...current, baseUrl: event.target.value })); setErrorMessage(''); }}
                 />
               </label>
               <label className="customer-service-editor-wide">
@@ -435,7 +439,7 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
                   autoComplete="new-password"
                   maxLength={4000}
                   value={draft.apiToken}
-                  onChange={(event) => setDraft((current) => ({ ...current, apiToken: event.target.value }))}
+                  onChange={(event) => { setDraft((current) => ({ ...current, apiToken: event.target.value })); setErrorMessage(''); }}
                 />
               </label>
               <label className="switch-row customer-service-editor-wide">
@@ -443,7 +447,7 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
                 <input
                   type="checkbox"
                   checked={draft.isEnabled}
-                  onChange={(event) => setDraft((current) => ({ ...current, isEnabled: event.target.checked }))}
+                  onChange={(event) => { setDraft((current) => ({ ...current, isEnabled: event.target.checked })); setErrorMessage(''); }}
                 />
               </label>
               <div className="admin-dialog-actions customer-service-editor-wide">
