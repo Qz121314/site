@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { AdminApiError } from './api';
+import { useAdminDirtySource } from './admin-unsaved-state';
 import {
   fetchThemeCenter,
   updateThemeCenter,
@@ -30,6 +31,12 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
   const [saving, setSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+
+  const themeIsDirty = currentTheme !== null && (
+    selectedKey !== currentTheme.key ||
+    accent.trim().toLowerCase() !== (currentTheme.overrides.accent ?? '').toLowerCase()
+  );
+  useAdminDirtySource('theme-center', '主题中心', themeIsDirty);
 
   useEffect(() => {
     let active = true;
@@ -78,6 +85,7 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
     try {
       const updated = await updateThemeCenter(selectedKey, normalizedAccent);
       setCurrentTheme(updated);
+      setSelectedKey(updated.key);
       setAccent(updated.overrides.accent ?? '');
       setSuccessMessage('主题已保存并应用到用户前端。前端刷新后即可看到新主题。');
     } catch (error) {
