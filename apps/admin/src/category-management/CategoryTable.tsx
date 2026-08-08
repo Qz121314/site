@@ -7,6 +7,7 @@ type CategoryTableProps = {
   selectedIds: Set<string>;
   allVisibleSelected: boolean;
   working: boolean;
+  reorderDisabled: boolean;
   onToggleSelect: (id: string) => void;
   onToggleSelectAll: () => void;
   onToggleEnabled: (category: AdminCategory) => void;
@@ -23,6 +24,7 @@ export function CategoryTable({
   selectedIds,
   allVisibleSelected,
   working,
+  reorderDisabled,
   onToggleSelect,
   onToggleSelectAll,
   onToggleEnabled,
@@ -103,7 +105,7 @@ export function CategoryTable({
                       <button
                         type="button"
                         aria-label={`上移 ${category.name}`}
-                        disabled={working || index === 0}
+                        disabled={working || reorderDisabled || index === 0}
                         onClick={() => onMove(category, -1)}
                       >
                         ↑
@@ -111,7 +113,7 @@ export function CategoryTable({
                       <button
                         type="button"
                         aria-label={`下移 ${category.name}`}
-                        disabled={working || index === categories.length - 1}
+                        disabled={working || reorderDisabled || index === categories.length - 1}
                         onClick={() => onMove(category, 1)}
                       >
                         ↓

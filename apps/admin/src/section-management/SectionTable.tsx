@@ -8,6 +8,7 @@ type SectionTableProps = {
   selectedIds: Set<string>;
   allVisibleSelected: boolean;
   working: boolean;
+  reorderDisabled: boolean;
   onToggleSelect: (id: string) => void;
   onToggleSelectAll: () => void;
   onToggleEnabled: (section: AdminSection) => void;
@@ -24,6 +25,7 @@ export function SectionTable({
   selectedIds,
   allVisibleSelected,
   working,
+  reorderDisabled,
   onToggleSelect,
   onToggleSelectAll,
   onToggleEnabled,
@@ -90,7 +92,7 @@ export function SectionTable({
                       <button
                         type="button"
                         aria-label={`上移 ${section.name}`}
-                        disabled={working || index === 0}
+                        disabled={working || reorderDisabled || index === 0}
                         onClick={() => onMove(section, -1)}
                       >
                         ↑
@@ -98,7 +100,7 @@ export function SectionTable({
                       <button
                         type="button"
                         aria-label={`下移 ${section.name}`}
-                        disabled={working || index === sections.length - 1}
+                        disabled={working || reorderDisabled || index === sections.length - 1}
                         onClick={() => onMove(section, 1)}
                       >
                         ↓

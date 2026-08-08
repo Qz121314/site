@@ -115,6 +115,7 @@ export function CategoryManagementView({
   const allVisibleSelected =
     filteredCategories.length > 0 &&
     filteredCategories.every((category) => selectedIds.has(category.id));
+  const reorderBlocked = scope !== 'active' || Boolean(search.trim());
 
   async function changeScope(nextScope: CategoryScope) {
     setScope(nextScope);
@@ -202,6 +203,7 @@ export function CategoryManagementView({
   }
 
   async function moveCategory(category: AdminCategory, direction: -1 | 1) {
+    if (reorderBlocked) return;
     const ordered = sortCategories(activeCategories).map((item) => ({ ...item }));
     const currentIndex = ordered.findIndex((item) => item.id === category.id);
     const targetIndex = currentIndex + direction;
@@ -361,6 +363,7 @@ export function CategoryManagementView({
         selectedIds={selectedIds}
         allVisibleSelected={allVisibleSelected}
         working={working}
+        reorderDisabled={reorderBlocked}
         onToggleSelect={toggleSelect}
         onToggleSelectAll={toggleSelectAll}
         onToggleEnabled={(category) => void toggleEnabled(category)}

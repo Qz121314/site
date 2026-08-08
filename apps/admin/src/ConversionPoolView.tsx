@@ -233,6 +233,8 @@ export function ConversionPoolView({ section, onSessionExpired }: Props) {
     filteredGroups.length > 0 && filteredGroups.every((group) => selectedGroupIds.has(group.id));
   const allTargetsSelected =
     filteredTargets.length > 0 && filteredTargets.every((target) => selectedTargetIds.has(target.id));
+  const groupReorderBlocked = groupScope !== 'active' || Boolean(groupSearch.trim());
+  const targetReorderBlocked = targetScope !== 'active' || Boolean(targetSearch.trim());
 
   async function changeGroupScope(scope: Scope) {
     setGroupScope(scope);
@@ -343,6 +345,7 @@ export function ConversionPoolView({ section, onSessionExpired }: Props) {
   }
 
   async function moveGroup(group: AdminConversionGroup, direction: -1 | 1) {
+    if (groupReorderBlocked) return;
     const ordered = sortGroups(activeGroups).map((item) => ({ ...item }));
     const index = ordered.findIndex((item) => item.id === group.id);
     const current = ordered[index];
@@ -453,7 +456,7 @@ export function ConversionPoolView({ section, onSessionExpired }: Props) {
   }
 
   async function moveTarget(target: AdminConversionTarget, direction: -1 | 1) {
-    if (!selectedGroup) return;
+    if (!selectedGroup || targetReorderBlocked) return;
     const ordered = sortTargets(activeTargets).map((item) => ({ ...item }));
     const index = ordered.findIndex((item) => item.id === target.id);
     const current = ordered[index];
@@ -680,8 +683,8 @@ export function ConversionPoolView({ section, onSessionExpired }: Props) {
                   </td>
                   <td>
                     {groupScope === 'active' ? <div className="sort-controls"><span>{group.sortOrder}</span><div>
-                      <button type="button" disabled={working || index === 0} onClick={() => void moveGroup(group, -1)}>↑</button>
-                      <button type="button" disabled={working || index === filteredGroups.length - 1} onClick={() => void moveGroup(group, 1)}>↓</button>
+                      <button type="button" disabled={working || groupReorderBlocked || index === 0} onClick={() => void moveGroup(group, -1)}>↑</button>
+                      <button type="button" disabled={working || groupReorderBlocked || index === filteredGroups.length - 1} onClick={() => void moveGroup(group, 1)}>↓</button>
                     </div></div> : group.sortOrder}
                   </td>
                   <td className="actions-cell">
@@ -785,8 +788,8 @@ export function ConversionPoolView({ section, onSessionExpired }: Props) {
                       </td>
                       <td>
                         {targetScope === 'active' ? <div className="sort-controls"><span>{target.sortOrder}</span><div>
-                          <button type="button" disabled={working || index === 0} onClick={() => void moveTarget(target, -1)}>↑</button>
-                          <button type="button" disabled={working || index === filteredTargets.length - 1} onClick={() => void moveTarget(target, 1)}>↓</button>
+                          <button type="button" disabled={working || targetReorderBlocked || index === 0} onClick={() => void moveTarget(target, -1)}>↑</button>
+                          <button type="button" disabled={working || targetReorderBlocked || index === filteredTargets.length - 1} onClick={() => void moveTarget(target, 1)}>↓</button>
                         </div></div> : target.sortOrder}
                       </td>
                       <td className="actions-cell">

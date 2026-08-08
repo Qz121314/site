@@ -10,7 +10,6 @@ export type CustomerServiceConnection = {
   baseUrl: string;
   projectId: string | null;
   hasApiToken: boolean;
-  privateConfig: string | null;
   isEnabled: boolean;
   createdAt: string;
   updatedAt: string;
@@ -24,7 +23,6 @@ export type CustomerServiceConnectionInput = {
   baseUrl: string;
   projectId: string | null;
   apiToken?: string | null;
-  privateConfig: string | null;
   isEnabled: boolean;
 };
 
@@ -88,7 +86,6 @@ function parseConnection(value: unknown): CustomerServiceConnection {
     typeof connection.baseUrl !== 'string' ||
     (typeof connection.projectId !== 'string' && connection.projectId !== null) ||
     typeof connection.hasApiToken !== 'boolean' ||
-    (typeof connection.privateConfig !== 'string' && connection.privateConfig !== null) ||
     typeof connection.isEnabled !== 'boolean' ||
     typeof connection.createdAt !== 'string' ||
     typeof connection.updatedAt !== 'string' ||

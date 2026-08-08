@@ -68,35 +68,46 @@
   .admin-main > .conversion-pool,
   .admin-main > .faq-management,
   .admin-main > .asset-library-page,
-  .admin-main > .customer-service-page,
-  .admin-main > .customer-service-view {
+  .admin-main > .customer-service-workbench {
     min-height: 0;
     flex: 1 1 auto;
   }
 
   /* Configuration pages scroll as one coherent page when they genuinely exceed the viewport. */
   .admin-main > .settings-form,
-  .admin-main > .customer-service-page,
-  .admin-main > .customer-service-view,
   .admin-main > .conversion-pool {
     overflow-y: auto;
     overscroll-behavior: contain;
     scrollbar-width: thin;
   }
 
-  /* List workbenches keep their command bar visible and scroll only the data surface. */
+  /* The shared settings UI declares overflow:visible!important. Override it here
+   * at the viewport-policy layer so shorter pages stay compact and taller pages
+   * remain reachable without introducing inner panel scrollbars. */
+  .admin-main > .settings-form {
+    align-content: start;
+    overflow-y: auto !important;
+  }
+
+  /* List workbenches use a stable vertical flow. This deliberately overrides
+   * older page-level CSS Grid roots whose auto rows stretched into blank space. */
   .admin-main > .section-management,
   .admin-main > .category-management,
   .admin-main > .product-management,
   .admin-main > .faq-management,
-  .admin-main > .asset-library-page {
+  .admin-main > .asset-library-page,
+  .admin-main > .customer-service-workbench {
+    display: flex;
+    flex-direction: column;
     overflow: hidden;
   }
 
+  /* Only the data surface scrolls on list workbenches. */
   .section-table-wrap,
   .category-table-wrap,
   .product-table-wrap,
-  .asset-table-wrap {
+  .asset-table-wrap,
+  .customer-service-table-wrap {
     min-height: 0;
     max-height: calc(100dvh - 104px);
     overflow: auto;
@@ -110,5 +121,18 @@
     overflow-y: auto;
     overscroll-behavior: contain;
     scrollbar-width: thin;
+  }
+
+  /* Conversion management is a two-level workflow. Let the page itself scroll
+   * instead of nesting a group-table scrollbar inside a target-panel scrollbar. */
+  .admin-main > .conversion-pool .conversion-table-wrap {
+    max-height: none !important;
+    overflow-x: auto !important;
+    overflow-y: visible !important;
+  }
+
+  .admin-main > .conversion-pool .conversion-target-panel {
+    max-height: none !important;
+    overflow: visible !important;
   }
 }

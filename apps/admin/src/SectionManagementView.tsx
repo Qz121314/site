@@ -89,6 +89,7 @@ export function SectionManagementView({
 
   const allVisibleSelected =
     filteredSections.length > 0 && filteredSections.every((section) => selectedIds.has(section.id));
+  const reorderBlocked = scope !== 'active' || Boolean(search.trim());
 
   useEffect(() => {
     setSelectedIds(new Set());
@@ -291,6 +292,7 @@ export function SectionManagementView({
   }
 
   async function moveSection(section: AdminSection, direction: -1 | 1) {
+    if (reorderBlocked) return;
     const ordered = sortSections(activeSections).map((item) => ({ ...item }));
     const currentIndex = ordered.findIndex((item) => item.id === section.id);
     const targetIndex = currentIndex + direction;
@@ -407,6 +409,7 @@ export function SectionManagementView({
         selectedIds={selectedIds}
         allVisibleSelected={allVisibleSelected}
         working={working}
+        reorderDisabled={reorderBlocked}
         onToggleSelect={toggleSelect}
         onToggleSelectAll={toggleSelectAll}
         onToggleEnabled={(section) => void toggleEnabled(section)}
