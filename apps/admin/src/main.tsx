@@ -8,7 +8,6 @@ import './site-settings.css';
 import './sections.css';
 import './operating-admin.css';
 import './asset-library.css';
-import './media-center.css';
 import './media-picker.css';
 import './media-folders.css';
 import './category-management.css';
@@ -30,7 +29,7 @@ import './admin-sidebar.css';
 import './theme-center.css';
 import './faq-management.css';
 import './markdown-media.css';
-import './media-center-compact.css';
+import './media-center.css';
 
 installAdminMutationObserver();
 installAdminUnsavedStateObserver();
