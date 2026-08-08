@@ -1,4 +1,8 @@
 import { AdminApiError } from '../api';
+import {
+  isCompressibleStaticMediaImage,
+  prepareCompressedMediaImage,
+} from './media-image-compression';
 
 export type AssetReferenceCounts = {
   logo: number;
@@ -407,12 +411,25 @@ export async function uploadMediaAsset(input: {
   height?: number | null | undefined;
   durationMs?: number | null | undefined;
 }): Promise<{ media: ManagedMediaAsset; reused: boolean }> {
+  const preparedImage = isCompressibleStaticMediaImage(input.file)
+    ? await prepareCompressedMediaImage(input.file)
+    : null;
+  const uploadFile = preparedImage?.file ?? input.file;
   const formData = new FormData();
-  formData.set('file', input.file);
+  formData.set('file', uploadFile);
   formData.set('role', input.role);
   if (input.folderId) formData.set('folderId', input.folderId);
-  if (input.width !== undefined && input.width !== null) formData.set('width', String(input.width));
-  if (input.height !== undefined && input.height !== null) formData.set('height', String(input.height));
+
+  if (preparedImage) {
+    formData.set('width', String(preparedImage.width));
+    formData.set('height', String(preparedImage.height));
+    formData.set('compressionProfile', preparedImage.compressionProfile);
+    formData.set('sourceByteSize', String(preparedImage.sourceByteSize));
+  } else {
+    if (input.width !== undefined && input.width !== null) formData.set('width', String(input.width));
+    if (input.height !== undefined && input.height !== null) formData.set('height', String(input.height));
+  }
+
   if (input.durationMs !== undefined && input.durationMs !== null) {
     formData.set('durationMs', String(input.durationMs));
   }
