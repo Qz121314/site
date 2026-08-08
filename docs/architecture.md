@@ -72,6 +72,8 @@ Tech
 
 产品列表和产品封面统一使用 1:1 作为跨主题媒体基准；Hero、Logo、图标、正文图片和视频保留各自合适比例。
 
+`packages/storefront-ui` 是前台展示组件的唯一共享层。Storefront 和后台主题实时预览共同使用其中的 BrandBar、Hero、ProductCard、BottomNavigation 与组件 CSS；主题预览不再维护一套仿制 DOM。数据请求、路由和管理操作仍留在各自应用，避免形成第二套 Storefront Runtime。
+
 ### 素材中心
 
 素材中心是全站统一媒体入口，不再只是 R2 图片清理页。

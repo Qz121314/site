@@ -1,4 +1,11 @@
-import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import {
+  StorefrontBottomNavigation,
+  StorefrontBrandBar,
+  StorefrontHero,
+  StorefrontProductCard,
+} from '@site/storefront-ui';
+import { storefrontThemeStyle } from '@site/storefront-ui/theme';
+import { useEffect, useMemo, useState, type AnchorHTMLAttributes } from 'react';
 import { AdminApiError } from './api';
 import { useAdminDirtySource } from './admin-unsaved-state';
 import {
@@ -30,6 +37,10 @@ function normalizeAccent(value: string): string | null {
 
 function importedSignature(value: ImportedThemeDefinition | undefined): string {
   return value ? JSON.stringify(value) : '';
+}
+
+function PreviewLink({ children, className }: AnchorHTMLAttributes<HTMLAnchorElement>) {
+  return <span className={className}>{children}</span>;
 }
 
 export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
@@ -369,44 +380,51 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
           {selectedPreset ? (
             <div className="theme-preview-device-shell">
               <div
-                className={`theme-live-preview is-${selectedPreset.colorScheme}`}
-                style={{
-                  '--preview-brand': previewAccent,
-                  '--preview-text': selectedPreset.tokens.text,
-                  '--preview-muted': selectedPreset.tokens.muted,
-                  '--preview-surface': selectedPreset.tokens.surface,
-                  '--preview-page': selectedPreset.tokens.pageBg,
-                  '--preview-line': selectedPreset.tokens.line,
-                  '--preview-hero-start': selectedPreset.tokens.heroStart,
-                  '--preview-hero-end': selectedPreset.tokens.heroEnd,
-                } as CSSProperties}
+                className="theme-live-preview storefront-ui-preview storefront-theme-root"
+                data-color-scheme={selectedPreset.colorScheme}
+                data-theme={selectedPreset.key}
+                style={storefrontThemeStyle(selectedPreset.tokens, previewAccent)}
               >
                 <div className="theme-preview-statusbar" aria-hidden="true"><span>9:41</span><span>● ● ▰</span></div>
-                <div className="theme-preview-appbar">
-                  <span className="theme-preview-logo">S</span>
-                  <div><strong>Service</strong><small>Explore nearby</small></div>
-                  <span className="theme-preview-app-action">•••</span>
-                </div>
-                <div className="theme-preview-hero">
-                  <span>{selectedPreset.label}</span>
-                  <strong>Discover what fits you</strong>
-                  <small>Fast browsing designed for one-hand mobile use.</small>
-                </div>
-                <div className="theme-preview-chips" aria-hidden="true"><span className="is-active">For you</span><span>Popular</span><span>Nearby</span></div>
-                <div className="theme-preview-section-row"><strong>Featured</strong><span>See all</span></div>
-                <div className="theme-preview-products">
+                <StorefrontBrandBar
+                  LinkComponent={PreviewLink}
+                  locationLabel="Explore nearby"
+                  logo="S"
+                  siteName="Service"
+                />
+                <div className="theme-preview-content">
+                  <StorefrontHero
+                    description="Fast browsing designed for one-hand mobile use."
+                    eyebrow={selectedPreset.label}
+                    locationLabel="Nearby"
+                    title="Discover what fits you"
+                  />
+                  <div className="theme-preview-section-row"><strong>Featured</strong><span>See all</span></div>
+                  <div className="theme-preview-products product-grid">
                   {[1, 2].map((item) => (
-                    <div className="theme-preview-product" key={item}>
-                      <div className="theme-preview-media"><span>1:1</span></div>
-                      <strong>{item === 1 ? 'Product title' : 'Featured item'}</strong>
-                      <small>Category · Tag</small>
-                      <button type="button" tabIndex={-1}>View</button>
-                    </div>
+                    <StorefrontProductCard
+                      categoryName="Category"
+                      href="#"
+                      key={item}
+                      LinkComponent={PreviewLink}
+                      media={<div className="theme-preview-media image-fallback"><span>1:1</span></div>}
+                      modeLabel="Online"
+                      sectionName="Featured"
+                      tags={[{ id: `preview-${item}`, name: 'Popular' }]}
+                      title={item === 1 ? 'Product title' : 'Featured item'}
+                    />
                   ))}
+                  </div>
                 </div>
-                <div className="theme-preview-bottom-nav" aria-hidden="true">
-                  <span className="is-active">⌂<small>Home</small></span><span>▦<small>Browse</small></span><span>♡<small>Saved</small></span><span>●<small>More</small></span>
-                </div>
+                <StorefrontBottomNavigation
+                  LinkComponent={PreviewLink}
+                  items={[
+                    { href: '/', icon: '⌂', label: 'Home' },
+                    { href: '/#hot', icon: '◆', label: 'Hot' },
+                    { href: '/#latest', icon: '◷', label: 'Latest' },
+                    { href: '/#faq', icon: '?', label: 'FAQ' },
+                  ]}
+                />
               </div>
             </div>
           ) : null}

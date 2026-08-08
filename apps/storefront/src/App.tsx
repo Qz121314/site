@@ -1,5 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import {
+  StorefrontBottomNavigation,
+  StorefrontBrandBar,
+  StorefrontHero,
+  StorefrontProductCard,
+} from '@site/storefront-ui';
+import {
   type AnchorHTMLAttributes,
   type MouseEvent as ReactMouseEvent,
   type ReactNode,
@@ -106,32 +112,24 @@ function SectionIcon({ section }: { section: PublicSection }) {
 
 function ProductCard({ product }: { product: PublicProductSummary }) {
   return (
-    <AppLink className="product-card" href={productHref(product)}>
-      <div className="product-card-media">
+    <StorefrontProductCard
+      address={product.address}
+      categoryName={product.category.name}
+      href={productHref(product)}
+      LinkComponent={AppLink}
+      media={(
         <ResilientImage
           alt=""
           fallback={<div className="image-fallback" aria-hidden="true" />}
           loading="lazy"
           src={product.coverUrl}
         />
-        <span className="service-mode-badge">
-          {product.serviceMode === 'online' ? 'Online' : 'In person'}
-        </span>
-      </div>
-      <div className="product-card-body">
-        <div className="product-card-heading">
-          <h3>{product.title}</h3>
-          <span>{product.sectionName}</span>
-        </div>
-        {product.category.name ? <p className="product-type">{product.category.name}</p> : null}
-        {product.tags.length > 0 ? (
-          <div className="tag-row" aria-label="Product tags">
-            {product.tags.slice(0, 3).map((tag) => <span key={tag.id}>{tag.name}</span>)}
-          </div>
-        ) : null}
-        {product.address ? <p className="product-address">⌖ {product.address}</p> : null}
-      </div>
-    </AppLink>
+      )}
+      modeLabel={product.serviceMode === 'online' ? 'Online' : 'In person'}
+      sectionName={product.sectionName}
+      tags={product.tags}
+      title={product.title}
+    />
   );
 }
 
@@ -170,41 +168,24 @@ function BottomNavigation({ site }: { site: PublicSite }) {
     { label: 'FAQ', icon: '?', href: '/#faq', enabled: site.navigation.showFaq },
   ].filter((item) => item.enabled);
 
-  return (
-    <nav
-      className="bottom-nav"
-      aria-label="Primary navigation"
-      style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}
-    >
-      {items.map((item, index) => (
-        <a className={index === 0 ? 'is-active' : undefined} href={item.href} key={item.label}>
-          <span aria-hidden="true">{item.icon}</span>
-          <small>{item.label}</small>
-        </a>
-      ))}
-    </nav>
-  );
+  return <StorefrontBottomNavigation items={items} />;
 }
 
 function SiteShell({ site, children }: { site: PublicSite; children: ReactNode }) {
   return (
     <div className="app-shell">
-      <header className="topbar">
-        <AppLink className="brand-lockup" href="/">
-          <span className="brand-logo">
+      <StorefrontBrandBar
+        LinkComponent={AppLink}
+        locationLabel={site.locationLabel}
+        logo={(
             <ResilientImage
               alt=""
               fallback={site.name.slice(0, 1)}
               src={site.logoUrl}
             />
-          </span>
-          <span>
-            <strong>{site.name}</strong>
-            <small>⌖ {site.locationLabel}</small>
-          </span>
-        </AppLink>
-        <span className="site-language">EN</span>
-      </header>
+        )}
+        siteName={site.name}
+      />
       <main>{children}</main>
       <footer className="site-footer">{site.name}</footer>
       <BottomNavigation site={site} />
@@ -338,14 +319,12 @@ function HomePage({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
   return (
     <SiteShell site={site}>
       <HomepageAnalytics measurementId={site.analytics.ga4MeasurementId} />
-      <section className="hero-panel">
-        <div>
-          <p className="eyebrow">Discover nearby</p>
-          <h1>Find the right service, faster.</h1>
-          <p className="hero-copy">Browse verified listings and connect through the available contact option.</p>
-        </div>
-        <span className="hero-location">⌖ {site.locationLabel}</span>
-      </section>
+      <StorefrontHero
+        description="Browse verified listings and connect through the available contact option."
+        eyebrow="Discover nearby"
+        locationLabel={site.locationLabel}
+        title="Find the right service, faster."
+      />
 
       <section className="content-section" id="services">
         <div className="section-heading">

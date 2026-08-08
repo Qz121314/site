@@ -13,6 +13,7 @@
   "dependencies": {
     "@site/config": "workspace:*",
     "@site/shared": "workspace:*",
+    "@site/storefront-ui": "workspace:*",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
   },
