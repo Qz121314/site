@@ -1,4 +1,6 @@
 import { useMemo, useState, type FormEvent, type KeyboardEvent } from 'react';
+import { adminConfirm } from '../admin-dialog-service';
+import { useAdminDirtySource } from '../admin-unsaved-state';
 import type { AdminCategory } from '../category-management/api';
 import type { AdminConversionGroup } from '../conversion-pool/api';
 import { MarkdownPreview } from '../faq-management/MarkdownPreview';
@@ -74,6 +76,50 @@ function sameName(left: string, right: string): boolean {
   return normalizeName(left).localeCompare(normalizeName(right), undefined, { sensitivity: 'accent' }) === 0;
 }
 
+function formWithoutMedia(input: ProductInput) {
+  const { coverAssetId: _coverAssetId, mediaAssetIds: _mediaAssetIds, ...rest } = input;
+  return rest;
+}
+
+function baselineForm(product: AdminProduct | null, currentSortOrder: number): ReturnType<typeof formWithoutMedia> {
+  if (!product) {
+    return formWithoutMedia({
+      serviceMode: 'offline',
+      title: '',
+      body: '',
+      address: null,
+      categoryId: null,
+      tagIds: [],
+      conversionGroupId: null,
+      coverAssetId: null,
+      mediaAssetIds: [],
+      isFeatured: false,
+      featuredOrder: 0,
+      sortOrder: currentSortOrder,
+      status: 'draft',
+    });
+  }
+  return formWithoutMedia({
+    serviceMode: product.serviceMode,
+    title: product.title,
+    body: product.body,
+    address: product.address,
+    categoryId: product.categoryId,
+    tagIds: product.tagIds,
+    conversionGroupId: product.conversionGroupId,
+    coverAssetId: product.coverAssetId,
+    mediaAssetIds: product.media.map((item) => item.id),
+    isFeatured: product.isFeatured,
+    featuredOrder: product.featuredOrder,
+    sortOrder: product.sortOrder,
+    status: product.status,
+  });
+}
+
+function mediaIds(media: ProductEditorImage[]): string[] {
+  return media.map((item) => item.kind === 'remote' ? item.media.id : item.key);
+}
+
 export function ProductEditorDialog({
   sectionName,
   editingProduct,
@@ -105,6 +151,30 @@ export function ProductEditorDialog({
   const [creatingInline, setCreatingInline] = useState<InlineCreateKind>(null);
   const [inlineError, setInlineError] = useState('');
 
+  const baselineCategoryText = editingProduct?.categoryId
+    ? categories.find((category) => category.id === editingProduct.categoryId)?.name ?? ''
+    : '';
+  const editorFingerprint = JSON.stringify({
+    form: formWithoutMedia(form),
+    media: mediaIds(media),
+    coverKey,
+    categoryText,
+    tagText,
+  });
+  const baselineFingerprint = JSON.stringify({
+    form: baselineForm(editingProduct, form.sortOrder),
+    media: editingProduct?.media.map((item) => item.id) ?? [],
+    coverKey: editingProduct?.coverAssetId ? `remote:${editingProduct.coverAssetId}` : null,
+    categoryText: baselineCategoryText,
+    tagText: '',
+  });
+  const editorDirty = editorFingerprint !== baselineFingerprint;
+  useAdminDirtySource(
+    'product-editor',
+    editingProduct ? `产品：${editingProduct.title}` : '新增产品',
+    editorDirty,
+  );
+
   const matchingGroups = useMemo(
     () => groups.filter((group) => group.mode === expectedConversionMode(form.serviceMode)),
     [form.serviceMode, groups],
@@ -122,6 +192,21 @@ export function ProductEditorDialog({
 
   function patch(patchValue: Partial<ProductInput>) {
     onFormChange({ ...form, ...patchValue });
+  }
+
+  async function requestClose() {
+    if (busy) return;
+    if (editorDirty) {
+      const confirmed = await adminConfirm({
+        eyebrow: '未保存修改',
+        title: '放弃当前产品修改？',
+        message: '当前产品编辑内容尚未保存。关闭后，本次修改会被放弃。',
+        confirmLabel: '放弃修改',
+        danger: true,
+      });
+      if (!confirmed) return;
+    }
+    onClose();
   }
 
   function changeServiceMode(nextMode: ProductServiceMode) {
@@ -235,7 +320,7 @@ export function ProductEditorDialog({
             <p>{sectionName} · 产品内容</p>
             <h3 id="product-editor-title">{editingProduct ? '编辑产品' : '新增产品'}</h3>
           </div>
-          <button type="button" aria-label="关闭" disabled={busy} onClick={onClose}>×</button>
+          <button type="button" aria-label="关闭" disabled={busy} onClick={() => void requestClose()}>×</button>
         </div>
 
         <form className="product-editor-form" onSubmit={onSubmit}>
@@ -497,7 +582,7 @@ export function ProductEditorDialog({
           </div>
 
           <div className="admin-dialog-actions">
-            <button type="button" disabled={busy} onClick={onClose}>取消</button>
+            <button type="button" disabled={busy} onClick={() => void requestClose()}>取消</button>
             <button className="primary-button" type="submit" disabled={busy}>{saveButtonLabel(saveStage, editingProduct)}</button>
           </div>
         </form>
