@@ -272,6 +272,7 @@ function FaqSection({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
   const query = useQuery({
     queryKey: ['storefront-faq', bootstrap.pointer.contentVersion],
     queryFn: ({ signal }) => loadFaqSnapshot(bootstrap, signal),
+    enabled: bootstrap.site.site.navigation.showFaq,
     staleTime: Number.POSITIVE_INFINITY,
   });
 
