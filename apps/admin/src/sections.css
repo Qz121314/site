@@ -1,18 +1,39 @@
+/* Section management is a compact data workbench. Dashboard owns the visible
+ * page title; the semantic heading remains in the DOM for accessibility. */
 .section-management {
   display: grid;
-  gap: 20px;
+  width: 100%;
+  min-height: 0;
+  grid-template-columns: auto minmax(260px, 1fr) max-content;
+  align-content: start;
+  gap: 8px;
 }
 
 .section-management-toolbar,
-.section-filter-bar,
-.selection-toolbar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
+.section-filter-bar {
+  display: contents;
 }
 
-.section-management-toolbar > div > p,
+.section-management-toolbar > div {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.section-management-toolbar > .primary-button {
+  grid-column: 3;
+  grid-row: 1;
+  min-height: 34px;
+  align-self: center;
+  padding: 0 12px;
+}
+
 .admin-dialog-header p {
   margin: 0 0 6px;
   color: var(--muted-text);
@@ -22,25 +43,12 @@
   text-transform: uppercase;
 }
 
-.section-management-toolbar h2,
 .admin-dialog-header h3 {
   margin: 0;
 }
 
-.section-management-toolbar > div > span {
-  display: block;
-  margin-top: 8px;
-  color: var(--muted-text);
-  font-size: 14px;
-}
-
-.section-filter-bar {
-  padding: 14px;
-  border: 1px solid var(--border-color);
-  border-radius: 18px;
-  background: var(--surface-color);
-}
-
+/* Shared status tabs are intentionally generic; page workbenches can tighten
+ * them with a scoped override without changing FAQ or other consumers. */
 .scope-tabs {
   display: flex;
   gap: 8px;
@@ -79,28 +87,86 @@
   color: #fff;
 }
 
-.section-search {
-  display: flex;
+.section-management .scope-tabs {
+  display: inline-flex;
+  grid-column: 1;
+  grid-row: 1;
+  width: fit-content;
   align-items: center;
-  gap: 10px;
-  min-width: 280px;
+  gap: 2px;
+  align-self: center;
+  padding: 3px;
+  border: 1px solid var(--admin-border, #e2e6ec);
+  border-radius: 9px;
+  background: #f1f3f6;
+}
+
+.section-management .scope-tabs button {
+  min-height: 28px;
+  gap: 6px;
+  padding: 0 10px;
+  border-radius: 6px;
+  color: #667085;
+  font-size: 0.71rem;
+  font-weight: 720;
+  line-height: 1;
+}
+
+.section-management .scope-tabs button span {
+  min-width: 18px;
+  padding: 2px 5px;
+  background: rgb(255 255 255 / 72%);
+  color: #667085;
+  font-size: 0.63rem;
+}
+
+.section-management .scope-tabs button.is-active {
+  color: #fff;
+  background: #202632;
+  box-shadow: 0 1px 3px rgb(16 24 40 / 18%);
+}
+
+.section-management .scope-tabs button.is-active span {
+  color: #fff;
+  background: rgb(255 255 255 / 14%);
+}
+
+.section-search {
+  display: block;
+  grid-column: 2;
+  grid-row: 1;
+  width: 100%;
+  min-width: 0;
+  align-self: center;
 }
 
 .section-search span {
-  color: var(--muted-text);
-  font-size: 13px;
+  display: none;
 }
 
 .section-search input {
   width: 100%;
-  padding: 10px 12px;
-  border: 1px solid var(--border-color);
-  border-radius: 11px;
+  min-height: 34px;
+  box-sizing: border-box;
+  padding: 0 10px;
+  border: 1px solid var(--admin-border-strong, #cfd5df);
+  border-radius: 7px;
   background: #fff;
+  outline: 0;
   font: inherit;
+  font-size: 0.77rem;
+}
+
+.section-search input:focus {
+  border-color: #ff9a76;
+  box-shadow: 0 0 0 3px rgb(255 90 31 / 10%);
 }
 
 .selection-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
   padding: 12px 14px;
   border: 1px solid #fecaca;
   border-radius: 14px;
@@ -112,35 +178,65 @@
   font-weight: 700;
 }
 
+.section-management > .notice,
+.section-management > .selection-toolbar,
+.section-management > .section-table-wrap {
+  grid-column: 1 / -1;
+}
+
+.section-management > .selection-toolbar {
+  min-height: 38px;
+  padding: 4px 7px;
+  border-radius: 8px;
+}
+
 .section-table-wrap {
-  overflow: hidden;
-  border: 1px solid var(--border-color);
-  border-radius: 20px;
-  background: var(--surface-color);
+  min-height: 0;
+  overflow: auto;
+  border: 1px solid var(--admin-border, #e2e6ec);
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(16 24 40 / 3%);
+}
+
+.section-table-wrap:has(.section-table-empty) .section-table {
+  display: none;
 }
 
 .section-table {
   width: 100%;
+  min-width: 820px;
   border-collapse: collapse;
 }
 
 .section-table th,
 .section-table td {
-  padding: 15px 14px;
-  border-bottom: 1px solid var(--border-color);
+  padding: 7px 9px;
+  border-bottom: 1px solid #edf0f4;
   text-align: left;
   vertical-align: middle;
 }
 
 .section-table th {
-  color: var(--muted-text);
-  background: #f8fafc;
-  font-size: 12px;
-  letter-spacing: 0.04em;
+  height: 36px;
+  color: #667085;
+  background: #f8f9fb;
+  font-size: 0.65rem;
+  font-weight: 760;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.section-table td {
+  font-size: 0.76rem;
 }
 
 .section-table tbody tr:last-child td {
   border-bottom: 0;
+}
+
+.section-table tbody tr:hover td {
+  background: #fafbfc;
 }
 
 .checkbox-cell {
@@ -153,21 +249,31 @@
   height: 17px;
 }
 
+.section-management .checkbox-cell {
+  width: 36px;
+}
+
+.section-management .checkbox-cell input {
+  width: 16px;
+  height: 16px;
+}
+
 .section-identity {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
 }
 
 .section-icon {
   display: grid;
-  width: 42px;
-  height: 42px;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
   place-items: center;
-  border-radius: 13px;
+  border-radius: 8px;
   background: #eef2ff;
   color: #4338ca;
-  font-size: 21px;
+  font-size: 17px;
 }
 
 .section-identity strong,
@@ -176,9 +282,9 @@
 }
 
 .section-identity small {
-  margin-top: 4px;
+  margin-top: 2px;
   color: var(--muted-text);
-  font-size: 12px;
+  font-size: 0.66rem;
 }
 
 .sort-controls {
@@ -217,6 +323,29 @@
   opacity: 0.4;
 }
 
+.section-management .sort-controls {
+  gap: 6px;
+}
+
+.section-management .sort-controls strong {
+  min-width: 24px;
+  color: #475467;
+  font-size: 0.71rem;
+}
+
+.section-management .sort-controls button {
+  border-color: #dfe4eb;
+  border-radius: 6px;
+  color: #475467;
+  box-shadow: 0 1px 1px rgb(16 24 40 / 3%);
+}
+
+.section-management .sort-controls button:not(:disabled):hover {
+  border-color: #c7ced8;
+  color: #172033;
+  background: #f8fafc;
+}
+
 .status-pill {
   display: inline-flex;
   align-items: center;
@@ -247,11 +376,16 @@ button.status-pill {
   color: #991b1b;
 }
 
+.section-management .status-pill {
+  padding: 5px 8px;
+  font-size: 0.68rem;
+}
+
 .relation-count {
   display: inline-block;
-  margin-right: 8px;
+  margin-right: 6px;
   color: var(--muted-text);
-  font-size: 12px;
+  font-size: 0.68rem;
 }
 
 .actions-cell {
@@ -272,19 +406,63 @@ button.status-pill {
   color: #b91c1c !important;
 }
 
+.section-management .actions-cell {
+  width: 150px;
+}
+
+.section-management .actions-cell button {
+  min-height: 27px;
+  margin-left: 4px;
+  padding: 3px 8px;
+  border: 1px solid #dfe4eb;
+  border-radius: 6px;
+  color: #475467;
+  background: #fff;
+  box-shadow: 0 1px 1px rgb(16 24 40 / 3%);
+  font-size: 0.69rem;
+}
+
+.section-management .actions-cell button:not(:disabled):hover {
+  border-color: #c7ced8;
+  color: #172033;
+  background: #f8fafc;
+}
+
+.section-management .actions-cell .text-danger {
+  border-color: transparent;
+  color: #b42318 !important;
+  background: transparent;
+  box-shadow: none;
+}
+
+.section-management .actions-cell .text-danger:not(:disabled):hover {
+  border-color: #fecdca;
+  color: #912018 !important;
+  background: #fff1f0;
+}
+
 .section-table-empty {
-  padding: 52px 20px;
+  display: grid;
+  min-height: 112px;
+  place-items: center;
+  align-content: center;
+  gap: 4px;
+  padding: 24px 16px;
+  color: #667085;
   text-align: center;
 }
 
 .section-table-empty strong {
   display: block;
-  margin-bottom: 8px;
+  margin: 0;
+  color: #344054;
+  font-size: 0.8rem;
 }
 
 .section-table-empty p {
   margin: 0;
   color: var(--muted-text);
+  font-size: 0.7rem;
 }
 
 .notice-success {
@@ -502,23 +680,39 @@ button.status-pill {
 }
 
 @media (max-width: 900px) {
-  .section-management-toolbar,
-  .section-filter-bar,
+  .section-management {
+    grid-template-columns: 1fr;
+  }
+
+  .section-management .scope-tabs {
+    grid-column: 1;
+    grid-row: 1;
+    width: 100%;
+  }
+
+  .section-management .scope-tabs button {
+    flex: 1;
+    justify-content: center;
+  }
+
+  .section-search {
+    grid-column: 1;
+    grid-row: 2;
+  }
+
+  .section-management-toolbar > .primary-button {
+    grid-column: 1;
+    grid-row: 3;
+    width: 100%;
+  }
+
   .selection-toolbar {
     align-items: stretch;
     flex-direction: column;
   }
 
-  .section-search {
-    min-width: 0;
-  }
-
   .section-table-wrap {
     overflow-x: auto;
-  }
-
-  .section-table {
-    min-width: 860px;
   }
 }
 
@@ -526,6 +720,10 @@ button.status-pill {
   .scope-tabs {
     display: grid;
     grid-template-columns: 1fr 1fr;
+  }
+
+  .section-management .scope-tabs {
+    display: flex;
   }
 
   .icon-picker {
