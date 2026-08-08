@@ -62,6 +62,8 @@ export type PublishResult = {
   publications: PublishModuleResult[];
 };
 
+let publishStatusInFlight: Promise<PublishStatus> | null = null;
+
 function asRecord(value: unknown): Record<string, unknown> | null {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
     ? (value as Record<string, unknown>)
@@ -233,7 +235,15 @@ function parsePublishResult(value: unknown): PublishResult {
 }
 
 export function fetchPublishStatus(): Promise<PublishStatus> {
-  return requestJson('/api/admin/publish/').then(parseStatus);
+  if (publishStatusInFlight) return publishStatusInFlight;
+
+  const request = requestJson('/api/admin/publish/')
+    .then(parseStatus)
+    .finally(() => {
+      if (publishStatusInFlight === request) publishStatusInFlight = null;
+    });
+  publishStatusInFlight = request;
+  return request;
 }
 
 export function publishStorefront(moduleKey = 'all'): Promise<PublishResult> {
