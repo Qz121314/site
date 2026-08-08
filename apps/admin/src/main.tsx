@@ -10,6 +10,7 @@ import './operating-admin.css';
 import './asset-library.css';
 import './media-center.css';
 import './media-picker.css';
+import './media-folders.css';
 import './category-management.css';
 import './conversion-pool.css';
 import './product-management.css';
