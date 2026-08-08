@@ -1,15 +1,15 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AdminApiError } from './api';
 import { AssetTable } from './asset-library/AssetTable';
 import { CleanupAssetDialog } from './asset-library/CleanupAssetDialog';
 import { deleteMediaAssets } from './asset-library/media-delete-api';
+import { fetchMediaLibraryPage } from './asset-library/media-library-page-api';
 import {
   cleanupAssets,
   createMediaFolder,
   deleteMediaFolder,
   fetchAssetPage,
   fetchMediaFolders,
-  fetchMediaLibrary,
   moveMediaAssets,
   renameMediaFolder,
   uploadMediaAsset,
@@ -127,7 +127,11 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
   const [managedAssets, setManagedAssets] = useState<ManagedMediaAsset[]>([]);
   const [folders, setFolders] = useState<MediaFolder[]>([]);
   const [mediaLoading, setMediaLoading] = useState(true);
+  const [mediaLoadingMore, setMediaLoadingMore] = useState(false);
+  const [mediaNextCursor, setMediaNextCursor] = useState<string | null>(null);
+  const [mediaTotal, setMediaTotal] = useState(0);
   const [mediaQuery, setMediaQuery] = useState('');
+  const [debouncedMediaQuery, setDebouncedMediaQuery] = useState('');
   const [mediaKind, setMediaKind] = useState<MediaKind | ''>('');
   const [mediaRole, setMediaRole] = useState<MediaRole | ''>('');
   const [folderFilter, setFolderFilter] = useState<FolderFilter>('all');
@@ -141,6 +145,7 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
   const [selectedMediaIds, setSelectedMediaIds] = useState<Set<string>>(new Set());
   const [mediaError, setMediaError] = useState<string | null>(null);
   const [mediaSuccess, setMediaSuccess] = useState<string | null>(null);
+  const mediaRequestVersionRef = useRef(0);
 
   const [assets, setAssets] = useState<AdminAsset[]>([]);
   const [mediaBaseUrl, setMediaBaseUrl] = useState<string | null>(null);
@@ -155,27 +160,97 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
   const [cleanupError, setCleanupError] = useState<string | null>(null);
   const [cleanupSuccess, setCleanupSuccess] = useState<string | null>(null);
 
-  const loadMedia = useCallback(async () => {
-    setMediaLoading(true);
-    setMediaError(null);
+  useEffect(() => {
+    const timeout = window.setTimeout(() => setDebouncedMediaQuery(mediaQuery.trim()), 220);
+    return () => window.clearTimeout(timeout);
+  }, [mediaQuery]);
+
+  const loadFolders = useCallback(async () => {
     try {
-      const [nextAssets, nextFolders] = await Promise.all([fetchMediaLibrary(), fetchMediaFolders()]);
-      setManagedAssets(nextAssets);
-      setFolders(nextFolders);
+      setFolders(await fetchMediaFolders());
     } catch (error) {
       if (isSessionError(error)) {
         onSessionExpired();
         return;
       }
-      setMediaError(error instanceof Error ? error.message : '素材中心加载失败。');
-    } finally {
-      setMediaLoading(false);
+      setMediaError(error instanceof Error ? error.message : '素材文件夹加载失败。');
     }
   }, [onSessionExpired]);
+
+  const loadMedia = useCallback(async () => {
+    const version = mediaRequestVersionRef.current + 1;
+    mediaRequestVersionRef.current = version;
+    setMediaLoading(true);
+    setMediaLoadingMore(false);
+    setMediaError(null);
+    setMediaNextCursor(null);
+    try {
+      const page = await fetchMediaLibraryPage({
+        kinds: mediaKind ? [mediaKind] : undefined,
+        role: mediaRole,
+        folder: folderFilter,
+        query: debouncedMediaQuery,
+        limit: 80,
+      });
+      if (mediaRequestVersionRef.current !== version) return;
+      setManagedAssets(page.assets);
+      setMediaNextCursor(page.nextCursor);
+      setMediaTotal(page.total);
+    } catch (error) {
+      if (mediaRequestVersionRef.current !== version) return;
+      if (isSessionError(error)) {
+        onSessionExpired();
+        return;
+      }
+      setManagedAssets([]);
+      setMediaTotal(0);
+      setMediaError(error instanceof Error ? error.message : '素材中心加载失败。');
+    } finally {
+      if (mediaRequestVersionRef.current === version) setMediaLoading(false);
+    }
+  }, [debouncedMediaQuery, folderFilter, mediaKind, mediaRole, onSessionExpired]);
+
+  useEffect(() => {
+    void loadFolders();
+  }, [loadFolders]);
 
   useEffect(() => {
     void loadMedia();
   }, [loadMedia]);
+
+  async function loadMoreMedia() {
+    if (!mediaNextCursor || mediaLoading || mediaLoadingMore) return;
+    const version = mediaRequestVersionRef.current;
+    setMediaLoadingMore(true);
+    setMediaError(null);
+    try {
+      const page = await fetchMediaLibraryPage({
+        kinds: mediaKind ? [mediaKind] : undefined,
+        role: mediaRole,
+        folder: folderFilter,
+        query: debouncedMediaQuery,
+        cursor: mediaNextCursor,
+        limit: 80,
+      });
+      if (mediaRequestVersionRef.current !== version) return;
+      setManagedAssets((current) => {
+        const byId = new Map(current.map((asset) => [asset.id, asset]));
+        page.assets.forEach((asset) => byId.set(asset.id, asset));
+        return [...byId.values()];
+      });
+      setMediaNextCursor(page.nextCursor);
+      setMediaTotal(page.total);
+    } catch (error) {
+      if (mediaRequestVersionRef.current !== version) return;
+      if (isSessionError(error)) {
+        onSessionExpired();
+        return;
+      }
+      setMediaError(error instanceof Error ? error.message : '继续加载素材失败。');
+    } finally {
+      if (mediaRequestVersionRef.current === version) setMediaLoadingMore(false);
+    }
+  }
 
   const scan = useCallback(async () => {
     setCleanupLoading(true);
@@ -224,40 +299,11 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
     setSelectedMediaIds(new Set());
   }, [folderFilter, mediaKind, mediaRole]);
 
-  const filteredManagedAssets = useMemo(() => {
-    const keyword = mediaQuery.trim().toLowerCase();
-    return managedAssets.filter((asset) => {
-      if (mediaKind && asset.mediaKind !== mediaKind) return false;
-      if (mediaRole && !asset.roles.includes(mediaRole)) return false;
-      if (folderFilter === 'unfiled' && asset.folderId !== null) return false;
-      if (folderFilter !== 'all' && folderFilter !== 'unfiled' && asset.folderId !== folderFilter) return false;
-      if (!keyword) return true;
-      return (
-        asset.fileName.toLowerCase().includes(keyword) ||
-        asset.objectKey.toLowerCase().includes(keyword) ||
-        asset.mimeType.toLowerCase().includes(keyword) ||
-        (asset.folderName?.toLowerCase().includes(keyword) ?? false) ||
-        asset.roles.some((role) => roleLabel(role).toLowerCase().includes(keyword))
-      );
-    });
-  }, [folderFilter, managedAssets, mediaKind, mediaQuery, mediaRole]);
-
   const allManagedSelected =
-    filteredManagedAssets.length > 0 && filteredManagedAssets.every((asset) => selectedMediaIds.has(asset.id));
+    managedAssets.length > 0 && managedAssets.every((asset) => selectedMediaIds.has(asset.id));
   const selectedManagedAssets = useMemo(
     () => managedAssets.filter((asset) => selectedMediaIds.has(asset.id)),
     [managedAssets, selectedMediaIds],
-  );
-
-  const mediaStats = useMemo(
-    () => ({
-      total: managedAssets.length,
-      images: managedAssets.filter((asset) => asset.mediaKind === 'image').length,
-      animated: managedAssets.filter((asset) => asset.mediaKind === 'animated_image').length,
-      videos: managedAssets.filter((asset) => asset.mediaKind === 'video').length,
-      bytes: managedAssets.reduce((total, asset) => total + asset.byteSize, 0),
-    }),
-    [managedAssets],
   );
 
   const filteredAssets = useMemo(() => {
@@ -309,12 +355,16 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
   function toggleAllMedia() {
     setSelectedMediaIds((current) => {
       const next = new Set(current);
-      filteredManagedAssets.forEach((asset) => {
+      managedAssets.forEach((asset) => {
         if (allManagedSelected) next.delete(asset.id);
         else next.add(asset.id);
       });
       return next;
     });
+  }
+
+  async function refreshMediaAndFolders() {
+    await Promise.all([loadMedia(), loadFolders()]);
   }
 
   async function uploadFiles(files: File[], folderId: string | null) {
@@ -344,7 +394,7 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
         if (result.reused) reused += 1;
         else uploaded += 1;
       }
-      await loadMedia();
+      await refreshMediaAndFolders();
       const skipped = files.length - supported.length;
       setMediaSuccess(`素材处理完成：新增 ${uploaded} 个${reused > 0 ? `，复用 ${reused} 个` : ''}${skipped > 0 ? `，忽略不支持文件 ${skipped} 个` : ''}。`);
     } catch (error) {
@@ -353,7 +403,7 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
         return;
       }
       setMediaError(error instanceof Error ? error.message : '素材上传失败。');
-      await loadMedia();
+      await refreshMediaAndFolders();
     } finally {
       setUploading(false);
     }
@@ -387,7 +437,7 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
     try {
       const result = await createMediaFolder(name);
       setNewFolderName('');
-      await loadMedia();
+      await loadFolders();
       setFolderFilter(result.folder.id);
       setUploadFolderId(result.folder.id);
       setMediaSuccess(result.reused ? `已切换到已有文件夹“${result.folder.name}”。` : `已创建文件夹“${result.folder.name}”。`);
@@ -406,7 +456,7 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
     setFolderWorking(true);
     try {
       const updated = await renameMediaFolder(activeFolder.id, name);
-      await loadMedia();
+      await refreshMediaAndFolders();
       setMediaSuccess(`文件夹已重命名为“${updated.name}”。`);
     } catch (error) {
       if (isSessionError(error)) onSessionExpired();
@@ -424,7 +474,7 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
       await deleteMediaFolder(activeFolder.id);
       setFolderFilter('unfiled');
       if (uploadFolderId === activeFolder.id) setUploadFolderId('');
-      await loadMedia();
+      await loadFolders();
       setMediaSuccess('文件夹已删除，原有素材已移动到“未分组”。');
     } catch (error) {
       if (isSessionError(error)) onSessionExpired();
@@ -442,7 +492,7 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
     try {
       const movedCount = await moveMediaAssets(selectedManagedAssets.map((asset) => asset.id), targetId);
       setSelectedMediaIds(new Set());
-      await loadMedia();
+      await refreshMediaAndFolders();
       const target = targetId ? folders.find((folder) => folder.id === targetId)?.name ?? '目标文件夹' : '未分组';
       setMediaSuccess(`已将 ${movedCount} 个素材移动到“${target}”。`);
     } catch (error) {
@@ -461,17 +511,15 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
     setMediaSuccess(null);
     try {
       const result = await deleteMediaAssets(selectedManagedAssets.map((asset) => asset.id));
-      const deleted = new Set(result.deletedIds);
-      setManagedAssets((current) => current.filter((asset) => !deleted.has(asset.id)));
       setSelectedMediaIds(new Set());
-      await loadMedia();
+      await refreshMediaAndFolders();
       setMediaSuccess(`已删除 ${result.deletedCount} 个素材，释放 ${formatBytes(result.freedBytes)}。`);
     } catch (error) {
       if (isSessionError(error)) onSessionExpired();
       else {
         setSelectedMediaIds(new Set());
         setMediaError(error instanceof Error ? error.message : '素材删除失败。');
-        await loadMedia();
+        await refreshMediaAndFolders();
       }
     } finally {
       setDeletingMedia(false);
@@ -600,18 +648,11 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
             <small>图片/GIF ≤ 20 MB；MP4/WebM ≤ 60 MB。文件夹上传按顶层文件夹自动分组，子目录不会额外创建多级树。</small>
           </div>
 
-          <div className="asset-summary-grid media-summary-grid">
-            <article><span>全部素材</span><strong>{mediaStats.total}</strong><small>{formatBytes(mediaStats.bytes)}</small></article>
-            <article><span>素材文件夹</span><strong>{folders.length}</strong><small>另有未分组素材</small></article>
-            <article><span>GIF / 动图</span><strong>{mediaStats.animated}</strong><small>保留原始动画</small></article>
-            <article><span>视频</span><strong>{mediaStats.videos}</strong><small>MP4 / WebM</small></article>
-          </div>
-
           {mediaError ? <p className="inline-status is-error" role="alert">{mediaError}</p> : null}
           {mediaSuccess ? <p className="inline-status is-success" role="status">{mediaSuccess}</p> : null}
 
           <div className="media-center-toolbar media-center-toolbar-v2">
-            <input type="search" value={mediaQuery} placeholder="搜索文件名、文件夹、格式或用途" onChange={(event) => setMediaQuery(event.target.value)} />
+            <input type="search" value={mediaQuery} placeholder="搜索文件名、文件夹或格式" onChange={(event) => setMediaQuery(event.target.value)} />
             <select value={folderFilter} onChange={(event) => setFolderFilter(event.target.value)}>
               <option value="all">全部文件夹</option>
               <option value="unfiled">未分组</option>
@@ -641,49 +682,58 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
 
           <div className="media-center-select-all">
             <label>
-              <input type="checkbox" checked={allManagedSelected} disabled={filteredManagedAssets.length === 0 || deletingMedia} onChange={toggleAllMedia} />
-              <span>全选当前筛选结果</span>
+              <input type="checkbox" checked={allManagedSelected} disabled={managedAssets.length === 0 || deletingMedia} onChange={toggleAllMedia} />
+              <span>全选已加载素材</span>
             </label>
-            <span>{filteredManagedAssets.length} 个结果</span>
+            <span>{mediaTotal} 个结果{managedAssets.length < mediaTotal ? ` · 已加载 ${managedAssets.length}` : ''}</span>
           </div>
 
           {mediaLoading ? (
             <div className="media-center-empty">正在读取素材…</div>
-          ) : filteredManagedAssets.length > 0 ? (
-            <div className="media-center-grid">
-              {filteredManagedAssets.map((asset) => {
-                const duration = formatDuration(asset.durationMs);
-                return (
-                  <article className={`media-center-card${selectedMediaIds.has(asset.id) ? ' is-selected' : ''}`} key={asset.id}>
-                    <label className="media-center-card-select">
-                      <input type="checkbox" checked={selectedMediaIds.has(asset.id)} disabled={deletingMedia} onChange={() => toggleMedia(asset.id)} />
-                      <span className="sr-only">选择 {asset.fileName}</span>
-                    </label>
-                    <div className="media-center-preview">
-                      {asset.publicUrl ? (
-                        asset.mediaKind === 'video' ? (
-                          <video src={asset.publicUrl} controls muted playsInline preload="metadata" />
-                        ) : (
-                          <img src={asset.publicUrl} alt="" loading="lazy" />
-                        )
-                      ) : <span>未配置媒体域名</span>}
-                      <b>{kindLabel(asset.mediaKind)}</b>
-                    </div>
-                    <div className="media-center-card-body">
-                      <strong title={asset.fileName}>{asset.fileName}</strong>
-                      <small>{asset.folderName ? `📁 ${asset.folderName} · ` : '未分组 · '}{asset.width && asset.height ? `${asset.width} × ${asset.height}` : '尺寸未知'}{duration ? ` · ${duration}` : ''} · {formatBytes(asset.byteSize)}</small>
-                      <div className="media-center-role-list">
-                        {(asset.roles.length > 0 ? asset.roles : ['general' as MediaRole]).map((role) => <span key={role}>{roleLabel(role)}</span>)}
+          ) : managedAssets.length > 0 ? (
+            <>
+              <div className="media-center-grid">
+                {managedAssets.map((asset) => {
+                  const duration = formatDuration(asset.durationMs);
+                  return (
+                    <article className={`media-center-card${selectedMediaIds.has(asset.id) ? ' is-selected' : ''}`} key={asset.id}>
+                      <label className="media-center-card-select">
+                        <input type="checkbox" checked={selectedMediaIds.has(asset.id)} disabled={deletingMedia} onChange={() => toggleMedia(asset.id)} />
+                        <span className="sr-only">选择 {asset.fileName}</span>
+                      </label>
+                      <div className="media-center-preview">
+                        {asset.publicUrl ? (
+                          asset.mediaKind === 'video' ? (
+                            <video src={asset.publicUrl} controls muted playsInline preload="metadata" />
+                          ) : (
+                            <img src={asset.publicUrl} alt="" loading="lazy" />
+                          )
+                        ) : <span>未配置媒体域名</span>}
+                        <b>{kindLabel(asset.mediaKind)}</b>
                       </div>
-                    </div>
-                    <div className="media-center-card-actions">
-                      {asset.publicUrl ? <button type="button" onClick={() => void navigator.clipboard.writeText(asset.publicUrl ?? '')}>复制链接</button> : null}
-                      <button type="button" onClick={() => setSelectedMediaIds(new Set([asset.id]))}>选择</button>
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
+                      <div className="media-center-card-body">
+                        <strong title={asset.fileName}>{asset.fileName}</strong>
+                        <small>{asset.folderName ? `📁 ${asset.folderName} · ` : '未分组 · '}{asset.width && asset.height ? `${asset.width} × ${asset.height}` : '尺寸未知'}{duration ? ` · ${duration}` : ''} · {formatBytes(asset.byteSize)}</small>
+                        <div className="media-center-role-list">
+                          {(asset.roles.length > 0 ? asset.roles : ['general' as MediaRole]).map((role) => <span key={role}>{roleLabel(role)}</span>)}
+                        </div>
+                      </div>
+                      <div className="media-center-card-actions">
+                        {asset.publicUrl ? <button type="button" onClick={() => void navigator.clipboard.writeText(asset.publicUrl ?? '')}>复制链接</button> : null}
+                        <button type="button" onClick={() => setSelectedMediaIds(new Set([asset.id]))}>选择</button>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+              {mediaNextCursor ? (
+                <div className="media-center-load-more">
+                  <button type="button" className="secondary-button" disabled={mediaLoadingMore} onClick={() => void loadMoreMedia()}>
+                    {mediaLoadingMore ? '正在加载…' : `加载更多（${managedAssets.length} / ${mediaTotal}）`}
+                  </button>
+                </div>
+              ) : null}
+            </>
           ) : (
             <div className="media-center-empty"><strong>没有匹配的素材</strong><p>调整文件夹或筛选条件，或者上传新的素材。</p></div>
           )}
