@@ -197,13 +197,11 @@ select:disabled {
 .conversion-filter-bar,
 .product-management-toolbar,
 .product-filter-bar,
-.faq-search,
 .section-table-wrap,
 .category-table-wrap,
 .conversion-table-wrap,
 .product-table-wrap,
-.asset-table-wrap,
-.faq-card {
+.asset-table-wrap {
   border-color: var(--border-color);
   background: var(--surface-color);
   box-shadow: var(--shadow-card);
@@ -219,7 +217,6 @@ select:disabled {
 .category-management,
 .conversion-pool,
 .product-management,
-.faq-management,
 .asset-library-page,
 .settings-form {
   gap: 16px;
@@ -269,7 +266,6 @@ select:disabled {
 .category-filter-bar,
 .conversion-filter-bar,
 .product-filter-bar,
-.faq-search,
 .asset-toolbar {
   min-height: 62px;
   padding: 12px;
@@ -278,7 +274,6 @@ select:disabled {
 
 .scope-tabs,
 .asset-filter-group,
-.faq-editor-tabs,
 .product-editor-tabs {
   gap: 3px;
   padding: 3px;
@@ -289,7 +284,6 @@ select:disabled {
 
 .scope-tabs button,
 .asset-filter-group button,
-.faq-editor-tabs button,
 .product-editor-tabs button {
   min-height: 34px;
   padding: 0 11px;
@@ -306,7 +300,6 @@ select:disabled {
   box-shadow: 0 3px 9px rgb(16 24 40 / 12%);
 }
 
-.faq-editor-tabs button.is-active,
 .product-editor-tabs button.is-active {
   color: var(--heading-color);
   background: #fff;
@@ -322,7 +315,6 @@ select:disabled {
 .section-search span,
 .category-search span,
 .conversion-search span,
-.faq-search span,
 .product-search span,
 .product-status-filter span {
   color: #475467;
@@ -333,14 +325,11 @@ select:disabled {
 .section-search input,
 .category-search input,
 .conversion-search input,
-.faq-search input,
 .asset-toolbar > input,
 .field-group input,
 .field-group textarea,
 .section-editor-form input[type='text'],
 .section-editor-form input[type='number'],
-.faq-editor-form input[type='text'],
-.faq-editor-form textarea,
 .conversion-editor-form input,
 .conversion-editor-form textarea,
 .product-search input,
@@ -361,13 +350,10 @@ select:disabled {
 .section-search input:focus,
 .category-search input:focus,
 .conversion-search input:focus,
-.faq-search input:focus,
 .asset-toolbar > input:focus,
 .field-group input:focus,
 .field-group textarea:focus,
 .section-editor-form input:focus,
-.faq-editor-form input:focus,
-.faq-editor-form textarea:focus,
 .conversion-editor-form input:focus,
 .conversion-editor-form textarea:focus,
 .product-search input:focus,
@@ -450,8 +436,7 @@ select:disabled {
   height: 16px;
 }
 
-.actions-cell button,
-.faq-card-actions button {
+.actions-cell button {
   margin-left: 8px;
   padding: 6px 8px;
   border-radius: 8px;
@@ -462,14 +447,12 @@ select:disabled {
     background 120ms ease;
 }
 
-.actions-cell button:hover,
-.faq-card-actions button:hover {
+.actions-cell button:hover {
   color: var(--heading-color);
   background: var(--surface-muted);
 }
 
-.actions-cell .text-danger:hover,
-.faq-card-actions .text-danger:hover {
+.actions-cell .text-danger:hover {
   color: var(--danger) !important;
   background: var(--danger-soft);
 }
@@ -589,7 +572,6 @@ select:disabled {
 .field-group > span,
 .section-editor-form label > span,
 .section-editor-form legend,
-.faq-editor-form label > span,
 .conversion-editor-form label > span,
 .conversion-editor-form legend,
 .product-field > span,
@@ -602,7 +584,6 @@ select:disabled {
 
 .field-group small,
 .section-editor-form label > small,
-.faq-body-label small,
 .conversion-editor-form label > small,
 .conversion-editor-form fieldset > small,
 .product-field small,
@@ -647,32 +628,6 @@ select:disabled {
 .section-icon-large-preview {
   border-color: var(--border-strong);
   background: #fff;
-}
-
-/* FAQ */
-.faq-list {
-  gap: 10px;
-}
-
-.faq-card {
-  padding: 17px 18px;
-  border-radius: 14px;
-}
-
-.faq-card:hover {
-  border-color: var(--border-strong);
-  box-shadow: 0 8px 28px rgb(16 24 40 / 7%);
-}
-
-.faq-card-content h3 {
-  color: var(--heading-color);
-  font-size: 0.98rem;
-}
-
-.faq-card-content p {
-  color: #475467;
-  font-size: 0.86rem;
-  line-height: 1.65;
 }
 
 /* Conversion panel */
@@ -782,7 +737,6 @@ select:disabled {
 }
 
 .section-editor-form,
-.faq-editor-form,
 .conversion-editor-form {
   gap: 17px;
   margin-top: 19px;
@@ -803,8 +757,7 @@ select:disabled {
 .category-table-empty,
 .conversion-empty,
 .product-empty-state,
-.asset-empty-state,
-.faq-empty-state {
+.asset-empty-state {
   min-height: 190px;
   padding: 42px 20px;
   border-color: var(--border-strong);
@@ -815,8 +768,7 @@ select:disabled {
 .section-table-empty strong,
 .category-table-empty strong,
 .conversion-empty strong,
-.product-empty-state strong,
-.faq-empty-state strong {
+.product-empty-state strong {
   color: var(--heading-color);
   font-size: 0.98rem;
 }
@@ -897,7 +849,6 @@ select:disabled {
   .category-filter-bar,
   .conversion-filter-bar,
   .product-filter-bar,
-  .faq-search,
   .asset-toolbar,
   .selection-toolbar {
     align-items: stretch;
@@ -907,7 +858,6 @@ select:disabled {
   .section-search,
   .category-search,
   .conversion-search,
-  .faq-search input,
   .asset-toolbar > input {
     width: 100%;
     min-width: 0;
@@ -946,15 +896,6 @@ select:disabled {
     bottom: -18px;
     margin: 18px -18px -18px;
     padding: 12px 18px calc(12px + env(safe-area-inset-bottom));
-  }
-
-  .faq-card {
-    padding: 15px;
-  }
-
-  .faq-card-actions {
-    width: 100%;
-    justify-content: flex-end;
   }
 
   .product-media-preview {
