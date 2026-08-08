@@ -213,11 +213,23 @@ jobs:
           printf '%s' "$health" | grep -F '"environment":"production"'
           printf '%s' "$health" | grep -F '"publicLanguage":"en"'
 
-          curl --fail --silent --show-error -D /tmp/security.headers -o /dev/null "$BASE_URL/"
-          grep -Eqi '^content-security-policy: .*frame-ancestors '\''none'\''' /tmp/security.headers
-          grep -Eqi '^x-content-type-options: nosniff' /tmp/security.headers
-          grep -Eqi '^x-frame-options: DENY' /tmp/security.headers
-          grep -Eqi '^referrer-policy: strict-origin-when-cross-origin' /tmp/security.headers
+          security_headers_ready=false
+          for attempt in 1 2 3 4 5; do
+            curl --fail --silent --show-error -D /tmp/security.headers -o /dev/null "$BASE_URL/"
+            if grep -Eqi '^content-security-policy: .*frame-ancestors '\''none'\''' /tmp/security.headers \
+              && grep -Eqi '^x-content-type-options: nosniff' /tmp/security.headers \
+              && grep -Eqi '^x-frame-options: DENY' /tmp/security.headers \
+              && grep -Eqi '^referrer-policy: strict-origin-when-cross-origin' /tmp/security.headers; then
+              security_headers_ready=true
+              break
+            fi
+            sleep 3
+          done
+          if [[ "$security_headers_ready" != true ]]; then
+            echo 'Security headers did not propagate before the smoke-test deadline.'
+            cat /tmp/security.headers
+            exit 1
+          fi
 
           content_config="$(curl --fail --silent --show-error "$BASE_URL/api/public/storefront/content-origin")"
           printf '%s' "$content_config" | BASE_URL="$BASE_URL" node -e '
