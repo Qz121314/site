@@ -554,7 +554,8 @@ R2 Custom Domain
 ```text
 /                        English Storefront
 /sections/:slug/         分区深链接
-/products/:slug/         产品深链接
+/sections/:sectionSlug/products/:productSlug/  产品规范深链接
+/products/:id-or-unique-slug/                  兼容旧产品深链接
 /admin/*                  中文管理后台
 /api/*                    Worker API
 /go/:productId            实时转化跳转
