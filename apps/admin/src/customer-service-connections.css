@@ -141,9 +141,7 @@
   font-weight: 700;
 }
 
-.customer-service-editor-form input,
-.customer-service-editor-form select,
-.customer-service-editor-form textarea {
+.customer-service-editor-form input {
   box-sizing: border-box;
   width: 100%;
   min-height: 36px;
@@ -153,12 +151,6 @@
   background: #fff;
   color: var(--admin-text, #172033);
   font-size: 0.8rem;
-}
-
-.customer-service-editor-form textarea {
-  min-height: 88px;
-  padding-block: 8px;
-  resize: vertical;
 }
 
 .customer-service-editor-wide {
