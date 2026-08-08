@@ -53,6 +53,15 @@ export type MediaRole =
   | 'background'
   | 'content';
 
+export type MediaFolder = {
+  id: string;
+  name: string;
+  sortOrder: number;
+  assetCount: number;
+  createdAt: string;
+  updatedAt: string;
+};
+
 export type ManagedMediaAsset = {
   id: string;
   objectKey: string;
@@ -63,6 +72,8 @@ export type ManagedMediaAsset = {
   width: number | null;
   height: number | null;
   durationMs: number | null;
+  folderId: string | null;
+  folderName: string | null;
   roles: MediaRole[];
   publicUrl: string | null;
   createdAt: string;
@@ -241,6 +252,29 @@ function parseMediaRole(value: unknown): MediaRole {
   throw new AdminApiError(500, 'INVALID_RESPONSE', '素材用途返回数据无效。');
 }
 
+function parseMediaFolder(value: unknown): MediaFolder {
+  const folder = asRecord(value);
+  if (
+    !folder ||
+    typeof folder.id !== 'string' ||
+    typeof folder.name !== 'string' ||
+    typeof folder.sortOrder !== 'number' ||
+    typeof folder.assetCount !== 'number' ||
+    typeof folder.createdAt !== 'string' ||
+    typeof folder.updatedAt !== 'string'
+  ) {
+    throw new AdminApiError(500, 'INVALID_RESPONSE', '素材文件夹返回数据无效。');
+  }
+  return {
+    id: folder.id,
+    name: folder.name,
+    sortOrder: folder.sortOrder,
+    assetCount: folder.assetCount,
+    createdAt: folder.createdAt,
+    updatedAt: folder.updatedAt,
+  };
+}
+
 function parseManagedMedia(value: unknown): ManagedMediaAsset {
   const media = asRecord(value);
   if (
@@ -254,6 +288,8 @@ function parseManagedMedia(value: unknown): ManagedMediaAsset {
     (typeof media.width !== 'number' && media.width !== null) ||
     (typeof media.height !== 'number' && media.height !== null) ||
     (typeof media.durationMs !== 'number' && media.durationMs !== null) ||
+    (typeof media.folderId !== 'string' && media.folderId !== null) ||
+    (typeof media.folderName !== 'string' && media.folderName !== null) ||
     !Array.isArray(media.roles) ||
     (typeof media.publicUrl !== 'string' && media.publicUrl !== null) ||
     typeof media.createdAt !== 'string' ||
@@ -271,6 +307,8 @@ function parseManagedMedia(value: unknown): ManagedMediaAsset {
     width: media.width,
     height: media.height,
     durationMs: media.durationMs,
+    folderId: media.folderId,
+    folderName: media.folderName,
     roles: media.roles.map(parseMediaRole),
     publicUrl: media.publicUrl,
     createdAt: media.createdAt,
@@ -280,10 +318,7 @@ function parseManagedMedia(value: unknown): ManagedMediaAsset {
 
 export function fetchAssetPage(cursor?: string): Promise<AssetScanPage> {
   const query = new URLSearchParams({ limit: '500' });
-  if (cursor) {
-    query.set('cursor', cursor);
-  }
-
+  if (cursor) query.set('cursor', cursor);
   return requestJson(`/api/admin/assets/?${query.toString()}`).then(parseScanPage);
 }
 
@@ -315,9 +350,59 @@ export async function fetchMediaLibrary(filters?: {
   return assets.map(parseManagedMedia);
 }
 
+export async function fetchMediaFolders(): Promise<MediaFolder[]> {
+  const body = await requestJson('/api/admin/assets/folders');
+  const folders = asRecord(body)?.folders;
+  if (!Array.isArray(folders)) {
+    throw new AdminApiError(500, 'INVALID_RESPONSE', '素材文件夹列表返回数据无效。');
+  }
+  return folders.map(parseMediaFolder);
+}
+
+export async function createMediaFolder(name: string): Promise<{ folder: MediaFolder; reused: boolean }> {
+  const body = asRecord(await requestJson('/api/admin/assets/folders', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'x-admin-request': '1' },
+    body: JSON.stringify({ name }),
+  }));
+  return {
+    folder: parseMediaFolder(body?.folder),
+    reused: body?.reused === true,
+  };
+}
+
+export async function renameMediaFolder(id: string, name: string): Promise<MediaFolder> {
+  const body = asRecord(await requestJson(`/api/admin/assets/folders/${encodeURIComponent(id)}`, {
+    method: 'PUT',
+    headers: { 'content-type': 'application/json', 'x-admin-request': '1' },
+    body: JSON.stringify({ name }),
+  }));
+  return parseMediaFolder(body?.folder);
+}
+
+export async function deleteMediaFolder(id: string): Promise<void> {
+  await requestJson(`/api/admin/assets/folders/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+    headers: { 'x-admin-request': '1' },
+  });
+}
+
+export async function moveMediaAssets(ids: string[], folderId: string | null): Promise<number> {
+  const body = asRecord(await requestJson('/api/admin/assets/folders/move', {
+    method: 'POST',
+    headers: { 'content-type': 'application/json', 'x-admin-request': '1' },
+    body: JSON.stringify({ ids, folderId }),
+  }));
+  if (typeof body?.movedCount !== 'number') {
+    throw new AdminApiError(500, 'INVALID_RESPONSE', '素材移动返回数据无效。');
+  }
+  return body.movedCount;
+}
+
 export async function uploadMediaAsset(input: {
   file: File;
   role: MediaRole;
+  folderId?: string | null | undefined;
   width?: number | null | undefined;
   height?: number | null | undefined;
   durationMs?: number | null | undefined;
@@ -325,6 +410,7 @@ export async function uploadMediaAsset(input: {
   const formData = new FormData();
   formData.set('file', input.file);
   formData.set('role', input.role);
+  if (input.folderId) formData.set('folderId', input.folderId);
   if (input.width !== undefined && input.width !== null) formData.set('width', String(input.width));
   if (input.height !== undefined && input.height !== null) formData.set('height', String(input.height));
   if (input.durationMs !== undefined && input.durationMs !== null) {
