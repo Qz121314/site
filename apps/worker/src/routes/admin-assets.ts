@@ -20,6 +20,9 @@ import {
   type MediaKind,
 } from '../media/media-center';
 import { listMediaLibraryPage } from '../media/media-library-page';
+import {
+  validateStaticImageUploadContract,
+} from '../media/static-image-upload-contract';
 import type { AppEnvironment } from '../types';
 import {
   hasAdminRequestHeader,
@@ -34,9 +37,6 @@ const MAX_CLEANUP_SIZE = 100;
 const IDEMPOTENCY_HEADER = 'x-idempotency-key';
 const CLEANUP_SCOPE = 'assets.cleanup';
 const MEDIA_KINDS = new Set<MediaKind>(['image', 'animated_image', 'video']);
-const STATIC_IMAGE_SOURCE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
-const STATIC_IMAGE_OUTPUT_TYPES = new Set(['image/jpeg', 'image/webp']);
-const STATIC_IMAGE_COMPRESSION_PROFILE = 'browser-static-image-v1';
 
 function parsePageSize(value: string | undefined): number {
   if (!value) {
@@ -144,18 +144,18 @@ adminAssetRoutes.post('/upload', async (context) => {
   const compressionProfile = formData.get('compressionProfile');
   const rawSourceByteSize = formData.get('sourceByteSize');
   const sourceByteSize = typeof rawSourceByteSize === 'string' ? Number(rawSourceByteSize) : null;
-  if (uploadFile instanceof File && STATIC_IMAGE_SOURCE_TYPES.has(uploadFile.type.toLowerCase())) {
-    if (
-      compressionProfile !== STATIC_IMAGE_COMPRESSION_PROFILE ||
-      !STATIC_IMAGE_OUTPUT_TYPES.has(uploadFile.type.toLowerCase()) ||
-      !Number.isInteger(sourceByteSize) ||
-      (sourceByteSize ?? 0) <= 0
-    ) {
+  if (uploadFile instanceof File) {
+    const contractError = validateStaticImageUploadContract({
+      mimeType: uploadFile.type,
+      compressionProfile: typeof compressionProfile === 'string' ? compressionProfile : null,
+      sourceByteSize,
+    });
+    if (contractError) {
       return apiError(
         context,
         400,
-        'MEDIA_COMPRESSION_REQUIRED',
-        '静态图片必须先在浏览器压缩，原图不会上传到 R2。',
+        contractError.code,
+        contractError.message,
         { field: 'file' },
       );
     }
