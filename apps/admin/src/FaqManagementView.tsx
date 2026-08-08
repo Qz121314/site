@@ -74,7 +74,10 @@ export function FaqManagementView({ onSessionExpired }: FaqManagementViewProps) 
     }
   }, [handleError]);
 
-  useEffect(() => { void loadActive(); }, [loadActive]);
+  useEffect(() => {
+    void loadActive();
+  }, [loadActive]);
+
   useEffect(() => {
     setSelectedIds(new Set());
     setErrorMessage('');
@@ -88,20 +91,21 @@ export function FaqManagementView({ onSessionExpired }: FaqManagementViewProps) 
       ? sourceFaqs.filter((faq) => `${faq.title} ${faq.body}`.toLowerCase().includes(keyword))
       : sourceFaqs;
   }, [search, sourceFaqs]);
-
   const allVisibleSelected = filteredFaqs.length > 0 && filteredFaqs.every((faq) => selectedIds.has(faq.id));
+  const canReorder = scope === 'active' && search.trim().length === 0;
 
   async function changeScope(nextScope: FaqScope) {
+    if (nextScope === scope) return;
     setScope(nextScope);
-    if (nextScope === 'trash') {
-      setLoading(true);
-      try {
-        setTrashFaqs(sortFaqs(await fetchFaqs('trash')));
-      } catch (error) {
-        handleError(error);
-      } finally {
-        setLoading(false);
-      }
+    if (nextScope !== 'trash') return;
+
+    setLoading(true);
+    try {
+      setTrashFaqs(sortFaqs(await fetchFaqs('trash')));
+    } catch (error) {
+      handleError(error);
+    } finally {
+      setLoading(false);
     }
   }
 
@@ -127,6 +131,7 @@ export function FaqManagementView({ onSessionExpired }: FaqManagementViewProps) 
   async function handleSave(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (saving) return;
+
     setSaving(true);
     setErrorMessage('');
     setSuccessMessage('');
@@ -149,6 +154,7 @@ export function FaqManagementView({ onSessionExpired }: FaqManagementViewProps) 
   }
 
   async function toggleEnabled(faq: AdminFaq) {
+    if (working) return;
     setWorking(true);
     setErrorMessage('');
     try {
@@ -168,15 +174,18 @@ export function FaqManagementView({ onSessionExpired }: FaqManagementViewProps) 
   }
 
   async function moveFaq(faq: AdminFaq, direction: -1 | 1) {
+    if (!canReorder || working) return;
     const ordered = sortFaqs(activeFaqs);
     const index = ordered.findIndex((item) => item.id === faq.id);
     const targetIndex = index + direction;
     if (index < 0 || targetIndex < 0 || targetIndex >= ordered.length) return;
+
     const next = [...ordered];
     const [moved] = next.splice(index, 1);
     if (!moved) return;
     next.splice(targetIndex, 0, moved);
     const normalized = next.map((item, itemIndex) => ({ ...item, sortOrder: itemIndex * 10 }));
+
     setWorking(true);
     try {
       await reorderFaqs(normalized.map((item) => ({ id: item.id, sortOrder: item.sortOrder })));
@@ -211,6 +220,7 @@ export function FaqManagementView({ onSessionExpired }: FaqManagementViewProps) 
   }
 
   async function handleRestore(faq: AdminFaq) {
+    if (working) return;
     setWorking(true);
     try {
       const restored = await restoreFaq(faq.id);
@@ -227,7 +237,8 @@ export function FaqManagementView({ onSessionExpired }: FaqManagementViewProps) 
   function toggleSelect(id: string) {
     setSelectedIds((current) => {
       const next = new Set(current);
-      if (next.has(id)) next.delete(id); else next.add(id);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
       return next;
     });
   }
@@ -236,22 +247,15 @@ export function FaqManagementView({ onSessionExpired }: FaqManagementViewProps) 
     setSelectedIds((current) => {
       const next = new Set(current);
       filteredFaqs.forEach((faq) => {
-        if (allVisibleSelected) next.delete(faq.id); else next.add(faq.id);
+        if (allVisibleSelected) next.delete(faq.id);
+        else next.add(faq.id);
       });
       return next;
     });
   }
 
   return (
-    <section className="faq-management" aria-labelledby="faq-management-title">
-      <div className="faq-management-heading">
-        <div>
-          <p className="eyebrow">全站公共内容</p>
-          <h2 id="faq-management-title">FAQ 管理</h2>
-        </div>
-        <button className="primary-button" type="button" onClick={openCreateEditor}>新增 FAQ</button>
-      </div>
-
+    <section className="faq-management" aria-label="FAQ 管理">
       <div className="faq-filter-bar">
         <div className="scope-tabs" role="tablist" aria-label="FAQ 状态">
           <button type="button" className={scope === 'active' ? 'is-active' : undefined} onClick={() => void changeScope('active')}>
@@ -265,6 +269,7 @@ export function FaqManagementView({ onSessionExpired }: FaqManagementViewProps) 
           <span>搜索</span>
           <input type="search" value={search} placeholder="搜索标题或正文" onChange={(event) => setSearch(event.target.value)} />
         </label>
+        <button className="primary-button faq-create-button" type="button" onClick={openCreateEditor}>新增 FAQ</button>
       </div>
 
       {errorMessage ? <div className="notice notice-error" role="alert">{errorMessage}</div> : null}
@@ -305,8 +310,8 @@ export function FaqManagementView({ onSessionExpired }: FaqManagementViewProps) 
               <div className="faq-card-actions">
                 {scope === 'active' ? (
                   <>
-                    <button type="button" disabled={working || index === 0} onClick={() => void moveFaq(faq, -1)}>↑</button>
-                    <button type="button" disabled={working || index === filteredFaqs.length - 1} onClick={() => void moveFaq(faq, 1)}>↓</button>
+                    <button type="button" title={canReorder ? '上移' : '搜索状态下不可排序'} disabled={working || !canReorder || index === 0} onClick={() => void moveFaq(faq, -1)}>↑</button>
+                    <button type="button" title={canReorder ? '下移' : '搜索状态下不可排序'} disabled={working || !canReorder || index === filteredFaqs.length - 1} onClick={() => void moveFaq(faq, 1)}>↓</button>
                     <button type="button" disabled={working} onClick={() => openEditEditor(faq)}>编辑</button>
                     <button className="text-danger" type="button" disabled={working} onClick={() => setPendingDeleteIds([faq.id])}>删除</button>
                   </>
