@@ -8,7 +8,6 @@ import './site-settings.css';
 import './sections.css';
 import './operating-admin.css';
 import './asset-library.css';
-import './faq-management.css';
 import './category-management.css';
 import './conversion-pool.css';
 import './product-management.css';
@@ -25,7 +24,7 @@ import './product-editor-compact.css';
 import './product-dependency-handoff.css';
 import './admin-ui-system.css';
 import './admin-sidebar.css';
-import './faq-lifecycle.css';
+import './faq-management.css';
 
 installAdminMutationObserver();
 installAdminUnsavedStateObserver();
