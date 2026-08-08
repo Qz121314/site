@@ -1,4 +1,4 @@
-import { cp, mkdir, rm, writeFile } from 'node:fs/promises';
+import { cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -6,6 +6,12 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const dist = path.join(root, 'dist');
 const storefrontDist = path.join(root, 'apps', 'storefront', 'dist');
 const adminDist = path.join(root, 'apps', 'admin', 'dist');
+const securityHeaders = JSON.parse(
+  await readFile(path.join(root, 'config', 'security-headers.json'), 'utf8'),
+);
+const staticSecurityHeaderBlock = Object.entries(securityHeaders)
+  .map(([name, value]) => `  ${name}: ${value}`)
+  .join('\n');
 
 await rm(dist, { recursive: true, force: true });
 await mkdir(dist, { recursive: true });
@@ -16,7 +22,10 @@ await cp(adminDist, path.join(dist, 'admin'), { recursive: true });
 
 await writeFile(
   path.join(dist, '_headers'),
-  `/assets/*
+  `/*
+${staticSecurityHeaderBlock}
+
+/assets/*
   Cache-Control: public, max-age=31536000, immutable
 
 /icons/*
