@@ -221,6 +221,24 @@ jobs:
           '
 
           curl --fail --silent --show-error \
+            -D /tmp/public-theme.headers \
+            -o /tmp/public-theme.json \
+            "$BASE_URL/api/public/theme"
+          grep -Eqi '^content-type: application/json' /tmp/public-theme.headers
+          grep -Eqi '^cache-control: public, max-age=30, must-revalidate' /tmp/public-theme.headers
+          node -e '
+            const fs = require("fs");
+            const value = JSON.parse(fs.readFileSync("/tmp/public-theme.json", "utf8"));
+            const theme = value?.theme;
+            const keys = new Set(["marketplace", "noir", "live", "saas", "travel", "tech", "custom"]);
+            const tokenKeys = ["brand", "brandStrong", "text", "muted", "surface", "surfaceSoft", "line", "pageBg", "heroStart", "heroEnd", "heroGlow", "shadow"];
+            if (!theme || !keys.has(theme.key)) process.exit(1);
+            if (theme.colorScheme !== "light" && theme.colorScheme !== "dark") process.exit(1);
+            if (theme.productMediaRatio !== "1:1") process.exit(1);
+            if (!theme.tokens || tokenKeys.some((key) => typeof theme.tokens[key] !== "string" || !theme.tokens[key])) process.exit(1);
+          '
+
+          curl --fail --silent --show-error \
             -D /tmp/storefront-current.headers \
             -o /tmp/storefront-current.json \
             "$BASE_URL/public/current.json"
