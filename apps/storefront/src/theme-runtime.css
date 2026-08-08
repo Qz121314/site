@@ -22,9 +22,52 @@ body {
   box-shadow: var(--shadow);
 }
 
-html[data-color-scheme='dark'] .topbar {
-  border-color: color-mix(in srgb, var(--line) 90%, transparent);
-  background: color-mix(in srgb, var(--surface) 92%, transparent);
+.topbar,
+.bottom-nav,
+.mobile-cta-bar {
+  border-color: color-mix(in srgb, var(--line) 92%, transparent);
+  background: color-mix(in srgb, var(--surface) 95%, transparent);
+}
+
+.section-icon {
+  color: var(--brand-strong);
+  background: color-mix(in srgb, var(--brand) 13%, var(--surface));
+}
+
+.search-field input:focus,
+.select-field select:focus {
+  border-color: color-mix(in srgb, var(--brand) 72%, var(--line));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 14%, transparent);
+}
+
+.cta-button,
+.primary-button {
+  box-shadow: 0 9px 20px color-mix(in srgb, var(--brand) 24%, transparent);
+}
+
+.markdown-content {
+  color: color-mix(in srgb, var(--text) 68%, var(--muted));
+}
+
+.markdown-content blockquote {
+  background: color-mix(in srgb, var(--brand) 8%, var(--surface));
+}
+
+.markdown-content code,
+.markdown-content pre {
+  background: var(--surface-soft);
+}
+
+.loading-brand,
+.loading-hero,
+.loading-card {
+  background: linear-gradient(
+    90deg,
+    color-mix(in srgb, var(--surface-soft) 82%, var(--line)) 25%,
+    color-mix(in srgb, var(--surface) 84%, var(--surface-soft)) 50%,
+    color-mix(in srgb, var(--surface-soft) 82%, var(--line)) 75%
+  );
+  background-size: 200% 100%;
 }
 
 html[data-color-scheme='dark'] .product-card-media,
