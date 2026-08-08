@@ -241,7 +241,7 @@
 
 .checkbox-cell {
   width: 44px;
-  text-align: center !important;
+  text-align: center;
 }
 
 .checkbox-cell input {
@@ -390,7 +390,7 @@ button.status-pill {
 
 .actions-cell {
   white-space: nowrap;
-  text-align: right !important;
+  text-align: right;
 }
 
 .actions-cell button {
@@ -426,14 +426,14 @@ button.status-pill {
 
 .section-management .actions-cell .text-danger {
   border-color: transparent;
-  color: #b42318 !important;
+  color: #b42318;
   background: transparent;
   box-shadow: none;
 }
 
 .section-management .actions-cell .text-danger:not(:disabled):hover {
   border-color: #fecdca;
-  color: #912018 !important;
+  color: #912018;
   background: #fff1f0;
 }
 
