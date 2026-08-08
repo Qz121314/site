@@ -23,7 +23,6 @@ type Draft = {
   baseUrl: string;
   projectId: string;
   apiToken: string;
-  privateConfig: string;
   isEnabled: boolean;
 };
 
@@ -32,7 +31,6 @@ const emptyDraft: Draft = {
   baseUrl: '',
   projectId: '',
   apiToken: '',
-  privateConfig: '',
   isEnabled: true,
 };
 
@@ -50,7 +48,6 @@ function toDraft(connection: CustomerServiceConnection): Draft {
     baseUrl: connection.baseUrl,
     projectId: connection.projectId ?? '',
     apiToken: '',
-    privateConfig: connection.privateConfig ?? '',
     isEnabled: connection.isEnabled,
   };
 }
@@ -63,7 +60,6 @@ function toInput(draft: Draft, editing: CustomerServiceConnection | null): Custo
     baseUrl: draft.baseUrl.trim(),
     projectId: draft.projectId.trim() || null,
     ...(editing && !token ? {} : { apiToken: token || null }),
-    privateConfig: draft.privateConfig.trim() || null,
     isEnabled: draft.isEnabled,
   };
 }
@@ -440,15 +436,6 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
                   maxLength={4000}
                   value={draft.apiToken}
                   onChange={(event) => setDraft((current) => ({ ...current, apiToken: event.target.value }))}
-                />
-              </label>
-              <label className="customer-service-editor-wide">
-                <span>私有扩展配置 JSON</span>
-                <textarea
-                  rows={4}
-                  spellCheck={false}
-                  value={draft.privateConfig}
-                  onChange={(event) => setDraft((current) => ({ ...current, privateConfig: event.target.value }))}
                 />
               </label>
               <label className="switch-row customer-service-editor-wide">
