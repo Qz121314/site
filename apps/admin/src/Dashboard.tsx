@@ -23,11 +23,13 @@ import {
 import { SectionManagementView } from './SectionManagementView';
 import { SiteSettingsView } from './SiteSettingsView';
 import { TagManagementView } from './TagManagementView';
+import { ThemeCenterView } from './ThemeCenterView';
 
 type DynamicViewKind = 'products' | 'categories' | 'tags' | 'conversion-pool';
 
 type AdminView =
   | 'settings'
+  | 'theme'
   | 'assets'
   | 'customer-service'
   | 'faq'
@@ -88,6 +90,7 @@ function parseDynamicView(view: AdminView): DynamicView | null {
 function getViewContext(view: AdminView, sections: AdminSection[]) {
   const fixed: Partial<Record<AdminView, { eyebrow: string; title: string }>> = {
     settings: { eyebrow: '全站配置', title: '站点设置' },
+    theme: { eyebrow: '用户前端视觉', title: '主题中心' },
     assets: { eyebrow: 'R2 扫描与清理', title: '素材库管理' },
     'customer-service': { eyebrow: '外部系统对接', title: '客服管理' },
     faq: { eyebrow: '公共内容', title: 'FAQ 管理' },
@@ -107,7 +110,7 @@ function getViewContext(view: AdminView, sections: AdminSection[]) {
 }
 
 function publishKeyForView(view: AdminView): string {
-  if (view === 'settings') return 'site';
+  if (view === 'settings' || view === 'theme') return 'site';
   if (view === 'faq') return 'faq';
   if (view === 'sections') return 'sections-index';
   const dynamic = parseDynamicView(view);
@@ -394,6 +397,7 @@ export function Dashboard({
         <nav className="admin-nav" aria-label="后台导航">
           <div className="sidebar-section-label sidebar-section-label-first">全局管理</div>
           <button className={activeView === 'settings' ? 'is-active' : undefined} type="button" onClick={() => requestView('settings')}>站点设置</button>
+          <button className={activeView === 'theme' ? 'is-active' : undefined} type="button" onClick={() => requestView('theme')}>主题中心</button>
           <button className={activeView === 'assets' ? 'is-active' : undefined} type="button" onClick={() => requestView('assets')}>素材库管理</button>
           <button className={activeView === 'customer-service' ? 'is-active' : undefined} type="button" onClick={() => requestView('customer-service')}>客服管理</button>
           <button className={activeView === 'faq' ? 'is-active' : undefined} type="button" onClick={() => requestView('faq')}>FAQ 管理</button>
@@ -533,6 +537,8 @@ export function Dashboard({
 
         {activeView === 'settings' ? (
           <SiteSettingsView key={activeView} onSessionExpired={onSessionExpired} />
+        ) : activeView === 'theme' ? (
+          <ThemeCenterView key={activeView} onSessionExpired={onSessionExpired} />
         ) : activeView === 'assets' ? (
           <AssetLibraryView key={activeView} onSessionExpired={onSessionExpired} />
         ) : activeView === 'customer-service' ? (
