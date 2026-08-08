@@ -1,0 +1,92 @@
+.admin-crash-screen {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 24px;
+  background: #f4f6f8;
+}
+
+.admin-crash-card {
+  display: grid;
+  width: min(560px, 100%);
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 16px 18px;
+  padding: 24px;
+  border: 1px solid #e1e6ec;
+  border-radius: 14px;
+  background: #fff;
+  box-shadow: 0 18px 50px rgb(16 24 40 / 8%);
+}
+
+.admin-crash-mark {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border-radius: 11px;
+  color: #b42318;
+  background: #fef3f2;
+  font-size: 1.2rem;
+  font-weight: 850;
+}
+
+.admin-crash-copy {
+  display: grid;
+  gap: 6px;
+}
+
+.admin-crash-copy p,
+.admin-crash-copy h1,
+.admin-crash-copy span {
+  margin: 0;
+}
+
+.admin-crash-copy p {
+  color: #b42318;
+  font-size: 0.72rem;
+  font-weight: 780;
+}
+
+.admin-crash-copy h1 {
+  color: #172033;
+  font-size: 1.1rem;
+}
+
+.admin-crash-copy span {
+  color: #667085;
+  font-size: 0.75rem;
+  line-height: 1.6;
+}
+
+.admin-crash-copy code {
+  width: fit-content;
+  margin-top: 4px;
+  padding: 4px 7px;
+  border-radius: 6px;
+  color: #475467;
+  background: #f6f8fa;
+  font-size: 0.67rem;
+}
+
+.admin-crash-actions {
+  display: flex;
+  grid-column: 1 / -1;
+  justify-content: flex-end;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+@media (max-width: 600px) {
+  .admin-crash-card {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-crash-actions {
+    grid-column: 1;
+    flex-direction: column-reverse;
+  }
+
+  .admin-crash-actions button {
+    width: 100%;
+  }
+}
