@@ -38,6 +38,7 @@ type AdminView =
 type DashboardProps = {
   expiresAt: string | undefined;
   loggingOut: boolean;
+  logoutError: string;
   onLogout: () => void;
   onSessionExpired: () => void;
 };
@@ -231,6 +232,7 @@ function moduleStateLabel(module: PublishModuleStatus): string {
 export function Dashboard({
   expiresAt,
   loggingOut,
+  logoutError,
   onLogout,
   onSessionExpired,
 }: DashboardProps) {
@@ -639,6 +641,7 @@ export function Dashboard({
         </header>
 
         {publishFeedback ? <div className={`notice ${publishFeedback.type === 'success' ? 'notice-success' : 'notice-error'} publish-feedback`} role={publishFeedback.type === 'error' ? 'alert' : 'status'}>{publishFeedback.message}</div> : null}
+        {logoutError ? <div className="notice notice-error" role="alert">{logoutError}</div> : null}
         {sectionsError ? <div className="notice notice-error" role="alert">{sectionsError}<button type="button" onClick={() => void loadSections()}>重新加载</button></div> : null}
 
         {activeView === 'settings' ? (

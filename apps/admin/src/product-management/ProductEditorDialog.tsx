@@ -34,6 +34,7 @@ type ProductEditorDialogProps = {
   categories: AdminCategory[];
   tags: AdminProductTag[];
   groups: AdminConversionGroup[];
+  errorMessage: string;
   saveStage: 'idle' | 'saving';
   handoffBusy?: boolean;
   resumeNotice?: boolean;
@@ -129,6 +130,7 @@ export function ProductEditorDialog({
   categories,
   tags,
   groups,
+  errorMessage,
   saveStage,
   handoffBusy = false,
   resumeNotice = false,
@@ -324,6 +326,8 @@ export function ProductEditorDialog({
         </div>
 
         <form className="product-editor-form" onSubmit={onSubmit}>
+          {errorMessage ? <div className="notice notice-error" role="alert">{errorMessage}</div> : null}
+
           {resumeNotice ? (
             <div className="product-handoff-notice" role="status">
               已返回当前产品草稿，可继续编辑后保存。

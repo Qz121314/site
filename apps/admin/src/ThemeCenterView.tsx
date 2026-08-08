@@ -5,7 +5,7 @@ import {
   StorefrontProductCard,
 } from '@site/storefront-ui';
 import { storefrontThemeStyle } from '@site/storefront-ui/theme';
-import { useEffect, useMemo, useState, type AnchorHTMLAttributes } from 'react';
+import { useCallback, useEffect, useMemo, useState, type AnchorHTMLAttributes } from 'react';
 import { AdminApiError } from './api';
 import { useAdminDirtySource } from './admin-unsaved-state';
 import {
@@ -68,38 +68,35 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
   );
   useAdminDirtySource('theme-center', '主题中心', themeIsDirty);
 
-  useEffect(() => {
-    let active = true;
-    void (async () => {
-      setLoading(true);
-      try {
-        const data = await fetchThemeCenter();
-        if (!active) return;
-        setPresets(data.presets);
-        setCurrentTheme(data.theme);
-        setSelectedKey(data.theme.key);
-        setAccent(data.theme.overrides.accent ?? '');
-        if (data.theme.key === 'custom') {
-          setImportedTheme(data.theme);
-          setSourceTab(data.theme.overrides.imported?.source === 'shadcn' ? 'registry' : 'json');
-          setImportMode(data.theme.colorScheme);
-          setRegistryUrl(data.theme.overrides.imported?.sourceUrl ?? '');
-        }
-      } catch (error) {
-        if (!active) return;
-        if (isSessionError(error)) {
-          onSessionExpired();
-          return;
-        }
-        setErrorMessage(error instanceof Error ? error.message : '主题中心加载失败。');
-      } finally {
-        if (active) setLoading(false);
+  const loadThemeCenter = useCallback(async () => {
+    setLoading(true);
+    setErrorMessage('');
+    try {
+      const data = await fetchThemeCenter();
+      setPresets(data.presets);
+      setCurrentTheme(data.theme);
+      setSelectedKey(data.theme.key);
+      setAccent(data.theme.overrides.accent ?? '');
+      if (data.theme.key === 'custom') {
+        setImportedTheme(data.theme);
+        setSourceTab(data.theme.overrides.imported?.source === 'shadcn' ? 'registry' : 'json');
+        setImportMode(data.theme.colorScheme);
+        setRegistryUrl(data.theme.overrides.imported?.sourceUrl ?? '');
       }
-    })();
-    return () => {
-      active = false;
-    };
+    } catch (error) {
+      if (isSessionError(error)) {
+        onSessionExpired();
+        return;
+      }
+      setErrorMessage(error instanceof Error ? error.message : '主题中心加载失败。');
+    } finally {
+      setLoading(false);
+    }
   }, [onSessionExpired]);
+
+  useEffect(() => {
+    void loadThemeCenter();
+  }, [loadThemeCenter]);
 
   const selectedPreset = useMemo(() => {
     if (selectedKey === 'custom') return importedTheme;
@@ -197,6 +194,20 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
 
   if (loading) {
     return <section className="theme-center"><div className="theme-center-state">正在读取主题…</div></section>;
+  }
+
+  if (!currentTheme || presets.length === 0) {
+    return (
+      <section className="theme-center">
+        <div className="settings-card settings-error-state" role="alert">
+          <strong>无法读取主题中心</strong>
+          <p>{errorMessage || '主题配置返回数据不完整，请重新加载。'}</p>
+          <button className="secondary-button" type="button" onClick={() => void loadThemeCenter()}>
+            重新加载
+          </button>
+        </div>
+      </section>
+    );
   }
 
   return (

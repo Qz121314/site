@@ -24,6 +24,7 @@ type SessionState =
 export function App() {
   const [sessionState, setSessionState] = useState<SessionState>({ status: 'loading' });
   const [loggingOut, setLoggingOut] = useState(false);
+  const [logoutError, setLogoutError] = useState('');
 
   const handleSessionExpired = useCallback(() => {
     setSessionState({
@@ -82,6 +83,7 @@ export function App() {
   }, []);
 
   function handleAuthenticated(session: AdminSessionResponse) {
+    setLogoutError('');
     setSessionState({ status: 'authenticated', expiresAt: session.expiresAt });
   }
 
@@ -91,6 +93,7 @@ export function App() {
     }
 
     setLoggingOut(true);
+    setLogoutError('');
     try {
       await logoutAdmin();
       setSessionState({
@@ -104,7 +107,7 @@ export function App() {
         return;
       }
 
-      window.alert(error instanceof Error ? error.message : '退出登录失败。');
+      setLogoutError(error instanceof Error ? error.message : '退出登录失败。');
     } finally {
       setLoggingOut(false);
     }
@@ -132,6 +135,7 @@ export function App() {
     <Dashboard
       expiresAt={sessionState.expiresAt}
       loggingOut={loggingOut}
+      logoutError={logoutError}
       onLogout={() => void handleLogout()}
       onSessionExpired={handleSessionExpired}
     />
