@@ -1,6 +1,6 @@
-import { useSyncExternalStore } from 'react';
+import { useEffect, useSyncExternalStore } from 'react';
 
-const PROTECTED_FORM_SELECTOR = '.settings-form, .admin-dialog form';
+const PROTECTED_FORM_SELECTOR = '.admin-dialog form';
 const SPECIAL_DRAFT_ACTION_SELECTOR = [
   '.product-tag-option',
   '.product-media-actions button',
@@ -16,15 +16,11 @@ export type AdminUnsavedSnapshot = {
   labels: string[];
 };
 
-type MutationDetail = {
-  method?: string;
-  path?: string;
-};
-
 type SerializedField = [string, unknown];
 
 const baselines = new WeakMap<HTMLFormElement, string>();
 const dirtyForms = new Set<HTMLFormElement>();
+const explicitDirtySources = new Map<string, string>();
 const listeners = new Set<() => void>();
 let installed = false;
 let snapshot: AdminUnsavedSnapshot = { isDirty: false, count: 0, labels: [] };
@@ -35,7 +31,6 @@ function protectedForm(element: Element | null): HTMLFormElement | null {
 }
 
 function formLabel(form: HTMLFormElement): string {
-  if (form.matches('.settings-form')) return '站点设置';
   const title = form.closest('.admin-dialog')?.querySelector('h3')?.textContent?.trim();
   return title || '当前编辑内容';
 }
@@ -79,10 +74,16 @@ function updateSnapshot(): void {
   for (const form of [...dirtyForms]) {
     if (!form.isConnected) dirtyForms.delete(form);
   }
-  const labels = [...new Set([...dirtyForms].map(formLabel))];
+  const labels = [
+    ...new Set([
+      ...explicitDirtySources.values(),
+      ...[...dirtyForms].map(formLabel),
+    ]),
+  ];
+  const count = explicitDirtySources.size + dirtyForms.size;
   const next: AdminUnsavedSnapshot = {
-    isDirty: dirtyForms.size > 0,
-    count: dirtyForms.size,
+    isDirty: count > 0,
+    count,
     labels,
   };
   if (
@@ -120,12 +121,6 @@ function evaluateForm(form: HTMLFormElement): void {
 function markFormDirty(form: HTMLFormElement): void {
   registerForm(form);
   dirtyForms.add(form);
-  updateSnapshot();
-}
-
-function resetFormBaseline(form: HTMLFormElement): void {
-  baselines.set(form, serializeForm(form));
-  dirtyForms.delete(form);
   updateSnapshot();
 }
 
@@ -215,18 +210,24 @@ export function installAdminUnsavedStateObserver(): void {
     },
     true,
   );
+}
 
-  window.addEventListener('admin:data-mutated', (event) => {
-    const detail = event instanceof CustomEvent ? (event.detail as MutationDetail | undefined) : undefined;
-    if (detail?.method !== 'PUT' || detail.path !== '/api/admin/settings/') return;
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        document
-          .querySelectorAll<HTMLFormElement>('.settings-form')
-          .forEach((form) => resetFormBaseline(form));
-      });
-    });
-  });
+export function setAdminDirtySource(id: string, label: string, isDirty: boolean): void {
+  if (isDirty) explicitDirtySources.set(id, label);
+  else explicitDirtySources.delete(id);
+  updateSnapshot();
+}
+
+export function clearAdminDirtySource(id: string): void {
+  if (!explicitDirtySources.delete(id)) return;
+  updateSnapshot();
+}
+
+export function useAdminDirtySource(id: string, label: string, isDirty: boolean): void {
+  useEffect(() => {
+    setAdminDirtySource(id, label, isDirty);
+    return () => clearAdminDirtySource(id);
+  }, [id, isDirty, label]);
 }
 
 export function getAdminUnsavedSnapshot(): AdminUnsavedSnapshot {
