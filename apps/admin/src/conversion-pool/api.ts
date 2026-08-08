@@ -58,10 +58,6 @@ export type ConversionTargetInput = {
   isEnabled: boolean;
 };
 
-type ErrorEnvelope = {
-  error?: { code?: string; message?: string };
-};
-
 function asRecord(value: unknown): Record<string, unknown> | null {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
     ? (value as Record<string, unknown>)
@@ -81,11 +77,17 @@ async function requestJson(path: string, init?: RequestInit): Promise<unknown> {
   });
   const body = await readJson(response);
   if (!response.ok) {
-    const envelope = asRecord(body) as ErrorEnvelope | null;
+    const error = asRecord(asRecord(body)?.error);
+    const details = asRecord(error?.details);
     throw new AdminApiError(
       response.status,
-      envelope?.error?.code ?? 'CONVERSION_REQUEST_FAILED',
-      envelope?.error?.message ?? '转化池请求失败。',
+      typeof error?.code === 'string' ? error.code : 'CONVERSION_REQUEST_FAILED',
+      typeof error?.message === 'string' ? error.message : '转化池请求失败。',
+      {
+        ...(typeof details?.field === 'string' ? { field: details.field } : {}),
+        ...(typeof details?.productCount === 'number' ? { productCount: details.productCount } : {}),
+        ...(typeof details?.targetCount === 'number' ? { targetCount: details.targetCount } : {}),
+      },
     );
   }
   return body;

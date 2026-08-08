@@ -289,7 +289,7 @@ export function TagManagementView({ section, onSessionExpired }: TagManagementVi
         </label>
       </div>
 
-      {errorMessage ? <div className="notice notice-error" role="alert">{errorMessage}</div> : null}
+      {!editorOpen && errorMessage ? <div className="notice notice-error" role="alert">{errorMessage}</div> : null}
       {successMessage ? <div className="notice notice-success" role="status">{successMessage}</div> : null}
 
       {scope === 'active' && selectedIds.size > 0 ? (
@@ -328,9 +328,10 @@ export function TagManagementView({ section, onSessionExpired }: TagManagementVi
           <section className="admin-dialog" role="dialog" aria-modal="true" aria-labelledby="tag-editor-title">
             <div className="admin-dialog-header"><div><p>{section.name} · 标签</p><h3 id="tag-editor-title">{editingTag ? '编辑标签' : '新增标签'}</h3></div><button type="button" aria-label="关闭" disabled={saving} onClick={() => setEditorOpen(false)}>×</button></div>
             <form className="category-editor-form" onSubmit={(event) => void saveTag(event)}>
-              <label><span>标签名称</span><input type="text" autoFocus maxLength={80} value={form.name} onChange={(event) => setForm((current) => ({ ...current, name: event.target.value }))} /></label>
-              <label><span>排序</span><input type="number" min={0} max={1_000_000} value={form.sortOrder} onChange={(event) => setForm((current) => ({ ...current, sortOrder: Number(event.target.value) }))} /></label>
-              <label className="category-enabled-field"><input type="checkbox" checked={form.isEnabled} onChange={(event) => setForm((current) => ({ ...current, isEnabled: event.target.checked }))} /><span>启用标签</span></label>
+              {errorMessage ? <div className="notice notice-error" role="alert">{errorMessage}</div> : null}
+              <label><span>标签名称</span><input type="text" autoFocus required maxLength={80} value={form.name} onChange={(event) => { setForm((current) => ({ ...current, name: event.target.value })); setErrorMessage(''); }} /></label>
+              <label><span>排序</span><input type="number" min={0} max={1_000_000} step={1} required value={form.sortOrder} onChange={(event) => { setForm((current) => ({ ...current, sortOrder: Number(event.target.value) })); setErrorMessage(''); }} /></label>
+              <label className="category-enabled-field"><input type="checkbox" checked={form.isEnabled} onChange={(event) => { setForm((current) => ({ ...current, isEnabled: event.target.checked })); setErrorMessage(''); }} /><span>启用标签</span></label>
               <div className="admin-dialog-actions"><button type="button" className="secondary-button" disabled={saving} onClick={() => setEditorOpen(false)}>取消</button><button type="submit" className="primary-button" disabled={saving}>{saving ? '保存中…' : '保存'}</button></div>
             </form>
           </section>

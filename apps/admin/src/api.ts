@@ -58,6 +58,7 @@ type ApiErrorDetails = {
   field?: string;
   responseStatus?: number;
   productCount?: number;
+  targetCount?: number;
   conversionMethodCount?: number;
   blockedKey?: string;
   blockedReason?: string;
@@ -78,6 +79,7 @@ export class AdminApiError extends Error {
   readonly field: string | undefined;
   readonly responseStatus: number | undefined;
   readonly productCount: number | undefined;
+  readonly targetCount: number | undefined;
   readonly conversionMethodCount: number | undefined;
   readonly blockedKey: string | undefined;
   readonly blockedReason: string | undefined;
@@ -91,6 +93,7 @@ export class AdminApiError extends Error {
     this.field = details?.field;
     this.responseStatus = details?.responseStatus;
     this.productCount = details?.productCount;
+    this.targetCount = details?.targetCount;
     this.conversionMethodCount = details?.conversionMethodCount;
     this.blockedKey = details?.blockedKey;
     this.blockedReason = details?.blockedReason;

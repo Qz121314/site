@@ -6,6 +6,7 @@ type CategoryEditorDialogProps = {
   editingCategory: AdminCategory | null;
   form: CategoryInput;
   saving: boolean;
+  errorMessage: string;
   onFormChange: (form: CategoryInput) => void;
   onClose: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
@@ -16,6 +17,7 @@ export function CategoryEditorDialog({
   editingCategory,
   form,
   saving,
+  errorMessage,
   onFormChange,
   onClose,
   onSubmit,
@@ -39,12 +41,16 @@ export function CategoryEditorDialog({
         </div>
 
         <form className="section-editor-form" onSubmit={onSubmit}>
+          {errorMessage ? <div className="notice notice-error" role="alert">{errorMessage}</div> : null}
+
           <label>
             <span>分类名称</span>
             <input
               type="text"
               value={form.name}
               autoFocus
+              required
+              maxLength={100}
               onChange={(event) => onFormChange({ ...form, name: event.target.value })}
             />
             <small>分类只属于当前分区，不会出现在其他分区中。</small>
@@ -55,7 +61,9 @@ export function CategoryEditorDialog({
             <input
               type="number"
               min="0"
+              max="1000000"
               step="1"
+              required
               value={form.sortOrder}
               onChange={(event) =>
                 onFormChange({
