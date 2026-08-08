@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AdminApiError } from './api';
+import { adminConfirm, adminPrompt } from './admin-dialog-service';
 import { AssetTable } from './asset-library/AssetTable';
 import { CleanupAssetDialog } from './asset-library/CleanupAssetDialog';
 import { deleteMediaAssets } from './asset-library/media-delete-api';
@@ -414,7 +415,14 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
 
   async function handleRenameFolder() {
     if (!activeFolder || folderWorking) return;
-    const name = window.prompt('新的文件夹名称', activeFolder.name)?.trim();
+    const name = await adminPrompt({
+      eyebrow: '素材文件夹',
+      title: '重命名文件夹',
+      message: '只修改素材中心的整理名称，不会移动 R2 对象或影响现有引用。',
+      initialValue: activeFolder.name,
+      confirmLabel: '保存名称',
+      maxLength: 80,
+    });
     if (!name || name === activeFolder.name) return;
     setFolderWorking(true);
     try {
@@ -431,7 +439,14 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
 
   async function handleDeleteFolder() {
     if (!activeFolder || folderWorking) return;
-    if (!window.confirm(`删除文件夹“${activeFolder.name}”？其中素材不会删除，只会移动到“未分组”。`)) return;
+    const confirmed = await adminConfirm({
+      eyebrow: '素材文件夹',
+      title: `删除“${activeFolder.name}”？`,
+      message: '只删除文件夹分组；其中素材不会删除，而是自动移动到“未分组”。',
+      confirmLabel: '删除文件夹',
+      danger: true,
+    });
+    if (!confirmed) return;
     setFolderWorking(true);
     try {
       await deleteMediaFolder(activeFolder.id);
@@ -468,7 +483,14 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
 
   async function handleDeleteManaged() {
     if (selectedManagedAssets.length === 0 || deletingMedia) return;
-    if (!window.confirm(`确认删除已选 ${selectedManagedAssets.length} 个素材？仍在使用或受发布快照保护的素材不会被删除。`)) return;
+    const confirmed = await adminConfirm({
+      eyebrow: '素材中心',
+      title: `删除已选 ${selectedManagedAssets.length} 个素材？`,
+      message: '仍在使用或受最近发布快照保护的素材会被服务端阻止删除；只会删除确认安全的素材。',
+      confirmLabel: '确认删除',
+      danger: true,
+    });
+    if (!confirmed) return;
     setDeletingMedia(true);
     setMediaError(null);
     setMediaSuccess(null);
