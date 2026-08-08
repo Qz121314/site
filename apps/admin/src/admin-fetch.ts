@@ -31,7 +31,8 @@ export function shouldNotifyAdminMutation(method: string, path: string | null): 
     path?.startsWith('/api/admin/') === true &&
     !path.startsWith('/api/admin/auth/') &&
     !path.startsWith('/api/admin/publish') &&
-    path !== '/api/admin/settings/media-domain/test'
+    path !== '/api/admin/settings/media-domain/test' &&
+    path !== '/api/admin/theme/import'
   );
 }
 

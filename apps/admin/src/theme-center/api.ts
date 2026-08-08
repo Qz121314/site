@@ -1,7 +1,8 @@
 import { AdminApiError } from '../api';
 import { adminFetch } from '../admin-fetch';
 
-export type ThemeKey = 'marketplace' | 'noir' | 'live' | 'saas' | 'travel' | 'tech';
+export type OfficialThemeKey = 'marketplace' | 'noir' | 'live' | 'saas' | 'travel' | 'tech';
+export type ThemeKey = OfficialThemeKey | 'custom';
 
 export type ThemeTokens = {
   brand: string;
@@ -18,6 +19,20 @@ export type ThemeTokens = {
   shadow: string;
 };
 
+export type ImportedThemeDefinition = {
+  source: 'shadcn' | 'json';
+  sourceUrl?: string;
+  label: string;
+  description: string;
+  colorScheme: 'light' | 'dark';
+  tokens: ThemeTokens;
+};
+
+export type ThemeOverrides = {
+  accent?: string;
+  imported?: ImportedThemeDefinition;
+};
+
 export type ThemePreset = {
   key: ThemeKey;
   label: string;
@@ -29,7 +44,7 @@ export type ThemePreset = {
 };
 
 export type ResolvedTheme = ThemePreset & {
-  overrides: { accent?: string };
+  overrides: ThemeOverrides;
 };
 
 export type ThemeCenterResponse = {
@@ -86,9 +101,40 @@ export async function fetchThemeCenter(): Promise<ThemeCenterResponse> {
   };
 }
 
+export async function importThemeFromRegistry(
+  url: string,
+  mode: 'light' | 'dark',
+): Promise<ResolvedTheme> {
+  const body = await themeRequest('/api/admin/theme/import', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'x-admin-request': '1',
+    },
+    body: JSON.stringify({ source: 'url', url, mode }),
+  });
+  return parseTheme(isRecord(body) ? body.theme : null);
+}
+
+export async function importThemeFromJson(
+  json: string,
+  mode: 'light' | 'dark',
+): Promise<ResolvedTheme> {
+  const body = await themeRequest('/api/admin/theme/import', {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'x-admin-request': '1',
+    },
+    body: JSON.stringify({ source: 'json', json, mode }),
+  });
+  return parseTheme(isRecord(body) ? body.theme : null);
+}
+
 export async function updateThemeCenter(
   themeKey: ThemeKey,
   accent: string | null,
+  imported?: ImportedThemeDefinition,
 ): Promise<ResolvedTheme> {
   const body = await themeRequest('/api/admin/theme/', {
     method: 'PUT',
@@ -98,7 +144,10 @@ export async function updateThemeCenter(
     },
     body: JSON.stringify({
       themeKey,
-      overrides: accent ? { accent } : {},
+      overrides: {
+        ...(accent ? { accent } : {}),
+        ...(themeKey === 'custom' && imported ? { imported } : {}),
+      },
     }),
   });
   const envelope = isRecord(body) ? body : null;
