@@ -76,6 +76,15 @@ function navigate(href: string) {
   window.dispatchEvent(new Event(NAVIGATION_EVENT));
 }
 
+function isVideoMediaUrl(value: string): boolean {
+  try {
+    const pathname = new URL(value, window.location.origin).pathname.toLowerCase();
+    return pathname.endsWith('.mp4') || pathname.endsWith('.webm');
+  } catch {
+    return /\.(?:mp4|webm)(?:$|[?#])/i.test(value);
+  }
+}
+
 function AppLink({ href = '/', onClick, ...props }: AnchorHTMLAttributes<HTMLAnchorElement>) {
   const handleClick = (event: ReactMouseEvent<HTMLAnchorElement>) => {
     onClick?.(event);
@@ -478,9 +487,21 @@ function ProductPage({ bootstrap, productId }: { bootstrap: StorefrontBootstrap;
           </AppLink>
 
           <div className="detail-gallery">
-            {query.data.product.media.length > 0 ? query.data.product.media.map((media) => (
-              media.url ? <img alt={media.altText || query.data.product.title} key={media.id} src={media.url} /> : null
-            )) : query.data.product.coverUrl ? (
+            {query.data.product.media.length > 0 ? query.data.product.media.map((media) => {
+              if (!media.url) return null;
+              return isVideoMediaUrl(media.url) ? (
+                <video
+                  aria-label={media.altText || query.data.product.title}
+                  controls
+                  key={media.id}
+                  playsInline
+                  preload="metadata"
+                  src={media.url}
+                />
+              ) : (
+                <img alt={media.altText || query.data.product.title} key={media.id} src={media.url} />
+              );
+            }) : query.data.product.coverUrl ? (
               <img alt={query.data.product.title} src={query.data.product.coverUrl} />
             ) : null}
           </div>
