@@ -23,6 +23,7 @@
   top: -14px;
   margin: -2px 0 8px;
   padding: 4px 0 9px;
+  border-bottom: 1px solid #edf0f4;
   background: #fff;
 }
 
@@ -137,8 +138,14 @@
   border: 0;
   color: var(--brand);
   background: transparent;
+  cursor: pointer;
   font-size: 0.68rem;
   font-weight: 720;
+}
+
+.product-editor-dialog .product-field-heading button:hover {
+  text-decoration: underline;
+  text-underline-offset: 2px;
 }
 
 .product-editor-dialog .product-editor-form input,
@@ -164,8 +171,15 @@
   border-radius: 7px;
   color: #334155;
   background: #fff;
+  cursor: pointer;
   font-size: 0.7rem;
   font-weight: 720;
+}
+
+.product-inline-entry > button:not(:disabled):hover {
+  border-color: #c5ccd7;
+  color: #172033;
+  background: #f8fafc;
 }
 
 .product-tag-entry > button {
@@ -189,7 +203,13 @@
   border-radius: 999px;
   color: #9a3412;
   background: #fff7ed;
+  cursor: pointer;
   font-size: 0.68rem;
+}
+
+.product-selected-tags button:not(:disabled):hover {
+  border-color: #fdba9a;
+  background: #fff1e8;
 }
 
 .product-selected-tags button span {
@@ -257,18 +277,39 @@
 .product-editor-dialog .product-media-heading {
   min-height: 38px;
   padding: 6px 9px;
+  background: #fbfcfe;
 }
 
 .product-editor-dialog .product-editor-tabs {
+  display: inline-flex;
+  gap: 2px;
   padding: 2px;
+  border: 1px solid #e0e5ec;
   border-radius: 7px;
+  background: #f1f3f6;
 }
 
 .product-editor-dialog .product-editor-tabs button {
   min-height: 26px;
   padding: 3px 8px;
-  border-radius: 6px;
+  border: 0;
+  border-radius: 5px;
+  color: #667085;
+  background: transparent;
+  cursor: pointer;
   font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.product-editor-dialog .product-editor-tabs button:not(.is-active):hover {
+  color: #344054;
+  background: rgb(255 255 255 / 72%);
+}
+
+.product-editor-dialog .product-editor-tabs button.is-active {
+  color: #fff;
+  background: #202632;
+  box-shadow: 0 1px 3px rgb(16 24 40 / 16%);
 }
 
 .product-editor-dialog .product-body-field textarea {
@@ -300,8 +341,18 @@
 .product-editor-dialog .product-upload-button {
   min-height: 28px;
   padding-inline: 9px;
+  border-color: #d7dde6;
   border-radius: 7px;
+  color: #344054;
+  background: #fff;
+  box-shadow: 0 1px 1px rgb(16 24 40 / 3%);
   font-size: 0.68rem;
+}
+
+.product-editor-dialog .product-upload-button:not(:disabled):hover {
+  border-color: #ffb69b;
+  color: #9a3412;
+  background: #fff8f5;
 }
 
 .product-editor-dialog .product-media-empty {
@@ -312,6 +363,17 @@
   padding: 10px;
   color: #94a3b8;
   font-size: 0.72rem;
+}
+
+.product-editor-dialog .product-media-empty strong {
+  color: #475467;
+  font-size: 0.72rem;
+}
+
+.product-editor-dialog .product-media-empty p {
+  margin: 3px 0 0;
+  color: #98a2b3;
+  font-size: 0.65rem;
 }
 
 .product-editor-dialog .product-media-grid {
@@ -328,28 +390,52 @@
   min-width: 0;
   overflow: hidden;
   border-radius: 8px;
+  box-shadow: 0 1px 2px rgb(16 24 40 / 3%);
+}
+
+.product-editor-dialog .product-media-card.is-cover {
+  border-color: #ff9a76;
+  box-shadow: 0 0 0 2px rgb(255 90 31 / 10%);
 }
 
 .product-editor-dialog .product-media-preview {
+  position: relative;
   height: auto;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 1;
+  background: #f4f6f8;
 }
 
-.product-editor-dialog .product-media-preview img {
+.product-editor-dialog .product-media-preview img,
+.product-editor-dialog .product-media-preview video {
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
 }
 
 .product-editor-dialog .product-media-badges {
+  position: absolute;
+  z-index: 2;
   top: 5px;
   left: 5px;
+  display: flex;
   gap: 3px;
+  pointer-events: none;
 }
 
 .product-editor-dialog .product-media-preview .product-media-badges b {
+  position: static;
   padding: 2px 5px;
+  border-radius: 999px;
+  background: rgb(17 24 39 / 78%);
+  color: #fff;
+  box-shadow: 0 1px 2px rgb(16 24 40 / 18%);
   font-size: 0.58rem;
+  line-height: 1.2;
+}
+
+.product-editor-dialog .product-media-preview .product-media-badges b:not(.is-kind-badge) {
+  background: #ff5a1f;
 }
 
 .product-editor-dialog .product-media-meta {
@@ -360,6 +446,7 @@
 
 .product-editor-dialog .product-media-meta strong {
   overflow: hidden;
+  color: #344054;
   font-size: 0.66rem;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -367,7 +454,7 @@
 
 .product-editor-dialog .product-media-meta small {
   overflow: hidden;
-  color: #64748b;
+  color: #667085;
   font-size: 0.6rem;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -384,8 +471,31 @@
 .product-editor-dialog .product-auto-cover {
   min-height: 22px;
   padding: 2px 5px;
+  border-color: #dfe4eb;
   border-radius: 5px;
+  color: #475467;
+  background: #fff;
+  box-shadow: none;
   font-size: 0.61rem;
+}
+
+.product-editor-dialog .product-media-actions button:not(:disabled):hover,
+.product-editor-dialog .product-auto-cover:not(:disabled):hover {
+  border-color: #c7ced8;
+  color: #172033;
+  background: #f8fafc;
+}
+
+.product-editor-dialog .product-media-actions .text-danger {
+  border-color: transparent;
+  color: #b42318 !important;
+  background: transparent;
+}
+
+.product-editor-dialog .product-media-actions .text-danger:not(:disabled):hover {
+  border-color: #fecdca;
+  color: #912018 !important;
+  background: #fff1f0;
 }
 
 .product-editor-dialog .product-auto-cover {
@@ -409,6 +519,11 @@
   min-height: 34px;
   padding-inline: 15px;
   font-size: 0.75rem;
+}
+
+.product-editor-dialog button:focus-visible {
+  outline: 3px solid rgb(255 90 31 / 14%);
+  outline-offset: 1px;
 }
 
 @media (max-width: 1120px) {
