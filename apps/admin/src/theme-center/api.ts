@@ -1,4 +1,5 @@
 import { AdminApiError } from '../api';
+import { adminFetch } from '../admin-fetch';
 
 export type ThemeKey = 'marketplace' | 'noir' | 'live' | 'saas' | 'travel' | 'tech';
 
@@ -46,7 +47,7 @@ async function readJson(response: Response): Promise<unknown> {
 }
 
 async function themeRequest(path: string, init?: RequestInit): Promise<unknown> {
-  const response = await fetch(path, {
+  const response = await adminFetch(path, {
     credentials: 'same-origin',
     cache: 'no-store',
     ...init,
