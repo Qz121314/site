@@ -4,17 +4,12 @@
   position: relative;
 }
 
-.product-field-heading,
-.product-field-inline-actions {
+.product-field-heading {
   display: flex;
   min-width: 0;
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-}
-
-.product-field-inline-actions {
-  justify-content: flex-end;
 }
 
 .product-field-heading > span {
@@ -24,8 +19,7 @@
   line-height: 1.2;
 }
 
-.product-field-heading button,
-.product-field-inline-actions button {
+.product-field-heading button {
   min-height: 22px;
   padding: 0 6px;
   border: 0;
@@ -38,13 +32,11 @@
   white-space: nowrap;
 }
 
-.product-field-heading button:hover,
-.product-field-inline-actions button:hover {
+.product-field-heading button:hover {
   background: #ffe4d8;
 }
 
-.product-field-heading button:disabled,
-.product-field-inline-actions button:disabled {
+.product-field-heading button:disabled {
   cursor: not-allowed;
   opacity: 0.55;
 }

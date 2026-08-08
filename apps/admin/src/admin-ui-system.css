@@ -45,14 +45,6 @@ body {
 /* ---------- Shell ---------- */
 
 @media (min-width: 1024px) {
-  .admin-shell {
-    grid-template-columns: 220px minmax(0, 1fr) !important;
-  }
-
-  .sidebar {
-    padding: 12px 10px !important;
-  }
-
   .admin-main {
     width: 100% !important;
     max-width: none !important;
@@ -66,9 +58,7 @@ body {
   .admin-main > .product-management,
   .admin-main > .conversion-pool,
   .admin-main > .faq-management,
-  .admin-main > .asset-library-page,
-  .admin-main > .customer-service-page,
-  .admin-main > .customer-service-view {
+  .admin-main > .asset-library-page {
     width: min(1280px, 100%) !important;
     margin-inline: auto !important;
   }
@@ -88,84 +78,6 @@ body {
   .admin-main > .product-management {
     width: min(1280px, 100%) !important;
   }
-}
-
-.admin-brand {
-  margin-bottom: 8px !important;
-  padding-bottom: 10px !important;
-}
-
-.admin-brand > span {
-  width: 32px !important;
-  height: 32px !important;
-  border-radius: 9px !important;
-  box-shadow: none !important;
-}
-
-.admin-brand strong {
-  font-size: 0.86rem !important;
-  font-weight: 760 !important;
-}
-
-.admin-brand small {
-  display: none !important;
-}
-
-.sidebar-section-label {
-  margin-top: 6px !important;
-  padding: 8px 8px 4px !important;
-  font-size: 0.62rem !important;
-  letter-spacing: 0.08em !important;
-}
-
-.sidebar nav,
-.admin-nav {
-  gap: 3px !important;
-}
-
-.sidebar nav > button,
-.dynamic-menu > button {
-  min-height: 34px !important;
-  border-radius: 8px !important;
-  font-size: 0.79rem !important;
-}
-
-.sidebar nav > button::before,
-.dynamic-menu-icon {
-  width: 22px !important;
-  height: 22px !important;
-  flex-basis: 22px !important;
-  border-radius: 6px !important;
-}
-
-.dynamic-menu {
-  margin-block: 1px !important;
-  padding: 3px !important;
-  border-radius: 9px !important;
-}
-
-.dynamic-menu > div {
-  display: grid !important;
-  grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
-  gap: 2px !important;
-  margin: 2px 0 0 !important;
-  padding: 2px !important;
-  border: 0 !important;
-  border-radius: 7px !important;
-  background: rgb(255 255 255 / 2.5%) !important;
-}
-
-.dynamic-menu > div button,
-.dynamic-menu > div button.is-active {
-  min-height: 26px !important;
-  padding: 0 4px !important;
-  border-radius: 6px !important;
-  font-size: 0.67rem !important;
-  text-align: center !important;
-}
-
-.dynamic-menu > div button.is-active::before {
-  display: none !important;
 }
 
 .admin-header {
@@ -376,8 +288,7 @@ textarea {
 .product-table-wrap,
 .asset-table-wrap,
 .conversion-target-panel,
-.faq-card,
-.empty-admin-state {
+.faq-card {
   border: 1px solid var(--admin-border) !important;
   border-radius: var(--admin-radius-md) !important;
   background: var(--admin-surface) !important;
@@ -506,8 +417,7 @@ textarea {
 .section-management-toolbar,
 .category-management-toolbar,
 .product-management-toolbar,
-.conversion-pool-heading,
-.faq-management-heading {
+.conversion-pool-heading {
   position: absolute !important;
   z-index: 4 !important;
   top: 5px !important;
@@ -523,16 +433,14 @@ textarea {
 .section-management-toolbar > div,
 .category-management-toolbar > div,
 .product-management-toolbar > div,
-.conversion-pool-heading > div,
-.faq-management-heading > div {
+.conversion-pool-heading > div {
   display: none !important;
 }
 
 .section-management-toolbar .primary-button,
 .category-management-toolbar .primary-button,
 .product-management-toolbar .primary-button,
-.conversion-pool-heading .primary-button,
-.faq-management-heading .primary-button {
+.conversion-pool-heading .primary-button {
   min-height: 34px !important;
 }
 
@@ -623,7 +531,6 @@ textarea {
 .status-chip,
 .product-status-badge,
 .category-reference,
-.asset-chip,
 .asset-cleanup-status,
 .asset-reference-list span {
   padding: 3px 7px !important;
@@ -685,20 +592,12 @@ textarea {
   padding-bottom: 2px;
 }
 
-.admin-settings-section > h2,
-.admin-settings-section-heading h2 {
+.admin-settings-section > h2 {
   margin: 0;
   color: #263244;
   font-size: 0.76rem;
   font-weight: 800;
   line-height: 1.2;
-}
-
-.admin-settings-section-heading {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
 }
 
 .admin-settings-row {
@@ -827,8 +726,7 @@ textarea {
   gap: 6px;
 }
 
-.admin-toggle-item,
-.admin-inline-switch {
+.admin-toggle-item {
   display: inline-flex;
   min-height: 34px;
   align-items: center;
@@ -843,19 +741,16 @@ textarea {
   cursor: pointer;
 }
 
-.admin-toggle-item:hover,
-.admin-inline-switch:hover {
+.admin-toggle-item:hover {
   background: #fafbfc;
 }
 
-.admin-toggle-item:has(input:checked),
-.admin-inline-switch:has(input:checked) {
+.admin-toggle-item:has(input:checked) {
   border-color: #ffb79d;
   background: var(--admin-brand-soft);
 }
 
-.admin-toggle-item input,
-.admin-inline-switch input {
+.admin-toggle-item input {
   width: 15px;
   height: 15px;
   margin: 0;
@@ -1032,8 +927,7 @@ textarea {
   .section-management-toolbar,
   .category-management-toolbar,
   .product-management-toolbar,
-  .conversion-pool-heading,
-  .faq-management-heading {
+  .conversion-pool-heading {
     position: static !important;
     display: flex !important;
     justify-content: flex-end !important;

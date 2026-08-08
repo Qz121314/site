@@ -2,7 +2,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AssetLibraryView } from './AssetLibraryView';
 import { AdminApiError, fetchSections, type AdminSection } from './api';
 import { useAdminUnsavedState } from './admin-unsaved-state';
-import { brandingAssetPreviewUrl } from './branding-media/api';
 import { CategoryManagementView } from './CategoryManagementView';
 import { ConversionPoolView } from './ConversionPoolView';
 import { CustomerServiceView } from './CustomerServiceView';
@@ -487,10 +486,7 @@ export function Dashboard({
       <aside className="sidebar">
         <div className="admin-brand">
           <span>SP</span>
-          <div>
-            <strong>业务运营后台</strong>
-            <small>React 管理系统</small>
-          </div>
+          <strong>业务运营后台</strong>
         </div>
 
         <nav className="admin-nav" aria-label="后台导航">
@@ -507,11 +503,8 @@ export function Dashboard({
           {sections.map((section) => {
             const sectionIsCurrent = currentSection?.section.id === section.id;
             return (
-              <div className={`dynamic-menu${sectionIsCurrent ? ' is-current-section' : ''}`} key={section.id}>
+              <div className="dynamic-menu" key={section.id}>
                 <button className={sectionIsCurrent ? 'is-current-section' : undefined} type="button" onClick={() => requestView(`products:${section.id}`)}>
-                  <span className={`dynamic-menu-icon${section.iconAssetId ? ' has-image' : ''}`} aria-hidden="true">
-                    {section.iconAssetId ? <img src={brandingAssetPreviewUrl(section.iconAssetId)} alt="" /> : section.iconValue ?? '◈'}
-                  </span>
                   {section.name}
                 </button>
               </div>

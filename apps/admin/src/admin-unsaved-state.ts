@@ -4,7 +4,6 @@ const LEGACY_PROTECTED_FORM_SELECTOR = '.admin-dialog form:not(.product-editor-f
 const SPECIAL_DRAFT_ACTION_SELECTOR = [
   '.icon-picker button',
   '.section-icon-upload-actions button',
-  '.branding-upload-actions button',
 ].join(', ');
 
 export type AdminUnsavedSnapshot = {

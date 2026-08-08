@@ -631,54 +631,6 @@ button.status-pill {
   line-height: 1.65;
 }
 
-.dynamic-menu {
-  margin: 6px 0;
-  padding: 6px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.04);
-}
-
-.dynamic-menu > button {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-}
-
-.dynamic-menu > div {
-  display: grid;
-  gap: 3px;
-  margin: 4px 0 0 28px;
-}
-
-.dynamic-menu > div button {
-  padding: 7px 9px;
-  color: rgba(255, 255, 255, 0.62);
-  font-size: 12px;
-}
-
-.dynamic-menu > div button.is-active {
-  color: #fff;
-  background: rgba(255, 255, 255, 0.1);
-}
-
-.section-context-placeholder {
-  padding: 32px;
-  border: 1px dashed var(--border-color);
-  border-radius: 20px;
-  background: var(--surface-color);
-}
-
-.section-context-placeholder h2 {
-  margin: 0 0 10px;
-}
-
-.section-context-placeholder p {
-  margin: 0;
-  color: var(--muted-text);
-  line-height: 1.7;
-}
-
 @media (max-width: 900px) {
   .section-management {
     grid-template-columns: 1fr;
