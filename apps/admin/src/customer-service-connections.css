@@ -22,6 +22,51 @@
   box-shadow: 0 1px 2px rgb(16 24 40 / 3%);
 }
 
+.customer-service-commandbar .segmented-control {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid var(--admin-border, #e2e6ec);
+  border-radius: 9px;
+  background: #f1f3f6;
+}
+
+.customer-service-commandbar .segmented-control button {
+  appearance: none;
+  min-height: 30px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 6px;
+  color: #667085;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 720;
+  line-height: 1;
+  transition:
+    color 140ms ease,
+    background 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.customer-service-commandbar .segmented-control button:not(.is-active):hover {
+  color: #344054;
+  background: rgb(255 255 255 / 72%);
+}
+
+.customer-service-commandbar .segmented-control button.is-active {
+  color: #fff;
+  background: #202632;
+  box-shadow: 0 1px 3px rgb(16 24 40 / 18%);
+}
+
+.customer-service-commandbar .segmented-control button:focus-visible {
+  outline: 3px solid rgb(255 90 31 / 14%);
+  outline-offset: 1px;
+}
+
 .customer-service-search {
   width: 100%;
   min-width: 0;
