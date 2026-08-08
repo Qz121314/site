@@ -5,6 +5,7 @@ import {
   logoutAdmin,
   type AdminSessionResponse,
 } from './api';
+import { ADMIN_SESSION_EXPIRED_EVENT } from './admin-fetch';
 import { Dashboard } from './Dashboard';
 import { LoginView } from './LoginView';
 
@@ -31,6 +32,12 @@ export function App() {
       errorMessage: '登录会话已失效，请重新登录。',
     });
   }, []);
+
+  useEffect(() => {
+    const handleExpiredEvent = () => handleSessionExpired();
+    window.addEventListener(ADMIN_SESSION_EXPIRED_EVENT, handleExpiredEvent);
+    return () => window.removeEventListener(ADMIN_SESSION_EXPIRED_EVENT, handleExpiredEvent);
+  }, [handleSessionExpired]);
 
   useEffect(() => {
     let active = true;
