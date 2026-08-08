@@ -86,6 +86,33 @@
   cursor: pointer;
 }
 
+.publish-status-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 8px;
+  padding: 8px;
+  border: 1px solid #fecaca;
+  border-radius: 9px;
+  color: #912018;
+  background: #fff7f7;
+  font-size: 0.68rem;
+}
+
+.publish-status-error button {
+  flex: 0 0 auto;
+  min-height: 26px;
+  padding: 0 8px;
+  border: 1px solid #fda29b;
+  border-radius: 7px;
+  color: inherit;
+  background: #fff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
 .publish-module-selector {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;

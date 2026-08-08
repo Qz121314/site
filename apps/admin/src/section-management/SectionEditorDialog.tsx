@@ -11,6 +11,7 @@ type SectionEditorDialogProps = {
   form: SectionEditorInput;
   iconPreviewUrl: string | null;
   localIcon: LocalBrandingImage | null;
+  errorMessage: string;
   saving: boolean;
   processingIcon: boolean;
   onFormChange: (form: SectionEditorInput) => void;
@@ -27,6 +28,7 @@ export function SectionEditorDialog({
   form,
   iconPreviewUrl,
   localIcon,
+  errorMessage,
   saving,
   processingIcon,
   onFormChange,
@@ -58,6 +60,8 @@ export function SectionEditorDialog({
         </div>
 
         <form className="section-editor-form" onSubmit={onSubmit}>
+          {errorMessage ? <div className="notice notice-error" role="alert">{errorMessage}</div> : null}
+
           <label>
             <span>分区名称</span>
             <input
@@ -65,6 +69,8 @@ export function SectionEditorDialog({
               value={form.name}
               placeholder="例如 Massage"
               autoFocus
+              required
+              maxLength={100}
               disabled={busy}
               onChange={(event) => onFormChange({ ...form, name: event.target.value })}
             />
@@ -144,7 +150,9 @@ export function SectionEditorDialog({
             <input
               type="number"
               min="0"
+              max="1000000"
               step="1"
+              required
               value={form.sortOrder}
               disabled={busy}
               onChange={(event) => onFormChange({ ...form, sortOrder: Number(event.target.value) })}

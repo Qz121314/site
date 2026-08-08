@@ -180,9 +180,11 @@ function publishStatusLabel(
   status: PublishStatus | null,
   publishing: boolean,
   hasUnsavedChanges: boolean,
+  hasError: boolean,
 ): string {
   if (publishing) return '正在发布';
   if (hasUnsavedChanges) return '有未保存修改';
+  if (hasError) return '发布状态读取失败';
   if (!status) return '读取发布状态';
   if (status.bootstrapRequired) return '需要首次发布';
   if (status.modules.some((module) => module.lastJob?.status === 'failed')) return '部分板块发布失败';
@@ -238,6 +240,7 @@ export function Dashboard({
   const [sectionsLoading, setSectionsLoading] = useState(true);
   const [sectionsError, setSectionsError] = useState('');
   const [publishStatus, setPublishStatus] = useState<PublishStatus | null>(null);
+  const [publishStatusError, setPublishStatusError] = useState('');
   const [publishingKey, setPublishingKey] = useState<string | null>(null);
   const [publishFeedback, setPublishFeedback] = useState<PublishFeedback>(null);
   const [publishPanelOpen, setPublishPanelOpen] = useState(false);
@@ -265,10 +268,15 @@ export function Dashboard({
   }, [onSessionExpired]);
 
   const loadPublishStatus = useCallback(async () => {
+    setPublishStatusError('');
     try {
       setPublishStatus(await fetchPublishStatus());
     } catch (error) {
-      if (isSessionError(error)) onSessionExpired();
+      if (isSessionError(error)) {
+        onSessionExpired();
+        return;
+      }
+      setPublishStatusError(error instanceof Error ? error.message : '发布状态读取失败。');
     }
   }, [onSessionExpired]);
 
@@ -535,7 +543,7 @@ export function Dashboard({
             {unsaved.isDirty ? <span className="admin-unsaved-chip" title={unsavedTitle}>未保存修改</span> : null}
             <div className="publish-version-control">
               <button
-                className={`publish-status-chip${publishStatus?.modules.some((module) => module.lastJob?.status === 'failed') ? ' is-error' : ''}${(publishStatus && !publishStatus.isCurrent) || unsaved.isDirty ? ' is-dirty' : ''}`}
+                className={`publish-status-chip${publishStatusError || publishStatus?.modules.some((module) => module.lastJob?.status === 'failed') ? ' is-error' : ''}${(publishStatus && !publishStatus.isCurrent) || unsaved.isDirty ? ' is-dirty' : ''}`}
                 type="button"
                 aria-expanded={publishPanelOpen}
                 onClick={() => {
@@ -544,7 +552,7 @@ export function Dashboard({
                   if (next) void loadPublishStatus();
                 }}
               >
-                {publishStatusLabel(publishStatus, publishing, unsaved.isDirty)}
+                {publishStatusLabel(publishStatus, publishing, unsaved.isDirty, Boolean(publishStatusError))}
               </button>
               {publishPanelOpen ? (
                 <div className="publish-version-popover">
@@ -552,6 +560,12 @@ export function Dashboard({
                     <div><strong>板块发布</strong><small>每个板块独立保留最近 3 版</small></div>
                     <button type="button" onClick={() => setPublishPanelOpen(false)} aria-label="关闭">×</button>
                   </div>
+                  {publishStatusError ? (
+                    <div className="publish-status-error" role="alert">
+                      <span>{publishStatusError}</span>
+                      <button type="button" onClick={() => void loadPublishStatus()}>重新读取</button>
+                    </div>
+                  ) : null}
                   <div className="publish-module-selector">
                     <label>
                       <span>查看板块</span>

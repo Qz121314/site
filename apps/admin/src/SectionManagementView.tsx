@@ -132,6 +132,7 @@ export function SectionManagementView({
     setForm({ ...emptySectionForm, sortOrder });
     setLocalIcon(null);
     setErrorMessage('');
+    setSuccessMessage('');
     setEditorOpen(true);
   }
 
@@ -146,6 +147,7 @@ export function SectionManagementView({
     });
     setLocalIcon(null);
     setErrorMessage('');
+    setSuccessMessage('');
     setEditorOpen(true);
   }
 
@@ -173,6 +175,7 @@ export function SectionManagementView({
   }
 
   function removeImageIcon() {
+    setErrorMessage('');
     setLocalIcon(null);
     setForm((current) => ({
       ...current,
@@ -182,6 +185,7 @@ export function SectionManagementView({
   }
 
   function selectFallbackIcon(icon: string) {
+    setErrorMessage('');
     setLocalIcon(null);
     setForm((current) => ({ ...current, iconAssetId: null, iconValue: icon }));
   }
@@ -353,7 +357,7 @@ export function SectionManagementView({
         </label>
       </div>
 
-      {errorMessage ? <div className="notice notice-error" role="alert">{errorMessage}</div> : null}
+      {errorMessage && !editorOpen ? <div className="notice notice-error" role="alert">{errorMessage}</div> : null}
       {successMessage ? <div className="notice notice-success" role="status">{successMessage}</div> : null}
 
       {scope === 'active' && selectedIds.size > 0 ? (
@@ -386,11 +390,18 @@ export function SectionManagementView({
           form={form}
           iconPreviewUrl={iconPreviewUrl}
           localIcon={localIcon}
+          errorMessage={errorMessage}
           saving={saving}
           processingIcon={processingIcon}
-          onFormChange={setForm}
+          onFormChange={(nextForm) => {
+            setErrorMessage('');
+            setForm(nextForm);
+          }}
           onSelectIconFile={(file) => void selectIconFile(file)}
-          onOpenMediaPicker={() => setIconPickerOpen(true)}
+          onOpenMediaPicker={() => {
+            setErrorMessage('');
+            setIconPickerOpen(true);
+          }}
           onRemoveImageIcon={removeImageIcon}
           onSelectFallbackIcon={selectFallbackIcon}
           onClose={closeEditor}
@@ -407,6 +418,7 @@ export function SectionManagementView({
           onSessionExpired={onSessionExpired}
           onClose={() => setIconPickerOpen(false)}
           onSelect={(asset) => {
+            setErrorMessage('');
             setLocalIcon(null);
             setForm((current) => ({ ...current, iconAssetId: asset.id }));
             setIconPickerOpen(false);
