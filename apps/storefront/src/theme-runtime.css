@@ -70,6 +70,244 @@ html[data-theme='tech'] .faq-list details {
 }
 
 /*
+ * Mobile is the storefront design baseline. Desktop styles are progressive
+ * enhancements layered on top of these touch-first proportions.
+ */
+@media (max-width: 719px) {
+  .app-shell {
+    padding-bottom: calc(82px + env(safe-area-inset-bottom));
+  }
+
+  .topbar {
+    min-height: 56px;
+    padding: 8px 11px;
+  }
+
+  .brand-lockup {
+    gap: 8px;
+  }
+
+  .brand-logo {
+    width: 38px;
+    height: 38px;
+    border-radius: 11px;
+  }
+
+  .brand-lockup strong {
+    font-size: 0.88rem;
+  }
+
+  .brand-lockup small {
+    font-size: 0.67rem;
+  }
+
+  main {
+    padding: 12px 10px 34px;
+  }
+
+  .hero-panel {
+    gap: 12px;
+    margin-bottom: 18px;
+    padding: 18px 14px;
+    border-radius: 20px;
+  }
+
+  .hero-panel h1 {
+    max-width: 92%;
+    margin-bottom: 7px;
+    font-size: clamp(1.75rem, 8.6vw, 2.65rem);
+    line-height: 1;
+  }
+
+  .hero-copy {
+    max-width: 92%;
+    font-size: 0.8rem;
+    line-height: 1.5;
+  }
+
+  .hero-location {
+    padding: 7px 10px;
+    font-size: 0.69rem;
+  }
+
+  .content-section {
+    margin-bottom: 22px;
+  }
+
+  .section-heading {
+    margin-bottom: 10px;
+  }
+
+  .section-heading h2 {
+    font-size: 1.28rem;
+  }
+
+  .section-grid {
+    gap: 7px;
+  }
+
+  .section-item {
+    min-height: 76px;
+    gap: 5px;
+    padding: 9px 3px;
+    border-radius: 13px;
+    font-size: 0.67rem;
+  }
+
+  .section-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 13px;
+  }
+
+  .product-grid,
+  .loading-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  .product-card {
+    border-radius: 16px;
+    box-shadow: 0 3px 12px rgb(31 35 40 / 4%);
+  }
+
+  .product-card-media {
+    aspect-ratio: 1 / 1;
+  }
+
+  .product-card-body {
+    padding: 9px;
+  }
+
+  .product-card-heading {
+    gap: 2px;
+  }
+
+  .product-card-heading h3 {
+    font-size: 0.86rem;
+    line-height: 1.2;
+  }
+
+  .product-card-heading > span {
+    font-size: 0.61rem;
+  }
+
+  .product-type {
+    margin-top: 6px;
+    font-size: 0.66rem;
+  }
+
+  .tag-row {
+    gap: 4px;
+    margin-top: 6px;
+    overflow: hidden;
+    max-height: 25px;
+  }
+
+  .tag-row span {
+    padding: 3px 5px;
+    font-size: 0.55rem;
+  }
+
+  .product-address {
+    margin-top: 6px;
+    font-size: 0.61rem;
+  }
+
+  .service-mode-badge {
+    top: 6px;
+    left: 6px;
+    padding: 4px 6px;
+    font-size: 0.55rem;
+  }
+
+  .filter-panel {
+    grid-template-columns: minmax(0, 1fr) minmax(108px, 0.42fr);
+    gap: 7px;
+    padding: 9px;
+    border-radius: 15px;
+  }
+
+  .search-field input,
+  .select-field select {
+    min-height: 42px;
+  }
+
+  .tag-filter button {
+    min-height: 36px;
+    padding-inline: 10px;
+  }
+
+  .cta-button,
+  .primary-button {
+    min-height: 48px;
+  }
+
+  .bottom-nav {
+    right: 8px;
+    bottom: 7px;
+    left: 8px;
+    padding-top: 5px;
+    border-radius: 18px;
+  }
+
+  .bottom-nav a {
+    min-height: 46px;
+    padding: 3px;
+  }
+
+  .bottom-nav a > span {
+    font-size: 1.05rem;
+  }
+
+  .mobile-cta-bar {
+    right: 8px;
+    bottom: calc(76px + env(safe-area-inset-bottom));
+    left: 8px;
+  }
+
+  html[data-theme='marketplace'] .product-card {
+    border-radius: 16px;
+  }
+
+  html[data-theme='noir'] .hero-panel,
+  html[data-theme='live'] .hero-panel,
+  html[data-theme='tech'] .hero-panel {
+    border: 1px solid color-mix(in srgb, var(--line) 76%, transparent);
+  }
+
+  html[data-theme='live'] .hero-panel {
+    min-height: 190px;
+    align-content: end;
+  }
+
+  html[data-theme='live'] .product-card {
+    border-color: color-mix(in srgb, var(--brand) 24%, var(--line));
+  }
+
+  html[data-theme='saas'] .hero-panel {
+    border-radius: 16px;
+    box-shadow: 0 8px 22px color-mix(in srgb, var(--brand) 12%, transparent);
+  }
+
+  html[data-theme='saas'] .product-card {
+    box-shadow: 0 2px 8px rgb(31 35 40 / 4%);
+  }
+
+  html[data-theme='travel'] .hero-panel {
+    border-radius: 24px;
+  }
+
+  html[data-theme='travel'] .product-card {
+    border-radius: 20px;
+  }
+
+  html[data-theme='tech'] .product-card {
+    border-color: color-mix(in srgb, var(--brand) 18%, var(--line));
+  }
+}
+
+/*
  * Product listing media uses 1:1 as the cross-theme baseline. Detail media,
  * logos, icons, hero imagery and future video keep role-specific proportions.
  */

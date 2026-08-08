@@ -62,6 +62,7 @@
   }
 
   .admin-main > .settings-form,
+  .admin-main > .theme-center,
   .admin-main > .section-management,
   .admin-main > .category-management,
   .admin-main > .product-management,
@@ -75,6 +76,7 @@
 
   /* Configuration pages scroll as one coherent page when they genuinely exceed the viewport. */
   .admin-main > .settings-form,
+  .admin-main > .theme-center,
   .admin-main > .conversion-pool {
     overflow-y: auto;
     overscroll-behavior: contain;
