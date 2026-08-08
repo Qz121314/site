@@ -415,10 +415,13 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
                 />
               </label>
               <label>
-                <span>接口协议</span>
-                <select value="generic_v1" disabled>
-                  <option value="generic_v1">标准客服接口 v1</option>
-                </select>
+                <span>项目 ID</span>
+                <input
+                  type="text"
+                  maxLength={200}
+                  value={draft.projectId}
+                  onChange={(event) => setDraft((current) => ({ ...current, projectId: event.target.value }))}
+                />
               </label>
               <label className="customer-service-editor-wide">
                 <span>API 根地址</span>
@@ -429,16 +432,7 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
                   onChange={(event) => setDraft((current) => ({ ...current, baseUrl: event.target.value }))}
                 />
               </label>
-              <label>
-                <span>项目 ID</span>
-                <input
-                  type="text"
-                  maxLength={200}
-                  value={draft.projectId}
-                  onChange={(event) => setDraft((current) => ({ ...current, projectId: event.target.value }))}
-                />
-              </label>
-              <label>
+              <label className="customer-service-editor-wide">
                 <span>API Token{editingConnection?.hasApiToken ? '（已配置）' : ''}</span>
                 <input
                   type="password"
@@ -451,7 +445,7 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
               <label className="customer-service-editor-wide">
                 <span>私有扩展配置 JSON</span>
                 <textarea
-                  rows={5}
+                  rows={4}
                   spellCheck={false}
                   value={draft.privateConfig}
                   onChange={(event) => setDraft((current) => ({ ...current, privateConfig: event.target.value }))}
