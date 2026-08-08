@@ -1,4 +1,5 @@
 import { AdminApiError } from '../api';
+import { adminFetch } from '../admin-fetch';
 import type { BrandingImageKind } from './local-branding-image';
 
 const BRANDING_IMAGE_COMPRESSION_PROFILE = 'browser-branding-image-v1';
@@ -54,7 +55,7 @@ export async function uploadBrandingImage(
   formData.set('kind', kind);
   formData.set('file', file);
   formData.set('compressionProfile', BRANDING_IMAGE_COMPRESSION_PROFILE);
-  const response = await fetch('/api/admin/media/branding', {
+  const response = await adminFetch('/api/admin/media/branding', {
     method: 'POST',
     credentials: 'same-origin',
     cache: 'no-store',

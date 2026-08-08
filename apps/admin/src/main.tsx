@@ -2,7 +2,6 @@ import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
 import { AdminErrorBoundary } from './AdminErrorBoundary';
-import { installAdminMutationObserver } from './admin-mutation-observer';
 import { installAdminUnsavedStateObserver } from './admin-unsaved-state';
 import './styles.css';
 import './site-settings.css';
@@ -35,7 +34,6 @@ import './media-upload-queue.css';
 import './admin-error-boundary.css';
 import './admin-dialog-service.css';
 
-installAdminMutationObserver();
 installAdminUnsavedStateObserver();
 
 const root = document.getElementById('root');
