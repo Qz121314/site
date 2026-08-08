@@ -1,6 +1,7 @@
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { App } from './App';
+import { AdminErrorBoundary } from './AdminErrorBoundary';
 import { installAdminMutationObserver } from './admin-mutation-observer';
 import { installAdminUnsavedStateObserver } from './admin-unsaved-state';
 import './styles.css';
@@ -31,6 +32,7 @@ import './faq-management.css';
 import './markdown-media.css';
 import './media-center.css';
 import './media-upload-queue.css';
+import './admin-error-boundary.css';
 
 installAdminMutationObserver();
 installAdminUnsavedStateObserver();
@@ -42,6 +44,8 @@ if (!root) {
 
 createRoot(root).render(
   <StrictMode>
-    <App />
+    <AdminErrorBoundary>
+      <App />
+    </AdminErrorBoundary>
   </StrictMode>,
 );
