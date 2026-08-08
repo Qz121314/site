@@ -102,6 +102,7 @@ export function TagManagementView({ section, onSessionExpired }: TagManagementVi
 
   const allVisibleSelected =
     filteredTags.length > 0 && filteredTags.every((tag) => selectedIds.has(tag.id));
+  const reorderBlocked = scope !== 'active' || Boolean(search.trim());
 
   async function changeScope(nextScope: TagScope) {
     setScope(nextScope);
@@ -177,6 +178,7 @@ export function TagManagementView({ section, onSessionExpired }: TagManagementVi
   }
 
   async function moveTag(tag: AdminProductTag, direction: -1 | 1) {
+    if (reorderBlocked) return;
     const ordered = sortTags(activeTags).map((item) => ({ ...item }));
     const index = ordered.findIndex((item) => item.id === tag.id);
     const targetIndex = index + direction;
@@ -311,7 +313,7 @@ export function TagManagementView({ section, onSessionExpired }: TagManagementVi
                   <td className="checkbox-cell">{scope === 'active' ? <input type="checkbox" aria-label={`选择标签 ${tag.name}`} checked={selectedIds.has(tag.id)} onChange={() => toggleSelect(tag.id)} /> : null}</td>
                   <td><div className="category-name-cell"><strong>{tag.name}</strong><small>{tag.id.slice(0, 8)}</small></div></td>
                   <td><span className={tag.productCount > 0 ? 'category-reference is-used' : 'category-reference'}>{tag.productCount} 个产品</span></td>
-                  <td>{scope === 'active' ? <div className="sort-controls"><span>{tag.sortOrder}</span><div><button type="button" disabled={working || index === 0} onClick={() => void moveTag(tag, -1)}>↑</button><button type="button" disabled={working || index === filteredTags.length - 1} onClick={() => void moveTag(tag, 1)}>↓</button></div></div> : tag.sortOrder}</td>
+                  <td>{scope === 'active' ? <div className="sort-controls"><span>{tag.sortOrder}</span><div><button type="button" disabled={working || reorderBlocked || index === 0} onClick={() => void moveTag(tag, -1)}>↑</button><button type="button" disabled={working || reorderBlocked || index === filteredTags.length - 1} onClick={() => void moveTag(tag, 1)}>↓</button></div></div> : tag.sortOrder}</td>
                   <td>{scope === 'active' ? <button type="button" className={`status-pill ${tag.isEnabled ? 'is-enabled' : 'is-disabled'}`} disabled={working} onClick={() => void toggleEnabled(tag)}>{tag.isEnabled ? '已启用' : '已停用'}</button> : <span className="status-pill is-deleted">已删除</span>}</td>
                   <td className="actions-cell">{scope === 'active' ? <><button type="button" disabled={working} onClick={() => openEditEditor(tag)}>编辑</button><button type="button" className="text-danger" disabled={working} onClick={() => setPendingDeleteIds([tag.id])}>删除</button></> : <button type="button" disabled={working} onClick={() => void restoreTag(tag)}>恢复</button>}</td>
                 </tr>
