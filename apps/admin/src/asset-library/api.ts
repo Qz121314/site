@@ -318,9 +318,9 @@ export async function fetchMediaLibrary(filters?: {
 export async function uploadMediaAsset(input: {
   file: File;
   role: MediaRole;
-  width?: number | null;
-  height?: number | null;
-  durationMs?: number | null;
+  width?: number | null | undefined;
+  height?: number | null | undefined;
+  durationMs?: number | null | undefined;
 }): Promise<{ media: ManagedMediaAsset; reused: boolean }> {
   const formData = new FormData();
   formData.set('file', input.file);
