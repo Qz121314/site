@@ -232,7 +232,7 @@
 
 .product-select-column {
   width: 36px;
-  text-align: center !important;
+  text-align: center;
 }
 
 .product-select-column input {
@@ -405,14 +405,14 @@
 
 .product-row-actions .text-danger {
   border-color: transparent;
-  color: #b42318 !important;
+  color: #b42318;
   background: transparent;
   box-shadow: none;
 }
 
 .product-row-actions .text-danger:not(:disabled):hover {
   border-color: #fecdca;
-  color: #912018 !important;
+  color: #912018;
   background: #fff1f0;
 }
 
