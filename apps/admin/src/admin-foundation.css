@@ -441,8 +441,12 @@ select:disabled {
   background: var(--surface-muted);
 }
 
+.actions-cell .text-danger {
+  color: var(--danger);
+}
+
 .actions-cell .text-danger:hover {
-  color: var(--danger) !important;
+  color: var(--danger);
   background: var(--danger-soft);
 }
 

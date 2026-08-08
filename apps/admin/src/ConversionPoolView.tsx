@@ -73,6 +73,17 @@ function modeLabel(group: AdminConversionGroup): string {
   return group.mode === 'customer_service' ? '在线客服' : '链接跳转';
 }
 
+function describeConversionError(error: unknown): string {
+  if (!(error instanceof AdminApiError)) return '转化池操作失败。';
+  if (error.code === 'CONVERSION_GROUP_HAS_DEPENDENCIES') {
+    return `${error.message} 当前包含 ${error.targetCount ?? 0} 个入口，被 ${error.productCount ?? 0} 个产品引用。`;
+  }
+  if (error.code === 'CONVERSION_GROUP_MODE_LOCKED') {
+    return `${error.message} 当前已有 ${error.targetCount ?? 0} 个入口。`;
+  }
+  return error.message;
+}
+
 function readinessLabel(group: AdminConversionGroup): string {
   if (!group.isEnabled) return '已停用';
   if (group.activeTargetCount === 0) return '未配置可用入口';
@@ -153,7 +164,7 @@ export function ConversionPoolView({ section, onSessionExpired }: Props) {
         onSessionExpired();
         return;
       }
-      setErrorMessage(error instanceof Error ? error.message : '转化池操作失败。');
+      setErrorMessage(describeConversionError(error));
     },
     [onSessionExpired],
   );
@@ -610,7 +621,7 @@ export function ConversionPoolView({ section, onSessionExpired }: Props) {
         </label>
       </div>
 
-      {errorMessage ? <div className="notice notice-error" role="alert">{errorMessage}</div> : null}
+      {!groupEditorOpen && !targetEditorOpen && errorMessage ? <div className="notice notice-error" role="alert">{errorMessage}</div> : null}
       {successMessage ? <div className="notice notice-success" role="status">{successMessage}</div> : null}
       {rotationMessage ? <div className="notice conversion-rotation-result" role="status">{rotationMessage}</div> : null}
 
@@ -813,7 +824,11 @@ export function ConversionPoolView({ section, onSessionExpired }: Props) {
           editingGroup={editingGroup}
           form={groupForm}
           saving={saving}
-          onFormChange={setGroupForm}
+          errorMessage={errorMessage}
+          onFormChange={(nextForm) => {
+            setGroupForm(nextForm);
+            setErrorMessage('');
+          }}
           onClose={() => setGroupEditorOpen(false)}
           onSubmit={(event) => void saveGroup(event)}
         />
@@ -825,7 +840,11 @@ export function ConversionPoolView({ section, onSessionExpired }: Props) {
           editingTarget={editingTarget}
           form={targetForm}
           saving={saving}
-          onFormChange={setTargetForm}
+          errorMessage={errorMessage}
+          onFormChange={(nextForm) => {
+            setTargetForm(nextForm);
+            setErrorMessage('');
+          }}
           onClose={() => setTargetEditorOpen(false)}
           onSubmit={(event) => void saveTarget(event)}
           onSessionExpired={onSessionExpired}

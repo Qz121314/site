@@ -10,6 +10,7 @@ type Props = {
   editingGroup: AdminConversionGroup | null;
   form: ConversionGroupInput;
   saving: boolean;
+  errorMessage: string;
   onFormChange: (form: ConversionGroupInput) => void;
   onClose: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
@@ -33,10 +34,13 @@ export function ConversionGroupEditorDialog({
   editingGroup,
   form,
   saving,
+  errorMessage,
   onFormChange,
   onClose,
   onSubmit,
 }: Props) {
+  const modeLocked = Boolean(editingGroup && editingGroup.targetCount > 0);
+
   return (
     <div className="admin-dialog-backdrop" role="presentation">
       <section
@@ -58,12 +62,15 @@ export function ConversionGroupEditorDialog({
         </div>
 
         <form className="conversion-editor-form" onSubmit={onSubmit}>
+          {errorMessage ? <div className="notice notice-error" role="alert">{errorMessage}</div> : null}
+
           <label>
             <span>分组名称</span>
             <input
               type="text"
               value={form.name}
               autoFocus
+              required
               maxLength={100}
               placeholder="例如：默认客服组"
               onChange={(event) => onFormChange({ ...form, name: event.target.value })}
@@ -79,6 +86,8 @@ export function ConversionGroupEditorDialog({
                   key={option.value}
                   type="button"
                   className={form.mode === option.value ? 'is-selected' : undefined}
+                  aria-pressed={form.mode === option.value}
+                  disabled={saving || modeLocked}
                   onClick={() => onFormChange({ ...form, mode: option.value })}
                 >
                   <strong>{option.title}</strong>
@@ -96,6 +105,7 @@ export function ConversionGroupEditorDialog({
             <input
               type="text"
               value={form.buttonLabel}
+              required
               maxLength={80}
               placeholder={form.mode === 'link' ? '例如：Book Now' : '例如：Contact Us'}
               onChange={(event) => onFormChange({ ...form, buttonLabel: event.target.value })}
@@ -109,6 +119,7 @@ export function ConversionGroupEditorDialog({
               min={0}
               max={1_000_000}
               step={1}
+              required
               value={form.sortOrder}
               onChange={(event) =>
                 onFormChange({ ...form, sortOrder: Number(event.target.value) })

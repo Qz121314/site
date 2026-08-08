@@ -17,6 +17,7 @@ type Props = {
   editingTarget: AdminConversionTarget | null;
   form: ConversionTargetInput;
   saving: boolean;
+  errorMessage: string;
   onFormChange: (form: ConversionTargetInput) => void;
   onClose: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
@@ -32,6 +33,7 @@ export function ConversionTargetEditorDialog({
   editingTarget,
   form,
   saving,
+  errorMessage,
   onFormChange,
   onClose,
   onSubmit,
@@ -123,6 +125,8 @@ export function ConversionTargetEditorDialog({
         </div>
 
         <form className="conversion-editor-form" onSubmit={onSubmit}>
+          {errorMessage ? <div className="notice notice-error" role="alert">{errorMessage}</div> : null}
+
           {isCustomerService ? (
             <>
               {editingTarget?.bindingKind === 'legacy_customer_service' ? (
@@ -133,6 +137,7 @@ export function ConversionTargetEditorDialog({
                 <span>客服系统</span>
                 <select
                   value={form.customerServiceConnectionId ?? ''}
+                  required
                   disabled={connectionsLoading || saving}
                   onChange={(event) => {
                     const connectionId = event.target.value || null;
@@ -160,6 +165,7 @@ export function ConversionTargetEditorDialog({
                 <div className="conversion-remote-group-row">
                   <select
                     value={form.remoteGroupId ?? ''}
+                    required
                     disabled={!form.customerServiceConnectionId || groupsLoading || saving}
                     onChange={(event) => {
                       const remoteGroupId = event.target.value || null;
@@ -203,6 +209,7 @@ export function ConversionTargetEditorDialog({
                   type="text"
                   value={form.name}
                   autoFocus
+                  required
                   maxLength={100}
                   onChange={(event) => onFormChange({ ...form, name: event.target.value })}
                 />
@@ -213,6 +220,8 @@ export function ConversionTargetEditorDialog({
                 <input
                   type="url"
                   value={form.endpointUrl ?? ''}
+                  required
+                  maxLength={1000}
                   placeholder="https://"
                   onChange={(event) => onFormChange({ ...form, endpointUrl: event.target.value || null })}
                 />
@@ -227,6 +236,7 @@ export function ConversionTargetEditorDialog({
               min={0}
               max={1_000_000}
               step={1}
+              required
               value={form.sortOrder}
               onChange={(event) =>
                 onFormChange({ ...form, sortOrder: Number(event.target.value) })

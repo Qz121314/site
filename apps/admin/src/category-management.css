@@ -287,14 +287,14 @@
 
 .category-management .actions-cell .text-danger {
   border-color: transparent;
-  color: #b42318 !important;
+  color: #b42318;
   background: transparent;
   box-shadow: none;
 }
 
 .category-management .actions-cell .text-danger:not(:disabled):hover {
   border-color: #fecdca;
-  color: #912018 !important;
+  color: #912018;
   background: #fff1f0;
 }
 

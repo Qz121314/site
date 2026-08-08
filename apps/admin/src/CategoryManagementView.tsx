@@ -339,7 +339,7 @@ export function CategoryManagementView({
         </label>
       </div>
 
-      {errorMessage ? <div className="notice notice-error" role="alert">{errorMessage}</div> : null}
+      {!editorOpen && errorMessage ? <div className="notice notice-error" role="alert">{errorMessage}</div> : null}
       {successMessage ? <div className="notice notice-success" role="status">{successMessage}</div> : null}
 
       {scope === 'active' && selectedIds.size > 0 ? (
@@ -379,7 +379,11 @@ export function CategoryManagementView({
           editingCategory={editingCategory}
           form={form}
           saving={saving}
-          onFormChange={setForm}
+          errorMessage={errorMessage}
+          onFormChange={(nextForm) => {
+            setForm(nextForm);
+            setErrorMessage('');
+          }}
           onClose={() => setEditorOpen(false)}
           onSubmit={(event) => void handleSave(event)}
         />
