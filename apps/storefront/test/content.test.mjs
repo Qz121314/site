@@ -126,7 +126,19 @@ function sectionModule(sectionId, version, productId, featuredOrder) {
   };
 }
 
-function installModularFetch(requests = []) {
+function derivedHomeSnapshot() {
+  const productA = sectionModule('section-a', SECTION_A_VERSION, 'product-a', 2).products[0];
+  const productB = sectionModule('section-b', SECTION_B_VERSION, 'product-b', 1).products[0];
+  return {
+    schemaVersion: 2,
+    pointerVersion: POINTER_VERSION,
+    publishedAt: '2026-08-07T09:00:00.000Z',
+    featuredProducts: [productB, productA],
+    latestProducts: [productA, productB],
+  };
+}
+
+function installModularFetch(requests = [], { homeAvailable = true } = {}) {
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async (input, init) => {
     const url = String(input);
@@ -138,6 +150,9 @@ function installModularFetch(requests = []) {
     if (url.endsWith(`/public/modules/site/${SITE_VERSION}/site.json`)) return jsonResponse(siteModule());
     if (url.endsWith(`/public/modules/sections-index/${INDEX_VERSION}/sections.json`)) {
       return jsonResponse(sectionsIndexModule());
+    }
+    if (url.endsWith(`/public/home/${POINTER_VERSION}/home.json`)) {
+      return homeAvailable ? jsonResponse(derivedHomeSnapshot()) : jsonResponse({}, 404);
     }
     if (url.endsWith(`/public/modules/sections/section-a/${SECTION_A_VERSION}/section.json`)) {
       return jsonResponse(sectionModule('section-a', SECTION_A_VERSION, 'product-a', 2));
@@ -279,44 +294,63 @@ test('missing build-time origin discovers the public R2 custom domain from the W
   }
 });
 
-test('schema-v2 bootstrap composes independent section versions into the current home view', async () => {
+test('schema-v2 bootstrap reads the compact home summary without preloading section snapshots', async () => {
   const requests = [];
   const restore = installModularFetch(requests);
   try {
     const bootstrap = await loadStorefrontBootstrap('https://content.example.com');
     assert.equal(bootstrap.pointer.schemaVersion, 2);
-    assert.equal(bootstrap.sectionSnapshots['section-a'].contentVersion, SECTION_A_VERSION);
-    assert.equal(bootstrap.sectionSnapshots['section-b'].contentVersion, SECTION_B_VERSION);
+    assert.deepEqual(Object.keys(bootstrap.sectionSnapshots), []);
     assert.deepEqual(bootstrap.home.featuredProducts.map((product) => product.id), ['product-b', 'product-a']);
     assert.deepEqual(bootstrap.home.latestProducts.map((product) => product.id), ['product-a', 'product-b']);
     assert.equal(bootstrap.home.allSections[0].icon.value, 'https://media.example.com/sections/alpha.webp');
-    assert.equal(bootstrap.sectionSnapshots['section-a'].products[0].coverUrl, 'https://media.example.com/products/product-a/cover.webp');
-    assert.ok(requests.some((request) => request.url.includes(SECTION_A_VERSION)));
-    assert.ok(requests.some((request) => request.url.includes(SECTION_B_VERSION)));
+    assert.equal(bootstrap.home.featuredProducts[0].coverUrl, 'https://media.example.com/products/product-b/cover.webp');
+    assert.ok(requests.some((request) => request.url.endsWith(`/public/home/${POINTER_VERSION}/home.json`)));
+    assert.equal(requests.filter((request) => request.url.endsWith('/section.json')).length, 0);
   } finally {
     restore();
   }
 });
 
-test('section, product and FAQ reads follow their own module version references', async () => {
+test('schema-v2 bootstrap falls back to eager section composition when a derived home snapshot does not exist yet', async () => {
+  const requests = [];
+  const restore = installModularFetch(requests, { homeAvailable: false });
+  try {
+    const bootstrap = await loadStorefrontBootstrap('https://content.example.com');
+    assert.equal(bootstrap.sectionSnapshots['section-a'].contentVersion, SECTION_A_VERSION);
+    assert.equal(bootstrap.sectionSnapshots['section-b'].contentVersion, SECTION_B_VERSION);
+    assert.deepEqual(bootstrap.home.featuredProducts.map((product) => product.id), ['product-b', 'product-a']);
+    assert.equal(requests.filter((request) => request.url.endsWith('/section.json')).length, 2);
+  } finally {
+    restore();
+  }
+});
+
+test('section, product and FAQ reads follow their own module versions and cache sections on demand', async () => {
   const requests = [];
   const restore = installModularFetch(requests);
   try {
     const bootstrap = await loadStorefrontBootstrap('https://content.example.com');
+    assert.equal(requests.filter((request) => request.url.endsWith('/section.json')).length, 0);
+
     const section = await loadSectionSnapshot(bootstrap, 'section-a');
     assert.equal(section.contentVersion, SECTION_A_VERSION);
+    assert.equal(section.products[0].coverUrl, 'https://media.example.com/products/product-a/cover.webp');
+    assert.equal(requests.filter((request) => request.url.includes(SECTION_A_VERSION) && request.url.endsWith('/section.json')).length, 1);
+
     const sectionBySlug = await loadSectionSnapshot(bootstrap, 'alpha');
     assert.equal(sectionBySlug.section.id, 'section-a');
+    assert.equal(requests.filter((request) => request.url.includes(SECTION_A_VERSION) && request.url.endsWith('/section.json')).length, 1);
 
-    const product = await loadProductSnapshot(bootstrap, 'product-a');
+    const product = await loadProductSnapshot(bootstrap, 'product-a-slug', undefined, 'alpha');
     assert.equal(product.contentVersion, SECTION_A_VERSION);
+    assert.equal(product.product.id, 'product-a');
     assert.equal(product.product.media[0].url, 'https://media.example.com/products/product-a/gallery-1.webp');
     assert.equal(product.product.cta.path, '/go/product-a');
 
-    const productBySlug = await loadProductSnapshot(bootstrap, 'product-a-slug', undefined, 'alpha');
-    assert.equal(productBySlug.product.id, 'product-a');
     const globallyUniqueSlug = await loadProductSnapshot(bootstrap, 'product-a-slug');
     assert.equal(globallyUniqueSlug.product.id, 'product-a');
+    assert.equal(requests.filter((request) => request.url.includes(SECTION_B_VERSION) && request.url.endsWith('/section.json')).length, 1);
 
     const faq = await loadFaqSnapshot(bootstrap);
     assert.equal(faq.contentVersion, FAQ_VERSION);
