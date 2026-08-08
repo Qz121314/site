@@ -41,6 +41,12 @@ function kindLabel(kind: MediaKind): string {
   return '图片';
 }
 
+function mediaKindsFromKey(value: string): MediaKind[] {
+  return value
+    .split(',')
+    .filter((kind): kind is MediaKind => kind === 'image' || kind === 'animated_image' || kind === 'video');
+}
+
 export function MediaLibraryPickerDialog({
   title,
   role,
@@ -100,7 +106,7 @@ export function MediaLibraryPickerDialog({
     setNextCursor(null);
     void (async () => {
       try {
-        const kinds = kindFilter === 'all' ? allowedKinds : [kindFilter];
+        const kinds = kindFilter === 'all' ? mediaKindsFromKey(allowedKindsKey) : [kindFilter];
         const page = await fetchMediaLibraryPage({
           kinds,
           folder: folderFilter,
