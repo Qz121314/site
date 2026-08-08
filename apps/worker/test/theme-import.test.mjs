@@ -1,7 +1,33 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { resolveTheme, validateThemeUpdate } from '../src/theme/theme-center.ts';
+import {
+  parseThemeSettings,
+  persistedThemeKey,
+  resolveTheme,
+  validateThemeUpdate,
+} from '../src/theme/theme-center.ts';
 import { importThemeJson } from '../src/theme/theme-import.ts';
+
+const storedCustomTheme = {
+  source: 'json',
+  label: 'Stored Custom',
+  description: 'Stored locally after import.',
+  colorScheme: 'dark',
+  tokens: {
+    brand: '#ff3366',
+    brandStrong: '#ff6688',
+    text: '#ffffff',
+    muted: '#a3a3a3',
+    surface: '#171717',
+    surfaceSoft: '#202020',
+    line: '#333333',
+    pageBg: '#0a0a0a',
+    heroStart: '#4a1028',
+    heroEnd: '#171717',
+    heroGlow: '#ff3366',
+    shadow: '0 16px 44px rgb(0 0 0 / 36%)',
+  },
+};
 
 test('imports a shadcn registry theme into site tokens', () => {
   const result = importThemeJson({
@@ -60,32 +86,31 @@ test('rejects shadcn theme when requested mode is missing', () => {
 });
 
 test('custom imported theme can be validated and resolved without external source', () => {
-  const imported = {
-    source: 'json',
-    label: 'Stored Custom',
-    description: 'Stored locally after import.',
-    colorScheme: 'dark',
-    tokens: {
-      brand: '#ff3366',
-      brandStrong: '#ff6688',
-      text: '#ffffff',
-      muted: '#a3a3a3',
-      surface: '#171717',
-      surfaceSoft: '#202020',
-      line: '#333333',
-      pageBg: '#0a0a0a',
-      heroStart: '#4a1028',
-      heroEnd: '#171717',
-      heroGlow: '#ff3366',
-      shadow: '0 16px 44px rgb(0 0 0 / 36%)',
-    },
-  };
-  const validation = validateThemeUpdate({ themeKey: 'custom', overrides: { imported } });
+  const validation = validateThemeUpdate({
+    themeKey: 'custom',
+    overrides: { imported: storedCustomTheme },
+  });
   assert.equal(validation.ok, true);
   const resolved = resolveTheme(validation.settings);
   assert.equal(resolved.key, 'custom');
   assert.equal(resolved.label, 'Stored Custom');
   assert.equal(resolved.tokens.brand, '#ff3366');
+});
+
+test('custom theme persists through the existing official-key D1 constraint', () => {
+  const validation = validateThemeUpdate({
+    themeKey: 'custom',
+    overrides: { imported: storedCustomTheme },
+  });
+  assert.equal(validation.ok, true);
+  assert.equal(persistedThemeKey(validation.settings), 'marketplace');
+
+  const reloaded = parseThemeSettings(
+    'marketplace',
+    JSON.stringify(validation.settings.overrides),
+  );
+  assert.equal(reloaded.key, 'custom');
+  assert.equal(reloaded.overrides.imported?.label, 'Stored Custom');
 });
 
 test('custom key is rejected unless imported tokens are present', () => {
