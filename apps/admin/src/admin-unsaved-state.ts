@@ -1,10 +1,7 @@
 import { useEffect, useSyncExternalStore } from 'react';
 
-const PROTECTED_FORM_SELECTOR = '.admin-dialog form';
+const LEGACY_PROTECTED_FORM_SELECTOR = '.admin-dialog form:not(.product-editor-form)';
 const SPECIAL_DRAFT_ACTION_SELECTOR = [
-  '.product-tag-option',
-  '.product-media-actions button',
-  '.product-auto-cover',
   '.icon-picker button',
   '.section-icon-upload-actions button',
   '.branding-upload-actions button',
@@ -27,7 +24,9 @@ let snapshot: AdminUnsavedSnapshot = { isDirty: false, count: 0, labels: [] };
 
 function protectedForm(element: Element | null): HTMLFormElement | null {
   const form = element?.closest('form');
-  return form instanceof HTMLFormElement && form.matches(PROTECTED_FORM_SELECTOR) ? form : null;
+  return form instanceof HTMLFormElement && form.matches(LEGACY_PROTECTED_FORM_SELECTOR)
+    ? form
+    : null;
 }
 
 function formLabel(form: HTMLFormElement): string {
@@ -103,8 +102,8 @@ function registerForm(form: HTMLFormElement): void {
 }
 
 function registerForms(root: ParentNode): void {
-  if (root instanceof HTMLFormElement && root.matches(PROTECTED_FORM_SELECTOR)) registerForm(root);
-  root.querySelectorAll<HTMLFormElement>(PROTECTED_FORM_SELECTOR).forEach(registerForm);
+  if (root instanceof HTMLFormElement && root.matches(LEGACY_PROTECTED_FORM_SELECTOR)) registerForm(root);
+  root.querySelectorAll<HTMLFormElement>(LEGACY_PROTECTED_FORM_SELECTOR).forEach(registerForm);
 }
 
 function evaluateForm(form: HTMLFormElement): void {
@@ -127,8 +126,8 @@ function markFormDirty(form: HTMLFormElement): void {
 function shouldGuardDialogClose(button: HTMLButtonElement): HTMLFormElement | null {
   const dialog = button.closest('.admin-dialog');
   if (!dialog) return null;
-  const form = dialog.querySelector('form');
-  if (!(form instanceof HTMLFormElement) || !dirtyForms.has(form)) return null;
+  const form = dialog.querySelector<HTMLFormElement>(LEGACY_PROTECTED_FORM_SELECTOR);
+  if (!form || !dirtyForms.has(form)) return null;
   const label = button.getAttribute('aria-label');
   const text = button.textContent?.trim();
   return label === '关闭' || text === '取消' ? form : null;
