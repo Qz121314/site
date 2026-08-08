@@ -62,7 +62,7 @@ function closeDialog(backdrop: HTMLElement): void {
 
 function addActions(
   dialog: HTMLElement,
-  options: { confirmLabel: string; cancelLabel: string; danger?: boolean },
+  options: { confirmLabel: string; cancelLabel: string; danger?: boolean | undefined },
 ): { confirmButton: HTMLButtonElement; cancelButton: HTMLButtonElement } {
   const actions = document.createElement('div');
   actions.className = 'admin-dialog-actions';
