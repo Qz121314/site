@@ -1,4 +1,4 @@
-type AdminMutationDetail = {
+export type AdminMutationDetail = {
   method: string;
   path: string;
 };
@@ -24,9 +24,10 @@ function requestPath(input: RequestInfo | URL): string | null {
   }
 }
 
-function shouldNotify(method: string, path: string | null): path is string {
+export function shouldNotifyAdminMutation(method: string, path: string | null): path is string {
+  const normalizedMethod = method.toUpperCase();
   return (
-    MUTATION_METHODS.has(method) &&
+    MUTATION_METHODS.has(normalizedMethod) &&
     path?.startsWith('/api/admin/') === true &&
     !path.startsWith('/api/admin/auth/') &&
     !path.startsWith('/api/admin/publish') &&
@@ -46,7 +47,7 @@ export async function adminFetch(
   const path = requestPath(input);
   const response = await fetch(input, init);
 
-  if (response.ok && shouldNotify(method, path)) {
+  if (response.ok && shouldNotifyAdminMutation(method, path)) {
     queueMicrotask(() => notifyAdminChanged({ method, path }));
   }
 
