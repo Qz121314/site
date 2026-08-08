@@ -11,3 +11,13 @@
 .detail-gallery img {
   object-fit: contain;
 }
+
+.markdown-content img {
+  display: block;
+  width: auto;
+  max-width: 100%;
+  max-height: min(72vh, 760px);
+  margin: 1rem auto;
+  border-radius: var(--radius-md);
+  object-fit: contain;
+}
