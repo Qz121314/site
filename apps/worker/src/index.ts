@@ -17,9 +17,11 @@ import { adminSectionBatchRoutes } from './routes/admin-section-batch';
 import { adminSectionRoutes } from './routes/admin-sections';
 import { adminSiteSettingsRoutes } from './routes/admin-site-settings';
 import { adminTagRoutes } from './routes/admin-tags';
+import { adminThemeRoutes } from './routes/admin-theme';
 import { publicContentRoutes } from './routes/public-content';
 import { publicConversionRoutes } from './routes/public-conversion';
 import { publicStorefrontConfigRoutes } from './routes/public-storefront-config';
+import { publicThemeRoutes } from './routes/public-theme';
 import type { AppEnvironment } from './types';
 
 export const app = new Hono<AppEnvironment>({ strict: false });
@@ -67,6 +69,7 @@ app.get('/api/public/version', (context) =>
   }),
 );
 app.route('/api/public/storefront', publicStorefrontConfigRoutes);
+app.route('/api/public/theme', publicThemeRoutes);
 app.route('/public', publicContentRoutes);
 
 app.route('/api/admin/auth', adminAuthRoutes);
@@ -84,6 +87,7 @@ app.get('/api/admin/health', (context) => {
 });
 
 app.route('/api/admin/settings', adminSiteSettingsRoutes);
+app.route('/api/admin/theme', adminThemeRoutes);
 app.route('/api/admin/customer-service', adminCustomerServiceRoutes);
 app.route('/api/admin/assets', adminAssetRoutes);
 app.route('/api/admin/media', adminBrandingMediaRoutes);
