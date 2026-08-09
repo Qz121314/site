@@ -3,6 +3,7 @@ const GUARD_BATCH_SIZE = 100;
 
 export type AssetReferenceCounts = {
   logo: number;
+  hero: number;
   sectionIcon: number;
   productCover: number;
   productGallery: number;
@@ -35,6 +36,7 @@ export type MediaAssetReferenceRow = {
   deleted_at: string | null;
   updated_at: string;
   logo_count: number;
+  hero_count: number;
   section_icon_count: number;
   product_cover_count: number;
   product_gallery_count: number;
@@ -100,6 +102,7 @@ async function runStatementChunks(
 function toReferenceCounts(row: MediaAssetReferenceRow | null): AssetReferenceCounts {
   return {
     logo: row?.logo_count ?? 0,
+    hero: row?.hero_count ?? 0,
     sectionIcon: row?.section_icon_count ?? 0,
     productCover: row?.product_cover_count ?? 0,
     productGallery: row?.product_gallery_count ?? 0,
@@ -109,6 +112,7 @@ function toReferenceCounts(row: MediaAssetReferenceRow | null): AssetReferenceCo
 export function countReferences(references: AssetReferenceCounts): number {
   return (
     references.logo +
+    references.hero +
     references.sectionIcon +
     references.productCover +
     references.productGallery
@@ -331,6 +335,7 @@ export async function getMediaAssetReferenceRows(
          ma.deleted_at,
          ma.updated_at,
          (SELECT COUNT(*) FROM site_settings ss WHERE ss.logo_asset_id = ma.id) AS logo_count,
+         (SELECT COUNT(*) FROM site_hero_slides hs WHERE hs.media_asset_id = ma.id) AS hero_count,
          (SELECT COUNT(*) FROM sections s WHERE s.icon_asset_id = ma.id) AS section_icon_count,
          (SELECT COUNT(*) FROM products p WHERE p.cover_asset_id = ma.id) AS product_cover_count,
          (SELECT COUNT(*) FROM product_media pm WHERE pm.media_asset_id = ma.id)
@@ -481,6 +486,7 @@ export function createMarkMediaAssetDeletedStatement(
        WHERE id = ?
          AND updated_at = ?
          AND NOT EXISTS (SELECT 1 FROM site_settings ss WHERE ss.logo_asset_id = media_assets.id)
+         AND NOT EXISTS (SELECT 1 FROM site_hero_slides hs WHERE hs.media_asset_id = media_assets.id)
          AND NOT EXISTS (SELECT 1 FROM sections s WHERE s.icon_asset_id = media_assets.id)
          AND NOT EXISTS (SELECT 1 FROM products p WHERE p.cover_asset_id = media_assets.id)
          AND NOT EXISTS (
