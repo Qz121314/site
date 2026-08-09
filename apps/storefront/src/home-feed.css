@@ -1,0 +1,285 @@
+/* Home is a recommendation feed: Hero -> 7 shortcuts + More -> up to 3 horizontal rails. */
+
+.brand-logo:not(:has(img)) {
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  color: #fff;
+  background: linear-gradient(145deg, var(--brand), var(--brand-strong));
+  font-size: 1.08rem;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+  text-transform: uppercase;
+  text-shadow: 0 1px 2px rgb(0 0 0 / 16%);
+}
+
+.brand-lockup > span:last-child > strong {
+  letter-spacing: -0.025em;
+}
+
+.home-shortcuts {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px 8px;
+  margin: 18px 16px 28px;
+}
+
+.home-shortcut {
+  display: grid;
+  min-width: 0;
+  justify-items: center;
+  gap: 7px;
+  color: var(--text);
+  text-align: center;
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.home-shortcut-icon {
+  display: grid;
+  width: var(--theme-section-icon-size);
+  height: var(--theme-section-icon-size);
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--theme-card-border) 82%, transparent);
+  border-radius: var(--theme-radius-icon);
+  background: var(--theme-media-background);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--text) 5%, transparent);
+  transition: transform 140ms ease, box-shadow 140ms ease;
+}
+
+.home-shortcut:active .home-shortcut-icon {
+  transform: scale(0.94);
+  box-shadow: none;
+}
+
+.home-shortcut-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.home-shortcut-icon > span:not(.home-more-glyph) {
+  display: grid;
+  width: 100%;
+  height: 100%;
+  place-items: center;
+  font-size: 1.3rem;
+  font-weight: 850;
+}
+
+.home-shortcut-label {
+  display: -webkit-box;
+  overflow: hidden;
+  max-width: 100%;
+  color: var(--text);
+  font-size: 0.76rem;
+  font-weight: 720;
+  line-height: 1.2;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.home-shortcut.is-more .home-shortcut-icon {
+  color: var(--brand-strong);
+  background: color-mix(in srgb, var(--brand) 10%, var(--theme-media-background));
+}
+
+.home-more-glyph {
+  display: grid;
+  grid-template-columns: repeat(2, 6px);
+  gap: 5px;
+}
+
+.home-more-glyph i {
+  width: 6px;
+  height: 6px;
+  border-radius: 2px;
+  background: currentColor;
+}
+
+.home-recommendation-feed {
+  display: grid;
+  gap: var(--theme-section-space);
+  padding-bottom: 12px;
+}
+
+.home-recommendation {
+  min-width: 0;
+}
+
+.home-recommendation-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin: 0 16px 12px;
+}
+
+.home-recommendation-heading h2 {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  color: var(--text);
+  font-size: 1.08rem;
+  font-weight: 850;
+  letter-spacing: -0.025em;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home-recommendation-heading a {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 3px;
+  min-height: 36px;
+  color: var(--brand-strong);
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-decoration: none;
+}
+
+.home-recommendation-heading a span {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.home-product-rail {
+  display: grid;
+  grid-auto-columns: clamp(126px, 41vw, 168px);
+  grid-auto-flow: column;
+  gap: var(--theme-card-gap-x);
+  overflow-x: auto;
+  padding: 0 16px 6px;
+  scroll-padding-inline: 16px;
+  scroll-snap-type: x proximity;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+
+.home-product-rail::-webkit-scrollbar {
+  display: none;
+}
+
+.home-product-tile {
+  display: grid;
+  min-width: 0;
+  align-content: start;
+  gap: 8px;
+  color: var(--text);
+  text-decoration: none;
+  scroll-snap-align: start;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.home-product-cover,
+.home-product-skeleton {
+  display: block;
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--theme-card-border) 78%, transparent);
+  border-radius: var(--theme-radius-media);
+  background: var(--theme-media-background);
+  box-shadow: var(--theme-card-shadow);
+}
+
+.home-product-cover {
+  transition: transform 140ms ease, box-shadow 140ms ease;
+}
+
+.home-product-tile:active .home-product-cover {
+  transform: scale(0.975);
+  box-shadow: none;
+}
+
+.home-product-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.home-product-cover-fallback {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background:
+    linear-gradient(135deg, transparent 35%, color-mix(in srgb, var(--brand) 8%, transparent)),
+    var(--theme-media-background);
+}
+
+.home-product-tile > strong {
+  display: -webkit-box;
+  overflow: hidden;
+  margin: 0 2px;
+  color: var(--text);
+  font-size: 0.86rem;
+  font-weight: 760;
+  line-height: 1.3;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.home-product-rail.is-loading {
+  pointer-events: none;
+}
+
+.home-product-skeleton {
+  animation: home-feed-pulse 1.3s ease-in-out infinite alternate;
+  box-shadow: none;
+}
+
+@keyframes home-feed-pulse {
+  from { opacity: 0.52; }
+  to { opacity: 0.9; }
+}
+
+@media (min-width: 768px) {
+  .home-shortcuts {
+    grid-template-columns: repeat(8, minmax(0, 1fr));
+    gap: 12px;
+    margin: 22px auto 34px;
+    padding-inline: 20px;
+    max-width: 1040px;
+  }
+
+  .home-shortcut-label {
+    font-size: 0.82rem;
+  }
+
+  .home-recommendation {
+    width: min(100%, 1180px);
+    margin-inline: auto;
+  }
+
+  .home-recommendation-heading {
+    margin-inline: 20px;
+  }
+
+  .home-recommendation-heading h2 {
+    font-size: 1.2rem;
+  }
+
+  .home-product-rail {
+    grid-auto-columns: clamp(150px, 17vw, 196px);
+    gap: 14px;
+    padding-inline: 20px;
+    scroll-padding-inline: 20px;
+  }
+
+  .home-product-tile > strong {
+    font-size: 0.92rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-shortcut-icon,
+  .home-product-cover,
+  .home-product-skeleton {
+    transition: none;
+    animation: none;
+  }
+}
