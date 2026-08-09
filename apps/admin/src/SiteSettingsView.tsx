@@ -284,8 +284,9 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
               </label>
 
               <label className="field-group admin-field-location">
-                <span>位置文案</span>
+                <span>站点说明</span>
                 <input type="text" value={draft.locationLabel} disabled={busy} onChange={(event) => updateDraft('locationLabel', event.target.value)} />
+                <small>用于浏览器页面描述和基础 SEO，不显示在前端 Logo / Header 区域。</small>
               </label>
 
               <div className="admin-logo-field">
