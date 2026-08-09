@@ -256,8 +256,12 @@ export function MessageThreadPageContent({
     event.preventDefault();
     const body = draft.trim();
     if (!body || !canSend || !onSendMessage || sending) return;
-    await onSendMessage(body);
-    setDraft('');
+    try {
+      await onSendMessage(body);
+      setDraft('');
+    } catch {
+      // The parent owns the visible error state. Keep the draft intact for retry.
+    }
   }
 
   return (
