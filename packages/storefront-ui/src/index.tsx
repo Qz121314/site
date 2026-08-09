@@ -1,7 +1,10 @@
-import type {
-  AnchorHTMLAttributes,
-  ElementType,
-  ReactNode,
+import {
+  useEffect,
+  useRef,
+  useState,
+  type AnchorHTMLAttributes,
+  type ElementType,
+  type ReactNode,
 } from 'react';
 
 export type StorefrontLinkComponent = ElementType<AnchorHTMLAttributes<HTMLAnchorElement>>;
@@ -35,17 +38,193 @@ export function StorefrontBrandBar({
   );
 }
 
-export function StorefrontHero({
-  description,
-  eyebrow,
-  locationLabel,
-  title,
-}: {
+export type StorefrontHeroSlide = {
+  id: string;
+  media: ReactNode;
+  title?: string | null;
+  description?: string | null;
+  cta?: { label: string; href: string } | null;
+};
+
+type StorefrontHeroCarouselProps = {
+  slides: StorefrontHeroSlide[];
+  LinkComponent?: StorefrontLinkComponent;
+  intervalMs?: number;
+};
+
+type StorefrontHeroLegacyProps = {
   description: string;
   eyebrow: string;
   locationLabel: string;
   title: string;
-}) {
+};
+
+function StorefrontHeroCarousel({
+  slides,
+  LinkComponent = 'a',
+  intervalMs = 5000,
+}: StorefrontHeroCarouselProps) {
+  const viewportRef = useRef<HTMLDivElement | null>(null);
+  const frameRef = useRef<number | null>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+  const [interactionPaused, setInteractionPaused] = useState(false);
+  const [pageVisible, setPageVisible] = useState(true);
+  const [reducedMotion, setReducedMotion] = useState(false);
+
+  useEffect(() => {
+    const query = window.matchMedia('(prefers-reduced-motion: reduce)');
+    const update = () => setReducedMotion(query.matches);
+    update();
+    query.addEventListener('change', update);
+    return () => query.removeEventListener('change', update);
+  }, []);
+
+  useEffect(() => {
+    const update = () => setPageVisible(document.visibilityState === 'visible');
+    update();
+    document.addEventListener('visibilitychange', update);
+    return () => document.removeEventListener('visibilitychange', update);
+  }, []);
+
+  useEffect(() => {
+    if (activeIndex < slides.length) return;
+    setActiveIndex(Math.max(0, slides.length - 1));
+  }, [activeIndex, slides.length]);
+
+  function goTo(index: number, behavior: ScrollBehavior = reducedMotion ? 'auto' : 'smooth') {
+    const viewport = viewportRef.current;
+    if (!viewport || slides.length === 0) return;
+    const normalized = (index + slides.length) % slides.length;
+    setActiveIndex(normalized);
+    viewport.scrollTo({ left: viewport.clientWidth * normalized, behavior });
+  }
+
+  useEffect(() => {
+    if (slides.length < 2 || interactionPaused || reducedMotion || !pageVisible) return;
+    const timer = window.setInterval(() => goTo(activeIndex + 1), Math.max(2500, intervalMs));
+    return () => window.clearInterval(timer);
+  }, [activeIndex, interactionPaused, intervalMs, pageVisible, reducedMotion, slides.length]);
+
+  useEffect(() => {
+    const viewport = viewportRef.current;
+    if (!viewport) return;
+    const slideElements = viewport.querySelectorAll<HTMLElement>('[data-hero-slide-index]');
+    slideElements.forEach((element, index) => {
+      element.querySelectorAll<HTMLVideoElement>('video').forEach((video) => {
+        video.muted = true;
+        if (index === activeIndex && pageVisible) {
+          void video.play().catch(() => undefined);
+        } else {
+          video.pause();
+        }
+      });
+    });
+  }, [activeIndex, pageVisible, slides]);
+
+  useEffect(() => () => {
+    if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
+  }, []);
+
+  if (slides.length === 0) return null;
+
+  return (
+    <section
+      className={`hero-carousel${slides.length === 1 ? ' is-single' : ''}`}
+      aria-roledescription="carousel"
+      onMouseEnter={() => setInteractionPaused(true)}
+      onMouseLeave={() => setInteractionPaused(false)}
+      onFocusCapture={() => setInteractionPaused(true)}
+      onBlurCapture={() => setInteractionPaused(false)}
+    >
+      <div
+        className="hero-carousel-viewport"
+        ref={viewportRef}
+        onPointerDown={() => setInteractionPaused(true)}
+        onPointerUp={() => setInteractionPaused(false)}
+        onPointerCancel={() => setInteractionPaused(false)}
+        onScroll={() => {
+          if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
+          frameRef.current = requestAnimationFrame(() => {
+            frameRef.current = null;
+            const viewport = viewportRef.current;
+            if (!viewport || viewport.clientWidth <= 0) return;
+            const index = Math.max(0, Math.min(slides.length - 1, Math.round(viewport.scrollLeft / viewport.clientWidth)));
+            setActiveIndex(index);
+          });
+        }}
+      >
+        <div className="hero-carousel-track">
+          {slides.map((slide, index) => {
+            const hasCopy = Boolean(slide.title || slide.description || slide.cta);
+            return (
+              <article
+                className="hero-carousel-slide"
+                data-hero-slide-index={index}
+                key={slide.id}
+                aria-hidden={index !== activeIndex}
+              >
+                <div className="hero-carousel-media">{slide.media}</div>
+                {hasCopy ? (
+                  <div className="hero-carousel-overlay">
+                    <div className="hero-carousel-copy">
+                      {slide.title ? <h1>{slide.title}</h1> : null}
+                      {slide.description ? <p>{slide.description}</p> : null}
+                      {slide.cta ? (
+                        <LinkComponent className="hero-carousel-cta" href={slide.cta.href}>
+                          {slide.cta.label}
+                        </LinkComponent>
+                      ) : null}
+                    </div>
+                  </div>
+                ) : null}
+              </article>
+            );
+          })}
+        </div>
+      </div>
+
+      {slides.length > 1 ? (
+        <>
+          <button
+            className="hero-carousel-arrow is-prev"
+            type="button"
+            aria-label="Previous slide"
+            onClick={() => goTo(activeIndex - 1)}
+          >
+            ‹
+          </button>
+          <button
+            className="hero-carousel-arrow is-next"
+            type="button"
+            aria-label="Next slide"
+            onClick={() => goTo(activeIndex + 1)}
+          >
+            ›
+          </button>
+          <div className="hero-carousel-dots" role="group" aria-label="Hero slides">
+            {slides.map((slide, index) => (
+              <button
+                className={`hero-carousel-dot${index === activeIndex ? ' is-active' : ''}`}
+                type="button"
+                key={slide.id}
+                aria-label={`Slide ${index + 1}`}
+                aria-current={index === activeIndex ? 'true' : undefined}
+                onClick={() => goTo(index)}
+              />
+            ))}
+          </div>
+        </>
+      ) : null}
+    </section>
+  );
+}
+
+export function StorefrontHero(props: StorefrontHeroCarouselProps | StorefrontHeroLegacyProps) {
+  if ('slides' in props) {
+    return <StorefrontHeroCarousel {...props} />;
+  }
+
+  const { description, eyebrow, locationLabel, title } = props;
   return (
     <section className="hero-panel">
       <div>
