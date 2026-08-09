@@ -10,6 +10,7 @@ import './hero-carousel.css';
 import './theme-runtime.css';
 import './media-runtime.css';
 import './storefront-resilience.css';
+import './storefront-pages.css';
 
 installPublicContentFetchFallback();
 void installStorefrontTheme();
