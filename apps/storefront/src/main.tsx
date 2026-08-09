@@ -13,6 +13,7 @@ import './media-runtime.css';
 import './storefront-resilience.css';
 import './storefront-pages.css';
 import './pwa.css';
+import './app-shell.css';
 
 installPublicContentFetchFallback();
 void installStorefrontTheme();
