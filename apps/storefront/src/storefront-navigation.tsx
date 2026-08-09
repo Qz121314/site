@@ -27,7 +27,7 @@ const homeIcon = navigationIcon(
   </>,
 );
 
-const discoverIcon = navigationIcon(
+const browseIcon = navigationIcon(
   <>
     <circle cx="12" cy="12" r="8.7" />
     <path d="m14.9 9.1-1.8 4-4 1.8 1.8-4 4-1.8Z" />
@@ -52,7 +52,7 @@ const faqIcon = navigationIcon(
 export function primaryNavigationItems(unreadMessages = 0): StorefrontNavigationItem[] {
   return [
     { href: '/', label: 'Home', icon: homeIcon },
-    { href: '/discover/', label: 'Discover', icon: discoverIcon },
+    { href: '/browse/', label: 'Browse', icon: browseIcon },
     {
       href: '/messages/',
       label: 'Messages',

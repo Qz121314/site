@@ -455,7 +455,7 @@ function DiscoverPage({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
   );
 
   useEffect(() => {
-    document.title = `Discover · ${site.name}`;
+    document.title = `Browse · ${site.name}`;
   }, [site.name]);
 
   const noResults = filteredSections.length === 0 && filteredProducts.length === 0;
@@ -466,7 +466,7 @@ function DiscoverPage({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
         <header className="app-page-heading">
           <div>
             <p className="app-page-kicker">Explore</p>
-            <h1 id="discover-title">Discover</h1>
+            <h1 id="discover-title">Browse</h1>
           </div>
         </header>
 
@@ -476,7 +476,7 @@ function DiscoverPage({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
             type="search"
             value={search}
             placeholder="Search sections, products, or tags"
-            aria-label="Search discover content"
+            aria-label="Search browse content"
             onChange={(event) => setSearch(event.target.value)}
           />
         </label>
@@ -619,7 +619,7 @@ function SectionPage({ bootstrap, sectionRef }: { bootstrap: StorefrontBootstrap
       {query.data ? (
         <>
           <section className="section-page-header">
-            <AppLink className="back-link" href="/discover/">← Discover</AppLink>
+            <AppLink className="back-link" href="/browse/">← Browse</AppLink>
             <div className="section-page-title">
               <span className="section-icon large"><SectionIcon section={query.data.section} /></span>
               <div>
