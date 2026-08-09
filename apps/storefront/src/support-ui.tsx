@@ -39,15 +39,41 @@ function MessageBubbleIcon() {
   );
 }
 
+function startOfLocalDay(date: Date): number {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+}
+
 function formatConversationTime(value: string | null): string {
   if (!value) return '';
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return '';
-  return new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' }).format(date);
+
+  const now = new Date();
+  const dayDifference = Math.round((startOfLocalDay(now) - startOfLocalDay(date)) / 86_400_000);
+  if (dayDifference === 0) {
+    return new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' }).format(date);
+  }
+  if (dayDifference === 1) return 'Yesterday';
+  if (dayDifference > 1 && dayDifference < 7) {
+    return new Intl.DateTimeFormat(undefined, { weekday: 'short' }).format(date);
+  }
+  return new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' }).format(date);
+}
+
+function conversationTimestamp(conversation: SupportConversationSummary): number {
+  if (!conversation.lastMessageAt) return 0;
+  const timestamp = new Date(conversation.lastMessageAt).getTime();
+  return Number.isNaN(timestamp) ? 0 : timestamp;
 }
 
 function conversationTitle(conversation: SupportConversationSummary, supportName: string): string {
   return conversation.agentName?.trim() || supportName;
+}
+
+function conversationPreview(conversation: SupportConversationSummary, waitingPreview: string): string {
+  const lastMessage = conversation.lastMessage?.trim()
+    || (conversation.status === 'waiting' ? waitingPreview : '');
+  return lastMessage ? `${conversation.productTitle} · ${lastMessage}` : conversation.productTitle;
 }
 
 function ConversationAvatar({ conversation }: { conversation: SupportConversationSummary }) {
@@ -60,25 +86,25 @@ function ConversationAvatar({ conversation }: { conversation: SupportConversatio
 
 export function MessagesPageContent({
   conversations,
+  activeConversationId = null,
   LinkComponent = 'a',
 }: {
   conversations: SupportConversationSummary[];
+  activeConversationId?: string | null;
   LinkComponent?: StorefrontLinkComponent;
 }) {
   const { messages } = useStorefrontCopy();
+  const orderedConversations = [...conversations].sort(
+    (left, right) => conversationTimestamp(right) - conversationTimestamp(left),
+  );
+
   return (
     <section className="messages-page" aria-labelledby="messages-title">
-      <header className="app-page-heading messages-page-heading">
-        <div>
-          <p className="app-page-kicker">{messages.kicker}</p>
-          <h1 id="messages-title">{messages.title}</h1>
-        </div>
-        <span className="conversation-capacity" aria-label={`${conversations.length} of 10 conversations`}>
-          {conversations.length}/10
-        </span>
+      <header className="messages-page-heading">
+        <h1 id="messages-title">{messages.title}</h1>
       </header>
 
-      {conversations.length === 0 ? (
+      {orderedConversations.length === 0 ? (
         <div className="messages-empty-state">
           <span className="messages-empty-icon"><MessageBubbleIcon /></span>
           <strong>{messages.emptyTitle}</strong>
@@ -86,30 +112,34 @@ export function MessagesPageContent({
         </div>
       ) : (
         <div className="conversation-list" role="list">
-          {conversations.map((conversation) => (
-            <LinkComponent
-              className="conversation-row"
-              href={`/messages/${encodeURIComponent(conversation.id)}/`}
-              key={conversation.id}
-            >
-              <span className="conversation-avatar"><ConversationAvatar conversation={conversation} /></span>
-              <span className="conversation-main">
-                <span className="conversation-heading-row">
-                  <strong>{conversationTitle(conversation, messages.supportName)}</strong>
-                  <time>{formatConversationTime(conversation.lastMessageAt)}</time>
+          {orderedConversations.map((conversation) => {
+            const isActive = activeConversationId === conversation.id;
+            const isUnread = conversation.unreadCount > 0;
+            return (
+              <LinkComponent
+                aria-current={isActive ? 'page' : undefined}
+                className={`conversation-row${isActive ? ' is-active' : ''}${isUnread ? ' is-unread' : ''}`}
+                href={`/messages/${encodeURIComponent(conversation.id)}/`}
+                key={conversation.id}
+              >
+                <span className="conversation-avatar"><ConversationAvatar conversation={conversation} /></span>
+                <span className="conversation-main">
+                  <span className="conversation-heading-row">
+                    <strong>{conversationTitle(conversation, messages.supportName)}</strong>
+                    <time>{formatConversationTime(conversation.lastMessageAt)}</time>
+                  </span>
+                  <span className="conversation-preview-row">
+                    <span>{conversationPreview(conversation, messages.waitingPreview)}</span>
+                    {isUnread ? (
+                      <b aria-label={`${conversation.unreadCount} unread messages`}>
+                        {conversation.unreadCount > 99 ? '99+' : conversation.unreadCount}
+                      </b>
+                    ) : null}
+                  </span>
                 </span>
-                <small>{conversation.productTitle}</small>
-                <span className="conversation-preview-row">
-                  <span>{conversation.lastMessage || (conversation.status === 'waiting' ? messages.waitingPreview : '')}</span>
-                  {conversation.unreadCount > 0 ? (
-                    <b aria-label={`${conversation.unreadCount} unread messages`}>
-                      {conversation.unreadCount > 99 ? '99+' : conversation.unreadCount}
-                    </b>
-                  ) : null}
-                </span>
-              </span>
-            </LinkComponent>
-          ))}
+              </LinkComponent>
+            );
+          })}
         </div>
       )}
     </section>
@@ -222,6 +252,48 @@ export function MessageThreadPageContent({
         <textarea rows={1} aria-label={messages.inputPlaceholder} placeholder={messages.inputPlaceholder} />
         <button type="submit" className="chat-send-button" aria-label="Send message">➤</button>
       </form>
+    </section>
+  );
+}
+
+function MessagesDetailPlaceholder() {
+  return (
+    <div className="messages-detail-placeholder" aria-hidden="true">
+      <MessageBubbleIcon />
+      <strong>Select a conversation</strong>
+      <p>Choose a conversation from the list to continue messaging.</p>
+    </div>
+  );
+}
+
+export function MessagesWorkspace({
+  conversations,
+  activeConversation,
+  activeConversationRef,
+  LinkComponent = 'a',
+}: {
+  conversations: SupportConversationDetail[];
+  activeConversation: SupportConversationDetail | null;
+  activeConversationRef: string | null;
+  LinkComponent?: StorefrontLinkComponent;
+}) {
+  const threadOpen = activeConversationRef !== null;
+  return (
+    <section className={`messages-workspace${threadOpen ? ' is-thread-open' : ''}`}>
+      <aside className="messages-sidebar">
+        <MessagesPageContent
+          activeConversationId={activeConversation?.id ?? null}
+          conversations={conversations}
+          LinkComponent={LinkComponent}
+        />
+      </aside>
+      <div className="messages-detail">
+        {threadOpen ? (
+          <MessageThreadPageContent conversation={activeConversation} LinkComponent={LinkComponent} />
+        ) : (
+          <MessagesDetailPlaceholder />
+        )}
+      </div>
     </section>
   );
 }
