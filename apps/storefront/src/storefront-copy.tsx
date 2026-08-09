@@ -83,6 +83,18 @@ export type StorefrontCopy = {
     activeStatus: string;
     closedStatus: string;
     waitingPreview: string;
+    newConversationStatus: string;
+    loadEarlier: string;
+    sendLabel: string;
+    attachmentLabel: string;
+    selectConversationTitle: string;
+    selectConversationDescription: string;
+    sendingLabel: string;
+    sentLabel: string;
+    readLabel: string;
+    unreadLabel: string;
+    sendFailed: string;
+    loadingConversation: string;
   };
 };
 
@@ -166,6 +178,18 @@ export const FALLBACK_STOREFRONT_COPY: StorefrontCopy = {
     activeStatus: 'Customer support',
     closedStatus: 'Conversation ended',
     waitingPreview: 'Waiting for an agent…',
+    newConversationStatus: 'New conversation',
+    loadEarlier: 'Load earlier messages',
+    sendLabel: 'Send message',
+    attachmentLabel: 'Add attachment',
+    selectConversationTitle: 'Select a conversation',
+    selectConversationDescription: 'Choose a conversation from the list to continue messaging.',
+    sendingLabel: 'Sending',
+    sentLabel: 'Sent',
+    readLabel: 'Read',
+    unreadLabel: 'unread messages',
+    sendFailed: 'Message could not be sent. Please try again.',
+    loadingConversation: 'Loading conversation…',
   },
 };
 
