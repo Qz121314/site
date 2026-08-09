@@ -1,0 +1,132 @@
+.admin-settings-section-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.admin-bottom-navigation-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.admin-bottom-navigation-card {
+  min-width: 0;
+  padding: 14px;
+  border: 1px solid #dfe4ea;
+  border-radius: 14px;
+  background: #fff;
+  transition: opacity 160ms ease, border-color 160ms ease;
+}
+
+.admin-bottom-navigation-card.is-disabled {
+  opacity: 0.66;
+}
+
+.admin-bottom-navigation-card-header {
+  display: grid;
+  grid-template-columns: 42px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.admin-bottom-navigation-preview {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid #e5e8ec;
+  border-radius: 12px;
+  background: #f7f8fa;
+}
+
+.admin-bottom-navigation-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.admin-bottom-nav-emoji {
+  font-size: 1.45rem;
+  line-height: 1;
+}
+
+.admin-bottom-nav-builtin {
+  max-width: 38px;
+  overflow: hidden;
+  color: #56606d;
+  font-size: 0.58rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-bottom-navigation-identity {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.admin-bottom-navigation-identity strong,
+.admin-bottom-navigation-identity small {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-bottom-navigation-identity strong {
+  color: #202837;
+  font-size: 0.82rem;
+}
+
+.admin-bottom-navigation-identity small {
+  color: #8b94a1;
+  font-size: 0.64rem;
+}
+
+.admin-bottom-navigation-switch {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #56606d;
+  font-size: 0.68rem;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.admin-bottom-navigation-switch input {
+  width: 16px;
+  height: 16px;
+}
+
+.admin-bottom-navigation-fields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.admin-bottom-navigation-icon-field {
+  grid-column: 1 / -1;
+}
+
+.admin-bottom-navigation-image-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+  min-height: 38px;
+}
+
+@media (max-width: 760px) {
+  .admin-bottom-navigation-grid,
+  .admin-bottom-navigation-fields {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-bottom-navigation-icon-field {
+    grid-column: auto;
+  }
+}
