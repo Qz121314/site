@@ -27,7 +27,11 @@ test('root path mounts Home while Browse and Messages use dedicated primary-page
   assert.match(rootSource, /case 'discover':\s*page = <BrowseRoot \/>/u);
   assert.match(
     rootSource,
-    /case 'messages':\s*page = <MessagesRoot activeConversationRef=\{null\} \/>/u,
+    /case 'messages':\s*page = <MessagesRoot activeConversationRef=\{null\} compose=\{false\} \/>/u,
+  );
+  assert.match(
+    rootSource,
+    /case 'message-compose':\s*page = <MessagesRoot activeConversationRef=\{null\} compose \/>/u,
   );
   assert.match(rootSource, /<HomeFeed bootstrap=\{bootstrapQuery\.data\} \/>/u);
 });
