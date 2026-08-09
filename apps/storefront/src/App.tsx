@@ -29,11 +29,23 @@ import { loadPublishedHero, type PublishedHeroSlide } from './hero-content';
 import { HomepageAnalytics } from './HomepageAnalytics';
 import { MarkdownContent } from './MarkdownContent';
 import { ResilientImage, ResilientVideo } from './ResilientMedia';
-import { parseStorefrontRoute, productHref, sectionHref } from './routing';
+import {
+  bottomNavigationActiveHref,
+  parseStorefrontRoute,
+  productHref,
+  sectionHref,
+} from './routing';
+import { primaryNavigationItems } from './storefront-navigation';
+import {
+  MessageThreadPageContent,
+  MessagesPageContent,
+  type SupportConversationSummary,
+} from './support-ui';
 
 type RouteResource = 'section' | 'product';
 
 const NAVIGATION_EVENT = 'storefront:navigate';
+const supportConversations: SupportConversationSummary[] = [];
 
 function subscribePathname(callback: () => void) {
   window.addEventListener('popstate', callback);
@@ -94,6 +106,15 @@ function AppLink({ href = '/', onClick, ...props }: AnchorHTMLAttributes<HTMLAnc
   };
 
   return <a {...props} href={href} onClick={handleClick} />;
+}
+
+function SearchIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+      <circle cx="10.8" cy="10.8" r="6.5" />
+      <path d="m16 16 4 4" strokeLinecap="round" />
+    </svg>
+  );
 }
 
 function SectionIcon({ section }: { section: PublicSection }) {
@@ -183,15 +204,20 @@ function ProductCollection({
   );
 }
 
-function BottomNavigation({ site }: { site: PublicSite }) {
-  const items = [
-    { label: 'Home', icon: '⌂', href: '/', enabled: true },
-    { label: 'Hot', icon: '◆', href: '/#hot', enabled: site.navigation.showHot },
-    { label: 'Latest', icon: '◷', href: '/#latest', enabled: site.navigation.showLatest },
-    { label: 'FAQ', icon: '?', href: '/#faq', enabled: site.navigation.showFaq },
-  ].filter((item) => item.enabled);
+function BottomNavigation() {
+  const pathname = usePathname();
+  const unreadMessages = supportConversations.reduce(
+    (total, conversation) => total + conversation.unreadCount,
+    0,
+  );
 
-  return <StorefrontBottomNavigation items={items} />;
+  return (
+    <StorefrontBottomNavigation
+      activeHref={bottomNavigationActiveHref(pathname)}
+      items={primaryNavigationItems(unreadMessages)}
+      LinkComponent={AppLink}
+    />
+  );
 }
 
 function SiteShell({ site, children }: { site: PublicSite; children: ReactNode }) {
@@ -201,17 +227,17 @@ function SiteShell({ site, children }: { site: PublicSite; children: ReactNode }
         LinkComponent={AppLink}
         locationLabel={site.locationLabel}
         logo={(
-            <ResilientImage
-              alt=""
-              fallback={site.name.slice(0, 1)}
-              src={site.logoUrl}
-            />
+          <ResilientImage
+            alt=""
+            fallback={site.name.slice(0, 1)}
+            src={site.logoUrl}
+          />
         )}
         siteName={site.name}
       />
       <main>{children}</main>
       <footer className="site-footer">{site.name}</footer>
-      <BottomNavigation site={site} />
+      <BottomNavigation />
     </div>
   );
 }
@@ -221,7 +247,6 @@ function LoadingPage() {
     <div className="app-shell loading-shell" aria-busy="true">
       <header className="topbar"><div className="loading-brand" /></header>
       <main>
-        <div className="loading-hero" />
         <div className="loading-grid">
           {Array.from({ length: 6 }, (_, index) => <div className="loading-card" key={index} />)}
         </div>
@@ -295,13 +320,11 @@ function FaqSection({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
   const query = useQuery({
     queryKey: ['storefront-faq', bootstrap.pointer.contentVersion],
     queryFn: ({ signal }) => loadFaqSnapshot(bootstrap, signal),
-    enabled: bootstrap.site.site.navigation.showFaq,
     staleTime: Number.POSITIVE_INFINITY,
   });
 
-  if (!bootstrap.site.site.navigation.showFaq) return null;
   return (
-    <section className="content-section faq-section" id="faq">
+    <section className="content-section faq-section">
       <div className="section-heading">
         <div>
           <p className="eyebrow">Need to know</p>
@@ -397,7 +420,150 @@ function HomePage({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
       {site.navigation.showLatest ? (
         <ProductCollection eyebrow="Recently added" title="Latest services" id="latest" products={home.latestProducts} />
       ) : null}
-      <FaqSection bootstrap={bootstrap} />
+    </SiteShell>
+  );
+}
+
+function DiscoverPage({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
+  const { site } = bootstrap.site;
+  const [search, setSearch] = useState('');
+  const normalizedSearch = search.trim().toLowerCase();
+  const discoverProducts = useMemo(() => {
+    const byId = new Map<string, PublicProductSummary>();
+    for (const product of [...bootstrap.home.featuredProducts, ...bootstrap.home.latestProducts]) {
+      if (!byId.has(product.id)) byId.set(product.id, product);
+    }
+    return [...byId.values()];
+  }, [bootstrap.home.featuredProducts, bootstrap.home.latestProducts]);
+  const filteredSections = useMemo(
+    () => bootstrap.home.allSections.filter((section) => (
+      !normalizedSearch || section.name.toLowerCase().includes(normalizedSearch)
+    )),
+    [bootstrap.home.allSections, normalizedSearch],
+  );
+  const filteredProducts = useMemo(
+    () => discoverProducts.filter((product) => {
+      if (!normalizedSearch) return true;
+      return [
+        product.title,
+        product.sectionName,
+        product.category.name ?? '',
+        ...product.tags.map((tag) => tag.name),
+      ].some((value) => value.toLowerCase().includes(normalizedSearch));
+    }),
+    [discoverProducts, normalizedSearch],
+  );
+
+  useEffect(() => {
+    document.title = `发现 · ${site.name}`;
+  }, [site.name]);
+
+  const noResults = filteredSections.length === 0 && filteredProducts.length === 0;
+
+  return (
+    <SiteShell site={site}>
+      <section className="discover-page" aria-labelledby="discover-title">
+        <header className="app-page-heading">
+          <div>
+            <p className="app-page-kicker">Explore</p>
+            <h1 id="discover-title">发现</h1>
+          </div>
+        </header>
+
+        <label className="discover-search">
+          <SearchIcon />
+          <input
+            type="search"
+            value={search}
+            placeholder="搜索分区、产品或标签"
+            aria-label="搜索发现内容"
+            onChange={(event) => setSearch(event.target.value)}
+          />
+        </label>
+
+        {filteredSections.length > 0 ? (
+          <section className="discover-section-block" aria-labelledby="discover-sections-title">
+            <div className="discover-section-title">
+              <h2 id="discover-sections-title">分区</h2>
+              <span>{filteredSections.length}</span>
+            </div>
+            <div className="discover-section-grid">
+              {filteredSections.map((section) => (
+                <AppLink className="section-item" href={sectionHref(section)} key={section.id}>
+                  <span className="section-icon"><SectionIcon section={section} /></span>
+                  <span>{section.name}</span>
+                </AppLink>
+              ))}
+            </div>
+          </section>
+        ) : null}
+
+        {filteredProducts.length > 0 ? (
+          <section className="discover-section-block" aria-labelledby="discover-products-title">
+            <div className="discover-section-title">
+              <h2 id="discover-products-title">产品</h2>
+              <span>{filteredProducts.length}</span>
+            </div>
+            <div className="product-grid">
+              {filteredProducts.map((product) => <ProductCard key={product.id} product={product} />)}
+            </div>
+          </section>
+        ) : null}
+
+        {noResults ? <div className="discover-results-empty">没有找到匹配的内容。</div> : null}
+      </section>
+    </SiteShell>
+  );
+}
+
+function MessagesPage({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
+  useEffect(() => {
+    document.title = `消息 · ${bootstrap.site.site.name}`;
+  }, [bootstrap.site.site.name]);
+
+  return (
+    <SiteShell site={bootstrap.site.site}>
+      <MessagesPageContent conversations={supportConversations} LinkComponent={AppLink} />
+    </SiteShell>
+  );
+}
+
+function MessagePage({
+  bootstrap,
+  conversationRef,
+}: {
+  bootstrap: StorefrontBootstrap;
+  conversationRef: string;
+}) {
+  useEffect(() => {
+    document.title = `消息 · ${bootstrap.site.site.name}`;
+  }, [bootstrap.site.site.name]);
+
+  const conversation = supportConversations.find((item) => item.id === conversationRef) ?? null;
+
+  return (
+    <SiteShell site={bootstrap.site.site}>
+      <MessageThreadPageContent conversation={conversation ? null : null} LinkComponent={AppLink} />
+    </SiteShell>
+  );
+}
+
+function FaqPage({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
+  useEffect(() => {
+    document.title = `FAQ · ${bootstrap.site.site.name}`;
+  }, [bootstrap.site.site.name]);
+
+  return (
+    <SiteShell site={bootstrap.site.site}>
+      <section className="faq-page" aria-labelledby="faq-page-title">
+        <header className="app-page-heading">
+          <div>
+            <p className="app-page-kicker">Help</p>
+            <h1 id="faq-page-title">FAQ</h1>
+          </div>
+        </header>
+        <FaqSection bootstrap={bootstrap} />
+      </section>
     </SiteShell>
   );
 }
@@ -414,20 +580,20 @@ function SectionPage({ bootstrap, sectionRef }: { bootstrap: StorefrontBootstrap
 
   const filteredProducts = useMemo(() => {
     const source = query.data?.products ?? [];
-    const normalizedSearch = search.trim().toLowerCase();
+    const normalizedSearchValue = search.trim().toLowerCase();
     return source.filter((product) => {
       if (categoryId && product.category.id !== categoryId) return false;
       if (selectedTags.size > 0) {
         const productTagIds = new Set(product.tags.map((tag) => tag.id));
         if (![...selectedTags].every((tagId) => productTagIds.has(tagId))) return false;
       }
-      if (!normalizedSearch) return true;
+      if (!normalizedSearchValue) return true;
       return [
         product.title,
         product.category.name ?? '',
         product.sectionName,
         ...product.tags.map((tag) => tag.name),
-      ].some((value) => value.toLowerCase().includes(normalizedSearch));
+      ].some((value) => value.toLowerCase().includes(normalizedSearchValue));
     });
   }, [categoryId, query.data?.products, search, selectedTags]);
 
@@ -453,7 +619,7 @@ function SectionPage({ bootstrap, sectionRef }: { bootstrap: StorefrontBootstrap
       {query.data ? (
         <>
           <section className="section-page-header">
-            <AppLink className="back-link" href="/">← Home</AppLink>
+            <AppLink className="back-link" href="/discover/">← 发现</AppLink>
             <div className="section-page-title">
               <span className="section-icon large"><SectionIcon section={query.data.section} /></span>
               <div>
@@ -649,6 +815,19 @@ export function App() {
   switch (route.type) {
     case 'home':
       return <HomePage bootstrap={bootstrapQuery.data} />;
+    case 'discover':
+      return <DiscoverPage bootstrap={bootstrapQuery.data} />;
+    case 'messages':
+      return <MessagesPage bootstrap={bootstrapQuery.data} />;
+    case 'message':
+      return (
+        <MessagePage
+          bootstrap={bootstrapQuery.data}
+          conversationRef={route.conversationRef}
+        />
+      );
+    case 'faq':
+      return <FaqPage bootstrap={bootstrapQuery.data} />;
     case 'section':
       return <SectionPage bootstrap={bootstrapQuery.data} sectionRef={route.sectionRef} />;
     case 'product':

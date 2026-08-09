@@ -4,9 +4,10 @@ import test from 'node:test';
 
 const appSource = await readFile(new URL('../src/App.tsx', import.meta.url), 'utf8');
 
-test('FAQ query is disabled when the published navigation hides FAQ', () => {
+test('FAQ query remains available for the dedicated fixed navigation page', () => {
   const faqSection = appSource.match(/function FaqSection[\s\S]*?function HomePage/)?.[0] ?? '';
   assert.match(faqSection, /queryFn:\s*\(\{ signal \}\) => loadFaqSnapshot\(bootstrap, signal\)/);
-  assert.match(faqSection, /enabled:\s*bootstrap\.site\.site\.navigation\.showFaq/);
-  assert.match(faqSection, /if \(!bootstrap\.site\.site\.navigation\.showFaq\) return null/);
+  assert.doesNotMatch(faqSection, /enabled:\s*bootstrap\.site\.site\.navigation\.showFaq/);
+  assert.doesNotMatch(faqSection, /if \(!bootstrap\.site\.site\.navigation\.showFaq\) return null/);
+  assert.match(appSource, /case 'faq':\s*return <FaqPage bootstrap=\{bootstrapQuery\.data\} \/>/);
 });

@@ -283,8 +283,9 @@ export function StorefrontProductCard({
 
 export type StorefrontNavigationItem = {
   href: string;
-  icon: string;
+  icon: ReactNode;
   label: string;
+  badgeCount?: number;
 };
 
 export function StorefrontBottomNavigation({
@@ -306,9 +307,15 @@ export function StorefrontBottomNavigation({
         <LinkComponent
           className={item.href === activeHref ? 'is-active' : undefined}
           href={item.href}
-          key={item.label}
+          key={item.href}
+          aria-current={item.href === activeHref ? 'page' : undefined}
         >
-          <span aria-hidden="true">{item.icon}</span>
+          <span className="bottom-nav-icon" aria-hidden="true">
+            {item.icon}
+            {item.badgeCount && item.badgeCount > 0 ? (
+              <b className="bottom-nav-badge">{item.badgeCount > 99 ? '99+' : item.badgeCount}</b>
+            ) : null}
+          </span>
           <small>{item.label}</small>
         </LinkComponent>
       ))}
