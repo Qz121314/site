@@ -33,6 +33,7 @@ import {
 } from './storefront-copy';
 import { primaryNavigationItems } from './storefront-navigation';
 import { siteSupportGateway } from './support-gateway';
+import { subscribeSupportRealtime } from './support-realtime';
 import type { SupportConversationDetail } from './support-contract';
 import { MessagesWorkspace, type PendingSupportConversation } from './support-ui';
 
@@ -326,6 +327,15 @@ function MessagesRoot({
   );
   const copy = copyQuery.data ?? FALLBACK_STOREFRONT_COPY;
 
+  useEffect(() => subscribeSupportRealtime((event) => {
+    void queryClient.invalidateQueries({ queryKey: ['support-conversations'] });
+    if (event.conversationRef) {
+      void queryClient.invalidateQueries({
+        queryKey: ['support-conversation', event.conversationRef],
+      });
+    }
+  }), [queryClient]);
+
   const sendMutation = useMutation({
     mutationFn: async (body: string) => {
       if (activeConversationRef) {
@@ -335,10 +345,13 @@ function MessagesRoot({
         });
         return { kind: 'message' as const };
       }
-      if (composeContext && pendingConversation) {
+      if (composeContext && pendingConversation && pendingConversation.productHref) {
         const conversation = await siteSupportGateway.startConversation({
           productId: composeContext.productId,
           sectionId: composeContext.sectionId,
+          productTitle: pendingConversation.productTitle,
+          productCoverUrl: pendingConversation.productCoverUrl,
+          productHref: pendingConversation.productHref,
           clientMessageId: crypto.randomUUID(),
           message: body,
         });
