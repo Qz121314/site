@@ -22,6 +22,7 @@ import { adminSectionRoutes } from './routes/admin-sections';
 import { adminSiteSettingsRoutes } from './routes/admin-site-settings';
 import { adminTagRoutes } from './routes/admin-tags';
 import { adminThemeRoutes } from './routes/admin-theme';
+import { publicBottomNavigationRoutes } from './routes/public-bottom-navigation';
 import { publicContentRoutes } from './routes/public-content';
 import { publicConversionRoutes } from './routes/public-conversion';
 import { servePwaManifest } from './routes/public-pwa';
@@ -80,6 +81,7 @@ app.get('/api/public/version', (context) =>
 );
 app.route('/api/public/storefront', publicStorefrontConfigRoutes);
 app.route('/api/public/storefront-copy', publicStorefrontCopyRoutes);
+app.route('/api/public/bottom-navigation', publicBottomNavigationRoutes);
 app.route('/api/public/theme', publicThemeRoutes);
 app.route('/public', publicContentRoutes);
 
