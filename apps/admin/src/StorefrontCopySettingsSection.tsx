@@ -1,6 +1,6 @@
 import type { StorefrontCopy } from './storefront-copy-settings';
 
-type CopyGroupKey = keyof StorefrontCopy;
+type CopyGroupKey = Exclude<keyof StorefrontCopy, 'navigation'>;
 
 type CopyField = {
   key: string;
@@ -15,17 +15,6 @@ type CopyGroup = {
 };
 
 const COPY_GROUPS: CopyGroup[] = [
-  {
-    key: 'navigation',
-    label: 'Navigation',
-    hint: '底部一级导航。结构固定，只允许修改显示文案。',
-    fields: [
-      { key: 'home', label: 'Home' },
-      { key: 'browse', label: 'Browse' },
-      { key: 'messages', label: 'Messages' },
-      { key: 'faq', label: 'FAQ' },
-    ],
-  },
   {
     key: 'home',
     label: 'Home',
@@ -152,7 +141,7 @@ export function StorefrontCopySettingsSection({
     <section className="admin-settings-section" aria-labelledby="settings-copy-title">
       <h2 id="settings-copy-title">前端文案</h2>
       <p className="admin-settings-section-description">
-        用户前端为英文。这里仅管理站点/业务可见文案；系统错误与无障碍提示由前端英文 localization 维护。
+        用户前端为英文。底部导航名称在“底部导航”中管理；这里维护其余站点/业务文案。
       </p>
       <div className="admin-storefront-copy-groups">
         {COPY_GROUPS.map((group) => (
