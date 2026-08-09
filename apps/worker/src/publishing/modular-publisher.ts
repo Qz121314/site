@@ -593,7 +593,6 @@ function sitePublicModel(site: SiteRow, heroSlides: HeroSlideRow[]) {
   return {
     name: site.site_name,
     locationLabel: site.location_label,
-    mediaBaseUrl: site.media_base_url,
     logoObjectKey: site.logo_object_key,
     homeSectionLimit: site.home_section_limit,
     hero: heroSlides.length > 0

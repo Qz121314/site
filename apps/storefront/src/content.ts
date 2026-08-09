@@ -173,7 +173,8 @@ type V2SiteSnapshot = {
   site: {
     name: string;
     locationLabel: string;
-    mediaBaseUrl: string | null;
+    /** Present only in older schema-v2 snapshots; runtime config is authoritative. */
+    mediaBaseUrl?: string | null;
     logoObjectKey: string | null;
     homeSectionLimit: number;
     navigation: PublicSite['navigation'];
@@ -302,9 +303,6 @@ async function discoverContentOrigin(signal?: AbortSignal): Promise<string | nul
 }
 
 export async function resolveContentOrigin(signal?: AbortSignal): Promise<string> {
-  const configured = normalizeContentOrigin(import.meta.env?.VITE_PUBLIC_CONTENT_ORIGIN);
-  if (configured) return configured;
-
   const discovered = await discoverContentOrigin(signal);
   if (discovered) return discovered;
 
@@ -734,10 +732,9 @@ async function loadV2Bootstrap(
     ),
   ]);
 
-  const mediaBaseUrl = normalizeContentOrigin(rawSite.site.mediaBaseUrl);
-  if (!mediaBaseUrl) {
-    throw new PublicContentError('INVALID_MEDIA_ORIGIN', 'The published media domain is invalid.');
-  }
+  // The runtime setting is authoritative. Published snapshots keep object keys only,
+  // so changing the R2 custom domain never requires rebuilding the Storefront.
+  const mediaBaseUrl = origin;
   const site: PublicSite = {
     name: rawSite.site.name,
     locationLabel: rawSite.site.locationLabel,

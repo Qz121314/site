@@ -217,10 +217,15 @@ test('modular rollback refuses a version whose retained R2 manifest is missing',
   assert.equal(db.batches.length, 0);
 });
 
-test('public storefront discovery returns the request origin without reading D1', async () => {
+test('public storefront discovery returns the current admin-configured R2 domain from D1', async () => {
   const db = {
-    prepare() {
-      throw new Error('Storefront content-origin discovery must not read D1');
+    prepare(sql) {
+      assert.match(sql, /SELECT media_base_url FROM site_settings/u);
+      return {
+        async first() {
+          return { media_base_url: 'https://media.example.com' };
+        },
+      };
     },
   };
 
@@ -230,6 +235,26 @@ test('public storefront discovery returns the request origin without reading D1'
     { DB: db },
   );
   assert.equal(response.status, 200);
-  assert.deepEqual(await response.json(), { contentOrigin: 'https://storefront.example.com' });
-  assert.equal(response.headers.get('cache-control'), 'public, max-age=300, stale-while-revalidate=3600');
+  assert.deepEqual(await response.json(), { contentOrigin: 'https://media.example.com' });
+  assert.equal(response.headers.get('cache-control'), 'no-store');
+});
+
+test('public storefront discovery reports an unconfigured R2 domain without inventing a default', async () => {
+  const db = {
+    prepare() {
+      return {
+        async first() {
+          return { media_base_url: null };
+        },
+      };
+    },
+  };
+
+  const response = await publicStorefrontConfigRoutes.request(
+    'https://storefront.example.com/content-origin',
+    {},
+    { DB: db },
+  );
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { contentOrigin: null });
 });

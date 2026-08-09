@@ -547,6 +547,8 @@ R2 Custom Domain
 {media_base_url}/{object_key}
 ```
 
+`media_base_url` 只由后台“站点设置”维护。Storefront 每次启动都通过运行时接口读取当前值；前端源码、构建变量和部署脚本都不保存当前 R2 自定义域名。更换绑定在同一 Bucket 上的自定义域名时，完成后台域名测试并保存即可，不需要修改代码、重新构建前端或重写已发布快照。
+
 生产环境不依赖 `r2.dev`。
 
 如果 R2 Custom Domain 暂时无法被浏览器直接读取，Storefront 对 `/public/*` 保留同源 Worker fallback，避免整个站点因直接 R2 读取异常而不可用。

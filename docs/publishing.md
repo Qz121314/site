@@ -120,26 +120,21 @@ public/
 
 ## Storefront 读取流程
 
-优先使用构建变量：
-
-```text
-PUBLIC_CONTENT_ORIGIN=https://content.example.com
-→ GitHub Actions 映射为 VITE_PUBLIC_CONTENT_ORIGIN
-```
-
-如果生产构建没有该变量，Storefront 会调用：
+Storefront 每次启动都会调用运行时配置接口：
 
 ```text
 GET /api/public/storefront/content-origin
 ```
 
-这个接口只返回已经公开的 R2 Custom Domain：
+这个接口直接读取后台站点设置中的 R2 Custom Domain：
 
 ```json
 { "contentOrigin": "https://content.example.com" }
 ```
 
 拿到域名之后，普通站点内容直接从 R2 读取。
+
+R2 域名不会写入前端构建变量或部署产物。后续更换域名时，在后台完成域名测试并保存即可；Storefront 下次启动会自动读取新值。部署流程只验证后台配置是否确实绑定到当前 R2 Bucket，不会反向覆盖后台设置。
 
 schema-v2 浏览器读取流程：
 
@@ -164,8 +159,8 @@ R2 Custom Domain
 模块化快照中的分区图标、产品封面和图库保存 **R2 object key**，不把完整媒体 URL 重复固化进每个高频分区版本。
 
 ```text
-site module
-→ mediaBaseUrl
+后台站点设置（D1）
+→ mediaBaseUrl / contentOrigin
 
 section module
 → products/.../cover.webp
@@ -174,7 +169,7 @@ Storefront
 → mediaBaseUrl + object key
 ```
 
-因此修改 R2 Custom Domain 时只需要发布 `site`，不需要重新生成所有产品分区版本。
+发布快照只保存 R2 object key，不保存当前媒体域名。修改 R2 Custom Domain 不需要重新构建 Storefront，也不需要重新生成产品或站点快照。
 
 ## 独立发布与回退
 

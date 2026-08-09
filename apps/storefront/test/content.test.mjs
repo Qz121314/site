@@ -8,6 +8,7 @@ import {
   loadStorefrontBootstrap,
   normalizeContentOrigin,
   publicContentUrl,
+  resolveContentOrigin,
 } from '../src/content.ts';
 
 const LEGACY_VERSION = '20260807074900-abcdef123456-deadbeef';
@@ -280,7 +281,7 @@ test('legacy schema-v1 bootstrap remains readable and normalizes missing tags/fe
   }
 });
 
-test('missing build-time origin discovers the public R2 custom domain from the Worker and then reads R2 directly', async () => {
+test('Storefront always discovers the current admin-configured R2 custom domain at runtime', async () => {
   const requests = [];
   const restore = installModularFetch(requests);
   try {
@@ -294,6 +295,23 @@ test('missing build-time origin discovers the public R2 custom domain from the W
   }
 });
 
+test('changing the admin R2 domain is picked up without rebuilding the Storefront', async () => {
+  const originalFetch = globalThis.fetch;
+  let configuredOrigin = 'https://media-old.example.com';
+  globalThis.fetch = async (input) => {
+    assert.equal(String(input), '/api/public/storefront/content-origin');
+    return jsonResponse({ contentOrigin: configuredOrigin });
+  };
+
+  try {
+    assert.equal(await resolveContentOrigin(), 'https://media-old.example.com');
+    configuredOrigin = 'https://media-new.example.com';
+    assert.equal(await resolveContentOrigin(), 'https://media-new.example.com');
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
+});
+
 test('schema-v2 bootstrap reads the compact home summary without preloading section snapshots', async () => {
   const requests = [];
   const restore = installModularFetch(requests);
@@ -303,8 +321,8 @@ test('schema-v2 bootstrap reads the compact home summary without preloading sect
     assert.deepEqual(Object.keys(bootstrap.sectionSnapshots), []);
     assert.deepEqual(bootstrap.home.featuredProducts.map((product) => product.id), ['product-b', 'product-a']);
     assert.deepEqual(bootstrap.home.latestProducts.map((product) => product.id), ['product-a', 'product-b']);
-    assert.equal(bootstrap.home.allSections[0].icon.value, 'https://media.example.com/sections/alpha.webp');
-    assert.equal(bootstrap.home.featuredProducts[0].coverUrl, 'https://media.example.com/products/product-b/cover.webp');
+    assert.equal(bootstrap.home.allSections[0].icon.value, 'https://content.example.com/sections/alpha.webp');
+    assert.equal(bootstrap.home.featuredProducts[0].coverUrl, 'https://content.example.com/products/product-b/cover.webp');
     assert.ok(requests.some((request) => request.url.endsWith(`/public/home/${POINTER_VERSION}/home.json`)));
     assert.equal(requests.filter((request) => request.url.endsWith('/section.json')).length, 0);
   } finally {
@@ -335,7 +353,7 @@ test('section, product and FAQ reads follow their own module versions and cache 
 
     const section = await loadSectionSnapshot(bootstrap, 'section-a');
     assert.equal(section.contentVersion, SECTION_A_VERSION);
-    assert.equal(section.products[0].coverUrl, 'https://media.example.com/products/product-a/cover.webp');
+    assert.equal(section.products[0].coverUrl, 'https://content.example.com/products/product-a/cover.webp');
     assert.equal(requests.filter((request) => request.url.includes(SECTION_A_VERSION) && request.url.endsWith('/section.json')).length, 1);
 
     const sectionBySlug = await loadSectionSnapshot(bootstrap, 'alpha');
@@ -345,7 +363,7 @@ test('section, product and FAQ reads follow their own module versions and cache 
     const product = await loadProductSnapshot(bootstrap, 'product-a-slug', undefined, 'alpha');
     assert.equal(product.contentVersion, SECTION_A_VERSION);
     assert.equal(product.product.id, 'product-a');
-    assert.equal(product.product.media[0].url, 'https://media.example.com/products/product-a/gallery-1.webp');
+    assert.equal(product.product.media[0].url, 'https://content.example.com/products/product-a/gallery-1.webp');
     assert.equal(product.product.cta.path, '/go/product-a');
 
     const globallyUniqueSlug = await loadProductSnapshot(bootstrap, 'product-a-slug');

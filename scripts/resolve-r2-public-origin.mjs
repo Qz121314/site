@@ -66,7 +66,14 @@ let selected = preferredHostname
   ? activeDomains.find((entry) => entry.domain.toLowerCase() === preferredHostname)
   : null;
 
-if (!selected && activeDomains.length === 1) {
+if (preferredHostname && !selected) {
+  throw new Error(
+    `The admin-configured R2 custom domain ${preferredHostname} is not active on bucket ${bucket}. ` +
+    `Active domains: ${activeDomains.map((entry) => entry.domain).join(', ')}`,
+  );
+}
+
+if (!preferredHostname && activeDomains.length === 1) {
   [selected] = activeDomains;
 }
 

@@ -172,12 +172,15 @@ https://assets.example.com
 site_settings.media_base_url
 ```
 
+这是 R2 公开域名的唯一权威来源。Storefront 通过运行时接口读取，GitHub Actions 只校验它是否绑定到当前 Bucket，不会自动选择域名、写回 D1 或注入前端构建变量。
+
 保存规则：
 
 - 必须是 `https://`；
 - 只保存 Origin，不允许路径、查询参数或片段；
 - 末尾不保存 `/`；
 - 初始值允许为空；
+- 更换域名只修改该字段，不修改对象 Key 和历史发布快照；
 - 发布包含媒体的公开内容前必须已经配置并验证；
 - 生产环境不使用 `r2.dev`。
 

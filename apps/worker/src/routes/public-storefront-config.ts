@@ -1,13 +1,14 @@
 import { Hono } from 'hono';
+import { getMediaBaseUrl } from '../assets/asset-library';
 import { resolvePublicCta } from '../conversion-pool/public-cta';
 import type { AppEnvironment } from '../types';
 
 export const publicStorefrontConfigRoutes = new Hono<AppEnvironment>();
 
-publicStorefrontConfigRoutes.get('/content-origin', (context) => {
-  const contentOrigin = new URL(context.req.url).origin;
+publicStorefrontConfigRoutes.get('/content-origin', async (context) => {
+  const contentOrigin = await getMediaBaseUrl(context.env.DB);
 
-  context.header('Cache-Control', 'public, max-age=300, stale-while-revalidate=3600');
+  context.header('Cache-Control', 'no-store');
   context.header('X-Robots-Tag', 'noindex, nofollow');
   return context.json({ contentOrigin });
 });
