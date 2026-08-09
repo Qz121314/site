@@ -56,9 +56,9 @@ publicConversionRoutes.get('/:code', async (context) => {
     return context.redirect(`/messages/new/?${query.toString()}`, 302);
   }
 
-  // Link conversions are the only /go path that consumes the round-robin cursor.
-  // Customer-service targets are selected only when the visitor sends the first
-  // message, which avoids creating empty conversations or advancing rotation twice.
+  // Link conversions are the only /go path that consumes Site round-robin.
+  // Customer-service CTA only enters the Storefront Messages UI; Storefront
+  // then resolves Product -> Support Group config and talks to support directly.
   const target = await selectNextConversionTarget(context.env.DB, group, now);
   if (!target || target.bindingKind !== 'link' || !target.endpointUrl) {
     return unavailable(context, 409, 'This contact option is temporarily unavailable.');

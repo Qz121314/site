@@ -12,7 +12,7 @@ function connection(overrides = {}) {
     id: 'connection-1',
     name: 'Support A',
     provider: 'generic_v1',
-    baseUrl: 'https://support.example/api/v1',
+    baseUrl: 'https://support.example',
     projectId: 'project-1',
     apiToken: 'secret-token',
     isEnabled: true,
@@ -34,7 +34,7 @@ async function withFetch(mock, callback) {
   }
 }
 
-test('group listing sends private credentials server-side and normalizes group records', async () => {
+test('group listing uses management API and keeps private credentials server-side', async () => {
   let request;
   const groups = await withFetch(
     async (url, init) => {
@@ -54,7 +54,7 @@ test('group listing sends private credentials server-side and normalizes group r
     () => listRemoteCustomerServiceGroups(connection()),
   );
 
-  assert.equal(request.url, 'https://support.example/api/v1/groups');
+  assert.equal(request.url, 'https://support.example/management/v1/groups');
   const headers = new Headers(request.init.headers);
   assert.equal(headers.get('authorization'), 'Bearer secret-token');
   assert.equal(headers.get('x-project-id'), 'project-1');
@@ -87,7 +87,7 @@ test('provider transport rejects disabled connections before fetch', async () =>
         called = true;
         throw new Error('should not run');
       },
-      () => customerServiceProviderFetchJson(connection({ isEnabled: false }), '/messages/v1/conversations'),
+      () => customerServiceProviderFetchJson(connection({ isEnabled: false }), '/management/v1/groups'),
     ),
     (error) =>
       error instanceof CustomerServiceProviderError &&
@@ -100,7 +100,7 @@ test('provider transport rejects non-JSON responses and redirects', async () => 
   await assert.rejects(
     withFetch(
       async () => new Response('ok', { status: 200, headers: { 'content-type': 'text/plain' } }),
-      () => customerServiceProviderFetchJson(connection(), '/messages/v1/conversations'),
+      () => customerServiceProviderFetchJson(connection(), '/management/v1/groups'),
     ),
     (error) =>
       error instanceof CustomerServiceProviderError &&
@@ -110,7 +110,7 @@ test('provider transport rejects non-JSON responses and redirects', async () => 
   await assert.rejects(
     withFetch(
       async () => new Response(null, { status: 302, headers: { location: 'https://other.example' } }),
-      () => customerServiceProviderFetchJson(connection(), '/messages/v1/conversations'),
+      () => customerServiceProviderFetchJson(connection(), '/management/v1/groups'),
     ),
     (error) => error instanceof CustomerServiceProviderError,
   );

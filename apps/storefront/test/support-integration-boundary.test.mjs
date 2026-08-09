@@ -10,6 +10,14 @@ const gatewaySource = await readFile(
   new URL('../src/support-gateway.ts', import.meta.url),
   'utf8',
 );
+const realtimeSource = await readFile(
+  new URL('../src/support-realtime.ts', import.meta.url),
+  'utf8',
+);
+const identitySource = await readFile(
+  new URL('../src/support-identity.ts', import.meta.url),
+  'utf8',
+);
 const supportSource = await readFile(
   new URL('../src/support-ui.tsx', import.meta.url),
   'utf8',
@@ -23,34 +31,46 @@ const integrationDoc = await readFile(
   'utf8',
 );
 
-test('Messages UI consumes the provider-neutral same-origin SupportGateway', () => {
+test('Messages UI uses direct customer-service REST and realtime gateways', () => {
   assert.match(contractSource, /export interface SupportGateway/u);
   assert.match(contractSource, /listConversations/u);
   assert.match(contractSource, /getConversation/u);
   assert.match(contractSource, /startConversation/u);
   assert.match(contractSource, /sendMessage/u);
   assert.match(contractSource, /markConversationRead/u);
-  assert.match(gatewaySource, /\/api\/messages\/v1\/conversations/u);
-  assert.match(rootSource, /siteSupportGateway/u);
+  assert.match(gatewaySource, /\/api\/public\/storefront\/support\/connections/u);
+  assert.match(gatewaySource, /\/client\/v1\/conversations/u);
+  assert.match(realtimeSource, /new WebSocket/u);
+  assert.match(realtimeSource, /buildSupportWebSocketUrl/u);
+  assert.match(rootSource, /subscribeSupportRealtime/u);
   assert.match(rootSource, /message-compose/u);
   assert.match(supportSource, /nextMessageCursor/u);
 });
 
-test('Storefront keeps provider credentials and provider URLs outside the browser boundary', () => {
-  const browserBoundary = `${contractSource}\n${gatewaySource}\n${supportSource}\n${rootSource}`;
-  assert.doesNotMatch(browserBoundary, /apiToken|Authorization:\s*Bearer|X-Project-Id|X-Site-Visitor-Id/u);
-  assert.doesNotMatch(browserBoundary, /https?:\/\/[^'"`\s]+/u);
-  assert.doesNotMatch(browserBoundary, /localStorage|sessionStorage|indexedDB/u);
+test('Storefront receives public connection metadata but never management credentials', () => {
+  const browserBoundary = `${contractSource}\n${gatewaySource}\n${realtimeSource}\n${identitySource}\n${supportSource}\n${rootSource}`;
+  assert.match(browserBoundary, /baseUrl/u);
+  assert.match(browserBoundary, /projectId/u);
+  assert.doesNotMatch(browserBoundary, /apiToken|managementToken|Authorization:\s*Bearer/u);
+  assert.doesNotMatch(gatewaySource, /\/api\/messages\/v1/u);
 });
 
-test('integration contract fixes Site-owned chat UI and external conversation ownership', () => {
-  assert.match(integrationDoc, /Site Storefront.*用户聊天 UI/u);
-  assert.match(integrationDoc, /独立 Git 仓库/u);
-  assert.match(integrationDoc, /独立 Cloudflare Worker/u);
-  assert.match(integrationDoc, /同源 `?\/api\/messages\/v1/u);
-  assert.match(integrationDoc, /唯一数据源/u);
-  assert.match(integrationDoc, /Cache-Control: no-store, private/u);
-  assert.match(integrationDoc, /MESSAGES_SESSION_SECRET/u);
+test('visitor identity is a local 24-hour six-character English alphanumeric ID', () => {
+  assert.match(identitySource, /24 \* 60 \* 60 \* 1000/u);
+  assert.match(identitySource, /ABCDEFGHIJKLMNOPQRSTUVWXYZ/u);
+  assert.match(identitySource, /0123456789/u);
+  assert.match(identitySource, /localStorage/u);
+  assert.doesNotMatch(identitySource, /Guest|游客/u);
+});
+
+test('integration contract fixes direct Storefront to customer-service ownership', () => {
+  assert.match(integrationDoc, /Storefront 直接连接客服系统/u);
+  assert.match(integrationDoc, /Site Worker 不代理聊天流量/u);
+  assert.match(integrationDoc, /24 小时/u);
+  assert.match(integrationDoc, /3 个 A-Z 字母 \+ 3 个数字/u);
+  assert.match(integrationDoc, /WebSocket/u);
+  assert.match(integrationDoc, /managementToken.*绝不返回 Storefront/u);
+  assert.doesNotMatch(integrationDoc, /MESSAGES_SESSION_SECRET/u);
 });
 
 test('Site D1 migrations do not create local conversation or message storage', async () => {

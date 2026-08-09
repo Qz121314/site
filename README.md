@@ -128,6 +128,7 @@ Cloudflare Worker + D1 + R2
 FAQ
 产品详情
 图片 / GIF / 视频媒体
+Messages / 实时客服 UI
 实时 CTA
 移动端底部导航
 ```
@@ -391,7 +392,7 @@ link               外部链接入口
 
 转化配置保存后通过 D1 实时生效，不要求重新发布 R2 内容快照。
 
-`/go/:productId` 是正式转化跳转入口，并负责需要轮换场景下的生产游标推进。
+`/go/:productId` 是正式转化跳转入口；链接模式需要轮换时由 `/go` 推进生产游标，在线客服模式只进入 Storefront Messages，不由 Site 进行坐席轮换。
 
 ## 客服管理
 
@@ -399,9 +400,9 @@ link               外部链接入口
 
 当前保持轻量的 first-party `generic_v1` 对接契约，不引入复杂第三方 REST 映射器。
 
-后续自研客服管理系统使用独立 Git 仓库、独立 Cloudflare Worker、独立数据库和独立部署流程。本项目保留 Messages 用户界面、后台运行时连接配置以及服务商无关的 Worker 适配边界；浏览器不得直接读取客服域名、项目密钥或 API Token。完整协议见 [客服系统接入文档](docs/customer-service-integration.md)。
+后续自研客服管理系统使用独立 Git 仓库、独立 Cloudflare Worker、独立数据库和独立部署流程。本项目保留 Messages 用户界面和后台运行时连接配置。Storefront 可以读取已启用连接的公开 `baseUrl` / `projectId`，并直接访问客服系统的 Client REST / WebSocket；管理 Token 只供产品后台测试连接和读取客服 Group，绝不进入浏览器。完整协议见 [客服系统接入文档](docs/customer-service-integration.md)。
 
-后台提供连接管理、启停、测试和回收站；转化池可以引用可用客服连接中的入口。
+后台提供连接管理、启停、测试和回收站；转化池可以引用可用客服连接中的 Group。Site 负责 Product -> Support Group，独立客服系统负责 Group -> Agent。
 
 ## Markdown
 
@@ -517,7 +518,7 @@ D1 当前业务数据
 - 主题保存后由 `/api/public/theme` 读取当前 D1 Theme Runtime；
 - 产品 CTA / 转化目标使用当前 D1 状态；
 - 转化配置变化不需要为了更新 CTA 重新生成产品 R2 快照；
-- `/go/:productId` 负责实际跳转和轮换游标。
+- `/go/:productId` 负责链接型实际跳转和需要时的轮换游标；在线客服聊天数据直接流向独立客服系统。
 
 这样内容版本保持稳定，同时运营入口可以即时生效。
 

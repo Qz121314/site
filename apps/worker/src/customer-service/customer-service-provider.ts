@@ -31,6 +31,10 @@ function buildHeaders(
   return headers;
 }
 
+/**
+ * Server-to-server management transport only. Storefront never calls this
+ * adapter and never receives the configured management token.
+ */
 export async function customerServiceProviderFetchJson(
   connection: CustomerServiceConnectionInternal,
   path: string,
@@ -120,7 +124,9 @@ function parseGroups(value: unknown): RemoteCustomerServiceGroup[] {
 export async function listRemoteCustomerServiceGroups(
   connection: CustomerServiceConnectionInternal,
 ): Promise<RemoteCustomerServiceGroup[]> {
-  return parseGroups(await customerServiceProviderFetchJson(connection, '/groups'));
+  return parseGroups(
+    await customerServiceProviderFetchJson(connection, '/management/v1/groups'),
+  );
 }
 
 export async function testCustomerServiceConnection(
