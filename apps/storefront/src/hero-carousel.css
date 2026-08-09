@@ -1,3 +1,7 @@
+.loading-shell .loading-hero {
+  display: none;
+}
+
 .hero-carousel {
   position: relative;
   width: 100%;
