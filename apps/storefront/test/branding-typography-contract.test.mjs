@@ -38,7 +38,7 @@ test('site description is written to browser metadata instead of visible header 
 
 test('Browse remains the dedicated sticky search surface', () => {
   assert.match(mainSource, /\.\/browse-ui\.css/u);
-  assert.match(browseCss, /\.discover-page \.discover-search/u);
+  assert.match(browseCss, /\.browse-directory-search/u);
   assert.match(browseCss, /position:\s*sticky/u);
-  assert.match(browseCss, /\.discover-section-grid/u);
+  assert.match(browseCss, /\.browse-section-list/u);
 });
