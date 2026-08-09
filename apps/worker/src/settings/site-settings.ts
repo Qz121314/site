@@ -1,5 +1,6 @@
 import { buildAssetPublicUrl } from '../assets/asset-library';
 import {
+  DEFAULT_STOREFRONT_COPY,
   parseStorefrontCopyJson,
   serializeStorefrontCopy,
   validateStorefrontCopyInput,
@@ -210,7 +211,9 @@ export function validateSiteSettingsInput(value: unknown): ValidationResult {
   if (!showMore.ok) return showMore;
   const showFaq = readBoolean(value.showFaq, 'showFaq');
   if (!showFaq.ok) return showFaq;
-  const storefrontCopy = validateStorefrontCopyInput(value.storefrontCopy);
+  const storefrontCopy = value.storefrontCopy === undefined
+    ? { ok: true as const, value: DEFAULT_STOREFRONT_COPY }
+    : validateStorefrontCopyInput(value.storefrontCopy);
   if (!storefrontCopy.ok) return storefrontCopy;
 
   return {
