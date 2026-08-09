@@ -31,9 +31,6 @@ ${staticSecurityHeaderBlock}
 /icons/*
   Cache-Control: public, max-age=31536000, immutable
 
-/sw.js
-  Cache-Control: no-cache
-
 /admin/assets/*
   Cache-Control: public, max-age=31536000, immutable
 
