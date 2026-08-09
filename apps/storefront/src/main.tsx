@@ -20,6 +20,7 @@ import './bottom-navigation.css';
 import './home-feed.css';
 import './browse-ui.css';
 import './messages-ui.css';
+import './faq-ui.css';
 import '@site/storefront-ui/theme-contract.css';
 import '@site/storefront-ui/product-detail-theme-contract.css';
 import '@site/storefront-ui/primary-pages-theme-contract.css';
