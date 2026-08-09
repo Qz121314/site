@@ -117,11 +117,6 @@
 }
 
 /* Messages: familiar mobile conversation-list ergonomics without copying another brand. */
-:is(html, .storefront-theme-root) .conversation-capacity {
-  border-color: var(--theme-primary-message-border);
-  background: var(--theme-primary-message-background);
-}
-
 :is(html, .storefront-theme-root) :is(.messages-empty-state, .conversation-list) {
   border-color: var(--theme-primary-message-border);
   border-radius: var(--theme-radius-card);

@@ -18,6 +18,10 @@ const legacyPagesCss = await readFile(
   new URL('../src/storefront-pages.css', import.meta.url),
   'utf8',
 );
+const themeContractCss = await readFile(
+  new URL('../../../packages/storefront-ui/src/primary-pages-theme-contract.css', import.meta.url),
+  'utf8',
+);
 const shellCss = await readFile(new URL('../src/app-shell.css', import.meta.url), 'utf8');
 const mainSource = await readFile(new URL('../src/main.tsx', import.meta.url), 'utf8');
 
@@ -25,6 +29,7 @@ test('Messages has no local search or visible ten-conversation capacity meter', 
   assert.doesNotMatch(supportSource, /conversation-capacity/u);
   assert.doesNotMatch(messagesCss, /\.conversation-capacity(?=[\s,{:.#>+~])/u);
   assert.doesNotMatch(legacyPagesCss, /\.conversation-capacity(?=[\s,{:.#>+~])/u);
+  assert.doesNotMatch(themeContractCss, /\.conversation-capacity(?=[\s,{:.#>+~])/u);
   assert.doesNotMatch(supportSource, /type="search"|Search conversations/u);
   assert.doesNotMatch(supportSource, /conversations\.length\}\/10|of 10 conversations/u);
 });
