@@ -4,6 +4,7 @@ export type StorefrontRoute =
   | { type: 'home' }
   | { type: 'discover' }
   | { type: 'messages' }
+  | { type: 'message-compose' }
   | { type: 'message'; conversationRef: string }
   | { type: 'faq' }
   | { type: 'faq-article'; articleRef: string }
@@ -65,6 +66,7 @@ export function parseStorefrontRoute(pathname: string): StorefrontRoute {
     || pathname === '/discover' || pathname === '/discover/'
   ) return { type: 'discover' };
   if (pathname === '/messages' || pathname === '/messages/') return { type: 'messages' };
+  if (pathname === '/messages/new' || pathname === '/messages/new/') return { type: 'message-compose' };
   if (pathname === '/faq' || pathname === '/faq/') return { type: 'faq' };
 
   const messageMatch = /^\/messages\/([^/]+)\/?$/.exec(pathname);

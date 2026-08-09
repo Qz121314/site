@@ -10,6 +10,7 @@ const rootSource = await readFile(
   new URL('../src/StorefrontRoot.tsx', import.meta.url),
   'utf8',
 );
+const routingSource = await readFile(new URL('../src/routing.ts', import.meta.url), 'utf8');
 const messagesCss = await readFile(
   new URL('../src/messages-ui.css', import.meta.url),
   'utf8',
@@ -108,8 +109,17 @@ test('Messages routes through the primary shell and shares Theme Center semantic
   assert.match(rootSource, /<MessagesWorkspace/u);
   assert.match(
     rootSource,
-    /case 'message':\s*page = <MessagesRoot activeConversationRef=\{route\.conversationRef\} \/>/u,
+    /case 'messages':\s*page = <MessagesRoot activeConversationRef=\{null\} compose=\{false\} \/>/u,
   );
+  assert.match(
+    rootSource,
+    /case 'message-compose':\s*page = <MessagesRoot activeConversationRef=\{null\} compose \/>/u,
+  );
+  assert.match(
+    rootSource,
+    /case 'message':\s*page = <MessagesRoot activeConversationRef=\{route\.conversationRef\} compose=\{false\} \/>/u,
+  );
+  assert.match(routingSource, /pathname === '\/messages\/new'/u);
   assert.match(messagesCss, /var\(--surface\)/u);
   assert.match(messagesCss, /var\(--brand\)/u);
   assert.match(messagesCss, /var\(--line\)/u);

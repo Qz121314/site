@@ -3,6 +3,7 @@ import { getConversionGroup, type ConversionMode } from './conversion-pool';
 export type RoutableProduct = {
   id: string;
   sectionId: string;
+  title: string;
   conversionGroupId: string | null;
 };
 
@@ -15,6 +16,7 @@ export type PublicCta = {
 type RoutableProductRow = {
   id: string;
   section_id: string;
+  title: string;
   conversion_group_id: string | null;
 };
 
@@ -24,7 +26,7 @@ export async function getRoutableProduct(
 ): Promise<RoutableProduct | null> {
   const row = await db
     .prepare(
-      `SELECT p.id, p.section_id, p.conversion_group_id
+      `SELECT p.id, p.section_id, p.title, p.conversion_group_id
        FROM products p
        JOIN sections s ON s.id = p.section_id
        WHERE p.id = ?
@@ -40,6 +42,7 @@ export async function getRoutableProduct(
     ? {
         id: row.id,
         sectionId: row.section_id,
+        title: row.title,
         conversionGroupId: row.conversion_group_id,
       }
     : null;

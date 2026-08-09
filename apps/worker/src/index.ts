@@ -27,6 +27,7 @@ import { publicBrowseSectionRoutes } from './routes/public-browse-sections';
 import { publicContentRoutes } from './routes/public-content';
 import { publicConversionRoutes } from './routes/public-conversion';
 import { publicHomeLayoutRoutes } from './routes/public-home-layout';
+import { publicMessagesRoutes } from './routes/public-messages';
 import { servePwaManifest } from './routes/public-pwa';
 import { publicStorefrontConfigRoutes } from './routes/public-storefront-config';
 import { publicStorefrontCopyRoutes } from './routes/public-storefront-copy';
@@ -87,6 +88,7 @@ app.route('/api/public/bottom-navigation', publicBottomNavigationRoutes);
 app.route('/api/public/home-layout', publicHomeLayoutRoutes);
 app.route('/api/public/browse-sections', publicBrowseSectionRoutes);
 app.route('/api/public/theme', publicThemeRoutes);
+app.route('/api/messages/v1', publicMessagesRoutes);
 app.route('/public', publicContentRoutes);
 
 app.route('/api/admin/auth', adminAuthRoutes);

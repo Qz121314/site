@@ -119,6 +119,8 @@ function normalizeBaseUrl(value: unknown) {
   if (
     hostname === 'localhost' ||
     hostname.endsWith('.localhost') ||
+    hostname.endsWith('.local') ||
+    hostname.endsWith('.internal') ||
     !hostname.includes('.') ||
     isIpAddress(hostname)
   ) {
@@ -220,6 +222,21 @@ export async function listCustomerServiceConnections(
       .all<ConnectionRow>()
   ).results;
   return rows.map(mapConnection).map(toPublicCustomerServiceConnection);
+}
+
+export async function listEnabledCustomerServiceConnectionsInternal(
+  db: D1Database,
+): Promise<CustomerServiceConnectionInternal[]> {
+  const rows = (
+    await db
+      .prepare(
+        `${CONNECTION_SELECT}
+         WHERE c.deleted_at IS NULL AND c.is_enabled = 1
+         ORDER BY c.name COLLATE NOCASE ASC`,
+      )
+      .all<ConnectionRow>()
+  ).results;
+  return rows.map(mapConnection);
 }
 
 export async function getCustomerServiceConnectionInternal(
