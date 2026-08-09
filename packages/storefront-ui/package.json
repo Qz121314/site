@@ -6,6 +6,7 @@
   "exports": {
     ".": "./src/index.tsx",
     "./theme": "./src/theme.ts",
+    "./theme-contract.css": "./src/theme-contract.css",
     "./styles.css": "./src/styles.css"
   },
   "scripts": {
