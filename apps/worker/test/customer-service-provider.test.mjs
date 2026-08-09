@@ -2,8 +2,8 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   CustomerServiceProviderError,
+  customerServiceProviderFetchJson,
   listRemoteCustomerServiceGroups,
-  resolveCustomerServiceGroupEntry,
   testCustomerServiceConnection,
 } from '../src/customer-service/customer-service-provider.ts';
 
@@ -15,7 +15,6 @@ function connection(overrides = {}) {
     baseUrl: 'https://support.example/api/v1',
     projectId: 'project-1',
     apiToken: 'secret-token',
-    privateConfig: null,
     isEnabled: true,
     createdAt: '2026-08-07T00:00:00.000Z',
     updatedAt: '2026-08-07T00:00:00.000Z',
@@ -80,47 +79,15 @@ test('connection test reports the number of readable remote groups', async () =>
   assert.deepEqual(result, { connected: true, groupCount: 2 });
 });
 
-test('entry resolution POSTs the click context to the encoded remote group path', async () => {
-  let request;
-  const entry = await withFetch(
-    async (url, init) => {
-      request = { url, init };
-      return new Response(JSON.stringify({ url: 'https://chat.example/session/123' }), {
-        status: 200,
-        headers: { 'content-type': 'application/json' },
-      });
-    },
-    () =>
-      resolveCustomerServiceGroupEntry(connection(), 'sales / vip', {
-        requestId: 'request-1',
-        productId: 'product-1',
-        sectionId: 'section-1',
-      }),
-  );
-
-  assert.equal(
-    request.url,
-    'https://support.example/api/v1/groups/sales%20%2F%20vip/entry',
-  );
-  assert.equal(request.init.method, 'POST');
-  assert.deepEqual(JSON.parse(request.init.body), {
-    requestId: 'request-1',
-    productId: 'product-1',
-    sectionId: 'section-1',
-  });
-  assert.equal(entry.url, 'https://chat.example/session/123');
-});
-
-test('disabled connections fail before any upstream request is made', async () => {
+test('provider transport rejects disabled connections before fetch', async () => {
   let called = false;
-
   await assert.rejects(
     withFetch(
       async () => {
         called = true;
         throw new Error('should not run');
       },
-      () => listRemoteCustomerServiceGroups(connection({ isEnabled: false })),
+      () => customerServiceProviderFetchJson(connection({ isEnabled: false }), '/messages/v1/conversations'),
     ),
     (error) =>
       error instanceof CustomerServiceProviderError &&
@@ -129,11 +96,11 @@ test('disabled connections fail before any upstream request is made', async () =
   assert.equal(called, false);
 });
 
-test('provider rejects non-JSON responses and unsafe entry protocols', async () => {
+test('provider transport rejects non-JSON responses and redirects', async () => {
   await assert.rejects(
     withFetch(
       async () => new Response('ok', { status: 200, headers: { 'content-type': 'text/plain' } }),
-      () => listRemoteCustomerServiceGroups(connection()),
+      () => customerServiceProviderFetchJson(connection(), '/messages/v1/conversations'),
     ),
     (error) =>
       error instanceof CustomerServiceProviderError &&
@@ -142,20 +109,9 @@ test('provider rejects non-JSON responses and unsafe entry protocols', async () 
 
   await assert.rejects(
     withFetch(
-      async () =>
-        new Response(JSON.stringify({ url: 'javascript:alert(1)' }), {
-          status: 200,
-          headers: { 'content-type': 'application/json' },
-        }),
-      () =>
-        resolveCustomerServiceGroupEntry(connection(), 'sales', {
-          requestId: 'request-1',
-          productId: 'product-1',
-          sectionId: 'section-1',
-        }),
+      async () => new Response(null, { status: 302, headers: { location: 'https://other.example' } }),
+      () => customerServiceProviderFetchJson(connection(), '/messages/v1/conversations'),
     ),
-    (error) =>
-      error instanceof CustomerServiceProviderError &&
-      error.code === 'CUSTOMER_SERVICE_INVALID_ENTRY',
+    (error) => error instanceof CustomerServiceProviderError,
   );
 });
