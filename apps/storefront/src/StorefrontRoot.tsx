@@ -18,6 +18,7 @@ import { FaqArticlePage, FaqDirectoryPage } from './FaqPage';
 import { HomeFeed } from './HomeFeed';
 import { ResilientImage } from './ResilientMedia';
 import { bottomNavigationActiveHref } from './routing';
+import { SectionCatalogPage } from './SectionPage';
 import {
   FALLBACK_STOREFRONT_COPY,
   loadStorefrontCopy,
@@ -297,6 +298,45 @@ function FaqRoot({ pathname }: { pathname: string }) {
   );
 }
 
+function sectionCatalogRef(pathname: string): string | null {
+  const match = pathname.match(/^\/sections\/([^/]+)\/?$/u);
+  if (!match?.[1]) return null;
+  try {
+    return decodeURIComponent(match[1]);
+  } catch {
+    return match[1];
+  }
+}
+
+function SectionRoot({ pathname }: { pathname: string }) {
+  const bootstrapQuery = useQuery({
+    queryKey: ['storefront-bootstrap'],
+    queryFn: ({ signal }) => loadStorefrontBootstrap(undefined, signal),
+    staleTime: 30_000,
+  });
+  const copyQuery = useQuery({
+    queryKey: ['storefront-copy'],
+    queryFn: ({ signal }) => loadStorefrontCopy(signal),
+    staleTime: 30_000,
+  });
+  const sectionRef = sectionCatalogRef(pathname);
+
+  if (bootstrapQuery.isLoading) return <PrimaryLoading />;
+  if (bootstrapQuery.error || !bootstrapQuery.data) return <PrimaryError error={bootstrapQuery.error} />;
+  if (!sectionRef) return <App />;
+
+  const copy = copyQuery.data ?? FALLBACK_STOREFRONT_COPY;
+  return (
+    <PrimaryShell activePath="/browse/" bootstrap={bootstrapQuery.data} copy={copy}>
+      <SectionCatalogPage
+        bootstrap={bootstrapQuery.data}
+        sectionRef={sectionRef}
+        LinkComponent={StorefrontLink as StorefrontLinkComponent}
+      />
+    </PrimaryShell>
+  );
+}
+
 function isBrowsePath(pathname: string): boolean {
   return pathname === '/browse' || pathname === '/browse/' || pathname === '/discover' || pathname === '/discover/';
 }
@@ -307,6 +347,10 @@ function isMessagesPath(pathname: string): boolean {
 
 function isFaqPath(pathname: string): boolean {
   return pathname === '/faq' || pathname === '/faq/' || /^\/faq\/[^/]+\/?$/u.test(pathname);
+}
+
+function isSectionPath(pathname: string): boolean {
+  return /^\/sections\/[^/]+\/?$/u.test(pathname);
 }
 
 export function StorefrontRoot() {
@@ -322,6 +366,8 @@ export function StorefrontRoot() {
         <MessagesRoot pathname={pathname} />
       ) : isFaqPath(pathname) ? (
         <FaqRoot pathname={pathname} />
+      ) : isSectionPath(pathname) ? (
+        <SectionRoot pathname={pathname} />
       ) : (
         <App />
       )}
