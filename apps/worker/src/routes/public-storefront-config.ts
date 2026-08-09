@@ -1,4 +1,4 @@
-import { Hono } from 'hono';
+import { Hono, type Context } from 'hono';
 import { getMediaBaseUrl } from '../assets/asset-library';
 import {
   getConversionGroup,
@@ -21,7 +21,7 @@ type PublicSupportConnection = {
   protocolVersion: 'v1';
 };
 
-function setPublicRuntimeHeaders(context: Parameters<typeof getMediaBaseUrl>[0] extends never ? never : any) {
+function setPublicRuntimeHeaders(context: Context<AppEnvironment>) {
   context.header('Cache-Control', 'no-store');
   context.header('X-Robots-Tag', 'noindex, nofollow');
 }
