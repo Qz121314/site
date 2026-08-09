@@ -99,59 +99,21 @@
   display: none;
 }
 
-/* FAQ: app accordion with large tap targets and an explicit open state. */
-:is(html, .storefront-theme-root) .faq-list {
-  gap: 9px;
-}
-
-:is(html, .storefront-theme-root) .faq-list details {
-  overflow: hidden;
+/* FAQ: simple article directory plus a dedicated reading surface. */
+:is(html, .storefront-theme-root) :is(.faq-article-list, .faq-article-body) {
   border-color: var(--theme-primary-faq-border);
   border-radius: var(--theme-radius-card);
   background: var(--theme-primary-faq-background);
   box-shadow: var(--theme-primary-faq-shadow);
 }
 
-:is(html, .storefront-theme-root) .faq-list details[open] {
-  background: var(--theme-primary-faq-open-background);
+:is(html, .storefront-theme-root) .faq-article-row {
+  transition: background 120ms ease, color 120ms ease;
 }
 
-:is(html, .storefront-theme-root) .faq-list summary {
-  position: relative;
-  display: flex;
-  min-height: var(--theme-control-height);
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 14px 16px;
-  list-style: none;
-}
-
-:is(html, .storefront-theme-root) .faq-list summary::-webkit-details-marker {
-  display: none;
-}
-
-:is(html, .storefront-theme-root) .faq-list summary::after {
-  width: 8px;
-  height: 8px;
-  flex: 0 0 auto;
-  border-right: 2px solid var(--muted);
-  border-bottom: 2px solid var(--muted);
-  content: '';
-  transform: rotate(45deg) translateY(-2px);
-  transition: transform 140ms ease;
-}
-
-:is(html, .storefront-theme-root) .faq-list details[open] summary::after {
-  transform: rotate(225deg) translate(-2px, -2px);
-}
-
-:is(html, .storefront-theme-root) .faq-list details[open] summary {
+:is(html, .storefront-theme-root) .faq-article-row:is(:hover, :focus-visible, :active) {
   color: var(--brand-strong);
-}
-
-:is(html, .storefront-theme-root) .faq-list .markdown-content {
-  padding: 0 16px 16px;
+  background: var(--theme-primary-faq-open-background);
 }
 
 /* Messages: familiar mobile conversation-list ergonomics without copying another brand. */
@@ -248,7 +210,8 @@
 }
 
 :is(html, .storefront-theme-root)[data-theme='tech'] :is(
-  .faq-list details,
+  .faq-article-list,
+  .faq-article-body,
   .messages-empty-state,
   .conversation-list,
   .chat-header,
@@ -256,7 +219,8 @@
   .topbar
 ),
 :is(html, .storefront-theme-root)[data-theme='noir'] :is(
-  .faq-list details,
+  .faq-article-list,
+  .faq-article-body,
   .messages-empty-state,
   .conversation-list,
   .chat-header,

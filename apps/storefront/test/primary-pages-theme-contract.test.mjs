@@ -28,12 +28,14 @@ test('primary app header removes passive language chrome and stays theme-driven'
   assert.match(contract, /\.brand-logo\s*\{[\s\S]*?--theme-primary-logo-radius/u);
 });
 
-test('FAQ is an app accordion with a themed open state', () => {
-  assert.match(contract, /\.faq-list details\s*\{[\s\S]*?--theme-primary-faq-background/u);
-  assert.match(contract, /\.faq-list details\[open\]/u);
-  assert.match(contract, /summary::after/u);
-  assert.match(contract, /summary::-webkit-details-marker/u);
-  assert.match(contract, /min-height:\s*var\(--theme-control-height\)/u);
+test('FAQ article list and reading surface stay controlled by Theme Center', () => {
+  assert.match(contract, /:is\(\.faq-article-list, \.faq-article-body\)/u);
+  assert.match(contract, /--theme-primary-faq-background/u);
+  assert.match(contract, /--theme-primary-faq-border/u);
+  assert.match(contract, /--theme-primary-faq-shadow/u);
+  assert.match(contract, /\.faq-article-row:is\(:hover, :focus-visible, :active\)/u);
+  assert.doesNotMatch(contract, /\.faq-list details/u);
+  assert.doesNotMatch(contract, /summary::after/u);
 });
 
 test('Messages and chat surfaces are controlled by Theme Center recipes', () => {

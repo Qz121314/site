@@ -14,6 +14,7 @@ import {
 import { App } from './App';
 import { BrowsePage } from './BrowsePage';
 import { loadStorefrontBootstrap, PublicContentError } from './content';
+import { FaqArticlePage, FaqDirectoryPage } from './FaqPage';
 import { HomeFeed } from './HomeFeed';
 import { ResilientImage } from './ResilientMedia';
 import { bottomNavigationActiveHref } from './routing';
@@ -251,12 +252,61 @@ function MessagesRoot({ pathname }: { pathname: string }) {
   );
 }
 
+function faqArticleRef(pathname: string): string | null {
+  const match = pathname.match(/^\/faq\/([^/]+)\/?$/u);
+  if (!match?.[1]) return null;
+  try {
+    return decodeURIComponent(match[1]);
+  } catch {
+    return match[1];
+  }
+}
+
+function FaqRoot({ pathname }: { pathname: string }) {
+  const bootstrapQuery = useQuery({
+    queryKey: ['storefront-bootstrap'],
+    queryFn: ({ signal }) => loadStorefrontBootstrap(undefined, signal),
+    staleTime: 30_000,
+  });
+  const copyQuery = useQuery({
+    queryKey: ['storefront-copy'],
+    queryFn: ({ signal }) => loadStorefrontCopy(signal),
+    staleTime: 30_000,
+  });
+  const articleRef = faqArticleRef(pathname);
+
+  if (bootstrapQuery.isLoading) return <PrimaryLoading />;
+  if (bootstrapQuery.error || !bootstrapQuery.data) return <PrimaryError error={bootstrapQuery.error} />;
+
+  const copy = copyQuery.data ?? FALLBACK_STOREFRONT_COPY;
+  return (
+    <PrimaryShell activePath="/faq/" bootstrap={bootstrapQuery.data} copy={copy}>
+      {articleRef ? (
+        <FaqArticlePage
+          articleRef={articleRef}
+          bootstrap={bootstrapQuery.data}
+          LinkComponent={StorefrontLink as StorefrontLinkComponent}
+        />
+      ) : (
+        <FaqDirectoryPage
+          bootstrap={bootstrapQuery.data}
+          LinkComponent={StorefrontLink as StorefrontLinkComponent}
+        />
+      )}
+    </PrimaryShell>
+  );
+}
+
 function isBrowsePath(pathname: string): boolean {
   return pathname === '/browse' || pathname === '/browse/' || pathname === '/discover' || pathname === '/discover/';
 }
 
 function isMessagesPath(pathname: string): boolean {
   return pathname === '/messages' || pathname === '/messages/' || /^\/messages\/[^/]+\/?$/u.test(pathname);
+}
+
+function isFaqPath(pathname: string): boolean {
+  return pathname === '/faq' || pathname === '/faq/' || /^\/faq\/[^/]+\/?$/u.test(pathname);
 }
 
 export function StorefrontRoot() {
@@ -270,6 +320,8 @@ export function StorefrontRoot() {
         <BrowseRoot />
       ) : isMessagesPath(pathname) ? (
         <MessagesRoot pathname={pathname} />
+      ) : isFaqPath(pathname) ? (
+        <FaqRoot pathname={pathname} />
       ) : (
         <App />
       )}
