@@ -52,10 +52,10 @@ const faqIcon = navigationIcon(
 export function primaryNavigationItems(unreadMessages = 0): StorefrontNavigationItem[] {
   return [
     { href: '/', label: 'Home', icon: homeIcon },
-    { href: '/discover/', label: '发现', icon: discoverIcon },
+    { href: '/discover/', label: 'Discover', icon: discoverIcon },
     {
       href: '/messages/',
-      label: '消息',
+      label: 'Messages',
       icon: messagesIcon,
       ...(unreadMessages > 0 ? { badgeCount: unreadMessages } : {}),
     },
