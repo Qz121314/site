@@ -24,7 +24,10 @@ test('storefront uses a modern self-contained font stack without remote font dep
 test('brand header hides descriptions and only shows a real uploaded logo image', () => {
   assert.match(typographyCss, /\.brand-lockup small[\s\S]*display:\s*none/u);
   assert.match(typographyCss, /\.brand-logo:not\(:has\(img\)\)[\s\S]*display:\s*none/u);
-  assert.match(rootSource, /site\.logoUrl \? <ResilientImage alt="" fallback=\{null\}/u);
+  assert.match(
+    rootSource,
+    /site\.logoUrl\s*\?\s*\(\s*<ResilientImage alt="" fallback=\{null\}/u,
+  );
   assert.doesNotMatch(rootSource, /brand-lettermark/u);
 });
 
