@@ -72,6 +72,18 @@ export type StorefrontCopy = {
     activeStatus: string;
     closedStatus: string;
     waitingPreview: string;
+    newConversationStatus: string;
+    loadEarlier: string;
+    sendLabel: string;
+    attachmentLabel: string;
+    selectConversationTitle: string;
+    selectConversationDescription: string;
+    sendingLabel: string;
+    sentLabel: string;
+    readLabel: string;
+    unreadLabel: string;
+    sendFailed: string;
+    loadingConversation: string;
   };
 };
 
@@ -96,7 +108,10 @@ const COPY_FIELDS: { [K in CopyGroupKey]: readonly (keyof StorefrontCopy[K])[] }
   messages: [
     'kicker', 'title', 'emptyTitle', 'emptyDescription', 'supportName', 'noActiveConversation',
     'unavailableTitle', 'unavailableDescription', 'backLabel', 'inputPlaceholder', 'productLabel',
-    'waitingStatus', 'activeStatus', 'closedStatus', 'waitingPreview',
+    'waitingStatus', 'activeStatus', 'closedStatus', 'waitingPreview', 'newConversationStatus',
+    'loadEarlier', 'sendLabel', 'attachmentLabel', 'selectConversationTitle',
+    'selectConversationDescription', 'sendingLabel', 'sentLabel', 'readLabel', 'unreadLabel',
+    'sendFailed', 'loadingConversation',
   ],
 };
 
