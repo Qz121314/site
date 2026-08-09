@@ -43,6 +43,30 @@ async function isReadyImageAsset(db: D1Database, id: string): Promise<boolean> {
   return Boolean(row);
 }
 
+async function validateImageReferences(
+  db: D1Database,
+  input: { iconAssetId: string | null; browseBackgroundAssetId: string | null },
+) {
+  if (input.iconAssetId && !(await isReadyImageAsset(db, input.iconAssetId))) {
+    return {
+      code: 'SECTION_ICON_ASSET_INVALID',
+      message: '分区图标不存在、已删除或状态异常。',
+      field: 'iconAssetId',
+    } as const;
+  }
+  if (
+    input.browseBackgroundAssetId &&
+    !(await isReadyImageAsset(db, input.browseBackgroundAssetId))
+  ) {
+    return {
+      code: 'SECTION_BROWSE_BACKGROUND_INVALID',
+      message: 'Browse 分区背景图不存在、已删除或状态异常。',
+      field: 'browseBackgroundAssetId',
+    } as const;
+  }
+  return null;
+}
+
 export const adminSectionRoutes = new Hono<AppEnvironment>();
 
 adminSectionRoutes.get('/', async (context) => {
@@ -80,12 +104,10 @@ adminSectionRoutes.post('/', async (context) => {
       field: validation.field,
     });
   }
-  if (
-    validation.value.iconAssetId &&
-    !(await isReadyImageAsset(context.env.DB, validation.value.iconAssetId))
-  ) {
-    return apiError(context, 409, 'SECTION_ICON_ASSET_INVALID', '分区图标不存在、已删除或状态异常。', {
-      field: 'iconAssetId',
+  const invalidImage = await validateImageReferences(context.env.DB, validation.value);
+  if (invalidImage) {
+    return apiError(context, 409, invalidImage.code, invalidImage.message, {
+      field: invalidImage.field,
     });
   }
 
@@ -140,12 +162,10 @@ adminSectionRoutes.put('/:id', async (context) => {
       field: validation.field,
     });
   }
-  if (
-    validation.value.iconAssetId &&
-    !(await isReadyImageAsset(context.env.DB, validation.value.iconAssetId))
-  ) {
-    return apiError(context, 409, 'SECTION_ICON_ASSET_INVALID', '分区图标不存在、已删除或状态异常。', {
-      field: 'iconAssetId',
+  const invalidImage = await validateImageReferences(context.env.DB, validation.value);
+  if (invalidImage) {
+    return apiError(context, 409, invalidImage.code, invalidImage.message, {
+      field: invalidImage.field,
     });
   }
 
@@ -153,10 +173,13 @@ adminSectionRoutes.put('/:id', async (context) => {
   const updated: SectionRecord = {
     ...current,
     name: validation.value.name,
+    description: validation.value.description,
     iconType: validation.value.iconAssetId ? 'asset' : 'icon',
     iconValue: validation.value.iconAssetId ? null : validation.value.iconValue,
     iconAssetId: validation.value.iconAssetId,
     iconUrl: null,
+    browseBackgroundAssetId: validation.value.browseBackgroundAssetId,
+    browseBackgroundUrl: null,
     sortOrder: validation.value.sortOrder,
     isEnabled: validation.value.isEnabled,
     updatedAt: now,
