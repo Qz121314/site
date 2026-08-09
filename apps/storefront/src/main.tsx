@@ -14,6 +14,7 @@ import './storefront-resilience.css';
 import './storefront-pages.css';
 import './pwa.css';
 import './app-shell.css';
+import './content-ui.css';
 
 installPublicContentFetchFallback();
 void installStorefrontTheme();
