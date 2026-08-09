@@ -155,8 +155,8 @@ export function StorefrontCopySettingsSection({
         用户前端为英文。这里仅管理站点/业务可见文案；系统错误与无障碍提示由前端英文 localization 维护。
       </p>
       <div className="admin-storefront-copy-groups">
-        {COPY_GROUPS.map((group, index) => (
-          <details className="admin-storefront-copy-group" key={group.key} open={index === 0}>
+        {COPY_GROUPS.map((group) => (
+          <details className="admin-storefront-copy-group" key={group.key}>
             <summary>
               <strong>{group.label}</strong>
               <span>{group.hint}</span>
