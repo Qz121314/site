@@ -8,7 +8,6 @@ export type AdminSession = {
 export type AppBindings = Env & {
   ADMIN_PASSWORD?: string;
   SESSION_SECRET?: string;
-  MESSAGES_SESSION_SECRET?: string;
 };
 
 export type AppVariables = {
