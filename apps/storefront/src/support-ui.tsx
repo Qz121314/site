@@ -1,34 +1,10 @@
 import type { StorefrontLinkComponent } from '@site/storefront-ui';
 import { useStorefrontCopy } from './storefront-copy';
-
-export type SupportConversationStatus = 'waiting' | 'active' | 'closed';
-
-export type SupportConversationSummary = {
-  id: string;
-  agentName: string | null;
-  agentAvatarUrl: string | null;
-  productTitle: string;
-  productCoverUrl: string | null;
-  lastMessage: string | null;
-  lastMessageAt: string | null;
-  unreadCount: number;
-  status: SupportConversationStatus;
-};
-
-export type SupportMessage = {
-  id: string;
-  direction: 'customer' | 'agent';
-  body: string;
-  sentAt: string;
-  delivery: 'sending' | 'sent' | 'read';
-};
-
-export type SupportConversationDetail = SupportConversationSummary & {
-  productHref: string | null;
-  createdAt: string;
-  expiresAt: string;
-  messages: SupportMessage[];
-};
+import type {
+  SupportConversationDetail,
+  SupportConversationSummary,
+  SupportMessage,
+} from './support-contract';
 
 function MessageBubbleIcon() {
   return (
