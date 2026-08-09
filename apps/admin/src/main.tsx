@@ -33,6 +33,7 @@ import './admin-error-boundary.css';
 import './admin-dialog-service.css';
 import '@site/storefront-ui/styles.css';
 import '@site/storefront-ui/theme-contract.css';
+import '@site/storefront-ui/product-detail-theme-contract.css';
 
 installAdminUnsavedStateObserver();
 
