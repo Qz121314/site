@@ -196,7 +196,7 @@ test('customer-service CTA stays inside Site Messages and does not consume a tar
     assert.equal(db.cursor, 0);
     assert.equal(upstreamCalled, false);
     assert.equal(
-      db.statements.some(({ sql }) => sql.includes('FROM conversion_targets t')),
+      db.statements.some(({ sql }) => sql.includes('INSERT INTO conversion_group_rotation')),
       false,
     );
   } finally {
