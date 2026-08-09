@@ -142,22 +142,45 @@ function remoteUrl(connection: PublicSupportConnection, path: string): string {
   return `${connection.baseUrl}${path}`;
 }
 
-async function remoteRequestJson(
+function clientQueryUrl(
   connection: PublicSupportConnection,
   path: string,
+  values?: Record<string, string | null | undefined>,
+): string {
+  const identity = getSupportVisitorIdentity();
+  const url = new URL(remoteUrl(connection, path));
+  url.searchParams.set('visitorId', identity.visitorId);
+  if (connection.projectId) url.searchParams.set('projectId', connection.projectId);
+  for (const [key, value] of Object.entries(values ?? {})) {
+    if (value) url.searchParams.set(key, value);
+  }
+  return url.toString();
+}
+
+function clientBody(
+  connection: PublicSupportConnection,
+  body: Record<string, unknown>,
+): Record<string, unknown> {
+  const identity = getSupportVisitorIdentity();
+  return {
+    visitorId: identity.visitorId,
+    ...(connection.projectId ? { projectId: connection.projectId } : {}),
+    ...body,
+  };
+}
+
+async function remoteRequestJson(
+  url: string,
   init?: RequestInit,
   signal?: AbortSignal,
 ): Promise<unknown> {
-  const identity = getSupportVisitorIdentity();
   const headers = new Headers(init?.headers);
   headers.set('Accept', 'application/json');
-  headers.set('X-Visitor-Id', identity.visitorId);
-  if (connection.projectId) headers.set('X-Project-Id', connection.projectId);
   if (init?.body !== undefined) headers.set('Content-Type', 'application/json');
 
   let response: Response;
   try {
-    response = await fetch(remoteUrl(connection, path), {
+    response = await fetch(url, {
       ...init,
       cache: 'no-store',
       credentials: 'omit',
@@ -166,7 +189,8 @@ async function remoteRequestJson(
       headers,
       ...(signal ? { signal } : {}),
     });
-  } catch {
+  } catch (error) {
+    if (signal?.aborted) throw error;
     throw new SupportApiError(503, 'SUPPORT_UNREACHABLE', 'Messages is temporarily unavailable.');
   }
   const body = await readJson(response);
@@ -259,14 +283,20 @@ function parseRemoteDetail(value: unknown): RemoteConversationDetail {
     typeof item.createdAt !== 'string' ||
     typeof item.expiresAt !== 'string' ||
     !Array.isArray(item.messages) ||
-    !nullableString(item.nextMessageCursor) ||
-    (item.productHref !== undefined && !nullableString(item.productHref))
+    !nullableString(item.nextMessageCursor)
   ) {
     throw new SupportApiError(500, 'INVALID_SUPPORT_RESPONSE', 'Messages returned invalid conversation data.');
   }
+  let productHref: string | null | undefined;
+  if (item.productHref !== undefined) {
+    if (!nullableString(item.productHref)) {
+      throw new SupportApiError(500, 'INVALID_SUPPORT_RESPONSE', 'Messages returned invalid conversation data.');
+    }
+    productHref = item.productHref;
+  }
   return {
     ...parseRemoteSummary(item),
-    ...(item.productHref !== undefined ? { productHref: item.productHref } : {}),
+    ...(productHref !== undefined ? { productHref } : {}),
     createdAt: item.createdAt,
     expiresAt: item.expiresAt,
     messages: item.messages.map(parseMessage),
@@ -311,6 +341,12 @@ async function connectionForConversationRef(
   return { connection, remoteConversationId: parsed.remoteConversationId };
 }
 
+function conversationTimestamp(value: string | null): number {
+  if (!value) return 0;
+  const timestamp = Date.parse(value);
+  return Number.isFinite(timestamp) ? timestamp : 0;
+}
+
 export function buildSupportWebSocketUrl(connection: PublicSupportConnection): string {
   const identity = getSupportVisitorIdentity();
   const url = new URL(`${connection.baseUrl}/client/v1/realtime`);
@@ -326,7 +362,11 @@ export const siteSupportGateway: SupportGateway = {
     if (connections.length === 0) return [];
     const settled = await Promise.allSettled(
       connections.map(async (connection) => {
-        const value = await remoteRequestJson(connection, '/client/v1/conversations', undefined, signal);
+        const value = await remoteRequestJson(
+          clientQueryUrl(connection, '/client/v1/conversations'),
+          undefined,
+          signal,
+        );
         const envelope = isRecord(value) ? value : null;
         if (!envelope || !Array.isArray(envelope.conversations)) {
           throw new SupportApiError(500, 'INVALID_SUPPORT_RESPONSE', 'Messages returned invalid data.');
@@ -342,19 +382,20 @@ export const siteSupportGateway: SupportGateway = {
     }
     return successful
       .flatMap((result) => result.value)
-      .sort((left, right) => Date.parse(right.lastMessageAt ?? '') - Date.parse(left.lastMessageAt ?? ''));
+      .sort((left, right) => conversationTimestamp(right.lastMessageAt) - conversationTimestamp(left.lastMessageAt));
   },
 
   async getConversation(conversationRef, before = null, signal) {
     const { connection, remoteConversationId } = await connectionForConversationRef(conversationRef, signal);
-    const query = new URLSearchParams({ limit: '30' });
-    if (before) query.set('before', before);
     try {
       return conversationEnvelope(
         connection,
         await remoteRequestJson(
-          connection,
-          `/client/v1/conversations/${encodeURIComponent(remoteConversationId)}?${query.toString()}`,
+          clientQueryUrl(
+            connection,
+            `/client/v1/conversations/${encodeURIComponent(remoteConversationId)}`,
+            { before, limit: '30' },
+          ),
           undefined,
           signal,
         ),
@@ -367,22 +408,23 @@ export const siteSupportGateway: SupportGateway = {
 
   async startConversation(input: StartSupportConversationInput, signal) {
     const route = await resolveSupportRoute(input.productId, input.sectionId, signal);
-    const body = {
-      groupId: route.groupId,
-      clientMessageId: input.clientMessageId,
-      message: input.message,
-      product: {
-        id: input.productId,
-        sectionId: input.sectionId,
-        title: input.productTitle,
-        href: input.productHref,
-        coverUrl: input.productCoverUrl,
-      },
-    };
     const value = await remoteRequestJson(
-      route.connection,
-      '/client/v1/conversations',
-      { method: 'POST', body: JSON.stringify(body) },
+      remoteUrl(route.connection, '/client/v1/conversations'),
+      {
+        method: 'POST',
+        body: JSON.stringify(clientBody(route.connection, {
+          groupId: route.groupId,
+          clientMessageId: input.clientMessageId,
+          message: input.message,
+          product: {
+            id: input.productId,
+            sectionId: input.sectionId,
+            title: input.productTitle,
+            href: input.productHref,
+            coverUrl: input.productCoverUrl,
+          },
+        })),
+      },
       signal,
     );
     return conversationEnvelope(route.connection, value);
@@ -391,11 +433,13 @@ export const siteSupportGateway: SupportGateway = {
   async sendMessage(conversationRef: string, input: SendSupportMessageInput, signal) {
     const { connection, remoteConversationId } = await connectionForConversationRef(conversationRef, signal);
     const value = await remoteRequestJson(
-      connection,
-      `/client/v1/conversations/${encodeURIComponent(remoteConversationId)}/messages`,
+      remoteUrl(connection, `/client/v1/conversations/${encodeURIComponent(remoteConversationId)}/messages`),
       {
         method: 'POST',
-        body: JSON.stringify({ clientMessageId: input.clientMessageId, body: input.body }),
+        body: JSON.stringify(clientBody(connection, {
+          clientMessageId: input.clientMessageId,
+          body: input.body,
+        })),
       },
       signal,
     );
@@ -406,9 +450,11 @@ export const siteSupportGateway: SupportGateway = {
   async markConversationRead(conversationRef, lastMessageId = null, signal) {
     const { connection, remoteConversationId } = await connectionForConversationRef(conversationRef, signal);
     const value = await remoteRequestJson(
-      connection,
-      `/client/v1/conversations/${encodeURIComponent(remoteConversationId)}/read`,
-      { method: 'POST', body: JSON.stringify({ lastMessageId }) },
+      remoteUrl(connection, `/client/v1/conversations/${encodeURIComponent(remoteConversationId)}/read`),
+      {
+        method: 'POST',
+        body: JSON.stringify(clientBody(connection, { lastMessageId })),
+      },
       signal,
     );
     const envelope = isRecord(value) ? value : null;
