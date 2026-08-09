@@ -20,10 +20,17 @@
 
 .faq-article-list {
   overflow: hidden;
+  margin: 0;
+  padding: 0;
   border: 1px solid var(--theme-primary-faq-border, var(--line));
   border-radius: var(--theme-radius-card, 18px);
   background: var(--theme-primary-faq-background, var(--surface));
   box-shadow: var(--theme-primary-faq-shadow, none);
+  list-style: none;
+}
+
+.faq-article-list li:not(:last-child) .faq-article-row {
+  border-bottom: 1px solid color-mix(in srgb, var(--theme-primary-faq-border, var(--line)) 84%, transparent);
 }
 
 .faq-article-row {
@@ -32,17 +39,12 @@
   min-height: 58px;
   align-items: center;
   padding: 13px 46px 13px 16px;
-  border-bottom: 1px solid color-mix(in srgb, var(--theme-primary-faq-border, var(--line)) 84%, transparent);
   color: var(--text);
   font-size: 0.92rem;
   font-weight: 760;
   line-height: 1.35;
   text-decoration: none;
   transition: background 120ms ease, color 120ms ease;
-}
-
-.faq-article-row:last-child {
-  border-bottom: 0;
 }
 
 .faq-article-row::after {
