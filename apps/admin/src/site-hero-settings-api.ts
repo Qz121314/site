@@ -6,6 +6,7 @@ import {
   type SiteSettingsUpdateInput,
 } from './api';
 import type { MediaKind } from './asset-library/api';
+import { parseStorefrontCopy, type StorefrontCopy } from './storefront-copy-settings';
 
 export type SiteHeroSlide = {
   id: string;
@@ -22,11 +23,13 @@ export type SiteHeroSlide = {
 export type SiteHeroSlideInput = Omit<SiteHeroSlide, 'mediaKind' | 'mediaUrl'>;
 
 export type SiteSettingsWithHero = SiteSettings & {
+  storefrontCopy: StorefrontCopy;
   heroSlides: SiteHeroSlide[];
 };
 
 export type SiteSettingsWithHeroUpdateInput = SiteSettingsUpdateInput & {
   logoAssetId: string | null;
+  storefrontCopy: StorefrontCopy;
   heroSlides: SiteHeroSlideInput[];
 };
 
@@ -55,12 +58,13 @@ function parseHeroSlide(value: unknown): SiteHeroSlide {
 }
 
 function withHero(settings: SiteSettings): SiteSettingsWithHero {
-  const raw = settings as SiteSettings & { heroSlides?: unknown };
+  const raw = settings as SiteSettings & { heroSlides?: unknown; storefrontCopy?: unknown };
   if (!Array.isArray(raw.heroSlides)) {
     throw new AdminApiError(500, 'INVALID_RESPONSE', 'Hero 设置返回数据无效。');
   }
   return {
     ...settings,
+    storefrontCopy: parseStorefrontCopy(raw.storefrontCopy),
     heroSlides: raw.heroSlides.map(parseHeroSlide),
   };
 }

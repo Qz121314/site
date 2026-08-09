@@ -1,0 +1,45 @@
+import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import test from 'node:test';
+
+const appSource = await readFile(new URL('../src/App.tsx', import.meta.url), 'utf8');
+const supportSource = await readFile(new URL('../src/support-ui.tsx', import.meta.url), 'utf8');
+const navigationSource = await readFile(new URL('../src/storefront-navigation.tsx', import.meta.url), 'utf8');
+const copySource = await readFile(new URL('../src/storefront-copy.tsx', import.meta.url), 'utf8');
+
+test('Storefront loads backend copy without making copy availability a page-fatal dependency', () => {
+  assert.match(copySource, /fetch\('\/api\/public\/storefront-copy\//u);
+  assert.match(appSource, /queryKey:\s*\['storefront-copy'\]/u);
+  assert.match(appSource, /copyQuery\.data \?\? FALLBACK_STOREFRONT_COPY/u);
+  assert.match(appSource, /<StorefrontCopyProvider/u);
+});
+
+test('primary navigation labels come from the copy contract', () => {
+  assert.match(navigationSource, /labels:\s*StorefrontCopy\['navigation'\]/u);
+  assert.match(navigationSource, /label:\s*labels\.home/u);
+  assert.match(navigationSource, /label:\s*labels\.browse/u);
+  assert.match(navigationSource, /label:\s*labels\.messages/u);
+  assert.match(navigationSource, /label:\s*labels\.faq/u);
+});
+
+test('normal storefront business copy is not re-hardcoded in App or support UI', () => {
+  const normalUiSource = `${appSource}\n${supportSource}`;
+  for (const text of [
+    'Hot picks',
+    'Latest services',
+    'Search sections, products, or tags',
+    'About this service',
+    'Ready to connect?',
+    'No conversations yet',
+    'Customer Support',
+    'Waiting for an agent…',
+  ]) {
+    assert.equal(normalUiSource.includes(text), false, `${text} must come from Storefront Copy`);
+  }
+});
+
+test('system error and accessibility copy remains separate from business copy', () => {
+  assert.match(appSource, /Storefront unavailable/u);
+  assert.match(supportSource, /aria-label="Add attachment"/u);
+  assert.match(supportSource, /aria-label="Send message"/u);
+});

@@ -5,6 +5,7 @@ import { AdminErrorBoundary } from './AdminErrorBoundary';
 import { installAdminUnsavedStateObserver } from './admin-unsaved-state';
 import './styles.css';
 import './site-settings.css';
+import './storefront-copy-settings.css';
 import './sections.css';
 import './asset-library.css';
 import './media-picker.css';

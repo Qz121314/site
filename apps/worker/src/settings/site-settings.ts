@@ -1,4 +1,11 @@
 import { buildAssetPublicUrl } from '../assets/asset-library';
+import {
+  DEFAULT_STOREFRONT_COPY,
+  parseStorefrontCopyJson,
+  serializeStorefrontCopy,
+  validateStorefrontCopyInput,
+  type StorefrontCopy,
+} from './storefront-copy';
 
 export type SiteSettings = {
   siteName: string;
@@ -12,6 +19,7 @@ export type SiteSettings = {
   showLatest: boolean;
   showMore: boolean;
   showFaq: boolean;
+  storefrontCopy: StorefrontCopy;
   updatedAt: string;
 };
 
@@ -29,6 +37,7 @@ type SiteSettingsRow = {
   show_latest: number;
   show_more: number;
   show_faq: number;
+  storefront_copy_json: string;
   updated_at: string;
 };
 
@@ -202,6 +211,10 @@ export function validateSiteSettingsInput(value: unknown): ValidationResult {
   if (!showMore.ok) return showMore;
   const showFaq = readBoolean(value.showFaq, 'showFaq');
   if (!showFaq.ok) return showFaq;
+  const storefrontCopy = value.storefrontCopy === undefined
+    ? { ok: true as const, value: DEFAULT_STOREFRONT_COPY }
+    : validateStorefrontCopyInput(value.storefrontCopy);
+  if (!storefrontCopy.ok) return storefrontCopy;
 
   return {
     ok: true,
@@ -216,6 +229,7 @@ export function validateSiteSettingsInput(value: unknown): ValidationResult {
       showLatest: showLatest.value,
       showMore: showMore.value,
       showFaq: showFaq.value,
+      storefrontCopy: storefrontCopy.value,
     },
   };
 }
@@ -233,6 +247,7 @@ function fromRow(row: SiteSettingsRow): SiteSettings {
     showLatest: row.show_latest === 1,
     showMore: row.show_more === 1,
     showFaq: row.show_faq === 1,
+    storefrontCopy: parseStorefrontCopyJson(row.storefront_copy_json),
     updatedAt: row.updated_at,
   };
 }
@@ -252,6 +267,7 @@ export async function getSiteSettings(db: D1Database): Promise<SiteSettings> {
          s.show_latest,
          s.show_more,
          s.show_faq,
+         s.storefront_copy_json,
          s.updated_at
        FROM site_settings s
        LEFT JOIN media_assets logo
@@ -284,6 +300,7 @@ export function createUpdateSiteSettingsStatement(
            show_latest = ?,
            show_more = ?,
            show_faq = ?,
+           storefront_copy_json = ?,
            updated_at = ?
        WHERE id = 1`,
     )
@@ -298,6 +315,7 @@ export function createUpdateSiteSettingsStatement(
       input.showLatest ? 1 : 0,
       input.showMore ? 1 : 0,
       input.showFaq ? 1 : 0,
+      serializeStorefrontCopy(input.storefrontCopy),
       updatedAt,
     );
 }

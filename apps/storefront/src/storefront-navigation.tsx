@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import type { StorefrontNavigationItem } from '@site/storefront-ui';
+import type { StorefrontCopy } from './storefront-copy';
 
 function navigationIcon(children: ReactNode) {
   return (
@@ -49,16 +50,19 @@ const faqIcon = navigationIcon(
   </>,
 );
 
-export function primaryNavigationItems(unreadMessages = 0): StorefrontNavigationItem[] {
+export function primaryNavigationItems(
+  labels: StorefrontCopy['navigation'],
+  unreadMessages = 0,
+): StorefrontNavigationItem[] {
   return [
-    { href: '/', label: 'Home', icon: homeIcon },
-    { href: '/browse/', label: 'Browse', icon: browseIcon },
+    { href: '/', label: labels.home, icon: homeIcon },
+    { href: '/browse/', label: labels.browse, icon: browseIcon },
     {
       href: '/messages/',
-      label: 'Messages',
+      label: labels.messages,
       icon: messagesIcon,
       ...(unreadMessages > 0 ? { badgeCount: unreadMessages } : {}),
     },
-    { href: '/faq/', label: 'FAQ', icon: faqIcon },
+    { href: '/faq/', label: labels.faq, icon: faqIcon },
   ];
 }

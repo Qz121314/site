@@ -13,6 +13,7 @@ import {
   type LocalBrandingImage,
 } from './branding-media/local-branding-image';
 import { SiteHeroSettingsSection } from './SiteHeroSettingsSection';
+import { StorefrontCopySettingsSection } from './StorefrontCopySettingsSection';
 import {
   fetchSiteSettingsWithHero,
   updateSiteSettingsWithHero,
@@ -56,6 +57,7 @@ function createDraft(settings: SiteSettingsWithHero): SettingsDraft {
     showLatest: settings.showLatest,
     showMore: settings.showMore,
     showFaq: settings.showFaq,
+    storefrontCopy: structuredClone(settings.storefrontCopy),
     heroSlides: settings.heroSlides.map((slide) => ({ ...slide })),
   };
 }
@@ -77,6 +79,7 @@ function toInput(draft: SettingsDraft): SettingsPayload {
     showLatest: draft.showLatest,
     showMore: draft.showMore,
     showFaq: draft.showFaq,
+    storefrontCopy: draft.storefrontCopy,
     heroSlides: draft.heroSlides.map((slide, index) => ({
       id: slide.id,
       mediaAssetId: slide.mediaAssetId,
@@ -320,6 +323,12 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
             busy={busy}
             onChange={(heroSlides) => updateDraft('heroSlides', heroSlides)}
             onSessionExpired={onSessionExpired}
+          />
+
+          <StorefrontCopySettingsSection
+            value={draft.storefrontCopy}
+            busy={busy}
+            onChange={(storefrontCopy) => updateDraft('storefrontCopy', storefrontCopy)}
           />
 
           <section className="admin-settings-section" aria-labelledby="settings-frontend-title">

@@ -35,6 +35,12 @@ import {
   productHref,
   sectionHref,
 } from './routing';
+import {
+  FALLBACK_STOREFRONT_COPY,
+  loadStorefrontCopy,
+  StorefrontCopyProvider,
+  useStorefrontCopy,
+} from './storefront-copy';
 import { primaryNavigationItems } from './storefront-navigation';
 import {
   MessageThreadPageContent,
@@ -133,6 +139,7 @@ function SectionIcon({ section }: { section: PublicSection }) {
 }
 
 function ProductCard({ product }: { product: PublicProductSummary }) {
+  const { product: productCopy } = useStorefrontCopy();
   return (
     <StorefrontProductCard
       address={product.address}
@@ -147,7 +154,7 @@ function ProductCard({ product }: { product: PublicProductSummary }) {
           src={product.coverUrl}
         />
       )}
-      modeLabel={product.serviceMode === 'online' ? 'Online' : 'In person'}
+      modeLabel={product.serviceMode === 'online' ? productCopy.onlineLabel : productCopy.offlineLabel}
       sectionName={product.sectionName}
       tags={product.tags}
       title={product.title}
@@ -206,6 +213,7 @@ function ProductCollection({
 
 function BottomNavigation() {
   const pathname = usePathname();
+  const copy = useStorefrontCopy();
   const unreadMessages = supportConversations.reduce(
     (total, conversation) => total + conversation.unreadCount,
     0,
@@ -214,7 +222,7 @@ function BottomNavigation() {
   return (
     <StorefrontBottomNavigation
       activeHref={bottomNavigationActiveHref(pathname)}
-      items={primaryNavigationItems(unreadMessages)}
+      items={primaryNavigationItems(copy.navigation, unreadMessages)}
       LinkComponent={AppLink}
     />
   );
@@ -317,6 +325,7 @@ function RouteErrorState({
 }
 
 function FaqSection({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
+  const { faq } = useStorefrontCopy();
   const query = useQuery({
     queryKey: ['storefront-faq', bootstrap.pointer.contentVersion],
     queryFn: ({ signal }) => loadFaqSnapshot(bootstrap, signal),
@@ -327,23 +336,23 @@ function FaqSection({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
     <section className="content-section faq-section">
       <div className="section-heading">
         <div>
-          <p className="eyebrow">Need to know</p>
-          <h2>Frequently asked questions</h2>
+          <p className="eyebrow">{faq.kicker}</p>
+          <h2>{faq.title}</h2>
         </div>
       </div>
-      {query.isLoading && !query.data ? <div className="inline-loading">Loading FAQ…</div> : null}
+      {query.isLoading && !query.data ? <div className="inline-loading">{faq.loading}</div> : null}
       {query.error && !query.data ? (
         <div className="inline-error inline-error-action">
-          <span>FAQ is temporarily unavailable.</span>
-          <button type="button" onClick={() => void query.refetch()}>Try again</button>
+          <span>{faq.unavailable}</span>
+          <button type="button" onClick={() => void query.refetch()}>{faq.retry}</button>
         </div>
       ) : null}
-      {query.data?.faqs.length === 0 ? <div className="inline-empty">No FAQs are published yet.</div> : null}
+      {query.data?.faqs.length === 0 ? <div className="inline-empty">{faq.empty}</div> : null}
       <div className="faq-list">
-        {query.data?.faqs.map((faq) => (
-          <details key={faq.id}>
-            <summary>{faq.title}</summary>
-            <MarkdownContent source={faq.body} />
+        {query.data?.faqs.map((item) => (
+          <details key={item.id}>
+            <summary>{item.title}</summary>
+            <MarkdownContent source={item.body} />
           </details>
         ))}
       </div>
@@ -354,6 +363,7 @@ function FaqSection({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
 function HomePage({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
   const { site } = bootstrap.site;
   const { home } = bootstrap;
+  const copy = useStorefrontCopy();
   const [showAllSections, setShowAllSections] = useState(false);
   const visibleSections = showAllSections ? home.allSections : home.sections;
   const canShowMore = site.navigation.showMore && home.allSections.length > home.sections.length;
@@ -391,12 +401,12 @@ function HomePage({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
       <section className="content-section" id="services">
         <div className="section-heading">
           <div>
-            <p className="eyebrow">Explore</p>
-            <h2>Services</h2>
+            <p className="eyebrow">{copy.home.sectionsKicker}</p>
+            <h2>{copy.home.sectionsTitle}</h2>
           </div>
           {canShowMore ? (
             <button className="text-button" type="button" onClick={() => setShowAllSections((value) => !value)}>
-              {showAllSections ? 'Show less' : 'View all'}
+              {showAllSections ? copy.home.showLess : copy.home.viewAll}
             </button>
           ) : null}
         </div>
@@ -410,15 +420,25 @@ function HomePage({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
             ))}
           </div>
         ) : (
-          <div className="inline-empty">No services are published yet.</div>
+          <div className="inline-empty">{copy.home.emptySections}</div>
         )}
       </section>
 
       {site.navigation.showHot ? (
-        <ProductCollection eyebrow="Popular now" title="Hot picks" id="hot" products={home.featuredProducts} />
+        <ProductCollection
+          eyebrow={copy.home.featuredKicker}
+          title={copy.home.featuredTitle}
+          id="hot"
+          products={home.featuredProducts}
+        />
       ) : null}
       {site.navigation.showLatest ? (
-        <ProductCollection eyebrow="Recently added" title="Latest services" id="latest" products={home.latestProducts} />
+        <ProductCollection
+          eyebrow={copy.home.latestKicker}
+          title={copy.home.latestTitle}
+          id="latest"
+          products={home.latestProducts}
+        />
       ) : null}
     </SiteShell>
   );
@@ -426,6 +446,7 @@ function HomePage({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
 
 function DiscoverPage({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
   const { site } = bootstrap.site;
+  const { browse } = useStorefrontCopy();
   const [search, setSearch] = useState('');
   const normalizedSearch = search.trim().toLowerCase();
   const discoverProducts = useMemo(() => {
@@ -455,8 +476,8 @@ function DiscoverPage({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
   );
 
   useEffect(() => {
-    document.title = `Browse · ${site.name}`;
-  }, [site.name]);
+    document.title = `${browse.title} · ${site.name}`;
+  }, [browse.title, site.name]);
 
   const noResults = filteredSections.length === 0 && filteredProducts.length === 0;
 
@@ -465,8 +486,8 @@ function DiscoverPage({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
       <section className="discover-page" aria-labelledby="discover-title">
         <header className="app-page-heading">
           <div>
-            <p className="app-page-kicker">Explore</p>
-            <h1 id="discover-title">Browse</h1>
+            <p className="app-page-kicker">{browse.kicker}</p>
+            <h1 id="discover-title">{browse.title}</h1>
           </div>
         </header>
 
@@ -475,8 +496,8 @@ function DiscoverPage({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
           <input
             type="search"
             value={search}
-            placeholder="Search sections, products, or tags"
-            aria-label="Search browse content"
+            placeholder={browse.searchPlaceholder}
+            aria-label={browse.searchPlaceholder}
             onChange={(event) => setSearch(event.target.value)}
           />
         </label>
@@ -484,7 +505,7 @@ function DiscoverPage({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
         {filteredSections.length > 0 ? (
           <section className="discover-section-block" aria-labelledby="discover-sections-title">
             <div className="discover-section-title">
-              <h2 id="discover-sections-title">Sections</h2>
+              <h2 id="discover-sections-title">{browse.sectionsTitle}</h2>
               <span>{filteredSections.length}</span>
             </div>
             <div className="discover-section-grid">
@@ -501,7 +522,7 @@ function DiscoverPage({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
         {filteredProducts.length > 0 ? (
           <section className="discover-section-block" aria-labelledby="discover-products-title">
             <div className="discover-section-title">
-              <h2 id="discover-products-title">Products</h2>
+              <h2 id="discover-products-title">{browse.productsTitle}</h2>
               <span>{filteredProducts.length}</span>
             </div>
             <div className="product-grid">
@@ -510,16 +531,17 @@ function DiscoverPage({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
           </section>
         ) : null}
 
-        {noResults ? <div className="discover-results-empty">No matching content found.</div> : null}
+        {noResults ? <div className="discover-results-empty">{browse.noResults}</div> : null}
       </section>
     </SiteShell>
   );
 }
 
 function MessagesPage({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
+  const { messages } = useStorefrontCopy();
   useEffect(() => {
-    document.title = `Messages · ${bootstrap.site.site.name}`;
-  }, [bootstrap.site.site.name]);
+    document.title = `${messages.title} · ${bootstrap.site.site.name}`;
+  }, [bootstrap.site.site.name, messages.title]);
 
   return (
     <SiteShell site={bootstrap.site.site}>
@@ -535,9 +557,10 @@ function MessagePage({
   bootstrap: StorefrontBootstrap;
   conversationRef: string;
 }) {
+  const { messages } = useStorefrontCopy();
   useEffect(() => {
-    document.title = `Messages · ${bootstrap.site.site.name}`;
-  }, [bootstrap.site.site.name]);
+    document.title = `${messages.title} · ${bootstrap.site.site.name}`;
+  }, [bootstrap.site.site.name, messages.title]);
 
   const conversation = supportConversations.find((item) => item.id === conversationRef) ?? null;
 
@@ -549,17 +572,18 @@ function MessagePage({
 }
 
 function FaqPage({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
+  const { faq } = useStorefrontCopy();
   useEffect(() => {
-    document.title = `FAQ · ${bootstrap.site.site.name}`;
-  }, [bootstrap.site.site.name]);
+    document.title = `${faq.title} · ${bootstrap.site.site.name}`;
+  }, [bootstrap.site.site.name, faq.title]);
 
   return (
     <SiteShell site={bootstrap.site.site}>
       <section className="faq-page" aria-labelledby="faq-page-title">
         <header className="app-page-heading">
           <div>
-            <p className="app-page-kicker">Help</p>
-            <h1 id="faq-page-title">FAQ</h1>
+            <p className="app-page-kicker">{faq.kicker}</p>
+            <h1 id="faq-page-title">{faq.title}</h1>
           </div>
         </header>
         <FaqSection bootstrap={bootstrap} />
@@ -569,6 +593,7 @@ function FaqPage({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
 }
 
 function SectionPage({ bootstrap, sectionRef }: { bootstrap: StorefrontBootstrap; sectionRef: string }) {
+  const { section: sectionCopy } = useStorefrontCopy();
   const [search, setSearch] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [selectedTags, setSelectedTags] = useState<Set<string>>(() => new Set());
@@ -610,35 +635,39 @@ function SectionPage({ bootstrap, sectionRef }: { bootstrap: StorefrontBootstrap
     });
   };
 
+  const resultWord = filteredProducts.length === 1
+    ? sectionCopy.resultSingular
+    : sectionCopy.resultPlural;
+
   return (
     <SiteShell site={bootstrap.site.site}>
-      {query.isLoading && !query.data ? <div className="inline-loading page-loading">Loading services…</div> : null}
+      {query.isLoading && !query.data ? <div className="inline-loading page-loading">{sectionCopy.loading}</div> : null}
       {query.error && !query.data ? (
         <RouteErrorState error={query.error} resource="section" onRetry={() => void query.refetch()} />
       ) : null}
       {query.data ? (
         <>
           <section className="section-page-header">
-            <AppLink className="back-link" href="/browse/">← Browse</AppLink>
+            <AppLink className="back-link" href="/browse/">← {sectionCopy.backLabel}</AppLink>
             <div className="section-page-title">
               <span className="section-icon large"><SectionIcon section={query.data.section} /></span>
               <div>
-                <p className="eyebrow">Browse services</p>
+                <p className="eyebrow">{sectionCopy.kicker}</p>
                 <h1>{query.data.section.name}</h1>
-                <p>{query.data.products.length} published service{query.data.products.length === 1 ? '' : 's'}</p>
+                <p>{query.data.products.length} {query.data.products.length === 1 ? sectionCopy.resultSingular : sectionCopy.resultPlural}</p>
               </div>
             </div>
           </section>
 
           <section className="filter-panel" aria-label="Service filters">
             <label className="search-field">
-              <span>Search</span>
-              <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Name, type or tag" />
+              <span>{sectionCopy.searchLabel}</span>
+              <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder={sectionCopy.searchPlaceholder} />
             </label>
             <label className="select-field">
-              <span>Service type</span>
+              <span>{sectionCopy.typeLabel}</span>
               <select value={categoryId} onChange={(event) => setCategoryId(event.target.value)}>
-                <option value="">All types</option>
+                <option value="">{sectionCopy.allTypes}</option>
                 {query.data.categories.map((category) => <option key={category.id} value={category.id}>{category.name}</option>)}
               </select>
             </label>
@@ -659,13 +688,13 @@ function SectionPage({ bootstrap, sectionRef }: { bootstrap: StorefrontBootstrap
           </section>
 
           <div className="result-toolbar">
-            <strong>{filteredProducts.length} result{filteredProducts.length === 1 ? '' : 's'}</strong>
+            <strong>{filteredProducts.length} {resultWord}</strong>
             {(search || categoryId || selectedTags.size > 0) ? (
               <button type="button" onClick={() => {
                 setSearch('');
                 setCategoryId('');
                 setSelectedTags(new Set());
-              }}>Clear filters</button>
+              }}>{sectionCopy.clearFilters}</button>
             ) : null}
           </div>
 
@@ -674,7 +703,7 @@ function SectionPage({ bootstrap, sectionRef }: { bootstrap: StorefrontBootstrap
               {filteredProducts.map((product) => <ProductCard key={product.id} product={product} />)}
             </div>
           ) : (
-            <div className="inline-empty">No services match these filters.</div>
+            <div className="inline-empty">{sectionCopy.emptyResults}</div>
           )}
         </>
       ) : null}
@@ -691,6 +720,7 @@ function ProductPage({
   productRef: string;
   sectionRef: string | null;
 }) {
+  const { product: productCopy } = useStorefrontCopy();
   const query = useQuery({
     queryKey: ['storefront-product', bootstrap.pointer.contentVersion, sectionRef, productRef],
     queryFn: ({ signal }) => loadProductSnapshot(bootstrap, productRef, signal, sectionRef),
@@ -704,7 +734,7 @@ function ProductPage({
 
   return (
     <SiteShell site={bootstrap.site.site}>
-      {query.isLoading && !query.data ? <div className="inline-loading page-loading">Loading service…</div> : null}
+      {query.isLoading && !query.data ? <div className="inline-loading page-loading">{productCopy.loading}</div> : null}
       {query.error && !query.data ? (
         <RouteErrorState error={query.error} resource="product" onRetry={() => void query.refetch()} />
       ) : null}
@@ -720,7 +750,7 @@ function ProductPage({
           <div className="detail-gallery">
             {productMedia.length > 0 ? productMedia.map((media) => {
               if (!media.url) return null;
-              const fallback = <div className="detail-media-fallback">Media unavailable</div>;
+              const fallback = <div className="detail-media-fallback">{productCopy.mediaUnavailable}</div>;
               return isVideoMediaUrl(media.url) ? (
                 <ResilientVideo
                   aria-label={media.altText || query.data.product.title}
@@ -742,21 +772,23 @@ function ProductPage({
             }) : query.data.product.coverUrl ? (
               <ResilientImage
                 alt={query.data.product.title}
-                fallback={<div className="detail-media-fallback">Image unavailable</div>}
+                fallback={<div className="detail-media-fallback">{productCopy.imageUnavailable}</div>}
                 src={query.data.product.coverUrl}
               />
             ) : (
-              <div className="detail-media-fallback">No media available</div>
+              <div className="detail-media-fallback">{productCopy.noMedia}</div>
             )}
           </div>
 
           <div className="detail-layout">
             <div className="detail-main">
               <div className="detail-heading">
-                <p className="eyebrow">{query.data.product.serviceMode === 'online' ? 'Online service' : 'In-person service'}</p>
+                <p className="eyebrow">
+                  {query.data.product.serviceMode === 'online' ? productCopy.onlineKicker : productCopy.offlineKicker}
+                </p>
                 <h1>{query.data.product.title}</h1>
                 {query.data.product.category.name ? (
-                  <p className="detail-type"><span>Service type</span>{query.data.product.category.name}</p>
+                  <p className="detail-type"><span>{productCopy.typeLabel}</span>{query.data.product.category.name}</p>
                 ) : null}
                 {query.data.product.tags.length > 0 ? (
                   <div className="tag-row detail-tags">
@@ -766,16 +798,16 @@ function ProductPage({
                 {query.data.product.address ? <address>⌖ {query.data.product.address}</address> : null}
               </div>
               <section className="detail-description">
-                <h2>About this service</h2>
+                <h2>{productCopy.aboutTitle}</h2>
                 <MarkdownContent source={query.data.product.body} />
               </section>
             </div>
 
             {query.data.product.cta ? (
               <aside className="contact-card">
-                <span>Ready to connect?</span>
+                <span>{productCopy.contactKicker}</span>
                 <strong>{query.data.product.cta.label}</strong>
-                <p>The available contact destination is selected when you continue.</p>
+                <p>{productCopy.contactHint}</p>
                 <a className="cta-button" href={query.data.product.cta.path} rel="nofollow">
                   {query.data.product.cta.label}
                 </a>
@@ -804,6 +836,11 @@ export function App() {
     queryFn: ({ signal }) => loadStorefrontBootstrap(undefined, signal),
     staleTime: 30_000,
   });
+  const copyQuery = useQuery({
+    queryKey: ['storefront-copy'],
+    queryFn: ({ signal }) => loadStorefrontCopy(signal),
+    staleTime: 30_000,
+  });
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'auto' });
@@ -812,33 +849,47 @@ export function App() {
   if (bootstrapQuery.isLoading) return <LoadingPage />;
   if (bootstrapQuery.error || !bootstrapQuery.data) return <ErrorPage error={bootstrapQuery.error} />;
 
+  let page: ReactNode;
   switch (route.type) {
     case 'home':
-      return <HomePage bootstrap={bootstrapQuery.data} />;
+      page = <HomePage bootstrap={bootstrapQuery.data} />;
+      break;
     case 'discover':
-      return <DiscoverPage bootstrap={bootstrapQuery.data} />;
+      page = <DiscoverPage bootstrap={bootstrapQuery.data} />;
+      break;
     case 'messages':
-      return <MessagesPage bootstrap={bootstrapQuery.data} />;
+      page = <MessagesPage bootstrap={bootstrapQuery.data} />;
+      break;
     case 'message':
-      return (
+      page = (
         <MessagePage
           bootstrap={bootstrapQuery.data}
           conversationRef={route.conversationRef}
         />
       );
+      break;
     case 'faq':
-      return <FaqPage bootstrap={bootstrapQuery.data} />;
+      page = <FaqPage bootstrap={bootstrapQuery.data} />;
+      break;
     case 'section':
-      return <SectionPage bootstrap={bootstrapQuery.data} sectionRef={route.sectionRef} />;
+      page = <SectionPage bootstrap={bootstrapQuery.data} sectionRef={route.sectionRef} />;
+      break;
     case 'product':
-      return (
+      page = (
         <ProductPage
           bootstrap={bootstrapQuery.data}
           productRef={route.productRef}
           sectionRef={route.sectionRef}
         />
       );
+      break;
     default:
-      return <NotFoundPage site={bootstrapQuery.data.site.site} />;
+      page = <NotFoundPage site={bootstrapQuery.data.site.site} />;
   }
+
+  return (
+    <StorefrontCopyProvider value={copyQuery.data ?? FALLBACK_STOREFRONT_COPY}>
+      {page}
+    </StorefrontCopyProvider>
+  );
 }

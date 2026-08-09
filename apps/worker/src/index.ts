@@ -26,6 +26,7 @@ import { publicContentRoutes } from './routes/public-content';
 import { publicConversionRoutes } from './routes/public-conversion';
 import { servePwaManifest } from './routes/public-pwa';
 import { publicStorefrontConfigRoutes } from './routes/public-storefront-config';
+import { publicStorefrontCopyRoutes } from './routes/public-storefront-copy';
 import { publicThemeRoutes } from './routes/public-theme';
 import type { AppEnvironment } from './types';
 
@@ -78,6 +79,7 @@ app.get('/api/public/version', (context) =>
   }),
 );
 app.route('/api/public/storefront', publicStorefrontConfigRoutes);
+app.route('/api/public/storefront-copy', publicStorefrontCopyRoutes);
 app.route('/api/public/theme', publicThemeRoutes);
 app.route('/public', publicContentRoutes);
 
