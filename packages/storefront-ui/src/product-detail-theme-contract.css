@@ -19,6 +19,7 @@
   --theme-detail-cta-height: 50px;
   --theme-detail-cta-radius: var(--theme-radius-control, 14px);
   --theme-detail-cta-background: var(--brand);
+  --theme-detail-cta-color: #fff;
   --theme-detail-cta-surface: color-mix(in srgb, var(--surface) 96%, transparent);
   --theme-detail-cta-shadow: 0 10px 24px color-mix(in srgb, var(--brand) 22%, transparent);
   --theme-detail-cta-bar-shadow: 0 -8px 24px color-mix(in srgb, var(--text) 6%, transparent);
@@ -105,7 +106,14 @@
   --theme-detail-cta-surface: color-mix(in srgb, var(--surface) 82%, transparent);
 }
 
-:is(html, .storefront-theme-root)[data-theme='tech'] :is(.detail-heading, .detail-description, .contact-card, .mobile-cta-bar),
-:is(html, .storefront-theme-root)[data-theme='noir'] .mobile-cta-bar {
+:is(html, .storefront-theme-root)[data-theme='tech'] :is(
+  .product-detail-summary,
+  .product-detail-body,
+  .product-detail-mobile-action
+),
+:is(html, .storefront-theme-root)[data-theme='noir'] :is(
+  .product-detail-summary,
+  .product-detail-mobile-action
+) {
   backdrop-filter: blur(18px);
 }
