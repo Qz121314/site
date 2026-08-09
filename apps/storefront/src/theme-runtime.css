@@ -16,17 +16,6 @@ body {
   background: color-mix(in srgb, var(--surface) 95%, transparent);
 }
 
-.section-icon {
-  color: var(--brand-strong);
-  background: color-mix(in srgb, var(--brand) 13%, var(--surface));
-}
-
-.search-field input:focus,
-.select-field select:focus {
-  border-color: color-mix(in srgb, var(--brand) 72%, var(--line));
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 14%, transparent);
-}
-
 .cta-button,
 .primary-button {
   box-shadow: 0 9px 20px color-mix(in srgb, var(--brand) 24%, transparent);
@@ -62,17 +51,6 @@ html[data-color-scheme='dark'] .inline-error {
   background: color-mix(in srgb, #7f1d1d 24%, var(--surface));
 }
 
-html[data-theme='saas'] .section-item,
-html[data-theme='saas'] .filter-panel {
-  border-radius: 12px;
-}
-
-html[data-theme='tech'] .filter-panel,
-html[data-theme='tech'] .faq-list details {
-  background: color-mix(in srgb, var(--surface) 88%, transparent);
-  backdrop-filter: blur(14px);
-}
-
 /*
  * Mobile is the storefront design baseline. Desktop styles are progressive
  * enhancements layered on top of these touch-first proportions.
@@ -86,57 +64,10 @@ html[data-theme='tech'] .faq-list details {
     padding: 12px 10px 34px;
   }
 
-  .content-section {
-    margin-bottom: 22px;
-  }
-
-  .section-heading {
-    margin-bottom: 10px;
-  }
-
-  .section-heading h2 {
-    font-size: 1.28rem;
-  }
-
-  .section-grid {
-    gap: 7px;
-  }
-
-  .section-item {
-    min-height: 76px;
-    gap: 5px;
-    padding: 9px 3px;
-    border-radius: 13px;
-    font-size: 0.67rem;
-  }
-
-  .section-icon {
-    width: 42px;
-    height: 42px;
-    border-radius: 13px;
-  }
-
   .product-grid,
   .loading-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 8px;
-  }
-
-  .filter-panel {
-    grid-template-columns: minmax(0, 1fr) minmax(108px, 0.42fr);
-    gap: 7px;
-    padding: 9px;
-    border-radius: 15px;
-  }
-
-  .search-field input,
-  .select-field select {
-    min-height: 42px;
-  }
-
-  .tag-filter button {
-    min-height: 36px;
-    padding-inline: 10px;
   }
 
   .cta-button,
