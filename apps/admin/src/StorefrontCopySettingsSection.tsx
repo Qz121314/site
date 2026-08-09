@@ -89,7 +89,7 @@ const COPY_GROUPS: CopyGroup[] = [
   {
     key: 'messages',
     label: 'Messages',
-    hint: '会话列表与聊天界面的基础用户文案；客服业务规则不在这里配置。',
+    hint: '会话列表、首条消息、历史消息与聊天界面的用户文案；客服业务规则仍由独立客服系统负责。',
     fields: [
       { key: 'kicker', label: '辅助标题' },
       { key: 'title', label: '页面标题' },
@@ -106,6 +106,18 @@ const COPY_GROUPS: CopyGroup[] = [
       { key: 'activeStatus', label: '服务中状态' },
       { key: 'closedStatus', label: '结束状态' },
       { key: 'waitingPreview', label: '等待时会话预览' },
+      { key: 'newConversationStatus', label: '新会话状态' },
+      { key: 'loadEarlier', label: '加载更早消息' },
+      { key: 'sendLabel', label: '发送按钮辅助文案' },
+      { key: 'attachmentLabel', label: '附件按钮辅助文案' },
+      { key: 'selectConversationTitle', label: '桌面空白区标题' },
+      { key: 'selectConversationDescription', label: '桌面空白区说明' },
+      { key: 'sendingLabel', label: '发送中状态' },
+      { key: 'sentLabel', label: '已发送状态' },
+      { key: 'readLabel', label: '已读状态' },
+      { key: 'unreadLabel', label: '未读计数辅助文案' },
+      { key: 'sendFailed', label: '发送失败提示' },
+      { key: 'loadingConversation', label: '会话加载提示' },
     ],
   },
 ];
