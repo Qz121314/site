@@ -26,15 +26,14 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 async function requestJson(path: string, init?: RequestInit): Promise<unknown> {
+  const headers = new Headers(init?.headers);
+  headers.set('Accept', 'application/json');
+  if (init?.body !== undefined) headers.set('Content-Type', 'application/json');
   const response = await fetch(path, {
+    ...init,
     cache: 'no-store',
     credentials: 'same-origin',
-    headers: {
-      Accept: 'application/json',
-      ...(init?.body === undefined ? {} : { 'Content-Type': 'application/json' }),
-      ...init?.headers,
-    },
-    ...init,
+    headers,
   });
   const contentType = response.headers.get('content-type') ?? '';
   const body = contentType.includes('application/json') ? await response.json() as unknown : null;
