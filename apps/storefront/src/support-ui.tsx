@@ -187,10 +187,10 @@ export function MessageThreadPageContent({
   conversation: SupportConversationDetail | null;
   pendingConversation?: PendingSupportConversation | null;
   LinkComponent?: StorefrontLinkComponent;
-  onSendMessage?: (body: string) => Promise<void>;
+  onSendMessage?: ((body: string) => Promise<void>) | undefined;
   sending?: boolean;
   sendError?: string | null;
-  onLoadEarlier?: () => Promise<void>;
+  onLoadEarlier?: (() => Promise<void>) | undefined;
   loadingEarlier?: boolean;
   loadingConversation?: boolean;
 }) {
@@ -357,10 +357,10 @@ export function MessagesWorkspace({
   activeConversationRef: string | null;
   pendingConversation?: PendingSupportConversation | null;
   LinkComponent?: StorefrontLinkComponent;
-  onSendMessage?: (body: string) => Promise<void>;
+  onSendMessage?: ((body: string) => Promise<void>) | undefined;
   sending?: boolean;
   sendError?: string | null;
-  onLoadEarlier?: () => Promise<void>;
+  onLoadEarlier?: (() => Promise<void>) | undefined;
   loadingEarlier?: boolean;
   loadingConversation?: boolean;
 }) {
