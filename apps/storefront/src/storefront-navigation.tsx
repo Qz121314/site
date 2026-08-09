@@ -5,6 +5,7 @@ import type {
   BottomNavigationItemConfig,
   BottomNavigationKey,
 } from './bottom-navigation';
+import type { StorefrontCopy } from './storefront-copy';
 
 const HREFS: Record<BottomNavigationKey, string> = {
   home: '/',
@@ -50,7 +51,7 @@ function builtinIcon(name: BottomNavigationBuiltinIcon | string | null): ReactNo
     case 'user':
       return navigationIcon(<><circle cx="12" cy="8" r="3.4" /><path d="M5.7 20c.8-3.7 3-5.6 6.3-5.6s5.5 1.9 6.3 5.6" /></>);
     case 'menu':
-      return navigationIcon(<><path d="M5 7h14M5 12h14M5 17h14" /></>);
+      return navigationIcon(<path d="M5 7h14M5 12h14M5 17h14" />);
     case 'bell':
       return navigationIcon(<><path d="M6.7 16.5h10.6l-1.2-2V10a4.1 4.1 0 0 0-8.2 0v4.5l-1.2 2Z" /><path d="M10 18.5a2.1 2.1 0 0 0 4 0" /></>);
     case 'map':
@@ -72,10 +73,10 @@ function itemIcon(item: BottomNavigationItemConfig): ReactNode {
 }
 
 export function primaryNavigationItems(
-  config: BottomNavigationItemConfig[],
+  navigation: StorefrontCopy['navigation'],
   unreadMessages = 0,
 ): StorefrontNavigationItem[] {
-  return config
+  return navigation.items
     .filter((item) => item.enabled)
     .map((item) => ({
       href: HREFS[item.key],
