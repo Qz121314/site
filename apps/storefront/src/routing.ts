@@ -6,6 +6,7 @@ export type StorefrontRoute =
   | { type: 'messages' }
   | { type: 'message'; conversationRef: string }
   | { type: 'faq' }
+  | { type: 'faq-article'; articleRef: string }
   | { type: 'section'; sectionRef: string }
   | { type: 'product'; productRef: string; sectionRef: string | null }
   | { type: 'not-found' };
@@ -37,6 +38,10 @@ export function productHref(
   return `/sections/${routePart(sectionRef)}/products/${routePart(productRef)}/`;
 }
 
+export function faqArticleHref(articleRef: string): string {
+  return `/faq/${routePart(articleRef)}/`;
+}
+
 export function bottomNavigationActiveHref(pathname: string): BottomNavigationHref {
   if (pathname === '/messages' || pathname.startsWith('/messages/')) return '/messages/';
   if (pathname === '/faq' || pathname.startsWith('/faq/')) return '/faq/';
@@ -66,6 +71,12 @@ export function parseStorefrontRoute(pathname: string): StorefrontRoute {
   if (messageMatch) {
     const conversationRef = decodeRoutePart(messageMatch[1] ?? '');
     return conversationRef ? { type: 'message', conversationRef } : { type: 'not-found' };
+  }
+
+  const faqArticleMatch = /^\/faq\/([^/]+)\/?$/.exec(pathname);
+  if (faqArticleMatch) {
+    const articleRef = decodeRoutePart(faqArticleMatch[1] ?? '');
+    return articleRef ? { type: 'faq-article', articleRef } : { type: 'not-found' };
   }
 
   const nestedProductMatch = /^\/sections\/([^/]+)\/products\/([^/]+)\/?$/.exec(pathname);
