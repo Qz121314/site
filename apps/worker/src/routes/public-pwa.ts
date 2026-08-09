@@ -1,8 +1,6 @@
-import { Hono } from 'hono';
+import type { Context } from 'hono';
 import { getSiteSettings } from '../settings/site-settings';
 import type { AppEnvironment } from '../types';
-
-export const publicPwaRoutes = new Hono<AppEnvironment>();
 
 type JsonRecord = Record<string, unknown>;
 
@@ -52,7 +50,7 @@ async function readJsonObject(bucket: R2Bucket, key: string): Promise<unknown | 
   }
 }
 
-async function resolvePublishedSiteName(context: { env: AppEnvironment['Bindings'] }): Promise<string> {
+async function resolvePublishedSiteName(context: Context<AppEnvironment>): Promise<string> {
   const pointer = await readJsonObject(context.env.ASSETS_BUCKET, 'public/current.json');
   const manifestKey = pointerManifestKey(pointer);
   if (manifestKey) {
@@ -73,7 +71,7 @@ function shortName(value: string): string {
   return normalized.length <= 30 ? normalized : `${normalized.slice(0, 29).trimEnd()}…`;
 }
 
-publicPwaRoutes.get('/manifest.webmanifest', async (context) => {
+export async function servePwaManifest(context: Context<AppEnvironment>) {
   const name = await resolvePublishedSiteName(context);
   const manifest = {
     id: '/',
@@ -104,4 +102,4 @@ publicPwaRoutes.get('/manifest.webmanifest', async (context) => {
   context.header('Cache-Control', 'public, max-age=300, stale-while-revalidate=3600');
   context.header('Content-Type', 'application/manifest+json; charset=utf-8');
   return context.body(JSON.stringify(manifest));
-});
+}
