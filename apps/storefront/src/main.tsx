@@ -21,6 +21,7 @@ import './home-feed.css';
 import '@site/storefront-ui/theme-contract.css';
 import '@site/storefront-ui/product-detail-theme-contract.css';
 import '@site/storefront-ui/primary-pages-theme-contract.css';
+import '@site/storefront-ui/typography-contract.css';
 
 installPublicContentFetchFallback();
 void installStorefrontTheme();
