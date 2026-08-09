@@ -263,7 +263,7 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
           className="customer-service-search"
           type="search"
           value={search}
-          placeholder="搜索名称 / API 地址 / 项目 ID"
+          placeholder="搜索名称 / 服务地址 / 项目 ID"
           onChange={(event) => setSearch(event.target.value)}
         />
         {scope === 'active' ? (
@@ -314,9 +314,9 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
                 ) : null}
               </th>
               <th>客服系统</th>
-              <th>接口</th>
+              <th>服务地址</th>
               <th>项目</th>
-              <th>凭证</th>
+              <th>管理凭证</th>
               <th>转化入口</th>
               <th>状态</th>
               <th className="actions-cell">操作</th>
@@ -351,7 +351,7 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
                   <td><strong>{connection.name}</strong></td>
                   <td className="customer-service-url">{connection.baseUrl}</td>
                   <td>{connection.projectId ?? '—'}</td>
-                  <td>{connection.hasApiToken ? 'Token 已配置' : '无 Token'}</td>
+                  <td>{connection.hasApiToken ? '管理 Token 已配置' : '无管理 Token'}</td>
                   <td>{connection.targetCount}</td>
                   <td>
                     <span className={connection.isEnabled ? 'status-chip is-configured' : 'status-chip'}>
@@ -413,7 +413,7 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
                 />
               </label>
               <label>
-                <span>项目 ID</span>
+                <span>项目 ID（前端可读取）</span>
                 <input
                   type="text"
                   maxLength={200}
@@ -422,18 +422,18 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
                 />
               </label>
               <label className="customer-service-editor-wide">
-                <span>API 根地址</span>
+                <span>客服服务地址（前端可读取）</span>
                 <input
                   type="url"
                   required
                   maxLength={1000}
-                  placeholder="https://support.example.com/api/integration/v1"
+                  placeholder="https://support.example.com"
                   value={draft.baseUrl}
                   onChange={(event) => { setDraft((current) => ({ ...current, baseUrl: event.target.value })); setErrorMessage(''); }}
                 />
               </label>
               <label className="customer-service-editor-wide">
-                <span>API Token{editingConnection?.hasApiToken ? '（已配置）' : ''}</span>
+                <span>管理 Token（仅产品后台使用）{editingConnection?.hasApiToken ? '（已配置）' : ''}</span>
                 <input
                   type="password"
                   autoComplete="new-password"
