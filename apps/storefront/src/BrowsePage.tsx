@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { StorefrontProductCard, type StorefrontLinkComponent } from '@site/storefront-ui';
-import { useEffect, useMemo, useState, type CSSProperties } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { loadBrowseSectionPresentations } from './browse-sections';
 import {
   loadSectionSnapshot,
@@ -42,7 +42,7 @@ export function BrowsePage({
   bootstrap: StorefrontBootstrap;
   LinkComponent: StorefrontLinkComponent;
 }) {
-  const { browse, product: productCopy } = useStorefrontCopy();
+  const { browse, product: productCopy, section: sectionCopy } = useStorefrontCopy();
   const [search, setSearch] = useState('');
   const normalizedSearch = search.trim().toLowerCase();
   const sections = useMemo(() => publishedSections(bootstrap), [bootstrap]);
@@ -123,15 +123,11 @@ export function BrowsePage({
           <div className="browse-section-list">
             {filteredSections.map((section) => {
               const presentation = presentationById.get(section.id);
-              const cardStyle = presentation?.backgroundUrl
-                ? ({ '--browse-section-image': `url("${presentation.backgroundUrl.replace(/"/g, '%22')}")` } as CSSProperties)
-                : undefined;
               return (
                 <LinkComponent
                   className={`browse-section-card${presentation?.backgroundUrl ? ' has-image' : ''}`}
                   href={sectionHref(section)}
                   key={section.id}
-                  style={cardStyle}
                 >
                   <span className="browse-section-card-background" aria-hidden="true">
                     {presentation?.backgroundUrl ? (
@@ -166,7 +162,7 @@ export function BrowsePage({
             {!productSearchQuery.isLoading ? <span>{filteredProducts.length}</span> : null}
           </div>
           {productSearchQuery.isLoading ? (
-            <div className="inline-loading">{browse.loading}</div>
+            <div className="inline-loading">{sectionCopy.loading}</div>
           ) : (
             <div className="product-grid browse-search-products">
               {filteredProducts.map((product) => (
