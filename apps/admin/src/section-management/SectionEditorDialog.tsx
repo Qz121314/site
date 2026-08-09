@@ -10,6 +10,7 @@ type SectionEditorDialogProps = {
   editingSection: AdminSection | null;
   form: SectionEditorInput;
   iconPreviewUrl: string | null;
+  browseBackgroundPreviewUrl: string | null;
   localIcon: LocalBrandingImage | null;
   errorMessage: string;
   saving: boolean;
@@ -17,7 +18,9 @@ type SectionEditorDialogProps = {
   onFormChange: (form: SectionEditorInput) => void;
   onSelectIconFile: (file: File) => void;
   onOpenMediaPicker: () => void;
+  onOpenBrowseBackgroundPicker: () => void;
   onRemoveImageIcon: () => void;
+  onRemoveBrowseBackground: () => void;
   onSelectFallbackIcon: (icon: string) => void;
   onClose: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
@@ -27,6 +30,7 @@ export function SectionEditorDialog({
   editingSection,
   form,
   iconPreviewUrl,
+  browseBackgroundPreviewUrl,
   localIcon,
   errorMessage,
   saving,
@@ -34,7 +38,9 @@ export function SectionEditorDialog({
   onFormChange,
   onSelectIconFile,
   onOpenMediaPicker,
+  onOpenBrowseBackgroundPicker,
   onRemoveImageIcon,
+  onRemoveBrowseBackground,
   onSelectFallbackIcon,
   onClose,
   onSubmit,
@@ -77,8 +83,21 @@ export function SectionEditorDialog({
             <small>请输入用户前端实际显示的 English 名称。</small>
           </label>
 
+          <label>
+            <span>分区简介</span>
+            <textarea
+              value={form.description}
+              placeholder="简要说明这个分区包含什么内容"
+              maxLength={280}
+              rows={3}
+              disabled={busy}
+              onChange={(event) => onFormChange({ ...form, description: event.target.value })}
+            />
+            <small>用于 Browse 分区列表，建议 1–2 行；留空时前端不显示简介。</small>
+          </label>
+
           <fieldset className="section-image-icon-fieldset">
-            <legend>分区图片图标</legend>
+            <legend>分区快捷图标</legend>
             <div className="section-icon-upload-row">
               <div className="section-icon-large-preview">
                 {iconPreviewUrl ? (
@@ -89,7 +108,7 @@ export function SectionEditorDialog({
               </div>
               <div className="section-icon-upload-copy">
                 <strong>{iconPreviewUrl ? '当前使用图片图标' : '当前使用字符图标'}</strong>
-                <p>支持 JPG、PNG、WebP。可直接上传，也可从全站素材中心复用已有图片。</p>
+                <p>主要用于 Home 快捷分区入口。支持 JPG、PNG、WebP，也可从素材中心复用已有图片。</p>
                 {localIcon ? (
                   <small>
                     压缩后 {localIcon.width} × {localIcon.height} ·{' '}
@@ -126,9 +145,36 @@ export function SectionEditorDialog({
             </div>
           </fieldset>
 
+          <fieldset className="section-browse-background-fieldset">
+            <legend>Browse 分区背景图</legend>
+            <div className="section-browse-background-control">
+              <div className="section-browse-background-preview">
+                {browseBackgroundPreviewUrl ? (
+                  <img src={browseBackgroundPreviewUrl} alt="Browse 分区背景图预览" />
+                ) : (
+                  <span>未设置背景图</span>
+                )}
+              </div>
+              <div className="section-icon-upload-copy">
+                <strong>{browseBackgroundPreviewUrl ? '已设置背景图' : '使用主题默认背景'}</strong>
+                <p>只用于 Browse 的详细分区卡片，不会显示在 Home 快捷入口，也不会替代产品封面。</p>
+                <div className="section-icon-upload-actions">
+                  <button type="button" className="secondary-button" disabled={busy} onClick={onOpenBrowseBackgroundPicker}>
+                    从素材中心选择
+                  </button>
+                  {browseBackgroundPreviewUrl ? (
+                    <button type="button" className="secondary-button" disabled={busy} onClick={onRemoveBrowseBackground}>
+                      移除背景图
+                    </button>
+                  ) : null}
+                </div>
+              </div>
+            </div>
+          </fieldset>
+
           <fieldset>
             <legend>备用字符图标</legend>
-            <small className="section-icon-help">未上传图片图标时显示；选择任意字符会切换回字符图标。</small>
+            <small className="section-icon-help">未上传图片图标时用于 Home 快捷入口；选择任意字符会切换回字符图标。</small>
             <div className="icon-picker">
               {sectionIconOptions.map((icon) => (
                 <button
