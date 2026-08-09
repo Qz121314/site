@@ -1,11 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import {
   AdminApiError,
-  fetchSiteSettings,
   testMediaDomain,
-  updateSiteSettings,
-  type SiteSettings,
-  type SiteSettingsUpdateInput,
 } from './api';
 import { useAdminDirtySource } from './admin-unsaved-state';
 import { MediaPickerDialog } from './asset-library/MediaPickerDialog';
@@ -16,21 +12,29 @@ import {
   releaseBrandingImage,
   type LocalBrandingImage,
 } from './branding-media/local-branding-image';
+import { SiteHeroSettingsSection } from './SiteHeroSettingsSection';
+import {
+  fetchSiteSettingsWithHero,
+  updateSiteSettingsWithHero,
+  type SiteHeroSlide,
+  type SiteSettingsWithHero,
+  type SiteSettingsWithHeroUpdateInput,
+} from './site-hero-settings-api';
 
 type SiteSettingsViewProps = {
   onSessionExpired: () => void;
 };
 
 type SettingsDraft = Omit<
-  SiteSettingsUpdateInput,
-  'mediaBaseUrl' | 'ga4MeasurementId'
+  SiteSettingsWithHeroUpdateInput,
+  'mediaBaseUrl' | 'ga4MeasurementId' | 'heroSlides'
 > & {
-  logoAssetId: string | null;
   mediaBaseUrl: string;
   ga4MeasurementId: string;
+  heroSlides: SiteHeroSlide[];
 };
 
-type SettingsPayload = SiteSettingsUpdateInput & { logoAssetId: string | null };
+type SettingsPayload = SiteSettingsWithHeroUpdateInput;
 
 type DomainTestState =
   | { status: 'idle' }
@@ -40,7 +44,7 @@ type DomainTestState =
 
 type SaveStage = 'idle' | 'uploading-logo' | 'saving';
 
-function createDraft(settings: SiteSettings): SettingsDraft {
+function createDraft(settings: SiteSettingsWithHero): SettingsDraft {
   return {
     siteName: settings.siteName,
     locationLabel: settings.locationLabel,
@@ -52,19 +56,41 @@ function createDraft(settings: SiteSettings): SettingsDraft {
     showLatest: settings.showLatest,
     showMore: settings.showMore,
     showFaq: settings.showFaq,
+    heroSlides: settings.heroSlides.map((slide) => ({ ...slide })),
   };
+}
+
+function optionalTrimmed(value: string | null): string | null {
+  const normalized = value?.trim() ?? '';
+  return normalized || null;
 }
 
 function toInput(draft: SettingsDraft): SettingsPayload {
   return {
-    ...draft,
+    siteName: draft.siteName,
+    locationLabel: draft.locationLabel,
+    logoAssetId: draft.logoAssetId,
     mediaBaseUrl: draft.mediaBaseUrl.trim() || null,
     ga4MeasurementId: draft.ga4MeasurementId.trim() || null,
+    homeSectionLimit: draft.homeSectionLimit,
+    showHot: draft.showHot,
+    showLatest: draft.showLatest,
+    showMore: draft.showMore,
+    showFaq: draft.showFaq,
+    heroSlides: draft.heroSlides.map((slide, index) => ({
+      id: slide.id,
+      mediaAssetId: slide.mediaAssetId,
+      title: optionalTrimmed(slide.title),
+      description: optionalTrimmed(slide.description),
+      ctaLabel: optionalTrimmed(slide.ctaLabel),
+      ctaHref: optionalTrimmed(slide.ctaHref),
+      sortOrder: index,
+    })),
   };
 }
 
 function settingsDirty(
-  settings: SiteSettings | null,
+  settings: SiteSettingsWithHero | null,
   draft: SettingsDraft | null,
   localLogo: LocalBrandingImage | null,
 ): boolean {
@@ -79,7 +105,7 @@ function formatUpdatedAt(value: string): string {
 }
 
 export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
-  const [settings, setSettings] = useState<SiteSettings | null>(null);
+  const [settings, setSettings] = useState<SiteSettingsWithHero | null>(null);
   const [draft, setDraft] = useState<SettingsDraft | null>(null);
   const [localLogo, setLocalLogo] = useState<LocalBrandingImage | null>(null);
   const [logoPickerOpen, setLogoPickerOpen] = useState(false);
@@ -98,7 +124,7 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
     setLoading(true);
     setErrorMessage(null);
     try {
-      const result = await fetchSiteSettings();
+      const result = await fetchSiteSettingsWithHero();
       setSettings(result);
       setDraft(createDraft(result));
       setLocalLogo(null);
@@ -156,7 +182,7 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
       }
 
       setSaveStage('saving');
-      const updated = await updateSiteSettings(input);
+      const updated = await updateSiteSettingsWithHero(input);
       setSettings(updated);
       setDraft(createDraft(updated));
       setSuccessMessage('站点设置已保存。');
@@ -288,6 +314,13 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
               </div>
             </div>
           </section>
+
+          <SiteHeroSettingsSection
+            slides={draft.heroSlides}
+            busy={busy}
+            onChange={(heroSlides) => updateDraft('heroSlides', heroSlides)}
+            onSessionExpired={onSessionExpired}
+          />
 
           <section className="admin-settings-section" aria-labelledby="settings-frontend-title">
             <h2 id="settings-frontend-title">前端设置</h2>
