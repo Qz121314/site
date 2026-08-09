@@ -20,6 +20,7 @@ type MediaDeleteRow = {
 type MediaReferenceRow = MediaDeleteRow & {
   logo_count: number;
   hero_slide_count: number;
+  bottom_nav_icon_count: number;
   section_icon_count: number;
   product_cover_count: number;
   product_gallery_count: number;
@@ -68,6 +69,7 @@ async function referenceRows(db: D1Database, ids: string[]): Promise<MediaRefere
            ma.updated_at,
            (SELECT COUNT(*) FROM site_settings ss WHERE ss.logo_asset_id = ma.id) AS logo_count,
            (SELECT COUNT(*) FROM site_hero_slides hs WHERE hs.media_asset_id = ma.id) AS hero_slide_count,
+           (SELECT COUNT(*) FROM site_bottom_navigation nav WHERE nav.icon_asset_id = ma.id) AS bottom_nav_icon_count,
            (SELECT COUNT(*) FROM sections s WHERE s.icon_asset_id = ma.id) AS section_icon_count,
            (SELECT COUNT(*) FROM products p WHERE p.cover_asset_id = ma.id) AS product_cover_count,
            (SELECT COUNT(*) FROM product_media pm WHERE pm.media_asset_id = ma.id) AS product_gallery_count
@@ -85,6 +87,7 @@ function hasReferences(row: MediaReferenceRow): boolean {
   return (
     row.logo_count +
     row.hero_slide_count +
+    row.bottom_nav_icon_count +
     row.section_icon_count +
     row.product_cover_count +
     row.product_gallery_count > 0
@@ -125,6 +128,7 @@ export async function deleteManagedMediaAssets(
              AND updated_at = ?
              AND NOT EXISTS (SELECT 1 FROM site_settings ss WHERE ss.logo_asset_id = media_assets.id)
              AND NOT EXISTS (SELECT 1 FROM site_hero_slides hs WHERE hs.media_asset_id = media_assets.id)
+             AND NOT EXISTS (SELECT 1 FROM site_bottom_navigation nav WHERE nav.icon_asset_id = media_assets.id)
              AND NOT EXISTS (SELECT 1 FROM sections s WHERE s.icon_asset_id = media_assets.id)
              AND NOT EXISTS (SELECT 1 FROM products p WHERE p.cover_asset_id = media_assets.id)
              AND NOT EXISTS (SELECT 1 FROM product_media pm WHERE pm.media_asset_id = media_assets.id)`,
