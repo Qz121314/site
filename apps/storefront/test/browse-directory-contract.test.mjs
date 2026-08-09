@@ -20,7 +20,7 @@ const migration = await readFile(
 test('Browse section cards are detailed image cards without shortcut icons', () => {
   assert.match(browsePage, /browse-section-card-background/u);
   assert.match(browsePage, /presentation\?\.description/u);
-  assert.match(browsePage, /presentation\?\.productCount/u);
+  assert.match(browsePage, /presentation\.productCount/u);
   assert.doesNotMatch(browsePage, /SectionIcon/u);
   assert.doesNotMatch(browsePage, /section-icon/u);
   assert.match(browseCss, /\.browse-section-list/u);
