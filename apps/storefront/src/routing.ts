@@ -2,9 +2,15 @@ import type { PublicProductSummary, PublicSection } from './content';
 
 export type StorefrontRoute =
   | { type: 'home' }
+  | { type: 'discover' }
+  | { type: 'messages' }
+  | { type: 'message'; conversationRef: string }
+  | { type: 'faq' }
   | { type: 'section'; sectionRef: string }
   | { type: 'product'; productRef: string; sectionRef: string | null }
   | { type: 'not-found' };
+
+export type BottomNavigationHref = '/' | '/discover/' | '/messages/' | '/faq/';
 
 function decodeRoutePart(value: string): string | null {
   try {
@@ -31,8 +37,31 @@ export function productHref(
   return `/sections/${routePart(sectionRef)}/products/${routePart(productRef)}/`;
 }
 
+export function bottomNavigationActiveHref(pathname: string): BottomNavigationHref {
+  if (pathname === '/messages' || pathname.startsWith('/messages/')) return '/messages/';
+  if (pathname === '/faq' || pathname.startsWith('/faq/')) return '/faq/';
+  if (
+    pathname === '/discover' ||
+    pathname.startsWith('/discover/') ||
+    pathname.startsWith('/sections/') ||
+    pathname.startsWith('/products/')
+  ) {
+    return '/discover/';
+  }
+  return '/';
+}
+
 export function parseStorefrontRoute(pathname: string): StorefrontRoute {
   if (pathname === '/' || pathname === '') return { type: 'home' };
+  if (pathname === '/discover' || pathname === '/discover/') return { type: 'discover' };
+  if (pathname === '/messages' || pathname === '/messages/') return { type: 'messages' };
+  if (pathname === '/faq' || pathname === '/faq/') return { type: 'faq' };
+
+  const messageMatch = /^\/messages\/([^/]+)\/?$/.exec(pathname);
+  if (messageMatch) {
+    const conversationRef = decodeRoutePart(messageMatch[1] ?? '');
+    return conversationRef ? { type: 'message', conversationRef } : { type: 'not-found' };
+  }
 
   const nestedProductMatch = /^\/sections\/([^/]+)\/products\/([^/]+)\/?$/.exec(pathname);
   if (nestedProductMatch) {
