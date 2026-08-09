@@ -4,6 +4,10 @@ import test from 'node:test';
 
 const rootSource = await readFile(new URL('../src/StorefrontRoot.tsx', import.meta.url), 'utf8');
 const mainSource = await readFile(new URL('../src/main.tsx', import.meta.url), 'utf8');
+const adminSettingsSource = await readFile(
+  new URL('../../admin/src/SiteSettingsView.tsx', import.meta.url),
+  'utf8',
+);
 const typographyCss = await readFile(
   new URL('../../../packages/storefront-ui/src/typography-contract.css', import.meta.url),
   'utf8',
@@ -28,6 +32,8 @@ test('site description is written to browser metadata instead of visible header 
   assert.match(rootSource, /site\.locationLabel\.trim\(\)/u);
   assert.match(rootSource, /meta\[name="description"\]/u);
   assert.match(rootSource, /meta\.content = description/u);
+  assert.match(adminSettingsSource, />站点说明</u);
+  assert.match(adminSettingsSource, /不显示在前端 Logo \/ Header 区域/u);
 });
 
 test('Browse remains the dedicated sticky search surface', () => {
