@@ -67,7 +67,7 @@ function validVisitorPayload(value: unknown): value is VisitorTokenPayload {
 
 export async function createMessageVisitorToken(
   secret: string,
-  visitorId = crypto.randomUUID(),
+  visitorId: string = crypto.randomUUID(),
   now = Date.now(),
 ): Promise<{ token: string; session: MessageVisitorSession }> {
   const issuedAt = Math.floor(now / 1000);
