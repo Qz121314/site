@@ -23,8 +23,10 @@ import {
   StorefrontCopyProvider,
 } from './storefront-copy';
 import { primaryNavigationItems } from './storefront-navigation';
+import { MessagesWorkspace, type SupportConversationDetail } from './support-ui';
 
 const NAVIGATION_EVENT = 'storefront:navigate';
+const supportConversations: SupportConversationDetail[] = [];
 
 function subscribePathname(callback: () => void) {
   window.addEventListener('popstate', callback);
@@ -119,11 +121,13 @@ function PrimaryShell({
   bootstrap,
   copy,
   children,
+  unreadMessages = 0,
 }: {
   activePath: string;
   bootstrap: Awaited<ReturnType<typeof loadStorefrontBootstrap>>;
   copy: typeof FALLBACK_STOREFRONT_COPY;
   children: ReactNode;
+  unreadMessages?: number;
 }) {
   const site = bootstrap.site.site;
   return (
@@ -139,7 +143,7 @@ function PrimaryShell({
         <footer className="site-footer">{site.name}</footer>
         <StorefrontBottomNavigation
           activeHref={bottomNavigationActiveHref(activePath)}
-          items={primaryNavigationItems(copy.navigation, 0)}
+          items={primaryNavigationItems(copy.navigation, unreadMessages)}
           LinkComponent={StorefrontLink as StorefrontLinkComponent}
         />
       </div>
@@ -196,8 +200,63 @@ function BrowseRoot() {
   );
 }
 
+function messageConversationRef(pathname: string): string | null {
+  const match = pathname.match(/^\/messages\/([^/]+)\/?$/u);
+  if (!match?.[1]) return null;
+  try {
+    return decodeURIComponent(match[1]);
+  } catch {
+    return match[1];
+  }
+}
+
+function MessagesRoot({ pathname }: { pathname: string }) {
+  const bootstrapQuery = useQuery({
+    queryKey: ['storefront-bootstrap'],
+    queryFn: ({ signal }) => loadStorefrontBootstrap(undefined, signal),
+    staleTime: 30_000,
+  });
+  const copyQuery = useQuery({
+    queryKey: ['storefront-copy'],
+    queryFn: ({ signal }) => loadStorefrontCopy(signal),
+    staleTime: 30_000,
+  });
+  const activeConversationRef = messageConversationRef(pathname);
+  const activeConversation = activeConversationRef
+    ? supportConversations.find((conversation) => conversation.id === activeConversationRef) ?? null
+    : null;
+  const unreadMessages = supportConversations.reduce(
+    (total, conversation) => total + conversation.unreadCount,
+    0,
+  );
+
+  if (bootstrapQuery.isLoading) return <PrimaryLoading />;
+  if (bootstrapQuery.error || !bootstrapQuery.data) return <PrimaryError error={bootstrapQuery.error} />;
+
+  const copy = copyQuery.data ?? FALLBACK_STOREFRONT_COPY;
+  return (
+    <PrimaryShell
+      activePath="/messages/"
+      bootstrap={bootstrapQuery.data}
+      copy={copy}
+      unreadMessages={unreadMessages}
+    >
+      <MessagesWorkspace
+        activeConversation={activeConversation}
+        activeConversationRef={activeConversationRef}
+        conversations={supportConversations}
+        LinkComponent={StorefrontLink as StorefrontLinkComponent}
+      />
+    </PrimaryShell>
+  );
+}
+
 function isBrowsePath(pathname: string): boolean {
   return pathname === '/browse' || pathname === '/browse/' || pathname === '/discover' || pathname === '/discover/';
+}
+
+function isMessagesPath(pathname: string): boolean {
+  return pathname === '/messages' || pathname === '/messages/' || /^\/messages\/[^/]+\/?$/u.test(pathname);
 }
 
 export function StorefrontRoot() {
@@ -205,7 +264,15 @@ export function StorefrontRoot() {
   return (
     <>
       <StorefrontMetadata />
-      {pathname === '/' ? <HomeRoot /> : isBrowsePath(pathname) ? <BrowseRoot /> : <App />}
+      {pathname === '/' ? (
+        <HomeRoot />
+      ) : isBrowsePath(pathname) ? (
+        <BrowseRoot />
+      ) : isMessagesPath(pathname) ? (
+        <MessagesRoot pathname={pathname} />
+      ) : (
+        <App />
+      )}
     </>
   );
 }
