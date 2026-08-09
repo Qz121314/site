@@ -8,7 +8,8 @@ const cssSource = await readFile(new URL('../src/faq-ui.css', import.meta.url), 
 const mainSource = await readFile(new URL('../src/main.tsx', import.meta.url), 'utf8');
 
 test('FAQ is a title-only one-row-per-article directory without search or accordion expansion', () => {
-  assert.match(faqSource, /className="faq-article-list" role="list"/u);
+  assert.match(faqSource, /<ul className="faq-article-list">/u);
+  assert.match(faqSource, /<li key=\{article\.id\}>/u);
   assert.match(faqSource, /className="faq-article-row"/u);
   assert.match(faqSource, /<span>\{article\.title\}<\/span>/u);
   assert.match(faqSource, /href=\{faqArticleHref\(article\.id\)\}/u);
