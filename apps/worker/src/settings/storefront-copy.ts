@@ -174,16 +174,14 @@ function readCopyField(value: unknown, field: string, fallback: string): string 
   return normalized && normalized.length <= 240 ? normalized : fallback;
 }
 
-function normalizeGroup<K extends CopyGroupKey>(
-  value: unknown,
-  fallback: StorefrontCopy[K],
-): StorefrontCopy[K] {
+function normalizeGroup<T>(value: unknown, fallback: T): T {
   const record = isRecord(value) ? value : {};
+  const fallbackRecord = fallback as Record<string, string>;
   const normalized: Record<string, string> = {};
-  for (const [key, fallbackValue] of Object.entries(fallback)) {
+  for (const [key, fallbackValue] of Object.entries(fallbackRecord)) {
     normalized[key] = readCopyField(record[key], key, fallbackValue);
   }
-  return normalized as StorefrontCopy[K];
+  return normalized as T;
 }
 
 export function normalizeStorefrontCopy(value: unknown): StorefrontCopy {
