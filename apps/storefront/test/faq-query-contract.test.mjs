@@ -2,19 +2,25 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-const appSource = await readFile(new URL('../src/App.tsx', import.meta.url), 'utf8');
+const faqSource = await readFile(new URL('../src/FaqPage.tsx', import.meta.url), 'utf8');
+const rootSource = await readFile(
+  new URL('../src/StorefrontRoot.tsx', import.meta.url),
+  'utf8',
+);
 
 test('FAQ query remains available for the dedicated fixed navigation page', () => {
-  const faqSection = appSource.match(/function FaqSection[\s\S]*?function HomePage/)?.[0] ?? '';
-  assert.match(faqSection, /queryFn:\s*\(\{ signal \}\) => loadFaqSnapshot\(bootstrap, signal\)/);
-  assert.doesNotMatch(faqSection, /enabled:\s*bootstrap\.site\.site\.navigation\.showFaq/);
-  assert.doesNotMatch(faqSection, /if \(!bootstrap\.site\.site\.navigation\.showFaq\) return null/);
   assert.match(
-    appSource,
-    /case 'faq':\s*page = <FaqPage bootstrap=\{bootstrapQuery\.data\} \/>;\s*break;/,
+    faqSource,
+    /queryFn:\s*\(\{ signal \}\) => loadFaqSnapshot\(bootstrap, signal\)/,
+  );
+  assert.doesNotMatch(faqSource, /enabled:\s*bootstrap\.site\.site\.navigation\.showFaq/);
+  assert.doesNotMatch(
+    faqSource,
+    /if \(!bootstrap\.site\.site\.navigation\.showFaq\) return null/,
   );
   assert.match(
-    appSource,
-    /<StorefrontCopyProvider value=\{copyQuery\.data \?\? FALLBACK_STOREFRONT_COPY\}>[\s\S]*?\{page\}[\s\S]*?<\/StorefrontCopyProvider>/,
+    rootSource,
+    /case 'faq':\s*page = <FaqRoot articleRef=\{null\} \/>;\s*break;/,
   );
+  assert.match(rootSource, /<PrimaryShell activePath="\/faq\/"[\s\S]*?<FaqDirectoryPage/);
 });
