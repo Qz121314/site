@@ -292,7 +292,7 @@ CTA 文案 / 模式 / 可用状态
 
 ## 已退役站点设置
 
-Facebook Pixel、Messages 导航和 Affiliate 检测已经从运行时模型、后台表单和新 R2 快照中移除。历史 D1 migration 中的旧列仅作为兼容遗留保留，不再读取、写入或发布；不为删除这些旧列重建生产表。
+Facebook Pixel、Messages 导航开关和 Affiliate 检测已经从运行时模型、后台表单和新 R2 快照中移除。Messages 本身仍是 Storefront 固定消息中心入口，后续通过 Site Worker 的服务商无关接口连接独立客服系统。历史 D1 migration 中的旧列仅作为兼容遗留保留，不再读取、写入或发布；不为删除这些旧列重建生产表。
 
 ## 缓存
 

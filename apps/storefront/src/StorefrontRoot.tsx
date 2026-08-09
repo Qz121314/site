@@ -26,7 +26,8 @@ import {
   StorefrontCopyProvider,
 } from './storefront-copy';
 import { primaryNavigationItems } from './storefront-navigation';
-import { MessagesWorkspace, type SupportConversationDetail } from './support-ui';
+import type { SupportConversationDetail } from './support-contract';
+import { MessagesWorkspace } from './support-ui';
 
 const NAVIGATION_EVENT = 'storefront:navigate';
 const supportConversations: SupportConversationDetail[] = [];
