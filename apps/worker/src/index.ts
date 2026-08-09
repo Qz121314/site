@@ -24,6 +24,7 @@ import { adminTagRoutes } from './routes/admin-tags';
 import { adminThemeRoutes } from './routes/admin-theme';
 import { publicContentRoutes } from './routes/public-content';
 import { publicConversionRoutes } from './routes/public-conversion';
+import { servePwaManifest } from './routes/public-pwa';
 import { publicStorefrontConfigRoutes } from './routes/public-storefront-config';
 import { publicThemeRoutes } from './routes/public-theme';
 import type { AppEnvironment } from './types';
@@ -54,6 +55,8 @@ app.use('*', async (context, next) => {
     );
   }
 });
+
+app.get('/manifest.webmanifest', servePwaManifest);
 
 app.get('/api/health', (context) =>
   context.json({
