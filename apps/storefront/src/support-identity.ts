@@ -13,7 +13,11 @@ let volatileIdentity: SupportVisitorIdentity | null = null;
 function randomIndex(length: number): number {
   const values = new Uint32Array(1);
   crypto.getRandomValues(values);
-  return Number(values[0] % length);
+  return (values[0] ?? 0) % length;
+}
+
+function randomCharacter(source: string): string {
+  return source[randomIndex(source.length)] ?? source[0] ?? '';
 }
 
 /**
@@ -23,16 +27,19 @@ function randomIndex(length: number): number {
  */
 export function generateSupportVisitorId(): string {
   const characters = [
-    LETTERS[randomIndex(LETTERS.length)] as string,
-    LETTERS[randomIndex(LETTERS.length)] as string,
-    LETTERS[randomIndex(LETTERS.length)] as string,
-    DIGITS[randomIndex(DIGITS.length)] as string,
-    DIGITS[randomIndex(DIGITS.length)] as string,
-    DIGITS[randomIndex(DIGITS.length)] as string,
+    randomCharacter(LETTERS),
+    randomCharacter(LETTERS),
+    randomCharacter(LETTERS),
+    randomCharacter(DIGITS),
+    randomCharacter(DIGITS),
+    randomCharacter(DIGITS),
   ];
   for (let index = characters.length - 1; index > 0; index -= 1) {
     const swapIndex = randomIndex(index + 1);
-    [characters[index], characters[swapIndex]] = [characters[swapIndex] as string, characters[index] as string];
+    const current = characters[index] ?? '';
+    const swap = characters[swapIndex] ?? '';
+    characters[index] = swap;
+    characters[swapIndex] = current;
   }
   return characters.join('');
 }
