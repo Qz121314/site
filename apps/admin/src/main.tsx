@@ -34,6 +34,7 @@ import './admin-dialog-service.css';
 import '@site/storefront-ui/styles.css';
 import '@site/storefront-ui/theme-contract.css';
 import '@site/storefront-ui/product-detail-theme-contract.css';
+import '@site/storefront-ui/primary-pages-theme-contract.css';
 
 installAdminUnsavedStateObserver();
 
