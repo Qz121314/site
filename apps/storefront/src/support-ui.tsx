@@ -1,4 +1,5 @@
 import type { StorefrontLinkComponent } from '@site/storefront-ui';
+import { useStorefrontCopy } from './storefront-copy';
 
 export type SupportConversationStatus = 'waiting' | 'active' | 'closed';
 
@@ -45,15 +46,16 @@ function formatConversationTime(value: string | null): string {
   return new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' }).format(date);
 }
 
-function conversationTitle(conversation: SupportConversationSummary): string {
-  return conversation.agentName?.trim() || 'Customer Support';
+function conversationTitle(conversation: SupportConversationSummary, supportName: string): string {
+  return conversation.agentName?.trim() || supportName;
 }
 
 function ConversationAvatar({ conversation }: { conversation: SupportConversationSummary }) {
+  const { messages } = useStorefrontCopy();
   if (conversation.agentAvatarUrl) {
     return <img src={conversation.agentAvatarUrl} alt="" loading="lazy" />;
   }
-  return <span aria-hidden="true">{conversationTitle(conversation).slice(0, 1)}</span>;
+  return <span aria-hidden="true">{conversationTitle(conversation, messages.supportName).slice(0, 1)}</span>;
 }
 
 export function MessagesPageContent({
@@ -63,12 +65,13 @@ export function MessagesPageContent({
   conversations: SupportConversationSummary[];
   LinkComponent?: StorefrontLinkComponent;
 }) {
+  const { messages } = useStorefrontCopy();
   return (
     <section className="messages-page" aria-labelledby="messages-title">
       <header className="app-page-heading messages-page-heading">
         <div>
-          <p className="app-page-kicker">Customer service</p>
-          <h1 id="messages-title">Messages</h1>
+          <p className="app-page-kicker">{messages.kicker}</p>
+          <h1 id="messages-title">{messages.title}</h1>
         </div>
         <span className="conversation-capacity" aria-label={`${conversations.length} of 10 conversations`}>
           {conversations.length}/10
@@ -78,8 +81,8 @@ export function MessagesPageContent({
       {conversations.length === 0 ? (
         <div className="messages-empty-state">
           <span className="messages-empty-icon"><MessageBubbleIcon /></span>
-          <strong>No conversations yet</strong>
-          <p>Start a consultation from a product page. Your conversations will appear here.</p>
+          <strong>{messages.emptyTitle}</strong>
+          <p>{messages.emptyDescription}</p>
         </div>
       ) : (
         <div className="conversation-list" role="list">
@@ -92,12 +95,12 @@ export function MessagesPageContent({
               <span className="conversation-avatar"><ConversationAvatar conversation={conversation} /></span>
               <span className="conversation-main">
                 <span className="conversation-heading-row">
-                  <strong>{conversationTitle(conversation)}</strong>
+                  <strong>{conversationTitle(conversation, messages.supportName)}</strong>
                   <time>{formatConversationTime(conversation.lastMessageAt)}</time>
                 </span>
                 <small>{conversation.productTitle}</small>
                 <span className="conversation-preview-row">
-                  <span>{conversation.lastMessage || (conversation.status === 'waiting' ? 'Waiting for an agent…' : '')}</span>
+                  <span>{conversation.lastMessage || (conversation.status === 'waiting' ? messages.waitingPreview : '')}</span>
                   {conversation.unreadCount > 0 ? (
                     <b aria-label={`${conversation.unreadCount} unread messages`}>
                       {conversation.unreadCount > 99 ? '99+' : conversation.unreadCount}
@@ -120,13 +123,14 @@ function ProductContextCard({
   conversation: SupportConversationDetail;
   LinkComponent: StorefrontLinkComponent;
 }) {
+  const { messages } = useStorefrontCopy();
   const body = (
     <>
       <span className="chat-product-media">
         {conversation.productCoverUrl ? <img src={conversation.productCoverUrl} alt="" /> : null}
       </span>
       <span className="chat-product-copy">
-        <small>Product</small>
+        <small>{messages.productLabel}</small>
         <strong>{conversation.productTitle}</strong>
       </span>
       <span className="chat-product-chevron" aria-hidden="true">›</span>
@@ -152,41 +156,48 @@ export function MessageThreadPageContent({
   conversation: SupportConversationDetail | null;
   LinkComponent?: StorefrontLinkComponent;
 }) {
+  const { messages } = useStorefrontCopy();
   if (!conversation) {
     return (
       <section className="chat-page chat-page-unavailable" aria-labelledby="chat-title">
         <header className="chat-header">
-          <LinkComponent className="chat-back-button" href="/messages/" aria-label="Back to messages">←</LinkComponent>
+          <LinkComponent className="chat-back-button" href="/messages/" aria-label={messages.backLabel}>←</LinkComponent>
           <span className="chat-header-avatar"><MessageBubbleIcon /></span>
           <span className="chat-header-copy">
-            <strong id="chat-title">Customer Support</strong>
-            <small>No active conversation</small>
+            <strong id="chat-title">{messages.supportName}</strong>
+            <small>{messages.noActiveConversation}</small>
           </span>
         </header>
         <div className="chat-timeline">
           <div className="chat-empty-state">
             <MessageBubbleIcon />
-            <strong>Conversation not found or has ended</strong>
-            <p>Go back to Messages, or start a new consultation from a product page.</p>
+            <strong>{messages.unavailableTitle}</strong>
+            <p>{messages.unavailableDescription}</p>
           </div>
         </div>
         <div className="chat-composer is-disabled" aria-disabled="true">
           <button type="button" disabled aria-label="Add attachment">＋</button>
-          <div className="chat-input-placeholder">Type a message</div>
+          <div className="chat-input-placeholder">{messages.inputPlaceholder}</div>
           <button type="button" disabled className="chat-send-button" aria-label="Send message">➤</button>
         </div>
       </section>
     );
   }
 
+  const statusLabel = conversation.status === 'waiting'
+    ? messages.waitingStatus
+    : conversation.status === 'active'
+      ? messages.activeStatus
+      : messages.closedStatus;
+
   return (
     <section className="chat-page" aria-labelledby="chat-title">
       <header className="chat-header">
-        <LinkComponent className="chat-back-button" href="/messages/" aria-label="Back to messages">←</LinkComponent>
+        <LinkComponent className="chat-back-button" href="/messages/" aria-label={messages.backLabel}>←</LinkComponent>
         <span className="chat-header-avatar"><ConversationAvatar conversation={conversation} /></span>
         <span className="chat-header-copy">
-          <strong id="chat-title">{conversationTitle(conversation)}</strong>
-          <small>{conversation.status === 'waiting' ? 'Connecting to support' : conversation.status === 'active' ? 'Customer support' : 'Conversation ended'}</small>
+          <strong id="chat-title">{conversationTitle(conversation, messages.supportName)}</strong>
+          <small>{statusLabel}</small>
         </span>
       </header>
 
@@ -208,7 +219,7 @@ export function MessageThreadPageContent({
 
       <form className="chat-composer" onSubmit={(event) => event.preventDefault()}>
         <button type="button" aria-label="Add attachment">＋</button>
-        <textarea rows={1} aria-label="Type a message" placeholder="Type a message" />
+        <textarea rows={1} aria-label={messages.inputPlaceholder} placeholder={messages.inputPlaceholder} />
         <button type="submit" className="chat-send-button" aria-label="Send message">➤</button>
       </form>
     </section>
