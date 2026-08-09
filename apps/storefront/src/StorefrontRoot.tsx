@@ -16,6 +16,7 @@ import { BrowsePage } from './BrowsePage';
 import { loadStorefrontBootstrap, PublicContentError } from './content';
 import { FaqArticlePage, FaqDirectoryPage } from './FaqPage';
 import { HomeFeed } from './HomeFeed';
+import { ProductDetailPage } from './ProductDetailPage';
 import { ResilientImage } from './ResilientMedia';
 import { bottomNavigationActiveHref } from './routing';
 import { SectionCatalogPage } from './SectionPage';
@@ -337,6 +338,60 @@ function SectionRoot({ pathname }: { pathname: string }) {
   );
 }
 
+type ProductRoute = {
+  productRef: string;
+  sectionRef: string | null;
+};
+
+function productRoute(pathname: string): ProductRoute | null {
+  const nested = pathname.match(/^\/sections\/([^/]+)\/products\/([^/]+)\/?$/u);
+  const legacy = pathname.match(/^\/products\/([^/]+)\/?$/u);
+  try {
+    if (nested?.[1] && nested[2]) {
+      return {
+        sectionRef: decodeURIComponent(nested[1]),
+        productRef: decodeURIComponent(nested[2]),
+      };
+    }
+    if (legacy?.[1]) {
+      return { sectionRef: null, productRef: decodeURIComponent(legacy[1]) };
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
+
+function ProductRoot({ pathname }: { pathname: string }) {
+  const bootstrapQuery = useQuery({
+    queryKey: ['storefront-bootstrap'],
+    queryFn: ({ signal }) => loadStorefrontBootstrap(undefined, signal),
+    staleTime: 30_000,
+  });
+  const copyQuery = useQuery({
+    queryKey: ['storefront-copy'],
+    queryFn: ({ signal }) => loadStorefrontCopy(signal),
+    staleTime: 30_000,
+  });
+  const route = productRoute(pathname);
+
+  if (bootstrapQuery.isLoading) return <PrimaryLoading />;
+  if (bootstrapQuery.error || !bootstrapQuery.data) return <PrimaryError error={bootstrapQuery.error} />;
+  if (!route) return <App />;
+
+  const copy = copyQuery.data ?? FALLBACK_STOREFRONT_COPY;
+  return (
+    <PrimaryShell activePath="/browse/" bootstrap={bootstrapQuery.data} copy={copy}>
+      <ProductDetailPage
+        bootstrap={bootstrapQuery.data}
+        productRef={route.productRef}
+        sectionRef={route.sectionRef}
+        LinkComponent={StorefrontLink as StorefrontLinkComponent}
+      />
+    </PrimaryShell>
+  );
+}
+
 function isBrowsePath(pathname: string): boolean {
   return pathname === '/browse' || pathname === '/browse/' || pathname === '/discover' || pathname === '/discover/';
 }
@@ -351,6 +406,11 @@ function isFaqPath(pathname: string): boolean {
 
 function isSectionPath(pathname: string): boolean {
   return /^\/sections\/[^/]+\/?$/u.test(pathname);
+}
+
+function isProductPath(pathname: string): boolean {
+  return /^\/sections\/[^/]+\/products\/[^/]+\/?$/u.test(pathname)
+    || /^\/products\/[^/]+\/?$/u.test(pathname);
 }
 
 export function StorefrontRoot() {
@@ -368,6 +428,8 @@ export function StorefrontRoot() {
         <FaqRoot pathname={pathname} />
       ) : isSectionPath(pathname) ? (
         <SectionRoot pathname={pathname} />
+      ) : isProductPath(pathname) ? (
+        <ProductRoot pathname={pathname} />
       ) : (
         <App />
       )}
