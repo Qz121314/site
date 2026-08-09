@@ -3,7 +3,8 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
 const mainSource = await readFile(new URL('../src/main.tsx', import.meta.url), 'utf8');
-const appSource = await readFile(new URL('../src/App.tsx', import.meta.url), 'utf8');
+const detailSource = await readFile(new URL('../src/ProductDetailPage.tsx', import.meta.url), 'utf8');
+const rootSource = await readFile(new URL('../src/StorefrontRoot.tsx', import.meta.url), 'utf8');
 const detailCss = await readFile(new URL('../src/product-detail-ui.css', import.meta.url), 'utf8');
 const detailThemeCss = await readFile(
   new URL('../../../packages/storefront-ui/src/product-detail-theme-contract.css', import.meta.url),
@@ -23,19 +24,45 @@ test('product detail structure loads before Theme Center visual recipes', () => 
   assert.ok(detailTheme > sharedTheme, 'detail Theme Center extension must be the final detail visual layer');
 });
 
+test('product detail routes through the primary Storefront shell', () => {
+  assert.match(rootSource, /function ProductRoot\(/u);
+  assert.match(rootSource, /isProductPath\(pathname\)/u);
+  assert.match(rootSource, /<ProductDetailPage/u);
+  assert.match(rootSource, /<PrimaryShell activePath="\/browse\/"/u);
+});
+
+test('product detail keeps a focused media, summary, Markdown and CTA hierarchy', () => {
+  assert.match(detailSource, /className="detail-gallery"/u);
+  assert.match(detailSource, /className="product-detail-summary"/u);
+  assert.match(detailSource, /<h1 id="product-detail-title">\{product\.title\}<\/h1>/u);
+  assert.match(detailSource, /className="product-detail-category"/u);
+  assert.match(detailSource, /className="product-detail-tags"/u);
+  assert.match(detailSource, /className="product-detail-body"/u);
+  assert.match(detailSource, /<MarkdownContent source=\{product\.body\} \/>/u);
+  assert.doesNotMatch(detailSource, /recommend|rating|favorite|share/iu);
+});
+
 test('product gallery is touch-first and supports both images and videos', () => {
   assert.match(detailCss, /scroll-snap-type:\s*x mandatory/u);
   assert.match(detailCss, /scrollbar-width:\s*none/u);
-  assert.match(detailCss, /\.detail-gallery > img,[\s\S]*?\.detail-gallery > video/u);
+  assert.match(detailCss, /\.detail-media-slide > img,[\s\S]*?\.detail-media-slide > video/u);
   assert.match(detailCss, /aspect-ratio:\s*var\(--theme-detail-media-ratio/u);
-  assert.match(detailCss, /\.detail-gallery > video\s*\{[\s\S]*?object-fit:\s*contain/u);
+  assert.match(detailCss, /\.detail-media-slide > video\s*\{[\s\S]*?object-fit:\s*contain/u);
+  assert.match(detailSource, /<ResilientVideo/u);
+  assert.match(detailSource, /<ResilientImage/u);
 });
 
 test('mobile CTA remains an app action bar above primary navigation', () => {
-  assert.match(detailCss, /\.mobile-cta-bar\s*\{[\s\S]*?position:\s*fixed/u);
+  assert.match(detailCss, /\.product-detail-mobile-action\s*\{[\s\S]*?position:\s*fixed/u);
   assert.match(detailCss, /bottom:\s*calc\(67px \+ env\(safe-area-inset-bottom\)\)/u);
   assert.match(detailCss, /backdrop-filter:\s*blur\(18px\)/u);
-  assert.match(detailCss, /\.product-detail:has\(\.mobile-cta-bar\)/u);
+  assert.match(detailCss, /\.product-detail-page:has\(\.product-detail-mobile-action\)/u);
+});
+
+test('desktop places media beside a sticky summary and keeps body readable below', () => {
+  assert.match(detailCss, /@media \(min-width:\s*768px\)[\s\S]*?\.product-detail-hero\s*\{[\s\S]*?grid-template-columns/u);
+  assert.match(detailCss, /\.product-detail-summary\s*\{[\s\S]*?position:\s*sticky/u);
+  assert.match(detailCss, /\.product-detail-body\s*\{[\s\S]*?width:\s*min\(820px, 100%\)/u);
 });
 
 test('Theme Center owns product detail visual treatment for every official theme', () => {
@@ -47,6 +74,8 @@ test('Theme Center owns product detail visual treatment for every official theme
   assert.match(detailThemeCss, /--theme-detail-panel-background/u);
   assert.match(detailThemeCss, /--theme-detail-media-radius/u);
   assert.match(detailThemeCss, /--theme-detail-cta-surface/u);
+  assert.match(detailThemeCss, /\.product-detail-summary/u);
+  assert.match(detailThemeCss, /\.product-detail-body/u);
 });
 
 test('shared package and Admin preview load the product detail Theme Center extension', () => {
@@ -57,7 +86,7 @@ test('shared package and Admin preview load the product detail Theme Center exte
   assert.match(adminMain, /@site\/storefront-ui\/product-detail-theme-contract\.css/u);
 });
 
-test('product detail keeps published CTA destination authoritative', () => {
-  assert.match(appSource, /href=\{query\.data\.product\.cta\.path\}/u);
-  assert.match(appSource, /\{query\.data\.product\.cta\.label\}/u);
+test('product detail keeps published CTA label and destination authoritative', () => {
+  assert.match(detailSource, /href=\{product\.cta\.path\}/u);
+  assert.match(detailSource, /\{product\.cta\.label\}/u);
 });
