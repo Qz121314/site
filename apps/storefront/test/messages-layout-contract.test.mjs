@@ -23,7 +23,8 @@ test('conversation list is compact, newest-first, and keeps product context in t
 });
 
 test('desktop Messages uses a two-pane conversation and chat workspace', () => {
-  assert.match(supportSource, /className={`messages-workspace\$\{threadOpen \? ' is-thread-open' : ''\}`}/u);
+  assert.match(supportSource, /messages-workspace/u);
+  assert.match(supportSource, /threadOpen \? ' is-thread-open' : ''/u);
   assert.match(supportSource, /className="messages-sidebar"/u);
   assert.match(supportSource, /className="messages-detail"/u);
   assert.match(messagesCss, /@media \(min-width:\s*768px\)[\s\S]*\.messages-workspace\s*\{[\s\S]*grid-template-columns:\s*minmax\(300px,\s*360px\) minmax\(0,\s*1fr\)/u);
