@@ -76,18 +76,18 @@ export function FaqDirectoryPage({
       />
 
       {query.data && query.data.faqs.length > 0 ? (
-        <div className="faq-article-list" role="list">
+        <ul className="faq-article-list">
           {query.data.faqs.map((article) => (
-            <LinkComponent
-              className="faq-article-row"
-              href={faqArticleHref(article.id)}
-              key={article.id}
-              role="listitem"
-            >
-              <span>{article.title}</span>
-            </LinkComponent>
+            <li key={article.id}>
+              <LinkComponent
+                className="faq-article-row"
+                href={faqArticleHref(article.id)}
+              >
+                <span>{article.title}</span>
+              </LinkComponent>
+            </li>
           ))}
-        </div>
+        </ul>
       ) : null}
     </section>
   );
