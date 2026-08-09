@@ -6,10 +6,6 @@ export type RemoteCustomerServiceGroup = {
   isEnabled: boolean;
 };
 
-export type ResolvedCustomerServiceEntry = {
-  url: string;
-};
-
 export class CustomerServiceProviderError extends Error {
   readonly code: string;
 
@@ -35,7 +31,7 @@ function buildHeaders(
   return headers;
 }
 
-async function providerFetch(
+export async function customerServiceProviderFetchJson(
   connection: CustomerServiceConnectionInternal,
   path: string,
   init?: RequestInit,
@@ -44,6 +40,12 @@ async function providerFetch(
     throw new CustomerServiceProviderError(
       'CUSTOMER_SERVICE_PROVIDER_UNSUPPORTED',
       '当前客服系统类型尚未实现适配器。',
+    );
+  }
+  if (!connection.isEnabled || connection.deletedAt) {
+    throw new CustomerServiceProviderError(
+      'CUSTOMER_SERVICE_CONNECTION_DISABLED',
+      '该客服系统连接当前未启用。',
     );
   }
 
@@ -118,13 +120,7 @@ function parseGroups(value: unknown): RemoteCustomerServiceGroup[] {
 export async function listRemoteCustomerServiceGroups(
   connection: CustomerServiceConnectionInternal,
 ): Promise<RemoteCustomerServiceGroup[]> {
-  if (!connection.isEnabled || connection.deletedAt) {
-    throw new CustomerServiceProviderError(
-      'CUSTOMER_SERVICE_CONNECTION_DISABLED',
-      '该客服系统连接当前未启用。',
-    );
-  }
-  return parseGroups(await providerFetch(connection, '/groups'));
+  return parseGroups(await customerServiceProviderFetchJson(connection, '/groups'));
 }
 
 export async function testCustomerServiceConnection(
@@ -132,37 +128,4 @@ export async function testCustomerServiceConnection(
 ): Promise<{ connected: true; groupCount: number }> {
   const groups = await listRemoteCustomerServiceGroups(connection);
   return { connected: true, groupCount: groups.length };
-}
-
-export async function resolveCustomerServiceGroupEntry(
-  connection: CustomerServiceConnectionInternal,
-  remoteGroupId: string,
-  payload: { requestId: string; productId: string; sectionId: string },
-): Promise<ResolvedCustomerServiceEntry> {
-  const value = await providerFetch(
-    connection,
-    `/groups/${encodeURIComponent(remoteGroupId)}/entry`,
-    {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload),
-    },
-  );
-  const envelope = isRecord(value) ? value : null;
-  if (!envelope || typeof envelope.url !== 'string') {
-    throw new CustomerServiceProviderError(
-      'CUSTOMER_SERVICE_INVALID_ENTRY',
-      '客服系统没有返回有效的会话入口。',
-    );
-  }
-  try {
-    const url = new URL(envelope.url);
-    if (url.protocol !== 'https:' && url.protocol !== 'http:') throw new Error('INVALID_PROTOCOL');
-    return { url: url.toString() };
-  } catch {
-    throw new CustomerServiceProviderError(
-      'CUSTOMER_SERVICE_INVALID_ENTRY',
-      '客服系统返回的会话入口地址无效。',
-    );
-  }
 }
