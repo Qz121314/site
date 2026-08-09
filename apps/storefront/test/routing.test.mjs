@@ -20,7 +20,8 @@ test('canonical storefront links use section and product slugs', () => {
   );
 });
 
-test('routing accepts primary pages, canonical slug paths and legacy product paths', () => {
+test('routing accepts primary pages, canonical slug paths and legacy paths', () => {
+  assert.deepEqual(parseStorefrontRoute('/browse/'), { type: 'discover' });
   assert.deepEqual(parseStorefrontRoute('/discover/'), { type: 'discover' });
   assert.deepEqual(parseStorefrontRoute('/messages/'), { type: 'messages' });
   assert.deepEqual(parseStorefrontRoute('/messages/conversation-1/'), {
@@ -44,12 +45,13 @@ test('routing accepts primary pages, canonical slug paths and legacy product pat
   });
 });
 
-test('bottom navigation keeps browsing routes under discover and chat routes under messages', () => {
+test('bottom navigation keeps browsing routes under browse and chat routes under messages', () => {
   assert.equal(bottomNavigationActiveHref('/'), '/');
-  assert.equal(bottomNavigationActiveHref('/discover/'), '/discover/');
-  assert.equal(bottomNavigationActiveHref('/sections/home-services/'), '/discover/');
-  assert.equal(bottomNavigationActiveHref('/sections/home-services/products/deep-clean/'), '/discover/');
-  assert.equal(bottomNavigationActiveHref('/products/product-1/'), '/discover/');
+  assert.equal(bottomNavigationActiveHref('/browse/'), '/browse/');
+  assert.equal(bottomNavigationActiveHref('/discover/'), '/browse/');
+  assert.equal(bottomNavigationActiveHref('/sections/home-services/'), '/browse/');
+  assert.equal(bottomNavigationActiveHref('/sections/home-services/products/deep-clean/'), '/browse/');
+  assert.equal(bottomNavigationActiveHref('/products/product-1/'), '/browse/');
   assert.equal(bottomNavigationActiveHref('/messages/'), '/messages/');
   assert.equal(bottomNavigationActiveHref('/messages/conversation-1/'), '/messages/');
   assert.equal(bottomNavigationActiveHref('/faq/'), '/faq/');
