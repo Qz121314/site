@@ -14,13 +14,45 @@ const messagesCss = await readFile(
   new URL('../src/messages-ui.css', import.meta.url),
   'utf8',
 );
+const legacyPagesCss = await readFile(
+  new URL('../src/storefront-pages.css', import.meta.url),
+  'utf8',
+);
 const shellCss = await readFile(new URL('../src/app-shell.css', import.meta.url), 'utf8');
 const mainSource = await readFile(new URL('../src/main.tsx', import.meta.url), 'utf8');
 
 test('Messages has no local search or visible ten-conversation capacity meter', () => {
   assert.doesNotMatch(supportSource, /conversation-capacity/u);
+  assert.doesNotMatch(messagesCss, /\.conversation-capacity(?=[\s,{:.#>+~])/u);
+  assert.doesNotMatch(legacyPagesCss, /\.conversation-capacity(?=[\s,{:.#>+~])/u);
   assert.doesNotMatch(supportSource, /type="search"|Search conversations/u);
   assert.doesNotMatch(supportSource, /conversations\.length\}\/10|of 10 conversations/u);
+});
+
+test('Messages structural selectors have one dedicated stylesheet owner', () => {
+  const structuralSelectors = [
+    'messages-page',
+    'messages-empty-state',
+    'conversation-list',
+    'conversation-row',
+    'conversation-avatar',
+    'chat-page',
+    'chat-header',
+    'chat-product-card',
+    'chat-timeline',
+    'chat-message-row',
+    'chat-composer',
+  ];
+
+  for (const selector of structuralSelectors) {
+    const selectorPattern = new RegExp(`\\.${selector}(?=[\\s,{:.#>+~])`, 'u');
+    assert.match(messagesCss, selectorPattern, `${selector} must live in messages-ui.css`);
+    assert.doesNotMatch(
+      legacyPagesCss,
+      selectorPattern,
+      `${selector} must not be duplicated in storefront-pages.css`,
+    );
+  }
 });
 
 test('conversation list is compact, newest-first, and keeps product context in the preview', () => {
