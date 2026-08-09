@@ -7,6 +7,7 @@ import {
 import {
   type AnchorHTMLAttributes,
   type MouseEvent as ReactMouseEvent,
+  type ReactNode,
   useEffect,
   useSyncExternalStore,
 } from 'react';
@@ -122,7 +123,7 @@ function PrimaryShell({
   activePath: string;
   bootstrap: Awaited<ReturnType<typeof loadStorefrontBootstrap>>;
   copy: typeof FALLBACK_STOREFRONT_COPY;
-  children: React.ReactNode;
+  children: ReactNode;
 }) {
   const site = bootstrap.site.site;
   return (
