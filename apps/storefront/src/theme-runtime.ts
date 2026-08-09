@@ -13,14 +13,17 @@ type ThemeTokens = {
   shadow: string;
 };
 
+type ThemeDensity = 'compact' | 'standard' | 'comfortable';
+
 type PublicTheme = {
   key: string;
   colorScheme: 'light' | 'dark';
+  density: ThemeDensity;
   productMediaRatio: '1:1';
   tokens: ThemeTokens;
 };
 
-const CACHE_KEY = 'storefront-theme-v1';
+const CACHE_KEY = 'storefront-theme-v2';
 const TOKEN_KEYS: Array<keyof ThemeTokens> = [
   'brand',
   'brandStrong',
@@ -40,9 +43,14 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+function isThemeDensity(value: unknown): value is ThemeDensity {
+  return value === 'compact' || value === 'standard' || value === 'comfortable';
+}
+
 function validTheme(value: unknown): value is PublicTheme {
   if (!isRecord(value) || typeof value.key !== 'string') return false;
   if (value.colorScheme !== 'light' && value.colorScheme !== 'dark') return false;
+  if (!isThemeDensity(value.density)) return false;
   if (value.productMediaRatio !== '1:1') return false;
   const tokens = value.tokens;
   if (!isRecord(tokens)) return false;
@@ -53,6 +61,7 @@ function applyTheme(theme: PublicTheme): void {
   const root = document.documentElement;
   root.dataset.theme = theme.key;
   root.dataset.colorScheme = theme.colorScheme;
+  root.dataset.density = theme.density;
   root.style.colorScheme = theme.colorScheme;
   root.style.setProperty('--brand', theme.tokens.brand);
   root.style.setProperty('--brand-strong', theme.tokens.brandStrong);
