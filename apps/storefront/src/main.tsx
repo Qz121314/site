@@ -16,6 +16,7 @@ import './pwa.css';
 import './app-shell.css';
 import './content-ui.css';
 import './product-detail-ui.css';
+import './bottom-navigation.css';
 import '@site/storefront-ui/theme-contract.css';
 import '@site/storefront-ui/product-detail-theme-contract.css';
 import '@site/storefront-ui/primary-pages-theme-contract.css';
