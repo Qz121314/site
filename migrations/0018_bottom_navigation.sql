@@ -24,3 +24,14 @@ INSERT INTO site_bottom_navigation (
 
 CREATE UNIQUE INDEX idx_site_bottom_navigation_sort_order
   ON site_bottom_navigation(sort_order);
+
+CREATE TRIGGER prevent_bottom_navigation_asset_soft_delete
+BEFORE UPDATE OF status ON media_assets
+WHEN NEW.status = 'deleted'
+  AND EXISTS (
+    SELECT 1 FROM site_bottom_navigation nav
+    WHERE nav.icon_asset_id = OLD.id
+  )
+BEGIN
+  SELECT RAISE(ABORT, 'BOTTOM_NAVIGATION_ASSET_IN_USE');
+END;
