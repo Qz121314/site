@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="App icon">
+  <defs>
+    <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#ff8a50"/>
+      <stop offset="1" stop-color="#d93f09"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="132" fill="url(#g)"/>
+  <path d="M153 174c0-42 35-75 86-75 48 0 85 25 103 61l-55 31c-9-18-25-29-49-29-19 0-31 8-31 20 0 14 17 19 48 27 61 15 101 40 101 101 0 62-50 103-118 103-64 0-107-29-126-76l58-31c12 28 35 43 68 43 28 0 44-10 44-27 0-15-16-22-53-31-56-14-96-39-96-97Z" fill="#fff"/>
+</svg>

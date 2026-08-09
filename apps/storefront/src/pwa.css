@@ -1,0 +1,143 @@
+html,
+body,
+#root {
+  min-height: 100%;
+}
+
+body {
+  overscroll-behavior-y: none;
+}
+
+.pwa-install-card {
+  position: fixed;
+  right: 12px;
+  bottom: calc(84px + env(safe-area-inset-bottom));
+  left: 12px;
+  z-index: 70;
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 10px;
+  width: min(560px, calc(100% - 24px));
+  margin: 0 auto;
+  padding: 10px;
+  border: 1px solid color-mix(in srgb, var(--line, #e7e9ec) 92%, transparent);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--surface, #fff) 97%, transparent);
+  box-shadow: 0 18px 44px rgb(31 35 40 / 18%);
+  backdrop-filter: blur(18px);
+}
+
+.pwa-install-icon {
+  width: 44px;
+  height: 44px;
+  overflow: hidden;
+  border-radius: 12px;
+}
+
+.pwa-install-icon img {
+  width: 100%;
+  height: 100%;
+}
+
+.pwa-install-copy {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.pwa-install-copy strong {
+  overflow: hidden;
+  font-size: 0.82rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.pwa-install-copy span {
+  color: var(--muted, #6f7782);
+  font-size: 0.68rem;
+  line-height: 1.35;
+}
+
+.pwa-install-action,
+.pwa-install-dismiss {
+  border: 0;
+  cursor: pointer;
+  font: inherit;
+}
+
+.pwa-install-action {
+  min-height: 36px;
+  padding: 0 12px;
+  border-radius: 10px;
+  color: #fff;
+  background: var(--brand, #ff5a1f);
+  font-size: 0.72rem;
+  font-weight: 850;
+}
+
+.pwa-install-dismiss {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  border-radius: 999px;
+  color: var(--muted, #6f7782);
+  background: transparent;
+  font-size: 1.25rem;
+}
+
+@media (max-width: 420px) {
+  .pwa-install-card {
+    grid-template-columns: 40px minmax(0, 1fr) auto;
+  }
+
+  .pwa-install-icon {
+    width: 40px;
+    height: 40px;
+  }
+
+  .pwa-install-action {
+    grid-column: 2;
+    width: fit-content;
+  }
+
+  .pwa-install-dismiss {
+    grid-column: 3;
+    grid-row: 1;
+  }
+}
+
+@media (display-mode: standalone) {
+  body {
+    min-height: 100dvh;
+    background: var(--surface-soft, #f8f8f9);
+  }
+
+  .app-shell {
+    min-height: 100dvh;
+  }
+
+  .topbar {
+    min-height: calc(56px + env(safe-area-inset-top));
+    padding-top: calc(8px + env(safe-area-inset-top));
+  }
+
+  .bottom-nav {
+    right: 0;
+    bottom: 0;
+    left: 0;
+    border-right: 0;
+    border-bottom: 0;
+    border-left: 0;
+    border-radius: 18px 18px 0 0;
+  }
+
+  .mobile-cta-bar {
+    bottom: calc(76px + env(safe-area-inset-bottom));
+  }
+
+  .pwa-install-card {
+    display: none;
+  }
+}
