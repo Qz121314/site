@@ -455,7 +455,7 @@ function DiscoverPage({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
   );
 
   useEffect(() => {
-    document.title = `发现 · ${site.name}`;
+    document.title = `Discover · ${site.name}`;
   }, [site.name]);
 
   const noResults = filteredSections.length === 0 && filteredProducts.length === 0;
@@ -466,7 +466,7 @@ function DiscoverPage({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
         <header className="app-page-heading">
           <div>
             <p className="app-page-kicker">Explore</p>
-            <h1 id="discover-title">发现</h1>
+            <h1 id="discover-title">Discover</h1>
           </div>
         </header>
 
@@ -475,8 +475,8 @@ function DiscoverPage({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
           <input
             type="search"
             value={search}
-            placeholder="搜索分区、产品或标签"
-            aria-label="搜索发现内容"
+            placeholder="Search sections, products, or tags"
+            aria-label="Search discover content"
             onChange={(event) => setSearch(event.target.value)}
           />
         </label>
@@ -484,7 +484,7 @@ function DiscoverPage({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
         {filteredSections.length > 0 ? (
           <section className="discover-section-block" aria-labelledby="discover-sections-title">
             <div className="discover-section-title">
-              <h2 id="discover-sections-title">分区</h2>
+              <h2 id="discover-sections-title">Sections</h2>
               <span>{filteredSections.length}</span>
             </div>
             <div className="discover-section-grid">
@@ -501,7 +501,7 @@ function DiscoverPage({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
         {filteredProducts.length > 0 ? (
           <section className="discover-section-block" aria-labelledby="discover-products-title">
             <div className="discover-section-title">
-              <h2 id="discover-products-title">产品</h2>
+              <h2 id="discover-products-title">Products</h2>
               <span>{filteredProducts.length}</span>
             </div>
             <div className="product-grid">
@@ -510,7 +510,7 @@ function DiscoverPage({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
           </section>
         ) : null}
 
-        {noResults ? <div className="discover-results-empty">没有找到匹配的内容。</div> : null}
+        {noResults ? <div className="discover-results-empty">No matching content found.</div> : null}
       </section>
     </SiteShell>
   );
@@ -518,7 +518,7 @@ function DiscoverPage({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
 
 function MessagesPage({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
   useEffect(() => {
-    document.title = `消息 · ${bootstrap.site.site.name}`;
+    document.title = `Messages · ${bootstrap.site.site.name}`;
   }, [bootstrap.site.site.name]);
 
   return (
@@ -536,7 +536,7 @@ function MessagePage({
   conversationRef: string;
 }) {
   useEffect(() => {
-    document.title = `消息 · ${bootstrap.site.site.name}`;
+    document.title = `Messages · ${bootstrap.site.site.name}`;
   }, [bootstrap.site.site.name]);
 
   const conversation = supportConversations.find((item) => item.id === conversationRef) ?? null;
@@ -619,7 +619,7 @@ function SectionPage({ bootstrap, sectionRef }: { bootstrap: StorefrontBootstrap
       {query.data ? (
         <>
           <section className="section-page-header">
-            <AppLink className="back-link" href="/discover/">← 发现</AppLink>
+            <AppLink className="back-link" href="/discover/">← Discover</AppLink>
             <div className="section-page-title">
               <span className="section-icon large"><SectionIcon section={query.data.section} /></span>
               <div>
