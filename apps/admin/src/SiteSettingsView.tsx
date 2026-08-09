@@ -5,6 +5,7 @@ import {
 } from './api';
 import { useAdminDirtySource } from './admin-unsaved-state';
 import { MediaPickerDialog } from './asset-library/MediaPickerDialog';
+import { BottomNavigationSettingsSection } from './BottomNavigationSettingsSection';
 import { brandingAssetPreviewUrl, uploadBrandingImage } from './branding-media/api';
 import {
   formatBrandingBytes,
@@ -17,6 +18,7 @@ import { StorefrontCopySettingsSection } from './StorefrontCopySettingsSection';
 import {
   fetchSiteSettingsWithHero,
   updateSiteSettingsWithHero,
+  type BottomNavigationItem,
   type SiteHeroSlide,
   type SiteSettingsWithHero,
   type SiteSettingsWithHeroUpdateInput,
@@ -28,11 +30,12 @@ type SiteSettingsViewProps = {
 
 type SettingsDraft = Omit<
   SiteSettingsWithHeroUpdateInput,
-  'mediaBaseUrl' | 'ga4MeasurementId' | 'heroSlides'
+  'mediaBaseUrl' | 'ga4MeasurementId' | 'heroSlides' | 'bottomNavigation'
 > & {
   mediaBaseUrl: string;
   ga4MeasurementId: string;
   heroSlides: SiteHeroSlide[];
+  bottomNavigation: BottomNavigationItem[];
 };
 
 type SettingsPayload = SiteSettingsWithHeroUpdateInput;
@@ -59,6 +62,7 @@ function createDraft(settings: SiteSettingsWithHero): SettingsDraft {
     showFaq: settings.showFaq,
     storefrontCopy: structuredClone(settings.storefrontCopy),
     heroSlides: settings.heroSlides.map((slide) => ({ ...slide })),
+    bottomNavigation: settings.bottomNavigation.map((item) => ({ ...item })),
   };
 }
 
@@ -89,6 +93,7 @@ function toInput(draft: SettingsDraft): SettingsPayload {
       ctaHref: optionalTrimmed(slide.ctaHref),
       sortOrder: index,
     })),
+    bottomNavigation: draft.bottomNavigation.map(({ sortOrder: _sortOrder, ...item }) => item),
   };
 }
 
@@ -325,6 +330,13 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
             onSessionExpired={onSessionExpired}
           />
 
+          <BottomNavigationSettingsSection
+            value={draft.bottomNavigation}
+            busy={busy}
+            onChange={(bottomNavigation) => updateDraft('bottomNavigation', bottomNavigation)}
+            onSessionExpired={onSessionExpired}
+          />
+
           <StorefrontCopySettingsSection
             value={draft.storefrontCopy}
             busy={busy}
@@ -340,13 +352,11 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
               </label>
 
               <fieldset className="admin-toggle-group">
-                <legend>导航显示</legend>
+                <legend>首页内容</legend>
                 <div className="admin-toggle-list">
                   {([
-                    ['showHot', 'Hot'],
+                    ['showHot', 'Featured'],
                     ['showLatest', 'Latest'],
-                    ['showMore', 'More'],
-                    ['showFaq', 'FAQ'],
                   ] as const).map(([field, label]) => (
                     <label className="admin-toggle-item" key={field}>
                       <input type="checkbox" checked={draft[field]} disabled={busy} onChange={(event) => updateDraft(field, event.target.checked)} />
