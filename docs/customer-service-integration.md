@@ -2,231 +2,236 @@
 
 ## 架构结论
 
-这条边界固定，不再变化：
+这条边界固定：
 
-> **独立客服系统负责会话、消息、坐席和实时状态；Site Storefront 负责用户聊天 UI。**
+> **Site Storefront 负责用户聊天 UI；独立客服系统负责 Visitor、Conversation、Message、Agent 和实时通信。Storefront 直接连接客服系统，Site Worker 不代理聊天流量。**
 
-客服管理系统使用独立 Git 仓库、独立 Cloudflare Worker、独立数据库、独立域名和独立部署流程。本 `site` 仓库不保存会话、消息、坐席或工单数据。
+最终拓扑：
 
 ```text
-Site Storefront Messages UI
-  → 同源 /api/messages/v1/*
-  → Site Worker
-  → D1 运行时客服连接配置
-  → generic_v1 provider adapter
-  → 独立客服 Worker
-  → 客服系统自己的 Conversation / Message / Agent 数据库
+                         Browser
+                            │
+                    Site Storefront
+                            │
+              ┌─────────────┴─────────────┐
+              │                           │
+              ▼                           ▼
+      Site Worker / D1            Customer Service Worker
+      产品、主题、素材、配置          REST + WebSocket
+              │                           │
+              │                           ▼
+              │                    Conversation / Message
+              │                    Durable Objects / DB
+              │                           │
+              │                           ▼
+              │                    Customer Service Admin
 ```
 
-职责边界：
+代码和部署：
 
 ```text
 site.git
-├─ Storefront Messages 用户 UI
-├─ 匿名访客安全 Cookie
-├─ 不透明 conversationRef
-├─ 同源 Messages API
-├─ 客服连接运行时配置
-├─ 转化池 / round-robin
-└─ provider adapter
+├─ Storefront
+│  └─ Messages 用户 UI + 客服直连客户端
+├─ Product Admin
+├─ Site Worker
+├─ Site D1
+└─ R2
 
 customer-service.git
-├─ Conversation 唯一数据源
-├─ Message 唯一数据源
-├─ Agent / 坐席
-├─ 会话状态
-├─ 未读 / 已读
-├─ 消息幂等
-├─ 数据保留
-└─ WebSocket / SSE / Durable Objects 等实时能力
+├─ Customer Service Admin
+├─ Customer Service Worker
+├─ Conversation / Message
+├─ Agent / Group
+├─ WebSocket realtime
+└─ Customer Service DB / Durable Objects
 ```
 
-Site D1 **不得**创建 conversations、messages、agents、tickets 等客服业务表。
+`site` D1 不创建 conversations、messages、agents、tickets 等客服业务表。
 
-## 客服连接
+---
 
-后台“客服管理”只保存运行时连接：
+## 产品后台负责什么
 
-- 连接名称；
-- provider，目前固定 `generic_v1`；
-- HTTPS API 根地址；
-- 可选项目 ID；
-- 可选 API Token；
-- 启用状态。
+产品后台只负责 **客服系统接入配置** 和 **Product -> Support Group** 映射，不参与用户和客服之间的消息传输。
 
-API Token 为只写字段。后台读取连接时只返回 `hasApiToken`，不返回 Token 原文；Provider 地址、Token、Project ID 和访客标识都不得进入 Storefront bundle 或 R2 发布快照。
-
-更换客服系统域名时只修改后台运行时连接，不重新构建 Storefront。
-
-## Cloudflare Secret
-
-Site Worker 必须配置：
+客服连接配置：
 
 ```text
-MESSAGES_SESSION_SECRET
+name
+baseUrl
+projectId
+managementToken
+isEnabled
 ```
 
-要求至少 32 个字符，并与 `SESSION_SECRET` 分离。
+字段边界：
 
-它只用于：
+- `baseUrl`：客服系统服务根地址，例如 `https://support.example.com`；允许 Storefront 读取。
+- `projectId`：客服系统中的项目标识；允许 Storefront 读取。
+- `managementToken`：当前数据库字段仍名为 `api_token`，只供 Site Admin 测试连接、读取客服 Group；绝不返回 Storefront。
+- `isEnabled`：关闭后 Storefront 不再发现该客服连接。
 
-- 签名匿名访客 Cookie；
-- AES-GCM 加密 Storefront 使用的 `conversationRef`。
-
-浏览器看到的 `conversationRef` 不包含可读的客服连接 ID 或上游 conversation ID，并且只能与创建它的访客 Cookie 一起使用。
-
-## Product CTA 行为
-
-在线客服 CTA 不再跳到外部客服网页，也不再调用 `/groups/{groupId}/entry`。
-
-固定流程：
+一个 `baseUrl` 派生所有协议地址，不额外录入 WebSocket URL：
 
 ```text
-Product CTA
-  → GET /go/{productId}
-  → Site Worker 校验产品和转化分组
-  → customer_service 模式不消费 round-robin target
-  → 302 /messages/new/?productId=...&sectionId=...
-  → 用户在 Site Storefront 输入第一条消息
-  → POST /api/messages/v1/conversations
-  → 此时才消费 round-robin target
-  → Site Worker 调用独立客服 Worker 创建 Conversation
-  → 返回加密 conversationRef
-  → Storefront 进入 /messages/{conversationRef}/
+Management API  {baseUrl}/management/v1/*
+Client REST     {baseUrl}/client/v1/*
+Client Realtime wss://{host}/client/v1/realtime
 ```
 
-这样不会创建空会话，也不会在点击 CTA 和发送首条消息时重复推进 round-robin 游标。
+更换客服系统域名只修改 Product Admin 中的 `baseUrl`，Storefront 不需要重新构建。
 
-链接型 CTA 保持原行为：`/go/{productId}` 选择链接 target 后直接 HTTP 302。
+---
 
-## Site 同源 Messages API
+## Site 发布给 Storefront 的公开配置
 
-Storefront 只调用以下同源接口：
+Storefront 可以读取：
 
 ```http
-GET  /api/messages/v1/conversations
-GET  /api/messages/v1/conversations/{conversationRef}?before={cursor}&limit=30
-POST /api/messages/v1/conversations
-POST /api/messages/v1/conversations/{conversationRef}/messages
-POST /api/messages/v1/conversations/{conversationRef}/read
+GET /api/public/storefront/support/connections
 ```
 
-所有响应：
-
-```http
-Cache-Control: no-store, private
-Pragma: no-cache
-Referrer-Policy: no-referrer
-X-Robots-Tag: noindex, nofollow
-```
-
-写接口必须：
-
-- 校验请求 `Origin` 与 Site 同源；
-- 只接受 JSON；
-- 限制请求正文大小；
-- 单条消息最大 4000 字符；
-- 使用 `clientMessageId` 作为幂等键；
-- 错误响应不返回 Token、上游 URL、内部日志或原始 provider body。
-
-Storefront 的 `SupportGateway` 位于：
-
-```text
-apps/storefront/src/support-contract.ts
-apps/storefront/src/support-gateway.ts
-```
-
-UI 不允许直接访问客服域名。
-
-## 匿名访客身份
-
-Site 不建立用户账号系统。Messages 使用 HttpOnly 匿名访客 Cookie：
-
-```text
-site_messages_session
-```
-
-属性：
-
-```text
-HttpOnly
-Secure（HTTPS）
-SameSite=Strict
-Path=/
-```
-
-Cookie 内只保存签名后的随机 Visitor ID 和有效期。Conversation 和 Message 本身仍全部存放在独立客服系统。
-
-Site Worker 调用客服 Worker 时附加：
-
-```http
-X-Site-Visitor-Id: <visitor-id>
-X-Site-Request-Id: <request-id>
-Authorization: Bearer <api-token>   # 可选
-X-Project-Id: <project-id>          # 可选
-```
-
-## 多客服系统
-
-Site 允许多个客服连接同时启用，不假设全站只有一个客服 Worker。
-
-会话列表：
-
-```text
-Site Worker
-  → 并行读取所有已启用客服连接的当前 Visitor 会话
-  → 合并 / 排序
-  → 每条远程 conversation ID 加密为 Site conversationRef
-  → 返回 Storefront
-```
-
-打开、发送、已读时，Site Worker 解密 `conversationRef`，得到实际连接和远程 conversation ID，再向正确的客服 Worker 发请求。
-
-因此不同分区可以绑定不同客服系统，同时 Storefront 仍然只有一个 Messages UI。
-
-## generic_v1：客服分组接口
-
-后台配置转化池时继续使用分组接口：
-
-```http
-GET {baseUrl}/groups
-Accept: application/json
-Authorization: Bearer <token>   # 可选
-X-Project-Id: <projectId>       # 可选
-```
-
-返回：
+示例：
 
 ```json
 {
-  "groups": [
+  "connections": [
     {
-      "id": "sales",
-      "name": "Sales",
-      "isEnabled": true
+      "id": "connection-id",
+      "baseUrl": "https://support.example.com",
+      "projectId": "site-main",
+      "protocolVersion": "v1"
     }
   ]
 }
 ```
 
-转化入口只保存：
+此接口不得返回：
 
 ```text
-customer_service_connection_id
-remote_group_id
-remote_group_name
+managementToken
+apiToken
+Authorization
+任何客服后台登录凭证
 ```
 
-不重复保存客服域名、Token 或 Project ID。
+Product -> Support Group 使用：
 
-## generic_v1：Messages 上游协议
+```http
+GET /api/public/storefront/support/route/{productId}?sectionId={sectionId}
+```
 
-独立客服 Worker 需要实现下面的版本化接口。
+示例：
+
+```json
+{
+  "available": true,
+  "connection": {
+    "id": "connection-id",
+    "baseUrl": "https://support.example.com",
+    "projectId": "site-main",
+    "protocolVersion": "v1"
+  },
+  "groupId": "sales"
+}
+```
+
+这个接口只读取 Site 配置：
+
+- 不创建 Conversation；
+- 不发送 Message；
+- 不调用客服 Worker；
+- 不推进 Site round-robin cursor。
+
+在线客服的分配职责固定为：
+
+```text
+Site:
+Product -> Support Group
+
+Customer Service:
+Support Group -> Agent
+```
+
+Site 不负责客服坐席轮询。
+
+---
+
+## 用户身份：无登录、24 小时、6 位 ID
+
+Storefront 不要求用户注册或登录。
+
+浏览器第一次需要 Messages 时生成一个临时 ID：
+
+```text
+长度：6
+组成：恰好 3 个 A-Z 字母 + 3 个数字
+顺序：随机打乱
+示例：A7C2D9
+```
+
+前端代码不使用 `Guest` 或“游客”作为用户名称；客服系统以这个 6 位 ID 识别短期访客。
+
+生命周期固定：
+
+```text
+Visitor ID     24 小时
+Conversation   24 小时
+Message        随 Conversation 24 小时清理
+```
+
+Storefront 在本地保存 `visitorId + expiresAt`。到期直接生成新 ID，不做 Refresh Token、不做账户恢复、不做长期用户画像。
+
+---
+
+## 实时链路
+
+真实聊天链路固定为：
+
+```text
+Storefront
+   │
+   │ HTTPS / WebSocket
+   ▼
+Customer Service Worker
+   │
+   ▼
+Conversation Durable Object / realtime state
+   │
+   │ WebSocket
+   ▼
+Customer Service Admin
+```
+
+**Site Worker 不在这条链路中。**
+
+用户发送消息：
+
+```text
+Storefront -> Customer Service Worker -> Conversation -> Agent WebSocket
+```
+
+客服回复：
+
+```text
+Customer Admin -> Customer Service Worker -> Conversation -> Storefront WebSocket
+```
+
+REST 用于初始化、历史分页和断线恢复；WebSocket 用于实时事件。
+
+---
+
+## Client REST v1
+
+跨域 Client API 由客服系统实现。客服 Worker 需要允许 Product Admin 中对应 Site 域名的 CORS Origin。
+
+为了让 GET 请求尽量避免自定义 Header 触发额外预检，`visitorId` 和 `projectId` 使用 query/body 传递。
 
 ### 会话列表
 
 ```http
-GET {baseUrl}/messages/v1/conversations
+GET {baseUrl}/client/v1/conversations?visitorId=A7C2D9&projectId=site-main
 ```
 
 返回：
@@ -236,7 +241,7 @@ GET {baseUrl}/messages/v1/conversations
   "conversations": [
     {
       "id": "remote-conversation-id",
-      "agentName": "Agent Name",
+      "agentName": "Alex",
       "agentAvatarUrl": null,
       "productId": "product-id",
       "sectionId": "section-id",
@@ -262,7 +267,7 @@ closed
 ### 会话详情 / 历史分页
 
 ```http
-GET {baseUrl}/messages/v1/conversations/{remoteConversationId}?before={cursor}&limit=30
+GET {baseUrl}/client/v1/conversations/{conversationId}?visitorId=A7C2D9&projectId=site-main&before={cursor}&limit=30
 ```
 
 返回：
@@ -277,12 +282,13 @@ GET {baseUrl}/messages/v1/conversations/{remoteConversationId}?before={cursor}&l
     "sectionId": "section-id",
     "productTitle": "Product title",
     "productCoverUrl": null,
+    "productHref": "/sections/section-id/products/product-id/",
     "lastMessage": "Hello",
-    "lastMessageAt": "2026-08-09T12:00:00.000Z",
+    "lastMessageAt": "2026-08-09T11:00:00.000Z",
     "unreadCount": 0,
     "status": "waiting",
     "createdAt": "2026-08-09T11:00:00.000Z",
-    "expiresAt": "2026-09-09T11:00:00.000Z",
+    "expiresAt": "2026-08-10T11:00:00.000Z",
     "nextMessageCursor": null,
     "messages": [
       {
@@ -297,15 +303,12 @@ GET {baseUrl}/messages/v1/conversations/{remoteConversationId}?before={cursor}&l
 }
 ```
 
-`direction`：`customer | agent`。
+### 第一条消息：创建 Conversation
 
-Provider 返回的 `delivery`：`sent | read`。Storefront 自己可以临时显示 `sending`，但 `sending` 不是客服 Worker 的持久状态。
-
-### 创建会话并发送首条消息
+用户真正发送第一条消息时才创建 Conversation；打开聊天页面不创建空会话。
 
 ```http
-POST {baseUrl}/messages/v1/conversations
-Idempotency-Key: <clientMessageId>
+POST {baseUrl}/client/v1/conversations
 Content-Type: application/json
 ```
 
@@ -313,7 +316,9 @@ Content-Type: application/json
 
 ```json
 {
-  "remoteGroupId": "sales",
+  "visitorId": "A7C2D9",
+  "projectId": "site-main",
+  "groupId": "sales",
   "clientMessageId": "uuid",
   "message": "Hello",
   "product": {
@@ -326,22 +331,19 @@ Content-Type: application/json
 }
 ```
 
-返回格式与“会话详情”一致。
+客服系统保存产品快照到 Conversation metadata，不反向读取 Site D1。
 
-客服系统应将产品上下文作为 Conversation metadata 保存；Site 不要求客服仓库反向读取 Site D1。
-
-### 发送后续消息
+### 后续消息
 
 ```http
-POST {baseUrl}/messages/v1/conversations/{remoteConversationId}/messages
-Idempotency-Key: <clientMessageId>
+POST {baseUrl}/client/v1/conversations/{conversationId}/messages
 Content-Type: application/json
 ```
 
-请求：
-
 ```json
 {
+  "visitorId": "A7C2D9",
+  "projectId": "site-main",
   "clientMessageId": "uuid",
   "body": "Hello again"
 }
@@ -361,17 +363,17 @@ Content-Type: application/json
 }
 ```
 
-### 标记已读
+### 已读
 
 ```http
-POST {baseUrl}/messages/v1/conversations/{remoteConversationId}/read
+POST {baseUrl}/client/v1/conversations/{conversationId}/read
 Content-Type: application/json
 ```
 
-请求：
-
 ```json
 {
+  "visitorId": "A7C2D9",
+  "projectId": "site-main",
   "lastMessageId": "message-id"
 }
 ```
@@ -379,34 +381,102 @@ Content-Type: application/json
 返回：
 
 ```json
+{ "ok": true }
+```
+
+---
+
+## WebSocket v1
+
+Storefront 直接连接：
+
+```text
+wss://support.example.com/client/v1/realtime?visitorId=A7C2D9&projectId=site-main
+```
+
+客服后台也直接连接 Customer Service Worker 的 Agent realtime endpoint。
+
+第一版实时事件保持最小：
+
+```text
+message.created
+message.read
+conversation.assigned
+conversation.closed
+```
+
+事件至少携带：
+
+```json
 {
-  "ok": true
+  "type": "message.created",
+  "conversationId": "remote-conversation-id"
 }
 ```
 
-已读是显式写操作，不允许通过 GET 会话详情隐式改变未读状态。
+Storefront 收到事件后立即刷新对应 Conversation / conversation list。WebSocket 断开时自动重连；REST 是恢复源。
 
-## 独立客服仓库开发顺序
-
-`site` 完成后，新的客服仓库按下面顺序实现：
+第一版不做：
 
 ```text
-1. generic_v1 /groups
-2. Visitor ID 接收与校验边界
-3. Conversation / Message 数据模型
-4. POST 创建会话 + clientMessageId 幂等
-5. 会话列表 / 详情 / Cursor 历史分页
-6. 发送消息
-7. 已读状态
-8. Agent 管理后台
-9. WebSocket / SSE / Durable Objects 实时推送
-10. 数据保留 / 关闭 / 超时策略
+复杂 presence
+多设备同步
+消息撤回
+reaction
+thread
+mention
+复杂 ACK protocol
 ```
 
-实时机制属于客服仓库。Site Storefront 保持同一套 `SupportGateway`，未来从轮询升级实时推送时不改变业务归属。
+---
 
-## 旧数据
+## Management API v1
 
-旧版单例客服配置已经迁移为连接模型。旧手工客服 URL 入口保持为 legacy 数据并停用；正式在线客服 target 必须重新绑定“客服连接 + 远程客服分组”。
+只有 Site Product Admin 使用 Management API。
 
-`/groups/{groupId}/entry` 外部会话 URL 模型已经退役，不再作为 Site Messages 架构的一部分。
+读取客服 Group：
+
+```http
+GET {baseUrl}/management/v1/groups
+Accept: application/json
+Authorization: Bearer <managementToken>   # 可选
+X-Project-Id: <projectId>                 # 可选
+```
+
+返回：
+
+```json
+{
+  "groups": [
+    {
+      "id": "sales",
+      "name": "Sales",
+      "isEnabled": true
+    }
+  ]
+}
+```
+
+`managementToken` 永远不进入 Storefront bundle、公开 JSON、R2 快照或浏览器网络请求。
+
+---
+
+## 独立客服仓库下一步实现顺序
+
+`site` 只负责把前端和产品后台边界准备好。新的 `customer-service.git` 按下面顺序开发：
+
+```text
+1. Project + allowed Origin 配置
+2. /management/v1/groups
+3. 24 小时 Visitor / Conversation / Message 数据模型
+4. /client/v1/conversations 创建 + clientMessageId 幂等
+5. 会话列表 / 详情 / Cursor 历史分页
+6. 后续消息 / 已读
+7. Agent 登录与最小客服后台
+8. Group -> Agent 分配
+9. WebSocket realtime
+10. Durable Objects 会话协调
+11. 24 小时清理 / close / timeout
+```
+
+目标是个人和小团队使用的轻量实时客服系统：速度优先、职责清楚、不做 CRM 和长期账号体系。
