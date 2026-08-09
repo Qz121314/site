@@ -1,22 +1,5 @@
 /* Home is a recommendation feed: Hero -> 7 shortcuts + More -> up to 3 horizontal rails. */
 
-.brand-logo:not(:has(img)) {
-  display: grid;
-  place-items: center;
-  overflow: hidden;
-  color: #fff;
-  background: linear-gradient(145deg, var(--brand), var(--brand-strong));
-  font-size: 1.08rem;
-  font-weight: 900;
-  letter-spacing: -0.04em;
-  text-transform: uppercase;
-  text-shadow: 0 1px 2px rgb(0 0 0 / 16%);
-}
-
-.brand-lockup > span:last-child > strong {
-  letter-spacing: -0.025em;
-}
-
 .home-shortcuts {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));

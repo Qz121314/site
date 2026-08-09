@@ -7,6 +7,7 @@ import {
 import {
   type AnchorHTMLAttributes,
   type MouseEvent as ReactMouseEvent,
+  useEffect,
   useSyncExternalStore,
 } from 'react';
 import { App } from './App';
@@ -59,6 +60,31 @@ function StorefrontLink({ href = '/', onClick, ...props }: AnchorHTMLAttributes<
   return <a {...props} href={href} onClick={handleClick} />;
 }
 
+function StorefrontMetadata() {
+  const bootstrapQuery = useQuery({
+    queryKey: ['storefront-bootstrap'],
+    queryFn: ({ signal }) => loadStorefrontBootstrap(undefined, signal),
+    staleTime: 30_000,
+  });
+  const description = bootstrapQuery.data?.site.site.locationLabel.trim() ?? '';
+
+  useEffect(() => {
+    let meta = document.head.querySelector<HTMLMetaElement>('meta[name="description"]');
+    if (!description) {
+      meta?.remove();
+      return;
+    }
+    if (!meta) {
+      meta = document.createElement('meta');
+      meta.name = 'description';
+      document.head.append(meta);
+    }
+    meta.content = description;
+  }, [description]);
+
+  return null;
+}
+
 function HomeLoading() {
   return (
     <div className="app-shell loading-shell" aria-busy="true">
@@ -102,7 +128,6 @@ function HomeRoot() {
   if (bootstrapQuery.error || !bootstrapQuery.data) return <HomeError error={bootstrapQuery.error} />;
 
   const site = bootstrapQuery.data.site.site;
-  const initial = Array.from(site.name.trim())[0]?.toLocaleUpperCase('en') ?? '•';
   const copy = copyQuery.data ?? FALLBACK_STOREFRONT_COPY;
 
   return (
@@ -111,13 +136,7 @@ function HomeRoot() {
         <StorefrontBrandBar
           LinkComponent={StorefrontLink as StorefrontLinkComponent}
           locationLabel={site.locationLabel}
-          logo={(
-            <ResilientImage
-              alt=""
-              fallback={<span className="brand-lettermark">{initial}</span>}
-              src={site.logoUrl}
-            />
-          )}
+          logo={site.logoUrl ? <ResilientImage alt="" fallback={null} src={site.logoUrl} /> : null}
           siteName={site.name}
         />
         <main><HomeFeed bootstrap={bootstrapQuery.data} /></main>
@@ -134,5 +153,10 @@ function HomeRoot() {
 
 export function StorefrontRoot() {
   const pathname = useSyncExternalStore(subscribePathname, currentPathname, () => '/');
-  return pathname === '/' ? <HomeRoot /> : <App />;
+  return (
+    <>
+      <StorefrontMetadata />
+      {pathname === '/' ? <HomeRoot /> : <App />}
+    </>
+  );
 }

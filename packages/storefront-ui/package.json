@@ -9,6 +9,7 @@
     "./theme-contract.css": "./src/theme-contract.css",
     "./product-detail-theme-contract.css": "./src/product-detail-theme-contract.css",
     "./primary-pages-theme-contract.css": "./src/primary-pages-theme-contract.css",
+    "./typography-contract.css": "./src/typography-contract.css",
     "./styles.css": "./src/styles.css"
   },
   "scripts": {

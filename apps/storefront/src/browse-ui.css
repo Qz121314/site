@@ -1,0 +1,125 @@
+/* Browse is the search/discovery surface; Home remains intentionally search-free. */
+
+.discover-page {
+  gap: 17px;
+  padding-top: 1px;
+}
+
+.discover-page .app-page-heading {
+  margin-bottom: 0;
+  padding: 0 1px;
+}
+
+.discover-page .app-page-kicker {
+  display: none;
+}
+
+.discover-page .app-page-heading h1 {
+  font-size: clamp(1.62rem, 7vw, 2.45rem);
+  line-height: 1.04;
+}
+
+.discover-page .discover-search {
+  min-height: var(--theme-control-height, 46px);
+  margin: 0;
+  padding: 0 13px;
+  border-color: color-mix(in srgb, var(--line) 86%, transparent);
+  border-radius: var(--theme-radius-control, 14px);
+  background: var(--theme-control-background, var(--surface));
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--text) 5%, transparent);
+}
+
+.discover-page .discover-search svg {
+  width: 18px;
+  height: 18px;
+}
+
+.discover-page .discover-search input {
+  font-size: 0.84rem;
+  font-weight: 480;
+}
+
+.discover-page .discover-section-block {
+  gap: 10px;
+}
+
+.discover-page .discover-section-title {
+  min-height: 28px;
+  align-items: center;
+  padding-inline: 1px;
+}
+
+.discover-page .discover-section-title h2 {
+  font-size: 1rem;
+  line-height: 1.2;
+}
+
+.discover-page .discover-section-title > span {
+  display: grid;
+  min-width: 22px;
+  height: 22px;
+  place-items: center;
+  padding: 0 6px;
+  border: 0;
+  border-radius: 999px;
+  color: var(--muted);
+  background: var(--surface-soft);
+  font-size: 0.64rem;
+  font-weight: 650;
+}
+
+.discover-page .discover-section-grid {
+  gap: 8px 6px;
+}
+
+.discover-page .discover-section-grid .section-item {
+  min-height: calc(var(--theme-section-icon-size, 48px) + 30px);
+  gap: 6px;
+  padding: 8px 2px;
+}
+
+.discover-page .discover-section-grid .section-item > span:last-child {
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 0.68rem;
+  font-weight: 620;
+  line-height: 1.18;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.discover-page .product-grid {
+  margin-top: 1px;
+}
+
+.discover-page .discover-results-empty {
+  border-color: color-mix(in srgb, var(--line) 76%, transparent);
+  background: var(--surface-soft);
+  font-size: 0.78rem;
+}
+
+@media (max-width: 767px) {
+  .discover-page .discover-search {
+    position: sticky;
+    top: calc(56px + env(safe-area-inset-top));
+    z-index: 35;
+  }
+}
+
+@media (min-width: 768px) {
+  .discover-page {
+    gap: 24px;
+  }
+
+  .discover-page .app-page-heading h1 {
+    font-size: 2.35rem;
+  }
+
+  .discover-page .discover-search {
+    max-width: 720px;
+  }
+
+  .discover-page .discover-section-title h2 {
+    font-size: 1.12rem;
+  }
+}
