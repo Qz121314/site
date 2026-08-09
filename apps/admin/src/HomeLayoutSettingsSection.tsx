@@ -124,7 +124,7 @@ export function HomeLayoutSettingsSection({
                       移除
                     </button>
                   </div>
-                  {selected ? <small className="admin-home-layout-route">/{selected.slug}/</small> : null}
+                  {selected ? <small className="admin-home-layout-route">/sections/{selected.slug}/</small> : null}
                 </div>
               );
             })}
