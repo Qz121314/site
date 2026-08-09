@@ -25,6 +25,7 @@ import {
   type PublicSite,
   type StorefrontBootstrap,
 } from './content';
+import { loadPublishedHero, type PublishedHeroSlide } from './hero-content';
 import { HomepageAnalytics } from './HomepageAnalytics';
 import { MarkdownContent } from './MarkdownContent';
 import { ResilientImage, ResilientVideo } from './ResilientMedia';
@@ -129,6 +130,28 @@ function ProductCard({ product }: { product: PublicProductSummary }) {
       sectionName={product.sectionName}
       tags={product.tags}
       title={product.title}
+    />
+  );
+}
+
+function HeroMedia({ slide }: { slide: PublishedHeroSlide }) {
+  const fallback = <div className="hero-media-fallback" aria-hidden="true" />;
+  if (slide.mediaKind === 'video') {
+    return (
+      <ResilientVideo
+        fallback={fallback}
+        muted
+        playsInline
+        preload="metadata"
+        src={slide.mediaUrl}
+      />
+    );
+  }
+  return (
+    <ResilientImage
+      alt=""
+      fallback={fallback}
+      src={slide.mediaUrl}
     />
   );
 }
@@ -311,6 +334,15 @@ function HomePage({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
   const [showAllSections, setShowAllSections] = useState(false);
   const visibleSections = showAllSections ? home.allSections : home.sections;
   const canShowMore = site.navigation.showMore && home.allSections.length > home.sections.length;
+  const heroVersion = bootstrap.pointer.schemaVersion === 2
+    ? bootstrap.pointer.site.contentVersion
+    : bootstrap.pointer.contentVersion;
+  const heroQuery = useQuery({
+    queryKey: ['storefront-hero', heroVersion],
+    queryFn: ({ signal }) => loadPublishedHero(bootstrap, signal),
+    enabled: bootstrap.pointer.schemaVersion === 2,
+    staleTime: Number.POSITIVE_INFINITY,
+  });
 
   useEffect(() => {
     document.documentElement.lang = 'en';
@@ -320,12 +352,18 @@ function HomePage({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
   return (
     <SiteShell site={site}>
       <HomepageAnalytics measurementId={site.analytics.ga4MeasurementId} />
-      <StorefrontHero
-        description="Browse verified listings and connect through the available contact option."
-        eyebrow="Discover nearby"
-        locationLabel={site.locationLabel}
-        title="Find the right service, faster."
-      />
+      {heroQuery.data ? (
+        <StorefrontHero
+          LinkComponent={AppLink}
+          slides={heroQuery.data.slides.map((slide) => ({
+            id: slide.id,
+            media: <HeroMedia slide={slide} />,
+            title: slide.title,
+            description: slide.description,
+            cta: slide.cta,
+          }))}
+        />
+      ) : null}
 
       <section className="content-section" id="services">
         <div className="section-heading">

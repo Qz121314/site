@@ -3,6 +3,14 @@ import { createAuditLogStatement, writeAuditLog } from '../audit/write-audit-log
 import { apiError } from '../http/api-response';
 import { buildMediaUrl } from '../media/media-url';
 import {
+  createReplaceHeroSlideStatements,
+  getReadyHeroMediaAssets,
+  getSiteHeroSlides,
+  resolveHeroSlides,
+  validateHeroSlidesInput,
+  type SiteHeroSlideInput,
+} from '../settings/site-hero';
+import {
   createUpdateSiteSettingsStatement,
   getSiteSettings,
   normalizeMediaBaseUrl,
@@ -48,6 +56,18 @@ function parseMediaDomainTestBody(value: unknown): MediaDomainTestBody | null {
   return { mediaBaseUrl: value.mediaBaseUrl };
 }
 
+function heroInputFromCurrent(slides: Awaited<ReturnType<typeof getSiteHeroSlides>>): SiteHeroSlideInput[] {
+  return slides.map((slide) => ({
+    id: slide.id,
+    mediaAssetId: slide.mediaAssetId,
+    title: slide.title,
+    description: slide.description,
+    ctaLabel: slide.ctaLabel,
+    ctaHref: slide.ctaHref,
+    sortOrder: slide.sortOrder,
+  }));
+}
+
 async function getReadyImageAsset(
   db: D1Database,
   id: string,
@@ -70,7 +90,8 @@ export const adminSiteSettingsRoutes = new Hono<AppEnvironment>();
 adminSiteSettingsRoutes.get('/', async (context) => {
   context.header('Cache-Control', 'no-store');
   const settings = await getSiteSettings(context.env.DB);
-  return context.json({ settings });
+  const heroSlides = await getSiteHeroSlides(context.env.DB, settings.mediaBaseUrl);
+  return context.json({ settings: { ...settings, heroSlides } });
 });
 
 adminSiteSettingsRoutes.put('/', async (context) => {
@@ -103,6 +124,13 @@ adminSiteSettingsRoutes.put('/', async (context) => {
     });
   }
 
+  const heroValidation = validateHeroSlidesInput(isRecord(body) ? body.heroSlides : undefined);
+  if (!heroValidation.ok) {
+    return apiError(context, 400, 'INVALID_SITE_HERO', heroValidation.message, {
+      field: heroValidation.field,
+    });
+  }
+
   const logoAsset = validation.value.logoAssetId
     ? await getReadyImageAsset(context.env.DB, validation.value.logoAssetId)
     : null;
@@ -112,12 +140,39 @@ adminSiteSettingsRoutes.put('/', async (context) => {
     });
   }
 
-  const current = await getSiteSettings(context.env.DB);
-  const updatedAt = new Date().toISOString();
-  const updated = toSiteSettings(validation.value, logoAsset?.object_key ?? null, updatedAt);
+  const currentSettings = await getSiteSettings(context.env.DB);
+  const currentHeroSlides = await getSiteHeroSlides(context.env.DB, currentSettings.mediaBaseUrl);
+  const heroInput = heroValidation.provided
+    ? heroValidation.value
+    : heroInputFromCurrent(currentHeroSlides);
+  const heroAssets = await getReadyHeroMediaAssets(
+    context.env.DB,
+    heroInput.map((slide) => slide.mediaAssetId),
+  );
+  if (heroAssets.size !== heroInput.length) {
+    return apiError(
+      context,
+      409,
+      'HERO_ASSET_INVALID',
+      'Hero 素材不存在、已删除或状态异常，请重新选择。',
+      { field: 'heroSlides' },
+    );
+  }
 
-  await context.env.DB.batch([
+  const updatedAt = new Date().toISOString();
+  const resolvedHeroSlides = resolveHeroSlides(heroInput, heroAssets, validation.value.mediaBaseUrl);
+  const updated = {
+    ...toSiteSettings(validation.value, logoAsset?.object_key ?? null, updatedAt),
+    heroSlides: resolvedHeroSlides,
+  };
+  const current = { ...currentSettings, heroSlides: currentHeroSlides };
+  const statements: D1PreparedStatement[] = [
     createUpdateSiteSettingsStatement(context.env.DB, validation.value, updatedAt),
+  ];
+  if (heroValidation.provided) {
+    statements.push(...createReplaceHeroSlideStatements(context.env.DB, heroValidation.value, updatedAt));
+  }
+  statements.push(
     createAuditLogStatement(context.env.DB, {
       action: 'site_settings.updated',
       entityType: 'site_settings',
@@ -127,8 +182,9 @@ adminSiteSettingsRoutes.put('/', async (context) => {
       after: { ...updated },
       createdAt: updatedAt,
     }),
-  ]);
+  );
 
+  await context.env.DB.batch(statements);
   return context.json({ settings: updated });
 });
 

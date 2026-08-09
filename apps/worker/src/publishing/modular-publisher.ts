@@ -123,6 +123,18 @@ type SiteRow = {
   ga4_measurement_id: string | null;
 };
 
+type HeroSlideRow = {
+  id: string;
+  media_asset_id: string;
+  media_kind: 'image' | 'animated_image' | 'video' | null;
+  media_object_key: string | null;
+  title: string | null;
+  description: string | null;
+  cta_label: string | null;
+  cta_href: string | null;
+  sort_order: number;
+};
+
 type SectionRow = {
   id: string;
   slug: string;
@@ -206,6 +218,7 @@ type RetentionVersionRow = {
 
 type Source = {
   site: SiteRow;
+  heroSlides: HeroSlideRow[];
   sections: SectionRow[];
   categories: CategoryRow[];
   products: ProductRow[];
@@ -429,6 +442,29 @@ async function loadSource(db: D1Database): Promise<Source> {
     throw new ModularPublicationError('SITE_SETTINGS_MISSING', '站点设置不存在，无法读取发布状态。');
   }
 
+  const heroSlides = (
+    await db
+      .prepare(
+        `SELECT
+           hs.id,
+           hs.media_asset_id,
+           ma.media_kind,
+           ma.object_key AS media_object_key,
+           hs.title,
+           hs.description,
+           hs.cta_label,
+           hs.cta_href,
+           hs.sort_order
+         FROM site_hero_slides hs
+         LEFT JOIN media_assets ma
+           ON ma.id = hs.media_asset_id
+          AND ma.status = 'ready'
+          AND ma.deleted_at IS NULL
+         ORDER BY hs.sort_order ASC, hs.id ASC`,
+      )
+      .all<HeroSlideRow>()
+  ).results;
+
   const sections = (
     await db
       .prepare(
@@ -550,16 +586,33 @@ async function loadSource(db: D1Database): Promise<Source> {
     mediaByProduct.set(item.product_id, current);
   }
 
-  return { site, sections, categories, products, mediaByProduct, faqs, publicTags, tagsByProduct };
+  return { site, heroSlides, sections, categories, products, mediaByProduct, faqs, publicTags, tagsByProduct };
 }
 
-function sitePublicModel(site: SiteRow) {
+function sitePublicModel(site: SiteRow, heroSlides: HeroSlideRow[]) {
   return {
     name: site.site_name,
     locationLabel: site.location_label,
     mediaBaseUrl: site.media_base_url,
     logoObjectKey: site.logo_object_key,
     homeSectionLimit: site.home_section_limit,
+    hero: heroSlides.length > 0
+      ? {
+          slides: heroSlides.map((slide) => ({
+            id: slide.id,
+            media: {
+              kind: slide.media_kind,
+              objectKey: slide.media_object_key,
+            },
+            title: slide.title,
+            description: slide.description,
+            cta: slide.cta_label && slide.cta_href
+              ? { label: slide.cta_label, href: slide.cta_href }
+              : null,
+            sortOrder: slide.sort_order,
+          })),
+        }
+      : null,
     navigation: {
       showHot: site.show_hot === 1,
       showLatest: site.show_latest === 1,
@@ -654,14 +707,17 @@ function faqModel(source: Source) {
 
 function modulePayload(source: Source, moduleKey: string): ModulePayload {
   if (moduleKey === 'site') {
-    const site = sitePublicModel(source.site);
+    const site = sitePublicModel(source.site, source.heroSlides);
     return {
       moduleKey,
       kind: 'site',
       sectionId: null,
       label: '站点设置',
       stateModel: site,
-      mediaKeys: uniqueStrings([source.site.logo_object_key]),
+      mediaKeys: uniqueStrings([
+        source.site.logo_object_key,
+        ...source.heroSlides.map((slide) => slide.media_object_key),
+      ]),
       buildFiles: (contentVersion, publishedAt) => [
         {
           relativePath: 'site.json',
@@ -770,6 +826,14 @@ function validatePayload(source: Source, payload: ModulePayload): void {
     }
     if (source.site.logo_asset_id && !source.site.logo_object_key) {
       throw new ModularPublicationError('SITE_LOGO_INVALID', '当前站点 Logo 已不可用，请重新设置后再发布。');
+    }
+    for (const slide of source.heroSlides) {
+      if (!slide.media_object_key || !slide.media_kind) {
+        throw new ModularPublicationError(
+          'SITE_HERO_MEDIA_INVALID',
+          '当前 Hero 存在不可用素材，请在站点设置中重新选择后再发布。',
+        );
+      }
     }
     return;
   }

@@ -1,0 +1,220 @@
+.loading-shell .loading-hero {
+  display: none;
+}
+
+.hero-carousel {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  border-radius: var(--radius-lg, 20px);
+  background: var(--surface, #fff);
+  box-shadow: var(--shadow-soft, 0 12px 30px rgba(15, 23, 42, 0.08));
+}
+
+.hero-carousel-viewport {
+  width: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  overscroll-behavior-x: contain;
+  touch-action: pan-x pan-y;
+}
+
+.hero-carousel-viewport::-webkit-scrollbar {
+  display: none;
+}
+
+.hero-carousel-track {
+  display: flex;
+  width: 100%;
+}
+
+.hero-carousel-slide {
+  position: relative;
+  flex: 0 0 100%;
+  width: 100%;
+  min-width: 0;
+  aspect-ratio: 16 / 7;
+  overflow: hidden;
+  scroll-snap-align: start;
+  scroll-snap-stop: always;
+  background: #0f172a;
+}
+
+.hero-carousel-media,
+.hero-carousel-media > * {
+  width: 100%;
+  height: 100%;
+}
+
+.hero-carousel-media img,
+.hero-carousel-media video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.hero-carousel-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: flex-end;
+  padding: clamp(18px, 4vw, 42px);
+  pointer-events: none;
+  background: linear-gradient(180deg, transparent 28%, rgba(2, 6, 23, 0.72) 100%);
+}
+
+.hero-carousel-copy {
+  display: grid;
+  gap: 8px;
+  width: min(640px, 88%);
+  color: #fff;
+  text-shadow: 0 1px 18px rgba(0, 0, 0, 0.28);
+}
+
+.hero-carousel-copy h1 {
+  margin: 0;
+  max-width: 18ch;
+  color: inherit;
+  font-size: clamp(24px, 4vw, 44px);
+  line-height: 1.08;
+}
+
+.hero-carousel-copy p {
+  margin: 0;
+  max-width: 52ch;
+  color: rgba(255, 255, 255, 0.9);
+  font-size: clamp(13px, 1.7vw, 17px);
+  line-height: 1.5;
+}
+
+.hero-carousel-cta {
+  justify-self: start;
+  margin-top: 4px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: var(--brand, #ff5a1f);
+  color: #fff;
+  font-weight: 700;
+  text-decoration: none;
+  text-shadow: none;
+  pointer-events: auto;
+}
+
+.hero-carousel-arrow {
+  position: absolute;
+  top: 50%;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.36);
+  border-radius: 50%;
+  background: rgba(15, 23, 42, 0.46);
+  color: #fff;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  transform: translateY(-50%);
+  backdrop-filter: blur(8px);
+}
+
+.hero-carousel-arrow:hover,
+.hero-carousel-arrow:focus-visible {
+  background: rgba(15, 23, 42, 0.72);
+}
+
+.hero-carousel-arrow.is-prev {
+  left: 12px;
+}
+
+.hero-carousel-arrow.is-next {
+  right: 12px;
+}
+
+.hero-carousel-dots {
+  position: absolute;
+  left: 50%;
+  bottom: 10px;
+  z-index: 3;
+  display: flex;
+  gap: 6px;
+  padding: 5px 7px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.34);
+  transform: translateX(-50%);
+  backdrop-filter: blur(8px);
+}
+
+.hero-carousel-dot {
+  width: 7px;
+  height: 7px;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.48);
+  cursor: pointer;
+  transition: width 160ms ease, background 160ms ease;
+}
+
+.hero-carousel-dot.is-active {
+  width: 20px;
+  background: #fff;
+}
+
+.hero-carousel.is-single .hero-carousel-dots,
+.hero-carousel.is-single .hero-carousel-arrow {
+  display: none;
+}
+
+@media (max-width: 720px) {
+  .hero-carousel {
+    border-radius: 16px;
+  }
+
+  .hero-carousel-slide {
+    aspect-ratio: 16 / 9;
+  }
+
+  .hero-carousel-overlay {
+    padding: 18px 18px 28px;
+  }
+
+  .hero-carousel-copy {
+    width: 90%;
+    gap: 6px;
+  }
+
+  .hero-carousel-copy h1 {
+    font-size: clamp(22px, 7vw, 32px);
+  }
+
+  .hero-carousel-copy p {
+    display: -webkit-box;
+    overflow: hidden;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
+  }
+
+  .hero-carousel-arrow {
+    display: none;
+  }
+
+  .hero-carousel-dots {
+    bottom: 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .hero-carousel-viewport {
+    scroll-behavior: auto;
+  }
+
+  .hero-carousel-dot {
+    transition: none;
+  }
+}

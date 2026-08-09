@@ -73,6 +73,18 @@ export function AssetTable({
           {assets.map((asset) => {
             const references = referenceLabels(asset.references);
             const status = cleanupStatus(asset);
+            const unclassifiedReferenceCount = Math.max(
+              0,
+              asset.referenceCount - (
+                asset.references.logo +
+                asset.references.sectionIcon +
+                asset.references.productCover +
+                asset.references.productGallery
+              ),
+            );
+            if (unclassifiedReferenceCount > 0) {
+              references.unshift(`Hero × ${unclassifiedReferenceCount}`);
+            }
             return (
               <tr key={asset.key}>
                 <td className="asset-select-cell">

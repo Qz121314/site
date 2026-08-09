@@ -6,6 +6,7 @@ import { installPublicContentFetchFallback } from './public-content-transport';
 import { installStorefrontTheme } from './theme-runtime';
 import '@site/storefront-ui/styles.css';
 import './styles.css';
+import './hero-carousel.css';
 import './theme-runtime.css';
 import './media-runtime.css';
 import './storefront-resilience.css';
