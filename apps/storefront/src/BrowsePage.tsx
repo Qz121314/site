@@ -22,8 +22,9 @@ function SearchIcon() {
 }
 
 function publishedSections(bootstrap: StorefrontBootstrap): PublicSection[] {
-  if (bootstrap.pointer.schemaVersion !== 2) return bootstrap.home.allSections;
-  return bootstrap.home.allSections.filter((section) => Boolean(bootstrap.pointer.sections[section.id]));
+  const pointer = bootstrap.pointer;
+  if (pointer.schemaVersion !== 2) return bootstrap.home.allSections;
+  return bootstrap.home.allSections.filter((section) => Boolean(pointer.sections[section.id]));
 }
 
 function productMatches(product: PublicProductSummary, keyword: string): boolean {
@@ -145,7 +146,7 @@ export function BrowsePage({
                   <span className="browse-section-card-content">
                     <strong>{section.name}</strong>
                     {presentation?.description ? <p>{presentation.description}</p> : null}
-                    <small>{presentation?.productCount ?? 0} {browse.productsTitle}</small>
+                    {presentation ? <small>{presentation.productCount} {browse.productsTitle}</small> : null}
                   </span>
                   <span className="browse-section-card-chevron" aria-hidden="true">›</span>
                 </LinkComponent>
