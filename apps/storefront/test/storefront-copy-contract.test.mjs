@@ -48,6 +48,8 @@ test('normal storefront business copy is not re-hardcoded in the root or support
     'No conversations yet',
     'Customer Support',
     'Waiting for an agent…',
+    'Add attachment',
+    'Send message',
   ]) {
     assert.equal(
       normalUiSource.includes(text),
@@ -57,8 +59,8 @@ test('normal storefront business copy is not re-hardcoded in the root or support
   }
 });
 
-test('system error and accessibility copy remains separate from business copy', () => {
+test('system failure copy remains separate while user-facing accessibility labels use Storefront Copy', () => {
   assert.match(rootSource, /Storefront unavailable/u);
-  assert.match(supportSource, /aria-label="Add attachment"/u);
-  assert.match(supportSource, /aria-label="Send message"/u);
+  assert.match(supportSource, /aria-label=\{messages\.attachmentLabel\}/u);
+  assert.match(supportSource, /aria-label=\{messages\.sendLabel\}/u);
 });
