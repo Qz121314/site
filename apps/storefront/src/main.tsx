@@ -15,7 +15,9 @@ import './storefront-pages.css';
 import './pwa.css';
 import './app-shell.css';
 import './content-ui.css';
+import './product-detail-ui.css';
 import '@site/storefront-ui/theme-contract.css';
+import '@site/storefront-ui/product-detail-theme-contract.css';
 
 installPublicContentFetchFallback();
 void installStorefrontTheme();

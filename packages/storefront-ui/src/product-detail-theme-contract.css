@@ -1,0 +1,111 @@
+/* Product detail extension for the shared Theme Center visual contract. */
+
+:is(html, .storefront-theme-root) {
+  --theme-detail-gap: 18px;
+  --theme-detail-gallery-gap: 8px;
+  --theme-detail-media-ratio: 4 / 3;
+  --theme-detail-desktop-media-ratio: 16 / 10;
+  --theme-detail-media-radius: var(--theme-radius-media, 16px);
+  --theme-detail-inline-media-radius: var(--theme-radius-control, 14px);
+  --theme-detail-media-background: var(--theme-media-background, var(--surface-soft));
+  --theme-detail-media-shadow: none;
+  --theme-detail-panel-radius: var(--theme-radius-card, 18px);
+  --theme-detail-panel-padding: 18px;
+  --theme-detail-mobile-panel-padding: 16px;
+  --theme-detail-panel-background: var(--theme-card-background, var(--surface));
+  --theme-detail-panel-border: var(--theme-card-border, var(--line));
+  --theme-detail-panel-shadow: var(--theme-card-shadow, none);
+  --theme-detail-meta-background: var(--surface-soft);
+  --theme-detail-cta-height: 50px;
+  --theme-detail-cta-radius: var(--theme-radius-control, 14px);
+  --theme-detail-cta-background: var(--brand);
+  --theme-detail-cta-surface: color-mix(in srgb, var(--surface) 96%, transparent);
+  --theme-detail-cta-shadow: 0 10px 24px color-mix(in srgb, var(--brand) 22%, transparent);
+  --theme-detail-cta-bar-shadow: 0 -8px 24px color-mix(in srgb, var(--text) 6%, transparent);
+}
+
+:is(html, .storefront-theme-root)[data-density='compact'] {
+  --theme-detail-gap: 14px;
+  --theme-detail-panel-padding: 15px;
+  --theme-detail-mobile-panel-padding: 14px;
+  --theme-detail-cta-height: 48px;
+}
+
+:is(html, .storefront-theme-root)[data-density='comfortable'],
+.storefront-theme-root:is([data-theme='noir'], [data-theme='saas'], [data-theme='travel']) {
+  --theme-detail-gap: 22px;
+  --theme-detail-panel-padding: 21px;
+  --theme-detail-mobile-panel-padding: 18px;
+  --theme-detail-cta-height: 52px;
+}
+
+:is(html, .storefront-theme-root)[data-theme='marketplace'] {
+  --theme-detail-panel-background: var(--surface);
+  --theme-detail-panel-border: var(--line);
+  --theme-detail-panel-shadow: 0 3px 14px rgb(31 35 40 / 4%);
+  --theme-detail-media-shadow: 0 3px 16px rgb(31 35 40 / 5%);
+}
+
+:is(html, .storefront-theme-root)[data-theme='noir'] {
+  --theme-detail-media-radius: 22px;
+  --theme-detail-panel-radius: 22px;
+  --theme-detail-panel-background: color-mix(in srgb, var(--surface) 94%, var(--brand) 6%);
+  --theme-detail-panel-border: color-mix(in srgb, var(--line) 76%, var(--brand) 24%);
+  --theme-detail-panel-shadow: 0 14px 34px rgb(0 0 0 / 24%);
+  --theme-detail-media-background: color-mix(in srgb, var(--surface-soft) 92%, black 8%);
+  --theme-detail-media-shadow: 0 16px 40px rgb(0 0 0 / 26%);
+  --theme-detail-meta-background: color-mix(in srgb, var(--surface-soft) 88%, var(--brand) 12%);
+  --theme-detail-cta-surface: color-mix(in srgb, var(--surface) 92%, transparent);
+}
+
+:is(html, .storefront-theme-root)[data-theme='live'] {
+  --theme-detail-gap: 16px;
+  --theme-detail-media-radius: 14px;
+  --theme-detail-panel-radius: 14px;
+  --theme-detail-panel-background: color-mix(in srgb, var(--surface) 92%, var(--brand) 8%);
+  --theme-detail-panel-border: color-mix(in srgb, var(--line) 66%, var(--brand) 34%);
+  --theme-detail-panel-shadow: 0 9px 26px rgb(0 0 0 / 22%);
+  --theme-detail-meta-background: color-mix(in srgb, var(--surface-soft) 88%, var(--brand) 12%);
+  --theme-detail-cta-radius: 12px;
+  --theme-detail-cta-shadow: 0 10px 28px color-mix(in srgb, var(--brand) 30%, transparent);
+}
+
+:is(html, .storefront-theme-root)[data-theme='saas'] {
+  --theme-detail-media-ratio: 16 / 10;
+  --theme-detail-media-radius: 12px;
+  --theme-detail-panel-radius: 14px;
+  --theme-detail-panel-background: var(--surface);
+  --theme-detail-panel-border: var(--line);
+  --theme-detail-panel-shadow: 0 2px 9px color-mix(in srgb, var(--brand) 7%, transparent);
+  --theme-detail-media-shadow: 0 4px 16px color-mix(in srgb, var(--brand) 7%, transparent);
+  --theme-detail-cta-radius: 10px;
+}
+
+:is(html, .storefront-theme-root)[data-theme='travel'] {
+  --theme-detail-media-ratio: 4 / 3;
+  --theme-detail-media-radius: 26px;
+  --theme-detail-panel-radius: 24px;
+  --theme-detail-panel-background: color-mix(in srgb, var(--surface) 96%, var(--surface-soft) 4%);
+  --theme-detail-panel-border: color-mix(in srgb, var(--line) 88%, transparent);
+  --theme-detail-panel-shadow: 0 10px 28px rgb(57 72 65 / 9%);
+  --theme-detail-media-shadow: 0 12px 30px rgb(57 72 65 / 10%);
+  --theme-detail-meta-background: var(--surface-soft);
+  --theme-detail-cta-radius: 18px;
+}
+
+:is(html, .storefront-theme-root)[data-theme='tech'] {
+  --theme-detail-media-radius: 16px;
+  --theme-detail-panel-radius: 16px;
+  --theme-detail-panel-background: color-mix(in srgb, var(--surface) 80%, transparent);
+  --theme-detail-panel-border: color-mix(in srgb, var(--line) 68%, var(--brand) 32%);
+  --theme-detail-panel-shadow: 0 12px 32px rgb(0 0 0 / 24%);
+  --theme-detail-media-background: color-mix(in srgb, var(--surface-soft) 84%, transparent);
+  --theme-detail-media-shadow: 0 14px 34px rgb(0 0 0 / 24%);
+  --theme-detail-meta-background: color-mix(in srgb, var(--surface-soft) 82%, transparent);
+  --theme-detail-cta-surface: color-mix(in srgb, var(--surface) 82%, transparent);
+}
+
+:is(html, .storefront-theme-root)[data-theme='tech'] :is(.detail-heading, .detail-description, .contact-card, .mobile-cta-bar),
+:is(html, .storefront-theme-root)[data-theme='noir'] .mobile-cta-bar {
+  backdrop-filter: blur(18px);
+}
