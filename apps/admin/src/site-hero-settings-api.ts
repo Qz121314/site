@@ -22,15 +22,30 @@ export type SiteHeroSlide = {
 
 export type SiteHeroSlideInput = Omit<SiteHeroSlide, 'mediaKind' | 'mediaUrl'>;
 
+export type BottomNavigationKey = 'home' | 'browse' | 'messages' | 'faq';
+export type BottomNavigationIconType = 'builtin' | 'emoji' | 'asset';
+export type BottomNavigationItem = {
+  key: BottomNavigationKey;
+  label: string;
+  iconType: BottomNavigationIconType;
+  iconValue: string | null;
+  iconAssetId: string | null;
+  enabled: boolean;
+  sortOrder: number;
+};
+export type BottomNavigationItemInput = Omit<BottomNavigationItem, 'sortOrder'>;
+
 export type SiteSettingsWithHero = SiteSettings & {
   storefrontCopy: StorefrontCopy;
   heroSlides: SiteHeroSlide[];
+  bottomNavigation: BottomNavigationItem[];
 };
 
 export type SiteSettingsWithHeroUpdateInput = SiteSettingsUpdateInput & {
   logoAssetId: string | null;
   storefrontCopy: StorefrontCopy;
   heroSlides: SiteHeroSlideInput[];
+  bottomNavigation: BottomNavigationItemInput[];
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -57,15 +72,41 @@ function parseHeroSlide(value: unknown): SiteHeroSlide {
   return value as SiteHeroSlide;
 }
 
+function parseBottomNavigationItem(value: unknown): BottomNavigationItem {
+  if (!isRecord(value)) {
+    throw new AdminApiError(500, 'INVALID_RESPONSE', '底部导航返回数据无效。');
+  }
+  const valid =
+    (value.key === 'home' || value.key === 'browse' || value.key === 'messages' || value.key === 'faq') &&
+    typeof value.label === 'string' &&
+    (value.iconType === 'builtin' || value.iconType === 'emoji' || value.iconType === 'asset') &&
+    (typeof value.iconValue === 'string' || value.iconValue === null) &&
+    (typeof value.iconAssetId === 'string' || value.iconAssetId === null) &&
+    typeof value.enabled === 'boolean' &&
+    typeof value.sortOrder === 'number';
+  if (!valid) {
+    throw new AdminApiError(500, 'INVALID_RESPONSE', '底部导航返回数据无效。');
+  }
+  return value as BottomNavigationItem;
+}
+
 function withHero(settings: SiteSettings): SiteSettingsWithHero {
-  const raw = settings as SiteSettings & { heroSlides?: unknown; storefrontCopy?: unknown };
+  const raw = settings as SiteSettings & {
+    heroSlides?: unknown;
+    storefrontCopy?: unknown;
+    bottomNavigation?: unknown;
+  };
   if (!Array.isArray(raw.heroSlides)) {
     throw new AdminApiError(500, 'INVALID_RESPONSE', 'Hero 设置返回数据无效。');
+  }
+  if (!Array.isArray(raw.bottomNavigation)) {
+    throw new AdminApiError(500, 'INVALID_RESPONSE', '底部导航返回数据无效。');
   }
   return {
     ...settings,
     storefrontCopy: parseStorefrontCopy(raw.storefrontCopy),
     heroSlides: raw.heroSlides.map(parseHeroSlide),
+    bottomNavigation: raw.bottomNavigation.map(parseBottomNavigationItem),
   };
 }
 

@@ -1,0 +1,18 @@
+.storefront-nav-image,
+.storefront-nav-emoji {
+  display: block;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
+}
+
+.storefront-nav-image {
+  border-radius: 6px;
+  object-fit: cover;
+}
+
+.storefront-nav-emoji {
+  font-size: 1.35rem;
+  line-height: 24px;
+  text-align: center;
+}

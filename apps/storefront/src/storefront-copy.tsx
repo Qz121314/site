@@ -1,7 +1,18 @@
 import { createContext, useContext, type ReactNode } from 'react';
+import {
+  FALLBACK_BOTTOM_NAVIGATION,
+  loadBottomNavigation,
+  type BottomNavigationItemConfig,
+} from './bottom-navigation';
 
 export type StorefrontCopy = {
-  navigation: { home: string; browse: string; messages: string; faq: string };
+  navigation: {
+    home: string;
+    browse: string;
+    messages: string;
+    faq: string;
+    items: BottomNavigationItemConfig[];
+  };
   home: {
     sectionsKicker: string;
     sectionsTitle: string;
@@ -75,9 +86,16 @@ export type StorefrontCopy = {
   };
 };
 
-/* Rollout/offline fallback only. Normal rendering uses the backend copy endpoint. */
+const FALLBACK_NAVIGATION_LABELS = {
+  home: 'Home',
+  browse: 'Browse',
+  messages: 'Messages',
+  faq: 'FAQ',
+};
+
+/* Rollout/offline fallback only. Normal rendering uses backend endpoints. */
 export const FALLBACK_STOREFRONT_COPY: StorefrontCopy = {
-  navigation: { home: 'Home', browse: 'Browse', messages: 'Messages', faq: 'FAQ' },
+  navigation: { ...FALLBACK_NAVIGATION_LABELS, items: FALLBACK_BOTTOM_NAVIGATION },
   home: {
     sectionsKicker: 'Explore',
     sectionsTitle: 'Services',
@@ -168,10 +186,14 @@ function normalizeGroup<T>(value: unknown, fallback: T): T {
   return output as T;
 }
 
-function normalizeCopy(value: unknown): StorefrontCopy {
+function normalizeCopy(value: unknown, navigationItems: BottomNavigationItemConfig[]): StorefrontCopy {
   const record = isRecord(value) ? value : {};
+  const navigationLabels = normalizeGroup(
+    record.navigation,
+    FALLBACK_NAVIGATION_LABELS,
+  );
   return {
-    navigation: normalizeGroup(record.navigation, FALLBACK_STOREFRONT_COPY.navigation),
+    navigation: { ...navigationLabels, items: navigationItems },
     home: normalizeGroup(record.home, FALLBACK_STOREFRONT_COPY.home),
     browse: normalizeGroup(record.browse, FALLBACK_STOREFRONT_COPY.browse),
     section: normalizeGroup(record.section, FALLBACK_STOREFRONT_COPY.section),
@@ -190,11 +212,20 @@ export async function loadStorefrontCopy(signal?: AbortSignal): Promise<Storefro
   };
   if (signal) init.signal = signal;
 
-  const response = await fetch('/api/public/storefront-copy/', init);
+  const [response, navigationResult] = await Promise.all([
+    fetch('/api/public/storefront-copy/', init),
+    loadBottomNavigation(signal).catch(() => null),
+  ]);
   if (!response.ok) throw new Error('STOREFRONT_COPY_UNAVAILABLE');
   const body = await response.json() as unknown;
   if (!isRecord(body)) throw new Error('STOREFRONT_COPY_INVALID');
-  return normalizeCopy(body.copy);
+
+  const normalizedWithoutNavigation = normalizeCopy(body.copy, FALLBACK_BOTTOM_NAVIGATION);
+  const navigationItems = navigationResult ?? FALLBACK_BOTTOM_NAVIGATION.map((item) => ({
+    ...item,
+    label: normalizedWithoutNavigation.navigation[item.key],
+  }));
+  return normalizeCopy(body.copy, navigationItems);
 }
 
 export function StorefrontCopyProvider({

@@ -3,6 +3,14 @@ import { createAuditLogStatement, writeAuditLog } from '../audit/write-audit-log
 import { apiError } from '../http/api-response';
 import { buildMediaUrl } from '../media/media-url';
 import {
+  BOTTOM_NAVIGATION_KEYS,
+  createReplaceBottomNavigationStatements,
+  getBottomNavigation,
+  getReadyBottomNavigationAssets,
+  validateBottomNavigationInput,
+  type BottomNavigationInput,
+} from '../settings/bottom-navigation';
+import {
   createReplaceHeroSlideStatements,
   getReadyHeroMediaAssets,
   getSiteHeroSlides,
@@ -68,6 +76,21 @@ function heroInputFromCurrent(slides: Awaited<ReturnType<typeof getSiteHeroSlide
   }));
 }
 
+function navigationInputFromCurrent(
+  items: Awaited<ReturnType<typeof getBottomNavigation>>,
+): BottomNavigationInput {
+  return items.map(({ sortOrder: _sortOrder, ...item }) => item);
+}
+
+function resolvedNavigation(input: BottomNavigationInput) {
+  const byKey = new Map(input.map((item) => [item.key, item]));
+  return BOTTOM_NAVIGATION_KEYS.map((key, sortOrder) => {
+    const item = byKey.get(key);
+    if (!item) throw new Error('BOTTOM_NAVIGATION_MISSING');
+    return { ...item, sortOrder };
+  });
+}
+
 async function getReadyImageAsset(
   db: D1Database,
   id: string,
@@ -90,8 +113,11 @@ export const adminSiteSettingsRoutes = new Hono<AppEnvironment>();
 adminSiteSettingsRoutes.get('/', async (context) => {
   context.header('Cache-Control', 'no-store');
   const settings = await getSiteSettings(context.env.DB);
-  const heroSlides = await getSiteHeroSlides(context.env.DB, settings.mediaBaseUrl);
-  return context.json({ settings: { ...settings, heroSlides } });
+  const [heroSlides, bottomNavigation] = await Promise.all([
+    getSiteHeroSlides(context.env.DB, settings.mediaBaseUrl),
+    getBottomNavigation(context.env.DB),
+  ]);
+  return context.json({ settings: { ...settings, heroSlides, bottomNavigation } });
 });
 
 adminSiteSettingsRoutes.put('/', async (context) => {
@@ -132,6 +158,15 @@ adminSiteSettingsRoutes.put('/', async (context) => {
     });
   }
 
+  const navigationValidation = validateBottomNavigationInput(
+    isRecord(body) ? body.bottomNavigation : undefined,
+  );
+  if (!navigationValidation.ok) {
+    return apiError(context, 400, 'INVALID_BOTTOM_NAVIGATION', navigationValidation.message, {
+      field: navigationValidation.field,
+    });
+  }
+
   const logoAsset = validation.value.logoAssetId
     ? await getReadyImageAsset(context.env.DB, validation.value.logoAssetId)
     : null;
@@ -142,9 +177,28 @@ adminSiteSettingsRoutes.put('/', async (context) => {
   }
 
   const currentSettings = await getSiteSettings(context.env.DB);
+  const currentBottomNavigation = await getBottomNavigation(context.env.DB);
   const effectiveSettingsInput = storefrontCopyProvided
     ? validation.value
     : { ...validation.value, storefrontCopy: currentSettings.storefrontCopy };
+  const bottomNavigationInput = navigationValidation.provided
+    ? navigationValidation.value
+    : navigationInputFromCurrent(currentBottomNavigation);
+
+  const navigationAssetIds = bottomNavigationInput
+    .filter((item) => item.iconType === 'asset' && item.iconAssetId)
+    .map((item) => item.iconAssetId as string);
+  const navigationAssets = await getReadyBottomNavigationAssets(context.env.DB, navigationAssetIds);
+  if (navigationAssets.size !== new Set(navigationAssetIds).size) {
+    return apiError(
+      context,
+      409,
+      'BOTTOM_NAVIGATION_ASSET_INVALID',
+      '底部导航图片不存在、已删除或状态异常，请重新选择。',
+      { field: 'bottomNavigation' },
+    );
+  }
+
   const currentHeroSlides = await getSiteHeroSlides(context.env.DB, currentSettings.mediaBaseUrl);
   const heroInput = heroValidation.provided
     ? heroValidation.value
@@ -168,13 +222,23 @@ adminSiteSettingsRoutes.put('/', async (context) => {
   const updated = {
     ...toSiteSettings(effectiveSettingsInput, logoAsset?.object_key ?? null, updatedAt),
     heroSlides: resolvedHeroSlides,
+    bottomNavigation: resolvedNavigation(bottomNavigationInput),
   };
-  const current = { ...currentSettings, heroSlides: currentHeroSlides };
+  const current = {
+    ...currentSettings,
+    heroSlides: currentHeroSlides,
+    bottomNavigation: currentBottomNavigation,
+  };
   const statements: D1PreparedStatement[] = [
     createUpdateSiteSettingsStatement(context.env.DB, effectiveSettingsInput, updatedAt),
   ];
   if (heroValidation.provided) {
     statements.push(...createReplaceHeroSlideStatements(context.env.DB, heroValidation.value, updatedAt));
+  }
+  if (navigationValidation.provided) {
+    statements.push(
+      ...createReplaceBottomNavigationStatements(context.env.DB, navigationValidation.value, updatedAt),
+    );
   }
   statements.push(
     createAuditLogStatement(context.env.DB, {
