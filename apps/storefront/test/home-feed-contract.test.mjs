@@ -8,11 +8,14 @@ const layoutSource = await readFile(new URL('../src/home-layout.ts', import.meta
 const cssSource = await readFile(new URL('../src/home-feed.css', import.meta.url), 'utf8');
 const mainSource = await readFile(new URL('../src/main.tsx', import.meta.url), 'utf8');
 
-test('root path mounts Home, Browse mounts its directory, and other paths keep the existing App', () => {
+test('root path mounts Home while Browse and Messages use dedicated primary-page roots', () => {
   assert.match(mainSource, /<StorefrontRoot \/>/u);
-  assert.match(rootSource, /pathname === '\/' \? <HomeRoot \/>/u);
-  assert.match(rootSource, /isBrowsePath\(pathname\) \? <BrowseRoot \/> : <App \/>/u);
-  assert.match(rootSource, /function BrowseRoot\(/u);
+  assert.match(rootSource, /pathname === '\/'/u);
+  assert.match(rootSource, /<HomeRoot \/>/u);
+  assert.match(rootSource, /isBrowsePath\(pathname\)/u);
+  assert.match(rootSource, /<BrowseRoot \/>/u);
+  assert.match(rootSource, /isMessagesPath\(pathname\)/u);
+  assert.match(rootSource, /<MessagesRoot pathname=\{pathname\} \/>/u);
   assert.match(rootSource, /<HomeFeed bootstrap=\{bootstrapQuery\.data\} \/>/u);
 });
 
