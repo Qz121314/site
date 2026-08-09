@@ -151,25 +151,21 @@ export const FALLBACK_STOREFRONT_COPY: StorefrontCopy = {
   },
 };
 
-type CopyGroupKey = keyof StorefrontCopy;
-
 const CopyContext = createContext<StorefrontCopy>(FALLBACK_STOREFRONT_COPY);
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-function normalizeGroup<K extends CopyGroupKey>(
-  value: unknown,
-  fallback: StorefrontCopy[K],
-): StorefrontCopy[K] {
+function normalizeGroup<T>(value: unknown, fallback: T): T {
   const record = isRecord(value) ? value : {};
+  const fallbackRecord = fallback as Record<string, string>;
   const output: Record<string, string> = {};
-  for (const [key, fallbackValue] of Object.entries(fallback)) {
+  for (const [key, fallbackValue] of Object.entries(fallbackRecord)) {
     const raw = record[key];
     output[key] = typeof raw === 'string' && raw.trim() ? raw.trim() : fallbackValue;
   }
-  return output as StorefrontCopy[K];
+  return output as T;
 }
 
 function normalizeCopy(value: unknown): StorefrontCopy {
