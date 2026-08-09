@@ -80,14 +80,18 @@ export function SiteHeroSettingsSection({
       ) : (
         <div className="hero-slide-list">
           {slides.map((slide, index) => {
-            const previewUrl = brandingAssetPreviewUrl(slide.mediaAssetId);
+            const previewUrl = slide.mediaKind === 'video'
+              ? slide.mediaUrl
+              : brandingAssetPreviewUrl(slide.mediaAssetId);
             return (
               <article className="hero-slide-card" key={slide.id}>
                 <div className="hero-slide-preview">
                   {slide.mediaKind === 'video' ? (
-                    <video src={previewUrl} muted playsInline preload="metadata" />
+                    previewUrl
+                      ? <video src={previewUrl} muted playsInline preload="metadata" />
+                      : <span className="hero-slide-preview-placeholder">视频</span>
                   ) : (
-                    <img src={previewUrl} alt="" />
+                    <img src={previewUrl ?? ''} alt="" />
                   )}
                   <span>{index + 1}</span>
                   <em>{mediaLabel(slide.mediaKind)}</em>
