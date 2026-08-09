@@ -11,6 +11,7 @@ import {
   useSyncExternalStore,
 } from 'react';
 import { App } from './App';
+import { BrowsePage } from './BrowsePage';
 import { loadStorefrontBootstrap, PublicContentError } from './content';
 import { HomeFeed } from './HomeFeed';
 import { ResilientImage } from './ResilientMedia';
@@ -85,7 +86,7 @@ function StorefrontMetadata() {
   return null;
 }
 
-function HomeLoading() {
+function PrimaryLoading() {
   return (
     <div className="app-shell loading-shell" aria-busy="true">
       <header className="topbar"><div className="loading-brand" /></header>
@@ -98,7 +99,7 @@ function HomeLoading() {
   );
 }
 
-function HomeError({ error }: { error: unknown }) {
+function PrimaryError({ error }: { error: unknown }) {
   const message = error instanceof PublicContentError
     ? error.message
     : 'The storefront is temporarily unavailable.';
@@ -109,6 +110,39 @@ function HomeError({ error }: { error: unknown }) {
       <p>{message}</p>
       <button type="button" onClick={() => window.location.reload()}>Try again</button>
     </div>
+  );
+}
+
+function PrimaryShell({
+  activePath,
+  bootstrap,
+  copy,
+  children,
+}: {
+  activePath: string;
+  bootstrap: Awaited<ReturnType<typeof loadStorefrontBootstrap>>;
+  copy: typeof FALLBACK_STOREFRONT_COPY;
+  children: React.ReactNode;
+}) {
+  const site = bootstrap.site.site;
+  return (
+    <StorefrontCopyProvider value={copy}>
+      <div className="app-shell">
+        <StorefrontBrandBar
+          LinkComponent={StorefrontLink as StorefrontLinkComponent}
+          locationLabel={site.locationLabel}
+          logo={site.logoUrl ? <ResilientImage alt="" fallback={null} src={site.logoUrl} /> : null}
+          siteName={site.name}
+        />
+        <main>{children}</main>
+        <footer className="site-footer">{site.name}</footer>
+        <StorefrontBottomNavigation
+          activeHref={bottomNavigationActiveHref(activePath)}
+          items={primaryNavigationItems(copy.navigation, 0)}
+          LinkComponent={StorefrontLink as StorefrontLinkComponent}
+        />
+      </div>
+    </StorefrontCopyProvider>
   );
 }
 
@@ -124,31 +158,45 @@ function HomeRoot() {
     staleTime: 30_000,
   });
 
-  if (bootstrapQuery.isLoading) return <HomeLoading />;
-  if (bootstrapQuery.error || !bootstrapQuery.data) return <HomeError error={bootstrapQuery.error} />;
+  if (bootstrapQuery.isLoading) return <PrimaryLoading />;
+  if (bootstrapQuery.error || !bootstrapQuery.data) return <PrimaryError error={bootstrapQuery.error} />;
 
-  const site = bootstrapQuery.data.site.site;
   const copy = copyQuery.data ?? FALLBACK_STOREFRONT_COPY;
-
   return (
-    <StorefrontCopyProvider value={copy}>
-      <div className="app-shell home-app-shell">
-        <StorefrontBrandBar
-          LinkComponent={StorefrontLink as StorefrontLinkComponent}
-          locationLabel={site.locationLabel}
-          logo={site.logoUrl ? <ResilientImage alt="" fallback={null} src={site.logoUrl} /> : null}
-          siteName={site.name}
-        />
-        <main><HomeFeed bootstrap={bootstrapQuery.data} /></main>
-        <footer className="site-footer">{site.name}</footer>
-        <StorefrontBottomNavigation
-          activeHref={bottomNavigationActiveHref('/')}
-          items={primaryNavigationItems(copy.navigation, 0)}
-          LinkComponent={StorefrontLink as StorefrontLinkComponent}
-        />
-      </div>
-    </StorefrontCopyProvider>
+    <PrimaryShell activePath="/" bootstrap={bootstrapQuery.data} copy={copy}>
+      <HomeFeed bootstrap={bootstrapQuery.data} />
+    </PrimaryShell>
   );
+}
+
+function BrowseRoot() {
+  const bootstrapQuery = useQuery({
+    queryKey: ['storefront-bootstrap'],
+    queryFn: ({ signal }) => loadStorefrontBootstrap(undefined, signal),
+    staleTime: 30_000,
+  });
+  const copyQuery = useQuery({
+    queryKey: ['storefront-copy'],
+    queryFn: ({ signal }) => loadStorefrontCopy(signal),
+    staleTime: 30_000,
+  });
+
+  if (bootstrapQuery.isLoading) return <PrimaryLoading />;
+  if (bootstrapQuery.error || !bootstrapQuery.data) return <PrimaryError error={bootstrapQuery.error} />;
+
+  const copy = copyQuery.data ?? FALLBACK_STOREFRONT_COPY;
+  return (
+    <PrimaryShell activePath="/browse/" bootstrap={bootstrapQuery.data} copy={copy}>
+      <BrowsePage
+        bootstrap={bootstrapQuery.data}
+        LinkComponent={StorefrontLink as StorefrontLinkComponent}
+      />
+    </PrimaryShell>
+  );
+}
+
+function isBrowsePath(pathname: string): boolean {
+  return pathname === '/browse' || pathname === '/browse/' || pathname === '/discover' || pathname === '/discover/';
 }
 
 export function StorefrontRoot() {
@@ -156,7 +204,7 @@ export function StorefrontRoot() {
   return (
     <>
       <StorefrontMetadata />
-      {pathname === '/' ? <HomeRoot /> : <App />}
+      {pathname === '/' ? <HomeRoot /> : isBrowsePath(pathname) ? <BrowseRoot /> : <App />}
     </>
   );
 }
