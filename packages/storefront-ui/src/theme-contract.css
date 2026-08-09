@@ -1,0 +1,120 @@
+/* Shared Theme Center -> Storefront visual contract. */
+
+:is(html, .storefront-theme-root) .topbar {
+  background: var(--theme-header-background, color-mix(in srgb, var(--surface) 95%, transparent));
+}
+
+:is(html, .storefront-theme-root) .bottom-nav {
+  background: var(--theme-tab-background, color-mix(in srgb, var(--surface) 96%, transparent));
+  box-shadow:
+    0 -1px 0 color-mix(in srgb, var(--line) 88%, transparent),
+    var(--theme-tab-shadow, 0 -8px 24px color-mix(in srgb, var(--text) 5%, transparent));
+}
+
+:is(html, .storefront-theme-root) .content-section {
+  margin-bottom: var(--theme-section-space, 24px);
+}
+
+:is(html, .storefront-theme-root) .product-grid {
+  gap: var(--theme-card-gap-y, 18px) var(--theme-card-gap-x, 10px);
+}
+
+:is(html, .storefront-theme-root) .section-icon {
+  width: var(--theme-section-icon-size, 48px);
+  height: var(--theme-section-icon-size, 48px);
+  border-radius: var(--theme-radius-icon, 15px);
+}
+
+:is(html, .storefront-theme-root) .product-card-media {
+  border-radius: var(--theme-radius-media, 16px);
+  background: var(--theme-media-background, var(--surface-soft));
+}
+
+:is(html, .storefront-theme-root) .discover-search {
+  min-height: var(--theme-control-height, 44px);
+  border-radius: var(--theme-radius-control, 15px);
+  background: var(--theme-control-background, var(--surface));
+  box-shadow: var(--theme-control-shadow, 0 6px 22px color-mix(in srgb, var(--text) 7%, transparent));
+}
+
+:is(html, .storefront-theme-root) .filter-panel {
+  border-radius: var(--theme-radius-card, 18px);
+  background: var(--theme-filter-background, var(--surface));
+}
+
+:is(html, .storefront-theme-root) :is(.search-field input, .select-field select) {
+  min-height: var(--theme-control-height, 44px);
+  border-radius: var(--theme-radius-control, 15px);
+  background: var(--theme-control-background, var(--surface));
+}
+
+:is(html, .storefront-theme-root) :is(.tag-filter button, .discover-section-title span) {
+  border-radius: var(--theme-radius-chip, 999px);
+  background: var(--theme-chip-background, var(--surface));
+}
+
+:is(html, .storefront-theme-root) :is(.faq-list details, .messages-empty-state, .conversation-list) {
+  border-radius: var(--theme-radius-card, 18px);
+  background: var(--theme-card-background, var(--surface));
+}
+
+/* Mobile preview in Admin always uses the touch-first card recipe regardless of desktop viewport size. */
+.storefront-theme-root .product-card {
+  border-color: transparent;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.storefront-theme-root .product-card-media {
+  border-radius: var(--theme-radius-media, 16px);
+}
+
+@media (max-width: 767px) {
+  html .section-item {
+    min-height: calc(var(--theme-section-icon-size, 48px) + 30px);
+  }
+}
+
+@media (min-width: 768px) {
+  html .product-card {
+    grid-template-columns: var(--theme-desktop-media-size, 154px) minmax(0, 1fr);
+    min-height: var(--theme-desktop-media-size, 154px);
+    border-color: var(--theme-card-border, var(--line));
+    border-radius: var(--theme-radius-card, 18px);
+    background: var(--theme-card-background, var(--surface));
+    box-shadow: var(--theme-card-shadow, 0 4px 16px color-mix(in srgb, var(--text) 4%, transparent));
+  }
+
+  html .product-card:hover {
+    border-color: color-mix(in srgb, var(--brand) 24%, var(--theme-card-border, var(--line)));
+    box-shadow: var(--theme-card-hover-shadow, var(--shadow));
+  }
+
+  html .product-card-media {
+    min-height: var(--theme-desktop-media-size, 154px);
+    border-radius: 0;
+  }
+
+  html .chat-page {
+    border-radius: var(--theme-radius-card, 18px);
+    background: var(--theme-card-background, var(--surface));
+    box-shadow: var(--theme-card-shadow, 0 4px 16px color-mix(in srgb, var(--text) 4%, transparent));
+  }
+}
+
+@media (min-width: 1100px) {
+  html .product-card {
+    grid-template-columns: var(--theme-desktop-media-size-large, 176px) minmax(0, 1fr);
+    min-height: var(--theme-desktop-media-size-large, 176px);
+  }
+
+  html .product-card-media {
+    min-height: var(--theme-desktop-media-size-large, 176px);
+  }
+}
+
+:is(html, .storefront-theme-root)[data-theme='tech'] :is(.product-card, .discover-search, .filter-panel, .topbar, .bottom-nav),
+:is(html, .storefront-theme-root)[data-theme='noir'] :is(.discover-search, .topbar, .bottom-nav) {
+  backdrop-filter: blur(18px);
+}
