@@ -7,6 +7,10 @@ type BeforeInstallPromptEvent = Event & {
 
 type NavigatorWithStandalone = Navigator & { standalone?: boolean };
 
+type PwaManifest = {
+  name?: unknown;
+};
+
 const DISMISSED_KEY = 'storefront:pwa-install-dismissed:v1';
 
 function isStandalone(): boolean {
@@ -37,13 +41,31 @@ function syncAppMetadata(appName: string) {
   ensureMeta('apple-mobile-web-app-title');
 }
 
-export function PwaInstallPrompt({ appName }: { appName: string }) {
+export function PwaInstallPrompt() {
+  const [appName, setAppName] = useState<string | null>(null);
   const [installEvent, setInstallEvent] = useState<BeforeInstallPromptEvent | null>(null);
   const [showIosHint, setShowIosHint] = useState(false);
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
-    syncAppMetadata(appName);
+    const controller = new AbortController();
+    void fetch('/manifest.webmanifest', { signal: controller.signal })
+      .then(async (response) => {
+        if (!response.ok) return null;
+        return response.json() as Promise<PwaManifest>;
+      })
+      .then((manifest) => {
+        if (!manifest || typeof manifest.name !== 'string' || !manifest.name.trim()) return;
+        const name = manifest.name.trim();
+        setAppName(name);
+        syncAppMetadata(name);
+      })
+      .catch(() => undefined);
+
+    return () => controller.abort();
+  }, []);
+
+  useEffect(() => {
     if (isStandalone()) return;
 
     try {
@@ -74,7 +96,7 @@ export function PwaInstallPrompt({ appName }: { appName: string }) {
       window.removeEventListener('beforeinstallprompt', handleInstallPrompt);
       window.removeEventListener('appinstalled', handleInstalled);
     };
-  }, [appName]);
+  }, []);
 
   const dismiss = () => {
     setVisible(false);
@@ -97,7 +119,7 @@ export function PwaInstallPrompt({ appName }: { appName: string }) {
     dismiss();
   };
 
-  if (!visible || (!installEvent && !showIosHint)) return null;
+  if (!appName || !visible || (!installEvent && !showIosHint)) return null;
 
   return (
     <aside className="pwa-install-card" aria-label="Install app">
