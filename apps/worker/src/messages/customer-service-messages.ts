@@ -153,17 +153,24 @@ function parseMessage(value: unknown): RemoteSupportMessage {
 
 function parseDetail(value: unknown): RemoteConversationDetail {
   const envelope = isRecord(value) ? value : null;
-  const conversation = isRecord(envelope?.conversation) ? envelope.conversation : envelope;
-  const summary = parseSummary(conversation);
-  const createdAt = requiredText(conversation?.createdAt, 80);
-  const expiresAt = requiredText(conversation?.expiresAt, 80);
-  if (!createdAt || !expiresAt || !Array.isArray(conversation?.messages)) {
+  const candidate = isRecord(envelope?.conversation) ? envelope.conversation : envelope;
+  if (!candidate) {
     throw new CustomerServiceProviderError(
       'CUSTOMER_SERVICE_INVALID_MESSAGES_RESPONSE',
       '客服系统会话详情返回格式无效。',
     );
   }
-  const cursorValue = conversation.nextMessageCursor;
+  const summary = parseSummary(candidate);
+  const createdAt = requiredText(candidate.createdAt, 80);
+  const expiresAt = requiredText(candidate.expiresAt, 80);
+  const rawMessages = candidate.messages;
+  if (!createdAt || !expiresAt || !Array.isArray(rawMessages)) {
+    throw new CustomerServiceProviderError(
+      'CUSTOMER_SERVICE_INVALID_MESSAGES_RESPONSE',
+      '客服系统会话详情返回格式无效。',
+    );
+  }
+  const cursorValue = candidate.nextMessageCursor;
   const nextMessageCursor =
     cursorValue === null || cursorValue === undefined
       ? null
@@ -178,7 +185,7 @@ function parseDetail(value: unknown): RemoteConversationDetail {
     ...summary,
     createdAt,
     expiresAt,
-    messages: conversation.messages.map(parseMessage),
+    messages: rawMessages.map(parseMessage),
     nextMessageCursor,
   };
 }
