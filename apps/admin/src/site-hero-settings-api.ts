@@ -35,10 +35,16 @@ export type BottomNavigationItem = {
 };
 export type BottomNavigationItemInput = Omit<BottomNavigationItem, 'sortOrder'>;
 
+export type HomeLayout = {
+  shortcutSectionIds: string[];
+  recommendationSectionIds: string[];
+};
+
 export type SiteSettingsWithHero = SiteSettings & {
   storefrontCopy: StorefrontCopy;
   heroSlides: SiteHeroSlide[];
   bottomNavigation: BottomNavigationItem[];
+  homeLayout: HomeLayout;
 };
 
 export type SiteSettingsWithHeroUpdateInput = SiteSettingsUpdateInput & {
@@ -46,6 +52,7 @@ export type SiteSettingsWithHeroUpdateInput = SiteSettingsUpdateInput & {
   storefrontCopy: StorefrontCopy;
   heroSlides: SiteHeroSlideInput[];
   bottomNavigation: BottomNavigationItemInput[];
+  homeLayout: HomeLayout;
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -90,11 +97,34 @@ function parseBottomNavigationItem(value: unknown): BottomNavigationItem {
   return value as BottomNavigationItem;
 }
 
+function parseSectionIds(value: unknown, max: number): string[] {
+  if (
+    !Array.isArray(value) ||
+    value.length > max ||
+    !value.every((item) => typeof item === 'string' && item.length > 0) ||
+    new Set(value).size !== value.length
+  ) {
+    throw new AdminApiError(500, 'INVALID_RESPONSE', '首页布局返回数据无效。');
+  }
+  return value as string[];
+}
+
+function parseHomeLayout(value: unknown): HomeLayout {
+  if (!isRecord(value)) {
+    throw new AdminApiError(500, 'INVALID_RESPONSE', '首页布局返回数据无效。');
+  }
+  return {
+    shortcutSectionIds: parseSectionIds(value.shortcutSectionIds, 7),
+    recommendationSectionIds: parseSectionIds(value.recommendationSectionIds, 3),
+  };
+}
+
 function withHero(settings: SiteSettings): SiteSettingsWithHero {
   const raw = settings as SiteSettings & {
     heroSlides?: unknown;
     storefrontCopy?: unknown;
     bottomNavigation?: unknown;
+    homeLayout?: unknown;
   };
   if (!Array.isArray(raw.heroSlides)) {
     throw new AdminApiError(500, 'INVALID_RESPONSE', 'Hero 设置返回数据无效。');
@@ -107,6 +137,7 @@ function withHero(settings: SiteSettings): SiteSettingsWithHero {
     storefrontCopy: parseStorefrontCopy(raw.storefrontCopy),
     heroSlides: raw.heroSlides.map(parseHeroSlide),
     bottomNavigation: raw.bottomNavigation.map(parseBottomNavigationItem),
+    homeLayout: parseHomeLayout(raw.homeLayout),
   };
 }
 
