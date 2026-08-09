@@ -14,12 +14,12 @@ test('Storefront loads backend copy without making copy availability a page-fata
   assert.match(appSource, /<StorefrontCopyProvider/u);
 });
 
-test('primary navigation labels come from the copy contract', () => {
-  assert.match(navigationSource, /labels:\s*StorefrontCopy\['navigation'\]/u);
-  assert.match(navigationSource, /label:\s*labels\.home/u);
-  assert.match(navigationSource, /label:\s*labels\.browse/u);
-  assert.match(navigationSource, /label:\s*labels\.messages/u);
-  assert.match(navigationSource, /label:\s*labels\.faq/u);
+test('primary navigation labels come from Bottom Navigation config with Storefront Copy fallback', () => {
+  assert.match(navigationSource, /navigation:\s*StorefrontCopy\['navigation'\]/u);
+  assert.match(navigationSource, /navigation\.items/u);
+  assert.match(navigationSource, /label:\s*item\.label/u);
+  assert.match(copySource, /loadBottomNavigation\(signal\)\.catch\(\(\) => null\)/u);
+  assert.match(copySource, /label:\s*normalizedWithoutNavigation\.navigation\[item\.key\]/u);
 });
 
 test('normal storefront business copy is not re-hardcoded in App or support UI', () => {
