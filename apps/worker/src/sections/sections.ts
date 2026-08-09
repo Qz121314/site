@@ -4,10 +4,13 @@ export type SectionRecord = {
   id: string;
   slug: string;
   name: string;
+  description: string | null;
   iconType: 'icon' | 'asset';
   iconValue: string | null;
   iconAssetId: string | null;
   iconUrl: string | null;
+  browseBackgroundAssetId: string | null;
+  browseBackgroundUrl: string | null;
   sortOrder: number;
   isEnabled: boolean;
   createdAt: string;
@@ -19,8 +22,10 @@ export type SectionRecord = {
 
 export type SectionInput = {
   name: string;
+  description: string | null;
   iconValue: string | null;
   iconAssetId: string | null;
+  browseBackgroundAssetId: string | null;
   sortOrder: number;
   isEnabled: boolean;
 };
@@ -31,10 +36,13 @@ type SectionRow = {
   id: string;
   slug: string;
   name: string;
+  description: string | null;
   icon_type: 'icon' | 'asset';
   icon_value: string | null;
   icon_asset_id: string | null;
   icon_object_key: string | null;
+  browse_background_asset_id: string | null;
+  browse_background_object_key: string | null;
   media_base_url: string | null;
   sort_order: number;
   is_enabled: number;
@@ -99,10 +107,19 @@ export function validateSectionInput(value: unknown): ValidationResult {
 
   const name = readText(value.name, 'name', '分区名称', 100);
   if (!name.ok) return name;
+  const description = readOptionalText(value.description, 'description', '分区简介', 280);
+  if (!description.ok) return description;
   const iconValue = readOptionalText(value.iconValue, 'iconValue', '分区字符图标', 80);
   if (!iconValue.ok) return iconValue;
   const iconAssetId = readOptionalText(value.iconAssetId, 'iconAssetId', '分区图片图标', 100);
   if (!iconAssetId.ok) return iconAssetId;
+  const browseBackgroundAssetId = readOptionalText(
+    value.browseBackgroundAssetId,
+    'browseBackgroundAssetId',
+    'Browse 分区背景图',
+    100,
+  );
+  if (!browseBackgroundAssetId.ok) return browseBackgroundAssetId;
   if (!iconAssetId.value && !iconValue.value) {
     return { ok: false, field: 'iconValue', message: '请上传分区图标或选择一个备用字符图标。' };
   }
@@ -123,8 +140,10 @@ export function validateSectionInput(value: unknown): ValidationResult {
     ok: true,
     value: {
       name: name.value,
+      description: description.value,
       iconValue: iconValue.value,
       iconAssetId: iconAssetId.value,
+      browseBackgroundAssetId: browseBackgroundAssetId.value,
       sortOrder: value.sortOrder,
       isEnabled: value.isEnabled,
     },
@@ -136,10 +155,13 @@ function mapSection(row: SectionRow): SectionRecord {
     id: row.id,
     slug: row.slug,
     name: row.name,
+    description: row.description,
     iconType: row.icon_type,
     iconValue: row.icon_value,
     iconAssetId: row.icon_asset_id,
     iconUrl: optionalAssetUrl(row.media_base_url, row.icon_object_key),
+    browseBackgroundAssetId: row.browse_background_asset_id,
+    browseBackgroundUrl: optionalAssetUrl(row.media_base_url, row.browse_background_object_key),
     sortOrder: row.sort_order,
     isEnabled: row.is_enabled === 1,
     createdAt: row.created_at,
@@ -154,10 +176,13 @@ const SECTION_SELECT = `SELECT
   s.id,
   s.slug,
   s.name,
+  s.description,
   s.icon_type,
   s.icon_value,
   s.icon_asset_id,
   icon.object_key AS icon_object_key,
+  s.browse_background_asset_id,
+  background.object_key AS browse_background_object_key,
   settings.media_base_url,
   s.sort_order,
   s.is_enabled,
@@ -171,6 +196,10 @@ LEFT JOIN media_assets icon
   ON icon.id = s.icon_asset_id
  AND icon.status = 'ready'
  AND icon.deleted_at IS NULL
+LEFT JOIN media_assets background
+  ON background.id = s.browse_background_asset_id
+ AND background.status = 'ready'
+ AND background.deleted_at IS NULL
 LEFT JOIN site_settings settings ON settings.id = 1`;
 
 export async function listSections(
@@ -235,10 +264,13 @@ export async function createSectionStatements(
     id,
     slug,
     name: input.name,
+    description: input.description,
     iconType,
     iconValue: input.iconAssetId ? null : input.iconValue,
     iconAssetId: input.iconAssetId,
     iconUrl: null,
+    browseBackgroundAssetId: input.browseBackgroundAssetId,
+    browseBackgroundUrl: null,
     sortOrder: input.sortOrder,
     isEnabled: input.isEnabled,
     createdAt: now,
@@ -254,17 +286,19 @@ export async function createSectionStatements(
       db
         .prepare(
           `INSERT INTO sections (
-             id, slug, name, icon_type, icon_value, icon_asset_id,
-             sort_order, is_enabled, created_at, updated_at, deleted_at
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)`,
+             id, slug, name, description, icon_type, icon_value, icon_asset_id,
+             browse_background_asset_id, sort_order, is_enabled, created_at, updated_at, deleted_at
+           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)`,
         )
         .bind(
           section.id,
           section.slug,
           section.name,
+          section.description,
           section.iconType,
           section.iconValue,
           section.iconAssetId,
+          section.browseBackgroundAssetId,
           section.sortOrder,
           section.isEnabled ? 1 : 0,
           section.createdAt,
@@ -284,15 +318,17 @@ export function createUpdateSectionStatement(
   return db
     .prepare(
       `UPDATE sections
-       SET name = ?, icon_type = ?, icon_value = ?, icon_asset_id = ?,
-           sort_order = ?, is_enabled = ?, updated_at = ?
+       SET name = ?, description = ?, icon_type = ?, icon_value = ?, icon_asset_id = ?,
+           browse_background_asset_id = ?, sort_order = ?, is_enabled = ?, updated_at = ?
        WHERE id = ? AND deleted_at IS NULL`,
     )
     .bind(
       input.name,
+      input.description,
       iconType,
       input.iconAssetId ? null : input.iconValue,
       input.iconAssetId,
+      input.browseBackgroundAssetId,
       input.sortOrder,
       input.isEnabled ? 1 : 0,
       now,

@@ -33,6 +33,21 @@ type SectionManagementViewProps = {
   onSessionExpired: () => void;
 };
 
+type BrowseSectionFields = {
+  description?: string | null;
+  browseBackgroundAssetId?: string | null;
+  browseBackgroundUrl?: string | null;
+};
+
+function browseFields(section: AdminSection): Required<BrowseSectionFields> {
+  const value = section as AdminSection & BrowseSectionFields;
+  return {
+    description: value.description ?? null,
+    browseBackgroundAssetId: value.browseBackgroundAssetId ?? null,
+    browseBackgroundUrl: value.browseBackgroundUrl ?? null,
+  };
+}
+
 function sortSections(sections: AdminSection[]): AdminSection[] {
   return [...sections].sort(
     (left, right) => left.sortOrder - right.sortOrder || left.name.localeCompare(right.name),
@@ -67,6 +82,7 @@ export function SectionManagementView({
   const [form, setForm] = useState<SectionEditorInput>(emptySectionForm);
   const [localIcon, setLocalIcon] = useState<LocalBrandingImage | null>(null);
   const [iconPickerOpen, setIconPickerOpen] = useState(false);
+  const [browseBackgroundPickerOpen, setBrowseBackgroundPickerOpen] = useState(false);
   const [processingIcon, setProcessingIcon] = useState(false);
   const [editorOpen, setEditorOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -81,7 +97,10 @@ export function SectionManagementView({
   const filteredSections = useMemo(() => {
     const keyword = search.trim().toLowerCase();
     return keyword
-      ? sourceSections.filter((section) => `${section.name} ${section.slug}`.toLowerCase().includes(keyword))
+      ? sourceSections.filter((section) => {
+          const presentation = browseFields(section);
+          return `${section.name} ${section.slug} ${presentation.description ?? ''}`.toLowerCase().includes(keyword);
+        })
       : sourceSections;
   }, [search, sourceSections]);
 
@@ -137,11 +156,14 @@ export function SectionManagementView({
   }
 
   function openEditEditor(section: AdminSection) {
+    const presentation = browseFields(section);
     setEditingSection(section);
     setForm({
       name: section.name,
+      description: presentation.description ?? '',
       iconValue: section.iconValue ?? sectionIconOptions[0],
       iconAssetId: section.iconAssetId,
+      browseBackgroundAssetId: presentation.browseBackgroundAssetId,
       sortOrder: section.sortOrder,
       isEnabled: section.isEnabled,
     });
@@ -152,7 +174,7 @@ export function SectionManagementView({
   }
 
   function closeEditor() {
-    if (saving || processingIcon || iconPickerOpen) return;
+    if (saving || processingIcon || iconPickerOpen || browseBackgroundPickerOpen) return;
     setLocalIcon(null);
     setEditorOpen(false);
   }
@@ -209,7 +231,7 @@ export function SectionManagementView({
       if (editingSection) {
         const updated = await updateSection(editingSection.id, input);
         onActiveSectionsChange(sortSections(activeSections.map((section) => (section.id === updated.id ? updated : section))));
-        setSuccessMessage(`分区“${updated.name}”及图标已更新。`);
+        setSuccessMessage(`分区“${updated.name}”已更新。`);
       } else {
         const created = await createSection(input);
         onActiveSectionsChange(sortSections([...activeSections, created]));
@@ -227,10 +249,13 @@ export function SectionManagementView({
     setWorking(true);
     setErrorMessage('');
     try {
+      const presentation = browseFields(section);
       const input: SectionEditorInput = {
         name: section.name,
+        description: presentation.description ?? '',
         iconValue: section.iconValue ?? sectionIconOptions[0],
         iconAssetId: section.iconAssetId,
+        browseBackgroundAssetId: presentation.browseBackgroundAssetId,
         sortOrder: section.sortOrder,
         isEnabled: !section.isEnabled,
       };
@@ -334,6 +359,9 @@ export function SectionManagementView({
   }
 
   const iconPreviewUrl = localIcon?.previewUrl ?? (form.iconAssetId ? brandingAssetPreviewUrl(form.iconAssetId) : null);
+  const browseBackgroundPreviewUrl = form.browseBackgroundAssetId
+    ? brandingAssetPreviewUrl(form.browseBackgroundAssetId)
+    : null;
 
   return (
     <section className="section-management" aria-labelledby="section-management-title">
@@ -341,7 +369,7 @@ export function SectionManagementView({
         <div>
           <p>动态业务结构</p>
           <h2 id="section-management-title">分区管理</h2>
-          <span>分区名称将直接用于 English 用户前端和后台动态菜单。</span>
+          <span>Icon 用于 Home 快捷入口；Browse 使用背景图、名称、简介和产品数量展示详细分区卡片。</span>
         </div>
         <button className="primary-button" type="button" onClick={openCreateEditor}>新增分区</button>
       </div>
@@ -353,7 +381,7 @@ export function SectionManagementView({
         </div>
         <label className="section-search">
           <span>搜索</span>
-          <input type="search" value={search} placeholder="名称或 slug" onChange={(event) => setSearch(event.target.value)} />
+          <input type="search" value={search} placeholder="名称、简介或 slug" onChange={(event) => setSearch(event.target.value)} />
         </label>
       </div>
 
@@ -389,6 +417,7 @@ export function SectionManagementView({
           editingSection={editingSection}
           form={form}
           iconPreviewUrl={iconPreviewUrl}
+          browseBackgroundPreviewUrl={browseBackgroundPreviewUrl}
           localIcon={localIcon}
           errorMessage={errorMessage}
           saving={saving}
@@ -402,7 +431,12 @@ export function SectionManagementView({
             setErrorMessage('');
             setIconPickerOpen(true);
           }}
+          onOpenBrowseBackgroundPicker={() => {
+            setErrorMessage('');
+            setBrowseBackgroundPickerOpen(true);
+          }}
           onRemoveImageIcon={removeImageIcon}
+          onRemoveBrowseBackground={() => setForm((current) => ({ ...current, browseBackgroundAssetId: null }))}
           onSelectFallbackIcon={selectFallbackIcon}
           onClose={closeEditor}
           onSubmit={(event) => void handleSave(event)}
@@ -423,6 +457,23 @@ export function SectionManagementView({
             setForm((current) => ({ ...current, iconAssetId: asset.id }));
             setIconPickerOpen(false);
             setSuccessMessage('已从素材中心选择分区图标，保存分区后生效。');
+          }}
+        />
+      ) : null}
+
+      {browseBackgroundPickerOpen ? (
+        <MediaPickerDialog
+          title="选择 Browse 分区背景图"
+          role="background"
+          allowedKinds={['image']}
+          selectedIds={form.browseBackgroundAssetId ? [form.browseBackgroundAssetId] : []}
+          onSessionExpired={onSessionExpired}
+          onClose={() => setBrowseBackgroundPickerOpen(false)}
+          onSelect={(asset) => {
+            setErrorMessage('');
+            setForm((current) => ({ ...current, browseBackgroundAssetId: asset.id }));
+            setBrowseBackgroundPickerOpen(false);
+            setSuccessMessage('已选择 Browse 分区背景图，保存分区后生效。');
           }}
         />
       ) : null}

@@ -336,7 +336,11 @@ export async function getMediaAssetReferenceRows(
          ma.updated_at,
          (SELECT COUNT(*) FROM site_settings ss WHERE ss.logo_asset_id = ma.id) AS logo_count,
          (SELECT COUNT(*) FROM site_hero_slides hs WHERE hs.media_asset_id = ma.id) AS hero_count,
-         (SELECT COUNT(*) FROM sections s WHERE s.icon_asset_id = ma.id) AS section_icon_count,
+         (
+           SELECT COUNT(*)
+           FROM sections s
+           WHERE s.icon_asset_id = ma.id OR s.browse_background_asset_id = ma.id
+         ) AS section_icon_count,
          (SELECT COUNT(*) FROM products p WHERE p.cover_asset_id = ma.id) AS product_cover_count,
          (SELECT COUNT(*) FROM product_media pm WHERE pm.media_asset_id = ma.id)
            AS product_gallery_count
@@ -487,7 +491,11 @@ export function createMarkMediaAssetDeletedStatement(
          AND updated_at = ?
          AND NOT EXISTS (SELECT 1 FROM site_settings ss WHERE ss.logo_asset_id = media_assets.id)
          AND NOT EXISTS (SELECT 1 FROM site_hero_slides hs WHERE hs.media_asset_id = media_assets.id)
-         AND NOT EXISTS (SELECT 1 FROM sections s WHERE s.icon_asset_id = media_assets.id)
+         AND NOT EXISTS (
+           SELECT 1
+           FROM sections s
+           WHERE s.icon_asset_id = media_assets.id OR s.browse_background_asset_id = media_assets.id
+         )
          AND NOT EXISTS (SELECT 1 FROM products p WHERE p.cover_asset_id = media_assets.id)
          AND NOT EXISTS (
            SELECT 1 FROM product_media pm WHERE pm.media_asset_id = media_assets.id

@@ -1,66 +1,87 @@
-/* Browse is the search/discovery surface; Home remains intentionally search-free. */
+/* Browse is the full section directory and global search surface. Home remains shortcut-only. */
 
-.discover-page {
-  gap: 17px;
-  padding-top: 1px;
+.browse-directory {
+  display: grid;
+  width: min(1120px, 100%);
+  gap: 18px;
+  margin: 0 auto;
 }
 
-.discover-page .app-page-heading {
-  margin-bottom: 0;
-  padding: 0 1px;
+.browse-directory-heading {
+  padding: 1px 1px 0;
 }
 
-.discover-page .app-page-kicker {
-  display: none;
-}
-
-.discover-page .app-page-heading h1 {
-  font-size: clamp(1.62rem, 7vw, 2.45rem);
-  line-height: 1.04;
-}
-
-.discover-page .discover-search {
-  min-height: var(--theme-control-height, 46px);
+.browse-directory-heading h1 {
   margin: 0;
+  color: var(--text);
+  font-size: clamp(1.72rem, 7vw, 2.5rem);
+  line-height: 1.04;
+  letter-spacing: -0.045em;
+}
+
+.browse-directory-search {
+  position: relative;
+  display: flex;
+  min-height: var(--theme-control-height, 46px);
+  align-items: center;
+  gap: 10px;
   padding: 0 13px;
-  border-color: color-mix(in srgb, var(--line) 86%, transparent);
+  border: 1px solid color-mix(in srgb, var(--line) 86%, transparent);
   border-radius: var(--theme-radius-control, 14px);
   background: var(--theme-control-background, var(--surface));
   box-shadow: 0 4px 16px color-mix(in srgb, var(--text) 5%, transparent);
 }
 
-.discover-page .discover-search svg {
+.browse-directory-search svg {
   width: 18px;
   height: 18px;
+  flex: 0 0 auto;
+  color: var(--muted);
 }
 
-.discover-page .discover-search input {
-  font-size: 0.84rem;
+.browse-directory-search input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  color: var(--text);
+  background: transparent;
+  font-size: 0.86rem;
   font-weight: 480;
 }
 
-.discover-page .discover-section-block {
-  gap: 10px;
+.browse-directory-search input::placeholder {
+  color: color-mix(in srgb, var(--muted) 78%, transparent);
 }
 
-.discover-page .discover-section-title {
+.browse-directory-section {
+  display: grid;
+  gap: 11px;
+}
+
+.browse-directory-section-heading {
+  display: flex;
   min-height: 28px;
   align-items: center;
+  justify-content: space-between;
+  gap: 12px;
   padding-inline: 1px;
 }
 
-.discover-page .discover-section-title h2 {
-  font-size: 1rem;
+.browse-directory-section-heading h2 {
+  margin: 0;
+  color: var(--text);
+  font-size: 1.02rem;
   line-height: 1.2;
+  letter-spacing: -0.025em;
 }
 
-.discover-page .discover-section-title > span {
+.browse-directory-section-heading > span {
   display: grid;
   min-width: 22px;
   height: 22px;
   place-items: center;
   padding: 0 6px;
-  border: 0;
   border-radius: 999px;
   color: var(--muted);
   background: var(--surface-soft);
@@ -68,58 +89,189 @@
   font-weight: 650;
 }
 
-.discover-page .discover-section-grid {
-  gap: 8px 6px;
+.browse-section-list {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
 }
 
-.discover-page .discover-section-grid .section-item {
-  min-height: calc(var(--theme-section-icon-size, 48px) + 30px);
-  gap: 6px;
-  padding: 8px 2px;
-}
-
-.discover-page .discover-section-grid .section-item > span:last-child {
-  max-width: 100%;
+.browse-section-card {
+  position: relative;
+  display: grid;
+  min-height: 132px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: end;
+  gap: 16px;
   overflow: hidden;
-  font-size: 0.68rem;
-  font-weight: 620;
-  line-height: 1.18;
+  padding: 18px;
+  border: 1px solid color-mix(in srgb, var(--theme-card-border, var(--line)) 82%, transparent);
+  border-radius: var(--theme-radius-card, 18px);
+  color: #fff;
+  background: var(--theme-card-background, var(--surface));
+  box-shadow: var(--theme-card-shadow, none);
+  isolation: isolate;
+  transition: transform 140ms ease, box-shadow 140ms ease;
+}
+
+.browse-section-card:active {
+  transform: scale(0.992);
+  box-shadow: none;
+}
+
+.browse-section-card-background,
+.browse-section-card-overlay {
+  position: absolute;
+  inset: 0;
+}
+
+.browse-section-card-background {
+  z-index: -3;
+  background: var(--theme-media-background, var(--surface-soft));
+}
+
+.browse-section-card-background img,
+.browse-section-card-fallback {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.browse-section-card-background img {
+  object-fit: cover;
+}
+
+.browse-section-card-fallback {
+  background:
+    radial-gradient(circle at 84% 16%, color-mix(in srgb, var(--brand) 42%, transparent), transparent 38%),
+    linear-gradient(135deg, color-mix(in srgb, var(--brand) 68%, #111827), color-mix(in srgb, var(--brand-strong) 38%, #111827));
+}
+
+.browse-section-card-overlay {
+  z-index: -2;
+  background:
+    linear-gradient(90deg, rgb(8 12 18 / 78%) 0%, rgb(8 12 18 / 58%) 58%, rgb(8 12 18 / 26%) 100%),
+    linear-gradient(0deg, rgb(8 12 18 / 28%), transparent 58%);
+}
+
+.browse-section-card:not(.has-image) .browse-section-card-overlay {
+  background: linear-gradient(90deg, rgb(8 12 18 / 38%), rgb(8 12 18 / 12%));
+}
+
+.browse-section-card-content {
+  display: grid;
+  min-width: 0;
+  gap: 5px;
+  align-self: end;
+}
+
+.browse-section-card-content strong {
+  overflow: hidden;
+  font-size: 1.12rem;
+  font-weight: 800;
+  line-height: 1.14;
+  letter-spacing: -0.025em;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.discover-page .product-grid {
+.browse-section-card-content p {
+  display: -webkit-box;
+  max-width: 620px;
+  margin: 0;
+  overflow: hidden;
+  color: rgb(255 255 255 / 82%);
+  font-size: 0.76rem;
+  line-height: 1.45;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.browse-section-card-content small {
+  color: rgb(255 255 255 / 68%);
+  font-size: 0.66rem;
+  font-weight: 650;
+}
+
+.browse-section-card-chevron {
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  align-self: center;
+  border: 1px solid rgb(255 255 255 / 18%);
+  border-radius: 50%;
+  background: rgb(255 255 255 / 10%);
+  font-size: 1.35rem;
+  line-height: 1;
+  backdrop-filter: blur(10px);
+}
+
+.browse-search-products {
   margin-top: 1px;
 }
 
-.discover-page .discover-results-empty {
-  border-color: color-mix(in srgb, var(--line) 76%, transparent);
+.browse-directory-empty {
+  padding: 34px 18px;
+  border: 1px dashed color-mix(in srgb, var(--line) 76%, transparent);
+  border-radius: var(--theme-radius-card, 18px);
+  color: var(--muted);
   background: var(--surface-soft);
   font-size: 0.78rem;
+  text-align: center;
 }
 
 @media (max-width: 767px) {
-  .discover-page .discover-search {
+  .browse-directory-search {
     position: sticky;
     top: calc(56px + env(safe-area-inset-top));
     z-index: 35;
   }
+
+  .browse-section-card {
+    min-height: 126px;
+    padding: 16px;
+    border-radius: max(16px, var(--theme-radius-card, 18px));
+  }
 }
 
 @media (min-width: 768px) {
-  .discover-page {
+  .browse-directory {
     gap: 24px;
   }
 
-  .discover-page .app-page-heading h1 {
+  .browse-directory-heading h1 {
     font-size: 2.35rem;
   }
 
-  .discover-page .discover-search {
+  .browse-directory-search {
     max-width: 720px;
   }
 
-  .discover-page .discover-section-title h2 {
-    font-size: 1.12rem;
+  .browse-directory-section-heading h2 {
+    font-size: 1.14rem;
+  }
+
+  .browse-section-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .browse-section-card {
+    min-height: 154px;
+    padding: 22px;
+  }
+
+  .browse-section-card-content strong {
+    font-size: 1.28rem;
+  }
+
+  .browse-section-card-content p {
+    font-size: 0.82rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .browse-section-card {
+    transition: none;
   }
 }

@@ -9,6 +9,7 @@ import './storefront-copy-settings.css';
 import './bottom-navigation-settings.css';
 import './home-layout-settings.css';
 import './sections.css';
+import './section-browse-presentation.css';
 import './asset-library.css';
 import './media-picker.css';
 import './media-folders.css';
