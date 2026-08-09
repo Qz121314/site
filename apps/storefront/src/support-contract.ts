@@ -31,6 +31,9 @@ export type SupportConversationDetail = SupportConversationSummary & {
 export type StartSupportConversationInput = {
   productId: string;
   sectionId: string;
+  productTitle: string;
+  productCoverUrl: string | null;
+  productHref: string;
   clientMessageId: string;
   message: string;
 };
@@ -41,10 +44,9 @@ export type SendSupportMessageInput = {
 };
 
 /**
- * Provider-neutral boundary consumed by the Storefront Messages UI.
- * Implementations call same-origin Site Worker routes only; provider URLs,
- * credentials, visitor headers and upstream conversation IDs never belong in
- * the browser.
+ * Browser boundary for the independent customer-service system.
+ * Storefront reads only non-secret connection metadata from Site, then sends
+ * conversation traffic directly to the customer-service origin.
  */
 export interface SupportGateway {
   listConversations(signal?: AbortSignal): Promise<SupportConversationSummary[]>;
