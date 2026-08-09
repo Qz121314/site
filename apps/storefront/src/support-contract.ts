@@ -25,11 +25,13 @@ export type SupportConversationDetail = SupportConversationSummary & {
   createdAt: string;
   expiresAt: string;
   messages: SupportMessage[];
+  nextMessageCursor: string | null;
 };
 
 export type StartSupportConversationInput = {
   productId: string;
   sectionId: string;
+  clientMessageId: string;
   message: string;
 };
 
@@ -40,13 +42,15 @@ export type SendSupportMessageInput = {
 
 /**
  * Provider-neutral boundary consumed by the Storefront Messages UI.
- * The eventual implementation must call same-origin Site Worker routes;
- * provider URLs and credentials never belong in the browser.
+ * Implementations call same-origin Site Worker routes only; provider URLs,
+ * credentials, visitor headers and upstream conversation IDs never belong in
+ * the browser.
  */
 export interface SupportGateway {
   listConversations(signal?: AbortSignal): Promise<SupportConversationSummary[]>;
   getConversation(
     conversationRef: string,
+    before?: string | null,
     signal?: AbortSignal,
   ): Promise<SupportConversationDetail | null>;
   startConversation(
@@ -58,4 +62,9 @@ export interface SupportGateway {
     input: SendSupportMessageInput,
     signal?: AbortSignal,
   ): Promise<SupportMessage>;
+  markConversationRead(
+    conversationRef: string,
+    lastMessageId?: string | null,
+    signal?: AbortSignal,
+  ): Promise<void>;
 }
