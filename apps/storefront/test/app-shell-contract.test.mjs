@@ -18,9 +18,11 @@ test('mobile app shell uses dynamic viewport height and a non-floating tab bar',
   assert.match(shellCss, /\.app-shell \.bottom-nav\s*\{[\s\S]*?border-radius:\s*0;/u);
 });
 
-test('conversation route becomes focused full-screen UI without global chrome', () => {
-  assert.match(shellCss, /\.app-shell:has\(\.chat-page\) > \.topbar/u);
-  assert.match(shellCss, /\.app-shell:has\(\.chat-page\) > \.bottom-nav/u);
-  assert.match(shellCss, /\.app-shell:has\(\.chat-page\) \.chat-page\s*\{[\s\S]*?height:\s*100dvh;/u);
-  assert.match(shellCss, /\.chat-composer\s*\{[\s\S]*?safe-area-inset-bottom/u);
+test('mobile conversation route becomes focused full-screen UI without global chrome', () => {
+  assert.match(shellCss, /@media \(max-width:\s*767px\)/u);
+  assert.match(shellCss, /\.app-shell:has\(\.messages-workspace\.is-thread-open\) > \.topbar/u);
+  assert.match(shellCss, /\.app-shell:has\(\.messages-workspace\.is-thread-open\) > \.bottom-nav/u);
+  assert.match(shellCss, /\.app-shell:has\(\.messages-workspace\.is-thread-open\) > main\s*\{[\s\S]*?height:\s*100dvh;/u);
+  assert.match(shellCss, /\.app-shell:has\(\.messages-workspace\.is-thread-open\) \.chat-composer\s*\{[\s\S]*?safe-area-inset-bottom/u);
+  assert.doesNotMatch(shellCss, /@media \(min-width:\s*768px\)[\s\S]*?> \.bottom-nav\s*\{\s*display:\s*none/u);
 });
