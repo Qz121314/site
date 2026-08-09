@@ -46,7 +46,7 @@ function formatConversationTime(value: string | null): string {
 }
 
 function conversationTitle(conversation: SupportConversationSummary): string {
-  return conversation.agentName?.trim() || '在线客服';
+  return conversation.agentName?.trim() || 'Customer Support';
 }
 
 function ConversationAvatar({ conversation }: { conversation: SupportConversationSummary }) {
@@ -68,7 +68,7 @@ export function MessagesPageContent({
       <header className="app-page-heading messages-page-heading">
         <div>
           <p className="app-page-kicker">Customer service</p>
-          <h1 id="messages-title">消息</h1>
+          <h1 id="messages-title">Messages</h1>
         </div>
         <span className="conversation-capacity" aria-label={`${conversations.length} of 10 conversations`}>
           {conversations.length}/10
@@ -78,8 +78,8 @@ export function MessagesPageContent({
       {conversations.length === 0 ? (
         <div className="messages-empty-state">
           <span className="messages-empty-icon"><MessageBubbleIcon /></span>
-          <strong>暂无会话</strong>
-          <p>从产品页面发起咨询后，会话会显示在这里。</p>
+          <strong>No conversations yet</strong>
+          <p>Start a consultation from a product page. Your conversations will appear here.</p>
         </div>
       ) : (
         <div className="conversation-list" role="list">
@@ -97,7 +97,7 @@ export function MessagesPageContent({
                 </span>
                 <small>{conversation.productTitle}</small>
                 <span className="conversation-preview-row">
-                  <span>{conversation.lastMessage || (conversation.status === 'waiting' ? '正在等待客服接入…' : '')}</span>
+                  <span>{conversation.lastMessage || (conversation.status === 'waiting' ? 'Waiting for an agent…' : '')}</span>
                   {conversation.unreadCount > 0 ? (
                     <b aria-label={`${conversation.unreadCount} unread messages`}>
                       {conversation.unreadCount > 99 ? '99+' : conversation.unreadCount}
@@ -126,7 +126,7 @@ function ProductContextCard({
         {conversation.productCoverUrl ? <img src={conversation.productCoverUrl} alt="" /> : null}
       </span>
       <span className="chat-product-copy">
-        <small>咨询产品</small>
+        <small>Product</small>
         <strong>{conversation.productTitle}</strong>
       </span>
       <span className="chat-product-chevron" aria-hidden="true">›</span>
@@ -156,24 +156,24 @@ export function MessageThreadPageContent({
     return (
       <section className="chat-page chat-page-unavailable" aria-labelledby="chat-title">
         <header className="chat-header">
-          <LinkComponent className="chat-back-button" href="/messages/" aria-label="返回消息列表">←</LinkComponent>
+          <LinkComponent className="chat-back-button" href="/messages/" aria-label="Back to messages">←</LinkComponent>
           <span className="chat-header-avatar"><MessageBubbleIcon /></span>
           <span className="chat-header-copy">
-            <strong id="chat-title">在线客服</strong>
-            <small>暂无可用会话</small>
+            <strong id="chat-title">Customer Support</strong>
+            <small>No active conversation</small>
           </span>
         </header>
         <div className="chat-timeline">
           <div className="chat-empty-state">
             <MessageBubbleIcon />
-            <strong>会话不存在或已结束</strong>
-            <p>请返回消息列表，或从产品页面重新发起咨询。</p>
+            <strong>Conversation not found or has ended</strong>
+            <p>Go back to Messages, or start a new consultation from a product page.</p>
           </div>
         </div>
         <div className="chat-composer is-disabled" aria-disabled="true">
-          <button type="button" disabled aria-label="添加附件">＋</button>
-          <div className="chat-input-placeholder">输入消息</div>
-          <button type="button" disabled className="chat-send-button" aria-label="发送消息">➤</button>
+          <button type="button" disabled aria-label="Add attachment">＋</button>
+          <div className="chat-input-placeholder">Type a message</div>
+          <button type="button" disabled className="chat-send-button" aria-label="Send message">➤</button>
         </div>
       </section>
     );
@@ -182,11 +182,11 @@ export function MessageThreadPageContent({
   return (
     <section className="chat-page" aria-labelledby="chat-title">
       <header className="chat-header">
-        <LinkComponent className="chat-back-button" href="/messages/" aria-label="返回消息列表">←</LinkComponent>
+        <LinkComponent className="chat-back-button" href="/messages/" aria-label="Back to messages">←</LinkComponent>
         <span className="chat-header-avatar"><ConversationAvatar conversation={conversation} /></span>
         <span className="chat-header-copy">
           <strong id="chat-title">{conversationTitle(conversation)}</strong>
-          <small>{conversation.status === 'waiting' ? '正在连接客服' : conversation.status === 'active' ? '在线客服' : '会话已结束'}</small>
+          <small>{conversation.status === 'waiting' ? 'Connecting to support' : conversation.status === 'active' ? 'Customer support' : 'Conversation ended'}</small>
         </span>
       </header>
 
@@ -207,9 +207,9 @@ export function MessageThreadPageContent({
       </div>
 
       <form className="chat-composer" onSubmit={(event) => event.preventDefault()}>
-        <button type="button" aria-label="添加附件">＋</button>
-        <textarea rows={1} aria-label="输入消息" placeholder="输入消息" />
-        <button type="submit" className="chat-send-button" aria-label="发送消息">➤</button>
+        <button type="button" aria-label="Add attachment">＋</button>
+        <textarea rows={1} aria-label="Type a message" placeholder="Type a message" />
+        <button type="submit" className="chat-send-button" aria-label="Send message">➤</button>
       </form>
     </section>
   );
