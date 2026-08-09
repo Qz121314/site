@@ -223,8 +223,8 @@ jobs:
 
           security_headers_ready=false
           for attempt in 1 2 3 4 5; do
-            curl --fail --silent --show-error -D /tmp/security.headers -o /dev/null "$BASE_URL/"
-            if grep -Eqi '^content-security-policy: .*frame-ancestors '\''none'\''' /tmp/security.headers \
+            if curl --fail --silent --show-error -D /tmp/security.headers -o /dev/null "$BASE_URL/" \
+              && grep -Eqi '^content-security-policy: .*frame-ancestors '\''none'\''' /tmp/security.headers \
               && grep -Eqi '^x-content-type-options: nosniff' /tmp/security.headers \
               && grep -Eqi '^x-frame-options: DENY' /tmp/security.headers \
               && grep -Eqi '^referrer-policy: strict-origin-when-cross-origin' /tmp/security.headers; then
@@ -235,7 +235,7 @@ jobs:
           done
           if [[ "$security_headers_ready" != true ]]; then
             echo 'Security headers did not propagate before the smoke-test deadline.'
-            cat /tmp/security.headers
+            cat /tmp/security.headers || true
             exit 1
           fi
 
