@@ -27,6 +27,17 @@ test('Browse section cards are detailed image cards without shortcut icons', () 
   assert.match(browseCss, /\.browse-section-card-overlay/u);
 });
 
+test('Browse section directory is one column on mobile and two columns on desktop', () => {
+  assert.match(
+    browseCss,
+    /\.browse-section-list\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)/su,
+  );
+  assert.match(
+    browseCss,
+    /@media \(min-width:\s*768px\)[\s\S]*?\.browse-section-list\s*\{[^}]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/u,
+  );
+});
+
 test('Home icon and Browse background remain separate section presentation fields', () => {
   assert.match(adminEditor, />分区快捷图标</u);
   assert.match(adminEditor, />Browse 分区背景图</u);
