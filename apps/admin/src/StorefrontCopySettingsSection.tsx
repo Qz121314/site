@@ -18,17 +18,9 @@ const COPY_GROUPS: CopyGroup[] = [
   {
     key: 'home',
     label: 'Home',
-    hint: '首页分区、热门与最新内容标题。',
+    hint: '首页分区入口和推荐分区共用的 More 按钮文案。分区名称和产品内容直接来自后台业务数据。',
     fields: [
-      { key: 'sectionsKicker', label: '分区辅助标题' },
-      { key: 'sectionsTitle', label: '分区标题' },
-      { key: 'viewAll', label: '展开按钮' },
-      { key: 'showLess', label: '收起按钮' },
-      { key: 'emptySections', label: '空状态' },
-      { key: 'featuredKicker', label: '热门辅助标题' },
-      { key: 'featuredTitle', label: '热门标题' },
-      { key: 'latestKicker', label: '最新辅助标题' },
-      { key: 'latestTitle', label: '最新标题' },
+      { key: 'viewAll', label: 'More 按钮' },
     ],
   },
   {

@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
 import {
   AdminApiError,
+  fetchSections,
   testMediaDomain,
+  type AdminSection,
 } from './api';
 import { useAdminDirtySource } from './admin-unsaved-state';
 import { MediaPickerDialog } from './asset-library/MediaPickerDialog';
@@ -13,6 +15,7 @@ import {
   releaseBrandingImage,
   type LocalBrandingImage,
 } from './branding-media/local-branding-image';
+import { HomeLayoutSettingsSection } from './HomeLayoutSettingsSection';
 import { SiteHeroSettingsSection } from './SiteHeroSettingsSection';
 import { StorefrontCopySettingsSection } from './StorefrontCopySettingsSection';
 import {
@@ -63,6 +66,10 @@ function createDraft(settings: SiteSettingsWithHero): SettingsDraft {
     storefrontCopy: structuredClone(settings.storefrontCopy),
     heroSlides: settings.heroSlides.map((slide) => ({ ...slide })),
     bottomNavigation: settings.bottomNavigation.map((item) => ({ ...item })),
+    homeLayout: {
+      shortcutSectionIds: [...settings.homeLayout.shortcutSectionIds],
+      recommendationSectionIds: [...settings.homeLayout.recommendationSectionIds],
+    },
   };
 }
 
@@ -94,6 +101,10 @@ function toInput(draft: SettingsDraft): SettingsPayload {
       sortOrder: index,
     })),
     bottomNavigation: draft.bottomNavigation.map(({ sortOrder: _sortOrder, ...item }) => item),
+    homeLayout: {
+      shortcutSectionIds: [...draft.homeLayout.shortcutSectionIds],
+      recommendationSectionIds: [...draft.homeLayout.recommendationSectionIds],
+    },
   };
 }
 
@@ -115,6 +126,7 @@ function formatUpdatedAt(value: string): string {
 export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
   const [settings, setSettings] = useState<SiteSettingsWithHero | null>(null);
   const [draft, setDraft] = useState<SettingsDraft | null>(null);
+  const [sections, setSections] = useState<AdminSection[]>([]);
   const [localLogo, setLocalLogo] = useState<LocalBrandingImage | null>(null);
   const [logoPickerOpen, setLogoPickerOpen] = useState(false);
   const [processingLogo, setProcessingLogo] = useState(false);
@@ -132,9 +144,13 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
     setLoading(true);
     setErrorMessage(null);
     try {
-      const result = await fetchSiteSettingsWithHero();
+      const [result, activeSections] = await Promise.all([
+        fetchSiteSettingsWithHero(),
+        fetchSections('active'),
+      ]);
       setSettings(result);
       setDraft(createDraft(result));
+      setSections(activeSections);
       setLocalLogo(null);
     } catch (error) {
       if (error instanceof AdminApiError && error.status === 401) {
@@ -272,11 +288,6 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
                 <input type="text" value={draft.locationLabel} disabled={busy} onChange={(event) => updateDraft('locationLabel', event.target.value)} />
               </label>
 
-              <label className="field-group admin-field-home-limit">
-                <span>首页分区数量</span>
-                <input type="number" value={draft.homeSectionLimit} min={1} max={20} step={1} disabled={busy} onChange={(event) => updateDraft('homeSectionLimit', Number(event.target.value))} />
-              </label>
-
               <div className="admin-logo-field">
                 <span className="admin-field-label">站点 Logo</span>
                 <div className="admin-logo-control">
@@ -330,6 +341,13 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
             onSessionExpired={onSessionExpired}
           />
 
+          <HomeLayoutSettingsSection
+            value={draft.homeLayout}
+            sections={sections}
+            busy={busy}
+            onChange={(homeLayout) => updateDraft('homeLayout', homeLayout)}
+          />
+
           <BottomNavigationSettingsSection
             value={draft.bottomNavigation}
             busy={busy}
@@ -350,21 +368,6 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
                 <span>GA4 Measurement ID</span>
                 <input type="text" value={draft.ga4MeasurementId} placeholder="G-XXXXXXXXXX" disabled={busy} onChange={(event) => updateDraft('ga4MeasurementId', event.target.value)} />
               </label>
-
-              <fieldset className="admin-toggle-group">
-                <legend>首页内容</legend>
-                <div className="admin-toggle-list">
-                  {([
-                    ['showHot', 'Featured'],
-                    ['showLatest', 'Latest'],
-                  ] as const).map(([field, label]) => (
-                    <label className="admin-toggle-item" key={field}>
-                      <input type="checkbox" checked={draft[field]} disabled={busy} onChange={(event) => updateDraft(field, event.target.checked)} />
-                      <span>{label}</span>
-                    </label>
-                  ))}
-                </div>
-              </fieldset>
             </div>
           </section>
 

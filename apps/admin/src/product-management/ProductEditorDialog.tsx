@@ -473,11 +473,11 @@ export function ProductEditorDialog({
 
             <label className="product-switch-field product-core-featured">
               <input type="checkbox" checked={form.isFeatured} onChange={(event) => patch({ isFeatured: event.target.checked })} />
-              <span><strong>热门推荐</strong></span>
+              <span><strong>首页推荐</strong></span>
             </label>
 
             <label className="product-field product-core-featured-sort">
-              <span>热门排序</span>
+              <span>首页推荐排序</span>
               <input type="number" min={0} max={1_000_000} value={form.featuredOrder} disabled={!form.isFeatured} onChange={(event) => patch({ featuredOrder: Number(event.target.value) })} />
             </label>
           </div>

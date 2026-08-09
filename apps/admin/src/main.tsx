@@ -7,6 +7,7 @@ import './styles.css';
 import './site-settings.css';
 import './storefront-copy-settings.css';
 import './bottom-navigation-settings.css';
+import './home-layout-settings.css';
 import './sections.css';
 import './asset-library.css';
 import './media-picker.css';

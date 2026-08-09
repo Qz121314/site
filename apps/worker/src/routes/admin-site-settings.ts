@@ -11,6 +11,12 @@ import {
   type BottomNavigationInput,
 } from '../settings/bottom-navigation';
 import {
+  createReplaceHomeLayoutStatements,
+  getActiveHomeSectionIds,
+  getHomeLayout,
+  validateHomeLayoutInput,
+} from '../settings/home-layout';
+import {
   createReplaceHeroSlideStatements,
   getReadyHeroMediaAssets,
   getSiteHeroSlides,
@@ -113,11 +119,12 @@ export const adminSiteSettingsRoutes = new Hono<AppEnvironment>();
 adminSiteSettingsRoutes.get('/', async (context) => {
   context.header('Cache-Control', 'no-store');
   const settings = await getSiteSettings(context.env.DB);
-  const [heroSlides, bottomNavigation] = await Promise.all([
+  const [heroSlides, bottomNavigation, homeLayout] = await Promise.all([
     getSiteHeroSlides(context.env.DB, settings.mediaBaseUrl),
     getBottomNavigation(context.env.DB),
+    getHomeLayout(context.env.DB),
   ]);
-  return context.json({ settings: { ...settings, heroSlides, bottomNavigation } });
+  return context.json({ settings: { ...settings, heroSlides, bottomNavigation, homeLayout } });
 });
 
 adminSiteSettingsRoutes.put('/', async (context) => {
@@ -167,6 +174,13 @@ adminSiteSettingsRoutes.put('/', async (context) => {
     });
   }
 
+  const homeLayoutValidation = validateHomeLayoutInput(isRecord(body) ? body.homeLayout : undefined);
+  if (!homeLayoutValidation.ok) {
+    return apiError(context, 400, 'INVALID_HOME_LAYOUT', homeLayoutValidation.message, {
+      field: homeLayoutValidation.field,
+    });
+  }
+
   const logoAsset = validation.value.logoAssetId
     ? await getReadyImageAsset(context.env.DB, validation.value.logoAssetId)
     : null;
@@ -177,13 +191,34 @@ adminSiteSettingsRoutes.put('/', async (context) => {
   }
 
   const currentSettings = await getSiteSettings(context.env.DB);
-  const currentBottomNavigation = await getBottomNavigation(context.env.DB);
+  const [currentBottomNavigation, currentHomeLayout] = await Promise.all([
+    getBottomNavigation(context.env.DB),
+    getHomeLayout(context.env.DB),
+  ]);
   const effectiveSettingsInput = storefrontCopyProvided
     ? validation.value
     : { ...validation.value, storefrontCopy: currentSettings.storefrontCopy };
   const bottomNavigationInput = navigationValidation.provided
     ? navigationValidation.value
     : navigationInputFromCurrent(currentBottomNavigation);
+  const homeLayoutInput = homeLayoutValidation.provided
+    ? homeLayoutValidation.value
+    : currentHomeLayout;
+
+  const selectedHomeSectionIds = [
+    ...homeLayoutInput.shortcutSectionIds,
+    ...homeLayoutInput.recommendationSectionIds,
+  ];
+  const activeHomeSectionIds = await getActiveHomeSectionIds(context.env.DB, selectedHomeSectionIds);
+  if (activeHomeSectionIds.size !== new Set(selectedHomeSectionIds).size) {
+    return apiError(
+      context,
+      409,
+      'HOME_SECTION_INVALID',
+      '首页选择的分区不存在、已停用或已进入回收站，请重新选择。',
+      { field: 'homeLayout' },
+    );
+  }
 
   const navigationAssetIds = bottomNavigationInput
     .filter((item) => item.iconType === 'asset' && item.iconAssetId)
@@ -223,11 +258,13 @@ adminSiteSettingsRoutes.put('/', async (context) => {
     ...toSiteSettings(effectiveSettingsInput, logoAsset?.object_key ?? null, updatedAt),
     heroSlides: resolvedHeroSlides,
     bottomNavigation: resolvedNavigation(bottomNavigationInput),
+    homeLayout: homeLayoutInput,
   };
   const current = {
     ...currentSettings,
     heroSlides: currentHeroSlides,
     bottomNavigation: currentBottomNavigation,
+    homeLayout: currentHomeLayout,
   };
   const statements: D1PreparedStatement[] = [
     createUpdateSiteSettingsStatement(context.env.DB, effectiveSettingsInput, updatedAt),
@@ -238,6 +275,11 @@ adminSiteSettingsRoutes.put('/', async (context) => {
   if (navigationValidation.provided) {
     statements.push(
       ...createReplaceBottomNavigationStatements(context.env.DB, navigationValidation.value, updatedAt),
+    );
+  }
+  if (homeLayoutValidation.provided) {
+    statements.push(
+      ...createReplaceHomeLayoutStatements(context.env.DB, homeLayoutValidation.value, updatedAt),
     );
   }
   statements.push(

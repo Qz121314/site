@@ -1,9 +1,9 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
-import { App } from './App';
 import { PwaInstallPrompt } from './PwaInstallPrompt';
 import { installPublicContentFetchFallback } from './public-content-transport';
+import { StorefrontRoot } from './StorefrontRoot';
 import { installStorefrontTheme } from './theme-runtime';
 import '@site/storefront-ui/styles.css';
 import './styles.css';
@@ -17,6 +17,7 @@ import './app-shell.css';
 import './content-ui.css';
 import './product-detail-ui.css';
 import './bottom-navigation.css';
+import './home-feed.css';
 import '@site/storefront-ui/theme-contract.css';
 import '@site/storefront-ui/product-detail-theme-contract.css';
 import '@site/storefront-ui/primary-pages-theme-contract.css';
@@ -50,7 +51,7 @@ if (!root) {
 createRoot(root).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
-      <App />
+      <StorefrontRoot />
       <PwaInstallPrompt />
     </QueryClientProvider>
   </StrictMode>,
