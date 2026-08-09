@@ -64,7 +64,6 @@
   letter-spacing: -0.045em;
 }
 
-:is(html, .storefront-theme-root) .discover-section-title h2,
 :is(html, .storefront-theme-root) .home-recommendation-heading h2 {
   font-weight: 720;
   letter-spacing: -0.03em;

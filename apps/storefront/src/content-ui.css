@@ -1,39 +1,4 @@
-/* Marketplace content layer: keep the Storefront dense, touch-first, and app-like. */
-
-.content-section {
-  margin-bottom: 24px;
-}
-
-.section-heading {
-  align-items: center;
-  margin-bottom: 12px;
-}
-
-.section-heading h2 {
-  font-size: clamp(1.18rem, 4.8vw, 1.72rem);
-  letter-spacing: -0.035em;
-}
-
-.section-item {
-  border: 0;
-  background: transparent;
-  box-shadow: none;
-}
-
-.section-item:hover {
-  border-color: transparent;
-  box-shadow: none;
-}
-
-.section-item:active {
-  transform: scale(0.97);
-}
-
-.section-icon {
-  width: 50px;
-  height: 50px;
-  border-radius: 16px;
-}
+/* Product listing layer: keep shared product cards dense, touch-first, and app-like. */
 
 .product-grid {
   align-items: stretch;
@@ -144,153 +109,14 @@
   white-space: nowrap;
 }
 
-/* Browse behaves like a primary app tab, not a form-heavy web page. */
-.discover-page {
-  gap: 18px;
-}
-
-.discover-page .app-page-heading {
-  margin-bottom: -2px;
-  padding: 2px 2px 0;
-}
-
-.discover-page .app-page-kicker {
-  display: none;
-}
-
-.discover-page .app-page-heading h1 {
-  font-size: clamp(1.62rem, 7vw, 2.4rem);
-}
-
-.discover-search {
-  z-index: 28;
-  min-height: 48px;
-  border: 0;
-  border-radius: 15px;
-  background: color-mix(in srgb, var(--surface, #fff) 96%, transparent);
-  box-shadow: 0 6px 22px rgb(31 35 40 / 7%);
-  backdrop-filter: blur(18px);
-}
-
-.discover-search input {
-  font-size: 0.88rem;
-}
-
-.discover-section-block {
-  gap: 11px;
-}
-
-.discover-section-title {
-  min-height: 28px;
-  align-items: center;
-}
-
-.discover-section-title h2 {
-  font-size: 1.02rem;
-  letter-spacing: -0.02em;
-}
-
-.discover-section-title span {
-  min-width: 25px;
-  padding: 3px 7px;
-  border-radius: 999px;
-  background: var(--surface-soft, #f8f8f9);
-  font-size: 0.64rem;
-  text-align: center;
-}
-
-.discover-results-empty {
-  border: 0;
-  background: var(--surface, #fff);
-  box-shadow: inset 0 0 0 1px var(--line, #e7e9ec);
-}
-
-/* Section browsing keeps the existing data model but reduces desktop-form visual weight. */
-.filter-panel {
-  border: 0;
-  box-shadow: inset 0 0 0 1px var(--line, #e7e9ec);
-}
-
-.search-field input,
-.select-field select {
-  min-height: 44px;
-  border: 0;
-  border-radius: 12px;
-}
-
-.tag-filter {
-  margin-right: -4px;
-  padding-right: 4px;
-  scrollbar-width: none;
-}
-
-.tag-filter::-webkit-scrollbar {
-  display: none;
-}
-
-.tag-filter button {
-  min-height: 34px;
-  padding: 7px 11px;
-  border-color: color-mix(in srgb, var(--line, #e7e9ec) 90%, transparent);
-}
-
-.result-toolbar {
-  margin-bottom: 8px;
-}
-
 @media (max-width: 767px) {
   .app-shell > main {
     padding-right: 10px;
     padding-left: 10px;
   }
 
-  .content-section {
-    margin-bottom: 22px;
-  }
-
-  .section-grid,
-  .discover-section-grid {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 9px 5px;
-  }
-
-  .section-item {
-    gap: 6px;
-    min-height: 78px;
-    padding: 6px 2px;
-    font-size: 0.67rem;
-    line-height: 1.2;
-  }
-
-  .section-icon {
-    width: 48px;
-    height: 48px;
-    border-radius: 15px;
-  }
-
   .product-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .discover-search {
-    position: sticky;
-    top: calc(56px + env(safe-area-inset-top));
-  }
-
-  .filter-panel {
-    grid-template-columns: minmax(0, 1fr) minmax(112px, 0.46fr);
-    gap: 8px;
-    padding: 9px;
-    border-radius: 16px;
-  }
-
-  .search-field > span,
-  .select-field > span {
-    font-size: 0.58rem;
-  }
-
-  .tag-filter {
-    gap: 6px;
   }
 }
 
@@ -301,11 +127,6 @@
 
   .product-card-heading h3 {
     font-size: 0.84rem;
-  }
-
-  .section-icon {
-    width: 44px;
-    height: 44px;
   }
 }
 
@@ -367,10 +188,6 @@
   .product-address {
     margin-top: 8px;
     font-size: 0.66rem;
-  }
-
-  .discover-search {
-    width: min(620px, 100%);
   }
 }
 

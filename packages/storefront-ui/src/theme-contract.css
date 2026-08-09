@@ -19,12 +19,9 @@
   --theme-card-hover-shadow: var(--shadow);
   --theme-media-background: var(--surface-soft);
   --theme-control-background: var(--surface);
-  --theme-control-shadow: 0 6px 22px color-mix(in srgb, var(--text) 7%, transparent);
   --theme-header-background: color-mix(in srgb, var(--surface) 95%, transparent);
   --theme-tab-background: color-mix(in srgb, var(--surface) 96%, transparent);
   --theme-tab-shadow: 0 -8px 24px color-mix(in srgb, var(--text) 5%, transparent);
-  --theme-filter-background: var(--surface);
-  --theme-chip-background: var(--surface);
 }
 
 /* Runtime density is authoritative. Theme-key fallbacks keep Admin preview accurate. */
@@ -69,7 +66,6 @@
   --theme-card-hover-shadow: var(--shadow);
   --theme-media-background: color-mix(in srgb, var(--surface-soft) 92%, black 8%);
   --theme-control-background: color-mix(in srgb, var(--surface) 90%, var(--brand) 10%);
-  --theme-control-shadow: 0 10px 28px rgb(0 0 0 / 22%);
   --theme-header-background: color-mix(in srgb, var(--surface) 88%, transparent);
   --theme-tab-background: color-mix(in srgb, var(--surface) 92%, transparent);
 }
@@ -85,7 +81,6 @@
   --theme-card-shadow: 0 8px 24px rgb(0 0 0 / 22%);
   --theme-card-hover-shadow: 0 14px 34px color-mix(in srgb, var(--brand) 16%, black 84%);
   --theme-control-background: color-mix(in srgb, var(--surface) 90%, var(--brand) 10%);
-  --theme-control-shadow: 0 8px 24px rgb(0 0 0 / 20%);
 }
 
 :is(html, .storefront-theme-root)[data-theme='saas'] {
@@ -95,7 +90,6 @@
   --theme-radius-icon: 12px;
   --theme-card-shadow: 0 2px 8px color-mix(in srgb, var(--brand) 8%, transparent);
   --theme-card-hover-shadow: 0 10px 24px color-mix(in srgb, var(--brand) 12%, transparent);
-  --theme-control-shadow: 0 4px 14px color-mix(in srgb, var(--brand) 8%, transparent);
 }
 
 :is(html, .storefront-theme-root)[data-theme='travel'] {
@@ -107,7 +101,6 @@
   --theme-card-shadow: 0 8px 22px rgb(57 72 65 / 8%);
   --theme-card-hover-shadow: var(--shadow);
   --theme-control-background: color-mix(in srgb, var(--surface) 94%, var(--surface-soft) 6%);
-  --theme-control-shadow: 0 8px 20px rgb(57 72 65 / 8%);
 }
 
 :is(html, .storefront-theme-root)[data-theme='tech'] {
@@ -120,7 +113,6 @@
   --theme-card-shadow: 0 10px 28px rgb(0 0 0 / 22%);
   --theme-card-hover-shadow: 0 16px 38px color-mix(in srgb, var(--brand) 10%, black 90%);
   --theme-control-background: color-mix(in srgb, var(--surface) 82%, transparent);
-  --theme-control-shadow: 0 8px 24px rgb(0 0 0 / 20%);
   --theme-header-background: color-mix(in srgb, var(--surface) 78%, transparent);
   --theme-tab-background: color-mix(in srgb, var(--surface) 82%, transparent);
 }
@@ -136,18 +128,8 @@
     var(--theme-tab-shadow);
 }
 
-:is(html, .storefront-theme-root) .content-section {
-  margin-bottom: var(--theme-section-space);
-}
-
 :is(html, .storefront-theme-root) .product-grid {
   gap: var(--theme-card-gap-y) var(--theme-card-gap-x);
-}
-
-:is(html, .storefront-theme-root) .section-icon {
-  width: var(--theme-section-icon-size);
-  height: var(--theme-section-icon-size);
-  border-radius: var(--theme-radius-icon);
 }
 
 :is(html, .storefront-theme-root) .product-card-media {
@@ -155,30 +137,7 @@
   background: var(--theme-media-background);
 }
 
-:is(html, .storefront-theme-root) .discover-search {
-  min-height: var(--theme-control-height);
-  border-radius: var(--theme-radius-control);
-  background: var(--theme-control-background);
-  box-shadow: var(--theme-control-shadow);
-}
-
-:is(html, .storefront-theme-root) .filter-panel {
-  border-radius: var(--theme-radius-card);
-  background: var(--theme-filter-background);
-}
-
-:is(html, .storefront-theme-root) :is(.search-field input, .select-field select) {
-  min-height: var(--theme-control-height);
-  border-radius: var(--theme-radius-control);
-  background: var(--theme-control-background);
-}
-
-:is(html, .storefront-theme-root) :is(.tag-filter button, .discover-section-title span) {
-  border-radius: var(--theme-radius-chip);
-  background: var(--theme-chip-background);
-}
-
-:is(html, .storefront-theme-root) :is(.faq-list details, .messages-empty-state, .conversation-list) {
+:is(html, .storefront-theme-root) :is(.messages-empty-state, .conversation-list) {
   border-radius: var(--theme-radius-card);
   background: var(--theme-card-background);
 }
@@ -193,12 +152,6 @@
 
 .storefront-theme-root .product-card-media {
   border-radius: var(--theme-radius-media);
-}
-
-@media (max-width: 767px) {
-  html .section-item {
-    min-height: calc(var(--theme-section-icon-size) + 30px);
-  }
 }
 
 @media (min-width: 768px) {
@@ -239,7 +192,7 @@
   }
 }
 
-:is(html, .storefront-theme-root)[data-theme='tech'] :is(.product-card, .discover-search, .filter-panel, .topbar, .bottom-nav),
-:is(html, .storefront-theme-root)[data-theme='noir'] :is(.discover-search, .topbar, .bottom-nav) {
+:is(html, .storefront-theme-root)[data-theme='tech'] :is(.product-card, .topbar, .bottom-nav),
+:is(html, .storefront-theme-root)[data-theme='noir'] :is(.topbar, .bottom-nav) {
   backdrop-filter: blur(18px);
 }
