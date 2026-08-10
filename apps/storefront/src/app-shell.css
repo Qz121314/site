@@ -84,6 +84,27 @@ body,
     font-weight: 720;
   }
 
+  html[data-storefront-presentation='push'] .app-shell {
+    min-height: 100dvh;
+    padding-bottom: 0;
+  }
+
+  html[data-storefront-presentation='push'] .app-shell > .topbar,
+  html[data-storefront-presentation='push'] .app-shell > .site-footer,
+  html[data-storefront-presentation='push'] .app-shell > .bottom-nav,
+  html[data-storefront-presentation='push'] .pwa-install-card {
+    display: none;
+  }
+
+  html[data-storefront-presentation='push'] .app-shell > main {
+    width: 100%;
+    min-height: 100dvh;
+    padding-top: calc(8px + env(safe-area-inset-top));
+    padding-right: max(10px, env(safe-area-inset-right));
+    padding-bottom: calc(18px + env(safe-area-inset-bottom));
+    padding-left: max(10px, env(safe-area-inset-left));
+  }
+
   .mobile-edge-navigation {
     position: fixed;
     top: 50%;
