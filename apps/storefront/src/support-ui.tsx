@@ -1,11 +1,11 @@
 import type { StorefrontLinkComponent } from '@site/storefront-ui';
 import { useEffect, useState, type FormEvent } from 'react';
-import { useStorefrontCopy } from './storefront-copy';
 import type {
   SupportConversationDetail,
   SupportConversationSummary,
   SupportMessage,
 } from './support-contract';
+import { SYSTEM_UI } from './system-ui';
 
 export type PendingSupportConversation = {
   productTitle: string;
@@ -47,7 +47,7 @@ function formatConversationTime(value: string | null): string {
       minute: '2-digit',
     }).format(date);
   }
-  if (dayDifference === 1) return 'Yesterday';
+  if (dayDifference === 1) return SYSTEM_UI.yesterday;
   if (dayDifference > 1 && dayDifference < 7) {
     return new Intl.DateTimeFormat(undefined, { weekday: 'short' }).format(date);
   }
@@ -62,20 +62,12 @@ function conversationTimestamp(conversation: SupportConversationSummary): number
   return Number.isNaN(timestamp) ? 0 : timestamp;
 }
 
-function conversationTitle(
-  conversation: SupportConversationSummary,
-  supportName: string,
-): string {
-  return conversation.agentName?.trim() || supportName;
+function conversationTitle(conversation: SupportConversationSummary): string {
+  return conversation.agentName?.trim() || conversation.productTitle;
 }
 
-function conversationPreview(
-  conversation: SupportConversationSummary,
-  waitingPreview: string,
-): string {
-  const lastMessage =
-    conversation.lastMessage?.trim() ||
-    (conversation.status === 'waiting' ? waitingPreview : '');
+function conversationPreview(conversation: SupportConversationSummary): string {
+  const lastMessage = conversation.lastMessage?.trim() ?? '';
   return lastMessage
     ? `${conversation.productTitle} · ${lastMessage}`
     : conversation.productTitle;
@@ -86,13 +78,12 @@ function ConversationAvatar({
 }: {
   conversation: SupportConversationSummary;
 }) {
-  const { messages } = useStorefrontCopy();
   if (conversation.agentAvatarUrl) {
     return <img src={conversation.agentAvatarUrl} alt="" loading="lazy" />;
   }
   return (
     <span aria-hidden="true">
-      {conversationTitle(conversation, messages.supportName).slice(0, 1)}
+      {conversationTitle(conversation).slice(0, 1)}
     </span>
   );
 }
@@ -106,19 +97,17 @@ export function MessagesPageContent({
   activeConversationId?: string | null;
   LinkComponent?: StorefrontLinkComponent;
 }) {
-  const { messages } = useStorefrontCopy();
   const orderedConversations = [...conversations].sort(
     (left, right) => conversationTimestamp(right) - conversationTimestamp(left),
   );
 
   return (
-    <section className="messages-page" aria-label={messages.title}>
+    <section className="messages-page">
       {orderedConversations.length === 0 ? (
-        <div className="messages-empty-state">
+        <div className="messages-empty-state" aria-hidden="true">
           <span className="messages-empty-icon">
             <MessageBubbleIcon />
           </span>
-          <strong>{messages.emptyTitle}</strong>
         </div>
       ) : (
         <div className="conversation-list" role="list">
@@ -137,19 +126,13 @@ export function MessagesPageContent({
                 </span>
                 <span className="conversation-main">
                   <span className="conversation-heading-row">
-                    <strong>
-                      {conversationTitle(conversation, messages.supportName)}
-                    </strong>
+                    <strong>{conversationTitle(conversation)}</strong>
                     <time>{formatConversationTime(conversation.lastMessageAt)}</time>
                   </span>
                   <span className="conversation-preview-row">
-                    <span>
-                      {conversationPreview(conversation, messages.waitingPreview)}
-                    </span>
+                    <span>{conversationPreview(conversation)}</span>
                     {isUnread ? (
-                      <b
-                        aria-label={`${conversation.unreadCount} ${messages.unreadLabel}`}
-                      >
+                      <b aria-label={`${conversation.unreadCount} unread`}>
                         {conversation.unreadCount > 99 ? '99+' : conversation.unreadCount}
                       </b>
                     ) : null}
@@ -177,14 +160,12 @@ function ProductContextCard({
   context: ProductContext;
   LinkComponent: StorefrontLinkComponent;
 }) {
-  const { messages } = useStorefrontCopy();
   const body = (
     <>
       <span className="chat-product-media">
         {context.productCoverUrl ? <img src={context.productCoverUrl} alt="" /> : null}
       </span>
       <span className="chat-product-copy">
-        <small>{messages.productLabel}</small>
         <strong>{context.productTitle}</strong>
       </span>
       <span className="chat-product-chevron" aria-hidden="true">
@@ -203,10 +184,9 @@ function ProductContextCard({
 }
 
 function DeliveryMark({ delivery }: { delivery: SupportMessage['delivery'] }) {
-  const { messages } = useStorefrontCopy();
-  if (delivery === 'sending') return <span aria-label={messages.sendingLabel}>◷</span>;
+  if (delivery === 'sending') return <span aria-label={SYSTEM_UI.sending}>◷</span>;
   return (
-    <span aria-label={delivery === 'read' ? messages.readLabel : messages.sentLabel}>
+    <span aria-label={delivery === 'read' ? SYSTEM_UI.read : SYSTEM_UI.sent}>
       {delivery === 'read' ? '✓✓' : '✓'}
     </span>
   );
@@ -233,7 +213,6 @@ export function MessageThreadPageContent({
   loadingEarlier?: boolean;
   loadingConversation?: boolean;
 }) {
-  const { messages } = useStorefrontCopy();
   const [draft, setDraft] = useState('');
 
   useEffect(() => {
@@ -242,11 +221,10 @@ export function MessageThreadPageContent({
 
   if (loadingConversation) {
     return (
-      <section className="chat-page chat-page-unavailable" aria-live="polite">
+      <section className="chat-page chat-page-unavailable" aria-busy="true">
         <div className="chat-timeline">
-          <div className="chat-empty-state">
+          <div className="chat-empty-state" aria-hidden="true">
             <MessageBubbleIcon />
-            <strong>{messages.loadingConversation}</strong>
           </div>
         </div>
       </section>
@@ -255,40 +233,34 @@ export function MessageThreadPageContent({
 
   if (!conversation && !pendingConversation) {
     return (
-      <section className="chat-page chat-page-unavailable" aria-labelledby="chat-title">
+      <section className="chat-page chat-page-unavailable">
         <header className="chat-header">
           <LinkComponent
             className="chat-back-button"
             href="/messages/"
-            aria-label={messages.backLabel}
+            aria-label={SYSTEM_UI.back}
           >
             ←
           </LinkComponent>
-          <span className="chat-header-avatar">
+          <span className="chat-header-avatar" aria-hidden="true">
             <MessageBubbleIcon />
-          </span>
-          <span className="chat-header-copy">
-            <strong id="chat-title">{messages.supportName}</strong>
-            <small>{messages.noActiveConversation}</small>
           </span>
         </header>
         <div className="chat-timeline">
-          <div className="chat-empty-state">
+          <div className="chat-empty-state" aria-hidden="true">
             <MessageBubbleIcon />
-            <strong>{messages.unavailableTitle}</strong>
-            <p>{messages.unavailableDescription}</p>
           </div>
         </div>
         <div className="chat-composer is-disabled" aria-disabled="true">
-          <button type="button" disabled aria-label={messages.attachmentLabel}>
+          <button type="button" disabled aria-label={SYSTEM_UI.attachment}>
             ＋
           </button>
-          <div className="chat-input-placeholder">{messages.inputPlaceholder}</div>
+          <div className="chat-input-placeholder">{SYSTEM_UI.message}</div>
           <button
             type="button"
             disabled
             className="chat-send-button"
-            aria-label={messages.sendLabel}
+            aria-label={SYSTEM_UI.send}
           >
             ➤
           </button>
@@ -297,13 +269,6 @@ export function MessageThreadPageContent({
     );
   }
 
-  const statusLabel = pendingConversation
-    ? messages.newConversationStatus
-    : conversation?.status === 'waiting'
-      ? messages.waitingStatus
-      : conversation?.status === 'active'
-        ? messages.activeStatus
-        : messages.closedStatus;
   const productContext: ProductContext = pendingConversation ?? {
     productTitle: conversation?.productTitle ?? '',
     productCoverUrl: conversation?.productCoverUrl ?? null,
@@ -312,6 +277,9 @@ export function MessageThreadPageContent({
   const canSend =
     Boolean(onSendMessage) &&
     (pendingConversation !== null || conversation?.status !== 'closed');
+  const headerTitle = conversation
+    ? conversationTitle(conversation)
+    : pendingConversation?.productTitle ?? '';
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -326,12 +294,12 @@ export function MessageThreadPageContent({
   }
 
   return (
-    <section className="chat-page" aria-labelledby="chat-title">
+    <section className="chat-page">
       <header className="chat-header">
         <LinkComponent
           className="chat-back-button"
           href="/messages/"
-          aria-label={messages.backLabel}
+          aria-label={SYSTEM_UI.back}
         >
           ←
         </LinkComponent>
@@ -342,14 +310,11 @@ export function MessageThreadPageContent({
             <MessageBubbleIcon />
           )}
         </span>
-        <span className="chat-header-copy">
-          <strong id="chat-title">
-            {conversation
-              ? conversationTitle(conversation, messages.supportName)
-              : messages.supportName}
-          </strong>
-          <small>{statusLabel}</small>
-        </span>
+        {headerTitle ? (
+          <span className="chat-header-copy">
+            <strong>{headerTitle}</strong>
+          </span>
+        ) : null}
       </header>
 
       <ProductContextCard context={productContext} LinkComponent={LinkComponent} />
@@ -362,7 +327,7 @@ export function MessageThreadPageContent({
             disabled={loadingEarlier}
             onClick={() => void onLoadEarlier()}
           >
-            {messages.loadEarlier}
+            {SYSTEM_UI.loadEarlier}
           </button>
         ) : null}
         {conversation?.messages.map((message) => (
@@ -389,13 +354,13 @@ export function MessageThreadPageContent({
         className={`chat-composer${canSend ? '' : ' is-disabled'}`}
         onSubmit={(event) => void submit(event)}
       >
-        <button type="button" disabled aria-label={messages.attachmentLabel}>
+        <button type="button" disabled aria-label={SYSTEM_UI.attachment}>
           ＋
         </button>
         <textarea
           rows={1}
-          aria-label={messages.inputPlaceholder}
-          placeholder={messages.inputPlaceholder}
+          aria-label={SYSTEM_UI.message}
+          placeholder={SYSTEM_UI.message}
           value={draft}
           disabled={!canSend || sending}
           maxLength={4000}
@@ -405,7 +370,7 @@ export function MessageThreadPageContent({
           type="submit"
           disabled={!canSend || sending || !draft.trim()}
           className="chat-send-button"
-          aria-label={messages.sendLabel}
+          aria-label={SYSTEM_UI.send}
         >
           ➤
         </button>
@@ -415,12 +380,9 @@ export function MessageThreadPageContent({
 }
 
 function MessagesDetailPlaceholder() {
-  const { messages } = useStorefrontCopy();
   return (
     <div className="messages-detail-placeholder" aria-hidden="true">
       <MessageBubbleIcon />
-      <strong>{messages.selectConversationTitle}</strong>
-      <p>{messages.selectConversationDescription}</p>
     </div>
   );
 }
