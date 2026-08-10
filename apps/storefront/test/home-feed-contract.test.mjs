@@ -20,20 +20,21 @@ const cssSource = await readFile(
 );
 const mainSource = await readFile(new URL('../src/main.tsx', import.meta.url), 'utf8');
 
-test('root path mounts Home while Browse and Messages use dedicated primary-page roots', () => {
+test('primary tabs switch content inside one persistent app shell', () => {
   assert.match(mainSource, /<StorefrontRoot \/>/u);
   assert.match(rootSource, /parseStorefrontRoute\(pathname\)/u);
-  assert.match(rootSource, /case 'home':\s*page = <HomeRoot \/>/u);
-  assert.match(rootSource, /case 'discover':\s*page = <BrowseRoot \/>/u);
+  assert.equal(rootSource.match(/<PrimaryShell\b/gu)?.length, 1);
+  assert.match(rootSource, /routeKey=\{pathname\}/u);
   assert.match(
     rootSource,
-    /case 'messages':\s*page = <MessagesRoot activeConversationRef=\{null\} compose=\{false\} \/>/u,
+    /case 'home':\s*page = <HomeFeed bootstrap=\{bootstrap\} \/>/u,
   );
+  assert.match(rootSource, /case 'discover':[\s\S]*?<BrowsePage/u);
   assert.match(
     rootSource,
-    /case 'message-compose':\s*page = <MessagesRoot activeConversationRef=\{null\} compose \/>/u,
+    /case 'messages':[\s\S]*?<MessagesPage[\s\S]*?activeConversationRef=\{null\}/u,
   );
-  assert.match(rootSource, /<HomeFeed bootstrap=\{bootstrapQuery\.data\} \/>/u);
+  assert.match(rootSource, /<main>[\s\S]*className="storefront-route-view"/u);
 });
 
 test('Home is Hero then seven configured section shortcuts plus Browse More', () => {

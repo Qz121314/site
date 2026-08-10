@@ -31,11 +31,11 @@ test('FAQ article opens on a dedicated detail route and renders the published Ma
 });
 
 test('FAQ list and article detail use the primary Storefront shell and keep FAQ navigation active', () => {
-  assert.match(rootSource, /function FaqRoot\(/u);
+  assert.match(rootSource, /case 'faq':/u);
   assert.match(rootSource, /case 'faq-article':/u);
   assert.match(rootSource, /<FaqDirectoryPage/u);
   assert.match(rootSource, /<FaqArticlePage/u);
-  assert.match(rootSource, /<PrimaryShell activePath="\/faq\/"/u);
+  assert.match(rootSource, /<PrimaryShell[\s\S]*activePath=\{pathname\}/u);
 });
 
 test('FAQ article UI is isolated, mobile-friendly, and consumes Theme Center variables', () => {

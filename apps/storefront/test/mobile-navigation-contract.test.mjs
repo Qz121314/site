@@ -12,14 +12,26 @@ const historySource = await readFile(
   'utf8',
 );
 const shellCss = await readFile(new URL('../src/app-shell.css', import.meta.url), 'utf8');
-const sectionSource = await readFile(new URL('../src/SectionPage.tsx', import.meta.url), 'utf8');
-const copySource = await readFile(new URL('../src/storefront-copy.tsx', import.meta.url), 'utf8');
+const sectionSource = await readFile(
+  new URL('../src/SectionPage.tsx', import.meta.url),
+  'utf8',
+);
+const copySource = await readFile(
+  new URL('../src/storefront-copy.tsx', import.meta.url),
+  'utf8',
+);
 
 test('mobile storefront mounts one global edge navigation controller', () => {
-  assert.equal(mainSource.includes("import { MobileEdgeNavigation } from './MobileEdgeNavigation';"), true);
+  assert.equal(
+    mainSource.includes("import { MobileEdgeNavigation } from './MobileEdgeNavigation';"),
+    true,
+  );
   assert.equal(mainSource.includes('<MobileEdgeNavigation />'), true);
   assert.equal(edgeSource.includes("window.matchMedia('(max-width: 767px)')"), true);
-  assert.equal(edgeSource.includes("window.matchMedia('(display-mode: standalone)')"), true);
+  assert.equal(
+    edgeSource.includes("window.matchMedia('(display-mode: standalone)')"),
+    true,
+  );
   assert.equal(edgeSource.includes('StandaloneNavigator'), true);
   assert.equal(edgeSource.includes('touchstart'), true);
   assert.equal(edgeSource.includes('touchmove'), true);
@@ -41,7 +53,11 @@ test('edge gestures support both internal Back and Forward without hijacking hor
     'section-tag-filter',
     'detail-gallery',
   ]) {
-    assert.equal(edgeSource.includes(selector), true, `${selector} must remain gesture-safe`);
+    assert.equal(
+      edgeSource.includes(selector),
+      true,
+      `${selector} must remain gesture-safe`,
+    );
   }
   assert.equal(edgeSource.includes('event.preventDefault()'), true);
 });
@@ -59,21 +75,33 @@ test('SPA history entries restore scroll and preserve Back then Forward navigati
     'window.scrollTo',
     'storefrontNavDirection',
   ]) {
-    assert.equal(historySource.includes(marker), true, `${marker} must remain in the navigation history layer`);
+    assert.equal(
+      historySource.includes(marker),
+      true,
+      `${marker} must remain in the navigation history layer`,
+    );
   }
   assert.equal(edgeSource.includes('handleClickCapture'), true);
 });
 
-test('mobile page transitions follow navigation direction and expose an edge affordance', () => {
+test('only pushed detail routes animate while primary tabs remain stationary', () => {
   for (const marker of [
     '.mobile-edge-navigation',
     "data-storefront-nav-direction='forward'",
     "data-storefront-nav-direction='back'",
+    "data-storefront-transition='push'",
+    "data-storefront-transition='pop'",
     '@keyframes app-page-enter-forward',
     '@keyframes app-page-enter-back',
   ]) {
-    assert.equal(shellCss.includes(marker), true, `${marker} must remain in the app shell`);
+    assert.equal(
+      shellCss.includes(marker),
+      true,
+      `${marker} must remain in the app shell`,
+    );
   }
+  assert.equal(shellCss.includes('@keyframes app-page-enter {'), false);
+  assert.equal(shellCss.includes('@keyframes app-tab-settle'), false);
 });
 
 test('section return control is a backend-driven Back action instead of a Browse label', () => {

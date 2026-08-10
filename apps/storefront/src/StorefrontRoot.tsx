@@ -15,10 +15,15 @@ import {
   type ReactNode,
   useEffect,
   useMemo,
+  useState,
   useSyncExternalStore,
 } from 'react';
 import { BrowsePage } from './BrowsePage';
-import { loadStorefrontBootstrap, loadProductSnapshot, PublicContentError } from './content';
+import {
+  loadStorefrontBootstrap,
+  loadProductSnapshot,
+  PublicContentError,
+} from './content';
 import { FaqArticlePage, FaqDirectoryPage } from './FaqPage';
 import { HomeFeed } from './HomeFeed';
 import { NotFoundPage } from './NotFoundPage';
@@ -83,14 +88,7 @@ function StorefrontLink({
   return <a {...props} href={href} onClick={handleClick} />;
 }
 
-function StorefrontMetadata() {
-  const bootstrapQuery = useQuery({
-    queryKey: ['storefront-bootstrap'],
-    queryFn: ({ signal }) => loadStorefrontBootstrap(undefined, signal),
-    staleTime: 30_000,
-  });
-  const description = bootstrapQuery.data?.site.site.locationLabel.trim() ?? '';
-
+function StorefrontMetadata({ description }: { description: string }) {
   useEffect(() => {
     let meta = document.head.querySelector<HTMLMetaElement>('meta[name="description"]');
     if (!description) {
@@ -147,12 +145,14 @@ function PrimaryShell({
   bootstrap,
   copy,
   children,
+  routeKey,
   unreadMessages = 0,
 }: {
   activePath: string;
   bootstrap: Awaited<ReturnType<typeof loadStorefrontBootstrap>>;
   copy: typeof FALLBACK_STOREFRONT_COPY;
   children: ReactNode;
+  routeKey: string;
   unreadMessages?: number;
 }) {
   const site = bootstrap.site.site;
@@ -169,7 +169,11 @@ function PrimaryShell({
           }
           siteName={site.name}
         />
-        <main>{children}</main>
+        <main>
+          <div className="storefront-route-view" key={routeKey}>
+            {children}
+          </div>
+        </main>
         <footer className="site-footer">{site.name}</footer>
         <StorefrontBottomNavigation
           activeHref={bottomNavigationActiveHref(activePath)}
@@ -181,71 +185,22 @@ function PrimaryShell({
   );
 }
 
-function HomeRoot() {
-  const bootstrapQuery = useQuery({
-    queryKey: ['storefront-bootstrap'],
-    queryFn: ({ signal }) => loadStorefrontBootstrap(undefined, signal),
-    staleTime: 30_000,
-  });
-  const copyQuery = useQuery({
-    queryKey: ['storefront-copy'],
-    queryFn: ({ signal }) => loadStorefrontCopy(signal),
-    staleTime: 30_000,
-  });
-
-  if (bootstrapQuery.isLoading) return <PrimaryLoading />;
-  if (bootstrapQuery.error || !bootstrapQuery.data)
-    return <PrimaryError error={bootstrapQuery.error} />;
-
-  const copy = copyQuery.data ?? FALLBACK_STOREFRONT_COPY;
-  return (
-    <PrimaryShell activePath="/" bootstrap={bootstrapQuery.data} copy={copy}>
-      <HomeFeed bootstrap={bootstrapQuery.data} />
-    </PrimaryShell>
-  );
-}
-
-function BrowseRoot() {
-  const bootstrapQuery = useQuery({
-    queryKey: ['storefront-bootstrap'],
-    queryFn: ({ signal }) => loadStorefrontBootstrap(undefined, signal),
-    staleTime: 30_000,
-  });
-  const copyQuery = useQuery({
-    queryKey: ['storefront-copy'],
-    queryFn: ({ signal }) => loadStorefrontCopy(signal),
-    staleTime: 30_000,
-  });
-
-  if (bootstrapQuery.isLoading) return <PrimaryLoading />;
-  if (bootstrapQuery.error || !bootstrapQuery.data)
-    return <PrimaryError error={bootstrapQuery.error} />;
-
-  const copy = copyQuery.data ?? FALLBACK_STOREFRONT_COPY;
-  return (
-    <PrimaryShell activePath="/browse/" bootstrap={bootstrapQuery.data} copy={copy}>
-      <BrowsePage
-        bootstrap={bootstrapQuery.data}
-        LinkComponent={StorefrontLink as StorefrontLinkComponent}
-      />
-    </PrimaryShell>
-  );
-}
-
 type ComposeContext = { productId: string; sectionId: string };
 
 function readComposeContext(): ComposeContext | null {
   const params = new URLSearchParams(window.location.search);
   const productId = params.get('productId')?.trim() ?? '';
   const sectionId = params.get('sectionId')?.trim() ?? '';
-  if (!productId || !sectionId || productId.length > 120 || sectionId.length > 120) return null;
+  if (!productId || !sectionId || productId.length > 120 || sectionId.length > 120)
+    return null;
   return { productId, sectionId };
 }
 
 function combineConversationPages(
   pages: Array<SupportConversationDetail | null> | undefined,
 ): SupportConversationDetail | null {
-  const validPages = pages?.filter((page): page is SupportConversationDetail => Boolean(page)) ?? [];
+  const validPages =
+    pages?.filter((page): page is SupportConversationDetail => Boolean(page)) ?? [];
   const latest = validPages[0];
   if (!latest) return null;
   const messages = [...validPages].reverse().flatMap((page) => page.messages);
@@ -257,24 +212,20 @@ function combineConversationPages(
   };
 }
 
-function MessagesRoot({
+function MessagesPage({
   activeConversationRef,
+  bootstrap,
   compose,
+  copy,
+  onUnreadMessagesChange,
 }: {
   activeConversationRef: string | null;
+  bootstrap: Awaited<ReturnType<typeof loadStorefrontBootstrap>>;
   compose: boolean;
+  copy: typeof FALLBACK_STOREFRONT_COPY;
+  onUnreadMessagesChange: (count: number) => void;
 }) {
   const queryClient = useQueryClient();
-  const bootstrapQuery = useQuery({
-    queryKey: ['storefront-bootstrap'],
-    queryFn: ({ signal }) => loadStorefrontBootstrap(undefined, signal),
-    staleTime: 30_000,
-  });
-  const copyQuery = useQuery({
-    queryKey: ['storefront-copy'],
-    queryFn: ({ signal }) => loadStorefrontCopy(signal),
-    staleTime: 30_000,
-  });
   const conversationsQuery = useQuery({
     queryKey: ['support-conversations'],
     queryFn: ({ signal }) => siteSupportGateway.listConversations(signal),
@@ -294,12 +245,16 @@ function MessagesRoot({
   });
   const composeContext = compose ? readComposeContext() : null;
   const composeProductQuery = useQuery({
-    queryKey: ['support-compose-product', composeContext?.sectionId, composeContext?.productId],
-    enabled: Boolean(composeContext && bootstrapQuery.data),
+    queryKey: [
+      'support-compose-product',
+      composeContext?.sectionId,
+      composeContext?.productId,
+    ],
+    enabled: Boolean(composeContext),
     queryFn: ({ signal }) => {
-      if (!composeContext || !bootstrapQuery.data) throw new Error('INVALID_COMPOSE_CONTEXT');
+      if (!composeContext) throw new Error('INVALID_COMPOSE_CONTEXT');
       return loadProductSnapshot(
-        bootstrapQuery.data,
+        bootstrap,
         composeContext.productId,
         signal,
         composeContext.sectionId,
@@ -313,7 +268,8 @@ function MessagesRoot({
     () => combineConversationPages(conversationQuery.data?.pages),
     [conversationQuery.data?.pages],
   );
-  const pendingConversation: PendingSupportConversation | null = composeProductQuery.data?.product
+  const pendingConversation: PendingSupportConversation | null = composeProductQuery.data
+    ?.product
     ? {
         productTitle: composeProductQuery.data.product.title,
         productCoverUrl: composeProductQuery.data.product.coverUrl,
@@ -325,16 +281,23 @@ function MessagesRoot({
     (total, conversation) => total + conversation.unreadCount,
     0,
   );
-  const copy = copyQuery.data ?? FALLBACK_STOREFRONT_COPY;
 
-  useEffect(() => subscribeSupportRealtime((event) => {
-    void queryClient.invalidateQueries({ queryKey: ['support-conversations'] });
-    if (event.conversationRef) {
-      void queryClient.invalidateQueries({
-        queryKey: ['support-conversation', event.conversationRef],
-      });
-    }
-  }), [queryClient]);
+  useEffect(() => {
+    onUnreadMessagesChange(unreadMessages);
+  }, [onUnreadMessagesChange, unreadMessages]);
+
+  useEffect(
+    () =>
+      subscribeSupportRealtime((event) => {
+        void queryClient.invalidateQueries({ queryKey: ['support-conversations'] });
+        if (event.conversationRef) {
+          void queryClient.invalidateQueries({
+            queryKey: ['support-conversation', event.conversationRef],
+          });
+        }
+      }),
+    [queryClient],
+  );
 
   const sendMutation = useMutation({
     mutationFn: async (body: string) => {
@@ -365,221 +328,184 @@ function MessagesRoot({
         navigateStorefront(`/messages/${encodeURIComponent(result.conversation.id)}/`);
         return;
       }
-      await queryClient.invalidateQueries({ queryKey: ['support-conversation', activeConversationRef] });
+      await queryClient.invalidateQueries({
+        queryKey: ['support-conversation', activeConversationRef],
+      });
     },
   });
 
   useEffect(() => {
-    if (!activeConversationRef || !activeConversation || activeConversation.unreadCount <= 0) return;
-    const lastAgentMessage = [...activeConversation.messages]
-      .reverse()
-      .find((message) => message.direction === 'agent')?.id ?? null;
+    if (
+      !activeConversationRef ||
+      !activeConversation ||
+      activeConversation.unreadCount <= 0
+    )
+      return;
+    const lastAgentMessage =
+      [...activeConversation.messages]
+        .reverse()
+        .find((message) => message.direction === 'agent')?.id ?? null;
     void siteSupportGateway
       .markConversationRead(activeConversationRef, lastAgentMessage)
       .then(() => queryClient.invalidateQueries({ queryKey: ['support-conversations'] }))
       .catch(() => undefined);
   }, [activeConversationRef, activeConversation, queryClient]);
 
-  if (bootstrapQuery.isLoading) return <PrimaryLoading />;
-  if (bootstrapQuery.error || !bootstrapQuery.data)
-    return <PrimaryError error={bootstrapQuery.error} />;
-
   const workspaceConversationRef = compose ? '__new__' : activeConversationRef;
   const sendError = sendMutation.error ? copy.messages.sendFailed : null;
   return (
-    <PrimaryShell
-      activePath="/messages/"
-      bootstrap={bootstrapQuery.data}
-      copy={copy}
-      unreadMessages={unreadMessages}
-    >
-      <MessagesWorkspace
-        activeConversation={activeConversation}
-        activeConversationRef={workspaceConversationRef}
-        conversations={conversations}
-        pendingConversation={pendingConversation}
-        LinkComponent={StorefrontLink as StorefrontLinkComponent}
-        onSendMessage={async (body) => {
-          await sendMutation.mutateAsync(body);
-        }}
-        sending={sendMutation.isPending}
-        sendError={sendError}
-        onLoadEarlier={activeConversation?.nextMessageCursor ? async () => {
-          await conversationQuery.fetchNextPage();
-        } : undefined}
-        loadingEarlier={conversationQuery.isFetchingNextPage}
-        loadingConversation={
-          Boolean(activeConversationRef && conversationQuery.isLoading)
-          || Boolean(compose && composeContext && composeProductQuery.isLoading)
-        }
-      />
-    </PrimaryShell>
-  );
-}
-
-function FaqRoot({ articleRef }: { articleRef: string | null }) {
-  const bootstrapQuery = useQuery({
-    queryKey: ['storefront-bootstrap'],
-    queryFn: ({ signal }) => loadStorefrontBootstrap(undefined, signal),
-    staleTime: 30_000,
-  });
-  const copyQuery = useQuery({
-    queryKey: ['storefront-copy'],
-    queryFn: ({ signal }) => loadStorefrontCopy(signal),
-    staleTime: 30_000,
-  });
-  if (bootstrapQuery.isLoading) return <PrimaryLoading />;
-  if (bootstrapQuery.error || !bootstrapQuery.data)
-    return <PrimaryError error={bootstrapQuery.error} />;
-
-  const copy = copyQuery.data ?? FALLBACK_STOREFRONT_COPY;
-  return (
-    <PrimaryShell activePath="/faq/" bootstrap={bootstrapQuery.data} copy={copy}>
-      {articleRef ? (
-        <FaqArticlePage
-          articleRef={articleRef}
-          bootstrap={bootstrapQuery.data}
-          LinkComponent={StorefrontLink as StorefrontLinkComponent}
-        />
-      ) : (
-        <FaqDirectoryPage
-          bootstrap={bootstrapQuery.data}
-          LinkComponent={StorefrontLink as StorefrontLinkComponent}
-        />
-      )}
-    </PrimaryShell>
-  );
-}
-
-function SectionRoot({ sectionRef }: { sectionRef: string }) {
-  const bootstrapQuery = useQuery({
-    queryKey: ['storefront-bootstrap'],
-    queryFn: ({ signal }) => loadStorefrontBootstrap(undefined, signal),
-    staleTime: 30_000,
-  });
-  const copyQuery = useQuery({
-    queryKey: ['storefront-copy'],
-    queryFn: ({ signal }) => loadStorefrontCopy(signal),
-    staleTime: 30_000,
-  });
-  if (bootstrapQuery.isLoading) return <PrimaryLoading />;
-  if (bootstrapQuery.error || !bootstrapQuery.data)
-    return <PrimaryError error={bootstrapQuery.error} />;
-
-  const copy = copyQuery.data ?? FALLBACK_STOREFRONT_COPY;
-  return (
-    <PrimaryShell activePath="/browse/" bootstrap={bootstrapQuery.data} copy={copy}>
-      <SectionCatalogPage
-        bootstrap={bootstrapQuery.data}
-        sectionRef={sectionRef}
-        LinkComponent={StorefrontLink as StorefrontLinkComponent}
-      />
-    </PrimaryShell>
-  );
-}
-
-function ProductRoot({
-  productRef,
-  sectionRef,
-}: {
-  productRef: string;
-  sectionRef: string | null;
-}) {
-  const bootstrapQuery = useQuery({
-    queryKey: ['storefront-bootstrap'],
-    queryFn: ({ signal }) => loadStorefrontBootstrap(undefined, signal),
-    staleTime: 30_000,
-  });
-  const copyQuery = useQuery({
-    queryKey: ['storefront-copy'],
-    queryFn: ({ signal }) => loadStorefrontCopy(signal),
-    staleTime: 30_000,
-  });
-  if (bootstrapQuery.isLoading) return <PrimaryLoading />;
-  if (bootstrapQuery.error || !bootstrapQuery.data)
-    return <PrimaryError error={bootstrapQuery.error} />;
-
-  const copy = copyQuery.data ?? FALLBACK_STOREFRONT_COPY;
-  return (
-    <PrimaryShell activePath="/browse/" bootstrap={bootstrapQuery.data} copy={copy}>
-      <ProductDetailPage
-        bootstrap={bootstrapQuery.data}
-        productRef={productRef}
-        sectionRef={sectionRef}
-        LinkComponent={StorefrontLink as StorefrontLinkComponent}
-      />
-    </PrimaryShell>
-  );
-}
-
-function NotFoundRoot({ pathname }: { pathname: string }) {
-  const bootstrapQuery = useQuery({
-    queryKey: ['storefront-bootstrap'],
-    queryFn: ({ signal }) => loadStorefrontBootstrap(undefined, signal),
-    staleTime: 30_000,
-  });
-  const copyQuery = useQuery({
-    queryKey: ['storefront-copy'],
-    queryFn: ({ signal }) => loadStorefrontCopy(signal),
-    staleTime: 30_000,
-  });
-
-  if (bootstrapQuery.isLoading) return <PrimaryLoading />;
-  if (bootstrapQuery.error || !bootstrapQuery.data)
-    return <PrimaryError error={bootstrapQuery.error} />;
-
-  const copy = copyQuery.data ?? FALLBACK_STOREFRONT_COPY;
-  return (
-    <PrimaryShell activePath={pathname} bootstrap={bootstrapQuery.data} copy={copy}>
-      <NotFoundPage
-        siteName={bootstrapQuery.data.site.site.name}
-        LinkComponent={StorefrontLink as StorefrontLinkComponent}
-      />
-    </PrimaryShell>
+    <MessagesWorkspace
+      activeConversation={activeConversation}
+      activeConversationRef={workspaceConversationRef}
+      conversations={conversations}
+      pendingConversation={pendingConversation}
+      LinkComponent={StorefrontLink as StorefrontLinkComponent}
+      onSendMessage={async (body) => {
+        await sendMutation.mutateAsync(body);
+      }}
+      sending={sendMutation.isPending}
+      sendError={sendError}
+      onLoadEarlier={
+        activeConversation?.nextMessageCursor
+          ? async () => {
+              await conversationQuery.fetchNextPage();
+            }
+          : undefined
+      }
+      loadingEarlier={conversationQuery.isFetchingNextPage}
+      loadingConversation={
+        Boolean(activeConversationRef && conversationQuery.isLoading) ||
+        Boolean(compose && composeContext && composeProductQuery.isLoading)
+      }
+    />
   );
 }
 
 export function StorefrontRoot() {
   const pathname = useSyncExternalStore(subscribePathname, currentPathname, () => '/');
   const route = parseStorefrontRoute(pathname);
+  const [unreadMessages, setUnreadMessages] = useState(0);
+  const bootstrapQuery = useQuery({
+    queryKey: ['storefront-bootstrap'],
+    queryFn: ({ signal }) => loadStorefrontBootstrap(undefined, signal),
+    staleTime: 30_000,
+  });
+  const copyQuery = useQuery({
+    queryKey: ['storefront-copy'],
+    queryFn: ({ signal }) => loadStorefrontCopy(signal),
+    staleTime: 30_000,
+  });
+
+  if (bootstrapQuery.isLoading) return <PrimaryLoading />;
+  if (bootstrapQuery.error || !bootstrapQuery.data)
+    return <PrimaryError error={bootstrapQuery.error} />;
+
+  const bootstrap = bootstrapQuery.data;
+  const copy = copyQuery.data ?? FALLBACK_STOREFRONT_COPY;
   let page: ReactNode;
 
   switch (route.type) {
     case 'home':
-      page = <HomeRoot />;
+      page = <HomeFeed bootstrap={bootstrap} />;
       break;
     case 'discover':
-      page = <BrowseRoot />;
+      page = (
+        <BrowsePage
+          bootstrap={bootstrap}
+          LinkComponent={StorefrontLink as StorefrontLinkComponent}
+        />
+      );
       break;
     case 'messages':
-      page = <MessagesRoot activeConversationRef={null} compose={false} />;
+      page = (
+        <MessagesPage
+          activeConversationRef={null}
+          bootstrap={bootstrap}
+          compose={false}
+          copy={copy}
+          onUnreadMessagesChange={setUnreadMessages}
+        />
+      );
       break;
     case 'message-compose':
-      page = <MessagesRoot activeConversationRef={null} compose />;
+      page = (
+        <MessagesPage
+          activeConversationRef={null}
+          bootstrap={bootstrap}
+          compose
+          copy={copy}
+          onUnreadMessagesChange={setUnreadMessages}
+        />
+      );
       break;
     case 'message':
-      page = <MessagesRoot activeConversationRef={route.conversationRef} compose={false} />;
+      page = (
+        <MessagesPage
+          activeConversationRef={route.conversationRef}
+          bootstrap={bootstrap}
+          compose={false}
+          copy={copy}
+          onUnreadMessagesChange={setUnreadMessages}
+        />
+      );
       break;
     case 'faq':
-      page = <FaqRoot articleRef={null} />;
+      page = (
+        <FaqDirectoryPage
+          bootstrap={bootstrap}
+          LinkComponent={StorefrontLink as StorefrontLinkComponent}
+        />
+      );
       break;
     case 'faq-article':
-      page = <FaqRoot articleRef={route.articleRef} />;
+      page = (
+        <FaqArticlePage
+          articleRef={route.articleRef}
+          bootstrap={bootstrap}
+          LinkComponent={StorefrontLink as StorefrontLinkComponent}
+        />
+      );
       break;
     case 'section':
-      page = <SectionRoot sectionRef={route.sectionRef} />;
+      page = (
+        <SectionCatalogPage
+          bootstrap={bootstrap}
+          sectionRef={route.sectionRef}
+          LinkComponent={StorefrontLink as StorefrontLinkComponent}
+        />
+      );
       break;
     case 'product':
-      page = <ProductRoot productRef={route.productRef} sectionRef={route.sectionRef} />;
+      page = (
+        <ProductDetailPage
+          bootstrap={bootstrap}
+          productRef={route.productRef}
+          sectionRef={route.sectionRef}
+          LinkComponent={StorefrontLink as StorefrontLinkComponent}
+        />
+      );
       break;
     default:
-      page = <NotFoundRoot pathname={pathname} />;
+      page = (
+        <NotFoundPage
+          siteName={bootstrap.site.site.name}
+          LinkComponent={StorefrontLink as StorefrontLinkComponent}
+        />
+      );
   }
 
   return (
     <>
-      <StorefrontMetadata />
-      {page}
+      <StorefrontMetadata description={bootstrap.site.site.locationLabel.trim()} />
+      <PrimaryShell
+        activePath={pathname}
+        bootstrap={bootstrap}
+        copy={copy}
+        routeKey={pathname}
+        unreadMessages={unreadMessages}
+      >
+        {page}
+      </PrimaryShell>
     </>
   );
 }

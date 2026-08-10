@@ -18,9 +18,6 @@ test('FAQ query remains available for the dedicated fixed navigation page', () =
     faqSource,
     /if \(!bootstrap\.site\.site\.navigation\.showFaq\) return null/,
   );
-  assert.match(
-    rootSource,
-    /case 'faq':\s*page = <FaqRoot articleRef=\{null\} \/>;\s*break;/,
-  );
-  assert.match(rootSource, /<PrimaryShell activePath="\/faq\/"[\s\S]*?<FaqDirectoryPage/);
+  assert.match(rootSource, /case 'faq':[\s\S]*?page = \([\s\S]*?<FaqDirectoryPage/);
+  assert.match(rootSource, /<PrimaryShell[\s\S]*activePath=\{pathname\}/);
 });
