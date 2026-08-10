@@ -1,4 +1,5 @@
 export const SYSTEM_UI = {
+  addToHomeScreen: 'Add to Home Screen',
   all: 'All',
   attachment: 'Attachment',
   back: 'Back',
@@ -8,7 +9,7 @@ export const SYSTEM_UI = {
   loadEarlier: 'Load earlier',
   loading: 'Loading…',
   message: 'Message',
-  messageFailed: 'Message could not be sent.',
+  messageFailed: 'Failed',
   more: 'More',
   noResults: 'No results',
   notFound: 'Not found',
@@ -19,5 +20,6 @@ export const SYSTEM_UI = {
   sending: 'Sending',
   sent: 'Sent',
   unavailable: 'Unavailable',
+  unread: 'unread',
   yesterday: 'Yesterday',
 } as const;
