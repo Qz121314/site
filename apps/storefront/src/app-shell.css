@@ -28,28 +28,47 @@ body,
   touch-action: manipulation;
 }
 
+.app-shell :is(a, button, input, select, textarea):focus-visible {
+  outline-color: color-mix(in srgb, var(--brand) 40%, transparent);
+}
+
 @media (max-width: 767px) {
   .site-footer {
     display: none;
   }
 
+  .app-shell > .topbar {
+    border-bottom-color: color-mix(in srgb, var(--line, #e7e9ec) 72%, transparent);
+    background: color-mix(in srgb, var(--surface, #fff) 96%, transparent);
+    box-shadow: 0 4px 16px color-mix(in srgb, var(--text, #1f2328) 3%, transparent);
+  }
+
   .app-shell > main {
-    padding-bottom: 24px;
+    padding-bottom: 26px;
   }
 
   .app-shell .bottom-nav {
+    border: 0;
+    border-top: 1px solid color-mix(in srgb, var(--line, #e7e9ec) 78%, transparent);
     border-radius: 0;
-    box-shadow: 0 -1px 0 color-mix(in srgb, var(--line, #e7e9ec) 88%, transparent),
-      0 -8px 24px rgb(15 23 42 / 5%);
+    background: color-mix(in srgb, var(--surface, #fff) 97%, transparent);
+    box-shadow: 0 -8px 28px color-mix(in srgb, var(--text, #1f2328) 6%, transparent);
+    backdrop-filter: blur(20px);
   }
 
   .app-shell .bottom-nav a {
-    min-height: 54px;
-    border-radius: 10px;
+    min-height: 55px;
+    border-radius: 12px;
+    transition: color 140ms ease, background 140ms ease, transform 120ms ease;
+  }
+
+  .app-shell .bottom-nav a:active {
+    transform: scale(0.96);
   }
 
   .app-shell .bottom-nav a.is-active {
-    background: transparent;
+    color: var(--brand-strong);
+    background: color-mix(in srgb, var(--brand) 7%, transparent);
   }
 
   .app-shell .bottom-nav a.is-active .storefront-nav-svg {
@@ -57,7 +76,8 @@ body,
   }
 
   .app-shell .bottom-nav small {
-    font-size: 0.67rem;
+    font-size: 0.66rem;
+    font-weight: 720;
   }
 
   @supports selector(.app-shell:has(.messages-workspace.is-thread-open)) {
@@ -112,6 +132,12 @@ body,
 
   .app-shell .bottom-nav a.is-active .storefront-nav-svg {
     animation: app-tab-settle 180ms cubic-bezier(0.2, 0.72, 0.2, 1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .app-shell .bottom-nav a {
+    transition: none;
   }
 }
 
