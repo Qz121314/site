@@ -7,6 +7,7 @@ body,
 
 .app-shell {
   min-height: 100dvh;
+  background: var(--page-bg, #f5f6f7);
 }
 
 .app-shell > .topbar {
@@ -17,7 +18,9 @@ body,
 }
 
 .app-shell > main {
-  min-height: calc(100dvh - 148px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  min-height: calc(
+    100dvh - 148px - env(safe-area-inset-top) - env(safe-area-inset-bottom)
+  );
 }
 
 .app-shell button,
@@ -37,33 +40,68 @@ body,
 }
 
 @media (max-width: 767px) {
+  body {
+    background: var(--page-bg, #f5f6f7);
+  }
+
   .site-footer {
     display: none;
   }
 
   .app-shell > .topbar {
-    border-bottom-color: color-mix(in srgb, var(--line, #e7e9ec) 72%, transparent);
-    background: color-mix(in srgb, var(--surface, #fff) 96%, transparent);
-    box-shadow: 0 4px 16px color-mix(in srgb, var(--text, #1f2328) 3%, transparent);
+    min-height: calc(62px + env(safe-area-inset-top));
+    padding-top: calc(10px + env(safe-area-inset-top));
+    padding-bottom: 8px;
+    border-bottom-color: color-mix(in srgb, var(--line, #e7e9ec) 62%, transparent);
+    background: color-mix(in srgb, var(--surface, #fff) 92%, transparent);
+    box-shadow: 0 6px 22px color-mix(in srgb, var(--text, #1f2328) 5%, transparent);
+    backdrop-filter: blur(24px) saturate(1.18);
   }
 
   .app-shell > main {
-    padding-bottom: 26px;
+    padding-top: 12px;
+    padding-bottom: 28px;
+  }
+
+  .app-shell .brand-logo {
+    width: 40px;
+    height: 40px;
+    border: 1px solid color-mix(in srgb, var(--line, #e7e9ec) 58%, transparent);
+    box-shadow: 0 5px 14px color-mix(in srgb, var(--text, #1f2328) 9%, transparent);
+  }
+
+  .app-shell .brand-lockup {
+    gap: 10px;
+  }
+
+  .app-shell .brand-lockup strong {
+    font-size: 0.92rem;
+    font-weight: 820;
+    letter-spacing: -0.02em;
+  }
+
+  .app-shell .brand-lockup small {
+    font-size: 0.68rem;
+    font-weight: 620;
   }
 
   .app-shell .bottom-nav {
     border: 0;
     border-top: 1px solid color-mix(in srgb, var(--line, #e7e9ec) 78%, transparent);
     border-radius: 0;
-    background: color-mix(in srgb, var(--surface, #fff) 97%, transparent);
-    box-shadow: 0 -8px 28px color-mix(in srgb, var(--text, #1f2328) 6%, transparent);
-    backdrop-filter: blur(20px);
+    background: color-mix(in srgb, var(--surface, #fff) 93%, transparent);
+    box-shadow: 0 -10px 30px color-mix(in srgb, var(--text, #1f2328) 7%, transparent);
+    backdrop-filter: blur(24px) saturate(1.15);
   }
 
   .app-shell .bottom-nav a {
-    min-height: 55px;
-    border-radius: 12px;
-    transition: color 140ms ease, background 140ms ease, transform 120ms ease;
+    min-height: 58px;
+    gap: 2px;
+    border-radius: 14px;
+    transition:
+      color 140ms ease,
+      background 140ms ease,
+      transform 120ms ease;
   }
 
   .app-shell .bottom-nav a:active {
@@ -72,7 +110,20 @@ body,
 
   .app-shell .bottom-nav a.is-active {
     color: var(--brand-strong);
-    background: color-mix(in srgb, var(--brand) 7%, transparent);
+    background: transparent;
+  }
+
+  .app-shell .bottom-nav .bottom-nav-icon {
+    width: 42px;
+    height: 28px;
+    border-radius: 999px;
+    transition:
+      background 140ms ease,
+      transform 140ms ease;
+  }
+
+  .app-shell .bottom-nav a.is-active .bottom-nav-icon {
+    background: color-mix(in srgb, var(--brand) 12%, transparent);
   }
 
   .app-shell .bottom-nav a.is-active .storefront-nav-svg {
@@ -80,8 +131,9 @@ body,
   }
 
   .app-shell .bottom-nav small {
-    font-size: 0.66rem;
-    font-weight: 720;
+    font-size: 0.65rem;
+    font-weight: 740;
+    letter-spacing: -0.012em;
   }
 
   html[data-storefront-presentation='push'] .app-shell {
@@ -120,7 +172,10 @@ body,
     box-shadow: 0 10px 28px color-mix(in srgb, #000 18%, transparent);
     pointer-events: none;
     backdrop-filter: blur(18px);
-    transition: border-color 100ms ease, color 100ms ease, background 100ms ease;
+    transition:
+      border-color 100ms ease,
+      color 100ms ease,
+      background 100ms ease;
   }
 
   .mobile-edge-navigation.is-back {
