@@ -19,6 +19,8 @@ test('mobile storefront mounts one global edge navigation controller', () => {
   assert.match(mainSource, /import \{ MobileEdgeNavigation \}/u);
   assert.match(mainSource, /<MobileEdgeNavigation \/>/u);
   assert.match(edgeSource, /max-width:\s*767px/u);
+  assert.match(edgeSource, /display-mode:\s*standalone/u);
+  assert.match(edgeSource, /StandaloneNavigator/u);
   assert.match(edgeSource, /touchstart/u);
   assert.match(edgeSource, /touchmove/u);
   assert.match(edgeSource, /TRIGGER_DISTANCE\s*=\s*76/u);
@@ -40,13 +42,18 @@ test('edge gestures support both internal Back and Forward without hijacking hor
   assert.match(edgeSource, /event\.preventDefault\(\)/u);
 });
 
-test('SPA history entries are position-aware so a completed Back can be followed by Forward', () => {
+test('SPA history entries restore scroll and preserve Back then Forward navigation', () => {
   assert.match(historySource, /__storefrontNavigationIndex/u);
+  assert.match(historySource, /__storefrontScrollY/u);
+  assert.match(historySource, /scrollRestoration\s*=\s*'manual'/u);
+  assert.match(historySource, /saveCurrentStorefrontScrollPosition/u);
   assert.match(historySource, /recordStorefrontHistoryPush/u);
   assert.match(historySource, /window\.history\.replaceState/u);
   assert.match(historySource, /window\.history\.back\(\)/u);
   assert.match(historySource, /window\.history\.forward\(\)/u);
+  assert.match(historySource, /window\.scrollTo/u);
   assert.match(historySource, /storefrontNavDirection/u);
+  assert.match(edgeSource, /handleClickCapture/u);
 });
 
 test('mobile page transitions follow navigation direction and expose an edge affordance', () => {
