@@ -317,7 +317,7 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
                     </label>
 
                     <label className="field-group admin-field-location">
-                      <span>SEO 描述</span>
+                      <span>站点说明</span>
                       <input type="text" value={draft.locationLabel} disabled={busy} onChange={(event) => updateDraft('locationLabel', event.target.value)} />
                     </label>
 
