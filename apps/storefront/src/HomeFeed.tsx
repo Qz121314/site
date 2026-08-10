@@ -17,7 +17,7 @@ import { loadPublishedHero, type PublishedHeroSlide } from './hero-content';
 import { HomepageAnalytics } from './HomepageAnalytics';
 import { ResilientImage, ResilientVideo } from './ResilientMedia';
 import { productHref, sectionHref } from './routing';
-import { useStorefrontCopy } from './storefront-copy';
+import { SYSTEM_UI } from './system-ui';
 
 const NAVIGATION_EVENT = 'storefront:navigate';
 
@@ -95,15 +95,9 @@ function MoreIcon() {
   );
 }
 
-function HomeShortcuts({
-  sections,
-  moreLabel,
-}: {
-  sections: PublicSection[];
-  moreLabel: string;
-}) {
+function HomeShortcuts({ sections }: { sections: PublicSection[] }) {
   return (
-    <nav className="home-shortcuts" aria-label="Home sections">
+    <nav className="home-shortcuts" aria-label="Sections">
       {sections.map((section) => (
         <HomeLink className="home-shortcut" href={sectionHref(section)} key={section.id}>
           <span className="home-shortcut-icon"><SectionIcon section={section} /></span>
@@ -112,7 +106,7 @@ function HomeShortcuts({
       ))}
       <HomeLink className="home-shortcut is-more" href="/browse/">
         <span className="home-shortcut-icon"><MoreIcon /></span>
-        <span className="home-shortcut-label">{moreLabel}</span>
+        <span className="home-shortcut-label">{SYSTEM_UI.more}</span>
       </HomeLink>
     </nav>
   );
@@ -137,11 +131,9 @@ function HomeProductTile({ product }: { product: PublicProductSummary }) {
 function HomeRecommendationRail({
   bootstrap,
   section,
-  moreLabel,
 }: {
   bootstrap: StorefrontBootstrap;
   section: PublicSection;
-  moreLabel: string;
 }) {
   const query = useQuery({
     queryKey: ['storefront-home-recommendation', bootstrap.pointer.contentVersion, section.id],
@@ -165,7 +157,9 @@ function HomeRecommendationRail({
     <section className="home-recommendation" aria-labelledby={`home-recommendation-${section.id}`}>
       <div className="home-recommendation-heading">
         <h2 id={`home-recommendation-${section.id}`}>{section.name}</h2>
-        <HomeLink href={sectionHref(section)}>{moreLabel}<span aria-hidden="true">›</span></HomeLink>
+        <HomeLink href={sectionHref(section)} aria-label={`${SYSTEM_UI.more}: ${section.name}`}>
+          <span aria-hidden="true">›</span>
+        </HomeLink>
       </div>
       {query.isLoading && !query.data ? (
         <div className="home-product-rail is-loading" aria-hidden="true">
@@ -197,7 +191,6 @@ function publishedSections(bootstrap: StorefrontBootstrap): PublicSection[] {
 
 export function HomeFeed({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
   const { site } = bootstrap.site;
-  const copy = useStorefrontCopy();
   const heroVersion = bootstrap.pointer.schemaVersion === 2
     ? bootstrap.pointer.site.contentVersion
     : bootstrap.pointer.contentVersion;
@@ -217,10 +210,10 @@ export function HomeFeed({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
     () => new Map(availableSections.map((section) => [section.id, section])),
     [availableSections],
   );
-  const fallbackLayout = useMemo(() => ({
+  const fallbackLayout = {
     shortcutSectionIds: availableSections.slice(0, 7).map((section) => section.id),
     recommendationSectionIds: fallbackRecommendationSectionIds(bootstrap),
-  }), [availableSections, bootstrap]);
+  };
   const layout = layoutQuery.data ?? fallbackLayout;
   const shortcutSections = layout.shortcutSectionIds
     .flatMap((id) => sectionById.get(id) ? [sectionById.get(id) as PublicSection] : [])
@@ -250,14 +243,13 @@ export function HomeFeed({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
         />
       ) : null}
 
-      <HomeShortcuts sections={shortcutSections} moreLabel={copy.home.viewAll} />
+      <HomeShortcuts sections={shortcutSections} />
 
       <div className="home-recommendation-feed">
         {recommendationSections.map((section) => (
           <HomeRecommendationRail
             bootstrap={bootstrap}
             section={section}
-            moreLabel={copy.home.viewAll}
             key={section.id}
           />
         ))}

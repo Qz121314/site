@@ -11,14 +11,12 @@ export type StorefrontLinkComponent = ElementType<AnchorHTMLAttributes<HTMLAncho
 
 export function StorefrontBrandBar({
   homeHref = '/',
-  language = 'EN',
   LinkComponent = 'a',
   locationLabel,
   logo,
   siteName,
 }: {
   homeHref?: string;
-  language?: string;
   LinkComponent?: StorefrontLinkComponent;
   locationLabel: string;
   logo: ReactNode;
@@ -33,7 +31,6 @@ export function StorefrontBrandBar({
           <small>⌖ {locationLabel}</small>
         </span>
       </LinkComponent>
-      <span className="site-language">{language}</span>
     </header>
   );
 }
@@ -253,7 +250,7 @@ export function StorefrontProductCard({
   href: string;
   LinkComponent?: StorefrontLinkComponent;
   media: ReactNode;
-  modeLabel: string;
+  modeLabel?: string | null;
   sectionName: string;
   tags: Array<{ id: string; name: string }>;
   title: string;
@@ -262,7 +259,7 @@ export function StorefrontProductCard({
     <LinkComponent className="product-card" href={href}>
       <div className="product-card-media">
         {media}
-        <span className="service-mode-badge">{modeLabel}</span>
+        {modeLabel ? <span className="service-mode-badge">{modeLabel}</span> : null}
       </div>
       <div className="product-card-body">
         <div className="product-card-heading">
@@ -271,7 +268,7 @@ export function StorefrontProductCard({
         </div>
         {categoryName ? <p className="product-type">{categoryName}</p> : null}
         {tags.length > 0 ? (
-          <div className="tag-row" aria-label="Product tags">
+          <div className="tag-row" aria-label="Tags">
             {tags.slice(0, 3).map((tag) => <span key={tag.id}>{tag.name}</span>)}
           </div>
         ) : null}

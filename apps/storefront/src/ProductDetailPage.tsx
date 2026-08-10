@@ -9,8 +9,8 @@ import {
 import { MarkdownContent } from './MarkdownContent';
 import { ResilientImage, ResilientVideo } from './ResilientMedia';
 import { sectionHref } from './routing';
-import { useStorefrontCopy } from './storefront-copy';
 import { canNavigateStorefrontBack, navigateStorefrontBack } from './storefront-history';
+import { SYSTEM_UI } from './system-ui';
 
 function isVideoMediaUrl(value: string): boolean {
   try {
@@ -46,7 +46,6 @@ export function ProductDetailPage({
   sectionRef: string | null;
   LinkComponent?: StorefrontLinkComponent;
 }) {
-  const { product: copy } = useStorefrontCopy();
   const query = useQuery({
     queryKey: ['storefront-product', bootstrap.pointer.contentVersion, sectionRef, productRef],
     queryFn: ({ signal }) => loadProductSnapshot(bootstrap, productRef, signal, sectionRef),
@@ -60,7 +59,7 @@ export function ProductDetailPage({
   }, [bootstrap.site.site.name, product]);
 
   if (query.isLoading && !product) {
-    return <div className="inline-loading product-detail-state">{copy.loading}</div>;
+    return <div className="inline-loading product-detail-state">{SYSTEM_UI.loading}</div>;
   }
 
   if (query.error && !product) {
@@ -68,14 +67,11 @@ export function ProductDetailPage({
     return (
       <section className="product-detail-state standalone-state embedded-state" role="status">
         <div className="state-mark">{missing ? '404' : '!'}</div>
-        <h1>{missing ? 'Product not found' : 'Product unavailable'}</h1>
-        <p>{missing
-          ? 'This product is not part of the current published version.'
-          : 'The latest published product could not be loaded. Please try again.'}</p>
+        <h1>{missing ? SYSTEM_UI.notFound : SYSTEM_UI.unavailable}</h1>
         <div className="state-actions">
           {!missing ? (
             <button className="primary-button" type="button" onClick={() => void query.refetch()}>
-              Try again
+              {SYSTEM_UI.retry}
             </button>
           ) : null}
           <LinkComponent
@@ -83,7 +79,7 @@ export function ProductDetailPage({
             href="/browse/"
             onClick={handleInternalBack}
           >
-            Back to Browse
+            {SYSTEM_UI.back}
           </LinkComponent>
         </div>
       </section>
@@ -93,7 +89,6 @@ export function ProductDetailPage({
   if (!product) return null;
 
   const backHref = sectionHref({ id: product.sectionId, slug: product.sectionSlug });
-  const modeLabel = product.serviceMode === 'online' ? copy.onlineLabel : copy.offlineLabel;
 
   return (
     <article className="product-detail-page" aria-labelledby="product-detail-title">
@@ -105,10 +100,10 @@ export function ProductDetailPage({
       </header>
 
       <div className="product-detail-hero">
-        <div className="detail-gallery" aria-label={`${product.title} media`}>
+        <div className="detail-gallery">
           {media.length > 0 ? media.map((item) => {
             if (!item.url) return null;
-            const fallback = <div className="detail-media-fallback">{copy.mediaUnavailable}</div>;
+            const fallback = <div className="detail-media-fallback" aria-hidden="true" />;
             return (
               <div className="detail-media-slide" key={item.id}>
                 {isVideoMediaUrl(item.url) ? (
@@ -133,30 +128,28 @@ export function ProductDetailPage({
             <div className="detail-media-slide">
               <ResilientImage
                 alt={product.title}
-                fallback={<div className="detail-media-fallback">{copy.imageUnavailable}</div>}
+                fallback={<div className="detail-media-fallback" aria-hidden="true" />}
                 src={product.coverUrl}
               />
             </div>
           ) : (
             <div className="detail-media-slide">
-              <div className="detail-media-fallback">{copy.noMedia}</div>
+              <div className="detail-media-fallback" aria-hidden="true" />
             </div>
           )}
         </div>
 
         <section className="product-detail-summary">
-          <span className="product-detail-mode">{modeLabel}</span>
           <h1 id="product-detail-title">{product.title}</h1>
 
           {product.category.name ? (
             <p className="product-detail-category">
-              <span>{copy.typeLabel}</span>
               <strong>{product.category.name}</strong>
             </p>
           ) : null}
 
           {product.tags.length > 0 ? (
-            <div className="product-detail-tags" aria-label="Product tags">
+            <div className="product-detail-tags" aria-label="Tags">
               {product.tags.map((tag) => <span key={tag.id}>{tag.name}</span>)}
             </div>
           ) : null}
@@ -165,8 +158,6 @@ export function ProductDetailPage({
 
           {product.cta ? (
             <div className="product-detail-action">
-              <span>{copy.contactKicker}</span>
-              <p>{copy.contactHint}</p>
               <a className="cta-button" href={product.cta.path} rel="nofollow">
                 {product.cta.label}
               </a>
@@ -175,10 +166,11 @@ export function ProductDetailPage({
         </section>
       </div>
 
-      <section className="product-detail-body" aria-labelledby="product-detail-about">
-        <h2 id="product-detail-about">{copy.aboutTitle}</h2>
-        <MarkdownContent source={product.body} />
-      </section>
+      {product.body.trim() ? (
+        <section className="product-detail-body">
+          <MarkdownContent source={product.body} />
+        </section>
+      ) : null}
 
       {product.cta ? (
         <div className="product-detail-mobile-action">

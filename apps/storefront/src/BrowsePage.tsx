@@ -10,7 +10,7 @@ import {
 } from './content';
 import { ResilientImage } from './ResilientMedia';
 import { productHref, sectionHref } from './routing';
-import { useStorefrontCopy } from './storefront-copy';
+import { SYSTEM_UI } from './system-ui';
 
 function SearchIcon() {
   return (
@@ -51,7 +51,6 @@ export function BrowsePage({
   bootstrap: StorefrontBootstrap;
   LinkComponent: StorefrontLinkComponent;
 }) {
-  const { browse, product: productCopy, section: sectionCopy } = useStorefrontCopy();
   const [search, setSearch] = useState('');
   const normalizedSearch = search.trim().toLowerCase();
   const sections = useMemo(() => publishedSections(bootstrap), [bootstrap]);
@@ -106,8 +105,8 @@ export function BrowsePage({
   }, [normalizedSearch, productSearchQuery.data]);
 
   useEffect(() => {
-    document.title = `${browse.title} · ${bootstrap.site.site.name}`;
-  }, [bootstrap.site.site.name, browse.title]);
+    document.title = bootstrap.site.site.name;
+  }, [bootstrap.site.site.name]);
 
   const noResults =
     normalizedSearch.length > 0 &&
@@ -116,20 +115,20 @@ export function BrowsePage({
     filteredProducts.length === 0;
 
   return (
-    <section className="browse-directory" aria-label={browse.title}>
+    <section className="browse-directory">
       <label className="browse-directory-search">
         <SearchIcon />
         <input
           type="search"
           value={search}
-          placeholder={browse.searchPlaceholder}
-          aria-label={browse.searchPlaceholder}
+          placeholder={SYSTEM_UI.search}
+          aria-label={SYSTEM_UI.search}
           onChange={(event) => setSearch(event.target.value)}
         />
       </label>
 
       {filteredSections.length > 0 ? (
-        <section className="browse-directory-section" aria-label={browse.sectionsTitle}>
+        <section className="browse-directory-section">
           <div className="browse-section-list">
             {filteredSections.map((section) => {
               const presentation = presentationById.get(section.id);
@@ -152,11 +151,6 @@ export function BrowsePage({
                   <span className="browse-section-card-content">
                     <strong>{section.name}</strong>
                     {presentation?.description ? <p>{presentation.description}</p> : null}
-                    {presentation && presentation.productCount > 0 ? (
-                      <small>
-                        {presentation.productCount} {browse.productsTitle}
-                      </small>
-                    ) : null}
                   </span>
                   <span className="browse-section-card-chevron" aria-hidden="true">
                     ›
@@ -170,18 +164,9 @@ export function BrowsePage({
 
       {normalizedSearch &&
       (productSearchQuery.isLoading || filteredProducts.length > 0) ? (
-        <section
-          className="browse-directory-section"
-          aria-labelledby="browse-directory-products-title"
-        >
-          <div className="browse-directory-section-heading">
-            <h2 id="browse-directory-products-title">{browse.productsTitle}</h2>
-            {!productSearchQuery.isLoading ? (
-              <span>{filteredProducts.length}</span>
-            ) : null}
-          </div>
+        <section className="browse-directory-section">
           {productSearchQuery.isLoading ? (
-            <div className="inline-loading">{sectionCopy.loading}</div>
+            <div className="inline-loading">{SYSTEM_UI.loading}</div>
           ) : (
             <div className="product-grid browse-search-products">
               {filteredProducts.map((product) => (
@@ -199,11 +184,6 @@ export function BrowsePage({
                       src={product.coverUrl}
                     />
                   }
-                  modeLabel={
-                    product.serviceMode === 'online'
-                      ? productCopy.onlineLabel
-                      : productCopy.offlineLabel
-                  }
                   sectionName={product.sectionName}
                   tags={product.tags}
                   title={product.title}
@@ -215,7 +195,7 @@ export function BrowsePage({
       ) : null}
 
       {noResults ? (
-        <div className="browse-directory-empty">{browse.noResults}</div>
+        <div className="browse-directory-empty">{SYSTEM_UI.noResults}</div>
       ) : null}
     </section>
   );

@@ -8,8 +8,8 @@ import {
 } from './content';
 import { ResilientImage } from './ResilientMedia';
 import { productHref } from './routing';
-import { useStorefrontCopy } from './storefront-copy';
 import { canNavigateStorefrontBack, navigateStorefrontBack } from './storefront-history';
+import { SYSTEM_UI } from './system-ui';
 
 function SearchIcon() {
   return (
@@ -44,7 +44,6 @@ export function SectionCatalogPage({
   sectionRef: string;
   LinkComponent: StorefrontLinkComponent;
 }) {
-  const { product: productCopy, section: sectionCopy } = useStorefrontCopy();
   const [search, setSearch] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [selectedTags, setSelectedTags] = useState<Set<string>>(() => new Set());
@@ -100,21 +99,20 @@ export function SectionCatalogPage({
   const hasFilters = Boolean(search.trim() || categoryId || selectedTags.size > 0);
 
   if (query.isLoading && !query.data) {
-    return <div className="inline-loading section-catalog-state">{sectionCopy.loading}</div>;
+    return <div className="inline-loading section-catalog-state">{SYSTEM_UI.loading}</div>;
   }
 
   if (query.error && !query.data) {
     return (
       <section className="section-catalog-state standalone-state embedded-state" role="status">
         <div className="state-mark">!</div>
-        <h1>Section unavailable</h1>
-        <p>The latest published products could not be loaded.</p>
+        <h1>{SYSTEM_UI.unavailable}</h1>
         <div className="state-actions">
           <button className="primary-button" type="button" onClick={() => void query.refetch()}>
-            Try again
+            {SYSTEM_UI.retry}
           </button>
           <LinkComponent className="secondary-button" href="/browse/" onClick={handleBack}>
-            {sectionCopy.backLabel}
+            {SYSTEM_UI.back}
           </LinkComponent>
         </div>
       </section>
@@ -123,12 +121,6 @@ export function SectionCatalogPage({
 
   if (!query.data) return null;
 
-  const resultWord = filteredProducts.length === 1
-    ? sectionCopy.resultSingular
-    : sectionCopy.resultPlural;
-  const totalWord = query.data.products.length === 1
-    ? sectionCopy.resultSingular
-    : sectionCopy.resultPlural;
   const hasFilterOptions = query.data.categories.length > 0 || query.data.tags.length > 0;
   const hasProducts = query.data.products.length > 0;
 
@@ -137,7 +129,7 @@ export function SectionCatalogPage({
       <header className="section-catalog-header">
         <LinkComponent className="section-catalog-back" href="/browse/" onClick={handleBack}>
           <span className="section-catalog-back-icon" aria-hidden="true">←</span>
-          <span>{sectionCopy.backLabel}</span>
+          <span>{SYSTEM_UI.back}</span>
         </LinkComponent>
 
         <div className="section-catalog-identity">
@@ -146,9 +138,6 @@ export function SectionCatalogPage({
           </span>
           <div className="section-catalog-title-group">
             <h1 id="section-catalog-title">{query.data.section.name}</h1>
-            <span className="section-catalog-total">
-              {query.data.products.length} {totalWord}
-            </span>
           </div>
         </div>
       </header>
@@ -160,17 +149,16 @@ export function SectionCatalogPage({
             <input
               type="search"
               value={search}
-              placeholder={sectionCopy.searchPlaceholder}
-              aria-label={sectionCopy.searchLabel}
+              placeholder={SYSTEM_UI.search}
+              aria-label={SYSTEM_UI.search}
               onChange={(event) => setSearch(event.target.value)}
             />
           </label>
 
           {hasFilterOptions ? (
-            <div className="section-catalog-filters" aria-label="Product filters">
+            <div className="section-catalog-filters" aria-label="Filters">
               {query.data.categories.length > 0 ? (
-                <div className="section-category-filter" aria-label={sectionCopy.typeLabel}>
-                  <span>{sectionCopy.typeLabel}</span>
+                <div className="section-category-filter">
                   <div className="section-category-options">
                     <button
                       className={!categoryId ? 'is-active' : undefined}
@@ -178,7 +166,7 @@ export function SectionCatalogPage({
                       aria-pressed={!categoryId}
                       onClick={() => setCategoryId('')}
                     >
-                      {sectionCopy.allTypes}
+                      {SYSTEM_UI.all}
                     </button>
                     {query.data.categories.map((category) => (
                       <button
@@ -196,7 +184,7 @@ export function SectionCatalogPage({
               ) : null}
 
               {query.data.tags.length > 0 ? (
-                <div className="section-tag-filter" aria-label="Product tags">
+                <div className="section-tag-filter" aria-label="Tags">
                   {query.data.tags.map((tag) => (
                     <button
                       className={selectedTags.has(tag.id) ? 'is-active' : undefined}
@@ -217,8 +205,8 @@ export function SectionCatalogPage({
 
       {hasFilters && filteredProducts.length > 0 ? (
         <div className="section-catalog-results">
-          <strong>{filteredProducts.length} {resultWord}</strong>
-          <button type="button" onClick={clearFilters}>{sectionCopy.clearFilters}</button>
+          <strong>{filteredProducts.length}</strong>
+          <button type="button" onClick={clearFilters}>{SYSTEM_UI.clear}</button>
         </div>
       ) : null}
 
@@ -239,7 +227,6 @@ export function SectionCatalogPage({
                   src={product.coverUrl}
                 />
               )}
-              modeLabel={product.serviceMode === 'online' ? productCopy.onlineLabel : productCopy.offlineLabel}
               sectionName={product.sectionName}
               tags={product.tags}
               title={product.title}
@@ -251,10 +238,10 @@ export function SectionCatalogPage({
           <span className="section-catalog-empty-icon" aria-hidden="true">
             <SectionVisual section={query.data.section} />
           </span>
-          <p>{sectionCopy.emptyResults}</p>
+          <p>{SYSTEM_UI.noResults}</p>
           {hasFilters ? (
             <button className="section-catalog-empty-reset" type="button" onClick={clearFilters}>
-              {sectionCopy.clearFilters}
+              {SYSTEM_UI.clear}
             </button>
           ) : null}
         </div>

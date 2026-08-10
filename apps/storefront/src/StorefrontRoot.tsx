@@ -20,14 +20,12 @@ import {
 } from 'react';
 import { BrowsePage } from './BrowsePage';
 import {
-  FALLBACK_BOTTOM_NAVIGATION,
   loadBottomNavigation,
   type BottomNavigationItemConfig,
 } from './bottom-navigation';
 import {
   loadStorefrontBootstrap,
   loadProductSnapshot,
-  PublicContentError,
 } from './content';
 import { FaqArticlePage, FaqDirectoryPage } from './FaqPage';
 import { HomeFeed } from './HomeFeed';
@@ -36,12 +34,12 @@ import { ProductDetailPage } from './ProductDetailPage';
 import { ResilientImage } from './ResilientMedia';
 import { bottomNavigationActiveHref, parseStorefrontRoute } from './routing';
 import { SectionCatalogPage } from './SectionPage';
-import { STOREFRONT_COPY } from './storefront-copy';
 import { primaryNavigationItems } from './storefront-navigation';
 import { siteSupportGateway } from './support-gateway';
 import { subscribeSupportRealtime } from './support-realtime';
 import type { SupportConversationDetail } from './support-contract';
 import { MessagesWorkspace, type PendingSupportConversation } from './support-ui';
+import { SYSTEM_UI } from './system-ui';
 
 const NAVIGATION_EVENT = 'storefront:navigate';
 
@@ -124,18 +122,13 @@ function PrimaryLoading() {
   );
 }
 
-function PrimaryError({ error }: { error: unknown }) {
-  const message =
-    error instanceof PublicContentError
-      ? error.message
-      : 'The storefront is temporarily unavailable.';
+function PrimaryError() {
   return (
     <div className="standalone-state">
       <div className="state-mark">!</div>
-      <h1>Storefront unavailable</h1>
-      <p>{message}</p>
+      <h1>{SYSTEM_UI.unavailable}</h1>
       <button type="button" onClick={() => window.location.reload()}>
-        Try again
+        {SYSTEM_UI.retry}
       </button>
     </div>
   );
@@ -175,11 +168,13 @@ function PrimaryShell({
         </div>
       </main>
       <footer className="site-footer">{site.name}</footer>
-      <StorefrontBottomNavigation
-        activeHref={bottomNavigationActiveHref(activePath)}
-        items={primaryNavigationItems(navigationItems, unreadMessages)}
-        LinkComponent={StorefrontLink as StorefrontLinkComponent}
-      />
+      {navigationItems.length > 0 ? (
+        <StorefrontBottomNavigation
+          activeHref={bottomNavigationActiveHref(activePath)}
+          items={primaryNavigationItems(navigationItems, unreadMessages)}
+          LinkComponent={StorefrontLink as StorefrontLinkComponent}
+        />
+      ) : null}
     </div>
   );
 }
@@ -349,7 +344,7 @@ function MessagesPage({
   }, [activeConversationRef, activeConversation, queryClient]);
 
   const workspaceConversationRef = compose ? '__new__' : activeConversationRef;
-  const sendError = sendMutation.error ? STOREFRONT_COPY.messages.sendFailed : null;
+  const sendError = sendMutation.error ? SYSTEM_UI.messageFailed : null;
   return (
     <MessagesWorkspace
       activeConversation={activeConversation}
@@ -394,11 +389,10 @@ export function StorefrontRoot() {
   });
 
   if (bootstrapQuery.isLoading) return <PrimaryLoading />;
-  if (bootstrapQuery.error || !bootstrapQuery.data)
-    return <PrimaryError error={bootstrapQuery.error} />;
+  if (bootstrapQuery.error || !bootstrapQuery.data) return <PrimaryError />;
 
   const bootstrap = bootstrapQuery.data;
-  const navigationItems = navigationQuery.data ?? FALLBACK_BOTTOM_NAVIGATION;
+  const navigationItems = navigationQuery.data ?? [];
   let page: ReactNode;
 
   switch (route.type) {

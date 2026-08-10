@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { SYSTEM_UI } from './system-ui';
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -192,7 +193,7 @@ export function PwaInstallPrompt() {
   return (
     <aside
       className={`pwa-install-card${showIosHint && !installEvent ? ' is-guidance' : ''}`}
-      aria-label="Install app"
+      aria-label={SYSTEM_UI.install}
       aria-live="polite"
     >
       <span className="pwa-install-handle" aria-hidden="true" />
@@ -200,12 +201,8 @@ export function PwaInstallPrompt() {
         <img src="/icons/app-icon-192.svg" alt="" />
       </div>
       <div className="pwa-install-copy">
-        <strong>Install {appName}</strong>
-        <span>
-          {installEvent
-            ? 'Add it to your Home Screen and open it like an app.'
-            : 'Tap Share, then choose Add to Home Screen.'}
-        </span>
+        <strong>{appName}</strong>
+        {!installEvent ? <span>{SYSTEM_UI.addToHomeScreen}</span> : null}
       </div>
       {installEvent ? (
         <button
@@ -213,13 +210,13 @@ export function PwaInstallPrompt() {
           type="button"
           onClick={() => void install()}
         >
-          Install
+          {SYSTEM_UI.install}
         </button>
       ) : null}
       <button
         className="pwa-install-dismiss"
         type="button"
-        aria-label="Dismiss install prompt"
+        aria-label={SYSTEM_UI.dismiss}
         onClick={dismiss}
       >
         <svg
