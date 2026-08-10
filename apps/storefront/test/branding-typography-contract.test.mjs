@@ -36,7 +36,7 @@ test('site description is written to browser metadata instead of visible header 
   assert.match(rootSource, /meta\[name="description"\]/u);
   assert.match(rootSource, /meta\.content = description/u);
   assert.match(adminSettingsSource, />站点说明</u);
-  assert.match(adminSettingsSource, /不显示在前端 Logo \/ Header 区域/u);
+  assert.doesNotMatch(adminSettingsSource, /不显示在前端 Logo \/ Header 区域/u);
 });
 
 test('Browse remains the dedicated sticky search surface', () => {
