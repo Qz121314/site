@@ -50,6 +50,14 @@ type DomainTestState =
   | { status: 'error'; message: string };
 
 type SaveStage = 'idle' | 'uploading-logo' | 'saving';
+type SettingsPanel = 'general' | 'home' | 'copy' | 'advanced';
+
+const SETTINGS_PANELS: Array<{ id: SettingsPanel; label: string }> = [
+  { id: 'general', label: '常用设置' },
+  { id: 'home', label: '首页展示' },
+  { id: 'copy', label: '前端文案' },
+  { id: 'advanced', label: '高级设置' },
+];
 
 function createDraft(settings: SiteSettingsWithHero): SettingsDraft {
   return {
@@ -127,6 +135,7 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
   const [settings, setSettings] = useState<SiteSettingsWithHero | null>(null);
   const [draft, setDraft] = useState<SettingsDraft | null>(null);
   const [sections, setSections] = useState<AdminSection[]>([]);
+  const [activePanel, setActivePanel] = useState<SettingsPanel>('general');
   const [localLogo, setLocalLogo] = useState<LocalBrandingImage | null>(null);
   const [logoPickerOpen, setLogoPickerOpen] = useState(false);
   const [processingLogo, setProcessingLogo] = useState(false);
@@ -269,123 +278,159 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
 
   return (
     <>
-      <form className="settings-form admin-settings-page" onSubmit={(event) => void handleSubmit(event)}>
+      <form className="settings-form admin-settings-page admin-settings-workbench" onSubmit={(event) => void handleSubmit(event)}>
         <section className="settings-card admin-settings-surface" aria-label="站点设置">
-          <div className="admin-settings-meta">
-            <span>更新于 {formatUpdatedAt(settings.updatedAt)}</span>
+          <div className="admin-settings-toolbar">
+            <div className="admin-settings-tabs" role="tablist" aria-label="站点设置分组">
+              {SETTINGS_PANELS.map((panel) => (
+                <button
+                  key={panel.id}
+                  className={`admin-settings-tab${activePanel === panel.id ? ' is-active' : ''}`}
+                  type="button"
+                  role="tab"
+                  aria-selected={activePanel === panel.id}
+                  aria-controls={`settings-panel-${panel.id}`}
+                  id={`settings-tab-${panel.id}`}
+                  onClick={() => setActivePanel(panel.id)}
+                >
+                  {panel.label}
+                </button>
+              ))}
+            </div>
+            <span className="admin-settings-updated">更新于 {formatUpdatedAt(settings.updatedAt)}</span>
           </div>
 
-          <section className="admin-settings-section" aria-labelledby="settings-basic-title">
-            <h2 id="settings-basic-title">基础信息</h2>
-            <div className="admin-settings-row admin-settings-basic-row">
-              <label className="field-group admin-field-site-name">
-                <span>站点名称</span>
-                <input type="text" value={draft.siteName} disabled={busy} onChange={(event) => updateDraft('siteName', event.target.value)} />
-              </label>
-
-              <label className="field-group admin-field-location">
-                <span>站点说明</span>
-                <input type="text" value={draft.locationLabel} disabled={busy} onChange={(event) => updateDraft('locationLabel', event.target.value)} />
-                <small>用于浏览器页面描述和基础 SEO，不显示在前端 Logo / Header 区域。</small>
-              </label>
-
-              <div className="admin-logo-field">
-                <span className="admin-field-label">站点 Logo</span>
-                <div className="admin-logo-control">
-                  <div className="admin-logo-preview">
-                    {logoPreviewUrl ? <img src={logoPreviewUrl} alt="站点 Logo 预览" /> : <span>Logo</span>}
-                  </div>
-                  <div className="admin-logo-state">
-                    <strong>{localLogo ? '待保存' : draft.logoAssetId ? '已设置' : '未设置'}</strong>
-                    {localLogo ? <small>{localLogo.width} × {localLogo.height} · {formatBrandingBytes(localLogo.compressedFile.size)}</small> : null}
-                  </div>
-                  <div className="admin-logo-actions">
-                    <label className={`branding-file-button${busy ? ' is-disabled' : ''}`}>
-                      <input
-                        type="file"
-                        accept="image/jpeg,image/png,image/webp"
-                        disabled={busy}
-                        onChange={(event) => {
-                          const file = event.target.files?.[0];
-                          event.currentTarget.value = '';
-                          if (file) void selectLogo(file);
-                        }}
-                      />
-                      {processingLogo ? '处理中…' : logoPreviewUrl ? '上传替换' : '上传'}
+          <div
+            className="admin-settings-panel"
+            id={`settings-panel-${activePanel}`}
+            role="tabpanel"
+            aria-labelledby={`settings-tab-${activePanel}`}
+          >
+            {activePanel === 'general' ? (
+              <>
+                <section className="admin-settings-section admin-settings-general" aria-labelledby="settings-basic-title">
+                  <h2 id="settings-basic-title">基础信息</h2>
+                  <div className="admin-settings-row admin-settings-basic-row">
+                    <label className="field-group admin-field-site-name">
+                      <span>站点名称</span>
+                      <input type="text" value={draft.siteName} disabled={busy} onChange={(event) => updateDraft('siteName', event.target.value)} />
                     </label>
-                    <button type="button" className="admin-text-button" disabled={busy} onClick={() => setLogoPickerOpen(true)}>
-                      从素材中心选择
-                    </button>
-                    {logoPreviewUrl ? (
-                      <button
-                        type="button"
-                        className="admin-text-button"
-                        disabled={busy}
-                        onClick={() => {
-                          setLocalLogo(null);
-                          updateDraft('logoAssetId', null);
-                        }}
-                      >
-                        移除
-                      </button>
-                    ) : null}
+
+                    <label className="field-group admin-field-location">
+                      <span>SEO 描述</span>
+                      <input type="text" value={draft.locationLabel} disabled={busy} onChange={(event) => updateDraft('locationLabel', event.target.value)} />
+                    </label>
+
+                    <div className="admin-logo-field">
+                      <span className="admin-field-label">站点 Logo</span>
+                      <div className="admin-logo-control">
+                        <div className="admin-logo-preview">
+                          {logoPreviewUrl ? <img src={logoPreviewUrl} alt="站点 Logo 预览" /> : <span>Logo</span>}
+                        </div>
+                        <div className="admin-logo-state">
+                          <strong>{localLogo ? '待保存' : draft.logoAssetId ? '已设置' : '未设置'}</strong>
+                          {localLogo ? <small>{localLogo.width} × {localLogo.height} · {formatBrandingBytes(localLogo.compressedFile.size)}</small> : null}
+                        </div>
+                        <div className="admin-logo-actions">
+                          <label className={`branding-file-button${busy ? ' is-disabled' : ''}`}>
+                            <input
+                              type="file"
+                              accept="image/jpeg,image/png,image/webp"
+                              disabled={busy}
+                              onChange={(event) => {
+                                const file = event.target.files?.[0];
+                                event.currentTarget.value = '';
+                                if (file) void selectLogo(file);
+                              }}
+                            />
+                            {processingLogo ? '处理中…' : logoPreviewUrl ? '上传替换' : '上传'}
+                          </label>
+                          <button type="button" className="admin-text-button" disabled={busy} onClick={() => setLogoPickerOpen(true)}>
+                            从素材中心选择
+                          </button>
+                          {logoPreviewUrl ? (
+                            <button
+                              type="button"
+                              className="admin-text-button"
+                              disabled={busy}
+                              onClick={() => {
+                                setLocalLogo(null);
+                                updateDraft('logoAssetId', null);
+                              }}
+                            >
+                              移除
+                            </button>
+                          ) : null}
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                </section>
+
+                <SiteHeroSettingsSection
+                  slides={draft.heroSlides}
+                  busy={busy}
+                  onChange={(heroSlides) => updateDraft('heroSlides', heroSlides)}
+                  onSessionExpired={onSessionExpired}
+                />
+              </>
+            ) : null}
+
+            {activePanel === 'home' ? (
+              <>
+                <HomeLayoutSettingsSection
+                  value={draft.homeLayout}
+                  sections={sections}
+                  busy={busy}
+                  onChange={(homeLayout) => updateDraft('homeLayout', homeLayout)}
+                />
+
+                <BottomNavigationSettingsSection
+                  value={draft.bottomNavigation}
+                  busy={busy}
+                  onChange={(bottomNavigation) => updateDraft('bottomNavigation', bottomNavigation)}
+                  onSessionExpired={onSessionExpired}
+                />
+              </>
+            ) : null}
+
+            {activePanel === 'copy' ? (
+              <StorefrontCopySettingsSection
+                value={draft.storefrontCopy}
+                busy={busy}
+                onChange={(storefrontCopy) => updateDraft('storefrontCopy', storefrontCopy)}
+              />
+            ) : null}
+
+            {activePanel === 'advanced' ? (
+              <div className="admin-settings-advanced-grid">
+                <section className="admin-settings-section" aria-labelledby="settings-frontend-title">
+                  <h2 id="settings-frontend-title">统计</h2>
+                  <div className="admin-settings-row admin-settings-frontend-row">
+                    <label className="field-group admin-field-ga4">
+                      <span>GA4 Measurement ID</span>
+                      <input type="text" value={draft.ga4MeasurementId} placeholder="G-XXXXXXXXXX" disabled={busy} onChange={(event) => updateDraft('ga4MeasurementId', event.target.value)} />
+                    </label>
+                  </div>
+                </section>
+
+                <section className="admin-settings-section" aria-labelledby="settings-media-title">
+                  <h2 id="settings-media-title">媒体域名</h2>
+                  <div className="admin-settings-row admin-settings-media-row">
+                    <label className="field-group admin-field-media-domain">
+                      <span>R2 自定义域名</span>
+                      <input type="url" value={draft.mediaBaseUrl} placeholder="https://assets.example.com" disabled={busy || domainTest.status === 'testing'} onChange={(event) => updateDraft('mediaBaseUrl', event.target.value)} />
+                    </label>
+                    <button className="secondary-button domain-test-button" type="button" disabled={busy || domainTest.status === 'testing' || !draft.mediaBaseUrl.trim()} onClick={() => void handleDomainTest()}>
+                      {domainTest.status === 'testing' ? '测试中…' : '测试连接'}
+                    </button>
+                  </div>
+                  {domainTest.status === 'success' ? <p className="inline-status is-success">{domainTest.message}</p> : null}
+                  {domainTest.status === 'error' ? <p className="inline-status is-error">{domainTest.message}</p> : null}
+                </section>
               </div>
-            </div>
-          </section>
-
-          <SiteHeroSettingsSection
-            slides={draft.heroSlides}
-            busy={busy}
-            onChange={(heroSlides) => updateDraft('heroSlides', heroSlides)}
-            onSessionExpired={onSessionExpired}
-          />
-
-          <HomeLayoutSettingsSection
-            value={draft.homeLayout}
-            sections={sections}
-            busy={busy}
-            onChange={(homeLayout) => updateDraft('homeLayout', homeLayout)}
-          />
-
-          <BottomNavigationSettingsSection
-            value={draft.bottomNavigation}
-            busy={busy}
-            onChange={(bottomNavigation) => updateDraft('bottomNavigation', bottomNavigation)}
-            onSessionExpired={onSessionExpired}
-          />
-
-          <StorefrontCopySettingsSection
-            value={draft.storefrontCopy}
-            busy={busy}
-            onChange={(storefrontCopy) => updateDraft('storefrontCopy', storefrontCopy)}
-          />
-
-          <section className="admin-settings-section" aria-labelledby="settings-frontend-title">
-            <h2 id="settings-frontend-title">前端设置</h2>
-            <div className="admin-settings-row admin-settings-frontend-row">
-              <label className="field-group admin-field-ga4">
-                <span>GA4 Measurement ID</span>
-                <input type="text" value={draft.ga4MeasurementId} placeholder="G-XXXXXXXXXX" disabled={busy} onChange={(event) => updateDraft('ga4MeasurementId', event.target.value)} />
-              </label>
-            </div>
-          </section>
-
-          <section className="admin-settings-section" aria-labelledby="settings-media-title">
-            <h2 id="settings-media-title">媒体</h2>
-            <div className="admin-settings-row admin-settings-media-row">
-              <label className="field-group admin-field-media-domain">
-                <span>R2 自定义域名</span>
-                <input type="url" value={draft.mediaBaseUrl} placeholder="https://assets.example.com" disabled={busy || domainTest.status === 'testing'} onChange={(event) => updateDraft('mediaBaseUrl', event.target.value)} />
-              </label>
-              <button className="secondary-button domain-test-button" type="button" disabled={busy || domainTest.status === 'testing' || !draft.mediaBaseUrl.trim()} onClick={() => void handleDomainTest()}>
-                {domainTest.status === 'testing' ? '测试中…' : '测试连接'}
-              </button>
-            </div>
-            {domainTest.status === 'success' ? <p className="inline-status is-success">{domainTest.message}</p> : null}
-            {domainTest.status === 'error' ? <p className="inline-status is-error">{domainTest.message}</p> : null}
-          </section>
+            ) : null}
+          </div>
         </section>
 
         {errorMessage ? <p className="inline-status is-error settings-toast">{errorMessage}</p> : null}
