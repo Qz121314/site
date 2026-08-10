@@ -15,7 +15,13 @@ export type PendingSupportConversation = {
 
 function MessageBubbleIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.7" aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      aria-hidden="true"
+    >
       <path d="M20 11.6a7.6 7.6 0 0 1-8 7.2 8.8 8.8 0 0 1-3.2-.7L4 19.5l1.4-4.2a7 7 0 0 1-1.1-3.7 7.6 7.6 0 0 1 8-7.2 7.6 7.6 0 0 1 7.7 7.2Z" />
       <path d="M8.5 11.7h.01M12 11.7h.01M15.5 11.7h.01" strokeLinecap="round" />
     </svg>
@@ -32,15 +38,22 @@ function formatConversationTime(value: string | null): string {
   if (Number.isNaN(date.getTime())) return '';
 
   const now = new Date();
-  const dayDifference = Math.round((startOfLocalDay(now) - startOfLocalDay(date)) / 86_400_000);
+  const dayDifference = Math.round(
+    (startOfLocalDay(now) - startOfLocalDay(date)) / 86_400_000,
+  );
   if (dayDifference === 0) {
-    return new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit' }).format(date);
+    return new Intl.DateTimeFormat(undefined, {
+      hour: '2-digit',
+      minute: '2-digit',
+    }).format(date);
   }
   if (dayDifference === 1) return 'Yesterday';
   if (dayDifference > 1 && dayDifference < 7) {
     return new Intl.DateTimeFormat(undefined, { weekday: 'short' }).format(date);
   }
-  return new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' }).format(date);
+  return new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' }).format(
+    date,
+  );
 }
 
 function conversationTimestamp(conversation: SupportConversationSummary): number {
@@ -49,22 +62,39 @@ function conversationTimestamp(conversation: SupportConversationSummary): number
   return Number.isNaN(timestamp) ? 0 : timestamp;
 }
 
-function conversationTitle(conversation: SupportConversationSummary, supportName: string): string {
+function conversationTitle(
+  conversation: SupportConversationSummary,
+  supportName: string,
+): string {
   return conversation.agentName?.trim() || supportName;
 }
 
-function conversationPreview(conversation: SupportConversationSummary, waitingPreview: string): string {
-  const lastMessage = conversation.lastMessage?.trim()
-    || (conversation.status === 'waiting' ? waitingPreview : '');
-  return lastMessage ? `${conversation.productTitle} · ${lastMessage}` : conversation.productTitle;
+function conversationPreview(
+  conversation: SupportConversationSummary,
+  waitingPreview: string,
+): string {
+  const lastMessage =
+    conversation.lastMessage?.trim() ||
+    (conversation.status === 'waiting' ? waitingPreview : '');
+  return lastMessage
+    ? `${conversation.productTitle} · ${lastMessage}`
+    : conversation.productTitle;
 }
 
-function ConversationAvatar({ conversation }: { conversation: SupportConversationSummary }) {
+function ConversationAvatar({
+  conversation,
+}: {
+  conversation: SupportConversationSummary;
+}) {
   const { messages } = useStorefrontCopy();
   if (conversation.agentAvatarUrl) {
     return <img src={conversation.agentAvatarUrl} alt="" loading="lazy" />;
   }
-  return <span aria-hidden="true">{conversationTitle(conversation, messages.supportName).slice(0, 1)}</span>;
+  return (
+    <span aria-hidden="true">
+      {conversationTitle(conversation, messages.supportName).slice(0, 1)}
+    </span>
+  );
 }
 
 export function MessagesPageContent({
@@ -82,16 +112,13 @@ export function MessagesPageContent({
   );
 
   return (
-    <section className="messages-page" aria-labelledby="messages-title">
-      <header className="messages-page-heading">
-        <h1 id="messages-title">{messages.title}</h1>
-      </header>
-
+    <section className="messages-page" aria-label={messages.title}>
       {orderedConversations.length === 0 ? (
         <div className="messages-empty-state">
-          <span className="messages-empty-icon"><MessageBubbleIcon /></span>
+          <span className="messages-empty-icon">
+            <MessageBubbleIcon />
+          </span>
           <strong>{messages.emptyTitle}</strong>
-          <p>{messages.emptyDescription}</p>
         </div>
       ) : (
         <div className="conversation-list" role="list">
@@ -105,16 +132,24 @@ export function MessagesPageContent({
                 href={`/messages/${encodeURIComponent(conversation.id)}/`}
                 key={conversation.id}
               >
-                <span className="conversation-avatar"><ConversationAvatar conversation={conversation} /></span>
+                <span className="conversation-avatar">
+                  <ConversationAvatar conversation={conversation} />
+                </span>
                 <span className="conversation-main">
                   <span className="conversation-heading-row">
-                    <strong>{conversationTitle(conversation, messages.supportName)}</strong>
+                    <strong>
+                      {conversationTitle(conversation, messages.supportName)}
+                    </strong>
                     <time>{formatConversationTime(conversation.lastMessageAt)}</time>
                   </span>
                   <span className="conversation-preview-row">
-                    <span>{conversationPreview(conversation, messages.waitingPreview)}</span>
+                    <span>
+                      {conversationPreview(conversation, messages.waitingPreview)}
+                    </span>
                     {isUnread ? (
-                      <b aria-label={`${conversation.unreadCount} ${messages.unreadLabel}`}>
+                      <b
+                        aria-label={`${conversation.unreadCount} ${messages.unreadLabel}`}
+                      >
                         {conversation.unreadCount > 99 ? '99+' : conversation.unreadCount}
                       </b>
                     ) : null}
@@ -152,12 +187,16 @@ function ProductContextCard({
         <small>{messages.productLabel}</small>
         <strong>{context.productTitle}</strong>
       </span>
-      <span className="chat-product-chevron" aria-hidden="true">›</span>
+      <span className="chat-product-chevron" aria-hidden="true">
+        ›
+      </span>
     </>
   );
 
   return context.productHref ? (
-    <LinkComponent className="chat-product-card" href={context.productHref}>{body}</LinkComponent>
+    <LinkComponent className="chat-product-card" href={context.productHref}>
+      {body}
+    </LinkComponent>
   ) : (
     <div className="chat-product-card">{body}</div>
   );
@@ -205,7 +244,10 @@ export function MessageThreadPageContent({
     return (
       <section className="chat-page chat-page-unavailable" aria-live="polite">
         <div className="chat-timeline">
-          <div className="chat-empty-state"><MessageBubbleIcon /><strong>{messages.loadingConversation}</strong></div>
+          <div className="chat-empty-state">
+            <MessageBubbleIcon />
+            <strong>{messages.loadingConversation}</strong>
+          </div>
         </div>
       </section>
     );
@@ -215,8 +257,16 @@ export function MessageThreadPageContent({
     return (
       <section className="chat-page chat-page-unavailable" aria-labelledby="chat-title">
         <header className="chat-header">
-          <LinkComponent className="chat-back-button" href="/messages/" aria-label={messages.backLabel}>←</LinkComponent>
-          <span className="chat-header-avatar"><MessageBubbleIcon /></span>
+          <LinkComponent
+            className="chat-back-button"
+            href="/messages/"
+            aria-label={messages.backLabel}
+          >
+            ←
+          </LinkComponent>
+          <span className="chat-header-avatar">
+            <MessageBubbleIcon />
+          </span>
           <span className="chat-header-copy">
             <strong id="chat-title">{messages.supportName}</strong>
             <small>{messages.noActiveConversation}</small>
@@ -230,9 +280,18 @@ export function MessageThreadPageContent({
           </div>
         </div>
         <div className="chat-composer is-disabled" aria-disabled="true">
-          <button type="button" disabled aria-label={messages.attachmentLabel}>＋</button>
+          <button type="button" disabled aria-label={messages.attachmentLabel}>
+            ＋
+          </button>
           <div className="chat-input-placeholder">{messages.inputPlaceholder}</div>
-          <button type="button" disabled className="chat-send-button" aria-label={messages.sendLabel}>➤</button>
+          <button
+            type="button"
+            disabled
+            className="chat-send-button"
+            aria-label={messages.sendLabel}
+          >
+            ➤
+          </button>
         </div>
       </section>
     );
@@ -250,7 +309,9 @@ export function MessageThreadPageContent({
     productCoverUrl: conversation?.productCoverUrl ?? null,
     productHref: conversation?.productHref ?? null,
   };
-  const canSend = Boolean(onSendMessage) && (pendingConversation !== null || conversation?.status !== 'closed');
+  const canSend =
+    Boolean(onSendMessage) &&
+    (pendingConversation !== null || conversation?.status !== 'closed');
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -267,13 +328,25 @@ export function MessageThreadPageContent({
   return (
     <section className="chat-page" aria-labelledby="chat-title">
       <header className="chat-header">
-        <LinkComponent className="chat-back-button" href="/messages/" aria-label={messages.backLabel}>←</LinkComponent>
+        <LinkComponent
+          className="chat-back-button"
+          href="/messages/"
+          aria-label={messages.backLabel}
+        >
+          ←
+        </LinkComponent>
         <span className="chat-header-avatar">
-          {conversation ? <ConversationAvatar conversation={conversation} /> : <MessageBubbleIcon />}
+          {conversation ? (
+            <ConversationAvatar conversation={conversation} />
+          ) : (
+            <MessageBubbleIcon />
+          )}
         </span>
         <span className="chat-header-copy">
           <strong id="chat-title">
-            {conversation ? conversationTitle(conversation, messages.supportName) : messages.supportName}
+            {conversation
+              ? conversationTitle(conversation, messages.supportName)
+              : messages.supportName}
           </strong>
           <small>{statusLabel}</small>
         </span>
@@ -298,16 +371,27 @@ export function MessageThreadPageContent({
               <p>{message.body}</p>
               <span className="chat-message-meta">
                 <time>{formatConversationTime(message.sentAt)}</time>
-                {message.direction === 'customer' ? <DeliveryMark delivery={message.delivery} /> : null}
+                {message.direction === 'customer' ? (
+                  <DeliveryMark delivery={message.delivery} />
+                ) : null}
               </span>
             </div>
           </div>
         ))}
       </div>
 
-      {sendError ? <p className="inline-error chat-send-error" role="alert">{sendError}</p> : null}
-      <form className={`chat-composer${canSend ? '' : ' is-disabled'}`} onSubmit={(event) => void submit(event)}>
-        <button type="button" disabled aria-label={messages.attachmentLabel}>＋</button>
+      {sendError ? (
+        <p className="inline-error chat-send-error" role="alert">
+          {sendError}
+        </p>
+      ) : null}
+      <form
+        className={`chat-composer${canSend ? '' : ' is-disabled'}`}
+        onSubmit={(event) => void submit(event)}
+      >
+        <button type="button" disabled aria-label={messages.attachmentLabel}>
+          ＋
+        </button>
         <textarea
           rows={1}
           aria-label={messages.inputPlaceholder}
@@ -322,7 +406,9 @@ export function MessageThreadPageContent({
           disabled={!canSend || sending || !draft.trim()}
           className="chat-send-button"
           aria-label={messages.sendLabel}
-        >➤</button>
+        >
+          ➤
+        </button>
       </form>
     </section>
   );

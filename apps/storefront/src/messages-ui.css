@@ -13,25 +13,6 @@
   min-height: 0;
 }
 
-.messages-page-heading {
-  display: flex;
-  min-height: 64px;
-  align-items: center;
-  margin: 0;
-  padding: 10px 14px;
-  border-bottom: 1px solid color-mix(in srgb, var(--line) 82%, transparent);
-  background: var(--surface);
-}
-
-.messages-page-heading h1 {
-  margin: 0;
-  color: var(--text);
-  font-size: 1.55rem;
-  font-weight: 830;
-  line-height: 1.05;
-  letter-spacing: -0.042em;
-}
-
 .messages-empty-state {
   display: grid;
   min-height: 320px;
@@ -69,14 +50,6 @@
   font-weight: 800;
 }
 
-.messages-empty-state p {
-  max-width: 310px;
-  margin: 0;
-  color: var(--muted);
-  font-size: 0.78rem;
-  line-height: 1.55;
-}
-
 .conversation-list {
   overflow: hidden;
   border: 0;
@@ -94,7 +67,9 @@
   outline: 0;
   color: var(--text);
   text-decoration: none;
-  transition: background 120ms ease, transform 120ms ease;
+  transition:
+    background 120ms ease,
+    transform 120ms ease;
 }
 
 .conversation-row:last-child {
@@ -220,7 +195,11 @@
   padding: 32px;
   color: var(--muted);
   background:
-    radial-gradient(circle at 50% 44%, color-mix(in srgb, var(--brand) 4%, transparent), transparent 34%),
+    radial-gradient(
+      circle at 50% 44%,
+      color-mix(in srgb, var(--brand) 4%, transparent),
+      transparent 34%
+    ),
     color-mix(in srgb, var(--surface-soft) 90%, var(--surface));
   text-align: center;
 }
@@ -383,7 +362,11 @@
   overflow-y: auto;
   padding: 17px 10px;
   background:
-    radial-gradient(circle at 18% 18%, color-mix(in srgb, var(--brand) 4%, transparent), transparent 26%),
+    radial-gradient(
+      circle at 18% 18%,
+      color-mix(in srgb, var(--brand) 4%, transparent),
+      transparent 26%
+    ),
     color-mix(in srgb, var(--surface-soft) 93%, var(--surface));
   overscroll-behavior: contain;
 }
@@ -528,7 +511,10 @@
   font-size: 0.8rem;
   line-height: 1.3;
   resize: none;
-  transition: border-color 120ms ease, box-shadow 120ms ease, background 120ms ease;
+  transition:
+    border-color 120ms ease,
+    box-shadow 120ms ease,
+    background 120ms ease;
 }
 
 .chat-composer textarea:focus {
@@ -548,7 +534,9 @@
   background: var(--brand);
   box-shadow: 0 5px 14px color-mix(in srgb, var(--brand) 20%, transparent);
   font-size: 0.94rem;
-  transition: transform 120ms ease, opacity 120ms ease;
+  transition:
+    transform 120ms ease,
+    opacity 120ms ease;
 }
 
 .chat-composer .chat-send-button:active:not(:disabled) {
@@ -579,16 +567,6 @@
 
   .messages-page {
     min-height: calc(100dvh - 150px);
-  }
-
-  .messages-page-heading {
-    min-height: 60px;
-    padding-inline: 2px;
-    border-bottom: 0;
-  }
-
-  .messages-page-heading h1 {
-    font-size: 1.8rem;
   }
 
   .conversation-list {
@@ -636,7 +614,7 @@
   .messages-page {
     display: grid;
     height: 100%;
-    grid-template-rows: auto minmax(0, 1fr);
+    grid-template-rows: minmax(0, 1fr);
   }
 
   .conversation-list {
