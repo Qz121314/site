@@ -23,12 +23,16 @@ const emptyForm: ProductTagInput = { name: '', sortOrder: 0, isEnabled: true };
 
 function sortTags(tags: AdminProductTag[]) {
   return [...tags].sort(
-    (left, right) => left.sortOrder - right.sortOrder || left.name.localeCompare(right.name),
+    (left, right) =>
+      left.sortOrder - right.sortOrder || left.name.localeCompare(right.name),
   );
 }
 
 function isSessionError(error: unknown) {
-  return error instanceof AdminApiError && (error.status === 401 || error.code === 'SESSION_INVALID');
+  return (
+    error instanceof AdminApiError &&
+    (error.status === 401 || error.code === 'SESSION_INVALID')
+  );
 }
 
 function describeError(error: unknown) {
@@ -97,7 +101,9 @@ export function TagManagementView({ section, onSessionExpired }: TagManagementVi
   const sourceTags = scope === 'active' ? activeTags : trashTags;
   const filteredTags = useMemo(() => {
     const keyword = search.trim().toLowerCase();
-    return keyword ? sourceTags.filter((tag) => tag.name.toLowerCase().includes(keyword)) : sourceTags;
+    return keyword
+      ? sourceTags.filter((tag) => tag.name.toLowerCase().includes(keyword))
+      : sourceTags;
   }, [search, sourceTags]);
 
   const allVisibleSelected =
@@ -118,7 +124,9 @@ export function TagManagementView({ section, onSessionExpired }: TagManagementVi
   }
 
   function openCreateEditor() {
-    const sortOrder = activeTags.length ? Math.max(...activeTags.map((tag) => tag.sortOrder)) + 10 : 0;
+    const sortOrder = activeTags.length
+      ? Math.max(...activeTags.map((tag) => tag.sortOrder)) + 10
+      : 0;
     setEditingTag(null);
     setForm({ ...emptyForm, sortOrder });
     setEditorOpen(true);
@@ -143,7 +151,9 @@ export function TagManagementView({ section, onSessionExpired }: TagManagementVi
     try {
       if (editingTag) {
         const updated = await updateProductTag(section.id, editingTag.id, form);
-        setActiveTags((current) => sortTags(current.map((tag) => (tag.id === updated.id ? updated : tag))));
+        setActiveTags((current) =>
+          sortTags(current.map((tag) => (tag.id === updated.id ? updated : tag))),
+        );
         setSuccessMessage(`标签“${updated.name}”已更新。`);
       } else {
         const created = await createProductTag(section.id, form);
@@ -168,7 +178,9 @@ export function TagManagementView({ section, onSessionExpired }: TagManagementVi
         sortOrder: tag.sortOrder,
         isEnabled: !tag.isEnabled,
       });
-      setActiveTags((current) => current.map((item) => (item.id === updated.id ? updated : item)));
+      setActiveTags((current) =>
+        current.map((item) => (item.id === updated.id ? updated : item)),
+      );
       setSuccessMessage(updated.isEnabled ? '标签已启用。' : '标签已停用。');
     } catch (error) {
       handleError(error);
@@ -264,58 +276,207 @@ export function TagManagementView({ section, onSessionExpired }: TagManagementVi
   }
 
   return (
-    <section className="category-management tag-management" aria-labelledby="tag-management-title">
+    <section
+      className="category-management tag-management"
+      aria-labelledby="tag-management-title"
+    >
       <div className="category-management-toolbar">
         <div>
           <p>当前分区</p>
           <h2 id="tag-management-title">{section.name} · 标签管理</h2>
           <span>标签用于产品的第二维度属性，一个产品可以选择多个标签。</span>
         </div>
-        <button className="primary-button" type="button" onClick={openCreateEditor}>新增标签</button>
+        <button className="primary-button" type="button" onClick={openCreateEditor}>
+          新增标签
+        </button>
       </div>
 
       <div className="category-filter-bar">
         <div className="scope-tabs" role="tablist" aria-label="标签状态">
-          <button type="button" className={scope === 'active' ? 'is-active' : undefined} onClick={() => void changeScope('active')}>
+          <button
+            type="button"
+            className={scope === 'active' ? 'is-active' : undefined}
+            onClick={() => void changeScope('active')}
+          >
             当前标签 <span>{activeTags.length}</span>
           </button>
-          <button type="button" className={scope === 'trash' ? 'is-active' : undefined} onClick={() => void changeScope('trash')}>
+          <button
+            type="button"
+            className={scope === 'trash' ? 'is-active' : undefined}
+            onClick={() => void changeScope('trash')}
+          >
             回收站 <span>{trashTags.length}</span>
           </button>
         </div>
         <label className="category-search">
           <span>搜索</span>
-          <input type="search" value={search} placeholder="标签名称" onChange={(event) => setSearch(event.target.value)} />
+          <input
+            type="search"
+            value={search}
+            placeholder="标签名称"
+            onChange={(event) => setSearch(event.target.value)}
+          />
         </label>
       </div>
 
-      {!editorOpen && errorMessage ? <div className="notice notice-error" role="alert">{errorMessage}</div> : null}
-      {successMessage ? <div className="notice notice-success" role="status">{successMessage}</div> : null}
+      {!editorOpen && errorMessage ? (
+        <div className="notice notice-error" role="alert">
+          {errorMessage}
+        </div>
+      ) : null}
+      {successMessage ? (
+        <div className="notice notice-success" role="status">
+          {successMessage}
+        </div>
+      ) : null}
 
       {scope === 'active' && selectedIds.size > 0 ? (
         <div className="selection-toolbar">
           <span>已选择 {selectedIds.size} 个标签</span>
-          <button type="button" className="danger-button" disabled={working} onClick={() => setPendingDeleteIds([...selectedIds])}>批量删除</button>
+          <button
+            type="button"
+            className="danger-button"
+            disabled={working}
+            onClick={() => setPendingDeleteIds([...selectedIds])}
+          >
+            批量删除
+          </button>
         </div>
       ) : null}
 
       {loading ? (
-        <div className="category-table-wrap category-table-empty"><div className="loading-indicator" aria-hidden="true" /><p>正在读取标签…</p></div>
+        <div className="category-table-wrap category-table-empty">
+          <div className="loading-indicator" aria-hidden="true" />
+          <p>正在读取标签…</p>
+        </div>
       ) : filteredTags.length === 0 ? (
-        <div className="category-table-wrap category-table-empty"><strong>{scope === 'active' ? '当前分区还没有标签' : '回收站为空'}</strong></div>
+        <div className="category-table-wrap category-table-empty">
+          <strong>{scope === 'active' ? '当前分区还没有标签' : '回收站为空'}</strong>
+        </div>
       ) : (
         <div className="category-table-wrap">
           <table className="category-table">
-            <thead><tr><th className="checkbox-cell">{scope === 'active' ? <input type="checkbox" aria-label="全选当前标签" checked={allVisibleSelected} onChange={toggleSelectAll} /> : null}</th><th>标签名称</th><th>产品引用</th><th>排序</th><th>状态</th><th className="actions-cell">操作</th></tr></thead>
+            <thead>
+              <tr>
+                <th className="checkbox-cell">
+                  {scope === 'active' ? (
+                    <input
+                      type="checkbox"
+                      aria-label="全选当前标签"
+                      checked={allVisibleSelected}
+                      onChange={toggleSelectAll}
+                    />
+                  ) : null}
+                </th>
+                <th>标签名称</th>
+                <th>产品引用</th>
+                <th>排序</th>
+                <th>状态</th>
+                <th className="actions-cell">操作</th>
+              </tr>
+            </thead>
             <tbody>
               {filteredTags.map((tag, index) => (
                 <tr key={tag.id}>
-                  <td className="checkbox-cell">{scope === 'active' ? <input type="checkbox" aria-label={`选择标签 ${tag.name}`} checked={selectedIds.has(tag.id)} onChange={() => toggleSelect(tag.id)} /> : null}</td>
-                  <td><div className="category-name-cell"><strong>{tag.name}</strong><small>{tag.id.slice(0, 8)}</small></div></td>
-                  <td><span className={tag.productCount > 0 ? 'category-reference is-used' : 'category-reference'}>{tag.productCount} 个产品</span></td>
-                  <td>{scope === 'active' ? <div className="sort-controls"><span>{tag.sortOrder}</span><div><button type="button" disabled={working || reorderBlocked || index === 0} onClick={() => void moveTag(tag, -1)}>↑</button><button type="button" disabled={working || reorderBlocked || index === filteredTags.length - 1} onClick={() => void moveTag(tag, 1)}>↓</button></div></div> : tag.sortOrder}</td>
-                  <td>{scope === 'active' ? <button type="button" className={`status-pill ${tag.isEnabled ? 'is-enabled' : 'is-disabled'}`} disabled={working} onClick={() => void toggleEnabled(tag)}>{tag.isEnabled ? '已启用' : '已停用'}</button> : <span className="status-pill is-deleted">已删除</span>}</td>
-                  <td className="actions-cell">{scope === 'active' ? <><button type="button" disabled={working} onClick={() => openEditEditor(tag)}>编辑</button><button type="button" className="text-danger" disabled={working} onClick={() => setPendingDeleteIds([tag.id])}>删除</button></> : <button type="button" disabled={working} onClick={() => void restoreTag(tag)}>恢复</button>}</td>
+                  <td className="checkbox-cell">
+                    {scope === 'active' ? (
+                      <input
+                        type="checkbox"
+                        aria-label={`选择标签 ${tag.name}`}
+                        checked={selectedIds.has(tag.id)}
+                        onChange={() => toggleSelect(tag.id)}
+                      />
+                    ) : null}
+                  </td>
+                  <td>
+                    <div className="category-name-cell">
+                      <strong>{tag.name}</strong>
+                      <small>{tag.id.slice(0, 8)}</small>
+                    </div>
+                  </td>
+                  <td>
+                    <span
+                      className={
+                        tag.productCount > 0
+                          ? 'category-reference is-used'
+                          : 'category-reference'
+                      }
+                    >
+                      {tag.productCount} 个产品
+                    </span>
+                  </td>
+                  <td>
+                    {scope === 'active' ? (
+                      <div className="sort-controls">
+                        <span>{tag.sortOrder}</span>
+                        <div>
+                          <button
+                            type="button"
+                            disabled={working || reorderBlocked || index === 0}
+                            onClick={() => void moveTag(tag, -1)}
+                          >
+                            ↑
+                          </button>
+                          <button
+                            type="button"
+                            disabled={
+                              working ||
+                              reorderBlocked ||
+                              index === filteredTags.length - 1
+                            }
+                            onClick={() => void moveTag(tag, 1)}
+                          >
+                            ↓
+                          </button>
+                        </div>
+                      </div>
+                    ) : (
+                      tag.sortOrder
+                    )}
+                  </td>
+                  <td>
+                    {scope === 'active' ? (
+                      <button
+                        type="button"
+                        className={`status-pill ${tag.isEnabled ? 'is-enabled' : 'is-disabled'}`}
+                        disabled={working}
+                        onClick={() => void toggleEnabled(tag)}
+                      >
+                        {tag.isEnabled ? '已启用' : '已停用'}
+                      </button>
+                    ) : (
+                      <span className="status-pill is-deleted">已删除</span>
+                    )}
+                  </td>
+                  <td className="actions-cell">
+                    {scope === 'active' ? (
+                      <>
+                        <button
+                          type="button"
+                          disabled={working}
+                          onClick={() => openEditEditor(tag)}
+                        >
+                          编辑
+                        </button>
+                        <button
+                          type="button"
+                          className="text-danger"
+                          disabled={working}
+                          onClick={() => setPendingDeleteIds([tag.id])}
+                        >
+                          删除
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        type="button"
+                        disabled={working}
+                        onClick={() => void restoreTag(tag)}
+                      >
+                        恢复
+                      </button>
+                    )}
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -325,21 +486,129 @@ export function TagManagementView({ section, onSessionExpired }: TagManagementVi
 
       {editorOpen ? (
         <div className="admin-dialog-backdrop" role="presentation">
-          <section className="admin-dialog" role="dialog" aria-modal="true" aria-labelledby="tag-editor-title">
-            <div className="admin-dialog-header"><div><p>{section.name} · 标签</p><h3 id="tag-editor-title">{editingTag ? '编辑标签' : '新增标签'}</h3></div><button type="button" aria-label="关闭" disabled={saving} onClick={() => setEditorOpen(false)}>×</button></div>
-            <form className="category-editor-form" onSubmit={(event) => void saveTag(event)}>
-              {errorMessage ? <div className="notice notice-error" role="alert">{errorMessage}</div> : null}
-              <label><span>标签名称</span><input type="text" autoFocus required maxLength={80} value={form.name} onChange={(event) => { setForm((current) => ({ ...current, name: event.target.value })); setErrorMessage(''); }} /></label>
-              <label><span>排序</span><input type="number" min={0} max={1_000_000} step={1} required value={form.sortOrder} onChange={(event) => { setForm((current) => ({ ...current, sortOrder: Number(event.target.value) })); setErrorMessage(''); }} /></label>
-              <label className="category-enabled-field"><input type="checkbox" checked={form.isEnabled} onChange={(event) => { setForm((current) => ({ ...current, isEnabled: event.target.checked })); setErrorMessage(''); }} /><span>启用标签</span></label>
-              <div className="admin-dialog-actions"><button type="button" className="secondary-button" disabled={saving} onClick={() => setEditorOpen(false)}>取消</button><button type="submit" className="primary-button" disabled={saving}>{saving ? '保存中…' : '保存'}</button></div>
+          <section
+            className="admin-dialog"
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="tag-editor-title"
+          >
+            <div className="admin-dialog-header">
+              <div>
+                <p>{section.name} · 标签</p>
+                <h3 id="tag-editor-title">{editingTag ? '编辑标签' : '新增标签'}</h3>
+              </div>
+              <button
+                type="button"
+                aria-label="关闭"
+                disabled={saving}
+                onClick={() => setEditorOpen(false)}
+              >
+                ×
+              </button>
+            </div>
+            <form
+              className="category-editor-form"
+              onSubmit={(event) => void saveTag(event)}
+            >
+              {errorMessage ? (
+                <div className="notice notice-error" role="alert">
+                  {errorMessage}
+                </div>
+              ) : null}
+              <label>
+                <span>标签名称</span>
+                <input
+                  type="text"
+                  autoFocus
+                  required
+                  maxLength={80}
+                  value={form.name}
+                  onChange={(event) => {
+                    setForm((current) => ({ ...current, name: event.target.value }));
+                    setErrorMessage('');
+                  }}
+                />
+              </label>
+              <label>
+                <span>排序</span>
+                <input
+                  type="number"
+                  min={0}
+                  max={1_000_000}
+                  step={1}
+                  required
+                  value={form.sortOrder}
+                  onChange={(event) => {
+                    setForm((current) => ({
+                      ...current,
+                      sortOrder: Number(event.target.value),
+                    }));
+                    setErrorMessage('');
+                  }}
+                />
+              </label>
+              <label className="category-enabled-field">
+                <input
+                  type="checkbox"
+                  checked={form.isEnabled}
+                  onChange={(event) => {
+                    setForm((current) => ({
+                      ...current,
+                      isEnabled: event.target.checked,
+                    }));
+                    setErrorMessage('');
+                  }}
+                />
+                <span>启用标签</span>
+              </label>
+              <div className="admin-dialog-actions">
+                <button
+                  type="button"
+                  className="secondary-button"
+                  disabled={saving}
+                  onClick={() => setEditorOpen(false)}
+                >
+                  取消
+                </button>
+                <button type="submit" className="primary-button" disabled={saving}>
+                  {saving ? '保存中…' : '保存'}
+                </button>
+              </div>
             </form>
           </section>
         </div>
       ) : null}
 
       {pendingDeleteIds.length > 0 ? (
-        <div className="admin-dialog-backdrop" role="presentation"><section className="admin-dialog" role="dialog" aria-modal="true"><div className="admin-dialog-header"><div><p>删除标签</p><h3>确认删除 {pendingDeleteIds.length} 个标签？</h3></div></div><p>正在被产品引用的标签不会被删除。</p><div className="admin-dialog-actions"><button type="button" className="secondary-button" disabled={working} onClick={() => setPendingDeleteIds([])}>取消</button><button type="button" className="danger-button" disabled={working} onClick={() => void confirmDelete()}>{working ? '处理中…' : '确认删除'}</button></div></section></div>
+        <div className="admin-dialog-backdrop" role="presentation">
+          <section className="admin-dialog" role="dialog" aria-modal="true">
+            <div className="admin-dialog-header">
+              <div>
+                <p>删除标签</p>
+                <h3>确认删除 {pendingDeleteIds.length} 个标签？</h3>
+              </div>
+            </div>
+            <p>正在被产品引用的标签不会被删除。</p>
+            <div className="admin-dialog-actions">
+              <button
+                type="button"
+                className="secondary-button"
+                disabled={working}
+                onClick={() => setPendingDeleteIds([])}
+              >
+                取消
+              </button>
+              <button
+                type="button"
+                className="danger-button"
+                disabled={working}
+                onClick={() => void confirmDelete()}
+              >
+                {working ? '处理中…' : '确认删除'}
+              </button>
+            </div>
+          </section>
+        </div>
       ) : null}
     </section>
   );

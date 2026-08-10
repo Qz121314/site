@@ -13,10 +13,7 @@ export type AssetReferenceCounts = {
 };
 
 export type AssetCleanupBlockedReason =
-  | 'IN_USE'
-  | 'NOT_IMAGE'
-  | 'SNAPSHOT_RETENTION'
-  | null;
+  'IN_USE' | 'NOT_IMAGE' | 'SNAPSHOT_RETENTION' | null;
 
 export type AdminAsset = {
   key: string;
@@ -49,14 +46,7 @@ export type AssetCleanupResponse = {
 
 export type MediaKind = 'image' | 'animated_image' | 'video';
 export type MediaRole =
-  | 'general'
-  | 'product'
-  | 'logo'
-  | 'icon'
-  | 'favicon'
-  | 'hero'
-  | 'background'
-  | 'content';
+  'general' | 'product' | 'logo' | 'icon' | 'favicon' | 'hero' | 'background' | 'content';
 
 export type MediaFolder = {
   id: string;
@@ -289,7 +279,9 @@ function parseManagedMedia(value: unknown): ManagedMediaAsset {
     typeof media.fileName !== 'string' ||
     typeof media.mimeType !== 'string' ||
     typeof media.byteSize !== 'number' ||
-    (media.mediaKind !== 'image' && media.mediaKind !== 'animated_image' && media.mediaKind !== 'video') ||
+    (media.mediaKind !== 'image' &&
+      media.mediaKind !== 'animated_image' &&
+      media.mediaKind !== 'video') ||
     (typeof media.width !== 'number' && media.width !== null) ||
     (typeof media.height !== 'number' && media.height !== null) ||
     (typeof media.durationMs !== 'number' && media.durationMs !== null) ||
@@ -364,12 +356,16 @@ export async function fetchMediaFolders(): Promise<MediaFolder[]> {
   return folders.map(parseMediaFolder);
 }
 
-export async function createMediaFolder(name: string): Promise<{ folder: MediaFolder; reused: boolean }> {
-  const body = asRecord(await requestJson('/api/admin/assets/folders', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', 'x-admin-request': '1' },
-    body: JSON.stringify({ name }),
-  }));
+export async function createMediaFolder(
+  name: string,
+): Promise<{ folder: MediaFolder; reused: boolean }> {
+  const body = asRecord(
+    await requestJson('/api/admin/assets/folders', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-admin-request': '1' },
+      body: JSON.stringify({ name }),
+    }),
+  );
   return {
     folder: parseMediaFolder(body?.folder),
     reused: body?.reused === true,
@@ -377,11 +373,13 @@ export async function createMediaFolder(name: string): Promise<{ folder: MediaFo
 }
 
 export async function renameMediaFolder(id: string, name: string): Promise<MediaFolder> {
-  const body = asRecord(await requestJson(`/api/admin/assets/folders/${encodeURIComponent(id)}`, {
-    method: 'PUT',
-    headers: { 'content-type': 'application/json', 'x-admin-request': '1' },
-    body: JSON.stringify({ name }),
-  }));
+  const body = asRecord(
+    await requestJson(`/api/admin/assets/folders/${encodeURIComponent(id)}`, {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json', 'x-admin-request': '1' },
+      body: JSON.stringify({ name }),
+    }),
+  );
   return parseMediaFolder(body?.folder);
 }
 
@@ -392,12 +390,17 @@ export async function deleteMediaFolder(id: string): Promise<void> {
   });
 }
 
-export async function moveMediaAssets(ids: string[], folderId: string | null): Promise<number> {
-  const body = asRecord(await requestJson('/api/admin/assets/folders/move', {
-    method: 'POST',
-    headers: { 'content-type': 'application/json', 'x-admin-request': '1' },
-    body: JSON.stringify({ ids, folderId }),
-  }));
+export async function moveMediaAssets(
+  ids: string[],
+  folderId: string | null,
+): Promise<number> {
+  const body = asRecord(
+    await requestJson('/api/admin/assets/folders/move', {
+      method: 'POST',
+      headers: { 'content-type': 'application/json', 'x-admin-request': '1' },
+      body: JSON.stringify({ ids, folderId }),
+    }),
+  );
   if (typeof body?.movedCount !== 'number') {
     throw new AdminApiError(500, 'INVALID_RESPONSE', '素材移动返回数据无效。');
   }
@@ -427,8 +430,10 @@ export async function uploadMediaAsset(input: {
     formData.set('compressionProfile', preparedImage.compressionProfile);
     formData.set('sourceByteSize', String(preparedImage.sourceByteSize));
   } else {
-    if (input.width !== undefined && input.width !== null) formData.set('width', String(input.width));
-    if (input.height !== undefined && input.height !== null) formData.set('height', String(input.height));
+    if (input.width !== undefined && input.width !== null)
+      formData.set('width', String(input.width));
+    if (input.height !== undefined && input.height !== null)
+      formData.set('height', String(input.height));
   }
 
   if (input.durationMs !== undefined && input.durationMs !== null) {

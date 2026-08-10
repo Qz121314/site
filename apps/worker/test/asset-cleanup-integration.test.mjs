@@ -39,7 +39,9 @@ function createAssetDb({ rows = [], retainedVersions = [], guards = [] } = {}) {
             return { results: this.args.map((key) => rowMap.get(key)).filter(Boolean) };
           }
           if (this.sql.includes('FROM publish_versions')) {
-            return { results: retainedVersions.map((content_version) => ({ content_version })) };
+            return {
+              results: retainedVersions.map((content_version) => ({ content_version })),
+            };
           }
           if (this.sql.includes('FROM asset_cleanup_guards')) {
             return { results: this.args.map((key) => guardMap.get(key)).filter(Boolean) };
@@ -50,10 +52,13 @@ function createAssetDb({ rows = [], retainedVersions = [], guards = [] } = {}) {
       return statement;
     },
     async batch(statements) {
-      batches.push(statements.map((statement) => ({ sql: statement.sql, args: statement.args })));
+      batches.push(
+        statements.map((statement) => ({ sql: statement.sql, args: statement.args })),
+      );
       for (const statement of statements) {
         if (statement.sql.includes('INSERT INTO asset_cleanup_guards')) {
-          const [objectKey, mediaAssetId, guardContentVersion, firstSeenAt] = statement.args;
+          const [objectKey, mediaAssetId, guardContentVersion, firstSeenAt] =
+            statement.args;
           if (!guardMap.has(objectKey)) {
             guardMap.set(objectKey, {
               object_key: objectKey,
@@ -92,7 +97,10 @@ function r2Object(key, contentType = 'image/webp') {
 
 test('an unused D1 media asset becomes snapshot-protected while the current retained version can still reference it', async () => {
   const row = mediaRow();
-  const db = createAssetDb({ rows: [row], retainedVersions: ['version-current', 'version-previous'] });
+  const db = createAssetDb({
+    rows: [row],
+    retainedVersions: ['version-current', 'version-previous'],
+  });
   const bucket = createBucket([r2Object(row.object_key)]);
 
   const [evaluation] = await evaluateCleanupCandidates(bucket, db, [row.object_key]);

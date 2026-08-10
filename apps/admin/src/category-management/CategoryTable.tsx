@@ -46,7 +46,9 @@ export function CategoryTable({
     return (
       <div className="category-table-wrap category-table-empty">
         <strong>{scope === 'active' ? '当前分区还没有分类' : '回收站为空'}</strong>
-        <p>{scope === 'active' ? '点击“新增分类”开始录入。' : '已删除的分类会显示在这里。'}</p>
+        <p>
+          {scope === 'active' ? '点击“新增分类”开始录入。' : '已删除的分类会显示在这里。'}
+        </p>
       </div>
     );
   }
@@ -93,7 +95,13 @@ export function CategoryTable({
                 </div>
               </td>
               <td>
-                <span className={category.productCount > 0 ? 'category-reference is-used' : 'category-reference'}>
+                <span
+                  className={
+                    category.productCount > 0
+                      ? 'category-reference is-used'
+                      : 'category-reference'
+                  }
+                >
                   {category.productCount} 个产品
                 </span>
               </td>
@@ -113,7 +121,9 @@ export function CategoryTable({
                       <button
                         type="button"
                         aria-label={`下移 ${category.name}`}
-                        disabled={working || reorderDisabled || index === categories.length - 1}
+                        disabled={
+                          working || reorderDisabled || index === categories.length - 1
+                        }
                         onClick={() => onMove(category, 1)}
                       >
                         ↓
@@ -141,7 +151,11 @@ export function CategoryTable({
               <td className="actions-cell">
                 {scope === 'active' ? (
                   <>
-                    <button type="button" disabled={working} onClick={() => onEdit(category)}>
+                    <button
+                      type="button"
+                      disabled={working}
+                      onClick={() => onEdit(category)}
+                    >
                       编辑
                     </button>
                     <button
@@ -154,7 +168,11 @@ export function CategoryTable({
                     </button>
                   </>
                 ) : (
-                  <button type="button" disabled={working} onClick={() => onRestore(category)}>
+                  <button
+                    type="button"
+                    disabled={working}
+                    onClick={() => onRestore(category)}
+                  >
                     恢复
                   </button>
                 )}

@@ -47,21 +47,26 @@ function shouldIgnoreTarget(target: EventTarget | null): boolean {
 }
 
 function isStandaloneApp(standaloneQuery: MediaQueryList): boolean {
-  return standaloneQuery.matches || (window.navigator as StandaloneNavigator).standalone === true;
+  return (
+    standaloneQuery.matches ||
+    (window.navigator as StandaloneNavigator).standalone === true
+  );
 }
 
 function shouldCaptureInternalNavigation(event: MouseEvent): boolean {
   if (
-    event.defaultPrevented
-    || event.button !== 0
-    || event.metaKey
-    || event.ctrlKey
-    || event.shiftKey
-    || event.altKey
-  ) return false;
-  const anchor = event.target instanceof Element
-    ? event.target.closest<HTMLAnchorElement>('a[href]')
-    : null;
+    event.defaultPrevented ||
+    event.button !== 0 ||
+    event.metaKey ||
+    event.ctrlKey ||
+    event.shiftKey ||
+    event.altKey
+  )
+    return false;
+  const anchor =
+    event.target instanceof Element
+      ? event.target.closest<HTMLAnchorElement>('a[href]')
+      : null;
   if (!anchor) return false;
   const href = anchor.getAttribute('href') ?? '';
   return href.startsWith('/') && !href.startsWith('/go/');
@@ -88,10 +93,7 @@ export function MobileEdgeNavigation() {
       setGesture(null);
     }
 
-    function beginGesture(
-      direction: StorefrontNavigationDirection,
-      touch: Touch,
-    ) {
+    function beginGesture(direction: StorefrontNavigationDirection, touch: Touch) {
       tracking = {
         direction,
         startX: touch.clientX,
@@ -118,11 +120,12 @@ export function MobileEdgeNavigation() {
 
     function handleTouchStart(event: TouchEvent) {
       if (
-        !mobileQuery.matches
-        || !isStandaloneApp(standaloneQuery)
-        || event.touches.length !== 1
-        || shouldIgnoreTarget(event.target)
-      ) return;
+        !mobileQuery.matches ||
+        !isStandaloneApp(standaloneQuery) ||
+        event.touches.length !== 1 ||
+        shouldIgnoreTarget(event.target)
+      )
+        return;
       const touch = event.touches[0];
       if (!touch) return;
 
@@ -131,7 +134,10 @@ export function MobileEdgeNavigation() {
         return;
       }
 
-      if (touch.clientX >= window.innerWidth - EDGE_WIDTH && canNavigateStorefrontForward()) {
+      if (
+        touch.clientX >= window.innerWidth - EDGE_WIDTH &&
+        canNavigateStorefrontForward()
+      ) {
         beginGesture('forward', touch);
       }
     }
@@ -147,7 +153,10 @@ export function MobileEdgeNavigation() {
       const verticalDistance = Math.abs(deltaY);
 
       if (!tracking.locked) {
-        if (verticalDistance > VERTICAL_CANCEL_DISTANCE && verticalDistance > Math.abs(deltaX)) {
+        if (
+          verticalDistance > VERTICAL_CANCEL_DISTANCE &&
+          verticalDistance > Math.abs(deltaX)
+        ) {
           clearGesture();
           return;
         }

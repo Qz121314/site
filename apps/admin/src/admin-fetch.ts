@@ -48,16 +48,20 @@ function isPublishSourcePath(path: string): boolean {
   return !path.includes('/conversion-groups');
 }
 
-export function shouldNotifyAdminMutation(method: string, path: string | null): path is string {
+export function shouldNotifyAdminMutation(
+  method: string,
+  path: string | null,
+): path is string {
   const normalizedMethod = method.toUpperCase();
   return (
-    MUTATION_METHODS.has(normalizedMethod) &&
-    path !== null &&
-    isPublishSourcePath(path)
+    MUTATION_METHODS.has(normalizedMethod) && path !== null && isPublishSourcePath(path)
   );
 }
 
-export function shouldNotifyAdminSessionExpired(status: number, path: string | null): path is string {
+export function shouldNotifyAdminSessionExpired(
+  status: number,
+  path: string | null,
+): path is string {
   return (
     status === 401 &&
     path?.startsWith('/api/admin/') === true &&
@@ -72,7 +76,8 @@ export function notifyAdminChanged(detail: AdminMutationDetail): void {
     mutationNotificationTimer = null;
     const pending = pendingMutationDetail;
     pendingMutationDetail = null;
-    if (pending) window.dispatchEvent(new CustomEvent(ADMIN_MUTATION_EVENT, { detail: pending }));
+    if (pending)
+      window.dispatchEvent(new CustomEvent(ADMIN_MUTATION_EVENT, { detail: pending }));
   }, ADMIN_MUTATION_DEBOUNCE_MS);
 }
 

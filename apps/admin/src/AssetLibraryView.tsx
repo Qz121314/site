@@ -6,7 +6,10 @@ import { CleanupAssetDialog } from './asset-library/CleanupAssetDialog';
 import { deleteMediaAssets } from './asset-library/media-delete-api';
 import { fetchMediaLibraryPage } from './asset-library/media-library-page-api';
 import { MediaUploadQueuePanel } from './asset-library/MediaUploadQueuePanel';
-import { useMediaUploadQueue, type MediaUploadBatchSummary } from './asset-library/media-upload-queue';
+import {
+  useMediaUploadQueue,
+  type MediaUploadBatchSummary,
+} from './asset-library/media-upload-queue';
 import {
   cleanupAssets,
   createMediaFolder,
@@ -74,7 +77,10 @@ function kindLabel(kind: MediaKind): string {
 }
 
 function isSessionError(error: unknown): boolean {
-  return error instanceof AdminApiError && (error.status === 401 || error.code === 'SESSION_INVALID');
+  return (
+    error instanceof AdminApiError &&
+    (error.status === 401 || error.code === 'SESSION_INVALID')
+  );
 }
 
 function mergeAssets(current: AdminAsset[], incoming: AdminAsset[]): AdminAsset[] {
@@ -128,7 +134,10 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
   const [cleanupSuccess, setCleanupSuccess] = useState<string | null>(null);
 
   useEffect(() => {
-    const timeout = window.setTimeout(() => setDebouncedMediaQuery(mediaQuery.trim()), 220);
+    const timeout = window.setTimeout(
+      () => setDebouncedMediaQuery(mediaQuery.trim()),
+      220,
+    );
     return () => window.clearTimeout(timeout);
   }, [mediaQuery]);
 
@@ -247,7 +256,8 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
         setScannedImages(allAssets.length);
         setMediaBaseUrl(page.mediaBaseUrl);
         if (!page.truncated || !page.cursor) break;
-        if (visitedCursors.has(page.cursor)) throw new Error('R2 返回了重复游标，扫描已停止。');
+        if (visitedCursors.has(page.cursor))
+          throw new Error('R2 返回了重复游标，扫描已停止。');
         visitedCursors.add(page.cursor);
         cursor = page.cursor;
       }
@@ -276,7 +286,8 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
   }, [folderFilter, mediaKind, mediaRole]);
 
   const allManagedSelected =
-    managedAssets.length > 0 && managedAssets.every((asset) => selectedMediaIds.has(asset.id));
+    managedAssets.length > 0 &&
+    managedAssets.every((asset) => selectedMediaIds.has(asset.id));
   const selectedManagedAssets = useMemo(
     () => managedAssets.filter((asset) => selectedMediaIds.has(asset.id)),
     [managedAssets, selectedMediaIds],
@@ -295,11 +306,13 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
   }, [assets, filter, query]);
 
   const visibleCleanupKeys = useMemo(
-    () => filteredAssets.filter((asset) => asset.cleanupEligible).map((asset) => asset.key),
+    () =>
+      filteredAssets.filter((asset) => asset.cleanupEligible).map((asset) => asset.key),
     [filteredAssets],
   );
   const allUnusedSelected =
-    visibleCleanupKeys.length > 0 && visibleCleanupKeys.every((key) => selectedKeys.has(key));
+    visibleCleanupKeys.length > 0 &&
+    visibleCleanupKeys.every((key) => selectedKeys.has(key));
   const selectedAssets = useMemo(
     () => assets.filter((asset) => selectedKeys.has(asset.key) && asset.cleanupEligible),
     [assets, selectedKeys],
@@ -310,7 +323,9 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
     () => ({
       total: assets.length,
       used: assets.filter((asset) => asset.usageStatus === 'used').length,
-      protected: assets.filter((asset) => asset.cleanupBlockedReason === 'SNAPSHOT_RETENTION').length,
+      protected: assets.filter(
+        (asset) => asset.cleanupBlockedReason === 'SNAPSHOT_RETENTION',
+      ).length,
       eligible: assets.filter((asset) => asset.cleanupEligible).length,
       bytes: assets.reduce((total, asset) => total + asset.size, 0),
     }),
@@ -347,10 +362,14 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
       summary.skipped > 0 ? `忽略不支持文件 ${summary.skipped} 个` : '',
     ].filter(Boolean);
     if (successful > 0 || summary.skipped > 0) {
-      setMediaSuccess(`${retry ? '重试' : '素材处理'}完成${parts.length ? `：${parts.join('，')}` : ''}。`);
+      setMediaSuccess(
+        `${retry ? '重试' : '素材处理'}完成${parts.length ? `：${parts.join('，')}` : ''}。`,
+      );
     }
     if (summary.failed > 0) {
-      setMediaError(`${summary.failed} 个素材处理失败，失败项已保留在上传队列中，可直接重试。`);
+      setMediaError(
+        `${summary.failed} 个素材处理失败，失败项已保留在上传队列中，可直接重试。`,
+      );
     } else if (summary.total === 0 && summary.skipped > 0) {
       setMediaError('所选内容中没有支持的 JPG、PNG、WebP、GIF、MP4 或 WebM。');
     }
@@ -404,7 +423,11 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
       await loadFolders();
       setFolderFilter(result.folder.id);
       setUploadFolderId(result.folder.id);
-      setMediaSuccess(result.reused ? `已切换到已有文件夹“${result.folder.name}”。` : `已创建文件夹“${result.folder.name}”。`);
+      setMediaSuccess(
+        result.reused
+          ? `已切换到已有文件夹“${result.folder.name}”。`
+          : `已创建文件夹“${result.folder.name}”。`,
+      );
     } catch (error) {
       if (isSessionError(error)) onSessionExpired();
       else setMediaError(error instanceof Error ? error.message : '创建文件夹失败。');
@@ -468,10 +491,15 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
     setFolderWorking(true);
     setMediaError(null);
     try {
-      const movedCount = await moveMediaAssets(selectedManagedAssets.map((asset) => asset.id), targetId);
+      const movedCount = await moveMediaAssets(
+        selectedManagedAssets.map((asset) => asset.id),
+        targetId,
+      );
       setSelectedMediaIds(new Set());
       await refreshMediaAndFolders();
-      const target = targetId ? folders.find((folder) => folder.id === targetId)?.name ?? '目标文件夹' : '未分组';
+      const target = targetId
+        ? (folders.find((folder) => folder.id === targetId)?.name ?? '目标文件夹')
+        : '未分组';
       setMediaSuccess(`已将 ${movedCount} 个素材移动到“${target}”。`);
     } catch (error) {
       if (isSessionError(error)) onSessionExpired();
@@ -486,7 +514,8 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
     const confirmed = await adminConfirm({
       eyebrow: '素材中心',
       title: `删除已选 ${selectedManagedAssets.length} 个素材？`,
-      message: '仍在使用或受最近发布快照保护的素材会被服务端阻止删除；只会删除确认安全的素材。',
+      message:
+        '仍在使用或受最近发布快照保护的素材会被服务端阻止删除；只会删除确认安全的素材。',
       confirmLabel: '确认删除',
       danger: true,
     });
@@ -495,10 +524,14 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
     setMediaError(null);
     setMediaSuccess(null);
     try {
-      const result = await deleteMediaAssets(selectedManagedAssets.map((asset) => asset.id));
+      const result = await deleteMediaAssets(
+        selectedManagedAssets.map((asset) => asset.id),
+      );
       setSelectedMediaIds(new Set());
       await refreshMediaAndFolders();
-      setMediaSuccess(`已删除 ${result.deletedCount} 个素材，释放 ${formatBytes(result.freedBytes)}。`);
+      setMediaSuccess(
+        `已删除 ${result.deletedCount} 个素材，释放 ${formatBytes(result.freedBytes)}。`,
+      );
     } catch (error) {
       if (isSessionError(error)) onSessionExpired();
       else {
@@ -542,7 +575,9 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
       setAssets((current) => current.filter((asset) => !deleted.has(asset.key)));
       setSelectedKeys(new Set());
       setShowCleanupDialog(false);
-      setCleanupSuccess(`已从 R2 物理删除 ${result.deletedCount} 张图片，释放 ${formatBytes(result.freedBytes)}。`);
+      setCleanupSuccess(
+        `已从 R2 物理删除 ${result.deletedCount} 张图片，释放 ${formatBytes(result.freedBytes)}。`,
+      );
       await loadMedia();
     } catch (error) {
       if (isSessionError(error)) onSessionExpired();
@@ -566,8 +601,20 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
           <p>所有图片、GIF 和视频统一在这里上传，再由产品、Logo、图标和正文引用。</p>
         </div>
         <div className="media-center-tabs" role="tablist" aria-label="素材中心模式">
-          <button type="button" className={tab === 'library' ? 'is-active' : undefined} onClick={() => setTab('library')}>素材中心</button>
-          <button type="button" className={tab === 'cleanup' ? 'is-active' : undefined} onClick={() => setTab('cleanup')}>存储清理</button>
+          <button
+            type="button"
+            className={tab === 'library' ? 'is-active' : undefined}
+            onClick={() => setTab('library')}
+          >
+            素材中心
+          </button>
+          <button
+            type="button"
+            className={tab === 'cleanup' ? 'is-active' : undefined}
+            onClick={() => setTab('cleanup')}
+          >
+            存储清理
+          </button>
         </div>
       </div>
 
@@ -578,27 +625,75 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
               <strong>素材文件夹</strong>
               <small>一层分组即可；文件夹上传会自动使用本地顶层目录名。</small>
             </div>
-            <input value={newFolderName} maxLength={80} placeholder="新建文件夹，例如 Product A" onChange={(event) => setNewFolderName(event.target.value)} />
-            <button className="secondary-button" type="button" disabled={!newFolderName.trim() || folderWorking || uploadQueue.running} onClick={() => void handleCreateFolder()}>新建文件夹</button>
-            {activeFolder ? <button type="button" className="secondary-button" disabled={folderWorking || uploadQueue.running} onClick={() => void handleRenameFolder()}>重命名当前文件夹</button> : null}
-            {activeFolder ? <button type="button" className="danger-button" disabled={folderWorking || uploadQueue.running} onClick={() => void handleDeleteFolder()}>删除当前文件夹</button> : null}
+            <input
+              value={newFolderName}
+              maxLength={80}
+              placeholder="新建文件夹，例如 Product A"
+              onChange={(event) => setNewFolderName(event.target.value)}
+            />
+            <button
+              className="secondary-button"
+              type="button"
+              disabled={!newFolderName.trim() || folderWorking || uploadQueue.running}
+              onClick={() => void handleCreateFolder()}
+            >
+              新建文件夹
+            </button>
+            {activeFolder ? (
+              <button
+                type="button"
+                className="secondary-button"
+                disabled={folderWorking || uploadQueue.running}
+                onClick={() => void handleRenameFolder()}
+              >
+                重命名当前文件夹
+              </button>
+            ) : null}
+            {activeFolder ? (
+              <button
+                type="button"
+                className="danger-button"
+                disabled={folderWorking || uploadQueue.running}
+                onClick={() => void handleDeleteFolder()}
+              >
+                删除当前文件夹
+              </button>
+            ) : null}
           </div>
 
           <div className="media-center-upload-bar">
             <label>
               <span>素材用途</span>
-              <select value={uploadRole} disabled={uploadQueue.running} onChange={(event) => setUploadRole(event.target.value as MediaRole)}>
-                {ROLE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+              <select
+                value={uploadRole}
+                disabled={uploadQueue.running}
+                onChange={(event) => setUploadRole(event.target.value as MediaRole)}
+              >
+                {ROLE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
               </select>
             </label>
             <label>
               <span>上传到文件夹</span>
-              <select value={uploadFolderId} disabled={uploadQueue.running} onChange={(event) => setUploadFolderId(event.target.value)}>
+              <select
+                value={uploadFolderId}
+                disabled={uploadQueue.running}
+                onChange={(event) => setUploadFolderId(event.target.value)}
+              >
                 <option value="">未分组</option>
-                {folders.map((folder) => <option key={folder.id} value={folder.id}>{folder.name}</option>)}
+                {folders.map((folder) => (
+                  <option key={folder.id} value={folder.id}>
+                    {folder.name}
+                  </option>
+                ))}
               </select>
             </label>
-            <label className={`media-center-upload-button${uploadQueue.running ? ' is-disabled' : ''}`}>
+            <label
+              className={`media-center-upload-button${uploadQueue.running ? ' is-disabled' : ''}`}
+            >
               <input
                 type="file"
                 accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm"
@@ -612,7 +707,9 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
               />
               {uploadQueue.running ? '队列处理中…' : '上传文件'}
             </label>
-            <label className={`media-center-upload-button is-folder-upload${uploadQueue.running || folderWorking ? ' is-disabled' : ''}`}>
+            <label
+              className={`media-center-upload-button is-folder-upload${uploadQueue.running || folderWorking ? ' is-disabled' : ''}`}
+            >
               <input
                 ref={(node) => {
                   if (!node) return;
@@ -630,7 +727,10 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
               />
               {uploadQueue.running || folderWorking ? '处理中…' : '上传文件夹'}
             </label>
-            <small>静态图片先在浏览器压缩；队列最多并发处理 3 个文件。单个失败不会中断后续文件。</small>
+            <small>
+              静态图片先在浏览器压缩；队列最多并发处理 3
+              个文件。单个失败不会中断后续文件。
+            </small>
           </div>
 
           <MediaUploadQueuePanel
@@ -641,44 +741,116 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
             onClearFinished={uploadQueue.clearFinished}
           />
 
-          {mediaError ? <p className="inline-status is-error" role="alert">{mediaError}</p> : null}
-          {mediaSuccess ? <p className="inline-status is-success" role="status">{mediaSuccess}</p> : null}
+          {mediaError ? (
+            <p className="inline-status is-error" role="alert">
+              {mediaError}
+            </p>
+          ) : null}
+          {mediaSuccess ? (
+            <p className="inline-status is-success" role="status">
+              {mediaSuccess}
+            </p>
+          ) : null}
 
           <div className="media-center-toolbar">
-            <input type="search" value={mediaQuery} placeholder="搜索文件名、文件夹或格式" onChange={(event) => setMediaQuery(event.target.value)} />
-            <select value={folderFilter} onChange={(event) => setFolderFilter(event.target.value)}>
+            <input
+              type="search"
+              value={mediaQuery}
+              placeholder="搜索文件名、文件夹或格式"
+              onChange={(event) => setMediaQuery(event.target.value)}
+            />
+            <select
+              value={folderFilter}
+              onChange={(event) => setFolderFilter(event.target.value)}
+            >
               <option value="all">全部文件夹</option>
               <option value="unfiled">未分组</option>
-              {folders.map((folder) => <option key={folder.id} value={folder.id}>{folder.name} ({folder.assetCount})</option>)}
+              {folders.map((folder) => (
+                <option key={folder.id} value={folder.id}>
+                  {folder.name} ({folder.assetCount})
+                </option>
+              ))}
             </select>
-            <select value={mediaKind} onChange={(event) => setMediaKind(event.target.value as MediaKind | '')}>
-              {KIND_OPTIONS.map((option) => <option key={option.value || 'all'} value={option.value}>{option.label}</option>)}
+            <select
+              value={mediaKind}
+              onChange={(event) => setMediaKind(event.target.value as MediaKind | '')}
+            >
+              {KIND_OPTIONS.map((option) => (
+                <option key={option.value || 'all'} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
             </select>
-            <select value={mediaRole} onChange={(event) => setMediaRole(event.target.value as MediaRole | '')}>
+            <select
+              value={mediaRole}
+              onChange={(event) => setMediaRole(event.target.value as MediaRole | '')}
+            >
               <option value="">全部用途</option>
-              {ROLE_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
+              {ROLE_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
             </select>
-            <button type="button" className="secondary-button" onClick={() => void loadMedia()} disabled={mediaLoading || uploadQueue.running}>刷新</button>
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={() => void loadMedia()}
+              disabled={mediaLoading || uploadQueue.running}
+            >
+              刷新
+            </button>
           </div>
 
           {selectedManagedAssets.length > 0 ? (
             <div className="media-center-selection-toolbar">
               <span>已选择 {selectedManagedAssets.length} 个素材</span>
-              <select value={moveFolderId} onChange={(event) => setMoveFolderId(event.target.value)}>
+              <select
+                value={moveFolderId}
+                onChange={(event) => setMoveFolderId(event.target.value)}
+              >
                 <option value="">移动到未分组</option>
-                {folders.map((folder) => <option key={folder.id} value={folder.id}>移动到 {folder.name}</option>)}
+                {folders.map((folder) => (
+                  <option key={folder.id} value={folder.id}>
+                    移动到 {folder.name}
+                  </option>
+                ))}
               </select>
-              <button type="button" className="secondary-button" disabled={folderWorking || uploadQueue.running} onClick={() => void handleMoveSelected()}>移动已选</button>
-              <button type="button" className="danger-button" disabled={deletingMedia || uploadQueue.running} onClick={() => void handleDeleteManaged()}>{deletingMedia ? '删除中…' : '删除已选'}</button>
+              <button
+                type="button"
+                className="secondary-button"
+                disabled={folderWorking || uploadQueue.running}
+                onClick={() => void handleMoveSelected()}
+              >
+                移动已选
+              </button>
+              <button
+                type="button"
+                className="danger-button"
+                disabled={deletingMedia || uploadQueue.running}
+                onClick={() => void handleDeleteManaged()}
+              >
+                {deletingMedia ? '删除中…' : '删除已选'}
+              </button>
             </div>
           ) : null}
 
           <div className="media-center-select-all">
             <label>
-              <input type="checkbox" checked={allManagedSelected} disabled={managedAssets.length === 0 || deletingMedia} onChange={toggleAllMedia} />
+              <input
+                type="checkbox"
+                checked={allManagedSelected}
+                disabled={managedAssets.length === 0 || deletingMedia}
+                onChange={toggleAllMedia}
+              />
               <span>全选已加载素材</span>
             </label>
-            <span>{mediaTotal} 个结果{managedAssets.length < mediaTotal ? ` · 已加载 ${managedAssets.length}` : ''}</span>
+            <span>
+              {mediaTotal} 个结果
+              {managedAssets.length < mediaTotal
+                ? ` · 已加载 ${managedAssets.length}`
+                : ''}
+            </span>
           </div>
 
           {mediaLoading ? (
@@ -689,31 +861,73 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
                 {managedAssets.map((asset) => {
                   const duration = formatDuration(asset.durationMs);
                   return (
-                    <article className={`media-center-card${selectedMediaIds.has(asset.id) ? ' is-selected' : ''}`} key={asset.id}>
+                    <article
+                      className={`media-center-card${selectedMediaIds.has(asset.id) ? ' is-selected' : ''}`}
+                      key={asset.id}
+                    >
                       <label className="media-center-card-select">
-                        <input type="checkbox" checked={selectedMediaIds.has(asset.id)} disabled={deletingMedia} onChange={() => toggleMedia(asset.id)} />
+                        <input
+                          type="checkbox"
+                          checked={selectedMediaIds.has(asset.id)}
+                          disabled={deletingMedia}
+                          onChange={() => toggleMedia(asset.id)}
+                        />
                         <span className="sr-only">选择 {asset.fileName}</span>
                       </label>
                       <div className="media-center-preview">
                         {asset.publicUrl ? (
                           asset.mediaKind === 'video' ? (
-                            <video src={asset.publicUrl} controls muted playsInline preload="metadata" />
+                            <video
+                              src={asset.publicUrl}
+                              controls
+                              muted
+                              playsInline
+                              preload="metadata"
+                            />
                           ) : (
                             <img src={asset.publicUrl} alt="" loading="lazy" />
                           )
-                        ) : <span>未配置媒体域名</span>}
+                        ) : (
+                          <span>未配置媒体域名</span>
+                        )}
                         <b>{kindLabel(asset.mediaKind)}</b>
                       </div>
                       <div className="media-center-card-body">
                         <strong title={asset.fileName}>{asset.fileName}</strong>
-                        <small>{asset.folderName ? `📁 ${asset.folderName} · ` : '未分组 · '}{asset.width && asset.height ? `${asset.width} × ${asset.height}` : '尺寸未知'}{duration ? ` · ${duration}` : ''} · {formatBytes(asset.byteSize)}</small>
+                        <small>
+                          {asset.folderName ? `📁 ${asset.folderName} · ` : '未分组 · '}
+                          {asset.width && asset.height
+                            ? `${asset.width} × ${asset.height}`
+                            : '尺寸未知'}
+                          {duration ? ` · ${duration}` : ''} ·{' '}
+                          {formatBytes(asset.byteSize)}
+                        </small>
                         <div className="media-center-role-list">
-                          {(asset.roles.length > 0 ? asset.roles : ['general' as MediaRole]).map((role) => <span key={role}>{roleLabel(role)}</span>)}
+                          {(asset.roles.length > 0
+                            ? asset.roles
+                            : ['general' as MediaRole]
+                          ).map((role) => (
+                            <span key={role}>{roleLabel(role)}</span>
+                          ))}
                         </div>
                       </div>
                       <div className="media-center-card-actions">
-                        {asset.publicUrl ? <button type="button" onClick={() => void navigator.clipboard.writeText(asset.publicUrl ?? '')}>复制链接</button> : null}
-                        <button type="button" onClick={() => setSelectedMediaIds(new Set([asset.id]))}>选择</button>
+                        {asset.publicUrl ? (
+                          <button
+                            type="button"
+                            onClick={() =>
+                              void navigator.clipboard.writeText(asset.publicUrl ?? '')
+                            }
+                          >
+                            复制链接
+                          </button>
+                        ) : null}
+                        <button
+                          type="button"
+                          onClick={() => setSelectedMediaIds(new Set([asset.id]))}
+                        >
+                          选择
+                        </button>
                       </div>
                     </article>
                   );
@@ -721,14 +935,24 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
               </div>
               {mediaNextCursor ? (
                 <div className="media-center-load-more">
-                  <button type="button" className="secondary-button" disabled={mediaLoadingMore} onClick={() => void loadMoreMedia()}>
-                    {mediaLoadingMore ? '正在加载…' : `加载更多（${managedAssets.length} / ${mediaTotal}）`}
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    disabled={mediaLoadingMore}
+                    onClick={() => void loadMoreMedia()}
+                  >
+                    {mediaLoadingMore
+                      ? '正在加载…'
+                      : `加载更多（${managedAssets.length} / ${mediaTotal}）`}
                   </button>
                 </div>
               ) : null}
             </>
           ) : (
-            <div className="media-center-empty"><strong>没有匹配的素材</strong><p>调整文件夹或筛选条件，或者上传新的素材。</p></div>
+            <div className="media-center-empty">
+              <strong>没有匹配的素材</strong>
+              <p>调整文件夹或筛选条件，或者上传新的素材。</p>
+            </div>
           )}
         </>
       ) : cleanupLoading ? (
@@ -739,39 +963,126 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
       ) : (
         <>
           <div className="asset-library-actions media-cleanup-actions">
-            <div><strong>底层存储清理</strong><span>仅用于清理没有业务引用、且已经退出最近 3 个可回退快照的图片对象。</span></div>
-            <button className="secondary-button" type="button" onClick={() => void scan()}>重新扫描全部图片</button>
-            <button className="danger-button" type="button" disabled={selectedAssets.length === 0} onClick={() => setShowCleanupDialog(true)}>物理清理已选 ({selectedAssets.length})</button>
+            <div>
+              <strong>底层存储清理</strong>
+              <span>
+                仅用于清理没有业务引用、且已经退出最近 3 个可回退快照的图片对象。
+              </span>
+            </div>
+            <button
+              className="secondary-button"
+              type="button"
+              onClick={() => void scan()}
+            >
+              重新扫描全部图片
+            </button>
+            <button
+              className="danger-button"
+              type="button"
+              disabled={selectedAssets.length === 0}
+              onClick={() => setShowCleanupDialog(true)}
+            >
+              物理清理已选 ({selectedAssets.length})
+            </button>
           </div>
 
           <div className="asset-summary-grid">
-            <article><span>扫描图片</span><strong>{cleanupStats.total}</strong><small>{formatBytes(cleanupStats.bytes)}</small></article>
-            <article><span>当前使用</span><strong>{cleanupStats.used}</strong><small>D1 中存在业务引用</small></article>
-            <article><span>快照保护</span><strong>{cleanupStats.protected}</strong><small>等待最近 3 版自然淘汰</small></article>
-            <article><span>可物理清理</span><strong>{cleanupStats.eligible}</strong><small>引用和回退窗口均已释放</small></article>
+            <article>
+              <span>扫描图片</span>
+              <strong>{cleanupStats.total}</strong>
+              <small>{formatBytes(cleanupStats.bytes)}</small>
+            </article>
+            <article>
+              <span>当前使用</span>
+              <strong>{cleanupStats.used}</strong>
+              <small>D1 中存在业务引用</small>
+            </article>
+            <article>
+              <span>快照保护</span>
+              <strong>{cleanupStats.protected}</strong>
+              <small>等待最近 3 版自然淘汰</small>
+            </article>
+            <article>
+              <span>可物理清理</span>
+              <strong>{cleanupStats.eligible}</strong>
+              <small>引用和回退窗口均已释放</small>
+            </article>
           </div>
 
-          <div className="asset-safety-note"><strong>清理规则</strong><span>日常删除请优先在素材中心操作。这里保留原始 R2 扫描，用于发现和清理历史孤立图片。</span></div>
-          {!mediaBaseUrl ? <div className="notice notice-error" role="alert">尚未配置 R2 自定义域名，图片预览不可用，但扫描和引用保护仍可执行。</div> : null}
-          {cleanupError ? <p className="inline-status is-error" role="alert">{cleanupError}</p> : null}
-          {cleanupSuccess ? <p className="inline-status is-success" role="status">{cleanupSuccess}</p> : null}
+          <div className="asset-safety-note">
+            <strong>清理规则</strong>
+            <span>
+              日常删除请优先在素材中心操作。这里保留原始 R2
+              扫描，用于发现和清理历史孤立图片。
+            </span>
+          </div>
+          {!mediaBaseUrl ? (
+            <div className="notice notice-error" role="alert">
+              尚未配置 R2 自定义域名，图片预览不可用，但扫描和引用保护仍可执行。
+            </div>
+          ) : null}
+          {cleanupError ? (
+            <p className="inline-status is-error" role="alert">
+              {cleanupError}
+            </p>
+          ) : null}
+          {cleanupSuccess ? (
+            <p className="inline-status is-success" role="status">
+              {cleanupSuccess}
+            </p>
+          ) : null}
 
           <div className="asset-toolbar">
-            <input type="search" value={query} placeholder="搜索图片路径或 Content-Type" onChange={(event) => setQuery(event.target.value)} />
+            <input
+              type="search"
+              value={query}
+              placeholder="搜索图片路径或 Content-Type"
+              onChange={(event) => setQuery(event.target.value)}
+            />
             <div className="asset-filter-group" aria-label="图片使用状态">
-              <button type="button" className={filter === 'used' ? 'is-active' : undefined} onClick={() => setFilter('used')}>使用中 ({cleanupStats.used})</button>
-              <button type="button" className={filter === 'unused' ? 'is-active' : undefined} onClick={() => setFilter('unused')}>未使用 ({cleanupStats.protected + cleanupStats.eligible})</button>
+              <button
+                type="button"
+                className={filter === 'used' ? 'is-active' : undefined}
+                onClick={() => setFilter('used')}
+              >
+                使用中 ({cleanupStats.used})
+              </button>
+              <button
+                type="button"
+                className={filter === 'unused' ? 'is-active' : undefined}
+                onClick={() => setFilter('unused')}
+              >
+                未使用 ({cleanupStats.protected + cleanupStats.eligible})
+              </button>
             </div>
           </div>
 
           {filteredAssets.length > 0 ? (
-            <AssetTable assets={filteredAssets} selectedKeys={selectedKeys} allUnusedSelected={allUnusedSelected} working={cleaning} onToggle={toggleKey} onToggleAll={toggleAll} />
+            <AssetTable
+              assets={filteredAssets}
+              selectedKeys={selectedKeys}
+              allUnusedSelected={allUnusedSelected}
+              working={cleaning}
+              onToggle={toggleKey}
+              onToggleAll={toggleAll}
+            />
           ) : (
-            <div className="asset-empty-state"><strong>{filter === 'used' ? '没有使用中的图片' : '没有未使用的图片'}</strong><p>可以调整搜索条件或重新扫描 R2。</p></div>
+            <div className="asset-empty-state">
+              <strong>
+                {filter === 'used' ? '没有使用中的图片' : '没有未使用的图片'}
+              </strong>
+              <p>可以调整搜索条件或重新扫描 R2。</p>
+            </div>
           )}
 
           {showCleanupDialog ? (
-            <CleanupAssetDialog count={selectedAssets.length} totalBytesLabel={formatBytes(selectedBytes)} working={cleaning} onCancel={() => setShowCleanupDialog(false)} onConfirm={() => void confirmCleanup()} />
+            <CleanupAssetDialog
+              count={selectedAssets.length}
+              totalBytesLabel={formatBytes(selectedBytes)}
+              working={cleaning}
+              onCancel={() => setShowCleanupDialog(false)}
+              onConfirm={() => void confirmCleanup()}
+            />
           ) : null}
         </>
       )}

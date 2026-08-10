@@ -1,5 +1,8 @@
 import { Hono, type Context } from 'hono';
-import { getConversionGroup, selectNextConversionTarget } from '../conversion-pool/conversion-pool';
+import {
+  getConversionGroup,
+  selectNextConversionTarget,
+} from '../conversion-pool/conversion-pool';
 import { getRoutableProduct } from '../conversion-pool/public-cta';
 import type { AppEnvironment } from '../types';
 

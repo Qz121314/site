@@ -84,7 +84,10 @@ publicStorefrontConfigRoutes.get('/support/route/:productId', async (context) =>
   setPublicRuntimeHeaders(context);
   const productId = context.req.param('productId').trim();
   const requestedSectionId = context.req.query('sectionId')?.trim() ?? '';
-  if (!validPublicId(productId) || (requestedSectionId && !validPublicId(requestedSectionId))) {
+  if (
+    !validPublicId(productId) ||
+    (requestedSectionId && !validPublicId(requestedSectionId))
+  ) {
     return context.json({ available: false });
   }
 

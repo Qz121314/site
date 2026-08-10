@@ -85,7 +85,13 @@ function tagRow(productCount = 0) {
   };
 }
 
-function conversionGroupRow({ mode = 'link', targetCount = 0, activeTargetCount = targetCount, productCount = 0, enabled = true } = {}) {
+function conversionGroupRow({
+  mode = 'link',
+  targetCount = 0,
+  activeTargetCount = targetCount,
+  productCount = 0,
+  enabled = true,
+} = {}) {
   return {
     id: 'group-1',
     section_id: 'section-1',
@@ -209,8 +215,32 @@ function productTagDb(rows) {
 
 function faqDb() {
   const records = new Map([
-    ['faq-1', { id: 'faq-1', question: 'Q1', answer: 'A1', sort_order: 10, is_enabled: 1, created_at: NOW, updated_at: NOW, deleted_at: null }],
-    ['faq-2', { id: 'faq-2', question: 'Q2', answer: 'A2', sort_order: 20, is_enabled: 1, created_at: NOW, updated_at: NOW, deleted_at: null }],
+    [
+      'faq-1',
+      {
+        id: 'faq-1',
+        question: 'Q1',
+        answer: 'A1',
+        sort_order: 10,
+        is_enabled: 1,
+        created_at: NOW,
+        updated_at: NOW,
+        deleted_at: null,
+      },
+    ],
+    [
+      'faq-2',
+      {
+        id: 'faq-2',
+        question: 'Q2',
+        answer: 'A2',
+        sort_order: 20,
+        is_enabled: 1,
+        created_at: NOW,
+        updated_at: NOW,
+        deleted_at: null,
+      },
+    ],
   ]);
   const idempotency = new Map();
   let batchCalls = 0;
@@ -239,7 +269,10 @@ function faqDb() {
           throw new Error(`Unexpected run SQL: ${this.sql}`);
         },
         async first() {
-          if (this.sql.includes('SELECT response_body') && this.sql.includes('FROM idempotency_keys')) {
+          if (
+            this.sql.includes('SELECT response_body') &&
+            this.sql.includes('FROM idempotency_keys')
+          ) {
             const responseBody = idempotency.get(this.args[0]);
             return responseBody ? { response_body: responseBody } : null;
           }
@@ -254,17 +287,33 @@ function faqDb() {
       batchCalls += 1;
       for (const statement of statements) {
         executedBatchSql.push(statement.sql);
-        if (statement.sql.includes('UPDATE faqs') && statement.sql.includes('SET is_enabled = 0')) {
+        if (
+          statement.sql.includes('UPDATE faqs') &&
+          statement.sql.includes('SET is_enabled = 0')
+        ) {
           const id = statement.args[2];
           const current = records.get(id);
           if (current) {
-            records.set(id, { ...current, is_enabled: 0, deleted_at: statement.args[0], updated_at: statement.args[1] });
+            records.set(id, {
+              ...current,
+              is_enabled: 0,
+              deleted_at: statement.args[0],
+              updated_at: statement.args[1],
+            });
           }
         }
-        if (statement.sql.includes('UPDATE faqs') && statement.sql.includes('SET deleted_at = NULL')) {
+        if (
+          statement.sql.includes('UPDATE faqs') &&
+          statement.sql.includes('SET deleted_at = NULL')
+        ) {
           const id = statement.args[1];
           const current = records.get(id);
-          if (current) records.set(id, { ...current, deleted_at: null, updated_at: statement.args[0] });
+          if (current)
+            records.set(id, {
+              ...current,
+              deleted_at: null,
+              updated_at: statement.args[0],
+            });
         }
         if (statement.sql.includes('INSERT INTO idempotency_keys')) {
           idempotency.set(statement.args[0], statement.args[3]);
@@ -321,7 +370,10 @@ test('customer-service connection deletion is blocked while conversion targets u
 });
 
 test('conversion-group deletion is blocked while targets or products still depend on it', async () => {
-  const db = blockingDb('FROM conversion_groups g', conversionGroupRow({ targetCount: 1, productCount: 4 }));
+  const db = blockingDb(
+    'FROM conversion_groups g',
+    conversionGroupRow({ targetCount: 1, productCount: 4 }),
+  );
   const app = withRequestId(adminConversionPoolRoutes);
   const response = await app.request(
     'http://local.test/section-1/conversion-groups/group-1',
@@ -358,12 +410,19 @@ test('FAQ batch delete is idempotent and deleted FAQs can be restored', async ()
   assert.equal(first.status, 200);
   assert.deepEqual(await first.json(), { deletedIds: ['faq-1', 'faq-2'] });
   assert.equal(db.batchCalls, 1);
-  assert.equal(db.executedBatchSql.filter((sql) => sql.includes('SET is_enabled = 0')).length, 2);
+  assert.equal(
+    db.executedBatchSql.filter((sql) => sql.includes('SET is_enabled = 0')).length,
+    2,
+  );
 
   const replay = await request();
   assert.equal(replay.status, 200);
   assert.deepEqual(await replay.json(), { deletedIds: ['faq-1', 'faq-2'] });
-  assert.equal(db.batchCalls, 1, 'idempotent replay must not execute another delete batch');
+  assert.equal(
+    db.batchCalls,
+    1,
+    'idempotent replay must not execute another delete batch',
+  );
 
   const restore = await app.request(
     'http://local.test/faq-1/restore',
@@ -396,11 +455,21 @@ test('published product dependency validation accepts a ready link product and r
   assert.equal(parsed.ok, true);
   if (!parsed.ok) return;
 
-  const valid = await validateProductDependencies(productDependencyDb(), 'section-1', parsed.value);
+  const valid = await validateProductDependencies(
+    productDependencyDb(),
+    'section-1',
+    parsed.value,
+  );
   assert.deepEqual(valid, { ok: true });
 
   const mismatch = await validateProductDependencies(
-    productDependencyDb({ group: conversionGroupRow({ mode: 'customer_service', targetCount: 1, activeTargetCount: 1 }) }),
+    productDependencyDb({
+      group: conversionGroupRow({
+        mode: 'customer_service',
+        targetCount: 1,
+        activeTargetCount: 1,
+      }),
+    }),
     'section-1',
     parsed.value,
   );
@@ -409,10 +478,16 @@ test('published product dependency validation accepts a ready link product and r
 });
 
 test('published products reject missing media and offline products require an address', async () => {
-  const noMedia = validateProductInput(baseProductInput({ mediaAssetIds: [], coverAssetId: null }));
+  const noMedia = validateProductInput(
+    baseProductInput({ mediaAssetIds: [], coverAssetId: null }),
+  );
   assert.equal(noMedia.ok, true);
   if (!noMedia.ok) return;
-  const missingMedia = await validateProductDependencies(productDependencyDb({ mediaIds: [] }), 'section-1', noMedia.value);
+  const missingMedia = await validateProductDependencies(
+    productDependencyDb({ mediaIds: [] }),
+    'section-1',
+    noMedia.value,
+  );
   assert.equal(missingMedia.ok, false);
   if (!missingMedia.ok) assert.equal(missingMedia.code, 'PRODUCT_IMAGE_REQUIRED');
 
@@ -426,7 +501,13 @@ test('published products reject missing media and offline products require an ad
   assert.equal(offline.ok, true);
   if (!offline.ok) return;
   const missingAddress = await validateProductDependencies(
-    productDependencyDb({ group: conversionGroupRow({ mode: 'customer_service', targetCount: 1, activeTargetCount: 1 }) }),
+    productDependencyDb({
+      group: conversionGroupRow({
+        mode: 'customer_service',
+        targetCount: 1,
+        activeTargetCount: 1,
+      }),
+    }),
     'section-1',
     offline.value,
   );
@@ -436,10 +517,15 @@ test('published products reject missing media and offline products require an ad
 
 test('product tag bindings enforce uniqueness, section ownership, enable state and the 12-tag cap', async () => {
   assert.equal(parseProductTagIds(['tag-1', 'tag-1']).ok, false);
-  assert.equal(parseProductTagIds(Array.from({ length: 13 }, (_, index) => `tag-${index}`)).ok, false);
+  assert.equal(
+    parseProductTagIds(Array.from({ length: 13 }, (_, index) => `tag-${index}`)).ok,
+    false,
+  );
 
   const publishedDisabled = await validateProductTagBindings(
-    productTagDb([{ id: 'tag-1', section_id: 'section-1', is_enabled: 0, deleted_at: null }]),
+    productTagDb([
+      { id: 'tag-1', section_id: 'section-1', is_enabled: 0, deleted_at: null },
+    ]),
     'section-1',
     ['tag-1'],
     'published',
@@ -448,7 +534,9 @@ test('product tag bindings enforce uniqueness, section ownership, enable state a
   if (!publishedDisabled.ok) assert.equal(publishedDisabled.code, 'PRODUCT_TAG_DISABLED');
 
   const draftDisabled = await validateProductTagBindings(
-    productTagDb([{ id: 'tag-1', section_id: 'section-1', is_enabled: 0, deleted_at: null }]),
+    productTagDb([
+      { id: 'tag-1', section_id: 'section-1', is_enabled: 0, deleted_at: null },
+    ]),
     'section-1',
     ['tag-1'],
     'draft',
@@ -456,7 +544,9 @@ test('product tag bindings enforce uniqueness, section ownership, enable state a
   assert.deepEqual(draftDisabled, { ok: true });
 
   const wrongSection = await validateProductTagBindings(
-    productTagDb([{ id: 'tag-1', section_id: 'section-2', is_enabled: 1, deleted_at: null }]),
+    productTagDb([
+      { id: 'tag-1', section_id: 'section-2', is_enabled: 1, deleted_at: null },
+    ]),
     'section-1',
     ['tag-1'],
     'draft',
@@ -485,16 +575,38 @@ test('product create/update media statements and tag replacement preserve determ
   assert.equal(created.statements.length, 3);
   assert.equal(created.product.effectiveCoverAssetId, 'media-1');
   assert.equal(created.product.publishedAt, NOW);
-  assert.deepEqual(created.statements.slice(1).map((statement) => statement.args[2]), [0, 10]);
+  assert.deepEqual(
+    created.statements.slice(1).map((statement) => statement.args[2]),
+    [0, 10],
+  );
 
-  const tagStatements = createReplaceProductTagStatements(db, created.product.id, ['tag-a', 'tag-b'], NOW);
+  const tagStatements = createReplaceProductTagStatements(
+    db,
+    created.product.id,
+    ['tag-a', 'tag-b'],
+    NOW,
+  );
   assert.equal(tagStatements.length, 3);
   assert.ok(tagStatements[0].sql.includes('DELETE FROM product_tag_bindings'));
-  assert.deepEqual(tagStatements.slice(1).map((statement) => statement.args[1]), ['tag-a', 'tag-b']);
+  assert.deepEqual(
+    tagStatements.slice(1).map((statement) => statement.args[1]),
+    ['tag-a', 'tag-b'],
+  );
 
-  const updated = createUpdateProductStatements(db, created.product, { ...input, mediaAssetIds: ['media-2', 'media-1'] }, '2026-08-07T01:00:00.000Z');
+  const updated = createUpdateProductStatements(
+    db,
+    created.product,
+    { ...input, mediaAssetIds: ['media-2', 'media-1'] },
+    '2026-08-07T01:00:00.000Z',
+  );
   assert.equal(updated.length, 4);
   assert.ok(updated[1].sql.includes('DELETE FROM product_media'));
-  assert.deepEqual(updated.slice(2).map((statement) => statement.args[1]), ['media-2', 'media-1']);
-  assert.deepEqual(updated.slice(2).map((statement) => statement.args[2]), [0, 10]);
+  assert.deepEqual(
+    updated.slice(2).map((statement) => statement.args[1]),
+    ['media-2', 'media-1'],
+  );
+  assert.deepEqual(
+    updated.slice(2).map((statement) => statement.args[2]),
+    [0, 10],
+  );
 });

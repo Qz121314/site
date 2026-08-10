@@ -2,23 +2,44 @@
 
 :is(html, .storefront-theme-root) {
   --theme-primary-header-border: color-mix(in srgb, var(--line) 88%, transparent);
-  --theme-primary-header-shadow: 0 4px 18px color-mix(in srgb, var(--text) 4%, transparent);
+  --theme-primary-header-shadow: 0 4px 18px
+    color-mix(in srgb, var(--text) 4%, transparent);
   --theme-primary-logo-radius: 12px;
   --theme-primary-faq-background: var(--surface);
-  --theme-primary-faq-open-background: color-mix(in srgb, var(--surface) 96%, var(--surface-soft) 4%);
+  --theme-primary-faq-open-background: color-mix(
+    in srgb,
+    var(--surface) 96%,
+    var(--surface-soft) 4%
+  );
   --theme-primary-faq-border: var(--line);
   --theme-primary-faq-shadow: none;
   --theme-primary-message-background: var(--surface);
   --theme-primary-message-border: var(--line);
   --theme-primary-message-row-active: var(--surface-soft);
   --theme-primary-message-shadow: none;
-  --theme-primary-message-avatar-background: color-mix(in srgb, var(--brand) 12%, var(--surface));
+  --theme-primary-message-avatar-background: color-mix(
+    in srgb,
+    var(--brand) 12%,
+    var(--surface)
+  );
   --theme-primary-unread-background: var(--brand);
   --theme-primary-chat-background: var(--surface-soft);
-  --theme-primary-chat-header-background: color-mix(in srgb, var(--surface) 97%, transparent);
-  --theme-primary-chat-timeline-background: color-mix(in srgb, var(--surface-soft) 92%, var(--surface));
+  --theme-primary-chat-header-background: color-mix(
+    in srgb,
+    var(--surface) 97%,
+    transparent
+  );
+  --theme-primary-chat-timeline-background: color-mix(
+    in srgb,
+    var(--surface-soft) 92%,
+    var(--surface)
+  );
   --theme-primary-chat-agent-bubble: var(--surface);
-  --theme-primary-chat-customer-bubble: color-mix(in srgb, var(--brand) 12%, var(--surface));
+  --theme-primary-chat-customer-bubble: color-mix(
+    in srgb,
+    var(--brand) 12%,
+    var(--surface)
+  );
   --theme-primary-chat-composer-background: var(--surface);
   --theme-primary-chat-input-background: var(--surface-soft);
 }
@@ -32,12 +53,24 @@
   --theme-primary-logo-radius: 15px;
   --theme-primary-header-border: color-mix(in srgb, var(--line) 72%, var(--brand) 28%);
   --theme-primary-header-shadow: 0 10px 28px rgb(0 0 0 / 20%);
-  --theme-primary-faq-open-background: color-mix(in srgb, var(--surface) 90%, var(--brand) 10%);
-  --theme-primary-message-background: color-mix(in srgb, var(--surface) 94%, var(--brand) 6%);
+  --theme-primary-faq-open-background: color-mix(
+    in srgb,
+    var(--surface) 90%,
+    var(--brand) 10%
+  );
+  --theme-primary-message-background: color-mix(
+    in srgb,
+    var(--surface) 94%,
+    var(--brand) 6%
+  );
   --theme-primary-message-border: color-mix(in srgb, var(--line) 76%, var(--brand) 24%);
   --theme-primary-message-shadow: 0 12px 30px rgb(0 0 0 / 20%);
   --theme-primary-chat-background: color-mix(in srgb, var(--surface-soft) 94%, black 6%);
-  --theme-primary-chat-customer-bubble: color-mix(in srgb, var(--brand) 18%, var(--surface));
+  --theme-primary-chat-customer-bubble: color-mix(
+    in srgb,
+    var(--brand) 18%,
+    var(--surface)
+  );
 }
 
 :is(html, .storefront-theme-root)[data-theme='live'] {
@@ -45,20 +78,29 @@
   --theme-primary-header-border: color-mix(in srgb, var(--brand) 26%, var(--line));
   --theme-primary-faq-border: color-mix(in srgb, var(--brand) 20%, var(--line));
   --theme-primary-message-border: color-mix(in srgb, var(--brand) 24%, var(--line));
-  --theme-primary-chat-customer-bubble: color-mix(in srgb, var(--brand) 22%, var(--surface));
+  --theme-primary-chat-customer-bubble: color-mix(
+    in srgb,
+    var(--brand) 22%,
+    var(--surface)
+  );
 }
 
 :is(html, .storefront-theme-root)[data-theme='saas'] {
   --theme-primary-logo-radius: 10px;
   --theme-primary-header-shadow: none;
   --theme-primary-faq-shadow: 0 1px 2px color-mix(in srgb, var(--text) 4%, transparent);
-  --theme-primary-message-shadow: 0 2px 8px color-mix(in srgb, var(--brand) 6%, transparent);
+  --theme-primary-message-shadow: 0 2px 8px
+    color-mix(in srgb, var(--brand) 6%, transparent);
 }
 
 :is(html, .storefront-theme-root)[data-theme='travel'] {
   --theme-primary-logo-radius: 16px;
   --theme-primary-header-shadow: 0 6px 20px rgb(57 72 65 / 7%);
-  --theme-primary-faq-open-background: color-mix(in srgb, var(--surface) 90%, var(--surface-soft) 10%);
+  --theme-primary-faq-open-background: color-mix(
+    in srgb,
+    var(--surface) 90%,
+    var(--surface-soft) 10%
+  );
   --theme-primary-message-shadow: 0 8px 22px rgb(57 72 65 / 7%);
 }
 
@@ -67,17 +109,41 @@
   --theme-primary-header-border: color-mix(in srgb, var(--brand) 26%, var(--line));
   --theme-primary-header-shadow: 0 10px 30px rgb(0 0 0 / 22%);
   --theme-primary-faq-background: color-mix(in srgb, var(--surface) 82%, transparent);
-  --theme-primary-faq-open-background: color-mix(in srgb, var(--surface) 72%, var(--brand) 8%);
+  --theme-primary-faq-open-background: color-mix(
+    in srgb,
+    var(--surface) 72%,
+    var(--brand) 8%
+  );
   --theme-primary-faq-border: color-mix(in srgb, var(--line) 68%, var(--brand) 32%);
   --theme-primary-message-background: color-mix(in srgb, var(--surface) 80%, transparent);
   --theme-primary-message-border: color-mix(in srgb, var(--line) 66%, var(--brand) 34%);
   --theme-primary-message-shadow: 0 12px 30px rgb(0 0 0 / 20%);
-  --theme-primary-chat-background: color-mix(in srgb, var(--surface-soft) 82%, transparent);
-  --theme-primary-chat-header-background: color-mix(in srgb, var(--surface) 76%, transparent);
-  --theme-primary-chat-timeline-background: color-mix(in srgb, var(--surface-soft) 82%, transparent);
+  --theme-primary-chat-background: color-mix(
+    in srgb,
+    var(--surface-soft) 82%,
+    transparent
+  );
+  --theme-primary-chat-header-background: color-mix(
+    in srgb,
+    var(--surface) 76%,
+    transparent
+  );
+  --theme-primary-chat-timeline-background: color-mix(
+    in srgb,
+    var(--surface-soft) 82%,
+    transparent
+  );
   --theme-primary-chat-agent-bubble: color-mix(in srgb, var(--surface) 86%, transparent);
-  --theme-primary-chat-customer-bubble: color-mix(in srgb, var(--brand) 18%, var(--surface));
-  --theme-primary-chat-composer-background: color-mix(in srgb, var(--surface) 82%, transparent);
+  --theme-primary-chat-customer-bubble: color-mix(
+    in srgb,
+    var(--brand) 18%,
+    var(--surface)
+  );
+  --theme-primary-chat-composer-background: color-mix(
+    in srgb,
+    var(--surface) 82%,
+    transparent
+  );
 }
 
 /* Header: compact app chrome; site name and location remain backend-driven. */
@@ -108,7 +174,9 @@
 }
 
 :is(html, .storefront-theme-root) .faq-article-row {
-  transition: background 120ms ease, color 120ms ease;
+  transition:
+    background 120ms ease,
+    color 120ms ease;
 }
 
 :is(html, .storefront-theme-root) .faq-article-row:is(:hover, :focus-visible, :active) {
@@ -130,7 +198,9 @@
 }
 
 :is(html, .storefront-theme-root) .conversation-row {
-  transition: background 120ms ease, transform 120ms ease;
+  transition:
+    background 120ms ease,
+    transform 120ms ease;
 }
 
 :is(html, .storefront-theme-root) .conversation-row:active {
@@ -160,7 +230,11 @@
 
 :is(html, .storefront-theme-root) .chat-timeline {
   background:
-    radial-gradient(circle at 20% 20%, color-mix(in srgb, var(--brand) 4%, transparent), transparent 25%),
+    radial-gradient(
+      circle at 20% 20%,
+      color-mix(in srgb, var(--brand) 4%, transparent),
+      transparent 25%
+    ),
     var(--theme-primary-chat-timeline-background);
 }
 
@@ -204,23 +278,25 @@
   }
 }
 
-:is(html, .storefront-theme-root)[data-theme='tech'] :is(
-  .faq-article-list,
-  .faq-article-body,
-  .messages-empty-state,
-  .conversation-list,
-  .chat-header,
-  .chat-composer,
-  .topbar
-),
-:is(html, .storefront-theme-root)[data-theme='noir'] :is(
-  .faq-article-list,
-  .faq-article-body,
-  .messages-empty-state,
-  .conversation-list,
-  .chat-header,
-  .chat-composer,
-  .topbar
-) {
+:is(html, .storefront-theme-root)[data-theme='tech']
+  :is(
+    .faq-article-list,
+    .faq-article-body,
+    .messages-empty-state,
+    .conversation-list,
+    .chat-header,
+    .chat-composer,
+    .topbar
+  ),
+:is(html, .storefront-theme-root)[data-theme='noir']
+  :is(
+    .faq-article-list,
+    .faq-article-body,
+    .messages-empty-state,
+    .conversation-list,
+    .chat-header,
+    .chat-composer,
+    .topbar
+  ) {
   backdrop-filter: blur(18px);
 }

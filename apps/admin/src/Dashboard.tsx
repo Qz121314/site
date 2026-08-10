@@ -60,9 +60,7 @@ type RollbackTarget = {
   version: PublishVersion;
 } | null;
 type PendingDiscardAction =
-  | { kind: 'navigate'; view: AdminView }
-  | { kind: 'logout' }
-  | null;
+  { kind: 'navigate'; view: AdminView } | { kind: 'logout' } | null;
 
 type HistoryMode = 'push' | 'replace';
 
@@ -77,7 +75,10 @@ const FIXED_ADMIN_VIEWS = new Set<AdminView>([
 ]);
 
 function isSessionError(error: unknown): boolean {
-  return error instanceof AdminApiError && (error.status === 401 || error.code === 'SESSION_INVALID');
+  return (
+    error instanceof AdminApiError &&
+    (error.status === 401 || error.code === 'SESSION_INVALID')
+  );
 }
 
 function parseDynamicView(view: AdminView): DynamicView | null {
@@ -188,7 +189,8 @@ function publishStatusLabel(
   if (hasError) return '发布状态读取失败';
   if (!status) return '读取发布状态';
   if (status.bootstrapRequired) return '需要首次发布';
-  if (status.modules.some((module) => module.lastJob?.status === 'failed')) return '部分板块发布失败';
+  if (status.modules.some((module) => module.lastJob?.status === 'failed'))
+    return '部分板块发布失败';
   if (status.dirtyCount > 0) return `${status.dirtyCount} 项待发布`;
   return '前台已是最新';
 }
@@ -208,7 +210,10 @@ function versionCode(version: PublishVersion): string {
   return version.contentVersion.slice(-8);
 }
 
-function modulePublishButtonLabel(module: PublishModuleStatus | null, key: string): string {
+function modulePublishButtonLabel(
+  module: PublishModuleStatus | null,
+  key: string,
+): string {
   if (key === 'all') return '发布全部';
   if (!module) return '发布当前板块';
   switch (module.kind) {
@@ -249,7 +254,8 @@ export function Dashboard({
   const [historyModuleKey, setHistoryModuleKey] = useState('site');
   const [rollbackTarget, setRollbackTarget] = useState<RollbackTarget>(null);
   const [rollingBack, setRollingBack] = useState(false);
-  const [pendingDiscardAction, setPendingDiscardAction] = useState<PendingDiscardAction>(null);
+  const [pendingDiscardAction, setPendingDiscardAction] =
+    useState<PendingDiscardAction>(null);
   const [productHandoff, setProductHandoff] = useState<ProductHandoff | null>(null);
   const unsaved = useAdminUnsavedState();
 
@@ -278,19 +284,24 @@ export function Dashboard({
         onSessionExpired();
         return;
       }
-      setPublishStatusError(error instanceof Error ? error.message : '发布状态读取失败。');
+      setPublishStatusError(
+        error instanceof Error ? error.message : '发布状态读取失败。',
+      );
     }
   }, [onSessionExpired]);
 
-  const commitView = useCallback((nextView: AdminView, mode: HistoryMode = 'push') => {
-    if (nextView === activeView) {
-      writeAdminViewLocation(nextView, 'replace');
-      return;
-    }
-    setPublishPanelOpen(false);
-    setActiveView(nextView);
-    writeAdminViewLocation(nextView, mode);
-  }, [activeView]);
+  const commitView = useCallback(
+    (nextView: AdminView, mode: HistoryMode = 'push') => {
+      if (nextView === activeView) {
+        writeAdminViewLocation(nextView, 'replace');
+        return;
+      }
+      setPublishPanelOpen(false);
+      setActiveView(nextView);
+      writeAdminViewLocation(nextView, mode);
+    },
+    [activeView],
+  );
 
   useEffect(() => {
     writeAdminViewLocation(initialViewRef.current, 'replace');
@@ -344,29 +355,41 @@ export function Dashboard({
   useEffect(() => {
     const dynamic = parseDynamicView(activeView);
     if (!dynamic) return;
-    if (!sectionsLoading && !sections.some((section) => section.id === dynamic.sectionId)) {
+    if (
+      !sectionsLoading &&
+      !sections.some((section) => section.id === dynamic.sectionId)
+    ) {
       commitView('sections', 'replace');
     }
   }, [activeView, commitView, sections, sectionsLoading]);
 
   const contextPublishKey = publishKeyForView(activeView);
   const contextPublishModule = useMemo(
-    () => publishStatus?.modules.find((module) => module.key === contextPublishKey) ?? null,
+    () =>
+      publishStatus?.modules.find((module) => module.key === contextPublishKey) ?? null,
     [contextPublishKey, publishStatus?.modules],
   );
   const historyModule = useMemo(
-    () => publishStatus?.modules.find((module) => module.key === historyModuleKey) ?? null,
+    () =>
+      publishStatus?.modules.find((module) => module.key === historyModuleKey) ?? null,
     [historyModuleKey, publishStatus?.modules],
   );
 
   useEffect(() => {
     if (!publishStatus?.modules.length) return;
-    if (contextPublishKey !== 'all' && publishStatus.modules.some((module) => module.key === contextPublishKey)) {
+    if (
+      contextPublishKey !== 'all' &&
+      publishStatus.modules.some((module) => module.key === contextPublishKey)
+    ) {
       setHistoryModuleKey(contextPublishKey);
       return;
     }
     if (!publishStatus.modules.some((module) => module.key === historyModuleKey)) {
-      setHistoryModuleKey(publishStatus.modules.find((module) => !module.isCurrent)?.key ?? publishStatus.modules[0]?.key ?? 'site');
+      setHistoryModuleKey(
+        publishStatus.modules.find((module) => !module.isCurrent)?.key ??
+          publishStatus.modules[0]?.key ??
+          'site',
+      );
     }
   }, [contextPublishKey, historyModuleKey, publishStatus]);
 
@@ -451,7 +474,10 @@ export function Dashboard({
     setRollingBack(true);
     setPublishFeedback(null);
     try {
-      await rollbackStorefront(rollbackTarget.moduleKey, rollbackTarget.version.contentVersion);
+      await rollbackStorefront(
+        rollbackTarget.moduleKey,
+        rollbackTarget.version.contentVersion,
+      );
       await loadPublishStatus();
       setPublishPanelOpen(false);
       setRollbackTarget(null);
@@ -473,23 +499,29 @@ export function Dashboard({
     }
   }
 
-  const heading = useMemo(() => getViewContext(activeView, sections), [activeView, sections]);
+  const heading = useMemo(
+    () => getViewContext(activeView, sections),
+    [activeView, sections],
+  );
   const currentSection = useMemo(() => {
     const dynamic = parseDynamicView(activeView);
     if (!dynamic) return null;
     const section = sections.find((item) => item.id === dynamic.sectionId);
     return section ? { kind: dynamic.kind, section } : null;
   }, [activeView, sections]);
-  const unsavedTitle = unsaved.labels.length > 0
-    ? `未保存：${unsaved.labels.join('、')}`
-    : '当前有未保存修改';
-  const contextIsCurrent = contextPublishKey === 'all'
-    ? publishStatus?.isCurrent === true
-    : contextPublishModule?.isCurrent === true;
+  const unsavedTitle =
+    unsaved.labels.length > 0
+      ? `未保存：${unsaved.labels.join('、')}`
+      : '当前有未保存修改';
+  const contextIsCurrent =
+    contextPublishKey === 'all'
+      ? publishStatus?.isCurrent === true
+      : contextPublishModule?.isCurrent === true;
   const publishing = publishingKey !== null;
-  const currentSectionHandoff = currentSection && productHandoff?.sectionId === currentSection.section.id
-    ? productHandoff
-    : null;
+  const currentSectionHandoff =
+    currentSection && productHandoff?.sectionId === currentSection.section.id
+      ? productHandoff
+      : null;
 
   return (
     <div className="admin-shell">
@@ -500,21 +532,65 @@ export function Dashboard({
         </div>
 
         <nav className="admin-nav" aria-label="后台导航">
-          <div className="sidebar-section-label sidebar-section-label-first">全局管理</div>
-          <button className={activeView === 'settings' ? 'is-active' : undefined} type="button" onClick={() => requestView('settings')}>站点设置</button>
-          <button className={activeView === 'theme' ? 'is-active' : undefined} type="button" onClick={() => requestView('theme')}>主题中心</button>
-          <button className={activeView === 'assets' ? 'is-active' : undefined} type="button" onClick={() => requestView('assets')}>素材库管理</button>
-          <button className={activeView === 'customer-service' ? 'is-active' : undefined} type="button" onClick={() => requestView('customer-service')}>客服管理</button>
-          <button className={activeView === 'faq' ? 'is-active' : undefined} type="button" onClick={() => requestView('faq')}>FAQ 管理</button>
-          <button className={activeView === 'sections' ? 'is-active' : undefined} type="button" onClick={() => requestView('sections')}>分区管理</button>
+          <div className="sidebar-section-label sidebar-section-label-first">
+            全局管理
+          </div>
+          <button
+            className={activeView === 'settings' ? 'is-active' : undefined}
+            type="button"
+            onClick={() => requestView('settings')}
+          >
+            站点设置
+          </button>
+          <button
+            className={activeView === 'theme' ? 'is-active' : undefined}
+            type="button"
+            onClick={() => requestView('theme')}
+          >
+            主题中心
+          </button>
+          <button
+            className={activeView === 'assets' ? 'is-active' : undefined}
+            type="button"
+            onClick={() => requestView('assets')}
+          >
+            素材库管理
+          </button>
+          <button
+            className={activeView === 'customer-service' ? 'is-active' : undefined}
+            type="button"
+            onClick={() => requestView('customer-service')}
+          >
+            客服管理
+          </button>
+          <button
+            className={activeView === 'faq' ? 'is-active' : undefined}
+            type="button"
+            onClick={() => requestView('faq')}
+          >
+            FAQ 管理
+          </button>
+          <button
+            className={activeView === 'sections' ? 'is-active' : undefined}
+            type="button"
+            onClick={() => requestView('sections')}
+          >
+            分区管理
+          </button>
 
           <div className="sidebar-section-label">业务分区</div>
-          {sectionsLoading ? <small className="sidebar-loading">正在读取分区…</small> : null}
+          {sectionsLoading ? (
+            <small className="sidebar-loading">正在读取分区…</small>
+          ) : null}
           {sections.map((section) => {
             const sectionIsCurrent = currentSection?.section.id === section.id;
             return (
               <div className="dynamic-menu" key={section.id}>
-                <button className={sectionIsCurrent ? 'is-current-section' : undefined} type="button" onClick={() => requestView(`products:${section.id}`)}>
+                <button
+                  className={sectionIsCurrent ? 'is-current-section' : undefined}
+                  type="button"
+                  onClick={() => requestView(`products:${section.id}`)}
+                >
                   {section.name}
                 </button>
               </div>
@@ -526,15 +602,61 @@ export function Dashboard({
       <main className="admin-main">
         <header className={`admin-header${currentSection ? ' has-section-nav' : ''}`}>
           <div className="admin-header-workspace">
-            <div className="admin-header-title"><p>{heading.eyebrow}</p><h1>{heading.title}</h1></div>
+            <div className="admin-header-title">
+              <p>{heading.eyebrow}</p>
+              <h1>{heading.title}</h1>
+            </div>
             {currentSection ? (
-              <nav className="section-workspace-nav" aria-label={`${currentSection.section.name} 管理`}>
-                <button className={currentSection.kind === 'products' ? 'is-active' : undefined} type="button" aria-current={currentSection.kind === 'products' ? 'page' : undefined} onClick={() => requestView(`products:${currentSection.section.id}`)}>产品管理</button>
-                <button className={currentSection.kind === 'categories' ? 'is-active' : undefined} type="button" aria-current={currentSection.kind === 'categories' ? 'page' : undefined} onClick={() => requestView(`categories:${currentSection.section.id}`)}>分类管理</button>
-                <button className={currentSection.kind === 'tags' ? 'is-active' : undefined} type="button" aria-current={currentSection.kind === 'tags' ? 'page' : undefined} onClick={() => requestView(`tags:${currentSection.section.id}`)}>标签管理</button>
-                <button className={currentSection.kind === 'conversion-pool' ? 'is-active' : undefined} type="button" aria-current={currentSection.kind === 'conversion-pool' ? 'page' : undefined} onClick={() => requestView(`conversion-pool:${currentSection.section.id}`)}>转化池</button>
+              <nav
+                className="section-workspace-nav"
+                aria-label={`${currentSection.section.name} 管理`}
+              >
+                <button
+                  className={currentSection.kind === 'products' ? 'is-active' : undefined}
+                  type="button"
+                  aria-current={currentSection.kind === 'products' ? 'page' : undefined}
+                  onClick={() => requestView(`products:${currentSection.section.id}`)}
+                >
+                  产品管理
+                </button>
+                <button
+                  className={
+                    currentSection.kind === 'categories' ? 'is-active' : undefined
+                  }
+                  type="button"
+                  aria-current={currentSection.kind === 'categories' ? 'page' : undefined}
+                  onClick={() => requestView(`categories:${currentSection.section.id}`)}
+                >
+                  分类管理
+                </button>
+                <button
+                  className={currentSection.kind === 'tags' ? 'is-active' : undefined}
+                  type="button"
+                  aria-current={currentSection.kind === 'tags' ? 'page' : undefined}
+                  onClick={() => requestView(`tags:${currentSection.section.id}`)}
+                >
+                  标签管理
+                </button>
+                <button
+                  className={
+                    currentSection.kind === 'conversion-pool' ? 'is-active' : undefined
+                  }
+                  type="button"
+                  aria-current={
+                    currentSection.kind === 'conversion-pool' ? 'page' : undefined
+                  }
+                  onClick={() =>
+                    requestView(`conversion-pool:${currentSection.section.id}`)
+                  }
+                >
+                  转化池
+                </button>
                 {currentSectionHandoff && currentSection.kind !== 'products' ? (
-                  <button className="product-handoff-return" type="button" onClick={() => requestView(`products:${currentSection.section.id}`)}>
+                  <button
+                    className="product-handoff-return"
+                    type="button"
+                    onClick={() => requestView(`products:${currentSection.section.id}`)}
+                  >
                     ← 返回产品草稿
                   </button>
                 ) : null}
@@ -542,7 +664,11 @@ export function Dashboard({
             ) : null}
           </div>
           <div className="header-actions">
-            {unsaved.isDirty ? <span className="admin-unsaved-chip" title={unsavedTitle}>未保存修改</span> : null}
+            {unsaved.isDirty ? (
+              <span className="admin-unsaved-chip" title={unsavedTitle}>
+                未保存修改
+              </span>
+            ) : null}
             <div className="publish-version-control">
               <button
                 className={`publish-status-chip${publishStatusError || publishStatus?.modules.some((module) => module.lastJob?.status === 'failed') ? ' is-error' : ''}${(publishStatus && !publishStatus.isCurrent) || unsaved.isDirty ? ' is-dirty' : ''}`}
@@ -554,64 +680,127 @@ export function Dashboard({
                   if (next) void loadPublishStatus();
                 }}
               >
-                {publishStatusLabel(publishStatus, publishing, unsaved.isDirty, Boolean(publishStatusError))}
+                {publishStatusLabel(
+                  publishStatus,
+                  publishing,
+                  unsaved.isDirty,
+                  Boolean(publishStatusError),
+                )}
               </button>
               {publishPanelOpen ? (
                 <div className="publish-version-popover">
                   <div className="publish-version-popover-title">
-                    <div><strong>板块发布</strong><small>每个板块独立保留最近 3 版</small></div>
-                    <button type="button" onClick={() => setPublishPanelOpen(false)} aria-label="关闭">×</button>
+                    <div>
+                      <strong>板块发布</strong>
+                      <small>每个板块独立保留最近 3 版</small>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setPublishPanelOpen(false)}
+                      aria-label="关闭"
+                    >
+                      ×
+                    </button>
                   </div>
                   {publishStatusError ? (
                     <div className="publish-status-error" role="alert">
                       <span>{publishStatusError}</span>
-                      <button type="button" onClick={() => void loadPublishStatus()}>重新读取</button>
+                      <button type="button" onClick={() => void loadPublishStatus()}>
+                        重新读取
+                      </button>
                     </div>
                   ) : null}
                   <div className="publish-module-selector">
                     <label>
                       <span>查看板块</span>
-                      <select value={historyModuleKey} onChange={(event) => setHistoryModuleKey(event.target.value)}>
+                      <select
+                        value={historyModuleKey}
+                        onChange={(event) => setHistoryModuleKey(event.target.value)}
+                      >
                         {publishStatus?.modules.map((module) => (
-                          <option key={module.key} value={module.key}>{module.label} · {moduleStateLabel(module)}</option>
+                          <option key={module.key} value={module.key}>
+                            {module.label} · {moduleStateLabel(module)}
+                          </option>
                         ))}
                       </select>
                     </label>
                     <button
                       className="secondary-button"
                       type="button"
-                      disabled={!historyModule || historyModule.isCurrent || publishing || rollingBack || unsaved.isDirty}
-                      onClick={() => historyModule && void handlePublish(historyModule.key)}
+                      disabled={
+                        !historyModule ||
+                        historyModule.isCurrent ||
+                        publishing ||
+                        rollingBack ||
+                        unsaved.isDirty
+                      }
+                      onClick={() =>
+                        historyModule && void handlePublish(historyModule.key)
+                      }
                     >
                       发布此板块
                     </button>
                   </div>
                   <div className="publish-module-summary">
-                    <span>{historyModule ? moduleStateLabel(historyModule) : '未选择'}</span>
-                    <small>{historyModule?.publishedAt ? `当前版本 ${formatVersionTime(historyModule.publishedAt)}` : '尚无当前版本'}</small>
+                    <span>
+                      {historyModule ? moduleStateLabel(historyModule) : '未选择'}
+                    </span>
+                    <small>
+                      {historyModule?.publishedAt
+                        ? `当前版本 ${formatVersionTime(historyModule.publishedAt)}`
+                        : '尚无当前版本'}
+                    </small>
                   </div>
                   <div className="publish-version-list">
-                    {historyModule?.versions.length ? historyModule.versions.map((version) => (
-                      <div className={`publish-version-row${version.isCurrent ? ' is-current' : ''}`} key={version.contentVersion}>
-                        <div><strong>{formatVersionTime(version.publishedAt)}</strong><small>{versionCode(version)}</small></div>
-                        <span>{version.isCurrent ? '当前' : `${version.objectCount} 项`}</span>
-                        <button
-                          type="button"
-                          disabled={version.isCurrent || publishing || rollingBack || unsaved.isDirty}
-                          onClick={() => setRollbackTarget({ moduleKey: historyModule.key, moduleLabel: historyModule.label, version })}
-                          title={unsaved.isDirty ? '请先处理未保存修改' : undefined}
+                    {historyModule?.versions.length ? (
+                      historyModule.versions.map((version) => (
+                        <div
+                          className={`publish-version-row${version.isCurrent ? ' is-current' : ''}`}
+                          key={version.contentVersion}
                         >
-                          {version.isCurrent ? '使用中' : '回退'}
-                        </button>
-                      </div>
-                    )) : <div className="publish-version-empty">该板块尚无发布版本</div>}
+                          <div>
+                            <strong>{formatVersionTime(version.publishedAt)}</strong>
+                            <small>{versionCode(version)}</small>
+                          </div>
+                          <span>
+                            {version.isCurrent ? '当前' : `${version.objectCount} 项`}
+                          </span>
+                          <button
+                            type="button"
+                            disabled={
+                              version.isCurrent ||
+                              publishing ||
+                              rollingBack ||
+                              unsaved.isDirty
+                            }
+                            onClick={() =>
+                              setRollbackTarget({
+                                moduleKey: historyModule.key,
+                                moduleLabel: historyModule.label,
+                                version,
+                              })
+                            }
+                            title={unsaved.isDirty ? '请先处理未保存修改' : undefined}
+                          >
+                            {version.isCurrent ? '使用中' : '回退'}
+                          </button>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="publish-version-empty">该板块尚无发布版本</div>
+                    )}
                   </div>
                   <div className="publish-module-footer">
                     <span>{publishStatus?.dirtyCount ?? 0} 个板块待发布</span>
                     <button
                       className="primary-button"
                       type="button"
-                      disabled={publishStatus?.isCurrent === true || publishing || rollingBack || unsaved.isDirty}
+                      disabled={
+                        publishStatus?.isCurrent === true ||
+                        publishing ||
+                        rollingBack ||
+                        unsaved.isDirty
+                      }
                       onClick={() => void handlePublish('all')}
                     >
                       发布全部待更新
@@ -624,10 +813,17 @@ export function Dashboard({
               className="primary-button storefront-publish-button"
               type="button"
               onClick={() => void handlePublish(contextPublishKey)}
-              disabled={publishing || loggingOut || rollingBack || unsaved.isDirty || contextIsCurrent}
+              disabled={
+                publishing ||
+                loggingOut ||
+                rollingBack ||
+                unsaved.isDirty ||
+                contextIsCurrent
+              }
               title={unsaved.isDirty ? unsavedTitle : undefined}
             >
-              {publishingKey === contextPublishKey || (contextPublishKey === 'all' && publishingKey === 'all')
+              {publishingKey === contextPublishKey ||
+              (contextPublishKey === 'all' && publishingKey === 'all')
                 ? '发布中…'
                 : unsaved.isDirty
                   ? '请先保存'
@@ -635,14 +831,43 @@ export function Dashboard({
                     ? '当前板块已最新'
                     : modulePublishButtonLabel(contextPublishModule, contextPublishKey)}
             </button>
-            <span className="environment-badge">{expiresAt ? `会话至 ${new Date(expiresAt).toLocaleTimeString('zh-CN')}` : 'PRODUCTION'}</span>
-            <button className="secondary-button" type="button" onClick={requestLogout} disabled={loggingOut || publishing || rollingBack}>{loggingOut ? '正在退出…' : '退出登录'}</button>
+            <span className="environment-badge">
+              {expiresAt
+                ? `会话至 ${new Date(expiresAt).toLocaleTimeString('zh-CN')}`
+                : 'PRODUCTION'}
+            </span>
+            <button
+              className="secondary-button"
+              type="button"
+              onClick={requestLogout}
+              disabled={loggingOut || publishing || rollingBack}
+            >
+              {loggingOut ? '正在退出…' : '退出登录'}
+            </button>
           </div>
         </header>
 
-        {publishFeedback ? <div className={`notice ${publishFeedback.type === 'success' ? 'notice-success' : 'notice-error'} publish-feedback`} role={publishFeedback.type === 'error' ? 'alert' : 'status'}>{publishFeedback.message}</div> : null}
-        {logoutError ? <div className="notice notice-error" role="alert">{logoutError}</div> : null}
-        {sectionsError ? <div className="notice notice-error" role="alert">{sectionsError}<button type="button" onClick={() => void loadSections()}>重新加载</button></div> : null}
+        {publishFeedback ? (
+          <div
+            className={`notice ${publishFeedback.type === 'success' ? 'notice-success' : 'notice-error'} publish-feedback`}
+            role={publishFeedback.type === 'error' ? 'alert' : 'status'}
+          >
+            {publishFeedback.message}
+          </div>
+        ) : null}
+        {logoutError ? (
+          <div className="notice notice-error" role="alert">
+            {logoutError}
+          </div>
+        ) : null}
+        {sectionsError ? (
+          <div className="notice notice-error" role="alert">
+            {sectionsError}
+            <button type="button" onClick={() => void loadSections()}>
+              重新加载
+            </button>
+          </div>
+        ) : null}
 
         {activeView === 'settings' ? (
           <SiteSettingsView key={activeView} onSessionExpired={onSessionExpired} />
@@ -653,7 +878,12 @@ export function Dashboard({
         ) : activeView === 'customer-service' ? (
           <CustomerServiceView key={activeView} onSessionExpired={onSessionExpired} />
         ) : activeView === 'sections' ? (
-          <SectionManagementView key={activeView} activeSections={sections} onActiveSectionsChange={setSections} onSessionExpired={onSessionExpired} />
+          <SectionManagementView
+            key={activeView}
+            activeSections={sections}
+            onActiveSectionsChange={setSections}
+            onSessionExpired={onSessionExpired}
+          />
         ) : activeView === 'faq' ? (
           <FaqManagementView key={activeView} onSessionExpired={onSessionExpired} />
         ) : currentSection?.kind === 'products' ? (
@@ -663,42 +893,125 @@ export function Dashboard({
             resumeRequest={currentSectionHandoff}
             onResumeHandled={() => setProductHandoff(null)}
             onConfigureDependency={(target, request) => {
-              setProductHandoff({ ...request, sectionId: currentSection.section.id, target });
+              setProductHandoff({
+                ...request,
+                sectionId: currentSection.section.id,
+                target,
+              });
               commitView(`${target}:${currentSection.section.id}`);
             }}
             onSessionExpired={onSessionExpired}
           />
         ) : currentSection?.kind === 'categories' ? (
-          <CategoryManagementView key={activeView} section={currentSection.section} onSessionExpired={onSessionExpired} />
+          <CategoryManagementView
+            key={activeView}
+            section={currentSection.section}
+            onSessionExpired={onSessionExpired}
+          />
         ) : currentSection?.kind === 'tags' ? (
-          <TagManagementView key={activeView} section={currentSection.section} onSessionExpired={onSessionExpired} />
+          <TagManagementView
+            key={activeView}
+            section={currentSection.section}
+            onSessionExpired={onSessionExpired}
+          />
         ) : currentSection?.kind === 'conversion-pool' ? (
-          <ConversionPoolView key={activeView} section={currentSection.section} onSessionExpired={onSessionExpired} />
+          <ConversionPoolView
+            key={activeView}
+            section={currentSection.section}
+            onSessionExpired={onSessionExpired}
+          />
         ) : null}
 
         {rollbackTarget ? (
           <div className="admin-dialog-backdrop" role="presentation">
-            <section className="admin-dialog admin-dialog-small" role="dialog" aria-modal="true" aria-labelledby="publish-rollback-title">
-              <div className="admin-dialog-header"><div><p>{rollbackTarget.moduleLabel}</p><h3 id="publish-rollback-title">回退到 {formatVersionTime(rollbackTarget.version.publishedAt)}？</h3></div><button type="button" aria-label="关闭" disabled={rollingBack} onClick={() => setRollbackTarget(null)}>×</button></div>
-              <p className="delete-warning">只会切换该板块的 R2 版本；其他板块和后台当前数据都不会改变。</p>
-              <div className="admin-dialog-actions"><button className="secondary-button" type="button" disabled={rollingBack} onClick={() => setRollbackTarget(null)}>取消</button><button className="primary-button" type="button" disabled={rollingBack} onClick={() => void handleRollback()}>{rollingBack ? '正在回退…' : '确认回退'}</button></div>
+            <section
+              className="admin-dialog admin-dialog-small"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="publish-rollback-title"
+            >
+              <div className="admin-dialog-header">
+                <div>
+                  <p>{rollbackTarget.moduleLabel}</p>
+                  <h3 id="publish-rollback-title">
+                    回退到 {formatVersionTime(rollbackTarget.version.publishedAt)}？
+                  </h3>
+                </div>
+                <button
+                  type="button"
+                  aria-label="关闭"
+                  disabled={rollingBack}
+                  onClick={() => setRollbackTarget(null)}
+                >
+                  ×
+                </button>
+              </div>
+              <p className="delete-warning">
+                只会切换该板块的 R2 版本；其他板块和后台当前数据都不会改变。
+              </p>
+              <div className="admin-dialog-actions">
+                <button
+                  className="secondary-button"
+                  type="button"
+                  disabled={rollingBack}
+                  onClick={() => setRollbackTarget(null)}
+                >
+                  取消
+                </button>
+                <button
+                  className="primary-button"
+                  type="button"
+                  disabled={rollingBack}
+                  onClick={() => void handleRollback()}
+                >
+                  {rollingBack ? '正在回退…' : '确认回退'}
+                </button>
+              </div>
             </section>
           </div>
         ) : null}
 
         {pendingDiscardAction ? (
           <div className="admin-dialog-backdrop" role="presentation">
-            <section className="admin-dialog admin-dialog-small" role="alertdialog" aria-modal="true" aria-labelledby="admin-unsaved-title">
+            <section
+              className="admin-dialog admin-dialog-small"
+              role="alertdialog"
+              aria-modal="true"
+              aria-labelledby="admin-unsaved-title"
+            >
               <div className="admin-dialog-header">
-                <div><p>未保存修改</p><h3 id="admin-unsaved-title">放弃当前修改？</h3></div>
+                <div>
+                  <p>未保存修改</p>
+                  <h3 id="admin-unsaved-title">放弃当前修改？</h3>
+                </div>
               </div>
               <div className="admin-unsaved-dialog-copy">
                 <p>当前编辑内容尚未保存到后台。</p>
-                {unsaved.labels.length > 0 ? <div className="admin-unsaved-list">{unsaved.labels.map((label) => <span key={label}>{label}</span>)}</div> : null}
+                {unsaved.labels.length > 0 ? (
+                  <div className="admin-unsaved-list">
+                    {unsaved.labels.map((label) => (
+                      <span key={label}>{label}</span>
+                    ))}
+                  </div>
+                ) : null}
               </div>
               <div className="admin-dialog-actions">
-                <button className="secondary-button" type="button" onClick={() => setPendingDiscardAction(null)}>继续编辑</button>
-                <button className="danger-button" type="button" onClick={confirmDiscardAndContinue}>{pendingDiscardAction.kind === 'logout' ? '放弃修改并退出' : '放弃修改并切换'}</button>
+                <button
+                  className="secondary-button"
+                  type="button"
+                  onClick={() => setPendingDiscardAction(null)}
+                >
+                  继续编辑
+                </button>
+                <button
+                  className="danger-button"
+                  type="button"
+                  onClick={confirmDiscardAndContinue}
+                >
+                  {pendingDiscardAction.kind === 'logout'
+                    ? '放弃修改并退出'
+                    : '放弃修改并切换'}
+                </button>
               </div>
             </section>
           </div>

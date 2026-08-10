@@ -29,7 +29,12 @@ describe('shared storefront UI', () => {
   it('renders shared hero and navigation landmarks', () => {
     const html = renderToStaticMarkup(
       <>
-        <StorefrontHero description="Description" eyebrow="Explore" locationLabel="Global" title="Title" />
+        <StorefrontHero
+          description="Description"
+          eyebrow="Explore"
+          locationLabel="Global"
+          title="Title"
+        />
         <StorefrontBottomNavigation items={[{ href: '/', icon: '⌂', label: 'Home' }]} />
       </>,
     );
@@ -39,20 +44,23 @@ describe('shared storefront UI', () => {
   });
 
   it('applies an optional accent without changing the remaining resolved tokens', () => {
-    const style = storefrontThemeStyle({
-      brand: '#111111',
-      brandStrong: '#222222',
-      text: '#333333',
-      muted: '#444444',
-      surface: '#555555',
-      surfaceSoft: '#666666',
-      line: '#777777',
-      pageBg: '#888888',
-      heroStart: '#999999',
-      heroEnd: '#aaaaaa',
-      heroGlow: '#bbbbbb',
-      shadow: 'none',
-    }, '#ff0000') as Record<string, string>;
+    const style = storefrontThemeStyle(
+      {
+        brand: '#111111',
+        brandStrong: '#222222',
+        text: '#333333',
+        muted: '#444444',
+        surface: '#555555',
+        surfaceSoft: '#666666',
+        line: '#777777',
+        pageBg: '#888888',
+        heroStart: '#999999',
+        heroEnd: '#aaaaaa',
+        heroGlow: '#bbbbbb',
+        shadow: 'none',
+      },
+      '#ff0000',
+    ) as Record<string, string>;
     expect(style['--brand']).toBe('#ff0000');
     expect(style['--brand-strong']).toBe('#ff0000');
     expect(style['--page-bg']).toBe('#888888');

@@ -1,10 +1,6 @@
 import { AdminApiError } from '../api';
 import { adminFetch } from '../admin-fetch';
-import {
-  type ManagedMediaAsset,
-  type MediaKind,
-  type MediaRole,
-} from './api';
+import { type ManagedMediaAsset, type MediaKind, type MediaRole } from './api';
 
 export type MediaLibraryPage = {
   assets: ManagedMediaAsset[];
@@ -60,7 +56,9 @@ function parseAsset(value: unknown): ManagedMediaAsset {
     typeof media.fileName !== 'string' ||
     typeof media.mimeType !== 'string' ||
     typeof media.byteSize !== 'number' ||
-    (media.mediaKind !== 'image' && media.mediaKind !== 'animated_image' && media.mediaKind !== 'video') ||
+    (media.mediaKind !== 'image' &&
+      media.mediaKind !== 'animated_image' &&
+      media.mediaKind !== 'video') ||
     (typeof media.width !== 'number' && media.width !== null) ||
     (typeof media.height !== 'number' && media.height !== null) ||
     (typeof media.durationMs !== 'number' && media.durationMs !== null) ||
@@ -104,12 +102,17 @@ export async function fetchMediaLibraryPage(
   if (filters.cursor) query.set('cursor', filters.cursor);
   if (filters.limit) query.set('limit', String(filters.limit));
 
-  const response = await adminFetch(`/api/admin/assets/library/page?${query.toString()}`, {
-    credentials: 'same-origin',
-    cache: 'no-store',
-  });
+  const response = await adminFetch(
+    `/api/admin/assets/library/page?${query.toString()}`,
+    {
+      credentials: 'same-origin',
+      cache: 'no-store',
+    },
+  );
   const contentType = response.headers.get('content-type') ?? '';
-  const body: unknown = contentType.includes('application/json') ? await response.json() : null;
+  const body: unknown = contentType.includes('application/json')
+    ? await response.json()
+    : null;
   if (!response.ok) {
     const envelope = asRecord(body) as ErrorEnvelope | null;
     throw new AdminApiError(

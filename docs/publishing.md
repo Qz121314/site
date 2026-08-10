@@ -107,11 +107,31 @@ public/
   "schemaVersion": 2,
   "contentVersion": "pointer-revision",
   "publishedAt": "...",
-  "site": { "contentVersion": "...", "manifestKey": "...", "sourceRevision": "...", "publishedAt": "..." },
-  "sectionsIndex": { "contentVersion": "...", "manifestKey": "...", "sourceRevision": "...", "publishedAt": "..." },
-  "faq": { "contentVersion": "...", "manifestKey": "...", "sourceRevision": "...", "publishedAt": "..." },
+  "site": {
+    "contentVersion": "...",
+    "manifestKey": "...",
+    "sourceRevision": "...",
+    "publishedAt": "..."
+  },
+  "sectionsIndex": {
+    "contentVersion": "...",
+    "manifestKey": "...",
+    "sourceRevision": "...",
+    "publishedAt": "..."
+  },
+  "faq": {
+    "contentVersion": "...",
+    "manifestKey": "...",
+    "sourceRevision": "...",
+    "publishedAt": "..."
+  },
   "sections": {
-    "section-a": { "contentVersion": "...", "manifestKey": "...", "sourceRevision": "...", "publishedAt": "..." }
+    "section-a": {
+      "contentVersion": "...",
+      "manifestKey": "...",
+      "sourceRevision": "...",
+      "publishedAt": "..."
+    }
   }
 }
 ```

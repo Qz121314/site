@@ -37,11 +37,20 @@ function serializeForm(form: HTMLFormElement): string {
   const values: SerializedField[] = [];
   for (const element of Array.from(form.elements)) {
     if (element instanceof HTMLInputElement) {
-      if (element.type === 'button' || element.type === 'submit' || element.type === 'reset') continue;
+      if (
+        element.type === 'button' ||
+        element.type === 'submit' ||
+        element.type === 'reset'
+      )
+        continue;
       if (element.type === 'file') {
         values.push([
           element.name || `file:${element.accept}`,
-          Array.from(element.files ?? []).map((file) => [file.name, file.size, file.lastModified]),
+          Array.from(element.files ?? []).map((file) => [
+            file.name,
+            file.size,
+            file.lastModified,
+          ]),
         ]);
         continue;
       }
@@ -73,10 +82,7 @@ function updateSnapshot(): void {
     if (!form.isConnected) dirtyForms.delete(form);
   }
   const labels = [
-    ...new Set([
-      ...explicitDirtySources.values(),
-      ...[...dirtyForms].map(formLabel),
-    ]),
+    ...new Set([...explicitDirtySources.values(), ...[...dirtyForms].map(formLabel)]),
   ];
   const count = explicitDirtySources.size + dirtyForms.size;
   const next: AdminUnsavedSnapshot = {
@@ -101,8 +107,11 @@ function registerForm(form: HTMLFormElement): void {
 }
 
 function registerForms(root: ParentNode): void {
-  if (root instanceof HTMLFormElement && root.matches(LEGACY_PROTECTED_FORM_SELECTOR)) registerForm(root);
-  root.querySelectorAll<HTMLFormElement>(LEGACY_PROTECTED_FORM_SELECTOR).forEach(registerForm);
+  if (root instanceof HTMLFormElement && root.matches(LEGACY_PROTECTED_FORM_SELECTOR))
+    registerForm(root);
+  root
+    .querySelectorAll<HTMLFormElement>(LEGACY_PROTECTED_FORM_SELECTOR)
+    .forEach(registerForm);
 }
 
 function evaluateForm(form: HTMLFormElement): void {
@@ -179,7 +188,11 @@ export function installAdminUnsavedStateObserver(): void {
       if (!(event.target instanceof Element)) return;
       const form = protectedForm(event.target);
       if (!form) return;
-      if (event.target instanceof HTMLInputElement && event.target.type === 'file' && event.target.files?.length) {
+      if (
+        event.target instanceof HTMLInputElement &&
+        event.target.type === 'file' &&
+        event.target.files?.length
+      ) {
         markFormDirty(form);
         return;
       }

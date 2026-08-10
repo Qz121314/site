@@ -43,6 +43,9 @@ jobs:
       - name: Lint
         run: pnpm lint
 
+      - name: Format
+        run: pnpm format
+
       - name: Typecheck
         run: pnpm typecheck
 
@@ -83,6 +86,12 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Record D1 recovery bookmark
+        run: pnpm exec wrangler d1 time-travel info DB
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
+
       - name: Apply D1 migrations
         run: pnpm db:migrate:remote
         env:
@@ -93,7 +102,7 @@ jobs:
         id: r2_origin
         run: |
           set -euo pipefail
-          configured_result="$(pnpm exec wrangler d1 execute DB --remote --command "SELECT media_base_url FROM site_settings WHERE id = 1;" --json)"
+          configured_result="$(pnpm exec wrangler d1 execute DB --remote --command "SELECT media_base_url, (SELECT object_key FROM media_assets WHERE status = 'ready' AND deleted_at IS NULL ORDER BY updated_at DESC LIMIT 1) AS media_object_key FROM site_settings WHERE id = 1;" --json)"
           configured="$(printf '%s' "$configured_result" | node -e '
             const fs = require("fs");
             const payload = JSON.parse(fs.readFileSync(0, "utf8"));
@@ -101,6 +110,14 @@ jobs:
             const row = entries.flatMap((entry) => Array.isArray(entry?.results) ? entry.results : []).find(Boolean);
             if (typeof row?.media_base_url === "string") process.stdout.write(row.media_base_url.trim());
           ')"
+          media_key="$(printf '%s' "$configured_result" | node -e '
+            const fs = require("fs");
+            const payload = JSON.parse(fs.readFileSync(0, "utf8"));
+            const entries = Array.isArray(payload) ? payload : [payload];
+            const row = entries.flatMap((entry) => Array.isArray(entry?.results) ? entry.results : []).find(Boolean);
+            if (typeof row?.media_object_key === "string") process.stdout.write(row.media_object_key.trim());
+          ')"
+          echo "media_key=$media_key" >> "$GITHUB_OUTPUT"
 
           if [[ -z "$configured" ]]; then
             echo '::warning::R2 custom domain is not configured in Admin > Site Settings.'
@@ -182,7 +199,7 @@ jobs:
           echo "Direct R2 probe: HTTP $status, CORS='${cors:-missing}', ready=$ready"
 
           if [[ "$ready" != true ]]; then
-            echo '::warning::DIRECT_R2_BLOCKED - Storefront will use its same-origin /public/* runtime fallback until the R2 custom domain becomes directly readable.'
+            echo '::warning::DIRECT_R2_BLOCKED - Storefront will use its same-origin /public/* and /_media/* runtime fallbacks until the R2 custom domain becomes directly readable.'
             if grep -Eqi '^cf-mitigated:[[:space:]]*challenge' "$headers"; then
               echo 'Direct R2 diagnosis: Cloudflare challenge (cf-mitigated: challenge).'
             fi
@@ -213,6 +230,7 @@ jobs:
           BASE_URL: ${{ steps.deploy.outputs.url }}
           R2_ORIGIN: ${{ steps.r2_origin.outputs.origin }}
           DIRECT_R2_READY: ${{ steps.r2_probe.outputs.ready }}
+          MEDIA_OBJECT_KEY: ${{ steps.r2_origin.outputs.media_key }}
         run: |
           set -euo pipefail
 
@@ -220,6 +238,11 @@ jobs:
           printf '%s' "$health" | grep -F '"ok":true'
           printf '%s' "$health" | grep -F '"environment":"production"'
           printf '%s' "$health" | grep -F '"publicLanguage":"en"'
+          printf '%s' "$health" | node -e '
+            const fs = require("fs");
+            const value = JSON.parse(fs.readFileSync(0, "utf8"));
+            if (typeof value.workerVersionId !== "string" || !value.workerVersionId) process.exit(1);
+          '
 
           security_headers_ready=false
           for attempt in 1 2 3 4 5; do
@@ -274,6 +297,31 @@ jobs:
           node -e "const fs=require('fs'); const value=JSON.parse(fs.readFileSync('/tmp/storefront-current.json','utf8')); if(value.schemaVersion!==1&&value.schemaVersion!==2) process.exit(1);"
           curl --fail --silent --show-error --head "$BASE_URL/public/current.json" >/dev/null
 
+          if [[ -n "$MEDIA_OBJECT_KEY" ]]; then
+            media_path="$(MEDIA_OBJECT_KEY="$MEDIA_OBJECT_KEY" node -e '
+              const key = process.env.MEDIA_OBJECT_KEY;
+              const segments = key.split("/");
+              if (segments.some((segment) => !segment || segment === "." || segment === "..")) process.exit(1);
+              process.stdout.write(segments.map(encodeURIComponent).join("/"));
+            ')"
+            media_status="$(curl --silent --show-error \
+              --connect-timeout 10 \
+              --max-time 20 \
+              --range 0-0 \
+              -D /tmp/media-fallback.headers \
+              -o /tmp/media-fallback.body \
+              -w '%{http_code}' \
+              "$BASE_URL/_media/$media_path")"
+            test "$media_status" = '206'
+            test "$(wc -c < /tmp/media-fallback.body)" = '1'
+            grep -Eqi '^content-type: (image|video)/' /tmp/media-fallback.headers
+            grep -Eqi '^content-range: bytes 0-0/[1-9][0-9]*' /tmp/media-fallback.headers
+            grep -Eqi '^cache-control: public, max-age=' /tmp/media-fallback.headers
+            echo 'SAME_ORIGIN_MEDIA_FALLBACK=ready'
+          else
+            echo '::warning::SAME_ORIGIN_MEDIA_FALLBACK=untested - no ready media asset exists yet.'
+          fi
+
           if [[ -n "$R2_ORIGIN" ]]; then
             direct_headers="$(mktemp)"
             direct_body="$(mktemp)"
@@ -295,7 +343,7 @@ jobs:
               ' "$direct_body"; then
               echo 'DIRECT_R2_READ=ready'
             else
-              echo '::warning::DIRECT_R2_READ=blocked - production remains available through the tested same-origin /public/* fallback.'
+              echo '::warning::DIRECT_R2_READ=blocked - production remains available through the tested same-origin /public/* and /_media/* fallbacks.'
               echo "Direct R2 post-deploy status: HTTP $direct_status, CORS='${direct_cors:-missing}', predeploy_ready=$DIRECT_R2_READY"
               if grep -Eqi '^cf-mitigated:[[:space:]]*challenge' "$direct_headers"; then
                 echo 'Direct R2 diagnosis: Cloudflare challenge (cf-mitigated: challenge).'

@@ -11,7 +11,9 @@ export function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-export async function readJsonBody(context: Parameters<typeof apiError>[0]): Promise<unknown> {
+export async function readJsonBody(
+  context: Parameters<typeof apiError>[0],
+): Promise<unknown> {
   const contentType = context.req.header('content-type') ?? '';
   if (!contentType.toLowerCase().startsWith('application/json')) {
     throw new Error('INVALID_CONTENT_TYPE');
@@ -25,7 +27,8 @@ export async function readJsonBody(context: Parameters<typeof apiError>[0]): Pro
 }
 
 export function jsonBodyError(context: Parameters<typeof apiError>[0], error: unknown) {
-  const invalidContentType = error instanceof Error && error.message === 'INVALID_CONTENT_TYPE';
+  const invalidContentType =
+    error instanceof Error && error.message === 'INVALID_CONTENT_TYPE';
   return apiError(
     context,
     400,

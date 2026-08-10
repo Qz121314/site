@@ -3,7 +3,12 @@ import { writeAuditLog } from '../audit/write-audit-log';
 import { apiError } from '../http/api-response';
 import { parseMediaRole } from '../media/media-center';
 import type { AppEnvironment } from '../types';
-import { hasAdminRequestHeader, isRecord, jsonBodyError, readJsonBody } from './admin-section-shared';
+import {
+  hasAdminRequestHeader,
+  isRecord,
+  jsonBodyError,
+  readJsonBody,
+} from './admin-section-shared';
 
 export const adminMediaRoleRoutes = new Hono<AppEnvironment>();
 
@@ -23,19 +28,19 @@ adminMediaRoleRoutes.post('/library/role', async (context) => {
   if (!isRecord(body)) {
     return apiError(context, 400, 'MEDIA_ROLE_INPUT_INVALID', '素材用途数据无效。');
   }
-  const id = typeof body.id === 'string' && body.id.length > 0 && body.id.length <= 100
-    ? body.id
-    : null;
+  const id =
+    typeof body.id === 'string' && body.id.length > 0 && body.id.length <= 100
+      ? body.id
+      : null;
   const role = parseMediaRole(body.role);
   if (!id || !role) {
     return apiError(context, 400, 'MEDIA_ROLE_INPUT_INVALID', '素材或用途无效。');
   }
 
-  const exists = await context.env.DB
-    .prepare(
-      `SELECT id FROM media_assets
+  const exists = await context.env.DB.prepare(
+    `SELECT id FROM media_assets
        WHERE id = ? AND status = 'ready' AND deleted_at IS NULL`,
-    )
+  )
     .bind(id)
     .first<{ id: string }>();
   if (!exists) {
@@ -43,12 +48,11 @@ adminMediaRoleRoutes.post('/library/role', async (context) => {
   }
 
   const createdAt = new Date().toISOString();
-  await context.env.DB
-    .prepare(
-      `INSERT INTO media_asset_roles (media_asset_id, role, created_at)
+  await context.env.DB.prepare(
+    `INSERT INTO media_asset_roles (media_asset_id, role, created_at)
        VALUES (?, ?, ?)
        ON CONFLICT(media_asset_id, role) DO NOTHING`,
-    )
+  )
     .bind(id, role, createdAt)
     .run();
 

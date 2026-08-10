@@ -74,7 +74,11 @@ function normalizeName(value: string): string {
 }
 
 function sameName(left: string, right: string): boolean {
-  return normalizeName(left).localeCompare(normalizeName(right), undefined, { sensitivity: 'accent' }) === 0;
+  return (
+    normalizeName(left).localeCompare(normalizeName(right), undefined, {
+      sensitivity: 'accent',
+    }) === 0
+  );
 }
 
 function formWithoutMedia(input: ProductInput) {
@@ -82,7 +86,10 @@ function formWithoutMedia(input: ProductInput) {
   return rest;
 }
 
-function baselineForm(product: AdminProduct | null, currentSortOrder: number): ReturnType<typeof formWithoutMedia> {
+function baselineForm(
+  product: AdminProduct | null,
+  currentSortOrder: number,
+): ReturnType<typeof formWithoutMedia> {
   if (!product) {
     return formWithoutMedia({
       serviceMode: 'offline',
@@ -154,7 +161,8 @@ export function ProductEditorDialog({
   const [inlineError, setInlineError] = useState('');
 
   const baselineCategoryText = editingProduct?.categoryId
-    ? categories.find((category) => category.id === editingProduct.categoryId)?.name ?? ''
+    ? (categories.find((category) => category.id === editingProduct.categoryId)?.name ??
+      '')
     : '';
   const editorFingerprint = JSON.stringify({
     form: formWithoutMedia(form),
@@ -166,7 +174,9 @@ export function ProductEditorDialog({
   const baselineFingerprint = JSON.stringify({
     form: baselineForm(editingProduct, form.sortOrder),
     media: editingProduct?.media.map((item) => item.id) ?? [],
-    coverKey: editingProduct?.coverAssetId ? `remote:${editingProduct.coverAssetId}` : null,
+    coverKey: editingProduct?.coverAssetId
+      ? `remote:${editingProduct.coverAssetId}`
+      : null,
     categoryText: baselineCategoryText,
     tagText: '',
   });
@@ -178,17 +188,20 @@ export function ProductEditorDialog({
   );
 
   const matchingGroups = useMemo(
-    () => groups.filter((group) => group.mode === expectedConversionMode(form.serviceMode)),
+    () =>
+      groups.filter((group) => group.mode === expectedConversionMode(form.serviceMode)),
     [form.serviceMode, groups],
   );
   const selectedTags = useMemo(
-    () => form.tagIds.flatMap((id) => {
-      const tag = tags.find((item) => item.id === id);
-      return tag ? [tag] : [];
-    }),
+    () =>
+      form.tagIds.flatMap((id) => {
+        const tag = tags.find((item) => item.id === id);
+        return tag ? [tag] : [];
+      }),
     [form.tagIds, tags],
   );
-  const effectiveCoverKey = coverKey ?? media.find(isEditorMediaCoverEligible)?.key ?? null;
+  const effectiveCoverKey =
+    coverKey ?? media.find(isEditorMediaCoverEligible)?.key ?? null;
   const saving = saveStage !== 'idle';
   const busy = saving || handoffBusy || creatingInline !== null;
 
@@ -283,7 +296,8 @@ export function ProductEditorDialog({
         setInlineError(`标签“${existing.name}”已存在但当前停用。`);
         return;
       }
-      if (!form.tagIds.includes(existing.id)) patch({ tagIds: [...form.tagIds, existing.id] });
+      if (!form.tagIds.includes(existing.id))
+        patch({ tagIds: [...form.tagIds, existing.id] });
       setTagText('');
       setInlineError('');
       return;
@@ -322,11 +336,22 @@ export function ProductEditorDialog({
             <p>{sectionName} · 产品内容</p>
             <h3 id="product-editor-title">{editingProduct ? '编辑产品' : '新增产品'}</h3>
           </div>
-          <button type="button" aria-label="关闭" disabled={busy} onClick={() => void requestClose()}>×</button>
+          <button
+            type="button"
+            aria-label="关闭"
+            disabled={busy}
+            onClick={() => void requestClose()}
+          >
+            ×
+          </button>
         </div>
 
         <form className="product-editor-form" onSubmit={onSubmit}>
-          {errorMessage ? <div className="notice notice-error" role="alert">{errorMessage}</div> : null}
+          {errorMessage ? (
+            <div className="notice notice-error" role="alert">
+              {errorMessage}
+            </div>
+          ) : null}
 
           {resumeNotice ? (
             <div className="product-handoff-notice" role="status">
@@ -351,7 +376,9 @@ export function ProductEditorDialog({
               <span>服务类型</span>
               <select
                 value={form.serviceMode}
-                onChange={(event) => changeServiceMode(event.target.value as ProductServiceMode)}
+                onChange={(event) =>
+                  changeServiceMode(event.target.value as ProductServiceMode)
+                }
               >
                 <option value="offline">线下服务</option>
                 <option value="online">线上服务</option>
@@ -375,11 +402,17 @@ export function ProductEditorDialog({
                   }}
                 />
                 <datalist id="product-category-options">
-                  {categories.filter((category) => category.isEnabled).map((category) => (
-                    <option key={category.id} value={category.name} />
-                  ))}
+                  {categories
+                    .filter((category) => category.isEnabled)
+                    .map((category) => (
+                      <option key={category.id} value={category.name} />
+                    ))}
                 </datalist>
-                <button type="button" disabled={busy || !categoryText.trim()} onClick={() => void commitCategory()}>
+                <button
+                  type="button"
+                  disabled={busy || !categoryText.trim()}
+                  onClick={() => void commitCategory()}
+                >
                   {creatingInline === 'category' ? '新增中…' : '确定'}
                 </button>
               </div>
@@ -389,17 +422,29 @@ export function ProductEditorDialog({
               <div className="product-field-heading">
                 <span>{modeLabel(form.serviceMode)}转化分组</span>
                 {onConfigureDependency ? (
-                  <button type="button" disabled={busy} onClick={() => onConfigureDependency('conversion-pool')}>管理</button>
+                  <button
+                    type="button"
+                    disabled={busy}
+                    onClick={() => onConfigureDependency('conversion-pool')}
+                  >
+                    管理
+                  </button>
                 ) : null}
               </div>
               <select
                 aria-label={`${modeLabel(form.serviceMode)}转化分组`}
                 value={form.conversionGroupId ?? ''}
-                onChange={(event) => patch({ conversionGroupId: event.target.value || null })}
+                onChange={(event) =>
+                  patch({ conversionGroupId: event.target.value || null })
+                }
               >
                 <option value="">暂不选择</option>
                 {matchingGroups.map((group) => (
-                  <option key={group.id} value={group.id} disabled={!group.isEnabled || group.activeTargetCount < 1}>
+                  <option
+                    key={group.id}
+                    value={group.id}
+                    disabled={!group.isEnabled || group.activeTargetCount < 1}
+                  >
                     {group.name} · {group.buttonLabel}
                   </option>
                 ))}
@@ -425,19 +470,32 @@ export function ProductEditorDialog({
                   onKeyDown={handleTagKeyDown}
                 />
                 <datalist id="product-tag-options">
-                  {tags.filter((tag) => tag.isEnabled && !form.tagIds.includes(tag.id)).map((tag) => (
-                    <option key={tag.id} value={tag.name} />
-                  ))}
+                  {tags
+                    .filter((tag) => tag.isEnabled && !form.tagIds.includes(tag.id))
+                    .map((tag) => (
+                      <option key={tag.id} value={tag.name} />
+                    ))}
                 </datalist>
-                <button type="button" disabled={busy || !tagText.trim() || form.tagIds.length >= 12} onClick={() => void commitTag()}>
+                <button
+                  type="button"
+                  disabled={busy || !tagText.trim() || form.tagIds.length >= 12}
+                  onClick={() => void commitTag()}
+                >
                   {creatingInline === 'tag' ? '新增中…' : '添加'}
                 </button>
               </div>
               {selectedTags.length > 0 ? (
                 <div className="product-selected-tags">
                   {selectedTags.map((tag) => (
-                    <button key={tag.id} type="button" disabled={busy} onClick={() => removeTag(tag.id)} title="移除标签">
-                      {tag.name}<span aria-hidden="true">×</span>
+                    <button
+                      key={tag.id}
+                      type="button"
+                      disabled={busy}
+                      onClick={() => removeTag(tag.id)}
+                      title="移除标签"
+                    >
+                      {tag.name}
+                      <span aria-hidden="true">×</span>
                     </button>
                   ))}
                 </div>
@@ -459,7 +517,12 @@ export function ProductEditorDialog({
 
             <label className="product-field product-core-status">
               <span>发布状态</span>
-              <select value={form.status} onChange={(event) => patch({ status: event.target.value as ProductStatus })}>
+              <select
+                value={form.status}
+                onChange={(event) =>
+                  patch({ status: event.target.value as ProductStatus })
+                }
+              >
                 <option value="draft">草稿</option>
                 <option value="published">发布</option>
                 <option value="archived">归档</option>
@@ -468,46 +531,94 @@ export function ProductEditorDialog({
 
             <label className="product-field product-core-sort">
               <span>产品排序</span>
-              <input type="number" min={0} max={1_000_000} value={form.sortOrder} onChange={(event) => patch({ sortOrder: Number(event.target.value) })} />
+              <input
+                type="number"
+                min={0}
+                max={1_000_000}
+                value={form.sortOrder}
+                onChange={(event) => patch({ sortOrder: Number(event.target.value) })}
+              />
             </label>
 
             <label className="product-switch-field product-core-featured">
-              <input type="checkbox" checked={form.isFeatured} onChange={(event) => patch({ isFeatured: event.target.checked })} />
-              <span><strong>首页推荐</strong></span>
+              <input
+                type="checkbox"
+                checked={form.isFeatured}
+                onChange={(event) => patch({ isFeatured: event.target.checked })}
+              />
+              <span>
+                <strong>首页推荐</strong>
+              </span>
             </label>
 
             <label className="product-field product-core-featured-sort">
               <span>首页推荐排序</span>
-              <input type="number" min={0} max={1_000_000} value={form.featuredOrder} disabled={!form.isFeatured} onChange={(event) => patch({ featuredOrder: Number(event.target.value) })} />
+              <input
+                type="number"
+                min={0}
+                max={1_000_000}
+                value={form.featuredOrder}
+                disabled={!form.isFeatured}
+                onChange={(event) => patch({ featuredOrder: Number(event.target.value) })}
+              />
             </label>
           </div>
 
-          {inlineError ? <div className="product-inline-error" role="alert">{inlineError}</div> : null}
+          {inlineError ? (
+            <div className="product-inline-error" role="alert">
+              {inlineError}
+            </div>
+          ) : null}
 
           <div className="product-content-grid">
             <div className="product-body-field">
               <div className="product-body-heading">
                 <strong>产品正文 · Markdown</strong>
-                <div className="product-editor-tabs" role="tablist" aria-label="正文编辑模式">
-                  <button type="button" className={bodyMode === 'edit' ? 'is-active' : undefined} onClick={() => setBodyMode('edit')}>编辑</button>
-                  <button type="button" className={bodyMode === 'preview' ? 'is-active' : undefined} onClick={() => setBodyMode('preview')}>预览</button>
+                <div
+                  className="product-editor-tabs"
+                  role="tablist"
+                  aria-label="正文编辑模式"
+                >
+                  <button
+                    type="button"
+                    className={bodyMode === 'edit' ? 'is-active' : undefined}
+                    onClick={() => setBodyMode('edit')}
+                  >
+                    编辑
+                  </button>
+                  <button
+                    type="button"
+                    className={bodyMode === 'preview' ? 'is-active' : undefined}
+                    onClick={() => setBodyMode('preview')}
+                  >
+                    预览
+                  </button>
                 </div>
               </div>
               {bodyMode === 'edit' ? (
                 <textarea
                   value={form.body}
                   maxLength={20_000}
-                  placeholder={'支持 Markdown：标题、粗体、列表、引用、链接和代码等。\n\n输入产品介绍、服务内容和注意事项。'}
+                  placeholder={
+                    '支持 Markdown：标题、粗体、列表、引用、链接和代码等。\n\n输入产品介绍、服务内容和注意事项。'
+                  }
                   onChange={(event) => patch({ body: event.target.value })}
                 />
               ) : (
                 <div className="product-markdown-preview">
-                  {form.body.trim() ? <MarkdownPreview source={form.body} /> : <p className="product-preview-empty">正文为空。</p>}
+                  {form.body.trim() ? (
+                    <MarkdownPreview source={form.body} />
+                  ) : (
+                    <p className="product-preview-empty">正文为空。</p>
+                  )}
                 </div>
               )}
             </div>
 
-            <section className="product-media-section" aria-labelledby="product-media-title">
+            <section
+              className="product-media-section"
+              aria-labelledby="product-media-title"
+            >
               <div className="product-media-heading">
                 <div>
                   <strong id="product-media-title">产品媒体</strong>
@@ -533,15 +644,26 @@ export function ProductEditorDialog({
                     const coverEligible = isEditorMediaCoverEligible(item);
                     const isCover = effectiveCoverKey === item.key;
                     return (
-                      <article className={`product-media-card${isCover ? ' is-cover' : ''}`} key={item.key}>
+                      <article
+                        className={`product-media-card${isCover ? ' is-cover' : ''}`}
+                        key={item.key}
+                      >
                         <div className="product-media-preview">
                           {previewUrl ? (
                             video ? (
-                              <video src={previewUrl} controls muted playsInline preload="metadata" />
+                              <video
+                                src={previewUrl}
+                                controls
+                                muted
+                                playsInline
+                                preload="metadata"
+                              />
                             ) : (
                               <img src={previewUrl} alt={fileName} />
                             )
-                          ) : <span>无预览</span>}
+                          ) : (
+                            <span>无预览</span>
+                          )}
                           <div className="product-media-badges">
                             <b className="is-kind-badge">{editorMediaKindLabel(item)}</b>
                             {isCover ? <b>封面</b> : null}
@@ -550,12 +672,27 @@ export function ProductEditorDialog({
                         <div className="product-media-meta">
                           <strong title={fileName}>{fileName}</strong>
                           <small>
-                            {dimensions.width && dimensions.height ? `${dimensions.width} × ${dimensions.height}` : '尺寸未知'} · {formatImageBytes(getEditorImageByteSize(item))}
+                            {dimensions.width && dimensions.height
+                              ? `${dimensions.width} × ${dimensions.height}`
+                              : '尺寸未知'}{' '}
+                            · {formatImageBytes(getEditorImageByteSize(item))}
                           </small>
                         </div>
                         <div className="product-media-actions">
-                          <button type="button" disabled={index === 0 || busy} onClick={() => onMoveMedia(item.key, -1)}>前移</button>
-                          <button type="button" disabled={index === media.length - 1 || busy} onClick={() => onMoveMedia(item.key, 1)}>后移</button>
+                          <button
+                            type="button"
+                            disabled={index === 0 || busy}
+                            onClick={() => onMoveMedia(item.key, -1)}
+                          >
+                            前移
+                          </button>
+                          <button
+                            type="button"
+                            disabled={index === media.length - 1 || busy}
+                            onClick={() => onMoveMedia(item.key, 1)}
+                          >
+                            后移
+                          </button>
                           <button
                             type="button"
                             disabled={!coverEligible || isCover || busy}
@@ -564,7 +701,14 @@ export function ProductEditorDialog({
                           >
                             封面
                           </button>
-                          <button className="text-danger" type="button" disabled={busy} onClick={() => onRemoveMedia(item.key)}>移除</button>
+                          <button
+                            className="text-danger"
+                            type="button"
+                            disabled={busy}
+                            onClick={() => onRemoveMedia(item.key)}
+                          >
+                            移除
+                          </button>
                         </div>
                       </article>
                     );
@@ -578,7 +722,12 @@ export function ProductEditorDialog({
               )}
 
               {coverKey ? (
-                <button className="product-auto-cover" type="button" disabled={busy} onClick={() => onSetCover(null)}>
+                <button
+                  className="product-auto-cover"
+                  type="button"
+                  disabled={busy}
+                  onClick={() => onSetCover(null)}
+                >
                   自动使用第一张图片或 GIF
                 </button>
               ) : null}
@@ -586,8 +735,12 @@ export function ProductEditorDialog({
           </div>
 
           <div className="admin-dialog-actions">
-            <button type="button" disabled={busy} onClick={() => void requestClose()}>取消</button>
-            <button className="primary-button" type="submit" disabled={busy}>{saveButtonLabel(saveStage, editingProduct)}</button>
+            <button type="button" disabled={busy} onClick={() => void requestClose()}>
+              取消
+            </button>
+            <button className="primary-button" type="submit" disabled={busy}>
+              {saveButtonLabel(saveStage, editingProduct)}
+            </button>
           </div>
         </form>
       </section>

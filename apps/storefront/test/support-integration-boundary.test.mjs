@@ -51,7 +51,10 @@ test('Storefront receives public connection metadata but never management creden
   const browserBoundary = `${contractSource}\n${gatewaySource}\n${realtimeSource}\n${identitySource}\n${supportSource}\n${rootSource}`;
   assert.match(browserBoundary, /baseUrl/u);
   assert.match(browserBoundary, /projectId/u);
-  assert.doesNotMatch(browserBoundary, /apiToken|managementToken|Authorization:\s*Bearer/u);
+  assert.doesNotMatch(
+    browserBoundary,
+    /apiToken|managementToken|Authorization:\s*Bearer/u,
+  );
   assert.doesNotMatch(gatewaySource, /\/api\/messages\/v1/u);
 });
 

@@ -147,9 +147,11 @@ export function updateCategory(
   id: string,
   input: CategoryInput,
 ): Promise<AdminCategory> {
-  return writeRequest(`${basePath(sectionId)}/${encodeURIComponent(id)}`, 'PUT', input).then(
-    parseCategoryEnvelope,
-  );
+  return writeRequest(
+    `${basePath(sectionId)}/${encodeURIComponent(id)}`,
+    'PUT',
+    input,
+  ).then(parseCategoryEnvelope);
 }
 
 export function deleteCategory(sectionId: string, id: string): Promise<AdminCategory> {
@@ -165,7 +167,10 @@ export function restoreCategory(sectionId: string, id: string): Promise<AdminCat
   ).then(parseCategoryEnvelope);
 }
 
-export async function batchDeleteCategories(sectionId: string, ids: string[]): Promise<string[]> {
+export async function batchDeleteCategories(
+  sectionId: string,
+  ids: string[],
+): Promise<string[]> {
   const body = await requestJson(`${basePath(sectionId)}/batch-delete`, {
     method: 'POST',
     headers: {

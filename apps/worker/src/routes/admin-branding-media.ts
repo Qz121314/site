@@ -18,15 +18,14 @@ const BRANDING_IMAGE_COMPRESSION_PROFILE = 'browser-branding-image-v1';
 export const adminBrandingMediaRoutes = new Hono<AppEnvironment>();
 
 adminBrandingMediaRoutes.get('/assets/:id', async (context) => {
-  const asset = await context.env.DB
-    .prepare(
-      `SELECT object_key, mime_type
+  const asset = await context.env.DB.prepare(
+    `SELECT object_key, mime_type
        FROM media_assets
        WHERE id = ?
          AND status = 'ready'
          AND deleted_at IS NULL
          AND mime_type LIKE 'image/%'`,
-    )
+  )
     .bind(context.req.param('id'))
     .first<MediaPreviewRow>();
   if (!asset) {
@@ -64,10 +63,14 @@ adminBrandingMediaRoutes.post('/branding', async (context) => {
   const file = formData.get('file');
   const compressionProfile = formData.get('compressionProfile');
   if (kindValue !== 'logo' && kindValue !== 'section-icon') {
-    return apiError(context, 400, 'BRANDING_KIND_INVALID', '图片用途无效。', { field: 'kind' });
+    return apiError(context, 400, 'BRANDING_KIND_INVALID', '图片用途无效。', {
+      field: 'kind',
+    });
   }
   if (!(file instanceof File)) {
-    return apiError(context, 400, 'IMAGE_REQUIRED', '请选择需要上传的图片。', { field: 'file' });
+    return apiError(context, 400, 'IMAGE_REQUIRED', '请选择需要上传的图片。', {
+      field: 'file',
+    });
   }
   if (compressionProfile !== BRANDING_IMAGE_COMPRESSION_PROFILE) {
     return apiError(
@@ -91,12 +94,11 @@ adminBrandingMediaRoutes.post('/branding', async (context) => {
   }
 
   const role = kind === 'logo' ? 'logo' : 'icon';
-  await context.env.DB
-    .prepare(
-      `INSERT INTO media_asset_roles (media_asset_id, role, created_at)
+  await context.env.DB.prepare(
+    `INSERT INTO media_asset_roles (media_asset_id, role, created_at)
        VALUES (?, ?, ?)
        ON CONFLICT(media_asset_id, role) DO NOTHING`,
-    )
+  )
     .bind(result.media.id, role, new Date().toISOString())
     .run();
 
@@ -117,5 +119,8 @@ adminBrandingMediaRoutes.post('/branding', async (context) => {
     },
   });
 
-  return context.json({ media: result.media, reused: result.reused }, result.reused ? 200 : 201);
+  return context.json(
+    { media: result.media, reused: result.reused },
+    result.reused ? 200 : 201,
+  );
 });

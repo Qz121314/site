@@ -5,6 +5,7 @@ import type {
   SupportConversationSummary,
   SupportMessage,
 } from './support-contract';
+import { ResilientImage } from './ResilientMedia';
 import { SYSTEM_UI } from './system-ui';
 
 export type PendingSupportConversation = {
@@ -79,13 +80,18 @@ function ConversationAvatar({
   conversation: SupportConversationSummary;
 }) {
   if (conversation.agentAvatarUrl) {
-    return <img src={conversation.agentAvatarUrl} alt="" loading="lazy" />;
+    return (
+      <ResilientImage
+        alt=""
+        fallback={
+          <span aria-hidden="true">{conversationTitle(conversation).slice(0, 1)}</span>
+        }
+        loading="lazy"
+        src={conversation.agentAvatarUrl}
+      />
+    );
   }
-  return (
-    <span aria-hidden="true">
-      {conversationTitle(conversation).slice(0, 1)}
-    </span>
-  );
+  return <span aria-hidden="true">{conversationTitle(conversation).slice(0, 1)}</span>;
 }
 
 export function MessagesPageContent({
@@ -163,7 +169,9 @@ function ProductContextCard({
   const body = (
     <>
       <span className="chat-product-media">
-        {context.productCoverUrl ? <img src={context.productCoverUrl} alt="" /> : null}
+        {context.productCoverUrl ? (
+          <ResilientImage alt="" fallback={null} src={context.productCoverUrl} />
+        ) : null}
       </span>
       <span className="chat-product-copy">
         <strong>{context.productTitle}</strong>
@@ -279,7 +287,7 @@ export function MessageThreadPageContent({
     (pendingConversation !== null || conversation?.status !== 'closed');
   const headerTitle = conversation
     ? conversationTitle(conversation)
-    : pendingConversation?.productTitle ?? '';
+    : (pendingConversation?.productTitle ?? '');
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();

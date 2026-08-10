@@ -8,7 +8,12 @@ import {
 } from '../idempotency/idempotency';
 import { deleteManagedMediaAssets } from '../media/media-delete';
 import type { AppEnvironment } from '../types';
-import { hasAdminRequestHeader, isRecord, jsonBodyError, readJsonBody } from './admin-section-shared';
+import {
+  hasAdminRequestHeader,
+  isRecord,
+  jsonBodyError,
+  readJsonBody,
+} from './admin-section-shared';
 
 const IDEMPOTENCY_HEADER = 'x-idempotency-key';
 const DELETE_SCOPE = 'media-center.delete';
@@ -19,7 +24,8 @@ function parseIds(value: unknown): string[] | null {
   const ids = value.ids.filter(
     (id): id is string => typeof id === 'string' && id.length > 0 && id.length <= 100,
   );
-  if (ids.length < 1 || ids.length > MAX_DELETE_SIZE || ids.length !== value.ids.length) return null;
+  if (ids.length < 1 || ids.length > MAX_DELETE_SIZE || ids.length !== value.ids.length)
+    return null;
   return new Set(ids).size === ids.length ? ids : null;
 }
 
@@ -37,7 +43,12 @@ adminMediaDeleteRoutes.post('/library/delete', async (context) => {
   }
 
   const now = new Date().toISOString();
-  const prior = await readIdempotentResponse(context.env.DB, DELETE_SCOPE, idempotencyKey, now);
+  const prior = await readIdempotentResponse(
+    context.env.DB,
+    DELETE_SCOPE,
+    idempotencyKey,
+    now,
+  );
   if (isRecord(prior)) return context.json(prior);
 
   let body: unknown;
@@ -48,7 +59,12 @@ adminMediaDeleteRoutes.post('/library/delete', async (context) => {
   }
   const ids = parseIds(body);
   if (!ids) {
-    return apiError(context, 400, 'MEDIA_IDS_INVALID', `请选择 1 到 ${MAX_DELETE_SIZE} 个有效素材。`);
+    return apiError(
+      context,
+      400,
+      'MEDIA_IDS_INVALID',
+      `请选择 1 到 ${MAX_DELETE_SIZE} 个有效素材。`,
+    );
   }
 
   let deletion;
@@ -64,7 +80,9 @@ adminMediaDeleteRoutes.post('/library/delete', async (context) => {
       context,
       503,
       'R2_DELETE_FAILED',
-      error instanceof Error ? `素材文件删除失败：${error.message}` : '素材文件删除失败。',
+      error instanceof Error
+        ? `素材文件删除失败：${error.message}`
+        : '素材文件删除失败。',
     );
   }
 

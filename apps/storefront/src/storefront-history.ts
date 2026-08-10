@@ -24,7 +24,7 @@ let lastKnownIndex = 0;
 
 function recordState(value: unknown): Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
-    ? value as Record<string, unknown>
+    ? (value as Record<string, unknown>)
     : {};
 }
 
@@ -50,11 +50,19 @@ function createSessionId(): string {
     : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
 }
 
-function readStateMeta(state: unknown, sessionId: string): Pick<NavigationMeta, 'sessionId' | 'index'> | null {
+function readStateMeta(
+  state: unknown,
+  sessionId: string,
+): Pick<NavigationMeta, 'sessionId' | 'index'> | null {
   const record = recordState(state);
   const stateSession = record[STATE_SESSION_KEY];
   const stateIndex = record[STATE_INDEX_KEY];
-  if (stateSession !== sessionId || typeof stateIndex !== 'number' || !Number.isInteger(stateIndex) || stateIndex < 0) {
+  if (
+    stateSession !== sessionId ||
+    typeof stateIndex !== 'number' ||
+    !Number.isInteger(stateIndex) ||
+    stateIndex < 0
+  ) {
     return null;
   }
   return { sessionId, index: stateIndex };
@@ -95,7 +103,8 @@ function activeSessionId(): string {
 }
 
 function restoreScrollPosition(position: ScrollPosition): void {
-  const restore = () => window.scrollTo({ left: position.x, top: position.y, behavior: 'auto' });
+  const restore = () =>
+    window.scrollTo({ left: position.x, top: position.y, behavior: 'auto' });
   window.requestAnimationFrame(() => {
     restore();
     window.setTimeout(restore, 80);
@@ -112,11 +121,10 @@ export function ensureStorefrontHistoryState(): NavigationMeta {
   const existingState = recordState(window.history.state);
   const storedSession = readSessionStorage(SESSION_STORAGE_KEY);
   const stateSession = existingState[STATE_SESSION_KEY];
-  const reusableSession = typeof stateSession === 'string'
-    && stateSession
-    && storedSession === stateSession
-    ? stateSession
-    : null;
+  const reusableSession =
+    typeof stateSession === 'string' && stateSession && storedSession === stateSession
+      ? stateSession
+      : null;
 
   if (!reusableSession) {
     const sessionId = createSessionId();

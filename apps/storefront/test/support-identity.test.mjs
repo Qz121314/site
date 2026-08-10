@@ -11,8 +11,14 @@ test('support visitor ID always contains exactly three letters and three digits'
     const visitorId = generateSupportVisitorId();
     assert.equal(visitorId.length, 6);
     assert.match(visitorId, /^[A-Z0-9]{6}$/u);
-    assert.equal([...visitorId].filter((character) => /[A-Z]/u.test(character)).length, 3);
-    assert.equal([...visitorId].filter((character) => /[0-9]/u.test(character)).length, 3);
+    assert.equal(
+      [...visitorId].filter((character) => /[A-Z]/u.test(character)).length,
+      3,
+    );
+    assert.equal(
+      [...visitorId].filter((character) => /[0-9]/u.test(character)).length,
+      3,
+    );
   }
 });
 

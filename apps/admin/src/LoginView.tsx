@@ -64,7 +64,9 @@ export function LoginView({
           <div className="notice notice-error" role="alert">
             <strong>后台认证配置尚未生效</strong>
             <span>
-              请确认 ADMIN_PASSWORD 和 SESSION_SECRET 已绑定到当前正式 Worker。两项可以使用普通变量或 Secret，不限制字符长度。配置完成后可直接在下方重试。
+              请确认 ADMIN_PASSWORD 和 SESSION_SECRET 已使用 Secret 绑定到当前正式
+              Worker。后台密码至少 12 个字符，会话密钥至少 32
+              个字符。配置完成后可直接在下方重试。
             </span>
           </div>
         ) : null}

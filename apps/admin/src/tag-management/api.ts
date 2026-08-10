@@ -48,7 +48,9 @@ async function requestJson(path: string, init?: RequestInit): Promise<unknown> {
       typeof error?.message === 'string' ? error.message : '标签请求失败。',
       {
         ...(typeof details?.field === 'string' ? { field: details.field } : {}),
-        ...(typeof details?.productCount === 'number' ? { productCount: details.productCount } : {}),
+        ...(typeof details?.productCount === 'number'
+          ? { productCount: details.productCount }
+          : {}),
       },
     );
   }
@@ -97,13 +99,19 @@ export async function fetchProductTags(
   sectionId: string,
   scope: ProductTagScope = 'active',
 ): Promise<AdminProductTag[]> {
-  const body = await requestJson(`${basePath(sectionId)}?scope=${encodeURIComponent(scope)}`);
+  const body = await requestJson(
+    `${basePath(sectionId)}?scope=${encodeURIComponent(scope)}`,
+  );
   const tags = asRecord(body)?.tags;
-  if (!Array.isArray(tags)) throw new AdminApiError(500, 'INVALID_RESPONSE', '标签列表返回数据无效。');
+  if (!Array.isArray(tags))
+    throw new AdminApiError(500, 'INVALID_RESPONSE', '标签列表返回数据无效。');
   return tags.map(parseTag);
 }
 
-export function createProductTag(sectionId: string, input: ProductTagInput): Promise<AdminProductTag> {
+export function createProductTag(
+  sectionId: string,
+  input: ProductTagInput,
+): Promise<AdminProductTag> {
   return writeRequest(basePath(sectionId), 'POST', input).then(parseTagEnvelope);
 }
 
@@ -112,18 +120,36 @@ export function updateProductTag(
   id: string,
   input: ProductTagInput,
 ): Promise<AdminProductTag> {
-  return writeRequest(`${basePath(sectionId)}/${encodeURIComponent(id)}`, 'PUT', input).then(parseTagEnvelope);
+  return writeRequest(
+    `${basePath(sectionId)}/${encodeURIComponent(id)}`,
+    'PUT',
+    input,
+  ).then(parseTagEnvelope);
 }
 
-export function deleteProductTag(sectionId: string, id: string): Promise<AdminProductTag> {
-  return writeRequest(`${basePath(sectionId)}/${encodeURIComponent(id)}`, 'DELETE').then(parseTagEnvelope);
+export function deleteProductTag(
+  sectionId: string,
+  id: string,
+): Promise<AdminProductTag> {
+  return writeRequest(`${basePath(sectionId)}/${encodeURIComponent(id)}`, 'DELETE').then(
+    parseTagEnvelope,
+  );
 }
 
-export function restoreProductTag(sectionId: string, id: string): Promise<AdminProductTag> {
-  return writeRequest(`${basePath(sectionId)}/${encodeURIComponent(id)}/restore`, 'POST').then(parseTagEnvelope);
+export function restoreProductTag(
+  sectionId: string,
+  id: string,
+): Promise<AdminProductTag> {
+  return writeRequest(
+    `${basePath(sectionId)}/${encodeURIComponent(id)}/restore`,
+    'POST',
+  ).then(parseTagEnvelope);
 }
 
-export async function batchDeleteProductTags(sectionId: string, ids: string[]): Promise<string[]> {
+export async function batchDeleteProductTags(
+  sectionId: string,
+  ids: string[],
+): Promise<string[]> {
   const body = await requestJson(`${basePath(sectionId)}/batch-delete`, {
     method: 'POST',
     headers: {

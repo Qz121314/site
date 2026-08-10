@@ -38,13 +38,18 @@ function parseScope(value: string | undefined): FaqScope | null {
 
 function parseBatchIds(value: unknown): string[] | null {
   if (!isRecord(value) || !Array.isArray(value.ids)) return null;
-  const ids = value.ids.filter((id): id is string => typeof id === 'string' && id.length > 0);
-  if (ids.length === 0 || ids.length !== value.ids.length || ids.length > MAX_BATCH_SIZE) return null;
+  const ids = value.ids.filter(
+    (id): id is string => typeof id === 'string' && id.length > 0,
+  );
+  if (ids.length === 0 || ids.length !== value.ids.length || ids.length > MAX_BATCH_SIZE)
+    return null;
   const uniqueIds = [...new Set(ids)];
   return uniqueIds.length === ids.length ? uniqueIds : null;
 }
 
-function parseReorderItems(value: unknown): Array<{ id: string; sortOrder: number }> | null {
+function parseReorderItems(
+  value: unknown,
+): Array<{ id: string; sortOrder: number }> | null {
   if (!isRecord(value) || !Array.isArray(value.items)) return null;
   if (value.items.length === 0 || value.items.length > MAX_BATCH_SIZE) return null;
   const items: Array<{ id: string; sortOrder: number }> = [];
@@ -57,7 +62,8 @@ function parseReorderItems(value: unknown): Array<{ id: string; sortOrder: numbe
       !Number.isInteger(item.sortOrder) ||
       item.sortOrder < 0 ||
       item.sortOrder > 1_000_000
-    ) return null;
+    )
+      return null;
     items.push({ id: item.id, sortOrder: item.sortOrder });
   }
   return new Set(items.map((item) => item.id)).size === items.length ? items : null;
@@ -89,7 +95,9 @@ adminFaqRoutes.post('/', async (context) => {
   }
   const validation = validateFaqInput(body);
   if (!validation.ok) {
-    return apiError(context, 400, 'INVALID_FAQ', validation.message, { field: validation.field });
+    return apiError(context, 400, 'INVALID_FAQ', validation.message, {
+      field: validation.field,
+    });
   }
   const now = new Date().toISOString();
   const created = createFaq(context.env.DB, validation.value, now);
@@ -129,7 +137,9 @@ adminFaqRoutes.put('/:id', async (context) => {
   }
   const validation = validateFaqInput(body);
   if (!validation.ok) {
-    return apiError(context, 400, 'INVALID_FAQ', validation.message, { field: validation.field });
+    return apiError(context, 400, 'INVALID_FAQ', validation.message, {
+      field: validation.field,
+    });
   }
   const now = new Date().toISOString();
   const updated: FaqRecord = { ...current, ...validation.value, updatedAt: now };
@@ -137,8 +147,13 @@ adminFaqRoutes.put('/:id', async (context) => {
     await context.env.DB.batch([
       createUpdateFaqStatement(context.env.DB, current.id, validation.value, now),
       createAuditLogStatement(context.env.DB, {
-        action: 'faq.updated', entityType: 'faq', entityId: current.id,
-        requestId: context.get('requestId'), before: { ...current }, after: { ...updated }, createdAt: now,
+        action: 'faq.updated',
+        entityType: 'faq',
+        entityId: current.id,
+        requestId: context.get('requestId'),
+        before: { ...current },
+        after: { ...updated },
+        createdAt: now,
       }),
     ]);
   } catch (error) {
@@ -158,12 +173,22 @@ adminFaqRoutes.delete('/:id', async (context) => {
   const current = await getFaq(context.env.DB, context.req.param('id'));
   if (!current || current.deletedAt) return faqNotFound(context);
   const now = new Date().toISOString();
-  const deleted: FaqRecord = { ...current, isEnabled: false, deletedAt: now, updatedAt: now };
+  const deleted: FaqRecord = {
+    ...current,
+    isEnabled: false,
+    deletedAt: now,
+    updatedAt: now,
+  };
   await context.env.DB.batch([
     createDeleteFaqStatement(context.env.DB, current.id, now),
     createAuditLogStatement(context.env.DB, {
-      action: 'faq.deleted', entityType: 'faq', entityId: current.id,
-      requestId: context.get('requestId'), before: { ...current }, after: { ...deleted }, createdAt: now,
+      action: 'faq.deleted',
+      entityType: 'faq',
+      entityId: current.id,
+      requestId: context.get('requestId'),
+      before: { ...current },
+      after: { ...deleted },
+      createdAt: now,
     }),
   ]);
   return context.json({ faq: deleted });
@@ -184,13 +209,23 @@ adminFaqRoutes.post('/:id/restore', async (context) => {
     await context.env.DB.batch([
       createRestoreFaqStatement(context.env.DB, current.id, now),
       createAuditLogStatement(context.env.DB, {
-        action: 'faq.restored', entityType: 'faq', entityId: current.id,
-        requestId: context.get('requestId'), before: { ...current }, after: { ...restored }, createdAt: now,
+        action: 'faq.restored',
+        entityType: 'faq',
+        entityId: current.id,
+        requestId: context.get('requestId'),
+        before: { ...current },
+        after: { ...restored },
+        createdAt: now,
       }),
     ]);
   } catch (error) {
     if (isFaqConflictError(error)) {
-      return apiError(context, 409, 'FAQ_RESTORE_CONFLICT', '当前已有相同标题的 FAQ，无法恢复。');
+      return apiError(
+        context,
+        409,
+        'FAQ_RESTORE_CONFLICT',
+        '当前已有相同标题的 FAQ，无法恢复。',
+      );
     }
     throw error;
   }
@@ -207,7 +242,12 @@ adminFaqRoutes.post('/batch-delete', async (context) => {
     return apiError(context, 400, 'IDEMPOTENCY_KEY_REQUIRED', '批量删除缺少幂等键。');
   }
   const now = new Date().toISOString();
-  const prior = await readIdempotentResponse(context.env.DB, 'faqs.batch-delete', idempotencyKey, now);
+  const prior = await readIdempotentResponse(
+    context.env.DB,
+    'faqs.batch-delete',
+    idempotencyKey,
+    now,
+  );
   if (isRecord(prior)) return context.json(prior);
 
   let body: unknown;
@@ -229,15 +269,26 @@ adminFaqRoutes.post('/batch-delete', async (context) => {
     statements.push(
       createDeleteFaqStatement(context.env.DB, faq.id, now),
       createAuditLogStatement(context.env.DB, {
-        action: 'faq.deleted', entityType: 'faq', entityId: faq.id,
-        requestId: context.get('requestId'), before: { ...faq }, after: deleted,
-        metadata: { batch: true }, createdAt: now,
+        action: 'faq.deleted',
+        entityType: 'faq',
+        entityId: faq.id,
+        requestId: context.get('requestId'),
+        before: { ...faq },
+        after: deleted,
+        metadata: { batch: true },
+        createdAt: now,
       }),
     );
   }
   const responseBody = { deletedIds: ids };
   statements.push(
-    createIdempotencyStatement(context.env.DB, 'faqs.batch-delete', idempotencyKey, responseBody, now),
+    createIdempotencyStatement(
+      context.env.DB,
+      'faqs.batch-delete',
+      idempotencyKey,
+      responseBody,
+      now,
+    ),
   );
   await context.env.DB.batch(statements);
   return context.json(responseBody);
@@ -253,7 +304,12 @@ adminFaqRoutes.post('/reorder', async (context) => {
     return apiError(context, 400, 'IDEMPOTENCY_KEY_REQUIRED', '排序请求缺少幂等键。');
   }
   const now = new Date().toISOString();
-  const prior = await readIdempotentResponse(context.env.DB, 'faqs.reorder', idempotencyKey, now);
+  const prior = await readIdempotentResponse(
+    context.env.DB,
+    'faqs.reorder',
+    idempotencyKey,
+    now,
+  );
   if (isRecord(prior)) return context.json(prior);
 
   let body: unknown;
@@ -274,10 +330,19 @@ adminFaqRoutes.post('/reorder', async (context) => {
   );
   statements.push(
     createAuditLogStatement(context.env.DB, {
-      action: 'faq.reordered', entityType: 'faq', requestId: context.get('requestId'),
-      metadata: { items }, createdAt: now,
+      action: 'faq.reordered',
+      entityType: 'faq',
+      requestId: context.get('requestId'),
+      metadata: { items },
+      createdAt: now,
     }),
-    createIdempotencyStatement(context.env.DB, 'faqs.reorder', idempotencyKey, responseBody, now),
+    createIdempotencyStatement(
+      context.env.DB,
+      'faqs.reorder',
+      idempotencyKey,
+      responseBody,
+      now,
+    ),
   );
   await context.env.DB.batch(statements);
   return context.json(responseBody);

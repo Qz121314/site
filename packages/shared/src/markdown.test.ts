@@ -6,16 +6,15 @@ describe('parseMarkdown', () => {
     expect(parseMarkdown('第一行\n第二行')).toEqual([
       {
         type: 'paragraph',
-        lines: [
-          [{ type: 'text', value: '第一行' }],
-          [{ type: 'text', value: '第二行' }],
-        ],
+        lines: [[{ type: 'text', value: '第一行' }], [{ type: 'text', value: '第二行' }]],
       },
     ]);
   });
 
   it('parses common markdown blocks', () => {
-    const result = parseMarkdown('# 标题\n\n- 第一项\n- 第二项\n\n```js\nconst ok = true;\n```');
+    const result = parseMarkdown(
+      '# 标题\n\n- 第一项\n- 第二项\n\n```js\nconst ok = true;\n```',
+    );
 
     expect(result).toEqual([
       {
@@ -25,10 +24,7 @@ describe('parseMarkdown', () => {
       },
       {
         type: 'unordered-list',
-        items: [
-          [{ type: 'text', value: '第一项' }],
-          [{ type: 'text', value: '第二项' }],
-        ],
+        items: [[{ type: 'text', value: '第一项' }], [{ type: 'text', value: '第二项' }]],
       },
       {
         type: 'code',
@@ -51,11 +47,15 @@ describe('parseMarkdown', () => {
     expect(parseMarkdown('![封面](https://assets.example.com/media/demo.webp)')).toEqual([
       {
         type: 'paragraph',
-        lines: [[{
-          type: 'image',
-          alt: '封面',
-          src: 'https://assets.example.com/media/demo.webp',
-        }]],
+        lines: [
+          [
+            {
+              type: 'image',
+              alt: '封面',
+              src: 'https://assets.example.com/media/demo.webp',
+            },
+          ],
+        ],
       },
     ]);
   });

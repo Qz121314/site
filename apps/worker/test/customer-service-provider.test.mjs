@@ -69,10 +69,18 @@ test('group listing uses management API and keeps private credentials server-sid
 test('connection test reports the number of readable remote groups', async () => {
   const result = await withFetch(
     async () =>
-      new Response(JSON.stringify({ groups: [{ id: 'sales', name: 'Sales' }, { id: 'vip', name: 'VIP' }] }), {
-        status: 200,
-        headers: { 'content-type': 'application/json' },
-      }),
+      new Response(
+        JSON.stringify({
+          groups: [
+            { id: 'sales', name: 'Sales' },
+            { id: 'vip', name: 'VIP' },
+          ],
+        }),
+        {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        },
+      ),
     () => testCustomerServiceConnection(connection()),
   );
 
@@ -87,7 +95,11 @@ test('provider transport rejects disabled connections before fetch', async () =>
         called = true;
         throw new Error('should not run');
       },
-      () => customerServiceProviderFetchJson(connection({ isEnabled: false }), '/management/v1/groups'),
+      () =>
+        customerServiceProviderFetchJson(
+          connection({ isEnabled: false }),
+          '/management/v1/groups',
+        ),
     ),
     (error) =>
       error instanceof CustomerServiceProviderError &&
@@ -99,7 +111,8 @@ test('provider transport rejects disabled connections before fetch', async () =>
 test('provider transport rejects non-JSON responses and redirects', async () => {
   await assert.rejects(
     withFetch(
-      async () => new Response('ok', { status: 200, headers: { 'content-type': 'text/plain' } }),
+      async () =>
+        new Response('ok', { status: 200, headers: { 'content-type': 'text/plain' } }),
       () => customerServiceProviderFetchJson(connection(), '/management/v1/groups'),
     ),
     (error) =>
@@ -109,7 +122,11 @@ test('provider transport rejects non-JSON responses and redirects', async () => 
 
   await assert.rejects(
     withFetch(
-      async () => new Response(null, { status: 302, headers: { location: 'https://other.example' } }),
+      async () =>
+        new Response(null, {
+          status: 302,
+          headers: { location: 'https://other.example' },
+        }),
       () => customerServiceProviderFetchJson(connection(), '/management/v1/groups'),
     ),
     (error) => error instanceof CustomerServiceProviderError,

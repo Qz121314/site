@@ -36,7 +36,11 @@
 }
 
 :is(html, .storefront-theme-root)[data-density='comfortable'],
-.storefront-theme-root:is([data-theme='noir'], [data-theme='saas'], [data-theme='travel']) {
+.storefront-theme-root:is(
+  [data-theme='noir'],
+  [data-theme='saas'],
+  [data-theme='travel']
+) {
   --theme-section-space: 30px;
   --theme-card-gap-y: 22px;
   --theme-card-gap-x: 12px;
@@ -100,7 +104,11 @@
   --theme-card-background: color-mix(in srgb, var(--surface) 96%, var(--surface-soft) 4%);
   --theme-card-shadow: 0 8px 22px rgb(57 72 65 / 8%);
   --theme-card-hover-shadow: var(--shadow);
-  --theme-control-background: color-mix(in srgb, var(--surface) 94%, var(--surface-soft) 6%);
+  --theme-control-background: color-mix(
+    in srgb,
+    var(--surface) 94%,
+    var(--surface-soft) 6%
+  );
 }
 
 :is(html, .storefront-theme-root)[data-theme='tech'] {
@@ -158,7 +166,8 @@
   }
 }
 
-:is(html, .storefront-theme-root)[data-theme='tech'] :is(.product-card, .topbar, .bottom-nav),
+:is(html, .storefront-theme-root)[data-theme='tech']
+  :is(.product-card, .topbar, .bottom-nav),
 :is(html, .storefront-theme-root)[data-theme='noir'] :is(.topbar, .bottom-nav) {
   backdrop-filter: blur(18px);
 }

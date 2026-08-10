@@ -29,7 +29,10 @@ function requestSnapshotPath(context: Context<AppEnvironment>): string {
 
 function responseHeaders(objectKey: string, object: R2Object): Headers {
   const headers = new Headers();
-  headers.set('Content-Type', object.httpMetadata?.contentType ?? 'application/json; charset=utf-8');
+  headers.set(
+    'Content-Type',
+    object.httpMetadata?.contentType ?? 'application/json; charset=utf-8',
+  );
   headers.set(
     'Cache-Control',
     publicSnapshotCacheControl(objectKey, object.httpMetadata?.cacheControl),

@@ -2,8 +2,14 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-const settingsSource = await readFile(new URL('../src/SiteSettingsView.tsx', import.meta.url), 'utf8');
-const layoutSource = await readFile(new URL('../src/HomeLayoutSettingsSection.tsx', import.meta.url), 'utf8');
+const settingsSource = await readFile(
+  new URL('../src/SiteSettingsView.tsx', import.meta.url),
+  'utf8',
+);
+const layoutSource = await readFile(
+  new URL('../src/HomeLayoutSettingsSection.tsx', import.meta.url),
+  'utf8',
+);
 
 test('site settings exposes explicit seven-shortcut and three-recommendation Home layout controls', () => {
   assert.match(settingsSource, /<HomeLayoutSettingsSection/u);

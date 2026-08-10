@@ -16,7 +16,10 @@ const sectionSource = await readFile(
   new URL('../src/SectionPage.tsx', import.meta.url),
   'utf8',
 );
-const systemUiSource = await readFile(new URL('../src/system-ui.ts', import.meta.url), 'utf8');
+const systemUiSource = await readFile(
+  new URL('../src/system-ui.ts', import.meta.url),
+  'utf8',
+);
 
 test('mobile storefront mounts one global edge navigation controller', () => {
   assert.equal(

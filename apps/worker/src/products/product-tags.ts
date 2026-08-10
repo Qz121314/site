@@ -38,15 +38,19 @@ type TagValidationRow = {
   deleted_at: string | null;
 };
 
-export function parseProductTagIds(value: unknown):
-  | { ok: true; value: string[] }
-  | { ok: false; field: 'tagIds'; message: string } {
+export function parseProductTagIds(
+  value: unknown,
+): { ok: true; value: string[] } | { ok: false; field: 'tagIds'; message: string } {
   if (value === undefined) return { ok: true, value: [] };
   if (!Array.isArray(value)) {
     return { ok: false, field: 'tagIds', message: '产品标签列表无效。' };
   }
   if (value.length > MAX_PRODUCT_TAGS) {
-    return { ok: false, field: 'tagIds', message: `每个产品最多选择 ${MAX_PRODUCT_TAGS} 个标签。` };
+    return {
+      ok: false,
+      field: 'tagIds',
+      message: `每个产品最多选择 ${MAX_PRODUCT_TAGS} 个标签。`,
+    };
   }
   const ids = value.filter(
     (id): id is string => typeof id === 'string' && id.length > 0 && id.length <= 100,
@@ -66,10 +70,7 @@ export async function validateProductTagBindings(
   sectionId: string,
   tagIds: string[],
   status: ProductStatus,
-): Promise<
-  | { ok: true }
-  | { ok: false; field: 'tagIds'; code: string; message: string }
-> {
+): Promise<{ ok: true } | { ok: false; field: 'tagIds'; code: string; message: string }> {
   if (tagIds.length === 0) return { ok: true };
   const rows = (
     await db

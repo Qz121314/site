@@ -34,10 +34,20 @@ export function DeleteCategoryDialog({
         </p>
 
         <div className="admin-dialog-actions">
-          <button className="secondary-button" type="button" disabled={working} onClick={onCancel}>
+          <button
+            className="secondary-button"
+            type="button"
+            disabled={working}
+            onClick={onCancel}
+          >
             取消
           </button>
-          <button className="danger-button" type="button" disabled={working} onClick={onConfirm}>
+          <button
+            className="danger-button"
+            type="button"
+            disabled={working}
+            onClick={onConfirm}
+          >
             {working ? '正在删除…' : '确认删除'}
           </button>
         </div>

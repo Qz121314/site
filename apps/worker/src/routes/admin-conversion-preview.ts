@@ -21,7 +21,9 @@ async function listPreviewTargets(
     (target) => target.isEnabled,
   );
   if (mode === 'link') {
-    return targets.filter((target) => target.bindingKind === 'link' && Boolean(target.endpointUrl));
+    return targets.filter(
+      (target) => target.bindingKind === 'link' && Boolean(target.endpointUrl),
+    );
   }
 
   const eligible: ConversionTargetRecord[] = [];
@@ -37,7 +39,8 @@ async function listPreviewTargets(
       db,
       target.customerServiceConnectionId,
     );
-    if (connection && !connection.deletedAt && connection.isEnabled) eligible.push(target);
+    if (connection && !connection.deletedAt && connection.isEnabled)
+      eligible.push(target);
   }
   return eligible;
 }
@@ -56,19 +59,30 @@ adminConversionPreviewRoutes.post(
     const groupId = context.req.param('groupId');
     const group = await getConversionGroup(context.env.DB, sectionId, groupId);
     if (!group || group.deletedAt) {
-      return apiError(context, 404, 'CONVERSION_GROUP_NOT_FOUND', '转化分组不存在或已进入回收站。');
+      return apiError(
+        context,
+        404,
+        'CONVERSION_GROUP_NOT_FOUND',
+        '转化分组不存在或已进入回收站。',
+      );
     }
     if (!group.isEnabled) {
       return apiError(context, 409, 'CONVERSION_GROUP_NOT_READY', '分组当前未启用。');
     }
 
-    const targets = await listPreviewTargets(context.env.DB, sectionId, groupId, group.mode);
+    const targets = await listPreviewTargets(
+      context.env.DB,
+      sectionId,
+      groupId,
+      group.mode,
+    );
     if (targets.length === 0) {
       return apiError(context, 409, 'CONVERSION_GROUP_NOT_READY', '分组没有可用入口。');
     }
 
-    const cursor = await context.env.DB
-      .prepare('SELECT next_index FROM conversion_group_rotation WHERE group_id = ?')
+    const cursor = await context.env.DB.prepare(
+      'SELECT next_index FROM conversion_group_rotation WHERE group_id = ?',
+    )
       .bind(groupId)
       .first<RotationCursorRow>();
     const nextIndex = cursor?.next_index ?? 0;

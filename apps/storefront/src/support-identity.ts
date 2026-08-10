@@ -57,15 +57,20 @@ function isValidIdentity(value: unknown, now: number): value is SupportVisitorId
     return false;
   }
   if (!/^[A-Z0-9]{6}$/u.test(candidate.visitorId)) return false;
-  const letters = [...candidate.visitorId].filter((character) => /[A-Z]/u.test(character)).length;
-  const digits = [...candidate.visitorId].filter((character) => /[0-9]/u.test(character)).length;
+  const letters = [...candidate.visitorId].filter((character) =>
+    /[A-Z]/u.test(character),
+  ).length;
+  const digits = [...candidate.visitorId].filter((character) =>
+    /[0-9]/u.test(character),
+  ).length;
   return letters === 3 && digits === 3;
 }
 
 function readStoredIdentity(now: number): SupportVisitorIdentity | null {
-  if (typeof window === 'undefined') return volatileIdentity && isValidIdentity(volatileIdentity, now)
-    ? volatileIdentity
-    : null;
+  if (typeof window === 'undefined')
+    return volatileIdentity && isValidIdentity(volatileIdentity, now)
+      ? volatileIdentity
+      : null;
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
@@ -76,7 +81,9 @@ function readStoredIdentity(now: number): SupportVisitorIdentity | null {
     }
     return parsed;
   } catch {
-    return volatileIdentity && isValidIdentity(volatileIdentity, now) ? volatileIdentity : null;
+    return volatileIdentity && isValidIdentity(volatileIdentity, now)
+      ? volatileIdentity
+      : null;
   }
 }
 

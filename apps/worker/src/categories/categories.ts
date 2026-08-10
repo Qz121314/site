@@ -31,8 +31,7 @@ type CategoryRow = {
 };
 
 type ValidationResult =
-  | { ok: true; value: CategoryInput }
-  | { ok: false; field: string; message: string };
+  { ok: true; value: CategoryInput } | { ok: false; field: string; message: string };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -248,6 +247,8 @@ export function isCategoryConflictError(error: unknown): boolean {
     error instanceof Error &&
     (error.message.includes('categories_active_name_unique') ||
       error.message.includes('UNIQUE constraint failed: index') ||
-      error.message.includes('UNIQUE constraint failed: categories.section_id, categories.name'))
+      error.message.includes(
+        'UNIQUE constraint failed: categories.section_id, categories.name',
+      ))
   );
 }

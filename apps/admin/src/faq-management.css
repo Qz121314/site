@@ -51,7 +51,9 @@
   background: #fff;
   box-shadow: none;
   font-size: 0.77rem;
-  transition: border-color 140ms ease, box-shadow 140ms ease;
+  transition:
+    border-color 140ms ease,
+    box-shadow 140ms ease;
 }
 
 .faq-filter-bar .faq-search input:focus {
@@ -253,7 +255,9 @@
   background: #fff;
   box-shadow: none;
   font-size: 0.8rem;
-  transition: border-color 140ms ease, box-shadow 140ms ease;
+  transition:
+    border-color 140ms ease,
+    box-shadow 140ms ease;
 }
 
 .faq-editor-form textarea {
@@ -347,7 +351,13 @@
   max-height: 50vh;
   box-sizing: border-box;
   resize: vertical;
-  font: 0.78rem/1.6 ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font:
+    0.78rem/1.6 ui-monospace,
+    SFMono-Regular,
+    Menlo,
+    Monaco,
+    Consolas,
+    monospace;
   tab-size: 2;
 }
 
@@ -388,9 +398,15 @@
   line-height: 1.35;
 }
 
-.faq-markdown-preview h1 { font-size: 1.35rem; }
-.faq-markdown-preview h2 { font-size: 1.15rem; }
-.faq-markdown-preview h3 { font-size: 1rem; }
+.faq-markdown-preview h1 {
+  font-size: 1.35rem;
+}
+.faq-markdown-preview h2 {
+  font-size: 1.15rem;
+}
+.faq-markdown-preview h3 {
+  font-size: 1rem;
+}
 
 .faq-markdown-preview p,
 .faq-markdown-preview li,

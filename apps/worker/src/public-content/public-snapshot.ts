@@ -11,7 +11,8 @@ export function publicSnapshotObjectKey(path: string | undefined): string | null
     return null;
   }
 
-  if (decoded.startsWith('/') || decoded.endsWith('/') || decoded.includes('\\')) return null;
+  if (decoded.startsWith('/') || decoded.endsWith('/') || decoded.includes('\\'))
+    return null;
   const segments = decoded.split('/');
   if (
     segments.length === 0 ||
@@ -29,7 +30,10 @@ export function publicSnapshotObjectKey(path: string | undefined): string | null
   return PUBLIC_PREFIXES.some((prefix) => key.startsWith(prefix)) ? key : null;
 }
 
-export function publicSnapshotCacheControl(objectKey: string, storedValue?: string): string {
+export function publicSnapshotCacheControl(
+  objectKey: string,
+  storedValue?: string,
+): string {
   if (objectKey === 'public/current.json') {
     return 'public, max-age=30, must-revalidate';
   }

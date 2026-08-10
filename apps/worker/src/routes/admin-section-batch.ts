@@ -30,8 +30,14 @@ function parseBatchIds(value: unknown): string[] | null {
     return null;
   }
 
-  const ids = value.ids.filter((id): id is string => typeof id === 'string' && id.length > 0);
-  if (ids.length !== value.ids.length || ids.length === 0 || ids.length > MAX_BATCH_SIZE) {
+  const ids = value.ids.filter(
+    (id): id is string => typeof id === 'string' && id.length > 0,
+  );
+  if (
+    ids.length !== value.ids.length ||
+    ids.length === 0 ||
+    ids.length > MAX_BATCH_SIZE
+  ) {
     return null;
   }
 
@@ -39,7 +45,9 @@ function parseBatchIds(value: unknown): string[] | null {
   return uniqueIds.length === ids.length ? uniqueIds : null;
 }
 
-function parseReorderItems(value: unknown): Array<{ id: string; sortOrder: number }> | null {
+function parseReorderItems(
+  value: unknown,
+): Array<{ id: string; sortOrder: number }> | null {
   if (!isRecord(value) || !Array.isArray(value.items)) {
     return null;
   }
@@ -103,8 +111,13 @@ adminSectionBatchRoutes.post('/batch-delete', async (context) => {
   }
 
   const sections = await Promise.all(ids.map((id) => getSection(context.env.DB, id)));
-  const activeSections = sections.filter((section): section is SectionRecord => Boolean(section));
-  if (activeSections.length !== ids.length || activeSections.some((section) => section.deletedAt)) {
+  const activeSections = sections.filter((section): section is SectionRecord =>
+    Boolean(section),
+  );
+  if (
+    activeSections.length !== ids.length ||
+    activeSections.some((section) => section.deletedAt)
+  ) {
     return apiError(context, 404, 'SECTION_NOT_FOUND', '部分分区不存在或已进入回收站。');
   }
 
@@ -179,7 +192,9 @@ adminSectionBatchRoutes.post('/reorder', async (context) => {
     return apiError(context, 400, 'INVALID_SECTION_ORDER', '分区排序数据无效。');
   }
 
-  const sections = await Promise.all(items.map((item) => getSection(context.env.DB, item.id)));
+  const sections = await Promise.all(
+    items.map((item) => getSection(context.env.DB, item.id)),
+  );
   if (sections.some((section) => !section || section.deletedAt)) {
     return apiError(context, 404, 'SECTION_NOT_FOUND', '部分分区不存在或已进入回收站。');
   }

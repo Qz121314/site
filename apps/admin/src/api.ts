@@ -142,7 +142,11 @@ async function requestJson(path: string, init?: RequestInit): Promise<unknown> {
   return body;
 }
 
-function adminJsonRequest(path: string, method: 'POST' | 'PUT' | 'DELETE', body?: unknown) {
+function adminJsonRequest(
+  path: string,
+  method: 'POST' | 'PUT' | 'DELETE',
+  body?: unknown,
+) {
   return requestJson(path, {
     method,
     headers: {
@@ -177,7 +181,8 @@ function parseSiteSettings(value: unknown): SiteSettings {
     typeof settings.locationLabel === 'string' &&
     (typeof settings.mediaBaseUrl === 'string' || settings.mediaBaseUrl === null) &&
     (typeof settings.logoAssetId === 'string' || settings.logoAssetId === null) &&
-    (typeof settings.ga4MeasurementId === 'string' || settings.ga4MeasurementId === null) &&
+    (typeof settings.ga4MeasurementId === 'string' ||
+      settings.ga4MeasurementId === null) &&
     typeof settings.homeSectionLimit === 'number' &&
     typeof settings.showHot === 'boolean' &&
     typeof settings.showLatest === 'boolean' &&
@@ -275,11 +280,15 @@ export function fetchSiteSettings(): Promise<SiteSettings> {
   return requestJson('/api/admin/settings/').then(parseSiteSettings);
 }
 
-export function updateSiteSettings(input: SiteSettingsUpdateInput): Promise<SiteSettings> {
+export function updateSiteSettings(
+  input: SiteSettingsUpdateInput,
+): Promise<SiteSettings> {
   return adminJsonRequest('/api/admin/settings/', 'PUT', input).then(parseSiteSettings);
 }
 
-export async function testMediaDomain(mediaBaseUrl: string): Promise<MediaDomainTestResponse> {
+export async function testMediaDomain(
+  mediaBaseUrl: string,
+): Promise<MediaDomainTestResponse> {
   const body = await adminJsonRequest('/api/admin/settings/media-domain/test', 'POST', {
     mediaBaseUrl,
   });
@@ -310,13 +319,17 @@ export function fetchSections(scope: SectionScope = 'active'): Promise<AdminSect
 }
 
 export function createSection(input: SectionInput): Promise<AdminSection> {
-  return adminJsonRequest('/api/admin/sections/', 'POST', input).then(parseSectionEnvelope);
+  return adminJsonRequest('/api/admin/sections/', 'POST', input).then(
+    parseSectionEnvelope,
+  );
 }
 
 export function updateSection(id: string, input: SectionInput): Promise<AdminSection> {
-  return adminJsonRequest(`/api/admin/sections/${encodeURIComponent(id)}`, 'PUT', input).then(
-    parseSectionEnvelope,
-  );
+  return adminJsonRequest(
+    `/api/admin/sections/${encodeURIComponent(id)}`,
+    'PUT',
+    input,
+  ).then(parseSectionEnvelope);
 }
 
 export function deleteSection(id: string): Promise<AdminSection> {
@@ -326,9 +339,10 @@ export function deleteSection(id: string): Promise<AdminSection> {
 }
 
 export function restoreSection(id: string): Promise<AdminSection> {
-  return adminJsonRequest(`/api/admin/sections/${encodeURIComponent(id)}/restore`, 'POST').then(
-    parseSectionEnvelope,
-  );
+  return adminJsonRequest(
+    `/api/admin/sections/${encodeURIComponent(id)}/restore`,
+    'POST',
+  ).then(parseSectionEnvelope);
 }
 
 export async function batchDeleteSections(ids: string[]): Promise<string[]> {

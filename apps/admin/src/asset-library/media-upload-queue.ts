@@ -3,11 +3,7 @@ import { AdminApiError } from '../api';
 import { uploadMediaAsset, type MediaRole } from './api';
 
 export type MediaUploadQueueStatus =
-  | 'queued'
-  | 'processing'
-  | 'uploaded'
-  | 'reused'
-  | 'error';
+  'queued' | 'processing' | 'uploaded' | 'reused' | 'error';
 
 export type MediaUploadQueueItem = {
   id: string;
@@ -52,10 +48,15 @@ const EMPTY_BATCH_SUMMARY: MediaUploadBatchSummary = {
 };
 
 function isSessionError(error: unknown): boolean {
-  return error instanceof AdminApiError && (error.status === 401 || error.code === 'SESSION_INVALID');
+  return (
+    error instanceof AdminApiError &&
+    (error.status === 401 || error.code === 'SESSION_INVALID')
+  );
 }
 
-function inspectVideo(file: File): Promise<{ width: number; height: number; durationMs: number }> {
+function inspectVideo(
+  file: File,
+): Promise<{ width: number; height: number; durationMs: number }> {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file);
     const video = document.createElement('video');
@@ -64,7 +65,9 @@ function inspectVideo(file: File): Promise<{ width: number; height: number; dura
     video.onloadedmetadata = () => {
       const width = video.videoWidth;
       const height = video.videoHeight;
-      const durationMs = Number.isFinite(video.duration) ? Math.round(video.duration * 1000) : 0;
+      const durationMs = Number.isFinite(video.duration)
+        ? Math.round(video.duration * 1000)
+        : 0;
       URL.revokeObjectURL(url);
       if (width < 1 || height < 1) {
         reject(new Error(`无法读取视频“${file.name}”的尺寸。`));
@@ -100,7 +103,10 @@ export function useMediaUploadQueue({
   );
 
   const runEntries = useCallback(
-    async (entries: MediaUploadQueueItem[], skipped: number): Promise<MediaUploadBatchSummary> => {
+    async (
+      entries: MediaUploadQueueItem[],
+      skipped: number,
+    ): Promise<MediaUploadBatchSummary> => {
       if (entries.length === 0) {
         return { ...EMPTY_BATCH_SUMMARY, skipped };
       }
@@ -123,7 +129,8 @@ export function useMediaUploadQueue({
 
           patchItem(entry.id, { status: 'processing', message: null });
           try {
-            const isVideo = entry.file.type === 'video/mp4' || entry.file.type === 'video/webm';
+            const isVideo =
+              entry.file.type === 'video/mp4' || entry.file.type === 'video/webm';
             const metadata = isVideo ? await inspectVideo(entry.file) : null;
             const result = await uploadMediaAsset({
               file: entry.file,
@@ -181,7 +188,9 @@ export function useMediaUploadQueue({
       folderId: string | null,
     ): Promise<MediaUploadBatchSummary> => {
       if (runningRef.current) return EMPTY_BATCH_SUMMARY;
-      const supported = files.filter((file) => SUPPORTED_MEDIA_TYPES.has(file.type.toLowerCase()));
+      const supported = files.filter((file) =>
+        SUPPORTED_MEDIA_TYPES.has(file.type.toLowerCase()),
+      );
       const entries: MediaUploadQueueItem[] = supported.map((file) => ({
         id: crypto.randomUUID(),
         file,
@@ -216,13 +225,19 @@ export function useMediaUploadQueue({
   const clearFinished = useCallback(() => {
     if (runningRef.current) return;
     setItems((current) =>
-      current.filter((item) => item.status === 'queued' || item.status === 'processing' || item.status === 'error'),
+      current.filter(
+        (item) =>
+          item.status === 'queued' ||
+          item.status === 'processing' ||
+          item.status === 'error',
+      ),
     );
   }, []);
 
   const progress = useMemo(() => {
     const done = items.filter(
-      (item) => item.status === 'uploaded' || item.status === 'reused' || item.status === 'error',
+      (item) =>
+        item.status === 'uploaded' || item.status === 'reused' || item.status === 'error',
     ).length;
     const failed = items.filter((item) => item.status === 'error').length;
     const active = items.filter((item) => item.status === 'processing').length;

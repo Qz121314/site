@@ -20,9 +20,7 @@ import {
   type MediaKind,
 } from '../media/media-center';
 import { listMediaLibraryPage } from '../media/media-library-page';
-import {
-  validateStaticImageUploadContract,
-} from '../media/static-image-upload-contract';
+import { validateStaticImageUploadContract } from '../media/static-image-upload-contract';
 import type { AppEnvironment } from '../types';
 import {
   hasAdminRequestHeader,
@@ -51,12 +49,14 @@ function parsePageSize(value: string | undefined): number {
 
 function parseLibraryKinds(value: string | undefined): MediaKind[] {
   if (!value) return [];
-  return [...new Set(
-    value
-      .split(',')
-      .map((item) => item.trim())
-      .filter((item): item is MediaKind => MEDIA_KINDS.has(item as MediaKind)),
-  )];
+  return [
+    ...new Set(
+      value
+        .split(',')
+        .map((item) => item.trim())
+        .filter((item): item is MediaKind => MEDIA_KINDS.has(item as MediaKind)),
+    ),
+  ];
 }
 
 function parseCleanupKeys(value: unknown): string[] | null {
@@ -67,7 +67,11 @@ function parseCleanupKeys(value: unknown): string[] | null {
   const keys = value.keys.filter(
     (key): key is string => typeof key === 'string' && isValidR2ObjectKey(key),
   );
-  if (keys.length === 0 || keys.length !== value.keys.length || keys.length > MAX_CLEANUP_SIZE) {
+  if (
+    keys.length === 0 ||
+    keys.length !== value.keys.length ||
+    keys.length > MAX_CLEANUP_SIZE
+  ) {
     return null;
   }
 
@@ -100,7 +104,10 @@ adminAssetRoutes.get('/', async (context) => {
 adminAssetRoutes.get('/library', async (context) => {
   context.header('Cache-Control', 'no-store');
   const kindValue = context.req.query('kind');
-  const kind = kindValue && MEDIA_KINDS.has(kindValue as MediaKind) ? (kindValue as MediaKind) : null;
+  const kind =
+    kindValue && MEDIA_KINDS.has(kindValue as MediaKind)
+      ? (kindValue as MediaKind)
+      : null;
   const role = parseMediaRole(context.req.query('role'));
   const assets = await listMediaCenterAssets(context.env.DB, { kind, role });
   return context.json({ assets });
@@ -108,7 +115,9 @@ adminAssetRoutes.get('/library', async (context) => {
 
 adminAssetRoutes.get('/library/page', async (context) => {
   context.header('Cache-Control', 'no-store');
-  const kinds = parseLibraryKinds(context.req.query('kinds') || context.req.query('kind'));
+  const kinds = parseLibraryKinds(
+    context.req.query('kinds') || context.req.query('kind'),
+  );
   const role = parseMediaRole(context.req.query('role'));
   const folder = context.req.query('folder')?.trim() || 'all';
   const query = context.req.query('q')?.trim() ?? '';
@@ -143,25 +152,27 @@ adminAssetRoutes.post('/upload', async (context) => {
   const uploadFile = formData.get('file');
   const compressionProfile = formData.get('compressionProfile');
   const rawSourceByteSize = formData.get('sourceByteSize');
-  const sourceByteSize = typeof rawSourceByteSize === 'string' ? Number(rawSourceByteSize) : null;
+  const sourceByteSize =
+    typeof rawSourceByteSize === 'string' ? Number(rawSourceByteSize) : null;
   if (uploadFile instanceof File) {
     const contractError = validateStaticImageUploadContract({
       mimeType: uploadFile.type,
-      compressionProfile: typeof compressionProfile === 'string' ? compressionProfile : null,
+      compressionProfile:
+        typeof compressionProfile === 'string' ? compressionProfile : null,
       sourceByteSize,
     });
     if (contractError) {
-      return apiError(
-        context,
-        400,
-        contractError.code,
-        contractError.message,
-        { field: 'file' },
-      );
+      return apiError(context, 400, contractError.code, contractError.message, {
+        field: 'file',
+      });
     }
   }
 
-  const result = await uploadMediaCenterAsset(context.env.ASSETS_BUCKET, context.env.DB, formData);
+  const result = await uploadMediaCenterAsset(
+    context.env.ASSETS_BUCKET,
+    context.env.DB,
+    formData,
+  );
   if (!result.ok) {
     return apiError(context, 400, result.code, result.message, { field: result.field });
   }
@@ -184,7 +195,10 @@ adminAssetRoutes.post('/upload', async (context) => {
     },
   });
 
-  return context.json({ media: result.media, reused: result.reused }, result.reused ? 200 : 201);
+  return context.json(
+    { media: result.media, reused: result.reused },
+    result.reused ? 200 : 201,
+  );
 });
 
 adminAssetRoutes.post('/cleanup', async (context) => {
@@ -246,7 +260,8 @@ adminAssetRoutes.post('/cleanup', async (context) => {
   }
 
   const tracked = evaluations.filter(
-    (item): item is typeof item & { row: NonNullable<typeof item.row> } => item.row !== null,
+    (item): item is typeof item & { row: NonNullable<typeof item.row> } =>
+      item.row !== null,
   );
   const markResults = tracked.length
     ? await context.env.DB.batch(
@@ -263,7 +278,9 @@ adminAssetRoutes.post('/cleanup', async (context) => {
   if (changedRows.length !== tracked.length) {
     if (changedRows.length > 0) {
       await context.env.DB.batch(
-        changedRows.map((row) => createRestoreMediaAssetStatement(context.env.DB, row, now)),
+        changedRows.map((row) =>
+          createRestoreMediaAssetStatement(context.env.DB, row, now),
+        ),
       );
     }
 
@@ -276,7 +293,8 @@ adminAssetRoutes.post('/cleanup', async (context) => {
   }
 
   const existing = evaluations.filter(
-    (item): item is typeof item & { object: NonNullable<typeof item.object> } => item.object !== null,
+    (item): item is typeof item & { object: NonNullable<typeof item.object> } =>
+      item.object !== null,
   );
 
   try {
@@ -301,7 +319,12 @@ adminAssetRoutes.post('/cleanup', async (context) => {
     );
     await context.env.DB.batch(restoreStatements);
 
-    return apiError(context, 503, 'R2_DELETE_FAILED', 'R2 图片物理删除失败，数据库状态已恢复。');
+    return apiError(
+      context,
+      503,
+      'R2_DELETE_FAILED',
+      'R2 图片物理删除失败，数据库状态已恢复。',
+    );
   }
 
   const responseBody = {
@@ -327,12 +350,10 @@ adminAssetRoutes.post('/cleanup', async (context) => {
         },
         createdAt: now,
       }),
-      context.env.DB
-        .prepare(
-          `DELETE FROM asset_cleanup_guards
+      context.env.DB.prepare(
+        `DELETE FROM asset_cleanup_guards
            WHERE object_key IN (${buildPlaceholders(keys.length)})`,
-        )
-        .bind(...keys),
+      ).bind(...keys),
       createIdempotencyStatement(
         context.env.DB,
         CLEANUP_SCOPE,

@@ -35,7 +35,11 @@ async function readJson(response: Response): Promise<unknown> {
 }
 
 async function requestJson(path: string, init?: RequestInit): Promise<unknown> {
-  const response = await adminFetch(path, { credentials: 'same-origin', cache: 'no-store', ...init });
+  const response = await adminFetch(path, {
+    credentials: 'same-origin',
+    cache: 'no-store',
+    ...init,
+  });
   const body = await readJson(response);
   if (!response.ok) {
     const envelope = asRecord(body) as ErrorEnvelope | null;
@@ -90,7 +94,9 @@ function parseFaqList(value: unknown): AdminFaq[] {
 }
 
 export function fetchFaqs(scope: FaqScope = 'active'): Promise<AdminFaq[]> {
-  return requestJson(`/api/admin/faqs/?scope=${encodeURIComponent(scope)}`).then(parseFaqList);
+  return requestJson(`/api/admin/faqs/?scope=${encodeURIComponent(scope)}`).then(
+    parseFaqList,
+  );
 }
 
 export function createFaq(input: FaqInput): Promise<AdminFaq> {
@@ -98,15 +104,21 @@ export function createFaq(input: FaqInput): Promise<AdminFaq> {
 }
 
 export function updateFaq(id: string, input: FaqInput): Promise<AdminFaq> {
-  return writeRequest(`/api/admin/faqs/${encodeURIComponent(id)}`, 'PUT', input).then(parseFaqEnvelope);
+  return writeRequest(`/api/admin/faqs/${encodeURIComponent(id)}`, 'PUT', input).then(
+    parseFaqEnvelope,
+  );
 }
 
 export function deleteFaq(id: string): Promise<AdminFaq> {
-  return writeRequest(`/api/admin/faqs/${encodeURIComponent(id)}`, 'DELETE').then(parseFaqEnvelope);
+  return writeRequest(`/api/admin/faqs/${encodeURIComponent(id)}`, 'DELETE').then(
+    parseFaqEnvelope,
+  );
 }
 
 export function restoreFaq(id: string): Promise<AdminFaq> {
-  return writeRequest(`/api/admin/faqs/${encodeURIComponent(id)}/restore`, 'POST').then(parseFaqEnvelope);
+  return writeRequest(`/api/admin/faqs/${encodeURIComponent(id)}/restore`, 'POST').then(
+    parseFaqEnvelope,
+  );
 }
 
 export async function batchDeleteFaqs(ids: string[]): Promise<string[]> {
@@ -120,13 +132,19 @@ export async function batchDeleteFaqs(ids: string[]): Promise<string[]> {
     body: JSON.stringify({ ids }),
   });
   const result = asRecord(body);
-  if (!result || !Array.isArray(result.deletedIds) || !result.deletedIds.every((id) => typeof id === 'string')) {
+  if (
+    !result ||
+    !Array.isArray(result.deletedIds) ||
+    !result.deletedIds.every((id) => typeof id === 'string')
+  ) {
     throw new AdminApiError(500, 'INVALID_RESPONSE', 'FAQ 批量删除返回数据无效。');
   }
   return result.deletedIds;
 }
 
-export async function reorderFaqs(items: Array<{ id: string; sortOrder: number }>): Promise<void> {
+export async function reorderFaqs(
+  items: Array<{ id: string; sortOrder: number }>,
+): Promise<void> {
   const body = await requestJson('/api/admin/faqs/reorder', {
     method: 'POST',
     headers: {

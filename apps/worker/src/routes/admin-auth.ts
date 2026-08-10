@@ -115,7 +115,10 @@ adminAuthRoutes.post('/login', async (context) => {
 
   const now = new Date();
   const clientAddress = context.req.header('cf-connecting-ip') ?? 'unknown';
-  const keyHash = await createLoginRateLimitKey(clientAddress, authBindings.sessionSecret);
+  const keyHash = await createLoginRateLimitKey(
+    clientAddress,
+    authBindings.sessionSecret,
+  );
 
   await pruneExpiredLoginRateLimits(context.env.DB, now);
   const currentLimit = await getLoginRateLimitStatus(context.env.DB, keyHash, now);
@@ -127,13 +130,9 @@ adminAuthRoutes.post('/login', async (context) => {
       requestId: context.get('requestId'),
       metadata: { retryAfterSeconds: currentLimit.retryAfterSeconds },
     });
-    return apiError(
-      context,
-      429,
-      'LOGIN_RATE_LIMITED',
-      '登录尝试过多，请稍后再试。',
-      { retryAfterSeconds: currentLimit.retryAfterSeconds },
-    );
+    return apiError(context, 429, 'LOGIN_RATE_LIMITED', '登录尝试过多，请稍后再试。', {
+      retryAfterSeconds: currentLimit.retryAfterSeconds,
+    });
   }
 
   const passwordMatches = await constantTimeSecretEqual(
@@ -151,13 +150,9 @@ adminAuthRoutes.post('/login', async (context) => {
 
     if (updatedLimit.blocked) {
       context.header('Retry-After', String(updatedLimit.retryAfterSeconds));
-      return apiError(
-        context,
-        429,
-        'LOGIN_RATE_LIMITED',
-        '登录尝试过多，请稍后再试。',
-        { retryAfterSeconds: updatedLimit.retryAfterSeconds },
-      );
+      return apiError(context, 429, 'LOGIN_RATE_LIMITED', '登录尝试过多，请稍后再试。', {
+        retryAfterSeconds: updatedLimit.retryAfterSeconds,
+      });
     }
 
     return apiError(context, 401, 'INVALID_CREDENTIALS', '后台密码不正确。');

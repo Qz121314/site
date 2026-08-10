@@ -7,14 +7,24 @@ import {
 
 test('published storefront source mutations notify the dashboard', () => {
   for (const method of ['POST', 'PUT', 'PATCH', 'DELETE']) {
-    assert.equal(shouldNotifyAdminMutation(method, '/api/admin/sections/abc/products'), true, method);
+    assert.equal(
+      shouldNotifyAdminMutation(method, '/api/admin/sections/abc/products'),
+      true,
+      method,
+    );
   }
 
   assert.equal(shouldNotifyAdminMutation('PUT', '/api/admin/settings/'), true);
   assert.equal(shouldNotifyAdminMutation('POST', '/api/admin/media/logo'), true);
   assert.equal(shouldNotifyAdminMutation('POST', '/api/admin/faqs'), true);
-  assert.equal(shouldNotifyAdminMutation('POST', '/api/admin/sections/batch-delete'), true);
-  assert.equal(shouldNotifyAdminMutation('POST', '/api/admin/sections/abc/categories'), true);
+  assert.equal(
+    shouldNotifyAdminMutation('POST', '/api/admin/sections/batch-delete'),
+    true,
+  );
+  assert.equal(
+    shouldNotifyAdminMutation('POST', '/api/admin/sections/abc/categories'),
+    true,
+  );
   assert.equal(shouldNotifyAdminMutation('POST', '/api/admin/sections/abc/tags'), true);
 });
 
@@ -28,7 +38,10 @@ test('mutations outside immutable publish sources do not trigger a publish-statu
   assert.equal(shouldNotifyAdminMutation('POST', '/api/admin/auth/logout'), false);
   assert.equal(shouldNotifyAdminMutation('POST', '/api/admin/publish'), false);
   assert.equal(shouldNotifyAdminMutation('POST', '/api/admin/publish/rollback'), false);
-  assert.equal(shouldNotifyAdminMutation('POST', '/api/admin/settings/media-domain/test'), false);
+  assert.equal(
+    shouldNotifyAdminMutation('POST', '/api/admin/settings/media-domain/test'),
+    false,
+  );
   assert.equal(shouldNotifyAdminMutation('POST', '/api/admin/theme/import'), false);
   assert.equal(shouldNotifyAdminMutation('PUT', '/api/admin/theme/'), false);
   assert.equal(shouldNotifyAdminMutation('POST', '/api/admin/assets/upload'), false);
@@ -53,8 +66,14 @@ test('non-admin mutation paths do not notify', () => {
 });
 
 test('unauthorized business admin responses expire the active session globally', () => {
-  assert.equal(shouldNotifyAdminSessionExpired(401, '/api/admin/assets/library/page'), true);
-  assert.equal(shouldNotifyAdminSessionExpired(401, '/api/admin/sections/abc/products'), true);
+  assert.equal(
+    shouldNotifyAdminSessionExpired(401, '/api/admin/assets/library/page'),
+    true,
+  );
+  assert.equal(
+    shouldNotifyAdminSessionExpired(401, '/api/admin/sections/abc/products'),
+    true,
+  );
 });
 
 test('auth endpoints and non-401 responses do not emit session expiry', () => {

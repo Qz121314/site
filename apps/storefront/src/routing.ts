@@ -62,11 +62,15 @@ export function bottomNavigationActiveHref(pathname: string): BottomNavigationHr
 export function parseStorefrontRoute(pathname: string): StorefrontRoute {
   if (pathname === '/' || pathname === '') return { type: 'home' };
   if (
-    pathname === '/browse' || pathname === '/browse/'
-    || pathname === '/discover' || pathname === '/discover/'
-  ) return { type: 'discover' };
+    pathname === '/browse' ||
+    pathname === '/browse/' ||
+    pathname === '/discover' ||
+    pathname === '/discover/'
+  )
+    return { type: 'discover' };
   if (pathname === '/messages' || pathname === '/messages/') return { type: 'messages' };
-  if (pathname === '/messages/new' || pathname === '/messages/new/') return { type: 'message-compose' };
+  if (pathname === '/messages/new' || pathname === '/messages/new/')
+    return { type: 'message-compose' };
   if (pathname === '/faq' || pathname === '/faq/') return { type: 'faq' };
 
   const messageMatch = /^\/messages\/([^/]+)\/?$/.exec(pathname);

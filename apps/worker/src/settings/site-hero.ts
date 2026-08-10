@@ -56,8 +56,13 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-function optionalText(value: unknown, field: string, maxLength: number): { ok: true; value: string | null } | ValidationFailure {
-  if (value === null || value === undefined || value === '') return { ok: true, value: null };
+function optionalText(
+  value: unknown,
+  field: string,
+  maxLength: number,
+): { ok: true; value: string | null } | ValidationFailure {
+  if (value === null || value === undefined || value === '')
+    return { ok: true, value: null };
   if (typeof value !== 'string') return { ok: false, field, message: '必须填写文本。' };
   const normalized = value.trim();
   if (!normalized) return { ok: true, value: null };
@@ -83,7 +88,11 @@ export function validateHeroSlidesInput(value: unknown): HeroSlidesValidation {
     return { ok: false, field: 'heroSlides', message: 'Hero 素材列表数据无效。' };
   }
   if (value.length > HERO_SLIDE_LIMIT) {
-    return { ok: false, field: 'heroSlides', message: `Hero 最多配置 ${HERO_SLIDE_LIMIT} 个素材。` };
+    return {
+      ok: false,
+      field: 'heroSlides',
+      message: `Hero 最多配置 ${HERO_SLIDE_LIMIT} 个素材。`,
+    };
   }
 
   const ids = new Set<string>();
@@ -101,7 +110,11 @@ export function validateHeroSlidesInput(value: unknown): HeroSlidesValidation {
       return { ok: false, field: `${fieldPrefix}.id`, message: 'Hero 素材标识无效。' };
     }
     if (typeof raw.mediaAssetId !== 'string' || !ID_PATTERN.test(raw.mediaAssetId)) {
-      return { ok: false, field: `${fieldPrefix}.mediaAssetId`, message: '请选择有效的 Hero 素材。' };
+      return {
+        ok: false,
+        field: `${fieldPrefix}.mediaAssetId`,
+        message: '请选择有效的 Hero 素材。',
+      };
     }
     if (
       typeof raw.sortOrder !== 'number' ||
@@ -109,16 +122,32 @@ export function validateHeroSlidesInput(value: unknown): HeroSlidesValidation {
       raw.sortOrder < 0 ||
       raw.sortOrder > 10000
     ) {
-      return { ok: false, field: `${fieldPrefix}.sortOrder`, message: 'Hero 排序值无效。' };
+      return {
+        ok: false,
+        field: `${fieldPrefix}.sortOrder`,
+        message: 'Hero 排序值无效。',
+      };
     }
     if (ids.has(raw.id)) {
-      return { ok: false, field: `${fieldPrefix}.id`, message: 'Hero 素材标识不能重复。' };
+      return {
+        ok: false,
+        field: `${fieldPrefix}.id`,
+        message: 'Hero 素材标识不能重复。',
+      };
     }
     if (mediaIds.has(raw.mediaAssetId)) {
-      return { ok: false, field: `${fieldPrefix}.mediaAssetId`, message: '同一个素材不能重复添加到 Hero。' };
+      return {
+        ok: false,
+        field: `${fieldPrefix}.mediaAssetId`,
+        message: '同一个素材不能重复添加到 Hero。',
+      };
     }
     if (sortOrders.has(raw.sortOrder)) {
-      return { ok: false, field: `${fieldPrefix}.sortOrder`, message: 'Hero 素材排序不能重复。' };
+      return {
+        ok: false,
+        field: `${fieldPrefix}.sortOrder`,
+        message: 'Hero 素材排序不能重复。',
+      };
     }
 
     const title = optionalText(raw.title, `${fieldPrefix}.title`, 120);
@@ -159,11 +188,16 @@ export function validateHeroSlidesInput(value: unknown): HeroSlidesValidation {
     });
   }
 
-  slides.sort((left, right) => left.sortOrder - right.sortOrder || left.id.localeCompare(right.id));
+  slides.sort(
+    (left, right) => left.sortOrder - right.sortOrder || left.id.localeCompare(right.id),
+  );
   return { ok: true, provided: true, value: slides };
 }
 
-export async function getSiteHeroSlides(db: D1Database, mediaBaseUrl: string | null): Promise<SiteHeroSlide[]> {
+export async function getSiteHeroSlides(
+  db: D1Database,
+  mediaBaseUrl: string | null,
+): Promise<SiteHeroSlide[]> {
   const rows = (
     await db
       .prepare(

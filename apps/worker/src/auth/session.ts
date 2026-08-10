@@ -1,4 +1,9 @@
-import { constantTimeEqual, decodeJsonPayload, encodeJsonPayload, hmacSha256Base64Url } from './crypto';
+import {
+  constantTimeEqual,
+  decodeJsonPayload,
+  encodeJsonPayload,
+  hmacSha256Base64Url,
+} from './crypto';
 import type { AdminSession } from '../types';
 
 export const ADMIN_SESSION_COOKIE = 'site_admin_session';

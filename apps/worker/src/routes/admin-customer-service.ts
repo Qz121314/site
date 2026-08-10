@@ -46,13 +46,18 @@ function parseScope(value: string | undefined): CustomerServiceScope | null {
 
 function parseBatchIds(value: unknown): string[] | null {
   if (!isRecord(value) || !Array.isArray(value.ids)) return null;
-  const ids = value.ids.filter((id): id is string => typeof id === 'string' && id.length > 0);
-  if (ids.length === 0 || ids.length !== value.ids.length || ids.length > MAX_BATCH_SIZE) return null;
+  const ids = value.ids.filter(
+    (id): id is string => typeof id === 'string' && id.length > 0,
+  );
+  if (ids.length === 0 || ids.length !== value.ids.length || ids.length > MAX_BATCH_SIZE)
+    return null;
   const unique = [...new Set(ids)];
   return unique.length === ids.length ? unique : null;
 }
 
-async function readBody(context: Parameters<typeof apiError>[0]): Promise<unknown | Response> {
+async function readBody(
+  context: Parameters<typeof apiError>[0],
+): Promise<unknown | Response> {
   try {
     return await readJsonBody(context);
   } catch (error) {
@@ -65,7 +70,12 @@ function isResponse(value: unknown): value is Response {
 }
 
 function connectionNotFound(context: Parameters<typeof apiError>[0]) {
-  return apiError(context, 404, 'CUSTOMER_SERVICE_CONNECTION_NOT_FOUND', '客服系统连接不存在。');
+  return apiError(
+    context,
+    404,
+    'CUSTOMER_SERVICE_CONNECTION_NOT_FOUND',
+    '客服系统连接不存在。',
+  );
 }
 
 function connectionDeleteBlocked(
@@ -95,7 +105,10 @@ function connectionAuditValue(connection: CustomerServiceConnectionRecord) {
   };
 }
 
-function providerFailure(context: Parameters<typeof apiError>[0], error: CustomerServiceProviderError) {
+function providerFailure(
+  context: Parameters<typeof apiError>[0],
+  error: CustomerServiceProviderError,
+) {
   return apiError(context, 503, error.code, error.message);
 }
 
@@ -103,9 +116,16 @@ adminCustomerServiceRoutes.get('/connections', async (context) => {
   context.header('Cache-Control', 'no-store');
   const scope = parseScope(context.req.query('scope'));
   if (!scope) {
-    return apiError(context, 400, 'INVALID_CUSTOMER_SERVICE_SCOPE', '客服系统列表范围无效。');
+    return apiError(
+      context,
+      400,
+      'INVALID_CUSTOMER_SERVICE_SCOPE',
+      '客服系统列表范围无效。',
+    );
   }
-  return context.json({ connections: await listCustomerServiceConnections(context.env.DB, scope) });
+  return context.json({
+    connections: await listCustomerServiceConnections(context.env.DB, scope),
+  });
 });
 
 adminCustomerServiceRoutes.post('/connections/batch-delete', async (context) => {
@@ -125,11 +145,21 @@ adminCustomerServiceRoutes.post('/connections/batch-delete', async (context) => 
   if (isResponse(body)) return body;
   const ids = parseBatchIds(body);
   if (!ids) {
-    return apiError(context, 400, 'INVALID_CUSTOMER_SERVICE_CONNECTION_IDS', '请选择有效的客服系统连接。');
+    return apiError(
+      context,
+      400,
+      'INVALID_CUSTOMER_SERVICE_CONNECTION_IDS',
+      '请选择有效的客服系统连接。',
+    );
   }
-  const connections = await Promise.all(ids.map((id) => getCustomerServiceConnection(context.env.DB, id)));
-  const active = connections.filter((item): item is CustomerServiceConnectionRecord => Boolean(item));
-  if (active.length !== ids.length || active.some((item) => item.deletedAt)) return connectionNotFound(context);
+  const connections = await Promise.all(
+    ids.map((id) => getCustomerServiceConnection(context.env.DB, id)),
+  );
+  const active = connections.filter((item): item is CustomerServiceConnectionRecord =>
+    Boolean(item),
+  );
+  if (active.length !== ids.length || active.some((item) => item.deletedAt))
+    return connectionNotFound(context);
   const blocked = active.find((item) => item.targetCount > 0);
   if (blocked) return connectionDeleteBlocked(context, blocked);
 
@@ -150,7 +180,9 @@ adminCustomerServiceRoutes.post('/connections/batch-delete', async (context) => 
       }),
     );
   }
-  statements.push(createIdempotencyStatement(context.env.DB, scope, idempotencyKey, responseBody, now));
+  statements.push(
+    createIdempotencyStatement(context.env.DB, scope, idempotencyKey, responseBody, now),
+  );
   await context.env.DB.batch(statements);
   return context.json(responseBody);
 });
@@ -164,9 +196,15 @@ adminCustomerServiceRoutes.post('/connections', async (context) => {
   if (isResponse(body)) return body;
   const validation = validateCustomerServiceConnectionInput(body);
   if (!validation.ok) {
-    return apiError(context, 400, 'INVALID_CUSTOMER_SERVICE_CONNECTION', validation.message, {
-      field: validation.field,
-    });
+    return apiError(
+      context,
+      400,
+      'INVALID_CUSTOMER_SERVICE_CONNECTION',
+      validation.message,
+      {
+        field: validation.field,
+      },
+    );
   }
   const now = new Date().toISOString();
   const created = createCustomerServiceConnection(context.env.DB, validation.value, now);
@@ -184,7 +222,12 @@ adminCustomerServiceRoutes.post('/connections', async (context) => {
     ]);
   } catch (error) {
     if (isCustomerServiceConnectionConflict(error)) {
-      return apiError(context, 409, 'CUSTOMER_SERVICE_CONNECTION_NAME_CONFLICT', '已存在同名客服系统连接。');
+      return apiError(
+        context,
+        409,
+        'CUSTOMER_SERVICE_CONNECTION_NAME_CONFLICT',
+        '已存在同名客服系统连接。',
+      );
     }
     throw error;
   }
@@ -196,18 +239,30 @@ adminCustomerServiceRoutes.put('/connections/:id', async (context) => {
   if (!hasAdminRequestHeader(context)) {
     return apiError(context, 403, 'ADMIN_REQUEST_REQUIRED', '后台请求标识无效。');
   }
-  const current = await getCustomerServiceConnectionInternal(context.env.DB, context.req.param('id'));
+  const current = await getCustomerServiceConnectionInternal(
+    context.env.DB,
+    context.req.param('id'),
+  );
   if (!current || current.deletedAt) return connectionNotFound(context);
   const body = await readBody(context);
   if (isResponse(body)) return body;
   const validation = validateCustomerServiceConnectionInput(body);
   if (!validation.ok) {
-    return apiError(context, 400, 'INVALID_CUSTOMER_SERVICE_CONNECTION', validation.message, {
-      field: validation.field,
-    });
+    return apiError(
+      context,
+      400,
+      'INVALID_CUSTOMER_SERVICE_CONNECTION',
+      validation.message,
+      {
+        field: validation.field,
+      },
+    );
   }
   const now = new Date().toISOString();
-  const resolvedApiToken = validation.value.apiToken === undefined ? current.apiToken : validation.value.apiToken;
+  const resolvedApiToken =
+    validation.value.apiToken === undefined
+      ? current.apiToken
+      : validation.value.apiToken;
   const updatedInternal = {
     ...current,
     ...validation.value,
@@ -237,7 +292,12 @@ adminCustomerServiceRoutes.put('/connections/:id', async (context) => {
     ]);
   } catch (error) {
     if (isCustomerServiceConnectionConflict(error)) {
-      return apiError(context, 409, 'CUSTOMER_SERVICE_CONNECTION_NAME_CONFLICT', '已存在同名客服系统连接。');
+      return apiError(
+        context,
+        409,
+        'CUSTOMER_SERVICE_CONNECTION_NAME_CONFLICT',
+        '已存在同名客服系统连接。',
+      );
     }
     throw error;
   }
@@ -249,7 +309,10 @@ adminCustomerServiceRoutes.delete('/connections/:id', async (context) => {
   if (!hasAdminRequestHeader(context)) {
     return apiError(context, 403, 'ADMIN_REQUEST_REQUIRED', '后台请求标识无效。');
   }
-  const current = await getCustomerServiceConnection(context.env.DB, context.req.param('id'));
+  const current = await getCustomerServiceConnection(
+    context.env.DB,
+    context.req.param('id'),
+  );
   if (!current || current.deletedAt) return connectionNotFound(context);
   if (current.targetCount > 0) return connectionDeleteBlocked(context, current);
   const now = new Date().toISOString();
@@ -274,7 +337,10 @@ adminCustomerServiceRoutes.post('/connections/:id/restore', async (context) => {
   if (!hasAdminRequestHeader(context)) {
     return apiError(context, 403, 'ADMIN_REQUEST_REQUIRED', '后台请求标识无效。');
   }
-  const current = await getCustomerServiceConnection(context.env.DB, context.req.param('id'));
+  const current = await getCustomerServiceConnection(
+    context.env.DB,
+    context.req.param('id'),
+  );
   if (!current || !current.deletedAt) return connectionNotFound(context);
   const now = new Date().toISOString();
   const restored = { ...current, deletedAt: null, updatedAt: now };
@@ -293,7 +359,12 @@ adminCustomerServiceRoutes.post('/connections/:id/restore', async (context) => {
     ]);
   } catch (error) {
     if (isCustomerServiceConnectionConflict(error)) {
-      return apiError(context, 409, 'CUSTOMER_SERVICE_CONNECTION_RESTORE_CONFLICT', '已有同名客服系统连接。');
+      return apiError(
+        context,
+        409,
+        'CUSTOMER_SERVICE_CONNECTION_RESTORE_CONFLICT',
+        '已有同名客服系统连接。',
+      );
     }
     throw error;
   }
@@ -305,25 +376,36 @@ adminCustomerServiceRoutes.post('/connections/:id/test', async (context) => {
   if (!hasAdminRequestHeader(context)) {
     return apiError(context, 403, 'ADMIN_REQUEST_REQUIRED', '后台请求标识无效。');
   }
-  const connection = await getCustomerServiceConnectionInternal(context.env.DB, context.req.param('id'));
+  const connection = await getCustomerServiceConnectionInternal(
+    context.env.DB,
+    context.req.param('id'),
+  );
   if (!connection || connection.deletedAt) return connectionNotFound(context);
   try {
-    const result = await testCustomerServiceConnection({ ...connection, isEnabled: true });
+    const result = await testCustomerServiceConnection({
+      ...connection,
+      isEnabled: true,
+    });
     return context.json(result);
   } catch (error) {
-    if (error instanceof CustomerServiceProviderError) return providerFailure(context, error);
+    if (error instanceof CustomerServiceProviderError)
+      return providerFailure(context, error);
     throw error;
   }
 });
 
 adminCustomerServiceRoutes.get('/connections/:id/groups', async (context) => {
   context.header('Cache-Control', 'no-store');
-  const connection = await getCustomerServiceConnectionInternal(context.env.DB, context.req.param('id'));
+  const connection = await getCustomerServiceConnectionInternal(
+    context.env.DB,
+    context.req.param('id'),
+  );
   if (!connection || connection.deletedAt) return connectionNotFound(context);
   try {
     return context.json({ groups: await listRemoteCustomerServiceGroups(connection) });
   } catch (error) {
-    if (error instanceof CustomerServiceProviderError) return providerFailure(context, error);
+    if (error instanceof CustomerServiceProviderError)
+      return providerFailure(context, error);
     throw error;
   }
 });

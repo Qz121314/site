@@ -17,14 +17,23 @@ const migrationSource = await readFile(
 );
 
 test('historical Storefront Copy migration remains immutable for deployed databases', () => {
-  assert.match(migrationSource, /ADD COLUMN storefront_copy_json TEXT NOT NULL DEFAULT '\{\}'/u);
+  assert.match(
+    migrationSource,
+    /ADD COLUMN storefront_copy_json TEXT NOT NULL DEFAULT '\{\}'/u,
+  );
 });
 
 test('site settings runtime no longer reads, validates, or writes Storefront Copy', () => {
-  assert.doesNotMatch(settingsSource, /StorefrontCopy|storefrontCopy|storefront_copy_json/u);
+  assert.doesNotMatch(
+    settingsSource,
+    /StorefrontCopy|storefrontCopy|storefront_copy_json/u,
+  );
   assert.doesNotMatch(adminRouteSource, /storefrontCopy/u);
 });
 
 test('public Storefront Copy API is no longer mounted', () => {
-  assert.doesNotMatch(indexSource, /publicStorefrontCopyRoutes|\/api\/public\/storefront-copy/u);
+  assert.doesNotMatch(
+    indexSource,
+    /publicStorefrontCopyRoutes|\/api\/public\/storefront-copy/u,
+  );
 });

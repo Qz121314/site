@@ -202,7 +202,8 @@ function parseModuleResult(value: unknown): PublishModuleResult {
     !publication ||
     typeof publication.moduleKey !== 'string' ||
     typeof publication.label !== 'string' ||
-    (typeof publication.contentVersion !== 'string' && publication.contentVersion !== null) ||
+    (typeof publication.contentVersion !== 'string' &&
+      publication.contentVersion !== null) ||
     typeof publication.sourceRevision !== 'string' ||
     (typeof publication.publishedAt !== 'string' && publication.publishedAt !== null) ||
     typeof publication.objectCount !== 'number' ||
@@ -254,7 +255,10 @@ export async function rollbackStorefront(
   moduleKey: string,
   contentVersion: string,
 ): Promise<PublishVersion> {
-  const body = await adminPost('/api/admin/publish/rollback', { moduleKey, contentVersion });
+  const body = await adminPost('/api/admin/publish/rollback', {
+    moduleKey,
+    contentVersion,
+  });
   const envelope = asRecord(body);
   return parseVersion(envelope?.version);
 }

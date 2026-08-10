@@ -1,4 +1,5 @@
-export type OfficialThemeKey = 'marketplace' | 'noir' | 'live' | 'saas' | 'travel' | 'tech';
+export type OfficialThemeKey =
+  'marketplace' | 'noir' | 'live' | 'saas' | 'travel' | 'tech';
 export type ThemeKey = OfficialThemeKey | 'custom';
 export type ThemeColorScheme = 'light' | 'dark';
 
@@ -52,7 +53,8 @@ export type ResolvedTheme = ThemePreset & {
 };
 
 const HEX_COLOR = /^#[0-9a-f]{6}$/i;
-const SAFE_COLOR_FUNCTION = /^(?:rgb|rgba|hsl|hsla|oklch|oklab|lab|lch)\([0-9a-z.%+\-/,\s]+\)$/iu;
+const SAFE_COLOR_FUNCTION =
+  /^(?:rgb|rgba|hsl|hsla|oklch|oklab|lab|lch)\([0-9a-z.%+\-/,\s]+\)$/iu;
 const SAFE_HEX_COLOR = /^#[0-9a-f]{3,8}$/iu;
 const TOKEN_KEYS: Array<keyof ThemeTokens> = [
   'brand',
@@ -227,14 +229,22 @@ function safeColor(value: unknown): string | null {
   if (typeof value !== 'string') return null;
   const color = value.trim();
   if (!color || color.length > 120) return null;
-  if (SAFE_HEX_COLOR.test(color) || SAFE_COLOR_FUNCTION.test(color) || /^(?:transparent|black|white)$/iu.test(color)) {
+  if (
+    SAFE_HEX_COLOR.test(color) ||
+    SAFE_COLOR_FUNCTION.test(color) ||
+    /^(?:transparent|black|white)$/iu.test(color)
+  ) {
     return color;
   }
   return null;
 }
 
 function safeShadow(value: unknown, colorScheme: ThemeColorScheme): string {
-  if (typeof value === 'string' && value.length <= 120 && /^0\s+\d+px\s+\d+px\s+rgb\([0-9\s/%.-]+\)$/iu.test(value.trim())) {
+  if (
+    typeof value === 'string' &&
+    value.length <= 120 &&
+    /^0\s+\d+px\s+\d+px\s+rgb\([0-9\s/%.-]+\)$/iu.test(value.trim())
+  ) {
     return value.trim();
   }
   return colorScheme === 'dark'
@@ -242,7 +252,10 @@ function safeShadow(value: unknown, colorScheme: ThemeColorScheme): string {
     : '0 12px 32px rgb(31 35 40 / 8%)';
 }
 
-function normalizeThemeTokens(value: unknown, colorScheme: ThemeColorScheme): ThemeTokens | null {
+function normalizeThemeTokens(
+  value: unknown,
+  colorScheme: ThemeColorScheme,
+): ThemeTokens | null {
   if (!isRecord(value)) return null;
   const colors = TOKEN_KEYS.filter((key) => key !== 'shadow');
   const normalized = {} as ThemeTokens;
@@ -255,12 +268,18 @@ function normalizeThemeTokens(value: unknown, colorScheme: ThemeColorScheme): Th
   return normalized;
 }
 
-export function normalizeImportedThemeDefinition(value: unknown): ImportedThemeDefinition | null {
+export function normalizeImportedThemeDefinition(
+  value: unknown,
+): ImportedThemeDefinition | null {
   if (!isRecord(value)) return null;
-  const source = value.source === 'shadcn' || value.source === 'json' ? value.source : null;
+  const source =
+    value.source === 'shadcn' || value.source === 'json' ? value.source : null;
   const label = cleanText(value.label, 80);
   const description = cleanText(value.description, 220) ?? 'Imported theme.';
-  const colorScheme = value.colorScheme === 'light' || value.colorScheme === 'dark' ? value.colorScheme : null;
+  const colorScheme =
+    value.colorScheme === 'light' || value.colorScheme === 'dark'
+      ? value.colorScheme
+      : null;
   if (!source || !label || !colorScheme) return null;
   const tokens = normalizeThemeTokens(value.tokens, colorScheme);
   if (!tokens) return null;
@@ -284,12 +303,16 @@ export function normalizeImportedThemeDefinition(value: unknown): ImportedThemeD
 }
 
 export function isThemeKey(value: unknown): value is ThemeKey {
-  return value === 'custom' || (typeof value === 'string' && presetByKey.has(value as OfficialThemeKey));
+  return (
+    value === 'custom' ||
+    (typeof value === 'string' && presetByKey.has(value as OfficialThemeKey))
+  );
 }
 
 export function normalizeThemeOverrides(value: unknown): ThemeOverrides {
   if (!isRecord(value)) return {};
-  const accent = typeof value.accent === 'string' ? value.accent.trim().toLowerCase() : '';
+  const accent =
+    typeof value.accent === 'string' ? value.accent.trim().toLowerCase() : '';
   const imported = normalizeImportedThemeDefinition(value.imported);
   return {
     ...(HEX_COLOR.test(accent) ? { accent } : {}),
@@ -297,7 +320,10 @@ export function normalizeThemeOverrides(value: unknown): ThemeOverrides {
   };
 }
 
-export function parseThemeSettings(themeKey: unknown, overridesJson: unknown): ThemeSettings {
+export function parseThemeSettings(
+  themeKey: unknown,
+  overridesJson: unknown,
+): ThemeSettings {
   const requestedKey = isThemeKey(themeKey) ? themeKey : 'marketplace';
   let overrides: ThemeOverrides = {};
   if (typeof overridesJson === 'string' && overridesJson) {
@@ -340,9 +366,9 @@ export function resolveTheme(settings: ThemeSettings): ResolvedTheme {
   };
 }
 
-export function validateThemeUpdate(value: unknown):
-  | { ok: true; settings: ThemeSettings }
-  | { ok: false; field: string; message: string } {
+export function validateThemeUpdate(
+  value: unknown,
+): { ok: true; settings: ThemeSettings } | { ok: false; field: string; message: string } {
   if (!isRecord(value)) {
     return { ok: false, field: 'form', message: '主题设置数据无效。' };
   }
@@ -353,11 +379,19 @@ export function validateThemeUpdate(value: unknown):
   if (isRecord(value.overrides) && typeof value.overrides.accent === 'string') {
     const accent = value.overrides.accent.trim();
     if (accent && !HEX_COLOR.test(accent)) {
-      return { ok: false, field: 'accent', message: '品牌强调色必须是 6 位十六进制颜色。' };
+      return {
+        ok: false,
+        field: 'accent',
+        message: '品牌强调色必须是 6 位十六进制颜色。',
+      };
     }
   }
   if (value.themeKey === 'custom' && !overrides.imported) {
-    return { ok: false, field: 'imported', message: '请先从主题库或 JSON 导入一个有效主题。' };
+    return {
+      ok: false,
+      field: 'imported',
+      message: '请先从主题库或 JSON 导入一个有效主题。',
+    };
   }
   return { ok: true, settings: { key: value.themeKey, overrides } };
 }

@@ -24,7 +24,11 @@
   width: 64px;
   height: 2px;
   border-radius: 999px;
-  background: linear-gradient(90deg, var(--brand), color-mix(in srgb, var(--brand) 12%, transparent));
+  background: linear-gradient(
+    90deg,
+    var(--brand),
+    color-mix(in srgb, var(--brand) 12%, transparent)
+  );
   content: '';
 }
 
@@ -43,7 +47,10 @@
   font-size: var(--storefront-text-small, 0.75rem);
   font-weight: 740;
   text-decoration: none;
-  transition: color 120ms ease, background 120ms ease, transform 120ms ease;
+  transition:
+    color 120ms ease,
+    background 120ms ease,
+    transform 120ms ease;
 }
 
 .section-catalog-back-icon {
@@ -57,7 +64,10 @@
   background: color-mix(in srgb, var(--surface-soft) 88%, var(--surface));
   font-size: 0.98rem;
   line-height: 1;
-  transition: border-color 120ms ease, background 120ms ease, transform 120ms ease;
+  transition:
+    border-color 120ms ease,
+    background 120ms ease,
+    transform 120ms ease;
 }
 
 .section-catalog-back:hover,
@@ -167,7 +177,10 @@
   border-radius: max(14px, var(--theme-radius-control, 15px));
   background: var(--theme-control-background, var(--surface));
   box-shadow: 0 4px 16px color-mix(in srgb, var(--text) 4%, transparent);
-  transition: border-color 140ms ease, box-shadow 140ms ease, background 140ms ease;
+  transition:
+    border-color 140ms ease,
+    box-shadow 140ms ease,
+    background 140ms ease;
 }
 
 .section-catalog-search:focus-within {
@@ -250,7 +263,11 @@
   font-weight: 730;
   white-space: nowrap;
   cursor: pointer;
-  transition: border-color 120ms ease, color 120ms ease, background 120ms ease, transform 120ms ease;
+  transition:
+    border-color 120ms ease,
+    color 120ms ease,
+    background 120ms ease,
+    transform 120ms ease;
 }
 
 .section-category-options button:active,

@@ -133,7 +133,9 @@ adminSectionRoutes.post('/', async (context) => {
   }
 
   return context.json(
-    { section: (await getSection(context.env.DB, created.section.id)) ?? created.section },
+    {
+      section: (await getSection(context.env.DB, created.section.id)) ?? created.section,
+    },
     201,
   );
 });
@@ -205,7 +207,9 @@ adminSectionRoutes.put('/:id', async (context) => {
     throw error;
   }
 
-  return context.json({ section: (await getSection(context.env.DB, current.id)) ?? updated });
+  return context.json({
+    section: (await getSection(context.env.DB, current.id)) ?? updated,
+  });
 });
 
 adminSectionRoutes.delete('/:id', async (context) => {
@@ -275,5 +279,7 @@ adminSectionRoutes.post('/:id/restore', async (context) => {
     throw error;
   }
 
-  return context.json({ section: (await getSection(context.env.DB, current.id)) ?? restored });
+  return context.json({
+    section: (await getSection(context.env.DB, current.id)) ?? restored,
+  });
 });

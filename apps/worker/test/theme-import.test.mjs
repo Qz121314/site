@@ -30,25 +30,28 @@ const storedCustomTheme = {
 };
 
 test('imports a shadcn registry theme into site tokens', () => {
-  const result = importThemeJson({
-    type: 'registry:theme',
-    name: 'ocean-mobile',
-    title: 'Ocean Mobile',
-    description: 'A clean mobile theme.',
-    cssVars: {
-      light: {
-        background: 'oklch(0.98 0.01 240)',
-        foreground: 'oklch(0.2 0.03 250)',
-        primary: 'oklch(0.58 0.19 245)',
-        'muted-foreground': 'oklch(0.5 0.04 250)',
-        card: 'oklch(1 0 0)',
-        muted: 'oklch(0.95 0.02 245)',
-        border: 'oklch(0.9 0.02 245)',
-        accent: 'oklch(0.7 0.16 220)',
-        ring: 'oklch(0.62 0.18 245)',
+  const result = importThemeJson(
+    {
+      type: 'registry:theme',
+      name: 'ocean-mobile',
+      title: 'Ocean Mobile',
+      description: 'A clean mobile theme.',
+      cssVars: {
+        light: {
+          background: 'oklch(0.98 0.01 240)',
+          foreground: 'oklch(0.2 0.03 250)',
+          primary: 'oklch(0.58 0.19 245)',
+          'muted-foreground': 'oklch(0.5 0.04 250)',
+          card: 'oklch(1 0 0)',
+          muted: 'oklch(0.95 0.02 245)',
+          border: 'oklch(0.9 0.02 245)',
+          accent: 'oklch(0.7 0.16 220)',
+          ring: 'oklch(0.62 0.18 245)',
+        },
       },
     },
-  }, 'light');
+    'light',
+  );
 
   assert.equal(result.ok, true);
   assert.equal(result.definition.label, 'Ocean Mobile');
@@ -57,17 +60,20 @@ test('imports a shadcn registry theme into site tokens', () => {
 });
 
 test('normalizes legacy bare shadcn HSL triples', () => {
-  const result = importThemeJson({
-    type: 'registry:theme',
-    name: 'legacy-theme',
-    cssVars: {
-      dark: {
-        background: '222.2 84% 4.9%',
-        foreground: '210 40% 98%',
-        primary: '217.2 91.2% 59.8%',
+  const result = importThemeJson(
+    {
+      type: 'registry:theme',
+      name: 'legacy-theme',
+      cssVars: {
+        dark: {
+          background: '222.2 84% 4.9%',
+          foreground: '210 40% 98%',
+          primary: '217.2 91.2% 59.8%',
+        },
       },
     },
-  }, 'dark');
+    'dark',
+  );
 
   assert.equal(result.ok, true);
   assert.equal(result.definition.tokens.brand, 'hsl(217.2 91.2% 59.8%)');
@@ -75,11 +81,14 @@ test('normalizes legacy bare shadcn HSL triples', () => {
 });
 
 test('rejects shadcn theme when requested mode is missing', () => {
-  const result = importThemeJson({
-    type: 'registry:theme',
-    name: 'light-only',
-    cssVars: { light: { primary: '#3366ff' } },
-  }, 'dark');
+  const result = importThemeJson(
+    {
+      type: 'registry:theme',
+      name: 'light-only',
+      cssVars: { light: { primary: '#3366ff' } },
+    },
+    'dark',
+  );
 
   assert.equal(result.ok, false);
   assert.equal(result.code, 'THEME_IMPORT_MODE_MISSING');

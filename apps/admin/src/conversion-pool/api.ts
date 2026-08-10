@@ -3,7 +3,8 @@ import { adminFetch } from '../admin-fetch';
 
 export type ConversionMode = 'customer_service' | 'link';
 export type ConversionScope = 'active' | 'trash' | 'all';
-export type ConversionTargetBindingKind = 'link' | 'customer_service' | 'legacy_customer_service';
+export type ConversionTargetBindingKind =
+  'link' | 'customer_service' | 'legacy_customer_service';
 
 export type AdminConversionGroup = {
   id: string;
@@ -85,8 +86,12 @@ async function requestJson(path: string, init?: RequestInit): Promise<unknown> {
       typeof error?.message === 'string' ? error.message : '转化池请求失败。',
       {
         ...(typeof details?.field === 'string' ? { field: details.field } : {}),
-        ...(typeof details?.productCount === 'number' ? { productCount: details.productCount } : {}),
-        ...(typeof details?.targetCount === 'number' ? { targetCount: details.targetCount } : {}),
+        ...(typeof details?.productCount === 'number'
+          ? { productCount: details.productCount }
+          : {}),
+        ...(typeof details?.targetCount === 'number'
+          ? { targetCount: details.targetCount }
+          : {}),
       },
     );
   }
@@ -148,10 +153,14 @@ function parseTarget(value: unknown): AdminConversionTarget {
     typeof target.sectionId !== 'string' ||
     typeof target.groupId !== 'string' ||
     typeof target.name !== 'string' ||
-    !['link', 'customer_service', 'legacy_customer_service'].includes(String(target.bindingKind)) ||
+    !['link', 'customer_service', 'legacy_customer_service'].includes(
+      String(target.bindingKind),
+    ) ||
     (typeof target.endpointUrl !== 'string' && target.endpointUrl !== null) ||
-    (typeof target.customerServiceConnectionId !== 'string' && target.customerServiceConnectionId !== null) ||
-    (typeof target.customerServiceConnectionName !== 'string' && target.customerServiceConnectionName !== null) ||
+    (typeof target.customerServiceConnectionId !== 'string' &&
+      target.customerServiceConnectionId !== null) ||
+    (typeof target.customerServiceConnectionName !== 'string' &&
+      target.customerServiceConnectionName !== null) ||
     (typeof target.remoteGroupId !== 'string' && target.remoteGroupId !== null) ||
     (typeof target.remoteGroupName !== 'string' && target.remoteGroupName !== null) ||
     typeof target.sortOrder !== 'number' ||
@@ -173,7 +182,11 @@ function parseTargetEnvelope(value: unknown): AdminConversionTarget {
   return parseTarget(asRecord(value)?.target);
 }
 
-function parseList<T>(value: unknown, key: 'groups' | 'targets', parser: (item: unknown) => T): T[] {
+function parseList<T>(
+  value: unknown,
+  key: 'groups' | 'targets',
+  parser: (item: unknown) => T,
+): T[] {
   const envelope = asRecord(value);
   const list = envelope?.[key];
   if (!Array.isArray(list)) {
@@ -199,8 +212,8 @@ export function fetchConversionGroups(
   sectionId: string,
   scope: ConversionScope = 'active',
 ): Promise<AdminConversionGroup[]> {
-  return requestJson(`${basePath(sectionId)}?scope=${encodeURIComponent(scope)}`).then((value) =>
-    parseList(value, 'groups', parseGroup),
+  return requestJson(`${basePath(sectionId)}?scope=${encodeURIComponent(scope)}`).then(
+    (value) => parseList(value, 'groups', parseGroup),
   );
 }
 
@@ -216,7 +229,9 @@ export function updateConversionGroup(
   groupId: string,
   input: ConversionGroupInput,
 ): Promise<AdminConversionGroup> {
-  return writeRequest(groupPath(sectionId, groupId), 'PUT', input).then(parseGroupEnvelope);
+  return writeRequest(groupPath(sectionId, groupId), 'PUT', input).then(
+    parseGroupEnvelope,
+  );
 }
 
 export function deleteConversionGroup(
@@ -230,13 +245,22 @@ export function restoreConversionGroup(
   sectionId: string,
   groupId: string,
 ): Promise<AdminConversionGroup> {
-  return writeRequest(`${groupPath(sectionId, groupId)}/restore`, 'POST').then(parseGroupEnvelope);
+  return writeRequest(`${groupPath(sectionId, groupId)}/restore`, 'POST').then(
+    parseGroupEnvelope,
+  );
 }
 
-export async function batchDeleteConversionGroups(sectionId: string, ids: string[]): Promise<string[]> {
+export async function batchDeleteConversionGroups(
+  sectionId: string,
+  ids: string[],
+): Promise<string[]> {
   const value = await idempotentPost(`${basePath(sectionId)}/batch-delete`, { ids });
   const result = asRecord(value);
-  if (!result || !Array.isArray(result.deletedIds) || !result.deletedIds.every((id) => typeof id === 'string')) {
+  if (
+    !result ||
+    !Array.isArray(result.deletedIds) ||
+    !result.deletedIds.every((id) => typeof id === 'string')
+  ) {
     throw new AdminApiError(500, 'INVALID_RESPONSE', '批量删除返回数据无效。');
   }
   return result.deletedIds;
@@ -246,7 +270,9 @@ export async function reorderConversionGroups(
   sectionId: string,
   items: Array<{ id: string; sortOrder: number }>,
 ): Promise<void> {
-  const result = asRecord(await idempotentPost(`${basePath(sectionId)}/reorder`, { items }));
+  const result = asRecord(
+    await idempotentPost(`${basePath(sectionId)}/reorder`, { items }),
+  );
   if (!result || result.reordered !== true) {
     throw new AdminApiError(500, 'INVALID_RESPONSE', '分组排序返回数据无效。');
   }
@@ -256,7 +282,9 @@ export function previewRotation(
   sectionId: string,
   groupId: string,
 ): Promise<AdminConversionTarget> {
-  return writeRequest(`${groupPath(sectionId, groupId)}/rotate-preview`, 'POST').then(parseTargetEnvelope);
+  return writeRequest(`${groupPath(sectionId, groupId)}/rotate-preview`, 'POST').then(
+    parseTargetEnvelope,
+  );
 }
 
 export function fetchConversionTargets(
@@ -264,9 +292,9 @@ export function fetchConversionTargets(
   groupId: string,
   scope: ConversionScope = 'active',
 ): Promise<AdminConversionTarget[]> {
-  return requestJson(`${targetPath(sectionId, groupId)}?scope=${encodeURIComponent(scope)}`).then((value) =>
-    parseList(value, 'targets', parseTarget),
-  );
+  return requestJson(
+    `${targetPath(sectionId, groupId)}?scope=${encodeURIComponent(scope)}`,
+  ).then((value) => parseList(value, 'targets', parseTarget));
 }
 
 export function createConversionTarget(
@@ -274,7 +302,9 @@ export function createConversionTarget(
   groupId: string,
   input: ConversionTargetInput,
 ): Promise<AdminConversionTarget> {
-  return writeRequest(targetPath(sectionId, groupId), 'POST', input).then(parseTargetEnvelope);
+  return writeRequest(targetPath(sectionId, groupId), 'POST', input).then(
+    parseTargetEnvelope,
+  );
 }
 
 export function updateConversionTarget(
@@ -283,7 +313,9 @@ export function updateConversionTarget(
   targetId: string,
   input: ConversionTargetInput,
 ): Promise<AdminConversionTarget> {
-  return writeRequest(targetPath(sectionId, groupId, targetId), 'PUT', input).then(parseTargetEnvelope);
+  return writeRequest(targetPath(sectionId, groupId, targetId), 'PUT', input).then(
+    parseTargetEnvelope,
+  );
 }
 
 export function deleteConversionTarget(
@@ -291,7 +323,9 @@ export function deleteConversionTarget(
   groupId: string,
   targetId: string,
 ): Promise<AdminConversionTarget> {
-  return writeRequest(targetPath(sectionId, groupId, targetId), 'DELETE').then(parseTargetEnvelope);
+  return writeRequest(targetPath(sectionId, groupId, targetId), 'DELETE').then(
+    parseTargetEnvelope,
+  );
 }
 
 export function restoreConversionTarget(
@@ -299,7 +333,9 @@ export function restoreConversionTarget(
   groupId: string,
   targetId: string,
 ): Promise<AdminConversionTarget> {
-  return writeRequest(`${targetPath(sectionId, groupId, targetId)}/restore`, 'POST').then(parseTargetEnvelope);
+  return writeRequest(`${targetPath(sectionId, groupId, targetId)}/restore`, 'POST').then(
+    parseTargetEnvelope,
+  );
 }
 
 export async function batchDeleteConversionTargets(
@@ -307,9 +343,15 @@ export async function batchDeleteConversionTargets(
   groupId: string,
   ids: string[],
 ): Promise<string[]> {
-  const value = await idempotentPost(`${targetPath(sectionId, groupId)}/batch-delete`, { ids });
+  const value = await idempotentPost(`${targetPath(sectionId, groupId)}/batch-delete`, {
+    ids,
+  });
   const result = asRecord(value);
-  if (!result || !Array.isArray(result.deletedIds) || !result.deletedIds.every((id) => typeof id === 'string')) {
+  if (
+    !result ||
+    !Array.isArray(result.deletedIds) ||
+    !result.deletedIds.every((id) => typeof id === 'string')
+  ) {
     throw new AdminApiError(500, 'INVALID_RESPONSE', '入口批量删除返回数据无效。');
   }
   return result.deletedIds;
@@ -320,7 +362,9 @@ export async function reorderConversionTargets(
   groupId: string,
   items: Array<{ id: string; sortOrder: number }>,
 ): Promise<void> {
-  const result = asRecord(await idempotentPost(`${targetPath(sectionId, groupId)}/reorder`, { items }));
+  const result = asRecord(
+    await idempotentPost(`${targetPath(sectionId, groupId)}/reorder`, { items }),
+  );
   if (!result || result.reordered !== true) {
     throw new AdminApiError(500, 'INVALID_RESPONSE', '入口排序返回数据无效。');
   }

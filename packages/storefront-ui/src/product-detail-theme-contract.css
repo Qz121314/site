@@ -22,7 +22,8 @@
   --theme-detail-cta-color: #fff;
   --theme-detail-cta-surface: color-mix(in srgb, var(--surface) 96%, transparent);
   --theme-detail-cta-shadow: 0 10px 24px color-mix(in srgb, var(--brand) 22%, transparent);
-  --theme-detail-cta-bar-shadow: 0 -8px 24px color-mix(in srgb, var(--text) 6%, transparent);
+  --theme-detail-cta-bar-shadow: 0 -8px 24px
+    color-mix(in srgb, var(--text) 6%, transparent);
 }
 
 :is(html, .storefront-theme-root)[data-density='compact'] {
@@ -33,7 +34,11 @@
 }
 
 :is(html, .storefront-theme-root)[data-density='comfortable'],
-.storefront-theme-root:is([data-theme='noir'], [data-theme='saas'], [data-theme='travel']) {
+.storefront-theme-root:is(
+  [data-theme='noir'],
+  [data-theme='saas'],
+  [data-theme='travel']
+) {
   --theme-detail-gap: 22px;
   --theme-detail-panel-padding: 21px;
   --theme-detail-mobile-panel-padding: 18px;
@@ -50,12 +55,20 @@
 :is(html, .storefront-theme-root)[data-theme='noir'] {
   --theme-detail-media-radius: 22px;
   --theme-detail-panel-radius: 22px;
-  --theme-detail-panel-background: color-mix(in srgb, var(--surface) 94%, var(--brand) 6%);
+  --theme-detail-panel-background: color-mix(
+    in srgb,
+    var(--surface) 94%,
+    var(--brand) 6%
+  );
   --theme-detail-panel-border: color-mix(in srgb, var(--line) 76%, var(--brand) 24%);
   --theme-detail-panel-shadow: 0 14px 34px rgb(0 0 0 / 24%);
   --theme-detail-media-background: color-mix(in srgb, var(--surface-soft) 92%, black 8%);
   --theme-detail-media-shadow: 0 16px 40px rgb(0 0 0 / 26%);
-  --theme-detail-meta-background: color-mix(in srgb, var(--surface-soft) 88%, var(--brand) 12%);
+  --theme-detail-meta-background: color-mix(
+    in srgb,
+    var(--surface-soft) 88%,
+    var(--brand) 12%
+  );
   --theme-detail-cta-surface: color-mix(in srgb, var(--surface) 92%, transparent);
 }
 
@@ -63,10 +76,18 @@
   --theme-detail-gap: 16px;
   --theme-detail-media-radius: 14px;
   --theme-detail-panel-radius: 14px;
-  --theme-detail-panel-background: color-mix(in srgb, var(--surface) 92%, var(--brand) 8%);
+  --theme-detail-panel-background: color-mix(
+    in srgb,
+    var(--surface) 92%,
+    var(--brand) 8%
+  );
   --theme-detail-panel-border: color-mix(in srgb, var(--line) 66%, var(--brand) 34%);
   --theme-detail-panel-shadow: 0 9px 26px rgb(0 0 0 / 22%);
-  --theme-detail-meta-background: color-mix(in srgb, var(--surface-soft) 88%, var(--brand) 12%);
+  --theme-detail-meta-background: color-mix(
+    in srgb,
+    var(--surface-soft) 88%,
+    var(--brand) 12%
+  );
   --theme-detail-cta-radius: 12px;
   --theme-detail-cta-shadow: 0 10px 28px color-mix(in srgb, var(--brand) 30%, transparent);
 }
@@ -86,7 +107,11 @@
   --theme-detail-media-ratio: 4 / 3;
   --theme-detail-media-radius: 26px;
   --theme-detail-panel-radius: 24px;
-  --theme-detail-panel-background: color-mix(in srgb, var(--surface) 96%, var(--surface-soft) 4%);
+  --theme-detail-panel-background: color-mix(
+    in srgb,
+    var(--surface) 96%,
+    var(--surface-soft) 4%
+  );
   --theme-detail-panel-border: color-mix(in srgb, var(--line) 88%, transparent);
   --theme-detail-panel-shadow: 0 10px 28px rgb(57 72 65 / 9%);
   --theme-detail-media-shadow: 0 12px 30px rgb(57 72 65 / 10%);
@@ -100,20 +125,23 @@
   --theme-detail-panel-background: color-mix(in srgb, var(--surface) 80%, transparent);
   --theme-detail-panel-border: color-mix(in srgb, var(--line) 68%, var(--brand) 32%);
   --theme-detail-panel-shadow: 0 12px 32px rgb(0 0 0 / 24%);
-  --theme-detail-media-background: color-mix(in srgb, var(--surface-soft) 84%, transparent);
+  --theme-detail-media-background: color-mix(
+    in srgb,
+    var(--surface-soft) 84%,
+    transparent
+  );
   --theme-detail-media-shadow: 0 14px 34px rgb(0 0 0 / 24%);
-  --theme-detail-meta-background: color-mix(in srgb, var(--surface-soft) 82%, transparent);
+  --theme-detail-meta-background: color-mix(
+    in srgb,
+    var(--surface-soft) 82%,
+    transparent
+  );
   --theme-detail-cta-surface: color-mix(in srgb, var(--surface) 82%, transparent);
 }
 
-:is(html, .storefront-theme-root)[data-theme='tech'] :is(
-  .product-detail-summary,
-  .product-detail-body,
-  .product-detail-mobile-action
-),
-:is(html, .storefront-theme-root)[data-theme='noir'] :is(
-  .product-detail-summary,
-  .product-detail-mobile-action
-) {
+:is(html, .storefront-theme-root)[data-theme='tech']
+  :is(.product-detail-summary, .product-detail-body, .product-detail-mobile-action),
+:is(html, .storefront-theme-root)[data-theme='noir']
+  :is(.product-detail-summary, .product-detail-mobile-action) {
   backdrop-filter: blur(18px);
 }

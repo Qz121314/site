@@ -1,9 +1,5 @@
 import type { FormEvent } from 'react';
-import type {
-  AdminConversionGroup,
-  ConversionGroupInput,
-  ConversionMode,
-} from './api';
+import type { AdminConversionGroup, ConversionGroupInput, ConversionMode } from './api';
 
 type Props = {
   sectionName: string;
@@ -16,18 +12,19 @@ type Props = {
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 };
 
-const modeOptions: Array<{ value: ConversionMode; title: string; description: string }> = [
-  {
-    value: 'customer_service',
-    title: '在线客服分组',
-    description: '线下服务 CTA 从多个客服入口中轮换。',
-  },
-  {
-    value: 'link',
-    title: '链接分组',
-    description: '线上服务 CTA 从多个外部链接中轮换。',
-  },
-];
+const modeOptions: Array<{ value: ConversionMode; title: string; description: string }> =
+  [
+    {
+      value: 'customer_service',
+      title: '在线客服分组',
+      description: '线下服务 CTA 从多个客服入口中轮换。',
+    },
+    {
+      value: 'link',
+      title: '链接分组',
+      description: '线上服务 CTA 从多个外部链接中轮换。',
+    },
+  ];
 
 export function ConversionGroupEditorDialog({
   sectionName,
@@ -62,7 +59,11 @@ export function ConversionGroupEditorDialog({
         </div>
 
         <form className="conversion-editor-form" onSubmit={onSubmit}>
-          {errorMessage ? <div className="notice notice-error" role="alert">{errorMessage}</div> : null}
+          {errorMessage ? (
+            <div className="notice notice-error" role="alert">
+              {errorMessage}
+            </div>
+          ) : null}
 
           <label>
             <span>分组名称</span>
@@ -108,7 +109,9 @@ export function ConversionGroupEditorDialog({
               required
               maxLength={80}
               placeholder={form.mode === 'link' ? '例如：Book Now' : '例如：Contact Us'}
-              onChange={(event) => onFormChange({ ...form, buttonLabel: event.target.value })}
+              onChange={(event) =>
+                onFormChange({ ...form, buttonLabel: event.target.value })
+              }
             />
           </label>
 
@@ -135,12 +138,19 @@ export function ConversionGroupEditorDialog({
             <input
               type="checkbox"
               checked={form.isEnabled}
-              onChange={(event) => onFormChange({ ...form, isEnabled: event.target.checked })}
+              onChange={(event) =>
+                onFormChange({ ...form, isEnabled: event.target.checked })
+              }
             />
           </label>
 
           <div className="admin-dialog-actions">
-            <button className="secondary-button" type="button" disabled={saving} onClick={onClose}>
+            <button
+              className="secondary-button"
+              type="button"
+              disabled={saving}
+              onClick={onClose}
+            >
               取消
             </button>
             <button className="primary-button" type="submit" disabled={saving}>

@@ -72,7 +72,10 @@ function readJpegDimensions(bytes: Uint8Array): { width: number; height: number 
       (marker >= 0xc9 && marker <= 0xcb) ||
       (marker >= 0xcd && marker <= 0xcf);
     if (isStartOfFrame && segmentLength >= 7) {
-      return { width: uint16Big(bytes, offset + 5), height: uint16Big(bytes, offset + 3) };
+      return {
+        width: uint16Big(bytes, offset + 5),
+        height: uint16Big(bytes, offset + 3),
+      };
     }
     offset += segmentLength;
   }
@@ -80,7 +83,11 @@ function readJpegDimensions(bytes: Uint8Array): { width: number; height: number 
 }
 
 function readWebpDimensions(bytes: Uint8Array): { width: number; height: number } | null {
-  if (bytes.length < 30 || ascii(bytes, 0, 4) !== 'RIFF' || ascii(bytes, 8, 4) !== 'WEBP') {
+  if (
+    bytes.length < 30 ||
+    ascii(bytes, 0, 4) !== 'RIFF' ||
+    ascii(bytes, 8, 4) !== 'WEBP'
+  ) {
     return null;
   }
   const chunk = ascii(bytes, 12, 4);
@@ -113,16 +120,23 @@ function readWebpDimensions(bytes: Uint8Array): { width: number; height: number 
 }
 
 function readDimensions(bytes: Uint8Array, mimeType: string) {
-  return mimeType === 'image/jpeg' ? readJpegDimensions(bytes) : readWebpDimensions(bytes);
+  return mimeType === 'image/jpeg'
+    ? readJpegDimensions(bytes)
+    : readWebpDimensions(bytes);
 }
 
 function sanitizeFileName(value: string): string {
-  const normalized = value.trim().replace(/[\\/\0]/g, '-').replace(/\s+/g, ' ');
+  const normalized = value
+    .trim()
+    .replace(/[\\/\0]/g, '-')
+    .replace(/\s+/g, ' ');
   return normalized.slice(0, 180) || 'branding-image';
 }
 
 function toHex(buffer: ArrayBuffer): string {
-  return [...new Uint8Array(buffer)].map((byte) => byte.toString(16).padStart(2, '0')).join('');
+  return [...new Uint8Array(buffer)]
+    .map((byte) => byte.toString(16).padStart(2, '0'))
+    .join('');
 }
 
 function toMedia(row: MediaAssetRow, mediaBaseUrl: string | null): BrandingMediaRecord {
@@ -156,7 +170,12 @@ export async function uploadBrandingImage(
   file: File,
 ): Promise<BrandingImageUploadResult> {
   if (kind !== 'logo' && kind !== 'section-icon') {
-    return { ok: false, field: 'kind', code: 'BRANDING_KIND_INVALID', message: '图片用途无效。' };
+    return {
+      ok: false,
+      field: 'kind',
+      code: 'BRANDING_KIND_INVALID',
+      message: '图片用途无效。',
+    };
   }
 
   const mimeType = file.type.toLowerCase();

@@ -30,8 +30,7 @@ type FaqRow = {
 };
 
 type ValidationResult =
-  | { ok: true; value: FaqInput }
-  | { ok: false; field: string; message: string };
+  { ok: true; value: FaqInput } | { ok: false; field: string; message: string };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -102,7 +101,10 @@ const FAQ_SELECT = `SELECT
   id, question, answer, sort_order, is_enabled, created_at, updated_at, deleted_at
 FROM faqs`;
 
-export async function listFaqs(db: D1Database, scope: FaqScope = 'active'): Promise<FaqRecord[]> {
+export async function listFaqs(
+  db: D1Database,
+  scope: FaqScope = 'active',
+): Promise<FaqRecord[]> {
   const deletedClause =
     scope === 'active'
       ? 'WHERE deleted_at IS NULL'

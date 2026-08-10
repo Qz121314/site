@@ -1,6 +1,6 @@
 :root {
   font-family:
-    Inter, "PingFang SC", "Microsoft YaHei", ui-sans-serif, system-ui, sans-serif;
+    Inter, 'PingFang SC', 'Microsoft YaHei', ui-sans-serif, system-ui, sans-serif;
   color: #172033;
   background: #f4f6f9;
   font-synthesis: none;
@@ -42,8 +42,7 @@ input:disabled {
   place-items: center;
   padding: 24px;
   background:
-    radial-gradient(circle at top left, rgb(255 90 31 / 12%), transparent 34rem),
-    #f4f6f9;
+    radial-gradient(circle at top left, rgb(255 90 31 / 12%), transparent 34rem), #f4f6f9;
 }
 
 .loading-shell {

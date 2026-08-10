@@ -3,14 +3,7 @@ import { getMediaFolder } from './media-folders';
 
 export type MediaKind = 'image' | 'animated_image' | 'video';
 export type MediaRole =
-  | 'general'
-  | 'product'
-  | 'logo'
-  | 'icon'
-  | 'favicon'
-  | 'hero'
-  | 'background'
-  | 'content';
+  'general' | 'product' | 'logo' | 'icon' | 'favicon' | 'hero' | 'background' | 'content';
 
 export type MediaCenterAsset = {
   id: string;
@@ -123,9 +116,13 @@ function ascii(bytes: Uint8Array, start: number, length: number): string {
   return String.fromCharCode(...bytes.slice(start, start + length));
 }
 
-function readImageDimensions(bytes: Uint8Array, mimeType: string): { width: number; height: number } | null {
+function readImageDimensions(
+  bytes: Uint8Array,
+  mimeType: string,
+): { width: number; height: number } | null {
   if (mimeType === 'image/png') {
-    if (bytes.length < 24 || bytes[0] !== 0x89 || ascii(bytes, 1, 3) !== 'PNG') return null;
+    if (bytes.length < 24 || bytes[0] !== 0x89 || ascii(bytes, 1, 3) !== 'PNG')
+      return null;
     return { width: uint32Big(bytes, 16), height: uint32Big(bytes, 20) };
   }
 
@@ -156,7 +153,10 @@ function readImageDimensions(bytes: Uint8Array, mimeType: string): { width: numb
         (marker >= 0xc9 && marker <= 0xcb) ||
         (marker >= 0xcd && marker <= 0xcf);
       if (frame && segmentLength >= 7) {
-        return { width: uint16Big(bytes, offset + 5), height: uint16Big(bytes, offset + 3) };
+        return {
+          width: uint16Big(bytes, offset + 5),
+          height: uint16Big(bytes, offset + 3),
+        };
       }
       offset += segmentLength;
     }
@@ -164,15 +164,28 @@ function readImageDimensions(bytes: Uint8Array, mimeType: string): { width: numb
   }
 
   if (mimeType === 'image/webp') {
-    if (bytes.length < 30 || ascii(bytes, 0, 4) !== 'RIFF' || ascii(bytes, 8, 4) !== 'WEBP') {
+    if (
+      bytes.length < 30 ||
+      ascii(bytes, 0, 4) !== 'RIFF' ||
+      ascii(bytes, 8, 4) !== 'WEBP'
+    ) {
       return null;
     }
     const chunk = ascii(bytes, 12, 4);
     if (chunk === 'VP8X') {
       return { width: uint24Little(bytes, 24) + 1, height: uint24Little(bytes, 27) + 1 };
     }
-    if (chunk === 'VP8 ' && bytes.length >= 30 && bytes[23] === 0x9d && bytes[24] === 0x01 && bytes[25] === 0x2a) {
-      return { width: uint16Little(bytes, 26) & 0x3fff, height: uint16Little(bytes, 28) & 0x3fff };
+    if (
+      chunk === 'VP8 ' &&
+      bytes.length >= 30 &&
+      bytes[23] === 0x9d &&
+      bytes[24] === 0x01 &&
+      bytes[25] === 0x2a
+    ) {
+      return {
+        width: uint16Little(bytes, 26) & 0x3fff,
+        height: uint16Little(bytes, 28) & 0x3fff,
+      };
     }
     if (chunk === 'VP8L' && bytes.length >= 25 && bytes[20] === 0x2f) {
       const b1 = bytes[21]!;
@@ -212,17 +225,24 @@ function fileStem(value: string): string {
 }
 
 function toHex(buffer: ArrayBuffer): string {
-  return [...new Uint8Array(buffer)].map((byte) => byte.toString(16).padStart(2, '0')).join('');
+  return [...new Uint8Array(buffer)]
+    .map((byte) => byte.toString(16).padStart(2, '0'))
+    .join('');
 }
 
-function readOptionalMetric(value: FormDataEntryValue | null, max: number): number | null {
+function readOptionalMetric(
+  value: FormDataEntryValue | null,
+  max: number,
+): number | null {
   if (typeof value !== 'string' || value.trim() === '') return null;
   const parsed = Number(value);
   return Number.isInteger(parsed) && parsed >= 0 && parsed <= max ? parsed : null;
 }
 
 export function parseMediaRole(value: unknown): MediaRole | null {
-  return typeof value === 'string' && MEDIA_ROLES.has(value as MediaRole) ? (value as MediaRole) : null;
+  return typeof value === 'string' && MEDIA_ROLES.has(value as MediaRole)
+    ? (value as MediaRole)
+    : null;
 }
 
 function rolesMap(rows: RoleRow[]): Map<string, MediaRole[]> {
@@ -235,7 +255,11 @@ function rolesMap(rows: RoleRow[]): Map<string, MediaRole[]> {
   return map;
 }
 
-function mapMedia(row: MediaRow, roles: MediaRole[], mediaBaseUrl: string | null): MediaCenterAsset {
+function mapMedia(
+  row: MediaRow,
+  roles: MediaRole[],
+  mediaBaseUrl: string | null,
+): MediaCenterAsset {
   return {
     id: row.id,
     objectKey: row.object_key,
@@ -281,7 +305,12 @@ async function getMediaRow(db: D1Database, id: string): Promise<MediaRow | null>
     .first<MediaRow>();
 }
 
-async function addRole(db: D1Database, id: string, role: MediaRole, now: string): Promise<void> {
+async function addRole(
+  db: D1Database,
+  id: string,
+  role: MediaRole,
+  now: string,
+): Promise<void> {
   await db
     .prepare(
       `INSERT INTO media_asset_roles (media_asset_id, role, created_at)
@@ -304,7 +333,11 @@ async function findImageByHash(db: D1Database, hash: string): Promise<MediaRow |
 
 export async function listMediaCenterAssets(
   db: D1Database,
-  options: { kind?: MediaKind | null; role?: MediaRole | null; folderId?: string | null } = {},
+  options: {
+    kind?: MediaKind | null;
+    role?: MediaRole | null;
+    folderId?: string | null;
+  } = {},
 ): Promise<MediaCenterAsset[]> {
   const clauses = ["ma.status = 'ready'", 'ma.deleted_at IS NULL'];
   const bindings: string[] = [];
@@ -313,7 +346,9 @@ export async function listMediaCenterAssets(
     bindings.push(options.kind);
   }
   if (options.role) {
-    clauses.push('EXISTS (SELECT 1 FROM media_asset_roles rf WHERE rf.media_asset_id = ma.id AND rf.role = ?)');
+    clauses.push(
+      'EXISTS (SELECT 1 FROM media_asset_roles rf WHERE rf.media_asset_id = ma.id AND rf.role = ?)',
+    );
     bindings.push(options.role);
   }
   if (options.folderId) {
@@ -332,13 +367,19 @@ export async function listMediaCenterAssets(
       .bind(...bindings)
       .all<MediaRow>()
   ).results;
-  const roleRows = await getRoleRows(db, rows.map((row) => row.id));
+  const roleRows = await getRoleRows(
+    db,
+    rows.map((row) => row.id),
+  );
   const roleById = rolesMap(roleRows);
   const mediaBaseUrl = await getMediaBaseUrl(db);
   return rows.map((row) => mapMedia(row, roleById.get(row.id) ?? [], mediaBaseUrl));
 }
 
-export async function getMediaCenterAsset(db: D1Database, id: string): Promise<MediaCenterAsset | null> {
+export async function getMediaCenterAsset(
+  db: D1Database,
+  id: string,
+): Promise<MediaCenterAsset | null> {
   const row = await getMediaRow(db, id);
   if (!row) return null;
   const roles = rolesMap(await getRoleRows(db, [id])).get(id) ?? [];
@@ -353,15 +394,31 @@ export async function uploadMediaCenterAsset(
   const file = formData.get('file');
   const role = parseMediaRole(formData.get('role'));
   const rawFolderId = formData.get('folderId');
-  const folderId = typeof rawFolderId === 'string' && rawFolderId.trim() ? rawFolderId.trim() : null;
+  const folderId =
+    typeof rawFolderId === 'string' && rawFolderId.trim() ? rawFolderId.trim() : null;
   if (!(file instanceof File)) {
-    return { ok: false, field: 'file', code: 'MEDIA_FILE_REQUIRED', message: '请选择需要上传的素材文件。' };
+    return {
+      ok: false,
+      field: 'file',
+      code: 'MEDIA_FILE_REQUIRED',
+      message: '请选择需要上传的素材文件。',
+    };
   }
   if (!role) {
-    return { ok: false, field: 'role', code: 'MEDIA_ROLE_INVALID', message: '请选择素材用途。' };
+    return {
+      ok: false,
+      field: 'role',
+      code: 'MEDIA_ROLE_INVALID',
+      message: '请选择素材用途。',
+    };
   }
   if (folderId && (folderId.length > 100 || !(await getMediaFolder(db, folderId)))) {
-    return { ok: false, field: 'folderId', code: 'MEDIA_FOLDER_INVALID', message: '所选素材文件夹不存在。' };
+    return {
+      ok: false,
+      field: 'folderId',
+      code: 'MEDIA_FOLDER_INVALID',
+      message: '所选素材文件夹不存在。',
+    };
   }
 
   const type = MEDIA_TYPES[file.type.toLowerCase()];
@@ -379,21 +436,35 @@ export async function uploadMediaCenterAsset(
       ok: false,
       field: 'file',
       code: 'MEDIA_SIZE_INVALID',
-      message: type.kind === 'video' ? '视频素材不能超过 60 MB。' : '图片或 GIF 不能超过 20 MB。',
+      message:
+        type.kind === 'video'
+          ? '视频素材不能超过 60 MB。'
+          : '图片或 GIF 不能超过 20 MB。',
     };
   }
 
   let width = readOptionalMetric(formData.get('width'), MAX_IMAGE_EDGE);
   let height = readOptionalMetric(formData.get('height'), MAX_IMAGE_EDGE);
-  const durationMs = type.kind === 'video' ? readOptionalMetric(formData.get('durationMs'), 24 * 60 * 60 * 1000) : null;
+  const durationMs =
+    type.kind === 'video'
+      ? readOptionalMetric(formData.get('durationMs'), 24 * 60 * 60 * 1000)
+      : null;
   let imageData: ArrayBuffer | null = null;
   let contentHash: string | null = null;
 
   if (type.kind !== 'video') {
     imageData = await file.arrayBuffer();
-    const dimensions = readImageDimensions(new Uint8Array(imageData), file.type.toLowerCase());
+    const dimensions = readImageDimensions(
+      new Uint8Array(imageData),
+      file.type.toLowerCase(),
+    );
     if (!dimensions) {
-      return { ok: false, field: 'file', code: 'MEDIA_CONTENT_INVALID', message: '无法识别图片或 GIF 内容。' };
+      return {
+        ok: false,
+        field: 'file',
+        code: 'MEDIA_CONTENT_INVALID',
+        message: '无法识别图片或 GIF 内容。',
+      };
     }
     const maximumEdge = type.kind === 'image' ? MAX_STATIC_IMAGE_EDGE : MAX_IMAGE_EDGE;
     if (
@@ -406,9 +477,10 @@ export async function uploadMediaCenterAsset(
         ok: false,
         field: 'file',
         code: 'MEDIA_DIMENSIONS_INVALID',
-        message: type.kind === 'image'
-          ? `压缩后的静态图片最长边不能超过 ${MAX_STATIC_IMAGE_EDGE} 像素。`
-          : '图片宽高必须在 16 到 12000 像素之间。',
+        message:
+          type.kind === 'image'
+            ? `压缩后的静态图片最长边不能超过 ${MAX_STATIC_IMAGE_EDGE} 像素。`
+            : '图片宽高必须在 16 到 12000 像素之间。',
       };
     }
     width = dimensions.width;
@@ -419,7 +491,9 @@ export async function uploadMediaCenterAsset(
       const now = new Date().toISOString();
       await db.batch([
         db
-          .prepare('UPDATE media_assets SET folder_id = COALESCE(?, folder_id), updated_at = ? WHERE id = ?')
+          .prepare(
+            'UPDATE media_assets SET folder_id = COALESCE(?, folder_id), updated_at = ? WHERE id = ?',
+          )
           .bind(folderId, now, existing.id),
         db
           .prepare(
@@ -457,9 +531,7 @@ export async function uploadMediaCenterAsset(
       ...(typeof compressionProfile === 'string' && compressionProfile
         ? { compressionProfile }
         : {}),
-      ...(typeof sourceByteSize === 'string' && sourceByteSize
-        ? { sourceByteSize }
-        : {}),
+      ...(typeof sourceByteSize === 'string' && sourceByteSize ? { sourceByteSize } : {}),
     },
   });
 
@@ -502,7 +574,10 @@ export async function uploadMediaCenterAsset(
       if (raced) {
         await addRole(db, raced.id, role, now);
         if (folderId) {
-          await db.prepare('UPDATE media_assets SET folder_id = ?, updated_at = ? WHERE id = ?').bind(folderId, now, raced.id).run();
+          await db
+            .prepare('UPDATE media_assets SET folder_id = ?, updated_at = ? WHERE id = ?')
+            .bind(folderId, now, raced.id)
+            .run();
         }
         const media = await getMediaCenterAsset(db, raced.id);
         if (media) return { ok: true, media, reused: true };

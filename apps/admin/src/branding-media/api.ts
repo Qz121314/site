@@ -63,7 +63,9 @@ export async function uploadBrandingImage(
     body: formData,
   });
   const contentType = response.headers.get('content-type') ?? '';
-  const body: unknown = contentType.includes('application/json') ? await response.json() : null;
+  const body: unknown = contentType.includes('application/json')
+    ? await response.json()
+    : null;
   if (!response.ok) {
     const envelope = asRecord(body) as ErrorEnvelope | null;
     throw new AdminApiError(

@@ -2,10 +2,8 @@
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "service-catalog-site",
   "main": "apps/worker/src/index.ts",
-  "compatibility_date": "2026-08-06",
-  "compatibility_flags": [
-    "nodejs_compat"
-  ],
+  "compatibility_date": "2026-08-10",
+  "compatibility_flags": ["nodejs_compat"],
   "workers_dev": true,
   "keep_vars": true,
   "assets": {
@@ -18,30 +16,34 @@
       "/api/*",
       "/go/*",
       "/public/*",
+      "/_media/*",
       "!/sections/*",
-      "!/products/*"
-    ]
+      "!/products/*",
+    ],
   },
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "service-catalog-site-db",
       "database_id": "b4282664-c690-4a38-9b2e-32e902c51442",
-      "migrations_dir": "./migrations"
-    }
+      "migrations_dir": "./migrations",
+    },
   ],
   "r2_buckets": [
     {
       "binding": "ASSETS_BUCKET",
-      "bucket_name": "service-catalog-site-assets"
-    }
+      "bucket_name": "service-catalog-site-assets",
+    },
   ],
+  "version_metadata": {
+    "binding": "CF_VERSION_METADATA",
+  },
   "vars": {
     "ENVIRONMENT": "production",
-    "APP_VERSION": "0.1.0"
+    "APP_VERSION": "0.1.0",
   },
   "observability": {
     "enabled": true,
-    "head_sampling_rate": 1
-  }
+    "head_sampling_rate": 1,
+  },
 }

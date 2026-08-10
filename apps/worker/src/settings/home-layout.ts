@@ -40,7 +40,11 @@ function normalizeIds(
     }
     const id = item.trim();
     if (!id || id.length > 120 || seen.has(id)) {
-      return { ok: false, field: `${field}.${index}`, message: '首页分区标识无效或重复。' };
+      return {
+        ok: false,
+        field: `${field}.${index}`,
+        message: '首页分区标识无效或重复。',
+      };
     }
     seen.add(id);
     normalized.push(id);
@@ -54,7 +58,11 @@ export function validateHomeLayoutInput(value: unknown): ValidationResult {
     return { ok: false, field: 'homeLayout', message: '首页布局配置无效。' };
   }
 
-  const shortcuts = normalizeIds(value.shortcutSectionIds, 'homeLayout.shortcutSectionIds', 7);
+  const shortcuts = normalizeIds(
+    value.shortcutSectionIds,
+    'homeLayout.shortcutSectionIds',
+    7,
+  );
   if (!shortcuts.ok) return shortcuts;
   const recommendations = normalizeIds(
     value.recommendationSectionIds,

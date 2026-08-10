@@ -10,13 +10,21 @@ import {
   renameMediaFolder,
 } from '../media/media-folders';
 import type { AppEnvironment } from '../types';
-import { hasAdminRequestHeader, isRecord, jsonBodyError, readJsonBody } from './admin-section-shared';
+import {
+  hasAdminRequestHeader,
+  isRecord,
+  jsonBodyError,
+  readJsonBody,
+} from './admin-section-shared';
 
 const MAX_MOVE_SIZE = 100;
 
 function readIds(value: unknown): string[] | null {
-  if (!Array.isArray(value) || value.length < 1 || value.length > MAX_MOVE_SIZE) return null;
-  const ids = value.filter((id): id is string => typeof id === 'string' && id.length > 0 && id.length <= 100);
+  if (!Array.isArray(value) || value.length < 1 || value.length > MAX_MOVE_SIZE)
+    return null;
+  const ids = value.filter(
+    (id): id is string => typeof id === 'string' && id.length > 0 && id.length <= 100,
+  );
   if (ids.length !== value.length || new Set(ids).size !== ids.length) return null;
   return ids;
 }
@@ -42,7 +50,13 @@ adminMediaFolderRoutes.post('/folders', async (context) => {
   }
   const name = isRecord(body) ? normalizeMediaFolderName(body.name) : null;
   if (!name) {
-    return apiError(context, 400, 'MEDIA_FOLDER_NAME_INVALID', '文件夹名称需要 1 到 80 个字符。', { field: 'name' });
+    return apiError(
+      context,
+      400,
+      'MEDIA_FOLDER_NAME_INVALID',
+      '文件夹名称需要 1 到 80 个字符。',
+      { field: 'name' },
+    );
   }
 
   const now = new Date().toISOString();
@@ -71,13 +85,25 @@ adminMediaFolderRoutes.put('/folders/:id', async (context) => {
   }
   const name = isRecord(body) ? normalizeMediaFolderName(body.name) : null;
   if (!name) {
-    return apiError(context, 400, 'MEDIA_FOLDER_NAME_INVALID', '文件夹名称需要 1 到 80 个字符。', { field: 'name' });
+    return apiError(
+      context,
+      400,
+      'MEDIA_FOLDER_NAME_INVALID',
+      '文件夹名称需要 1 到 80 个字符。',
+      { field: 'name' },
+    );
   }
 
   const now = new Date().toISOString();
   try {
-    const folder = await renameMediaFolder(context.env.DB, context.req.param('id'), name, now);
-    if (!folder) return apiError(context, 404, 'MEDIA_FOLDER_NOT_FOUND', '素材文件夹不存在。');
+    const folder = await renameMediaFolder(
+      context.env.DB,
+      context.req.param('id'),
+      name,
+      now,
+    );
+    if (!folder)
+      return apiError(context, 404, 'MEDIA_FOLDER_NOT_FOUND', '素材文件夹不存在。');
     await writeAuditLog(context.env.DB, {
       action: 'media_folder.renamed',
       entityType: 'media_folder',
@@ -87,7 +113,13 @@ adminMediaFolderRoutes.put('/folders/:id', async (context) => {
     });
     return context.json({ folder });
   } catch {
-    return apiError(context, 409, 'MEDIA_FOLDER_NAME_EXISTS', '已经存在同名素材文件夹。', { field: 'name' });
+    return apiError(
+      context,
+      409,
+      'MEDIA_FOLDER_NAME_EXISTS',
+      '已经存在同名素材文件夹。',
+      { field: 'name' },
+    );
   }
 });
 
@@ -123,20 +155,28 @@ adminMediaFolderRoutes.post('/folders/move', async (context) => {
   } catch (error) {
     return jsonBodyError(context, error);
   }
-  if (!isRecord(body)) return apiError(context, 400, 'MEDIA_MOVE_INVALID', '素材移动参数无效。');
+  if (!isRecord(body))
+    return apiError(context, 400, 'MEDIA_MOVE_INVALID', '素材移动参数无效。');
   const ids = readIds(body.ids);
-  const folderId = body.folderId === null || body.folderId === ''
-    ? null
-    : typeof body.folderId === 'string' && body.folderId.length <= 100
-      ? body.folderId
-      : undefined;
+  const folderId =
+    body.folderId === null || body.folderId === ''
+      ? null
+      : typeof body.folderId === 'string' && body.folderId.length <= 100
+        ? body.folderId
+        : undefined;
   if (!ids || folderId === undefined) {
-    return apiError(context, 400, 'MEDIA_MOVE_INVALID', `请选择 1 到 ${MAX_MOVE_SIZE} 个素材并指定目标文件夹。`);
+    return apiError(
+      context,
+      400,
+      'MEDIA_MOVE_INVALID',
+      `请选择 1 到 ${MAX_MOVE_SIZE} 个素材并指定目标文件夹。`,
+    );
   }
 
   const now = new Date().toISOString();
   const movedCount = await moveMediaAssetsToFolder(context.env.DB, ids, folderId, now);
-  if (movedCount < 0) return apiError(context, 404, 'MEDIA_FOLDER_NOT_FOUND', '目标素材文件夹不存在。');
+  if (movedCount < 0)
+    return apiError(context, 404, 'MEDIA_FOLDER_NOT_FOUND', '目标素材文件夹不存在。');
 
   await writeAuditLog(context.env.DB, {
     action: 'media.moved',

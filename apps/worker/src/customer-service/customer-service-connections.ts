@@ -86,7 +86,11 @@ function readText(
       : { ok: true as const, value: null };
   }
   if (normalized.length > maxLength) {
-    return { ok: false as const, field, message: `${label}不能超过 ${maxLength} 个字符。` };
+    return {
+      ok: false as const,
+      field,
+      message: `${label}不能超过 ${maxLength} 个字符。`,
+    };
   }
   return { ok: true as const, value: normalized };
 }
@@ -96,7 +100,9 @@ function isIpAddress(hostname: string): boolean {
   const parts = hostname.split('.');
   return (
     parts.length === 4 &&
-    parts.every((part) => /^\d{1,3}$/u.test(part) && Number(part) >= 0 && Number(part) <= 255)
+    parts.every(
+      (part) => /^\d{1,3}$/u.test(part) && Number(part) >= 0 && Number(part) <= 255,
+    )
   );
 }
 
@@ -110,10 +116,18 @@ function normalizeBaseUrl(value: unknown) {
     return { ok: false as const, field: 'baseUrl', message: 'API 根地址格式无效。' };
   }
   if (url.protocol !== 'https:') {
-    return { ok: false as const, field: 'baseUrl', message: '客服系统 API 必须使用 HTTPS。' };
+    return {
+      ok: false as const,
+      field: 'baseUrl',
+      message: '客服系统 API 必须使用 HTTPS。',
+    };
   }
   if (url.username || url.password || url.search || url.hash) {
-    return { ok: false as const, field: 'baseUrl', message: 'API 根地址不能包含账号、查询参数或锚点。' };
+    return {
+      ok: false as const,
+      field: 'baseUrl',
+      message: 'API 根地址不能包含账号、查询参数或锚点。',
+    };
   }
   const hostname = url.hostname.toLowerCase();
   if (
@@ -124,7 +138,11 @@ function normalizeBaseUrl(value: unknown) {
     !hostname.includes('.') ||
     isIpAddress(hostname)
   ) {
-    return { ok: false as const, field: 'baseUrl', message: '客服系统 API 必须使用公开 HTTPS 域名。' };
+    return {
+      ok: false as const,
+      field: 'baseUrl',
+      message: '客服系统 API 必须使用公开 HTTPS 域名。',
+    };
   }
   return { ok: true as const, value: url.toString().replace(/\/$/u, '') };
 }
@@ -360,6 +378,8 @@ export function isCustomerServiceConnectionConflict(error: unknown): boolean {
   return (
     error instanceof Error &&
     (error.message.includes('customer_service_connections_active_name_unique') ||
-      error.message.includes('UNIQUE constraint failed: customer_service_connections.name'))
+      error.message.includes(
+        'UNIQUE constraint failed: customer_service_connections.name',
+      ))
   );
 }

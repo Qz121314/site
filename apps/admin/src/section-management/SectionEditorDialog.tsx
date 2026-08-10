@@ -66,7 +66,11 @@ export function SectionEditorDialog({
         </div>
 
         <form className="section-editor-form" onSubmit={onSubmit}>
-          {errorMessage ? <div className="notice notice-error" role="alert">{errorMessage}</div> : null}
+          {errorMessage ? (
+            <div className="notice notice-error" role="alert">
+              {errorMessage}
+            </div>
+          ) : null}
 
           <label>
             <span>分区名称</span>
@@ -91,7 +95,9 @@ export function SectionEditorDialog({
               maxLength={280}
               rows={3}
               disabled={busy}
-              onChange={(event) => onFormChange({ ...form, description: event.target.value })}
+              onChange={(event) =>
+                onFormChange({ ...form, description: event.target.value })
+              }
             />
             <small>用于 Browse 分区列表，建议 1–2 行；留空时前端不显示简介。</small>
           </label>
@@ -103,12 +109,19 @@ export function SectionEditorDialog({
                 {iconPreviewUrl ? (
                   <img src={iconPreviewUrl} alt="分区图标预览" />
                 ) : (
-                  <span aria-hidden="true">{form.iconValue || sectionIconOptions[0]}</span>
+                  <span aria-hidden="true">
+                    {form.iconValue || sectionIconOptions[0]}
+                  </span>
                 )}
               </div>
               <div className="section-icon-upload-copy">
-                <strong>{iconPreviewUrl ? '当前使用图片图标' : '当前使用字符图标'}</strong>
-                <p>主要用于 Home 快捷分区入口。支持 JPG、PNG、WebP，也可从素材中心复用已有图片。</p>
+                <strong>
+                  {iconPreviewUrl ? '当前使用图片图标' : '当前使用字符图标'}
+                </strong>
+                <p>
+                  主要用于 Home 快捷分区入口。支持
+                  JPG、PNG、WebP，也可从素材中心复用已有图片。
+                </p>
                 {localIcon ? (
                   <small>
                     压缩后 {localIcon.width} × {localIcon.height} ·{' '}
@@ -130,13 +143,27 @@ export function SectionEditorDialog({
                         if (file) onSelectIconFile(file);
                       }}
                     />
-                    {processingIcon ? '浏览器压缩中…' : iconPreviewUrl ? '上传替换' : '上传图片图标'}
+                    {processingIcon
+                      ? '浏览器压缩中…'
+                      : iconPreviewUrl
+                        ? '上传替换'
+                        : '上传图片图标'}
                   </label>
-                  <button type="button" className="secondary-button" disabled={busy} onClick={onOpenMediaPicker}>
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    disabled={busy}
+                    onClick={onOpenMediaPicker}
+                  >
                     从素材中心选择
                   </button>
                   {iconPreviewUrl ? (
-                    <button type="button" className="secondary-button" disabled={busy} onClick={onRemoveImageIcon}>
+                    <button
+                      type="button"
+                      className="secondary-button"
+                      disabled={busy}
+                      onClick={onRemoveImageIcon}
+                    >
                       移除图片图标
                     </button>
                   ) : null}
@@ -156,14 +183,29 @@ export function SectionEditorDialog({
                 )}
               </div>
               <div className="section-icon-upload-copy">
-                <strong>{browseBackgroundPreviewUrl ? '已设置背景图' : '使用主题默认背景'}</strong>
-                <p>只用于 Browse 的详细分区卡片，不会显示在 Home 快捷入口，也不会替代产品封面。</p>
+                <strong>
+                  {browseBackgroundPreviewUrl ? '已设置背景图' : '使用主题默认背景'}
+                </strong>
+                <p>
+                  只用于 Browse 的详细分区卡片，不会显示在 Home
+                  快捷入口，也不会替代产品封面。
+                </p>
                 <div className="section-icon-upload-actions">
-                  <button type="button" className="secondary-button" disabled={busy} onClick={onOpenBrowseBackgroundPicker}>
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    disabled={busy}
+                    onClick={onOpenBrowseBackgroundPicker}
+                  >
                     从素材中心选择
                   </button>
                   {browseBackgroundPreviewUrl ? (
-                    <button type="button" className="secondary-button" disabled={busy} onClick={onRemoveBrowseBackground}>
+                    <button
+                      type="button"
+                      className="secondary-button"
+                      disabled={busy}
+                      onClick={onRemoveBrowseBackground}
+                    >
                       移除背景图
                     </button>
                   ) : null}
@@ -174,14 +216,18 @@ export function SectionEditorDialog({
 
           <fieldset>
             <legend>备用字符图标</legend>
-            <small className="section-icon-help">未上传图片图标时用于 Home 快捷入口；选择任意字符会切换回字符图标。</small>
+            <small className="section-icon-help">
+              未上传图片图标时用于 Home 快捷入口；选择任意字符会切换回字符图标。
+            </small>
             <div className="icon-picker">
               {sectionIconOptions.map((icon) => (
                 <button
                   key={icon}
                   type="button"
                   disabled={busy}
-                  className={!iconPreviewUrl && form.iconValue === icon ? 'is-selected' : undefined}
+                  className={
+                    !iconPreviewUrl && form.iconValue === icon ? 'is-selected' : undefined
+                  }
                   aria-label={`选择图标 ${icon}`}
                   onClick={() => onSelectFallbackIcon(icon)}
                 >
@@ -201,7 +247,9 @@ export function SectionEditorDialog({
               required
               value={form.sortOrder}
               disabled={busy}
-              onChange={(event) => onFormChange({ ...form, sortOrder: Number(event.target.value) })}
+              onChange={(event) =>
+                onFormChange({ ...form, sortOrder: Number(event.target.value) })
+              }
             />
             <small>数字越小越靠前，也可以在列表中使用上下移动。</small>
           </label>
@@ -215,12 +263,19 @@ export function SectionEditorDialog({
               type="checkbox"
               checked={form.isEnabled}
               disabled={busy}
-              onChange={(event) => onFormChange({ ...form, isEnabled: event.target.checked })}
+              onChange={(event) =>
+                onFormChange({ ...form, isEnabled: event.target.checked })
+              }
             />
           </label>
 
           <div className="admin-dialog-actions">
-            <button type="button" className="secondary-button" disabled={busy} onClick={onClose}>
+            <button
+              type="button"
+              className="secondary-button"
+              disabled={busy}
+              onClick={onClose}
+            >
               取消
             </button>
             <button type="submit" className="primary-button" disabled={busy}>

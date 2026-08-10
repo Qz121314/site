@@ -35,7 +35,10 @@ const emptyDraft: Draft = {
 };
 
 function isSessionError(error: unknown): boolean {
-  return error instanceof AdminApiError && (error.status === 401 || error.code === 'SESSION_INVALID');
+  return (
+    error instanceof AdminApiError &&
+    (error.status === 401 || error.code === 'SESSION_INVALID')
+  );
 }
 
 function sortConnections(items: CustomerServiceConnection[]) {
@@ -52,7 +55,10 @@ function toDraft(connection: CustomerServiceConnection): Draft {
   };
 }
 
-function toInput(draft: Draft, editing: CustomerServiceConnection | null): CustomerServiceConnectionInput {
+function toInput(
+  draft: Draft,
+  editing: CustomerServiceConnection | null,
+): CustomerServiceConnectionInput {
   const token = draft.apiToken.trim();
   return {
     name: draft.name.trim(),
@@ -66,12 +72,17 @@ function toInput(draft: Draft, editing: CustomerServiceConnection | null): Custo
 
 export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewProps) {
   const [scope, setScope] = useState<Scope>('active');
-  const [activeConnections, setActiveConnections] = useState<CustomerServiceConnection[]>([]);
-  const [trashConnections, setTrashConnections] = useState<CustomerServiceConnection[]>([]);
+  const [activeConnections, setActiveConnections] = useState<CustomerServiceConnection[]>(
+    [],
+  );
+  const [trashConnections, setTrashConnections] = useState<CustomerServiceConnection[]>(
+    [],
+  );
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [editingConnection, setEditingConnection] = useState<CustomerServiceConnection | null>(null);
+  const [editingConnection, setEditingConnection] =
+    useState<CustomerServiceConnection | null>(null);
   const [draft, setDraft] = useState<Draft>(emptyDraft);
   const [editorOpen, setEditorOpen] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -95,7 +106,9 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
     setLoading(true);
     setErrorMessage('');
     try {
-      setActiveConnections(sortConnections(await fetchCustomerServiceConnections('active')));
+      setActiveConnections(
+        sortConnections(await fetchCustomerServiceConnections('active')),
+      );
     } catch (error) {
       handleError(error);
     } finally {
@@ -132,7 +145,9 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
     if (next === 'trash') {
       setLoading(true);
       try {
-        setTrashConnections(sortConnections(await fetchCustomerServiceConnections('trash')));
+        setTrashConnections(
+          sortConnections(await fetchCustomerServiceConnections('trash')),
+        );
       } catch (error) {
         handleError(error);
       } finally {
@@ -170,7 +185,9 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
           toInput(draft, editingConnection),
         );
         setActiveConnections((current) =>
-          sortConnections(current.map((item) => (item.id === updated.id ? updated : item))),
+          sortConnections(
+            current.map((item) => (item.id === updated.id ? updated : item)),
+          ),
         );
         setSuccessMessage(`客服系统“${updated.name}”已更新。`);
       } else {
@@ -192,7 +209,9 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
     setSuccessMessage('');
     try {
       const result = await testCustomerServiceConnection(connection.id);
-      setSuccessMessage(`“${connection.name}”连接正常，读取到 ${result.groupCount} 个客服分组。`);
+      setSuccessMessage(
+        `“${connection.name}”连接正常，读取到 ${result.groupCount} 个客服分组。`,
+      );
     } catch (error) {
       handleError(error);
     } finally {
@@ -232,7 +251,9 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
         return next;
       });
       setPendingDeleteIds([]);
-      setSuccessMessage(ids.length === 1 ? '客服系统已移入回收站。' : `已删除 ${ids.length} 个客服系统。`);
+      setSuccessMessage(
+        ids.length === 1 ? '客服系统已移入回收站。' : `已删除 ${ids.length} 个客服系统。`,
+      );
     } catch (error) {
       handleError(error);
     } finally {
@@ -273,8 +294,14 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
         ) : null}
       </div>
 
-      {!editorOpen && errorMessage ? <p className="inline-status is-error" role="alert">{errorMessage}</p> : null}
-      {successMessage ? <p className="inline-status is-success">{successMessage}</p> : null}
+      {!editorOpen && errorMessage ? (
+        <p className="inline-status is-error" role="alert">
+          {errorMessage}
+        </p>
+      ) : null}
+      {successMessage ? (
+        <p className="inline-status is-success">{successMessage}</p>
+      ) : null}
 
       {scope === 'active' && selectedIds.size > 0 ? (
         <div className="selection-toolbar customer-service-selection-toolbar">
@@ -324,9 +351,13 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
           </thead>
           <tbody>
             {loading ? (
-              <tr><td colSpan={8}>正在读取客服系统…</td></tr>
+              <tr>
+                <td colSpan={8}>正在读取客服系统…</td>
+              </tr>
             ) : filtered.length === 0 ? (
-              <tr><td colSpan={8}>暂无客服系统。</td></tr>
+              <tr>
+                <td colSpan={8}>暂无客服系统。</td>
+              </tr>
             ) : (
               filtered.map((connection) => (
                 <tr key={connection.id}>
@@ -348,13 +379,19 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
                       />
                     ) : null}
                   </td>
-                  <td><strong>{connection.name}</strong></td>
+                  <td>
+                    <strong>{connection.name}</strong>
+                  </td>
                   <td className="customer-service-url">{connection.baseUrl}</td>
                   <td>{connection.projectId ?? '—'}</td>
                   <td>{connection.hasApiToken ? '管理 Token 已配置' : '无管理 Token'}</td>
                   <td>{connection.targetCount}</td>
                   <td>
-                    <span className={connection.isEnabled ? 'status-chip is-configured' : 'status-chip'}>
+                    <span
+                      className={
+                        connection.isEnabled ? 'status-chip is-configured' : 'status-chip'
+                      }
+                    >
                       {connection.isEnabled ? '启用' : '停用'}
                     </span>
                   </td>
@@ -368,7 +405,9 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
                         >
                           {testingId === connection.id ? '测试中…' : '测试'}
                         </button>
-                        <button type="button" onClick={() => openEdit(connection)}>编辑</button>
+                        <button type="button" onClick={() => openEdit(connection)}>
+                          编辑
+                        </button>
                         <button
                           className="danger-link"
                           type="button"
@@ -379,7 +418,9 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
                         </button>
                       </div>
                     ) : (
-                      <button type="button" onClick={() => void restore(connection)}>恢复</button>
+                      <button type="button" onClick={() => void restore(connection)}>
+                        恢复
+                      </button>
                     )}
                   </td>
                 </tr>
@@ -391,16 +432,37 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
 
       {editorOpen ? (
         <div className="admin-dialog-backdrop" role="presentation">
-          <section className="admin-dialog customer-service-editor" role="dialog" aria-modal="true">
+          <section
+            className="admin-dialog customer-service-editor"
+            role="dialog"
+            aria-modal="true"
+          >
             <div className="admin-dialog-header">
               <div>
                 <p>客服管理</p>
                 <h3>{editingConnection ? '编辑客服系统' : '添加客服系统'}</h3>
               </div>
-              <button type="button" aria-label="关闭" disabled={saving} onClick={() => setEditorOpen(false)}>×</button>
+              <button
+                type="button"
+                aria-label="关闭"
+                disabled={saving}
+                onClick={() => setEditorOpen(false)}
+              >
+                ×
+              </button>
             </div>
-            <form className="customer-service-editor-form" onSubmit={(event) => void submit(event)}>
-              {errorMessage ? <div className="notice notice-error customer-service-editor-wide" role="alert">{errorMessage}</div> : null}
+            <form
+              className="customer-service-editor-form"
+              onSubmit={(event) => void submit(event)}
+            >
+              {errorMessage ? (
+                <div
+                  className="notice notice-error customer-service-editor-wide"
+                  role="alert"
+                >
+                  {errorMessage}
+                </div>
+              ) : null}
               <label>
                 <span>连接名称</span>
                 <input
@@ -409,7 +471,10 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
                   required
                   maxLength={120}
                   value={draft.name}
-                  onChange={(event) => { setDraft((current) => ({ ...current, name: event.target.value })); setErrorMessage(''); }}
+                  onChange={(event) => {
+                    setDraft((current) => ({ ...current, name: event.target.value }));
+                    setErrorMessage('');
+                  }}
                 />
               </label>
               <label>
@@ -418,7 +483,13 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
                   type="text"
                   maxLength={200}
                   value={draft.projectId}
-                  onChange={(event) => { setDraft((current) => ({ ...current, projectId: event.target.value })); setErrorMessage(''); }}
+                  onChange={(event) => {
+                    setDraft((current) => ({
+                      ...current,
+                      projectId: event.target.value,
+                    }));
+                    setErrorMessage('');
+                  }}
                 />
               </label>
               <label className="customer-service-editor-wide">
@@ -429,29 +500,51 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
                   maxLength={1000}
                   placeholder="https://support.example.com"
                   value={draft.baseUrl}
-                  onChange={(event) => { setDraft((current) => ({ ...current, baseUrl: event.target.value })); setErrorMessage(''); }}
+                  onChange={(event) => {
+                    setDraft((current) => ({ ...current, baseUrl: event.target.value }));
+                    setErrorMessage('');
+                  }}
                 />
               </label>
               <label className="customer-service-editor-wide">
-                <span>管理 Token（仅产品后台使用）{editingConnection?.hasApiToken ? '（已配置）' : ''}</span>
+                <span>
+                  管理 Token（仅产品后台使用）
+                  {editingConnection?.hasApiToken ? '（已配置）' : ''}
+                </span>
                 <input
                   type="password"
                   autoComplete="new-password"
                   maxLength={4000}
                   value={draft.apiToken}
-                  onChange={(event) => { setDraft((current) => ({ ...current, apiToken: event.target.value })); setErrorMessage(''); }}
+                  onChange={(event) => {
+                    setDraft((current) => ({ ...current, apiToken: event.target.value }));
+                    setErrorMessage('');
+                  }}
                 />
               </label>
               <label className="switch-row customer-service-editor-wide">
-                <span><strong>启用连接</strong></span>
+                <span>
+                  <strong>启用连接</strong>
+                </span>
                 <input
                   type="checkbox"
                   checked={draft.isEnabled}
-                  onChange={(event) => { setDraft((current) => ({ ...current, isEnabled: event.target.checked })); setErrorMessage(''); }}
+                  onChange={(event) => {
+                    setDraft((current) => ({
+                      ...current,
+                      isEnabled: event.target.checked,
+                    }));
+                    setErrorMessage('');
+                  }}
                 />
               </label>
               <div className="admin-dialog-actions customer-service-editor-wide">
-                <button className="secondary-button" type="button" disabled={saving} onClick={() => setEditorOpen(false)}>
+                <button
+                  className="secondary-button"
+                  type="button"
+                  disabled={saving}
+                  onClick={() => setEditorOpen(false)}
+                >
                   取消
                 </button>
                 <button className="primary-button" type="submit" disabled={saving}>
@@ -465,7 +558,11 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
 
       {pendingDeleteIds.length > 0 ? (
         <div className="admin-dialog-backdrop" role="presentation">
-          <section className="admin-dialog compact-confirm-dialog" role="dialog" aria-modal="true">
+          <section
+            className="admin-dialog compact-confirm-dialog"
+            role="dialog"
+            aria-modal="true"
+          >
             <div className="admin-dialog-header">
               <div>
                 <p>客服管理</p>
@@ -473,10 +570,20 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
               </div>
             </div>
             <div className="admin-dialog-actions">
-              <button className="secondary-button" type="button" disabled={saving} onClick={() => setPendingDeleteIds([])}>
+              <button
+                className="secondary-button"
+                type="button"
+                disabled={saving}
+                onClick={() => setPendingDeleteIds([])}
+              >
                 取消
               </button>
-              <button className="danger-button" type="button" disabled={saving} onClick={() => void confirmDelete()}>
+              <button
+                className="danger-button"
+                type="button"
+                disabled={saving}
+                onClick={() => void confirmDelete()}
+              >
                 {saving ? '正在删除…' : '确认删除'}
               </button>
             </div>

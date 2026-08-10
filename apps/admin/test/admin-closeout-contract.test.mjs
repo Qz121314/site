@@ -10,13 +10,17 @@ function readSource(relativePath) {
   return fs.readFileSync(path.join(sourceDirectory, relativePath), 'utf8');
 }
 
+function compactMarkup(source) {
+  return source.replace(/\s+/gu, ' ');
+}
+
 test('remaining editor save failures stay visible inside open dialogs', () => {
   for (const relativePath of [
     'product-management/ProductEditorDialog.tsx',
     'FaqManagementView.tsx',
     'CustomerServiceView.tsx',
   ]) {
-    const source = readSource(relativePath);
+    const source = compactMarkup(readSource(relativePath));
     assert.match(source, /errorMessage/);
     assert.match(source, /className="notice notice-error[^"\n]*" role="alert"/);
   }
@@ -27,14 +31,14 @@ test('remaining editor save failures stay visible inside open dialogs', () => {
 });
 
 test('FAQ and customer-service forms expose server input limits to the browser', () => {
-  const faq = readSource('FaqManagementView.tsx');
+  const faq = compactMarkup(readSource('FaqManagementView.tsx'));
   assert.match(faq, /autoFocus required maxLength=\{300\}/);
   assert.match(faq, /step=\{1\} required/);
   assert.match(faq, /<textarea value=\{form\.body\} required maxLength=\{20_000\}/);
 
-  const customerService = readSource('CustomerServiceView.tsx');
-  assert.match(customerService, /autoFocus\s+required\s+maxLength=\{120\}/);
-  assert.match(customerService, /type="url"\s+required\s+maxLength=\{1000\}/);
+  const customerService = compactMarkup(readSource('CustomerServiceView.tsx'));
+  assert.match(customerService, /autoFocus required maxLength=\{120\}/);
+  assert.match(customerService, /type="url" required maxLength=\{1000\}/);
 });
 
 test('theme and logout failures use recoverable in-app feedback', () => {

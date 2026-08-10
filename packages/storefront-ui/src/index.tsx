@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
   useRef,
   useState,
@@ -7,7 +8,9 @@ import {
   type ReactNode,
 } from 'react';
 
-export type StorefrontLinkComponent = ElementType<AnchorHTMLAttributes<HTMLAnchorElement>>;
+export type StorefrontLinkComponent = ElementType<
+  AnchorHTMLAttributes<HTMLAnchorElement>
+>;
 
 export function StorefrontBrandBar({
   homeHref = '/',
@@ -88,24 +91,40 @@ function StorefrontHeroCarousel({
     setActiveIndex(Math.max(0, slides.length - 1));
   }, [activeIndex, slides.length]);
 
-  function goTo(index: number, behavior: ScrollBehavior = reducedMotion ? 'auto' : 'smooth') {
-    const viewport = viewportRef.current;
-    if (!viewport || slides.length === 0) return;
-    const normalized = (index + slides.length) % slides.length;
-    setActiveIndex(normalized);
-    viewport.scrollTo({ left: viewport.clientWidth * normalized, behavior });
-  }
+  const goTo = useCallback(
+    (index: number, behavior: ScrollBehavior = reducedMotion ? 'auto' : 'smooth') => {
+      const viewport = viewportRef.current;
+      if (!viewport || slides.length === 0) return;
+      const normalized = (index + slides.length) % slides.length;
+      setActiveIndex(normalized);
+      viewport.scrollTo({ left: viewport.clientWidth * normalized, behavior });
+    },
+    [reducedMotion, slides.length],
+  );
 
   useEffect(() => {
     if (slides.length < 2 || interactionPaused || reducedMotion || !pageVisible) return;
-    const timer = window.setInterval(() => goTo(activeIndex + 1), Math.max(2500, intervalMs));
+    const timer = window.setInterval(
+      () => goTo(activeIndex + 1),
+      Math.max(2500, intervalMs),
+    );
     return () => window.clearInterval(timer);
-  }, [activeIndex, interactionPaused, intervalMs, pageVisible, reducedMotion, slides.length]);
+  }, [
+    activeIndex,
+    goTo,
+    interactionPaused,
+    intervalMs,
+    pageVisible,
+    reducedMotion,
+    slides.length,
+  ]);
 
   useEffect(() => {
     const viewport = viewportRef.current;
     if (!viewport) return;
-    const slideElements = viewport.querySelectorAll<HTMLElement>('[data-hero-slide-index]');
+    const slideElements = viewport.querySelectorAll<HTMLElement>(
+      '[data-hero-slide-index]',
+    );
     slideElements.forEach((element, index) => {
       element.querySelectorAll<HTMLVideoElement>('video').forEach((video) => {
         video.muted = true;
@@ -118,9 +137,12 @@ function StorefrontHeroCarousel({
     });
   }, [activeIndex, pageVisible, slides]);
 
-  useEffect(() => () => {
-    if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
-  }, []);
+  useEffect(
+    () => () => {
+      if (frameRef.current !== null) cancelAnimationFrame(frameRef.current);
+    },
+    [],
+  );
 
   if (slides.length === 0) return null;
 
@@ -145,7 +167,13 @@ function StorefrontHeroCarousel({
             frameRef.current = null;
             const viewport = viewportRef.current;
             if (!viewport || viewport.clientWidth <= 0) return;
-            const index = Math.max(0, Math.min(slides.length - 1, Math.round(viewport.scrollLeft / viewport.clientWidth)));
+            const index = Math.max(
+              0,
+              Math.min(
+                slides.length - 1,
+                Math.round(viewport.scrollLeft / viewport.clientWidth),
+              ),
+            );
             setActiveIndex(index);
           });
         }}
@@ -167,7 +195,10 @@ function StorefrontHeroCarousel({
                       {slide.title ? <h1>{slide.title}</h1> : null}
                       {slide.description ? <p>{slide.description}</p> : null}
                       {slide.cta ? (
-                        <LinkComponent className="hero-carousel-cta" href={slide.cta.href}>
+                        <LinkComponent
+                          className="hero-carousel-cta"
+                          href={slide.cta.href}
+                        >
                           {slide.cta.label}
                         </LinkComponent>
                       ) : null}
@@ -216,7 +247,9 @@ function StorefrontHeroCarousel({
   );
 }
 
-export function StorefrontHero(props: StorefrontHeroCarouselProps | StorefrontHeroLegacyProps) {
+export function StorefrontHero(
+  props: StorefrontHeroCarouselProps | StorefrontHeroLegacyProps,
+) {
   if ('slides' in props) {
     return <StorefrontHeroCarousel {...props} />;
   }
@@ -269,7 +302,9 @@ export function StorefrontProductCard({
         {categoryName ? <p className="product-type">{categoryName}</p> : null}
         {tags.length > 0 ? (
           <div className="tag-row" aria-label="Tags">
-            {tags.slice(0, 3).map((tag) => <span key={tag.id}>{tag.name}</span>)}
+            {tags.slice(0, 3).map((tag) => (
+              <span key={tag.id}>{tag.name}</span>
+            ))}
           </div>
         ) : null}
         {address ? <p className="product-address">⌖ {address}</p> : null}
@@ -310,7 +345,9 @@ export function StorefrontBottomNavigation({
           <span className="bottom-nav-icon" aria-hidden="true">
             {item.icon}
             {item.badgeCount && item.badgeCount > 0 ? (
-              <b className="bottom-nav-badge">{item.badgeCount > 99 ? '99+' : item.badgeCount}</b>
+              <b className="bottom-nav-badge">
+                {item.badgeCount > 99 ? '99+' : item.badgeCount}
+              </b>
             ) : null}
           </span>
           <small>{item.label}</small>

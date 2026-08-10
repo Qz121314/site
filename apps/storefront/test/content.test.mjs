@@ -107,29 +107,35 @@ function sectionModule(sectionId, version, productId, featuredOrder) {
     contentVersion: version,
     publishedAt: '2026-08-07T08:53:00.000Z',
     sectionId,
-    categories: [{ id: `category-${sectionId}`, sectionId, name: 'Primary', sortOrder: 0 }],
+    categories: [
+      { id: `category-${sectionId}`, sectionId, name: 'Primary', sortOrder: 0 },
+    ],
     tags: [{ id: `tag-${sectionId}`, sectionId, name: 'Verified', sortOrder: 0 }],
-    products: [{
-      id: productId,
-      slug: `${productId}-slug`,
-      sectionId,
-      title: `Product ${productId}`,
-      serviceMode: 'online',
-      address: null,
-      category: { id: `category-${sectionId}`, name: 'Primary' },
-      tags: [{ id: `tag-${sectionId}`, name: 'Verified', sortOrder: 0 }],
-      coverObjectKey: `products/${productId}/cover.webp`,
-      isFeatured: true,
-      featuredOrder,
-      publishedAt: `2026-08-07T08:${featuredOrder === 1 ? '54' : '55'}:00.000Z`,
-      sortOrder: 0,
-    }],
+    products: [
+      {
+        id: productId,
+        slug: `${productId}-slug`,
+        sectionId,
+        title: `Product ${productId}`,
+        serviceMode: 'online',
+        address: null,
+        category: { id: `category-${sectionId}`, name: 'Primary' },
+        tags: [{ id: `tag-${sectionId}`, name: 'Verified', sortOrder: 0 }],
+        coverObjectKey: `products/${productId}/cover.webp`,
+        isFeatured: true,
+        featuredOrder,
+        publishedAt: `2026-08-07T08:${featuredOrder === 1 ? '54' : '55'}:00.000Z`,
+        sortOrder: 0,
+      },
+    ],
   };
 }
 
 function derivedHomeSnapshot() {
-  const productA = sectionModule('section-a', SECTION_A_VERSION, 'product-a', 2).products[0];
-  const productB = sectionModule('section-b', SECTION_B_VERSION, 'product-b', 1).products[0];
+  const productA = sectionModule('section-a', SECTION_A_VERSION, 'product-a', 2)
+    .products[0];
+  const productB = sectionModule('section-b', SECTION_B_VERSION, 'product-b', 1)
+    .products[0];
   return {
     schemaVersion: 2,
     pointerVersion: POINTER_VERSION,
@@ -148,20 +154,29 @@ function installModularFetch(requests = [], { homeAvailable = true } = {}) {
       return jsonResponse({ contentOrigin: 'https://content.example.com' });
     }
     if (url.endsWith('/public/current.json')) return jsonResponse(modularPointer());
-    if (url.endsWith(`/public/modules/site/${SITE_VERSION}/site.json`)) return jsonResponse(siteModule());
+    if (url.endsWith(`/public/modules/site/${SITE_VERSION}/site.json`))
+      return jsonResponse(siteModule());
     if (url.endsWith(`/public/modules/sections-index/${INDEX_VERSION}/sections.json`)) {
       return jsonResponse(sectionsIndexModule());
     }
     if (url.endsWith(`/public/home/${POINTER_VERSION}/home.json`)) {
       return homeAvailable ? jsonResponse(derivedHomeSnapshot()) : jsonResponse({}, 404);
     }
-    if (url.endsWith(`/public/modules/sections/section-a/${SECTION_A_VERSION}/section.json`)) {
+    if (
+      url.endsWith(`/public/modules/sections/section-a/${SECTION_A_VERSION}/section.json`)
+    ) {
       return jsonResponse(sectionModule('section-a', SECTION_A_VERSION, 'product-a', 2));
     }
-    if (url.endsWith(`/public/modules/sections/section-b/${SECTION_B_VERSION}/section.json`)) {
+    if (
+      url.endsWith(`/public/modules/sections/section-b/${SECTION_B_VERSION}/section.json`)
+    ) {
       return jsonResponse(sectionModule('section-b', SECTION_B_VERSION, 'product-b', 1));
     }
-    if (url.endsWith(`/public/modules/sections/section-a/${SECTION_A_VERSION}/products/product-a.json`)) {
+    if (
+      url.endsWith(
+        `/public/modules/sections/section-a/${SECTION_A_VERSION}/products/product-a.json`,
+      )
+    ) {
       return jsonResponse({
         schemaVersion: 2,
         moduleKey: 'section:section-a',
@@ -170,14 +185,16 @@ function installModularFetch(requests = [], { homeAvailable = true } = {}) {
         product: {
           ...sectionModule('section-a', SECTION_A_VERSION, 'product-a', 2).products[0],
           body: '**Details**',
-          media: [{
-            id: 'media-a',
-            objectKey: 'products/product-a/gallery-1.webp',
-            width: 800,
-            height: 800,
-            altText: 'Gallery',
-            sortOrder: 0,
-          }],
+          media: [
+            {
+              id: 'media-a',
+              objectKey: 'products/product-a/gallery-1.webp',
+              width: 800,
+              height: 800,
+              altText: 'Gallery',
+              sortOrder: 0,
+            },
+          ],
           cta: { label: 'Contact', mode: 'link', path: '/go/product-a' },
         },
       });
@@ -199,7 +216,10 @@ function installModularFetch(requests = [], { homeAvailable = true } = {}) {
 }
 
 test('content origin normalization accepts public HTTP(S) URLs and removes the trailing slash', () => {
-  assert.equal(normalizeContentOrigin(' https://cdn.example.com/ '), 'https://cdn.example.com');
+  assert.equal(
+    normalizeContentOrigin(' https://cdn.example.com/ '),
+    'https://cdn.example.com',
+  );
   assert.equal(normalizeContentOrigin('http://localhost:8787/'), 'http://localhost:8787');
   assert.equal(normalizeContentOrigin('javascript:alert(1)'), null);
   assert.equal(normalizeContentOrigin('https://user:pass@example.com/'), null);
@@ -237,7 +257,13 @@ test('legacy schema-v1 bootstrap remains readable and normalizes missing tags/fe
           locationLabel: 'City',
           mediaBaseUrl: 'https://cdn.example.com',
           logoUrl: null,
-          navigation: { showHot: true, showLatest: true, showMore: true, showMessages: false, showFaq: true },
+          navigation: {
+            showHot: true,
+            showLatest: true,
+            showMore: true,
+            showMessages: false,
+            showFaq: true,
+          },
           analytics: { ga4MeasurementId: null, facebookPixelId: null },
           affiliate: { enabled: false, platform: null },
         },
@@ -250,21 +276,23 @@ test('legacy schema-v1 bootstrap remains readable and normalizes missing tags/fe
         publishedAt: '2026-08-07T07:49:00.000Z',
         sections: [],
         allSections: [],
-        featuredProducts: [{
-          id: 'legacy-product',
-          slug: 'legacy-product',
-          sectionId: 'section-1',
-          sectionSlug: 'main',
-          sectionName: 'Main',
-          title: 'Legacy product',
-          serviceMode: 'online',
-          address: null,
-          category: { id: 'category-1', name: 'Primary' },
-          coverUrl: null,
-          isFeatured: true,
-          publishedAt: '2026-08-07T07:40:00.000Z',
-          sortOrder: 0,
-        }],
+        featuredProducts: [
+          {
+            id: 'legacy-product',
+            slug: 'legacy-product',
+            sectionId: 'section-1',
+            sectionSlug: 'main',
+            sectionName: 'Main',
+            title: 'Legacy product',
+            serviceMode: 'online',
+            address: null,
+            category: { id: 'category-1', name: 'Primary' },
+            coverUrl: null,
+            isFeatured: true,
+            publishedAt: '2026-08-07T07:40:00.000Z',
+            sortOrder: 0,
+          },
+        ],
         latestProducts: [],
       });
     }
@@ -289,7 +317,11 @@ test('Storefront always discovers the current admin-configured R2 custom domain 
     assert.equal(bootstrap.origin, 'https://content.example.com');
     assert.equal(requests[0].url, '/api/public/storefront/content-origin');
     assert.equal(requests[1].url, 'https://content.example.com/public/current.json');
-    assert.ok(requests.slice(1).every((request) => request.url.startsWith('https://content.example.com/')));
+    assert.ok(
+      requests
+        .slice(1)
+        .every((request) => request.url.startsWith('https://content.example.com/')),
+    );
   } finally {
     restore();
   }
@@ -319,12 +351,31 @@ test('schema-v2 bootstrap reads the compact home summary without preloading sect
     const bootstrap = await loadStorefrontBootstrap('https://content.example.com');
     assert.equal(bootstrap.pointer.schemaVersion, 2);
     assert.deepEqual(Object.keys(bootstrap.sectionSnapshots), []);
-    assert.deepEqual(bootstrap.home.featuredProducts.map((product) => product.id), ['product-b', 'product-a']);
-    assert.deepEqual(bootstrap.home.latestProducts.map((product) => product.id), ['product-a', 'product-b']);
-    assert.equal(bootstrap.home.allSections[0].icon.value, 'https://content.example.com/sections/alpha.webp');
-    assert.equal(bootstrap.home.featuredProducts[0].coverUrl, 'https://content.example.com/products/product-b/cover.webp');
-    assert.ok(requests.some((request) => request.url.endsWith(`/public/home/${POINTER_VERSION}/home.json`)));
-    assert.equal(requests.filter((request) => request.url.endsWith('/section.json')).length, 0);
+    assert.deepEqual(
+      bootstrap.home.featuredProducts.map((product) => product.id),
+      ['product-b', 'product-a'],
+    );
+    assert.deepEqual(
+      bootstrap.home.latestProducts.map((product) => product.id),
+      ['product-a', 'product-b'],
+    );
+    assert.equal(
+      bootstrap.home.allSections[0].icon.value,
+      'https://content.example.com/sections/alpha.webp',
+    );
+    assert.equal(
+      bootstrap.home.featuredProducts[0].coverUrl,
+      'https://content.example.com/products/product-b/cover.webp',
+    );
+    assert.ok(
+      requests.some((request) =>
+        request.url.endsWith(`/public/home/${POINTER_VERSION}/home.json`),
+      ),
+    );
+    assert.equal(
+      requests.filter((request) => request.url.endsWith('/section.json')).length,
+      0,
+    );
   } finally {
     restore();
   }
@@ -335,10 +386,22 @@ test('schema-v2 bootstrap falls back to eager section composition when a derived
   const restore = installModularFetch(requests, { homeAvailable: false });
   try {
     const bootstrap = await loadStorefrontBootstrap('https://content.example.com');
-    assert.equal(bootstrap.sectionSnapshots['section-a'].contentVersion, SECTION_A_VERSION);
-    assert.equal(bootstrap.sectionSnapshots['section-b'].contentVersion, SECTION_B_VERSION);
-    assert.deepEqual(bootstrap.home.featuredProducts.map((product) => product.id), ['product-b', 'product-a']);
-    assert.equal(requests.filter((request) => request.url.endsWith('/section.json')).length, 2);
+    assert.equal(
+      bootstrap.sectionSnapshots['section-a'].contentVersion,
+      SECTION_A_VERSION,
+    );
+    assert.equal(
+      bootstrap.sectionSnapshots['section-b'].contentVersion,
+      SECTION_B_VERSION,
+    );
+    assert.deepEqual(
+      bootstrap.home.featuredProducts.map((product) => product.id),
+      ['product-b', 'product-a'],
+    );
+    assert.equal(
+      requests.filter((request) => request.url.endsWith('/section.json')).length,
+      2,
+    );
   } finally {
     restore();
   }
@@ -349,26 +412,61 @@ test('section, product and FAQ reads follow their own module versions and cache 
   const restore = installModularFetch(requests);
   try {
     const bootstrap = await loadStorefrontBootstrap('https://content.example.com');
-    assert.equal(requests.filter((request) => request.url.endsWith('/section.json')).length, 0);
+    assert.equal(
+      requests.filter((request) => request.url.endsWith('/section.json')).length,
+      0,
+    );
 
     const section = await loadSectionSnapshot(bootstrap, 'section-a');
     assert.equal(section.contentVersion, SECTION_A_VERSION);
-    assert.equal(section.products[0].coverUrl, 'https://content.example.com/products/product-a/cover.webp');
-    assert.equal(requests.filter((request) => request.url.includes(SECTION_A_VERSION) && request.url.endsWith('/section.json')).length, 1);
+    assert.equal(
+      section.products[0].coverUrl,
+      'https://content.example.com/products/product-a/cover.webp',
+    );
+    assert.equal(
+      requests.filter(
+        (request) =>
+          request.url.includes(SECTION_A_VERSION) &&
+          request.url.endsWith('/section.json'),
+      ).length,
+      1,
+    );
 
     const sectionBySlug = await loadSectionSnapshot(bootstrap, 'alpha');
     assert.equal(sectionBySlug.section.id, 'section-a');
-    assert.equal(requests.filter((request) => request.url.includes(SECTION_A_VERSION) && request.url.endsWith('/section.json')).length, 1);
+    assert.equal(
+      requests.filter(
+        (request) =>
+          request.url.includes(SECTION_A_VERSION) &&
+          request.url.endsWith('/section.json'),
+      ).length,
+      1,
+    );
 
-    const product = await loadProductSnapshot(bootstrap, 'product-a-slug', undefined, 'alpha');
+    const product = await loadProductSnapshot(
+      bootstrap,
+      'product-a-slug',
+      undefined,
+      'alpha',
+    );
     assert.equal(product.contentVersion, SECTION_A_VERSION);
     assert.equal(product.product.id, 'product-a');
-    assert.equal(product.product.media[0].url, 'https://content.example.com/products/product-a/gallery-1.webp');
+    assert.equal(
+      product.product.media[0].url,
+      'https://content.example.com/products/product-a/gallery-1.webp',
+    );
     assert.equal(product.product.cta.path, '/go/product-a');
 
     const globallyUniqueSlug = await loadProductSnapshot(bootstrap, 'product-a-slug');
     assert.equal(globallyUniqueSlug.product.id, 'product-a');
-    assert.equal(requests.filter((request) => request.url.includes(SECTION_B_VERSION) && request.url.endsWith('/section.json')).length, 1);
+    assert.equal(
+      requests.filter(
+        (request) =>
+          request.url.includes(SECTION_B_VERSION) &&
+          request.url.endsWith('/section.json'),
+      ).length,
+      1,
+    );
 
     const faq = await loadFaqSnapshot(bootstrap);
     assert.equal(faq.contentVersion, FAQ_VERSION);
@@ -384,7 +482,10 @@ test('schema-v2 bootstrap rejects a module whose contentVersion does not match t
     const url = String(input);
     if (url.endsWith('/public/current.json')) return jsonResponse(modularPointer());
     if (url.endsWith(`/public/modules/site/${SITE_VERSION}/site.json`)) {
-      return jsonResponse({ ...siteModule(), contentVersion: '20260807090000-wrongversion-acde9999' });
+      return jsonResponse({
+        ...siteModule(),
+        contentVersion: '20260807090000-wrongversion-acde9999',
+      });
     }
     if (url.endsWith(`/public/modules/sections-index/${INDEX_VERSION}/sections.json`)) {
       return jsonResponse(sectionsIndexModule());
@@ -395,7 +496,8 @@ test('schema-v2 bootstrap rejects a module whose contentVersion does not match t
   try {
     await assert.rejects(
       loadStorefrontBootstrap('https://content.example.com'),
-      (error) => error instanceof PublicContentError && error.code === 'SNAPSHOT_VERSION_MISMATCH',
+      (error) =>
+        error instanceof PublicContentError && error.code === 'SNAPSHOT_VERSION_MISMATCH',
     );
   } finally {
     globalThis.fetch = originalFetch;

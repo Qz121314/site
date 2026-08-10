@@ -2,7 +2,11 @@ import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react
 import { AdminApiError, type AdminSection } from './api';
 import { MediaLibraryPickerDialog } from './asset-library/MediaLibraryPickerDialog';
 import type { ManagedMediaAsset } from './asset-library/api';
-import { createCategory, fetchCategories, type AdminCategory } from './category-management/api';
+import {
+  createCategory,
+  fetchCategories,
+  type AdminCategory,
+} from './category-management/api';
 import { fetchConversionGroups, type AdminConversionGroup } from './conversion-pool/api';
 import { DeleteProductDialog } from './product-management/DeleteProductDialog';
 import { ProductEditorDialog } from './product-management/ProductEditorDialog';
@@ -27,7 +31,11 @@ import {
   type ProductInput,
   type ProductStatus,
 } from './product-management/api';
-import { createProductTag, fetchProductTags, type AdminProductTag } from './tag-management/api';
+import {
+  createProductTag,
+  fetchProductTags,
+  type AdminProductTag,
+} from './tag-management/api';
 
 export type ProductDependencyTarget = 'categories' | 'tags' | 'conversion-pool';
 export type ProductResumeRequest = {
@@ -69,12 +77,16 @@ const emptyProductForm: ProductInput = {
 
 function sortProducts(products: AdminProduct[]): AdminProduct[] {
   return [...products].sort(
-    (left, right) => left.sortOrder - right.sortOrder || right.updatedAt.localeCompare(left.updatedAt),
+    (left, right) =>
+      left.sortOrder - right.sortOrder || right.updatedAt.localeCompare(left.updatedAt),
   );
 }
 
 function isSessionError(error: unknown): boolean {
-  return error instanceof AdminApiError && (error.status === 401 || error.code === 'SESSION_INVALID');
+  return (
+    error instanceof AdminApiError &&
+    (error.status === 401 || error.code === 'SESSION_INVALID')
+  );
 }
 
 function describeError(error: unknown): string {
@@ -102,7 +114,10 @@ function productToInput(product: AdminProduct): ProductInput {
   };
 }
 
-function managedMediaToProductMedia(media: ManagedMediaAsset, sortOrder: number): AdminProductMedia {
+function managedMediaToProductMedia(
+  media: ManagedMediaAsset,
+  sortOrder: number,
+): AdminProductMedia {
   return {
     id: media.id,
     objectKey: media.objectKey,
@@ -146,7 +161,9 @@ export function ProductManagementView({
   const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
   const [resumeNotice, setResumeNotice] = useState(false);
   const [saveStage, setSaveStage] = useState<SaveStage>('idle');
-  const [handoffTarget, setHandoffTarget] = useState<ProductDependencyTarget | null>(null);
+  const [handoffTarget, setHandoffTarget] = useState<ProductDependencyTarget | null>(
+    null,
+  );
   const [working, setWorking] = useState(false);
   const [pendingDeleteIds, setPendingDeleteIds] = useState<string[]>([]);
   const [errorMessage, setErrorMessage] = useState('');
@@ -242,11 +259,13 @@ export function ProductManagementView({
     if (loading || resumeOpenedProductId === resumeRequest.productId) return;
 
     setResumeOpenedProductId(resumeRequest.productId);
-    void openProductEditor(resumeRequest.productId, resumeRequest.intendedStatus).then((opened) => {
-      if (!opened) return;
-      setResumeNotice(resumeRequest.wasDowngradedToDraft);
-      onResumeHandled?.();
-    });
+    void openProductEditor(resumeRequest.productId, resumeRequest.intendedStatus).then(
+      (opened) => {
+        if (!opened) return;
+        setResumeNotice(resumeRequest.wasDowngradedToDraft);
+        onResumeHandled?.();
+      },
+    );
   }, [loading, onResumeHandled, openProductEditor, resumeOpenedProductId, resumeRequest]);
 
   const sourceProducts = scope === 'active' ? activeProducts : trashProducts;
@@ -262,8 +281,10 @@ export function ProductManagementView({
   }, [search, sourceProducts, statusFilter]);
 
   const allVisibleSelected =
-    filteredProducts.length > 0 && filteredProducts.every((product) => selectedIds.has(product.id));
-  const reorderBlocked = scope !== 'active' || Boolean(search.trim()) || statusFilter !== 'all';
+    filteredProducts.length > 0 &&
+    filteredProducts.every((product) => selectedIds.has(product.id));
+  const reorderBlocked =
+    scope !== 'active' || Boolean(search.trim()) || statusFilter !== 'all';
   const saving = saveStage !== 'idle';
 
   async function changeScope(nextScope: ProductScope) {
@@ -305,10 +326,16 @@ export function ProductManagementView({
 
   function addMediaFromLibrary(asset: ManagedMediaAsset) {
     setMedia((current) => {
-      if (current.length >= 12 || current.some((item) => item.kind === 'remote' && item.media.id === asset.id)) {
+      if (
+        current.length >= 12 ||
+        current.some((item) => item.kind === 'remote' && item.media.id === asset.id)
+      ) {
         return current;
       }
-      return [...current, toRemoteProductImage(managedMediaToProductMedia(asset, current.length * 10))];
+      return [
+        ...current,
+        toRemoteProductImage(managedMediaToProductMedia(asset, current.length * 10)),
+      ];
     });
   }
 
@@ -333,18 +360,29 @@ export function ProductManagementView({
   async function persistEditor(nextForm: ProductInput): Promise<AdminProduct | null> {
     if (saving) return null;
 
-    const localValidation = validateProductDraft(nextForm, media, categories, tags, groups);
+    const localValidation = validateProductDraft(
+      nextForm,
+      media,
+      categories,
+      tags,
+      groups,
+    );
     if (localValidation) {
       setErrorMessage(localValidation);
       setSuccessMessage('');
       return null;
     }
 
-    const requestedCover = coverKey ? media.find((item) => item.key === coverKey) ?? null : null;
-    const selectedCover = requestedCover && isEditorMediaCoverEligible(requestedCover)
-      ? requestedCover
-      : media.find(isEditorMediaCoverEligible) ?? null;
-    const mediaAssetIds = media.flatMap((item) => item.kind === 'remote' ? [item.media.id] : []);
+    const requestedCover = coverKey
+      ? (media.find((item) => item.key === coverKey) ?? null)
+      : null;
+    const selectedCover =
+      requestedCover && isEditorMediaCoverEligible(requestedCover)
+        ? requestedCover
+        : (media.find(isEditorMediaCoverEligible) ?? null);
+    const mediaAssetIds = media.flatMap((item) =>
+      item.kind === 'remote' ? [item.media.id] : [],
+    );
     const input: ProductInput = {
       ...nextForm,
       mediaAssetIds,
@@ -402,10 +440,17 @@ export function ProductManagementView({
 
     const intendedStatus = form.status;
     const currentValidation = validateProductDraft(form, media, categories, tags, groups);
-    const handoffForm = currentValidation && intendedStatus === 'published'
-      ? { ...form, status: 'draft' as const }
-      : form;
-    const handoffValidation = validateProductDraft(handoffForm, media, categories, tags, groups);
+    const handoffForm =
+      currentValidation && intendedStatus === 'published'
+        ? { ...form, status: 'draft' as const }
+        : form;
+    const handoffValidation = validateProductDraft(
+      handoffForm,
+      media,
+      categories,
+      tags,
+      groups,
+    );
     if (handoffValidation) {
       setErrorMessage(`暂存产品后才能切换配置：${handoffValidation}`);
       setSuccessMessage('');
@@ -436,7 +481,9 @@ export function ProductManagementView({
   async function handleCreateCategory(name: string): Promise<AdminCategory> {
     const normalized = normalizeInlineName(name);
     const existing = categories.find(
-      (category) => category.name.localeCompare(normalized, undefined, { sensitivity: 'accent' }) === 0,
+      (category) =>
+        category.name.localeCompare(normalized, undefined, { sensitivity: 'accent' }) ===
+        0,
     );
     if (existing) return existing;
 
@@ -444,8 +491,14 @@ export function ProductManagementView({
       ? Math.max(...categories.map((category) => category.sortOrder)) + 10
       : 0;
     try {
-      const created = await createCategory(section.id, { name: normalized, sortOrder, isEnabled: true });
-      setCategories((current) => [...current, created].sort((a, b) => a.sortOrder - b.sortOrder));
+      const created = await createCategory(section.id, {
+        name: normalized,
+        sortOrder,
+        isEnabled: true,
+      });
+      setCategories((current) =>
+        [...current, created].sort((a, b) => a.sortOrder - b.sortOrder),
+      );
       return created;
     } catch (error) {
       if (isSessionError(error)) onSessionExpired();
@@ -456,14 +509,23 @@ export function ProductManagementView({
   async function handleCreateTag(name: string): Promise<AdminProductTag> {
     const normalized = normalizeInlineName(name);
     const existing = tags.find(
-      (tag) => tag.name.localeCompare(normalized, undefined, { sensitivity: 'accent' }) === 0,
+      (tag) =>
+        tag.name.localeCompare(normalized, undefined, { sensitivity: 'accent' }) === 0,
     );
     if (existing) return existing;
 
-    const sortOrder = tags.length ? Math.max(...tags.map((tag) => tag.sortOrder)) + 10 : 0;
+    const sortOrder = tags.length
+      ? Math.max(...tags.map((tag) => tag.sortOrder)) + 10
+      : 0;
     try {
-      const created = await createProductTag(section.id, { name: normalized, sortOrder, isEnabled: true });
-      setTags((current) => [...current, created].sort((a, b) => a.sortOrder - b.sortOrder));
+      const created = await createProductTag(section.id, {
+        name: normalized,
+        sortOrder,
+        isEnabled: true,
+      });
+      setTags((current) =>
+        [...current, created].sort((a, b) => a.sortOrder - b.sortOrder),
+      );
       return created;
     } catch (error) {
       if (isSessionError(error)) onSessionExpired();
@@ -481,13 +543,19 @@ export function ProductManagementView({
     const [moved] = next.splice(index, 1);
     if (!moved) return;
     next.splice(targetIndex, 0, moved);
-    const normalized = next.map((item, itemIndex) => ({ ...item, sortOrder: itemIndex * 10 }));
+    const normalized = next.map((item, itemIndex) => ({
+      ...item,
+      sortOrder: itemIndex * 10,
+    }));
 
     setWorking(true);
     setErrorMessage('');
     setSuccessMessage('');
     try {
-      await reorderProducts(section.id, normalized.map((item) => ({ id: item.id, sortOrder: item.sortOrder })));
+      await reorderProducts(
+        section.id,
+        normalized.map((item) => ({ id: item.id, sortOrder: item.sortOrder })),
+      );
       setActiveProducts(normalized);
       setSuccessMessage('产品顺序已更新。');
     } catch (error) {
@@ -508,7 +576,9 @@ export function ProductManagementView({
       const firstId = deletingIds[0];
       if (deletingIds.length === 1 && firstId) await deleteProduct(section.id, firstId);
       else await batchDeleteProducts(section.id, deletingIds);
-      setActiveProducts((current) => current.filter((product) => !deletingIds.includes(product.id)));
+      setActiveProducts((current) =>
+        current.filter((product) => !deletingIds.includes(product.id)),
+      );
       setSelectedIds(new Set());
       setPendingDeleteIds([]);
       setSuccessMessage(`已将 ${deletingIds.length} 个产品移入回收站。`);
@@ -556,7 +626,9 @@ export function ProductManagementView({
     });
   }
 
-  const selectedMediaIds = media.flatMap((item) => item.kind === 'remote' ? [item.media.id] : []);
+  const selectedMediaIds = media.flatMap((item) =>
+    item.kind === 'remote' ? [item.media.id] : [],
+  );
 
   return (
     <section className="product-management" aria-labelledby="product-management-title">
@@ -566,21 +638,43 @@ export function ProductManagementView({
           <h2 id="product-management-title">{section.name} · 产品管理</h2>
           <span>产品、分类、标签和转化分组全部限制在“{section.name}”分区内。</span>
         </div>
-        <button className="primary-button" type="button" onClick={openCreateEditor}>新增产品</button>
+        <button className="primary-button" type="button" onClick={openCreateEditor}>
+          新增产品
+        </button>
       </div>
 
       <div className="product-filter-bar">
         <div className="scope-tabs" role="tablist" aria-label="产品范围">
-          <button type="button" className={scope === 'active' ? 'is-active' : undefined} onClick={() => void changeScope('active')}>当前产品 <span>{activeProducts.length}</span></button>
-          <button type="button" className={scope === 'trash' ? 'is-active' : undefined} onClick={() => void changeScope('trash')}>回收站 <span>{trashProducts.length}</span></button>
+          <button
+            type="button"
+            className={scope === 'active' ? 'is-active' : undefined}
+            onClick={() => void changeScope('active')}
+          >
+            当前产品 <span>{activeProducts.length}</span>
+          </button>
+          <button
+            type="button"
+            className={scope === 'trash' ? 'is-active' : undefined}
+            onClick={() => void changeScope('trash')}
+          >
+            回收站 <span>{trashProducts.length}</span>
+          </button>
         </div>
         <label className="product-search">
           <span>搜索</span>
-          <input type="search" value={search} placeholder="标题、分类、标签或转化分组" onChange={(event) => setSearch(event.target.value)} />
+          <input
+            type="search"
+            value={search}
+            placeholder="标题、分类、标签或转化分组"
+            onChange={(event) => setSearch(event.target.value)}
+          />
         </label>
         <label className="product-status-filter">
           <span>状态</span>
-          <select value={statusFilter} onChange={(event) => setStatusFilter(event.target.value as StatusFilter)}>
+          <select
+            value={statusFilter}
+            onChange={(event) => setStatusFilter(event.target.value as StatusFilter)}
+          >
             <option value="all">全部状态</option>
             <option value="draft">草稿</option>
             <option value="published">已发布</option>
@@ -589,11 +683,29 @@ export function ProductManagementView({
         </label>
       </div>
 
-      {!editorOpen && errorMessage ? <div className="notice notice-error" role="alert">{errorMessage}</div> : null}
-      {successMessage ? <div className="notice notice-success" role="status">{successMessage}</div> : null}
+      {!editorOpen && errorMessage ? (
+        <div className="notice notice-error" role="alert">
+          {errorMessage}
+        </div>
+      ) : null}
+      {successMessage ? (
+        <div className="notice notice-success" role="status">
+          {successMessage}
+        </div>
+      ) : null}
 
       {scope === 'active' && selectedIds.size > 0 ? (
-        <div className="selection-toolbar"><span>已选择 {selectedIds.size} 个产品</span><button className="danger-button" type="button" disabled={working} onClick={() => setPendingDeleteIds([...selectedIds])}>批量删除</button></div>
+        <div className="selection-toolbar">
+          <span>已选择 {selectedIds.size} 个产品</span>
+          <button
+            className="danger-button"
+            type="button"
+            disabled={working}
+            onClick={() => setPendingDeleteIds([...selectedIds])}
+          >
+            批量删除
+          </button>
+        </div>
       ) : null}
 
       <ProductTable
@@ -669,7 +781,12 @@ export function ProductManagementView({
       ) : null}
 
       {pendingDeleteIds.length > 0 ? (
-        <DeleteProductDialog count={pendingDeleteIds.length} working={working} onCancel={() => setPendingDeleteIds([])} onConfirm={() => void confirmDelete()} />
+        <DeleteProductDialog
+          count={pendingDeleteIds.length}
+          working={working}
+          onCancel={() => setPendingDeleteIds([])}
+          onConfirm={() => void confirmDelete()}
+        />
       ) : null}
     </section>
   );
