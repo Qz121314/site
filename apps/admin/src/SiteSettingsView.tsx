@@ -17,7 +17,6 @@ import {
 } from './branding-media/local-branding-image';
 import { HomeLayoutSettingsSection } from './HomeLayoutSettingsSection';
 import { SiteHeroSettingsSection } from './SiteHeroSettingsSection';
-import { StorefrontCopySettingsSection } from './StorefrontCopySettingsSection';
 import {
   fetchSiteSettingsWithHero,
   updateSiteSettingsWithHero,
@@ -50,12 +49,11 @@ type DomainTestState =
   | { status: 'error'; message: string };
 
 type SaveStage = 'idle' | 'uploading-logo' | 'saving';
-type SettingsPanel = 'general' | 'home' | 'copy' | 'advanced';
+type SettingsPanel = 'general' | 'home' | 'advanced';
 
 const SETTINGS_PANELS: Array<{ id: SettingsPanel; label: string }> = [
   { id: 'general', label: '常用设置' },
   { id: 'home', label: '首页展示' },
-  { id: 'copy', label: '前端文案' },
   { id: 'advanced', label: '高级设置' },
 ];
 
@@ -71,7 +69,6 @@ function createDraft(settings: SiteSettingsWithHero): SettingsDraft {
     showLatest: settings.showLatest,
     showMore: settings.showMore,
     showFaq: settings.showFaq,
-    storefrontCopy: structuredClone(settings.storefrontCopy),
     heroSlides: settings.heroSlides.map((slide) => ({ ...slide })),
     bottomNavigation: settings.bottomNavigation.map((item) => ({ ...item })),
     homeLayout: {
@@ -98,7 +95,6 @@ function toInput(draft: SettingsDraft): SettingsPayload {
     showLatest: draft.showLatest,
     showMore: draft.showMore,
     showFaq: draft.showFaq,
-    storefrontCopy: draft.storefrontCopy,
     heroSlides: draft.heroSlides.map((slide, index) => ({
       id: slide.id,
       mediaAssetId: slide.mediaAssetId,
@@ -392,14 +388,6 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
                   onSessionExpired={onSessionExpired}
                 />
               </>
-            ) : null}
-
-            {activePanel === 'copy' ? (
-              <StorefrontCopySettingsSection
-                value={draft.storefrontCopy}
-                busy={busy}
-                onChange={(storefrontCopy) => updateDraft('storefrontCopy', storefrontCopy)}
-              />
             ) : null}
 
             {activePanel === 'advanced' ? (
