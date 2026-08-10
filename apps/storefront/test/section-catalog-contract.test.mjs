@@ -17,10 +17,9 @@ const cssSource = await readFile(
 const mainSource = await readFile(new URL('../src/main.tsx', import.meta.url), 'utf8');
 
 test('section route uses a dedicated primary-shell product catalog', () => {
-  assert.match(rootSource, /function SectionRoot\(/u);
   assert.match(rootSource, /case 'section':/u);
-  assert.match(rootSource, /<SectionRoot sectionRef=\{route\.sectionRef\} \/>/u);
-  assert.match(rootSource, /<PrimaryShell activePath="\/browse\/"/u);
+  assert.match(rootSource, /sectionRef=\{route\.sectionRef\}/u);
+  assert.match(rootSource, /<PrimaryShell[\s\S]*activePath=\{pathname\}/u);
   assert.match(rootSource, /<SectionCatalogPage/u);
 });
 

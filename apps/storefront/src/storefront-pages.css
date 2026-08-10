@@ -53,12 +53,12 @@
 }
 
 .app-shell .bottom-nav a:active {
-  transform: scale(0.97);
+  transform: none;
 }
 
 .app-shell .bottom-nav a.is-active {
   color: var(--brand-strong);
-  background: color-mix(in srgb, var(--brand) 8%, transparent);
+  background: transparent;
 }
 
 .bottom-nav-icon {
@@ -98,7 +98,7 @@
   line-height: 1;
 }
 
-@media (min-width: 720px) {
+@media (min-width: 768px) {
   .app-shell .bottom-nav {
     right: auto;
     left: 50%;

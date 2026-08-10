@@ -4,6 +4,7 @@ import { parseStorefrontRoute } from './routing';
 const NAVIGATION_EVENT = 'storefront:navigate';
 
 type StorefrontPresentationMode = 'root' | 'push';
+type StorefrontTransitionMode = 'tab' | 'push' | 'pop';
 
 function presentationMode(pathname: string): StorefrontPresentationMode {
   const route = parseStorefrontRoute(pathname);
@@ -20,7 +21,19 @@ function presentationMode(pathname: string): StorefrontPresentationMode {
 }
 
 function applyPresentationMode() {
-  document.documentElement.dataset.storefrontPresentation = presentationMode(window.location.pathname);
+  const element = document.documentElement;
+  const previousMode = element.dataset.storefrontPresentation as
+    StorefrontPresentationMode | undefined;
+  const nextMode = presentationMode(window.location.pathname);
+  let transitionMode: StorefrontTransitionMode | null = null;
+
+  if (previousMode === 'root' && nextMode === 'root') transitionMode = 'tab';
+  else if (previousMode && nextMode === 'push') transitionMode = 'push';
+  else if (previousMode === 'push' && nextMode === 'root') transitionMode = 'pop';
+
+  element.dataset.storefrontPresentation = nextMode;
+  if (transitionMode) element.dataset.storefrontTransition = transitionMode;
+  else delete element.dataset.storefrontTransition;
 }
 
 export function StorefrontPresentation() {
@@ -32,6 +45,7 @@ export function StorefrontPresentation() {
       window.removeEventListener('popstate', applyPresentationMode);
       window.removeEventListener(NAVIGATION_EVENT, applyPresentationMode);
       delete document.documentElement.dataset.storefrontPresentation;
+      delete document.documentElement.dataset.storefrontTransition;
     };
   }, []);
 

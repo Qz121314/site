@@ -10,7 +10,10 @@ const rootSource = await readFile(
   new URL('../src/StorefrontRoot.tsx', import.meta.url),
   'utf8',
 );
-const routingSource = await readFile(new URL('../src/routing.ts', import.meta.url), 'utf8');
+const routingSource = await readFile(
+  new URL('../src/routing.ts', import.meta.url),
+  'utf8',
+);
 const messagesCss = await readFile(
   new URL('../src/messages-ui.css', import.meta.url),
   'utf8',
@@ -20,7 +23,10 @@ const legacyPagesCss = await readFile(
   'utf8',
 );
 const themeContractCss = await readFile(
-  new URL('../../../packages/storefront-ui/src/primary-pages-theme-contract.css', import.meta.url),
+  new URL(
+    '../../../packages/storefront-ui/src/primary-pages-theme-contract.css',
+    import.meta.url,
+  ),
   'utf8',
 );
 const shellCss = await readFile(new URL('../src/app-shell.css', import.meta.url), 'utf8');
@@ -52,7 +58,11 @@ test('Messages structural selectors have one dedicated stylesheet owner', () => 
 
   for (const selector of structuralSelectors) {
     const selectorPattern = new RegExp(`\\.${selector}(?=[\\s,{:.#>+~])`, 'u');
-    assert.match(messagesCss, selectorPattern, `${selector} must live in messages-ui.css`);
+    assert.match(
+      messagesCss,
+      selectorPattern,
+      `${selector} must live in messages-ui.css`,
+    );
     assert.doesNotMatch(
       legacyPagesCss,
       selectorPattern,
@@ -105,20 +115,21 @@ test('mobile opens a conversation as a dedicated chat view without global chrome
 
 test('Messages routes through the primary shell and shares Theme Center semantic variables', () => {
   assert.match(mainSource, /\.\/messages-ui\.css/u);
-  assert.match(rootSource, /function MessagesRoot\(/u);
+  assert.match(rootSource, /function MessagesPage\(/u);
   assert.match(rootSource, /<MessagesWorkspace/u);
   assert.match(
     rootSource,
-    /case 'messages':\s*page = <MessagesRoot activeConversationRef=\{null\} compose=\{false\} \/>/u,
+    /case 'messages':[\s\S]*?<MessagesPage[\s\S]*?activeConversationRef=\{null\}/u,
   );
   assert.match(
     rootSource,
-    /case 'message-compose':\s*page = <MessagesRoot activeConversationRef=\{null\} compose \/>/u,
+    /case 'message-compose':[\s\S]*?<MessagesPage[\s\S]*?compose/u,
   );
   assert.match(
     rootSource,
-    /case 'message':\s*page = <MessagesRoot activeConversationRef=\{route\.conversationRef\} compose=\{false\} \/>/u,
+    /case 'message':[\s\S]*?<MessagesPage[\s\S]*?activeConversationRef=\{route\.conversationRef\}/u,
   );
+  assert.equal(rootSource.match(/<PrimaryShell\b/gu)?.length, 1);
   assert.match(routingSource, /pathname === '\/messages\/new'/u);
   assert.match(messagesCss, /var\(--surface\)/u);
   assert.match(messagesCss, /var\(--brand\)/u);

@@ -53,14 +53,11 @@ test('product detail structure loads before Theme Center visual recipes', () => 
 });
 
 test('product detail routes through the primary Storefront shell', () => {
-  assert.match(rootSource, /function ProductRoot\(/u);
   assert.match(rootSource, /case 'product':/u);
-  assert.match(
-    rootSource,
-    /<ProductRoot productRef=\{route\.productRef\} sectionRef=\{route\.sectionRef\} \/>/u,
-  );
+  assert.match(rootSource, /productRef=\{route\.productRef\}/u);
+  assert.match(rootSource, /sectionRef=\{route\.sectionRef\}/u);
   assert.match(rootSource, /<ProductDetailPage/u);
-  assert.match(rootSource, /<PrimaryShell activePath="\/browse\/"/u);
+  assert.match(rootSource, /<PrimaryShell[\s\S]*activePath=\{pathname\}/u);
 });
 
 test('product detail keeps a focused media, summary, Markdown and CTA hierarchy', () => {

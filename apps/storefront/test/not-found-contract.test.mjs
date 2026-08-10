@@ -13,8 +13,8 @@ const notFoundSource = await readFile(
 
 test('unknown and invalid routes use the primary shell and the small 404 page', () => {
   assert.match(rootSource, /const route = parseStorefrontRoute\(pathname\)/u);
-  assert.match(rootSource, /default:\s*page = <NotFoundRoot pathname=\{pathname\} \/>/u);
-  assert.match(rootSource, /<PrimaryShell activePath=\{pathname\}/u);
+  assert.match(rootSource, /default:[\s\S]*?<NotFoundPage/u);
+  assert.match(rootSource, /<PrimaryShell[\s\S]*activePath=\{pathname\}/u);
   assert.match(rootSource, /<NotFoundPage/u);
   assert.match(notFoundSource, /<div className="state-mark">404<\/div>/u);
   assert.match(

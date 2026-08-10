@@ -8,8 +8,22 @@ const presentationSource = await readFile(
   'utf8',
 );
 const shellCss = await readFile(new URL('../src/app-shell.css', import.meta.url), 'utf8');
-const productSource = await readFile(new URL('../src/ProductDetailPage.tsx', import.meta.url), 'utf8');
-const productCss = await readFile(new URL('../src/product-detail-ui.css', import.meta.url), 'utf8');
+const pagesCss = await readFile(
+  new URL('../src/storefront-pages.css', import.meta.url),
+  'utf8',
+);
+const rootSource = await readFile(
+  new URL('../src/StorefrontRoot.tsx', import.meta.url),
+  'utf8',
+);
+const productSource = await readFile(
+  new URL('../src/ProductDetailPage.tsx', import.meta.url),
+  'utf8',
+);
+const productCss = await readFile(
+  new URL('../src/product-detail-ui.css', import.meta.url),
+  'utf8',
+);
 const faqSource = await readFile(new URL('../src/FaqPage.tsx', import.meta.url), 'utf8');
 
 test('storefront loads the app shell refinement layer after PWA styles', () => {
@@ -24,13 +38,41 @@ test('mobile app shell uses dynamic viewport height and a non-floating tab bar',
   assert.equal(shellCss.includes('.site-footer {\n    display: none;'), true);
   assert.equal(shellCss.includes('.app-shell .bottom-nav {'), true);
   assert.equal(shellCss.includes('border-radius: 0;'), true);
+  assert.match(
+    shellCss,
+    /@media \(max-width: 767px\)[\s\S]*?\.app-shell \.bottom-nav \{[\s\S]*?right:\s*0;[\s\S]*?bottom:\s*0;[\s\S]*?left:\s*0;[\s\S]*?width:\s*100%;[\s\S]*?transform:\s*none;/u,
+  );
+  assert.doesNotMatch(pagesCss, /@media \(min-width:\s*720px\)/u);
+  assert.match(pagesCss, /@media \(min-width:\s*768px\)/u);
+});
+
+test('primary tabs keep one mounted shell and use color-only active state', () => {
+  assert.equal(rootSource.match(/<PrimaryShell\b/gu)?.length, 1);
+  assert.match(rootSource, /className="storefront-route-view"/u);
+  assert.match(rootSource, /routeKey=\{pathname\}/u);
+  assert.match(
+    shellCss,
+    /\.app-shell \.bottom-nav a\.is-active \.bottom-nav-icon\s*\{[\s\S]*?background:\s*transparent;/u,
+  );
+  assert.doesNotMatch(shellCss, /@keyframes app-tab-settle/u);
 });
 
 test('storefront classifies secondary routes as push pages before paint', () => {
-  assert.equal(mainSource.includes("import { StorefrontPresentation } from './StorefrontPresentation';"), true);
+  assert.equal(
+    mainSource.includes(
+      "import { StorefrontPresentation } from './StorefrontPresentation';",
+    ),
+    true,
+  );
   assert.equal(mainSource.includes('<StorefrontPresentation />'), true);
   assert.equal(presentationSource.includes('useLayoutEffect'), true);
-  for (const routeType of ['section', 'product', 'faq-article', 'message', 'message-compose']) {
+  for (const routeType of [
+    'section',
+    'product',
+    'faq-article',
+    'message',
+    'message-compose',
+  ]) {
     assert.equal(
       presentationSource.includes(`case '${routeType}':`),
       true,
@@ -38,6 +80,7 @@ test('storefront classifies secondary routes as push pages before paint', () => 
     );
   }
   assert.equal(presentationSource.includes('storefrontPresentation'), true);
+  assert.equal(presentationSource.includes('storefrontTransition'), true);
 });
 
 test('mobile push pages remove root chrome while root tabs keep it', () => {
@@ -46,7 +89,9 @@ test('mobile push pages remove root chrome while root tabs keep it', () => {
     true,
   );
   assert.equal(
-    shellCss.includes("html[data-storefront-presentation='push'] .app-shell > .bottom-nav"),
+    shellCss.includes(
+      "html[data-storefront-presentation='push'] .app-shell > .bottom-nav",
+    ),
     true,
   );
   assert.equal(
@@ -85,7 +130,9 @@ test('mobile conversation route remains focused full-screen UI without global ch
   );
   assert.equal(shellCss.includes('height: 100dvh;'), true);
   assert.equal(
-    shellCss.includes('.app-shell:has(.messages-workspace.is-thread-open) .chat-composer'),
+    shellCss.includes(
+      '.app-shell:has(.messages-workspace.is-thread-open) .chat-composer',
+    ),
     true,
   );
   assert.equal(shellCss.includes('safe-area-inset-bottom'), true);
