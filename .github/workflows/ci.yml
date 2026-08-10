@@ -250,7 +250,7 @@ jobs:
 
           health=''
           health_ready=false
-          for attempt in 1 2 3 4 5 6 7 8 9 10; do
+          for attempt in {1..40}; do
             health="$(curl --fail --silent --show-error "$BASE_URL/api/health" || true)"
             if printf '%s' "$health" | node -e '
               const fs = require("fs");
@@ -272,6 +272,7 @@ jobs:
           done
           if [[ "$health_ready" != true ]]; then
             echo 'Worker version metadata did not propagate before the smoke-test deadline.'
+            echo "Expected Worker Version ID: $EXPECTED_WORKER_VERSION_ID"
             printf '%s\n' "$health"
             exit 1
           fi
