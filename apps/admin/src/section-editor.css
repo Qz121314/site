@@ -1,0 +1,373 @@
+.section-editor-dialog {
+  display: flex !important;
+  width: min(820px, calc(100vw - 32px)) !important;
+  max-height: calc(100dvh - 32px) !important;
+  flex-direction: column;
+  padding: 0 !important;
+  overflow: hidden !important;
+}
+
+.section-editor-dialog .admin-dialog-header {
+  min-height: 0 !important;
+  flex: 0 0 auto;
+  align-items: center;
+  margin: 0 !important;
+  padding: 14px 18px 12px !important;
+}
+
+.section-editor-dialog .admin-dialog-header > div {
+  display: grid;
+  gap: 3px;
+}
+
+.section-editor-dialog .admin-dialog-header h3 {
+  font-size: 1rem !important;
+}
+
+.section-editor-dialog .section-editor-header-note {
+  display: block !important;
+  margin: 0 !important;
+  color: var(--admin-text-muted, #667085) !important;
+  font-size: 0.7rem !important;
+  font-weight: 500 !important;
+  letter-spacing: 0 !important;
+  line-height: 1.4 !important;
+  text-transform: none !important;
+}
+
+.section-editor-dialog .admin-dialog-header > button {
+  border: 1px solid var(--admin-border, #e2e6ec) !important;
+  background: #fff !important;
+  font-size: 1.15rem !important;
+}
+
+.section-editor-dialog .section-editor-form {
+  display: flex;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 12px !important;
+  margin: 0 !important;
+  padding: 14px 18px 0;
+  overflow-y: auto;
+}
+
+.section-editor-card {
+  min-width: 0;
+  margin: 0;
+  padding: 13px !important;
+  border: 1px solid var(--admin-border, #e2e6ec) !important;
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(16 24 40 / 2%);
+}
+
+.section-editor-card-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 10px;
+}
+
+.section-editor-card-heading > div {
+  display: grid;
+  gap: 2px;
+}
+
+.section-editor-card-heading strong,
+.section-editor-dialog .section-editor-card > legend {
+  color: #263244;
+  font-size: 0.75rem;
+  font-weight: 800;
+  line-height: 1.2;
+}
+
+.section-editor-dialog .section-editor-card > legend {
+  padding: 0 5px;
+}
+
+.section-editor-card-heading small,
+.section-editor-dialog .section-icon-help {
+  color: var(--admin-text-muted, #667085);
+  font-size: 0.66rem;
+  line-height: 1.45;
+}
+
+.section-editor-dialog .section-icon-help {
+  margin: 0 0 9px;
+}
+
+.section-editor-fields-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
+  gap: 12px;
+}
+
+.section-editor-dialog .section-editor-form label {
+  display: grid;
+  min-width: 0;
+}
+
+.section-editor-dialog .section-editor-form label > span,
+.section-editor-dialog .section-editor-form label > small {
+  line-height: 1.4;
+}
+
+.section-editor-dialog .section-editor-form label > small {
+  margin-top: 5px !important;
+  color: var(--admin-text-muted, #667085) !important;
+  font-size: 0.65rem;
+}
+
+.section-editor-dialog .section-editor-form textarea {
+  width: 100%;
+  min-height: 62px !important;
+  box-sizing: border-box;
+  padding: 8px 10px !important;
+  resize: vertical;
+  border: 1px solid var(--admin-border-strong, #cfd5df) !important;
+  border-radius: 8px !important;
+  outline: 0;
+  background: #fff !important;
+  color: var(--admin-text, #172033);
+  font: inherit;
+  font-size: 0.8rem !important;
+  line-height: 1.45;
+}
+
+.section-editor-dialog .section-editor-form textarea:focus {
+  border-color: #ff9a76 !important;
+  box-shadow: 0 0 0 3px rgb(255 90 31 / 10%) !important;
+}
+
+.section-editor-visual-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.section-editor-dialog .section-image-icon-fieldset,
+.section-editor-dialog .section-browse-background-fieldset {
+  display: block;
+}
+
+.section-editor-media-row {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+}
+
+.section-editor-dialog .section-icon-large-preview {
+  width: 72px !important;
+  height: 72px !important;
+  border-radius: 13px !important;
+  background: #fafbfc !important;
+  color: #172033 !important;
+  font-size: 27px !important;
+}
+
+.section-editor-dialog .section-icon-large-preview img {
+  object-fit: cover;
+}
+
+.section-editor-dialog .section-browse-background-preview {
+  width: 150px;
+  min-height: 0 !important;
+  height: 88px;
+  border-radius: 10px;
+  font-size: 0.68rem;
+}
+
+.section-editor-dialog .section-icon-upload-copy {
+  gap: 4px;
+  align-content: center;
+}
+
+.section-editor-dialog .section-icon-upload-copy strong {
+  color: #344054;
+  font-size: 0.74rem;
+  font-weight: 760;
+}
+
+.section-editor-dialog .section-icon-upload-copy p {
+  color: var(--admin-text-muted, #667085);
+  font-size: 0.67rem;
+  line-height: 1.45;
+}
+
+.section-editor-dialog .section-icon-upload-copy small {
+  color: #667085;
+  font-size: 0.64rem;
+}
+
+.section-editor-dialog .section-icon-upload-actions {
+  --admin-button-min-height: 30px;
+  --admin-button-padding-inline: 9px;
+  --admin-button-font-size: 0.69rem;
+  gap: 5px;
+  margin-top: 3px;
+}
+
+.section-editor-bottom-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.2fr) minmax(260px, 0.8fr);
+  gap: 12px;
+}
+
+.section-editor-dialog .icon-picker {
+  display: grid;
+  grid-template-columns: repeat(6, 36px) !important;
+  gap: 6px !important;
+  justify-content: start;
+}
+
+.section-editor-dialog .icon-picker button {
+  width: 36px;
+  height: 36px;
+  min-height: 36px;
+  border-radius: 8px !important;
+  font-size: 16px !important;
+}
+
+.section-editor-dialog .icon-picker button:not(.is-selected):hover {
+  border-color: #b9c0cb;
+  background: #f8f9fb;
+}
+
+.section-editor-dialog .icon-picker button.is-selected {
+  border-color: #ff9a76 !important;
+  background: #fff2ec !important;
+  color: #c2410c !important;
+  box-shadow: 0 0 0 2px rgb(255 90 31 / 8%) !important;
+}
+
+.section-editor-settings-card {
+  display: grid;
+  grid-template-columns: minmax(96px, 0.38fr) minmax(0, 0.62fr);
+  align-items: stretch;
+  gap: 10px;
+}
+
+.section-editor-dialog .section-editor-sort-field input {
+  width: 100% !important;
+}
+
+.section-editor-dialog .section-editor-switch-row {
+  min-height: 64px;
+  margin: 0;
+  padding: 9px 10px;
+  border-color: var(--admin-border, #e2e6ec);
+  border-radius: 8px;
+  background: #fafbfc;
+}
+
+.section-editor-dialog .section-editor-switch-row > span {
+  display: grid;
+  gap: 2px;
+}
+
+.section-editor-dialog .section-editor-switch-row > span strong {
+  color: #344054;
+  font-size: 0.72rem;
+}
+
+.section-editor-dialog .section-editor-switch-row > span small {
+  margin: 0;
+  color: var(--admin-text-muted, #667085);
+  font-size: 0.63rem;
+  line-height: 1.35;
+}
+
+.section-editor-dialog .section-editor-switch-row input[type='checkbox'] {
+  width: 18px !important;
+  height: 18px !important;
+  min-height: 18px !important;
+  margin: 0;
+  padding: 0 !important;
+  accent-color: var(--admin-brand, #ff5a1f);
+  box-shadow: none !important;
+}
+
+.section-editor-dialog .admin-dialog-actions {
+  position: sticky;
+  z-index: 4;
+  bottom: 0;
+  flex: 0 0 auto;
+  margin: 0 -18px !important;
+  padding: 10px 18px 12px !important;
+  background: #fff;
+  box-shadow: 0 -10px 22px rgb(255 255 255 / 92%) !important;
+}
+
+@media (max-width: 760px) {
+  .section-editor-dialog {
+    width: min(680px, calc(100vw - 24px)) !important;
+    max-height: calc(100dvh - 24px) !important;
+  }
+
+  .section-editor-fields-grid,
+  .section-editor-visual-grid,
+  .section-editor-bottom-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .section-editor-dialog .section-browse-background-preview {
+    width: 132px;
+    height: 78px;
+  }
+
+  .section-editor-settings-card {
+    grid-template-columns: minmax(100px, 0.4fr) minmax(0, 0.6fr);
+  }
+}
+
+@media (max-width: 520px) {
+  .section-editor-dialog {
+    width: 100% !important;
+    max-height: calc(100dvh - 12px) !important;
+    border-radius: 12px 12px 0 0 !important;
+  }
+
+  .section-editor-dialog .admin-dialog-header {
+    padding: 12px 14px 10px !important;
+  }
+
+  .section-editor-dialog .section-editor-form {
+    padding: 12px 14px 0;
+  }
+
+  .section-editor-media-row {
+    grid-template-columns: 64px minmax(0, 1fr);
+  }
+
+  .section-editor-dialog .section-icon-large-preview {
+    width: 64px !important;
+    height: 64px !important;
+  }
+
+  .section-editor-dialog .section-browse-background-preview {
+    width: 64px;
+    height: 64px;
+  }
+
+  .section-editor-dialog .icon-picker {
+    grid-template-columns: repeat(6, 34px) !important;
+  }
+
+  .section-editor-dialog .icon-picker button {
+    width: 34px;
+    height: 34px;
+    min-height: 34px;
+  }
+
+  .section-editor-settings-card {
+    grid-template-columns: 1fr;
+  }
+
+  .section-editor-dialog .admin-dialog-actions {
+    margin: 0 -14px !important;
+    padding: 10px 14px 12px !important;
+  }
+}
