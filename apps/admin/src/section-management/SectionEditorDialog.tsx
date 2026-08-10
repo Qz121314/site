@@ -118,7 +118,7 @@ export function SectionEditorDialog({
 
           <div className="section-editor-visual-grid">
             <fieldset className="section-editor-card section-image-icon-fieldset">
-              <legend>Home 快捷图标</legend>
+              <legend>分区快捷图标</legend>
               <div className="section-editor-media-row section-editor-icon-row">
                 <div className="section-icon-large-preview">
                   {iconPreviewUrl ? (
@@ -184,7 +184,7 @@ export function SectionEditorDialog({
             </fieldset>
 
             <fieldset className="section-editor-card section-browse-background-fieldset">
-              <legend>Browse 背景图</legend>
+              <legend>Browse 分区背景图</legend>
               <div className="section-editor-media-row">
                 <div className="section-browse-background-preview">
                   {browseBackgroundPreviewUrl ? (
@@ -197,7 +197,7 @@ export function SectionEditorDialog({
                   <strong>
                     {browseBackgroundPreviewUrl ? '已设置背景图' : '使用主题背景'}
                   </strong>
-                  <p>仅用于 Browse 的详细分区卡片，不影响 Home 入口和产品封面。</p>
+                  <p>只用于 Browse 的详细分区卡片，不影响 Home 入口和产品封面。</p>
                   <div className="section-icon-upload-actions">
                     <button
                       type="button"
