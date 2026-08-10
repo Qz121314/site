@@ -40,7 +40,7 @@ export type PublishStatus = {
   dirtyCount: number;
   bootstrapRequired: boolean;
   legacyPointerDetected: boolean;
-  contentOrigin: string | null;
+  mediaBaseUrl: string | null;
   modules: PublishModuleStatus[];
 };
 
@@ -179,7 +179,7 @@ function parseStatus(value: unknown): PublishStatus {
     typeof status.dirtyCount !== 'number' ||
     typeof status.bootstrapRequired !== 'boolean' ||
     typeof status.legacyPointerDetected !== 'boolean' ||
-    (typeof status.contentOrigin !== 'string' && status.contentOrigin !== null) ||
+    (typeof status.mediaBaseUrl !== 'string' && status.mediaBaseUrl !== null) ||
     !Array.isArray(status.modules)
   ) {
     throw new AdminApiError(500, 'INVALID_RESPONSE', '发布状态返回数据无效。');
@@ -191,7 +191,7 @@ function parseStatus(value: unknown): PublishStatus {
     dirtyCount: status.dirtyCount,
     bootstrapRequired: status.bootstrapRequired,
     legacyPointerDetected: status.legacyPointerDetected,
-    contentOrigin: status.contentOrigin as string | null,
+    mediaBaseUrl: status.mediaBaseUrl as string | null,
     modules: status.modules.map(parseModule),
   };
 }

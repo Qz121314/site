@@ -156,10 +156,11 @@ jobs:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
 
-      - name: Probe direct R2 snapshot reads
+      - name: Probe direct R2 media reads
         id: r2_probe
         env:
           R2_ORIGIN: ${{ steps.r2_origin.outputs.origin }}
+          MEDIA_OBJECT_KEY: ${{ steps.r2_origin.outputs.media_key }}
         run: |
           set -euo pipefail
           if [[ -z "$R2_ORIGIN" ]]; then
@@ -168,38 +169,47 @@ jobs:
             echo '::warning::DIRECT_R2_NOT_CONFIGURED - configure and test the R2 custom domain in Admin > Site Settings.'
             exit 0
           fi
+          if [[ -z "$MEDIA_OBJECT_KEY" ]]; then
+            echo 'ready=false' >> "$GITHUB_OUTPUT"
+            echo 'status=no-ready-media' >> "$GITHUB_OUTPUT"
+            echo '::warning::DIRECT_R2_MEDIA_UNTESTED - no ready media asset exists yet.'
+            exit 0
+          fi
 
           probe_origin='https://storefront-probe.invalid'
+          media_path="$(MEDIA_OBJECT_KEY="$MEDIA_OBJECT_KEY" node -e '
+            const key = process.env.MEDIA_OBJECT_KEY;
+            const segments = key.split("/");
+            if (segments.some((segment) => !segment || segment === "." || segment === "..")) process.exit(1);
+            process.stdout.write(segments.map(encodeURIComponent).join("/"));
+          ')"
           headers="$(mktemp)"
           body="$(mktemp)"
           status="$(curl --silent --show-error \
             --connect-timeout 10 \
             --max-time 20 \
+            --range 0-0 \
             -H "Origin: $probe_origin" \
             -D "$headers" \
             -o "$body" \
             -w '%{http_code}' \
-            "$R2_ORIGIN/public/current.json" || true)"
+            "$R2_ORIGIN/$media_path" || true)"
           cors="$(awk 'BEGIN{IGNORECASE=1} /^access-control-allow-origin:/ {gsub("\r", ""); sub(/^[^:]+:[[:space:]]*/, ""); print; exit}' "$headers")"
-          json_ok=false
-          if [[ "$status" =~ ^2 ]] && node -e '
-            const fs = require("fs");
-            const value = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
-            if (value.schemaVersion !== 1 && value.schemaVersion !== 2) process.exit(1);
-          ' "$body"; then
-            json_ok=true
-          fi
+          content_type="$(awk 'BEGIN{IGNORECASE=1} /^content-type:/ {gsub("\r", ""); sub(/^[^:]+:[[:space:]]*/, ""); print; exit}' "$headers")"
 
           ready=false
-          if [[ "$json_ok" == true && ( "$cors" == '*' || "$cors" == "$probe_origin" ) ]]; then
+          if [[ "$status" == '206' \
+            && "$(wc -c < "$body")" == '1' \
+            && "$content_type" =~ ^(image|video)/ \
+            && ( "$cors" == '*' || "$cors" == "$probe_origin" ) ]]; then
             ready=true
           fi
           echo "ready=$ready" >> "$GITHUB_OUTPUT"
           echo "status=$status" >> "$GITHUB_OUTPUT"
-          echo "Direct R2 probe: HTTP $status, CORS='${cors:-missing}', ready=$ready"
+          echo "Direct R2 media probe: HTTP $status, type='${content_type:-missing}', CORS='${cors:-missing}', ready=$ready"
 
           if [[ "$ready" != true ]]; then
-            echo '::warning::DIRECT_R2_BLOCKED - Storefront will use its same-origin /public/* and /_media/* runtime fallbacks until the R2 custom domain becomes directly readable.'
+            echo '::warning::DIRECT_R2_MEDIA_BLOCKED - Storefront will retry tracked media through its same-origin /_media/* route.'
             if grep -Eqi '^cf-mitigated:[[:space:]]*challenge' "$headers"; then
               echo 'Direct R2 diagnosis: Cloudflare challenge (cf-mitigated: challenge).'
             fi
@@ -281,12 +291,12 @@ jobs:
             exit 1
           fi
 
-          content_config="$(curl --fail --silent --show-error "$BASE_URL/api/public/storefront/content-origin")"
-          printf '%s' "$content_config" | R2_ORIGIN="$R2_ORIGIN" node -e '
+          media_config="$(curl --fail --silent --show-error "$BASE_URL/api/public/storefront/media-base-url")"
+          printf '%s' "$media_config" | R2_ORIGIN="$R2_ORIGIN" node -e '
             const fs = require("fs");
             const value = JSON.parse(fs.readFileSync(0, "utf8"));
             const expected = process.env.R2_ORIGIN.trim() || null;
-            if (value.contentOrigin !== expected) process.exit(1);
+            if (value.mediaBaseUrl !== expected) process.exit(1);
           '
 
           curl --fail --silent --show-error \
@@ -341,35 +351,42 @@ jobs:
             echo '::warning::SAME_ORIGIN_MEDIA_FALLBACK=untested - no ready media asset exists yet.'
           fi
 
-          if [[ -n "$R2_ORIGIN" ]]; then
+          if [[ -n "$R2_ORIGIN" && -n "$MEDIA_OBJECT_KEY" ]]; then
+            media_path="$(MEDIA_OBJECT_KEY="$MEDIA_OBJECT_KEY" node -e '
+              const key = process.env.MEDIA_OBJECT_KEY;
+              const segments = key.split("/");
+              if (segments.some((segment) => !segment || segment === "." || segment === "..")) process.exit(1);
+              process.stdout.write(segments.map(encodeURIComponent).join("/"));
+            ')"
             direct_headers="$(mktemp)"
             direct_body="$(mktemp)"
             direct_status="$(curl --silent --show-error \
               --connect-timeout 10 \
               --max-time 20 \
+              --range 0-0 \
               -H "Origin: $BASE_URL" \
               -D "$direct_headers" \
               -o "$direct_body" \
               -w '%{http_code}' \
-              "$R2_ORIGIN/public/current.json" || true)"
+              "$R2_ORIGIN/$media_path" || true)"
             direct_cors="$(awk 'BEGIN{IGNORECASE=1} /^access-control-allow-origin:/ {gsub("\r", ""); sub(/^[^:]+:[[:space:]]*/, ""); print; exit}' "$direct_headers")"
-            if [[ "$direct_status" =~ ^2 ]] \
-              && [[ "$direct_cors" == '*' || "$direct_cors" == "$BASE_URL" ]] \
-              && node -e '
-                const fs = require("fs");
-                const value = JSON.parse(fs.readFileSync(process.argv[1], "utf8"));
-                if (value.schemaVersion !== 1 && value.schemaVersion !== 2) process.exit(1);
-              ' "$direct_body"; then
-              echo 'DIRECT_R2_READ=ready'
+            direct_content_type="$(awk 'BEGIN{IGNORECASE=1} /^content-type:/ {gsub("\r", ""); sub(/^[^:]+:[[:space:]]*/, ""); print; exit}' "$direct_headers")"
+            if [[ "$direct_status" == '206' \
+              && "$(wc -c < "$direct_body")" == '1' \
+              && "$direct_content_type" =~ ^(image|video)/ \
+              && ( "$direct_cors" == '*' || "$direct_cors" == "$BASE_URL" ) ]]; then
+              echo 'DIRECT_R2_MEDIA_READ=ready'
             else
-              echo '::warning::DIRECT_R2_READ=blocked - production remains available through the tested same-origin /public/* and /_media/* fallbacks.'
-              echo "Direct R2 post-deploy status: HTTP $direct_status, CORS='${direct_cors:-missing}', predeploy_ready=$DIRECT_R2_READY"
+              echo '::warning::DIRECT_R2_MEDIA_READ=blocked - tracked media remains available through the tested same-origin /_media/* fallback.'
+              echo "Direct R2 media status: HTTP $direct_status, type='${direct_content_type:-missing}', CORS='${direct_cors:-missing}', predeploy_ready=$DIRECT_R2_READY"
               if grep -Eqi '^cf-mitigated:[[:space:]]*challenge' "$direct_headers"; then
                 echo 'Direct R2 diagnosis: Cloudflare challenge (cf-mitigated: challenge).'
               fi
             fi
+          elif [[ -z "$R2_ORIGIN" ]]; then
+            echo '::warning::DIRECT_R2_MEDIA_READ=not-configured'
           else
-            echo '::warning::DIRECT_R2_READ=not-configured'
+            echo '::warning::DIRECT_R2_MEDIA_READ=untested-no-ready-media'
           fi
 
           auth_session="$(curl --fail --silent --show-error "$BASE_URL/api/admin/auth/session")"

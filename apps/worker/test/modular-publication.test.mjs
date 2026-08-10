@@ -258,12 +258,12 @@ test('public storefront discovery returns the current admin-configured R2 domain
   };
 
   const response = await publicStorefrontConfigRoutes.request(
-    'https://storefront.example.com/content-origin',
+    'https://storefront.example.com/media-base-url',
     {},
     { DB: db },
   );
   assert.equal(response.status, 200);
-  assert.deepEqual(await response.json(), { contentOrigin: 'https://media.example.com' });
+  assert.deepEqual(await response.json(), { mediaBaseUrl: 'https://media.example.com' });
   assert.equal(response.headers.get('cache-control'), 'no-store');
 });
 
@@ -279,10 +279,10 @@ test('public storefront discovery reports an unconfigured R2 domain without inve
   };
 
   const response = await publicStorefrontConfigRoutes.request(
-    'https://storefront.example.com/content-origin',
+    'https://storefront.example.com/media-base-url',
     {},
     { DB: db },
   );
   assert.equal(response.status, 200);
-  assert.deepEqual(await response.json(), { contentOrigin: null });
+  assert.deepEqual(await response.json(), { mediaBaseUrl: null });
 });

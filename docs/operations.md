@@ -45,9 +45,9 @@ pnpm exec wrangler d1 time-travel restore DB --bookmark="TARGET_BOOKMARK"
 
 - 公开内容采用不可变快照和 current pointer；内容误发布优先通过模块版本 Rollback。
 - 数据库只保存媒体 `object_key`，R2 自定义域名由后台运行时配置提供，不写入前端源码或构建变量。
-- 直接 R2 读取失败时，公开 JSON 使用 `/public/*`；图片、GIF 和视频在浏览器加载失败后使用 `/_media/*` 重试。
+- 公开 JSON 始终使用同源 `/public/*`；图片、GIF 和视频通过运行时媒体域名读取，浏览器加载失败后使用 `/_media/*` 重试。
 - `/_media/*` 只读取 D1 中状态为 `ready` 且未删除的对象，并支持视频 Range 请求；它不是公开的任意 Bucket 代理。
-- 同源 fallback 保证业务连续性，但仍应修复 R2 Custom Domain 的 DNS、WAF、Bot 或 CORS 配置，恢复直接读取并降低 Worker 流量。
+- 只有真实 ready 媒体对象的直读探测失败时，才检查对应媒体域名的 DNS、WAF、Bot 或 CORS；不能用 `/public/current.json` 探测媒体域名并据此判断安全规则异常。
 
 ## 发布后核验
 

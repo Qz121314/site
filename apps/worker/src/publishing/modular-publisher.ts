@@ -71,7 +71,7 @@ export type ModularPublishStatus = {
   dirtyCount: number;
   bootstrapRequired: boolean;
   legacyPointerDetected: boolean;
-  contentOrigin: string | null;
+  mediaBaseUrl: string | null;
   modules: PublishModuleStatus[];
 };
 
@@ -1266,7 +1266,7 @@ export async function getModularPublishStatus(
     dirtyCount,
     bootstrapRequired: pointerResult.pointer === null,
     legacyPointerDetected: pointerResult.legacyDetected,
-    contentOrigin: source.site.media_base_url,
+    mediaBaseUrl: source.site.media_base_url,
     modules,
   };
 }
