@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import type { StorefrontLinkComponent } from '@site/storefront-ui';
-import { useEffect } from 'react';
+import { useEffect, type MouseEvent as ReactMouseEvent } from 'react';
 import {
   loadProductSnapshot,
   PublicContentError,
@@ -10,6 +10,7 @@ import { MarkdownContent } from './MarkdownContent';
 import { ResilientImage, ResilientVideo } from './ResilientMedia';
 import { sectionHref } from './routing';
 import { useStorefrontCopy } from './storefront-copy';
+import { canNavigateStorefrontBack, navigateStorefrontBack } from './storefront-history';
 
 function isVideoMediaUrl(value: string): boolean {
   try {
@@ -26,6 +27,12 @@ function isMissingProduct(error: unknown): boolean {
     || error.code === 'INVALID_PRODUCT'
     || error.code === 'INVALID_SECTION'
   );
+}
+
+function handleInternalBack(event: ReactMouseEvent<HTMLAnchorElement>) {
+  if (!canNavigateStorefrontBack()) return;
+  event.preventDefault();
+  navigateStorefrontBack();
 }
 
 export function ProductDetailPage({
@@ -71,7 +78,11 @@ export function ProductDetailPage({
               Try again
             </button>
           ) : null}
-          <LinkComponent className={missing ? 'primary-button' : 'secondary-button'} href="/browse/">
+          <LinkComponent
+            className={missing ? 'primary-button' : 'secondary-button'}
+            href="/browse/"
+            onClick={handleInternalBack}
+          >
             Back to Browse
           </LinkComponent>
         </div>
@@ -86,9 +97,12 @@ export function ProductDetailPage({
 
   return (
     <article className="product-detail-page" aria-labelledby="product-detail-title">
-      <LinkComponent className="product-detail-back" href={backHref}>
-        ← {product.sectionName}
-      </LinkComponent>
+      <header className="product-detail-navigation">
+        <LinkComponent className="product-detail-back" href={backHref} onClick={handleInternalBack}>
+          <span className="product-detail-back-icon" aria-hidden="true">‹</span>
+          <span className="product-detail-back-label">{product.sectionName}</span>
+        </LinkComponent>
+      </header>
 
       <div className="product-detail-hero">
         <div className="detail-gallery" aria-label={`${product.title} media`}>
