@@ -1,18 +1,4 @@
-import { createContext, useContext, type ReactNode } from 'react';
-import {
-  FALLBACK_BOTTOM_NAVIGATION,
-  loadBottomNavigation,
-  type BottomNavigationItemConfig,
-} from './bottom-navigation';
-
 export type StorefrontCopy = {
-  navigation: {
-    home: string;
-    browse: string;
-    messages: string;
-    faq: string;
-    items: BottomNavigationItemConfig[];
-  };
   home: {
     sectionsKicker: string;
     sectionsTitle: string;
@@ -98,20 +84,11 @@ export type StorefrontCopy = {
   };
 };
 
-const FALLBACK_NAVIGATION_LABELS = {
-  home: 'Home',
-  browse: 'Browse',
-  messages: 'Messages',
-  faq: 'FAQ',
-};
-
-/* Rollout/offline fallback only. Normal rendering uses backend endpoints. */
-export const FALLBACK_STOREFRONT_COPY: StorefrontCopy = {
-  navigation: { ...FALLBACK_NAVIGATION_LABELS, items: FALLBACK_BOTTOM_NAVIGATION },
+export const STOREFRONT_COPY: StorefrontCopy = {
   home: {
     sectionsKicker: 'Explore',
     sectionsTitle: 'Services',
-    viewAll: 'View all',
+    viewAll: 'More',
     showLess: 'Show less',
     emptySections: 'No services are published yet.',
     featuredKicker: 'Popular now',
@@ -193,75 +170,6 @@ export const FALLBACK_STOREFRONT_COPY: StorefrontCopy = {
   },
 };
 
-const CopyContext = createContext<StorefrontCopy>(FALLBACK_STOREFRONT_COPY);
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
-function normalizeGroup<T>(value: unknown, fallback: T): T {
-  const record = isRecord(value) ? value : {};
-  const fallbackRecord = fallback as Record<string, string>;
-  const output: Record<string, string> = {};
-  for (const [key, fallbackValue] of Object.entries(fallbackRecord)) {
-    const raw = record[key];
-    output[key] = typeof raw === 'string' && raw.trim() ? raw.trim() : fallbackValue;
-  }
-  return output as T;
-}
-
-function normalizeCopy(value: unknown, navigationItems: BottomNavigationItemConfig[]): StorefrontCopy {
-  const record = isRecord(value) ? value : {};
-  const navigationLabels = normalizeGroup(
-    record.navigation,
-    FALLBACK_NAVIGATION_LABELS,
-  );
-  return {
-    navigation: { ...navigationLabels, items: navigationItems },
-    home: normalizeGroup(record.home, FALLBACK_STOREFRONT_COPY.home),
-    browse: normalizeGroup(record.browse, FALLBACK_STOREFRONT_COPY.browse),
-    section: normalizeGroup(record.section, FALLBACK_STOREFRONT_COPY.section),
-    product: normalizeGroup(record.product, FALLBACK_STOREFRONT_COPY.product),
-    faq: normalizeGroup(record.faq, FALLBACK_STOREFRONT_COPY.faq),
-    messages: normalizeGroup(record.messages, FALLBACK_STOREFRONT_COPY.messages),
-  };
-}
-
-export async function loadStorefrontCopy(signal?: AbortSignal): Promise<StorefrontCopy> {
-  const init: RequestInit = {
-    method: 'GET',
-    cache: 'no-cache',
-    credentials: 'same-origin',
-    headers: { Accept: 'application/json' },
-  };
-  if (signal) init.signal = signal;
-
-  const [response, navigationResult] = await Promise.all([
-    fetch('/api/public/storefront-copy/', init),
-    loadBottomNavigation(signal).catch(() => null),
-  ]);
-  if (!response.ok) throw new Error('STOREFRONT_COPY_UNAVAILABLE');
-  const body = await response.json() as unknown;
-  if (!isRecord(body)) throw new Error('STOREFRONT_COPY_INVALID');
-
-  const normalizedWithoutNavigation = normalizeCopy(body.copy, FALLBACK_BOTTOM_NAVIGATION);
-  const navigationItems = navigationResult ?? FALLBACK_BOTTOM_NAVIGATION.map((item) => ({
-    ...item,
-    label: normalizedWithoutNavigation.navigation[item.key],
-  }));
-  return normalizeCopy(body.copy, navigationItems);
-}
-
-export function StorefrontCopyProvider({
-  value,
-  children,
-}: {
-  value: StorefrontCopy;
-  children: ReactNode;
-}) {
-  return <CopyContext.Provider value={value}>{children}</CopyContext.Provider>;
-}
-
 export function useStorefrontCopy(): StorefrontCopy {
-  return useContext(CopyContext);
+  return STOREFRONT_COPY;
 }
