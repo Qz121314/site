@@ -92,7 +92,9 @@ export function SectionEditorDialog({
                   required
                   maxLength={100}
                   disabled={busy}
-                  onChange={(event) => onFormChange({ ...form, name: event.target.value })}
+                  onChange={(event) =>
+                    onFormChange({ ...form, name: event.target.value })
+                  }
                 />
                 <small>填写用户前端实际显示的 English 名称。</small>
               </label>
@@ -139,7 +141,9 @@ export function SectionEditorDialog({
                     <small>已绑定素材中心图片。</small>
                   ) : null}
                   <div className="section-icon-upload-actions">
-                    <label className={`branding-file-button${busy ? ' is-disabled' : ''}`}>
+                    <label
+                      className={`branding-file-button${busy ? ' is-disabled' : ''}`}
+                    >
                       <input
                         type="file"
                         accept="image/jpeg,image/png,image/webp"
@@ -150,7 +154,11 @@ export function SectionEditorDialog({
                           if (file) onSelectIconFile(file);
                         }}
                       />
-                      {processingIcon ? '压缩中…' : iconPreviewUrl ? '上传替换' : '上传图片'}
+                      {processingIcon
+                        ? '压缩中…'
+                        : iconPreviewUrl
+                          ? '上传替换'
+                          : '上传图片'}
                     </label>
                     <button
                       type="button"
@@ -186,7 +194,9 @@ export function SectionEditorDialog({
                   )}
                 </div>
                 <div className="section-icon-upload-copy">
-                  <strong>{browseBackgroundPreviewUrl ? '已设置背景图' : '使用主题背景'}</strong>
+                  <strong>
+                    {browseBackgroundPreviewUrl ? '已设置背景图' : '使用主题背景'}
+                  </strong>
                   <p>仅用于 Browse 的详细分区卡片，不影响 Home 入口和产品封面。</p>
                   <div className="section-icon-upload-actions">
                     <button
@@ -226,7 +236,9 @@ export function SectionEditorDialog({
                     type="button"
                     disabled={busy}
                     className={
-                      !iconPreviewUrl && form.iconValue === icon ? 'is-selected' : undefined
+                      !iconPreviewUrl && form.iconValue === icon
+                        ? 'is-selected'
+                        : undefined
                     }
                     aria-label={`选择图标 ${icon}`}
                     onClick={() => onSelectFallbackIcon(icon)}
