@@ -29,7 +29,6 @@ import { publicConversionRoutes } from './routes/public-conversion';
 import { publicHomeLayoutRoutes } from './routes/public-home-layout';
 import { servePwaManifest } from './routes/public-pwa';
 import { publicStorefrontConfigRoutes } from './routes/public-storefront-config';
-import { publicStorefrontCopyRoutes } from './routes/public-storefront-copy';
 import { publicThemeRoutes } from './routes/public-theme';
 import type { AppEnvironment } from './types';
 
@@ -82,7 +81,6 @@ app.get('/api/public/version', (context) =>
   }),
 );
 app.route('/api/public/storefront', publicStorefrontConfigRoutes);
-app.route('/api/public/storefront-copy', publicStorefrontCopyRoutes);
 app.route('/api/public/bottom-navigation', publicBottomNavigationRoutes);
 app.route('/api/public/home-layout', publicHomeLayoutRoutes);
 app.route('/api/public/browse-sections', publicBrowseSectionRoutes);
