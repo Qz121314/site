@@ -20,16 +20,21 @@ test('primary pages use backend-driven centered page titles instead of the site 
   assert.match(rootSource, /title:\s*copy\.messages\.title/u);
   assert.match(rootSource, /title:\s*copy\.faq\.title/u);
   assert.match(headerSource, /storefront-app-header-title/u);
-  assert.match(shellCss, /grid-template-columns:\s*minmax\(64px,\s*1fr\)\s+minmax\(0,\s*auto\)\s+minmax\(64px,\s*1fr\)/u);
+  assert.match(shellCss, /grid-template-columns:\s*minmax\(40px,\s*1fr\)\s+minmax\(0,\s*auto\)\s+minmax\(40px,\s*1fr\)/u);
 });
 
-test('nested catalog routes use dynamic titles and history-aware Back controls', () => {
+test('nested catalog routes keep Back inside the compact app header', () => {
   assert.match(rootSource, /title:\s*sectionTitle/u);
   assert.match(rootSource, /title:\s*product\?\.title \?\? copy\.product\.loading/u);
   assert.match(rootSource, /backHref:\s*'\/browse\/'/u);
   assert.match(rootSource, /backHref:\s*productBackHref/u);
+  assert.match(headerSource, /className="storefront-app-header-back"/u);
+  assert.match(headerSource, /aria-label=\{pageConfig\.backLabel\}/u);
   assert.match(headerSource, /canNavigateStorefrontBack/u);
   assert.match(headerSource, /navigateStorefrontBack/u);
+  assert.doesNotMatch(headerSource, /<small>/u);
+  assert.match(shellCss, /min-height:\s*calc\(48px \+ env\(safe-area-inset-top\)\)/u);
+  assert.match(shellCss, /\.storefront-app-header-back\s*\{[^}]*width:\s*32px;[^}]*height:\s*32px/su);
 });
 
 test('Browse and Section content do not duplicate page-level titles under the app header', () => {
