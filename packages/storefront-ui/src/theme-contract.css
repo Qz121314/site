@@ -150,7 +150,15 @@
   background: var(--theme-card-background);
 }
 
-:is(html, .storefront-theme-root)[data-theme='tech'] :is(.topbar, .bottom-nav),
+@media (min-width: 768px) {
+  html .chat-page {
+    border-radius: var(--theme-radius-card);
+    background: var(--theme-card-background);
+    box-shadow: var(--theme-card-shadow);
+  }
+}
+
+:is(html, .storefront-theme-root)[data-theme='tech'] :is(.product-card, .topbar, .bottom-nav),
 :is(html, .storefront-theme-root)[data-theme='noir'] :is(.topbar, .bottom-nav) {
   backdrop-filter: blur(18px);
 }
