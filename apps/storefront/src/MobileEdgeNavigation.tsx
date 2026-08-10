@@ -51,47 +51,58 @@ export function MobileEdgeNavigation() {
     const mobileQuery = window.matchMedia('(max-width: 767px)');
     let tracking: TrackingGesture | null = null;
 
-    const clearGesture = () => {
+    function detachTrackingListeners() {
+      document.removeEventListener('touchmove', handleTouchMove);
+      document.removeEventListener('touchend', finishGesture);
+      document.removeEventListener('touchcancel', cancelGesture);
+    }
+
+    function clearGesture() {
+      detachTrackingListeners();
       tracking = null;
       setGesture(null);
-    };
+    }
 
-    const handleStorefrontNavigation = () => {
+    function beginGesture(
+      direction: StorefrontNavigationDirection,
+      touch: Touch,
+    ) {
+      tracking = {
+        direction,
+        startX: touch.clientX,
+        startY: touch.clientY,
+        distance: 0,
+        locked: false,
+      };
+      document.addEventListener('touchmove', handleTouchMove, { passive: false });
+      document.addEventListener('touchend', finishGesture, { passive: true });
+      document.addEventListener('touchcancel', cancelGesture, { passive: true });
+    }
+
+    function handleStorefrontNavigation() {
       recordStorefrontHistoryPush();
-    };
+    }
 
-    const handlePopState = (event: PopStateEvent) => {
+    function handlePopState(event: PopStateEvent) {
       syncStorefrontHistoryFromPopState(event.state);
-    };
+    }
 
-    const handleTouchStart = (event: TouchEvent) => {
+    function handleTouchStart(event: TouchEvent) {
       if (!mobileQuery.matches || event.touches.length !== 1 || shouldIgnoreTarget(event.target)) return;
       const touch = event.touches[0];
       if (!touch) return;
 
       if (touch.clientX <= EDGE_WIDTH && canNavigateStorefrontBack()) {
-        tracking = {
-          direction: 'back',
-          startX: touch.clientX,
-          startY: touch.clientY,
-          distance: 0,
-          locked: false,
-        };
+        beginGesture('back', touch);
         return;
       }
 
       if (touch.clientX >= window.innerWidth - EDGE_WIDTH && canNavigateStorefrontForward()) {
-        tracking = {
-          direction: 'forward',
-          startX: touch.clientX,
-          startY: touch.clientY,
-          distance: 0,
-          locked: false,
-        };
+        beginGesture('forward', touch);
       }
-    };
+    }
 
-    const handleTouchMove = (event: TouchEvent) => {
+    function handleTouchMove(event: TouchEvent) {
       if (!tracking || event.touches.length !== 1) return;
       const touch = event.touches[0];
       if (!touch) return;
@@ -125,31 +136,31 @@ export function MobileEdgeNavigation() {
         direction: tracking.direction,
         progress: Math.min(horizontalDistance / TRIGGER_DISTANCE, 1),
       });
-    };
+    }
 
-    const finishGesture = () => {
+    function finishGesture() {
       if (!tracking) return;
       const { direction, distance, locked } = tracking;
       clearGesture();
       if (!locked || distance < TRIGGER_DISTANCE) return;
       if (direction === 'back') navigateStorefrontBack();
       else navigateStorefrontForward();
-    };
+    }
+
+    function cancelGesture() {
+      clearGesture();
+    }
 
     window.addEventListener(NAVIGATION_EVENT, handleStorefrontNavigation);
     window.addEventListener('popstate', handlePopState);
     document.addEventListener('touchstart', handleTouchStart, { passive: true });
-    document.addEventListener('touchmove', handleTouchMove, { passive: false });
-    document.addEventListener('touchend', finishGesture, { passive: true });
-    document.addEventListener('touchcancel', clearGesture, { passive: true });
 
     return () => {
       window.removeEventListener(NAVIGATION_EVENT, handleStorefrontNavigation);
       window.removeEventListener('popstate', handlePopState);
       document.removeEventListener('touchstart', handleTouchStart);
-      document.removeEventListener('touchmove', handleTouchMove);
-      document.removeEventListener('touchend', finishGesture);
-      document.removeEventListener('touchcancel', clearGesture);
+      detachTrackingListeners();
+      tracking = null;
     };
   }, []);
 
