@@ -16,10 +16,7 @@ const sectionSource = await readFile(
   new URL('../src/SectionPage.tsx', import.meta.url),
   'utf8',
 );
-const copySource = await readFile(
-  new URL('../src/storefront-copy.tsx', import.meta.url),
-  'utf8',
-);
+const systemUiSource = await readFile(new URL('../src/system-ui.ts', import.meta.url), 'utf8');
 
 test('mobile storefront mounts one global edge navigation controller', () => {
   assert.equal(
@@ -104,10 +101,10 @@ test('only pushed detail routes animate while primary tabs remain stationary', (
   assert.equal(shellCss.includes('@keyframes app-tab-settle'), false);
 });
 
-test('section return control is a backend-driven Back action instead of a Browse label', () => {
-  assert.equal(sectionSource.includes('sectionCopy.backLabel'), true);
+test('section return control uses the minimal system Back action instead of business copy', () => {
+  assert.equal(sectionSource.includes('SYSTEM_UI.back'), true);
   assert.equal(sectionSource.includes('handleBack'), true);
   assert.equal(sectionSource.includes('navigateStorefrontBack'), true);
-  assert.equal(copySource.includes("backLabel: 'Back'"), true);
+  assert.equal(systemUiSource.includes("back: 'Back'"), true);
   assert.equal(sectionSource.includes('>Browse<'), false);
 });

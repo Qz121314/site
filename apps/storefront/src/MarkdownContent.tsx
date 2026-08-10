@@ -31,7 +31,7 @@ function renderInline(nodes: MarkdownInlineNode[]): ReactNode {
         return (
           <ResilientImage
             alt={node.alt}
-            fallback={<span className="markdown-image-fallback">Image unavailable</span>}
+            fallback={<span className="markdown-image-fallback" aria-hidden="true" />}
             key={key}
             loading="lazy"
             src={node.src}

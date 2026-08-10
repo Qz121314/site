@@ -11,6 +11,7 @@ const browseSource = await readFile(new URL('../src/BrowsePage.tsx', import.meta
 const sectionSource = await readFile(new URL('../src/SectionPage.tsx', import.meta.url), 'utf8');
 const productSource = await readFile(new URL('../src/ProductDetailPage.tsx', import.meta.url), 'utf8');
 const faqSource = await readFile(new URL('../src/FaqPage.tsx', import.meta.url), 'utf8');
+const markdownSource = await readFile(new URL('../src/MarkdownContent.tsx', import.meta.url), 'utf8');
 const supportSource = await readFile(new URL('../src/support-ui.tsx', import.meta.url), 'utf8');
 const navigationSource = await readFile(
   new URL('../src/storefront-navigation.tsx', import.meta.url),
@@ -25,6 +26,7 @@ const storefrontPages = [
   sectionSource,
   productSource,
   faqSource,
+  markdownSource,
   supportSource,
 ].join('\n');
 
@@ -54,6 +56,7 @@ test('invented marketing and customer-service prose is absent from storefront pa
     'Conversation ended',
     'Select a conversation',
     'The storefront is temporarily unavailable',
+    'Image unavailable',
   ]) {
     assert.equal(storefrontPages.includes(text), false, `${text} must not be hardcoded in storefront pages`);
   }

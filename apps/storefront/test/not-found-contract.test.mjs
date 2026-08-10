@@ -19,6 +19,7 @@ test('unknown and invalid routes use the primary shell and the small 404 page', 
   assert.match(notFoundSource, /<div className="state-mark">404<\/div>/u);
   assert.match(
     notFoundSource,
-    /<LinkComponent className="primary-button" href="\/">\s*Back to home\s*<\/LinkComponent>/u,
+    /<LinkComponent className="primary-button" href="\/">\s*\{SYSTEM_UI\.back\}\s*<\/LinkComponent>/u,
   );
+  assert.doesNotMatch(notFoundSource, /Back to home|Page not found/u);
 });
