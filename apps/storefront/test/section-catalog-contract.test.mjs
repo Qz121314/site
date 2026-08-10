@@ -24,10 +24,15 @@ test('section route uses a dedicated primary-shell product catalog', () => {
   assert.match(rootSource, /<SectionCatalogPage/u);
 });
 
-test('section catalog is search plus category plus tag filtering', () => {
+test('section catalog is search plus touch-first category and tag filtering', () => {
   assert.match(sectionSource, /type="search"/u);
   assert.match(sectionSource, /className="section-category-filter"/u);
-  assert.match(sectionSource, /<select value=\{categoryId\}/u);
+  assert.match(sectionSource, /className="section-category-options"/u);
+  assert.match(sectionSource, /aria-pressed=\{!categoryId\}/u);
+  assert.match(sectionSource, /onClick=\{\(\) => setCategoryId\(''\)\}/u);
+  assert.match(sectionSource, /aria-pressed=\{categoryId === category\.id\}/u);
+  assert.match(sectionSource, /onClick=\{\(\) => setCategoryId\(category\.id\)\}/u);
+  assert.doesNotMatch(sectionSource, /<select\b/u);
   assert.match(sectionSource, /className="section-tag-filter"/u);
   assert.match(sectionSource, /aria-pressed=\{selectedTags\.has\(tag\.id\)\}/u);
   assert.match(sectionSource, /\[\.\.\.selectedTags\]\.every/u);
