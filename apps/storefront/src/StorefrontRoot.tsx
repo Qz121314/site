@@ -6,7 +6,6 @@ import {
 } from '@tanstack/react-query';
 import {
   StorefrontBottomNavigation,
-  StorefrontBrandBar,
   type StorefrontLinkComponent,
 } from '@site/storefront-ui';
 import {
@@ -18,14 +17,20 @@ import {
   useSyncExternalStore,
 } from 'react';
 import { BrowsePage } from './BrowsePage';
-import { loadStorefrontBootstrap, loadProductSnapshot, PublicContentError } from './content';
+import {
+  loadProductSnapshot,
+  loadSectionSnapshot,
+  loadStorefrontBootstrap,
+  PublicContentError,
+} from './content';
 import { FaqArticlePage, FaqDirectoryPage } from './FaqPage';
 import { HomeFeed } from './HomeFeed';
 import { NotFoundPage } from './NotFoundPage';
 import { ProductDetailPage } from './ProductDetailPage';
 import { ResilientImage } from './ResilientMedia';
-import { bottomNavigationActiveHref, parseStorefrontRoute } from './routing';
+import { bottomNavigationActiveHref, parseStorefrontRoute, sectionHref } from './routing';
 import { SectionCatalogPage } from './SectionPage';
+import { StorefrontAppHeader, type StorefrontHeaderConfig } from './StorefrontAppHeader';
 import {
   FALLBACK_STOREFRONT_COPY,
   loadStorefrontCopy,
@@ -147,21 +152,23 @@ function PrimaryShell({
   bootstrap,
   copy,
   children,
+  header,
   unreadMessages = 0,
 }: {
   activePath: string;
   bootstrap: Awaited<ReturnType<typeof loadStorefrontBootstrap>>;
   copy: typeof FALLBACK_STOREFRONT_COPY;
   children: ReactNode;
+  header: StorefrontHeaderConfig;
   unreadMessages?: number;
 }) {
   const site = bootstrap.site.site;
   return (
     <StorefrontCopyProvider value={copy}>
       <div className="app-shell">
-        <StorefrontBrandBar
+        <StorefrontAppHeader
+          config={header}
           LinkComponent={StorefrontLink as StorefrontLinkComponent}
-          locationLabel={site.locationLabel}
           logo={
             site.logoUrl ? (
               <ResilientImage alt="" fallback={null} src={site.logoUrl} />
@@ -199,7 +206,12 @@ function HomeRoot() {
 
   const copy = copyQuery.data ?? FALLBACK_STOREFRONT_COPY;
   return (
-    <PrimaryShell activePath="/" bootstrap={bootstrapQuery.data} copy={copy}>
+    <PrimaryShell
+      activePath="/"
+      bootstrap={bootstrapQuery.data}
+      copy={copy}
+      header={{ kind: 'home' }}
+    >
       <HomeFeed bootstrap={bootstrapQuery.data} />
     </PrimaryShell>
   );
@@ -223,7 +235,12 @@ function BrowseRoot() {
 
   const copy = copyQuery.data ?? FALLBACK_STOREFRONT_COPY;
   return (
-    <PrimaryShell activePath="/browse/" bootstrap={bootstrapQuery.data} copy={copy}>
+    <PrimaryShell
+      activePath="/browse/"
+      bootstrap={bootstrapQuery.data}
+      copy={copy}
+      header={{ kind: 'page', title: copy.browse.title }}
+    >
       <BrowsePage
         bootstrap={bootstrapQuery.data}
         LinkComponent={StorefrontLink as StorefrontLinkComponent}
@@ -391,6 +408,7 @@ function MessagesRoot({
       activePath="/messages/"
       bootstrap={bootstrapQuery.data}
       copy={copy}
+      header={{ kind: 'page', title: copy.messages.title }}
       unreadMessages={unreadMessages}
     >
       <MessagesWorkspace
@@ -434,7 +452,16 @@ function FaqRoot({ articleRef }: { articleRef: string | null }) {
 
   const copy = copyQuery.data ?? FALLBACK_STOREFRONT_COPY;
   return (
-    <PrimaryShell activePath="/faq/" bootstrap={bootstrapQuery.data} copy={copy}>
+    <PrimaryShell
+      activePath="/faq/"
+      bootstrap={bootstrapQuery.data}
+      copy={copy}
+      header={{
+        kind: 'page',
+        title: copy.faq.title,
+        ...(articleRef ? { backHref: '/faq/', backLabel: copy.section.backLabel } : {}),
+      }}
+    >
       {articleRef ? (
         <FaqArticlePage
           articleRef={articleRef}
@@ -462,13 +489,36 @@ function SectionRoot({ sectionRef }: { sectionRef: string }) {
     queryFn: ({ signal }) => loadStorefrontCopy(signal),
     staleTime: 30_000,
   });
+  const sectionQuery = useQuery({
+    queryKey: ['storefront-section', bootstrapQuery.data?.pointer.contentVersion, sectionRef],
+    enabled: Boolean(bootstrapQuery.data),
+    queryFn: ({ signal }) => {
+      if (!bootstrapQuery.data) throw new Error('STOREFRONT_BOOTSTRAP_UNAVAILABLE');
+      return loadSectionSnapshot(bootstrapQuery.data, sectionRef, signal);
+    },
+    staleTime: Number.POSITIVE_INFINITY,
+  });
   if (bootstrapQuery.isLoading) return <PrimaryLoading />;
   if (bootstrapQuery.error || !bootstrapQuery.data)
     return <PrimaryError error={bootstrapQuery.error} />;
 
   const copy = copyQuery.data ?? FALLBACK_STOREFRONT_COPY;
+  const fallbackSection = bootstrapQuery.data.home.allSections.find(
+    (section) => section.id === sectionRef || section.slug === sectionRef,
+  );
+  const sectionTitle = sectionQuery.data?.section.name ?? fallbackSection?.name ?? copy.section.loading;
   return (
-    <PrimaryShell activePath="/browse/" bootstrap={bootstrapQuery.data} copy={copy}>
+    <PrimaryShell
+      activePath="/browse/"
+      bootstrap={bootstrapQuery.data}
+      copy={copy}
+      header={{
+        kind: 'page',
+        title: sectionTitle,
+        backHref: '/browse/',
+        backLabel: copy.section.backLabel,
+      }}
+    >
       <SectionCatalogPage
         bootstrap={bootstrapQuery.data}
         sectionRef={sectionRef}
@@ -495,13 +545,41 @@ function ProductRoot({
     queryFn: ({ signal }) => loadStorefrontCopy(signal),
     staleTime: 30_000,
   });
+  const productQuery = useQuery({
+    queryKey: [
+      'storefront-product',
+      bootstrapQuery.data?.pointer.contentVersion,
+      sectionRef,
+      productRef,
+    ],
+    enabled: Boolean(bootstrapQuery.data),
+    queryFn: ({ signal }) => {
+      if (!bootstrapQuery.data) throw new Error('STOREFRONT_BOOTSTRAP_UNAVAILABLE');
+      return loadProductSnapshot(bootstrapQuery.data, productRef, signal, sectionRef);
+    },
+    staleTime: Number.POSITIVE_INFINITY,
+  });
   if (bootstrapQuery.isLoading) return <PrimaryLoading />;
   if (bootstrapQuery.error || !bootstrapQuery.data)
     return <PrimaryError error={bootstrapQuery.error} />;
 
   const copy = copyQuery.data ?? FALLBACK_STOREFRONT_COPY;
+  const product = productQuery.data?.product ?? null;
+  const productBackHref = product
+    ? sectionHref({ id: product.sectionId, slug: product.sectionSlug })
+    : '/browse/';
   return (
-    <PrimaryShell activePath="/browse/" bootstrap={bootstrapQuery.data} copy={copy}>
+    <PrimaryShell
+      activePath="/browse/"
+      bootstrap={bootstrapQuery.data}
+      copy={copy}
+      header={{
+        kind: 'page',
+        title: product?.title ?? copy.product.loading,
+        backHref: productBackHref,
+        backLabel: copy.section.backLabel,
+      }}
+    >
       <ProductDetailPage
         bootstrap={bootstrapQuery.data}
         productRef={productRef}
@@ -530,7 +608,12 @@ function NotFoundRoot({ pathname }: { pathname: string }) {
 
   const copy = copyQuery.data ?? FALLBACK_STOREFRONT_COPY;
   return (
-    <PrimaryShell activePath={pathname} bootstrap={bootstrapQuery.data} copy={copy}>
+    <PrimaryShell
+      activePath={pathname}
+      bootstrap={bootstrapQuery.data}
+      copy={copy}
+      header={{ kind: 'page', title: bootstrapQuery.data.site.site.name }}
+    >
       <NotFoundPage
         siteName={bootstrapQuery.data.site.site.name}
         LinkComponent={StorefrontLink as StorefrontLinkComponent}
