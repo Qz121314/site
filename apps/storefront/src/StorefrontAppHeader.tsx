@@ -32,27 +32,29 @@ export function StorefrontAppHeader({
     );
   }
 
+  const pageConfig = config;
+
   function handleBack(event: ReactMouseEvent<HTMLAnchorElement>) {
-    if (!config.backHref || !canNavigateStorefrontBack()) return;
+    if (!pageConfig.backHref || !canNavigateStorefrontBack()) return;
     event.preventDefault();
     navigateStorefrontBack();
   }
 
   return (
-    <header className={`topbar storefront-app-header is-page${config.backHref ? ' has-back' : ''}`}>
+    <header className={`topbar storefront-app-header is-page${pageConfig.backHref ? ' has-back' : ''}`}>
       <div className="storefront-app-header-side is-left">
-        {config.backHref ? (
+        {pageConfig.backHref ? (
           <LinkComponent
             className="storefront-app-header-back"
-            href={config.backHref}
+            href={pageConfig.backHref}
             onClick={handleBack}
           >
             <span aria-hidden="true">‹</span>
-            <small>{config.backLabel ?? ''}</small>
+            <small>{pageConfig.backLabel ?? ''}</small>
           </LinkComponent>
         ) : null}
       </div>
-      <h1 className="storefront-app-header-title" title={config.title}>{config.title}</h1>
+      <h1 className="storefront-app-header-title" title={pageConfig.title}>{pageConfig.title}</h1>
       <div className="storefront-app-header-side is-right" aria-hidden="true" />
     </header>
   );
