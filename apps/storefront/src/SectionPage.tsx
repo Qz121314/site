@@ -1,7 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import { StorefrontProductCard, type StorefrontLinkComponent } from '@site/storefront-ui';
 import { useEffect, useMemo, useState } from 'react';
-import { loadSectionSnapshot, type StorefrontBootstrap } from './content';
+import {
+  loadSectionSnapshot,
+  type PublicSection,
+  type StorefrontBootstrap,
+} from './content';
 import { ResilientImage } from './ResilientMedia';
 import { productHref } from './routing';
 import { useStorefrontCopy } from './storefront-copy';
@@ -13,6 +17,21 @@ function SearchIcon() {
       <path d="m16 16 4 4" strokeLinecap="round" />
     </svg>
   );
+}
+
+function SectionVisual({ section }: { section: PublicSection }) {
+  const fallback = <span aria-hidden="true">{Array.from(section.name.trim())[0] ?? '•'}</span>;
+  if (section.icon.type === 'image' && section.icon.value) {
+    return (
+      <ResilientImage
+        alt=""
+        fallback={fallback}
+        loading="lazy"
+        src={section.icon.value}
+      />
+    );
+  }
+  return <span aria-hidden="true">{section.icon.value || Array.from(section.name.trim())[0] || '•'}</span>;
 }
 
 export function SectionCatalogPage({
@@ -98,69 +117,89 @@ export function SectionCatalogPage({
   const resultWord = filteredProducts.length === 1
     ? sectionCopy.resultSingular
     : sectionCopy.resultPlural;
+  const totalWord = query.data.products.length === 1
+    ? sectionCopy.resultSingular
+    : sectionCopy.resultPlural;
+  const hasFilterOptions = query.data.categories.length > 0 || query.data.tags.length > 0;
+  const hasProducts = query.data.products.length > 0;
 
   return (
     <section className="section-catalog" aria-labelledby="section-catalog-title">
-      <LinkComponent className="section-catalog-back" href="/browse/">
-        <span aria-hidden="true">←</span> {sectionCopy.backLabel}
-      </LinkComponent>
+      <header className="section-catalog-hero">
+        <span className="section-catalog-hero-watermark" aria-hidden="true">
+          <SectionVisual section={query.data.section} />
+        </span>
 
-      <header className="section-catalog-heading">
-        <div>
+        <div className="section-catalog-hero-topline">
+          <LinkComponent className="section-catalog-back" href="/browse/">
+            <span aria-hidden="true">←</span> {sectionCopy.backLabel}
+          </LinkComponent>
+          <span className="section-catalog-total">
+            {query.data.products.length} {totalWord}
+          </span>
+        </div>
+
+        <div className="section-catalog-hero-main">
+          <span className="section-catalog-hero-icon">
+            <SectionVisual section={query.data.section} />
+          </span>
           <h1 id="section-catalog-title">{query.data.section.name}</h1>
-          <p>{query.data.products.length} {query.data.products.length === 1 ? sectionCopy.resultSingular : sectionCopy.resultPlural}</p>
         </div>
       </header>
 
-      <label className="section-catalog-search">
-        <SearchIcon />
-        <input
-          type="search"
-          value={search}
-          placeholder={sectionCopy.searchPlaceholder}
-          aria-label={sectionCopy.searchLabel}
-          onChange={(event) => setSearch(event.target.value)}
-        />
-      </label>
+      {hasProducts ? (
+        <div className="section-catalog-controls">
+          <label className="section-catalog-search">
+            <SearchIcon />
+            <input
+              type="search"
+              value={search}
+              placeholder={sectionCopy.searchPlaceholder}
+              aria-label={sectionCopy.searchLabel}
+              onChange={(event) => setSearch(event.target.value)}
+            />
+          </label>
 
-      {(query.data.categories.length > 0 || query.data.tags.length > 0) ? (
-        <div className="section-catalog-filters" aria-label="Product filters">
-          {query.data.categories.length > 0 ? (
-            <label className="section-category-filter">
-              <span>{sectionCopy.typeLabel}</span>
-              <select value={categoryId} onChange={(event) => setCategoryId(event.target.value)}>
-                <option value="">{sectionCopy.allTypes}</option>
-                {query.data.categories.map((category) => (
-                  <option key={category.id} value={category.id}>{category.name}</option>
-                ))}
-              </select>
-            </label>
-          ) : null}
+          {hasFilterOptions ? (
+            <div className="section-catalog-filters" aria-label="Product filters">
+              {query.data.categories.length > 0 ? (
+                <label className="section-category-filter">
+                  <span>{sectionCopy.typeLabel}</span>
+                  <select value={categoryId} onChange={(event) => setCategoryId(event.target.value)}>
+                    <option value="">{sectionCopy.allTypes}</option>
+                    {query.data.categories.map((category) => (
+                      <option key={category.id} value={category.id}>{category.name}</option>
+                    ))}
+                  </select>
+                </label>
+              ) : null}
 
-          {query.data.tags.length > 0 ? (
-            <div className="section-tag-filter" aria-label="Product tags">
-              {query.data.tags.map((tag) => (
-                <button
-                  className={selectedTags.has(tag.id) ? 'is-active' : undefined}
-                  key={tag.id}
-                  type="button"
-                  aria-pressed={selectedTags.has(tag.id)}
-                  onClick={() => toggleTag(tag.id)}
-                >
-                  {tag.name}
-                </button>
-              ))}
+              {query.data.tags.length > 0 ? (
+                <div className="section-tag-filter" aria-label="Product tags">
+                  {query.data.tags.map((tag) => (
+                    <button
+                      className={selectedTags.has(tag.id) ? 'is-active' : undefined}
+                      key={tag.id}
+                      type="button"
+                      aria-pressed={selectedTags.has(tag.id)}
+                      onClick={() => toggleTag(tag.id)}
+                    >
+                      {tag.name}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
             </div>
           ) : null}
         </div>
       ) : null}
 
-      <div className="section-catalog-results">
-        <strong>{filteredProducts.length} {resultWord}</strong>
-        {hasFilters ? (
+      {hasFilters && filteredProducts.length > 0 ? (
+        <div className="section-catalog-results">
+          <strong>{filteredProducts.length} {resultWord}</strong>
           <button type="button" onClick={clearFilters}>{sectionCopy.clearFilters}</button>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
 
       {filteredProducts.length > 0 ? (
         <div className="product-grid section-catalog-products">
@@ -187,7 +226,17 @@ export function SectionCatalogPage({
           ))}
         </div>
       ) : (
-        <div className="section-catalog-empty">{sectionCopy.emptyResults}</div>
+        <div className="section-catalog-empty">
+          <span className="section-catalog-empty-icon" aria-hidden="true">
+            <SectionVisual section={query.data.section} />
+          </span>
+          <p>{sectionCopy.emptyResults}</p>
+          {hasFilters ? (
+            <button className="section-catalog-empty-reset" type="button" onClick={clearFilters}>
+              {sectionCopy.clearFilters}
+            </button>
+          ) : null}
+        </div>
       )}
     </section>
   );
