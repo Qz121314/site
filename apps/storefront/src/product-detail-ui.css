@@ -11,17 +11,24 @@
 .product-detail-back {
   display: inline-flex;
   width: fit-content;
-  min-height: 38px;
+  min-height: 36px;
   align-items: center;
+  gap: 4px;
+  padding-inline: 2px;
   color: var(--muted);
-  font-size: 0.76rem;
+  font-size: 0.75rem;
   font-weight: 760;
   text-decoration: none;
+  transition: color 120ms ease, transform 120ms ease;
 }
 
 .product-detail-back:hover,
 .product-detail-back:focus-visible {
   color: var(--brand-strong);
+}
+
+.product-detail-back:active {
+  transform: translateX(-2px);
 }
 
 .product-detail-hero {
@@ -37,9 +44,11 @@
   grid-auto-flow: column;
   gap: var(--theme-detail-gallery-gap, 8px);
   overflow-x: auto;
+  border: 1px solid color-mix(in srgb, var(--theme-detail-panel-border, var(--line)) 72%, transparent);
   border-radius: var(--theme-detail-media-radius, var(--theme-radius-media, 16px));
   background: var(--theme-detail-media-background, var(--surface-soft));
-  box-shadow: var(--theme-detail-media-shadow, none);
+  box-shadow: var(--theme-detail-media-shadow, 0 8px 24px color-mix(in srgb, var(--text) 6%, transparent));
+  scroll-padding-inline: 0;
   scroll-snap-type: x mandatory;
   scrollbar-width: none;
   overscroll-behavior-inline: contain;
@@ -53,6 +62,7 @@
   min-width: 0;
   overflow: hidden;
   border-radius: inherit;
+  background: var(--theme-detail-media-background, var(--surface-soft));
   scroll-snap-align: start;
   scroll-snap-stop: always;
 }
@@ -90,25 +100,29 @@
   min-width: 0;
   align-content: start;
   gap: 0;
-  padding: 2px;
+  padding: 3px 2px;
 }
 
 .product-detail-mode {
   width: fit-content;
-  margin-bottom: 9px;
+  margin-bottom: 10px;
   padding: 5px 9px;
+  border: 1px solid color-mix(in srgb, var(--brand) 10%, transparent);
   border-radius: var(--theme-radius-chip, 999px);
   color: var(--brand-strong);
-  background: var(--theme-detail-meta-background, var(--surface-soft));
-  font-size: 0.64rem;
-  font-weight: 780;
+  background: var(--theme-detail-meta-background, color-mix(in srgb, var(--brand) 8%, var(--surface-soft)));
+  font-size: 0.63rem;
+  font-weight: 790;
+  letter-spacing: 0.012em;
 }
 
 .product-detail-summary h1 {
   margin: 0;
+  color: var(--text);
   font-size: clamp(1.82rem, 8vw, 3.2rem);
-  line-height: 1.03;
-  letter-spacing: -0.048em;
+  font-weight: 860;
+  line-height: 1.02;
+  letter-spacing: -0.05em;
   text-wrap: balance;
 }
 
@@ -117,8 +131,9 @@
   min-width: 0;
   align-items: baseline;
   gap: 7px;
-  margin: 14px 0 0;
-  font-size: 0.76rem;
+  margin: 15px 0 0;
+  font-size: 0.75rem;
+  line-height: 1.4;
 }
 
 .product-detail-category span {
@@ -127,8 +142,11 @@
 }
 
 .product-detail-category strong {
+  overflow: hidden;
   color: var(--text);
   font-weight: 760;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .product-detail-tags {
@@ -141,20 +159,20 @@
 .product-detail-tags span {
   max-width: 100%;
   padding: 5px 8px;
-  border: 1px solid color-mix(in srgb, var(--theme-detail-panel-border, var(--line)) 78%, transparent);
+  border: 1px solid color-mix(in srgb, var(--theme-detail-panel-border, var(--line)) 72%, transparent);
   border-radius: var(--theme-radius-chip, 999px);
-  color: var(--text);
+  color: color-mix(in srgb, var(--text) 88%, var(--muted));
   background: var(--theme-detail-meta-background, var(--surface-soft));
   font-size: 0.62rem;
   font-weight: 720;
 }
 
 .product-detail-address {
-  margin-top: 13px;
+  margin-top: 14px;
   color: var(--muted);
   font-size: 0.74rem;
   font-style: normal;
-  line-height: 1.5;
+  line-height: 1.55;
 }
 
 .product-detail-action {
@@ -164,22 +182,24 @@
 .product-detail-body {
   width: min(820px, 100%);
   padding: var(--theme-detail-panel-padding, 18px);
-  border: 1px solid var(--theme-detail-panel-border, var(--line));
+  border: 1px solid color-mix(in srgb, var(--theme-detail-panel-border, var(--line)) 88%, transparent);
   border-radius: var(--theme-detail-panel-radius, var(--theme-radius-card, 18px));
   background: var(--theme-detail-panel-background, var(--surface));
-  box-shadow: var(--theme-detail-panel-shadow, none);
+  box-shadow: var(--theme-detail-panel-shadow, 0 5px 18px color-mix(in srgb, var(--text) 4%, transparent));
 }
 
 .product-detail-body h2 {
-  margin: 0 0 14px;
+  margin: 0 0 15px;
+  color: var(--text);
   font-size: 1.08rem;
+  font-weight: 820;
   letter-spacing: -0.028em;
 }
 
 .product-detail-body .markdown-content {
   color: color-mix(in srgb, var(--text) 78%, var(--muted));
   font-size: 0.88rem;
-  line-height: 1.76;
+  line-height: 1.78;
 }
 
 .product-detail-body .markdown-content > :first-child {
@@ -192,7 +212,9 @@
 
 .product-detail-body .markdown-content :is(img, video) {
   max-width: 100%;
+  border: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
   border-radius: var(--theme-detail-inline-media-radius, var(--theme-radius-control, 14px));
+  background: var(--surface-soft);
 }
 
 .product-detail-page .cta-button {
@@ -205,9 +227,9 @@
   background: var(--theme-detail-cta-background, var(--brand));
   box-shadow: var(--theme-detail-cta-shadow, 0 10px 24px color-mix(in srgb, var(--brand) 22%, transparent));
   font-size: 0.82rem;
-  font-weight: 800;
+  font-weight: 820;
   text-decoration: none;
-  transition: transform 120ms ease;
+  transition: transform 120ms ease, filter 120ms ease;
 }
 
 .product-detail-page .cta-button:active {
@@ -220,8 +242,8 @@
   bottom: calc(67px + env(safe-area-inset-bottom));
   left: 0;
   z-index: 42;
-  padding: 8px max(10px, env(safe-area-inset-right)) 8px max(10px, env(safe-area-inset-left));
-  border-top: 1px solid color-mix(in srgb, var(--line) 88%, transparent);
+  padding: 9px max(10px, env(safe-area-inset-right)) 9px max(10px, env(safe-area-inset-left));
+  border-top: 1px solid color-mix(in srgb, var(--line) 78%, transparent);
   background: var(--theme-detail-cta-surface, color-mix(in srgb, var(--surface) 96%, transparent));
   box-shadow: var(--theme-detail-cta-bar-shadow, 0 -8px 24px color-mix(in srgb, var(--text) 6%, transparent));
   backdrop-filter: blur(18px);
@@ -232,12 +254,19 @@
 }
 
 .product-detail-page:has(.product-detail-mobile-action) {
-  padding-bottom: 74px;
+  padding-bottom: 76px;
 }
 
 .product-detail-state {
   width: min(720px, 100%);
   margin-inline: auto;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .product-detail-page .cta-button:hover {
+    filter: brightness(1.04);
+    transform: translateY(-1px);
+  }
 }
 
 @media (max-width: 767px) {
@@ -246,13 +275,16 @@
   }
 
   .product-detail-back {
-    min-height: 34px;
+    min-height: 32px;
   }
 
   .detail-gallery {
     margin-right: -10px;
     margin-left: -10px;
+    border-right: 0;
+    border-left: 0;
     border-radius: 0;
+    box-shadow: 0 6px 18px color-mix(in srgb, var(--text) 5%, transparent);
   }
 
   .detail-media-slide > img,
@@ -262,10 +294,15 @@
   }
 
   .product-detail-summary {
-    padding: 2px 2px 4px;
+    padding: 4px 2px 5px;
+  }
+
+  .product-detail-summary h1 {
+    font-size: clamp(1.68rem, 8.8vw, 2.35rem);
   }
 
   .product-detail-body {
+    margin-top: 2px;
     padding: var(--theme-detail-mobile-panel-padding, var(--theme-detail-panel-padding, 16px));
   }
 }
@@ -290,11 +327,11 @@
   .product-detail-summary {
     position: sticky;
     top: calc(82px + env(safe-area-inset-top));
-    padding: var(--theme-detail-panel-padding, 18px);
-    border: 1px solid var(--theme-detail-panel-border, var(--line));
+    padding: var(--theme-detail-panel-padding, 19px);
+    border: 1px solid color-mix(in srgb, var(--theme-detail-panel-border, var(--line)) 88%, transparent);
     border-radius: var(--theme-detail-panel-radius, var(--theme-radius-card, 18px));
     background: var(--theme-detail-panel-background, var(--surface));
-    box-shadow: var(--theme-detail-panel-shadow, none);
+    box-shadow: var(--theme-detail-panel-shadow, 0 8px 26px color-mix(in srgb, var(--text) 5%, transparent));
   }
 
   .product-detail-summary h1 {
@@ -306,7 +343,7 @@
     gap: 9px;
     margin-top: 20px;
     padding-top: 18px;
-    border-top: 1px solid color-mix(in srgb, var(--theme-detail-panel-border, var(--line)) 82%, transparent);
+    border-top: 1px solid color-mix(in srgb, var(--theme-detail-panel-border, var(--line)) 78%, transparent);
   }
 
   .product-detail-action > span {
@@ -335,5 +372,12 @@
   .product-detail-hero {
     grid-template-columns: minmax(0, 1.7fr) 360px;
     gap: 26px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .product-detail-back,
+  .product-detail-page .cta-button {
+    transition: none;
   }
 }
