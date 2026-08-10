@@ -24,7 +24,7 @@ R2 binding:  ASSETS_BUCKET
 - 删除、恢复、启停、排序和关键配置写操作进入 `audit_logs`；
 - 批量写操作使用 `idempotency_keys` 防止重复提交；
 - 后台密码和会话签名值不进入 D1，由 Cloudflare Worker 变量或 Secret 提供；
-- `ADMIN_PASSWORD` 至少 12 个字符，`SESSION_SECRET` 至少 32 个字符；二者使用 Worker Secret 配置，并由 `keep_vars` 在部署时保留。
+- 新配置的 `ADMIN_PASSWORD` 至少 12 个字符，`SESSION_SECRET` 至少 32 个字符；二者使用 Worker Secret 配置，并由 `keep_vars` 在部署时保留。运行时暂时兼容非空的历史旧值以防部署锁死后台，但商业发布验收仍要求完成 Secret 轮换。
 
 ## 3. 核心表结构边界
 
