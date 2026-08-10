@@ -73,6 +73,10 @@ function markNavigationDirection(direction: StorefrontNavigationDirection): void
   document.documentElement.dataset.storefrontNavDirection = direction;
 }
 
+function activeSessionId(): string {
+  return readSessionStorage(SESSION_STORAGE_KEY) || memorySessionId;
+}
+
 export function ensureStorefrontHistoryState(): NavigationMeta {
   const existingState = recordState(window.history.state);
   const storedSession = readSessionStorage(SESSION_STORAGE_KEY);
@@ -119,24 +123,34 @@ export function ensureStorefrontHistoryState(): NavigationMeta {
   return { sessionId: reusableSession, index, maxIndex };
 }
 
-export function pushStorefrontHistory(href: string): void {
-  const current = ensureStorefrontHistoryState();
-  const nextIndex = current.index + 1;
-  window.history.pushState(
+/**
+ * StorefrontRoot emits `storefront:navigate` immediately after its SPA pushState.
+ * Stamp that newly-pushed entry with our lightweight history position so edge
+ * gestures can distinguish Back from Forward without changing route ownership.
+ */
+export function recordStorefrontHistoryPush(): void {
+  const sessionId = activeSessionId();
+  if (!sessionId) {
+    ensureStorefrontHistoryState();
+    return;
+  }
+  const nextIndex = lastKnownIndex + 1;
+  window.history.replaceState(
     {
-      [STATE_SESSION_KEY]: current.sessionId,
+      ...recordState(window.history.state),
+      [STATE_SESSION_KEY]: sessionId,
       [STATE_INDEX_KEY]: nextIndex,
     },
     '',
-    href,
+    window.location.href,
   );
-  writeMaxIndex(current.sessionId, nextIndex);
+  writeMaxIndex(sessionId, nextIndex);
   lastKnownIndex = nextIndex;
   markNavigationDirection('forward');
 }
 
 export function syncStorefrontHistoryFromPopState(state: unknown): void {
-  const sessionId = readSessionStorage(SESSION_STORAGE_KEY) || memorySessionId;
+  const sessionId = activeSessionId();
   if (!sessionId) return;
   const next = readStateMeta(state, sessionId);
   if (!next) return;
