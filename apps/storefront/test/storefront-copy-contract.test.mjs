@@ -43,6 +43,7 @@ test('normal storefront business copy is not re-hardcoded in the root or support
     'Hot picks',
     'Latest services',
     'Search sections, products, or tags',
+    'Name, type or tag',
     'About this service',
     'Ready to connect?',
     'No conversations yet',
@@ -57,6 +58,11 @@ test('normal storefront business copy is not re-hardcoded in the root or support
       `${text} must come from Storefront Copy`,
     );
   }
+});
+
+test('search prompts describe the user action instead of internal content structure', () => {
+  assert.doesNotMatch(copySource, /Search sections, products, or tags|Name, type or tag/u);
+  assert.equal(copySource.match(/searchPlaceholder:\s*'Search'/gu)?.length, 2);
 });
 
 test('system failure copy remains separate while user-facing accessibility labels use Storefront Copy', () => {

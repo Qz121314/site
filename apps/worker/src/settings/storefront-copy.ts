@@ -111,7 +111,7 @@ export const DEFAULT_STOREFRONT_COPY: StorefrontCopy = {
   browse: {
     kicker: 'Explore',
     title: 'Browse',
-    searchPlaceholder: 'Search sections, products, or tags',
+    searchPlaceholder: 'Search',
     sectionsTitle: 'Sections',
     productsTitle: 'Products',
     noResults: 'No matching content found.',
@@ -120,7 +120,7 @@ export const DEFAULT_STOREFRONT_COPY: StorefrontCopy = {
     backLabel: 'Back',
     kicker: 'Browse services',
     searchLabel: 'Search',
-    searchPlaceholder: 'Name, type or tag',
+    searchPlaceholder: 'Search',
     typeLabel: 'Service type',
     allTypes: 'All types',
     clearFilters: 'Clear filters',
