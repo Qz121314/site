@@ -10,6 +10,10 @@ const rootSource = await readFile(
   new URL('../src/StorefrontRoot.tsx', import.meta.url),
   'utf8',
 );
+const appHeaderSource = await readFile(
+  new URL('../src/StorefrontAppHeader.tsx', import.meta.url),
+  'utf8',
+);
 const cssSource = await readFile(
   new URL('../src/section-ui.css', import.meta.url),
   'utf8',
@@ -20,7 +24,6 @@ test('section route uses a dedicated primary-shell product catalog', () => {
   assert.match(rootSource, /function SectionRoot\(/u);
   assert.match(rootSource, /case 'section':/u);
   assert.match(rootSource, /<SectionRoot sectionRef=\{route\.sectionRef\} \/>/u);
-  assert.match(rootSource, /<PrimaryShell activePath="\/browse\/"/u);
   assert.match(rootSource, /<SectionCatalogPage/u);
 });
 
@@ -34,12 +37,13 @@ test('section catalog is search plus category plus tag filtering', () => {
   assert.match(sectionSource, /clearFilters/u);
 });
 
-test('section header stays content-focused and does not reuse Home shortcut icons', () => {
-  assert.match(
-    sectionSource,
-    /<h1 id="section-catalog-title">\{query\.data\.section\.name\}<\/h1>/u,
-  );
-  assert.doesNotMatch(sectionSource, /SectionIcon|section-icon/u);
+test('section identity is owned by the route-aware app header without a duplicate page heading', () => {
+  assert.match(rootSource, /const sectionTitle =/u);
+  assert.match(rootSource, /title:\s*sectionTitle/u);
+  assert.match(rootSource, /backHref:\s*'\/browse\/'/u);
+  assert.match(rootSource, /backLabel:\s*copy\.section\.backLabel/u);
+  assert.match(appHeaderSource, /storefront-app-header-title/u);
+  assert.doesNotMatch(sectionSource, /section-catalog-header|section-catalog-title/u);
 });
 
 test('section products remain a two-column product list on mobile and desktop', () => {
