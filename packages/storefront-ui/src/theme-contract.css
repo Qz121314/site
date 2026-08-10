@@ -29,7 +29,7 @@
   --theme-section-space: 20px;
   --theme-card-gap-y: 14px;
   --theme-card-gap-x: 8px;
-  --theme-control-height: 42px;
+  --theme-control-height: 44px;
   --theme-section-icon-size: 44px;
   --theme-desktop-media-size: 144px;
   --theme-desktop-media-size-large: 162px;
@@ -128,21 +128,11 @@
     var(--theme-tab-shadow);
 }
 
-:is(html, .storefront-theme-root) .product-grid {
+/* Admin mobile preview stays on the touch-first recipe even on a desktop viewport. */
+.storefront-theme-root .product-grid {
   gap: var(--theme-card-gap-y) var(--theme-card-gap-x);
 }
 
-:is(html, .storefront-theme-root) .product-card-media {
-  border-radius: var(--theme-radius-media);
-  background: var(--theme-media-background);
-}
-
-:is(html, .storefront-theme-root) :is(.messages-empty-state, .conversation-list) {
-  border-radius: var(--theme-radius-card);
-  background: var(--theme-card-background);
-}
-
-/* Admin mobile preview stays on the touch-first recipe even on a desktop viewport. */
 .storefront-theme-root .product-card {
   border-color: transparent;
   border-radius: 0;
@@ -152,43 +142,19 @@
 
 .storefront-theme-root .product-card-media {
   border-radius: var(--theme-radius-media);
+  background: var(--theme-media-background);
+}
+
+.storefront-theme-root :is(.messages-empty-state, .conversation-list) {
+  border-radius: var(--theme-radius-card);
+  background: var(--theme-card-background);
 }
 
 @media (min-width: 768px) {
-  html .product-card {
-    grid-template-columns: var(--theme-desktop-media-size) minmax(0, 1fr);
-    min-height: var(--theme-desktop-media-size);
-    border-color: var(--theme-card-border);
-    border-radius: var(--theme-radius-card);
-    background: var(--theme-card-background);
-    box-shadow: var(--theme-card-shadow);
-  }
-
-  html .product-card:hover {
-    border-color: color-mix(in srgb, var(--brand) 24%, var(--theme-card-border));
-    box-shadow: var(--theme-card-hover-shadow);
-  }
-
-  html .product-card-media {
-    min-height: var(--theme-desktop-media-size);
-    border-radius: 0;
-  }
-
   html .chat-page {
     border-radius: var(--theme-radius-card);
     background: var(--theme-card-background);
     box-shadow: var(--theme-card-shadow);
-  }
-}
-
-@media (min-width: 1100px) {
-  html .product-card {
-    grid-template-columns: var(--theme-desktop-media-size-large) minmax(0, 1fr);
-    min-height: var(--theme-desktop-media-size-large);
-  }
-
-  html .product-card-media {
-    min-height: var(--theme-desktop-media-size-large);
   }
 }
 

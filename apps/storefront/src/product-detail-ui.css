@@ -18,12 +18,12 @@
   display: inline-flex;
   width: fit-content;
   max-width: 100%;
-  min-height: 44px;
+  min-height: var(--theme-control-height, 44px);
   align-items: center;
   gap: 5px;
   padding-inline: 2px 8px;
   color: var(--muted);
-  font-size: 0.78rem;
+  font-size: var(--storefront-text-small, 0.75rem);
   font-weight: 760;
   text-decoration: none;
   transition: color 120ms ease, transform 120ms ease;
@@ -112,7 +112,7 @@
   padding: 24px;
   color: var(--muted);
   background: var(--theme-detail-media-background, var(--surface-soft));
-  font-size: 0.78rem;
+  font-size: var(--storefront-text-small, 0.75rem);
   text-align: center;
 }
 
@@ -132,7 +132,7 @@
   border-radius: var(--theme-radius-chip, 999px);
   color: var(--brand-strong);
   background: var(--theme-detail-meta-background, color-mix(in srgb, var(--brand) 8%, var(--surface-soft)));
-  font-size: 0.63rem;
+  font-size: var(--storefront-text-caption, 0.6875rem);
   font-weight: 790;
   letter-spacing: 0.012em;
 }
@@ -153,7 +153,7 @@
   align-items: baseline;
   gap: 7px;
   margin: 15px 0 0;
-  font-size: 0.75rem;
+  font-size: var(--storefront-text-small, 0.75rem);
   line-height: 1.4;
 }
 
@@ -184,14 +184,14 @@
   border-radius: var(--theme-radius-chip, 999px);
   color: color-mix(in srgb, var(--text) 88%, var(--muted));
   background: var(--theme-detail-meta-background, var(--surface-soft));
-  font-size: 0.62rem;
+  font-size: var(--storefront-text-caption, 0.6875rem);
   font-weight: 720;
 }
 
 .product-detail-address {
   margin-top: 14px;
   color: var(--muted);
-  font-size: 0.74rem;
+  font-size: var(--storefront-text-small, 0.75rem);
   font-style: normal;
   line-height: 1.55;
 }
@@ -219,7 +219,7 @@
 
 .product-detail-body .markdown-content {
   color: color-mix(in srgb, var(--text) 78%, var(--muted));
-  font-size: 0.88rem;
+  font-size: var(--storefront-text-body, 0.875rem);
   line-height: 1.78;
 }
 
@@ -247,7 +247,7 @@
   color: var(--theme-detail-cta-color, #fff);
   background: var(--theme-detail-cta-background, var(--brand));
   box-shadow: var(--theme-detail-cta-shadow, 0 10px 24px color-mix(in srgb, var(--brand) 22%, transparent));
-  font-size: 0.82rem;
+  font-size: var(--storefront-text-body, 0.875rem);
   font-weight: 820;
   text-decoration: none;
   transition: transform 120ms ease, filter 120ms ease;
@@ -311,7 +311,6 @@
     min-height: 48px;
     padding-inline: 2px 10px;
     color: var(--text);
-    font-size: 0.8rem;
   }
 
   .product-detail-back-icon {
@@ -388,14 +387,14 @@
 
   .product-detail-action > span {
     color: var(--muted);
-    font-size: 0.68rem;
+    font-size: var(--storefront-text-caption, 0.6875rem);
     font-weight: 760;
   }
 
   .product-detail-action p {
     margin: 0 0 2px;
     color: var(--muted);
-    font-size: 0.72rem;
+    font-size: var(--storefront-text-small, 0.75rem);
     line-height: 1.5;
   }
 

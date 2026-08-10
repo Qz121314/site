@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
 const storefrontMain = await readFile(new URL('../src/main.tsx', import.meta.url), 'utf8');
+const contentUi = await readFile(new URL('../src/content-ui.css', import.meta.url), 'utf8');
 const themeRuntime = await readFile(new URL('../src/theme-runtime.ts', import.meta.url), 'utf8');
 const sharedContract = await readFile(
   new URL('../../../packages/storefront-ui/src/theme-contract.css', import.meta.url),
@@ -21,10 +22,10 @@ test('storefront runtime consumes Theme Center density', () => {
 });
 
 test('shared theme contract is the final Storefront visual layer', () => {
-  const contentUi = storefrontMain.indexOf("import './content-ui.css';");
+  const contentUiImport = storefrontMain.indexOf("import './content-ui.css';");
   const themeContract = storefrontMain.indexOf("import '@site/storefront-ui/theme-contract.css';");
-  assert.ok(contentUi >= 0, 'content UI must be loaded');
-  assert.ok(themeContract > contentUi, 'theme contract must load after structural content UI');
+  assert.ok(contentUiImport >= 0, 'content UI must be loaded');
+  assert.ok(themeContract > contentUiImport, 'theme contract must load after structural content UI');
   assert.equal(
     sharedPackage.exports['./theme-contract.css'],
     './src/theme-contract.css',
@@ -51,9 +52,16 @@ test('official theme recipes and density variants remain visually distinct', () 
   assert.match(sharedContract, /--theme-tab-background/u);
 });
 
-test('business layout remains stable while theme contract owns visual treatment', () => {
-  assert.match(sharedContract, /html \.product-card\s*\{[\s\S]*?grid-template-columns:\s*var\(--theme-desktop-media-size\)/u);
-  assert.match(sharedContract, /\.product-card-media\s*\{[\s\S]*?border-radius:\s*var\(--theme-radius-media\)/u);
+test('business layout stays structural while Theme Center owns visual tokens', () => {
+  assert.match(
+    contentUi,
+    /\.product-card\s*\{[\s\S]*?grid-template-columns:\s*var\(--theme-desktop-media-size,/u,
+  );
+  assert.match(
+    contentUi,
+    /\.product-card-media\s*\{[\s\S]*?border-radius:\s*var\(--theme-radius-media,/u,
+  );
+  assert.doesNotMatch(sharedContract, /html \.product-card\s*\{/u);
   assert.doesNotMatch(sharedContract, /grid-template-columns:\s*repeat\(3/u);
   assert.doesNotMatch(sharedContract, /grid-template-columns:\s*repeat\(4/u);
 });
