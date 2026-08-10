@@ -16,21 +16,25 @@ const sectionSource = await readFile(new URL('../src/SectionPage.tsx', import.me
 const copySource = await readFile(new URL('../src/storefront-copy.tsx', import.meta.url), 'utf8');
 
 test('mobile storefront mounts one global edge navigation controller', () => {
-  assert.match(mainSource, /import \{ MobileEdgeNavigation \}/u);
-  assert.match(mainSource, /<MobileEdgeNavigation \/>/u);
-  assert.match(edgeSource, /max-width:\s*767px/u);
-  assert.match(edgeSource, /display-mode:\s*standalone/u);
-  assert.match(edgeSource, /StandaloneNavigator/u);
-  assert.match(edgeSource, /touchstart/u);
-  assert.match(edgeSource, /touchmove/u);
-  assert.match(edgeSource, /TRIGGER_DISTANCE\s*=\s*76/u);
+  assert.equal(mainSource.includes("import { MobileEdgeNavigation } from './MobileEdgeNavigation';"), true);
+  assert.equal(mainSource.includes('<MobileEdgeNavigation />'), true);
+  assert.equal(edgeSource.includes("window.matchMedia('(max-width: 767px)')"), true);
+  assert.equal(edgeSource.includes("window.matchMedia('(display-mode: standalone)')"), true);
+  assert.equal(edgeSource.includes('StandaloneNavigator'), true);
+  assert.equal(edgeSource.includes('touchstart'), true);
+  assert.equal(edgeSource.includes('touchmove'), true);
+  assert.equal(edgeSource.includes('const TRIGGER_DISTANCE = 76;'), true);
 });
 
 test('edge gestures support both internal Back and Forward without hijacking horizontal media', () => {
-  assert.match(edgeSource, /canNavigateStorefrontBack/u);
-  assert.match(edgeSource, /canNavigateStorefrontForward/u);
-  assert.match(edgeSource, /navigateStorefrontBack/u);
-  assert.match(edgeSource, /navigateStorefrontForward/u);
+  for (const symbol of [
+    'canNavigateStorefrontBack',
+    'canNavigateStorefrontForward',
+    'navigateStorefrontBack',
+    'navigateStorefrontForward',
+  ]) {
+    assert.equal(edgeSource.includes(symbol), true, `${symbol} must remain wired`);
+  }
   for (const selector of [
     'hero-carousel-viewport',
     'home-product-rail',
@@ -39,35 +43,43 @@ test('edge gestures support both internal Back and Forward without hijacking hor
   ]) {
     assert.equal(edgeSource.includes(selector), true, `${selector} must remain gesture-safe`);
   }
-  assert.match(edgeSource, /event\.preventDefault\(\)/u);
+  assert.equal(edgeSource.includes('event.preventDefault()'), true);
 });
 
 test('SPA history entries restore scroll and preserve Back then Forward navigation', () => {
-  assert.match(historySource, /__storefrontNavigationIndex/u);
-  assert.match(historySource, /__storefrontScrollY/u);
-  assert.match(historySource, /scrollRestoration\s*=\s*'manual'/u);
-  assert.match(historySource, /saveCurrentStorefrontScrollPosition/u);
-  assert.match(historySource, /recordStorefrontHistoryPush/u);
-  assert.match(historySource, /window\.history\.replaceState/u);
-  assert.match(historySource, /window\.history\.back\(\)/u);
-  assert.match(historySource, /window\.history\.forward\(\)/u);
-  assert.match(historySource, /window\.scrollTo/u);
-  assert.match(historySource, /storefrontNavDirection/u);
-  assert.match(edgeSource, /handleClickCapture/u);
+  for (const marker of [
+    '__storefrontNavigationIndex',
+    '__storefrontScrollY',
+    "window.history.scrollRestoration = 'manual'",
+    'saveCurrentStorefrontScrollPosition',
+    'recordStorefrontHistoryPush',
+    'window.history.replaceState',
+    'window.history.back()',
+    'window.history.forward()',
+    'window.scrollTo',
+    'storefrontNavDirection',
+  ]) {
+    assert.equal(historySource.includes(marker), true, `${marker} must remain in the navigation history layer`);
+  }
+  assert.equal(edgeSource.includes('handleClickCapture'), true);
 });
 
 test('mobile page transitions follow navigation direction and expose an edge affordance', () => {
-  assert.match(shellCss, /\.mobile-edge-navigation/u);
-  assert.match(shellCss, /data-storefront-nav-direction='forward'/u);
-  assert.match(shellCss, /data-storefront-nav-direction='back'/u);
-  assert.match(shellCss, /@keyframes app-page-enter-forward/u);
-  assert.match(shellCss, /@keyframes app-page-enter-back/u);
+  for (const marker of [
+    '.mobile-edge-navigation',
+    "data-storefront-nav-direction='forward'",
+    "data-storefront-nav-direction='back'",
+    '@keyframes app-page-enter-forward',
+    '@keyframes app-page-enter-back',
+  ]) {
+    assert.equal(shellCss.includes(marker), true, `${marker} must remain in the app shell`);
+  }
 });
 
 test('section return control is a backend-driven Back action instead of a Browse label', () => {
-  assert.match(sectionSource, /sectionCopy\.backLabel/u);
-  assert.match(sectionSource, /handleBack/u);
-  assert.match(sectionSource, /navigateStorefrontBack/u);
-  assert.match(copySource, /section:\s*\{[\s\S]*backLabel:\s*'Back'/u);
-  assert.doesNotMatch(sectionSource, />\s*Browse\s*</u);
+  assert.equal(sectionSource.includes('sectionCopy.backLabel'), true);
+  assert.equal(sectionSource.includes('handleBack'), true);
+  assert.equal(sectionSource.includes('navigateStorefrontBack'), true);
+  assert.equal(copySource.includes("backLabel: 'Back'"), true);
+  assert.equal(sectionSource.includes('>Browse<'), false);
 });
