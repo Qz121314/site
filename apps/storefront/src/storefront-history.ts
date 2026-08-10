@@ -2,6 +2,8 @@ const SESSION_STORAGE_KEY = 'storefront:navigation-session';
 const MAX_INDEX_STORAGE_PREFIX = 'storefront:navigation-max:';
 const STATE_SESSION_KEY = '__storefrontNavigationSession';
 const STATE_INDEX_KEY = '__storefrontNavigationIndex';
+const STATE_SCROLL_X_KEY = '__storefrontScrollX';
+const STATE_SCROLL_Y_KEY = '__storefrontScrollY';
 
 export type StorefrontNavigationDirection = 'back' | 'forward';
 
@@ -9,6 +11,11 @@ type NavigationMeta = {
   sessionId: string;
   index: number;
   maxIndex: number;
+};
+
+type ScrollPosition = {
+  x: number;
+  y: number;
 };
 
 let memorySessionId = '';
@@ -53,6 +60,16 @@ function readStateMeta(state: unknown, sessionId: string): Pick<NavigationMeta, 
   return { sessionId, index: stateIndex };
 }
 
+function readScrollPosition(state: unknown): ScrollPosition {
+  const record = recordState(state);
+  const rawX = record[STATE_SCROLL_X_KEY];
+  const rawY = record[STATE_SCROLL_Y_KEY];
+  return {
+    x: typeof rawX === 'number' && Number.isFinite(rawX) && rawX >= 0 ? rawX : 0,
+    y: typeof rawY === 'number' && Number.isFinite(rawY) && rawY >= 0 ? rawY : 0,
+  };
+}
+
 function maxStorageKey(sessionId: string): string {
   return `${MAX_INDEX_STORAGE_PREFIX}${sessionId}`;
 }
@@ -77,7 +94,21 @@ function activeSessionId(): string {
   return readSessionStorage(SESSION_STORAGE_KEY) || memorySessionId;
 }
 
+function restoreScrollPosition(position: ScrollPosition): void {
+  const restore = () => window.scrollTo({ left: position.x, top: position.y, behavior: 'auto' });
+  window.requestAnimationFrame(() => {
+    restore();
+    window.setTimeout(restore, 80);
+  });
+}
+
 export function ensureStorefrontHistoryState(): NavigationMeta {
+  try {
+    window.history.scrollRestoration = 'manual';
+  } catch {
+    // Some embedded browsers expose History without a writable scrollRestoration property.
+  }
+
   const existingState = recordState(window.history.state);
   const storedSession = readSessionStorage(SESSION_STORAGE_KEY);
   const stateSession = existingState[STATE_SESSION_KEY];
@@ -94,6 +125,8 @@ export function ensureStorefrontHistoryState(): NavigationMeta {
         ...existingState,
         [STATE_SESSION_KEY]: sessionId,
         [STATE_INDEX_KEY]: 0,
+        [STATE_SCROLL_X_KEY]: Math.max(0, window.scrollX),
+        [STATE_SCROLL_Y_KEY]: Math.max(0, window.scrollY),
       },
       '',
       window.location.href,
@@ -113,6 +146,8 @@ export function ensureStorefrontHistoryState(): NavigationMeta {
         ...existingState,
         [STATE_SESSION_KEY]: reusableSession,
         [STATE_INDEX_KEY]: index,
+        [STATE_SCROLL_X_KEY]: Math.max(0, window.scrollX),
+        [STATE_SCROLL_Y_KEY]: Math.max(0, window.scrollY),
       },
       '',
       window.location.href,
@@ -123,8 +158,21 @@ export function ensureStorefrontHistoryState(): NavigationMeta {
   return { sessionId: reusableSession, index, maxIndex };
 }
 
+export function saveCurrentStorefrontScrollPosition(): void {
+  ensureStorefrontHistoryState();
+  window.history.replaceState(
+    {
+      ...recordState(window.history.state),
+      [STATE_SCROLL_X_KEY]: Math.max(0, window.scrollX),
+      [STATE_SCROLL_Y_KEY]: Math.max(0, window.scrollY),
+    },
+    '',
+    window.location.href,
+  );
+}
+
 /**
- * StorefrontRoot emits `storefront:navigate` immediately after its SPA pushState.
+ * StorefrontLink emits `storefront:navigate` immediately after its SPA pushState.
  * Stamp that newly-pushed entry with our lightweight history position so edge
  * gestures can distinguish Back from Forward without changing route ownership.
  */
@@ -140,6 +188,8 @@ export function recordStorefrontHistoryPush(): void {
       ...recordState(window.history.state),
       [STATE_SESSION_KEY]: sessionId,
       [STATE_INDEX_KEY]: nextIndex,
+      [STATE_SCROLL_X_KEY]: 0,
+      [STATE_SCROLL_Y_KEY]: 0,
     },
     '',
     window.location.href,
@@ -147,6 +197,7 @@ export function recordStorefrontHistoryPush(): void {
   writeMaxIndex(sessionId, nextIndex);
   lastKnownIndex = nextIndex;
   markNavigationDirection('forward');
+  window.scrollTo({ left: 0, top: 0, behavior: 'auto' });
 }
 
 export function syncStorefrontHistoryFromPopState(state: unknown): void {
@@ -156,6 +207,7 @@ export function syncStorefrontHistoryFromPopState(state: unknown): void {
   if (!next) return;
   markNavigationDirection(next.index < lastKnownIndex ? 'back' : 'forward');
   lastKnownIndex = next.index;
+  restoreScrollPosition(readScrollPosition(state));
 }
 
 export function canNavigateStorefrontBack(): boolean {
@@ -169,6 +221,7 @@ export function canNavigateStorefrontForward(): boolean {
 
 export function navigateStorefrontBack(): boolean {
   if (!canNavigateStorefrontBack()) return false;
+  saveCurrentStorefrontScrollPosition();
   markNavigationDirection('back');
   window.history.back();
   return true;
@@ -176,6 +229,7 @@ export function navigateStorefrontBack(): boolean {
 
 export function navigateStorefrontForward(): boolean {
   if (!canNavigateStorefrontForward()) return false;
+  saveCurrentStorefrontScrollPosition();
   markNavigationDirection('forward');
   window.history.forward();
   return true;
