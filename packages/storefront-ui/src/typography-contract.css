@@ -75,8 +75,23 @@
 
 :is(html, .storefront-theme-root) .product-card-heading h3,
 :is(html, .storefront-theme-root) .home-product-tile strong {
+  font-size: var(--storefront-text-label);
   font-weight: 690;
   letter-spacing: -0.022em;
+}
+
+:is(html, .storefront-theme-root) :is(
+  .service-mode-badge,
+  .product-card-heading > span,
+  .tag-row span,
+  .product-address,
+  .bottom-nav small
+) {
+  font-size: var(--storefront-text-caption);
+}
+
+:is(html, .storefront-theme-root) .product-type {
+  font-size: var(--storefront-text-small);
 }
 
 :is(html, .storefront-theme-root) .bottom-nav small {
@@ -87,5 +102,21 @@
 @media (min-width: 720px) {
   :is(html, .storefront-theme-root) .brand-lockup strong {
     font-size: 1rem;
+  }
+}
+
+@media (min-width: 768px) {
+  html .product-card-heading h3 {
+    font-size: 1rem;
+  }
+
+  html :is(.product-card-heading > span, .product-type, .product-address) {
+    font-size: var(--storefront-text-small);
+  }
+}
+
+@media (min-width: 1100px) {
+  html .product-card-heading h3 {
+    font-size: 1.05rem;
   }
 }
