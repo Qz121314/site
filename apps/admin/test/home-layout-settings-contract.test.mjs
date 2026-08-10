@@ -4,7 +4,6 @@ import test from 'node:test';
 
 const settingsSource = await readFile(new URL('../src/SiteSettingsView.tsx', import.meta.url), 'utf8');
 const layoutSource = await readFile(new URL('../src/HomeLayoutSettingsSection.tsx', import.meta.url), 'utf8');
-const copySource = await readFile(new URL('../src/StorefrontCopySettingsSection.tsx', import.meta.url), 'utf8');
 
 test('site settings exposes explicit seven-shortcut and three-recommendation Home layout controls', () => {
   assert.match(settingsSource, /<HomeLayoutSettingsSection/u);
@@ -20,9 +19,8 @@ test('legacy Featured Latest and home section count controls are no longer shown
   assert.doesNotMatch(settingsSource, /\['showLatest', 'Latest'\]/u);
 });
 
-test('Home copy editor only exposes the shared More label instead of obsolete content headings', () => {
-  const homeGroup = copySource.slice(copySource.indexOf("key: 'home'"), copySource.indexOf("key: 'browse'"));
-  assert.match(homeGroup, /key: 'viewAll'/u);
-  assert.doesNotMatch(homeGroup, /featuredTitle/u);
-  assert.doesNotMatch(homeGroup, /latestTitle/u);
+test('site settings no longer exposes a Storefront Copy editor', () => {
+  assert.doesNotMatch(settingsSource, /StorefrontCopySettingsSection/u);
+  assert.doesNotMatch(settingsSource, /前端文案/u);
+  assert.doesNotMatch(settingsSource, /storefrontCopy/u);
 });

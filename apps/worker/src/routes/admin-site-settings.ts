@@ -150,7 +150,6 @@ adminSiteSettingsRoutes.put('/', async (context) => {
     );
   }
 
-  const storefrontCopyProvided = isRecord(body) && body.storefrontCopy !== undefined;
   const validation = validateSiteSettingsInput(body);
   if (!validation.ok) {
     return apiError(context, 400, 'INVALID_SITE_SETTINGS', validation.message, {
@@ -195,9 +194,6 @@ adminSiteSettingsRoutes.put('/', async (context) => {
     getBottomNavigation(context.env.DB),
     getHomeLayout(context.env.DB),
   ]);
-  const effectiveSettingsInput = storefrontCopyProvided
-    ? validation.value
-    : { ...validation.value, storefrontCopy: currentSettings.storefrontCopy };
   const bottomNavigationInput = navigationValidation.provided
     ? navigationValidation.value
     : navigationInputFromCurrent(currentBottomNavigation);
@@ -253,9 +249,9 @@ adminSiteSettingsRoutes.put('/', async (context) => {
   }
 
   const updatedAt = new Date().toISOString();
-  const resolvedHeroSlides = resolveHeroSlides(heroInput, heroAssets, effectiveSettingsInput.mediaBaseUrl);
+  const resolvedHeroSlides = resolveHeroSlides(heroInput, heroAssets, validation.value.mediaBaseUrl);
   const updated = {
-    ...toSiteSettings(effectiveSettingsInput, logoAsset?.object_key ?? null, updatedAt),
+    ...toSiteSettings(validation.value, logoAsset?.object_key ?? null, updatedAt),
     heroSlides: resolvedHeroSlides,
     bottomNavigation: resolvedNavigation(bottomNavigationInput),
     homeLayout: homeLayoutInput,
@@ -267,7 +263,7 @@ adminSiteSettingsRoutes.put('/', async (context) => {
     homeLayout: currentHomeLayout,
   };
   const statements: D1PreparedStatement[] = [
-    createUpdateSiteSettingsStatement(context.env.DB, effectiveSettingsInput, updatedAt),
+    createUpdateSiteSettingsStatement(context.env.DB, validation.value, updatedAt),
   ];
   if (heroValidation.provided) {
     statements.push(...createReplaceHeroSlideStatements(context.env.DB, heroValidation.value, updatedAt));

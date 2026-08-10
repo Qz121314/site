@@ -20,6 +20,11 @@ import {
 } from 'react';
 import { BrowsePage } from './BrowsePage';
 import {
+  FALLBACK_BOTTOM_NAVIGATION,
+  loadBottomNavigation,
+  type BottomNavigationItemConfig,
+} from './bottom-navigation';
+import {
   loadStorefrontBootstrap,
   loadProductSnapshot,
   PublicContentError,
@@ -31,11 +36,7 @@ import { ProductDetailPage } from './ProductDetailPage';
 import { ResilientImage } from './ResilientMedia';
 import { bottomNavigationActiveHref, parseStorefrontRoute } from './routing';
 import { SectionCatalogPage } from './SectionPage';
-import {
-  FALLBACK_STOREFRONT_COPY,
-  loadStorefrontCopy,
-  StorefrontCopyProvider,
-} from './storefront-copy';
+import { STOREFRONT_COPY } from './storefront-copy';
 import { primaryNavigationItems } from './storefront-navigation';
 import { siteSupportGateway } from './support-gateway';
 import { subscribeSupportRealtime } from './support-realtime';
@@ -143,45 +144,43 @@ function PrimaryError({ error }: { error: unknown }) {
 function PrimaryShell({
   activePath,
   bootstrap,
-  copy,
+  navigationItems,
   children,
   routeKey,
   unreadMessages = 0,
 }: {
   activePath: string;
   bootstrap: Awaited<ReturnType<typeof loadStorefrontBootstrap>>;
-  copy: typeof FALLBACK_STOREFRONT_COPY;
+  navigationItems: BottomNavigationItemConfig[];
   children: ReactNode;
   routeKey: string;
   unreadMessages?: number;
 }) {
   const site = bootstrap.site.site;
   return (
-    <StorefrontCopyProvider value={copy}>
-      <div className="app-shell">
-        <StorefrontBrandBar
-          LinkComponent={StorefrontLink as StorefrontLinkComponent}
-          locationLabel={site.locationLabel}
-          logo={
-            site.logoUrl ? (
-              <ResilientImage alt="" fallback={null} src={site.logoUrl} />
-            ) : null
-          }
-          siteName={site.name}
-        />
-        <main>
-          <div className="storefront-route-view" key={routeKey}>
-            {children}
-          </div>
-        </main>
-        <footer className="site-footer">{site.name}</footer>
-        <StorefrontBottomNavigation
-          activeHref={bottomNavigationActiveHref(activePath)}
-          items={primaryNavigationItems(copy.navigation, unreadMessages)}
-          LinkComponent={StorefrontLink as StorefrontLinkComponent}
-        />
-      </div>
-    </StorefrontCopyProvider>
+    <div className="app-shell">
+      <StorefrontBrandBar
+        LinkComponent={StorefrontLink as StorefrontLinkComponent}
+        locationLabel={site.locationLabel}
+        logo={
+          site.logoUrl ? (
+            <ResilientImage alt="" fallback={null} src={site.logoUrl} />
+          ) : null
+        }
+        siteName={site.name}
+      />
+      <main>
+        <div className="storefront-route-view" key={routeKey}>
+          {children}
+        </div>
+      </main>
+      <footer className="site-footer">{site.name}</footer>
+      <StorefrontBottomNavigation
+        activeHref={bottomNavigationActiveHref(activePath)}
+        items={primaryNavigationItems(navigationItems, unreadMessages)}
+        LinkComponent={StorefrontLink as StorefrontLinkComponent}
+      />
+    </div>
   );
 }
 
@@ -216,13 +215,11 @@ function MessagesPage({
   activeConversationRef,
   bootstrap,
   compose,
-  copy,
   onUnreadMessagesChange,
 }: {
   activeConversationRef: string | null;
   bootstrap: Awaited<ReturnType<typeof loadStorefrontBootstrap>>;
   compose: boolean;
-  copy: typeof FALLBACK_STOREFRONT_COPY;
   onUnreadMessagesChange: (count: number) => void;
 }) {
   const queryClient = useQueryClient();
@@ -352,7 +349,7 @@ function MessagesPage({
   }, [activeConversationRef, activeConversation, queryClient]);
 
   const workspaceConversationRef = compose ? '__new__' : activeConversationRef;
-  const sendError = sendMutation.error ? copy.messages.sendFailed : null;
+  const sendError = sendMutation.error ? STOREFRONT_COPY.messages.sendFailed : null;
   return (
     <MessagesWorkspace
       activeConversation={activeConversation}
@@ -390,9 +387,9 @@ export function StorefrontRoot() {
     queryFn: ({ signal }) => loadStorefrontBootstrap(undefined, signal),
     staleTime: 30_000,
   });
-  const copyQuery = useQuery({
-    queryKey: ['storefront-copy'],
-    queryFn: ({ signal }) => loadStorefrontCopy(signal),
+  const navigationQuery = useQuery({
+    queryKey: ['bottom-navigation'],
+    queryFn: ({ signal }) => loadBottomNavigation(signal),
     staleTime: 30_000,
   });
 
@@ -401,7 +398,7 @@ export function StorefrontRoot() {
     return <PrimaryError error={bootstrapQuery.error} />;
 
   const bootstrap = bootstrapQuery.data;
-  const copy = copyQuery.data ?? FALLBACK_STOREFRONT_COPY;
+  const navigationItems = navigationQuery.data ?? FALLBACK_BOTTOM_NAVIGATION;
   let page: ReactNode;
 
   switch (route.type) {
@@ -422,7 +419,6 @@ export function StorefrontRoot() {
           activeConversationRef={null}
           bootstrap={bootstrap}
           compose={false}
-          copy={copy}
           onUnreadMessagesChange={setUnreadMessages}
         />
       );
@@ -433,7 +429,6 @@ export function StorefrontRoot() {
           activeConversationRef={null}
           bootstrap={bootstrap}
           compose
-          copy={copy}
           onUnreadMessagesChange={setUnreadMessages}
         />
       );
@@ -444,7 +439,6 @@ export function StorefrontRoot() {
           activeConversationRef={route.conversationRef}
           bootstrap={bootstrap}
           compose={false}
-          copy={copy}
           onUnreadMessagesChange={setUnreadMessages}
         />
       );
@@ -500,7 +494,7 @@ export function StorefrontRoot() {
       <PrimaryShell
         activePath={pathname}
         bootstrap={bootstrap}
-        copy={copy}
+        navigationItems={navigationItems}
         routeKey={pathname}
         unreadMessages={unreadMessages}
       >
