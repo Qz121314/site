@@ -58,9 +58,6 @@ export function LoginView({
         <div>
           <p className="eyebrow">业务展示模板</p>
           <h1 id="login-title">管理后台登录</h1>
-          <p className="login-description">
-            使用 Cloudflare Worker 中配置的 ADMIN_PASSWORD 登录。
-          </p>
         </div>
 
         {configurationMissing ? (
