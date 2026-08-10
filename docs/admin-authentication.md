@@ -13,6 +13,8 @@ SESSION_SECRET   至少 32 个字符的随机密钥
 
 敏感值不得写入 GitHub、`wrangler.jsonc`、D1 或普通 `vars`。
 
+新配置和轮换后的值必须满足上述长度。Worker 暂时接受已经存在的非空旧 Secret，避免发布新版时直接锁死后台；该兼容行为不降低验收标准，旧值必须在 Cloudflare 中人工轮换。
+
 本地开发可在未提交的 `.dev.vars` 中配置同名变量。
 
 ## API

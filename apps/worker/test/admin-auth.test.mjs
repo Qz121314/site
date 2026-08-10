@@ -87,18 +87,15 @@ function loginRequest(password, headers = {}) {
   });
 }
 
-test('auth bindings enforce production-safe minimum lengths', () => {
+test('auth bindings reject missing values while preserving legacy configured secrets', () => {
   assert.equal(getAdminAuthBindings({}), null);
   assert.equal(
-    getAdminAuthBindings({ ADMIN_PASSWORD: 'short', SESSION_SECRET: 'x'.repeat(32) }),
+    getAdminAuthBindings({ ADMIN_PASSWORD: '   ', SESSION_SECRET: 'configured' }),
     null,
   );
-  assert.equal(
-    getAdminAuthBindings({
-      ADMIN_PASSWORD: 'long-enough-password',
-      SESSION_SECRET: 'short',
-    }),
-    null,
+  assert.deepEqual(
+    getAdminAuthBindings({ ADMIN_PASSWORD: 'legacy', SESSION_SECRET: 'legacy-secret' }),
+    { adminPassword: 'legacy', sessionSecret: 'legacy-secret' },
   );
   assert.deepEqual(
     getAdminAuthBindings({

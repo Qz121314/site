@@ -463,6 +463,8 @@ SESSION_SECRET   至少 32 个字符的随机密钥
 
 绑定值不写入 GitHub、D1 或 `wrangler.jsonc`。
 
+新配置必须遵守上面的 12 / 32 字符基线。为避免历史 Secret 在部署时直接锁死后台，Worker 运行时暂时兼容已有的非空旧值；这只是一条迁移兼容路径，不代表短 Secret 达到生产安全要求，应在 Cloudflare 中人工轮换后再完成商业发布验收。
+
 认证保留必要安全措施：
 
 - 签名 Session；
