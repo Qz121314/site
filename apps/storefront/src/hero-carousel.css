@@ -211,47 +211,50 @@
 
 @media (max-width: 720px) {
   .hero-carousel {
-    border-radius: max(16px, var(--theme-radius-card, 18px));
-    box-shadow: 0 7px 22px color-mix(in srgb, var(--text, #1f2328) 7%, transparent);
+    border-color: color-mix(in srgb, var(--line, #e7e9ec) 48%, transparent);
+    border-radius: max(15px, min(var(--theme-radius-card, 18px), 18px));
+    box-shadow: 0 6px 18px color-mix(in srgb, var(--text, #1f2328) 6%, transparent);
   }
 
   .hero-carousel-slide {
-    min-height: 208px;
-    aspect-ratio: 16 / 9;
+    min-height: 188px;
+    aspect-ratio: 16 / 8.4;
   }
 
   .hero-carousel-overlay {
-    padding: 18px 16px 28px;
+    padding: 14px 14px 24px;
     background:
-      linear-gradient(90deg, rgb(2 6 23 / 18%) 0%, transparent 82%),
-      linear-gradient(180deg, transparent 16%, rgb(2 6 23 / 14%) 44%, rgb(2 6 23 / 80%) 100%);
+      linear-gradient(90deg, rgb(2 6 23 / 16%) 0%, transparent 86%),
+      linear-gradient(180deg, transparent 18%, rgb(2 6 23 / 12%) 46%, rgb(2 6 23 / 82%) 100%);
   }
 
   .hero-carousel-copy {
-    width: 94%;
-    gap: 6px;
+    width: min(94%, 430px);
+    gap: 5px;
   }
 
   .hero-carousel-copy h1 {
-    max-width: 16ch;
-    font-size: clamp(22px, 7vw, 31px);
-    line-height: 1.05;
+    max-width: 17ch;
+    font-size: clamp(20px, 6.4vw, 28px);
+    line-height: 1.04;
+    letter-spacing: -0.035em;
   }
 
   .hero-carousel-copy p {
     display: -webkit-box;
-    max-width: 42ch;
+    max-width: 40ch;
     overflow: hidden;
-    font-size: 0.78rem;
-    line-height: 1.42;
+    font-size: 0.75rem;
+    line-height: 1.38;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
   }
 
   .hero-carousel-cta {
-    min-height: 38px;
-    padding-inline: 14px;
-    font-size: 0.74rem;
+    min-height: 36px;
+    margin-top: 3px;
+    padding-inline: 13px;
+    font-size: 0.72rem;
   }
 
   .hero-carousel-arrow {
@@ -259,7 +262,18 @@
   }
 
   .hero-carousel-dots {
-    bottom: 8px;
+    bottom: 7px;
+    gap: 5px;
+    padding: 4px 6px;
+  }
+
+  .hero-carousel-dot {
+    width: 6px;
+    height: 6px;
+  }
+
+  .hero-carousel-dot.is-active {
+    width: 17px;
   }
 }
 
