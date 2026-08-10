@@ -210,10 +210,10 @@ export function HomeFeed({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
     () => new Map(availableSections.map((section) => [section.id, section])),
     [availableSections],
   );
-  const fallbackLayout = useMemo(() => ({
+  const fallbackLayout = {
     shortcutSectionIds: availableSections.slice(0, 7).map((section) => section.id),
     recommendationSectionIds: fallbackRecommendationSectionIds(bootstrap),
-  }), [availableSections, bootstrap]);
+  };
   const layout = layoutQuery.data ?? fallbackLayout;
   const shortcutSections = layout.shortcutSectionIds
     .flatMap((id) => sectionById.get(id) ? [sectionById.get(id) as PublicSection] : [])
