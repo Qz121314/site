@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { StorefrontProductCard, type StorefrontLinkComponent } from '@site/storefront-ui';
-import { useEffect, useMemo, useState, type MouseEvent as ReactMouseEvent } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   loadSectionSnapshot,
   type PublicSection,
@@ -9,7 +9,6 @@ import {
 import { ResilientImage } from './ResilientMedia';
 import { productHref } from './routing';
 import { useStorefrontCopy } from './storefront-copy';
-import { canNavigateStorefrontBack, navigateStorefrontBack } from './storefront-history';
 
 function SearchIcon() {
   return (
@@ -91,12 +90,6 @@ export function SectionCatalogPage({
     setSelectedTags(new Set());
   }
 
-  function handleBack(event: ReactMouseEvent<HTMLAnchorElement>) {
-    if (!canNavigateStorefrontBack()) return;
-    event.preventDefault();
-    navigateStorefrontBack();
-  }
-
   const hasFilters = Boolean(search.trim() || categoryId || selectedTags.size > 0);
 
   if (query.isLoading && !query.data) {
@@ -113,9 +106,6 @@ export function SectionCatalogPage({
           <button className="primary-button" type="button" onClick={() => void query.refetch()}>
             Try again
           </button>
-          <LinkComponent className="secondary-button" href="/browse/" onClick={handleBack}>
-            {sectionCopy.backLabel}
-          </LinkComponent>
         </div>
       </section>
     );
@@ -126,33 +116,11 @@ export function SectionCatalogPage({
   const resultWord = filteredProducts.length === 1
     ? sectionCopy.resultSingular
     : sectionCopy.resultPlural;
-  const totalWord = query.data.products.length === 1
-    ? sectionCopy.resultSingular
-    : sectionCopy.resultPlural;
   const hasFilterOptions = query.data.categories.length > 0 || query.data.tags.length > 0;
   const hasProducts = query.data.products.length > 0;
 
   return (
-    <section className="section-catalog" aria-labelledby="section-catalog-title">
-      <header className="section-catalog-header">
-        <LinkComponent className="section-catalog-back" href="/browse/" onClick={handleBack}>
-          <span className="section-catalog-back-icon" aria-hidden="true">←</span>
-          <span>{sectionCopy.backLabel}</span>
-        </LinkComponent>
-
-        <div className="section-catalog-identity">
-          <span className="section-catalog-visual">
-            <SectionVisual section={query.data.section} />
-          </span>
-          <div className="section-catalog-title-group">
-            <h1 id="section-catalog-title">{query.data.section.name}</h1>
-            <span className="section-catalog-total">
-              {query.data.products.length} {totalWord}
-            </span>
-          </div>
-        </div>
-      </header>
-
+    <section className="section-catalog" aria-label={query.data.section.name}>
       {hasProducts ? (
         <div className="section-catalog-controls">
           <label className="section-catalog-search">
