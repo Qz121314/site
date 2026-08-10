@@ -23,13 +23,6 @@ export type BottomNavigationItemConfig = {
   };
 };
 
-export const FALLBACK_BOTTOM_NAVIGATION: BottomNavigationItemConfig[] = [
-  { key: 'home', label: 'Home', enabled: true, icon: { type: 'builtin', value: 'home' } },
-  { key: 'browse', label: 'Browse', enabled: true, icon: { type: 'builtin', value: 'compass' } },
-  { key: 'messages', label: 'Messages', enabled: true, icon: { type: 'builtin', value: 'messages' } },
-  { key: 'faq', label: 'FAQ', enabled: true, icon: { type: 'builtin', value: 'help' } },
-];
-
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
