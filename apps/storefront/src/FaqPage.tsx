@@ -1,10 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import type { StorefrontLinkComponent } from '@site/storefront-ui';
-import { useEffect } from 'react';
+import { useEffect, type MouseEvent as ReactMouseEvent } from 'react';
 import { loadFaqSnapshot, type StorefrontBootstrap } from './content';
 import { MarkdownContent } from './MarkdownContent';
 import { faqArticleHref } from './routing';
 import { useStorefrontCopy } from './storefront-copy';
+import { canNavigateStorefrontBack, navigateStorefrontBack } from './storefront-history';
 
 function faqContentVersion(bootstrap: StorefrontBootstrap): string {
   return bootstrap.pointer.schemaVersion === 2
@@ -18,6 +19,12 @@ function useFaqSnapshot(bootstrap: StorefrontBootstrap) {
     queryFn: ({ signal }) => loadFaqSnapshot(bootstrap, signal),
     staleTime: Number.POSITIVE_INFINITY,
   });
+}
+
+function handleInternalBack(event: ReactMouseEvent<HTMLAnchorElement>) {
+  if (!canNavigateStorefrontBack()) return;
+  event.preventDefault();
+  navigateStorefrontBack();
 }
 
 function FaqLoadState({
@@ -123,12 +130,19 @@ export function FaqArticlePage({
   if (!article) {
     return (
       <section className="faq-article-detail faq-article-missing" aria-labelledby="faq-article-missing-title">
-        <LinkComponent className="faq-back-link" href="/faq/">← {faq.title}</LinkComponent>
+        <header className="faq-article-navigation">
+          <LinkComponent className="faq-back-link" href="/faq/" onClick={handleInternalBack}>
+            <span className="faq-back-icon" aria-hidden="true">‹</span>
+            <span>{faq.title}</span>
+          </LinkComponent>
+        </header>
         <div className="standalone-state embedded-state">
           <div className="state-mark">404</div>
           <h1 id="faq-article-missing-title">Article not found</h1>
           <p>This article is not part of the current published FAQ.</p>
-          <LinkComponent className="primary-button" href="/faq/">Back to {faq.title}</LinkComponent>
+          <LinkComponent className="primary-button" href="/faq/" onClick={handleInternalBack}>
+            Back to {faq.title}
+          </LinkComponent>
         </div>
       </section>
     );
@@ -136,7 +150,12 @@ export function FaqArticlePage({
 
   return (
     <article className="faq-article-detail" aria-labelledby="faq-article-title">
-      <LinkComponent className="faq-back-link" href="/faq/">← {faq.title}</LinkComponent>
+      <header className="faq-article-navigation">
+        <LinkComponent className="faq-back-link" href="/faq/" onClick={handleInternalBack}>
+          <span className="faq-back-icon" aria-hidden="true">‹</span>
+          <span>{faq.title}</span>
+        </LinkComponent>
+      </header>
       <header className="faq-article-header">
         <h1 id="faq-article-title">{article.title}</h1>
       </header>
