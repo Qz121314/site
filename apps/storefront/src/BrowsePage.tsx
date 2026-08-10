@@ -14,7 +14,13 @@ import { useStorefrontCopy } from './storefront-copy';
 
 function SearchIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      aria-hidden="true"
+    >
       <circle cx="10.8" cy="10.8" r="6.5" />
       <path d="m16 16 4 4" strokeLinecap="round" />
     </svg>
@@ -24,7 +30,9 @@ function SearchIcon() {
 function publishedSections(bootstrap: StorefrontBootstrap): PublicSection[] {
   const pointer = bootstrap.pointer;
   if (pointer.schemaVersion !== 2) return bootstrap.home.allSections;
-  return bootstrap.home.allSections.filter((section) => Boolean(pointer.sections[section.id]));
+  return bootstrap.home.allSections.filter((section) =>
+    Boolean(pointer.sections[section.id]),
+  );
 }
 
 function productMatches(product: PublicProductSummary, keyword: string): boolean {
@@ -78,32 +86,37 @@ export function BrowsePage({
     },
   });
 
-  const filteredSections = useMemo(() => sections.filter((section) => {
-    if (!normalizedSearch) return true;
-    const presentation = presentationById.get(section.id);
-    return `${section.name} ${presentation?.description ?? ''}`.toLowerCase().includes(normalizedSearch);
-  }), [normalizedSearch, presentationById, sections]);
+  const filteredSections = useMemo(
+    () =>
+      sections.filter((section) => {
+        if (!normalizedSearch) return true;
+        const presentation = presentationById.get(section.id);
+        return `${section.name} ${presentation?.description ?? ''}`
+          .toLowerCase()
+          .includes(normalizedSearch);
+      }),
+    [normalizedSearch, presentationById, sections],
+  );
 
   const filteredProducts = useMemo(() => {
     if (!normalizedSearch) return [];
-    return (productSearchQuery.data ?? []).filter((product) => productMatches(product, normalizedSearch));
+    return (productSearchQuery.data ?? []).filter((product) =>
+      productMatches(product, normalizedSearch),
+    );
   }, [normalizedSearch, productSearchQuery.data]);
 
   useEffect(() => {
     document.title = `${browse.title} · ${bootstrap.site.site.name}`;
   }, [bootstrap.site.site.name, browse.title]);
 
-  const noResults = normalizedSearch.length > 0 &&
+  const noResults =
+    normalizedSearch.length > 0 &&
     !productSearchQuery.isLoading &&
     filteredSections.length === 0 &&
     filteredProducts.length === 0;
 
   return (
-    <section className="browse-directory" aria-labelledby="browse-directory-title">
-      <header className="browse-directory-heading">
-        <h1 id="browse-directory-title">{browse.title}</h1>
-      </header>
-
+    <section className="browse-directory" aria-label={browse.title}>
       <label className="browse-directory-search">
         <SearchIcon />
         <input
@@ -116,11 +129,7 @@ export function BrowsePage({
       </label>
 
       {filteredSections.length > 0 ? (
-        <section className="browse-directory-section" aria-labelledby="browse-directory-sections-title">
-          <div className="browse-directory-section-heading">
-            <h2 id="browse-directory-sections-title">{browse.sectionsTitle}</h2>
-            <span>{filteredSections.length}</span>
-          </div>
+        <section className="browse-directory-section" aria-label={browse.sectionsTitle}>
           <div className="browse-section-list">
             {filteredSections.map((section) => {
               const presentation = presentationById.get(section.id);
@@ -130,25 +139,28 @@ export function BrowsePage({
                   href={sectionHref(section)}
                   key={section.id}
                 >
-                  <span className="browse-section-card-background" aria-hidden="true">
-                    {presentation?.backgroundUrl ? (
+                  {presentation?.backgroundUrl ? (
+                    <span className="browse-section-card-background" aria-hidden="true">
                       <ResilientImage
                         alt=""
-                        fallback={<span className="browse-section-card-fallback" />}
                         loading="lazy"
                         src={presentation.backgroundUrl}
                       />
-                    ) : (
-                      <span className="browse-section-card-fallback" />
-                    )}
-                  </span>
+                    </span>
+                  ) : null}
                   <span className="browse-section-card-overlay" aria-hidden="true" />
                   <span className="browse-section-card-content">
                     <strong>{section.name}</strong>
                     {presentation?.description ? <p>{presentation.description}</p> : null}
-                    {presentation ? <small>{presentation.productCount} {browse.productsTitle}</small> : null}
+                    {presentation && presentation.productCount > 0 ? (
+                      <small>
+                        {presentation.productCount} {browse.productsTitle}
+                      </small>
+                    ) : null}
                   </span>
-                  <span className="browse-section-card-chevron" aria-hidden="true">›</span>
+                  <span className="browse-section-card-chevron" aria-hidden="true">
+                    ›
+                  </span>
                 </LinkComponent>
               );
             })}
@@ -156,11 +168,17 @@ export function BrowsePage({
         </section>
       ) : null}
 
-      {normalizedSearch && (productSearchQuery.isLoading || filteredProducts.length > 0) ? (
-        <section className="browse-directory-section" aria-labelledby="browse-directory-products-title">
+      {normalizedSearch &&
+      (productSearchQuery.isLoading || filteredProducts.length > 0) ? (
+        <section
+          className="browse-directory-section"
+          aria-labelledby="browse-directory-products-title"
+        >
           <div className="browse-directory-section-heading">
             <h2 id="browse-directory-products-title">{browse.productsTitle}</h2>
-            {!productSearchQuery.isLoading ? <span>{filteredProducts.length}</span> : null}
+            {!productSearchQuery.isLoading ? (
+              <span>{filteredProducts.length}</span>
+            ) : null}
           </div>
           {productSearchQuery.isLoading ? (
             <div className="inline-loading">{sectionCopy.loading}</div>
@@ -173,15 +191,19 @@ export function BrowsePage({
                   href={productHref(product)}
                   key={product.id}
                   LinkComponent={LinkComponent}
-                  media={(
+                  media={
                     <ResilientImage
                       alt=""
                       fallback={<div className="image-fallback" aria-hidden="true" />}
                       loading="lazy"
                       src={product.coverUrl}
                     />
-                  )}
-                  modeLabel={product.serviceMode === 'online' ? productCopy.onlineLabel : productCopy.offlineLabel}
+                  }
+                  modeLabel={
+                    product.serviceMode === 'online'
+                      ? productCopy.onlineLabel
+                      : productCopy.offlineLabel
+                  }
                   sectionName={product.sectionName}
                   tags={product.tags}
                   title={product.title}
@@ -192,7 +214,9 @@ export function BrowsePage({
         </section>
       ) : null}
 
-      {noResults ? <div className="browse-directory-empty">{browse.noResults}</div> : null}
+      {noResults ? (
+        <div className="browse-directory-empty">{browse.noResults}</div>
+      ) : null}
     </section>
   );
 }

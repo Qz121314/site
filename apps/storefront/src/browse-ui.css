@@ -7,18 +7,6 @@
   margin: 0 auto;
 }
 
-.browse-directory-heading {
-  padding: 0 1px;
-}
-
-.browse-directory-heading h1 {
-  margin: 0;
-  color: var(--text);
-  font-size: clamp(1.7rem, 7vw, 2.35rem);
-  line-height: 1.02;
-  letter-spacing: -0.042em;
-}
-
 .browse-directory-search {
   position: relative;
   display: flex;
@@ -125,6 +113,10 @@
     box-shadow 140ms ease;
 }
 
+.browse-section-card:not(.has-image) {
+  grid-template-columns: minmax(0, 1fr) 36px;
+}
+
 .browse-section-card:active {
   transform: scale(0.992);
   box-shadow: none;
@@ -146,8 +138,7 @@
   display: none;
 }
 
-.browse-section-card-background img,
-.browse-section-card-fallback {
+.browse-section-card-background img {
   display: block;
   width: 100%;
   height: 100%;
@@ -155,20 +146,6 @@
 
 .browse-section-card-background img {
   object-fit: cover;
-}
-
-.browse-section-card-fallback {
-  background:
-    radial-gradient(
-      circle at 82% 18%,
-      color-mix(in srgb, var(--brand) 34%, transparent),
-      transparent 38%
-    ),
-    linear-gradient(
-      135deg,
-      color-mix(in srgb, var(--brand) 20%, var(--surface-soft)),
-      color-mix(in srgb, var(--brand-strong) 12%, var(--surface))
-    );
 }
 
 .browse-section-card-content {
@@ -253,15 +230,6 @@
     gap: 14px;
   }
 
-  .browse-directory-heading {
-    padding: 3px 2px 1px;
-  }
-
-  .browse-directory-heading h1 {
-    font-size: 1.8rem;
-    font-weight: 860;
-  }
-
   .browse-directory-search {
     position: sticky;
     top: calc(64px + env(safe-area-inset-top));
@@ -331,10 +299,6 @@
 @media (min-width: 768px) {
   .browse-directory {
     gap: 22px;
-  }
-
-  .browse-directory-heading h1 {
-    font-size: 2.3rem;
   }
 
   .browse-directory-search {

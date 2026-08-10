@@ -18,6 +18,9 @@ test('FAQ is a title-only one-row-per-article directory without search or accord
   assert.match(faqSource, /href=\{faqArticleHref\(article\.id\)\}/u);
   assert.doesNotMatch(faqSource, /<details|<summary/u);
   assert.doesNotMatch(faqSource, /type="search"|searchPlaceholder/u);
+  assert.doesNotMatch(faqSource, /faq-directory-heading|app-page-kicker/u);
+  assert.doesNotMatch(faqSource, /faq\.empty/u);
+  assert.doesNotMatch(cssSource, /\.faq-directory-heading/u);
 });
 
 test('FAQ article opens on a dedicated detail route and renders the published Markdown body', () => {
@@ -27,7 +30,7 @@ test('FAQ article opens on a dedicated detail route and renders the published Ma
     /query\.data\?\.faqs\.find\(\(item\) => item\.id === articleRef\)/u,
   );
   assert.match(faqSource, /<MarkdownContent source=\{article\.body\} \/>/u);
-  assert.match(faqSource, /className="faq-back-link" href="\/faq\/"/u);
+  assert.match(faqSource, /className="faq-back-link"[\s\S]*?href="\/faq\/"/u);
 });
 
 test('FAQ list and article detail use the primary Storefront shell and keep FAQ navigation active', () => {
