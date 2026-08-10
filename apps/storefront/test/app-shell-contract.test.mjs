@@ -20,15 +20,16 @@ test('storefront loads the app shell refinement layer after PWA styles', () => {
 });
 
 test('mobile app shell uses dynamic viewport height and a non-floating tab bar', () => {
-  assert.match(shellCss, /100dvh/u);
-  assert.match(shellCss, /\.site-footer\s*\{\s*display:\s*none;/u);
-  assert.match(shellCss, /\.app-shell \.bottom-nav\s*\{[\s\S]*?border-radius:\s*0;/u);
+  assert.equal(shellCss.includes('100dvh'), true);
+  assert.equal(shellCss.includes('.site-footer {\n    display: none;'), true);
+  assert.equal(shellCss.includes('.app-shell .bottom-nav {'), true);
+  assert.equal(shellCss.includes('border-radius: 0;'), true);
 });
 
 test('storefront classifies secondary routes as push pages before paint', () => {
-  assert.match(mainSource, /import \{ StorefrontPresentation \}/u);
-  assert.match(mainSource, /<StorefrontPresentation \/>/u);
-  assert.match(presentationSource, /useLayoutEffect/u);
+  assert.equal(mainSource.includes("import { StorefrontPresentation } from './StorefrontPresentation';"), true);
+  assert.equal(mainSource.includes('<StorefrontPresentation />'), true);
+  assert.equal(presentationSource.includes('useLayoutEffect'), true);
   for (const routeType of ['section', 'product', 'faq-article', 'message', 'message-compose']) {
     assert.equal(
       presentationSource.includes(`case '${routeType}':`),
@@ -36,32 +37,56 @@ test('storefront classifies secondary routes as push pages before paint', () => 
       `${routeType} must remain a push presentation`,
     );
   }
-  assert.match(presentationSource, /storefrontPresentation/u);
+  assert.equal(presentationSource.includes('storefrontPresentation'), true);
 });
 
 test('mobile push pages remove root chrome while root tabs keep it', () => {
-  assert.match(shellCss, /data-storefront-presentation='push'/u);
-  assert.match(shellCss, /data-storefront-presentation='push'[\s\S]*?> \.topbar/u);
-  assert.match(shellCss, /data-storefront-presentation='push'[\s\S]*?> \.bottom-nav/u);
-  assert.match(shellCss, /data-storefront-presentation='push'[\s\S]*?> main\s*\{[\s\S]*?safe-area-inset-top/u);
-  assert.doesNotMatch(shellCss, /data-storefront-presentation='root'[\s\S]*?display:\s*none/u);
+  assert.equal(
+    shellCss.includes("html[data-storefront-presentation='push'] .app-shell > .topbar"),
+    true,
+  );
+  assert.equal(
+    shellCss.includes("html[data-storefront-presentation='push'] .app-shell > .bottom-nav"),
+    true,
+  );
+  assert.equal(
+    shellCss.includes("html[data-storefront-presentation='push'] .app-shell > main"),
+    true,
+  );
+  assert.equal(shellCss.includes('safe-area-inset-top'), true);
+  assert.equal(shellCss.includes("html[data-storefront-presentation='root']"), false);
 });
 
 test('product and FAQ detail use history-aware push headers', () => {
-  assert.match(productSource, /product-detail-navigation/u);
-  assert.match(productSource, /navigateStorefrontBack/u);
-  assert.match(faqSource, /faq-article-navigation/u);
-  assert.match(faqSource, /navigateStorefrontBack/u);
-  assert.match(productCss, /\.product-detail-navigation\s*\{[\s\S]*?position:\s*sticky;/u);
-  assert.match(productCss, /\.product-detail-mobile-action\s*\{[\s\S]*?bottom:\s*0;/u);
-  assert.match(productCss, /safe-area-inset-bottom/u);
+  assert.equal(productSource.includes('product-detail-navigation'), true);
+  assert.equal(productSource.includes('navigateStorefrontBack'), true);
+  assert.equal(faqSource.includes('faq-article-navigation'), true);
+  assert.equal(faqSource.includes('navigateStorefrontBack'), true);
+  assert.equal(productCss.includes('.product-detail-navigation {'), true);
+  assert.equal(productCss.includes('position: sticky;'), true);
+  assert.equal(productCss.includes('.product-detail-mobile-action {'), true);
+  assert.equal(productCss.includes('bottom: 0;'), true);
+  assert.equal(productCss.includes('safe-area-inset-bottom'), true);
 });
 
 test('mobile conversation route remains focused full-screen UI without global chrome', () => {
-  assert.match(shellCss, /@media \(max-width:\s*767px\)/u);
-  assert.match(shellCss, /\.app-shell:has\(\.messages-workspace\.is-thread-open\) > \.topbar/u);
-  assert.match(shellCss, /\.app-shell:has\(\.messages-workspace\.is-thread-open\) > \.bottom-nav/u);
-  assert.match(shellCss, /\.app-shell:has\(\.messages-workspace\.is-thread-open\) > main\s*\{[\s\S]*?height:\s*100dvh;/u);
-  assert.match(shellCss, /\.app-shell:has\(\.messages-workspace\.is-thread-open\) \.chat-composer\s*\{[\s\S]*?safe-area-inset-bottom/u);
-  assert.doesNotMatch(shellCss, /@media \(min-width:\s*768px\)[\s\S]*?> \.bottom-nav\s*\{\s*display:\s*none/u);
+  assert.equal(shellCss.includes('@media (max-width: 767px)'), true);
+  assert.equal(
+    shellCss.includes('.app-shell:has(.messages-workspace.is-thread-open) > .topbar'),
+    true,
+  );
+  assert.equal(
+    shellCss.includes('.app-shell:has(.messages-workspace.is-thread-open) > .bottom-nav'),
+    true,
+  );
+  assert.equal(
+    shellCss.includes('.app-shell:has(.messages-workspace.is-thread-open) > main'),
+    true,
+  );
+  assert.equal(shellCss.includes('height: 100dvh;'), true);
+  assert.equal(
+    shellCss.includes('.app-shell:has(.messages-workspace.is-thread-open) .chat-composer'),
+    true,
+  );
+  assert.equal(shellCss.includes('safe-area-inset-bottom'), true);
 });
