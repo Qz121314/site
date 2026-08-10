@@ -99,11 +99,7 @@ export function BrowsePage({
     filteredProducts.length === 0;
 
   return (
-    <section className="browse-directory" aria-labelledby="browse-directory-title">
-      <header className="browse-directory-heading">
-        <h1 id="browse-directory-title">{browse.title}</h1>
-      </header>
-
+    <section className="browse-directory" aria-label={browse.title}>
       <label className="browse-directory-search">
         <SearchIcon />
         <input
