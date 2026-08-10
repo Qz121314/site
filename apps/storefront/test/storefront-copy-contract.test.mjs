@@ -19,31 +19,27 @@ const copySource = await readFile(
   'utf8',
 );
 
-test('Storefront loads backend copy without making copy availability a page-fatal dependency', () => {
-  assert.match(copySource, /fetch\('\/api\/public\/storefront-copy\//u);
-  assert.match(rootSource, /queryKey:\s*\['storefront-copy'\]/u);
-  assert.match(rootSource, /copyQuery\.data \?\? FALLBACK_STOREFRONT_COPY/u);
-  assert.match(rootSource, /<StorefrontCopyProvider/u);
+test('Storefront UI copy is frontend-owned and no longer fetched from site settings', () => {
+  assert.match(copySource, /export const STOREFRONT_COPY/u);
+  assert.doesNotMatch(copySource, /\/api\/public\/storefront-copy/u);
+  assert.doesNotMatch(copySource, /createContext|StorefrontCopyProvider/u);
+  assert.doesNotMatch(rootSource, /queryKey:\s*\['storefront-copy'\]/u);
+  assert.doesNotMatch(rootSource, /StorefrontCopyProvider/u);
 });
 
-test('primary navigation labels come from Bottom Navigation config with Storefront Copy fallback', () => {
-  assert.match(navigationSource, /navigation:\s*StorefrontCopy\['navigation'\]/u);
-  assert.match(navigationSource, /navigation\.items/u);
+test('bottom navigation remains backend-configurable independently of UI copy', () => {
+  assert.match(rootSource, /queryKey:\s*\['bottom-navigation'\]/u);
+  assert.match(rootSource, /loadBottomNavigation\(signal\)/u);
+  assert.match(rootSource, /navigationQuery\.data \?\? FALLBACK_BOTTOM_NAVIGATION/u);
+  assert.match(navigationSource, /navigationItems:\s*BottomNavigationItemConfig\[\]/u);
   assert.match(navigationSource, /label:\s*item\.label/u);
-  assert.match(copySource, /loadBottomNavigation\(signal\)\.catch\(\(\) => null\)/u);
-  assert.match(
-    copySource,
-    /label:\s*normalizedWithoutNavigation\.navigation\[item\.key\]/u,
-  );
 });
 
-test('normal storefront business copy is not re-hardcoded in the root or support UI', () => {
-  const normalUiSource = `${rootSource}\n${supportSource}`;
+test('normal storefront UI copy stays centralized instead of being duplicated in page components', () => {
+  const pageSource = `${rootSource}\n${supportSource}`;
   for (const text of [
     'Hot picks',
     'Latest services',
-    'Search sections, products, or tags',
-    'Name, type or tag',
     'About this service',
     'Ready to connect?',
     'No conversations yet',
@@ -53,9 +49,9 @@ test('normal storefront business copy is not re-hardcoded in the root or support
     'Send message',
   ]) {
     assert.equal(
-      normalUiSource.includes(text),
+      pageSource.includes(text),
       false,
-      `${text} must come from Storefront Copy`,
+      `${text} must stay in the frontend copy module`,
     );
   }
 });
@@ -65,7 +61,7 @@ test('search prompts describe the user action instead of internal content struct
   assert.equal(copySource.match(/searchPlaceholder:\s*'Search'/gu)?.length, 2);
 });
 
-test('system failure copy remains separate while user-facing accessibility labels use Storefront Copy', () => {
+test('system failure copy remains separate while accessibility labels use the frontend copy module', () => {
   assert.match(rootSource, /Storefront unavailable/u);
   assert.match(supportSource, /aria-label=\{messages\.attachmentLabel\}/u);
   assert.match(supportSource, /aria-label=\{messages\.sendLabel\}/u);
