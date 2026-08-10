@@ -5,6 +5,8 @@ import {
   ensureStorefrontHistoryState,
   navigateStorefrontBack,
   navigateStorefrontForward,
+  recordStorefrontHistoryPush,
+  syncStorefrontHistoryFromPopState,
   type StorefrontNavigationDirection,
 } from './storefront-history';
 
@@ -21,6 +23,7 @@ type TrackingGesture = {
   locked: boolean;
 };
 
+const NAVIGATION_EVENT = 'storefront:navigate';
 const EDGE_WIDTH = 26;
 const LOCK_DISTANCE = 10;
 const TRIGGER_DISTANCE = 76;
@@ -51,6 +54,14 @@ export function MobileEdgeNavigation() {
     const clearGesture = () => {
       tracking = null;
       setGesture(null);
+    };
+
+    const handleStorefrontNavigation = () => {
+      recordStorefrontHistoryPush();
+    };
+
+    const handlePopState = (event: PopStateEvent) => {
+      syncStorefrontHistoryFromPopState(event.state);
     };
 
     const handleTouchStart = (event: TouchEvent) => {
@@ -125,12 +136,16 @@ export function MobileEdgeNavigation() {
       else navigateStorefrontForward();
     };
 
+    window.addEventListener(NAVIGATION_EVENT, handleStorefrontNavigation);
+    window.addEventListener('popstate', handlePopState);
     document.addEventListener('touchstart', handleTouchStart, { passive: true });
     document.addEventListener('touchmove', handleTouchMove, { passive: false });
     document.addEventListener('touchend', finishGesture, { passive: true });
     document.addEventListener('touchcancel', clearGesture, { passive: true });
 
     return () => {
+      window.removeEventListener(NAVIGATION_EVENT, handleStorefrontNavigation);
+      window.removeEventListener('popstate', handlePopState);
       document.removeEventListener('touchstart', handleTouchStart);
       document.removeEventListener('touchmove', handleTouchMove);
       document.removeEventListener('touchend', finishGesture);
