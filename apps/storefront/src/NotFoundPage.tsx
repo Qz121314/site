@@ -1,5 +1,6 @@
 import type { StorefrontLinkComponent } from '@site/storefront-ui';
 import { useEffect } from 'react';
+import { SYSTEM_UI } from './system-ui';
 
 export function NotFoundPage({
   siteName,
@@ -9,18 +10,15 @@ export function NotFoundPage({
   LinkComponent?: StorefrontLinkComponent;
 }) {
   useEffect(() => {
-    document.title = `Not found · ${siteName}`;
+    document.title = siteName;
   }, [siteName]);
 
   return (
     <div className="standalone-state embedded-state">
       <div className="state-mark">404</div>
-      <h1>Page not found</h1>
-      <p>
-        The service or page you requested is not part of the current published version.
-      </p>
+      <h1>{SYSTEM_UI.notFound}</h1>
       <LinkComponent className="primary-button" href="/">
-        Back to home
+        {SYSTEM_UI.back}
       </LinkComponent>
     </div>
   );
