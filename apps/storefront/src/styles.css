@@ -108,17 +108,50 @@ main {
 .inline-loading,
 .inline-error,
 .inline-empty {
-  padding: 18px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-md);
+  display: grid;
+  min-height: 72px;
+  align-content: center;
+  gap: 5px;
+  padding: 16px 17px;
+  border: 1px solid color-mix(in srgb, var(--line) 90%, transparent);
+  border-radius: var(--theme-radius-card, var(--radius-md));
   color: var(--muted);
-  background: var(--surface);
-  font-size: 0.82rem;
+  background: color-mix(in srgb, var(--surface) 94%, var(--surface-soft));
+  box-shadow: 0 6px 20px color-mix(in srgb, var(--text) 4%, transparent);
+  font-size: 0.8rem;
+  line-height: 1.5;
+}
+
+.inline-loading {
+  position: relative;
+  overflow: hidden;
+}
+
+.inline-loading::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 20%,
+    color-mix(in srgb, var(--surface) 70%, transparent) 48%,
+    transparent 76%
+  );
+  content: '';
+  transform: translateX(-100%);
+  animation: state-sweep 1.5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.inline-empty {
+  border-style: dashed;
+  box-shadow: none;
 }
 
 .inline-error {
-  color: #a3321a;
-  background: #fff6f2;
+  border-color: color-mix(in srgb, #c44a2f 24%, var(--line));
+  color: color-mix(in srgb, #a3321a 88%, var(--text));
+  background: color-mix(in srgb, #fff6f2 88%, var(--surface));
+  box-shadow: none;
 }
 
 .detail-gallery {
@@ -242,6 +275,8 @@ main {
   place-content: center;
   justify-items: center;
   gap: 10px;
+  padding: 34px 0;
+  color: var(--text);
   text-align: center;
 }
 
@@ -251,18 +286,23 @@ main {
 
 .state-mark {
   display: grid;
-  min-width: 52px;
-  height: 52px;
+  min-width: 54px;
+  height: 54px;
   place-items: center;
   padding: 0 10px;
-  border-radius: 15px;
-  color: #fff;
-  background: var(--brand);
+  border: 1px solid color-mix(in srgb, var(--brand) 14%, transparent);
+  border-radius: 17px;
+  color: var(--brand-strong);
+  background: color-mix(in srgb, var(--brand) 10%, var(--surface));
+  box-shadow: 0 10px 26px color-mix(in srgb, var(--brand) 10%, transparent);
   font-weight: 900;
 }
 
 .standalone-state h1 {
-  font-size: 1.8rem;
+  max-width: 460px;
+  font-size: clamp(1.55rem, 6vw, 1.9rem);
+  line-height: 1.12;
+  text-wrap: balance;
 }
 
 .standalone-state p {
@@ -275,20 +315,25 @@ main {
 
 .standalone-state button,
 .standalone-state .primary-button {
-  min-height: 42px;
-  margin-top: 5px;
-  padding: 0 16px;
+  min-height: 44px;
+  margin-top: 6px;
+  padding: 0 17px;
   border: 0;
-  border-radius: 11px;
+  border-radius: 12px;
   cursor: pointer;
 }
 
 .loading-brand,
 .loading-card {
-  border-radius: var(--radius-lg);
-  background: linear-gradient(90deg, #e8eaed 25%, #f4f5f6 50%, #e8eaed 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.4s infinite linear;
+  border-radius: var(--theme-radius-card, var(--radius-lg));
+  background: linear-gradient(
+    100deg,
+    color-mix(in srgb, var(--surface-soft) 88%, var(--line)) 20%,
+    color-mix(in srgb, var(--surface) 80%, var(--surface-soft)) 48%,
+    color-mix(in srgb, var(--surface-soft) 88%, var(--line)) 76%
+  );
+  background-size: 220% 100%;
+  animation: shimmer 1.45s ease-in-out infinite;
 }
 
 .loading-brand {
@@ -304,11 +349,56 @@ main {
 
 .loading-card {
   aspect-ratio: 1 / 1.18;
+  border: 1px solid color-mix(in srgb, var(--line) 82%, transparent);
 }
 
 @keyframes shimmer {
   to {
-    background-position: -200% 0;
+    background-position: -220% 0;
+  }
+}
+
+@keyframes state-sweep {
+  55%,
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+@media (max-width: 430px) {
+  main {
+    padding: 14px 12px 38px;
+  }
+
+  .inline-loading,
+  .inline-error,
+  .inline-empty {
+    min-height: 68px;
+    padding: 14px 15px;
+    font-size: 0.78rem;
+  }
+
+  .standalone-state {
+    width: min(100%, calc(100% - 24px));
+    min-height: 62vh;
+  }
+
+  .state-mark {
+    min-width: 50px;
+    height: 50px;
+    border-radius: 15px;
+  }
+}
+
+@media (max-width: 370px) {
+  main {
+    padding-right: 10px;
+    padding-left: 10px;
+  }
+
+  .product-grid,
+  .loading-grid {
+    gap: 8px;
   }
 }
 
@@ -349,5 +439,9 @@ main {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+
+  .inline-loading::after {
+    display: none;
   }
 }
