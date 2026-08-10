@@ -169,15 +169,30 @@ export function SectionCatalogPage({
           {hasFilterOptions ? (
             <div className="section-catalog-filters" aria-label="Product filters">
               {query.data.categories.length > 0 ? (
-                <label className="section-category-filter">
+                <div className="section-category-filter" aria-label={sectionCopy.typeLabel}>
                   <span>{sectionCopy.typeLabel}</span>
-                  <select value={categoryId} onChange={(event) => setCategoryId(event.target.value)}>
-                    <option value="">{sectionCopy.allTypes}</option>
+                  <div className="section-category-options">
+                    <button
+                      className={!categoryId ? 'is-active' : undefined}
+                      type="button"
+                      aria-pressed={!categoryId}
+                      onClick={() => setCategoryId('')}
+                    >
+                      {sectionCopy.allTypes}
+                    </button>
                     {query.data.categories.map((category) => (
-                      <option key={category.id} value={category.id}>{category.name}</option>
+                      <button
+                        className={categoryId === category.id ? 'is-active' : undefined}
+                        key={category.id}
+                        type="button"
+                        aria-pressed={categoryId === category.id}
+                        onClick={() => setCategoryId(category.id)}
+                      >
+                        {category.name}
+                      </button>
                     ))}
-                  </select>
-                </label>
+                  </div>
+                </div>
               ) : null}
 
               {query.data.tags.length > 0 ? (
