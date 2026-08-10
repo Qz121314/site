@@ -111,13 +111,18 @@
   gap: 12px;
   overflow: hidden;
   padding: 9px 10px;
-  border: 1px solid color-mix(in srgb, var(--theme-card-border, var(--line)) 82%, transparent);
+  border: 1px solid
+    color-mix(in srgb, var(--theme-card-border, var(--line)) 82%, transparent);
   border-radius: max(15px, var(--theme-radius-card, 18px));
   color: var(--text);
   background: var(--theme-card-background, var(--surface));
   box-shadow: 0 4px 16px color-mix(in srgb, var(--text) 4%, transparent);
   isolation: isolate;
-  transition: border-color 140ms ease, background 140ms ease, transform 120ms ease, box-shadow 140ms ease;
+  transition:
+    border-color 140ms ease,
+    background 140ms ease,
+    transform 120ms ease,
+    box-shadow 140ms ease;
 }
 
 .browse-section-card:active {
@@ -131,7 +136,8 @@
   width: 60px;
   height: 60px;
   overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--theme-card-border, var(--line)) 72%, transparent);
+  border: 1px solid
+    color-mix(in srgb, var(--theme-card-border, var(--line)) 72%, transparent);
   border-radius: max(13px, var(--theme-radius-icon, 14px));
   background: var(--theme-media-background, var(--surface-soft));
 }
@@ -153,8 +159,16 @@
 
 .browse-section-card-fallback {
   background:
-    radial-gradient(circle at 82% 18%, color-mix(in srgb, var(--brand) 34%, transparent), transparent 38%),
-    linear-gradient(135deg, color-mix(in srgb, var(--brand) 20%, var(--surface-soft)), color-mix(in srgb, var(--brand-strong) 12%, var(--surface)));
+    radial-gradient(
+      circle at 82% 18%,
+      color-mix(in srgb, var(--brand) 34%, transparent),
+      transparent 38%
+    ),
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--brand) 20%, var(--surface-soft)),
+      color-mix(in srgb, var(--brand-strong) 12%, var(--surface))
+    );
 }
 
 .browse-section-card-content {
@@ -223,7 +237,11 @@
 
 @media (hover: hover) and (pointer: fine) {
   .browse-section-card:hover {
-    border-color: color-mix(in srgb, var(--brand) 22%, var(--theme-card-border, var(--line)));
+    border-color: color-mix(
+      in srgb,
+      var(--brand) 22%,
+      var(--theme-card-border, var(--line))
+    );
     background: color-mix(in srgb, var(--surface) 97%, var(--brand) 3%);
     box-shadow: 0 8px 22px color-mix(in srgb, var(--text) 6%, transparent);
     transform: translateY(-1px);
@@ -231,14 +249,82 @@
 }
 
 @media (max-width: 767px) {
+  .browse-directory {
+    gap: 14px;
+  }
+
+  .browse-directory-heading {
+    padding: 3px 2px 1px;
+  }
+
+  .browse-directory-heading h1 {
+    font-size: 1.8rem;
+    font-weight: 860;
+  }
+
   .browse-directory-search {
     position: sticky;
-    top: calc(56px + env(safe-area-inset-top));
+    top: calc(64px + env(safe-area-inset-top));
     z-index: 35;
+    min-height: 50px;
+    border-color: color-mix(in srgb, var(--line) 72%, transparent);
+    border-radius: 16px;
+    background: color-mix(
+      in srgb,
+      var(--theme-control-background, var(--surface)) 94%,
+      transparent
+    );
+    box-shadow:
+      0 1px 0 color-mix(in srgb, #fff 30%, transparent) inset,
+      0 8px 24px color-mix(in srgb, var(--text) 7%, transparent);
+    backdrop-filter: blur(20px);
   }
 
   .browse-section-list {
-    margin-inline: -2px;
+    gap: 0;
+    overflow: hidden;
+    margin-inline: 0;
+    padding-inline: 12px;
+    border: 1px solid
+      color-mix(in srgb, var(--theme-card-border, var(--line)) 72%, transparent);
+    border-radius: max(20px, var(--theme-radius-card, 18px));
+    background: color-mix(
+      in srgb,
+      var(--theme-card-background, var(--surface)) 97%,
+      transparent
+    );
+    box-shadow: 0 7px 22px color-mix(in srgb, var(--text) 5%, transparent);
+  }
+
+  .browse-section-card {
+    min-height: 86px;
+    padding: 12px 0;
+    border: 0;
+    border-bottom: 1px solid
+      color-mix(in srgb, var(--theme-card-border, var(--line)) 62%, transparent);
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .browse-section-card:last-child {
+    border-bottom: 0;
+  }
+
+  .browse-section-card:active {
+    background: color-mix(in srgb, var(--brand) 5%, transparent);
+    transform: scale(0.995);
+  }
+
+  .browse-section-card-background {
+    width: 62px;
+    height: 62px;
+  }
+
+  .browse-section-card-chevron {
+    width: 32px;
+    height: 32px;
+    background: color-mix(in srgb, var(--surface-soft) 72%, transparent);
   }
 }
 

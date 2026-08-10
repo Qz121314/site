@@ -4,7 +4,10 @@ import test from 'node:test';
 
 const indexSource = await readFile(new URL('../index.html', import.meta.url), 'utf8');
 const mainSource = await readFile(new URL('../src/main.tsx', import.meta.url), 'utf8');
-const pwaSource = await readFile(new URL('../src/PwaInstallPrompt.tsx', import.meta.url), 'utf8');
+const pwaSource = await readFile(
+  new URL('../src/PwaInstallPrompt.tsx', import.meta.url),
+  'utf8',
+);
 const pwaCss = await readFile(new URL('../src/pwa.css', import.meta.url), 'utf8');
 const serviceWorker = await readFile(new URL('../public/sw.js', import.meta.url), 'utf8');
 
@@ -20,6 +23,14 @@ test('storefront registers a root-scoped service worker and install UI', () => {
   assert.match(mainSource, /<PwaInstallPrompt \/>/);
   assert.match(pwaSource, /beforeinstallprompt/);
   assert.match(pwaSource, /Add to Home Screen/);
+});
+
+test('install UI waits for 30 seconds of visible engagement and respects dismissal', () => {
+  assert.match(pwaSource, /INSTALL_PROMPT_DELAY_MS = 30_000/);
+  assert.match(pwaSource, /document\.visibilityState === 'visible'/);
+  assert.match(pwaSource, /visibilitychange/);
+  assert.match(pwaSource, /DISMISS_COOLDOWN_MS/);
+  assert.match(pwaSource, /appinstalled/);
 });
 
 test('standalone mode uses safe areas and removes floating browser-like tab bar spacing', () => {
