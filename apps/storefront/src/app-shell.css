@@ -10,8 +10,8 @@ body,
 }
 
 .app-shell > .topbar {
-  min-height: calc(56px + env(safe-area-inset-top));
-  padding-top: calc(8px + env(safe-area-inset-top));
+  min-height: calc(48px + env(safe-area-inset-top));
+  padding-top: calc(4px + env(safe-area-inset-top));
   padding-right: max(11px, env(safe-area-inset-right));
   padding-left: max(11px, env(safe-area-inset-left));
 }
@@ -28,8 +28,8 @@ body,
 .storefront-home-brand {
   display: flex;
   min-width: 0;
-  max-width: min(180px, 68vw);
-  min-height: 38px;
+  max-width: min(160px, 62vw);
+  min-height: 32px;
   align-items: center;
   justify-content: center;
   color: var(--text, #1f2328);
@@ -40,7 +40,7 @@ body,
   display: flex;
   width: auto;
   max-width: 100%;
-  height: 28px;
+  height: 24px;
   align-items: center;
   justify-content: center;
 }
@@ -55,7 +55,7 @@ body,
 
 .storefront-home-brand strong {
   overflow: hidden;
-  font-size: 0.96rem;
+  font-size: 0.92rem;
   font-weight: 900;
   letter-spacing: -0.035em;
   text-overflow: ellipsis;
@@ -64,8 +64,8 @@ body,
 
 .storefront-app-header.is-page {
   display: grid;
-  grid-template-columns: minmax(64px, 1fr) minmax(0, auto) minmax(64px, 1fr);
-  gap: 8px;
+  grid-template-columns: minmax(40px, 1fr) minmax(0, auto) minmax(40px, 1fr);
+  gap: 4px;
 }
 
 .storefront-app-header-side {
@@ -83,58 +83,46 @@ body,
 }
 
 .storefront-app-header-title {
-  max-width: min(52vw, 520px);
+  max-width: min(60vw, 560px);
   margin: 0;
   overflow: hidden;
   color: var(--text, #1f2328);
-  font-size: 0.9rem;
+  font-size: 0.88rem;
   font-weight: 830;
-  letter-spacing: -0.025em;
-  line-height: 1.15;
+  letter-spacing: -0.02em;
+  line-height: 1.1;
   text-align: center;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
 .storefront-app-header-back {
-  display: inline-flex;
-  width: fit-content;
-  min-width: 0;
-  min-height: 38px;
-  align-items: center;
-  gap: 2px;
-  margin-left: -4px;
-  padding: 0 6px 0 2px;
-  border-radius: 12px;
+  display: grid;
+  width: 32px;
+  height: 32px;
+  place-items: center;
+  margin-left: -2px;
+  border-radius: 10px;
   color: var(--brand-strong);
   text-decoration: none;
   transition: background 120ms ease, transform 120ms ease;
 }
 
 .storefront-app-header-back > span {
-  flex: 0 0 auto;
+  display: block;
   margin-top: -2px;
-  font-size: 1.55rem;
-  font-weight: 420;
+  font-size: 1.5rem;
+  font-weight: 430;
   line-height: 1;
-}
-
-.storefront-app-header-back small {
-  max-width: 70px;
-  overflow: hidden;
-  font-size: 0.72rem;
-  font-weight: 760;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .storefront-app-header-back:active {
   background: color-mix(in srgb, var(--brand) 8%, transparent);
-  transform: scale(0.97);
+  transform: scale(0.96);
 }
 
 .app-shell > main {
-  min-height: calc(100dvh - 148px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
+  min-height: calc(100dvh - 140px - env(safe-area-inset-top) - env(safe-area-inset-bottom));
 }
 
 .app-shell button,
@@ -161,27 +149,12 @@ body,
   .app-shell > .topbar {
     border-bottom-color: color-mix(in srgb, var(--line, #e7e9ec) 72%, transparent);
     background: color-mix(in srgb, var(--surface, #fff) 96%, transparent);
-    box-shadow: 0 4px 16px color-mix(in srgb, var(--text, #1f2328) 3%, transparent);
-  }
-
-  .storefront-app-header.is-home {
-    min-height: calc(60px + env(safe-area-inset-top));
-  }
-
-  .storefront-app-header.is-home::after {
-    position: absolute;
-    right: 24%;
-    bottom: -1px;
-    left: 24%;
-    height: 1px;
-    background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--brand) 46%, var(--line)), transparent);
-    content: '';
-    pointer-events: none;
+    box-shadow: 0 2px 10px color-mix(in srgb, var(--text, #1f2328) 2.5%, transparent);
   }
 
   .storefront-app-header-title {
-    max-width: 54vw;
-    font-size: 0.93rem;
+    max-width: 62vw;
+    font-size: 0.9rem;
   }
 
   .app-shell > main {
@@ -331,15 +304,15 @@ body,
 
   .storefront-app-header-title {
     max-width: 620px;
-    font-size: 0.94rem;
+    font-size: 0.92rem;
   }
 
   .storefront-home-brand {
-    max-width: 220px;
+    max-width: 190px;
   }
 
   .storefront-home-logo {
-    height: 30px;
+    height: 26px;
   }
 }
 
