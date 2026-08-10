@@ -4,6 +4,7 @@ import { createRoot } from 'react-dom/client';
 import { MobileEdgeNavigation } from './MobileEdgeNavigation';
 import { PwaInstallPrompt } from './PwaInstallPrompt';
 import { installPublicContentFetchFallback } from './public-content-transport';
+import { StorefrontPresentation } from './StorefrontPresentation';
 import { StorefrontRoot } from './StorefrontRoot';
 import { installStorefrontTheme } from './theme-runtime';
 import '@site/storefront-ui/styles.css';
@@ -57,6 +58,7 @@ if (!root) {
 createRoot(root).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
+      <StorefrontPresentation />
       <MobileEdgeNavigation />
       <StorefrontRoot />
       <PwaInstallPrompt />

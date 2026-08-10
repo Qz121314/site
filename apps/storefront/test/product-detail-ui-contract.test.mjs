@@ -90,14 +90,21 @@ test('product gallery is touch-first and supports both images and videos', () =>
   assert.match(detailSource, /<ResilientImage/u);
 });
 
-test('mobile CTA remains an app action bar above primary navigation', () => {
+test('mobile CTA is the push-page safe-area action bar at the viewport edge', () => {
   assert.match(
     detailCss,
-    /\.product-detail-mobile-action\s*\{[\s\S]*?position:\s*fixed/u,
+    /\.product-detail-mobile-action\s*\{[\s\S]*?position:\s*fixed[\s\S]*?bottom:\s*0/u,
   );
-  assert.match(detailCss, /bottom:\s*calc\(67px \+ env\(safe-area-inset-bottom\)\)/u);
+  assert.match(
+    detailCss,
+    /\.product-detail-mobile-action\s*\{[\s\S]*?padding:[^;]*env\(safe-area-inset-bottom\)/u,
+  );
   assert.match(detailCss, /backdrop-filter:\s*blur\(18px\)/u);
   assert.match(detailCss, /\.product-detail-page:has\(\.product-detail-mobile-action\)/u);
+  assert.doesNotMatch(
+    detailCss,
+    /bottom:\s*calc\(67px \+ env\(safe-area-inset-bottom\)\)/u,
+  );
 });
 
 test('desktop places media beside a sticky summary and keeps body readable below', () => {

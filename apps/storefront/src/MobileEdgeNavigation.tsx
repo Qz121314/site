@@ -6,6 +6,7 @@ import {
   navigateStorefrontBack,
   navigateStorefrontForward,
   recordStorefrontHistoryPush,
+  saveCurrentStorefrontScrollPosition,
   syncStorefrontHistoryFromPopState,
   type StorefrontNavigationDirection,
 } from './storefront-history';
@@ -22,6 +23,8 @@ type TrackingGesture = {
   distance: number;
   locked: boolean;
 };
+
+type StandaloneNavigator = Navigator & { standalone?: boolean };
 
 const NAVIGATION_EVENT = 'storefront:navigate';
 const EDGE_WIDTH = 26;
@@ -43,12 +46,34 @@ function shouldIgnoreTarget(target: EventTarget | null): boolean {
   return target instanceof Element && Boolean(target.closest(IGNORE_GESTURE_SELECTOR));
 }
 
+function isStandaloneApp(standaloneQuery: MediaQueryList): boolean {
+  return standaloneQuery.matches || (window.navigator as StandaloneNavigator).standalone === true;
+}
+
+function shouldCaptureInternalNavigation(event: MouseEvent): boolean {
+  if (
+    event.defaultPrevented
+    || event.button !== 0
+    || event.metaKey
+    || event.ctrlKey
+    || event.shiftKey
+    || event.altKey
+  ) return false;
+  const anchor = event.target instanceof Element
+    ? event.target.closest<HTMLAnchorElement>('a[href]')
+    : null;
+  if (!anchor) return false;
+  const href = anchor.getAttribute('href') ?? '';
+  return href.startsWith('/') && !href.startsWith('/go/');
+}
+
 export function MobileEdgeNavigation() {
   const [gesture, setGesture] = useState<EdgeGesture | null>(null);
 
   useEffect(() => {
     ensureStorefrontHistoryState();
     const mobileQuery = window.matchMedia('(max-width: 767px)');
+    const standaloneQuery = window.matchMedia('(display-mode: standalone)');
     let tracking: TrackingGesture | null = null;
 
     function detachTrackingListeners() {
@@ -87,8 +112,17 @@ export function MobileEdgeNavigation() {
       syncStorefrontHistoryFromPopState(event.state);
     }
 
+    function handleClickCapture(event: MouseEvent) {
+      if (shouldCaptureInternalNavigation(event)) saveCurrentStorefrontScrollPosition();
+    }
+
     function handleTouchStart(event: TouchEvent) {
-      if (!mobileQuery.matches || event.touches.length !== 1 || shouldIgnoreTarget(event.target)) return;
+      if (
+        !mobileQuery.matches
+        || !isStandaloneApp(standaloneQuery)
+        || event.touches.length !== 1
+        || shouldIgnoreTarget(event.target)
+      ) return;
       const touch = event.touches[0];
       if (!touch) return;
 
@@ -153,11 +187,13 @@ export function MobileEdgeNavigation() {
 
     window.addEventListener(NAVIGATION_EVENT, handleStorefrontNavigation);
     window.addEventListener('popstate', handlePopState);
+    document.addEventListener('click', handleClickCapture, true);
     document.addEventListener('touchstart', handleTouchStart, { passive: true });
 
     return () => {
       window.removeEventListener(NAVIGATION_EVENT, handleStorefrontNavigation);
       window.removeEventListener('popstate', handlePopState);
+      document.removeEventListener('click', handleClickCapture, true);
       document.removeEventListener('touchstart', handleTouchStart);
       detachTrackingListeners();
       tracking = null;
