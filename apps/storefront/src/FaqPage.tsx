@@ -4,8 +4,8 @@ import { useEffect, type MouseEvent as ReactMouseEvent } from 'react';
 import { loadFaqSnapshot, type StorefrontBootstrap } from './content';
 import { MarkdownContent } from './MarkdownContent';
 import { faqArticleHref } from './routing';
-import { useStorefrontCopy } from './storefront-copy';
 import { canNavigateStorefrontBack, navigateStorefrontBack } from './storefront-history';
+import { SYSTEM_UI } from './system-ui';
 
 function faqContentVersion(bootstrap: StorefrontBootstrap): string {
   return bootstrap.pointer.schemaVersion === 2
@@ -36,14 +36,13 @@ function FaqLoadState({
   error: boolean;
   onRetry: () => void;
 }) {
-  const { faq } = useStorefrontCopy();
-  if (loading) return <div className="inline-loading faq-state">{faq.loading}</div>;
+  if (loading) return <div className="inline-loading faq-state">{SYSTEM_UI.loading}</div>;
   if (error) {
     return (
       <div className="inline-error inline-error-action faq-state">
-        <span>{faq.unavailable}</span>
+        <span>{SYSTEM_UI.unavailable}</span>
         <button type="button" onClick={onRetry}>
-          {faq.retry}
+          {SYSTEM_UI.retry}
         </button>
       </div>
     );
@@ -58,15 +57,14 @@ export function FaqDirectoryPage({
   bootstrap: StorefrontBootstrap;
   LinkComponent?: StorefrontLinkComponent;
 }) {
-  const { faq } = useStorefrontCopy();
   const query = useFaqSnapshot(bootstrap);
 
   useEffect(() => {
-    document.title = `${faq.title} · ${bootstrap.site.site.name}`;
-  }, [bootstrap.site.site.name, faq.title]);
+    document.title = bootstrap.site.site.name;
+  }, [bootstrap.site.site.name]);
 
   return (
-    <section className="faq-directory" aria-label={faq.title}>
+    <section className="faq-directory">
       <FaqLoadState
         loading={query.isLoading && !query.data}
         error={Boolean(query.error && !query.data)}
@@ -100,15 +98,14 @@ export function FaqArticlePage({
   bootstrap: StorefrontBootstrap;
   LinkComponent?: StorefrontLinkComponent;
 }) {
-  const { faq } = useStorefrontCopy();
   const query = useFaqSnapshot(bootstrap);
   const article = query.data?.faqs.find((item) => item.id === articleRef) ?? null;
 
   useEffect(() => {
     document.title = article
       ? `${article.title} · ${bootstrap.site.site.name}`
-      : `${faq.title} · ${bootstrap.site.site.name}`;
-  }, [article, bootstrap.site.site.name, faq.title]);
+      : bootstrap.site.site.name;
+  }, [article, bootstrap.site.site.name]);
 
   if (query.isLoading && !query.data) {
     return <FaqLoadState loading error={false} onRetry={() => void query.refetch()} />;
@@ -133,20 +130,12 @@ export function FaqArticlePage({
             <span className="faq-back-icon" aria-hidden="true">
               ‹
             </span>
-            <span>{faq.title}</span>
+            <span>{SYSTEM_UI.back}</span>
           </LinkComponent>
         </header>
         <div className="standalone-state embedded-state">
           <div className="state-mark">404</div>
-          <h1 id="faq-article-missing-title">Article not found</h1>
-          <p>This article is not part of the current published FAQ.</p>
-          <LinkComponent
-            className="primary-button"
-            href="/faq/"
-            onClick={handleInternalBack}
-          >
-            Back to {faq.title}
-          </LinkComponent>
+          <h1 id="faq-article-missing-title">{SYSTEM_UI.notFound}</h1>
         </div>
       </section>
     );
@@ -163,7 +152,7 @@ export function FaqArticlePage({
           <span className="faq-back-icon" aria-hidden="true">
             ‹
           </span>
-          <span>{faq.title}</span>
+          <span>{SYSTEM_UI.back}</span>
         </LinkComponent>
       </header>
       <header className="faq-article-header">
