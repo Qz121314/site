@@ -172,7 +172,7 @@ export function saveCurrentStorefrontScrollPosition(): void {
 }
 
 /**
- * StorefrontLink emits `storefront:navigate` immediately after its SPA pushState.
+ * Storefront navigation emits `storefront:navigate` immediately after SPA pushState.
  * Stamp that newly-pushed entry with our lightweight history position so edge
  * gestures can distinguish Back from Forward without changing route ownership.
  */
