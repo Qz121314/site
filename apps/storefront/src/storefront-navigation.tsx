@@ -5,7 +5,6 @@ import type {
   BottomNavigationItemConfig,
   BottomNavigationKey,
 } from './bottom-navigation';
-import type { StorefrontCopy } from './storefront-copy';
 
 const HREFS: Record<BottomNavigationKey, string> = {
   home: '/',
@@ -73,10 +72,10 @@ function itemIcon(item: BottomNavigationItemConfig): ReactNode {
 }
 
 export function primaryNavigationItems(
-  navigation: StorefrontCopy['navigation'],
+  navigationItems: BottomNavigationItemConfig[],
   unreadMessages = 0,
 ): StorefrontNavigationItem[] {
-  return navigation.items
+  return navigationItems
     .filter((item) => item.enabled)
     .map((item) => ({
       href: HREFS[item.key],
