@@ -74,6 +74,6 @@ product_media.media_asset_id
 
 ## 公开读取
 
-Admin 写入使用 `ASSETS_BUCKET` Binding。Storefront 公开读取优先使用站点设置中的 R2 自定义域名；若自定义域名或 CORS 暂时不可用，公开内容 JSON 仍可通过 Worker 同源 `/public/*` 回退读取。
+Admin 写入使用 `ASSETS_BUCKET` Binding。Storefront 图片、GIF 和视频读取使用站点设置中的 R2 自定义域名；若媒体域名或 CORS 暂时不可用，已登记媒体可通过 Worker 同源 `/_media/*` 重试。发布 JSON 始终通过 Worker 同源 `/public/*` 读取。
 
-生产部署会解析并验证 R2 自定义域名、写入公开 CORS、探测 `public/current.json`，并在 Worker 部署后再次冒烟检查。
+生产部署会解析并验证 R2 自定义域名、写入公开 CORS；只有存在 ready 媒体时才用真实媒体对象探测直接读取，并在 Worker 部署后再次冒烟检查。

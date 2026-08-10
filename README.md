@@ -457,13 +457,11 @@ Admin 保持中文、小团队、高密度工作台风格。
 Cloudflare Worker 需要手动绑定：
 
 ```text
-ADMIN_PASSWORD   至少 12 个字符
-SESSION_SECRET   至少 32 个字符的随机密钥
+ADMIN_PASSWORD
+SESSION_SECRET
 ```
 
-绑定值不写入 GitHub、D1 或 `wrangler.jsonc`。
-
-新配置必须遵守上面的 12 / 32 字符基线。为避免历史 Secret 在部署时直接锁死后台，Worker 运行时暂时兼容已有的非空旧值；这只是一条迁移兼容路径，不代表短 Secret 达到生产安全要求，应在 Cloudflare 中人工轮换后再完成商业发布验收。
+两个值只要求已经配置且不是空值，不限制长度或复杂度。绑定值不写入 GitHub、D1 或 `wrangler.jsonc`。
 
 认证保留必要安全措施：
 
@@ -524,7 +522,7 @@ D1 当前业务数据
 
 这样内容版本保持稳定，同时运营入口可以即时生效。
 
-## R2 媒体与公开内容访问
+## R2 存储与媒体公开读取
 
 Cloudflare 正式资源：
 
@@ -543,8 +541,10 @@ ASSETS_BUCKET Worker Binding
 → 后台上传、删除、校验和维护
 
 R2 Custom Domain
-→ 用户前端公开读取图片、GIF、视频和公开内容对象
+→ 用户前端只用于公开读取图片、GIF 和视频
 ```
+
+发布 JSON 虽然也保存在 R2，但浏览器始终通过站点 Worker 的同源 `/public/*` 读取，由 `ASSETS_BUCKET` Binding 访问对象；不会使用媒体自定义域名。
 
 数据库媒体记录只保存 `object_key`，公开媒体 URL 统一生成：
 
@@ -556,7 +556,7 @@ R2 Custom Domain
 
 生产环境不依赖 `r2.dev`。
 
-如果 R2 Custom Domain 暂时无法被浏览器直接读取，Storefront 会分别通过 `/public/*` 读取公开 JSON、通过 `/_media/*` 重试已登记在 D1 且状态正常的媒体。媒体 fallback 由 Worker 使用 R2 Binding 流式响应并支持 Range 请求，不暴露任意 Bucket Key，也不在前端硬编码当前自定义域名。
+如果 R2 Custom Domain 暂时无法被浏览器直接读取，Storefront 会通过 `/_media/*` 重试已登记在 D1 且状态正常的媒体。媒体 fallback 由 Worker 使用 R2 Binding 流式响应并支持 Range 请求，不暴露任意 Bucket Key，也不在前端硬编码当前自定义域名。
 
 ## 路由
 
@@ -626,8 +626,8 @@ pnpm install --frozen-lockfile
 → 远程 D1 migrations
 → 解析并校验 R2 Custom Domain
 → 配置 R2 CORS
-→ 直接 R2 读取探测
-→ 使用当前 R2 Origin 构建生产静态资源
+→ 有 ready 媒体时探测直接 R2 媒体读取
+→ 构建生产静态资源
 → wrangler deploy --keep-vars
 → Production smoke test
 ```
@@ -637,7 +637,7 @@ pnpm install --frozen-lockfile
 - `/api/health`；
 - `/api/public/theme` Theme Runtime；
 - `/public/current.json`；
-- R2 直接读取 / CORS；
+- 有 ready 媒体时的 R2 直接读取 / CORS；
 - 已登记媒体的 `/_media/*` Range 同源 fallback；
 - 未登录 Admin session；
 - Storefront / Admin SPA；

@@ -282,7 +282,7 @@ export function normalizeContentOrigin(value: string | undefined | null): string
   }
 }
 
-async function discoverContentOrigin(signal?: AbortSignal): Promise<string | null> {
+export async function resolveMediaBaseUrl(signal?: AbortSignal): Promise<string | null> {
   const init: RequestInit = {
     method: 'GET',
     cache: 'no-cache',
@@ -292,33 +292,27 @@ async function discoverContentOrigin(signal?: AbortSignal): Promise<string | nul
   if (signal) init.signal = signal;
 
   try {
-    const response = await fetch('/api/public/storefront/content-origin', init);
+    const response = await fetch('/api/public/storefront/media-base-url', init);
     if (!response.ok) return null;
     const value = (await response.json()) as unknown;
     if (!isRecord(value)) return null;
     return normalizeContentOrigin(
-      typeof value.contentOrigin === 'string' ? value.contentOrigin : null,
+      typeof value.mediaBaseUrl === 'string' ? value.mediaBaseUrl : null,
     );
   } catch {
     return null;
   }
 }
 
-export async function resolveContentOrigin(signal?: AbortSignal): Promise<string> {
-  const discovered = await discoverContentOrigin(signal);
-  if (discovered) return discovered;
-
+export async function resolveContentOrigin(_signal?: AbortSignal): Promise<string> {
   if (typeof window !== 'undefined') {
-    const host = window.location.hostname.toLowerCase();
-    if (host === 'localhost' || host === '127.0.0.1' || host === '[::1]') {
-      return window.location.origin;
-    }
+    const origin = normalizeContentOrigin(window.location.origin);
+    if (origin) return origin;
   }
 
-  throw new PublicContentError(
-    'CONTENT_ORIGIN_REQUIRED',
-    'Public content has been published, but its R2 content domain is not available yet.',
-  );
+  // Storefront is browser-only. This deterministic origin keeps non-browser
+  // contract tests on the same-origin path without coupling JSON to media config.
+  return 'http://localhost';
 }
 
 function assertContentVersion(value: unknown): asserts value is string {
@@ -538,7 +532,9 @@ function encodeObjectKey(key: string): string {
 }
 
 function mediaUrl(mediaBaseUrl: string, objectKey: string | null): string | null {
-  return objectKey ? `${mediaBaseUrl}/${encodeObjectKey(objectKey)}` : null;
+  return mediaBaseUrl && objectKey
+    ? `${mediaBaseUrl}/${encodeObjectKey(objectKey)}`
+    : null;
 }
 
 async function fetchJson(
@@ -797,7 +793,7 @@ async function loadV2Bootstrap(
   pointer: CurrentPointerV2,
   signal?: AbortSignal,
 ): Promise<StorefrontBootstrap> {
-  const [rawSite, rawIndex] = await Promise.all([
+  const [rawSite, rawIndex, configuredMediaBaseUrl] = await Promise.all([
     loadV2File<V2SiteSnapshot>(
       origin,
       'site',
@@ -812,11 +808,13 @@ async function loadV2Bootstrap(
       v2ModulePath('sections-index', pointer.sectionsIndex, 'sections.json'),
       signal,
     ),
+    resolveMediaBaseUrl(signal),
   ]);
 
-  // The runtime setting is authoritative. Published snapshots keep object keys only,
-  // so changing the R2 custom domain never requires rebuilding the Storefront.
-  const mediaBaseUrl = origin;
+  // Public JSON stays on the same-origin Worker. The independently configured
+  // media read domain is authoritative for object-key URLs and may change at runtime.
+  const mediaBaseUrl =
+    configuredMediaBaseUrl ?? normalizeContentOrigin(rawSite.site.mediaBaseUrl) ?? '';
   const site: PublicSite = {
     name: rawSite.site.name,
     locationLabel: rawSite.site.locationLabel,

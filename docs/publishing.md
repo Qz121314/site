@@ -143,24 +143,25 @@ public/
 Storefront 每次启动都会调用运行时配置接口：
 
 ```text
-GET /api/public/storefront/content-origin
+GET /api/public/storefront/media-base-url
 ```
 
-这个接口直接读取后台站点设置中的 R2 Custom Domain：
+这个接口只返回后台站点设置中的媒体公开读取域名：
 
 ```json
-{ "contentOrigin": "https://content.example.com" }
+{ "mediaBaseUrl": "https://media.example.com" }
 ```
 
-拿到域名之后，普通站点内容直接从 R2 读取。
+站点发布 JSON 不使用这个域名。Storefront 始终从当前站点的同源 `/public/*` 请求 JSON，Worker 再通过 `ASSETS_BUCKET` Binding 读取 R2 对象。
 
 R2 域名不会写入前端构建变量或部署产物。后续更换域名时，在后台完成域名测试并保存即可；Storefront 下次启动会自动读取新值。部署流程只验证后台配置是否确实绑定到当前 R2 Bucket，不会反向覆盖后台设置。
 
-schema-v2 浏览器读取流程：
+schema-v2 内容读取流程：
 
 ```text
-R2 Custom Domain
-→ GET /public/current.json
+Storefront 当前站点 Origin
+→ GET /public/current.json（同源 Worker）
+→ ASSETS_BUCKET Binding 读取 R2 JSON
 → GET 当前 site 模块
 → GET 当前 sections-index 模块
 → GET pointer 中每个当前分区的 section.json
@@ -180,7 +181,7 @@ R2 Custom Domain
 
 ```text
 后台站点设置（D1）
-→ mediaBaseUrl / contentOrigin
+→ mediaBaseUrl
 
 section module
 → products/.../cover.webp
@@ -189,7 +190,7 @@ Storefront
 → mediaBaseUrl + object key
 ```
 
-发布快照只保存 R2 object key，不保存当前媒体域名。修改 R2 Custom Domain 不需要重新构建 Storefront，也不需要重新生成产品或站点快照。
+发布快照只保存 R2 object key，不保存当前媒体域名。修改 R2 Custom Domain 不需要重新构建 Storefront，也不需要重新生成产品或站点快照；同源发布 JSON 的读取地址不会随媒体域名变化。
 
 ## 独立发布与回退
 

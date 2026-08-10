@@ -42,10 +42,19 @@ function validPublicId(value: string): boolean {
 }
 
 publicStorefrontConfigRoutes.get('/content-origin', async (context) => {
+  // Backward compatibility for already-loaded Storefront bundles. New clients
+  // read JSON through the same-origin /public route and use /media-base-url below.
   const contentOrigin = await getMediaBaseUrl(context.env.DB);
 
   setPublicRuntimeHeaders(context);
   return context.json({ contentOrigin });
+});
+
+publicStorefrontConfigRoutes.get('/media-base-url', async (context) => {
+  const mediaBaseUrl = await getMediaBaseUrl(context.env.DB);
+
+  setPublicRuntimeHeaders(context);
+  return context.json({ mediaBaseUrl });
 });
 
 publicStorefrontConfigRoutes.get('/cta/:productId', async (context) => {

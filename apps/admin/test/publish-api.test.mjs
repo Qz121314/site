@@ -27,7 +27,7 @@ function statusEnvelope() {
       dirtyCount: 1,
       bootstrapRequired: true,
       legacyPointerDetected: false,
-      contentOrigin: null,
+      mediaBaseUrl: null,
       modules: [
         {
           key: 'site',

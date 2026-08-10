@@ -12,7 +12,7 @@ function jsonResponse(value, status = 200, headers = {}) {
   });
 }
 
-test('public snapshot reads stay on the R2 custom domain when direct access succeeds', async () => {
+test('legacy cross-origin snapshot URLs remain readable during client upgrades', async () => {
   const calls = [];
   const wrapped = createPublicContentFetch(async (input) => {
     calls.push(String(input));
@@ -87,7 +87,7 @@ test('unavailable realtime CTA removes stale CTA data from an older snapshot', a
   assert.equal(body.product.cta, null);
 });
 
-test('Cloudflare challenge falls back to same-origin Worker and opens a short circuit breaker', async () => {
+test('legacy cross-origin challenges fall back to the same-origin Worker', async () => {
   let now = 1_000;
   const calls = [];
   const wrapped = createPublicContentFetch(
@@ -131,7 +131,7 @@ test('Cloudflare challenge falls back to same-origin Worker and opens a short ci
   assert.equal(calls[0], 'https://media.example.com/public/current.json');
 });
 
-test('content transport falls back for JSON while media retries stay component-owned', async () => {
+test('legacy JSON transport falls back while media retries stay component-owned', async () => {
   const calls = [];
   const wrapped = createPublicContentFetch(async (input) => {
     const url = String(input);

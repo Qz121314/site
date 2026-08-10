@@ -8,7 +8,7 @@ import {
   loadStorefrontBootstrap,
   normalizeContentOrigin,
   publicContentUrl,
-  resolveContentOrigin,
+  resolveMediaBaseUrl,
 } from '../src/content.ts';
 
 const LEGACY_VERSION = '20260807074900-abcdef123456-deadbeef';
@@ -150,8 +150,8 @@ function installModularFetch(requests = [], { homeAvailable = true } = {}) {
   globalThis.fetch = async (input, init) => {
     const url = String(input);
     requests.push({ url, cache: init?.cache, credentials: init?.credentials });
-    if (url === '/api/public/storefront/content-origin') {
-      return jsonResponse({ contentOrigin: 'https://content.example.com' });
+    if (url === '/api/public/storefront/media-base-url') {
+      return jsonResponse({ mediaBaseUrl: 'https://media.example.com' });
     }
     if (url.endsWith('/public/current.json')) return jsonResponse(modularPointer());
     if (url.endsWith(`/public/modules/site/${SITE_VERSION}/site.json`))
@@ -227,7 +227,7 @@ test('content origin normalization accepts public HTTP(S) URLs and removes the t
   assert.equal(normalizeContentOrigin(''), null);
 });
 
-test('public content URLs stay on the configured R2 custom domain', () => {
+test('public content URL builder normalizes an explicit origin', () => {
   assert.equal(
     publicContentUrl('https://cdn.example.com/', '/public/current.json'),
     'https://cdn.example.com/public/current.json',
@@ -309,20 +309,26 @@ test('legacy schema-v1 bootstrap remains readable and normalizes missing tags/fe
   }
 });
 
-test('Storefront always discovers the current admin-configured R2 custom domain at runtime', async () => {
+test('Storefront reads JSON from its Worker and media from runtime configuration', async () => {
   const requests = [];
   const restore = installModularFetch(requests);
+  const previousWindow = globalThis.window;
+  globalThis.window = { location: { origin: 'https://app.example.com' } };
   try {
     const bootstrap = await loadStorefrontBootstrap();
-    assert.equal(bootstrap.origin, 'https://content.example.com');
-    assert.equal(requests[0].url, '/api/public/storefront/content-origin');
-    assert.equal(requests[1].url, 'https://content.example.com/public/current.json');
+    assert.equal(bootstrap.origin, 'https://app.example.com');
+    assert.equal(requests[0].url, 'https://app.example.com/public/current.json');
     assert.ok(
       requests
-        .slice(1)
-        .every((request) => request.url.startsWith('https://content.example.com/')),
+        .filter(
+          (request) => request.url.includes('/public/') && !request.url.includes('/api/'),
+        )
+        .every((request) => request.url.startsWith('https://app.example.com/')),
     );
+    assert.equal(bootstrap.site.site.mediaBaseUrl, 'https://media.example.com');
   } finally {
+    if (previousWindow === undefined) delete globalThis.window;
+    else globalThis.window = previousWindow;
     restore();
   }
 });
@@ -331,14 +337,14 @@ test('changing the admin R2 domain is picked up without rebuilding the Storefron
   const originalFetch = globalThis.fetch;
   let configuredOrigin = 'https://media-old.example.com';
   globalThis.fetch = async (input) => {
-    assert.equal(String(input), '/api/public/storefront/content-origin');
-    return jsonResponse({ contentOrigin: configuredOrigin });
+    assert.equal(String(input), '/api/public/storefront/media-base-url');
+    return jsonResponse({ mediaBaseUrl: configuredOrigin });
   };
 
   try {
-    assert.equal(await resolveContentOrigin(), 'https://media-old.example.com');
+    assert.equal(await resolveMediaBaseUrl(), 'https://media-old.example.com');
     configuredOrigin = 'https://media-new.example.com';
-    assert.equal(await resolveContentOrigin(), 'https://media-new.example.com');
+    assert.equal(await resolveMediaBaseUrl(), 'https://media-new.example.com');
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -361,11 +367,11 @@ test('schema-v2 bootstrap reads the compact home summary without preloading sect
     );
     assert.equal(
       bootstrap.home.allSections[0].icon.value,
-      'https://content.example.com/sections/alpha.webp',
+      'https://media.example.com/sections/alpha.webp',
     );
     assert.equal(
       bootstrap.home.featuredProducts[0].coverUrl,
-      'https://content.example.com/products/product-b/cover.webp',
+      'https://media.example.com/products/product-b/cover.webp',
     );
     assert.ok(
       requests.some((request) =>
@@ -421,7 +427,7 @@ test('section, product and FAQ reads follow their own module versions and cache 
     assert.equal(section.contentVersion, SECTION_A_VERSION);
     assert.equal(
       section.products[0].coverUrl,
-      'https://content.example.com/products/product-a/cover.webp',
+      'https://media.example.com/products/product-a/cover.webp',
     );
     assert.equal(
       requests.filter(
@@ -453,7 +459,7 @@ test('section, product and FAQ reads follow their own module versions and cache 
     assert.equal(product.product.id, 'product-a');
     assert.equal(
       product.product.media[0].url,
-      'https://content.example.com/products/product-a/gallery-1.webp',
+      'https://media.example.com/products/product-a/gallery-1.webp',
     );
     assert.equal(product.product.cta.path, '/go/product-a');
 

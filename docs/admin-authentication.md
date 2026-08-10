@@ -7,13 +7,11 @@
 正式 Worker 必须手动配置：
 
 ```text
-ADMIN_PASSWORD   至少 12 个字符
-SESSION_SECRET   至少 32 个字符的随机密钥
+ADMIN_PASSWORD
+SESSION_SECRET
 ```
 
-敏感值不得写入 GitHub、`wrangler.jsonc`、D1 或普通 `vars`。
-
-新配置和轮换后的值必须满足上述长度。Worker 暂时接受已经存在的非空旧 Secret，避免发布新版时直接锁死后台；该兼容行为不降低验收标准，旧值必须在 Cloudflare 中人工轮换。
+两个值只要求已经配置且不是空值，不限制长度或复杂度。敏感值不得写入 GitHub、`wrangler.jsonc`、D1 或普通 `vars`。
 
 本地开发可在未提交的 `.dev.vars` 中配置同名变量。
 

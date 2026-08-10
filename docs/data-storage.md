@@ -24,7 +24,7 @@ R2 binding:  ASSETS_BUCKET
 - 删除、恢复、启停、排序和关键配置写操作进入 `audit_logs`；
 - 批量写操作使用 `idempotency_keys` 防止重复提交；
 - 后台密码和会话签名值不进入 D1，由 Cloudflare Worker 变量或 Secret 提供；
-- 新配置的 `ADMIN_PASSWORD` 至少 12 个字符，`SESSION_SECRET` 至少 32 个字符；二者使用 Worker Secret 配置，并由 `keep_vars` 在部署时保留。运行时暂时兼容非空的历史旧值以防部署锁死后台，但商业发布验收仍要求完成 Secret 轮换。
+- `ADMIN_PASSWORD` 与 `SESSION_SECRET` 只要求使用 Worker Secret 配置且不是空值，不限制长度或复杂度，并由 `keep_vars` 在部署时保留。
 
 ## 3. 核心表结构边界
 
@@ -173,6 +173,8 @@ site_settings.media_base_url
 ```
 
 这是 R2 公开域名的唯一权威来源。Storefront 通过运行时接口读取，GitHub Actions 只校验它是否绑定到当前 Bucket，不会自动选择域名、写回 D1 或注入前端构建变量。
+
+该域名只负责媒体公开读取。发布 JSON 固定由站点 Worker 的 `/public/*` 通过 `ASSETS_BUCKET` Binding 读取，不与 `media_base_url` 共用 Origin。
 
 保存规则：
 
