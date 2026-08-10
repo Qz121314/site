@@ -41,7 +41,7 @@ const COPY_GROUPS: CopyGroup[] = [
     label: 'Section',
     hint: '分区页面的返回、筛选与结果文案。',
     fields: [
-      { key: 'backLabel', label: '返回 Browse' },
+      { key: 'backLabel', label: 'Back 按钮' },
       { key: 'kicker', label: '辅助标题' },
       { key: 'searchLabel', label: '搜索字段' },
       { key: 'searchPlaceholder', label: '搜索提示' },

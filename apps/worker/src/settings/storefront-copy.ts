@@ -117,7 +117,7 @@ export const DEFAULT_STOREFRONT_COPY: StorefrontCopy = {
     noResults: 'No matching content found.',
   },
   section: {
-    backLabel: 'Browse',
+    backLabel: 'Back',
     kicker: 'Browse services',
     searchLabel: 'Search',
     searchPlaceholder: 'Name, type or tag',

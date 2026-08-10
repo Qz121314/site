@@ -7,6 +7,10 @@ const copySource = await readFile(new URL('../src/settings/storefront-copy.ts', 
 const routeSource = await readFile(new URL('../src/routes/public-storefront-copy.ts', import.meta.url), 'utf8');
 const indexSource = await readFile(new URL('../src/index.ts', import.meta.url), 'utf8');
 const migrationSource = await readFile(new URL('../../../migrations/0017_storefront_copy.sql', import.meta.url), 'utf8');
+const backLabelMigrationSource = await readFile(
+  new URL('../../../migrations/0021_section_back_label.sql', import.meta.url),
+  'utf8',
+);
 
 test('site settings persist storefront copy as one bounded JSON field', () => {
   assert.match(migrationSource, /ADD COLUMN storefront_copy_json TEXT NOT NULL DEFAULT '\{\}'/u);
@@ -21,8 +25,16 @@ test('backend supplies normalized English defaults and validates admin updates',
   assert.match(copySource, /browse:\s*'Browse'/u);
   assert.match(copySource, /messages:\s*'Messages'/u);
   assert.match(copySource, /faq:\s*'FAQ'/u);
+  assert.match(copySource, /section:\s*\{[\s\S]*backLabel:\s*'Back'/u);
   assert.match(copySource, /validateStorefrontCopyInput/u);
   assert.match(copySource, /240/u);
+});
+
+test('legacy Section Browse return copy is migrated to Back without resetting other copy', () => {
+  assert.match(backLabelMigrationSource, /json_set/u);
+  assert.match(backLabelMigrationSource, /\$\.section\.backLabel/u);
+  assert.match(backLabelMigrationSource, /= 'Browse'/u);
+  assert.match(backLabelMigrationSource, /'Back'/u);
 });
 
 test('public storefront copy route exposes only normalized copy with short cache', () => {

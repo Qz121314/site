@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { StorefrontProductCard, type StorefrontLinkComponent } from '@site/storefront-ui';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import {
   loadSectionSnapshot,
   type PublicSection,
@@ -9,6 +9,7 @@ import {
 import { ResilientImage } from './ResilientMedia';
 import { productHref } from './routing';
 import { useStorefrontCopy } from './storefront-copy';
+import { canNavigateStorefrontBack, navigateStorefrontBack } from './storefront-history';
 
 function SearchIcon() {
   return (
@@ -90,6 +91,12 @@ export function SectionCatalogPage({
     setSelectedTags(new Set());
   }
 
+  function handleBack(event: ReactMouseEvent<HTMLAnchorElement>) {
+    if (!canNavigateStorefrontBack()) return;
+    event.preventDefault();
+    navigateStorefrontBack();
+  }
+
   const hasFilters = Boolean(search.trim() || categoryId || selectedTags.size > 0);
 
   if (query.isLoading && !query.data) {
@@ -106,7 +113,9 @@ export function SectionCatalogPage({
           <button className="primary-button" type="button" onClick={() => void query.refetch()}>
             Try again
           </button>
-          <LinkComponent className="secondary-button" href="/browse/">{sectionCopy.backLabel}</LinkComponent>
+          <LinkComponent className="secondary-button" href="/browse/" onClick={handleBack}>
+            {sectionCopy.backLabel}
+          </LinkComponent>
         </div>
       </section>
     );
@@ -125,25 +134,22 @@ export function SectionCatalogPage({
 
   return (
     <section className="section-catalog" aria-labelledby="section-catalog-title">
-      <header className="section-catalog-hero">
-        <span className="section-catalog-hero-watermark" aria-hidden="true">
-          <SectionVisual section={query.data.section} />
-        </span>
+      <header className="section-catalog-header">
+        <LinkComponent className="section-catalog-back" href="/browse/" onClick={handleBack}>
+          <span className="section-catalog-back-icon" aria-hidden="true">←</span>
+          <span>{sectionCopy.backLabel}</span>
+        </LinkComponent>
 
-        <div className="section-catalog-hero-topline">
-          <LinkComponent className="section-catalog-back" href="/browse/">
-            <span aria-hidden="true">←</span> {sectionCopy.backLabel}
-          </LinkComponent>
-          <span className="section-catalog-total">
-            {query.data.products.length} {totalWord}
-          </span>
-        </div>
-
-        <div className="section-catalog-hero-main">
-          <span className="section-catalog-hero-icon">
+        <div className="section-catalog-identity">
+          <span className="section-catalog-visual">
             <SectionVisual section={query.data.section} />
           </span>
-          <h1 id="section-catalog-title">{query.data.section.name}</h1>
+          <div className="section-catalog-title-group">
+            <h1 id="section-catalog-title">{query.data.section.name}</h1>
+            <span className="section-catalog-total">
+              {query.data.products.length} {totalWord}
+            </span>
+          </div>
         </div>
       </header>
 
