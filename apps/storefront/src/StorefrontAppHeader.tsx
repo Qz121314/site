@@ -48,9 +48,10 @@ export function StorefrontAppHeader({
             className="storefront-app-header-back"
             href={pageConfig.backHref}
             onClick={handleBack}
+            aria-label={pageConfig.backLabel}
+            title={pageConfig.backLabel}
           >
             <span aria-hidden="true">‹</span>
-            <small>{pageConfig.backLabel ?? ''}</small>
           </LinkComponent>
         ) : null}
       </div>
