@@ -43,8 +43,11 @@ test('Messages has no local search or visible ten-conversation capacity meter', 
 
 test('Messages omits the duplicate page title and unnecessary empty-state explanation', () => {
   assert.doesNotMatch(supportSource, /messages-page-heading|id="messages-title"/u);
-  assert.doesNotMatch(supportSource, /messages\.emptyDescription/u);
-  assert.match(supportSource, /messages\.emptyTitle/u);
+  assert.doesNotMatch(supportSource, /messages\.emptyDescription|messages\.emptyTitle/u);
+  assert.match(
+    supportSource,
+    /<div className="messages-empty-state" aria-hidden="true">/u,
+  );
   assert.doesNotMatch(messagesCss, /\.messages-page-heading/u);
   assert.doesNotMatch(messagesCss, /\.messages-empty-state p/u);
 });
@@ -87,7 +90,7 @@ test('conversation list is compact, newest-first, and keeps product context in t
   );
   assert.match(supportSource, /`\$\{conversation\.productTitle\} · \$\{lastMessage\}`/u);
   assert.match(supportSource, /conversation\.unreadCount > 0/u);
-  assert.match(supportSource, /Yesterday/u);
+  assert.match(supportSource, /SYSTEM_UI\.yesterday/u);
 });
 
 test('desktop Messages uses a two-pane conversation and chat workspace', () => {

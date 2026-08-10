@@ -42,10 +42,9 @@ test('Home is Hero then seven configured section shortcuts plus Browse More', ()
   assert.match(feedSource, /shortcutSectionIds/u);
   assert.match(feedSource, /\.slice\(0, 7\)/u);
   assert.match(feedSource, /className="home-shortcut is-more" href="\/browse\/"/u);
-  assert.match(
-    feedSource,
-    /<HomeShortcuts sections=\{shortcutSections\} moreLabel=\{copy\.home\.viewAll\} \/>/u,
-  );
+  assert.match(feedSource, /<HomeShortcuts sections=\{shortcutSections\} \/>/u);
+  assert.match(feedSource, /\{SYSTEM_UI\.more\}/u);
+  assert.doesNotMatch(feedSource, /copy\.home\.viewAll|moreLabel/u);
   assert.doesNotMatch(feedSource, /type="search"/u);
 });
 

@@ -30,7 +30,7 @@ test('Browse starts with search and only renders backend-provided section artwor
     /presentation\?\.backgroundUrl \? \([\s\S]*?browse-section-card-background[\s\S]*?<ResilientImage/u,
   );
   assert.match(browsePage, /presentation\?\.description/u);
-  assert.match(browsePage, /presentation\.productCount > 0/u);
+  assert.doesNotMatch(browsePage, /presentation\.productCount/u);
   assert.doesNotMatch(browsePage, /SectionIcon/u);
   assert.doesNotMatch(browsePage, /section-icon/u);
   assert.doesNotMatch(
