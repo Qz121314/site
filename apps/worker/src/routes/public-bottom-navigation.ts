@@ -24,12 +24,15 @@ publicBottomNavigationRoutes.get('/', async (context) => {
     items: items.map((item) => {
       let icon: { type: 'builtin' | 'emoji' | 'image'; value: string | null };
       if (item.iconType === 'asset') {
-        const objectKey = item.iconAssetId ? assets.get(item.iconAssetId) ?? null : null;
+        const objectKey = item.iconAssetId
+          ? (assets.get(item.iconAssetId) ?? null)
+          : null;
         icon = {
           type: 'image',
-          value: settings.mediaBaseUrl && objectKey
-            ? buildMediaUrl(settings.mediaBaseUrl, objectKey)
-            : null,
+          value:
+            settings.mediaBaseUrl && objectKey
+              ? buildMediaUrl(settings.mediaBaseUrl, objectKey)
+              : null,
         };
       } else {
         icon = { type: item.iconType, value: item.iconValue };

@@ -128,7 +128,9 @@ const basePath = '/api/admin/customer-service/connections';
 export function fetchCustomerServiceConnections(
   scope: CustomerServiceScope = 'active',
 ): Promise<CustomerServiceConnection[]> {
-  return requestJson(`${basePath}?scope=${encodeURIComponent(scope)}`).then(parseConnectionList);
+  return requestJson(`${basePath}?scope=${encodeURIComponent(scope)}`).then(
+    parseConnectionList,
+  );
 }
 
 export function createCustomerServiceConnection(
@@ -146,17 +148,25 @@ export function updateCustomerServiceConnection(
   );
 }
 
-export function deleteCustomerServiceConnection(id: string): Promise<CustomerServiceConnection> {
-  return writeRequest(`${basePath}/${encodeURIComponent(id)}`, 'DELETE').then(parseConnectionEnvelope);
+export function deleteCustomerServiceConnection(
+  id: string,
+): Promise<CustomerServiceConnection> {
+  return writeRequest(`${basePath}/${encodeURIComponent(id)}`, 'DELETE').then(
+    parseConnectionEnvelope,
+  );
 }
 
-export function restoreCustomerServiceConnection(id: string): Promise<CustomerServiceConnection> {
+export function restoreCustomerServiceConnection(
+  id: string,
+): Promise<CustomerServiceConnection> {
   return writeRequest(`${basePath}/${encodeURIComponent(id)}/restore`, 'POST').then(
     parseConnectionEnvelope,
   );
 }
 
-export async function batchDeleteCustomerServiceConnections(ids: string[]): Promise<string[]> {
+export async function batchDeleteCustomerServiceConnections(
+  ids: string[],
+): Promise<string[]> {
   const value = await requestJson(`${basePath}/batch-delete`, {
     method: 'POST',
     headers: {
@@ -167,7 +177,11 @@ export async function batchDeleteCustomerServiceConnections(ids: string[]): Prom
     body: JSON.stringify({ ids }),
   });
   const result = asRecord(value);
-  if (!result || !Array.isArray(result.deletedIds) || !result.deletedIds.every((id) => typeof id === 'string')) {
+  if (
+    !result ||
+    !Array.isArray(result.deletedIds) ||
+    !result.deletedIds.every((id) => typeof id === 'string')
+  ) {
     throw new AdminApiError(500, 'INVALID_RESPONSE', '客服系统批量删除返回数据无效。');
   }
   return result.deletedIds;
@@ -176,7 +190,9 @@ export async function batchDeleteCustomerServiceConnections(ids: string[]): Prom
 export async function testCustomerServiceConnection(
   id: string,
 ): Promise<{ connected: true; groupCount: number }> {
-  const value = asRecord(await writeRequest(`${basePath}/${encodeURIComponent(id)}/test`, 'POST'));
+  const value = asRecord(
+    await writeRequest(`${basePath}/${encodeURIComponent(id)}/test`, 'POST'),
+  );
   if (!value || value.connected !== true || typeof value.groupCount !== 'number') {
     throw new AdminApiError(500, 'INVALID_RESPONSE', '客服系统连接测试返回数据无效。');
   }
@@ -186,7 +202,9 @@ export async function testCustomerServiceConnection(
 export async function fetchRemoteCustomerServiceGroups(
   id: string,
 ): Promise<RemoteCustomerServiceGroup[]> {
-  const value = asRecord(await requestJson(`${basePath}/${encodeURIComponent(id)}/groups`));
+  const value = asRecord(
+    await requestJson(`${basePath}/${encodeURIComponent(id)}/groups`),
+  );
   if (!value || !Array.isArray(value.groups)) {
     throw new AdminApiError(500, 'INVALID_RESPONSE', '客服分组列表返回数据无效。');
   }

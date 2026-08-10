@@ -54,9 +54,14 @@ function productNotFound(context: Parameters<typeof apiError>[0]) {
 
 function dependencyError(
   context: Parameters<typeof apiError>[0],
-  validation: Exclude<Awaited<ReturnType<typeof validateProductDependencies>>, { ok: true }>,
+  validation: Exclude<
+    Awaited<ReturnType<typeof validateProductDependencies>>,
+    { ok: true }
+  >,
 ) {
-  return apiError(context, 409, validation.code, validation.message, { field: validation.field });
+  return apiError(context, 409, validation.code, validation.message, {
+    field: validation.field,
+  });
 }
 
 export const adminProductRoutes = new Hono<AppEnvironment>();
@@ -71,7 +76,9 @@ adminProductRoutes.get('/:sectionId/products', async (context) => {
     return apiError(context, 400, 'INVALID_PRODUCT_SCOPE', '产品列表范围无效。');
   }
   const products = await listProducts(context.env.DB, sectionId, scope);
-  return context.json({ products: await hydrateProductsWithTags(context.env.DB, products) });
+  return context.json({
+    products: await hydrateProductsWithTags(context.env.DB, products),
+  });
 });
 
 adminProductRoutes.get('/:sectionId/products/:id', async (context) => {
@@ -108,9 +115,15 @@ adminProductRoutes.post('/:sectionId/products', async (context) => {
   }
   const tagIds = parseProductTagIds(isRecord(body) ? body.tagIds : undefined);
   if (!tagIds.ok) {
-    return apiError(context, 400, 'INVALID_PRODUCT_TAGS', tagIds.message, { field: tagIds.field });
+    return apiError(context, 400, 'INVALID_PRODUCT_TAGS', tagIds.message, {
+      field: tagIds.field,
+    });
   }
-  const dependencies = await validateProductDependencies(context.env.DB, sectionId, validation.value);
+  const dependencies = await validateProductDependencies(
+    context.env.DB,
+    sectionId,
+    validation.value,
+  );
   if (!dependencies.ok) return dependencyError(context, dependencies);
   const tagDependencies = await validateProductTagBindings(
     context.env.DB,
@@ -129,7 +142,12 @@ adminProductRoutes.post('/:sectionId/products', async (context) => {
   try {
     await context.env.DB.batch([
       ...created.statements,
-      ...createReplaceProductTagStatements(context.env.DB, created.product.id, tagIds.value, now),
+      ...createReplaceProductTagStatements(
+        context.env.DB,
+        created.product.id,
+        tagIds.value,
+        now,
+      ),
       createAuditLogStatement(context.env.DB, {
         action: 'product.created',
         entityType: 'product',
@@ -146,13 +164,21 @@ adminProductRoutes.post('/:sectionId/products', async (context) => {
     ]);
   } catch (error) {
     if (isProductConflictError(error)) {
-      return apiError(context, 409, 'PRODUCT_SLUG_CONFLICT', '产品地址冲突，请重新提交。');
+      return apiError(
+        context,
+        409,
+        'PRODUCT_SLUG_CONFLICT',
+        '产品地址冲突，请重新提交。',
+      );
     }
     throw error;
   }
 
   const product = await hydrateProduct(context.env.DB, created.product);
-  return context.json({ product: await hydrateProductWithTags(context.env.DB, product) }, 201);
+  return context.json(
+    { product: await hydrateProductWithTags(context.env.DB, product) },
+    201,
+  );
 });
 
 adminProductRoutes.put('/:sectionId/products/:id', async (context) => {
@@ -178,9 +204,15 @@ adminProductRoutes.put('/:sectionId/products/:id', async (context) => {
   }
   const tagIds = parseProductTagIds(isRecord(body) ? body.tagIds : undefined);
   if (!tagIds.ok) {
-    return apiError(context, 400, 'INVALID_PRODUCT_TAGS', tagIds.message, { field: tagIds.field });
+    return apiError(context, 400, 'INVALID_PRODUCT_TAGS', tagIds.message, {
+      field: tagIds.field,
+    });
   }
-  const dependencies = await validateProductDependencies(context.env.DB, sectionId, validation.value);
+  const dependencies = await validateProductDependencies(
+    context.env.DB,
+    sectionId,
+    validation.value,
+  );
   if (!dependencies.ok) return dependencyError(context, dependencies);
   const tagDependencies = await validateProductTagBindings(
     context.env.DB,
@@ -202,7 +234,9 @@ adminProductRoutes.put('/:sectionId/products/:id', async (context) => {
       validation.value.coverAssetId ?? validation.value.mediaAssetIds[0] ?? null,
     updatedAt: now,
     publishedAt:
-      validation.value.status === 'published' ? current.publishedAt ?? now : current.publishedAt,
+      validation.value.status === 'published'
+        ? (current.publishedAt ?? now)
+        : current.publishedAt,
   };
   await context.env.DB.batch([
     ...createUpdateProductStatements(context.env.DB, current, validation.value, now),

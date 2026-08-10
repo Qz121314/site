@@ -63,7 +63,9 @@ function parseHeroSlide(value: unknown): SiteHeroSlide {
   const valid =
     typeof value.id === 'string' &&
     typeof value.mediaAssetId === 'string' &&
-    (value.mediaKind === 'image' || value.mediaKind === 'animated_image' || value.mediaKind === 'video') &&
+    (value.mediaKind === 'image' ||
+      value.mediaKind === 'animated_image' ||
+      value.mediaKind === 'video') &&
     (typeof value.mediaUrl === 'string' || value.mediaUrl === null) &&
     (typeof value.title === 'string' || value.title === null) &&
     (typeof value.description === 'string' || value.description === null) &&
@@ -81,9 +83,14 @@ function parseBottomNavigationItem(value: unknown): BottomNavigationItem {
     throw new AdminApiError(500, 'INVALID_RESPONSE', '底部导航返回数据无效。');
   }
   const valid =
-    (value.key === 'home' || value.key === 'browse' || value.key === 'messages' || value.key === 'faq') &&
+    (value.key === 'home' ||
+      value.key === 'browse' ||
+      value.key === 'messages' ||
+      value.key === 'faq') &&
     typeof value.label === 'string' &&
-    (value.iconType === 'builtin' || value.iconType === 'emoji' || value.iconType === 'asset') &&
+    (value.iconType === 'builtin' ||
+      value.iconType === 'emoji' ||
+      value.iconType === 'asset') &&
     (typeof value.iconValue === 'string' || value.iconValue === null) &&
     (typeof value.iconAssetId === 'string' || value.iconAssetId === null) &&
     typeof value.enabled === 'boolean' &&

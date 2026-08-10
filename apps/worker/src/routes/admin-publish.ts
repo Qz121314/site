@@ -15,7 +15,9 @@ export const adminPublishRoutes = new Hono<AppEnvironment>();
 adminPublishRoutes.get('/', async (context) => {
   context.header('Cache-Control', 'no-store');
   try {
-    return context.json({ status: await getModularPublishStatus(context.env.DB, context.env.ASSETS_BUCKET) });
+    return context.json({
+      status: await getModularPublishStatus(context.env.DB, context.env.ASSETS_BUCKET),
+    });
   } catch (error) {
     if (error instanceof ModularPublicationError) {
       return apiError(context, error.status, error.code, error.message);
@@ -76,14 +78,24 @@ adminPublishRoutes.post('/rollback', async (context) => {
   try {
     body = await context.req.json();
   } catch {
-    return apiError(context, 400, 'INVALID_PUBLISH_VERSION', '请选择需要回退的板块版本。');
+    return apiError(
+      context,
+      400,
+      'INVALID_PUBLISH_VERSION',
+      '请选择需要回退的板块版本。',
+    );
   }
   if (
     !isRecord(body) ||
     typeof body.moduleKey !== 'string' ||
     typeof body.contentVersion !== 'string'
   ) {
-    return apiError(context, 400, 'INVALID_PUBLISH_VERSION', '请选择需要回退的板块版本。');
+    return apiError(
+      context,
+      400,
+      'INVALID_PUBLISH_VERSION',
+      '请选择需要回退的板块版本。',
+    );
   }
 
   try {

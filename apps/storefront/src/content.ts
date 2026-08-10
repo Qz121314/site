@@ -294,9 +294,11 @@ async function discoverContentOrigin(signal?: AbortSignal): Promise<string | nul
   try {
     const response = await fetch('/api/public/storefront/content-origin', init);
     if (!response.ok) return null;
-    const value = await response.json() as unknown;
+    const value = (await response.json()) as unknown;
     if (!isRecord(value)) return null;
-    return normalizeContentOrigin(typeof value.contentOrigin === 'string' ? value.contentOrigin : null);
+    return normalizeContentOrigin(
+      typeof value.contentOrigin === 'string' ? value.contentOrigin : null,
+    );
   } catch {
     return null;
   }
@@ -321,7 +323,10 @@ export async function resolveContentOrigin(signal?: AbortSignal): Promise<string
 
 function assertContentVersion(value: unknown): asserts value is string {
   if (typeof value !== 'string' || !VERSION_PATTERN.test(value)) {
-    throw new PublicContentError('INVALID_CONTENT_VERSION', 'The published content version is invalid.');
+    throw new PublicContentError(
+      'INVALID_CONTENT_VERSION',
+      'The published content version is invalid.',
+    );
   }
 }
 
@@ -340,7 +345,10 @@ function validModuleReference(value: unknown): value is ModuleReference {
 
 function parsePointer(value: unknown): CurrentPointer {
   if (!isRecord(value)) {
-    throw new PublicContentError('INVALID_POINTER', 'The published content pointer is invalid.');
+    throw new PublicContentError(
+      'INVALID_POINTER',
+      'The published content pointer is invalid.',
+    );
   }
 
   if (value.schemaVersion === 1) {
@@ -349,7 +357,10 @@ function parsePointer(value: unknown): CurrentPointer {
       typeof value.sourceRevision !== 'string' ||
       typeof value.publishedAt !== 'string'
     ) {
-      throw new PublicContentError('INVALID_POINTER', 'The published content pointer is invalid.');
+      throw new PublicContentError(
+        'INVALID_POINTER',
+        'The published content pointer is invalid.',
+      );
     }
     assertContentVersion(value.contentVersion);
     return {
@@ -369,13 +380,19 @@ function parsePointer(value: unknown): CurrentPointer {
     !validModuleReference(value.faq) ||
     !isRecord(value.sections)
   ) {
-    throw new PublicContentError('INVALID_POINTER', 'The published content pointer is invalid.');
+    throw new PublicContentError(
+      'INVALID_POINTER',
+      'The published content pointer is invalid.',
+    );
   }
   assertContentVersion(value.contentVersion);
   const sections: Record<string, ModuleReference> = {};
   for (const [sectionId, reference] of Object.entries(value.sections)) {
     if (!sectionId || sectionId.length > 120 || !validModuleReference(reference)) {
-      throw new PublicContentError('INVALID_POINTER', 'The published content pointer is invalid.');
+      throw new PublicContentError(
+        'INVALID_POINTER',
+        'The published content pointer is invalid.',
+      );
     }
     sections[sectionId] = reference;
   }
@@ -391,23 +408,40 @@ function parsePointer(value: unknown): CurrentPointer {
 }
 
 function assertV1Envelope(value: unknown, contentVersion: string): void {
-  if (!isRecord(value) || value.schemaVersion !== 1 || value.contentVersion !== contentVersion) {
-    throw new PublicContentError('SNAPSHOT_VERSION_MISMATCH', 'The published content snapshot is inconsistent.');
+  if (
+    !isRecord(value) ||
+    value.schemaVersion !== 1 ||
+    value.contentVersion !== contentVersion
+  ) {
+    throw new PublicContentError(
+      'SNAPSHOT_VERSION_MISMATCH',
+      'The published content snapshot is inconsistent.',
+    );
   }
 }
 
-function assertV2Envelope(value: unknown, moduleKey: string, contentVersion: string): void {
+function assertV2Envelope(
+  value: unknown,
+  moduleKey: string,
+  contentVersion: string,
+): void {
   if (
     !isRecord(value) ||
     value.schemaVersion !== 2 ||
     value.moduleKey !== moduleKey ||
     value.contentVersion !== contentVersion
   ) {
-    throw new PublicContentError('SNAPSHOT_VERSION_MISMATCH', 'The published content module is inconsistent.');
+    throw new PublicContentError(
+      'SNAPSHOT_VERSION_MISMATCH',
+      'The published content module is inconsistent.',
+    );
   }
 }
 
-function parseV2DerivedHome(value: unknown, pointerVersion: string): V2DerivedHomeSnapshot {
+function parseV2DerivedHome(
+  value: unknown,
+  pointerVersion: string,
+): V2DerivedHomeSnapshot {
   if (
     !isRecord(value) ||
     value.schemaVersion !== 2 ||
@@ -416,7 +450,10 @@ function parseV2DerivedHome(value: unknown, pointerVersion: string): V2DerivedHo
     !Array.isArray(value.featuredProducts) ||
     !Array.isArray(value.latestProducts)
   ) {
-    throw new PublicContentError('SNAPSHOT_VERSION_MISMATCH', 'The published home summary is inconsistent.');
+    throw new PublicContentError(
+      'SNAPSHOT_VERSION_MISMATCH',
+      'The published home summary is inconsistent.',
+    );
   }
   return value as V2DerivedHomeSnapshot;
 }
@@ -434,7 +471,8 @@ function normalizeTags(value: unknown): PublicProductSummary['tags'] {
 }
 
 function normalizeV1Summary(product: PublicProductSummary): PublicProductSummary {
-  const featuredOrder = (product as PublicProductSummary & { featuredOrder?: unknown }).featuredOrder;
+  const featuredOrder = (product as PublicProductSummary & { featuredOrder?: unknown })
+    .featuredOrder;
   return {
     ...product,
     tags: normalizeTags((product as { tags?: unknown }).tags),
@@ -461,7 +499,9 @@ function normalizeV1SectionSnapshot(snapshot: SectionSnapshot): SectionSnapshot 
     ...snapshot,
     categories: Array.isArray(snapshot.categories) ? snapshot.categories : [],
     tags: Array.isArray(snapshot.tags) ? snapshot.tags : [],
-    products: Array.isArray(snapshot.products) ? snapshot.products.map(normalizeV1Summary) : [],
+    products: Array.isArray(snapshot.products)
+      ? snapshot.products.map(normalizeV1Summary)
+      : [],
   };
 }
 
@@ -481,21 +521,31 @@ function normalizeV1ProductSnapshot(snapshot: ProductSnapshot): ProductSnapshot 
 export function publicContentUrl(origin: string, path: string): string {
   const normalized = normalizeContentOrigin(origin);
   if (!normalized) {
-    throw new PublicContentError('INVALID_CONTENT_ORIGIN', 'The public content origin is invalid.');
+    throw new PublicContentError(
+      'INVALID_CONTENT_ORIGIN',
+      'The public content origin is invalid.',
+    );
   }
   const normalizedPath = path.replace(/^\/+/, '');
   return `${normalized}/${normalizedPath}`;
 }
 
 function encodeObjectKey(key: string): string {
-  return key.split('/').map((segment) => encodeURIComponent(segment)).join('/');
+  return key
+    .split('/')
+    .map((segment) => encodeURIComponent(segment))
+    .join('/');
 }
 
 function mediaUrl(mediaBaseUrl: string, objectKey: string | null): string | null {
   return objectKey ? `${mediaBaseUrl}/${encodeObjectKey(objectKey)}` : null;
 }
 
-async function fetchJson(url: string, cache: RequestCache, signal?: AbortSignal): Promise<unknown> {
+async function fetchJson(
+  url: string,
+  cache: RequestCache,
+  signal?: AbortSignal,
+): Promise<unknown> {
   const init: RequestInit = {
     method: 'GET',
     cache,
@@ -525,13 +575,19 @@ async function fetchJson(url: string, cache: RequestCache, signal?: AbortSignal)
 
   const contentType = response.headers.get('content-type')?.toLowerCase() ?? '';
   if (!contentType.includes('application/json')) {
-    throw new PublicContentError('INVALID_CONTENT_TYPE', 'Published content returned an invalid response.');
+    throw new PublicContentError(
+      'INVALID_CONTENT_TYPE',
+      'Published content returned an invalid response.',
+    );
   }
 
   try {
     return await response.json();
   } catch {
-    throw new PublicContentError('INVALID_JSON', 'Published content returned invalid JSON.');
+    throw new PublicContentError(
+      'INVALID_JSON',
+      'Published content returned invalid JSON.',
+    );
   }
 }
 
@@ -539,7 +595,11 @@ export async function loadCurrentPointer(
   origin: string,
   signal?: AbortSignal,
 ): Promise<CurrentPointer> {
-  const value = await fetchJson(publicContentUrl(origin, 'public/current.json'), 'no-cache', signal);
+  const value = await fetchJson(
+    publicContentUrl(origin, 'public/current.json'),
+    'no-cache',
+    signal,
+  );
   return parsePointer(value);
 }
 
@@ -572,7 +632,11 @@ async function loadV2File<T>(
   return value as T;
 }
 
-function v2ModulePath(moduleKey: string, reference: ModuleReference, relativePath: string): string {
+function v2ModulePath(
+  moduleKey: string,
+  reference: ModuleReference,
+  relativePath: string,
+): string {
   if (moduleKey === 'site') {
     return `public/modules/site/${reference.contentVersion}/${relativePath}`;
   }
@@ -582,9 +646,14 @@ function v2ModulePath(moduleKey: string, reference: ModuleReference, relativePat
   if (moduleKey === 'faq') {
     return `public/modules/faq/${reference.contentVersion}/${relativePath}`;
   }
-  const sectionId = moduleKey.startsWith('section:') ? moduleKey.slice('section:'.length) : '';
+  const sectionId = moduleKey.startsWith('section:')
+    ? moduleKey.slice('section:'.length)
+    : '';
   if (!sectionId) {
-    throw new PublicContentError('INVALID_POINTER', 'The published section module is invalid.');
+    throw new PublicContentError(
+      'INVALID_POINTER',
+      'The published section module is invalid.',
+    );
   }
   return `public/modules/sections/${encodeURIComponent(sectionId)}/${reference.contentVersion}/${relativePath}`;
 }
@@ -599,9 +668,10 @@ function resolveV2Section(
     name: section.name,
     icon: {
       type: section.icon.type,
-      value: section.icon.type === 'image'
-        ? mediaUrl(mediaBaseUrl, section.icon.objectKey)
-        : section.icon.value,
+      value:
+        section.icon.type === 'image'
+          ? mediaUrl(mediaBaseUrl, section.icon.objectKey)
+          : section.icon.value,
     },
     sortOrder: section.sortOrder,
   };
@@ -640,7 +710,10 @@ async function loadV2SectionFile(
 ): Promise<SectionSnapshot> {
   const reference = pointer.sections[section.id];
   if (!reference) {
-    throw new PublicContentError('CONTENT_NOT_PUBLISHED', 'This service section has not been published yet.');
+    throw new PublicContentError(
+      'CONTENT_NOT_PUBLISHED',
+      'This service section has not been published yet.',
+    );
   }
   const moduleKey = `section:${section.id}`;
   const raw = await loadV2File<V2SectionSnapshot>(
@@ -651,7 +724,10 @@ async function loadV2SectionFile(
     signal,
   );
   if (raw.sectionId !== section.id) {
-    throw new PublicContentError('SNAPSHOT_VERSION_MISMATCH', 'The published section is inconsistent.');
+    throw new PublicContentError(
+      'SNAPSHOT_VERSION_MISMATCH',
+      'The published section is inconsistent.',
+    );
   }
   return {
     schemaVersion: 2,
@@ -690,7 +766,10 @@ async function loadDerivedV2Home(
 ): Promise<Pick<HomeSnapshot, 'featuredProducts' | 'latestProducts'>> {
   const raw = parseV2DerivedHome(
     await fetchJson(
-      publicContentUrl(origin, `public/home/${encodeURIComponent(pointer.contentVersion)}/home.json`),
+      publicContentUrl(
+        origin,
+        `public/home/${encodeURIComponent(pointer.contentVersion)}/home.json`,
+      ),
       'force-cache',
       signal,
     ),
@@ -705,7 +784,10 @@ async function loadDerivedV2Home(
 function indexBootstrapProducts(
   bootstrap: Pick<StorefrontBootstrap, 'home' | 'productSectionIds'>,
 ): void {
-  for (const product of [...bootstrap.home.featuredProducts, ...bootstrap.home.latestProducts]) {
+  for (const product of [
+    ...bootstrap.home.featuredProducts,
+    ...bootstrap.home.latestProducts,
+  ]) {
     bootstrap.productSectionIds[product.id] = product.sectionId;
   }
 }
@@ -744,14 +826,22 @@ async function loadV2Bootstrap(
     navigation: rawSite.site.navigation,
     analytics: rawSite.site.analytics,
   };
-  const sections = rawIndex.sections.map((section) => resolveV2Section(section, mediaBaseUrl));
+  const sections = rawIndex.sections.map((section) =>
+    resolveV2Section(section, mediaBaseUrl),
+  );
   const sectionSnapshots: Record<string, SectionSnapshot> = {};
   const productSectionIds: Record<string, string> = {};
 
   let featuredProducts: PublicProductSummary[] = [];
   let latestProducts: PublicProductSummary[] = [];
   try {
-    const derivedHome = await loadDerivedV2Home(origin, pointer, sections, mediaBaseUrl, signal);
+    const derivedHome = await loadDerivedV2Home(
+      origin,
+      pointer,
+      sections,
+      mediaBaseUrl,
+      signal,
+    );
     featuredProducts = derivedHome.featuredProducts;
     latestProducts = derivedHome.latestProducts;
   } catch (error) {
@@ -773,10 +863,15 @@ async function loadV2Bootstrap(
     }
     featuredProducts = allProducts
       .filter((product) => product.isFeatured)
-      .sort((left, right) => left.featuredOrder - right.featuredOrder || left.sortOrder - right.sortOrder)
+      .sort(
+        (left, right) =>
+          left.featuredOrder - right.featuredOrder || left.sortOrder - right.sortOrder,
+      )
       .slice(0, 30);
     latestProducts = [...allProducts]
-      .sort((left, right) => (right.publishedAt ?? '').localeCompare(left.publishedAt ?? ''))
+      .sort((left, right) =>
+        (right.publishedAt ?? '').localeCompare(left.publishedAt ?? ''),
+      )
       .slice(0, 30);
   }
 
@@ -833,7 +928,10 @@ export async function loadStorefrontBootstrap(
     ? normalizeContentOrigin(origin)
     : await resolveContentOrigin(signal);
   if (!resolvedOrigin) {
-    throw new PublicContentError('INVALID_CONTENT_ORIGIN', 'The public content origin is invalid.');
+    throw new PublicContentError(
+      'INVALID_CONTENT_ORIGIN',
+      'The public content origin is invalid.',
+    );
   }
   const pointer = await loadCurrentPointer(resolvedOrigin, signal);
   return pointer.schemaVersion === 2
@@ -847,13 +945,19 @@ export async function loadSectionSnapshot(
   signal?: AbortSignal,
 ): Promise<SectionSnapshot> {
   if (!sectionRef || sectionRef.length > 120) {
-    throw new PublicContentError('INVALID_SECTION', 'The requested service section is invalid.');
+    throw new PublicContentError(
+      'INVALID_SECTION',
+      'The requested service section is invalid.',
+    );
   }
   const section = bootstrap.home.allSections.find(
     (item) => item.id === sectionRef || item.slug === sectionRef,
   );
   if (!section) {
-    throw new PublicContentError('CONTENT_NOT_PUBLISHED', 'This service section has not been published yet.');
+    throw new PublicContentError(
+      'CONTENT_NOT_PUBLISHED',
+      'This service section has not been published yet.',
+    );
   }
   const sectionId = section.id;
   if (bootstrap.pointer.schemaVersion === 2) {
@@ -881,7 +985,10 @@ export async function loadSectionSnapshot(
   return normalizeV1SectionSnapshot(snapshot);
 }
 
-function findPublishedProduct(products: PublicProductSummary[], productRef: string): PublicProductSummary | null {
+function findPublishedProduct(
+  products: PublicProductSummary[],
+  productRef: string,
+): PublicProductSummary | null {
   const exactId = products.find((product) => product.id === productRef);
   if (exactId) return exactId;
   const slugMatches = products.filter((product) => product.slug === productRef);
@@ -903,7 +1010,10 @@ export async function loadProductSnapshot(
       const section = await loadSectionSnapshot(bootstrap, sectionRef, signal);
       const product = findPublishedProduct(section.products, productRef);
       if (!product) {
-        throw new PublicContentError('CONTENT_NOT_PUBLISHED', 'This service has not been published yet.');
+        throw new PublicContentError(
+          'CONTENT_NOT_PUBLISHED',
+          'This service has not been published yet.',
+        );
       }
       productId = product.id;
     } else {
@@ -931,23 +1041,34 @@ export async function loadProductSnapshot(
     section = sectionSnapshot.section;
   } else {
     const snapshots = await Promise.all(
-      bootstrap.home.allSections.map((item) => loadSectionSnapshot(bootstrap, item.id, signal)),
+      bootstrap.home.allSections.map((item) =>
+        loadSectionSnapshot(bootstrap, item.id, signal),
+      ),
     );
     matchedProduct = findPublishedProduct(
       snapshots.flatMap((snapshot) => snapshot.products),
       productRef,
     );
     if (matchedProduct) {
-      section = bootstrap.home.allSections.find((item) => item.id === matchedProduct?.sectionId) ?? null;
+      section =
+        bootstrap.home.allSections.find(
+          (item) => item.id === matchedProduct?.sectionId,
+        ) ?? null;
     }
   }
 
   if (!matchedProduct || !section) {
-    throw new PublicContentError('CONTENT_NOT_PUBLISHED', 'This service is not part of the current published section versions.');
+    throw new PublicContentError(
+      'CONTENT_NOT_PUBLISHED',
+      'This service is not part of the current published section versions.',
+    );
   }
   const reference = bootstrap.pointer.sections[section.id];
   if (!reference) {
-    throw new PublicContentError('CONTENT_NOT_PUBLISHED', 'This service is not part of the current published section versions.');
+    throw new PublicContentError(
+      'CONTENT_NOT_PUBLISHED',
+      'This service is not part of the current published section versions.',
+    );
   }
 
   const moduleKey = `section:${section.id}`;
@@ -955,13 +1076,24 @@ export async function loadProductSnapshot(
     bootstrap.origin,
     moduleKey,
     reference,
-    v2ModulePath(moduleKey, reference, `products/${encodeURIComponent(matchedProduct.id)}.json`),
+    v2ModulePath(
+      moduleKey,
+      reference,
+      `products/${encodeURIComponent(matchedProduct.id)}.json`,
+    ),
     signal,
   );
   if (raw.product.id !== matchedProduct.id || raw.product.sectionId !== section.id) {
-    throw new PublicContentError('SNAPSHOT_VERSION_MISMATCH', 'The published service is inconsistent.');
+    throw new PublicContentError(
+      'SNAPSHOT_VERSION_MISMATCH',
+      'The published service is inconsistent.',
+    );
   }
-  const summary = resolveV2Summary(raw.product, section, bootstrap.site.site.mediaBaseUrl);
+  const summary = resolveV2Summary(
+    raw.product,
+    section,
+    bootstrap.site.site.mediaBaseUrl,
+  );
   return {
     schemaVersion: 2,
     contentVersion: reference.contentVersion,

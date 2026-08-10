@@ -49,7 +49,10 @@ type RemoteConversationDetail = RemoteConversationSummary & {
 type ErrorEnvelope = { error?: { code?: string; message?: string } };
 
 const CONNECTION_CACHE_MS = 30_000;
-let connectionCache: { expiresAt: number; connections: PublicSupportConnection[] } | null = null;
+let connectionCache: {
+  expiresAt: number;
+  connections: PublicSupportConnection[];
+} | null = null;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -73,7 +76,7 @@ async function siteRequestJson(path: string, signal?: AbortSignal): Promise<unkn
   });
   const body = await readJson(response);
   if (!response.ok) {
-    const envelope = isRecord(body) ? body as ErrorEnvelope : null;
+    const envelope = isRecord(body) ? (body as ErrorEnvelope) : null;
     throw new SupportApiError(
       response.status,
       envelope?.error?.code ?? 'SUPPORT_CONFIG_FAILED',
@@ -92,7 +95,11 @@ function parseConnection(value: unknown): PublicSupportConnection {
     !nullableString(item.projectId) ||
     item.protocolVersion !== 'v1'
   ) {
-    throw new SupportApiError(500, 'INVALID_SUPPORT_CONFIG', 'Messages returned invalid configuration.');
+    throw new SupportApiError(
+      500,
+      'INVALID_SUPPORT_CONFIG',
+      'Messages returned invalid configuration.',
+    );
   }
   return {
     id: item.id,
@@ -106,11 +113,19 @@ export async function loadPublicSupportConnections(
   signal?: AbortSignal,
 ): Promise<PublicSupportConnection[]> {
   const now = Date.now();
-  if (connectionCache && connectionCache.expiresAt > now) return connectionCache.connections;
-  const value = await siteRequestJson('/api/public/storefront/support/connections', signal);
+  if (connectionCache && connectionCache.expiresAt > now)
+    return connectionCache.connections;
+  const value = await siteRequestJson(
+    '/api/public/storefront/support/connections',
+    signal,
+  );
   const envelope = isRecord(value) ? value : null;
   if (!envelope || !Array.isArray(envelope.connections)) {
-    throw new SupportApiError(500, 'INVALID_SUPPORT_CONFIG', 'Messages returned invalid configuration.');
+    throw new SupportApiError(
+      500,
+      'INVALID_SUPPORT_CONFIG',
+      'Messages returned invalid configuration.',
+    );
   }
   const connections = envelope.connections.map(parseConnection);
   connectionCache = { expiresAt: now + CONNECTION_CACHE_MS, connections };
@@ -129,7 +144,11 @@ async function resolveSupportRoute(
   );
   const envelope = isRecord(value) ? value : null;
   if (!envelope || envelope.available !== true || typeof envelope.groupId !== 'string') {
-    throw new SupportApiError(409, 'SUPPORT_UNAVAILABLE', 'Customer service is unavailable.');
+    throw new SupportApiError(
+      409,
+      'SUPPORT_UNAVAILABLE',
+      'Customer service is unavailable.',
+    );
   }
   return {
     available: true,
@@ -191,11 +210,15 @@ async function remoteRequestJson(
     });
   } catch (error) {
     if (signal?.aborted) throw error;
-    throw new SupportApiError(503, 'SUPPORT_UNREACHABLE', 'Messages is temporarily unavailable.');
+    throw new SupportApiError(
+      503,
+      'SUPPORT_UNREACHABLE',
+      'Messages is temporarily unavailable.',
+    );
   }
   const body = await readJson(response);
   if (!response.ok) {
-    const envelope = isRecord(body) ? body as ErrorEnvelope : null;
+    const envelope = isRecord(body) ? (body as ErrorEnvelope) : null;
     throw new SupportApiError(
       response.status,
       envelope?.error?.code ?? 'SUPPORT_REQUEST_FAILED',
@@ -205,11 +228,16 @@ async function remoteRequestJson(
   return body;
 }
 
-export function wrapSupportConversationRef(connectionId: string, remoteConversationId: string): string {
+export function wrapSupportConversationRef(
+  connectionId: string,
+  remoteConversationId: string,
+): string {
   return `${connectionId}:${encodeURIComponent(remoteConversationId)}`;
 }
 
-function parseSupportConversationRef(value: string): { connectionId: string; remoteConversationId: string } | null {
+function parseSupportConversationRef(
+  value: string,
+): { connectionId: string; remoteConversationId: string } | null {
   const separator = value.indexOf(':');
   if (separator < 1 || separator === value.length - 1) return null;
   const connectionId = value.slice(0, separator);
@@ -232,7 +260,11 @@ function parseMessage(value: unknown): SupportMessage {
     typeof item.sentAt !== 'string' ||
     (item.delivery !== 'sending' && item.delivery !== 'sent' && item.delivery !== 'read')
   ) {
-    throw new SupportApiError(500, 'INVALID_SUPPORT_RESPONSE', 'Messages returned invalid message data.');
+    throw new SupportApiError(
+      500,
+      'INVALID_SUPPORT_RESPONSE',
+      'Messages returned invalid message data.',
+    );
   }
   return item as SupportMessage;
 }
@@ -254,7 +286,11 @@ function parseRemoteSummary(value: unknown): RemoteConversationSummary {
     !Number.isInteger(item.unreadCount) ||
     (item.status !== 'waiting' && item.status !== 'active' && item.status !== 'closed')
   ) {
-    throw new SupportApiError(500, 'INVALID_SUPPORT_RESPONSE', 'Messages returned invalid conversation data.');
+    throw new SupportApiError(
+      500,
+      'INVALID_SUPPORT_RESPONSE',
+      'Messages returned invalid conversation data.',
+    );
   }
   return item as RemoteConversationSummary;
 }
@@ -285,12 +321,20 @@ function parseRemoteDetail(value: unknown): RemoteConversationDetail {
     !Array.isArray(item.messages) ||
     !nullableString(item.nextMessageCursor)
   ) {
-    throw new SupportApiError(500, 'INVALID_SUPPORT_RESPONSE', 'Messages returned invalid conversation data.');
+    throw new SupportApiError(
+      500,
+      'INVALID_SUPPORT_RESPONSE',
+      'Messages returned invalid conversation data.',
+    );
   }
   let productHref: string | null | undefined;
   if (item.productHref !== undefined) {
     if (!nullableString(item.productHref)) {
-      throw new SupportApiError(500, 'INVALID_SUPPORT_RESPONSE', 'Messages returned invalid conversation data.');
+      throw new SupportApiError(
+        500,
+        'INVALID_SUPPORT_RESPONSE',
+        'Messages returned invalid conversation data.',
+      );
     }
     productHref = item.productHref;
   }
@@ -310,7 +354,9 @@ function normalizeDetail(
 ): SupportConversationDetail {
   return {
     ...normalizeSummary(connection, remote),
-    productHref: remote.productHref ?? `/sections/${encodeURIComponent(remote.sectionId)}/products/${encodeURIComponent(remote.productId)}/`,
+    productHref:
+      remote.productHref ??
+      `/sections/${encodeURIComponent(remote.sectionId)}/products/${encodeURIComponent(remote.productId)}/`,
     createdAt: remote.createdAt,
     expiresAt: remote.expiresAt,
     messages: remote.messages,
@@ -324,7 +370,11 @@ function conversationEnvelope(
 ): SupportConversationDetail {
   const envelope = isRecord(value) ? value : null;
   if (!envelope) {
-    throw new SupportApiError(500, 'INVALID_SUPPORT_RESPONSE', 'Messages returned invalid data.');
+    throw new SupportApiError(
+      500,
+      'INVALID_SUPPORT_RESPONSE',
+      'Messages returned invalid data.',
+    );
   }
   return normalizeDetail(connection, parseRemoteDetail(envelope.conversation));
 }
@@ -334,10 +384,20 @@ async function connectionForConversationRef(
   signal?: AbortSignal,
 ): Promise<{ connection: PublicSupportConnection; remoteConversationId: string }> {
   const parsed = parseSupportConversationRef(conversationRef);
-  if (!parsed) throw new SupportApiError(404, 'SUPPORT_CONVERSATION_NOT_FOUND', 'Conversation not found.');
+  if (!parsed)
+    throw new SupportApiError(
+      404,
+      'SUPPORT_CONVERSATION_NOT_FOUND',
+      'Conversation not found.',
+    );
   const connections = await loadPublicSupportConnections(signal);
   const connection = connections.find((item) => item.id === parsed.connectionId);
-  if (!connection) throw new SupportApiError(404, 'SUPPORT_CONVERSATION_NOT_FOUND', 'Conversation not found.');
+  if (!connection)
+    throw new SupportApiError(
+      404,
+      'SUPPORT_CONVERSATION_NOT_FOUND',
+      'Conversation not found.',
+    );
   return { connection, remoteConversationId: parsed.remoteConversationId };
 }
 
@@ -369,24 +429,45 @@ export const siteSupportGateway: SupportGateway = {
         );
         const envelope = isRecord(value) ? value : null;
         if (!envelope || !Array.isArray(envelope.conversations)) {
-          throw new SupportApiError(500, 'INVALID_SUPPORT_RESPONSE', 'Messages returned invalid data.');
+          throw new SupportApiError(
+            500,
+            'INVALID_SUPPORT_RESPONSE',
+            'Messages returned invalid data.',
+          );
         }
-        return envelope.conversations.map((item) => normalizeSummary(connection, parseRemoteSummary(item)));
+        return envelope.conversations.map((item) =>
+          normalizeSummary(connection, parseRemoteSummary(item)),
+        );
       }),
     );
     const successful = settled.filter(
-      (result): result is PromiseFulfilledResult<SupportConversationSummary[]> => result.status === 'fulfilled',
+      (result): result is PromiseFulfilledResult<SupportConversationSummary[]> =>
+        result.status === 'fulfilled',
     );
-    if (successful.length === 0 && settled.some((result) => result.status === 'rejected')) {
-      throw new SupportApiError(503, 'SUPPORT_UNREACHABLE', 'Messages is temporarily unavailable.');
+    if (
+      successful.length === 0 &&
+      settled.some((result) => result.status === 'rejected')
+    ) {
+      throw new SupportApiError(
+        503,
+        'SUPPORT_UNREACHABLE',
+        'Messages is temporarily unavailable.',
+      );
     }
     return successful
       .flatMap((result) => result.value)
-      .sort((left, right) => conversationTimestamp(right.lastMessageAt) - conversationTimestamp(left.lastMessageAt));
+      .sort(
+        (left, right) =>
+          conversationTimestamp(right.lastMessageAt) -
+          conversationTimestamp(left.lastMessageAt),
+      );
   },
 
   async getConversation(conversationRef, before = null, signal) {
-    const { connection, remoteConversationId } = await connectionForConversationRef(conversationRef, signal);
+    const { connection, remoteConversationId } = await connectionForConversationRef(
+      conversationRef,
+      signal,
+    );
     try {
       return conversationEnvelope(
         connection,
@@ -412,18 +493,20 @@ export const siteSupportGateway: SupportGateway = {
       remoteUrl(route.connection, '/client/v1/conversations'),
       {
         method: 'POST',
-        body: JSON.stringify(clientBody(route.connection, {
-          groupId: route.groupId,
-          clientMessageId: input.clientMessageId,
-          message: input.message,
-          product: {
-            id: input.productId,
-            sectionId: input.sectionId,
-            title: input.productTitle,
-            href: input.productHref,
-            coverUrl: input.productCoverUrl,
-          },
-        })),
+        body: JSON.stringify(
+          clientBody(route.connection, {
+            groupId: route.groupId,
+            clientMessageId: input.clientMessageId,
+            message: input.message,
+            product: {
+              id: input.productId,
+              sectionId: input.sectionId,
+              title: input.productTitle,
+              href: input.productHref,
+              coverUrl: input.productCoverUrl,
+            },
+          }),
+        ),
       },
       signal,
     );
@@ -431,15 +514,23 @@ export const siteSupportGateway: SupportGateway = {
   },
 
   async sendMessage(conversationRef: string, input: SendSupportMessageInput, signal) {
-    const { connection, remoteConversationId } = await connectionForConversationRef(conversationRef, signal);
+    const { connection, remoteConversationId } = await connectionForConversationRef(
+      conversationRef,
+      signal,
+    );
     const value = await remoteRequestJson(
-      remoteUrl(connection, `/client/v1/conversations/${encodeURIComponent(remoteConversationId)}/messages`),
+      remoteUrl(
+        connection,
+        `/client/v1/conversations/${encodeURIComponent(remoteConversationId)}/messages`,
+      ),
       {
         method: 'POST',
-        body: JSON.stringify(clientBody(connection, {
-          clientMessageId: input.clientMessageId,
-          body: input.body,
-        })),
+        body: JSON.stringify(
+          clientBody(connection, {
+            clientMessageId: input.clientMessageId,
+            body: input.body,
+          }),
+        ),
       },
       signal,
     );
@@ -448,9 +539,15 @@ export const siteSupportGateway: SupportGateway = {
   },
 
   async markConversationRead(conversationRef, lastMessageId = null, signal) {
-    const { connection, remoteConversationId } = await connectionForConversationRef(conversationRef, signal);
+    const { connection, remoteConversationId } = await connectionForConversationRef(
+      conversationRef,
+      signal,
+    );
     const value = await remoteRequestJson(
-      remoteUrl(connection, `/client/v1/conversations/${encodeURIComponent(remoteConversationId)}/read`),
+      remoteUrl(
+        connection,
+        `/client/v1/conversations/${encodeURIComponent(remoteConversationId)}/read`,
+      ),
       {
         method: 'POST',
         body: JSON.stringify(clientBody(connection, { lastMessageId })),
@@ -459,7 +556,11 @@ export const siteSupportGateway: SupportGateway = {
     );
     const envelope = isRecord(value) ? value : null;
     if (!envelope || envelope.ok !== true) {
-      throw new SupportApiError(500, 'INVALID_SUPPORT_RESPONSE', 'Messages returned invalid data.');
+      throw new SupportApiError(
+        500,
+        'INVALID_SUPPORT_RESPONSE',
+        'Messages returned invalid data.',
+      );
     }
   },
 };

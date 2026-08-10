@@ -457,8 +457,8 @@ Admin 保持中文、小团队、高密度工作台风格。
 Cloudflare Worker 需要手动绑定：
 
 ```text
-ADMIN_PASSWORD
-SESSION_SECRET
+ADMIN_PASSWORD   至少 12 个字符
+SESSION_SECRET   至少 32 个字符的随机密钥
 ```
 
 绑定值不写入 GitHub、D1 或 `wrangler.jsonc`。
@@ -554,7 +554,7 @@ R2 Custom Domain
 
 生产环境不依赖 `r2.dev`。
 
-如果 R2 Custom Domain 暂时无法被浏览器直接读取，Storefront 对 `/public/*` 保留同源 Worker fallback，避免整个站点因直接 R2 读取异常而不可用。
+如果 R2 Custom Domain 暂时无法被浏览器直接读取，Storefront 会分别通过 `/public/*` 读取公开 JSON、通过 `/_media/*` 重试已登记在 D1 且状态正常的媒体。媒体 fallback 由 Worker 使用 R2 Binding 流式响应并支持 Range 请求，不暴露任意 Bucket Key，也不在前端硬编码当前自定义域名。
 
 ## 路由
 
@@ -567,6 +567,7 @@ R2 Custom Domain
 /api/*                    Worker API
 /go/:productId            实时转化跳转
 /public/*                 当前公开内容与版本读取
+/_media/*                 已登记媒体的同源读取 fallback
 ```
 
 Storefront 和 Admin 都由同一个正式 Cloudflare Worker 提供。
@@ -609,6 +610,7 @@ PR 和 `main` 都先执行完整验证：
 pnpm install --frozen-lockfile
 → 本地 D1 migrations
 → lint
+→ format
 → typecheck
 → tests
 → build
@@ -618,7 +620,8 @@ pnpm install --frozen-lockfile
 只有 `main` push 验证成功后才执行正式部署：
 
 ```text
-远程 D1 migrations
+记录正式 D1 Time Travel 恢复点
+→ 远程 D1 migrations
 → 解析并校验 R2 Custom Domain
 → 配置 R2 CORS
 → 直接 R2 读取探测
@@ -632,7 +635,8 @@ pnpm install --frozen-lockfile
 - `/api/health`；
 - `/api/public/theme` Theme Runtime；
 - `/public/current.json`；
-- R2 直接读取 / CORS 或同源 fallback；
+- R2 直接读取 / CORS；
+- 已登记媒体的 `/_media/*` Range 同源 fallback；
 - 未登录 Admin session；
 - Storefront / Admin SPA；
 - Storefront 分区 / 产品深链接。
@@ -661,6 +665,7 @@ pnpm dev
 
 ```bash
 pnpm lint
+pnpm format
 pnpm typecheck
 pnpm test
 pnpm build
@@ -694,5 +699,6 @@ site/
 - [D1 与 R2 数据存储基线](docs/data-storage.md)
 - [开发阶段与交付计划](docs/development-plan.md)
 - [发布验收清单](docs/acceptance-checklist.md)
+- [生产发布与恢复手册](docs/operations.md)
 
 README 用于说明**当前产品范围、已实现能力和运行方式**；`docs/` 保留更细的架构 / 数据设计背景。功能行为、migration 与文档发生变化时，应同步维护，避免 README 重新变成历史版本。

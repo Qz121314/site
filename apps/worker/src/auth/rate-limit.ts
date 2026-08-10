@@ -22,7 +22,10 @@ export async function createLoginRateLimitKey(
   return sha256Base64Url(`${clientAddress}:${sessionSecret}`);
 }
 
-export async function pruneExpiredLoginRateLimits(db: D1Database, now: Date): Promise<void> {
+export async function pruneExpiredLoginRateLimits(
+  db: D1Database,
+  now: Date,
+): Promise<void> {
   await db
     .prepare('DELETE FROM admin_login_rate_limits WHERE expires_at <= ?')
     .bind(now.toISOString())
@@ -123,6 +126,12 @@ export async function recordFailedLogin(
   };
 }
 
-export async function clearLoginRateLimit(db: D1Database, keyHash: string): Promise<void> {
-  await db.prepare('DELETE FROM admin_login_rate_limits WHERE key_hash = ?').bind(keyHash).run();
+export async function clearLoginRateLimit(
+  db: D1Database,
+  keyHash: string,
+): Promise<void> {
+  await db
+    .prepare('DELETE FROM admin_login_rate_limits WHERE key_hash = ?')
+    .bind(keyHash)
+    .run();
 }

@@ -27,7 +27,8 @@ const POINTER = {
   },
   sectionsIndex: {
     contentVersion: '20260808185900-index1234567-acde1201',
-    manifestKey: 'public/modules/sections-index/20260808185900-index1234567-acde1201/manifest.json',
+    manifestKey:
+      'public/modules/sections-index/20260808185900-index1234567-acde1201/manifest.json',
     sourceRevision: 'index-source',
     publishedAt: '2026-08-08T18:59:00.000Z',
   },
@@ -80,19 +81,23 @@ function createBucket() {
     ['public/current.json', JSON.stringify(POINTER)],
     [
       `public/modules/sections/section-a/${SECTION_A_VERSION}/section.json`,
-      JSON.stringify(sectionSnapshot(
-        'section-a',
-        SECTION_A_VERSION,
-        product('section-a', 'product-a', 2, '2026-08-08T19:02:00.000Z'),
-      )),
+      JSON.stringify(
+        sectionSnapshot(
+          'section-a',
+          SECTION_A_VERSION,
+          product('section-a', 'product-a', 2, '2026-08-08T19:02:00.000Z'),
+        ),
+      ),
     ],
     [
       `public/modules/sections/section-b/${SECTION_B_VERSION}/section.json`,
-      JSON.stringify(sectionSnapshot(
-        'section-b',
-        SECTION_B_VERSION,
-        product('section-b', 'product-b', 1, '2026-08-08T19:01:00.000Z'),
-      )),
+      JSON.stringify(
+        sectionSnapshot(
+          'section-b',
+          SECTION_B_VERSION,
+          product('section-b', 'product-b', 1, '2026-08-08T19:01:00.000Z'),
+        ),
+      ),
     ],
   ]);
   const metadata = new Map();
@@ -103,7 +108,11 @@ function createBucket() {
     async get(key) {
       const body = objects.get(key);
       if (body === undefined) return null;
-      return { async text() { return body; } };
+      return {
+        async text() {
+          return body;
+        },
+      };
     },
     async put(key, body, options) {
       const text = String(body);
@@ -135,8 +144,17 @@ test('derived home snapshot aggregates the current section versions into one imm
   const home = JSON.parse(bucket.objects.get(key));
   assert.equal(home.schemaVersion, 2);
   assert.equal(home.pointerVersion, POINTER_VERSION);
-  assert.deepEqual(home.featuredProducts.map((item) => item.id), ['product-b', 'product-a']);
-  assert.deepEqual(home.latestProducts.map((item) => item.id), ['product-a', 'product-b']);
+  assert.deepEqual(
+    home.featuredProducts.map((item) => item.id),
+    ['product-b', 'product-a'],
+  );
+  assert.deepEqual(
+    home.latestProducts.map((item) => item.id),
+    ['product-a', 'product-b'],
+  );
   assert.equal(bucket.writes.length, 1);
-  assert.equal(bucket.writes[0].options.httpMetadata.cacheControl, 'public, max-age=31536000, immutable');
+  assert.equal(
+    bucket.writes[0].options.httpMetadata.cacheControl,
+    'public, max-age=31536000, immutable',
+  );
 });

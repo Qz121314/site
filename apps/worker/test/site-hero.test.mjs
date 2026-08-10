@@ -79,11 +79,13 @@ test('hero slides reject duplicate media and duplicate order positions', () => {
 });
 
 test('hero settings cap the carousel at ten slides', () => {
-  const slides = Array.from({ length: 11 }, (_, index) => slide({
-    id: `slide-${index}`,
-    mediaAssetId: `media-${index}`,
-    sortOrder: index,
-  }));
+  const slides = Array.from({ length: 11 }, (_, index) =>
+    slide({
+      id: `slide-${index}`,
+      mediaAssetId: `media-${index}`,
+      sortOrder: index,
+    }),
+  );
   const result = validateHeroSlidesInput(slides);
   assert.equal(result.ok, false);
   assert.equal(result.field, 'heroSlides');

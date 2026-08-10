@@ -24,12 +24,18 @@ test('FAQ page styles have one authoritative owner', () => {
     /^\s*\.faq-empty-state\b/m,
   ];
 
-  const cssFiles = fs.readdirSync(sourceDirectory).filter((fileName) => fileName.endsWith('.css'));
+  const cssFiles = fs
+    .readdirSync(sourceDirectory)
+    .filter((fileName) => fileName.endsWith('.css'));
   for (const fileName of cssFiles) {
     if (fileName === faqStylesheet) continue;
     const cssSource = readSource(path.join(sourceDirectory, fileName));
     for (const selector of faqSelectors) {
-      assert.doesNotMatch(cssSource, selector, `${fileName} must not redefine FAQ page selectors`);
+      assert.doesNotMatch(
+        cssSource,
+        selector,
+        `${fileName} must not redefine FAQ page selectors`,
+      );
     }
   }
 });

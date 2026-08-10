@@ -25,7 +25,10 @@ type Props = {
 };
 
 function isSessionError(error: unknown): boolean {
-  return error instanceof AdminApiError && (error.status === 401 || error.code === 'SESSION_INVALID');
+  return (
+    error instanceof AdminApiError &&
+    (error.status === 401 || error.code === 'SESSION_INVALID')
+  );
 }
 
 export function ConversionTargetEditorDialog({
@@ -62,7 +65,9 @@ export function ConversionTargetEditorDialog({
           return;
         }
         setRemoteGroups([]);
-        setIntegrationError(error instanceof Error ? error.message : '读取客服分组失败。');
+        setIntegrationError(
+          error instanceof Error ? error.message : '读取客服分组失败。',
+        );
       } finally {
         setGroupsLoading(false);
       }
@@ -86,7 +91,9 @@ export function ConversionTargetEditorDialog({
           onSessionExpired();
           return;
         }
-        setIntegrationError(error instanceof Error ? error.message : '读取客服系统失败。');
+        setIntegrationError(
+          error instanceof Error ? error.message : '读取客服系统失败。',
+        );
       })
       .finally(() => {
         if (active) setConnectionsLoading(false);
@@ -125,12 +132,18 @@ export function ConversionTargetEditorDialog({
         </div>
 
         <form className="conversion-editor-form" onSubmit={onSubmit}>
-          {errorMessage ? <div className="notice notice-error" role="alert">{errorMessage}</div> : null}
+          {errorMessage ? (
+            <div className="notice notice-error" role="alert">
+              {errorMessage}
+            </div>
+          ) : null}
 
           {isCustomerService ? (
             <>
               {editingTarget?.bindingKind === 'legacy_customer_service' ? (
-                <p className="inline-status is-error">旧客服入口已停用，需要重新绑定客服系统分组。</p>
+                <p className="inline-status is-error">
+                  旧客服入口已停用，需要重新绑定客服系统分组。
+                </p>
               ) : null}
 
               <label>
@@ -151,10 +164,17 @@ export function ConversionTargetEditorDialog({
                     });
                   }}
                 >
-                  <option value="">{connectionsLoading ? '正在读取…' : '选择客服系统'}</option>
+                  <option value="">
+                    {connectionsLoading ? '正在读取…' : '选择客服系统'}
+                  </option>
                   {connections.map((connection) => (
-                    <option key={connection.id} value={connection.id} disabled={!connection.isEnabled}>
-                      {connection.name}{connection.isEnabled ? '' : '（停用）'}
+                    <option
+                      key={connection.id}
+                      value={connection.id}
+                      disabled={!connection.isEnabled}
+                    >
+                      {connection.name}
+                      {connection.isEnabled ? '' : '（停用）'}
                     </option>
                   ))}
                 </select>
@@ -166,10 +186,13 @@ export function ConversionTargetEditorDialog({
                   <select
                     value={form.remoteGroupId ?? ''}
                     required
-                    disabled={!form.customerServiceConnectionId || groupsLoading || saving}
+                    disabled={
+                      !form.customerServiceConnectionId || groupsLoading || saving
+                    }
                     onChange={(event) => {
                       const remoteGroupId = event.target.value || null;
-                      const selected = remoteGroups.find((item) => item.id === remoteGroupId) ?? null;
+                      const selected =
+                        remoteGroups.find((item) => item.id === remoteGroupId) ?? null;
                       onFormChange({
                         ...form,
                         name: selected?.name ?? '',
@@ -179,19 +202,29 @@ export function ConversionTargetEditorDialog({
                       });
                     }}
                   >
-                    <option value="">{groupsLoading ? '正在读取…' : '选择客服分组'}</option>
+                    <option value="">
+                      {groupsLoading ? '正在读取…' : '选择客服分组'}
+                    </option>
                     {remoteGroups.map((remoteGroup) => (
-                      <option key={remoteGroup.id} value={remoteGroup.id} disabled={!remoteGroup.isEnabled}>
-                        {remoteGroup.name}{remoteGroup.isEnabled ? '' : '（停用）'}
+                      <option
+                        key={remoteGroup.id}
+                        value={remoteGroup.id}
+                        disabled={!remoteGroup.isEnabled}
+                      >
+                        {remoteGroup.name}
+                        {remoteGroup.isEnabled ? '' : '（停用）'}
                       </option>
                     ))}
                   </select>
                   <button
                     className="secondary-button"
                     type="button"
-                    disabled={!form.customerServiceConnectionId || groupsLoading || saving}
+                    disabled={
+                      !form.customerServiceConnectionId || groupsLoading || saving
+                    }
                     onClick={() => {
-                      if (form.customerServiceConnectionId) void loadGroups(form.customerServiceConnectionId);
+                      if (form.customerServiceConnectionId)
+                        void loadGroups(form.customerServiceConnectionId);
                     }}
                   >
                     刷新
@@ -199,7 +232,9 @@ export function ConversionTargetEditorDialog({
                 </div>
               </label>
 
-              {integrationError ? <p className="inline-status is-error">{integrationError}</p> : null}
+              {integrationError ? (
+                <p className="inline-status is-error">{integrationError}</p>
+              ) : null}
             </>
           ) : (
             <>
@@ -211,7 +246,9 @@ export function ConversionTargetEditorDialog({
                   autoFocus
                   required
                   maxLength={100}
-                  onChange={(event) => onFormChange({ ...form, name: event.target.value })}
+                  onChange={(event) =>
+                    onFormChange({ ...form, name: event.target.value })
+                  }
                 />
               </label>
 
@@ -223,7 +260,9 @@ export function ConversionTargetEditorDialog({
                   required
                   maxLength={1000}
                   placeholder="https://"
-                  onChange={(event) => onFormChange({ ...form, endpointUrl: event.target.value || null })}
+                  onChange={(event) =>
+                    onFormChange({ ...form, endpointUrl: event.target.value || null })
+                  }
                 />
               </label>
             </>
@@ -245,16 +284,25 @@ export function ConversionTargetEditorDialog({
           </label>
 
           <label className="switch-row">
-            <span><strong>启用入口</strong></span>
+            <span>
+              <strong>启用入口</strong>
+            </span>
             <input
               type="checkbox"
               checked={form.isEnabled}
-              onChange={(event) => onFormChange({ ...form, isEnabled: event.target.checked })}
+              onChange={(event) =>
+                onFormChange({ ...form, isEnabled: event.target.checked })
+              }
             />
           </label>
 
           <div className="admin-dialog-actions">
-            <button className="secondary-button" type="button" disabled={saving} onClick={onClose}>
+            <button
+              className="secondary-button"
+              type="button"
+              disabled={saving}
+              onClick={onClose}
+            >
               取消
             </button>
             <button
@@ -263,7 +311,9 @@ export function ConversionTargetEditorDialog({
               disabled={
                 saving ||
                 (isCustomerService &&
-                  (!form.customerServiceConnectionId || !form.remoteGroupId || !form.remoteGroupName))
+                  (!form.customerServiceConnectionId ||
+                    !form.remoteGroupId ||
+                    !form.remoteGroupName))
               }
             >
               {saving ? '正在保存…' : '保存入口'}

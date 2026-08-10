@@ -15,7 +15,8 @@ const SITE = {
 };
 const INDEX = {
   contentVersion: '20260807090100-index1234567-acde0002',
-  manifestKey: 'public/modules/sections-index/20260807090100-index1234567-acde0002/manifest.json',
+  manifestKey:
+    'public/modules/sections-index/20260807090100-index1234567-acde0002/manifest.json',
   sourceRevision: 'index-source',
   publishedAt: '2026-08-07T09:01:00.000Z',
 };
@@ -27,13 +28,15 @@ const FAQ = {
 };
 const SECTION_A = {
   contentVersion: '20260807090300-sectiona12345-acde0004',
-  manifestKey: 'public/modules/sections/section-a/20260807090300-sectiona12345-acde0004/manifest.json',
+  manifestKey:
+    'public/modules/sections/section-a/20260807090300-sectiona12345-acde0004/manifest.json',
   sourceRevision: 'section-a-source-current',
   publishedAt: '2026-08-07T09:03:00.000Z',
 };
 const SECTION_B = {
   contentVersion: '20260807090400-sectionb12345-acde0005',
-  manifestKey: 'public/modules/sections/section-b/20260807090400-sectionb12345-acde0005/manifest.json',
+  manifestKey:
+    'public/modules/sections/section-b/20260807090400-sectionb12345-acde0005/manifest.json',
   sourceRevision: 'section-b-source',
   publishedAt: '2026-08-07T09:04:00.000Z',
 };
@@ -45,7 +48,8 @@ const SECTION_A_TARGET = {
   total_bytes: 1234,
   is_current: 0,
   published_at: '2026-08-07T08:50:00.000Z',
-  manifest_key: 'public/modules/sections/section-a/20260807085000-sectionaold12-acde9999/manifest.json',
+  manifest_key:
+    'public/modules/sections/section-a/20260807085000-sectionaold12-acde9999/manifest.json',
 };
 
 const POINTER = {
@@ -72,7 +76,11 @@ function createBucket({ pointer = POINTER, manifestExists = true } = {}) {
     async get(key) {
       const body = objects.get(key);
       if (body === undefined) return null;
-      return { async text() { return body; } };
+      return {
+        async text() {
+          return body;
+        },
+      };
     },
     async head(key) {
       return objects.has(key) ? { key } : null;
@@ -99,13 +107,16 @@ function createRollbackDb({ failBatch = false } = {}) {
           return this;
         },
         async first() {
-          if (this.sql.includes('FROM publish_module_versions v')) return SECTION_A_TARGET;
+          if (this.sql.includes('FROM publish_module_versions v'))
+            return SECTION_A_TARGET;
           throw new Error(`Unexpected first SQL: ${this.sql}`);
         },
       };
     },
     async batch(statements) {
-      batches.push(statements.map((statement) => ({ sql: statement.sql, args: statement.args })));
+      batches.push(
+        statements.map((statement) => ({ sql: statement.sql, args: statement.args })),
+      );
       if (failBatch) throw new Error('D1 modular rollback failed');
       return statements.map(() => ({ success: true, meta: { changes: 1 } }));
     },
@@ -161,7 +172,10 @@ test('rolling back one business section changes only that section reference in t
   assert.equal(version.isCurrent, true);
 
   const pointer = JSON.parse(bucket.objects.get('public/current.json'));
-  assert.equal(pointer.sections['section-a'].contentVersion, SECTION_A_TARGET.content_version);
+  assert.equal(
+    pointer.sections['section-a'].contentVersion,
+    SECTION_A_TARGET.content_version,
+  );
   assert.deepEqual(pointer.sections['section-b'], SECTION_B);
   assert.deepEqual(pointer.site, SITE);
   assert.deepEqual(pointer.sectionsIndex, INDEX);
@@ -169,12 +183,24 @@ test('rolling back one business section changes only that section reference in t
   assert.notEqual(pointer.contentVersion, POINTER.contentVersion);
 
   assert.equal(db.batches.length, 1);
-  const moduleScopedReset = db.batches[0].find((statement) => statement.sql.includes('SET is_current = 0'));
+  const moduleScopedReset = db.batches[0].find((statement) =>
+    statement.sql.includes('SET is_current = 0'),
+  );
   assert.deepEqual(moduleScopedReset.args, ['section:section-a']);
-  const audit = db.batches[0].find((statement) => statement.sql.includes('INSERT INTO audit_logs'));
+  const audit = db.batches[0].find((statement) =>
+    statement.sql.includes('INSERT INTO audit_logs'),
+  );
   assert.ok(audit);
-  assert.ok(audit.args.some((arg) => typeof arg === 'string' && arg.includes(SECTION_A.contentVersion)));
-  assert.ok(audit.args.some((arg) => typeof arg === 'string' && arg.includes(SECTION_A_TARGET.content_version)));
+  assert.ok(
+    audit.args.some(
+      (arg) => typeof arg === 'string' && arg.includes(SECTION_A.contentVersion),
+    ),
+  );
+  assert.ok(
+    audit.args.some(
+      (arg) => typeof arg === 'string' && arg.includes(SECTION_A_TARGET.content_version),
+    ),
+  );
 });
 
 test('modular rollback restores the entire previous composite pointer when the D1 transition fails', async () => {
@@ -182,13 +208,14 @@ test('modular rollback restores the entire previous composite pointer when the D
   const db = createRollbackDb({ failBatch: true });
 
   await assert.rejects(
-    () => rollbackModularModule(
-      db,
-      bucket,
-      'section:section-a',
-      SECTION_A_TARGET.content_version,
-      'request-2',
-    ),
+    () =>
+      rollbackModularModule(
+        db,
+        bucket,
+        'section:section-a',
+        SECTION_A_TARGET.content_version,
+        'request-2',
+      ),
     /D1 modular rollback failed/,
   );
 
@@ -202,13 +229,14 @@ test('modular rollback refuses a version whose retained R2 manifest is missing',
   const db = createRollbackDb();
 
   await assert.rejects(
-    () => rollbackModularModule(
-      db,
-      bucket,
-      'section:section-a',
-      SECTION_A_TARGET.content_version,
-      'request-3',
-    ),
+    () =>
+      rollbackModularModule(
+        db,
+        bucket,
+        'section:section-a',
+        SECTION_A_TARGET.content_version,
+        'request-3',
+      ),
     (error) => error?.code === 'PUBLISH_VERSION_OBJECTS_MISSING',
   );
 

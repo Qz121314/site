@@ -10,9 +10,18 @@ const typographyContract = await readFile(
   new URL('../../../packages/storefront-ui/src/typography-contract.css', import.meta.url),
   'utf8',
 );
-const contentCss = await readFile(new URL('../src/content-ui.css', import.meta.url), 'utf8');
-const browseCss = await readFile(new URL('../src/browse-ui.css', import.meta.url), 'utf8');
-const sectionCss = await readFile(new URL('../src/section-ui.css', import.meta.url), 'utf8');
+const contentCss = await readFile(
+  new URL('../src/content-ui.css', import.meta.url),
+  'utf8',
+);
+const browseCss = await readFile(
+  new URL('../src/browse-ui.css', import.meta.url),
+  'utf8',
+);
+const sectionCss = await readFile(
+  new URL('../src/section-ui.css', import.meta.url),
+  'utf8',
+);
 const productDetailCss = await readFile(
   new URL('../src/product-detail-ui.css', import.meta.url),
   'utf8',
@@ -23,7 +32,10 @@ test('Storefront keeps a readable four-step UI type scale', () => {
   assert.match(typographyContract, /--storefront-text-small:\s*0\.75rem;/u);
   assert.match(typographyContract, /--storefront-text-body:\s*0\.875rem;/u);
   assert.match(typographyContract, /--storefront-text-label:\s*0\.9375rem;/u);
-  assert.match(typographyContract, /\.service-mode-badge,[\s\S]*\.bottom-nav small[\s\S]*font-size:\s*var\(--storefront-text-caption\)/u);
+  assert.match(
+    typographyContract,
+    /\.service-mode-badge,[\s\S]*\.bottom-nav small[\s\S]*font-size:\s*var\(--storefront-text-caption\)/u,
+  );
 });
 
 test('all Theme Center densities keep touch controls at least 44px tall', () => {

@@ -54,8 +54,7 @@ type SectionRow = {
 };
 
 type ValidationResult =
-  | { ok: true; value: SectionInput }
-  | { ok: false; field: string; message: string };
+  { ok: true; value: SectionInput } | { ok: false; field: string; message: string };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -84,7 +83,8 @@ function readOptionalText(
   label: string,
   maxLength: number,
 ): { ok: true; value: string | null } | { ok: false; field: string; message: string } {
-  if (value === null || value === undefined || value === '') return { ok: true, value: null };
+  if (value === null || value === undefined || value === '')
+    return { ok: true, value: null };
   if (typeof value !== 'string') {
     return { ok: false, field, message: `${label}必须是文本。` };
   }
@@ -96,7 +96,10 @@ function readOptionalText(
   return { ok: true, value: normalized };
 }
 
-function optionalAssetUrl(mediaBaseUrl: string | null, key: string | null): string | null {
+function optionalAssetUrl(
+  mediaBaseUrl: string | null,
+  key: string | null,
+): string | null {
   return key ? buildAssetPublicUrl(mediaBaseUrl, key) : null;
 }
 
@@ -111,7 +114,12 @@ export function validateSectionInput(value: unknown): ValidationResult {
   if (!description.ok) return description;
   const iconValue = readOptionalText(value.iconValue, 'iconValue', '分区字符图标', 80);
   if (!iconValue.ok) return iconValue;
-  const iconAssetId = readOptionalText(value.iconAssetId, 'iconAssetId', '分区图片图标', 100);
+  const iconAssetId = readOptionalText(
+    value.iconAssetId,
+    'iconAssetId',
+    '分区图片图标',
+    100,
+  );
   if (!iconAssetId.ok) return iconAssetId;
   const browseBackgroundAssetId = readOptionalText(
     value.browseBackgroundAssetId,
@@ -121,7 +129,11 @@ export function validateSectionInput(value: unknown): ValidationResult {
   );
   if (!browseBackgroundAssetId.ok) return browseBackgroundAssetId;
   if (!iconAssetId.value && !iconValue.value) {
-    return { ok: false, field: 'iconValue', message: '请上传分区图标或选择一个备用字符图标。' };
+    return {
+      ok: false,
+      field: 'iconValue',
+      message: '请上传分区图标或选择一个备用字符图标。',
+    };
   }
 
   if (
@@ -161,7 +173,10 @@ function mapSection(row: SectionRow): SectionRecord {
     iconAssetId: row.icon_asset_id,
     iconUrl: optionalAssetUrl(row.media_base_url, row.icon_object_key),
     browseBackgroundAssetId: row.browse_background_asset_id,
-    browseBackgroundUrl: optionalAssetUrl(row.media_base_url, row.browse_background_object_key),
+    browseBackgroundUrl: optionalAssetUrl(
+      row.media_base_url,
+      row.browse_background_object_key,
+    ),
     sortOrder: row.sort_order,
     isEnabled: row.is_enabled === 1,
     createdAt: row.created_at,
@@ -213,7 +228,9 @@ export async function listSections(
         ? 'WHERE s.deleted_at IS NOT NULL'
         : '';
   const result = await db
-    .prepare(`${SECTION_SELECT} ${whereClause} ORDER BY s.sort_order ASC, s.name COLLATE NOCASE ASC`)
+    .prepare(
+      `${SECTION_SELECT} ${whereClause} ORDER BY s.sort_order ASC, s.name COLLATE NOCASE ASC`,
+    )
     .all<SectionRow>();
   return result.results.map(mapSection);
 }
@@ -239,12 +256,18 @@ function slugify(value: string): string {
     .slice(0, 80);
 }
 
-async function createUniqueSlug(db: D1Database, name: string, id: string): Promise<string> {
+async function createUniqueSlug(
+  db: D1Database,
+  name: string,
+  id: string,
+): Promise<string> {
   const base = slugify(name) || `section-${id.slice(0, 8)}`;
   for (let suffix = 0; suffix < 1000; suffix += 1) {
     const candidate = suffix === 0 ? base : `${base}-${suffix + 1}`;
     const existing = await db
-      .prepare('SELECT id FROM sections WHERE lower(slug) = lower(?) AND deleted_at IS NULL')
+      .prepare(
+        'SELECT id FROM sections WHERE lower(slug) = lower(?) AND deleted_at IS NULL',
+      )
       .bind(candidate)
       .first<{ id: string }>();
     if (!existing) return candidate;

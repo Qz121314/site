@@ -75,7 +75,12 @@ export function ProductTable({
           <tr>
             <th className="product-select-column">
               {scope === 'active' ? (
-                <input type="checkbox" aria-label="选择当前结果全部产品" checked={allVisibleSelected} onChange={onToggleSelectAll} />
+                <input
+                  type="checkbox"
+                  aria-label="选择当前结果全部产品"
+                  checked={allVisibleSelected}
+                  onChange={onToggleSelectAll}
+                />
               ) : null}
             </th>
             <th>产品</th>
@@ -93,13 +98,22 @@ export function ProductTable({
             <tr key={product.id}>
               <td className="product-select-column">
                 {scope === 'active' ? (
-                  <input type="checkbox" aria-label={`选择产品 ${product.title}`} checked={selectedIds.has(product.id)} onChange={() => onToggleSelect(product.id)} />
+                  <input
+                    type="checkbox"
+                    aria-label={`选择产品 ${product.title}`}
+                    checked={selectedIds.has(product.id)}
+                    onChange={() => onToggleSelect(product.id)}
+                  />
                 ) : null}
               </td>
               <td>
                 <div className="product-table-identity">
                   <div className="product-table-cover">
-                    {product.effectiveCoverUrl ? <img src={product.effectiveCoverUrl} alt="" /> : <span>无图片</span>}
+                    {product.effectiveCoverUrl ? (
+                      <img src={product.effectiveCoverUrl} alt="" />
+                    ) : (
+                      <span>无图片</span>
+                    )}
                   </div>
                   <div>
                     <strong>{product.title}</strong>
@@ -108,26 +122,91 @@ export function ProductTable({
                   </div>
                 </div>
               </td>
-              <td><div className="product-table-stack"><span>{serviceModeLabel(product.serviceMode)}</span><small>{product.conversionGroupName ?? '未选择转化分组'}</small></div></td>
+              <td>
+                <div className="product-table-stack">
+                  <span>{serviceModeLabel(product.serviceMode)}</span>
+                  <small>{product.conversionGroupName ?? '未选择转化分组'}</small>
+                </div>
+              </td>
               <td>{product.categoryName ?? '未分类'}</td>
               <td>
                 {product.tags.length > 0 ? (
                   <div className="product-table-tags">
-                    {product.tags.map((tag) => <span key={tag.id} className={!tag.isEnabled ? 'is-disabled' : undefined}>{tag.name}</span>)}
+                    {product.tags.map((tag) => (
+                      <span
+                        key={tag.id}
+                        className={!tag.isEnabled ? 'is-disabled' : undefined}
+                      >
+                        {tag.name}
+                      </span>
+                    ))}
                   </div>
-                ) : <span className="product-tags-none">—</span>}
+                ) : (
+                  <span className="product-tags-none">—</span>
+                )}
               </td>
-              <td><span className={`product-status-badge is-${product.status}`}>{statusLabel(product.status)}</span></td>
+              <td>
+                <span className={`product-status-badge is-${product.status}`}>
+                  {statusLabel(product.status)}
+                </span>
+              </td>
               <td>
                 <div className="product-order-cell">
                   <span>{product.sortOrder}</span>
-                  {scope === 'active' ? <div><button type="button" aria-label="上移产品" disabled={working || reorderDisabled || index === 0} onClick={() => onMove(product, -1)}>↑</button><button type="button" aria-label="下移产品" disabled={working || reorderDisabled || index === products.length - 1} onClick={() => onMove(product, 1)}>↓</button></div> : null}
+                  {scope === 'active' ? (
+                    <div>
+                      <button
+                        type="button"
+                        aria-label="上移产品"
+                        disabled={working || reorderDisabled || index === 0}
+                        onClick={() => onMove(product, -1)}
+                      >
+                        ↑
+                      </button>
+                      <button
+                        type="button"
+                        aria-label="下移产品"
+                        disabled={
+                          working || reorderDisabled || index === products.length - 1
+                        }
+                        onClick={() => onMove(product, 1)}
+                      >
+                        ↓
+                      </button>
+                    </div>
+                  ) : null}
                 </div>
               </td>
               <td>{formatDate(product.updatedAt)}</td>
               <td>
                 <div className="product-row-actions">
-                  {scope === 'active' ? <><button type="button" disabled={working} onClick={() => onEdit(product)}>编辑</button><button className="text-danger" type="button" disabled={working} onClick={() => onDelete(product)}>删除</button></> : <button type="button" disabled={working} onClick={() => onRestore(product)}>恢复</button>}
+                  {scope === 'active' ? (
+                    <>
+                      <button
+                        type="button"
+                        disabled={working}
+                        onClick={() => onEdit(product)}
+                      >
+                        编辑
+                      </button>
+                      <button
+                        className="text-danger"
+                        type="button"
+                        disabled={working}
+                        onClick={() => onDelete(product)}
+                      >
+                        删除
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      type="button"
+                      disabled={working}
+                      onClick={() => onRestore(product)}
+                    >
+                      恢复
+                    </button>
+                  )}
                 </div>
               </td>
             </tr>

@@ -33,7 +33,9 @@ export function CategoryEditorDialog({
         <div className="admin-dialog-header">
           <div>
             <p>{sectionName}</p>
-            <h3 id="category-editor-title">{editingCategory ? '编辑分类' : '新增分类'}</h3>
+            <h3 id="category-editor-title">
+              {editingCategory ? '编辑分类' : '新增分类'}
+            </h3>
           </div>
           <button type="button" aria-label="关闭" disabled={saving} onClick={onClose}>
             ×
@@ -41,7 +43,11 @@ export function CategoryEditorDialog({
         </div>
 
         <form className="section-editor-form" onSubmit={onSubmit}>
-          {errorMessage ? <div className="notice notice-error" role="alert">{errorMessage}</div> : null}
+          {errorMessage ? (
+            <div className="notice notice-error" role="alert">
+              {errorMessage}
+            </div>
+          ) : null}
 
           <label>
             <span>分类名称</span>
@@ -84,12 +90,19 @@ export function CategoryEditorDialog({
             <input
               type="checkbox"
               checked={form.isEnabled}
-              onChange={(event) => onFormChange({ ...form, isEnabled: event.target.checked })}
+              onChange={(event) =>
+                onFormChange({ ...form, isEnabled: event.target.checked })
+              }
             />
           </label>
 
           <div className="admin-dialog-actions">
-            <button className="secondary-button" type="button" disabled={saving} onClick={onClose}>
+            <button
+              className="secondary-button"
+              type="button"
+              disabled={saving}
+              onClick={onClose}
+            >
               取消
             </button>
             <button className="primary-button" type="submit" disabled={saving}>

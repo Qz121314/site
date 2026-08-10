@@ -97,11 +97,7 @@ export class ModularPublicationError extends Error {
   readonly code: string;
   readonly status: 400 | 404 | 409 | 503;
 
-  constructor(
-    code: string,
-    message: string,
-    status: 400 | 404 | 409 | 503 = 409,
-  ) {
+  constructor(code: string, message: string, status: 400 | 404 | 409 | 503 = 409) {
     super(message);
     this.name = 'ModularPublicationError';
     this.code = code;
@@ -235,7 +231,10 @@ type ModulePayload = {
   label: string;
   stateModel: unknown;
   mediaKeys: string[];
-  buildFiles: (contentVersion: string, publishedAt: string) => Array<{
+  buildFiles: (
+    contentVersion: string,
+    publishedAt: string,
+  ) => Array<{
     relativePath: string;
     value: unknown;
   }>;
@@ -292,7 +291,8 @@ function parseSectionModuleKey(moduleKey: string): string | null {
 }
 
 export function normalizePublishModuleKey(value: unknown): string | null {
-  if (value === undefined || value === null || value === '' || value === 'all') return 'all';
+  if (value === undefined || value === null || value === '' || value === 'all')
+    return 'all';
   if (value === 'site' || value === 'sections-index' || value === 'faq') return value;
   if (typeof value !== 'string' || value.length > 140) return null;
   const sectionId = parseSectionModuleKey(value);
@@ -305,11 +305,15 @@ function moduleBasePrefix(moduleKey: string): string {
   if (moduleKey === 'sections-index') return 'public/modules/sections-index';
   if (moduleKey === 'faq') return 'public/modules/faq';
   const sectionId = parseSectionModuleKey(moduleKey);
-  if (!sectionId) throw new ModularPublicationError('INVALID_MODULE', '发布板块标识无效。', 400);
+  if (!sectionId)
+    throw new ModularPublicationError('INVALID_MODULE', '发布板块标识无效。', 400);
   return `public/modules/sections/${encodeKeySegment(sectionId)}`;
 }
 
-function moduleReference(pointer: ModularStorefrontPointer | null, moduleKey: string): ModuleReference | null {
+function moduleReference(
+  pointer: ModularStorefrontPointer | null,
+  moduleKey: string,
+): ModuleReference | null {
   if (!pointer) return null;
   if (moduleKey === 'site') return pointer.site;
   if (moduleKey === 'sections-index') return pointer.sectionsIndex;
@@ -344,9 +348,11 @@ function validModuleReference(value: unknown): value is ModuleReference {
   );
 }
 
-export async function readModularPointer(
-  bucket: R2Bucket,
-): Promise<{ pointer: ModularStorefrontPointer | null; body: string | null; legacyDetected: boolean }> {
+export async function readModularPointer(bucket: R2Bucket): Promise<{
+  pointer: ModularStorefrontPointer | null;
+  body: string | null;
+  legacyDetected: boolean;
+}> {
   const object = await bucket.get(CURRENT_KEY);
   if (!object) return { pointer: null, body: null, legacyDetected: false };
   const body = await object.text();
@@ -392,10 +398,16 @@ export async function readModularPointer(
 
 async function sha256Hex(value: string): Promise<string> {
   const digest = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(value));
-  return Array.from(new Uint8Array(digest), (byte) => byte.toString(16).padStart(2, '0')).join('');
+  return Array.from(new Uint8Array(digest), (byte) =>
+    byte.toString(16).padStart(2, '0'),
+  ).join('');
 }
 
-async function encodeFile(prefix: string, relativePath: string, value: unknown): Promise<EncodedFile> {
+async function encodeFile(
+  prefix: string,
+  relativePath: string,
+  value: unknown,
+): Promise<EncodedFile> {
   const body = JSON.stringify(value);
   return {
     relativePath,
@@ -439,7 +451,10 @@ async function loadSource(db: D1Database): Promise<Source> {
     )
     .first<SiteRow>();
   if (!site) {
-    throw new ModularPublicationError('SITE_SETTINGS_MISSING', '站点设置不存在，无法读取发布状态。');
+    throw new ModularPublicationError(
+      'SITE_SETTINGS_MISSING',
+      '站点设置不存在，无法读取发布状态。',
+    );
   }
 
   const heroSlides = (
@@ -586,7 +601,17 @@ async function loadSource(db: D1Database): Promise<Source> {
     mediaByProduct.set(item.product_id, current);
   }
 
-  return { site, heroSlides, sections, categories, products, mediaByProduct, faqs, publicTags, tagsByProduct };
+  return {
+    site,
+    heroSlides,
+    sections,
+    categories,
+    products,
+    mediaByProduct,
+    faqs,
+    publicTags,
+    tagsByProduct,
+  };
 }
 
 function sitePublicModel(site: SiteRow, heroSlides: HeroSlideRow[]) {
@@ -595,23 +620,25 @@ function sitePublicModel(site: SiteRow, heroSlides: HeroSlideRow[]) {
     locationLabel: site.location_label,
     logoObjectKey: site.logo_object_key,
     homeSectionLimit: site.home_section_limit,
-    hero: heroSlides.length > 0
-      ? {
-          slides: heroSlides.map((slide) => ({
-            id: slide.id,
-            media: {
-              kind: slide.media_kind,
-              objectKey: slide.media_object_key,
-            },
-            title: slide.title,
-            description: slide.description,
-            cta: slide.cta_label && slide.cta_href
-              ? { label: slide.cta_label, href: slide.cta_href }
-              : null,
-            sortOrder: slide.sort_order,
-          })),
-        }
-      : null,
+    hero:
+      heroSlides.length > 0
+        ? {
+            slides: heroSlides.map((slide) => ({
+              id: slide.id,
+              media: {
+                kind: slide.media_kind,
+                objectKey: slide.media_object_key,
+              },
+              title: slide.title,
+              description: slide.description,
+              cta:
+                slide.cta_label && slide.cta_href
+                  ? { label: slide.cta_label, href: slide.cta_href }
+                  : null,
+              sortOrder: slide.sort_order,
+            })),
+          }
+        : null,
     navigation: {
       showHot: site.show_hot === 1,
       showLatest: site.show_latest === 1,
@@ -640,7 +667,11 @@ function sectionsIndexModel(source: Source) {
 function sectionPublicData(source: Source, sectionId: string) {
   const section = source.sections.find((item) => item.id === sectionId);
   if (!section) {
-    throw new ModularPublicationError('SECTION_NOT_FOUND', '当前分区不存在、已停用或已进入回收站。', 404);
+    throw new ModularPublicationError(
+      'SECTION_NOT_FOUND',
+      '当前分区不存在、已停用或已进入回收站。',
+      404,
+    );
   }
 
   const categories = source.categories
@@ -652,7 +683,9 @@ function sectionPublicData(source: Source, sectionId: string) {
       sortOrder: category.sort_order,
     }));
   const tags = source.publicTags.filter((tag) => tag.sectionId === sectionId);
-  const productRows = source.products.filter((product) => product.section_id === sectionId);
+  const productRows = source.products.filter(
+    (product) => product.section_id === sectionId,
+  );
   const products = productRows.map((product) => {
     const media = (source.mediaByProduct.get(product.id) ?? []).map((item) => ({
       id: item.id,
@@ -824,7 +857,10 @@ function validatePayload(source: Source, payload: ModulePayload): void {
       );
     }
     if (source.site.logo_asset_id && !source.site.logo_object_key) {
-      throw new ModularPublicationError('SITE_LOGO_INVALID', '当前站点 Logo 已不可用，请重新设置后再发布。');
+      throw new ModularPublicationError(
+        'SITE_LOGO_INVALID',
+        '当前站点 Logo 已不可用，请重新设置后再发布。',
+      );
     }
     for (const slide of source.heroSlides) {
       if (!slide.media_object_key || !slide.media_kind) {
@@ -850,19 +886,33 @@ function validatePayload(source: Source, payload: ModulePayload): void {
   }
 
   if (payload.kind !== 'section' || !payload.sectionId) return;
-  const products = source.products.filter((product) => product.section_id === payload.sectionId);
+  const products = source.products.filter(
+    (product) => product.section_id === payload.sectionId,
+  );
   for (const product of products) {
-    if (product.category_id && (!product.category_name || product.category_enabled !== 1)) {
+    if (
+      product.category_id &&
+      (!product.category_name || product.category_enabled !== 1)
+    ) {
       throw new ModularPublicationError(
         'PRODUCT_CATEGORY_INVALID',
         `产品“${product.title}”选择的分类已不可用，当前分区无法发布。`,
       );
     }
     if (product.service_mode === 'offline' && !product.address) {
-      throw new ModularPublicationError('PRODUCT_ADDRESS_REQUIRED', `产品“${product.title}”缺少服务地址。`);
+      throw new ModularPublicationError(
+        'PRODUCT_ADDRESS_REQUIRED',
+        `产品“${product.title}”缺少服务地址。`,
+      );
     }
-    if ((source.mediaByProduct.get(product.id) ?? []).length === 0 || !product.effective_cover_object_key) {
-      throw new ModularPublicationError('PRODUCT_MEDIA_INVALID', `产品“${product.title}”缺少可用图片。`);
+    if (
+      (source.mediaByProduct.get(product.id) ?? []).length === 0 ||
+      !product.effective_cover_object_key
+    ) {
+      throw new ModularPublicationError(
+        'PRODUCT_MEDIA_INVALID',
+        `产品“${product.title}”缺少可用图片。`,
+      );
     }
   }
 }
@@ -872,7 +922,12 @@ async function payloadRevision(payload: ModulePayload): Promise<string> {
 }
 
 function desiredModuleKeys(source: Source): string[] {
-  return ['site', 'sections-index', 'faq', ...source.sections.map((section) => sectionModuleKey(section.id))];
+  return [
+    'site',
+    'sections-index',
+    'faq',
+    ...source.sections.map((section) => sectionModuleKey(section.id)),
+  ];
 }
 
 function blankPointer(
@@ -884,7 +939,10 @@ function blankPointer(
   const sectionsIndex = references.get('sections-index');
   const faq = references.get('faq');
   if (!site || !sectionsIndex || !faq) {
-    throw new ModularPublicationError('PUBLISH_BOOTSTRAP_INCOMPLETE', '首次模块化发布缺少必要的全局板块。');
+    throw new ModularPublicationError(
+      'PUBLISH_BOOTSTRAP_INCOMPLETE',
+      '首次模块化发布缺少必要的全局板块。',
+    );
   }
   const sections: Record<string, ModuleReference> = {};
   for (const section of source.sections) {
@@ -942,9 +1000,9 @@ async function preparePublication(
 
   try {
     const files = await Promise.all(
-      payload.buildFiles(contentVersion, now).map((file) =>
-        encodeFile(prefix, file.relativePath, file.value),
-      ),
+      payload
+        .buildFiles(contentVersion, now)
+        .map((file) => encodeFile(prefix, file.relativePath, file.value)),
     );
     const manifestValue = {
       schemaVersion: 2,
@@ -968,12 +1026,17 @@ async function preparePublication(
             contentType: 'application/json; charset=utf-8',
             cacheControl: IMMUTABLE_CACHE,
           },
-          customMetadata: { moduleKey: payload.moduleKey, contentVersion, sourceRevision },
+          customMetadata: {
+            moduleKey: payload.moduleKey,
+            contentVersion,
+            sourceRevision,
+          },
         }),
       ),
     );
     const objectCount = files.length + 1;
-    const totalBytes = files.reduce((sum, file) => sum + file.byteSize, 0) + manifest.byteSize;
+    const totalBytes =
+      files.reduce((sum, file) => sum + file.byteSize, 0) + manifest.byteSize;
 
     await db
       .prepare(
@@ -1016,7 +1079,11 @@ async function preparePublication(
   }
 }
 
-async function markJobFailed(db: D1Database, jobId: string, error: unknown): Promise<void> {
+async function markJobFailed(
+  db: D1Database,
+  jobId: string,
+  error: unknown,
+): Promise<void> {
   const message = error instanceof Error ? error.message.slice(0, 1000) : '未知发布错误';
   try {
     await db
@@ -1036,8 +1103,15 @@ async function deleteR2PrefixBestEffort(bucket: R2Bucket, prefix: string): Promi
   try {
     let cursor: string | undefined;
     do {
-      const page = await bucket.list({ prefix: `${prefix}/`, ...(cursor ? { cursor } : {}), limit: 1000 });
-      for (const batch of chunk(page.objects.map((object) => object.key), R2_DELETE_BATCH_SIZE)) {
+      const page = await bucket.list({
+        prefix: `${prefix}/`,
+        ...(cursor ? { cursor } : {}),
+        limit: 1000,
+      });
+      for (const batch of chunk(
+        page.objects.map((object) => object.key),
+        R2_DELETE_BATCH_SIZE,
+      )) {
         if (batch.length > 0) await bucket.delete(batch);
       }
       cursor = page.truncated ? page.cursor : undefined;
@@ -1058,7 +1132,10 @@ async function ensureNoActivePublish(db: D1Database, now: string): Promise<void>
     )
     .first<{ id: string; requested_at: string }>();
   if (active && active.requested_at >= staleBefore) {
-    throw new ModularPublicationError('PUBLISH_IN_PROGRESS', '已有前台发布任务正在执行，请稍后再试。');
+    throw new ModularPublicationError(
+      'PUBLISH_IN_PROGRESS',
+      '已有前台发布任务正在执行，请稍后再试。',
+    );
   }
   if (active) {
     await db
@@ -1107,7 +1184,10 @@ async function listModuleJobs(db: D1Database): Promise<ModuleJobRow[]> {
   ).results;
 }
 
-function publicVersion(row: ModuleVersionRow, currentVersion: string | null): PublishModuleVersion {
+function publicVersion(
+  row: ModuleVersionRow,
+  currentVersion: string | null,
+): PublishModuleVersion {
   return {
     moduleKey: row.module_key,
     contentVersion: row.content_version,
@@ -1221,12 +1301,17 @@ async function pruneModuleRetention(
   const stale = rows.slice(RETAINED_VERSION_COUNT);
 
   for (const row of stale) {
-    await deleteR2PrefixBestEffort(bucket, `${moduleBasePrefix(moduleKey)}/${row.content_version}`);
+    await deleteR2PrefixBestEffort(
+      bucket,
+      `${moduleBasePrefix(moduleKey)}/${row.content_version}`,
+    );
   }
   if (stale.length > 0) {
     await db.batch(
       stale.map((row) =>
-        db.prepare('DELETE FROM publish_module_versions WHERE content_version = ?').bind(row.content_version),
+        db
+          .prepare('DELETE FROM publish_module_versions WHERE content_version = ?')
+          .bind(row.content_version),
       ),
     );
   }
@@ -1244,12 +1329,16 @@ async function pruneModuleRetention(
       .all<{ id: string }>()
   ).results;
   const extraSlots = Math.max(0, RETAINED_VERSION_COUNT - protectedJobIds.size);
-  const extraKeep = jobs.filter((job) => !protectedJobIds.has(job.id)).slice(0, extraSlots);
+  const extraKeep = jobs
+    .filter((job) => !protectedJobIds.has(job.id))
+    .slice(0, extraSlots);
   const keepIds = new Set([...protectedJobIds, ...extraKeep.map((job) => job.id)]);
   const staleJobIds = jobs.map((job) => job.id).filter((id) => !keepIds.has(id));
   if (staleJobIds.length > 0) {
     await db.batch(
-      staleJobIds.map((id) => db.prepare('DELETE FROM publish_module_jobs WHERE id = ?').bind(id)),
+      staleJobIds.map((id) =>
+        db.prepare('DELETE FROM publish_module_jobs WHERE id = ?').bind(id),
+      ),
     );
   }
 }
@@ -1269,7 +1358,8 @@ async function pruneModulesBestEffort(
           event: 'storefront.module_retention_failed',
           moduleKey,
           errorName: error instanceof Error ? error.name : 'UnknownError',
-          errorMessage: error instanceof Error ? error.message : 'Unknown retention error',
+          errorMessage:
+            error instanceof Error ? error.message : 'Unknown retention error',
         }),
       );
     }
@@ -1289,7 +1379,10 @@ export async function publishModularStorefront(
   const now = new Date().toISOString();
   await ensureNoActivePublish(db, now);
 
-  const [source, pointerResult] = await Promise.all([loadSource(db), readModularPointer(bucket)]);
+  const [source, pointerResult] = await Promise.all([
+    loadSource(db),
+    readModularPointer(bucket),
+  ]);
   const allKeys = desiredModuleKeys(source);
   const enabledSectionIds = new Set(source.sections.map((section) => section.id));
   const requestedKeys = new Set<string>();
@@ -1300,13 +1393,18 @@ export async function publishModularStorefront(
   } else if (normalized === 'sections-index') {
     requestedKeys.add('sections-index');
     for (const section of source.sections) {
-      if (!pointerResult.pointer?.sections[section.id]) requestedKeys.add(sectionModuleKey(section.id));
+      if (!pointerResult.pointer?.sections[section.id])
+        requestedKeys.add(sectionModuleKey(section.id));
     }
   } else {
     if (normalized.startsWith(SECTION_PREFIX)) {
       const sectionId = parseSectionModuleKey(normalized);
       if (!sectionId || !enabledSectionIds.has(sectionId)) {
-        throw new ModularPublicationError('SECTION_NOT_FOUND', '当前分区不存在、已停用或已进入回收站。', 404);
+        throw new ModularPublicationError(
+          'SECTION_NOT_FOUND',
+          '当前分区不存在、已停用或已进入回收站。',
+          404,
+        );
       }
     }
     requestedKeys.add(normalized);
@@ -1393,7 +1491,11 @@ export async function publishModularStorefront(
       }
     : blankPointer(now, references, source);
   for (const publication of prepared) {
-    nextPointer = pointerWithModule(nextPointer, publication.moduleKey, referenceFromPrepared(publication));
+    nextPointer = pointerWithModule(
+      nextPointer,
+      publication.moduleKey,
+      referenceFromPrepared(publication),
+    );
   }
 
   if (requestedKeys.has('sections-index') || bootstrapped || normalized === 'all') {
@@ -1406,7 +1508,10 @@ export async function publishModularStorefront(
   }
 
   await bucket.put(CURRENT_KEY, JSON.stringify(nextPointer), {
-    httpMetadata: { contentType: 'application/json; charset=utf-8', cacheControl: POINTER_CACHE },
+    httpMetadata: {
+      contentType: 'application/json; charset=utf-8',
+      cacheControl: POINTER_CACHE,
+    },
   });
 
   try {
@@ -1414,10 +1519,14 @@ export async function publishModularStorefront(
     for (const publication of prepared) {
       statements.push(
         db
-          .prepare('UPDATE publish_module_versions SET is_current = 0 WHERE module_key = ? AND is_current = 1')
+          .prepare(
+            'UPDATE publish_module_versions SET is_current = 0 WHERE module_key = ? AND is_current = 1',
+          )
           .bind(publication.moduleKey),
         db
-          .prepare('UPDATE publish_module_versions SET is_current = 1 WHERE content_version = ?')
+          .prepare(
+            'UPDATE publish_module_versions SET is_current = 1 WHERE content_version = ?',
+          )
           .bind(publication.contentVersion),
         db
           .prepare(
@@ -1434,7 +1543,9 @@ export async function publishModularStorefront(
           metadata: {
             contentVersion: publication.contentVersion,
             sourceRevision: publication.sourceRevision,
-            previousContentVersion: moduleReference(pointerResult.pointer, publication.moduleKey)?.contentVersion ?? null,
+            previousContentVersion:
+              moduleReference(pointerResult.pointer, publication.moduleKey)
+                ?.contentVersion ?? null,
             objectCount: publication.objectCount,
             totalBytes: publication.totalBytes,
             bootstrapped,
@@ -1447,7 +1558,10 @@ export async function publishModularStorefront(
   } catch (error) {
     if (pointerResult.body !== null) {
       await bucket.put(CURRENT_KEY, pointerResult.body, {
-        httpMetadata: { contentType: 'application/json; charset=utf-8', cacheControl: POINTER_CACHE },
+        httpMetadata: {
+          contentType: 'application/json; charset=utf-8',
+          cacheControl: POINTER_CACHE,
+        },
       });
     } else {
       await bucket.delete(CURRENT_KEY);
@@ -1463,7 +1577,11 @@ export async function publishModularStorefront(
       // Modular retained-version media indexes supersede legacy cleanup guards.
     }
   }
-  await pruneModulesBestEffort(db, bucket, prepared.map((publication) => publication.moduleKey));
+  await pruneModulesBestEffort(
+    db,
+    bucket,
+    prepared.map((publication) => publication.moduleKey),
+  );
   return {
     pointerVersion: nextPointer.contentVersion,
     publishedAt: nextPointer.publishedAt,
@@ -1481,10 +1599,22 @@ export async function rollbackModularModule(
 ): Promise<PublishModuleVersion> {
   const moduleKey = normalizePublishModuleKey(moduleKeyInput);
   if (!moduleKey || moduleKey === 'all') {
-    throw new ModularPublicationError('INVALID_MODULE', '请选择需要回退的发布板块。', 400);
+    throw new ModularPublicationError(
+      'INVALID_MODULE',
+      '请选择需要回退的发布板块。',
+      400,
+    );
   }
-  if (!contentVersion || contentVersion.length > 180 || !/^[A-Za-z0-9-]+$/u.test(contentVersion)) {
-    throw new ModularPublicationError('INVALID_PUBLISH_VERSION', '前台版本标识无效。', 400);
+  if (
+    !contentVersion ||
+    contentVersion.length > 180 ||
+    !/^[A-Za-z0-9-]+$/u.test(contentVersion)
+  ) {
+    throw new ModularPublicationError(
+      'INVALID_PUBLISH_VERSION',
+      '前台版本标识无效。',
+      400,
+    );
   }
 
   const row = await db
@@ -1505,20 +1635,34 @@ export async function rollbackModularModule(
     .bind(moduleKey, contentVersion)
     .first<ModuleVersionRow & { manifest_key: string }>();
   if (!row) {
-    throw new ModularPublicationError('PUBLISH_VERSION_NOT_FOUND', '该板块版本已不存在。', 404);
+    throw new ModularPublicationError(
+      'PUBLISH_VERSION_NOT_FOUND',
+      '该板块版本已不存在。',
+      404,
+    );
   }
   if (!(await bucket.head(row.manifest_key))) {
-    throw new ModularPublicationError('PUBLISH_VERSION_OBJECTS_MISSING', '该板块的 R2 快照已不完整，不能回退。');
+    throw new ModularPublicationError(
+      'PUBLISH_VERSION_OBJECTS_MISSING',
+      '该板块的 R2 快照已不完整，不能回退。',
+    );
   }
 
   const pointerResult = await readModularPointer(bucket);
   const pointer = pointerResult.pointer;
   if (!pointer) {
-    throw new ModularPublicationError('MODULAR_POINTER_REQUIRED', '模块化前台尚未完成首次发布。');
+    throw new ModularPublicationError(
+      'MODULAR_POINTER_REQUIRED',
+      '模块化前台尚未完成首次发布。',
+    );
   }
   const current = moduleReference(pointer, moduleKey);
   if (!current) {
-    throw new ModularPublicationError('MODULE_NOT_PUBLISHED', '该板块当前没有在线版本。', 404);
+    throw new ModularPublicationError(
+      'MODULE_NOT_PUBLISHED',
+      '该板块当前没有在线版本。',
+      404,
+    );
   }
   if (current.contentVersion === contentVersion) {
     return publicVersion(row, contentVersion);
@@ -1539,7 +1683,11 @@ export async function rollbackModularModule(
   if (moduleKey.startsWith(SECTION_PREFIX)) {
     const sectionId = parseSectionModuleKey(moduleKey);
     if (!sectionId || !pointer.sections[sectionId]) {
-      throw new ModularPublicationError('MODULE_NOT_PUBLISHED', '该分区当前不在前台导航中，不能回退。', 404);
+      throw new ModularPublicationError(
+        'MODULE_NOT_PUBLISHED',
+        '该分区当前不在前台导航中，不能回退。',
+        404,
+      );
     }
     nextPointer = {
       ...nextPointer,
@@ -1548,15 +1696,22 @@ export async function rollbackModularModule(
   }
 
   await bucket.put(CURRENT_KEY, JSON.stringify(nextPointer), {
-    httpMetadata: { contentType: 'application/json; charset=utf-8', cacheControl: POINTER_CACHE },
+    httpMetadata: {
+      contentType: 'application/json; charset=utf-8',
+      cacheControl: POINTER_CACHE,
+    },
   });
   try {
     await db.batch([
       db
-        .prepare('UPDATE publish_module_versions SET is_current = 0 WHERE module_key = ? AND is_current = 1')
+        .prepare(
+          'UPDATE publish_module_versions SET is_current = 0 WHERE module_key = ? AND is_current = 1',
+        )
         .bind(moduleKey),
       db
-        .prepare('UPDATE publish_module_versions SET is_current = 1 WHERE module_key = ? AND content_version = ?')
+        .prepare(
+          'UPDATE publish_module_versions SET is_current = 1 WHERE module_key = ? AND content_version = ?',
+        )
         .bind(moduleKey, contentVersion),
       createAuditLogStatement(db, {
         action: 'storefront.module_rolled_back',
@@ -1573,7 +1728,10 @@ export async function rollbackModularModule(
   } catch (error) {
     if (pointerResult.body !== null) {
       await bucket.put(CURRENT_KEY, pointerResult.body, {
-        httpMetadata: { contentType: 'application/json; charset=utf-8', cacheControl: POINTER_CACHE },
+        httpMetadata: {
+          contentType: 'application/json; charset=utf-8',
+          cacheControl: POINTER_CACHE,
+        },
       });
     }
     throw error;

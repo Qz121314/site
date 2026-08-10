@@ -6,18 +6,39 @@ const rootSource = await readFile(
   new URL('../src/StorefrontRoot.tsx', import.meta.url),
   'utf8',
 );
-const homeSource = await readFile(new URL('../src/HomeFeed.tsx', import.meta.url), 'utf8');
-const browseSource = await readFile(new URL('../src/BrowsePage.tsx', import.meta.url), 'utf8');
-const sectionSource = await readFile(new URL('../src/SectionPage.tsx', import.meta.url), 'utf8');
-const productSource = await readFile(new URL('../src/ProductDetailPage.tsx', import.meta.url), 'utf8');
+const homeSource = await readFile(
+  new URL('../src/HomeFeed.tsx', import.meta.url),
+  'utf8',
+);
+const browseSource = await readFile(
+  new URL('../src/BrowsePage.tsx', import.meta.url),
+  'utf8',
+);
+const sectionSource = await readFile(
+  new URL('../src/SectionPage.tsx', import.meta.url),
+  'utf8',
+);
+const productSource = await readFile(
+  new URL('../src/ProductDetailPage.tsx', import.meta.url),
+  'utf8',
+);
 const faqSource = await readFile(new URL('../src/FaqPage.tsx', import.meta.url), 'utf8');
-const markdownSource = await readFile(new URL('../src/MarkdownContent.tsx', import.meta.url), 'utf8');
-const supportSource = await readFile(new URL('../src/support-ui.tsx', import.meta.url), 'utf8');
+const markdownSource = await readFile(
+  new URL('../src/MarkdownContent.tsx', import.meta.url),
+  'utf8',
+);
+const supportSource = await readFile(
+  new URL('../src/support-ui.tsx', import.meta.url),
+  'utf8',
+);
 const navigationSource = await readFile(
   new URL('../src/storefront-navigation.tsx', import.meta.url),
   'utf8',
 );
-const systemUiSource = await readFile(new URL('../src/system-ui.ts', import.meta.url), 'utf8');
+const systemUiSource = await readFile(
+  new URL('../src/system-ui.ts', import.meta.url),
+  'utf8',
+);
 
 const storefrontPages = [
   rootSource,
@@ -58,7 +79,11 @@ test('invented marketing and customer-service prose is absent from storefront pa
     'The storefront is temporarily unavailable',
     'Image unavailable',
   ]) {
-    assert.equal(storefrontPages.includes(text), false, `${text} must not be hardcoded in storefront pages`);
+    assert.equal(
+      storefrontPages.includes(text),
+      false,
+      `${text} must not be hardcoded in storefront pages`,
+    );
   }
 });
 
@@ -66,7 +91,10 @@ test('only compact interaction and system-state labels are centralized in system
   for (const key of ['back', 'search', 'retry', 'loading', 'send', 'install']) {
     assert.match(systemUiSource, new RegExp(`\\b${key}:`, 'u'));
   }
-  assert.doesNotMatch(systemUiSource, /service|product|customer support|hot|latest|explore/iu);
+  assert.doesNotMatch(
+    systemUiSource,
+    /service|product|customer support|hot|latest|explore/iu,
+  );
 });
 
 test('bottom navigation labels come from backend configuration with no local label fallback', () => {

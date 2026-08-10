@@ -3,7 +3,10 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
 const mainSource = await readFile(new URL('../src/main.tsx', import.meta.url), 'utf8');
-const contentCss = await readFile(new URL('../src/content-ui.css', import.meta.url), 'utf8');
+const contentCss = await readFile(
+  new URL('../src/content-ui.css', import.meta.url),
+  'utf8',
+);
 const storefrontPagesCss = await readFile(
   new URL('../src/storefront-pages.css', import.meta.url),
   'utf8',

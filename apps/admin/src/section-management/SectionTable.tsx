@@ -71,11 +71,14 @@ export function SectionTable({
               </td>
               <td>
                 <div className="section-identity">
-                  <span className={`section-icon${section.iconAssetId ? ' has-image' : ''}`} aria-hidden="true">
+                  <span
+                    className={`section-icon${section.iconAssetId ? ' has-image' : ''}`}
+                    aria-hidden="true"
+                  >
                     {section.iconAssetId ? (
                       <img src={brandingAssetPreviewUrl(section.iconAssetId)} alt="" />
                     ) : (
-                      section.iconValue ?? '◈'
+                      (section.iconValue ?? '◈')
                     )}
                   </span>
                   <div>
@@ -100,7 +103,9 @@ export function SectionTable({
                       <button
                         type="button"
                         aria-label={`下移 ${section.name}`}
-                        disabled={working || reorderDisabled || index === sections.length - 1}
+                        disabled={
+                          working || reorderDisabled || index === sections.length - 1
+                        }
                         onClick={() => onMove(section, 1)}
                       >
                         ↓
@@ -125,11 +130,17 @@ export function SectionTable({
               </td>
               <td>
                 <span className="relation-count">产品 {section.productCount}</span>
-                <span className="relation-count">转化 {section.conversionMethodCount}</span>
+                <span className="relation-count">
+                  转化 {section.conversionMethodCount}
+                </span>
               </td>
               <td className="actions-cell">
                 {scope === 'trash' ? (
-                  <button type="button" disabled={working} onClick={() => onRestore(section)}>
+                  <button
+                    type="button"
+                    disabled={working}
+                    onClick={() => onRestore(section)}
+                  >
                     恢复
                   </button>
                 ) : (

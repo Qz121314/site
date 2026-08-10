@@ -170,20 +170,26 @@ function parseProduct(value: unknown): AdminProduct {
     !Array.isArray(product.tags) ||
     !Array.isArray(product.tagIds) ||
     !product.tagIds.every((id) => typeof id === 'string') ||
-    (typeof product.conversionGroupId !== 'string' && product.conversionGroupId !== null) ||
-    (typeof product.conversionGroupName !== 'string' && product.conversionGroupName !== null) ||
+    (typeof product.conversionGroupId !== 'string' &&
+      product.conversionGroupId !== null) ||
+    (typeof product.conversionGroupName !== 'string' &&
+      product.conversionGroupName !== null) ||
     (product.conversionMode !== 'customer_service' &&
       product.conversionMode !== 'link' &&
       product.conversionMode !== null) ||
     (typeof product.buttonLabel !== 'string' && product.buttonLabel !== null) ||
     (typeof product.coverAssetId !== 'string' && product.coverAssetId !== null) ||
-    (typeof product.effectiveCoverAssetId !== 'string' && product.effectiveCoverAssetId !== null) ||
-    (typeof product.effectiveCoverUrl !== 'string' && product.effectiveCoverUrl !== null) ||
+    (typeof product.effectiveCoverAssetId !== 'string' &&
+      product.effectiveCoverAssetId !== null) ||
+    (typeof product.effectiveCoverUrl !== 'string' &&
+      product.effectiveCoverUrl !== null) ||
     !Array.isArray(product.media) ||
     typeof product.isFeatured !== 'boolean' ||
     typeof product.featuredOrder !== 'number' ||
     typeof product.sortOrder !== 'number' ||
-    (product.status !== 'draft' && product.status !== 'published' && product.status !== 'archived') ||
+    (product.status !== 'draft' &&
+      product.status !== 'published' &&
+      product.status !== 'archived') ||
     (typeof product.publishedAt !== 'string' && product.publishedAt !== null) ||
     typeof product.createdAt !== 'string' ||
     typeof product.updatedAt !== 'string' ||
@@ -223,13 +229,19 @@ export function fetchProducts(
   );
 }
 
-export function fetchProduct(sectionId: string, productId: string): Promise<AdminProduct> {
+export function fetchProduct(
+  sectionId: string,
+  productId: string,
+): Promise<AdminProduct> {
   return requestJson(`${basePath(sectionId)}/${encodeURIComponent(productId)}`).then(
     parseProductEnvelope,
   );
 }
 
-export function createProduct(sectionId: string, input: ProductInput): Promise<AdminProduct> {
+export function createProduct(
+  sectionId: string,
+  input: ProductInput,
+): Promise<AdminProduct> {
   return writeRequest(basePath(sectionId), 'POST', input).then(parseProductEnvelope);
 }
 
@@ -238,25 +250,37 @@ export function updateProduct(
   productId: string,
   input: ProductInput,
 ): Promise<AdminProduct> {
-  return writeRequest(`${basePath(sectionId)}/${encodeURIComponent(productId)}`, 'PUT', input).then(
-    parseProductEnvelope,
-  );
+  return writeRequest(
+    `${basePath(sectionId)}/${encodeURIComponent(productId)}`,
+    'PUT',
+    input,
+  ).then(parseProductEnvelope);
 }
 
-export function deleteProduct(sectionId: string, productId: string): Promise<AdminProduct> {
-  return writeRequest(`${basePath(sectionId)}/${encodeURIComponent(productId)}`, 'DELETE').then(
-    parseProductEnvelope,
-  );
+export function deleteProduct(
+  sectionId: string,
+  productId: string,
+): Promise<AdminProduct> {
+  return writeRequest(
+    `${basePath(sectionId)}/${encodeURIComponent(productId)}`,
+    'DELETE',
+  ).then(parseProductEnvelope);
 }
 
-export function restoreProduct(sectionId: string, productId: string): Promise<AdminProduct> {
+export function restoreProduct(
+  sectionId: string,
+  productId: string,
+): Promise<AdminProduct> {
   return writeRequest(
     `${basePath(sectionId)}/${encodeURIComponent(productId)}/restore`,
     'POST',
   ).then(parseProductEnvelope);
 }
 
-export async function batchDeleteProducts(sectionId: string, ids: string[]): Promise<string[]> {
+export async function batchDeleteProducts(
+  sectionId: string,
+  ids: string[],
+): Promise<string[]> {
   const body = await requestJson(`${basePath(sectionId)}/batch-delete`, {
     method: 'POST',
     headers: {

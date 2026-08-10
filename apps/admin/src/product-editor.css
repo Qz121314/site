@@ -425,7 +425,10 @@
   line-height: 1.2;
 }
 
-.product-editor-dialog .product-media-preview .product-media-badges b:not(.is-kind-badge) {
+.product-editor-dialog
+  .product-media-preview
+  .product-media-badges
+  b:not(.is-kind-badge) {
   background: #ff5a1f;
 }
 

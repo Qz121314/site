@@ -65,15 +65,24 @@ function normalizeCssColor(value: unknown): string | null {
   const color = value.trim();
   if (!color || color.length > 120) return null;
   if (/^(?:#[0-9a-f]{3,8})$/iu.test(color)) return color;
-  if (/^(?:rgb|rgba|hsl|hsla|oklch|oklab|lab|lch)\([0-9a-z.%+\-/,\s]+\)$/iu.test(color)) return color;
+  if (/^(?:rgb|rgba|hsl|hsla|oklch|oklab|lab|lch)\([0-9a-z.%+\-/,\s]+\)$/iu.test(color))
+    return color;
   if (/^(?:transparent|black|white)$/iu.test(color)) return color;
-  if (/^-?\d+(?:\.\d+)?(?:deg)?\s+-?\d+(?:\.\d+)?%\s+-?\d+(?:\.\d+)?%(?:\s*\/\s*\d+(?:\.\d+)?%?)?$/u.test(color)) {
+  if (
+    /^-?\d+(?:\.\d+)?(?:deg)?\s+-?\d+(?:\.\d+)?%\s+-?\d+(?:\.\d+)?%(?:\s*\/\s*\d+(?:\.\d+)?%?)?$/u.test(
+      color,
+    )
+  ) {
     return `hsl(${color})`;
   }
   return null;
 }
 
-function readColor(record: Record<string, unknown>, keys: string[], fallback: string): string {
+function readColor(
+  record: Record<string, unknown>,
+  keys: string[],
+  fallback: string,
+): string {
   for (const key of keys) {
     const value = normalizeCssColor(record[key]);
     if (value) return value;
@@ -91,11 +100,23 @@ function mapShadcnCssVars(
 ): ThemeTokens {
   const fallback = colorScheme === 'dark' ? DARK_FALLBACK : LIGHT_FALLBACK;
   const brand = readColor(vars, ['primary', 'accent', 'ring'], fallback.brand);
-  const brandStrong = readColor(vars, ['ring', 'primary', 'accent'], fallback.brandStrong);
+  const brandStrong = readColor(
+    vars,
+    ['ring', 'primary', 'accent'],
+    fallback.brandStrong,
+  );
   const text = readColor(vars, ['foreground', 'card-foreground'], fallback.text);
-  const muted = readColor(vars, ['muted-foreground', 'secondary-foreground'], fallback.muted);
+  const muted = readColor(
+    vars,
+    ['muted-foreground', 'secondary-foreground'],
+    fallback.muted,
+  );
   const surface = readColor(vars, ['card', 'popover', 'background'], fallback.surface);
-  const surfaceSoft = readColor(vars, ['muted', 'secondary', 'card'], fallback.surfaceSoft);
+  const surfaceSoft = readColor(
+    vars,
+    ['muted', 'secondary', 'card'],
+    fallback.surfaceSoft,
+  );
   const line = readColor(vars, ['border', 'input', 'muted'], fallback.line);
   const pageBg = readColor(vars, ['background'], fallback.pageBg);
   const heroStart = brand;
@@ -132,7 +153,8 @@ function parseShadcnTheme(
     };
   }
   const cssVars = isRecord(value.cssVars) ? value.cssVars : null;
-  const modeVars = cssVars && isRecord(cssVars[colorScheme]) ? cssVars[colorScheme] : null;
+  const modeVars =
+    cssVars && isRecord(cssVars[colorScheme]) ? cssVars[colorScheme] : null;
   if (!modeVars) {
     return {
       ok: false,
@@ -193,7 +215,12 @@ function parsePortableTheme(value: unknown, mode: ThemeColorScheme): ImportResul
 export function importThemeJson(value: unknown, mode: unknown): ImportResult {
   const colorScheme = normalizeMode(mode);
   if (!colorScheme) {
-    return { ok: false, code: 'THEME_IMPORT_MODE_INVALID', field: 'mode', message: '请选择浅色或深色模式。' };
+    return {
+      ok: false,
+      code: 'THEME_IMPORT_MODE_INVALID',
+      field: 'mode',
+      message: '请选择浅色或深色模式。',
+    };
   }
   if (isRecord(value) && value.type === 'registry:theme') {
     return parseShadcnTheme(value, colorScheme, 'json');
@@ -203,10 +230,22 @@ export function importThemeJson(value: unknown, mode: unknown): ImportResult {
 
 function isPrivateIpv4(hostname: string): boolean {
   const parts = hostname.split('.').map((part) => Number(part));
-  if (parts.length !== 4 || parts.some((part) => !Number.isInteger(part) || part < 0 || part > 255)) return false;
+  if (
+    parts.length !== 4 ||
+    parts.some((part) => !Number.isInteger(part) || part < 0 || part > 255)
+  )
+    return false;
   const [a, b] = parts as [number, number, number, number];
-  return a === 0 || a === 10 || a === 127 || a >= 224 || (a === 169 && b === 254) ||
-    (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) || (a === 100 && b >= 64 && b <= 127);
+  return (
+    a === 0 ||
+    a === 10 ||
+    a === 127 ||
+    a >= 224 ||
+    (a === 169 && b === 254) ||
+    (a === 172 && b >= 16 && b <= 31) ||
+    (a === 192 && b === 168) ||
+    (a === 100 && b >= 64 && b <= 127)
+  );
 }
 
 function validateRemoteUrl(value: unknown): URL | null {
@@ -232,7 +271,12 @@ function validateRemoteUrl(value: unknown): URL | null {
   return url;
 }
 
-async function fetchThemeJson(url: URL): Promise<{ ok: true; value: unknown; finalUrl: string } | { ok: false; code: string; message: string }> {
+async function fetchThemeJson(
+  url: URL,
+): Promise<
+  | { ok: true; value: unknown; finalUrl: string }
+  | { ok: false; code: string; message: string }
+> {
   let current = url;
   for (let redirectCount = 0; redirectCount <= MAX_REDIRECTS; redirectCount += 1) {
     const response = await fetch(current, {
@@ -246,43 +290,86 @@ async function fetchThemeJson(url: URL): Promise<{ ok: true; value: unknown; fin
     if (response.status >= 300 && response.status < 400) {
       const location = response.headers.get('location');
       if (!location || redirectCount === MAX_REDIRECTS) {
-        return { ok: false, code: 'THEME_IMPORT_REDIRECT_INVALID', message: '主题地址重定向无效或次数过多。' };
+        return {
+          ok: false,
+          code: 'THEME_IMPORT_REDIRECT_INVALID',
+          message: '主题地址重定向无效或次数过多。',
+        };
       }
       const next = validateRemoteUrl(new URL(location, current).toString());
-      if (!next) return { ok: false, code: 'THEME_IMPORT_URL_BLOCKED', message: '重定向目标不是允许的公开 HTTPS 地址。' };
+      if (!next)
+        return {
+          ok: false,
+          code: 'THEME_IMPORT_URL_BLOCKED',
+          message: '重定向目标不是允许的公开 HTTPS 地址。',
+        };
       current = next;
       continue;
     }
     if (!response.ok) {
-      return { ok: false, code: 'THEME_IMPORT_FETCH_FAILED', message: `主题源返回 HTTP ${response.status}。` };
+      return {
+        ok: false,
+        code: 'THEME_IMPORT_FETCH_FAILED',
+        message: `主题源返回 HTTP ${response.status}。`,
+      };
     }
     const declaredLength = Number(response.headers.get('content-length') ?? '0');
     if (Number.isFinite(declaredLength) && declaredLength > MAX_REMOTE_THEME_BYTES) {
-      return { ok: false, code: 'THEME_IMPORT_TOO_LARGE', message: '主题 JSON 不能超过 256 KB。' };
+      return {
+        ok: false,
+        code: 'THEME_IMPORT_TOO_LARGE',
+        message: '主题 JSON 不能超过 256 KB。',
+      };
     }
     const text = await response.text();
     if (new TextEncoder().encode(text).byteLength > MAX_REMOTE_THEME_BYTES) {
-      return { ok: false, code: 'THEME_IMPORT_TOO_LARGE', message: '主题 JSON 不能超过 256 KB。' };
+      return {
+        ok: false,
+        code: 'THEME_IMPORT_TOO_LARGE',
+        message: '主题 JSON 不能超过 256 KB。',
+      };
     }
     try {
-      return { ok: true, value: JSON.parse(text) as unknown, finalUrl: current.toString() };
+      return {
+        ok: true,
+        value: JSON.parse(text) as unknown,
+        finalUrl: current.toString(),
+      };
     } catch {
-      return { ok: false, code: 'THEME_IMPORT_JSON_INVALID', message: '主题地址返回的不是有效 JSON。' };
+      return {
+        ok: false,
+        code: 'THEME_IMPORT_JSON_INVALID',
+        message: '主题地址返回的不是有效 JSON。',
+      };
     }
   }
   return { ok: false, code: 'THEME_IMPORT_FETCH_FAILED', message: '主题读取失败。' };
 }
 
-export async function importThemeFromUrl(urlValue: unknown, mode: unknown): Promise<ImportResult> {
+export async function importThemeFromUrl(
+  urlValue: unknown,
+  mode: unknown,
+): Promise<ImportResult> {
   const colorScheme = normalizeMode(mode);
   if (!colorScheme) {
-    return { ok: false, code: 'THEME_IMPORT_MODE_INVALID', field: 'mode', message: '请选择浅色或深色模式。' };
+    return {
+      ok: false,
+      code: 'THEME_IMPORT_MODE_INVALID',
+      field: 'mode',
+      message: '请选择浅色或深色模式。',
+    };
   }
   const url = validateRemoteUrl(urlValue);
   if (!url) {
-    return { ok: false, code: 'THEME_IMPORT_URL_INVALID', field: 'url', message: '请输入公开可访问的 HTTPS shadcn Registry Theme 地址。' };
+    return {
+      ok: false,
+      code: 'THEME_IMPORT_URL_INVALID',
+      field: 'url',
+      message: '请输入公开可访问的 HTTPS shadcn Registry Theme 地址。',
+    };
   }
   const fetched = await fetchThemeJson(url);
-  if (!fetched.ok) return { ok: false, code: fetched.code, field: 'url', message: fetched.message };
+  if (!fetched.ok)
+    return { ok: false, code: fetched.code, field: 'url', message: fetched.message };
   return parseShadcnTheme(fetched.value, colorScheme, 'shadcn', fetched.finalUrl);
 }

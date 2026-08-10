@@ -85,7 +85,10 @@ function createDb() {
         },
         async first() {
           statements.push({ kind: 'first', sql: this.sql, args: this.args });
-          if (this.sql.includes('FROM products p') && this.sql.includes('JOIN sections s')) {
+          if (
+            this.sql.includes('FROM products p') &&
+            this.sql.includes('JOIN sections s')
+          ) {
             return {
               id: 'product-1',
               section_id: 'section-1',
@@ -153,7 +156,9 @@ test('Product support route resolves connection and group without consuming roun
     groupId: 'sales',
   });
   assert.equal(
-    db.statements.some(({ sql }) => sql.includes('INSERT INTO conversion_group_rotation')),
+    db.statements.some(({ sql }) =>
+      sql.includes('INSERT INTO conversion_group_rotation'),
+    ),
     false,
   );
 });

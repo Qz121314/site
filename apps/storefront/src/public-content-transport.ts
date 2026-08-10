@@ -6,10 +6,7 @@ type RealtimeCta = {
   path: string;
 };
 
-const PUBLIC_SNAPSHOT_PREFIXES = [
-  '/public/versions/',
-  '/public/modules/',
-] as const;
+const PUBLIC_SNAPSHOT_PREFIXES = ['/public/versions/', '/public/modules/'] as const;
 
 const DIRECT_FAILURE_COOLDOWN_MS = 5 * 60_000;
 
@@ -33,12 +30,17 @@ function requestMethod(input: RequestInfo | URL, init?: RequestInit): string {
 }
 
 function isPublicSnapshotPath(pathname: string): boolean {
-  return pathname === '/public/current.json'
-    || PUBLIC_SNAPSHOT_PREFIXES.some((prefix) => pathname.startsWith(prefix));
+  return (
+    pathname === '/public/current.json' ||
+    PUBLIC_SNAPSHOT_PREFIXES.some((prefix) => pathname.startsWith(prefix))
+  );
 }
 
 function productIdFromSnapshotPath(pathname: string): string | null {
-  const modular = /^\/public\/modules\/sections\/[^/]+\/[^/]+\/products\/([^/]+)\.json$/u.exec(pathname);
+  const modular =
+    /^\/public\/modules\/sections\/[^/]+\/[^/]+\/products\/([^/]+)\.json$/u.exec(
+      pathname,
+    );
   const legacy = /^\/public\/versions\/[^/]+\/products\/([^/]+)\.json$/u.exec(pathname);
   const encoded = modular?.[1] ?? legacy?.[1];
   if (!encoded) return null;
@@ -50,10 +52,7 @@ function productIdFromSnapshotPath(pathname: string): string | null {
   }
 }
 
-function fallbackInput(
-  input: RequestInfo | URL,
-  fallbackUrl: string,
-): RequestInfo | URL {
+function fallbackInput(input: RequestInfo | URL, fallbackUrl: string): RequestInfo | URL {
   return input instanceof Request ? new Request(fallbackUrl, input) : fallbackUrl;
 }
 
@@ -61,12 +60,14 @@ function shouldFallbackResponse(response: Response, method: string): boolean {
   if (response.headers.get('cf-mitigated')?.toLowerCase() === 'challenge') return true;
 
   if (!response.ok) {
-    return response.status === 401
-      || response.status === 403
-      || response.status === 408
-      || response.status === 425
-      || response.status === 429
-      || response.status >= 500;
+    return (
+      response.status === 401 ||
+      response.status === 403 ||
+      response.status === 408 ||
+      response.status === 425 ||
+      response.status === 429 ||
+      response.status >= 500
+    );
   }
 
   if (method === 'HEAD') return false;
@@ -84,10 +85,10 @@ function parseRealtimeCta(value: unknown): RealtimeCta | null {
   const result = asRecord(value);
   if (!result || result.available !== true) return null;
   if (
-    typeof result.label !== 'string'
-    || (result.mode !== 'customer_service' && result.mode !== 'link')
-    || typeof result.path !== 'string'
-    || !result.path.startsWith('/go/')
+    typeof result.label !== 'string' ||
+    (result.mode !== 'customer_service' && result.mode !== 'link') ||
+    typeof result.path !== 'string' ||
+    !result.path.startsWith('/go/')
   ) {
     return null;
   }
@@ -140,14 +141,11 @@ async function hydrateProductCta(
   headers.set('content-type', 'application/json; charset=utf-8');
   headers.set('cache-control', 'no-store');
 
-  return new Response(
-    JSON.stringify({ ...snapshot, product: { ...product, cta } }),
-    {
-      status: response.status,
-      statusText: response.statusText,
-      headers,
-    },
-  );
+  return new Response(JSON.stringify({ ...snapshot, product: { ...product, cta } }), {
+    status: response.status,
+    statusText: response.statusText,
+    headers,
+  });
 }
 
 export function createPublicContentFetch(
@@ -162,9 +160,9 @@ export function createPublicContentFetch(
     const url = requestUrl(input, normalizedPageOrigin);
     const method = requestMethod(input, init);
     if (
-      !url
-      || (method !== 'GET' && method !== 'HEAD')
-      || !isPublicSnapshotPath(url.pathname)
+      !url ||
+      (method !== 'GET' && method !== 'HEAD') ||
+      !isPublicSnapshotPath(url.pathname)
     ) {
       return originalFetch(input, init);
     }
@@ -174,7 +172,13 @@ export function createPublicContentFetch(
 
     if (url.origin === normalizedPageOrigin) {
       const response = await originalFetch(input, init);
-      return hydrateProductCta(response, productId, originalFetch, normalizedPageOrigin, signal);
+      return hydrateProductCta(
+        response,
+        productId,
+        originalFetch,
+        normalizedPageOrigin,
+        signal,
+      );
     }
 
     const sameOriginUrl = `${normalizedPageOrigin}${url.pathname}${url.search}`;
@@ -182,24 +186,48 @@ export function createPublicContentFetch(
     const blocked = (blockedUntil.get(url.origin) ?? 0) > now();
     if (blocked) {
       const response = await originalFetch(retryInput, init);
-      return hydrateProductCta(response, productId, originalFetch, normalizedPageOrigin, signal);
+      return hydrateProductCta(
+        response,
+        productId,
+        originalFetch,
+        normalizedPageOrigin,
+        signal,
+      );
     }
 
     try {
       const response = await originalFetch(input, init);
       if (!shouldFallbackResponse(response, method)) {
         blockedUntil.delete(url.origin);
-        return hydrateProductCta(response, productId, originalFetch, normalizedPageOrigin, signal);
+        return hydrateProductCta(
+          response,
+          productId,
+          originalFetch,
+          normalizedPageOrigin,
+          signal,
+        );
       }
 
       blockedUntil.set(url.origin, now() + DIRECT_FAILURE_COOLDOWN_MS);
       const fallbackResponse = await originalFetch(retryInput, init);
-      return hydrateProductCta(fallbackResponse, productId, originalFetch, normalizedPageOrigin, signal);
+      return hydrateProductCta(
+        fallbackResponse,
+        productId,
+        originalFetch,
+        normalizedPageOrigin,
+        signal,
+      );
     } catch (error) {
       if (signal?.aborted) throw error;
       blockedUntil.set(url.origin, now() + DIRECT_FAILURE_COOLDOWN_MS);
       const fallbackResponse = await originalFetch(retryInput, init);
-      return hydrateProductCta(fallbackResponse, productId, originalFetch, normalizedPageOrigin, signal);
+      return hydrateProductCta(
+        fallbackResponse,
+        productId,
+        originalFetch,
+        normalizedPageOrigin,
+        signal,
+      );
     }
   };
 }
@@ -207,5 +235,8 @@ export function createPublicContentFetch(
 export function installPublicContentFetchFallback(): void {
   if (typeof window === 'undefined') return;
   const originalFetch = window.fetch.bind(window);
-  window.fetch = createPublicContentFetch(originalFetch, window.location.origin) as typeof window.fetch;
+  window.fetch = createPublicContentFetch(
+    originalFetch,
+    window.location.origin,
+  ) as typeof window.fetch;
 }

@@ -17,7 +17,9 @@
   border: 1px solid #dfe4ea;
   border-radius: 14px;
   background: #fff;
-  transition: opacity 160ms ease, border-color 160ms ease;
+  transition:
+    opacity 160ms ease,
+    border-color 160ms ease;
 }
 
 .admin-bottom-navigation-card.is-disabled {

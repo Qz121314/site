@@ -128,7 +128,12 @@ adminCategoryRoutes.post('/:sectionId/categories', async (context) => {
     ]);
   } catch (error) {
     if (isCategoryConflictError(error)) {
-      return apiError(context, 409, 'CATEGORY_NAME_CONFLICT', '当前分区已存在相同名称的分类。');
+      return apiError(
+        context,
+        409,
+        'CATEGORY_NAME_CONFLICT',
+        '当前分区已存在相同名称的分类。',
+      );
     }
     throw error;
   }
@@ -189,7 +194,12 @@ adminCategoryRoutes.put('/:sectionId/categories/:id', async (context) => {
     ]);
   } catch (error) {
     if (isCategoryConflictError(error)) {
-      return apiError(context, 409, 'CATEGORY_NAME_CONFLICT', '当前分区已存在相同名称的分类。');
+      return apiError(
+        context,
+        409,
+        'CATEGORY_NAME_CONFLICT',
+        '当前分区已存在相同名称的分类。',
+      );
     }
     throw error;
   }

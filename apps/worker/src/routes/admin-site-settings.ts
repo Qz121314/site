@@ -70,7 +70,9 @@ function parseMediaDomainTestBody(value: unknown): MediaDomainTestBody | null {
   return { mediaBaseUrl: value.mediaBaseUrl };
 }
 
-function heroInputFromCurrent(slides: Awaited<ReturnType<typeof getSiteHeroSlides>>): SiteHeroSlideInput[] {
+function heroInputFromCurrent(
+  slides: Awaited<ReturnType<typeof getSiteHeroSlides>>,
+): SiteHeroSlideInput[] {
   return slides.map((slide) => ({
     id: slide.id,
     mediaAssetId: slide.mediaAssetId,
@@ -124,7 +126,9 @@ adminSiteSettingsRoutes.get('/', async (context) => {
     getBottomNavigation(context.env.DB),
     getHomeLayout(context.env.DB),
   ]);
-  return context.json({ settings: { ...settings, heroSlides, bottomNavigation, homeLayout } });
+  return context.json({
+    settings: { ...settings, heroSlides, bottomNavigation, homeLayout },
+  });
 });
 
 adminSiteSettingsRoutes.put('/', async (context) => {
@@ -157,7 +161,9 @@ adminSiteSettingsRoutes.put('/', async (context) => {
     });
   }
 
-  const heroValidation = validateHeroSlidesInput(isRecord(body) ? body.heroSlides : undefined);
+  const heroValidation = validateHeroSlidesInput(
+    isRecord(body) ? body.heroSlides : undefined,
+  );
   if (!heroValidation.ok) {
     return apiError(context, 400, 'INVALID_SITE_HERO', heroValidation.message, {
       field: heroValidation.field,
@@ -168,12 +174,20 @@ adminSiteSettingsRoutes.put('/', async (context) => {
     isRecord(body) ? body.bottomNavigation : undefined,
   );
   if (!navigationValidation.ok) {
-    return apiError(context, 400, 'INVALID_BOTTOM_NAVIGATION', navigationValidation.message, {
-      field: navigationValidation.field,
-    });
+    return apiError(
+      context,
+      400,
+      'INVALID_BOTTOM_NAVIGATION',
+      navigationValidation.message,
+      {
+        field: navigationValidation.field,
+      },
+    );
   }
 
-  const homeLayoutValidation = validateHomeLayoutInput(isRecord(body) ? body.homeLayout : undefined);
+  const homeLayoutValidation = validateHomeLayoutInput(
+    isRecord(body) ? body.homeLayout : undefined,
+  );
   if (!homeLayoutValidation.ok) {
     return apiError(context, 400, 'INVALID_HOME_LAYOUT', homeLayoutValidation.message, {
       field: homeLayoutValidation.field,
@@ -184,9 +198,15 @@ adminSiteSettingsRoutes.put('/', async (context) => {
     ? await getReadyImageAsset(context.env.DB, validation.value.logoAssetId)
     : null;
   if (validation.value.logoAssetId && !logoAsset) {
-    return apiError(context, 409, 'LOGO_ASSET_INVALID', 'Logo 图片不存在、已删除或状态异常。', {
-      field: 'logoAssetId',
-    });
+    return apiError(
+      context,
+      409,
+      'LOGO_ASSET_INVALID',
+      'Logo 图片不存在、已删除或状态异常。',
+      {
+        field: 'logoAssetId',
+      },
+    );
   }
 
   const currentSettings = await getSiteSettings(context.env.DB);
@@ -205,7 +225,10 @@ adminSiteSettingsRoutes.put('/', async (context) => {
     ...homeLayoutInput.shortcutSectionIds,
     ...homeLayoutInput.recommendationSectionIds,
   ];
-  const activeHomeSectionIds = await getActiveHomeSectionIds(context.env.DB, selectedHomeSectionIds);
+  const activeHomeSectionIds = await getActiveHomeSectionIds(
+    context.env.DB,
+    selectedHomeSectionIds,
+  );
   if (activeHomeSectionIds.size !== new Set(selectedHomeSectionIds).size) {
     return apiError(
       context,
@@ -219,7 +242,10 @@ adminSiteSettingsRoutes.put('/', async (context) => {
   const navigationAssetIds = bottomNavigationInput
     .filter((item) => item.iconType === 'asset' && item.iconAssetId)
     .map((item) => item.iconAssetId as string);
-  const navigationAssets = await getReadyBottomNavigationAssets(context.env.DB, navigationAssetIds);
+  const navigationAssets = await getReadyBottomNavigationAssets(
+    context.env.DB,
+    navigationAssetIds,
+  );
   if (navigationAssets.size !== new Set(navigationAssetIds).size) {
     return apiError(
       context,
@@ -230,7 +256,10 @@ adminSiteSettingsRoutes.put('/', async (context) => {
     );
   }
 
-  const currentHeroSlides = await getSiteHeroSlides(context.env.DB, currentSettings.mediaBaseUrl);
+  const currentHeroSlides = await getSiteHeroSlides(
+    context.env.DB,
+    currentSettings.mediaBaseUrl,
+  );
   const heroInput = heroValidation.provided
     ? heroValidation.value
     : heroInputFromCurrent(currentHeroSlides);
@@ -249,7 +278,11 @@ adminSiteSettingsRoutes.put('/', async (context) => {
   }
 
   const updatedAt = new Date().toISOString();
-  const resolvedHeroSlides = resolveHeroSlides(heroInput, heroAssets, validation.value.mediaBaseUrl);
+  const resolvedHeroSlides = resolveHeroSlides(
+    heroInput,
+    heroAssets,
+    validation.value.mediaBaseUrl,
+  );
   const updated = {
     ...toSiteSettings(validation.value, logoAsset?.object_key ?? null, updatedAt),
     heroSlides: resolvedHeroSlides,
@@ -266,16 +299,30 @@ adminSiteSettingsRoutes.put('/', async (context) => {
     createUpdateSiteSettingsStatement(context.env.DB, validation.value, updatedAt),
   ];
   if (heroValidation.provided) {
-    statements.push(...createReplaceHeroSlideStatements(context.env.DB, heroValidation.value, updatedAt));
+    statements.push(
+      ...createReplaceHeroSlideStatements(
+        context.env.DB,
+        heroValidation.value,
+        updatedAt,
+      ),
+    );
   }
   if (navigationValidation.provided) {
     statements.push(
-      ...createReplaceBottomNavigationStatements(context.env.DB, navigationValidation.value, updatedAt),
+      ...createReplaceBottomNavigationStatements(
+        context.env.DB,
+        navigationValidation.value,
+        updatedAt,
+      ),
     );
   }
   if (homeLayoutValidation.provided) {
     statements.push(
-      ...createReplaceHomeLayoutStatements(context.env.DB, homeLayoutValidation.value, updatedAt),
+      ...createReplaceHomeLayoutStatements(
+        context.env.DB,
+        homeLayoutValidation.value,
+        updatedAt,
+      ),
     );
   }
   statements.push(

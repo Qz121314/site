@@ -1,10 +1,5 @@
 import { useCallback, useEffect, useState, type FormEvent } from 'react';
-import {
-  AdminApiError,
-  fetchSections,
-  testMediaDomain,
-  type AdminSection,
-} from './api';
+import { AdminApiError, fetchSections, testMediaDomain, type AdminSection } from './api';
 import { useAdminDirtySource } from './admin-unsaved-state';
 import { MediaPickerDialog } from './asset-library/MediaPickerDialog';
 import { BottomNavigationSettingsSection } from './BottomNavigationSettingsSection';
@@ -104,7 +99,9 @@ function toInput(draft: SettingsDraft): SettingsPayload {
       ctaHref: optionalTrimmed(slide.ctaHref),
       sortOrder: index,
     })),
-    bottomNavigation: draft.bottomNavigation.map(({ sortOrder: _sortOrder, ...item }) => item),
+    bottomNavigation: draft.bottomNavigation.map(
+      ({ sortOrder: _sortOrder, ...item }) => item,
+    ),
     homeLayout: {
       shortcutSectionIds: [...draft.homeLayout.shortcutSectionIds],
       recommendationSectionIds: [...draft.homeLayout.recommendationSectionIds],
@@ -119,7 +116,9 @@ function settingsDirty(
 ): boolean {
   if (!settings || !draft) return false;
   if (localLogo) return true;
-  return JSON.stringify(toInput(draft)) !== JSON.stringify(toInput(createDraft(settings)));
+  return (
+    JSON.stringify(toInput(draft)) !== JSON.stringify(toInput(createDraft(settings)))
+  );
 }
 
 function formatUpdatedAt(value: string): string {
@@ -141,7 +140,11 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [domainTest, setDomainTest] = useState<DomainTestState>({ status: 'idle' });
 
-  useAdminDirtySource('site-settings', '站点设置', settingsDirty(settings, draft, localLogo));
+  useAdminDirtySource(
+    'site-settings',
+    '站点设置',
+    settingsDirty(settings, draft, localLogo),
+  );
 
   useEffect(() => () => releaseBrandingImage(localLogo), [localLogo]);
 
@@ -206,7 +209,9 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
         setSaveStage('uploading-logo');
         const uploaded = await uploadBrandingImage('logo', localLogo.compressedFile);
         input = { ...input, logoAssetId: uploaded.media.id };
-        setDraft((current) => (current ? { ...current, logoAssetId: uploaded.media.id } : current));
+        setDraft((current) =>
+          current ? { ...current, logoAssetId: uploaded.media.id } : current,
+        );
         setLocalLogo(null);
       }
 
@@ -254,14 +259,21 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
     }
   }
 
-  if (loading) return <section className="settings-card settings-loading">正在读取站点设置…</section>;
+  if (loading)
+    return (
+      <section className="settings-card settings-loading">正在读取站点设置…</section>
+    );
 
   if (!draft || !settings) {
     return (
       <section className="settings-card settings-error-state">
         <strong>无法读取站点设置</strong>
         <p>{errorMessage ?? '请检查 D1 数据库和后台接口。'}</p>
-        <button className="secondary-button" type="button" onClick={() => void loadSettings()}>
+        <button
+          className="secondary-button"
+          type="button"
+          onClick={() => void loadSettings()}
+        >
           重新加载
         </button>
       </section>
@@ -269,12 +281,16 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
   }
 
   const busy = saveStage !== 'idle' || processingLogo;
-  const logoPreviewUrl = localLogo?.previewUrl ??
+  const logoPreviewUrl =
+    localLogo?.previewUrl ??
     (draft.logoAssetId ? brandingAssetPreviewUrl(draft.logoAssetId) : null);
 
   return (
     <>
-      <form className="settings-form admin-settings-page admin-settings-workbench" onSubmit={(event) => void handleSubmit(event)}>
+      <form
+        className="settings-form admin-settings-page admin-settings-workbench"
+        onSubmit={(event) => void handleSubmit(event)}
+      >
         <section className="settings-card admin-settings-surface" aria-label="站点设置">
           <div className="admin-settings-toolbar">
             <div className="admin-settings-tabs" role="tablist" aria-label="站点设置分组">
@@ -293,7 +309,9 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
                 </button>
               ))}
             </div>
-            <span className="admin-settings-updated">更新于 {formatUpdatedAt(settings.updatedAt)}</span>
+            <span className="admin-settings-updated">
+              更新于 {formatUpdatedAt(settings.updatedAt)}
+            </span>
           </div>
 
           <div
@@ -304,31 +322,63 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
           >
             {activePanel === 'general' ? (
               <>
-                <section className="admin-settings-section admin-settings-general" aria-labelledby="settings-basic-title">
+                <section
+                  className="admin-settings-section admin-settings-general"
+                  aria-labelledby="settings-basic-title"
+                >
                   <h2 id="settings-basic-title">基础信息</h2>
                   <div className="admin-settings-row admin-settings-basic-row">
                     <label className="field-group admin-field-site-name">
                       <span>站点名称</span>
-                      <input type="text" value={draft.siteName} disabled={busy} onChange={(event) => updateDraft('siteName', event.target.value)} />
+                      <input
+                        type="text"
+                        value={draft.siteName}
+                        disabled={busy}
+                        onChange={(event) => updateDraft('siteName', event.target.value)}
+                      />
                     </label>
 
                     <label className="field-group admin-field-location">
                       <span>站点说明</span>
-                      <input type="text" value={draft.locationLabel} disabled={busy} onChange={(event) => updateDraft('locationLabel', event.target.value)} />
+                      <input
+                        type="text"
+                        value={draft.locationLabel}
+                        disabled={busy}
+                        onChange={(event) =>
+                          updateDraft('locationLabel', event.target.value)
+                        }
+                      />
                     </label>
 
                     <div className="admin-logo-field">
                       <span className="admin-field-label">站点 Logo</span>
                       <div className="admin-logo-control">
                         <div className="admin-logo-preview">
-                          {logoPreviewUrl ? <img src={logoPreviewUrl} alt="站点 Logo 预览" /> : <span>Logo</span>}
+                          {logoPreviewUrl ? (
+                            <img src={logoPreviewUrl} alt="站点 Logo 预览" />
+                          ) : (
+                            <span>Logo</span>
+                          )}
                         </div>
                         <div className="admin-logo-state">
-                          <strong>{localLogo ? '待保存' : draft.logoAssetId ? '已设置' : '未设置'}</strong>
-                          {localLogo ? <small>{localLogo.width} × {localLogo.height} · {formatBrandingBytes(localLogo.compressedFile.size)}</small> : null}
+                          <strong>
+                            {localLogo
+                              ? '待保存'
+                              : draft.logoAssetId
+                                ? '已设置'
+                                : '未设置'}
+                          </strong>
+                          {localLogo ? (
+                            <small>
+                              {localLogo.width} × {localLogo.height} ·{' '}
+                              {formatBrandingBytes(localLogo.compressedFile.size)}
+                            </small>
+                          ) : null}
                         </div>
                         <div className="admin-logo-actions">
-                          <label className={`branding-file-button${busy ? ' is-disabled' : ''}`}>
+                          <label
+                            className={`branding-file-button${busy ? ' is-disabled' : ''}`}
+                          >
                             <input
                               type="file"
                               accept="image/jpeg,image/png,image/webp"
@@ -339,9 +389,18 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
                                 if (file) void selectLogo(file);
                               }}
                             />
-                            {processingLogo ? '处理中…' : logoPreviewUrl ? '上传替换' : '上传'}
+                            {processingLogo
+                              ? '处理中…'
+                              : logoPreviewUrl
+                                ? '上传替换'
+                                : '上传'}
                           </label>
-                          <button type="button" className="admin-text-button" disabled={busy} onClick={() => setLogoPickerOpen(true)}>
+                          <button
+                            type="button"
+                            className="admin-text-button"
+                            disabled={busy}
+                            onClick={() => setLogoPickerOpen(true)}
+                          >
                             从素材中心选择
                           </button>
                           {logoPreviewUrl ? (
@@ -384,7 +443,9 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
                 <BottomNavigationSettingsSection
                   value={draft.bottomNavigation}
                   busy={busy}
-                  onChange={(bottomNavigation) => updateDraft('bottomNavigation', bottomNavigation)}
+                  onChange={(bottomNavigation) =>
+                    updateDraft('bottomNavigation', bottomNavigation)
+                  }
                   onSessionExpired={onSessionExpired}
                 />
               </>
@@ -392,41 +453,88 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
 
             {activePanel === 'advanced' ? (
               <div className="admin-settings-advanced-grid">
-                <section className="admin-settings-section" aria-labelledby="settings-frontend-title">
+                <section
+                  className="admin-settings-section"
+                  aria-labelledby="settings-frontend-title"
+                >
                   <h2 id="settings-frontend-title">统计</h2>
                   <div className="admin-settings-row admin-settings-frontend-row">
                     <label className="field-group admin-field-ga4">
                       <span>GA4 Measurement ID</span>
-                      <input type="text" value={draft.ga4MeasurementId} placeholder="G-XXXXXXXXXX" disabled={busy} onChange={(event) => updateDraft('ga4MeasurementId', event.target.value)} />
+                      <input
+                        type="text"
+                        value={draft.ga4MeasurementId}
+                        placeholder="G-XXXXXXXXXX"
+                        disabled={busy}
+                        onChange={(event) =>
+                          updateDraft('ga4MeasurementId', event.target.value)
+                        }
+                      />
                     </label>
                   </div>
                 </section>
 
-                <section className="admin-settings-section" aria-labelledby="settings-media-title">
+                <section
+                  className="admin-settings-section"
+                  aria-labelledby="settings-media-title"
+                >
                   <h2 id="settings-media-title">媒体域名</h2>
                   <div className="admin-settings-row admin-settings-media-row">
                     <label className="field-group admin-field-media-domain">
                       <span>R2 自定义域名</span>
-                      <input type="url" value={draft.mediaBaseUrl} placeholder="https://assets.example.com" disabled={busy || domainTest.status === 'testing'} onChange={(event) => updateDraft('mediaBaseUrl', event.target.value)} />
+                      <input
+                        type="url"
+                        value={draft.mediaBaseUrl}
+                        placeholder="https://assets.example.com"
+                        disabled={busy || domainTest.status === 'testing'}
+                        onChange={(event) =>
+                          updateDraft('mediaBaseUrl', event.target.value)
+                        }
+                      />
                     </label>
-                    <button className="secondary-button domain-test-button" type="button" disabled={busy || domainTest.status === 'testing' || !draft.mediaBaseUrl.trim()} onClick={() => void handleDomainTest()}>
+                    <button
+                      className="secondary-button domain-test-button"
+                      type="button"
+                      disabled={
+                        busy ||
+                        domainTest.status === 'testing' ||
+                        !draft.mediaBaseUrl.trim()
+                      }
+                      onClick={() => void handleDomainTest()}
+                    >
                       {domainTest.status === 'testing' ? '测试中…' : '测试连接'}
                     </button>
                   </div>
-                  {domainTest.status === 'success' ? <p className="inline-status is-success">{domainTest.message}</p> : null}
-                  {domainTest.status === 'error' ? <p className="inline-status is-error">{domainTest.message}</p> : null}
+                  {domainTest.status === 'success' ? (
+                    <p className="inline-status is-success">{domainTest.message}</p>
+                  ) : null}
+                  {domainTest.status === 'error' ? (
+                    <p className="inline-status is-error">{domainTest.message}</p>
+                  ) : null}
                 </section>
               </div>
             ) : null}
           </div>
         </section>
 
-        {errorMessage ? <p className="inline-status is-error settings-toast">{errorMessage}</p> : null}
-        {successMessage ? <p className="inline-status is-success settings-toast">{successMessage}</p> : null}
+        {errorMessage ? (
+          <p className="inline-status is-error settings-toast">{errorMessage}</p>
+        ) : null}
+        {successMessage ? (
+          <p className="inline-status is-success settings-toast">{successMessage}</p>
+        ) : null}
 
         <div className="settings-actions admin-settings-actions">
-          <button className="primary-button settings-save-button" type="submit" disabled={busy}>
-            {saveStage === 'uploading-logo' ? '上传 Logo…' : saveStage === 'saving' ? '保存中…' : '保存站点设置'}
+          <button
+            className="primary-button settings-save-button"
+            type="submit"
+            disabled={busy}
+          >
+            {saveStage === 'uploading-logo'
+              ? '上传 Logo…'
+              : saveStage === 'saving'
+                ? '保存中…'
+                : '保存站点设置'}
           </button>
         </div>
       </form>

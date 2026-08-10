@@ -5,7 +5,13 @@ import {
   StorefrontProductCard,
 } from '@site/storefront-ui';
 import { storefrontThemeStyle } from '@site/storefront-ui/theme';
-import { useCallback, useEffect, useMemo, useState, type AnchorHTMLAttributes } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type AnchorHTMLAttributes,
+} from 'react';
 import { AdminApiError } from './api';
 import { useAdminDirtySource } from './admin-unsaved-state';
 import {
@@ -27,7 +33,10 @@ type ThemeSourceTab = 'official' | 'registry' | 'json';
 type ThemeMode = 'light' | 'dark';
 
 function isSessionError(error: unknown): boolean {
-  return error instanceof AdminApiError && (error.status === 401 || error.code === 'SESSION_INVALID');
+  return (
+    error instanceof AdminApiError &&
+    (error.status === 401 || error.code === 'SESSION_INVALID')
+  );
 }
 
 function normalizeAccent(value: string): string | null {
@@ -59,13 +68,16 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
-  const selectedImported = selectedKey === 'custom' ? importedTheme?.overrides.imported : undefined;
-  const currentImported = currentTheme?.key === 'custom' ? currentTheme.overrides.imported : undefined;
-  const themeIsDirty = currentTheme !== null && (
-    selectedKey !== currentTheme.key ||
-    accent.trim().toLowerCase() !== (currentTheme.overrides.accent ?? '').toLowerCase() ||
-    importedSignature(selectedImported) !== importedSignature(currentImported)
-  );
+  const selectedImported =
+    selectedKey === 'custom' ? importedTheme?.overrides.imported : undefined;
+  const currentImported =
+    currentTheme?.key === 'custom' ? currentTheme.overrides.imported : undefined;
+  const themeIsDirty =
+    currentTheme !== null &&
+    (selectedKey !== currentTheme.key ||
+      accent.trim().toLowerCase() !==
+        (currentTheme.overrides.accent ?? '').toLowerCase() ||
+      importedSignature(selectedImported) !== importedSignature(currentImported));
   useAdminDirtySource('theme-center', '主题中心', themeIsDirty);
 
   const loadThemeCenter = useCallback(async () => {
@@ -79,7 +91,9 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
       setAccent(data.theme.overrides.accent ?? '');
       if (data.theme.key === 'custom') {
         setImportedTheme(data.theme);
-        setSourceTab(data.theme.overrides.imported?.source === 'shadcn' ? 'registry' : 'json');
+        setSourceTab(
+          data.theme.overrides.imported?.source === 'shadcn' ? 'registry' : 'json',
+        );
         setImportMode(data.theme.colorScheme);
         setRegistryUrl(data.theme.overrides.imported?.sourceUrl ?? '');
       }
@@ -102,8 +116,12 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
     if (selectedKey === 'custom') return importedTheme;
     return presets.find((preset) => preset.key === selectedKey) ?? presets[0] ?? null;
   }, [importedTheme, presets, selectedKey]);
-  const previewAccent = normalizeAccent(accent) ?? selectedPreset?.tokens.brand ?? '#ff5a1f';
-  const colorInputValue = normalizeAccent(accent) ?? normalizeAccent(selectedPreset?.tokens.brand ?? '') ?? '#ff5a1f';
+  const previewAccent =
+    normalizeAccent(accent) ?? selectedPreset?.tokens.brand ?? '#ff5a1f';
+  const colorInputValue =
+    normalizeAccent(accent) ??
+    normalizeAccent(selectedPreset?.tokens.brand ?? '') ??
+    '#ff5a1f';
 
   function clearMessages() {
     setErrorMessage('');
@@ -166,7 +184,8 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
       setErrorMessage('品牌强调色请输入 6 位十六进制颜色，例如 #ff5a1f。');
       return;
     }
-    const imported = selectedKey === 'custom' ? importedTheme?.overrides.imported : undefined;
+    const imported =
+      selectedKey === 'custom' ? importedTheme?.overrides.imported : undefined;
     if (selectedKey === 'custom' && !imported) {
       setErrorMessage('请先从主题库或 JSON 导入一个有效主题。');
       return;
@@ -193,7 +212,11 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
   }
 
   if (loading) {
-    return <section className="theme-center"><div className="theme-center-state">正在读取主题…</div></section>;
+    return (
+      <section className="theme-center">
+        <div className="theme-center-state">正在读取主题…</div>
+      </section>
+    );
   }
 
   if (!currentTheme || presets.length === 0) {
@@ -202,7 +225,11 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
         <div className="settings-card settings-error-state" role="alert">
           <strong>无法读取主题中心</strong>
           <p>{errorMessage || '主题配置返回数据不完整，请重新加载。'}</p>
-          <button className="secondary-button" type="button" onClick={() => void loadThemeCenter()}>
+          <button
+            className="secondary-button"
+            type="button"
+            onClick={() => void loadThemeCenter()}
+          >
             重新加载
           </button>
         </div>
@@ -216,7 +243,10 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
         <div className="theme-center-heading-copy">
           <p>用户前端视觉系统</p>
           <h2 id="theme-center-title">主题中心</h2>
-          <span>以移动端为主要设计基准；PC 端作为响应式扩展。产品列表默认双列并使用 1:1 方形封面。</span>
+          <span>
+            以移动端为主要设计基准；PC 端作为响应式扩展。产品列表默认双列并使用 1:1
+            方形封面。
+          </span>
         </div>
 
         <div className="theme-mobile-baseline" aria-label="主题设计基准">
@@ -240,15 +270,41 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
         </div>
       </div>
 
-      {errorMessage ? <div className="notice notice-error" role="alert">{errorMessage}</div> : null}
-      {successMessage ? <div className="notice notice-success" role="status">{successMessage}</div> : null}
+      {errorMessage ? (
+        <div className="notice notice-error" role="alert">
+          {errorMessage}
+        </div>
+      ) : null}
+      {successMessage ? (
+        <div className="notice notice-success" role="status">
+          {successMessage}
+        </div>
+      ) : null}
 
       <div className="theme-center-layout">
         <div className="theme-preset-panel">
           <div className="theme-source-tabs" role="tablist" aria-label="主题来源">
-            <button type="button" className={sourceTab === 'official' ? 'is-active' : ''} onClick={() => setSourceTab('official')}>官方精选</button>
-            <button type="button" className={sourceTab === 'registry' ? 'is-active' : ''} onClick={() => setSourceTab('registry')}>主题库</button>
-            <button type="button" className={sourceTab === 'json' ? 'is-active' : ''} onClick={() => setSourceTab('json')}>JSON 导入</button>
+            <button
+              type="button"
+              className={sourceTab === 'official' ? 'is-active' : ''}
+              onClick={() => setSourceTab('official')}
+            >
+              官方精选
+            </button>
+            <button
+              type="button"
+              className={sourceTab === 'registry' ? 'is-active' : ''}
+              onClick={() => setSourceTab('registry')}
+            >
+              主题库
+            </button>
+            <button
+              type="button"
+              className={sourceTab === 'json' ? 'is-active' : ''}
+              onClick={() => setSourceTab('json')}
+            >
+              JSON 导入
+            </button>
           </div>
 
           {sourceTab === 'official' ? (
@@ -267,7 +323,9 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
                   >
                     <span
                       className="theme-preset-swatch"
-                      style={{ background: `linear-gradient(135deg, ${preset.tokens.heroStart}, ${preset.tokens.heroEnd})` }}
+                      style={{
+                        background: `linear-gradient(135deg, ${preset.tokens.heroStart}, ${preset.tokens.heroEnd})`,
+                      }}
                     >
                       <i style={{ background: preset.tokens.brand }} />
                       <i style={{ background: preset.tokens.surface }} />
@@ -276,7 +334,9 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
                     <span className="theme-preset-copy">
                       <strong>{preset.label}</strong>
                       <small>{preset.description}</small>
-                      <em>{preset.colorScheme === 'dark' ? '深色' : '浅色'} · 移动端双列 1:1</em>
+                      <em>
+                        {preset.colorScheme === 'dark' ? '深色' : '浅色'} · 移动端双列 1:1
+                      </em>
                     </span>
                   </button>
                 ))}
@@ -288,7 +348,10 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
             <div className="theme-import-panel">
               <div className="theme-section-title">
                 <strong>shadcn Registry 主题库</strong>
-                <span>只读取公开 HTTPS 的 registry:theme JSON，并转换为本站 Theme Tokens；不会执行外部 JS、React 或 CSS 文件。</span>
+                <span>
+                  只读取公开 HTTPS 的 registry:theme JSON，并转换为本站 Theme
+                  Tokens；不会执行外部 JS、React 或 CSS 文件。
+                </span>
               </div>
               <label className="theme-import-field">
                 <span>Theme JSON 地址</span>
@@ -302,18 +365,29 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
               <div className="theme-import-row">
                 <label className="theme-import-field">
                   <span>读取模式</span>
-                  <select value={importMode} onChange={(event) => setImportMode(event.target.value as ThemeMode)}>
+                  <select
+                    value={importMode}
+                    onChange={(event) => setImportMode(event.target.value as ThemeMode)}
+                  >
                     <option value="light">浅色 light</option>
                     <option value="dark">深色 dark</option>
                   </select>
                 </label>
-                <button className="primary-button theme-import-button" type="button" disabled={importing || !registryUrl.trim()} onClick={() => void importRegistryTheme()}>
+                <button
+                  className="primary-button theme-import-button"
+                  type="button"
+                  disabled={importing || !registryUrl.trim()}
+                  onClick={() => void importRegistryTheme()}
+                >
                   {importing ? '正在读取…' : '读取并预览'}
                 </button>
               </div>
               <div className="theme-import-note">
                 <strong>安全边界</strong>
-                <span>最多读取 256 KB JSON；拒绝 localhost、私网地址和非 HTTPS 地址。保存后前端只读取本站存储的标准化 Token，不依赖原主题 URL。</span>
+                <span>
+                  最多读取 256 KB JSON；拒绝 localhost、私网地址和非 HTTPS
+                  地址。保存后前端只读取本站存储的标准化 Token，不依赖原主题 URL。
+                </span>
               </div>
             </div>
           ) : null}
@@ -328,19 +402,29 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
                 <span>主题 JSON</span>
                 <textarea
                   value={jsonText}
-                  placeholder={'{\n  "type": "registry:theme",\n  "name": "my-theme",\n  "cssVars": { "light": { ... } }\n}'}
+                  placeholder={
+                    '{\n  "type": "registry:theme",\n  "name": "my-theme",\n  "cssVars": { "light": { ... } }\n}'
+                  }
                   onChange={(event) => setJsonText(event.target.value)}
                 />
               </label>
               <div className="theme-import-row">
                 <label className="theme-import-field">
                   <span>读取模式</span>
-                  <select value={importMode} onChange={(event) => setImportMode(event.target.value as ThemeMode)}>
+                  <select
+                    value={importMode}
+                    onChange={(event) => setImportMode(event.target.value as ThemeMode)}
+                  >
                     <option value="light">浅色 light</option>
                     <option value="dark">深色 dark</option>
                   </select>
                 </label>
-                <button className="primary-button theme-import-button" type="button" disabled={importing || !jsonText.trim()} onClick={() => void importJsonTheme()}>
+                <button
+                  className="primary-button theme-import-button"
+                  type="button"
+                  disabled={importing || !jsonText.trim()}
+                  onClick={() => void importJsonTheme()}
+                >
                   {importing ? '正在解析…' : '解析并预览'}
                 </button>
               </div>
@@ -354,7 +438,9 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
                 <strong>{selectedPreset.label}</strong>
                 <small>{selectedPreset.description}</small>
               </div>
-              <span>{selectedPreset.colorScheme === 'dark' ? '深色' : '浅色'} · 已标准化</span>
+              <span>
+                {selectedPreset.colorScheme === 'dark' ? '深色' : '浅色'} · 已标准化
+              </span>
             </div>
           ) : null}
         </div>
@@ -365,7 +451,11 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
               <strong>移动端实时预览</strong>
               <span>模拟用户主要访问场景；品牌色可选，留空使用主题原色。</span>
             </div>
-            {themeIsDirty ? <span className="theme-unsaved-pill">待保存</span> : <span className="theme-saved-pill">已保存</span>}
+            {themeIsDirty ? (
+              <span className="theme-unsaved-pill">待保存</span>
+            ) : (
+              <span className="theme-saved-pill">已保存</span>
+            )}
           </div>
 
           <label className="theme-accent-field">
@@ -384,7 +474,11 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
                 maxLength={7}
                 onChange={(event) => setAccent(event.target.value)}
               />
-              {accent ? <button type="button" onClick={() => setAccent('')}>恢复主题色</button> : null}
+              {accent ? (
+                <button type="button" onClick={() => setAccent('')}>
+                  恢复主题色
+                </button>
+              ) : null}
             </div>
           </label>
 
@@ -396,7 +490,10 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
                 data-theme={selectedPreset.key}
                 style={storefrontThemeStyle(selectedPreset.tokens, previewAccent)}
               >
-                <div className="theme-preview-statusbar" aria-hidden="true"><span>9:41</span><span>● ● ▰</span></div>
+                <div className="theme-preview-statusbar" aria-hidden="true">
+                  <span>9:41</span>
+                  <span>● ● ▰</span>
+                </div>
                 <StorefrontBrandBar
                   LinkComponent={PreviewLink}
                   locationLabel="Explore nearby"
@@ -410,21 +507,28 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
                     locationLabel="Nearby"
                     title="Discover what fits you"
                   />
-                  <div className="theme-preview-section-row"><strong>Featured</strong><span>See all</span></div>
+                  <div className="theme-preview-section-row">
+                    <strong>Featured</strong>
+                    <span>See all</span>
+                  </div>
                   <div className="theme-preview-products product-grid">
-                  {[1, 2].map((item) => (
-                    <StorefrontProductCard
-                      categoryName="Category"
-                      href="#"
-                      key={item}
-                      LinkComponent={PreviewLink}
-                      media={<div className="theme-preview-media image-fallback"><span>1:1</span></div>}
-                      modeLabel="Online"
-                      sectionName="Featured"
-                      tags={[{ id: `preview-${item}`, name: 'Popular' }]}
-                      title={item === 1 ? 'Product title' : 'Featured item'}
-                    />
-                  ))}
+                    {[1, 2].map((item) => (
+                      <StorefrontProductCard
+                        categoryName="Category"
+                        href="#"
+                        key={item}
+                        LinkComponent={PreviewLink}
+                        media={
+                          <div className="theme-preview-media image-fallback">
+                            <span>1:1</span>
+                          </div>
+                        }
+                        modeLabel="Online"
+                        sectionName="Featured"
+                        tags={[{ id: `preview-${item}`, name: 'Popular' }]}
+                        title={item === 1 ? 'Product title' : 'Featured item'}
+                      />
+                    ))}
                   </div>
                 </div>
                 <StorefrontBottomNavigation
@@ -442,7 +546,10 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
 
           <div className="theme-ratio-note">
             <strong>外部主题也必须服从本站移动端结构</strong>
-            <p>外部来源只能改变经过校验的 Theme Tokens。产品双列、1:1 卡片、触控操作、底部导航和业务组件仍由本站控制。</p>
+            <p>
+              外部来源只能改变经过校验的 Theme Tokens。产品双列、1:1
+              卡片、触控操作、底部导航和业务组件仍由本站控制。
+            </p>
           </div>
         </aside>
       </div>

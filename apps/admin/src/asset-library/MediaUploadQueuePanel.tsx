@@ -53,11 +53,21 @@ export function MediaUploadQueuePanel({
         </div>
         <div>
           {progress.failed > 0 ? (
-            <button type="button" className="secondary-button" disabled={running} onClick={onRetryFailed}>
+            <button
+              type="button"
+              className="secondary-button"
+              disabled={running}
+              onClick={onRetryFailed}
+            >
               重试失败项
             </button>
           ) : null}
-          <button type="button" className="secondary-button" disabled={running} onClick={onClearFinished}>
+          <button
+            type="button"
+            className="secondary-button"
+            disabled={running}
+            onClick={onClearFinished}
+          >
             清理已完成
           </button>
         </div>
@@ -68,7 +78,10 @@ export function MediaUploadQueuePanel({
             <span className="media-upload-queue-state" aria-hidden="true" />
             <div>
               <strong title={item.fileName}>{item.fileName}</strong>
-              <small>{formatBytes(item.byteSize)}{item.message ? ` · ${item.message}` : ''}</small>
+              <small>
+                {formatBytes(item.byteSize)}
+                {item.message ? ` · ${item.message}` : ''}
+              </small>
             </div>
             <b>{statusLabel(item)}</b>
           </div>

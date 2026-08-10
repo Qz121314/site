@@ -43,8 +43,9 @@ export async function loadBrowseSectionPresentations(
     ...(signal ? { signal } : {}),
   });
   if (!response.ok) throw new Error('Browse section presentation is unavailable.');
-  const body = await response.json() as BrowseSectionEnvelope;
-  if (!Array.isArray(body.sections)) throw new Error('Browse section presentation is invalid.');
+  const body = (await response.json()) as BrowseSectionEnvelope;
+  if (!Array.isArray(body.sections))
+    throw new Error('Browse section presentation is invalid.');
   return body.sections.flatMap((item) => {
     const parsed = parsePresentation(item);
     return parsed ? [parsed] : [];

@@ -5,8 +5,8 @@ export type AdminAuthBindings = {
   sessionSecret: string;
 };
 
-function readBinding(value: unknown): string | null {
-  if (typeof value !== 'string' || value.trim().length === 0) {
+function readBinding(value: unknown, minimumLength: number): string | null {
+  if (typeof value !== 'string' || value.trim().length < minimumLength) {
     return null;
   }
 
@@ -14,8 +14,8 @@ function readBinding(value: unknown): string | null {
 }
 
 export function getAdminAuthBindings(bindings: AppBindings): AdminAuthBindings | null {
-  const adminPassword = readBinding(bindings.ADMIN_PASSWORD);
-  const sessionSecret = readBinding(bindings.SESSION_SECRET);
+  const adminPassword = readBinding(bindings.ADMIN_PASSWORD, 12);
+  const sessionSecret = readBinding(bindings.SESSION_SECRET, 32);
 
   if (adminPassword === null || sessionSecret === null) {
     return null;

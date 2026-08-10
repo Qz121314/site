@@ -1,7 +1,8 @@
 import { AdminApiError } from '../api';
 import { adminFetch } from '../admin-fetch';
 
-export type OfficialThemeKey = 'marketplace' | 'noir' | 'live' | 'saas' | 'travel' | 'tech';
+export type OfficialThemeKey =
+  'marketplace' | 'noir' | 'live' | 'saas' | 'travel' | 'tech';
 export type ThemeKey = OfficialThemeKey | 'custom';
 
 export type ThemeTokens = {
@@ -74,7 +75,9 @@ async function themeRequest(path: string, init?: RequestInit): Promise<unknown> 
     throw new AdminApiError(
       response.status,
       envelope && typeof envelope.code === 'string' ? envelope.code : 'REQUEST_FAILED',
-      envelope && typeof envelope.message === 'string' ? envelope.message : '主题中心请求失败。',
+      envelope && typeof envelope.message === 'string'
+        ? envelope.message
+        : '主题中心请求失败。',
       details && typeof details.field === 'string' ? { field: details.field } : undefined,
     );
   }

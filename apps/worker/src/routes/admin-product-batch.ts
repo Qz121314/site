@@ -13,7 +13,12 @@ import {
 } from '../products/products';
 import { getSection } from '../sections/sections';
 import type { AppEnvironment } from '../types';
-import { hasAdminRequestHeader, isRecord, jsonBodyError, readJsonBody } from './admin-section-shared';
+import {
+  hasAdminRequestHeader,
+  isRecord,
+  jsonBodyError,
+  readJsonBody,
+} from './admin-section-shared';
 
 const IDEMPOTENCY_HEADER = 'x-idempotency-key';
 const MAX_BATCH_SIZE = 100;
@@ -23,13 +28,19 @@ function parseIds(value: unknown): string[] | null {
   const ids = value.ids.filter(
     (id): id is string => typeof id === 'string' && id.length > 0 && id.length <= 100,
   );
-  if (ids.length === 0 || ids.length !== value.ids.length || ids.length > MAX_BATCH_SIZE) {
+  if (
+    ids.length === 0 ||
+    ids.length !== value.ids.length ||
+    ids.length > MAX_BATCH_SIZE
+  ) {
     return null;
   }
   return new Set(ids).size === ids.length ? ids : null;
 }
 
-function parseReorderItems(value: unknown): Array<{ id: string; sortOrder: number }> | null {
+function parseReorderItems(
+  value: unknown,
+): Array<{ id: string; sortOrder: number }> | null {
   if (!isRecord(value) || !Array.isArray(value.items)) return null;
   if (value.items.length === 0 || value.items.length > MAX_BATCH_SIZE) return null;
   const items: Array<{ id: string; sortOrder: number }> = [];
@@ -74,11 +85,21 @@ adminProductBatchRoutes.post('/:sectionId/products/batch-delete', async (context
 
   const idempotencyKey = normalizeIdempotencyKey(context.req.header(IDEMPOTENCY_HEADER));
   if (!idempotencyKey) {
-    return apiError(context, 400, 'IDEMPOTENCY_KEY_REQUIRED', '批量删除需要有效的幂等键。');
+    return apiError(
+      context,
+      400,
+      'IDEMPOTENCY_KEY_REQUIRED',
+      '批量删除需要有效的幂等键。',
+    );
   }
   const now = new Date().toISOString();
   const scope = `product-batch-delete:${sectionId}`;
-  const previous = await readIdempotentResponse(context.env.DB, scope, idempotencyKey, now);
+  const previous = await readIdempotentResponse(
+    context.env.DB,
+    scope,
+    idempotencyKey,
+    now,
+  );
   if (previous) return context.json(previous);
 
   let body: unknown;
@@ -89,10 +110,17 @@ adminProductBatchRoutes.post('/:sectionId/products/batch-delete', async (context
   }
   const ids = parseIds(body);
   if (!ids) {
-    return apiError(context, 400, 'INVALID_PRODUCT_BATCH', '请选择 1 到 100 个有效产品。');
+    return apiError(
+      context,
+      400,
+      'INVALID_PRODUCT_BATCH',
+      '请选择 1 到 100 个有效产品。',
+    );
   }
 
-  const products = await Promise.all(ids.map((id) => getProduct(context.env.DB, sectionId, id)));
+  const products = await Promise.all(
+    ids.map((id) => getProduct(context.env.DB, sectionId, id)),
+  );
   const missingIndex = products.findIndex((product) => !product || product.deletedAt);
   if (missingIndex >= 0) {
     return apiError(
@@ -138,11 +166,21 @@ adminProductBatchRoutes.post('/:sectionId/products/reorder', async (context) => 
 
   const idempotencyKey = normalizeIdempotencyKey(context.req.header(IDEMPOTENCY_HEADER));
   if (!idempotencyKey) {
-    return apiError(context, 400, 'IDEMPOTENCY_KEY_REQUIRED', '产品排序需要有效的幂等键。');
+    return apiError(
+      context,
+      400,
+      'IDEMPOTENCY_KEY_REQUIRED',
+      '产品排序需要有效的幂等键。',
+    );
   }
   const now = new Date().toISOString();
   const scope = `product-reorder:${sectionId}`;
-  const previous = await readIdempotentResponse(context.env.DB, scope, idempotencyKey, now);
+  const previous = await readIdempotentResponse(
+    context.env.DB,
+    scope,
+    idempotencyKey,
+    now,
+  );
   if (previous) return context.json(previous);
 
   let body: unknown;
@@ -167,7 +205,13 @@ adminProductBatchRoutes.post('/:sectionId/products/reorder', async (context) => 
   const statements = items.flatMap((item, index) => {
     const current = products[index]!;
     return [
-      createReorderProductStatement(context.env.DB, sectionId, item.id, item.sortOrder, now),
+      createReorderProductStatement(
+        context.env.DB,
+        sectionId,
+        item.id,
+        item.sortOrder,
+        now,
+      ),
       createAuditLogStatement(context.env.DB, {
         action: 'product.reordered',
         entityType: 'product',

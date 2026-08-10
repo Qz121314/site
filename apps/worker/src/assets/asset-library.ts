@@ -10,10 +10,7 @@ export type AssetReferenceCounts = {
 };
 
 export type AssetCleanupBlockedReason =
-  | 'IN_USE'
-  | 'NOT_IMAGE'
-  | 'SNAPSHOT_RETENTION'
-  | null;
+  'IN_USE' | 'NOT_IMAGE' | 'SNAPSHOT_RETENTION' | null;
 
 export type AdminAsset = {
   key: string;
@@ -153,14 +150,23 @@ function inferContentType(key: string): string | null {
 }
 
 export function isImageObject(key: string, contentType: string | null): boolean {
-  return contentType?.toLowerCase().startsWith('image/') === true || IMAGE_EXTENSION_PATTERN.test(key);
+  return (
+    contentType?.toLowerCase().startsWith('image/') === true ||
+    IMAGE_EXTENSION_PATTERN.test(key)
+  );
 }
 
 function encodeObjectKey(key: string): string {
-  return key.split('/').map((segment) => encodeURIComponent(segment)).join('/');
+  return key
+    .split('/')
+    .map((segment) => encodeURIComponent(segment))
+    .join('/');
 }
 
-export function buildAssetPublicUrl(mediaBaseUrl: string | null, key: string): string | null {
+export function buildAssetPublicUrl(
+  mediaBaseUrl: string | null,
+  key: string,
+): string | null {
   return mediaBaseUrl ? `${mediaBaseUrl}/${encodeObjectKey(key)}` : null;
 }
 
@@ -212,7 +218,9 @@ async function getSnapshotProtection(db: D1Database): Promise<SnapshotProtection
     if (rows.length > 0) {
       return {
         modular: true,
-        protectedKeys: new Set(rows.flatMap((row) => parseMediaKeys(row.media_keys_json))),
+        protectedKeys: new Set(
+          rows.flatMap((row) => parseMediaKeys(row.media_keys_json)),
+        ),
         retainedLegacyVersions: [],
       };
     }
@@ -261,7 +269,9 @@ async function synchronizeCleanupGuards(
     if (referenceCount > 0 || !guardVersion) {
       if (existing) {
         statements.push(
-          db.prepare('DELETE FROM asset_cleanup_guards WHERE object_key = ?').bind(row.object_key),
+          db
+            .prepare('DELETE FROM asset_cleanup_guards WHERE object_key = ?')
+            .bind(row.object_key),
         );
         guards.delete(row.object_key);
       }
@@ -300,9 +310,9 @@ function legacyRetentionBlocked(
 ): boolean {
   return Boolean(
     row &&
-      guard &&
-      retainedVersions.has(guard.guard_content_version) &&
-      countReferences(toReferenceCounts(row)) === 0,
+    guard &&
+    retainedVersions.has(guard.guard_content_version) &&
+    countReferences(toReferenceCounts(row)) === 0,
   );
 }
 
@@ -312,9 +322,7 @@ function modularRetentionBlocked(
   protectedKeys: Set<string>,
 ): boolean {
   return Boolean(
-    row &&
-      countReferences(toReferenceCounts(row)) === 0 &&
-      protectedKeys.has(key),
+    row && countReferences(toReferenceCounts(row)) === 0 && protectedKeys.has(key),
   );
 }
 
@@ -399,7 +407,10 @@ export async function scanAssetPage(
     getSnapshotProtection(db),
   ]);
   const imageObjects = listed.objects.filter((object) =>
-    isImageObject(object.key, object.httpMetadata?.contentType ?? inferContentType(object.key)),
+    isImageObject(
+      object.key,
+      object.httpMetadata?.contentType ?? inferContentType(object.key),
+    ),
   );
   const rows = await getMediaAssetReferenceRows(
     db,

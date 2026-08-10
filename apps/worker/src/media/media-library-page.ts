@@ -69,7 +69,9 @@ function encodeCursor(row: Pick<MediaRow, 'created_at' | 'id'>): string {
     .replace(/=+$/g, '');
 }
 
-function decodeCursor(value: string | null | undefined): { createdAt: string; id: string } | null {
+function decodeCursor(
+  value: string | null | undefined,
+): { createdAt: string; id: string } | null {
   if (!value) return null;
   try {
     const normalized = value.replace(/-/g, '+').replace(/_/g, '/');
@@ -187,7 +189,10 @@ export async function listMediaLibraryPage(
 
   const hasMore = rows.length > limit;
   const pageRows = hasMore ? rows.slice(0, limit) : rows;
-  const roleRows = await getRoleRows(db, pageRows.map((row) => row.id));
+  const roleRows = await getRoleRows(
+    db,
+    pageRows.map((row) => row.id),
+  );
   const roleById = rolesMap(roleRows);
   const mediaBaseUrl = await getMediaBaseUrl(db);
 

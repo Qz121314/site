@@ -37,7 +37,8 @@ export function App() {
   useEffect(() => {
     const handleExpiredEvent = () => handleSessionExpired();
     window.addEventListener(ADMIN_SESSION_EXPIRED_EVENT, handleExpiredEvent);
-    return () => window.removeEventListener(ADMIN_SESSION_EXPIRED_EVENT, handleExpiredEvent);
+    return () =>
+      window.removeEventListener(ADMIN_SESSION_EXPIRED_EVENT, handleExpiredEvent);
   }, [handleSessionExpired]);
 
   useEffect(() => {

@@ -33,12 +33,10 @@ type SiteSettingsRow = {
 };
 
 type ValidationResult =
-  | { ok: true; value: SiteSettingsInput }
-  | { ok: false; field: string; message: string };
+  { ok: true; value: SiteSettingsInput } | { ok: false; field: string; message: string };
 
 type FieldValidation<T> =
-  | { ok: true; value: T }
-  | { ok: false; field: string; message: string };
+  { ok: true; value: T } | { ok: false; field: string; message: string };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -102,11 +100,16 @@ function isIpAddress(hostname: string): boolean {
   const parts = hostname.split('.');
   return (
     parts.length === 4 &&
-    parts.every((part) => /^\d{1,3}$/u.test(part) && Number(part) >= 0 && Number(part) <= 255)
+    parts.every(
+      (part) => /^\d{1,3}$/u.test(part) && Number(part) >= 0 && Number(part) <= 255,
+    )
   );
 }
 
-function optionalAssetUrl(mediaBaseUrl: string | null, key: string | null): string | null {
+function optionalAssetUrl(
+  mediaBaseUrl: string | null,
+  key: string | null,
+): string | null {
   return key ? buildAssetPublicUrl(mediaBaseUrl, key) : null;
 }
 
@@ -178,7 +181,11 @@ export function validateSiteSettingsInput(value: unknown): ValidationResult {
     };
   }
 
-  const ga4MeasurementId = readOptionalString(value.ga4MeasurementId, 'ga4MeasurementId', 80);
+  const ga4MeasurementId = readOptionalString(
+    value.ga4MeasurementId,
+    'ga4MeasurementId',
+    80,
+  );
   if (!ga4MeasurementId.ok) return ga4MeasurementId;
 
   if (

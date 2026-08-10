@@ -27,7 +27,10 @@ test('PNG cannot be accepted as optimized static output', () => {
 });
 
 test('missing compression profile rejects static image', () => {
-  assert.equal(validate({ compressionProfile: null })?.code, 'MEDIA_COMPRESSION_REQUIRED');
+  assert.equal(
+    validate({ compressionProfile: null })?.code,
+    'MEDIA_COMPRESSION_REQUIRED',
+  );
 });
 
 test('invalid original byte size rejects static image', () => {
@@ -36,6 +39,12 @@ test('invalid original byte size rejects static image', () => {
 });
 
 test('GIF and videos are outside the static image compression contract', () => {
-  assert.equal(validate({ mimeType: 'image/gif', compressionProfile: null, sourceByteSize: null }), null);
-  assert.equal(validate({ mimeType: 'video/mp4', compressionProfile: null, sourceByteSize: null }), null);
+  assert.equal(
+    validate({ mimeType: 'image/gif', compressionProfile: null, sourceByteSize: null }),
+    null,
+  );
+  assert.equal(
+    validate({ mimeType: 'video/mp4', compressionProfile: null, sourceByteSize: null }),
+    null,
+  );
 });

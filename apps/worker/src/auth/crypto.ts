@@ -43,7 +43,10 @@ export function decodeJsonPayload(value: string): unknown | null {
   }
 }
 
-export async function hmacSha256Base64Url(secret: string, value: string): Promise<string> {
+export async function hmacSha256Base64Url(
+  secret: string,
+  value: string,
+): Promise<string> {
   const keyMaterial = await crypto.subtle.digest('SHA-256', encoder.encode(secret));
   const key = await crypto.subtle.importKey(
     'raw',
@@ -74,7 +77,10 @@ export function constantTimeEqual(left: string, right: string): boolean {
   return difference === 0;
 }
 
-export async function constantTimeSecretEqual(left: string, right: string): Promise<boolean> {
+export async function constantTimeSecretEqual(
+  left: string,
+  right: string,
+): Promise<boolean> {
   const [leftDigest, rightDigest] = await Promise.all([
     sha256Base64Url(left),
     sha256Base64Url(right),

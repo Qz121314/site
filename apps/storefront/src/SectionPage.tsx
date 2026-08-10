@@ -13,7 +13,13 @@ import { SYSTEM_UI } from './system-ui';
 
 function SearchIcon() {
   return (
-    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden="true">
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      aria-hidden="true"
+    >
       <circle cx="10.8" cy="10.8" r="6.5" />
       <path d="m16 16 4 4" strokeLinecap="round" />
     </svg>
@@ -21,7 +27,9 @@ function SearchIcon() {
 }
 
 function SectionVisual({ section }: { section: PublicSection }) {
-  const fallback = <span aria-hidden="true">{Array.from(section.name.trim())[0] ?? '•'}</span>;
+  const fallback = (
+    <span aria-hidden="true">{Array.from(section.name.trim())[0] ?? '•'}</span>
+  );
   if (section.icon.type === 'image' && section.icon.value) {
     return (
       <ResilientImage
@@ -32,7 +40,11 @@ function SectionVisual({ section }: { section: PublicSection }) {
       />
     );
   }
-  return <span aria-hidden="true">{section.icon.value || Array.from(section.name.trim())[0] || '•'}</span>;
+  return (
+    <span aria-hidden="true">
+      {section.icon.value || Array.from(section.name.trim())[0] || '•'}
+    </span>
+  );
 }
 
 export function SectionCatalogPage({
@@ -72,7 +84,8 @@ export function SectionCatalogPage({
   }, [categoryId, query.data?.products, search, selectedTags]);
 
   useEffect(() => {
-    if (query.data) document.title = `${query.data.section.name} · ${bootstrap.site.site.name}`;
+    if (query.data)
+      document.title = `${query.data.section.name} · ${bootstrap.site.site.name}`;
   }, [bootstrap.site.site.name, query.data]);
 
   function toggleTag(tagId: string) {
@@ -99,19 +112,32 @@ export function SectionCatalogPage({
   const hasFilters = Boolean(search.trim() || categoryId || selectedTags.size > 0);
 
   if (query.isLoading && !query.data) {
-    return <div className="inline-loading section-catalog-state">{SYSTEM_UI.loading}</div>;
+    return (
+      <div className="inline-loading section-catalog-state">{SYSTEM_UI.loading}</div>
+    );
   }
 
   if (query.error && !query.data) {
     return (
-      <section className="section-catalog-state standalone-state embedded-state" role="status">
+      <section
+        className="section-catalog-state standalone-state embedded-state"
+        role="status"
+      >
         <div className="state-mark">!</div>
         <h1>{SYSTEM_UI.unavailable}</h1>
         <div className="state-actions">
-          <button className="primary-button" type="button" onClick={() => void query.refetch()}>
+          <button
+            className="primary-button"
+            type="button"
+            onClick={() => void query.refetch()}
+          >
             {SYSTEM_UI.retry}
           </button>
-          <LinkComponent className="secondary-button" href="/browse/" onClick={handleBack}>
+          <LinkComponent
+            className="secondary-button"
+            href="/browse/"
+            onClick={handleBack}
+          >
             {SYSTEM_UI.back}
           </LinkComponent>
         </div>
@@ -127,8 +153,14 @@ export function SectionCatalogPage({
   return (
     <section className="section-catalog" aria-labelledby="section-catalog-title">
       <header className="section-catalog-header">
-        <LinkComponent className="section-catalog-back" href="/browse/" onClick={handleBack}>
-          <span className="section-catalog-back-icon" aria-hidden="true">←</span>
+        <LinkComponent
+          className="section-catalog-back"
+          href="/browse/"
+          onClick={handleBack}
+        >
+          <span className="section-catalog-back-icon" aria-hidden="true">
+            ←
+          </span>
           <span>{SYSTEM_UI.back}</span>
         </LinkComponent>
 
@@ -206,7 +238,9 @@ export function SectionCatalogPage({
       {hasFilters && filteredProducts.length > 0 ? (
         <div className="section-catalog-results">
           <strong>{filteredProducts.length}</strong>
-          <button type="button" onClick={clearFilters}>{SYSTEM_UI.clear}</button>
+          <button type="button" onClick={clearFilters}>
+            {SYSTEM_UI.clear}
+          </button>
         </div>
       ) : null}
 
@@ -219,14 +253,14 @@ export function SectionCatalogPage({
               href={productHref(product)}
               key={product.id}
               LinkComponent={LinkComponent}
-              media={(
+              media={
                 <ResilientImage
                   alt=""
                   fallback={<div className="image-fallback" aria-hidden="true" />}
                   loading="lazy"
                   src={product.coverUrl}
                 />
-              )}
+              }
               sectionName={product.sectionName}
               tags={product.tags}
               title={product.title}
@@ -240,7 +274,11 @@ export function SectionCatalogPage({
           </span>
           <p>{SYSTEM_UI.noResults}</p>
           {hasFilters ? (
-            <button className="section-catalog-empty-reset" type="button" onClick={clearFilters}>
+            <button
+              className="section-catalog-empty-reset"
+              type="button"
+              onClick={clearFilters}
+            >
               {SYSTEM_UI.clear}
             </button>
           ) : null}

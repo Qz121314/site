@@ -1,6 +1,7 @@
 export type ConversionMode = 'customer_service' | 'link';
 export type ConversionScope = 'active' | 'trash' | 'all';
-export type ConversionTargetBindingKind = 'link' | 'customer_service' | 'legacy_customer_service';
+export type ConversionTargetBindingKind =
+  'link' | 'customer_service' | 'legacy_customer_service';
 
 export type ConversionGroupRecord = {
   id: string;
@@ -91,8 +92,7 @@ type ConversionTargetRow = {
 };
 
 type ValidationResult<T> =
-  | { ok: true; value: T }
-  | { ok: false; field: string; message: string };
+  { ok: true; value: T } | { ok: false; field: string; message: string };
 
 type RotationRow = { selected_index: number };
 
@@ -125,7 +125,8 @@ function readNullableText(
   label: string,
   maxLength: number,
 ): ValidationResult<string | null> {
-  if (value === null || value === undefined || value === '') return { ok: true, value: null };
+  if (value === null || value === undefined || value === '')
+    return { ok: true, value: null };
   if (typeof value !== 'string') {
     return { ok: false, field, message: `${label}必须是文本。` };
   }
@@ -157,7 +158,12 @@ export function validateConversionGroupInput(
   }
   const name = readRequiredText(value.name, 'name', '分组名称', 100);
   if (!name.ok) return name;
-  const buttonLabel = readRequiredText(value.buttonLabel, 'buttonLabel', 'CTA 按钮文字', 80);
+  const buttonLabel = readRequiredText(
+    value.buttonLabel,
+    'buttonLabel',
+    'CTA 按钮文字',
+    80,
+  );
   if (!buttonLabel.ok) return buttonLabel;
   if (value.mode !== 'customer_service' && value.mode !== 'link') {
     return { ok: false, field: 'mode', message: '请选择在线客服或链接分组。' };
@@ -200,7 +206,11 @@ export function validateConversionTargetInput(
     try {
       const parsed = new URL(endpoint.value);
       if (parsed.protocol !== 'https:' && parsed.protocol !== 'http:') {
-        return { ok: false, field: 'endpointUrl', message: '跳转链接必须使用 HTTP 或 HTTPS。' };
+        return {
+          ok: false,
+          field: 'endpointUrl',
+          message: '跳转链接必须使用 HTTP 或 HTTPS。',
+        };
       }
     } catch {
       return { ok: false, field: 'endpointUrl', message: '跳转链接格式无效。' };
@@ -226,7 +236,12 @@ export function validateConversionTargetInput(
     100,
   );
   if (!connectionId.ok) return connectionId;
-  const remoteGroupId = readRequiredText(value.remoteGroupId, 'remoteGroupId', '客服分组', 300);
+  const remoteGroupId = readRequiredText(
+    value.remoteGroupId,
+    'remoteGroupId',
+    '客服分组',
+    300,
+  );
   if (!remoteGroupId.ok) return remoteGroupId;
   const remoteGroupName = readRequiredText(
     value.remoteGroupName,
@@ -238,7 +253,11 @@ export function validateConversionTargetInput(
   const endpoint = readNullableText(value.endpointUrl, 'endpointUrl', '跳转链接', 1000);
   if (!endpoint.ok) return endpoint;
   if (endpoint.value !== null) {
-    return { ok: false, field: 'endpointUrl', message: '在线客服入口不能手工填写跳转链接。' };
+    return {
+      ok: false,
+      field: 'endpointUrl',
+      message: '在线客服入口不能手工填写跳转链接。',
+    };
   }
 
   return {

@@ -214,7 +214,10 @@ export function parseMarkdown(source: string): MarkdownBlock[] {
     const paragraphLines: MarkdownInlineNode[][] = [];
     while (index < lines.length) {
       const paragraphLine = lines[index] ?? '';
-      if (!paragraphLine.trim() || (paragraphLines.length > 0 && isBlockStart(paragraphLine))) {
+      if (
+        !paragraphLine.trim() ||
+        (paragraphLines.length > 0 && isBlockStart(paragraphLine))
+      ) {
         break;
       }
       paragraphLines.push(parseInlineMarkdown(paragraphLine));

@@ -2,11 +2,11 @@
 
 :is(html, .storefront-theme-root) {
   --storefront-font-ui:
-    "Avenir Next", "Segoe UI Variable Text", "SF Pro Text", Inter,
-    ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    'Avenir Next', 'Segoe UI Variable Text', 'SF Pro Text', Inter, ui-sans-serif,
+    system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --storefront-font-display:
-    "Avenir Next", "Segoe UI Variable Display", "SF Pro Display", Inter,
-    ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    'Avenir Next', 'Segoe UI Variable Display', 'SF Pro Display', Inter, ui-sans-serif,
+    system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --storefront-text-caption: 0.6875rem;
   --storefront-text-small: 0.75rem;
   --storefront-text-body: 0.875rem;
@@ -22,14 +22,8 @@
   font-family: inherit;
 }
 
-:is(html, .storefront-theme-root) :is(
-  h1,
-  h2,
-  h3,
-  .brand-lockup strong,
-  .home-product-tile strong,
-  .bottom-nav small
-) {
+:is(html, .storefront-theme-root)
+  :is(h1, h2, h3, .brand-lockup strong, .home-product-tile strong, .bottom-nav small) {
   font-family: var(--storefront-font-display);
 }
 
@@ -80,13 +74,14 @@
   letter-spacing: -0.022em;
 }
 
-:is(html, .storefront-theme-root) :is(
-  .service-mode-badge,
-  .product-card-heading > span,
-  .tag-row span,
-  .product-address,
-  .bottom-nav small
-) {
+:is(html, .storefront-theme-root)
+  :is(
+    .service-mode-badge,
+    .product-card-heading > span,
+    .tag-row span,
+    .product-address,
+    .bottom-nav small
+  ) {
   font-size: var(--storefront-text-caption);
 }
 

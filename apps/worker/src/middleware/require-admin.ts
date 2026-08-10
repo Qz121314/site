@@ -10,12 +10,7 @@ export const requireAdmin: MiddlewareHandler<AppEnvironment> = async (context, n
 
   const authBindings = getAdminAuthBindings(context.env);
   if (!authBindings) {
-    return apiError(
-      context,
-      503,
-      'AUTH_NOT_CONFIGURED',
-      '后台登录变量尚未配置。',
-    );
+    return apiError(context, 503, 'AUTH_NOT_CONFIGURED', '后台登录变量尚未配置。');
   }
 
   const token = getCookie(context, ADMIN_SESSION_COOKIE);

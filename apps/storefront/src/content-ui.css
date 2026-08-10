@@ -45,7 +45,10 @@
   box-shadow:
     0 1px 0 color-mix(in srgb, #fff 30%, transparent) inset,
     0 3px 12px color-mix(in srgb, var(--text) 5%, transparent);
-  transition: transform 130ms ease, box-shadow 150ms ease, border-color 150ms ease;
+  transition:
+    transform 130ms ease,
+    box-shadow 150ms ease,
+    border-color 150ms ease;
 }
 
 .product-card-media img,
@@ -190,8 +193,14 @@
     border: 1px solid var(--theme-card-border, var(--line, #e7e9ec));
     border-radius: var(--theme-radius-card, 18px);
     background: var(--theme-card-background, var(--surface, #fff));
-    box-shadow: var(--theme-card-shadow, 0 5px 18px color-mix(in srgb, var(--text) 5%, transparent));
-    transition: transform 150ms ease, box-shadow 150ms ease, border-color 150ms ease;
+    box-shadow: var(
+      --theme-card-shadow,
+      0 5px 18px color-mix(in srgb, var(--text) 5%, transparent)
+    );
+    transition:
+      transform 150ms ease,
+      box-shadow 150ms ease,
+      border-color 150ms ease;
   }
 
   .product-card:focus-visible {
@@ -204,8 +213,15 @@
   }
 
   .product-card:hover {
-    border-color: color-mix(in srgb, var(--brand, #ff5a1f) 24%, var(--theme-card-border, var(--line, #e7e9ec)));
-    box-shadow: var(--theme-card-hover-shadow, 0 14px 30px color-mix(in srgb, var(--text) 9%, transparent));
+    border-color: color-mix(
+      in srgb,
+      var(--brand, #ff5a1f) 24%,
+      var(--theme-card-border, var(--line, #e7e9ec))
+    );
+    box-shadow: var(
+      --theme-card-hover-shadow,
+      0 14px 30px color-mix(in srgb, var(--text) 9%, transparent)
+    );
     transform: translateY(-2px);
   }
 

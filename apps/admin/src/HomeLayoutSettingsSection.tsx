@@ -58,7 +58,8 @@ export function HomeLayoutSettingsSection({
   ) {
     const ids = value[placement];
     const limit = LIMITS[placement];
-    const canAdd = ids.length < limit && sections.some((section) => !ids.includes(section.id));
+    const canAdd =
+      ids.length < limit && sections.some((section) => !ids.includes(section.id));
 
     return (
       <div className="admin-home-layout-group">
@@ -67,7 +68,9 @@ export function HomeLayoutSettingsSection({
             <strong>{title}</strong>
             <p>{description}</p>
           </div>
-          <span>{ids.length}/{limit}</span>
+          <span>
+            {ids.length}/{limit}
+          </span>
         </div>
 
         {ids.length > 0 ? (
@@ -82,10 +85,12 @@ export function HomeLayoutSettingsSection({
                     <select
                       value={sectionId}
                       disabled={busy}
-                      onChange={(event) => updatePlacement(
-                        placement,
-                        replaceItem(ids, index, event.target.value),
-                      )}
+                      onChange={(event) =>
+                        updatePlacement(
+                          placement,
+                          replaceItem(ids, index, event.target.value),
+                        )
+                      }
                     >
                       {sections.map((section) => (
                         <option
@@ -124,7 +129,11 @@ export function HomeLayoutSettingsSection({
                       移除
                     </button>
                   </div>
-                  {selected ? <small className="admin-home-layout-route">/sections/{selected.slug}/</small> : null}
+                  {selected ? (
+                    <small className="admin-home-layout-route">
+                      /sections/{selected.slug}/
+                    </small>
+                  ) : null}
                 </div>
               );
             })}
@@ -146,12 +155,16 @@ export function HomeLayoutSettingsSection({
   }
 
   return (
-    <section className="admin-settings-section" aria-labelledby="settings-home-layout-title">
+    <section
+      className="admin-settings-section"
+      aria-labelledby="settings-home-layout-title"
+    >
       <div className="admin-settings-section-heading">
         <div>
           <h2 id="settings-home-layout-title">首页布局</h2>
           <p className="admin-settings-section-description">
-            Home 固定为 Logo、Hero、快捷分区、推荐分区产品横滑和底部导航；这里仅选择首页展示哪些分区及顺序。
+            Home 固定为
+            Logo、Hero、快捷分区、推荐分区产品横滑和底部导航；这里仅选择首页展示哪些分区及顺序。
           </p>
         </div>
       </div>

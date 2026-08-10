@@ -31,8 +31,7 @@ type ProductTagRow = {
 };
 
 type ValidationResult =
-  | { ok: true; value: ProductTagInput }
-  | { ok: false; field: string; message: string };
+  { ok: true; value: ProductTagInput } | { ok: false; field: string; message: string };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -58,7 +57,10 @@ export function validateProductTagInput(value: unknown): ValidationResult {
   if (typeof value.isEnabled !== 'boolean') {
     return { ok: false, field: 'isEnabled', message: '必须选择启用或停用。' };
   }
-  return { ok: true, value: { name, sortOrder: value.sortOrder, isEnabled: value.isEnabled } };
+  return {
+    ok: true,
+    value: { name, sortOrder: value.sortOrder, isEnabled: value.isEnabled },
+  };
 }
 
 function mapProductTag(row: ProductTagRow): ProductTagRecord {

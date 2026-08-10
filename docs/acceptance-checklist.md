@@ -5,7 +5,7 @@
 ## 验收前提
 
 - 使用非生产测试内容，避免覆盖正在运营的数据；
-- 确认 `ADMIN_PASSWORD` 与 `SESSION_SECRET` 已配置且不是空值；
+- 确认 `ADMIN_PASSWORD` 至少 12 个字符，`SESSION_SECRET` 至少 32 个字符，并均使用 Worker Secret 配置；
 - 确认 D1 增量迁移已全部应用；
 - 确认 R2 自定义域名与 `media_base_url` 一致；
 - 记录验收 commit、Worker 版本和开始时间。
@@ -55,6 +55,7 @@
 - [ ] Storefront 首页、分区页和产品详情显示刚发布的数据；
 - [ ] 手机宽度保持双列产品卡、可触控筛选和 Safe Area 底部导航；
 - [ ] 图片 / GIF / 视频正常显示，失效媒体显示稳定占位；
+- [ ] 阻断 R2 Custom Domain 后，已登记图片和视频通过 `/_media/*` 同源路径重试成功，视频 Range 请求返回 206；
 - [ ] 将 R2 自定义域名切换到同一 Bucket 的另一个已验证域名后，不重新构建前端也能读取公开内容和媒体；
 - [ ] CTA 使用当前 D1 转化配置并正确跳转。
 
@@ -68,7 +69,7 @@
 
 ## 5. 生产冒烟证据
 
-- [ ] `/api/health` 返回 production、版本和 request ID；
+- [ ] `/api/health` 返回 production、Worker Version ID 和 request ID；
 - [ ] `/api/public/theme` 与 `/public/current.json` 返回正确 JSON 和缓存头；
 - [ ] `/`、`/admin/`、分区深链和产品深链返回 SPA；
 - [ ] 响应包含 CSP、`X-Content-Type-Options`、`X-Frame-Options` 和 `Referrer-Policy`；

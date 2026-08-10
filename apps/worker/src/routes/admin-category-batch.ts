@@ -28,8 +28,14 @@ const MAX_BATCH_SIZE = 100;
 function parseBatchIds(value: unknown): string[] | null {
   if (!isRecord(value) || !Array.isArray(value.ids)) return null;
 
-  const ids = value.ids.filter((id): id is string => typeof id === 'string' && id.length > 0);
-  if (ids.length === 0 || ids.length !== value.ids.length || ids.length > MAX_BATCH_SIZE) {
+  const ids = value.ids.filter(
+    (id): id is string => typeof id === 'string' && id.length > 0,
+  );
+  if (
+    ids.length === 0 ||
+    ids.length !== value.ids.length ||
+    ids.length > MAX_BATCH_SIZE
+  ) {
     return null;
   }
 
@@ -37,7 +43,9 @@ function parseBatchIds(value: unknown): string[] | null {
   return uniqueIds.length === ids.length ? uniqueIds : null;
 }
 
-function parseReorderItems(value: unknown): Array<{ id: string; sortOrder: number }> | null {
+function parseReorderItems(
+  value: unknown,
+): Array<{ id: string; sortOrder: number }> | null {
   if (!isRecord(value) || !Array.isArray(value.items)) return null;
   if (value.items.length === 0 || value.items.length > MAX_BATCH_SIZE) return null;
 
@@ -125,10 +133,13 @@ adminCategoryBatchRoutes.post('/:sectionId/categories/batch-delete', async (cont
   const categories = await Promise.all(
     ids.map((id) => getCategory(context.env.DB, sectionId, id)),
   );
-  const activeCategories = categories.filter(
-    (category): category is CategoryRecord => Boolean(category),
+  const activeCategories = categories.filter((category): category is CategoryRecord =>
+    Boolean(category),
   );
-  if (activeCategories.length !== ids.length || activeCategories.some((item) => item.deletedAt)) {
+  if (
+    activeCategories.length !== ids.length ||
+    activeCategories.some((item) => item.deletedAt)
+  ) {
     return apiError(context, 404, 'CATEGORY_NOT_FOUND', '部分分类不存在或已进入回收站。');
   }
 

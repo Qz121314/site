@@ -32,7 +32,12 @@ export function DeleteSectionDialog({
           <button type="button" className="secondary-button" onClick={onCancel}>
             取消
           </button>
-          <button type="button" className="danger-button" disabled={working} onClick={onConfirm}>
+          <button
+            type="button"
+            className="danger-button"
+            disabled={working}
+            onClick={onConfirm}
+          >
             {working ? '正在删除…' : '确认删除'}
           </button>
         </div>

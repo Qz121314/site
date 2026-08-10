@@ -9,7 +9,10 @@ import {
 } from '../src/routing.ts';
 
 test('canonical storefront links use section, product, and FAQ article routes', () => {
-  assert.equal(sectionHref({ id: 'section-1', slug: 'home-services' }), '/sections/home-services/');
+  assert.equal(
+    sectionHref({ id: 'section-1', slug: 'home-services' }),
+    '/sections/home-services/',
+  );
   assert.equal(
     productHref({
       id: 'product-1',
@@ -56,7 +59,10 @@ test('bottom navigation keeps browsing, chat, and FAQ detail routes under their 
   assert.equal(bottomNavigationActiveHref('/browse/'), '/browse/');
   assert.equal(bottomNavigationActiveHref('/discover/'), '/browse/');
   assert.equal(bottomNavigationActiveHref('/sections/home-services/'), '/browse/');
-  assert.equal(bottomNavigationActiveHref('/sections/home-services/products/deep-clean/'), '/browse/');
+  assert.equal(
+    bottomNavigationActiveHref('/sections/home-services/products/deep-clean/'),
+    '/browse/',
+  );
   assert.equal(bottomNavigationActiveHref('/products/product-1/'), '/browse/');
   assert.equal(bottomNavigationActiveHref('/messages/'), '/messages/');
   assert.equal(bottomNavigationActiveHref('/messages/conversation-1/'), '/messages/');
@@ -66,8 +72,14 @@ test('bottom navigation keeps browsing, chat, and FAQ detail routes under their 
 
 test('routing rejects malformed or oversized route parts', () => {
   assert.deepEqual(parseStorefrontRoute('/sections/%E0%A4%A/'), { type: 'not-found' });
-  assert.deepEqual(parseStorefrontRoute(`/products/${'a'.repeat(121)}/`), { type: 'not-found' });
-  assert.deepEqual(parseStorefrontRoute(`/messages/${'a'.repeat(121)}/`), { type: 'not-found' });
-  assert.deepEqual(parseStorefrontRoute(`/faq/${'a'.repeat(121)}/`), { type: 'not-found' });
+  assert.deepEqual(parseStorefrontRoute(`/products/${'a'.repeat(121)}/`), {
+    type: 'not-found',
+  });
+  assert.deepEqual(parseStorefrontRoute(`/messages/${'a'.repeat(121)}/`), {
+    type: 'not-found',
+  });
+  assert.deepEqual(parseStorefrontRoute(`/faq/${'a'.repeat(121)}/`), {
+    type: 'not-found',
+  });
   assert.deepEqual(parseStorefrontRoute('/unknown/path/'), { type: 'not-found' });
 });

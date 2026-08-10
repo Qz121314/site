@@ -24,7 +24,7 @@ R2 binding:  ASSETS_BUCKET
 - 删除、恢复、启停、排序和关键配置写操作进入 `audit_logs`；
 - 批量写操作使用 `idempotency_keys` 防止重复提交；
 - 后台密码和会话签名值不进入 D1，由 Cloudflare Worker 变量或 Secret 提供；
-- 认证绑定不限制字符长度，部署通过 `keep_vars` 保留 Dashboard 手动配置。
+- `ADMIN_PASSWORD` 至少 12 个字符，`SESSION_SECRET` 至少 32 个字符；二者使用 Worker Secret 配置，并由 `keep_vars` 在部署时保留。
 
 ## 3. 核心表结构边界
 
@@ -299,6 +299,7 @@ Pull Request 校验：
 ```text
 应用全部 D1 migration 到全新的本地 D1
 → lint
+→ format
 → typecheck
 → test
 → build
@@ -309,10 +310,13 @@ Pull Request 校验：
 
 ```text
 验证通过
+→ 记录正式 D1 Time Travel 恢复点
 → 构建
 → 对正式 D1 应用尚未执行的 migration
 → 使用 keep_vars 部署唯一正式 Worker
-→ 生产烟雾测试
+→ 生产烟雾测试（含公开 JSON 与已登记媒体同源 fallback）
 ```
 
 不得在 Cloudflare Dashboard 中手工修改表结构。所有结构变化必须通过版本化 SQL migration 进入 GitHub。
+
+恢复与回滚步骤见 [生产发布与恢复手册](operations.md)。

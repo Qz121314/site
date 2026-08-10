@@ -80,7 +80,6 @@ html[data-color-scheme='dark'] .inline-error {
     bottom: calc(76px + env(safe-area-inset-bottom));
     left: 8px;
   }
-
 }
 
 /*

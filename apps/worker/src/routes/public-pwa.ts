@@ -50,7 +50,9 @@ async function readJsonObject(bucket: R2Bucket, key: string): Promise<unknown | 
   }
 }
 
-async function resolvePublishedSiteName(context: Context<AppEnvironment>): Promise<string> {
+async function resolvePublishedSiteName(
+  context: Context<AppEnvironment>,
+): Promise<string> {
   const pointer = await readJsonObject(context.env.ASSETS_BUCKET, 'public/current.json');
   const manifestKey = pointerManifestKey(pointer);
   if (manifestKey) {

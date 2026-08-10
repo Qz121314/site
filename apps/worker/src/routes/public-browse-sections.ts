@@ -14,9 +14,8 @@ export const publicBrowseSectionRoutes = new Hono<AppEnvironment>();
 
 publicBrowseSectionRoutes.get('/', async (context) => {
   const rows = (
-    await context.env.DB
-      .prepare(
-        `SELECT
+    await context.env.DB.prepare(
+      `SELECT
            s.id,
            s.description,
            background.object_key AS background_object_key,
@@ -37,8 +36,7 @@ publicBrowseSectionRoutes.get('/', async (context) => {
          WHERE s.deleted_at IS NULL
            AND s.is_enabled = 1
          ORDER BY s.sort_order ASC, s.name COLLATE NOCASE ASC`,
-      )
-      .all<BrowseSectionRow>()
+    ).all<BrowseSectionRow>()
   ).results;
 
   context.header('Cache-Control', 'public, max-age=30, must-revalidate');

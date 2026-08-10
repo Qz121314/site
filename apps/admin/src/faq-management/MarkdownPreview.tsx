@@ -1,9 +1,5 @@
 import { useMemo, type ReactNode } from 'react';
-import {
-  parseMarkdown,
-  type MarkdownBlock,
-  type MarkdownInlineNode,
-} from '@site/shared';
+import { parseMarkdown, type MarkdownBlock, type MarkdownInlineNode } from '@site/shared';
 
 function renderInline(nodes: MarkdownInlineNode[], keyPrefix: string): ReactNode[] {
   return nodes.map((node, index) => {
@@ -70,7 +66,9 @@ function renderBlock(block: MarkdownBlock, index: number): ReactNode {
       return (
         <ul key={key}>
           {block.items.map((item, itemIndex) => (
-            <li key={`${key}-${itemIndex}`}>{renderInline(item, `${key}-${itemIndex}`)}</li>
+            <li key={`${key}-${itemIndex}`}>
+              {renderInline(item, `${key}-${itemIndex}`)}
+            </li>
           ))}
         </ul>
       );
@@ -78,7 +76,9 @@ function renderBlock(block: MarkdownBlock, index: number): ReactNode {
       return (
         <ol key={key}>
           {block.items.map((item, itemIndex) => (
-            <li key={`${key}-${itemIndex}`}>{renderInline(item, `${key}-${itemIndex}`)}</li>
+            <li key={`${key}-${itemIndex}`}>
+              {renderInline(item, `${key}-${itemIndex}`)}
+            </li>
           ))}
         </ol>
       );

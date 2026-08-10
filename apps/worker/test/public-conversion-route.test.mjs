@@ -71,7 +71,10 @@ function createConversionDb({
         },
         async first() {
           statements.push({ kind: 'first', sql: this.sql, args: this.args });
-          if (this.sql.includes('FROM products p') && this.sql.includes('JOIN sections s')) {
+          if (
+            this.sql.includes('FROM products p') &&
+            this.sql.includes('JOIN sections s')
+          ) {
             return product;
           }
           if (this.sql.includes('FROM conversion_groups g')) return group;
@@ -104,15 +107,34 @@ function env(db) {
 
 test('GET /go/:code keeps link targets on production round-robin', async () => {
   const targets = [
-    targetRow({ id: 'a', name: 'A', sortOrder: 10, endpointUrl: 'https://a.example/path' }),
-    targetRow({ id: 'b', name: 'B', sortOrder: 20, endpointUrl: 'https://b.example/path' }),
-    targetRow({ id: 'c', name: 'C', sortOrder: 30, endpointUrl: 'https://c.example/path' }),
+    targetRow({
+      id: 'a',
+      name: 'A',
+      sortOrder: 10,
+      endpointUrl: 'https://a.example/path',
+    }),
+    targetRow({
+      id: 'b',
+      name: 'B',
+      sortOrder: 20,
+      endpointUrl: 'https://b.example/path',
+    }),
+    targetRow({
+      id: 'c',
+      name: 'C',
+      sortOrder: 30,
+      endpointUrl: 'https://c.example/path',
+    }),
   ];
   const db = createConversionDb({ group: groupRow({ activeTargetCount: 3 }), targets });
 
   const locations = [];
   for (let index = 0; index < 4; index += 1) {
-    const response = await app.request('http://local.test/go/product-1', undefined, env(db));
+    const response = await app.request(
+      'http://local.test/go/product-1',
+      undefined,
+      env(db),
+    );
     assert.equal(response.status, 302);
     locations.push(response.headers.get('location'));
     assert.equal(response.headers.get('cache-control'), 'no-store, private');
@@ -129,7 +151,9 @@ test('GET /go/:code keeps link targets on production round-robin', async () => {
 });
 
 test('GET realtime CTA state reads current configuration without consuming round-robin', async () => {
-  const db = createConversionDb({ group: groupRow({ mode: 'link', activeTargetCount: 2 }) });
+  const db = createConversionDb({
+    group: groupRow({ mode: 'link', activeTargetCount: 2 }),
+  });
   const response = await app.request(
     'http://local.test/api/public/storefront/cta/product-1',
     undefined,
@@ -186,17 +210,20 @@ test('customer-service CTA stays inside Site Messages and does not consume a tar
   };
 
   try {
-    const response = await app.request('http://local.test/go/product-1', undefined, env(db));
+    const response = await app.request(
+      'http://local.test/go/product-1',
+      undefined,
+      env(db),
+    );
     assert.equal(response.status, 302);
     const location = response.headers.get('location');
-    assert.equal(
-      location,
-      '/messages/new/?productId=product-1&sectionId=section-1',
-    );
+    assert.equal(location, '/messages/new/?productId=product-1&sectionId=section-1');
     assert.equal(db.cursor, 0);
     assert.equal(upstreamCalled, false);
     assert.equal(
-      db.statements.some(({ sql }) => sql.includes('INSERT INTO conversion_group_rotation')),
+      db.statements.some(({ sql }) =>
+        sql.includes('INSERT INTO conversion_group_rotation'),
+      ),
       false,
     );
   } finally {
@@ -206,12 +233,20 @@ test('customer-service CTA stays inside Site Messages and does not consume a tar
 
 test('invalid or unpublished products never consume the production cursor', async () => {
   const invalidDb = createConversionDb({ targets: [] });
-  const invalidResponse = await app.request('http://local.test/go/not%20valid', undefined, env(invalidDb));
+  const invalidResponse = await app.request(
+    'http://local.test/go/not%20valid',
+    undefined,
+    env(invalidDb),
+  );
   assert.equal(invalidResponse.status, 404);
   assert.equal(invalidDb.cursor, 0);
 
   const missingDb = createConversionDb({ product: null, targets: [] });
-  const missingResponse = await app.request('http://local.test/go/missing-product', undefined, env(missingDb));
+  const missingResponse = await app.request(
+    'http://local.test/go/missing-product',
+    undefined,
+    env(missingDb),
+  );
   assert.equal(missingResponse.status, 404);
   assert.equal(missingDb.cursor, 0);
 });

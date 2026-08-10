@@ -79,13 +79,17 @@ function renderBlock(block: MarkdownBlock, key: number): ReactNode {
     case 'unordered-list':
       return (
         <ul key={key}>
-          {block.items.map((item, index) => <li key={index}>{renderInline(item)}</li>)}
+          {block.items.map((item, index) => (
+            <li key={index}>{renderInline(item)}</li>
+          ))}
         </ul>
       );
     case 'ordered-list':
       return (
         <ol key={key}>
-          {block.items.map((item, index) => <li key={index}>{renderInline(item)}</li>)}
+          {block.items.map((item, index) => (
+            <li key={index}>{renderInline(item)}</li>
+          ))}
         </ol>
       );
     case 'code':

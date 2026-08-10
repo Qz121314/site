@@ -24,12 +24,18 @@ test('sidebar styles have one authoritative owner', () => {
     /^\s*\.dynamic-menu\b/m,
   ];
 
-  const cssFiles = fs.readdirSync(sourceDirectory).filter((fileName) => fileName.endsWith('.css'));
+  const cssFiles = fs
+    .readdirSync(sourceDirectory)
+    .filter((fileName) => fileName.endsWith('.css'));
   for (const fileName of cssFiles) {
     if (fileName === 'admin-sidebar.css') continue;
     const cssSource = readSource(path.join(sourceDirectory, fileName));
     for (const selector of sidebarSelectors) {
-      assert.doesNotMatch(cssSource, selector, `${fileName} must not redefine sidebar selectors`);
+      assert.doesNotMatch(
+        cssSource,
+        selector,
+        `${fileName} must not redefine sidebar selectors`,
+      );
     }
   }
 });

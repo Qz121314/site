@@ -2,18 +2,33 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-const storefrontMain = await readFile(new URL('../src/main.tsx', import.meta.url), 'utf8');
-const adminMain = await readFile(new URL('../../admin/src/main.tsx', import.meta.url), 'utf8');
+const storefrontMain = await readFile(
+  new URL('../src/main.tsx', import.meta.url),
+  'utf8',
+);
+const adminMain = await readFile(
+  new URL('../../admin/src/main.tsx', import.meta.url),
+  'utf8',
+);
 const contract = await readFile(
-  new URL('../../../packages/storefront-ui/src/primary-pages-theme-contract.css', import.meta.url),
+  new URL(
+    '../../../packages/storefront-ui/src/primary-pages-theme-contract.css',
+    import.meta.url,
+  ),
   'utf8',
 );
 const sharedPackage = JSON.parse(
-  await readFile(new URL('../../../packages/storefront-ui/package.json', import.meta.url), 'utf8'),
+  await readFile(
+    new URL('../../../packages/storefront-ui/package.json', import.meta.url),
+    'utf8',
+  ),
 );
 
 test('Storefront and Admin load the shared primary-pages Theme Center contract', () => {
-  assert.match(storefrontMain, /@site\/storefront-ui\/primary-pages-theme-contract\.css/u);
+  assert.match(
+    storefrontMain,
+    /@site\/storefront-ui\/primary-pages-theme-contract\.css/u,
+  );
   assert.match(adminMain, /@site\/storefront-ui\/primary-pages-theme-contract\.css/u);
   assert.equal(
     sharedPackage.exports['./primary-pages-theme-contract.css'],

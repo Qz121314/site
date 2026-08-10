@@ -6,7 +6,14 @@ import {
   validateConversionTargetInput,
 } from '../src/conversion-pool/conversion-pool.ts';
 
-function targetRow({ id, name, sortOrder, endpointUrl = null, connectionId = null, remoteGroupId = null }) {
+function targetRow({
+  id,
+  name,
+  sortOrder,
+  endpointUrl = null,
+  connectionId = null,
+  remoteGroupId = null,
+}) {
   return {
     id,
     section_id: 'section-1',
@@ -188,20 +195,46 @@ test('production selector rotates A → B → C → A', async () => {
 
   const selected = [];
   for (let index = 0; index < 4; index += 1) {
-    selected.push((await selectNextConversionTarget(db, linkGroup, `2026-08-07T00:00:0${index}.000Z`))?.id);
+    selected.push(
+      (await selectNextConversionTarget(db, linkGroup, `2026-08-07T00:00:0${index}.000Z`))
+        ?.id,
+    );
   }
 
   assert.deepEqual(selected, ['a', 'b', 'c', 'a']);
-  const targetQueries = db.statements.filter((statement) => statement.sql.includes('FROM conversion_targets t'));
-  assert.deepEqual(targetQueries.map((statement) => statement.args.at(-1)), [0, 1, 2, 0]);
-  assert.ok(targetQueries.every((statement) => statement.sql.includes('t.endpoint_url IS NOT NULL')));
+  const targetQueries = db.statements.filter((statement) =>
+    statement.sql.includes('FROM conversion_targets t'),
+  );
+  assert.deepEqual(
+    targetQueries.map((statement) => statement.args.at(-1)),
+    [0, 1, 2, 0],
+  );
+  assert.ok(
+    targetQueries.every((statement) =>
+      statement.sql.includes('t.endpoint_url IS NOT NULL'),
+    ),
+  );
 });
 
 test('disabled or empty groups never consume the production cursor', async () => {
   const db = createRotationDb([]);
 
-  assert.equal(await selectNextConversionTarget(db, { ...linkGroup, isEnabled: false }, '2026-08-07T00:00:00.000Z'), null);
-  assert.equal(await selectNextConversionTarget(db, { ...linkGroup, activeTargetCount: 0 }, '2026-08-07T00:00:00.000Z'), null);
+  assert.equal(
+    await selectNextConversionTarget(
+      db,
+      { ...linkGroup, isEnabled: false },
+      '2026-08-07T00:00:00.000Z',
+    ),
+    null,
+  );
+  assert.equal(
+    await selectNextConversionTarget(
+      db,
+      { ...linkGroup, activeTargetCount: 0 },
+      '2026-08-07T00:00:00.000Z',
+    ),
+    null,
+  );
   assert.equal(db.statements.length, 0);
 });
 
@@ -217,11 +250,17 @@ test('customer-service rotation only queries bound groups on enabled connections
   ]);
   const group = { ...linkGroup, mode: 'customer_service', activeTargetCount: 1 };
 
-  const selected = await selectNextConversionTarget(db, group, '2026-08-07T00:00:00.000Z');
+  const selected = await selectNextConversionTarget(
+    db,
+    group,
+    '2026-08-07T00:00:00.000Z',
+  );
   assert.equal(selected?.bindingKind, 'customer_service');
   assert.equal(selected?.remoteGroupId, 'sales');
 
-  const targetQuery = db.statements.find((statement) => statement.sql.includes('FROM conversion_targets t'));
+  const targetQuery = db.statements.find((statement) =>
+    statement.sql.includes('FROM conversion_targets t'),
+  );
   assert.ok(targetQuery?.sql.includes('t.customer_service_connection_id IS NOT NULL'));
   assert.ok(targetQuery?.sql.includes('EXISTS'));
   assert.ok(targetQuery?.sql.includes('c2.is_enabled = 1'));

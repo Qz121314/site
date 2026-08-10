@@ -8,7 +8,10 @@ const pwaSource = await readFile(
   new URL('../src/PwaInstallPrompt.tsx', import.meta.url),
   'utf8',
 );
-const systemUiSource = await readFile(new URL('../src/system-ui.ts', import.meta.url), 'utf8');
+const systemUiSource = await readFile(
+  new URL('../src/system-ui.ts', import.meta.url),
+  'utf8',
+);
 const pwaCss = await readFile(new URL('../src/pwa.css', import.meta.url), 'utf8');
 const serviceWorker = await readFile(new URL('../public/sw.js', import.meta.url), 'utf8');
 
@@ -20,7 +23,7 @@ test('storefront declares installable app metadata', () => {
 });
 
 test('storefront registers a root-scoped service worker and install UI', () => {
-  assert.match(mainSource, /serviceWorker\.register\('\/sw\.js', \{ scope: '\/' \}\)/);
+  assert.match(mainSource, /serviceWorker\s*\.register\('\/sw\.js', \{ scope: '\/' \}\)/);
   assert.match(mainSource, /<PwaInstallPrompt \/>/);
   assert.match(pwaSource, /beforeinstallprompt/);
   assert.match(pwaSource, /SYSTEM_UI\.addToHomeScreen/);

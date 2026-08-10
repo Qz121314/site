@@ -68,7 +68,10 @@ test('public content route reads only the requested public JSON object from R2',
   assert.equal(response.status, 200);
   assert.deepEqual(requested, ['public/current.json']);
   assert.equal(response.headers.get('content-type'), 'application/json; charset=utf-8');
-  assert.equal(response.headers.get('cache-control'), 'public, max-age=30, must-revalidate');
+  assert.equal(
+    response.headers.get('cache-control'),
+    'public, max-age=30, must-revalidate',
+  );
   assert.equal(response.headers.get('etag'), '"etag-current"');
   assert.deepEqual(await response.json(), { schemaVersion: 2 });
 });

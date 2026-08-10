@@ -58,7 +58,10 @@ async function protectedMediaKeys(db: D1Database): Promise<Set<string>> {
   return new Set(rows.flatMap((row) => parseMediaKeys(row.media_keys_json)));
 }
 
-async function referenceRows(db: D1Database, ids: string[]): Promise<MediaReferenceRow[]> {
+async function referenceRows(
+  db: D1Database,
+  ids: string[],
+): Promise<MediaReferenceRow[]> {
   if (ids.length === 0) return [];
   return (
     await db
@@ -88,12 +91,13 @@ async function referenceRows(db: D1Database, ids: string[]): Promise<MediaRefere
 function hasReferences(row: MediaReferenceRow): boolean {
   return (
     row.logo_count +
-    row.hero_slide_count +
-    row.bottom_nav_icon_count +
-    row.section_icon_count +
-    row.section_browse_background_count +
-    row.product_cover_count +
-    row.product_gallery_count > 0
+      row.hero_slide_count +
+      row.bottom_nav_icon_count +
+      row.section_icon_count +
+      row.section_browse_background_count +
+      row.product_cover_count +
+      row.product_gallery_count >
+    0
   );
 }
 
@@ -102,7 +106,9 @@ export async function deleteManagedMediaAssets(
   db: D1Database,
   ids: string[],
   now: string,
-): Promise<{ ok: true; result: MediaDeleteResult } | { ok: false; blocked: MediaDeleteBlocked }> {
+): Promise<
+  { ok: true; result: MediaDeleteResult } | { ok: false; blocked: MediaDeleteBlocked }
+> {
   const uniqueIds = [...new Set(ids)];
   const rows = await referenceRows(db, uniqueIds);
   const rowById = new Map(rows.map((row) => [row.id, row]));
@@ -113,7 +119,8 @@ export async function deleteManagedMediaAssets(
 
   const protectedKeys = await protectedMediaKeys(db);
   for (const row of rows) {
-    if (hasReferences(row)) return { ok: false, blocked: { id: row.id, reason: 'IN_USE' } };
+    if (hasReferences(row))
+      return { ok: false, blocked: { id: row.id, reason: 'IN_USE' } };
     if (protectedKeys.has(row.object_key)) {
       return { ok: false, blocked: { id: row.id, reason: 'SNAPSHOT_RETENTION' } };
     }
@@ -159,7 +166,10 @@ export async function deleteManagedMediaAssets(
     const failedIndex = markResults.findIndex((result) => result.meta.changes !== 1);
     return {
       ok: false,
-      blocked: { id: rows[Math.max(0, failedIndex)]?.id ?? uniqueIds[0] ?? '', reason: 'REFERENCE_CHANGED' },
+      blocked: {
+        id: rows[Math.max(0, failedIndex)]?.id ?? uniqueIds[0] ?? '',
+        reason: 'REFERENCE_CHANGED',
+      },
     };
   }
 

@@ -1,8 +1,4 @@
-const ACCEPTED_STATIC_IMAGE_TYPES = new Set([
-  'image/jpeg',
-  'image/png',
-  'image/webp',
-]);
+const ACCEPTED_STATIC_IMAGE_TYPES = new Set(['image/jpeg', 'image/png', 'image/webp']);
 
 const MAX_SOURCE_BYTES = 30 * 1024 * 1024;
 const MAX_OUTPUT_BYTES = 20 * 1024 * 1024;
@@ -90,7 +86,9 @@ export async function prepareCompressedMediaImage(
 
   try {
     if (bitmap.width < MIN_IMAGE_SIDE || bitmap.height < MIN_IMAGE_SIDE) {
-      throw new Error(`图片“${sourceFile.name}”的宽高都必须至少为 ${MIN_IMAGE_SIDE} 像素。`);
+      throw new Error(
+        `图片“${sourceFile.name}”的宽高都必须至少为 ${MIN_IMAGE_SIDE} 像素。`,
+      );
     }
 
     const scale = Math.min(1, MAX_OUTPUT_SIDE / Math.max(bitmap.width, bitmap.height));

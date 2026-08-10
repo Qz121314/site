@@ -33,9 +33,8 @@ function parseEvent(connectionId: string, raw: unknown): SupportRealtimeEvent | 
   if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return null;
   const record = raw as Record<string, unknown>;
   if (typeof record.type !== 'string' || !record.type.trim()) return null;
-  const remoteConversationId = typeof record.conversationId === 'string'
-    ? record.conversationId.trim()
-    : '';
+  const remoteConversationId =
+    typeof record.conversationId === 'string' ? record.conversationId.trim() : '';
   return {
     type: record.type,
     connectionId,
@@ -46,7 +45,7 @@ function parseEvent(connectionId: string, raw: unknown): SupportRealtimeEvent | 
 }
 
 function reconnectDelay(attempt: number): number {
-  return Math.min(10_000, 750 * (2 ** Math.min(attempt, 4)));
+  return Math.min(10_000, 750 * 2 ** Math.min(attempt, 4));
 }
 
 function scheduleReconnect(state: SocketState) {
@@ -70,7 +69,10 @@ function openSocket(state: SocketState) {
     });
     socket.addEventListener('message', (event) => {
       try {
-        const parsed = parseEvent(state.connection.id, JSON.parse(String(event.data)) as unknown);
+        const parsed = parseEvent(
+          state.connection.id,
+          JSON.parse(String(event.data)) as unknown,
+        );
         if (parsed) emit(parsed);
       } catch {
         // Ignore malformed realtime frames; REST remains the recovery source.

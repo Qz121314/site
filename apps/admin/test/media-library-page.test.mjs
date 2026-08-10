@@ -44,7 +44,11 @@ test('paged media request sends server-side filters and cursor', async () => {
   await withFetch(
     async (input) => {
       requestedUrl = String(input);
-      return Response.json({ assets: [sampleAsset()], nextCursor: 'cursor-2', total: 132 });
+      return Response.json({
+        assets: [sampleAsset()],
+        nextCursor: 'cursor-2',
+        total: 132,
+      });
     },
     async () => {
       const page = await fetchMediaLibraryPage({
@@ -99,14 +103,16 @@ test('invalid media page payload is rejected', async () => {
 
 test('media page API errors preserve server message and code', async () => {
   await withFetch(
-    async () => Response.json(
-      { error: { code: 'MEDIA_LIBRARY_FAILED', message: '查询失败。' } },
-      { status: 500 },
-    ),
+    async () =>
+      Response.json(
+        { error: { code: 'MEDIA_LIBRARY_FAILED', message: '查询失败。' } },
+        { status: 500 },
+      ),
     async () => {
       await assert.rejects(
         () => fetchMediaLibraryPage(),
-        (error) => error?.code === 'MEDIA_LIBRARY_FAILED' && error?.message === '查询失败。',
+        (error) =>
+          error?.code === 'MEDIA_LIBRARY_FAILED' && error?.message === '查询失败。',
       );
     },
   );

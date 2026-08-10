@@ -4,7 +4,8 @@ const STATIC_DESTINATIONS = new Set(['script', 'style', 'font', 'image']);
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
+    caches
+      .open(CACHE_NAME)
       .then((cache) => cache.add(APP_SHELL_URL))
       .catch(() => undefined),
   );
@@ -13,8 +14,13 @@ self.addEventListener('install', (event) => {
 
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys()
-      .then((keys) => Promise.all(keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key))))
+    caches
+      .keys()
+      .then((keys) =>
+        Promise.all(
+          keys.filter((key) => key !== CACHE_NAME).map((key) => caches.delete(key)),
+        ),
+      )
       .then(() => self.clients.claim()),
   );
 });
@@ -25,7 +31,11 @@ self.addEventListener('fetch', (event) => {
 
   const url = new URL(request.url);
   if (url.origin !== self.location.origin) return;
-  if (url.pathname.startsWith('/api/') || url.pathname.startsWith('/public/') || url.pathname.startsWith('/go/')) {
+  if (
+    url.pathname.startsWith('/api/') ||
+    url.pathname.startsWith('/public/') ||
+    url.pathname.startsWith('/go/')
+  ) {
     return;
   }
 

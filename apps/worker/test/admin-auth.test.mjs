@@ -87,13 +87,28 @@ function loginRequest(password, headers = {}) {
   });
 }
 
-test('auth bindings reject missing, empty, and whitespace-only values', () => {
+test('auth bindings enforce production-safe minimum lengths', () => {
   assert.equal(getAdminAuthBindings({}), null);
-  assert.equal(getAdminAuthBindings({ ADMIN_PASSWORD: '', SESSION_SECRET: 'secret' }), null);
-  assert.equal(getAdminAuthBindings({ ADMIN_PASSWORD: 'password', SESSION_SECRET: '   ' }), null);
+  assert.equal(
+    getAdminAuthBindings({ ADMIN_PASSWORD: 'short', SESSION_SECRET: 'x'.repeat(32) }),
+    null,
+  );
+  assert.equal(
+    getAdminAuthBindings({
+      ADMIN_PASSWORD: 'long-enough-password',
+      SESSION_SECRET: 'short',
+    }),
+    null,
+  );
   assert.deepEqual(
-    getAdminAuthBindings({ ADMIN_PASSWORD: ' password ', SESSION_SECRET: ' secret ' }),
-    { adminPassword: ' password ', sessionSecret: ' secret ' },
+    getAdminAuthBindings({
+      ADMIN_PASSWORD: ' correct horse battery staple ',
+      SESSION_SECRET: ` ${'s'.repeat(32)} `,
+    }),
+    {
+      adminPassword: ' correct horse battery staple ',
+      sessionSecret: ` ${'s'.repeat(32)} `,
+    },
   );
 });
 
@@ -104,7 +119,11 @@ test('admin session token accepts the valid window and rejects tampering or expi
   assert.deepEqual(await verifyAdminSessionToken(token, 'test-secret', now), session);
   assert.equal(await verifyAdminSessionToken(`${token}x`, 'test-secret', now), null);
   assert.equal(
-    await verifyAdminSessionToken(token, 'test-secret', now + ADMIN_SESSION_TTL_SECONDS * 1000),
+    await verifyAdminSessionToken(
+      token,
+      'test-secret',
+      now + ADMIN_SESSION_TTL_SECONDS * 1000,
+    ),
     null,
   );
 });
@@ -113,7 +132,11 @@ test('admin auth routes reject unconfigured and malformed login requests', async
   const db = createAuthDb();
   const unconfigured = createEnv(db);
   unconfigured.ADMIN_PASSWORD = '   ';
-  const unavailable = await app.request(loginRequest('anything'), undefined, unconfigured);
+  const unavailable = await app.request(
+    loginRequest('anything'),
+    undefined,
+    unconfigured,
+  );
   assert.equal(unavailable.status, 503);
   assert.equal((await unavailable.json()).error.code, 'AUTH_NOT_CONFIGURED');
 
@@ -184,17 +207,46 @@ test('five failed logins trigger the persisted rate limit', async () => {
   assert.equal(blocked.headers.get('retry-after'), '900');
   assert.equal((await blocked.json()).error.code, 'LOGIN_RATE_LIMITED');
 
-  const stillBlocked = await app.request(loginRequest(env.ADMIN_PASSWORD), undefined, env);
+  const stillBlocked = await app.request(
+    loginRequest(env.ADMIN_PASSWORD),
+    undefined,
+    env,
+  );
   assert.equal(stillBlocked.status, 429);
   assert.equal(db.state.auditActions.includes('auth.login.blocked'), true);
 });
 
 test('global security headers cover API and browser responses', async () => {
-  const response = await app.request('https://example.test/api/health', undefined, createEnv());
+  const response = await app.request(
+    'https://example.test/api/health',
+    undefined,
+    createEnv(),
+  );
 
   assert.equal(response.status, 200);
   assert.equal(response.headers.get('x-content-type-options'), 'nosniff');
   assert.equal(response.headers.get('x-frame-options'), 'DENY');
-  assert.equal(response.headers.get('referrer-policy'), 'strict-origin-when-cross-origin');
-  assert.match(response.headers.get('content-security-policy') ?? '', /frame-ancestors 'none'/u);
+  assert.equal(
+    response.headers.get('referrer-policy'),
+    'strict-origin-when-cross-origin',
+  );
+  assert.match(
+    response.headers.get('content-security-policy') ?? '',
+    /frame-ancestors 'none'/u,
+  );
+});
+
+test('health reports the immutable Cloudflare Worker version metadata', async () => {
+  const env = createEnv();
+  env.CF_VERSION_METADATA = {
+    id: 'worker-version-id',
+    tag: 'production',
+    timestamp: '2026-08-10T17:00:00.000Z',
+  };
+  const response = await app.request('https://example.test/api/health', undefined, env);
+  const body = await response.json();
+
+  assert.equal(body.version, 'test');
+  assert.equal(body.workerVersionId, 'worker-version-id');
+  assert.equal(body.workerVersionTag, 'production');
 });

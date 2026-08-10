@@ -17,7 +17,8 @@ function referenceLabels(references: AssetReferenceCounts): string[] {
   if (references.logo > 0) labels.push(`Logo × ${references.logo}`);
   if (references.sectionIcon > 0) labels.push(`分区图标 × ${references.sectionIcon}`);
   if (references.productCover > 0) labels.push(`产品封面 × ${references.productCover}`);
-  if (references.productGallery > 0) labels.push(`产品图片 × ${references.productGallery}`);
+  if (references.productGallery > 0)
+    labels.push(`产品图片 × ${references.productGallery}`);
   return labels;
 }
 
@@ -75,12 +76,11 @@ export function AssetTable({
             const status = cleanupStatus(asset);
             const unclassifiedReferenceCount = Math.max(
               0,
-              asset.referenceCount - (
-                asset.references.logo +
-                asset.references.sectionIcon +
-                asset.references.productCover +
-                asset.references.productGallery
-              ),
+              asset.referenceCount -
+                (asset.references.logo +
+                  asset.references.sectionIcon +
+                  asset.references.productCover +
+                  asset.references.productGallery),
             );
             if (unclassifiedReferenceCount > 0) {
               references.unshift(`Hero × ${unclassifiedReferenceCount}`);

@@ -71,7 +71,12 @@
   pointer-events: none;
   background:
     linear-gradient(90deg, rgb(2 6 23 / 24%) 0%, transparent 68%),
-    linear-gradient(180deg, transparent 22%, rgb(2 6 23 / 12%) 48%, rgb(2 6 23 / 78%) 100%);
+    linear-gradient(
+      180deg,
+      transparent 22%,
+      rgb(2 6 23 / 12%) 48%,
+      rgb(2 6 23 / 78%) 100%
+    );
 }
 
 .hero-carousel-copy {
@@ -119,7 +124,9 @@
   text-decoration: none;
   text-shadow: none;
   pointer-events: auto;
-  transition: transform 120ms ease, filter 120ms ease;
+  transition:
+    transform 120ms ease,
+    filter 120ms ease;
 }
 
 .hero-carousel-cta:active {
@@ -145,7 +152,9 @@
   cursor: pointer;
   transform: translateY(-50%);
   backdrop-filter: blur(10px);
-  transition: background 120ms ease, transform 120ms ease;
+  transition:
+    background 120ms ease,
+    transform 120ms ease;
 }
 
 .hero-carousel-arrow:hover,
@@ -189,7 +198,9 @@
   border-radius: 999px;
   background: rgb(255 255 255 / 48%);
   cursor: pointer;
-  transition: width 160ms ease, background 160ms ease;
+  transition:
+    width 160ms ease,
+    background 160ms ease;
 }
 
 .hero-carousel-dot.is-active {
@@ -225,7 +236,12 @@
     padding: 14px 14px 24px;
     background:
       linear-gradient(90deg, rgb(2 6 23 / 16%) 0%, transparent 86%),
-      linear-gradient(180deg, transparent 18%, rgb(2 6 23 / 12%) 46%, rgb(2 6 23 / 82%) 100%);
+      linear-gradient(
+        180deg,
+        transparent 18%,
+        rgb(2 6 23 / 12%) 46%,
+        rgb(2 6 23 / 82%) 100%
+      );
   }
 
   .hero-carousel-copy {

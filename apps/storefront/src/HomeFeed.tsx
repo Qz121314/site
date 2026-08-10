@@ -21,7 +21,11 @@ import { SYSTEM_UI } from './system-ui';
 
 const NAVIGATION_EVENT = 'storefront:navigate';
 
-function HomeLink({ href = '/', onClick, ...props }: AnchorHTMLAttributes<HTMLAnchorElement>) {
+function HomeLink({
+  href = '/',
+  onClick,
+  ...props
+}: AnchorHTMLAttributes<HTMLAnchorElement>) {
   const handleClick = (event: ReactMouseEvent<HTMLAnchorElement>) => {
     onClick?.(event);
     if (
@@ -70,7 +74,9 @@ function HeroMedia({ slide }: { slide: PublishedHeroSlide }) {
 }
 
 function SectionIcon({ section }: { section: PublicSection }) {
-  const fallback = <span aria-hidden="true">{Array.from(section.name.trim())[0] ?? '•'}</span>;
+  const fallback = (
+    <span aria-hidden="true">{Array.from(section.name.trim())[0] ?? '•'}</span>
+  );
   if (section.icon.type === 'image' && section.icon.value) {
     return (
       <ResilientImage
@@ -100,12 +106,16 @@ function HomeShortcuts({ sections }: { sections: PublicSection[] }) {
     <nav className="home-shortcuts" aria-label="Sections">
       {sections.map((section) => (
         <HomeLink className="home-shortcut" href={sectionHref(section)} key={section.id}>
-          <span className="home-shortcut-icon"><SectionIcon section={section} /></span>
+          <span className="home-shortcut-icon">
+            <SectionIcon section={section} />
+          </span>
           <span className="home-shortcut-label">{section.name}</span>
         </HomeLink>
       ))}
       <HomeLink className="home-shortcut is-more" href="/browse/">
-        <span className="home-shortcut-icon"><MoreIcon /></span>
+        <span className="home-shortcut-icon">
+          <MoreIcon />
+        </span>
         <span className="home-shortcut-label">{SYSTEM_UI.more}</span>
       </HomeLink>
     </nav>
@@ -136,38 +146,54 @@ function HomeRecommendationRail({
   section: PublicSection;
 }) {
   const query = useQuery({
-    queryKey: ['storefront-home-recommendation', bootstrap.pointer.contentVersion, section.id],
+    queryKey: [
+      'storefront-home-recommendation',
+      bootstrap.pointer.contentVersion,
+      section.id,
+    ],
     queryFn: ({ signal }) => loadSectionSnapshot(bootstrap, section.id, signal),
     staleTime: Number.POSITIVE_INFINITY,
   });
   const products = useMemo(
-    () => (query.data?.products ?? [])
-      .filter((product) => product.isFeatured)
-      .sort((left, right) => (
-        left.featuredOrder - right.featuredOrder ||
-        left.sortOrder - right.sortOrder ||
-        left.title.localeCompare(right.title)
-      )),
+    () =>
+      (query.data?.products ?? [])
+        .filter((product) => product.isFeatured)
+        .sort(
+          (left, right) =>
+            left.featuredOrder - right.featuredOrder ||
+            left.sortOrder - right.sortOrder ||
+            left.title.localeCompare(right.title),
+        ),
     [query.data?.products],
   );
 
   if (query.error || (query.data && products.length === 0)) return null;
 
   return (
-    <section className="home-recommendation" aria-labelledby={`home-recommendation-${section.id}`}>
+    <section
+      className="home-recommendation"
+      aria-labelledby={`home-recommendation-${section.id}`}
+    >
       <div className="home-recommendation-heading">
         <h2 id={`home-recommendation-${section.id}`}>{section.name}</h2>
-        <HomeLink href={sectionHref(section)} aria-label={`${SYSTEM_UI.more}: ${section.name}`}>
+        <HomeLink
+          href={sectionHref(section)}
+          aria-label={`${SYSTEM_UI.more}: ${section.name}`}
+        >
           <span aria-hidden="true">›</span>
         </HomeLink>
       </div>
       {query.isLoading && !query.data ? (
         <div className="home-product-rail is-loading" aria-hidden="true">
-          {Array.from({ length: 4 }, (_, index) => <span className="home-product-skeleton" key={index} />)}
+          {Array.from({ length: 4 }, (_, index) => (
+            <span className="home-product-skeleton" key={index} />
+          ))}
         </div>
       ) : (
         <div className="home-product-rail">
-          {products.map((product) => <HomeProductTile product={product} key={product.id} />)}
+          {products.map((product) => (
+            <HomeProductTile product={product} key={product.id} />
+          ))}
         </div>
       )}
     </section>
@@ -191,9 +217,10 @@ function publishedSections(bootstrap: StorefrontBootstrap): PublicSection[] {
 
 export function HomeFeed({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
   const { site } = bootstrap.site;
-  const heroVersion = bootstrap.pointer.schemaVersion === 2
-    ? bootstrap.pointer.site.contentVersion
-    : bootstrap.pointer.contentVersion;
+  const heroVersion =
+    bootstrap.pointer.schemaVersion === 2
+      ? bootstrap.pointer.site.contentVersion
+      : bootstrap.pointer.contentVersion;
   const heroQuery = useQuery({
     queryKey: ['storefront-hero', heroVersion],
     queryFn: ({ signal }) => loadPublishedHero(bootstrap, signal),
@@ -216,10 +243,10 @@ export function HomeFeed({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
   };
   const layout = layoutQuery.data ?? fallbackLayout;
   const shortcutSections = layout.shortcutSectionIds
-    .flatMap((id) => sectionById.get(id) ? [sectionById.get(id) as PublicSection] : [])
+    .flatMap((id) => (sectionById.get(id) ? [sectionById.get(id) as PublicSection] : []))
     .slice(0, 7);
   const recommendationSections = layout.recommendationSectionIds
-    .flatMap((id) => sectionById.get(id) ? [sectionById.get(id) as PublicSection] : [])
+    .flatMap((id) => (sectionById.get(id) ? [sectionById.get(id) as PublicSection] : []))
     .slice(0, 3);
 
   useEffect(() => {

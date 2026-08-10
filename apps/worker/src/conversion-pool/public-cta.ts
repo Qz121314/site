@@ -55,7 +55,11 @@ export async function resolvePublicCta(
   const product = await getRoutableProduct(db, productId);
   if (!product?.conversionGroupId) return { product, cta: null };
 
-  const group = await getConversionGroup(db, product.sectionId, product.conversionGroupId);
+  const group = await getConversionGroup(
+    db,
+    product.sectionId,
+    product.conversionGroupId,
+  );
   if (!group || group.deletedAt || !group.isEnabled || group.activeTargetCount < 1) {
     return { product, cta: null };
   }

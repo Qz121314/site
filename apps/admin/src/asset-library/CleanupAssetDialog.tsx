@@ -32,10 +32,20 @@ export function CleanupAssetDialog({
           物理删除，无法恢复。
         </p>
         <div className="admin-dialog-actions">
-          <button type="button" className="secondary-button" disabled={working} onClick={onCancel}>
+          <button
+            type="button"
+            className="secondary-button"
+            disabled={working}
+            onClick={onCancel}
+          >
             取消
           </button>
-          <button type="button" className="danger-button" disabled={working} onClick={onConfirm}>
+          <button
+            type="button"
+            className="danger-button"
+            disabled={working}
+            onClick={onConfirm}
+          >
             {working ? '正在物理删除…' : '确认永久删除'}
           </button>
         </div>

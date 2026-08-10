@@ -71,7 +71,10 @@ async function readSectionProducts(
   return (value as SectionSnapshotEnvelope).products;
 }
 
-async function pruneDerivedHomeSnapshots(bucket: R2Bucket, currentKey: string): Promise<void> {
+async function pruneDerivedHomeSnapshots(
+  bucket: R2Bucket,
+  currentKey: string,
+): Promise<void> {
   const listed = await bucket.list({ prefix: `${DERIVED_HOME_PREFIX}/`, limit: 1000 });
   const snapshots = listed.objects
     .filter((object) => object.key.endsWith('/home.json'))
@@ -84,7 +87,9 @@ async function pruneDerivedHomeSnapshots(bucket: R2Bucket, currentKey: string): 
   }
 }
 
-export async function materializeDerivedHomeSnapshot(bucket: R2Bucket): Promise<string | null> {
+export async function materializeDerivedHomeSnapshot(
+  bucket: R2Bucket,
+): Promise<string | null> {
   const { pointer } = await readModularPointer(bucket);
   if (!pointer) return null;
 
@@ -98,10 +103,15 @@ export async function materializeDerivedHomeSnapshot(bucket: R2Bucket): Promise<
 
   const featuredProducts = products
     .filter((product) => product.isFeatured)
-    .sort((left, right) => left.featuredOrder - right.featuredOrder || left.sortOrder - right.sortOrder)
+    .sort(
+      (left, right) =>
+        left.featuredOrder - right.featuredOrder || left.sortOrder - right.sortOrder,
+    )
     .slice(0, 30);
   const latestProducts = [...products]
-    .sort((left, right) => (right.publishedAt ?? '').localeCompare(left.publishedAt ?? ''))
+    .sort((left, right) =>
+      (right.publishedAt ?? '').localeCompare(left.publishedAt ?? ''),
+    )
     .slice(0, 30);
 
   const key = `${DERIVED_HOME_PREFIX}/${pointer.contentVersion}/home.json`;
@@ -147,7 +157,8 @@ async function refreshDerivedHomeBestEffort(bucket: R2Bucket): Promise<void> {
         level: 'error',
         event: 'storefront.derived_home_failed',
         errorName: error instanceof Error ? error.name : 'UnknownError',
-        errorMessage: error instanceof Error ? error.message : 'Unknown derived-home error',
+        errorMessage:
+          error instanceof Error ? error.message : 'Unknown derived-home error',
       }),
     );
   }
@@ -176,8 +187,4 @@ export async function rollbackModularModule(
   return result;
 }
 
-export {
-  getModularPublishStatus,
-  ModularPublicationError,
-  normalizePublishModuleKey,
-};
+export { getModularPublishStatus, ModularPublicationError, normalizePublishModuleKey };

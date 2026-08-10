@@ -50,7 +50,8 @@ function browseFields(section: AdminSection): Required<BrowseSectionFields> {
 
 function sortSections(sections: AdminSection[]): AdminSection[] {
   return [...sections].sort(
-    (left, right) => left.sortOrder - right.sortOrder || left.name.localeCompare(right.name),
+    (left, right) =>
+      left.sortOrder - right.sortOrder || left.name.localeCompare(right.name),
   );
 }
 
@@ -65,7 +66,10 @@ function describeError(error: unknown): string {
 }
 
 function isSessionError(error: unknown): boolean {
-  return error instanceof AdminApiError && (error.status === 401 || error.code === 'SESSION_INVALID');
+  return (
+    error instanceof AdminApiError &&
+    (error.status === 401 || error.code === 'SESSION_INVALID')
+  );
 }
 
 export function SectionManagementView({
@@ -99,12 +103,16 @@ export function SectionManagementView({
     return keyword
       ? sourceSections.filter((section) => {
           const presentation = browseFields(section);
-          return `${section.name} ${section.slug} ${presentation.description ?? ''}`.toLowerCase().includes(keyword);
+          return `${section.name} ${section.slug} ${presentation.description ?? ''}`
+            .toLowerCase()
+            .includes(keyword);
         })
       : sourceSections;
   }, [search, sourceSections]);
 
-  const allVisibleSelected = filteredSections.length > 0 && filteredSections.every((section) => selectedIds.has(section.id));
+  const allVisibleSelected =
+    filteredSections.length > 0 &&
+    filteredSections.every((section) => selectedIds.has(section.id));
   const reorderBlocked = scope !== 'active' || Boolean(search.trim());
 
   useEffect(() => {
@@ -146,7 +154,9 @@ export function SectionManagementView({
   }
 
   function openCreateEditor() {
-    const sortOrder = activeSections.length ? Math.max(...activeSections.map((section) => section.sortOrder)) + 10 : 0;
+    const sortOrder = activeSections.length
+      ? Math.max(...activeSections.map((section) => section.sortOrder)) + 10
+      : 0;
     setEditingSection(null);
     setForm({ ...emptySectionForm, sortOrder });
     setLocalIcon(null);
@@ -222,7 +232,10 @@ export function SectionManagementView({
     let input: SectionEditorInput = form;
     try {
       if (localIcon) {
-        const uploaded = await uploadBrandingImage('section-icon', localIcon.compressedFile);
+        const uploaded = await uploadBrandingImage(
+          'section-icon',
+          localIcon.compressedFile,
+        );
         input = { ...input, iconAssetId: uploaded.media.id };
         setForm(input);
         setLocalIcon(null);
@@ -230,7 +243,13 @@ export function SectionManagementView({
 
       if (editingSection) {
         const updated = await updateSection(editingSection.id, input);
-        onActiveSectionsChange(sortSections(activeSections.map((section) => (section.id === updated.id ? updated : section))));
+        onActiveSectionsChange(
+          sortSections(
+            activeSections.map((section) =>
+              section.id === updated.id ? updated : section,
+            ),
+          ),
+        );
         setSuccessMessage(`分区“${updated.name}”已更新。`);
       } else {
         const created = await createSection(input);
@@ -260,7 +279,9 @@ export function SectionManagementView({
         isEnabled: !section.isEnabled,
       };
       const updated = await updateSection(section.id, input);
-      onActiveSectionsChange(activeSections.map((item) => (item.id === updated.id ? updated : item)));
+      onActiveSectionsChange(
+        activeSections.map((item) => (item.id === updated.id ? updated : item)),
+      );
       setSuccessMessage(updated.isEnabled ? '分区已启用。' : '分区已停用。');
     } catch (error) {
       handleOperationError(error);
@@ -281,7 +302,9 @@ export function SectionManagementView({
       } else {
         await batchDeleteSections(deletingIds);
       }
-      onActiveSectionsChange(activeSections.filter((section) => !deletingIds.includes(section.id)));
+      onActiveSectionsChange(
+        activeSections.filter((section) => !deletingIds.includes(section.id)),
+      );
       setSelectedIds(new Set());
       setPendingDeleteIds([]);
       setSuccessMessage(`已将 ${deletingIds.length} 个分区移入回收站。`);
@@ -358,7 +381,9 @@ export function SectionManagementView({
     });
   }
 
-  const iconPreviewUrl = localIcon?.previewUrl ?? (form.iconAssetId ? brandingAssetPreviewUrl(form.iconAssetId) : null);
+  const iconPreviewUrl =
+    localIcon?.previewUrl ??
+    (form.iconAssetId ? brandingAssetPreviewUrl(form.iconAssetId) : null);
   const browseBackgroundPreviewUrl = form.browseBackgroundAssetId
     ? brandingAssetPreviewUrl(form.browseBackgroundAssetId)
     : null;
@@ -369,29 +394,66 @@ export function SectionManagementView({
         <div>
           <p>动态业务结构</p>
           <h2 id="section-management-title">分区管理</h2>
-          <span>Icon 用于 Home 快捷入口；Browse 使用背景图、名称、简介和产品数量展示详细分区卡片。</span>
+          <span>
+            Icon 用于 Home 快捷入口；Browse
+            使用背景图、名称、简介和产品数量展示详细分区卡片。
+          </span>
         </div>
-        <button className="primary-button" type="button" onClick={openCreateEditor}>新增分区</button>
+        <button className="primary-button" type="button" onClick={openCreateEditor}>
+          新增分区
+        </button>
       </div>
 
       <div className="section-filter-bar">
         <div className="scope-tabs" role="tablist" aria-label="分区状态">
-          <button type="button" className={scope === 'active' ? 'is-active' : undefined} onClick={() => void changeScope('active')}>当前分区 <span>{activeSections.length}</span></button>
-          <button type="button" className={scope === 'trash' ? 'is-active' : undefined} onClick={() => void changeScope('trash')}>回收站 <span>{trashSections.length}</span></button>
+          <button
+            type="button"
+            className={scope === 'active' ? 'is-active' : undefined}
+            onClick={() => void changeScope('active')}
+          >
+            当前分区 <span>{activeSections.length}</span>
+          </button>
+          <button
+            type="button"
+            className={scope === 'trash' ? 'is-active' : undefined}
+            onClick={() => void changeScope('trash')}
+          >
+            回收站 <span>{trashSections.length}</span>
+          </button>
         </div>
         <label className="section-search">
           <span>搜索</span>
-          <input type="search" value={search} placeholder="名称、简介或 slug" onChange={(event) => setSearch(event.target.value)} />
+          <input
+            type="search"
+            value={search}
+            placeholder="名称、简介或 slug"
+            onChange={(event) => setSearch(event.target.value)}
+          />
         </label>
       </div>
 
-      {errorMessage && !editorOpen ? <div className="notice notice-error" role="alert">{errorMessage}</div> : null}
-      {successMessage ? <div className="notice notice-success" role="status">{successMessage}</div> : null}
+      {errorMessage && !editorOpen ? (
+        <div className="notice notice-error" role="alert">
+          {errorMessage}
+        </div>
+      ) : null}
+      {successMessage ? (
+        <div className="notice notice-success" role="status">
+          {successMessage}
+        </div>
+      ) : null}
 
       {scope === 'active' && selectedIds.size > 0 ? (
         <div className="selection-toolbar">
           <span>已选择 {selectedIds.size} 个分区</span>
-          <button type="button" className="danger-button" disabled={working} onClick={() => setPendingDeleteIds([...selectedIds])}>批量删除</button>
+          <button
+            type="button"
+            className="danger-button"
+            disabled={working}
+            onClick={() => setPendingDeleteIds([...selectedIds])}
+          >
+            批量删除
+          </button>
         </div>
       ) : null}
 
@@ -436,7 +498,9 @@ export function SectionManagementView({
             setBrowseBackgroundPickerOpen(true);
           }}
           onRemoveImageIcon={removeImageIcon}
-          onRemoveBrowseBackground={() => setForm((current) => ({ ...current, browseBackgroundAssetId: null }))}
+          onRemoveBrowseBackground={() =>
+            setForm((current) => ({ ...current, browseBackgroundAssetId: null }))
+          }
           onSelectFallbackIcon={selectFallbackIcon}
           onClose={closeEditor}
           onSubmit={(event) => void handleSave(event)}
@@ -479,7 +543,12 @@ export function SectionManagementView({
       ) : null}
 
       {pendingDeleteIds.length > 0 ? (
-        <DeleteSectionDialog count={pendingDeleteIds.length} working={working} onCancel={() => setPendingDeleteIds([])} onConfirm={() => void confirmDelete()} />
+        <DeleteSectionDialog
+          count={pendingDeleteIds.length}
+          working={working}
+          onCancel={() => setPendingDeleteIds([])}
+          onConfirm={() => void confirmDelete()}
+        />
       ) : null}
     </section>
   );

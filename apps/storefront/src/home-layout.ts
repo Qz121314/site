@@ -34,7 +34,7 @@ export async function loadHomeLayout(signal?: AbortSignal): Promise<HomeLayout> 
 
   const response = await fetch('/api/public/home-layout/', init);
   if (!response.ok) throw new Error('HOME_LAYOUT_UNAVAILABLE');
-  const body = await response.json() as unknown;
+  const body = (await response.json()) as unknown;
   if (!isRecord(body) || !isRecord(body.layout)) throw new Error('HOME_LAYOUT_INVALID');
 
   return {

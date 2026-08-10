@@ -2,7 +2,10 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-const rootSource = await readFile(new URL('../src/StorefrontRoot.tsx', import.meta.url), 'utf8');
+const rootSource = await readFile(
+  new URL('../src/StorefrontRoot.tsx', import.meta.url),
+  'utf8',
+);
 const mainSource = await readFile(new URL('../src/main.tsx', import.meta.url), 'utf8');
 const adminSettingsSource = await readFile(
   new URL('../../admin/src/SiteSettingsView.tsx', import.meta.url),
@@ -12,7 +15,10 @@ const typographyCss = await readFile(
   new URL('../../../packages/storefront-ui/src/typography-contract.css', import.meta.url),
   'utf8',
 );
-const browseCss = await readFile(new URL('../src/browse-ui.css', import.meta.url), 'utf8');
+const browseCss = await readFile(
+  new URL('../src/browse-ui.css', import.meta.url),
+  'utf8',
+);
 
 test('storefront uses a modern self-contained font stack without remote font dependencies', () => {
   assert.match(mainSource, /@site\/storefront-ui\/typography-contract\.css/u);

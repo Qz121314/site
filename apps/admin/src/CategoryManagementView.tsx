@@ -30,12 +30,16 @@ const emptyCategoryForm: CategoryInput = {
 
 function sortCategories(categories: AdminCategory[]): AdminCategory[] {
   return [...categories].sort(
-    (left, right) => left.sortOrder - right.sortOrder || left.name.localeCompare(right.name),
+    (left, right) =>
+      left.sortOrder - right.sortOrder || left.name.localeCompare(right.name),
   );
 }
 
 function isSessionError(error: unknown): boolean {
-  return error instanceof AdminApiError && (error.status === 401 || error.code === 'SESSION_INVALID');
+  return (
+    error instanceof AdminApiError &&
+    (error.status === 401 || error.code === 'SESSION_INVALID')
+  );
 }
 
 function describeError(error: unknown): string {
@@ -108,7 +112,9 @@ export function CategoryManagementView({
   const filteredCategories = useMemo(() => {
     const keyword = search.trim().toLowerCase();
     return keyword
-      ? sourceCategories.filter((category) => category.name.toLowerCase().includes(keyword))
+      ? sourceCategories.filter((category) =>
+          category.name.toLowerCase().includes(keyword),
+        )
       : sourceCategories;
   }, [search, sourceCategories]);
 
@@ -165,7 +171,9 @@ export function CategoryManagementView({
       if (editingCategory) {
         const updated = await updateCategory(section.id, editingCategory.id, form);
         setActiveCategories((current) =>
-          sortCategories(current.map((item) => (item.id === updated.id ? updated : item))),
+          sortCategories(
+            current.map((item) => (item.id === updated.id ? updated : item)),
+          ),
         );
         setSuccessMessage(`分类“${updated.name}”已更新。`);
       } else {
@@ -339,8 +347,16 @@ export function CategoryManagementView({
         </label>
       </div>
 
-      {!editorOpen && errorMessage ? <div className="notice notice-error" role="alert">{errorMessage}</div> : null}
-      {successMessage ? <div className="notice notice-success" role="status">{successMessage}</div> : null}
+      {!editorOpen && errorMessage ? (
+        <div className="notice notice-error" role="alert">
+          {errorMessage}
+        </div>
+      ) : null}
+      {successMessage ? (
+        <div className="notice notice-success" role="status">
+          {successMessage}
+        </div>
+      ) : null}
 
       {scope === 'active' && selectedIds.size > 0 ? (
         <div className="selection-toolbar">

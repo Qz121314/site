@@ -90,7 +90,11 @@ export function validateCustomerServiceSettingsInput(value: unknown): Validation
   }
 
   if (value.isEnabled && endpointUrl.value === null) {
-    return { ok: false, field: 'endpointUrl', message: '启用客服时必须填写客服系统地址。' };
+    return {
+      ok: false,
+      field: 'endpointUrl',
+      message: '启用客服时必须填写客服系统地址。',
+    };
   }
 
   return {

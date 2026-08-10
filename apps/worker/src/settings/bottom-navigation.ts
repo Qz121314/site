@@ -15,7 +15,8 @@ export const BOTTOM_NAVIGATION_BUILTIN_ICONS = [
   'bell',
   'map',
 ] as const;
-export type BottomNavigationBuiltinIcon = (typeof BOTTOM_NAVIGATION_BUILTIN_ICONS)[number];
+export type BottomNavigationBuiltinIcon =
+  (typeof BOTTOM_NAVIGATION_BUILTIN_ICONS)[number];
 export type BottomNavigationIconType = 'builtin' | 'emoji' | 'asset';
 
 export type BottomNavigationItem = {
@@ -28,9 +29,7 @@ export type BottomNavigationItem = {
   sortOrder: number;
 };
 
-export type BottomNavigationInput = Array<
-  Omit<BottomNavigationItem, 'sortOrder'>
->;
+export type BottomNavigationInput = Array<Omit<BottomNavigationItem, 'sortOrder'>>;
 
 type BottomNavigationRow = {
   item_key: BottomNavigationKey;
@@ -57,15 +56,25 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function isBottomNavigationKey(value: unknown): value is BottomNavigationKey {
-  return typeof value === 'string' && BOTTOM_NAVIGATION_KEYS.includes(value as BottomNavigationKey);
+  return (
+    typeof value === 'string' &&
+    BOTTOM_NAVIGATION_KEYS.includes(value as BottomNavigationKey)
+  );
 }
 
 function isBuiltinIcon(value: unknown): value is BottomNavigationBuiltinIcon {
-  return typeof value === 'string' && BOTTOM_NAVIGATION_BUILTIN_ICONS.includes(value as BottomNavigationBuiltinIcon);
+  return (
+    typeof value === 'string' &&
+    BOTTOM_NAVIGATION_BUILTIN_ICONS.includes(value as BottomNavigationBuiltinIcon)
+  );
 }
 
-function normalizeLabel(value: unknown, field: string): { ok: true; value: string } | { ok: false; field: string; message: string } {
-  if (typeof value !== 'string') return { ok: false, field, message: '导航名称必须填写文本。' };
+function normalizeLabel(
+  value: unknown,
+  field: string,
+): { ok: true; value: string } | { ok: false; field: string; message: string } {
+  if (typeof value !== 'string')
+    return { ok: false, field, message: '导航名称必须填写文本。' };
   const normalized = value.trim();
   if (normalized.length < 1 || normalized.length > 24) {
     return { ok: false, field, message: '导航名称长度必须在 1 到 24 个字符之间。' };
@@ -73,7 +82,10 @@ function normalizeLabel(value: unknown, field: string): { ok: true; value: strin
   return { ok: true, value: normalized };
 }
 
-function normalizeEmoji(value: unknown, field: string): { ok: true; value: string } | { ok: false; field: string; message: string } {
+function normalizeEmoji(
+  value: unknown,
+  field: string,
+): { ok: true; value: string } | { ok: false; field: string; message: string } {
   if (typeof value !== 'string') return { ok: false, field, message: '请填写 Emoji。' };
   const normalized = value.trim();
   if (normalized.length < 1 || normalized.length > 16) {
@@ -85,7 +97,11 @@ function normalizeEmoji(value: unknown, field: string): { ok: true; value: strin
 export function validateBottomNavigationInput(value: unknown): ValidationResult {
   if (value === undefined) return { ok: true, provided: false, value: null };
   if (!Array.isArray(value) || value.length !== BOTTOM_NAVIGATION_KEYS.length) {
-    return { ok: false, field: 'bottomNavigation', message: '底部导航必须包含 Home、Browse、Messages、FAQ 四个固定入口。' };
+    return {
+      ok: false,
+      field: 'bottomNavigation',
+      message: '底部导航必须包含 Home、Browse、Messages、FAQ 四个固定入口。',
+    };
   }
 
   const seen = new Set<BottomNavigationKey>();
@@ -104,7 +120,11 @@ export function validateBottomNavigationInput(value: unknown): ValidationResult 
     if (typeof item.enabled !== 'boolean') {
       return { ok: false, field: `${field}.enabled`, message: '请选择是否显示该导航。' };
     }
-    if (item.iconType !== 'builtin' && item.iconType !== 'emoji' && item.iconType !== 'asset') {
+    if (
+      item.iconType !== 'builtin' &&
+      item.iconType !== 'emoji' &&
+      item.iconType !== 'asset'
+    ) {
       return { ok: false, field: `${field}.iconType`, message: '导航图标类型无效。' };
     }
 
@@ -112,7 +132,11 @@ export function validateBottomNavigationInput(value: unknown): ValidationResult 
     let iconAssetId: string | null = null;
     if (item.iconType === 'builtin') {
       if (!isBuiltinIcon(item.iconValue)) {
-        return { ok: false, field: `${field}.iconValue`, message: '请选择有效的内置图标。' };
+        return {
+          ok: false,
+          field: `${field}.iconValue`,
+          message: '请选择有效的内置图标。',
+        };
       }
       iconValue = item.iconValue;
     } else if (item.iconType === 'emoji') {
@@ -120,8 +144,16 @@ export function validateBottomNavigationInput(value: unknown): ValidationResult 
       if (!emoji.ok) return emoji;
       iconValue = emoji.value;
     } else {
-      if (typeof item.iconAssetId !== 'string' || !item.iconAssetId.trim() || item.iconAssetId.length > 100) {
-        return { ok: false, field: `${field}.iconAssetId`, message: '请选择有效的导航图片。' };
+      if (
+        typeof item.iconAssetId !== 'string' ||
+        !item.iconAssetId.trim() ||
+        item.iconAssetId.length > 100
+      ) {
+        return {
+          ok: false,
+          field: `${field}.iconAssetId`,
+          message: '请选择有效的导航图片。',
+        };
       }
       iconAssetId = item.iconAssetId.trim();
     }
@@ -138,14 +170,20 @@ export function validateBottomNavigationInput(value: unknown): ValidationResult 
 
   for (const key of BOTTOM_NAVIGATION_KEYS) {
     if (!seen.has(key)) {
-      return { ok: false, field: 'bottomNavigation', message: `底部导航缺少 ${key} 入口。` };
+      return {
+        ok: false,
+        field: 'bottomNavigation',
+        message: `底部导航缺少 ${key} 入口。`,
+      };
     }
   }
 
   return { ok: true, provided: true, value: normalized };
 }
 
-export async function getBottomNavigation(db: D1Database): Promise<BottomNavigationItem[]> {
+export async function getBottomNavigation(
+  db: D1Database,
+): Promise<BottomNavigationItem[]> {
   const rows = (
     await db
       .prepare(

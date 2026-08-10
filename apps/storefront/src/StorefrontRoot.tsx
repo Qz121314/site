@@ -23,10 +23,7 @@ import {
   loadBottomNavigation,
   type BottomNavigationItemConfig,
 } from './bottom-navigation';
-import {
-  loadStorefrontBootstrap,
-  loadProductSnapshot,
-} from './content';
+import { loadStorefrontBootstrap, loadProductSnapshot } from './content';
 import { FaqArticlePage, FaqDirectoryPage } from './FaqPage';
 import { HomeFeed } from './HomeFeed';
 import { NotFoundPage } from './NotFoundPage';

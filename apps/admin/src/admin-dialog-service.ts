@@ -84,7 +84,10 @@ function addActions(
 
 export function adminConfirm(options: ConfirmOptions): Promise<boolean> {
   return new Promise((resolve) => {
-    const { backdrop, dialog } = createDialogShell(options.eyebrow ?? '确认操作', options.title);
+    const { backdrop, dialog } = createDialogShell(
+      options.eyebrow ?? '确认操作',
+      options.title,
+    );
     appendTextElement(dialog, 'p', options.message, 'admin-service-dialog-message');
     const { confirmButton, cancelButton } = addActions(dialog, {
       confirmLabel: options.confirmLabel ?? '确认',
@@ -119,7 +122,10 @@ export function adminConfirm(options: ConfirmOptions): Promise<boolean> {
 
 export function adminPrompt(options: PromptOptions): Promise<string | null> {
   return new Promise((resolve) => {
-    const { backdrop, dialog } = createDialogShell(options.eyebrow ?? '输入内容', options.title);
+    const { backdrop, dialog } = createDialogShell(
+      options.eyebrow ?? '输入内容',
+      options.title,
+    );
     if (options.message) {
       appendTextElement(dialog, 'p', options.message, 'admin-service-dialog-message');
     }

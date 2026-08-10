@@ -27,6 +27,7 @@ import { publicBrowseSectionRoutes } from './routes/public-browse-sections';
 import { publicContentRoutes } from './routes/public-content';
 import { publicConversionRoutes } from './routes/public-conversion';
 import { publicHomeLayoutRoutes } from './routes/public-home-layout';
+import { publicMediaFallbackRoutes } from './routes/public-media-fallback';
 import { servePwaManifest } from './routes/public-pwa';
 import { publicStorefrontConfigRoutes } from './routes/public-storefront-config';
 import { publicThemeRoutes } from './routes/public-theme';
@@ -67,6 +68,8 @@ app.get('/api/health', (context) =>
     service: 'service-catalog-site',
     environment: context.env.ENVIRONMENT,
     version: context.env.APP_VERSION,
+    workerVersionId: context.env.CF_VERSION_METADATA?.id ?? null,
+    workerVersionTag: context.env.CF_VERSION_METADATA?.tag ?? null,
     publicLanguage: 'en',
     timestamp: new Date().toISOString(),
     requestId: context.get('requestId'),
@@ -76,6 +79,9 @@ app.get('/api/health', (context) =>
 app.get('/api/public/version', (context) =>
   context.json({
     appVersion: context.env.APP_VERSION,
+    workerVersionId: context.env.CF_VERSION_METADATA?.id ?? null,
+    workerVersionTag: context.env.CF_VERSION_METADATA?.tag ?? null,
+    deployedAt: context.env.CF_VERSION_METADATA?.timestamp ?? null,
     environment: context.env.ENVIRONMENT,
     publicLanguage: 'en',
   }),
@@ -86,6 +92,7 @@ app.route('/api/public/home-layout', publicHomeLayoutRoutes);
 app.route('/api/public/browse-sections', publicBrowseSectionRoutes);
 app.route('/api/public/theme', publicThemeRoutes);
 app.route('/public', publicContentRoutes);
+app.route('/_media', publicMediaFallbackRoutes);
 
 app.route('/api/admin/auth', adminAuthRoutes);
 

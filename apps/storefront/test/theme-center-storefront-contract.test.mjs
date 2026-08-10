@@ -2,30 +2,56 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-const storefrontMain = await readFile(new URL('../src/main.tsx', import.meta.url), 'utf8');
-const contentUi = await readFile(new URL('../src/content-ui.css', import.meta.url), 'utf8');
-const themeRuntime = await readFile(new URL('../src/theme-runtime.ts', import.meta.url), 'utf8');
+const storefrontMain = await readFile(
+  new URL('../src/main.tsx', import.meta.url),
+  'utf8',
+);
+const contentUi = await readFile(
+  new URL('../src/content-ui.css', import.meta.url),
+  'utf8',
+);
+const themeRuntime = await readFile(
+  new URL('../src/theme-runtime.ts', import.meta.url),
+  'utf8',
+);
 const sharedContract = await readFile(
   new URL('../../../packages/storefront-ui/src/theme-contract.css', import.meta.url),
   'utf8',
 );
 const sharedPackage = JSON.parse(
-  await readFile(new URL('../../../packages/storefront-ui/package.json', import.meta.url), 'utf8'),
+  await readFile(
+    new URL('../../../packages/storefront-ui/package.json', import.meta.url),
+    'utf8',
+  ),
 );
-const adminMain = await readFile(new URL('../../admin/src/main.tsx', import.meta.url), 'utf8');
-const themeCenterView = await readFile(new URL('../../admin/src/ThemeCenterView.tsx', import.meta.url), 'utf8');
+const adminMain = await readFile(
+  new URL('../../admin/src/main.tsx', import.meta.url),
+  'utf8',
+);
+const themeCenterView = await readFile(
+  new URL('../../admin/src/ThemeCenterView.tsx', import.meta.url),
+  'utf8',
+);
 
 test('storefront runtime consumes Theme Center density', () => {
-  assert.match(themeRuntime, /type ThemeDensity = 'compact' \| 'standard' \| 'comfortable';/u);
+  assert.match(
+    themeRuntime,
+    /type ThemeDensity = 'compact' \| 'standard' \| 'comfortable';/u,
+  );
   assert.match(themeRuntime, /root\.dataset\.density = theme\.density;/u);
   assert.match(themeRuntime, /storefront-theme-v2/u);
 });
 
 test('shared theme contract is the final Storefront visual layer', () => {
   const contentUiImport = storefrontMain.indexOf("import './content-ui.css';");
-  const themeContract = storefrontMain.indexOf("import '@site/storefront-ui/theme-contract.css';");
+  const themeContract = storefrontMain.indexOf(
+    "import '@site/storefront-ui/theme-contract.css';",
+  );
   assert.ok(contentUiImport >= 0, 'content UI must be loaded');
-  assert.ok(themeContract > contentUiImport, 'theme contract must load after structural content UI');
+  assert.ok(
+    themeContract > contentUiImport,
+    'theme contract must load after structural content UI',
+  );
   assert.equal(
     sharedPackage.exports['./theme-contract.css'],
     './src/theme-contract.css',

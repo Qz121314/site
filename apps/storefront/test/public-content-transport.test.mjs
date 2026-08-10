@@ -37,11 +37,15 @@ test('product snapshots are hydrated with realtime CTA state from the Worker', a
         path: '/go/product-1',
       });
     }
-    return jsonResponse({
-      schemaVersion: 2,
-      moduleKey: 'section:section-1',
-      product: { id: 'product-1', title: 'Product' },
-    }, 200, { etag: 'snapshot-etag' });
+    return jsonResponse(
+      {
+        schemaVersion: 2,
+        moduleKey: 'section:section-1',
+        product: { id: 'product-1', title: 'Product' },
+      },
+      200,
+      { etag: 'snapshot-etag' },
+    );
   }, 'https://app.example.com');
 
   const response = await wrapped(
@@ -86,20 +90,24 @@ test('unavailable realtime CTA removes stale CTA data from an older snapshot', a
 test('Cloudflare challenge falls back to same-origin Worker and opens a short circuit breaker', async () => {
   let now = 1_000;
   const calls = [];
-  const wrapped = createPublicContentFetch(async (input) => {
-    const url = String(input);
-    calls.push(url);
-    if (url.startsWith('https://media.example.com/')) {
-      return new Response('<html>Just a moment...</html>', {
-        status: 403,
-        headers: {
-          'content-type': 'text/html; charset=UTF-8',
-          'cf-mitigated': 'challenge',
-        },
-      });
-    }
-    return jsonResponse({ ok: true });
-  }, 'https://app.example.com', () => now);
+  const wrapped = createPublicContentFetch(
+    async (input) => {
+      const url = String(input);
+      calls.push(url);
+      if (url.startsWith('https://media.example.com/')) {
+        return new Response('<html>Just a moment...</html>', {
+          status: 403,
+          headers: {
+            'content-type': 'text/html; charset=UTF-8',
+            'cf-mitigated': 'challenge',
+          },
+        });
+      }
+      return jsonResponse({ ok: true });
+    },
+    'https://app.example.com',
+    () => now,
+  );
 
   const pointer = await wrapped('https://media.example.com/public/current.json');
   assert.equal(pointer.status, 200);
@@ -123,7 +131,7 @@ test('Cloudflare challenge falls back to same-origin Worker and opens a short ci
   assert.equal(calls[0], 'https://media.example.com/public/current.json');
 });
 
-test('CORS or network failure falls back, while media objects remain direct', async () => {
+test('content transport falls back for JSON while media retries stay component-owned', async () => {
   const calls = [];
   const wrapped = createPublicContentFetch(async (input) => {
     const url = String(input);
@@ -144,7 +152,9 @@ test('CORS or network failure falls back, while media objects remain direct', as
     'https://app.example.com/public/current.json',
   ]);
 
-  const mediaResponse = await wrapped('https://media.example.com/products/product-a/cover.webp');
+  const mediaResponse = await wrapped(
+    'https://media.example.com/products/product-a/cover.webp',
+  );
   assert.equal(mediaResponse.status, 403);
   assert.equal(calls.at(-1), 'https://media.example.com/products/product-a/cover.webp');
 });
@@ -159,7 +169,9 @@ test('aborted public requests are not retried through the fallback route', async
   }, 'https://app.example.com');
 
   await assert.rejects(
-    wrapped('https://media.example.com/public/current.json', { signal: controller.signal }),
+    wrapped('https://media.example.com/public/current.json', {
+      signal: controller.signal,
+    }),
     (error) => error?.name === 'AbortError',
   );
   assert.deepEqual(calls, ['https://media.example.com/public/current.json']);

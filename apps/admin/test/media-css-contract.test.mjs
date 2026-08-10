@@ -17,7 +17,10 @@ test('media page styles do not rely on forced overrides or legacy aliases', () =
 
   assert.doesNotMatch(mediaSource, /!important/);
   assert.doesNotMatch(assetSource, /!important/);
-  assert.doesNotMatch(`${mediaSource}\n${assetViewSource}`, /media-center-(?:upload-bar|toolbar)-v2/);
+  assert.doesNotMatch(
+    `${mediaSource}\n${assetViewSource}`,
+    /media-center-(?:upload-bar|toolbar)-v2/,
+  );
 });
 
 test('media and asset controls have one page-level style owner', () => {
@@ -27,20 +30,30 @@ test('media and asset controls have one page-level style owner', () => {
     /^\s*\.media-center-upload-bar\b/m,
     /^\s*\.media-center-toolbar\b/m,
   ];
-  const cssFiles = fs.readdirSync(sourceDirectory).filter((fileName) => fileName.endsWith('.css'));
+  const cssFiles = fs
+    .readdirSync(sourceDirectory)
+    .filter((fileName) => fileName.endsWith('.css'));
   for (const fileName of cssFiles) {
     if (fileName === 'media-center.css') continue;
     const cssSource = readSource(path.join(sourceDirectory, fileName));
     for (const selector of mediaSelectors) {
-      assert.doesNotMatch(cssSource, selector, `${fileName} must not redefine media center controls`);
+      assert.doesNotMatch(
+        cssSource,
+        selector,
+        `${fileName} must not redefine media center controls`,
+      );
     }
   }
 
-  const sharedOverrideSource = [
-    'admin-foundation.css',
-    'admin-ui-system.css',
-  ].map((fileName) => readSource(path.join(sourceDirectory, fileName))).join('\n');
-  for (const selector of ['asset-toolbar', 'asset-filter-group', 'asset-empty-state', 'asset-summary-grid']) {
+  const sharedOverrideSource = ['admin-foundation.css', 'admin-ui-system.css']
+    .map((fileName) => readSource(path.join(sourceDirectory, fileName)))
+    .join('\n');
+  for (const selector of [
+    'asset-toolbar',
+    'asset-filter-group',
+    'asset-empty-state',
+    'asset-summary-grid',
+  ]) {
     assert.doesNotMatch(sharedOverrideSource, new RegExp(`^\\s*\\.${selector}\\b`, 'm'));
   }
 });

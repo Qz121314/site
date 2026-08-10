@@ -1,6 +1,9 @@
 import { buildAssetPublicUrl, getMediaBaseUrl } from '../assets/asset-library';
 import { getCategory } from '../categories/categories';
-import { getConversionGroup, type ConversionMode } from '../conversion-pool/conversion-pool';
+import {
+  getConversionGroup,
+  type ConversionMode,
+} from '../conversion-pool/conversion-pool';
 
 export type ProductServiceMode = 'online' | 'offline';
 export type ProductStatus = 'draft' | 'published' | 'archived';
@@ -103,12 +106,10 @@ type ProductMediaRow = {
 };
 
 type ValidationResult<T> =
-  | { ok: true; value: T }
-  | { ok: false; field: string; message: string };
+  { ok: true; value: T } | { ok: false; field: string; message: string };
 
 export type ProductDependencyValidation =
-  | { ok: true }
-  | { ok: false; field: string; code: string; message: string };
+  { ok: true } | { ok: false; field: string; code: string; message: string };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -151,15 +152,24 @@ function readOptionalText(
   return { ok: true, value: normalized };
 }
 
-function readOptionalId(value: unknown, field: string, label: string): ValidationResult<string | null> {
-  if (value === null || value === undefined || value === '') return { ok: true, value: null };
+function readOptionalId(
+  value: unknown,
+  field: string,
+  label: string,
+): ValidationResult<string | null> {
+  if (value === null || value === undefined || value === '')
+    return { ok: true, value: null };
   if (typeof value !== 'string' || value.length > 100) {
     return { ok: false, field, message: `${label}无效。` };
   }
   return { ok: true, value };
 }
 
-function readOrder(value: unknown, field: string, label: string): ValidationResult<number> {
+function readOrder(
+  value: unknown,
+  field: string,
+  label: string,
+): ValidationResult<number> {
   if (
     typeof value !== 'number' ||
     !Number.isInteger(value) ||
@@ -178,9 +188,15 @@ function readMediaIds(value: unknown): ValidationResult<string[]> {
   if (value.length > 12) {
     return { ok: false, field: 'mediaAssetIds', message: '每个产品最多上传 12 张图片。' };
   }
-  const ids = value.filter((id): id is string => typeof id === 'string' && id.length > 0 && id.length <= 100);
+  const ids = value.filter(
+    (id): id is string => typeof id === 'string' && id.length > 0 && id.length <= 100,
+  );
   if (ids.length !== value.length || new Set(ids).size !== ids.length) {
-    return { ok: false, field: 'mediaAssetIds', message: '产品图片列表包含无效或重复图片。' };
+    return {
+      ok: false,
+      field: 'mediaAssetIds',
+      message: '产品图片列表包含无效或重复图片。',
+    };
   }
   return { ok: true, value: ids };
 }
@@ -220,7 +236,11 @@ export function validateProductInput(value: unknown): ValidationResult<ProductIn
   if (!featuredOrder.ok) return featuredOrder;
   const sortOrder = readOrder(value.sortOrder, 'sortOrder', '产品排序');
   if (!sortOrder.ok) return sortOrder;
-  if (value.status !== 'draft' && value.status !== 'published' && value.status !== 'archived') {
+  if (
+    value.status !== 'draft' &&
+    value.status !== 'published' &&
+    value.status !== 'archived'
+  ) {
     return { ok: false, field: 'status', message: '产品发布状态无效。' };
   }
 
@@ -255,17 +275,32 @@ export async function validateProductDependencies(
   if (input.categoryId) {
     const category = await getCategory(db, sectionId, input.categoryId);
     if (!category || category.deletedAt) {
-      return { ok: false, field: 'categoryId', code: 'CATEGORY_NOT_FOUND', message: '所选分类不存在于当前分区。' };
+      return {
+        ok: false,
+        field: 'categoryId',
+        code: 'CATEGORY_NOT_FOUND',
+        message: '所选分类不存在于当前分区。',
+      };
     }
     if (input.status === 'published' && !category.isEnabled) {
-      return { ok: false, field: 'categoryId', code: 'CATEGORY_DISABLED', message: '发布产品不能使用已停用分类。' };
+      return {
+        ok: false,
+        field: 'categoryId',
+        code: 'CATEGORY_DISABLED',
+        message: '发布产品不能使用已停用分类。',
+      };
     }
   }
 
   if (input.conversionGroupId) {
     const group = await getConversionGroup(db, sectionId, input.conversionGroupId);
     if (!group || group.deletedAt) {
-      return { ok: false, field: 'conversionGroupId', code: 'CONVERSION_GROUP_NOT_FOUND', message: '所选转化分组不存在于当前分区。' };
+      return {
+        ok: false,
+        field: 'conversionGroupId',
+        code: 'CONVERSION_GROUP_NOT_FOUND',
+        message: '所选转化分组不存在于当前分区。',
+      };
     }
     const requiredMode: ConversionMode =
       input.serviceMode === 'online' ? 'link' : 'customer_service';
@@ -281,18 +316,38 @@ export async function validateProductDependencies(
       };
     }
     if (input.status === 'published' && !group.isEnabled) {
-      return { ok: false, field: 'conversionGroupId', code: 'CONVERSION_GROUP_DISABLED', message: '发布产品不能使用已停用转化分组。' };
+      return {
+        ok: false,
+        field: 'conversionGroupId',
+        code: 'CONVERSION_GROUP_DISABLED',
+        message: '发布产品不能使用已停用转化分组。',
+      };
     }
     if (input.status === 'published' && group.activeTargetCount < 1) {
-      return { ok: false, field: 'conversionGroupId', code: 'CONVERSION_TARGET_REQUIRED', message: '发布前请为转化分组配置至少一个启用入口。' };
+      return {
+        ok: false,
+        field: 'conversionGroupId',
+        code: 'CONVERSION_TARGET_REQUIRED',
+        message: '发布前请为转化分组配置至少一个启用入口。',
+      };
     }
   }
 
   if (input.status === 'published' && input.serviceMode === 'offline' && !input.address) {
-    return { ok: false, field: 'address', code: 'ADDRESS_REQUIRED', message: '发布线下服务必须填写服务地址。' };
+    return {
+      ok: false,
+      field: 'address',
+      code: 'ADDRESS_REQUIRED',
+      message: '发布线下服务必须填写服务地址。',
+    };
   }
   if (input.status === 'published' && input.mediaAssetIds.length === 0) {
-    return { ok: false, field: 'mediaAssetIds', code: 'PRODUCT_IMAGE_REQUIRED', message: '发布产品至少需要一张图片。' };
+    return {
+      ok: false,
+      field: 'mediaAssetIds',
+      code: 'PRODUCT_IMAGE_REQUIRED',
+      message: '发布产品至少需要一张图片。',
+    };
   }
 
   if (input.mediaAssetIds.length > 0) {
@@ -306,7 +361,12 @@ export async function validateProductDependencies(
       .bind(...input.mediaAssetIds)
       .all<{ id: string }>();
     if (rows.results.length !== input.mediaAssetIds.length) {
-      return { ok: false, field: 'mediaAssetIds', code: 'PRODUCT_IMAGE_INVALID', message: '部分产品图片已不存在或不可用，请重新上传。' };
+      return {
+        ok: false,
+        field: 'mediaAssetIds',
+        code: 'PRODUCT_IMAGE_INVALID',
+        message: '部分产品图片已不存在或不可用，请重新上传。',
+      };
     }
   }
 
@@ -557,7 +617,7 @@ export function createUpdateProductStatements(
   now: string,
 ): D1PreparedStatement[] {
   const publishedAt =
-    input.status === 'published' ? current.publishedAt ?? now : current.publishedAt;
+    input.status === 'published' ? (current.publishedAt ?? now) : current.publishedAt;
   const statements: D1PreparedStatement[] = [
     db
       .prepare(
@@ -661,6 +721,8 @@ export function isProductConflictError(error: unknown): boolean {
   return (
     error instanceof Error &&
     (error.message.includes('products_active_slug_unique') ||
-      error.message.includes('UNIQUE constraint failed: products.section_id, products.slug'))
+      error.message.includes(
+        'UNIQUE constraint failed: products.section_id, products.slug',
+      ))
   );
 }

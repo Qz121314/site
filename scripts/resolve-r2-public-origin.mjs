@@ -4,7 +4,9 @@ const bucket = process.env.R2_BUCKET_NAME?.trim();
 const preferredOrigin = process.env.PREFERRED_R2_PUBLIC_ORIGIN?.trim() || null;
 
 if (!accountId || !apiToken || !bucket) {
-  throw new Error('CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_API_TOKEN and R2_BUCKET_NAME are required.');
+  throw new Error(
+    'CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_API_TOKEN and R2_BUCKET_NAME are required.',
+  );
 }
 
 function normalizeHostname(value) {
@@ -27,7 +29,9 @@ const response = await fetch(endpoint, {
 
 const bodyText = await response.text();
 if (!response.ok) {
-  throw new Error(`Unable to list R2 custom domains for ${bucket}: HTTP ${response.status}: ${bodyText.slice(0, 800)}`);
+  throw new Error(
+    `Unable to list R2 custom domains for ${bucket}: HTTP ${response.status}: ${bodyText.slice(0, 800)}`,
+  );
 }
 
 let payload;
@@ -43,12 +47,13 @@ const domains = Array.isArray(payload?.result?.domains)
     ? payload.result
     : [];
 
-const activeDomains = domains.filter((entry) =>
-  entry &&
-  typeof entry.domain === 'string' &&
-  entry.enabled === true &&
-  entry.status?.ownership === 'active' &&
-  entry.status?.ssl === 'active'
+const activeDomains = domains.filter(
+  (entry) =>
+    entry &&
+    typeof entry.domain === 'string' &&
+    entry.enabled === true &&
+    entry.status?.ownership === 'active' &&
+    entry.status?.ssl === 'active',
 );
 
 if (activeDomains.length === 0) {
@@ -58,7 +63,9 @@ if (activeDomains.length === 0) {
     ownership: entry?.status?.ownership ?? null,
     ssl: entry?.status?.ssl ?? null,
   }));
-  throw new Error(`R2 bucket ${bucket} has no enabled custom domain with active ownership and SSL. Found: ${JSON.stringify(summary)}`);
+  throw new Error(
+    `R2 bucket ${bucket} has no enabled custom domain with active ownership and SSL. Found: ${JSON.stringify(summary)}`,
+  );
 }
 
 const preferredHostname = normalizeHostname(preferredOrigin);
@@ -69,7 +76,7 @@ let selected = preferredHostname
 if (preferredHostname && !selected) {
   throw new Error(
     `The admin-configured R2 custom domain ${preferredHostname} is not active on bucket ${bucket}. ` +
-    `Active domains: ${activeDomains.map((entry) => entry.domain).join(', ')}`,
+      `Active domains: ${activeDomains.map((entry) => entry.domain).join(', ')}`,
   );
 }
 
@@ -80,7 +87,7 @@ if (!preferredHostname && activeDomains.length === 1) {
 if (!selected) {
   throw new Error(
     `R2 bucket ${bucket} has multiple active custom domains (${activeDomains.map((entry) => entry.domain).join(', ')}). ` +
-    'Set the admin media domain to one of those domains to disambiguate; deployment only reads the actual R2 binding.',
+      'Set the admin media domain to one of those domains to disambiguate; deployment only reads the actual R2 binding.',
   );
 }
 

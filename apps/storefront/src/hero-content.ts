@@ -18,7 +18,10 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function encodeObjectKey(key: string): string {
-  return key.split('/').map((segment) => encodeURIComponent(segment)).join('/');
+  return key
+    .split('/')
+    .map((segment) => encodeURIComponent(segment))
+    .join('/');
 }
 
 function mediaUrl(baseUrl: string, objectKey: string): string {
@@ -26,10 +29,13 @@ function mediaUrl(baseUrl: string, objectKey: string): string {
 }
 
 function parseSlide(value: unknown, baseUrl: string): PublishedHeroSlide | null {
-  if (!isRecord(value) || typeof value.id !== 'string' || !isRecord(value.media)) return null;
+  if (!isRecord(value) || typeof value.id !== 'string' || !isRecord(value.media))
+    return null;
   const media = value.media;
   if (
-    (media.kind !== 'image' && media.kind !== 'animated_image' && media.kind !== 'video') ||
+    (media.kind !== 'image' &&
+      media.kind !== 'animated_image' &&
+      media.kind !== 'video') ||
     typeof media.objectKey !== 'string' ||
     !media.objectKey
   ) {
@@ -38,7 +44,11 @@ function parseSlide(value: unknown, baseUrl: string): PublishedHeroSlide | null 
   const title = typeof value.title === 'string' ? value.title : null;
   const description = typeof value.description === 'string' ? value.description : null;
   let cta: PublishedHeroSlide['cta'] = null;
-  if (isRecord(value.cta) && typeof value.cta.label === 'string' && typeof value.cta.href === 'string') {
+  if (
+    isRecord(value.cta) &&
+    typeof value.cta.label === 'string' &&
+    typeof value.cta.href === 'string'
+  ) {
     cta = { label: value.cta.label, href: value.cta.href };
   }
   return {
@@ -73,7 +83,12 @@ export async function loadPublishedHero(
   } catch {
     return null;
   }
-  if (!isRecord(value) || value.schemaVersion !== 2 || value.moduleKey !== 'site' || !isRecord(value.site)) {
+  if (
+    !isRecord(value) ||
+    value.schemaVersion !== 2 ||
+    value.moduleKey !== 'site' ||
+    !isRecord(value.site)
+  ) {
     return null;
   }
   const hero = value.site.hero;

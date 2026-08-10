@@ -49,12 +49,17 @@ LEFT JOIN media_assets ma
 
 export async function listMediaFolders(db: D1Database): Promise<MediaFolder[]> {
   const rows = await db
-    .prepare(`${FOLDER_SELECT} GROUP BY mf.id ORDER BY mf.sort_order ASC, lower(mf.name) ASC`)
+    .prepare(
+      `${FOLDER_SELECT} GROUP BY mf.id ORDER BY mf.sort_order ASC, lower(mf.name) ASC`,
+    )
     .all<MediaFolderRow>();
   return rows.results.map(mapFolder);
 }
 
-export async function getMediaFolder(db: D1Database, id: string): Promise<MediaFolder | null> {
+export async function getMediaFolder(
+  db: D1Database,
+  id: string,
+): Promise<MediaFolder | null> {
   const row = await db
     .prepare(`${FOLDER_SELECT} WHERE mf.id = ? GROUP BY mf.id`)
     .bind(id)
@@ -62,9 +67,14 @@ export async function getMediaFolder(db: D1Database, id: string): Promise<MediaF
   return row ? mapFolder(row) : null;
 }
 
-export async function findMediaFolderByName(db: D1Database, name: string): Promise<MediaFolder | null> {
+export async function findMediaFolderByName(
+  db: D1Database,
+  name: string,
+): Promise<MediaFolder | null> {
   const row = await db
-    .prepare(`${FOLDER_SELECT} WHERE lower(trim(mf.name)) = lower(trim(?)) GROUP BY mf.id`)
+    .prepare(
+      `${FOLDER_SELECT} WHERE lower(trim(mf.name)) = lower(trim(?)) GROUP BY mf.id`,
+    )
     .bind(name)
     .first<MediaFolderRow>();
   return row ? mapFolder(row) : null;
@@ -117,12 +127,18 @@ export async function renameMediaFolder(
   return getMediaFolder(db, id);
 }
 
-export async function deleteMediaFolder(db: D1Database, id: string, now: string): Promise<boolean> {
+export async function deleteMediaFolder(
+  db: D1Database,
+  id: string,
+  now: string,
+): Promise<boolean> {
   const folder = await getMediaFolder(db, id);
   if (!folder) return false;
   await db.batch([
     db
-      .prepare('UPDATE media_assets SET folder_id = NULL, updated_at = ? WHERE folder_id = ?')
+      .prepare(
+        'UPDATE media_assets SET folder_id = NULL, updated_at = ? WHERE folder_id = ?',
+      )
       .bind(now, id),
     db.prepare('DELETE FROM media_folders WHERE id = ?').bind(id),
   ]);
