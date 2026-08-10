@@ -6,7 +6,6 @@ import {
   type SiteSettingsUpdateInput,
 } from './api';
 import type { MediaKind } from './asset-library/api';
-import { parseStorefrontCopy, type StorefrontCopy } from './storefront-copy-settings';
 
 export type SiteHeroSlide = {
   id: string;
@@ -41,7 +40,6 @@ export type HomeLayout = {
 };
 
 export type SiteSettingsWithHero = SiteSettings & {
-  storefrontCopy: StorefrontCopy;
   heroSlides: SiteHeroSlide[];
   bottomNavigation: BottomNavigationItem[];
   homeLayout: HomeLayout;
@@ -49,7 +47,6 @@ export type SiteSettingsWithHero = SiteSettings & {
 
 export type SiteSettingsWithHeroUpdateInput = SiteSettingsUpdateInput & {
   logoAssetId: string | null;
-  storefrontCopy: StorefrontCopy;
   heroSlides: SiteHeroSlideInput[];
   bottomNavigation: BottomNavigationItemInput[];
   homeLayout: HomeLayout;
@@ -122,7 +119,6 @@ function parseHomeLayout(value: unknown): HomeLayout {
 function withHero(settings: SiteSettings): SiteSettingsWithHero {
   const raw = settings as SiteSettings & {
     heroSlides?: unknown;
-    storefrontCopy?: unknown;
     bottomNavigation?: unknown;
     homeLayout?: unknown;
   };
@@ -134,7 +130,6 @@ function withHero(settings: SiteSettings): SiteSettingsWithHero {
   }
   return {
     ...settings,
-    storefrontCopy: parseStorefrontCopy(raw.storefrontCopy),
     heroSlides: raw.heroSlides.map(parseHeroSlide),
     bottomNavigation: raw.bottomNavigation.map(parseBottomNavigationItem),
     homeLayout: parseHomeLayout(raw.homeLayout),
