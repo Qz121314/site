@@ -1,6 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import type { StorefrontLinkComponent } from '@site/storefront-ui';
 import { useEffect, useState, type MouseEvent as ReactMouseEvent } from 'react';
+import { createPortal } from 'react-dom';
 import {
   loadProductSnapshot,
   PublicContentError,
@@ -180,155 +181,159 @@ export function ProductDetailPage({
   const activeMediaFallback = (
     <div className="detail-media-fallback" aria-hidden="true" />
   );
+  const ctaAction = (
+    <div className="product-detail-fixed-action">
+      {ctaDestination ? (
+        ctaDestination.mode === 'customer_service' ? (
+          <LinkComponent className="cta-button is-ready" href={ctaDestination.href}>
+            <span>{ctaLabel}</span>
+            <span className="product-detail-cta-arrow" aria-hidden="true">
+              →
+            </span>
+          </LinkComponent>
+        ) : (
+          <a
+            className="cta-button is-ready"
+            href={ctaDestination.href}
+            target="_blank"
+            rel="noopener noreferrer nofollow"
+          >
+            <span>{ctaLabel}</span>
+            <span className="product-detail-cta-arrow" aria-hidden="true">
+              ↗
+            </span>
+          </a>
+        )
+      ) : (
+        <button
+          className={`cta-button${ctaUnavailable ? ' is-unavailable' : ''}`}
+          type="button"
+          aria-busy={ctaResolveState === 'loading'}
+          disabled={ctaResolveState === 'loading' || ctaUnavailable}
+          onClick={() => void handleResolveCta()}
+        >
+          {ctaResolveState === 'loading' ? (
+            <span className="product-detail-cta-spinner" aria-hidden="true" />
+          ) : null}
+          <span>{ctaUnavailable ? SYSTEM_UI.temporarilyUnavailable : ctaLabel}</span>
+        </button>
+      )}
+      <span className="sr-only" role="status" aria-live="polite">
+        {ctaUnavailable ? SYSTEM_UI.temporarilyUnavailable : ''}
+      </span>
+    </div>
+  );
 
   return (
-    <article className="product-detail-page" aria-labelledby="product-detail-title">
-      <header className="product-detail-navigation">
-        <LinkComponent
-          className="product-detail-back"
-          href={backHref}
-          onClick={handleInternalBack}
-        >
-          {SYSTEM_UI.back}
-        </LinkComponent>
-      </header>
+    <>
+      <article className="product-detail-page" aria-labelledby="product-detail-title">
+        <header className="product-detail-navigation">
+          <LinkComponent
+            className="product-detail-back"
+            href={backHref}
+            onClick={handleInternalBack}
+          >
+            {SYSTEM_UI.back}
+          </LinkComponent>
+        </header>
 
-      <div className="product-detail-hero">
-        <div className="detail-gallery">
-          <div className="detail-media-stage" key={activeMedia?.id ?? 'cover'}>
-            {activeMediaUrl ? (
-              activeMediaIsVideo ? (
-                <ResilientVideo
-                  aria-label={activeMedia?.altText || product.title}
-                  controls
-                  fallback={activeMediaFallback}
-                  playsInline
-                  preload="metadata"
-                  src={activeMediaUrl}
-                />
+        <div className="product-detail-hero">
+          <div className="detail-gallery">
+            <div className="detail-media-stage" key={activeMedia?.id ?? 'cover'}>
+              {activeMediaUrl ? (
+                activeMediaIsVideo ? (
+                  <ResilientVideo
+                    aria-label={activeMedia?.altText || product.title}
+                    controls
+                    fallback={activeMediaFallback}
+                    playsInline
+                    preload="metadata"
+                    src={activeMediaUrl}
+                  />
+                ) : (
+                  <ResilientImage
+                    alt={activeMedia?.altText || product.title}
+                    fallback={activeMediaFallback}
+                    src={activeMediaUrl}
+                  />
+                )
               ) : (
-                <ResilientImage
-                  alt={activeMedia?.altText || product.title}
-                  fallback={activeMediaFallback}
-                  src={activeMediaUrl}
-                />
-              )
-            ) : (
-              activeMediaFallback
-            )}
-          </div>
+                activeMediaFallback
+              )}
+            </div>
 
-          {media.length > 1 ? (
-            <div className="detail-media-thumbnails" role="list">
-              {media.map((item, index) => {
-                if (!item.url) return null;
-                const selected = item.id === activeMedia?.id;
-                const video = isVideoMediaUrl(item.url);
-                return (
-                  <button
-                    className={`detail-media-thumbnail${selected ? ' is-active' : ''}`}
-                    type="button"
-                    aria-label={item.altText || `${product.title} ${index + 1}`}
-                    aria-pressed={selected}
-                    key={item.id}
-                    onClick={() => setActiveMediaId(item.id)}
-                  >
-                    {video ? (
-                      <>
-                        <ResilientVideo
-                          aria-hidden="true"
+            {media.length > 1 ? (
+              <div className="detail-media-thumbnails" role="list">
+                {media.map((item, index) => {
+                  if (!item.url) return null;
+                  const selected = item.id === activeMedia?.id;
+                  const video = isVideoMediaUrl(item.url);
+                  return (
+                    <button
+                      className={`detail-media-thumbnail${selected ? ' is-active' : ''}`}
+                      type="button"
+                      aria-label={item.altText || `${product.title} ${index + 1}`}
+                      aria-pressed={selected}
+                      key={item.id}
+                      onClick={() => setActiveMediaId(item.id)}
+                    >
+                      {video ? (
+                        <>
+                          <ResilientVideo
+                            aria-hidden="true"
+                            fallback={<div className="detail-thumbnail-fallback" />}
+                            muted
+                            playsInline
+                            preload="metadata"
+                            src={item.url}
+                          />
+                          <span className="detail-thumbnail-video-mark" aria-hidden="true">
+                            ▶
+                          </span>
+                        </>
+                      ) : (
+                        <ResilientImage
+                          alt=""
                           fallback={<div className="detail-thumbnail-fallback" />}
-                          muted
-                          playsInline
-                          preload="metadata"
+                          loading="lazy"
                           src={item.url}
                         />
-                        <span className="detail-thumbnail-video-mark" aria-hidden="true">
-                          ▶
-                        </span>
-                      </>
-                    ) : (
-                      <ResilientImage
-                        alt=""
-                        fallback={<div className="detail-thumbnail-fallback" />}
-                        loading="lazy"
-                        src={item.url}
-                      />
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          ) : null}
-        </div>
-
-        <div className="product-detail-info">
-          <section className="product-detail-summary">
-            <h1 id="product-detail-title">{product.title}</h1>
-
-            {product.category.name ? (
-              <p className="product-detail-category">
-                <strong>{product.category.name}</strong>
-              </p>
-            ) : null}
-
-            {product.tags.length > 0 ? (
-              <div className="product-detail-tags" aria-label="Tags">
-                {product.tags.map((tag) => (
-                  <span key={tag.id}>{tag.name}</span>
-                ))}
+                      )}
+                    </button>
+                  );
+                })}
               </div>
             ) : null}
-          </section>
+          </div>
 
-          {product.body.trim() ? (
-            <section className="product-detail-body">
-              <MarkdownContent source={product.body} />
+          <div className="product-detail-info">
+            <section className="product-detail-summary">
+              <h1 id="product-detail-title">{product.title}</h1>
+
+              {product.category.name ? (
+                <p className="product-detail-category">
+                  <strong>{product.category.name}</strong>
+                </p>
+              ) : null}
+
+              {product.tags.length > 0 ? (
+                <div className="product-detail-tags" aria-label="Tags">
+                  {product.tags.map((tag) => (
+                    <span key={tag.id}>{tag.name}</span>
+                  ))}
+                </div>
+              ) : null}
             </section>
-          ) : null}
-        </div>
-      </div>
 
-      <div className="product-detail-fixed-action">
-        {ctaDestination ? (
-          ctaDestination.mode === 'customer_service' ? (
-            <LinkComponent className="cta-button is-ready" href={ctaDestination.href}>
-              <span>{ctaLabel}</span>
-              <span className="product-detail-cta-arrow" aria-hidden="true">
-                →
-              </span>
-            </LinkComponent>
-          ) : (
-            <a
-              className="cta-button is-ready"
-              href={ctaDestination.href}
-              target="_blank"
-              rel="noopener noreferrer nofollow"
-            >
-              <span>{ctaLabel}</span>
-              <span className="product-detail-cta-arrow" aria-hidden="true">
-                ↗
-              </span>
-            </a>
-          )
-        ) : (
-          <button
-            className={`cta-button${ctaUnavailable ? ' is-unavailable' : ''}`}
-            type="button"
-            aria-busy={ctaResolveState === 'loading'}
-            disabled={ctaResolveState === 'loading' || ctaUnavailable}
-            onClick={() => void handleResolveCta()}
-          >
-            {ctaResolveState === 'loading' ? (
-              <span className="product-detail-cta-spinner" aria-hidden="true" />
+            {product.body.trim() ? (
+              <section className="product-detail-body">
+                <MarkdownContent source={product.body} />
+              </section>
             ) : null}
-            <span>{ctaUnavailable ? SYSTEM_UI.temporarilyUnavailable : ctaLabel}</span>
-          </button>
-        )}
-        <span className="sr-only" role="status" aria-live="polite">
-          {ctaUnavailable ? SYSTEM_UI.temporarilyUnavailable : ''}
-        </span>
-      </div>
-    </article>
+          </div>
+        </div>
+      </article>
+      {createPortal(ctaAction, document.body)}
+    </>
   );
 }
