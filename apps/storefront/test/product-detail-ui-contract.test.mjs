@@ -7,6 +7,7 @@ const detailSource = await readFile(
   new URL('../src/ProductDetailPage.tsx', import.meta.url),
   'utf8',
 );
+const ctaSource = await readFile(new URL('../src/cta.ts', import.meta.url), 'utf8');
 const rootSource = await readFile(
   new URL('../src/StorefrontRoot.tsx', import.meta.url),
   'utf8',
@@ -184,16 +185,20 @@ test('shared package and Admin preview load the product detail Theme Center exte
   assert.match(adminMain, /@site\/storefront-ui\/product-detail-theme-contract\.css/u);
 });
 
-test('product detail keeps published CTA label authoritative and resolves destination on demand', () => {
-  assert.match(detailSource, /product\.cta\?\.label/u);
-  assert.match(detailSource, /SYSTEM_UI\.continue/u);
-  assert.match(
+test('product detail reads realtime CTA metadata and navigates through the single go route', () => {
+  assert.match(detailSource, /loadPublicCta\(product!\.id, signal\)/u);
+  assert.match(detailSource, /href=\{cta\.path\}/u);
+  assert.match(detailSource, /\{cta\.label\}/u);
+  assert.doesNotMatch(detailSource, /product\.cta|SYSTEM_UI\.continue/u);
+  assert.doesNotMatch(
     detailSource,
-    /\/api\/public\/storefront\/cta\/\$\{encodeURIComponent\(productId\)\}\/resolve/u,
+    /\/cta\/\$\{encodeURIComponent\(productId\)\}\/resolve/u,
   );
-  assert.match(detailSource, /method: 'POST'/u);
-  assert.match(detailSource, /SYSTEM_UI\.temporarilyUnavailable/u);
-  assert.match(detailSource, /ctaResolveState === 'unavailable'/u);
-  assert.doesNotMatch(detailSource, /\{product\.cta \? \(/u);
-  assert.doesNotMatch(detailSource, /href=\{product\.cta\.path\}/u);
+  assert.doesNotMatch(detailSource, /method: 'POST'/u);
+  assert.match(ctaSource, /method: 'GET'/u);
+  assert.match(
+    ctaSource,
+    /\/api\/public\/storefront\/cta\/\$\{encodeURIComponent\(productId\)\}/u,
+  );
+  assert.match(ctaSource, /value\.path\.startsWith\('\/'\)/u);
 });

@@ -14,6 +14,7 @@ const detailSource = await readFile(
   new URL('../src/ProductDetailPage.tsx', import.meta.url),
   'utf8',
 );
+const ctaSource = await readFile(new URL('../src/cta.ts', import.meta.url), 'utf8');
 const detailCss = await readFile(
   new URL('../src/product-detail-ui.css', import.meta.url),
   'utf8',
@@ -33,17 +34,16 @@ test('section catalog keeps the section name in the app header and product cards
   assert.match(sectionCss, /\.section-product-cover \{[\s\S]*aspect-ratio: 1 \/ 1/);
 });
 
-test('product detail keeps Back at the left and CTA resolves before navigation', () => {
-  assert.match(
-    detailSource,
-    /\/api\/public\/storefront\/cta\/\$\{encodeURIComponent\(productId\)\}\/resolve/,
-  );
-  assert.match(detailSource, /method: 'POST'/);
-  assert.match(detailSource, /onClick=\{\(\) => void handleResolveCta\(\)\}/);
-  assert.match(detailSource, /ctaDestination\.mode === 'customer_service'/);
-  assert.match(detailSource, /target="_blank"/);
+test('product detail keeps Back at the left and uses the single backend CTA route', () => {
+  assert.match(detailSource, /loadPublicCta\(product!\.id, signal\)/);
+  assert.match(detailSource, /href=\{cta\.path\}/);
+  assert.match(detailSource, /cta\.mode === 'link'/);
   assert.match(detailSource, /SYSTEM_UI\.temporarilyUnavailable/);
-  assert.doesNotMatch(detailSource, /href=\{product\.cta\.path\}/);
+  assert.doesNotMatch(detailSource, /handleResolveCta|ctaDestination/);
+  assert.doesNotMatch(detailSource, /method: 'POST'/);
+  assert.doesNotMatch(detailSource, /\/cta\/[^\s]*\/resolve/);
+  assert.match(ctaSource, /method: 'GET'/);
+  assert.match(ctaSource, /value\.path\.startsWith\('\/'\)/);
   assert.match(detailCss, /\.product-detail-fixed-action \{[\s\S]*position: fixed/);
   assert.match(
     detailCss,

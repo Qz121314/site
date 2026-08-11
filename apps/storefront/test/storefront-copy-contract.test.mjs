@@ -57,8 +57,8 @@ test('business content is backend-driven instead of coming from a storefront cop
   assert.match(homeSource, /slide\.title/u);
   assert.match(homeSource, /section\.name/u);
   assert.match(productSource, /product\.title/u);
-  assert.match(productSource, /product\.cta\?\.label/u);
-  assert.match(productSource, /\{ctaLabel\}/u);
+  assert.match(productSource, /\{cta\.label\}/u);
+  assert.doesNotMatch(productSource, /product\.cta|SYSTEM_UI\.continue/u);
   assert.match(faqSource, /article\.title/u);
   assert.match(supportSource, /conversation\.agentName/u);
 });

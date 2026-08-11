@@ -23,7 +23,6 @@ import { adminSiteSettingsRoutes } from './routes/admin-site-settings';
 import { adminTagRoutes } from './routes/admin-tags';
 import { adminThemeRoutes } from './routes/admin-theme';
 import { publicBottomNavigationRoutes } from './routes/public-bottom-navigation';
-import { publicBrowseSectionRoutes } from './routes/public-browse-sections';
 import { publicContentRoutes } from './routes/public-content';
 import { publicConversionRoutes } from './routes/public-conversion';
 import { publicMediaFallbackRoutes } from './routes/public-media-fallback';
@@ -87,7 +86,6 @@ app.get('/api/public/version', (context) =>
 );
 app.route('/api/public/storefront', publicStorefrontConfigRoutes);
 app.route('/api/public/bottom-navigation', publicBottomNavigationRoutes);
-app.route('/api/public/browse-sections', publicBrowseSectionRoutes);
 app.route('/api/public/theme', publicThemeRoutes);
 app.route('/public', publicContentRoutes);
 app.route('/_media', publicMediaFallbackRoutes);

@@ -7,23 +7,12 @@ import {
   PublicContentError,
   type StorefrontBootstrap,
 } from './content';
+import { loadPublicCta } from './cta';
 import { MarkdownContent } from './MarkdownContent';
 import { ResilientImage, ResilientVideo } from './ResilientMedia';
 import { sectionHref } from './routing';
 import { canNavigateStorefrontBack, navigateStorefrontBack } from './storefront-history';
 import { SYSTEM_UI } from './system-ui';
-
-type ResolvedCtaDestination = {
-  mode: 'customer_service' | 'link';
-  href: string;
-  label: string | null;
-};
-
-type CtaResolveState = 'idle' | 'loading' | 'ready' | 'unavailable';
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
 
 function isVideoMediaUrl(value: string): boolean {
   try {
@@ -49,35 +38,6 @@ function handleInternalBack(event: ReactMouseEvent<HTMLAnchorElement>) {
   navigateStorefrontBack();
 }
 
-async function resolveCtaDestination(productId: string): Promise<ResolvedCtaDestination> {
-  const response = await fetch(
-    `/api/public/storefront/cta/${encodeURIComponent(productId)}/resolve`,
-    {
-      method: 'POST',
-      cache: 'no-store',
-      credentials: 'same-origin',
-      headers: { Accept: 'application/json' },
-    },
-  );
-  const value = (await response.json().catch(() => null)) as unknown;
-  const envelope = isRecord(value) ? value : null;
-  if (
-    !response.ok ||
-    !envelope ||
-    envelope.available !== true ||
-    (envelope.mode !== 'customer_service' && envelope.mode !== 'link') ||
-    typeof envelope.href !== 'string' ||
-    !envelope.href
-  ) {
-    throw new Error('CTA_UNAVAILABLE');
-  }
-  const label =
-    typeof envelope.label === 'string' && envelope.label.trim()
-      ? envelope.label.trim()
-      : null;
-  return { mode: envelope.mode, href: envelope.href, label };
-}
-
 export function ProductDetailPage({
   bootstrap,
   productRef,
@@ -90,10 +50,6 @@ export function ProductDetailPage({
   LinkComponent?: StorefrontLinkComponent;
 }) {
   const [activeMediaId, setActiveMediaId] = useState<string | null>(null);
-  const [ctaDestination, setCtaDestination] = useState<ResolvedCtaDestination | null>(
-    null,
-  );
-  const [ctaResolveState, setCtaResolveState] = useState<CtaResolveState>('idle');
   const query = useQuery({
     queryKey: [
       'storefront-product',
@@ -106,6 +62,12 @@ export function ProductDetailPage({
     staleTime: Number.POSITIVE_INFINITY,
   });
   const product = query.data?.product ?? null;
+  const ctaQuery = useQuery({
+    queryKey: ['storefront-product-cta', product?.id],
+    enabled: Boolean(product?.id),
+    queryFn: ({ signal }) => loadPublicCta(product!.id, signal),
+  });
+  const cta = ctaQuery.data ?? null;
   const media = product?.media.filter((item) => Boolean(item.url)) ?? [];
   const activeMedia = media.find((item) => item.id === activeMediaId) ?? media[0] ?? null;
 
@@ -115,24 +77,7 @@ export function ProductDetailPage({
 
   useEffect(() => {
     setActiveMediaId(null);
-    setCtaDestination(null);
-    setCtaResolveState('idle');
   }, [product?.id]);
-
-  async function handleResolveCta() {
-    if (!product || ctaResolveState === 'loading' || ctaResolveState === 'unavailable') {
-      return;
-    }
-    setCtaResolveState('loading');
-    try {
-      const destination = await resolveCtaDestination(product.id);
-      setCtaDestination(destination);
-      setCtaResolveState('ready');
-    } catch {
-      setCtaDestination(null);
-      setCtaResolveState('unavailable');
-    }
-  }
 
   if (query.isLoading && !product) {
     return <div className="inline-loading product-detail-state">{SYSTEM_UI.loading}</div>;
@@ -172,8 +117,6 @@ export function ProductDetailPage({
   if (!product) return null;
 
   const backHref = sectionHref({ id: product.sectionId, slug: product.sectionSlug });
-  const ctaLabel = ctaDestination?.label ?? product.cta?.label ?? SYSTEM_UI.continue;
-  const ctaUnavailable = ctaResolveState === 'unavailable';
   const activeMediaUrl = activeMedia?.url ?? product.coverUrl;
   const activeMediaIsVideo = Boolean(
     activeMedia?.url && isVideoMediaUrl(activeMedia.url),
@@ -181,48 +124,35 @@ export function ProductDetailPage({
   const activeMediaFallback = (
     <div className="detail-media-fallback" aria-hidden="true" />
   );
-  const ctaAction = (
+  const ctaAction = ctaQuery.isLoading ? (
     <div className="product-detail-fixed-action">
-      {ctaDestination ? (
-        ctaDestination.mode === 'customer_service' ? (
-          <LinkComponent className="cta-button is-ready" href={ctaDestination.href}>
-            <span>{ctaLabel}</span>
-            <span className="product-detail-cta-arrow" aria-hidden="true">
-              →
-            </span>
-          </LinkComponent>
-        ) : (
-          <a
-            className="cta-button is-ready"
-            href={ctaDestination.href}
-            target="_blank"
-            rel="noopener noreferrer nofollow"
-          >
-            <span>{ctaLabel}</span>
-            <span className="product-detail-cta-arrow" aria-hidden="true">
-              ↗
-            </span>
-          </a>
-        )
-      ) : (
-        <button
-          className={`cta-button${ctaUnavailable ? ' is-unavailable' : ''}`}
-          type="button"
-          aria-busy={ctaResolveState === 'loading'}
-          disabled={ctaResolveState === 'loading' || ctaUnavailable}
-          onClick={() => void handleResolveCta()}
-        >
-          {ctaResolveState === 'loading' ? (
-            <span className="product-detail-cta-spinner" aria-hidden="true" />
-          ) : null}
-          <span>{ctaUnavailable ? SYSTEM_UI.temporarilyUnavailable : ctaLabel}</span>
-        </button>
-      )}
-      <span className="sr-only" role="status" aria-live="polite">
-        {ctaUnavailable ? SYSTEM_UI.temporarilyUnavailable : ''}
-      </span>
+      <button className="cta-button" type="button" aria-busy="true" disabled>
+        <span className="product-detail-cta-spinner" aria-hidden="true" />
+        <span className="sr-only">{SYSTEM_UI.loading}</span>
+      </button>
     </div>
-  );
+  ) : ctaQuery.error ? (
+    <div className="product-detail-fixed-action">
+      <button className="cta-button is-unavailable" type="button" disabled>
+        <span>{SYSTEM_UI.temporarilyUnavailable}</span>
+      </button>
+    </div>
+  ) : cta ? (
+    <div className="product-detail-fixed-action">
+      <a
+        className="cta-button is-ready"
+        href={cta.path}
+        {...(cta.mode === 'link'
+          ? { target: '_blank', rel: 'noopener noreferrer nofollow' }
+          : {})}
+      >
+        <span>{cta.label}</span>
+        <span className="product-detail-cta-arrow" aria-hidden="true">
+          {cta.mode === 'link' ? '↗' : '→'}
+        </span>
+      </a>
+    </div>
+  ) : null;
 
   return (
     <>
@@ -330,7 +260,7 @@ export function ProductDetailPage({
           </div>
         </div>
       </article>
-      {createPortal(ctaAction, document.body)}
+      {ctaAction ? createPortal(ctaAction, document.body) : null}
     </>
   );
 }

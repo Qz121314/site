@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import { StorefrontProductCard, type StorefrontLinkComponent } from '@site/storefront-ui';
 import { useEffect, useMemo, useState } from 'react';
-import { loadBrowseSectionPresentations } from './browse-sections';
 import {
   loadSectionSnapshot,
   type PublicProductSummary,
@@ -54,19 +53,6 @@ export function BrowsePage({
   const [search, setSearch] = useState('');
   const normalizedSearch = search.trim().toLowerCase();
   const sections = useMemo(() => publishedSections(bootstrap), [bootstrap]);
-  const presentationVersion =
-    bootstrap.pointer.schemaVersion === 2
-      ? bootstrap.pointer.sectionsIndex.contentVersion
-      : bootstrap.pointer.contentVersion;
-  const presentationQuery = useQuery({
-    queryKey: ['storefront-browse-section-presentation', presentationVersion],
-    queryFn: ({ signal }) => loadBrowseSectionPresentations(bootstrap, signal),
-    staleTime: Number.POSITIVE_INFINITY,
-  });
-  const presentationById = useMemo(
-    () => new Map((presentationQuery.data ?? []).map((item) => [item.id, item])),
-    [presentationQuery.data],
-  );
   const productSearchQuery = useQuery({
     queryKey: ['storefront-browse-product-search', bootstrap.pointer.contentVersion],
     enabled: normalizedSearch.length > 0,
@@ -93,12 +79,11 @@ export function BrowsePage({
     () =>
       sections.filter((section) => {
         if (!normalizedSearch) return true;
-        const presentation = presentationById.get(section.id);
-        return `${section.name} ${presentation?.description ?? ''}`
+        return `${section.name} ${section.description ?? ''}`
           .toLowerCase()
           .includes(normalizedSearch);
       }),
-    [normalizedSearch, presentationById, sections],
+    [normalizedSearch, sections],
   );
 
   const filteredProducts = useMemo(() => {
@@ -136,37 +121,34 @@ export function BrowsePage({
           <div
             className={`browse-section-list${filteredSections.length === 1 ? ' is-single' : ''}`}
           >
-            {filteredSections.map((section) => {
-              const presentation = presentationById.get(section.id);
-              return (
-                <LinkComponent
-                  className={`browse-section-card${presentation?.backgroundUrl ? ' has-image' : ' is-fallback'}`}
-                  href={sectionHref(section)}
-                  key={section.id}
-                >
-                  <span className="browse-section-card-media" aria-hidden="true">
-                    {presentation?.backgroundUrl ? (
-                      <ResilientImage
-                        alt=""
-                        fallback={
-                          <span
-                            className="browse-section-card-media-fallback"
-                            aria-hidden="true"
-                          />
-                        }
-                        loading="lazy"
-                        src={presentation.backgroundUrl}
-                      />
-                    ) : null}
-                  </span>
-                  <span className="browse-section-card-scrim" aria-hidden="true" />
-                  <span className="browse-section-card-content">
-                    <strong>{section.name}</strong>
-                    {presentation?.description ? <p>{presentation.description}</p> : null}
-                  </span>
-                </LinkComponent>
-              );
-            })}
+            {filteredSections.map((section) => (
+              <LinkComponent
+                className={`browse-section-card${section.browseBackgroundUrl ? ' has-image' : ' is-fallback'}`}
+                href={sectionHref(section)}
+                key={section.id}
+              >
+                <span className="browse-section-card-media" aria-hidden="true">
+                  {section.browseBackgroundUrl ? (
+                    <ResilientImage
+                      alt=""
+                      fallback={
+                        <span
+                          className="browse-section-card-media-fallback"
+                          aria-hidden="true"
+                        />
+                      }
+                      loading="lazy"
+                      src={section.browseBackgroundUrl}
+                    />
+                  ) : null}
+                </span>
+                <span className="browse-section-card-scrim" aria-hidden="true" />
+                <span className="browse-section-card-content">
+                  <strong>{section.name}</strong>
+                  {section.description ? <p>{section.description}</p> : null}
+                </span>
+              </LinkComponent>
+            ))}
           </div>
         </section>
       ) : null}
