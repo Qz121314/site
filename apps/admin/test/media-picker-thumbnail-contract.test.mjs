@@ -6,7 +6,10 @@ const pickerSource = await readFile(
   new URL('../src/asset-library/MediaLibraryPickerDialog.tsx', import.meta.url),
   'utf8',
 );
-const pickerCss = await readFile(new URL('../src/media-picker.css', import.meta.url), 'utf8');
+const pickerCss = await readFile(
+  new URL('../src/media-picker.css', import.meta.url),
+  'utf8',
+);
 const brandingApi = await readFile(
   new URL('../src/branding-media/api.ts', import.meta.url),
   'utf8',
@@ -17,7 +20,10 @@ const editorMediaSource = await readFile(
 );
 
 test('admin media selection uses dense thumbnails instead of original media', () => {
-  assert.match(brandingApi, /\/assets\/\$\{encodeURIComponent\(assetId\)\}\/thumbnail/);
+  assert.match(
+    brandingApi,
+    /\/assets\/\$\{encodeURIComponent\(assetId\)\}\/thumbnail/,
+  );
   assert.match(pickerSource, /brandingAssetPreviewUrl\(asset\.id\)/);
   assert.doesNotMatch(pickerSource, /<video/);
   assert.match(pickerCss, /minmax\(112px, 1fr\)/);
