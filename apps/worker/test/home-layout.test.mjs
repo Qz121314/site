@@ -1,7 +1,10 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
-import { validateHomeLayoutInput } from '../src/settings/home-layout.ts';
+import {
+  filterHomeLayoutByPublishedSections,
+  validateHomeLayoutInput,
+} from '../src/settings/home-layout.ts';
 
 const migrationSource = await readFile(
   new URL('../../../migrations/0019_home_layout.sql', import.meta.url),
@@ -49,7 +52,21 @@ test('home layout rejects overflow and duplicate slots', () => {
   );
 });
 
-test('home layout persists fixed placement bounds and is exposed as short-cache public config', () => {
+test('public home layout only exposes sections present in the published pointer', () => {
+  const filtered = filterHomeLayoutByPublishedSections(
+    {
+      shortcutSectionIds: ['s1', 'draft', 's2'],
+      recommendationSectionIds: ['draft', 's2', 's3'],
+    },
+    new Set(['s1', 's2']),
+  );
+  assert.deepEqual(filtered, {
+    shortcutSectionIds: ['s1', 's2'],
+    recommendationSectionIds: ['s2'],
+  });
+});
+
+test('home layout persists fixed placement bounds and is bound to the published pointer', () => {
   assert.match(migrationSource, /placement IN \('shortcut', 'recommendation'\)/u);
   assert.match(migrationSource, /placement = 'shortcut' AND sort_order BETWEEN 0 AND 6/u);
   assert.match(
@@ -57,6 +74,9 @@ test('home layout persists fixed placement bounds and is exposed as short-cache 
     /placement = 'recommendation' AND sort_order BETWEEN 0 AND 2/u,
   );
   assert.match(publicRouteSource, /max-age=30/u);
+  assert.match(publicRouteSource, /readModularPointer/u);
+  assert.match(publicRouteSource, /pointerVersion:\s*pointer\.contentVersion/u);
+  assert.match(publicRouteSource, /filterHomeLayoutByPublishedSections/u);
   assert.match(adminRouteSource, /validateHomeLayoutInput/u);
   assert.match(adminRouteSource, /getActiveHomeSectionIds/u);
 });
