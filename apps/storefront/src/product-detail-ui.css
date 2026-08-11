@@ -5,7 +5,7 @@
   width: min(720px, 100%);
   gap: var(--theme-detail-gap, 18px);
   margin-inline: auto;
-  padding-bottom: 12px;
+  padding-bottom: calc(82px + env(safe-area-inset-bottom));
 }
 
 .product-detail-navigation {
@@ -287,7 +287,7 @@
   right: 0;
   bottom: 0;
   left: 0;
-  z-index: 48;
+  z-index: 80;
   display: flex;
   justify-content: center;
   padding: 9px max(10px, env(safe-area-inset-right))
@@ -363,10 +363,6 @@
   border-top-color: currentColor;
   border-radius: 50%;
   animation: product-detail-cta-spin 700ms linear infinite;
-}
-
-.product-detail-page:has(.product-detail-fixed-action) {
-  padding-bottom: calc(82px + env(safe-area-inset-bottom));
 }
 
 .product-detail-state {
@@ -485,14 +481,14 @@
 
 @media (min-width: 980px) {
   .product-detail-page {
-    width: min(1040px, 100%);
-    gap: 14px;
+    width: min(920px, 100%);
+    gap: 12px;
   }
 
   .product-detail-navigation {
     position: relative;
     top: auto;
-    min-height: 36px;
+    min-height: 34px;
     margin: 0;
     padding: 0;
     border-bottom: 0;
@@ -506,21 +502,21 @@
   }
 
   .product-detail-hero {
-    grid-template-columns: minmax(0, 620px) minmax(300px, 360px);
+    grid-template-columns: minmax(0, 520px) minmax(280px, 340px);
     justify-content: center;
     align-items: start;
-    gap: 28px;
+    gap: 24px;
   }
 
   .detail-gallery {
     width: 100%;
-    max-width: 620px;
+    max-width: 520px;
   }
 
   .detail-media-thumbnail {
-    flex-basis: 66px;
-    width: 66px;
-    height: 66px;
+    flex-basis: 62px;
+    width: 62px;
+    height: 62px;
   }
 
   .product-detail-info {
@@ -529,7 +525,7 @@
   }
 
   .product-detail-summary {
-    padding: 18px;
+    padding: 16px;
     border: 1px solid
       color-mix(in srgb, var(--theme-detail-panel-border, var(--line)) 76%, transparent);
     border-radius: var(--theme-detail-panel-radius, var(--theme-radius-card, 18px));
@@ -541,15 +537,15 @@
   }
 
   .product-detail-summary h1 {
-    font-size: clamp(2.1rem, 3vw, 2.75rem);
+    font-size: clamp(2rem, 2.6vw, 2.5rem);
   }
 
   .product-detail-body {
-    padding: 16px 18px;
+    padding: 15px 16px;
   }
 
   .product-detail-fixed-action {
-    padding: 14px 24px 18px;
+    padding: 12px 24px 16px;
     border-top: 0;
     background: transparent;
     box-shadow: none;
@@ -558,7 +554,7 @@
   }
 
   .product-detail-fixed-action .cta-button {
-    width: min(600px, 100%);
+    width: min(520px, 100%);
     pointer-events: auto;
   }
 }
