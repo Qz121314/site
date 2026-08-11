@@ -18,7 +18,10 @@ const publisherSource = await readFile(
   new URL('../../worker/src/publishing/modular-publisher.ts', import.meta.url),
   'utf8',
 );
-const detailSource = await readFile(new URL('../src/ProductDetailPage.tsx', import.meta.url), 'utf8');
+const detailSource = await readFile(
+  new URL('../src/ProductDetailPage.tsx', import.meta.url),
+  'utf8',
+);
 
 test('offline products use the product body for location details instead of a dedicated address field', () => {
   assert.doesNotMatch(editorSource, /product-core-address/);
