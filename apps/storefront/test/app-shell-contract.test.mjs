@@ -110,7 +110,7 @@ test('product and FAQ detail use history-aware push headers', () => {
   assert.equal(faqSource.includes('navigateStorefrontBack'), true);
   assert.equal(productCss.includes('.product-detail-navigation {'), true);
   assert.equal(productCss.includes('position: sticky;'), true);
-  assert.equal(productCss.includes('.product-detail-mobile-action {'), true);
+  assert.equal(productCss.includes('.product-detail-fixed-action {'), true);
   assert.equal(productCss.includes('bottom: 0;'), true);
   assert.equal(productCss.includes('safe-area-inset-bottom'), true);
 });
