@@ -28,6 +28,6 @@ test('media center keeps compact cards while preserving original media proportio
     cssSource,
     /\.media-center-preview img,\n\.media-center-preview video \{[^}]*object-fit:/s,
   );
-  assert.match(cssSource, /\.media-center-upload-bar > small \{\n  display: none;/);
+  assert.match(cssSource, /\.media-center-upload-bar > small \{\n\s+display: none;/);
   assert.doesNotMatch(cssSource, /\.media-center-heading::after/);
 });
