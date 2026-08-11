@@ -111,7 +111,7 @@ export function SectionEditorDialog({
                     onFormChange({ ...form, description: event.target.value })
                   }
                 />
-                <small>用于 Browse 列表；留空时前端不显示简介。</small>
+                <small>用于 Browse 分区视觉卡；留空时前端不显示简介。</small>
               </label>
             </div>
           </section>
@@ -131,7 +131,7 @@ export function SectionEditorDialog({
                 </div>
                 <div className="section-icon-upload-copy">
                   <strong>{iconPreviewUrl ? '图片图标' : '字符图标'}</strong>
-                  <p>用于 Home 的快捷分区入口。支持 JPG、PNG、WebP 或素材中心图片。</p>
+                  <p>只用于 Home 的快捷分区入口；Browse 页面不会使用这个图标。</p>
                   {localIcon ? (
                     <small>
                       {localIcon.width} × {localIcon.height} ·{' '}
@@ -197,7 +197,7 @@ export function SectionEditorDialog({
                   <strong>
                     {browseBackgroundPreviewUrl ? '已设置背景图' : '使用主题背景'}
                   </strong>
-                  <p>只用于 Browse 的详细分区卡片，不影响 Home 入口和产品封面。</p>
+                  <p>只用于 Browse 页面分区视觉卡，不影响 Home 快捷图标和产品封面。</p>
                   <div className="section-icon-upload-actions">
                     <button
                       type="button"
@@ -261,13 +261,13 @@ export function SectionEditorDialog({
                   value={form.sortOrder}
                   disabled={busy}
                   onChange={(event) =>
-                    onFormChange({ ...form, sortOrder: Number(event.target.value) })
+                    onFormChange({ ...form, sortOrder: Number(event.target.value) || 0 })
                   }
                 />
                 <small>数字越小越靠前。</small>
               </label>
 
-              <label className="switch-row section-editor-switch-row">
+              <label className="section-enabled-toggle">
                 <span>
                   <strong>启用分区</strong>
                   <small>关闭后不进入前端发布内容。</small>
@@ -284,7 +284,7 @@ export function SectionEditorDialog({
             </section>
           </div>
 
-          <div className="admin-dialog-actions">
+          <div className="admin-dialog-footer">
             <button
               type="button"
               className="secondary-button"
@@ -294,7 +294,7 @@ export function SectionEditorDialog({
               取消
             </button>
             <button type="submit" className="primary-button" disabled={busy}>
-              {saving ? '保存中…' : editingSection ? '保存修改' : '创建分区'}
+              {saving ? '保存中…' : '保存修改'}
             </button>
           </div>
         </form>
