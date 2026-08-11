@@ -162,7 +162,7 @@
   margin: 0;
   overflow: hidden;
   color: rgb(255 255 255 / 80%);
-  font-size: var(--storefront-text-small, 0.75rem);
+  font-size: var(--storefront-text-caption, 0.75rem);
   font-weight: 440;
   line-height: 1.3;
   text-shadow: 0 1px 8px rgb(0 0 0 / 24%);
