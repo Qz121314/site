@@ -4,7 +4,10 @@ import { securityHeaders } from './http/security-headers';
 import { requireAdmin } from './middleware/require-admin';
 import { adminAssetRoutes } from './routes/admin-assets';
 import { adminAuthRoutes } from './routes/admin-auth';
-import { adminBrandingMediaRoutes } from './routes/admin-branding-media';
+import {
+  adminBrandingMediaRoutes,
+  adminMediaThumbnailSourceRoutes,
+} from './routes/admin-branding-media';
 import { adminCategoryBatchRoutes } from './routes/admin-category-batch';
 import { adminCategoryRoutes } from './routes/admin-categories';
 import { adminConversionPoolRoutes } from './routes/admin-conversion-pool';
@@ -94,6 +97,7 @@ app.route('/api/public/theme', publicThemeRoutes);
 app.route('/public', publicContentRoutes);
 app.route('/_media', publicMediaFallbackRoutes);
 
+app.route('/__admin-media-thumbnail-source', adminMediaThumbnailSourceRoutes);
 app.route('/api/admin/auth', adminAuthRoutes);
 
 app.use('/api/admin/*', requireAdmin);
