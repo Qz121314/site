@@ -67,12 +67,11 @@ test('Home product covers stay square and recommendation rails are manual horizo
   assert.match(cssSource, /grid-template-columns:\s*repeat\(8/u);
 });
 
-test('Home layout is version-bound runtime config with safe published-content fallback', () => {
-  assert.match(layoutSource, /fetch\('\/api\/public\/home-layout\/'/u);
-  assert.match(layoutSource, /expectedPointerVersion/u);
-  assert.match(layoutSource, /body\.pointerVersion !== expectedPointerVersion/u);
+test('Home layout comes from the published Site snapshot with published-content auto mode', () => {
+  assert.doesNotMatch(layoutSource, /fetch\(/u);
+  assert.doesNotMatch(feedSource, /loadHomeLayout|storefront-home-layout/u);
   assert.match(layoutSource, /resolveHomeLayout/u);
-  assert.match(feedSource, /bootstrap\.pointer\.contentVersion/u);
+  assert.match(feedSource, /site\.homeLayout/u);
   assert.match(feedSource, /fallbackRecommendationSectionIds\(bootstrap\)/u);
   assert.match(feedSource, /resolveHomeLayout\(/u);
 });

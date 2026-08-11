@@ -74,12 +74,18 @@ export type PublicHero = {
   slides: PublicHeroSlide[];
 };
 
+export type HomeLayout = {
+  shortcutSectionIds: string[];
+  recommendationSectionIds: string[];
+};
+
 export type PublicSite = {
   name: string;
   locationLabel: string;
   mediaBaseUrl: string;
   logoUrl: string | null;
   homeSectionLimit?: number;
+  homeLayout?: HomeLayout;
   hero?: PublicHero | null;
   navigation: {
     showHot: boolean;
@@ -191,6 +197,7 @@ type V2SiteSnapshot = {
     mediaBaseUrl?: string | null;
     logoObjectKey: string | null;
     homeSectionLimit: number;
+    homeLayout?: HomeLayout;
     hero?: {
       slides: Array<{
         id: string;
@@ -293,6 +300,34 @@ const VERSION_PATTERN = /^[A-Za-z0-9-]{12,180}$/;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function normalizeHomeLayoutSectionIds(value: unknown, max: number): string[] {
+  if (!Array.isArray(value)) return [];
+  const output: string[] = [];
+  const seen = new Set<string>();
+  for (const item of value) {
+    if (typeof item !== 'string' || !item || item.length > 120 || seen.has(item)) {
+      continue;
+    }
+    seen.add(item);
+    output.push(item);
+    if (output.length === max) break;
+  }
+  return output;
+}
+
+function normalizeHomeLayout(value: unknown): HomeLayout {
+  if (!isRecord(value)) {
+    return { shortcutSectionIds: [], recommendationSectionIds: [] };
+  }
+  return {
+    shortcutSectionIds: normalizeHomeLayoutSectionIds(value.shortcutSectionIds, 7),
+    recommendationSectionIds: normalizeHomeLayoutSectionIds(
+      value.recommendationSectionIds,
+      3,
+    ),
+  };
 }
 
 export function normalizeContentOrigin(value: string | undefined | null): string | null {
@@ -887,6 +922,7 @@ async function loadV2Bootstrap(
     mediaBaseUrl,
     logoUrl: mediaUrl(mediaBaseUrl, rawSite.site.logoObjectKey),
     homeSectionLimit: rawSite.site.homeSectionLimit,
+    homeLayout: normalizeHomeLayout(rawSite.site.homeLayout),
     hero: resolveV2Hero(rawSite.site.hero, mediaBaseUrl),
     navigation: rawSite.site.navigation,
     analytics: rawSite.site.analytics,

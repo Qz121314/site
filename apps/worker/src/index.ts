@@ -29,7 +29,6 @@ import { publicBottomNavigationRoutes } from './routes/public-bottom-navigation'
 import { publicBrowseSectionRoutes } from './routes/public-browse-sections';
 import { publicContentRoutes } from './routes/public-content';
 import { publicConversionRoutes } from './routes/public-conversion';
-import { publicHomeLayoutRoutes } from './routes/public-home-layout';
 import { publicMediaFallbackRoutes } from './routes/public-media-fallback';
 import { servePwaManifest } from './routes/public-pwa';
 import { publicStorefrontConfigRoutes } from './routes/public-storefront-config';
@@ -91,7 +90,6 @@ app.get('/api/public/version', (context) =>
 );
 app.route('/api/public/storefront', publicStorefrontConfigRoutes);
 app.route('/api/public/bottom-navigation', publicBottomNavigationRoutes);
-app.route('/api/public/home-layout', publicHomeLayoutRoutes);
 app.route('/api/public/browse-sections', publicBrowseSectionRoutes);
 app.route('/api/public/theme', publicThemeRoutes);
 app.route('/public', publicContentRoutes);

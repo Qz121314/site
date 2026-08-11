@@ -5,6 +5,7 @@ import {
   type BoundProductTag,
   type PublicProductTag,
 } from '../products/product-tags';
+import { getHomeLayout, type HomeLayout } from '../settings/home-layout';
 
 const CURRENT_KEY = 'public/current.json';
 const IMMUTABLE_CACHE = 'public, max-age=31536000, immutable';
@@ -218,6 +219,7 @@ type RetentionVersionRow = {
 type Source = {
   site: SiteRow;
   heroSlides: HeroSlideRow[];
+  homeLayout: HomeLayout;
   sections: SectionRow[];
   categories: CategoryRow[];
   products: ProductRow[];
@@ -601,13 +603,14 @@ async function loadSource(db: D1Database): Promise<Source> {
       .all<FaqRow>()
   ).results;
 
-  const [publicTags, tagsByProduct] = await Promise.all([
+  const [publicTags, tagsByProduct, homeLayout] = await Promise.all([
     listEnabledPublicProductTags(db),
     listProductTagsByProductIds(
       db,
       products.map((product) => product.id),
       true,
     ),
+    getHomeLayout(db),
   ]);
 
   const mediaByProduct = new Map<string, ProductMediaRow[]>();
@@ -620,6 +623,7 @@ async function loadSource(db: D1Database): Promise<Source> {
   return {
     site,
     heroSlides,
+    homeLayout,
     sections,
     categories,
     products,
@@ -630,12 +634,17 @@ async function loadSource(db: D1Database): Promise<Source> {
   };
 }
 
-function sitePublicModel(site: SiteRow, heroSlides: HeroSlideRow[]) {
+function sitePublicModel(
+  site: SiteRow,
+  heroSlides: HeroSlideRow[],
+  homeLayout: HomeLayout,
+) {
   return {
     name: site.site_name,
     locationLabel: site.location_label,
     logoObjectKey: site.logo_object_key,
     homeSectionLimit: site.home_section_limit,
+    homeLayout,
     hero:
       heroSlides.length > 0
         ? {
@@ -757,7 +766,7 @@ function faqModel(source: Source) {
 
 function modulePayload(source: Source, moduleKey: string): ModulePayload {
   if (moduleKey === 'site') {
-    const site = sitePublicModel(source.site, source.heroSlides);
+    const site = sitePublicModel(source.site, source.heroSlides, source.homeLayout);
     return {
       moduleKey,
       kind: 'site',
