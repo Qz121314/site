@@ -161,9 +161,12 @@ test('published products require cover-eligible media without requiring an offli
     '发布产品前至少需要一张图片或 GIF 作为封面。',
   );
   assert.equal(
-    validate(productForm({ serviceMode: 'offline', status: 'published', address: null }), {
-      media: [media('image/gif')],
-    }),
+    validate(
+      productForm({ serviceMode: 'offline', status: 'published', address: null }),
+      {
+        media: [media('image/gif')],
+      },
+    ),
     null,
   );
 });
