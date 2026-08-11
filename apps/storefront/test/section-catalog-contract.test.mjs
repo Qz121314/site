@@ -25,7 +25,7 @@ test('section route uses a dedicated primary-shell product catalog', () => {
 
 test('section catalog is search plus touch-first category and tag filtering', () => {
   assert.match(sectionSource, /type="search"/u);
-  assert.match(sectionSource, /className="section-category-filter"/u);
+  assert.match(sectionSource, /className="section-catalog-filters"/u);
   assert.match(sectionSource, /className="section-category-options"/u);
   assert.match(sectionSource, /aria-pressed=\{!categoryId\}/u);
   assert.match(sectionSource, /onClick=\{\(\) => setCategoryId\(''\)\}/u);
@@ -46,16 +46,15 @@ test('section header stays content-focused and does not reuse Home shortcut icon
   assert.doesNotMatch(sectionSource, /SectionIcon|section-icon/u);
 });
 
-test('section products remain a two-column product list on mobile and desktop', () => {
-  assert.match(sectionSource, /className="product-grid section-catalog-products"/u);
+test('section products remain a two-column minimal product list on mobile and desktop', () => {
+  assert.match(sectionSource, /className="section-catalog-products"/u);
+  assert.match(sectionSource, /className="section-product-card"/u);
+  assert.match(sectionSource, /className="section-product-cover"/u);
   assert.match(
     cssSource,
-    /\.section-catalog-products\s*\{\s*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/u,
+    /\.section-catalog-products\s*\{[\s\S]*?grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/u,
   );
-  assert.match(
-    cssSource,
-    /@media \(max-width:\s*767px\)[\s\S]*\.section-catalog-products/u,
-  );
+  assert.doesNotMatch(cssSource, /\.section-catalog-products\s*\{[\s\S]*?grid-template-columns:\s*1fr[;\n]/u);
 });
 
 test('section catalog uses Theme Center semantic variables and isolated styles', () => {
