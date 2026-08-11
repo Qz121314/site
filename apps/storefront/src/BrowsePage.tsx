@@ -44,6 +44,10 @@ function productMatches(product: PublicProductSummary, keyword: string): boolean
   ].some((value) => value.toLowerCase().includes(keyword));
 }
 
+function sectionInitial(name: string): string {
+  return name.trim().slice(0, 1).toUpperCase();
+}
+
 export function BrowsePage({
   bootstrap,
   LinkComponent,
@@ -138,20 +142,24 @@ export function BrowsePage({
               const presentation = presentationById.get(section.id);
               return (
                 <LinkComponent
-                  className={`browse-section-card${presentation?.backgroundUrl ? ' has-image' : ''}`}
+                  className="browse-section-card"
                   href={sectionHref(section)}
                   key={section.id}
                 >
-                  {presentation?.backgroundUrl ? (
-                    <span className="browse-section-card-background" aria-hidden="true">
+                  <span
+                    className={`browse-section-card-media${presentation?.backgroundUrl ? ' has-image' : ' is-fallback'}`}
+                    aria-hidden="true"
+                  >
+                    {presentation?.backgroundUrl ? (
                       <ResilientImage
                         alt=""
                         loading="lazy"
                         src={presentation.backgroundUrl}
                       />
-                    </span>
-                  ) : null}
-                  <span className="browse-section-card-overlay" aria-hidden="true" />
+                    ) : (
+                      <span>{sectionInitial(section.name)}</span>
+                    )}
+                  </span>
                   <span className="browse-section-card-content">
                     <strong>{section.name}</strong>
                     {presentation?.description ? <p>{presentation.description}</p> : null}
