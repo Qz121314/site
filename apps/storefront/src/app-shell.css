@@ -64,6 +64,7 @@ body,
 
   .app-shell > .topbar {
     min-height: calc(56px + env(safe-area-inset-top));
+    justify-content: center;
     padding-top: calc(8px + env(safe-area-inset-top));
     padding-bottom: 7px;
     border-bottom-color: color-mix(in srgb, var(--line, #e7e9ec) 46%, transparent);
@@ -77,6 +78,18 @@ body,
     padding-bottom: 26px;
   }
 
+  .app-shell .brand-lockup {
+    width: min(100%, calc(100vw - 48px));
+    justify-content: center;
+    gap: 8px;
+    margin-inline: auto;
+    text-align: center;
+  }
+
+  .app-shell .brand-logo:empty {
+    display: none;
+  }
+
   .app-shell .brand-logo {
     width: 34px;
     height: 34px;
@@ -85,19 +98,19 @@ body,
     box-shadow: none;
   }
 
-  .app-shell .brand-lockup {
-    gap: 9px;
+  .app-shell .brand-lockup > span:last-child {
+    justify-items: center;
   }
 
   .app-shell .brand-lockup strong {
+    max-width: min(72vw, 260px);
     font-size: 0.9rem;
     font-weight: 650;
     letter-spacing: -0.018em;
   }
 
   .app-shell .brand-lockup small {
-    font-size: 0.66rem;
-    font-weight: 470;
+    display: none;
   }
 
   .app-shell .bottom-nav {
