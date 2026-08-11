@@ -71,7 +71,9 @@ async function resolveCtaDestination(productId: string): Promise<ResolvedCtaDest
     throw new Error('CTA_UNAVAILABLE');
   }
   const label =
-    typeof envelope.label === 'string' && envelope.label.trim() ? envelope.label.trim() : null;
+    typeof envelope.label === 'string' && envelope.label.trim()
+      ? envelope.label.trim()
+      : null;
   return { mode: envelope.mode, href: envelope.href, label };
 }
 
@@ -117,11 +119,7 @@ export function ProductDetailPage({
   }, [product?.id]);
 
   async function handleResolveCta() {
-    if (
-      !product ||
-      ctaResolveState === 'loading' ||
-      ctaResolveState === 'unavailable'
-    ) {
+    if (!product || ctaResolveState === 'loading' || ctaResolveState === 'unavailable') {
       return;
     }
     setCtaResolveState('loading');
@@ -176,8 +174,12 @@ export function ProductDetailPage({
   const ctaLabel = ctaDestination?.label ?? product.cta?.label ?? SYSTEM_UI.continue;
   const ctaUnavailable = ctaResolveState === 'unavailable';
   const activeMediaUrl = activeMedia?.url ?? product.coverUrl;
-  const activeMediaIsVideo = Boolean(activeMedia?.url && isVideoMediaUrl(activeMedia.url));
-  const activeMediaFallback = <div className="detail-media-fallback" aria-hidden="true" />;
+  const activeMediaIsVideo = Boolean(
+    activeMedia?.url && isVideoMediaUrl(activeMedia.url),
+  );
+  const activeMediaFallback = (
+    <div className="detail-media-fallback" aria-hidden="true" />
+  );
 
   return (
     <article className="product-detail-page" aria-labelledby="product-detail-title">
