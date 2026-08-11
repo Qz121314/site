@@ -502,19 +502,6 @@ export function ProductEditorDialog({
               ) : null}
             </div>
 
-            {form.serviceMode === 'offline' ? (
-              <label className="product-field product-core-address">
-                <span>服务地址</span>
-                <input
-                  type="text"
-                  value={form.address ?? ''}
-                  maxLength={500}
-                  placeholder="门店或服务区域"
-                  onChange={(event) => patch({ address: event.target.value || null })}
-                />
-              </label>
-            ) : null}
-
             <label className="product-field product-core-status">
               <span>发布状态</span>
               <select

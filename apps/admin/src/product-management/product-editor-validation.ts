@@ -42,8 +42,5 @@ export function validateProductDraft(
   if (media.length < 1) return '发布产品前至少需要一个产品媒体。';
   if (!media.some(isEditorMediaCoverEligible))
     return '发布产品前至少需要一张图片或 GIF 作为封面。';
-  if (form.serviceMode === 'offline' && !form.address?.trim()) {
-    return '发布线下产品前必须填写服务地址。';
-  }
   return null;
 }

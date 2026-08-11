@@ -180,10 +180,6 @@ export function ProductDetailPage({
             </div>
           ) : null}
 
-          {product.address ? (
-            <address className="product-detail-address">⌖ {product.address}</address>
-          ) : null}
-
           {product.cta ? (
             <div className="product-detail-action">
               <a className="cta-button" href={product.cta.path} rel="nofollow">
