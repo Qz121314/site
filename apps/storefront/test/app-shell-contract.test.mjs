@@ -70,10 +70,7 @@ test('primary tabs keep one mounted shell and use color-only active state', () =
 });
 
 test('app shell waits for complete bootstrap and bottom navigation config', () => {
-  assert.match(
-    rootSource,
-    /bootstrapQuery\.isLoading \|\| navigationQuery\.isLoading/u,
-  );
+  assert.match(rootSource, /bootstrapQuery\.isLoading \|\| navigationQuery\.isLoading/u);
   assert.match(
     rootSource,
     /bootstrapQuery\.error[\s\S]*?navigationQuery\.error[\s\S]*?!navigationQuery\.data/u,
