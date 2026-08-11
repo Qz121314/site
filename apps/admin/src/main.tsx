@@ -32,6 +32,7 @@ import './theme-center.css';
 import './faq-management.css';
 import './markdown-media.css';
 import './media-center.css';
+import './media-center-density.css';
 import './admin-error-boundary.css';
 import './admin-dialog-service.css';
 import './section-editor.css';
