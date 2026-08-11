@@ -8,12 +8,12 @@ import {
 } from 'react';
 import {
   loadSectionSnapshot,
+  type PublicHeroSlide,
   type PublicProductSummary,
   type PublicSection,
   type StorefrontBootstrap,
 } from './content';
 import { loadHomeLayout } from './home-layout';
-import { loadPublishedHero, type PublishedHeroSlide } from './hero-content';
 import { ResilientImage, ResilientVideo } from './ResilientMedia';
 import { productHref, sectionHref } from './routing';
 import { SYSTEM_UI } from './system-ui';
@@ -56,7 +56,7 @@ function isVideoMediaUrl(value: string): boolean {
   }
 }
 
-function HeroMedia({ slide }: { slide: PublishedHeroSlide }) {
+function HeroMedia({ slide }: { slide: PublicHeroSlide }) {
   const fallback = <div className="hero-media-fallback" aria-hidden="true" />;
   if (slide.mediaKind === 'video' || isVideoMediaUrl(slide.mediaUrl)) {
     return (
@@ -219,16 +219,6 @@ function publishedSections(bootstrap: StorefrontBootstrap): PublicSection[] {
 
 export function HomeFeed({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
   const { site } = bootstrap.site;
-  const heroVersion =
-    bootstrap.pointer.schemaVersion === 2
-      ? bootstrap.pointer.site.contentVersion
-      : bootstrap.pointer.contentVersion;
-  const heroQuery = useQuery({
-    queryKey: ['storefront-hero', heroVersion],
-    queryFn: ({ signal }) => loadPublishedHero(bootstrap, signal),
-    enabled: bootstrap.pointer.schemaVersion === 2,
-    staleTime: Number.POSITIVE_INFINITY,
-  });
   const layoutQuery = useQuery({
     queryKey: ['storefront-home-layout'],
     queryFn: ({ signal }) => loadHomeLayout(signal),
@@ -275,10 +265,10 @@ export function HomeFeed({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
 
   return (
     <>
-      {heroQuery.data ? (
+      {site.hero ? (
         <StorefrontHero
           LinkComponent={HomeLink as StorefrontLinkComponent}
-          slides={heroQuery.data.slides.map((slide) => ({
+          slides={site.hero.slides.map((slide) => ({
             id: slide.id,
             media: <HeroMedia slide={slide} />,
             title: slide.title,
