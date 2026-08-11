@@ -71,18 +71,17 @@ test('product detail keeps a focused media, summary, Markdown and CTA hierarchy'
   assert.doesNotMatch(detailSource, /recommend|rating|favorite|share/iu);
 });
 
-test('product gallery is touch-first and supports both images and videos', () => {
-  assert.match(detailCss, /scroll-snap-type:\s*x mandatory/u);
-  assert.match(detailCss, /scrollbar-width:\s*none/u);
+test('product gallery uses one active media stage with clickable thumbnails', () => {
+  assert.match(detailSource, /className="detail-media-stage"/u);
+  assert.match(detailSource, /className="detail-media-thumbnails"/u);
+  assert.match(detailSource, /setActiveMediaId\(item\.id\)/u);
+  assert.match(detailSource, /aria-pressed=\{selected\}/u);
   assert.match(
     detailCss,
-    /\.detail-media-slide > img,[\s\S]*?\.detail-media-slide > video/u,
+    /\.detail-media-stage > img,[\s\S]*?\.detail-media-stage > video/u,
   );
-  assert.match(detailCss, /aspect-ratio:\s*var\(--theme-detail-media-ratio/u);
-  assert.match(
-    detailCss,
-    /\.detail-media-slide > video\s*\{[\s\S]*?object-fit:\s*contain/u,
-  );
+  assert.match(detailCss, /\.detail-media-thumbnails\s*\{[\s\S]*?overflow-x:\s*auto/u);
+  assert.doesNotMatch(detailCss, /scroll-snap-type:\s*x mandatory/u);
   assert.match(detailSource, /<ResilientVideo/u);
   assert.match(detailSource, /<ResilientImage/u);
 });
@@ -139,11 +138,14 @@ test('shared package and Admin preview load the product detail Theme Center exte
 
 test('product detail keeps published CTA label authoritative and resolves destination on demand', () => {
   assert.match(detailSource, /product\.cta\?\.label/u);
-  assert.match(detailSource, /\{ctaLabel\}/u);
+  assert.match(detailSource, /SYSTEM_UI\.continue/u);
   assert.match(
     detailSource,
     /\/api\/public\/storefront\/cta\/\$\{encodeURIComponent\(productId\)\}\/resolve/u,
   );
   assert.match(detailSource, /method: 'POST'/u);
+  assert.match(detailSource, /SYSTEM_UI\.temporarilyUnavailable/u);
+  assert.match(detailSource, /ctaResolveState === 'unavailable'/u);
+  assert.doesNotMatch(detailSource, /\{product\.cta \? \(/u);
   assert.doesNotMatch(detailSource, /href=\{product\.cta\.path\}/u);
 });
