@@ -18,6 +18,10 @@ const editorMediaSource = await readFile(
   new URL('../src/product-management/product-editor-media.ts', import.meta.url),
   'utf8',
 );
+const mediaCenterSource = await readFile(
+  new URL('../src/AssetLibraryView.tsx', import.meta.url),
+  'utf8',
+);
 
 test('admin media selection uses dense thumbnails instead of original media', () => {
   assert.match(brandingApi, /\/assets\/\$\{encodeURIComponent\(assetId\)\}\/thumbnail/);
@@ -28,4 +32,7 @@ test('admin media selection uses dense thumbnails instead of original media', ()
   assert.doesNotMatch(pickerCss, /object-fit: cover/);
   assert.match(editorMediaSource, /adminMediaThumbnailUrl\(image\.media\.id\)/);
   assert.match(editorMediaSource, /if \(isEditorMediaVideo\(image\)\) return null/);
+  assert.match(mediaCenterSource, /src=\{adminMediaThumbnailUrl\(asset\.id\)\}/);
+  assert.doesNotMatch(mediaCenterSource, /<video[^>]*asset\.publicUrl/);
+  assert.match(mediaCenterSource, /navigator\.clipboard\.writeText\(asset\.publicUrl/);
 });
