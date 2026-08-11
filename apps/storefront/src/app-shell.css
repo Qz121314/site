@@ -44,6 +44,10 @@ body,
 }
 
 @supports selector(.app-shell:has(.product-detail-page)) {
+  .app-shell:has(.product-detail-page) {
+    padding-bottom: 0;
+  }
+
   .app-shell:has(.product-detail-page) > .bottom-nav {
     display: none;
   }
@@ -156,12 +160,10 @@ body,
 
   html[data-storefront-presentation='push'] .app-shell {
     min-height: 100dvh;
-    padding-bottom: 0;
   }
 
   html[data-storefront-presentation='push'] .app-shell > .topbar,
   html[data-storefront-presentation='push'] .app-shell > .site-footer,
-  html[data-storefront-presentation='push'] .app-shell > .bottom-nav,
   html[data-storefront-presentation='push'] .pwa-install-card {
     display: none;
   }
