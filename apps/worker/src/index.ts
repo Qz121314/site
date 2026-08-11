@@ -26,7 +26,7 @@ import { publicBottomNavigationRoutes } from './routes/public-bottom-navigation'
 import { publicContentRoutes } from './routes/public-content';
 import { publicConversionRoutes } from './routes/public-conversion';
 import { publicMediaFallbackRoutes } from './routes/public-media-fallback';
-import { servePwaManifest } from './routes/public-pwa';
+import { servePwaIcon, servePwaManifest } from './routes/public-pwa';
 import { publicStorefrontConfigRoutes } from './routes/public-storefront-config';
 import { publicThemeRoutes } from './routes/public-theme';
 import type { AppEnvironment } from './types';
@@ -59,6 +59,7 @@ app.use('*', async (context, next) => {
 });
 
 app.get('/manifest.webmanifest', servePwaManifest);
+app.get('/api/public/pwa/icon/:size', servePwaIcon);
 
 app.get('/api/health', (context) =>
   context.json({

@@ -198,7 +198,7 @@ export function PwaInstallPrompt() {
     >
       <span className="pwa-install-handle" aria-hidden="true" />
       <div className="pwa-install-icon" aria-hidden="true">
-        <img src="/icons/app-icon-192.svg" alt="" />
+        <img src="/api/public/pwa/icon/192" alt="" />
       </div>
       <div className="pwa-install-copy">
         <strong>{appName}</strong>

@@ -257,6 +257,21 @@ export async function listEnabledCustomerServiceConnectionsInternal(
   return rows.map(mapConnection);
 }
 
+export async function hasEnabledCustomerServiceConnection(
+  db: D1Database,
+): Promise<boolean> {
+  const row = await db
+    .prepare(
+      `SELECT EXISTS(
+         SELECT 1
+         FROM customer_service_connections
+         WHERE deleted_at IS NULL AND is_enabled = 1
+       ) AS available`,
+    )
+    .first<{ available: number }>();
+  return row?.available === 1;
+}
+
 export async function getCustomerServiceConnectionInternal(
   db: D1Database,
   id: string,
