@@ -1,0 +1,65 @@
+name: Finalize media center density
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ui/media-center-density
+          fetch-depth: 0
+
+      - name: Remove redundant helper copy
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          view_path = Path('apps/admin/src/AssetLibraryView.tsx')
+          view = view_path.read_text()
+          helper = '''            <small>
+              静态图片先在浏览器压缩；队列最多并发处理 3
+              个文件。单个失败不会中断后续文件。
+            </small>
+'''
+          if helper not in view:
+              raise SystemExit('upload helper copy not found')
+          view_path.write_text(view.replace(helper, '', 1))
+
+          css_path = Path('apps/admin/src/media-center.css')
+          css = css_path.read_text()
+          after_start = css.index('.media-center-heading::after {')
+          after_end = css.index('\n}\n', after_start) + 3
+          css = css[:after_start] + css[after_end:]
+          css = css.replace('  min-height: 38px;\n', '  min-height: 32px;\n', 1)
+          css = css.replace('  gap: 16px;\n', '  gap: 10px;\n', 1)
+          css = css.replace('  padding: 0 2px 6px;\n', '  padding: 0 2px 4px;\n', 1)
+          css_path.write_text(css)
+
+          test_path = Path('apps/admin/test/media-center-density-contract.test.mjs')
+          test = test_path.read_text()
+          old = '  assert.doesNotMatch(viewSource, /上传队列|队列处理中/);\n'
+          if old not in test:
+              raise SystemExit('queue copy assertion not found')
+          test_path.write_text(test.replace(old, '  assert.doesNotMatch(viewSource, /队列/);\n', 1))
+
+          Path('.github/workflows/agent-media-center-density-v4.yml').unlink()
+          PY
+
+      - name: Commit changes
+        shell: bash
+        run: |
+          git diff --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Remove redundant media center helper copy"
+          git push origin HEAD:ui/media-center-density
