@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AdminApiError } from './api';
+import { adminMediaThumbnailUrl } from './branding-media/api';
 import { adminConfirm, adminPrompt } from './admin-dialog-service';
 import { AssetTable } from './asset-library/AssetTable';
 import { CleanupAssetDialog } from './asset-library/CleanupAssetDialog';
@@ -934,20 +935,14 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
                         <span className="sr-only">选择 {asset.fileName}</span>
                       </label>
                       <div className="media-center-preview">
-                        {asset.publicUrl ? (
-                          asset.mediaKind === 'video' ? (
-                            <video
-                              src={asset.publicUrl}
-                              controls
-                              muted
-                              playsInline
-                              preload="metadata"
-                            />
-                          ) : (
-                            <img src={asset.publicUrl} alt="" loading="lazy" />
-                          )
+                        {asset.mediaKind === 'video' ? (
+                          <span>视频</span>
                         ) : (
-                          <span>未配置媒体域名</span>
+                          <img
+                            src={adminMediaThumbnailUrl(asset.id)}
+                            alt=""
+                            loading="lazy"
+                          />
                         )}
                         <b>{kindLabel(asset.mediaKind)}</b>
                       </div>
