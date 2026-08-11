@@ -86,6 +86,8 @@ function sectionsIndexModule() {
         id: 'section-a',
         slug: 'alpha',
         name: 'Alpha',
+        description: 'Alpha description',
+        browseBackgroundObjectKey: 'sections/alpha-browse.webp',
         icon: { type: 'image', objectKey: 'sections/alpha.webp', value: null },
         sortOrder: 0,
       },
@@ -195,7 +197,6 @@ function installModularFetch(requests = [], { homeAvailable = true } = {}) {
               sortOrder: 0,
             },
           ],
-          cta: { label: 'Contact', mode: 'link', path: '/go/product-a' },
         },
       });
     }
@@ -369,6 +370,13 @@ test('schema-v2 bootstrap reads the compact home summary without preloading sect
       bootstrap.home.allSections[0].icon.value,
       'https://media.example.com/sections/alpha.webp',
     );
+    assert.equal(bootstrap.home.allSections[0].description, 'Alpha description');
+    assert.equal(
+      bootstrap.home.allSections[0].browseBackgroundUrl,
+      'https://media.example.com/sections/alpha-browse.webp',
+    );
+    assert.equal(bootstrap.home.allSections[1].description, null);
+    assert.equal(bootstrap.home.allSections[1].browseBackgroundUrl, null);
     assert.equal(
       bootstrap.home.featuredProducts[0].coverUrl,
       'https://media.example.com/products/product-b/cover.webp',
@@ -461,7 +469,7 @@ test('section, product and FAQ reads follow their own module versions and cache 
       product.product.media[0].url,
       'https://media.example.com/products/product-a/gallery-1.webp',
     );
-    assert.equal(product.product.cta.path, '/go/product-a');
+    assert.equal('cta' in product.product, false);
 
     const globallyUniqueSlug = await loadProductSnapshot(bootstrap, 'product-a-slug');
     assert.equal(globallyUniqueSlug.product.id, 'product-a');
