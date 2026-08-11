@@ -1,0 +1,190 @@
+name: Apply Admin Thumbnail Images Binding
+
+on:
+  push:
+    branches: [fix/admin-media-thumbnail-images-binding]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repair branch
+        uses: actions/checkout@v4
+        with:
+          ref: fix/admin-media-thumbnail-images-binding
+          fetch-depth: 0
+
+      - name: Set up Node.js and pnpm
+        run: |
+          node --version
+          npm install --global pnpm@11.19.0
+
+      - name: Apply thumbnail infrastructure repair
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+
+          function replaceOnce(source, search, replacement, label) {
+            const count = source.split(search).length - 1;
+            if (count !== 1) throw new Error(`${label}: expected 1 match, found ${count}`);
+            return source.replace(search, replacement);
+          }
+
+          const wranglerPath = 'wrangler.jsonc';
+          let wrangler = fs.readFileSync(wranglerPath, 'utf8');
+          wrangler = replaceOnce(
+            wrangler,
+            '  "version_metadata": {\n    "binding": "CF_VERSION_METADATA",\n  },',
+            '  "images": {\n    "binding": "IMAGES",\n  },\n  "version_metadata": {\n    "binding": "CF_VERSION_METADATA",\n  },',
+            'wrangler images binding',
+          );
+          fs.writeFileSync(wranglerPath, wrangler);
+
+          const routePath = 'apps/worker/src/routes/admin-branding-media.ts';
+          let route = fs.readFileSync(routePath, 'utf8');
+
+          route = route.replace(
+            /type ImageTransformRequestInit = RequestInit & \{[\s\S]*?\};\n\n/u,
+            '',
+          );
+          route = replaceOnce(
+            route,
+            "const THUMBNAIL_TOKEN_NAMESPACE = 'admin-media-thumbnail-source:v1:';\n\nexport const adminBrandingMediaRoutes = new Hono<AppEnvironment>();\nexport const adminMediaThumbnailSourceRoutes = new Hono<AppEnvironment>();",
+            "export const adminBrandingMediaRoutes = new Hono<AppEnvironment>();",
+            'thumbnail source exports',
+          );
+          route = route.replace(
+            /function thumbnailSecret\([\s\S]*?\nasync function loadImageAsset\(/u,
+            'async function loadImageAsset(',
+          );
+          route = route.replace(
+            /adminMediaThumbnailSourceRoutes\.get\('\/:id\/:token',[\s\S]*?\n\}\);\n\nadminBrandingMediaRoutes\.get\('\/assets\/:id'/u,
+            "adminBrandingMediaRoutes.get('/assets/:id'",
+          );
+
+          const thumbnailStart = route.indexOf("adminBrandingMediaRoutes.get('/assets/:id/thumbnail'");
+          const brandingStart = route.indexOf("adminBrandingMediaRoutes.post('/branding'", thumbnailStart);
+          if (thumbnailStart < 0 || brandingStart < 0) {
+            throw new Error('thumbnail route boundaries not found');
+          }
+          const thumbnailRoute = `adminBrandingMediaRoutes.get('/assets/:id/thumbnail', async (context) => {
+  const asset = await loadImageAsset(context.env.DB, context.req.param('id'));
+  if (!asset) {
+    return apiError(context, 404, 'MEDIA_ASSET_NOT_FOUND', '图片素材不存在或已删除。');
+  }
+
+  const object = await context.env.ASSETS_BUCKET.get(asset.object_key);
+  if (!object) {
+    return apiError(context, 404, 'R2_OBJECT_NOT_FOUND', 'R2 中不存在对应图片对象。');
+  }
+
+  try {
+    const transformed = (
+      await context.env.IMAGES.input(object.body)
+        .transform({
+          width: ADMIN_THUMBNAIL_SIZE,
+          height: ADMIN_THUMBNAIL_SIZE,
+          fit: 'scale-down',
+        })
+        .output({
+          format: 'image/webp',
+          quality: ADMIN_THUMBNAIL_QUALITY,
+          anim: false,
+        })
+    ).response();
+
+    const headers = new Headers(transformed.headers);
+    headers.set('content-type', transformed.headers.get('content-type') ?? 'image/webp');
+    headers.set('cache-control', 'private, max-age=3600');
+    return new Response(transformed.body, {
+      status: transformed.status,
+      statusText: transformed.statusText,
+      headers,
+    });
+  } catch (error) {
+    console.error(
+      JSON.stringify({
+        level: 'error',
+        event: 'admin.media_thumbnail_failed',
+        assetId: context.req.param('id'),
+        errorName: error instanceof Error ? error.name : 'UnknownError',
+        errorMessage: error instanceof Error ? error.message : 'Unknown thumbnail error',
+      }),
+    );
+    return apiError(context, 502, 'MEDIA_THUMBNAIL_FAILED', '后台缩略图生成失败。');
+  }
+});
+
+`;
+          route = route.slice(0, thumbnailStart) + thumbnailRoute + route.slice(brandingStart);
+          fs.writeFileSync(routePath, route);
+
+          const indexPath = 'apps/worker/src/index.ts';
+          let index = fs.readFileSync(indexPath, 'utf8');
+          index = replaceOnce(
+            index,
+            "import {\n  adminBrandingMediaRoutes,\n  adminMediaThumbnailSourceRoutes,\n} from './routes/admin-branding-media';",
+            "import { adminBrandingMediaRoutes } from './routes/admin-branding-media';",
+            'thumbnail source import',
+          );
+          index = replaceOnce(
+            index,
+            "app.route('/__admin-media-thumbnail-source', adminMediaThumbnailSourceRoutes);\n",
+            '',
+            'thumbnail source mount',
+          );
+          fs.writeFileSync(indexPath, index);
+
+          const testPath = 'apps/worker/test/admin-media-thumbnail-contract.test.mjs';
+          fs.writeFileSync(testPath, `import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
+import test from 'node:test';
+
+const routeSource = await readFile(
+  new URL('../src/routes/admin-branding-media.ts', import.meta.url),
+  'utf8',
+);
+const indexSource = await readFile(new URL('../src/index.ts', import.meta.url), 'utf8');
+const wranglerSource = await readFile(
+  new URL('../../../wrangler.jsonc', import.meta.url),
+  'utf8',
+);
+
+test('admin media thumbnails transform R2 bytes directly through the Images binding', () => {
+  assert.match(wranglerSource, /"images"\\s*:\\s*\\{[\\s\\S]*?"binding"\\s*:\\s*"IMAGES"/u);
+  assert.match(routeSource, /context\\.env\\.IMAGES\\.input\\(object\\.body\\)/u);
+  assert.match(routeSource, /ADMIN_THUMBNAIL_SIZE = 240/u);
+  assert.match(routeSource, /fit: 'scale-down'/u);
+  assert.match(routeSource, /format: 'image\\/webp'/u);
+  assert.match(routeSource, /quality: ADMIN_THUMBNAIL_QUALITY/u);
+  assert.match(routeSource, /anim: false/u);
+  assert.match(routeSource, /\\/assets\\/:id\\/thumbnail/u);
+  assert.match(routeSource, /MEDIA_THUMBNAIL_FAILED/u);
+  assert.doesNotMatch(routeSource, /image-resizing|THUMBNAIL_TOKEN_NAMESPACE|signThumbnailSource/u);
+  assert.doesNotMatch(indexSource, /adminMediaThumbnailSourceRoutes|__admin-media-thumbnail-source/u);
+});
+`);
+          NODE
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Format and verify
+        run: |
+          pnpm exec prettier --write wrangler.jsonc apps/worker/src/routes/admin-branding-media.ts apps/worker/src/index.ts apps/worker/test/admin-media-thumbnail-contract.test.mjs
+          pnpm typecheck
+          pnpm test
+          pnpm cf:check
+
+      - name: Commit repair
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add wrangler.jsonc apps/worker/src/routes/admin-branding-media.ts apps/worker/src/index.ts apps/worker/test/admin-media-thumbnail-contract.test.mjs
+          git diff --cached --exit-code && exit 0
+          git commit -m 'Repair admin media thumbnails with Images binding'
+          git push origin HEAD:fix/admin-media-thumbnail-images-binding
