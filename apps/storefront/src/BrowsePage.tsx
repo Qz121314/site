@@ -149,7 +149,10 @@ export function BrowsePage({
                       <ResilientImage
                         alt=""
                         fallback={
-                          <span className="browse-section-card-media-fallback" aria-hidden="true" />
+                          <span
+                            className="browse-section-card-media-fallback"
+                            aria-hidden="true"
+                          />
                         }
                         loading="lazy"
                         src={presentation.backgroundUrl}
