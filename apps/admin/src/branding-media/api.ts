@@ -82,6 +82,10 @@ export async function uploadBrandingImage(
   };
 }
 
+export function adminMediaThumbnailUrl(assetId: string): string {
+  return `/api/admin/media/assets/${encodeURIComponent(assetId)}/thumbnail`;
+}
+
 export function brandingAssetPreviewUrl(assetId: string): string {
-  return `/api/admin/media/assets/${encodeURIComponent(assetId)}`;
+  return adminMediaThumbnailUrl(assetId);
 }
