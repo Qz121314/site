@@ -23,25 +23,21 @@ const migration = await readFile(
   'utf8',
 );
 
-test('Browse starts with search and only renders backend-provided section artwork', () => {
-  assert.match(browsePage, /browse-section-card-background/u);
-  assert.match(
-    browsePage,
-    /presentation\?\.backgroundUrl \? \([\s\S]*?browse-section-card-background[\s\S]*?<ResilientImage/u,
-  );
+test('Browse starts with search and uses compact section artwork with a name fallback', () => {
+  assert.match(browsePage, /browse-section-card-media/u);
+  assert.match(browsePage, /presentation\?\.backgroundUrl/u);
+  assert.match(browsePage, /src=\{presentation\.backgroundUrl\}/u);
+  assert.match(browsePage, /sectionInitial\(section\.name\)/u);
   assert.match(browsePage, /presentation\?\.description/u);
   assert.doesNotMatch(browsePage, /presentation\.productCount/u);
-  assert.doesNotMatch(browsePage, /SectionIcon/u);
-  assert.doesNotMatch(browsePage, /section-icon/u);
-  assert.doesNotMatch(
-    browsePage,
-    /browse-directory-heading|browse-section-card-fallback/u,
-  );
+  assert.doesNotMatch(browsePage, /SectionIcon|section-icon/u);
+  assert.doesNotMatch(browsePage, /browse-directory-heading/u);
   assert.doesNotMatch(browsePage, /<h2 id="browse-directory-sections-title"/u);
   assert.match(browseCss, /\.browse-section-list/u);
-  assert.match(browseCss, /\.browse-section-card-overlay/u);
-  assert.match(browseCss, /\.browse-section-card:not\(\.has-image\)/u);
-  assert.doesNotMatch(browseCss, /\.browse-section-card-fallback/u);
+  assert.match(browseCss, /\.browse-section-card-media/u);
+  assert.match(browseCss, /\.browse-section-card-media\.is-fallback/u);
+  assert.doesNotMatch(browseCss, /\.browse-section-card-overlay/u);
+  assert.doesNotMatch(browseCss, /\.browse-section-card-background/u);
 });
 
 test('Browse section directory is one column on mobile and two columns on desktop', () => {
