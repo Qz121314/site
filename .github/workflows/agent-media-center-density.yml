@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - ui/media-center-density
+  pull_request:
+    branches:
+      - main
 
 permissions:
   contents: write
