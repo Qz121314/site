@@ -36,18 +36,23 @@ test('storefront loads the app shell refinement layer after PWA styles', () => {
 test('mobile app shell uses dynamic viewport height and one floating rounded dock', () => {
   assert.equal(shellCss.includes('100dvh'), true);
   assert.equal(shellCss.includes('.site-footer {\n    display: none;'), true);
-  assert.match(
-    shellCss,
-    /@media \(max-width: 767px\)[\s\S]*?\.app-shell \.bottom-nav \{[\s\S]*?right:\s*max\(8px, env\(safe-area-inset-right\)\);[\s\S]*?bottom:\s*max\(7px, env\(safe-area-inset-bottom\)\);[\s\S]*?left:\s*max\(8px, env\(safe-area-inset-left\)\);[\s\S]*?width:\s*auto;[\s\S]*?border-radius:\s*18px;[\s\S]*?box-shadow:\s*0 12px 34px rgb\(31 35 40 \/ 12%\);[\s\S]*?backdrop-filter:\s*blur\(18px\);/u,
+
+  const mobileDockMatch = shellCss.match(
+    /@media \(max-width: 767px\)[\s\S]*?\.app-shell \.bottom-nav \{(?<body>[^}]*)\}/u,
   );
-  assert.doesNotMatch(
-    shellCss,
-    /@media \(max-width: 767px\)[\s\S]*?\.app-shell \.bottom-nav \{[\s\S]*?width:\s*100%;/u,
-  );
-  assert.doesNotMatch(
-    shellCss,
-    /@media \(max-width: 767px\)[\s\S]*?\.app-shell \.bottom-nav \{[\s\S]*?border-radius:\s*0;/u,
-  );
+  assert.ok(mobileDockMatch?.groups?.body, 'mobile bottom dock styles must exist');
+  const mobileDockCss = mobileDockMatch.groups.body;
+
+  assert.match(mobileDockCss, /right:\s*max\(8px, env\(safe-area-inset-right\)\);/u);
+  assert.match(mobileDockCss, /bottom:\s*max\(7px, env\(safe-area-inset-bottom\)\);/u);
+  assert.match(mobileDockCss, /left:\s*max\(8px, env\(safe-area-inset-left\)\);/u);
+  assert.match(mobileDockCss, /width:\s*auto;/u);
+  assert.match(mobileDockCss, /border-radius:\s*18px;/u);
+  assert.match(mobileDockCss, /box-shadow:\s*0 12px 34px rgb\(31 35 40 \/ 12%\);/u);
+  assert.match(mobileDockCss, /backdrop-filter:\s*blur\(18px\);/u);
+  assert.doesNotMatch(mobileDockCss, /width:\s*100%/u);
+  assert.doesNotMatch(mobileDockCss, /border-radius:\s*0/u);
+
   assert.doesNotMatch(pagesCss, /@media \(min-width:\s*720px\)/u);
   assert.match(pagesCss, /@media \(min-width:\s*768px\)/u);
 });
