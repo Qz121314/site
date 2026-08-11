@@ -115,7 +115,9 @@ test('product detail main media stays square and shows the full source image', (
   );
 });
 
-test('product CTA is the push-page safe-area action bar at the viewport edge', () => {
+test('product CTA mounts at the viewport layer and keeps safe-area spacing', () => {
+  assert.match(detailSource, /import \{ createPortal \} from 'react-dom'/u);
+  assert.match(detailSource, /createPortal\(ctaAction, document\.body\)/u);
   assert.match(
     detailCss,
     /\.product-detail-fixed-action\s*\{[\s\S]*?position:\s*fixed[\s\S]*?bottom:\s*0/u,
@@ -124,32 +126,35 @@ test('product CTA is the push-page safe-area action bar at the viewport edge', (
     detailCss,
     /\.product-detail-fixed-action\s*\{[\s\S]*?padding:[^;]*env\(safe-area-inset-bottom\)/u,
   );
-  assert.match(detailCss, /backdrop-filter:\s*blur\(18px\)/u);
-  assert.match(detailCss, /\.product-detail-page:has\(\.product-detail-fixed-action\)/u);
+  assert.match(
+    detailCss,
+    /\.product-detail-page\s*\{[\s\S]*?padding-bottom:\s*calc\(82px \+ env\(safe-area-inset-bottom\)\)/u,
+  );
+  assert.doesNotMatch(detailCss, /\.product-detail-page:has\(\.product-detail-fixed-action\)/u);
   assert.doesNotMatch(
     detailCss,
     /bottom:\s*calc\(67px \+ env\(safe-area-inset-bottom\)\)/u,
   );
 });
 
-test('desktop uses a capped two-column layout only at true desktop width', () => {
+test('desktop uses a compact capped two-column layout only at true desktop width', () => {
   assert.match(detailCss, /@media \(min-width:\s*768px\) and \(max-width:\s*979px\)/u);
   assert.doesNotMatch(detailCss, /@media \(min-width:\s*768px\)\s*\{/u);
   assert.match(
     detailCss,
-    /@media \(min-width:\s*980px\)[\s\S]*?\.product-detail-page\s*\{[\s\S]*?width:\s*min\(1040px, 100%\)/u,
+    /@media \(min-width:\s*980px\)[\s\S]*?\.product-detail-page\s*\{[\s\S]*?width:\s*min\(920px, 100%\)/u,
   );
   assert.match(
     detailCss,
-    /@media \(min-width:\s*980px\)[\s\S]*?\.product-detail-hero\s*\{[\s\S]*?grid-template-columns:\s*minmax\(0, 620px\) minmax\(300px, 360px\)/u,
+    /@media \(min-width:\s*980px\)[\s\S]*?\.product-detail-hero\s*\{[\s\S]*?grid-template-columns:\s*minmax\(0, 520px\) minmax\(280px, 340px\)/u,
   );
   assert.match(
     detailCss,
-    /@media \(min-width:\s*980px\)[\s\S]*?\.detail-gallery\s*\{[\s\S]*?max-width:\s*620px/u,
+    /@media \(min-width:\s*980px\)[\s\S]*?\.detail-gallery\s*\{[\s\S]*?max-width:\s*520px/u,
   );
   assert.match(
     detailCss,
-    /@media \(min-width:\s*980px\)[\s\S]*?\.product-detail-fixed-action\s*\{[\s\S]*?background:\s*transparent/u,
+    /@media \(min-width:\s*980px\)[\s\S]*?\.product-detail-fixed-action \.cta-button\s*\{[\s\S]*?width:\s*min\(520px, 100%\)/u,
   );
 });
 
