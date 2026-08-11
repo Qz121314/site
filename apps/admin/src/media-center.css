@@ -8,26 +8,17 @@
 /* Shared mode navigation: one location and one visual language in both modes. */
 .media-center-heading {
   display: flex;
-  min-height: 38px;
+  min-height: 32px;
   align-items: center;
   justify-content: flex-start;
-  gap: 16px;
+  gap: 10px;
   margin: 0;
-  padding: 0 2px 6px;
+  padding: 0 2px 4px;
   border-bottom: 1px solid #e7eaf0;
 }
 
 .media-center-heading > div:first-child {
   display: none;
-}
-
-.media-center-heading::after {
-  margin-left: auto;
-  color: #7a8492;
-  content: '静态图片自动优化后入库 · 原图不进入 R2';
-  font-size: 0.63rem;
-  font-weight: 650;
-  white-space: nowrap;
 }
 
 .media-center-tabs {
@@ -234,15 +225,7 @@
 }
 
 .media-center-upload-bar > small {
-  min-width: 0;
-  flex: 1 1 auto;
-  align-self: center;
-  overflow: hidden;
-  color: #7d8794;
-  font-size: 0.62rem;
-  line-height: 1.35;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  display: none;
 }
 
 .media-center-page .inline-status {
@@ -382,7 +365,6 @@
 .media-center-preview {
   position: relative;
   display: grid;
-  aspect-ratio: 4 / 3;
   place-items: center;
   overflow: hidden;
   background: #eef1f5;
@@ -390,9 +372,9 @@
 
 .media-center-preview img,
 .media-center-preview video {
+  display: block;
   width: 100%;
-  height: 100%;
-  object-fit: cover;
+  height: auto;
 }
 
 .media-center-preview > span {
@@ -727,10 +709,6 @@
 }
 
 @media (max-width: 1320px) {
-  .media-center-heading::after {
-    display: none;
-  }
-
   .media-center-page .media-folder-create-bar,
   .media-center-upload-bar {
     flex-wrap: wrap;
