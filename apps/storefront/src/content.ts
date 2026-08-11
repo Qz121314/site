@@ -61,12 +61,26 @@ export type PublicProduct = PublicProductSummary & {
   } | null;
 };
 
+export type PublicHeroSlide = {
+  id: string;
+  mediaKind: 'image' | 'animated_image' | 'video';
+  mediaUrl: string;
+  title: string | null;
+  description: string | null;
+  cta: { label: string; href: string } | null;
+};
+
+export type PublicHero = {
+  slides: PublicHeroSlide[];
+};
+
 export type PublicSite = {
   name: string;
   locationLabel: string;
   mediaBaseUrl: string;
   logoUrl: string | null;
   homeSectionLimit?: number;
+  hero?: PublicHero | null;
   navigation: {
     showHot: boolean;
     showLatest: boolean;
@@ -177,6 +191,19 @@ type V2SiteSnapshot = {
     mediaBaseUrl?: string | null;
     logoObjectKey: string | null;
     homeSectionLimit: number;
+    hero?: {
+      slides: Array<{
+        id: string;
+        media: {
+          kind: 'image' | 'animated_image' | 'video' | null;
+          objectKey: string | null;
+        };
+        title: string | null;
+        description: string | null;
+        cta: { label: string; href: string } | null;
+        sortOrder: number;
+      }>;
+    } | null;
     navigation: PublicSite['navigation'];
     analytics: PublicSite['analytics'];
   };
@@ -537,6 +564,45 @@ function mediaUrl(mediaBaseUrl: string, objectKey: string | null): string | null
     : null;
 }
 
+function resolveV2Hero(
+  hero: V2SiteSnapshot['site']['hero'],
+  mediaBaseUrl: string,
+): PublicHero | null {
+  if (!hero || !Array.isArray(hero.slides)) return null;
+  const slides = hero.slides.flatMap((slide) => {
+    if (
+      !slide ||
+      typeof slide.id !== 'string' ||
+      !slide.media ||
+      (slide.media.kind !== 'image' &&
+        slide.media.kind !== 'animated_image' &&
+        slide.media.kind !== 'video') ||
+      typeof slide.media.objectKey !== 'string' ||
+      !slide.media.objectKey
+    ) {
+      return [];
+    }
+    const url = mediaUrl(mediaBaseUrl, slide.media.objectKey);
+    if (!url) return [];
+    return [
+      {
+        id: slide.id,
+        mediaKind: slide.media.kind,
+        mediaUrl: url,
+        title: typeof slide.title === 'string' ? slide.title : null,
+        description: typeof slide.description === 'string' ? slide.description : null,
+        cta:
+          slide.cta &&
+          typeof slide.cta.label === 'string' &&
+          typeof slide.cta.href === 'string'
+            ? { label: slide.cta.label, href: slide.cta.href }
+            : null,
+      } satisfies PublicHeroSlide,
+    ];
+  });
+  return slides.length > 0 ? { slides } : null;
+}
+
 async function fetchJson(
   url: string,
   cache: RequestCache,
@@ -821,6 +887,7 @@ async function loadV2Bootstrap(
     mediaBaseUrl,
     logoUrl: mediaUrl(mediaBaseUrl, rawSite.site.logoObjectKey),
     homeSectionLimit: rawSite.site.homeSectionLimit,
+    hero: resolveV2Hero(rawSite.site.hero, mediaBaseUrl),
     navigation: rawSite.site.navigation,
     analytics: rawSite.site.analytics,
   };
