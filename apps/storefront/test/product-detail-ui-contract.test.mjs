@@ -130,7 +130,10 @@ test('product CTA mounts at the viewport layer and keeps safe-area spacing', () 
     detailCss,
     /\.product-detail-page\s*\{[\s\S]*?padding-bottom:\s*calc\(82px \+ env\(safe-area-inset-bottom\)\)/u,
   );
-  assert.doesNotMatch(detailCss, /\.product-detail-page:has\(\.product-detail-fixed-action\)/u);
+  assert.doesNotMatch(
+    detailCss,
+    /\.product-detail-page:has\(\.product-detail-fixed-action\)/u,
+  );
   assert.doesNotMatch(
     detailCss,
     /bottom:\s*calc\(67px \+ env\(safe-area-inset-bottom\)\)/u,
