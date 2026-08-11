@@ -2,6 +2,8 @@ export type PublicSection = {
   id: string;
   slug: string;
   name: string;
+  description: string | null;
+  browseBackgroundUrl: string | null;
   icon: {
     type: 'image' | 'icon';
     value: string | null;
@@ -54,11 +56,6 @@ export type PublicProduct = PublicProductSummary & {
     altText: string | null;
     sortOrder: number;
   }>;
-  cta: {
-    label: string;
-    mode: 'customer_service' | 'link';
-    path: string;
-  } | null;
 };
 
 export type PublicHeroSlide = {
@@ -225,6 +222,8 @@ type V2SectionsIndexSnapshot = {
     id: string;
     slug: string;
     name: string;
+    description?: string | null;
+    browseBackgroundObjectKey?: string | null;
     icon: {
       type: 'image' | 'icon';
       objectKey: string | null;
@@ -276,7 +275,6 @@ type V2ProductSnapshot = {
       altText: string | null;
       sortOrder: number;
     }>;
-    cta: PublicProduct['cta'];
   };
 };
 
@@ -526,6 +524,19 @@ function normalizeTags(value: unknown): PublicProductSummary['tags'] {
   });
 }
 
+function normalizeV1Section(section: PublicSection): PublicSection {
+  const legacy = section as PublicSection & {
+    description?: unknown;
+    browseBackgroundUrl?: unknown;
+  };
+  return {
+    ...section,
+    description: typeof legacy.description === 'string' ? legacy.description : null,
+    browseBackgroundUrl:
+      typeof legacy.browseBackgroundUrl === 'string' ? legacy.browseBackgroundUrl : null,
+  };
+}
+
 function normalizeV1Summary(product: PublicProductSummary): PublicProductSummary {
   const featuredOrder = (product as PublicProductSummary & { featuredOrder?: unknown })
     .featuredOrder;
@@ -539,8 +550,12 @@ function normalizeV1Summary(product: PublicProductSummary): PublicProductSummary
 function normalizeV1HomeSnapshot(snapshot: HomeSnapshot): HomeSnapshot {
   return {
     ...snapshot,
-    sections: Array.isArray(snapshot.sections) ? snapshot.sections : [],
-    allSections: Array.isArray(snapshot.allSections) ? snapshot.allSections : [],
+    sections: Array.isArray(snapshot.sections)
+      ? snapshot.sections.map(normalizeV1Section)
+      : [],
+    allSections: Array.isArray(snapshot.allSections)
+      ? snapshot.allSections.map(normalizeV1Section)
+      : [],
     featuredProducts: Array.isArray(snapshot.featuredProducts)
       ? snapshot.featuredProducts.map(normalizeV1Summary)
       : [],
@@ -553,6 +568,7 @@ function normalizeV1HomeSnapshot(snapshot: HomeSnapshot): HomeSnapshot {
 function normalizeV1SectionSnapshot(snapshot: SectionSnapshot): SectionSnapshot {
   return {
     ...snapshot,
+    section: normalizeV1Section(snapshot.section),
     categories: Array.isArray(snapshot.categories) ? snapshot.categories : [],
     tags: Array.isArray(snapshot.tags) ? snapshot.tags : [],
     products: Array.isArray(snapshot.products)
@@ -569,7 +585,6 @@ function normalizeV1ProductSnapshot(snapshot: ProductSnapshot): ProductSnapshot 
       ...normalizeV1Summary(product),
       body: product.body,
       media: Array.isArray(product.media) ? product.media : [],
-      cta: product.cta,
     },
   };
 }
@@ -763,6 +778,13 @@ function resolveV2Section(
     id: section.id,
     slug: section.slug,
     name: section.name,
+    description: typeof section.description === 'string' ? section.description : null,
+    browseBackgroundUrl: mediaUrl(
+      mediaBaseUrl,
+      typeof section.browseBackgroundObjectKey === 'string'
+        ? section.browseBackgroundObjectKey
+        : null,
+    ),
     icon: {
       type: section.icon.type,
       value:
@@ -1212,7 +1234,6 @@ export async function loadProductSnapshot(
             sortOrder: media.sortOrder,
           }))
         : [],
-      cta: raw.product.cta,
     },
   };
 }
