@@ -3,6 +3,7 @@ import { getMediaBaseUrl } from '../assets/asset-library';
 import {
   getConversionGroup,
   listConversionTargets,
+  selectNextConversionTarget,
 } from '../conversion-pool/conversion-pool';
 import { getRoutableProduct, resolvePublicCta } from '../conversion-pool/public-cta';
 import {
@@ -41,6 +42,11 @@ function validPublicId(value: string): boolean {
   return Boolean(value && value.length <= 100 && /^[A-Za-z0-9-]+$/u.test(value));
 }
 
+function messagesComposeHref(productId: string, sectionId: string): string {
+  const query = new URLSearchParams({ productId, sectionId });
+  return `/messages/new/?${query.toString()}`;
+}
+
 publicStorefrontConfigRoutes.get('/content-origin', async (context) => {
   // Backward compatibility for already-loaded Storefront bundles. New clients
   // read JSON through the same-origin /public route and use /media-base-url below.
@@ -69,6 +75,54 @@ publicStorefrontConfigRoutes.get('/cta/:productId', async (context) => {
   return cta
     ? context.json({ available: true, ...cta })
     : context.json({ available: false });
+});
+
+/**
+ * Resolve the destination only after an explicit CTA click. Link groups consume
+ * round-robin here and return the selected external URL so the second click does
+ * not allocate again. Customer-service groups resolve to the internal Messages
+ * composer; the independent support system still owns conversation assignment.
+ */
+publicStorefrontConfigRoutes.post('/cta/:productId/resolve', async (context) => {
+  setPublicRuntimeHeaders(context);
+
+  const productId = context.req.param('productId').trim();
+  if (!validPublicId(productId)) return context.json({ available: false });
+
+  const product = await getRoutableProduct(context.env.DB, productId);
+  if (!product?.conversionGroupId) return context.json({ available: false });
+
+  const group = await getConversionGroup(
+    context.env.DB,
+    product.sectionId,
+    product.conversionGroupId,
+  );
+  if (!group || group.deletedAt || !group.isEnabled || group.activeTargetCount < 1) {
+    return context.json({ available: false });
+  }
+
+  if (group.mode === 'customer_service') {
+    return context.json({
+      available: true,
+      mode: 'customer_service' as const,
+      href: messagesComposeHref(product.id, product.sectionId),
+    });
+  }
+
+  const target = await selectNextConversionTarget(
+    context.env.DB,
+    group,
+    new Date().toISOString(),
+  );
+  if (!target || target.bindingKind !== 'link' || !target.endpointUrl) {
+    return context.json({ available: false });
+  }
+
+  return context.json({
+    available: true,
+    mode: 'link' as const,
+    href: target.endpointUrl,
+  });
 });
 
 /**
