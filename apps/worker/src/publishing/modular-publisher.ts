@@ -904,10 +904,7 @@ function validatePayload(source: Source, payload: ModulePayload): void {
           `分区“${section.name}”的图片图标已不可用，请重新设置后再发布。`,
         );
       }
-      if (
-        section.browse_background_asset_id &&
-        !section.browse_background_object_key
-      ) {
+      if (section.browse_background_asset_id && !section.browse_background_object_key) {
         throw new ModularPublicationError(
           'SECTION_BROWSE_BACKGROUND_INVALID',
           `分区“${section.name}”的 Browse 背景图已不可用，请重新设置后再发布。`,
