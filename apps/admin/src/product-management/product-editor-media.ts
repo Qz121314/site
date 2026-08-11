@@ -1,3 +1,4 @@
+import { adminMediaThumbnailUrl } from '../branding-media/api';
 import type { AdminProductMedia } from './api';
 
 export type ProductEditorImage = {
@@ -15,7 +16,8 @@ export function toRemoteProductImage(media: AdminProductMedia): ProductEditorIma
 }
 
 export function getEditorImagePreviewUrl(image: ProductEditorImage): string | null {
-  return image.media.publicUrl;
+  if (isEditorMediaVideo(image)) return null;
+  return adminMediaThumbnailUrl(image.media.id);
 }
 
 export function getEditorImageFileName(image: ProductEditorImage): string {

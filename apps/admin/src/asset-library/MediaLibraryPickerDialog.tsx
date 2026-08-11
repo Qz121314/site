@@ -274,7 +274,7 @@ export function MediaLibraryPickerDialog({
             {selectionLimitReached ? (
               <strong>已达到选择上限</strong>
             ) : (
-              <small>先看缩略图，再点击素材加入产品</small>
+              <small>点击缩略图加入产品</small>
             )}
           </div>
 
@@ -301,16 +301,7 @@ export function MediaLibraryPickerDialog({
                     >
                       <span className="media-picker-preview">
                         {asset.mediaKind === 'video' ? (
-                          asset.publicUrl ? (
-                            <video
-                              src={asset.publicUrl}
-                              muted
-                              playsInline
-                              preload="metadata"
-                            />
-                          ) : (
-                            <i>视频</i>
-                          )
+                          <i>视频</i>
                         ) : (
                           <img
                             src={brandingAssetPreviewUrl(asset.id)}
