@@ -139,7 +139,9 @@ export function HomeLayoutSettingsSection({
             })}
           </div>
         ) : (
-          <div className="admin-home-layout-empty">尚未选择分区。</div>
+          <div className="admin-home-layout-empty">
+            未固定分区，将按已发布内容自动生成。
+          </div>
         )}
 
         <button
@@ -164,7 +166,7 @@ export function HomeLayoutSettingsSection({
           <h2 id="settings-home-layout-title">首页布局</h2>
           <p className="admin-settings-section-description">
             Home 固定为
-            Logo、Hero、快捷分区、推荐分区产品横滑和底部导航；这里仅选择首页展示哪些分区及顺序。
+            Logo、Hero、快捷分区、推荐分区产品横滑和底部导航；这里用于固定首页分区及顺序，未选择时会从当前已发布内容自动生成。
           </p>
         </div>
       </div>
@@ -173,13 +175,13 @@ export function HomeLayoutSettingsSection({
         {renderPlacement(
           'shortcutSectionIds',
           '快捷分区',
-          '最多 7 个。前端会自动补第 8 个 More，点击进入 Browse。',
+          '最多 7 个。未选择时按当前已发布分区顺序自动生成；前端会补第 8 个 More。',
           '添加快捷分区',
         )}
         {renderPlacement(
           'recommendationSectionIds',
           '推荐分区',
-          '最多 3 个。每个分区只展示该分区中已发布并标记“首页推荐”的产品，按首页推荐排序横向展示。',
+          '最多 3 个。未选择时自动从已发布且标记“首页推荐”的产品推导分区；选择后按这里的分区顺序展示。',
           '添加推荐分区',
         )}
       </div>
