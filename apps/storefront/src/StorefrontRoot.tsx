@@ -396,11 +396,17 @@ export function StorefrontRoot() {
     staleTime: 30_000,
   });
 
-  if (bootstrapQuery.isLoading) return <PrimaryLoading />;
-  if (bootstrapQuery.error || !bootstrapQuery.data) return <PrimaryError />;
+  if (bootstrapQuery.isLoading || navigationQuery.isLoading) return <PrimaryLoading />;
+  if (
+    bootstrapQuery.error ||
+    !bootstrapQuery.data ||
+    navigationQuery.error ||
+    !navigationQuery.data
+  )
+    return <PrimaryError />;
 
   const bootstrap = bootstrapQuery.data;
-  const navigationItems = navigationQuery.data ?? [];
+  const navigationItems = navigationQuery.data;
   let page: ReactNode;
 
   switch (route.type) {
