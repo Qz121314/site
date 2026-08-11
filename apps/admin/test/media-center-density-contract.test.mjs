@@ -11,13 +11,21 @@ const cssSource = await readFile(
   new URL('../src/media-center.css', import.meta.url),
   'utf8',
 );
+const densityCssSource = await readFile(
+  new URL('../src/media-center-density.css', import.meta.url),
+  'utf8',
+);
 
 test('media center renders upload feedback inside a dense asset grid', () => {
   assert.doesNotMatch(viewSource, /MediaUploadQueuePanel/);
   assert.doesNotMatch(viewSource, /上传队列|队列处理中/);
   assert.doesNotMatch(mainSource, /media-upload-queue\.css/);
+  assert.match(mainSource, /media-center-density\.css/);
   assert.match(viewSource, /<UploadMediaCard item=\{item\}/);
   assert.match(viewSource, /上传 \{uploadQueue\.progress\.done\}/);
   assert.match(cssSource, /minmax\(138px, 156px\)/);
   assert.match(cssSource, /aspect-ratio: 4 \/ 3/);
+  assert.match(densityCssSource, /media-center-heading::after/);
+  assert.match(densityCssSource, /media-center-upload-bar > small/);
+  assert.match(densityCssSource, /display: none/);
 });
