@@ -333,14 +333,6 @@ export async function validateProductDependencies(
     }
   }
 
-  if (input.status === 'published' && input.serviceMode === 'offline' && !input.address) {
-    return {
-      ok: false,
-      field: 'address',
-      code: 'ADDRESS_REQUIRED',
-      message: '发布线下服务必须填写服务地址。',
-    };
-  }
   if (input.status === 'published' && input.mediaAssetIds.length === 0) {
     return {
       ok: false,

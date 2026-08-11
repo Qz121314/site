@@ -928,12 +928,6 @@ function validatePayload(source: Source, payload: ModulePayload): void {
         `产品“${product.title}”选择的分类已不可用，当前分区无法发布。`,
       );
     }
-    if (product.service_mode === 'offline' && !product.address) {
-      throw new ModularPublicationError(
-        'PRODUCT_ADDRESS_REQUIRED',
-        `产品“${product.title}”缺少服务地址。`,
-      );
-    }
     if (
       (source.mediaByProduct.get(product.id) ?? []).length === 0 ||
       !product.effective_cover_object_key
