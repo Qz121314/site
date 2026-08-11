@@ -1,0 +1,107 @@
+name: Apply original-ratio media previews
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/media-center-square-thumbnails
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install pnpm
+        run: npm install --global pnpm@11.19.0
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Apply preview ratio fix
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          css_path = Path('apps/admin/src/media-center.css')
+          css = css_path.read_text()
+
+          css = css.replace('  min-height: 38px;\n', '  min-height: 32px;\n', 1)
+          css = css.replace('  gap: 16px;\n', '  gap: 10px;\n', 1)
+          css = css.replace('  padding: 0 2px 6px;\n', '  padding: 0 2px 4px;\n', 1)
+
+          start = css.index('.media-center-heading::after {')
+          end = css.index('\n}\n', start) + 3
+          css = css[:start] + css[end:]
+
+          preview_start = css.index('.media-center-preview {')
+          preview_end = css.index('\n}\n', preview_start) + 3
+          preview = css[preview_start:preview_end]
+          if '  aspect-ratio: 4 / 3;\n' not in preview:
+              raise SystemExit('expected fixed preview ratio not found')
+          preview = preview.replace('  aspect-ratio: 4 / 3;\n', '')
+          css = css[:preview_start] + preview + css[preview_end:]
+
+          media_start = css.index('.media-center-preview img,')
+          media_end = css.index('\n}\n', media_start) + 3
+          media = css[media_start:media_end]
+          media = media.replace('  width: 100%;\n  height: 100%;\n  object-fit: cover;\n', '  display: block;\n  width: 100%;\n  height: auto;\n')
+          css = css[:media_start] + media + css[media_end:]
+
+          responsive = '''  .media-center-heading::after {
+            display: none;
+          }
+
+'''
+          if responsive not in css:
+              raise SystemExit('responsive heading note block not found')
+          css = css.replace(responsive, '', 1)
+          css_path.write_text(css)
+
+          view_path = Path('apps/admin/src/AssetLibraryView.tsx')
+          view = view_path.read_text()
+          helper = '''            <small>
+              静态图片先在浏览器压缩；队列最多并发处理 3
+              个文件。单个失败不会中断后续文件。
+            </small>
+'''
+          if helper not in view:
+              raise SystemExit('upload helper copy not found')
+          view_path.write_text(view.replace(helper, '', 1))
+
+          test_path = Path('apps/admin/test/media-center-density-contract.test.mjs')
+          test = test_path.read_text()
+          test = test.replace(
+              "  assert.match(cssSource, /aspect-ratio: 4 \\/ 3/);\n",
+              "  assert.doesNotMatch(cssSource, /\\.media-center-preview\\s*\\{[^}]*aspect-ratio/s);\n  assert.match(cssSource, /\\.media-center-preview img,[\\s\\S]*height: auto/);\n  assert.doesNotMatch(cssSource, /\\.media-center-preview img,[\\s\\S]*object-fit: cover/);\n",
+              1,
+          )
+          test_path.write_text(test)
+
+          Path('.github/workflows/agent-media-original-ratio.yml').unlink()
+          PY
+
+          pnpm exec prettier --write \
+            apps/admin/src/AssetLibraryView.tsx \
+            apps/admin/src/media-center.css \
+            apps/admin/test/media-center-density-contract.test.mjs
+
+      - name: Commit changes
+        shell: bash
+        run: |
+          git diff --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Preserve original media preview ratios"
+          git push origin HEAD:fix/media-center-square-thumbnails
