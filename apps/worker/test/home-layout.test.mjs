@@ -1,21 +1,22 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
-import {
-  filterHomeLayoutByPublishedSections,
-  validateHomeLayoutInput,
-} from '../src/settings/home-layout.ts';
+import { validateHomeLayoutInput } from '../src/settings/home-layout.ts';
 
 const migrationSource = await readFile(
   new URL('../../../migrations/0019_home_layout.sql', import.meta.url),
   'utf8',
 );
-const publicRouteSource = await readFile(
-  new URL('../src/routes/public-home-layout.ts', import.meta.url),
-  'utf8',
-);
 const adminRouteSource = await readFile(
   new URL('../src/routes/admin-site-settings.ts', import.meta.url),
+  'utf8',
+);
+const publisherSource = await readFile(
+  new URL('../src/publishing/modular-publisher.ts', import.meta.url),
+  'utf8',
+);
+const workerIndexSource = await readFile(
+  new URL('../src/index.ts', import.meta.url),
   'utf8',
 );
 
@@ -52,31 +53,27 @@ test('home layout rejects overflow and duplicate slots', () => {
   );
 });
 
-test('public home layout only exposes sections present in the published pointer', () => {
-  const filtered = filterHomeLayoutByPublishedSections(
-    {
-      shortcutSectionIds: ['s1', 'draft', 's2'],
-      recommendationSectionIds: ['draft', 's2', 's3'],
-    },
-    new Set(['s1', 's2']),
+test('home layout is part of the immutable Site publication source', () => {
+  assert.match(publisherSource, /getHomeLayout/u);
+  assert.match(publisherSource, /homeLayout:\s*HomeLayout/u);
+  assert.match(
+    publisherSource,
+    /sitePublicModel\(source\.site, source\.heroSlides, source\.homeLayout\)/u,
   );
-  assert.deepEqual(filtered, {
-    shortcutSectionIds: ['s1', 's2'],
-    recommendationSectionIds: ['s2'],
-  });
+  assert.match(
+    publisherSource,
+    /homeSectionLimit:\s*site\.home_section_limit,\s*homeLayout,/u,
+  );
 });
 
-test('home layout persists fixed placement bounds and is bound to the published pointer', () => {
+test('home layout remains Admin-edited but is not exposed through a realtime public D1 route', () => {
   assert.match(migrationSource, /placement IN \('shortcut', 'recommendation'\)/u);
   assert.match(migrationSource, /placement = 'shortcut' AND sort_order BETWEEN 0 AND 6/u);
   assert.match(
     migrationSource,
     /placement = 'recommendation' AND sort_order BETWEEN 0 AND 2/u,
   );
-  assert.match(publicRouteSource, /max-age=30/u);
-  assert.match(publicRouteSource, /readModularPointer/u);
-  assert.match(publicRouteSource, /pointerVersion:\s*pointer\.contentVersion/u);
-  assert.match(publicRouteSource, /filterHomeLayoutByPublishedSections/u);
   assert.match(adminRouteSource, /validateHomeLayoutInput/u);
   assert.match(adminRouteSource, /getActiveHomeSectionIds/u);
+  assert.doesNotMatch(workerIndexSource, /publicHomeLayoutRoutes/u);
 });

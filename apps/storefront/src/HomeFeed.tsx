@@ -13,7 +13,7 @@ import {
   type PublicSection,
   type StorefrontBootstrap,
 } from './content';
-import { loadHomeLayout, resolveHomeLayout } from './home-layout';
+import { resolveHomeLayout } from './home-layout';
 import { ResilientImage, ResilientVideo } from './ResilientMedia';
 import { productHref, sectionHref } from './routing';
 import { SYSTEM_UI } from './system-ui';
@@ -219,11 +219,6 @@ function publishedSections(bootstrap: StorefrontBootstrap): PublicSection[] {
 
 export function HomeFeed({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
   const { site } = bootstrap.site;
-  const layoutQuery = useQuery({
-    queryKey: ['storefront-home-layout', bootstrap.pointer.contentVersion],
-    queryFn: ({ signal }) => loadHomeLayout(bootstrap.pointer.contentVersion, signal),
-    staleTime: 30_000,
-  });
   const availableSections = useMemo(() => publishedSections(bootstrap), [bootstrap]);
   const publishedSectionIds = useMemo(
     () => new Set(availableSections.map((section) => section.id)),
@@ -254,7 +249,7 @@ export function HomeFeed({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
     shortcutSectionIds: availableSections.slice(0, 7).map((section) => section.id),
     recommendationSectionIds: fallbackRecommendationSectionIds(bootstrap),
   };
-  const layout = resolveHomeLayout(layoutQuery.data, fallbackLayout, publishedSectionIds);
+  const layout = resolveHomeLayout(site.homeLayout, fallbackLayout, publishedSectionIds);
   const shortcutSections = layout.shortcutSectionIds
     .flatMap((id) => (sectionById.get(id) ? [sectionById.get(id) as PublicSection] : []))
     .slice(0, 7);

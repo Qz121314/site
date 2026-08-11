@@ -81,20 +81,6 @@ export function validateHomeLayoutInput(value: unknown): ValidationResult {
   };
 }
 
-export function filterHomeLayoutByPublishedSections(
-  layout: HomeLayout,
-  publishedSectionIds: ReadonlySet<string>,
-): HomeLayout {
-  return {
-    shortcutSectionIds: layout.shortcutSectionIds.filter((id) =>
-      publishedSectionIds.has(id),
-    ),
-    recommendationSectionIds: layout.recommendationSectionIds.filter((id) =>
-      publishedSectionIds.has(id),
-    ),
-  };
-}
-
 export async function getHomeLayout(db: D1Database): Promise<HomeLayout> {
   const rows = (
     await db
