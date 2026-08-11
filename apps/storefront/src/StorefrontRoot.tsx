@@ -26,6 +26,7 @@ import {
 import { loadStorefrontBootstrap, loadProductSnapshot } from './content';
 import { FaqArticlePage, FaqDirectoryPage } from './FaqPage';
 import { HomeFeed } from './HomeFeed';
+import { HomepageAnalytics } from './HomepageAnalytics';
 import { NotFoundPage } from './NotFoundPage';
 import { ProductDetailPage } from './ProductDetailPage';
 import { ResilientImage } from './ResilientMedia';
@@ -481,6 +482,10 @@ export function StorefrontRoot() {
 
   return (
     <>
+      <HomepageAnalytics
+        measurementId={bootstrap.site.site.analytics.ga4MeasurementId}
+        pathname={pathname}
+      />
       <StorefrontMetadata description={bootstrap.site.site.locationLabel.trim()} />
       <PrimaryShell
         activePath={pathname}
