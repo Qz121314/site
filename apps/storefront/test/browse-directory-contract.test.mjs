@@ -63,9 +63,9 @@ test('Browse uses one hero card for one section and a discovery grid for multipl
 
 test('Home icon and Browse background remain separate section presentation fields', () => {
   assert.match(adminEditor, />分区快捷图标</u);
-  assert.match(adminEditor, /用于 Home 的快捷分区入口/u);
+  assert.match(adminEditor, /只用于 Home 的快捷分区入口；Browse 页面不会使用这个图标/u);
   assert.match(adminEditor, />Browse 分区背景图</u);
-  assert.match(adminEditor, /只用于 Browse 的详细分区卡片/u);
+  assert.match(adminEditor, /只用于 Browse 页面分区视觉卡，不影响 Home 快捷图标和产品封面/u);
   assert.match(migration, /browse_background_asset_id/u);
   assert.match(migration, /description TEXT/u);
 });
