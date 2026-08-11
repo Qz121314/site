@@ -15,13 +15,13 @@
   --theme-desktop-media-size-large: 176px;
   --theme-card-background: var(--surface);
   --theme-card-border: var(--line);
-  --theme-card-shadow: 0 4px 16px color-mix(in srgb, var(--text) 4%, transparent);
-  --theme-card-hover-shadow: var(--shadow);
+  --theme-card-shadow: none;
+  --theme-card-hover-shadow: none;
   --theme-media-background: var(--surface-soft);
   --theme-control-background: var(--surface);
-  --theme-header-background: color-mix(in srgb, var(--surface) 95%, transparent);
-  --theme-tab-background: color-mix(in srgb, var(--surface) 96%, transparent);
-  --theme-tab-shadow: 0 -8px 24px color-mix(in srgb, var(--text) 5%, transparent);
+  --theme-header-background: color-mix(in srgb, var(--page-bg, var(--surface)) 96%, var(--surface));
+  --theme-tab-background: color-mix(in srgb, var(--page-bg, var(--surface)) 92%, var(--surface));
+  --theme-tab-shadow: none;
 }
 
 /* Runtime density is authoritative. Theme-key fallbacks keep Admin preview accurate. */
@@ -55,36 +55,30 @@
   --theme-radius-media: 16px;
   --theme-radius-control: 15px;
   --theme-radius-icon: 15px;
-  --theme-card-shadow: 0 4px 16px rgb(31 35 40 / 4%);
-  --theme-card-hover-shadow: 0 12px 28px rgb(31 35 40 / 8%);
 }
 
 :is(html, .storefront-theme-root)[data-theme='noir'] {
-  --theme-radius-card: 22px;
-  --theme-radius-media: 20px;
-  --theme-radius-control: 18px;
-  --theme-radius-icon: 18px;
-  --theme-card-background: color-mix(in srgb, var(--surface) 94%, var(--brand) 6%);
-  --theme-card-border: color-mix(in srgb, var(--line) 78%, var(--brand) 22%);
-  --theme-card-shadow: 0 12px 30px rgb(0 0 0 / 22%);
-  --theme-card-hover-shadow: var(--shadow);
-  --theme-media-background: color-mix(in srgb, var(--surface-soft) 92%, black 8%);
-  --theme-control-background: color-mix(in srgb, var(--surface) 90%, var(--brand) 10%);
-  --theme-header-background: color-mix(in srgb, var(--surface) 88%, transparent);
-  --theme-tab-background: color-mix(in srgb, var(--surface) 92%, transparent);
+  --theme-radius-card: 20px;
+  --theme-radius-media: 17px;
+  --theme-radius-control: 16px;
+  --theme-radius-icon: 15px;
+  --theme-card-background: color-mix(in srgb, var(--surface) 97%, var(--brand) 3%);
+  --theme-card-border: color-mix(in srgb, var(--line) 90%, var(--brand) 10%);
+  --theme-media-background: color-mix(in srgb, var(--surface-soft) 96%, black 4%);
+  --theme-control-background: color-mix(in srgb, var(--surface) 97%, var(--brand) 3%);
+  --theme-header-background: color-mix(in srgb, var(--page-bg, var(--surface)) 96%, var(--surface));
+  --theme-tab-background: color-mix(in srgb, var(--page-bg, var(--surface)) 93%, var(--surface));
 }
 
 :is(html, .storefront-theme-root)[data-theme='live'] {
   --theme-radius-card: 14px;
-  --theme-radius-media: 14px;
+  --theme-radius-media: 13px;
   --theme-radius-control: 12px;
-  --theme-radius-icon: 14px;
+  --theme-radius-icon: 13px;
   --theme-radius-chip: 10px;
-  --theme-card-background: color-mix(in srgb, var(--surface) 92%, var(--brand) 8%);
-  --theme-card-border: color-mix(in srgb, var(--line) 68%, var(--brand) 32%);
-  --theme-card-shadow: 0 8px 24px rgb(0 0 0 / 22%);
-  --theme-card-hover-shadow: 0 14px 34px color-mix(in srgb, var(--brand) 16%, black 84%);
-  --theme-control-background: color-mix(in srgb, var(--surface) 90%, var(--brand) 10%);
+  --theme-card-background: color-mix(in srgb, var(--surface) 97%, var(--brand) 3%);
+  --theme-card-border: color-mix(in srgb, var(--line) 86%, var(--brand) 14%);
+  --theme-control-background: color-mix(in srgb, var(--surface) 96%, var(--brand) 4%);
 }
 
 :is(html, .storefront-theme-root)[data-theme='saas'] {
@@ -92,37 +86,31 @@
   --theme-radius-media: 12px;
   --theme-radius-control: 10px;
   --theme-radius-icon: 12px;
-  --theme-card-shadow: 0 2px 8px color-mix(in srgb, var(--brand) 8%, transparent);
-  --theme-card-hover-shadow: 0 10px 24px color-mix(in srgb, var(--brand) 12%, transparent);
 }
 
 :is(html, .storefront-theme-root)[data-theme='travel'] {
-  --theme-radius-card: 24px;
-  --theme-radius-media: 22px;
-  --theme-radius-control: 18px;
-  --theme-radius-icon: 18px;
-  --theme-card-background: color-mix(in srgb, var(--surface) 96%, var(--surface-soft) 4%);
-  --theme-card-shadow: 0 8px 22px rgb(57 72 65 / 8%);
-  --theme-card-hover-shadow: var(--shadow);
+  --theme-radius-card: 22px;
+  --theme-radius-media: 19px;
+  --theme-radius-control: 17px;
+  --theme-radius-icon: 17px;
+  --theme-card-background: color-mix(in srgb, var(--surface) 97%, var(--surface-soft) 3%);
   --theme-control-background: color-mix(
     in srgb,
-    var(--surface) 94%,
-    var(--surface-soft) 6%
+    var(--surface) 96%,
+    var(--surface-soft) 4%
   );
 }
 
 :is(html, .storefront-theme-root)[data-theme='tech'] {
-  --theme-radius-card: 16px;
-  --theme-radius-media: 14px;
+  --theme-radius-card: 15px;
+  --theme-radius-media: 13px;
   --theme-radius-control: 12px;
   --theme-radius-icon: 12px;
-  --theme-card-background: color-mix(in srgb, var(--surface) 82%, transparent);
-  --theme-card-border: color-mix(in srgb, var(--line) 72%, var(--brand) 28%);
-  --theme-card-shadow: 0 10px 28px rgb(0 0 0 / 22%);
-  --theme-card-hover-shadow: 0 16px 38px color-mix(in srgb, var(--brand) 10%, black 90%);
-  --theme-control-background: color-mix(in srgb, var(--surface) 82%, transparent);
-  --theme-header-background: color-mix(in srgb, var(--surface) 78%, transparent);
-  --theme-tab-background: color-mix(in srgb, var(--surface) 82%, transparent);
+  --theme-card-background: color-mix(in srgb, var(--surface) 95%, var(--brand) 5%);
+  --theme-card-border: color-mix(in srgb, var(--line) 84%, var(--brand) 16%);
+  --theme-control-background: color-mix(in srgb, var(--surface) 95%, var(--brand) 5%);
+  --theme-header-background: color-mix(in srgb, var(--page-bg, var(--surface)) 95%, var(--surface));
+  --theme-tab-background: color-mix(in srgb, var(--page-bg, var(--surface)) 92%, var(--surface));
 }
 
 :is(html, .storefront-theme-root) .topbar {
@@ -131,9 +119,7 @@
 
 :is(html, .storefront-theme-root) .bottom-nav {
   background: var(--theme-tab-background);
-  box-shadow:
-    0 -1px 0 color-mix(in srgb, var(--line) 88%, transparent),
-    var(--theme-tab-shadow);
+  box-shadow: none;
 }
 
 /* Admin mobile preview stays on the touch-first recipe even on a desktop viewport. */
@@ -162,12 +148,6 @@
   html .chat-page {
     border-radius: var(--theme-radius-card);
     background: var(--theme-card-background);
-    box-shadow: var(--theme-card-shadow);
+    box-shadow: none;
   }
-}
-
-:is(html, .storefront-theme-root)[data-theme='tech']
-  :is(.product-card, .topbar, .bottom-nav),
-:is(html, .storefront-theme-root)[data-theme='noir'] :is(.topbar, .bottom-nav) {
-  backdrop-filter: blur(18px);
 }

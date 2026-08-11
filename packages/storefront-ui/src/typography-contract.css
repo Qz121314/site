@@ -28,8 +28,8 @@
 }
 
 :is(html, .storefront-theme-root) :is(h1, h2, h3) {
-  font-weight: 720;
-  letter-spacing: -0.038em;
+  font-weight: 650;
+  letter-spacing: -0.028em;
 }
 
 :is(html, .storefront-theme-root) .brand-lockup {
@@ -38,8 +38,8 @@
 
 :is(html, .storefront-theme-root) .brand-lockup strong {
   font-size: 0.94rem;
-  font-weight: 760;
-  letter-spacing: -0.025em;
+  font-weight: 640;
+  letter-spacing: -0.018em;
   line-height: 1.08;
 }
 
@@ -58,20 +58,20 @@
 }
 
 :is(html, .storefront-theme-root) .app-page-heading h1 {
-  font-weight: 730;
-  letter-spacing: -0.045em;
+  font-weight: 660;
+  letter-spacing: -0.032em;
 }
 
 :is(html, .storefront-theme-root) .home-recommendation-heading h2 {
-  font-weight: 720;
-  letter-spacing: -0.03em;
+  font-weight: 640;
+  letter-spacing: -0.022em;
 }
 
 :is(html, .storefront-theme-root) .product-card-heading h3,
 :is(html, .storefront-theme-root) .home-product-tile strong {
   font-size: var(--storefront-text-label);
-  font-weight: 690;
-  letter-spacing: -0.022em;
+  font-weight: 580;
+  letter-spacing: -0.012em;
 }
 
 :is(html, .storefront-theme-root)
@@ -90,8 +90,8 @@
 }
 
 :is(html, .storefront-theme-root) .bottom-nav small {
-  font-weight: 650;
-  letter-spacing: -0.012em;
+  font-weight: 540;
+  letter-spacing: -0.006em;
 }
 
 @media (min-width: 720px) {
