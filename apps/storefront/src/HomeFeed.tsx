@@ -1,8 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import {
-  StorefrontHero,
-  type StorefrontLinkComponent,
-} from '@site/storefront-ui';
+import { StorefrontHero, type StorefrontLinkComponent } from '@site/storefront-ui';
 import {
   type AnchorHTMLAttributes,
   type MouseEvent as ReactMouseEvent,
@@ -107,11 +104,7 @@ function HomeShortcuts({ sections }: { sections: PublicSection[] }) {
   return (
     <nav className="home-shortcuts" aria-label="Sections">
       {sections.map((section) => (
-        <HomeLink
-          className="home-shortcut"
-          href={sectionHref(section)}
-          key={section.id}
-        >
+        <HomeLink className="home-shortcut" href={sectionHref(section)} key={section.id}>
           <span className="home-shortcut-icon">
             <SectionIcon section={section} />
           </span>
@@ -134,9 +127,7 @@ function HomeProductTile({ product }: { product: PublicProductSummary }) {
       <span className="home-product-cover">
         <ResilientImage
           alt=""
-          fallback={
-            <span className="home-product-cover-fallback" aria-hidden="true" />
-          }
+          fallback={<span className="home-product-cover-fallback" aria-hidden="true" />}
           loading="lazy"
           src={product.coverUrl}
         />
@@ -167,10 +158,7 @@ function HomeRecommendationRail({
   });
   const products = useMemo(
     () =>
-      (initialProducts.length > 0
-        ? initialProducts
-        : (query.data?.products ?? [])
-      )
+      (initialProducts.length > 0 ? initialProducts : (query.data?.products ?? []))
         .filter((product) => product.isFeatured)
         .sort(
           (left, right) =>
@@ -236,10 +224,7 @@ export function HomeFeed({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
     queryFn: ({ signal }) => loadHomeLayout(bootstrap.pointer.contentVersion, signal),
     staleTime: 30_000,
   });
-  const availableSections = useMemo(
-    () => publishedSections(bootstrap),
-    [bootstrap],
-  );
+  const availableSections = useMemo(() => publishedSections(bootstrap), [bootstrap]);
   const publishedSectionIds = useMemo(
     () => new Set(availableSections.map((section) => section.id)),
     [availableSections],
@@ -269,20 +254,12 @@ export function HomeFeed({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
     shortcutSectionIds: availableSections.slice(0, 7).map((section) => section.id),
     recommendationSectionIds: fallbackRecommendationSectionIds(bootstrap),
   };
-  const layout = resolveHomeLayout(
-    layoutQuery.data,
-    fallbackLayout,
-    publishedSectionIds,
-  );
+  const layout = resolveHomeLayout(layoutQuery.data, fallbackLayout, publishedSectionIds);
   const shortcutSections = layout.shortcutSectionIds
-    .flatMap((id) =>
-      sectionById.get(id) ? [sectionById.get(id) as PublicSection] : [],
-    )
+    .flatMap((id) => (sectionById.get(id) ? [sectionById.get(id) as PublicSection] : []))
     .slice(0, 7);
   const recommendationSections = layout.recommendationSectionIds
-    .flatMap((id) =>
-      sectionById.get(id) ? [sectionById.get(id) as PublicSection] : [],
-    )
+    .flatMap((id) => (sectionById.get(id) ? [sectionById.get(id) as PublicSection] : []))
     .slice(0, 3);
 
   useEffect(() => {
