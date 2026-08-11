@@ -19,8 +19,16 @@
   --theme-card-hover-shadow: none;
   --theme-media-background: var(--surface-soft);
   --theme-control-background: var(--surface);
-  --theme-header-background: color-mix(in srgb, var(--page-bg, var(--surface)) 96%, var(--surface));
-  --theme-tab-background: color-mix(in srgb, var(--page-bg, var(--surface)) 92%, var(--surface));
+  --theme-header-background: color-mix(
+    in srgb,
+    var(--page-bg, var(--surface)) 96%,
+    var(--surface)
+  );
+  --theme-tab-background: color-mix(
+    in srgb,
+    var(--page-bg, var(--surface)) 92%,
+    var(--surface)
+  );
   --theme-tab-shadow: none;
 }
 
@@ -66,8 +74,16 @@
   --theme-card-border: color-mix(in srgb, var(--line) 90%, var(--brand) 10%);
   --theme-media-background: color-mix(in srgb, var(--surface-soft) 96%, black 4%);
   --theme-control-background: color-mix(in srgb, var(--surface) 97%, var(--brand) 3%);
-  --theme-header-background: color-mix(in srgb, var(--page-bg, var(--surface)) 96%, var(--surface));
-  --theme-tab-background: color-mix(in srgb, var(--page-bg, var(--surface)) 93%, var(--surface));
+  --theme-header-background: color-mix(
+    in srgb,
+    var(--page-bg, var(--surface)) 96%,
+    var(--surface)
+  );
+  --theme-tab-background: color-mix(
+    in srgb,
+    var(--page-bg, var(--surface)) 93%,
+    var(--surface)
+  );
 }
 
 :is(html, .storefront-theme-root)[data-theme='live'] {
@@ -109,8 +125,16 @@
   --theme-card-background: color-mix(in srgb, var(--surface) 95%, var(--brand) 5%);
   --theme-card-border: color-mix(in srgb, var(--line) 84%, var(--brand) 16%);
   --theme-control-background: color-mix(in srgb, var(--surface) 95%, var(--brand) 5%);
-  --theme-header-background: color-mix(in srgb, var(--page-bg, var(--surface)) 95%, var(--surface));
-  --theme-tab-background: color-mix(in srgb, var(--page-bg, var(--surface)) 92%, var(--surface));
+  --theme-header-background: color-mix(
+    in srgb,
+    var(--page-bg, var(--surface)) 95%,
+    var(--surface)
+  );
+  --theme-tab-background: color-mix(
+    in srgb,
+    var(--page-bg, var(--surface)) 92%,
+    var(--surface)
+  );
 }
 
 :is(html, .storefront-theme-root) .topbar {
