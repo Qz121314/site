@@ -139,7 +139,9 @@ export function HomeLayoutSettingsSection({
             })}
           </div>
         ) : (
-          <div className="admin-home-layout-empty">未固定分区，将按已发布内容自动生成。</div>
+          <div className="admin-home-layout-empty">
+            未固定分区，将按已发布内容自动生成。
+          </div>
         )}
 
         <button
