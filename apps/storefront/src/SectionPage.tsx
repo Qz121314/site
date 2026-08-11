@@ -1,11 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
-import { StorefrontProductCard, type StorefrontLinkComponent } from '@site/storefront-ui';
+import type { StorefrontLinkComponent } from '@site/storefront-ui';
 import { useEffect, useMemo, useState, type MouseEvent as ReactMouseEvent } from 'react';
-import {
-  loadSectionSnapshot,
-  type PublicSection,
-  type StorefrontBootstrap,
-} from './content';
+import { loadSectionSnapshot, type StorefrontBootstrap } from './content';
 import { ResilientImage } from './ResilientMedia';
 import { productHref } from './routing';
 import { canNavigateStorefrontBack, navigateStorefrontBack } from './storefront-history';
@@ -23,27 +19,6 @@ function SearchIcon() {
       <circle cx="10.8" cy="10.8" r="6.5" />
       <path d="m16 16 4 4" strokeLinecap="round" />
     </svg>
-  );
-}
-
-function SectionVisual({ section }: { section: PublicSection }) {
-  const fallback = (
-    <span aria-hidden="true">{Array.from(section.name.trim())[0] ?? '•'}</span>
-  );
-  if (section.icon.type === 'image' && section.icon.value) {
-    return (
-      <ResilientImage
-        alt=""
-        fallback={fallback}
-        loading="lazy"
-        src={section.icon.value}
-      />
-    );
-  }
-  return (
-    <span aria-hidden="true">
-      {section.icon.value || Array.from(section.name.trim())[0] || '•'}
-    </span>
   );
 }
 
@@ -156,22 +131,12 @@ export function SectionCatalogPage({
         <LinkComponent
           className="section-catalog-back"
           href="/browse/"
+          aria-label={SYSTEM_UI.back}
           onClick={handleBack}
         >
-          <span className="section-catalog-back-icon" aria-hidden="true">
-            ←
-          </span>
-          <span>{SYSTEM_UI.back}</span>
+          <span aria-hidden="true">‹</span>
         </LinkComponent>
-
-        <div className="section-catalog-identity">
-          <span className="section-catalog-visual">
-            <SectionVisual section={query.data.section} />
-          </span>
-          <div className="section-catalog-title-group">
-            <h1 id="section-catalog-title">{query.data.section.name}</h1>
-          </div>
-        </div>
+        <h1 id="section-catalog-title">{query.data.section.name}</h1>
       </header>
 
       {hasProducts ? (
@@ -185,33 +150,41 @@ export function SectionCatalogPage({
               aria-label={SYSTEM_UI.search}
               onChange={(event) => setSearch(event.target.value)}
             />
+            {search ? (
+              <button
+                type="button"
+                className="section-catalog-search-clear"
+                aria-label={SYSTEM_UI.clear}
+                onClick={() => setSearch('')}
+              >
+                ×
+              </button>
+            ) : null}
           </label>
 
           {hasFilterOptions ? (
             <div className="section-catalog-filters" aria-label="Filters">
               {query.data.categories.length > 0 ? (
-                <div className="section-category-filter">
-                  <div className="section-category-options">
+                <div className="section-category-options">
+                  <button
+                    className={!categoryId ? 'is-active' : undefined}
+                    type="button"
+                    aria-pressed={!categoryId}
+                    onClick={() => setCategoryId('')}
+                  >
+                    {SYSTEM_UI.all}
+                  </button>
+                  {query.data.categories.map((category) => (
                     <button
-                      className={!categoryId ? 'is-active' : undefined}
+                      className={categoryId === category.id ? 'is-active' : undefined}
+                      key={category.id}
                       type="button"
-                      aria-pressed={!categoryId}
-                      onClick={() => setCategoryId('')}
+                      aria-pressed={categoryId === category.id}
+                      onClick={() => setCategoryId(category.id)}
                     >
-                      {SYSTEM_UI.all}
+                      {category.name}
                     </button>
-                    {query.data.categories.map((category) => (
-                      <button
-                        className={categoryId === category.id ? 'is-active' : undefined}
-                        key={category.id}
-                        type="button"
-                        aria-pressed={categoryId === category.id}
-                        onClick={() => setCategoryId(category.id)}
-                      >
-                        {category.name}
-                      </button>
-                    ))}
-                  </div>
+                  ))}
                 </div>
               ) : null}
 
@@ -245,33 +218,27 @@ export function SectionCatalogPage({
       ) : null}
 
       {filteredProducts.length > 0 ? (
-        <div className="product-grid section-catalog-products">
+        <div className="section-catalog-products">
           {filteredProducts.map((product) => (
-            <StorefrontProductCard
-              address={product.address}
-              categoryName={product.category.name}
+            <LinkComponent
+              className="section-product-card"
               href={productHref(product)}
               key={product.id}
-              LinkComponent={LinkComponent}
-              media={
+            >
+              <div className="section-product-cover">
                 <ResilientImage
                   alt=""
                   fallback={<div className="image-fallback" aria-hidden="true" />}
                   loading="lazy"
                   src={product.coverUrl}
                 />
-              }
-              sectionName={product.sectionName}
-              tags={product.tags}
-              title={product.title}
-            />
+              </div>
+              <h2>{product.title}</h2>
+            </LinkComponent>
           ))}
         </div>
       ) : (
         <div className="section-catalog-empty">
-          <span className="section-catalog-empty-icon" aria-hidden="true">
-            <SectionVisual section={query.data.section} />
-          </span>
           <p>{SYSTEM_UI.noResults}</p>
           {hasFilters ? (
             <button
