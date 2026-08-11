@@ -144,8 +144,8 @@
 }
 
 :is(html, .storefront-theme-root)[data-theme='tech']
-  :is(.product-detail-summary, .product-detail-body, .product-detail-mobile-action),
+  :is(.product-detail-summary, .product-detail-body, .product-detail-fixed-action),
 :is(html, .storefront-theme-root)[data-theme='noir']
-  :is(.product-detail-summary, .product-detail-mobile-action) {
+  :is(.product-detail-summary, .product-detail-fixed-action) {
   backdrop-filter: blur(18px);
 }
