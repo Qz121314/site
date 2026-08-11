@@ -20,6 +20,10 @@ const manifestSource = await readFile(
   new URL('../../worker/src/routes/public-pwa.ts', import.meta.url),
   'utf8',
 );
+const workerSource = await readFile(
+  new URL('../../worker/src/index.ts', import.meta.url),
+  'utf8',
+);
 const pwaCss = await readFile(new URL('../src/pwa.css', import.meta.url), 'utf8');
 const serviceWorker = await readFile(new URL('../public/sw.js', import.meta.url), 'utf8');
 
@@ -54,6 +58,21 @@ test('PWA and browser chrome colors follow the active storefront theme', () => {
   assert.match(manifestSource, /background_color: theme\.backgroundColor/);
   assert.match(manifestSource, /theme_color: theme\.themeColor/);
   assert.match(themeRuntimeSource, /syncThemeColor\(theme\.tokens\.brand\)/);
+});
+
+test('PWA icons follow the configured logo with a safe default fallback', () => {
+  assert.match(indexSource, /href="\/api\/public\/pwa\/icon\/192"/);
+  assert.match(pwaSource, /src="\/api\/public\/pwa\/icon\/192"/);
+  assert.match(manifestSource, /src: '\/api\/public\/pwa\/icon\/192'/);
+  assert.match(manifestSource, /src: '\/api\/public\/pwa\/icon\/512'/);
+  assert.match(manifestSource, /logo\.mime_type LIKE 'image\/%'/);
+  assert.match(manifestSource, /format: 'image\/png'/);
+  assert.match(manifestSource, /PWA_ICON_SAFE_AREA_RATIO/);
+  assert.match(manifestSource, /loadDefaultIconStream/);
+  assert.match(
+    workerSource,
+    /app\.get\('\/api\/public\/pwa\/icon\/:size', servePwaIcon\)/,
+  );
 });
 
 test('standalone mode uses safe areas and removes floating browser-like tab bar spacing', () => {

@@ -62,7 +62,7 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     needs: validate
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 30
     concurrency:
       group: site-cloudflare-production
       cancel-in-progress: false
@@ -412,3 +412,11 @@ jobs:
               -H 'Sec-Fetch-Mode: navigate' \
               "$BASE_URL$path" | grep -F '<div id="root"></div>'
           done
+
+      - name: Install production browser
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Browser acceptance test production
+        run: pnpm test:e2e
+        env:
+          BASE_URL: ${{ steps.deploy.outputs.url }}

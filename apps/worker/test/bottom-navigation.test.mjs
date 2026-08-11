@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
+import { isPublicBottomNavigationItemEnabled } from '../src/routes/public-bottom-navigation.ts';
 import { validateBottomNavigationInput } from '../src/settings/bottom-navigation.ts';
 
 const migrationSource = await readFile(
@@ -95,4 +96,17 @@ test('navigation image assets are foreign-keyed and protected from managed delet
   );
   assert.match(publicRouteSource, /buildMediaUrl/u);
   assert.match(publicRouteSource, /max-age=30/u);
+});
+
+test('messages only appears publicly when customer service is actually available', () => {
+  const messages = { key: 'messages', enabled: true };
+  const home = { key: 'home', enabled: true };
+  assert.equal(isPublicBottomNavigationItemEnabled(messages, false), false);
+  assert.equal(isPublicBottomNavigationItemEnabled(messages, true), true);
+  assert.equal(isPublicBottomNavigationItemEnabled(home, false), true);
+  assert.equal(
+    isPublicBottomNavigationItemEnabled({ ...home, enabled: false }, true),
+    false,
+  );
+  assert.match(publicRouteSource, /hasEnabledCustomerServiceConnection/u);
 });

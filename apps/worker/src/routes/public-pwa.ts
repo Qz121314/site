@@ -10,6 +10,14 @@ type ManifestTheme = {
   themeColor: string;
 };
 
+type LogoAssetRow = {
+  object_key: string;
+};
+
+const PWA_ICON_SIZES = new Set([192, 512]);
+const PWA_ICON_SAFE_AREA_RATIO = 0.8;
+const PWA_CACHE_CONTROL = 'public, max-age=300, stale-while-revalidate=3600';
+
 const DEFAULT_MANIFEST_THEME: ManifestTheme = {
   backgroundColor: '#f5f6f7',
   themeColor: '#ff5a1f',
@@ -115,21 +123,98 @@ export async function servePwaManifest(context: Context<AppEnvironment>) {
     theme_color: theme.themeColor,
     icons: [
       {
-        src: '/icons/app-icon-192.svg',
+        src: '/api/public/pwa/icon/192',
         sizes: '192x192',
-        type: 'image/svg+xml',
+        type: 'image/png',
         purpose: 'any',
       },
       {
-        src: '/icons/app-icon-512.svg',
+        src: '/api/public/pwa/icon/512',
         sizes: '512x512',
-        type: 'image/svg+xml',
+        type: 'image/png',
         purpose: 'any maskable',
       },
     ],
   };
 
-  context.header('Cache-Control', 'public, max-age=300, stale-while-revalidate=3600');
+  context.header('Cache-Control', PWA_CACHE_CONTROL);
   context.header('Content-Type', 'application/manifest+json; charset=utf-8');
   return context.body(JSON.stringify(manifest));
+}
+
+async function loadLogoStream(
+  context: Context<AppEnvironment>,
+): Promise<ReadableStream<Uint8Array> | null> {
+  const asset = await context.env.DB.prepare(
+    `SELECT logo.object_key
+       FROM site_settings settings
+       JOIN media_assets logo ON logo.id = settings.logo_asset_id
+      WHERE settings.id = 1
+        AND logo.status = 'ready'
+        AND logo.deleted_at IS NULL
+        AND logo.mime_type LIKE 'image/%'`,
+  ).first<LogoAssetRow>();
+  if (!asset) return null;
+  return (await context.env.ASSETS_BUCKET.get(asset.object_key))?.body ?? null;
+}
+
+async function loadDefaultIconStream(
+  context: Context<AppEnvironment>,
+): Promise<ReadableStream<Uint8Array>> {
+  const url = new URL('/icons/app-icon-512.svg', context.req.url);
+  const response = await context.env.ASSETS.fetch(new Request(url));
+  if (!response.ok || !response.body) throw new Error('PWA_DEFAULT_ICON_MISSING');
+  return response.body;
+}
+
+async function transformPwaIcon(
+  context: Context<AppEnvironment>,
+  stream: ReadableStream<Uint8Array>,
+  size: number,
+  background: string,
+): Promise<Response> {
+  const safeSize = Math.round(size * PWA_ICON_SAFE_AREA_RATIO);
+  const transformed = (
+    await context.env.IMAGES.input(stream)
+      .transform({ width: safeSize, height: safeSize, fit: 'contain' })
+      .transform({ width: size, height: size, fit: 'pad', background })
+      .output({ format: 'image/png', anim: false })
+  ).response();
+  const headers = new Headers(transformed.headers);
+  headers.set('content-type', 'image/png');
+  headers.set('cache-control', PWA_CACHE_CONTROL);
+  headers.set('x-content-type-options', 'nosniff');
+  return new Response(transformed.body, {
+    status: transformed.status,
+    statusText: transformed.statusText,
+    headers,
+  });
+}
+
+export async function servePwaIcon(context: Context<AppEnvironment>) {
+  const size = Number(context.req.param('size'));
+  if (!PWA_ICON_SIZES.has(size)) return context.notFound();
+
+  const theme = await resolveManifestTheme(context);
+  try {
+    const logo = await loadLogoStream(context);
+    if (logo) return await transformPwaIcon(context, logo, size, theme.backgroundColor);
+  } catch (error) {
+    console.error(
+      JSON.stringify({
+        level: 'error',
+        event: 'pwa.logo_icon_failed',
+        size,
+        errorName: error instanceof Error ? error.name : 'UnknownError',
+        errorMessage: error instanceof Error ? error.message : 'Unknown PWA icon error',
+      }),
+    );
+  }
+
+  return transformPwaIcon(
+    context,
+    await loadDefaultIconStream(context),
+    size,
+    theme.backgroundColor,
+  );
 }
