@@ -71,16 +71,27 @@ test('product detail keeps a focused media, summary, Markdown and CTA hierarchy'
   assert.doesNotMatch(detailSource, /recommend|rating|favorite|share/iu);
 });
 
-test('product gallery uses one active media stage with clickable thumbnails', () => {
+test('product gallery keeps thumbnails directly below the active media stage', () => {
   assert.match(detailSource, /className="detail-media-stage"/u);
   assert.match(detailSource, /className="detail-media-thumbnails"/u);
   assert.match(detailSource, /setActiveMediaId\(item\.id\)/u);
   assert.match(detailSource, /aria-pressed=\{selected\}/u);
   assert.match(
     detailCss,
+    /\.detail-gallery\s*\{[\s\S]*?display:\s*flex[\s\S]*?flex-direction:\s*column/u,
+  );
+  assert.match(
+    detailCss,
+    /\.detail-media-stage\s*\{[\s\S]*?width:\s*100%[\s\S]*?max-width:\s*100%/u,
+  );
+  assert.match(
+    detailCss,
+    /\.detail-media-thumbnails\s*\{[\s\S]*?width:\s*100%[\s\S]*?overflow-x:\s*auto[\s\S]*?overflow-y:\s*hidden/u,
+  );
+  assert.match(
+    detailCss,
     /\.detail-media-stage > img,[\s\S]*?\.detail-media-stage > video/u,
   );
-  assert.match(detailCss, /\.detail-media-thumbnails\s*\{[\s\S]*?overflow-x:\s*auto/u);
   assert.doesNotMatch(detailCss, /scroll-snap-type:\s*x mandatory/u);
   assert.match(detailSource, /<ResilientVideo/u);
   assert.match(detailSource, /<ResilientImage/u);
