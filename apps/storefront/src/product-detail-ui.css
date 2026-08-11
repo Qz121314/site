@@ -2,7 +2,7 @@
 
 .product-detail-page {
   display: grid;
-  width: min(1180px, 100%);
+  width: min(720px, 100%);
   gap: var(--theme-detail-gap, 18px);
   margin-inline: auto;
   padding-bottom: 12px;
@@ -48,9 +48,19 @@
   opacity: 0.66;
 }
 
-.product-detail-hero {
+.product-detail-hero,
+.product-detail-info {
   display: grid;
+  min-width: 0;
+}
+
+.product-detail-hero {
   gap: var(--theme-detail-gap, 18px);
+}
+
+.product-detail-info {
+  align-content: start;
+  gap: 12px;
 }
 
 .detail-gallery {
@@ -83,12 +93,12 @@
 .detail-media-stage > .detail-media-fallback {
   display: block;
   width: 100%;
-  aspect-ratio: var(--theme-detail-media-ratio, 4 / 3);
+  aspect-ratio: var(--theme-detail-media-ratio, 1 / 1);
   border-radius: inherit;
 }
 
 .detail-media-stage > img {
-  object-fit: cover;
+  object-fit: contain;
 }
 
 .detail-media-stage > video {
@@ -235,7 +245,8 @@
 }
 
 .product-detail-body {
-  width: min(820px, 100%);
+  width: 100%;
+  min-width: 0;
   padding: var(--theme-detail-panel-padding, 18px);
   border: 1px solid
     color-mix(in srgb, var(--theme-detail-panel-border, var(--line)) 76%, transparent);
@@ -434,15 +445,16 @@
   }
 }
 
-@media (min-width: 768px) {
+@media (min-width: 768px) and (max-width: 979px) {
   .product-detail-page {
-    gap: 20px;
+    width: min(680px, 100%);
+    gap: 16px;
   }
 
   .product-detail-navigation {
     position: relative;
     top: auto;
-    min-height: 48px;
+    min-height: 40px;
     margin: 0;
     padding: 0;
     border-bottom: 0;
@@ -450,28 +462,74 @@
     backdrop-filter: none;
   }
 
-  .product-detail-hero {
-    grid-template-columns: minmax(0, 1.55fr) minmax(300px, 0.75fr);
-    align-items: start;
-    gap: 22px;
-  }
-
-  .detail-media-stage > img,
-  .detail-media-stage > video,
-  .detail-media-stage > .detail-media-fallback {
-    aspect-ratio: var(--theme-detail-desktop-media-ratio, 16 / 10);
+  .detail-gallery,
+  .product-detail-info {
+    width: min(620px, 100%);
+    margin-inline: auto;
   }
 
   .detail-media-thumbnail {
-    flex-basis: 72px;
-    width: 72px;
-    height: 72px;
+    flex-basis: 68px;
+    width: 68px;
+    height: 68px;
   }
 
   .product-detail-summary {
-    position: sticky;
-    top: calc(82px + env(safe-area-inset-top));
-    padding: var(--theme-detail-panel-padding, 19px);
+    padding: 6px 2px 2px;
+  }
+
+  .product-detail-summary h1 {
+    font-size: clamp(2rem, 5vw, 2.65rem);
+  }
+}
+
+@media (min-width: 980px) {
+  .product-detail-page {
+    width: min(1040px, 100%);
+    gap: 14px;
+  }
+
+  .product-detail-navigation {
+    position: relative;
+    top: auto;
+    min-height: 36px;
+    margin: 0;
+    padding: 0;
+    border-bottom: 0;
+    background: transparent;
+    backdrop-filter: none;
+  }
+
+  .product-detail-back {
+    min-height: 32px;
+    padding-inline: 10px;
+  }
+
+  .product-detail-hero {
+    grid-template-columns: minmax(0, 620px) minmax(300px, 360px);
+    justify-content: center;
+    align-items: start;
+    gap: 28px;
+  }
+
+  .detail-gallery {
+    width: 100%;
+    max-width: 620px;
+  }
+
+  .detail-media-thumbnail {
+    flex-basis: 66px;
+    width: 66px;
+    height: 66px;
+  }
+
+  .product-detail-info {
+    width: 100%;
+    gap: 12px;
+  }
+
+  .product-detail-summary {
+    padding: 18px;
     border: 1px solid
       color-mix(in srgb, var(--theme-detail-panel-border, var(--line)) 76%, transparent);
     border-radius: var(--theme-detail-panel-radius, var(--theme-radius-card, 18px));
@@ -483,14 +541,25 @@
   }
 
   .product-detail-summary h1 {
-    font-size: clamp(2rem, 3.5vw, 3.25rem);
+    font-size: clamp(2.1rem, 3vw, 2.75rem);
   }
-}
 
-@media (min-width: 1100px) {
-  .product-detail-hero {
-    grid-template-columns: minmax(0, 1.7fr) 360px;
-    gap: 26px;
+  .product-detail-body {
+    padding: 16px 18px;
+  }
+
+  .product-detail-fixed-action {
+    padding: 14px 24px 18px;
+    border-top: 0;
+    background: transparent;
+    box-shadow: none;
+    pointer-events: none;
+    backdrop-filter: none;
+  }
+
+  .product-detail-fixed-action .cta-button {
+    width: min(600px, 100%);
+    pointer-events: auto;
   }
 }
 

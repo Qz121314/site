@@ -60,14 +60,19 @@ test('product detail routes through the primary Storefront shell', () => {
   assert.match(rootSource, /<PrimaryShell[\s\S]*activePath=\{pathname\}/u);
 });
 
-test('product detail keeps a focused media, summary, Markdown and CTA hierarchy', () => {
+test('product detail keeps a focused media and information hierarchy', () => {
   assert.match(detailSource, /className="detail-gallery"/u);
+  assert.match(detailSource, /className="product-detail-info"/u);
   assert.match(detailSource, /className="product-detail-summary"/u);
   assert.match(detailSource, /<h1 id="product-detail-title">\{product\.title\}<\/h1>/u);
   assert.match(detailSource, /className="product-detail-category"/u);
   assert.match(detailSource, /className="product-detail-tags"/u);
   assert.match(detailSource, /className="product-detail-body"/u);
   assert.match(detailSource, /<MarkdownContent source=\{product\.body\} \/>/u);
+  assert.match(
+    detailSource,
+    /className="product-detail-info"[\s\S]*?className="product-detail-summary"[\s\S]*?className="product-detail-body"/u,
+  );
   assert.doesNotMatch(detailSource, /recommend|rating|favorite|share/iu);
 });
 
@@ -127,15 +132,24 @@ test('product CTA is the push-page safe-area action bar at the viewport edge', (
   );
 });
 
-test('desktop places media beside a sticky summary and keeps body readable below', () => {
+test('desktop uses a capped two-column layout only at true desktop width', () => {
+  assert.match(detailCss, /@media \(min-width:\s*768px\) and \(max-width:\s*979px\)/u);
+  assert.doesNotMatch(detailCss, /@media \(min-width:\s*768px\)\s*\{/u);
   assert.match(
     detailCss,
-    /@media \(min-width:\s*768px\)[\s\S]*?\.product-detail-hero\s*\{[\s\S]*?grid-template-columns/u,
+    /@media \(min-width:\s*980px\)[\s\S]*?\.product-detail-page\s*\{[\s\S]*?width:\s*min\(1040px, 100%\)/u,
   );
-  assert.match(detailCss, /\.product-detail-summary\s*\{[\s\S]*?position:\s*sticky/u);
   assert.match(
     detailCss,
-    /\.product-detail-body\s*\{[\s\S]*?width:\s*min\(820px, 100%\)/u,
+    /@media \(min-width:\s*980px\)[\s\S]*?\.product-detail-hero\s*\{[\s\S]*?grid-template-columns:\s*minmax\(0, 620px\) minmax\(300px, 360px\)/u,
+  );
+  assert.match(
+    detailCss,
+    /@media \(min-width:\s*980px\)[\s\S]*?\.detail-gallery\s*\{[\s\S]*?max-width:\s*620px/u,
+  );
+  assert.match(
+    detailCss,
+    /@media \(min-width:\s*980px\)[\s\S]*?\.product-detail-fixed-action\s*\{[\s\S]*?background:\s*transparent/u,
   );
 });
 
@@ -150,6 +164,8 @@ test('Theme Center owns product detail visual treatment for every official theme
   assert.match(detailThemeCss, /--theme-detail-cta-surface/u);
   assert.match(detailThemeCss, /\.product-detail-summary/u);
   assert.match(detailThemeCss, /\.product-detail-body/u);
+  assert.match(detailThemeCss, /\.product-detail-fixed-action/u);
+  assert.doesNotMatch(detailThemeCss, /\.product-detail-mobile-action/u);
 });
 
 test('shared package and Admin preview load the product detail Theme Center extension', () => {
