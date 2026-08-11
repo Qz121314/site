@@ -24,7 +24,8 @@ test('primary tabs switch content inside one persistent app shell', () => {
   assert.match(mainSource, /<StorefrontRoot \/>/u);
   assert.match(rootSource, /parseStorefrontRoute\(pathname\)/u);
   assert.equal(rootSource.match(/<PrimaryShell\b/gu)?.length, 1);
-  assert.match(rootSource, /routeKey=\{pathname\}/u);
+  assert.match(rootSource, /routeKey=\{locationKey\}/u);
+  assert.match(rootSource, /pathnameFromLocationKey\(locationKey\)/u);
   assert.match(
     rootSource,
     /case 'home':\s*page = <HomeFeed bootstrap=\{bootstrap\} \/>/u,
