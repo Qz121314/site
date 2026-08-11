@@ -1,414 +1,82 @@
-name: CI and Deploy
+name: Apply original media aspect ratios
 
 on:
   push:
-    branches: [main]
-  pull_request:
-  workflow_dispatch:
+    branches:
+      - fix/media-center-square-thumbnails
 
 permissions:
-  contents: read
-
-concurrency:
-  group: site-v2-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  contents: write
 
 jobs:
-  validate:
+  apply:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
     steps:
-      - name: Checkout
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/media-center-square-thumbnails
+          fetch-depth: 0
+
+      - name: Apply media preview fix
+        shell: bash
         run: |
-          set -euo pipefail
-          git init .
-          git remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
-          git fetch --no-tags --depth=1 origin "${GITHUB_REF}"
-          git checkout --detach FETCH_HEAD
+          git fetch origin main
+          python - <<'PY'
+          from pathlib import Path
 
-      - name: Set up Node.js and pnpm
-        run: |
-          set -euo pipefail
-          node --version
-          node -e "if (Number(process.versions.node.split('.')[0]) < 22) { throw new Error('Node.js 22 or newer is required') }"
-          npm install --global pnpm@11.19.0
-          pnpm --version
+          css_path = Path('apps/admin/src/media-center.css')
+          css = css_path.read_text()
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+          css = css.replace('  min-height: 38px;\n', '  min-height: 32px;\n', 1)
+          css = css.replace('  gap: 16px;\n', '  gap: 10px;\n', 1)
+          css = css.replace('  padding: 0 2px 6px;\n', '  padding: 0 2px 4px;\n', 1)
 
-      - name: Validate D1 migrations
-        run: pnpm db:migrate:local
+          start = css.index('.media-center-heading::after {')
+          end = css.index('\n}\n', start) + 3
+          css = css[:start] + css[end:]
 
-      - name: Lint
-        run: pnpm lint
+          preview_start = css.index('.media-center-preview {')
+          preview_end = css.index('\n}\n', preview_start) + 3
+          preview = css[preview_start:preview_end]
+          preview = preview.replace('  aspect-ratio: 4 / 3;\n', '')
+          css = css[:preview_start] + preview + css[preview_end:]
 
-      - name: Format
-        run: pnpm format
+          media_start = css.index('.media-center-preview img,')
+          media_end = css.index('\n}\n', media_start) + 3
+          media = css[media_start:media_end]
+          media = media.replace(
+              '  width: 100%;\n  height: 100%;\n  object-fit: cover;\n',
+              '  display: block;\n  width: 100%;\n  height: auto;\n',
+          )
+          css = css[:media_start] + media + css[media_end:]
 
-      - name: Typecheck
-        run: pnpm typecheck
+          helper_start = css.index('.media-center-upload-bar > small {')
+          helper_end = css.index('\n}\n', helper_start) + 3
+          css = css[:helper_start] + '.media-center-upload-bar > small {\n  display: none;\n}\n\n' + css[helper_end:]
 
-      - name: Test
-        run: pnpm test
+          responsive_heading = '''  .media-center-heading::after {
+            display: none;
+          }
 
-      - name: Build
-        run: pnpm build
+'''
+          css = css.replace(responsive_heading, '', 1)
+          css_path.write_text(css)
 
-      - name: Validate Worker bundle
-        run: pnpm cf:check
+          test_path = Path('apps/admin/test/media-center-density-contract.test.mjs')
+          test = test_path.read_text()
+          old = "  assert.match(cssSource, /aspect-ratio: 4 \\/ 3/);\n"
+          new = "  assert.doesNotMatch(cssSource, /\\.media-center-preview\\s*\\{[^}]*aspect-ratio/s);\n  assert.match(cssSource, /\\.media-center-preview img,[\\s\\S]*height: auto/);\n  assert.doesNotMatch(cssSource, /\\.media-center-preview img,[\\s\\S]*object-fit: cover/);\n"
+          if old not in test:
+              raise SystemExit('old ratio contract not found')
+          test_path.write_text(test.replace(old, new, 1))
 
-  deploy:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: validate
-    runs-on: ubuntu-latest
-    timeout-minutes: 20
-    concurrency:
-      group: site-cloudflare-production
-      cancel-in-progress: false
-    steps:
-      - name: Checkout
-        run: |
-          set -euo pipefail
-          git init .
-          git remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
-          git fetch --no-tags --depth=1 origin "${GITHUB_REF}"
-          git checkout --detach FETCH_HEAD
+          Path('.github/workflows/agent-media-original-ratio.yml').unlink(missing_ok=True)
+          PY
 
-      - name: Set up Node.js and pnpm
-        run: |
-          set -euo pipefail
-          node --version
-          node -e "if (Number(process.versions.node.split('.')[0]) < 22) { throw new Error('Node.js 22 or newer is required') }"
-          npm install --global pnpm@11.19.0
-          pnpm --version
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
-      - name: Record D1 recovery bookmark
-        run: pnpm exec wrangler d1 time-travel info DB
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
-
-      - name: Apply D1 migrations
-        run: pnpm db:migrate:remote
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
-
-      - name: Read and verify admin-configured R2 custom domain
-        id: r2_origin
-        run: |
-          set -euo pipefail
-          configured_result="$(pnpm exec wrangler d1 execute DB --remote --command "SELECT media_base_url, (SELECT object_key FROM media_assets WHERE status = 'ready' AND deleted_at IS NULL ORDER BY updated_at DESC LIMIT 1) AS media_object_key FROM site_settings WHERE id = 1;" --json)"
-          configured="$(printf '%s' "$configured_result" | node -e '
-            const fs = require("fs");
-            const payload = JSON.parse(fs.readFileSync(0, "utf8"));
-            const entries = Array.isArray(payload) ? payload : [payload];
-            const row = entries.flatMap((entry) => Array.isArray(entry?.results) ? entry.results : []).find(Boolean);
-            if (typeof row?.media_base_url === "string") process.stdout.write(row.media_base_url.trim());
-          ')"
-          media_key="$(printf '%s' "$configured_result" | node -e '
-            const fs = require("fs");
-            const payload = JSON.parse(fs.readFileSync(0, "utf8"));
-            const entries = Array.isArray(payload) ? payload : [payload];
-            const row = entries.flatMap((entry) => Array.isArray(entry?.results) ? entry.results : []).find(Boolean);
-            if (typeof row?.media_object_key === "string") process.stdout.write(row.media_object_key.trim());
-          ')"
-          echo "media_key=$media_key" >> "$GITHUB_OUTPUT"
-
-          if [[ -z "$configured" ]]; then
-            echo '::warning::R2 custom domain is not configured in Admin > Site Settings.'
-            echo 'origin=' >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          origin="$(PREFERRED_R2_PUBLIC_ORIGIN="$configured" \
-            R2_BUCKET_NAME='service-catalog-site-assets' \
-            node scripts/resolve-r2-public-origin.mjs)"
-          echo "origin=$origin" >> "$GITHUB_OUTPUT"
-          echo "Verified admin-configured R2 custom-domain read origin: $origin"
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
-
-      - name: Verify selected R2 custom domain
-        if: steps.r2_origin.outputs.origin != ''
-        env:
-          R2_ORIGIN: ${{ steps.r2_origin.outputs.origin }}
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
-        run: |
-          set -euo pipefail
-          domain="$(node -e 'process.stdout.write(new URL(process.env.R2_ORIGIN).hostname)')"
-          pnpm exec wrangler r2 bucket domain get service-catalog-site-assets --domain "$domain"
-
-      - name: Configure public R2 CORS
-        run: |
-          set -euo pipefail
-          pnpm exec wrangler r2 bucket cors set service-catalog-site-assets \
-            --file config/r2-public-cors.json \
-            --force
-          pnpm exec wrangler r2 bucket cors list service-catalog-site-assets
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
-
-      - name: Probe direct R2 media reads
-        id: r2_probe
-        env:
-          R2_ORIGIN: ${{ steps.r2_origin.outputs.origin }}
-          MEDIA_OBJECT_KEY: ${{ steps.r2_origin.outputs.media_key }}
-        run: |
-          set -euo pipefail
-          if [[ -z "$R2_ORIGIN" ]]; then
-            echo 'ready=false' >> "$GITHUB_OUTPUT"
-            echo 'status=not-configured' >> "$GITHUB_OUTPUT"
-            echo '::warning::DIRECT_R2_NOT_CONFIGURED - configure and test the R2 custom domain in Admin > Site Settings.'
-            exit 0
-          fi
-          if [[ -z "$MEDIA_OBJECT_KEY" ]]; then
-            echo 'ready=false' >> "$GITHUB_OUTPUT"
-            echo 'status=no-ready-media' >> "$GITHUB_OUTPUT"
-            echo '::warning::DIRECT_R2_MEDIA_UNTESTED - no ready media asset exists yet.'
-            exit 0
-          fi
-
-          probe_origin='https://storefront-probe.invalid'
-          media_path="$(MEDIA_OBJECT_KEY="$MEDIA_OBJECT_KEY" node -e '
-            const key = process.env.MEDIA_OBJECT_KEY;
-            const segments = key.split("/");
-            if (segments.some((segment) => !segment || segment === "." || segment === "..")) process.exit(1);
-            process.stdout.write(segments.map(encodeURIComponent).join("/"));
-          ')"
-          headers="$(mktemp)"
-          body="$(mktemp)"
-          status="$(curl --silent --show-error \
-            --connect-timeout 10 \
-            --max-time 20 \
-            --range 0-0 \
-            -H "Origin: $probe_origin" \
-            -D "$headers" \
-            -o "$body" \
-            -w '%{http_code}' \
-            "$R2_ORIGIN/$media_path" || true)"
-          cors="$(awk 'BEGIN{IGNORECASE=1} /^access-control-allow-origin:/ {gsub("\r", ""); sub(/^[^:]+:[[:space:]]*/, ""); print; exit}' "$headers")"
-          content_type="$(awk 'BEGIN{IGNORECASE=1} /^content-type:/ {gsub("\r", ""); sub(/^[^:]+:[[:space:]]*/, ""); print; exit}' "$headers")"
-
-          ready=false
-          if [[ "$status" == '206' \
-            && "$(wc -c < "$body")" == '1' \
-            && "$content_type" =~ ^(image|video)/ \
-            && ( "$cors" == '*' || "$cors" == "$probe_origin" ) ]]; then
-            ready=true
-          fi
-          echo "ready=$ready" >> "$GITHUB_OUTPUT"
-          echo "status=$status" >> "$GITHUB_OUTPUT"
-          echo "Direct R2 media probe: HTTP $status, type='${content_type:-missing}', CORS='${cors:-missing}', ready=$ready"
-
-          if [[ "$ready" != true ]]; then
-            echo '::warning::DIRECT_R2_MEDIA_BLOCKED - Storefront will retry tracked media through its same-origin /_media/* route.'
-            if grep -Eqi '^cf-mitigated:[[:space:]]*challenge' "$headers"; then
-              echo 'Direct R2 diagnosis: Cloudflare challenge (cf-mitigated: challenge).'
-            fi
-            echo '--- direct R2 response headers ---'
-            cat "$headers"
-            echo '--- direct R2 response body preview ---'
-            head -c 800 "$body" || true
-            echo
-          fi
-
-      - name: Build production assets
-        run: pnpm build
-
-      - name: Deploy business platform Worker
-        id: deploy
-        run: |
-          set -euo pipefail
-          pnpm exec wrangler deploy --keep-vars | tee /tmp/wrangler-deploy.log
-          url="$(grep -Eo 'https://[A-Za-z0-9.-]+\.workers\.dev' /tmp/wrangler-deploy.log | tail -n 1)"
-          version_id="$(grep -Eo 'Current Version ID: [0-9a-f-]+' /tmp/wrangler-deploy.log | tail -n 1 | awk '{print $4}')"
-          test -n "$url"
-          test -n "$version_id"
-          echo "url=$url" >> "$GITHUB_OUTPUT"
-          echo "version_id=$version_id" >> "$GITHUB_OUTPUT"
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
-
-      - name: Smoke test production
-        env:
-          BASE_URL: ${{ steps.deploy.outputs.url }}
-          EXPECTED_WORKER_VERSION_ID: ${{ steps.deploy.outputs.version_id }}
-          R2_ORIGIN: ${{ steps.r2_origin.outputs.origin }}
-          DIRECT_R2_READY: ${{ steps.r2_probe.outputs.ready }}
-          MEDIA_OBJECT_KEY: ${{ steps.r2_origin.outputs.media_key }}
-        run: |
-          set -euo pipefail
-
-          health=''
-          health_ready=false
-          for attempt in {1..40}; do
-            health="$(curl --fail --silent --show-error "$BASE_URL/api/health" || true)"
-            if printf '%s' "$health" | node -e '
-              const fs = require("fs");
-              let value;
-              try {
-                value = JSON.parse(fs.readFileSync(0, "utf8"));
-              } catch {
-                process.exit(1);
-              }
-              if (value.ok !== true) process.exit(1);
-              if (value.environment !== "production") process.exit(1);
-              if (value.publicLanguage !== "en") process.exit(1);
-              if (value.workerVersionId !== process.env.EXPECTED_WORKER_VERSION_ID) process.exit(1);
-            '; then
-              health_ready=true
-              break
-            fi
-            sleep 3
-          done
-          if [[ "$health_ready" != true ]]; then
-            echo 'Worker version metadata did not propagate before the smoke-test deadline.'
-            echo "Expected Worker Version ID: $EXPECTED_WORKER_VERSION_ID"
-            printf '%s\n' "$health"
-            exit 1
-          fi
-          printf '%s\n' "$health"
-
-          security_headers_ready=false
-          for attempt in 1 2 3 4 5; do
-            if curl --fail --silent --show-error -D /tmp/security.headers -o /dev/null "$BASE_URL/" \
-              && grep -Eqi '^content-security-policy: .*frame-ancestors '\''none'\''' /tmp/security.headers \
-              && grep -Eqi '^x-content-type-options: nosniff' /tmp/security.headers \
-              && grep -Eqi '^x-frame-options: DENY' /tmp/security.headers \
-              && grep -Eqi '^referrer-policy: strict-origin-when-cross-origin' /tmp/security.headers; then
-              security_headers_ready=true
-              break
-            fi
-            sleep 3
-          done
-          if [[ "$security_headers_ready" != true ]]; then
-            echo 'Security headers did not propagate before the smoke-test deadline.'
-            cat /tmp/security.headers || true
-            exit 1
-          fi
-
-          media_config="$(curl --fail --silent --show-error "$BASE_URL/api/public/storefront/media-base-url")"
-          printf '%s' "$media_config" | R2_ORIGIN="$R2_ORIGIN" node -e '
-            const fs = require("fs");
-            const value = JSON.parse(fs.readFileSync(0, "utf8"));
-            const expected = process.env.R2_ORIGIN.trim() || null;
-            if (value.mediaBaseUrl !== expected) process.exit(1);
-          '
-
-          curl --fail --silent --show-error \
-            -D /tmp/public-theme.headers \
-            -o /tmp/public-theme.json \
-            "$BASE_URL/api/public/theme"
-          grep -Eqi '^content-type: application/json' /tmp/public-theme.headers
-          grep -Eqi '^cache-control: public, max-age=30, must-revalidate' /tmp/public-theme.headers
-          node -e '
-            const fs = require("fs");
-            const value = JSON.parse(fs.readFileSync("/tmp/public-theme.json", "utf8"));
-            const theme = value?.theme;
-            const keys = new Set(["marketplace", "noir", "live", "saas", "travel", "tech", "custom"]);
-            const tokenKeys = ["brand", "brandStrong", "text", "muted", "surface", "surfaceSoft", "line", "pageBg", "heroStart", "heroEnd", "heroGlow", "shadow"];
-            if (!theme || !keys.has(theme.key)) process.exit(1);
-            if (theme.colorScheme !== "light" && theme.colorScheme !== "dark") process.exit(1);
-            if (theme.productMediaRatio !== "1:1") process.exit(1);
-            if (!theme.tokens || tokenKeys.some((key) => typeof theme.tokens[key] !== "string" || !theme.tokens[key])) process.exit(1);
-          '
-
-          curl --fail --silent --show-error \
-            -D /tmp/storefront-current.headers \
-            -o /tmp/storefront-current.json \
-            "$BASE_URL/public/current.json"
-          grep -Eqi '^content-type: application/json' /tmp/storefront-current.headers
-          grep -Eqi '^cache-control: public, max-age=30, must-revalidate' /tmp/storefront-current.headers
-          node -e "const fs=require('fs'); const value=JSON.parse(fs.readFileSync('/tmp/storefront-current.json','utf8')); if(value.schemaVersion!==1&&value.schemaVersion!==2) process.exit(1);"
-          curl --fail --silent --show-error --head "$BASE_URL/public/current.json" >/dev/null
-
-          if [[ -n "$MEDIA_OBJECT_KEY" ]]; then
-            media_path="$(MEDIA_OBJECT_KEY="$MEDIA_OBJECT_KEY" node -e '
-              const key = process.env.MEDIA_OBJECT_KEY;
-              const segments = key.split("/");
-              if (segments.some((segment) => !segment || segment === "." || segment === "..")) process.exit(1);
-              process.stdout.write(segments.map(encodeURIComponent).join("/"));
-            ')"
-            media_status="$(curl --silent --show-error \
-              --connect-timeout 10 \
-              --max-time 20 \
-              --range 0-0 \
-              -D /tmp/media-fallback.headers \
-              -o /tmp/media-fallback.body \
-              -w '%{http_code}' \
-              "$BASE_URL/_media/$media_path")"
-            test "$media_status" = '206'
-            test "$(wc -c < /tmp/media-fallback.body)" = '1'
-            grep -Eqi '^content-type: (image|video)/' /tmp/media-fallback.headers
-            grep -Eqi '^content-range: bytes 0-0/[1-9][0-9]*' /tmp/media-fallback.headers
-            grep -Eqi '^cache-control: public, max-age=' /tmp/media-fallback.headers
-            echo 'SAME_ORIGIN_MEDIA_FALLBACK=ready'
-          else
-            echo '::warning::SAME_ORIGIN_MEDIA_FALLBACK=untested - no ready media asset exists yet.'
-          fi
-
-          if [[ -n "$R2_ORIGIN" && -n "$MEDIA_OBJECT_KEY" ]]; then
-            media_path="$(MEDIA_OBJECT_KEY="$MEDIA_OBJECT_KEY" node -e '
-              const key = process.env.MEDIA_OBJECT_KEY;
-              const segments = key.split("/");
-              if (segments.some((segment) => !segment || segment === "." || segment === "..")) process.exit(1);
-              process.stdout.write(segments.map(encodeURIComponent).join("/"));
-            ')"
-            direct_headers="$(mktemp)"
-            direct_body="$(mktemp)"
-            direct_status="$(curl --silent --show-error \
-              --connect-timeout 10 \
-              --max-time 20 \
-              --range 0-0 \
-              -H "Origin: $BASE_URL" \
-              -D "$direct_headers" \
-              -o "$direct_body" \
-              -w '%{http_code}' \
-              "$R2_ORIGIN/$media_path" || true)"
-            direct_cors="$(awk 'BEGIN{IGNORECASE=1} /^access-control-allow-origin:/ {gsub("\r", ""); sub(/^[^:]+:[[:space:]]*/, ""); print; exit}' "$direct_headers")"
-            direct_content_type="$(awk 'BEGIN{IGNORECASE=1} /^content-type:/ {gsub("\r", ""); sub(/^[^:]+:[[:space:]]*/, ""); print; exit}' "$direct_headers")"
-            if [[ "$direct_status" == '206' \
-              && "$(wc -c < "$direct_body")" == '1' \
-              && "$direct_content_type" =~ ^(image|video)/ \
-              && ( "$direct_cors" == '*' || "$direct_cors" == "$BASE_URL" ) ]]; then
-              echo 'DIRECT_R2_MEDIA_READ=ready'
-            else
-              echo '::warning::DIRECT_R2_MEDIA_READ=blocked - tracked media remains available through the tested same-origin /_media/* fallback.'
-              echo "Direct R2 media status: HTTP $direct_status, type='${direct_content_type:-missing}', CORS='${direct_cors:-missing}', predeploy_ready=$DIRECT_R2_READY"
-              if grep -Eqi '^cf-mitigated:[[:space:]]*challenge' "$direct_headers"; then
-                echo 'Direct R2 diagnosis: Cloudflare challenge (cf-mitigated: challenge).'
-              fi
-            fi
-          elif [[ -z "$R2_ORIGIN" ]]; then
-            echo '::warning::DIRECT_R2_MEDIA_READ=not-configured'
-          else
-            echo '::warning::DIRECT_R2_MEDIA_READ=untested-no-ready-media'
-          fi
-
-          auth_session="$(curl --fail --silent --show-error "$BASE_URL/api/admin/auth/session")"
-          printf '%s' "$auth_session" | grep -F '"authenticated":false'
-
-          auth_session_with_slash="$(curl --fail --silent --show-error "$BASE_URL/api/admin/auth/session/")"
-          printf '%s' "$auth_session_with_slash" | grep -F '"authenticated":false'
-
-          for path in / /admin/; do
-            curl --fail --silent --show-error "$BASE_URL$path" | grep -F '<div id="root"></div>'
-          done
-
-          for path in "/sections/storefront-smoke-${GITHUB_SHA}/" \
-            "/sections/storefront-smoke-${GITHUB_SHA}/products/product-smoke-${GITHUB_SHA}/" \
-            "/products/storefront-smoke-${GITHUB_SHA}/"; do
-            curl --fail --silent --show-error \
-              -H 'Accept: text/html' \
-              -H 'Sec-Fetch-Mode: navigate' \
-              "$BASE_URL$path" | grep -F '<div id="root"></div>'
-          done
+          git show origin/main:.github/workflows/ci.yml > .github/workflows/ci.yml
+          git diff --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Preserve original media preview ratios"
+          git push origin HEAD:fix/media-center-square-thumbnails
