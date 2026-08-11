@@ -287,7 +287,10 @@ export function ProductDetailPage({
                             preload="metadata"
                             src={item.url}
                           />
-                          <span className="detail-thumbnail-video-mark" aria-hidden="true">
+                          <span
+                            className="detail-thumbnail-video-mark"
+                            aria-hidden="true"
+                          >
                             ▶
                           </span>
                         </>
