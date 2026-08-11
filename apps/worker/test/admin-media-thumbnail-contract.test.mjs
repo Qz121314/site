@@ -7,21 +7,27 @@ const routeSource = await readFile(
   'utf8',
 );
 const indexSource = await readFile(new URL('../src/index.ts', import.meta.url), 'utf8');
+const wranglerSource = await readFile(
+  new URL('../../../wrangler.jsonc', import.meta.url),
+  'utf8',
+);
 
-test('admin media thumbnails are edge-resized and do not expose the raw source route', () => {
-  assert.match(routeSource, /ADMIN_THUMBNAIL_SIZE = 240/);
-  assert.match(routeSource, /fit: 'scale-down'/);
-  assert.match(routeSource, /anim: false/);
-  assert.match(routeSource, /format: 'webp'/);
-  assert.match(routeSource, /\/assets\/:id\/thumbnail/);
-  assert.match(routeSource, /image-resizing/i);
-  assert.match(routeSource, /HMAC/);
-  assert.match(routeSource, /MEDIA_THUMBNAIL_FAILED/);
-
-  const sourceRouteIndex = indexSource.indexOf(
-    "app.route('/__admin-media-thumbnail-source', adminMediaThumbnailSourceRoutes);",
+test('admin media thumbnails transform R2 bytes directly through the Images binding', () => {
+  assert.match(wranglerSource, /"images"\s*:\s*\{[\s\S]*?"binding"\s*:\s*"IMAGES"/u);
+  assert.match(routeSource, /context\.env\.IMAGES\.input\(object\.body\)/u);
+  assert.match(routeSource, /ADMIN_THUMBNAIL_SIZE = 240/u);
+  assert.match(routeSource, /fit: 'scale-down'/u);
+  assert.match(routeSource, /format: 'image\/webp'/u);
+  assert.match(routeSource, /quality: ADMIN_THUMBNAIL_QUALITY/u);
+  assert.match(routeSource, /anim: false/u);
+  assert.match(routeSource, /\/assets\/:id\/thumbnail/u);
+  assert.match(routeSource, /MEDIA_THUMBNAIL_FAILED/u);
+  assert.doesNotMatch(
+    routeSource,
+    /image-resizing|THUMBNAIL_TOKEN_NAMESPACE|signThumbnailSource/u,
   );
-  const adminGuardIndex = indexSource.indexOf("app.use('/api/admin/*', requireAdmin);");
-  assert.ok(sourceRouteIndex >= 0);
-  assert.ok(adminGuardIndex > sourceRouteIndex);
+  assert.doesNotMatch(
+    indexSource,
+    /adminMediaThumbnailSourceRoutes|__admin-media-thumbnail-source/u,
+  );
 });
