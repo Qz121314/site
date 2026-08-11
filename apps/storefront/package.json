@@ -8,7 +8,7 @@
     "build": "tsc --noEmit && vite build",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src test vite.config.ts",
-    "test": "node --test --experimental-strip-types test/messages-layout-contract.test.mjs test/mobile-navigation-contract.test.mjs test/not-found-contract.test.mjs test/primary-pages-theme-contract.test.mjs test/public-content-transport.test.mjs test/pwa-contract.test.mjs"
+    "test": "node --test --experimental-strip-types test/*.test.mjs"
   },
   "dependencies": {
     "@site/config": "workspace:*",
