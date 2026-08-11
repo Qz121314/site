@@ -1,0 +1,366 @@
+name: Apply media center density v2
+
+on:
+  pull_request:
+    branches:
+      - main
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ui/media-center-density
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+
+      - name: Install pnpm
+        run: npm install --global pnpm@11.19.0
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Apply changes
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def require(text, needle, label):
+              if needle not in text:
+                  raise SystemExit(f'missing target: {label}')
+
+          view_path = Path('apps/admin/src/AssetLibraryView.tsx')
+          view = view_path.read_text()
+          require(view, "import { MediaUploadQueuePanel } from './asset-library/MediaUploadQueuePanel';\n", 'panel import')
+          view = view.replace("import { MediaUploadQueuePanel } from './asset-library/MediaUploadQueuePanel';\n", '', 1)
+          require(view, '  type MediaUploadBatchSummary,\n', 'queue summary import')
+          view = view.replace(
+              '  type MediaUploadBatchSummary,\n',
+              '  type MediaUploadBatchSummary,\n  type MediaUploadQueueItem,\n',
+              1,
+          )
+
+          helper_anchor = '\nfunction isSessionError(error: unknown): boolean {'
+          require(view, helper_anchor, 'helper anchor')
+          helpers = r'''
+          
+          function uploadStatusLabel(item: MediaUploadQueueItem): string {
+            switch (item.status) {
+              case 'queued':
+                return '等待';
+              case 'processing':
+                return item.file.type.startsWith('image/') && item.file.type !== 'image/gif'
+                  ? '优化上传中'
+                  : '上传中';
+              case 'uploaded':
+                return '完成';
+              case 'reused':
+                return '已存在';
+              case 'error':
+                return '失败';
+            }
+          }
+
+          function UploadMediaCard({ item }: { item: MediaUploadQueueItem }) {
+            const [previewUrl, setPreviewUrl] = useState('');
+
+            useEffect(() => {
+              const url = URL.createObjectURL(item.file);
+              setPreviewUrl(url);
+              return () => URL.revokeObjectURL(url);
+            }, [item.file]);
+
+            return (
+              <article className={`media-center-card media-center-upload-card is-${item.status}`}>
+                <div className="media-center-preview">
+                  {previewUrl ? (
+                    item.file.type.startsWith('video/') ? (
+                      <video src={previewUrl} muted playsInline preload="metadata" />
+                    ) : (
+                      <img src={previewUrl} alt="" />
+                    )
+                  ) : null}
+                  <b>{uploadStatusLabel(item)}</b>
+                  <i className="media-center-upload-progress" aria-hidden="true" />
+                </div>
+                <div className="media-center-card-body">
+                  <strong title={item.fileName}>{item.fileName}</strong>
+                  <small>
+                    {formatBytes(item.byteSize)}
+                    {item.message ? ` · ${item.message}` : ''}
+                  </small>
+                  <div className="media-center-role-list">
+                    <span>{roleLabel(item.role)}</span>
+                  </div>
+                </div>
+              </article>
+            );
+          }
+          '''
+          view = view.replace(helper_anchor, helpers + helper_anchor, 1)
+
+          start = view.index('  function reportUploadSummary(')
+          end = view.index('\n\n  async function uploadFiles', start)
+          summary = '''  function reportUploadSummary(summary: MediaUploadBatchSummary) {
+            if (summary.failed > 0) {
+              setMediaError(`${summary.failed} 个素材处理失败，可在素材区直接重试。`);
+              return;
+            }
+            if (summary.total === 0 && summary.skipped > 0) {
+              setMediaError('所选内容中没有支持的 JPG、PNG、WebP、GIF、MP4 或 WebM。');
+              return;
+            }
+            if (summary.skipped > 0) {
+              setMediaError(`已忽略 ${summary.skipped} 个不支持的文件。`);
+            }
+          }'''
+          view = view[:start] + summary + view[end:]
+          view = view.replace('    reportUploadSummary(summary, true);', '    reportUploadSummary(summary);', 1)
+
+          panel_start = view.index('          <MediaUploadQueuePanel')
+          panel_end = view.index('          {mediaError ?', panel_start)
+          view = view[:panel_start] + view[panel_end:]
+
+          result_old = '''            <span>
+              {mediaTotal} 个结果
+              {managedAssets.length < mediaTotal
+                ? ` · 已加载 ${managedAssets.length}`
+                : ''}
+            </span>'''
+          require(view, result_old, 'result count')
+          result_new = '''            <div className="media-center-result-summary">
+              {uploadQueue.progress.total > 0 ? (
+                <span className="media-center-upload-summary">
+                  上传 {uploadQueue.progress.done} / {uploadQueue.progress.total}
+                  {uploadQueue.progress.active > 0
+                    ? ` · ${uploadQueue.progress.active} 个处理中`
+                    : ''}
+                  {uploadQueue.progress.failed > 0
+                    ? ` · ${uploadQueue.progress.failed} 个失败`
+                    : ''}
+                </span>
+              ) : null}
+              {uploadQueue.progress.failed > 0 && !uploadQueue.running ? (
+                <button type="button" onClick={() => void retryFailedUploads()}>
+                  重试失败项
+                </button>
+              ) : null}
+              <span>
+                {mediaTotal} 个结果
+                {managedAssets.length < mediaTotal
+                  ? ` · 已加载 ${managedAssets.length}`
+                  : ''}
+              </span>
+            </div>'''
+          view = view.replace(result_old, result_new, 1)
+          require(view, '{mediaLoading ? (', 'loading condition')
+          view = view.replace(
+              '{mediaLoading ? (',
+              '{mediaLoading && uploadQueue.items.length === 0 ? (',
+              1,
+          )
+          require(view, ') : managedAssets.length > 0 ? (', 'asset condition')
+          view = view.replace(
+              ') : managedAssets.length > 0 ? (',
+              ') : managedAssets.length > 0 || uploadQueue.items.length > 0 ? (',
+              1,
+          )
+          grid_anchor = '              <div className="media-center-grid">\n'
+          require(view, grid_anchor, 'grid anchor')
+          view = view.replace(
+              grid_anchor,
+              grid_anchor
+              + '                {uploadQueue.items.map((item) => (\n'
+              + '                  <UploadMediaCard item={item} key={item.id} />\n'
+              + '                ))}\n',
+              1,
+          )
+          view_path.write_text(view)
+
+          queue_path = Path('apps/admin/src/asset-library/media-upload-queue.ts')
+          queue = queue_path.read_text()
+          queue_old = '        if (!sessionExpired) await callbacksRef.current.onBatchComplete();'
+          require(queue, queue_old, 'queue completion')
+          queue = queue.replace(
+              queue_old,
+              '''        if (!sessionExpired) {
+                  await callbacksRef.current.onBatchComplete();
+                  setItems((current) => current.filter((item) => item.status === 'error'));
+                }''',
+              1,
+          )
+          queue_path.write_text(queue)
+
+          main_path = Path('apps/admin/src/main.tsx')
+          main = main_path.read_text()
+          require(main, "import './media-upload-queue.css';\n", 'queue css import')
+          main_path.write_text(main.replace("import './media-upload-queue.css';\n", '', 1))
+
+          css_path = Path('apps/admin/src/media-center.css')
+          css = css_path.read_text()
+
+          def patch_block(selector, replacements):
+              global css
+              start = css.index(selector)
+              end = css.index('\n}', start) + 2
+              block = css[start:end]
+              for old, new in replacements:
+                  if old not in block:
+                      raise SystemExit(f'missing css target in {selector}: {old}')
+                  block = block.replace(old, new, 1)
+              css = css[:start] + block + css[end:]
+
+          patch_block('.media-center-grid {', [
+              ('grid-template-columns: repeat(auto-fill, minmax(188px, 1fr));', 'grid-template-columns: repeat(auto-fill, minmax(138px, 156px));'),
+              ('align-content: start;', 'align-content: start;\n  justify-content: start;'),
+              ('gap: 8px;', 'gap: 6px;'),
+          ])
+          patch_block('.media-center-card {', [('border-radius: 10px;', 'border-radius: 8px;')])
+          patch_block('.media-center-card-select {', [
+              ('top: 7px;', 'top: 5px;'), ('left: 7px;', 'left: 5px;'),
+              ('width: 23px;', 'width: 20px;'), ('height: 23px;', 'height: 20px;'),
+              ('border-radius: 7px;', 'border-radius: 6px;'),
+          ])
+          patch_block('.media-center-preview {', [('aspect-ratio: 1 / 1;', 'aspect-ratio: 4 / 3;')])
+          patch_block('.media-center-preview > b {', [
+              ('right: 7px;', 'right: 5px;'), ('bottom: 7px;', 'bottom: 5px;'),
+              ('padding: 3px 6px;', 'padding: 2px 5px;'),
+          ])
+          patch_block('.media-center-card-body {', [('gap: 4px;', 'gap: 3px;'), ('padding: 7px 8px 6px;', 'padding: 5px 6px 4px;')])
+          patch_block('.media-center-card-body > strong {', [('font-size: 0.68rem;', 'font-size: 0.63rem;')])
+          patch_block('.media-center-card-body > small {', [
+              ('display: -webkit-box;', 'display: block;'),
+              ('min-height: 2.45em;', 'min-height: 1.25em;'),
+              ('font-size: 0.59rem;', 'font-size: 0.55rem;'),
+              ('  -webkit-box-orient: vertical;\n  -webkit-line-clamp: 2;', '  text-overflow: ellipsis;\n  white-space: nowrap;'),
+          ])
+          patch_block('.media-center-role-list {', [('min-height: 19px;', 'min-height: 16px;')])
+          patch_block('.media-center-role-list span {', [
+              ('padding: 2px 5px;', 'padding: 1px 4px;'),
+              ('border-radius: 5px;', 'border-radius: 4px;'),
+              ('font-size: 0.55rem;', 'font-size: 0.5rem;'),
+          ])
+          patch_block('.media-center-card-actions {', [('padding: 5px 8px 7px;', 'padding: 4px 6px 5px;')])
+          patch_block('.media-center-card-actions button {', [
+              ('min-height: 24px;', 'min-height: 22px;'),
+              ('padding: 0 7px;', 'padding: 0 6px;'),
+          ])
+
+          upload_css = '''.media-center-result-summary {
+            display: inline-flex;
+            min-width: 0;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 7px;
+          }
+
+          .media-center-result-summary button {
+            min-height: 22px;
+            padding: 0 6px;
+            border: 1px solid #e2e6ec;
+            border-radius: 6px;
+            color: #475467;
+            background: #fff;
+            cursor: pointer;
+            font-size: 0.56rem;
+            font-weight: 700;
+          }
+
+          .media-center-upload-summary {
+            color: #536174;
+            font-variant-numeric: tabular-nums;
+          }
+
+          .media-center-upload-card {
+            border-style: dashed;
+          }
+
+          .media-center-upload-card .media-center-preview img,
+          .media-center-upload-card .media-center-preview video {
+            opacity: 0.76;
+          }
+
+          .media-center-upload-card.is-error {
+            border-color: #e6a49d;
+          }
+
+          .media-center-upload-progress {
+            position: absolute;
+            z-index: 2;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            height: 2px;
+            overflow: hidden;
+          }
+
+          .media-center-upload-card.is-processing .media-center-upload-progress::after {
+            position: absolute;
+            width: 42%;
+            height: 100%;
+            border-radius: 999px;
+            background: var(--brand, #ff5a1f);
+            content: '';
+            animation: media-center-upload-progress 1s ease-in-out infinite alternate;
+          }
+
+          @keyframes media-center-upload-progress {
+            from { transform: translateX(-15%); }
+            to { transform: translateX(155%); }
+          }
+
+          '''
+          empty_anchor = '.media-center-empty,\n'
+          require(css, empty_anchor, 'empty-state css anchor')
+          css = css.replace(empty_anchor, upload_css + empty_anchor, 1)
+          css_path.write_text(css)
+
+          test_path = Path('apps/admin/test/media-center-density-contract.test.mjs')
+          test_path.write_text(r'''import assert from 'node:assert/strict';
+          import { readFile } from 'node:fs/promises';
+          import test from 'node:test';
+
+          const viewSource = await readFile(new URL('../src/AssetLibraryView.tsx', import.meta.url), 'utf8');
+          const mainSource = await readFile(new URL('../src/main.tsx', import.meta.url), 'utf8');
+          const cssSource = await readFile(new URL('../src/media-center.css', import.meta.url), 'utf8');
+
+          test('media center renders upload feedback inside a dense asset grid', () => {
+            assert.doesNotMatch(viewSource, /MediaUploadQueuePanel/);
+            assert.doesNotMatch(mainSource, /media-upload-queue\.css/);
+            assert.match(viewSource, /<UploadMediaCard item=\{item\}/);
+            assert.match(viewSource, /上传 \{uploadQueue\.progress\.done\}/);
+            assert.match(cssSource, /minmax\(138px, 156px\)/);
+            assert.match(cssSource, /aspect-ratio: 4 \/ 3/);
+          });
+          ''')
+
+          Path('apps/admin/src/asset-library/MediaUploadQueuePanel.tsx').unlink()
+          Path('apps/admin/src/media-upload-queue.css').unlink()
+          Path('.github/workflows/agent-media-center-density.yml').unlink()
+          Path('.github/workflows/agent-media-center-density-v2.yml').unlink()
+          PY
+
+          pnpm exec prettier --write \
+            apps/admin/src/AssetLibraryView.tsx \
+            apps/admin/src/asset-library/media-upload-queue.ts \
+            apps/admin/src/main.tsx \
+            apps/admin/src/media-center.css \
+            apps/admin/test/media-center-density-contract.test.mjs
+
+      - name: Commit changes
+        shell: bash
+        run: |
+          git diff --check
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Tighten media center density"
+          git push origin HEAD:ui/media-center-density
