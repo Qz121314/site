@@ -87,17 +87,17 @@ test('product gallery is touch-first and supports both images and videos', () =>
   assert.match(detailSource, /<ResilientImage/u);
 });
 
-test('mobile CTA is the push-page safe-area action bar at the viewport edge', () => {
+test('product CTA is the push-page safe-area action bar at the viewport edge', () => {
   assert.match(
     detailCss,
-    /\.product-detail-mobile-action\s*\{[\s\S]*?position:\s*fixed[\s\S]*?bottom:\s*0/u,
+    /\.product-detail-fixed-action\s*\{[\s\S]*?position:\s*fixed[\s\S]*?bottom:\s*0/u,
   );
   assert.match(
     detailCss,
-    /\.product-detail-mobile-action\s*\{[\s\S]*?padding:[^;]*env\(safe-area-inset-bottom\)/u,
+    /\.product-detail-fixed-action\s*\{[\s\S]*?padding:[^;]*env\(safe-area-inset-bottom\)/u,
   );
   assert.match(detailCss, /backdrop-filter:\s*blur\(18px\)/u);
-  assert.match(detailCss, /\.product-detail-page:has\(\.product-detail-mobile-action\)/u);
+  assert.match(detailCss, /\.product-detail-page:has\(\.product-detail-fixed-action\)/u);
   assert.doesNotMatch(
     detailCss,
     /bottom:\s*calc\(67px \+ env\(safe-area-inset-bottom\)\)/u,
@@ -137,7 +137,13 @@ test('shared package and Admin preview load the product detail Theme Center exte
   assert.match(adminMain, /@site\/storefront-ui\/product-detail-theme-contract\.css/u);
 });
 
-test('product detail keeps published CTA label and destination authoritative', () => {
-  assert.match(detailSource, /href=\{product\.cta\.path\}/u);
-  assert.match(detailSource, /\{product\.cta\.label\}/u);
+test('product detail keeps published CTA label authoritative and resolves destination on demand', () => {
+  assert.match(detailSource, /product\.cta\?\.label/u);
+  assert.match(detailSource, /\{ctaLabel\}/u);
+  assert.match(
+    detailSource,
+    /\/api\/public\/storefront\/cta\/\$\{encodeURIComponent\(productId\)\}\/resolve/u,
+  );
+  assert.match(detailSource, /method: 'POST'/u);
+  assert.doesNotMatch(detailSource, /href=\{product\.cta\.path\}/u);
 });

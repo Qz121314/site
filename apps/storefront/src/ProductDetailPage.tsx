@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import type { StorefrontLinkComponent } from '@site/storefront-ui';
-import { useEffect, type MouseEvent as ReactMouseEvent } from 'react';
+import { useEffect, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import {
   loadProductSnapshot,
   PublicContentError,
@@ -11,6 +11,17 @@ import { ResilientImage, ResilientVideo } from './ResilientMedia';
 import { sectionHref } from './routing';
 import { canNavigateStorefrontBack, navigateStorefrontBack } from './storefront-history';
 import { SYSTEM_UI } from './system-ui';
+
+type ResolvedCtaDestination = {
+  mode: 'customer_service' | 'link';
+  href: string;
+};
+
+type CtaResolveState = 'idle' | 'loading' | 'ready' | 'error';
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
 
 function isVideoMediaUrl(value: string): boolean {
   try {
@@ -36,6 +47,31 @@ function handleInternalBack(event: ReactMouseEvent<HTMLAnchorElement>) {
   navigateStorefrontBack();
 }
 
+async function resolveCtaDestination(productId: string): Promise<ResolvedCtaDestination> {
+  const response = await fetch(
+    `/api/public/storefront/cta/${encodeURIComponent(productId)}/resolve`,
+    {
+      method: 'POST',
+      cache: 'no-store',
+      credentials: 'same-origin',
+      headers: { Accept: 'application/json' },
+    },
+  );
+  const value = (await response.json().catch(() => null)) as unknown;
+  const envelope = isRecord(value) ? value : null;
+  if (
+    !response.ok ||
+    !envelope ||
+    envelope.available !== true ||
+    (envelope.mode !== 'customer_service' && envelope.mode !== 'link') ||
+    typeof envelope.href !== 'string' ||
+    !envelope.href
+  ) {
+    throw new Error('CTA_UNAVAILABLE');
+  }
+  return { mode: envelope.mode, href: envelope.href };
+}
+
 export function ProductDetailPage({
   bootstrap,
   productRef,
@@ -47,6 +83,10 @@ export function ProductDetailPage({
   sectionRef: string | null;
   LinkComponent?: StorefrontLinkComponent;
 }) {
+  const [ctaDestination, setCtaDestination] = useState<ResolvedCtaDestination | null>(
+    null,
+  );
+  const [ctaResolveState, setCtaResolveState] = useState<CtaResolveState>('idle');
   const query = useQuery({
     queryKey: [
       'storefront-product',
@@ -64,6 +104,24 @@ export function ProductDetailPage({
   useEffect(() => {
     if (product) document.title = `${product.title} · ${bootstrap.site.site.name}`;
   }, [bootstrap.site.site.name, product]);
+
+  useEffect(() => {
+    setCtaDestination(null);
+    setCtaResolveState('idle');
+  }, [product?.id]);
+
+  async function handleResolveCta() {
+    if (!product?.cta || ctaResolveState === 'loading') return;
+    setCtaResolveState('loading');
+    try {
+      const destination = await resolveCtaDestination(product.id);
+      setCtaDestination(destination);
+      setCtaResolveState('ready');
+    } catch {
+      setCtaDestination(null);
+      setCtaResolveState('error');
+    }
+  }
 
   if (query.isLoading && !product) {
     return <div className="inline-loading product-detail-state">{SYSTEM_UI.loading}</div>;
@@ -103,6 +161,7 @@ export function ProductDetailPage({
   if (!product) return null;
 
   const backHref = sectionHref({ id: product.sectionId, slug: product.sectionSlug });
+  const ctaLabel = product.cta?.label ?? '';
 
   return (
     <article className="product-detail-page" aria-labelledby="product-detail-title">
@@ -112,10 +171,7 @@ export function ProductDetailPage({
           href={backHref}
           onClick={handleInternalBack}
         >
-          <span className="product-detail-back-icon" aria-hidden="true">
-            ‹
-          </span>
-          <span className="product-detail-back-label">{product.sectionName}</span>
+          {SYSTEM_UI.back}
         </LinkComponent>
       </header>
 
@@ -179,14 +235,6 @@ export function ProductDetailPage({
               ))}
             </div>
           ) : null}
-
-          {product.cta ? (
-            <div className="product-detail-action">
-              <a className="cta-button" href={product.cta.path} rel="nofollow">
-                {product.cta.label}
-              </a>
-            </div>
-          ) : null}
         </section>
       </div>
 
@@ -197,10 +245,45 @@ export function ProductDetailPage({
       ) : null}
 
       {product.cta ? (
-        <div className="product-detail-mobile-action">
-          <a className="cta-button" href={product.cta.path} rel="nofollow">
-            {product.cta.label}
-          </a>
+        <div className="product-detail-fixed-action">
+          {ctaDestination ? (
+            ctaDestination.mode === 'customer_service' ? (
+              <LinkComponent className="cta-button is-ready" href={ctaDestination.href}>
+                <span>{ctaLabel}</span>
+                <span className="product-detail-cta-arrow" aria-hidden="true">
+                  →
+                </span>
+              </LinkComponent>
+            ) : (
+              <a
+                className="cta-button is-ready"
+                href={ctaDestination.href}
+                target="_blank"
+                rel="noopener noreferrer nofollow"
+              >
+                <span>{ctaLabel}</span>
+                <span className="product-detail-cta-arrow" aria-hidden="true">
+                  ↗
+                </span>
+              </a>
+            )
+          ) : (
+            <button
+              className="cta-button"
+              type="button"
+              aria-busy={ctaResolveState === 'loading'}
+              disabled={ctaResolveState === 'loading'}
+              onClick={() => void handleResolveCta()}
+            >
+              {ctaResolveState === 'loading' ? (
+                <span className="product-detail-cta-spinner" aria-hidden="true" />
+              ) : null}
+              <span>{ctaLabel}</span>
+            </button>
+          )}
+          <span className="sr-only" role="status" aria-live="polite">
+            {ctaResolveState === 'error' ? SYSTEM_UI.unavailable : ''}
+          </span>
         </div>
       ) : null}
     </article>
