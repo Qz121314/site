@@ -54,10 +54,14 @@ export function BrowsePage({
   const [search, setSearch] = useState('');
   const normalizedSearch = search.trim().toLowerCase();
   const sections = useMemo(() => publishedSections(bootstrap), [bootstrap]);
+  const presentationVersion =
+    bootstrap.pointer.schemaVersion === 2
+      ? bootstrap.pointer.sectionsIndex.contentVersion
+      : bootstrap.pointer.contentVersion;
   const presentationQuery = useQuery({
-    queryKey: ['storefront-browse-section-presentation'],
-    queryFn: ({ signal }) => loadBrowseSectionPresentations(signal),
-    staleTime: 30_000,
+    queryKey: ['storefront-browse-section-presentation', presentationVersion],
+    queryFn: ({ signal }) => loadBrowseSectionPresentations(bootstrap, signal),
+    staleTime: Number.POSITIVE_INFINITY,
   });
   const presentationById = useMemo(
     () => new Map((presentationQuery.data ?? []).map((item) => [item.id, item])),
