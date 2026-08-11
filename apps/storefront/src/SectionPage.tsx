@@ -208,15 +208,6 @@ export function SectionCatalogPage({
         </div>
       ) : null}
 
-      {hasFilters && filteredProducts.length > 0 ? (
-        <div className="section-catalog-results">
-          <strong>{filteredProducts.length}</strong>
-          <button type="button" onClick={clearFilters}>
-            {SYSTEM_UI.clear}
-          </button>
-        </div>
-      ) : null}
-
       {filteredProducts.length > 0 ? (
         <div className="section-catalog-products">
           {filteredProducts.map((product) => (

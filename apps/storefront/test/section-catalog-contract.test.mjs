@@ -36,6 +36,7 @@ test('section catalog is search plus touch-first category and tag filtering', ()
   assert.match(sectionSource, /aria-pressed=\{selectedTags\.has\(tag\.id\)\}/u);
   assert.match(sectionSource, /\[\.\.\.selectedTags\]\.every/u);
   assert.match(sectionSource, /clearFilters/u);
+  assert.doesNotMatch(sectionSource, /section-catalog-results/u);
 });
 
 test('section header stays content-focused and does not reuse Home shortcut icons', () => {
@@ -53,6 +54,10 @@ test('section products remain a two-column minimal product list on mobile and de
   assert.match(
     cssSource,
     /\.section-catalog-products\s*\{[\s\S]*?grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/u,
+  );
+  assert.match(
+    cssSource,
+    /@media \(min-width:\s*980px\)[\s\S]*?\.section-catalog-controls,[\s\S]*?\.section-catalog-products\s*\{[\s\S]*?width:\s*min\(720px, 100%\)/u,
   );
   assert.doesNotMatch(
     cssSource,
