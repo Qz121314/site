@@ -190,9 +190,15 @@ test('product detail reads realtime CTA metadata and navigates through the singl
   assert.match(detailSource, /href=\{cta\.path\}/u);
   assert.match(detailSource, /\{cta\.label\}/u);
   assert.doesNotMatch(detailSource, /product\.cta|SYSTEM_UI\.continue/u);
-  assert.doesNotMatch(detailSource, /\/cta\/\$\{encodeURIComponent\(productId\)\}\/resolve/u);
+  assert.doesNotMatch(
+    detailSource,
+    /\/cta\/\$\{encodeURIComponent\(productId\)\}\/resolve/u,
+  );
   assert.doesNotMatch(detailSource, /method: 'POST'/u);
   assert.match(ctaSource, /method: 'GET'/u);
-  assert.match(ctaSource, /\/api\/public\/storefront\/cta\/\$\{encodeURIComponent\(productId\)\}/u);
+  assert.match(
+    ctaSource,
+    /\/api\/public\/storefront\/cta\/\$\{encodeURIComponent\(productId\)\}/u,
+  );
   assert.match(ctaSource, /value\.path\.startsWith\('\/'\)/u);
 });
