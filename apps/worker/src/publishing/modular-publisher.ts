@@ -135,10 +135,13 @@ type SectionRow = {
   id: string;
   slug: string;
   name: string;
+  description: string | null;
   icon_type: 'icon' | 'asset';
   icon_value: string | null;
   icon_asset_id: string | null;
   icon_object_key: string | null;
+  browse_background_asset_id: string | null;
+  browse_background_object_key: string | null;
   sort_order: number;
 };
 
@@ -484,13 +487,26 @@ async function loadSource(db: D1Database): Promise<Source> {
     await db
       .prepare(
         `SELECT
-           s.id, s.slug, s.name, s.icon_type, s.icon_value, s.icon_asset_id,
-           ma.object_key AS icon_object_key, s.sort_order
+           s.id,
+           s.slug,
+           s.name,
+           s.description,
+           s.icon_type,
+           s.icon_value,
+           s.icon_asset_id,
+           icon.object_key AS icon_object_key,
+           s.browse_background_asset_id,
+           background.object_key AS browse_background_object_key,
+           s.sort_order
          FROM sections s
-         LEFT JOIN media_assets ma
-           ON ma.id = s.icon_asset_id
-          AND ma.status = 'ready'
-          AND ma.deleted_at IS NULL
+         LEFT JOIN media_assets icon
+           ON icon.id = s.icon_asset_id
+          AND icon.status = 'ready'
+          AND icon.deleted_at IS NULL
+         LEFT JOIN media_assets background
+           ON background.id = s.browse_background_asset_id
+          AND background.status = 'ready'
+          AND background.deleted_at IS NULL
          WHERE s.deleted_at IS NULL AND s.is_enabled = 1
          ORDER BY s.sort_order ASC, s.name COLLATE NOCASE ASC`,
       )
@@ -656,10 +672,12 @@ function sectionsIndexModel(source: Source) {
     id: section.id,
     slug: section.slug,
     name: section.name,
+    description: section.description,
     icon:
       section.icon_type === 'asset'
         ? { type: 'image' as const, objectKey: section.icon_object_key, value: null }
         : { type: 'icon' as const, objectKey: null, value: section.icon_value },
+    browseBackgroundObjectKey: section.browse_background_object_key,
     sortOrder: section.sort_order,
   }));
 }
@@ -767,7 +785,12 @@ function modulePayload(source: Source, moduleKey: string): ModulePayload {
       sectionId: null,
       label: '分区导航',
       stateModel: sections,
-      mediaKeys: uniqueStrings(source.sections.map((section) => section.icon_object_key)),
+      mediaKeys: uniqueStrings(
+        source.sections.flatMap((section) => [
+          section.icon_object_key,
+          section.browse_background_object_key,
+        ]),
+      ),
       buildFiles: (contentVersion, publishedAt) => [
         {
           relativePath: 'sections.json',
@@ -879,6 +902,15 @@ function validatePayload(source: Source, payload: ModulePayload): void {
         throw new ModularPublicationError(
           'SECTION_ICON_INVALID',
           `分区“${section.name}”的图片图标已不可用，请重新设置后再发布。`,
+        );
+      }
+      if (
+        section.browse_background_asset_id &&
+        !section.browse_background_object_key
+      ) {
+        throw new ModularPublicationError(
+          'SECTION_BROWSE_BACKGROUND_INVALID',
+          `分区“${section.name}”的 Browse 背景图已不可用，请重新设置后再发布。`,
         );
       }
     }
