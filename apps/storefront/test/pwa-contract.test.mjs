@@ -26,6 +26,9 @@ const workerSource = await readFile(
 );
 const pwaCss = await readFile(new URL('../src/pwa.css', import.meta.url), 'utf8');
 const serviceWorker = await readFile(new URL('../public/sw.js', import.meta.url), 'utf8');
+const defaultPwaIcon = await readFile(
+  new URL('../public/icons/app-icon-512.png', import.meta.url),
+);
 
 test('storefront declares installable app metadata', () => {
   assert.match(indexSource, /rel="manifest" href="\/manifest\.webmanifest"/);
@@ -69,6 +72,8 @@ test('PWA icons follow the configured logo with a safe default fallback', () => 
   assert.match(manifestSource, /format: 'image\/png'/);
   assert.match(manifestSource, /PWA_ICON_SAFE_AREA_RATIO/);
   assert.match(manifestSource, /loadDefaultIconStream/);
+  assert.match(manifestSource, /app-icon-512\.png/);
+  assert.deepEqual([...defaultPwaIcon.subarray(0, 8)], [137, 80, 78, 71, 13, 10, 26, 10]);
   assert.match(
     workerSource,
     /app\.get\('\/api\/public\/pwa\/icon\/:size', servePwaIcon\)/,

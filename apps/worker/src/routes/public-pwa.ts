@@ -161,7 +161,7 @@ async function loadLogoStream(
 async function loadDefaultIconStream(
   context: Context<AppEnvironment>,
 ): Promise<ReadableStream<Uint8Array>> {
-  const url = new URL('/icons/app-icon-512.svg', context.req.url);
+  const url = new URL('/icons/app-icon-512.png', context.req.url);
   const response = await context.env.ASSETS.fetch(new Request(url));
   if (!response.ok || !response.body) throw new Error('PWA_DEFAULT_ICON_MISSING');
   return response.body;
