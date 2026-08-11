@@ -7,7 +7,10 @@ const editorSource = await readFile(
   'utf8',
 );
 const adminValidationSource = await readFile(
-  new URL('../../admin/src/product-management/product-editor-validation.ts', import.meta.url),
+  new URL(
+    '../../admin/src/product-management/product-editor-validation.ts',
+    import.meta.url,
+  ),
   'utf8',
 );
 const productDomainSource = await readFile(
