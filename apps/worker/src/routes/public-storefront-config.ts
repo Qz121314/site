@@ -106,6 +106,7 @@ publicStorefrontConfigRoutes.post('/cta/:productId/resolve', async (context) => 
       available: true,
       mode: 'customer_service' as const,
       href: messagesComposeHref(product.id, product.sectionId),
+      label: group.buttonLabel,
     });
   }
 
@@ -122,6 +123,7 @@ publicStorefrontConfigRoutes.post('/cta/:productId/resolve', async (context) => 
     available: true,
     mode: 'link' as const,
     href: target.endpointUrl,
+    label: group.buttonLabel,
   });
 });
 
