@@ -69,7 +69,7 @@
 .section-catalog-search {
   display: flex;
   width: 100%;
-  min-height: 46px;
+  min-height: var(--theme-control-height, 46px);
   align-items: center;
   gap: 10px;
   padding: 0 11px 0 13px;
@@ -333,7 +333,7 @@
   }
 
   .section-catalog-search {
-    min-height: 48px;
+    min-height: var(--theme-control-height, 48px);
   }
 
   .section-catalog-products {
