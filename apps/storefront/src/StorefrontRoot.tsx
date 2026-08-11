@@ -41,7 +41,7 @@ import { SYSTEM_UI } from './system-ui';
 
 const NAVIGATION_EVENT = 'storefront:navigate';
 
-function subscribePathname(callback: () => void) {
+function subscribeLocation(callback: () => void) {
   window.addEventListener('popstate', callback);
   window.addEventListener(NAVIGATION_EVENT, callback);
   return () => {
@@ -50,8 +50,13 @@ function subscribePathname(callback: () => void) {
   };
 }
 
-function currentPathname() {
-  return window.location.pathname;
+function currentLocationKey() {
+  return `${window.location.pathname}${window.location.search}`;
+}
+
+function pathnameFromLocationKey(locationKey: string) {
+  const queryIndex = locationKey.indexOf('?');
+  return queryIndex === -1 ? locationKey : locationKey.slice(0, queryIndex);
 }
 
 function navigateStorefront(href: string) {
@@ -372,7 +377,12 @@ function MessagesPage({
 }
 
 export function StorefrontRoot() {
-  const pathname = useSyncExternalStore(subscribePathname, currentPathname, () => '/');
+  const locationKey = useSyncExternalStore(
+    subscribeLocation,
+    currentLocationKey,
+    () => '/',
+  );
+  const pathname = pathnameFromLocationKey(locationKey) || '/';
   const route = parseStorefrontRoute(pathname);
   const [unreadMessages, setUnreadMessages] = useState(0);
   const bootstrapQuery = useQuery({
@@ -491,7 +501,7 @@ export function StorefrontRoot() {
         activePath={pathname}
         bootstrap={bootstrap}
         navigationItems={navigationItems}
-        routeKey={pathname}
+        routeKey={locationKey}
         unreadMessages={unreadMessages}
       >
         {page}
