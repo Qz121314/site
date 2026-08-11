@@ -100,7 +100,8 @@ test('only compact interaction and system-state labels are centralized in system
 
 test('bottom navigation labels come from backend configuration with no local label fallback', () => {
   assert.match(rootSource, /loadBottomNavigation\(signal\)/u);
-  assert.match(rootSource, /navigationQuery\.data \?\? \[\]/u);
+  assert.doesNotMatch(rootSource, /navigationQuery\.data \?\? \[\]/u);
+  assert.match(rootSource, /const navigationItems = navigationQuery\.data;/u);
   assert.doesNotMatch(rootSource, /FALLBACK_BOTTOM_NAVIGATION/u);
   assert.match(navigationSource, /label:\s*item\.label/u);
 });
