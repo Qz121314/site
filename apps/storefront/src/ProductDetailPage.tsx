@@ -262,30 +262,32 @@ export function ProductDetailPage({
           ) : null}
         </div>
 
-        <section className="product-detail-summary">
-          <h1 id="product-detail-title">{product.title}</h1>
+        <div className="product-detail-info">
+          <section className="product-detail-summary">
+            <h1 id="product-detail-title">{product.title}</h1>
 
-          {product.category.name ? (
-            <p className="product-detail-category">
-              <strong>{product.category.name}</strong>
-            </p>
-          ) : null}
+            {product.category.name ? (
+              <p className="product-detail-category">
+                <strong>{product.category.name}</strong>
+              </p>
+            ) : null}
 
-          {product.tags.length > 0 ? (
-            <div className="product-detail-tags" aria-label="Tags">
-              {product.tags.map((tag) => (
-                <span key={tag.id}>{tag.name}</span>
-              ))}
-            </div>
+            {product.tags.length > 0 ? (
+              <div className="product-detail-tags" aria-label="Tags">
+                {product.tags.map((tag) => (
+                  <span key={tag.id}>{tag.name}</span>
+                ))}
+              </div>
+            ) : null}
+          </section>
+
+          {product.body.trim() ? (
+            <section className="product-detail-body">
+              <MarkdownContent source={product.body} />
+            </section>
           ) : null}
-        </section>
+        </div>
       </div>
-
-      {product.body.trim() ? (
-        <section className="product-detail-body">
-          <MarkdownContent source={product.body} />
-        </section>
-      ) : null}
 
       <div className="product-detail-fixed-action">
         {ctaDestination ? (
