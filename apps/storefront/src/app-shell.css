@@ -101,25 +101,24 @@ body,
   }
 
   .app-shell .bottom-nav {
-    right: 0;
-    bottom: 0;
-    left: 0;
-    width: 100%;
+    right: max(8px, env(safe-area-inset-right));
+    bottom: max(7px, env(safe-area-inset-bottom));
+    left: max(8px, env(safe-area-inset-left));
+    width: auto;
     margin: 0;
-    padding-top: 4px;
-    border: 0;
-    border-top: 1px solid color-mix(in srgb, var(--line, #e7e9ec) 58%, transparent);
-    border-radius: 0;
-    background: color-mix(in srgb, var(--page-bg, #f5f6f7) 92%, var(--surface, #fff));
-    box-shadow: none;
+    padding: 4px 4px 5px;
+    border: 1px solid color-mix(in srgb, var(--line, #e7e9ec) 92%, transparent);
+    border-radius: 18px;
+    background: color-mix(in srgb, var(--surface, #fff) 95%, transparent);
+    box-shadow: 0 12px 34px rgb(31 35 40 / 12%);
     transform: none;
-    backdrop-filter: none;
+    backdrop-filter: blur(18px);
   }
 
   .app-shell .bottom-nav a {
     min-height: 55px;
     gap: 1px;
-    border-radius: 0;
+    border-radius: 12px;
     transition:
       color 110ms ease,
       opacity 110ms ease;

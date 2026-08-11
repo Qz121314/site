@@ -33,15 +33,26 @@ test('storefront loads the app shell refinement layer after PWA styles', () => {
   assert.ok(shellImport > pwaImport, 'app shell overrides must load after PWA styles');
 });
 
-test('mobile app shell uses dynamic viewport height and a non-floating tab bar', () => {
+test('mobile app shell uses dynamic viewport height and one floating rounded dock', () => {
   assert.equal(shellCss.includes('100dvh'), true);
   assert.equal(shellCss.includes('.site-footer {\n    display: none;'), true);
-  assert.equal(shellCss.includes('.app-shell .bottom-nav {'), true);
-  assert.equal(shellCss.includes('border-radius: 0;'), true);
-  assert.match(
-    shellCss,
-    /@media \(max-width: 767px\)[\s\S]*?\.app-shell \.bottom-nav \{[\s\S]*?right:\s*0;[\s\S]*?bottom:\s*0;[\s\S]*?left:\s*0;[\s\S]*?width:\s*100%;[\s\S]*?transform:\s*none;/u,
+
+  const mobileDockMatch = shellCss.match(
+    /@media \(max-width: 767px\)[\s\S]*?\.app-shell \.bottom-nav \{(?<body>[^}]*)\}/u,
   );
+  assert.ok(mobileDockMatch?.groups?.body, 'mobile bottom dock styles must exist');
+  const mobileDockCss = mobileDockMatch.groups.body;
+
+  assert.match(mobileDockCss, /right:\s*max\(8px, env\(safe-area-inset-right\)\);/u);
+  assert.match(mobileDockCss, /bottom:\s*max\(7px, env\(safe-area-inset-bottom\)\);/u);
+  assert.match(mobileDockCss, /left:\s*max\(8px, env\(safe-area-inset-left\)\);/u);
+  assert.match(mobileDockCss, /width:\s*auto;/u);
+  assert.match(mobileDockCss, /border-radius:\s*18px;/u);
+  assert.match(mobileDockCss, /box-shadow:\s*0 12px 34px rgb\(31 35 40 \/ 12%\);/u);
+  assert.match(mobileDockCss, /backdrop-filter:\s*blur\(18px\);/u);
+  assert.doesNotMatch(mobileDockCss, /width:\s*100%/u);
+  assert.doesNotMatch(mobileDockCss, /border-radius:\s*0/u);
+
   assert.doesNotMatch(pagesCss, /@media \(min-width:\s*720px\)/u);
   assert.match(pagesCss, /@media \(min-width:\s*768px\)/u);
 });
@@ -84,7 +95,7 @@ test('storefront classifies secondary routes as push pages before paint', () => 
   assert.equal(presentationSource.includes('storefrontTransition'), true);
 });
 
-test('mobile push content keeps the global bottom navigation unless the page owns the bottom action layer', () => {
+test('mobile push content reuses the global dock unless the page owns the bottom action layer', () => {
   assert.equal(
     shellCss.includes("html[data-storefront-presentation='push'] .app-shell > .topbar"),
     true,
