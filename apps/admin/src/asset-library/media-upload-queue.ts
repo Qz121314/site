@@ -164,7 +164,10 @@ export function useMediaUploadQueue({
       try {
         const concurrency = Math.min(MAX_CONCURRENCY, entries.length);
         await Promise.all(Array.from({ length: concurrency }, () => worker()));
-        if (!sessionExpired) await callbacksRef.current.onBatchComplete();
+        if (!sessionExpired) {
+          await callbacksRef.current.onBatchComplete();
+          setItems((current) => current.filter((item) => item.status === 'error'));
+        }
       } finally {
         runningRef.current = false;
         setRunning(false);

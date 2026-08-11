@@ -5,10 +5,10 @@ import { AssetTable } from './asset-library/AssetTable';
 import { CleanupAssetDialog } from './asset-library/CleanupAssetDialog';
 import { deleteMediaAssets } from './asset-library/media-delete-api';
 import { fetchMediaLibraryPage } from './asset-library/media-library-page-api';
-import { MediaUploadQueuePanel } from './asset-library/MediaUploadQueuePanel';
 import {
   useMediaUploadQueue,
   type MediaUploadBatchSummary,
+  type MediaUploadQueueItem,
 } from './asset-library/media-upload-queue';
 import {
   cleanupAssets,
@@ -74,6 +74,59 @@ function kindLabel(kind: MediaKind): string {
   if (kind === 'video') return '视频';
   if (kind === 'animated_image') return 'GIF / 动图';
   return '图片';
+}
+
+function uploadStatusLabel(item: MediaUploadQueueItem): string {
+  switch (item.status) {
+    case 'queued':
+      return '等待';
+    case 'processing':
+      return item.file.type.startsWith('image/') && item.file.type !== 'image/gif'
+        ? '优化上传中'
+        : '上传中';
+    case 'uploaded':
+      return '完成';
+    case 'reused':
+      return '已存在';
+    case 'error':
+      return '失败';
+  }
+}
+
+function UploadMediaCard({ item }: { item: MediaUploadQueueItem }) {
+  const [previewUrl, setPreviewUrl] = useState('');
+
+  useEffect(() => {
+    const url = URL.createObjectURL(item.file);
+    setPreviewUrl(url);
+    return () => URL.revokeObjectURL(url);
+  }, [item.file]);
+
+  return (
+    <article className={`media-center-card media-center-upload-card is-${item.status}`}>
+      <div className="media-center-preview">
+        {previewUrl ? (
+          item.file.type.startsWith('video/') ? (
+            <video src={previewUrl} muted playsInline preload="metadata" />
+          ) : (
+            <img src={previewUrl} alt="" />
+          )
+        ) : null}
+        <b>{uploadStatusLabel(item)}</b>
+        <i className="media-center-upload-progress" aria-hidden="true" />
+      </div>
+      <div className="media-center-card-body">
+        <strong title={item.fileName}>{item.fileName}</strong>
+        <small>
+          {formatBytes(item.byteSize)}
+          {item.message ? ` · ${item.message}` : ''}
+        </small>
+        <div className="media-center-role-list">
+          <span>{roleLabel(item.role)}</span>
+        </div>
+      </div>
+    </article>
+  );
 }
 
 function isSessionError(error: unknown): boolean {
@@ -354,24 +407,17 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
     });
   }
 
-  function reportUploadSummary(summary: MediaUploadBatchSummary, retry = false) {
-    const successful = summary.uploaded + summary.reused;
-    const parts = [
-      summary.uploaded > 0 ? `新增 ${summary.uploaded} 个` : '',
-      summary.reused > 0 ? `复用 ${summary.reused} 个` : '',
-      summary.skipped > 0 ? `忽略不支持文件 ${summary.skipped} 个` : '',
-    ].filter(Boolean);
-    if (successful > 0 || summary.skipped > 0) {
-      setMediaSuccess(
-        `${retry ? '重试' : '素材处理'}完成${parts.length ? `：${parts.join('，')}` : ''}。`,
-      );
-    }
+  function reportUploadSummary(summary: MediaUploadBatchSummary) {
     if (summary.failed > 0) {
-      setMediaError(
-        `${summary.failed} 个素材处理失败，失败项已保留在上传队列中，可直接重试。`,
-      );
-    } else if (summary.total === 0 && summary.skipped > 0) {
+      setMediaError(`${summary.failed} 个素材处理失败，可在素材区直接重试。`);
+      return;
+    }
+    if (summary.total === 0 && summary.skipped > 0) {
       setMediaError('所选内容中没有支持的 JPG、PNG、WebP、GIF、MP4 或 WebM。');
+      return;
+    }
+    if (summary.skipped > 0) {
+      setMediaError(`已忽略 ${summary.skipped} 个不支持的文件。`);
     }
   }
 
@@ -388,7 +434,7 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
     setMediaError(null);
     setMediaSuccess(null);
     const summary = await uploadQueue.retryFailed();
-    reportUploadSummary(summary, true);
+    reportUploadSummary(summary);
   }
 
   async function handleFolderUpload(files: File[]) {
@@ -705,7 +751,7 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
                   void uploadFiles(files, uploadFolderId || null);
                 }}
               />
-              {uploadQueue.running ? '队列处理中…' : '上传文件'}
+              {uploadQueue.running ? '上传中…' : '上传文件'}
             </label>
             <label
               className={`media-center-upload-button is-folder-upload${uploadQueue.running || folderWorking ? ' is-disabled' : ''}`}
@@ -732,14 +778,6 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
               个文件。单个失败不会中断后续文件。
             </small>
           </div>
-
-          <MediaUploadQueuePanel
-            items={uploadQueue.items}
-            running={uploadQueue.running}
-            progress={uploadQueue.progress}
-            onRetryFailed={() => void retryFailedUploads()}
-            onClearFinished={uploadQueue.clearFinished}
-          />
 
           {mediaError ? (
             <p className="inline-status is-error" role="alert">
@@ -845,19 +883,40 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
               />
               <span>全选已加载素材</span>
             </label>
-            <span>
-              {mediaTotal} 个结果
-              {managedAssets.length < mediaTotal
-                ? ` · 已加载 ${managedAssets.length}`
-                : ''}
-            </span>
+            <div className="media-center-result-summary">
+              {uploadQueue.progress.total > 0 ? (
+                <span className="media-center-upload-summary">
+                  上传 {uploadQueue.progress.done} / {uploadQueue.progress.total}
+                  {uploadQueue.progress.active > 0
+                    ? ` · ${uploadQueue.progress.active} 个处理中`
+                    : ''}
+                  {uploadQueue.progress.failed > 0
+                    ? ` · ${uploadQueue.progress.failed} 个失败`
+                    : ''}
+                </span>
+              ) : null}
+              {uploadQueue.progress.failed > 0 && !uploadQueue.running ? (
+                <button type="button" onClick={() => void retryFailedUploads()}>
+                  重试失败项
+                </button>
+              ) : null}
+              <span>
+                {mediaTotal} 个结果
+                {managedAssets.length < mediaTotal
+                  ? ` · 已加载 ${managedAssets.length}`
+                  : ''}
+              </span>
+            </div>
           </div>
 
-          {mediaLoading ? (
+          {mediaLoading && uploadQueue.items.length === 0 ? (
             <div className="media-center-empty">正在读取素材…</div>
-          ) : managedAssets.length > 0 ? (
+          ) : managedAssets.length > 0 || uploadQueue.items.length > 0 ? (
             <>
               <div className="media-center-grid">
+                {uploadQueue.items.map((item) => (
+                  <UploadMediaCard item={item} key={item.id} />
+                ))}
                 {managedAssets.map((asset) => {
                   const duration = formatDuration(asset.durationMs);
                   return (
