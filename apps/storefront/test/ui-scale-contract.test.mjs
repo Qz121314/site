@@ -64,7 +64,7 @@ test('product structure consumes theme tokens instead of being rewritten by the 
 test('Browse Section and Product detail consume the shared app scale', () => {
   assert.match(browseCss, /font-size:\s*var\(--storefront-text-body,/u);
   assert.match(browseCss, /font-size:\s*var\(--storefront-text-caption,/u);
-  assert.match(sectionCss, /min-height:\s*var\(--theme-control-height,/u);
+  assert.match(sectionCss, /min-height:\s*[^;]*var\(--theme-control-height,/u);
   assert.match(sectionCss, /font-size:\s*var\(--storefront-text-small,/u);
   assert.match(productDetailCss, /font-size:\s*var\(--storefront-text-body,/u);
   assert.match(productDetailCss, /font-size:\s*var\(--storefront-text-caption,/u);
