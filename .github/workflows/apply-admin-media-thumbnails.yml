@@ -15,6 +15,7 @@ jobs:
       - name: Checkout PR head
         env:
           HEAD_REF: ${{ github.head_ref }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           git init .
@@ -59,6 +60,7 @@ jobs:
       - name: Commit clean business changes
         env:
           HEAD_REF: ${{ github.head_ref }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           set -euo pipefail
           rm .github/workflows/apply-admin-media-thumbnails.yml
