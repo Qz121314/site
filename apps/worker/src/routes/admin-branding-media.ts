@@ -35,8 +35,8 @@ const THUMBNAIL_TOKEN_NAMESPACE = 'admin-media-thumbnail-source:v1:';
 export const adminBrandingMediaRoutes = new Hono<AppEnvironment>();
 export const adminMediaThumbnailSourceRoutes = new Hono<AppEnvironment>();
 
-function thumbnailSecret(context: { env: { SESSION_SECRET?: string } }): string | null {
-  const secret = context.env.SESSION_SECRET?.trim();
+function thumbnailSecret(env: AppEnvironment['Bindings']): string | null {
+  const secret = env.SESSION_SECRET?.trim();
   return secret ? secret : null;
 }
 
@@ -55,7 +55,9 @@ async function signThumbnailSource(secret: string, assetId: string): Promise<str
       new TextEncoder().encode(`${THUMBNAIL_TOKEN_NAMESPACE}${assetId}`),
     ),
   );
-  return Array.from(signature, (value) => value.toString(16).padStart(2, '0')).join('');
+  return Array.from(signature, (value) => value.toString(16).padStart(2, '0')).join(
+    '',
+  );
 }
 
 function constantTimeEqual(left: string, right: string): boolean {
@@ -67,25 +69,26 @@ function constantTimeEqual(left: string, right: string): boolean {
   return mismatch === 0;
 }
 
-async function loadImageAsset(context: {
-  env: AppEnvironment['Bindings'];
-  req: { param: (name: string) => string };
-}): Promise<MediaPreviewRow | null> {
-  return context.env.DB.prepare(
-    `SELECT object_key, mime_type
-       FROM media_assets
-       WHERE id = ?
-         AND status = 'ready'
-         AND deleted_at IS NULL
-         AND mime_type LIKE 'image/%'`,
-  )
-    .bind(context.req.param('id'))
+async function loadImageAsset(
+  db: AppEnvironment['Bindings']['DB'],
+  assetId: string,
+): Promise<MediaPreviewRow | null> {
+  return db
+    .prepare(
+      `SELECT object_key, mime_type
+         FROM media_assets
+         WHERE id = ?
+           AND status = 'ready'
+           AND deleted_at IS NULL
+           AND mime_type LIKE 'image/%'`,
+    )
+    .bind(assetId)
     .first<MediaPreviewRow>();
 }
 
 adminMediaThumbnailSourceRoutes.get('/:id/:token', async (context) => {
   const via = context.req.header('via') ?? '';
-  const secret = thumbnailSecret(context);
+  const secret = thumbnailSecret(context.env);
   if (!/image-resizing/i.test(via) || !secret) {
     return new Response(null, { status: 404 });
   }
@@ -96,7 +99,7 @@ adminMediaThumbnailSourceRoutes.get('/:id/:token', async (context) => {
     return new Response(null, { status: 404 });
   }
 
-  const asset = await loadImageAsset(context);
+  const asset = await loadImageAsset(context.env.DB, assetId);
   if (!asset) return new Response(null, { status: 404 });
 
   const object = await context.env.ASSETS_BUCKET.get(asset.object_key);
@@ -112,7 +115,7 @@ adminMediaThumbnailSourceRoutes.get('/:id/:token', async (context) => {
 });
 
 adminBrandingMediaRoutes.get('/assets/:id', async (context) => {
-  const asset = await loadImageAsset(context);
+  const asset = await loadImageAsset(context.env.DB, context.req.param('id'));
   if (!asset) {
     return apiError(context, 404, 'MEDIA_ASSET_NOT_FOUND', '图片素材不存在或已删除。');
   }
@@ -132,7 +135,7 @@ adminBrandingMediaRoutes.get('/assets/:id', async (context) => {
 });
 
 adminBrandingMediaRoutes.get('/assets/:id/thumbnail', async (context) => {
-  const secret = thumbnailSecret(context);
+  const secret = thumbnailSecret(context.env);
   if (!secret) {
     return apiError(
       context,
@@ -176,7 +179,10 @@ adminBrandingMediaRoutes.get('/assets/:id/thumbnail', async (context) => {
   }
 
   const headers = new Headers();
-  headers.set('content-type', transformed.headers.get('content-type') ?? 'image/webp');
+  headers.set(
+    'content-type',
+    transformed.headers.get('content-type') ?? 'image/webp',
+  );
   headers.set('cache-control', 'private, max-age=3600');
   const etag = transformed.headers.get('etag');
   if (etag) headers.set('etag', etag);
