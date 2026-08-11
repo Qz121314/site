@@ -10,12 +10,16 @@ const browseCss = await readFile(
   new URL('../src/browse-ui.css', import.meta.url),
   'utf8',
 );
-const adminEditor = await readFile(
-  new URL('../../admin/src/section-management/SectionEditorDialog.tsx', import.meta.url),
+const contentSource = await readFile(
+  new URL('../src/content.ts', import.meta.url),
   'utf8',
 );
-const publicRoute = await readFile(
-  new URL('../../worker/src/routes/public-browse-sections.ts', import.meta.url),
+const workerIndex = await readFile(
+  new URL('../../worker/src/index.ts', import.meta.url),
+  'utf8',
+);
+const adminEditor = await readFile(
+  new URL('../../admin/src/section-management/SectionEditorDialog.tsx', import.meta.url),
   'utf8',
 );
 const migration = await readFile(
@@ -25,14 +29,13 @@ const migration = await readFile(
 
 test('Browse uses section background artwork as the visual card surface', () => {
   assert.match(browsePage, /browse-section-card-media/u);
-  assert.match(browsePage, /presentation\?\.backgroundUrl/u);
-  assert.match(browsePage, /src=\{presentation\.backgroundUrl\}/u);
-  assert.match(browsePage, /presentation\?\.description/u);
+  assert.match(browsePage, /section\.browseBackgroundUrl/u);
+  assert.match(browsePage, /src=\{section\.browseBackgroundUrl\}/u);
+  assert.match(browsePage, /section\.description/u);
   assert.match(browsePage, /browse-section-card-scrim/u);
   assert.doesNotMatch(browsePage, /sectionInitial\(section\.name\)/u);
   assert.doesNotMatch(browsePage, /browse-section-card-chevron/u);
   assert.doesNotMatch(browsePage, /SectionIcon|section-icon/u);
-  assert.doesNotMatch(browsePage, /presentation\.productCount/u);
   assert.doesNotMatch(browsePage, /browse-directory-heading/u);
   assert.doesNotMatch(browsePage, /<h2 id="browse-directory-sections-title"/u);
   assert.match(browseCss, /\.browse-section-card-media/u);
@@ -73,9 +76,13 @@ test('Home icon and Browse background remain separate section presentation field
   assert.match(migration, /description TEXT/u);
 });
 
-test('Browse presentation counts only published products and exposes no icon field', () => {
-  assert.match(publicRoute, /p\.status = 'published'/u);
-  assert.match(publicRoute, /backgroundUrl/u);
-  assert.match(publicRoute, /productCount/u);
-  assert.doesNotMatch(publicRoute, /iconUrl|iconValue|icon_type/u);
+test('Browse presentation is part of the published Section contract with no second API', () => {
+  assert.match(contentSource, /description\?: string \| null/u);
+  assert.match(contentSource, /browseBackgroundObjectKey\?: string \| null/u);
+  assert.match(contentSource, /browseBackgroundUrl: mediaUrl/u);
+  assert.doesNotMatch(
+    browsePage,
+    /loadBrowseSectionPresentations|presentationQuery|presentationById/u,
+  );
+  assert.doesNotMatch(workerIndex, /publicBrowseSectionRoutes|\/api\/public\/browse-sections/u);
 });
