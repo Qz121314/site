@@ -55,9 +55,7 @@ async function signThumbnailSource(secret: string, assetId: string): Promise<str
       new TextEncoder().encode(`${THUMBNAIL_TOKEN_NAMESPACE}${assetId}`),
     ),
   );
-  return Array.from(signature, (value) => value.toString(16).padStart(2, '0')).join(
-    '',
-  );
+  return Array.from(signature, (value) => value.toString(16).padStart(2, '0')).join('');
 }
 
 function constantTimeEqual(left: string, right: string): boolean {
@@ -170,19 +168,11 @@ adminBrandingMediaRoutes.get('/assets/:id/thumbnail', async (context) => {
     if (transformed.status === 404) {
       return apiError(context, 404, 'MEDIA_ASSET_NOT_FOUND', '图片素材不存在或已删除。');
     }
-    return apiError(
-      context,
-      502,
-      'MEDIA_THUMBNAIL_FAILED',
-      '后台缩略图生成失败。',
-    );
+    return apiError(context, 502, 'MEDIA_THUMBNAIL_FAILED', '后台缩略图生成失败。');
   }
 
   const headers = new Headers();
-  headers.set(
-    'content-type',
-    transformed.headers.get('content-type') ?? 'image/webp',
-  );
+  headers.set('content-type', transformed.headers.get('content-type') ?? 'image/webp');
   headers.set('cache-control', 'private, max-age=3600');
   const etag = transformed.headers.get('etag');
   if (etag) headers.set('etag', etag);
