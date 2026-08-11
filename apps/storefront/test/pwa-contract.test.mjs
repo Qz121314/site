@@ -12,6 +12,14 @@ const systemUiSource = await readFile(
   new URL('../src/system-ui.ts', import.meta.url),
   'utf8',
 );
+const themeRuntimeSource = await readFile(
+  new URL('../src/theme-runtime.ts', import.meta.url),
+  'utf8',
+);
+const manifestSource = await readFile(
+  new URL('../../worker/src/routes/public-pwa.ts', import.meta.url),
+  'utf8',
+);
 const pwaCss = await readFile(new URL('../src/pwa.css', import.meta.url), 'utf8');
 const serviceWorker = await readFile(new URL('../public/sw.js', import.meta.url), 'utf8');
 
@@ -36,6 +44,16 @@ test('install UI waits for 30 seconds of visible engagement and respects dismiss
   assert.match(pwaSource, /visibilitychange/);
   assert.match(pwaSource, /DISMISS_COOLDOWN_MS/);
   assert.match(pwaSource, /appinstalled/);
+});
+
+test('PWA and browser chrome colors follow the active storefront theme', () => {
+  assert.match(manifestSource, /getThemeSettings/);
+  assert.match(manifestSource, /resolveTheme/);
+  assert.match(manifestSource, /backgroundColor: theme\.tokens\.pageBg/);
+  assert.match(manifestSource, /themeColor: theme\.tokens\.brand/);
+  assert.match(manifestSource, /background_color: theme\.backgroundColor/);
+  assert.match(manifestSource, /theme_color: theme\.themeColor/);
+  assert.match(themeRuntimeSource, /syncThemeColor\(theme\.tokens\.brand\)/);
 });
 
 test('standalone mode uses safe areas and removes floating browser-like tab bar spacing', () => {

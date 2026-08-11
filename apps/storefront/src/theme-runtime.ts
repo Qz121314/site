@@ -57,6 +57,16 @@ function validTheme(value: unknown): value is PublicTheme {
   return TOKEN_KEYS.every((key) => typeof tokens[key] === 'string');
 }
 
+function syncThemeColor(themeColor: string): void {
+  let meta = document.head.querySelector<HTMLMetaElement>('meta[name="theme-color"]');
+  if (!meta) {
+    meta = document.createElement('meta');
+    meta.name = 'theme-color';
+    document.head.append(meta);
+  }
+  meta.content = themeColor;
+}
+
 function applyTheme(theme: PublicTheme): void {
   const root = document.documentElement;
   root.dataset.theme = theme.key;
@@ -76,6 +86,7 @@ function applyTheme(theme: PublicTheme): void {
   root.style.setProperty('--hero-glow', theme.tokens.heroGlow);
   root.style.setProperty('--shadow', theme.tokens.shadow);
   root.style.setProperty('--product-media-ratio', '1 / 1');
+  syncThemeColor(theme.tokens.brand);
 }
 
 function readCachedTheme(): PublicTheme | null {

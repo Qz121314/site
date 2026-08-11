@@ -1,8 +1,19 @@
 import type { Context } from 'hono';
 import { getSiteSettings } from '../settings/site-settings';
+import { getThemeSettings, resolveTheme } from '../theme/theme-center';
 import type { AppEnvironment } from '../types';
 
 type JsonRecord = Record<string, unknown>;
+
+type ManifestTheme = {
+  backgroundColor: string;
+  themeColor: string;
+};
+
+const DEFAULT_MANIFEST_THEME: ManifestTheme = {
+  backgroundColor: '#f5f6f7',
+  themeColor: '#ff5a1f',
+};
 
 function isRecord(value: unknown): value is JsonRecord {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -68,13 +79,30 @@ async function resolvePublishedSiteName(
   }
 }
 
+async function resolveManifestTheme(
+  context: Context<AppEnvironment>,
+): Promise<ManifestTheme> {
+  try {
+    const theme = resolveTheme(await getThemeSettings(context.env.DB));
+    return {
+      backgroundColor: theme.tokens.pageBg,
+      themeColor: theme.tokens.brand,
+    };
+  } catch {
+    return DEFAULT_MANIFEST_THEME;
+  }
+}
+
 function shortName(value: string): string {
   const normalized = value.trim();
   return normalized.length <= 30 ? normalized : `${normalized.slice(0, 29).trimEnd()}…`;
 }
 
 export async function servePwaManifest(context: Context<AppEnvironment>) {
-  const name = await resolvePublishedSiteName(context);
+  const [name, theme] = await Promise.all([
+    resolvePublishedSiteName(context),
+    resolveManifestTheme(context),
+  ]);
   const manifest = {
     id: '/',
     name,
@@ -83,8 +111,8 @@ export async function servePwaManifest(context: Context<AppEnvironment>) {
     start_url: '/',
     scope: '/',
     display: 'standalone',
-    background_color: '#f5f6f7',
-    theme_color: '#ff5a1f',
+    background_color: theme.backgroundColor,
+    theme_color: theme.themeColor,
     icons: [
       {
         src: '/icons/app-icon-192.svg',
