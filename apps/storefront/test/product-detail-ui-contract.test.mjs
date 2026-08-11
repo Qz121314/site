@@ -97,6 +97,19 @@ test('product gallery keeps thumbnails directly below the active media stage', (
   assert.match(detailSource, /<ResilientImage/u);
 });
 
+test('product detail main media stays square and shows the full source image', () => {
+  assert.match(detailThemeCss, /--theme-detail-media-ratio:\s*1 \/ 1/u);
+  assert.match(detailThemeCss, /--theme-detail-desktop-media-ratio:\s*1 \/ 1/u);
+  assert.match(
+    detailThemeCss,
+    /\.detail-media-stage > img\s*\{[\s\S]*?object-fit:\s*contain/u,
+  );
+  assert.doesNotMatch(
+    detailThemeCss,
+    /--theme-detail-(?:desktop-)?media-ratio:\s*(?:4 \/ 3|16 \/ 10)/u,
+  );
+});
+
 test('product CTA is the push-page safe-area action bar at the viewport edge', () => {
   assert.match(
     detailCss,

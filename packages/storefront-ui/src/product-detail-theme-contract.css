@@ -3,8 +3,8 @@
 :is(html, .storefront-theme-root) {
   --theme-detail-gap: 18px;
   --theme-detail-gallery-gap: 8px;
-  --theme-detail-media-ratio: 4 / 3;
-  --theme-detail-desktop-media-ratio: 16 / 10;
+  --theme-detail-media-ratio: 1 / 1;
+  --theme-detail-desktop-media-ratio: 1 / 1;
   --theme-detail-media-radius: var(--theme-radius-media, 16px);
   --theme-detail-inline-media-radius: var(--theme-radius-control, 14px);
   --theme-detail-media-background: var(--theme-media-background, var(--surface-soft));
@@ -24,6 +24,10 @@
   --theme-detail-cta-shadow: 0 10px 24px color-mix(in srgb, var(--brand) 22%, transparent);
   --theme-detail-cta-bar-shadow: 0 -8px 24px
     color-mix(in srgb, var(--text) 6%, transparent);
+}
+
+.detail-media-stage > img {
+  object-fit: contain;
 }
 
 :is(html, .storefront-theme-root)[data-density='compact'] {
@@ -93,7 +97,7 @@
 }
 
 :is(html, .storefront-theme-root)[data-theme='saas'] {
-  --theme-detail-media-ratio: 16 / 10;
+  --theme-detail-media-ratio: 1 / 1;
   --theme-detail-media-radius: 12px;
   --theme-detail-panel-radius: 14px;
   --theme-detail-panel-background: var(--surface);
@@ -104,7 +108,7 @@
 }
 
 :is(html, .storefront-theme-root)[data-theme='travel'] {
-  --theme-detail-media-ratio: 4 / 3;
+  --theme-detail-media-ratio: 1 / 1;
   --theme-detail-media-radius: 26px;
   --theme-detail-panel-radius: 24px;
   --theme-detail-panel-background: color-mix(
