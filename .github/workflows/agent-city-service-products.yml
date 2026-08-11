@@ -1,0 +1,84 @@
+name: Apply city service product simplification
+
+on:
+  push:
+    branches:
+      - agent/city-service-products
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/city-service-products
+          fetch-depth: 0
+
+      - name: Apply focused source changes
+        shell: bash
+        run: |
+          python3 <<'PY'
+          from pathlib import Path
+
+          def replace_once(path: str, old: str, new: str) -> None:
+              file = Path(path)
+              text = file.read_text()
+              count = text.count(old)
+              if count != 1:
+                  raise SystemExit(f"{path}: expected one match, found {count}")
+              file.write_text(text.replace(old, new, 1))
+
+          replace_once(
+              'apps/admin/src/product-management/ProductEditorDialog.tsx',
+              """            {form.serviceMode === 'offline' ? (\n              <label className=\"product-field product-core-address\">\n                <span>服务地址</span>\n                <input\n                  type=\"text\"\n                  value={form.address ?? ''}\n                  maxLength={500}\n                  placeholder=\"门店或服务区域\"\n                  onChange={(event) => patch({ address: event.target.value || null })}\n                />\n              </label>\n            ) : null}\n\n""",
+              '',
+          )
+
+          replace_once(
+              'apps/admin/src/product-management/product-editor-validation.ts',
+              """  if (form.serviceMode === 'offline' && !form.address?.trim()) {\n    return '发布线下产品前必须填写服务地址。';\n  }\n""",
+              '',
+          )
+
+          replace_once(
+              'apps/admin/test/product-editor-validation.test.mjs',
+              """test('published products require cover-eligible media and offline products require an address', () => {\n  const publishedOnline = productForm({ status: 'published' });\n  assert.equal(validate(publishedOnline), '发布产品前至少需要一个产品媒体。');\n  assert.equal(\n    validate(publishedOnline, { media: [media('video/mp4')] }),\n    '发布产品前至少需要一张图片或 GIF 作为封面。',\n  );\n  assert.equal(\n    validate(\n      productForm({ serviceMode: 'offline', status: 'published', address: '  ' }),\n      {\n        media: [media('image/gif')],\n      },\n    ),\n    '发布线下产品前必须填写服务地址。',\n  );\n});\n""",
+              """test('published products require cover-eligible media without requiring an offline address', () => {\n  const publishedOnline = productForm({ status: 'published' });\n  assert.equal(validate(publishedOnline), '发布产品前至少需要一个产品媒体。');\n  assert.equal(\n    validate(publishedOnline, { media: [media('video/mp4')] }),\n    '发布产品前至少需要一张图片或 GIF 作为封面。',\n  );\n  assert.equal(\n    validate(productForm({ serviceMode: 'offline', status: 'published', address: null }), {\n      media: [media('image/gif')],\n    }),\n    null,\n  );\n});\n""",
+          )
+
+          replace_once(
+              'apps/worker/src/products/products.ts',
+              """  if (input.status === 'published' && input.serviceMode === 'offline' && !input.address) {\n    return {\n      ok: false,\n      field: 'address',\n      code: 'ADDRESS_REQUIRED',\n      message: '发布线下服务必须填写服务地址。',\n    };\n  }\n""",
+              '',
+          )
+
+          replace_once(
+              'apps/worker/src/publishing/modular-publisher.ts',
+              """    if (product.service_mode === 'offline' && !product.address) {\n      throw new ModularPublicationError(\n        'PRODUCT_ADDRESS_REQUIRED',\n        `产品“${product.title}”缺少服务地址。`,\n      );\n    }\n""",
+              '',
+          )
+
+          replace_once(
+              'apps/storefront/src/ProductDetailPage.tsx',
+              """          {product.address ? (\n            <address className=\"product-detail-address\">⌖ {product.address}</address>\n          ) : null}\n\n""",
+              '',
+          )
+
+          contract = Path('apps/storefront/test/city-service-product-contract.test.mjs')
+          contract.write_text("""import assert from 'node:assert/strict';\nimport { readFile } from 'node:fs/promises';\nimport test from 'node:test';\n\nconst editorSource = await readFile(\n  new URL('../../admin/src/product-management/ProductEditorDialog.tsx', import.meta.url),\n  'utf8',\n);\nconst adminValidationSource = await readFile(\n  new URL('../../admin/src/product-management/product-editor-validation.ts', import.meta.url),\n  'utf8',\n);\nconst productDomainSource = await readFile(\n  new URL('../../worker/src/products/products.ts', import.meta.url),\n  'utf8',\n);\nconst publisherSource = await readFile(\n  new URL('../../worker/src/publishing/modular-publisher.ts', import.meta.url),\n  'utf8',\n);\nconst detailSource = await readFile(new URL('../src/ProductDetailPage.tsx', import.meta.url), 'utf8');\n\ntest('offline products use the product body for location details instead of a dedicated address field', () => {\n  assert.doesNotMatch(editorSource, /product-core-address/);\n  assert.doesNotMatch(editorSource, /服务地址/);\n  assert.doesNotMatch(adminValidationSource, /必须填写服务地址/);\n  assert.doesNotMatch(productDomainSource, /ADDRESS_REQUIRED/);\n  assert.doesNotMatch(publisherSource, /PRODUCT_ADDRESS_REQUIRED/);\n  assert.doesNotMatch(detailSource, /product\.address/);\n});\n""")
+          PY
+
+          rm .github/workflows/agent-city-service-products.yml
+          git diff --check
+
+      - name: Commit focused changes
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Simplify offline products to city-level service entries"
+          git push origin HEAD:agent/city-service-products
