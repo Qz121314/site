@@ -14,5 +14,6 @@ test('public CTA resolver separates destination selection from navigation', () =
   assert.match(source, /messagesComposeHref\(product\.id, product\.sectionId\)/);
   assert.match(source, /mode: 'link' as const/);
   assert.match(source, /href: target\.endpointUrl/);
+  assert.match(source, /label: group\.buttonLabel/);
   assert.match(source, /Cache-Control', 'no-store'/);
 });
