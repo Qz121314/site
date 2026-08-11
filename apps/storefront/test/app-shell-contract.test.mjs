@@ -103,6 +103,28 @@ test('mobile push pages remove root chrome while root tabs keep it', () => {
   assert.equal(shellCss.includes("html[data-storefront-presentation='root']"), false);
 });
 
+test('mobile route transitions release fixed descendants back to the viewport', () => {
+  assert.match(
+    shellCss,
+    /@keyframes app-page-enter-forward[\s\S]*?to\s*\{[\s\S]*?transform:\s*none;/u,
+  );
+  assert.match(
+    shellCss,
+    /@keyframes app-page-enter-back[\s\S]*?to\s*\{[\s\S]*?transform:\s*none;/u,
+  );
+  assert.doesNotMatch(
+    shellCss,
+    /@keyframes app-page-enter-(?:forward|back)[\s\S]*?to\s*\{[\s\S]*?transform:\s*translateX\(0\)/u,
+  );
+});
+
+test('product detail owns the bottom action layer without the global tab bar', () => {
+  assert.match(
+    shellCss,
+    /\.app-shell:has\(\.product-detail-page\) > \.bottom-nav\s*\{[\s\S]*?display:\s*none;/u,
+  );
+});
+
 test('product and FAQ detail use history-aware push headers', () => {
   assert.equal(productSource.includes('product-detail-navigation'), true);
   assert.equal(productSource.includes('navigateStorefrontBack'), true);
