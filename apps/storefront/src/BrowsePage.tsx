@@ -44,10 +44,6 @@ function productMatches(product: PublicProductSummary, keyword: string): boolean
   ].some((value) => value.toLowerCase().includes(keyword));
 }
 
-function sectionInitial(name: string): string {
-  return name.trim().slice(0, 1).toUpperCase();
-}
-
 export function BrowsePage({
   bootstrap,
   LinkComponent,
@@ -137,35 +133,33 @@ export function BrowsePage({
 
       {filteredSections.length > 0 ? (
         <section className="browse-directory-section">
-          <div className="browse-section-list">
+          <div
+            className={`browse-section-list${filteredSections.length === 1 ? ' is-single' : ''}`}
+          >
             {filteredSections.map((section) => {
               const presentation = presentationById.get(section.id);
               return (
                 <LinkComponent
-                  className="browse-section-card"
+                  className={`browse-section-card${presentation?.backgroundUrl ? ' has-image' : ' is-fallback'}`}
                   href={sectionHref(section)}
                   key={section.id}
                 >
-                  <span
-                    className={`browse-section-card-media${presentation?.backgroundUrl ? ' has-image' : ' is-fallback'}`}
-                    aria-hidden="true"
-                  >
+                  <span className="browse-section-card-media" aria-hidden="true">
                     {presentation?.backgroundUrl ? (
                       <ResilientImage
                         alt=""
+                        fallback={
+                          <span className="browse-section-card-media-fallback" aria-hidden="true" />
+                        }
                         loading="lazy"
                         src={presentation.backgroundUrl}
                       />
-                    ) : (
-                      <span>{sectionInitial(section.name)}</span>
-                    )}
+                    ) : null}
                   </span>
+                  <span className="browse-section-card-scrim" aria-hidden="true" />
                   <span className="browse-section-card-content">
                     <strong>{section.name}</strong>
                     {presentation?.description ? <p>{presentation.description}</p> : null}
-                  </span>
-                  <span className="browse-section-card-chevron" aria-hidden="true">
-                    ›
                   </span>
                 </LinkComponent>
               );
