@@ -84,7 +84,7 @@ test('storefront classifies secondary routes as push pages before paint', () => 
   assert.equal(presentationSource.includes('storefrontTransition'), true);
 });
 
-test('mobile push pages remove root chrome while root tabs keep it', () => {
+test('mobile push content keeps the global bottom navigation unless the page owns the bottom action layer', () => {
   assert.equal(
     shellCss.includes("html[data-storefront-presentation='push'] .app-shell > .topbar"),
     true,
@@ -93,11 +93,15 @@ test('mobile push pages remove root chrome while root tabs keep it', () => {
     shellCss.includes(
       "html[data-storefront-presentation='push'] .app-shell > .bottom-nav",
     ),
-    true,
+    false,
   );
   assert.equal(
     shellCss.includes("html[data-storefront-presentation='push'] .app-shell > main"),
     true,
+  );
+  assert.match(
+    shellCss,
+    /@supports selector\(\.app-shell:has\(\.product-detail-page\)\)[\s\S]*?\.app-shell:has\(\.product-detail-page\)\s*\{[\s\S]*?padding-bottom:\s*0;/u,
   );
   assert.equal(shellCss.includes('safe-area-inset-top'), true);
   assert.equal(shellCss.includes("html[data-storefront-presentation='root']"), false);
