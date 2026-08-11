@@ -32,20 +32,27 @@ function ensureGoogleTag(measurementId: string) {
   initializedMeasurementIds.add(measurementId);
 }
 
-function trackHomepage(measurementId: string) {
-  if (window.location.pathname !== '/') return;
+function trackPageView(measurementId: string, pathname: string) {
   ensureGoogleTag(measurementId);
   gtag('event', 'page_view', {
     page_location: window.location.href,
+    page_path: pathname,
+    page_title: document.title,
   });
 }
 
-export function HomepageAnalytics({ measurementId }: { measurementId: string | null }) {
+export function HomepageAnalytics({
+  measurementId,
+  pathname,
+}: {
+  measurementId: string | null;
+  pathname: string;
+}) {
   useEffect(() => {
     const normalized = measurementId?.trim();
     if (!normalized) return;
-    trackHomepage(normalized);
-  }, [measurementId]);
+    trackPageView(normalized, pathname);
+  }, [measurementId, pathname]);
 
   return null;
 }

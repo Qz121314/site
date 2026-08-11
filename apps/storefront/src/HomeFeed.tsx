@@ -14,7 +14,6 @@ import {
 } from './content';
 import { loadHomeLayout } from './home-layout';
 import { loadPublishedHero, type PublishedHeroSlide } from './hero-content';
-import { HomepageAnalytics } from './HomepageAnalytics';
 import { ResilientImage, ResilientVideo } from './ResilientMedia';
 import { productHref, sectionHref } from './routing';
 import { SYSTEM_UI } from './system-ui';
@@ -140,9 +139,11 @@ function HomeProductTile({ product }: { product: PublicProductSummary }) {
 
 function HomeRecommendationRail({
   bootstrap,
+  initialProducts,
   section,
 }: {
   bootstrap: StorefrontBootstrap;
+  initialProducts: PublicProductSummary[];
   section: PublicSection;
 }) {
   const query = useQuery({
@@ -152,11 +153,12 @@ function HomeRecommendationRail({
       section.id,
     ],
     queryFn: ({ signal }) => loadSectionSnapshot(bootstrap, section.id, signal),
+    enabled: initialProducts.length === 0,
     staleTime: Number.POSITIVE_INFINITY,
   });
   const products = useMemo(
     () =>
-      (query.data?.products ?? [])
+      (initialProducts.length > 0 ? initialProducts : (query.data?.products ?? []))
         .filter((product) => product.isFeatured)
         .sort(
           (left, right) =>
@@ -164,7 +166,7 @@ function HomeRecommendationRail({
             left.sortOrder - right.sortOrder ||
             left.title.localeCompare(right.title),
         ),
-    [query.data?.products],
+    [initialProducts, query.data?.products],
   );
 
   if (query.error || (query.data && products.length === 0)) return null;
@@ -183,7 +185,7 @@ function HomeRecommendationRail({
           <span aria-hidden="true">›</span>
         </HomeLink>
       </div>
-      {query.isLoading && !query.data ? (
+      {initialProducts.length === 0 && query.isLoading && !query.data ? (
         <div className="home-product-rail is-loading" aria-hidden="true">
           {Array.from({ length: 4 }, (_, index) => (
             <span className="home-product-skeleton" key={index} />
@@ -237,6 +239,23 @@ export function HomeFeed({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
     () => new Map(availableSections.map((section) => [section.id, section])),
     [availableSections],
   );
+  const featuredProductsBySection = useMemo(() => {
+    const groups = new Map<string, PublicProductSummary[]>();
+    for (const product of bootstrap.home.featuredProducts) {
+      const group = groups.get(product.sectionId) ?? [];
+      group.push(product);
+      groups.set(product.sectionId, group);
+    }
+    for (const group of groups.values()) {
+      group.sort(
+        (left, right) =>
+          left.featuredOrder - right.featuredOrder ||
+          left.sortOrder - right.sortOrder ||
+          left.title.localeCompare(right.title),
+      );
+    }
+    return groups;
+  }, [bootstrap.home.featuredProducts]);
   const fallbackLayout = {
     shortcutSectionIds: availableSections.slice(0, 7).map((section) => section.id),
     recommendationSectionIds: fallbackRecommendationSectionIds(bootstrap),
@@ -256,7 +275,6 @@ export function HomeFeed({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
 
   return (
     <>
-      <HomepageAnalytics measurementId={site.analytics.ga4MeasurementId} />
       {heroQuery.data ? (
         <StorefrontHero
           LinkComponent={HomeLink as StorefrontLinkComponent}
@@ -276,6 +294,7 @@ export function HomeFeed({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
         {recommendationSections.map((section) => (
           <HomeRecommendationRail
             bootstrap={bootstrap}
+            initialProducts={featuredProductsBySection.get(section.id) ?? []}
             section={section}
             key={section.id}
           />
