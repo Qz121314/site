@@ -477,7 +477,7 @@ test('published product dependency validation accepts a ready link product and r
   if (!mismatch.ok) assert.equal(mismatch.code, 'CONVERSION_MODE_MISMATCH');
 });
 
-test('published products reject missing media and offline products require an address', async () => {
+test('published products reject missing media while offline products may omit an address', async () => {
   const noMedia = validateProductInput(
     baseProductInput({ mediaAssetIds: [], coverAssetId: null }),
   );
@@ -500,7 +500,7 @@ test('published products reject missing media and offline products require an ad
   );
   assert.equal(offline.ok, true);
   if (!offline.ok) return;
-  const missingAddress = await validateProductDependencies(
+  const validWithoutAddress = await validateProductDependencies(
     productDependencyDb({
       group: conversionGroupRow({
         mode: 'customer_service',
@@ -511,8 +511,7 @@ test('published products reject missing media and offline products require an ad
     'section-1',
     offline.value,
   );
-  assert.equal(missingAddress.ok, false);
-  if (!missingAddress.ok) assert.equal(missingAddress.code, 'ADDRESS_REQUIRED');
+  assert.deepEqual(validWithoutAddress, { ok: true });
 });
 
 test('product tag bindings enforce uniqueness, section ownership, enable state and the 12-tag cap', async () => {
