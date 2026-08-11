@@ -84,5 +84,8 @@ test('Browse presentation is part of the published Section contract with no seco
     browsePage,
     /loadBrowseSectionPresentations|presentationQuery|presentationById/u,
   );
-  assert.doesNotMatch(workerIndex, /publicBrowseSectionRoutes|\/api\/public\/browse-sections/u);
+  assert.doesNotMatch(
+    workerIndex,
+    /publicBrowseSectionRoutes|\/api\/public\/browse-sections/u,
+  );
 });
