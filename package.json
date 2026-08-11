@@ -15,7 +15,7 @@
     "lint": "eslint .",
     "typecheck": "pnpm cf:types && pnpm -r --if-present typecheck",
     "test": "pnpm -r --if-present test",
-    "format": "prettier --write apps/storefront/src/ProductDetailPage.tsx apps/storefront/test/product-detail-ui-contract.test.mjs && git diff -- apps/storefront/src/ProductDetailPage.tsx apps/storefront/test/product-detail-ui-contract.test.mjs && exit 1",
+    "format": "prettier --check .",
     "format:write": "prettier --write .",
     "cf:types": "wrangler types apps/worker/src/worker-configuration.d.ts",
     "cf:check": "wrangler deploy --dry-run",
