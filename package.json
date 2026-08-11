@@ -14,7 +14,7 @@
     "build:apps": "pnpm --filter @site/storefront build && pnpm --filter @site/admin build && pnpm --filter @site/worker build",
     "lint": "eslint .",
     "typecheck": "pnpm cf:types && pnpm -r --if-present typecheck",
-    "test": "pnpm -r --if-present test > /tmp/site-tests.log 2>&1 || { grep -E 'not ok|location:|error:|regular expression' /tmp/site-tests.log | tail -n 400; exit 1; }",
+    "test": "pnpm -r --if-present test",
     "format": "prettier --check .",
     "format:write": "prettier --write .",
     "cf:types": "wrangler types apps/worker/src/worker-configuration.d.ts",
