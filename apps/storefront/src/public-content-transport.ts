@@ -91,7 +91,8 @@ export function createPublicContentFetch(
       blockedUntil.set(url.origin, now() + DIRECT_FAILURE_COOLDOWN_MS);
       return originalFetch(retryInput, init);
     } catch (error) {
-      const signal = init?.signal ?? (input instanceof Request ? input.signal : undefined);
+      const signal =
+        init?.signal ?? (input instanceof Request ? input.signal : undefined);
       if (signal?.aborted) throw error;
       blockedUntil.set(url.origin, now() + DIRECT_FAILURE_COOLDOWN_MS);
       return originalFetch(retryInput, init);
