@@ -19,11 +19,15 @@ const cssSource = await readFile(
   'utf8',
 );
 
-test('storefront bottom navigation is runtime-configured without local content fallback', () => {
+test('storefront bottom navigation is runtime-configured and required by the app shell', () => {
   assert.match(loaderSource, /\/api\/public\/bottom-navigation\//u);
   assert.doesNotMatch(loaderSource, /FALLBACK_BOTTOM_NAVIGATION/u);
   assert.match(rootSource, /loadBottomNavigation\(signal\)/u);
-  assert.match(rootSource, /navigationQuery\.data \?\? \[\]/u);
+  assert.doesNotMatch(rootSource, /navigationQuery\.data \?\? \[\]/u);
+  assert.match(
+    rootSource,
+    /navigationQuery\.error[\s\S]*?!navigationQuery\.data/u,
+  );
   assert.match(rootSource, /navigationItems\.length > 0/u);
 });
 
