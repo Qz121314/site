@@ -313,12 +313,6 @@ export function ProductDetailPage({
             <section className="product-detail-summary">
               <h1 id="product-detail-title">{product.title}</h1>
 
-              {product.category.name ? (
-                <p className="product-detail-category">
-                  <strong>{product.category.name}</strong>
-                </p>
-              ) : null}
-
               {product.tags.length > 0 ? (
                 <div className="product-detail-tags" aria-label="Tags">
                   {product.tags.map((tag) => (

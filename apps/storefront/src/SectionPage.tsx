@@ -22,6 +22,20 @@ function SearchIcon() {
   );
 }
 
+function BackIcon() {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.8"
+      aria-hidden="true"
+    >
+      <path d="m12.5 4.5-5.5 5.5 5.5 5.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export function SectionCatalogPage({
   bootstrap,
   sectionRef,
@@ -134,7 +148,8 @@ export function SectionCatalogPage({
           aria-label={SYSTEM_UI.back}
           onClick={handleBack}
         >
-          <span aria-hidden="true">‹</span>
+          <BackIcon />
+          <span>{SYSTEM_UI.back}</span>
         </LinkComponent>
         <h1 id="section-catalog-title">{query.data.section.name}</h1>
       </header>

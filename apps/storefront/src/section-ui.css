@@ -13,51 +13,71 @@
   position: sticky;
   top: env(safe-area-inset-top);
   z-index: 40;
-  display: grid;
-  min-height: 48px;
-  grid-template-columns: 34px minmax(0, 1fr) 34px;
-  align-items: center;
+  min-height: 52px;
   margin: -8px -10px 0;
-  padding: 0 10px;
-  border-bottom: 1px solid color-mix(in srgb, var(--line) 58%, transparent);
-  background: color-mix(in srgb, var(--page-bg) 94%, var(--surface));
-  backdrop-filter: blur(18px);
+  padding: 0 12px;
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 54%, transparent);
+  background: color-mix(in srgb, var(--page-bg) 92%, var(--surface));
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--text) 2.5%, transparent);
+  backdrop-filter: blur(22px) saturate(1.12);
+  isolation: isolate;
 }
 
 .section-catalog-back {
-  display: grid;
-  width: 34px;
-  height: 40px;
-  place-items: center;
-  border-radius: 10px;
-  color: var(--text);
-  font-size: 1.55rem;
-  font-weight: 430;
+  position: absolute;
+  top: 50%;
+  left: 8px;
+  z-index: 2;
+  display: inline-flex;
+  min-width: 44px;
+  min-height: 40px;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 2px;
+  padding: 0 8px 0 5px;
+  border-radius: 12px;
+  color: color-mix(in srgb, var(--text) 88%, var(--muted));
+  font-size: var(--storefront-text-small, 0.75rem);
+  font-weight: 650;
   line-height: 1;
   text-decoration: none;
+  transform: translateY(-50%);
   transition:
+    color 110ms ease,
     background 110ms ease,
     opacity 110ms ease,
     transform 110ms ease;
 }
 
+.section-catalog-back svg {
+  width: 17px;
+  height: 17px;
+  flex: 0 0 17px;
+}
+
 .section-catalog-back:active {
-  opacity: 0.66;
-  transform: translateX(-1px);
+  opacity: 0.64;
+  transform: translate(-1px, -50%);
 }
 
 .section-catalog-header h1 {
-  min-width: 0;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: max-content;
+  max-width: min(56vw, 420px);
   margin: 0;
   overflow: hidden;
   color: var(--text);
-  font-size: 0.92rem;
+  font-size: 0.93rem;
   font-weight: 760;
   line-height: 1.2;
-  letter-spacing: -0.018em;
-  text-align: left;
+  letter-spacing: -0.022em;
+  text-align: center;
   text-overflow: ellipsis;
   white-space: nowrap;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
 }
 
 .section-catalog-controls {
@@ -305,10 +325,16 @@
     padding: 0 2px;
     border-bottom-color: color-mix(in srgb, var(--line) 64%, transparent);
     background: transparent;
+    box-shadow: none;
     backdrop-filter: none;
   }
 
+  .section-catalog-back {
+    left: 0;
+  }
+
   .section-catalog-header h1 {
+    max-width: min(52vw, 520px);
     font-size: 1.04rem;
   }
 
