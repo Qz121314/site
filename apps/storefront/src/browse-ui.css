@@ -1,8 +1,8 @@
-/* Browse is the full section directory and global search surface. */
+/* Browse is a visual discovery surface and global search entry. */
 
 .browse-directory {
   display: grid;
-  width: min(1120px, 100%);
+  width: min(960px, 100%);
   gap: 16px;
   margin: 0 auto;
 }
@@ -50,142 +50,129 @@
 
 .browse-directory-section {
   display: grid;
-  gap: 9px;
-}
-
-.browse-directory-section-heading {
-  display: flex;
-  min-height: 30px;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  padding-inline: 2px;
-}
-
-.browse-directory-section-heading h2 {
-  margin: 0;
-  color: var(--text);
-  font-size: 1rem;
-  font-weight: 640;
-  line-height: 1.2;
-  letter-spacing: -0.02em;
-}
-
-.browse-directory-section-heading > span {
-  color: color-mix(in srgb, var(--muted) 82%, transparent);
-  background: transparent;
-  font-size: var(--storefront-text-caption, 0.6875rem);
-  font-weight: 500;
+  gap: 10px;
 }
 
 .browse-section-list {
   display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.browse-section-list.is-single {
   grid-template-columns: minmax(0, 1fr);
-  gap: 9px;
 }
 
 .browse-section-card {
   position: relative;
-  display: grid;
-  min-height: 70px;
-  grid-template-columns: 48px minmax(0, 1fr) 28px;
-  align-items: center;
-  gap: 11px;
+  display: block;
+  min-width: 0;
+  aspect-ratio: 1 / 1;
   overflow: hidden;
-  padding: 10px 10px;
-  border: 1px solid color-mix(in srgb, var(--line) 62%, transparent);
-  border-radius: min(max(14px, var(--theme-radius-card, 16px)), 18px);
-  color: var(--text);
-  background: color-mix(in srgb, var(--surface) 96%, var(--surface-soft));
-  box-shadow: 0 3px 12px color-mix(in srgb, var(--text) 4%, transparent);
+  border: 1px solid color-mix(in srgb, var(--line) 46%, transparent);
+  border-radius: min(max(18px, var(--theme-radius-card, 18px)), 22px);
+  color: #fff;
+  background: linear-gradient(
+    145deg,
+    color-mix(in srgb, var(--brand) 76%, #111827),
+    color-mix(in srgb, var(--brand-strong) 64%, #0f172a)
+  );
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--text) 8%, transparent);
   isolation: isolate;
   transition:
     border-color 120ms ease,
-    background 120ms ease,
+    box-shadow 120ms ease,
     opacity 120ms ease,
     transform 120ms ease;
 }
 
-.browse-section-card:active {
-  opacity: 0.82;
-  transform: scale(0.992);
+.browse-section-list.is-single .browse-section-card {
+  aspect-ratio: 16 / 9;
 }
 
-.browse-section-card-media {
-  display: grid;
-  width: 48px;
-  height: 48px;
-  place-items: center;
-  overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--line) 54%, transparent);
-  border-radius: min(max(11px, var(--theme-radius-icon, 14px)), 15px);
-  background: var(--theme-media-background, var(--surface-soft));
-}
-
-.browse-section-card-media img {
+.browse-section-card-media,
+.browse-section-card-media img,
+.browse-section-card-media-fallback,
+.browse-section-card-scrim {
+  position: absolute;
+  inset: 0;
   display: block;
   width: 100%;
   height: 100%;
-  object-fit: cover;
 }
 
-.browse-section-card-media.is-fallback {
-  color: var(--brand-strong);
-  background: color-mix(in srgb, var(--brand) 12%, var(--surface-soft));
-  font-size: 0.95rem;
-  font-weight: 760;
-  letter-spacing: -0.03em;
+.browse-section-card-media {
+  z-index: -3;
+  overflow: hidden;
+  background: transparent;
+}
+
+.browse-section-card-media img {
+  object-fit: cover;
+  transform: scale(1.002);
+  transition: transform 260ms cubic-bezier(0.22, 0.7, 0.2, 1);
+}
+
+.browse-section-card-media-fallback {
+  background: transparent;
+}
+
+.browse-section-card-scrim {
+  z-index: -1;
+  background: linear-gradient(
+    180deg,
+    rgb(0 0 0 / 4%) 28%,
+    rgb(0 0 0 / 18%) 58%,
+    rgb(0 0 0 / 70%) 100%
+  );
+}
+
+.browse-section-card.is-fallback .browse-section-card-scrim {
+  background: linear-gradient(
+    150deg,
+    color-mix(in srgb, var(--brand) 78%, #111827),
+    color-mix(in srgb, var(--brand-strong) 66%, #0f172a)
+  );
 }
 
 .browse-section-card-content {
+  position: absolute;
+  right: 14px;
+  bottom: 13px;
+  left: 14px;
   display: grid;
   min-width: 0;
-  gap: 3px;
-  align-self: center;
+  gap: 4px;
 }
 
 .browse-section-card-content strong {
   overflow: hidden;
-  color: var(--text);
-  font-size: var(--storefront-text-label, 0.9375rem);
-  font-weight: 650;
-  line-height: 1.2;
-  letter-spacing: -0.016em;
+  color: #fff;
+  font-size: clamp(0.96rem, 4.2vw, 1.12rem);
+  font-weight: 720;
+  line-height: 1.08;
+  letter-spacing: -0.025em;
   text-overflow: ellipsis;
+  text-shadow: 0 1px 10px rgb(0 0 0 / 26%);
   white-space: nowrap;
 }
 
 .browse-section-card-content p {
   display: -webkit-box;
-  max-width: 620px;
   margin: 0;
   overflow: hidden;
-  color: var(--muted);
+  color: rgb(255 255 255 / 80%);
   font-size: var(--storefront-text-small, 0.75rem);
-  font-weight: 420;
-  line-height: 1.38;
+  font-weight: 440;
+  line-height: 1.3;
+  text-shadow: 0 1px 8px rgb(0 0 0 / 24%);
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 1;
 }
 
-.browse-section-card-content small {
-  color: color-mix(in srgb, var(--muted) 78%, transparent);
-  font-size: var(--storefront-text-caption, 0.6875rem);
-  font-weight: 480;
-}
-
-.browse-section-card-chevron {
-  display: grid;
-  width: 28px;
-  height: 28px;
-  place-items: center;
-  align-self: center;
-  border-radius: 999px;
-  color: color-mix(in srgb, var(--text) 52%, var(--muted));
-  background: color-mix(in srgb, var(--surface-soft) 72%, transparent);
-  font-size: 1.1rem;
-  font-weight: 380;
-  line-height: 1;
+.browse-section-card:active {
+  opacity: 0.88;
+  transform: scale(0.985);
 }
 
 .browse-search-products {
@@ -204,8 +191,12 @@
 
 @media (hover: hover) and (pointer: fine) {
   .browse-section-card:hover {
-    border-color: color-mix(in srgb, var(--brand) 20%, var(--line));
-    background: color-mix(in srgb, var(--surface) 92%, var(--surface-soft));
+    border-color: color-mix(in srgb, var(--brand) 26%, var(--line));
+    box-shadow: 0 14px 34px color-mix(in srgb, var(--text) 12%, transparent);
+  }
+
+  .browse-section-card:hover .browse-section-card-media img {
+    transform: scale(1.025);
   }
 }
 
@@ -226,25 +217,17 @@
   }
 
   .browse-section-list {
-    overflow: visible;
-    margin-inline: 0;
-    padding-inline: 0;
-  }
-
-  .browse-section-card {
-    min-height: 68px;
-    grid-template-columns: 46px minmax(0, 1fr) 28px;
     gap: 10px;
-    padding: 10px;
   }
 
-  .browse-section-card-media {
-    width: 46px;
-    height: 46px;
+  .browse-section-list.is-single .browse-section-card {
+    aspect-ratio: 16 / 9;
   }
 
-  .browse-section-card:active {
-    background: color-mix(in srgb, var(--surface-soft) 76%, var(--surface));
+  .browse-section-card-content {
+    right: 12px;
+    bottom: 11px;
+    left: 12px;
   }
 }
 
@@ -254,41 +237,42 @@
   }
 
   .browse-directory-search {
-    max-width: 720px;
-  }
-
-  .browse-directory-section-heading h2 {
-    font-size: 1.1rem;
+    max-width: 680px;
   }
 
   .browse-section-list {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 12px;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
   }
 
-  .browse-section-card {
-    min-height: 78px;
-    grid-template-columns: 54px minmax(0, 1fr) 30px;
-    gap: 13px;
-    padding: 11px 12px;
+  .browse-section-list.is-single {
+    grid-template-columns: minmax(0, 520px);
   }
 
-  .browse-section-card-media {
-    width: 54px;
-    height: 54px;
+  .browse-section-list.is-single .browse-section-card {
+    aspect-ratio: 16 / 9;
+  }
+
+  .browse-section-card-content {
+    right: 16px;
+    bottom: 15px;
+    left: 16px;
   }
 
   .browse-section-card-content strong {
-    font-size: 1rem;
+    font-size: 1.05rem;
   }
+}
 
-  .browse-section-card-content p {
-    -webkit-line-clamp: 2;
+@media (min-width: 1180px) {
+  .browse-section-list:not(.is-single) {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .browse-section-card,
+  .browse-section-card-media img,
   .browse-directory-search {
     transition: none;
   }
