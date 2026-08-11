@@ -24,10 +24,7 @@ test('storefront bottom navigation is runtime-configured and required by the app
   assert.doesNotMatch(loaderSource, /FALLBACK_BOTTOM_NAVIGATION/u);
   assert.match(rootSource, /loadBottomNavigation\(signal\)/u);
   assert.doesNotMatch(rootSource, /navigationQuery\.data \?\? \[\]/u);
-  assert.match(
-    rootSource,
-    /navigationQuery\.error[\s\S]*?!navigationQuery\.data/u,
-  );
+  assert.match(rootSource, /navigationQuery\.error[\s\S]*?!navigationQuery\.data/u);
   assert.match(rootSource, /navigationItems\.length > 0/u);
 });
 
