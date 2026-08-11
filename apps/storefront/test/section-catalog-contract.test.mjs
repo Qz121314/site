@@ -54,7 +54,10 @@ test('section products remain a two-column minimal product list on mobile and de
     cssSource,
     /\.section-catalog-products\s*\{[\s\S]*?grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/u,
   );
-  assert.doesNotMatch(cssSource, /\.section-catalog-products\s*\{[\s\S]*?grid-template-columns:\s*1fr[;\n]/u);
+  assert.doesNotMatch(
+    cssSource,
+    /\.section-catalog-products\s*\{[\s\S]*?grid-template-columns:\s*1fr[;\n]/u,
+  );
 });
 
 test('section catalog uses Theme Center semantic variables and isolated styles', () => {
