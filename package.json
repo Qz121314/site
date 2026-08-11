@@ -14,7 +14,7 @@
     "build:apps": "pnpm --filter @site/storefront build && pnpm --filter @site/admin build && pnpm --filter @site/worker build",
     "lint": "eslint .",
     "typecheck": "pnpm cf:types && pnpm -r --if-present typecheck",
-    "test": "pnpm -r --if-present test",
+    "test": "node --input-type=module -e \"import{spawnSync}from'node:child_process';const r=spawnSync('pnpm',['-r','--if-present','test'],{encoding:'utf8'});process.stdout.write(r.stdout||'');process.stderr.write(r.stderr||'');if(r.status){const s=(r.stdout||'')+'\\n'+(r.stderr||'');const a=s.split(/\\r?\\n/);let i=a.findIndex(x=>/not ok|AssertionError|ERR_ASSERTION/.test(x));if(i<0)i=Math.max(0,a.length-40);const e=a.slice(Math.max(0,i-8),i+35).join('\\n');console.log('::error title=Test failure excerpt::'+Buffer.from(e).toString('base64'));process.exit(r.status)}\"",
     "format": "prettier --check .",
     "format:write": "prettier --write .",
     "cf:types": "wrangler types apps/worker/src/worker-configuration.d.ts",
