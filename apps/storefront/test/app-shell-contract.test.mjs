@@ -49,7 +49,8 @@ test('mobile app shell uses dynamic viewport height and a non-floating tab bar',
 test('primary tabs keep one mounted shell and use color-only active state', () => {
   assert.equal(rootSource.match(/<PrimaryShell\b/gu)?.length, 1);
   assert.match(rootSource, /className="storefront-route-view"/u);
-  assert.match(rootSource, /routeKey=\{pathname\}/u);
+  assert.match(rootSource, /routeKey=\{locationKey\}/u);
+  assert.match(rootSource, /window\.location\.search/u);
   assert.match(
     shellCss,
     /\.app-shell \.bottom-nav a\.is-active \.bottom-nav-icon\s*\{[\s\S]*?background:\s*transparent;/u,
