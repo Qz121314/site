@@ -29,14 +29,8 @@ test('section catalog keeps the section name in the app header and product cards
   assert.match(sectionSource, /className="section-product-cover"/);
   assert.doesNotMatch(sectionSource, /StorefrontProductCard/);
   assert.doesNotMatch(sectionSource, /categoryName=|address=|sectionName=|tags=/);
-  assert.match(
-    sectionCss,
-    /\.section-catalog-header \{[\s\S]*position: sticky/,
-  );
-  assert.match(
-    sectionCss,
-    /\.section-product-cover \{[\s\S]*aspect-ratio: 1 \/ 1/,
-  );
+  assert.match(sectionCss, /\.section-catalog-header \{[\s\S]*position: sticky/);
+  assert.match(sectionCss, /\.section-product-cover \{[\s\S]*aspect-ratio: 1 \/ 1/);
 });
 
 test('product CTA resolves on first click and only navigates after resolution', () => {
@@ -49,10 +43,7 @@ test('product CTA resolves on first click and only navigates after resolution', 
   assert.match(detailSource, /ctaDestination\.mode === 'customer_service'/);
   assert.match(detailSource, /target="_blank"/);
   assert.doesNotMatch(detailSource, /href=\{product\.cta\.path\}/);
-  assert.match(
-    detailCss,
-    /\.product-detail-fixed-action \{[\s\S]*position: fixed/,
-  );
+  assert.match(detailCss, /\.product-detail-fixed-action \{[\s\S]*position: fixed/);
   assert.match(
     detailCss,
     /\.product-detail-navigation \{[\s\S]*justify-content: flex-end/,
