@@ -16,6 +16,10 @@ test('public snapshot path accepts current and immutable snapshot JSON', () => {
     publicSnapshotObjectKey('versions/version-123456/products/product-1.json'),
     'public/versions/version-123456/products/product-1.json',
   );
+  assert.equal(
+    publicSnapshotObjectKey('home/pointer-123456/home.json'),
+    'public/home/pointer-123456/home.json',
+  );
 });
 
 test('public snapshot path rejects traversal and non-public object shapes', () => {
@@ -34,6 +38,13 @@ test('public pointer stays short cached while immutable snapshots stay long cach
   assert.equal(
     publicSnapshotCacheControl(
       'public/modules/site/version-123456/site.json',
+      'public, max-age=31536000, immutable',
+    ),
+    'public, max-age=31536000, immutable',
+  );
+  assert.equal(
+    publicSnapshotCacheControl(
+      'public/home/pointer-123456/home.json',
       'public, max-age=31536000, immutable',
     ),
     'public, max-age=31536000, immutable',

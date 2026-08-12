@@ -123,7 +123,7 @@ export function BrowsePage({
   }, [normalizedSearch, productSearchQuery.data]);
 
   useEffect(() => {
-    document.title = bootstrap.site.site.name;
+    document.title = `Browse · ${bootstrap.site.site.name}`;
   }, [bootstrap.site.site.name]);
 
   const noResults =
@@ -134,6 +134,7 @@ export function BrowsePage({
 
   return (
     <section className="browse-directory">
+      <h1 className="sr-only">Browse · {bootstrap.site.site.name}</h1>
       <div className="browse-directory-search">
         <SearchIcon />
         <input

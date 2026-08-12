@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { SYSTEM_UI } from './system-ui';
+import { type PublicTheme, type ThemeInstallPrompt } from './theme-runtime';
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -12,9 +12,8 @@ type PwaManifest = {
   name?: unknown;
 };
 
-const INSTALL_PROMPT_DELAY_MS = 30_000;
 const DISMISS_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1_000;
-const DISMISSED_KEY = 'storefront:pwa-install-dismissed:v2';
+const DISMISSED_KEY = 'storefront:pwa-install-dismissed:v3';
 
 function isStandalone(): boolean {
   return (
@@ -60,8 +59,13 @@ function syncAppMetadata(appName: string) {
   ensureMeta('apple-mobile-web-app-title');
 }
 
-export function PwaInstallPrompt() {
+export function PwaInstallPrompt({
+  themePromise,
+}: {
+  themePromise: Promise<PublicTheme | null>;
+}) {
   const [appName, setAppName] = useState<string | null>(null);
+  const [config, setConfig] = useState<ThemeInstallPrompt | null>(null);
   const [installEvent, setInstallEvent] = useState<BeforeInstallPromptEvent | null>(null);
   const [showIosHint, setShowIosHint] = useState(false);
   const [delayComplete, setDelayComplete] = useState(false);
@@ -70,6 +74,9 @@ export function PwaInstallPrompt() {
 
   useEffect(() => {
     const controller = new AbortController();
+    void themePromise.then((theme) => {
+      setConfig(theme?.installPrompt ?? null);
+    });
     void fetch('/manifest.webmanifest', { signal: controller.signal })
       .then(async (response) => {
         if (!response.ok) return null;
@@ -85,50 +92,10 @@ export function PwaInstallPrompt() {
       .catch(() => undefined);
 
     return () => controller.abort();
-  }, []);
+  }, [themePromise]);
 
   useEffect(() => {
     if (isStandalone() || hasActiveDismissal()) return;
-
-    let remainingMs = INSTALL_PROMPT_DELAY_MS;
-    let visibleSince = document.visibilityState === 'visible' ? Date.now() : null;
-    let timer: number | null = null;
-
-    const clearDelayTimer = () => {
-      if (timer === null) return;
-      window.clearTimeout(timer);
-      timer = null;
-    };
-
-    const scheduleDelay = () => {
-      clearDelayTimer();
-      if (visibleSince === null) return;
-      if (remainingMs <= 0) {
-        setDelayComplete(true);
-        return;
-      }
-      timer = window.setTimeout(() => {
-        timer = null;
-        remainingMs = 0;
-        setDelayComplete(true);
-      }, remainingMs);
-    };
-
-    const handleVisibilityChange = () => {
-      const now = Date.now();
-      if (visibleSince !== null) {
-        remainingMs = Math.max(0, remainingMs - (now - visibleSince));
-        visibleSince = null;
-      }
-      if (document.visibilityState === 'visible') {
-        visibleSince = now;
-        scheduleDelay();
-      } else {
-        clearDelayTimer();
-      }
-    };
-
-    scheduleDelay();
 
     const handleInstallPrompt = (event: Event) => {
       event.preventDefault();
@@ -142,19 +109,60 @@ export function PwaInstallPrompt() {
 
     window.addEventListener('beforeinstallprompt', handleInstallPrompt);
     window.addEventListener('appinstalled', handleInstalled);
-    document.addEventListener('visibilitychange', handleVisibilityChange);
 
     if (isIosDevice()) {
       setShowIosHint(true);
     }
 
     return () => {
-      clearDelayTimer();
       window.removeEventListener('beforeinstallprompt', handleInstallPrompt);
       window.removeEventListener('appinstalled', handleInstalled);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
   }, []);
+
+  useEffect(() => {
+    if (!config?.enabled || isStandalone() || hasActiveDismissal()) return;
+    setDelayComplete(false);
+    let remainingMs = config.delaySeconds * 1_000;
+    let visibleSince = document.visibilityState === 'visible' ? Date.now() : null;
+    let timer: number | null = null;
+
+    const clearDelayTimer = () => {
+      if (timer === null) return;
+      window.clearTimeout(timer);
+      timer = null;
+    };
+    const scheduleDelay = () => {
+      clearDelayTimer();
+      if (visibleSince === null) return;
+      timer = window.setTimeout(() => {
+        timer = null;
+        remainingMs = 0;
+        setDelayComplete(true);
+      }, remainingMs);
+    };
+    const handleVisibilityChange = () => {
+      const now = Date.now();
+      if (visibleSince !== null) {
+        remainingMs = Math.max(0, remainingMs - (now - visibleSince));
+        visibleSince = null;
+      }
+      if (document.visibilityState === 'visible') {
+        visibleSince = now;
+        if (remainingMs === 0) setDelayComplete(true);
+        else scheduleDelay();
+      } else {
+        clearDelayTimer();
+      }
+    };
+
+    scheduleDelay();
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => {
+      clearDelayTimer();
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [config]);
 
   const dismiss = () => {
     setDismissed(true);
@@ -182,6 +190,7 @@ export function PwaInstallPrompt() {
   };
 
   if (
+    !config?.enabled ||
     !appName ||
     !delayComplete ||
     dismissed ||
@@ -193,7 +202,7 @@ export function PwaInstallPrompt() {
   return (
     <aside
       className={`pwa-install-card${showIosHint && !installEvent ? ' is-guidance' : ''}`}
-      aria-label={SYSTEM_UI.install}
+      aria-label={config.title}
       aria-live="polite"
     >
       <span className="pwa-install-handle" aria-hidden="true" />
@@ -201,8 +210,8 @@ export function PwaInstallPrompt() {
         <img src="/api/public/pwa/icon/192" alt="" />
       </div>
       <div className="pwa-install-copy">
-        <strong>{appName}</strong>
-        {!installEvent ? <span>{SYSTEM_UI.addToHomeScreen}</span> : null}
+        <strong>{config.title || appName}</strong>
+        <span>{installEvent ? config.description : config.iosDescription}</span>
       </div>
       {installEvent ? (
         <button
@@ -210,13 +219,14 @@ export function PwaInstallPrompt() {
           type="button"
           onClick={() => void install()}
         >
-          {SYSTEM_UI.install}
+          {config.installLabel}
         </button>
       ) : null}
       <button
         className="pwa-install-dismiss"
         type="button"
-        aria-label={SYSTEM_UI.dismiss}
+        aria-label={config.dismissLabel}
+        title={config.dismissLabel}
         onClick={dismiss}
       >
         <svg

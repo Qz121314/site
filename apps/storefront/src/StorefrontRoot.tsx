@@ -13,25 +13,23 @@ import {
   type AnchorHTMLAttributes,
   type MouseEvent as ReactMouseEvent,
   type ReactNode,
+  lazy,
+  Suspense,
   useEffect,
   useMemo,
   useState,
   useSyncExternalStore,
 } from 'react';
-import { BrowsePage } from './BrowsePage';
 import {
   loadBottomNavigation,
   type BottomNavigationItemConfig,
 } from './bottom-navigation';
 import { loadStorefrontBootstrap, loadProductSnapshot } from './content';
-import { FaqArticlePage, FaqDirectoryPage } from './FaqPage';
 import { HomeFeed } from './HomeFeed';
 import { HomepageAnalytics } from './HomepageAnalytics';
 import { NotFoundPage } from './NotFoundPage';
-import { ProductDetailPage } from './ProductDetailPage';
 import { ResilientImage } from './ResilientMedia';
 import { bottomNavigationActiveHref, parseStorefrontRoute } from './routing';
-import { SectionCatalogPage } from './SectionPage';
 import { primaryNavigationItems } from './storefront-navigation';
 import { loadPublicSupportConnections, siteSupportGateway } from './support-gateway';
 import { subscribeSupportRealtime } from './support-realtime';
@@ -40,6 +38,24 @@ import { MessagesWorkspace, type PendingSupportConversation } from './support-ui
 import { SYSTEM_UI } from './system-ui';
 
 const NAVIGATION_EVENT = 'storefront:navigate';
+
+const BrowsePage = lazy(() =>
+  import('./BrowsePage').then((module) => ({ default: module.BrowsePage })),
+);
+const FaqDirectoryPage = lazy(() =>
+  import('./FaqPage').then((module) => ({ default: module.FaqDirectoryPage })),
+);
+const FaqArticlePage = lazy(() =>
+  import('./FaqPage').then((module) => ({ default: module.FaqArticlePage })),
+);
+const ProductDetailPage = lazy(() =>
+  import('./ProductDetailPage').then((module) => ({
+    default: module.ProductDetailPage,
+  })),
+);
+const SectionCatalogPage = lazy(() =>
+  import('./SectionPage').then((module) => ({ default: module.SectionCatalogPage })),
+);
 
 function subscribeLocation(callback: () => void) {
   window.addEventListener('popstate', callback);
@@ -135,6 +151,10 @@ function PrimaryError() {
       </button>
     </div>
   );
+}
+
+function RouteLoading() {
+  return <div className="inline-loading route-loading">{SYSTEM_UI.loading}</div>;
 }
 
 function PrimaryShell({
@@ -525,7 +545,7 @@ export function StorefrontRoot() {
         routeKey={locationKey}
         unreadMessages={unreadMessages}
       >
-        {page}
+        <Suspense fallback={<RouteLoading />}>{page}</Suspense>
       </PrimaryShell>
     </>
   );

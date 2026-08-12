@@ -30,7 +30,7 @@ import '@site/storefront-ui/primary-pages-theme-contract.css';
 import '@site/storefront-ui/typography-contract.css';
 
 installPublicContentFetchFallback();
-void installStorefrontTheme();
+const storefrontThemePromise = installStorefrontTheme();
 
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
   window.addEventListener('load', () => {
@@ -63,7 +63,7 @@ createRoot(root).render(
       <StorefrontPresentation />
       <MobileEdgeNavigation />
       <StorefrontRoot />
-      <PwaInstallPrompt />
+      <PwaInstallPrompt themePromise={storefrontThemePromise} />
     </QueryClientProvider>
   </StrictMode>,
 );

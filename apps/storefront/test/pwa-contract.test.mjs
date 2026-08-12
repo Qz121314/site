@@ -8,8 +8,8 @@ const pwaSource = await readFile(
   new URL('../src/PwaInstallPrompt.tsx', import.meta.url),
   'utf8',
 );
-const systemUiSource = await readFile(
-  new URL('../src/system-ui.ts', import.meta.url),
+const adminThemeSource = await readFile(
+  new URL('../../admin/src/ThemeCenterView.tsx', import.meta.url),
   'utf8',
 );
 const themeRuntimeSource = await readFile(
@@ -39,18 +39,24 @@ test('storefront declares installable app metadata', () => {
 
 test('storefront registers a root-scoped service worker and install UI', () => {
   assert.match(mainSource, /serviceWorker\s*\.register\('\/sw\.js', \{ scope: '\/' \}\)/);
-  assert.match(mainSource, /<PwaInstallPrompt \/>/);
+  assert.match(
+    mainSource,
+    /<PwaInstallPrompt themePromise=\{storefrontThemePromise\} \/>/,
+  );
   assert.match(pwaSource, /beforeinstallprompt/);
-  assert.match(pwaSource, /SYSTEM_UI\.addToHomeScreen/);
-  assert.match(systemUiSource, /addToHomeScreen:\s*'Add to Home Screen'/);
+  assert.match(pwaSource, /config\.installLabel/);
+  assert.match(pwaSource, /config\.iosDescription/);
 });
 
-test('install UI waits for 30 seconds of visible engagement and respects dismissal', () => {
-  assert.match(pwaSource, /INSTALL_PROMPT_DELAY_MS = 30_000/);
+test('install UI follows Theme Center delay and respects dismissal', () => {
+  assert.match(pwaSource, /config\.delaySeconds \* 1_000/);
   assert.match(pwaSource, /document\.visibilityState === 'visible'/);
   assert.match(pwaSource, /visibilitychange/);
   assert.match(pwaSource, /DISMISS_COOLDOWN_MS/);
   assert.match(pwaSource, /appinstalled/);
+  assert.match(adminThemeSource, /安装应用提示/);
+  assert.match(adminThemeSource, /setInstallPrompt/);
+  assert.match(adminThemeSource, /delaySeconds/);
 });
 
 test('PWA and browser chrome colors follow the active storefront theme', () => {

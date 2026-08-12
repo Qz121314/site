@@ -24,6 +24,7 @@ import {
   type ThemeButtonStyle,
   type ThemeDensity,
   type ThemeFontPack,
+  type ThemeInstallPrompt,
   type ThemeKey,
   type ThemeMediaStyle,
   type ThemeMotionStyle,
@@ -126,6 +127,15 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
     motionStyle: 'restrained',
     navigationStyle: 'quiet',
   });
+  const [installPrompt, setInstallPrompt] = useState<ThemeInstallPrompt>({
+    enabled: true,
+    delaySeconds: 30,
+    title: 'Install app',
+    description: 'Add it to your desktop for faster access.',
+    iosDescription: 'Use Share, then Add to Home Screen.',
+    installLabel: 'Install',
+    dismissLabel: 'Not now',
+  });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [importing, setImporting] = useState(false);
@@ -142,6 +152,7 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
       accent.trim().toLowerCase() !==
         (currentTheme.overrides.accent ?? '').toLowerCase() ||
       JSON.stringify(recipe) !== JSON.stringify(recipeSelection(currentTheme)) ||
+      JSON.stringify(installPrompt) !== JSON.stringify(currentTheme.installPrompt) ||
       importedSignature(selectedImported) !== importedSignature(currentImported));
   useAdminDirtySource('theme-center', '主题中心', themeIsDirty);
 
@@ -155,6 +166,7 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
       setSelectedKey(data.theme.key);
       setAccent(data.theme.overrides.accent ?? '');
       setRecipe(recipeSelection(data.theme));
+      setInstallPrompt(data.theme.installPrompt);
       if (data.theme.key === 'custom') {
         setImportedTheme(data.theme);
         setSourceTab(
@@ -199,6 +211,7 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
     setImportedTheme(null);
     setAccent('');
     setRecipe(recipeSelection(preset));
+    setInstallPrompt(preset.installPrompt);
     clearMessages();
   }
 
@@ -212,6 +225,7 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
       setSelectedKey('custom');
       setAccent('');
       setRecipe(recipeSelection(theme));
+      setInstallPrompt(theme.installPrompt);
       setSuccessMessage('主题已读取并转换。请先检查右侧移动端预览，再点击“保存并应用”。');
     } catch (error) {
       if (isSessionError(error)) {
@@ -234,6 +248,7 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
       setSelectedKey('custom');
       setAccent('');
       setRecipe(recipeSelection(theme));
+      setInstallPrompt(theme.installPrompt);
       setSuccessMessage('JSON 主题已转换。请检查右侧移动端预览，再点击“保存并应用”。');
     } catch (error) {
       if (isSessionError(error)) {
@@ -267,12 +282,14 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
         selectedKey,
         normalizedAccent,
         recipe,
+        installPrompt,
         imported,
       );
       setCurrentTheme(updated);
       setSelectedKey(updated.key);
       setAccent(updated.overrides.accent ?? '');
       setRecipe(recipeSelection(updated));
+      setInstallPrompt(updated.installPrompt);
       if (updated.key === 'custom') setImportedTheme(updated);
       setSuccessMessage('主题已保存并应用到用户前端。前端刷新后即可看到新主题。');
     } catch (error) {
@@ -685,6 +702,127 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
                       </option>
                     ))}
                   </select>
+                </label>
+              </div>
+            </div>
+          ) : null}
+
+          {selectedPreset ? (
+            <div className="theme-install-editor" aria-label="安装应用提示设置">
+              <div className="theme-recipe-heading">
+                <div>
+                  <strong>安装应用提示</strong>
+                  <span>用户停留指定时间后，在可安装设备上显示轻量提示。</span>
+                </div>
+                <label className="theme-install-switch">
+                  <input
+                    type="checkbox"
+                    checked={installPrompt.enabled}
+                    onChange={(event) =>
+                      setInstallPrompt((current) => ({
+                        ...current,
+                        enabled: event.target.checked,
+                      }))
+                    }
+                  />
+                  <span>{installPrompt.enabled ? '已开启' : '已关闭'}</span>
+                </label>
+              </div>
+
+              <div className="theme-install-grid">
+                <label>
+                  <span>延迟显示（秒）</span>
+                  <input
+                    type="number"
+                    min={5}
+                    max={120}
+                    value={installPrompt.delaySeconds}
+                    disabled={!installPrompt.enabled}
+                    onChange={(event) =>
+                      setInstallPrompt((current) => ({
+                        ...current,
+                        delaySeconds: Math.max(
+                          5,
+                          Math.min(120, Number(event.target.value) || 30),
+                        ),
+                      }))
+                    }
+                  />
+                </label>
+                <label>
+                  <span>提示标题</span>
+                  <input
+                    type="text"
+                    maxLength={80}
+                    value={installPrompt.title}
+                    disabled={!installPrompt.enabled}
+                    onChange={(event) =>
+                      setInstallPrompt((current) => ({
+                        ...current,
+                        title: event.target.value,
+                      }))
+                    }
+                  />
+                </label>
+                <label className="is-wide">
+                  <span>桌面端说明</span>
+                  <input
+                    type="text"
+                    maxLength={160}
+                    value={installPrompt.description}
+                    disabled={!installPrompt.enabled}
+                    onChange={(event) =>
+                      setInstallPrompt((current) => ({
+                        ...current,
+                        description: event.target.value,
+                      }))
+                    }
+                  />
+                </label>
+                <label className="is-wide">
+                  <span>iPhone / iPad 说明</span>
+                  <input
+                    type="text"
+                    maxLength={160}
+                    value={installPrompt.iosDescription}
+                    disabled={!installPrompt.enabled}
+                    onChange={(event) =>
+                      setInstallPrompt((current) => ({
+                        ...current,
+                        iosDescription: event.target.value,
+                      }))
+                    }
+                  />
+                </label>
+                <label>
+                  <span>安装按钮</span>
+                  <input
+                    type="text"
+                    maxLength={32}
+                    value={installPrompt.installLabel}
+                    disabled={!installPrompt.enabled}
+                    onChange={(event) =>
+                      setInstallPrompt((current) => ({
+                        ...current,
+                        installLabel: event.target.value,
+                      }))
+                    }
+                  />
+                </label>
+                <label>
+                  <span>关闭提示</span>
+                  <input
+                    type="text"
+                    maxLength={32}
+                    value={installPrompt.dismissLabel}
+                    disabled={!installPrompt.enabled}
+                    onChange={(event) =>
+                      setInstallPrompt((current) => ({
+                        ...current,
+                        dismissLabel: event.target.value,
+                      }))
+                    }
+                  />
                 </label>
               </div>
             </div>

@@ -39,7 +39,7 @@ test('storefront runtime consumes versioned Theme Center UI recipes', () => {
     /type ThemeDensity = 'compact' \| 'standard' \| 'comfortable';/u,
   );
   assert.match(themeRuntime, /root\.dataset\.density = theme\.density;/u);
-  assert.match(themeRuntime, /storefront-theme-v3/u);
+  assert.match(themeRuntime, /storefront-theme-v4/u);
   assert.match(themeRuntime, /recipe:\s*ThemeRecipe/u);
   assert.match(themeRuntime, /root\.dataset\.fontPack = theme\.recipe\.fontPack/u);
   assert.match(themeRuntime, /root\.dataset\.buttonStyle = theme\.recipe\.buttonStyle/u);
