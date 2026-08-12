@@ -84,11 +84,20 @@ test('Home uses rounded icon shortcuts and compact Airbnb-like product rails', (
   );
   assert.doesNotMatch(feedSource, /home-product-arrow|ProductArrowIcon/u);
   assert.match(feedSource, /home-product-meta/u);
+  assert.doesNotMatch(feedSource, /product\.category\.name|product\.tags\[0\]/u);
+  assert.doesNotMatch(feedSource, /<small>/u);
+});
+
+test('Home visually separates shortcut navigation from recommendation content', () => {
+  assert.match(feedSource, /className="home-shortcut-zone"/u);
   assert.match(
-    feedSource,
-    /product\.category\.name\?\.trim\(\) \|\| product\.tags\[0\]\?\.name\.trim\(\)/u,
+    cssSource,
+    /\.home-shortcut-zone\s*\{[\s\S]*?border-bottom:[\s\S]*?background:/u,
   );
-  assert.match(cssSource, /\.home-product-meta small/u);
+  assert.match(
+    cssSource,
+    /\.home-recommendation-feed\s*\{[\s\S]*?padding:\s*28px 0 40px/u,
+  );
 });
 
 test('Home uses tighter mobile app chrome without changing other primary pages', () => {

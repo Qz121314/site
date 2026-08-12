@@ -27,6 +27,8 @@ test('storefront renders its shell and primary browse route without runtime erro
   await expect(page.locator('#root')).not.toBeEmpty();
   await expect(page.locator('.bottom-nav')).toBeVisible();
   await expect(page.locator('.home-shortcut-icon').first()).toBeVisible();
+  await expect(page.locator('.home-shortcut-zone')).toBeVisible();
+  await expect(page.locator('.home-product-meta small')).toHaveCount(0);
   await expect
     .poll(() => page.evaluate(() => document.documentElement.dataset.fontPack))
     .toBe('editorial');
@@ -138,6 +140,17 @@ test('storefront renders its shell and primary browse route without runtime erro
   await page.goto(sectionHref!);
   await expect(page.locator('.section-catalog-back')).toBeVisible();
   await expect(page.locator('.section-catalog-content')).toBeVisible();
+  await expect(page.locator('.section-category-filter button').first()).toHaveText('All');
+  await expect(page.locator('.section-category-select')).toHaveCount(0);
+  await expect(page.locator('.section-product-meta small')).toHaveCount(0);
+
+  const categoryButtons = page.locator('.section-category-filter button');
+  if ((await categoryButtons.count()) > 1) {
+    await categoryButtons.nth(1).click();
+    await expect(categoryButtons.nth(1)).toHaveAttribute('aria-pressed', 'true');
+    await categoryButtons.first().click();
+    await expect(categoryButtons.first()).toHaveAttribute('aria-pressed', 'true');
+  }
 
   const sectionAppContract = await page.evaluate(() => {
     const back = document.querySelector<HTMLElement>('.section-catalog-back');

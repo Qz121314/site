@@ -34,7 +34,7 @@ test('section catalog keeps compact app navigation and minimal product cards', (
   assert.match(sectionSource, /className="section-product-card"/);
   assert.match(sectionSource, /className="section-product-cover"/);
   assert.match(sectionSource, /className="section-product-meta"/);
-  assert.match(sectionSource, /product\.category\.name \|\| product\.tags\[0\]\?\.name/u);
+  assert.doesNotMatch(sectionSource, /section-product-meta[\s\S]*?<small>/u);
   assert.doesNotMatch(sectionSource, /StorefrontProductCard/);
   assert.doesNotMatch(sectionSource, /categoryName=|address=|sectionName=|tags=/);
   assert.match(sectionCss, /\.section-catalog-header \{[\s\S]*position: relative/);
@@ -47,19 +47,18 @@ test('section catalog keeps compact app navigation and minimal product cards', (
   assert.match(sectionCss, /\.section-catalog-back-label \{[\s\S]*white-space: nowrap/);
   assert.match(sectionCss, /\.section-catalog-content \{[\s\S]*min-height: 0/);
   assert.match(sectionCss, /\.section-product-cover \{[\s\S]*aspect-ratio: 1 \/ 1/);
-  assert.match(sectionCss, /\.section-product-meta \{[\s\S]*gap: 3px/);
+  assert.match(sectionCss, /\.section-product-meta \{[\s\S]*margin: 9px 1px 0/);
 });
 
-test('section catalog uses category select plus horizontal tag filters', () => {
-  assert.match(sectionSource, /className=\{`section-category-select/);
-  assert.match(sectionSource, /<select/);
-  assert.match(sectionSource, /value=\{categoryId\}/);
-  assert.match(sectionSource, /<option value="">\{SYSTEM_UI\.all\}<\/option>/);
+test('section catalog uses horizontal category and tag filter buttons', () => {
+  assert.match(sectionSource, /className="section-category-filter"/);
+  assert.match(sectionSource, /onClick=\{\(\) => setCategoryId\(''\)\}/);
+  assert.match(sectionSource, /onClick=\{\(\) => setCategoryId\(category\.id\)\}/);
   assert.match(sectionSource, /className="section-tag-filter"/);
-  assert.doesNotMatch(sectionSource, /className="section-category-options"/);
+  assert.doesNotMatch(sectionSource, /<select|<option|section-category-select/);
   assert.match(
     sectionCss,
-    /\.section-category-select\s*\{[\s\S]*border-radius:\s*var\(--theme-radius-chip,/,
+    /\.section-category-filter button,[\s\S]*border-radius:\s*var\(--theme-radius-chip,/,
   );
   assert.match(sectionCss, /\.section-catalog-filters\s*\{[\s\S]*overflow-x: auto/);
 });
