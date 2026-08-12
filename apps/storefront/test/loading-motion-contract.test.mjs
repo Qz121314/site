@@ -6,7 +6,10 @@ const rootSource = await readFile(
   new URL('../src/StorefrontRoot.tsx', import.meta.url),
   'utf8',
 );
-const browseSource = await readFile(new URL('../src/BrowsePage.tsx', import.meta.url), 'utf8');
+const browseSource = await readFile(
+  new URL('../src/BrowsePage.tsx', import.meta.url),
+  'utf8',
+);
 const sectionSource = await readFile(
   new URL('../src/SectionPage.tsx', import.meta.url),
   'utf8',
@@ -19,10 +22,15 @@ const loadingCss = await readFile(
   new URL('../src/loading-states.css', import.meta.url),
   'utf8',
 );
-const baseCss = await readFile(new URL('../src/styles.css', import.meta.url), 'utf8');
+const baseCss = await readFile(
+  new URL('../src/styles.css', import.meta.url),
+  'utf8',
+);
 
 test('startup and lazy-route loading use restrained visual primitives', () => {
-  assert.ok(rootSource.includes('if (bootstrapQuery.isLoading) return <StartupLoader />;'));
+  assert.ok(
+    rootSource.includes('if (bootstrapQuery.isLoading) return <StartupLoader />;'),
+  );
   assert.ok(rootSource.includes('<Suspense fallback={<RouteProgress />}>'));
   assert.ok(loadingSource.includes('className="loading-halo"'));
   assert.ok(loadingSource.includes('className="route-progress"'));
