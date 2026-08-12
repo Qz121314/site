@@ -95,6 +95,8 @@ function HomeShortcuts({ sections }: { sections: PublicSection[] }) {
 }
 
 function HomeProductTile({ product }: { product: PublicProductSummary }) {
+  const supporting = product.category.name?.trim() || product.tags[0]?.name.trim();
+
   return (
     <HomeLink className="home-product-tile" href={productHref(product)}>
       <span className="home-product-cover">
@@ -107,6 +109,7 @@ function HomeProductTile({ product }: { product: PublicProductSummary }) {
       </span>
       <span className="home-product-meta">
         <strong>{product.title}</strong>
+        {supporting ? <small>{supporting}</small> : null}
       </span>
     </HomeLink>
   );

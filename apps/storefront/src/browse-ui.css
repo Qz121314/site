@@ -3,7 +3,7 @@
 .browse-directory {
   display: grid;
   width: min(1040px, 100%);
-  gap: 22px;
+  gap: 20px;
   margin: 0 auto;
 }
 
@@ -11,17 +11,15 @@
   position: relative;
   display: flex;
   width: min(680px, 100%);
-  min-height: max(52px, var(--theme-control-height, 44px));
+  min-height: max(48px, var(--theme-control-height, 44px));
   align-items: center;
   gap: 10px;
   padding: 0 12px 0 15px;
   border: 1px solid var(--app-hairline, var(--line));
-  border-radius: var(--theme-radius-control, 12px);
-  background: color-mix(in srgb, var(--surface) 82%, transparent);
-  box-shadow:
-    inset 0 1px 0 color-mix(in srgb, #fff 5%, transparent),
-    0 10px 30px color-mix(in srgb, #000 8%, transparent);
-  backdrop-filter: blur(22px) saturate(1.08);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--surface-soft) 84%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 4%, transparent);
+  backdrop-filter: blur(22px) saturate(1.04);
   transition:
     border-color var(--app-motion-fast, 160ms) ease,
     background var(--app-motion-fast, 160ms) ease,
@@ -29,12 +27,11 @@
 }
 
 .browse-directory-search:focus-within {
-  border-color: color-mix(in srgb, var(--brand) 46%, var(--line));
-  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  border-color: color-mix(in srgb, var(--brand) 38%, var(--line));
+  background: color-mix(in srgb, var(--surface-soft) 96%, transparent);
   box-shadow:
-    inset 0 1px 0 color-mix(in srgb, #fff 6%, transparent),
-    0 0 0 3px color-mix(in srgb, var(--brand) 7%, transparent),
-    0 14px 36px color-mix(in srgb, #000 10%, transparent);
+    inset 0 1px 0 color-mix(in srgb, #fff 5%, transparent),
+    0 0 0 3px color-mix(in srgb, var(--brand) 6%, transparent);
 }
 
 .browse-directory-search > svg {
@@ -98,7 +95,7 @@
 .browse-section-list {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 18px;
+  gap: 16px;
   border-top: 0;
 }
 
@@ -106,15 +103,15 @@
   position: relative;
   display: block;
   min-width: 0;
-  min-height: 220px;
-  aspect-ratio: 16 / 10;
+  min-height: 204px;
+  aspect-ratio: 3 / 2;
   padding: 0;
   border: 0;
-  border-radius: 0;
+  border-radius: var(--theme-browse-radius, 14px);
   overflow: hidden;
   color: #fff;
   background: #121318;
-  box-shadow: var(--app-shadow-soft, 0 18px 50px rgb(0 0 0 / 18%));
+  box-shadow: 0 18px 46px rgb(0 0 0 / 24%);
   isolation: isolate;
   transition:
     opacity var(--app-motion-fast, 160ms) ease,
@@ -127,7 +124,8 @@
   inset: 0;
   z-index: 2;
   display: block;
-  border: 1px solid rgb(255 255 255 / 12%);
+  border: 1px solid rgb(255 255 255 / 10%);
+  border-radius: inherit;
   content: '';
   pointer-events: none;
   transition: border-color var(--app-motion-fast, 160ms) ease;
@@ -142,7 +140,7 @@
   height: 100%;
   overflow: hidden;
   border: 0;
-  border-radius: 0;
+  border-radius: inherit;
   background: #121318;
   box-shadow: none;
   isolation: isolate;
@@ -179,8 +177,8 @@
   width: 100%;
   height: 100%;
   background:
-    linear-gradient(90deg, rgb(0 0 0 / 30%) 0%, rgb(0 0 0 / 2%) 70%),
-    linear-gradient(180deg, rgb(0 0 0 / 0%) 24%, rgb(0 0 0 / 88%) 100%);
+    linear-gradient(90deg, rgb(0 0 0 / 24%) 0%, rgb(0 0 0 / 0%) 68%),
+    linear-gradient(180deg, rgb(0 0 0 / 0%) 28%, rgb(0 0 0 / 86%) 100%);
 }
 
 .browse-section-card.is-fallback .browse-section-card-scrim {
@@ -195,9 +193,9 @@
 
 .browse-section-card-content {
   position: absolute;
-  right: 18px;
-  bottom: 18px;
-  left: 18px;
+  right: 17px;
+  bottom: 16px;
+  left: 17px;
   z-index: 3;
   display: flex;
   min-width: 0;
@@ -209,16 +207,16 @@
 .browse-section-card-copy {
   display: grid;
   min-width: 0;
-  gap: 7px;
+  gap: 5px;
 }
 
 .browse-section-card-content strong {
   overflow: hidden;
   color: #fff;
-  font-size: clamp(1.35rem, 6vw, 1.7rem);
-  font-weight: 620;
-  line-height: 1.02;
-  letter-spacing: -0.032em;
+  font-size: clamp(1.28rem, 5.8vw, 1.62rem);
+  font-weight: 650;
+  line-height: 1.06;
+  letter-spacing: -0.038em;
   text-overflow: ellipsis;
   text-shadow: 0 1px 14px rgb(0 0 0 / 32%);
   white-space: nowrap;
@@ -229,9 +227,9 @@
   max-width: 46ch;
   margin: 0;
   overflow: hidden;
-  color: rgb(255 255 255 / 76%);
-  font-size: var(--storefront-text-caption, 0.6875rem);
-  font-weight: 420;
+  color: rgb(255 255 255 / 74%);
+  font-size: var(--storefront-text-caption, 0.75rem);
+  font-weight: 450;
   line-height: 1.38;
   text-shadow: 0 1px 10px rgb(0 0 0 / 30%);
   -webkit-box-orient: vertical;
@@ -261,8 +259,8 @@
 }
 
 .browse-section-card:active {
-  opacity: 0.76;
-  transform: scale(0.992);
+  opacity: 0.9;
+  transform: scale(var(--theme-press-scale, 0.985));
 }
 
 .browse-section-card:active .browse-section-card-arrow {
@@ -381,7 +379,7 @@
   }
 
   .browse-section-card {
-    min-height: 220px;
+    min-height: 204px;
   }
 }
 
@@ -406,6 +404,7 @@
     aspect-ratio: 16 / 9;
     padding: 0;
     border-bottom: 0;
+    border-radius: var(--theme-browse-radius, 14px);
     color: #fff;
     background: #121318;
     box-shadow: var(--app-shadow-soft, 0 18px 50px rgb(0 0 0 / 18%));
@@ -418,6 +417,7 @@
     z-index: 2;
     display: block;
     border: 1px solid rgb(255 255 255 / 10%);
+    border-radius: inherit;
     content: '';
     pointer-events: none;
     transition: border-color var(--app-motion-fast, 160ms) ease;
@@ -430,7 +430,7 @@
     width: 100%;
     height: 100%;
     border: 0;
-    border-radius: 0;
+    border-radius: inherit;
     background: #121318;
     box-shadow: none;
   }

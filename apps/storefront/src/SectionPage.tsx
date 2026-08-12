@@ -264,7 +264,12 @@ export function SectionCatalogPage({
                     src={product.coverUrl}
                   />
                 </div>
-                <h2>{product.title}</h2>
+                <span className="section-product-meta">
+                  <h2>{product.title}</h2>
+                  {product.category.name || product.tags[0]?.name ? (
+                    <small>{product.category.name || product.tags[0]?.name}</small>
+                  ) : null}
+                </span>
               </LinkComponent>
             ))}
           </div>

@@ -10,9 +10,9 @@
 .home-shortcuts {
   display: flex;
   min-width: 0;
-  gap: 15px;
-  margin: 8px 0 34px;
-  padding: 12px 1px 14px;
+  gap: 13px;
+  margin: 4px 0 30px;
+  padding: 10px 1px 12px;
   overflow-x: auto;
   scroll-padding-inline: 1px;
   scroll-snap-type: x proximity;
@@ -27,12 +27,12 @@
 
 .home-shortcut {
   display: grid;
-  width: 70px;
-  min-width: 70px;
-  min-height: 86px;
+  width: 66px;
+  min-width: 66px;
+  min-height: 80px;
   align-content: start;
   justify-items: center;
-  gap: 9px;
+  gap: 8px;
   padding: 0;
   color: var(--text);
   text-align: center;
@@ -44,18 +44,18 @@
 .home-shortcut-icon {
   position: relative;
   display: grid;
-  width: 64px;
-  height: 64px;
+  width: 58px;
+  height: 58px;
   box-sizing: border-box;
   place-items: center;
   overflow: hidden;
   padding: 1px;
   border: 1px solid color-mix(in srgb, var(--theme-card-border) 54%, transparent);
-  border-radius: var(--theme-radius-icon, 12px);
+  border-radius: 16px;
   background: var(--app-surface-raised, var(--theme-media-background));
   box-shadow:
     inset 0 1px 0 color-mix(in srgb, #fff 8%, transparent),
-    0 12px 30px color-mix(in srgb, #000 18%, transparent);
+    0 12px 28px color-mix(in srgb, #000 20%, transparent);
   transform: translateZ(0);
   transition:
     transform var(--app-motion-fast, 160ms) var(--app-ease-out),
@@ -75,7 +75,7 @@
 .home-shortcut-icon img {
   width: 100%;
   height: 100%;
-  border-radius: var(--theme-radius-icon, 12px);
+  border-radius: 15px;
   object-fit: cover;
   transition: transform var(--app-motion-base, 240ms) var(--app-ease-out);
 }
@@ -96,7 +96,7 @@
   overflow: hidden;
   color: color-mix(in srgb, var(--text) 92%, var(--muted));
   font-size: var(--storefront-text-caption, 0.6875rem);
-  font-weight: 540;
+  font-weight: 570;
   line-height: 1.18;
   letter-spacing: -0.012em;
   -webkit-box-orient: vertical;
@@ -124,7 +124,7 @@
 
 .home-recommendation-feed {
   display: grid;
-  gap: clamp(42px, 9vw, 64px);
+  gap: clamp(36px, 8vw, 54px);
   padding-bottom: 40px;
 }
 
@@ -135,10 +135,10 @@
 .home-recommendation-heading {
   display: flex;
   min-height: 38px;
-  align-items: flex-end;
+  align-items: center;
   justify-content: space-between;
   gap: 12px;
-  margin: 0 1px 16px;
+  margin: 0 0 14px;
 }
 
 .home-recommendation-heading-copy {
@@ -164,24 +164,24 @@
   display: -webkit-box;
   margin: 0;
   overflow: hidden;
-  color: var(--app-text-secondary, var(--muted));
+  color: color-mix(in srgb, var(--muted) 88%, var(--text));
   font-size: var(--storefront-text-small, 0.8125rem);
-  font-weight: 410;
-  line-height: 1.34;
+  font-weight: 450;
+  line-height: 1.4;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 1;
 }
 
 .home-recommendation-heading > a {
   display: grid;
-  width: 36px;
-  height: 36px;
-  flex: 0 0 36px;
+  width: 32px;
+  height: 44px;
+  flex: 0 0 32px;
   place-items: center;
-  border: 1px solid var(--app-hairline, var(--line));
-  border-radius: 999px;
+  border: 0;
+  border-radius: 0;
   color: color-mix(in srgb, var(--text) 76%, var(--muted));
-  background: color-mix(in srgb, var(--surface) 72%, transparent);
+  background: transparent;
   box-shadow: none;
   text-decoration: none;
   transition:
@@ -198,15 +198,15 @@
 }
 
 .home-recommendation-heading > a:active {
-  background: color-mix(in srgb, var(--brand) 8%, var(--surface-soft));
-  transform: scale(0.92);
+  color: var(--brand-strong);
+  transform: translateX(2px) scale(0.96);
 }
 
 .home-product-rail {
   display: grid;
-  grid-auto-columns: clamp(132px, 41vw, 168px);
+  grid-auto-columns: clamp(148px, 44vw, 176px);
   grid-auto-flow: column;
-  gap: 12px;
+  gap: 13px;
   overflow-x: auto;
   margin-right: calc(var(--app-gutter, 16px) * -1);
   padding: 0 var(--app-gutter, 16px) 4px 0;
@@ -225,7 +225,7 @@
   display: grid;
   min-width: 0;
   align-content: start;
-  gap: 8px;
+  gap: 9px;
   color: var(--text);
   text-decoration: none;
   scroll-snap-align: start;
@@ -237,12 +237,12 @@
   position: relative;
   display: block;
   width: 100%;
-  aspect-ratio: 10 / 11;
+  aspect-ratio: 4 / 5;
   overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--line) 58%, transparent);
-  border-radius: var(--theme-radius-control, 12px);
+  border: 0;
+  border-radius: var(--theme-radius-media, 12px);
   background: var(--theme-media-background);
-  box-shadow: 0 10px 28px color-mix(in srgb, #000 18%, transparent);
+  box-shadow: var(--theme-content-media-shadow, 0 14px 36px rgb(0 0 0 / 22%));
   isolation: isolate;
   transform: translateZ(0);
   transition:
@@ -254,14 +254,15 @@
 .home-product-cover::after {
   position: absolute;
   inset: 0;
-  border: 1px solid color-mix(in srgb, #fff 4%, transparent);
+  border: 1px solid color-mix(in srgb, #fff 7%, transparent);
+  border-radius: inherit;
   content: '';
   pointer-events: none;
 }
 
 .home-product-tile:active .home-product-cover {
-  filter: brightness(0.92);
-  transform: scale(0.975);
+  filter: brightness(var(--theme-press-brightness, 0.94));
+  transform: scale(var(--theme-press-scale, 0.985));
 }
 
 .home-product-cover img {
@@ -279,8 +280,9 @@
 }
 
 .home-product-meta {
-  display: block;
+  display: grid;
   min-width: 0;
+  gap: 3px;
   padding: 0 1px;
 }
 
@@ -295,6 +297,16 @@
   letter-spacing: -0.01em;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 1;
+}
+
+.home-product-meta small {
+  overflow: hidden;
+  color: color-mix(in srgb, var(--muted) 88%, var(--text));
+  font-size: var(--storefront-text-caption, 0.6875rem);
+  font-weight: 450;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .home-product-rail.is-loading {
@@ -366,7 +378,7 @@
   }
 
   .home-recommendation-feed {
-    gap: 46px;
+    gap: 40px;
   }
 }
 
@@ -379,16 +391,16 @@
   }
 
   .home-shortcut {
-    width: 70px;
-    min-width: 70px;
+    width: 68px;
+    min-width: 68px;
     min-height: 84px;
     gap: 8px;
   }
 
   .home-shortcut-icon {
-    width: 60px;
-    height: 60px;
-    border-radius: 14px;
+    width: 58px;
+    height: 58px;
+    border-radius: 16px;
   }
 
   .home-shortcut-label {

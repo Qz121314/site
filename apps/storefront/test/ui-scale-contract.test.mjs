@@ -28,7 +28,7 @@ const productDetailCss = await readFile(
 );
 
 test('Storefront keeps a readable four-step UI type scale', () => {
-  assert.match(typographyContract, /--storefront-text-caption:\s*0\.6875rem;/u);
+  assert.match(typographyContract, /--storefront-text-caption:\s*0\.75rem;/u);
   assert.match(typographyContract, /--storefront-text-small:\s*0\.8125rem;/u);
   assert.match(typographyContract, /--storefront-text-body:\s*0\.9375rem;/u);
   assert.match(typographyContract, /--storefront-text-label:\s*0\.9375rem;/u);
