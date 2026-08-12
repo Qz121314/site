@@ -407,10 +407,18 @@ jobs:
           for path in "/sections/storefront-smoke-${GITHUB_SHA}/" \
             "/sections/storefront-smoke-${GITHUB_SHA}/products/product-smoke-${GITHUB_SHA}/" \
             "/products/storefront-smoke-${GITHUB_SHA}/"; do
-            curl --fail --silent --show-error \
+            status="$(curl --silent --show-error \
               -H 'Accept: text/html' \
               -H 'Sec-Fetch-Mode: navigate' \
-              "$BASE_URL$path" | grep -F '<div id="root"></div>'
+              -D /tmp/storefront-not-found.headers \
+              -o /tmp/storefront-not-found.body \
+              -w '%{http_code}' \
+              "$BASE_URL$path")"
+            test "$status" = '404'
+            grep -Eqi '^content-type: text/html' /tmp/storefront-not-found.headers
+            grep -Eqi '^x-robots-tag: noindex, nofollow' /tmp/storefront-not-found.headers
+            grep -F '<meta name="robots" content="noindex, nofollow" />' /tmp/storefront-not-found.body
+            grep -F '<div id="root"></div>' /tmp/storefront-not-found.body
           done
 
       - name: Install production browser
