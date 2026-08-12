@@ -54,8 +54,9 @@ const storefrontPages = [
 test('business content is backend-driven instead of coming from a storefront copy module', () => {
   assert.doesNotMatch(storefrontPages, /useStorefrontCopy|STOREFRONT_COPY/u);
   assert.doesNotMatch(rootSource, /storefront-copy/u);
-  assert.match(homeSource, /slide\.title/u);
   assert.match(homeSource, /section\.name/u);
+  assert.match(homeSource, /section\.description/u);
+  assert.match(homeSource, /product\.title/u);
   assert.match(productSource, /product\.title/u);
   assert.match(productSource, /\{cta\.label\}/u);
   assert.doesNotMatch(productSource, /product\.cta|SYSTEM_UI\.continue/u);
