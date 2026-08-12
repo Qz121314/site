@@ -25,7 +25,9 @@ test('storefront renders its shell and primary browse route without runtime erro
 
   await page.goto('/');
   await expect(page.locator('#root')).not.toBeEmpty();
-  await expect(page.locator('.app-shell > .topbar .brand-lockup')).toBeVisible();
+  await expect(
+    page.locator('.app-shell > .topbar .brand-lockup'),
+  ).toBeVisible();
   await expect(page.locator('.bottom-nav')).toBeVisible();
   await expect(page.locator('.home-shortcut-icon').first()).toBeVisible();
   await expect(page.locator('.home-shortcut-zone')).toBeVisible();
@@ -51,7 +53,9 @@ test('storefront renders its shell and primary browse route without runtime erro
     );
     const firstCover = document.querySelector<HTMLElement>('.home-product-cover');
     const firstCoverRect = firstCover?.getBoundingClientRect();
-    const semanticHeading = document.querySelector<HTMLElement>('.home-feed > h1.sr-only');
+    const semanticHeading = document.querySelector<HTMLElement>(
+      '.home-feed > h1.sr-only',
+    );
     const semanticHeadingRect = semanticHeading?.getBoundingClientRect();
     return {
       bodyScaleRem: Number.parseFloat(
@@ -237,9 +241,13 @@ test('storefront renders its shell and primary browse route without runtime erro
   expect(pageErrors).toEqual([]);
 });
 
-test('FAQ keeps its semantic title out of the visual brand surface', async ({ page }) => {
+test('FAQ keeps its semantic title out of the visual brand surface', async ({
+  page,
+}) => {
   await page.goto('/faq/');
-  await expect(page.locator('.app-shell > .topbar .brand-lockup')).toBeVisible();
+  await expect(
+    page.locator('.app-shell > .topbar .brand-lockup'),
+  ).toBeVisible();
   await expect
     .poll(() =>
       page.locator('.faq-directory > h1.sr-only').evaluate((element) => {
@@ -285,7 +293,9 @@ test('manifest exposes installable, branded PNG icons', async ({ request }) => {
   }
 });
 
-test('admin entry renders the authentication boundary from /admin', async ({ page }) => {
+test('admin entry renders the authentication boundary from /admin', async ({
+  page,
+}) => {
   await page.goto('/admin');
   await expect(page).toHaveURL(/\/admin\/$/u);
   await expect(page.locator('#admin-password')).toBeVisible();
