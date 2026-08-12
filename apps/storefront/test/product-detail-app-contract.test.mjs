@@ -22,9 +22,12 @@ test('mobile product media is a swipe-first scroll-snap gallery', () => {
   );
 });
 
-test('product detail uses an icon back control and continuous article body', () => {
+test('product detail uses icon back and continuous body', () => {
   const backControl = productSource.indexOf('className="product-detail-back"');
-  const backIcon = productSource.indexOf('<svg viewBox="0 0 20 20"', backControl);
+  const backIcon = productSource.indexOf(
+    '<svg viewBox="0 0 20 20"',
+    backControl,
+  );
   const bodySection = productSource.indexOf(
     '<section className="product-detail-body">',
   );
@@ -39,7 +42,9 @@ test('product detail uses an icon back control and continuous article body', () 
 });
 
 test('customer-service CTA stays inside the mounted storefront shell', () => {
-  const serviceBranch = productSource.indexOf("cta.mode === 'customer_service'");
+  const serviceBranch = productSource.indexOf(
+    "cta.mode === 'customer_service'",
+  );
   const internalCta = productSource.indexOf(
     '<LinkComponent className="cta-button is-ready"',
     serviceBranch,
@@ -56,7 +61,7 @@ test('customer-service CTA stays inside the mounted storefront shell', () => {
   assert.ok(externalTarget > externalCta);
 });
 
-test('product detail keeps flat content surfaces and restrained CTA geometry', () => {
+test('product detail keeps flat surfaces and restrained geometry', () => {
   assert.equal(productCss.includes('var(--theme-radius-control, 4px)'), true);
   assert.equal(productCss.includes('var(--theme-radius-media, 0px)'), true);
   assert.equal(productCss.includes('box-shadow: none;'), true);
