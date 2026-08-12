@@ -33,16 +33,10 @@ test('section catalog uses category select and tag filtering', () => {
     sectionSource,
     /onChange=\{\(event\) => setCategoryId\(event\.target\.value\)\}/u,
   );
-  assert.match(
-    sectionSource,
-    /<option value="">\{SYSTEM_UI\.all\}<\/option>/u,
-  );
+  assert.match(sectionSource, /<option value="">\{SYSTEM_UI\.all\}<\/option>/u);
   assert.doesNotMatch(sectionSource, /className="section-category-options"/u);
   assert.match(sectionSource, /className="section-tag-filter"/u);
-  assert.match(
-    sectionSource,
-    /aria-pressed=\{selectedTags\.has\(tag\.id\)\}/u,
-  );
+  assert.match(sectionSource, /aria-pressed=\{selectedTags\.has\(tag\.id\)\}/u);
   assert.match(sectionSource, /\[\.\.\.selectedTags\]\.every/u);
   assert.match(sectionSource, /clearFilters/u);
   assert.doesNotMatch(sectionSource, /section-catalog-results/u);
@@ -65,10 +59,7 @@ test('section products stay two-column', () => {
     cssSource,
     /\.section-catalog-products\s*\{[\s\S]*?width:\s*min\(760px,\s*100%\)/u,
   );
-  assert.match(
-    cssSource,
-    /grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/u,
-  );
+  assert.match(cssSource, /grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/u);
   assert.match(cssSource, /@media \(min-width:\s*768px\)/u);
   assert.doesNotMatch(
     cssSource,
