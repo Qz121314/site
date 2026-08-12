@@ -38,28 +38,3 @@ export function SquareSkeletonGrid({
     </div>
   );
 }
-
-export function LineSkeletonList({ count = 5 }: { count?: number }) {
-  return (
-    <div className="loading-line-list" aria-hidden="true">
-      {Array.from({ length: count }, (_, index) => (
-        <span className="loading-skeleton loading-line" key={index}>
-          <i />
-          <b />
-        </span>
-      ))}
-    </div>
-  );
-}
-
-export function ProductDetailSkeleton() {
-  return (
-    <div className="loading-product-detail" aria-hidden="true">
-      <span className="loading-skeleton loading-product-back" />
-      <span className="loading-skeleton loading-product-media" />
-      <span className="loading-skeleton loading-product-title" />
-      <span className="loading-skeleton loading-product-copy" />
-      <span className="loading-skeleton loading-product-copy is-short" />
-    </div>
-  );
-}
