@@ -82,10 +82,11 @@ test('official themes use a restrained precision radius system', () => {
   assert.match(sharedContract, /--theme-radius-card:\s*2px;/u);
   assert.match(sharedContract, /--theme-radius-media:\s*0px;/u);
   assert.match(sharedContract, /--theme-radius-control:\s*4px;/u);
+  assert.match(sharedContract, /--theme-radius-icon:\s*12px;/u);
   assert.match(sharedContract, /--theme-radius-chip:\s*2px;/u);
   assert.doesNotMatch(
     sharedContract,
-    /--theme-radius-(?:card|media|control|icon|chip):\s*(?:[1-9]\d+px|999px)/u,
+    /--theme-radius-(?:card|media|control|chip):\s*(?:[1-9]\d+px|999px)/u,
   );
 });
 

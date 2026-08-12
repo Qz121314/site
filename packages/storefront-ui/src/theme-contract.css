@@ -7,7 +7,7 @@
   --theme-radius-card: 2px;
   --theme-radius-media: 0px;
   --theme-radius-control: 4px;
-  --theme-radius-icon: 3px;
+  --theme-radius-icon: 12px;
   --theme-radius-chip: 2px;
   --theme-control-height: 44px;
   --theme-section-icon-size: 48px;
@@ -62,14 +62,14 @@
   --theme-radius-card: 2px;
   --theme-radius-media: 0px;
   --theme-radius-control: 4px;
-  --theme-radius-icon: 3px;
+  --theme-radius-icon: 12px;
 }
 
 :is(html, .storefront-theme-root)[data-theme='noir'] {
   --theme-radius-card: 2px;
   --theme-radius-media: 0px;
   --theme-radius-control: 3px;
-  --theme-radius-icon: 3px;
+  --theme-radius-icon: 12px;
   --theme-card-background: color-mix(in srgb, var(--surface) 97%, var(--brand) 3%);
   --theme-card-border: color-mix(in srgb, var(--line) 90%, var(--brand) 10%);
   --theme-media-background: color-mix(in srgb, var(--surface-soft) 96%, black 4%);
@@ -90,7 +90,7 @@
   --theme-radius-card: 0px;
   --theme-radius-media: 0px;
   --theme-radius-control: 2px;
-  --theme-radius-icon: 2px;
+  --theme-radius-icon: 12px;
   --theme-radius-chip: 2px;
   --theme-card-background: color-mix(in srgb, var(--surface) 97%, var(--brand) 3%);
   --theme-card-border: color-mix(in srgb, var(--line) 86%, var(--brand) 14%);
@@ -101,14 +101,14 @@
   --theme-radius-card: 4px;
   --theme-radius-media: 2px;
   --theme-radius-control: 4px;
-  --theme-radius-icon: 4px;
+  --theme-radius-icon: 12px;
 }
 
 :is(html, .storefront-theme-root)[data-theme='travel'] {
   --theme-radius-card: 4px;
   --theme-radius-media: 2px;
   --theme-radius-control: 4px;
-  --theme-radius-icon: 4px;
+  --theme-radius-icon: 12px;
   --theme-card-background: color-mix(in srgb, var(--surface) 97%, var(--surface-soft) 3%);
   --theme-control-background: color-mix(
     in srgb,
@@ -121,7 +121,7 @@
   --theme-radius-card: 0px;
   --theme-radius-media: 0px;
   --theme-radius-control: 2px;
-  --theme-radius-icon: 2px;
+  --theme-radius-icon: 12px;
   --theme-card-background: color-mix(in srgb, var(--surface) 95%, var(--brand) 5%);
   --theme-card-border: color-mix(in srgb, var(--line) 84%, var(--brand) 16%);
   --theme-control-background: color-mix(in srgb, var(--surface) 95%, var(--brand) 5%);
