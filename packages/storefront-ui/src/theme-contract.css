@@ -174,9 +174,9 @@
 }
 
 :is(html, .storefront-theme-root)[data-media-style='soft'] {
-  --theme-radius-media: 10px;
-  --theme-browse-radius: 4px;
-  --theme-content-media-shadow: 0 10px 28px color-mix(in srgb, #000 18%, transparent);
+  --theme-radius-media: 12px;
+  --theme-browse-radius: 14px;
+  --theme-content-media-shadow: 0 14px 36px color-mix(in srgb, #000 22%, transparent);
 }
 
 :is(html, .storefront-theme-root)[data-media-style='editorial'] {

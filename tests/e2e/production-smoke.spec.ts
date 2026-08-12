@@ -46,6 +46,8 @@ test('storefront renders its shell and primary browse route without runtime erro
     const activeIcon = document.querySelector<HTMLElement>(
       '.bottom-nav a.is-active .bottom-nav-icon',
     );
+    const firstCover = document.querySelector<HTMLElement>('.home-product-cover');
+    const firstCoverRect = firstCover?.getBoundingClientRect();
     return {
       bodyScaleRem: Number.parseFloat(
         getComputedStyle(document.documentElement).getPropertyValue(
@@ -58,6 +60,12 @@ test('storefront renders its shell and primary browse route without runtime erro
       mediaStyle: document.documentElement.dataset.mediaStyle,
       motionStyle: document.documentElement.dataset.motionStyle,
       navigationStyle: document.documentElement.dataset.navigationStyle,
+      usesManrope: getComputedStyle(document.body).fontFamily.includes(
+        'Manrope Variable',
+      ),
+      productCoverRatio: firstCoverRect
+        ? firstCoverRect.height / firstCoverRect.width
+        : null,
       singleTileStaysCompact:
         rail && singleTile
           ? singleTile.getBoundingClientRect().width <=
@@ -73,8 +81,11 @@ test('storefront renders its shell and primary browse route without runtime erro
     mediaStyle: 'soft',
     motionStyle: 'restrained',
     navigationStyle: 'quiet',
+    usesManrope: true,
+    productCoverRatio: expect.any(Number),
     singleTileStaysCompact: true,
   });
+  expect(homeVisualContract.productCoverRatio ?? 0).toBeCloseTo(1.25, 1);
 
   await page.goto('/browse/');
   await expect(page.locator('#root')).not.toBeEmpty();
@@ -109,11 +120,11 @@ test('storefront renders its shell and primary browse route without runtime erro
     };
   });
   expect(visualContract).toEqual({
-    cardRadius: '4px',
+    cardRadius: '14px',
     cardMinHeight: expect.any(Number),
     mediaFillsCard: true,
     imageFillsCard: true,
-    searchRadius: '12px',
+    searchRadius: '14px',
     navigationRadius: '0px',
     navigationBottom: '0px',
   });

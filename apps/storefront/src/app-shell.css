@@ -13,9 +13,14 @@ body,
 html[data-theme='noir'] .app-shell {
   background:
     radial-gradient(
-      circle at 50% -12%,
-      color-mix(in srgb, var(--brand) 7%, transparent),
-      transparent 34rem
+      ellipse at 50% -8%,
+      color-mix(in srgb, var(--brand) 9%, transparent),
+      transparent 30rem
+    ),
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface) 24%, transparent),
+      transparent 18rem
     ),
     var(--page-bg, #09070a);
 }
@@ -80,9 +85,9 @@ html[data-theme='noir'] .app-shell {
     padding-bottom: 7px;
     padding-left: max(var(--app-gutter, 16px), env(safe-area-inset-left));
     border-bottom-color: var(--app-hairline, var(--line));
-    background: color-mix(in srgb, var(--page-bg, #f5f6f7) 82%, transparent);
-    box-shadow: 0 1px 0 color-mix(in srgb, #fff 3%, transparent) inset;
-    backdrop-filter: blur(30px) saturate(1.15);
+    background: color-mix(in srgb, var(--page-bg, #f5f6f7) 88%, transparent);
+    box-shadow: 0 1px 0 color-mix(in srgb, #fff 2.5%, transparent) inset;
+    backdrop-filter: blur(28px) saturate(1.08);
   }
 
   .app-shell > main {
@@ -141,7 +146,7 @@ html[data-theme='noir'] .app-shell {
     background: color-mix(in srgb, var(--surface, #fff) 84%, transparent);
     box-shadow:
       0 -1px 0 rgb(255 255 255 / 5%) inset,
-      0 -14px 36px color-mix(in srgb, #000 12%, transparent);
+      0 -18px 44px color-mix(in srgb, #000 16%, transparent);
     transform: none;
     backdrop-filter: blur(30px) saturate(1.12);
   }
@@ -157,8 +162,8 @@ html[data-theme='noir'] .app-shell {
   }
 
   .app-shell .bottom-nav a:active {
-    opacity: 0.68;
-    transform: scale(0.96);
+    opacity: 0.72;
+    transform: translateY(1px) scale(0.97);
   }
 
   .app-shell .bottom-nav a.is-active {

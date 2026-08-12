@@ -53,9 +53,12 @@ test('Browse uses full-bleed image cards on mobile and desktop', () => {
   );
   assert.match(
     browseCss,
-    /\.browse-section-card\s*\{[^}]*min-height:\s*220px[^}]*aspect-ratio:\s*16 \/ 10/su,
+    /\.browse-section-card\s*\{[^}]*min-height:\s*204px[^}]*aspect-ratio:\s*3 \/ 2/su,
   );
-  assert.match(browseCss, /\.browse-section-card\s*\{[^}]*border-radius:\s*0/su);
+  assert.match(
+    browseCss,
+    /\.browse-section-card\s*\{[^}]*border-radius:\s*var\(--theme-browse-radius,\s*14px\)/su,
+  );
   assert.match(
     browseCss,
     /\.browse-section-card-media\s*\{[^}]*position:\s*absolute[^}]*inset:\s*0[^}]*width:\s*100%[^}]*height:\s*100%/su,
@@ -96,10 +99,7 @@ test('Browse search uses the same minimal two-column product language as section
     browseCss,
     /\.browse-search-product-cover\s*\{[^}]*aspect-ratio:\s*1 \/ 1/su,
   );
-  assert.match(
-    browseCss,
-    /\.browse-directory-search\s*\{[^}]*border-radius:\s*var\(--theme-radius-control,\s*12px\)/su,
-  );
+  assert.match(browseCss, /\.browse-directory-search\s*\{[^}]*border-radius:\s*14px/su);
 });
 
 test('Home icon and Browse background remain separate section presentation fields', () => {

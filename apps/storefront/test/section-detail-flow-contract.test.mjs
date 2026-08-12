@@ -33,6 +33,8 @@ test('section catalog keeps compact app navigation and minimal product cards', (
   );
   assert.match(sectionSource, /className="section-product-card"/);
   assert.match(sectionSource, /className="section-product-cover"/);
+  assert.match(sectionSource, /className="section-product-meta"/);
+  assert.match(sectionSource, /product\.category\.name \|\| product\.tags\[0\]\?\.name/u);
   assert.doesNotMatch(sectionSource, /StorefrontProductCard/);
   assert.doesNotMatch(sectionSource, /categoryName=|address=|sectionName=|tags=/);
   assert.match(sectionCss, /\.section-catalog-header \{[\s\S]*position: relative/);
@@ -45,6 +47,7 @@ test('section catalog keeps compact app navigation and minimal product cards', (
   assert.match(sectionCss, /\.section-catalog-back-label \{[\s\S]*white-space: nowrap/);
   assert.match(sectionCss, /\.section-catalog-content \{[\s\S]*min-height: 0/);
   assert.match(sectionCss, /\.section-product-cover \{[\s\S]*aspect-ratio: 1 \/ 1/);
+  assert.match(sectionCss, /\.section-product-meta \{[\s\S]*gap: 3px/);
 });
 
 test('section catalog uses category select plus horizontal tag filters', () => {

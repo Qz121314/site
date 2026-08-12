@@ -60,19 +60,19 @@ test('Home renders at most three section recommendation rails from explicitly fe
 });
 
 test('Home uses rounded icon shortcuts and compact Airbnb-like product rails', () => {
-  assert.match(cssSource, /aspect-ratio:\s*10 \/ 11/u);
+  assert.match(cssSource, /aspect-ratio:\s*4 \/ 5/u);
   assert.match(cssSource, /\.home-product-rail[\s\S]*overflow-x:\s*auto/u);
   assert.match(cssSource, /scroll-snap-type:\s*x proximity/u);
   assert.doesNotMatch(feedSource, /setInterval/u);
   assert.match(cssSource, /\.home-shortcuts\s*\{[\s\S]*?display:\s*flex;/u);
-  assert.match(cssSource, /\.home-shortcut\s*\{[\s\S]*?min-width:\s*70px;/u);
+  assert.match(cssSource, /\.home-shortcut\s*\{[\s\S]*?min-width:\s*66px;/u);
   assert.match(
     cssSource,
     /\.home-shortcut:hover \.home-shortcut-icon\s*\{[\s\S]*?box-shadow:[\s\S]*?transform:\s*translateY\(-4px\)/u,
   );
   assert.match(
     cssSource,
-    /\.home-product-rail\s*\{[\s\S]*?grid-auto-columns:\s*clamp\(132px,\s*41vw,\s*168px\)/u,
+    /\.home-product-rail\s*\{[\s\S]*?grid-auto-columns:\s*clamp\(148px,\s*44vw,\s*176px\)/u,
   );
   assert.doesNotMatch(
     cssSource,
@@ -80,10 +80,15 @@ test('Home uses rounded icon shortcuts and compact Airbnb-like product rails', (
   );
   assert.match(
     cssSource,
-    /\.home-product-cover,[\s\S]*?border-radius:\s*var\(--theme-radius-control,\s*12px\)/u,
+    /\.home-product-cover,[\s\S]*?border-radius:\s*var\(--theme-radius-media,\s*12px\)/u,
   );
   assert.doesNotMatch(feedSource, /home-product-arrow|ProductArrowIcon/u);
   assert.match(feedSource, /home-product-meta/u);
+  assert.match(
+    feedSource,
+    /product\.category\.name\?\.trim\(\) \|\| product\.tags\[0\]\?\.name\.trim\(\)/u,
+  );
+  assert.match(cssSource, /\.home-product-meta small/u);
 });
 
 test('Home uses tighter mobile app chrome without changing other primary pages', () => {

@@ -25,6 +25,8 @@ test('storefront uses a modern self-contained font stack without remote font dep
   assert.match(typographyCss, /Segoe UI Variable Text/u);
   assert.match(typographyCss, /SF Pro Text/u);
   assert.match(typographyCss, /-apple-system/u);
+  assert.match(typographyCss, /@fontsource-variable\/manrope\/wght\.css/u);
+  assert.match(typographyCss, /'Manrope Variable'/u);
   assert.doesNotMatch(typographyCss, /https?:\/\//u);
 });
 
