@@ -23,6 +23,12 @@ function isVideoMediaUrl(value: string): boolean {
   }
 }
 
+function hasMediaUrl<T extends { url: string | null }>(
+  item: T,
+): item is T & { url: string } {
+  return Boolean(item.url);
+}
+
 function isMissingProduct(error: unknown): boolean {
   return (
     error instanceof PublicContentError &&
@@ -38,6 +44,22 @@ function handleInternalBack(event: ReactMouseEvent<HTMLAnchorElement>) {
   navigateStorefrontBack();
 }
 
+function CtaArrow({ external }: { external: boolean }) {
+  return (
+    <span className="product-detail-cta-arrow" aria-hidden="true">
+      {external ? (
+        <svg viewBox="0 0 20 20" focusable="false">
+          <path d="M6 14 14 6M8 6h6v6" />
+        </svg>
+      ) : (
+        <svg viewBox="0 0 20 20" focusable="false">
+          <path d="m8 5 5 5-5 5" />
+        </svg>
+      )}
+    </span>
+  );
+}
+
 export function ProductDetailPage({
   bootstrap,
   productRef,
@@ -50,6 +72,7 @@ export function ProductDetailPage({
   LinkComponent?: StorefrontLinkComponent;
 }) {
   const [activeMediaId, setActiveMediaId] = useState<string | null>(null);
+  const [mobileMediaIndex, setMobileMediaIndex] = useState(0);
   const query = useQuery({
     queryKey: [
       'storefront-product',
@@ -68,7 +91,7 @@ export function ProductDetailPage({
     queryFn: ({ signal }) => loadPublicCta(product!.id, signal),
   });
   const cta = ctaQuery.data ?? null;
-  const media = product?.media.filter((item) => Boolean(item.url)) ?? [];
+  const media = product?.media.filter(hasMediaUrl) ?? [];
   const activeMedia = media.find((item) => item.id === activeMediaId) ?? media[0] ?? null;
 
   useEffect(() => {
@@ -77,6 +100,7 @@ export function ProductDetailPage({
 
   useEffect(() => {
     setActiveMediaId(null);
+    setMobileMediaIndex(0);
   }, [product?.id]);
 
   if (query.isLoading && !product) {
@@ -121,9 +145,43 @@ export function ProductDetailPage({
   const activeMediaIsVideo = Boolean(
     activeMedia?.url && isVideoMediaUrl(activeMedia.url),
   );
+  const mobileGalleryItems =
+    media.length > 0
+      ? media.map((item) => ({
+          id: item.id,
+          url: item.url,
+          altText: item.altText || product.title,
+        }))
+      : product.coverUrl
+        ? [
+            {
+              id: 'cover',
+              url: product.coverUrl,
+              altText: product.title,
+            },
+          ]
+        : [];
   const activeMediaFallback = (
     <div className="detail-media-fallback" aria-hidden="true" />
   );
+  const readyCta = cta ? (
+    cta.mode === 'customer_service' ? (
+      <LinkComponent className="cta-button is-ready" href={cta.path}>
+        <span>{cta.label}</span>
+        <CtaArrow external={false} />
+      </LinkComponent>
+    ) : (
+      <a
+        className="cta-button is-ready"
+        href={cta.path}
+        target="_blank"
+        rel="noopener noreferrer nofollow"
+      >
+        <span>{cta.label}</span>
+        <CtaArrow external />
+      </a>
+    )
+  ) : null;
   const ctaAction = ctaQuery.isLoading ? (
     <div className="product-detail-fixed-action">
       <button className="cta-button" type="button" aria-busy="true" disabled>
@@ -137,21 +195,8 @@ export function ProductDetailPage({
         <span>{SYSTEM_UI.temporarilyUnavailable}</span>
       </button>
     </div>
-  ) : cta ? (
-    <div className="product-detail-fixed-action">
-      <a
-        className="cta-button is-ready"
-        href={cta.path}
-        {...(cta.mode === 'link'
-          ? { target: '_blank', rel: 'noopener noreferrer nofollow' }
-          : {})}
-      >
-        <span>{cta.label}</span>
-        <span className="product-detail-cta-arrow" aria-hidden="true">
-          {cta.mode === 'link' ? '↗' : '→'}
-        </span>
-      </a>
-    </div>
+  ) : readyCta ? (
+    <div className="product-detail-fixed-action">{readyCta}</div>
   ) : (
     <div className="product-detail-fixed-action">
       <button className="cta-button is-unavailable" type="button" disabled>
@@ -165,84 +210,139 @@ export function ProductDetailPage({
       <article className="product-detail-page" aria-labelledby="product-detail-title">
         <header className="product-detail-navigation">
           <LinkComponent
+            aria-label={SYSTEM_UI.back}
             className="product-detail-back"
             href={backHref}
             onClick={handleInternalBack}
           >
-            {SYSTEM_UI.back}
+            <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+              <path d="m12.5 4.5-5.5 5.5 5.5 5.5" />
+            </svg>
+            <span className="sr-only">{SYSTEM_UI.back}</span>
           </LinkComponent>
         </header>
 
         <div className="product-detail-hero">
           <div className="detail-gallery">
-            <div className="detail-media-stage" key={activeMedia?.id ?? 'cover'}>
-              {activeMediaUrl ? (
-                activeMediaIsVideo ? (
-                  <ResilientVideo
-                    aria-label={activeMedia?.altText || product.title}
-                    controls
-                    fallback={activeMediaFallback}
-                    playsInline
-                    preload="metadata"
-                    src={activeMediaUrl}
-                  />
-                ) : (
-                  <ResilientImage
-                    alt={activeMedia?.altText || product.title}
-                    fallback={activeMediaFallback}
-                    src={activeMediaUrl}
-                  />
-                )
-              ) : (
-                activeMediaFallback
-              )}
+            <div className="detail-mobile-gallery">
+              <div
+                className="detail-mobile-media-track"
+                onScroll={(event) => {
+                  const width = event.currentTarget.clientWidth;
+                  if (!width) return;
+                  const nextIndex = Math.max(
+                    0,
+                    Math.min(
+                      mobileGalleryItems.length - 1,
+                      Math.round(event.currentTarget.scrollLeft / width),
+                    ),
+                  );
+                  if (nextIndex !== mobileMediaIndex) setMobileMediaIndex(nextIndex);
+                }}
+              >
+                {mobileGalleryItems.length > 0
+                  ? mobileGalleryItems.map((item) => {
+                      const video = isVideoMediaUrl(item.url);
+                      return (
+                        <div className="detail-mobile-media-item" key={item.id}>
+                          {video ? (
+                            <ResilientVideo
+                              aria-label={item.altText}
+                              controls
+                              fallback={activeMediaFallback}
+                              playsInline
+                              preload="metadata"
+                              src={item.url}
+                            />
+                          ) : (
+                            <ResilientImage
+                              alt={item.altText}
+                              fallback={activeMediaFallback}
+                              src={item.url}
+                            />
+                          )}
+                        </div>
+                      );
+                    })
+                  : activeMediaFallback}
+              </div>
+              {mobileGalleryItems.length > 1 ? (
+                <span className="detail-mobile-media-count" aria-hidden="true">
+                  {mobileMediaIndex + 1} / {mobileGalleryItems.length}
+                </span>
+              ) : null}
             </div>
 
-            {media.length > 1 ? (
-              <div className="detail-media-thumbnails" role="list">
-                {media.map((item, index) => {
-                  if (!item.url) return null;
-                  const selected = item.id === activeMedia?.id;
-                  const video = isVideoMediaUrl(item.url);
-                  return (
-                    <button
-                      className={`detail-media-thumbnail${selected ? ' is-active' : ''}`}
-                      type="button"
-                      aria-label={item.altText || `${product.title} ${index + 1}`}
-                      aria-pressed={selected}
-                      key={item.id}
-                      onClick={() => setActiveMediaId(item.id)}
-                    >
-                      {video ? (
-                        <>
-                          <ResilientVideo
-                            aria-hidden="true"
+            <div className="detail-desktop-gallery">
+              <div className="detail-media-stage" key={activeMedia?.id ?? 'cover'}>
+                {activeMediaUrl ? (
+                  activeMediaIsVideo ? (
+                    <ResilientVideo
+                      aria-label={activeMedia?.altText || product.title}
+                      controls
+                      fallback={activeMediaFallback}
+                      playsInline
+                      preload="metadata"
+                      src={activeMediaUrl}
+                    />
+                  ) : (
+                    <ResilientImage
+                      alt={activeMedia?.altText || product.title}
+                      fallback={activeMediaFallback}
+                      src={activeMediaUrl}
+                    />
+                  )
+                ) : (
+                  activeMediaFallback
+                )}
+              </div>
+
+              {media.length > 1 ? (
+                <div className="detail-media-thumbnails" role="list">
+                  {media.map((item, index) => {
+                    if (!item.url) return null;
+                    const selected = item.id === activeMedia?.id;
+                    const video = isVideoMediaUrl(item.url);
+                    return (
+                      <button
+                        className={`detail-media-thumbnail${selected ? ' is-active' : ''}`}
+                        type="button"
+                        aria-label={item.altText || `${product.title} ${index + 1}`}
+                        aria-pressed={selected}
+                        key={item.id}
+                        onClick={() => setActiveMediaId(item.id)}
+                      >
+                        {video ? (
+                          <>
+                            <ResilientVideo
+                              aria-hidden="true"
+                              fallback={<div className="detail-thumbnail-fallback" />}
+                              muted
+                              playsInline
+                              preload="metadata"
+                              src={item.url}
+                            />
+                            <span
+                              className="detail-thumbnail-video-mark"
+                              aria-hidden="true"
+                            >
+                              ▶
+                            </span>
+                          </>
+                        ) : (
+                          <ResilientImage
+                            alt=""
                             fallback={<div className="detail-thumbnail-fallback" />}
-                            muted
-                            playsInline
-                            preload="metadata"
+                            loading="lazy"
                             src={item.url}
                           />
-                          <span
-                            className="detail-thumbnail-video-mark"
-                            aria-hidden="true"
-                          >
-                            ▶
-                          </span>
-                        </>
-                      ) : (
-                        <ResilientImage
-                          alt=""
-                          fallback={<div className="detail-thumbnail-fallback" />}
-                          loading="lazy"
-                          src={item.url}
-                        />
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            ) : null}
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              ) : null}
+            </div>
           </div>
 
           <div className="product-detail-info">
@@ -257,16 +357,16 @@ export function ProductDetailPage({
                 </div>
               ) : null}
             </section>
-
-            {product.body.trim() ? (
-              <section className="product-detail-body">
-                <MarkdownContent source={product.body} />
-              </section>
-            ) : null}
           </div>
         </div>
+
+        {product.body.trim() ? (
+          <section className="product-detail-body">
+            <MarkdownContent source={product.body} />
+          </section>
+        ) : null}
       </article>
-      {ctaAction ? createPortal(ctaAction, document.body) : null}
+      {createPortal(ctaAction, document.body)}
     </>
   );
 }
