@@ -62,7 +62,7 @@ test('storefront renders its shell and primary browse route without runtime erro
       mediaStyle: document.documentElement.dataset.mediaStyle,
       motionStyle: document.documentElement.dataset.motionStyle,
       navigationStyle: document.documentElement.dataset.navigationStyle,
-      usesManrope: getComputedStyle(document.body).fontFamily.includes(
+      loadsBundledManrope: getComputedStyle(document.body).fontFamily.includes(
         'Manrope Variable',
       ),
       productCoverRatio: firstCoverRect
@@ -83,7 +83,7 @@ test('storefront renders its shell and primary browse route without runtime erro
     mediaStyle: 'soft',
     motionStyle: 'restrained',
     navigationStyle: 'quiet',
-    usesManrope: true,
+    loadsBundledManrope: false,
     productCoverRatio: expect.any(Number),
     singleTileStaysCompact: true,
   });
