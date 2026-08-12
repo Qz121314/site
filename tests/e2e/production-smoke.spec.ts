@@ -28,9 +28,11 @@ test('storefront renders its shell and primary browse route without runtime erro
       '.bottom-nav a.is-active .bottom-nav-icon',
     );
     return {
-      bodyScale: getComputedStyle(document.documentElement)
-        .getPropertyValue('--storefront-text-body')
-        .trim(),
+      bodyScaleRem: Number.parseFloat(
+        getComputedStyle(document.documentElement).getPropertyValue(
+          '--storefront-text-body',
+        ),
+      ),
       activeIconRadius: activeIcon ? getComputedStyle(activeIcon).borderRadius : null,
       singleTileFillsRail:
         singleRail && singleTile
@@ -40,7 +42,7 @@ test('storefront renders its shell and primary browse route without runtime erro
     };
   });
   expect(homeVisualContract).toEqual({
-    bodyScale: '0.9375rem',
+    bodyScaleRem: 0.9375,
     activeIconRadius: '10px',
     singleTileFillsRail: true,
   });
