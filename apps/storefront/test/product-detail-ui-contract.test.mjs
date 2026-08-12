@@ -93,7 +93,7 @@ test('product gallery uses mobile swipe media and desktop thumbnail navigation',
   assert.match(detailSource, /aria-pressed=\{selected\}/u);
   assert.match(
     detailCss,
-    /\.detail-gallery\s*\{[\s\S]*?display:\s*flex[\s\S]*?flex-direction:\s*column/u,
+    /\.detail-gallery,\s*\.detail-desktop-gallery\s*\{[\s\S]*?display:\s*flex[\s\S]*?flex-direction:\s*column/u,
   );
   assert.match(
     detailCss,
