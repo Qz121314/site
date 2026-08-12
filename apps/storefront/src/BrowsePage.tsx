@@ -1,5 +1,5 @@
 import { useQuery } from '@tanstack/react-query';
-import { StorefrontProductCard, type StorefrontLinkComponent } from '@site/storefront-ui';
+import type { StorefrontLinkComponent } from '@site/storefront-ui';
 import { useEffect, useMemo, useState } from 'react';
 import {
   loadSectionSnapshot,
@@ -22,6 +22,20 @@ function SearchIcon() {
     >
       <circle cx="10.8" cy="10.8" r="6.5" />
       <path d="m16 16 4 4" strokeLinecap="round" />
+    </svg>
+  );
+}
+
+function ClearIcon() {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      aria-hidden="true"
+    >
+      <path d="m6.5 6.5 7 7M13.5 6.5l-7 7" strokeLinecap="round" />
     </svg>
   );
 }
@@ -120,7 +134,7 @@ export function BrowsePage({
 
   return (
     <section className="browse-directory">
-      <label className="browse-directory-search">
+      <div className="browse-directory-search">
         <SearchIcon />
         <input
           type="search"
@@ -129,7 +143,17 @@ export function BrowsePage({
           aria-label={SYSTEM_UI.search}
           onChange={(event) => setSearch(event.target.value)}
         />
-      </label>
+        {search ? (
+          <button
+            type="button"
+            className="browse-directory-search-clear"
+            aria-label={SYSTEM_UI.clear}
+            onClick={() => setSearch('')}
+          >
+            <ClearIcon />
+          </button>
+        ) : null}
+      </div>
 
       {filteredSections.length > 0 ? (
         <section className="browse-directory-section">
@@ -179,26 +203,23 @@ export function BrowsePage({
           {productSearchQuery.isLoading ? (
             <div className="inline-loading">{SYSTEM_UI.loading}</div>
           ) : (
-            <div className="product-grid browse-search-products">
+            <div className="browse-search-products">
               {filteredProducts.map((product) => (
-                <StorefrontProductCard
-                  address={product.address}
-                  categoryName={product.category.name}
+                <LinkComponent
+                  className="browse-search-product-card"
                   href={productHref(product)}
                   key={product.id}
-                  LinkComponent={LinkComponent}
-                  media={
+                >
+                  <span className="browse-search-product-cover">
                     <ResilientImage
                       alt=""
-                      fallback={<div className="image-fallback" aria-hidden="true" />}
+                      fallback={<span className="image-fallback" aria-hidden="true" />}
                       loading="lazy"
                       src={product.coverUrl}
                     />
-                  }
-                  sectionName={product.sectionName}
-                  tags={product.tags}
-                  title={product.title}
-                />
+                  </span>
+                  <strong>{product.title}</strong>
+                </LinkComponent>
               ))}
             </div>
           )}
