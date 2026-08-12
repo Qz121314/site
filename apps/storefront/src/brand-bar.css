@@ -2,6 +2,10 @@
   justify-content: center;
 }
 
+.app-shell > .site-footer {
+  display: none;
+}
+
 .app-shell .brand-lockup {
   display: grid;
   width: fit-content;
