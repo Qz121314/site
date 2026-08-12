@@ -50,6 +50,6 @@ test('product detail keeps Back at the left and routes the backend CTA by mode',
   assert.match(detailCss, /\.product-detail-fixed-action \{[\s\S]*position: fixed/);
   assert.match(
     detailCss,
-    /\.product-detail-navigation \{[\s\S]*justify-content: flex-start/,
+    /\.product-detail-navigation \{[\s\S]*position: fixed;[\s\S]*left:/,
   );
 });
