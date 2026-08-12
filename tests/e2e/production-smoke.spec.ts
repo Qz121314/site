@@ -9,6 +9,15 @@ test('storefront renders its shell and primary browse route without runtime erro
   await page.goto('/');
   await expect(page.locator('#root')).not.toBeEmpty();
   await expect(page.locator('.bottom-nav')).toBeVisible();
+  await expect(page.locator('.home-shortcut-icon').first()).toBeVisible();
+  await expect
+    .poll(() =>
+      page
+        .locator('.home-shortcut-icon')
+        .first()
+        .evaluate((element) => getComputedStyle(element).borderRadius),
+    )
+    .toBe('12px');
 
   await page.goto('/browse/');
   await expect(page.locator('#root')).not.toBeEmpty();
