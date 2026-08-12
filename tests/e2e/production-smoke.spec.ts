@@ -19,6 +19,32 @@ test('storefront renders its shell and primary browse route without runtime erro
     )
     .toBe('12px');
 
+  const homeVisualContract = await page.evaluate(() => {
+    const singleRail = document.querySelector<HTMLElement>(
+      '.home-product-rail.is-single',
+    );
+    const singleTile = singleRail?.querySelector<HTMLElement>('.home-product-tile');
+    const activeIcon = document.querySelector<HTMLElement>(
+      '.bottom-nav a.is-active .bottom-nav-icon',
+    );
+    return {
+      bodyScale: getComputedStyle(document.documentElement)
+        .getPropertyValue('--storefront-text-body')
+        .trim(),
+      activeIconRadius: activeIcon ? getComputedStyle(activeIcon).borderRadius : null,
+      singleTileFillsRail:
+        singleRail && singleTile
+          ? singleTile.getBoundingClientRect().width >=
+            singleRail.getBoundingClientRect().width * 0.95
+          : true,
+    };
+  });
+  expect(homeVisualContract).toEqual({
+    bodyScale: '0.9375rem',
+    activeIconRadius: '10px',
+    singleTileFillsRail: true,
+  });
+
   await page.goto('/browse/');
   await expect(page.locator('#root')).not.toBeEmpty();
   await expect(page.locator('.bottom-nav')).toBeVisible();
@@ -116,5 +142,9 @@ test('a published product always renders its CTA surface', async ({ page }) => {
   test.skip(!productHref, 'No published product is available for CTA verification.');
 
   await page.goto(productHref!);
-  await expect(page.locator('.product-detail-fixed-action .cta-button')).toBeVisible();
+  const cta = page.locator('.product-detail-fixed-action .cta-button');
+  await expect(cta).toBeVisible();
+  await expect
+    .poll(() => cta.evaluate((element) => element.getBoundingClientRect().height))
+    .toBeGreaterThanOrEqual(52);
 });

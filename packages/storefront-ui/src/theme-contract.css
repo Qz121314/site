@@ -1,6 +1,14 @@
 /* Shared Theme Center -> Storefront visual contract. */
 
 :is(html, .storefront-theme-root) {
+  --app-gutter: 16px;
+  --app-surface-raised: color-mix(in srgb, var(--surface) 94%, var(--surface-soft));
+  --app-text-secondary: color-mix(in srgb, var(--text) 62%, var(--muted));
+  --app-motion-fast: 160ms;
+  --app-motion-base: 240ms;
+  --app-motion-slow: 360ms;
+  --app-ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --app-ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
   --theme-section-space: 24px;
   --theme-card-gap-y: 18px;
   --theme-card-gap-x: 10px;
@@ -74,6 +82,8 @@
   --theme-card-border: color-mix(in srgb, var(--line) 90%, var(--brand) 10%);
   --theme-media-background: color-mix(in srgb, var(--surface-soft) 96%, black 4%);
   --theme-control-background: color-mix(in srgb, var(--surface) 97%, var(--brand) 3%);
+  --app-surface-raised: color-mix(in srgb, var(--surface) 92%, var(--brand) 8%);
+  --app-text-secondary: color-mix(in srgb, var(--text) 68%, var(--muted));
   --theme-header-background: color-mix(
     in srgb,
     var(--page-bg, var(--surface)) 96%,

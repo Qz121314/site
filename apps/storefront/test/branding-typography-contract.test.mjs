@@ -23,7 +23,8 @@ const browseCss = await readFile(
 test('storefront uses a modern self-contained font stack without remote font dependencies', () => {
   assert.match(mainSource, /@site\/storefront-ui\/typography-contract\.css/u);
   assert.match(typographyCss, /Segoe UI Variable Text/u);
-  assert.match(typographyCss, /Avenir Next/u);
+  assert.match(typographyCss, /SF Pro Text/u);
+  assert.match(typographyCss, /-apple-system/u);
   assert.doesNotMatch(typographyCss, /https?:\/\//u);
 });
 

@@ -45,7 +45,11 @@ test('product browsing stays two-column on mobile and desktop', () => {
 test('mobile product cards use square cover-first marketplace layout', () => {
   assert.match(contentCss, /\.product-card-media\s*\{[\s\S]*?aspect-ratio:\s*1 \/ 1;/u);
   assert.match(contentCss, /\.product-card\s*\{[\s\S]*?background:\s*transparent;/u);
-  assert.match(contentCss, /\.product-card-body\s*\{[\s\S]*?padding:\s*9px 2px 0;/u);
+  assert.match(contentCss, /\.product-card-body\s*\{[\s\S]*?padding:\s*10px 1px 0;/u);
+  assert.match(
+    contentCss,
+    /\.product-card:active \.product-card-media\s*\{[\s\S]*?transform:\s*scale\(0\.97\);/u,
+  );
 });
 
 test('retired Discover, FAQ, section-directory, and filter selectors stay removed', () => {
