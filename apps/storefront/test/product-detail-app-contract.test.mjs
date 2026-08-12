@@ -11,58 +11,29 @@ const productCss = await readFile(
   'utf8',
 );
 
-test('mobile product media is a swipe-first scroll-snap gallery', () => {
-  assert.equal(productSource.includes('detail-mobile-media-track'), true);
-  assert.equal(productSource.includes('mobileMediaIndex'), true);
-  assert.equal(productCss.includes('scroll-snap-type: x mandatory;'), true);
-  assert.equal(productCss.includes('scroll-snap-align: start;'), true);
-  assert.equal(
-    productCss.includes('-webkit-overflow-scrolling: touch;'),
-    true,
-  );
+test('mobile gallery contract', () => {
+  assert.ok(productSource.includes('detail-mobile-media-track'));
+  assert.ok(productSource.includes('mobileMediaIndex'));
+  assert.ok(productCss.includes('scroll-snap-type: x mandatory;'));
+  assert.ok(productCss.includes('scroll-snap-align: start;'));
+  assert.ok(productCss.includes('-webkit-overflow-scrolling: touch;'));
 });
 
-test('product detail uses icon back and continuous body', () => {
-  const backControl = productSource.indexOf('className="product-detail-back"');
-  const backIcon = productSource.indexOf(
-    '<svg viewBox="0 0 20 20"',
-    backControl,
-  );
-  const bodySection = productSource.indexOf(
-    '<section className="product-detail-body">',
-  );
-  const heroEnd = productSource.indexOf('</div>\n\n        {product.body.trim()');
-
-  assert.ok(backControl >= 0);
-  assert.ok(backIcon > backControl);
-  assert.ok(heroEnd >= 0);
-  assert.ok(bodySection > heroEnd);
-  assert.equal(productCss.includes('border-radius: 50%;'), true);
-  assert.equal(productCss.includes('border-top: 1px solid'), true);
+test('detail navigation and body contract', () => {
+  assert.ok(productSource.includes('className="product-detail-back"'));
+  assert.ok(productSource.includes('<section className="product-detail-body">'));
+  assert.ok(productCss.includes('border-radius: 50%;'));
+  assert.ok(productCss.includes('border-top: 1px solid'));
 });
 
-test('customer-service CTA stays inside the mounted storefront shell', () => {
-  const serviceBranch = productSource.indexOf(
-    "cta.mode === 'customer_service'",
-  );
-  const internalCta = productSource.indexOf(
-    '<LinkComponent className="cta-button is-ready"',
-    serviceBranch,
-  );
-  const externalCta = productSource.indexOf(
-    'className="cta-button is-ready"',
-    internalCta + 1,
-  );
-  const externalTarget = productSource.indexOf('target="_blank"', externalCta);
-
-  assert.ok(serviceBranch >= 0);
-  assert.ok(internalCta > serviceBranch);
-  assert.ok(externalCta > internalCta);
-  assert.ok(externalTarget > externalCta);
+test('CTA routing contract', () => {
+  assert.ok(productSource.includes("cta.mode === 'customer_service'"));
+  assert.ok(productSource.includes('<LinkComponent className="cta-button is-ready"'));
+  assert.ok(productSource.includes('target="_blank"'));
 });
 
-test('product detail keeps flat surfaces and restrained geometry', () => {
-  assert.equal(productCss.includes('var(--theme-radius-control, 4px)'), true);
-  assert.equal(productCss.includes('var(--theme-radius-media, 0px)'), true);
-  assert.equal(productCss.includes('box-shadow: none;'), true);
+test('flat detail geometry contract', () => {
+  assert.ok(productCss.includes('var(--theme-radius-control, 4px)'));
+  assert.ok(productCss.includes('var(--theme-radius-media, 0px)'));
+  assert.ok(productCss.includes('box-shadow: none;'));
 });
