@@ -234,7 +234,7 @@ export function ProductDetailPage({
             <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false">
               <path d="m12.5 4.5-5.5 5.5 5.5 5.5" />
             </svg>
-            <span className="sr-only">{SYSTEM_UI.back}</span>
+            <span className="product-detail-back-label">{SYSTEM_UI.back}</span>
           </LinkComponent>
         </header>
 

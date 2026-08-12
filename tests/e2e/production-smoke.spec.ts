@@ -134,6 +134,10 @@ test('storefront renders its shell and primary browse route without runtime erro
     const main = document.querySelector<HTMLElement>('.app-shell > main');
     const topbar = document.querySelector<HTMLElement>('.app-shell > .topbar');
     const backRect = back?.getBoundingClientRect();
+    const backIconRect = back?.querySelector('svg')?.getBoundingClientRect();
+    const backLabelRect = back
+      ?.querySelector<HTMLElement>('.section-catalog-back-label')
+      ?.getBoundingClientRect();
     return {
       documentLocked:
         document.scrollingElement !== null &&
@@ -147,6 +151,14 @@ test('storefront renders its shell and primary browse route without runtime erro
       backRadius: back ? getComputedStyle(back).borderRadius : null,
       backBorderWidth: back ? getComputedStyle(back).borderTopWidth : null,
       backBackground: back ? getComputedStyle(back).backgroundColor : null,
+      backSingleLine:
+        backIconRect && backLabelRect
+          ? Math.abs(
+              backIconRect.top +
+                backIconRect.height / 2 -
+                (backLabelRect.top + backLabelRect.height / 2),
+            ) <= 1
+          : false,
       topbarHidden: topbar ? getComputedStyle(topbar).display === 'none' : false,
     };
   });
@@ -155,13 +167,15 @@ test('storefront renders its shell and primary browse route without runtime erro
     bodyOverflow: 'hidden',
     mainOverflow: 'hidden',
     contentOverflowY: 'auto',
-    backWidth: 44,
+    backWidth: expect.any(Number),
     backHeight: 44,
     backRadius: '0px',
     backBorderWidth: '0px',
     backBackground: 'rgba(0, 0, 0, 0)',
+    backSingleLine: true,
     topbarHidden: true,
   });
+  expect(sectionAppContract.backWidth).toBeGreaterThan(44);
   expect(pageErrors).toEqual([]);
 });
 
@@ -237,6 +251,23 @@ test('a published product always renders its CTA surface', async ({ page }) => {
   test.skip(!productHref, 'No published product is available for CTA verification.');
 
   await page.goto(productHref!);
+  const productBack = page.locator('.product-detail-back');
+  await expect(productBack.locator('.product-detail-back-label')).toBeVisible();
+  await expect
+    .poll(() =>
+      productBack.evaluate((element) => {
+        const iconRect = element.querySelector('svg')?.getBoundingClientRect();
+        const labelRect = element
+          .querySelector<HTMLElement>('.product-detail-back-label')
+          ?.getBoundingClientRect();
+        return iconRect && labelRect
+          ? Math.abs(
+              iconRect.top + iconRect.height / 2 - (labelRect.top + labelRect.height / 2),
+            ) <= 1
+          : false;
+      }),
+    )
+    .toBe(true);
   const cta = page.locator('.product-detail-fixed-action .cta-button');
   await expect(cta).toBeVisible();
   await expect

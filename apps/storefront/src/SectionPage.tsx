@@ -177,7 +177,7 @@ export function SectionCatalogPage({
           onClick={handleBack}
         >
           <BackIcon />
-          <span className="sr-only">{SYSTEM_UI.back}</span>
+          <span className="section-catalog-back-label">{SYSTEM_UI.back}</span>
         </LinkComponent>
         <h1 id="section-catalog-title">{query.data.section.name}</h1>
       </header>

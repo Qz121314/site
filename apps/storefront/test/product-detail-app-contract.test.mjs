@@ -34,12 +34,17 @@ test('mobile gallery keeps swipe and adds thumbnail navigation', () => {
 test('back control and body contract', () => {
   assert.ok(productSource.includes('className="product-detail-back"'));
   assert.ok(productSource.includes('<svg viewBox="0 0 20 20"'));
+  assert.ok(productSource.includes('className="product-detail-back-label"'));
   assert.ok(productSource.includes('className="product-detail-body"'));
   assert.ok(productCss.includes('.product-detail-body {'));
   assert.ok(productCss.includes('border-top: 1px solid'));
   assert.match(
     productCss,
-    /\.product-detail-back\s*\{[\s\S]*?width:\s*44px;[\s\S]*?height:\s*44px;[\s\S]*?border:\s*0;[\s\S]*?border-radius:\s*0;[\s\S]*?background:\s*transparent;/u,
+    /\.product-detail-back\s*\{[\s\S]*?display:\s*inline-flex;[\s\S]*?min-width:\s*44px;[\s\S]*?height:\s*44px;[\s\S]*?border:\s*0;[\s\S]*?border-radius:\s*0;[\s\S]*?background:\s*transparent;/u,
+  );
+  assert.match(
+    productCss,
+    /\.product-detail-back-label\s*\{[\s\S]*?white-space:\s*nowrap;/u,
   );
   assert.doesNotMatch(productCss, /\.product-detail-back\s*\{[^}]*border-radius:\s*50%/u);
 });
