@@ -33,17 +33,17 @@ test('storefront renders its shell and primary browse route without runtime erro
         ),
       ),
       activeIconRadius: activeIcon ? getComputedStyle(activeIcon).borderRadius : null,
-      singleTileFillsRail:
+      singleTileStaysCompact:
         rail && singleTile
-          ? singleTile.getBoundingClientRect().width >=
-            rail.getBoundingClientRect().width * 0.95
+          ? singleTile.getBoundingClientRect().width <=
+            rail.getBoundingClientRect().width * 0.55
           : true,
     };
   });
   expect(homeVisualContract).toEqual({
     bodyScaleRem: 0.9375,
     activeIconRadius: '0px',
-    singleTileFillsRail: true,
+    singleTileStaysCompact: true,
   });
 
   await page.goto('/browse/');

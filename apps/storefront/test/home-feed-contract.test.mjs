@@ -59,8 +59,8 @@ test('Home renders at most three section recommendation rails from explicitly fe
   assert.match(feedSource, /href=\{productHref\(product\)\}/u);
 });
 
-test('Home uses rounded icon shortcuts and editorial manual product rails', () => {
-  assert.match(cssSource, /aspect-ratio:\s*4 \/ 5/u);
+test('Home uses rounded icon shortcuts and compact Airbnb-like product rails', () => {
+  assert.match(cssSource, /aspect-ratio:\s*10 \/ 11/u);
   assert.match(cssSource, /\.home-product-rail[\s\S]*overflow-x:\s*auto/u);
   assert.match(cssSource, /scroll-snap-type:\s*x proximity/u);
   assert.doesNotMatch(feedSource, /setInterval/u);
@@ -72,9 +72,16 @@ test('Home uses rounded icon shortcuts and editorial manual product rails', () =
   );
   assert.match(
     cssSource,
-    /\.home-product-rail\s*\{[\s\S]*?grid-auto-columns:\s*clamp\(210px,\s*72vw,\s*292px\)/u,
+    /\.home-product-rail\s*\{[\s\S]*?grid-auto-columns:\s*clamp\(132px,\s*41vw,\s*168px\)/u,
   );
-  assert.match(cssSource, /\.home-product-rail:has\(> \.home-product-tile:only-child\)/u);
+  assert.doesNotMatch(
+    cssSource,
+    /\.home-product-rail:has\(> \.home-product-tile:only-child\)/u,
+  );
+  assert.match(
+    cssSource,
+    /\.home-product-cover,[\s\S]*?border-radius:\s*var\(--theme-radius-control,\s*12px\)/u,
+  );
   assert.doesNotMatch(feedSource, /home-product-arrow|ProductArrowIcon/u);
   assert.match(feedSource, /home-product-meta/u);
 });
