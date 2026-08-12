@@ -41,10 +41,7 @@ test('back control and body contract', () => {
     productCss,
     /\.product-detail-back\s*\{[\s\S]*?border-radius:\s*var\(--theme-radius-control, 4px\)/u,
   );
-  assert.doesNotMatch(
-    productCss,
-    /\.product-detail-back\s*\{[^}]*border-radius:\s*50%/u,
-  );
+  assert.doesNotMatch(productCss, /\.product-detail-back\s*\{[^}]*border-radius:\s*50%/u);
 });
 
 test('CTA resolves only after user interaction', () => {
