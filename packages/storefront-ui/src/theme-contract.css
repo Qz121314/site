@@ -4,11 +4,11 @@
   --theme-section-space: 24px;
   --theme-card-gap-y: 18px;
   --theme-card-gap-x: 10px;
-  --theme-radius-card: 18px;
-  --theme-radius-media: 16px;
-  --theme-radius-control: 15px;
-  --theme-radius-icon: 15px;
-  --theme-radius-chip: 999px;
+  --theme-radius-card: 2px;
+  --theme-radius-media: 0px;
+  --theme-radius-control: 4px;
+  --theme-radius-icon: 3px;
+  --theme-radius-chip: 2px;
   --theme-control-height: 44px;
   --theme-section-icon-size: 48px;
   --theme-desktop-media-size: 154px;
@@ -59,17 +59,17 @@
 }
 
 :is(html, .storefront-theme-root)[data-theme='marketplace'] {
-  --theme-radius-card: 18px;
-  --theme-radius-media: 16px;
-  --theme-radius-control: 15px;
-  --theme-radius-icon: 15px;
+  --theme-radius-card: 2px;
+  --theme-radius-media: 0px;
+  --theme-radius-control: 4px;
+  --theme-radius-icon: 3px;
 }
 
 :is(html, .storefront-theme-root)[data-theme='noir'] {
-  --theme-radius-card: 20px;
-  --theme-radius-media: 17px;
-  --theme-radius-control: 16px;
-  --theme-radius-icon: 15px;
+  --theme-radius-card: 2px;
+  --theme-radius-media: 0px;
+  --theme-radius-control: 3px;
+  --theme-radius-icon: 3px;
   --theme-card-background: color-mix(in srgb, var(--surface) 97%, var(--brand) 3%);
   --theme-card-border: color-mix(in srgb, var(--line) 90%, var(--brand) 10%);
   --theme-media-background: color-mix(in srgb, var(--surface-soft) 96%, black 4%);
@@ -87,28 +87,28 @@
 }
 
 :is(html, .storefront-theme-root)[data-theme='live'] {
-  --theme-radius-card: 14px;
-  --theme-radius-media: 13px;
-  --theme-radius-control: 12px;
-  --theme-radius-icon: 13px;
-  --theme-radius-chip: 10px;
+  --theme-radius-card: 0px;
+  --theme-radius-media: 0px;
+  --theme-radius-control: 2px;
+  --theme-radius-icon: 2px;
+  --theme-radius-chip: 2px;
   --theme-card-background: color-mix(in srgb, var(--surface) 97%, var(--brand) 3%);
   --theme-card-border: color-mix(in srgb, var(--line) 86%, var(--brand) 14%);
   --theme-control-background: color-mix(in srgb, var(--surface) 96%, var(--brand) 4%);
 }
 
 :is(html, .storefront-theme-root)[data-theme='saas'] {
-  --theme-radius-card: 14px;
-  --theme-radius-media: 12px;
-  --theme-radius-control: 10px;
-  --theme-radius-icon: 12px;
+  --theme-radius-card: 4px;
+  --theme-radius-media: 2px;
+  --theme-radius-control: 4px;
+  --theme-radius-icon: 4px;
 }
 
 :is(html, .storefront-theme-root)[data-theme='travel'] {
-  --theme-radius-card: 22px;
-  --theme-radius-media: 19px;
-  --theme-radius-control: 17px;
-  --theme-radius-icon: 17px;
+  --theme-radius-card: 4px;
+  --theme-radius-media: 2px;
+  --theme-radius-control: 4px;
+  --theme-radius-icon: 4px;
   --theme-card-background: color-mix(in srgb, var(--surface) 97%, var(--surface-soft) 3%);
   --theme-control-background: color-mix(
     in srgb,
@@ -118,10 +118,10 @@
 }
 
 :is(html, .storefront-theme-root)[data-theme='tech'] {
-  --theme-radius-card: 15px;
-  --theme-radius-media: 13px;
-  --theme-radius-control: 12px;
-  --theme-radius-icon: 12px;
+  --theme-radius-card: 0px;
+  --theme-radius-media: 0px;
+  --theme-radius-control: 2px;
+  --theme-radius-icon: 2px;
   --theme-card-background: color-mix(in srgb, var(--surface) 95%, var(--brand) 5%);
   --theme-card-border: color-mix(in srgb, var(--line) 84%, var(--brand) 16%);
   --theme-control-background: color-mix(in srgb, var(--surface) 95%, var(--brand) 5%);

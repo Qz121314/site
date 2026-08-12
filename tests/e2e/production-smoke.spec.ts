@@ -13,6 +13,25 @@ test('storefront renders its shell and primary browse route without runtime erro
   await page.goto('/browse/');
   await expect(page.locator('#root')).not.toBeEmpty();
   await expect(page.locator('.bottom-nav')).toBeVisible();
+  await expect(page.locator('.browse-section-card').first()).toBeVisible();
+
+  const visualContract = await page.evaluate(() => {
+    const card = document.querySelector<HTMLElement>('.browse-section-card');
+    const search = document.querySelector<HTMLElement>('.browse-directory-search');
+    const navigation = document.querySelector<HTMLElement>('.bottom-nav');
+    return {
+      cardRadius: card ? getComputedStyle(card).borderRadius : null,
+      searchRadius: search ? getComputedStyle(search).borderRadius : null,
+      navigationRadius: navigation ? getComputedStyle(navigation).borderRadius : null,
+      navigationBottom: navigation ? getComputedStyle(navigation).bottom : null,
+    };
+  });
+  expect(visualContract).toEqual({
+    cardRadius: '0px',
+    searchRadius: '0px',
+    navigationRadius: '0px',
+    navigationBottom: '0px',
+  });
   expect(pageErrors).toEqual([]);
 });
 

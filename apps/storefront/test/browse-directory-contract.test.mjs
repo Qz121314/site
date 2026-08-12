@@ -34,33 +34,32 @@ test('Browse uses section background artwork as the visual card surface', () => 
   assert.match(browsePage, /section\.description/u);
   assert.match(browsePage, /browse-section-card-scrim/u);
   assert.doesNotMatch(browsePage, /sectionInitial\(section\.name\)/u);
-  assert.doesNotMatch(browsePage, /browse-section-card-chevron/u);
+  assert.match(browsePage, /browse-section-card-arrow/u);
+  assert.match(browsePage, /SectionArrowIcon/u);
   assert.doesNotMatch(browsePage, /SectionIcon|section-icon/u);
   assert.doesNotMatch(browsePage, /browse-directory-heading/u);
   assert.doesNotMatch(browsePage, /<h2 id="browse-directory-sections-title"/u);
   assert.match(browseCss, /\.browse-section-card-media/u);
   assert.match(browseCss, /\.browse-section-card-scrim/u);
   assert.match(browseCss, /object-fit:\s*cover/u);
-  assert.doesNotMatch(browseCss, /browse-section-card-chevron/u);
+  assert.match(browseCss, /\.browse-section-card-arrow/u);
 });
 
-test('Browse uses one hero card for one section and a discovery grid for multiple sections', () => {
+test('Browse uses a sharp editorial stack on mobile and a restrained desktop grid', () => {
   assert.match(browsePage, /filteredSections\.length === 1 \? ' is-single' : ''/u);
   assert.match(
     browseCss,
-    /\.browse-section-list\s*\{[^}]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/su,
+    /\.browse-section-list\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)/su,
+  );
+  assert.match(browseCss, /\.browse-section-card\s*\{[^}]*aspect-ratio:\s*16 \/ 8\.4/su);
+  assert.match(browseCss, /\.browse-section-card\s*\{[^}]*border-radius:\s*0/su);
+  assert.match(
+    browseCss,
+    /@media \(min-width:\s*768px\)[\s\S]*?\.browse-section-list\s*\{[^}]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/u,
   );
   assert.match(
     browseCss,
-    /\.browse-section-list\.is-single\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)/su,
-  );
-  assert.match(
-    browseCss,
-    /\.browse-section-list\.is-single \.browse-section-card\s*\{[^}]*aspect-ratio:\s*16 \/ 9/su,
-  );
-  assert.match(
-    browseCss,
-    /@media \(min-width:\s*768px\)[\s\S]*?\.browse-section-list\s*\{[^}]*grid-template-columns:\s*repeat\(3,\s*minmax\(0,\s*1fr\)\)/u,
+    /@media \(min-width:\s*768px\)[\s\S]*?\.browse-section-list\.is-single \.browse-section-card\s*\{[^}]*aspect-ratio:\s*16 \/ 6\.8/u,
   );
 });
 

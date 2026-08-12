@@ -22,7 +22,7 @@ body {
   margin: 0 auto;
   padding: 16px 46px 14px 14px;
   border: 1px solid color-mix(in srgb, var(--line, #e7e9ec) 78%, transparent);
-  border-radius: 24px;
+  border-radius: 4px;
   color: var(--text, #1f2328);
   background: color-mix(in srgb, var(--surface, #fff) 95%, transparent);
   box-shadow:
@@ -48,7 +48,7 @@ body {
   height: 48px;
   overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--line, #e7e9ec) 64%, transparent);
-  border-radius: 14px;
+  border-radius: 2px;
   background: var(--surface-soft, #f8f8f9);
   box-shadow: 0 7px 18px color-mix(in srgb, var(--text, #1f2328) 10%, transparent);
 }
@@ -91,7 +91,7 @@ body {
   min-width: 74px;
   min-height: 40px;
   padding: 0 15px;
-  border-radius: 13px;
+  border-radius: 2px;
   color: #fff;
   background: var(--brand, #ff5a1f);
   box-shadow: 0 8px 20px color-mix(in srgb, var(--brand, #ff5a1f) 25%, transparent);
@@ -107,7 +107,7 @@ body {
   width: 30px;
   height: 30px;
   place-items: center;
-  border-radius: 999px;
+  border-radius: 0;
   color: var(--muted, #6f7782);
   background: color-mix(in srgb, var(--surface-soft, #f8f8f9) 86%, transparent);
 }
@@ -167,7 +167,7 @@ body {
     border-right: 0;
     border-bottom: 0;
     border-left: 0;
-    border-radius: 18px 18px 0 0;
+    border-radius: 0;
   }
 
   .mobile-cta-bar {
