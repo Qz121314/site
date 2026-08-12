@@ -247,40 +247,42 @@ export function SectionCatalogPage({
         </div>
       ) : null}
 
-      {filteredProducts.length > 0 ? (
-        <div className="section-catalog-products">
-          {filteredProducts.map((product) => (
-            <LinkComponent
-              className="section-product-card"
-              href={productHref(product)}
-              key={product.id}
-            >
-              <div className="section-product-cover">
-                <ResilientImage
-                  alt=""
-                  fallback={<div className="image-fallback" aria-hidden="true" />}
-                  loading="lazy"
-                  src={product.coverUrl}
-                />
-              </div>
-              <h2>{product.title}</h2>
-            </LinkComponent>
-          ))}
-        </div>
-      ) : (
-        <div className="section-catalog-empty">
-          <p>{SYSTEM_UI.noResults}</p>
-          {hasFilters ? (
-            <button
-              className="section-catalog-empty-reset"
-              type="button"
-              onClick={clearFilters}
-            >
-              {SYSTEM_UI.clear}
-            </button>
-          ) : null}
-        </div>
-      )}
+      <div className="section-catalog-content">
+        {filteredProducts.length > 0 ? (
+          <div className="section-catalog-products">
+            {filteredProducts.map((product) => (
+              <LinkComponent
+                className="section-product-card"
+                href={productHref(product)}
+                key={product.id}
+              >
+                <div className="section-product-cover">
+                  <ResilientImage
+                    alt=""
+                    fallback={<div className="image-fallback" aria-hidden="true" />}
+                    loading="lazy"
+                    src={product.coverUrl}
+                  />
+                </div>
+                <h2>{product.title}</h2>
+              </LinkComponent>
+            ))}
+          </div>
+        ) : (
+          <div className="section-catalog-empty">
+            <p>{SYSTEM_UI.noResults}</p>
+            {hasFilters ? (
+              <button
+                className="section-catalog-empty-reset"
+                type="button"
+                onClick={clearFilters}
+              >
+                {SYSTEM_UI.clear}
+              </button>
+            ) : null}
+          </div>
+        )}
+      </div>
     </section>
   );
 }
