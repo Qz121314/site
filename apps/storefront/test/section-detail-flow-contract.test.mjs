@@ -20,18 +20,35 @@ const detailCss = await readFile(
   'utf8',
 );
 
-test('section catalog keeps the section name in the app header and product cards minimal', () => {
+test('section catalog keeps compact app navigation and minimal product cards', () => {
   assert.match(sectionSource, /<header className="section-catalog-header">/);
   assert.match(
     sectionSource,
     /<h1 id="section-catalog-title">\{query\.data\.section\.name\}<\/h1>/,
   );
+  assert.match(sectionSource, /className="section-catalog-back"/);
+  assert.match(sectionSource, /<span className="sr-only">\{SYSTEM_UI\.back\}<\/span>/);
   assert.match(sectionSource, /className="section-product-card"/);
   assert.match(sectionSource, /className="section-product-cover"/);
   assert.doesNotMatch(sectionSource, /StorefrontProductCard/);
   assert.doesNotMatch(sectionSource, /categoryName=|address=|sectionName=|tags=/);
   assert.match(sectionCss, /\.section-catalog-header \{[\s\S]*position: sticky/);
+  assert.match(sectionCss, /\.section-catalog-back \{[\s\S]*border-radius: 50%/);
   assert.match(sectionCss, /\.section-product-cover \{[\s\S]*aspect-ratio: 1 \/ 1/);
+});
+
+test('section catalog uses category select plus horizontal tag filters', () => {
+  assert.match(sectionSource, /className=\{`section-category-select/);
+  assert.match(sectionSource, /<select/);
+  assert.match(sectionSource, /value=\{categoryId\}/);
+  assert.match(sectionSource, /<option value="">\{SYSTEM_UI\.all\}<\/option>/);
+  assert.match(sectionSource, /className="section-tag-filter"/);
+  assert.doesNotMatch(sectionSource, /className="section-category-options"/);
+  assert.match(
+    sectionCss,
+    /\.section-category-select\s*\{[\s\S]*border-radius:\s*var\(--theme-radius-chip,/,
+  );
+  assert.match(sectionCss, /\.section-catalog-filters\s*\{[\s\S]*overflow-x: auto/);
 });
 
 test('product detail keeps Back at the left and routes the backend CTA by mode', () => {
