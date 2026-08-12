@@ -27,6 +27,12 @@ import { publicContentRoutes } from './routes/public-content';
 import { publicConversionRoutes } from './routes/public-conversion';
 import { publicMediaFallbackRoutes } from './routes/public-media-fallback';
 import { servePwaIcon, servePwaManifest } from './routes/public-pwa';
+import {
+  serveRobots,
+  serveSitemap,
+  serveStaticAsset,
+  serveStorefrontDocument,
+} from './routes/public-seo';
 import { publicStorefrontConfigRoutes } from './routes/public-storefront-config';
 import { publicThemeRoutes } from './routes/public-theme';
 import type { AppEnvironment } from './types';
@@ -60,6 +66,8 @@ app.use('*', async (context, next) => {
 
 app.get('/manifest.webmanifest', servePwaManifest);
 app.get('/api/public/pwa/icon/:size', servePwaIcon);
+app.on(['GET', 'HEAD'], '/robots.txt', serveRobots);
+app.on(['GET', 'HEAD'], '/sitemap.xml', serveSitemap);
 
 app.get('/api/health', (context) =>
   context.json({
@@ -126,6 +134,31 @@ app.route('/api/admin/sections', adminSectionBatchRoutes);
 app.route('/api/admin/sections', adminSectionRoutes);
 
 app.route('/go', publicConversionRoutes);
+
+app.on(['GET', 'HEAD'], '*', async (context) => {
+  const pathname = new URL(context.req.url).pathname;
+  if (
+    pathname.startsWith('/api/') ||
+    pathname.startsWith('/public/') ||
+    pathname.startsWith('/_media/') ||
+    pathname.startsWith('/go/')
+  ) {
+    return context.json(
+      {
+        error: {
+          code: 'NOT_FOUND',
+          message: 'The requested route does not exist.',
+          requestId: context.get('requestId'),
+        },
+      },
+      404,
+    );
+  }
+  if (pathname.startsWith('/admin/') || /\.[A-Za-z0-9]{1,12}$/u.test(pathname)) {
+    return serveStaticAsset(context);
+  }
+  return serveStorefrontDocument(context);
+});
 
 app.notFound((context) => {
   if (context.req.path.startsWith('/api/')) {

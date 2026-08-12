@@ -11,6 +11,16 @@ export type ThemeMediaStyle = 'precise' | 'soft' | 'editorial';
 export type ThemeMotionStyle = 'restrained' | 'gentle' | 'active';
 export type ThemeNavigationStyle = 'quiet' | 'tinted' | 'solid';
 
+export type ThemeInstallPrompt = {
+  enabled: boolean;
+  delaySeconds: number;
+  title: string;
+  description: string;
+  iosDescription: string;
+  installLabel: string;
+  dismissLabel: string;
+};
+
 export type ThemeRecipe = {
   version: 2;
   fontPack: ThemeFontPack;
@@ -52,6 +62,7 @@ export type ThemeOverrides = {
   mediaStyle?: ThemeMediaStyle;
   motionStyle?: ThemeMotionStyle;
   navigationStyle?: ThemeNavigationStyle;
+  installPrompt?: ThemeInstallPrompt;
   imported?: ImportedThemeDefinition;
 };
 
@@ -63,6 +74,7 @@ export type ThemePreset = {
   density: ThemeDensity;
   productMediaRatio: '1:1';
   recipe: ThemeRecipe;
+  installPrompt: ThemeInstallPrompt;
   tokens: ThemeTokens;
 };
 
@@ -160,6 +172,7 @@ export async function updateThemeCenter(
   themeKey: ThemeKey,
   accent: string | null,
   recipe: Omit<ThemeRecipe, 'version'> & { density: ThemeDensity },
+  installPrompt: ThemeInstallPrompt,
   imported?: ImportedThemeDefinition,
 ): Promise<ResolvedTheme> {
   const body = await themeRequest('/api/admin/theme/', {
@@ -178,6 +191,7 @@ export async function updateThemeCenter(
         mediaStyle: recipe.mediaStyle,
         motionStyle: recipe.motionStyle,
         navigationStyle: recipe.navigationStyle,
+        installPrompt,
         ...(themeKey === 'custom' && imported ? { imported } : {}),
       },
     }),

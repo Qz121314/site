@@ -68,11 +68,12 @@ export function FaqDirectoryPage({
   const query = useFaqSnapshot(bootstrap);
 
   useEffect(() => {
-    document.title = bootstrap.site.site.name;
+    document.title = `FAQ · ${bootstrap.site.site.name}`;
   }, [bootstrap.site.site.name]);
 
   return (
     <section className="faq-directory">
+      <h1 className="sr-only">FAQ · {bootstrap.site.site.name}</h1>
       <FaqLoadState
         loading={query.isLoading && !query.data}
         error={Boolean(query.error && !query.data)}

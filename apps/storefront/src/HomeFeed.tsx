@@ -45,7 +45,13 @@ function HomeLink({
   return <a {...props} href={href} onClick={handleClick} />;
 }
 
-function SectionIcon({ section }: { section: PublicSection }) {
+function SectionIcon({
+  priority,
+  section,
+}: {
+  priority: boolean;
+  section: PublicSection;
+}) {
   const fallback = (
     <span aria-hidden="true">{Array.from(section.name.trim())[0] ?? '•'}</span>
   );
@@ -54,7 +60,8 @@ function SectionIcon({ section }: { section: PublicSection }) {
       <ResilientImage
         alt=""
         fallback={fallback}
-        loading="lazy"
+        fetchPriority={priority ? 'high' : 'auto'}
+        loading={priority ? 'eager' : 'lazy'}
         src={section.icon.value}
       />
     );
@@ -77,14 +84,14 @@ function HomeShortcuts({ sections }: { sections: PublicSection[] }) {
   return (
     <div className="home-shortcut-zone">
       <nav className="home-shortcuts home-shortcut-hero" aria-label="Sections">
-        {sections.map((section) => (
+        {sections.map((section, index) => (
           <HomeLink
             className="home-shortcut"
             href={sectionHref(section)}
             key={section.id}
           >
             <span className="home-shortcut-icon">
-              <SectionIcon section={section} />
+              <SectionIcon priority={index === 0} section={section} />
             </span>
             <span className="home-shortcut-label">{section.name}</span>
           </HomeLink>
@@ -100,14 +107,21 @@ function HomeShortcuts({ sections }: { sections: PublicSection[] }) {
   );
 }
 
-function HomeProductTile({ product }: { product: PublicProductSummary }) {
+function HomeProductTile({
+  priority,
+  product,
+}: {
+  priority: boolean;
+  product: PublicProductSummary;
+}) {
   return (
     <HomeLink className="home-product-tile" href={productHref(product)}>
       <span className="home-product-cover">
         <ResilientImage
           alt=""
           fallback={<span className="home-product-cover-fallback" aria-hidden="true" />}
-          loading="lazy"
+          fetchPriority={priority ? 'high' : 'auto'}
+          loading={priority ? 'eager' : 'lazy'}
           src={product.coverUrl}
         />
       </span>
@@ -121,10 +135,12 @@ function HomeProductTile({ product }: { product: PublicProductSummary }) {
 function HomeRecommendationRail({
   bootstrap,
   initialProducts,
+  priority,
   section,
 }: {
   bootstrap: StorefrontBootstrap;
   initialProducts: PublicProductSummary[];
+  priority: boolean;
   section: PublicSection;
 }) {
   const query = useQuery({
@@ -177,8 +193,12 @@ function HomeRecommendationRail({
         </div>
       ) : (
         <div className="home-product-rail">
-          {products.map((product) => (
-            <HomeProductTile product={product} key={product.id} />
+          {products.map((product, index) => (
+            <HomeProductTile
+              priority={priority && index === 0}
+              product={product}
+              key={product.id}
+            />
           ))}
         </div>
       )}
@@ -248,13 +268,15 @@ export function HomeFeed({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
 
   return (
     <div className="home-feed">
+      <h1 className="sr-only">{site.name}</h1>
       <HomeShortcuts sections={shortcutSections} />
 
       <div className="home-recommendation-feed">
-        {recommendationSections.map((section) => (
+        {recommendationSections.map((section, index) => (
           <HomeRecommendationRail
             bootstrap={bootstrap}
             initialProducts={featuredProductsBySection.get(section.id) ?? []}
+            priority={index === 0}
             section={section}
             key={section.id}
           />

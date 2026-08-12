@@ -135,6 +135,39 @@ test('Premium Noir Dating V2 resolves a complete commercial UI recipe', () => {
   });
   assert.equal(resolved.tokens.pageBg, '#0b080b');
   assert.equal(resolved.tokens.brand, '#e45594');
+  assert.deepEqual(resolved.installPrompt, {
+    enabled: true,
+    delaySeconds: 30,
+    title: 'Install app',
+    description: 'Add it to your desktop for faster access.',
+    iosDescription: 'Use Share, then Add to Home Screen.',
+    installLabel: 'Install',
+    dismissLabel: 'Not now',
+  });
+});
+
+test('Theme Center persists a bounded backend-driven install prompt', () => {
+  const validation = validateThemeUpdate({
+    themeKey: 'noir',
+    overrides: {
+      installPrompt: {
+        enabled: true,
+        delaySeconds: 45,
+        title: 'Keep EROSDOOR close',
+        description: 'Install the app on this desktop.',
+        iosDescription: 'Use Share, then Add to Home Screen.',
+        installLabel: 'Install',
+        dismissLabel: 'Later',
+      },
+    },
+  });
+  assert.equal(validation.ok, true);
+  const reloaded = parseThemeSettings(
+    'noir',
+    JSON.stringify(validation.settings.overrides),
+  );
+  assert.equal(reloaded.overrides.installPrompt?.delaySeconds, 45);
+  assert.equal(resolveTheme(reloaded).installPrompt.dismissLabel, 'Later');
 });
 
 test('custom theme persists through the existing official-key D1 constraint', () => {

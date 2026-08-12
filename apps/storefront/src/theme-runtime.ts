@@ -23,17 +23,28 @@ type ThemeRecipe = {
   navigationStyle: 'quiet' | 'tinted' | 'solid';
 };
 
-type PublicTheme = {
+export type ThemeInstallPrompt = {
+  enabled: boolean;
+  delaySeconds: number;
+  title: string;
+  description: string;
+  iosDescription: string;
+  installLabel: string;
+  dismissLabel: string;
+};
+
+export type PublicTheme = {
   key: string;
   colorScheme: 'light' | 'dark';
   density: ThemeDensity;
   productMediaRatio: '1:1';
   recipe: ThemeRecipe;
+  installPrompt: ThemeInstallPrompt;
   tokens: ThemeTokens;
 };
 
-const CACHE_KEY = 'storefront-theme-v3';
-const LEGACY_CACHE_KEY = 'storefront-theme-v2';
+const CACHE_KEY = 'storefront-theme-v4';
+const LEGACY_CACHE_KEYS = ['storefront-theme-v3', 'storefront-theme-v2'] as const;
 const TOKEN_KEYS: Array<keyof ThemeTokens> = [
   'brand',
   'brandStrong',
@@ -57,6 +68,21 @@ function isThemeDensity(value: unknown): value is ThemeDensity {
   return value === 'compact' || value === 'standard' || value === 'comfortable';
 }
 
+function validInstallPrompt(value: unknown): value is ThemeInstallPrompt {
+  return (
+    isRecord(value) &&
+    typeof value.enabled === 'boolean' &&
+    Number.isInteger(value.delaySeconds) &&
+    Number(value.delaySeconds) >= 5 &&
+    Number(value.delaySeconds) <= 120 &&
+    typeof value.title === 'string' &&
+    typeof value.description === 'string' &&
+    typeof value.iosDescription === 'string' &&
+    typeof value.installLabel === 'string' &&
+    typeof value.dismissLabel === 'string'
+  );
+}
+
 function validTheme(value: unknown): value is PublicTheme {
   if (!isRecord(value) || typeof value.key !== 'string') return false;
   if (value.colorScheme !== 'light' && value.colorScheme !== 'dark') return false;
@@ -73,6 +99,7 @@ function validTheme(value: unknown): value is PublicTheme {
     return false;
   if (!['quiet', 'tinted', 'solid'].includes(String(recipe.navigationStyle)))
     return false;
+  if (!validInstallPrompt(value.installPrompt)) return false;
   const tokens = value.tokens;
   if (!isRecord(tokens)) return false;
   return TOKEN_KEYS.every((key) => typeof tokens[key] === 'string');
@@ -104,14 +131,28 @@ function upgradeLegacyTheme(value: unknown): PublicTheme | null {
   if (value.colorScheme !== 'light' && value.colorScheme !== 'dark') return null;
   if (!isThemeDensity(value.density) || value.productMediaRatio !== '1:1') return null;
   if (!isRecord(value.tokens)) return null;
+  if (!validInstallPrompt(value.installPrompt)) return null;
   const tokens = value.tokens;
   if (!TOKEN_KEYS.every((key) => typeof tokens[key] === 'string')) return null;
+  const recipe =
+    isRecord(value.recipe) &&
+    value.recipe.version === 2 &&
+    ['modern', 'editorial', 'compact', 'technical'].includes(
+      String(value.recipe.fontPack),
+    ) &&
+    ['refined', 'minimal', 'soft-pill'].includes(String(value.recipe.buttonStyle)) &&
+    ['precise', 'soft', 'editorial'].includes(String(value.recipe.mediaStyle)) &&
+    ['restrained', 'gentle', 'active'].includes(String(value.recipe.motionStyle)) &&
+    ['quiet', 'tinted', 'solid'].includes(String(value.recipe.navigationStyle))
+      ? (value.recipe as ThemeRecipe)
+      : defaultRecipe(value.key);
   return {
     key: value.key,
     colorScheme: value.colorScheme,
     density: value.density,
     productMediaRatio: '1:1',
-    recipe: defaultRecipe(value.key),
+    recipe,
+    installPrompt: value.installPrompt,
     tokens: tokens as ThemeTokens,
   };
 }
@@ -160,14 +201,19 @@ function readCachedTheme(): PublicTheme | null {
       const value = JSON.parse(raw) as unknown;
       if (validTheme(value)) return value;
     }
-    const legacyRaw = window.localStorage.getItem(LEGACY_CACHE_KEY);
-    return legacyRaw ? upgradeLegacyTheme(JSON.parse(legacyRaw) as unknown) : null;
+    for (const legacyKey of LEGACY_CACHE_KEYS) {
+      const legacyRaw = window.localStorage.getItem(legacyKey);
+      if (!legacyRaw) continue;
+      const upgraded = upgradeLegacyTheme(JSON.parse(legacyRaw) as unknown);
+      if (upgraded) return upgraded;
+    }
+    return null;
   } catch {
     return null;
   }
 }
 
-export async function installStorefrontTheme(): Promise<void> {
+export async function installStorefrontTheme(): Promise<PublicTheme | null> {
   const cached = readCachedTheme();
   if (cached) applyTheme(cached);
 
@@ -178,16 +224,18 @@ export async function installStorefrontTheme(): Promise<void> {
       credentials: 'same-origin',
       headers: { Accept: 'application/json' },
     });
-    if (!response.ok) return;
+    if (!response.ok) return cached;
     const body = (await response.json()) as unknown;
-    if (!isRecord(body) || !validTheme(body.theme)) return;
+    if (!isRecord(body) || !validTheme(body.theme)) return cached;
     applyTheme(body.theme);
     try {
       window.localStorage.setItem(CACHE_KEY, JSON.stringify(body.theme));
     } catch {
       // Theme caching is optional; the live response remains authoritative.
     }
+    return body.theme;
   } catch {
     // Keep the cached/default theme when the theme endpoint is temporarily unavailable.
+    return cached;
   }
 }

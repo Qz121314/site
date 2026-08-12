@@ -9,6 +9,16 @@ export type ThemeMotionStyle = 'restrained' | 'gentle' | 'active';
 export type ThemeNavigationStyle = 'quiet' | 'tinted' | 'solid';
 export type ThemeDensity = 'compact' | 'standard' | 'comfortable';
 
+export type ThemeInstallPrompt = {
+  enabled: boolean;
+  delaySeconds: number;
+  title: string;
+  description: string;
+  iosDescription: string;
+  installLabel: string;
+  dismissLabel: string;
+};
+
 export type ThemeRecipe = {
   version: 2;
   fontPack: ThemeFontPack;
@@ -41,6 +51,7 @@ export type ThemePreset = {
   density: ThemeDensity;
   productMediaRatio: '1:1';
   recipe: ThemeRecipe;
+  installPrompt: ThemeInstallPrompt;
   tokens: ThemeTokens;
 };
 
@@ -61,6 +72,7 @@ export type ThemeOverrides = {
   mediaStyle?: ThemeMediaStyle;
   motionStyle?: ThemeMotionStyle;
   navigationStyle?: ThemeNavigationStyle;
+  installPrompt?: ThemeInstallPrompt;
   imported?: ImportedThemeDefinition;
 };
 
@@ -102,6 +114,16 @@ const DEFAULT_RECIPE: ThemeRecipe = {
   navigationStyle: 'quiet',
 };
 
+export const DEFAULT_INSTALL_PROMPT: ThemeInstallPrompt = {
+  enabled: true,
+  delaySeconds: 30,
+  title: 'Install app',
+  description: 'Add it to your desktop for faster access.',
+  iosDescription: 'Use Share, then Add to Home Screen.',
+  installLabel: 'Install',
+  dismissLabel: 'Not now',
+};
+
 export const THEME_PRESETS: readonly ThemePreset[] = [
   {
     key: 'marketplace',
@@ -116,6 +138,7 @@ export const THEME_PRESETS: readonly ThemePreset[] = [
       mediaStyle: 'precise',
       navigationStyle: 'tinted',
     },
+    installPrompt: DEFAULT_INSTALL_PROMPT,
     tokens: {
       brand: '#ff5a1f',
       brandStrong: '#e94a12',
@@ -146,6 +169,7 @@ export const THEME_PRESETS: readonly ThemePreset[] = [
       motionStyle: 'restrained',
       navigationStyle: 'quiet',
     },
+    installPrompt: DEFAULT_INSTALL_PROMPT,
     tokens: {
       brand: '#e45594',
       brandStrong: '#f06ba8',
@@ -176,6 +200,7 @@ export const THEME_PRESETS: readonly ThemePreset[] = [
       motionStyle: 'active',
       navigationStyle: 'solid',
     },
+    installPrompt: DEFAULT_INSTALL_PROMPT,
     tokens: {
       brand: '#ff355d',
       brandStrong: '#ff5f80',
@@ -204,6 +229,7 @@ export const THEME_PRESETS: readonly ThemePreset[] = [
       mediaStyle: 'precise',
       navigationStyle: 'tinted',
     },
+    installPrompt: DEFAULT_INSTALL_PROMPT,
     tokens: {
       brand: '#4f46e5',
       brandStrong: '#3730a3',
@@ -234,6 +260,7 @@ export const THEME_PRESETS: readonly ThemePreset[] = [
       motionStyle: 'gentle',
       navigationStyle: 'quiet',
     },
+    installPrompt: DEFAULT_INSTALL_PROMPT,
     tokens: {
       brand: '#df6c4f',
       brandStrong: '#b84d35',
@@ -264,6 +291,7 @@ export const THEME_PRESETS: readonly ThemePreset[] = [
       motionStyle: 'active',
       navigationStyle: 'tinted',
     },
+    installPrompt: DEFAULT_INSTALL_PROMPT,
     tokens: {
       brand: '#22d3ee',
       brandStrong: '#67e8f9',
@@ -391,6 +419,27 @@ export function isThemeKey(value: unknown): value is ThemeKey {
   );
 }
 
+export function normalizeInstallPrompt(value: unknown): ThemeInstallPrompt | null {
+  if (!isRecord(value)) return null;
+  const delay = Number(value.delaySeconds);
+  return {
+    enabled:
+      typeof value.enabled === 'boolean' ? value.enabled : DEFAULT_INSTALL_PROMPT.enabled,
+    delaySeconds:
+      Number.isInteger(delay) && delay >= 5 && delay <= 120
+        ? delay
+        : DEFAULT_INSTALL_PROMPT.delaySeconds,
+    title: cleanText(value.title, 80) ?? DEFAULT_INSTALL_PROMPT.title,
+    description: cleanText(value.description, 160) ?? DEFAULT_INSTALL_PROMPT.description,
+    iosDescription:
+      cleanText(value.iosDescription, 160) ?? DEFAULT_INSTALL_PROMPT.iosDescription,
+    installLabel:
+      cleanText(value.installLabel, 32) ?? DEFAULT_INSTALL_PROMPT.installLabel,
+    dismissLabel:
+      cleanText(value.dismissLabel, 32) ?? DEFAULT_INSTALL_PROMPT.dismissLabel,
+  };
+}
+
 export function normalizeThemeOverrides(value: unknown): ThemeOverrides {
   if (!isRecord(value)) return {};
   const accent =
@@ -427,6 +476,7 @@ export function normalizeThemeOverrides(value: unknown): ThemeOverrides {
     'tinted',
     'solid',
   ] as const);
+  const installPrompt = normalizeInstallPrompt(value.installPrompt);
   return {
     ...(HEX_COLOR.test(accent) ? { accent } : {}),
     ...(density ? { density } : {}),
@@ -435,6 +485,7 @@ export function normalizeThemeOverrides(value: unknown): ThemeOverrides {
     ...(mediaStyle ? { mediaStyle } : {}),
     ...(motionStyle ? { motionStyle } : {}),
     ...(navigationStyle ? { navigationStyle } : {}),
+    ...(installPrompt ? { installPrompt } : {}),
     ...(imported ? { imported } : {}),
   };
 }
@@ -483,6 +534,7 @@ export function resolveTheme(settings: ThemeSettings): ResolvedTheme {
       density: settings.overrides.density ?? 'standard',
       productMediaRatio: '1:1',
       recipe,
+      installPrompt: settings.overrides.installPrompt ?? DEFAULT_INSTALL_PROMPT,
       tokens: applyAccent(imported.tokens, accent),
       overrides: settings.overrides,
     };
@@ -500,6 +552,7 @@ export function resolveTheme(settings: ThemeSettings): ResolvedTheme {
       navigationStyle:
         settings.overrides.navigationStyle ?? preset.recipe.navigationStyle,
     },
+    installPrompt: settings.overrides.installPrompt ?? preset.installPrompt,
     overrides: settings.overrides,
     tokens: applyAccent(preset.tokens, accent),
   };
