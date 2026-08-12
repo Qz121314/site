@@ -70,6 +70,26 @@ test('Browse uses a dense native list on mobile and a restrained editorial grid 
   );
 });
 
+test('Browse search uses the same minimal two-column product language as section catalogs', () => {
+  assert.match(browsePage, /className="browse-directory-search"/u);
+  assert.match(browsePage, /className="browse-directory-search-clear"/u);
+  assert.match(browsePage, /className="browse-search-product-card"/u);
+  assert.match(browsePage, /className="browse-search-product-cover"/u);
+  assert.doesNotMatch(browsePage, /StorefrontProductCard/u);
+  assert.match(
+    browseCss,
+    /\.browse-search-products\s*\{[^}]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/su,
+  );
+  assert.match(
+    browseCss,
+    /\.browse-search-product-cover\s*\{[^}]*aspect-ratio:\s*1 \/ 1/su,
+  );
+  assert.match(
+    browseCss,
+    /\.browse-directory-search\s*\{[^}]*border-radius:\s*var\(--theme-radius-control,\s*4px\)/su,
+  );
+});
+
 test('Home icon and Browse background remain separate section presentation fields', () => {
   assert.match(adminEditor, />分区快捷图标</u);
   assert.match(adminEditor, /只用于 Home 的快捷分区入口；Browse 页面不会使用这个图标/u);
