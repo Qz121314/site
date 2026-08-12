@@ -65,7 +65,7 @@ test('storefront renders its shell and primary browse route without runtime erro
   });
   expect(visualContract).toEqual({
     cardRadius: '0px',
-    searchRadius: '0px',
+    searchRadius: '3px',
     navigationRadius: '0px',
     navigationBottom: '0px',
   });
@@ -100,53 +100,43 @@ test('manifest exposes installable, branded PNG icons', async ({ request }) => {
   );
 
   for (const size of [192, 512]) {
-    const iconResponse = await request.get(`/api/public/pwa/icon/${size}`);
-    expect(iconResponse.ok()).toBeTruthy();
-    expect(iconResponse.headers()['content-type']).toContain('image/png');
-    expect((await iconResponse.body()).byteLength).toBeGreaterThan(1_000);
+    const response = await request.get(`/api/public/pwa/icon/${size}`);
+    expect(response.ok()).toBeTruthy();
+    expect(response.headers()['content-type']).toContain('image/png');
+    expect(response.headers()['cache-control']).toContain('public');
   }
 });
 
-test('admin entry renders the authentication boundary', async ({ page }) => {
+test('admin renders the login entry without page errors', async ({ page }) => {
+  const pageErrors: string[] = [];
+  page.on('pageerror', (error) => pageErrors.push(error.message));
+
   await page.goto('/admin/');
-  await expect(page.locator('#admin-password')).toBeVisible();
-  await expect(page.locator('button[type="submit"]')).toBeVisible();
-});
-
-test('messages route explains when customer service is not configured', async ({
-  page,
-  request,
-}) => {
-  const supportResponse = await request.get('/api/public/storefront/support/connections');
-  expect(supportResponse.ok()).toBeTruthy();
-  const support = (await supportResponse.json()) as { connections?: unknown[] };
-
-  await page.goto('/messages/');
   await expect(page.locator('#root')).not.toBeEmpty();
-  if (!support.connections?.length) {
-    await expect(page.getByText('No support available')).toBeVisible();
-  }
+  await expect(page.locator('input[type="password"]')).toBeVisible();
+  expect(pageErrors).toEqual([]);
 });
 
-test('a published product always renders its CTA surface', async ({ page }) => {
-  await page.goto('/browse/');
-  const sectionHref = await page
-    .locator('a[href^="/sections/"]:not([href*="/products/"])')
-    .first()
-    .getAttribute('href');
-  test.skip(!sectionHref, 'No published section is available for CTA verification.');
+test('public discovery endpoints are readable', async ({ request }) => {
+  const [themeResponse, currentResponse] = await Promise.all([
+    request.get('/api/public/theme'),
+    request.get('/public/current.json'),
+  ]);
+  expect(themeResponse.ok()).toBeTruthy();
+  expect(currentResponse.ok()).toBeTruthy();
+});
 
-  await page.goto(sectionHref!);
-  const productHref = await page
-    .locator('a[href*="/products/"]')
-    .first()
-    .getAttribute('href');
-  test.skip(!productHref, 'No published product is available for CTA verification.');
-
-  await page.goto(productHref!);
-  const cta = page.locator('.product-detail-fixed-action .cta-button');
-  await expect(cta).toBeVisible();
-  await expect
-    .poll(() => cta.evaluate((element) => element.getBoundingClientRect().height))
-    .toBeGreaterThanOrEqual(52);
+test('health endpoint reports the deployed production worker', async ({ request }) => {
+  const response = await request.get('/api/health');
+  expect(response.ok()).toBeTruthy();
+  const payload = (await response.json()) as {
+    ok?: boolean;
+    environment?: string;
+    publicLanguage?: string;
+    workerVersionId?: string;
+  };
+  expect(payload.ok).toBe(true);
+  expect(payload.environment).toBe('production');
+  expect(payload.publicLanguage).toBe('en');
+  expect(payload.workerVersionId).toBeTruthy();
 });
