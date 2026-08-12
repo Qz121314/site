@@ -72,12 +72,21 @@ test('product detail keeps a focused media and information hierarchy', () => {
   assert.match(detailSource, /<MarkdownContent source=\{product\.body\} \/>/u);
   assert.match(
     detailSource,
-    /className="product-detail-info"[\s\S]*?className="product-detail-summary"[\s\S]*?className="product-detail-body"/u,
+    /<div className="product-detail-info">[\s\S]*?className="product-detail-summary"[\s\S]*?<\/section>\s*<\/div>\s*<\/div>\s*\{product\.body\.trim\(\) \? \([\s\S]*?className="product-detail-body"/u,
   );
   assert.doesNotMatch(detailSource, /recommend|rating|favorite|share/iu);
 });
 
-test('product gallery keeps thumbnails directly below the active media stage', () => {
+test('product gallery uses mobile swipe media and desktop thumbnail navigation', () => {
+  assert.match(detailSource, /className="detail-mobile-gallery"/u);
+  assert.match(detailSource, /className="detail-mobile-media-track"/u);
+  assert.match(detailSource, /className="detail-mobile-media-item"/u);
+  assert.match(detailSource, /mobileMediaIndex \+ 1/u);
+  assert.match(detailCss, /scroll-snap-type:\s*x mandatory/u);
+  assert.match(detailCss, /scroll-snap-align:\s*start/u);
+  assert.match(detailCss, /scroll-snap-stop:\s*always/u);
+
+  assert.match(detailSource, /className="detail-desktop-gallery"/u);
   assert.match(detailSource, /className="detail-media-stage"/u);
   assert.match(detailSource, /className="detail-media-thumbnails"/u);
   assert.match(detailSource, /setActiveMediaId\(item\.id\)/u);
@@ -96,9 +105,8 @@ test('product gallery keeps thumbnails directly below the active media stage', (
   );
   assert.match(
     detailCss,
-    /\.detail-media-stage > img,[\s\S]*?\.detail-media-stage > video/u,
+    /@media \(min-width:\s*768px\)[\s\S]*?\.detail-mobile-gallery\s*\{[\s\S]*?display:\s*none[\s\S]*?\.detail-desktop-gallery\s*\{[\s\S]*?display:\s*flex/u,
   );
-  assert.doesNotMatch(detailCss, /scroll-snap-type:\s*x mandatory/u);
   assert.match(detailSource, /<ResilientVideo/u);
   assert.match(detailSource, /<ResilientImage/u);
 });
@@ -129,7 +137,7 @@ test('product CTA mounts at the viewport layer and keeps safe-area spacing', () 
   );
   assert.match(
     detailCss,
-    /\.product-detail-page\s*\{[\s\S]*?padding-bottom:\s*calc\(82px \+ env\(safe-area-inset-bottom\)\)/u,
+    /\.product-detail-page\s*\{[\s\S]*?padding-bottom:\s*calc\(78px \+ env\(safe-area-inset-bottom\)\)/u,
   );
   assert.doesNotMatch(
     detailCss,
@@ -139,27 +147,38 @@ test('product CTA mounts at the viewport layer and keeps safe-area spacing', () 
     detailCss,
     /bottom:\s*calc\(67px \+ env\(safe-area-inset-bottom\)\)/u,
   );
+  assert.match(detailSource, /const readyCta = cta \? \(/u);
+  assert.match(detailSource, /cta\.mode === 'customer_service'/u);
   assert.match(
     detailSource,
-    /cta \? \([\s\S]*?className="cta-button is-ready"[\s\S]*?: \([\s\S]*?className="cta-button is-unavailable"/u,
+    /<LinkComponent className="cta-button is-ready" href=\{cta\.path\}>/u,
   );
+  assert.match(detailSource, /target="_blank"/u);
+  assert.match(detailSource, /className="cta-button is-unavailable"/u);
   assert.match(detailSource, /<span>\{SYSTEM_UI\.unavailable\}<\/span>/u);
 });
 
-test('desktop uses a compact capped two-column layout only at true desktop width', () => {
-  assert.match(detailCss, /@media \(min-width:\s*768px\) and \(max-width:\s*979px\)/u);
-  assert.doesNotMatch(detailCss, /@media \(min-width:\s*768px\)\s*\{/u);
+test('desktop uses a capped reading layout with a two-column hero at true desktop width', () => {
+  assert.match(detailCss, /@media \(min-width:\s*768px\)\s*\{/u);
   assert.match(
     detailCss,
-    /@media \(min-width:\s*980px\)[\s\S]*?\.product-detail-page\s*\{[\s\S]*?width:\s*min\(920px, 100%\)/u,
+    /@media \(min-width:\s*768px\)[\s\S]*?\.product-detail-page\s*\{[\s\S]*?width:\s*min\(760px, 100%\)/u,
   );
   assert.match(
     detailCss,
-    /@media \(min-width:\s*980px\)[\s\S]*?\.product-detail-hero\s*\{[\s\S]*?grid-template-columns:\s*minmax\(0, 520px\) minmax\(280px, 340px\)/u,
+    /@media \(min-width:\s*980px\)[\s\S]*?\.product-detail-page\s*\{[\s\S]*?width:\s*min\(980px, 100%\)/u,
   );
   assert.match(
     detailCss,
-    /@media \(min-width:\s*980px\)[\s\S]*?\.detail-gallery\s*\{[\s\S]*?max-width:\s*520px/u,
+    /@media \(min-width:\s*980px\)[\s\S]*?\.product-detail-hero\s*\{[\s\S]*?grid-template-columns:\s*minmax\(0, 590px\) minmax\(280px, 330px\)/u,
+  );
+  assert.match(
+    detailCss,
+    /@media \(min-width:\s*980px\)[\s\S]*?\.detail-gallery\s*\{[\s\S]*?max-width:\s*590px/u,
+  );
+  assert.match(
+    detailCss,
+    /@media \(min-width:\s*980px\)[\s\S]*?\.product-detail-body\s*\{[\s\S]*?width:\s*min\(780px, 100%\)/u,
   );
   assert.match(
     detailCss,
