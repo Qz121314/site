@@ -45,17 +45,24 @@ test('Browse uses section background artwork as the visual card surface', () => 
   assert.match(browseCss, /\.browse-section-card-arrow/u);
 });
 
-test('Browse uses a sharp editorial stack on mobile and a restrained desktop grid', () => {
+test('Browse uses a dense native list on mobile and a restrained editorial grid on desktop', () => {
   assert.match(browsePage, /filteredSections\.length === 1 \? ' is-single' : ''/u);
   assert.match(
     browseCss,
     /\.browse-section-list\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)/su,
   );
-  assert.match(browseCss, /\.browse-section-card\s*\{[^}]*aspect-ratio:\s*16 \/ 8\.4/su);
+  assert.match(
+    browseCss,
+    /\.browse-section-card\s*\{[^}]*grid-template-columns:\s*104px minmax\(0,\s*1fr\)/su,
+  );
   assert.match(browseCss, /\.browse-section-card\s*\{[^}]*border-radius:\s*0/su);
   assert.match(
     browseCss,
     /@media \(min-width:\s*768px\)[\s\S]*?\.browse-section-list\s*\{[^}]*grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/u,
+  );
+  assert.match(
+    browseCss,
+    /@media \(min-width:\s*768px\)[\s\S]*?\.browse-section-card\s*\{[^}]*aspect-ratio:\s*16 \/ 8\.4/u,
   );
   assert.match(
     browseCss,
