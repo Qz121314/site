@@ -68,7 +68,7 @@
   left: 8px;
   padding: 4px 7px;
   border: 1px solid rgb(255 255 255 / 22%);
-  border-radius: 999px;
+  border-radius: var(--theme-radius-chip, 2px);
   color: #fff;
   background: rgb(18 22 27 / 66%);
   box-shadow: 0 2px 8px rgb(0 0 0 / 10%);
@@ -134,7 +134,7 @@
   overflow: hidden;
   padding: 3px 6px;
   border: 1px solid color-mix(in srgb, var(--brand) 9%, transparent);
-  border-radius: 7px;
+  border-radius: var(--theme-radius-chip, 2px);
   color: var(--brand-strong);
   background: color-mix(in srgb, var(--brand) 9%, var(--surface));
   font-weight: 740;

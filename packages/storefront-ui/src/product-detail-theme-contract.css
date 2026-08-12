@@ -57,8 +57,8 @@
 }
 
 :is(html, .storefront-theme-root)[data-theme='noir'] {
-  --theme-detail-media-radius: 22px;
-  --theme-detail-panel-radius: 22px;
+  --theme-detail-media-radius: 0px;
+  --theme-detail-panel-radius: 2px;
   --theme-detail-panel-background: color-mix(
     in srgb,
     var(--surface) 94%,
@@ -78,8 +78,8 @@
 
 :is(html, .storefront-theme-root)[data-theme='live'] {
   --theme-detail-gap: 16px;
-  --theme-detail-media-radius: 14px;
-  --theme-detail-panel-radius: 14px;
+  --theme-detail-media-radius: 0px;
+  --theme-detail-panel-radius: 0px;
   --theme-detail-panel-background: color-mix(
     in srgb,
     var(--surface) 92%,
@@ -92,25 +92,25 @@
     var(--surface-soft) 88%,
     var(--brand) 12%
   );
-  --theme-detail-cta-radius: 12px;
+  --theme-detail-cta-radius: 2px;
   --theme-detail-cta-shadow: 0 10px 28px color-mix(in srgb, var(--brand) 30%, transparent);
 }
 
 :is(html, .storefront-theme-root)[data-theme='saas'] {
   --theme-detail-media-ratio: 1 / 1;
-  --theme-detail-media-radius: 12px;
-  --theme-detail-panel-radius: 14px;
+  --theme-detail-media-radius: 2px;
+  --theme-detail-panel-radius: 4px;
   --theme-detail-panel-background: var(--surface);
   --theme-detail-panel-border: var(--line);
   --theme-detail-panel-shadow: 0 2px 9px color-mix(in srgb, var(--brand) 7%, transparent);
   --theme-detail-media-shadow: 0 4px 16px color-mix(in srgb, var(--brand) 7%, transparent);
-  --theme-detail-cta-radius: 10px;
+  --theme-detail-cta-radius: 4px;
 }
 
 :is(html, .storefront-theme-root)[data-theme='travel'] {
   --theme-detail-media-ratio: 1 / 1;
-  --theme-detail-media-radius: 26px;
-  --theme-detail-panel-radius: 24px;
+  --theme-detail-media-radius: 2px;
+  --theme-detail-panel-radius: 4px;
   --theme-detail-panel-background: color-mix(
     in srgb,
     var(--surface) 96%,
@@ -120,12 +120,12 @@
   --theme-detail-panel-shadow: 0 10px 28px rgb(57 72 65 / 9%);
   --theme-detail-media-shadow: 0 12px 30px rgb(57 72 65 / 10%);
   --theme-detail-meta-background: var(--surface-soft);
-  --theme-detail-cta-radius: 18px;
+  --theme-detail-cta-radius: 4px;
 }
 
 :is(html, .storefront-theme-root)[data-theme='tech'] {
-  --theme-detail-media-radius: 16px;
-  --theme-detail-panel-radius: 16px;
+  --theme-detail-media-radius: 0px;
+  --theme-detail-panel-radius: 0px;
   --theme-detail-panel-background: color-mix(in srgb, var(--surface) 80%, transparent);
   --theme-detail-panel-border: color-mix(in srgb, var(--line) 68%, var(--brand) 32%);
   --theme-detail-panel-shadow: 0 12px 32px rgb(0 0 0 / 24%);

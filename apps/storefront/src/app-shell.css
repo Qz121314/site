@@ -94,7 +94,7 @@ body,
     width: 34px;
     height: 34px;
     border: 0;
-    border-radius: 10px;
+    border-radius: var(--theme-primary-logo-radius, 3px);
     box-shadow: none;
   }
 
@@ -114,24 +114,26 @@ body,
   }
 
   .app-shell .bottom-nav {
-    right: max(8px, env(safe-area-inset-right));
-    bottom: max(7px, env(safe-area-inset-bottom));
-    left: max(8px, env(safe-area-inset-left));
-    width: auto;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    width: 100%;
     margin: 0;
-    padding: 4px 4px 5px;
-    border: 1px solid color-mix(in srgb, var(--line, #e7e9ec) 92%, transparent);
-    border-radius: 18px;
-    background: color-mix(in srgb, var(--surface, #fff) 95%, transparent);
-    box-shadow: 0 12px 34px rgb(31 35 40 / 12%);
+    padding: 4px max(8px, env(safe-area-inset-right))
+      calc(5px + env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+    border: 0;
+    border-top: 1px solid color-mix(in srgb, var(--line, #e7e9ec) 92%, transparent);
+    border-radius: 0;
+    background: color-mix(in srgb, var(--surface, #fff) 96%, transparent);
+    box-shadow: 0 -1px 0 rgb(255 255 255 / 4%);
     transform: none;
-    backdrop-filter: blur(18px);
+    backdrop-filter: blur(20px);
   }
 
   .app-shell .bottom-nav a {
     min-height: 55px;
     gap: 1px;
-    border-radius: 12px;
+    border-radius: 0;
     transition:
       color 110ms ease,
       opacity 110ms ease;
@@ -198,7 +200,7 @@ body,
     height: 38px;
     place-items: center;
     border: 0;
-    border-radius: 50%;
+    border-radius: var(--theme-radius-control, 4px);
     color: color-mix(in srgb, var(--text, #1f2328) 68%, var(--muted));
     background: color-mix(in srgb, var(--surface, #fff) 90%, transparent);
     box-shadow: none;

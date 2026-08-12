@@ -30,7 +30,7 @@
   place-items: center;
   overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--theme-card-border) 52%, transparent);
-  border-radius: min(var(--theme-radius-icon), 15px);
+  border-radius: var(--theme-radius-icon, 3px);
   background: var(--theme-media-background);
   box-shadow: none;
   transition:
@@ -181,7 +181,7 @@
   aspect-ratio: 1 / 1;
   overflow: hidden;
   border: 0;
-  border-radius: min(max(12px, var(--theme-radius-media, 14px)), 17px);
+  border-radius: var(--theme-radius-media, 0px);
   background: var(--theme-media-background);
   box-shadow: none;
 }

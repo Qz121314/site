@@ -1,9 +1,9 @@
-/* Browse is a visual discovery surface and global search entry. */
+/* Browse is an editorial discovery surface, not a grid of generic UI cards. */
 
 .browse-directory {
   display: grid;
-  width: min(960px, 100%);
-  gap: 16px;
+  width: min(1040px, 100%);
+  gap: 22px;
   margin: 0 auto;
 }
 
@@ -12,18 +12,35 @@
   display: flex;
   min-height: max(48px, var(--theme-control-height, 44px));
   align-items: center;
-  gap: 10px;
-  padding: 0 13px;
-  border: 1px solid color-mix(in srgb, var(--line) 68%, transparent);
-  border-radius: min(max(12px, var(--theme-radius-control, 14px)), 16px);
-  background: color-mix(in srgb, var(--surface-soft) 90%, var(--surface));
+  gap: 11px;
+  padding: 0 2px;
+  border: 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 88%, transparent);
+  border-radius: 0;
+  background: transparent;
   box-shadow: none;
+  transition: border-color 140ms ease;
+}
+
+.browse-directory-search::after {
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 1px;
+  background: var(--brand);
+  content: '';
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 180ms cubic-bezier(0.22, 0.7, 0.2, 1);
 }
 
 .browse-directory-search:focus-within {
-  border-color: color-mix(in srgb, var(--brand) 28%, var(--line));
-  background: var(--surface);
-  box-shadow: 0 0 0 2px color-mix(in srgb, var(--brand) 6%, transparent);
+  border-color: transparent;
+}
+
+.browse-directory-search:focus-within::after {
+  transform: scaleX(1);
 }
 
 .browse-directory-search svg {
@@ -41,53 +58,49 @@
   color: var(--text);
   background: transparent;
   font-size: var(--storefront-text-body, 0.875rem);
-  font-weight: 450;
+  font-weight: 480;
+  letter-spacing: -0.008em;
 }
 
 .browse-directory-search input::placeholder {
-  color: color-mix(in srgb, var(--muted) 74%, transparent);
+  color: color-mix(in srgb, var(--muted) 76%, transparent);
 }
 
 .browse-directory-section {
   display: grid;
-  gap: 10px;
 }
 
 .browse-section-list {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-}
-
-.browse-section-list.is-single {
   grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
 }
 
 .browse-section-card {
   position: relative;
   display: block;
   min-width: 0;
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 16 / 8.4;
   overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--line) 46%, transparent);
-  border-radius: min(max(18px, var(--theme-radius-card, 18px)), 22px);
+  border: 0;
+  border-radius: 0;
   color: #fff;
-  background: linear-gradient(
-    145deg,
-    color-mix(in srgb, var(--brand) 76%, #111827),
-    color-mix(in srgb, var(--brand-strong) 64%, #0f172a)
-  );
-  box-shadow: 0 8px 24px color-mix(in srgb, var(--text) 8%, transparent);
+  background: #121318;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 8%);
   isolation: isolate;
   transition:
-    border-color 120ms ease,
-    box-shadow 120ms ease,
     opacity 120ms ease,
-    transform 120ms ease;
+    transform 180ms cubic-bezier(0.22, 0.7, 0.2, 1);
 }
 
-.browse-section-list.is-single .browse-section-card {
-  aspect-ratio: 16 / 9;
+.browse-section-card::after {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border: 1px solid rgb(255 255 255 / 10%);
+  content: '';
+  pointer-events: none;
+  transition: border-color 160ms ease;
 }
 
 .browse-section-card-media,
@@ -104,13 +117,13 @@
 .browse-section-card-media {
   z-index: -3;
   overflow: hidden;
-  background: transparent;
+  background: #121318;
 }
 
 .browse-section-card-media img {
   object-fit: cover;
   transform: scale(1.002);
-  transition: transform 260ms cubic-bezier(0.22, 0.7, 0.2, 1);
+  transition: transform 420ms cubic-bezier(0.22, 0.7, 0.2, 1);
 }
 
 .browse-section-card-media-fallback {
@@ -119,60 +132,90 @@
 
 .browse-section-card-scrim {
   z-index: -1;
-  background: linear-gradient(
-    180deg,
-    rgb(0 0 0 / 4%) 28%,
-    rgb(0 0 0 / 18%) 58%,
-    rgb(0 0 0 / 70%) 100%
-  );
+  background:
+    linear-gradient(90deg, rgb(0 0 0 / 44%) 0%, rgb(0 0 0 / 6%) 62%),
+    linear-gradient(180deg, rgb(0 0 0 / 0%) 36%, rgb(0 0 0 / 74%) 100%);
 }
 
 .browse-section-card.is-fallback .browse-section-card-scrim {
-  background: linear-gradient(
-    150deg,
-    color-mix(in srgb, var(--brand) 78%, #111827),
-    color-mix(in srgb, var(--brand-strong) 66%, #0f172a)
-  );
+  background:
+    linear-gradient(115deg, rgb(0 0 0 / 12%), rgb(0 0 0 / 46%)),
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--brand) 76%, #111827),
+      color-mix(in srgb, var(--brand-strong) 58%, #090b10)
+    );
 }
 
 .browse-section-card-content {
   position: absolute;
-  right: 14px;
-  bottom: 13px;
-  left: 14px;
+  right: 17px;
+  bottom: 15px;
+  left: 17px;
+  z-index: 3;
+  display: flex;
+  min-width: 0;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.browse-section-card-copy {
   display: grid;
   min-width: 0;
-  gap: 4px;
+  gap: 5px;
 }
 
 .browse-section-card-content strong {
   overflow: hidden;
   color: #fff;
-  font-size: clamp(0.96rem, 4.2vw, 1.12rem);
-  font-weight: 720;
-  line-height: 1.08;
-  letter-spacing: -0.025em;
+  font-size: clamp(1.08rem, 5.2vw, 1.5rem);
+  font-weight: 690;
+  line-height: 1.02;
+  letter-spacing: -0.036em;
   text-overflow: ellipsis;
-  text-shadow: 0 1px 10px rgb(0 0 0 / 26%);
+  text-shadow: 0 1px 14px rgb(0 0 0 / 32%);
   white-space: nowrap;
 }
 
 .browse-section-card-content p {
   display: -webkit-box;
+  max-width: 52ch;
   margin: 0;
   overflow: hidden;
-  color: rgb(255 255 255 / 80%);
+  color: rgb(255 255 255 / 76%);
   font-size: var(--storefront-text-caption, 0.75rem);
   font-weight: 440;
-  line-height: 1.3;
-  text-shadow: 0 1px 8px rgb(0 0 0 / 24%);
+  line-height: 1.35;
+  text-shadow: 0 1px 10px rgb(0 0 0 / 30%);
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 1;
 }
 
+.browse-section-card-arrow {
+  display: grid;
+  width: 35px;
+  height: 35px;
+  flex: 0 0 35px;
+  place-items: center;
+  border: 1px solid rgb(255 255 255 / 42%);
+  color: #fff;
+  background: rgb(0 0 0 / 16%);
+  backdrop-filter: blur(8px);
+  transition:
+    color 160ms ease,
+    background 160ms ease,
+    transform 180ms ease;
+}
+
+.browse-section-card-arrow svg {
+  width: 18px;
+  height: 18px;
+}
+
 .browse-section-card:active {
-  opacity: 0.88;
-  transform: scale(0.985);
+  opacity: 0.82;
+  transform: scale(0.994);
 }
 
 .browse-search-products {
@@ -180,7 +223,7 @@
 }
 
 .browse-directory-empty {
-  padding: 38px 18px;
+  padding: 40px 18px;
   border: 0;
   border-radius: 0;
   color: var(--muted);
@@ -190,90 +233,86 @@
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .browse-section-card:hover {
-    border-color: color-mix(in srgb, var(--brand) 26%, var(--line));
-    box-shadow: 0 14px 34px color-mix(in srgb, var(--text) 12%, transparent);
+  .browse-section-card:hover::after {
+    border-color: color-mix(in srgb, var(--brand) 62%, rgb(255 255 255 / 20%));
   }
 
   .browse-section-card:hover .browse-section-card-media img {
-    transform: scale(1.025);
+    transform: scale(1.035);
+  }
+
+  .browse-section-card:hover .browse-section-card-arrow {
+    color: #111;
+    background: #fff;
+    transform: translateX(2px);
   }
 }
 
 @media (max-width: 767px) {
   .browse-directory {
-    gap: 14px;
+    gap: 18px;
   }
 
   .browse-directory-search {
     position: sticky;
-    top: calc(58px + env(safe-area-inset-top));
+    top: calc(56px + env(safe-area-inset-top));
     z-index: 35;
-    min-height: 48px;
-    border-color: color-mix(in srgb, var(--line) 58%, transparent);
-    background: color-mix(in srgb, var(--page-bg, #f5f6f7) 94%, var(--surface));
-    box-shadow: none;
-    backdrop-filter: none;
-  }
-
-  .browse-section-list {
-    gap: 10px;
-  }
-
-  .browse-section-list.is-single .browse-section-card {
-    aspect-ratio: 16 / 9;
+    min-height: 47px;
+    background: color-mix(in srgb, var(--page-bg, #f5f6f7) 96%, transparent);
+    backdrop-filter: blur(12px);
   }
 
   .browse-section-card-content {
-    right: 12px;
-    bottom: 11px;
-    left: 12px;
+    right: 14px;
+    bottom: 13px;
+    left: 14px;
   }
 }
 
 @media (min-width: 768px) {
   .browse-directory {
-    gap: 24px;
+    gap: 28px;
   }
 
   .browse-directory-search {
-    max-width: 680px;
+    width: min(640px, 100%);
   }
 
   .browse-section-list {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 14px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
   }
 
   .browse-section-list.is-single {
-    grid-template-columns: minmax(0, 520px);
+    grid-template-columns: minmax(0, 1fr);
   }
 
   .browse-section-list.is-single .browse-section-card {
-    aspect-ratio: 16 / 9;
+    aspect-ratio: 16 / 6.8;
   }
 
   .browse-section-card-content {
-    right: 16px;
-    bottom: 15px;
-    left: 16px;
+    right: 20px;
+    bottom: 18px;
+    left: 20px;
   }
 
   .browse-section-card-content strong {
-    font-size: 1.05rem;
+    font-size: clamp(1.25rem, 2.2vw, 1.75rem);
   }
-}
 
-@media (min-width: 1180px) {
-  .browse-section-list:not(.is-single) {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+  .browse-section-list.is-single .browse-section-card-content strong {
+    font-size: clamp(1.55rem, 3vw, 2.3rem);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .browse-section-card,
+  .browse-section-card::after,
   .browse-section-card-media img,
-  .browse-directory-search {
+  .browse-section-card-arrow,
+  .browse-directory-search,
+  .browse-directory-search::after {
     transition: none;
   }
 }

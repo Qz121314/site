@@ -26,6 +26,21 @@ function SearchIcon() {
   );
 }
 
+function SectionArrowIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      aria-hidden="true"
+    >
+      <path d="M5 12h13" strokeLinecap="round" />
+      <path d="m14 7 5 5-5 5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 function publishedSections(bootstrap: StorefrontBootstrap): PublicSection[] {
   const pointer = bootstrap.pointer;
   if (pointer.schemaVersion !== 2) return bootstrap.home.allSections;
@@ -144,8 +159,13 @@ export function BrowsePage({
                 </span>
                 <span className="browse-section-card-scrim" aria-hidden="true" />
                 <span className="browse-section-card-content">
-                  <strong>{section.name}</strong>
-                  {section.description ? <p>{section.description}</p> : null}
+                  <span className="browse-section-card-copy">
+                    <strong>{section.name}</strong>
+                    {section.description ? <p>{section.description}</p> : null}
+                  </span>
+                  <span className="browse-section-card-arrow" aria-hidden="true">
+                    <SectionArrowIcon />
+                  </span>
                 </span>
               </LinkComponent>
             ))}

@@ -4,7 +4,7 @@
   --theme-primary-header-border: color-mix(in srgb, var(--line) 88%, transparent);
   --theme-primary-header-shadow: 0 4px 18px
     color-mix(in srgb, var(--text) 4%, transparent);
-  --theme-primary-logo-radius: 12px;
+  --theme-primary-logo-radius: 3px;
   --theme-primary-faq-background: var(--surface);
   --theme-primary-faq-open-background: color-mix(
     in srgb,
@@ -50,7 +50,7 @@
 }
 
 :is(html, .storefront-theme-root)[data-theme='noir'] {
-  --theme-primary-logo-radius: 15px;
+  --theme-primary-logo-radius: 3px;
   --theme-primary-header-border: color-mix(in srgb, var(--line) 72%, var(--brand) 28%);
   --theme-primary-header-shadow: 0 10px 28px rgb(0 0 0 / 20%);
   --theme-primary-faq-open-background: color-mix(
@@ -74,7 +74,7 @@
 }
 
 :is(html, .storefront-theme-root)[data-theme='live'] {
-  --theme-primary-logo-radius: 10px;
+  --theme-primary-logo-radius: 2px;
   --theme-primary-header-border: color-mix(in srgb, var(--brand) 26%, var(--line));
   --theme-primary-faq-border: color-mix(in srgb, var(--brand) 20%, var(--line));
   --theme-primary-message-border: color-mix(in srgb, var(--brand) 24%, var(--line));
@@ -86,7 +86,7 @@
 }
 
 :is(html, .storefront-theme-root)[data-theme='saas'] {
-  --theme-primary-logo-radius: 10px;
+  --theme-primary-logo-radius: 4px;
   --theme-primary-header-shadow: none;
   --theme-primary-faq-shadow: 0 1px 2px color-mix(in srgb, var(--text) 4%, transparent);
   --theme-primary-message-shadow: 0 2px 8px
@@ -94,7 +94,7 @@
 }
 
 :is(html, .storefront-theme-root)[data-theme='travel'] {
-  --theme-primary-logo-radius: 16px;
+  --theme-primary-logo-radius: 4px;
   --theme-primary-header-shadow: 0 6px 20px rgb(57 72 65 / 7%);
   --theme-primary-faq-open-background: color-mix(
     in srgb,
@@ -105,7 +105,7 @@
 }
 
 :is(html, .storefront-theme-root)[data-theme='tech'] {
-  --theme-primary-logo-radius: 10px;
+  --theme-primary-logo-radius: 2px;
   --theme-primary-header-border: color-mix(in srgb, var(--brand) 26%, var(--line));
   --theme-primary-header-shadow: 0 10px 30px rgb(0 0 0 / 22%);
   --theme-primary-faq-background: color-mix(in srgb, var(--surface) 82%, transparent);

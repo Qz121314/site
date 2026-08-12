@@ -203,6 +203,6 @@
     margin-right: -4px;
     margin-left: -4px;
     padding: 18px 16px;
-    border-radius: calc(var(--theme-radius-card, 18px) - 4px);
+    border-radius: var(--theme-radius-card, 2px);
   }
 }

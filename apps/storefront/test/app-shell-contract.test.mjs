@@ -33,7 +33,7 @@ test('storefront loads the app shell refinement layer after PWA styles', () => {
   assert.ok(shellImport > pwaImport, 'app shell overrides must load after PWA styles');
 });
 
-test('mobile app shell uses dynamic viewport height and one floating rounded dock', () => {
+test('mobile app shell uses dynamic viewport height and a flat system tab bar', () => {
   assert.equal(shellCss.includes('100dvh'), true);
   assert.equal(shellCss.includes('.site-footer {\n    display: none;'), true);
 
@@ -43,15 +43,14 @@ test('mobile app shell uses dynamic viewport height and one floating rounded doc
   assert.ok(mobileDockMatch?.groups?.body, 'mobile bottom dock styles must exist');
   const mobileDockCss = mobileDockMatch.groups.body;
 
-  assert.match(mobileDockCss, /right:\s*max\(8px, env\(safe-area-inset-right\)\);/u);
-  assert.match(mobileDockCss, /bottom:\s*max\(7px, env\(safe-area-inset-bottom\)\);/u);
-  assert.match(mobileDockCss, /left:\s*max\(8px, env\(safe-area-inset-left\)\);/u);
-  assert.match(mobileDockCss, /width:\s*auto;/u);
-  assert.match(mobileDockCss, /border-radius:\s*18px;/u);
-  assert.match(mobileDockCss, /box-shadow:\s*0 12px 34px rgb\(31 35 40 \/ 12%\);/u);
-  assert.match(mobileDockCss, /backdrop-filter:\s*blur\(18px\);/u);
-  assert.doesNotMatch(mobileDockCss, /width:\s*100%/u);
-  assert.doesNotMatch(mobileDockCss, /border-radius:\s*0/u);
+  assert.match(mobileDockCss, /right:\s*0;/u);
+  assert.match(mobileDockCss, /bottom:\s*0;/u);
+  assert.match(mobileDockCss, /left:\s*0;/u);
+  assert.match(mobileDockCss, /width:\s*100%;/u);
+  assert.match(mobileDockCss, /border-top:\s*1px solid/u);
+  assert.match(mobileDockCss, /border-radius:\s*0;/u);
+  assert.match(mobileDockCss, /backdrop-filter:\s*blur\(20px\);/u);
+  assert.doesNotMatch(mobileDockCss, /border-radius:\s*18px/u);
 
   assert.doesNotMatch(pagesCss, /@media \(min-width:\s*720px\)/u);
   assert.match(pagesCss, /@media \(min-width:\s*768px\)/u);
