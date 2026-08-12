@@ -31,6 +31,10 @@ test('FAQ article opens on a dedicated detail route and renders the published Ma
   );
   assert.match(faqSource, /<MarkdownContent source=\{article\.body\} \/>/u);
   assert.match(faqSource, /className="faq-back-link"[\s\S]*?href="\/faq\/"/u);
+  assert.match(faqSource, /aria-label=\{SYSTEM_UI\.back\}/u);
+  assert.match(faqSource, /<NavigationBackIcon \/>/u);
+  assert.match(faqSource, /<span className="sr-only">\{SYSTEM_UI\.back\}<\/span>/u);
+  assert.doesNotMatch(faqSource, /<span aria-hidden="true">‹<\/span>/u);
 });
 
 test('FAQ list and article detail use the primary Storefront shell and keep FAQ navigation active', () => {
@@ -43,7 +47,11 @@ test('FAQ list and article detail use the primary Storefront shell and keep FAQ 
 
 test('FAQ article UI is isolated, mobile-friendly, and consumes Theme Center variables', () => {
   assert.match(mainSource, /\.\/faq-ui\.css/u);
-  assert.match(cssSource, /\.faq-article-row\s*\{[\s\S]*min-height:\s*58px/u);
+  assert.match(cssSource, /\.faq-article-row\s*\{[\s\S]*min-height:\s*64px/u);
+  assert.match(
+    cssSource,
+    /\.faq-back-link\s*\{[\s\S]*width:\s*44px;[\s\S]*height:\s*44px;[\s\S]*border:\s*0;[\s\S]*border-radius:\s*0;[\s\S]*background:\s*transparent;/u,
+  );
   assert.match(
     cssSource,
     /\.faq-article-list\s*\{[\s\S]*--theme-primary-faq-background/u,

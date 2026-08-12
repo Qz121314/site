@@ -28,15 +28,15 @@
 
 .messages-empty-icon {
   display: grid;
-  width: 60px;
-  height: 60px;
+  width: 56px;
+  height: 56px;
   place-items: center;
   margin-bottom: 5px;
   border: 1px solid color-mix(in srgb, var(--brand) 10%, transparent);
   border-radius: var(--theme-radius-icon, 3px);
   color: var(--brand-strong);
   background: color-mix(in srgb, var(--brand) 9%, var(--surface));
-  box-shadow: 0 8px 24px color-mix(in srgb, var(--brand) 8%, transparent);
+  box-shadow: 0 14px 34px color-mix(in srgb, #000 12%, transparent);
 }
 
 .messages-empty-icon svg {
@@ -47,7 +47,7 @@
 .messages-empty-state strong {
   color: var(--text);
   font-size: 0.98rem;
-  font-weight: 800;
+  font-weight: 600;
 }
 
 .conversation-list {
@@ -61,9 +61,9 @@
   display: grid;
   grid-template-columns: 50px minmax(0, 1fr);
   gap: 11px;
-  min-height: 76px;
-  padding: 11px 12px;
-  border-bottom: 1px solid color-mix(in srgb, var(--line) 72%, transparent);
+  min-height: 80px;
+  padding: 13px 12px;
+  border-bottom: 1px solid var(--app-hairline, var(--line));
   outline: 0;
   color: var(--text);
   text-decoration: none;
@@ -96,7 +96,7 @@
 }
 
 .conversation-row.is-unread .conversation-heading-row strong {
-  font-weight: 830;
+  font-weight: 680;
 }
 
 .conversation-avatar,
@@ -144,7 +144,7 @@
   overflow: hidden;
   color: var(--text);
   font-size: 0.88rem;
-  font-weight: 730;
+  font-weight: 580;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -238,30 +238,43 @@
 
 .chat-header {
   display: grid;
-  grid-template-columns: 36px 42px minmax(0, 1fr);
+  grid-template-columns: 44px 42px minmax(0, 1fr);
   align-items: center;
   gap: 9px;
   min-height: 64px;
   padding: 8px 11px;
-  border-bottom: 1px solid color-mix(in srgb, var(--line) 78%, transparent);
-  background: color-mix(in srgb, var(--surface) 97%, transparent);
-  box-shadow: 0 4px 14px color-mix(in srgb, var(--text) 3%, transparent);
-  backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--app-hairline, var(--line));
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  box-shadow: none;
+  backdrop-filter: blur(28px) saturate(1.08);
 }
 
 .chat-back-button {
   display: grid;
-  width: 34px;
-  height: 34px;
+  width: 44px;
+  height: 44px;
   place-items: center;
-  border-radius: var(--theme-radius-control, 4px);
+  border-radius: 0;
   color: var(--text);
-  font-size: 1.2rem;
+  background: transparent;
   text-decoration: none;
+  transition:
+    opacity var(--app-motion-fast, 140ms) ease,
+    transform var(--app-motion-fast, 140ms) var(--app-ease-out, ease-out);
+}
+
+.chat-back-button svg {
+  width: 22px;
+  height: 22px;
+  stroke: currentColor;
+  stroke-width: 1.75;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .chat-back-button:active {
-  background: var(--surface-soft);
+  opacity: 0.58;
+  transform: translateX(-2px) scale(0.97);
 }
 
 .chat-header-avatar {
@@ -290,7 +303,7 @@
 .chat-header-copy strong {
   color: var(--text);
   font-size: 0.86rem;
-  font-weight: 780;
+  font-weight: 600;
 }
 
 .chat-header-copy small {

@@ -27,6 +27,14 @@ function handleInternalBack(event: ReactMouseEvent<HTMLAnchorElement>) {
   navigateStorefrontBack();
 }
 
+function NavigationBackIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+      <path d="m14.5 5-7 7 7 7" />
+    </svg>
+  );
+}
+
 function FaqLoadState({
   loading,
   error,
@@ -123,14 +131,13 @@ export function FaqArticlePage({
       >
         <header className="faq-article-navigation">
           <LinkComponent
+            aria-label={SYSTEM_UI.back}
             className="faq-back-link"
             href="/faq/"
             onClick={handleInternalBack}
           >
-            <span className="faq-back-icon" aria-hidden="true">
-              ‹
-            </span>
-            <span>{SYSTEM_UI.back}</span>
+            <NavigationBackIcon />
+            <span className="sr-only">{SYSTEM_UI.back}</span>
           </LinkComponent>
         </header>
         <div className="standalone-state embedded-state">
@@ -145,14 +152,13 @@ export function FaqArticlePage({
     <article className="faq-article-detail" aria-labelledby="faq-article-title">
       <header className="faq-article-navigation">
         <LinkComponent
+          aria-label={SYSTEM_UI.back}
           className="faq-back-link"
           href="/faq/"
           onClick={handleInternalBack}
         >
-          <span className="faq-back-icon" aria-hidden="true">
-            ‹
-          </span>
-          <span>{SYSTEM_UI.back}</span>
+          <NavigationBackIcon />
+          <span className="sr-only">{SYSTEM_UI.back}</span>
         </LinkComponent>
       </header>
       <header className="faq-article-header">

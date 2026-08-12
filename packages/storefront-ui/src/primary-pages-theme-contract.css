@@ -1,9 +1,8 @@
 /* Theme Center recipes for Storefront primary app surfaces: header, FAQ and Messages. */
 
 :is(html, .storefront-theme-root) {
-  --theme-primary-header-border: color-mix(in srgb, var(--line) 88%, transparent);
-  --theme-primary-header-shadow: 0 4px 18px
-    color-mix(in srgb, var(--text) 4%, transparent);
+  --theme-primary-header-border: var(--app-hairline, var(--line));
+  --theme-primary-header-shadow: none;
   --theme-primary-logo-radius: 3px;
   --theme-primary-faq-background: var(--surface);
   --theme-primary-faq-open-background: color-mix(
@@ -51,24 +50,24 @@
 
 :is(html, .storefront-theme-root)[data-theme='noir'] {
   --theme-primary-logo-radius: 3px;
-  --theme-primary-header-border: color-mix(in srgb, var(--line) 72%, var(--brand) 28%);
-  --theme-primary-header-shadow: 0 10px 28px rgb(0 0 0 / 20%);
+  --theme-primary-header-border: var(--app-hairline, var(--line));
+  --theme-primary-header-shadow: none;
   --theme-primary-faq-open-background: color-mix(
     in srgb,
-    var(--surface) 90%,
-    var(--brand) 10%
+    var(--surface) 96%,
+    var(--brand) 4%
   );
   --theme-primary-message-background: color-mix(
     in srgb,
-    var(--surface) 94%,
-    var(--brand) 6%
+    var(--surface) 98%,
+    var(--brand) 2%
   );
-  --theme-primary-message-border: color-mix(in srgb, var(--line) 76%, var(--brand) 24%);
-  --theme-primary-message-shadow: 0 12px 30px rgb(0 0 0 / 20%);
+  --theme-primary-message-border: color-mix(in srgb, var(--line) 92%, var(--brand) 8%);
+  --theme-primary-message-shadow: none;
   --theme-primary-chat-background: color-mix(in srgb, var(--surface-soft) 94%, black 6%);
   --theme-primary-chat-customer-bubble: color-mix(
     in srgb,
-    var(--brand) 18%,
+    var(--brand) 14%,
     var(--surface)
   );
 }

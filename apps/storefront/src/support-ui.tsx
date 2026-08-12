@@ -29,6 +29,14 @@ function MessageBubbleIcon() {
   );
 }
 
+function NavigationBackIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+      <path d="m14.5 5-7 7 7 7" />
+    </svg>
+  );
+}
+
 function startOfLocalDay(date: Date): number {
   return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
 }
@@ -251,7 +259,7 @@ export function MessageThreadPageContent({
             href="/messages/"
             aria-label={SYSTEM_UI.back}
           >
-            ←
+            <NavigationBackIcon />
           </LinkComponent>
           <span className="chat-header-avatar" aria-hidden="true">
             <MessageBubbleIcon />
@@ -312,7 +320,7 @@ export function MessageThreadPageContent({
           href="/messages/"
           aria-label={SYSTEM_UI.back}
         >
-          ←
+          <NavigationBackIcon />
         </LinkComponent>
         <span className="chat-header-avatar">
           {conversation ? (

@@ -39,7 +39,7 @@ test('back control and body contract', () => {
   assert.ok(productCss.includes('border-top: 1px solid'));
   assert.match(
     productCss,
-    /\.product-detail-back\s*\{[\s\S]*?border-radius:\s*var\(--theme-radius-control, 4px\)/u,
+    /\.product-detail-back\s*\{[\s\S]*?width:\s*44px;[\s\S]*?height:\s*44px;[\s\S]*?border:\s*0;[\s\S]*?border-radius:\s*0;[\s\S]*?background:\s*transparent;/u,
   );
   assert.doesNotMatch(productCss, /\.product-detail-back\s*\{[^}]*border-radius:\s*50%/u);
 });

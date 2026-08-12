@@ -59,22 +59,22 @@ test('Home renders at most three section recommendation rails from explicitly fe
   assert.match(feedSource, /href=\{productHref\(product\)\}/u);
 });
 
-test('Home uses floating shortcuts and compact manual product rails', () => {
-  assert.match(cssSource, /aspect-ratio:\s*1 \/ 1/u);
+test('Home uses rounded icon shortcuts and editorial manual product rails', () => {
+  assert.match(cssSource, /aspect-ratio:\s*4 \/ 5/u);
   assert.match(cssSource, /\.home-product-rail[\s\S]*overflow-x:\s*auto/u);
   assert.match(cssSource, /scroll-snap-type:\s*x proximity/u);
   assert.doesNotMatch(feedSource, /setInterval/u);
   assert.match(cssSource, /\.home-shortcuts\s*\{[\s\S]*?display:\s*flex;/u);
-  assert.match(cssSource, /\.home-shortcut\s*\{[\s\S]*?min-width:\s*62px;/u);
+  assert.match(cssSource, /\.home-shortcut\s*\{[\s\S]*?min-width:\s*70px;/u);
   assert.match(
     cssSource,
-    /\.home-shortcut-icon\s*\{[\s\S]*?box-shadow:[\s\S]*?transform:\s*translateY\(-2px\)/u,
+    /\.home-shortcut:hover \.home-shortcut-icon\s*\{[\s\S]*?box-shadow:[\s\S]*?transform:\s*translateY\(-4px\)/u,
   );
   assert.match(
     cssSource,
-    /\.home-product-rail\s*\{[\s\S]*?grid-auto-columns:\s*clamp\(126px,\s*40\.5vw,\s*176px\)/u,
+    /\.home-product-rail\s*\{[\s\S]*?grid-auto-columns:\s*clamp\(210px,\s*72vw,\s*292px\)/u,
   );
-  assert.doesNotMatch(cssSource, /\.home-product-rail\.is-single/u);
+  assert.match(cssSource, /\.home-product-rail:has\(> \.home-product-tile:only-child\)/u);
   assert.doesNotMatch(feedSource, /home-product-arrow|ProductArrowIcon/u);
   assert.match(feedSource, /home-product-meta/u);
 });
@@ -82,11 +82,11 @@ test('Home uses floating shortcuts and compact manual product rails', () => {
 test('Home uses tighter mobile app chrome without changing other primary pages', () => {
   assert.match(
     cssSource,
-    /\.app-shell:has\(\.home-feed\) > \.topbar\s*\{[\s\S]*?min-height:\s*calc\(54px \+ env\(safe-area-inset-top\)\)/u,
+    /\.app-shell:has\(\.home-feed\) > \.topbar\s*\{[\s\S]*?min-height:\s*calc\(64px \+ env\(safe-area-inset-top\)\)/u,
   );
   assert.match(
     cssSource,
-    /\.app-shell:has\(\.home-feed\) > main\s*\{[\s\S]*?padding-top:\s*6px/u,
+    /\.app-shell:has\(\.home-feed\) > main\s*\{[\s\S]*?padding-top:\s*10px/u,
   );
   assert.match(
     cssSource,

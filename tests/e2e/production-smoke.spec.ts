@@ -17,13 +17,12 @@ test('storefront renders its shell and primary browse route without runtime erro
         .first()
         .evaluate((element) => getComputedStyle(element).borderRadius),
     )
-    .toBe('12px');
+    .toBe('16px');
 
   const homeVisualContract = await page.evaluate(() => {
-    const singleRail = document.querySelector<HTMLElement>(
-      '.home-product-rail.is-single',
-    );
-    const singleTile = singleRail?.querySelector<HTMLElement>('.home-product-tile');
+    const rail = document.querySelector<HTMLElement>('.home-product-rail');
+    const tiles = rail?.querySelectorAll<HTMLElement>('.home-product-tile');
+    const singleTile = tiles?.length === 1 ? tiles.item(0) : null;
     const activeIcon = document.querySelector<HTMLElement>(
       '.bottom-nav a.is-active .bottom-nav-icon',
     );
@@ -35,15 +34,15 @@ test('storefront renders its shell and primary browse route without runtime erro
       ),
       activeIconRadius: activeIcon ? getComputedStyle(activeIcon).borderRadius : null,
       singleTileFillsRail:
-        singleRail && singleTile
+        rail && singleTile
           ? singleTile.getBoundingClientRect().width >=
-            singleRail.getBoundingClientRect().width * 0.95
+            rail.getBoundingClientRect().width * 0.95
           : true,
     };
   });
   expect(homeVisualContract).toEqual({
     bodyScaleRem: 0.9375,
-    activeIconRadius: '10px',
+    activeIconRadius: '0px',
     singleTileFillsRail: true,
   });
 
@@ -84,11 +83,11 @@ test('storefront renders its shell and primary browse route without runtime erro
     cardMinHeight: expect.any(Number),
     mediaFillsCard: true,
     imageFillsCard: true,
-    searchRadius: '3px',
+    searchRadius: '14px',
     navigationRadius: '0px',
     navigationBottom: '0px',
   });
-  expect(visualContract.cardMinHeight).toBeGreaterThanOrEqual(190);
+  expect(visualContract.cardMinHeight).toBeGreaterThanOrEqual(220);
 
   const sectionHref = await page
     .locator('a[href^="/sections/"]:not([href*="/products/"])')
@@ -116,6 +115,8 @@ test('storefront renders its shell and primary browse route without runtime erro
       backWidth: backRect?.width ?? 0,
       backHeight: backRect?.height ?? 0,
       backRadius: back ? getComputedStyle(back).borderRadius : null,
+      backBorderWidth: back ? getComputedStyle(back).borderTopWidth : null,
+      backBackground: back ? getComputedStyle(back).backgroundColor : null,
       topbarHidden: topbar ? getComputedStyle(topbar).display === 'none' : false,
     };
   });
@@ -124,9 +125,11 @@ test('storefront renders its shell and primary browse route without runtime erro
     bodyOverflow: 'hidden',
     mainOverflow: 'hidden',
     contentOverflowY: 'auto',
-    backWidth: 40,
-    backHeight: 40,
-    backRadius: '50%',
+    backWidth: 44,
+    backHeight: 44,
+    backRadius: '0px',
+    backBorderWidth: '0px',
+    backBackground: 'rgba(0, 0, 0, 0)',
     topbarHidden: true,
   });
   expect(pageErrors).toEqual([]);

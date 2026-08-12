@@ -16,30 +16,28 @@
   z-index: 40;
   display: grid;
   min-height: 58px;
-  grid-template-columns: 40px minmax(0, 1fr) 40px;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
   align-items: center;
   gap: 10px;
   margin: 0;
   padding: 0 var(--app-gutter, 16px);
-  border-bottom: 1px solid color-mix(in srgb, var(--line) 56%, transparent);
-  background: color-mix(in srgb, var(--page-bg) 94%, transparent);
+  border-bottom: 1px solid var(--app-hairline, var(--line));
+  background: color-mix(in srgb, var(--page-bg) 84%, transparent);
   box-shadow: none;
-  backdrop-filter: blur(20px) saturate(1.1);
+  backdrop-filter: blur(30px) saturate(1.08);
   isolation: isolate;
 }
 
 .section-catalog-back {
   display: grid;
-  width: 40px;
-  height: 40px;
+  width: 44px;
+  height: 44px;
   place-items: center;
-  border: 1px solid color-mix(in srgb, var(--line) 58%, transparent);
-  border-radius: 50%;
-  color: color-mix(in srgb, var(--text) 88%, var(--muted));
-  background: color-mix(in srgb, var(--surface) 82%, transparent);
-  box-shadow:
-    0 1px 0 color-mix(in srgb, #fff 10%, transparent) inset,
-    0 6px 18px color-mix(in srgb, #000 9%, transparent);
+  border: 0;
+  border-radius: 0;
+  color: var(--text);
+  background: transparent;
+  box-shadow: none;
   text-decoration: none;
   transition:
     opacity var(--app-motion-fast, 160ms) ease,
@@ -47,13 +45,13 @@
 }
 
 .section-catalog-back svg {
-  width: 20px;
-  height: 20px;
+  width: 22px;
+  height: 22px;
 }
 
 .section-catalog-back:active {
-  opacity: 0.62;
-  transform: scale(0.92);
+  opacity: 0.58;
+  transform: translateX(-2px) scale(0.97);
 }
 
 .section-catalog-header h1 {
@@ -61,10 +59,10 @@
   margin: 0;
   overflow: hidden;
   color: var(--text);
-  font-size: 0.96rem;
-  font-weight: 700;
+  font-size: 0.94rem;
+  font-weight: 620;
   line-height: 1.2;
-  letter-spacing: -0.024em;
+  letter-spacing: -0.018em;
   text-align: center;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -86,14 +84,17 @@
   position: relative;
   display: flex;
   width: 100%;
-  min-height: max(46px, var(--theme-control-height, 44px));
+  min-height: max(52px, var(--theme-control-height, 44px));
   align-items: center;
   gap: 10px;
-  padding: 0 10px 0 12px;
-  border: 1px solid color-mix(in srgb, var(--line) 78%, transparent);
-  border-radius: var(--theme-radius-control, 4px);
-  background: color-mix(in srgb, var(--surface) 94%, var(--page-bg));
-  box-shadow: 0 1px 2px color-mix(in srgb, var(--text) 4%, transparent);
+  padding: 0 12px 0 15px;
+  border: 1px solid var(--app-hairline, var(--line));
+  border-radius: var(--theme-radius-control, 12px);
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #fff 5%, transparent),
+    0 10px 30px color-mix(in srgb, #000 8%, transparent);
+  backdrop-filter: blur(22px) saturate(1.08);
   transition:
     border-color var(--app-motion-fast, 160ms) ease,
     background var(--app-motion-fast, 160ms) ease,
@@ -101,9 +102,12 @@
 }
 
 .section-catalog-search:focus-within {
-  border-color: color-mix(in srgb, var(--brand) 58%, var(--line));
-  background: var(--surface);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 8%, transparent);
+  border-color: color-mix(in srgb, var(--brand) 46%, var(--line));
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #fff 6%, transparent),
+    0 0 0 3px color-mix(in srgb, var(--brand) 7%, transparent),
+    0 14px 36px color-mix(in srgb, #000 10%, transparent);
 }
 
 .section-catalog-search > svg {
@@ -121,7 +125,7 @@
   color: var(--text);
   background: transparent;
   font-size: var(--storefront-text-body, 0.9375rem);
-  font-weight: 480;
+  font-weight: 430;
   letter-spacing: -0.008em;
 }
 
@@ -180,13 +184,13 @@
 .section-category-select {
   position: relative;
   display: flex;
-  min-height: 34px;
+  min-height: 38px;
   flex: 0 0 auto;
   align-items: center;
-  border: 1px solid color-mix(in srgb, var(--line) 64%, transparent);
+  border: 1px solid var(--app-hairline, var(--line));
   border-radius: var(--theme-radius-chip, var(--theme-radius-control, 3px));
   color: color-mix(in srgb, var(--text) 76%, var(--muted));
-  background: transparent;
+  background: color-mix(in srgb, var(--surface) 66%, transparent);
   transition:
     border-color var(--app-motion-fast, 160ms) ease,
     color var(--app-motion-fast, 160ms) ease,
@@ -194,7 +198,7 @@
 }
 
 .section-category-select select {
-  min-height: 32px;
+  min-height: 36px;
   max-width: min(42vw, 220px);
   padding: 0 30px 0 11px;
   border: 0;
@@ -220,9 +224,9 @@
 }
 
 .section-category-select.is-active {
-  border-color: var(--text);
-  color: var(--surface);
-  background: var(--text);
+  border-color: color-mix(in srgb, var(--brand) 64%, transparent);
+  color: #fff;
+  background: var(--brand);
 }
 
 .section-tag-filter {
@@ -233,13 +237,13 @@
 }
 
 .section-tag-filter button {
-  min-height: 34px;
+  min-height: 38px;
   flex: 0 0 auto;
   padding: 6px 11px;
-  border: 1px solid color-mix(in srgb, var(--line) 64%, transparent);
+  border: 1px solid var(--app-hairline, var(--line));
   border-radius: var(--theme-radius-chip, var(--theme-radius-control, 3px));
   color: color-mix(in srgb, var(--text) 74%, var(--muted));
-  background: transparent;
+  background: color-mix(in srgb, var(--surface) 66%, transparent);
   font-size: var(--storefront-text-small, 0.8125rem);
   font-weight: 550;
   white-space: nowrap;
@@ -252,9 +256,9 @@
 }
 
 .section-tag-filter button.is-active {
-  border-color: var(--text);
-  color: var(--surface);
-  background: var(--text);
+  border-color: color-mix(in srgb, var(--brand) 64%, transparent);
+  color: #fff;
+  background: var(--brand);
 }
 
 .section-tag-filter button:active {
@@ -325,7 +329,7 @@
   overflow: hidden;
   color: var(--text);
   font-size: var(--storefront-text-small, 0.8125rem);
-  font-weight: 630;
+  font-weight: 560;
   line-height: 1.24;
   letter-spacing: -0.014em;
   -webkit-box-orient: vertical;
@@ -364,7 +368,7 @@
   }
 
   .section-category-select.is-active:hover {
-    color: var(--surface);
+    color: #fff;
   }
 
   .section-product-card:hover .section-product-cover {
@@ -431,9 +435,9 @@
     width: 100%;
     margin: 0;
     padding: 8px var(--app-gutter, 16px) 10px;
-    border-bottom: 1px solid color-mix(in srgb, var(--line) 44%, transparent);
-    background: color-mix(in srgb, var(--page-bg) 94%, transparent);
-    backdrop-filter: blur(20px) saturate(1.1);
+    border-bottom: 1px solid var(--app-hairline, var(--line));
+    background: color-mix(in srgb, var(--page-bg) 84%, transparent);
+    backdrop-filter: blur(30px) saturate(1.08);
   }
 
   .section-catalog-filters {

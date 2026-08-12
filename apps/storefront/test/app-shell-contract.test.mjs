@@ -49,25 +49,29 @@ test('mobile app shell uses dynamic viewport height and a flat system tab bar', 
   assert.match(mobileDockCss, /width:\s*100%;/u);
   assert.match(mobileDockCss, /border-top:\s*1px solid/u);
   assert.match(mobileDockCss, /border-radius:\s*0;/u);
-  assert.match(mobileDockCss, /backdrop-filter:\s*blur\(20px\);/u);
+  assert.match(mobileDockCss, /backdrop-filter:\s*blur\(30px\) saturate\(1\.12\);/u);
   assert.doesNotMatch(mobileDockCss, /border-radius:\s*18px/u);
 
   assert.doesNotMatch(pagesCss, /@media \(min-width:\s*720px\)/u);
   assert.match(pagesCss, /@media \(min-width:\s*768px\)/u);
 });
 
-test('primary tabs keep one mounted shell and use a compact icon-only active surface', () => {
+test('primary tabs keep one mounted shell and use a quiet native active indicator', () => {
   assert.equal(rootSource.match(/<PrimaryShell\b/gu)?.length, 1);
   assert.match(rootSource, /className="storefront-route-view"/u);
   assert.match(rootSource, /routeKey=\{locationKey\}/u);
   assert.match(rootSource, /window\.location\.search/u);
   assert.match(
     shellCss,
-    /\.app-shell \.bottom-nav a\.is-active \.bottom-nav-icon\s*\{[\s\S]*?background:\s*color-mix\(in srgb, var\(--brand\) 15%, transparent\);/u,
+    /\.app-shell \.bottom-nav a\.is-active \.bottom-nav-icon\s*\{[\s\S]*?background:\s*transparent;/u,
   );
   assert.match(
     shellCss,
-    /\.app-shell \.bottom-nav \.bottom-nav-icon\s*\{[\s\S]*?border-radius:\s*10px;/u,
+    /\.app-shell \.bottom-nav \.bottom-nav-icon\s*\{[\s\S]*?border-radius:\s*0;/u,
+  );
+  assert.match(
+    shellCss,
+    /\.app-shell \.bottom-nav a\.is-active::before\s*\{[\s\S]*?background:\s*var\(--brand-strong\);/u,
   );
   assert.doesNotMatch(shellCss, /@keyframes app-tab-settle/u);
 });

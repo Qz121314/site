@@ -3,7 +3,7 @@
 .browse-directory {
   display: grid;
   width: min(1040px, 100%);
-  gap: 16px;
+  gap: 22px;
   margin: 0 auto;
 }
 
@@ -11,14 +11,17 @@
   position: relative;
   display: flex;
   width: min(680px, 100%);
-  min-height: max(46px, var(--theme-control-height, 44px));
+  min-height: max(52px, var(--theme-control-height, 44px));
   align-items: center;
   gap: 10px;
-  padding: 0 10px 0 12px;
-  border: 1px solid color-mix(in srgb, var(--line) 78%, transparent);
-  border-radius: var(--theme-radius-control, 4px);
-  background: color-mix(in srgb, var(--surface) 94%, var(--page-bg));
-  box-shadow: 0 1px 2px color-mix(in srgb, var(--text) 4%, transparent);
+  padding: 0 12px 0 15px;
+  border: 1px solid var(--app-hairline, var(--line));
+  border-radius: var(--theme-radius-control, 12px);
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #fff 5%, transparent),
+    0 10px 30px color-mix(in srgb, #000 8%, transparent);
+  backdrop-filter: blur(22px) saturate(1.08);
   transition:
     border-color var(--app-motion-fast, 160ms) ease,
     background var(--app-motion-fast, 160ms) ease,
@@ -26,9 +29,12 @@
 }
 
 .browse-directory-search:focus-within {
-  border-color: color-mix(in srgb, var(--brand) 58%, var(--line));
-  background: var(--surface);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 8%, transparent);
+  border-color: color-mix(in srgb, var(--brand) 46%, var(--line));
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #fff 6%, transparent),
+    0 0 0 3px color-mix(in srgb, var(--brand) 7%, transparent),
+    0 14px 36px color-mix(in srgb, #000 10%, transparent);
 }
 
 .browse-directory-search > svg {
@@ -46,7 +52,7 @@
   color: var(--text);
   background: transparent;
   font-size: var(--storefront-text-body, 0.9375rem);
-  font-weight: 480;
+  font-weight: 430;
   letter-spacing: -0.008em;
 }
 
@@ -92,7 +98,7 @@
 .browse-section-list {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 12px;
+  gap: 18px;
   border-top: 0;
 }
 
@@ -100,15 +106,15 @@
   position: relative;
   display: block;
   min-width: 0;
-  min-height: 190px;
-  aspect-ratio: 16 / 9.2;
+  min-height: 220px;
+  aspect-ratio: 16 / 10;
   padding: 0;
   border: 0;
   border-radius: 0;
   overflow: hidden;
   color: #fff;
   background: #121318;
-  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 8%);
+  box-shadow: var(--app-shadow-soft, 0 18px 50px rgb(0 0 0 / 18%));
   isolation: isolate;
   transition:
     opacity var(--app-motion-fast, 160ms) ease,
@@ -121,7 +127,7 @@
   inset: 0;
   z-index: 2;
   display: block;
-  border: 1px solid rgb(255 255 255 / 10%);
+  border: 1px solid rgb(255 255 255 / 12%);
   content: '';
   pointer-events: none;
   transition: border-color var(--app-motion-fast, 160ms) ease;
@@ -173,8 +179,8 @@
   width: 100%;
   height: 100%;
   background:
-    linear-gradient(90deg, rgb(0 0 0 / 38%) 0%, rgb(0 0 0 / 4%) 66%),
-    linear-gradient(180deg, rgb(0 0 0 / 0%) 32%, rgb(0 0 0 / 82%) 100%);
+    linear-gradient(90deg, rgb(0 0 0 / 30%) 0%, rgb(0 0 0 / 2%) 70%),
+    linear-gradient(180deg, rgb(0 0 0 / 0%) 24%, rgb(0 0 0 / 88%) 100%);
 }
 
 .browse-section-card.is-fallback .browse-section-card-scrim {
@@ -189,9 +195,9 @@
 
 .browse-section-card-content {
   position: absolute;
-  right: 16px;
-  bottom: 15px;
-  left: 16px;
+  right: 18px;
+  bottom: 18px;
+  left: 18px;
   z-index: 3;
   display: flex;
   min-width: 0;
@@ -203,16 +209,16 @@
 .browse-section-card-copy {
   display: grid;
   min-width: 0;
-  gap: 5px;
+  gap: 7px;
 }
 
 .browse-section-card-content strong {
   overflow: hidden;
   color: #fff;
-  font-size: clamp(1.16rem, 5.2vw, 1.4rem);
-  font-weight: 710;
-  line-height: 1.04;
-  letter-spacing: -0.034em;
+  font-size: clamp(1.35rem, 6vw, 1.7rem);
+  font-weight: 620;
+  line-height: 1.02;
+  letter-spacing: -0.032em;
   text-overflow: ellipsis;
   text-shadow: 0 1px 14px rgb(0 0 0 / 32%);
   white-space: nowrap;
@@ -225,7 +231,7 @@
   overflow: hidden;
   color: rgb(255 255 255 / 76%);
   font-size: var(--storefront-text-caption, 0.6875rem);
-  font-weight: 450;
+  font-weight: 420;
   line-height: 1.38;
   text-shadow: 0 1px 10px rgb(0 0 0 / 30%);
   -webkit-box-orient: vertical;
@@ -238,11 +244,11 @@
   height: 34px;
   flex: 0 0 34px;
   place-items: center;
-  border: 1px solid rgb(255 255 255 / 40%);
-  border-radius: 50%;
+  border: 0;
+  border-radius: 0;
   color: #fff;
-  background: rgb(0 0 0 / 18%);
-  backdrop-filter: blur(8px);
+  background: transparent;
+  backdrop-filter: none;
   transition:
     color var(--app-motion-fast, 160ms) ease,
     background var(--app-motion-fast, 160ms) ease,
@@ -360,7 +366,7 @@
 
   .browse-directory-search {
     position: sticky;
-    top: calc(60px + env(safe-area-inset-top));
+    top: calc(64px + env(safe-area-inset-top));
     z-index: 35;
   }
 
@@ -368,14 +374,14 @@
     position: absolute;
     inset: -8px calc(var(--app-gutter, 16px) * -1);
     z-index: -1;
-    background: color-mix(in srgb, var(--page-bg, #f5f6f7) 94%, transparent);
+    background: color-mix(in srgb, var(--page-bg, #f5f6f7) 84%, transparent);
     content: '';
     pointer-events: none;
-    backdrop-filter: blur(18px) saturate(1.08);
+    backdrop-filter: blur(30px) saturate(1.08);
   }
 
   .browse-section-card {
-    min-height: 190px;
+    min-height: 220px;
   }
 }
 
@@ -397,12 +403,12 @@
   .browse-section-card {
     display: block;
     min-height: 0;
-    aspect-ratio: 16 / 8.4;
+    aspect-ratio: 16 / 9;
     padding: 0;
     border-bottom: 0;
     color: #fff;
     background: #121318;
-    box-shadow: inset 0 0 0 1px rgb(255 255 255 / 8%);
+    box-shadow: var(--app-shadow-soft, 0 18px 50px rgb(0 0 0 / 18%));
     overflow: hidden;
   }
 
@@ -464,7 +470,7 @@
   .browse-section-card-content strong {
     color: #fff;
     font-size: clamp(1.25rem, 2.2vw, 1.75rem);
-    font-weight: 690;
+    font-weight: 620;
     line-height: 1.02;
     letter-spacing: -0.036em;
     text-shadow: 0 1px 14px rgb(0 0 0 / 32%);
@@ -481,10 +487,11 @@
     width: 35px;
     height: 35px;
     flex-basis: 35px;
-    border: 1px solid rgb(255 255 255 / 42%);
+    border: 0;
+    border-radius: 0;
     color: #fff;
-    background: rgb(0 0 0 / 16%);
-    backdrop-filter: blur(8px);
+    background: transparent;
+    backdrop-filter: none;
   }
 
   .browse-section-list.is-single .browse-section-card {
@@ -511,8 +518,8 @@
   }
 
   .browse-section-card:hover .browse-section-card-arrow {
-    color: #111;
-    background: #fff;
+    color: #fff;
+    background: transparent;
   }
 }
 

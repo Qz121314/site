@@ -33,9 +33,11 @@ test('section catalog keeps compact app navigation and minimal product cards', (
   assert.doesNotMatch(sectionSource, /StorefrontProductCard/);
   assert.doesNotMatch(sectionSource, /categoryName=|address=|sectionName=|tags=/);
   assert.match(sectionCss, /\.section-catalog-header \{[\s\S]*position: relative/);
-  assert.match(sectionCss, /\.section-catalog-back \{[\s\S]*width: 40px/);
-  assert.match(sectionCss, /\.section-catalog-back \{[\s\S]*height: 40px/);
-  assert.match(sectionCss, /\.section-catalog-back \{[\s\S]*border-radius: 50%/);
+  assert.match(sectionCss, /\.section-catalog-back \{[\s\S]*width: 44px/);
+  assert.match(sectionCss, /\.section-catalog-back \{[\s\S]*height: 44px/);
+  assert.match(sectionCss, /\.section-catalog-back \{[\s\S]*border: 0/);
+  assert.match(sectionCss, /\.section-catalog-back \{[\s\S]*border-radius: 0/);
+  assert.match(sectionCss, /\.section-catalog-back \{[\s\S]*background: transparent/);
   assert.match(sectionCss, /\.section-catalog-content \{[\s\S]*min-height: 0/);
   assert.match(sectionCss, /\.section-product-cover \{[\s\S]*aspect-ratio: 1 \/ 1/);
 });
