@@ -1,5 +1,4 @@
 import { useQuery } from '@tanstack/react-query';
-import { StorefrontHero, type StorefrontLinkComponent } from '@site/storefront-ui';
 import {
   type AnchorHTMLAttributes,
   type MouseEvent as ReactMouseEvent,
@@ -8,13 +7,12 @@ import {
 } from 'react';
 import {
   loadSectionSnapshot,
-  type PublicHeroSlide,
   type PublicProductSummary,
   type PublicSection,
   type StorefrontBootstrap,
 } from './content';
 import { resolveHomeLayout } from './home-layout';
-import { ResilientImage, ResilientVideo } from './ResilientMedia';
+import { ResilientImage } from './ResilientMedia';
 import { productHref, sectionHref } from './routing';
 import { SYSTEM_UI } from './system-ui';
 
@@ -47,31 +45,6 @@ function HomeLink({
   return <a {...props} href={href} onClick={handleClick} />;
 }
 
-function isVideoMediaUrl(value: string): boolean {
-  try {
-    const pathname = new URL(value, window.location.origin).pathname.toLowerCase();
-    return pathname.endsWith('.mp4') || pathname.endsWith('.webm');
-  } catch {
-    return /\.(?:mp4|webm)(?:$|[?#])/i.test(value);
-  }
-}
-
-function HeroMedia({ slide }: { slide: PublicHeroSlide }) {
-  const fallback = <div className="hero-media-fallback" aria-hidden="true" />;
-  if (slide.mediaKind === 'video' || isVideoMediaUrl(slide.mediaUrl)) {
-    return (
-      <ResilientVideo
-        fallback={fallback}
-        muted
-        playsInline
-        preload="metadata"
-        src={slide.mediaUrl}
-      />
-    );
-  }
-  return <ResilientImage alt="" fallback={fallback} src={slide.mediaUrl} />;
-}
-
 function SectionIcon({ section }: { section: PublicSection }) {
   const fallback = (
     <span aria-hidden="true">{Array.from(section.name.trim())[0] ?? '•'}</span>
@@ -102,7 +75,7 @@ function MoreIcon() {
 
 function HomeShortcuts({ sections }: { sections: PublicSection[] }) {
   return (
-    <nav className="home-shortcuts" aria-label="Sections">
+    <nav className="home-shortcuts home-shortcut-hero" aria-label="Sections">
       {sections.map((section) => (
         <HomeLink className="home-shortcut" href={sectionHref(section)} key={section.id}>
           <span className="home-shortcut-icon">
@@ -268,20 +241,7 @@ export function HomeFeed({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
   }, [site.name]);
 
   return (
-    <div className={`home-feed${site.hero ? ' has-hero' : ' is-hero-less'}`}>
-      {site.hero ? (
-        <StorefrontHero
-          LinkComponent={HomeLink as StorefrontLinkComponent}
-          slides={site.hero.slides.map((slide) => ({
-            id: slide.id,
-            media: <HeroMedia slide={slide} />,
-            title: slide.title,
-            description: slide.description,
-            cta: slide.cta,
-          }))}
-        />
-      ) : null}
-
+    <div className="home-feed">
       <HomeShortcuts sections={shortcutSections} />
 
       <div className="home-recommendation-feed">
