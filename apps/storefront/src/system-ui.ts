@@ -4,6 +4,7 @@ export const SYSTEM_UI = {
   attachment: 'Attachment',
   back: 'Back',
   clear: 'Clear',
+  continue: 'Continue',
   dismiss: 'Dismiss',
   install: 'Install',
   loadEarlier: 'Load earlier',

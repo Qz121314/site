@@ -77,10 +77,13 @@ test('product detail keeps a focused media and information hierarchy', () => {
   assert.doesNotMatch(detailSource, /recommend|rating|favorite|share/iu);
 });
 
-test('product gallery uses mobile swipe media and desktop thumbnail navigation', () => {
+test('product gallery uses mobile swipe plus thumbnail navigation and desktop thumbnails', () => {
   assert.match(detailSource, /className="detail-mobile-gallery"/u);
   assert.match(detailSource, /className="detail-mobile-media-track"/u);
   assert.match(detailSource, /className="detail-mobile-media-item"/u);
+  assert.match(detailSource, /className="detail-mobile-thumbnails"/u);
+  assert.match(detailSource, /mobileMediaTrackRef/u);
+  assert.match(detailSource, /selectMobileMedia\(index\)/u);
   assert.match(detailSource, /mobileMediaIndex \+ 1/u);
   assert.match(detailCss, /scroll-snap-type:\s*x mandatory/u);
   assert.match(detailCss, /scroll-snap-align:\s*start/u);
@@ -147,15 +150,11 @@ test('product CTA mounts at the viewport layer and keeps safe-area spacing', () 
     detailCss,
     /bottom:\s*calc\(67px \+ env\(safe-area-inset-bottom\)\)/u,
   );
-  assert.match(detailSource, /const readyCta = cta \? \(/u);
-  assert.match(detailSource, /cta\.mode === 'customer_service'/u);
-  assert.match(
-    detailSource,
-    /<LinkComponent className="cta-button is-ready" href=\{cta\.path\}>/u,
-  );
-  assert.match(detailSource, /target="_blank"/u);
-  assert.match(detailSource, /className="cta-button is-unavailable"/u);
-  assert.match(detailSource, /<span>\{SYSTEM_UI\.unavailable\}<\/span>/u);
+  assert.match(detailSource, /className=\{`cta-button\$\{ctaUnavailable/u);
+  assert.match(detailSource, /SYSTEM_UI\.continue/u);
+  assert.match(detailSource, /onClick=\{\(\) => void handleCtaClick\(\)\}/u);
+  assert.match(detailSource, /className="product-detail-fixed-action"/u);
+  assert.match(detailSource, /is-unavailable/u);
 });
 
 test('desktop uses a capped reading layout with a two-column hero at true desktop width', () => {
@@ -209,11 +208,13 @@ test('shared package and Admin preview load the product detail Theme Center exte
   assert.match(adminMain, /@site\/storefront-ui\/product-detail-theme-contract\.css/u);
 });
 
-test('product detail reads realtime CTA metadata and navigates through the single go route', () => {
+test('product detail defers realtime CTA metadata until the user clicks', () => {
+  assert.match(detailSource, /enabled:\s*false/u);
   assert.match(detailSource, /loadPublicCta\(product!\.id, signal\)/u);
-  assert.match(detailSource, /href=\{cta\.path\}/u);
-  assert.match(detailSource, /\{cta\.label\}/u);
-  assert.doesNotMatch(detailSource, /product\.cta|SYSTEM_UI\.continue/u);
+  assert.match(detailSource, /ctaQuery\.refetch\(\)/u);
+  assert.match(detailSource, /window\.location\.assign\(cta\.path\)/u);
+  assert.match(detailSource, /SYSTEM_UI\.continue/u);
+  assert.doesNotMatch(detailSource, /enabled:\s*Boolean\(product\?\.id\)/u);
   assert.doesNotMatch(
     detailSource,
     /\/cta\/\$\{encodeURIComponent\(productId\)\}\/resolve/u,

@@ -58,8 +58,8 @@ test('business content is backend-driven instead of coming from a storefront cop
   assert.match(homeSource, /section\.description/u);
   assert.match(homeSource, /product\.title/u);
   assert.match(productSource, /product\.title/u);
-  assert.match(productSource, /\{cta\.label\}/u);
-  assert.doesNotMatch(productSource, /product\.cta|SYSTEM_UI\.continue/u);
+  assert.match(productSource, /SYSTEM_UI\.continue/u);
+  assert.doesNotMatch(productSource, /product\.cta/u);
   assert.match(faqSource, /article\.title/u);
   assert.match(supportSource, /conversation\.agentName/u);
 });
@@ -90,7 +90,15 @@ test('invented marketing and customer-service prose is absent from storefront pa
 });
 
 test('only compact interaction and system-state labels are centralized in system-ui', () => {
-  for (const key of ['back', 'search', 'retry', 'loading', 'send', 'install']) {
+  for (const key of [
+    'back',
+    'continue',
+    'search',
+    'retry',
+    'loading',
+    'send',
+    'install',
+  ]) {
     assert.match(systemUiSource, new RegExp(`\\b${key}:`, 'u'));
   }
   assert.doesNotMatch(

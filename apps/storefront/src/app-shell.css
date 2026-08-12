@@ -202,6 +202,21 @@ body,
     padding-left: max(10px, env(safe-area-inset-left));
   }
 
+  @supports selector(.app-shell:has(.product-detail-page)) {
+    html[data-storefront-presentation='push']
+      .app-shell:has(.product-detail-page)
+      > .topbar {
+      display: flex;
+    }
+
+    html[data-storefront-presentation='push']
+      .app-shell:has(.product-detail-page)
+      > main {
+      min-height: calc(100dvh - 60px - env(safe-area-inset-top));
+      padding-top: 0;
+    }
+  }
+
   .mobile-edge-navigation {
     position: fixed;
     top: 50%;

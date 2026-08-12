@@ -51,13 +51,14 @@ test('section catalog uses category select plus horizontal tag filters', () => {
   assert.match(sectionCss, /\.section-catalog-filters\s*\{[\s\S]*overflow-x: auto/);
 });
 
-test('product detail keeps Back at the left and routes the backend CTA by mode', () => {
+test('product detail resolves CTA only on click and routes by mode', () => {
+  assert.match(detailSource, /enabled:\s*false/);
   assert.match(detailSource, /loadPublicCta\(product!\.id, signal\)/);
-  assert.match(detailSource, /href=\{cta\.path\}/);
+  assert.match(detailSource, /ctaQuery\.refetch\(\)/);
   assert.match(detailSource, /cta\.mode === 'customer_service'/);
-  assert.match(detailSource, /<LinkComponent/);
-  assert.match(detailSource, /target="_blank"/);
-  assert.match(detailSource, /rel="noopener noreferrer nofollow"/);
+  assert.match(detailSource, /navigateInternalCta\(cta\.path\)/);
+  assert.match(detailSource, /window\.location\.assign\(cta\.path\)/);
+  assert.match(detailSource, /new Event\('storefront:navigate'\)/);
   assert.match(detailSource, /SYSTEM_UI\.temporarilyUnavailable/);
   assert.doesNotMatch(detailSource, /handleResolveCta|ctaDestination/);
   assert.doesNotMatch(detailSource, /method: 'POST'/);
@@ -67,6 +68,6 @@ test('product detail keeps Back at the left and routes the backend CTA by mode',
   assert.match(detailCss, /\.product-detail-fixed-action \{[\s\S]*position: fixed/);
   assert.match(
     detailCss,
-    /\.product-detail-navigation \{[\s\S]*position: fixed;[\s\S]*left:/,
+    /\.product-detail-navigation \{[\s\S]*position: sticky;[\s\S]*top: 0/,
   );
 });
