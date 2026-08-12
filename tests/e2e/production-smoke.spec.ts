@@ -209,7 +209,7 @@ test('storefront renders its shell and primary browse route without runtime erro
     backBorderWidth: '0px',
     backBackground: 'rgba(0, 0, 0, 0)',
     backSingleLine: true,
-    topbarHidden: true,
+    topbarHidden: false,
   });
   expect(sectionAppContract.backWidth).toBeGreaterThan(44);
   expect(pageErrors).toEqual([]);
