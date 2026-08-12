@@ -4,6 +4,21 @@ import { adminFetch } from '../admin-fetch';
 export type OfficialThemeKey =
   'marketplace' | 'noir' | 'live' | 'saas' | 'travel' | 'tech';
 export type ThemeKey = OfficialThemeKey | 'custom';
+export type ThemeDensity = 'compact' | 'standard' | 'comfortable';
+export type ThemeFontPack = 'modern' | 'editorial' | 'compact' | 'technical';
+export type ThemeButtonStyle = 'refined' | 'minimal' | 'soft-pill';
+export type ThemeMediaStyle = 'precise' | 'soft' | 'editorial';
+export type ThemeMotionStyle = 'restrained' | 'gentle' | 'active';
+export type ThemeNavigationStyle = 'quiet' | 'tinted' | 'solid';
+
+export type ThemeRecipe = {
+  version: 2;
+  fontPack: ThemeFontPack;
+  buttonStyle: ThemeButtonStyle;
+  mediaStyle: ThemeMediaStyle;
+  motionStyle: ThemeMotionStyle;
+  navigationStyle: ThemeNavigationStyle;
+};
 
 export type ThemeTokens = {
   brand: string;
@@ -31,6 +46,12 @@ export type ImportedThemeDefinition = {
 
 export type ThemeOverrides = {
   accent?: string;
+  density?: ThemeDensity;
+  fontPack?: ThemeFontPack;
+  buttonStyle?: ThemeButtonStyle;
+  mediaStyle?: ThemeMediaStyle;
+  motionStyle?: ThemeMotionStyle;
+  navigationStyle?: ThemeNavigationStyle;
   imported?: ImportedThemeDefinition;
 };
 
@@ -39,8 +60,9 @@ export type ThemePreset = {
   label: string;
   description: string;
   colorScheme: 'light' | 'dark';
-  density: 'compact' | 'standard' | 'comfortable';
+  density: ThemeDensity;
   productMediaRatio: '1:1';
+  recipe: ThemeRecipe;
   tokens: ThemeTokens;
 };
 
@@ -137,6 +159,7 @@ export async function importThemeFromJson(
 export async function updateThemeCenter(
   themeKey: ThemeKey,
   accent: string | null,
+  recipe: Omit<ThemeRecipe, 'version'> & { density: ThemeDensity },
   imported?: ImportedThemeDefinition,
 ): Promise<ResolvedTheme> {
   const body = await themeRequest('/api/admin/theme/', {
@@ -149,6 +172,12 @@ export async function updateThemeCenter(
       themeKey,
       overrides: {
         ...(accent ? { accent } : {}),
+        density: recipe.density,
+        fontPack: recipe.fontPack,
+        buttonStyle: recipe.buttonStyle,
+        mediaStyle: recipe.mediaStyle,
+        motionStyle: recipe.motionStyle,
+        navigationStyle: recipe.navigationStyle,
         ...(themeKey === 'custom' && imported ? { imported } : {}),
       },
     }),

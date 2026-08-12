@@ -11,6 +11,9 @@ test('storefront renders its shell and primary browse route without runtime erro
   await expect(page.locator('.bottom-nav')).toBeVisible();
   await expect(page.locator('.home-shortcut-icon').first()).toBeVisible();
   await expect
+    .poll(() => page.evaluate(() => document.documentElement.dataset.fontPack))
+    .toBe('editorial');
+  await expect
     .poll(() =>
       page
         .locator('.home-shortcut-icon')
@@ -33,6 +36,11 @@ test('storefront renders its shell and primary browse route without runtime erro
         ),
       ),
       activeIconRadius: activeIcon ? getComputedStyle(activeIcon).borderRadius : null,
+      buttonStyle: document.documentElement.dataset.buttonStyle,
+      fontPack: document.documentElement.dataset.fontPack,
+      mediaStyle: document.documentElement.dataset.mediaStyle,
+      motionStyle: document.documentElement.dataset.motionStyle,
+      navigationStyle: document.documentElement.dataset.navigationStyle,
       singleTileStaysCompact:
         rail && singleTile
           ? singleTile.getBoundingClientRect().width <=
@@ -43,6 +51,11 @@ test('storefront renders its shell and primary browse route without runtime erro
   expect(homeVisualContract).toEqual({
     bodyScaleRem: 0.9375,
     activeIconRadius: '0px',
+    buttonStyle: 'refined',
+    fontPack: 'editorial',
+    mediaStyle: 'soft',
+    motionStyle: 'restrained',
+    navigationStyle: 'quiet',
     singleTileStaysCompact: true,
   });
 
