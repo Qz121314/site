@@ -2,9 +2,26 @@ import { expect, test } from '@playwright/test';
 
 test('storefront renders its shell and primary browse route without runtime errors', async ({
   page,
+  request,
 }) => {
   const pageErrors: string[] = [];
   page.on('pageerror', (error) => pageErrors.push(error.message));
+
+  await expect
+    .poll(
+      async () => {
+        const response = await request.get('/api/public/theme', {
+          headers: { 'cache-control': 'no-cache' },
+        });
+        if (!response.ok()) return null;
+        const payload = (await response.json()) as {
+          theme?: { recipe?: { fontPack?: string } };
+        };
+        return payload.theme?.recipe?.fontPack ?? null;
+      },
+      { timeout: 30_000 },
+    )
+    .toBe('editorial');
 
   await page.goto('/');
   await expect(page.locator('#root')).not.toBeEmpty();
@@ -92,11 +109,11 @@ test('storefront renders its shell and primary browse route without runtime erro
     };
   });
   expect(visualContract).toEqual({
-    cardRadius: '0px',
+    cardRadius: '4px',
     cardMinHeight: expect.any(Number),
     mediaFillsCard: true,
     imageFillsCard: true,
-    searchRadius: '14px',
+    searchRadius: '12px',
     navigationRadius: '0px',
     navigationBottom: '0px',
   });
