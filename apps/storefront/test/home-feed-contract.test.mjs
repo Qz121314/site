@@ -58,15 +58,23 @@ test('Home renders at most three section recommendation rails from explicitly fe
   assert.match(feedSource, /href=\{productHref\(product\)\}/u);
 });
 
-test('Home uses fixed app shortcuts and large manual product rails', () => {
+test('Home uses floating shortcuts and compact manual product rails', () => {
   assert.match(cssSource, /aspect-ratio:\s*1 \/ 1/u);
   assert.match(cssSource, /\.home-product-rail[\s\S]*overflow-x:\s*auto/u);
-  assert.match(cssSource, /scroll-snap-type:\s*x mandatory/u);
+  assert.match(cssSource, /scroll-snap-type:\s*x proximity/u);
   assert.doesNotMatch(feedSource, /setInterval/u);
   assert.match(cssSource, /\.home-shortcuts\s*\{[\s\S]*?display:\s*flex;/u);
   assert.match(cssSource, /\.home-shortcut\s*\{[\s\S]*?min-width:\s*64px;/u);
-  assert.match(cssSource, /\.home-product-rail\.is-single/u);
-  assert.match(feedSource, /products\.length === 1 \? ' is-single' : ''/u);
+  assert.match(
+    cssSource,
+    /\.home-shortcut-icon\s*\{[\s\S]*?box-shadow:[\s\S]*?transform:\s*translateY\(-2px\)/u,
+  );
+  assert.match(
+    cssSource,
+    /\.home-product-rail\s*\{[\s\S]*?grid-auto-columns:\s*clamp\(136px,\s*42vw,\s*182px\)/u,
+  );
+  assert.doesNotMatch(cssSource, /\.home-product-rail\.is-single/u);
+  assert.doesNotMatch(feedSource, /home-product-arrow|ProductArrowIcon/u);
   assert.match(feedSource, /home-product-meta/u);
 });
 
