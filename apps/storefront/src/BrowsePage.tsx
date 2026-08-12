@@ -202,7 +202,10 @@ export function BrowsePage({
 
       {normalizedSearch &&
       (productSearchQuery.isLoading || filteredProducts.length > 0) ? (
-        <section className="browse-directory-section" aria-busy={productSearchQuery.isLoading}>
+        <section
+          className="browse-directory-section"
+          aria-busy={productSearchQuery.isLoading}
+        >
           {productSearchQuery.isLoading ? (
             <SquareSkeletonGrid count={4} />
           ) : (
