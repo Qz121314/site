@@ -25,6 +25,7 @@ test('storefront renders its shell and primary browse route without runtime erro
 
   await page.goto('/');
   await expect(page.locator('#root')).not.toBeEmpty();
+  await expect(page.locator('.app-shell > .topbar .brand-lockup')).toBeVisible();
   await expect(page.locator('.bottom-nav')).toBeVisible();
   await expect(page.locator('.home-shortcut-icon').first()).toBeVisible();
   await expect(page.locator('.home-shortcut-zone')).toBeVisible();
@@ -50,6 +51,8 @@ test('storefront renders its shell and primary browse route without runtime erro
     );
     const firstCover = document.querySelector<HTMLElement>('.home-product-cover');
     const firstCoverRect = firstCover?.getBoundingClientRect();
+    const semanticHeading = document.querySelector<HTMLElement>('.home-feed > h1.sr-only');
+    const semanticHeadingRect = semanticHeading?.getBoundingClientRect();
     return {
       bodyScaleRem: Number.parseFloat(
         getComputedStyle(document.documentElement).getPropertyValue(
@@ -68,6 +71,11 @@ test('storefront renders its shell and primary browse route without runtime erro
       productCoverRatio: firstCoverRect
         ? firstCoverRect.height / firstCoverRect.width
         : null,
+      semanticBrandHeadingHidden:
+        semanticHeadingRect !== undefined &&
+        semanticHeadingRect !== null &&
+        semanticHeadingRect.width <= 1 &&
+        semanticHeadingRect.height <= 1,
       singleTileStaysCompact:
         rail && singleTile
           ? singleTile.getBoundingClientRect().width <=
@@ -85,9 +93,10 @@ test('storefront renders its shell and primary browse route without runtime erro
     navigationStyle: 'quiet',
     loadsBundledManrope: false,
     productCoverRatio: expect.any(Number),
+    semanticBrandHeadingHidden: true,
     singleTileStaysCompact: true,
   });
-  expect(homeVisualContract.productCoverRatio ?? 0).toBeCloseTo(1.25, 1);
+  expect(homeVisualContract.productCoverRatio ?? 0).toBeCloseTo(1, 2);
 
   await page.goto('/browse/');
   await expect(page.locator('#root')).not.toBeEmpty();
@@ -112,12 +121,17 @@ test('storefront renders its shell and primary browse route without runtime erro
     const image = media?.querySelector<HTMLImageElement>('img');
     const search = document.querySelector<HTMLElement>('.browse-directory-search');
     const navigation = document.querySelector<HTMLElement>('.bottom-nav');
+    const semanticHeading = document.querySelector<HTMLElement>(
+      '.browse-directory > h1.sr-only',
+    );
     const cardRect = card?.getBoundingClientRect();
     const mediaRect = media?.getBoundingClientRect();
     const imageRect = image?.getBoundingClientRect();
+    const semanticHeadingRect = semanticHeading?.getBoundingClientRect();
     return {
       cardRadius: card ? getComputedStyle(card).borderRadius : null,
       cardMinHeight: cardRect?.height ?? 0,
+      cardRatio: cardRect ? cardRect.height / cardRect.width : null,
       mediaFillsCard:
         cardRect && mediaRect
           ? Math.abs(cardRect.width - mediaRect.width) <= 1 &&
@@ -128,6 +142,11 @@ test('storefront renders its shell and primary browse route without runtime erro
           ? true
           : imageRect.width >= cardRect.width - 1 &&
             imageRect.height >= cardRect.height - 1,
+      semanticBrandHeadingHidden:
+        semanticHeadingRect !== undefined &&
+        semanticHeadingRect !== null &&
+        semanticHeadingRect.width <= 1 &&
+        semanticHeadingRect.height <= 1,
       searchRadius: search ? getComputedStyle(search).borderRadius : null,
       navigationRadius: navigation ? getComputedStyle(navigation).borderRadius : null,
       navigationBottom: navigation ? getComputedStyle(navigation).bottom : null,
@@ -136,13 +155,16 @@ test('storefront renders its shell and primary browse route without runtime erro
   expect(visualContract).toEqual({
     cardRadius: '14px',
     cardMinHeight: expect.any(Number),
+    cardRatio: expect.any(Number),
     mediaFillsCard: true,
     imageFillsCard: true,
+    semanticBrandHeadingHidden: true,
     searchRadius: '14px',
     navigationRadius: '0px',
     navigationBottom: '0px',
   });
   expect(visualContract.cardMinHeight).toBeGreaterThanOrEqual(220);
+  expect(visualContract.cardRatio ?? 0).toBeCloseTo(1, 2);
 
   const sectionHref = await page
     .locator('a[href^="/sections/"]:not([href*="/products/"])')
@@ -215,6 +237,19 @@ test('storefront renders its shell and primary browse route without runtime erro
   expect(pageErrors).toEqual([]);
 });
 
+test('FAQ keeps its semantic title out of the visual brand surface', async ({ page }) => {
+  await page.goto('/faq/');
+  await expect(page.locator('.app-shell > .topbar .brand-lockup')).toBeVisible();
+  await expect
+    .poll(() =>
+      page.locator('.faq-directory > h1.sr-only').evaluate((element) => {
+        const rect = element.getBoundingClientRect();
+        return rect.width <= 1 && rect.height <= 1;
+      }),
+    )
+    .toBe(true);
+});
+
 test('manifest exposes installable, branded PNG icons', async ({ request }) => {
   const manifestResponse = await request.get('/manifest.webmanifest');
   expect(manifestResponse.ok()).toBeTruthy();
@@ -250,8 +285,9 @@ test('manifest exposes installable, branded PNG icons', async ({ request }) => {
   }
 });
 
-test('admin entry renders the authentication boundary', async ({ page }) => {
-  await page.goto('/admin/');
+test('admin entry renders the authentication boundary from /admin', async ({ page }) => {
+  await page.goto('/admin');
+  await expect(page).toHaveURL(/\/admin\/$/u);
   await expect(page.locator('#admin-password')).toBeVisible();
   await expect(page.locator('button[type="submit"]')).toBeVisible();
 });
