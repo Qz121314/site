@@ -23,6 +23,12 @@ function isVideoMediaUrl(value: string): boolean {
   }
 }
 
+function hasMediaUrl<T extends { url: string | null }>(
+  item: T,
+): item is T & { url: string } {
+  return Boolean(item.url);
+}
+
 function isMissingProduct(error: unknown): boolean {
   return (
     error instanceof PublicContentError &&
@@ -85,7 +91,7 @@ export function ProductDetailPage({
     queryFn: ({ signal }) => loadPublicCta(product!.id, signal),
   });
   const cta = ctaQuery.data ?? null;
-  const media = product?.media.filter((item) => Boolean(item.url)) ?? [];
+  const media = product?.media.filter(hasMediaUrl) ?? [];
   const activeMedia = media.find((item) => item.id === activeMediaId) ?? media[0] ?? null;
 
   useEffect(() => {
