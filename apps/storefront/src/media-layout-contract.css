@@ -1,19 +1,19 @@
 /* Public card media follows one square presentation contract across primary pages. */
-.home-product-cover,
-.home-product-skeleton,
-.browse-section-card,
-.browse-search-product-cover,
-.section-product-cover {
+.app-shell .home-product-cover,
+.app-shell .home-product-skeleton,
+.app-shell .browse-section-card,
+.app-shell .browse-search-product-cover,
+.app-shell .section-product-cover {
   aspect-ratio: 1 / 1;
 }
 
-.browse-section-card {
+.app-shell .browse-section-card {
   min-height: 0;
 }
 
 @media (min-width: 768px) {
-  .browse-section-card,
-  .browse-section-list.is-single .browse-section-card {
+  .app-shell .browse-section-card,
+  .app-shell .browse-section-list.is-single .browse-section-card {
     aspect-ratio: 1 / 1;
   }
 }
