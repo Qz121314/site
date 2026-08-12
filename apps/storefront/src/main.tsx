@@ -15,6 +15,7 @@ import './storefront-resilience.css';
 import './storefront-pages.css';
 import './pwa.css';
 import './app-shell.css';
+import './brand-bar.css';
 import './bottom-navigation.css';
 import './home-feed.css';
 import '@site/storefront-ui/theme-contract.css';
