@@ -27,17 +27,22 @@ test('section catalog keeps compact app navigation and minimal product cards', (
     /<h1 id="section-catalog-title">\{query\.data\.section\.name\}<\/h1>/,
   );
   assert.match(sectionSource, /className="section-catalog-back"/);
-  assert.match(sectionSource, /<span className="sr-only">\{SYSTEM_UI\.back\}<\/span>/);
+  assert.match(
+    sectionSource,
+    /<span className="section-catalog-back-label">\{SYSTEM_UI\.back\}<\/span>/,
+  );
   assert.match(sectionSource, /className="section-product-card"/);
   assert.match(sectionSource, /className="section-product-cover"/);
   assert.doesNotMatch(sectionSource, /StorefrontProductCard/);
   assert.doesNotMatch(sectionSource, /categoryName=|address=|sectionName=|tags=/);
   assert.match(sectionCss, /\.section-catalog-header \{[\s\S]*position: relative/);
-  assert.match(sectionCss, /\.section-catalog-back \{[\s\S]*width: 44px/);
+  assert.match(sectionCss, /\.section-catalog-back \{[\s\S]*display: inline-flex/);
+  assert.match(sectionCss, /\.section-catalog-back \{[\s\S]*min-width: 44px/);
   assert.match(sectionCss, /\.section-catalog-back \{[\s\S]*height: 44px/);
   assert.match(sectionCss, /\.section-catalog-back \{[\s\S]*border: 0/);
   assert.match(sectionCss, /\.section-catalog-back \{[\s\S]*border-radius: 0/);
   assert.match(sectionCss, /\.section-catalog-back \{[\s\S]*background: transparent/);
+  assert.match(sectionCss, /\.section-catalog-back-label \{[\s\S]*white-space: nowrap/);
   assert.match(sectionCss, /\.section-catalog-content \{[\s\S]*min-height: 0/);
   assert.match(sectionCss, /\.section-product-cover \{[\s\S]*aspect-ratio: 1 \/ 1/);
 });
