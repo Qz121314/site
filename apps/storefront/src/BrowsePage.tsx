@@ -7,6 +7,7 @@ import {
   type PublicSection,
   type StorefrontBootstrap,
 } from './content';
+import { SquareSkeletonGrid } from './LoadingStates';
 import { ResilientImage } from './ResilientMedia';
 import { productHref, sectionHref } from './routing';
 import { SYSTEM_UI } from './system-ui';
@@ -201,9 +202,12 @@ export function BrowsePage({
 
       {normalizedSearch &&
       (productSearchQuery.isLoading || filteredProducts.length > 0) ? (
-        <section className="browse-directory-section">
+        <section
+          className="browse-directory-section"
+          aria-busy={productSearchQuery.isLoading}
+        >
           {productSearchQuery.isLoading ? (
-            <div className="inline-loading">{SYSTEM_UI.loading}</div>
+            <SquareSkeletonGrid count={4} />
           ) : (
             <div className="browse-search-products">
               {filteredProducts.map((product) => (

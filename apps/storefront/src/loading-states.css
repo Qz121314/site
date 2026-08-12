@@ -1,0 +1,233 @@
+.startup-loader {
+  display: grid;
+  min-height: 100dvh;
+  place-items: center;
+  padding: max(24px, env(safe-area-inset-top)) 24px max(24px, env(safe-area-inset-bottom));
+  background: var(--page-bg, #f5f6f7);
+}
+
+.loading-halo {
+  position: relative;
+  display: grid;
+  width: 42px;
+  height: 42px;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--brand) 24%, transparent);
+  border-radius: 50%;
+  box-shadow:
+    0 0 18px color-mix(in srgb, var(--brand) 15%, transparent),
+    inset 0 0 14px color-mix(in srgb, var(--brand) 7%, transparent);
+  animation: loading-halo-breathe 1.8s ease-in-out infinite;
+}
+
+.loading-halo::before {
+  position: absolute;
+  inset: 7px;
+  border: 1px solid color-mix(in srgb, var(--brand-strong) 34%, transparent);
+  border-radius: inherit;
+  content: '';
+  opacity: 0.68;
+}
+
+.loading-halo > span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--brand) 72%, #fff);
+  box-shadow:
+    0 0 9px color-mix(in srgb, var(--brand) 70%, transparent),
+    0 0 20px color-mix(in srgb, var(--brand) 28%, transparent);
+  animation: loading-halo-core 1.8s ease-in-out infinite;
+}
+
+.route-progress {
+  position: fixed;
+  top: env(safe-area-inset-top, 0px);
+  right: 0;
+  left: 0;
+  z-index: 140;
+  height: 2px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.route-progress > span:first-child {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 38%;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    color-mix(in srgb, var(--brand) 28%, transparent) 18%,
+    color-mix(in srgb, var(--brand) 86%, #fff) 52%,
+    color-mix(in srgb, var(--brand-strong) 42%, transparent) 78%,
+    transparent 100%
+  );
+  box-shadow: 0 0 10px color-mix(in srgb, var(--brand) 34%, transparent);
+  animation: route-progress-sweep 920ms cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+.loading-skeleton {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--surface-soft) 88%, var(--line));
+}
+
+.loading-skeleton::after,
+.app-shell .home-product-skeleton::after {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 18%,
+    color-mix(in srgb, #fff 3%, transparent) 36%,
+    color-mix(in srgb, #fff 14%, transparent) 50%,
+    color-mix(in srgb, #fff 3%, transparent) 64%,
+    transparent 82%
+  );
+  content: '';
+  transform: translateX(-110%);
+  animation: loading-skeleton-sweep 1.45s ease-in-out infinite;
+}
+
+.loading-square-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  width: 100%;
+}
+
+.loading-square {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: var(--theme-radius-media, 12px);
+}
+
+.app-shell .home-product-skeleton {
+  position: relative;
+  overflow: hidden;
+  animation: none;
+  background: color-mix(in srgb, var(--surface-soft) 88%, var(--line));
+}
+
+.inline-loading {
+  min-height: 2px !important;
+}
+
+.inline-loading::after {
+  top: 0;
+  bottom: auto;
+  height: 2px;
+}
+
+body .product-detail-cta-spinner {
+  position: relative;
+  width: 17px;
+  height: 17px;
+  border: 1px solid color-mix(in srgb, currentColor 34%, transparent);
+  border-top-color: color-mix(in srgb, currentColor 34%, transparent);
+  border-radius: 50%;
+  box-shadow: 0 0 8px color-mix(in srgb, currentColor 18%, transparent);
+  animation: loading-cta-breathe 1.2s ease-in-out infinite;
+}
+
+body .product-detail-cta-spinner::after {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 4px;
+  height: 4px;
+  border-radius: 50%;
+  background: currentColor;
+  box-shadow: 0 0 7px currentColor;
+  content: '';
+  transform: translate(-50%, -50%);
+}
+
+@keyframes route-progress-sweep {
+  from {
+    transform: translateX(-125%);
+  }
+
+  to {
+    transform: translateX(365%);
+  }
+}
+
+@keyframes loading-halo-breathe {
+  0%,
+  100% {
+    opacity: 0.58;
+    transform: scale(0.94);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes loading-halo-core {
+  0%,
+  100% {
+    opacity: 0.5;
+    transform: scale(0.78);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+}
+
+@keyframes loading-skeleton-sweep {
+  0% {
+    transform: translateX(-110%);
+  }
+
+  60%,
+  100% {
+    transform: translateX(110%);
+  }
+}
+
+@keyframes loading-cta-breathe {
+  0%,
+  100% {
+    opacity: 0.55;
+    transform: scale(0.88);
+  }
+
+  50% {
+    opacity: 1;
+    transform: scale(1.04);
+  }
+}
+
+@media (min-width: 768px) {
+  .loading-square-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-halo,
+  .loading-halo > span,
+  .route-progress > span:first-child,
+  .loading-skeleton::after,
+  .app-shell .home-product-skeleton::after,
+  body .product-detail-cta-spinner {
+    animation: none;
+  }
+
+  .route-progress > span:first-child {
+    right: 0;
+    width: 100%;
+    opacity: 0.5;
+  }
+}

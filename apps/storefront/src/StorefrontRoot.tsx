@@ -21,6 +21,7 @@ import {
 import { loadStorefrontBootstrap } from './content';
 import { HomeFeed } from './HomeFeed';
 import { HomepageAnalytics } from './HomepageAnalytics';
+import { RouteProgress, StartupLoader } from './LoadingStates';
 import { NotFoundPage } from './NotFoundPage';
 import { ResilientImage } from './ResilientMedia';
 import { bottomNavigationActiveHref, parseStorefrontRoute } from './routing';
@@ -117,23 +118,6 @@ function StorefrontMetadata({ description }: { description: string }) {
   return null;
 }
 
-function PrimaryLoading() {
-  return (
-    <div className="app-shell loading-shell" aria-busy="true">
-      <header className="topbar">
-        <div className="loading-brand" />
-      </header>
-      <main>
-        <div className="loading-grid">
-          {Array.from({ length: 6 }, (_, index) => (
-            <div className="loading-card" key={index} />
-          ))}
-        </div>
-      </main>
-    </div>
-  );
-}
-
 function PrimaryError() {
   return (
     <div className="standalone-state">
@@ -144,10 +128,6 @@ function PrimaryError() {
       </button>
     </div>
   );
-}
-
-function RouteLoading() {
-  return <div className="inline-loading route-loading">{SYSTEM_UI.loading}</div>;
 }
 
 function PrimaryShell({
@@ -215,7 +195,7 @@ export function StorefrontRoot() {
     staleTime: 30_000,
   });
 
-  if (bootstrapQuery.isLoading) return <PrimaryLoading />;
+  if (bootstrapQuery.isLoading) return <StartupLoader />;
   if (bootstrapQuery.error || !bootstrapQuery.data) return <PrimaryError />;
 
   const bootstrap = bootstrapQuery.data;
@@ -326,7 +306,7 @@ export function StorefrontRoot() {
         routeKey={locationKey}
         unreadMessages={unreadMessages}
       >
-        <Suspense fallback={<RouteLoading />}>{page}</Suspense>
+        <Suspense fallback={<RouteProgress />}>{page}</Suspense>
       </PrimaryShell>
     </>
   );

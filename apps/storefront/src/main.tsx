@@ -23,6 +23,7 @@ import '@site/storefront-ui/primary-pages-theme-contract.css';
 import '@site/storefront-ui/typography-contract.css';
 import './ui-accessibility.css';
 import './media-layout-contract.css';
+import './loading-states.css';
 
 installPublicContentFetchFallback();
 const storefrontThemePromise = installStorefrontTheme();
