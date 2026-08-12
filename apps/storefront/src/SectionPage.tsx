@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import type { StorefrontLinkComponent } from '@site/storefront-ui';
 import { useEffect, useMemo, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import { loadSectionSnapshot, type StorefrontBootstrap } from './content';
+import { SquareSkeletonGrid } from './LoadingStates';
 import { ResilientImage } from './ResilientMedia';
 import { productHref } from './routing';
 import { canNavigateStorefrontBack, navigateStorefrontBack } from './storefront-history';
@@ -117,7 +118,9 @@ export function SectionCatalogPage({
 
   if (query.isLoading && !query.data) {
     return (
-      <div className="inline-loading section-catalog-state">{SYSTEM_UI.loading}</div>
+      <section className="section-catalog-state" aria-busy="true">
+        <SquareSkeletonGrid count={6} />
+      </section>
     );
   }
 
