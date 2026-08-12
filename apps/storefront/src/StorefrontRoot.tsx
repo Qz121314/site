@@ -33,7 +33,7 @@ import { ResilientImage } from './ResilientMedia';
 import { bottomNavigationActiveHref, parseStorefrontRoute } from './routing';
 import { SectionCatalogPage } from './SectionPage';
 import { primaryNavigationItems } from './storefront-navigation';
-import { siteSupportGateway } from './support-gateway';
+import { loadPublicSupportConnections, siteSupportGateway } from './support-gateway';
 import { subscribeSupportRealtime } from './support-realtime';
 import type { SupportConversationDetail } from './support-contract';
 import { MessagesWorkspace, type PendingSupportConversation } from './support-ui';
@@ -221,9 +221,19 @@ function MessagesPage({
   onUnreadMessagesChange: (count: number) => void;
 }) {
   const queryClient = useQueryClient();
+  const supportConnectionsQuery = useQuery({
+    queryKey: ['support-connections'],
+    queryFn: ({ signal }) => loadPublicSupportConnections(signal),
+    staleTime: 5_000,
+    retry: 1,
+  });
+  const supportAvailable = supportConnectionsQuery.isSuccess
+    ? supportConnectionsQuery.data.length > 0
+    : null;
   const conversationsQuery = useQuery({
     queryKey: ['support-conversations'],
     queryFn: ({ signal }) => siteSupportGateway.listConversations(signal),
+    enabled: supportAvailable === true,
     staleTime: 5_000,
     retry: 1,
   });
@@ -354,10 +364,15 @@ function MessagesPage({
       activeConversationRef={workspaceConversationRef}
       conversations={conversations}
       pendingConversation={pendingConversation}
+      supportAvailable={supportAvailable}
       LinkComponent={StorefrontLink as StorefrontLinkComponent}
-      onSendMessage={async (body) => {
-        await sendMutation.mutateAsync(body);
-      }}
+      onSendMessage={
+        supportAvailable
+          ? async (body) => {
+              await sendMutation.mutateAsync(body);
+            }
+          : undefined
+      }
       sending={sendMutation.isPending}
       sendError={sendError}
       onLoadEarlier={

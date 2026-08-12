@@ -139,6 +139,11 @@ test('product CTA mounts at the viewport layer and keeps safe-area spacing', () 
     detailCss,
     /bottom:\s*calc\(67px \+ env\(safe-area-inset-bottom\)\)/u,
   );
+  assert.match(
+    detailSource,
+    /cta \? \([\s\S]*?className="cta-button is-ready"[\s\S]*?: \([\s\S]*?className="cta-button is-unavailable"/u,
+  );
+  assert.match(detailSource, /<span>\{SYSTEM_UI\.unavailable\}<\/span>/u);
 });
 
 test('desktop uses a compact capped two-column layout only at true desktop width', () => {

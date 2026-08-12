@@ -53,7 +53,7 @@ pnpm exec wrangler d1 time-travel restore DB --bookmark="TARGET_BOOKMARK"
 
 - GitHub Actions 的 validate、deploy 和 smoke 全部成功；
 - `/api/health` 返回 production 与非空 Worker Version ID；
-- 部署后的 Playwright 浏览器验收通过（首页、Browse、后台登录、PWA 品牌图标、Messages 可用性）；
+- 部署后的 Playwright 浏览器验收通过（首页、Browse、后台登录、PWA 品牌图标、Messages 空状态、CTA 可见性）；
 - `/public/current.json` 与主题接口返回正确缓存头；
 - 至少一个已登记媒体通过 `/_media/*` 的 `Range: bytes=0-0` 请求返回 206、1 字节内容和 `Content-Range`；
 - Storefront、Admin、分区和产品深链接正常；

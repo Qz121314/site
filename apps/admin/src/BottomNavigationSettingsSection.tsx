@@ -95,7 +95,7 @@ export function BottomNavigationSettingsSection({
           <h2 id="settings-bottom-navigation-title">底部导航</h2>
           <p className="admin-settings-section-description">
             路由固定，避免误配置；显示状态、名称和图标可以自由调整。图标支持内置
-            Icon、Emoji 和素材图片。Messages 还需至少一个已启用的客服连接才会在前台显示。
+            Icon、Emoji 和素材图片。Messages 的显示状态不受客服连接配置影响。
           </p>
         </div>
       </div>

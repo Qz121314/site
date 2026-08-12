@@ -97,10 +97,12 @@ function ConversationAvatar({
 export function MessagesPageContent({
   conversations,
   activeConversationId = null,
+  supportAvailable = null,
   LinkComponent = 'a',
 }: {
   conversations: SupportConversationSummary[];
   activeConversationId?: string | null;
+  supportAvailable?: boolean | null;
   LinkComponent?: StorefrontLinkComponent;
 }) {
   const orderedConversations = [...conversations].sort(
@@ -110,10 +112,11 @@ export function MessagesPageContent({
   return (
     <section className="messages-page">
       {orderedConversations.length === 0 ? (
-        <div className="messages-empty-state" aria-hidden="true">
-          <span className="messages-empty-icon">
+        <div className="messages-empty-state" role="status">
+          <span className="messages-empty-icon" aria-hidden="true">
             <MessageBubbleIcon />
           </span>
+          {supportAvailable === false ? <strong>{SYSTEM_UI.noSupport}</strong> : null}
         </div>
       ) : (
         <div className="conversation-list" role="list">
@@ -407,6 +410,7 @@ export function MessagesWorkspace({
   onLoadEarlier,
   loadingEarlier = false,
   loadingConversation = false,
+  supportAvailable = null,
 }: {
   conversations: SupportConversationDetail[] | SupportConversationSummary[];
   activeConversation: SupportConversationDetail | null;
@@ -419,6 +423,7 @@ export function MessagesWorkspace({
   onLoadEarlier?: (() => Promise<void>) | undefined;
   loadingEarlier?: boolean;
   loadingConversation?: boolean;
+  supportAvailable?: boolean | null;
 }) {
   const threadOpen = activeConversationRef !== null || pendingConversation !== null;
   return (
@@ -428,6 +433,7 @@ export function MessagesWorkspace({
           activeConversationId={activeConversation?.id ?? null}
           conversations={conversations}
           LinkComponent={LinkComponent}
+          supportAvailable={supportAvailable}
         />
       </aside>
       <div className="messages-detail">

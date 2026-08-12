@@ -57,21 +57,36 @@ test('admin entry renders the authentication boundary', async ({ page }) => {
   await expect(page.locator('button[type="submit"]')).toBeVisible();
 });
 
-test('messages navigation never advertises unavailable customer service', async ({
+test('messages route explains when customer service is not configured', async ({
+  page,
   request,
 }) => {
-  const [navigationResponse, supportResponse] = await Promise.all([
-    request.get('/api/public/bottom-navigation/'),
-    request.get('/api/public/storefront/support/connections'),
-  ]);
-  expect(navigationResponse.ok()).toBeTruthy();
+  const supportResponse = await request.get('/api/public/storefront/support/connections');
   expect(supportResponse.ok()).toBeTruthy();
-
-  const navigation = (await navigationResponse.json()) as {
-    items?: Array<{ key?: string; enabled?: boolean }>;
-  };
   const support = (await supportResponse.json()) as { connections?: unknown[] };
-  const messages = navigation.items?.find((item) => item.key === 'messages');
-  expect(messages).toBeDefined();
-  if (!support.connections?.length) expect(messages?.enabled).toBe(false);
+
+  await page.goto('/messages/');
+  await expect(page.locator('#root')).not.toBeEmpty();
+  if (!support.connections?.length) {
+    await expect(page.getByText('No support available')).toBeVisible();
+  }
+});
+
+test('a published product always renders its CTA surface', async ({ page }) => {
+  await page.goto('/browse/');
+  const sectionHref = await page
+    .locator('a[href^="/sections/"]:not([href*="/products/"])')
+    .first()
+    .getAttribute('href');
+  test.skip(!sectionHref, 'No published section is available for CTA verification.');
+
+  await page.goto(sectionHref!);
+  const productHref = await page
+    .locator('a[href*="/products/"]')
+    .first()
+    .getAttribute('href');
+  test.skip(!productHref, 'No published product is available for CTA verification.');
+
+  await page.goto(productHref!);
+  await expect(page.locator('.product-detail-fixed-action .cta-button')).toBeVisible();
 });
