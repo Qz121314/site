@@ -157,6 +157,9 @@ app.on(['GET', 'HEAD'], '*', async (context) => {
       404,
     );
   }
+  if (pathname === '/admin') {
+    return context.redirect('/admin/', 308);
+  }
   if (pathname.startsWith('/admin/') || /\.[A-Za-z0-9]{1,12}$/u.test(pathname)) {
     return serveStaticAsset(context);
   }
