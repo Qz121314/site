@@ -100,21 +100,6 @@ function MoreIcon() {
   );
 }
 
-function ProductArrowIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.7"
-      aria-hidden="true"
-    >
-      <path d="M5 12h13" strokeLinecap="round" />
-      <path d="m14 7 5 5-5 5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
 function HomeShortcuts({ sections }: { sections: PublicSection[] }) {
   return (
     <nav className="home-shortcuts" aria-label="Sections">
@@ -149,9 +134,6 @@ function HomeProductTile({ product }: { product: PublicProductSummary }) {
       </span>
       <span className="home-product-meta">
         <strong>{product.title}</strong>
-        <span className="home-product-arrow" aria-hidden="true">
-          <ProductArrowIcon />
-        </span>
       </span>
     </HomeLink>
   );
@@ -215,7 +197,7 @@ function HomeRecommendationRail({
           ))}
         </div>
       ) : (
-        <div className={`home-product-rail${products.length === 1 ? ' is-single' : ''}`}>
+        <div className="home-product-rail">
           {products.map((product) => (
             <HomeProductTile product={product} key={product.id} />
           ))}
