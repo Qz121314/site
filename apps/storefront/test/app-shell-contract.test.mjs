@@ -73,6 +73,11 @@ test('primary tabs keep one mounted shell and use a quiet native active indicato
     shellCss,
     /\.app-shell \.bottom-nav a\.is-active::before\s*\{[\s\S]*?background:\s*var\(--brand-strong\);/u,
   );
+  assert.match(shellCss, /\.app-shell \.bottom-nav a::before\s*\{[\s\S]*?opacity:\s*0;/u);
+  assert.match(
+    shellCss,
+    /\.app-shell \.bottom-nav a\.is-active::before\s*\{[\s\S]*?opacity:\s*var\(--theme-nav-indicator-opacity,\s*0\);/u,
+  );
   assert.doesNotMatch(shellCss, /@keyframes app-tab-settle/u);
 });
 

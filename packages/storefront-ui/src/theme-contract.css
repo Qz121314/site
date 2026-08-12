@@ -236,6 +236,10 @@
   box-shadow: none;
 }
 
+:is(html, .storefront-theme-root) .bottom-nav a::before {
+  opacity: 0;
+}
+
 :is(html, .storefront-theme-root) .bottom-nav a.is-active::before {
   opacity: var(--theme-nav-indicator-opacity, 0);
 }

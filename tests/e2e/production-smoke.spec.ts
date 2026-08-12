@@ -94,6 +94,18 @@ test('storefront renders its shell and primary browse route without runtime erro
   await expect(page.locator('.bottom-nav')).toBeVisible();
   await expect(page.locator('.browse-section-card').first()).toBeVisible();
 
+  const navigationIndicatorState = await page.evaluate(() =>
+    [...document.querySelectorAll<HTMLElement>('.bottom-nav a')].map((item) => ({
+      active: item.classList.contains('is-active'),
+      opacity: getComputedStyle(item, '::before').opacity,
+    })),
+  );
+  expect(
+    navigationIndicatorState
+      .filter((item) => !item.active)
+      .every((item) => item.opacity === '0'),
+  ).toBeTruthy();
+
   const visualContract = await page.evaluate(() => {
     const card = document.querySelector<HTMLElement>('.browse-section-card');
     const media = card?.querySelector<HTMLElement>('.browse-section-card-media');

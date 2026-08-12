@@ -98,6 +98,11 @@ test('official theme recipes and density variants remain visually distinct', () 
   ]) {
     assert.match(sharedContract, new RegExp(recipeAttribute, 'u'));
   }
+  assert.match(sharedContract, /\.bottom-nav a::before\s*\{[\s\S]*?opacity:\s*0;/u);
+  assert.match(
+    sharedContract,
+    /\.bottom-nav a\.is-active::before\s*\{[\s\S]*?opacity:\s*var\(--theme-nav-indicator-opacity,\s*0\);/u,
+  );
 });
 
 test('official themes keep media precise while controls and icon objects stay tactile', () => {
