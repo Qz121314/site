@@ -14,16 +14,26 @@ type ThemeTokens = {
 };
 
 type ThemeDensity = 'compact' | 'standard' | 'comfortable';
+type ThemeRecipe = {
+  version: 2;
+  fontPack: 'modern' | 'editorial' | 'compact' | 'technical';
+  buttonStyle: 'refined' | 'minimal' | 'soft-pill';
+  mediaStyle: 'precise' | 'soft' | 'editorial';
+  motionStyle: 'restrained' | 'gentle' | 'active';
+  navigationStyle: 'quiet' | 'tinted' | 'solid';
+};
 
 type PublicTheme = {
   key: string;
   colorScheme: 'light' | 'dark';
   density: ThemeDensity;
   productMediaRatio: '1:1';
+  recipe: ThemeRecipe;
   tokens: ThemeTokens;
 };
 
-const CACHE_KEY = 'storefront-theme-v2';
+const CACHE_KEY = 'storefront-theme-v3';
+const LEGACY_CACHE_KEY = 'storefront-theme-v2';
 const TOKEN_KEYS: Array<keyof ThemeTokens> = [
   'brand',
   'brandStrong',
@@ -52,9 +62,58 @@ function validTheme(value: unknown): value is PublicTheme {
   if (value.colorScheme !== 'light' && value.colorScheme !== 'dark') return false;
   if (!isThemeDensity(value.density)) return false;
   if (value.productMediaRatio !== '1:1') return false;
+  const recipe = value.recipe;
+  if (!isRecord(recipe) || recipe.version !== 2) return false;
+  if (!['modern', 'editorial', 'compact', 'technical'].includes(String(recipe.fontPack)))
+    return false;
+  if (!['refined', 'minimal', 'soft-pill'].includes(String(recipe.buttonStyle)))
+    return false;
+  if (!['precise', 'soft', 'editorial'].includes(String(recipe.mediaStyle))) return false;
+  if (!['restrained', 'gentle', 'active'].includes(String(recipe.motionStyle)))
+    return false;
+  if (!['quiet', 'tinted', 'solid'].includes(String(recipe.navigationStyle)))
+    return false;
   const tokens = value.tokens;
   if (!isRecord(tokens)) return false;
   return TOKEN_KEYS.every((key) => typeof tokens[key] === 'string');
+}
+
+function defaultRecipe(themeKey: string): ThemeRecipe {
+  if (themeKey === 'noir') {
+    return {
+      version: 2,
+      fontPack: 'editorial',
+      buttonStyle: 'refined',
+      mediaStyle: 'soft',
+      motionStyle: 'restrained',
+      navigationStyle: 'quiet',
+    };
+  }
+  return {
+    version: 2,
+    fontPack: 'modern',
+    buttonStyle: 'refined',
+    mediaStyle: 'precise',
+    motionStyle: 'restrained',
+    navigationStyle: 'tinted',
+  };
+}
+
+function upgradeLegacyTheme(value: unknown): PublicTheme | null {
+  if (!isRecord(value) || typeof value.key !== 'string') return null;
+  if (value.colorScheme !== 'light' && value.colorScheme !== 'dark') return null;
+  if (!isThemeDensity(value.density) || value.productMediaRatio !== '1:1') return null;
+  if (!isRecord(value.tokens)) return null;
+  const tokens = value.tokens;
+  if (!TOKEN_KEYS.every((key) => typeof tokens[key] === 'string')) return null;
+  return {
+    key: value.key,
+    colorScheme: value.colorScheme,
+    density: value.density,
+    productMediaRatio: '1:1',
+    recipe: defaultRecipe(value.key),
+    tokens: tokens as ThemeTokens,
+  };
 }
 
 function syncThemeColor(themeColor: string): void {
@@ -72,6 +131,11 @@ function applyTheme(theme: PublicTheme): void {
   root.dataset.theme = theme.key;
   root.dataset.colorScheme = theme.colorScheme;
   root.dataset.density = theme.density;
+  root.dataset.fontPack = theme.recipe.fontPack;
+  root.dataset.buttonStyle = theme.recipe.buttonStyle;
+  root.dataset.mediaStyle = theme.recipe.mediaStyle;
+  root.dataset.motionStyle = theme.recipe.motionStyle;
+  root.dataset.navigationStyle = theme.recipe.navigationStyle;
   root.style.colorScheme = theme.colorScheme;
   root.style.setProperty('--brand', theme.tokens.brand);
   root.style.setProperty('--brand-strong', theme.tokens.brandStrong);
@@ -92,9 +156,12 @@ function applyTheme(theme: PublicTheme): void {
 function readCachedTheme(): PublicTheme | null {
   try {
     const raw = window.localStorage.getItem(CACHE_KEY);
-    if (!raw) return null;
-    const value = JSON.parse(raw) as unknown;
-    return validTheme(value) ? value : null;
+    if (raw) {
+      const value = JSON.parse(raw) as unknown;
+      if (validTheme(value)) return value;
+    }
+    const legacyRaw = window.localStorage.getItem(LEGACY_CACHE_KEY);
+    return legacyRaw ? upgradeLegacyTheme(JSON.parse(legacyRaw) as unknown) : null;
   } catch {
     return null;
   }

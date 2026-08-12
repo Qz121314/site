@@ -33,13 +33,22 @@ const themeCenterView = await readFile(
   'utf8',
 );
 
-test('storefront runtime consumes Theme Center density', () => {
+test('storefront runtime consumes versioned Theme Center UI recipes', () => {
   assert.match(
     themeRuntime,
     /type ThemeDensity = 'compact' \| 'standard' \| 'comfortable';/u,
   );
   assert.match(themeRuntime, /root\.dataset\.density = theme\.density;/u);
-  assert.match(themeRuntime, /storefront-theme-v2/u);
+  assert.match(themeRuntime, /storefront-theme-v3/u);
+  assert.match(themeRuntime, /recipe:\s*ThemeRecipe/u);
+  assert.match(themeRuntime, /root\.dataset\.fontPack = theme\.recipe\.fontPack/u);
+  assert.match(themeRuntime, /root\.dataset\.buttonStyle = theme\.recipe\.buttonStyle/u);
+  assert.match(themeRuntime, /root\.dataset\.mediaStyle = theme\.recipe\.mediaStyle/u);
+  assert.match(themeRuntime, /root\.dataset\.motionStyle = theme\.recipe\.motionStyle/u);
+  assert.match(
+    themeRuntime,
+    /root\.dataset\.navigationStyle = theme\.recipe\.navigationStyle/u,
+  );
 });
 
 test('shared theme contract is the final Storefront visual layer', () => {
@@ -62,6 +71,11 @@ test('shared theme contract is the final Storefront visual layer', () => {
 test('Admin Theme Center preview consumes the same shared contract', () => {
   assert.match(adminMain, /@site\/storefront-ui\/theme-contract\.css/u);
   assert.match(themeCenterView, /data-theme=\{selectedPreset\.key\}/u);
+  assert.match(themeCenterView, /data-font-pack=\{recipe\.fontPack\}/u);
+  assert.match(themeCenterView, /data-button-style=\{recipe\.buttonStyle\}/u);
+  assert.match(themeCenterView, /data-media-style=\{recipe\.mediaStyle\}/u);
+  assert.match(themeCenterView, /data-motion-style=\{recipe\.motionStyle\}/u);
+  assert.match(themeCenterView, /data-navigation-style=\{recipe\.navigationStyle\}/u);
   assert.match(themeCenterView, /storefront-theme-root/u);
 });
 
@@ -76,6 +90,14 @@ test('official theme recipes and density variants remain visually distinct', () 
   assert.match(sharedContract, /--theme-card-background/u);
   assert.match(sharedContract, /--theme-header-background/u);
   assert.match(sharedContract, /--theme-tab-background/u);
+  for (const recipeAttribute of [
+    'data-button-style',
+    'data-media-style',
+    'data-motion-style',
+    'data-navigation-style',
+  ]) {
+    assert.match(sharedContract, new RegExp(recipeAttribute, 'u'));
+  }
 });
 
 test('official themes keep media precise while controls and icon objects stay tactile', () => {

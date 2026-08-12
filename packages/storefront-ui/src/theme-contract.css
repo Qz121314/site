@@ -144,6 +144,89 @@
   );
 }
 
+/* Published UI Recipe. These semantic layers override preset fallbacks without
+   allowing business layout or content structure to drift. */
+:is(html, .storefront-theme-root)[data-button-style='refined'] {
+  --theme-radius-control: 12px;
+  --theme-button-height: 52px;
+  --theme-button-border-width: 0px;
+  --theme-button-letter-spacing: -0.012em;
+}
+
+:is(html, .storefront-theme-root)[data-button-style='minimal'] {
+  --theme-radius-control: 4px;
+  --theme-button-height: 48px;
+  --theme-button-border-width: 1px;
+  --theme-button-letter-spacing: 0;
+}
+
+:is(html, .storefront-theme-root)[data-button-style='soft-pill'] {
+  --theme-radius-control: 999px;
+  --theme-button-height: 52px;
+  --theme-button-border-width: 0px;
+  --theme-button-letter-spacing: -0.008em;
+}
+
+:is(html, .storefront-theme-root)[data-media-style='precise'] {
+  --theme-radius-media: 0px;
+  --theme-browse-radius: 0px;
+  --theme-content-media-shadow: none;
+}
+
+:is(html, .storefront-theme-root)[data-media-style='soft'] {
+  --theme-radius-media: 10px;
+  --theme-browse-radius: 4px;
+  --theme-content-media-shadow: 0 10px 28px color-mix(in srgb, #000 18%, transparent);
+}
+
+:is(html, .storefront-theme-root)[data-media-style='editorial'] {
+  --theme-radius-media: 14px;
+  --theme-browse-radius: 10px;
+  --theme-content-media-shadow: 0 14px 34px color-mix(in srgb, #000 14%, transparent);
+}
+
+:is(html, .storefront-theme-root)[data-motion-style='restrained'] {
+  --app-motion-fast: 110ms;
+  --app-motion-base: 180ms;
+  --app-motion-slow: 320ms;
+  --theme-press-scale: 0.985;
+  --theme-press-brightness: 0.94;
+}
+
+:is(html, .storefront-theme-root)[data-motion-style='gentle'] {
+  --app-motion-fast: 150ms;
+  --app-motion-base: 240ms;
+  --app-motion-slow: 440ms;
+  --theme-press-scale: 0.98;
+  --theme-press-brightness: 0.96;
+}
+
+:is(html, .storefront-theme-root)[data-motion-style='active'] {
+  --app-motion-fast: 100ms;
+  --app-motion-base: 200ms;
+  --app-motion-slow: 360ms;
+  --theme-press-scale: 0.965;
+  --theme-press-brightness: 0.91;
+}
+
+:is(html, .storefront-theme-root)[data-navigation-style='quiet'] {
+  --theme-nav-indicator-opacity: 0;
+  --theme-nav-active-surface: transparent;
+  --theme-nav-active-radius: 0px;
+}
+
+:is(html, .storefront-theme-root)[data-navigation-style='tinted'] {
+  --theme-nav-indicator-opacity: 0.72;
+  --theme-nav-active-surface: color-mix(in srgb, var(--brand) 10%, transparent);
+  --theme-nav-active-radius: 10px;
+}
+
+:is(html, .storefront-theme-root)[data-navigation-style='solid'] {
+  --theme-nav-indicator-opacity: 1;
+  --theme-nav-active-surface: color-mix(in srgb, var(--brand) 18%, transparent);
+  --theme-nav-active-radius: 10px;
+}
+
 :is(html, .storefront-theme-root) .topbar {
   background: var(--theme-header-background);
 }
@@ -151,6 +234,49 @@
 :is(html, .storefront-theme-root) .bottom-nav {
   background: var(--theme-tab-background);
   box-shadow: none;
+}
+
+:is(html, .storefront-theme-root) .bottom-nav a.is-active::before {
+  opacity: var(--theme-nav-indicator-opacity, 0);
+}
+
+:is(html, .storefront-theme-root) .bottom-nav a.is-active .bottom-nav-icon {
+  border-radius: var(--theme-nav-active-radius, 0px);
+  background: var(--theme-nav-active-surface, transparent);
+}
+
+:is(html, .storefront-theme-root)
+  :is(.cta-button, .product-detail-fixed-action .cta-button) {
+  min-height: var(--theme-button-height, 52px);
+  border-width: var(--theme-button-border-width, 0px);
+  border-radius: var(--theme-radius-control);
+  font-weight: 620;
+  letter-spacing: var(--theme-button-letter-spacing, -0.01em);
+  transition:
+    filter var(--app-motion-fast) ease,
+    transform var(--app-motion-base) var(--app-ease-out);
+}
+
+:is(html, .storefront-theme-root)
+  :is(.cta-button, .product-detail-fixed-action .cta-button):active:not(:disabled) {
+  filter: brightness(var(--theme-press-brightness, 0.94));
+  transform: scale(var(--theme-press-scale, 0.985));
+}
+
+:is(html, .storefront-theme-root)
+  :is(.home-product-cover, .section-product-cover, .browse-search-product-cover) {
+  border-radius: var(--theme-radius-media);
+  box-shadow: var(--theme-content-media-shadow, none);
+}
+
+:is(html, .storefront-theme-root) .browse-section-card {
+  border-radius: var(--theme-browse-radius, 0px);
+}
+
+:is(html, .storefront-theme-root)
+  :is(.home-product-tile, .section-product-card, .browse-search-product-card):active {
+  filter: brightness(var(--theme-press-brightness, 0.94));
+  transform: scale(var(--theme-press-scale, 0.985));
 }
 
 /* Admin mobile preview stays on the touch-first recipe even on a desktop viewport. */

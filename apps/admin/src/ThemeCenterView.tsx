@@ -21,7 +21,13 @@ import {
   updateThemeCenter,
   type ImportedThemeDefinition,
   type ResolvedTheme,
+  type ThemeButtonStyle,
+  type ThemeDensity,
+  type ThemeFontPack,
   type ThemeKey,
+  type ThemeMediaStyle,
+  type ThemeMotionStyle,
+  type ThemeNavigationStyle,
   type ThemePreset,
 } from './theme-center/api';
 
@@ -31,6 +37,56 @@ type ThemeCenterViewProps = {
 
 type ThemeSourceTab = 'official' | 'registry' | 'json';
 type ThemeMode = 'light' | 'dark';
+type ThemeRecipeSelection = {
+  density: ThemeDensity;
+  fontPack: ThemeFontPack;
+  buttonStyle: ThemeButtonStyle;
+  mediaStyle: ThemeMediaStyle;
+  motionStyle: ThemeMotionStyle;
+  navigationStyle: ThemeNavigationStyle;
+};
+
+const FONT_PACK_LABELS: Record<ThemeFontPack, string> = {
+  modern: 'Modern Sans · 现代',
+  editorial: 'Soft Editorial · 高级生活方式',
+  compact: 'Compact UI · 紧凑浏览',
+  technical: 'Technical Sans · 科技',
+};
+
+const BUTTON_STYLE_LABELS: Record<ThemeButtonStyle, string> = {
+  refined: 'Refined Rectangle · 精致矩形',
+  minimal: 'Minimal Flat · 极简平面',
+  'soft-pill': 'Soft Pill · 柔和胶囊',
+};
+
+const MEDIA_STYLE_LABELS: Record<ThemeMediaStyle, string> = {
+  precise: 'Precise · 利落素材',
+  soft: 'Soft · 适度圆角',
+  editorial: 'Editorial · 摄影内容',
+};
+
+const MOTION_STYLE_LABELS: Record<ThemeMotionStyle, string> = {
+  restrained: 'Restrained · 克制',
+  gentle: 'Gentle · 柔和',
+  active: 'Active · 活跃',
+};
+
+const NAVIGATION_STYLE_LABELS: Record<ThemeNavigationStyle, string> = {
+  quiet: 'Quiet · 安静导航',
+  tinted: 'Tinted · 品牌强调',
+  solid: 'Solid · 强对比',
+};
+
+function recipeSelection(theme: ResolvedTheme | ThemePreset): ThemeRecipeSelection {
+  return {
+    density: theme.density,
+    fontPack: theme.recipe.fontPack,
+    buttonStyle: theme.recipe.buttonStyle,
+    mediaStyle: theme.recipe.mediaStyle,
+    motionStyle: theme.recipe.motionStyle,
+    navigationStyle: theme.recipe.navigationStyle,
+  };
+}
 
 function isSessionError(error: unknown): boolean {
   return (
@@ -62,6 +118,14 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
   const [jsonText, setJsonText] = useState('');
   const [importMode, setImportMode] = useState<ThemeMode>('light');
   const [accent, setAccent] = useState('');
+  const [recipe, setRecipe] = useState<ThemeRecipeSelection>({
+    density: 'standard',
+    fontPack: 'modern',
+    buttonStyle: 'refined',
+    mediaStyle: 'soft',
+    motionStyle: 'restrained',
+    navigationStyle: 'quiet',
+  });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [importing, setImporting] = useState(false);
@@ -77,6 +141,7 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
     (selectedKey !== currentTheme.key ||
       accent.trim().toLowerCase() !==
         (currentTheme.overrides.accent ?? '').toLowerCase() ||
+      JSON.stringify(recipe) !== JSON.stringify(recipeSelection(currentTheme)) ||
       importedSignature(selectedImported) !== importedSignature(currentImported));
   useAdminDirtySource('theme-center', '主题中心', themeIsDirty);
 
@@ -89,6 +154,7 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
       setCurrentTheme(data.theme);
       setSelectedKey(data.theme.key);
       setAccent(data.theme.overrides.accent ?? '');
+      setRecipe(recipeSelection(data.theme));
       if (data.theme.key === 'custom') {
         setImportedTheme(data.theme);
         setSourceTab(
@@ -132,6 +198,7 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
     setSelectedKey(preset.key);
     setImportedTheme(null);
     setAccent('');
+    setRecipe(recipeSelection(preset));
     clearMessages();
   }
 
@@ -144,6 +211,7 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
       setImportedTheme(theme);
       setSelectedKey('custom');
       setAccent('');
+      setRecipe(recipeSelection(theme));
       setSuccessMessage('主题已读取并转换。请先检查右侧移动端预览，再点击“保存并应用”。');
     } catch (error) {
       if (isSessionError(error)) {
@@ -165,6 +233,7 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
       setImportedTheme(theme);
       setSelectedKey('custom');
       setAccent('');
+      setRecipe(recipeSelection(theme));
       setSuccessMessage('JSON 主题已转换。请检查右侧移动端预览，再点击“保存并应用”。');
     } catch (error) {
       if (isSessionError(error)) {
@@ -194,10 +263,16 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
     setSaving(true);
     clearMessages();
     try {
-      const updated = await updateThemeCenter(selectedKey, normalizedAccent, imported);
+      const updated = await updateThemeCenter(
+        selectedKey,
+        normalizedAccent,
+        recipe,
+        imported,
+      );
       setCurrentTheme(updated);
       setSelectedKey(updated.key);
       setAccent(updated.overrides.accent ?? '');
+      setRecipe(recipeSelection(updated));
       if (updated.key === 'custom') setImportedTheme(updated);
       setSuccessMessage('主题已保存并应用到用户前端。前端刷新后即可看到新主题。');
     } catch (error) {
@@ -335,7 +410,9 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
                       <strong>{preset.label}</strong>
                       <small>{preset.description}</small>
                       <em>
-                        {preset.colorScheme === 'dark' ? '深色' : '浅色'} · 移动端双列 1:1
+                        {preset.colorScheme === 'dark' ? '深色' : '浅色'} ·{' '}
+                        {FONT_PACK_LABELS[preset.recipe.fontPack].split(' · ')[0]} · V
+                        {preset.recipe.version}
                       </em>
                     </span>
                   </button>
@@ -483,11 +560,148 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
           </label>
 
           {selectedPreset ? (
+            <div className="theme-recipe-editor" aria-label="主题模板设置">
+              <div className="theme-recipe-heading">
+                <div>
+                  <strong>UI Recipe</strong>
+                  <span>模板已做好完整搭配，只开放安全范围内的品牌调整。</span>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setRecipe(recipeSelection(selectedPreset))}
+                >
+                  恢复模板
+                </button>
+              </div>
+
+              <div className="theme-recipe-grid">
+                <label>
+                  <span>字体方案</span>
+                  <select
+                    value={recipe.fontPack}
+                    onChange={(event) =>
+                      setRecipe((current) => ({
+                        ...current,
+                        fontPack: event.target.value as ThemeFontPack,
+                      }))
+                    }
+                  >
+                    {Object.entries(FONT_PACK_LABELS).map(([value, label]) => (
+                      <option value={value} key={value}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label>
+                  <span>页面密度</span>
+                  <select
+                    value={recipe.density}
+                    onChange={(event) =>
+                      setRecipe((current) => ({
+                        ...current,
+                        density: event.target.value as ThemeDensity,
+                      }))
+                    }
+                  >
+                    <option value="compact">Compact · 紧凑</option>
+                    <option value="standard">Standard · 标准</option>
+                    <option value="comfortable">Comfortable · 宽松</option>
+                  </select>
+                </label>
+
+                <label>
+                  <span>按钮方案</span>
+                  <select
+                    value={recipe.buttonStyle}
+                    onChange={(event) =>
+                      setRecipe((current) => ({
+                        ...current,
+                        buttonStyle: event.target.value as ThemeButtonStyle,
+                      }))
+                    }
+                  >
+                    {Object.entries(BUTTON_STYLE_LABELS).map(([value, label]) => (
+                      <option value={value} key={value}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label>
+                  <span>素材方案</span>
+                  <select
+                    value={recipe.mediaStyle}
+                    onChange={(event) =>
+                      setRecipe((current) => ({
+                        ...current,
+                        mediaStyle: event.target.value as ThemeMediaStyle,
+                      }))
+                    }
+                  >
+                    {Object.entries(MEDIA_STYLE_LABELS).map(([value, label]) => (
+                      <option value={value} key={value}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label>
+                  <span>点击与转场</span>
+                  <select
+                    value={recipe.motionStyle}
+                    onChange={(event) =>
+                      setRecipe((current) => ({
+                        ...current,
+                        motionStyle: event.target.value as ThemeMotionStyle,
+                      }))
+                    }
+                  >
+                    {Object.entries(MOTION_STYLE_LABELS).map(([value, label]) => (
+                      <option value={value} key={value}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+
+                <label>
+                  <span>导航风格</span>
+                  <select
+                    value={recipe.navigationStyle}
+                    onChange={(event) =>
+                      setRecipe((current) => ({
+                        ...current,
+                        navigationStyle: event.target.value as ThemeNavigationStyle,
+                      }))
+                    }
+                  >
+                    {Object.entries(NAVIGATION_STYLE_LABELS).map(([value, label]) => (
+                      <option value={value} key={value}>
+                        {label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            </div>
+          ) : null}
+
+          {selectedPreset ? (
             <div className="theme-preview-device-shell">
               <div
                 className="theme-live-preview storefront-ui-preview storefront-theme-root"
                 data-color-scheme={selectedPreset.colorScheme}
+                data-density={recipe.density}
                 data-theme={selectedPreset.key}
+                data-font-pack={recipe.fontPack}
+                data-button-style={recipe.buttonStyle}
+                data-media-style={recipe.mediaStyle}
+                data-motion-style={recipe.motionStyle}
+                data-navigation-style={recipe.navigationStyle}
                 style={storefrontThemeStyle(selectedPreset.tokens, previewAccent)}
               >
                 <div className="theme-preview-statusbar" aria-hidden="true">
@@ -547,8 +761,9 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
           <div className="theme-ratio-note">
             <strong>外部主题也必须服从本站移动端结构</strong>
             <p>
-              外部来源只能改变经过校验的 Theme Tokens。产品双列、1:1
-              卡片、触控操作、底部导航和业务组件仍由本站控制。
+              外部来源只能改变经过校验的颜色
+              Token。字体、按钮、素材、动效和导航会先映射到本站安全的 UI
+              Recipe；产品双列和业务结构保持不变。
             </p>
           </div>
         </aside>

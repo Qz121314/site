@@ -2,6 +2,21 @@ export type OfficialThemeKey =
   'marketplace' | 'noir' | 'live' | 'saas' | 'travel' | 'tech';
 export type ThemeKey = OfficialThemeKey | 'custom';
 export type ThemeColorScheme = 'light' | 'dark';
+export type ThemeFontPack = 'modern' | 'editorial' | 'compact' | 'technical';
+export type ThemeButtonStyle = 'refined' | 'minimal' | 'soft-pill';
+export type ThemeMediaStyle = 'precise' | 'soft' | 'editorial';
+export type ThemeMotionStyle = 'restrained' | 'gentle' | 'active';
+export type ThemeNavigationStyle = 'quiet' | 'tinted' | 'solid';
+export type ThemeDensity = 'compact' | 'standard' | 'comfortable';
+
+export type ThemeRecipe = {
+  version: 2;
+  fontPack: ThemeFontPack;
+  buttonStyle: ThemeButtonStyle;
+  mediaStyle: ThemeMediaStyle;
+  motionStyle: ThemeMotionStyle;
+  navigationStyle: ThemeNavigationStyle;
+};
 
 export type ThemeTokens = {
   brand: string;
@@ -23,8 +38,9 @@ export type ThemePreset = {
   label: string;
   description: string;
   colorScheme: ThemeColorScheme;
-  density: 'compact' | 'standard' | 'comfortable';
+  density: ThemeDensity;
   productMediaRatio: '1:1';
+  recipe: ThemeRecipe;
   tokens: ThemeTokens;
 };
 
@@ -39,6 +55,12 @@ export type ImportedThemeDefinition = {
 
 export type ThemeOverrides = {
   accent?: string;
+  density?: ThemeDensity;
+  fontPack?: ThemeFontPack;
+  buttonStyle?: ThemeButtonStyle;
+  mediaStyle?: ThemeMediaStyle;
+  motionStyle?: ThemeMotionStyle;
+  navigationStyle?: ThemeNavigationStyle;
   imported?: ImportedThemeDefinition;
 };
 
@@ -71,6 +93,15 @@ const TOKEN_KEYS: Array<keyof ThemeTokens> = [
   'shadow',
 ];
 
+const DEFAULT_RECIPE: ThemeRecipe = {
+  version: 2,
+  fontPack: 'modern',
+  buttonStyle: 'refined',
+  mediaStyle: 'soft',
+  motionStyle: 'restrained',
+  navigationStyle: 'quiet',
+};
+
 export const THEME_PRESETS: readonly ThemePreset[] = [
   {
     key: 'marketplace',
@@ -79,6 +110,12 @@ export const THEME_PRESETS: readonly ThemePreset[] = [
     colorScheme: 'light',
     density: 'standard',
     productMediaRatio: '1:1',
+    recipe: {
+      ...DEFAULT_RECIPE,
+      fontPack: 'compact',
+      mediaStyle: 'precise',
+      navigationStyle: 'tinted',
+    },
     tokens: {
       brand: '#ff5a1f',
       brandStrong: '#e94a12',
@@ -96,24 +133,32 @@ export const THEME_PRESETS: readonly ThemePreset[] = [
   },
   {
     key: 'noir',
-    label: 'Noir · 成人内容',
-    description: '深色、低亮背景与玫紫强调，适合成人内容、会员与私域展示。',
+    label: 'Premium Noir Dating V2',
+    description: '暖黑、柔白与克制玫瑰色，完整覆盖字体、按钮、素材、导航和动效。',
     colorScheme: 'dark',
-    density: 'comfortable',
+    density: 'standard',
     productMediaRatio: '1:1',
+    recipe: {
+      version: 2,
+      fontPack: 'editorial',
+      buttonStyle: 'refined',
+      mediaStyle: 'soft',
+      motionStyle: 'restrained',
+      navigationStyle: 'quiet',
+    },
     tokens: {
-      brand: '#e85d9e',
-      brandStrong: '#ff78b5',
-      text: '#f8edf3',
-      muted: '#ad98a4',
-      surface: '#171116',
-      surfaceSoft: '#211820',
-      line: '#382934',
-      pageBg: '#0d090c',
-      heroStart: '#3b172b',
-      heroEnd: '#171018',
-      heroGlow: '#7a234e',
-      shadow: '0 16px 40px rgb(0 0 0 / 34%)',
+      brand: '#e45594',
+      brandStrong: '#f06ba8',
+      text: '#f4eef2',
+      muted: '#a99da5',
+      surface: '#120e12',
+      surfaceSoft: '#191319',
+      line: '#2a2228',
+      pageBg: '#0b080b',
+      heroStart: '#311322',
+      heroEnd: '#120d12',
+      heroGlow: '#6f2148',
+      shadow: '0 18px 48px rgb(0 0 0 / 38%)',
     },
   },
   {
@@ -123,6 +168,14 @@ export const THEME_PRESETS: readonly ThemePreset[] = [
     colorScheme: 'dark',
     density: 'standard',
     productMediaRatio: '1:1',
+    recipe: {
+      version: 2,
+      fontPack: 'compact',
+      buttonStyle: 'soft-pill',
+      mediaStyle: 'soft',
+      motionStyle: 'active',
+      navigationStyle: 'solid',
+    },
     tokens: {
       brand: '#ff355d',
       brandStrong: '#ff5f80',
@@ -145,6 +198,12 @@ export const THEME_PRESETS: readonly ThemePreset[] = [
     colorScheme: 'light',
     density: 'comfortable',
     productMediaRatio: '1:1',
+    recipe: {
+      ...DEFAULT_RECIPE,
+      fontPack: 'modern',
+      mediaStyle: 'precise',
+      navigationStyle: 'tinted',
+    },
     tokens: {
       brand: '#4f46e5',
       brandStrong: '#3730a3',
@@ -167,6 +226,14 @@ export const THEME_PRESETS: readonly ThemePreset[] = [
     colorScheme: 'light',
     density: 'comfortable',
     productMediaRatio: '1:1',
+    recipe: {
+      version: 2,
+      fontPack: 'editorial',
+      buttonStyle: 'refined',
+      mediaStyle: 'editorial',
+      motionStyle: 'gentle',
+      navigationStyle: 'quiet',
+    },
     tokens: {
       brand: '#df6c4f',
       brandStrong: '#b84d35',
@@ -189,6 +256,14 @@ export const THEME_PRESETS: readonly ThemePreset[] = [
     colorScheme: 'dark',
     density: 'standard',
     productMediaRatio: '1:1',
+    recipe: {
+      version: 2,
+      fontPack: 'technical',
+      buttonStyle: 'minimal',
+      mediaStyle: 'precise',
+      motionStyle: 'active',
+      navigationStyle: 'tinted',
+    },
     tokens: {
       brand: '#22d3ee',
       brandStrong: '#67e8f9',
@@ -237,6 +312,13 @@ function safeColor(value: unknown): string | null {
     return color;
   }
   return null;
+}
+
+function normalizeOption<const T extends readonly string[]>(
+  value: unknown,
+  options: T,
+): T[number] | null {
+  return typeof value === 'string' && options.includes(value) ? value : null;
 }
 
 function safeShadow(value: unknown, colorScheme: ThemeColorScheme): string {
@@ -314,8 +396,45 @@ export function normalizeThemeOverrides(value: unknown): ThemeOverrides {
   const accent =
     typeof value.accent === 'string' ? value.accent.trim().toLowerCase() : '';
   const imported = normalizeImportedThemeDefinition(value.imported);
+  const density = normalizeOption(value.density, [
+    'compact',
+    'standard',
+    'comfortable',
+  ] as const);
+  const fontPack = normalizeOption(value.fontPack, [
+    'modern',
+    'editorial',
+    'compact',
+    'technical',
+  ] as const);
+  const buttonStyle = normalizeOption(value.buttonStyle, [
+    'refined',
+    'minimal',
+    'soft-pill',
+  ] as const);
+  const mediaStyle = normalizeOption(value.mediaStyle, [
+    'precise',
+    'soft',
+    'editorial',
+  ] as const);
+  const motionStyle = normalizeOption(value.motionStyle, [
+    'restrained',
+    'gentle',
+    'active',
+  ] as const);
+  const navigationStyle = normalizeOption(value.navigationStyle, [
+    'quiet',
+    'tinted',
+    'solid',
+  ] as const);
   return {
     ...(HEX_COLOR.test(accent) ? { accent } : {}),
+    ...(density ? { density } : {}),
+    ...(fontPack ? { fontPack } : {}),
+    ...(buttonStyle ? { buttonStyle } : {}),
+    ...(mediaStyle ? { mediaStyle } : {}),
+    ...(motionStyle ? { motionStyle } : {}),
+    ...(navigationStyle ? { navigationStyle } : {}),
     ...(imported ? { imported } : {}),
   };
 }
@@ -347,13 +466,23 @@ export function resolveTheme(settings: ThemeSettings): ResolvedTheme {
   const accent = settings.overrides.accent;
   if (settings.key === 'custom' && settings.overrides.imported) {
     const imported = settings.overrides.imported;
+    const recipe: ThemeRecipe = {
+      ...DEFAULT_RECIPE,
+      fontPack: settings.overrides.fontPack ?? DEFAULT_RECIPE.fontPack,
+      buttonStyle: settings.overrides.buttonStyle ?? DEFAULT_RECIPE.buttonStyle,
+      mediaStyle: settings.overrides.mediaStyle ?? DEFAULT_RECIPE.mediaStyle,
+      motionStyle: settings.overrides.motionStyle ?? DEFAULT_RECIPE.motionStyle,
+      navigationStyle:
+        settings.overrides.navigationStyle ?? DEFAULT_RECIPE.navigationStyle,
+    };
     return {
       key: 'custom',
       label: imported.label,
       description: imported.description,
       colorScheme: imported.colorScheme,
-      density: 'standard',
+      density: settings.overrides.density ?? 'standard',
       productMediaRatio: '1:1',
+      recipe,
       tokens: applyAccent(imported.tokens, accent),
       overrides: settings.overrides,
     };
@@ -361,6 +490,16 @@ export function resolveTheme(settings: ThemeSettings): ResolvedTheme {
   const preset = presetByKey.get(settings.key as OfficialThemeKey) ?? THEME_PRESETS[0]!;
   return {
     ...preset,
+    density: settings.overrides.density ?? preset.density,
+    recipe: {
+      ...preset.recipe,
+      fontPack: settings.overrides.fontPack ?? preset.recipe.fontPack,
+      buttonStyle: settings.overrides.buttonStyle ?? preset.recipe.buttonStyle,
+      mediaStyle: settings.overrides.mediaStyle ?? preset.recipe.mediaStyle,
+      motionStyle: settings.overrides.motionStyle ?? preset.recipe.motionStyle,
+      navigationStyle:
+        settings.overrides.navigationStyle ?? preset.recipe.navigationStyle,
+    },
     overrides: settings.overrides,
     tokens: applyAccent(preset.tokens, accent),
   };
