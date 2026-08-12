@@ -1,53 +1,80 @@
-/* Home is a recommendation feed: Hero -> shortcuts -> featured rails. */
+/* Home is a content-first mobile feed: media leads, chrome stays quiet. */
+
+.home-feed {
+  display: grid;
+  width: min(1120px, 100%);
+  gap: 0;
+  margin-inline: auto;
+}
+
+.home-feed.is-hero-less {
+  padding-top: 4px;
+}
 
 .home-shortcuts {
-  display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 16px 8px;
-  margin: 18px 0 30px;
-  padding: 0 2px;
+  display: flex;
+  min-width: 0;
+  gap: 14px;
+  margin: 20px 0 34px;
+  padding: 0 1px 4px;
+  overflow-x: auto;
+  scroll-padding-inline: 1px;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+  overscroll-behavior-inline: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.home-shortcuts::-webkit-scrollbar {
+  display: none;
 }
 
 .home-shortcut {
   display: grid;
-  min-width: 0;
-  min-height: 68px;
+  width: 64px;
+  min-width: 64px;
+  min-height: 82px;
   align-content: start;
   justify-items: center;
-  gap: 7px;
+  gap: 9px;
   padding: 0;
   color: var(--text);
   text-align: center;
   text-decoration: none;
+  scroll-snap-align: start;
   -webkit-tap-highlight-color: transparent;
 }
 
 .home-shortcut-icon {
   position: relative;
   display: grid;
-  width: min(var(--theme-section-icon-size), 52px);
-  height: min(var(--theme-section-icon-size), 52px);
+  width: 58px;
+  height: 58px;
   place-items: center;
   overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--theme-card-border) 52%, transparent);
-  border-radius: var(--theme-radius-icon, 3px);
-  background: var(--theme-media-background);
-  box-shadow: none;
+  border: 1px solid color-mix(in srgb, var(--theme-card-border) 70%, transparent);
+  border-radius: var(--theme-radius-icon, 12px);
+  background: var(--app-surface-raised, var(--theme-media-background));
+  box-shadow:
+    inset 0 1px 0 color-mix(in srgb, #fff 7%, transparent),
+    0 8px 22px color-mix(in srgb, #000 12%, transparent);
+  transform: translateZ(0);
   transition:
-    opacity 120ms ease,
-    transform 120ms ease,
-    border-color 120ms ease;
+    transform var(--app-motion-fast, 160ms) var(--app-ease-out),
+    filter var(--app-motion-fast, 160ms) ease,
+    border-color var(--app-motion-fast, 160ms) ease;
 }
 
 .home-shortcut:active .home-shortcut-icon {
-  opacity: 0.78;
-  transform: scale(0.96);
+  filter: brightness(0.92);
+  transform: scale(0.92);
 }
 
 .home-shortcut-icon img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform var(--app-motion-base, 240ms) var(--app-ease-out);
 }
 
 .home-shortcut-icon > span:not(.home-more-glyph) {
@@ -55,47 +82,47 @@
   width: 100%;
   height: 100%;
   place-items: center;
-  color: color-mix(in srgb, var(--text) 82%, var(--muted));
-  font-size: 1.18rem;
-  font-weight: 620;
+  color: color-mix(in srgb, var(--text) 86%, var(--muted));
+  font-size: 1.22rem;
+  font-weight: 650;
 }
 
 .home-shortcut-label {
   display: -webkit-box;
+  width: 100%;
   overflow: hidden;
-  max-width: 100%;
-  color: color-mix(in srgb, var(--text) 88%, var(--muted));
-  font-size: 0.72rem;
-  font-weight: 560;
-  line-height: 1.22;
-  letter-spacing: -0.008em;
+  color: color-mix(in srgb, var(--text) 90%, var(--muted));
+  font-size: var(--storefront-text-caption, 0.6875rem);
+  font-weight: 620;
+  line-height: 1.18;
+  letter-spacing: -0.012em;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
 
 .home-shortcut.is-more .home-shortcut-icon {
-  border-color: color-mix(in srgb, var(--brand) 18%, var(--theme-card-border));
+  border-color: color-mix(in srgb, var(--brand) 30%, var(--theme-card-border));
   color: var(--brand-strong);
-  background: color-mix(in srgb, var(--brand) 6%, var(--theme-media-background));
+  background: color-mix(in srgb, var(--brand) 12%, var(--app-surface-raised));
 }
 
 .home-more-glyph {
   display: grid;
   grid-template-columns: repeat(2, 5px);
-  gap: 4px;
+  gap: 5px;
 }
 
 .home-more-glyph i {
   width: 5px;
   height: 5px;
-  border-radius: 1.5px;
+  border-radius: 2px;
   background: currentColor;
 }
 
 .home-recommendation-feed {
   display: grid;
-  gap: max(28px, var(--theme-section-space));
-  padding-bottom: 12px;
+  gap: clamp(38px, 8vw, 58px);
+  padding-bottom: 32px;
 }
 
 .home-recommendation {
@@ -104,11 +131,17 @@
 
 .home-recommendation-heading {
   display: flex;
-  min-height: 30px;
-  align-items: center;
+  min-height: 38px;
+  align-items: flex-end;
   justify-content: space-between;
-  gap: 14px;
-  margin: 0 2px 11px;
+  gap: 18px;
+  margin: 0 1px 15px;
+}
+
+.home-recommendation-heading-copy {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
 }
 
 .home-recommendation-heading h2 {
@@ -116,47 +149,76 @@
   margin: 0;
   overflow: hidden;
   color: var(--text);
-  font-size: 1.02rem;
-  font-weight: 650;
-  letter-spacing: -0.022em;
-  line-height: 1.22;
+  font-size: clamp(1.18rem, 5vw, 1.42rem);
+  font-weight: 720;
+  letter-spacing: -0.035em;
+  line-height: 1.08;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.home-recommendation-heading a {
-  display: inline-flex;
-  flex: 0 0 auto;
-  min-width: 32px;
-  min-height: 32px;
-  align-items: center;
-  justify-content: flex-end;
-  padding: 0 2px 0 10px;
-  border-radius: 0;
-  color: color-mix(in srgb, var(--text) 58%, var(--muted));
-  font-size: 0.78rem;
-  font-weight: 540;
-  text-decoration: none;
+.home-recommendation-heading p {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  color: var(--app-text-secondary, var(--muted));
+  font-size: var(--storefront-text-small, 0.8125rem);
+  font-weight: 440;
+  line-height: 1.35;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 1;
 }
 
-.home-recommendation-heading a span {
-  font-size: 1.2rem;
+.home-recommendation-heading > a {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  flex: 0 0 38px;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, var(--line) 78%, transparent);
+  border-radius: var(--theme-radius-icon, 12px);
+  color: color-mix(in srgb, var(--text) 74%, var(--muted));
+  background: var(--app-surface-raised, var(--surface));
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 7%, transparent);
+  text-decoration: none;
+  transition:
+    color var(--app-motion-fast, 160ms) ease,
+    background var(--app-motion-fast, 160ms) ease,
+    transform var(--app-motion-fast, 160ms) var(--app-ease-out);
+}
+
+.home-recommendation-heading > a span {
+  margin-top: -2px;
+  font-size: 1.35rem;
   font-weight: 400;
   line-height: 1;
 }
 
+.home-recommendation-heading > a:active {
+  background: color-mix(in srgb, var(--brand) 10%, var(--app-surface-raised));
+  transform: scale(0.9);
+}
+
 .home-product-rail {
   display: grid;
-  grid-auto-columns: clamp(126px, 40vw, 164px);
+  grid-auto-columns: clamp(200px, 68vw, 278px);
   grid-auto-flow: column;
-  gap: max(10px, var(--theme-card-gap-x));
+  gap: 14px;
   overflow-x: auto;
-  padding: 0 2px 4px;
-  scroll-padding-inline: 2px;
-  scroll-snap-type: x proximity;
-  overscroll-behavior-inline: contain;
+  margin-right: calc(var(--app-gutter, 16px) * -1);
+  padding: 0 var(--app-gutter, 16px) 5px 0;
+  scroll-padding-inline: 0 var(--app-gutter, 16px);
+  scroll-snap-type: x mandatory;
   scrollbar-width: none;
+  overscroll-behavior-inline: contain;
   -webkit-overflow-scrolling: touch;
+}
+
+.home-product-rail.is-single {
+  display: block;
+  margin-right: 0;
+  padding-right: 0;
+  overflow: visible;
 }
 
 .home-product-rail::-webkit-scrollbar {
@@ -167,7 +229,7 @@
   display: grid;
   min-width: 0;
   align-content: start;
-  gap: 8px;
+  gap: 11px;
   color: var(--text);
   text-decoration: none;
   scroll-snap-align: start;
@@ -176,32 +238,41 @@
 
 .home-product-cover,
 .home-product-skeleton {
+  position: relative;
   display: block;
   width: 100%;
   aspect-ratio: 1 / 1;
   overflow: hidden;
-  border: 0;
+  border: 1px solid color-mix(in srgb, var(--line) 62%, transparent);
   border-radius: var(--theme-radius-media, 0px);
   background: var(--theme-media-background);
-  box-shadow: none;
+  box-shadow: 0 16px 36px color-mix(in srgb, #000 12%, transparent);
+  isolation: isolate;
+  transform: translateZ(0);
+  transition:
+    filter var(--app-motion-fast, 160ms) ease,
+    transform var(--app-motion-base, 240ms) var(--app-ease-out),
+    box-shadow var(--app-motion-base, 240ms) ease;
 }
 
-.home-product-cover {
-  transition:
-    opacity 120ms ease,
-    transform 140ms ease;
+.home-product-cover::after {
+  position: absolute;
+  inset: 0;
+  border: 1px solid color-mix(in srgb, #fff 8%, transparent);
+  content: '';
+  pointer-events: none;
 }
 
 .home-product-tile:active .home-product-cover {
-  opacity: 0.82;
-  transform: scale(0.985);
+  filter: brightness(0.9);
+  transform: scale(0.975);
 }
 
 .home-product-cover img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 220ms ease;
+  transition: transform 420ms var(--app-ease-out);
 }
 
 .home-product-cover-fallback {
@@ -211,17 +282,50 @@
   background: var(--theme-media-background);
 }
 
-.home-product-tile > strong {
+.home-product-meta {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 0 1px;
+}
+
+.home-product-meta strong {
   display: -webkit-box;
+  min-width: 0;
   overflow: hidden;
-  margin: 0 1px;
-  color: color-mix(in srgb, var(--text) 94%, var(--muted));
-  font-size: 0.82rem;
-  font-weight: 560;
-  line-height: 1.3;
-  letter-spacing: -0.008em;
+  color: color-mix(in srgb, var(--text) 96%, var(--muted));
+  font-size: var(--storefront-text-label, 1rem);
+  font-weight: 650;
+  line-height: 1.28;
+  letter-spacing: -0.022em;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
+}
+
+.home-product-arrow {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  flex: 0 0 28px;
+  place-items: center;
+  color: color-mix(in srgb, var(--text) 64%, var(--muted));
+  transition: transform var(--app-motion-fast, 160ms) var(--app-ease-out);
+}
+
+.home-product-arrow svg {
+  width: 18px;
+  height: 18px;
+}
+
+.home-product-tile:active .home-product-arrow {
+  transform: translateX(3px);
+}
+
+.home-product-rail.is-single .home-product-meta strong {
+  font-size: clamp(1.05rem, 4.8vw, 1.3rem);
+  font-weight: 680;
 }
 
 .home-product-rail.is-loading {
@@ -230,153 +334,108 @@
 
 .home-product-skeleton {
   animation: home-feed-pulse 1.25s ease-in-out infinite alternate;
-  background: color-mix(in srgb, var(--surface-soft) 94%, var(--line));
+  background: color-mix(in srgb, var(--surface-soft) 92%, var(--line));
+  box-shadow: none;
 }
 
 @keyframes home-feed-pulse {
   from {
-    opacity: 0.58;
+    opacity: 0.46;
   }
   to {
-    opacity: 0.88;
+    opacity: 0.82;
   }
 }
 
 @media (hover: hover) and (pointer: fine) {
   .home-shortcut:hover .home-shortcut-icon {
-    border-color: color-mix(in srgb, var(--text) 18%, var(--theme-card-border));
+    border-color: color-mix(in srgb, var(--brand) 28%, var(--theme-card-border));
+  }
+
+  .home-shortcut:hover .home-shortcut-icon img {
+    transform: scale(1.04);
+  }
+
+  .home-product-tile:hover .home-product-cover {
+    box-shadow: 0 20px 46px color-mix(in srgb, #000 16%, transparent);
   }
 
   .home-product-tile:hover .home-product-cover img {
-    transform: scale(1.018);
+    transform: scale(1.03);
   }
 
-  .home-recommendation-heading a:hover {
-    color: var(--text);
+  .home-recommendation-heading > a:hover {
+    color: var(--brand-strong);
   }
 }
 
 @media (max-width: 767px) {
+  .home-feed.has-hero .hero-carousel {
+    margin-right: calc(var(--app-gutter, 16px) * -1);
+    margin-left: calc(var(--app-gutter, 16px) * -1);
+    width: calc(100% + var(--app-gutter, 16px) * 2);
+  }
+
   .home-shortcuts {
-    gap: 15px 6px;
-    margin: 16px 0 28px;
-    padding: 0 4px;
-  }
-
-  .home-shortcut {
-    min-height: 64px;
-    gap: 6px;
-  }
-
-  .home-shortcut-icon {
-    width: min(var(--theme-section-icon-size), 50px);
-    height: min(var(--theme-section-icon-size), 50px);
-  }
-
-  .home-shortcut-label {
-    font-size: 0.7rem;
-    font-weight: 550;
+    margin-top: 18px;
   }
 
   .home-recommendation-feed {
-    gap: 28px;
-  }
-
-  .home-recommendation {
-    padding: 0;
-    overflow: hidden;
-    border: 0;
-    border-radius: 0;
-    background: transparent;
-    box-shadow: none;
-  }
-
-  .home-recommendation-heading {
-    margin: 0 2px 10px;
-  }
-
-  .home-recommendation-heading h2 {
-    font-size: 1rem;
-    font-weight: 640;
-  }
-
-  .home-product-rail {
-    margin-right: -12px;
-    padding-right: 12px;
-    padding-bottom: 3px;
-    scroll-padding-right: 12px;
+    gap: 42px;
   }
 }
 
 @media (min-width: 768px) {
   .home-shortcuts {
-    grid-template-columns: repeat(8, minmax(0, 1fr));
-    gap: 16px;
-    max-width: 1040px;
-    margin: 26px auto 40px;
-    padding-inline: 20px;
+    gap: 18px;
+    margin: 30px 0 46px;
   }
 
   .home-shortcut {
-    min-height: 84px;
-    gap: 8px;
+    width: 76px;
+    min-width: 76px;
+    min-height: 96px;
+    gap: 10px;
   }
 
   .home-shortcut-icon {
-    width: min(var(--theme-section-icon-size), 58px);
-    height: min(var(--theme-section-icon-size), 58px);
+    width: 68px;
+    height: 68px;
+    border-radius: 15px;
   }
 
   .home-shortcut-label {
-    font-size: 0.8rem;
-  }
-
-  .home-recommendation {
-    width: min(100%, 1180px);
-    margin-inline: auto;
+    font-size: var(--storefront-text-small, 0.8125rem);
   }
 
   .home-recommendation-heading {
-    margin-inline: 20px;
-    margin-bottom: 14px;
+    margin-bottom: 18px;
   }
 
   .home-recommendation-heading h2 {
-    font-size: 1.16rem;
+    font-size: 1.55rem;
   }
 
   .home-product-rail {
-    grid-auto-columns: clamp(156px, 17vw, 198px);
-    gap: 15px;
-    padding: 0 20px 6px;
-    scroll-padding-inline: 20px;
+    grid-auto-columns: clamp(230px, 30vw, 320px);
+    gap: 18px;
+    margin-right: 0;
+    padding-right: 0;
   }
 
-  .home-product-tile {
-    gap: 9px;
-  }
-
-  .home-product-tile > strong {
-    font-size: 0.9rem;
-  }
-}
-
-@media (min-width: 1100px) {
-  .home-recommendation-heading {
-    margin-inline: 0;
-  }
-
-  .home-product-rail {
-    padding-inline: 0;
-    scroll-padding-inline: 0;
+  .home-product-rail.is-single {
+    width: min(520px, 100%);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .home-shortcut-icon,
+  .home-shortcut-icon img,
   .home-product-cover,
   .home-product-cover img,
-  .home-product-skeleton {
+  .home-product-arrow,
+  .home-product-skeleton,
+  .home-recommendation-heading > a {
     transition: none;
     animation: none;
   }

@@ -58,13 +58,16 @@ test('Home renders at most three section recommendation rails from explicitly fe
   assert.match(feedSource, /href=\{productHref\(product\)\}/u);
 });
 
-test('Home product covers stay square and recommendation rails are manual horizontal scrollers', () => {
+test('Home uses fixed app shortcuts and large manual product rails', () => {
   assert.match(cssSource, /aspect-ratio:\s*1 \/ 1/u);
   assert.match(cssSource, /\.home-product-rail[\s\S]*overflow-x:\s*auto/u);
-  assert.match(cssSource, /scroll-snap-type:\s*x proximity/u);
+  assert.match(cssSource, /scroll-snap-type:\s*x mandatory/u);
   assert.doesNotMatch(feedSource, /setInterval/u);
-  assert.match(cssSource, /grid-template-columns:\s*repeat\(4/u);
-  assert.match(cssSource, /grid-template-columns:\s*repeat\(8/u);
+  assert.match(cssSource, /\.home-shortcuts\s*\{[\s\S]*?display:\s*flex;/u);
+  assert.match(cssSource, /\.home-shortcut\s*\{[\s\S]*?min-width:\s*64px;/u);
+  assert.match(cssSource, /\.home-product-rail\.is-single/u);
+  assert.match(feedSource, /products\.length === 1 \? ' is-single' : ''/u);
+  assert.match(feedSource, /home-product-meta/u);
 });
 
 test('Home layout comes from the published Site snapshot with published-content auto mode', () => {

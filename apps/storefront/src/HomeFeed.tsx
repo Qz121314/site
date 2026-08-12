@@ -100,6 +100,21 @@ function MoreIcon() {
   );
 }
 
+function ProductArrowIcon() {
+  return (
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      aria-hidden="true"
+    >
+      <path d="M5 12h13" strokeLinecap="round" />
+      <path d="m14 7 5 5-5 5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 function HomeShortcuts({ sections }: { sections: PublicSection[] }) {
   return (
     <nav className="home-shortcuts" aria-label="Sections">
@@ -132,7 +147,12 @@ function HomeProductTile({ product }: { product: PublicProductSummary }) {
           src={product.coverUrl}
         />
       </span>
-      <strong>{product.title}</strong>
+      <span className="home-product-meta">
+        <strong>{product.title}</strong>
+        <span className="home-product-arrow" aria-hidden="true">
+          <ProductArrowIcon />
+        </span>
+      </span>
     </HomeLink>
   );
 }
@@ -177,7 +197,10 @@ function HomeRecommendationRail({
       aria-labelledby={`home-recommendation-${section.id}`}
     >
       <div className="home-recommendation-heading">
-        <h2 id={`home-recommendation-${section.id}`}>{section.name}</h2>
+        <span className="home-recommendation-heading-copy">
+          <h2 id={`home-recommendation-${section.id}`}>{section.name}</h2>
+          {section.description ? <p>{section.description}</p> : null}
+        </span>
         <HomeLink
           href={sectionHref(section)}
           aria-label={`${SYSTEM_UI.more}: ${section.name}`}
@@ -192,7 +215,7 @@ function HomeRecommendationRail({
           ))}
         </div>
       ) : (
-        <div className="home-product-rail">
+        <div className={`home-product-rail${products.length === 1 ? ' is-single' : ''}`}>
           {products.map((product) => (
             <HomeProductTile product={product} key={product.id} />
           ))}
@@ -263,7 +286,7 @@ export function HomeFeed({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
   }, [site.name]);
 
   return (
-    <>
+    <div className={`home-feed${site.hero ? ' has-hero' : ' is-hero-less'}`}>
       {site.hero ? (
         <StorefrontHero
           LinkComponent={HomeLink as StorefrontLinkComponent}
@@ -289,6 +312,6 @@ export function HomeFeed({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
           />
         ))}
       </div>
-    </>
+    </div>
   );
 }

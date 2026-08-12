@@ -56,14 +56,18 @@ test('mobile app shell uses dynamic viewport height and a flat system tab bar', 
   assert.match(pagesCss, /@media \(min-width:\s*768px\)/u);
 });
 
-test('primary tabs keep one mounted shell and use color-only active state', () => {
+test('primary tabs keep one mounted shell and use a compact icon-only active surface', () => {
   assert.equal(rootSource.match(/<PrimaryShell\b/gu)?.length, 1);
   assert.match(rootSource, /className="storefront-route-view"/u);
   assert.match(rootSource, /routeKey=\{locationKey\}/u);
   assert.match(rootSource, /window\.location\.search/u);
   assert.match(
     shellCss,
-    /\.app-shell \.bottom-nav a\.is-active \.bottom-nav-icon\s*\{[\s\S]*?background:\s*transparent;/u,
+    /\.app-shell \.bottom-nav a\.is-active \.bottom-nav-icon\s*\{[\s\S]*?background:\s*color-mix\(in srgb, var\(--brand\) 15%, transparent\);/u,
+  );
+  assert.match(
+    shellCss,
+    /\.app-shell \.bottom-nav \.bottom-nav-icon\s*\{[\s\S]*?border-radius:\s*10px;/u,
   );
   assert.doesNotMatch(shellCss, /@keyframes app-tab-settle/u);
 });

@@ -16,12 +16,14 @@
   --theme-detail-panel-border: var(--theme-card-border, var(--line));
   --theme-detail-panel-shadow: var(--theme-card-shadow, none);
   --theme-detail-meta-background: var(--surface-soft);
-  --theme-detail-cta-height: 50px;
+  --theme-detail-cta-height: 54px;
   --theme-detail-cta-radius: var(--theme-radius-control, 14px);
   --theme-detail-cta-background: var(--brand);
   --theme-detail-cta-color: #fff;
   --theme-detail-cta-surface: color-mix(in srgb, var(--surface) 96%, transparent);
-  --theme-detail-cta-shadow: 0 10px 24px color-mix(in srgb, var(--brand) 22%, transparent);
+  --theme-detail-cta-shadow:
+    inset 0 1px 0 color-mix(in srgb, #fff 18%, transparent),
+    0 12px 28px color-mix(in srgb, var(--brand) 24%, transparent);
   --theme-detail-cta-bar-shadow: 0 -8px 24px
     color-mix(in srgb, var(--text) 6%, transparent);
 }
@@ -34,7 +36,7 @@
   --theme-detail-gap: 14px;
   --theme-detail-panel-padding: 15px;
   --theme-detail-mobile-panel-padding: 14px;
-  --theme-detail-cta-height: 48px;
+  --theme-detail-cta-height: 52px;
 }
 
 :is(html, .storefront-theme-root)[data-density='comfortable'],
@@ -46,7 +48,7 @@
   --theme-detail-gap: 22px;
   --theme-detail-panel-padding: 21px;
   --theme-detail-mobile-panel-padding: 18px;
-  --theme-detail-cta-height: 52px;
+  --theme-detail-cta-height: 56px;
 }
 
 :is(html, .storefront-theme-root)[data-theme='marketplace'] {

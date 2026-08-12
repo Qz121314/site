@@ -2,7 +2,7 @@
 
 .product-grid {
   align-items: stretch;
-  gap: var(--theme-card-gap-y, 18px) var(--theme-card-gap-x, 10px);
+  gap: var(--theme-card-gap-y, 22px) var(--theme-card-gap-x, 12px);
 }
 
 .product-card {
@@ -32,7 +32,8 @@
 }
 
 .product-card:active .product-card-media {
-  transform: scale(0.982);
+  filter: brightness(0.94);
+  transform: scale(0.97);
 }
 
 .product-card-media {
@@ -46,9 +47,10 @@
     0 1px 0 color-mix(in srgb, #fff 30%, transparent) inset,
     0 3px 12px color-mix(in srgb, var(--text) 5%, transparent);
   transition:
-    transform 130ms ease,
-    box-shadow 150ms ease,
-    border-color 150ms ease;
+    transform var(--app-motion-fast, 160ms) var(--app-ease-out, ease-out),
+    filter var(--app-motion-fast, 160ms) ease,
+    box-shadow var(--app-motion-base, 240ms) ease,
+    border-color var(--app-motion-fast, 160ms) ease;
 }
 
 .product-card-media img,
@@ -60,7 +62,7 @@
 }
 
 .product-card-media img {
-  transition: transform 220ms ease;
+  transition: transform var(--app-motion-slow, 360ms) var(--app-ease-out, ease-out);
 }
 
 .service-mode-badge {
@@ -82,7 +84,7 @@
   flex: 1;
   align-content: start;
   gap: 0;
-  padding: 9px 2px 0;
+  padding: 10px 1px 0;
 }
 
 .product-card-heading {
@@ -95,17 +97,17 @@
   margin: 0;
   overflow: hidden;
   color: var(--text);
-  font-weight: 780;
-  line-height: 1.2;
-  letter-spacing: -0.027em;
+  font-weight: 680;
+  line-height: 1.22;
+  letter-spacing: -0.022em;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
 
 .product-card-heading > span {
   overflow: hidden;
-  color: var(--muted);
-  font-weight: 680;
+  color: var(--app-text-secondary, var(--muted));
+  font-weight: 560;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -113,8 +115,8 @@
 .product-type {
   overflow: hidden;
   margin-top: 6px;
-  color: color-mix(in srgb, var(--text) 78%, var(--muted));
-  font-weight: 720;
+  color: var(--app-text-secondary, var(--muted));
+  font-weight: 600;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -165,8 +167,8 @@
 
 @media (max-width: 767px) {
   .app-shell > main {
-    padding-right: 10px;
-    padding-left: 10px;
+    padding-right: max(var(--app-gutter, 16px), env(safe-area-inset-right));
+    padding-left: max(var(--app-gutter, 16px), env(safe-area-inset-left));
   }
 
   .product-grid {
@@ -176,7 +178,7 @@
 
 @media (max-width: 360px) {
   .product-grid {
-    gap: 16px 8px;
+    gap: 20px 10px;
   }
 }
 
