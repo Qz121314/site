@@ -21,6 +21,7 @@ import './home-feed.css';
 import '@site/storefront-ui/theme-contract.css';
 import '@site/storefront-ui/primary-pages-theme-contract.css';
 import '@site/storefront-ui/typography-contract.css';
+import './ui-accessibility.css';
 
 installPublicContentFetchFallback();
 const storefrontThemePromise = installStorefrontTheme();
