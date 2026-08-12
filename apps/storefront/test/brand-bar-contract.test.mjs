@@ -2,12 +2,18 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-const mainSource = await readFile(new URL('../src/main.tsx', import.meta.url), 'utf8');
+const mainSource = await readFile(
+  new URL('../src/main.tsx', import.meta.url),
+  'utf8',
+);
 const rootSource = await readFile(
   new URL('../src/StorefrontRoot.tsx', import.meta.url),
   'utf8',
 );
-const brandCss = await readFile(new URL('../src/brand-bar.css', import.meta.url), 'utf8');
+const brandCss = await readFile(
+  new URL('../src/brand-bar.css', import.meta.url),
+  'utf8',
+);
 
 test('storefront renders one global brand bar and loads its refinement after app shell CSS', () => {
   assert.equal(rootSource.match(/<StorefrontBrandBar\b/gu)?.length, 1);
@@ -15,7 +21,10 @@ test('storefront renders one global brand bar and loads its refinement after app
   const shellImport = mainSource.indexOf("import './app-shell.css';");
   const brandImport = mainSource.indexOf("import './brand-bar.css';");
   assert.ok(shellImport >= 0, 'app shell CSS must be loaded');
-  assert.ok(brandImport > shellImport, 'brand bar refinement must load after app shell CSS');
+  assert.ok(
+    brandImport > shellImport,
+    'brand bar refinement must load after app shell CSS',
+  );
 });
 
 test('global brand bar keeps one visual logo horizontally centered', () => {
