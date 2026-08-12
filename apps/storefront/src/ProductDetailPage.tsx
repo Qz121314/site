@@ -152,7 +152,13 @@ export function ProductDetailPage({
         </span>
       </a>
     </div>
-  ) : null;
+  ) : (
+    <div className="product-detail-fixed-action">
+      <button className="cta-button is-unavailable" type="button" disabled>
+        <span>{SYSTEM_UI.unavailable}</span>
+      </button>
+    </div>
+  );
 
   return (
     <>

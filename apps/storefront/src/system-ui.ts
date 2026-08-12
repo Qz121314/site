@@ -11,6 +11,7 @@ export const SYSTEM_UI = {
   message: 'Message',
   messageFailed: 'Failed',
   more: 'More',
+  noSupport: 'No support available',
   noResults: 'No results',
   notFound: 'Not found',
   read: 'Read',

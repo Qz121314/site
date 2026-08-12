@@ -41,15 +41,13 @@ test('Messages has no local search or visible ten-conversation capacity meter', 
   assert.doesNotMatch(supportSource, /conversations\.length\}\/10|of 10 conversations/u);
 });
 
-test('Messages omits the duplicate page title and unnecessary empty-state explanation', () => {
+test('Messages keeps a minimal empty state and explains missing customer service', () => {
   assert.doesNotMatch(supportSource, /messages-page-heading|id="messages-title"/u);
   assert.doesNotMatch(supportSource, /messages\.emptyDescription|messages\.emptyTitle/u);
-  assert.match(
-    supportSource,
-    /<div className="messages-empty-state" aria-hidden="true">/u,
-  );
+  assert.match(supportSource, /<div className="messages-empty-state" role="status">/u);
+  assert.match(supportSource, /SYSTEM_UI\.noSupport/u);
   assert.doesNotMatch(messagesCss, /\.messages-page-heading/u);
-  assert.doesNotMatch(messagesCss, /\.messages-empty-state p/u);
+  assert.match(messagesCss, /\.messages-empty-state strong/u);
 });
 
 test('Messages structural selectors have one dedicated stylesheet owner', () => {
