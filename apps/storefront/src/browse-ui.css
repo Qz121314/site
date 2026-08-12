@@ -1,4 +1,4 @@
-/* Browse is a native discovery directory on touch screens and an editorial grid on desktop. */
+/* Browse uses image-led destination cards at every viewport. */
 
 .browse-directory {
   display: grid;
@@ -92,25 +92,23 @@
 .browse-section-list {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
-  gap: 0;
-  border-top: 1px solid color-mix(in srgb, var(--line) 68%, transparent);
+  gap: 12px;
+  border-top: 0;
 }
 
 .browse-section-card {
   position: relative;
-  display: grid;
-  grid-template-columns: 104px minmax(0, 1fr);
+  display: block;
   min-width: 0;
-  min-height: 104px;
-  align-items: center;
-  gap: 14px;
-  padding: 12px 0;
+  min-height: 190px;
+  aspect-ratio: 16 / 9.2;
+  padding: 0;
   border: 0;
-  border-bottom: 1px solid color-mix(in srgb, var(--line) 68%, transparent);
   border-radius: 0;
-  color: var(--text);
-  background: transparent;
-  box-shadow: none;
+  overflow: hidden;
+  color: #fff;
+  background: #121318;
+  box-shadow: inset 0 0 0 1px rgb(255 255 255 / 8%);
   isolation: isolate;
   transition:
     opacity var(--app-motion-fast, 160ms) ease,
@@ -119,18 +117,27 @@
 }
 
 .browse-section-card::after {
-  display: none;
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: block;
+  border: 1px solid rgb(255 255 255 / 10%);
+  content: '';
+  pointer-events: none;
+  transition: border-color var(--app-motion-fast, 160ms) ease;
 }
 
 .browse-section-card-media {
-  position: relative;
+  position: absolute;
+  inset: 0;
+  z-index: 0;
   display: block;
-  width: 104px;
-  height: 80px;
+  width: 100%;
+  height: 100%;
   overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--line) 64%, transparent);
-  border-radius: var(--theme-radius-media, 0px);
-  background: var(--theme-media-background, var(--surface-soft));
+  border: 0;
+  border-radius: 0;
+  background: #121318;
   box-shadow: none;
   isolation: isolate;
 }
@@ -159,15 +166,36 @@
 }
 
 .browse-section-card-scrim {
-  display: none;
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: block;
+  width: 100%;
+  height: 100%;
+  background:
+    linear-gradient(90deg, rgb(0 0 0 / 38%) 0%, rgb(0 0 0 / 4%) 66%),
+    linear-gradient(180deg, rgb(0 0 0 / 0%) 32%, rgb(0 0 0 / 82%) 100%);
+}
+
+.browse-section-card.is-fallback .browse-section-card-scrim {
+  background:
+    linear-gradient(115deg, rgb(0 0 0 / 12%), rgb(0 0 0 / 46%)),
+    linear-gradient(
+      145deg,
+      color-mix(in srgb, var(--brand) 76%, #111827),
+      color-mix(in srgb, var(--brand-strong) 58%, #090b10)
+    );
 }
 
 .browse-section-card-content {
-  position: static;
-  z-index: 1;
+  position: absolute;
+  right: 16px;
+  bottom: 15px;
+  left: 16px;
+  z-index: 3;
   display: flex;
   min-width: 0;
-  align-items: center;
+  align-items: flex-end;
   justify-content: space-between;
   gap: 12px;
 }
@@ -180,12 +208,13 @@
 
 .browse-section-card-content strong {
   overflow: hidden;
-  color: var(--text);
-  font-size: clamp(1rem, 4.6vw, 1.15rem);
-  font-weight: 690;
-  line-height: 1.12;
-  letter-spacing: -0.028em;
+  color: #fff;
+  font-size: clamp(1.16rem, 5.2vw, 1.4rem);
+  font-weight: 710;
+  line-height: 1.04;
+  letter-spacing: -0.034em;
   text-overflow: ellipsis;
+  text-shadow: 0 1px 14px rgb(0 0 0 / 32%);
   white-space: nowrap;
 }
 
@@ -194,24 +223,26 @@
   max-width: 46ch;
   margin: 0;
   overflow: hidden;
-  color: var(--app-text-secondary, var(--muted));
+  color: rgb(255 255 255 / 76%);
   font-size: var(--storefront-text-caption, 0.6875rem);
   font-weight: 450;
   line-height: 1.38;
+  text-shadow: 0 1px 10px rgb(0 0 0 / 30%);
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
 
 .browse-section-card-arrow {
   display: grid;
-  width: 30px;
-  height: 30px;
-  flex: 0 0 30px;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
   place-items: center;
-  border: 0;
+  border: 1px solid rgb(255 255 255 / 40%);
   border-radius: 50%;
-  color: color-mix(in srgb, var(--text) 54%, var(--muted));
-  background: color-mix(in srgb, var(--text) 4%, transparent);
+  color: #fff;
+  background: rgb(0 0 0 / 18%);
+  backdrop-filter: blur(8px);
   transition:
     color var(--app-motion-fast, 160ms) ease,
     background var(--app-motion-fast, 160ms) ease,
@@ -343,15 +374,8 @@
     backdrop-filter: blur(18px) saturate(1.08);
   }
 
-  .browse-section-card-media {
-    width: 96px;
-    height: 74px;
-  }
-
   .browse-section-card {
-    grid-template-columns: 96px minmax(0, 1fr);
-    min-height: 98px;
-    gap: 13px;
+    min-height: 190px;
   }
 }
 
@@ -396,7 +420,7 @@
   .browse-section-card-media {
     position: absolute;
     inset: 0;
-    z-index: -3;
+    z-index: 0;
     width: 100%;
     height: 100%;
     border: 0;
@@ -408,7 +432,7 @@
   .browse-section-card-scrim {
     position: absolute;
     inset: 0;
-    z-index: -1;
+    z-index: 1;
     display: block;
     width: 100%;
     height: 100%;

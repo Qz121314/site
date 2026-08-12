@@ -1,7 +1,9 @@
 .section-catalog {
-  display: grid;
+  display: flex;
   width: min(980px, 100%);
-  gap: 16px;
+  min-height: 0;
+  flex-direction: column;
+  gap: 0;
   margin-inline: auto;
 }
 
@@ -10,15 +12,14 @@
 }
 
 .section-catalog-header {
-  position: sticky;
-  top: env(safe-area-inset-top);
+  position: relative;
   z-index: 40;
   display: grid;
-  min-height: 50px;
-  grid-template-columns: 38px minmax(0, 1fr) 38px;
+  min-height: 58px;
+  grid-template-columns: 40px minmax(0, 1fr) 40px;
   align-items: center;
-  gap: 8px;
-  margin: -12px calc(var(--app-gutter, 16px) * -1) 0;
+  gap: 10px;
+  margin: 0;
   padding: 0 var(--app-gutter, 16px);
   border-bottom: 1px solid color-mix(in srgb, var(--line) 56%, transparent);
   background: color-mix(in srgb, var(--page-bg) 94%, transparent);
@@ -29,14 +30,16 @@
 
 .section-catalog-back {
   display: grid;
-  width: 36px;
-  height: 36px;
+  width: 40px;
+  height: 40px;
   place-items: center;
   border: 1px solid color-mix(in srgb, var(--line) 58%, transparent);
   border-radius: 50%;
   color: color-mix(in srgb, var(--text) 88%, var(--muted));
-  background: color-mix(in srgb, var(--surface) 90%, transparent);
-  box-shadow: 0 2px 8px color-mix(in srgb, var(--text) 5%, transparent);
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  box-shadow:
+    0 1px 0 color-mix(in srgb, #fff 10%, transparent) inset,
+    0 6px 18px color-mix(in srgb, #000 9%, transparent);
   text-decoration: none;
   transition:
     opacity var(--app-motion-fast, 160ms) ease,
@@ -44,8 +47,8 @@
 }
 
 .section-catalog-back svg {
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
 }
 
 .section-catalog-back:active {
@@ -70,7 +73,13 @@
 .section-catalog-controls {
   display: grid;
   width: min(760px, 100%);
+  flex: 0 0 auto;
   gap: 8px;
+}
+
+.section-catalog-content {
+  min-width: 0;
+  min-height: 0;
 }
 
 .section-catalog-search {
@@ -368,11 +377,59 @@
 }
 
 @media (max-width: 767px) {
+  @supports selector(.app-shell:has(.section-catalog)) {
+    html:has(.section-catalog),
+    body:has(.section-catalog),
+    #root:has(.section-catalog) {
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+      overflow: hidden;
+      overscroll-behavior: none;
+    }
+
+    body:has(.section-catalog) .pwa-install-card,
+    .app-shell:has(.section-catalog) > .topbar,
+    .app-shell:has(.section-catalog) > .site-footer {
+      display: none;
+    }
+
+    .app-shell:has(.section-catalog) {
+      width: 100%;
+      height: 100dvh;
+      min-height: 0;
+      padding-bottom: 0;
+      overflow: hidden;
+    }
+
+    .app-shell:has(.section-catalog) > main {
+      width: 100%;
+      height: calc(100dvh - 68px - env(safe-area-inset-bottom));
+      min-height: 0;
+      margin: 0;
+      padding: 0;
+      overflow: hidden;
+    }
+
+    .app-shell:has(.section-catalog) .storefront-route-view,
+    .app-shell:has(.section-catalog) .section-catalog {
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+    }
+  }
+
+  .section-catalog-header {
+    min-height: calc(58px + env(safe-area-inset-top));
+    flex: 0 0 auto;
+    padding-top: env(safe-area-inset-top);
+  }
+
   .section-catalog-controls {
-    position: sticky;
-    top: calc(50px + env(safe-area-inset-top));
+    position: relative;
     z-index: 34;
-    margin-inline: calc(var(--app-gutter, 16px) * -1);
+    width: 100%;
+    margin: 0;
     padding: 8px var(--app-gutter, 16px) 10px;
     border-bottom: 1px solid color-mix(in srgb, var(--line) 44%, transparent);
     background: color-mix(in srgb, var(--page-bg) 94%, transparent);
@@ -383,10 +440,29 @@
     margin-right: calc(var(--app-gutter, 16px) * -1);
     padding-right: var(--app-gutter, 16px);
   }
+
+  .section-catalog-content {
+    flex: 1 1 auto;
+    overflow-x: hidden;
+    overflow-y: auto;
+    overscroll-behavior-y: contain;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .section-catalog-content::-webkit-scrollbar {
+    display: none;
+  }
+
+  .section-catalog-products {
+    width: 100%;
+    padding: 12px var(--app-gutter, 16px) 24px;
+  }
 }
 
 @media (min-width: 768px) {
   .section-catalog {
+    display: grid;
     gap: 20px;
   }
 

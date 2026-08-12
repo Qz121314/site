@@ -39,6 +39,7 @@ test('section catalog uses category select and tag filtering', () => {
   assert.match(sectionSource, /aria-pressed=\{selectedTags\.has\(tag\.id\)\}/u);
   assert.match(sectionSource, /\[\.\.\.selectedTags\]\.every/u);
   assert.match(sectionSource, /clearFilters/u);
+  assert.match(sectionSource, /className="section-catalog-content"/u);
   assert.doesNotMatch(sectionSource, /section-catalog-results/u);
 });
 
@@ -64,6 +65,18 @@ test('section products stay two-column', () => {
   assert.doesNotMatch(
     cssSource,
     /\.section-catalog-products\s*\{[\s\S]*?grid-template-columns:\s*1fr[;\n]/u,
+  );
+});
+
+test('mobile section catalog locks the document and scrolls only its content pane', () => {
+  assert.match(cssSource, /body:has\(\.section-catalog\)[\s\S]*?overflow:\s*hidden/su);
+  assert.match(
+    cssSource,
+    /\.app-shell:has\(\.section-catalog\)\s*> main\s*\{[^}]*height:\s*calc\(100dvh - 68px - env\(safe-area-inset-bottom\)\)[^}]*overflow:\s*hidden/su,
+  );
+  assert.match(
+    cssSource,
+    /\.section-catalog-content\s*\{[^}]*flex:\s*1 1 auto[^}]*overflow-y:\s*auto/su,
   );
 });
 

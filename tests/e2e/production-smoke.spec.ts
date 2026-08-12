@@ -54,10 +54,26 @@ test('storefront renders its shell and primary browse route without runtime erro
 
   const visualContract = await page.evaluate(() => {
     const card = document.querySelector<HTMLElement>('.browse-section-card');
+    const media = card?.querySelector<HTMLElement>('.browse-section-card-media');
+    const image = media?.querySelector<HTMLImageElement>('img');
     const search = document.querySelector<HTMLElement>('.browse-directory-search');
     const navigation = document.querySelector<HTMLElement>('.bottom-nav');
+    const cardRect = card?.getBoundingClientRect();
+    const mediaRect = media?.getBoundingClientRect();
+    const imageRect = image?.getBoundingClientRect();
     return {
       cardRadius: card ? getComputedStyle(card).borderRadius : null,
+      cardMinHeight: cardRect?.height ?? 0,
+      mediaFillsCard:
+        cardRect && mediaRect
+          ? Math.abs(cardRect.width - mediaRect.width) <= 1 &&
+            Math.abs(cardRect.height - mediaRect.height) <= 1
+          : false,
+      imageFillsCard:
+        !imageRect || !cardRect
+          ? true
+          : imageRect.width >= cardRect.width - 1 &&
+            imageRect.height >= cardRect.height - 1,
       searchRadius: search ? getComputedStyle(search).borderRadius : null,
       navigationRadius: navigation ? getComputedStyle(navigation).borderRadius : null,
       navigationBottom: navigation ? getComputedStyle(navigation).bottom : null,
@@ -65,9 +81,53 @@ test('storefront renders its shell and primary browse route without runtime erro
   });
   expect(visualContract).toEqual({
     cardRadius: '0px',
+    cardMinHeight: expect.any(Number),
+    mediaFillsCard: true,
+    imageFillsCard: true,
     searchRadius: '3px',
     navigationRadius: '0px',
     navigationBottom: '0px',
+  });
+  expect(visualContract.cardMinHeight).toBeGreaterThanOrEqual(190);
+
+  const sectionHref = await page
+    .locator('a[href^="/sections/"]:not([href*="/products/"])')
+    .first()
+    .getAttribute('href');
+  expect(sectionHref).toBeTruthy();
+  await page.goto(sectionHref!);
+  await expect(page.locator('.section-catalog-back')).toBeVisible();
+  await expect(page.locator('.section-catalog-content')).toBeVisible();
+
+  const sectionAppContract = await page.evaluate(() => {
+    const back = document.querySelector<HTMLElement>('.section-catalog-back');
+    const content = document.querySelector<HTMLElement>('.section-catalog-content');
+    const main = document.querySelector<HTMLElement>('.app-shell > main');
+    const topbar = document.querySelector<HTMLElement>('.app-shell > .topbar');
+    const backRect = back?.getBoundingClientRect();
+    return {
+      documentLocked:
+        document.scrollingElement !== null &&
+        document.scrollingElement.scrollHeight <=
+          document.scrollingElement.clientHeight + 1,
+      bodyOverflow: getComputedStyle(document.body).overflow,
+      mainOverflow: main ? getComputedStyle(main).overflow : null,
+      contentOverflowY: content ? getComputedStyle(content).overflowY : null,
+      backWidth: backRect?.width ?? 0,
+      backHeight: backRect?.height ?? 0,
+      backRadius: back ? getComputedStyle(back).borderRadius : null,
+      topbarHidden: topbar ? getComputedStyle(topbar).display === 'none' : false,
+    };
+  });
+  expect(sectionAppContract).toEqual({
+    documentLocked: true,
+    bodyOverflow: 'hidden',
+    mainOverflow: 'hidden',
+    contentOverflowY: 'auto',
+    backWidth: 40,
+    backHeight: 40,
+    backRadius: '50%',
+    topbarHidden: true,
   });
   expect(pageErrors).toEqual([]);
 });
