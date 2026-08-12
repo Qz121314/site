@@ -1,22 +1,24 @@
 /* Shared Theme Center -> Storefront visual contract. */
 
 :is(html, .storefront-theme-root) {
-  --app-gutter: 16px;
-  --app-surface-raised: color-mix(in srgb, var(--surface) 94%, var(--surface-soft));
-  --app-text-secondary: color-mix(in srgb, var(--text) 62%, var(--muted));
-  --app-motion-fast: 160ms;
-  --app-motion-base: 240ms;
-  --app-motion-slow: 360ms;
-  --app-ease-out: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --app-gutter: 18px;
+  --app-surface-raised: color-mix(in srgb, var(--surface) 96%, var(--surface-soft));
+  --app-text-secondary: color-mix(in srgb, var(--text) 66%, var(--muted));
+  --app-hairline: color-mix(in srgb, var(--line) 54%, transparent);
+  --app-shadow-soft: 0 18px 50px color-mix(in srgb, #000 14%, transparent);
+  --app-motion-fast: 140ms;
+  --app-motion-base: 220ms;
+  --app-motion-slow: 420ms;
+  --app-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
   --app-ease-spring: cubic-bezier(0.16, 1, 0.3, 1);
   --theme-section-space: 24px;
   --theme-card-gap-y: 18px;
   --theme-card-gap-x: 10px;
   --theme-radius-card: 2px;
   --theme-radius-media: 0px;
-  --theme-radius-control: 4px;
-  --theme-radius-icon: 12px;
-  --theme-radius-chip: 2px;
+  --theme-radius-control: 12px;
+  --theme-radius-icon: 16px;
+  --theme-radius-chip: 999px;
   --theme-control-height: 44px;
   --theme-section-icon-size: 48px;
   --theme-desktop-media-size: 154px;
@@ -29,14 +31,10 @@
   --theme-control-background: var(--surface);
   --theme-header-background: color-mix(
     in srgb,
-    var(--page-bg, var(--surface)) 96%,
-    var(--surface)
+    var(--page-bg, var(--surface)) 88%,
+    transparent
   );
-  --theme-tab-background: color-mix(
-    in srgb,
-    var(--page-bg, var(--surface)) 92%,
-    var(--surface)
-  );
+  --theme-tab-background: color-mix(in srgb, var(--surface) 90%, transparent);
   --theme-tab-shadow: none;
 }
 
@@ -69,31 +67,30 @@
 :is(html, .storefront-theme-root)[data-theme='marketplace'] {
   --theme-radius-card: 2px;
   --theme-radius-media: 0px;
-  --theme-radius-control: 4px;
-  --theme-radius-icon: 12px;
+  --theme-radius-control: 12px;
+  --theme-radius-icon: 16px;
 }
 
 :is(html, .storefront-theme-root)[data-theme='noir'] {
-  --theme-radius-card: 2px;
+  --theme-radius-card: 0px;
   --theme-radius-media: 0px;
-  --theme-radius-control: 3px;
-  --theme-radius-icon: 12px;
-  --theme-card-background: color-mix(in srgb, var(--surface) 97%, var(--brand) 3%);
-  --theme-card-border: color-mix(in srgb, var(--line) 90%, var(--brand) 10%);
-  --theme-media-background: color-mix(in srgb, var(--surface-soft) 96%, black 4%);
-  --theme-control-background: color-mix(in srgb, var(--surface) 97%, var(--brand) 3%);
-  --app-surface-raised: color-mix(in srgb, var(--surface) 92%, var(--brand) 8%);
-  --app-text-secondary: color-mix(in srgb, var(--text) 68%, var(--muted));
+  --theme-radius-control: 14px;
+  --theme-radius-icon: 16px;
+  --theme-radius-chip: 999px;
+  --theme-card-background: color-mix(in srgb, var(--surface) 98%, var(--brand) 2%);
+  --theme-card-border: color-mix(in srgb, var(--line) 94%, var(--brand) 6%);
+  --theme-media-background: color-mix(in srgb, var(--surface-soft) 94%, black 6%);
+  --theme-control-background: color-mix(in srgb, var(--surface) 96%, transparent);
+  --app-surface-raised: color-mix(in srgb, var(--surface) 96%, var(--brand) 4%);
+  --app-text-secondary: color-mix(in srgb, var(--text) 72%, var(--muted));
+  --app-hairline: color-mix(in srgb, var(--line) 48%, transparent);
+  --app-shadow-soft: 0 22px 64px rgb(0 0 0 / 32%);
   --theme-header-background: color-mix(
     in srgb,
-    var(--page-bg, var(--surface)) 96%,
-    var(--surface)
+    var(--page-bg, var(--surface)) 88%,
+    transparent
   );
-  --theme-tab-background: color-mix(
-    in srgb,
-    var(--page-bg, var(--surface)) 93%,
-    var(--surface)
-  );
+  --theme-tab-background: color-mix(in srgb, var(--surface) 88%, transparent);
 }
 
 :is(html, .storefront-theme-root)[data-theme='live'] {

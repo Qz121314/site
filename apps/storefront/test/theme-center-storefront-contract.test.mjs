@@ -78,15 +78,15 @@ test('official theme recipes and density variants remain visually distinct', () 
   assert.match(sharedContract, /--theme-tab-background/u);
 });
 
-test('official themes use a restrained precision radius system', () => {
+test('official themes keep media precise while controls and icon objects stay tactile', () => {
   assert.match(sharedContract, /--theme-radius-card:\s*2px;/u);
   assert.match(sharedContract, /--theme-radius-media:\s*0px;/u);
-  assert.match(sharedContract, /--theme-radius-control:\s*4px;/u);
-  assert.match(sharedContract, /--theme-radius-icon:\s*12px;/u);
-  assert.match(sharedContract, /--theme-radius-chip:\s*2px;/u);
-  assert.doesNotMatch(
+  assert.match(sharedContract, /--theme-radius-control:\s*12px;/u);
+  assert.match(sharedContract, /--theme-radius-icon:\s*16px;/u);
+  assert.match(sharedContract, /--theme-radius-chip:\s*999px;/u);
+  assert.match(
     sharedContract,
-    /--theme-radius-(?:card|media|control|chip):\s*(?:[1-9]\d+px|999px)/u,
+    /\[data-theme='noir'\][\s\S]*?--theme-radius-card:\s*0px;[\s\S]*?--theme-radius-media:\s*0px;[\s\S]*?--theme-radius-control:\s*14px;[\s\S]*?--theme-radius-icon:\s*16px;[\s\S]*?--theme-radius-chip:\s*999px;/u,
   );
 });
 

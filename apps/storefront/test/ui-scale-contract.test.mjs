@@ -31,7 +31,7 @@ test('Storefront keeps a readable four-step UI type scale', () => {
   assert.match(typographyContract, /--storefront-text-caption:\s*0\.6875rem;/u);
   assert.match(typographyContract, /--storefront-text-small:\s*0\.8125rem;/u);
   assert.match(typographyContract, /--storefront-text-body:\s*0\.9375rem;/u);
-  assert.match(typographyContract, /--storefront-text-label:\s*1rem;/u);
+  assert.match(typographyContract, /--storefront-text-label:\s*0\.9375rem;/u);
   assert.match(
     typographyContract,
     /\.service-mode-badge,[\s\S]*\.bottom-nav small[\s\S]*font-size:\s*var\(--storefront-text-caption\)/u,
@@ -39,9 +39,10 @@ test('Storefront keeps a readable four-step UI type scale', () => {
 });
 
 test('Storefront interaction timing uses one restrained app motion system', () => {
-  assert.match(themeContract, /--app-motion-fast:\s*160ms;/u);
-  assert.match(themeContract, /--app-motion-base:\s*240ms;/u);
-  assert.match(themeContract, /--app-ease-out:\s*cubic-bezier\(0\.2, 0\.8, 0\.2, 1\);/u);
+  assert.match(themeContract, /--app-motion-fast:\s*140ms;/u);
+  assert.match(themeContract, /--app-motion-base:\s*220ms;/u);
+  assert.match(themeContract, /--app-motion-slow:\s*420ms;/u);
+  assert.match(themeContract, /--app-ease-out:\s*cubic-bezier\(0\.22, 1, 0\.36, 1\);/u);
 });
 
 test('all Theme Center densities keep touch controls at least 44px tall', () => {

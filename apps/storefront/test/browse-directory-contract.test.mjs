@@ -53,7 +53,7 @@ test('Browse uses full-bleed image cards on mobile and desktop', () => {
   );
   assert.match(
     browseCss,
-    /\.browse-section-card\s*\{[^}]*min-height:\s*190px[^}]*aspect-ratio:\s*16 \/ 9\.2/su,
+    /\.browse-section-card\s*\{[^}]*min-height:\s*220px[^}]*aspect-ratio:\s*16 \/ 10/su,
   );
   assert.match(browseCss, /\.browse-section-card\s*\{[^}]*border-radius:\s*0/su);
   assert.match(
@@ -74,7 +74,7 @@ test('Browse uses full-bleed image cards on mobile and desktop', () => {
   );
   assert.match(
     browseCss,
-    /@media \(min-width:\s*768px\)[\s\S]*?\.browse-section-card\s*\{[^}]*aspect-ratio:\s*16 \/ 8\.4/u,
+    /@media \(min-width:\s*768px\)[\s\S]*?\.browse-section-card\s*\{[^}]*aspect-ratio:\s*16 \/ 9/u,
   );
   assert.match(
     browseCss,
@@ -98,7 +98,7 @@ test('Browse search uses the same minimal two-column product language as section
   );
   assert.match(
     browseCss,
-    /\.browse-directory-search\s*\{[^}]*border-radius:\s*var\(--theme-radius-control,\s*4px\)/su,
+    /\.browse-directory-search\s*\{[^}]*border-radius:\s*var\(--theme-radius-control,\s*12px\)/su,
   );
 });
 
