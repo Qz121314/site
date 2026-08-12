@@ -46,7 +46,8 @@ test('FAQ list and article detail use the primary Storefront shell and keep FAQ 
 });
 
 test('FAQ article UI is isolated, mobile-friendly, and consumes Theme Center variables', () => {
-  assert.match(mainSource, /\.\/faq-ui\.css/u);
+  assert.doesNotMatch(mainSource, /\.\/faq-ui\.css/u);
+  assert.match(faqSource, /import '\.\/faq-ui\.css';/u);
   assert.match(cssSource, /\.faq-article-row\s*\{[\s\S]*min-height:\s*64px/u);
   assert.match(
     cssSource,

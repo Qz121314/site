@@ -21,6 +21,34 @@ type PublicSupportConnection = {
   protocolVersion: 'v1';
 };
 
+type JsonRecord = Record<string, unknown>;
+
+function isRecord(value: unknown): value is JsonRecord {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+async function readPublishedJson(bucket: R2Bucket, key: string): Promise<unknown | null> {
+  const object = await bucket.get(key);
+  if (!object) return null;
+  try {
+    return JSON.parse(await object.text()) as unknown;
+  } catch {
+    return null;
+  }
+}
+
+function publishedFile(reference: unknown, fileName: string): string | null {
+  if (!isRecord(reference) || typeof reference.manifestKey !== 'string') return null;
+  const manifestKey = reference.manifestKey;
+  if (
+    !/^public\/modules\/[A-Za-z0-9._/-]+\/manifest\.json$/u.test(manifestKey) ||
+    manifestKey.includes('..')
+  ) {
+    return null;
+  }
+  return manifestKey.replace(/manifest\.json$/u, fileName);
+}
+
 function setPublicRuntimeHeaders(context: Context<AppEnvironment>) {
   context.header('Cache-Control', 'no-store');
   context.header('X-Robots-Tag', 'noindex, nofollow');
@@ -55,6 +83,45 @@ publicStorefrontConfigRoutes.get('/media-base-url', async (context) => {
 
   setPublicRuntimeHeaders(context);
   return context.json({ mediaBaseUrl });
+});
+
+publicStorefrontConfigRoutes.get('/bootstrap', async (context) => {
+  const [pointerValue, mediaBaseUrl] = await Promise.all([
+    readPublishedJson(context.env.ASSETS_BUCKET, 'public/current.json'),
+    getMediaBaseUrl(context.env.DB),
+  ]);
+  if (!isRecord(pointerValue) || pointerValue.schemaVersion !== 2) {
+    return context.json({ available: false }, 404);
+  }
+  const sitePath = publishedFile(pointerValue.site, 'site.json');
+  const sectionsPath = publishedFile(pointerValue.sectionsIndex, 'sections.json');
+  const pointerVersion =
+    typeof pointerValue.contentVersion === 'string' ? pointerValue.contentVersion : null;
+  if (!sitePath || !sectionsPath || !pointerVersion) {
+    return context.json({ available: false }, 404);
+  }
+
+  const [site, sectionsIndex, home] = await Promise.all([
+    readPublishedJson(context.env.ASSETS_BUCKET, sitePath),
+    readPublishedJson(context.env.ASSETS_BUCKET, sectionsPath),
+    readPublishedJson(
+      context.env.ASSETS_BUCKET,
+      `public/home/${pointerVersion}/home.json`,
+    ),
+  ]);
+  if (!site || !sectionsIndex || !home) {
+    return context.json({ available: false }, 404);
+  }
+
+  context.header('Cache-Control', 'public, max-age=30, must-revalidate');
+  context.header('X-Robots-Tag', 'noindex, nofollow');
+  return context.json({
+    pointer: pointerValue,
+    site,
+    sectionsIndex,
+    home,
+    mediaBaseUrl,
+  });
 });
 
 publicStorefrontConfigRoutes.get('/cta/:productId', async (context) => {

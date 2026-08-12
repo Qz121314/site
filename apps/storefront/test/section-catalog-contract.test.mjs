@@ -91,7 +91,8 @@ test('mobile section catalog locks the document and scrolls only its content pan
 });
 
 test('section catalog uses Theme Center semantic variables and isolated styles', () => {
-  assert.match(mainSource, /\.\/section-ui\.css/u);
+  assert.doesNotMatch(mainSource, /\.\/section-ui\.css/u);
+  assert.match(sectionSource, /import '\.\/section-ui\.css';/u);
   assert.match(cssSource, /var\(--surface\)/u);
   assert.match(cssSource, /var\(--brand-strong\)/u);
   assert.match(cssSource, /var\(--line\)/u);

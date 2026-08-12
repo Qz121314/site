@@ -13,6 +13,8 @@ import { ResilientImage, ResilientVideo } from './ResilientMedia';
 import { sectionHref } from './routing';
 import { canNavigateStorefrontBack, navigateStorefrontBack } from './storefront-history';
 import { SYSTEM_UI } from './system-ui';
+import './product-detail-ui.css';
+import '@site/storefront-ui/product-detail-theme-contract.css';
 
 function isVideoMediaUrl(value: string): boolean {
   try {

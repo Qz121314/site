@@ -10,6 +10,7 @@ import {
 import { ResilientImage } from './ResilientMedia';
 import { productHref, sectionHref } from './routing';
 import { SYSTEM_UI } from './system-ui';
+import './browse-ui.css';
 
 function SearchIcon() {
   return (

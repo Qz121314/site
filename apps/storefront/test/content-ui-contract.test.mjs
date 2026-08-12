@@ -24,11 +24,9 @@ const typographyContractCss = await readFile(
   'utf8',
 );
 
-test('content UI refinement loads after the app shell layer', () => {
-  const shellImport = mainSource.indexOf("import './app-shell.css';");
-  const contentImport = mainSource.indexOf("import './content-ui.css';");
-  assert.ok(shellImport >= 0, 'app shell styles must be loaded');
-  assert.ok(contentImport > shellImport, 'content UI must load after app shell styles');
+test('unused generic content card styles stay out of the critical bundle', () => {
+  assert.match(mainSource, /import '\.\/app-shell\.css';/u);
+  assert.doesNotMatch(mainSource, /import '\.\/content-ui\.css';/u);
 });
 
 test('product browsing stays two-column on mobile and desktop', () => {

@@ -26,6 +26,10 @@ const rootSource = await readFile(
   new URL('../src/StorefrontRoot.tsx', import.meta.url),
   'utf8',
 );
+const messagesPageSource = await readFile(
+  new URL('../src/MessagesPage.tsx', import.meta.url),
+  'utf8',
+);
 const integrationDoc = await readFile(
   new URL('../../../docs/customer-service-integration.md', import.meta.url),
   'utf8',
@@ -42,13 +46,14 @@ test('Messages UI uses direct customer-service REST and realtime gateways', () =
   assert.match(gatewaySource, /\/client\/v1\/conversations/u);
   assert.match(realtimeSource, /new WebSocket/u);
   assert.match(realtimeSource, /buildSupportWebSocketUrl/u);
-  assert.match(rootSource, /subscribeSupportRealtime/u);
+  assert.match(rootSource, /lazy\(\(\) =>[\s\S]*?import\('\.\/MessagesPage'\)/u);
+  assert.match(messagesPageSource, /subscribeSupportRealtime/u);
   assert.match(rootSource, /message-compose/u);
   assert.match(supportSource, /nextMessageCursor/u);
 });
 
 test('Storefront receives public connection metadata but never management credentials', () => {
-  const browserBoundary = `${contractSource}\n${gatewaySource}\n${realtimeSource}\n${identitySource}\n${supportSource}\n${rootSource}`;
+  const browserBoundary = `${contractSource}\n${gatewaySource}\n${realtimeSource}\n${identitySource}\n${supportSource}\n${rootSource}\n${messagesPageSource}`;
   assert.match(browserBoundary, /baseUrl/u);
   assert.match(browserBoundary, /projectId/u);
   assert.doesNotMatch(

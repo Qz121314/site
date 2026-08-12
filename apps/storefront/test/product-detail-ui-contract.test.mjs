@@ -35,21 +35,18 @@ const adminMain = await readFile(
 );
 
 test('product detail structure loads before Theme Center visual recipes', () => {
-  const detailUi = mainSource.indexOf("import './product-detail-ui.css';");
+  const detailUi = detailSource.indexOf("import './product-detail-ui.css';");
   const sharedTheme = mainSource.indexOf(
     "import '@site/storefront-ui/theme-contract.css';",
   );
-  const detailTheme = mainSource.indexOf(
+  const detailTheme = detailSource.indexOf(
     "import '@site/storefront-ui/product-detail-theme-contract.css';",
   );
   assert.ok(detailUi >= 0, 'product detail structural styles must load');
+  assert.ok(sharedTheme >= 0, 'shared Theme Center contract must stay global');
   assert.ok(
-    sharedTheme > detailUi,
-    'shared Theme Center contract must load after detail structure',
-  );
-  assert.ok(
-    detailTheme > sharedTheme,
-    'detail Theme Center extension must be the final detail visual layer',
+    detailTheme > detailUi,
+    'route Theme Center extension must load after detail structure',
   );
 });
 
