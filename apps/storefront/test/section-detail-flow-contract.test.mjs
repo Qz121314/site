@@ -34,10 +34,13 @@ test('section catalog keeps the section name in the app header and product cards
   assert.match(sectionCss, /\.section-product-cover \{[\s\S]*aspect-ratio: 1 \/ 1/);
 });
 
-test('product detail keeps Back at the left and uses the single backend CTA route', () => {
+test('product detail keeps Back at the left and routes the backend CTA by mode', () => {
   assert.match(detailSource, /loadPublicCta\(product!\.id, signal\)/);
   assert.match(detailSource, /href=\{cta\.path\}/);
-  assert.match(detailSource, /cta\.mode === 'link'/);
+  assert.match(detailSource, /cta\.mode === 'customer_service'/);
+  assert.match(detailSource, /<LinkComponent/);
+  assert.match(detailSource, /target="_blank"/);
+  assert.match(detailSource, /rel="noopener noreferrer nofollow"/);
   assert.match(detailSource, /SYSTEM_UI\.temporarilyUnavailable/);
   assert.doesNotMatch(detailSource, /handleResolveCta|ctaDestination/);
   assert.doesNotMatch(detailSource, /method: 'POST'/);
