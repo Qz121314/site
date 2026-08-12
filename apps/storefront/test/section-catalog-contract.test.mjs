@@ -23,24 +23,34 @@ test('section route uses a dedicated primary-shell product catalog', () => {
   assert.match(rootSource, /<SectionCatalogPage/u);
 });
 
-test('section catalog uses category select and tag filtering', () => {
+test('section catalog uses direct category buttons and tag filtering', () => {
   assert.match(sectionSource, /type="search"/u);
   assert.match(sectionSource, /className="section-catalog-filters"/u);
-  assert.match(sectionSource, /section-category-select/u);
-  assert.match(sectionSource, /<select/u);
-  assert.match(sectionSource, /value=\{categoryId\}/u);
+  assert.match(sectionSource, /className="section-category-filter"/u);
   assert.match(
     sectionSource,
-    /onChange=\{\(event\) => setCategoryId\(event\.target\.value\)\}/u,
+    /onClick=\{\(\) => setCategoryId\(''\)\}[\s\S]*?\{SYSTEM_UI\.all\}/u,
   );
-  assert.match(sectionSource, /<option value="">\{SYSTEM_UI\.all\}<\/option>/u);
-  assert.doesNotMatch(sectionSource, /className="section-category-options"/u);
+  assert.match(sectionSource, /onClick=\{\(\) => setCategoryId\(category\.id\)\}/u);
+  assert.match(sectionSource, /aria-pressed=\{isActive\}/u);
+  assert.doesNotMatch(sectionSource, /<select|<option|section-category-select/u);
   assert.match(sectionSource, /className="section-tag-filter"/u);
   assert.match(sectionSource, /aria-pressed=\{selectedTags\.has\(tag\.id\)\}/u);
   assert.match(sectionSource, /\[\.\.\.selectedTags\]\.every/u);
   assert.match(sectionSource, /clearFilters/u);
   assert.match(sectionSource, /className="section-catalog-content"/u);
   assert.doesNotMatch(sectionSource, /section-catalog-results/u);
+});
+
+test('section product cards show product names without category labels', () => {
+  assert.match(
+    sectionSource,
+    /<span className="section-product-meta">[\s\S]*?<h2>\{product\.title\}<\/h2>/u,
+  );
+  assert.doesNotMatch(
+    sectionSource,
+    /section-product-meta[\s\S]*?<small>|product\.category\.name \|\| product\.tags\[0\]/u,
+  );
 });
 
 test('section header stays content-focused', () => {

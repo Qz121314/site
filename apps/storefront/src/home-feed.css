@@ -7,12 +7,25 @@
   margin-inline: auto;
 }
 
+.home-shortcut-zone {
+  position: relative;
+  margin: -10px calc(var(--app-gutter, 16px) * -1) 0;
+  padding: 16px var(--app-gutter, 16px) 18px;
+  border-bottom: 1px solid var(--app-hairline, var(--line));
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--surface-soft) 72%, transparent),
+    color-mix(in srgb, var(--surface) 34%, transparent)
+  );
+  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 3%, transparent);
+}
+
 .home-shortcuts {
   display: flex;
   min-width: 0;
   gap: 13px;
-  margin: 4px 0 30px;
-  padding: 10px 1px 12px;
+  margin: 0;
+  padding: 0 1px;
   overflow-x: auto;
   scroll-padding-inline: 1px;
   scroll-snap-type: x proximity;
@@ -125,7 +138,7 @@
 .home-recommendation-feed {
   display: grid;
   gap: clamp(36px, 8vw, 54px);
-  padding-bottom: 40px;
+  padding: 28px 0 40px;
 }
 
 .home-recommendation {
@@ -282,7 +295,6 @@
 .home-product-meta {
   display: grid;
   min-width: 0;
-  gap: 3px;
   padding: 0 1px;
 }
 
@@ -297,16 +309,6 @@
   letter-spacing: -0.01em;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 1;
-}
-
-.home-product-meta small {
-  overflow: hidden;
-  color: color-mix(in srgb, var(--muted) 88%, var(--text));
-  font-size: var(--storefront-text-caption, 0.6875rem);
-  font-weight: 450;
-  line-height: 1.35;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .home-product-rail.is-loading {
@@ -385,9 +387,16 @@
 @media (min-width: 768px) {
   .home-shortcuts {
     gap: 14px;
-    margin: 16px 0 30px;
-    padding-top: 9px;
-    padding-bottom: 13px;
+  }
+
+  .home-shortcut-zone {
+    margin: 0 0 4px;
+    padding: 18px 0 22px;
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface-soft) 44%, transparent),
+      transparent
+    );
   }
 
   .home-shortcut {

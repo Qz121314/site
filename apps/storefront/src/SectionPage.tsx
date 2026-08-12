@@ -50,20 +50,6 @@ function BackIcon() {
   );
 }
 
-function SelectChevronIcon() {
-  return (
-    <svg
-      viewBox="0 0 20 20"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.7"
-      aria-hidden="true"
-    >
-      <path d="m6.5 8 3.5 3.5L13.5 8" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
-}
-
 export function SectionCatalogPage({
   bootstrap,
   sectionRef,
@@ -208,23 +194,30 @@ export function SectionCatalogPage({
           {hasFilterOptions ? (
             <div className="section-catalog-filters" aria-label="Filters">
               {query.data.categories.length > 0 ? (
-                <label
-                  className={`section-category-select${categoryId ? ' is-active' : ''}`}
-                >
-                  <select
-                    value={categoryId}
-                    aria-label="Category"
-                    onChange={(event) => setCategoryId(event.target.value)}
+                <div className="section-category-filter" aria-label="Category">
+                  <button
+                    className={!categoryId ? 'is-active' : undefined}
+                    type="button"
+                    aria-pressed={!categoryId}
+                    onClick={() => setCategoryId('')}
                   >
-                    <option value="">{SYSTEM_UI.all}</option>
-                    {query.data.categories.map((category) => (
-                      <option key={category.id} value={category.id}>
+                    {SYSTEM_UI.all}
+                  </button>
+                  {query.data.categories.map((category) => {
+                    const isActive = categoryId === category.id;
+                    return (
+                      <button
+                        className={isActive ? 'is-active' : undefined}
+                        key={category.id}
+                        type="button"
+                        aria-pressed={isActive}
+                        onClick={() => setCategoryId(category.id)}
+                      >
                         {category.name}
-                      </option>
-                    ))}
-                  </select>
-                  <SelectChevronIcon />
-                </label>
+                      </button>
+                    );
+                  })}
+                </div>
               ) : null}
 
               {query.data.tags.length > 0 ? (
@@ -266,9 +259,6 @@ export function SectionCatalogPage({
                 </div>
                 <span className="section-product-meta">
                   <h2>{product.title}</h2>
-                  {product.category.name || product.tags[0]?.name ? (
-                    <small>{product.category.name || product.tags[0]?.name}</small>
-                  ) : null}
                 </span>
               </LinkComponent>
             ))}

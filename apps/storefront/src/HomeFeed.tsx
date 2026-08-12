@@ -75,28 +75,32 @@ function MoreIcon() {
 
 function HomeShortcuts({ sections }: { sections: PublicSection[] }) {
   return (
-    <nav className="home-shortcuts home-shortcut-hero" aria-label="Sections">
-      {sections.map((section) => (
-        <HomeLink className="home-shortcut" href={sectionHref(section)} key={section.id}>
+    <div className="home-shortcut-zone">
+      <nav className="home-shortcuts home-shortcut-hero" aria-label="Sections">
+        {sections.map((section) => (
+          <HomeLink
+            className="home-shortcut"
+            href={sectionHref(section)}
+            key={section.id}
+          >
+            <span className="home-shortcut-icon">
+              <SectionIcon section={section} />
+            </span>
+            <span className="home-shortcut-label">{section.name}</span>
+          </HomeLink>
+        ))}
+        <HomeLink className="home-shortcut is-more" href="/browse/">
           <span className="home-shortcut-icon">
-            <SectionIcon section={section} />
+            <MoreIcon />
           </span>
-          <span className="home-shortcut-label">{section.name}</span>
+          <span className="home-shortcut-label">{SYSTEM_UI.more}</span>
         </HomeLink>
-      ))}
-      <HomeLink className="home-shortcut is-more" href="/browse/">
-        <span className="home-shortcut-icon">
-          <MoreIcon />
-        </span>
-        <span className="home-shortcut-label">{SYSTEM_UI.more}</span>
-      </HomeLink>
-    </nav>
+      </nav>
+    </div>
   );
 }
 
 function HomeProductTile({ product }: { product: PublicProductSummary }) {
-  const supporting = product.category.name?.trim() || product.tags[0]?.name.trim();
-
   return (
     <HomeLink className="home-product-tile" href={productHref(product)}>
       <span className="home-product-cover">
@@ -109,7 +113,6 @@ function HomeProductTile({ product }: { product: PublicProductSummary }) {
       </span>
       <span className="home-product-meta">
         <strong>{product.title}</strong>
-        {supporting ? <small>{supporting}</small> : null}
       </span>
     </HomeLink>
   );
