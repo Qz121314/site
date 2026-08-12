@@ -8,15 +8,15 @@
 }
 
 .home-feed.is-hero-less {
-  padding-top: 4px;
+  padding-top: 2px;
 }
 
 .home-shortcuts {
   display: flex;
   min-width: 0;
-  gap: 14px;
-  margin: 20px 0 34px;
-  padding: 0 1px 4px;
+  gap: 12px;
+  margin: 16px 0 28px;
+  padding: 0 1px 3px;
   overflow-x: auto;
   scroll-padding-inline: 1px;
   scroll-snap-type: x proximity;
@@ -33,10 +33,10 @@
   display: grid;
   width: 64px;
   min-width: 64px;
-  min-height: 82px;
+  min-height: 78px;
   align-content: start;
   justify-items: center;
-  gap: 9px;
+  gap: 8px;
   padding: 0;
   color: var(--text);
   text-align: center;
@@ -48,8 +48,8 @@
 .home-shortcut-icon {
   position: relative;
   display: grid;
-  width: 58px;
-  height: 58px;
+  width: 56px;
+  height: 56px;
   place-items: center;
   overflow: hidden;
   border: 1px solid color-mix(in srgb, var(--theme-card-border) 70%, transparent);
@@ -57,7 +57,7 @@
   background: var(--app-surface-raised, var(--theme-media-background));
   box-shadow:
     inset 0 1px 0 color-mix(in srgb, #fff 7%, transparent),
-    0 8px 22px color-mix(in srgb, #000 12%, transparent);
+    0 4px 14px color-mix(in srgb, #000 7%, transparent);
   transform: translateZ(0);
   transition:
     transform var(--app-motion-fast, 160ms) var(--app-ease-out),
@@ -67,7 +67,7 @@
 
 .home-shortcut:active .home-shortcut-icon {
   filter: brightness(0.92);
-  transform: scale(0.92);
+  transform: scale(0.94);
 }
 
 .home-shortcut-icon img {
@@ -83,7 +83,7 @@
   height: 100%;
   place-items: center;
   color: color-mix(in srgb, var(--text) 86%, var(--muted));
-  font-size: 1.22rem;
+  font-size: 1.16rem;
   font-weight: 650;
 }
 
@@ -93,7 +93,7 @@
   overflow: hidden;
   color: color-mix(in srgb, var(--text) 90%, var(--muted));
   font-size: var(--storefront-text-caption, 0.6875rem);
-  font-weight: 620;
+  font-weight: 610;
   line-height: 1.18;
   letter-spacing: -0.012em;
   -webkit-box-orient: vertical;
@@ -101,9 +101,9 @@
 }
 
 .home-shortcut.is-more .home-shortcut-icon {
-  border-color: color-mix(in srgb, var(--brand) 30%, var(--theme-card-border));
+  border-color: color-mix(in srgb, var(--brand) 24%, var(--theme-card-border));
   color: var(--brand-strong);
-  background: color-mix(in srgb, var(--brand) 12%, var(--app-surface-raised));
+  background: color-mix(in srgb, var(--brand) 9%, var(--app-surface-raised));
 }
 
 .home-more-glyph {
@@ -121,8 +121,8 @@
 
 .home-recommendation-feed {
   display: grid;
-  gap: clamp(38px, 8vw, 58px);
-  padding-bottom: 32px;
+  gap: clamp(30px, 6vw, 46px);
+  padding-bottom: 28px;
 }
 
 .home-recommendation {
@@ -131,17 +131,17 @@
 
 .home-recommendation-heading {
   display: flex;
-  min-height: 38px;
+  min-height: 36px;
   align-items: flex-end;
   justify-content: space-between;
-  gap: 18px;
-  margin: 0 1px 15px;
+  gap: 14px;
+  margin: 0 1px 12px;
 }
 
 .home-recommendation-heading-copy {
   display: grid;
   min-width: 0;
-  gap: 4px;
+  gap: 3px;
 }
 
 .home-recommendation-heading h2 {
@@ -149,9 +149,9 @@
   margin: 0;
   overflow: hidden;
   color: var(--text);
-  font-size: clamp(1.18rem, 5vw, 1.42rem);
-  font-weight: 720;
-  letter-spacing: -0.035em;
+  font-size: clamp(1.12rem, 4.7vw, 1.32rem);
+  font-weight: 710;
+  letter-spacing: -0.033em;
   line-height: 1.08;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -164,22 +164,22 @@
   color: var(--app-text-secondary, var(--muted));
   font-size: var(--storefront-text-small, 0.8125rem);
   font-weight: 440;
-  line-height: 1.35;
+  line-height: 1.32;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 1;
 }
 
 .home-recommendation-heading > a {
   display: grid;
-  width: 38px;
-  height: 38px;
-  flex: 0 0 38px;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
   place-items: center;
-  border: 1px solid color-mix(in srgb, var(--line) 78%, transparent);
+  border: 1px solid color-mix(in srgb, var(--line) 72%, transparent);
   border-radius: var(--theme-radius-icon, 12px);
-  color: color-mix(in srgb, var(--text) 74%, var(--muted));
-  background: var(--app-surface-raised, var(--surface));
-  box-shadow: inset 0 1px 0 color-mix(in srgb, #fff 7%, transparent);
+  color: color-mix(in srgb, var(--text) 70%, var(--muted));
+  background: transparent;
+  box-shadow: none;
   text-decoration: none;
   transition:
     color var(--app-motion-fast, 160ms) ease,
@@ -189,24 +189,24 @@
 
 .home-recommendation-heading > a span {
   margin-top: -2px;
-  font-size: 1.35rem;
+  font-size: 1.25rem;
   font-weight: 400;
   line-height: 1;
 }
 
 .home-recommendation-heading > a:active {
-  background: color-mix(in srgb, var(--brand) 10%, var(--app-surface-raised));
-  transform: scale(0.9);
+  background: color-mix(in srgb, var(--brand) 8%, transparent);
+  transform: scale(0.94);
 }
 
 .home-product-rail {
   display: grid;
-  grid-auto-columns: clamp(200px, 68vw, 278px);
+  grid-auto-columns: clamp(168px, 54vw, 224px);
   grid-auto-flow: column;
-  gap: 14px;
+  gap: 12px;
   overflow-x: auto;
   margin-right: calc(var(--app-gutter, 16px) * -1);
-  padding: 0 var(--app-gutter, 16px) 5px 0;
+  padding: 0 var(--app-gutter, 16px) 4px 0;
   scroll-padding-inline: 0 var(--app-gutter, 16px);
   scroll-snap-type: x mandatory;
   scrollbar-width: none;
@@ -216,6 +216,7 @@
 
 .home-product-rail.is-single {
   display: block;
+  width: min(280px, 76vw);
   margin-right: 0;
   padding-right: 0;
   overflow: visible;
@@ -229,7 +230,7 @@
   display: grid;
   min-width: 0;
   align-content: start;
-  gap: 11px;
+  gap: 9px;
   color: var(--text);
   text-decoration: none;
   scroll-snap-align: start;
@@ -246,7 +247,7 @@
   border: 1px solid color-mix(in srgb, var(--line) 62%, transparent);
   border-radius: var(--theme-radius-media, 0px);
   background: var(--theme-media-background);
-  box-shadow: 0 16px 36px color-mix(in srgb, #000 12%, transparent);
+  box-shadow: 0 8px 22px color-mix(in srgb, #000 7%, transparent);
   isolation: isolate;
   transform: translateZ(0);
   transition:
@@ -258,21 +259,21 @@
 .home-product-cover::after {
   position: absolute;
   inset: 0;
-  border: 1px solid color-mix(in srgb, #fff 8%, transparent);
+  border: 1px solid color-mix(in srgb, #fff 7%, transparent);
   content: '';
   pointer-events: none;
 }
 
 .home-product-tile:active .home-product-cover {
   filter: brightness(0.9);
-  transform: scale(0.975);
+  transform: scale(0.98);
 }
 
 .home-product-cover img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 420ms var(--app-ease-out);
+  transition: transform 360ms var(--app-ease-out);
 }
 
 .home-product-cover-fallback {
@@ -287,7 +288,7 @@
   min-width: 0;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 8px;
   padding: 0 1px;
 }
 
@@ -297,35 +298,35 @@
   overflow: hidden;
   color: color-mix(in srgb, var(--text) 96%, var(--muted));
   font-size: var(--storefront-text-label, 1rem);
-  font-weight: 650;
-  line-height: 1.28;
-  letter-spacing: -0.022em;
+  font-weight: 640;
+  line-height: 1.24;
+  letter-spacing: -0.02em;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
 
 .home-product-arrow {
   display: grid;
-  width: 28px;
-  height: 28px;
-  flex: 0 0 28px;
+  width: 24px;
+  height: 24px;
+  flex: 0 0 24px;
   place-items: center;
-  color: color-mix(in srgb, var(--text) 64%, var(--muted));
+  color: color-mix(in srgb, var(--text) 56%, var(--muted));
   transition: transform var(--app-motion-fast, 160ms) var(--app-ease-out);
 }
 
 .home-product-arrow svg {
-  width: 18px;
-  height: 18px;
+  width: 17px;
+  height: 17px;
 }
 
 .home-product-tile:active .home-product-arrow {
-  transform: translateX(3px);
+  transform: translateX(2px);
 }
 
 .home-product-rail.is-single .home-product-meta strong {
-  font-size: clamp(1.05rem, 4.8vw, 1.3rem);
-  font-weight: 680;
+  font-size: clamp(1rem, 4.5vw, 1.18rem);
+  font-weight: 660;
 }
 
 .home-product-rail.is-loading {
@@ -342,6 +343,7 @@
   from {
     opacity: 0.46;
   }
+
   to {
     opacity: 0.82;
   }
@@ -357,11 +359,11 @@
   }
 
   .home-product-tile:hover .home-product-cover {
-    box-shadow: 0 20px 46px color-mix(in srgb, #000 16%, transparent);
+    box-shadow: 0 12px 28px color-mix(in srgb, #000 10%, transparent);
   }
 
   .home-product-tile:hover .home-product-cover img {
-    transform: scale(1.03);
+    transform: scale(1.025);
   }
 
   .home-recommendation-heading > a:hover {
@@ -377,31 +379,31 @@
   }
 
   .home-shortcuts {
-    margin-top: 18px;
+    margin-top: 14px;
   }
 
   .home-recommendation-feed {
-    gap: 42px;
+    gap: 34px;
   }
 }
 
 @media (min-width: 768px) {
   .home-shortcuts {
-    gap: 18px;
-    margin: 30px 0 46px;
+    gap: 16px;
+    margin: 26px 0 38px;
   }
 
   .home-shortcut {
-    width: 76px;
-    min-width: 76px;
-    min-height: 96px;
-    gap: 10px;
+    width: 74px;
+    min-width: 74px;
+    min-height: 90px;
+    gap: 9px;
   }
 
   .home-shortcut-icon {
-    width: 68px;
-    height: 68px;
-    border-radius: 15px;
+    width: 64px;
+    height: 64px;
+    border-radius: 14px;
   }
 
   .home-shortcut-label {
@@ -409,22 +411,22 @@
   }
 
   .home-recommendation-heading {
-    margin-bottom: 18px;
+    margin-bottom: 16px;
   }
 
   .home-recommendation-heading h2 {
-    font-size: 1.55rem;
+    font-size: 1.45rem;
   }
 
   .home-product-rail {
-    grid-auto-columns: clamp(230px, 30vw, 320px);
-    gap: 18px;
+    grid-auto-columns: clamp(210px, 27vw, 292px);
+    gap: 16px;
     margin-right: 0;
     padding-right: 0;
   }
 
   .home-product-rail.is-single {
-    width: min(520px, 100%);
+    width: min(360px, 100%);
   }
 }
 
