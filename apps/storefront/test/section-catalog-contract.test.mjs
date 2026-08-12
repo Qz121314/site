@@ -29,11 +29,20 @@ test('section catalog is search plus category select and touch-first tag filteri
   assert.match(sectionSource, /section-category-select/u);
   assert.match(sectionSource, /<select/u);
   assert.match(sectionSource, /value=\{categoryId\}/u);
-  assert.match(sectionSource, /onChange=\{\(event\) => setCategoryId\(event\.target\.value\)\}/u);
-  assert.match(sectionSource, /<option value="">\{SYSTEM_UI\.all\}<\/option>/u);
+  assert.match(
+    sectionSource,
+    /onChange=\{\(event\) => setCategoryId\(event\.target\.value\)\}/u,
+  );
+  assert.match(
+    sectionSource,
+    /<option value="">\{SYSTEM_UI\.all\}<\/option>/u,
+  );
   assert.doesNotMatch(sectionSource, /className="section-category-options"/u);
   assert.match(sectionSource, /className="section-tag-filter"/u);
-  assert.match(sectionSource, /aria-pressed=\{selectedTags\.has\(tag\.id\)\}/u);
+  assert.match(
+    sectionSource,
+    /aria-pressed=\{selectedTags\.has\(tag\.id\)\}/u,
+  );
   assert.match(sectionSource, /\[\.\.\.selectedTags\]\.every/u);
   assert.match(sectionSource, /clearFilters/u);
   assert.doesNotMatch(sectionSource, /section-catalog-results/u);
