@@ -24,7 +24,10 @@ test('product detail uses an icon back control and continuous article body', () 
     productSource,
     /className="product-detail-back"[\s\S]*?<svg[\s\S]*?<span className="sr-only">\{SYSTEM_UI\.back\}/u,
   );
-  assert.match(productCss, /\.product-detail-back[\s\S]*?border-radius:\s*50%/u);
+  assert.match(
+    productCss,
+    /\.product-detail-back[\s\S]*?border-radius:\s*50%/u,
+  );
   assert.match(
     productSource,
     /<\/div>\s*\{product\.body\.trim\(\) \? \(\s*<section className="product-detail-body">/u,
