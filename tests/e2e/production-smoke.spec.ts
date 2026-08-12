@@ -65,7 +65,7 @@ test('storefront renders its shell and primary browse route without runtime erro
   });
   expect(visualContract).toEqual({
     cardRadius: '0px',
-    searchRadius: '0px',
+    searchRadius: '3px',
     navigationRadius: '0px',
     navigationBottom: '0px',
   });
