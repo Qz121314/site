@@ -44,6 +44,11 @@ function handleInternalBack(event: ReactMouseEvent<HTMLAnchorElement>) {
   navigateStorefrontBack();
 }
 
+function navigateInternalCta(path: string) {
+  window.history.pushState(null, '', path);
+  window.dispatchEvent(new Event('storefront:navigate'));
+}
+
 function CtaArrow() {
   return (
     <span className="product-detail-cta-arrow" aria-hidden="true">
@@ -177,6 +182,10 @@ export function ProductDetailPage({
     const result = await ctaQuery.refetch();
     const cta = result.data;
     if (!cta) return;
+    if (cta.mode === 'customer_service') {
+      navigateInternalCta(cta.path);
+      return;
+    }
     window.location.assign(cta.path);
   }
 
