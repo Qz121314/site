@@ -37,12 +37,15 @@ test('startup and lazy-route loading use restrained visual primitives', () => {
   assert.doesNotMatch(rootSource, /loading-shell|loading-brand|loading-card/u);
 });
 
-test('content requests use square skeletons instead of visible Loading text', () => {
-  assert.ok(browseSource.includes('<SquareSkeletonGrid count={4} />'));
-  assert.ok(sectionSource.includes('<SquareSkeletonGrid count={6} />'));
-  assert.doesNotMatch(browseSource, /inline-loading[^\n]*SYSTEM_UI\.loading/u);
-  assert.doesNotMatch(sectionSource, /inline-loading[^\n]*SYSTEM_UI\.loading/u);
-});
+test(
+  'content requests use square skeletons instead of visible Loading text',
+  () => {
+    assert.ok(browseSource.includes('<SquareSkeletonGrid count={4} />'));
+    assert.ok(sectionSource.includes('<SquareSkeletonGrid count={6} />'));
+    assert.doesNotMatch(browseSource, /inline-loading[^\n]*SYSTEM_UI\.loading/u);
+    assert.doesNotMatch(sectionSource, /inline-loading[^\n]*SYSTEM_UI\.loading/u);
+  },
+);
 
 test('loading motion stays thin, theme-aware and reduced-motion safe', () => {
   assert.match(loadingCss, /\.route-progress[\s\S]*?height:\s*2px;/u);
@@ -54,6 +57,9 @@ test('loading motion stays thin, theme-aware and reduced-motion safe', () => {
 });
 
 test('legacy blocky shimmer placeholders are removed from base styles', () => {
-  assert.doesNotMatch(baseCss, /\.loading-brand|\.loading-card|\.loading-grid/u);
+  assert.doesNotMatch(
+    baseCss,
+    /\.loading-brand|\.loading-card|\.loading-grid/u,
+  );
   assert.match(baseCss, /\.inline-loading::after/u);
 });
