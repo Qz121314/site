@@ -286,3 +286,50 @@ test('public storefront discovery reports an unconfigured R2 domain without inve
   assert.equal(response.status, 200);
   assert.deepEqual(await response.json(), { mediaBaseUrl: null });
 });
+
+test('public storefront bootstrap consolidates the critical published snapshots', async () => {
+  const bucket = createBucket();
+  const site = { schemaVersion: 2, site: { name: 'Example' } };
+  const sectionsIndex = { schemaVersion: 2, sections: [] };
+  const home = { schemaVersion: 2, featuredProducts: [] };
+  bucket.objects.set(
+    SITE.manifestKey.replace(/manifest\.json$/u, 'site.json'),
+    JSON.stringify(site),
+  );
+  bucket.objects.set(
+    INDEX.manifestKey.replace(/manifest\.json$/u, 'sections.json'),
+    JSON.stringify(sectionsIndex),
+  );
+  bucket.objects.set(
+    `public/home/${POINTER.contentVersion}/home.json`,
+    JSON.stringify(home),
+  );
+  const db = {
+    prepare(sql) {
+      assert.match(sql, /SELECT media_base_url FROM site_settings/u);
+      return {
+        async first() {
+          return { media_base_url: 'https://media.example.com' };
+        },
+      };
+    },
+  };
+
+  const response = await publicStorefrontConfigRoutes.request(
+    'https://storefront.example.com/bootstrap',
+    {},
+    { DB: db, ASSETS_BUCKET: bucket },
+  );
+  assert.equal(response.status, 200);
+  assert.equal(
+    response.headers.get('cache-control'),
+    'public, max-age=30, must-revalidate',
+  );
+  assert.deepEqual(await response.json(), {
+    pointer: POINTER,
+    site,
+    sectionsIndex,
+    home,
+    mediaBaseUrl: 'https://media.example.com',
+  });
+});

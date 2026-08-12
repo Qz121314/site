@@ -7,6 +7,7 @@ export type PublicSection = {
   icon: {
     type: 'image' | 'icon';
     value: string | null;
+    objectKey?: string | null;
   };
   sortOrder: number;
 };
@@ -40,6 +41,7 @@ export type PublicProductSummary = {
   };
   tags: Array<Pick<PublicTag, 'id' | 'name' | 'sortOrder'>>;
   coverUrl: string | null;
+  coverObjectKey?: string | null;
   isFeatured: boolean;
   featuredOrder: number;
   publishedAt: string | null;
@@ -292,6 +294,14 @@ type V2DerivedHomeSnapshot = {
   publishedAt: string;
   featuredProducts: V2ProductSummary[];
   latestProducts: V2ProductSummary[];
+};
+
+type V2BootstrapBundle = {
+  pointer: CurrentPointerV2;
+  rawSite: V2SiteSnapshot;
+  rawIndex: V2SectionsIndexSnapshot;
+  rawHome: V2DerivedHomeSnapshot;
+  configuredMediaBaseUrl: string | null;
 };
 
 const VERSION_PATTERN = /^[A-Za-z0-9-]{12,180}$/;
@@ -614,6 +624,16 @@ function mediaUrl(mediaBaseUrl: string, objectKey: string | null): string | null
     : null;
 }
 
+export function publicImageVariantUrl(
+  objectKey: string | null | undefined,
+  width: 96 | 160 | 240 | 384 | 640 | 960,
+): string | null {
+  if (!objectKey || objectKey.includes('..')) return null;
+  const segments = objectKey.split('/');
+  if (segments.length < 2 || segments.some((segment) => !segment)) return null;
+  return `/_image/square/${width}/${segments.map(encodeURIComponent).join('/')}`;
+}
+
 function resolveV2Hero(
   hero: V2SiteSnapshot['site']['hero'],
   mediaBaseUrl: string,
@@ -787,6 +807,7 @@ function resolveV2Section(
     ),
     icon: {
       type: section.icon.type,
+      objectKey: section.icon.objectKey,
       value:
         section.icon.type === 'image'
           ? mediaUrl(mediaBaseUrl, section.icon.objectKey)
@@ -813,6 +834,7 @@ function resolveV2Summary(
     category: product.category,
     tags: normalizeTags(product.tags),
     coverUrl: mediaUrl(mediaBaseUrl, product.coverObjectKey),
+    coverObjectKey: product.coverObjectKey,
     isFeatured: product.isFeatured,
     featuredOrder: product.featuredOrder,
     publishedAt: product.publishedAt,
@@ -915,24 +937,29 @@ async function loadV2Bootstrap(
   origin: string,
   pointer: CurrentPointerV2,
   signal?: AbortSignal,
+  bundle?: V2BootstrapBundle,
 ): Promise<StorefrontBootstrap> {
-  const [rawSite, rawIndex, configuredMediaBaseUrl] = await Promise.all([
-    loadV2File<V2SiteSnapshot>(
-      origin,
-      'site',
-      pointer.site,
-      v2ModulePath('site', pointer.site, 'site.json'),
-      signal,
-    ),
-    loadV2File<V2SectionsIndexSnapshot>(
-      origin,
-      'sections-index',
-      pointer.sectionsIndex,
-      v2ModulePath('sections-index', pointer.sectionsIndex, 'sections.json'),
-      signal,
-    ),
-    resolveMediaBaseUrl(signal),
-  ]);
+  const [rawSite, rawIndex, configuredMediaBaseUrl] = bundle
+    ? [bundle.rawSite, bundle.rawIndex, bundle.configuredMediaBaseUrl]
+    : await Promise.all([
+        loadV2File<V2SiteSnapshot>(
+          origin,
+          'site',
+          pointer.site,
+          v2ModulePath('site', pointer.site, 'site.json'),
+          signal,
+        ),
+        loadV2File<V2SectionsIndexSnapshot>(
+          origin,
+          'sections-index',
+          pointer.sectionsIndex,
+          v2ModulePath('sections-index', pointer.sectionsIndex, 'sections.json'),
+          signal,
+        ),
+        resolveMediaBaseUrl(signal),
+      ]);
+  assertV2Envelope(rawSite, 'site', pointer.site.contentVersion);
+  assertV2Envelope(rawIndex, 'sections-index', pointer.sectionsIndex.contentVersion);
 
   // Public JSON stays on the same-origin Worker. The independently configured
   // media read domain is authoritative for object-key URLs and may change at runtime.
@@ -958,13 +985,23 @@ async function loadV2Bootstrap(
   let featuredProducts: PublicProductSummary[] = [];
   let latestProducts: PublicProductSummary[] = [];
   try {
-    const derivedHome = await loadDerivedV2Home(
-      origin,
-      pointer,
-      sections,
-      mediaBaseUrl,
-      signal,
-    );
+    const derivedHome = bundle
+      ? (() => {
+          const raw = parseV2DerivedHome(bundle.rawHome, pointer.contentVersion);
+          return {
+            featuredProducts: composeHomeProducts(
+              raw.featuredProducts,
+              sections,
+              mediaBaseUrl,
+            ),
+            latestProducts: composeHomeProducts(
+              raw.latestProducts,
+              sections,
+              mediaBaseUrl,
+            ),
+          };
+        })()
+      : await loadDerivedV2Home(origin, pointer, sections, mediaBaseUrl, signal);
     featuredProducts = derivedHome.featuredProducts;
     latestProducts = derivedHome.latestProducts;
   } catch (error) {
@@ -1024,6 +1061,42 @@ async function loadV2Bootstrap(
   return bootstrap;
 }
 
+async function loadV2BootstrapBundle(
+  origin: string,
+  signal?: AbortSignal,
+): Promise<V2BootstrapBundle | null> {
+  let value: unknown;
+  try {
+    value = await fetchJson(
+      publicContentUrl(origin, 'api/public/storefront/bootstrap'),
+      'no-cache',
+      signal,
+    );
+  } catch (error) {
+    if (signal?.aborted) throw error;
+    return null;
+  }
+  if (
+    !isRecord(value) ||
+    !isRecord(value.site) ||
+    !isRecord(value.sectionsIndex) ||
+    !isRecord(value.home)
+  ) {
+    return null;
+  }
+  const pointer = parsePointer(value.pointer);
+  if (pointer.schemaVersion !== 2) return null;
+  return {
+    pointer,
+    rawSite: value.site as V2SiteSnapshot,
+    rawIndex: value.sectionsIndex as V2SectionsIndexSnapshot,
+    rawHome: value.home as V2DerivedHomeSnapshot,
+    configuredMediaBaseUrl: normalizeContentOrigin(
+      typeof value.mediaBaseUrl === 'string' ? value.mediaBaseUrl : null,
+    ),
+  };
+}
+
 async function loadV1Bootstrap(
   origin: string,
   pointer: CurrentPointerV1,
@@ -1055,6 +1128,14 @@ export async function loadStorefrontBootstrap(
       'INVALID_CONTENT_ORIGIN',
       'The public content origin is invalid.',
     );
+  }
+  const bundle = await loadV2BootstrapBundle(resolvedOrigin, signal);
+  if (bundle) {
+    try {
+      return await loadV2Bootstrap(resolvedOrigin, bundle.pointer, signal, bundle);
+    } catch (error) {
+      if (signal?.aborted) throw error;
+    }
   }
   const pointer = await loadCurrentPointer(resolvedOrigin, signal);
   return pointer.schemaVersion === 2

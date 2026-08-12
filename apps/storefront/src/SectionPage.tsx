@@ -6,6 +6,7 @@ import { ResilientImage } from './ResilientMedia';
 import { productHref } from './routing';
 import { canNavigateStorefrontBack, navigateStorefrontBack } from './storefront-history';
 import { SYSTEM_UI } from './system-ui';
+import './section-ui.css';
 
 function SearchIcon() {
   return (

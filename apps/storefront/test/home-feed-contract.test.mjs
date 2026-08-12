@@ -59,6 +59,16 @@ test('Home renders at most three section recommendation rails from explicitly fe
   assert.match(feedSource, /href=\{productHref\(product\)\}/u);
 });
 
+test('Home requests responsive image variants and promotes the actual first visible product', () => {
+  assert.match(feedSource, /publicImageVariantUrl/u);
+  assert.match(feedSource, /\[96, 160, 240\]/u);
+  assert.match(feedSource, /\[384, 640, 960\]/u);
+  assert.match(feedSource, /sizes="58px"/u);
+  assert.match(feedSource, /fetchPriority=\{priority \? 'high' : 'auto'\}/u);
+  assert.match(feedSource, /loading=\{priority \? 'eager' : 'lazy'\}/u);
+  assert.match(feedSource, /priorityRecommendationSectionId/u);
+});
+
 test('Home uses rounded icon shortcuts and compact Airbnb-like product rails', () => {
   assert.match(cssSource, /aspect-ratio:\s*4 \/ 5/u);
   assert.match(cssSource, /\.home-product-rail[\s\S]*overflow-x:\s*auto/u);

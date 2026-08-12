@@ -318,7 +318,16 @@ test('Storefront reads JSON from its Worker and media from runtime configuration
   try {
     const bootstrap = await loadStorefrontBootstrap();
     assert.equal(bootstrap.origin, 'https://app.example.com');
-    assert.equal(requests[0].url, 'https://app.example.com/public/current.json');
+    assert.equal(
+      requests[0].url,
+      'https://app.example.com/api/public/storefront/bootstrap',
+    );
+    assert.ok(
+      requests.some(
+        (request) => request.url === 'https://app.example.com/public/current.json',
+      ),
+      'the modular snapshot remains a compatibility fallback',
+    );
     assert.ok(
       requests
         .filter(

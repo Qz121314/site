@@ -7,6 +7,7 @@ import {
 } from 'react';
 import {
   loadSectionSnapshot,
+  publicImageVariantUrl,
   type PublicProductSummary,
   type PublicSection,
   type StorefrontBootstrap,
@@ -56,13 +57,26 @@ function SectionIcon({
     <span aria-hidden="true">{Array.from(section.name.trim())[0] ?? '•'}</span>
   );
   if (section.icon.type === 'image' && section.icon.value) {
+    const src = publicImageVariantUrl(section.icon.objectKey, 160) ?? section.icon.value;
+    const srcSet = section.icon.objectKey
+      ? ([96, 160, 240] as const)
+          .map(
+            (width) =>
+              `${publicImageVariantUrl(section.icon.objectKey, width)} ${width}w`,
+          )
+          .join(', ')
+      : undefined;
     return (
       <ResilientImage
         alt=""
         fallback={fallback}
         fetchPriority={priority ? 'high' : 'auto'}
+        height={160}
         loading={priority ? 'eager' : 'lazy'}
-        src={section.icon.value}
+        sizes="58px"
+        src={src}
+        srcSet={srcSet}
+        width={160}
       />
     );
   }
@@ -114,6 +128,14 @@ function HomeProductTile({
   priority: boolean;
   product: PublicProductSummary;
 }) {
+  const src = publicImageVariantUrl(product.coverObjectKey, 640) ?? product.coverUrl;
+  const srcSet = product.coverObjectKey
+    ? ([384, 640, 960] as const)
+        .map(
+          (width) => `${publicImageVariantUrl(product.coverObjectKey, width)} ${width}w`,
+        )
+        .join(', ')
+    : undefined;
   return (
     <HomeLink className="home-product-tile" href={productHref(product)}>
       <span className="home-product-cover">
@@ -121,8 +143,12 @@ function HomeProductTile({
           alt=""
           fallback={<span className="home-product-cover-fallback" aria-hidden="true" />}
           fetchPriority={priority ? 'high' : 'auto'}
+          height={640}
           loading={priority ? 'eager' : 'lazy'}
-          src={product.coverUrl}
+          sizes="(max-width: 767px) 44vw, 176px"
+          src={src}
+          srcSet={srcSet}
+          width={640}
         />
       </span>
       <span className="home-product-meta">
@@ -260,6 +286,10 @@ export function HomeFeed({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
   const recommendationSections = layout.recommendationSectionIds
     .flatMap((id) => (sectionById.get(id) ? [sectionById.get(id) as PublicSection] : []))
     .slice(0, 3);
+  const priorityRecommendationSectionId =
+    recommendationSections.find(
+      (section) => (featuredProductsBySection.get(section.id)?.length ?? 0) > 0,
+    )?.id ?? recommendationSections[0]?.id;
 
   useEffect(() => {
     document.documentElement.lang = 'en';
@@ -272,11 +302,11 @@ export function HomeFeed({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
       <HomeShortcuts sections={shortcutSections} />
 
       <div className="home-recommendation-feed">
-        {recommendationSections.map((section, index) => (
+        {recommendationSections.map((section) => (
           <HomeRecommendationRail
             bootstrap={bootstrap}
             initialProducts={featuredProductsBySection.get(section.id) ?? []}
-            priority={index === 0}
+            priority={section.id === priorityRecommendationSectionId}
             section={section}
             key={section.id}
           />

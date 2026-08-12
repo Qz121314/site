@@ -66,6 +66,7 @@ type SeoPage = {
   imagePath: string | null;
   noindex: boolean;
   jsonLd: JsonRecord;
+  preloadImageKey?: string | null;
   redirectPath?: string;
 };
 
@@ -322,6 +323,26 @@ function sameOriginMediaPath(objectKey: string | null): string | null {
   return `/_media/${segments.map(routePart).join('/')}`;
 }
 
+function publicImageVariantPath(objectKey: string, width: 384 | 640 | 960): string {
+  return `/_image/square/${width}/${objectKey.split('/').map(routePart).join('/')}`;
+}
+
+async function loadHomePreloadImageKey(
+  bucket: R2Bucket,
+  content: PublishedContent,
+): Promise<string | null> {
+  const value = await readJson(
+    bucket,
+    `public/home/${content.pointer.contentVersion}/home.json`,
+  );
+  if (!isRecord(value) || !Array.isArray(value.featuredProducts)) return null;
+  for (const product of value.featuredProducts) {
+    if (!isRecord(product) || typeof product.coverObjectKey !== 'string') continue;
+    if (sameOriginMediaPath(product.coverObjectKey)) return product.coverObjectKey;
+  }
+  return null;
+}
+
 function webpageJsonLd(
   origin: string,
   canonicalPath: string,
@@ -388,7 +409,10 @@ async function resolveSeoPage(
   const { site } = content;
 
   if (pathname === '/') {
-    return basicPage(origin, content, '/', site.name, site.locationLabel);
+    return {
+      ...basicPage(origin, content, '/', site.name, site.locationLabel),
+      preloadImageKey: await loadHomePreloadImageKey(bucket, content),
+    };
   }
   if (pathname === '/browse' || pathname === '/discover' || pathname === '/discover/') {
     return {
@@ -570,7 +594,23 @@ function metadataMarkup(page: SeoPage, origin: string): string {
     ? 'noindex, nofollow'
     : 'index, follow, max-image-preview:large';
   const jsonLd = JSON.stringify(page.jsonLd).replaceAll('<', '\\u003c');
+  const preloadImage = page.preloadImageKey
+    ? {
+        href: absoluteUrl(origin, publicImageVariantPath(page.preloadImageKey, 640)),
+        srcSet: ([384, 640, 960] as const)
+          .map(
+            (width) =>
+              `${absoluteUrl(origin, publicImageVariantPath(page.preloadImageKey as string, width))} ${width}w`,
+          )
+          .join(', '),
+      }
+    : null;
   return [
+    ...(preloadImage
+      ? [
+          `<link rel="preload" as="image" href="${escapeHtml(preloadImage.href)}" imagesrcset="${escapeHtml(preloadImage.srcSet)}" imagesizes="(max-width: 767px) 44vw, 176px" fetchpriority="high" />`,
+        ]
+      : []),
     `<meta name="description" content="${escapeHtml(page.description)}" />`,
     `<meta name="robots" content="${robots}" />`,
     `<link rel="canonical" href="${escapeHtml(canonical)}" />`,

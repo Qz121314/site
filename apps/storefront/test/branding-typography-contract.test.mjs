@@ -19,14 +19,18 @@ const browseCss = await readFile(
   new URL('../src/browse-ui.css', import.meta.url),
   'utf8',
 );
+const browseSource = await readFile(
+  new URL('../src/BrowsePage.tsx', import.meta.url),
+  'utf8',
+);
 
 test('storefront uses a modern self-contained font stack without remote font dependencies', () => {
   assert.match(mainSource, /@site\/storefront-ui\/typography-contract\.css/u);
   assert.match(typographyCss, /Segoe UI Variable Text/u);
   assert.match(typographyCss, /SF Pro Text/u);
   assert.match(typographyCss, /-apple-system/u);
-  assert.match(typographyCss, /@fontsource-variable\/manrope\/wght\.css/u);
-  assert.match(typographyCss, /'Manrope Variable'/u);
+  assert.doesNotMatch(typographyCss, /@fontsource/u);
+  assert.doesNotMatch(typographyCss, /Manrope/u);
   assert.doesNotMatch(typographyCss, /https?:\/\//u);
 });
 
@@ -49,7 +53,8 @@ test('site description is written to browser metadata instead of visible header 
 });
 
 test('Browse remains the dedicated sticky search surface', () => {
-  assert.match(mainSource, /\.\/browse-ui\.css/u);
+  assert.doesNotMatch(mainSource, /\.\/browse-ui\.css/u);
+  assert.match(browseSource, /import '\.\/browse-ui\.css';/u);
   assert.match(browseCss, /\.browse-directory-search/u);
   assert.match(browseCss, /position:\s*sticky/u);
   assert.match(browseCss, /\.browse-section-list/u);

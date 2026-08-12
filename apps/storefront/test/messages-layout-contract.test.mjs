@@ -31,6 +31,10 @@ const themeContractCss = await readFile(
 );
 const shellCss = await readFile(new URL('../src/app-shell.css', import.meta.url), 'utf8');
 const mainSource = await readFile(new URL('../src/main.tsx', import.meta.url), 'utf8');
+const messagesPageSource = await readFile(
+  new URL('../src/MessagesPage.tsx', import.meta.url),
+  'utf8',
+);
 
 test('Messages has no local search or visible ten-conversation capacity meter', () => {
   assert.doesNotMatch(supportSource, /conversation-capacity/u);
@@ -123,9 +127,14 @@ test('mobile opens a conversation as a dedicated chat view without global chrome
 });
 
 test('Messages routes through the primary shell and shares Theme Center semantic variables', () => {
-  assert.match(mainSource, /\.\/messages-ui\.css/u);
-  assert.match(rootSource, /function MessagesPage\(/u);
-  assert.match(rootSource, /<MessagesWorkspace/u);
+  assert.doesNotMatch(mainSource, /\.\/messages-ui\.css/u);
+  assert.match(messagesPageSource, /import '\.\/messages-ui\.css';/u);
+  assert.match(messagesPageSource, /export function MessagesPage\(/u);
+  assert.match(messagesPageSource, /<MessagesWorkspace/u);
+  assert.match(
+    rootSource,
+    /const MessagesPage = lazy\(\(\) =>[\s\S]*?import\('\.\/MessagesPage'\)/u,
+  );
   assert.match(
     rootSource,
     /case 'messages':[\s\S]*?<MessagesPage[\s\S]*?activeConversationRef=\{null\}/u,

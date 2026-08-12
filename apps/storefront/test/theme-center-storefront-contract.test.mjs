@@ -52,14 +52,18 @@ test('storefront runtime consumes versioned Theme Center UI recipes', () => {
 });
 
 test('shared theme contract is the final Storefront visual layer', () => {
-  const contentUiImport = storefrontMain.indexOf("import './content-ui.css';");
+  const homeFeedImport = storefrontMain.indexOf("import './home-feed.css';");
   const themeContract = storefrontMain.indexOf(
     "import '@site/storefront-ui/theme-contract.css';",
   );
-  assert.ok(contentUiImport >= 0, 'content UI must be loaded');
+  assert.equal(
+    storefrontMain.includes("import './content-ui.css';"),
+    false,
+    'unused generic product-card CSS must stay out of the Home critical bundle',
+  );
   assert.ok(
-    themeContract > contentUiImport,
-    'theme contract must load after structural content UI',
+    themeContract > homeFeedImport,
+    'theme contract must load after Home structural CSS',
   );
   assert.equal(
     sharedPackage.exports['./theme-contract.css'],

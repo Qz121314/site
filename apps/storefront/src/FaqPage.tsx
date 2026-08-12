@@ -6,6 +6,7 @@ import { MarkdownContent } from './MarkdownContent';
 import { faqArticleHref } from './routing';
 import { canNavigateStorefrontBack, navigateStorefrontBack } from './storefront-history';
 import { SYSTEM_UI } from './system-ui';
+import './faq-ui.css';
 
 function faqContentVersion(bootstrap: StorefrontBootstrap): string {
   return bootstrap.pointer.schemaVersion === 2

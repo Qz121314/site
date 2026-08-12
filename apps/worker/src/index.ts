@@ -25,6 +25,7 @@ import { adminThemeRoutes } from './routes/admin-theme';
 import { publicBottomNavigationRoutes } from './routes/public-bottom-navigation';
 import { publicContentRoutes } from './routes/public-content';
 import { publicConversionRoutes } from './routes/public-conversion';
+import { publicImageVariantRoutes } from './routes/public-image-variant';
 import { publicMediaFallbackRoutes } from './routes/public-media-fallback';
 import { servePwaIcon, servePwaManifest } from './routes/public-pwa';
 import {
@@ -98,6 +99,7 @@ app.route('/api/public/bottom-navigation', publicBottomNavigationRoutes);
 app.route('/api/public/theme', publicThemeRoutes);
 app.route('/public', publicContentRoutes);
 app.route('/_media', publicMediaFallbackRoutes);
+app.route('/_image', publicImageVariantRoutes);
 
 app.route('/api/admin/auth', adminAuthRoutes);
 
@@ -141,6 +143,7 @@ app.on(['GET', 'HEAD'], '*', async (context) => {
     pathname.startsWith('/api/') ||
     pathname.startsWith('/public/') ||
     pathname.startsWith('/_media/') ||
+    pathname.startsWith('/_image/') ||
     pathname.startsWith('/go/')
   ) {
     return context.json(

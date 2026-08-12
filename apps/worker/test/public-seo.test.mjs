@@ -91,6 +91,12 @@ const objects = new Map([
       },
     },
   ],
+  [
+    'public/home/pointer-v1/home.json',
+    {
+      featuredProducts: [{ coverObjectKey: 'media/product.webp' }],
+    },
+  ],
 ]);
 
 function env() {
@@ -156,6 +162,16 @@ test('Storefront HTML has route metadata, canonical URLs and structured data', a
   );
   assert.match(html, /<meta property="og:image"/u);
   assert.match(html, /application\/ld\+json/u);
+});
+
+test('Home HTML preloads the responsive LCP image before client rendering', async () => {
+  const response = await app.request('https://example.com/', {}, env());
+  assert.equal(response.status, 200);
+  const html = await response.text();
+  assert.match(html, /rel="preload" as="image"/u);
+  assert.match(html, /\/_image\/square\/640\/media\/product\.webp/u);
+  assert.match(html, /imagesrcset=/u);
+  assert.match(html, /fetchpriority="high"/u);
 });
 
 test('Storefront normalizes valid routes and returns a real noindex 404', async () => {

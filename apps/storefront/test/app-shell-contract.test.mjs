@@ -81,13 +81,13 @@ test('primary tabs keep one mounted shell and use a quiet native active indicato
   assert.doesNotMatch(shellCss, /@keyframes app-tab-settle/u);
 });
 
-test('app shell waits for complete bootstrap and bottom navigation config', () => {
-  assert.match(rootSource, /bootstrapQuery\.isLoading \|\| navigationQuery\.isLoading/u);
-  assert.match(
+test('app shell paints published content without waiting for navigation config', () => {
+  assert.match(rootSource, /if \(bootstrapQuery\.isLoading\)/u);
+  assert.doesNotMatch(
     rootSource,
-    /bootstrapQuery\.error[\s\S]*?navigationQuery\.error[\s\S]*?!navigationQuery\.data/u,
+    /bootstrapQuery\.isLoading \|\| navigationQuery\.isLoading/u,
   );
-  assert.doesNotMatch(rootSource, /navigationQuery\.data \?\? \[\]/u);
+  assert.match(rootSource, /navigationQuery\.data \?\? \[\]/u);
 });
 
 test('storefront classifies secondary routes as push pages before paint', () => {
