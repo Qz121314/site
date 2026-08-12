@@ -22,6 +22,20 @@ function SearchIcon() {
   );
 }
 
+function ClearIcon() {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      aria-hidden="true"
+    >
+      <path d="m6.5 6.5 7 7M13.5 6.5l-7 7" strokeLinecap="round" />
+    </svg>
+  );
+}
+
 function BackIcon() {
   return (
     <svg
@@ -32,6 +46,20 @@ function BackIcon() {
       aria-hidden="true"
     >
       <path d="m12.5 4.5-5.5 5.5 5.5 5.5" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
+function SelectChevronIcon() {
+  return (
+    <svg
+      viewBox="0 0 20 20"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="1.7"
+      aria-hidden="true"
+    >
+      <path d="m6.5 8 3.5 3.5L13.5 8" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 }
@@ -149,14 +177,14 @@ export function SectionCatalogPage({
           onClick={handleBack}
         >
           <BackIcon />
-          <span>{SYSTEM_UI.back}</span>
+          <span className="sr-only">{SYSTEM_UI.back}</span>
         </LinkComponent>
         <h1 id="section-catalog-title">{query.data.section.name}</h1>
       </header>
 
       {hasProducts ? (
         <div className="section-catalog-controls">
-          <label className="section-catalog-search">
+          <div className="section-catalog-search">
             <SearchIcon />
             <input
               type="search"
@@ -172,35 +200,31 @@ export function SectionCatalogPage({
                 aria-label={SYSTEM_UI.clear}
                 onClick={() => setSearch('')}
               >
-                ×
+                <ClearIcon />
               </button>
             ) : null}
-          </label>
+          </div>
 
           {hasFilterOptions ? (
             <div className="section-catalog-filters" aria-label="Filters">
               {query.data.categories.length > 0 ? (
-                <div className="section-category-options">
-                  <button
-                    className={!categoryId ? 'is-active' : undefined}
-                    type="button"
-                    aria-pressed={!categoryId}
-                    onClick={() => setCategoryId('')}
+                <label
+                  className={`section-category-select${categoryId ? ' is-active' : ''}`}
+                >
+                  <select
+                    value={categoryId}
+                    aria-label="Category"
+                    onChange={(event) => setCategoryId(event.target.value)}
                   >
-                    {SYSTEM_UI.all}
-                  </button>
-                  {query.data.categories.map((category) => (
-                    <button
-                      className={categoryId === category.id ? 'is-active' : undefined}
-                      key={category.id}
-                      type="button"
-                      aria-pressed={categoryId === category.id}
-                      onClick={() => setCategoryId(category.id)}
-                    >
-                      {category.name}
-                    </button>
-                  ))}
-                </div>
+                    <option value="">{SYSTEM_UI.all}</option>
+                    {query.data.categories.map((category) => (
+                      <option key={category.id} value={category.id}>
+                        {category.name}
+                      </option>
+                    ))}
+                  </select>
+                  <SelectChevronIcon />
+                </label>
               ) : null}
 
               {query.data.tags.length > 0 ? (
