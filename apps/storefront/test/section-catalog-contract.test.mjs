@@ -23,15 +23,15 @@ test('section route uses a dedicated primary-shell product catalog', () => {
   assert.match(rootSource, /<SectionCatalogPage/u);
 });
 
-test('section catalog is search plus touch-first category and tag filtering', () => {
+test('section catalog is search plus category select and touch-first tag filtering', () => {
   assert.match(sectionSource, /type="search"/u);
   assert.match(sectionSource, /className="section-catalog-filters"/u);
-  assert.match(sectionSource, /className="section-category-options"/u);
-  assert.match(sectionSource, /aria-pressed=\{!categoryId\}/u);
-  assert.match(sectionSource, /onClick=\{\(\) => setCategoryId\(''\)\}/u);
-  assert.match(sectionSource, /aria-pressed=\{categoryId === category\.id\}/u);
-  assert.match(sectionSource, /onClick=\{\(\) => setCategoryId\(category\.id\)\}/u);
-  assert.doesNotMatch(sectionSource, /<select\b/u);
+  assert.match(sectionSource, /section-category-select/u);
+  assert.match(sectionSource, /<select/u);
+  assert.match(sectionSource, /value=\{categoryId\}/u);
+  assert.match(sectionSource, /onChange=\{\(event\) => setCategoryId\(event\.target\.value\)\}/u);
+  assert.match(sectionSource, /<option value="">\{SYSTEM_UI\.all\}<\/option>/u);
+  assert.doesNotMatch(sectionSource, /className="section-category-options"/u);
   assert.match(sectionSource, /className="section-tag-filter"/u);
   assert.match(sectionSource, /aria-pressed=\{selectedTags\.has\(tag\.id\)\}/u);
   assert.match(sectionSource, /\[\.\.\.selectedTags\]\.every/u);
@@ -44,6 +44,7 @@ test('section header stays content-focused and does not reuse Home shortcut icon
     sectionSource,
     /<h1 id="section-catalog-title">\{query\.data\.section\.name\}<\/h1>/u,
   );
+  assert.match(sectionSource, /className="section-catalog-back"/u);
   assert.doesNotMatch(sectionSource, /SectionIcon|section-icon/u);
 });
 
@@ -53,12 +54,9 @@ test('section products remain a two-column minimal product list on mobile and de
   assert.match(sectionSource, /className="section-product-cover"/u);
   assert.match(
     cssSource,
-    /\.section-catalog-products\s*\{[\s\S]*?grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/u,
+    /\.section-catalog-products\s*\{[\s\S]*?width:\s*min\(760px,\s*100%\)[\s\S]*?grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/u,
   );
-  assert.match(
-    cssSource,
-    /@media \(min-width:\s*980px\)[\s\S]*?\.section-catalog-controls,[\s\S]*?\.section-catalog-products\s*\{[\s\S]*?width:\s*min\(720px, 100%\)/u,
-  );
+  assert.match(cssSource, /@media \(min-width:\s*768px\)/u);
   assert.doesNotMatch(
     cssSource,
     /\.section-catalog-products\s*\{[\s\S]*?grid-template-columns:\s*1fr[;\n]/u,
