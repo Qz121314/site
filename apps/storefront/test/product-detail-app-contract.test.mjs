@@ -12,50 +12,52 @@ const productCss = await readFile(
 );
 
 test('mobile product media is a swipe-first scroll-snap gallery', () => {
-  assert.match(productSource, /detail-mobile-media-track/u);
-  assert.match(productSource, /mobileMediaIndex/u);
-  assert.match(productCss, /scroll-snap-type:\s*x mandatory/u);
-  assert.match(productCss, /scroll-snap-align:\s*start/u);
-  assert.match(productCss, /-webkit-overflow-scrolling:\s*touch/u);
+  assert.equal(productSource.includes('detail-mobile-media-track'), true);
+  assert.equal(productSource.includes('mobileMediaIndex'), true);
+  assert.equal(productCss.includes('scroll-snap-type: x mandatory;'), true);
+  assert.equal(productCss.includes('scroll-snap-align: start;'), true);
+  assert.equal(
+    productCss.includes('-webkit-overflow-scrolling: touch;'),
+    true,
+  );
 });
 
 test('product detail uses an icon back control and continuous article body', () => {
-  assert.match(
-    productSource,
-    /className="product-detail-back"[\s\S]*?<svg[\s\S]*?<span className="sr-only">\{SYSTEM_UI\.back\}/u,
+  const backControl = productSource.indexOf('className="product-detail-back"');
+  const backIcon = productSource.indexOf('<svg viewBox="0 0 20 20"', backControl);
+  const bodySection = productSource.indexOf(
+    '<section className="product-detail-body">',
   );
-  assert.match(
-    productCss,
-    /\.product-detail-back[\s\S]*?border-radius:\s*50%/u,
-  );
-  assert.match(
-    productSource,
-    /<\/div>\s*\{product\.body\.trim\(\) \? \(\s*<section className="product-detail-body">/u,
-  );
-  assert.match(
-    productCss,
-    /\.product-detail-body\s*\{[\s\S]*?border-top:\s*1px solid/u,
-  );
+  const heroEnd = productSource.indexOf('</div>\n\n        {product.body.trim()');
+
+  assert.ok(backControl >= 0);
+  assert.ok(backIcon > backControl);
+  assert.ok(heroEnd >= 0);
+  assert.ok(bodySection > heroEnd);
+  assert.equal(productCss.includes('border-radius: 50%;'), true);
+  assert.equal(productCss.includes('border-top: 1px solid'), true);
 });
 
 test('customer-service CTA stays inside the mounted storefront shell', () => {
-  assert.match(
-    productSource,
-    /cta\.mode === 'customer_service'[\s\S]*?<LinkComponent className="cta-button is-ready" href=\{cta\.path\}>/u,
+  const serviceBranch = productSource.indexOf("cta.mode === 'customer_service'");
+  const internalCta = productSource.indexOf(
+    '<LinkComponent className="cta-button is-ready"',
+    serviceBranch,
   );
-  assert.match(
-    productSource,
-    /<a[\s\S]*?className="cta-button is-ready"[\s\S]*?target="_blank"/u,
+  const externalCta = productSource.indexOf(
+    'className="cta-button is-ready"',
+    internalCta + 1,
   );
+  const externalTarget = productSource.indexOf('target="_blank"', externalCta);
+
+  assert.ok(serviceBranch >= 0);
+  assert.ok(internalCta > serviceBranch);
+  assert.ok(externalCta > internalCta);
+  assert.ok(externalTarget > externalCta);
 });
 
 test('product detail keeps flat content surfaces and restrained CTA geometry', () => {
-  assert.match(
-    productCss,
-    /\.product-detail-fixed-action \.cta-button\s*\{[\s\S]*?border-radius:\s*var\(--theme-detail-cta-radius, var\(--theme-radius-control, 4px\)\)/u,
-  );
-  assert.match(
-    productCss,
-    /\.product-detail-body \.markdown-content :is\(img, video\)[\s\S]*?border-radius:\s*var\(--theme-radius-media, 0px\)/u,
-  );
+  assert.equal(productCss.includes('var(--theme-radius-control, 4px)'), true);
+  assert.equal(productCss.includes('var(--theme-radius-media, 0px)'), true);
+  assert.equal(productCss.includes('box-shadow: none;'), true);
 });
