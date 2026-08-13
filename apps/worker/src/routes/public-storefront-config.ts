@@ -16,8 +16,8 @@ export const publicStorefrontConfigRoutes = new Hono<AppEnvironment>();
 
 type PublicSupportConnection = {
   id: string;
-  baseUrl: string;
-  projectId: string | null;
+  clientApiUrl: string;
+  realtimeUrl: string;
   protocolVersion: 'v1';
 };
 
@@ -56,11 +56,14 @@ function setPublicRuntimeHeaders(context: Context<AppEnvironment>) {
 
 function toPublicSupportConnection(
   connection: CustomerServiceConnectionRecord,
-): PublicSupportConnection {
+): PublicSupportConnection | null {
+  if (!connection.clientApiUrl || !connection.realtimeUrl || !connection.verifiedAt) {
+    return null;
+  }
   return {
     id: connection.id,
-    baseUrl: connection.baseUrl,
-    projectId: connection.projectId,
+    clientApiUrl: connection.clientApiUrl,
+    realtimeUrl: connection.realtimeUrl,
     protocolVersion: 'v1',
   };
 }
@@ -70,17 +73,13 @@ function validPublicId(value: string): boolean {
 }
 
 publicStorefrontConfigRoutes.get('/content-origin', async (context) => {
-  // Backward compatibility for already-loaded Storefront bundles. New clients
-  // read JSON through the same-origin /public route and use /media-base-url below.
   const contentOrigin = await getMediaBaseUrl(context.env.DB);
-
   setPublicRuntimeHeaders(context);
   return context.json({ contentOrigin });
 });
 
 publicStorefrontConfigRoutes.get('/media-base-url', async (context) => {
   const mediaBaseUrl = await getMediaBaseUrl(context.env.DB);
-
   setPublicRuntimeHeaders(context);
   return context.json({ mediaBaseUrl });
 });
@@ -126,12 +125,10 @@ publicStorefrontConfigRoutes.get('/bootstrap', async (context) => {
 
 publicStorefrontConfigRoutes.get('/cta/:productId', async (context) => {
   setPublicRuntimeHeaders(context);
-
   const productId = context.req.param('productId').trim();
   if (!validPublicId(productId)) {
     return context.json({ available: false });
   }
-
   const { cta } = await resolvePublicCta(context.env.DB, productId);
   return cta
     ? context.json({ available: true, ...cta })
@@ -139,22 +136,23 @@ publicStorefrontConfigRoutes.get('/cta/:productId', async (context) => {
 });
 
 /**
- * Public discovery only. Storefront uses these non-secret values to connect
- * directly to the independent customer-service system. Management tokens are
- * never returned from this endpoint.
+ * Safe configuration discovery only. Storefront receives only the verified
+ * public client endpoints needed to connect directly to customer-service.
+ * Verification tokens are never exposed.
  */
 publicStorefrontConfigRoutes.get('/support/connections', async (context) => {
   setPublicRuntimeHeaders(context);
   const connections = (await listCustomerServiceConnections(context.env.DB, 'active'))
     .filter((connection) => connection.isEnabled && !connection.deletedAt)
-    .map(toPublicSupportConnection);
+    .map(toPublicSupportConnection)
+    .filter((connection): connection is PublicSupportConnection => Boolean(connection));
   return context.json({ connections });
 });
 
 /**
- * Resolve Product -> customer-service connection -> remote support group.
- * This is configuration discovery only: it does not create a conversation,
- * send a message, call the support provider, or advance a round-robin cursor.
+ * Resolve Product -> online support conversion group -> customer-service
+ * connection + remote groupId. This only returns configuration. Conversation
+ * creation/messages/WebSocket are browser -> customer-service directly.
  */
 publicStorefrontConfigRoutes.get('/support/route/:productId', async (context) => {
   setPublicRuntimeHeaders(context);
@@ -186,7 +184,7 @@ publicStorefrontConfigRoutes.get('/support/route/:productId', async (context) =>
     group.deletedAt ||
     !group.isEnabled ||
     group.mode !== 'customer_service' ||
-    group.activeTargetCount < 1
+    group.activeTargetCount !== 1
   ) {
     return context.json({ available: false });
   }
@@ -197,27 +195,30 @@ publicStorefrontConfigRoutes.get('/support/route/:productId', async (context) =>
     group.id,
     'active',
   );
-  for (const target of targets) {
-    if (
-      !target.isEnabled ||
-      target.bindingKind !== 'customer_service' ||
-      !target.customerServiceConnectionId ||
-      !target.remoteGroupId
-    ) {
-      continue;
-    }
-    const connection = await getCustomerServiceConnection(
-      context.env.DB,
-      target.customerServiceConnectionId,
-    );
-    if (!connection || connection.deletedAt || !connection.isEnabled) continue;
-
-    return context.json({
-      available: true,
-      connection: toPublicSupportConnection(connection),
-      groupId: target.remoteGroupId,
-    });
+  const target = targets.find(
+    (item) =>
+      item.isEnabled &&
+      item.bindingKind === 'customer_service' &&
+      Boolean(item.customerServiceConnectionId) &&
+      Boolean(item.remoteGroupId),
+  );
+  if (!target?.customerServiceConnectionId || !target.remoteGroupId) {
+    return context.json({ available: false });
   }
 
-  return context.json({ available: false });
+  const connection = await getCustomerServiceConnection(
+    context.env.DB,
+    target.customerServiceConnectionId,
+  );
+  if (!connection || connection.deletedAt || !connection.isEnabled) {
+    return context.json({ available: false });
+  }
+  const publicConnection = toPublicSupportConnection(connection);
+  if (!publicConnection) return context.json({ available: false });
+
+  return context.json({
+    available: true,
+    connection: publicConnection,
+    groupId: target.remoteGroupId,
+  });
 });
