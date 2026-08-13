@@ -38,6 +38,11 @@ type ErrorEnvelope = {
   error?: { code?: string; message?: string };
 };
 
+type VerificationContext = {
+  baseUrl: string;
+  verifyToken: string;
+};
+
 function asRecord(value: unknown): Record<string, unknown> | null {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
     ? (value as Record<string, unknown>)
@@ -126,6 +131,20 @@ function parseRemoteGroup(value: unknown): RemoteCustomerServiceGroup {
   return group as RemoteCustomerServiceGroup;
 }
 
+function parseVerificationContext(value: unknown): VerificationContext {
+  const context = asRecord(value);
+  if (
+    !context ||
+    typeof context.baseUrl !== 'string' ||
+    !context.baseUrl ||
+    typeof context.verifyToken !== 'string' ||
+    !context.verifyToken
+  ) {
+    throw new AdminApiError(500, 'INVALID_RESPONSE', '客服系统验证上下文无效。');
+  }
+  return { baseUrl: context.baseUrl, verifyToken: context.verifyToken };
+}
+
 const basePath = '/api/admin/customer-service/connections';
 
 export function fetchCustomerServiceConnections(
@@ -190,11 +209,68 @@ export async function batchDeleteCustomerServiceConnections(
   return result.deletedIds;
 }
 
+async function verifyPublicCustomerService(
+  context: VerificationContext,
+): Promise<unknown> {
+  let response: Response;
+  try {
+    response = await fetch(`${context.baseUrl}/integration/v1/verify`, {
+      method: 'POST',
+      mode: 'cors',
+      credentials: 'omit',
+      cache: 'no-store',
+      redirect: 'error',
+      headers: {
+        Accept: 'application/json',
+        Authorization: `Bearer ${context.verifyToken}`,
+      },
+    });
+  } catch {
+    throw new AdminApiError(
+      503,
+      'CUSTOMER_SERVICE_UNREACHABLE',
+      '浏览器无法连接客服系统验证接口，请确认公网地址可访问且客服系统已允许跨域验证。',
+    );
+  }
+
+  const body = await readJson(response);
+  if (!response.ok) {
+    const message =
+      response.status === 401
+        ? '客服系统验证 Token 无效。'
+        : response.status === 503
+          ? '客服系统尚未启用接入验证。'
+          : `客服系统验证接口返回 HTTP ${response.status}。`;
+    throw new AdminApiError(
+      response.status,
+      response.status === 401
+        ? 'CUSTOMER_SERVICE_VERIFY_TOKEN_INVALID'
+        : 'CUSTOMER_SERVICE_UPSTREAM_ERROR',
+      message,
+    );
+  }
+  if (body === null) {
+    throw new AdminApiError(
+      502,
+      'CUSTOMER_SERVICE_INVALID_RESPONSE',
+      '客服系统验证接口未返回 JSON。',
+    );
+  }
+  return body;
+}
+
 export async function testCustomerServiceConnection(
   id: string,
 ): Promise<{ connected: true; groupCount: number; verifiedAt: string }> {
+  const encodedId = encodeURIComponent(id);
+  const context = parseVerificationContext(
+    await requestJson(`${basePath}/${encodedId}/verification-context`),
+  );
+  const integration = await verifyPublicCustomerService(context);
   const value = asRecord(
-    await writeRequest(`${basePath}/${encodeURIComponent(id)}/test`, 'POST'),
+    await writeRequest(`${basePath}/${encodedId}/verification-result`, 'POST', {
+      integration,
+    }),
   );
   if (
     !value ||
