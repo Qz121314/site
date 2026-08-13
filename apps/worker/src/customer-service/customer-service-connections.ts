@@ -6,8 +6,10 @@ export type CustomerServiceConnectionRecord = {
   name: string;
   provider: CustomerServiceProvider;
   baseUrl: string;
-  projectId: string | null;
-  hasApiToken: boolean;
+  hasVerifyToken: boolean;
+  clientApiUrl: string | null;
+  realtimeUrl: string | null;
+  verifiedAt: string | null;
   isEnabled: boolean;
   createdAt: string;
   updatedAt: string;
@@ -19,13 +21,12 @@ export type CustomerServiceConnectionInput = {
   name: string;
   provider: CustomerServiceProvider;
   baseUrl: string;
-  projectId: string | null;
-  apiToken?: string | null;
+  verifyToken?: string | null;
   isEnabled: boolean;
 };
 
 export type CustomerServiceConnectionInternal = CustomerServiceConnectionRecord & {
-  apiToken: string | null;
+  verifyToken: string | null;
 };
 
 type ConnectionRow = {
@@ -33,8 +34,10 @@ type ConnectionRow = {
   name: string;
   provider: string;
   base_url: string;
-  project_id: string | null;
   api_token: string | null;
+  client_api_url: string | null;
+  realtime_url: string | null;
+  verified_at: string | null;
   is_enabled: number;
   created_at: string;
   updated_at: string;
@@ -107,26 +110,30 @@ function isIpAddress(hostname: string): boolean {
 }
 
 function normalizeBaseUrl(value: unknown) {
-  const raw = readText(value, 'baseUrl', 'API 根地址', 1000, true);
+  const raw = readText(value, 'baseUrl', '客服系统公网地址', 1000, true);
   if (!raw.ok) return raw;
   let url: URL;
   try {
     url = new URL(raw.value);
   } catch {
-    return { ok: false as const, field: 'baseUrl', message: 'API 根地址格式无效。' };
+    return {
+      ok: false as const,
+      field: 'baseUrl',
+      message: '客服系统公网地址格式无效。',
+    };
   }
   if (url.protocol !== 'https:') {
     return {
       ok: false as const,
       field: 'baseUrl',
-      message: '客服系统 API 必须使用 HTTPS。',
+      message: '客服系统公网地址必须使用 HTTPS。',
     };
   }
   if (url.username || url.password || url.search || url.hash) {
     return {
       ok: false as const,
       field: 'baseUrl',
-      message: 'API 根地址不能包含账号、查询参数或锚点。',
+      message: '客服系统公网地址不能包含账号、查询参数或锚点。',
     };
   }
   const hostname = url.hostname.toLowerCase();
@@ -141,7 +148,7 @@ function normalizeBaseUrl(value: unknown) {
     return {
       ok: false as const,
       field: 'baseUrl',
-      message: '客服系统 API 必须使用公开 HTTPS 域名。',
+      message: '客服系统必须使用公开 HTTPS 域名。',
     };
   }
   return { ok: true as const, value: url.toString().replace(/\/$/u, '') };
@@ -158,13 +165,12 @@ export function validateCustomerServiceConnectionInput(value: unknown): Validati
   }
   const baseUrl = normalizeBaseUrl(value.baseUrl);
   if (!baseUrl.ok) return baseUrl;
-  const projectId = readText(value.projectId, 'projectId', '项目 ID', 200, false);
-  if (!projectId.ok) return projectId;
-  let apiToken: string | null | undefined;
-  if (Object.hasOwn(value, 'apiToken')) {
-    const token = readText(value.apiToken, 'apiToken', 'API Token', 4000, false);
+
+  let verifyToken: string | null | undefined;
+  if (Object.hasOwn(value, 'verifyToken')) {
+    const token = readText(value.verifyToken, 'verifyToken', '验证 Token', 4000, false);
     if (!token.ok) return token;
-    apiToken = token.value;
+    verifyToken = token.value;
   }
   if (typeof value.isEnabled !== 'boolean') {
     return { ok: false, field: 'isEnabled', message: '必须选择启用或停用。' };
@@ -175,8 +181,7 @@ export function validateCustomerServiceConnectionInput(value: unknown): Validati
       name: name.value,
       provider: 'generic_v1',
       baseUrl: baseUrl.value,
-      projectId: projectId.value,
-      ...(apiToken !== undefined ? { apiToken } : {}),
+      ...(verifyToken !== undefined ? { verifyToken } : {}),
       isEnabled: value.isEnabled,
     },
   };
@@ -187,8 +192,10 @@ const CONNECTION_SELECT = `SELECT
   c.name,
   c.provider,
   c.base_url,
-  c.project_id,
   c.api_token,
+  c.client_api_url,
+  c.realtime_url,
+  c.verified_at,
   c.is_enabled,
   c.created_at,
   c.updated_at,
@@ -206,9 +213,11 @@ function mapConnection(row: ConnectionRow): CustomerServiceConnectionInternal {
     name: row.name,
     provider: row.provider,
     baseUrl: row.base_url,
-    projectId: row.project_id,
-    apiToken: row.api_token,
-    hasApiToken: Boolean(row.api_token),
+    verifyToken: row.api_token,
+    hasVerifyToken: Boolean(row.api_token),
+    clientApiUrl: row.client_api_url,
+    realtimeUrl: row.realtime_url,
+    verifiedAt: row.verified_at,
     isEnabled: row.is_enabled === 1,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -220,7 +229,7 @@ function mapConnection(row: ConnectionRow): CustomerServiceConnectionInternal {
 export function toPublicCustomerServiceConnection(
   connection: CustomerServiceConnectionInternal,
 ): CustomerServiceConnectionRecord {
-  const { apiToken: _apiToken, ...publicConnection } = connection;
+  const { verifyToken: _verifyToken, ...publicConnection } = connection;
   return publicConnection;
 }
 
@@ -287,9 +296,11 @@ export function createCustomerServiceConnection(
     name: input.name,
     provider: input.provider,
     baseUrl: input.baseUrl,
-    projectId: input.projectId,
-    apiToken: input.apiToken ?? null,
-    hasApiToken: Boolean(input.apiToken),
+    verifyToken: input.verifyToken ?? null,
+    hasVerifyToken: Boolean(input.verifyToken),
+    clientApiUrl: null,
+    realtimeUrl: null,
+    verifiedAt: null,
     isEnabled: input.isEnabled,
     createdAt: now,
     updatedAt: now,
@@ -302,16 +313,16 @@ export function createCustomerServiceConnection(
       .prepare(
         `INSERT INTO customer_service_connections (
            id, name, provider, base_url, project_id, api_token,
+           client_api_url, realtime_url, verified_at,
            is_enabled, created_at, updated_at, deleted_at
-         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)`,
+         ) VALUES (?, ?, ?, ?, NULL, ?, NULL, NULL, NULL, ?, ?, ?, NULL)`,
       )
       .bind(
         internal.id,
         internal.name,
         internal.provider,
         internal.baseUrl,
-        internal.projectId,
-        internal.apiToken,
+        internal.verifyToken,
         internal.isEnabled ? 1 : 0,
         internal.createdAt,
         internal.updatedAt,
@@ -323,14 +334,19 @@ export function createUpdateCustomerServiceConnectionStatement(
   db: D1Database,
   id: string,
   input: CustomerServiceConnectionInput,
-  currentApiToken: string | null,
+  currentVerifyToken: string | null,
+  clearVerification: boolean,
   now: string,
 ): D1PreparedStatement {
-  const apiToken = input.apiToken === undefined ? currentApiToken : input.apiToken;
+  const verifyToken =
+    input.verifyToken === undefined ? currentVerifyToken : input.verifyToken;
   return db
     .prepare(
       `UPDATE customer_service_connections
-       SET name = ?, provider = ?, base_url = ?, project_id = ?, api_token = ?,
+       SET name = ?, provider = ?, base_url = ?, project_id = NULL, api_token = ?,
+           client_api_url = CASE WHEN ? THEN NULL ELSE client_api_url END,
+           realtime_url = CASE WHEN ? THEN NULL ELSE realtime_url END,
+           verified_at = CASE WHEN ? THEN NULL ELSE verified_at END,
            is_enabled = ?, updated_at = ?
        WHERE id = ? AND deleted_at IS NULL`,
     )
@@ -338,12 +354,30 @@ export function createUpdateCustomerServiceConnectionStatement(
       input.name,
       input.provider,
       input.baseUrl,
-      input.projectId,
-      apiToken,
+      verifyToken,
+      clearVerification ? 1 : 0,
+      clearVerification ? 1 : 0,
+      clearVerification ? 1 : 0,
       input.isEnabled ? 1 : 0,
       now,
       id,
     );
+}
+
+export function createSetCustomerServiceVerificationStatement(
+  db: D1Database,
+  id: string,
+  clientApiUrl: string,
+  realtimeUrl: string,
+  verifiedAt: string,
+): D1PreparedStatement {
+  return db
+    .prepare(
+      `UPDATE customer_service_connections
+       SET client_api_url = ?, realtime_url = ?, verified_at = ?, updated_at = ?
+       WHERE id = ? AND deleted_at IS NULL`,
+    )
+    .bind(clientApiUrl, realtimeUrl, verifiedAt, verifiedAt, id);
 }
 
 export function createDeleteCustomerServiceConnectionStatement(
