@@ -10,8 +10,11 @@ function connectionRow(overrides = {}) {
     name: 'Primary Support',
     provider: 'generic_v1',
     base_url: 'https://support.example.com',
-    project_id: 'site-main',
-    api_token: 'private-management-token',
+    project_id: null,
+    api_token: 'private-verify-token',
+    client_api_url: 'https://support.example.com/client/v1',
+    realtime_url: 'wss://support.example.com/client/v1/realtime',
+    verified_at: NOW,
     is_enabled: 1,
     created_at: NOW,
     updated_at: NOW,
@@ -21,7 +24,7 @@ function connectionRow(overrides = {}) {
   };
 }
 
-function groupRow() {
+function groupRow(overrides = {}) {
   return {
     id: 'group-1',
     section_id: 'section-1',
@@ -34,35 +37,19 @@ function groupRow() {
     created_at: NOW,
     updated_at: NOW,
     deleted_at: null,
-    target_count: 1,
+    target_count: 0,
     active_target_count: 1,
     product_count: 1,
-  };
-}
-
-function targetRow() {
-  return {
-    id: 'target-1',
-    section_id: 'section-1',
-    group_id: 'group-1',
-    group_mode: 'customer_service',
-    name: 'Sales',
-    endpoint_url: null,
     customer_service_connection_id: 'connection-1',
     customer_service_connection_name: 'Primary Support',
     remote_group_id: 'sales',
     remote_group_name: 'Sales',
-    sort_order: 0,
-    is_enabled: 1,
-    created_at: NOW,
-    updated_at: NOW,
-    deleted_at: null,
+    ...overrides,
   };
 }
 
-function createDb() {
+function createDb({ connection = connectionRow(), group = groupRow() } = {}) {
   const statements = [];
-  const connection = connectionRow();
   return {
     statements,
     prepare(sql) {
@@ -77,9 +64,6 @@ function createDb() {
           statements.push({ kind: 'all', sql: this.sql, args: this.args });
           if (this.sql.includes('FROM customer_service_connections c')) {
             return { results: [connection] };
-          }
-          if (this.sql.includes('FROM conversion_targets t')) {
-            return { results: [targetRow()] };
           }
           throw new Error(`Unexpected all SQL: ${this.sql}`);
         },
@@ -96,7 +80,7 @@ function createDb() {
               conversion_group_id: 'group-1',
             };
           }
-          if (this.sql.includes('FROM conversion_groups g')) return groupRow();
+          if (this.sql.includes('FROM conversion_groups g')) return group;
           if (this.sql.includes('FROM customer_service_connections c')) return connection;
           throw new Error(`Unexpected first SQL: ${this.sql}`);
         },
@@ -116,49 +100,68 @@ function env(db) {
   };
 }
 
-test('Storefront can read enabled public support connections without management token', async () => {
+const publicConnection = {
+  id: 'connection-1',
+  clientApiUrl: 'https://support.example.com/client/v1',
+  realtimeUrl: 'wss://support.example.com/client/v1/realtime',
+  protocolVersion: 'v1',
+};
+
+test('Storefront exposes only verified public support runtime endpoints', async () => {
   const db = createDb();
   const response = await app.request(
     'http://local.test/api/public/storefront/support/connections',
     undefined,
     env(db),
   );
+
   assert.equal(response.status, 200);
   assert.deepEqual(await response.json(), {
-    connections: [
-      {
-        id: 'connection-1',
-        baseUrl: 'https://support.example.com',
-        projectId: 'site-main',
-        protocolVersion: 'v1',
-      },
-    ],
+    connections: [publicConnection],
   });
   assert.equal(response.headers.get('cache-control'), 'no-store');
 });
 
-test('Product support route resolves connection and group without consuming round-robin', async () => {
+test('Storefront hides unverified support connections', async () => {
+  const db = createDb({
+    connection: connectionRow({
+      client_api_url: null,
+      realtime_url: null,
+      verified_at: null,
+    }),
+  });
+  const response = await app.request(
+    'http://local.test/api/public/storefront/support/connections',
+    undefined,
+    env(db),
+  );
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), { connections: [] });
+});
+
+test('Product support route resolves direct group binding without target rotation', async () => {
   const db = createDb();
   const response = await app.request(
     'http://local.test/api/public/storefront/support/route/product-1?sectionId=section-1',
     undefined,
     env(db),
   );
+
   assert.equal(response.status, 200);
   assert.deepEqual(await response.json(), {
     available: true,
-    connection: {
-      id: 'connection-1',
-      baseUrl: 'https://support.example.com',
-      projectId: 'site-main',
-      protocolVersion: 'v1',
-    },
+    connection: publicConnection,
     groupId: 'sales',
   });
   assert.equal(
     db.statements.some(({ sql }) =>
       sql.includes('INSERT INTO conversion_group_rotation'),
     ),
+    false,
+  );
+  assert.equal(
+    db.statements.some(({ sql }) => sql.includes('FROM conversion_targets t')),
     false,
   );
 });
