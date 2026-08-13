@@ -21,6 +21,10 @@ export type AdminConversionGroup = {
   targetCount: number;
   activeTargetCount: number;
   productCount: number;
+  customerServiceConnectionId: string | null;
+  customerServiceConnectionName: string | null;
+  remoteGroupId: string | null;
+  remoteGroupName: string | null;
 };
 
 export type AdminConversionTarget = {
@@ -47,6 +51,9 @@ export type ConversionGroupInput = {
   buttonLabel: string;
   sortOrder: number;
   isEnabled: boolean;
+  customerServiceConnectionId: string | null;
+  remoteGroupId: string | null;
+  remoteGroupName: string | null;
 };
 
 export type ConversionTargetInput = {
@@ -121,6 +128,10 @@ function idempotentPost(path: string, body: unknown) {
   });
 }
 
+function nullableString(value: unknown): boolean {
+  return value === null || typeof value === 'string';
+}
+
 function parseGroup(value: unknown): AdminConversionGroup {
   const group = asRecord(value);
   if (
@@ -135,10 +146,14 @@ function parseGroup(value: unknown): AdminConversionGroup {
     typeof group.isEnabled !== 'boolean' ||
     typeof group.createdAt !== 'string' ||
     typeof group.updatedAt !== 'string' ||
-    (typeof group.deletedAt !== 'string' && group.deletedAt !== null) ||
+    !nullableString(group.deletedAt) ||
     typeof group.targetCount !== 'number' ||
     typeof group.activeTargetCount !== 'number' ||
-    typeof group.productCount !== 'number'
+    typeof group.productCount !== 'number' ||
+    !nullableString(group.customerServiceConnectionId) ||
+    !nullableString(group.customerServiceConnectionName) ||
+    !nullableString(group.remoteGroupId) ||
+    !nullableString(group.remoteGroupName)
   ) {
     throw new AdminApiError(500, 'INVALID_RESPONSE', '转化分组返回数据无效。');
   }
@@ -156,18 +171,16 @@ function parseTarget(value: unknown): AdminConversionTarget {
     !['link', 'customer_service', 'legacy_customer_service'].includes(
       String(target.bindingKind),
     ) ||
-    (typeof target.endpointUrl !== 'string' && target.endpointUrl !== null) ||
-    (typeof target.customerServiceConnectionId !== 'string' &&
-      target.customerServiceConnectionId !== null) ||
-    (typeof target.customerServiceConnectionName !== 'string' &&
-      target.customerServiceConnectionName !== null) ||
-    (typeof target.remoteGroupId !== 'string' && target.remoteGroupId !== null) ||
-    (typeof target.remoteGroupName !== 'string' && target.remoteGroupName !== null) ||
+    !nullableString(target.endpointUrl) ||
+    !nullableString(target.customerServiceConnectionId) ||
+    !nullableString(target.customerServiceConnectionName) ||
+    !nullableString(target.remoteGroupId) ||
+    !nullableString(target.remoteGroupName) ||
     typeof target.sortOrder !== 'number' ||
     typeof target.isEnabled !== 'boolean' ||
     typeof target.createdAt !== 'string' ||
     typeof target.updatedAt !== 'string' ||
-    (typeof target.deletedAt !== 'string' && target.deletedAt !== null)
+    !nullableString(target.deletedAt)
   ) {
     throw new AdminApiError(500, 'INVALID_RESPONSE', '转化入口返回数据无效。');
   }
