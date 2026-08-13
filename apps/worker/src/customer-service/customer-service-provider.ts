@@ -6,6 +6,10 @@ export type RemoteCustomerServiceGroup = {
   isEnabled: boolean;
 };
 
+export type CustomerServiceProviderTransport = {
+  internalService?: Fetcher;
+};
+
 export class CustomerServiceProviderError extends Error {
   readonly code: string;
 
@@ -31,14 +35,29 @@ function buildHeaders(
   return headers;
 }
 
+function shouldUseInternalService(
+  connection: CustomerServiceConnectionInternal,
+  transport?: CustomerServiceProviderTransport,
+): boolean {
+  if (!transport?.internalService) return false;
+  const hostname = new URL(connection.baseUrl).hostname.toLowerCase();
+  return (
+    hostname.startsWith('customer-service-app.') && hostname.endsWith('.workers.dev')
+  );
+}
+
 /**
  * Server-to-server management transport only. Storefront never calls this
  * adapter and never receives the configured management token.
+ *
+ * The same-account customer-service workers.dev endpoint is reached through a
+ * Service Binding. Other generic_v1 providers continue to use public HTTPS.
  */
 export async function customerServiceProviderFetchJson(
   connection: CustomerServiceConnectionInternal,
   path: string,
   init?: RequestInit,
+  transport?: CustomerServiceProviderTransport,
 ): Promise<unknown> {
   if (connection.provider !== 'generic_v1') {
     throw new CustomerServiceProviderError(
@@ -56,12 +75,16 @@ export async function customerServiceProviderFetchJson(
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 8_000);
   try {
-    const response = await fetch(`${connection.baseUrl}${path}`, {
+    const requestUrl = `${connection.baseUrl}${path}`;
+    const requestInit: RequestInit = {
       ...init,
       headers: buildHeaders(connection, init?.headers),
       signal: controller.signal,
       redirect: 'error',
-    });
+    };
+    const response = shouldUseInternalService(connection, transport)
+      ? await transport!.internalService!.fetch(requestUrl, requestInit)
+      : await fetch(requestUrl, requestInit);
     if (!response.ok) {
       throw new CustomerServiceProviderError(
         'CUSTOMER_SERVICE_UPSTREAM_ERROR',
@@ -123,15 +146,22 @@ function parseGroups(value: unknown): RemoteCustomerServiceGroup[] {
 
 export async function listRemoteCustomerServiceGroups(
   connection: CustomerServiceConnectionInternal,
+  transport?: CustomerServiceProviderTransport,
 ): Promise<RemoteCustomerServiceGroup[]> {
   return parseGroups(
-    await customerServiceProviderFetchJson(connection, '/management/v1/groups'),
+    await customerServiceProviderFetchJson(
+      connection,
+      '/management/v1/groups',
+      undefined,
+      transport,
+    ),
   );
 }
 
 export async function testCustomerServiceConnection(
   connection: CustomerServiceConnectionInternal,
+  transport?: CustomerServiceProviderTransport,
 ): Promise<{ connected: true; groupCount: number }> {
-  const groups = await listRemoteCustomerServiceGroups(connection);
+  const groups = await listRemoteCustomerServiceGroups(connection, transport);
   return { connected: true, groupCount: groups.length };
 }

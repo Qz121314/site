@@ -66,6 +66,46 @@ test('group listing uses management API and keeps private credentials server-sid
   ]);
 });
 
+test('same-account customer-service workers.dev uses the Service Binding', async () => {
+  let boundRequest;
+  let publicFetchCalled = false;
+  const internalService = {
+    async fetch(url, init) {
+      boundRequest = { url, init };
+      return new Response(
+        JSON.stringify({ groups: [{ id: 'general', name: 'General' }] }),
+        {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        },
+      );
+    },
+  };
+
+  const groups = await withFetch(
+    async () => {
+      publicFetchCalled = true;
+      throw new Error('public fetch must not be used');
+    },
+    () =>
+      listRemoteCustomerServiceGroups(
+        connection({
+          baseUrl: 'https://customer-service-app.fcqz121314.workers.dev',
+          projectId: null,
+          apiToken: null,
+        }),
+        { internalService },
+      ),
+  );
+
+  assert.equal(publicFetchCalled, false);
+  assert.equal(
+    boundRequest.url,
+    'https://customer-service-app.fcqz121314.workers.dev/management/v1/groups',
+  );
+  assert.deepEqual(groups, [{ id: 'general', name: 'General', isEnabled: true }]);
+});
+
 test('connection test reports the number of readable remote groups', async () => {
   const result = await withFetch(
     async () =>
