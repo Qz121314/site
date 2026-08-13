@@ -19,12 +19,7 @@ jobs:
     timeout-minutes: 20
     steps:
       - name: Checkout
-        run: |
-          set -euo pipefail
-          git init .
-          git remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
-          git fetch --no-tags --depth=1 origin "${GITHUB_REF}"
-          git checkout --detach FETCH_HEAD
+        uses: actions/checkout@v4
 
       - name: Set up Node.js and pnpm
         run: |
@@ -68,12 +63,7 @@ jobs:
       cancel-in-progress: false
     steps:
       - name: Checkout
-        run: |
-          set -euo pipefail
-          git init .
-          git remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
-          git fetch --no-tags --depth=1 origin "${GITHUB_REF}"
-          git checkout --detach FETCH_HEAD
+        uses: actions/checkout@v4
 
       - name: Set up Node.js and pnpm
         run: |
