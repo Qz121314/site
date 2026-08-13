@@ -2,9 +2,8 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   CustomerServiceProviderError,
-  customerServiceProviderFetchJson,
   listRemoteCustomerServiceGroups,
-  testCustomerServiceConnection,
+  verifyCustomerServiceIntegration,
 } from '../src/customer-service/customer-service-provider.ts';
 
 function connection(overrides = {}) {
@@ -13,13 +12,32 @@ function connection(overrides = {}) {
     name: 'Support A',
     provider: 'generic_v1',
     baseUrl: 'https://support.example',
-    projectId: 'project-1',
-    apiToken: 'secret-token',
+    verifyToken: 'secret-token',
+    hasVerifyToken: true,
+    clientApiUrl: null,
+    realtimeUrl: null,
+    verifiedAt: null,
     isEnabled: true,
     createdAt: '2026-08-07T00:00:00.000Z',
     updatedAt: '2026-08-07T00:00:00.000Z',
     deletedAt: null,
     targetCount: 0,
+    ...overrides,
+  };
+}
+
+function integrationEnvelope(overrides = {}) {
+  return {
+    ok: true,
+    protocolVersion: 'v1',
+    clientApiUrl: 'https://support.example/client/v1',
+    realtimeUrl: 'wss://support.example/client/v1/realtime',
+    groups: [
+      { id: ' sales ', name: ' Sales ', isEnabled: true },
+      { id: 'vip', name: 'VIP' },
+      { id: 'off', name: 'Off', isEnabled: false },
+      { id: ' ', name: 'ignored' },
+    ],
     ...overrides,
   };
 }
@@ -34,31 +52,47 @@ async function withFetch(mock, callback) {
   }
 }
 
-test('group listing uses management API and keeps private credentials server-side', async () => {
+test('integration verification uses Bearer token and returns public runtime endpoints', async () => {
   let request;
-  const groups = await withFetch(
+  const result = await withFetch(
     async (url, init) => {
       request = { url, init };
-      return new Response(
-        JSON.stringify({
-          groups: [
-            { id: ' sales ', name: ' Sales ', isEnabled: true },
-            { id: 'vip', name: 'VIP' },
-            { id: 'off', name: 'Off', isEnabled: false },
-            { id: ' ', name: 'ignored' },
-          ],
-        }),
-        { status: 200, headers: { 'content-type': 'application/json' } },
-      );
+      return new Response(JSON.stringify(integrationEnvelope()), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      });
     },
+    () => verifyCustomerServiceIntegration(connection()),
+  );
+
+  assert.equal(request.url, 'https://support.example/integration/v1/verify');
+  assert.equal(request.init.method, 'POST');
+  const headers = new Headers(request.init.headers);
+  assert.equal(headers.get('authorization'), 'Bearer secret-token');
+  assert.equal(headers.has('x-project-id'), false);
+  assert.equal(request.init.redirect, 'error');
+  assert.deepEqual(result, {
+    protocolVersion: 'v1',
+    clientApiUrl: 'https://support.example/client/v1',
+    realtimeUrl: 'wss://support.example/client/v1/realtime',
+    groups: [
+      { id: 'sales', name: 'Sales', isEnabled: true },
+      { id: 'vip', name: 'VIP', isEnabled: true },
+      { id: 'off', name: 'Off', isEnabled: false },
+    ],
+  });
+});
+
+test('remote group listing reuses integration verification and keeps token server-side', async () => {
+  const groups = await withFetch(
+    async () =>
+      new Response(JSON.stringify(integrationEnvelope()), {
+        status: 200,
+        headers: { 'content-type': 'application/json' },
+      }),
     () => listRemoteCustomerServiceGroups(connection()),
   );
 
-  assert.equal(request.url, 'https://support.example/management/v1/groups');
-  const headers = new Headers(request.init.headers);
-  assert.equal(headers.get('authorization'), 'Bearer secret-token');
-  assert.equal(headers.get('x-project-id'), 'project-1');
-  assert.equal(request.init.redirect, 'error');
   assert.deepEqual(groups, [
     { id: 'sales', name: 'Sales', isEnabled: true },
     { id: 'vip', name: 'VIP', isEnabled: true },
@@ -66,14 +100,22 @@ test('group listing uses management API and keeps private credentials server-sid
   ]);
 });
 
-test('same-account customer-service workers.dev uses the Service Binding', async () => {
+test('same-account customer-service workers.dev uses Service Binding only for control plane', async () => {
   let boundRequest;
   let publicFetchCalled = false;
   const internalService = {
     async fetch(url, init) {
       boundRequest = { url, init };
       return new Response(
-        JSON.stringify({ groups: [{ id: 'general', name: 'General' }] }),
+        JSON.stringify(
+          integrationEnvelope({
+            clientApiUrl:
+              'https://customer-service-app.fcqz121314.workers.dev/client/v1',
+            realtimeUrl:
+              'wss://customer-service-app.fcqz121314.workers.dev/client/v1/realtime',
+            groups: [{ id: 'general', name: '默认客服组', isEnabled: true }],
+          }),
+        ),
         {
           status: 200,
           headers: { 'content-type': 'application/json' },
@@ -82,17 +124,15 @@ test('same-account customer-service workers.dev uses the Service Binding', async
     },
   };
 
-  const groups = await withFetch(
+  const result = await withFetch(
     async () => {
       publicFetchCalled = true;
       throw new Error('public fetch must not be used');
     },
     () =>
-      listRemoteCustomerServiceGroups(
+      verifyCustomerServiceIntegration(
         connection({
           baseUrl: 'https://customer-service-app.fcqz121314.workers.dev',
-          projectId: null,
-          apiToken: null,
         }),
         { internalService },
       ),
@@ -101,33 +141,16 @@ test('same-account customer-service workers.dev uses the Service Binding', async
   assert.equal(publicFetchCalled, false);
   assert.equal(
     boundRequest.url,
-    'https://customer-service-app.fcqz121314.workers.dev/management/v1/groups',
+    'https://customer-service-app.fcqz121314.workers.dev/integration/v1/verify',
   );
-  assert.deepEqual(groups, [{ id: 'general', name: 'General', isEnabled: true }]);
+  const headers = new Headers(boundRequest.init.headers);
+  assert.equal(headers.get('authorization'), 'Bearer secret-token');
+  assert.deepEqual(result.groups, [
+    { id: 'general', name: '默认客服组', isEnabled: true },
+  ]);
 });
 
-test('connection test reports the number of readable remote groups', async () => {
-  const result = await withFetch(
-    async () =>
-      new Response(
-        JSON.stringify({
-          groups: [
-            { id: 'sales', name: 'Sales' },
-            { id: 'vip', name: 'VIP' },
-          ],
-        }),
-        {
-          status: 200,
-          headers: { 'content-type': 'application/json' },
-        },
-      ),
-    () => testCustomerServiceConnection(connection()),
-  );
-
-  assert.deepEqual(result, { connected: true, groupCount: 2 });
-});
-
-test('provider transport rejects disabled connections before fetch', async () => {
+test('provider rejects disabled connections before fetch', async () => {
   let called = false;
   await assert.rejects(
     withFetch(
@@ -135,11 +158,7 @@ test('provider transport rejects disabled connections before fetch', async () =>
         called = true;
         throw new Error('should not run');
       },
-      () =>
-        customerServiceProviderFetchJson(
-          connection({ isEnabled: false }),
-          '/management/v1/groups',
-        ),
+      () => verifyCustomerServiceIntegration(connection({ isEnabled: false })),
     ),
     (error) =>
       error instanceof CustomerServiceProviderError &&
@@ -148,12 +167,51 @@ test('provider transport rejects disabled connections before fetch', async () =>
   assert.equal(called, false);
 });
 
-test('provider transport rejects non-JSON responses and redirects', async () => {
+test('provider requires a verification token before fetch', async () => {
+  let called = false;
+  await assert.rejects(
+    withFetch(
+      async () => {
+        called = true;
+        throw new Error('should not run');
+      },
+      () =>
+        verifyCustomerServiceIntegration(
+          connection({ verifyToken: null, hasVerifyToken: false }),
+        ),
+    ),
+    (error) =>
+      error instanceof CustomerServiceProviderError &&
+      error.code === 'CUSTOMER_SERVICE_VERIFY_TOKEN_REQUIRED',
+  );
+  assert.equal(called, false);
+});
+
+test('provider maps invalid verification token to a specific error', async () => {
   await assert.rejects(
     withFetch(
       async () =>
-        new Response('ok', { status: 200, headers: { 'content-type': 'text/plain' } }),
-      () => customerServiceProviderFetchJson(connection(), '/management/v1/groups'),
+        new Response(JSON.stringify({ error: { code: 'INVALID_VERIFY_TOKEN' } }), {
+          status: 401,
+          headers: { 'content-type': 'application/json' },
+        }),
+      () => verifyCustomerServiceIntegration(connection()),
+    ),
+    (error) =>
+      error instanceof CustomerServiceProviderError &&
+      error.code === 'CUSTOMER_SERVICE_VERIFY_TOKEN_INVALID',
+  );
+});
+
+test('provider rejects non-JSON and invalid runtime endpoint responses', async () => {
+  await assert.rejects(
+    withFetch(
+      async () =>
+        new Response('ok', {
+          status: 200,
+          headers: { 'content-type': 'text/plain' },
+        }),
+      () => verifyCustomerServiceIntegration(connection()),
     ),
     (error) =>
       error instanceof CustomerServiceProviderError &&
@@ -163,12 +221,21 @@ test('provider transport rejects non-JSON responses and redirects', async () => 
   await assert.rejects(
     withFetch(
       async () =>
-        new Response(null, {
-          status: 302,
-          headers: { location: 'https://other.example' },
-        }),
-      () => customerServiceProviderFetchJson(connection(), '/management/v1/groups'),
+        new Response(
+          JSON.stringify(
+            integrationEnvelope({
+              realtimeUrl: 'https://support.example/client/v1/realtime',
+            }),
+          ),
+          {
+            status: 200,
+            headers: { 'content-type': 'application/json' },
+          },
+        ),
+      () => verifyCustomerServiceIntegration(connection()),
     ),
-    (error) => error instanceof CustomerServiceProviderError,
+    (error) =>
+      error instanceof CustomerServiceProviderError &&
+      error.code === 'CUSTOMER_SERVICE_INVALID_RESPONSE',
   );
 });
