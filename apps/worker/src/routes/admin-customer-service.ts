@@ -394,10 +394,10 @@ adminCustomerServiceRoutes.post('/connections/:id/test', async (context) => {
   );
   if (!connection || connection.deletedAt) return connectionNotFound(context);
   try {
-    const result = await verifyCustomerServiceIntegration(
-      { ...connection, isEnabled: true },
-      { internalService: context.env.CUSTOMER_SERVICE_APP },
-    );
+    const result = await verifyCustomerServiceIntegration({
+      ...connection,
+      isEnabled: true,
+    });
     const verifiedAt = new Date().toISOString();
     await context.env.DB.batch([
       createSetCustomerServiceVerificationStatement(
@@ -444,9 +444,7 @@ adminCustomerServiceRoutes.get('/connections/:id/groups', async (context) => {
   if (!connection || connection.deletedAt) return connectionNotFound(context);
   try {
     return context.json({
-      groups: await listRemoteCustomerServiceGroups(connection, {
-        internalService: context.env.CUSTOMER_SERVICE_APP,
-      }),
+      groups: await listRemoteCustomerServiceGroups(connection),
     });
   } catch (error) {
     if (error instanceof CustomerServiceProviderError)
