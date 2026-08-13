@@ -24,33 +24,44 @@ jobs:
         run: |
           python - <<'PY'
           from pathlib import Path
+          import re
 
           route = Path('apps/worker/src/routes/admin-customer-service.ts')
           text = route.read_text()
-          old_test = """    const result = await testCustomerServiceConnection({
-              ...connection,
-              isEnabled: true,
-            });"""
-          new_test = """    const result = await testCustomerServiceConnection(
-              {
-                ...connection,
-                isEnabled: true,
-              },
-              { internalService: context.env.CUSTOMER_SERVICE_APP },
-            );"""
-          if text.count(old_test) != 1:
-              raise SystemExit(f'Expected one connection test call, found {text.count(old_test)}')
-          text = text.replace(old_test, new_test)
+          pattern = re.compile(
+              r'(?m)^(?P<i>\s*)const result = await testCustomerServiceConnection\(\{\n'
+              r'\s*\.\.\.connection,\n\s*isEnabled: true,\n\s*\}\);'
+          )
+          match = pattern.search(text)
+          if not match:
+              raise SystemExit('Connection test call not found')
+          i = match.group('i')
+          replacement = (
+              f'{i}const result = await testCustomerServiceConnection(\n'
+              f'{i}  {{\n'
+              f'{i}    ...connection,\n'
+              f'{i}    isEnabled: true,\n'
+              f'{i}  }},\n'
+              f'{i}  {{ internalService: context.env.CUSTOMER_SERVICE_APP }},\n'
+              f'{i});'
+          )
+          text = pattern.sub(replacement, text, count=1)
 
-          old_groups = "return context.json({ groups: await listRemoteCustomerServiceGroups(connection) });"
-          new_groups = """return context.json({
-              groups: await listRemoteCustomerServiceGroups(connection, {
-                internalService: context.env.CUSTOMER_SERVICE_APP,
-              }),
-            });"""
-          if text.count(old_groups) != 1:
-              raise SystemExit(f'Expected one group listing call, found {text.count(old_groups)}')
-          route.write_text(text.replace(old_groups, new_groups))
+          groups_pattern = re.compile(
+              r'(?m)^(?P<i>\s*)return context\.json\(\{ groups: await listRemoteCustomerServiceGroups\(connection\) \}\);'
+          )
+          match = groups_pattern.search(text)
+          if not match:
+              raise SystemExit('Group listing call not found')
+          i = match.group('i')
+          replacement = (
+              f'{i}return context.json({{\n'
+              f'{i}  groups: await listRemoteCustomerServiceGroups(connection, {{\n'
+              f'{i}    internalService: context.env.CUSTOMER_SERVICE_APP,\n'
+              f'{i}  }}),\n'
+              f'{i}}});'
+          )
+          route.write_text(groups_pattern.sub(replacement, text, count=1))
 
           test = Path('apps/worker/test/customer-service-provider.test.mjs')
           text = test.read_text()
