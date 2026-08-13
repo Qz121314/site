@@ -18,6 +18,10 @@ export type ConversionGroupRecord = {
   targetCount: number;
   activeTargetCount: number;
   productCount: number;
+  customerServiceConnectionId: string | null;
+  customerServiceConnectionName: string | null;
+  remoteGroupId: string | null;
+  remoteGroupName: string | null;
 };
 
 export type ConversionTargetRecord = {
@@ -44,6 +48,9 @@ export type ConversionGroupInput = {
   buttonLabel: string;
   sortOrder: number;
   isEnabled: boolean;
+  customerServiceConnectionId: string | null;
+  remoteGroupId: string | null;
+  remoteGroupName: string | null;
 };
 
 export type ConversionTargetInput = {
@@ -71,6 +78,10 @@ type ConversionGroupRow = {
   target_count: number;
   active_target_count: number;
   product_count: number;
+  customer_service_connection_id: string | null;
+  customer_service_connection_name: string | null;
+  remote_group_id: string | null;
+  remote_group_name: string | null;
 };
 
 type ConversionTargetRow = {
@@ -173,6 +184,44 @@ export function validateConversionGroupInput(
   if (typeof value.isEnabled !== 'boolean') {
     return { ok: false, field: 'isEnabled', message: '必须选择启用或停用。' };
   }
+
+  if (value.mode === 'customer_service') {
+    const connectionId = readRequiredText(
+      value.customerServiceConnectionId,
+      'customerServiceConnectionId',
+      '客服系统',
+      100,
+    );
+    if (!connectionId.ok) return connectionId;
+    const remoteGroupId = readRequiredText(
+      value.remoteGroupId,
+      'remoteGroupId',
+      '在线客服分组',
+      300,
+    );
+    if (!remoteGroupId.ok) return remoteGroupId;
+    const remoteGroupName = readRequiredText(
+      value.remoteGroupName,
+      'remoteGroupName',
+      '在线客服分组名称',
+      300,
+    );
+    if (!remoteGroupName.ok) return remoteGroupName;
+    return {
+      ok: true,
+      value: {
+        name: name.value,
+        mode: value.mode,
+        buttonLabel: buttonLabel.value,
+        sortOrder: sortOrder.value,
+        isEnabled: value.isEnabled,
+        customerServiceConnectionId: connectionId.value,
+        remoteGroupId: remoteGroupId.value,
+        remoteGroupName: remoteGroupName.value,
+      },
+    };
+  }
+
   return {
     ok: true,
     value: {
@@ -181,6 +230,9 @@ export function validateConversionGroupInput(
       buttonLabel: buttonLabel.value,
       sortOrder: sortOrder.value,
       isEnabled: value.isEnabled,
+      customerServiceConnectionId: null,
+      remoteGroupId: null,
+      remoteGroupName: null,
     },
   };
 }
@@ -290,6 +342,10 @@ function mapGroup(row: ConversionGroupRow): ConversionGroupRecord {
     targetCount: row.target_count,
     activeTargetCount: row.active_target_count,
     productCount: row.product_count,
+    customerServiceConnectionId: row.customer_service_connection_id,
+    customerServiceConnectionName: row.customer_service_connection_name,
+    remoteGroupId: row.remote_group_id,
+    remoteGroupName: row.remote_group_name,
   };
 }
 
@@ -347,11 +403,35 @@ const GROUP_SELECT = `SELECT
             WHERE c.id = t.customer_service_connection_id
               AND c.deleted_at IS NULL
               AND c.is_enabled = 1
+              AND c.client_api_url IS NOT NULL
+              AND c.realtime_url IS NOT NULL
+              AND c.verified_at IS NOT NULL
           )
         )
       )) AS active_target_count,
   (SELECT COUNT(*) FROM products p
-    WHERE p.conversion_group_id = g.id) AS product_count
+    WHERE p.conversion_group_id = g.id) AS product_count,
+  (SELECT t.customer_service_connection_id
+    FROM conversion_targets t
+    WHERE t.group_id = g.id AND t.deleted_at IS NULL
+      AND t.customer_service_connection_id IS NOT NULL
+    ORDER BY t.sort_order ASC, t.id ASC LIMIT 1) AS customer_service_connection_id,
+  (SELECT c.name
+    FROM conversion_targets t
+    JOIN customer_service_connections c ON c.id = t.customer_service_connection_id
+    WHERE t.group_id = g.id AND t.deleted_at IS NULL
+      AND t.customer_service_connection_id IS NOT NULL
+    ORDER BY t.sort_order ASC, t.id ASC LIMIT 1) AS customer_service_connection_name,
+  (SELECT t.remote_group_id
+    FROM conversion_targets t
+    WHERE t.group_id = g.id AND t.deleted_at IS NULL
+      AND t.remote_group_id IS NOT NULL
+    ORDER BY t.sort_order ASC, t.id ASC LIMIT 1) AS remote_group_id,
+  (SELECT t.remote_group_name
+    FROM conversion_targets t
+    WHERE t.group_id = g.id AND t.deleted_at IS NULL
+      AND t.remote_group_id IS NOT NULL
+    ORDER BY t.sort_order ASC, t.id ASC LIMIT 1) AS remote_group_name
 FROM conversion_groups g`;
 
 const TARGET_SELECT = `SELECT
@@ -429,6 +509,10 @@ export function createConversionGroup(
     targetCount: 0,
     activeTargetCount: 0,
     productCount: 0,
+    customerServiceConnectionId: input.customerServiceConnectionId,
+    customerServiceConnectionName: null,
+    remoteGroupId: input.remoteGroupId,
+    remoteGroupName: input.remoteGroupName,
   };
   return {
     group,
@@ -723,6 +807,9 @@ export async function selectNextConversionTarget(
            WHERE c2.id = t.customer_service_connection_id
              AND c2.deleted_at IS NULL
              AND c2.is_enabled = 1
+             AND c2.client_api_url IS NOT NULL
+             AND c2.realtime_url IS NOT NULL
+             AND c2.verified_at IS NOT NULL
          )`
       : 'AND t.endpoint_url IS NOT NULL';
   const row = await db
