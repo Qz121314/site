@@ -1,0 +1,109 @@
+name: Apply customer service binding patch
+
+on:
+  push:
+    branches:
+      - fix/customer-service-service-binding
+    paths:
+      - .github/workflows/patch-customer-service-binding.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: fix/customer-service-service-binding
+
+      - name: Patch route and provider regression test
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          route = Path('apps/worker/src/routes/admin-customer-service.ts')
+          text = route.read_text()
+          old_test = """    const result = await testCustomerServiceConnection({
+              ...connection,
+              isEnabled: true,
+            });"""
+          new_test = """    const result = await testCustomerServiceConnection(
+              {
+                ...connection,
+                isEnabled: true,
+              },
+              { internalService: context.env.CUSTOMER_SERVICE_APP },
+            );"""
+          if text.count(old_test) != 1:
+              raise SystemExit(f'Expected one connection test call, found {text.count(old_test)}')
+          text = text.replace(old_test, new_test)
+
+          old_groups = "return context.json({ groups: await listRemoteCustomerServiceGroups(connection) });"
+          new_groups = """return context.json({
+              groups: await listRemoteCustomerServiceGroups(connection, {
+                internalService: context.env.CUSTOMER_SERVICE_APP,
+              }),
+            });"""
+          if text.count(old_groups) != 1:
+              raise SystemExit(f'Expected one group listing call, found {text.count(old_groups)}')
+          route.write_text(text.replace(old_groups, new_groups))
+
+          test = Path('apps/worker/test/customer-service-provider.test.mjs')
+          text = test.read_text()
+          marker = "test('connection test reports the number of readable remote groups', async () => {"
+          if text.count(marker) != 1:
+              raise SystemExit(f'Expected one test insertion marker, found {text.count(marker)}')
+          addition = """test('same-account customer-service workers.dev uses the Service Binding', async () => {
+            let boundRequest;
+            let publicFetchCalled = false;
+            const internalService = {
+              async fetch(url, init) {
+                boundRequest = { url, init };
+                return new Response(JSON.stringify({ groups: [{ id: 'general', name: 'General' }] }), {
+                  status: 200,
+                  headers: { 'content-type': 'application/json' },
+                });
+              },
+            };
+
+            const groups = await withFetch(
+              async () => {
+                publicFetchCalled = true;
+                throw new Error('public fetch must not be used');
+              },
+              () =>
+                listRemoteCustomerServiceGroups(
+                  connection({
+                    baseUrl: 'https://customer-service-app.fcqz121314.workers.dev',
+                    projectId: null,
+                    apiToken: null,
+                  }),
+                  { internalService },
+                ),
+            );
+
+            assert.equal(publicFetchCalled, false);
+            assert.equal(
+              boundRequest.url,
+              'https://customer-service-app.fcqz121314.workers.dev/management/v1/groups',
+            );
+            assert.deepEqual(groups, [{ id: 'general', name: 'General', isEnabled: true }]);
+          });
+
+          """
+          test.write_text(text.replace(marker, addition + marker))
+          PY
+
+      - name: Commit patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add apps/worker/src/routes/admin-customer-service.ts apps/worker/test/customer-service-provider.test.mjs
+          git commit -m 'test: cover bound customer service transport'
+          git push origin HEAD:fix/customer-service-service-binding
