@@ -109,8 +109,7 @@ test('same-account customer-service workers.dev uses Service Binding only for co
       return new Response(
         JSON.stringify(
           integrationEnvelope({
-            clientApiUrl:
-              'https://customer-service-app.fcqz121314.workers.dev/client/v1',
+            clientApiUrl: 'https://customer-service-app.fcqz121314.workers.dev/client/v1',
             realtimeUrl:
               'wss://customer-service-app.fcqz121314.workers.dev/client/v1/realtime',
             groups: [{ id: 'general', name: '默认客服组', isEnabled: true }],
