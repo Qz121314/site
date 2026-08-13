@@ -3,7 +3,10 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
 const headers = JSON.parse(
-  await readFile(new URL('../../../config/security-headers.json', import.meta.url), 'utf8'),
+  await readFile(
+    new URL('../../../config/security-headers.json', import.meta.url),
+    'utf8',
+  ),
 );
 
 test('storefront CSP permits secure customer-service WebSocket connections', () => {
