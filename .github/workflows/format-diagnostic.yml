@@ -5,15 +5,17 @@ on:
     types: [opened, reopened, synchronize]
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   format:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Checkout
+      - name: Checkout PR branch
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
 
       - name: Set up pnpm
         run: npm install --global pnpm@11.19.0
@@ -21,7 +23,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Format changed customer-service files
+      - name: Format and commit customer-service files
         shell: bash
         run: |
           set -euo pipefail
@@ -35,8 +37,12 @@ jobs:
             apps/worker/src/routes/public-storefront-config.ts
           )
           pnpm exec prettier --write "${files[@]}"
-          for file in "${files[@]}"; do
-            echo "---FORMAT_FILE_START:$file---"
-            cat "$file"
-            echo "---FORMAT_FILE_END:$file---"
-          done
+          if git diff --quiet -- "${files[@]}"; then
+            echo 'No formatting changes required.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -- "${files[@]}"
+          git commit -m '应用客服重构 Prettier 格式'
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
