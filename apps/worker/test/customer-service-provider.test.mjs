@@ -110,7 +110,8 @@ test('workers.dev customer service verification uses the configured public URL',
         JSON.stringify(
           integrationEnvelope({
             clientApiUrl: `${baseUrl}/client/v1`,
-            realtimeUrl: 'wss://customer-service-app.fcqz121314.workers.dev/client/v1/realtime',
+            realtimeUrl:
+              'wss://customer-service-app.fcqz121314.workers.dev/client/v1/realtime',
             groups: [{ id: 'general', name: '默认客服组', isEnabled: true }],
           }),
         ),
