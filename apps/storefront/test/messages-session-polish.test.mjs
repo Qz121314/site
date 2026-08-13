@@ -22,8 +22,14 @@ test('reading a live conversation refreshes both list and detail state', () => {
 });
 
 test('visitor thread follows new messages without breaking earlier-message paging', () => {
-  assert.match(supportUi, /const lastMessageId = conversation\?\.messages\.at\(-1\)\?\.id/u);
-  assert.match(supportUi, /timeline\.scrollTo\(\{ top: timeline\.scrollHeight/u);
+  assert.match(
+    supportUi,
+    /const lastMessageId = conversation\?\.messages\.at\(-1\)\?\.id/u,
+  );
+  assert.match(
+    supportUi,
+    /timeline\.scrollTo\(\{ top: timeline\.scrollHeight/u,
+  );
 });
 
 test('visitor composer supports Enter send and preserves a newer draft on failure', () => {
