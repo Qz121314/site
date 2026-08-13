@@ -13,10 +13,6 @@ export type VerifiedCustomerServiceIntegration = {
   groups: RemoteCustomerServiceGroup[];
 };
 
-export type CustomerServiceProviderTransport = {
-  internalService?: Fetcher;
-};
-
 export class CustomerServiceProviderError extends Error {
   readonly code: string;
 
@@ -29,17 +25,6 @@ export class CustomerServiceProviderError extends Error {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
-function shouldUseInternalService(
-  connection: CustomerServiceConnectionInternal,
-  transport?: CustomerServiceProviderTransport,
-): boolean {
-  if (!transport?.internalService) return false;
-  const hostname = new URL(connection.baseUrl).hostname.toLowerCase();
-  return (
-    hostname.startsWith('customer-service-app.') && hostname.endsWith('.workers.dev')
-  );
 }
 
 function safeHttpsUrl(value: unknown, label: string): string {
@@ -132,13 +117,11 @@ function parseIntegration(value: unknown): VerifiedCustomerServiceIntegration {
 }
 
 /**
- * Control-plane transport only. Storefront never calls this adapter and never
- * receives the verification token. Same-account workers.dev can use a Service
- * Binding internally while the saved connection remains the public URL.
+ * Control-plane verification always uses the public URL configured by Admin.
+ * The verification token remains server-side and Storefront never receives it.
  */
 export async function verifyCustomerServiceIntegration(
   connection: CustomerServiceConnectionInternal,
-  transport?: CustomerServiceProviderTransport,
 ): Promise<VerifiedCustomerServiceIntegration> {
   if (connection.provider !== 'generic_v1') {
     throw new CustomerServiceProviderError(
@@ -162,8 +145,7 @@ export async function verifyCustomerServiceIntegration(
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 8_000);
   try {
-    const requestUrl = `${connection.baseUrl}/integration/v1/verify`;
-    const requestInit: RequestInit = {
+    const response = await fetch(`${connection.baseUrl}/integration/v1/verify`, {
       method: 'POST',
       headers: {
         Accept: 'application/json',
@@ -171,10 +153,7 @@ export async function verifyCustomerServiceIntegration(
       },
       signal: controller.signal,
       redirect: 'error',
-    };
-    const response = shouldUseInternalService(connection, transport)
-      ? await transport!.internalService!.fetch(requestUrl, requestInit)
-      : await fetch(requestUrl, requestInit);
+    });
 
     if (!response.ok) {
       const code =
@@ -218,7 +197,6 @@ export async function verifyCustomerServiceIntegration(
 
 export async function listRemoteCustomerServiceGroups(
   connection: CustomerServiceConnectionInternal,
-  transport?: CustomerServiceProviderTransport,
 ): Promise<RemoteCustomerServiceGroup[]> {
-  return (await verifyCustomerServiceIntegration(connection, transport)).groups;
+  return (await verifyCustomerServiceIntegration(connection)).groups;
 }
