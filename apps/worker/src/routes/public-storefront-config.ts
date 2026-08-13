@@ -1,9 +1,6 @@
 import { Hono, type Context } from 'hono';
 import { getMediaBaseUrl } from '../assets/asset-library';
-import {
-  getConversionGroup,
-  listConversionTargets,
-} from '../conversion-pool/conversion-pool';
+import { getConversionGroup } from '../conversion-pool/conversion-pool';
 import { getRoutableProduct, resolvePublicCta } from '../conversion-pool/public-cta';
 import {
   getCustomerServiceConnection,
@@ -184,31 +181,16 @@ publicStorefrontConfigRoutes.get('/support/route/:productId', async (context) =>
     group.deletedAt ||
     !group.isEnabled ||
     group.mode !== 'customer_service' ||
-    group.activeTargetCount !== 1
+    group.activeTargetCount !== 1 ||
+    !group.customerServiceConnectionId ||
+    !group.remoteGroupId
   ) {
-    return context.json({ available: false });
-  }
-
-  const targets = await listConversionTargets(
-    context.env.DB,
-    product.sectionId,
-    group.id,
-    'active',
-  );
-  const target = targets.find(
-    (item) =>
-      item.isEnabled &&
-      item.bindingKind === 'customer_service' &&
-      Boolean(item.customerServiceConnectionId) &&
-      Boolean(item.remoteGroupId),
-  );
-  if (!target?.customerServiceConnectionId || !target.remoteGroupId) {
     return context.json({ available: false });
   }
 
   const connection = await getCustomerServiceConnection(
     context.env.DB,
-    target.customerServiceConnectionId,
+    group.customerServiceConnectionId,
   );
   if (!connection || connection.deletedAt || !connection.isEnabled) {
     return context.json({ available: false });
@@ -219,6 +201,6 @@ publicStorefrontConfigRoutes.get('/support/route/:productId', async (context) =>
   return context.json({
     available: true,
     connection: publicConnection,
-    groupId: target.remoteGroupId,
+    groupId: group.remoteGroupId,
   });
 });
