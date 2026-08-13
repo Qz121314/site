@@ -21,16 +21,14 @@ type Scope = 'active' | 'trash';
 type Draft = {
   name: string;
   baseUrl: string;
-  projectId: string;
-  apiToken: string;
+  verifyToken: string;
   isEnabled: boolean;
 };
 
 const emptyDraft: Draft = {
   name: '',
   baseUrl: '',
-  projectId: '',
-  apiToken: '',
+  verifyToken: '',
   isEnabled: true,
 };
 
@@ -49,8 +47,7 @@ function toDraft(connection: CustomerServiceConnection): Draft {
   return {
     name: connection.name,
     baseUrl: connection.baseUrl,
-    projectId: connection.projectId ?? '',
-    apiToken: '',
+    verifyToken: '',
     isEnabled: connection.isEnabled,
   };
 }
@@ -59,15 +56,22 @@ function toInput(
   draft: Draft,
   editing: CustomerServiceConnection | null,
 ): CustomerServiceConnectionInput {
-  const token = draft.apiToken.trim();
+  const verifyToken = draft.verifyToken.trim();
   return {
     name: draft.name.trim(),
     provider: 'generic_v1',
     baseUrl: draft.baseUrl.trim(),
-    projectId: draft.projectId.trim() || null,
-    ...(editing && !token ? {} : { apiToken: token || null }),
+    ...(editing && !verifyToken ? {} : { verifyToken: verifyToken || null }),
     isEnabled: draft.isEnabled,
   };
+}
+
+function verifiedLabel(connection: CustomerServiceConnection): string {
+  if (!connection.hasVerifyToken) return '未配置 Token';
+  if (!connection.verifiedAt || !connection.clientApiUrl || !connection.realtimeUrl) {
+    return '待验证';
+  }
+  return '已验证';
 }
 
 export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewProps) {
@@ -132,9 +136,7 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
     const keyword = search.trim().toLowerCase();
     if (!keyword) return source;
     return source.filter((connection) =>
-      `${connection.name} ${connection.baseUrl} ${connection.projectId ?? ''}`
-        .toLowerCase()
-        .includes(keyword),
+      `${connection.name} ${connection.baseUrl}`.toLowerCase().includes(keyword),
     );
   }, [search, source]);
   const allVisibleSelected =
@@ -193,7 +195,7 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
       } else {
         const created = await createCustomerServiceConnection(toInput(draft, null));
         setActiveConnections((current) => sortConnections([...current, created]));
-        setSuccessMessage(`客服系统“${created.name}”已添加。`);
+        setSuccessMessage(`客服系统“${created.name}”已添加，请验证连接。`);
       }
       setEditorOpen(false);
     } catch (error) {
@@ -209,8 +211,9 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
     setSuccessMessage('');
     try {
       const result = await testCustomerServiceConnection(connection.id);
+      await loadActive();
       setSuccessMessage(
-        `“${connection.name}”连接正常，读取到 ${result.groupCount} 个客服分组。`,
+        `“${connection.name}”验证成功，读取到 ${result.groupCount} 个在线客服分组。`,
       );
     } catch (error) {
       handleError(error);
@@ -284,7 +287,7 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
           className="customer-service-search"
           type="search"
           value={search}
-          placeholder="搜索名称 / 服务地址 / 项目 ID"
+          placeholder="搜索名称或公网地址"
           onChange={(event) => setSearch(event.target.value)}
         />
         {scope === 'active' ? (
@@ -299,9 +302,7 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
           {errorMessage}
         </p>
       ) : null}
-      {successMessage ? (
-        <p className="inline-status is-success">{successMessage}</p>
-      ) : null}
+      {successMessage ? <p className="inline-status is-success">{successMessage}</p> : null}
 
       {scope === 'active' && selectedIds.size > 0 ? (
         <div className="selection-toolbar customer-service-selection-toolbar">
@@ -341,10 +342,9 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
                 ) : null}
               </th>
               <th>客服系统</th>
-              <th>服务地址</th>
-              <th>项目</th>
-              <th>管理凭证</th>
-              <th>转化入口</th>
+              <th>公网地址</th>
+              <th>验证状态</th>
+              <th>已绑定分组</th>
               <th>状态</th>
               <th className="actions-cell">操作</th>
             </tr>
@@ -352,11 +352,11 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={8}>正在读取客服系统…</td>
+                <td colSpan={7}>正在读取客服系统…</td>
               </tr>
             ) : filtered.length === 0 ? (
               <tr>
-                <td colSpan={8}>暂无客服系统。</td>
+                <td colSpan={7}>暂无客服系统。</td>
               </tr>
             ) : (
               filtered.map((connection) => (
@@ -383,8 +383,15 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
                     <strong>{connection.name}</strong>
                   </td>
                   <td className="customer-service-url">{connection.baseUrl}</td>
-                  <td>{connection.projectId ?? '—'}</td>
-                  <td>{connection.hasApiToken ? '管理 Token 已配置' : '无管理 Token'}</td>
+                  <td>
+                    <span
+                      className={
+                        connection.verifiedAt ? 'status-chip is-configured' : 'status-chip'
+                      }
+                    >
+                      {verifiedLabel(connection)}
+                    </span>
+                  </td>
                   <td>{connection.targetCount}</td>
                   <td>
                     <span
@@ -403,7 +410,7 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
                           disabled={testingId === connection.id}
                           onClick={() => void testConnection(connection)}
                         >
-                          {testingId === connection.id ? '测试中…' : '测试'}
+                          {testingId === connection.id ? '验证中…' : '验证'}
                         </button>
                         <button type="button" onClick={() => openEdit(connection)}>
                           编辑
@@ -477,23 +484,8 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
                   }}
                 />
               </label>
-              <label>
-                <span>项目 ID（前端可读取）</span>
-                <input
-                  type="text"
-                  maxLength={200}
-                  value={draft.projectId}
-                  onChange={(event) => {
-                    setDraft((current) => ({
-                      ...current,
-                      projectId: event.target.value,
-                    }));
-                    setErrorMessage('');
-                  }}
-                />
-              </label>
               <label className="customer-service-editor-wide">
-                <span>客服服务地址（前端可读取）</span>
+                <span>客服系统公网地址</span>
                 <input
                   type="url"
                   required
@@ -508,16 +500,19 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
               </label>
               <label className="customer-service-editor-wide">
                 <span>
-                  管理 Token（仅产品后台使用）
-                  {editingConnection?.hasApiToken ? '（已配置）' : ''}
+                  验证 Token
+                  {editingConnection?.hasVerifyToken ? '（已配置，留空保持不变）' : ''}
                 </span>
                 <input
                   type="password"
                   autoComplete="new-password"
-                  maxLength={4000}
-                  value={draft.apiToken}
+                  required={!editingConnection?.hasVerifyToken}
+                  value={draft.verifyToken}
                   onChange={(event) => {
-                    setDraft((current) => ({ ...current, apiToken: event.target.value }));
+                    setDraft((current) => ({
+                      ...current,
+                      verifyToken: event.target.value,
+                    }));
                     setErrorMessage('');
                   }}
                 />
