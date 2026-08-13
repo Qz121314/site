@@ -7,7 +7,7 @@ import {
 import type { StorefrontLinkComponent } from '@site/storefront-ui';
 import { useEffect, useMemo } from 'react';
 import { loadProductSnapshot, type StorefrontBootstrap } from './content';
-import type { SupportConversationDetail } from './support-contract';
+import type { SupportConversationDetail, SupportMessage } from './support-contract';
 import { loadPublicSupportConnections, siteSupportGateway } from './support-gateway';
 import { subscribeSupportRealtime } from './support-realtime';
 import { MessagesWorkspace, type PendingSupportConversation } from './support-ui';
@@ -34,7 +34,17 @@ function combineConversationPages(
     pages?.filter((page): page is SupportConversationDetail => Boolean(page)) ?? [];
   const latest = validPages[0];
   if (!latest) return null;
-  const messages = [...validPages].reverse().flatMap((page) => page.messages);
+
+  const seen = new Set<string>();
+  const messages: SupportMessage[] = [];
+  for (const page of [...validPages].reverse()) {
+    for (const message of page.messages) {
+      if (seen.has(message.id)) continue;
+      seen.add(message.id);
+      messages.push(message);
+    }
+  }
+
   const oldestLoaded = validPages[validPages.length - 1];
   return {
     ...latest,
@@ -194,7 +204,14 @@ export function MessagesPage({
         .find((message) => message.direction === 'agent')?.id ?? null;
     void siteSupportGateway
       .markConversationRead(activeConversationRef, lastAgentMessage)
-      .then(() => queryClient.invalidateQueries({ queryKey: ['support-conversations'] }))
+      .then(async () => {
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['support-conversations'] }),
+          queryClient.invalidateQueries({
+            queryKey: ['support-conversation', activeConversationRef],
+          }),
+        ]);
+      })
       .catch(() => undefined);
   }, [activeConversationRef, activeConversation, queryClient]);
 

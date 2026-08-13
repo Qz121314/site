@@ -1,5 +1,5 @@
 import type { StorefrontLinkComponent } from '@site/storefront-ui';
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import type {
   SupportConversationDetail,
   SupportConversationSummary,
@@ -233,10 +233,21 @@ export function MessageThreadPageContent({
   loadingConversation?: boolean;
 }) {
   const [draft, setDraft] = useState('');
+  const timelineRef = useRef<HTMLDivElement | null>(null);
+  const lastMessageId = conversation?.messages.at(-1)?.id ?? null;
 
   useEffect(() => {
     setDraft('');
   }, [conversation?.id, pendingConversation?.productHref]);
+
+  useEffect(() => {
+    const timeline = timelineRef.current;
+    if (!timeline || !lastMessageId) return;
+    const frame = window.requestAnimationFrame(() => {
+      timeline.scrollTo({ top: timeline.scrollHeight, behavior: 'smooth' });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [conversation?.id, lastMessageId]);
 
   if (loadingConversation) {
     return (
@@ -304,11 +315,11 @@ export function MessageThreadPageContent({
     event.preventDefault();
     const body = draft.trim();
     if (!body || !canSend || !onSendMessage || sending) return;
+    setDraft('');
     try {
       await onSendMessage(body);
-      setDraft('');
     } catch {
-      // The parent owns the visible error state. Keep the draft intact for retry.
+      setDraft((current) => current || body);
     }
   }
 
@@ -338,7 +349,7 @@ export function MessageThreadPageContent({
 
       <ProductContextCard context={productContext} LinkComponent={LinkComponent} />
 
-      <div className="chat-timeline" role="log" aria-live="polite">
+      <div className="chat-timeline" role="log" aria-live="polite" ref={timelineRef}>
         {conversation?.nextMessageCursor && onLoadEarlier ? (
           <button
             className="chat-load-earlier"
@@ -381,9 +392,19 @@ export function MessageThreadPageContent({
           aria-label={SYSTEM_UI.message}
           placeholder={SYSTEM_UI.message}
           value={draft}
-          disabled={!canSend || sending}
+          disabled={!canSend}
           maxLength={4000}
           onChange={(event) => setDraft(event.target.value)}
+          onKeyDown={(event) => {
+            if (
+              event.key === 'Enter' &&
+              !event.shiftKey &&
+              !event.nativeEvent.isComposing
+            ) {
+              event.preventDefault();
+              event.currentTarget.form?.requestSubmit();
+            }
+          }}
         />
         <button
           type="submit"
