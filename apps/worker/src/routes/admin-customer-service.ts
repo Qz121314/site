@@ -4,6 +4,7 @@ import {
   createCustomerServiceConnection,
   createDeleteCustomerServiceConnectionStatement,
   createRestoreCustomerServiceConnectionStatement,
+  createSetCustomerServiceVerificationStatement,
   createUpdateCustomerServiceConnectionStatement,
   getCustomerServiceConnection,
   getCustomerServiceConnectionInternal,
@@ -17,7 +18,7 @@ import {
 import {
   CustomerServiceProviderError,
   listRemoteCustomerServiceGroups,
-  testCustomerServiceConnection,
+  verifyCustomerServiceIntegration,
 } from '../customer-service/customer-service-provider';
 import { apiError } from '../http/api-response';
 import {
@@ -86,7 +87,7 @@ function connectionDeleteBlocked(
     context,
     409,
     'CUSTOMER_SERVICE_CONNECTION_IN_USE',
-    `客服系统“${connection.name}”仍被 ${connection.targetCount} 个转化入口使用，不能删除。`,
+    `客服系统“${connection.name}”仍被 ${connection.targetCount} 个在线客服分组使用，不能删除。`,
     { targetCount: connection.targetCount },
   );
 }
@@ -97,8 +98,10 @@ function connectionAuditValue(connection: CustomerServiceConnectionRecord) {
     name: connection.name,
     provider: connection.provider,
     baseUrl: connection.baseUrl,
-    projectId: connection.projectId,
-    hasApiToken: connection.hasApiToken,
+    hasVerifyToken: connection.hasVerifyToken,
+    clientApiUrl: connection.clientApiUrl,
+    realtimeUrl: connection.realtimeUrl,
+    verifiedAt: connection.verifiedAt,
     isEnabled: connection.isEnabled,
     deletedAt: connection.deletedAt,
     targetCount: connection.targetCount,
@@ -109,7 +112,13 @@ function providerFailure(
   context: Parameters<typeof apiError>[0],
   error: CustomerServiceProviderError,
 ) {
-  return apiError(context, 503, error.code, error.message);
+  const status =
+    error.code === 'CUSTOMER_SERVICE_VERIFY_TOKEN_INVALID'
+      ? 401
+      : error.code === 'CUSTOMER_SERVICE_VERIFY_TOKEN_REQUIRED'
+        ? 400
+        : 503;
+  return apiError(context, status, error.code, error.message);
 }
 
 adminCustomerServiceRoutes.get('/connections', async (context) => {
@@ -201,9 +210,7 @@ adminCustomerServiceRoutes.post('/connections', async (context) => {
       400,
       'INVALID_CUSTOMER_SERVICE_CONNECTION',
       validation.message,
-      {
-        field: validation.field,
-      },
+      { field: validation.field },
     );
   }
   const now = new Date().toISOString();
@@ -253,21 +260,25 @@ adminCustomerServiceRoutes.put('/connections/:id', async (context) => {
       400,
       'INVALID_CUSTOMER_SERVICE_CONNECTION',
       validation.message,
-      {
-        field: validation.field,
-      },
+      { field: validation.field },
     );
   }
   const now = new Date().toISOString();
-  const resolvedApiToken =
-    validation.value.apiToken === undefined
-      ? current.apiToken
-      : validation.value.apiToken;
+  const resolvedVerifyToken =
+    validation.value.verifyToken === undefined
+      ? current.verifyToken
+      : validation.value.verifyToken;
+  const clearVerification =
+    current.baseUrl !== validation.value.baseUrl ||
+    current.verifyToken !== resolvedVerifyToken;
   const updatedInternal = {
     ...current,
     ...validation.value,
-    apiToken: resolvedApiToken,
-    hasApiToken: Boolean(resolvedApiToken),
+    verifyToken: resolvedVerifyToken,
+    hasVerifyToken: Boolean(resolvedVerifyToken),
+    clientApiUrl: clearVerification ? null : current.clientApiUrl,
+    realtimeUrl: clearVerification ? null : current.realtimeUrl,
+    verifiedAt: clearVerification ? null : current.verifiedAt,
     updatedAt: now,
   };
   const updated = toPublicCustomerServiceConnection(updatedInternal);
@@ -277,7 +288,8 @@ adminCustomerServiceRoutes.put('/connections/:id', async (context) => {
         context.env.DB,
         current.id,
         validation.value,
-        current.apiToken,
+        current.verifyToken,
+        clearVerification,
         now,
       ),
       createAuditLogStatement(context.env.DB, {
@@ -382,14 +394,40 @@ adminCustomerServiceRoutes.post('/connections/:id/test', async (context) => {
   );
   if (!connection || connection.deletedAt) return connectionNotFound(context);
   try {
-    const result = await testCustomerServiceConnection(
-      {
-        ...connection,
-        isEnabled: true,
-      },
+    const result = await verifyCustomerServiceIntegration(
+      { ...connection, isEnabled: true },
       { internalService: context.env.CUSTOMER_SERVICE_APP },
     );
-    return context.json(result);
+    const verifiedAt = new Date().toISOString();
+    await context.env.DB.batch([
+      createSetCustomerServiceVerificationStatement(
+        context.env.DB,
+        connection.id,
+        result.clientApiUrl,
+        result.realtimeUrl,
+        verifiedAt,
+      ),
+      createAuditLogStatement(context.env.DB, {
+        action: 'customer-service-connection.verified',
+        entityType: 'customer_service_connection',
+        entityId: connection.id,
+        requestId: context.get('requestId'),
+        before: connectionAuditValue(toPublicCustomerServiceConnection(connection)),
+        after: {
+          ...connectionAuditValue(toPublicCustomerServiceConnection(connection)),
+          clientApiUrl: result.clientApiUrl,
+          realtimeUrl: result.realtimeUrl,
+          verifiedAt,
+        },
+        metadata: { groupCount: result.groups.length },
+        createdAt: verifiedAt,
+      }),
+    ]);
+    return context.json({
+      connected: true,
+      groupCount: result.groups.length,
+      verifiedAt,
+    });
   } catch (error) {
     if (error instanceof CustomerServiceProviderError)
       return providerFailure(context, error);

@@ -22,8 +22,8 @@ export class SupportApiError extends Error {
 
 export type PublicSupportConnection = {
   id: string;
-  baseUrl: string;
-  projectId: string | null;
+  clientApiUrl: string;
+  realtimeUrl: string;
   protocolVersion: 'v1';
 };
 
@@ -91,8 +91,8 @@ function parseConnection(value: unknown): PublicSupportConnection {
   if (
     !item ||
     typeof item.id !== 'string' ||
-    typeof item.baseUrl !== 'string' ||
-    !nullableString(item.projectId) ||
+    typeof item.clientApiUrl !== 'string' ||
+    typeof item.realtimeUrl !== 'string' ||
     item.protocolVersion !== 'v1'
   ) {
     throw new SupportApiError(
@@ -103,8 +103,8 @@ function parseConnection(value: unknown): PublicSupportConnection {
   }
   return {
     id: item.id,
-    baseUrl: item.baseUrl.replace(/\/$/u, ''),
-    projectId: item.projectId,
+    clientApiUrl: item.clientApiUrl.replace(/\/$/u, ''),
+    realtimeUrl: item.realtimeUrl,
     protocolVersion: 'v1',
   };
 }
@@ -158,7 +158,7 @@ async function resolveSupportRoute(
 }
 
 function remoteUrl(connection: PublicSupportConnection, path: string): string {
-  return `${connection.baseUrl}${path}`;
+  return `${connection.clientApiUrl}${path}`;
 }
 
 function clientQueryUrl(
@@ -169,21 +169,16 @@ function clientQueryUrl(
   const identity = getSupportVisitorIdentity();
   const url = new URL(remoteUrl(connection, path));
   url.searchParams.set('visitorId', identity.visitorId);
-  if (connection.projectId) url.searchParams.set('projectId', connection.projectId);
   for (const [key, value] of Object.entries(values ?? {})) {
     if (value) url.searchParams.set(key, value);
   }
   return url.toString();
 }
 
-function clientBody(
-  connection: PublicSupportConnection,
-  body: Record<string, unknown>,
-): Record<string, unknown> {
+function clientBody(body: Record<string, unknown>): Record<string, unknown> {
   const identity = getSupportVisitorIdentity();
   return {
     visitorId: identity.visitorId,
-    ...(connection.projectId ? { projectId: connection.projectId } : {}),
     ...body,
   };
 }
@@ -409,10 +404,8 @@ function conversationTimestamp(value: string | null): number {
 
 export function buildSupportWebSocketUrl(connection: PublicSupportConnection): string {
   const identity = getSupportVisitorIdentity();
-  const url = new URL(`${connection.baseUrl}/client/v1/realtime`);
-  url.protocol = 'wss:';
+  const url = new URL(connection.realtimeUrl);
   url.searchParams.set('visitorId', identity.visitorId);
-  if (connection.projectId) url.searchParams.set('projectId', connection.projectId);
   return url.toString();
 }
 
@@ -423,7 +416,7 @@ export const siteSupportGateway: SupportGateway = {
     const settled = await Promise.allSettled(
       connections.map(async (connection) => {
         const value = await remoteRequestJson(
-          clientQueryUrl(connection, '/client/v1/conversations'),
+          clientQueryUrl(connection, '/conversations'),
           undefined,
           signal,
         );
@@ -474,7 +467,7 @@ export const siteSupportGateway: SupportGateway = {
         await remoteRequestJson(
           clientQueryUrl(
             connection,
-            `/client/v1/conversations/${encodeURIComponent(remoteConversationId)}`,
+            `/conversations/${encodeURIComponent(remoteConversationId)}`,
             { before, limit: '30' },
           ),
           undefined,
@@ -490,11 +483,11 @@ export const siteSupportGateway: SupportGateway = {
   async startConversation(input: StartSupportConversationInput, signal) {
     const route = await resolveSupportRoute(input.productId, input.sectionId, signal);
     const value = await remoteRequestJson(
-      remoteUrl(route.connection, '/client/v1/conversations'),
+      remoteUrl(route.connection, '/conversations'),
       {
         method: 'POST',
         body: JSON.stringify(
-          clientBody(route.connection, {
+          clientBody({
             groupId: route.groupId,
             clientMessageId: input.clientMessageId,
             message: input.message,
@@ -521,12 +514,12 @@ export const siteSupportGateway: SupportGateway = {
     const value = await remoteRequestJson(
       remoteUrl(
         connection,
-        `/client/v1/conversations/${encodeURIComponent(remoteConversationId)}/messages`,
+        `/conversations/${encodeURIComponent(remoteConversationId)}/messages`,
       ),
       {
         method: 'POST',
         body: JSON.stringify(
-          clientBody(connection, {
+          clientBody({
             clientMessageId: input.clientMessageId,
             body: input.body,
           }),
@@ -546,11 +539,11 @@ export const siteSupportGateway: SupportGateway = {
     const value = await remoteRequestJson(
       remoteUrl(
         connection,
-        `/client/v1/conversations/${encodeURIComponent(remoteConversationId)}/read`,
+        `/conversations/${encodeURIComponent(remoteConversationId)}/read`,
       ),
       {
         method: 'POST',
-        body: JSON.stringify(clientBody(connection, { lastMessageId })),
+        body: JSON.stringify(clientBody({ lastMessageId })),
       },
       signal,
     );

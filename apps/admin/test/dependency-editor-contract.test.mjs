@@ -23,9 +23,10 @@ test('dependency editor failures remain visible inside open dialogs', () => {
   }
 });
 
-test('conversion group mode controls lock when existing targets make the mode immutable', () => {
+test('conversion group mode controls lock when existing link targets make the mode immutable', () => {
   const source = readSource('conversion-pool/ConversionGroupEditorDialog.tsx');
-  assert.match(source, /editingGroup && editingGroup\.targetCount > 0/);
+  assert.match(source, /editingGroup\.mode === 'link'/);
+  assert.match(source, /editingGroup\.targetCount > 0/);
   assert.match(source, /disabled=\{saving \|\| modeLocked\}/);
 });
 

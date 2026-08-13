@@ -6,25 +6,18 @@ import {
   validateConversionTargetInput,
 } from '../src/conversion-pool/conversion-pool.ts';
 
-function targetRow({
-  id,
-  name,
-  sortOrder,
-  endpointUrl = null,
-  connectionId = null,
-  remoteGroupId = null,
-}) {
+function targetRow({ id, name, sortOrder, endpointUrl }) {
   return {
     id,
     section_id: 'section-1',
     group_id: 'group-1',
-    group_mode: connectionId ? 'customer_service' : 'link',
+    group_mode: 'link',
     name,
     endpoint_url: endpointUrl,
-    customer_service_connection_id: connectionId,
-    customer_service_connection_name: connectionId ? 'Support A' : null,
-    remote_group_id: remoteGroupId,
-    remote_group_name: remoteGroupId ? name : null,
+    customer_service_connection_id: null,
+    customer_service_connection_name: null,
+    remote_group_id: null,
+    remote_group_name: null,
     sort_order: sortOrder,
     is_enabled: 1,
     created_at: '2026-08-07T00:00:00.000Z',
@@ -81,6 +74,10 @@ const linkGroup = {
   targetCount: 3,
   activeTargetCount: 3,
   productCount: 1,
+  customerServiceConnectionId: null,
+  customerServiceConnectionName: null,
+  remoteGroupId: null,
+  remoteGroupName: null,
 };
 
 test('link target validation accepts HTTP(S) and strips customer-service fields', () => {
@@ -126,55 +123,87 @@ test('link target validation rejects non HTTP(S) protocols', () => {
   assert.equal(result.field, 'endpointUrl');
 });
 
-test('customer-service target requires a remote group and forbids manual URL', () => {
-  const invalid = validateConversionTargetInput(
+test('online support no longer accepts a separate conversion target', () => {
+  const result = validateConversionTargetInput(
     {
       name: 'Sales',
-      endpointUrl: 'https://should-not-be-saved.example',
+      endpointUrl: null,
       customerServiceConnectionId: 'connection-1',
       remoteGroupId: 'sales',
-      remoteGroupName: 'Sales',
+      remoteGroupName: 'Sales Team',
       sortOrder: 0,
       isEnabled: true,
     },
     'customer_service',
   );
-  assert.equal(invalid.ok, false);
-  if (!invalid.ok) assert.equal(invalid.field, 'endpointUrl');
 
-  const valid = validateConversionTargetInput(
-    {
-      name: 'ignored local name',
-      endpointUrl: null,
-      customerServiceConnectionId: ' connection-1 ',
-      remoteGroupId: ' sales ',
-      remoteGroupName: ' Sales Team ',
-      sortOrder: 20,
-      isEnabled: true,
-    },
-    'customer_service',
-  );
-  assert.equal(valid.ok, true);
-  if (!valid.ok) return;
-  assert.equal(valid.value.name, 'Sales Team');
-  assert.equal(valid.value.customerServiceConnectionId, 'connection-1');
-  assert.equal(valid.value.remoteGroupId, 'sales');
+  assert.equal(result.ok, false);
+  if (!result.ok) {
+    assert.equal(result.field, 'form');
+    assert.match(result.message, /直接绑定客服系统/u);
+  }
 });
 
-test('conversion group validation keeps round-robin-compatible modes only', () => {
+test('online support group requires a direct customer-service connection and group', () => {
+  const missingBinding = validateConversionGroupInput({
+    name: ' Main ',
+    mode: 'customer_service',
+    buttonLabel: ' Contact ',
+    sortOrder: 0,
+    isEnabled: true,
+    customerServiceConnectionId: null,
+    remoteGroupId: null,
+    remoteGroupName: null,
+  });
+  assert.equal(missingBinding.ok, false);
+  if (!missingBinding.ok) {
+    assert.equal(missingBinding.field, 'customerServiceConnectionId');
+  }
+
   const valid = validateConversionGroupInput({
     name: ' Main ',
     mode: 'customer_service',
     buttonLabel: ' Contact ',
     sortOrder: 0,
     isEnabled: true,
+    customerServiceConnectionId: ' connection-1 ',
+    remoteGroupId: ' sales ',
+    remoteGroupName: ' Sales Team ',
   });
   assert.equal(valid.ok, true);
-  if (valid.ok) {
-    assert.equal(valid.value.name, 'Main');
-    assert.equal(valid.value.buttonLabel, 'Contact');
-  }
+  if (!valid.ok) return;
+  assert.deepEqual(valid.value, {
+    name: 'Main',
+    mode: 'customer_service',
+    buttonLabel: 'Contact',
+    sortOrder: 0,
+    isEnabled: true,
+    customerServiceConnectionId: 'connection-1',
+    remoteGroupId: 'sales',
+    remoteGroupName: 'Sales Team',
+  });
+});
 
+test('link group strips customer-service binding fields', () => {
+  const result = validateConversionGroupInput({
+    name: 'Links',
+    mode: 'link',
+    buttonLabel: 'Open',
+    sortOrder: 0,
+    isEnabled: true,
+    customerServiceConnectionId: 'ignored',
+    remoteGroupId: 'ignored',
+    remoteGroupName: 'ignored',
+  });
+
+  assert.equal(result.ok, true);
+  if (!result.ok) return;
+  assert.equal(result.value.customerServiceConnectionId, null);
+  assert.equal(result.value.remoteGroupId, null);
+  assert.equal(result.value.remoteGroupName, null);
+});
+
+test('conversion group validation rejects unsupported modes', () => {
   const invalid = validateConversionGroupInput({
     name: 'Main',
     mode: 'random',
@@ -186,7 +215,7 @@ test('conversion group validation keeps round-robin-compatible modes only', () =
   if (!invalid.ok) assert.equal(invalid.field, 'mode');
 });
 
-test('production selector rotates A → B → C → A', async () => {
+test('production link selector rotates A → B → C → A', async () => {
   const db = createRotationDb([
     targetRow({ id: 'a', name: 'A', sortOrder: 10, endpointUrl: 'https://a.example/' }),
     targetRow({ id: 'b', name: 'B', sortOrder: 20, endpointUrl: 'https://b.example/' }),
@@ -216,7 +245,7 @@ test('production selector rotates A → B → C → A', async () => {
   );
 });
 
-test('disabled or empty groups never consume the production cursor', async () => {
+test('disabled or empty link groups never consume the production cursor', async () => {
   const db = createRotationDb([]);
 
   assert.equal(
@@ -238,30 +267,25 @@ test('disabled or empty groups never consume the production cursor', async () =>
   assert.equal(db.statements.length, 0);
 });
 
-test('customer-service rotation only queries bound groups on enabled connections', async () => {
-  const db = createRotationDb([
-    targetRow({
-      id: 'sales',
-      name: 'Sales',
-      sortOrder: 10,
-      connectionId: 'connection-1',
-      remoteGroupId: 'sales',
-    }),
-  ]);
-  const group = { ...linkGroup, mode: 'customer_service', activeTargetCount: 1 };
+test('online support groups never enter link target rotation', async () => {
+  const db = createRotationDb([]);
+  const group = {
+    ...linkGroup,
+    mode: 'customer_service',
+    targetCount: 0,
+    activeTargetCount: 1,
+    customerServiceConnectionId: 'connection-1',
+    customerServiceConnectionName: 'Support A',
+    remoteGroupId: 'sales',
+    remoteGroupName: 'Sales Team',
+  };
 
   const selected = await selectNextConversionTarget(
     db,
     group,
     '2026-08-07T00:00:00.000Z',
   );
-  assert.equal(selected?.bindingKind, 'customer_service');
-  assert.equal(selected?.remoteGroupId, 'sales');
 
-  const targetQuery = db.statements.find((statement) =>
-    statement.sql.includes('FROM conversion_targets t'),
-  );
-  assert.ok(targetQuery?.sql.includes('t.customer_service_connection_id IS NOT NULL'));
-  assert.ok(targetQuery?.sql.includes('EXISTS'));
-  assert.ok(targetQuery?.sql.includes('c2.is_enabled = 1'));
+  assert.equal(selected, null);
+  assert.equal(db.statements.length, 0);
 });
