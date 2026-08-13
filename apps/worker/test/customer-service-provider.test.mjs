@@ -72,10 +72,13 @@ test('same-account customer-service workers.dev uses the Service Binding', async
   const internalService = {
     async fetch(url, init) {
       boundRequest = { url, init };
-      return new Response(JSON.stringify({ groups: [{ id: 'general', name: 'General' }] }), {
-        status: 200,
-        headers: { 'content-type': 'application/json' },
-      });
+      return new Response(
+        JSON.stringify({ groups: [{ id: 'general', name: 'General' }] }),
+        {
+          status: 200,
+          headers: { 'content-type': 'application/json' },
+        },
+      );
     },
   };
 
