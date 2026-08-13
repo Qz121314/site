@@ -1,9 +1,7 @@
 export type ConversionMode = 'customer_service' | 'link';
 export type ConversionScope = 'active' | 'trash' | 'all';
 export type ConversionTargetBindingKind =
-  | 'link'
-  | 'customer_service'
-  | 'legacy_customer_service';
+  'link' | 'customer_service' | 'legacy_customer_service';
 
 export type ConversionGroupRecord = {
   id: string;
@@ -105,8 +103,7 @@ type ConversionTargetRow = {
 };
 
 type ValidationResult<T> =
-  | { ok: true; value: T }
-  | { ok: false; field: string; message: string };
+  { ok: true; value: T } | { ok: false; field: string; message: string };
 
 type RotationRow = { selected_index: number };
 

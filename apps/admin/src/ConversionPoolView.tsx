@@ -31,9 +31,7 @@ type Props = {
 
 type Scope = 'active' | 'trash';
 type DeleteState =
-  | { kind: 'group'; ids: string[] }
-  | { kind: 'target'; ids: string[] }
-  | null;
+  { kind: 'group'; ids: string[] } | { kind: 'target'; ids: string[] } | null;
 
 const emptyGroupForm: ConversionGroupInput = {
   name: '',
@@ -560,7 +558,9 @@ export function ConversionPoolView({ section, onSessionExpired }: Props) {
     setErrorMessage('');
     try {
       const target = await previewRotation(section.id, group.id);
-      setRotationMessage(`本次轮换命中：${target.name} · ${shortUrl(target.endpointUrl)}`);
+      setRotationMessage(
+        `本次轮换命中：${target.name} · ${shortUrl(target.endpointUrl)}`,
+      );
     } catch (error) {
       handleError(error);
     } finally {
@@ -1011,7 +1011,10 @@ export function ConversionPoolView({ section, onSessionExpired }: Props) {
                       <td>
                         <strong>{target.name}</strong>
                       </td>
-                      <td className="conversion-url-cell" title={target.endpointUrl ?? undefined}>
+                      <td
+                        className="conversion-url-cell"
+                        title={target.endpointUrl ?? undefined}
+                      >
                         {shortUrl(target.endpointUrl)}
                       </td>
                       <td>

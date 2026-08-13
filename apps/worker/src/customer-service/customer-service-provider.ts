@@ -37,7 +37,9 @@ function shouldUseInternalService(
 ): boolean {
   if (!transport?.internalService) return false;
   const hostname = new URL(connection.baseUrl).hostname.toLowerCase();
-  return hostname.startsWith('customer-service-app.') && hostname.endsWith('.workers.dev');
+  return (
+    hostname.startsWith('customer-service-app.') && hostname.endsWith('.workers.dev')
+  );
 }
 
 function safeHttpsUrl(value: unknown, label: string): string {
