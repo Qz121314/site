@@ -100,16 +100,16 @@ test('remote group listing reuses integration verification and keeps token serve
   ]);
 });
 
-test('same-account customer-service workers.dev uses Service Binding only for control plane', async () => {
-  let boundRequest;
-  let publicFetchCalled = false;
-  const internalService = {
-    async fetch(url, init) {
-      boundRequest = { url, init };
+test('workers.dev customer service verification uses the configured public URL', async () => {
+  let request;
+  const baseUrl = 'https://customer-service-app.fcqz121314.workers.dev';
+  const result = await withFetch(
+    async (url, init) => {
+      request = { url, init };
       return new Response(
         JSON.stringify(
           integrationEnvelope({
-            clientApiUrl: 'https://customer-service-app.fcqz121314.workers.dev/client/v1',
+            clientApiUrl: `${baseUrl}/client/v1`,
             realtimeUrl:
               'wss://customer-service-app.fcqz121314.workers.dev/client/v1/realtime',
             groups: [{ id: 'general', name: '默认客服组', isEnabled: true }],
@@ -121,28 +121,11 @@ test('same-account customer-service workers.dev uses Service Binding only for co
         },
       );
     },
-  };
-
-  const result = await withFetch(
-    async () => {
-      publicFetchCalled = true;
-      throw new Error('public fetch must not be used');
-    },
-    () =>
-      verifyCustomerServiceIntegration(
-        connection({
-          baseUrl: 'https://customer-service-app.fcqz121314.workers.dev',
-        }),
-        { internalService },
-      ),
+    () => verifyCustomerServiceIntegration(connection({ baseUrl })),
   );
 
-  assert.equal(publicFetchCalled, false);
-  assert.equal(
-    boundRequest.url,
-    'https://customer-service-app.fcqz121314.workers.dev/integration/v1/verify',
-  );
-  const headers = new Headers(boundRequest.init.headers);
+  assert.equal(request.url, `${baseUrl}/integration/v1/verify`);
+  const headers = new Headers(request.init.headers);
   assert.equal(headers.get('authorization'), 'Bearer secret-token');
   assert.deepEqual(result.groups, [
     { id: 'general', name: '默认客服组', isEnabled: true },
