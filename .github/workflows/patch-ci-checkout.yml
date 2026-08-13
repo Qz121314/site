@@ -2,7 +2,8 @@ name: Repair CI checkout
 
 on:
   push:
-    branches: [fix/customer-service-worker-fetch]
+    branches:
+      - fix/customer-service-worker-fetch
     paths:
       - .github/workflows/patch-ci-checkout.yml
 
@@ -25,17 +26,8 @@ jobs:
           from pathlib import Path
           path = Path('.github/workflows/ci.yml')
           text = path.read_text()
-          old = '''      - name: Checkout
-        run: |
-          set -euo pipefail
-          git init .
-          git remote add origin "https://github.com/${GITHUB_REPOSITORY}.git"
-          git fetch --no-tags --depth=1 origin "${GITHUB_REF}"
-          git checkout --detach FETCH_HEAD
-'''
-          new = '''      - name: Checkout
-        uses: actions/checkout@v4
-'''
+          old = "      - name: Checkout\n        run: |\n          set -euo pipefail\n          git init .\n          git remote add origin \"https://github.com/${GITHUB_REPOSITORY}.git\"\n          git fetch --no-tags --depth=1 origin \"${GITHUB_REF}\"\n          git checkout --detach FETCH_HEAD\n"
+          new = "      - name: Checkout\n        uses: actions/checkout@v4\n"
           count = text.count(old)
           if count != 2:
               raise SystemExit(f'Expected 2 checkout blocks, found {count}')
