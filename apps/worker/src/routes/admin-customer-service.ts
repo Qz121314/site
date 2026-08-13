@@ -382,10 +382,13 @@ adminCustomerServiceRoutes.post('/connections/:id/test', async (context) => {
   );
   if (!connection || connection.deletedAt) return connectionNotFound(context);
   try {
-    const result = await testCustomerServiceConnection({
-      ...connection,
-      isEnabled: true,
-    });
+    const result = await testCustomerServiceConnection(
+      {
+        ...connection,
+        isEnabled: true,
+      },
+      { internalService: context.env.CUSTOMER_SERVICE_APP },
+    );
     return context.json(result);
   } catch (error) {
     if (error instanceof CustomerServiceProviderError)
@@ -402,7 +405,11 @@ adminCustomerServiceRoutes.get('/connections/:id/groups', async (context) => {
   );
   if (!connection || connection.deletedAt) return connectionNotFound(context);
   try {
-    return context.json({ groups: await listRemoteCustomerServiceGroups(connection) });
+    return context.json({
+      groups: await listRemoteCustomerServiceGroups(connection, {
+        internalService: context.env.CUSTOMER_SERVICE_APP,
+      }),
+    });
   } catch (error) {
     if (error instanceof CustomerServiceProviderError)
       return providerFailure(context, error);
