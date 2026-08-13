@@ -43,19 +43,21 @@ test('Messages UI uses direct customer-service REST and realtime gateways', () =
   assert.match(contractSource, /sendMessage/u);
   assert.match(contractSource, /markConversationRead/u);
   assert.match(gatewaySource, /\/api\/public\/storefront\/support\/connections/u);
-  assert.match(gatewaySource, /\/client\/v1\/conversations/u);
+  assert.match(gatewaySource, /connection\.clientApiUrl/u);
+  assert.match(gatewaySource, /['"]\/conversations['"]/u);
   assert.match(realtimeSource, /new WebSocket/u);
   assert.match(realtimeSource, /buildSupportWebSocketUrl/u);
   assert.match(rootSource, /lazy\(\(\) =>[\s\S]*?import\('\.\/MessagesPage'\)/u);
   assert.match(messagesPageSource, /subscribeSupportRealtime/u);
-  assert.match(rootSource, /message-compose/u);
+  assert.match(`${supportSource}\n${messagesPageSource}`, /message-compose/u);
   assert.match(supportSource, /nextMessageCursor/u);
 });
 
 test('Storefront receives public connection metadata but never management credentials', () => {
   const browserBoundary = `${contractSource}\n${gatewaySource}\n${realtimeSource}\n${identitySource}\n${supportSource}\n${rootSource}\n${messagesPageSource}`;
-  assert.match(browserBoundary, /baseUrl/u);
-  assert.match(browserBoundary, /projectId/u);
+  assert.match(browserBoundary, /clientApiUrl/u);
+  assert.match(browserBoundary, /realtimeUrl/u);
+  assert.match(browserBoundary, /protocolVersion/u);
   assert.doesNotMatch(
     browserBoundary,
     /apiToken|managementToken|Authorization:\s*Bearer/u,
