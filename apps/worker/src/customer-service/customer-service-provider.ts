@@ -1,5 +1,3 @@
-import type { CustomerServiceConnectionInternal } from './customer-service-connections';
-
 export type RemoteCustomerServiceGroup = {
   id: string;
   name: string;
@@ -11,10 +9,6 @@ export type VerifiedCustomerServiceIntegration = {
   clientApiUrl: string;
   realtimeUrl: string;
   groups: RemoteCustomerServiceGroup[];
-};
-
-export type CustomerServiceProviderTransport = {
-  internalService?: Fetcher;
 };
 
 export class CustomerServiceProviderError extends Error {
@@ -29,17 +23,6 @@ export class CustomerServiceProviderError extends Error {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
-}
-
-function shouldUseInternalService(
-  connection: CustomerServiceConnectionInternal,
-  transport?: CustomerServiceProviderTransport,
-): boolean {
-  if (!transport?.internalService) return false;
-  const hostname = new URL(connection.baseUrl).hostname.toLowerCase();
-  return (
-    hostname.startsWith('customer-service-app.') && hostname.endsWith('.workers.dev')
-  );
 }
 
 function safeHttpsUrl(value: unknown, label: string): string {
@@ -115,7 +98,14 @@ function parseGroups(value: unknown): RemoteCustomerServiceGroup[] {
   return groups;
 }
 
-function parseIntegration(value: unknown): VerifiedCustomerServiceIntegration {
+/**
+ * Validate the public generic-v1 integration response returned to the Site
+ * admin browser. This module intentionally performs no network I/O: Site's
+ * Worker never contacts a customer-service Worker directly.
+ */
+export function parseCustomerServiceIntegration(
+  value: unknown,
+): VerifiedCustomerServiceIntegration {
   const envelope = isRecord(value) ? value : null;
   if (!envelope || envelope.ok !== true || envelope.protocolVersion !== 'v1') {
     throw new CustomerServiceProviderError(
@@ -129,97 +119,4 @@ function parseIntegration(value: unknown): VerifiedCustomerServiceIntegration {
     realtimeUrl: safeRealtimeUrl(envelope.realtimeUrl),
     groups: parseGroups(envelope.groups),
   };
-}
-
-/**
- * Admin still stores only the public customer-service URL and verification
- * token. For this deployment's same-account workers.dev target, a Service
- * Binding is used only as the control-plane transport so verification does not
- * depend on Worker-to-Worker public routing. Storefront traffic never uses it.
- */
-export async function verifyCustomerServiceIntegration(
-  connection: CustomerServiceConnectionInternal,
-  transport?: CustomerServiceProviderTransport,
-): Promise<VerifiedCustomerServiceIntegration> {
-  if (connection.provider !== 'generic_v1') {
-    throw new CustomerServiceProviderError(
-      'CUSTOMER_SERVICE_PROVIDER_UNSUPPORTED',
-      '当前客服系统类型尚未实现适配器。',
-    );
-  }
-  if (!connection.isEnabled || connection.deletedAt) {
-    throw new CustomerServiceProviderError(
-      'CUSTOMER_SERVICE_CONNECTION_DISABLED',
-      '该客服系统连接当前未启用。',
-    );
-  }
-  if (!connection.verifyToken) {
-    throw new CustomerServiceProviderError(
-      'CUSTOMER_SERVICE_VERIFY_TOKEN_REQUIRED',
-      '请先配置客服系统验证 Token。',
-    );
-  }
-
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 8_000);
-  try {
-    const requestUrl = `${connection.baseUrl}/integration/v1/verify`;
-    const requestInit: RequestInit = {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        Authorization: `Bearer ${connection.verifyToken}`,
-      },
-      signal: controller.signal,
-      redirect: 'error',
-    };
-    const response = shouldUseInternalService(connection, transport)
-      ? await transport!.internalService!.fetch(requestUrl, requestInit)
-      : await fetch(requestUrl, requestInit);
-
-    if (!response.ok) {
-      const code =
-        response.status === 401
-          ? 'CUSTOMER_SERVICE_VERIFY_TOKEN_INVALID'
-          : response.status === 503
-            ? 'CUSTOMER_SERVICE_INTEGRATION_NOT_CONFIGURED'
-            : 'CUSTOMER_SERVICE_UPSTREAM_ERROR';
-      const message =
-        response.status === 401
-          ? '客服系统验证 Token 无效。'
-          : response.status === 503
-            ? '客服系统尚未启用接入验证。'
-            : `客服系统验证接口返回 HTTP ${response.status}。`;
-      throw new CustomerServiceProviderError(code, message);
-    }
-    const contentType = response.headers.get('content-type') ?? '';
-    if (!contentType.includes('application/json')) {
-      throw new CustomerServiceProviderError(
-        'CUSTOMER_SERVICE_INVALID_RESPONSE',
-        '客服系统验证接口未返回 JSON。',
-      );
-    }
-    return parseIntegration((await response.json()) as unknown);
-  } catch (error) {
-    if (error instanceof CustomerServiceProviderError) throw error;
-    if (error instanceof DOMException && error.name === 'AbortError') {
-      throw new CustomerServiceProviderError(
-        'CUSTOMER_SERVICE_TIMEOUT',
-        '客服系统验证接口连接超时。',
-      );
-    }
-    throw new CustomerServiceProviderError(
-      'CUSTOMER_SERVICE_UNREACHABLE',
-      '无法连接客服系统验证接口。',
-    );
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-
-export async function listRemoteCustomerServiceGroups(
-  connection: CustomerServiceConnectionInternal,
-  transport?: CustomerServiceProviderTransport,
-): Promise<RemoteCustomerServiceGroup[]> {
-  return (await verifyCustomerServiceIntegration(connection, transport)).groups;
 }
