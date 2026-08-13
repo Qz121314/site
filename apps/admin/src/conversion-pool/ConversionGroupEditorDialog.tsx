@@ -217,12 +217,16 @@ export function ConversionGroupEditorDialog({
                   {connections.map((connection) => {
                     const available = Boolean(
                       connection.isEnabled &&
-                        connection.verifiedAt &&
-                        connection.clientApiUrl &&
-                        connection.realtimeUrl,
+                      connection.verifiedAt &&
+                      connection.clientApiUrl &&
+                      connection.realtimeUrl,
                     );
                     return (
-                      <option key={connection.id} value={connection.id} disabled={!available}>
+                      <option
+                        key={connection.id}
+                        value={connection.id}
+                        disabled={!available}
+                      >
                         {connection.name}
                         {available ? '' : '（未验证）'}
                       </option>

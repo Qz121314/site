@@ -302,7 +302,9 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
           {errorMessage}
         </p>
       ) : null}
-      {successMessage ? <p className="inline-status is-success">{successMessage}</p> : null}
+      {successMessage ? (
+        <p className="inline-status is-success">{successMessage}</p>
+      ) : null}
 
       {scope === 'active' && selectedIds.size > 0 ? (
         <div className="selection-toolbar customer-service-selection-toolbar">
@@ -386,7 +388,9 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
                   <td>
                     <span
                       className={
-                        connection.verifiedAt ? 'status-chip is-configured' : 'status-chip'
+                        connection.verifiedAt
+                          ? 'status-chip is-configured'
+                          : 'status-chip'
                       }
                     >
                       {verifiedLabel(connection)}
