@@ -25,8 +25,15 @@ export type CustomerServiceConnectionInput = {
   isEnabled: boolean;
 };
 
+export type StoredCustomerServiceGroup = {
+  id: string;
+  name: string;
+  isEnabled: boolean;
+};
+
 export type CustomerServiceConnectionInternal = CustomerServiceConnectionRecord & {
   verifyToken: string | null;
+  verifiedGroups: StoredCustomerServiceGroup[];
 };
 
 type ConnectionRow = {
@@ -38,6 +45,7 @@ type ConnectionRow = {
   client_api_url: string | null;
   realtime_url: string | null;
   verified_at: string | null;
+  verified_groups_json: string;
   is_enabled: number;
   created_at: string;
   updated_at: string;
@@ -187,6 +195,28 @@ export function validateCustomerServiceConnectionInput(value: unknown): Validati
   };
 }
 
+function parseStoredGroups(value: string): StoredCustomerServiceGroup[] {
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    if (!Array.isArray(parsed)) return [];
+    return parsed.flatMap((item) => {
+      if (
+        !isRecord(item) ||
+        typeof item.id !== 'string' ||
+        typeof item.name !== 'string' ||
+        typeof item.isEnabled !== 'boolean'
+      ) {
+        return [];
+      }
+      const id = item.id.trim();
+      const name = item.name.trim();
+      return id && name ? [{ id, name, isEnabled: item.isEnabled }] : [];
+    });
+  } catch {
+    return [];
+  }
+}
+
 const CONNECTION_SELECT = `SELECT
   c.id,
   c.name,
@@ -196,6 +226,7 @@ const CONNECTION_SELECT = `SELECT
   c.client_api_url,
   c.realtime_url,
   c.verified_at,
+  c.verified_groups_json,
   c.is_enabled,
   c.created_at,
   c.updated_at,
@@ -220,6 +251,7 @@ function mapConnection(row: ConnectionRow): CustomerServiceConnectionInternal {
     clientApiUrl: row.client_api_url,
     realtimeUrl: row.realtime_url,
     verifiedAt: row.verified_at,
+    verifiedGroups: parseStoredGroups(row.verified_groups_json),
     isEnabled: row.is_enabled === 1,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -231,7 +263,11 @@ function mapConnection(row: ConnectionRow): CustomerServiceConnectionInternal {
 export function toPublicCustomerServiceConnection(
   connection: CustomerServiceConnectionInternal,
 ): CustomerServiceConnectionRecord {
-  const { verifyToken: _verifyToken, ...publicConnection } = connection;
+  const {
+    verifyToken: _verifyToken,
+    verifiedGroups: _verifiedGroups,
+    ...publicConnection
+  } = connection;
   return publicConnection;
 }
 
@@ -303,6 +339,7 @@ export function createCustomerServiceConnection(
     clientApiUrl: null,
     realtimeUrl: null,
     verifiedAt: null,
+    verifiedGroups: [],
     isEnabled: input.isEnabled,
     createdAt: now,
     updatedAt: now,
@@ -315,9 +352,9 @@ export function createCustomerServiceConnection(
       .prepare(
         `INSERT INTO customer_service_connections (
            id, name, provider, base_url, project_id, api_token,
-           client_api_url, realtime_url, verified_at,
+           client_api_url, realtime_url, verified_at, verified_groups_json,
            is_enabled, created_at, updated_at, deleted_at
-         ) VALUES (?, ?, ?, ?, NULL, ?, NULL, NULL, NULL, ?, ?, ?, NULL)`,
+         ) VALUES (?, ?, ?, ?, NULL, ?, NULL, NULL, NULL, '[]', ?, ?, ?, NULL)`,
       )
       .bind(
         internal.id,
@@ -349,6 +386,7 @@ export function createUpdateCustomerServiceConnectionStatement(
            client_api_url = CASE WHEN ? THEN NULL ELSE client_api_url END,
            realtime_url = CASE WHEN ? THEN NULL ELSE realtime_url END,
            verified_at = CASE WHEN ? THEN NULL ELSE verified_at END,
+           verified_groups_json = CASE WHEN ? THEN '[]' ELSE verified_groups_json END,
            is_enabled = ?, updated_at = ?
        WHERE id = ? AND deleted_at IS NULL`,
     )
@@ -357,6 +395,7 @@ export function createUpdateCustomerServiceConnectionStatement(
       input.provider,
       input.baseUrl,
       verifyToken,
+      clearVerification ? 1 : 0,
       clearVerification ? 1 : 0,
       clearVerification ? 1 : 0,
       clearVerification ? 1 : 0,
@@ -371,15 +410,24 @@ export function createSetCustomerServiceVerificationStatement(
   id: string,
   clientApiUrl: string,
   realtimeUrl: string,
+  groups: StoredCustomerServiceGroup[],
   verifiedAt: string,
 ): D1PreparedStatement {
   return db
     .prepare(
       `UPDATE customer_service_connections
-       SET client_api_url = ?, realtime_url = ?, verified_at = ?, updated_at = ?
+       SET client_api_url = ?, realtime_url = ?, verified_groups_json = ?,
+           verified_at = ?, updated_at = ?
        WHERE id = ? AND deleted_at IS NULL`,
     )
-    .bind(clientApiUrl, realtimeUrl, verifiedAt, verifiedAt, id);
+    .bind(
+      clientApiUrl,
+      realtimeUrl,
+      JSON.stringify(groups),
+      verifiedAt,
+      verifiedAt,
+      id,
+    );
 }
 
 export function createDeleteCustomerServiceConnectionStatement(
