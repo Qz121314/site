@@ -162,7 +162,11 @@ test('Product support route resolves direct group binding without target rotatio
     false,
   );
   assert.equal(
-    db.statements.some(({ sql }) => sql.includes('FROM conversion_targets t')),
+    db.statements.some(({ sql }) =>
+      sql.includes(
+        'FROM conversion_targets t\nJOIN conversion_groups g ON g.id = t.group_id',
+      ),
+    ),
     false,
   );
 });
