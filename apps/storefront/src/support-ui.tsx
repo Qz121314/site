@@ -1,5 +1,5 @@
 import type { StorefrontLinkComponent } from '@site/storefront-ui';
-import { useEffect, useRef, useState, type FormEvent } from 'react';
+import { Fragment, useEffect, useRef, useState, type FormEvent } from 'react';
 import type {
   SupportConversationDetail,
   SupportConversationSummary,
@@ -13,6 +13,16 @@ export type PendingSupportConversation = {
   productCoverUrl: string | null;
   productHref: string | null;
 };
+
+const CHAT_TIME_ZONE = 'America/Los_Angeles';
+const DAY_IN_MILLISECONDS = 86_400_000;
+
+const chatDayPartsFormatter = new Intl.DateTimeFormat('en-US', {
+  timeZone: CHAT_TIME_ZONE,
+  year: 'numeric',
+  month: 'numeric',
+  day: 'numeric',
+});
 
 function MessageBubbleIcon() {
   return (
@@ -37,8 +47,23 @@ function NavigationBackIcon() {
   );
 }
 
-function startOfLocalDay(date: Date): number {
-  return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+function chatDayNumber(date: Date): number {
+  const parts = chatDayPartsFormatter.formatToParts(date);
+  const year = Number(parts.find((part) => part.type === 'year')?.value ?? 0);
+  const month = Number(parts.find((part) => part.type === 'month')?.value ?? 0);
+  const day = Number(parts.find((part) => part.type === 'day')?.value ?? 0);
+  return Date.UTC(year, month - 1, day) / DAY_IN_MILLISECONDS;
+}
+
+function formatChatClock(value: string | null): string {
+  if (!value) return '';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  return new Intl.DateTimeFormat('en-US', {
+    timeZone: CHAT_TIME_ZONE,
+    hour: 'numeric',
+    minute: '2-digit',
+  }).format(date);
 }
 
 function formatConversationTime(value: string | null): string {
@@ -47,22 +72,42 @@ function formatConversationTime(value: string | null): string {
   if (Number.isNaN(date.getTime())) return '';
 
   const now = new Date();
-  const dayDifference = Math.round(
-    (startOfLocalDay(now) - startOfLocalDay(date)) / 86_400_000,
-  );
-  if (dayDifference === 0) {
-    return new Intl.DateTimeFormat(undefined, {
-      hour: '2-digit',
-      minute: '2-digit',
-    }).format(date);
-  }
+  const dayDifference = chatDayNumber(now) - chatDayNumber(date);
+  if (dayDifference === 0) return formatChatClock(value);
   if (dayDifference === 1) return SYSTEM_UI.yesterday;
   if (dayDifference > 1 && dayDifference < 7) {
-    return new Intl.DateTimeFormat(undefined, { weekday: 'short' }).format(date);
+    return new Intl.DateTimeFormat('en-US', {
+      timeZone: CHAT_TIME_ZONE,
+      weekday: 'short',
+    }).format(date);
   }
-  return new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric' }).format(
-    date,
-  );
+  return new Intl.DateTimeFormat('en-US', {
+    timeZone: CHAT_TIME_ZONE,
+    month: 'short',
+    day: 'numeric',
+  }).format(date);
+}
+
+function formatChatDay(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+  const now = new Date();
+  const dayDifference = chatDayNumber(now) - chatDayNumber(date);
+  if (dayDifference === 0) return 'Today';
+  if (dayDifference === 1) return SYSTEM_UI.yesterday;
+  return new Intl.DateTimeFormat('en-US', {
+    timeZone: CHAT_TIME_ZONE,
+    month: 'short',
+    day: 'numeric',
+    year: date.getFullYear() === now.getFullYear() ? undefined : 'numeric',
+  }).format(date);
+}
+
+function isSameChatDay(left: string, right: string): boolean {
+  const leftDate = new Date(left);
+  const rightDate = new Date(right);
+  if (Number.isNaN(leftDate.getTime()) || Number.isNaN(rightDate.getTime())) return false;
+  return chatDayNumber(leftDate) === chatDayNumber(rightDate);
 }
 
 function conversationTimestamp(conversation: SupportConversationSummary): number {
@@ -144,7 +189,9 @@ export function MessagesPageContent({
                 <span className="conversation-main">
                   <span className="conversation-heading-row">
                     <strong>{conversationTitle(conversation)}</strong>
-                    <time>{formatConversationTime(conversation.lastMessageAt)}</time>
+                    <time dateTime={conversation.lastMessageAt ?? undefined}>
+                      {formatConversationTime(conversation.lastMessageAt)}
+                    </time>
                   </span>
                   <span className="conversation-preview-row">
                     <span>{conversationPreview(conversation)}</span>
@@ -360,19 +407,35 @@ export function MessageThreadPageContent({
             {SYSTEM_UI.loadEarlier}
           </button>
         ) : null}
-        {conversation?.messages.map((message) => (
-          <div className={`chat-message-row is-${message.direction}`} key={message.id}>
-            <div className="chat-message-bubble">
-              <p>{message.body}</p>
-              <span className="chat-message-meta">
-                <time>{formatConversationTime(message.sentAt)}</time>
-                {message.direction === 'customer' ? (
-                  <DeliveryMark delivery={message.delivery} />
-                ) : null}
-              </span>
-            </div>
-          </div>
-        ))}
+        {conversation?.messages.map((message, index, messages) => {
+          const previous = messages[index - 1];
+          const next = messages[index + 1];
+          const groupStart = !previous || previous.direction !== message.direction;
+          const groupEnd = !next || next.direction !== message.direction;
+          const showDay = !previous || !isSameChatDay(previous.sentAt, message.sentAt);
+          return (
+            <Fragment key={message.id}>
+              {showDay ? (
+                <div className="chat-day-separator">
+                  <span>{formatChatDay(message.sentAt)}</span>
+                </div>
+              ) : null}
+              <div
+                className={`chat-message-row is-${message.direction}${groupStart ? ' is-group-start' : ''}${groupEnd ? ' is-group-end' : ''}`}
+              >
+                <div className="chat-message-bubble">
+                  <p>{message.body}</p>
+                  <span className="chat-message-meta">
+                    <time dateTime={message.sentAt}>{formatChatClock(message.sentAt)}</time>
+                    {message.direction === 'customer' ? (
+                      <DeliveryMark delivery={message.delivery} />
+                    ) : null}
+                  </span>
+                </div>
+              </div>
+            </Fragment>
+          );
+        })}
       </div>
 
       {sendError ? (
