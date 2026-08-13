@@ -64,12 +64,20 @@ export async function resolvePublicCta(
     return { product, cta: null };
   }
 
+  const path =
+    group.mode === 'customer_service'
+      ? `/messages/new/?${new URLSearchParams({
+          productId: product.id,
+          sectionId: product.sectionId,
+        }).toString()}`
+      : `/go/${encodeURIComponent(product.id)}`;
+
   return {
     product,
     cta: {
       label: group.buttonLabel,
       mode: group.mode,
-      path: `/go/${encodeURIComponent(product.id)}`,
+      path,
     },
   };
 }
