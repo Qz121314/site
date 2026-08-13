@@ -25,4 +25,4 @@ jobs:
 
       - name: Run public support config tests
         working-directory: apps/worker
-        run: node --test test/public-support-config.test.mjs
+        run: node --test --experimental-strip-types --import ./test/register-ts-resolver.mjs test/public-support-config.test.mjs
