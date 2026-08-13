@@ -1,0 +1,238 @@
+/* Telegram / WhatsApp inspired conversation presentation.
+   messages-ui.css remains the structural workspace stylesheet. */
+
+.chat-page {
+  background: color-mix(in srgb, var(--surface-soft) 94%, var(--surface));
+}
+
+.chat-header {
+  min-height: 62px;
+  padding-block: 7px;
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--line) 72%, transparent);
+}
+
+.chat-header-copy strong {
+  font-size: 0.9rem;
+  font-weight: 680;
+  letter-spacing: -0.01em;
+}
+
+.chat-product-card {
+  width: min(760px, calc(100% - 20px));
+  margin: 9px auto 0;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface) 96%, transparent);
+  box-shadow: 0 4px 16px color-mix(in srgb, var(--text) 5%, transparent);
+}
+
+.chat-product-media {
+  border-radius: 9px;
+}
+
+.chat-timeline {
+  gap: 2px;
+  padding: 14px clamp(8px, 2.4vw, 24px) 16px;
+  background:
+    radial-gradient(
+      circle at 14% 12%,
+      color-mix(in srgb, var(--brand) 4%, transparent),
+      transparent 28%
+    ),
+    radial-gradient(
+      circle at 88% 82%,
+      color-mix(in srgb, var(--brand) 3%, transparent),
+      transparent 30%
+    ),
+    color-mix(in srgb, var(--surface-soft) 94%, var(--surface));
+  scrollbar-gutter: stable;
+}
+
+.chat-load-earlier {
+  border: 0;
+  border-radius: 999px;
+  background: color-mix(in srgb, var(--surface) 88%, transparent);
+  box-shadow: 0 2px 10px color-mix(in srgb, var(--text) 5%, transparent);
+  backdrop-filter: blur(14px);
+}
+
+.chat-day-separator {
+  display: flex;
+  width: min(100%, 760px);
+  justify-content: center;
+  margin: 9px auto 10px;
+  pointer-events: none;
+}
+
+.chat-day-separator span {
+  padding: 4px 9px;
+  border: 1px solid color-mix(in srgb, var(--line) 60%, transparent);
+  border-radius: 999px;
+  color: var(--muted);
+  background: color-mix(in srgb, var(--surface) 84%, transparent);
+  box-shadow: 0 2px 8px color-mix(in srgb, var(--text) 4%, transparent);
+  backdrop-filter: blur(16px) saturate(1.08);
+  font-size: 0.59rem;
+  font-weight: 700;
+}
+
+.chat-message-row {
+  width: min(100%, 760px);
+  margin-inline: auto;
+  padding-inline: 3px;
+}
+
+.chat-message-row.is-group-start {
+  margin-top: 7px;
+}
+
+.chat-day-separator + .chat-message-row.is-group-start {
+  margin-top: 0;
+}
+
+.chat-message-bubble {
+  position: relative;
+  min-width: 82px;
+  max-width: min(76%, 540px);
+  padding: 7px 9px 5px;
+  border: 0;
+  border-radius: 14px;
+  box-shadow:
+    0 1px 1px color-mix(in srgb, var(--text) 5%, transparent),
+    0 3px 10px color-mix(in srgb, var(--text) 4%, transparent);
+}
+
+.chat-message-row.is-agent .chat-message-bubble {
+  border-radius: 14px 14px 14px 5px;
+  background: var(--surface);
+}
+
+.chat-message-row.is-customer .chat-message-bubble {
+  border-radius: 14px 14px 5px 14px;
+  background: color-mix(in srgb, var(--brand) 15%, var(--surface));
+}
+
+.chat-message-row.is-agent:not(.is-group-start) .chat-message-bubble {
+  border-top-left-radius: 6px;
+}
+
+.chat-message-row.is-agent:not(.is-group-end) .chat-message-bubble {
+  border-bottom-left-radius: 6px;
+}
+
+.chat-message-row.is-customer:not(.is-group-start) .chat-message-bubble {
+  border-top-right-radius: 6px;
+}
+
+.chat-message-row.is-customer:not(.is-group-end) .chat-message-bubble {
+  border-bottom-right-radius: 6px;
+}
+
+.chat-message-row.is-agent.is-group-end .chat-message-bubble::after,
+.chat-message-row.is-customer.is-group-end .chat-message-bubble::after {
+  position: absolute;
+  bottom: 0;
+  width: 8px;
+  height: 11px;
+  background: inherit;
+  content: '';
+}
+
+.chat-message-row.is-agent.is-group-end .chat-message-bubble::after {
+  left: -5px;
+  clip-path: polygon(100% 0, 100% 100%, 0 100%);
+}
+
+.chat-message-row.is-customer.is-group-end .chat-message-bubble::after {
+  right: -5px;
+  clip-path: polygon(0 0, 100% 100%, 0 100%);
+}
+
+.chat-message-bubble p {
+  font-size: 0.84rem;
+  line-height: 1.42;
+  letter-spacing: -0.005em;
+}
+
+.chat-message-meta {
+  min-height: 12px;
+  align-items: center;
+  gap: 3px;
+  margin-top: 2px;
+  opacity: 0.78;
+  font-size: 0.54rem;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+
+.chat-message-row.is-customer .chat-message-meta {
+  color: color-mix(in srgb, var(--brand-strong) 62%, var(--muted));
+}
+
+.chat-composer {
+  grid-template-columns: 40px minmax(0, 1fr) 42px;
+  gap: 6px;
+  padding: 8px max(8px, env(safe-area-inset-right))
+    calc(8px + env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+  border-top-color: color-mix(in srgb, var(--line) 62%, transparent);
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  backdrop-filter: blur(22px) saturate(1.06);
+}
+
+.chat-composer > button {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  font-size: 1.15rem;
+}
+
+.chat-composer textarea,
+.chat-input-placeholder {
+  min-height: 40px;
+  padding: 10px 14px;
+  border-color: color-mix(in srgb, var(--line) 72%, transparent);
+  border-radius: 20px;
+  background: var(--surface);
+  font-size: 0.82rem;
+}
+
+.chat-composer textarea:focus {
+  border-color: color-mix(in srgb, var(--brand) 26%, var(--line));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 6%, transparent);
+}
+
+.chat-composer .chat-send-button {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  box-shadow: 0 5px 14px color-mix(in srgb, var(--brand) 20%, transparent);
+}
+
+@media (max-width: 767px) {
+  .chat-header {
+    padding-inline: 7px 10px;
+  }
+
+  .chat-product-card {
+    width: calc(100% - 16px);
+    margin-top: 7px;
+  }
+
+  .chat-timeline {
+    padding-inline: 5px;
+  }
+
+  .chat-message-row {
+    padding-inline: 5px;
+  }
+
+  .chat-message-bubble {
+    max-width: 82%;
+  }
+}
+
+@media (min-width: 768px) {
+  .chat-timeline {
+    padding-block: 18px 20px;
+  }
+}
