@@ -62,7 +62,7 @@ function createDb({ connection = connectionRow(), group = groupRow() } = {}) {
         },
         async all() {
           statements.push({ kind: 'all', sql: this.sql, args: this.args });
-          if (this.sql.includes('FROM customer_service_connections c')) {
+          if (this.sql.includes('\nFROM customer_service_connections c')) {
             return { results: [connection] };
           }
           throw new Error(`Unexpected all SQL: ${this.sql}`);
@@ -80,8 +80,8 @@ function createDb({ connection = connectionRow(), group = groupRow() } = {}) {
               conversion_group_id: 'group-1',
             };
           }
-          if (this.sql.includes('FROM customer_service_connections c')) return connection;
-          if (this.sql.includes('FROM conversion_groups g')) return group;
+          if (this.sql.includes('\nFROM conversion_groups g')) return group;
+          if (this.sql.includes('\nFROM customer_service_connections c')) return connection;
           throw new Error(`Unexpected first SQL: ${this.sql}`);
         },
       };
