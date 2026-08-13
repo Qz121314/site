@@ -9,8 +9,10 @@ export type CustomerServiceConnection = {
   name: string;
   provider: CustomerServiceProvider;
   baseUrl: string;
-  projectId: string | null;
-  hasApiToken: boolean;
+  hasVerifyToken: boolean;
+  clientApiUrl: string | null;
+  realtimeUrl: string | null;
+  verifiedAt: string | null;
   isEnabled: boolean;
   createdAt: string;
   updatedAt: string;
@@ -22,8 +24,7 @@ export type CustomerServiceConnectionInput = {
   name: string;
   provider: CustomerServiceProvider;
   baseUrl: string;
-  projectId: string | null;
-  apiToken?: string | null;
+  verifyToken?: string | null;
   isEnabled: boolean;
 };
 
@@ -85,8 +86,10 @@ function parseConnection(value: unknown): CustomerServiceConnection {
     typeof connection.name !== 'string' ||
     connection.provider !== 'generic_v1' ||
     typeof connection.baseUrl !== 'string' ||
-    (typeof connection.projectId !== 'string' && connection.projectId !== null) ||
-    typeof connection.hasApiToken !== 'boolean' ||
+    typeof connection.hasVerifyToken !== 'boolean' ||
+    (typeof connection.clientApiUrl !== 'string' && connection.clientApiUrl !== null) ||
+    (typeof connection.realtimeUrl !== 'string' && connection.realtimeUrl !== null) ||
+    (typeof connection.verifiedAt !== 'string' && connection.verifiedAt !== null) ||
     typeof connection.isEnabled !== 'boolean' ||
     typeof connection.createdAt !== 'string' ||
     typeof connection.updatedAt !== 'string' ||
@@ -118,7 +121,7 @@ function parseRemoteGroup(value: unknown): RemoteCustomerServiceGroup {
     typeof group.name !== 'string' ||
     typeof group.isEnabled !== 'boolean'
   ) {
-    throw new AdminApiError(500, 'INVALID_RESPONSE', '客服分组返回数据无效。');
+    throw new AdminApiError(500, 'INVALID_RESPONSE', '在线客服分组返回数据无效。');
   }
   return group as RemoteCustomerServiceGroup;
 }
@@ -189,14 +192,23 @@ export async function batchDeleteCustomerServiceConnections(
 
 export async function testCustomerServiceConnection(
   id: string,
-): Promise<{ connected: true; groupCount: number }> {
+): Promise<{ connected: true; groupCount: number; verifiedAt: string }> {
   const value = asRecord(
     await writeRequest(`${basePath}/${encodeURIComponent(id)}/test`, 'POST'),
   );
-  if (!value || value.connected !== true || typeof value.groupCount !== 'number') {
-    throw new AdminApiError(500, 'INVALID_RESPONSE', '客服系统连接测试返回数据无效。');
+  if (
+    !value ||
+    value.connected !== true ||
+    typeof value.groupCount !== 'number' ||
+    typeof value.verifiedAt !== 'string'
+  ) {
+    throw new AdminApiError(500, 'INVALID_RESPONSE', '客服系统验证返回数据无效。');
   }
-  return { connected: true, groupCount: value.groupCount };
+  return {
+    connected: true,
+    groupCount: value.groupCount,
+    verifiedAt: value.verifiedAt,
+  };
 }
 
 export async function fetchRemoteCustomerServiceGroups(
@@ -206,7 +218,7 @@ export async function fetchRemoteCustomerServiceGroups(
     await requestJson(`${basePath}/${encodeURIComponent(id)}/groups`),
   );
   if (!value || !Array.isArray(value.groups)) {
-    throw new AdminApiError(500, 'INVALID_RESPONSE', '客服分组列表返回数据无效。');
+    throw new AdminApiError(500, 'INVALID_RESPONSE', '在线客服分组列表返回数据无效。');
   }
   return value.groups.map(parseRemoteGroup);
 }
