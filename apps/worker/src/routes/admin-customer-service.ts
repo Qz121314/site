@@ -19,6 +19,10 @@ import {
   CustomerServiceProviderError,
   parseCustomerServiceIntegration,
 } from '../customer-service/customer-service-provider';
+import {
+  createReplaceVerifiedCustomerServiceGroupsStatements,
+  listVerifiedCustomerServiceGroups,
+} from '../customer-service/customer-service-verified-groups';
 import { apiError } from '../http/api-response';
 import {
   createIdempotencyStatement,
@@ -273,7 +277,6 @@ adminCustomerServiceRoutes.put('/connections/:id', async (context) => {
     clientApiUrl: clearVerification ? null : current.clientApiUrl,
     realtimeUrl: clearVerification ? null : current.realtimeUrl,
     verifiedAt: clearVerification ? null : current.verifiedAt,
-    verifiedGroups: clearVerification ? [] : current.verifiedGroups,
     updatedAt: now,
   };
   const updated = toPublicCustomerServiceConnection(updatedInternal);
@@ -287,6 +290,14 @@ adminCustomerServiceRoutes.put('/connections/:id', async (context) => {
         clearVerification,
         now,
       ),
+      ...(clearVerification
+        ? createReplaceVerifiedCustomerServiceGroupsStatements(
+            context.env.DB,
+            current.id,
+            [],
+            now,
+          )
+        : []),
       createAuditLogStatement(context.env.DB, {
         action: 'customer-service-connection.updated',
         entityType: 'customer_service_connection',
@@ -326,6 +337,12 @@ adminCustomerServiceRoutes.delete('/connections/:id', async (context) => {
   const deleted = { ...current, isEnabled: false, deletedAt: now, updatedAt: now };
   await context.env.DB.batch([
     createDeleteCustomerServiceConnectionStatement(context.env.DB, current.id, now),
+    ...createReplaceVerifiedCustomerServiceGroupsStatements(
+      context.env.DB,
+      current.id,
+      [],
+      now,
+    ),
     createAuditLogStatement(context.env.DB, {
       action: 'customer-service-connection.deleted',
       entityType: 'customer_service_connection',
@@ -465,6 +482,11 @@ adminCustomerServiceRoutes.post(
         connection.id,
         result.clientApiUrl,
         result.realtimeUrl,
+        verifiedAt,
+      ),
+      ...createReplaceVerifiedCustomerServiceGroupsStatements(
+        context.env.DB,
+        connection.id,
         result.groups,
         verifiedAt,
       ),
@@ -507,5 +529,7 @@ adminCustomerServiceRoutes.get('/connections/:id/groups', async (context) => {
       '请先验证客服系统连接。',
     );
   }
-  return context.json({ groups: connection.verifiedGroups });
+  return context.json({
+    groups: await listVerifiedCustomerServiceGroups(context.env.DB, connection.id),
+  });
 });
