@@ -200,8 +200,10 @@ const CONNECTION_SELECT = `SELECT
   c.created_at,
   c.updated_at,
   c.deleted_at,
-  (SELECT COUNT(*) FROM conversion_targets t
-    WHERE t.customer_service_connection_id = c.id AND t.deleted_at IS NULL) AS target_count
+  (SELECT COUNT(*) FROM conversion_groups g
+    WHERE g.customer_service_connection_id = c.id
+      AND g.mode = 'customer_service'
+      AND g.deleted_at IS NULL) AS target_count
 FROM customer_service_connections c`;
 
 function mapConnection(row: ConnectionRow): CustomerServiceConnectionInternal {
