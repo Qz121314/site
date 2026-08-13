@@ -1,11 +1,5 @@
 import type { StorefrontLinkComponent } from '@site/storefront-ui';
-import {
-  Fragment,
-  useEffect,
-  useRef,
-  useState,
-  type FormEvent,
-} from 'react';
+import { Fragment, useEffect, useRef, useState, type FormEvent } from 'react';
 import type {
   SupportConversationDetail,
   SupportConversationSummary,
@@ -40,10 +34,7 @@ function MessageBubbleIcon() {
       aria-hidden="true"
     >
       <path d="M20 11.6a7.6 7.6 0 0 1-8 7.2 8.8 8.8 0 0 1-3.2-.7L4 19.5l1.4-4.2a7 7 0 0 1-1.1-3.7 7.6 7.6 0 0 1 8-7.2 7.6 7.6 0 0 1 7.7 7.2Z" />
-      <path
-        d="M8.5 11.7h.01M12 11.7h.01M15.5 11.7h.01"
-        strokeLinecap="round"
-      />
+      <path d="M8.5 11.7h.01M12 11.7h.01M15.5 11.7h.01" strokeLinecap="round" />
     </svg>
   );
 }
@@ -115,8 +106,7 @@ function formatChatDay(value: string): string {
 function isSameChatDay(left: string, right: string): boolean {
   const leftDate = new Date(left);
   const rightDate = new Date(right);
-  if (Number.isNaN(leftDate.getTime()) || Number.isNaN(rightDate.getTime()))
-    return false;
+  if (Number.isNaN(leftDate.getTime()) || Number.isNaN(rightDate.getTime())) return false;
   return chatDayNumber(leftDate) === chatDayNumber(rightDate);
 }
 
@@ -147,18 +137,14 @@ function ConversationAvatar({
       <ResilientImage
         alt=""
         fallback={
-          <span aria-hidden="true">
-            {conversationTitle(conversation).slice(0, 1)}
-          </span>
+          <span aria-hidden="true">{conversationTitle(conversation).slice(0, 1)}</span>
         }
         loading="lazy"
         src={conversation.agentAvatarUrl}
       />
     );
   }
-  return (
-    <span aria-hidden="true">{conversationTitle(conversation).slice(0, 1)}</span>
-  );
+  return <span aria-hidden="true">{conversationTitle(conversation).slice(0, 1)}</span>;
 }
 
 export function MessagesPageContent({
@@ -428,9 +414,7 @@ export function MessageThreadPageContent({
             previous && isSameChatDay(previous.sentAt, message.sentAt);
           const sameDayAsNext = next && isSameChatDay(message.sentAt, next.sentAt);
           const groupStart =
-            !previous ||
-            !sameDayAsPrevious ||
-            previous.direction !== message.direction;
+            !previous || !sameDayAsPrevious || previous.direction !== message.direction;
           const groupEnd =
             !next || !sameDayAsNext || next.direction !== message.direction;
           const showDay = !previous || !sameDayAsPrevious;
@@ -447,7 +431,9 @@ export function MessageThreadPageContent({
                 <div className="chat-message-bubble">
                   <p>{message.body}</p>
                   <span className="chat-message-meta">
-                    <time dateTime={message.sentAt}>{formatChatClock(message.sentAt)}</time>
+                    <time dateTime={message.sentAt}>
+                      {formatChatClock(message.sentAt)}
+                    </time>
                     {message.direction === 'customer' ? (
                       <DeliveryMark delivery={message.delivery} />
                     ) : null}
