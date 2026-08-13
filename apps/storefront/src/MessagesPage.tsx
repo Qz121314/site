@@ -131,13 +131,14 @@ export function MessagesPage({
     () =>
       subscribeSupportRealtime((event) => {
         void queryClient.invalidateQueries({ queryKey: ['support-conversations'] });
-        if (event.conversationRef) {
+        const conversationRef = event.conversationRef ?? activeConversationRef;
+        if (conversationRef) {
           void queryClient.invalidateQueries({
-            queryKey: ['support-conversation', event.conversationRef],
+            queryKey: ['support-conversation', conversationRef],
           });
         }
       }),
-    [queryClient],
+    [activeConversationRef, queryClient],
   );
 
   const sendMutation = useMutation({
