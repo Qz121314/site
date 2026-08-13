@@ -18,6 +18,7 @@ import './app-shell.css';
 import './brand-bar.css';
 import './bottom-navigation.css';
 import './home-feed.css';
+import './chat-conversation.css';
 import '@site/storefront-ui/theme-contract.css';
 import '@site/storefront-ui/primary-pages-theme-contract.css';
 import '@site/storefront-ui/typography-contract.css';
