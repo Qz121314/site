@@ -81,7 +81,8 @@ function createDb({ connection = connectionRow(), group = groupRow() } = {}) {
             };
           }
           if (this.sql.includes('\nFROM conversion_groups g')) return group;
-          if (this.sql.includes('\nFROM customer_service_connections c')) return connection;
+          if (this.sql.includes('\nFROM customer_service_connections c'))
+            return connection;
           throw new Error(`Unexpected first SQL: ${this.sql}`);
         },
       };
