@@ -17,8 +17,7 @@ import {
 } from '../customer-service/customer-service-connections';
 import {
   CustomerServiceProviderError,
-  listRemoteCustomerServiceGroups,
-  verifyCustomerServiceIntegration,
+  parseCustomerServiceIntegration,
 } from '../customer-service/customer-service-provider';
 import { apiError } from '../http/api-response';
 import {
@@ -108,17 +107,12 @@ function connectionAuditValue(connection: CustomerServiceConnectionRecord) {
   };
 }
 
-function providerFailure(
+function browserVerificationUnavailable(
   context: Parameters<typeof apiError>[0],
-  error: CustomerServiceProviderError,
+  code: string,
+  message: string,
 ) {
-  const status =
-    error.code === 'CUSTOMER_SERVICE_VERIFY_TOKEN_INVALID'
-      ? 401
-      : error.code === 'CUSTOMER_SERVICE_VERIFY_TOKEN_REQUIRED'
-        ? 400
-        : 503;
-  return apiError(context, status, error.code, error.message);
+  return apiError(context, 409, code, message);
 }
 
 adminCustomerServiceRoutes.get('/connections', async (context) => {
@@ -279,6 +273,7 @@ adminCustomerServiceRoutes.put('/connections/:id', async (context) => {
     clientApiUrl: clearVerification ? null : current.clientApiUrl,
     realtimeUrl: clearVerification ? null : current.realtimeUrl,
     verifiedAt: clearVerification ? null : current.verifiedAt,
+    verifiedGroups: clearVerification ? [] : current.verifiedGroups,
     updatedAt: now,
   };
   const updated = toPublicCustomerServiceConnection(updatedInternal);
@@ -383,21 +378,86 @@ adminCustomerServiceRoutes.post('/connections/:id/restore', async (context) => {
   return context.json({ connection: restored });
 });
 
-adminCustomerServiceRoutes.post('/connections/:id/test', async (context) => {
-  context.header('Cache-Control', 'no-store');
-  if (!hasAdminRequestHeader(context)) {
-    return apiError(context, 403, 'ADMIN_REQUEST_REQUIRED', '后台请求标识无效。');
-  }
-  const connection = await getCustomerServiceConnectionInternal(
-    context.env.DB,
-    context.req.param('id'),
-  );
-  if (!connection || connection.deletedAt) return connectionNotFound(context);
-  try {
-    const result = await verifyCustomerServiceIntegration(
-      { ...connection, isEnabled: true },
-      { internalService: context.env.CUSTOMER_SERVICE_APP },
+adminCustomerServiceRoutes.get(
+  '/connections/:id/verification-context',
+  async (context) => {
+    context.header('Cache-Control', 'no-store');
+    const connection = await getCustomerServiceConnectionInternal(
+      context.env.DB,
+      context.req.param('id'),
     );
+    if (!connection || connection.deletedAt) return connectionNotFound(context);
+    if (!connection.isEnabled) {
+      return browserVerificationUnavailable(
+        context,
+        'CUSTOMER_SERVICE_CONNECTION_DISABLED',
+        '该客服系统连接当前未启用。',
+      );
+    }
+    if (!connection.verifyToken) {
+      return apiError(
+        context,
+        400,
+        'CUSTOMER_SERVICE_VERIFY_TOKEN_REQUIRED',
+        '请先配置客服系统验证 Token。',
+      );
+    }
+    return context.json({
+      baseUrl: connection.baseUrl,
+      verifyToken: connection.verifyToken,
+    });
+  },
+);
+
+adminCustomerServiceRoutes.post(
+  '/connections/:id/verification-result',
+  async (context) => {
+    context.header('Cache-Control', 'no-store');
+    if (!hasAdminRequestHeader(context)) {
+      return apiError(context, 403, 'ADMIN_REQUEST_REQUIRED', '后台请求标识无效。');
+    }
+    const connection = await getCustomerServiceConnectionInternal(
+      context.env.DB,
+      context.req.param('id'),
+    );
+    if (!connection || connection.deletedAt) return connectionNotFound(context);
+    if (!connection.isEnabled) {
+      return browserVerificationUnavailable(
+        context,
+        'CUSTOMER_SERVICE_CONNECTION_DISABLED',
+        '该客服系统连接当前未启用。',
+      );
+    }
+    if (!connection.verifyToken) {
+      return apiError(
+        context,
+        400,
+        'CUSTOMER_SERVICE_VERIFY_TOKEN_REQUIRED',
+        '请先配置客服系统验证 Token。',
+      );
+    }
+
+    const body = await readBody(context);
+    if (isResponse(body)) return body;
+    if (!isRecord(body) || !Object.hasOwn(body, 'integration')) {
+      return apiError(
+        context,
+        400,
+        'CUSTOMER_SERVICE_INVALID_RESPONSE',
+        '客服系统验证结果无效。',
+      );
+    }
+
+    let result;
+    try {
+      result = parseCustomerServiceIntegration(body.integration);
+    } catch (error) {
+      if (error instanceof CustomerServiceProviderError) {
+        return apiError(context, 400, error.code, error.message);
+      }
+      throw error;
+    }
+
     const verifiedAt = new Date().toISOString();
     await context.env.DB.batch([
       createSetCustomerServiceVerificationStatement(
@@ -405,6 +465,7 @@ adminCustomerServiceRoutes.post('/connections/:id/test', async (context) => {
         connection.id,
         result.clientApiUrl,
         result.realtimeUrl,
+        result.groups,
         verifiedAt,
       ),
       createAuditLogStatement(context.env.DB, {
@@ -419,21 +480,18 @@ adminCustomerServiceRoutes.post('/connections/:id/test', async (context) => {
           realtimeUrl: result.realtimeUrl,
           verifiedAt,
         },
-        metadata: { groupCount: result.groups.length },
+        metadata: { groupCount: result.groups.length, transport: 'admin-browser' },
         createdAt: verifiedAt,
       }),
     ]);
+
     return context.json({
       connected: true,
       groupCount: result.groups.length,
       verifiedAt,
     });
-  } catch (error) {
-    if (error instanceof CustomerServiceProviderError)
-      return providerFailure(context, error);
-    throw error;
-  }
-});
+  },
+);
 
 adminCustomerServiceRoutes.get('/connections/:id/groups', async (context) => {
   context.header('Cache-Control', 'no-store');
@@ -442,15 +500,12 @@ adminCustomerServiceRoutes.get('/connections/:id/groups', async (context) => {
     context.req.param('id'),
   );
   if (!connection || connection.deletedAt) return connectionNotFound(context);
-  try {
-    return context.json({
-      groups: await listRemoteCustomerServiceGroups(connection, {
-        internalService: context.env.CUSTOMER_SERVICE_APP,
-      }),
-    });
-  } catch (error) {
-    if (error instanceof CustomerServiceProviderError)
-      return providerFailure(context, error);
-    throw error;
+  if (!connection.verifiedAt || !connection.clientApiUrl || !connection.realtimeUrl) {
+    return browserVerificationUnavailable(
+      context,
+      'CUSTOMER_SERVICE_NOT_VERIFIED',
+      '请先验证客服系统连接。',
+    );
   }
+  return context.json({ groups: connection.verifiedGroups });
 });
