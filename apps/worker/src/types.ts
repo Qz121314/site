@@ -5,10 +5,11 @@ export type AdminSession = {
   nonce: string;
 };
 
-export type AppBindings = Env & {
-  ADMIN_PASSWORD?: string;
-  SESSION_SECRET?: string;
-};
+export type AppBindings = Env &
+  Record<string, unknown> & {
+    ADMIN_PASSWORD?: string;
+    SESSION_SECRET?: string;
+  };
 
 export type AppVariables = {
   requestId: string;
