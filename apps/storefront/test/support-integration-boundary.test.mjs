@@ -49,7 +49,7 @@ test('Messages UI uses direct customer-service REST and realtime gateways', () =
   assert.match(realtimeSource, /buildSupportWebSocketUrl/u);
   assert.match(rootSource, /lazy\(\(\) =>[\s\S]*?import\('\.\/MessagesPage'\)/u);
   assert.match(messagesPageSource, /subscribeSupportRealtime/u);
-  assert.match(`${supportSource}\n${messagesPageSource}`, /message-compose/u);
+  assert.match(`${supportSource}\n${messagesPageSource}`, /chat-composer/u);
   assert.match(supportSource, /nextMessageCursor/u);
 });
 
