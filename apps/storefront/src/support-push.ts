@@ -60,7 +60,7 @@ async function resolveConversationConnection(conversationRef: string): Promise<{
   return { connection, remoteConversationId: parsed.remoteConversationId };
 }
 
-async function readPushConfig(connection: PublicSupportConnection): Promise<Uint8Array> {
+async function readPushConfig(connection: PublicSupportConnection): Promise<ArrayBuffer> {
   const response = await fetch(`${connection.clientApiUrl}/push/config`, {
     cache: 'no-store',
     credentials: 'omit',
@@ -73,25 +73,30 @@ async function readPushConfig(connection: PublicSupportConnection): Promise<Uint
   if (body.enabled !== true || typeof body.applicationServerKey !== 'string') {
     throw new Error('SUPPORT_PUSH_UNAVAILABLE');
   }
-  return base64UrlToBytes(body.applicationServerKey);
+  return base64UrlToArrayBuffer(body.applicationServerKey);
 }
 
-function base64UrlToBytes(value: string): Uint8Array {
+function base64UrlToArrayBuffer(value: string): ArrayBuffer {
   const normalized = value.replace(/-/gu, '+').replace(/_/gu, '/');
   const padded = normalized.padEnd(Math.ceil(normalized.length / 4) * 4, '=');
   const binary = atob(padded);
-  return Uint8Array.from(binary, (character) => character.charCodeAt(0));
+  const bytes = new Uint8Array(binary.length);
+  for (let index = 0; index < binary.length; index += 1) {
+    bytes[index] = binary.charCodeAt(index);
+  }
+  return bytes.buffer;
 }
 
 function sameApplicationServerKey(
   subscription: PushSubscription,
-  expected: Uint8Array,
+  expected: ArrayBuffer,
 ): boolean {
   const current = subscription.options.applicationServerKey;
   if (!current) return false;
   const bytes = new Uint8Array(current);
-  if (bytes.length !== expected.length) return false;
-  return bytes.every((value, index) => value === expected[index]);
+  const expectedBytes = new Uint8Array(expected);
+  if (bytes.length !== expectedBytes.length) return false;
+  return bytes.every((value, index) => value === expectedBytes[index]);
 }
 
 async function registerSubscription(conversationRef: string): Promise<PushSubscription> {
