@@ -236,7 +236,6 @@ export function ConversionPoolView({ section, onSessionExpired }: Props) {
             group.buttonLabel,
             modeLabel(group),
             group.customerServiceConnectionName,
-            group.remoteGroupName,
           ]
             .filter(Boolean)
             .join(' ')
@@ -321,8 +320,8 @@ export function ConversionPoolView({ section, onSessionExpired }: Props) {
       sortOrder: group.sortOrder,
       isEnabled: group.isEnabled,
       customerServiceConnectionId: group.customerServiceConnectionId,
-      remoteGroupId: group.remoteGroupId,
-      remoteGroupName: group.remoteGroupName,
+      remoteGroupId: null,
+      remoteGroupName: null,
     });
     setGroupEditorOpen(true);
     setErrorMessage('');
@@ -775,9 +774,11 @@ export function ConversionPoolView({ section, onSessionExpired }: Props) {
                   <td>
                     {group.mode === 'customer_service' ? (
                       <div>
-                        <strong>{group.remoteGroupName ?? '未绑定'}</strong>
+                        <strong>
+                          {group.customerServiceConnectionName ?? '未绑定客服系统'}
+                        </strong>
                         <small className="conversion-cell-note">
-                          {group.customerServiceConnectionName ?? '请选择客服系统'}
+                          产品按客服系统后台分配的坐席接待
                         </small>
                       </div>
                     ) : (
@@ -1126,7 +1127,6 @@ export function ConversionPoolView({ section, onSessionExpired }: Props) {
           }}
           onClose={() => setTargetEditorOpen(false)}
           onSubmit={(event) => void saveTarget(event)}
-          onSessionExpired={onSessionExpired}
         />
       ) : null}
 

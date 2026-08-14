@@ -207,20 +207,6 @@ export function validateConversionGroupInput(
       100,
     );
     if (!connectionId.ok) return connectionId;
-    const remoteGroupId = readRequiredText(
-      value.remoteGroupId,
-      'remoteGroupId',
-      '在线客服分组',
-      300,
-    );
-    if (!remoteGroupId.ok) return remoteGroupId;
-    const remoteGroupName = readRequiredText(
-      value.remoteGroupName,
-      'remoteGroupName',
-      '在线客服分组名称',
-      300,
-    );
-    if (!remoteGroupName.ok) return remoteGroupName;
 
     return {
       ok: true,
@@ -231,8 +217,8 @@ export function validateConversionGroupInput(
         sortOrder: sortOrder.value,
         isEnabled: value.isEnabled,
         customerServiceConnectionId: connectionId.value,
-        remoteGroupId: remoteGroupId.value,
-        remoteGroupName: remoteGroupName.value,
+        remoteGroupId: null,
+        remoteGroupName: null,
       },
     };
   }
@@ -376,7 +362,6 @@ const GROUP_SELECT = `SELECT
   CASE WHEN g.mode = 'customer_service' THEN
     CASE WHEN
       g.customer_service_connection_id IS NOT NULL
-      AND g.remote_group_id IS NOT NULL
       AND EXISTS (
         SELECT 1 FROM customer_service_connections c2
         WHERE c2.id = g.customer_service_connection_id

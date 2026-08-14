@@ -213,7 +213,7 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
       const result = await testCustomerServiceConnection(connection.id);
       await loadActive();
       setSuccessMessage(
-        `“${connection.name}”验证成功，读取到 ${result.groupCount} 个在线客服分组。`,
+        `“${connection.name}”验证成功，已同步 ${result.productCount} 个在线客服产品。`,
       );
     } catch (error) {
       handleError(error);
@@ -283,35 +283,36 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
             回收站
           </button>
         </div>
-        <input
-          className="customer-service-search"
-          type="search"
-          value={search}
-          placeholder="搜索名称或公网地址"
-          onChange={(event) => setSearch(event.target.value)}
-        />
-        {scope === 'active' ? (
-          <button className="primary-button" type="button" onClick={openCreate}>
-            添加客服系统
-          </button>
-        ) : null}
+
+        <div className="customer-service-toolbar-actions">
+          <label className="customer-service-search">
+            <span className="sr-only">搜索客服系统</span>
+            <input
+              type="search"
+              value={search}
+              placeholder="搜索名称或公网地址"
+              onChange={(event) => setSearch(event.target.value)}
+            />
+          </label>
+          {scope === 'active' ? (
+            <button type="button" className="primary-button" onClick={openCreate}>
+              新增客服系统
+            </button>
+          ) : null}
+        </div>
       </div>
 
-      {!editorOpen && errorMessage ? (
-        <p className="inline-status is-error" role="alert">
-          {errorMessage}
-        </p>
-      ) : null}
+      {errorMessage ? <div className="notice notice-error">{errorMessage}</div> : null}
       {successMessage ? (
-        <p className="inline-status is-success">{successMessage}</p>
+        <div className="notice notice-success">{successMessage}</div>
       ) : null}
 
       {scope === 'active' && selectedIds.size > 0 ? (
-        <div className="selection-toolbar customer-service-selection-toolbar">
-          <strong>已选择 {selectedIds.size} 项</strong>
+        <div className="selection-toolbar">
+          <span>已选择 {selectedIds.size} 项</span>
           <button
-            className="danger-button"
             type="button"
+            className="danger-button"
             onClick={() => setPendingDeleteIds([...selectedIds])}
           >
             批量删除
@@ -320,108 +321,101 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
       ) : null}
 
       <div className="customer-service-table-wrap">
-        <table className="customer-service-table">
+        <table className="admin-table customer-service-table">
           <thead>
             <tr>
-              <th className="selection-cell">
-                {scope === 'active' ? (
+              {scope === 'active' ? (
+                <th className="selection-column">
                   <input
                     type="checkbox"
+                    aria-label="全选当前客服系统"
                     checked={allVisibleSelected}
-                    aria-label="选择当前结果"
                     onChange={(event) => {
-                      const checked = event.target.checked;
-                      setSelectedIds((current) => {
-                        const next = new Set(current);
-                        filtered.forEach((item) => {
-                          if (checked) next.add(item.id);
-                          else next.delete(item.id);
-                        });
-                        return next;
+                      const next = new Set(selectedIds);
+                      filtered.forEach((connection) => {
+                        if (event.target.checked) next.add(connection.id);
+                        else next.delete(connection.id);
                       });
+                      setSelectedIds(next);
                     }}
                   />
-                ) : null}
-              </th>
-              <th>客服系统</th>
+                </th>
+              ) : null}
+              <th>名称</th>
               <th>公网地址</th>
-              <th>验证状态</th>
-              <th>已绑定分组</th>
-              <th>状态</th>
-              <th className="actions-cell">操作</th>
+              <th>连接状态</th>
+              <th>使用中</th>
+              <th>更新时间</th>
+              <th className="actions-column">操作</th>
             </tr>
           </thead>
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={7}>正在读取客服系统…</td>
+                <td colSpan={scope === 'active' ? 7 : 6}>正在读取…</td>
               </tr>
             ) : filtered.length === 0 ? (
               <tr>
-                <td colSpan={7}>暂无客服系统。</td>
+                <td colSpan={scope === 'active' ? 7 : 6}>
+                  {scope === 'active' ? '暂无客服系统。' : '回收站为空。'}
+                </td>
               </tr>
             ) : (
               filtered.map((connection) => (
                 <tr key={connection.id}>
-                  <td className="selection-cell">
-                    {scope === 'active' ? (
+                  {scope === 'active' ? (
+                    <td className="selection-column">
                       <input
                         type="checkbox"
-                        checked={selectedIds.has(connection.id)}
                         aria-label={`选择 ${connection.name}`}
+                        checked={selectedIds.has(connection.id)}
                         onChange={(event) => {
-                          const checked = event.target.checked;
-                          setSelectedIds((current) => {
-                            const next = new Set(current);
-                            if (checked) next.add(connection.id);
-                            else next.delete(connection.id);
-                            return next;
-                          });
+                          const next = new Set(selectedIds);
+                          if (event.target.checked) next.add(connection.id);
+                          else next.delete(connection.id);
+                          setSelectedIds(next);
                         }}
                       />
-                    ) : null}
-                  </td>
+                    </td>
+                  ) : null}
                   <td>
                     <strong>{connection.name}</strong>
                   </td>
-                  <td className="customer-service-url">{connection.baseUrl}</td>
+                  <td>
+                    <code>{connection.baseUrl}</code>
+                  </td>
                   <td>
                     <span
-                      className={
-                        connection.verifiedAt
-                          ? 'status-chip is-configured'
-                          : 'status-chip'
-                      }
+                      className={`status-badge ${
+                        connection.verifiedAt ? 'is-success' : 'is-muted'
+                      }`}
                     >
                       {verifiedLabel(connection)}
                     </span>
                   </td>
-                  <td>{connection.targetCount}</td>
-                  <td>
-                    <span
-                      className={
-                        connection.isEnabled ? 'status-chip is-configured' : 'status-chip'
-                      }
-                    >
-                      {connection.isEnabled ? '启用' : '停用'}
-                    </span>
-                  </td>
-                  <td className="actions-cell">
+                  <td>{connection.targetCount} 个转化分组</td>
+                  <td>{new Date(connection.updatedAt).toLocaleString('zh-CN')}</td>
+                  <td className="actions-column">
                     {scope === 'active' ? (
-                      <div className="row-actions">
+                      <div className="table-actions">
                         <button
                           type="button"
+                          className="table-action"
                           disabled={testingId === connection.id}
                           onClick={() => void testConnection(connection)}
                         >
                           {testingId === connection.id ? '验证中…' : '验证'}
                         </button>
-                        <button type="button" onClick={() => openEdit(connection)}>
+                        <button
+                          type="button"
+                          className="table-action"
+                          onClick={() => openEdit(connection)}
+                        >
                           编辑
                         </button>
                         <button
-                          className="danger-link"
                           type="button"
+                          className="table-action is-danger"
                           disabled={connection.targetCount > 0}
                           onClick={() => setPendingDeleteIds([connection.id])}
                         >
@@ -429,7 +423,11 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
                         </button>
                       </div>
                     ) : (
-                      <button type="button" onClick={() => void restore(connection)}>
+                      <button
+                        type="button"
+                        className="table-action"
+                        onClick={() => void restore(connection)}
+                      >
                         恢复
                       </button>
                     )}
@@ -447,11 +445,14 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
             className="admin-dialog customer-service-editor"
             role="dialog"
             aria-modal="true"
+            aria-labelledby="customer-service-editor-title"
           >
             <div className="admin-dialog-header">
               <div>
-                <p>客服管理</p>
-                <h3>{editingConnection ? '编辑客服系统' : '添加客服系统'}</h3>
+                <p>客服系统</p>
+                <h3 id="customer-service-editor-title">
+                  {editingConnection ? '编辑连接' : '新增连接'}
+                </h3>
               </div>
               <button
                 type="button"
@@ -462,91 +463,76 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
                 ×
               </button>
             </div>
-            <form
-              className="customer-service-editor-form"
-              onSubmit={(event) => void submit(event)}
-            >
-              {errorMessage ? (
-                <div
-                  className="notice notice-error customer-service-editor-wide"
-                  role="alert"
-                >
-                  {errorMessage}
-                </div>
-              ) : null}
+
+            <form className="customer-service-editor-form" onSubmit={submit}>
               <label>
-                <span>连接名称</span>
+                <span>名称</span>
                 <input
                   type="text"
+                  value={draft.name}
                   autoFocus
                   required
-                  maxLength={120}
-                  value={draft.name}
-                  onChange={(event) => {
-                    setDraft((current) => ({ ...current, name: event.target.value }));
-                    setErrorMessage('');
-                  }}
+                  maxLength={100}
+                  placeholder="例如：主客服系统"
+                  onChange={(event) => setDraft({ ...draft, name: event.target.value })}
                 />
               </label>
-              <label className="customer-service-editor-wide">
-                <span>客服系统公网地址</span>
+
+              <label>
+                <span>公网地址</span>
                 <input
                   type="url"
-                  required
-                  maxLength={1000}
-                  placeholder="https://support.example.com"
                   value={draft.baseUrl}
-                  onChange={(event) => {
-                    setDraft((current) => ({ ...current, baseUrl: event.target.value }));
-                    setErrorMessage('');
-                  }}
+                  required
+                  placeholder="https://support.example.com"
+                  onChange={(event) =>
+                    setDraft({ ...draft, baseUrl: event.target.value })
+                  }
                 />
+                <small>填写客服管理系统的公网 HTTPS 地址。</small>
               </label>
-              <label className="customer-service-editor-wide">
-                <span>
-                  验证 Token
-                  {editingConnection?.hasVerifyToken ? '（已配置，留空保持不变）' : ''}
-                </span>
+
+              <label>
+                <span>验证 Token</span>
                 <input
                   type="password"
-                  autoComplete="new-password"
-                  required={!editingConnection?.hasVerifyToken}
                   value={draft.verifyToken}
-                  onChange={(event) => {
-                    setDraft((current) => ({
-                      ...current,
-                      verifyToken: event.target.value,
-                    }));
-                    setErrorMessage('');
-                  }}
+                  required={!editingConnection?.hasVerifyToken}
+                  autoComplete="new-password"
+                  placeholder={
+                    editingConnection?.hasVerifyToken ? '留空表示保持当前 Token' : '必填'
+                  }
+                  onChange={(event) =>
+                    setDraft({ ...draft, verifyToken: event.target.value })
+                  }
                 />
+                <small>只用于后台验证，不会暴露给前端访客。</small>
               </label>
-              <label className="switch-row customer-service-editor-wide">
+
+              <label className="switch-row">
                 <span>
                   <strong>启用连接</strong>
+                  <small>关闭后，前端不会使用这个客服系统。</small>
                 </span>
                 <input
                   type="checkbox"
                   checked={draft.isEnabled}
-                  onChange={(event) => {
-                    setDraft((current) => ({
-                      ...current,
-                      isEnabled: event.target.checked,
-                    }));
-                    setErrorMessage('');
-                  }}
+                  onChange={(event) =>
+                    setDraft({ ...draft, isEnabled: event.target.checked })
+                  }
                 />
               </label>
-              <div className="admin-dialog-actions customer-service-editor-wide">
+
+              <div className="admin-dialog-actions">
                 <button
-                  className="secondary-button"
                   type="button"
+                  className="secondary-button"
                   disabled={saving}
                   onClick={() => setEditorOpen(false)}
                 >
                   取消
                 </button>
-                <button className="primary-button" type="submit" disabled={saving}>
+                <button type="submit" className="primary-button" disabled={saving}>
                   {saving ? '正在保存…' : '保存'}
                 </button>
               </div>
@@ -557,29 +543,30 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
 
       {pendingDeleteIds.length > 0 ? (
         <div className="admin-dialog-backdrop" role="presentation">
-          <section
-            className="admin-dialog compact-confirm-dialog"
-            role="dialog"
-            aria-modal="true"
-          >
+          <section className="admin-dialog" role="dialog" aria-modal="true">
             <div className="admin-dialog-header">
               <div>
-                <p>客服管理</p>
-                <h3>确认删除 {pendingDeleteIds.length} 项</h3>
+                <p>删除客服系统</p>
+                <h3>确认移入回收站？</h3>
               </div>
             </div>
+            <p>
+              {pendingDeleteIds.length === 1
+                ? '删除后可在回收站恢复。正在被转化分组使用的客服系统不能删除。'
+                : `将删除 ${pendingDeleteIds.length} 个客服系统，删除后可在回收站恢复。`}
+            </p>
             <div className="admin-dialog-actions">
               <button
-                className="secondary-button"
                 type="button"
+                className="secondary-button"
                 disabled={saving}
                 onClick={() => setPendingDeleteIds([])}
               >
                 取消
               </button>
               <button
-                className="danger-button"
                 type="button"
+                className="danger-button"
                 disabled={saving}
                 onClick={() => void confirmDelete()}
               >

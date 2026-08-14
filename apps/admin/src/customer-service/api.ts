@@ -1,6 +1,7 @@
 import { AdminApiError, fetchSections } from '../api';
 import { adminFetch } from '../admin-fetch';
-import { fetchCategories } from '../category-management/api';
+import { fetchConversionGroups } from '../conversion-pool/api';
+import { fetchProducts } from '../product-management/api';
 
 export type CustomerServiceScope = 'active' | 'trash' | 'all';
 export type CustomerServiceProvider = 'generic_v1';
@@ -29,12 +30,6 @@ export type CustomerServiceConnectionInput = {
   isEnabled: boolean;
 };
 
-export type RemoteCustomerServiceGroup = {
-  id: string;
-  name: string;
-  isEnabled: boolean;
-};
-
 type ErrorEnvelope = {
   error?: { code?: string; message?: string };
 };
@@ -44,11 +39,17 @@ type VerificationContext = {
   verifyToken: string;
 };
 
-type RoutingCatalog = {
-  sections: Array<{
+type ProductCatalog = {
+  products: Array<{
     id: string;
-    name: string;
-    categories: Array<{ id: string; name: string }>;
+    title: string;
+    href: null;
+    coverUrl: string | null;
+    sectionId: string;
+    sectionName: string;
+    categoryId: string | null;
+    categoryName: string | null;
+    isEnabled: true;
   }>;
 };
 
@@ -125,19 +126,6 @@ function parseConnectionList(value: unknown): CustomerServiceConnection[] {
     throw new AdminApiError(500, 'INVALID_RESPONSE', '客服系统列表返回数据无效。');
   }
   return connections.map(parseConnection);
-}
-
-function parseRemoteGroup(value: unknown): RemoteCustomerServiceGroup {
-  const group = asRecord(value);
-  if (
-    !group ||
-    typeof group.id !== 'string' ||
-    typeof group.name !== 'string' ||
-    typeof group.isEnabled !== 'boolean'
-  ) {
-    throw new AdminApiError(500, 'INVALID_RESPONSE', '在线客服分组返回数据无效。');
-  }
-  return group as RemoteCustomerServiceGroup;
 }
 
 function parseVerificationContext(value: unknown): VerificationContext {
@@ -218,25 +206,56 @@ export async function batchDeleteCustomerServiceConnections(
   return result.deletedIds;
 }
 
-async function loadRoutingCatalog(): Promise<RoutingCatalog> {
+async function loadProductCatalog(connectionId: string): Promise<ProductCatalog> {
   const sections = await fetchSections('active');
-  return {
-    sections: await Promise.all(
-      sections.map(async (section) => ({
-        id: section.id,
-        name: section.name,
-        categories: (await fetchCategories(section.id, 'active')).map((category) => ({
-          id: category.id,
-          name: category.name,
-        })),
-      })),
-    ),
-  };
+  const products = await Promise.all(
+    sections.map(async (section) => {
+      const [sectionProducts, conversionGroups] = await Promise.all([
+        fetchProducts(section.id, 'active'),
+        fetchConversionGroups(section.id, 'active'),
+      ]);
+      const groupById = new Map(conversionGroups.map((group) => [group.id, group]));
+
+      return sectionProducts.flatMap((product) => {
+        const group = product.conversionGroupId
+          ? groupById.get(product.conversionGroupId)
+          : undefined;
+        if (
+          product.status !== 'published' ||
+          product.deletedAt ||
+          product.conversionMode !== 'customer_service' ||
+          !group ||
+          group.deletedAt ||
+          !group.isEnabled ||
+          group.mode !== 'customer_service' ||
+          group.customerServiceConnectionId !== connectionId
+        ) {
+          return [];
+        }
+
+        return [
+          {
+            id: product.id,
+            title: product.title,
+            href: null,
+            coverUrl: product.effectiveCoverUrl,
+            sectionId: section.id,
+            sectionName: section.name,
+            categoryId: product.categoryId,
+            categoryName: product.categoryName,
+            isEnabled: true as const,
+          },
+        ];
+      });
+    }),
+  );
+
+  return { products: products.flat() };
 }
 
 async function verifyPublicCustomerService(
   context: VerificationContext,
-  routingCatalog: RoutingCatalog,
+  productCatalog: ProductCatalog,
 ): Promise<unknown> {
   let response: Response;
   try {
@@ -251,7 +270,7 @@ async function verifyPublicCustomerService(
         Authorization: `Bearer ${context.verifyToken}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ routingCatalog }),
+      body: JSON.stringify({ productCatalog }),
     });
   } catch {
     throw new AdminApiError(
@@ -289,15 +308,15 @@ async function verifyPublicCustomerService(
 
 export async function testCustomerServiceConnection(
   id: string,
-): Promise<{ connected: true; groupCount: number; verifiedAt: string }> {
+): Promise<{ connected: true; productCount: number; verifiedAt: string }> {
   const encodedId = encodeURIComponent(id);
-  const [context, routingCatalog] = await Promise.all([
+  const [context, productCatalog] = await Promise.all([
     requestJson(`${basePath}/${encodedId}/verification-context`).then(
       parseVerificationContext,
     ),
-    loadRoutingCatalog(),
+    loadProductCatalog(id),
   ]);
-  const integration = await verifyPublicCustomerService(context, routingCatalog);
+  const integration = await verifyPublicCustomerService(context, productCatalog);
   const value = asRecord(
     await writeRequest(`${basePath}/${encodedId}/verification-result`, 'POST', {
       integration,
@@ -306,26 +325,14 @@ export async function testCustomerServiceConnection(
   if (
     !value ||
     value.connected !== true ||
-    typeof value.groupCount !== 'number' ||
+    typeof value.productCount !== 'number' ||
     typeof value.verifiedAt !== 'string'
   ) {
     throw new AdminApiError(500, 'INVALID_RESPONSE', '客服系统验证返回数据无效。');
   }
   return {
     connected: true,
-    groupCount: value.groupCount,
+    productCount: value.productCount,
     verifiedAt: value.verifiedAt,
   };
-}
-
-export async function fetchRemoteCustomerServiceGroups(
-  id: string,
-): Promise<RemoteCustomerServiceGroup[]> {
-  const value = asRecord(
-    await requestJson(`${basePath}/${encodeURIComponent(id)}/groups`),
-  );
-  if (!value || !Array.isArray(value.groups)) {
-    throw new AdminApiError(500, 'INVALID_RESPONSE', '在线客服分组列表返回数据无效。');
-  }
-  return value.groups.map(parseRemoteGroup);
 }

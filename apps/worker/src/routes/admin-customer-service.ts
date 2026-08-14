@@ -19,10 +19,6 @@ import {
   CustomerServiceProviderError,
   parseCustomerServiceIntegration,
 } from '../customer-service/customer-service-provider';
-import {
-  createReplaceVerifiedCustomerServiceGroupsStatements,
-  listVerifiedCustomerServiceGroups,
-} from '../customer-service/customer-service-verified-groups';
 import { apiError } from '../http/api-response';
 import {
   createIdempotencyStatement,
@@ -290,14 +286,6 @@ adminCustomerServiceRoutes.put('/connections/:id', async (context) => {
         clearVerification,
         now,
       ),
-      ...(clearVerification
-        ? createReplaceVerifiedCustomerServiceGroupsStatements(
-            context.env.DB,
-            current.id,
-            [],
-            now,
-          )
-        : []),
       createAuditLogStatement(context.env.DB, {
         action: 'customer-service-connection.updated',
         entityType: 'customer_service_connection',
@@ -337,12 +325,6 @@ adminCustomerServiceRoutes.delete('/connections/:id', async (context) => {
   const deleted = { ...current, isEnabled: false, deletedAt: now, updatedAt: now };
   await context.env.DB.batch([
     createDeleteCustomerServiceConnectionStatement(context.env.DB, current.id, now),
-    ...createReplaceVerifiedCustomerServiceGroupsStatements(
-      context.env.DB,
-      current.id,
-      [],
-      now,
-    ),
     createAuditLogStatement(context.env.DB, {
       action: 'customer-service-connection.deleted',
       entityType: 'customer_service_connection',
@@ -484,12 +466,6 @@ adminCustomerServiceRoutes.post(
         result.realtimeUrl,
         verifiedAt,
       ),
-      ...createReplaceVerifiedCustomerServiceGroupsStatements(
-        context.env.DB,
-        connection.id,
-        result.groups,
-        verifiedAt,
-      ),
       createAuditLogStatement(context.env.DB, {
         action: 'customer-service-connection.verified',
         entityType: 'customer_service_connection',
@@ -502,34 +478,15 @@ adminCustomerServiceRoutes.post(
           realtimeUrl: result.realtimeUrl,
           verifiedAt,
         },
-        metadata: { groupCount: result.groups.length, transport: 'admin-browser' },
+        metadata: { productCount: result.productCount, transport: 'admin-browser' },
         createdAt: verifiedAt,
       }),
     ]);
 
     return context.json({
       connected: true,
-      groupCount: result.groups.length,
+      productCount: result.productCount,
       verifiedAt,
     });
   },
 );
-
-adminCustomerServiceRoutes.get('/connections/:id/groups', async (context) => {
-  context.header('Cache-Control', 'no-store');
-  const connection = await getCustomerServiceConnectionInternal(
-    context.env.DB,
-    context.req.param('id'),
-  );
-  if (!connection || connection.deletedAt) return connectionNotFound(context);
-  if (!connection.verifiedAt || !connection.clientApiUrl || !connection.realtimeUrl) {
-    return browserVerificationUnavailable(
-      context,
-      'CUSTOMER_SERVICE_NOT_VERIFIED',
-      '请先验证客服系统连接。',
-    );
-  }
-  return context.json({
-    groups: await listVerifiedCustomerServiceGroups(context.env.DB, connection.id),
-  });
-});
