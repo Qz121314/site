@@ -9,7 +9,9 @@ let activeChatInput: HTMLTextAreaElement | null = null;
 let settleTimerIds: number[] = [];
 
 function isChatInput(target: EventTarget | null): target is HTMLTextAreaElement {
-  return target instanceof HTMLTextAreaElement && target.matches(CHAT_INPUT_SELECTOR);
+  return (
+    target instanceof HTMLTextAreaElement && target.matches(CHAT_INPUT_SELECTOR)
+  );
 }
 
 function findChatPage(target: Element | null = null): HTMLElement | null {
@@ -20,7 +22,9 @@ function findChatPage(target: Element | null = null): HTMLElement | null {
 }
 
 function setMobileChatViewportHeight(page: HTMLElement) {
-  const workspace = page.closest<HTMLElement>('.messages-workspace.is-thread-open');
+  const workspace = page.closest<HTMLElement>(
+    '.messages-workspace.is-thread-open',
+  );
   const detail = page.closest<HTMLElement>('.messages-detail');
 
   if (!window.matchMedia(MOBILE_CHAT_QUERY).matches) {
@@ -31,7 +35,9 @@ function setMobileChatViewportHeight(page: HTMLElement) {
     return;
   }
 
-  const viewportHeight = Math.round(window.visualViewport?.height ?? window.innerHeight);
+  const viewportHeight = Math.round(
+    window.visualViewport?.height ?? window.innerHeight,
+  );
   if (viewportHeight <= 0) return;
   const height = `${viewportHeight}px`;
 
@@ -101,7 +107,12 @@ function observeMountedChats() {
 }
 
 export function installMobileChatViewportRuntime() {
-  if (installed || typeof window === 'undefined' || typeof document === 'undefined') return;
+  if (
+    installed ||
+    typeof window === 'undefined' ||
+    typeof document === 'undefined'
+  )
+    return;
   installed = true;
 
   document.addEventListener('focusin', (event) => {
@@ -140,7 +151,9 @@ export function installMobileChatViewportRuntime() {
   window.addEventListener('resize', handleViewportChange);
 
   const handleNavigation = () => {
-    window.requestAnimationFrame(() => settleChatViewport(findChatPage(), true));
+    window.requestAnimationFrame(() =>
+      settleChatViewport(findChatPage(), true),
+    );
   };
   window.addEventListener(NAVIGATION_EVENT, handleNavigation);
   window.addEventListener('popstate', handleNavigation);
