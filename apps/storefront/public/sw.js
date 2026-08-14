@@ -21,7 +21,9 @@ self.addEventListener('activate', (event) => {
       .keys()
       .then((keys) =>
         Promise.all(
-          keys.filter((key) => !RETAINED_CACHES.has(key)).map((key) => caches.delete(key)),
+          keys
+            .filter((key) => !RETAINED_CACHES.has(key))
+            .map((key) => caches.delete(key)),
         ),
       )
       .then(() => self.clients.claim()),
@@ -100,7 +102,8 @@ async function showSupportPushNotification() {
       );
       const latest = conversations[0];
       if (latest) {
-        title = stringValue(latest.agentName) || stringValue(latest.productTitle) || title;
+        title =
+          stringValue(latest.agentName) || stringValue(latest.productTitle) || title;
         body = stringValue(latest.lastMessage) || body;
         if (stringValue(latest.id)) {
           const wrapped = `${context.connectionId}:${encodeURIComponent(latest.id)}`;
@@ -204,7 +207,9 @@ async function openNotificationTarget(path) {
     type: 'window',
     includeUncontrolled: true,
   });
-  const current = windows.find((client) => new URL(client.url).origin === self.location.origin);
+  const current = windows.find(
+    (client) => new URL(client.url).origin === self.location.origin,
+  );
   if (current) {
     if ('navigate' in current) await current.navigate(targetUrl);
     return current.focus();

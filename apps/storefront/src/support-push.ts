@@ -48,9 +48,7 @@ function parseConversationRef(
   }
 }
 
-async function resolveConversationConnection(
-  conversationRef: string,
-): Promise<{
+async function resolveConversationConnection(conversationRef: string): Promise<{
   connection: PublicSupportConnection;
   remoteConversationId: string;
 }> {
@@ -62,9 +60,7 @@ async function resolveConversationConnection(
   return { connection, remoteConversationId: parsed.remoteConversationId };
 }
 
-async function readPushConfig(
-  connection: PublicSupportConnection,
-): Promise<Uint8Array> {
+async function readPushConfig(connection: PublicSupportConnection): Promise<Uint8Array> {
   const response = await fetch(`${connection.clientApiUrl}/push/config`, {
     cache: 'no-store',
     credentials: 'omit',
@@ -98,9 +94,7 @@ function sameApplicationServerKey(
   return bytes.every((value, index) => value === expected[index]);
 }
 
-async function registerSubscription(
-  conversationRef: string,
-): Promise<PushSubscription> {
+async function registerSubscription(conversationRef: string): Promise<PushSubscription> {
   const { connection, remoteConversationId } =
     await resolveConversationConnection(conversationRef);
   const applicationServerKey = await readPushConfig(connection);
