@@ -144,7 +144,7 @@ test('online support no longer accepts a separate conversion target', () => {
   }
 });
 
-test('online support group requires a direct customer-service connection and group', () => {
+test('online support group requires only a customer-service connection', () => {
   const missingBinding = validateConversionGroupInput({
     name: ' Main ',
     mode: 'customer_service',
@@ -167,8 +167,8 @@ test('online support group requires a direct customer-service connection and gro
     sortOrder: 0,
     isEnabled: true,
     customerServiceConnectionId: ' connection-1 ',
-    remoteGroupId: ' sales ',
-    remoteGroupName: ' Sales Team ',
+    remoteGroupId: ' legacy-group-is-ignored ',
+    remoteGroupName: ' Legacy Team ',
   });
   assert.equal(valid.ok, true);
   if (!valid.ok) return;
@@ -179,8 +179,8 @@ test('online support group requires a direct customer-service connection and gro
     sortOrder: 0,
     isEnabled: true,
     customerServiceConnectionId: 'connection-1',
-    remoteGroupId: 'sales',
-    remoteGroupName: 'Sales Team',
+    remoteGroupId: null,
+    remoteGroupName: null,
   });
 });
 
@@ -276,8 +276,8 @@ test('online support groups never enter link target rotation', async () => {
     activeTargetCount: 1,
     customerServiceConnectionId: 'connection-1',
     customerServiceConnectionName: 'Support A',
-    remoteGroupId: 'sales',
-    remoteGroupName: 'Sales Team',
+    remoteGroupId: null,
+    remoteGroupName: null,
   };
 
   const selected = await selectNextConversionTarget(
