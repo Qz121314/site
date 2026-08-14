@@ -249,11 +249,13 @@ export function MessagesPage({
     [conversationQuery.data?.pages],
   );
   const composeProduct = composeProductQuery.data?.product ?? null;
-  const firstProductImageUrl = composeProduct
-    ? [...composeProduct.media]
-        .sort((left, right) => left.sortOrder - right.sortOrder)
-        .find((item) => Boolean(item.url))?.url ?? composeProduct.coverUrl
-    : null;
+  const sortedProductMedia = composeProduct
+    ? [...composeProduct.media].sort((left, right) => left.sortOrder - right.sortOrder)
+    : [];
+  const firstProductImageUrl =
+    sortedProductMedia.find((item) => Boolean(item.url))?.url ??
+    composeProduct?.coverUrl ??
+    null;
   const pendingConversation: PendingSupportConversation | null = composeProduct
     ? {
         productTitle: composeProduct.title,
