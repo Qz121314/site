@@ -7,6 +7,7 @@ import { PwaInstallPrompt } from './PwaInstallPrompt';
 import { installPublicContentFetchFallback } from './public-content-transport';
 import { StorefrontPresentation } from './StorefrontPresentation';
 import { StorefrontRoot } from './StorefrontRoot';
+import { installSupportExpiryRuntime } from './support-expiry-runtime';
 import { installStorefrontTheme } from './theme-runtime';
 import '@site/storefront-ui/styles.css';
 import './styles.css';
@@ -20,6 +21,7 @@ import './brand-bar.css';
 import './bottom-navigation.css';
 import './home-feed.css';
 import './chat-conversation.css';
+import './support-expiry-runtime.css';
 import '@site/storefront-ui/theme-contract.css';
 import '@site/storefront-ui/primary-pages-theme-contract.css';
 import '@site/storefront-ui/typography-contract.css';
@@ -29,6 +31,7 @@ import './loading-states.css';
 
 installPublicContentFetchFallback();
 installMobileChatViewportRuntime();
+installSupportExpiryRuntime();
 const storefrontThemePromise = installStorefrontTheme();
 
 if ('serviceWorker' in navigator && import.meta.env.PROD) {

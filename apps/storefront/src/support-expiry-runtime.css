@@ -1,0 +1,32 @@
+.chat-expiry-countdown {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  gap: 5px;
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 0.58rem;
+  font-variant-numeric: tabular-nums;
+  font-weight: 680;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.chat-expiry-countdown::before {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  content: '';
+  opacity: 0.72;
+}
+
+.chat-expiry-countdown.is-expired {
+  color: #b93a3a;
+}
+
+@media (max-width: 640px) {
+  .chat-expiry-countdown {
+    font-size: 0.56rem;
+  }
+}
