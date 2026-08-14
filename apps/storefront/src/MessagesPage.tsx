@@ -3,18 +3,21 @@ import {
   useMutation,
   useQuery,
   useQueryClient,
+  type QueryClient,
 } from '@tanstack/react-query';
 import type { StorefrontLinkComponent } from '@site/storefront-ui';
 import { useEffect, useMemo, useState } from 'react';
 import { loadProductSnapshot, type StorefrontBootstrap } from './content';
-import type { SupportConversationDetail, SupportMessage } from './support-contract';
+import type {
+  SupportConversationDetail,
+  SupportConversationSummary,
+  SupportMessage,
+} from './support-contract';
 import { loadPublicSupportConnections, siteSupportGateway } from './support-gateway';
-import { subscribeSupportRealtime } from './support-realtime';
 import { prepareSupportImage, releaseSupportImage } from './support-image-compress';
 import {
   enableSupportPush,
   readSupportPushState,
-  syncSupportAppBadge,
   syncSupportPushSubscription,
   type SupportPushState,
 } from './support-push';
@@ -26,6 +29,20 @@ import './messages-media.css';
 const NAVIGATION_EVENT = 'storefront:navigate';
 
 type ComposeContext = { productId: string; sectionId: string };
+type ConversationQueryCache = {
+  pages: Array<SupportConversationDetail | null>;
+  pageParams: Array<string | null>;
+};
+type SendMessageVariables = {
+  body: string;
+  clientMessageId: string;
+  sentAt: string;
+  conversationRef: string | null;
+};
+type ImageMutationVariables = {
+  file: File;
+  previewUrl: string;
+};
 
 function readComposeContext(): ComposeContext | null {
   const params = new URLSearchParams(window.location.search);
@@ -72,20 +89,100 @@ function combineConversationPages(
   };
 }
 
+function updateConversationCache(
+  queryClient: QueryClient,
+  conversationRef: string,
+  update: (conversation: SupportConversationDetail) => SupportConversationDetail,
+) {
+  queryClient.setQueryData<ConversationQueryCache>(
+    ['support-conversation', conversationRef],
+    (current) => {
+      if (!current?.pages[0]) return current;
+      return {
+        ...current,
+        pages: current.pages.map((page, index) =>
+          index === 0 && page ? update(page) : page,
+        ),
+      };
+    },
+  );
+}
+
+function appendOptimisticMessage(
+  queryClient: QueryClient,
+  conversationRef: string,
+  message: SupportMessage,
+) {
+  updateConversationCache(queryClient, conversationRef, (conversation) => ({
+    ...conversation,
+    lastMessage: message.body,
+    lastMessageAt: message.sentAt,
+    messages: [...conversation.messages, message],
+  }));
+}
+
+function replaceOptimisticMessage(
+  queryClient: QueryClient,
+  conversationRef: string,
+  optimisticId: string,
+  message: SupportMessage,
+) {
+  updateConversationCache(queryClient, conversationRef, (conversation) => ({
+    ...conversation,
+    lastMessage: message.body,
+    lastMessageAt: message.sentAt,
+    messages: conversation.messages.map((item) =>
+      item.id === optimisticId ? message : item,
+    ),
+  }));
+}
+
+function removeOptimisticMessage(
+  queryClient: QueryClient,
+  conversationRef: string,
+  optimisticId: string,
+) {
+  updateConversationCache(queryClient, conversationRef, (conversation) => ({
+    ...conversation,
+    messages: conversation.messages.filter((item) => item.id !== optimisticId),
+  }));
+}
+
+function updateConversationPreview(
+  queryClient: QueryClient,
+  conversationRef: string,
+  body: string,
+  sentAt: string,
+) {
+  queryClient.setQueryData<SupportConversationSummary[]>(
+    ['support-conversations'],
+    (current) =>
+      current?.map((conversation) =>
+        conversation.id === conversationRef
+          ? {
+              ...conversation,
+              lastMessage: body,
+              lastMessageAt: sentAt,
+            }
+          : conversation,
+      ) ?? current,
+  );
+}
+
 export function MessagesPage({
   activeConversationRef,
   bootstrap,
   compose,
   LinkComponent,
-  onUnreadMessagesChange,
 }: {
   activeConversationRef: string | null;
   bootstrap: StorefrontBootstrap;
   compose: boolean;
   LinkComponent: StorefrontLinkComponent;
-  onUnreadMessagesChange: (count: number) => void;
 }) {
   const queryClient = useQueryClient();
+  const [composeOptimisticMessage, setComposeOptimisticMessage] =
+    useState<SupportMessage | null>(null);
   const [imageProgress, setImageProgress] = useState<number | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
   const [notificationState, setNotificationState] =
@@ -151,16 +248,27 @@ export function MessagesPage({
         productHref: `/sections/${encodeURIComponent(composeProductQuery.data.product.sectionId)}/products/${encodeURIComponent(composeProductQuery.data.product.id)}/`,
       }
     : null;
+  const optimisticComposeConversation = useMemo<SupportConversationDetail | null>(() => {
+    if (!composeOptimisticMessage || !pendingConversation) return null;
+    return {
+      id: '__new__',
+      agentName: null,
+      agentAvatarUrl: null,
+      productTitle: pendingConversation.productTitle,
+      productCoverUrl: pendingConversation.productCoverUrl,
+      productHref: pendingConversation.productHref,
+      lastMessage: composeOptimisticMessage.body,
+      lastMessageAt: composeOptimisticMessage.sentAt,
+      unreadCount: 0,
+      status: 'waiting',
+      createdAt: composeOptimisticMessage.sentAt,
+      expiresAt: composeOptimisticMessage.sentAt,
+      messages: [composeOptimisticMessage],
+      nextMessageCursor: null,
+    };
+  }, [composeOptimisticMessage, pendingConversation]);
+  const displayedConversation = activeConversation ?? optimisticComposeConversation;
   const conversations = conversationsQuery.data ?? [];
-  const unreadMessages = conversations.reduce(
-    (total, conversation) => total + conversation.unreadCount,
-    0,
-  );
-
-  useEffect(() => {
-    onUnreadMessagesChange(unreadMessages);
-    void syncSupportAppBadge(unreadMessages);
-  }, [onUnreadMessagesChange, unreadMessages]);
 
   useEffect(() => {
     let active = true;
@@ -192,28 +300,14 @@ export function MessagesPage({
     };
   }, [activeConversationRef]);
 
-  useEffect(
-    () =>
-      subscribeSupportRealtime((event) => {
-        void queryClient.invalidateQueries({ queryKey: ['support-conversations'] });
-        const conversationRef = event.conversationRef ?? activeConversationRef;
-        if (conversationRef) {
-          void queryClient.invalidateQueries({
-            queryKey: ['support-conversation', conversationRef],
-          });
-        }
-      }),
-    [activeConversationRef, queryClient],
-  );
-
   const sendMutation = useMutation({
-    mutationFn: async (body: string) => {
-      if (activeConversationRef) {
-        await siteSupportGateway.sendMessage(activeConversationRef, {
-          clientMessageId: crypto.randomUUID(),
-          body,
+    mutationFn: async (variables: SendMessageVariables) => {
+      if (variables.conversationRef) {
+        const message = await siteSupportGateway.sendMessage(variables.conversationRef, {
+          clientMessageId: variables.clientMessageId,
+          body: variables.body,
         });
-        return { kind: 'message' as const };
+        return { kind: 'message' as const, message };
       }
       if (composeContext && pendingConversation?.productHref) {
         const conversation = await siteSupportGateway.startConversation({
@@ -222,16 +316,43 @@ export function MessagesPage({
           productTitle: pendingConversation.productTitle,
           productCoverUrl: pendingConversation.productCoverUrl,
           productHref: pendingConversation.productHref,
-          clientMessageId: crypto.randomUUID(),
-          message: body,
+          clientMessageId: variables.clientMessageId,
+          message: variables.body,
         });
         return { kind: 'conversation' as const, conversation };
       }
       throw new Error('MESSAGE_CONTEXT_UNAVAILABLE');
     },
-    onSuccess: async (result) => {
-      await queryClient.invalidateQueries({ queryKey: ['support-conversations'] });
+    onMutate: (variables) => {
+      const optimisticId = `local:${variables.clientMessageId}`;
+      const optimisticMessage: SupportMessage = {
+        id: optimisticId,
+        direction: 'customer',
+        body: variables.body,
+        sentAt: variables.sentAt,
+        delivery: 'sending',
+        attachments: [],
+      };
+      if (variables.conversationRef) {
+        appendOptimisticMessage(
+          queryClient,
+          variables.conversationRef,
+          optimisticMessage,
+        );
+        updateConversationPreview(
+          queryClient,
+          variables.conversationRef,
+          variables.body,
+          variables.sentAt,
+        );
+      } else {
+        setComposeOptimisticMessage(optimisticMessage);
+      }
+      return { optimisticId };
+    },
+    onSuccess: (result, variables, context) => {
       if (result.kind === 'conversation') {
+        setComposeOptimisticMessage(null);
         window.history.pushState(
           null,
           '',
@@ -240,18 +361,40 @@ export function MessagesPage({
         window.dispatchEvent(new Event(NAVIGATION_EVENT));
         return;
       }
-      await queryClient.invalidateQueries({
-        queryKey: ['support-conversation', activeConversationRef],
-      });
+      if (variables.conversationRef) {
+        replaceOptimisticMessage(
+          queryClient,
+          variables.conversationRef,
+          context.optimisticId,
+          result.message,
+        );
+      }
+    },
+    onError: (_error, variables, context) => {
+      if (variables.conversationRef) {
+        removeOptimisticMessage(
+          queryClient,
+          variables.conversationRef,
+          context?.optimisticId ?? `local:${variables.clientMessageId}`,
+        );
+      } else {
+        setComposeOptimisticMessage(null);
+      }
+    },
+    onSettled: (_result, _error, variables) => {
+      void queryClient.invalidateQueries({ queryKey: ['support-conversations'] });
+      if (variables.conversationRef) {
+        void queryClient.invalidateQueries({
+          queryKey: ['support-conversation', variables.conversationRef],
+        });
+      }
     },
   });
 
   const imageMutation = useMutation({
-    mutationFn: async (file: File) => {
+    mutationFn: async ({ file }: ImageMutationVariables) => {
       if (!activeConversationRef) throw new Error('IMAGE_CONTEXT_UNAVAILABLE');
       const image = await prepareSupportImage(file);
-      setImagePreviewUrl(image.previewUrl);
-      setImageProgress(0);
       try {
         await siteSupportGateway.sendImage(
           activeConversationRef,
@@ -267,17 +410,24 @@ export function MessagesPage({
         );
       } finally {
         releaseSupportImage(image);
-        setImagePreviewUrl(null);
-        setImageProgress(null);
       }
     },
-    onSuccess: async () => {
-      await Promise.all([
+    onSuccess: (_result, variables) => {
+      void Promise.all([
         queryClient.invalidateQueries({ queryKey: ['support-conversations'] }),
         queryClient.invalidateQueries({
           queryKey: ['support-conversation', activeConversationRef],
         }),
-      ]);
+      ]).finally(() => {
+        setImagePreviewUrl((current) => (current === variables.previewUrl ? null : current));
+        setImageProgress(null);
+        URL.revokeObjectURL(variables.previewUrl);
+      });
+    },
+    onError: (_error, variables) => {
+      setImagePreviewUrl((current) => (current === variables.previewUrl ? null : current));
+      setImageProgress(null);
+      URL.revokeObjectURL(variables.previewUrl);
     },
   });
 
@@ -341,7 +491,7 @@ export function MessagesPage({
         </button>
       ) : null}
       <MessagesWorkspace
-        activeConversation={activeConversation}
+        activeConversation={displayedConversation}
         activeConversationRef={workspaceConversationRef}
         conversations={conversations}
         pendingConversation={pendingConversation}
@@ -350,16 +500,28 @@ export function MessagesPage({
         onSendMessage={
           supportAvailable
             ? async (body) => {
-                await sendMutation.mutateAsync(body);
+                await sendMutation.mutateAsync({
+                  body,
+                  clientMessageId: crypto.randomUUID(),
+                  sentAt: new Date().toISOString(),
+                  conversationRef: activeConversationRef,
+                });
               }
             : undefined
         }
-        sending={sendMutation.isPending}
+        sending={compose && sendMutation.isPending}
         sendError={sendMutation.error ? SYSTEM_UI.messageFailed : null}
         onSendImage={
           supportAvailable && activeConversationRef
             ? async (file) => {
-                await imageMutation.mutateAsync(file);
+                const previewUrl = URL.createObjectURL(file);
+                setImagePreviewUrl(previewUrl);
+                setImageProgress(0);
+                try {
+                  await imageMutation.mutateAsync({ file, previewUrl });
+                } catch {
+                  // Mutation state renders the error; do not surface an unhandled promise.
+                }
               }
             : undefined
         }
