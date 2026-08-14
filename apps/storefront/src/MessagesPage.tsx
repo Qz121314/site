@@ -248,25 +248,25 @@ export function MessagesPage({
         productHref: `/sections/${encodeURIComponent(composeProductQuery.data.product.sectionId)}/products/${encodeURIComponent(composeProductQuery.data.product.id)}/`,
       }
     : null;
-  const optimisticComposeConversation = useMemo<SupportConversationDetail | null>(() => {
-    if (!composeOptimisticMessage || !pendingConversation) return null;
-    return {
-      id: '__new__',
-      agentName: null,
-      agentAvatarUrl: null,
-      productTitle: pendingConversation.productTitle,
-      productCoverUrl: pendingConversation.productCoverUrl,
-      productHref: pendingConversation.productHref,
-      lastMessage: composeOptimisticMessage.body,
-      lastMessageAt: composeOptimisticMessage.sentAt,
-      unreadCount: 0,
-      status: 'waiting',
-      createdAt: composeOptimisticMessage.sentAt,
-      expiresAt: composeOptimisticMessage.sentAt,
-      messages: [composeOptimisticMessage],
-      nextMessageCursor: null,
-    };
-  }, [composeOptimisticMessage, pendingConversation]);
+  const optimisticComposeConversation: SupportConversationDetail | null =
+    composeOptimisticMessage && pendingConversation
+      ? {
+          id: '__new__',
+          agentName: null,
+          agentAvatarUrl: null,
+          productTitle: pendingConversation.productTitle,
+          productCoverUrl: pendingConversation.productCoverUrl,
+          productHref: pendingConversation.productHref,
+          lastMessage: composeOptimisticMessage.body,
+          lastMessageAt: composeOptimisticMessage.sentAt,
+          unreadCount: 0,
+          status: 'waiting',
+          createdAt: composeOptimisticMessage.sentAt,
+          expiresAt: composeOptimisticMessage.sentAt,
+          messages: [composeOptimisticMessage],
+          nextMessageCursor: null,
+        }
+      : null;
   const displayedConversation = activeConversation ?? optimisticComposeConversation;
   const conversations = conversationsQuery.data ?? [];
 
@@ -419,13 +419,17 @@ export function MessagesPage({
           queryKey: ['support-conversation', activeConversationRef],
         }),
       ]).finally(() => {
-        setImagePreviewUrl((current) => (current === variables.previewUrl ? null : current));
+        setImagePreviewUrl((current) =>
+          current === variables.previewUrl ? null : current,
+        );
         setImageProgress(null);
         URL.revokeObjectURL(variables.previewUrl);
       });
     },
     onError: (_error, variables) => {
-      setImagePreviewUrl((current) => (current === variables.previewUrl ? null : current));
+      setImagePreviewUrl((current) =>
+        current === variables.previewUrl ? null : current,
+      );
       setImageProgress(null);
       URL.revokeObjectURL(variables.previewUrl);
     },
