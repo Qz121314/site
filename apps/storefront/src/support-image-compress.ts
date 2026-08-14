@@ -12,7 +12,8 @@ const MAX_EDGE = 1600;
 const TARGET_BYTES = 400 * 1024;
 const MAX_STATIC_BYTES = 1024 * 1024;
 const MAX_GIF_BYTES = 5 * 1024 * 1024;
-const QUALITIES = [0.78, 0.7, 0.62, 0.54, 0.46];
+const INITIAL_QUALITY = 0.78;
+const LOWER_QUALITIES = [0.7, 0.62, 0.54, 0.46] as const;
 
 export async function prepareSupportImage(file: File): Promise<PreparedSupportImage> {
   if (!file.type.startsWith('image/')) throw new Error('Please choose an image.');
@@ -28,8 +29,8 @@ export async function prepareSupportImage(file: File): Promise<PreparedSupportIm
       height = Math.max(1, Math.round(height * scale));
     }
 
-    let blob = await encodeWebp(bitmap, width, height, QUALITIES[0]);
-    for (const quality of QUALITIES.slice(1)) {
+    let blob = await encodeWebp(bitmap, width, height, INITIAL_QUALITY);
+    for (const quality of LOWER_QUALITIES) {
       if (blob.size <= TARGET_BYTES) break;
       blob = await encodeWebp(bitmap, width, height, quality);
     }
