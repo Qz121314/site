@@ -33,7 +33,9 @@ test('mobile product fixed surfaces respect safe areas', async ({ page }) => {
 
   const geometry = await page.evaluate(() => {
     const topbar = document.querySelector<HTMLElement>('.app-shell > .topbar');
-    const nav = document.querySelector<HTMLElement>('.product-detail-navigation');
+    const nav = document.querySelector<HTMLElement>(
+      '.product-detail-navigation',
+    );
     const product = document.querySelector<HTMLElement>('.product-detail-page');
     const action = document.querySelector<HTMLElement>(
       '.product-detail-fixed-action',
