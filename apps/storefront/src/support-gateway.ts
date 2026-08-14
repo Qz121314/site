@@ -29,10 +29,19 @@ export type PublicSupportConnection = {
   protocolVersion: 'v1';
 };
 
+type ResolvedSupportProduct = {
+  id: string;
+  sectionId: string;
+  sectionName: string;
+  categoryId: string | null;
+  categoryName: string | null;
+  title: string;
+};
+
 type ResolvedSupportRoute = {
   available: true;
   connection: PublicSupportConnection;
-  groupId: string;
+  product: ResolvedSupportProduct;
 };
 
 type RemoteConversationSummary = SupportConversationSummary & {
@@ -111,6 +120,27 @@ function parseConnection(value: unknown): PublicSupportConnection {
   };
 }
 
+function parseResolvedProduct(value: unknown): ResolvedSupportProduct {
+  const item = isRecord(value) ? value : null;
+  if (
+    !item ||
+    typeof item.id !== 'string' ||
+    typeof item.sectionId !== 'string' ||
+    typeof item.sectionName !== 'string' ||
+    !nullableString(item.categoryId) ||
+    !nullableString(item.categoryName) ||
+    typeof item.title !== 'string' ||
+    Boolean(item.categoryId) !== Boolean(item.categoryName)
+  ) {
+    throw new SupportApiError(
+      500,
+      'INVALID_SUPPORT_CONFIG',
+      'Messages returned invalid product routing context.',
+    );
+  }
+  return item as ResolvedSupportProduct;
+}
+
 export async function loadPublicSupportConnections(
   signal?: AbortSignal,
 ): Promise<PublicSupportConnection[]> {
@@ -145,7 +175,7 @@ async function resolveSupportRoute(
     signal,
   );
   const envelope = isRecord(value) ? value : null;
-  if (!envelope || envelope.available !== true || typeof envelope.groupId !== 'string') {
+  if (!envelope || envelope.available !== true) {
     throw new SupportApiError(
       409,
       'SUPPORT_UNAVAILABLE',
@@ -155,7 +185,7 @@ async function resolveSupportRoute(
   return {
     available: true,
     connection: parseConnection(envelope.connection),
-    groupId: envelope.groupId,
+    product: parseResolvedProduct(envelope.product),
   };
 }
 
@@ -504,13 +534,15 @@ export const siteSupportGateway: SupportGateway = {
         method: 'POST',
         body: JSON.stringify(
           clientBody({
-            groupId: route.groupId,
             clientMessageId: input.clientMessageId,
             message: input.message,
             product: {
-              id: input.productId,
-              sectionId: input.sectionId,
-              title: input.productTitle,
+              id: route.product.id,
+              sectionId: route.product.sectionId,
+              sectionName: route.product.sectionName,
+              categoryId: route.product.categoryId,
+              categoryName: route.product.categoryName,
+              title: route.product.title,
               href: input.productHref,
               coverUrl: input.productCoverUrl,
             },
