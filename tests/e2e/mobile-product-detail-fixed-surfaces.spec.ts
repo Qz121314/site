@@ -1,38 +1,30 @@
 import { expect, test, type Page } from '@playwright/test';
 
-async function findPublishedProductHref(page: Page): Promise<string | null> {
+const SECTION_LINK = 'a[href^="/sections/"]:not([href*="/products/"])';
+const PRODUCT_LINK = 'a.section-product-card[href*="/products/"]';
+
+async function findProductHref(page: Page): Promise<string | null> {
   await page.goto('/browse/');
-  const sectionHrefs = await page
-    .locator('a[href^="/sections/"]:not([href*="/products/"])')
-    .evaluateAll((links) => {
-      const hrefs = links.map((link) => link.getAttribute('href')).filter(Boolean);
-      return [...new Set(hrefs)];
-    });
+  const sectionHrefs = await page.locator(SECTION_LINK).evaluateAll((links) => {
+    const hrefs = links.map((link) => link.getAttribute('href'));
+    return [...new Set(hrefs.filter(Boolean))];
+  });
 
   for (const sectionHref of sectionHrefs) {
     if (!sectionHref) continue;
     await page.goto(sectionHref);
-    const productHref = await page
-      .locator('a.section-product-card[href*="/products/"]')
-      .first()
-      .getAttribute('href')
-      .catch(() => null);
-    if (productHref) return productHref;
+    const card = page.locator(PRODUCT_LINK).first();
+    if ((await card.count()) > 0) return card.getAttribute('href');
   }
 
   return null;
 }
 
-test('mobile product detail fixed surfaces stay clear of navigation and viewport edges', async ({
-  page,
-}) => {
+test('mobile product fixed surfaces respect safe areas', async ({ page }) => {
   test.setTimeout(60_000);
 
-  const productHref = await findPublishedProductHref(page);
-  test.skip(
-    !productHref,
-    'No published product is available for production acceptance.',
-  );
+  const productHref = await findProductHref(page);
+  test.skip(!productHref, 'No published product.');
 
   await page.goto(productHref!);
   await expect(page.locator('.product-detail-page')).toBeVisible();
@@ -41,48 +33,36 @@ test('mobile product detail fixed surfaces stay clear of navigation and viewport
 
   const geometry = await page.evaluate(() => {
     const topbar = document.querySelector<HTMLElement>('.app-shell > .topbar');
-    const navigation = document.querySelector<HTMLElement>(
-      '.product-detail-navigation',
-    );
-    const productPage = document.querySelector<HTMLElement>(
-      '.product-detail-page',
-    );
-    const fixedAction = document.querySelector<HTMLElement>(
+    const nav = document.querySelector<HTMLElement>('.product-detail-navigation');
+    const product = document.querySelector<HTMLElement>('.product-detail-page');
+    const action = document.querySelector<HTMLElement>(
       '.product-detail-fixed-action',
     );
-    const cta = fixedAction?.querySelector<HTMLElement>('.cta-button');
+    const cta = action?.querySelector<HTMLElement>('.cta-button');
 
-    const topbarRect = topbar?.getBoundingClientRect();
-    const fixedActionRect = fixedAction?.getBoundingClientRect();
+    const barRect = topbar?.getBoundingClientRect();
+    const actionRect = action?.getBoundingClientRect();
     const ctaRect = cta?.getBoundingClientRect();
 
     return {
-      viewportHeight: window.innerHeight,
-      topbarBottom: topbarRect?.bottom ?? 0,
-      navigationStickyTop: navigation
-        ? Number.parseFloat(getComputedStyle(navigation).top)
-        : 0,
-      fixedActionTop: fixedActionRect?.top ?? 0,
-      fixedActionBottom: fixedActionRect?.bottom ?? 0,
-      fixedActionHeight: fixedActionRect?.height ?? 0,
-      ctaHeight: ctaRect?.height ?? 0,
-      pagePaddingBottom: productPage
-        ? Number.parseFloat(getComputedStyle(productPage).paddingBottom)
+      viewH: window.innerHeight,
+      barBottom: barRect?.bottom ?? 0,
+      navTop: nav ? Number.parseFloat(getComputedStyle(nav).top) : 0,
+      actionTop: actionRect?.top ?? 0,
+      actionBottom: actionRect?.bottom ?? 0,
+      actionH: actionRect?.height ?? 0,
+      ctaH: ctaRect?.height ?? 0,
+      paddingB: product
+        ? Number.parseFloat(getComputedStyle(product).paddingBottom)
         : 0,
     };
   });
 
-  expect(geometry.navigationStickyTop).toBeGreaterThanOrEqual(
-    geometry.topbarBottom - 1,
-  );
-  expect(geometry.fixedActionTop).toBeGreaterThan(0);
-  expect(geometry.fixedActionBottom).toBeLessThanOrEqual(
-    geometry.viewportHeight + 1,
-  );
-  expect(geometry.ctaHeight).toBeGreaterThanOrEqual(50);
-  expect(geometry.pagePaddingBottom).toBeGreaterThanOrEqual(
-    geometry.fixedActionHeight + 8,
-  );
+  expect(geometry.navTop).toBeGreaterThanOrEqual(geometry.barBottom - 1);
+  expect(geometry.actionTop).toBeGreaterThan(0);
+  expect(geometry.actionBottom).toBeLessThanOrEqual(geometry.viewH + 1);
+  expect(geometry.ctaH).toBeGreaterThanOrEqual(50);
+  expect(geometry.paddingB).toBeGreaterThanOrEqual(geometry.actionH + 8);
 
   console.log('PRODUCT_DETAIL_FIXED_SURFACES_ACCEPTANCE=passed');
 });
