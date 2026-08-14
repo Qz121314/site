@@ -32,7 +32,9 @@ jobs:
           pnpm --version
 
       - name: Apply realtime consumer optimization
-        run: python .github/scripts/apply_realtime_consumer_optimization.py
+        run: |
+          python .github/scripts/apply_realtime_consumer_optimization.py
+          python .github/scripts/fix_realtime_consumer_typecheck.py
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -47,7 +49,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          git rm -f .github/workflows/codex-storefront-optimize.yml .github/scripts/apply_realtime_consumer_optimization.py
+          git rm -f .github/workflows/codex-storefront-optimize.yml .github/scripts/apply_realtime_consumer_optimization.py .github/scripts/fix_realtime_consumer_typecheck.py
           git add -A
           git config user.name 'OpenAI Codex'
           git config user.email 'codex@openai.com'
