@@ -253,7 +253,9 @@ export function MessagesPage({
     ? [...composeProduct.media].sort((left, right) => left.sortOrder - right.sortOrder)
     : [];
   const firstProductImageUrl =
-    sortedProductMedia.find((item) => Boolean(item.url))?.url ??
+    sortedProductMedia.find(
+      (item) => item.url && !/\.(?:mp4|webm)(?:$|[?#])/iu.test(item.url),
+    )?.url ??
     composeProduct?.coverUrl ??
     null;
   const pendingConversation: PendingSupportConversation | null = composeProduct
