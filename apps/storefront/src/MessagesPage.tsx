@@ -11,6 +11,13 @@ import type { SupportConversationDetail, SupportMessage } from './support-contra
 import { loadPublicSupportConnections, siteSupportGateway } from './support-gateway';
 import { subscribeSupportRealtime } from './support-realtime';
 import { prepareSupportImage, releaseSupportImage } from './support-image-compress';
+import {
+  enableSupportPush,
+  readSupportPushState,
+  syncSupportAppBadge,
+  syncSupportPushSubscription,
+  type SupportPushState,
+} from './support-push';
 import { MessagesWorkspace, type PendingSupportConversation } from './support-ui';
 import { SYSTEM_UI } from './system-ui';
 import './messages-ui.css';
@@ -71,6 +78,9 @@ export function MessagesPage({
   const queryClient = useQueryClient();
   const [imageProgress, setImageProgress] = useState<number | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
+  const [notificationState, setNotificationState] =
+    useState<SupportPushState>('unsupported');
+  const [notificationBusy, setNotificationBusy] = useState(false);
   const supportConnectionsQuery = useQuery({
     queryKey: ['support-connections'],
     queryFn: ({ signal }) => loadPublicSupportConnections(signal),
@@ -139,7 +149,38 @@ export function MessagesPage({
 
   useEffect(() => {
     onUnreadMessagesChange(unreadMessages);
+    void syncSupportAppBadge(unreadMessages);
   }, [onUnreadMessagesChange, unreadMessages]);
+
+  useEffect(() => {
+    let active = true;
+    if (!activeConversationRef) {
+      setNotificationState('unsupported');
+      return () => {
+        active = false;
+      };
+    }
+
+    void readSupportPushState()
+      .then(async (state) => {
+        if (state !== 'enabled') return state;
+        try {
+          return await syncSupportPushSubscription(activeConversationRef);
+        } catch {
+          return state;
+        }
+      })
+      .then((state) => {
+        if (active) setNotificationState(state);
+      })
+      .catch(() => {
+        if (active) setNotificationState('unsupported');
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [activeConversationRef]);
 
   useEffect(
     () =>
@@ -283,6 +324,23 @@ export function MessagesPage({
       imageProgress={imageProgress}
       imagePreviewUrl={imagePreviewUrl}
       imageError={imageMutation.error ? SYSTEM_UI.messageFailed : null}
+      notificationState={notificationState}
+      notificationBusy={notificationBusy}
+      onEnableNotifications={
+        activeConversationRef && notificationState === 'prompt'
+          ? async () => {
+              setNotificationBusy(true);
+              try {
+                setNotificationState(await enableSupportPush(activeConversationRef));
+              } catch {
+                setNotificationState(await readSupportPushState());
+                throw new Error('SUPPORT_PUSH_ENABLE_FAILED');
+              } finally {
+                setNotificationBusy(false);
+              }
+            }
+          : undefined
+      }
       onLoadEarlier={
         activeConversation?.nextMessageCursor
           ? async () => {
