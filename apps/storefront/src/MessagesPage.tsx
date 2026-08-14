@@ -248,12 +248,19 @@ export function MessagesPage({
     () => combineConversationPages(conversationQuery.data?.pages),
     [conversationQuery.data?.pages],
   );
-  const pendingConversation: PendingSupportConversation | null = composeProductQuery.data
-    ?.product
+  const composeProduct = composeProductQuery.data?.product ?? null;
+  const sortedProductMedia = composeProduct
+    ? [...composeProduct.media].sort((left, right) => left.sortOrder - right.sortOrder)
+    : [];
+  const firstProductImageUrl =
+    sortedProductMedia.find((item) => Boolean(item.url))?.url ??
+    composeProduct?.coverUrl ??
+    null;
+  const pendingConversation: PendingSupportConversation | null = composeProduct
     ? {
-        productTitle: composeProductQuery.data.product.title,
-        productCoverUrl: composeProductQuery.data.product.coverUrl,
-        productHref: `/sections/${encodeURIComponent(composeProductQuery.data.product.sectionId)}/products/${encodeURIComponent(composeProductQuery.data.product.id)}/`,
+        productTitle: composeProduct.title,
+        productCoverUrl: firstProductImageUrl,
+        productHref: `/sections/${encodeURIComponent(composeProduct.sectionId)}/products/${encodeURIComponent(composeProduct.id)}/`,
       }
     : null;
   const optimisticComposeConversation: SupportConversationDetail | null =
