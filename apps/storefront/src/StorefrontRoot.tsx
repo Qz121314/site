@@ -25,9 +25,15 @@ import { NotFoundPage } from './NotFoundPage';
 import { ResilientImage } from './ResilientMedia';
 import { bottomNavigationActiveHref, parseStorefrontRoute } from './routing';
 import { primaryNavigationItems } from './storefront-navigation';
+import type { SupportConversationSummary } from './support-contract';
 import { siteSupportGateway } from './support-gateway';
 import { syncSupportAppBadge } from './support-push';
 import { subscribeSupportRealtime } from './support-realtime';
+import {
+  applyRealtimeToConversationCache,
+  applyRealtimeToConversationList,
+  type SupportConversationQueryCache,
+} from './support-realtime-cache';
 import { SYSTEM_UI } from './system-ui';
 
 const NAVIGATION_EVENT = 'storefront:navigate';
@@ -199,10 +205,9 @@ export function StorefrontRoot() {
   const supportConversationsQuery = useQuery({
     queryKey: ['support-conversations'],
     queryFn: ({ signal }) => siteSupportGateway.listConversations(signal),
-    staleTime: 5_000,
+    staleTime: Number.POSITIVE_INFINITY,
     retry: 1,
-    refetchInterval: 30_000,
-    refetchOnWindowFocus: true,
+    refetchOnWindowFocus: false,
   });
   const unreadMessages = (supportConversationsQuery.data ?? []).reduce(
     (total, conversation) => total + conversation.unreadCount,
@@ -216,11 +221,21 @@ export function StorefrontRoot() {
   useEffect(
     () =>
       subscribeSupportRealtime((event) => {
-        void queryClient.invalidateQueries({ queryKey: ['support-conversations'] });
+        if (event.type === 'realtime.recovered') {
+          void queryClient.invalidateQueries({ queryKey: ['support-conversations'] });
+          void queryClient.invalidateQueries({ queryKey: ['support-conversation'] });
+          return;
+        }
+        if (event.type === 'realtime.connected') return;
+        queryClient.setQueryData<SupportConversationSummary[]>(
+          ['support-conversations'],
+          (current) => applyRealtimeToConversationList(current, event),
+        );
         if (event.conversationRef) {
-          void queryClient.invalidateQueries({
-            queryKey: ['support-conversation', event.conversationRef],
-          });
+          queryClient.setQueryData<SupportConversationQueryCache>(
+            ['support-conversation', event.conversationRef],
+            (current) => applyRealtimeToConversationCache(current, event),
+          );
         }
       }),
     [queryClient],

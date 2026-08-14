@@ -589,7 +589,7 @@ export const siteSupportGateway: SupportGateway = {
       conversationRef,
       signal,
     );
-    await sendConversationImage(
+    return sendConversationImage(
       connection,
       remoteConversationId,
       input,

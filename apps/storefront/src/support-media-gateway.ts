@@ -1,4 +1,8 @@
-import type { SendSupportImageInput, SupportImageAttachment } from './support-contract';
+import type {
+  SendSupportImageInput,
+  SupportImageAttachment,
+  SupportMessage,
+} from './support-contract';
 import { getSupportVisitorIdentity } from './support-identity';
 import { uploadSupportImage, type SupportUploadTarget } from './support-image-upload';
 
@@ -21,6 +25,12 @@ type RemoteMediaItem = {
 type InitResponse = {
   media: { id: string };
   upload: SupportUploadTarget;
+};
+
+type CompleteResponse = {
+  messageId: string;
+  createdAt?: string;
+  media: Omit<RemoteMediaItem, 'messageId'>;
 };
 
 export async function loadConversationMedia(
@@ -70,7 +80,7 @@ export async function sendConversationImage(
   input: SendSupportImageInput,
   onProgress?: (progress: number) => void,
   signal?: AbortSignal,
-): Promise<void> {
+): Promise<SupportMessage> {
   const identity = getSupportVisitorIdentity();
   const init = await requestJson<InitResponse>(
     remoteUrl(
@@ -93,7 +103,7 @@ export async function sendConversationImage(
   if (!init?.media?.id || !init.upload?.url)
     throw new Error('Invalid media upload response.');
   await uploadSupportImage(init.upload, input, onProgress);
-  await requestJson(
+  const complete = await requestJson<CompleteResponse>(
     remoteUrl(
       connection,
       `/media/${encodeURIComponent(init.media.id)}/complete`,
@@ -104,6 +114,33 @@ export async function sendConversationImage(
     },
     signal,
   );
+  if (!complete?.messageId || !complete.media || !validCompletedMedia(complete.media)) {
+    throw new Error('Invalid media completion response.');
+  }
+  const contentUrl = remoteUrl(
+    connection,
+    `/media/${encodeURIComponent(complete.media.id)}/content`,
+  );
+  contentUrl.searchParams.set('visitorId', identity.visitorId);
+  return {
+    id: complete.messageId,
+    direction: 'customer',
+    body: '',
+    sentAt: complete.createdAt ?? new Date().toISOString(),
+    delivery: 'sent',
+    attachments: [
+      {
+        id: complete.media.id,
+        kind: 'image',
+        mimeType: complete.media.mimeType,
+        byteSize: complete.media.byteSize,
+        width: complete.media.width,
+        height: complete.media.height,
+        originalName: complete.media.originalName,
+        url: contentUrl.toString(),
+      },
+    ],
+  };
 }
 
 function remoteUrl(connection: SupportMediaConnection, path: string): URL {
@@ -133,8 +170,11 @@ async function requestJson<T>(
 }
 
 function validMedia(value: RemoteMediaItem): boolean {
+  return typeof value?.messageId === 'string' && validCompletedMedia(value);
+}
+
+function validCompletedMedia(value: Omit<RemoteMediaItem, 'messageId'>): boolean {
   return (
-    typeof value?.messageId === 'string' &&
     typeof value?.id === 'string' &&
     value.kind === 'image' &&
     typeof value.mimeType === 'string' &&

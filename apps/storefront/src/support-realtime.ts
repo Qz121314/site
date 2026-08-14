@@ -1,14 +1,24 @@
+import type {
+  SupportConversationSummary,
+  SupportImageAttachment,
+  SupportMessage,
+} from './support-contract';
 import {
   buildSupportWebSocketUrl,
   loadPublicSupportConnections,
   wrapSupportConversationRef,
   type PublicSupportConnection,
 } from './support-gateway';
+import { getSupportVisitorIdentity } from './support-identity';
 
 export type SupportRealtimeEvent = {
   type: string;
   connectionId: string;
   conversationRef: string | null;
+  conversation: SupportConversationSummary | null;
+  message: SupportMessage | null;
+  reader: 'agent' | 'visitor' | null;
+  lastMessageId: string | null;
 };
 
 type Listener = (event: SupportRealtimeEvent) => void;
@@ -20,6 +30,7 @@ type SocketState = {
   heartbeatTimer: number | null;
   reconnectAttempt: number;
   lastActivityAt: number;
+  openedOnce: boolean;
   stopped: boolean;
 };
 
@@ -36,19 +47,147 @@ function emit(event: SupportRealtimeEvent) {
   for (const listener of listeners) listener(event);
 }
 
-function parseEvent(connectionId: string, raw: unknown): SupportRealtimeEvent | null {
-  if (typeof raw !== 'object' || raw === null || Array.isArray(raw)) return null;
-  const record = raw as Record<string, unknown>;
-  if (typeof record.type !== 'string' || !record.type.trim()) return null;
-  if (record.type === 'ready' || record.type === 'pong') return null;
-  const remoteConversationId =
-    typeof record.conversationId === 'string' ? record.conversationId.trim() : '';
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function nullableString(value: unknown): value is string | null {
+  return value === null || typeof value === 'string';
+}
+
+function parseConversation(
+  connectionId: string,
+  value: unknown,
+): SupportConversationSummary | null {
+  const item = isRecord(value) ? value : null;
+  if (
+    !item ||
+    typeof item.id !== 'string' ||
+    !nullableString(item.agentName) ||
+    !nullableString(item.agentAvatarUrl) ||
+    typeof item.productTitle !== 'string' ||
+    !nullableString(item.productCoverUrl) ||
+    !nullableString(item.lastMessage) ||
+    !nullableString(item.lastMessageAt) ||
+    typeof item.unreadCount !== 'number' ||
+    !Number.isInteger(item.unreadCount) ||
+    (item.status !== 'waiting' && item.status !== 'active' && item.status !== 'closed')
+  ) {
+    return null;
+  }
   return {
-    type: record.type,
-    connectionId,
-    conversationRef: remoteConversationId
-      ? wrapSupportConversationRef(connectionId, remoteConversationId)
-      : null,
+    id: wrapSupportConversationRef(connectionId, item.id),
+    agentName: item.agentName,
+    agentAvatarUrl: item.agentAvatarUrl,
+    productTitle: item.productTitle,
+    productCoverUrl: item.productCoverUrl,
+    lastMessage: item.lastMessage,
+    lastMessageAt: item.lastMessageAt,
+    unreadCount: item.unreadCount,
+    status: item.status,
+  };
+}
+
+function parseMedia(
+  connection: PublicSupportConnection,
+  value: unknown,
+): { messageId: string; attachment: SupportImageAttachment } | null {
+  const item = isRecord(value) ? value : null;
+  if (
+    !item ||
+    typeof item.messageId !== 'string' ||
+    typeof item.id !== 'string' ||
+    item.kind !== 'image' ||
+    typeof item.mimeType !== 'string' ||
+    typeof item.byteSize !== 'number' ||
+    !Number.isFinite(item.byteSize) ||
+    (item.width !== null && typeof item.width !== 'number') ||
+    (item.height !== null && typeof item.height !== 'number') ||
+    !nullableString(item.originalName)
+  ) {
+    return null;
+  }
+  const identity = getSupportVisitorIdentity();
+  const contentUrl = new URL(
+    `${connection.clientApiUrl.replace(/\/$/u, '')}/media/${encodeURIComponent(item.id)}/content`,
+  );
+  contentUrl.searchParams.set('visitorId', identity.visitorId);
+  return {
+    messageId: item.messageId,
+    attachment: {
+      id: item.id,
+      kind: 'image',
+      mimeType: item.mimeType,
+      byteSize: item.byteSize,
+      width: item.width as number | null,
+      height: item.height as number | null,
+      originalName: item.originalName,
+      url: contentUrl.toString(),
+    },
+  };
+}
+
+function parseMessage(
+  connection: PublicSupportConnection,
+  value: unknown,
+  mediaValue: unknown,
+): SupportMessage | null {
+  const item = isRecord(value) ? value : null;
+  if (
+    !item ||
+    typeof item.id !== 'string' ||
+    (item.direction !== 'customer' && item.direction !== 'agent') ||
+    typeof item.body !== 'string' ||
+    typeof item.sentAt !== 'string' ||
+    (item.delivery !== 'sending' &&
+      item.delivery !== 'failed' &&
+      item.delivery !== 'sent' &&
+      item.delivery !== 'read')
+  ) {
+    return null;
+  }
+  const media = parseMedia(connection, mediaValue);
+  return {
+    id: item.id,
+    direction: item.direction,
+    body: item.body,
+    sentAt: item.sentAt,
+    delivery: item.delivery,
+    attachments: media && media.messageId === item.id ? [media.attachment] : [],
+  };
+}
+
+function emptyEvent(state: SocketState, type: string): SupportRealtimeEvent {
+  return {
+    type,
+    connectionId: state.connection.id,
+    conversationRef: null,
+    conversation: null,
+    message: null,
+    reader: null,
+    lastMessageId: null,
+  };
+}
+
+function parseEvent(state: SocketState, raw: unknown): SupportRealtimeEvent | null {
+  if (!isRecord(raw) || typeof raw.type !== 'string' || !raw.type.trim()) return null;
+  if (raw.type === 'ready' || raw.type === 'pong') return null;
+  const remoteConversationId =
+    typeof raw.conversationId === 'string' ? raw.conversationId.trim() : '';
+  const conversation = parseConversation(state.connection.id, raw.conversation);
+  const conversationRef =
+    conversation?.id ??
+    (remoteConversationId
+      ? wrapSupportConversationRef(state.connection.id, remoteConversationId)
+      : null);
+  return {
+    type: raw.type,
+    connectionId: state.connection.id,
+    conversationRef,
+    conversation,
+    message: parseMessage(state.connection, raw.message, raw.media),
+    reader: raw.reader === 'agent' || raw.reader === 'visitor' ? raw.reader : null,
+    lastMessageId: typeof raw.lastMessageId === 'string' ? raw.lastMessageId : null,
   };
 }
 
@@ -102,26 +241,21 @@ function openSocket(state: SocketState) {
     state.socket = socket;
     socket.addEventListener('open', () => {
       if (state.socket !== socket) return;
+      const recovered = state.openedOnce;
+      state.openedOnce = true;
       state.reconnectAttempt = 0;
       state.lastActivityAt = Date.now();
       startHeartbeat(state, socket);
-      emit({
-        type: 'realtime.connected',
-        connectionId: state.connection.id,
-        conversationRef: null,
-      });
+      emit(emptyEvent(state, recovered ? 'realtime.recovered' : 'realtime.connected'));
     });
     socket.addEventListener('message', (event) => {
       if (state.socket !== socket) return;
       state.lastActivityAt = Date.now();
       try {
-        const parsed = parseEvent(
-          state.connection.id,
-          JSON.parse(String(event.data)) as unknown,
-        );
+        const parsed = parseEvent(state, JSON.parse(String(event.data)) as unknown);
         if (parsed) emit(parsed);
       } catch {
-        // Ignore malformed realtime frames; REST remains the recovery source.
+        // Invalid frames are ignored; a reconnect is the REST recovery boundary.
       }
     });
     socket.addEventListener('close', () => {
@@ -130,9 +264,7 @@ function openSocket(state: SocketState) {
       state.socket = null;
       scheduleReconnect(state);
     });
-    socket.addEventListener('error', () => {
-      socket.close();
-    });
+    socket.addEventListener('error', () => socket.close());
   } catch {
     state.socket = null;
     scheduleReconnect(state);
@@ -169,6 +301,7 @@ async function startSockets() {
       heartbeatTimer: null,
       reconnectAttempt: 0,
       lastActivityAt: 0,
+      openedOnce: false,
       stopped: false,
     };
     sockets.set(connection.id, state);
@@ -235,7 +368,7 @@ function recoverSockets() {
       try {
         socket.close();
       } catch {
-        // Reopening below is the recovery path.
+        // Reopening below performs recovery.
       }
       openSocket(state);
     }

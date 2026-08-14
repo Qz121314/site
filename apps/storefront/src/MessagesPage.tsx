@@ -89,6 +89,22 @@ function combineConversationPages(
   };
 }
 
+function conversationSummary(
+  conversation: SupportConversationDetail,
+): SupportConversationSummary {
+  return {
+    id: conversation.id,
+    agentName: conversation.agentName,
+    agentAvatarUrl: conversation.agentAvatarUrl,
+    productTitle: conversation.productTitle,
+    productCoverUrl: conversation.productCoverUrl,
+    lastMessage: conversation.lastMessage,
+    lastMessageAt: conversation.lastMessageAt,
+    unreadCount: conversation.unreadCount,
+    status: conversation.status,
+  };
+}
+
 function updateConversationCache(
   queryClient: QueryClient,
   conversationRef: string,
@@ -209,8 +225,9 @@ export function MessagesPage({
     queryKey: ['support-conversations'],
     queryFn: ({ signal }) => siteSupportGateway.listConversations(signal),
     enabled: supportAvailable === true,
-    staleTime: 5_000,
+    staleTime: Number.POSITIVE_INFINITY,
     retry: 1,
+    refetchOnWindowFocus: false,
   });
   const conversationQuery = useInfiniteQuery({
     queryKey: ['support-conversation', activeConversationRef],
@@ -221,7 +238,9 @@ export function MessagesPage({
       return siteSupportGateway.getConversation(activeConversationRef, pageParam, signal);
     },
     getNextPageParam: (page) => page?.nextMessageCursor ?? undefined,
+    staleTime: Number.POSITIVE_INFINITY,
     retry: 1,
+    refetchOnWindowFocus: false,
   });
   const composeContext = compose ? readComposeContext() : null;
   const composeProductQuery = useQuery({
@@ -370,7 +389,20 @@ export function MessagesPage({
     onSuccess: (result, variables, context) => {
       if (result.kind === 'conversation') {
         setComposeOptimisticMessage(null);
-        void queryClient.invalidateQueries({ queryKey: ['support-conversations'] });
+        queryClient.setQueryData<SupportConversationSummary[]>(
+          ['support-conversations'],
+          (current) => {
+            const summary = conversationSummary(result.conversation);
+            const withoutCurrent = (current ?? []).filter(
+              (item) => item.id !== summary.id,
+            );
+            return [summary, ...withoutCurrent];
+          },
+        );
+        queryClient.setQueryData<ConversationQueryCache>(
+          ['support-conversation', result.conversation.id],
+          { pages: [result.conversation], pageParams: [null] },
+        );
         window.history.pushState(
           null,
           '',
@@ -386,7 +418,12 @@ export function MessagesPage({
           context.optimisticId,
           result.message,
         );
-        void queryClient.invalidateQueries({ queryKey: ['support-conversations'] });
+        updateConversationPreview(
+          queryClient,
+          variables.conversationRef,
+          result.message.body,
+          result.message.sentAt,
+        );
       }
     },
     onError: (_error, variables, context) => {
@@ -410,7 +447,7 @@ export function MessagesPage({
     mutationFn: async ({ file, conversationRef }: ImageMutationVariables) => {
       const image = await prepareSupportImage(file);
       try {
-        await siteSupportGateway.sendImage(
+        return await siteSupportGateway.sendImage(
           conversationRef,
           {
             blob: image.blob,
@@ -426,19 +463,19 @@ export function MessagesPage({
         releaseSupportImage(image);
       }
     },
-    onSuccess: (_result, variables) => {
-      void Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['support-conversations'] }),
-        queryClient.invalidateQueries({
-          queryKey: ['support-conversation', variables.conversationRef],
-        }),
-      ]).finally(() => {
-        setImagePreviewUrl((current) =>
-          current === variables.previewUrl ? null : current,
-        );
-        setImageProgress(null);
-        URL.revokeObjectURL(variables.previewUrl);
-      });
+    onSuccess: (message, variables) => {
+      upsertOptimisticMessage(queryClient, variables.conversationRef, message);
+      updateConversationPreview(
+        queryClient,
+        variables.conversationRef,
+        message.body,
+        message.sentAt,
+      );
+      setImagePreviewUrl((current) =>
+        current === variables.previewUrl ? null : current,
+      );
+      setImageProgress(null);
+      URL.revokeObjectURL(variables.previewUrl);
     },
     onError: () => {
       setImageProgress(null);
@@ -458,13 +495,25 @@ export function MessagesPage({
         .find((message) => message.direction === 'agent')?.id ?? null;
     void siteSupportGateway
       .markConversationRead(activeConversationRef, lastAgentMessage)
-      .then(async () => {
-        await Promise.all([
-          queryClient.invalidateQueries({ queryKey: ['support-conversations'] }),
-          queryClient.invalidateQueries({
-            queryKey: ['support-conversation', activeConversationRef],
-          }),
-        ]);
+      .then(() => {
+        queryClient.setQueryData<SupportConversationSummary[]>(
+          ['support-conversations'],
+          (current) =>
+            current?.map((conversation) =>
+              conversation.id === activeConversationRef
+                ? { ...conversation, unreadCount: 0 }
+                : conversation,
+            ) ?? current,
+        );
+        updateConversationCache(queryClient, activeConversationRef, (conversation) => ({
+          ...conversation,
+          unreadCount: 0,
+          messages: conversation.messages.map((message) =>
+            message.direction === 'agent' && message.delivery === 'sent'
+              ? { ...message, delivery: 'read' }
+              : message,
+          ),
+        }));
       })
       .catch(() => undefined);
   }, [activeConversationRef, activeConversation, queryClient]);

@@ -90,7 +90,7 @@ export interface SupportGateway {
     input: SendSupportImageInput,
     onProgress?: (progress: number) => void,
     signal?: AbortSignal,
-  ): Promise<void>;
+  ): Promise<SupportMessage>;
   markConversationRead(
     conversationRef: string,
     lastMessageId?: string | null,
