@@ -1,10 +1,11 @@
-name: Apply chat media gateway
+name: Apply chat image UI
 
 on:
   push:
     branches: [feat/chat-media]
     paths:
-      - scripts/patch-storefront-media-gateway.mjs
+      - scripts/patch-messages-image-ui.mjs
+      - scripts/patch-support-ui-media.mjs
       - .github/workflows/apply-chat-media.yml
 
 permissions:
@@ -22,11 +23,12 @@ jobs:
           node-version: 22
       - run: npm install --global pnpm@11.19.0
       - run: pnpm install --frozen-lockfile
-      - run: node scripts/patch-storefront-media-gateway.mjs
-      - run: pnpm exec prettier --write apps/storefront/src/support-gateway.ts
+      - run: node scripts/patch-messages-image-ui.mjs
+      - run: node scripts/patch-support-ui-media.mjs
+      - run: pnpm exec prettier --write apps/storefront/src/MessagesPage.tsx apps/storefront/src/support-ui.tsx
       - run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add apps/storefront/src/support-gateway.ts
-          git commit -m "接入访客图片媒体网关"
+          git add apps/storefront/src/MessagesPage.tsx apps/storefront/src/support-ui.tsx
+          git commit -m "接入访客图片聊天UI"
           git push origin HEAD:feat/chat-media
