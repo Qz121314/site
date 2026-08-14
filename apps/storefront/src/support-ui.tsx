@@ -265,6 +265,11 @@ export function MessageThreadPageContent({
   onSendMessage,
   sending = false,
   sendError = null,
+  onSendImage,
+  imageSending = false,
+  imageProgress = null,
+  imagePreviewUrl = null,
+  imageError = null,
   onLoadEarlier,
   loadingEarlier = false,
   loadingConversation = false,
@@ -275,6 +280,11 @@ export function MessageThreadPageContent({
   onSendMessage?: ((body: string) => Promise<void>) | undefined;
   sending?: boolean;
   sendError?: string | null;
+  onSendImage?: ((file: File) => Promise<void>) | undefined;
+  imageSending?: boolean;
+  imageProgress?: number | null;
+  imagePreviewUrl?: string | null;
+  imageError?: string | null;
   onLoadEarlier?: (() => Promise<void>) | undefined;
   loadingEarlier?: boolean;
   loadingConversation?: boolean;
@@ -354,6 +364,8 @@ export function MessageThreadPageContent({
   const canSend =
     Boolean(onSendMessage) &&
     (pendingConversation !== null || conversation?.status !== 'closed');
+  const canSendImage =
+    Boolean(onSendImage) && Boolean(conversation) && conversation?.status !== 'closed';
   const headerTitle = conversation
     ? conversationTitle(conversation)
     : (pendingConversation?.productTitle ?? '');
@@ -429,7 +441,29 @@ export function MessageThreadPageContent({
                 className={`chat-message-row is-${message.direction}${groupStart ? ' is-group-start' : ''}${groupEnd ? ' is-group-end' : ''}`}
               >
                 <div className="chat-message-bubble">
-                  <p>{message.body}</p>
+                  {message.attachments.length > 0 ? (
+                    <div className="chat-message-media">
+                      {message.attachments.map((attachment) => (
+                        <a
+                          className="chat-message-image-link"
+                          href={attachment.url}
+                          target="_blank"
+                          rel="noreferrer"
+                          key={attachment.id}
+                        >
+                          <img
+                            className="chat-message-image"
+                            src={attachment.url}
+                            alt={attachment.originalName || 'Chat image'}
+                            loading="lazy"
+                          />
+                        </a>
+                      ))}
+                    </div>
+                  ) : null}
+                  {message.body && message.attachments.length === 0 ? (
+                    <p>{message.body}</p>
+                  ) : null}
                   <span className="chat-message-meta">
                     <time dateTime={message.sentAt}>
                       {formatChatClock(message.sentAt)}
@@ -445,18 +479,40 @@ export function MessageThreadPageContent({
         })}
       </div>
 
-      {sendError ? (
+      {sendError || imageError ? (
         <p className="inline-error chat-send-error" role="alert">
-          {sendError}
+          {imageError || sendError}
         </p>
+      ) : null}
+      {imagePreviewUrl ? (
+        <div className="chat-image-upload-preview" aria-live="polite">
+          <img src={imagePreviewUrl} alt="Uploading" />
+          <span>Uploading image {Math.round((imageProgress ?? 0) * 100)}%</span>
+        </div>
       ) : null}
       <form
         className={`chat-composer${canSend ? '' : ' is-disabled'}`}
         onSubmit={(event) => void submit(event)}
       >
-        <button type="button" disabled aria-label={SYSTEM_UI.attachment}>
-          ＋
-        </button>
+        {canSendImage ? (
+          <label className="chat-attachment-picker" aria-label={SYSTEM_UI.attachment}>
+            ＋
+            <input
+              type="file"
+              accept="image/jpeg,image/png,image/webp,image/gif"
+              disabled={imageSending}
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+                event.currentTarget.value = '';
+                if (file && onSendImage) void onSendImage(file);
+              }}
+            />
+          </label>
+        ) : (
+          <button type="button" disabled aria-label={SYSTEM_UI.attachment}>
+            ＋
+          </button>
+        )}
         <textarea
           rows={1}
           aria-label={SYSTEM_UI.message}
@@ -506,6 +562,11 @@ export function MessagesWorkspace({
   onSendMessage,
   sending = false,
   sendError = null,
+  onSendImage,
+  imageSending = false,
+  imageProgress = null,
+  imagePreviewUrl = null,
+  imageError = null,
   onLoadEarlier,
   loadingEarlier = false,
   loadingConversation = false,
@@ -519,6 +580,11 @@ export function MessagesWorkspace({
   onSendMessage?: ((body: string) => Promise<void>) | undefined;
   sending?: boolean;
   sendError?: string | null;
+  onSendImage?: ((file: File) => Promise<void>) | undefined;
+  imageSending?: boolean;
+  imageProgress?: number | null;
+  imagePreviewUrl?: string | null;
+  imageError?: string | null;
   onLoadEarlier?: (() => Promise<void>) | undefined;
   loadingEarlier?: boolean;
   loadingConversation?: boolean;
@@ -544,6 +610,11 @@ export function MessagesWorkspace({
             onSendMessage={onSendMessage}
             sending={sending}
             sendError={sendError}
+            onSendImage={onSendImage}
+            imageSending={imageSending}
+            imageProgress={imageProgress}
+            imagePreviewUrl={imagePreviewUrl}
+            imageError={imageError}
             onLoadEarlier={onLoadEarlier}
             loadingEarlier={loadingEarlier}
             loadingConversation={loadingConversation}

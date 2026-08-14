@@ -5,14 +5,16 @@ import {
   useQueryClient,
 } from '@tanstack/react-query';
 import type { StorefrontLinkComponent } from '@site/storefront-ui';
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { loadProductSnapshot, type StorefrontBootstrap } from './content';
 import type { SupportConversationDetail, SupportMessage } from './support-contract';
 import { loadPublicSupportConnections, siteSupportGateway } from './support-gateway';
 import { subscribeSupportRealtime } from './support-realtime';
+import { prepareSupportImage, releaseSupportImage } from './support-image-compress';
 import { MessagesWorkspace, type PendingSupportConversation } from './support-ui';
 import { SYSTEM_UI } from './system-ui';
 import './messages-ui.css';
+import './messages-media.css';
 
 const NAVIGATION_EVENT = 'storefront:navigate';
 
@@ -67,6 +69,8 @@ export function MessagesPage({
   onUnreadMessagesChange: (count: number) => void;
 }) {
   const queryClient = useQueryClient();
+  const [imageProgress, setImageProgress] = useState<number | null>(null);
+  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
   const supportConnectionsQuery = useQuery({
     queryKey: ['support-connections'],
     queryFn: ({ signal }) => loadPublicSupportConnections(signal),
@@ -191,6 +195,41 @@ export function MessagesPage({
     },
   });
 
+  const imageMutation = useMutation({
+    mutationFn: async (file: File) => {
+      if (!activeConversationRef) throw new Error('IMAGE_CONTEXT_UNAVAILABLE');
+      const image = await prepareSupportImage(file);
+      setImagePreviewUrl(image.previewUrl);
+      setImageProgress(0);
+      try {
+        await siteSupportGateway.sendImage(
+          activeConversationRef,
+          {
+            blob: image.blob,
+            mimeType: image.mimeType,
+            byteSize: image.byteSize,
+            width: image.width,
+            height: image.height,
+            originalName: image.originalName,
+          },
+          setImageProgress,
+        );
+      } finally {
+        releaseSupportImage(image);
+        setImagePreviewUrl(null);
+        setImageProgress(null);
+      }
+    },
+    onSuccess: async () => {
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['support-conversations'] }),
+        queryClient.invalidateQueries({
+          queryKey: ['support-conversation', activeConversationRef],
+        }),
+      ]);
+    },
+  });
+
   useEffect(() => {
     if (
       !activeConversationRef ||
@@ -233,6 +272,17 @@ export function MessagesPage({
       }
       sending={sendMutation.isPending}
       sendError={sendMutation.error ? SYSTEM_UI.messageFailed : null}
+      onSendImage={
+        supportAvailable && activeConversationRef
+          ? async (file) => {
+              await imageMutation.mutateAsync(file);
+            }
+          : undefined
+      }
+      imageSending={imageMutation.isPending}
+      imageProgress={imageProgress}
+      imagePreviewUrl={imagePreviewUrl}
+      imageError={imageMutation.error ? SYSTEM_UI.messageFailed : null}
       onLoadEarlier={
         activeConversation?.nextMessageCursor
           ? async () => {
