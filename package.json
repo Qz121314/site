@@ -10,9 +10,13 @@
   },
   "scripts": {
     "dev": "pnpm --parallel --filter @site/storefront --filter @site/admin --filter @site/worker run dev",
+    "prepare": "node scripts/setup-git-hooks.mjs",
     "build": "pnpm cf:types && pnpm run build:apps && node scripts/assemble-assets.mjs",
     "build:apps": "pnpm --filter @site/storefront build && pnpm --filter @site/admin build && pnpm --filter @site/worker build",
+    "preflight": "pnpm format && pnpm lint && pnpm typecheck",
+    "verify": "pnpm preflight && pnpm db:migrate:local && pnpm test && pnpm build && pnpm cf:check",
     "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "typecheck": "pnpm cf:types && pnpm -r --if-present typecheck",
     "test": "pnpm -r --if-present test",
     "test:e2e": "playwright test",
