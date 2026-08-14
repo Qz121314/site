@@ -4,9 +4,26 @@ const CHAT_INPUT_SELECTOR = '.chat-composer textarea';
 const CHAT_TIMELINE_SELECTOR = '.chat-timeline';
 const NAVIGATION_EVENT = 'storefront:navigate';
 
+type MobileChatVisualViewport = Pick<VisualViewport, 'height' | 'offsetTop'>;
+
+export type MobileChatViewportMetrics = {
+  height: number;
+  offsetTop: number;
+};
+
 let installed = false;
 let activeChatInput: HTMLTextAreaElement | null = null;
 let settleTimerIds: number[] = [];
+
+export function resolveMobileChatViewportMetrics(
+  visualViewport: MobileChatVisualViewport | null | undefined,
+  fallbackHeight: number,
+): MobileChatViewportMetrics {
+  return {
+    height: Math.round(visualViewport?.height ?? fallbackHeight),
+    offsetTop: Math.max(0, Math.round(visualViewport?.offsetTop ?? 0)),
+  };
+}
 
 function isChatInput(target: EventTarget | null): target is HTMLTextAreaElement {
   return target instanceof HTMLTextAreaElement && target.matches(CHAT_INPUT_SELECTOR);
@@ -28,10 +45,14 @@ function setMobileChatViewportHeight(page: HTMLElement) {
       element?.style.removeProperty('height');
       element?.style.removeProperty('min-height');
     }
+    workspace?.style.removeProperty('transform');
     return;
   }
 
-  const viewportHeight = Math.round(window.visualViewport?.height ?? window.innerHeight);
+  const { height: viewportHeight, offsetTop } = resolveMobileChatViewportMetrics(
+    window.visualViewport,
+    window.innerHeight,
+  );
   if (viewportHeight <= 0) return;
   const height = `${viewportHeight}px`;
 
@@ -39,6 +60,14 @@ function setMobileChatViewportHeight(page: HTMLElement) {
     if (!element) continue;
     element.style.height = height;
     element.style.minHeight = height;
+  }
+
+  if (workspace) {
+    if (offsetTop > 0) {
+      workspace.style.transform = `translate3d(0, ${offsetTop}px, 0)`;
+    } else {
+      workspace.style.removeProperty('transform');
+    }
   }
 }
 
