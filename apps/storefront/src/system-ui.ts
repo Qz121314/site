@@ -3,6 +3,8 @@ export const SYSTEM_UI = {
   all: 'All',
   attachment: 'Attachment',
   back: 'Back',
+  chatDeletesIn: 'Chat deletes in',
+  chatExpired: 'Chat expired',
   clear: 'Clear',
   continue: 'Continue',
   dismiss: 'Dismiss',

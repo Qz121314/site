@@ -257,6 +257,40 @@ function ProductContextCard({
   );
 }
 
+function ConversationExpiryNotice({
+  expiresAt,
+  now,
+}: {
+  expiresAt: string;
+  now: number;
+}) {
+  const timestamp = Date.parse(expiresAt);
+  if (!Number.isFinite(timestamp)) return null;
+  const remaining = Math.max(0, timestamp - now);
+  const totalSeconds = Math.ceil(remaining / 1000);
+  const hours = Math.floor(totalSeconds / 3600);
+  const minutes = Math.floor((totalSeconds % 3600) / 60);
+  const seconds = totalSeconds % 60;
+  const clock = [hours, minutes, seconds]
+    .map((value) => String(value).padStart(2, '0'))
+    .join(':');
+  const urgency =
+    remaining <= 5 * 60 * 1000
+      ? ' is-urgent'
+      : remaining <= 60 * 60 * 1000
+        ? ' is-warning'
+        : '';
+
+  return (
+    <div className={`chat-expiry-notice${urgency}`} aria-live="off">
+      <span aria-hidden="true">◷</span>
+      <strong>
+        {remaining > 0 ? `${SYSTEM_UI.chatDeletesIn} ${clock}` : SYSTEM_UI.chatExpired}
+      </strong>
+    </div>
+  );
+}
+
 function DeliveryMark({
   delivery,
   onRetry,
@@ -333,6 +367,7 @@ export function MessageThreadPageContent({
   loadingConversation?: boolean;
 }) {
   const [draft, setDraft] = useState('');
+  const [expiryNow, setExpiryNow] = useState(() => Date.now());
   const timelineRef = useRef<HTMLDivElement | null>(null);
   const openedConversationRef = useRef<string | null>(null);
   const lastMessageId = conversation?.messages.at(-1)?.id ?? null;
@@ -340,6 +375,13 @@ export function MessageThreadPageContent({
   useEffect(() => {
     setDraft('');
   }, [conversation?.id, pendingConversation?.productHref]);
+
+  useEffect(() => {
+    if (!conversation?.expiresAt) return;
+    setExpiryNow(Date.now());
+    const timer = window.setInterval(() => setExpiryNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, [conversation?.expiresAt]);
 
   useLayoutEffect(() => {
     const timeline = timelineRef.current;
@@ -357,7 +399,7 @@ export function MessageThreadPageContent({
     scroll();
     const frame = window.requestAnimationFrame(scroll);
     return () => window.cancelAnimationFrame(frame);
-  }, [conversation?.id, lastMessageId]);
+  }, [conversation?.id, imagePreviewUrl, lastMessageId]);
 
   if (loadingConversation) {
     return (
@@ -414,11 +456,19 @@ export function MessageThreadPageContent({
     productCoverUrl: conversation?.productCoverUrl ?? null,
     productHref: conversation?.productHref ?? null,
   };
+  const expiresAt = conversation?.expiresAt
+    ? Date.parse(conversation.expiresAt)
+    : Number.NaN;
+  const conversationExpired = Number.isFinite(expiresAt) && expiresAt <= expiryNow;
   const canSend =
     Boolean(onSendMessage) &&
+    !conversationExpired &&
     (pendingConversation !== null || conversation?.status !== 'closed');
   const canSendImage =
-    Boolean(onSendImage) && Boolean(conversation) && conversation?.status !== 'closed';
+    Boolean(onSendImage) &&
+    Boolean(conversation) &&
+    !conversationExpired &&
+    conversation?.status !== 'closed';
   const headerTitle = conversation
     ? conversationTitle(conversation)
     : (pendingConversation?.productTitle ?? '');
@@ -462,6 +512,10 @@ export function MessageThreadPageContent({
           </span>
         ) : null}
       </header>
+
+      {conversation && conversation.id !== '__new__' ? (
+        <ConversationExpiryNotice expiresAt={conversation.expiresAt} now={expiryNow} />
+      ) : null}
 
       <ProductContextCard context={productContext} LinkComponent={LinkComponent} />
 
@@ -541,42 +595,50 @@ export function MessageThreadPageContent({
             </Fragment>
           );
         })}
+        {imagePreviewUrl ? (
+          <div
+            className={`chat-message-row is-customer is-group-start is-group-end is-local-image${
+              imageFailed ? ' is-failed' : ''
+            }`}
+          >
+            <div className="chat-message-bubble chat-image-upload-preview">
+              <div className="chat-image-upload-media">
+                <img src={imagePreviewUrl} alt="Uploading" />
+                <button
+                  type="button"
+                  className="chat-image-upload-status"
+                  aria-label={imageFailed ? SYSTEM_UI.retry : SYSTEM_UI.sending}
+                  title={imageFailed ? SYSTEM_UI.retry : SYSTEM_UI.sending}
+                  disabled={!imageFailed || !onRetryImage}
+                  onClick={() => void onRetryImage?.().catch(() => undefined)}
+                >
+                  {imageFailed ? (
+                    <span className="chat-upload-failed-mark" aria-hidden="true">
+                      !
+                    </span>
+                  ) : (
+                    <span
+                      className="chat-upload-ring"
+                      style={uploadRingStyle}
+                      aria-hidden="true"
+                    >
+                      <span>{uploadPercent}</span>
+                    </span>
+                  )}
+                </button>
+              </div>
+              <span className="chat-message-meta">
+                <span>{imageFailed ? SYSTEM_UI.messageFailed : SYSTEM_UI.sending}</span>
+              </span>
+            </div>
+          </div>
+        ) : null}
       </div>
 
       {sendError || imageError ? (
         <p className="inline-error chat-send-error" role="alert">
           {imageError || sendError}
         </p>
-      ) : null}
-      {imagePreviewUrl ? (
-        <div
-          className={`chat-image-upload-preview${imageFailed ? ' is-failed' : ''}`}
-          aria-live="polite"
-        >
-          <img src={imagePreviewUrl} alt="Uploading" />
-          <button
-            type="button"
-            className="chat-image-upload-status"
-            aria-label={imageFailed ? SYSTEM_UI.retry : SYSTEM_UI.sending}
-            title={imageFailed ? SYSTEM_UI.retry : SYSTEM_UI.sending}
-            disabled={!imageFailed || !onRetryImage}
-            onClick={() => void onRetryImage?.().catch(() => undefined)}
-          >
-            {imageFailed ? (
-              <span className="chat-upload-failed-mark" aria-hidden="true">
-                !
-              </span>
-            ) : (
-              <span
-                className="chat-upload-ring"
-                style={uploadRingStyle}
-                aria-hidden="true"
-              >
-                <span>{uploadPercent}</span>
-              </span>
-            )}
-          </button>
-        </div>
       ) : null}
       <form
         className={`chat-composer${canSend ? '' : ' is-disabled'}`}

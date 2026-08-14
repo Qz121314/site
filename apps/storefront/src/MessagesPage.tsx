@@ -270,7 +270,9 @@ export function MessagesPage({
           unreadCount: 0,
           status: 'waiting',
           createdAt: composeOptimisticMessage.sentAt,
-          expiresAt: composeOptimisticMessage.sentAt,
+          expiresAt: new Date(
+            Date.parse(composeOptimisticMessage.sentAt) + 86_400_000,
+          ).toISOString(),
           messages: [composeOptimisticMessage],
           nextMessageCursor: null,
         }
@@ -459,6 +461,32 @@ export function MessagesPage({
       })
       .catch(() => undefined);
   }, [activeConversationRef, activeConversation, queryClient]);
+
+  useEffect(() => {
+    if (!activeConversationRef || !activeConversation?.expiresAt) return;
+    const expiresAt = Date.parse(activeConversation.expiresAt);
+    if (!Number.isFinite(expiresAt)) return;
+
+    const expire = () => {
+      void Promise.all([
+        queryClient.invalidateQueries({ queryKey: ['support-conversations'] }),
+        queryClient.invalidateQueries({
+          queryKey: ['support-conversation', activeConversationRef],
+        }),
+      ]).finally(() => {
+        window.history.replaceState(null, '', '/messages/');
+        window.dispatchEvent(new Event(NAVIGATION_EVENT));
+      });
+    };
+
+    const remaining = expiresAt - Date.now();
+    if (remaining <= 0) {
+      expire();
+      return;
+    }
+    const timer = window.setTimeout(expire, remaining + 100);
+    return () => window.clearTimeout(timer);
+  }, [activeConversation?.expiresAt, activeConversationRef, queryClient]);
 
   const showNotificationToggle =
     Boolean(activeConversationRef) && notificationState !== 'unsupported';
