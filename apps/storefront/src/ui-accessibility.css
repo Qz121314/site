@@ -9,3 +9,11 @@
   white-space: nowrap !important;
   border: 0 !important;
 }
+
+@media (max-width: 767px) {
+  .app-shell input,
+  .app-shell select,
+  .app-shell textarea {
+    font-size: 1rem;
+  }
+}
