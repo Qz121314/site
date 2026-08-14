@@ -1,0 +1,13 @@
+/* Mobile fixed-surface invariants shared by route-specific lazy styles. */
+
+.app-shell .product-detail-page {
+  padding-bottom: calc(
+    var(--theme-detail-cta-height, 50px) + 32px + env(safe-area-inset-bottom)
+  );
+}
+
+@media (max-width: 767px) {
+  .app-shell .product-detail-navigation {
+    top: calc(64px + env(safe-area-inset-top));
+  }
+}
