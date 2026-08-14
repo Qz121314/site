@@ -1,4 +1,5 @@
 import type {
+  SendSupportImageInput,
   SendSupportMessageInput,
   StartSupportConversationInput,
   SupportConversationDetail,
@@ -7,6 +8,7 @@ import type {
   SupportMessage,
 } from './support-contract';
 import { getSupportVisitorIdentity } from './support-identity';
+import { loadConversationMedia, sendConversationImage } from './support-media-gateway';
 
 export class SupportApiError extends Error {
   readonly status: number;
@@ -261,7 +263,7 @@ function parseMessage(value: unknown): SupportMessage {
       'Messages returned invalid message data.',
     );
   }
-  return item as SupportMessage;
+  return { ...(item as Omit<SupportMessage, 'attachments'>), attachments: [] };
 }
 
 function parseRemoteSummary(value: unknown): RemoteConversationSummary {
@@ -374,6 +376,19 @@ function conversationEnvelope(
   return normalizeDetail(connection, parseRemoteDetail(envelope.conversation));
 }
 
+function attachConversationMedia(
+  conversation: SupportConversationDetail,
+  media: Map<string, SupportMessage['attachments']>,
+): SupportConversationDetail {
+  return {
+    ...conversation,
+    messages: conversation.messages.map((message) => ({
+      ...message,
+      attachments: media.get(message.id) ?? [],
+    })),
+  };
+}
+
 async function connectionForConversationRef(
   conversationRef: string,
   signal?: AbortSignal,
@@ -462,9 +477,8 @@ export const siteSupportGateway: SupportGateway = {
       signal,
     );
     try {
-      return conversationEnvelope(
-        connection,
-        await remoteRequestJson(
+      const [value, media] = await Promise.all([
+        remoteRequestJson(
           clientQueryUrl(
             connection,
             `/conversations/${encodeURIComponent(remoteConversationId)}`,
@@ -473,7 +487,9 @@ export const siteSupportGateway: SupportGateway = {
           undefined,
           signal,
         ),
-      );
+        loadConversationMedia(connection, remoteConversationId, signal),
+      ]);
+      return attachConversationMedia(conversationEnvelope(connection, value), media);
     } catch (error) {
       if (error instanceof SupportApiError && error.status === 404) return null;
       throw error;
@@ -529,6 +545,25 @@ export const siteSupportGateway: SupportGateway = {
     );
     const envelope = isRecord(value) ? value : null;
     return parseMessage(envelope?.message);
+  },
+
+  async sendImage(
+    conversationRef: string,
+    input: SendSupportImageInput,
+    onProgress,
+    signal,
+  ) {
+    const { connection, remoteConversationId } = await connectionForConversationRef(
+      conversationRef,
+      signal,
+    );
+    await sendConversationImage(
+      connection,
+      remoteConversationId,
+      input,
+      onProgress,
+      signal,
+    );
   },
 
   async markConversationRead(conversationRef, lastMessageId = null, signal) {
