@@ -45,6 +45,7 @@ test('messages page stays healthy against production support without creating co
   if (!support.connections?.length) {
     await expect(page.getByText('No support available')).toBeVisible();
     expect(pageErrors).toEqual([]);
+    console.log('MESSAGES_PAGE_ACCEPTANCE=passed:no-support-configured');
     return;
   }
 
@@ -59,6 +60,7 @@ test('messages page stays healthy against production support without creating co
   }
 
   expect(pageErrors).toEqual([]);
+  console.log('MESSAGES_PAGE_ACCEPTANCE=passed');
 });
 
 test('a published customer-service CTA reaches the product-scoped Messages composer', async ({
@@ -87,7 +89,7 @@ test('a published customer-service CTA reaches the product-scoped Messages compo
     .locator('a[href^="/sections/"]:not([href*="/products/"])')
     .evaluateAll((links) => {
       const hrefs = links.map((link) => link.getAttribute('href')).filter(Boolean);
-      return [...new Set(hrefs)].slice(0, 3);
+      return [...new Set(hrefs)];
     });
 
   let customerServiceCtaFound = false;
@@ -99,7 +101,7 @@ test('a published customer-service CTA reaches the product-scoped Messages compo
       .locator('a.section-product-card[href*="/products/"]')
       .evaluateAll((links) => {
         const hrefs = links.map((link) => link.getAttribute('href')).filter(Boolean);
-        return [...new Set(hrefs)].slice(0, 4);
+        return [...new Set(hrefs)];
       });
 
     for (const productHref of productHrefs) {
@@ -152,6 +154,7 @@ test('a published customer-service CTA reaches the product-scoped Messages compo
       }
 
       customerServiceCtaFound = true;
+      console.log('MESSAGES_CUSTOMER_SERVICE_CTA_ACCEPTANCE=passed');
       break;
     }
 
