@@ -12,6 +12,10 @@ source = source.replace(
   "import { subscribeSupportRealtime } from './support-realtime';\nimport { prepareSupportImage, releaseSupportImage } from './support-image-compress';\n",
 );
 source = source.replace(
+  "import './messages-ui.css';\n",
+  "import './messages-ui.css';\nimport './messages-media.css';\n",
+);
+source = source.replace(
   '  const queryClient = useQueryClient();\n',
   "  const queryClient = useQueryClient();\n  const [imageProgress, setImageProgress] = useState<number | null>(null);\n  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);\n",
 );
