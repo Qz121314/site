@@ -40,7 +40,8 @@ export async function prepareSupportImage(file: File): Promise<PreparedSupportIm
       blob = await encodeWebp(bitmap, width, height, 0.58);
       shrinkCount += 1;
     }
-    if (blob.size > MAX_STATIC_BYTES) throw new Error('Image is still too large after compression.');
+    if (blob.size > MAX_STATIC_BYTES)
+      throw new Error('Image is still too large after compression.');
     return {
       blob,
       mimeType: 'image/webp',

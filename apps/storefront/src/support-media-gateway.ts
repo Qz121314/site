@@ -1,12 +1,6 @@
-import type {
-  SendSupportImageInput,
-  SupportImageAttachment,
-} from './support-contract';
+import type { SendSupportImageInput, SupportImageAttachment } from './support-contract';
 import { getSupportVisitorIdentity } from './support-identity';
-import {
-  uploadSupportImage,
-  type SupportUploadTarget,
-} from './support-image-upload';
+import { uploadSupportImage, type SupportUploadTarget } from './support-image-upload';
 
 export type SupportMediaConnection = {
   clientApiUrl: string;
@@ -48,7 +42,10 @@ export async function loadConversationMedia(
   const result = new Map<string, SupportImageAttachment[]>();
   for (const item of payload.items ?? []) {
     if (!validMedia(item)) continue;
-    const contentUrl = remoteUrl(connection, `/media/${encodeURIComponent(item.id)}/content`);
+    const contentUrl = remoteUrl(
+      connection,
+      `/media/${encodeURIComponent(item.id)}/content`,
+    );
     contentUrl.searchParams.set('visitorId', identity.visitorId);
     const attachment: SupportImageAttachment = {
       id: item.id,
@@ -93,10 +90,14 @@ export async function sendConversationImage(
     },
     signal,
   );
-  if (!init?.media?.id || !init.upload?.url) throw new Error('Invalid media upload response.');
+  if (!init?.media?.id || !init.upload?.url)
+    throw new Error('Invalid media upload response.');
   await uploadSupportImage(init.upload, input, onProgress);
   await requestJson(
-    remoteUrl(connection, `/media/${encodeURIComponent(init.media.id)}/complete`).toString(),
+    remoteUrl(
+      connection,
+      `/media/${encodeURIComponent(init.media.id)}/complete`,
+    ).toString(),
     {
       method: 'POST',
       body: JSON.stringify({ visitorId: identity.visitorId }),
