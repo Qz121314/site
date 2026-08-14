@@ -44,7 +44,9 @@ test('mobile product detail fixed surfaces stay clear of navigation and viewport
     const navigation = document.querySelector<HTMLElement>(
       '.product-detail-navigation',
     );
-    const productPage = document.querySelector<HTMLElement>('.product-detail-page');
+    const productPage = document.querySelector<HTMLElement>(
+      '.product-detail-page',
+    );
     const fixedAction = document.querySelector<HTMLElement>(
       '.product-detail-fixed-action',
     );
@@ -74,7 +76,9 @@ test('mobile product detail fixed surfaces stay clear of navigation and viewport
     geometry.topbarBottom - 1,
   );
   expect(geometry.fixedActionTop).toBeGreaterThan(0);
-  expect(geometry.fixedActionBottom).toBeLessThanOrEqual(geometry.viewportHeight + 1);
+  expect(geometry.fixedActionBottom).toBeLessThanOrEqual(
+    geometry.viewportHeight + 1,
+  );
   expect(geometry.ctaHeight).toBeGreaterThanOrEqual(50);
   expect(geometry.pagePaddingBottom).toBeGreaterThanOrEqual(
     geometry.fixedActionHeight + 8,
