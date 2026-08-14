@@ -22,7 +22,6 @@ import {
   type SupportPushState,
 } from './support-push';
 import { MessagesWorkspace, type PendingSupportConversation } from './support-ui';
-import { SYSTEM_UI } from './system-ui';
 import './messages-ui.css';
 import './messages-media.css';
 
@@ -42,6 +41,7 @@ type SendMessageVariables = {
 type ImageMutationVariables = {
   file: File;
   previewUrl: string;
+  conversationRef: string;
 };
 
 function readComposeContext(): ComposeContext | null {
@@ -108,17 +108,22 @@ function updateConversationCache(
   );
 }
 
-function appendOptimisticMessage(
+function upsertOptimisticMessage(
   queryClient: QueryClient,
   conversationRef: string,
   message: SupportMessage,
 ) {
-  updateConversationCache(queryClient, conversationRef, (conversation) => ({
-    ...conversation,
-    lastMessage: message.body,
-    lastMessageAt: message.sentAt,
-    messages: [...conversation.messages, message],
-  }));
+  updateConversationCache(queryClient, conversationRef, (conversation) => {
+    const exists = conversation.messages.some((item) => item.id === message.id);
+    return {
+      ...conversation,
+      lastMessage: message.body,
+      lastMessageAt: message.sentAt,
+      messages: exists
+        ? conversation.messages.map((item) => (item.id === message.id ? message : item))
+        : [...conversation.messages, message],
+    };
+  });
 }
 
 function replaceOptimisticMessage(
@@ -137,14 +142,17 @@ function replaceOptimisticMessage(
   }));
 }
 
-function removeOptimisticMessage(
+function updateOptimisticDelivery(
   queryClient: QueryClient,
   conversationRef: string,
   optimisticId: string,
+  delivery: SupportMessage['delivery'],
 ) {
   updateConversationCache(queryClient, conversationRef, (conversation) => ({
     ...conversation,
-    messages: conversation.messages.filter((item) => item.id !== optimisticId),
+    messages: conversation.messages.map((item) =>
+      item.id === optimisticId ? { ...item, delivery } : item,
+    ),
   }));
 }
 
@@ -334,7 +342,7 @@ export function MessagesPage({
         attachments: [],
       };
       if (variables.conversationRef) {
-        appendOptimisticMessage(
+        upsertOptimisticMessage(
           queryClient,
           variables.conversationRef,
           optimisticMessage,
@@ -353,6 +361,7 @@ export function MessagesPage({
     onSuccess: (result, variables, context) => {
       if (result.kind === 'conversation') {
         setComposeOptimisticMessage(null);
+        void queryClient.invalidateQueries({ queryKey: ['support-conversations'] });
         window.history.pushState(
           null,
           '',
@@ -368,36 +377,32 @@ export function MessagesPage({
           context.optimisticId,
           result.message,
         );
+        void queryClient.invalidateQueries({ queryKey: ['support-conversations'] });
       }
     },
     onError: (_error, variables, context) => {
+      const optimisticId = context?.optimisticId ?? `local:${variables.clientMessageId}`;
       if (variables.conversationRef) {
-        removeOptimisticMessage(
+        updateOptimisticDelivery(
           queryClient,
           variables.conversationRef,
-          context?.optimisticId ?? `local:${variables.clientMessageId}`,
+          optimisticId,
+          'failed',
         );
       } else {
-        setComposeOptimisticMessage(null);
-      }
-    },
-    onSettled: (_result, _error, variables) => {
-      void queryClient.invalidateQueries({ queryKey: ['support-conversations'] });
-      if (variables.conversationRef) {
-        void queryClient.invalidateQueries({
-          queryKey: ['support-conversation', variables.conversationRef],
-        });
+        setComposeOptimisticMessage((current) =>
+          current?.id === optimisticId ? { ...current, delivery: 'failed' } : current,
+        );
       }
     },
   });
 
   const imageMutation = useMutation({
-    mutationFn: async ({ file }: ImageMutationVariables) => {
-      if (!activeConversationRef) throw new Error('IMAGE_CONTEXT_UNAVAILABLE');
+    mutationFn: async ({ file, conversationRef }: ImageMutationVariables) => {
       const image = await prepareSupportImage(file);
       try {
         await siteSupportGateway.sendImage(
-          activeConversationRef,
+          conversationRef,
           {
             blob: image.blob,
             mimeType: image.mimeType,
@@ -416,7 +421,7 @@ export function MessagesPage({
       void Promise.all([
         queryClient.invalidateQueries({ queryKey: ['support-conversations'] }),
         queryClient.invalidateQueries({
-          queryKey: ['support-conversation', activeConversationRef],
+          queryKey: ['support-conversation', variables.conversationRef],
         }),
       ]).finally(() => {
         setImagePreviewUrl((current) =>
@@ -426,12 +431,8 @@ export function MessagesPage({
         URL.revokeObjectURL(variables.previewUrl);
       });
     },
-    onError: (_error, variables) => {
-      setImagePreviewUrl((current) =>
-        current === variables.previewUrl ? null : current,
-      );
+    onError: () => {
       setImageProgress(null);
-      URL.revokeObjectURL(variables.previewUrl);
     },
   });
 
@@ -463,11 +464,54 @@ export function MessagesPage({
     Boolean(activeConversationRef) && notificationState !== 'unsupported';
   const notificationLabel =
     notificationState === 'enabled'
-      ? SYSTEM_UI.notificationsEnabled
+      ? 'Notifications enabled'
       : notificationState === 'blocked'
-        ? SYSTEM_UI.notificationsBlocked
-        : SYSTEM_UI.enableNotifications;
+        ? 'Notifications blocked'
+        : 'Enable notifications';
   const workspaceConversationRef = compose ? '__new__' : activeConversationRef;
+
+  async function retryMessage(message: SupportMessage) {
+    const clientMessageId = message.id.startsWith('local:')
+      ? message.id.slice('local:'.length)
+      : crypto.randomUUID();
+    await sendMutation.mutateAsync({
+      body: message.body,
+      clientMessageId,
+      sentAt: message.sentAt,
+      conversationRef: activeConversationRef,
+    });
+  }
+
+  async function sendImage(file: File) {
+    if (!activeConversationRef) return;
+    if (imagePreviewUrl && imageMutation.isError) {
+      URL.revokeObjectURL(imagePreviewUrl);
+      setImagePreviewUrl(null);
+    }
+    const previewUrl = URL.createObjectURL(file);
+    setImagePreviewUrl(previewUrl);
+    setImageProgress(0);
+    try {
+      await imageMutation.mutateAsync({
+        file,
+        previewUrl,
+        conversationRef: activeConversationRef,
+      });
+    } catch {
+      // The preview remains visible with an inline retry state.
+    }
+  }
+
+  async function retryImage() {
+    const variables = imageMutation.variables;
+    if (!variables || imageMutation.isPending) return;
+    setImageProgress(0);
+    try {
+      await imageMutation.mutateAsync(variables);
+    } catch {
+      // The same preview remains available for another retry.
+    }
+  }
 
   return (
     <div
@@ -513,26 +557,20 @@ export function MessagesPage({
               }
             : undefined
         }
+        onRetryMessage={supportAvailable ? retryMessage : undefined}
         sending={compose && sendMutation.isPending}
-        sendError={sendMutation.error ? SYSTEM_UI.messageFailed : null}
-        onSendImage={
-          supportAvailable && activeConversationRef
-            ? async (file) => {
-                const previewUrl = URL.createObjectURL(file);
-                setImagePreviewUrl(previewUrl);
-                setImageProgress(0);
-                try {
-                  await imageMutation.mutateAsync({ file, previewUrl });
-                } catch {
-                  // Mutation state renders the error; do not surface an unhandled promise.
-                }
-              }
+        sendError={null}
+        onSendImage={supportAvailable && activeConversationRef ? sendImage : undefined}
+        onRetryImage={
+          supportAvailable && activeConversationRef && imageMutation.isError
+            ? retryImage
             : undefined
         }
         imageSending={imageMutation.isPending}
+        imageFailed={imageMutation.isError && Boolean(imagePreviewUrl)}
         imageProgress={imageProgress}
         imagePreviewUrl={imagePreviewUrl}
-        imageError={imageMutation.error ? SYSTEM_UI.messageFailed : null}
+        imageError={null}
         onLoadEarlier={
           activeConversation?.nextMessageCursor
             ? async () => {

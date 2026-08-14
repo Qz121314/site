@@ -28,7 +28,7 @@ export type SupportMessage = {
   direction: 'customer' | 'agent';
   body: string;
   sentAt: string;
-  delivery: 'sending' | 'sent' | 'read';
+  delivery: 'sending' | 'failed' | 'sent' | 'read';
   attachments: SupportImageAttachment[];
 };
 
