@@ -4,12 +4,16 @@ async function expectNoFocusZoomFont(locator: Locator) {
   await expect(locator).toBeVisible();
   await expect
     .poll(() =>
-      locator.evaluate((element) => Number.parseFloat(getComputedStyle(element).fontSize)),
+      locator.evaluate((element) =>
+        Number.parseFloat(getComputedStyle(element).fontSize),
+      ),
     )
     .toBeGreaterThanOrEqual(16);
 }
 
-test('mobile text controls keep a 16px font floor to avoid focus zoom', async ({ page }) => {
+test('mobile text controls keep a 16px font floor to avoid focus zoom', async ({
+  page,
+}) => {
   await page.goto('/browse/');
   await expectNoFocusZoomFont(page.locator('.browse-directory-search input'));
 
@@ -36,8 +40,9 @@ test('mobile text controls keep a 16px font floor to avoid focus zoom', async ({
     `;
     shell.append(probe);
 
-    const sizes = [...probe.querySelectorAll<HTMLElement>('input, select, textarea')].map(
-      (element) => Number.parseFloat(getComputedStyle(element).fontSize),
+    const controls = probe.querySelectorAll<HTMLElement>('input, select, textarea');
+    const sizes = [...controls].map((element) =>
+      Number.parseFloat(getComputedStyle(element).fontSize),
     );
     probe.remove();
     return sizes;
