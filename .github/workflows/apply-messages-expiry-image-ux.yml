@@ -18,6 +18,18 @@ jobs:
           ref: agent/messages-expiry-image-ux
           fetch-depth: 0
 
+      - name: Prepare patch script
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('scripts/apply-messages-expiry-image-ux.mjs')
+          source = path.read_text()
+          source = source.replace('${SYSTEM_UI.chatDeletesIn}', '\\${SYSTEM_UI.chatDeletesIn}')
+          source = source.replace('${clock}', '\\${clock}')
+          path.write_text(source)
+          PY
+
       - name: Apply implementation
         run: node scripts/apply-messages-expiry-image-ux.mjs
 
