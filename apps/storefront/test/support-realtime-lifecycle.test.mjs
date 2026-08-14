@@ -21,6 +21,9 @@ test('support realtime survives route transitions and reconnects with catch-up',
   assert.match(realtimeSource, /visibilitychange/u);
   assert.match(rootSource, /subscribeSupportRealtime/u);
   assert.match(rootSource, /event\.conversationRef/u);
-  assert.match(rootSource, /queryKey: \['support-conversation', event\.conversationRef\]/u);
+  assert.match(
+    rootSource,
+    /queryKey: \['support-conversation', event\.conversationRef\]/u,
+  );
   assert.doesNotMatch(messagesPageSource, /subscribeSupportRealtime/u);
 });
