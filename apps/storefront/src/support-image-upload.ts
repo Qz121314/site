@@ -1,14 +1,16 @@
-import type { PreparedSupportImage } from './support-image-compress';
-
 export type SupportUploadTarget = {
   mode: 'direct' | 'proxy';
   url: string;
   headers: Record<string, string>;
 };
 
+type UploadableImage = {
+  blob: Blob;
+};
+
 export function uploadSupportImage(
   target: SupportUploadTarget,
-  image: PreparedSupportImage,
+  image: UploadableImage,
   onProgress?: (progress: number) => void,
 ): Promise<void> {
   return new Promise((resolve, reject) => {
