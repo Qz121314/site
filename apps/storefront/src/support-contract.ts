@@ -12,12 +12,24 @@ export type SupportConversationSummary = {
   status: SupportConversationStatus;
 };
 
+export type SupportImageAttachment = {
+  id: string;
+  kind: 'image';
+  mimeType: string;
+  byteSize: number;
+  width: number | null;
+  height: number | null;
+  originalName: string | null;
+  url: string;
+};
+
 export type SupportMessage = {
   id: string;
   direction: 'customer' | 'agent';
   body: string;
   sentAt: string;
   delivery: 'sending' | 'sent' | 'read';
+  attachments: SupportImageAttachment[];
 };
 
 export type SupportConversationDetail = SupportConversationSummary & {
@@ -43,6 +55,15 @@ export type SendSupportMessageInput = {
   body: string;
 };
 
+export type SendSupportImageInput = {
+  blob: Blob;
+  mimeType: string;
+  byteSize: number;
+  width: number | null;
+  height: number | null;
+  originalName: string;
+};
+
 /**
  * Browser boundary for the independent customer-service system.
  * Storefront reads only non-secret connection metadata from Site, then sends
@@ -64,6 +85,12 @@ export interface SupportGateway {
     input: SendSupportMessageInput,
     signal?: AbortSignal,
   ): Promise<SupportMessage>;
+  sendImage(
+    conversationRef: string,
+    input: SendSupportImageInput,
+    onProgress?: (progress: number) => void,
+    signal?: AbortSignal,
+  ): Promise<void>;
   markConversationRead(
     conversationRef: string,
     lastMessageId?: string | null,
