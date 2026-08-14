@@ -18,15 +18,12 @@ type Props = {
   onSessionExpired: () => void;
 };
 
-const CUSTOMER_SERVICE_AUTO_ROUTE_ID = 'auto';
-const CUSTOMER_SERVICE_AUTO_ROUTE_NAME = '客服系统自动分流';
-
 const modeOptions: Array<{ value: ConversionMode; title: string; description: string }> =
   [
     {
       value: 'customer_service',
       title: '在线客服分组',
-      description: '产品绑定本分组后，前端直接连接客服系统并由客服系统分流。',
+      description: '产品绑定本分组后，前端直接连接所选客服系统。',
     },
     {
       value: 'link',
@@ -124,10 +121,10 @@ export function ConversionGroupEditorDialog({
               autoFocus
               required
               maxLength={100}
-              placeholder="例如：售前客服"
+              placeholder="例如：在线客服"
               onChange={(event) => onFormChange({ ...form, name: event.target.value })}
             />
-            <small>产品录入时直接选择这个分组。</small>
+            <small>产品录入时直接选择这个转化分组。</small>
           </label>
 
           <fieldset>
@@ -171,10 +168,8 @@ export function ConversionGroupEditorDialog({
                     onFormChange({
                       ...form,
                       customerServiceConnectionId: connectionId,
-                      remoteGroupId: connectionId ? CUSTOMER_SERVICE_AUTO_ROUTE_ID : null,
-                      remoteGroupName: connectionId
-                        ? CUSTOMER_SERVICE_AUTO_ROUTE_NAME
-                        : null,
+                      remoteGroupId: null,
+                      remoteGroupName: null,
                     });
                   }}
                 >
@@ -201,8 +196,8 @@ export function ConversionGroupEditorDialog({
                   })}
                 </select>
                 <small>
-                  客服分组不在 Site
-                  里指定。访客发起会话后，客服系统会根据产品所属分区和分类自动分流。
+                  Site
+                  只绑定客服系统。访客会话直接连接客服系统，并按产品匹配管理员分配的客服坐席。
                 </small>
               </label>
 
@@ -246,7 +241,7 @@ export function ConversionGroupEditorDialog({
               <strong>启用分组</strong>
               <small>
                 {isCustomerService
-                  ? '客服系统已验证后，前端会直接连接；具体客服分组由客服系统按产品分区和分类决定。'
+                  ? '客服系统已验证后，绑定本分组的产品会直接使用该客服系统。'
                   : '至少需要一个启用的链接入口。'}
               </small>
             </span>

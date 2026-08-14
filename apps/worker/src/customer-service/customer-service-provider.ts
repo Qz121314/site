@@ -1,14 +1,8 @@
-export type RemoteCustomerServiceGroup = {
-  id: string;
-  name: string;
-  isEnabled: boolean;
-};
-
 export type VerifiedCustomerServiceIntegration = {
   protocolVersion: 'v1';
   clientApiUrl: string;
   realtimeUrl: string;
-  groups: RemoteCustomerServiceGroup[];
+  productCount: number;
 };
 
 export class CustomerServiceProviderError extends Error {
@@ -75,27 +69,20 @@ function safeRealtimeUrl(value: unknown): string {
   return url.toString();
 }
 
-function parseGroups(value: unknown): RemoteCustomerServiceGroup[] {
-  if (!Array.isArray(value)) {
+function parseProductCount(value: unknown): number {
+  const catalog = isRecord(value) ? value : null;
+  const productCount = catalog?.productCount;
+  if (
+    typeof productCount !== 'number' ||
+    !Number.isInteger(productCount) ||
+    productCount < 0
+  ) {
     throw new CustomerServiceProviderError(
-      'CUSTOMER_SERVICE_INVALID_GROUPS',
-      '客服系统在线客服分组返回格式无效。',
+      'CUSTOMER_SERVICE_INVALID_PRODUCT_CATALOG',
+      '客服系统产品目录同步结果无效。',
     );
   }
-  const groups: RemoteCustomerServiceGroup[] = [];
-  for (const item of value) {
-    if (!isRecord(item) || typeof item.id !== 'string' || typeof item.name !== 'string') {
-      throw new CustomerServiceProviderError(
-        'CUSTOMER_SERVICE_INVALID_GROUPS',
-        '客服系统在线客服分组返回格式无效。',
-      );
-    }
-    const id = item.id.trim();
-    const name = item.name.trim();
-    if (!id || !name) continue;
-    groups.push({ id, name, isEnabled: item.isEnabled !== false });
-  }
-  return groups;
+  return productCount;
 }
 
 /**
@@ -117,6 +104,6 @@ export function parseCustomerServiceIntegration(
     protocolVersion: 'v1',
     clientApiUrl: safeHttpsUrl(envelope.clientApiUrl, '前端接口地址'),
     realtimeUrl: safeRealtimeUrl(envelope.realtimeUrl),
-    groups: parseGroups(envelope.groups),
+    productCount: parseProductCount(envelope.productCatalog),
   };
 }

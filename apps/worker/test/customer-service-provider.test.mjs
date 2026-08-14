@@ -11,26 +11,17 @@ function integrationEnvelope(overrides = {}) {
     protocolVersion: 'v1',
     clientApiUrl: 'https://support.example/client/v1',
     realtimeUrl: 'wss://support.example/client/v1/realtime',
-    groups: [
-      { id: ' sales ', name: ' Sales ', isEnabled: true },
-      { id: 'vip', name: 'VIP' },
-      { id: 'off', name: 'Off', isEnabled: false },
-      { id: ' ', name: 'ignored' },
-    ],
+    productCatalog: { productCount: 12 },
     ...overrides,
   };
 }
 
-test('integration parser validates and normalizes public runtime endpoints', () => {
+test('integration parser validates public runtime endpoints and product sync', () => {
   assert.deepEqual(parseCustomerServiceIntegration(integrationEnvelope()), {
     protocolVersion: 'v1',
     clientApiUrl: 'https://support.example/client/v1',
     realtimeUrl: 'wss://support.example/client/v1/realtime',
-    groups: [
-      { id: 'sales', name: 'Sales', isEnabled: true },
-      { id: 'vip', name: 'VIP', isEnabled: true },
-      { id: 'off', name: 'Off', isEnabled: false },
-    ],
+    productCount: 12,
   });
 });
 
@@ -69,11 +60,14 @@ test('integration parser requires WSS realtime endpoint', () => {
   );
 });
 
-test('integration parser rejects malformed groups', () => {
+test('integration parser rejects malformed product catalog result', () => {
   assert.throws(
-    () => parseCustomerServiceIntegration(integrationEnvelope({ groups: {} })),
+    () =>
+      parseCustomerServiceIntegration(
+        integrationEnvelope({ productCatalog: { productCount: -1 } }),
+      ),
     (error) =>
       error instanceof CustomerServiceProviderError &&
-      error.code === 'CUSTOMER_SERVICE_INVALID_GROUPS',
+      error.code === 'CUSTOMER_SERVICE_INVALID_PRODUCT_CATALOG',
   );
 });
