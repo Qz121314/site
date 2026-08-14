@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import {
   StorefrontBottomNavigation,
   StorefrontBrandBar,
@@ -11,7 +11,6 @@ import {
   lazy,
   Suspense,
   useEffect,
-  useState,
   useSyncExternalStore,
 } from 'react';
 import {
@@ -26,6 +25,9 @@ import { NotFoundPage } from './NotFoundPage';
 import { ResilientImage } from './ResilientMedia';
 import { bottomNavigationActiveHref, parseStorefrontRoute } from './routing';
 import { primaryNavigationItems } from './storefront-navigation';
+import { siteSupportGateway } from './support-gateway';
+import { syncSupportAppBadge } from './support-push';
+import { subscribeSupportRealtime } from './support-realtime';
 import { SYSTEM_UI } from './system-ui';
 
 const NAVIGATION_EVENT = 'storefront:navigate';
@@ -176,6 +178,7 @@ function PrimaryShell({
 }
 
 export function StorefrontRoot() {
+  const queryClient = useQueryClient();
   const locationKey = useSyncExternalStore(
     subscribeLocation,
     currentLocationKey,
@@ -183,7 +186,6 @@ export function StorefrontRoot() {
   );
   const pathname = pathnameFromLocationKey(locationKey) || '/';
   const route = parseStorefrontRoute(pathname);
-  const [unreadMessages, setUnreadMessages] = useState(0);
   const bootstrapQuery = useQuery({
     queryKey: ['storefront-bootstrap'],
     queryFn: ({ signal }) => loadStorefrontBootstrap(undefined, signal),
@@ -194,6 +196,35 @@ export function StorefrontRoot() {
     queryFn: ({ signal }) => loadBottomNavigation(signal),
     staleTime: 30_000,
   });
+  const supportConversationsQuery = useQuery({
+    queryKey: ['support-conversations'],
+    queryFn: ({ signal }) => siteSupportGateway.listConversations(signal),
+    staleTime: 5_000,
+    retry: 1,
+    refetchInterval: 30_000,
+    refetchOnWindowFocus: true,
+  });
+  const unreadMessages = (supportConversationsQuery.data ?? []).reduce(
+    (total, conversation) => total + conversation.unreadCount,
+    0,
+  );
+
+  useEffect(() => {
+    void syncSupportAppBadge(unreadMessages);
+  }, [unreadMessages]);
+
+  useEffect(
+    () =>
+      subscribeSupportRealtime((event) => {
+        void queryClient.invalidateQueries({ queryKey: ['support-conversations'] });
+        if (event.conversationRef) {
+          void queryClient.invalidateQueries({
+            queryKey: ['support-conversation', event.conversationRef],
+          });
+        }
+      }),
+    [queryClient],
+  );
 
   if (bootstrapQuery.isLoading) return <StartupLoader />;
   if (bootstrapQuery.error || !bootstrapQuery.data) return <PrimaryError />;
@@ -221,7 +252,6 @@ export function StorefrontRoot() {
           bootstrap={bootstrap}
           compose={false}
           LinkComponent={StorefrontLink as StorefrontLinkComponent}
-          onUnreadMessagesChange={setUnreadMessages}
         />
       );
       break;
@@ -232,7 +262,6 @@ export function StorefrontRoot() {
           bootstrap={bootstrap}
           compose
           LinkComponent={StorefrontLink as StorefrontLinkComponent}
-          onUnreadMessagesChange={setUnreadMessages}
         />
       );
       break;
@@ -243,7 +272,6 @@ export function StorefrontRoot() {
           bootstrap={bootstrap}
           compose={false}
           LinkComponent={StorefrontLink as StorefrontLinkComponent}
-          onUnreadMessagesChange={setUnreadMessages}
         />
       );
       break;
