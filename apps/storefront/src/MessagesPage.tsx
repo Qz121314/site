@@ -11,6 +11,13 @@ import type { SupportConversationDetail, SupportMessage } from './support-contra
 import { loadPublicSupportConnections, siteSupportGateway } from './support-gateway';
 import { subscribeSupportRealtime } from './support-realtime';
 import { prepareSupportImage, releaseSupportImage } from './support-image-compress';
+import {
+  enableSupportPush,
+  readSupportPushState,
+  syncSupportAppBadge,
+  syncSupportPushSubscription,
+  type SupportPushState,
+} from './support-push';
 import { MessagesWorkspace, type PendingSupportConversation } from './support-ui';
 import { SYSTEM_UI } from './system-ui';
 import './messages-ui.css';
@@ -27,6 +34,16 @@ function readComposeContext(): ComposeContext | null {
   if (!productId || !sectionId || productId.length > 120 || sectionId.length > 120)
     return null;
   return { productId, sectionId };
+}
+
+function NotificationBellIcon({ enabled }: { enabled: boolean }) {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+      <path d="M18 8.8a6 6 0 0 0-12 0c0 6-2.4 6.4-2.4 7.8h16.8C20.4 15.2 18 14.8 18 8.8Z" />
+      <path d="M9.7 19a2.6 2.6 0 0 0 4.6 0" />
+      {enabled ? <path d="m16.5 4.2 1.4 1.4 2.7-3" /> : null}
+    </svg>
+  );
 }
 
 function combineConversationPages(
@@ -71,6 +88,9 @@ export function MessagesPage({
   const queryClient = useQueryClient();
   const [imageProgress, setImageProgress] = useState<number | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
+  const [notificationState, setNotificationState] =
+    useState<SupportPushState>('unsupported');
+  const [notificationBusy, setNotificationBusy] = useState(false);
   const supportConnectionsQuery = useQuery({
     queryKey: ['support-connections'],
     queryFn: ({ signal }) => loadPublicSupportConnections(signal),
@@ -139,7 +159,38 @@ export function MessagesPage({
 
   useEffect(() => {
     onUnreadMessagesChange(unreadMessages);
+    void syncSupportAppBadge(unreadMessages);
   }, [onUnreadMessagesChange, unreadMessages]);
+
+  useEffect(() => {
+    let active = true;
+    if (!activeConversationRef) {
+      setNotificationState('unsupported');
+      return () => {
+        active = false;
+      };
+    }
+
+    void readSupportPushState()
+      .then(async (state) => {
+        if (state !== 'enabled') return state;
+        try {
+          return await syncSupportPushSubscription(activeConversationRef);
+        } catch {
+          return state;
+        }
+      })
+      .then((state) => {
+        if (active) setNotificationState(state);
+      })
+      .catch(() => {
+        if (active) setNotificationState('unsupported');
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [activeConversationRef]);
 
   useEffect(
     () =>
@@ -254,47 +305,81 @@ export function MessagesPage({
       .catch(() => undefined);
   }, [activeConversationRef, activeConversation, queryClient]);
 
+  const showNotificationToggle =
+    Boolean(activeConversationRef) && notificationState !== 'unsupported';
+  const notificationLabel =
+    notificationState === 'enabled'
+      ? SYSTEM_UI.notificationsEnabled
+      : notificationState === 'blocked'
+        ? SYSTEM_UI.notificationsBlocked
+        : SYSTEM_UI.enableNotifications;
   const workspaceConversationRef = compose ? '__new__' : activeConversationRef;
+
   return (
-    <MessagesWorkspace
-      activeConversation={activeConversation}
-      activeConversationRef={workspaceConversationRef}
-      conversations={conversations}
-      pendingConversation={pendingConversation}
-      supportAvailable={supportAvailable}
-      LinkComponent={LinkComponent}
-      onSendMessage={
-        supportAvailable
-          ? async (body) => {
-              await sendMutation.mutateAsync(body);
-            }
-          : undefined
-      }
-      sending={sendMutation.isPending}
-      sendError={sendMutation.error ? SYSTEM_UI.messageFailed : null}
-      onSendImage={
-        supportAvailable && activeConversationRef
-          ? async (file) => {
-              await imageMutation.mutateAsync(file);
-            }
-          : undefined
-      }
-      imageSending={imageMutation.isPending}
-      imageProgress={imageProgress}
-      imagePreviewUrl={imagePreviewUrl}
-      imageError={imageMutation.error ? SYSTEM_UI.messageFailed : null}
-      onLoadEarlier={
-        activeConversation?.nextMessageCursor
-          ? async () => {
-              await conversationQuery.fetchNextPage();
-            }
-          : undefined
-      }
-      loadingEarlier={conversationQuery.isFetchingNextPage}
-      loadingConversation={
-        Boolean(activeConversationRef && conversationQuery.isLoading) ||
-        Boolean(compose && composeContext && composeProductQuery.isLoading)
-      }
-    />
+    <div
+      className={`messages-push-host${showNotificationToggle ? ' has-push-toggle' : ''}`}
+    >
+      {showNotificationToggle ? (
+        <button
+          type="button"
+          className={`messages-push-toggle${notificationState === 'enabled' ? ' is-enabled' : ''}`}
+          aria-label={notificationLabel}
+          title={notificationLabel}
+          disabled={notificationBusy || notificationState !== 'prompt'}
+          onClick={() => {
+            if (!activeConversationRef || notificationState !== 'prompt') return;
+            setNotificationBusy(true);
+            void enableSupportPush(activeConversationRef)
+              .then(setNotificationState)
+              .catch(async () => {
+                setNotificationState(await readSupportPushState());
+              })
+              .finally(() => setNotificationBusy(false));
+          }}
+        >
+          <NotificationBellIcon enabled={notificationState === 'enabled'} />
+        </button>
+      ) : null}
+      <MessagesWorkspace
+        activeConversation={activeConversation}
+        activeConversationRef={workspaceConversationRef}
+        conversations={conversations}
+        pendingConversation={pendingConversation}
+        supportAvailable={supportAvailable}
+        LinkComponent={LinkComponent}
+        onSendMessage={
+          supportAvailable
+            ? async (body) => {
+                await sendMutation.mutateAsync(body);
+              }
+            : undefined
+        }
+        sending={sendMutation.isPending}
+        sendError={sendMutation.error ? SYSTEM_UI.messageFailed : null}
+        onSendImage={
+          supportAvailable && activeConversationRef
+            ? async (file) => {
+                await imageMutation.mutateAsync(file);
+              }
+            : undefined
+        }
+        imageSending={imageMutation.isPending}
+        imageProgress={imageProgress}
+        imagePreviewUrl={imagePreviewUrl}
+        imageError={imageMutation.error ? SYSTEM_UI.messageFailed : null}
+        onLoadEarlier={
+          activeConversation?.nextMessageCursor
+            ? async () => {
+                await conversationQuery.fetchNextPage();
+              }
+            : undefined
+        }
+        loadingEarlier={conversationQuery.isFetchingNextPage}
+        loadingConversation={
+          Boolean(activeConversationRef && conversationQuery.isLoading) ||
+          Boolean(compose && composeContext && composeProductQuery.isLoading)
+        }
+      />
+    </div>
   );
 }

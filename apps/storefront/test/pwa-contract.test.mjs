@@ -8,6 +8,14 @@ const pwaSource = await readFile(
   new URL('../src/PwaInstallPrompt.tsx', import.meta.url),
   'utf8',
 );
+const supportPushSource = await readFile(
+  new URL('../src/support-push.ts', import.meta.url),
+  'utf8',
+);
+const messagesPageSource = await readFile(
+  new URL('../src/MessagesPage.tsx', import.meta.url),
+  'utf8',
+);
 const adminThemeSource = await readFile(
   new URL('../../admin/src/ThemeCenterView.tsx', import.meta.url),
   'utf8',
@@ -96,4 +104,25 @@ test('service worker does not cache public business APIs', () => {
   assert.match(serviceWorker, /url\.pathname\.startsWith\('\/api\/'\)/);
   assert.match(serviceWorker, /url\.pathname\.startsWith\('\/public\/'\)/);
   assert.match(serviceWorker, /request\.mode === 'navigate'/);
+});
+
+test('Messages enables background Web Push only after explicit notification permission', () => {
+  assert.match(supportPushSource, /Notification\.requestPermission\(\)/);
+  assert.match(supportPushSource, /pushManager\.subscribe/u);
+  assert.match(supportPushSource, /\/push\/subscriptions/u);
+  assert.match(supportPushSource, /conversationId: remoteConversationId/u);
+  assert.match(messagesPageSource, /enableSupportPush/u);
+  assert.match(messagesPageSource, /messages-push-toggle/u);
+  assert.match(messagesPageSource, /syncSupportPushSubscription/u);
+});
+
+test('service worker wakes for push, refreshes unread state, badges the app, and deep-links notifications', () => {
+  assert.match(serviceWorker, /addEventListener\('push'/u);
+  assert.match(serviceWorker, /showNotification/u);
+  assert.match(serviceWorker, /setAppBadge/u);
+  assert.match(serviceWorker, /addEventListener\('notificationclick'/u);
+  assert.match(serviceWorker, /\/conversations/u);
+  assert.match(serviceWorker, /\/messages\/\$\{encodeURIComponent\(wrapped\)\}\//u);
+  assert.match(serviceWorker, /RETAINED_CACHES/u);
+  assert.match(messagesPageSource, /syncSupportAppBadge\(unreadMessages\)/u);
 });
