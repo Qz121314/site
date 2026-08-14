@@ -1,5 +1,6 @@
-import { AdminApiError } from '../api';
+import { AdminApiError, fetchSections } from '../api';
 import { adminFetch } from '../admin-fetch';
+import { fetchCategories } from '../category-management/api';
 
 export type CustomerServiceScope = 'active' | 'trash' | 'all';
 export type CustomerServiceProvider = 'generic_v1';
@@ -41,6 +42,14 @@ type ErrorEnvelope = {
 type VerificationContext = {
   baseUrl: string;
   verifyToken: string;
+};
+
+type RoutingCatalog = {
+  sections: Array<{
+    id: string;
+    name: string;
+    categories: Array<{ id: string; name: string }>;
+  }>;
 };
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -209,8 +218,25 @@ export async function batchDeleteCustomerServiceConnections(
   return result.deletedIds;
 }
 
+async function loadRoutingCatalog(): Promise<RoutingCatalog> {
+  const sections = await fetchSections('active');
+  return {
+    sections: await Promise.all(
+      sections.map(async (section) => ({
+        id: section.id,
+        name: section.name,
+        categories: (await fetchCategories(section.id, 'active')).map((category) => ({
+          id: category.id,
+          name: category.name,
+        })),
+      })),
+    ),
+  };
+}
+
 async function verifyPublicCustomerService(
   context: VerificationContext,
+  routingCatalog: RoutingCatalog,
 ): Promise<unknown> {
   let response: Response;
   try {
@@ -223,7 +249,9 @@ async function verifyPublicCustomerService(
       headers: {
         Accept: 'application/json',
         Authorization: `Bearer ${context.verifyToken}`,
+        'Content-Type': 'application/json',
       },
+      body: JSON.stringify({ routingCatalog }),
     });
   } catch {
     throw new AdminApiError(
@@ -263,10 +291,13 @@ export async function testCustomerServiceConnection(
   id: string,
 ): Promise<{ connected: true; groupCount: number; verifiedAt: string }> {
   const encodedId = encodeURIComponent(id);
-  const context = parseVerificationContext(
-    await requestJson(`${basePath}/${encodedId}/verification-context`),
-  );
-  const integration = await verifyPublicCustomerService(context);
+  const [context, routingCatalog] = await Promise.all([
+    requestJson(`${basePath}/${encodedId}/verification-context`).then(
+      parseVerificationContext,
+    ),
+    loadRoutingCatalog(),
+  ]);
+  const integration = await verifyPublicCustomerService(context, routingCatalog);
   const value = asRecord(
     await writeRequest(`${basePath}/${encodedId}/verification-result`, 'POST', {
       integration,

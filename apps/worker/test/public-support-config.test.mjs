@@ -42,8 +42,8 @@ function groupRow(overrides = {}) {
     product_count: 1,
     customer_service_connection_id: 'connection-1',
     customer_service_connection_name: 'Primary Support',
-    remote_group_id: 'sales',
-    remote_group_name: 'Sales',
+    remote_group_id: null,
+    remote_group_name: null,
     ...overrides,
   };
 }
@@ -52,6 +52,9 @@ function productRow() {
   return {
     id: 'product-1',
     section_id: 'section-1',
+    section_name: 'Software',
+    category_id: 'category-1',
+    category_name: 'CRM',
     title: 'Product One',
     conversion_group_id: 'group-1',
   };
@@ -157,7 +160,7 @@ test('Storefront hides unverified support connections', async () => {
   assert.equal(db.remainingSteps, 0);
 });
 
-test('Product support route resolves direct group binding without target rotation', async () => {
+test('Product support route returns customer-service connection and demand context', async () => {
   const db = supportRouteDb();
   const response = await app.request(
     'http://local.test/api/public/storefront/support/route/product-1?sectionId=section-1',
@@ -169,7 +172,14 @@ test('Product support route resolves direct group binding without target rotatio
   assert.deepEqual(await response.json(), {
     available: true,
     connection: publicConnection,
-    groupId: 'sales',
+    product: {
+      id: 'product-1',
+      sectionId: 'section-1',
+      sectionName: 'Software',
+      categoryId: 'category-1',
+      categoryName: 'CRM',
+      title: 'Product One',
+    },
   });
   assert.equal(db.remainingSteps, 0);
   assert.deepEqual(

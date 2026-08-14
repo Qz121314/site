@@ -148,8 +148,10 @@ publicStorefrontConfigRoutes.get('/support/connections', async (context) => {
 
 /**
  * Resolve Product -> online support conversion group -> customer-service
- * connection + remote groupId. This only returns configuration. Conversation
- * creation/messages/WebSocket are browser -> customer-service directly.
+ * connection + authoritative product demand context. Site does not select a
+ * remote support group. Conversation/group/agent routing happens inside the
+ * customer-service system. Runtime conversation traffic remains browser ->
+ * customer-service directly.
  */
 publicStorefrontConfigRoutes.get('/support/route/:productId', async (context) => {
   setPublicRuntimeHeaders(context);
@@ -181,9 +183,7 @@ publicStorefrontConfigRoutes.get('/support/route/:productId', async (context) =>
     group.deletedAt ||
     !group.isEnabled ||
     group.mode !== 'customer_service' ||
-    group.activeTargetCount !== 1 ||
-    !group.customerServiceConnectionId ||
-    !group.remoteGroupId
+    !group.customerServiceConnectionId
   ) {
     return context.json({ available: false });
   }
@@ -201,6 +201,13 @@ publicStorefrontConfigRoutes.get('/support/route/:productId', async (context) =>
   return context.json({
     available: true,
     connection: publicConnection,
-    groupId: group.remoteGroupId,
+    product: {
+      id: product.id,
+      sectionId: product.sectionId,
+      sectionName: product.sectionName,
+      categoryId: product.categoryId,
+      categoryName: product.categoryName,
+      title: product.title,
+    },
   });
 });

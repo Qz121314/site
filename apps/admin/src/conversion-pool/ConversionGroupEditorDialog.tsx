@@ -1,10 +1,8 @@
-import { useCallback, useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useState, type FormEvent } from 'react';
 import { AdminApiError } from '../api';
 import {
   fetchCustomerServiceConnections,
-  fetchRemoteCustomerServiceGroups,
   type CustomerServiceConnection,
-  type RemoteCustomerServiceGroup,
 } from '../customer-service/api';
 import type { AdminConversionGroup, ConversionGroupInput, ConversionMode } from './api';
 
@@ -19,6 +17,9 @@ type Props = {
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
   onSessionExpired: () => void;
 };
+
+const CUSTOMER_SERVICE_AUTO_ROUTE_ID = 'auto';
+const CUSTOMER_SERVICE_AUTO_ROUTE_NAME = '客服系统自动分流';
 
 const modeOptions: Array<{ value: ConversionMode; title: string; description: string }> =
   [
@@ -57,36 +58,8 @@ export function ConversionGroupEditorDialog({
   );
   const isCustomerService = form.mode === 'customer_service';
   const [connections, setConnections] = useState<CustomerServiceConnection[]>([]);
-  const [remoteGroups, setRemoteGroups] = useState<RemoteCustomerServiceGroup[]>([]);
   const [connectionsLoading, setConnectionsLoading] = useState(false);
-  const [groupsLoading, setGroupsLoading] = useState(false);
   const [integrationError, setIntegrationError] = useState('');
-
-  const loadGroups = useCallback(
-    async (connectionId: string) => {
-      if (!connectionId) {
-        setRemoteGroups([]);
-        return;
-      }
-      setGroupsLoading(true);
-      setIntegrationError('');
-      try {
-        setRemoteGroups(await fetchRemoteCustomerServiceGroups(connectionId));
-      } catch (error) {
-        if (isSessionError(error)) {
-          onSessionExpired();
-          return;
-        }
-        setRemoteGroups([]);
-        setIntegrationError(
-          error instanceof Error ? error.message : '读取在线客服分组失败。',
-        );
-      } finally {
-        setGroupsLoading(false);
-      }
-    },
-    [onSessionExpired],
-  );
 
   useEffect(() => {
     if (!isCustomerService) return;
@@ -115,14 +88,6 @@ export function ConversionGroupEditorDialog({
       active = false;
     };
   }, [isCustomerService, onSessionExpired]);
-
-  useEffect(() => {
-    if (!isCustomerService || !form.customerServiceConnectionId) {
-      setRemoteGroups([]);
-      return;
-    }
-    void loadGroups(form.customerServiceConnectionId);
-  }, [form.customerServiceConnectionId, isCustomerService, loadGroups]);
 
   return (
     <div className="admin-dialog-backdrop" role="presentation">
@@ -206,8 +171,10 @@ export function ConversionGroupEditorDialog({
                     onFormChange({
                       ...form,
                       customerServiceConnectionId: connectionId,
-                      remoteGroupId: null,
-                      remoteGroupName: null,
+                      remoteGroupId: connectionId ? CUSTOMER_SERVICE_AUTO_ROUTE_ID : null,
+                      remoteGroupName: connectionId
+                        ? CUSTOMER_SERVICE_AUTO_ROUTE_NAME
+                        : null,
                     });
                   }}
                 >
@@ -233,56 +200,10 @@ export function ConversionGroupEditorDialog({
                     );
                   })}
                 </select>
-              </label>
-
-              <label>
-                <span>在线客服分组</span>
-                <div className="conversion-remote-group-row">
-                  <select
-                    value={form.remoteGroupId ?? ''}
-                    required
-                    disabled={
-                      !form.customerServiceConnectionId || groupsLoading || saving
-                    }
-                    onChange={(event) => {
-                      const remoteGroupId = event.target.value || null;
-                      const selected =
-                        remoteGroups.find((item) => item.id === remoteGroupId) ?? null;
-                      onFormChange({
-                        ...form,
-                        remoteGroupId,
-                        remoteGroupName: selected?.name ?? null,
-                      });
-                    }}
-                  >
-                    <option value="">
-                      {groupsLoading ? '正在读取…' : '选择在线客服分组'}
-                    </option>
-                    {remoteGroups.map((remoteGroup) => (
-                      <option
-                        key={remoteGroup.id}
-                        value={remoteGroup.id}
-                        disabled={!remoteGroup.isEnabled}
-                      >
-                        {remoteGroup.name}
-                        {remoteGroup.isEnabled ? '' : '（停用）'}
-                      </option>
-                    ))}
-                  </select>
-                  <button
-                    className="secondary-button"
-                    type="button"
-                    disabled={
-                      !form.customerServiceConnectionId || groupsLoading || saving
-                    }
-                    onClick={() => {
-                      if (form.customerServiceConnectionId)
-                        void loadGroups(form.customerServiceConnectionId);
-                    }}
-                  >
-                    刷新
-                  </button>
-                </div>
+                <small>
+                  客服分组不在 Site
+                  里指定。访客发起会话后，客服系统会根据产品所属分区和分类自动分流。
+                </small>
               </label>
 
               {integrationError ? (
@@ -325,7 +246,7 @@ export function ConversionGroupEditorDialog({
               <strong>启用分组</strong>
               <small>
                 {isCustomerService
-                  ? '只有客服系统已验证且分组已绑定时，前端才会显示该客服入口。'
+                  ? '客服系统已验证后，前端会直接连接；具体客服分组由客服系统按产品分区和分类决定。'
                   : '至少需要一个启用的链接入口。'}
               </small>
             </span>
@@ -351,11 +272,7 @@ export function ConversionGroupEditorDialog({
               className="primary-button"
               type="submit"
               disabled={
-                saving ||
-                (isCustomerService &&
-                  (!form.customerServiceConnectionId ||
-                    !form.remoteGroupId ||
-                    !form.remoteGroupName))
+                saving || (isCustomerService && !form.customerServiceConnectionId)
               }
             >
               {saving ? '正在保存…' : '保存分组'}
