@@ -1,5 +1,13 @@
 import type { StorefrontLinkComponent } from '@site/storefront-ui';
-import { Fragment, useEffect, useRef, useState, type FormEvent } from 'react';
+import {
+  Fragment,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type CSSProperties,
+  type FormEvent,
+} from 'react';
 import type {
   SupportConversationDetail,
   SupportConversationSummary,
@@ -249,10 +257,39 @@ function ProductContextCard({
   );
 }
 
-function DeliveryMark({ delivery }: { delivery: SupportMessage['delivery'] }) {
-  if (delivery === 'sending') return <span aria-label={SYSTEM_UI.sending}>◷</span>;
+function DeliveryMark({
+  delivery,
+  onRetry,
+}: {
+  delivery: SupportMessage['delivery'];
+  onRetry?: (() => void) | undefined;
+}) {
+  if (delivery === 'sending') {
+    return (
+      <span className="chat-delivery-mark is-sending" aria-label={SYSTEM_UI.sending}>
+        <span className="chat-status-spinner" aria-hidden="true" />
+      </span>
+    );
+  }
+  if (delivery === 'failed') {
+    return (
+      <button
+        type="button"
+        className="chat-delivery-mark is-failed"
+        aria-label={SYSTEM_UI.retry}
+        title={SYSTEM_UI.retry}
+        onClick={onRetry}
+      >
+        !
+      </button>
+    );
+  }
   return (
-    <span aria-label={delivery === 'read' ? SYSTEM_UI.read : SYSTEM_UI.sent}>
+    <span
+      className={`chat-delivery-mark${delivery === 'read' ? ' is-read' : ''}`}
+      aria-label={delivery === 'read' ? SYSTEM_UI.read : SYSTEM_UI.sent}
+      title={delivery === 'read' ? SYSTEM_UI.read : SYSTEM_UI.sent}
+    >
       {delivery === 'read' ? '✓✓' : '✓'}
     </span>
   );
@@ -263,10 +300,13 @@ export function MessageThreadPageContent({
   pendingConversation = null,
   LinkComponent = 'a',
   onSendMessage,
+  onRetryMessage,
   sending = false,
   sendError = null,
   onSendImage,
+  onRetryImage,
   imageSending = false,
+  imageFailed = false,
   imageProgress = null,
   imagePreviewUrl = null,
   imageError = null,
@@ -278,10 +318,13 @@ export function MessageThreadPageContent({
   pendingConversation?: PendingSupportConversation | null;
   LinkComponent?: StorefrontLinkComponent;
   onSendMessage?: ((body: string) => Promise<void>) | undefined;
+  onRetryMessage?: ((message: SupportMessage) => Promise<void>) | undefined;
   sending?: boolean;
   sendError?: string | null;
   onSendImage?: ((file: File) => Promise<void>) | undefined;
+  onRetryImage?: (() => Promise<void>) | undefined;
   imageSending?: boolean;
+  imageFailed?: boolean;
   imageProgress?: number | null;
   imagePreviewUrl?: string | null;
   imageError?: string | null;
@@ -291,18 +334,28 @@ export function MessageThreadPageContent({
 }) {
   const [draft, setDraft] = useState('');
   const timelineRef = useRef<HTMLDivElement | null>(null);
+  const openedConversationRef = useRef<string | null>(null);
   const lastMessageId = conversation?.messages.at(-1)?.id ?? null;
 
   useEffect(() => {
     setDraft('');
   }, [conversation?.id, pendingConversation?.productHref]);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const timeline = timelineRef.current;
-    if (!timeline || !lastMessageId) return;
-    const frame = window.requestAnimationFrame(() => {
+    const conversationId = conversation?.id ?? null;
+    if (!timeline || !conversationId) return;
+    const isOpeningConversation = openedConversationRef.current !== conversationId;
+    const scroll = () => {
+      if (isOpeningConversation) {
+        timeline.scrollTop = timeline.scrollHeight;
+        openedConversationRef.current = conversationId;
+        return;
+      }
       timeline.scrollTo({ top: timeline.scrollHeight, behavior: 'smooth' });
-    });
+    };
+    scroll();
+    const frame = window.requestAnimationFrame(scroll);
     return () => window.cancelAnimationFrame(frame);
   }, [conversation?.id, lastMessageId]);
 
@@ -369,6 +422,10 @@ export function MessageThreadPageContent({
   const headerTitle = conversation
     ? conversationTitle(conversation)
     : (pendingConversation?.productTitle ?? '');
+  const uploadPercent = Math.round(Math.max(0, Math.min(1, imageProgress ?? 0)) * 100);
+  const uploadRingStyle = {
+    '--chat-upload-progress': `${uploadPercent * 3.6}deg`,
+  } as CSSProperties;
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -438,7 +495,7 @@ export function MessageThreadPageContent({
                 </div>
               ) : null}
               <div
-                className={`chat-message-row is-${message.direction}${groupStart ? ' is-group-start' : ''}${groupEnd ? ' is-group-end' : ''}`}
+                className={`chat-message-row is-${message.direction}${groupStart ? ' is-group-start' : ''}${groupEnd ? ' is-group-end' : ''}${message.delivery === 'failed' ? ' is-failed' : ''}`}
               >
                 <div className="chat-message-bubble">
                   {message.attachments.length > 0 ? (
@@ -469,7 +526,14 @@ export function MessageThreadPageContent({
                       {formatChatClock(message.sentAt)}
                     </time>
                     {message.direction === 'customer' ? (
-                      <DeliveryMark delivery={message.delivery} />
+                      <DeliveryMark
+                        delivery={message.delivery}
+                        onRetry={
+                          message.delivery === 'failed' && onRetryMessage
+                            ? () => void onRetryMessage(message).catch(() => undefined)
+                            : undefined
+                        }
+                      />
                     ) : null}
                   </span>
                 </div>
@@ -485,9 +549,29 @@ export function MessageThreadPageContent({
         </p>
       ) : null}
       {imagePreviewUrl ? (
-        <div className="chat-image-upload-preview" aria-live="polite">
+        <div
+          className={`chat-image-upload-preview${imageFailed ? ' is-failed' : ''}`}
+          aria-live="polite"
+        >
           <img src={imagePreviewUrl} alt="Uploading" />
-          <span>Uploading image {Math.round((imageProgress ?? 0) * 100)}%</span>
+          <button
+            type="button"
+            className="chat-image-upload-status"
+            aria-label={imageFailed ? SYSTEM_UI.retry : SYSTEM_UI.sending}
+            title={imageFailed ? SYSTEM_UI.retry : SYSTEM_UI.sending}
+            disabled={!imageFailed || !onRetryImage}
+            onClick={() => void onRetryImage?.().catch(() => undefined)}
+          >
+            {imageFailed ? (
+              <span className="chat-upload-failed-mark" aria-hidden="true">
+                !
+              </span>
+            ) : (
+              <span className="chat-upload-ring" style={uploadRingStyle} aria-hidden="true">
+                <span>{uploadPercent}</span>
+              </span>
+            )}
+          </button>
         </div>
       ) : null}
       <form
@@ -560,10 +644,13 @@ export function MessagesWorkspace({
   pendingConversation = null,
   LinkComponent = 'a',
   onSendMessage,
+  onRetryMessage,
   sending = false,
   sendError = null,
   onSendImage,
+  onRetryImage,
   imageSending = false,
+  imageFailed = false,
   imageProgress = null,
   imagePreviewUrl = null,
   imageError = null,
@@ -578,10 +665,13 @@ export function MessagesWorkspace({
   pendingConversation?: PendingSupportConversation | null;
   LinkComponent?: StorefrontLinkComponent;
   onSendMessage?: ((body: string) => Promise<void>) | undefined;
+  onRetryMessage?: ((message: SupportMessage) => Promise<void>) | undefined;
   sending?: boolean;
   sendError?: string | null;
   onSendImage?: ((file: File) => Promise<void>) | undefined;
+  onRetryImage?: (() => Promise<void>) | undefined;
   imageSending?: boolean;
+  imageFailed?: boolean;
   imageProgress?: number | null;
   imagePreviewUrl?: string | null;
   imageError?: string | null;
@@ -608,10 +698,13 @@ export function MessagesWorkspace({
             pendingConversation={pendingConversation}
             LinkComponent={LinkComponent}
             onSendMessage={onSendMessage}
+            onRetryMessage={onRetryMessage}
             sending={sending}
             sendError={sendError}
             onSendImage={onSendImage}
+            onRetryImage={onRetryImage}
             imageSending={imageSending}
+            imageFailed={imageFailed}
             imageProgress={imageProgress}
             imagePreviewUrl={imagePreviewUrl}
             imageError={imageError}
