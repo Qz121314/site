@@ -381,8 +381,7 @@ export function MessagesPage({
       }
     },
     onError: (_error, variables, context) => {
-      const optimisticId =
-        context?.optimisticId ?? `local:${variables.clientMessageId}`;
+      const optimisticId = context?.optimisticId ?? `local:${variables.clientMessageId}`;
       if (variables.conversationRef) {
         updateOptimisticDelivery(
           queryClient,

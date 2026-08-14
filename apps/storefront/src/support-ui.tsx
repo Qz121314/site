@@ -567,7 +567,11 @@ export function MessageThreadPageContent({
                 !
               </span>
             ) : (
-              <span className="chat-upload-ring" style={uploadRingStyle} aria-hidden="true">
+              <span
+                className="chat-upload-ring"
+                style={uploadRingStyle}
+                aria-hidden="true"
+              >
                 <span>{uploadPercent}</span>
               </span>
             )}
