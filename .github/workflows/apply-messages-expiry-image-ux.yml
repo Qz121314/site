@@ -1,0 +1,54 @@
+name: Apply messages expiry and image UX
+
+on:
+  push:
+    branches: [agent/messages-expiry-image-ux]
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: agent/messages-expiry-image-ux
+          fetch-depth: 0
+
+      - name: Apply implementation
+        run: node scripts/apply-messages-expiry-image-ux.mjs
+
+      - name: Set up Node.js and pnpm
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --version
+          npm install --global pnpm@11.19.0
+          pnpm --version
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Format implementation before validation
+        run: pnpm format:write
+
+      - name: Verify implementation
+        run: pnpm verify
+
+      - name: Commit verified implementation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            apps/storefront/src/system-ui.ts \
+            apps/storefront/src/MessagesPage.tsx \
+            apps/storefront/src/support-ui.tsx \
+            apps/storefront/src/messages-media.css
+          git diff --cached --check
+          git commit --no-verify -m "完善24小时会话倒计时与图片发送体验"
+          git push
