@@ -1,7 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import type { StorefrontLinkComponent } from '@site/storefront-ui';
 import { useEffect, useMemo, useState, type MouseEvent as ReactMouseEvent } from 'react';
-import { loadSectionSnapshot, type StorefrontBootstrap } from './content';
+import {
+  loadSectionSnapshot,
+  publicImageVariantUrl,
+  type StorefrontBootstrap,
+} from './content';
 import { SquareSkeletonGrid } from './LoadingStates';
 import { ResilientImage } from './ResilientMedia';
 import { productHref } from './routing';
@@ -247,25 +251,42 @@ export function SectionCatalogPage({
       <div className="section-catalog-content">
         {filteredProducts.length > 0 ? (
           <div className="section-catalog-products">
-            {filteredProducts.map((product) => (
-              <LinkComponent
-                className="section-product-card"
-                href={productHref(product)}
-                key={product.id}
-              >
-                <div className="section-product-cover">
-                  <ResilientImage
-                    alt=""
-                    fallback={<div className="image-fallback" aria-hidden="true" />}
-                    loading="lazy"
-                    src={product.coverUrl}
-                  />
-                </div>
-                <span className="section-product-meta">
-                  <h2>{product.title}</h2>
-                </span>
-              </LinkComponent>
-            ))}
+            {filteredProducts.map((product, index) => {
+              const src =
+                publicImageVariantUrl(product.coverObjectKey, 640) ?? product.coverUrl;
+              const srcSet = product.coverObjectKey
+                ? ([384, 640, 960] as const)
+                    .map(
+                      (width) =>
+                        `${publicImageVariantUrl(product.coverObjectKey, width)} ${width}w`,
+                    )
+                    .join(', ')
+                : undefined;
+              return (
+                <LinkComponent
+                  className="section-product-card"
+                  href={productHref(product)}
+                  key={product.id}
+                >
+                  <div className="section-product-cover">
+                    <ResilientImage
+                      alt=""
+                      fallback={<div className="image-fallback" aria-hidden="true" />}
+                      fetchPriority={index === 0 ? 'high' : 'auto'}
+                      height={640}
+                      loading={index < 2 ? 'eager' : 'lazy'}
+                      sizes="(max-width: 767px) 46vw, 372px"
+                      src={src}
+                      srcSet={srcSet}
+                      width={640}
+                    />
+                  </div>
+                  <span className="section-product-meta">
+                    <h2>{product.title}</h2>
+                  </span>
+                </LinkComponent>
+              );
+            })}
           </div>
         ) : (
           <div className="section-catalog-empty">

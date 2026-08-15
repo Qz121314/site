@@ -3,6 +3,7 @@ import type { StorefrontLinkComponent } from '@site/storefront-ui';
 import { useEffect, useMemo, useState } from 'react';
 import {
   loadSectionSnapshot,
+  publicImageVariantUrl,
   type PublicProductSummary,
   type PublicSection,
   type StorefrontBootstrap,
@@ -210,23 +211,40 @@ export function BrowsePage({
             <SquareSkeletonGrid count={4} />
           ) : (
             <div className="browse-search-products">
-              {filteredProducts.map((product) => (
-                <LinkComponent
-                  className="browse-search-product-card"
-                  href={productHref(product)}
-                  key={product.id}
-                >
-                  <span className="browse-search-product-cover">
-                    <ResilientImage
-                      alt=""
-                      fallback={<span className="image-fallback" aria-hidden="true" />}
-                      loading="lazy"
-                      src={product.coverUrl}
-                    />
-                  </span>
-                  <strong>{product.title}</strong>
-                </LinkComponent>
-              ))}
+              {filteredProducts.map((product, index) => {
+                const src =
+                  publicImageVariantUrl(product.coverObjectKey, 640) ?? product.coverUrl;
+                const srcSet = product.coverObjectKey
+                  ? ([384, 640, 960] as const)
+                      .map(
+                        (width) =>
+                          `${publicImageVariantUrl(product.coverObjectKey, width)} ${width}w`,
+                      )
+                      .join(', ')
+                  : undefined;
+                return (
+                  <LinkComponent
+                    className="browse-search-product-card"
+                    href={productHref(product)}
+                    key={product.id}
+                  >
+                    <span className="browse-search-product-cover">
+                      <ResilientImage
+                        alt=""
+                        fallback={<span className="image-fallback" aria-hidden="true" />}
+                        fetchPriority={index === 0 ? 'high' : 'auto'}
+                        height={640}
+                        loading={index < 2 ? 'eager' : 'lazy'}
+                        sizes="(max-width: 767px) 46vw, 372px"
+                        src={src}
+                        srcSet={srcSet}
+                        width={640}
+                      />
+                    </span>
+                    <strong>{product.title}</strong>
+                  </LinkComponent>
+                );
+              })}
             </div>
           )}
         </section>
