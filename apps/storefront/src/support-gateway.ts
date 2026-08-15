@@ -8,7 +8,10 @@ import type {
   SupportMessage,
 } from './support-contract';
 import { getSupportVisitorIdentity } from './support-identity';
-import { loadConversationMedia, sendConversationImage } from './support-media-gateway';
+import {
+  loadConversationMedia,
+  sendConversationImage,
+} from './support-media-gateway';
 
 export class SupportApiError extends Error {
   readonly status: number;
@@ -78,7 +81,10 @@ async function readJson(response: Response): Promise<unknown> {
   return contentType.includes('application/json') ? response.json() : null;
 }
 
-async function siteRequestJson(path: string, signal?: AbortSignal): Promise<unknown> {
+async function siteRequestJson(
+  path: string,
+  signal?: AbortSignal,
+): Promise<unknown> {
   const response = await fetch(path, {
     cache: 'no-store',
     credentials: 'same-origin',
@@ -285,7 +291,9 @@ function parseMessage(value: unknown): SupportMessage {
     (item.direction !== 'customer' && item.direction !== 'agent') ||
     typeof item.body !== 'string' ||
     typeof item.sentAt !== 'string' ||
-    (item.delivery !== 'sending' && item.delivery !== 'sent' && item.delivery !== 'read')
+    (item.delivery !== 'sending' &&
+      item.delivery !== 'sent' &&
+      item.delivery !== 'read')
   ) {
     throw new SupportApiError(
       500,
@@ -311,7 +319,9 @@ function parseRemoteSummary(value: unknown): RemoteConversationSummary {
     !nullableString(item.lastMessageAt) ||
     typeof item.unreadCount !== 'number' ||
     !Number.isInteger(item.unreadCount) ||
-    (item.status !== 'waiting' && item.status !== 'active' && item.status !== 'closed')
+    (item.status !== 'waiting' &&
+      item.status !== 'active' &&
+      item.status !== 'closed')
   ) {
     throw new SupportApiError(
       500,
@@ -422,7 +432,10 @@ function attachConversationMedia(
 async function connectionForConversationRef(
   conversationRef: string,
   signal?: AbortSignal,
-): Promise<{ connection: PublicSupportConnection; remoteConversationId: string }> {
+): Promise<{
+  connection: PublicSupportConnection;
+  remoteConversationId: string;
+}> {
   const parsed = parseSupportConversationRef(conversationRef);
   if (!parsed)
     throw new SupportApiError(
@@ -431,7 +444,9 @@ async function connectionForConversationRef(
       'Conversation not found.',
     );
   const connections = await loadPublicSupportConnections(signal);
-  const connection = connections.find((item) => item.id === parsed.connectionId);
+  const connection = connections.find(
+    (item) => item.id === parsed.connectionId,
+  );
   if (!connection)
     throw new SupportApiError(
       404,
@@ -447,10 +462,27 @@ function conversationTimestamp(value: string | null): number {
   return Number.isFinite(timestamp) ? timestamp : 0;
 }
 
-export function buildSupportWebSocketUrl(connection: PublicSupportConnection): string {
+export function buildSupportWebSocketUrl(
+  connection: PublicSupportConnection,
+): string {
   const identity = getSupportVisitorIdentity();
   const url = new URL(connection.realtimeUrl);
   url.searchParams.set('visitorId', identity.visitorId);
+  return url.toString();
+}
+
+export async function buildSupportConversationWebSocketUrl(
+  conversationRef: string,
+): Promise<string> {
+  const { connection, remoteConversationId } =
+    await connectionForConversationRef(conversationRef);
+  const url = new URL(
+    clientQueryUrl(
+      connection,
+      `/conversations/${encodeURIComponent(remoteConversationId)}/realtime`,
+    ),
+  );
+  url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
   return url.toString();
 }
 
@@ -479,7 +511,9 @@ export const siteSupportGateway: SupportGateway = {
       }),
     );
     const successful = settled.filter(
-      (result): result is PromiseFulfilledResult<SupportConversationSummary[]> =>
+      (
+        result,
+      ): result is PromiseFulfilledResult<SupportConversationSummary[]> =>
         result.status === 'fulfilled',
     );
     if (
@@ -502,10 +536,8 @@ export const siteSupportGateway: SupportGateway = {
   },
 
   async getConversation(conversationRef, before = null, signal) {
-    const { connection, remoteConversationId } = await connectionForConversationRef(
-      conversationRef,
-      signal,
-    );
+    const { connection, remoteConversationId } =
+      await connectionForConversationRef(conversationRef, signal);
     try {
       const [value, media] = await Promise.all([
         remoteRequestJson(
@@ -519,7 +551,10 @@ export const siteSupportGateway: SupportGateway = {
         ),
         loadConversationMedia(connection, remoteConversationId, signal),
       ]);
-      return attachConversationMedia(conversationEnvelope(connection, value), media);
+      return attachConversationMedia(
+        conversationEnvelope(connection, value),
+        media,
+      );
     } catch (error) {
       if (error instanceof SupportApiError && error.status === 404) return null;
       throw error;
@@ -527,7 +562,11 @@ export const siteSupportGateway: SupportGateway = {
   },
 
   async startConversation(input: StartSupportConversationInput, signal) {
-    const route = await resolveSupportRoute(input.productId, input.sectionId, signal);
+    const route = await resolveSupportRoute(
+      input.productId,
+      input.sectionId,
+      signal,
+    );
     const value = await remoteRequestJson(
       remoteUrl(route.connection, '/conversations'),
       {
@@ -554,11 +593,13 @@ export const siteSupportGateway: SupportGateway = {
     return conversationEnvelope(route.connection, value);
   },
 
-  async sendMessage(conversationRef: string, input: SendSupportMessageInput, signal) {
-    const { connection, remoteConversationId } = await connectionForConversationRef(
-      conversationRef,
-      signal,
-    );
+  async sendMessage(
+    conversationRef: string,
+    input: SendSupportMessageInput,
+    signal,
+  ) {
+    const { connection, remoteConversationId } =
+      await connectionForConversationRef(conversationRef, signal);
     const value = await remoteRequestJson(
       remoteUrl(
         connection,
@@ -585,10 +626,8 @@ export const siteSupportGateway: SupportGateway = {
     onProgress,
     signal,
   ) {
-    const { connection, remoteConversationId } = await connectionForConversationRef(
-      conversationRef,
-      signal,
-    );
+    const { connection, remoteConversationId } =
+      await connectionForConversationRef(conversationRef, signal);
     return sendConversationImage(
       connection,
       remoteConversationId,
@@ -599,10 +638,8 @@ export const siteSupportGateway: SupportGateway = {
   },
 
   async markConversationRead(conversationRef, lastMessageId = null, signal) {
-    const { connection, remoteConversationId } = await connectionForConversationRef(
-      conversationRef,
-      signal,
-    );
+    const { connection, remoteConversationId } =
+      await connectionForConversationRef(conversationRef, signal);
     const value = await remoteRequestJson(
       remoteUrl(
         connection,

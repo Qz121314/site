@@ -12,15 +12,28 @@ test('support realtime is websocket-first with REST reserved for recovery', () =
   const realtime = source('../src/support-realtime.ts');
   const messages = source('../src/MessagesPage.tsx');
   const media = source('../src/support-media-gateway.ts');
+  const typing = source('../src/support-thread-realtime.ts');
 
   assert.ok(!root.includes('refetchInterval: 30_000'));
   assert.ok(root.includes("event.type === 'realtime.recovered'"));
   assert.ok(root.includes('setQueryData'));
-  assert.ok(realtime.includes("recovered ? 'realtime.recovered' : 'realtime.connected'"));
-  assert.ok(realtime.includes('parseMessage(state.connection, raw.message, raw.media)'));
+  assert.ok(
+    realtime.includes(
+      "recovered ? 'realtime.recovered' : 'realtime.connected'",
+    ),
+  );
+  assert.ok(
+    realtime.includes('parseMessage(state.connection, raw.message, raw.media)'),
+  );
   assert.ok(messages.includes('staleTime: Number.POSITIVE_INFINITY'));
   assert.ok(
-    !messages.includes("invalidateQueries({ queryKey: ['support-conversations'] })"),
+    !messages.includes(
+      "invalidateQueries({ queryKey: ['support-conversations'] })",
+    ),
   );
   assert.ok(media.includes('Promise<SupportMessage>'));
+  assert.ok(
+    typing.includes("socket.send(JSON.stringify({ type: 'typing', active }))"),
+  );
+  assert.ok(typing.includes('buildSupportConversationWebSocketUrl'));
 });
