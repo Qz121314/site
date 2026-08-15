@@ -9,11 +9,7 @@ const RECONNECT_DELAYS_MS = [750, 1_500, 3_000, 6_000, 10_000];
 const HEARTBEAT_MS = 25_000;
 
 function reconnectDelay(attempt: number): number {
-  return (
-    RECONNECT_DELAYS_MS[
-      Math.min(attempt, RECONNECT_DELAYS_MS.length - 1)
-    ] ?? 10_000
-  );
+  return RECONNECT_DELAYS_MS[Math.min(attempt, RECONNECT_DELAYS_MS.length - 1)] ?? 10_000;
 }
 
 export async function openSupportTypingChannel(
@@ -38,12 +34,7 @@ export async function openSupportTypingChannel(
 
   const transmitTyping = (active: boolean) => {
     desiredTyping = active;
-    if (
-      !socket ||
-      socket.readyState !== WebSocket.OPEN ||
-      sentTyping === active
-    )
-      return;
+    if (!socket || socket.readyState !== WebSocket.OPEN || sentTyping === active) return;
     try {
       socket.send(JSON.stringify({ type: 'typing', active }));
       sentTyping = active;
@@ -63,8 +54,7 @@ export async function openSupportTypingChannel(
         sentTyping = false;
         if (desiredTyping) transmitTyping(true);
         heartbeatTimer = window.setInterval(() => {
-          if (socket !== nextSocket || nextSocket.readyState !== WebSocket.OPEN)
-            return;
+          if (socket !== nextSocket || nextSocket.readyState !== WebSocket.OPEN) return;
           try {
             nextSocket.send('ping');
           } catch {
@@ -106,9 +96,7 @@ export async function openSupportTypingChannel(
       nextSocket.addEventListener('error', () => nextSocket.close());
     } catch {
       const delay =
-        RECONNECT_DELAYS_MS[
-          Math.min(reconnectAttempt, RECONNECT_DELAYS_MS.length - 1)
-        ];
+        RECONNECT_DELAYS_MS[Math.min(reconnectAttempt, RECONNECT_DELAYS_MS.length - 1)];
       reconnectAttempt += 1;
       reconnectTimer = window.setTimeout(connect, delay);
     }

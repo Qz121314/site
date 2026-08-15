@@ -17,23 +17,13 @@ test('support realtime is websocket-first with REST reserved for recovery', () =
   assert.ok(!root.includes('refetchInterval: 30_000'));
   assert.ok(root.includes("event.type === 'realtime.recovered'"));
   assert.ok(root.includes('setQueryData'));
-  assert.ok(
-    realtime.includes(
-      "recovered ? 'realtime.recovered' : 'realtime.connected'",
-    ),
-  );
-  assert.ok(
-    realtime.includes('parseMessage(state.connection, raw.message, raw.media)'),
-  );
+  assert.ok(realtime.includes("recovered ? 'realtime.recovered' : 'realtime.connected'"));
+  assert.ok(realtime.includes('parseMessage(state.connection, raw.message, raw.media)'));
   assert.ok(messages.includes('staleTime: Number.POSITIVE_INFINITY'));
   assert.ok(
-    !messages.includes(
-      "invalidateQueries({ queryKey: ['support-conversations'] })",
-    ),
+    !messages.includes("invalidateQueries({ queryKey: ['support-conversations'] })"),
   );
   assert.ok(media.includes('Promise<SupportMessage>'));
-  assert.ok(
-    typing.includes("socket.send(JSON.stringify({ type: 'typing', active }))"),
-  );
+  assert.ok(typing.includes("socket.send(JSON.stringify({ type: 'typing', active }))"));
   assert.ok(typing.includes('buildSupportConversationWebSocketUrl'));
 });

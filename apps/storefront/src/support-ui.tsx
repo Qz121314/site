@@ -120,14 +120,11 @@ function formatChatDay(value: string): string {
 function isSameChatDay(left: string, right: string): boolean {
   const leftDate = new Date(left);
   const rightDate = new Date(right);
-  if (Number.isNaN(leftDate.getTime()) || Number.isNaN(rightDate.getTime()))
-    return false;
+  if (Number.isNaN(leftDate.getTime()) || Number.isNaN(rightDate.getTime())) return false;
   return chatDayNumber(leftDate) === chatDayNumber(rightDate);
 }
 
-function conversationTimestamp(
-  conversation: SupportConversationSummary,
-): number {
+function conversationTimestamp(conversation: SupportConversationSummary): number {
   if (!conversation.lastMessageAt) return 0;
   const timestamp = new Date(conversation.lastMessageAt).getTime();
   return Number.isNaN(timestamp) ? 0 : timestamp;
@@ -155,20 +152,14 @@ function ConversationAvatar({
       <ResilientImage
         alt=""
         fallback={
-          <span aria-hidden="true">
-            {conversationTitle(conversation).slice(0, 1)}
-          </span>
+          <span aria-hidden="true">{conversationTitle(conversation).slice(0, 1)}</span>
         }
         loading="lazy"
         src={avatarUrl}
       />
     );
   }
-  return (
-    <span aria-hidden="true">
-      {conversationTitle(conversation).slice(0, 1)}
-    </span>
-  );
+  return <span aria-hidden="true">{conversationTitle(conversation).slice(0, 1)}</span>;
 }
 
 export function MessagesPageContent({
@@ -193,9 +184,7 @@ export function MessagesPageContent({
           <span className="messages-empty-icon" aria-hidden="true">
             <MessageBubbleIcon />
           </span>
-          {supportAvailable === false ? (
-            <strong>{SYSTEM_UI.noSupport}</strong>
-          ) : null}
+          {supportAvailable === false ? <strong>{SYSTEM_UI.noSupport}</strong> : null}
         </div>
       ) : (
         <div className="conversation-list" role="list">
@@ -223,9 +212,7 @@ export function MessagesPageContent({
                     <span>{conversationPreview(conversation)}</span>
                     {isUnread ? (
                       <b aria-label={`${conversation.unreadCount} unread`}>
-                        {conversation.unreadCount > 99
-                          ? '99+'
-                          : conversation.unreadCount}
+                        {conversation.unreadCount > 99 ? '99+' : conversation.unreadCount}
                       </b>
                     ) : null}
                   </span>
@@ -256,11 +243,7 @@ function ProductContextCard({
     <>
       <span className="chat-product-media">
         {context.productCoverUrl ? (
-          <ResilientImage
-            alt=""
-            fallback={null}
-            src={context.productCoverUrl}
-          />
+          <ResilientImage alt="" fallback={null} src={context.productCoverUrl} />
         ) : null}
       </span>
       <span className="chat-product-copy">
@@ -290,10 +273,7 @@ function DeliveryMark({
 }) {
   if (delivery === 'sending') {
     return (
-      <span
-        className="chat-delivery-mark is-sending"
-        aria-label={SYSTEM_UI.sending}
-      >
+      <span className="chat-delivery-mark is-sending" aria-label={SYSTEM_UI.sending}>
         <span className="chat-status-spinner" aria-hidden="true" />
       </span>
     );
@@ -367,6 +347,7 @@ export function MessageThreadPageContent({
   const localTypingTimerRef = useRef<number | null>(null);
   const remoteTypingTimerRef = useRef<number | null>(null);
   const lastMessageId = conversation?.messages.at(-1)?.id ?? null;
+  const typingConversationId = conversation?.id ?? null;
 
   useEffect(() => {
     setDraft('');
@@ -377,13 +358,13 @@ export function MessageThreadPageContent({
     setAgentTyping(false);
     typingChannelRef.current?.close();
     typingChannelRef.current = null;
-    if (!conversation || conversation.id === '__new__') {
+    if (!typingConversationId || typingConversationId === '__new__') {
       return () => {
         disposed = true;
       };
     }
 
-    void openSupportTypingChannel(conversation.id, (active) => {
+    void openSupportTypingChannel(typingConversationId, (active) => {
       if (disposed) return;
       if (remoteTypingTimerRef.current !== null) {
         window.clearTimeout(remoteTypingTimerRef.current);
@@ -418,7 +399,7 @@ export function MessageThreadPageContent({
         remoteTypingTimerRef.current = null;
       }
     };
-  }, [conversation?.id]);
+  }, [typingConversationId]);
 
   function signalCustomerTyping(value: string) {
     if (localTypingTimerRef.current !== null) {
@@ -438,8 +419,7 @@ export function MessageThreadPageContent({
     const timeline = timelineRef.current;
     const conversationId = conversation?.id ?? null;
     if (!timeline || !conversationId) return;
-    const isOpeningConversation =
-      openedConversationRef.current !== conversationId;
+    const isOpeningConversation = openedConversationRef.current !== conversationId;
     const scroll = () => {
       if (isOpeningConversation) {
         timeline.scrollTop = timeline.scrollHeight;
@@ -512,15 +492,11 @@ export function MessageThreadPageContent({
     Boolean(onSendMessage) &&
     (pendingConversation !== null || conversation?.status !== 'closed');
   const canSendImage =
-    Boolean(onSendImage) &&
-    Boolean(conversation) &&
-    conversation?.status !== 'closed';
+    Boolean(onSendImage) && Boolean(conversation) && conversation?.status !== 'closed';
   const headerTitle = conversation
     ? conversationTitle(conversation)
     : (pendingConversation?.productTitle ?? '');
-  const uploadPercent = Math.round(
-    Math.max(0, Math.min(1, imageProgress ?? 0)) * 100,
-  );
+  const uploadPercent = Math.round(Math.max(0, Math.min(1, imageProgress ?? 0)) * 100);
   const uploadRingStyle = {
     '--chat-upload-progress': `${uploadPercent * 3.6}deg`,
   } as CSSProperties;
@@ -572,17 +548,9 @@ export function MessageThreadPageContent({
         ) : null}
       </header>
 
-      <ProductContextCard
-        context={productContext}
-        LinkComponent={LinkComponent}
-      />
+      <ProductContextCard context={productContext} LinkComponent={LinkComponent} />
 
-      <div
-        className="chat-timeline"
-        role="log"
-        aria-live="polite"
-        ref={timelineRef}
-      >
+      <div className="chat-timeline" role="log" aria-live="polite" ref={timelineRef}>
         {conversation?.nextMessageCursor && onLoadEarlier ? (
           <button
             className="chat-load-earlier"
@@ -598,12 +566,9 @@ export function MessageThreadPageContent({
           const next = messages[index + 1];
           const sameDayAsPrevious =
             previous && isSameChatDay(previous.sentAt, message.sentAt);
-          const sameDayAsNext =
-            next && isSameChatDay(message.sentAt, next.sentAt);
+          const sameDayAsNext = next && isSameChatDay(message.sentAt, next.sentAt);
           const groupStart =
-            !previous ||
-            !sameDayAsPrevious ||
-            previous.direction !== message.direction;
+            !previous || !sameDayAsPrevious || previous.direction !== message.direction;
           const groupEnd =
             !next || !sameDayAsNext || next.direction !== message.direction;
           const showDay = !previous || !sameDayAsPrevious;
@@ -650,10 +615,7 @@ export function MessageThreadPageContent({
                         delivery={message.delivery}
                         onRetry={
                           message.delivery === 'failed' && onRetryMessage
-                            ? () =>
-                                void onRetryMessage(message).catch(
-                                  () => undefined,
-                                )
+                            ? () => void onRetryMessage(message).catch(() => undefined)
                             : undefined
                         }
                       />
@@ -716,10 +678,7 @@ export function MessageThreadPageContent({
         onSubmit={(event) => void submit(event)}
       >
         {canSendImage ? (
-          <label
-            className="chat-attachment-picker"
-            aria-label={SYSTEM_UI.attachment}
-          >
+          <label className="chat-attachment-picker" aria-label={SYSTEM_UI.attachment}>
             ＋
             <input
               type="file"
@@ -824,12 +783,9 @@ export function MessagesWorkspace({
   loadingConversation?: boolean;
   supportAvailable?: boolean | null;
 }) {
-  const threadOpen =
-    activeConversationRef !== null || pendingConversation !== null;
+  const threadOpen = activeConversationRef !== null || pendingConversation !== null;
   return (
-    <section
-      className={`messages-workspace${threadOpen ? ' is-thread-open' : ''}`}
-    >
+    <section className={`messages-workspace${threadOpen ? ' is-thread-open' : ''}`}>
       <aside className="messages-sidebar">
         <MessagesPageContent
           activeConversationId={activeConversation?.id ?? null}
