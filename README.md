@@ -399,9 +399,9 @@ link               外部链接入口
 
 当前保持轻量的 first-party `generic_v1` 对接契约，不引入复杂第三方 REST 映射器。
 
-后续自研客服管理系统使用独立 Git 仓库、独立 Cloudflare Worker、独立数据库和独立部署流程。本项目保留 Messages 用户界面和后台运行时连接配置。Storefront 可以读取已启用连接的公开 `baseUrl` / `projectId`，并直接访问客服系统的 Client REST / WebSocket；管理 Token 只供产品后台测试连接和读取客服 Group，绝不进入浏览器。完整协议见 [客服系统接入文档](docs/customer-service-integration.md)。
+自研客服管理系统使用独立 Git 仓库、独立 Cloudflare Worker、独立数据库和独立部署流程。本项目只保留 Messages 用户界面、Site 侧在线客服转化组和客服系统连接配置。管理员录入客服系统公网根地址与验证 Token 后，由浏览器直接调用客服系统 `/integration/v1/verify` 完成协议验证并同步当前在线客服产品目录；Site 只保存验证后返回的 `clientApiUrl` / `realtimeUrl`，验证 Token 永远不会进入 Storefront 公开配置。
 
-后台提供连接管理、启停、测试和回收站；转化池可以引用可用客服连接中的 Group。Site 负责 Product -> Support Group，独立客服系统负责 Group -> Agent。
+运行时由 Site 解析 **Product -> 在线客服转化组 -> 客服系统连接**，并把权威的产品 / 分区 / 分类上下文返回给 Storefront；之后 Conversation、Message、媒体和 WebSocket 流量都由浏览器直接访问独立客服系统，Site Worker 不代理聊天流量。独立客服系统再按“整个分区 / 指定分类 / 指定产品”的动态负责范围把会话分配给 Agent。Site 的转化分组只是 Site 侧产品入口配置，不再映射远端客服 Group。完整协议见 [客服系统接入文档](docs/customer-service-integration.md)。
 
 ## Markdown
 
