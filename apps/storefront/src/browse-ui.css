@@ -535,3 +535,9 @@
     transition: none;
   }
 }
+
+/* Keep narrow desktop catalog surfaces optically centered inside the app shell. */
+.browse-directory-search,
+.browse-search-products {
+  margin-inline: auto;
+}
