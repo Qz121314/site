@@ -447,3 +447,19 @@
     animation: none;
   }
 }
+
+@media (min-width: 1180px) {
+  .home-shortcut-zone {
+    padding-inline: 2px;
+  }
+
+  .home-product-rail {
+    grid-auto-columns: minmax(184px, 208px);
+    gap: 16px;
+  }
+
+  .home-recommendation-feed {
+    gap: 48px;
+    padding-bottom: 56px;
+  }
+}

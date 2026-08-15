@@ -131,6 +131,15 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
     setSuccessMessage('');
   }, [scope]);
 
+  useEffect(() => {
+    if (!editorOpen || saving) return;
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setEditorOpen(false);
+    };
+    window.addEventListener('keydown', closeOnEscape);
+    return () => window.removeEventListener('keydown', closeOnEscape);
+  }, [editorOpen, saving]);
+
   const source = scope === 'active' ? activeConnections : trashConnections;
   const filtered = useMemo(() => {
     const keyword = search.trim().toLowerCase();
@@ -440,12 +449,19 @@ export function CustomerServiceView({ onSessionExpired }: CustomerServiceViewPro
       </div>
 
       {editorOpen ? (
-        <div className="admin-dialog-backdrop" role="presentation">
+        <div
+          className="admin-dialog-backdrop"
+          role="presentation"
+          onMouseDown={() => {
+            if (!saving) setEditorOpen(false);
+          }}
+        >
           <section
             className="admin-dialog customer-service-editor"
             role="dialog"
             aria-modal="true"
             aria-labelledby="customer-service-editor-title"
+            onMouseDown={(event) => event.stopPropagation()}
           >
             <div className="admin-dialog-header">
               <div>
