@@ -362,7 +362,7 @@ Cloudflare Static Assets 使用 SPA fallback。`/api/*` 和 `/go/*` Worker-first
 
 ```text
 audit_logs
-conversion_events（预留表；当前 /go 不写入）
+conversion_events（`/go` 权威分发账本；按 request_id 防止重复记账）
 ```
 
 它们不按模块最近 3 版规则删除。

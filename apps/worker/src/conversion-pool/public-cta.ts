@@ -77,13 +77,9 @@ export async function resolvePublicCta(
     return { product, cta: null };
   }
 
-  const path =
-    group.mode === 'customer_service'
-      ? `/messages/new/?${new URLSearchParams({
-          productId: product.id,
-          sectionId: product.sectionId,
-        }).toString()}`
-      : `/go/${encodeURIComponent(product.id)}`;
+  // Every CTA mode passes through the authoritative distribution route so one
+  // successful handoff produces exactly one billable traffic record.
+  const path = `/go/${encodeURIComponent(product.id)}`;
 
   return {
     product,

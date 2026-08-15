@@ -89,6 +89,10 @@ function createConversionDb({
           }
           throw new Error(`Unexpected first SQL: ${this.sql}`);
         },
+        async run() {
+          statements.push({ kind: 'run', sql: this.sql, args: this.args });
+          return { success: true, meta: { changes: 1 } };
+        },
       };
       return statement;
     },
@@ -148,6 +152,13 @@ test('GET /go/:code keeps link targets on production round-robin', async () => {
     'https://a.example/path',
   ]);
   assert.equal(db.cursor, 4);
+  assert.equal(
+    db.statements.filter(
+      ({ kind, sql }) =>
+        kind === 'run' && /INSERT(?: OR IGNORE)? INTO conversion_events/u.test(sql),
+    ).length,
+    4,
+  );
 });
 
 test('GET realtime CTA state reads current configuration without consuming round-robin', async () => {
@@ -225,6 +236,13 @@ test('customer-service CTA stays inside Site Messages and does not consume a tar
         sql.includes('INSERT INTO conversion_group_rotation'),
       ),
       false,
+    );
+    assert.equal(
+      db.statements.filter(
+        ({ kind, sql }) =>
+          kind === 'run' && /INSERT(?: OR IGNORE)? INTO conversion_events/u.test(sql),
+      ).length,
+      1,
     );
   } finally {
     globalThis.fetch = originalFetch;
