@@ -74,7 +74,7 @@ publicConversionRoutes.get('/:code', async (context) => {
   }
 
   if (group.mode === 'customer_service') {
-    await recordConversionTrafficEvent(context.env.DB, {
+    const handoffId = await recordConversionTrafficEvent(context.env.DB, {
       sectionId: product.sectionId,
       productId: product.id,
       conversionGroupId: group.id,
@@ -87,6 +87,7 @@ publicConversionRoutes.get('/:code', async (context) => {
     const query = new URLSearchParams({
       productId: product.id,
       sectionId: product.sectionId,
+      handoffId,
     });
     return context.redirect(`/messages/new/?${query.toString()}`, 302);
   }

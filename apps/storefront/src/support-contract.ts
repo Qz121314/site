@@ -41,6 +41,7 @@ export type SupportConversationDetail = SupportConversationSummary & {
 };
 
 export type StartSupportConversationInput = {
+  handoffId: string;
   productId: string;
   sectionId: string;
   productTitle: string;

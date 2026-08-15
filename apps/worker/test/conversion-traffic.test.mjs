@@ -54,6 +54,38 @@ test('one authoritative distribution request writes one traffic event', async ()
   assert.equal(captured.args.at(-1), '2026-08-15');
 });
 
+test('a retried distribution request reuses its persisted handoff ID', async () => {
+  const db = {
+    prepare(sql) {
+      return {
+        bind() {
+          return this;
+        },
+        async run() {
+          return { success: true, meta: { changes: 0 } };
+        },
+        async first() {
+          assert.match(sql, /WHERE request_id = \?/u);
+          return { id: 'persisted-handoff-id' };
+        },
+      };
+    },
+  };
+
+  const handoffId = await recordConversionTrafficEvent(db, {
+    sectionId: 'section-1',
+    productId: 'product-1',
+    conversionGroupId: 'group-1',
+    conversionTargetId: null,
+    mode: 'customer_service',
+    outcome: 'redirected',
+    requestId: 'same-request',
+    createdAt: '2026-08-15T12:00:00.000Z',
+  });
+
+  assert.equal(handoffId, 'persisted-handoff-id');
+});
+
 test('monthly report returns billing totals in one response model', async () => {
   const db = {
     prepare(sql) {

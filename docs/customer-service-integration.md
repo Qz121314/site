@@ -441,6 +441,10 @@ Storefront 收到有效 delta 后直接更新 React Query cache，不再为每�
 
 Site 只选客服系统，不选客服坐席。
 
+每次在线客服 CTA 由 `/go/{productId}` 生成唯一 `handoffId`。该编号随 Messages
+临时会话创建请求直接传给 Customer Service，用于把 Site 的“已分发”与坐席的
+“首次接待”一一对应；它不包含访客身份信息，也不会增加额外 Worker 请求。
+
 Customer Service 负责范围模型：
 
 ```text

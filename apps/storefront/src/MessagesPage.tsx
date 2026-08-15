@@ -27,7 +27,7 @@ import './messages-media.css';
 
 const NAVIGATION_EVENT = 'storefront:navigate';
 
-type ComposeContext = { productId: string; sectionId: string };
+type ComposeContext = { productId: string; sectionId: string; handoffId: string };
 type ConversationQueryCache = {
   pages: Array<SupportConversationDetail | null>;
   pageParams: Array<string | null>;
@@ -48,9 +48,18 @@ function readComposeContext(): ComposeContext | null {
   const params = new URLSearchParams(window.location.search);
   const productId = params.get('productId')?.trim() ?? '';
   const sectionId = params.get('sectionId')?.trim() ?? '';
-  if (!productId || !sectionId || productId.length > 120 || sectionId.length > 120)
+  const handoffId = params.get('handoffId')?.trim() ?? '';
+  if (
+    !productId ||
+    !sectionId ||
+    !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu.test(
+      handoffId,
+    ) ||
+    productId.length > 120 ||
+    sectionId.length > 120
+  )
     return null;
-  return { productId, sectionId };
+  return { productId, sectionId, handoffId };
 }
 
 function NotificationBellIcon({ enabled }: { enabled: boolean }) {
@@ -347,6 +356,7 @@ export function MessagesPage({
       }
       if (composeContext && pendingConversation?.productHref) {
         const conversation = await siteSupportGateway.startConversation({
+          handoffId: composeContext.handoffId,
           productId: composeContext.productId,
           sectionId: composeContext.sectionId,
           productTitle: pendingConversation.productTitle,

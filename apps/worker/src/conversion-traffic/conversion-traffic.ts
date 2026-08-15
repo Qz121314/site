@@ -3,6 +3,7 @@ export const TRAFFIC_TIME_ZONE = 'America/Los_Angeles';
 export type ConversionTrafficOutcome = 'redirected' | 'provider_error' | 'not_ready';
 
 export type ConversionTrafficEventInput = {
+  eventId?: string;
   sectionId: string;
   productId: string;
   conversionGroupId: string | null;
@@ -124,8 +125,9 @@ export function trafficMonthDays(month: string): number {
 export async function recordConversionTrafficEvent(
   db: D1Database,
   input: ConversionTrafficEventInput,
-): Promise<void> {
-  await db
+): Promise<string> {
+  const eventId = input.eventId ?? crypto.randomUUID();
+  const result = await db
     .prepare(
       `INSERT INTO conversion_events (
          id, section_id, product_id, conversion_group_id,
@@ -136,7 +138,7 @@ export async function recordConversionTrafficEvent(
        ON CONFLICT(request_id) DO NOTHING`,
     )
     .bind(
-      crypto.randomUUID(),
+      eventId,
       input.sectionId,
       input.productId,
       input.conversionGroupId,
@@ -148,6 +150,22 @@ export async function recordConversionTrafficEvent(
       trafficBusinessDate(new Date(input.createdAt)),
     )
     .run();
+  if (!result.meta.changes) {
+    const existing = await db
+      .prepare(
+        `SELECT id
+         FROM conversion_events
+         WHERE request_id = ?
+         LIMIT 1`,
+      )
+      .bind(input.requestId)
+      .first<{ id: string }>();
+    if (!existing?.id) {
+      throw new Error('Traffic event idempotency lookup failed.');
+    }
+    return existing.id;
+  }
+  return eventId;
 }
 
 export async function getConversionTrafficReport(

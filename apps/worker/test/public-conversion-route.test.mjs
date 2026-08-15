@@ -228,7 +228,11 @@ test('customer-service CTA stays inside Site Messages and does not consume a tar
     );
     assert.equal(response.status, 302);
     const location = response.headers.get('location');
-    assert.equal(location, '/messages/new/?productId=product-1&sectionId=section-1');
+    const redirect = new URL(location, 'http://local.test');
+    assert.equal(redirect.pathname, '/messages/new/');
+    assert.equal(redirect.searchParams.get('productId'), 'product-1');
+    assert.equal(redirect.searchParams.get('sectionId'), 'section-1');
+    assert.match(redirect.searchParams.get('handoffId') ?? '', /^[0-9a-f-]{36}$/u);
     assert.equal(db.cursor, 0);
     assert.equal(upstreamCalled, false);
     assert.equal(
@@ -244,6 +248,10 @@ test('customer-service CTA stays inside Site Messages and does not consume a tar
       ).length,
       1,
     );
+    const trafficWrite = db.statements.find(
+      ({ kind, sql }) => kind === 'run' && /INSERT INTO conversion_events/u.test(sql),
+    );
+    assert.equal(redirect.searchParams.get('handoffId'), trafficWrite?.args[0]);
   } finally {
     globalThis.fetch = originalFetch;
   }

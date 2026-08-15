@@ -552,6 +552,7 @@ export const siteSupportGateway: SupportGateway = {
         method: 'POST',
         body: JSON.stringify(
           clientBody({
+            sourceHandoffId: input.handoffId,
             clientMessageId: input.clientMessageId,
             message: input.message,
             product: {
