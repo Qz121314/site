@@ -47,8 +47,7 @@ function handleInternalBack(event: ReactMouseEvent<HTMLAnchorElement>) {
 }
 
 function navigateInternalCta(path: string) {
-  window.history.pushState(null, '', path);
-  window.dispatchEvent(new Event('storefront:navigate'));
+  window.location.assign(path);
 }
 
 function CtaArrow() {
