@@ -35,6 +35,13 @@ export function resolveMobileChatViewportMetrics(
   };
 }
 
+export function shouldUseMobileChatVisualViewportFallback(
+  visualViewportHeight: number,
+  layoutViewportHeight: number,
+): boolean {
+  return Math.abs(Math.round(visualViewportHeight) - Math.round(layoutViewportHeight)) > 1;
+}
+
 function isChatInput(target: EventTarget | null): target is HTMLTextAreaElement {
   return target instanceof HTMLTextAreaElement && target.matches(CHAT_INPUT_SELECTOR);
 }
@@ -66,12 +73,16 @@ function clearNestedViewportStyles(surfaces: MobileChatSurfaces) {
   }
 }
 
+function clearOuterViewportStyles(main: HTMLElement | null) {
+  main?.style.removeProperty('height');
+  main?.style.removeProperty('min-height');
+  main?.style.removeProperty('transform');
+}
+
 function clearMobileChatViewportStyles(surfaces = managedSurfaces) {
   if (!surfaces) return;
   clearNestedViewportStyles(surfaces);
-  surfaces.main?.style.removeProperty('height');
-  surfaces.main?.style.removeProperty('min-height');
-  surfaces.main?.style.removeProperty('transform');
+  clearOuterViewportStyles(surfaces.main);
   if (managedSurfaces === surfaces) managedSurfaces = null;
 }
 
@@ -81,8 +92,9 @@ function setMobileChatViewportHeight(page: HTMLElement) {
     return;
   }
 
+  const visualViewport = window.visualViewport;
   const { height: viewportHeight, offsetTop } = resolveMobileChatViewportMetrics(
-    window.visualViewport,
+    visualViewport,
     window.innerHeight,
   );
   if (viewportHeight <= 0) return;
@@ -93,17 +105,31 @@ function setMobileChatViewportHeight(page: HTMLElement) {
   }
   managedSurfaces = nextSurfaces;
 
-  // Keep exactly one pixel-height source. The outer main surface follows the
-  // visual viewport while every nested chat surface uses CSS height: 100%.
-  // Writing the same viewport height onto every nested layer caused Android
-  // keyboard resize to mix independent containing blocks and push the composer
-  // into the keyboard edge.
+  // Nested chat layers never receive their own pixel viewport heights. They form
+  // one 100%-height chain so the composer has a single containing block.
   clearNestedViewportStyles(nextSurfaces);
   const main = nextSurfaces.main;
   if (!main) return;
+
+  const layoutViewportHeight = Math.round(
+    document.documentElement.clientHeight || window.innerHeight,
+  );
+  const needsVisualViewportFallback =
+    Boolean(visualViewport) &&
+    shouldUseMobileChatVisualViewportFallback(viewportHeight, layoutViewportHeight);
+
+  if (!needsVisualViewportFallback) {
+    // Modern Android Chrome with interactive-widget=resizes-content already
+    // resizes the layout viewport above the software keyboard. Let 100dvh own
+    // that geometry instead of applying a second JavaScript resize.
+    clearOuterViewportStyles(main);
+    return;
+  }
+
+  // Browsers whose layout viewport does not follow the visual viewport (notably
+  // some iOS/legacy cases) get one fallback pixel height on the outer main only.
   main.style.height = `${viewportHeight}px`;
   main.style.minHeight = '0px';
-
   if (offsetTop > 0) {
     main.style.transform = `translate3d(0, ${offsetTop}px, 0)`;
   } else {
