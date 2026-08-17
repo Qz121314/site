@@ -22,6 +22,7 @@ type MobileChatSurfaces = {
 let installed = false;
 let activeChatInput: HTMLTextAreaElement | null = null;
 let settleTimerIds: number[] = [];
+let managedSurfaces: MobileChatSurfaces | null = null;
 
 export function resolveMobileChatViewportMetrics(
   visualViewport: MobileChatVisualViewport | null | undefined,
@@ -54,19 +55,21 @@ function findMobileChatSurfaces(page: HTMLElement): MobileChatSurfaces {
   };
 }
 
-function clearMobileChatViewportStyles(page: HTMLElement) {
-  const { main, route, workspace, detail } = findMobileChatSurfaces(page);
+function clearMobileChatViewportStyles(surfaces = managedSurfaces) {
+  if (!surfaces) return;
+  const { main, route, workspace, detail, page } = surfaces;
   for (const element of [main, route, workspace, detail, page]) {
     element?.style.removeProperty('height');
     element?.style.removeProperty('min-height');
   }
   main?.style.removeProperty('transform');
   workspace?.style.removeProperty('transform');
+  if (managedSurfaces === surfaces) managedSurfaces = null;
 }
 
 function setMobileChatViewportHeight(page: HTMLElement) {
   if (!window.matchMedia(MOBILE_CHAT_QUERY).matches) {
-    clearMobileChatViewportStyles(page);
+    clearMobileChatViewportStyles();
     return;
   }
 
@@ -76,8 +79,14 @@ function setMobileChatViewportHeight(page: HTMLElement) {
   );
   if (viewportHeight <= 0) return;
   const height = `${viewportHeight}px`;
-  const { main, route, workspace, detail } = findMobileChatSurfaces(page);
+  const nextSurfaces = findMobileChatSurfaces(page);
 
+  if (managedSurfaces && managedSurfaces.page !== page) {
+    clearMobileChatViewportStyles(managedSurfaces);
+  }
+  managedSurfaces = nextSurfaces;
+
+  const { main, route, workspace, detail } = nextSurfaces;
   for (const element of [main, route, workspace, detail, page]) {
     if (!element) continue;
     element.style.height = height;
@@ -105,7 +114,10 @@ function scrollChatToLatest(page: HTMLElement) {
 }
 
 function syncChatViewport(page: HTMLElement | null, forceLatest: boolean) {
-  if (!page) return;
+  if (!page) {
+    clearMobileChatViewportStyles();
+    return;
+  }
   setMobileChatViewportHeight(page);
   if (forceLatest) scrollChatToLatest(page);
 }
@@ -116,7 +128,11 @@ function clearSettleTimers() {
 }
 
 function settleChatViewport(page: HTMLElement | null, forceLatest = true) {
-  if (!page) return;
+  if (!page) {
+    clearSettleTimers();
+    clearMobileChatViewportStyles();
+    return;
+  }
   clearSettleTimers();
   syncChatViewport(page, forceLatest);
 
@@ -140,6 +156,10 @@ function observeMountedChats() {
   if (!root) return;
 
   const observer = new MutationObserver((records) => {
+    if (managedSurfaces && !document.contains(managedSurfaces.page)) {
+      clearMobileChatViewportStyles();
+    }
+
     for (const record of records) {
       for (const node of record.addedNodes) {
         if (!(node instanceof Element)) continue;
