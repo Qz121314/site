@@ -193,6 +193,18 @@ function remoteUrl(connection: PublicSupportConnection, path: string): string {
   return `${connection.clientApiUrl}${path}`;
 }
 
+export function resolveSupportAssetUrl(
+  connection: PublicSupportConnection,
+  value: string | null,
+): string | null {
+  if (!value) return null;
+  try {
+    return new URL(value, `${connection.clientApiUrl.replace(/\/$/u, '')}/`).toString();
+  } catch {
+    return null;
+  }
+}
+
 function clientQueryUrl(
   connection: PublicSupportConnection,
   path: string,
@@ -329,7 +341,7 @@ function normalizeSummary(
   return {
     id: wrapSupportConversationRef(connection.id, remote.id),
     agentName: remote.agentName,
-    agentAvatarUrl: remote.agentAvatarUrl,
+    agentAvatarUrl: resolveSupportAssetUrl(connection, remote.agentAvatarUrl),
     productTitle: remote.productTitle,
     productCoverUrl: remote.productCoverUrl,
     lastMessage: remote.lastMessage,

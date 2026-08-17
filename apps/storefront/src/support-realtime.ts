@@ -6,6 +6,7 @@ import type {
 import {
   buildSupportWebSocketUrl,
   loadPublicSupportConnections,
+  resolveSupportAssetUrl,
   wrapSupportConversationRef,
   type PublicSupportConnection,
 } from './support-gateway';
@@ -56,7 +57,7 @@ function nullableString(value: unknown): value is string | null {
 }
 
 function parseConversation(
-  connectionId: string,
+  connection: PublicSupportConnection,
   value: unknown,
 ): SupportConversationSummary | null {
   const item = isRecord(value) ? value : null;
@@ -76,9 +77,9 @@ function parseConversation(
     return null;
   }
   return {
-    id: wrapSupportConversationRef(connectionId, item.id),
+    id: wrapSupportConversationRef(connection.id, item.id),
     agentName: item.agentName,
-    agentAvatarUrl: item.agentAvatarUrl,
+    agentAvatarUrl: resolveSupportAssetUrl(connection, item.agentAvatarUrl),
     productTitle: item.productTitle,
     productCoverUrl: item.productCoverUrl,
     lastMessage: item.lastMessage,
@@ -174,7 +175,7 @@ function parseEvent(state: SocketState, raw: unknown): SupportRealtimeEvent | nu
   if (raw.type === 'ready' || raw.type === 'pong') return null;
   const remoteConversationId =
     typeof raw.conversationId === 'string' ? raw.conversationId.trim() : '';
-  const conversation = parseConversation(state.connection.id, raw.conversation);
+  const conversation = parseConversation(state.connection, raw.conversation);
   const conversationRef =
     conversation?.id ??
     (remoteConversationId
