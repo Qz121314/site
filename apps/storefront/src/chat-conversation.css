@@ -246,6 +246,7 @@
 
 .chat-composer textarea,
 .chat-input-placeholder {
+  box-sizing: border-box;
   min-height: 40px;
   padding: 10px 14px;
   border-color: color-mix(in srgb, var(--line) 72%, transparent);
@@ -295,6 +296,49 @@
 
   .chat-message-bubble {
     max-width: 82%;
+  }
+
+  .chat-composer {
+    grid-template-columns: 40px minmax(0, 1fr) 44px;
+    align-items: end;
+    gap: 6px;
+    padding: 6px max(8px, env(safe-area-inset-right))
+      max(8px, env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+  }
+
+  .chat-composer textarea {
+    box-sizing: border-box;
+    width: 100%;
+    min-width: 0;
+    height: 44px;
+    min-height: 44px;
+    max-height: 108px;
+    align-self: end;
+    margin: 0;
+    padding: 10px 14px;
+    overflow-y: auto;
+    border-radius: 22px;
+    font-size: 16px;
+    line-height: 22px;
+    field-sizing: content;
+    scrollbar-width: none;
+  }
+
+  .chat-input-placeholder {
+    height: 44px;
+    min-height: 44px;
+    padding: 10px 14px;
+    border-radius: 22px;
+    font-size: 16px;
+    line-height: 22px;
+  }
+
+  .chat-composer .chat-send-button {
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    min-height: 44px;
+    align-self: end;
   }
 }
 
