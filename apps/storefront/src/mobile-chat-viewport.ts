@@ -118,7 +118,10 @@ function setMobileChatViewportHeight(page: HTMLElement) {
   );
   const needsVisualViewportFallback =
     Boolean(visualViewport) &&
-    shouldUseMobileChatVisualViewportFallback(viewportHeight, layoutViewportHeight);
+    shouldUseMobileChatVisualViewportFallback(
+      viewportHeight,
+      layoutViewportHeight,
+    );
 
   if (!needsVisualViewportFallback) {
     // Modern Android Chrome with interactive-widget=resizes-content already
