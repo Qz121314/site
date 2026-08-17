@@ -2,7 +2,11 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import { URL } from 'node:url';
 import test from 'node:test';
-import { resolveMobileChatViewportMetrics } from '../src/mobile-chat-viewport.ts';
+import {
+  MOBILE_CHAT_KEYBOARD_CLEARANCE_PX,
+  resolveMobileChatSurfaceHeight,
+  resolveMobileChatViewportMetrics,
+} from '../src/mobile-chat-viewport.ts';
 
 function source(path) {
   return readFileSync(new URL(path, import.meta.url), 'utf8');
@@ -45,6 +49,13 @@ test('mobile chat viewport falls back to the layout viewport and never shifts up
   );
 });
 
+test('focused mobile chat reserves a real viewport gap above the software keyboard', () => {
+  assert.equal(MOBILE_CHAT_KEYBOARD_CLEARANCE_PX, 14);
+  assert.equal(resolveMobileChatSurfaceHeight(524, false), 524);
+  assert.equal(resolveMobileChatSurfaceHeight(524, true), 510);
+  assert.equal(resolveMobileChatSurfaceHeight(8, true), 1);
+});
+
 test('mobile chat keeps the whole route on the keyboard-resized viewport', () => {
   const html = source('../index.html');
   const runtime = source('../src/mobile-chat-viewport.ts');
@@ -53,6 +64,7 @@ test('mobile chat keeps the whole route on the keyboard-resized viewport', () =>
   assert.ok(runtime.includes("main: page.closest<HTMLElement>('main')"));
   assert.ok(runtime.includes('.storefront-route-view'));
   assert.ok(runtime.includes('main, route, workspace, detail, page'));
+  assert.ok(runtime.includes('isChatInputFocused(page)'));
   assert.ok(runtime.includes("workspace?.style.removeProperty('transform')"));
   assert.ok(runtime.includes('translate3d(0, ${offsetTop}px, 0)'));
 });
