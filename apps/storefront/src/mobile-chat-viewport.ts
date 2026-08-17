@@ -4,6 +4,8 @@ const CHAT_INPUT_SELECTOR = '.chat-composer textarea';
 const CHAT_TIMELINE_SELECTOR = '.chat-timeline';
 const NAVIGATION_EVENT = 'storefront:navigate';
 
+export const MOBILE_CHAT_KEYBOARD_CLEARANCE_PX = 14;
+
 type MobileChatVisualViewport = Pick<VisualViewport, 'height' | 'offsetTop'>;
 
 export type MobileChatViewportMetrics = {
@@ -34,6 +36,16 @@ export function resolveMobileChatViewportMetrics(
   };
 }
 
+export function resolveMobileChatSurfaceHeight(
+  viewportHeight: number,
+  inputFocused: boolean,
+): number {
+  return Math.max(
+    1,
+    Math.round(viewportHeight) - (inputFocused ? MOBILE_CHAT_KEYBOARD_CLEARANCE_PX : 0),
+  );
+}
+
 function isChatInput(target: EventTarget | null): target is HTMLTextAreaElement {
   return target instanceof HTMLTextAreaElement && target.matches(CHAT_INPUT_SELECTOR);
 }
@@ -42,6 +54,15 @@ function findChatPage(target: Element | null = null): HTMLElement | null {
   return (
     target?.closest<HTMLElement>('.chat-page') ??
     document.querySelector<HTMLElement>(CHAT_PAGE_SELECTOR)
+  );
+}
+
+function isChatInputFocused(page: HTMLElement): boolean {
+  const activeElement = document.activeElement;
+  return (
+    activeElement instanceof HTMLTextAreaElement &&
+    activeElement.matches(CHAT_INPUT_SELECTOR) &&
+    page.contains(activeElement)
   );
 }
 
@@ -78,7 +99,16 @@ function setMobileChatViewportHeight(page: HTMLElement) {
     window.innerHeight,
   );
   if (viewportHeight <= 0) return;
-  const height = `${viewportHeight}px`;
+
+  // Android browsers can keep the focused control flush with, or partially under,
+  // the software keyboard even when visualViewport itself has resized. Reserve a
+  // real slice of viewport outside the chat surface while the textarea is focused
+  // instead of faking clearance with composer padding inside the same surface.
+  const surfaceHeight = resolveMobileChatSurfaceHeight(
+    viewportHeight,
+    isChatInputFocused(page),
+  );
+  const height = `${surfaceHeight}px`;
   const nextSurfaces = findMobileChatSurfaces(page);
 
   if (managedSurfaces && managedSurfaces.page !== page) {
