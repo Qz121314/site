@@ -20,7 +20,7 @@
     "typecheck": "pnpm cf:types && pnpm -r --if-present typecheck",
     "test": "pnpm -r --if-present test",
     "test:e2e": "playwright test",
-    "format": "prettier apps/storefront/src/mobile-chat-viewport.ts && exit 1",
+    "format": "prettier --check .",
     "format:write": "prettier --write .",
     "cf:types": "wrangler types apps/worker/src/worker-configuration.d.ts",
     "cf:check": "wrangler deploy --dry-run",
