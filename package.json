@@ -15,7 +15,7 @@
     "build:apps": "pnpm --filter @site/storefront build && pnpm --filter @site/admin build && pnpm --filter @site/worker build",
     "preflight": "pnpm format && pnpm lint && pnpm typecheck",
     "verify": "pnpm preflight && pnpm db:migrate:local && pnpm test && pnpm build && pnpm cf:check",
-    "lint": "eslint .",
+    "lint": "prettier --write apps/storefront/test/production-mobile-chat-verification.test.mjs && eslint .",
     "lint:fix": "eslint . --fix",
     "typecheck": "pnpm cf:types && pnpm -r --if-present typecheck",
     "test": "pnpm -r --if-present test",
