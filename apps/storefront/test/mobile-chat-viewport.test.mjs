@@ -61,7 +61,9 @@ test('mobile chat uses one viewport height source for the full nested route', ()
 
   assert.ok(html.includes('interactive-widget=resizes-content'));
   assert.ok(runtime.includes("main: page.closest<HTMLElement>('main')"));
-  assert.ok(runtime.includes("pushHost: page.closest<HTMLElement>('.messages-push-host')"));
+  assert.ok(
+    runtime.includes("pushHost: page.closest<HTMLElement>('.messages-push-host')"),
+  );
   assert.ok(runtime.includes('document.documentElement.clientHeight'));
   assert.ok(runtime.includes('needsVisualViewportFallback'));
   assert.ok(runtime.includes('clearOuterViewportStyles(main)'));
