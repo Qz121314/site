@@ -11,9 +11,18 @@ export type MobileChatViewportMetrics = {
   offsetTop: number;
 };
 
+type MobileChatSurfaces = {
+  main: HTMLElement | null;
+  route: HTMLElement | null;
+  workspace: HTMLElement | null;
+  detail: HTMLElement | null;
+  page: HTMLElement;
+};
+
 let installed = false;
 let activeChatInput: HTMLTextAreaElement | null = null;
 let settleTimerIds: number[] = [];
+let managedSurfaces: MobileChatSurfaces | null = null;
 
 export function resolveMobileChatViewportMetrics(
   visualViewport: MobileChatVisualViewport | null | undefined,
@@ -36,16 +45,31 @@ function findChatPage(target: Element | null = null): HTMLElement | null {
   );
 }
 
-function setMobileChatViewportHeight(page: HTMLElement) {
-  const workspace = page.closest<HTMLElement>('.messages-workspace.is-thread-open');
-  const detail = page.closest<HTMLElement>('.messages-detail');
+function findMobileChatSurfaces(page: HTMLElement): MobileChatSurfaces {
+  return {
+    main: page.closest<HTMLElement>('main'),
+    route: page.closest<HTMLElement>('.storefront-route-view'),
+    workspace: page.closest<HTMLElement>('.messages-workspace.is-thread-open'),
+    detail: page.closest<HTMLElement>('.messages-detail'),
+    page,
+  };
+}
 
+function clearMobileChatViewportStyles(surfaces = managedSurfaces) {
+  if (!surfaces) return;
+  const { main, route, workspace, detail, page } = surfaces;
+  for (const element of [main, route, workspace, detail, page]) {
+    element?.style.removeProperty('height');
+    element?.style.removeProperty('min-height');
+  }
+  main?.style.removeProperty('transform');
+  workspace?.style.removeProperty('transform');
+  if (managedSurfaces === surfaces) managedSurfaces = null;
+}
+
+function setMobileChatViewportHeight(page: HTMLElement) {
   if (!window.matchMedia(MOBILE_CHAT_QUERY).matches) {
-    for (const element of [workspace, detail, page]) {
-      element?.style.removeProperty('height');
-      element?.style.removeProperty('min-height');
-    }
-    workspace?.style.removeProperty('transform');
+    clearMobileChatViewportStyles();
     return;
   }
 
@@ -55,18 +79,30 @@ function setMobileChatViewportHeight(page: HTMLElement) {
   );
   if (viewportHeight <= 0) return;
   const height = `${viewportHeight}px`;
+  const nextSurfaces = findMobileChatSurfaces(page);
 
-  for (const element of [workspace, detail, page]) {
+  if (managedSurfaces && managedSurfaces.page !== page) {
+    clearMobileChatViewportStyles(managedSurfaces);
+  }
+  managedSurfaces = nextSurfaces;
+
+  const { main, route, workspace, detail } = nextSurfaces;
+  for (const element of [main, route, workspace, detail, page]) {
     if (!element) continue;
     element.style.height = height;
     element.style.minHeight = height;
   }
 
-  if (workspace) {
+  // Keep the entire chat surface aligned to the visual viewport. Applying the
+  // offset to the outer main container avoids mixing a 100dvh parent with a
+  // translated child when mobile browser chrome or the virtual keyboard moves
+  // the visual viewport.
+  workspace?.style.removeProperty('transform');
+  if (main) {
     if (offsetTop > 0) {
-      workspace.style.transform = `translate3d(0, ${offsetTop}px, 0)`;
+      main.style.transform = `translate3d(0, ${offsetTop}px, 0)`;
     } else {
-      workspace.style.removeProperty('transform');
+      main.style.removeProperty('transform');
     }
   }
 }
@@ -78,7 +114,10 @@ function scrollChatToLatest(page: HTMLElement) {
 }
 
 function syncChatViewport(page: HTMLElement | null, forceLatest: boolean) {
-  if (!page) return;
+  if (!page) {
+    clearMobileChatViewportStyles();
+    return;
+  }
   setMobileChatViewportHeight(page);
   if (forceLatest) scrollChatToLatest(page);
 }
@@ -89,7 +128,11 @@ function clearSettleTimers() {
 }
 
 function settleChatViewport(page: HTMLElement | null, forceLatest = true) {
-  if (!page) return;
+  if (!page) {
+    clearSettleTimers();
+    clearMobileChatViewportStyles();
+    return;
+  }
   clearSettleTimers();
   syncChatViewport(page, forceLatest);
 
@@ -113,6 +156,10 @@ function observeMountedChats() {
   if (!root) return;
 
   const observer = new MutationObserver((records) => {
+    if (managedSurfaces && !document.contains(managedSurfaces.page)) {
+      clearMobileChatViewportStyles();
+    }
+
     for (const record of records) {
       for (const node of record.addedNodes) {
         if (!(node instanceof Element)) continue;
