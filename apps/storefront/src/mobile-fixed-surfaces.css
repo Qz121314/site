@@ -43,10 +43,6 @@
       background: color-mix(in srgb, var(--surface) 97%, transparent);
     }
 
-    .app-shell:has(.messages-workspace.is-thread-open) .chat-composer:focus-within {
-      padding-bottom: calc(18px + env(safe-area-inset-bottom));
-    }
-
     .app-shell:has(.messages-workspace.is-thread-open) .chat-composer textarea {
       border: 2px solid color-mix(in srgb, var(--brand) 54%, var(--line));
       background: var(--surface);
