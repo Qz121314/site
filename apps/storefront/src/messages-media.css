@@ -61,10 +61,54 @@
   border-color: color-mix(in srgb, #c83b3b 34%, var(--line));
 }
 
-.chat-attachment-picker {
+.chat-attachment-picker,
+.chat-composer > button:first-child:not(.chat-send-button) {
   position: relative;
+  display: grid;
+  width: 40px;
+  min-width: 40px;
+  height: 40px;
+  min-height: 40px;
+  place-items: center;
+  align-self: end;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  color: var(--muted);
+  background: transparent;
   cursor: pointer;
+  font-size: 0;
   touch-action: manipulation;
+}
+
+.chat-attachment-picker::before,
+.chat-attachment-picker::after,
+.chat-composer > button:first-child:not(.chat-send-button)::before,
+.chat-composer > button:first-child:not(.chat-send-button)::after {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: block;
+  border-radius: 999px;
+  background: currentColor;
+  content: '';
+  transform: translate(-50%, -50%);
+}
+
+.chat-attachment-picker::before,
+.chat-composer > button:first-child:not(.chat-send-button)::before {
+  width: 18px;
+  height: 1.8px;
+}
+
+.chat-attachment-picker::after,
+.chat-composer > button:first-child:not(.chat-send-button)::after {
+  width: 1.8px;
+  height: 18px;
+}
+
+.chat-composer > button:first-child:not(.chat-send-button):disabled {
+  cursor: default;
 }
 
 .chat-attachment-picker input {
