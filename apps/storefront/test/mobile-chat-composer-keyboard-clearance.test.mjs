@@ -7,11 +7,14 @@ function source(path) {
   return readFileSync(new URL(path, import.meta.url), 'utf8');
 }
 
-test('mobile visitor composer separates focused controls from the keyboard and keeps controls prominent', () => {
+test('mobile visitor composer keeps controls prominent while keyboard clearance stays outside the composer', () => {
   const css = source('../src/mobile-fixed-surfaces.css');
+  const runtime = source('../src/mobile-chat-viewport.ts');
 
-  assert.ok(css.includes('.chat-composer:focus-within'));
-  assert.ok(css.includes('padding-bottom: calc(18px + env(safe-area-inset-bottom));'));
+  assert.equal(css.includes('.chat-composer:focus-within'), false);
+  assert.ok(css.includes('padding-bottom: calc(10px + env(safe-area-inset-bottom));'));
+  assert.ok(runtime.includes('MOBILE_CHAT_KEYBOARD_CLEARANCE_PX = 14'));
+  assert.ok(runtime.includes('resolveMobileChatSurfaceHeight'));
   assert.ok(
     css.includes('border: 2px solid color-mix(in srgb, var(--brand) 54%, var(--line));'),
   );
