@@ -146,7 +146,7 @@ function ConversationAvatar({
 }: {
   conversation: SupportConversationSummary;
 }) {
-  const avatarUrl = conversation.productCoverUrl || conversation.agentAvatarUrl;
+  const avatarUrl = conversation.agentAvatarUrl || conversation.productCoverUrl;
   if (avatarUrl) {
     return (
       <ResilientImage
