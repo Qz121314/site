@@ -32,4 +32,62 @@
       );
     }
   }
+
+  @supports selector(.app-shell:has(.messages-workspace.is-thread-open)) {
+    .app-shell:has(.messages-workspace.is-thread-open) .chat-composer {
+      padding-top: 7px;
+      padding-right: max(8px, env(safe-area-inset-right));
+      padding-bottom: calc(10px + env(safe-area-inset-bottom));
+      padding-left: max(8px, env(safe-area-inset-left));
+      border-top: 1px solid color-mix(in srgb, var(--brand) 18%, var(--line));
+      background: color-mix(in srgb, var(--surface) 97%, transparent);
+    }
+
+    .app-shell:has(.messages-workspace.is-thread-open) .chat-composer:focus-within {
+      padding-bottom: calc(18px + env(safe-area-inset-bottom));
+    }
+
+    .app-shell:has(.messages-workspace.is-thread-open) .chat-composer textarea {
+      border: 2px solid color-mix(in srgb, var(--brand) 54%, var(--line));
+      background: var(--surface);
+      box-shadow: 0 1px 5px color-mix(in srgb, var(--brand) 10%, transparent);
+    }
+
+    .app-shell:has(.messages-workspace.is-thread-open) .chat-composer textarea::placeholder {
+      color: color-mix(in srgb, var(--text) 52%, var(--muted));
+      opacity: 1;
+    }
+
+    .app-shell:has(.messages-workspace.is-thread-open) .chat-composer textarea:focus {
+      border-color: var(--brand);
+      box-shadow:
+        0 0 0 3px color-mix(in srgb, var(--brand) 12%, transparent),
+        0 2px 8px color-mix(in srgb, var(--brand) 14%, transparent);
+    }
+
+    .app-shell:has(.messages-workspace.is-thread-open) .chat-attachment-picker,
+    .app-shell:has(.messages-workspace.is-thread-open)
+      .chat-composer
+      > button:first-child:not(.chat-send-button) {
+      border: 2px solid color-mix(in srgb, var(--brand) 56%, var(--line));
+      color: var(--brand-strong);
+      background: color-mix(in srgb, var(--brand) 12%, var(--surface));
+      box-shadow: 0 2px 7px color-mix(in srgb, var(--brand) 10%, transparent);
+    }
+
+    .app-shell:has(.messages-workspace.is-thread-open)
+      .chat-composer
+      .chat-send-button {
+      background: var(--brand);
+      box-shadow: 0 5px 14px color-mix(in srgb, var(--brand) 28%, transparent);
+    }
+
+    .app-shell:has(.messages-workspace.is-thread-open)
+      .chat-composer
+      .chat-send-button:disabled {
+      opacity: 0.68;
+      background: color-mix(in srgb, var(--brand) 72%, var(--surface));
+      box-shadow: 0 2px 8px color-mix(in srgb, var(--brand) 12%, transparent);
+    }
+  }
 }
