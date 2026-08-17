@@ -40,7 +40,9 @@ export function shouldUseMobileChatVisualViewportFallback(
   layoutViewportHeight: number,
 ): boolean {
   return (
-    Math.abs(Math.round(visualViewportHeight) - Math.round(layoutViewportHeight)) > 1
+    Math.abs(
+      Math.round(visualViewportHeight) - Math.round(layoutViewportHeight),
+    ) > 1
   );
 }
 
