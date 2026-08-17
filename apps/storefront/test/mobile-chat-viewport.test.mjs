@@ -52,9 +52,19 @@ test('mobile chat keeps the whole route on the keyboard-resized viewport', () =>
   assert.ok(html.includes('interactive-widget=resizes-content'));
   assert.ok(runtime.includes("main: page.closest<HTMLElement>('main')"));
   assert.ok(
-    runtime.includes("route: page.closest<HTMLElement>('.storefront-route-view')"),
+    runtime.includes(
+      "route: page.closest<HTMLElement>('.storefront-route-view')",
+    ),
   );
-  assert.ok(runtime.includes('for (const element of [main, route, workspace, detail, page])'));
+  assert.ok(
+    runtime.includes(
+      'for (const element of [main, route, workspace, detail, page])',
+    ),
+  );
   assert.ok(runtime.includes("workspace?.style.removeProperty('transform')"));
-  assert.ok(runtime.includes('main.style.transform = `translate3d(0, ${offsetTop}px, 0)`'));
+  assert.ok(
+    runtime.includes(
+      'main.style.transform = `translate3d(0, ${offsetTop}px, 0)`',
+    ),
+  );
 });
