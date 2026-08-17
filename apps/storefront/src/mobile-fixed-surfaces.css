@@ -43,8 +43,7 @@
       background: color-mix(in srgb, var(--surface) 97%, transparent);
     }
 
-    .app-shell:has(.messages-workspace.is-thread-open)
-      .chat-composer:focus-within {
+    .app-shell:has(.messages-workspace.is-thread-open) .chat-composer:focus-within {
       padding-bottom: calc(18px + env(safe-area-inset-bottom));
     }
 
@@ -61,9 +60,7 @@
       opacity: 1;
     }
 
-    .app-shell:has(.messages-workspace.is-thread-open)
-      .chat-composer
-      textarea:focus {
+    .app-shell:has(.messages-workspace.is-thread-open) .chat-composer textarea:focus {
       border-color: var(--brand);
       box-shadow:
         0 0 0 3px color-mix(in srgb, var(--brand) 12%, transparent),
@@ -80,9 +77,7 @@
       box-shadow: 0 2px 7px color-mix(in srgb, var(--brand) 10%, transparent);
     }
 
-    .app-shell:has(.messages-workspace.is-thread-open)
-      .chat-composer
-      .chat-send-button {
+    .app-shell:has(.messages-workspace.is-thread-open) .chat-composer .chat-send-button {
       background: var(--brand);
       box-shadow: 0 5px 14px color-mix(in srgb, var(--brand) 28%, transparent);
     }
