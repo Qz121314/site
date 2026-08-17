@@ -4,8 +4,6 @@ const CHAT_INPUT_SELECTOR = '.chat-composer textarea';
 const CHAT_TIMELINE_SELECTOR = '.chat-timeline';
 const NAVIGATION_EVENT = 'storefront:navigate';
 
-export const MOBILE_CHAT_KEYBOARD_CLEARANCE_PX = 14;
-
 type MobileChatVisualViewport = Pick<VisualViewport, 'height' | 'offsetTop'>;
 
 export type MobileChatViewportMetrics = {
@@ -16,6 +14,7 @@ export type MobileChatViewportMetrics = {
 type MobileChatSurfaces = {
   main: HTMLElement | null;
   route: HTMLElement | null;
+  pushHost: HTMLElement | null;
   workspace: HTMLElement | null;
   detail: HTMLElement | null;
   page: HTMLElement;
@@ -36,16 +35,6 @@ export function resolveMobileChatViewportMetrics(
   };
 }
 
-export function resolveMobileChatSurfaceHeight(
-  viewportHeight: number,
-  inputFocused: boolean,
-): number {
-  return Math.max(
-    1,
-    Math.round(viewportHeight) - (inputFocused ? MOBILE_CHAT_KEYBOARD_CLEARANCE_PX : 0),
-  );
-}
-
 function isChatInput(target: EventTarget | null): target is HTMLTextAreaElement {
   return target instanceof HTMLTextAreaElement && target.matches(CHAT_INPUT_SELECTOR);
 }
@@ -57,34 +46,32 @@ function findChatPage(target: Element | null = null): HTMLElement | null {
   );
 }
 
-function isChatInputFocused(page: HTMLElement): boolean {
-  const activeElement = document.activeElement;
-  return (
-    activeElement instanceof HTMLTextAreaElement &&
-    activeElement.matches(CHAT_INPUT_SELECTOR) &&
-    page.contains(activeElement)
-  );
-}
-
 function findMobileChatSurfaces(page: HTMLElement): MobileChatSurfaces {
   return {
     main: page.closest<HTMLElement>('main'),
     route: page.closest<HTMLElement>('.storefront-route-view'),
+    pushHost: page.closest<HTMLElement>('.messages-push-host'),
     workspace: page.closest<HTMLElement>('.messages-workspace.is-thread-open'),
     detail: page.closest<HTMLElement>('.messages-detail'),
     page,
   };
 }
 
-function clearMobileChatViewportStyles(surfaces = managedSurfaces) {
-  if (!surfaces) return;
-  const { main, route, workspace, detail, page } = surfaces;
-  for (const element of [main, route, workspace, detail, page]) {
+function clearNestedViewportStyles(surfaces: MobileChatSurfaces) {
+  const { route, pushHost, workspace, detail, page } = surfaces;
+  for (const element of [route, pushHost, workspace, detail, page]) {
     element?.style.removeProperty('height');
     element?.style.removeProperty('min-height');
+    element?.style.removeProperty('transform');
   }
-  main?.style.removeProperty('transform');
-  workspace?.style.removeProperty('transform');
+}
+
+function clearMobileChatViewportStyles(surfaces = managedSurfaces) {
+  if (!surfaces) return;
+  clearNestedViewportStyles(surfaces);
+  surfaces.main?.style.removeProperty('height');
+  surfaces.main?.style.removeProperty('min-height');
+  surfaces.main?.style.removeProperty('transform');
   if (managedSurfaces === surfaces) managedSurfaces = null;
 }
 
@@ -100,40 +87,27 @@ function setMobileChatViewportHeight(page: HTMLElement) {
   );
   if (viewportHeight <= 0) return;
 
-  // Android browsers can keep the focused control flush with, or partially under,
-  // the software keyboard even when visualViewport itself has resized. Reserve a
-  // real slice of viewport outside the chat surface while the textarea is focused
-  // instead of faking clearance with composer padding inside the same surface.
-  const surfaceHeight = resolveMobileChatSurfaceHeight(
-    viewportHeight,
-    isChatInputFocused(page),
-  );
-  const height = `${surfaceHeight}px`;
   const nextSurfaces = findMobileChatSurfaces(page);
-
   if (managedSurfaces && managedSurfaces.page !== page) {
     clearMobileChatViewportStyles(managedSurfaces);
   }
   managedSurfaces = nextSurfaces;
 
-  const { main, route, workspace, detail } = nextSurfaces;
-  for (const element of [main, route, workspace, detail, page]) {
-    if (!element) continue;
-    element.style.height = height;
-    element.style.minHeight = height;
-  }
+  // Keep exactly one pixel-height source. The outer main surface follows the
+  // visual viewport while every nested chat surface uses CSS height: 100%.
+  // Writing the same viewport height onto every nested layer caused Android
+  // keyboard resize to mix independent containing blocks and push the composer
+  // into the keyboard edge.
+  clearNestedViewportStyles(nextSurfaces);
+  const main = nextSurfaces.main;
+  if (!main) return;
+  main.style.height = `${viewportHeight}px`;
+  main.style.minHeight = '0px';
 
-  // Keep the entire chat surface aligned to the visual viewport. Applying the
-  // offset to the outer main container avoids mixing a 100dvh parent with a
-  // translated child when mobile browser chrome or the virtual keyboard moves
-  // the visual viewport.
-  workspace?.style.removeProperty('transform');
-  if (main) {
-    if (offsetTop > 0) {
-      main.style.transform = `translate3d(0, ${offsetTop}px, 0)`;
-    } else {
-      main.style.removeProperty('transform');
-    }
+  if (offsetTop > 0) {
+    main.style.transform = `translate3d(0, ${offsetTop}px, 0)`;
+  } else {
+    main.style.removeProperty('transform');
   }
 }
 
