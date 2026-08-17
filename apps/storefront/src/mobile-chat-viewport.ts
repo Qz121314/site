@@ -39,7 +39,9 @@ export function shouldUseMobileChatVisualViewportFallback(
   visualViewportHeight: number,
   layoutViewportHeight: number,
 ): boolean {
-  return Math.abs(Math.round(visualViewportHeight) - Math.round(layoutViewportHeight)) > 1;
+  return (
+    Math.abs(Math.round(visualViewportHeight) - Math.round(layoutViewportHeight)) > 1
+  );
 }
 
 function isChatInput(target: EventTarget | null): target is HTMLTextAreaElement {
