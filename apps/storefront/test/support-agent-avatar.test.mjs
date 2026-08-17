@@ -21,14 +21,8 @@ test('storefront resolves and prefers the assigned customer-service agent avatar
       'agentAvatarUrl: resolveSupportAssetUrl(connection, remote.agentAvatarUrl)',
     ),
   );
-  assert.ok(
-    realtime.includes(
-      'resolveSupportAssetUrl(connection, item.agentAvatarUrl)',
-    ),
-  );
-  assert.ok(
-    ui.includes('conversation.agentAvatarUrl || conversation.productCoverUrl'),
-  );
+  assert.ok(realtime.includes('resolveSupportAssetUrl(connection, item.agentAvatarUrl)'));
+  assert.ok(ui.includes('conversation.agentAvatarUrl || conversation.productCoverUrl'));
   assert.ok(css.includes('.conversation-avatar,\n.chat-header-avatar'));
   assert.ok(css.includes('border-radius: 50%'));
   assert.ok(css.includes('object-fit: cover'));
