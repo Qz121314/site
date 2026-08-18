@@ -77,8 +77,5 @@ test('mobile chat uses one viewport height source for the full nested route', ()
   assert.ok(fixedSurfaces.includes('.messages-push-host,'));
   assert.ok(fixedSurfaces.includes('height: 100%;'));
   assert.ok(fixedSurfaces.includes('min-height: 0;'));
-  assert.equal(
-    messagesUi.includes('height: 100dvh;\n    min-height: 100dvh;'),
-    false,
-  );
+  assert.equal(messagesUi.includes('height: 100dvh;\n    min-height: 100dvh;'), false);
 });
