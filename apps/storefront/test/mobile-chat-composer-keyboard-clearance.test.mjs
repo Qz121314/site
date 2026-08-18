@@ -7,14 +7,14 @@ function source(path) {
   return readFileSync(new URL(path, import.meta.url), 'utf8');
 }
 
-test('mobile visitor composer stays prominent inside the keyboard-resized chat surface', () => {
+test('mobile visitor composer stays above the keyboard inside the flex thread', () => {
   const css = source('../src/mobile-fixed-surfaces.css');
-  const runtime = source('../src/mobile-chat-viewport.ts');
+  const conversationCss = source('../src/chat-conversation.css');
 
   assert.equal(css.includes('.chat-composer:focus-within'), false);
-  assert.ok(css.includes('padding-bottom: calc(10px + env(safe-area-inset-bottom));'));
-  assert.equal(runtime.includes('MOBILE_CHAT_KEYBOARD_CLEARANCE_PX'), false);
-  assert.equal(runtime.includes('resolveMobileChatSurfaceHeight'), false);
+  assert.ok(css.includes('padding-bottom: max(8px, env(safe-area-inset-bottom));'));
+  assert.ok(css.includes('flex: 0 0 auto;'));
+  assert.ok(conversationCss.includes('font-size: 16px;'));
   assert.ok(
     css.includes('border: 2px solid color-mix(in srgb, var(--brand) 54%, var(--line));'),
   );

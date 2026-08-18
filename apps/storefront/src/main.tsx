@@ -2,7 +2,6 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { MobileEdgeNavigation } from './MobileEdgeNavigation';
-import { installMobileChatViewportRuntime } from './mobile-chat-viewport';
 import { PwaInstallPrompt } from './PwaInstallPrompt';
 import { installPublicContentFetchFallback } from './public-content-transport';
 import { StorefrontPresentation } from './StorefrontPresentation';
@@ -31,7 +30,6 @@ import './media-layout-contract.css';
 import './loading-states.css';
 
 installPublicContentFetchFallback();
-installMobileChatViewportRuntime();
 installSupportExpiryRuntime();
 const storefrontThemePromise = installStorefrontTheme();
 
