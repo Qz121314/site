@@ -58,6 +58,7 @@ test('mobile chat uses one viewport height source for the full nested route', ()
   const html = source('../index.html');
   const runtime = source('../src/mobile-chat-viewport.ts');
   const fixedSurfaces = source('../src/mobile-fixed-surfaces.css');
+  const messagesUi = source('../src/messages-ui.css');
 
   assert.ok(html.includes('interactive-widget=resizes-content'));
   assert.ok(runtime.includes("main: page.closest<HTMLElement>('main')"));
@@ -76,4 +77,8 @@ test('mobile chat uses one viewport height source for the full nested route', ()
   assert.ok(fixedSurfaces.includes('.messages-push-host,'));
   assert.ok(fixedSurfaces.includes('height: 100%;'));
   assert.ok(fixedSurfaces.includes('min-height: 0;'));
+  assert.equal(
+    messagesUi.includes('height: 100dvh;\n    min-height: 100dvh;'),
+    false,
+  );
 });
