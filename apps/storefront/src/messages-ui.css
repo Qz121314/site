@@ -598,8 +598,6 @@
   .messages-workspace.is-thread-open .messages-detail,
   .messages-workspace.is-thread-open .chat-page {
     width: 100%;
-    height: 100dvh;
-    min-height: 100dvh;
   }
 }
 
