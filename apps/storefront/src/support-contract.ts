@@ -47,8 +47,6 @@ export type StartSupportConversationInput = {
   productTitle: string;
   productCoverUrl: string | null;
   productHref: string;
-  clientMessageId: string;
-  message: string;
 };
 
 export type SendSupportMessageInput = {
