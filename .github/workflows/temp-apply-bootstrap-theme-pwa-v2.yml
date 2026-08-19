@@ -1,0 +1,42 @@
+name: Temp Apply Bootstrap Theme PWA V2
+
+on:
+  push:
+    branches:
+      - agent/storefront-bootstrap-theme-pwa
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/storefront-bootstrap-theme-pwa
+      - name: Apply bootstrap theme and PWA patch
+        shell: bash
+        run: |
+          set -euo pipefail
+          python .github/temp_apply_bootstrap_theme_pwa.py
+          npm install --global prettier@3.9.6
+          prettier --write \
+            apps/worker/src/routes/public-storefront-config.ts \
+            apps/storefront/src/content.ts \
+            apps/storefront/src/theme-runtime.ts \
+            apps/storefront/src/pwa-install-runtime.ts \
+            apps/storefront/src/main.tsx \
+            apps/storefront/src/StorefrontRoot.tsx \
+            apps/storefront/src/PwaInstallPrompt.tsx \
+            apps/storefront/test/content.test.mjs \
+            apps/storefront/test/storefront-bootstrap-theme-pwa.test.mjs \
+            apps/worker/test/public-bootstrap-runtime.test.mjs \
+            apps/worker/test/modular-publication.test.mjs \
+            README.md
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Reuse storefront bootstrap for theme and PWA runtime"
+          git push origin HEAD:agent/storefront-bootstrap-theme-pwa
