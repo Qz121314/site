@@ -1,0 +1,72 @@
+name: Temp Fix Theme Token Narrowing
+
+on:
+  push:
+    branches:
+      - agent/storefront-bootstrap-theme-pwa
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/storefront-bootstrap-theme-pwa
+      - name: Fix theme token type narrowing
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('apps/storefront/src/content.ts')
+          text = path.read_text()
+          array_block = """const STOREFRONT_THEME_TOKEN_KEYS = [
+            'brand',
+            'brandStrong',
+            'text',
+            'muted',
+            'surface',
+            'surfaceSoft',
+            'line',
+            'pageBg',
+            'heroStart',
+            'heroEnd',
+            'heroGlow',
+            'shadow',
+          ] as const;
+          """
+          helper = """
+
+          function validStorefrontThemeTokens(
+            value: unknown,
+          ): value is StorefrontTheme['tokens'] {
+            if (!isRecord(value)) return false;
+            return STOREFRONT_THEME_TOKEN_KEYS.every(
+              (key) => typeof value[key] === 'string',
+            );
+          }
+          """
+          if array_block not in text:
+              raise SystemExit('theme token key marker not found')
+          text = text.replace(array_block, array_block + helper, 1)
+          old = """    !isRecord(value.tokens) ||
+              !STOREFRONT_THEME_TOKEN_KEYS.every((key) => typeof value.tokens[key] === 'string')
+          """
+          new = """    !validStorefrontThemeTokens(value.tokens)
+          """
+          if old not in text:
+              raise SystemExit('theme token validation marker not found')
+          path.write_text(text.replace(old, new, 1))
+          PY
+          npm install --global prettier@3.9.6
+          prettier --write apps/storefront/src/content.ts
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apps/storefront/src/content.ts
+          git commit -m "Fix storefront theme token narrowing"
+          git push origin HEAD:agent/storefront-bootstrap-theme-pwa
