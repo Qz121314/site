@@ -270,25 +270,36 @@ export function ProductDetailPage({
                   }}
                 >
                   {mobileGalleryItems.length > 0
-                    ? mobileGalleryItems.map((item) => {
+                    ? mobileGalleryItems.map((item, index) => {
                         const video = isVideoMediaUrl(item.url);
+                        const shouldLoadMedia = Math.abs(index - mobileMediaIndex) <= 1;
                         return (
                           <div className="detail-mobile-media-item" key={item.id}>
-                            {video ? (
-                              <ResilientVideo
-                                aria-label={item.altText}
-                                controls
-                                fallback={activeMediaFallback}
-                                playsInline
-                                preload="metadata"
-                                src={item.url}
-                              />
+                            {shouldLoadMedia ? (
+                              video ? (
+                                <ResilientVideo
+                                  aria-label={item.altText}
+                                  controls
+                                  fallback={activeMediaFallback}
+                                  playsInline
+                                  preload="none"
+                                  src={item.url}
+                                />
+                              ) : (
+                                <ResilientImage
+                                  alt={item.altText}
+                                  fallback={activeMediaFallback}
+                                  fetchPriority={
+                                    index === mobileMediaIndex ? 'high' : 'auto'
+                                  }
+                                  loading={
+                                    index === mobileMediaIndex ? 'eager' : 'lazy'
+                                  }
+                                  src={item.url}
+                                />
+                              )
                             ) : (
-                              <ResilientImage
-                                alt={item.altText}
-                                fallback={activeMediaFallback}
-                                src={item.url}
-                              />
+                              activeMediaFallback
                             )}
                           </div>
                         );
@@ -323,7 +334,7 @@ export function ProductDetailPage({
                               fallback={<div className="detail-thumbnail-fallback" />}
                               muted
                               playsInline
-                              preload="metadata"
+                              preload="none"
                               src={item.url}
                             />
                             <span
@@ -357,7 +368,7 @@ export function ProductDetailPage({
                       controls
                       fallback={activeMediaFallback}
                       playsInline
-                      preload="metadata"
+                      preload="none"
                       src={activeMediaUrl}
                     />
                   ) : (
@@ -394,7 +405,7 @@ export function ProductDetailPage({
                               fallback={<div className="detail-thumbnail-fallback" />}
                               muted
                               playsInline
-                              preload="metadata"
+                              preload="none"
                               src={item.url}
                             />
                             <span
