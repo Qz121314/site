@@ -30,7 +30,10 @@ test('CTA compose creates the conversation before any visitor message', () => {
   assert.ok(messages.includes('enabled: !compose'));
   assert.ok(messages.includes('window.history.replaceState('));
   assert.equal(messages.includes('setComposeOptimisticMessage'), false);
-  assert.equal(contract.includes('clientMessageId: string;\n  message: string;'), false);
+  assert.equal(
+    contract.includes('clientMessageId: string;\n  message: string;'),
+    false,
+  );
 
   const conversationCreation = gateway.slice(startConversation, sendMessage);
   assert.ok(conversationCreation.includes('sourceHandoffId: input.handoffId'));
