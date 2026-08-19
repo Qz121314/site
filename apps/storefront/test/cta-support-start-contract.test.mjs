@@ -14,15 +14,29 @@ test('CTA compose creates the conversation before any visitor message', () => {
 
   const startQuery = messages.indexOf("queryKey: ['support-compose-start'");
   const sendMutation = messages.indexOf('const sendMutation = useMutation');
+  const startConversation = gateway.indexOf(
+    'async startConversation(input: StartSupportConversationInput, signal)',
+  );
+  const sendMessage = gateway.indexOf(
+    'async sendMessage(conversationRef: string',
+  );
 
   assert.ok(startQuery >= 0);
   assert.ok(sendMutation > startQuery);
+  assert.ok(startConversation >= 0);
+  assert.ok(sendMessage > startConversation);
   assert.ok(messages.includes('return siteSupportGateway.startConversation('));
   assert.ok(messages.includes('handoffId: composeContext.handoffId'));
   assert.ok(messages.includes('enabled: !compose'));
   assert.ok(messages.includes('window.history.replaceState('));
   assert.equal(messages.includes('setComposeOptimisticMessage'), false);
   assert.equal(contract.includes('clientMessageId: string;\n  message: string;'), false);
-  assert.equal(gateway.includes('clientMessageId: input.clientMessageId'), false);
-  assert.equal(gateway.includes('message: input.message'), false);
+
+  const conversationCreation = gateway.slice(startConversation, sendMessage);
+  assert.ok(conversationCreation.includes('sourceHandoffId: input.handoffId'));
+  assert.equal(
+    conversationCreation.includes('clientMessageId: input.clientMessageId'),
+    false,
+  );
+  assert.equal(conversationCreation.includes('message: input.message'), false);
 });
