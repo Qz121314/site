@@ -7,7 +7,9 @@ import {
   listCustomerServiceConnections,
   type CustomerServiceConnectionRecord,
 } from '../customer-service/customer-service-connections';
+import { buildMediaUrl } from '../media/media-url';
 import { materializeDerivedSearchSnapshot } from '../publishing/storefront-publisher';
+import { BOTTOM_NAVIGATION_KEYS } from '../settings/bottom-navigation';
 import type { AppEnvironment } from '../types';
 
 export const publicStorefrontConfigRoutes = new Hono<AppEnvironment>();
@@ -19,6 +21,30 @@ type PublicSupportConnection = {
   clientApiUrl: string;
   realtimeUrl: string;
   protocolVersion: 'v1';
+};
+
+type StorefrontRuntimeRow = {
+  media_base_url: string | null;
+  item_key: string;
+  label: string;
+  icon_type: string;
+  icon_value: string | null;
+  is_enabled: number;
+  sort_order: number;
+  icon_object_key: string | null;
+};
+
+type StorefrontBootstrapRuntime = {
+  mediaBaseUrl: string | null;
+  bottomNavigation: Array<{
+    key: (typeof BOTTOM_NAVIGATION_KEYS)[number];
+    label: string;
+    enabled: boolean;
+    icon: {
+      type: 'builtin' | 'emoji' | 'image';
+      value: string | null;
+    };
+  }>;
 };
 
 type JsonRecord = Record<string, unknown>;
@@ -80,6 +106,72 @@ function searchSnapshotKey(pointerVersion: string): string {
   return `public/search/${encodeURIComponent(pointerVersion)}/search.json`;
 }
 
+export async function getStorefrontBootstrapRuntime(
+  db: D1Database,
+): Promise<StorefrontBootstrapRuntime | null> {
+  const rows = (
+    await db
+      .prepare(
+        `SELECT
+           ss.media_base_url,
+           nav.item_key,
+           nav.label,
+           nav.icon_type,
+           nav.icon_value,
+           nav.is_enabled,
+           nav.sort_order,
+           asset.object_key AS icon_object_key
+         FROM site_settings ss
+         CROSS JOIN site_bottom_navigation nav
+         LEFT JOIN media_assets asset
+           ON asset.id = nav.icon_asset_id
+          AND asset.status = 'ready'
+          AND asset.deleted_at IS NULL
+          AND asset.media_kind IN ('image', 'animated_image')
+         WHERE ss.id = 1
+         ORDER BY nav.sort_order ASC, nav.item_key ASC`,
+      )
+      .all<StorefrontRuntimeRow>()
+  ).results;
+
+  if (rows.length !== BOTTOM_NAVIGATION_KEYS.length) return null;
+  const byKey = new Map(rows.map((row) => [row.item_key, row]));
+  const first = rows[0];
+  if (!first) return null;
+  const mediaBaseUrl = first.media_base_url;
+  if (rows.some((row) => row.media_base_url !== mediaBaseUrl)) return null;
+
+  const bottomNavigation: StorefrontBootstrapRuntime['bottomNavigation'] = [];
+  for (const key of BOTTOM_NAVIGATION_KEYS) {
+    const row = byKey.get(key);
+    if (!row || typeof row.label !== 'string') return null;
+    if (row.icon_type === 'builtin' || row.icon_type === 'emoji') {
+      bottomNavigation.push({
+        key,
+        label: row.label,
+        enabled: row.is_enabled === 1,
+        icon: { type: row.icon_type, value: row.icon_value },
+      });
+      continue;
+    }
+    if (row.icon_type !== 'asset') return null;
+    bottomNavigation.push({
+      key,
+      label: row.label,
+      enabled: row.is_enabled === 1,
+      icon: {
+        type: 'image',
+        value:
+          mediaBaseUrl && row.icon_object_key
+            ? buildMediaUrl(mediaBaseUrl, row.icon_object_key)
+            : null,
+      },
+    });
+  }
+
+  return { mediaBaseUrl, bottomNavigation };
+}
+
 publicStorefrontConfigRoutes.get('/content-origin', async (context) => {
   const contentOrigin = await getMediaBaseUrl(context.env.DB);
   setPublicRuntimeHeaders(context);
@@ -93,11 +185,11 @@ publicStorefrontConfigRoutes.get('/media-base-url', async (context) => {
 });
 
 publicStorefrontConfigRoutes.get('/bootstrap', async (context) => {
-  const [pointerValue, mediaBaseUrl] = await Promise.all([
+  const [pointerValue, runtime] = await Promise.all([
     readPublishedJson(context.env.ASSETS_BUCKET, 'public/current.json'),
-    getMediaBaseUrl(context.env.DB),
+    getStorefrontBootstrapRuntime(context.env.DB),
   ]);
-  if (!isRecord(pointerValue) || pointerValue.schemaVersion !== 2) {
+  if (!isRecord(pointerValue) || pointerValue.schemaVersion !== 2 || !runtime) {
     return context.json({ available: false }, 404);
   }
   const sitePath = publishedFile(pointerValue.site, 'site.json');
@@ -127,7 +219,8 @@ publicStorefrontConfigRoutes.get('/bootstrap', async (context) => {
     site,
     sectionsIndex,
     home,
-    mediaBaseUrl,
+    mediaBaseUrl: runtime.mediaBaseUrl,
+    bottomNavigation: runtime.bottomNavigation,
   });
 });
 
