@@ -49,7 +49,11 @@ test('bootstrap snapshot write failure never breaks the existing published-conte
       reads.push(key);
       const body = objects.get(key);
       if (body === undefined) return null;
-      return { async text() { return body; } };
+      return {
+        async text() {
+          return body;
+        },
+      };
     },
     async put() {
       throw new Error('simulated R2 write failure');
@@ -85,7 +89,11 @@ test('bootstrap snapshot refuses a cached bundle from a different pointer versio
     async get(key) {
       const body = objects.get(key);
       if (body === undefined) return null;
-      return { async text() { return body; } };
+      return {
+        async text() {
+          return body;
+        },
+      };
     },
     async put(key, body) {
       writes.push(key);
