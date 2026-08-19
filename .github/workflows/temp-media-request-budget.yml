@@ -1,0 +1,184 @@
+name: Temp Media Request Budget
+
+on:
+  push:
+    branches:
+      - agent/media-request-budget
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/media-request-budget
+
+      - name: Reduce unnecessary media requests
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          home = Path('apps/storefront/src/HomeFeed.tsx')
+          home_source = home.read_text()
+          old_hero_video = """                  {slide.mediaKind === 'video' ? (
+                    <ResilientVideo
+                      aria-label={slide.title || siteName}
+                      autoPlay
+                      fallback={mediaFallback}
+                      loop
+                      muted
+                      playsInline
+                      preload={index === 0 ? 'auto' : 'metadata'}
+                      src={slide.mediaUrl}
+                    />
+                  ) : (
+"""
+          new_hero_video = """                  {slide.mediaKind === 'video' ? (
+                    <ResilientVideo
+                      key={`${slide.id}:${index === activeIndex ? 'active' : 'inactive'}`}
+                      aria-label={slide.title || siteName}
+                      autoPlay={index === activeIndex}
+                      fallback={mediaFallback}
+                      loop
+                      muted
+                      playsInline
+                      preload={index === activeIndex ? 'auto' : 'none'}
+                      src={slide.mediaUrl}
+                    />
+                  ) : (
+"""
+          if old_hero_video not in home_source:
+              raise SystemExit('Home hero video marker not found')
+          home.write_text(home_source.replace(old_hero_video, new_hero_video, 1))
+
+          detail = Path('apps/storefront/src/ProductDetailPage.tsx')
+          detail_source = detail.read_text()
+          old_mobile_stage = """                  {mobileGalleryItems.length > 0
+                    ? mobileGalleryItems.map((item) => {
+                        const video = isVideoMediaUrl(item.url);
+                        return (
+                          <div className=\"detail-mobile-media-item\" key={item.id}>
+                            {video ? (
+                              <ResilientVideo
+                                aria-label={item.altText}
+                                controls
+                                fallback={activeMediaFallback}
+                                playsInline
+                                preload=\"metadata\"
+                                src={item.url}
+                              />
+                            ) : (
+                              <ResilientImage
+                                alt={item.altText}
+                                fallback={activeMediaFallback}
+                                src={item.url}
+                              />
+                            )}
+                          </div>
+                        );
+                      })
+                    : activeMediaFallback}
+"""
+          new_mobile_stage = """                  {mobileGalleryItems.length > 0
+                    ? mobileGalleryItems.map((item, index) => {
+                        const video = isVideoMediaUrl(item.url);
+                        const shouldLoadMedia = Math.abs(index - mobileMediaIndex) <= 1;
+                        return (
+                          <div className=\"detail-mobile-media-item\" key={item.id}>
+                            {shouldLoadMedia ? (
+                              video ? (
+                                <ResilientVideo
+                                  aria-label={item.altText}
+                                  controls
+                                  fallback={activeMediaFallback}
+                                  playsInline
+                                  preload=\"none\"
+                                  src={item.url}
+                                />
+                              ) : (
+                                <ResilientImage
+                                  alt={item.altText}
+                                  fallback={activeMediaFallback}
+                                  fetchPriority={
+                                    index === mobileMediaIndex ? 'high' : 'auto'
+                                  }
+                                  loading={
+                                    index === mobileMediaIndex ? 'eager' : 'lazy'
+                                  }
+                                  src={item.url}
+                                />
+                              )
+                            ) : (
+                              activeMediaFallback
+                            )}
+                          </div>
+                        );
+                      })
+                    : activeMediaFallback}
+"""
+          if old_mobile_stage not in detail_source:
+              raise SystemExit('Product mobile gallery marker not found')
+          detail_source = detail_source.replace(old_mobile_stage, new_mobile_stage, 1)
+          detail_source = detail_source.replace('preload="metadata"', 'preload="none"')
+          detail.write_text(detail_source)
+
+          readme = Path('README.md')
+          readme_source = readme.read_text()
+          marker = """- 不为了减少一次 R2 GET 复制产品详情文件、扩大 R2 存储，或把整分区详情提前塞进 bootstrap。\n\n### 分区筛选交互规则\n"""
+          replacement = """- 不为了减少一次 R2 GET 复制产品详情文件、扩大 R2 存储，或把整分区详情提前塞进 bootstrap。\n\n### Storefront 媒体请求边界\n\n媒体加载同样遵循“先消灭无效请求，再考虑图片变体”的原则：\n\n- Hero 视频只有当前激活的 slide 可以 `autoPlay` 并使用 `preload=auto`；未激活视频固定 `preload=none`，不能因为轮播中存在多个视频就在首页同时建立多个视频媒体请求；\n- Product Detail 的移动端主图库只挂载当前项及相邻一项的真实媒体，远离当前项的内容保留占位，用户滑动或点击后再进入加载窗口，避免进入详情页就把整组原图全部请求下来；\n- 产品详情视频不自动预加载 metadata，主播放器和缩略图均使用 `preload=none`，只有用户真正播放时才产生视频内容读取；\n- 列表封面继续使用现有 `/_image/square/*` 响应式变体，但不能为了“看起来更省流量”把所有详情媒体都改走该链路；当前图片变体会经过 Worker、D1 公开媒体校验、R2 读取和 Images 转换，扩大使用范围前必须同时评估 Workers / D1 / R2 请求预算；\n- GIF、Video 与 R2 自定义读取域名的原有语义保持不变；媒体失败时继续使用现有 same-origin fallback，不以性能优化为理由删除兼容路径。\n\n### 分区筛选交互规则\n"""
+          if marker not in readme_source:
+              raise SystemExit('README media boundary marker not found')
+          readme.write_text(readme_source.replace(marker, replacement, 1))
+
+          test = Path('apps/storefront/test/media-request-budget-contract.test.mjs')
+          test.write_text("""import assert from 'node:assert/strict';
+          import { readFile } from 'node:fs/promises';
+          import test from 'node:test';
+
+          test('hero carousel only autoplays and preloads the active video slide', async () => {
+            const source = await readFile(new URL('../src/HomeFeed.tsx', import.meta.url), 'utf8');
+            assert.match(source, /autoPlay=\\{index === activeIndex\\}/u);
+            assert.match(
+              source,
+              /preload=\\{index === activeIndex \\? 'auto' : 'none'\\}/u,
+            );
+            assert.doesNotMatch(source, /preload=\\{index === 0 \\? 'auto' : 'metadata'\\}/u);
+          });
+
+          test('product detail bounds mobile stage media and avoids video metadata preloads', async () => {
+            const source = await readFile(
+              new URL('../src/ProductDetailPage.tsx', import.meta.url),
+              'utf8',
+            );
+            assert.match(source, /Math\\.abs\\(index - mobileMediaIndex\\) <= 1/u);
+            assert.match(
+              source,
+              /loading=\\{\\s*index === mobileMediaIndex \\? 'eager' : 'lazy'\\s*\\}/u,
+            );
+            assert.doesNotMatch(source, /preload=\"metadata\"/u);
+            assert.ok((source.match(/preload=\"none\"/gu) ?? []).length >= 4);
+          });
+          """)
+          PY
+
+          pnpm exec prettier --write \
+            README.md \
+            apps/storefront/src/HomeFeed.tsx \
+            apps/storefront/src/ProductDetailPage.tsx \
+            apps/storefront/test/media-request-budget-contract.test.mjs
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -- \
+            README.md \
+            apps/storefront/src/HomeFeed.tsx \
+            apps/storefront/src/ProductDetailPage.tsx \
+            apps/storefront/test/media-request-budget-contract.test.mjs
+          git commit -m "Reduce storefront media request fan-out"
+          git push origin HEAD:agent/media-request-budget
