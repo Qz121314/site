@@ -30,6 +30,7 @@
 
 .home-product-kicker,
 .section-product-kicker,
+.browse-search-product-kicker,
 .product-detail-context {
   display: block;
   overflow: hidden;
@@ -49,6 +50,30 @@
 
 .section-product-card h2 {
   margin-top: 0;
+}
+
+.browse-search-product-kicker {
+  margin: 9px 1px 0;
+}
+
+.browse-search-product-card > .browse-search-product-kicker + strong {
+  margin-top: 4px;
+}
+
+.browse-directory-empty:has(.browse-directory-retry) {
+  gap: 8px;
+}
+
+.browse-directory-retry {
+  min-height: 36px;
+  padding: 0 12px;
+  border: 1px solid color-mix(in srgb, var(--line) 78%, transparent);
+  border-radius: var(--theme-radius-control, 8px);
+  color: var(--text);
+  background: color-mix(in srgb, var(--surface-soft) 86%, var(--surface));
+  font-size: var(--storefront-text-small, 0.8125rem);
+  font-weight: 620;
+  cursor: pointer;
 }
 
 .product-detail-context {
@@ -120,7 +145,8 @@
   }
 
   .home-product-kicker,
-  .section-product-kicker {
+  .section-product-kicker,
+  .browse-search-product-kicker {
     font-size: 0.64rem;
   }
 
@@ -179,7 +205,8 @@
   }
 
   .home-product-kicker,
-  .section-product-kicker {
+  .section-product-kicker,
+  .browse-search-product-kicker {
     font-size: 0.7rem;
   }
 
@@ -274,8 +301,13 @@
 
 @media (hover: hover) and (pointer: fine) {
   .home-product-tile:hover .home-product-kicker,
-  .section-product-card:hover .section-product-kicker {
+  .section-product-card:hover .section-product-kicker,
+  .browse-search-product-card:hover .browse-search-product-kicker {
     color: color-mix(in srgb, var(--brand-strong) 46%, var(--muted));
+  }
+
+  .browse-directory-retry:hover {
+    border-color: color-mix(in srgb, var(--brand) 34%, var(--line));
   }
 
   .product-detail-inline-action .cta-button:hover:not(:disabled) {
