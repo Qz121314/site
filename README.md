@@ -115,6 +115,25 @@ Cloudflare Worker + D1 + R2
 - 图片 / 视频失败时显示稳定占位，不暴露浏览器破图；
 - 内容暂时加载失败可原地重试，未发布 / 不存在资源使用明确的 404 语义。
 
+### Storefront 启动请求边界
+
+正常 schema-v2 Storefront 启动把首屏必须的运行时配置合并到单个 bootstrap 请求：
+
+```text
+GET /api/public/storefront/bootstrap
+→ current pointer / site / sections index / home summary
+→ 当前 mediaBaseUrl
+→ Bottom Navigation
+```
+
+具体规则：
+
+- 正常启动不再额外请求 `/api/public/bottom-navigation/`；
+- `mediaBaseUrl` 与四个 Bottom Navigation 项使用同一条 D1 查询读取，导航图片的 `object_key` 也在该查询中解析；
+- Bottom Navigation 仍是后台实时配置，不要求为了修改导航重新发布 R2 内容快照；
+- 旧 `/api/public/bottom-navigation/` 仅作为旧内容 / bootstrap 不可用时的兼容回退，不属于正常请求预算；
+- 后续新增首屏配置时优先复用 bootstrap，不能为可合并的小型配置恢复独立的全局启动请求。
+
 ### 分区筛选交互规则
 
 分区产品页的筛选属于高频用户交互，固定采用**横向按钮**，不改成下拉选择器：
