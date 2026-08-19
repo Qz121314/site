@@ -147,6 +147,7 @@ export function ProductDetailPage({
   const activeMediaIsVideo = Boolean(
     activeMedia?.url && isVideoMediaUrl(activeMedia.url),
   );
+  const detailContext = product.category.name?.trim() || product.sectionName.trim();
   const mobileGalleryItems =
     media.length > 0
       ? media.map((item) => ({
@@ -194,8 +195,9 @@ export function ProductDetailPage({
     ctaAttempted &&
     !ctaQuery.isFetching &&
     (Boolean(ctaQuery.error) || ctaQuery.data === null);
-  const ctaAction = (
-    <div className="product-detail-fixed-action">
+
+  function renderCtaButton() {
+    return (
       <button
         className={`cta-button${ctaUnavailable ? ' is-unavailable' : ' is-ready'}`}
         type="button"
@@ -219,7 +221,11 @@ export function ProductDetailPage({
           </>
         )}
       </button>
-    </div>
+    );
+  }
+
+  const fixedCtaAction = (
+    <div className="product-detail-fixed-action">{renderCtaButton()}</div>
   );
 
   return (
@@ -416,6 +422,9 @@ export function ProductDetailPage({
 
           <div className="product-detail-info">
             <section className="product-detail-summary">
+              {detailContext ? (
+                <p className="product-detail-context">{detailContext}</p>
+              ) : null}
               <h1 id="product-detail-title">{product.title}</h1>
 
               {product.tags.length > 0 ? (
@@ -426,6 +435,8 @@ export function ProductDetailPage({
                 </div>
               ) : null}
             </section>
+
+            <div className="product-detail-inline-action">{renderCtaButton()}</div>
           </div>
         </div>
 
@@ -435,7 +446,7 @@ export function ProductDetailPage({
           </section>
         ) : null}
       </article>
-      {createPortal(ctaAction, document.body)}
+      {createPortal(fixedCtaAction, document.body)}
     </>
   );
 }
