@@ -1,0 +1,261 @@
+name: One-shot CTA support conversation start
+
+on:
+  push:
+    branches: [fix/cta-starts-support-conversation]
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/cta-starts-support-conversation
+
+      - name: Apply CTA-first conversation lifecycle patch
+        shell: bash
+        run: |
+          python <<'PY'
+          from pathlib import Path
+          import re
+
+          messages_path = Path('apps/storefront/src/MessagesPage.tsx')
+          messages = messages_path.read_text()
+
+          old_state = """  const [composeOptimisticMessage, setComposeOptimisticMessage] =
+            useState<SupportMessage | null>(null);
+"""
+          if old_state not in messages:
+              raise SystemExit('compose optimistic state marker not found')
+          messages = messages.replace(old_state, '', 1)
+
+          pattern = re.compile(
+              r"\n  const optimisticComposeConversation: SupportConversationDetail \| null =.*?\n  const displayedConversation = activeConversation \?\? optimisticComposeConversation;\n",
+              re.S,
+          )
+          replacement = """
+  const composeStartQuery = useQuery({
+    queryKey: ['support-compose-start', composeContext?.handoffId],
+    enabled:
+      supportAvailable === true &&
+      Boolean(composeContext && pendingConversation?.productHref),
+    queryFn: ({ signal }) => {
+      if (!composeContext || !pendingConversation?.productHref)
+        throw new Error('MESSAGE_CONTEXT_UNAVAILABLE');
+      return siteSupportGateway.startConversation(
+        {
+          handoffId: composeContext.handoffId,
+          productId: composeContext.productId,
+          sectionId: composeContext.sectionId,
+          productTitle: pendingConversation.productTitle,
+          productCoverUrl: pendingConversation.productCoverUrl,
+          productHref: pendingConversation.productHref,
+        },
+        signal,
+      );
+    },
+    staleTime: Number.POSITIVE_INFINITY,
+    retry: 1,
+    refetchOnWindowFocus: false,
+  });
+  const displayedConversation = activeConversation;
+"""
+          messages, count = pattern.subn(replacement, messages, count=1)
+          if count != 1:
+              raise SystemExit(f'compose conversation block replacements: {count}')
+
+          pattern = re.compile(
+              r"\n  const sendMutation = useMutation\(\{.*?\n  \}\);\n\n  const imageMutation",
+              re.S,
+          )
+          replacement = """
+  useEffect(() => {
+    const conversation = composeStartQuery.data;
+    if (!compose || !conversation) return;
+
+    queryClient.setQueryData<SupportConversationSummary[]>(
+      ['support-conversations'],
+      (current) => {
+        const summary = conversationSummary(conversation);
+        const withoutCurrent = (current ?? []).filter(
+          (item) => item.id !== summary.id,
+        );
+        return [summary, ...withoutCurrent];
+      },
+    );
+    queryClient.setQueryData<ConversationQueryCache>(
+      ['support-conversation', conversation.id],
+      { pages: [conversation], pageParams: [null] },
+    );
+    window.history.replaceState(
+      null,
+      '',
+      `/messages/${encodeURIComponent(conversation.id)}/`,
+    );
+    window.dispatchEvent(new Event(NAVIGATION_EVENT));
+  }, [compose, composeStartQuery.data, queryClient]);
+
+  const sendMutation = useMutation({
+    mutationFn: async (variables: SendMessageVariables) => {
+      if (!variables.conversationRef)
+        throw new Error('MESSAGE_CONTEXT_UNAVAILABLE');
+      return siteSupportGateway.sendMessage(variables.conversationRef, {
+        clientMessageId: variables.clientMessageId,
+        body: variables.body,
+      });
+    },
+    onMutate: (variables) => {
+      const optimisticId = `local:${variables.clientMessageId}`;
+      const optimisticMessage: SupportMessage = {
+        id: optimisticId,
+        direction: 'customer',
+        body: variables.body,
+        sentAt: variables.sentAt,
+        delivery: 'sending',
+        attachments: [],
+      };
+      if (variables.conversationRef) {
+        upsertOptimisticMessage(
+          queryClient,
+          variables.conversationRef,
+          optimisticMessage,
+        );
+        updateConversationPreview(
+          queryClient,
+          variables.conversationRef,
+          variables.body,
+          variables.sentAt,
+        );
+      }
+      return { optimisticId };
+    },
+    onSuccess: (message, variables, context) => {
+      if (!variables.conversationRef) return;
+      replaceOptimisticMessage(
+        queryClient,
+        variables.conversationRef,
+        context.optimisticId,
+        message,
+      );
+      updateConversationPreview(
+        queryClient,
+        variables.conversationRef,
+        message.body,
+        message.sentAt,
+      );
+    },
+    onError: (_error, variables, context) => {
+      if (!variables.conversationRef) return;
+      const optimisticId = context?.optimisticId ?? `local:${variables.clientMessageId}`;
+      updateOptimisticDelivery(
+        queryClient,
+        variables.conversationRef,
+        optimisticId,
+        'failed',
+      );
+    },
+  });
+
+  const imageMutation"""
+          messages, count = pattern.subn(replacement, messages, count=1)
+          if count != 1:
+              raise SystemExit(f'send mutation replacements: {count}')
+
+          replacements = {
+              """        onSendMessage={
+          supportAvailable
+            ? async (body) => {
+""": """        onSendMessage={
+          supportAvailable && activeConversationRef
+            ? async (body) => {
+""",
+              "        onRetryMessage={supportAvailable ? retryMessage : undefined}\n": "        onRetryMessage={supportAvailable && activeConversationRef ? retryMessage : undefined}\n",
+              "        sending={compose && sendMutation.isPending}\n": "        sending={sendMutation.isPending}\n",
+              """          Boolean(compose && composeContext && composeProductQuery.isLoading)
+""": """          Boolean(
+            compose &&
+              composeContext &&
+              (composeProductQuery.isLoading || composeStartQuery.isLoading),
+          )
+""",
+          }
+          for old, new in replacements.items():
+              if old not in messages:
+                  raise SystemExit(f'MessagesPage marker not found: {old!r}')
+              messages = messages.replace(old, new, 1)
+
+          messages_path.write_text(messages)
+
+          contract_path = Path('apps/storefront/src/support-contract.ts')
+          contract = contract_path.read_text()
+          old = """  productHref: string;
+  clientMessageId: string;
+  message: string;
+};
+"""
+          new = """  productHref: string;
+};
+"""
+          if old not in contract:
+              raise SystemExit('support contract marker not found')
+          contract_path.write_text(contract.replace(old, new, 1))
+
+          gateway_path = Path('apps/storefront/src/support-gateway.ts')
+          gateway = gateway_path.read_text()
+          old = """            sourceHandoffId: input.handoffId,
+            clientMessageId: input.clientMessageId,
+            message: input.message,
+            product: {
+"""
+          new = """            sourceHandoffId: input.handoffId,
+            product: {
+"""
+          if old not in gateway:
+              raise SystemExit('support gateway marker not found')
+          gateway_path.write_text(gateway.replace(old, new, 1))
+
+          test_path = Path('apps/storefront/test/cta-support-start-contract.test.mjs')
+          test_path.write_text("""import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { URL } from 'node:url';
+import test from 'node:test';
+
+function source(path) {
+  return readFileSync(new URL(path, import.meta.url), 'utf8');
+}
+
+test('CTA compose creates the conversation before any visitor message', () => {
+  const messages = source('../src/MessagesPage.tsx');
+  const contract = source('../src/support-contract.ts');
+  const gateway = source('../src/support-gateway.ts');
+
+  const startQuery = messages.indexOf("queryKey: ['support-compose-start'");
+  const sendMutation = messages.indexOf('const sendMutation = useMutation');
+  assert.ok(startQuery >= 0);
+  assert.ok(sendMutation > startQuery);
+  assert.ok(messages.includes('return siteSupportGateway.startConversation('));
+  assert.ok(messages.includes('handoffId: composeContext.handoffId'));
+  assert.ok(messages.includes('window.history.replaceState('));
+  assert.equal(messages.includes('setComposeOptimisticMessage'), false);
+  assert.equal(contract.includes('clientMessageId: string;\n  message: string;'), false);
+  assert.equal(gateway.includes('clientMessageId: input.clientMessageId'), false);
+  assert.equal(gateway.includes('message: input.message'), false);
+});
+""")
+          PY
+
+          rm .github/workflows/one-shot-cta-support-start.yml
+
+      - name: Commit patch
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git diff --cached --check
+          git commit -m 'Start customer-service conversation on CTA entry'
+          git push origin HEAD:fix/cta-starts-support-conversation
