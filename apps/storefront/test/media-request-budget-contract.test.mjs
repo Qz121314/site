@@ -3,20 +3,11 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
 test('hero active video controls media preload', async () => {
-  const source = await readFile(
-    new URL('../src/HomeFeed.tsx', import.meta.url),
-    'utf8',
-  );
+  const source = await readFile(new URL('../src/HomeFeed.tsx', import.meta.url), 'utf8');
 
   assert.match(source, /autoPlay=\{index === activeIndex\}/u);
-  assert.match(
-    source,
-    /preload=\{index === activeIndex \? 'auto' : 'none'\}/u,
-  );
-  assert.doesNotMatch(
-    source,
-    /preload=\{index === 0 \? 'auto' : 'metadata'\}/u,
-  );
+  assert.match(source, /preload=\{index === activeIndex \? 'auto' : 'none'\}/u);
+  assert.doesNotMatch(source, /preload=\{index === 0 \? 'auto' : 'metadata'\}/u);
 });
 
 test('product detail bounds mobile media preload', async () => {
