@@ -1,9 +1,8 @@
 name: Temp Fix Legacy Product Routing
 
 on:
-  push:
-    branches:
-      - agent/product-detail-summary-reuse
+  pull_request:
+    types: [synchronize, edited]
 
 permissions:
   contents: write
@@ -91,7 +90,8 @@ test('legacy product routes keep authoritative all-section lookup', async () => 
   );
 });
 """
-          contract.write_text(text.rstrip() + addition + '\n')
+          if "legacy product routes keep authoritative all-section lookup" not in text:
+            contract.write_text(text.rstrip() + addition + '\n')
           PY
 
           npx --yes prettier@3.9.6 --write apps/storefront/src/content.ts apps/storefront/test/product-summary-reuse-contract.test.mjs
