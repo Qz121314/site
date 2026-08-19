@@ -611,6 +611,63 @@ test('section, product and FAQ reads follow their own module versions and cache 
   }
 });
 
+test('product detail reuses a bootstrap product summary before loading a section snapshot', async () => {
+  const requests = [];
+  const restore = installModularFetch(requests);
+  try {
+    const bootstrap = await loadStorefrontBootstrap('https://content.example.com');
+    requests.length = 0;
+
+    const product = await loadProductSnapshot(
+      bootstrap,
+      'product-a-slug',
+      undefined,
+      'alpha',
+    );
+
+    assert.equal(product.product.id, 'product-a');
+    assert.deepEqual(
+      requests.map((request) => request.url),
+      [
+        `https://content.example.com/public/modules/sections/section-a/${SECTION_A_VERSION}/products/product-a.json`,
+      ],
+    );
+  } finally {
+    restore();
+  }
+});
+
+test('product detail keeps the section fallback when no remembered summary is available', async () => {
+  const requests = [];
+  const restore = installModularFetch(requests);
+  try {
+    const bootstrap = await loadStorefrontBootstrap('https://content.example.com');
+    bootstrap.productSummaries = {};
+    bootstrap.productReferenceIds = {};
+    requests.length = 0;
+
+    const product = await loadProductSnapshot(
+      bootstrap,
+      'product-a-slug',
+      undefined,
+      'alpha',
+    );
+
+    assert.equal(product.product.id, 'product-a');
+    assert.equal(
+      requests.filter((request) => request.url.endsWith('/section.json')).length,
+      1,
+    );
+    assert.equal(
+      requests.filter((request) => request.url.endsWith('/products/product-a.json'))
+        .length,
+      1,
+    );
+  } finally {
+    restore();
+  }
+});
+
 test('schema-v2 bootstrap rejects a module whose contentVersion does not match the pointer', async () => {
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async (input) => {
