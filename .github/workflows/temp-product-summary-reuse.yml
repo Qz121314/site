@@ -1,0 +1,106 @@
+name: Temp Product Summary Reuse Patch
+
+on:
+  push:
+    branches:
+      - agent/product-detail-summary-reuse
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/product-detail-summary-reuse
+      - name: Apply product summary reuse patch
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          content_path = Path('apps/storefront/src/content.ts')
+          content = content_path.read_text()
+
+          type_old = """  sectionSnapshots: Record<string, SectionSnapshot>;\n  productSectionIds: Record<string, string>;\n};\n"""
+          type_new = """  sectionSnapshots: Record<string, SectionSnapshot>;\n  productSectionIds: Record<string, string>;\n  productSummaries: Record<string, PublicProductSummary>;\n  productReferenceIds: Record<string, string>;\n};\n"""
+          if type_old not in content:
+              raise SystemExit('StorefrontBootstrap type marker not found')
+          content = content.replace(type_old, type_new, 1)
+
+          index_old = """function indexBootstrapProducts(\n  bootstrap: Pick<StorefrontBootstrap, 'home' | 'productSectionIds'>,\n): void {\n  for (const product of [\n    ...bootstrap.home.featuredProducts,\n    ...bootstrap.home.latestProducts,\n  ]) {\n    bootstrap.productSectionIds[product.id] = product.sectionId;\n  }\n}\n"""
+          index_new = """function productReferenceKey(sectionId: string, productRef: string): string {\n  return `${sectionId}\\u0000${productRef}`;\n}\n\nexport function rememberStorefrontProducts(\n  bootstrap: Pick<\n    StorefrontBootstrap,\n    'productSectionIds' | 'productSummaries' | 'productReferenceIds'\n  >,\n  products: PublicProductSummary[],\n): void {\n  for (const product of products) {\n    bootstrap.productSectionIds[product.id] = product.sectionId;\n    bootstrap.productSummaries[product.id] = product;\n    bootstrap.productReferenceIds[productReferenceKey(product.sectionId, product.id)] =\n      product.id;\n    bootstrap.productReferenceIds[productReferenceKey(product.sectionId, product.slug)] =\n      product.id;\n  }\n}\n\nfunction findRememberedProduct(\n  bootstrap: Pick<StorefrontBootstrap, 'productSummaries' | 'productReferenceIds'>,\n  sectionId: string,\n  productRef: string,\n): PublicProductSummary | null {\n  const productId = bootstrap.productReferenceIds[productReferenceKey(sectionId, productRef)];\n  return productId ? (bootstrap.productSummaries[productId] ?? null) : null;\n}\n\nfunction indexBootstrapProducts(\n  bootstrap: Pick<\n    StorefrontBootstrap,\n    'home' | 'productSectionIds' | 'productSummaries' | 'productReferenceIds'\n  >,\n): void {\n  rememberStorefrontProducts(bootstrap, [\n    ...bootstrap.home.featuredProducts,\n    ...bootstrap.home.latestProducts,\n  ]);\n}\n"""
+          if index_old not in content:
+              raise SystemExit('indexBootstrapProducts marker not found')
+          content = content.replace(index_old, index_new, 1)
+
+          init_v2_old = """    sectionSnapshots,\n    productSectionIds,\n  };\n"""
+          init_v2_new = """    sectionSnapshots,\n    productSectionIds,\n    productSummaries: {},\n    productReferenceIds: {},\n  };\n"""
+          if init_v2_old not in content:
+              raise SystemExit('schema-v2 bootstrap init marker not found')
+          content = content.replace(init_v2_old, init_v2_new, 1)
+
+          init_v1_old = """    bottomNavigation,\n    sectionSnapshots: {},\n    productSectionIds: {},\n  };\n"""
+          init_v1_new = """    bottomNavigation,\n    sectionSnapshots: {},\n    productSectionIds: {},\n    productSummaries: {},\n    productReferenceIds: {},\n  };\n"""
+          if init_v1_old not in content:
+              raise SystemExit('schema-v1 bootstrap init marker not found')
+          content = content.replace(init_v1_old, init_v1_new, 1)
+
+          section_cache_old = """    bootstrap.sectionSnapshots[sectionId] = snapshot;\n    for (const product of snapshot.products) {\n      bootstrap.productSectionIds[product.id] = sectionId;\n    }\n    return snapshot;\n"""
+          section_cache_new = """    bootstrap.sectionSnapshots[sectionId] = snapshot;\n    rememberStorefrontProducts(bootstrap, snapshot.products);\n    return snapshot;\n"""
+          if section_cache_old not in content:
+              raise SystemExit('section cache marker not found')
+          content = content.replace(section_cache_old, section_cache_new, 1)
+
+          product_branch_old = """  if (sectionRef) {\n    const sectionSnapshot = await loadSectionSnapshot(bootstrap, sectionRef, signal);\n    matchedProduct = findPublishedProduct(sectionSnapshot.products, productRef);\n    section = sectionSnapshot.section;\n  } else {\n    const snapshots = await Promise.all(\n      bootstrap.home.allSections.map((item) =>\n        loadSectionSnapshot(bootstrap, item.id, signal),\n      ),\n    );\n    matchedProduct = findPublishedProduct(\n      snapshots.flatMap((snapshot) => snapshot.products),\n      productRef,\n    );\n    if (matchedProduct) {\n      section =\n        bootstrap.home.allSections.find(\n          (item) => item.id === matchedProduct?.sectionId,\n        ) ?? null;\n    }\n  }\n"""
+          product_branch_new = """  if (sectionRef) {\n    section =\n      bootstrap.home.allSections.find(\n        (item) => item.id === sectionRef || item.slug === sectionRef,\n      ) ?? null;\n    if (!section) {\n      throw new PublicContentError(\n        'CONTENT_NOT_PUBLISHED',\n        'This service section has not been published yet.',\n      );\n    }\n    matchedProduct = findRememberedProduct(bootstrap, section.id, productRef);\n    if (!matchedProduct) {\n      const sectionSnapshot = await loadSectionSnapshot(bootstrap, sectionRef, signal);\n      matchedProduct = findPublishedProduct(sectionSnapshot.products, productRef);\n      section = sectionSnapshot.section;\n    }\n  } else {\n    const rememberedMatches = Object.values(bootstrap.productSummaries).filter(\n      (product) => product.id === productRef || product.slug === productRef,\n    );\n    if (rememberedMatches.length === 1) {\n      matchedProduct = rememberedMatches[0] ?? null;\n      section = matchedProduct\n        ? (bootstrap.home.allSections.find(\n            (item) => item.id === matchedProduct?.sectionId,\n          ) ?? null)\n        : null;\n    } else {\n      const snapshots = await Promise.all(\n        bootstrap.home.allSections.map((item) =>\n          loadSectionSnapshot(bootstrap, item.id, signal),\n        ),\n      );\n      matchedProduct = findPublishedProduct(\n        snapshots.flatMap((snapshot) => snapshot.products),\n        productRef,\n      );\n      if (matchedProduct) {\n        section =\n          bootstrap.home.allSections.find(\n            (item) => item.id === matchedProduct?.sectionId,\n          ) ?? null;\n      }\n    }\n  }\n"""
+          if product_branch_old not in content:
+              raise SystemExit('product branch marker not found')
+          content = content.replace(product_branch_old, product_branch_new, 1)
+          content_path.write_text(content)
+
+          search_path = Path('apps/storefront/src/search-index.ts')
+          search = search_path.read_text()
+          import_old = """import {\n  PublicContentError,\n  type PublicProductSummary,\n  type StorefrontBootstrap,\n} from './content';\n"""
+          import_new = """import {\n  PublicContentError,\n  rememberStorefrontProducts,\n  type PublicProductSummary,\n  type StorefrontBootstrap,\n} from './content';\n"""
+          if import_old not in search:
+              raise SystemExit('search import marker not found')
+          search = search.replace(import_old, import_new, 1)
+
+          return_old = """  return snapshot.products.flatMap((product) => {\n    const section = sectionsById.get(product.sectionId);\n    if (!section) return [];\n    return [\n      {\n        ...product,\n        sectionSlug: section.slug,\n        sectionName: section.name,\n        coverUrl: mediaObjectUrl(\n          bootstrap.site.site.mediaBaseUrl,\n          product.coverObjectKey,\n        ),\n      },\n    ];\n  });\n}\n"""
+          return_new = """  const products = snapshot.products.flatMap((product) => {\n    const section = sectionsById.get(product.sectionId);\n    if (!section) return [];\n    return [\n      {\n        ...product,\n        sectionSlug: section.slug,\n        sectionName: section.name,\n        coverUrl: mediaObjectUrl(\n          bootstrap.site.site.mediaBaseUrl,\n          product.coverObjectKey,\n        ),\n      },\n    ];\n  });\n  rememberStorefrontProducts(bootstrap, products);\n  return products;\n}\n"""
+          if return_old not in search:
+              raise SystemExit('search return marker not found')
+          search = search.replace(return_old, return_new, 1)
+          search_path.write_text(search)
+
+          test_path = Path('apps/storefront/test/content.test.mjs')
+          test = test_path.read_text()
+          marker = """test('schema-v2 bootstrap rejects a module whose contentVersion does not match the pointer', async () => {\n"""
+          addition = """test('product detail reuses a bootstrap product summary before loading a section snapshot', async () => {\n  const requests = [];\n  const restore = installModularFetch(requests);\n  try {\n    const bootstrap = await loadStorefrontBootstrap('https://content.example.com');\n    requests.length = 0;\n\n    const product = await loadProductSnapshot(\n      bootstrap,\n      'product-a-slug',\n      undefined,\n      'alpha',\n    );\n\n    assert.equal(product.product.id, 'product-a');\n    assert.deepEqual(\n      requests.map((request) => request.url),\n      [\n        `https://content.example.com/public/modules/sections/section-a/${SECTION_A_VERSION}/products/product-a.json`,\n      ],\n    );\n  } finally {\n    restore();\n  }\n});\n\ntest('product detail keeps the section fallback when no remembered summary is available', async () => {\n  const requests = [];\n  const restore = installModularFetch(requests);\n  try {\n    const bootstrap = await loadStorefrontBootstrap('https://content.example.com');\n    bootstrap.productSummaries = {};\n    bootstrap.productReferenceIds = {};\n    requests.length = 0;\n\n    const product = await loadProductSnapshot(\n      bootstrap,\n      'product-a-slug',\n      undefined,\n      'alpha',\n    );\n\n    assert.equal(product.product.id, 'product-a');\n    assert.equal(\n      requests.filter((request) => request.url.endsWith('/section.json')).length,\n      1,\n    );\n    assert.equal(\n      requests.filter((request) => request.url.endsWith('/products/product-a.json')).length,\n      1,\n    );\n  } finally {\n    restore();\n  }\n});\n\n"""
+          if marker not in test:
+              raise SystemExit('content test insertion marker not found')
+          test = test.replace(marker, addition + marker, 1)
+          test_path.write_text(test)
+
+          contract_path = Path('apps/storefront/test/product-summary-reuse-contract.test.mjs')
+          contract_path.write_text("""import assert from 'node:assert/strict';\nimport { readFile } from 'node:fs/promises';\nimport test from 'node:test';\n\ntest('browse search remembers product summaries for later product detail navigation', async () => {\n  const source = await readFile(new URL('../src/search-index.ts', import.meta.url), 'utf8');\n  assert.match(source, /rememberStorefrontProducts\\(bootstrap, products\\)/u);\n});\n\ntest('product detail checks remembered summaries before section fallback', async () => {\n  const source = await readFile(new URL('../src/content.ts', import.meta.url), 'utf8');\n  const remembered = source.indexOf('matchedProduct = findRememberedProduct');\n  const fallback = source.indexOf('const sectionSnapshot = await loadSectionSnapshot', remembered);\n  assert.ok(remembered >= 0);\n  assert.ok(fallback > remembered);\n});\n""")
+
+          readme_path = Path('README.md')
+          readme = readme_path.read_text()
+          readme_marker = """### 分区筛选交互规则\n"""
+          readme_addition = """### Storefront 路由级请求边界\n\n路由级公开内容保持按需读取，并优先复用浏览器已经拿到的数据：\n\n- Section 首次进入只读取当前分区 snapshot；分类、标签、搜索继续在本地完成，不因筛选重复请求；\n- Product 详情优先复用 bootstrap、Browse Search Index 或已访问 Section 中已经存在的产品摘要来解析产品 ID；正常站内导航只再读取对应 product detail，不为了确认产品重复读取 section snapshot；\n- 如果是直接深链、旧 URL 或当前浏览器没有该产品摘要，则保留 section snapshot fallback，功能正确性优先于请求数；\n- FAQ 目录与文章共享同一个版本化 FAQ snapshot，首次进入读取一次，React Query 后续复用；\n- 不为了减少一次 R2 GET 复制产品详情文件、扩大 R2 存储，或把整分区详情提前塞进 bootstrap。\n\n"""
+          if readme_marker not in readme:
+              raise SystemExit('README insertion marker not found')
+          readme = readme.replace(readme_marker, readme_addition + readme_marker, 1)
+          readme_path.write_text(readme)
+          PY
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apps/storefront/src/content.ts apps/storefront/src/search-index.ts apps/storefront/test/content.test.mjs apps/storefront/test/product-summary-reuse-contract.test.mjs README.md
+          git commit -m "Reuse product summaries for detail routing"
+          git push origin HEAD:agent/product-detail-summary-reuse
