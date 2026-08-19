@@ -273,8 +273,7 @@ export function ProductDetailPage({
                     ? mobileGalleryItems.map((item, index) => {
                         const video = isVideoMediaUrl(item.url);
                         const isActiveMedia = index === mobileMediaIndex;
-                        const shouldLoadMedia =
-                          Math.abs(index - mobileMediaIndex) <= 1;
+                        const shouldLoadMedia = Math.abs(index - mobileMediaIndex) <= 1;
 
                         if (!shouldLoadMedia) {
                           return (
