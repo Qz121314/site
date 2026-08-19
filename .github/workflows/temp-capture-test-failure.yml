@@ -1,31 +1,29 @@
 name: Temp Capture Test Failure
 
 on:
-  pull_request:
+  push:
     branches:
-      - main
+      - agent/storefront-bootstrap-navigation
 
 jobs:
   capture:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 11
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: pnpm
+      - name: Set up Node.js and pnpm
+        run: |
+          node --version
+          npm install --global pnpm@11.19.0
+          pnpm --version
       - run: pnpm install --frozen-lockfile
-      - name: Capture compact test failure
+      - name: Capture exact Storefront test failure
         shell: bash
         run: |
           set +e
-          pnpm test > /tmp/test-output.txt 2>&1
+          pnpm --filter @site/storefront test > /tmp/test-output.txt 2>&1
           status=$?
           set -e
-          echo '--- TEST FAILURE TAIL ---'
-          tail -n 180 /tmp/test-output.txt
-          echo '--- END TEST FAILURE TAIL ---'
+          echo '--- FAILURE MATCHES ---'
+          grep -n -B 20 -A 45 -E 'not ok|AssertionError|failureType|ERR_ASSERTION|error:' /tmp/test-output.txt || true
+          echo '--- END FAILURE MATCHES ---'
           exit "$status"
