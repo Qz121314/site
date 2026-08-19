@@ -272,36 +272,42 @@ export function ProductDetailPage({
                   {mobileGalleryItems.length > 0
                     ? mobileGalleryItems.map((item, index) => {
                         const video = isVideoMediaUrl(item.url);
+                        const isActiveMedia = index === mobileMediaIndex;
                         const shouldLoadMedia =
                           Math.abs(index - mobileMediaIndex) <= 1;
+
+                        if (!shouldLoadMedia) {
+                          return (
+                            <div className="detail-mobile-media-item" key={item.id}>
+                              {activeMediaFallback}
+                            </div>
+                          );
+                        }
+
+                        if (video) {
+                          return (
+                            <div className="detail-mobile-media-item" key={item.id}>
+                              <ResilientVideo
+                                aria-label={item.altText}
+                                controls
+                                fallback={activeMediaFallback}
+                                playsInline
+                                preload="none"
+                                src={item.url}
+                              />
+                            </div>
+                          );
+                        }
+
                         return (
                           <div className="detail-mobile-media-item" key={item.id}>
-                            {shouldLoadMedia ? (
-                              video ? (
-                                <ResilientVideo
-                                  aria-label={item.altText}
-                                  controls
-                                  fallback={activeMediaFallback}
-                                  playsInline
-                                  preload="none"
-                                  src={item.url}
-                                />
-                              ) : (
-                                <ResilientImage
-                                  alt={item.altText}
-                                  fallback={activeMediaFallback}
-                                  fetchPriority={
-                                    index === mobileMediaIndex ? 'high' : 'auto'
-                                  }
-                                  loading={
-                                    index === mobileMediaIndex ? 'eager' : 'lazy'
-                                  }
-                                  src={item.url}
-                                />
-                              )
-                            ) : (
-                              activeMediaFallback
-                            )}
+                            <ResilientImage
+                              alt={item.altText}
+                              fallback={activeMediaFallback}
+                              fetchPriority={isActiveMedia ? 'high' : 'auto'}
+                              loading={isActiveMedia ? 'eager' : 'lazy'}
+                              src={item.url}
+                            />
                           </div>
                         );
                       })
