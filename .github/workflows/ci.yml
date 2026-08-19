@@ -45,14 +45,7 @@ jobs:
         run: pnpm typecheck
 
       - name: Test
-        shell: bash
-        run: |
-          set +e
-          pnpm test > /tmp/test-output.txt 2>&1
-          status=$?
-          set -e
-          tail -n 180 /tmp/test-output.txt
-          exit "$status"
+        run: pnpm test
 
       - name: Build
         run: pnpm build

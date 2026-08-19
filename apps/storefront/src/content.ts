@@ -1,8 +1,12 @@
-import {
-  loadBottomNavigation,
-  parseBottomNavigationItems,
-  type BottomNavigationItemConfig,
-} from './bottom-navigation';
+export type BottomNavigationItemConfig = {
+  key: 'home' | 'browse' | 'messages' | 'faq';
+  label: string;
+  enabled: boolean;
+  icon: {
+    type: 'builtin' | 'emoji' | 'image';
+    value: string | null;
+  };
+};
 
 export type PublicSection = {
   id: string;
@@ -316,6 +320,70 @@ const VERSION_PATTERN = /^[A-Za-z0-9-]{12,180}$/;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+
+function isBottomNavigationKey(
+  value: unknown,
+): value is BottomNavigationItemConfig['key'] {
+  return (
+    value === 'home' ||
+    value === 'browse' ||
+    value === 'messages' ||
+    value === 'faq'
+  );
+}
+
+function parseBottomNavigationItem(value: unknown): BottomNavigationItemConfig | null {
+  if (
+    !isRecord(value) ||
+    !isBottomNavigationKey(value.key) ||
+    typeof value.label !== 'string' ||
+    typeof value.enabled !== 'boolean' ||
+    !isRecord(value.icon) ||
+    (value.icon.type !== 'builtin' &&
+      value.icon.type !== 'emoji' &&
+      value.icon.type !== 'image') ||
+    (typeof value.icon.value !== 'string' && value.icon.value !== null)
+  ) {
+    return null;
+  }
+  return {
+    key: value.key,
+    label: value.label,
+    enabled: value.enabled,
+    icon: { type: value.icon.type, value: value.icon.value },
+  };
+}
+
+export function parseBottomNavigationItems(
+  value: unknown,
+): BottomNavigationItemConfig[] {
+  if (!Array.isArray(value)) throw new Error('BOTTOM_NAVIGATION_INVALID');
+  const items = value.map(parseBottomNavigationItem);
+  if (items.some((item) => item === null)) throw new Error('BOTTOM_NAVIGATION_INVALID');
+  const parsed = items as BottomNavigationItemConfig[];
+  const keys = new Set(parsed.map((item) => item.key));
+  if (parsed.length !== 4 || keys.size !== 4) {
+    throw new Error('BOTTOM_NAVIGATION_INVALID');
+  }
+  return parsed;
+}
+
+async function loadBottomNavigation(
+  signal?: AbortSignal,
+): Promise<BottomNavigationItemConfig[]> {
+  const response = await fetch('/api/public/bottom-navigation/', {
+    method: 'GET',
+    cache: 'no-cache',
+    credentials: 'same-origin',
+    headers: { Accept: 'application/json' },
+    ...(signal ? { signal } : {}),
+  });
+  if (!response.ok) throw new Error('BOTTOM_NAVIGATION_UNAVAILABLE');
+  const body = (await response.json()) as unknown;
+  if (!isRecord(body)) throw new Error('BOTTOM_NAVIGATION_INVALID');
+  return parseBottomNavigationItems(body.items);
 }
 
 function normalizeHomeLayoutSectionIds(value: unknown, max: number): string[] {
