@@ -618,6 +618,9 @@ test('schema-v2 bootstrap rejects a module whose contentVersion does not match t
     if (url === '/api/public/bottom-navigation/') {
       return jsonResponse({ items: bottomNavigation() });
     }
+    if (url === '/api/public/theme') {
+      return jsonResponse({ theme: storefrontTheme() });
+    }
     if (url.endsWith('/public/current.json')) return jsonResponse(modularPointer());
     if (url.endsWith(`/public/modules/site/${SITE_VERSION}/site.json`)) {
       return jsonResponse({
