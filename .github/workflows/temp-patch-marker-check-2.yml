@@ -1,0 +1,51 @@
+name: Temp Patch Marker Check 2
+
+on:
+  push:
+    branches:
+      - agent/storefront-bootstrap-theme-pwa
+
+permissions:
+  contents: write
+
+jobs:
+  check:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/storefront-bootstrap-theme-pwa
+      - name: Check remaining protected markers
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          checks = [
+            ('content-v1-output','apps/storefront/src/content.ts',"    home: normalizeV1HomeSnapshot(rawHome),\n    bottomNavigation,"),
+            ('theme-live-block','apps/storefront/src/theme-runtime.ts',"    if (!isRecord(body) || !validTheme(body.theme)) return cached;\n    applyTheme(body.theme);\n    try {\n      window.localStorage.setItem(CACHE_KEY, JSON.stringify(body.theme));\n    } catch {\n      // Theme caching is optional; the live response remains authoritative.\n    }\n    return body.theme;"),
+            ('main-import','apps/storefront/src/main.tsx',"import { installStorefrontTheme } from './theme-runtime';"),
+            ('main-pwa-jsx','apps/storefront/src/main.tsx',"      <PwaInstallPrompt themePromise={storefrontThemePromise} />"),
+            ('root-nav-import','apps/storefront/src/StorefrontRoot.tsx',"import { primaryNavigationItems } from './storefront-navigation';"),
+            ('root-system-import','apps/storefront/src/StorefrontRoot.tsx',"import { SYSTEM_UI } from './system-ui';"),
+            ('root-query-block','apps/storefront/src/StorefrontRoot.tsx',"  const supportConversationsQuery = useQuery({\n    queryKey: ['support-conversations'],\n    queryFn: ({ signal }) => siteSupportGateway.listConversations(signal),\n    enabled: supportRuntimeEnabled,\n    staleTime: Number.POSITIVE_INFINITY,\n    retry: 1,\n    refetchOnWindowFocus: false,\n  });\n  const unreadMessages ="),
+            ('pwa-manifest-type','apps/storefront/src/PwaInstallPrompt.tsx',"type PwaManifest = {\n  name?: unknown;\n};\n\n"),
+            ('pwa-full-signature','apps/storefront/src/PwaInstallPrompt.tsx',"export function PwaInstallPrompt({\n  themePromise,\n}: {\n  themePromise: Promise<PublicTheme | null>;\n}) {\n  const [appName, setAppName] = useState<string | null>(null);\n  const [config, setConfig] = useState<ThemeInstallPrompt | null>(null);"),
+            ('pwa-full-effect','apps/storefront/src/PwaInstallPrompt.tsx',"  useEffect(() => {\n    const controller = new AbortController();\n    void themePromise.then((theme) => {\n      setConfig(theme?.installPrompt ?? null);\n    });\n    void fetch('/manifest.webmanifest', { signal: controller.signal })"),
+            ('content-test-bottom','apps/storefront/test/content.test.mjs',"function bottomNavigation() {"),
+            ('content-test-media-route','apps/storefront/test/content.test.mjs',"    if (url === '/api/public/storefront/media-base-url') {\n      return jsonResponse({ mediaBaseUrl: 'https://media.example.com' });\n    }"),
+            ('content-test-legacy','apps/storefront/test/content.test.mjs',"    if (url === '/api/public/bottom-navigation/') {\n      return jsonResponse({ items: bottomNavigation() });\n    }\n    if (url.endsWith('/public/current.json')) {"),
+            ('content-test-legacy-assert','apps/storefront/test/content.test.mjs',"    assert.equal(result.bottomNavigation[0].key, 'home');"),
+            ('content-test-normal-assert','apps/storefront/test/content.test.mjs',"    assert.equal(bootstrap.bottomNavigation.length, 4);\n    assert.equal(bootstrap.bottomNavigation[2].key, 'messages');"),
+            ('worker-test-runtime-assert','apps/worker/test/public-bootstrap-runtime.test.mjs',"  assert.equal(runtime.mediaBaseUrl, 'https://media.example.com');"),
+            ('modular-expected','apps/worker/test/modular-publication.test.mjs',"    mediaBaseUrl: 'https://media.example.com',\n    bottomNavigation,"),
+            ('readme-bullets','README.md',"- 正常启动不再额外请求 `/api/public/bottom-navigation/`；\n- `mediaBaseUrl` 与四个 Bottom Navigation 项使用同一条 D1 查询读取，导航图片的 `object_key` 也在该查询中解析；\n- Bottom Navigation 仍是后台实时配置，不要求为了修改导航重新发布 R2 内容快照；\n- 旧 `/api/public/bottom-navigation/` 仅作为旧内容 / bootstrap 不可用时的兼容回退，不属于正常请求预算；\n- 后续新增首屏配置时优先复用 bootstrap，不能为可合并的小型配置恢复独立的全局启动请求。"),
+          ]
+          missing=[f'{label}: {path}' for label,path,marker in checks if marker not in Path(path).read_text()]
+          Path('.github/temp-patch-marker-report-2.txt').write_text('all-markers-present\n' if not missing else 'missing-markers:\n'+'\n'.join(missing)+'\n')
+          PY
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add .github/temp-patch-marker-report-2.txt
+          git commit -m "Report remaining bootstrap theme patch markers"
+          git push origin HEAD:agent/storefront-bootstrap-theme-pwa
