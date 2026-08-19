@@ -292,6 +292,32 @@ test('public storefront bootstrap consolidates the critical published snapshots'
   const site = { schemaVersion: 2, site: { name: 'Example' } };
   const sectionsIndex = { schemaVersion: 2, sections: [] };
   const home = { schemaVersion: 2, featuredProducts: [] };
+  const bottomNavigation = [
+    {
+      key: 'home',
+      label: 'Home',
+      enabled: true,
+      icon: { type: 'builtin', value: 'home' },
+    },
+    {
+      key: 'browse',
+      label: 'Browse',
+      enabled: true,
+      icon: { type: 'image', value: 'https://media.example.com/navigation/browse.webp' },
+    },
+    {
+      key: 'messages',
+      label: 'Messages',
+      enabled: true,
+      icon: { type: 'builtin', value: 'messages' },
+    },
+    {
+      key: 'faq',
+      label: 'FAQ',
+      enabled: false,
+      icon: { type: 'emoji', value: '?' },
+    },
+  ];
   bucket.objects.set(
     SITE.manifestKey.replace(/manifest\.json$/u, 'site.json'),
     JSON.stringify(site),
@@ -306,10 +332,54 @@ test('public storefront bootstrap consolidates the critical published snapshots'
   );
   const db = {
     prepare(sql) {
-      assert.match(sql, /SELECT media_base_url FROM site_settings/u);
+      assert.match(sql, /CROSS JOIN site_bottom_navigation nav/u);
+      assert.match(sql, /LEFT JOIN media_assets asset/u);
       return {
-        async first() {
-          return { media_base_url: 'https://media.example.com' };
+        async all() {
+          return {
+            results: [
+              {
+                media_base_url: 'https://media.example.com',
+                item_key: 'home',
+                label: 'Home',
+                icon_type: 'builtin',
+                icon_value: 'home',
+                is_enabled: 1,
+                sort_order: 0,
+                icon_object_key: null,
+              },
+              {
+                media_base_url: 'https://media.example.com',
+                item_key: 'browse',
+                label: 'Browse',
+                icon_type: 'asset',
+                icon_value: null,
+                is_enabled: 1,
+                sort_order: 1,
+                icon_object_key: 'navigation/browse.webp',
+              },
+              {
+                media_base_url: 'https://media.example.com',
+                item_key: 'messages',
+                label: 'Messages',
+                icon_type: 'builtin',
+                icon_value: 'messages',
+                is_enabled: 1,
+                sort_order: 2,
+                icon_object_key: null,
+              },
+              {
+                media_base_url: 'https://media.example.com',
+                item_key: 'faq',
+                label: 'FAQ',
+                icon_type: 'emoji',
+                icon_value: '?',
+                is_enabled: 0,
+                sort_order: 3,
+                icon_object_key: null,
+              },
+            ],
+          };
         },
       };
     },
@@ -331,5 +401,6 @@ test('public storefront bootstrap consolidates the critical published snapshots'
     sectionsIndex,
     home,
     mediaBaseUrl: 'https://media.example.com',
+    bottomNavigation,
   });
 });
