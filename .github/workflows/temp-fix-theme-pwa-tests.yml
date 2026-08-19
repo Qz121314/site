@@ -1,0 +1,82 @@
+name: Temp Fix Theme PWA Tests
+
+on:
+  push:
+    branches:
+      - agent/storefront-bootstrap-theme-pwa
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/storefront-bootstrap-theme-pwa
+      - name: Fix test fixtures and restore diagnostics
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          content_path = Path('apps/storefront/test/content.test.mjs')
+          content = content_path.read_text()
+          old = """    if (url === '/api/public/bottom-navigation/') {
+              return jsonResponse({ items: bottomNavigation() });
+            }
+            if (url.endsWith('/public/current.json')) return jsonResponse(modularPointer());
+          """
+          new = """    if (url === '/api/public/bottom-navigation/') {
+              return jsonResponse({ items: bottomNavigation() });
+            }
+            if (url === '/api/public/theme') {
+              return jsonResponse({ theme: storefrontTheme() });
+            }
+            if (url.endsWith('/public/current.json')) return jsonResponse(modularPointer());
+          """
+          # The exact sequence occurs in the mismatch test; replace the last occurrence so other
+          # fixtures are not changed accidentally.
+          index = content.rfind(old)
+          if index == -1:
+              raise SystemExit('mismatch test fetch marker not found')
+          content = content[:index] + new + content[index + len(old):]
+          content_path.write_text(content)
+
+          pwa_path = Path('apps/storefront/test/storefront-bootstrap-theme-pwa.test.mjs')
+          pwa = pwa_path.read_text()
+          old_regex = "  assert.doesNotMatch(pwaSource, /fetch\\\\(['\\\\\"]\\\\/manifest\\\\.webmanifest/u);\n"
+          new_check = "  assert.equal(pwaSource.includes(\"fetch('/manifest.webmanifest\"), false);\n  assert.equal(pwaSource.includes('fetch(\"/manifest.webmanifest'), false);\n"
+          if old_regex not in pwa:
+              raise SystemExit('invalid manifest regex marker not found')
+          pwa_path.write_text(pwa.replace(old_regex, new_check, 1))
+
+          package_path = Path('package.json')
+          package = package_path.read_text()
+          diagnostic = '"test": "bash -lc \'set +e; pnpm -r --if-present test > /tmp/test-output.txt 2>&1; status=$?; set -e; grep -n -B 24 -A 60 -E \\\"not ok|AssertionError|ERR_ASSERTION|ERR_MODULE|failing tests|failureType|Expected values|actual:|expected:|✖|Failed\\\" /tmp/test-output.txt || true; exit $status\'"'
+          original = '"test": "pnpm -r --if-present test"'
+          if diagnostic not in package:
+              raise SystemExit('diagnostic root test script marker not found')
+          package_path.write_text(package.replace(diagnostic, original, 1))
+
+          for temp in [
+              '.github/workflows/temp-test-failure-summary.yml',
+              '.github/temp-test-failure-summary-trigger.txt',
+              '.github/workflows/temp-fix-theme-pwa-tests.yml',
+          ]:
+              path = Path(temp)
+              if path.exists():
+                  path.unlink()
+          PY
+
+          npm install --global prettier@3.9.6
+          prettier --write apps/storefront/test/content.test.mjs apps/storefront/test/storefront-bootstrap-theme-pwa.test.mjs package.json
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Fix storefront theme fallback test coverage"
+          git push origin HEAD:agent/storefront-bootstrap-theme-pwa
