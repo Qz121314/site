@@ -224,6 +224,8 @@ export type StorefrontBootstrap = {
   bottomNavigation: BottomNavigationItemConfig[];
   sectionSnapshots: Record<string, SectionSnapshot>;
   productSectionIds: Record<string, string>;
+  productSummaries: Record<string, PublicProductSummary>;
+  productReferenceIds: Record<string, string>;
 };
 
 export class PublicContentError extends Error {
@@ -1103,15 +1105,46 @@ async function loadDerivedV2Home(
   };
 }
 
-function indexBootstrapProducts(
-  bootstrap: Pick<StorefrontBootstrap, 'home' | 'productSectionIds'>,
+function productReferenceKey(sectionId: string, productRef: string): string {
+  return `${sectionId}\u0000${productRef}`;
+}
+
+export function rememberStorefrontProducts(
+  bootstrap: Pick<
+    StorefrontBootstrap,
+    'productSectionIds' | 'productSummaries' | 'productReferenceIds'
+  >,
+  products: PublicProductSummary[],
 ): void {
-  for (const product of [
+  for (const product of products) {
+    bootstrap.productSectionIds[product.id] = product.sectionId;
+    bootstrap.productSummaries[product.id] = product;
+    bootstrap.productReferenceIds[productReferenceKey(product.sectionId, product.id)] =
+      product.id;
+    bootstrap.productReferenceIds[productReferenceKey(product.sectionId, product.slug)] =
+      product.id;
+  }
+}
+
+function findRememberedProduct(
+  bootstrap: Pick<StorefrontBootstrap, 'productSummaries' | 'productReferenceIds'>,
+  sectionId: string,
+  productRef: string,
+): PublicProductSummary | null {
+  const productId = bootstrap.productReferenceIds[productReferenceKey(sectionId, productRef)];
+  return productId ? (bootstrap.productSummaries[productId] ?? null) : null;
+}
+
+function indexBootstrapProducts(
+  bootstrap: Pick<
+    StorefrontBootstrap,
+    'home' | 'productSectionIds' | 'productSummaries' | 'productReferenceIds'
+  >,
+): void {
+  rememberStorefrontProducts(bootstrap, [
     ...bootstrap.home.featuredProducts,
     ...bootstrap.home.latestProducts,
-  ]) {
-    bootstrap.productSectionIds[product.id] = product.sectionId;
-  }
+  ]);
 }
 
 async function loadV2Bootstrap(
@@ -1247,6 +1280,8 @@ async function loadV2Bootstrap(
     bottomNavigation,
     sectionSnapshots,
     productSectionIds,
+    productSummaries: {},
+    productReferenceIds: {},
   };
   indexBootstrapProducts(bootstrap);
   return bootstrap;
@@ -1318,6 +1353,8 @@ async function loadV1Bootstrap(
     bottomNavigation,
     sectionSnapshots: {},
     productSectionIds: {},
+    productSummaries: {},
+    productReferenceIds: {},
   };
 }
 
@@ -1380,9 +1417,7 @@ export async function loadSectionSnapshot(
       signal,
     );
     bootstrap.sectionSnapshots[sectionId] = snapshot;
-    for (const product of snapshot.products) {
-      bootstrap.productSectionIds[product.id] = sectionId;
-    }
+    rememberStorefrontProducts(bootstrap, snapshot.products);
     return snapshot;
   }
   const snapshot = await loadV1File<SectionSnapshot>(
@@ -1445,24 +1480,49 @@ export async function loadProductSnapshot(
   let section: PublicSection | null = null;
 
   if (sectionRef) {
-    const sectionSnapshot = await loadSectionSnapshot(bootstrap, sectionRef, signal);
-    matchedProduct = findPublishedProduct(sectionSnapshot.products, productRef);
-    section = sectionSnapshot.section;
+    section =
+      bootstrap.home.allSections.find(
+        (item) => item.id === sectionRef || item.slug === sectionRef,
+      ) ?? null;
+    if (!section) {
+      throw new PublicContentError(
+        'CONTENT_NOT_PUBLISHED',
+        'This service section has not been published yet.',
+      );
+    }
+    matchedProduct = findRememberedProduct(bootstrap, section.id, productRef);
+    if (!matchedProduct) {
+      const sectionSnapshot = await loadSectionSnapshot(bootstrap, sectionRef, signal);
+      matchedProduct = findPublishedProduct(sectionSnapshot.products, productRef);
+      section = sectionSnapshot.section;
+    }
   } else {
-    const snapshots = await Promise.all(
-      bootstrap.home.allSections.map((item) =>
-        loadSectionSnapshot(bootstrap, item.id, signal),
-      ),
+    const rememberedMatches = Object.values(bootstrap.productSummaries).filter(
+      (product) => product.id === productRef || product.slug === productRef,
     );
-    matchedProduct = findPublishedProduct(
-      snapshots.flatMap((snapshot) => snapshot.products),
-      productRef,
-    );
-    if (matchedProduct) {
-      section =
-        bootstrap.home.allSections.find(
-          (item) => item.id === matchedProduct?.sectionId,
-        ) ?? null;
+    if (rememberedMatches.length === 1) {
+      matchedProduct = rememberedMatches[0] ?? null;
+      section = matchedProduct
+        ? (bootstrap.home.allSections.find(
+            (item) => item.id === matchedProduct?.sectionId,
+          ) ?? null)
+        : null;
+    } else {
+      const snapshots = await Promise.all(
+        bootstrap.home.allSections.map((item) =>
+          loadSectionSnapshot(bootstrap, item.id, signal),
+        ),
+      );
+      matchedProduct = findPublishedProduct(
+        snapshots.flatMap((snapshot) => snapshot.products),
+        productRef,
+      );
+      if (matchedProduct) {
+        section =
+          bootstrap.home.allSections.find(
+            (item) => item.id === matchedProduct?.sectionId,
+          ) ?? null;
+      }
     }
   }
 

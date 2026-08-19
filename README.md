@@ -139,6 +139,16 @@ GET /api/public/storefront/bootstrap
 - 旧 `/api/public/bottom-navigation/` 与 `/api/public/theme` 仅作为旧内容 / bootstrap 不可用时的兼容回退，不属于正常 schema-v2 启动请求预算；
 - 后续新增首屏配置时优先复用 bootstrap，不能为可合并的小型配置恢复独立的全局启动请求。
 
+### Storefront 路由级请求边界
+
+路由级公开内容保持按需读取，并优先复用浏览器已经拿到的数据：
+
+- Section 首次进入只读取当前分区 snapshot；分类、标签、搜索继续在本地完成，不因筛选重复请求；
+- Product 详情优先复用 bootstrap、Browse Search Index 或已访问 Section 中已经存在的产品摘要来解析产品 ID；正常站内导航只再读取对应 product detail，不为了确认产品重复读取 section snapshot；
+- 如果是直接深链、旧 URL 或当前浏览器没有该产品摘要，则保留 section snapshot fallback，功能正确性优先于请求数；
+- FAQ 目录与文章共享同一个版本化 FAQ snapshot，首次进入读取一次，React Query 后续复用；
+- 不为了减少一次 R2 GET 复制产品详情文件、扩大 R2 存储，或把整分区详情提前塞进 bootstrap。
+
 ### 分区筛选交互规则
 
 分区产品页的筛选属于高频用户交互，固定采用**横向按钮**，不改成下拉选择器：

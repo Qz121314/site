@@ -1,5 +1,6 @@
 import {
   PublicContentError,
+  rememberStorefrontProducts,
   type PublicProductSummary,
   type StorefrontBootstrap,
 } from './content';
@@ -95,7 +96,7 @@ export async function loadBrowseSearchProducts(
     bootstrap.home.allSections.map((section) => [section.id, section]),
   );
 
-  return snapshot.products.flatMap((product) => {
+  const products = snapshot.products.flatMap((product) => {
     const section = sectionsById.get(product.sectionId);
     if (!section) return [];
     return [
@@ -110,4 +111,6 @@ export async function loadBrowseSearchProducts(
       },
     ];
   });
+  rememberStorefrontProducts(bootstrap, products);
+  return products;
 }
