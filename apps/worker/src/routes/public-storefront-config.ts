@@ -140,7 +140,9 @@ publicStorefrontConfigRoutes.get('/search-index/:pointerVersion', async (context
   const key = searchSnapshotKey(pointerVersion);
   let object = await context.env.ASSETS_BUCKET.get(key);
   if (!object) {
-    const materializedKey = await materializeDerivedSearchSnapshot(context.env.ASSETS_BUCKET);
+    const materializedKey = await materializeDerivedSearchSnapshot(
+      context.env.ASSETS_BUCKET,
+    );
     if (materializedKey !== key) {
       return context.json({ available: false }, 404);
     }
