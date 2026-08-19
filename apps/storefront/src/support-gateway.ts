@@ -565,8 +565,6 @@ export const siteSupportGateway: SupportGateway = {
         body: JSON.stringify(
           clientBody({
             sourceHandoffId: input.handoffId,
-            clientMessageId: input.clientMessageId,
-            message: input.message,
             product: {
               id: route.product.id,
               sectionId: route.product.sectionId,
