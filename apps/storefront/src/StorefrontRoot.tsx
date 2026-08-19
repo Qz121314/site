@@ -13,10 +13,7 @@ import {
   useEffect,
   useSyncExternalStore,
 } from 'react';
-import {
-  loadBottomNavigation,
-  type BottomNavigationItemConfig,
-} from './bottom-navigation';
+import type { BottomNavigationItemConfig } from './bottom-navigation';
 import { loadStorefrontBootstrap } from './content';
 import { HomeFeed } from './HomeFeed';
 import { HomepageAnalytics } from './HomepageAnalytics';
@@ -203,11 +200,6 @@ export function StorefrontRoot() {
     queryFn: ({ signal }) => loadStorefrontBootstrap(undefined, signal),
     staleTime: 30_000,
   });
-  const navigationQuery = useQuery({
-    queryKey: ['bottom-navigation'],
-    queryFn: ({ signal }) => loadBottomNavigation(signal),
-    staleTime: 30_000,
-  });
   const supportConversationsQuery = useQuery({
     queryKey: ['support-conversations'],
     queryFn: ({ signal }) => siteSupportGateway.listConversations(signal),
@@ -251,7 +243,7 @@ export function StorefrontRoot() {
   if (bootstrapQuery.error || !bootstrapQuery.data) return <PrimaryError />;
 
   const bootstrap = bootstrapQuery.data;
-  const navigationItems = navigationQuery.data ?? [];
+  const navigationItems = bootstrap.bottomNavigation;
   let page: ReactNode;
 
   switch (route.type) {
