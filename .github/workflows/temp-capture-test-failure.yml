@@ -39,3 +39,5 @@ jobs:
           git add test-failure-output.txt
           git commit -m "Capture test failure output"
           git push origin HEAD:agent/storefront-bootstrap-navigation
+
+# diagnostic trigger
