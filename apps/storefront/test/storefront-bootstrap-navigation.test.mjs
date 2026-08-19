@@ -16,6 +16,8 @@ test('StorefrontRoot consumes bottom navigation from bootstrap without a second 
   assert.ok(root.includes('const navigationItems = bootstrap.bottomNavigation'));
   assert.ok(content.includes('bottomNavigation: BottomNavigationItemConfig[]'));
   assert.ok(
-    content.includes('bottomNavigation = parseBottomNavigationItems(value.bottomNavigation)'),
+    content.includes(
+      'bottomNavigation = parseBottomNavigationItems(value.bottomNavigation)',
+    ),
   );
 });

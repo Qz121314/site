@@ -64,7 +64,8 @@ export function parseBottomNavigationItems(value: unknown): BottomNavigationItem
   if (items.some((item) => item === null)) throw new Error('BOTTOM_NAVIGATION_INVALID');
   const parsed = items as BottomNavigationItemConfig[];
   const keys = new Set(parsed.map((item) => item.key));
-  if (parsed.length !== 4 || keys.size !== 4) throw new Error('BOTTOM_NAVIGATION_INVALID');
+  if (parsed.length !== 4 || keys.size !== 4)
+    throw new Error('BOTTOM_NAVIGATION_INVALID');
   return parsed;
 }
 

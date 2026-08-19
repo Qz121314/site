@@ -149,7 +149,12 @@ function derivedHomeSnapshot() {
 
 function bottomNavigation() {
   return [
-    { key: 'home', label: 'Home', enabled: true, icon: { type: 'builtin', value: 'home' } },
+    {
+      key: 'home',
+      label: 'Home',
+      enabled: true,
+      icon: { type: 'builtin', value: 'home' },
+    },
     {
       key: 'browse',
       label: 'Browse',
