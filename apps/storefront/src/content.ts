@@ -1498,32 +1498,23 @@ export async function loadProductSnapshot(
       section = sectionSnapshot.section;
     }
   } else {
-    const rememberedMatches = Object.values(bootstrap.productSummaries).filter(
-      (product) => product.id === productRef || product.slug === productRef,
+    // Legacy product URLs do not carry section context. Product slugs are only
+    // unique within a section, so a partial in-memory summary set cannot prove
+    // global uniqueness safely. Preserve the authoritative all-section lookup.
+    const snapshots = await Promise.all(
+      bootstrap.home.allSections.map((item) =>
+        loadSectionSnapshot(bootstrap, item.id, signal),
+      ),
     );
-    if (rememberedMatches.length === 1) {
-      matchedProduct = rememberedMatches[0] ?? null;
-      section = matchedProduct
-        ? (bootstrap.home.allSections.find(
-            (item) => item.id === matchedProduct?.sectionId,
-          ) ?? null)
-        : null;
-    } else {
-      const snapshots = await Promise.all(
-        bootstrap.home.allSections.map((item) =>
-          loadSectionSnapshot(bootstrap, item.id, signal),
-        ),
-      );
-      matchedProduct = findPublishedProduct(
-        snapshots.flatMap((snapshot) => snapshot.products),
-        productRef,
-      );
-      if (matchedProduct) {
-        section =
-          bootstrap.home.allSections.find(
-            (item) => item.id === matchedProduct?.sectionId,
-          ) ?? null;
-      }
+    matchedProduct = findPublishedProduct(
+      snapshots.flatMap((snapshot) => snapshot.products),
+      productRef,
+    );
+    if (matchedProduct) {
+      section =
+        bootstrap.home.allSections.find(
+          (item) => item.id === matchedProduct?.sectionId,
+        ) ?? null;
     }
   }
 
