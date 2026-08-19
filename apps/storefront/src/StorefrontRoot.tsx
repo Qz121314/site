@@ -27,6 +27,7 @@ import { bottomNavigationActiveHref, parseStorefrontRoute } from './routing';
 import { primaryNavigationItems } from './storefront-navigation';
 import type { SupportConversationSummary } from './support-contract';
 import { siteSupportGateway } from './support-gateway';
+import { peekSupportVisitorIdentity } from './support-identity';
 import { syncSupportAppBadge } from './support-push';
 import { subscribeSupportRealtime } from './support-realtime';
 import {
@@ -192,6 +193,11 @@ export function StorefrontRoot() {
   );
   const pathname = pathnameFromLocationKey(locationKey) || '/';
   const route = parseStorefrontRoute(pathname);
+  const supportRuntimeEnabled =
+    route.type === 'messages' ||
+    route.type === 'message-compose' ||
+    route.type === 'message' ||
+    Boolean(peekSupportVisitorIdentity());
   const bootstrapQuery = useQuery({
     queryKey: ['storefront-bootstrap'],
     queryFn: ({ signal }) => loadStorefrontBootstrap(undefined, signal),
@@ -205,6 +211,7 @@ export function StorefrontRoot() {
   const supportConversationsQuery = useQuery({
     queryKey: ['support-conversations'],
     queryFn: ({ signal }) => siteSupportGateway.listConversations(signal),
+    enabled: supportRuntimeEnabled,
     staleTime: Number.POSITIVE_INFINITY,
     retry: 1,
     refetchOnWindowFocus: false,
@@ -218,28 +225,27 @@ export function StorefrontRoot() {
     void syncSupportAppBadge(unreadMessages);
   }, [unreadMessages]);
 
-  useEffect(
-    () =>
-      subscribeSupportRealtime((event) => {
-        if (event.type === 'realtime.recovered') {
-          void queryClient.invalidateQueries({ queryKey: ['support-conversations'] });
-          void queryClient.invalidateQueries({ queryKey: ['support-conversation'] });
-          return;
-        }
-        if (event.type === 'realtime.connected') return;
-        queryClient.setQueryData<SupportConversationSummary[]>(
-          ['support-conversations'],
-          (current) => applyRealtimeToConversationList(current, event),
+  useEffect(() => {
+    if (!supportRuntimeEnabled) return undefined;
+    return subscribeSupportRealtime((event) => {
+      if (event.type === 'realtime.recovered') {
+        void queryClient.invalidateQueries({ queryKey: ['support-conversations'] });
+        void queryClient.invalidateQueries({ queryKey: ['support-conversation'] });
+        return;
+      }
+      if (event.type === 'realtime.connected') return;
+      queryClient.setQueryData<SupportConversationSummary[]>(
+        ['support-conversations'],
+        (current) => applyRealtimeToConversationList(current, event),
+      );
+      if (event.conversationRef) {
+        queryClient.setQueryData<SupportConversationQueryCache>(
+          ['support-conversation', event.conversationRef],
+          (current) => applyRealtimeToConversationCache(current, event),
         );
-        if (event.conversationRef) {
-          queryClient.setQueryData<SupportConversationQueryCache>(
-            ['support-conversation', event.conversationRef],
-            (current) => applyRealtimeToConversationCache(current, event),
-          );
-        }
-      }),
-    [queryClient],
-  );
+      }
+    });
+  }, [queryClient, supportRuntimeEnabled]);
 
   if (bootstrapQuery.isLoading) return <StartupLoader />;
   if (bootstrapQuery.error || !bootstrapQuery.data) return <PrimaryError />;
