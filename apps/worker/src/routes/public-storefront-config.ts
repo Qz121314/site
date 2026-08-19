@@ -10,6 +10,7 @@ import {
 import { buildMediaUrl } from '../media/media-url';
 import { materializeDerivedSearchSnapshot } from '../publishing/storefront-publisher';
 import { BOTTOM_NAVIGATION_KEYS } from '../settings/bottom-navigation';
+import { parseThemeSettings, resolveTheme } from '../theme/theme-center';
 import type { AppEnvironment } from '../types';
 
 export const publicStorefrontConfigRoutes = new Hono<AppEnvironment>();
@@ -25,6 +26,8 @@ type PublicSupportConnection = {
 
 type StorefrontRuntimeRow = {
   media_base_url: string | null;
+  theme_key: string | null;
+  theme_overrides_json: string | null;
   item_key: string;
   label: string;
   icon_type: string;
@@ -36,6 +39,7 @@ type StorefrontRuntimeRow = {
 
 type StorefrontBootstrapRuntime = {
   mediaBaseUrl: string | null;
+  theme: ReturnType<typeof resolveTheme>;
   bottomNavigation: Array<{
     key: (typeof BOTTOM_NAVIGATION_KEYS)[number];
     label: string;
@@ -114,6 +118,8 @@ export async function getStorefrontBootstrapRuntime(
       .prepare(
         `SELECT
            ss.media_base_url,
+           ss.theme_key,
+           ss.theme_overrides_json,
            nav.item_key,
            nav.label,
            nav.icon_type,
@@ -139,7 +145,19 @@ export async function getStorefrontBootstrapRuntime(
   const first = rows[0];
   if (!first) return null;
   const mediaBaseUrl = first.media_base_url;
-  if (rows.some((row) => row.media_base_url !== mediaBaseUrl)) return null;
+  const themeKey = first.theme_key;
+  const themeOverridesJson = first.theme_overrides_json;
+  if (
+    rows.some(
+      (row) =>
+        row.media_base_url !== mediaBaseUrl ||
+        row.theme_key !== themeKey ||
+        row.theme_overrides_json !== themeOverridesJson,
+    )
+  ) {
+    return null;
+  }
+  const theme = resolveTheme(parseThemeSettings(themeKey, themeOverridesJson));
 
   const bottomNavigation: StorefrontBootstrapRuntime['bottomNavigation'] = [];
   for (const key of BOTTOM_NAVIGATION_KEYS) {
@@ -169,7 +187,7 @@ export async function getStorefrontBootstrapRuntime(
     });
   }
 
-  return { mediaBaseUrl, bottomNavigation };
+  return { mediaBaseUrl, theme, bottomNavigation };
 }
 
 publicStorefrontConfigRoutes.get('/content-origin', async (context) => {
@@ -220,6 +238,7 @@ publicStorefrontConfigRoutes.get('/bootstrap', async (context) => {
     sectionsIndex,
     home,
     mediaBaseUrl: runtime.mediaBaseUrl,
+    theme: runtime.theme,
     bottomNavigation: runtime.bottomNavigation,
   });
 });

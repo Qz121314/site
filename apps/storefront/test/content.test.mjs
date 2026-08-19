@@ -147,6 +147,46 @@ function derivedHomeSnapshot() {
   };
 }
 
+function storefrontTheme() {
+  return {
+    key: 'saas',
+    colorScheme: 'light',
+    density: 'comfortable',
+    productMediaRatio: '1:1',
+    recipe: {
+      version: 2,
+      fontPack: 'modern',
+      buttonStyle: 'refined',
+      mediaStyle: 'precise',
+      motionStyle: 'restrained',
+      navigationStyle: 'tinted',
+    },
+    installPrompt: {
+      enabled: true,
+      delaySeconds: 30,
+      title: 'Install app',
+      description: 'Add it to your desktop for faster access.',
+      iosDescription: 'Use Share, then Add to Home Screen.',
+      installLabel: 'Install',
+      dismissLabel: 'Not now',
+    },
+    tokens: {
+      brand: '#4f46e5',
+      brandStrong: '#3730a3',
+      text: '#111827',
+      muted: '#6b7280',
+      surface: '#ffffff',
+      surfaceSoft: '#f7f8fc',
+      line: '#e5e7eb',
+      pageBg: '#f8fafc',
+      heroStart: '#4f46e5',
+      heroEnd: '#2563eb',
+      heroGlow: '#bfdbfe',
+      shadow: '0 14px 34px rgb(79 70 229 / 10%)',
+    },
+  };
+}
+
 function bottomNavigation() {
   return [
     {
@@ -187,11 +227,15 @@ function installModularFetch(
         sectionsIndex: sectionsIndexModule(),
         home: derivedHomeSnapshot(),
         mediaBaseUrl: 'https://media.example.com',
+        theme: storefrontTheme(),
         bottomNavigation: bottomNavigation(),
       });
     }
     if (url === '/api/public/storefront/media-base-url') {
       return jsonResponse({ mediaBaseUrl: 'https://media.example.com' });
+    }
+    if (url === '/api/public/theme') {
+      return jsonResponse({ theme: storefrontTheme() });
     }
     if (url === '/api/public/bottom-navigation/') {
       return jsonResponse({ items: bottomNavigation() });
@@ -283,6 +327,9 @@ test('legacy schema-v1 bootstrap remains readable and normalizes missing tags/fe
     if (url === '/api/public/bottom-navigation/') {
       return jsonResponse({ items: bottomNavigation() });
     }
+    if (url === '/api/public/theme') {
+      return jsonResponse({ theme: storefrontTheme() });
+    }
     if (url.endsWith('/public/current.json')) {
       return jsonResponse({
         schemaVersion: 1,
@@ -350,6 +397,8 @@ test('legacy schema-v1 bootstrap remains readable and normalizes missing tags/fe
     assert.deepEqual(result.home.featuredProducts[0].tags, []);
     assert.equal(result.home.featuredProducts[0].featuredOrder, 0);
     assert.equal(result.bottomNavigation[0].key, 'home');
+    assert.equal(result.theme.key, 'saas');
+    assert.equal(result.theme.installPrompt.delaySeconds, 30);
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -395,6 +444,8 @@ test('normal schema-v2 startup gets navigation from the single bootstrap request
     const bootstrap = await loadStorefrontBootstrap('https://app.example.com');
     assert.equal(bootstrap.bottomNavigation.length, 4);
     assert.equal(bootstrap.bottomNavigation[2].key, 'messages');
+    assert.equal(bootstrap.theme.key, 'saas');
+    assert.equal(bootstrap.theme.installPrompt.delaySeconds, 30);
     assert.deepEqual(
       requests.map((request) => request.url),
       ['https://app.example.com/api/public/storefront/bootstrap'],

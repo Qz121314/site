@@ -11,6 +11,7 @@ import {
   lazy,
   Suspense,
   useEffect,
+  useLayoutEffect,
   useSyncExternalStore,
 } from 'react';
 import type { BottomNavigationItemConfig } from './bottom-navigation';
@@ -21,6 +22,7 @@ import { RouteProgress, StartupLoader } from './LoadingStates';
 import { NotFoundPage } from './NotFoundPage';
 import { ResilientImage } from './ResilientMedia';
 import { bottomNavigationActiveHref, parseStorefrontRoute } from './routing';
+import { publishPwaInstallRuntime } from './pwa-install-runtime';
 import { primaryNavigationItems } from './storefront-navigation';
 import type { SupportConversationSummary } from './support-contract';
 import { siteSupportGateway } from './support-gateway';
@@ -33,6 +35,7 @@ import {
   type SupportConversationQueryCache,
 } from './support-realtime-cache';
 import { SYSTEM_UI } from './system-ui';
+import { applyStorefrontTheme } from './theme-runtime';
 
 const NAVIGATION_EVENT = 'storefront:navigate';
 
@@ -208,6 +211,17 @@ export function StorefrontRoot() {
     retry: 1,
     refetchOnWindowFocus: false,
   });
+
+  useLayoutEffect(() => {
+    const bootstrap = bootstrapQuery.data;
+    if (!bootstrap) return;
+    applyStorefrontTheme(bootstrap.theme);
+    publishPwaInstallRuntime({
+      appName: bootstrap.site.site.name,
+      config: bootstrap.theme.installPrompt,
+    });
+  }, [bootstrapQuery.data]);
+
   const unreadMessages = (supportConversationsQuery.data ?? []).reduce(
     (total, conversation) => total + conversation.unreadCount,
     0,

@@ -213,9 +213,29 @@ function readCachedTheme(): PublicTheme | null {
   }
 }
 
-export async function installStorefrontTheme(): Promise<PublicTheme | null> {
+function cacheTheme(theme: PublicTheme): void {
+  try {
+    window.localStorage.setItem(CACHE_KEY, JSON.stringify(theme));
+  } catch {
+    // Theme caching is optional; the live runtime remains authoritative.
+  }
+}
+
+export function installCachedStorefrontTheme(): PublicTheme | null {
   const cached = readCachedTheme();
   if (cached) applyTheme(cached);
+  return cached;
+}
+
+export function applyStorefrontTheme(theme: PublicTheme): boolean {
+  if (!validTheme(theme)) return false;
+  applyTheme(theme);
+  cacheTheme(theme);
+  return true;
+}
+
+export async function installStorefrontTheme(): Promise<PublicTheme | null> {
+  const cached = installCachedStorefrontTheme();
 
   try {
     const response = await fetch('/api/public/theme', {
@@ -227,12 +247,7 @@ export async function installStorefrontTheme(): Promise<PublicTheme | null> {
     if (!response.ok) return cached;
     const body = (await response.json()) as unknown;
     if (!isRecord(body) || !validTheme(body.theme)) return cached;
-    applyTheme(body.theme);
-    try {
-      window.localStorage.setItem(CACHE_KEY, JSON.stringify(body.theme));
-    } catch {
-      // Theme caching is optional; the live response remains authoritative.
-    }
+    applyStorefrontTheme(body.theme);
     return body.theme;
   } catch {
     // Keep the cached/default theme when the theme endpoint is temporarily unavailable.

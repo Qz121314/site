@@ -8,6 +8,46 @@ export type BottomNavigationItemConfig = {
   };
 };
 
+export type StorefrontThemeInstallPrompt = {
+  enabled: boolean;
+  delaySeconds: number;
+  title: string;
+  description: string;
+  iosDescription: string;
+  installLabel: string;
+  dismissLabel: string;
+};
+
+export type StorefrontTheme = {
+  key: string;
+  colorScheme: 'light' | 'dark';
+  density: 'compact' | 'standard' | 'comfortable';
+  productMediaRatio: '1:1';
+  recipe: {
+    version: 2;
+    fontPack: 'modern' | 'editorial' | 'compact' | 'technical';
+    buttonStyle: 'refined' | 'minimal' | 'soft-pill';
+    mediaStyle: 'precise' | 'soft' | 'editorial';
+    motionStyle: 'restrained' | 'gentle' | 'active';
+    navigationStyle: 'quiet' | 'tinted' | 'solid';
+  };
+  installPrompt: StorefrontThemeInstallPrompt;
+  tokens: {
+    brand: string;
+    brandStrong: string;
+    text: string;
+    muted: string;
+    surface: string;
+    surfaceSoft: string;
+    line: string;
+    pageBg: string;
+    heroStart: string;
+    heroEnd: string;
+    heroGlow: string;
+    shadow: string;
+  };
+};
+
 export type PublicSection = {
   id: string;
   slug: string;
@@ -180,6 +220,7 @@ export type StorefrontBootstrap = {
   pointer: CurrentPointer;
   site: SiteSnapshot;
   home: HomeSnapshot;
+  theme: StorefrontTheme;
   bottomNavigation: BottomNavigationItemConfig[];
   sectionSnapshots: Record<string, SectionSnapshot>;
   productSectionIds: Record<string, string>;
@@ -313,6 +354,7 @@ type V2BootstrapBundle = {
   rawIndex: V2SectionsIndexSnapshot;
   rawHome: V2DerivedHomeSnapshot;
   configuredMediaBaseUrl: string | null;
+  theme: StorefrontTheme;
   bottomNavigation: BottomNavigationItemConfig[];
 };
 
@@ -320,6 +362,71 @@ const VERSION_PATTERN = /^[A-Za-z0-9-]{12,180}$/;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+const STOREFRONT_THEME_TOKEN_KEYS = [
+  'brand',
+  'brandStrong',
+  'text',
+  'muted',
+  'surface',
+  'surfaceSoft',
+  'line',
+  'pageBg',
+  'heroStart',
+  'heroEnd',
+  'heroGlow',
+  'shadow',
+] as const;
+
+function parseStorefrontTheme(value: unknown): StorefrontTheme {
+  if (
+    !isRecord(value) ||
+    typeof value.key !== 'string' ||
+    (value.colorScheme !== 'light' && value.colorScheme !== 'dark') ||
+    (value.density !== 'compact' &&
+      value.density !== 'standard' &&
+      value.density !== 'comfortable') ||
+    value.productMediaRatio !== '1:1' ||
+    !isRecord(value.recipe) ||
+    value.recipe.version !== 2 ||
+    !['modern', 'editorial', 'compact', 'technical'].includes(
+      String(value.recipe.fontPack),
+    ) ||
+    !['refined', 'minimal', 'soft-pill'].includes(String(value.recipe.buttonStyle)) ||
+    !['precise', 'soft', 'editorial'].includes(String(value.recipe.mediaStyle)) ||
+    !['restrained', 'gentle', 'active'].includes(String(value.recipe.motionStyle)) ||
+    !['quiet', 'tinted', 'solid'].includes(String(value.recipe.navigationStyle)) ||
+    !isRecord(value.installPrompt) ||
+    typeof value.installPrompt.enabled !== 'boolean' ||
+    !Number.isInteger(value.installPrompt.delaySeconds) ||
+    Number(value.installPrompt.delaySeconds) < 5 ||
+    Number(value.installPrompt.delaySeconds) > 120 ||
+    typeof value.installPrompt.title !== 'string' ||
+    typeof value.installPrompt.description !== 'string' ||
+    typeof value.installPrompt.iosDescription !== 'string' ||
+    typeof value.installPrompt.installLabel !== 'string' ||
+    typeof value.installPrompt.dismissLabel !== 'string' ||
+    !isRecord(value.tokens) ||
+    !STOREFRONT_THEME_TOKEN_KEYS.every((key) => typeof value.tokens[key] === 'string')
+  ) {
+    throw new Error('THEME_INVALID');
+  }
+  return value as StorefrontTheme;
+}
+
+async function loadTheme(signal?: AbortSignal): Promise<StorefrontTheme> {
+  const response = await fetch('/api/public/theme', {
+    method: 'GET',
+    cache: 'no-cache',
+    credentials: 'same-origin',
+    headers: { Accept: 'application/json' },
+    ...(signal ? { signal } : {}),
+  });
+  if (!response.ok) throw new Error('THEME_UNAVAILABLE');
+  const body = (await response.json()) as unknown;
+  if (!isRecord(body)) throw new Error('THEME_INVALID');
+  return parseStorefrontTheme(body.theme);
 }
 
 function isBottomNavigationKey(
@@ -1009,12 +1116,13 @@ async function loadV2Bootstrap(
   signal?: AbortSignal,
   bundle?: V2BootstrapBundle,
 ): Promise<StorefrontBootstrap> {
-  const [rawSite, rawIndex, configuredMediaBaseUrl, bottomNavigation] = bundle
+  const [rawSite, rawIndex, configuredMediaBaseUrl, bottomNavigation, theme] = bundle
     ? [
         bundle.rawSite,
         bundle.rawIndex,
         bundle.configuredMediaBaseUrl,
         bundle.bottomNavigation,
+        bundle.theme,
       ]
     : await Promise.all([
         loadV2File<V2SiteSnapshot>(
@@ -1033,6 +1141,7 @@ async function loadV2Bootstrap(
         ),
         resolveMediaBaseUrl(signal),
         loadBottomNavigation(signal),
+        loadTheme(signal),
       ]);
   assertV2Envelope(rawSite, 'site', pointer.site.contentVersion);
   assertV2Envelope(rawIndex, 'sections-index', pointer.sectionsIndex.contentVersion);
@@ -1130,6 +1239,7 @@ async function loadV2Bootstrap(
       featuredProducts,
       latestProducts,
     },
+    theme,
     bottomNavigation,
     sectionSnapshots,
     productSectionIds,
@@ -1164,8 +1274,10 @@ async function loadV2BootstrapBundle(
   const pointer = parsePointer(value.pointer);
   if (pointer.schemaVersion !== 2) return null;
   let bottomNavigation: BottomNavigationItemConfig[];
+  let theme: StorefrontTheme;
   try {
     bottomNavigation = parseBottomNavigationItems(value.bottomNavigation);
+    theme = parseStorefrontTheme(value.theme);
   } catch {
     return null;
   }
@@ -1177,6 +1289,7 @@ async function loadV2BootstrapBundle(
     configuredMediaBaseUrl: normalizeContentOrigin(
       typeof value.mediaBaseUrl === 'string' ? value.mediaBaseUrl : null,
     ),
+    theme,
     bottomNavigation,
   };
 }
@@ -1186,16 +1299,18 @@ async function loadV1Bootstrap(
   pointer: CurrentPointerV1,
   signal?: AbortSignal,
 ): Promise<StorefrontBootstrap> {
-  const [site, rawHome, bottomNavigation] = await Promise.all([
+  const [site, rawHome, bottomNavigation, theme] = await Promise.all([
     loadV1File<SiteSnapshot>(origin, pointer.contentVersion, 'site.json', signal),
     loadV1File<HomeSnapshot>(origin, pointer.contentVersion, 'home.json', signal),
     loadBottomNavigation(signal),
+    loadTheme(signal),
   ]);
   return {
     origin,
     pointer,
     site,
     home: normalizeV1HomeSnapshot(rawHome),
+    theme,
     bottomNavigation,
     sectionSnapshots: {},
     productSectionIds: {},
