@@ -30,6 +30,7 @@ test('CTA compose creates the conversation before any visitor message', () => {
   assert.equal(messages.includes('setComposeOptimisticMessage'), false);
   assert.equal(contract.includes('clientMessageId: string;\n  message: string;'), false);
 
+  // Regression guard: creating a conversation must not carry visitor content.
   const conversationCreation = gateway.slice(startConversation, sendMessage);
   assert.ok(conversationCreation.includes('sourceHandoffId: input.handoffId'));
   assert.equal(
