@@ -362,9 +362,7 @@ export function MessagesPage({
       ['support-conversations'],
       (current) => {
         const summary = conversationSummary(conversation);
-        const withoutCurrent = (current ?? []).filter(
-          (item) => item.id !== summary.id,
-        );
+        const withoutCurrent = (current ?? []).filter((item) => item.id !== summary.id);
         return [summary, ...withoutCurrent];
       },
     );
@@ -382,8 +380,7 @@ export function MessagesPage({
 
   const sendMutation = useMutation({
     mutationFn: async (variables: SendMessageVariables) => {
-      if (!variables.conversationRef)
-        throw new Error('MESSAGE_CONTEXT_UNAVAILABLE');
+      if (!variables.conversationRef) throw new Error('MESSAGE_CONTEXT_UNAVAILABLE');
       return siteSupportGateway.sendMessage(variables.conversationRef, {
         clientMessageId: variables.clientMessageId,
         body: variables.body,
@@ -613,7 +610,9 @@ export function MessagesPage({
               }
             : undefined
         }
-        onRetryMessage={supportAvailable && activeConversationRef ? retryMessage : undefined}
+        onRetryMessage={
+          supportAvailable && activeConversationRef ? retryMessage : undefined
+        }
         sending={sendMutation.isPending}
         sendError={null}
         onSendImage={supportAvailable && activeConversationRef ? sendImage : undefined}
@@ -639,8 +638,8 @@ export function MessagesPage({
           Boolean(activeConversationRef && conversationQuery.isLoading) ||
           Boolean(
             compose &&
-              composeContext &&
-              (composeProductQuery.isLoading || composeStartQuery.isFetching),
+            composeContext &&
+            (composeProductQuery.isLoading || composeStartQuery.isFetching),
           )
         }
       />
