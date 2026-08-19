@@ -214,8 +214,6 @@ export function MessagesPage({
   LinkComponent: StorefrontLinkComponent;
 }) {
   const queryClient = useQueryClient();
-  const [composeOptimisticMessage, setComposeOptimisticMessage] =
-    useState<SupportMessage | null>(null);
   const [imageProgress, setImageProgress] = useState<number | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
   const [notificationState, setNotificationState] =
@@ -224,20 +222,13 @@ export function MessagesPage({
   const supportConnectionsQuery = useQuery({
     queryKey: ['support-connections'],
     queryFn: ({ signal }) => loadPublicSupportConnections(signal),
+    enabled: !compose,
     staleTime: 5_000,
     retry: 1,
   });
   const supportAvailable = supportConnectionsQuery.isSuccess
     ? supportConnectionsQuery.data.length > 0
     : null;
-  const conversationsQuery = useQuery({
-    queryKey: ['support-conversations'],
-    queryFn: ({ signal }) => siteSupportGateway.listConversations(signal),
-    enabled: supportAvailable === true,
-    staleTime: Number.POSITIVE_INFINITY,
-    retry: 1,
-    refetchOnWindowFocus: false,
-  });
   const conversationQuery = useInfiniteQuery({
     queryKey: ['support-conversation', activeConversationRef],
     enabled: Boolean(activeConversationRef),
@@ -293,27 +284,45 @@ export function MessagesPage({
         productHref: `/sections/${encodeURIComponent(composeProduct.sectionId)}/products/${encodeURIComponent(composeProduct.id)}/`,
       }
     : null;
-  const optimisticComposeConversation: SupportConversationDetail | null =
-    composeOptimisticMessage && pendingConversation
-      ? {
-          id: '__new__',
-          agentName: null,
-          agentAvatarUrl: null,
+  const composeStartQuery = useQuery({
+    queryKey: ['support-compose-start', composeContext?.handoffId],
+    enabled: Boolean(composeContext && pendingConversation?.productHref),
+    queryFn: ({ signal }) => {
+      if (!composeContext || !pendingConversation?.productHref)
+        throw new Error('MESSAGE_CONTEXT_UNAVAILABLE');
+      return siteSupportGateway.startConversation(
+        {
+          handoffId: composeContext.handoffId,
+          productId: composeContext.productId,
+          sectionId: composeContext.sectionId,
           productTitle: pendingConversation.productTitle,
           productCoverUrl: pendingConversation.productCoverUrl,
           productHref: pendingConversation.productHref,
-          lastMessage: composeOptimisticMessage.body,
-          lastMessageAt: composeOptimisticMessage.sentAt,
-          unreadCount: 0,
-          status: 'waiting',
-          createdAt: composeOptimisticMessage.sentAt,
-          expiresAt: composeOptimisticMessage.sentAt,
-          messages: [composeOptimisticMessage],
-          nextMessageCursor: null,
-        }
-      : null;
-  const displayedConversation = activeConversation ?? optimisticComposeConversation;
+        },
+        signal,
+      );
+    },
+    staleTime: Number.POSITIVE_INFINITY,
+    retry: 1,
+    refetchOnWindowFocus: false,
+  });
+  const conversationsQuery = useQuery({
+    queryKey: ['support-conversations'],
+    queryFn: ({ signal }) => siteSupportGateway.listConversations(signal),
+    enabled: supportAvailable === true && !compose,
+    staleTime: Number.POSITIVE_INFINITY,
+    retry: 1,
+    refetchOnWindowFocus: false,
+  });
+  const displayedConversation = activeConversation;
   const conversations = conversationsQuery.data ?? [];
+  const workspaceSupportAvailable = compose
+    ? composeStartQuery.isError
+      ? false
+      : composeStartQuery.data
+        ? true
+        : null
+    : supportAvailable;
 
   useEffect(() => {
     let active = true;
@@ -345,29 +354,40 @@ export function MessagesPage({
     };
   }, [activeConversationRef]);
 
+  useEffect(() => {
+    const conversation = composeStartQuery.data;
+    if (!compose || !conversation) return;
+
+    queryClient.setQueryData<SupportConversationSummary[]>(
+      ['support-conversations'],
+      (current) => {
+        const summary = conversationSummary(conversation);
+        const withoutCurrent = (current ?? []).filter(
+          (item) => item.id !== summary.id,
+        );
+        return [summary, ...withoutCurrent];
+      },
+    );
+    queryClient.setQueryData<ConversationQueryCache>(
+      ['support-conversation', conversation.id],
+      { pages: [conversation], pageParams: [null] },
+    );
+    window.history.replaceState(
+      null,
+      '',
+      `/messages/${encodeURIComponent(conversation.id)}/`,
+    );
+    window.dispatchEvent(new Event(NAVIGATION_EVENT));
+  }, [compose, composeStartQuery.data, queryClient]);
+
   const sendMutation = useMutation({
     mutationFn: async (variables: SendMessageVariables) => {
-      if (variables.conversationRef) {
-        const message = await siteSupportGateway.sendMessage(variables.conversationRef, {
-          clientMessageId: variables.clientMessageId,
-          body: variables.body,
-        });
-        return { kind: 'message' as const, message };
-      }
-      if (composeContext && pendingConversation?.productHref) {
-        const conversation = await siteSupportGateway.startConversation({
-          handoffId: composeContext.handoffId,
-          productId: composeContext.productId,
-          sectionId: composeContext.sectionId,
-          productTitle: pendingConversation.productTitle,
-          productCoverUrl: pendingConversation.productCoverUrl,
-          productHref: pendingConversation.productHref,
-          clientMessageId: variables.clientMessageId,
-          message: variables.body,
-        });
-        return { kind: 'conversation' as const, conversation };
-      }
-      throw new Error('MESSAGE_CONTEXT_UNAVAILABLE');
+      if (!variables.conversationRef)
+        throw new Error('MESSAGE_CONTEXT_UNAVAILABLE');
+      return siteSupportGateway.sendMessage(variables.conversationRef, {
+        clientMessageId: variables.clientMessageId,
+        body: variables.body,
+      });
     },
     onMutate: (variables) => {
       const optimisticId = `local:${variables.clientMessageId}`;
@@ -391,65 +411,33 @@ export function MessagesPage({
           variables.body,
           variables.sentAt,
         );
-      } else {
-        setComposeOptimisticMessage(optimisticMessage);
       }
       return { optimisticId };
     },
-    onSuccess: (result, variables, context) => {
-      if (result.kind === 'conversation') {
-        setComposeOptimisticMessage(null);
-        queryClient.setQueryData<SupportConversationSummary[]>(
-          ['support-conversations'],
-          (current) => {
-            const summary = conversationSummary(result.conversation);
-            const withoutCurrent = (current ?? []).filter(
-              (item) => item.id !== summary.id,
-            );
-            return [summary, ...withoutCurrent];
-          },
-        );
-        queryClient.setQueryData<ConversationQueryCache>(
-          ['support-conversation', result.conversation.id],
-          { pages: [result.conversation], pageParams: [null] },
-        );
-        window.history.pushState(
-          null,
-          '',
-          `/messages/${encodeURIComponent(result.conversation.id)}/`,
-        );
-        window.dispatchEvent(new Event(NAVIGATION_EVENT));
-        return;
-      }
-      if (variables.conversationRef) {
-        replaceOptimisticMessage(
-          queryClient,
-          variables.conversationRef,
-          context.optimisticId,
-          result.message,
-        );
-        updateConversationPreview(
-          queryClient,
-          variables.conversationRef,
-          result.message.body,
-          result.message.sentAt,
-        );
-      }
+    onSuccess: (message, variables, context) => {
+      if (!variables.conversationRef) return;
+      replaceOptimisticMessage(
+        queryClient,
+        variables.conversationRef,
+        context.optimisticId,
+        message,
+      );
+      updateConversationPreview(
+        queryClient,
+        variables.conversationRef,
+        message.body,
+        message.sentAt,
+      );
     },
     onError: (_error, variables, context) => {
+      if (!variables.conversationRef) return;
       const optimisticId = context?.optimisticId ?? `local:${variables.clientMessageId}`;
-      if (variables.conversationRef) {
-        updateOptimisticDelivery(
-          queryClient,
-          variables.conversationRef,
-          optimisticId,
-          'failed',
-        );
-      } else {
-        setComposeOptimisticMessage((current) =>
-          current?.id === optimisticId ? { ...current, delivery: 'failed' } : current,
-        );
-      }
+      updateOptimisticDelivery(
+        queryClient,
+        variables.conversationRef,
+        optimisticId,
+        'failed',
+      );
     },
   });
 
@@ -611,10 +599,10 @@ export function MessagesPage({
         activeConversationRef={workspaceConversationRef}
         conversations={conversations}
         pendingConversation={pendingConversation}
-        supportAvailable={supportAvailable}
+        supportAvailable={workspaceSupportAvailable}
         LinkComponent={LinkComponent}
         onSendMessage={
-          supportAvailable
+          supportAvailable && activeConversationRef
             ? async (body) => {
                 await sendMutation.mutateAsync({
                   body,
@@ -625,8 +613,8 @@ export function MessagesPage({
               }
             : undefined
         }
-        onRetryMessage={supportAvailable ? retryMessage : undefined}
-        sending={compose && sendMutation.isPending}
+        onRetryMessage={supportAvailable && activeConversationRef ? retryMessage : undefined}
+        sending={sendMutation.isPending}
         sendError={null}
         onSendImage={supportAvailable && activeConversationRef ? sendImage : undefined}
         onRetryImage={
@@ -649,7 +637,11 @@ export function MessagesPage({
         loadingEarlier={conversationQuery.isFetchingNextPage}
         loadingConversation={
           Boolean(activeConversationRef && conversationQuery.isLoading) ||
-          Boolean(compose && composeContext && composeProductQuery.isLoading)
+          Boolean(
+            compose &&
+              composeContext &&
+              (composeProductQuery.isLoading || composeStartQuery.isFetching),
+          )
         }
       />
     </div>
