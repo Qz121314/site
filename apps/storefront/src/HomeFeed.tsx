@@ -101,13 +101,14 @@ function HomeHero({ siteName, slides }: { siteName: string; slides: PublicHeroSl
                 <div className="hero-carousel-media">
                   {slide.mediaKind === 'video' ? (
                     <ResilientVideo
+                      key={`${slide.id}:${index === activeIndex ? 'active' : 'inactive'}`}
                       aria-label={slide.title || siteName}
-                      autoPlay
+                      autoPlay={index === activeIndex}
                       fallback={mediaFallback}
                       loop
                       muted
                       playsInline
-                      preload={index === 0 ? 'auto' : 'metadata'}
+                      preload={index === activeIndex ? 'auto' : 'none'}
                       src={slide.mediaUrl}
                     />
                   ) : (

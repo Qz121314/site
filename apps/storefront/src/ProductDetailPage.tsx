@@ -270,26 +270,43 @@ export function ProductDetailPage({
                   }}
                 >
                   {mobileGalleryItems.length > 0
-                    ? mobileGalleryItems.map((item) => {
+                    ? mobileGalleryItems.map((item, index) => {
                         const video = isVideoMediaUrl(item.url);
-                        return (
-                          <div className="detail-mobile-media-item" key={item.id}>
-                            {video ? (
+                        const isActiveMedia = index === mobileMediaIndex;
+                        const shouldLoadMedia = Math.abs(index - mobileMediaIndex) <= 1;
+
+                        if (!shouldLoadMedia) {
+                          return (
+                            <div className="detail-mobile-media-item" key={item.id}>
+                              {activeMediaFallback}
+                            </div>
+                          );
+                        }
+
+                        if (video) {
+                          return (
+                            <div className="detail-mobile-media-item" key={item.id}>
                               <ResilientVideo
                                 aria-label={item.altText}
                                 controls
                                 fallback={activeMediaFallback}
                                 playsInline
-                                preload="metadata"
+                                preload="none"
                                 src={item.url}
                               />
-                            ) : (
-                              <ResilientImage
-                                alt={item.altText}
-                                fallback={activeMediaFallback}
-                                src={item.url}
-                              />
-                            )}
+                            </div>
+                          );
+                        }
+
+                        return (
+                          <div className="detail-mobile-media-item" key={item.id}>
+                            <ResilientImage
+                              alt={item.altText}
+                              fallback={activeMediaFallback}
+                              fetchPriority={isActiveMedia ? 'high' : 'auto'}
+                              loading={isActiveMedia ? 'eager' : 'lazy'}
+                              src={item.url}
+                            />
                           </div>
                         );
                       })
@@ -323,7 +340,7 @@ export function ProductDetailPage({
                               fallback={<div className="detail-thumbnail-fallback" />}
                               muted
                               playsInline
-                              preload="metadata"
+                              preload="none"
                               src={item.url}
                             />
                             <span
@@ -357,7 +374,7 @@ export function ProductDetailPage({
                       controls
                       fallback={activeMediaFallback}
                       playsInline
-                      preload="metadata"
+                      preload="none"
                       src={activeMediaUrl}
                     />
                   ) : (
@@ -394,7 +411,7 @@ export function ProductDetailPage({
                               fallback={<div className="detail-thumbnail-fallback" />}
                               muted
                               playsInline
-                              preload="metadata"
+                              preload="none"
                               src={item.url}
                             />
                             <span
