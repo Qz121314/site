@@ -322,15 +322,11 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-
 function isBottomNavigationKey(
   value: unknown,
 ): value is BottomNavigationItemConfig['key'] {
   return (
-    value === 'home' ||
-    value === 'browse' ||
-    value === 'messages' ||
-    value === 'faq'
+    value === 'home' || value === 'browse' || value === 'messages' || value === 'faq'
   );
 }
 
@@ -356,9 +352,7 @@ function parseBottomNavigationItem(value: unknown): BottomNavigationItemConfig |
   };
 }
 
-export function parseBottomNavigationItems(
-  value: unknown,
-): BottomNavigationItemConfig[] {
+export function parseBottomNavigationItems(value: unknown): BottomNavigationItemConfig[] {
   if (!Array.isArray(value)) throw new Error('BOTTOM_NAVIGATION_INVALID');
   const items = value.map(parseBottomNavigationItem);
   if (items.some((item) => item === null)) throw new Error('BOTTOM_NAVIGATION_INVALID');
