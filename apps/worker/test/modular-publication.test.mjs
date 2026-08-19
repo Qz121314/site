@@ -71,10 +71,13 @@ function createBucket({ pointer = POINTER, manifestExists = true } = {}) {
   if (pointer) objects.set('public/current.json', JSON.stringify(pointer));
   if (manifestExists) objects.set(SECTION_A_TARGET.manifest_key, '{}');
   const writes = [];
+  const reads = [];
   return {
     objects,
     writes,
+    reads,
     async get(key) {
+      reads.push(key);
       const body = objects.get(key);
       if (body === undefined) return null;
       return {
@@ -406,7 +409,7 @@ test('public storefront bootstrap consolidates the critical published snapshots'
     response.headers.get('cache-control'),
     'public, max-age=30, must-revalidate',
   );
-  assert.deepEqual(await response.json(), {
+  const expected = {
     pointer: POINTER,
     site,
     sectionsIndex,
@@ -414,5 +417,26 @@ test('public storefront bootstrap consolidates the critical published snapshots'
     mediaBaseUrl: 'https://media.example.com',
     theme: resolveTheme({ key: 'saas', overrides: {} }),
     bottomNavigation,
-  });
+  };
+  assert.deepEqual(await response.json(), expected);
+
+  const bundleKey = `public/bootstrap/${POINTER.contentVersion}/bootstrap.json`;
+  assert.deepEqual(bucket.reads, [
+    'public/current.json',
+    bundleKey,
+    SITE.manifestKey.replace(/manifest\.json$/u, 'site.json'),
+    INDEX.manifestKey.replace(/manifest\.json$/u, 'sections.json'),
+    `public/home/${POINTER.contentVersion}/home.json`,
+  ]);
+  assert.equal(bucket.writes.at(-1)?.key, bundleKey);
+
+  bucket.reads.length = 0;
+  const secondResponse = await publicStorefrontConfigRoutes.request(
+    'https://storefront.example.com/bootstrap',
+    {},
+    { DB: db, ASSETS_BUCKET: bucket },
+  );
+  assert.equal(secondResponse.status, 200);
+  assert.deepEqual(await secondResponse.json(), expected);
+  assert.deepEqual(bucket.reads, ['public/current.json', bundleKey]);
 });

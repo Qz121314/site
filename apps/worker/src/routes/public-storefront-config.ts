@@ -8,6 +8,7 @@ import {
   type CustomerServiceConnectionRecord,
 } from '../customer-service/customer-service-connections';
 import { buildMediaUrl } from '../media/media-url';
+import { loadStorefrontPublishedBootstrap } from '../publishing/storefront-bootstrap-snapshot';
 import { materializeDerivedSearchSnapshot } from '../publishing/storefront-publisher';
 import { BOTTOM_NAVIGATION_KEYS } from '../settings/bottom-navigation';
 import { parseThemeSettings, resolveTheme } from '../theme/theme-center';
@@ -65,18 +66,6 @@ async function readPublishedJson(bucket: R2Bucket, key: string): Promise<unknown
   } catch {
     return null;
   }
-}
-
-function publishedFile(reference: unknown, fileName: string): string | null {
-  if (!isRecord(reference) || typeof reference.manifestKey !== 'string') return null;
-  const manifestKey = reference.manifestKey;
-  if (
-    !/^public\/modules\/[A-Za-z0-9._/-]+\/manifest\.json$/u.test(manifestKey) ||
-    manifestKey.includes('..')
-  ) {
-    return null;
-  }
-  return manifestKey.replace(/manifest\.json$/u, fileName);
 }
 
 function setPublicRuntimeHeaders(context: Context<AppEnvironment>) {
@@ -210,25 +199,14 @@ publicStorefrontConfigRoutes.get('/bootstrap', async (context) => {
   if (!isRecord(pointerValue) || pointerValue.schemaVersion !== 2 || !runtime) {
     return context.json({ available: false }, 404);
   }
-  const sitePath = publishedFile(pointerValue.site, 'site.json');
-  const sectionsPath = publishedFile(pointerValue.sectionsIndex, 'sections.json');
-  const pointerVersion =
-    typeof pointerValue.contentVersion === 'string' ? pointerValue.contentVersion : null;
-  if (!sitePath || !sectionsPath || !pointerVersion) {
+  const publishedBootstrap = await loadStorefrontPublishedBootstrap(
+    context.env.ASSETS_BUCKET,
+    pointerValue,
+  );
+  if (!publishedBootstrap) {
     return context.json({ available: false }, 404);
   }
-
-  const [site, sectionsIndex, home] = await Promise.all([
-    readPublishedJson(context.env.ASSETS_BUCKET, sitePath),
-    readPublishedJson(context.env.ASSETS_BUCKET, sectionsPath),
-    readPublishedJson(
-      context.env.ASSETS_BUCKET,
-      `public/home/${pointerVersion}/home.json`,
-    ),
-  ]);
-  if (!site || !sectionsIndex || !home) {
-    return context.json({ available: false }, 404);
-  }
+  const { site, sectionsIndex, home } = publishedBootstrap;
 
   context.header('Cache-Control', 'public, max-age=30, must-revalidate');
   context.header('X-Robots-Tag', 'noindex, nofollow');
