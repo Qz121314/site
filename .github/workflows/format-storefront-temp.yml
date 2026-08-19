@@ -1,0 +1,39 @@
+name: Temporary storefront formatter
+
+on:
+  push:
+    branches:
+      - agent/storefront-conversion-polish
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: agent/storefront-conversion-polish
+      - name: Set up Node.js and pnpm
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --global pnpm@11.19.0
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Format storefront file
+        run: pnpm exec prettier --write apps/storefront/src/HomeFeed.tsx
+      - name: Commit formatting
+        shell: bash
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- apps/storefront/src/HomeFeed.tsx; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apps/storefront/src/HomeFeed.tsx
+          git commit -m "Format storefront conversion changes"
+          git push origin HEAD:agent/storefront-conversion-polish
