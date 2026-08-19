@@ -7,9 +7,12 @@ import {
   listCustomerServiceConnections,
   type CustomerServiceConnectionRecord,
 } from '../customer-service/customer-service-connections';
+import { materializeDerivedSearchSnapshot } from '../publishing/storefront-publisher';
 import type { AppEnvironment } from '../types';
 
 export const publicStorefrontConfigRoutes = new Hono<AppEnvironment>();
+
+const IMMUTABLE_CACHE = 'public, max-age=31536000, immutable';
 
 type PublicSupportConnection = {
   id: string;
@@ -69,6 +72,14 @@ function validPublicId(value: string): boolean {
   return Boolean(value && value.length <= 100 && /^[A-Za-z0-9-]+$/u.test(value));
 }
 
+function validPointerVersion(value: string): boolean {
+  return Boolean(value && value.length <= 180 && /^[A-Za-z0-9-]+$/u.test(value));
+}
+
+function searchSnapshotKey(pointerVersion: string): string {
+  return `public/search/${encodeURIComponent(pointerVersion)}/search.json`;
+}
+
 publicStorefrontConfigRoutes.get('/content-origin', async (context) => {
   const contentOrigin = await getMediaBaseUrl(context.env.DB);
   setPublicRuntimeHeaders(context);
@@ -118,6 +129,38 @@ publicStorefrontConfigRoutes.get('/bootstrap', async (context) => {
     home,
     mediaBaseUrl,
   });
+});
+
+publicStorefrontConfigRoutes.get('/search-index/:pointerVersion', async (context) => {
+  const pointerVersion = context.req.param('pointerVersion').trim();
+  if (!validPointerVersion(pointerVersion)) {
+    return context.json({ available: false }, 404);
+  }
+
+  const key = searchSnapshotKey(pointerVersion);
+  let object = await context.env.ASSETS_BUCKET.get(key);
+  if (!object) {
+    const materializedKey = await materializeDerivedSearchSnapshot(
+      context.env.ASSETS_BUCKET,
+    );
+    if (materializedKey !== key) {
+      return context.json({ available: false }, 404);
+    }
+    object = await context.env.ASSETS_BUCKET.get(key);
+  }
+  if (!object) return context.json({ available: false }, 404);
+
+  const headers = new Headers();
+  headers.set(
+    'Content-Type',
+    object.httpMetadata?.contentType ?? 'application/json; charset=utf-8',
+  );
+  headers.set('Cache-Control', object.httpMetadata?.cacheControl ?? IMMUTABLE_CACHE);
+  headers.set('Content-Length', String(object.size));
+  headers.set('ETag', object.httpEtag);
+  headers.set('X-Content-Type-Options', 'nosniff');
+  headers.set('X-Robots-Tag', 'noindex, nofollow');
+  return new Response(object.body, { status: 200, headers });
 });
 
 publicStorefrontConfigRoutes.get('/cta/:productId', async (context) => {

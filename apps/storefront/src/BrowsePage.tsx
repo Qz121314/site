@@ -2,7 +2,6 @@ import { useQuery } from '@tanstack/react-query';
 import type { StorefrontLinkComponent } from '@site/storefront-ui';
 import { useEffect, useMemo, useState } from 'react';
 import {
-  loadSectionSnapshot,
   publicImageVariantUrl,
   type PublicProductSummary,
   type PublicSection,
@@ -11,6 +10,7 @@ import {
 import { SquareSkeletonGrid } from './LoadingStates';
 import { ResilientImage } from './ResilientMedia';
 import { productHref, sectionHref } from './routing';
+import { loadBrowseSearchProducts } from './search-index';
 import { SYSTEM_UI } from './system-ui';
 import './browse-ui.css';
 
@@ -89,22 +89,7 @@ export function BrowsePage({
     queryKey: ['storefront-browse-product-search', bootstrap.pointer.contentVersion],
     enabled: normalizedSearch.length > 0,
     staleTime: Number.POSITIVE_INFINITY,
-    queryFn: async ({ signal }) => {
-      const snapshots = await Promise.all(
-        sections.map(async (section) => {
-          try {
-            return await loadSectionSnapshot(bootstrap, section.id, signal);
-          } catch {
-            return null;
-          }
-        }),
-      );
-      const byId = new Map<string, PublicProductSummary>();
-      for (const snapshot of snapshots) {
-        for (const product of snapshot?.products ?? []) byId.set(product.id, product);
-      }
-      return [...byId.values()];
-    },
+    queryFn: ({ signal }) => loadBrowseSearchProducts(bootstrap, signal),
   });
 
   const filteredSections = useMemo(
@@ -132,6 +117,7 @@ export function BrowsePage({
   const noResults =
     normalizedSearch.length > 0 &&
     !productSearchQuery.isLoading &&
+    !productSearchQuery.isError &&
     filteredSections.length === 0 &&
     filteredProducts.length === 0;
 
@@ -222,6 +208,9 @@ export function BrowsePage({
                       )
                       .join(', ')
                   : undefined;
+                const contextLabel = [product.sectionName, product.category.name]
+                  .filter((value): value is string => Boolean(value?.trim()))
+                  .join(' · ');
                 return (
                   <LinkComponent
                     className="browse-search-product-card"
@@ -241,6 +230,9 @@ export function BrowsePage({
                         width={640}
                       />
                     </span>
+                    {contextLabel ? (
+                      <span className="browse-search-product-kicker">{contextLabel}</span>
+                    ) : null}
                     <strong>{product.title}</strong>
                   </LinkComponent>
                 );
@@ -248,6 +240,19 @@ export function BrowsePage({
             </div>
           )}
         </section>
+      ) : null}
+
+      {normalizedSearch && productSearchQuery.isError ? (
+        <div className="browse-directory-empty" role="status">
+          <span>{SYSTEM_UI.temporarilyUnavailable}</span>
+          <button
+            className="browse-directory-retry"
+            type="button"
+            onClick={() => void productSearchQuery.refetch()}
+          >
+            {SYSTEM_UI.retry}
+          </button>
+        </div>
       ) : null}
 
       {noResults ? (

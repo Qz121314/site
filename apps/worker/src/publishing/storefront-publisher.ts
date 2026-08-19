@@ -6,12 +6,14 @@ import {
   readModularPointer,
   rollbackModularModule as rollbackCore,
   type ModularPublishResult,
+  type ModularStorefrontPointer,
   type ModuleReference,
   type PublishModuleVersion,
 } from './modular-publisher';
 
 const DERIVED_HOME_PREFIX = 'public/home';
-const DERIVED_HOME_RETENTION = 3;
+const DERIVED_SEARCH_PREFIX = 'public/search';
+const DERIVED_SNAPSHOT_RETENTION = 3;
 const IMMUTABLE_CACHE = 'public, max-age=31536000, immutable';
 
 type DerivedProductSummary = {
@@ -36,6 +38,11 @@ type SectionSnapshotEnvelope = {
   contentVersion: string;
   publishedAt: string;
   sectionId: string;
+  products: DerivedProductSummary[];
+};
+
+type DerivedSnapshotSource = {
+  pointer: ModularStorefrontPointer;
   products: DerivedProductSummary[];
 };
 
@@ -71,25 +78,9 @@ async function readSectionProducts(
   return (value as SectionSnapshotEnvelope).products;
 }
 
-async function pruneDerivedHomeSnapshots(
+async function readDerivedSnapshotSource(
   bucket: R2Bucket,
-  currentKey: string,
-): Promise<void> {
-  const listed = await bucket.list({ prefix: `${DERIVED_HOME_PREFIX}/`, limit: 1000 });
-  const snapshots = listed.objects
-    .filter((object) => object.key.endsWith('/home.json'))
-    .sort((left, right) => right.uploaded.getTime() - left.uploaded.getTime());
-  const stale = snapshots
-    .filter((object) => object.key !== currentKey)
-    .slice(Math.max(0, DERIVED_HOME_RETENTION - 1));
-  if (stale.length > 0) {
-    await bucket.delete(stale.map((object) => object.key));
-  }
-}
-
-export async function materializeDerivedHomeSnapshot(
-  bucket: R2Bucket,
-): Promise<string | null> {
+): Promise<DerivedSnapshotSource | null> {
   const { pointer } = await readModularPointer(bucket);
   if (!pointer) return null;
 
@@ -101,6 +92,32 @@ export async function materializeDerivedHomeSnapshot(
     )
   ).flat();
 
+  return { pointer, products };
+}
+
+async function pruneDerivedSnapshots(
+  bucket: R2Bucket,
+  prefix: string,
+  fileName: string,
+  currentKey: string,
+): Promise<void> {
+  const listed = await bucket.list({ prefix: `${prefix}/`, limit: 1000 });
+  const snapshots = listed.objects
+    .filter((object) => object.key.endsWith(`/${fileName}`))
+    .sort((left, right) => right.uploaded.getTime() - left.uploaded.getTime());
+  const stale = snapshots
+    .filter((object) => object.key !== currentKey)
+    .slice(Math.max(0, DERIVED_SNAPSHOT_RETENTION - 1));
+  if (stale.length > 0) {
+    await bucket.delete(stale.map((object) => object.key));
+  }
+}
+
+async function writeDerivedHomeSnapshot(
+  bucket: R2Bucket,
+  source: DerivedSnapshotSource,
+): Promise<string> {
+  const { pointer, products } = source;
   const featuredProducts = products
     .filter((product) => product.isFeatured)
     .sort(
@@ -134,7 +151,7 @@ export async function materializeDerivedHomeSnapshot(
   );
 
   try {
-    await pruneDerivedHomeSnapshots(bucket, key);
+    await pruneDerivedSnapshots(bucket, DERIVED_HOME_PREFIX, 'home.json', key);
   } catch (error) {
     console.error(
       JSON.stringify({
@@ -148,17 +165,78 @@ export async function materializeDerivedHomeSnapshot(
   return key;
 }
 
-async function refreshDerivedHomeBestEffort(bucket: R2Bucket): Promise<void> {
+async function writeDerivedSearchSnapshot(
+  bucket: R2Bucket,
+  source: DerivedSnapshotSource,
+): Promise<string> {
+  const { pointer, products } = source;
+  const key = `${DERIVED_SEARCH_PREFIX}/${pointer.contentVersion}/search.json`;
+  await bucket.put(
+    key,
+    JSON.stringify({
+      schemaVersion: 2,
+      pointerVersion: pointer.contentVersion,
+      publishedAt: pointer.publishedAt,
+      products,
+    }),
+    {
+      httpMetadata: {
+        contentType: 'application/json; charset=utf-8',
+        cacheControl: IMMUTABLE_CACHE,
+      },
+      customMetadata: { pointerVersion: pointer.contentVersion, kind: 'derived-search' },
+    },
+  );
+
   try {
-    await materializeDerivedHomeSnapshot(bucket);
+    await pruneDerivedSnapshots(bucket, DERIVED_SEARCH_PREFIX, 'search.json', key);
   } catch (error) {
     console.error(
       JSON.stringify({
         level: 'error',
-        event: 'storefront.derived_home_failed',
+        event: 'storefront.derived_search_retention_failed',
+        errorName: error instanceof Error ? error.name : 'UnknownError',
+        errorMessage: error instanceof Error ? error.message : 'Unknown retention error',
+      }),
+    );
+  }
+  return key;
+}
+
+export async function materializeDerivedHomeSnapshot(
+  bucket: R2Bucket,
+): Promise<string | null> {
+  const source = await readDerivedSnapshotSource(bucket);
+  return source ? writeDerivedHomeSnapshot(bucket, source) : null;
+}
+
+export async function materializeDerivedSearchSnapshot(
+  bucket: R2Bucket,
+): Promise<string | null> {
+  const source = await readDerivedSnapshotSource(bucket);
+  return source ? writeDerivedSearchSnapshot(bucket, source) : null;
+}
+
+async function materializeDerivedSnapshots(bucket: R2Bucket): Promise<void> {
+  const source = await readDerivedSnapshotSource(bucket);
+  if (!source) return;
+  await Promise.all([
+    writeDerivedHomeSnapshot(bucket, source),
+    writeDerivedSearchSnapshot(bucket, source),
+  ]);
+}
+
+async function refreshDerivedSnapshotsBestEffort(bucket: R2Bucket): Promise<void> {
+  try {
+    await materializeDerivedSnapshots(bucket);
+  } catch (error) {
+    console.error(
+      JSON.stringify({
+        level: 'error',
+        event: 'storefront.derived_snapshots_failed',
         errorName: error instanceof Error ? error.name : 'UnknownError',
         errorMessage:
-          error instanceof Error ? error.message : 'Unknown derived-home error',
+          error instanceof Error ? error.message : 'Unknown derived-snapshot error',
       }),
     );
   }
@@ -171,7 +249,7 @@ export async function publishModularStorefront(
   requestedModuleKey: string = 'all',
 ): Promise<ModularPublishResult> {
   const result = await publishCore(db, bucket, requestId, requestedModuleKey);
-  await refreshDerivedHomeBestEffort(bucket);
+  await refreshDerivedSnapshotsBestEffort(bucket);
   return result;
 }
 
@@ -183,7 +261,7 @@ export async function rollbackModularModule(
   requestId: string,
 ): Promise<PublishModuleVersion> {
   const result = await rollbackCore(db, bucket, moduleKey, contentVersion, requestId);
-  await refreshDerivedHomeBestEffort(bucket);
+  await refreshDerivedSnapshotsBestEffort(bucket);
   return result;
 }
 
