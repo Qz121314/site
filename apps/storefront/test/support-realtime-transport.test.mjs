@@ -17,6 +17,9 @@ test('support realtime is websocket-first with REST reserved for recovery', () =
   assert.ok(!root.includes('refetchInterval: 30_000'));
   assert.ok(root.includes("event.type === 'realtime.recovered'"));
   assert.ok(root.includes('setQueryData'));
+  assert.ok(root.includes('Boolean(peekSupportVisitorIdentity())'));
+  assert.ok(root.includes('enabled: supportRuntimeEnabled'));
+  assert.ok(root.includes('if (!supportRuntimeEnabled) return undefined;'));
   assert.ok(realtime.includes("recovered ? 'realtime.recovered' : 'realtime.connected'"));
   assert.ok(realtime.includes('parseMessage(state.connection, raw.message, raw.media)'));
   assert.ok(messages.includes('staleTime: Number.POSITIVE_INFINITY'));
