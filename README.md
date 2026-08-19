@@ -453,6 +453,31 @@ link               外部链接入口
 
 运行时由 Site 解析 **Product -> 在线客服转化组 -> 客服系统连接**，并把权威的产品 / 分区 / 分类上下文返回给 Storefront；之后 Conversation、Message、媒体和 WebSocket 流量都由浏览器直接访问独立客服系统，Site Worker 不代理聊天流量。独立客服系统再按“整个分区 / 指定分类 / 指定产品”的动态负责范围把会话分配给 Agent。Site 的“已分发”与客服系统的“坐席首次接待”形成上下游核对口径；转接、重新排队和重开不会重复增加坐席接待流量。完整协议见 [客服系统接入文档](docs/customer-service-integration.md)。
 
+### 客服运行时请求边界
+
+客服运行时采用**按需激活**，普通 Storefront 浏览不能因为底部存在 Messages 入口就无条件启动会话读取和 WebSocket：
+
+```text
+首次普通访客
+→ 不创建客服 visitor identity
+→ 不读取客服会话列表
+→ 不建立客服 WebSocket
+
+进入 Messages / 客服 CTA
+或浏览器已有有效的 24h 客服 visitor identity
+→ 激活会话列表
+→ 激活实时连接
+→ 维护未读状态
+```
+
+具体规则：
+
+- 检查是否已有客服 identity 时只能读取现有状态，不能为了判断而创建新 identity；
+- 用户进入 Messages 或客服 CTA 后可以创建 / 续用 24 小时 visitor identity；
+- 已有有效 identity 的用户离开 Messages 后，仍可在其他 Storefront 页面保持未读徽标与实时消息更新；
+- 没有客服使用历史的新访客不得请求 `/support/connections`、远端 conversations 或建立客服 WebSocket；
+- 客服按需激活不能改变会话生命周期、转化记账或独立客服系统的路由职责。
+
 ## Markdown
 
 产品正文和 FAQ 正文使用安全 Markdown。
