@@ -4,6 +4,7 @@ import {
   SUPPORT_VISITOR_TTL_MS,
   generateSupportVisitorId,
   getSupportVisitorIdentity,
+  peekSupportVisitorIdentity,
 } from '../src/support-identity.ts';
 
 test('support visitor ID always contains exactly three letters and three digits', () => {
@@ -24,9 +25,12 @@ test('support visitor ID always contains exactly three letters and three digits'
 
 test('support visitor identity expires after exactly 24 hours', () => {
   const now = 1_000_000;
+  assert.equal(peekSupportVisitorIdentity(now), null);
+
   const identity = getSupportVisitorIdentity(now);
   assert.equal(SUPPORT_VISITOR_TTL_MS, 86_400_000);
   assert.equal(identity.expiresAt, now + SUPPORT_VISITOR_TTL_MS);
+  assert.deepEqual(peekSupportVisitorIdentity(now + 1), identity);
 
   const sameIdentity = getSupportVisitorIdentity(now + 10_000);
   assert.equal(sameIdentity.visitorId, identity.visitorId);
