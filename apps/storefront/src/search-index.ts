@@ -20,7 +20,10 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-function mediaObjectUrl(mediaBaseUrl: string, objectKey: string | null | undefined) {
+function mediaObjectUrl(
+  mediaBaseUrl: string,
+  objectKey: string | null | undefined,
+) {
   const base = mediaBaseUrl.replace(/\/+$/u, '');
   if (!base || !objectKey || objectKey.includes('..')) return null;
   const segments = objectKey.split('/');
@@ -28,7 +31,10 @@ function mediaObjectUrl(mediaBaseUrl: string, objectKey: string | null | undefin
   return `${base}/${segments.map(encodeURIComponent).join('/')}`;
 }
 
-function parseSearchSnapshot(value: unknown, pointerVersion: string): DerivedSearchSnapshot {
+function parseSearchSnapshot(
+  value: unknown,
+  pointerVersion: string,
+): DerivedSearchSnapshot {
   if (
     !isRecord(value) ||
     value.schemaVersion !== 2 ||
