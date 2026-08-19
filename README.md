@@ -131,7 +131,9 @@ GET /api/public/storefront/bootstrap
 
 - 正常启动不再额外请求 `/api/public/bottom-navigation/` 或 `/api/public/theme`；
 - `mediaBaseUrl`、当前主题配置与四个 Bottom Navigation 项使用同一条 D1 查询读取，导航图片的 `object_key` 也在该查询中解析；
-- Theme 与 Bottom Navigation 都仍是后台实时配置，不要求为了修改它们重新发布 R2 内容快照；
+- 已发布的 `site + sections index + home summary` 按 `pointerVersion` 合并为不可变 bootstrap bundle；正常命中后 Worker 只需要读取 `public/current.json + 对应 bootstrap bundle` 两个 R2 对象，而不是每次分别读取 4 个公开对象；
+- bootstrap bundle 缺失、损坏或版本不匹配时必须回退到现有 `site / sections / home` 公开快照读取并自动重建 bundle，不能因为缓存优化导致 Storefront 不可用；
+- bootstrap bundle 只缓存已发布静态内容；Theme、Bottom Navigation 与 `mediaBaseUrl` 仍是后台实时配置，不要求为了修改它们重新发布 R2 内容快照；
 - PWA 的 `<link rel="manifest">` 和 Service Worker 行为保持不变；安装提示组件不再为了读取应用名主动二次 `fetch('/manifest.webmanifest')`，应用名直接复用 bootstrap 已有站点名称；
 - PWA 安装监听仍在应用启动时立即挂载，不能因为等待 bootstrap 而错过 `beforeinstallprompt`；
 - 旧 `/api/public/bottom-navigation/` 与 `/api/public/theme` 仅作为旧内容 / bootstrap 不可用时的兼容回退，不属于正常 schema-v2 启动请求预算；
