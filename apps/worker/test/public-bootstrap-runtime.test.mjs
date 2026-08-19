@@ -7,6 +7,8 @@ test('storefront bootstrap runtime reads media and bottom navigation in one D1 q
   const db = {
     prepare(sql) {
       prepareCount += 1;
+      assert.match(sql, /ss\.theme_key/u);
+      assert.match(sql, /ss\.theme_overrides_json/u);
       assert.match(sql, /CROSS JOIN site_bottom_navigation nav/u);
       assert.match(sql, /LEFT JOIN media_assets asset/u);
       return {
@@ -15,6 +17,8 @@ test('storefront bootstrap runtime reads media and bottom navigation in one D1 q
             results: [
               {
                 media_base_url: 'https://media.example.com',
+                theme_key: 'saas',
+                theme_overrides_json: '{}',
                 item_key: 'home',
                 label: 'Home',
                 icon_type: 'builtin',
@@ -25,6 +29,8 @@ test('storefront bootstrap runtime reads media and bottom navigation in one D1 q
               },
               {
                 media_base_url: 'https://media.example.com',
+                theme_key: 'saas',
+                theme_overrides_json: '{}',
                 item_key: 'browse',
                 label: 'Browse',
                 icon_type: 'asset',
@@ -35,6 +41,8 @@ test('storefront bootstrap runtime reads media and bottom navigation in one D1 q
               },
               {
                 media_base_url: 'https://media.example.com',
+                theme_key: 'saas',
+                theme_overrides_json: '{}',
                 item_key: 'messages',
                 label: 'Messages',
                 icon_type: 'builtin',
@@ -45,6 +53,8 @@ test('storefront bootstrap runtime reads media and bottom navigation in one D1 q
               },
               {
                 media_base_url: 'https://media.example.com',
+                theme_key: 'saas',
+                theme_overrides_json: '{}',
                 item_key: 'faq',
                 label: 'FAQ',
                 icon_type: 'emoji',
@@ -63,6 +73,8 @@ test('storefront bootstrap runtime reads media and bottom navigation in one D1 q
   const runtime = await getStorefrontBootstrapRuntime(db);
   assert.equal(prepareCount, 1);
   assert.equal(runtime.mediaBaseUrl, 'https://media.example.com');
+  assert.equal(runtime.theme.key, 'saas');
+  assert.equal(runtime.theme.installPrompt.delaySeconds, 30);
   assert.deepEqual(
     runtime.bottomNavigation.map((item) => item.key),
     ['home', 'browse', 'messages', 'faq'],
@@ -85,6 +97,8 @@ test('storefront bootstrap runtime rejects incomplete navigation without extra D
             results: [
               {
                 media_base_url: 'https://media.example.com',
+                theme_key: 'saas',
+                theme_overrides_json: '{}',
                 item_key: 'home',
                 label: 'Home',
                 icon_type: 'builtin',

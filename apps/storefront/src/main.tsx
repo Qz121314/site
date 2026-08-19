@@ -7,7 +7,7 @@ import { installPublicContentFetchFallback } from './public-content-transport';
 import { StorefrontPresentation } from './StorefrontPresentation';
 import { StorefrontRoot } from './StorefrontRoot';
 import { installSupportExpiryRuntime } from './support-expiry-runtime';
-import { installStorefrontTheme } from './theme-runtime';
+import { installCachedStorefrontTheme } from './theme-runtime';
 import '@site/storefront-ui/styles.css';
 import './styles.css';
 import './theme-runtime.css';
@@ -33,7 +33,7 @@ import './loading-states.css';
 
 installPublicContentFetchFallback();
 installSupportExpiryRuntime();
-const storefrontThemePromise = installStorefrontTheme();
+installCachedStorefrontTheme();
 
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
   window.addEventListener('load', () => {
@@ -66,7 +66,7 @@ createRoot(root).render(
       <StorefrontPresentation />
       <MobileEdgeNavigation />
       <StorefrontRoot />
-      <PwaInstallPrompt themePromise={storefrontThemePromise} />
+      <PwaInstallPrompt />
     </QueryClientProvider>
   </StrictMode>,
 );

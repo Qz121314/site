@@ -6,6 +6,7 @@ import {
   rollbackModularModule,
 } from '../src/publishing/modular-publisher.ts';
 import { publicStorefrontConfigRoutes } from '../src/routes/public-storefront-config.ts';
+import { resolveTheme } from '../src/theme/theme-center.ts';
 
 const SITE = {
   contentVersion: '20260807090000-site12345678-acde0001',
@@ -332,6 +333,8 @@ test('public storefront bootstrap consolidates the critical published snapshots'
   );
   const db = {
     prepare(sql) {
+      assert.match(sql, /ss\.theme_key/u);
+      assert.match(sql, /ss\.theme_overrides_json/u);
       assert.match(sql, /CROSS JOIN site_bottom_navigation nav/u);
       assert.match(sql, /LEFT JOIN media_assets asset/u);
       return {
@@ -340,6 +343,8 @@ test('public storefront bootstrap consolidates the critical published snapshots'
             results: [
               {
                 media_base_url: 'https://media.example.com',
+                theme_key: 'saas',
+                theme_overrides_json: '{}',
                 item_key: 'home',
                 label: 'Home',
                 icon_type: 'builtin',
@@ -350,6 +355,8 @@ test('public storefront bootstrap consolidates the critical published snapshots'
               },
               {
                 media_base_url: 'https://media.example.com',
+                theme_key: 'saas',
+                theme_overrides_json: '{}',
                 item_key: 'browse',
                 label: 'Browse',
                 icon_type: 'asset',
@@ -360,6 +367,8 @@ test('public storefront bootstrap consolidates the critical published snapshots'
               },
               {
                 media_base_url: 'https://media.example.com',
+                theme_key: 'saas',
+                theme_overrides_json: '{}',
                 item_key: 'messages',
                 label: 'Messages',
                 icon_type: 'builtin',
@@ -370,6 +379,8 @@ test('public storefront bootstrap consolidates the critical published snapshots'
               },
               {
                 media_base_url: 'https://media.example.com',
+                theme_key: 'saas',
+                theme_overrides_json: '{}',
                 item_key: 'faq',
                 label: 'FAQ',
                 icon_type: 'emoji',
@@ -401,6 +412,7 @@ test('public storefront bootstrap consolidates the critical published snapshots'
     sectionsIndex,
     home,
     mediaBaseUrl: 'https://media.example.com',
+    theme: resolveTheme({ key: 'saas', overrides: {} }),
     bottomNavigation,
   });
 });

@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { type PublicTheme, type ThemeInstallPrompt } from './theme-runtime';
+import { useEffect, useState, useSyncExternalStore } from 'react';
+import { getPwaInstallRuntime, subscribePwaInstallRuntime } from './pwa-install-runtime';
 
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
@@ -7,10 +7,6 @@ type BeforeInstallPromptEvent = Event & {
 };
 
 type NavigatorWithStandalone = Navigator & { standalone?: boolean };
-
-type PwaManifest = {
-  name?: unknown;
-};
 
 const DISMISS_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1_000;
 const DISMISSED_KEY = 'storefront:pwa-install-dismissed:v3';
@@ -59,13 +55,14 @@ function syncAppMetadata(appName: string) {
   ensureMeta('apple-mobile-web-app-title');
 }
 
-export function PwaInstallPrompt({
-  themePromise,
-}: {
-  themePromise: Promise<PublicTheme | null>;
-}) {
-  const [appName, setAppName] = useState<string | null>(null);
-  const [config, setConfig] = useState<ThemeInstallPrompt | null>(null);
+export function PwaInstallPrompt() {
+  const runtime = useSyncExternalStore(
+    subscribePwaInstallRuntime,
+    getPwaInstallRuntime,
+    getPwaInstallRuntime,
+  );
+  const appName = runtime?.appName ?? null;
+  const config = runtime?.config ?? null;
   const [installEvent, setInstallEvent] = useState<BeforeInstallPromptEvent | null>(null);
   const [showIosHint, setShowIosHint] = useState(false);
   const [delayComplete, setDelayComplete] = useState(false);
@@ -73,26 +70,8 @@ export function PwaInstallPrompt({
   const [installed, setInstalled] = useState(false);
 
   useEffect(() => {
-    const controller = new AbortController();
-    void themePromise.then((theme) => {
-      setConfig(theme?.installPrompt ?? null);
-    });
-    void fetch('/manifest.webmanifest', { signal: controller.signal })
-      .then(async (response) => {
-        if (!response.ok) return null;
-        return response.json() as Promise<PwaManifest>;
-      })
-      .then((manifest) => {
-        if (!manifest || typeof manifest.name !== 'string' || !manifest.name.trim())
-          return;
-        const name = manifest.name.trim();
-        setAppName(name);
-        syncAppMetadata(name);
-      })
-      .catch(() => undefined);
-
-    return () => controller.abort();
-  }, [themePromise]);
+    if (appName) syncAppMetadata(appName);
+  }, [appName]);
 
   useEffect(() => {
     if (isStandalone() || hasActiveDismissal()) return;
