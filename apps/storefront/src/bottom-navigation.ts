@@ -58,6 +58,17 @@ function parseItem(value: unknown): BottomNavigationItemConfig | null {
   };
 }
 
+export function parseBottomNavigationItems(value: unknown): BottomNavigationItemConfig[] {
+  if (!Array.isArray(value)) throw new Error('BOTTOM_NAVIGATION_INVALID');
+  const items = value.map(parseItem);
+  if (items.some((item) => item === null)) throw new Error('BOTTOM_NAVIGATION_INVALID');
+  const parsed = items as BottomNavigationItemConfig[];
+  const keys = new Set(parsed.map((item) => item.key));
+  if (parsed.length !== 4 || keys.size !== 4)
+    throw new Error('BOTTOM_NAVIGATION_INVALID');
+  return parsed;
+}
+
 export async function loadBottomNavigation(
   signal?: AbortSignal,
 ): Promise<BottomNavigationItemConfig[]> {
@@ -70,13 +81,6 @@ export async function loadBottomNavigation(
   });
   if (!response.ok) throw new Error('BOTTOM_NAVIGATION_UNAVAILABLE');
   const body = (await response.json()) as unknown;
-  if (!isRecord(body) || !Array.isArray(body.items))
-    throw new Error('BOTTOM_NAVIGATION_INVALID');
-  const items = body.items.map(parseItem);
-  if (items.some((item) => item === null)) throw new Error('BOTTOM_NAVIGATION_INVALID');
-  const parsed = items as BottomNavigationItemConfig[];
-  const keys = new Set(parsed.map((item) => item.key));
-  if (parsed.length !== 4 || keys.size !== 4)
-    throw new Error('BOTTOM_NAVIGATION_INVALID');
-  return parsed;
+  if (!isRecord(body)) throw new Error('BOTTOM_NAVIGATION_INVALID');
+  return parseBottomNavigationItems(body.items);
 }

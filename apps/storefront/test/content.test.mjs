@@ -147,13 +147,54 @@ function derivedHomeSnapshot() {
   };
 }
 
-function installModularFetch(requests = [], { homeAvailable = true } = {}) {
+function bottomNavigation() {
+  return [
+    {
+      key: 'home',
+      label: 'Home',
+      enabled: true,
+      icon: { type: 'builtin', value: 'home' },
+    },
+    {
+      key: 'browse',
+      label: 'Browse',
+      enabled: true,
+      icon: { type: 'builtin', value: 'compass' },
+    },
+    {
+      key: 'messages',
+      label: 'Messages',
+      enabled: true,
+      icon: { type: 'builtin', value: 'messages' },
+    },
+    { key: 'faq', label: 'FAQ', enabled: true, icon: { type: 'builtin', value: 'help' } },
+  ];
+}
+
+function installModularFetch(
+  requests = [],
+  { homeAvailable = true, bootstrapAvailable = false } = {},
+) {
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async (input, init) => {
     const url = String(input);
     requests.push({ url, cache: init?.cache, credentials: init?.credentials });
+    if (url.endsWith('/api/public/storefront/bootstrap')) {
+      if (!bootstrapAvailable) return jsonResponse({}, 404);
+      return jsonResponse({
+        pointer: modularPointer(),
+        site: siteModule(),
+        sectionsIndex: sectionsIndexModule(),
+        home: derivedHomeSnapshot(),
+        mediaBaseUrl: 'https://media.example.com',
+        bottomNavigation: bottomNavigation(),
+      });
+    }
     if (url === '/api/public/storefront/media-base-url') {
       return jsonResponse({ mediaBaseUrl: 'https://media.example.com' });
+    }
+    if (url === '/api/public/bottom-navigation/') {
+      return jsonResponse({ items: bottomNavigation() });
     }
     if (url.endsWith('/public/current.json')) return jsonResponse(modularPointer());
     if (url.endsWith(`/public/modules/site/${SITE_VERSION}/site.json`))
@@ -239,6 +280,9 @@ test('legacy schema-v1 bootstrap remains readable and normalizes missing tags/fe
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async (input) => {
     const url = String(input);
+    if (url === '/api/public/bottom-navigation/') {
+      return jsonResponse({ items: bottomNavigation() });
+    }
     if (url.endsWith('/public/current.json')) {
       return jsonResponse({
         schemaVersion: 1,
@@ -305,6 +349,7 @@ test('legacy schema-v1 bootstrap remains readable and normalizes missing tags/fe
     assert.equal(result.pointer.schemaVersion, 1);
     assert.deepEqual(result.home.featuredProducts[0].tags, []);
     assert.equal(result.home.featuredProducts[0].featuredOrder, 0);
+    assert.equal(result.bottomNavigation[0].key, 'home');
   } finally {
     globalThis.fetch = originalFetch;
   }
@@ -339,6 +384,22 @@ test('Storefront reads JSON from its Worker and media from runtime configuration
   } finally {
     if (previousWindow === undefined) delete globalThis.window;
     else globalThis.window = previousWindow;
+    restore();
+  }
+});
+
+test('normal schema-v2 startup gets navigation from the single bootstrap request', async () => {
+  const requests = [];
+  const restore = installModularFetch(requests, { bootstrapAvailable: true });
+  try {
+    const bootstrap = await loadStorefrontBootstrap('https://app.example.com');
+    assert.equal(bootstrap.bottomNavigation.length, 4);
+    assert.equal(bootstrap.bottomNavigation[2].key, 'messages');
+    assert.deepEqual(
+      requests.map((request) => request.url),
+      ['https://app.example.com/api/public/storefront/bootstrap'],
+    );
+  } finally {
     restore();
   }
 });
@@ -503,6 +564,9 @@ test('schema-v2 bootstrap rejects a module whose contentVersion does not match t
   const originalFetch = globalThis.fetch;
   globalThis.fetch = async (input) => {
     const url = String(input);
+    if (url === '/api/public/bottom-navigation/') {
+      return jsonResponse({ items: bottomNavigation() });
+    }
     if (url.endsWith('/public/current.json')) return jsonResponse(modularPointer());
     if (url.endsWith(`/public/modules/site/${SITE_VERSION}/site.json`)) {
       return jsonResponse({
