@@ -18,7 +18,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "typecheck": "pnpm cf:types && pnpm -r --if-present typecheck",
-    "test": "bash -lc 'set +e; pnpm -r --if-present test > /tmp/test-output.txt 2>&1; status=$?; set -e; grep -n -B 24 -A 60 -E \"not ok|AssertionError|ERR_ASSERTION|ERR_MODULE|failing tests|failureType|Expected values|actual:|expected:|✖|Failed\" /tmp/test-output.txt || true; exit $status'",
+    "test": "pnpm -r --if-present test",
     "test:e2e": "playwright test",
     "format": "prettier --check .",
     "format:write": "prettier --write .",
