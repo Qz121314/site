@@ -379,6 +379,11 @@ const STOREFRONT_THEME_TOKEN_KEYS = [
   'shadow',
 ] as const;
 
+function validStorefrontThemeTokens(value: unknown): value is StorefrontTheme['tokens'] {
+  if (!isRecord(value)) return false;
+  return STOREFRONT_THEME_TOKEN_KEYS.every((key) => typeof value[key] === 'string');
+}
+
 function parseStorefrontTheme(value: unknown): StorefrontTheme {
   if (
     !isRecord(value) ||
@@ -407,8 +412,7 @@ function parseStorefrontTheme(value: unknown): StorefrontTheme {
     typeof value.installPrompt.iosDescription !== 'string' ||
     typeof value.installPrompt.installLabel !== 'string' ||
     typeof value.installPrompt.dismissLabel !== 'string' ||
-    !isRecord(value.tokens) ||
-    !STOREFRONT_THEME_TOKEN_KEYS.every((key) => typeof value.tokens[key] === 'string')
+    !validStorefrontThemeTokens(value.tokens)
   ) {
     throw new Error('THEME_INVALID');
   }
