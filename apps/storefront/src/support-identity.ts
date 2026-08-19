@@ -97,6 +97,17 @@ function persistIdentity(identity: SupportVisitorIdentity) {
   }
 }
 
+/**
+ * Inspect an existing support identity without creating one. Storefront uses
+ * this as the activation boundary for background conversation/realtime work so
+ * ordinary visitors do not pay customer-service request costs before engaging.
+ */
+export function peekSupportVisitorIdentity(
+  now = Date.now(),
+): SupportVisitorIdentity | null {
+  return readStoredIdentity(now);
+}
+
 export function getSupportVisitorIdentity(now = Date.now()): SupportVisitorIdentity {
   const existing = readStoredIdentity(now);
   if (existing) return existing;
