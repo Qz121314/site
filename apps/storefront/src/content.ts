@@ -1,3 +1,9 @@
+import {
+  loadBottomNavigation,
+  parseBottomNavigationItems,
+  type BottomNavigationItemConfig,
+} from './bottom-navigation';
+
 export type PublicSection = {
   id: string;
   slug: string;
@@ -170,6 +176,7 @@ export type StorefrontBootstrap = {
   pointer: CurrentPointer;
   site: SiteSnapshot;
   home: HomeSnapshot;
+  bottomNavigation: BottomNavigationItemConfig[];
   sectionSnapshots: Record<string, SectionSnapshot>;
   productSectionIds: Record<string, string>;
 };
@@ -302,6 +309,7 @@ type V2BootstrapBundle = {
   rawIndex: V2SectionsIndexSnapshot;
   rawHome: V2DerivedHomeSnapshot;
   configuredMediaBaseUrl: string | null;
+  bottomNavigation: BottomNavigationItemConfig[];
 };
 
 const VERSION_PATTERN = /^[A-Za-z0-9-]{12,180}$/;
@@ -939,8 +947,13 @@ async function loadV2Bootstrap(
   signal?: AbortSignal,
   bundle?: V2BootstrapBundle,
 ): Promise<StorefrontBootstrap> {
-  const [rawSite, rawIndex, configuredMediaBaseUrl] = bundle
-    ? [bundle.rawSite, bundle.rawIndex, bundle.configuredMediaBaseUrl]
+  const [rawSite, rawIndex, configuredMediaBaseUrl, bottomNavigation] = bundle
+    ? [
+        bundle.rawSite,
+        bundle.rawIndex,
+        bundle.configuredMediaBaseUrl,
+        bundle.bottomNavigation,
+      ]
     : await Promise.all([
         loadV2File<V2SiteSnapshot>(
           origin,
@@ -957,6 +970,7 @@ async function loadV2Bootstrap(
           signal,
         ),
         resolveMediaBaseUrl(signal),
+        loadBottomNavigation(signal),
       ]);
   assertV2Envelope(rawSite, 'site', pointer.site.contentVersion);
   assertV2Envelope(rawIndex, 'sections-index', pointer.sectionsIndex.contentVersion);
@@ -1054,6 +1068,7 @@ async function loadV2Bootstrap(
       featuredProducts,
       latestProducts,
     },
+    bottomNavigation,
     sectionSnapshots,
     productSectionIds,
   };
@@ -1086,6 +1101,12 @@ async function loadV2BootstrapBundle(
   }
   const pointer = parsePointer(value.pointer);
   if (pointer.schemaVersion !== 2) return null;
+  let bottomNavigation: BottomNavigationItemConfig[];
+  try {
+    bottomNavigation = parseBottomNavigationItems(value.bottomNavigation);
+  } catch {
+    return null;
+  }
   return {
     pointer,
     rawSite: value.site as V2SiteSnapshot,
@@ -1094,6 +1115,7 @@ async function loadV2BootstrapBundle(
     configuredMediaBaseUrl: normalizeContentOrigin(
       typeof value.mediaBaseUrl === 'string' ? value.mediaBaseUrl : null,
     ),
+    bottomNavigation,
   };
 }
 
@@ -1102,15 +1124,17 @@ async function loadV1Bootstrap(
   pointer: CurrentPointerV1,
   signal?: AbortSignal,
 ): Promise<StorefrontBootstrap> {
-  const [site, rawHome] = await Promise.all([
+  const [site, rawHome, bottomNavigation] = await Promise.all([
     loadV1File<SiteSnapshot>(origin, pointer.contentVersion, 'site.json', signal),
     loadV1File<HomeSnapshot>(origin, pointer.contentVersion, 'home.json', signal),
+    loadBottomNavigation(signal),
   ]);
   return {
     origin,
     pointer,
     site,
     home: normalizeV1HomeSnapshot(rawHome),
+    bottomNavigation,
     sectionSnapshots: {},
     productSectionIds: {},
   };
