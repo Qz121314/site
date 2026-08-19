@@ -1131,7 +1131,8 @@ function findRememberedProduct(
   sectionId: string,
   productRef: string,
 ): PublicProductSummary | null {
-  const productId = bootstrap.productReferenceIds[productReferenceKey(sectionId, productRef)];
+  const productId =
+    bootstrap.productReferenceIds[productReferenceKey(sectionId, productRef)];
   return productId ? (bootstrap.productSummaries[productId] ?? null) : null;
 }
 

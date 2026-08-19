@@ -659,7 +659,8 @@ test('product detail keeps the section fallback when no remembered summary is av
       1,
     );
     assert.equal(
-      requests.filter((request) => request.url.endsWith('/products/product-a.json')).length,
+      requests.filter((request) => request.url.endsWith('/products/product-a.json'))
+        .length,
       1,
     );
   } finally {
