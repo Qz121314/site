@@ -20,10 +20,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
-function mediaObjectUrl(
-  mediaBaseUrl: string,
-  objectKey: string | null | undefined,
-) {
+function mediaObjectUrl(mediaBaseUrl: string, objectKey: string | null | undefined) {
   const base = mediaBaseUrl.replace(/\/+$/u, '');
   if (!base || !objectKey || objectKey.includes('..')) return null;
   const segments = objectKey.split('/');

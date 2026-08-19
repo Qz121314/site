@@ -53,7 +53,10 @@ test('storefront search index serves one immutable versioned R2 object', async (
 
   assert.equal(response.status, 200);
   assert.equal(reads, 1);
-  assert.equal(response.headers.get('cache-control'), 'public, max-age=31536000, immutable');
+  assert.equal(
+    response.headers.get('cache-control'),
+    'public, max-age=31536000, immutable',
+  );
   assert.equal(response.headers.get('etag'), '"search-etag"');
   assert.deepEqual(await response.json(), SEARCH_PAYLOAD);
 });
