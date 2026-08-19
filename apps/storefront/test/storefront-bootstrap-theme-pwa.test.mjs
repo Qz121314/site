@@ -14,7 +14,8 @@ test('Storefront startup reuses bootstrap for live theme and PWA runtime data', 
   assert.doesNotMatch(mainSource, /installStorefrontTheme\(\)/u);
   assert.match(rootSource, /applyStorefrontTheme\(bootstrap\.theme\)/u);
   assert.match(rootSource, /publishPwaInstallRuntime/u);
-  assert.doesNotMatch(pwaSource, /fetch\(['\"]\/manifest\.webmanifest/u);
+  assert.equal(pwaSource.includes("fetch('/manifest.webmanifest"), false);
+  assert.equal(pwaSource.includes('fetch("/manifest.webmanifest'), false);
   assert.match(pwaSource, /beforeinstallprompt/u);
   assert.match(contentSource, /loadTheme\(signal\)/u);
 });
