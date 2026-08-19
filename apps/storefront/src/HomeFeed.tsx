@@ -49,13 +49,7 @@ function HomeLink({
   return <a {...props} href={href} onClick={handleClick} />;
 }
 
-function HomeHero({
-  siteName,
-  slides,
-}: {
-  siteName: string;
-  slides: PublicHeroSlide[];
-}) {
+function HomeHero({ siteName, slides }: { siteName: string; slides: PublicHeroSlide[] }) {
   const availableSlides = slides.filter((slide) => slide.mediaUrl.trim());
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
@@ -65,8 +59,7 @@ function HomeHero({
   function scrollToSlide(index: number) {
     const viewport = viewportRef.current;
     if (!viewport) return;
-    const normalizedIndex =
-      (index + availableSlides.length) % availableSlides.length;
+    const normalizedIndex = (index + availableSlides.length) % availableSlides.length;
     viewport.scrollTo({
       left: viewport.clientWidth * normalizedIndex,
       behavior: 'smooth',
