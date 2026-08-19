@@ -1,4 +1,4 @@
-name: Temp Bootstrap R2 Patch
+name: Temp Bootstrap R2 Finalize
 
 on:
   push:
@@ -9,152 +9,47 @@ permissions:
   contents: write
 
 jobs:
-  patch:
+  finalize:
     if: github.actor != 'github-actions[bot]'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           ref: agent/storefront-bootstrap-r2-budget
-      - name: Apply bootstrap R2 route and regression patch
+      - name: Document and format bootstrap R2 optimization
         shell: bash
         run: |
           python - <<'PY'
           from pathlib import Path
 
-          route_path = Path('apps/worker/src/routes/public-storefront-config.ts')
-          route = route_path.read_text()
-          import_old = "import { buildMediaUrl } from '../media/media-url';\nimport { materializeDerivedSearchSnapshot } from '../publishing/storefront-publisher';\n"
-          import_new = "import { buildMediaUrl } from '../media/media-url';\nimport { loadStorefrontPublishedBootstrap } from '../publishing/storefront-bootstrap-snapshot';\nimport { materializeDerivedSearchSnapshot } from '../publishing/storefront-publisher';\n"
-          if import_old not in route:
-              raise SystemExit('route import marker not found')
-          route = route.replace(import_old, import_new, 1)
-
-          published_file = """function publishedFile(reference: unknown, fileName: string): string | null {
-            if (!isRecord(reference) || typeof reference.manifestKey !== 'string') return null;
-            const manifestKey = reference.manifestKey;
-            if (
-              !/^public\\/modules\\/[A-Za-z0-9._/-]+\\/manifest\\.json$/u.test(manifestKey) ||
-              manifestKey.includes('..')
-            ) {
-              return null;
-            }
-            return manifestKey.replace(/manifest\\.json$/u, fileName);
-          }
-
+          path = Path('README.md')
+          text = path.read_text()
+          old = """- `mediaBaseUrl`、当前主题配置与四个 Bottom Navigation 项使用同一条 D1 查询读取，导航图片的 `object_key` 也在该查询中解析；
+          - Theme 与 Bottom Navigation 都仍是后台实时配置，不要求为了修改它们重新发布 R2 内容快照；
           """
-          if published_file not in route:
-              raise SystemExit('publishedFile block not found')
-          route = route.replace(published_file, '', 1)
-
-          bootstrap_old = """  const sitePath = publishedFile(pointerValue.site, 'site.json');
-            const sectionsPath = publishedFile(pointerValue.sectionsIndex, 'sections.json');
-            const pointerVersion =
-              typeof pointerValue.contentVersion === 'string' ? pointerValue.contentVersion : null;
-            if (!sitePath || !sectionsPath || !pointerVersion) {
-              return context.json({ available: false }, 404);
-            }
-
-            const [site, sectionsIndex, home] = await Promise.all([
-              readPublishedJson(context.env.ASSETS_BUCKET, sitePath),
-              readPublishedJson(context.env.ASSETS_BUCKET, sectionsPath),
-              readPublishedJson(
-                context.env.ASSETS_BUCKET,
-                `public/home/${pointerVersion}/home.json`,
-              ),
-            ]);
-            if (!site || !sectionsIndex || !home) {
-              return context.json({ available: false }, 404);
-            }
+          new = """- `mediaBaseUrl`、当前主题配置与四个 Bottom Navigation 项使用同一条 D1 查询读取，导航图片的 `object_key` 也在该查询中解析；
+          - 已发布的 `site + sections index + home summary` 按 `pointerVersion` 合并为不可变 bootstrap bundle；正常命中后 Worker 只需要读取 `public/current.json + 对应 bootstrap bundle` 两个 R2 对象，而不是每次分别读取 4 个公开对象；
+          - bootstrap bundle 缺失、损坏或版本不匹配时必须回退到现有 `site / sections / home` 公开快照读取并自动重建 bundle，不能因为缓存优化导致 Storefront 不可用；
+          - bootstrap bundle 只缓存已发布静态内容；Theme、Bottom Navigation 与 `mediaBaseUrl` 仍是后台实时配置，不要求为了修改它们重新发布 R2 内容快照；
           """
-          bootstrap_new = """  const publishedBootstrap = await loadStorefrontPublishedBootstrap(
-              context.env.ASSETS_BUCKET,
-              pointerValue,
-            );
-            if (!publishedBootstrap) {
-              return context.json({ available: false }, 404);
-            }
-            const { site, sectionsIndex, home } = publishedBootstrap;
-          """
-          if bootstrap_old not in route:
-              raise SystemExit('bootstrap route block not found')
-          route = route.replace(bootstrap_old, bootstrap_new, 1)
-          route_path.write_text(route)
-
-          test_path = Path('apps/worker/test/modular-publication.test.mjs')
-          test = test_path.read_text()
-          bucket_old = """  const writes = [];
-            return {
-              objects,
-              writes,
-              async get(key) {
-                const body = objects.get(key);
-          """
-          bucket_new = """  const writes = [];
-            const reads = [];
-            return {
-              objects,
-              writes,
-              reads,
-              async get(key) {
-                reads.push(key);
-                const body = objects.get(key);
-          """
-          if bucket_old not in test:
-              raise SystemExit('createBucket marker not found')
-          test = test.replace(bucket_old, bucket_new, 1)
-
-          assertion_old = """  assert.deepEqual(await response.json(), {
-              pointer: POINTER,
-              site,
-              sectionsIndex,
-              home,
-              mediaBaseUrl: 'https://media.example.com',
-              theme: resolveTheme({ key: 'saas', overrides: {} }),
-              bottomNavigation,
-            });
-          });
-          """
-          assertion_new = """  const expected = {
-              pointer: POINTER,
-              site,
-              sectionsIndex,
-              home,
-              mediaBaseUrl: 'https://media.example.com',
-              theme: resolveTheme({ key: 'saas', overrides: {} }),
-              bottomNavigation,
-            };
-            assert.deepEqual(await response.json(), expected);
-
-            const bundleKey = `public/bootstrap/${POINTER.contentVersion}/bootstrap.json`;
-            assert.deepEqual(bucket.reads, [
-              'public/current.json',
-              bundleKey,
-              SITE.manifestKey.replace(/manifest\\.json$/u, 'site.json'),
-              INDEX.manifestKey.replace(/manifest\\.json$/u, 'sections.json'),
-              `public/home/${POINTER.contentVersion}/home.json`,
-            ]);
-            assert.equal(bucket.writes.at(-1)?.key, bundleKey);
-
-            bucket.reads.length = 0;
-            const secondResponse = await publicStorefrontConfigRoutes.request(
-              'https://storefront.example.com/bootstrap',
-              {},
-              { DB: db, ASSETS_BUCKET: bucket },
-            );
-            assert.equal(secondResponse.status, 200);
-            assert.deepEqual(await secondResponse.json(), expected);
-            assert.deepEqual(bucket.reads, ['public/current.json', bundleKey]);
-          });
-          """
-          if assertion_old not in test:
-              raise SystemExit('bootstrap assertion block not found')
-          test = test.replace(assertion_old, assertion_new, 1)
-          test_path.write_text(test)
+          if old not in text:
+              raise SystemExit('README bootstrap marker not found')
+          path.write_text(text.replace(old, new, 1))
           PY
 
+          npm install --global prettier@3.9.6
+          prettier --write \
+            apps/worker/src/publishing/storefront-bootstrap-snapshot.ts \
+            apps/worker/src/routes/public-storefront-config.ts \
+            apps/worker/test/modular-publication.test.mjs \
+            apps/worker/test/public-bootstrap-snapshot.test.mjs \
+            README.md
+
+          if git diff --quiet; then
+            exit 0
+          fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add apps/worker/src/routes/public-storefront-config.ts apps/worker/test/modular-publication.test.mjs
-          git commit -m "Reduce storefront bootstrap R2 reads"
+          git add README.md apps/worker/src/publishing/storefront-bootstrap-snapshot.ts apps/worker/src/routes/public-storefront-config.ts apps/worker/test/modular-publication.test.mjs apps/worker/test/public-bootstrap-snapshot.test.mjs
+          git commit -m "Finalize storefront bootstrap R2 budget"
           git push origin HEAD:agent/storefront-bootstrap-r2-budget
