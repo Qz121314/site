@@ -73,7 +73,9 @@ function readStateMeta(
 }
 
 function finiteScrollValue(value: unknown): number {
-  return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : 0;
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0
+    ? value
+    : 0;
 }
 
 function readScrollPosition(state: unknown): ScrollPosition {
@@ -117,7 +119,9 @@ function restoreScrollPosition(position: ScrollPosition): void {
   const restore = () => {
     window.scrollTo({ left: position.x, top: position.y, behavior: 'auto' });
     const surface = currentScrollSurface();
-    if (surface) surface.scrollTo({ left: 0, top: position.surfaceY, behavior: 'auto' });
+    if (surface) {
+      surface.scrollTo({ left: 0, top: position.surfaceY, behavior: 'auto' });
+    }
   };
   window.requestAnimationFrame(() => {
     restore();
@@ -137,7 +141,9 @@ export function ensureStorefrontHistoryState(): NavigationMeta {
   const storedSession = readSessionStorage(SESSION_STORAGE_KEY);
   const stateSession = existingState[STATE_SESSION_KEY];
   const reusableSession =
-    typeof stateSession === 'string' && stateSession && storedSession === stateSession
+    typeof stateSession === 'string' &&
+    stateSession &&
+    storedSession === stateSession
       ? stateSession
       : null;
   const surfaceY = currentScrollSurface()?.scrollTop ?? 0;
@@ -187,10 +193,15 @@ export function ensureStorefrontHistoryState(): NavigationMeta {
 export function readCurrentStorefrontViewState<T>(key: string): T | null {
   const state = recordState(window.history.state);
   const viewState = recordState(state[STATE_VIEW_KEY]);
-  return Object.prototype.hasOwnProperty.call(viewState, key) ? (viewState[key] as T) : null;
+  return Object.prototype.hasOwnProperty.call(viewState, key)
+    ? (viewState[key] as T)
+    : null;
 }
 
-export function writeCurrentStorefrontViewState(key: string, value: unknown): void {
+export function writeCurrentStorefrontViewState(
+  key: string,
+  value: unknown,
+): void {
   ensureStorefrontHistoryState();
   const state = recordState(window.history.state);
   const viewState = recordState(state[STATE_VIEW_KEY]);
