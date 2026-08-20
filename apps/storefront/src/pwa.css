@@ -82,9 +82,14 @@ body {
 }
 
 .pwa-install-copy span {
+  display: -webkit-box;
+  overflow: hidden;
+  overflow-wrap: anywhere;
   color: var(--muted, #6f7782);
   font-size: 0.72rem;
   line-height: 1.42;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .pwa-install-action,
@@ -131,6 +136,15 @@ body {
 .pwa-install-dismiss svg {
   width: 15px;
   height: 15px;
+}
+
+@media (max-width: 767px) {
+  .pwa-install-card {
+    right: max(10px, env(safe-area-inset-right));
+    left: max(10px, env(safe-area-inset-left));
+    width: auto;
+    max-width: 480px;
+  }
 }
 
 @media (max-width: 420px) {
