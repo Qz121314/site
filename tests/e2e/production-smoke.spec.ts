@@ -309,7 +309,7 @@ test('messages route explains when customer service is not configured', async ({
   }
 });
 
-test('a published product always renders its CTA surface', async ({ page }) => {
+test('a published product always renders its mobile CTA surface', async ({ page }) => {
   await page.goto('/browse/');
   const sectionHref = await page
     .locator('a[href^="/sections/"]:not([href*="/products/"])')
@@ -326,24 +326,29 @@ test('a published product always renders its CTA surface', async ({ page }) => {
 
   await page.goto(productHref!);
   const productBack = page.locator('.product-detail-back');
-  await expect(productBack.locator('.product-detail-back-label')).toBeVisible();
-  await expect
-    .poll(() =>
-      productBack.evaluate((element) => {
-        const iconRect = element.querySelector('svg')?.getBoundingClientRect();
-        const labelRect = element
-          .querySelector<HTMLElement>('.product-detail-back-label')
-          ?.getBoundingClientRect();
-        return iconRect && labelRect
-          ? Math.abs(
-              iconRect.top + iconRect.height / 2 - (labelRect.top + labelRect.height / 2),
-            ) <= 1
-          : false;
-      }),
-    )
-    .toBe(true);
-  const cta = page.locator('.product-detail-fixed-action .cta-button');
+  await expect(productBack).toBeVisible();
+  await expect(productBack.locator('svg')).toBeVisible();
+  await expect(productBack.locator('.product-detail-back-label')).toBeHidden();
+
+  const backContract = await productBack.evaluate((element) => {
+    const rect = element.getBoundingClientRect();
+    return {
+      width: rect.width,
+      height: rect.height,
+      radius: getComputedStyle(element).borderRadius,
+    };
+  });
+  expect(backContract.width).toBe(40);
+  expect(backContract.height).toBe(40);
+  expect(backContract.radius).toBe('50%');
+
+  const fixedAction = page.locator('body > .product-detail-fixed-action');
+  const cta = fixedAction.locator('.cta-button');
+  await expect(fixedAction).toBeVisible();
   await expect(cta).toBeVisible();
+  await expect
+    .poll(() => fixedAction.evaluate((element) => getComputedStyle(element).position))
+    .toBe('fixed');
   await expect
     .poll(() => cta.evaluate((element) => element.getBoundingClientRect().height))
     .toBeGreaterThanOrEqual(52);
