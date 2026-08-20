@@ -10,15 +10,17 @@ test('hero active video controls media preload', async () => {
   assert.doesNotMatch(source, /preload=\{index === 0 \? 'auto' : 'metadata'\}/u);
 });
 
-test('product detail bounds mobile media preload without a thumbnail request rail', async () => {
+test('product detail loads one primary mobile media eagerly and defers the rest', async () => {
   const source = await readFile(
     new URL('../src/ProductDetailPage.tsx', import.meta.url),
     'utf8',
   );
 
-  assert.match(source, /Math\.abs\(index - mobileMediaIndex\) <= 1/u);
-  assert.match(source, /loading=\{isActiveMedia \? 'eager' : 'lazy'\}/u);
-  assert.match(source, /detail-mobile-media-progress/u);
+  assert.match(source, /const primaryMobileMedia = mobileGalleryItems\[0\] \?\? null;/u);
+  assert.match(source, /const secondaryMobileMedia = mobileGalleryItems\.slice\(1\);/u);
+  assert.match(source, /renderMobileMedia\(primaryMobileMedia, true\)/u);
+  assert.match(source, /loading=\{eager \? 'eager' : 'lazy'\}/u);
+  assert.match(source, /className="product-detail-secondary-media"/u);
   assert.doesNotMatch(source, /detail-mobile-thumbnails/u);
   assert.doesNotMatch(source, /preload="metadata"/u);
   assert.ok((source.match(/preload="none"/gu) ?? []).length >= 3);
