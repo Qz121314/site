@@ -350,14 +350,18 @@ html[data-theme='noir'] .app-shell {
   @supports selector(.app-shell:has(.product-detail-page)) {
     html[data-storefront-presentation='push']
       .app-shell:has(.product-detail-page)
+      > .topbar,
+    html[data-storefront-presentation='push']
+      .app-shell:has(.product-detail-loading)
       > .topbar {
-      display: flex;
+      display: none;
     }
 
+    html[data-storefront-presentation='push'] .app-shell:has(.product-detail-page) > main,
     html[data-storefront-presentation='push']
-      .app-shell:has(.product-detail-page)
+      .app-shell:has(.product-detail-loading)
       > main {
-      min-height: calc(100dvh - 58px - env(safe-area-inset-top));
+      min-height: 100dvh;
       padding-top: 0;
     }
   }
@@ -595,52 +599,5 @@ html[data-theme='noir'] .app-shell {
   .app-shell > .bottom-nav a:hover {
     color: var(--text);
     background: transparent;
-  }
-}
-
-@media (max-width: 767px) and (prefers-reduced-motion: no-preference) {
-  html[data-storefront-transition='push'][data-storefront-nav-direction='forward']
-    .storefront-route-view {
-    animation: app-page-enter-forward var(--app-motion-base, 240ms)
-      var(--app-ease-out, ease-out) both;
-  }
-
-  html[data-storefront-transition='push'][data-storefront-nav-direction='back']
-    .storefront-route-view,
-  html[data-storefront-transition='pop'][data-storefront-nav-direction='back']
-    .storefront-route-view {
-    animation: app-page-enter-back var(--app-motion-base, 240ms)
-      var(--app-ease-out, ease-out) both;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .app-shell > .bottom-nav a,
-  .mobile-edge-navigation {
-    transition: none;
-  }
-}
-
-@keyframes app-page-enter-forward {
-  from {
-    opacity: 0.92;
-    transform: translateX(6px);
-  }
-
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-@keyframes app-page-enter-back {
-  from {
-    opacity: 0.92;
-    transform: translateX(-6px);
-  }
-
-  to {
-    opacity: 1;
-    transform: none;
   }
 }
