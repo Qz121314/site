@@ -32,6 +32,7 @@ import './ui-accessibility.css';
 import './mobile-fixed-surfaces.css';
 import './media-layout-contract.css';
 import './loading-states.css';
+import './storefront-edge-layout.css';
 
 installPublicContentFetchFallback();
 installSupportExpiryRuntime();
