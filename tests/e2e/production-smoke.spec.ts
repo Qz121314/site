@@ -284,7 +284,9 @@ test('storefront keeps one coherent mobile visual system across discovery routes
     topbarHidden: false,
   });
   expect(sectionVisualContract.backWidth).toBeGreaterThan(44);
-  expect(Math.abs(sectionVisualContract.searchHeight - browseVisualContract.searchHeight)).toBeLessThanOrEqual(1);
+  expect(
+    Math.abs(sectionVisualContract.searchHeight - browseVisualContract.searchHeight),
+  ).toBeLessThanOrEqual(1);
   expect(
     Math.abs(
       (sectionVisualContract.searchRadius ?? 0) -

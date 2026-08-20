@@ -4,7 +4,10 @@ import test from 'node:test';
 
 test('production acceptance guards the Visual V2 system instead of stale page pixels', async () => {
   const [acceptance, home, browse, section] = await Promise.all([
-    readFile(new URL('../../../tests/e2e/production-smoke.spec.ts', import.meta.url), 'utf8'),
+    readFile(
+      new URL('../../../tests/e2e/production-smoke.spec.ts', import.meta.url),
+      'utf8',
+    ),
     readFile(new URL('../src/home-feed.css', import.meta.url), 'utf8'),
     readFile(new URL('../src/browse-ui.css', import.meta.url), 'utf8'),
     readFile(new URL('../src/section-ui.css', import.meta.url), 'utf8'),
