@@ -73,9 +73,7 @@ function readStateMeta(
 }
 
 function finiteScrollValue(value: unknown): number {
-  return typeof value === 'number' && Number.isFinite(value) && value >= 0
-    ? value
-    : 0;
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : 0;
 }
 
 function readScrollPosition(state: unknown): ScrollPosition {
@@ -141,9 +139,7 @@ export function ensureStorefrontHistoryState(): NavigationMeta {
   const storedSession = readSessionStorage(SESSION_STORAGE_KEY);
   const stateSession = existingState[STATE_SESSION_KEY];
   const reusableSession =
-    typeof stateSession === 'string' &&
-    stateSession &&
-    storedSession === stateSession
+    typeof stateSession === 'string' && stateSession && storedSession === stateSession
       ? stateSession
       : null;
   const surfaceY = currentScrollSurface()?.scrollTop ?? 0;
@@ -198,10 +194,7 @@ export function readCurrentStorefrontViewState<T>(key: string): T | null {
     : null;
 }
 
-export function writeCurrentStorefrontViewState(
-  key: string,
-  value: unknown,
-): void {
+export function writeCurrentStorefrontViewState(key: string, value: unknown): void {
   ensureStorefrontHistoryState();
   const state = recordState(window.history.state);
   const viewState = recordState(state[STATE_VIEW_KEY]);
