@@ -21,10 +21,10 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Print failing test tail
+      - name: Print failing test context
         run: |
           set +e
           pnpm test > /tmp/test.log 2>&1
           status=$?
-          tail -n 180 /tmp/test.log
+          grep -n -B 18 -A 45 "not ok" /tmp/test.log || true
           exit $status
