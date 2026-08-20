@@ -7,7 +7,10 @@ test('desktop production acceptance and shell corrections remain wired', async (
     readFile(new URL('../../../playwright.config.ts', import.meta.url), 'utf8'),
     readFile(new URL('../src/main.tsx', import.meta.url), 'utf8'),
     readFile(new URL('../src/desktop-shell.css', import.meta.url), 'utf8'),
-    readFile(new URL('../../../tests/e2e/desktop-production.spec.ts', import.meta.url), 'utf8'),
+    readFile(
+      new URL('../../../tests/e2e/desktop-production.spec.ts', import.meta.url),
+      'utf8',
+    ),
   ]);
 
   assert.match(configSource, /name: 'desktop-chromium'/u);
@@ -17,7 +20,10 @@ test('desktop production acceptance and shell corrections remain wired', async (
   assert.match(desktopStyles, /\.app-shell > \.bottom-nav/u);
   assert.match(desktopStyles, /position: fixed/u);
   assert.match(desktopStyles, /body > \.product-detail-fixed-action/u);
-  assert.match(desktopStyles, /article\.product-detail-page \.product-detail-inline-action/u);
+  assert.match(
+    desktopStyles,
+    /article\.product-detail-page \.product-detail-inline-action/u,
+  );
   assert.match(desktopSpec, /product-detail-inline-action \.cta-button/u);
   assert.match(desktopSpec, /body > \.product-detail-fixed-action/u);
 });
