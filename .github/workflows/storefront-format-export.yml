@@ -1,8 +1,8 @@
 name: Storefront Format Export
 
 on:
-  push:
-    branches: [fix/storefront-navigation-continuity]
+  pull_request:
+    branches: [main]
 
 permissions:
   contents: read
