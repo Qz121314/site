@@ -1,0 +1,127 @@
+/* Cross-route edge-content rules. Keep extreme backend-driven content inside the app shell. */
+
+html,
+body,
+#root,
+.app-shell,
+.app-shell > main,
+.storefront-route-view {
+  max-width: 100%;
+}
+
+body {
+  overflow-x: clip;
+}
+
+.app-shell :is(.home-feed, .browse-directory, .section-catalog, .product-detail-page),
+.app-shell :is(.faq-directory, .faq-article-detail, .messages-workspace),
+.app-shell :is(.product-detail-body, .faq-article-body, .markdown-content) {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Backend-configured navigation labels must never widen the fixed app navigation. */
+.app-shell .bottom-nav a {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.app-shell .bottom-nav small {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Hero copy remains image-led even when an unusually long title is entered in Admin. */
+.app-shell .hero-carousel-copy :is(h1, h2) {
+  display: -webkit-box;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}
+
+/* Long product, FAQ, address, and message-context strings should wrap rather than widen pages. */
+.app-shell :is(.product-detail-summary h1, .product-detail-address span),
+.app-shell :is(.faq-article-header h1, .faq-article-row),
+.app-shell :is(.chat-header-copy strong, .chat-product-copy strong) {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.app-shell .product-detail-address,
+.app-shell .chat-product-card,
+.app-shell .conversation-row,
+.app-shell .conversation-main {
+  min-width: 0;
+  max-width: 100%;
+}
+
+/* Markdown is backend-driven. Protect the app viewport from long URLs, code, and unbroken text. */
+.app-shell .markdown-content :is(p, li, blockquote, a, code, h2, h3, h4, h5, h6) {
+  overflow-wrap: anywhere;
+}
+
+.app-shell .markdown-content pre {
+  max-width: 100%;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  -webkit-overflow-scrolling: touch;
+}
+
+.app-shell .markdown-content :is(img, video) {
+  height: auto;
+  max-width: 100%;
+}
+
+/* Keep the media-first product-detail rhythm even when no usable media exists. */
+.app-shell :is(
+    .detail-mobile-media-stage > .detail-media-fallback,
+    .detail-mobile-media-item > .detail-media-fallback
+  ) {
+  display: grid;
+  width: 100%;
+  min-height: 0;
+  aspect-ratio: var(--theme-detail-media-ratio, 1 / 1);
+  place-items: center;
+}
+
+.app-shell :is(
+    .detail-mobile-media-stage > .detail-media-fallback,
+    .detail-mobile-media-item > .detail-media-fallback
+  )::before {
+  width: 34px;
+  height: 28px;
+  border: 1.5px solid color-mix(in srgb, var(--muted) 40%, transparent);
+  border-radius: 6px;
+  content: '';
+}
+
+/* The PWA prompt is also backend-copy driven and must respect notches and narrow screens. */
+.pwa-install-copy span {
+  display: -webkit-box;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+@media (max-width: 767px) {
+  .pwa-install-card {
+    right: max(10px, env(safe-area-inset-right));
+    left: max(10px, env(safe-area-inset-left));
+    width: auto;
+    max-width: 480px;
+  }
+
+  .app-shell .product-detail-summary h1 {
+    font-size: clamp(1.5rem, 7vw, 2.05rem);
+    line-height: 1.08;
+    text-wrap: pretty;
+  }
+
+  .app-shell .faq-article-header h1 {
+    text-wrap: pretty;
+  }
+}
