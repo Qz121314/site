@@ -95,14 +95,19 @@
 }
 
 .hero-carousel-copy :is(h1, h2) {
+  display: -webkit-box;
   max-width: 16ch;
   margin: 0;
+  overflow: hidden;
+  overflow-wrap: anywhere;
   color: inherit;
   font-size: clamp(2rem, 4.2vw, 3.7rem);
   font-weight: 690;
   line-height: 0.98;
   letter-spacing: -0.052em;
   text-wrap: balance;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
 }
 
 .hero-carousel-copy p {

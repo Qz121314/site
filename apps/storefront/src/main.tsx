@@ -12,7 +12,6 @@ import '@site/storefront-ui/styles.css';
 import './styles.css';
 import './theme-runtime.css';
 import './media-runtime.css';
-import './storefront-resilience.css';
 import './pwa.css';
 import './app-shell.css';
 import './hero-carousel.css';
@@ -27,7 +26,6 @@ import '@site/storefront-ui/typography-contract.css';
 import './ui-accessibility.css';
 import './mobile-fixed-surfaces.css';
 import './loading-states.css';
-import './storefront-edge-layout.css';
 
 installPublicContentFetchFallback();
 installSupportExpiryRuntime();
