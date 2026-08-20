@@ -1,43 +1,158 @@
 .startup-loader {
-  display: grid;
   min-height: 100dvh;
-  place-items: center;
-  padding: max(24px, env(safe-area-inset-top)) 24px max(24px, env(safe-area-inset-bottom));
   background: var(--page-bg, #f5f6f7);
 }
 
-.loading-halo {
+.startup-app-shell {
   position: relative;
+  width: 100%;
+  min-height: 100dvh;
+  padding-bottom: calc(72px + env(safe-area-inset-bottom));
+  overflow: hidden;
+}
+
+.startup-app-bar {
   display: grid;
-  width: 42px;
-  height: 42px;
+  min-height: calc(60px + env(safe-area-inset-top));
   place-items: center;
-  border: 1px solid color-mix(in srgb, var(--brand) 24%, transparent);
-  border-radius: 50%;
-  box-shadow:
-    0 0 18px color-mix(in srgb, var(--brand) 15%, transparent),
-    inset 0 0 14px color-mix(in srgb, var(--brand) 7%, transparent);
-  animation: loading-halo-breathe 1.8s ease-in-out infinite;
+  padding-top: env(safe-area-inset-top);
+  border-bottom: 1px solid var(--app-hairline, var(--line));
+  background: color-mix(in srgb, var(--surface, #fff) 88%, transparent);
+  backdrop-filter: blur(24px) saturate(1.08);
 }
 
-.loading-halo::before {
+.startup-brand-skeleton,
+.startup-hero-skeleton,
+.startup-shortcut-skeletons span,
+.startup-section-heading-skeleton span,
+.startup-section-heading-skeleton i,
+.startup-product-rail-skeleton span,
+.startup-bottom-nav-skeleton span {
+  position: relative;
+  display: block;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--surface-soft) 86%, var(--line));
+}
+
+.startup-brand-skeleton {
+  width: 32px;
+  height: 32px;
+  border-radius: 10px;
+}
+
+.startup-feed-skeleton {
+  display: grid;
+  width: min(1120px, 100%);
+  gap: 0;
+  margin-inline: auto;
+  padding: 9px max(var(--app-gutter, 16px), env(safe-area-inset-right)) 32px
+    max(var(--app-gutter, 16px), env(safe-area-inset-left));
+}
+
+.startup-hero-skeleton {
+  width: 100%;
+  min-height: 214px;
+  aspect-ratio: 16 / 9.2;
+  border-radius: 16px;
+}
+
+.startup-shortcut-skeletons {
+  display: flex;
+  gap: 12px;
+  margin-inline: calc(var(--app-gutter, 16px) * -1);
+  padding: 26px var(--app-gutter, 16px) 20px;
+  overflow: hidden;
+}
+
+.startup-shortcut-skeletons span {
+  width: 56px;
+  height: 56px;
+  flex: 0 0 56px;
+  border-radius: 18px;
+}
+
+.startup-section-heading-skeleton {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 2px 0 12px;
+}
+
+.startup-section-heading-skeleton span {
+  width: min(42vw, 164px);
+  height: 20px;
+  border-radius: 7px;
+}
+
+.startup-section-heading-skeleton i {
+  width: 20px;
+  height: 20px;
+  border-radius: 7px;
+}
+
+.startup-product-rail-skeleton {
+  display: grid;
+  grid-auto-columns: clamp(148px, 44vw, 176px);
+  grid-auto-flow: column;
+  gap: 12px;
+  margin-right: calc(var(--app-gutter, 16px) * -1);
+  overflow: hidden;
+}
+
+.startup-product-rail-skeleton span {
+  width: 100%;
+  aspect-ratio: 1 / 1;
+  border-radius: 14px;
+}
+
+.startup-bottom-nav-skeleton {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 30;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  min-height: calc(64px + env(safe-area-inset-bottom));
+  align-items: center;
+  gap: 20px;
+  padding: 5px max(20px, env(safe-area-inset-right))
+    calc(5px + env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+  border-top: 1px solid var(--app-hairline, var(--line));
+  background: color-mix(in srgb, var(--surface, #fff) 84%, transparent);
+  backdrop-filter: blur(28px) saturate(1.08);
+}
+
+.startup-bottom-nav-skeleton span {
+  width: 28px;
+  height: 28px;
+  justify-self: center;
+  border-radius: 10px;
+}
+
+.startup-brand-skeleton::after,
+.startup-hero-skeleton::after,
+.startup-shortcut-skeletons span::after,
+.startup-section-heading-skeleton span::after,
+.startup-section-heading-skeleton i::after,
+.startup-product-rail-skeleton span::after,
+.startup-bottom-nav-skeleton span::after,
+.loading-skeleton::after,
+.app-shell .home-product-skeleton::after {
   position: absolute;
-  inset: 7px;
-  border: 1px solid color-mix(in srgb, var(--brand-strong) 34%, transparent);
-  border-radius: inherit;
+  inset: 0;
+  background: linear-gradient(
+    100deg,
+    transparent 18%,
+    color-mix(in srgb, #fff 3%, transparent) 36%,
+    color-mix(in srgb, #fff 14%, transparent) 50%,
+    color-mix(in srgb, #fff 3%, transparent) 64%,
+    transparent 82%
+  );
   content: '';
-  opacity: 0.68;
-}
-
-.loading-halo > span {
-  width: 7px;
-  height: 7px;
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--brand) 72%, #fff);
-  box-shadow:
-    0 0 9px color-mix(in srgb, var(--brand) 70%, transparent),
-    0 0 20px color-mix(in srgb, var(--brand) 28%, transparent);
-  animation: loading-halo-core 1.8s ease-in-out infinite;
+  transform: translateX(-110%);
+  animation: loading-skeleton-sweep 1.45s ease-in-out infinite;
 }
 
 .route-progress {
@@ -75,23 +190,6 @@
   display: block;
   overflow: hidden;
   background: color-mix(in srgb, var(--surface-soft) 88%, var(--line));
-}
-
-.loading-skeleton::after,
-.app-shell .home-product-skeleton::after {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    100deg,
-    transparent 18%,
-    color-mix(in srgb, #fff 3%, transparent) 36%,
-    color-mix(in srgb, #fff 14%, transparent) 50%,
-    color-mix(in srgb, #fff 3%, transparent) 64%,
-    transparent 82%
-  );
-  content: '';
-  transform: translateX(-110%);
-  animation: loading-skeleton-sweep 1.45s ease-in-out infinite;
 }
 
 .loading-square-grid {
@@ -158,32 +256,6 @@ body .product-detail-cta-spinner::after {
   }
 }
 
-@keyframes loading-halo-breathe {
-  0%,
-  100% {
-    opacity: 0.58;
-    transform: scale(0.94);
-  }
-
-  50% {
-    opacity: 1;
-    transform: scale(1.05);
-  }
-}
-
-@keyframes loading-halo-core {
-  0%,
-  100% {
-    opacity: 0.5;
-    transform: scale(0.78);
-  }
-
-  50% {
-    opacity: 1;
-    transform: scale(1.08);
-  }
-}
-
 @keyframes loading-skeleton-sweep {
   0% {
     transform: translateX(-110%);
@@ -209,6 +281,35 @@ body .product-detail-cta-spinner::after {
 }
 
 @media (min-width: 768px) {
+  .startup-app-bar {
+    min-height: 56px;
+  }
+
+  .startup-feed-skeleton {
+    padding-top: 18px;
+    padding-inline: max(24px, calc((100% - 1120px) / 2));
+  }
+
+  .startup-hero-skeleton {
+    min-height: 0;
+    aspect-ratio: 16 / 7;
+    border-radius: 18px;
+  }
+
+  .startup-shortcut-skeletons {
+    margin-inline: 0;
+    padding-inline: 0;
+  }
+
+  .startup-product-rail-skeleton {
+    grid-auto-columns: clamp(172px, 18vw, 218px);
+    margin-right: 0;
+  }
+
+  .startup-bottom-nav-skeleton {
+    display: none;
+  }
+
   .loading-square-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 16px;
@@ -216,8 +317,13 @@ body .product-detail-cta-spinner::after {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .loading-halo,
-  .loading-halo > span,
+  .startup-brand-skeleton::after,
+  .startup-hero-skeleton::after,
+  .startup-shortcut-skeletons span::after,
+  .startup-section-heading-skeleton span::after,
+  .startup-section-heading-skeleton i::after,
+  .startup-product-rail-skeleton span::after,
+  .startup-bottom-nav-skeleton span::after,
   .route-progress > span:first-child,
   .loading-skeleton::after,
   .app-shell .home-product-skeleton::after,
