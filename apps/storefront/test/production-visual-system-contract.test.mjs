@@ -3,9 +3,14 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
 test('production acceptance guards the Visual V2 system instead of stale page pixels', async () => {
-  const [acceptance, home, browse, section] = await Promise.all([
+  const [acceptance, main, theme, home, browse, section] = await Promise.all([
     readFile(
       new URL('../../../tests/e2e/production-smoke.spec.ts', import.meta.url),
+      'utf8',
+    ),
+    readFile(new URL('../src/main.tsx', import.meta.url), 'utf8'),
+    readFile(
+      new URL('../../../packages/storefront-ui/src/theme-contract.css', import.meta.url),
       'utf8',
     ),
     readFile(new URL('../src/home-feed.css', import.meta.url), 'utf8'),
@@ -26,6 +31,15 @@ test('production acceptance guards the Visual V2 system instead of stale page pi
   assert.doesNotMatch(acceptance, /\.toBe\('16px'\)/u);
   assert.doesNotMatch(acceptance, /cardRadius: '14px'/u);
   assert.doesNotMatch(acceptance, /searchRadius: '14px'/u);
+
+  assert.doesNotMatch(main, /conversion-polish\.css/u);
+  assert.doesNotMatch(main, /media-layout-contract\.css/u);
+  assert.doesNotMatch(main, /storefront-pages\.css/u);
+  assert.doesNotMatch(main, /brand-bar\.css/u);
+  assert.doesNotMatch(main, /bottom-navigation\.css/u);
+  assert.doesNotMatch(theme, /theme-content-media-shadow/u);
+  assert.doesNotMatch(theme, /\.home-product-cover/u);
+  assert.doesNotMatch(theme, /\.browse-section-card/u);
 
   assert.match(home, /\.home-product-rail \{[\s\S]*grid-template-columns: repeat\(2,/u);
   assert.match(home, /\.home-product-cover,[\s\S]*aspect-ratio: 1 \/ 1;/u);
