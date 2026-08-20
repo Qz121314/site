@@ -3,11 +3,11 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
 test('product detail keeps a conversion-first mobile hierarchy', async () => {
-  const [source, styles, flowStyles, shell] = await Promise.all([
+  const [source, styles, flowStyles, loadingStyles] = await Promise.all([
     readFile(new URL('../src/ProductDetailPage.tsx', import.meta.url), 'utf8'),
     readFile(new URL('../src/product-detail-ui.css', import.meta.url), 'utf8'),
     readFile(new URL('../src/product-detail-content-flow.css', import.meta.url), 'utf8'),
-    readFile(new URL('../src/product-detail-shell.css', import.meta.url), 'utf8'),
+    readFile(new URL('../src/loading-states.css', import.meta.url), 'utf8'),
   ]);
 
   assert.match(source, /const address = product\.address\?\.trim\(\) \?\? '';/u);
@@ -35,5 +35,8 @@ test('product detail keeps a conversion-first mobile hierarchy', async () => {
   assert.match(flowStyles, /\.product-detail-secondary-media \{/u);
   assert.match(flowStyles, /\.product-detail-secondary-media-item > img/u);
   assert.match(flowStyles, /@media \(min-width: 768px\)/u);
-  assert.match(shell, /\.product-detail-loading-navigation \{[\s\S]*position: absolute/u);
+  assert.match(
+    loadingStyles,
+    /\.product-detail-loading-navigation \{[\s\S]*position: absolute/u,
+  );
 });
