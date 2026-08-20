@@ -60,6 +60,39 @@ function CtaArrow() {
   );
 }
 
+function ProductDetailSkeleton() {
+  return (
+    <section
+      className="product-detail-loading"
+      role="status"
+      aria-live="polite"
+      aria-busy="true"
+    >
+      <div className="product-detail-loading-navigation" aria-hidden="true">
+        <span className="loading-skeleton" />
+        <span className="loading-skeleton" />
+      </div>
+      <div className="product-detail-loading-hero" aria-hidden="true">
+        <span className="product-detail-loading-media loading-skeleton" />
+        <div className="product-detail-loading-copy">
+          <span className="is-context loading-skeleton" />
+          <span className="is-title loading-skeleton" />
+          <span className="is-title is-short loading-skeleton" />
+          <div className="product-detail-loading-tags">
+            <span className="loading-skeleton" />
+            <span className="loading-skeleton" />
+          </div>
+          <span className="product-detail-loading-inline-action loading-skeleton" />
+        </div>
+      </div>
+      <div className="product-detail-loading-action" aria-hidden="true">
+        <span className="loading-skeleton" />
+      </div>
+      <span className="sr-only">{SYSTEM_UI.loading}</span>
+    </section>
+  );
+}
+
 export function ProductDetailPage({
   bootstrap,
   productRef,
@@ -106,7 +139,7 @@ export function ProductDetailPage({
   }, [product?.id]);
 
   if (query.isLoading && !product) {
-    return <div className="inline-loading product-detail-state">{SYSTEM_UI.loading}</div>;
+    return <ProductDetailSkeleton />;
   }
 
   if (query.error && !product) {
@@ -227,6 +260,7 @@ export function ProductDetailPage({
   const fixedCtaAction = (
     <div className="product-detail-fixed-action">{renderCtaButton()}</div>
   );
+  const site = bootstrap.site.site;
 
   return (
     <>
@@ -243,6 +277,22 @@ export function ProductDetailPage({
             </svg>
             <span className="product-detail-back-label">{SYSTEM_UI.back}</span>
           </LinkComponent>
+          <LinkComponent
+            className="product-detail-brand"
+            href="/"
+            aria-label={site.name}
+          >
+            {site.logoUrl ? (
+              <ResilientImage
+                alt=""
+                fallback={<span>{site.name}</span>}
+                src={site.logoUrl}
+              />
+            ) : (
+              <span>{site.name}</span>
+            )}
+          </LinkComponent>
+          <span className="product-detail-nav-spacer" aria-hidden="true" />
         </header>
 
         <div className="product-detail-hero">
