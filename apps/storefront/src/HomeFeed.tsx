@@ -266,10 +266,6 @@ function HomeProductTile({
         )
         .join(', ')
     : undefined;
-  const contextLabel =
-    product.category.name?.trim() ||
-    product.tags[0]?.name.trim() ||
-    product.sectionName.trim();
 
   return (
     <HomeLink className="home-product-tile" href={productHref(product)}>
@@ -285,12 +281,7 @@ function HomeProductTile({
           srcSet={srcSet}
           width={640}
         />
-      </span>
-      <span className="home-product-meta">
-        {contextLabel && contextLabel !== product.title ? (
-          <span className="home-product-kicker">{contextLabel}</span>
-        ) : null}
-        <strong>{product.title}</strong>
+        <strong className="home-product-title">{product.title}</strong>
       </span>
     </HomeLink>
   );
