@@ -10,10 +10,20 @@ export default defineConfig({
   reporter: process.env.CI ? 'github' : 'line',
   timeout: 30_000,
   use: {
-    ...devices['Pixel 7'],
     baseURL,
     trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
   },
-  projects: [{ name: 'chromium', use: { browserName: 'chromium' } }],
+  projects: [
+    {
+      name: 'mobile-chromium',
+      testIgnore: /desktop-production\.spec\.ts/u,
+      use: { ...devices['Pixel 7'], browserName: 'chromium' },
+    },
+    {
+      name: 'desktop-chromium',
+      testMatch: /desktop-production\.spec\.ts/u,
+      use: { ...devices['Desktop Chrome'], browserName: 'chromium' },
+    },
+  ],
 });
