@@ -38,7 +38,8 @@ test('desktop shell keeps the centered brand and primary navigation usable', asy
         navigationRect!.top >= topbarRect!.top - 1 &&
         navigationRect!.bottom <= topbarRect!.bottom + 1,
       navigationClearsBrand:
-        Boolean(brandRect && navigationRect) && navigationRect!.left >= brandRect!.right + 12,
+        Boolean(brandRect && navigationRect) &&
+        navigationRect!.left >= brandRect!.right + 12,
     };
   });
 
@@ -54,13 +55,12 @@ test('desktop shell keeps the centered brand and primary navigation usable', asy
 
   const browseCards = page.locator('.browse-section-card');
   if ((await browseCards.count()) >= 2) {
-    const layout = await browseCards
-      .evaluateAll((cards) =>
-        cards.slice(0, 2).map((card) => {
-          const rect = card.getBoundingClientRect();
-          return { left: rect.left, top: rect.top, width: rect.width };
-        }),
-      );
+    const layout = await browseCards.evaluateAll((cards) =>
+      cards.slice(0, 2).map((card) => {
+        const rect = card.getBoundingClientRect();
+        return { left: rect.left, top: rect.top, width: rect.width };
+      }),
+    );
     expect(Math.abs(layout[0]!.top - layout[1]!.top)).toBeLessThanOrEqual(1);
     expect(layout[1]!.left).toBeGreaterThan(layout[0]!.left);
     expect(layout[0]!.width).toBeGreaterThan(280);
@@ -71,7 +71,9 @@ test('desktop shell keeps the centered brand and primary navigation usable', asy
   expect(pageErrors).toEqual([]);
 });
 
-test('desktop section and product detail use the PC decision layout', async ({ page }) => {
+test('desktop section and product detail use the PC decision layout', async ({
+  page,
+}) => {
   const pageErrors: string[] = [];
   page.on('pageerror', (error) => pageErrors.push(error.message));
 
@@ -97,20 +99,19 @@ test('desktop section and product detail use the PC decision layout', async ({ p
 
   const productCards = page.locator('.section-product-card');
   if ((await productCards.count()) >= 2) {
-    const layout = await productCards
-      .evaluateAll((cards) =>
-        cards.slice(0, 2).map((card) => {
-          const rect = card.getBoundingClientRect();
-          const cover = card.querySelector<HTMLElement>('.section-product-cover');
-          const coverRect = cover?.getBoundingClientRect();
-          return {
-            left: rect.left,
-            top: rect.top,
-            width: rect.width,
-            coverRatio: coverRect ? coverRect.height / coverRect.width : null,
-          };
-        }),
-      );
+    const layout = await productCards.evaluateAll((cards) =>
+      cards.slice(0, 2).map((card) => {
+        const rect = card.getBoundingClientRect();
+        const cover = card.querySelector<HTMLElement>('.section-product-cover');
+        const coverRect = cover?.getBoundingClientRect();
+        return {
+          left: rect.left,
+          top: rect.top,
+          width: rect.width,
+          coverRatio: coverRect ? coverRect.height / coverRect.width : null,
+        };
+      }),
+    );
     expect(Math.abs(layout[0]!.top - layout[1]!.top)).toBeLessThanOrEqual(1);
     expect(layout[1]!.left).toBeGreaterThan(layout[0]!.left);
     expect(layout[0]!.coverRatio ?? 0).toBeCloseTo(1, 2);
@@ -144,7 +145,9 @@ test('desktop section and product detail use the PC decision layout', async ({ p
   expect(pageErrors).toEqual([]);
 });
 
-test('desktop Messages and FAQ remain healthy without horizontal overflow', async ({ page }) => {
+test('desktop Messages and FAQ remain healthy without horizontal overflow', async ({
+  page,
+}) => {
   const pageErrors: string[] = [];
   page.on('pageerror', (error) => pageErrors.push(error.message));
 
