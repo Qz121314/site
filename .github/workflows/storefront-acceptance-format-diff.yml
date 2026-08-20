@@ -1,0 +1,33 @@
+name: Storefront Acceptance Format Diff
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        run: npm install --global pnpm@11.19.0
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Print exact Prettier diff
+        run: |
+          set -euo pipefail
+          cp tests/e2e/production-smoke.spec.ts /tmp/production-smoke.spec.ts
+          cp apps/storefront/test/production-visual-system-contract.test.mjs /tmp/production-visual-system-contract.test.mjs
+          pnpm exec prettier --write \
+            tests/e2e/production-smoke.spec.ts \
+            apps/storefront/test/production-visual-system-contract.test.mjs
+          diff -u /tmp/production-smoke.spec.ts tests/e2e/production-smoke.spec.ts || true
+          diff -u /tmp/production-visual-system-contract.test.mjs apps/storefront/test/production-visual-system-contract.test.mjs || true
