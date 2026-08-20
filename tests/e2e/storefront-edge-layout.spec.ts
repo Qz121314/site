@@ -3,23 +3,11 @@ import { expect, test, type Page } from '@playwright/test';
 async function expectDocumentInsideViewport(page: Page) {
   await expect
     .poll(() =>
-      page.evaluate(() => ({
-        clientWidth: document.documentElement.clientWidth,
-        scrollWidth: document.documentElement.scrollWidth,
-      })),
+      page.evaluate(
+        () => document.documentElement.scrollWidth <= document.documentElement.clientWidth + 1,
+      ),
     )
-    .toEqual(
-      expect.objectContaining({
-        clientWidth: expect.any(Number),
-        scrollWidth: expect.any(Number),
-      }),
-    );
-
-  const dimensions = await page.evaluate(() => ({
-    clientWidth: document.documentElement.clientWidth,
-    scrollWidth: document.documentElement.scrollWidth,
-  }));
-  expect(dimensions.scrollWidth).toBeLessThanOrEqual(dimensions.clientWidth + 1);
+    .toBe(true);
 }
 
 test('primary mobile storefront routes do not widen the document viewport', async ({ page }) => {
