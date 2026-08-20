@@ -1,8 +1,8 @@
 name: Storefront Edge Resilience Fix
 
 on:
-  push:
-    branches: [fix/storefront-edge-resilience-20260820]
+  pull_request:
+    branches: [main]
 
 permissions:
   contents: write
