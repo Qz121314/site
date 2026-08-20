@@ -52,6 +52,13 @@
   height: 100%;
 }
 
+.hero-carousel-media-fallback {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: var(--theme-media-background, var(--surface-soft));
+}
+
 .hero-carousel-media img,
 .hero-carousel-media video {
   display: block;
