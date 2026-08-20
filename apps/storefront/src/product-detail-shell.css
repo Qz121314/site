@@ -15,8 +15,8 @@
   left: calc(-1 * var(--app-gutter, 10px));
   z-index: 3;
   min-height: calc(62px + env(safe-area-inset-top));
-  padding: calc(10px + env(safe-area-inset-top))
-    max(10px, env(safe-area-inset-right)) 10px max(10px, env(safe-area-inset-left));
+  padding: calc(10px + env(safe-area-inset-top)) max(10px, env(safe-area-inset-right))
+    10px max(10px, env(safe-area-inset-left));
   pointer-events: none;
 }
 
