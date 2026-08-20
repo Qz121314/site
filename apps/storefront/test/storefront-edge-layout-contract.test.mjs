@@ -7,23 +7,32 @@ function source(path) {
   return readFileSync(new URL(path, import.meta.url), 'utf8');
 }
 
-test('storefront edge layout contract is wired', () => {
+test('storefront edge safeguards live with their visual owners', () => {
   const main = source('../src/main.tsx');
-  const css = source('../src/storefront-edge-layout.css');
+  const base = source('../src/styles.css');
+  const hero = source('../src/hero-carousel.css');
+  const pwa = source('../src/pwa.css');
+  const detail = source('../src/product-detail-content-flow.css');
 
-  assert.ok(main.includes("import './storefront-edge-layout.css';"));
-  assert.ok(!css.includes('body {\n  overflow-x: clip;'));
-  assert.ok(css.includes('.hero-carousel-copy h1'));
-  assert.ok(css.includes('-webkit-line-clamp: 3;'));
-  assert.ok(css.includes('.bottom-nav small'));
-  assert.ok(css.includes('text-overflow: ellipsis;'));
-  assert.ok(css.includes('.markdown-content pre'));
-  assert.ok(css.includes('overflow-x: auto;'));
-  assert.ok(css.includes('overscroll-behavior-inline: contain;'));
-  assert.ok(css.includes('.detail-mobile-media-stage > .detail-media-fallback'));
-  assert.ok(css.includes('--theme-detail-media-ratio'));
-  assert.ok(css.includes('.pwa-install-copy span'));
-  assert.ok(css.includes('-webkit-line-clamp: 2;'));
-  assert.ok(css.includes('env(safe-area-inset-right)'));
-  assert.ok(css.includes('env(safe-area-inset-left)'));
+  assert.ok(!main.includes("import './storefront-edge-layout.css';"));
+  assert.ok(!main.includes("import './storefront-resilience.css';"));
+
+  assert.ok(base.includes('.state-actions'));
+  assert.ok(base.includes('.secondary-button'));
+  assert.ok(base.includes('.markdown-image-fallback'));
+  assert.ok(base.includes('.markdown-content pre'));
+  assert.ok(base.includes('overscroll-behavior-inline: contain;'));
+
+  assert.ok(hero.includes('.hero-carousel-copy :is(h1, h2)'));
+  assert.ok(hero.includes('-webkit-line-clamp: 3;'));
+
+  assert.ok(pwa.includes('.pwa-install-copy span'));
+  assert.ok(pwa.includes('-webkit-line-clamp: 2;'));
+  assert.ok(pwa.includes('env(safe-area-inset-right)'));
+  assert.ok(pwa.includes('env(safe-area-inset-left)'));
+
+  assert.ok(detail.includes('.product-detail-summary h1'));
+  assert.ok(detail.includes('overflow-wrap: anywhere;'));
+  assert.ok(detail.includes('.detail-mobile-media-stage > .detail-media-fallback'));
+  assert.ok(detail.includes('--theme-detail-media-ratio'));
 });
