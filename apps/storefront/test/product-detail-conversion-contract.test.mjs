@@ -33,7 +33,7 @@ test('product detail keeps a conversion-first mobile hierarchy', async () => {
   );
 
   assert.match(flowStyles, /\.product-detail-secondary-media \{/u);
-  assert.match(flowStyles, /loading/u);
+  assert.match(flowStyles, /\.product-detail-secondary-media-item > img/u);
   assert.match(flowStyles, /@media \(min-width: 768px\)/u);
   assert.match(shell, /\.product-detail-loading-navigation \{[\s\S]*position: absolute/u);
 });
