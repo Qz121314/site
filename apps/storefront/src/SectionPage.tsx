@@ -9,9 +9,36 @@ import {
 import { SquareSkeletonGrid } from './LoadingStates';
 import { ResilientImage } from './ResilientMedia';
 import { productHref } from './routing';
-import { canNavigateStorefrontBack, navigateStorefrontBack } from './storefront-history';
+import {
+  canNavigateStorefrontBack,
+  navigateStorefrontBack,
+  readCurrentStorefrontViewState,
+  writeCurrentStorefrontViewState,
+} from './storefront-history';
 import { SYSTEM_UI } from './system-ui';
 import './section-ui.css';
+
+const SECTION_VIEW_STATE_KEY = 'section-catalog';
+
+type SectionViewState = {
+  search: string;
+  categoryId: string;
+  selectedTagIds: string[];
+};
+
+function restoredSectionViewState(): SectionViewState {
+  const value = readCurrentStorefrontViewState<unknown>(SECTION_VIEW_STATE_KEY);
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return { search: '', categoryId: '', selectedTagIds: [] };
+  }
+  const record = value as Record<string, unknown>;
+  const search = typeof record.search === 'string' ? record.search : '';
+  const categoryId = typeof record.categoryId === 'string' ? record.categoryId : '';
+  const selectedTagIds = Array.isArray(record.selectedTagIds)
+    ? record.selectedTagIds.filter((item): item is string => typeof item === 'string')
+    : [];
+  return { search, categoryId, selectedTagIds };
+}
 
 function SearchIcon() {
   return (
@@ -65,9 +92,12 @@ export function SectionCatalogPage({
   sectionRef: string;
   LinkComponent: StorefrontLinkComponent;
 }) {
-  const [search, setSearch] = useState('');
-  const [categoryId, setCategoryId] = useState('');
-  const [selectedTags, setSelectedTags] = useState<Set<string>>(() => new Set());
+  const [initialViewState] = useState(restoredSectionViewState);
+  const [search, setSearch] = useState(initialViewState.search);
+  const [categoryId, setCategoryId] = useState(initialViewState.categoryId);
+  const [selectedTags, setSelectedTags] = useState<Set<string>>(
+    () => new Set(initialViewState.selectedTagIds),
+  );
   const query = useQuery({
     queryKey: ['storefront-section', bootstrap.pointer.contentVersion, sectionRef],
     queryFn: ({ signal }) => loadSectionSnapshot(bootstrap, sectionRef, signal),
@@ -96,6 +126,14 @@ export function SectionCatalogPage({
     if (query.data)
       document.title = `${query.data.section.name} · ${bootstrap.site.site.name}`;
   }, [bootstrap.site.site.name, query.data]);
+
+  useEffect(() => {
+    writeCurrentStorefrontViewState(SECTION_VIEW_STATE_KEY, {
+      search,
+      categoryId,
+      selectedTagIds: [...selectedTags],
+    } satisfies SectionViewState);
+  }, [categoryId, search, selectedTags]);
 
   function toggleTag(tagId: string) {
     setSelectedTags((current) => {
@@ -248,7 +286,7 @@ export function SectionCatalogPage({
         </div>
       ) : null}
 
-      <div className="section-catalog-content">
+      <div className="section-catalog-content" data-storefront-scroll-surface>
         {filteredProducts.length > 0 ? (
           <div className="section-catalog-products">
             {filteredProducts.map((product, index) => {
