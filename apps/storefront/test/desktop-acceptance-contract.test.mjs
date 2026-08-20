@@ -25,10 +25,7 @@ test('desktop production acceptance and visual v2 shell remain wired', async () 
   assert.match(appShell, /\.app-shell > \.bottom-nav/u);
   assert.match(appShell, /position: fixed/u);
   assert.match(appShell, /body > \.product-detail-fixed-action/u);
-  assert.match(
-    appShell,
-    /article\.product-detail-page \.product-detail-inline-action/u,
-  );
+  assert.match(appShell, /article\.product-detail-page \.product-detail-inline-action/u);
 
   assert.match(homeStyles, /grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/u);
   assert.match(homeStyles, /grid-template-columns: repeat\(4, minmax\(0, 1fr\)\)/u);
