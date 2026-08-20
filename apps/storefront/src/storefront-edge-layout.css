@@ -13,9 +13,16 @@ body {
   overflow-x: clip;
 }
 
-.app-shell :is(.home-feed, .browse-directory, .section-catalog, .product-detail-page),
-.app-shell :is(.faq-directory, .faq-article-detail, .messages-workspace),
-.app-shell :is(.product-detail-body, .faq-article-body, .markdown-content) {
+.app-shell .home-feed,
+.app-shell .browse-directory,
+.app-shell .section-catalog,
+.app-shell .product-detail-page,
+.app-shell .faq-directory,
+.app-shell .faq-article-detail,
+.app-shell .messages-workspace,
+.app-shell .product-detail-body,
+.app-shell .faq-article-body,
+.app-shell .markdown-content {
   min-width: 0;
   max-width: 100%;
 }
@@ -33,8 +40,9 @@ body {
   white-space: nowrap;
 }
 
-/* Hero copy remains image-led even when an unusually long title is entered in Admin. */
-.app-shell .hero-carousel-copy :is(h1, h2) {
+/* Hero copy remains image-led when an unusually long title is entered in Admin. */
+.app-shell .hero-carousel-copy h1,
+.app-shell .hero-carousel-copy h2 {
   display: -webkit-box;
   overflow: hidden;
   overflow-wrap: anywhere;
@@ -42,10 +50,13 @@ body {
   -webkit-line-clamp: 3;
 }
 
-/* Long product, FAQ, address, and message-context strings should wrap rather than widen pages. */
-.app-shell :is(.product-detail-summary h1, .product-detail-address span),
-.app-shell :is(.faq-article-header h1, .faq-article-row),
-.app-shell :is(.chat-header-copy strong, .chat-product-copy strong) {
+/* Long backend-driven labels should wrap rather than widen pages. */
+.app-shell .product-detail-summary h1,
+.app-shell .product-detail-address span,
+.app-shell .faq-article-header h1,
+.app-shell .faq-article-row,
+.app-shell .chat-header-copy strong,
+.app-shell .chat-product-copy strong {
   min-width: 0;
   overflow-wrap: anywhere;
 }
@@ -58,8 +69,17 @@ body {
   max-width: 100%;
 }
 
-/* Markdown is backend-driven. Protect the app viewport from long URLs, code, and unbroken text. */
-.app-shell .markdown-content :is(p, li, blockquote, a, code, h2, h3, h4, h5, h6) {
+/* Markdown is backend-driven. Protect the app viewport from long unbroken content. */
+.app-shell .markdown-content p,
+.app-shell .markdown-content li,
+.app-shell .markdown-content blockquote,
+.app-shell .markdown-content a,
+.app-shell .markdown-content code,
+.app-shell .markdown-content h2,
+.app-shell .markdown-content h3,
+.app-shell .markdown-content h4,
+.app-shell .markdown-content h5,
+.app-shell .markdown-content h6 {
   overflow-wrap: anywhere;
 }
 
@@ -70,16 +90,15 @@ body {
   -webkit-overflow-scrolling: touch;
 }
 
-.app-shell .markdown-content :is(img, video) {
+.app-shell .markdown-content img,
+.app-shell .markdown-content video {
   height: auto;
   max-width: 100%;
 }
 
-/* Keep the media-first product-detail rhythm even when no usable media exists. */
-.app-shell :is(
-    .detail-mobile-media-stage > .detail-media-fallback,
-    .detail-mobile-media-item > .detail-media-fallback
-  ) {
+/* Keep the media-first detail rhythm when no usable media exists. */
+.app-shell .detail-mobile-media-stage > .detail-media-fallback,
+.app-shell .detail-mobile-media-item > .detail-media-fallback {
   display: grid;
   width: 100%;
   min-height: 0;
@@ -87,10 +106,8 @@ body {
   place-items: center;
 }
 
-.app-shell :is(
-    .detail-mobile-media-stage > .detail-media-fallback,
-    .detail-mobile-media-item > .detail-media-fallback
-  )::before {
+.app-shell .detail-mobile-media-stage > .detail-media-fallback::before,
+.app-shell .detail-mobile-media-item > .detail-media-fallback::before {
   width: 34px;
   height: 28px;
   border: 1.5px solid color-mix(in srgb, var(--muted) 40%, transparent);
@@ -98,7 +115,7 @@ body {
   content: '';
 }
 
-/* The PWA prompt is also backend-copy driven and must respect notches and narrow screens. */
+/* The PWA prompt is backend-copy driven and must respect narrow safe areas. */
 .pwa-install-copy span {
   display: -webkit-box;
   overflow: hidden;
