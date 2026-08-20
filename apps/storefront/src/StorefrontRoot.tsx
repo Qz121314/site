@@ -127,10 +127,21 @@ function StorefrontMetadata({ description }: { description: string }) {
   return null;
 }
 
+function UnavailableIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+      <path d="M12 4.75a7.25 7.25 0 1 1-7.25 7.25A7.25 7.25 0 0 1 12 4.75Z" />
+      <path d="M12 8.25v4.5M12 15.75h.01" />
+    </svg>
+  );
+}
+
 function PrimaryError() {
   return (
     <div className="standalone-state">
-      <div className="state-mark">!</div>
+      <div className="state-mark" aria-hidden="true">
+        <UnavailableIcon />
+      </div>
       <h1>{SYSTEM_UI.unavailable}</h1>
       <button type="button" onClick={() => window.location.reload()}>
         {SYSTEM_UI.retry}
@@ -172,7 +183,6 @@ function PrimaryShell({
           {children}
         </div>
       </main>
-      <footer className="site-footer">{site.name}</footer>
       {navigationItems.length > 0 ? (
         <StorefrontBottomNavigation
           activeHref={bottomNavigationActiveHref(activePath)}
