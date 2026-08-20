@@ -1,6 +1,16 @@
-import { expect, test } from '@playwright/test';
+import { expect, test, type Page } from '@playwright/test';
 
-test('storefront renders its shell and primary browse route without runtime errors', async ({
+async function expectNoHorizontalOverflow(page: Page) {
+  await expect
+    .poll(() =>
+      page.evaluate(
+        () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+      ),
+    )
+    .toBeLessThanOrEqual(1);
+}
+
+test('storefront keeps one coherent mobile visual system across discovery routes', async ({
   page,
   request,
 }) => {
@@ -33,22 +43,16 @@ test('storefront renders its shell and primary browse route without runtime erro
   await expect
     .poll(() => page.evaluate(() => document.documentElement.dataset.fontPack))
     .toBe('editorial');
-  await expect
-    .poll(() =>
-      page
-        .locator('.home-shortcut-icon')
-        .first()
-        .evaluate((element) => getComputedStyle(element).borderRadius),
-    )
-    .toBe('16px');
 
   const homeVisualContract = await page.evaluate(() => {
     const rail = document.querySelector<HTMLElement>('.home-product-rail');
     const tiles = rail?.querySelectorAll<HTMLElement>('.home-product-tile');
     const singleTile = tiles?.length === 1 ? tiles.item(0) : null;
+    const shortcut = document.querySelector<HTMLElement>('.home-shortcut-icon');
     const activeIcon = document.querySelector<HTMLElement>(
       '.bottom-nav a.is-active .bottom-nav-icon',
     );
+    const navigation = document.querySelector<HTMLElement>('.bottom-nav');
     const firstCover = document.querySelector<HTMLElement>('.home-product-cover');
     const firstCoverRect = firstCover?.getBoundingClientRect();
     const semanticHeading = document.querySelector<HTMLElement>(
@@ -70,9 +74,19 @@ test('storefront renders its shell and primary browse route without runtime erro
       loadsBundledManrope: getComputedStyle(document.body).fontFamily.includes(
         'Manrope Variable',
       ),
+      shortcutRadius: shortcut
+        ? Number.parseFloat(getComputedStyle(shortcut).borderRadius)
+        : null,
+      shortcutShadow: shortcut ? getComputedStyle(shortcut).boxShadow : null,
+      productCoverRadius: firstCover
+        ? Number.parseFloat(getComputedStyle(firstCover).borderRadius)
+        : null,
+      productCoverShadow: firstCover ? getComputedStyle(firstCover).boxShadow : null,
       productCoverRatio: firstCoverRect
         ? firstCoverRect.height / firstCoverRect.width
         : null,
+      navigationRadius: navigation ? getComputedStyle(navigation).borderRadius : null,
+      navigationBottom: navigation ? getComputedStyle(navigation).bottom : null,
       semanticBrandHeadingHidden:
         semanticHeadingRect !== undefined &&
         semanticHeadingRect !== null &&
@@ -85,7 +99,8 @@ test('storefront renders its shell and primary browse route without runtime erro
           : true,
     };
   });
-  expect(homeVisualContract).toEqual({
+
+  expect(homeVisualContract).toMatchObject({
     bodyScaleRem: 0.9375,
     activeIconRadius: '0px',
     buttonStyle: 'refined',
@@ -94,11 +109,17 @@ test('storefront renders its shell and primary browse route without runtime erro
     motionStyle: 'restrained',
     navigationStyle: 'quiet',
     loadsBundledManrope: false,
-    productCoverRatio: expect.any(Number),
+    shortcutShadow: 'none',
+    productCoverShadow: 'none',
+    navigationRadius: '0px',
+    navigationBottom: '0px',
     semanticBrandHeadingHidden: true,
     singleTileStaysCompact: true,
   });
+  expect(homeVisualContract.shortcutRadius ?? 99).toBeGreaterThan(0);
+  expect(homeVisualContract.shortcutRadius ?? 99).toBeLessThanOrEqual(12);
   expect(homeVisualContract.productCoverRatio ?? 0).toBeCloseTo(1, 2);
+  await expectNoHorizontalOverflow(page);
 
   await page.goto('/browse/');
   await expect(page.locator('#root')).not.toBeEmpty();
@@ -117,7 +138,7 @@ test('storefront renders its shell and primary browse route without runtime erro
       .every((item) => item.opacity === '0'),
   ).toBeTruthy();
 
-  const visualContract = await page.evaluate(() => {
+  const browseVisualContract = await page.evaluate(() => {
     const card = document.querySelector<HTMLElement>('.browse-section-card');
     const media = card?.querySelector<HTMLElement>('.browse-section-card-media');
     const image = media?.querySelector<HTMLImageElement>('img');
@@ -129,9 +150,11 @@ test('storefront renders its shell and primary browse route without runtime erro
     const cardRect = card?.getBoundingClientRect();
     const mediaRect = media?.getBoundingClientRect();
     const imageRect = image?.getBoundingClientRect();
+    const searchRect = search?.getBoundingClientRect();
     const semanticHeadingRect = semanticHeading?.getBoundingClientRect();
     return {
-      cardRadius: card ? getComputedStyle(card).borderRadius : null,
+      cardRadius: card ? Number.parseFloat(getComputedStyle(card).borderRadius) : null,
+      cardShadow: card ? getComputedStyle(card).boxShadow : null,
       cardMinHeight: cardRect?.height ?? 0,
       cardRatio: cardRect ? cardRect.height / cardRect.width : null,
       mediaFillsCard:
@@ -149,24 +172,32 @@ test('storefront renders its shell and primary browse route without runtime erro
         semanticHeadingRect !== null &&
         semanticHeadingRect.width <= 1 &&
         semanticHeadingRect.height <= 1,
-      searchRadius: search ? getComputedStyle(search).borderRadius : null,
+      searchRadius: search
+        ? Number.parseFloat(getComputedStyle(search).borderRadius)
+        : null,
+      searchHeight: searchRect?.height ?? 0,
+      searchShadow: search ? getComputedStyle(search).boxShadow : null,
       navigationRadius: navigation ? getComputedStyle(navigation).borderRadius : null,
       navigationBottom: navigation ? getComputedStyle(navigation).bottom : null,
     };
   });
-  expect(visualContract).toEqual({
-    cardRadius: '14px',
-    cardMinHeight: expect.any(Number),
-    cardRatio: expect.any(Number),
+
+  expect(browseVisualContract).toMatchObject({
+    cardShadow: 'none',
     mediaFillsCard: true,
     imageFillsCard: true,
     semanticBrandHeadingHidden: true,
-    searchRadius: '14px',
+    searchShadow: 'none',
     navigationRadius: '0px',
     navigationBottom: '0px',
   });
-  expect(visualContract.cardMinHeight).toBeGreaterThanOrEqual(220);
-  expect(visualContract.cardRatio ?? 0).toBeCloseTo(1, 2);
+  expect(browseVisualContract.cardRadius ?? 99).toBeLessThanOrEqual(12);
+  expect(browseVisualContract.cardMinHeight).toBeGreaterThanOrEqual(180);
+  expect(browseVisualContract.cardRatio ?? 0).toBeCloseTo(10 / 16, 1);
+  expect(browseVisualContract.searchRadius ?? 99).toBeGreaterThan(0);
+  expect(browseVisualContract.searchRadius ?? 99).toBeLessThanOrEqual(12);
+  expect(browseVisualContract.searchHeight).toBeGreaterThanOrEqual(44);
+  await expectNoHorizontalOverflow(page);
 
   const sectionHref = await page
     .locator('a[href^="/sections/"]:not([href*="/products/"])')
@@ -188,16 +219,20 @@ test('storefront renders its shell and primary browse route without runtime erro
     await expect(categoryButtons.first()).toHaveAttribute('aria-pressed', 'true');
   }
 
-  const sectionAppContract = await page.evaluate(() => {
+  const sectionVisualContract = await page.evaluate(() => {
     const back = document.querySelector<HTMLElement>('.section-catalog-back');
     const content = document.querySelector<HTMLElement>('.section-catalog-content');
     const main = document.querySelector<HTMLElement>('.app-shell > main');
     const topbar = document.querySelector<HTMLElement>('.app-shell > .topbar');
+    const search = document.querySelector<HTMLElement>('.section-catalog-search');
+    const productCover = document.querySelector<HTMLElement>('.section-product-cover');
     const backRect = back?.getBoundingClientRect();
     const backIconRect = back?.querySelector('svg')?.getBoundingClientRect();
     const backLabelRect = back
       ?.querySelector<HTMLElement>('.section-catalog-back-label')
       ?.getBoundingClientRect();
+    const searchRect = search?.getBoundingClientRect();
+    const productCoverRect = productCover?.getBoundingClientRect();
     return {
       documentLocked:
         document.scrollingElement !== null &&
@@ -219,23 +254,56 @@ test('storefront renders its shell and primary browse route without runtime erro
                 (backLabelRect.top + backLabelRect.height / 2),
             ) <= 1
           : false,
+      searchRadius: search
+        ? Number.parseFloat(getComputedStyle(search).borderRadius)
+        : null,
+      searchHeight: searchRect?.height ?? 0,
+      searchShadow: search ? getComputedStyle(search).boxShadow : null,
+      productCoverRadius: productCover
+        ? Number.parseFloat(getComputedStyle(productCover).borderRadius)
+        : null,
+      productCoverRatio: productCoverRect
+        ? productCoverRect.height / productCoverRect.width
+        : null,
+      productCoverShadow: productCover ? getComputedStyle(productCover).boxShadow : null,
       topbarHidden: topbar ? getComputedStyle(topbar).display === 'none' : false,
     };
   });
-  expect(sectionAppContract).toEqual({
+
+  expect(sectionVisualContract).toMatchObject({
     documentLocked: true,
     bodyOverflow: 'hidden',
     mainOverflow: 'hidden',
     contentOverflowY: 'auto',
-    backWidth: expect.any(Number),
     backHeight: 44,
     backRadius: '0px',
     backBorderWidth: '0px',
     backBackground: 'rgba(0, 0, 0, 0)',
     backSingleLine: true,
+    searchShadow: 'none',
     topbarHidden: false,
   });
-  expect(sectionAppContract.backWidth).toBeGreaterThan(44);
+  expect(sectionVisualContract.backWidth).toBeGreaterThan(44);
+  expect(
+    Math.abs(sectionVisualContract.searchHeight - browseVisualContract.searchHeight),
+  ).toBeLessThanOrEqual(1);
+  expect(
+    Math.abs(
+      (sectionVisualContract.searchRadius ?? 0) -
+        (browseVisualContract.searchRadius ?? 0),
+    ),
+  ).toBeLessThanOrEqual(0.5);
+  if (sectionVisualContract.productCoverRatio !== null) {
+    expect(sectionVisualContract.productCoverRatio).toBeCloseTo(1, 2);
+    expect(sectionVisualContract.productCoverShadow).toBe('none');
+    expect(
+      Math.abs(
+        (sectionVisualContract.productCoverRadius ?? 0) -
+          (homeVisualContract.productCoverRadius ?? 0),
+      ),
+    ).toBeLessThanOrEqual(0.5);
+  }
+  await expectNoHorizontalOverflow(page);
   expect(pageErrors).toEqual([]);
 });
 
