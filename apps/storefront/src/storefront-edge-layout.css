@@ -9,10 +9,6 @@ body,
   max-width: 100%;
 }
 
-body {
-  overflow-x: clip;
-}
-
 .app-shell .home-feed,
 .app-shell .browse-directory,
 .app-shell .section-catalog,
