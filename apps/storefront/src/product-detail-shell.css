@@ -121,9 +121,7 @@
       display: none;
     }
 
-    html[data-storefront-presentation='push']
-      .app-shell:has(.product-detail-page)
-      > main,
+    html[data-storefront-presentation='push'] .app-shell:has(.product-detail-page) > main,
     html[data-storefront-presentation='push']
       .app-shell:has(.product-detail-loading)
       > main {
