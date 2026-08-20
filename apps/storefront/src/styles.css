@@ -106,6 +106,33 @@ main {
   gap: 10px;
 }
 
+.state-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.secondary-button {
+  display: flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+  border: 1px solid var(--line);
+  border-radius: var(--theme-radius-control, 4px);
+  color: var(--text);
+  background: var(--surface);
+  cursor: pointer;
+  font-weight: 800;
+}
+
+.secondary-button:hover {
+  border-color: color-mix(in srgb, var(--brand) 38%, var(--line));
+  color: var(--brand-strong);
+}
+
 .inline-error,
 .inline-empty {
   padding: 14px 15px;
@@ -174,24 +201,6 @@ main {
   background: color-mix(in srgb, #fff6f2 74%, var(--surface));
 }
 
-.detail-gallery {
-  display: grid;
-  grid-auto-columns: min(88vw, 760px);
-  grid-auto-flow: column;
-  gap: 9px;
-  overflow-x: auto;
-  border-radius: var(--radius-lg);
-  scroll-snap-type: x mandatory;
-}
-
-.detail-gallery img {
-  width: 100%;
-  aspect-ratio: 16 / 10;
-  border-radius: var(--radius-lg);
-  object-fit: cover;
-  scroll-snap-align: start;
-}
-
 .markdown-content {
   color: #4f5761;
   font-size: 0.86rem;
@@ -240,10 +249,13 @@ main {
 }
 
 .markdown-content pre {
+  max-width: 100%;
   overflow-x: auto;
   padding: 12px;
   border-radius: 2px;
   background: #f0f1f2;
+  overscroll-behavior-inline: contain;
+  -webkit-overflow-scrolling: touch;
 }
 
 .markdown-content pre code {
@@ -254,6 +266,26 @@ main {
   color: var(--brand-strong);
   text-decoration: underline;
   text-underline-offset: 2px;
+}
+
+.markdown-content img,
+.markdown-content video {
+  height: auto;
+  max-width: 100%;
+}
+
+.markdown-image-fallback {
+  display: block;
+  width: min(100%, 520px);
+  margin: 1rem auto;
+  padding: 18px;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius-md);
+  color: var(--muted);
+  background: var(--surface-soft);
+  font-size: 0.76rem;
+  font-weight: 700;
+  text-align: center;
 }
 
 .cta-button,
@@ -351,6 +383,21 @@ main {
   }
 }
 
+@media (max-width: 719px) {
+  .state-actions {
+    width: min(100%, 300px);
+  }
+
+  .state-actions > * {
+    width: 100%;
+  }
+
+  .inline-error-action {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+}
+
 @media (min-width: 720px) {
   main {
     padding: 26px 22px 58px;
@@ -358,10 +405,6 @@ main {
 
   .product-grid {
     gap: 16px;
-  }
-
-  .detail-gallery {
-    grid-auto-columns: min(68vw, 800px);
   }
 }
 
