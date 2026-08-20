@@ -16,7 +16,6 @@ import './pwa.css';
 import './app-shell.css';
 import './hero-carousel.css';
 import './home-feed.css';
-import './product-detail-shell.css';
 import './chat-conversation.css';
 import './support-expiry-runtime.css';
 import './route-transition.css';
