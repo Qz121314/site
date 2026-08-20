@@ -52,12 +52,6 @@
   padding-inline: 4px;
 }
 
-.product-detail-loading-copy > .is-context {
-  width: 88px;
-  height: 11px;
-  border-radius: 5px;
-}
-
 .product-detail-loading-copy > .is-title {
   width: min(88%, 420px);
   height: 28px;
@@ -66,22 +60,6 @@
 
 .product-detail-loading-copy > .is-title.is-short {
   width: min(56%, 280px);
-}
-
-.product-detail-loading-tags {
-  display: flex;
-  gap: 7px;
-  margin-top: 2px;
-}
-
-.product-detail-loading-tags span {
-  width: 62px;
-  height: 26px;
-  border-radius: 999px;
-}
-
-.product-detail-loading-tags span:last-child {
-  width: 82px;
 }
 
 .product-detail-loading-inline-action {
