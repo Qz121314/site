@@ -36,6 +36,24 @@ function NavigationBackIcon() {
   );
 }
 
+function FaqStateIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+      <path d="M6.5 5.5h11a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H11l-4.5 2.5v-2.5h0a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2Z" />
+      <path d="M9 10h6M9 13.5h4" />
+    </svg>
+  );
+}
+
+function MissingStateIcon() {
+  return (
+    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
+      <path d="M7 5.5h7l3 3v10H7z" />
+      <path d="M14 5.5v3h3M9.5 13h5M9.5 16h3" />
+    </svg>
+  );
+}
+
 function FaqLoadState({
   loading,
   error,
@@ -48,7 +66,7 @@ function FaqLoadState({
   if (loading) return <div className="inline-loading faq-state">{SYSTEM_UI.loading}</div>;
   if (error) {
     return (
-      <div className="inline-error inline-error-action faq-state">
+      <div className="inline-error inline-error-action faq-state" role="alert">
         <span>{SYSTEM_UI.unavailable}</span>
         <button type="button" onClick={onRetry}>
           {SYSTEM_UI.retry}
@@ -94,6 +112,15 @@ export function FaqDirectoryPage({
             </li>
           ))}
         </ul>
+      ) : null}
+
+      {query.data && query.data.faqs.length === 0 ? (
+        <div className="faq-empty-state" role="status">
+          <span className="faq-empty-mark" aria-hidden="true">
+            <FaqStateIcon />
+          </span>
+          <strong>{SYSTEM_UI.noResults}</strong>
+        </div>
       ) : null}
     </section>
   );
@@ -143,7 +170,9 @@ export function FaqArticlePage({
           </LinkComponent>
         </header>
         <div className="standalone-state embedded-state">
-          <div className="state-mark">404</div>
+          <div className="state-mark" aria-hidden="true">
+            <MissingStateIcon />
+          </div>
           <h1 id="faq-article-missing-title">{SYSTEM_UI.notFound}</h1>
         </div>
       </section>
