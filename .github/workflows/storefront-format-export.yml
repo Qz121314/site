@@ -1,0 +1,37 @@
+name: Storefront Format Export
+
+on:
+  push:
+    branches: [fix/storefront-navigation-continuity]
+
+permissions:
+  contents: read
+
+jobs:
+  export:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js and pnpm
+        run: |
+          set -euo pipefail
+          npm install --global pnpm@11.19.0
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Format target files
+        run: pnpm format
+
+      - name: Upload formatted sources
+        uses: actions/upload-artifact@v4
+        with:
+          name: storefront-prettier-output
+          path: |
+            apps/storefront/src/product-detail-shell.css
+            apps/storefront/src/ProductDetailPage.tsx
+            apps/storefront/src/storefront-history.ts
+          if-no-files-found: error
