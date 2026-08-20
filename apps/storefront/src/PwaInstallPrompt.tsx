@@ -116,7 +116,9 @@ export function PwaInstallPrompt() {
   const [installEvent, setInstallEvent] = useState<BeforeInstallPromptEvent | null>(null);
   const [showIosHint, setShowIosHint] = useState(false);
   const [delayComplete, setDelayComplete] = useState(false);
-  const [engaged, setEngaged] = useState(() => routeSignalsStrongIntent(window.location.pathname));
+  const [engaged, setEngaged] = useState(() =>
+    routeSignalsStrongIntent(window.location.pathname),
+  );
   const [dismissed, setDismissed] = useState(false);
   const [installed, setInstalled] = useState(isStandalone);
   const [sessionSuppressed] = useState(hasSessionPrompted);
@@ -185,12 +187,7 @@ export function PwaInstallPrompt() {
   }, [engaged, installed, sessionSuppressed]);
 
   useEffect(() => {
-    if (
-      !config?.enabled ||
-      installed ||
-      sessionSuppressed ||
-      hasActiveDismissal()
-    )
+    if (!config?.enabled || installed || sessionSuppressed || hasActiveDismissal())
       return;
     setDelayComplete(false);
     let remainingMs = config.delaySeconds * 1_000;
@@ -262,13 +259,13 @@ export function PwaInstallPrompt() {
 
   const shouldShow = Boolean(
     config?.enabled &&
-      appName &&
-      delayComplete &&
-      engaged &&
-      !sessionSuppressed &&
-      !dismissed &&
-      !installed &&
-      (installEvent || showIosHint),
+    appName &&
+    delayComplete &&
+    engaged &&
+    !sessionSuppressed &&
+    !dismissed &&
+    !installed &&
+    (installEvent || showIosHint),
   );
 
   useEffect(() => {
