@@ -23,6 +23,7 @@ import './home-feed.css';
 import './conversion-polish.css';
 import './chat-conversation.css';
 import './support-expiry-runtime.css';
+import './route-transition.css';
 import '@site/storefront-ui/theme-contract.css';
 import '@site/storefront-ui/primary-pages-theme-contract.css';
 import '@site/storefront-ui/typography-contract.css';
