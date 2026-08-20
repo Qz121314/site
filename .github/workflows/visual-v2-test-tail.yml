@@ -1,0 +1,30 @@
+name: Visual V2 Test Tail
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  diagnose:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        run: npm install --global pnpm@11.19.0
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Print failing test tail
+        run: |
+          set +e
+          pnpm test > /tmp/test.log 2>&1
+          status=$?
+          tail -n 180 /tmp/test.log
+          exit $status
