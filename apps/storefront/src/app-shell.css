@@ -6,36 +6,43 @@ body,
 }
 
 .app-shell {
+  --v2-content-width: 1200px;
+  --v2-reading-width: 760px;
+  --v2-gutter: clamp(14px, 3.2vw, 24px);
+  --v2-hairline: color-mix(in srgb, var(--line) 72%, transparent);
+  --v2-muted: color-mix(in srgb, var(--muted) 88%, var(--text));
+  --v2-control-bg: color-mix(in srgb, var(--surface-soft) 88%, var(--surface));
   min-height: 100dvh;
+  color: var(--text);
   background: var(--page-bg, #f5f6f7);
 }
 
 html[data-theme='noir'] .app-shell {
-  background:
-    radial-gradient(
-      ellipse at 50% -8%,
-      color-mix(in srgb, var(--brand) 9%, transparent),
-      transparent 30rem
-    ),
-    linear-gradient(
-      180deg,
-      color-mix(in srgb, var(--surface) 24%, transparent),
-      transparent 18rem
-    ),
-    var(--page-bg, #09070a);
+  background: var(--page-bg, #09070a);
 }
 
 .app-shell > .topbar {
-  min-height: calc(54px + env(safe-area-inset-top));
-  padding-top: calc(7px + env(safe-area-inset-top));
-  padding-right: max(12px, env(safe-area-inset-right));
-  padding-left: max(12px, env(safe-area-inset-left));
+  position: sticky;
+  top: 0;
+  z-index: 58;
+  min-height: calc(58px + env(safe-area-inset-top));
+  padding-top: env(safe-area-inset-top);
+  padding-right: max(var(--v2-gutter), env(safe-area-inset-right));
+  padding-left: max(var(--v2-gutter), env(safe-area-inset-left));
+  border-bottom: 1px solid var(--v2-hairline);
+  background: color-mix(in srgb, var(--page-bg, #f5f6f7) 94%, transparent);
+  box-shadow: none;
+  backdrop-filter: blur(18px) saturate(1.05);
 }
 
 .app-shell > main {
+  width: min(var(--v2-content-width), 100%);
   min-height: calc(
-    100dvh - 142px - env(safe-area-inset-top) - env(safe-area-inset-bottom)
+    100dvh - 136px - env(safe-area-inset-top) - env(safe-area-inset-bottom)
   );
+  margin-inline: auto;
+  padding: 14px max(var(--v2-gutter), env(safe-area-inset-right)) 36px
+    max(var(--v2-gutter), env(safe-area-inset-left));
 }
 
 .storefront-route-view {
@@ -51,11 +58,38 @@ html[data-theme='noir'] .app-shell {
 }
 
 .app-shell :is(a, button, input, select, textarea):focus-visible {
-  outline-color: color-mix(in srgb, var(--brand) 34%, transparent);
+  outline: 2px solid color-mix(in srgb, var(--brand) 48%, transparent);
+  outline-offset: 2px;
 }
 
 .mobile-edge-navigation {
   display: none;
+}
+
+.product-detail-state .state-mark {
+  position: relative;
+  font-size: 0;
+}
+
+.product-detail-state .state-mark::before {
+  width: 17px;
+  height: 21px;
+  border: 1.5px solid currentColor;
+  border-radius: 3px;
+  content: '';
+}
+
+.product-detail-state .state-mark::after {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 8px;
+  height: 1.5px;
+  border-radius: 999px;
+  background: currentColor;
+  box-shadow: 0 5px 0 currentColor;
+  content: '';
+  transform: translate(-50%, -3px);
 }
 
 @supports selector(.app-shell:has(.product-detail-page)) {
@@ -73,28 +107,21 @@ html[data-theme='noir'] .app-shell {
     background: var(--page-bg, #f5f6f7);
   }
 
-  .site-footer {
-    display: none;
+  .app-shell {
+    padding-bottom: calc(68px + env(safe-area-inset-bottom));
   }
 
   .app-shell > .topbar {
-    min-height: calc(64px + env(safe-area-inset-top));
+    min-height: calc(58px + env(safe-area-inset-top));
     justify-content: center;
-    padding-top: calc(8px + env(safe-area-inset-top));
-    padding-right: max(var(--app-gutter, 16px), env(safe-area-inset-right));
-    padding-bottom: 7px;
-    padding-left: max(var(--app-gutter, 16px), env(safe-area-inset-left));
-    border-bottom-color: var(--app-hairline, var(--line));
-    background: color-mix(in srgb, var(--page-bg, #f5f6f7) 88%, transparent);
-    box-shadow: 0 1px 0 color-mix(in srgb, #fff 2.5%, transparent) inset;
-    backdrop-filter: blur(28px) saturate(1.08);
+    padding-bottom: 0;
   }
 
   .app-shell > main {
-    padding-top: 14px;
-    padding-right: max(var(--app-gutter, 16px), env(safe-area-inset-right));
-    padding-bottom: 32px;
-    padding-left: max(var(--app-gutter, 16px), env(safe-area-inset-left));
+    width: 100%;
+    min-height: calc(100dvh - 126px - env(safe-area-inset-top));
+    padding-top: 10px;
+    padding-bottom: 28px;
   }
 
   .app-shell .brand-lockup {
@@ -110,8 +137,8 @@ html[data-theme='noir'] .app-shell {
   }
 
   .app-shell .brand-logo {
-    width: 34px;
-    height: 34px;
+    width: 32px;
+    height: 32px;
     border: 0;
     border-radius: var(--theme-primary-logo-radius, 3px);
     box-shadow: none;
@@ -122,110 +149,92 @@ html[data-theme='noir'] .app-shell {
   }
 
   .app-shell .brand-lockup strong {
-    max-width: min(76vw, 300px);
-    font-size: 0.96rem;
-    font-weight: 720;
-    letter-spacing: -0.026em;
+    max-width: min(74vw, 300px);
+    font-size: 0.94rem;
+    font-weight: 700;
+    letter-spacing: -0.025em;
   }
 
   .app-shell .brand-lockup small {
     display: none;
   }
 
-  .app-shell .bottom-nav {
+  .app-shell > .bottom-nav {
+    position: fixed;
     right: 0;
     bottom: 0;
     left: 0;
+    z-index: 64;
     width: 100%;
     margin: 0;
-    padding: 4px max(10px, env(safe-area-inset-right))
-      calc(5px + env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+    padding: 3px max(8px, env(safe-area-inset-right))
+      calc(4px + env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
     border: 0;
-    border-top: 1px solid var(--app-hairline, var(--line));
+    border-top: 1px solid var(--v2-hairline);
     border-radius: 0;
-    background: color-mix(in srgb, var(--surface, #fff) 84%, transparent);
-    box-shadow:
-      0 -1px 0 rgb(255 255 255 / 5%) inset,
-      0 -18px 44px color-mix(in srgb, #000 16%, transparent);
+    background: color-mix(in srgb, var(--surface, #fff) 94%, transparent);
+    box-shadow: none;
     transform: none;
-    backdrop-filter: blur(30px) saturate(1.12);
+    backdrop-filter: blur(20px) saturate(1.04);
   }
 
-  .app-shell .bottom-nav a {
-    min-height: 59px;
+  .app-shell > .bottom-nav a {
+    position: relative;
+    min-height: 55px;
     gap: 1px;
     border-radius: 0;
+    color: var(--v2-muted);
+    background: transparent;
     transition:
       color var(--app-motion-fast, 160ms) ease,
       opacity var(--app-motion-fast, 160ms) ease,
       transform var(--app-motion-fast, 160ms) var(--app-ease-out, ease-out);
   }
 
-  .app-shell .bottom-nav a:active {
-    opacity: 0.72;
-    transform: translateY(1px) scale(0.97);
+  .app-shell > .bottom-nav a:active {
+    opacity: 0.68;
+    transform: scale(0.97);
   }
 
-  .app-shell .bottom-nav a.is-active {
-    color: var(--brand-strong);
+  .app-shell > .bottom-nav a.is-active {
+    color: var(--text);
     background: transparent;
-    font-weight: 650;
+    font-weight: 620;
   }
 
-  .app-shell .bottom-nav a::before {
-    position: absolute;
-    top: -4px;
-    left: 50%;
-    width: 18px;
-    height: 2px;
-    border-radius: 999px;
-    opacity: 0;
-    background: transparent;
-    content: '';
-    transform: translateX(-50%) scaleX(0.5);
-    transition:
-      background var(--app-motion-fast, 140ms) ease,
-      transform var(--app-motion-base, 220ms) var(--app-ease-out, ease-out);
+  .app-shell > .bottom-nav a::before {
+    display: none;
   }
 
-  .app-shell .bottom-nav a.is-active::before {
-    opacity: var(--theme-nav-indicator-opacity, 0);
-    background: var(--brand-strong);
-    transform: translateX(-50%) scaleX(1);
-  }
-
-  .app-shell .bottom-nav .bottom-nav-icon {
-    width: 32px;
-    height: 28px;
+  .app-shell > .bottom-nav .bottom-nav-icon {
+    width: 30px;
+    height: 27px;
     border-radius: 0;
     background: transparent;
-    transition:
-      color var(--app-motion-fast, 160ms) ease,
-      background var(--app-motion-fast, 160ms) ease,
-      transform var(--app-motion-fast, 160ms) var(--app-ease-out, ease-out);
+    transition: transform var(--app-motion-fast, 160ms) var(--app-ease-out, ease-out);
   }
 
-  .app-shell .bottom-nav a.is-active .bottom-nav-icon {
+  .app-shell > .bottom-nav a.is-active .bottom-nav-icon {
     background: transparent;
     transform: translateY(-1px);
   }
 
-  .app-shell .bottom-nav a.is-active .storefront-nav-svg {
+  .app-shell > .bottom-nav a.is-active .storefront-nav-svg {
     stroke-width: 2.05;
   }
 
-  .app-shell .bottom-nav small {
-    font-size: 0.625rem;
-    font-weight: 540;
-    letter-spacing: 0.004em;
+  .app-shell > .bottom-nav small {
+    font-size: 0.61rem;
+    font-weight: 530;
+    letter-spacing: 0;
   }
 
   html[data-storefront-presentation='push'] .app-shell {
     min-height: 100dvh;
+    padding-bottom: 0;
   }
 
   html[data-storefront-presentation='push'] .app-shell > .topbar,
-  html[data-storefront-presentation='push'] .app-shell > .site-footer,
   html[data-storefront-presentation='push'] .pwa-install-card {
     display: none;
   }
@@ -249,7 +258,7 @@ html[data-theme='noir'] .app-shell {
     html[data-storefront-presentation='push']
       .app-shell:has(.product-detail-page)
       > main {
-      min-height: calc(100dvh - 60px - env(safe-area-inset-top));
+      min-height: calc(100dvh - 58px - env(safe-area-inset-top));
       padding-top: 0;
     }
   }
@@ -259,16 +268,16 @@ html[data-theme='noir'] .app-shell {
     top: 50%;
     z-index: 90;
     display: grid;
-    width: 38px;
-    height: 38px;
+    width: 36px;
+    height: 36px;
     place-items: center;
     border: 0;
-    border-radius: var(--theme-radius-control, 4px);
-    color: color-mix(in srgb, var(--text, #1f2328) 68%, var(--muted));
-    background: color-mix(in srgb, var(--surface, #fff) 90%, transparent);
-    box-shadow: none;
+    border-radius: 50%;
+    color: color-mix(in srgb, var(--text) 58%, var(--muted));
+    background: color-mix(in srgb, var(--surface, #fff) 88%, transparent);
+    box-shadow: 0 4px 18px color-mix(in srgb, #000 8%, transparent);
     pointer-events: none;
-    backdrop-filter: none;
+    backdrop-filter: blur(14px);
     transition:
       color 100ms ease,
       background 100ms ease;
@@ -285,7 +294,7 @@ html[data-theme='noir'] .app-shell {
   .mobile-edge-navigation span {
     display: block;
     margin-top: -2px;
-    font-size: 1.5rem;
+    font-size: 1.45rem;
     font-weight: 420;
     line-height: 1;
   }
@@ -311,7 +320,6 @@ html[data-theme='noir'] .app-shell {
     }
 
     .app-shell:has(.messages-workspace.is-thread-open) > .topbar,
-    .app-shell:has(.messages-workspace.is-thread-open) > .site-footer,
     .app-shell:has(.messages-workspace.is-thread-open) > .bottom-nav {
       display: none;
     }
@@ -330,8 +338,8 @@ html[data-theme='noir'] .app-shell {
     }
 
     .app-shell:has(.messages-workspace.is-thread-open) .chat-header {
-      min-height: calc(64px + env(safe-area-inset-top));
-      padding-top: calc(8px + env(safe-area-inset-top));
+      min-height: calc(60px + env(safe-area-inset-top));
+      padding-top: calc(6px + env(safe-area-inset-top));
       padding-right: max(11px, env(safe-area-inset-right));
       padding-left: max(11px, env(safe-area-inset-left));
     }
@@ -344,6 +352,13 @@ html[data-theme='noir'] .app-shell {
   }
 }
 
+@media (min-width: 768px) {
+  .app-shell > main {
+    padding-top: 24px;
+    padding-bottom: 56px;
+  }
+}
+
 @media (min-width: 980px) {
   body {
     background: var(--page-bg, #f5f6f7);
@@ -351,14 +366,124 @@ html[data-theme='noir'] .app-shell {
 
   .app-shell {
     width: 100%;
+    padding-bottom: 0;
     margin-inline: auto;
     border: 0;
-    background: var(--page-bg, #f5f6f7);
     box-shadow: none;
   }
 
   .app-shell > .topbar {
-    padding-inline: max(24px, calc((100% - 1120px) / 2));
+    min-height: 62px;
+    padding-top: 0;
+    padding-inline: max(24px, calc((100% - var(--v2-content-width)) / 2));
+    background: color-mix(in srgb, var(--page-bg, #f5f6f7) 97%, transparent);
+  }
+
+  .app-shell > main {
+    width: min(var(--v2-content-width), 100%);
+    padding-inline: 24px;
+  }
+
+  .app-shell > .bottom-nav {
+    position: fixed;
+    top: 10px;
+    right: max(24px, calc((100vw - var(--v2-content-width)) / 2));
+    bottom: auto;
+    left: auto;
+    z-index: 60;
+    display: flex;
+    width: auto;
+    align-items: center;
+    gap: 18px;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+    backdrop-filter: none;
+  }
+
+  .app-shell > .bottom-nav a {
+    position: relative;
+    display: flex;
+    min-width: 0;
+    min-height: 42px;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 0 1px;
+    border-radius: 0;
+    color: var(--v2-muted);
+    background: transparent;
+    transition:
+      color var(--app-motion-fast, 160ms) ease,
+      opacity var(--app-motion-fast, 160ms) ease;
+  }
+
+  .app-shell > .bottom-nav a::after {
+    position: absolute;
+    right: 0;
+    bottom: 5px;
+    left: 0;
+    height: 1px;
+    background: currentColor;
+    content: '';
+    opacity: 0;
+    transform: scaleX(0.6);
+    transition:
+      opacity var(--app-motion-fast, 160ms) ease,
+      transform var(--app-motion-fast, 160ms) ease;
+  }
+
+  .app-shell > .bottom-nav .bottom-nav-icon {
+    display: grid;
+    width: 19px;
+    height: 19px;
+    flex: 0 0 19px;
+    place-items: center;
+  }
+
+  .app-shell > .bottom-nav :is(.storefront-nav-image, .storefront-nav-emoji) {
+    width: 18px;
+    height: 18px;
+    flex-basis: 18px;
+  }
+
+  .app-shell > .bottom-nav .storefront-nav-emoji {
+    font-size: 1rem;
+    line-height: 18px;
+  }
+
+  .app-shell > .bottom-nav small {
+    font-size: 0.73rem;
+    font-weight: 560;
+    letter-spacing: -0.006em;
+  }
+
+  .app-shell > .bottom-nav a.is-active {
+    color: var(--text);
+    background: transparent;
+  }
+
+  .app-shell > .bottom-nav a.is-active::after {
+    opacity: 1;
+    transform: scaleX(1);
+  }
+
+  body > .product-detail-fixed-action {
+    display: none;
+  }
+
+  article.product-detail-page .product-detail-inline-action {
+    display: flex;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) and (min-width: 980px) {
+  .app-shell > .bottom-nav a:hover {
+    color: var(--text);
+    background: transparent;
   }
 }
 
@@ -379,7 +504,7 @@ html[data-theme='noir'] .app-shell {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .app-shell .bottom-nav a,
+  .app-shell > .bottom-nav a,
   .mobile-edge-navigation {
     transition: none;
   }
@@ -387,8 +512,8 @@ html[data-theme='noir'] .app-shell {
 
 @keyframes app-page-enter-forward {
   from {
-    opacity: 0.9;
-    transform: translateX(8px);
+    opacity: 0.92;
+    transform: translateX(6px);
   }
 
   to {
@@ -399,8 +524,8 @@ html[data-theme='noir'] .app-shell {
 
 @keyframes app-page-enter-back {
   from {
-    opacity: 0.9;
-    transform: translateX(-8px);
+    opacity: 0.92;
+    transform: translateX(-6px);
   }
 
   to {

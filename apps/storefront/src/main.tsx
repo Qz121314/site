@@ -15,9 +15,9 @@ import './media-runtime.css';
 import './storefront-resilience.css';
 import './storefront-pages.css';
 import './pwa.css';
-import './app-shell.css';
 import './brand-bar.css';
 import './bottom-navigation.css';
+import './app-shell.css';
 import './hero-carousel.css';
 import './home-feed.css';
 import './conversion-polish.css';
@@ -32,7 +32,6 @@ import './ui-accessibility.css';
 import './mobile-fixed-surfaces.css';
 import './media-layout-contract.css';
 import './loading-states.css';
-import './desktop-shell.css';
 
 installPublicContentFetchFallback();
 installSupportExpiryRuntime();
