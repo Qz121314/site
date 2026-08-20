@@ -10,7 +10,10 @@ test('product detail keeps a conversion-first mobile hierarchy', async () => {
   ]);
 
   assert.match(source, /const address = product\.address\?\.trim\(\) \?\? '';/u);
-  assert.match(source, /const bodyIsAddress = Boolean\(address && body && body === address\);/u);
+  assert.match(
+    source,
+    /const bodyIsAddress = Boolean\(address && body && body === address\);/u,
+  );
   assert.match(source, /className="product-detail-address"/u);
   assert.match(source, /className="detail-mobile-media-progress"/u);
   assert.doesNotMatch(source, /detail-mobile-thumbnails/u);
@@ -22,7 +25,10 @@ test('product detail keeps a conversion-first mobile hierarchy', async () => {
   assert.match(styles, /\.product-detail-navigation \{[\s\S]*position: absolute/u);
   assert.match(styles, /\.product-detail-address \{/u);
   assert.match(styles, /\.product-detail-fixed-action \{[\s\S]*linear-gradient/u);
-  assert.match(styles, /\.product-detail-info \{[\s\S]*position: sticky;[\s\S]*top: 86px/u);
+  assert.match(
+    styles,
+    /\.product-detail-info \{[\s\S]*position: sticky;[\s\S]*top: 86px/u,
+  );
 
   assert.match(shell, /\.product-detail-loading-navigation \{[\s\S]*position: absolute/u);
 });
