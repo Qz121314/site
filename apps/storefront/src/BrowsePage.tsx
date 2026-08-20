@@ -11,8 +11,25 @@ import { SquareSkeletonGrid } from './LoadingStates';
 import { ResilientImage } from './ResilientMedia';
 import { productHref, sectionHref } from './routing';
 import { loadBrowseSearchProducts } from './search-index';
+import {
+  readCurrentStorefrontViewState,
+  writeCurrentStorefrontViewState,
+} from './storefront-history';
 import { SYSTEM_UI } from './system-ui';
 import './browse-ui.css';
+
+const BROWSE_VIEW_STATE_KEY = 'browse-directory';
+
+type BrowseViewState = {
+  search: string;
+};
+
+function restoredBrowseViewState(): BrowseViewState {
+  const value = readCurrentStorefrontViewState<unknown>(BROWSE_VIEW_STATE_KEY);
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return { search: '' };
+  const search = (value as Record<string, unknown>).search;
+  return { search: typeof search === 'string' ? search : '' };
+}
 
 function SearchIcon() {
   return (
@@ -82,7 +99,8 @@ export function BrowsePage({
   bootstrap: StorefrontBootstrap;
   LinkComponent: StorefrontLinkComponent;
 }) {
-  const [search, setSearch] = useState('');
+  const [initialViewState] = useState(restoredBrowseViewState);
+  const [search, setSearch] = useState(initialViewState.search);
   const normalizedSearch = search.trim().toLowerCase();
   const sections = useMemo(() => publishedSections(bootstrap), [bootstrap]);
   const productSearchQuery = useQuery({
@@ -113,6 +131,12 @@ export function BrowsePage({
   useEffect(() => {
     document.title = `Browse · ${bootstrap.site.site.name}`;
   }, [bootstrap.site.site.name]);
+
+  useEffect(() => {
+    writeCurrentStorefrontViewState(BROWSE_VIEW_STATE_KEY, {
+      search,
+    } satisfies BrowseViewState);
+  }, [search]);
 
   const noResults =
     normalizedSearch.length > 0 &&
