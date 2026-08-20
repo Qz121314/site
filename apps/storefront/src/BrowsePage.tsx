@@ -232,9 +232,6 @@ export function BrowsePage({
                       )
                       .join(', ')
                   : undefined;
-                const contextLabel = [product.sectionName, product.category.name]
-                  .filter((value): value is string => Boolean(value?.trim()))
-                  .join(' · ');
                 return (
                   <LinkComponent
                     className="browse-search-product-card"
@@ -253,11 +250,10 @@ export function BrowsePage({
                         srcSet={srcSet}
                         width={640}
                       />
+                      <strong className="browse-search-product-title">
+                        {product.title}
+                      </strong>
                     </span>
-                    {contextLabel ? (
-                      <span className="browse-search-product-kicker">{contextLabel}</span>
-                    ) : null}
-                    <strong>{product.title}</strong>
                   </LinkComponent>
                 );
               })}

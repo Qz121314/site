@@ -75,13 +75,8 @@ function ProductDetailSkeleton() {
       <div className="product-detail-loading-hero" aria-hidden="true">
         <span className="product-detail-loading-media loading-skeleton" />
         <div className="product-detail-loading-copy">
-          <span className="is-context loading-skeleton" />
           <span className="is-title loading-skeleton" />
           <span className="is-title is-short loading-skeleton" />
-          <div className="product-detail-loading-tags">
-            <span className="loading-skeleton" />
-            <span className="loading-skeleton" />
-          </div>
           <span className="product-detail-loading-inline-action loading-skeleton" />
         </div>
       </div>
@@ -180,7 +175,6 @@ export function ProductDetailPage({
   const activeMediaIsVideo = Boolean(
     activeMedia?.url && isVideoMediaUrl(activeMedia.url),
   );
-  const detailContext = product.category.name?.trim() || product.sectionName.trim();
   const mobileGalleryItems =
     media.length > 0
       ? media.map((item) => ({
@@ -485,18 +479,7 @@ export function ProductDetailPage({
 
           <div className="product-detail-info">
             <section className="product-detail-summary">
-              {detailContext ? (
-                <p className="product-detail-context">{detailContext}</p>
-              ) : null}
               <h1 id="product-detail-title">{product.title}</h1>
-
-              {product.tags.length > 0 ? (
-                <div className="product-detail-tags" aria-label="Tags">
-                  {product.tags.map((tag) => (
-                    <span key={tag.id}>{tag.name}</span>
-                  ))}
-                </div>
-              ) : null}
             </section>
 
             <div className="product-detail-inline-action">{renderCtaButton()}</div>
