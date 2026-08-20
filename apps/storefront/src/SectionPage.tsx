@@ -300,8 +300,6 @@ export function SectionCatalogPage({
                     )
                     .join(', ')
                 : undefined;
-              const contextLabel =
-                product.category.name?.trim() || product.tags[0]?.name.trim() || '';
               return (
                 <LinkComponent
                   className="section-product-card"
@@ -320,13 +318,8 @@ export function SectionCatalogPage({
                       srcSet={srcSet}
                       width={640}
                     />
+                    <h2 className="section-product-title">{product.title}</h2>
                   </div>
-                  <span className="section-product-meta">
-                    {contextLabel && contextLabel !== product.title ? (
-                      <span className="section-product-kicker">{contextLabel}</span>
-                    ) : null}
-                    <h2>{product.title}</h2>
-                  </span>
                 </LinkComponent>
               );
             })}
