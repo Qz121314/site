@@ -4,6 +4,9 @@ const STATE_SESSION_KEY = '__storefrontNavigationSession';
 const STATE_INDEX_KEY = '__storefrontNavigationIndex';
 const STATE_SCROLL_X_KEY = '__storefrontScrollX';
 const STATE_SCROLL_Y_KEY = '__storefrontScrollY';
+const STATE_SURFACE_SCROLL_Y_KEY = '__storefrontSurfaceScrollY';
+const STATE_VIEW_KEY = '__storefrontViewState';
+const SCROLL_SURFACE_SELECTOR = '[data-storefront-scroll-surface]';
 
 export type StorefrontNavigationDirection = 'back' | 'forward';
 
@@ -16,6 +19,7 @@ type NavigationMeta = {
 type ScrollPosition = {
   x: number;
   y: number;
+  surfaceY: number;
 };
 
 let memorySessionId = '';
@@ -68,14 +72,21 @@ function readStateMeta(
   return { sessionId, index: stateIndex };
 }
 
+function finiteScrollValue(value: unknown): number {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0 ? value : 0;
+}
+
 function readScrollPosition(state: unknown): ScrollPosition {
   const record = recordState(state);
-  const rawX = record[STATE_SCROLL_X_KEY];
-  const rawY = record[STATE_SCROLL_Y_KEY];
   return {
-    x: typeof rawX === 'number' && Number.isFinite(rawX) && rawX >= 0 ? rawX : 0,
-    y: typeof rawY === 'number' && Number.isFinite(rawY) && rawY >= 0 ? rawY : 0,
+    x: finiteScrollValue(record[STATE_SCROLL_X_KEY]),
+    y: finiteScrollValue(record[STATE_SCROLL_Y_KEY]),
+    surfaceY: finiteScrollValue(record[STATE_SURFACE_SCROLL_Y_KEY]),
   };
+}
+
+function currentScrollSurface(): HTMLElement | null {
+  return document.querySelector<HTMLElement>(SCROLL_SURFACE_SELECTOR);
 }
 
 function maxStorageKey(sessionId: string): string {
@@ -103,10 +114,14 @@ function activeSessionId(): string {
 }
 
 function restoreScrollPosition(position: ScrollPosition): void {
-  const restore = () =>
+  const restore = () => {
     window.scrollTo({ left: position.x, top: position.y, behavior: 'auto' });
+    const surface = currentScrollSurface();
+    if (surface) surface.scrollTo({ left: 0, top: position.surfaceY, behavior: 'auto' });
+  };
   window.requestAnimationFrame(() => {
     restore();
+    window.requestAnimationFrame(restore);
     window.setTimeout(restore, 80);
   });
 }
@@ -125,6 +140,7 @@ export function ensureStorefrontHistoryState(): NavigationMeta {
     typeof stateSession === 'string' && stateSession && storedSession === stateSession
       ? stateSession
       : null;
+  const surfaceY = currentScrollSurface()?.scrollTop ?? 0;
 
   if (!reusableSession) {
     const sessionId = createSessionId();
@@ -135,6 +151,7 @@ export function ensureStorefrontHistoryState(): NavigationMeta {
         [STATE_INDEX_KEY]: 0,
         [STATE_SCROLL_X_KEY]: Math.max(0, window.scrollX),
         [STATE_SCROLL_Y_KEY]: Math.max(0, window.scrollY),
+        [STATE_SURFACE_SCROLL_Y_KEY]: Math.max(0, surfaceY),
       },
       '',
       window.location.href,
@@ -156,6 +173,7 @@ export function ensureStorefrontHistoryState(): NavigationMeta {
         [STATE_INDEX_KEY]: index,
         [STATE_SCROLL_X_KEY]: Math.max(0, window.scrollX),
         [STATE_SCROLL_Y_KEY]: Math.max(0, window.scrollY),
+        [STATE_SURFACE_SCROLL_Y_KEY]: Math.max(0, surfaceY),
       },
       '',
       window.location.href,
@@ -166,13 +184,38 @@ export function ensureStorefrontHistoryState(): NavigationMeta {
   return { sessionId: reusableSession, index, maxIndex };
 }
 
+export function readCurrentStorefrontViewState<T>(key: string): T | null {
+  const state = recordState(window.history.state);
+  const viewState = recordState(state[STATE_VIEW_KEY]);
+  return Object.prototype.hasOwnProperty.call(viewState, key) ? (viewState[key] as T) : null;
+}
+
+export function writeCurrentStorefrontViewState(key: string, value: unknown): void {
+  ensureStorefrontHistoryState();
+  const state = recordState(window.history.state);
+  const viewState = recordState(state[STATE_VIEW_KEY]);
+  window.history.replaceState(
+    {
+      ...state,
+      [STATE_VIEW_KEY]: {
+        ...viewState,
+        [key]: value,
+      },
+    },
+    '',
+    window.location.href,
+  );
+}
+
 export function saveCurrentStorefrontScrollPosition(): void {
   ensureStorefrontHistoryState();
+  const surfaceY = currentScrollSurface()?.scrollTop ?? 0;
   window.history.replaceState(
     {
       ...recordState(window.history.state),
       [STATE_SCROLL_X_KEY]: Math.max(0, window.scrollX),
       [STATE_SCROLL_Y_KEY]: Math.max(0, window.scrollY),
+      [STATE_SURFACE_SCROLL_Y_KEY]: Math.max(0, surfaceY),
     },
     '',
     window.location.href,
@@ -198,6 +241,7 @@ export function recordStorefrontHistoryPush(): void {
       [STATE_INDEX_KEY]: nextIndex,
       [STATE_SCROLL_X_KEY]: 0,
       [STATE_SCROLL_Y_KEY]: 0,
+      [STATE_SURFACE_SCROLL_Y_KEY]: 0,
     },
     '',
     window.location.href,
