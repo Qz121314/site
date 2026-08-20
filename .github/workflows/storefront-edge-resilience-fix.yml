@@ -1,0 +1,171 @@
+name: Storefront Edge Resilience Fix
+
+on:
+  push:
+    branches: [fix/storefront-edge-resilience-20260820]
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: fix/storefront-edge-resilience-20260820
+
+      - name: Apply targeted frontend fixes
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          support = Path('apps/storefront/src/support-ui.tsx')
+          text = support.read_text()
+          text = text.replace("const CHAT_TIME_ZONE = 'America/Los_Angeles';\n", '')
+          text = text.replace('  timeZone: CHAT_TIME_ZONE,\n', '')
+          text = text.replace("if (dayDifference === 0) return 'Today';", 'if (dayDifference === 0) return SYSTEM_UI.today;')
+          text = text.replace("aria-label={`${conversation.unreadCount} unread`}", "aria-label={`${conversation.unreadCount} ${SYSTEM_UI.unread}`}")
+          text = text.replace("alt={attachment.originalName || 'Chat image'}", 'alt={attachment.originalName || SYSTEM_UI.chatImage}')
+          old_image = '''                          <img
+                            className="chat-message-image"
+                            src={attachment.url}
+                            alt={attachment.originalName || SYSTEM_UI.chatImage}
+                            loading="lazy"
+                          />'''
+          new_image = '''                          <ResilientImage
+                            alt={attachment.originalName || SYSTEM_UI.chatImage}
+                            className="chat-message-image"
+                            fallback={
+                              <span
+                                className="chat-message-image-fallback"
+                                aria-hidden="true"
+                              />
+                            }
+                            loading="lazy"
+                            src={attachment.url}
+                          />'''
+          if old_image not in text:
+              raise SystemExit('attachment image block not found')
+          text = text.replace(old_image, new_image)
+          text = text.replace('<small>Customer service is typing</small>', '<small>{SYSTEM_UI.customerServiceTyping}</small>')
+          text = text.replace('<img src={imagePreviewUrl} alt="Uploading" />', '<img src={imagePreviewUrl} alt={SYSTEM_UI.uploading} />')
+          support.write_text(text)
+
+          system_ui = Path('apps/storefront/src/system-ui.ts')
+          text = system_ui.read_text()
+          text = text.replace("  back: 'Back',\n", "  back: 'Back',\n  chatImage: 'Chat image',\n")
+          text = text.replace("  continue: 'Continue',\n", "  continue: 'Continue',\n  customerServiceTyping: 'Customer service is typing',\n")
+          text = text.replace("  temporarilyUnavailable: 'Temporarily unavailable',\n", "  temporarilyUnavailable: 'Temporarily unavailable',\n  today: 'Today',\n")
+          text = text.replace("  unavailable: 'Unavailable',\n", "  unavailable: 'Unavailable',\n  uploading: 'Uploading',\n")
+          system_ui.write_text(text)
+
+          hero = Path('apps/storefront/src/hero-carousel.css')
+          text = hero.read_text()
+          old = '''  max-width: 16ch;
+  margin: 0;
+  color: inherit;'''
+          new = '''  display: -webkit-box;
+  max-width: 16ch;
+  margin: 0;
+  overflow: hidden;
+  color: inherit;'''
+          if old not in text:
+              raise SystemExit('hero title block not found')
+          text = text.replace(old, new, 1)
+          text = text.replace('''  text-wrap: balance;
+}''', '''  text-wrap: balance;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+}''', 1)
+          hero.write_text(text)
+
+          media = Path('apps/storefront/src/messages-media.css')
+          text = media.read_text()
+          anchor = '''.chat-message-image {
+  display: block;
+  width: min(100%, 360px);
+  max-height: 440px;
+  object-fit: contain;
+  background: rgba(0, 0, 0, 0.04);
+}
+'''
+          addition = anchor + '''
+.chat-message-image-fallback {
+  display: grid;
+  width: min(100%, 360px);
+  min-height: 180px;
+  aspect-ratio: 4 / 3;
+  place-items: center;
+  background: color-mix(in srgb, var(--surface-soft) 92%, var(--line));
+}
+
+.chat-message-image-fallback::before {
+  width: 28px;
+  height: 22px;
+  border: 1.5px solid color-mix(in srgb, var(--muted) 54%, transparent);
+  border-radius: 5px;
+  content: '';
+}
+'''
+          if anchor not in text:
+              raise SystemExit('message image styles not found')
+          text = text.replace(anchor, addition, 1)
+          media.write_text(text)
+
+          test = Path('apps/storefront/test/storefront-edge-resilience-contract.test.mjs')
+          test.write_text('''import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
+import { URL } from 'node:url';
+import test from 'node:test';
+
+function source(path) {
+  return readFileSync(new URL(path, import.meta.url), 'utf8');
+}
+
+test('storefront edge surfaces stay resilient to local time, media failure, and long copy', () => {
+  const supportUi = source('../src/support-ui.tsx');
+  const systemUi = source('../src/system-ui.ts');
+  const messagesMedia = source('../src/messages-media.css');
+  const hero = source('../src/hero-carousel.css');
+
+  assert.equal(supportUi.includes('America/Los_Angeles'), false);
+  assert.equal(supportUi.includes('timeZone: CHAT_TIME_ZONE'), false);
+  assert.ok(supportUi.includes('SYSTEM_UI.today'));
+  assert.ok(supportUi.includes('SYSTEM_UI.customerServiceTyping'));
+  assert.ok(supportUi.includes('SYSTEM_UI.chatImage'));
+  assert.ok(supportUi.includes('SYSTEM_UI.uploading'));
+  assert.ok(supportUi.includes('className="chat-message-image-fallback"'));
+  assert.ok(systemUi.includes("today: 'Today'"));
+  assert.ok(systemUi.includes("customerServiceTyping: 'Customer service is typing'"));
+  assert.ok(messagesMedia.includes('.chat-message-image-fallback'));
+  assert.match(
+    hero,
+    /\.hero-carousel-copy :is\(h1, h2\) \{[\s\S]*?overflow: hidden;[\s\S]*?-webkit-line-clamp: 3;/,
+  );
+});
+''')
+          PY
+
+      - name: Format changed files
+        run: |
+          npm install --global pnpm@11.19.0
+          pnpm install --frozen-lockfile
+          pnpm exec prettier --write \
+            apps/storefront/src/support-ui.tsx \
+            apps/storefront/src/system-ui.ts \
+            apps/storefront/src/hero-carousel.css \
+            apps/storefront/src/messages-media.css \
+            apps/storefront/test/storefront-edge-resilience-contract.test.mjs
+
+      - name: Commit targeted fixes
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add apps/storefront/src/support-ui.tsx apps/storefront/src/system-ui.ts apps/storefront/src/hero-carousel.css apps/storefront/src/messages-media.css apps/storefront/test/storefront-edge-resilience-contract.test.mjs
+          git commit -m 'fix(storefront): harden edge-case presentation'
+          git push origin HEAD:fix/storefront-edge-resilience-20260820
