@@ -82,9 +82,7 @@ function ProductDetailSkeleton() {
             <span className="loading-skeleton" />
             <span className="loading-skeleton" />
           </div>
-          <span
-            className="product-detail-loading-inline-action loading-skeleton"
-          />
+          <span className="product-detail-loading-inline-action loading-skeleton" />
         </div>
       </div>
       <div className="product-detail-loading-action" aria-hidden="true">
@@ -279,11 +277,7 @@ export function ProductDetailPage({
             </svg>
             <span className="product-detail-back-label">{SYSTEM_UI.back}</span>
           </LinkComponent>
-          <LinkComponent
-            className="product-detail-brand"
-            href="/"
-            aria-label={site.name}
-          >
+          <LinkComponent className="product-detail-brand" href="/" aria-label={site.name}>
             {site.logoUrl ? (
               <ResilientImage
                 alt=""
