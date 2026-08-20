@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import type { StorefrontLinkComponent } from '@site/storefront-ui';
-import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
+import { useEffect, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import { createPortal } from 'react-dom';
 import {
   loadProductSnapshot,
@@ -60,6 +60,15 @@ function CtaArrow() {
   );
 }
 
+function LocationIcon() {
+  return (
+    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+      <path d="M12 21s6-5.18 6-11a6 6 0 1 0-12 0c0 5.82 6 11 6 11Z" />
+      <circle cx="12" cy="10" r="2.15" />
+    </svg>
+  );
+}
+
 function ProductDetailSkeleton() {
   return (
     <section
@@ -102,7 +111,6 @@ export function ProductDetailPage({
   const [activeMediaId, setActiveMediaId] = useState<string | null>(null);
   const [mobileMediaIndex, setMobileMediaIndex] = useState(0);
   const [ctaAttempted, setCtaAttempted] = useState(false);
-  const mobileMediaTrackRef = useRef<HTMLDivElement | null>(null);
   const query = useQuery({
     queryKey: [
       'storefront-product',
@@ -194,16 +202,9 @@ export function ProductDetailPage({
   const activeMediaFallback = (
     <div className="detail-media-fallback" aria-hidden="true" />
   );
-
-  function selectMobileMedia(index: number) {
-    const item = mobileGalleryItems[index];
-    if (!item) return;
-    setMobileMediaIndex(index);
-    setActiveMediaId(item.id === 'cover' ? null : item.id);
-    const track = mobileMediaTrackRef.current;
-    if (!track) return;
-    track.scrollTo({ left: track.clientWidth * index });
-  }
+  const address = product.address?.trim() ?? '';
+  const body = product.body.trim();
+  const bodyIsAddress = Boolean(address && body && body === address);
 
   async function handleCtaClick() {
     if (ctaQuery.isFetching) return;
@@ -218,18 +219,23 @@ export function ProductDetailPage({
     window.location.assign(cta.path);
   }
 
-  const ctaUnavailable =
-    ctaAttempted &&
-    !ctaQuery.isFetching &&
-    (Boolean(ctaQuery.error) || ctaQuery.data === null);
+  const ctaMissing =
+    ctaAttempted && !ctaQuery.isFetching && !ctaQuery.error && ctaQuery.data === null;
+  const ctaFailed = ctaAttempted && !ctaQuery.isFetching && Boolean(ctaQuery.error);
 
   function renderCtaButton() {
+    const stateClass = ctaMissing
+      ? ' is-unavailable'
+      : ctaFailed
+        ? ' is-retry'
+        : ' is-ready';
+
     return (
       <button
-        className={`cta-button${ctaUnavailable ? ' is-unavailable' : ' is-ready'}`}
+        className={`cta-button${stateClass}`}
         type="button"
         aria-busy={ctaQuery.isFetching || undefined}
-        disabled={ctaQuery.isFetching || ctaUnavailable}
+        disabled={ctaQuery.isFetching || ctaMissing}
         onClick={() => void handleCtaClick()}
       >
         {ctaQuery.isFetching ? (
@@ -237,10 +243,13 @@ export function ProductDetailPage({
             <span className="product-detail-cta-spinner" aria-hidden="true" />
             <span className="sr-only">{SYSTEM_UI.loading}</span>
           </>
-        ) : ctaUnavailable ? (
-          <span>
-            {ctaQuery.error ? SYSTEM_UI.temporarilyUnavailable : SYSTEM_UI.unavailable}
-          </span>
+        ) : ctaMissing ? (
+          <span>{SYSTEM_UI.unavailable}</span>
+        ) : ctaFailed ? (
+          <>
+            <span>{SYSTEM_UI.retry}</span>
+            <CtaArrow />
+          </>
         ) : (
           <>
             <span>{SYSTEM_UI.continue}</span>
@@ -291,7 +300,6 @@ export function ProductDetailPage({
               <div className="detail-mobile-media-stage">
                 <div
                   className="detail-mobile-media-track"
-                  ref={mobileMediaTrackRef}
                   onScroll={(event) => {
                     const width = event.currentTarget.clientWidth;
                     if (!width) return;
@@ -352,57 +360,24 @@ export function ProductDetailPage({
                       })
                     : activeMediaFallback}
                 </div>
+
+                {mobileGalleryItems.length > 1 && mobileGalleryItems.length <= 8 ? (
+                  <span className="detail-mobile-media-progress" aria-hidden="true">
+                    {mobileGalleryItems.map((item, index) => (
+                      <i
+                        className={index === mobileMediaIndex ? 'is-active' : undefined}
+                        key={item.id}
+                      />
+                    ))}
+                  </span>
+                ) : null}
+
                 {mobileGalleryItems.length > 1 ? (
                   <span className="detail-mobile-media-count" aria-hidden="true">
                     {mobileMediaIndex + 1} / {mobileGalleryItems.length}
                   </span>
                 ) : null}
               </div>
-
-              {mobileGalleryItems.length > 1 ? (
-                <div className="detail-mobile-thumbnails" role="list">
-                  {mobileGalleryItems.map((item, index) => {
-                    const selected = index === mobileMediaIndex;
-                    const video = isVideoMediaUrl(item.url);
-                    return (
-                      <button
-                        className={`detail-media-thumbnail${selected ? ' is-active' : ''}`}
-                        type="button"
-                        aria-label={item.altText || `${product.title} ${index + 1}`}
-                        aria-pressed={selected}
-                        key={item.id}
-                        onClick={() => selectMobileMedia(index)}
-                      >
-                        {video ? (
-                          <>
-                            <ResilientVideo
-                              aria-hidden="true"
-                              fallback={<div className="detail-thumbnail-fallback" />}
-                              muted
-                              playsInline
-                              preload="none"
-                              src={item.url}
-                            />
-                            <span
-                              className="detail-thumbnail-video-mark"
-                              aria-hidden="true"
-                            >
-                              ▶
-                            </span>
-                          </>
-                        ) : (
-                          <ResilientImage
-                            alt=""
-                            fallback={<div className="detail-thumbnail-fallback" />}
-                            loading="lazy"
-                            src={item.url}
-                          />
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              ) : null}
             </div>
 
             <div className="detail-desktop-gallery">
@@ -480,13 +455,19 @@ export function ProductDetailPage({
           <div className="product-detail-info">
             <section className="product-detail-summary">
               <h1 id="product-detail-title">{product.title}</h1>
+              {address ? (
+                <div className="product-detail-address">
+                  <LocationIcon />
+                  <span>{address}</span>
+                </div>
+              ) : null}
             </section>
 
             <div className="product-detail-inline-action">{renderCtaButton()}</div>
           </div>
         </div>
 
-        {product.body.trim() ? (
+        {body && !bodyIsAddress ? (
           <section className="product-detail-body">
             <MarkdownContent source={product.body} />
           </section>
