@@ -82,7 +82,9 @@ function ProductDetailSkeleton() {
             <span className="loading-skeleton" />
             <span className="loading-skeleton" />
           </div>
-          <span className="product-detail-loading-inline-action loading-skeleton" />
+          <span
+            className="product-detail-loading-inline-action loading-skeleton"
+          />
         </div>
       </div>
       <div className="product-detail-loading-action" aria-hidden="true">
