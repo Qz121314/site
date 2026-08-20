@@ -220,14 +220,15 @@ export function ProductDetailPage({
   }
 
   const ctaMissing =
-    ctaAttempted &&
-    !ctaQuery.isFetching &&
-    !ctaQuery.error &&
-    ctaQuery.data === null;
+    ctaAttempted && !ctaQuery.isFetching && !ctaQuery.error && ctaQuery.data === null;
   const ctaFailed = ctaAttempted && !ctaQuery.isFetching && Boolean(ctaQuery.error);
 
   function renderCtaButton() {
-    const stateClass = ctaMissing ? ' is-unavailable' : ctaFailed ? ' is-retry' : ' is-ready';
+    const stateClass = ctaMissing
+      ? ' is-unavailable'
+      : ctaFailed
+        ? ' is-retry'
+        : ' is-ready';
 
     return (
       <button
@@ -363,7 +364,10 @@ export function ProductDetailPage({
                 {mobileGalleryItems.length > 1 && mobileGalleryItems.length <= 8 ? (
                   <span className="detail-mobile-media-progress" aria-hidden="true">
                     {mobileGalleryItems.map((item, index) => (
-                      <i className={index === mobileMediaIndex ? 'is-active' : undefined} key={item.id} />
+                      <i
+                        className={index === mobileMediaIndex ? 'is-active' : undefined}
+                        key={item.id}
+                      />
                     ))}
                   </span>
                 ) : null}
