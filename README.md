@@ -45,6 +45,91 @@ Mobile-first
 
 功能优先解决真实运营需求，不为了“功能数量”堆叠低频模块。后台保持直接的单管理员操作流程；只有出现明确需求时才增加新的系统复杂度。
 
+### 开发改动分级与验证原则
+
+**任何改动开始前，必须先判断改动等级，再决定实现范围和验证强度。** 改动等级按影响面和风险判断，不按修改文件数量判断。
+
+固定原则：
+
+```text
+小改快跑
+中改局部验证
+大改完整验证
+```
+
+#### S 级：小型 / 局部改动
+
+典型范围：
+
+- README / 文档；
+- 文案、间距、字号、字体、图标尺寸；
+- border / radius / shadow；
+- 单个组件或页面的局部 CSS 精修；
+- 不改变 API、数据结构、路由、请求次数、持久化或部署行为的修改。
+
+验证原则：
+
+```text
+changed-file Prettier
+→ 最小必要的局部 lint / test / typecheck / build
+```
+
+纯文档 S 级改动不需要运行 D1 migration、Worker dry-run、R2 或 Production E2E。多个相关 UI 小问题优先批量处理后一次验证 / 合并，不为每一个像素级调整单独创建完整发布循环。
+
+#### M 级：应用行为改动
+
+典型范围：
+
+- Storefront / Admin 交互行为；
+- 页面切换、路由或导航行为；
+- 分类 / 标签 / 搜索等前端行为；
+- CTA 展现、PWA、媒体加载、Messages UI；
+- 改变用户可见行为契约，但不改变持久化数据模型或部署基础设施。
+
+验证原则：
+
+```text
+先确认 / 更新受影响契约
+→ affected app format / lint
+→ typecheck
+→ relevant tests
+→ affected app build
+→ 仅在相关边界变化时增加 Worker dry-run / Smoke / E2E
+```
+
+#### L 级：架构 / 数据 / 基础设施改动
+
+典型范围：
+
+- D1 schema / migration / query contract；
+- Worker API / Public API；
+- R2 发布、存储或公开读取模型；
+- 登录、认证或安全边界；
+- CI / Deploy；
+- 跨应用架构、请求预算或持久化行为。
+
+验证原则使用完整仓库门槛：
+
+```text
+guardrails
+→ format
+→ lint
+→ typecheck
+→ local D1 migrations
+→ tests
+→ build
+→ Worker dry-run
+→ relevant production acceptance
+```
+
+如果开发过程中影响范围扩大，必须停止并重新判断等级；无法确定时使用更高一级。
+
+**验证强度必须和改动风险成比例。** 不能为了“安全”让所有小改都跑最重流程，也不能为了速度让高风险改动缺少验证。`main` 的正式发布 CI 仍然是最终 release gate；改动分级主要用于减少日常开发和 PR 迭代中的无意义等待。
+
+当前项目已进入 Commercial Release / Polish 阶段，默认冻结已经稳定的架构、数据库模型、API、发布模型和路由模型。UI / 体验问题优先在所属 owner 内做最小、完整的根因修复，不顺手重构无关区域。只有确认根因跨越多个 ownership 边界、或同类问题会在多个页面反复发生时，才升级为架构级改造。
+
+同时继续遵守 **root-cause-first**：不以叠加 CSS override、一次性 route if、复制组件、保留新旧两套实现等补丁方式压住症状；先定位 owner / 数据流 / 状态边界 / 路由边界，再修根因并清理被替代代码。
+
 ### 明确不在当前范围内
 
 以下能力不是当前项目目标，也不应在常规优化中被当成“缺失功能”补充：
