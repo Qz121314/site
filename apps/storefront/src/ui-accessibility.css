@@ -28,6 +28,17 @@ body,
     font-size: 16px !important;
   }
 
+  html[data-app-text-entry='active'] .app-shell > .storefront-bottom-chrome,
+  html[data-app-text-entry='active'] .pwa-install-card {
+    visibility: hidden;
+    opacity: 0;
+    pointer-events: none;
+  }
+
+  html[data-app-text-entry='active'] .messages-workspace.is-thread-open .chat-composer {
+    padding-bottom: 8px;
+  }
+
   .browse-directory-search-clear,
   .section-catalog-search-clear {
     width: 44px;

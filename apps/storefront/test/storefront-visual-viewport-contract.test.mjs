@@ -14,6 +14,7 @@ test('Storefront chrome follows the visual viewport and measured shell geometry'
     browse,
     loading,
     pwa,
+    accessibility,
     themeRuntime,
     indexHtml,
   ] = await Promise.all([
@@ -25,6 +26,7 @@ test('Storefront chrome follows the visual viewport and measured shell geometry'
     read('../src/browse-ui.css'),
     read('../src/loading-states.css'),
     read('../src/pwa.css'),
+    read('../src/ui-accessibility.css'),
     read('../src/theme-runtime.ts'),
     read('../index.html'),
   ]);
@@ -35,6 +37,12 @@ test('Storefront chrome follows the visual viewport and measured shell geometry'
   assert.match(runtime, /addEventListener\('resize'/u);
   assert.match(runtime, /addEventListener\('scroll'/u);
   assert.match(runtime, /orientationchange/u);
+  assert.match(runtime, /focusin/u);
+  assert.match(runtime, /focusout/u);
+  assert.match(runtime, /appTextEntry/u);
+  assert.match(runtime, /HTMLInputElement/u);
+  assert.match(runtime, /HTMLTextAreaElement/u);
+  assert.match(runtime, /isContentEditable/u);
   assert.match(runtime, /--app-viewport-height/u);
   assert.match(runtime, /--app-viewport-top/u);
   assert.match(runtime, /--app-viewport-bottom/u);
@@ -111,6 +119,12 @@ test('Storefront chrome follows the visual viewport and measured shell geometry'
   assert.match(pwa, /var\(--app-viewport-bottom/u);
   assert.match(pwa, /var\(--app-bottom-chrome-height/u);
   assert.doesNotMatch(pwa, /var\(--app-bottom-nav-height/u);
+
+  assert.match(accessibility, /data-app-text-entry='active'/u);
+  assert.match(accessibility, /> \.storefront-bottom-chrome/u);
+  assert.match(accessibility, /\.pwa-install-card/u);
+  assert.match(accessibility, /\.messages-workspace\.is-thread-open \.chat-composer/u);
+  assert.match(accessibility, /padding-bottom: 8px/u);
 
   assert.match(themeRuntime, /syncThemeColor\(theme\.tokens\.pageBg\)/u);
   assert.match(indexHtml, /interactive-widget=resizes-content/u);
