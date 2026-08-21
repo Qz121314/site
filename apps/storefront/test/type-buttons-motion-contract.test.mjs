@@ -5,11 +5,17 @@ import test from 'node:test';
 test('storefront typography buttons and route motion share one app visual contract', async () => {
   const [typography, theme, transitions, main] = await Promise.all([
     readFile(
-      new URL('../../../packages/storefront-ui/src/typography-contract.css', import.meta.url),
+      new URL(
+        '../../../packages/storefront-ui/src/typography-contract.css',
+        import.meta.url,
+      ),
       'utf8',
     ),
     readFile(
-      new URL('../../../packages/storefront-ui/src/theme-contract.css', import.meta.url),
+      new URL(
+        '../../../packages/storefront-ui/src/theme-contract.css',
+        import.meta.url,
+      ),
       'utf8',
     ),
     readFile(new URL('../src/route-transition.css', import.meta.url), 'utf8'),
@@ -29,8 +35,14 @@ test('storefront typography buttons and route motion share one app visual contra
     theme,
     /:is\(\.cta-button, \.product-detail-fixed-action \.cta-button\)[\s\S]*box-shadow: var\(--theme-detail-cta-shadow, var\(--theme-button-shadow\)\)/u,
   );
-  assert.match(theme, /\.section-tag-filter button \{[\s\S]*min-height: 34px/u);
-  assert.match(theme, /\.section-category-filter button,[\s\S]*\.section-tag-filter button/u);
+  assert.match(
+    theme,
+    /\.section-tag-filter button \{[\s\S]*min-height: 34px/u,
+  );
+  assert.match(
+    theme,
+    /\.section-category-filter button,[\s\S]*\.section-tag-filter button/u,
+  );
 
   assert.match(transitions, /--storefront-route-shift:/u);
   assert.match(
@@ -40,5 +52,7 @@ test('storefront typography buttons and route motion share one app visual contra
   assert.match(transitions, /animation: storefront-push-enter var\(--app-motion-base/u);
   assert.match(transitions, /animation: storefront-pop-enter var\(--app-motion-base/u);
   assert.match(transitions, /prefers-reduced-motion: reduce/u);
-  assert.ok(main.indexOf("./app-shell.css") < main.indexOf("./route-transition.css"));
+  assert.ok(
+    main.indexOf('./app-shell.css') < main.indexOf('./route-transition.css'),
+  );
 });
