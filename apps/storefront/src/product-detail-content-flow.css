@@ -42,8 +42,8 @@
 .product-detail-secondary-media {
   display: grid;
   width: calc(100% + (var(--app-gutter, 10px) * 2));
-  gap: 8px;
-  margin: 18px calc(-1 * var(--app-gutter, 10px)) 0;
+  gap: 6px;
+  margin: 20px calc(-1 * var(--app-gutter, 10px)) 0;
 }
 
 .product-detail-secondary-media-item {
@@ -71,8 +71,8 @@
 .product-detail-secondary-media-item > .detail-media-fallback::before {
   width: 34px;
   height: 28px;
-  border: 1.5px solid color-mix(in srgb, var(--muted) 40%, transparent);
-  border-radius: 6px;
+  border: 1.5px solid color-mix(in srgb, var(--muted) 36%, transparent);
+  border-radius: var(--theme-radius-media, 6px);
   content: '';
 }
 
