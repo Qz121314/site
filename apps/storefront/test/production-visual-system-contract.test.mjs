@@ -27,6 +27,7 @@ test('production acceptance stays runtime-theme-aware and guards stable storefro
   assert.match(acceptance, /sectionContract\.searchHeight/u);
   assert.match(acceptance, /sectionContract\.coverRatio[\s\S]*toBeCloseTo\(1, 2\)/u);
   assert.match(acceptance, /\.messages-workspace/u);
+  assert.match(acceptance, /\.storefront-bottom-chrome/u);
   assert.match(acceptance, /\.storefront-route-action-host/u);
   assert.match(acceptance, /\.product-detail-route-action/u);
   assert.match(acceptance, /\.storefront-detail-topbar/u);
@@ -37,7 +38,7 @@ test('production acceptance stays runtime-theme-aware and guards stable storefro
   assert.match(acceptance, /ctaContract\.visualBottomGap/u);
   assert.match(acceptance, /ctaContract\.runtimeHeightGap/u);
   assert.match(acceptance, /ctaContract\.buttonHeight/u);
-  assert.match(acceptance, /ctaContract\.hostPosition/u);
+  assert.match(acceptance, /ctaContract\.chromePosition/u);
   assert.match(acceptance, /headerContract\.visualTopGap/u);
   assert.match(acceptance, /headerContract\.runtimeHeightGap/u);
   assert.match(acceptance, /headerContract\.position/u);
