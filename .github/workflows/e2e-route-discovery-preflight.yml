@@ -1,0 +1,59 @@
+name: E2E Route Discovery Preflight
+
+on:
+  push:
+    branches: [fix/e2e-product-route-discovery]
+
+permissions:
+  contents: write
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: fix/e2e-product-route-discovery
+
+      - name: Set up Node.js and pnpm
+        run: |
+          set -euo pipefail
+          npm install --global pnpm@11.19.0
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Format changed files with repository Prettier
+        run: |
+          pnpm exec prettier --write \
+            apps/storefront/test/production-e2e-route-discovery-contract.test.mjs \
+            tests/e2e/customer-service-cta-navigation.spec.ts \
+            tests/e2e/desktop-production.spec.ts \
+            tests/e2e/production-smoke.spec.ts \
+            tests/e2e/published-storefront-fixtures.ts
+
+      - name: Commit exact formatter output when needed
+        run: |
+          set -euo pipefail
+          if git diff --quiet; then
+            echo 'Prettier already clean.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            apps/storefront/test/production-e2e-route-discovery-contract.test.mjs \
+            tests/e2e/customer-service-cta-navigation.spec.ts \
+            tests/e2e/desktop-production.spec.ts \
+            tests/e2e/production-smoke.spec.ts \
+            tests/e2e/published-storefront-fixtures.ts
+          git commit -m 'style: apply repository Prettier to E2E route discovery'
+          git push origin HEAD:fix/e2e-product-route-discovery
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Validate E2E route discovery contract
+        run: node --test apps/storefront/test/production-e2e-route-discovery-contract.test.mjs
