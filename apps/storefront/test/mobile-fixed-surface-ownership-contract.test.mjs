@@ -7,7 +7,7 @@ function source(path) {
   return readFileSync(new URL(path, import.meta.url), 'utf8');
 }
 
-test('mobile persistent surfaces are owned by App Shell and the live visual viewport', () => {
+test('mobile persistent surfaces share one App Shell bottom chrome owner', () => {
   const main = source('../src/main.tsx');
   const root = source('../src/StorefrontRoot.tsx');
   const routeAction = source('../src/StorefrontRouteAction.tsx');
@@ -27,27 +27,36 @@ test('mobile persistent surfaces are owned by App Shell and the live visual view
   assert.match(viewportRuntime, /window\.visualViewport/u);
   assert.match(viewportRuntime, /ResizeObserver/u);
   assert.match(viewportRuntime, /--app-header-height/u);
-  assert.match(viewportRuntime, /--app-bottom-nav-height/u);
-  assert.match(viewportRuntime, /--app-route-action-height/u);
+  assert.match(viewportRuntime, /--app-bottom-chrome-height/u);
+  assert.doesNotMatch(viewportRuntime, /--app-bottom-nav-height/u);
+  assert.doesNotMatch(viewportRuntime, /--app-route-action-height/u);
 
-  assert.match(appShell, /\.app-shell > \.bottom-nav/u);
+  assert.match(root, /className="storefront-bottom-chrome"/u);
+  assert.match(root, /className="storefront-route-action-host"/u);
+  assert.match(root, /data-shell-route=/u);
+  assert.match(root, /observeStorefrontShellChrome/u);
+  assert.match(routeAction, /createPortal\(children, host\)/u);
+
   assert.match(
     appShell,
     /\.app-shell > \.topbar \{[\s\S]*position: fixed;[\s\S]*--app-viewport-top/u,
   );
   assert.match(
     appShell,
-    /\.storefront-route-action-host \{[\s\S]*position: fixed;[\s\S]*--app-viewport-bottom/u,
+    /\.storefront-bottom-chrome \{[\s\S]*position: fixed;[\s\S]*--app-viewport-bottom/u,
   );
-  assert.match(appShell, /env\(safe-area-inset-bottom\)/u);
+  assert.doesNotMatch(
+    appShell,
+    /\.storefront-route-action-host \{[\s\S]{0,220}position: fixed/u,
+  );
+  assert.match(appShell, /var\(--app-bottom-chrome-height/u);
+  assert.doesNotMatch(appShell, /var\(--app-bottom-nav-height/u);
+  assert.doesNotMatch(appShell, /var\(--app-route-action-height/u);
   assert.match(appShell, /messages-workspace\.is-thread-open/u);
-  assert.match(root, /className="storefront-route-action-host"/u);
-  assert.match(root, /data-shell-route=/u);
-  assert.match(root, /observeStorefrontShellChrome/u);
-  assert.match(routeAction, /createPortal\(children, host\)/u);
 
   assert.match(section, /var\(--app-viewport-height/u);
-  assert.match(section, /var\(--app-bottom-nav-height/u);
+  assert.match(section, /var\(--app-bottom-chrome-height/u);
+  assert.doesNotMatch(section, /var\(--app-bottom-nav-height/u);
   assert.doesNotMatch(section, /100dvh - 68px/u);
   assert.match(section, /\.section-catalog-content[\s\S]*overflow-y: auto/u);
 
