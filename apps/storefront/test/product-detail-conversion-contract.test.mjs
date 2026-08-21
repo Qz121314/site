@@ -43,7 +43,7 @@ test('product detail keeps a conversion-first mobile hierarchy', async () => {
   );
   assert.match(
     styles,
-    /\.product-detail-fixed-action \{[\s\S]*box-shadow: var\(--theme-detail-cta-bar-shadow/u,
+    /\.product-detail-fixed-action \{[\s\S]*box-shadow: var\(\s*--theme-detail-cta-bar-shadow/u,
   );
   assert.match(
     styles,
