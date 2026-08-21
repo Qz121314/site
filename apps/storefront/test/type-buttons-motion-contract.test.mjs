@@ -32,8 +32,9 @@ test('storefront typography buttons and route motion share one app visual contra
   assert.match(theme, /--theme-button-focus-ring:/u);
   assert.match(
     theme,
-    /:is\(\.cta-button, \.product-detail-fixed-action \.cta-button\)[\s\S]*box-shadow: var\(--theme-detail-cta-shadow, var\(--theme-button-shadow\)\)/u,
+    /:is\(\.cta-button, \.product-detail-route-action \.cta-button\)[\s\S]*box-shadow: var\(--theme-detail-cta-shadow, var\(--theme-button-shadow\)\)/u,
   );
+  assert.doesNotMatch(theme, /product-detail-fixed-action/u);
   assert.match(theme, /\.section-tag-filter button \{[\s\S]*min-height: 34px/u);
   assert.match(
     theme,
@@ -45,8 +46,9 @@ test('storefront typography buttons and route motion share one app visual contra
   assert.match(chrome, /:is\(\.browse-directory-search, \.section-catalog-search\)/u);
   assert.match(
     chrome,
-    /:is\(\.section-catalog-back, \.faq-back-link, \.product-detail-back\)/u,
+    /:is\(\.section-catalog-back, \.faq-back-link, \.storefront-detail-back\)/u,
   );
+  assert.doesNotMatch(chrome, /product-detail-back/u);
   assert.match(chrome, /\.bottom-nav a:focus-visible/u);
   assert.match(chrome, /--storefront-weight-regular/u);
   assert.match(chrome, /--storefront-weight-semibold/u);
@@ -61,6 +63,7 @@ test('storefront typography buttons and route motion share one app visual contra
   assert.match(transitions, /prefers-reduced-motion: reduce/u);
   assert.doesNotMatch(appShell, /animation: app-page-enter-forward/u);
   assert.doesNotMatch(appShell, /@keyframes app-page-enter-forward/u);
+  assert.match(appShell, /\.storefront-route-action-host \{[\s\S]*position: fixed/u);
   assert.ok(main.indexOf('./app-shell.css') < main.indexOf('./route-transition.css'));
   assert.ok(
     main.indexOf('@site/storefront-ui/typography-contract.css') <
