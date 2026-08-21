@@ -6,6 +6,7 @@ import { PwaInstallPrompt } from './PwaInstallPrompt';
 import { installPublicContentFetchFallback } from './public-content-transport';
 import { StorefrontPresentation } from './StorefrontPresentation';
 import { StorefrontRoot } from './StorefrontRoot';
+import { StorefrontRoutePreload } from './StorefrontRoutePreload';
 import { installSupportExpiryRuntime } from './support-expiry-runtime';
 import { installCachedStorefrontTheme } from './theme-runtime';
 import '@site/storefront-ui/styles.css';
@@ -58,6 +59,7 @@ createRoot(root).render(
   <StrictMode>
     <QueryClientProvider client={queryClient}>
       <StorefrontPresentation />
+      <StorefrontRoutePreload />
       <MobileEdgeNavigation />
       <StorefrontRoot />
       <PwaInstallPrompt />
