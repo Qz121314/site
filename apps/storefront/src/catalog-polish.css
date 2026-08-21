@@ -1,0 +1,193 @@
+/* Shared app-native polish for the storefront's high-frequency catalog surfaces. */
+
+:is(html, .storefront-theme-root)
+  :is(.home-product-cover, .browse-search-product-cover, .section-product-cover) {
+  border-radius: var(--theme-radius-media, 12px);
+  box-shadow: var(--catalog-card-shadow);
+  transform: translateZ(0);
+  transition:
+    opacity var(--app-motion-fast, 160ms) ease,
+    transform var(--app-motion-base, 240ms) var(--app-ease-out, ease-out),
+    box-shadow var(--app-motion-base, 240ms) ease;
+}
+
+:is(html, .storefront-theme-root)
+  :is(
+    .home-product-cover::before,
+    .browse-search-product-cover::before,
+    .section-product-cover::before
+  ) {
+  background: linear-gradient(
+    180deg,
+    transparent 50%,
+    rgb(0 0 0 / 4%) 62%,
+    rgb(0 0 0 / 68%) 100%
+  );
+}
+
+:is(html, .storefront-theme-root)
+  :is(
+    .home-product-cover::after,
+    .browse-search-product-cover::after,
+    .section-product-cover::after
+  ) {
+  border-color: color-mix(in srgb, var(--line) 34%, transparent);
+}
+
+:is(html, .storefront-theme-root)
+  :is(.home-product-title, .browse-search-product-title, .section-product-title) {
+  right: 10px;
+  bottom: 9px;
+  left: 10px;
+  font-size: 0.84rem;
+  font-weight: var(--catalog-card-title-weight);
+  line-height: 1.22;
+  letter-spacing: -0.016em;
+  text-shadow: 0 1px 12px rgb(0 0 0 / 34%);
+}
+
+:is(html, .storefront-theme-root)
+  :is(.browse-search-product-card, .section-product-card):active {
+  opacity: 1;
+  transform: none;
+}
+
+:is(html, .storefront-theme-root)
+  :is(
+    .home-product-tile:active .home-product-cover,
+    .browse-search-product-card:active .browse-search-product-cover,
+    .section-product-card:active .section-product-cover
+  ) {
+  opacity: 0.94;
+  box-shadow: var(--catalog-card-shadow-pressed);
+  transform: scale(var(--catalog-card-press-scale));
+}
+
+:is(html, .storefront-theme-root) .section-catalog-filters {
+  gap: 12px;
+  padding-bottom: 4px;
+}
+
+:is(html, .storefront-theme-root) .section-category-filter,
+:is(html, .storefront-theme-root) .section-tag-filter {
+  gap: 7px;
+}
+
+:is(html, .storefront-theme-root) .section-category-filter button,
+:is(html, .storefront-theme-root) .section-tag-filter button {
+  min-height: 36px;
+  font-size: 0.76rem;
+  font-weight: 560;
+  line-height: 1;
+  transform: translateZ(0);
+  transition:
+    border-color var(--app-motion-fast, 160ms) ease,
+    color var(--app-motion-fast, 160ms) ease,
+    background var(--app-motion-fast, 160ms) ease,
+    box-shadow var(--app-motion-fast, 160ms) ease,
+    opacity var(--app-motion-fast, 160ms) ease,
+    transform var(--app-motion-fast, 160ms) var(--app-ease-out, ease-out);
+}
+
+:is(html, .storefront-theme-root) .section-category-filter button {
+  padding: 0 13px;
+  border: 1px solid color-mix(in srgb, var(--line) 58%, transparent);
+  border-radius: 999px;
+  color: color-mix(in srgb, var(--text) 72%, var(--muted));
+  background: color-mix(in srgb, var(--surface-soft) 82%, transparent);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--text) 3%, transparent) inset;
+}
+
+:is(html, .storefront-theme-root) .section-category-filter button::after {
+  display: none;
+}
+
+:is(html, .storefront-theme-root) .section-category-filter button.is-active {
+  border-color: var(--text);
+  color: var(--surface);
+  background: var(--text);
+  box-shadow: 0 5px 14px color-mix(in srgb, var(--text) 12%, transparent);
+}
+
+:is(html, .storefront-theme-root) .section-tag-filter button {
+  min-height: 34px;
+  padding: 0 11px;
+  border-color: color-mix(in srgb, var(--line) 68%, transparent);
+  color: color-mix(in srgb, var(--text) 66%, var(--muted));
+  background: color-mix(in srgb, var(--surface) 58%, transparent);
+}
+
+:is(html, .storefront-theme-root) .section-tag-filter button.is-active {
+  border-color: color-mix(in srgb, var(--brand) 38%, var(--line));
+  color: var(--text);
+  background: color-mix(in srgb, var(--brand) 11%, var(--surface));
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--brand) 10%, transparent) inset;
+}
+
+:is(html, .storefront-theme-root) .section-category-filter button:focus-visible,
+:is(html, .storefront-theme-root) .section-tag-filter button:focus-visible {
+  outline: 0;
+  box-shadow: var(
+    --theme-chrome-focus-ring,
+    0 0 0 3px color-mix(in srgb, var(--brand) 18%, transparent)
+  );
+}
+
+:is(html, .storefront-theme-root) .section-category-filter button:active,
+:is(html, .storefront-theme-root) .section-tag-filter button:active {
+  opacity: 0.9;
+  transform: scale(0.96);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  :is(html, .storefront-theme-root)
+    :is(
+      .home-product-tile:hover .home-product-cover,
+      .browse-search-product-card:hover .browse-search-product-cover,
+      .section-product-card:hover .section-product-cover
+    ) {
+    box-shadow: var(--catalog-card-shadow-hover);
+    transform: translateY(-2px);
+  }
+
+  :is(html, .storefront-theme-root)
+    :is(
+      .home-product-tile:hover .home-product-cover img,
+      .browse-search-product-card:hover .browse-search-product-cover > img,
+      .section-product-card:hover .section-product-cover > img
+    ) {
+    transform: scale(1.018);
+  }
+
+  :is(html, .storefront-theme-root)
+    :is(.section-category-filter button, .section-tag-filter button):hover:not(
+      .is-active
+    ) {
+    border-color: color-mix(in srgb, var(--text) 18%, var(--line));
+    color: var(--text);
+    background: color-mix(in srgb, var(--surface-soft) 92%, var(--surface));
+  }
+}
+
+@media (min-width: 768px) {
+  :is(html, .storefront-theme-root)
+    :is(.home-product-title, .browse-search-product-title, .section-product-title) {
+    right: 12px;
+    bottom: 11px;
+    left: 12px;
+    font-size: 0.9rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :is(html, .storefront-theme-root)
+    :is(
+      .home-product-cover,
+      .browse-search-product-cover,
+      .section-product-cover,
+      .section-category-filter button,
+      .section-tag-filter button
+    ) {
+    transition: none;
+  }
+}
