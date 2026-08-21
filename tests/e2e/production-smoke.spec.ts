@@ -154,7 +154,9 @@ test('messages route remains renderable with the current support configuration',
   await expectNoHorizontalOverflow(page);
 });
 
-test('a published product renders its mobile CTA surface', async ({ page }) => {
+test('a published product renders its mobile CTA surface and carousel media flow', async ({
+  page,
+}) => {
   await page.goto('/browse/');
   const sectionHref = await page
     .locator('a[href^="/sections/"]:not([href*="/products/"])')
@@ -172,10 +174,21 @@ test('a published product renders its mobile CTA surface', async ({ page }) => {
   await page.goto(productHref!);
   const fixedAction = page.locator('body > .product-detail-fixed-action');
   const cta = fixedAction.locator('.cta-button');
+  const mobileMediaTrack = page.locator('.detail-mobile-media-track');
 
   await expect(page.locator('.product-detail-back')).toBeVisible();
   await expect(fixedAction).toBeVisible();
   await expect(cta).toBeVisible();
+  await expect(page.locator('.product-detail-secondary-media')).toHaveCount(0);
+  if ((await mobileMediaTrack.count()) > 0) {
+    await expect(mobileMediaTrack).toBeVisible();
+    const mediaContract = await mobileMediaTrack.evaluate((element) => ({
+      overflowX: getComputedStyle(element).overflowX,
+      scrollSnapType: getComputedStyle(element).scrollSnapType,
+    }));
+    expect(mediaContract.overflowX).toBe('auto');
+    expect(mediaContract.scrollSnapType).toContain('x');
+  }
   await expect
     .poll(() => fixedAction.evaluate((element) => getComputedStyle(element).position))
     .toBe('fixed');
