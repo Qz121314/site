@@ -41,24 +41,31 @@ test('product detail keeps a conversion-first mobile hierarchy', async () => {
   assert.doesNotMatch(source, /product-detail-navigation/u);
   assert.doesNotMatch(source, /product-detail-brand/u);
 
+  assert.match(rootSource, /className="storefront-bottom-chrome"/u);
   assert.match(rootSource, /className="storefront-route-action-host"/u);
   assert.match(rootSource, /data-shell-header=/u);
   assert.match(rootSource, /storefront-detail-topbar/u);
   assert.match(rootSource, /observeStorefrontShellChrome/u);
   assert.match(routeActionSource, /StorefrontRouteActionHostContext/u);
   assert.match(routeActionSource, /createPortal/u);
-  assert.match(viewportRuntime, /--app-route-action-height/u);
+  assert.match(viewportRuntime, /--app-bottom-chrome-height/u);
+  assert.doesNotMatch(viewportRuntime, /--app-route-action-height/u);
 
   assert.match(source, /const ctaFailed =/u);
   assert.match(source, /disabled=\{ctaQuery\.isFetching \|\| ctaMissing\}/u);
   assert.match(source, /<span>\{SYSTEM_UI\.retry\}<\/span>/u);
 
-  assert.match(shellStyles, /\.storefront-route-action-host \{[\s\S]*position: fixed/u);
+  assert.match(shellStyles, /\.storefront-bottom-chrome \{[\s\S]*position: fixed/u);
   assert.match(
     shellStyles,
-    /\.storefront-route-action-host \{[\s\S]*bottom: var\(--app-viewport-bottom/u,
+    /\.storefront-bottom-chrome \{[\s\S]*bottom: var\(--app-viewport-bottom/u,
   );
-  assert.match(shellStyles, /var\(--app-route-action-height/u);
+  assert.doesNotMatch(
+    shellStyles,
+    /\.storefront-route-action-host \{[\s\S]{0,220}position: fixed/u,
+  );
+  assert.match(shellStyles, /var\(--app-bottom-chrome-height/u);
+  assert.doesNotMatch(shellStyles, /var\(--app-route-action-height/u);
   assert.doesNotMatch(
     shellStyles,
     /max\(var\(--theme-detail-cta-height[\s\S]{0,180}\+ 58px/u,
