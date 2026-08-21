@@ -43,10 +43,16 @@ function applyPresentationMode(direction: StorefrontNavigationDirection | null =
   const element = document.documentElement;
   const previousMode = element.dataset.storefrontPresentation as
     StorefrontPresentationMode | undefined;
-  const nextMode = presentationMode(window.location.pathname);
-  const transitionMode = transitionModeForNavigation(previousMode, nextMode, direction);
+  const previousPathname = element.dataset.storefrontPathname;
+  const nextPathname = window.location.pathname;
+  const nextMode = presentationMode(nextPathname);
+  const transitionMode =
+    previousPathname && previousPathname !== nextPathname
+      ? transitionModeForNavigation(previousMode, nextMode, direction)
+      : null;
 
   element.dataset.storefrontPresentation = nextMode;
+  element.dataset.storefrontPathname = nextPathname;
   if (transitionMode) element.dataset.storefrontTransition = transitionMode;
   else delete element.dataset.storefrontTransition;
 }
@@ -72,6 +78,7 @@ export function StorefrontPresentation() {
       window.removeEventListener('popstate', handlePopState);
       window.removeEventListener(STOREFRONT_NAVIGATION_EVENT, handleStorefrontNavigation);
       delete document.documentElement.dataset.storefrontPresentation;
+      delete document.documentElement.dataset.storefrontPathname;
       delete document.documentElement.dataset.storefrontTransition;
     };
   }, []);
