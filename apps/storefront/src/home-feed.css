@@ -359,10 +359,6 @@
 }
 
 @media (max-width: 767px) {
-  .app-shell:has(.home-feed) > main {
-    padding-top: 0;
-  }
-
   .home-shortcut-zone {
     padding-top: 16px;
   }
