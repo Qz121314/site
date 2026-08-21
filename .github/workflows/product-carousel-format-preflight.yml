@@ -1,0 +1,63 @@
+name: Product Carousel Format Preflight
+
+on:
+  push:
+    branches: [fix/product-detail-mobile-carousel]
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: fix/product-detail-mobile-carousel
+
+      - name: Set up pnpm
+        run: npm install --global pnpm@11.19.0
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Apply repository Prettier
+        run: |
+          set -euo pipefail
+          pnpm exec prettier \
+            apps/storefront/src/ProductDetailPage.tsx \
+            apps/storefront/src/product-detail-content-flow.css \
+            apps/storefront/test/media-request-budget-contract.test.mjs \
+            apps/storefront/test/product-detail-conversion-contract.test.mjs \
+            apps/storefront/test/product-detail-style-ownership.test.mjs \
+            apps/storefront/test/production-visual-system-contract.test.mjs \
+            apps/storefront/test/storefront-full-polish-contract.test.mjs \
+            tests/e2e/production-smoke.spec.ts \
+            --write
+          if git diff --quiet -- \
+            apps/storefront/src/ProductDetailPage.tsx \
+            apps/storefront/src/product-detail-content-flow.css \
+            apps/storefront/test/media-request-budget-contract.test.mjs \
+            apps/storefront/test/product-detail-conversion-contract.test.mjs \
+            apps/storefront/test/product-detail-style-ownership.test.mjs \
+            apps/storefront/test/production-visual-system-contract.test.mjs \
+            apps/storefront/test/storefront-full-polish-contract.test.mjs \
+            tests/e2e/production-smoke.spec.ts; then
+            echo 'Formatting already clean.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            apps/storefront/src/ProductDetailPage.tsx \
+            apps/storefront/src/product-detail-content-flow.css \
+            apps/storefront/test/media-request-budget-contract.test.mjs \
+            apps/storefront/test/product-detail-conversion-contract.test.mjs \
+            apps/storefront/test/product-detail-style-ownership.test.mjs \
+            apps/storefront/test/production-visual-system-contract.test.mjs \
+            apps/storefront/test/storefront-full-polish-contract.test.mjs \
+            tests/e2e/production-smoke.spec.ts
+          git commit -m 'chore: apply product carousel prettier formatting'
+          git push origin HEAD:fix/product-detail-mobile-carousel
