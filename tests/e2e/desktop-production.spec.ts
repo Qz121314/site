@@ -20,12 +20,17 @@ test('desktop shell keeps the centered brand and primary navigation usable', asy
   await page.goto('/');
   await expect(page.locator('#root')).not.toBeEmpty();
   await expect(page.locator('.app-shell > .topbar .brand-lockup')).toBeVisible();
-  await expect(page.locator('.app-shell > .bottom-nav')).toBeVisible();
+  await expect(
+    page.locator('.app-shell > .storefront-bottom-chrome > .bottom-nav'),
+  ).toBeVisible();
 
   const shellContract = await page.evaluate(() => {
     const topbar = document.querySelector<HTMLElement>('.app-shell > .topbar');
     const brand = topbar?.querySelector<HTMLElement>('.brand-lockup');
-    const navigation = document.querySelector<HTMLElement>('.app-shell > .bottom-nav');
+    const bottomChrome = document.querySelector<HTMLElement>(
+      '.app-shell > .storefront-bottom-chrome',
+    );
+    const navigation = bottomChrome?.querySelector<HTMLElement>(':scope > .bottom-nav');
     const topbarRect = topbar?.getBoundingClientRect();
     const brandRect = brand?.getBoundingClientRect();
     const navigationRect = navigation?.getBoundingClientRect();
@@ -33,6 +38,7 @@ test('desktop shell keeps the centered brand and primary navigation usable', asy
       brandCenterDelta: brandRect
         ? Math.abs(brandRect.left + brandRect.width / 2 - window.innerWidth / 2)
         : Number.POSITIVE_INFINITY,
+      bottomChromePosition: bottomChrome ? getComputedStyle(bottomChrome).position : null,
       navigationPosition: navigation ? getComputedStyle(navigation).position : null,
       navigationInsideTopbar:
         Boolean(topbarRect && navigationRect) &&
@@ -44,7 +50,8 @@ test('desktop shell keeps the centered brand and primary navigation usable', asy
     };
   });
 
-  expect(shellContract.navigationPosition).toBe('fixed');
+  expect(shellContract.bottomChromePosition).toBe('fixed');
+  expect(shellContract.navigationPosition).toBe('static');
   expect(shellContract.brandCenterDelta).toBeLessThanOrEqual(1.5);
   expect(shellContract.navigationInsideTopbar).toBeTruthy();
   expect(shellContract.navigationClearsBrand).toBeTruthy();
@@ -52,7 +59,9 @@ test('desktop shell keeps the centered brand and primary navigation usable', asy
 
   await page.goto('/browse/');
   await expect(page.locator('.browse-directory')).toBeVisible();
-  await expect(page.locator('.app-shell > .bottom-nav')).toBeVisible();
+  await expect(
+    page.locator('.app-shell > .storefront-bottom-chrome > .bottom-nav'),
+  ).toBeVisible();
 
   const browseCards = page.locator('.browse-section-card');
   if ((await browseCards.count()) >= 2) {
