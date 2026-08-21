@@ -253,7 +253,7 @@
 }
 
 :is(html, .storefront-theme-root)
-  :is(.cta-button, .product-detail-fixed-action .cta-button) {
+  :is(.cta-button, .product-detail-route-action .cta-button) {
   min-height: var(--theme-button-height, 52px);
   border-width: var(--theme-button-border-width, 0px);
   border-radius: var(--theme-radius-control);
@@ -268,7 +268,7 @@
 }
 
 :is(html, .storefront-theme-root)
-  :is(.cta-button, .product-detail-fixed-action .cta-button):focus-visible {
+  :is(.cta-button, .product-detail-route-action .cta-button):focus-visible {
   outline: 0;
   box-shadow:
     var(--theme-detail-cta-shadow, var(--theme-button-shadow)),
@@ -276,7 +276,7 @@
 }
 
 :is(html, .storefront-theme-root)
-  :is(.cta-button, .product-detail-fixed-action .cta-button):active:not(:disabled) {
+  :is(.cta-button, .product-detail-route-action .cta-button):active:not(:disabled) {
   box-shadow: var(--theme-button-press-shadow);
   filter: brightness(var(--theme-press-brightness, 0.94));
   transform: scale(var(--theme-press-scale, 0.985));
