@@ -8,6 +8,7 @@ const [
   productionSmoke,
   ciWorkflow,
   workflowNames,
+  storefrontRoot,
   productDetailSource,
   appShellStyles,
   routeActionSource,
@@ -23,6 +24,7 @@ const [
   readFile('tests/e2e/production-smoke.spec.ts', 'utf8'),
   readFile('.github/workflows/ci.yml', 'utf8'),
   readdir('.github/workflows'),
+  readFile('apps/storefront/src/StorefrontRoot.tsx', 'utf8'),
   readFile('apps/storefront/src/ProductDetailPage.tsx', 'utf8'),
   readFile('apps/storefront/src/app-shell.css', 'utf8'),
   readFile('apps/storefront/src/StorefrontRouteAction.tsx', 'utf8'),
@@ -119,6 +121,16 @@ assert.match(
   /createPortal\(children, host\)/u,
   'route actions must portal only into the App Shell-owned host',
 );
+assert.match(
+  storefrontRoot,
+  /className="storefront-bottom-chrome"/u,
+  'App Shell must expose one shared Bottom Chrome for navigation and route actions',
+);
+assert.match(
+  storefrontRoot,
+  /className="storefront-route-action-host"/u,
+  'product route actions must mount inside the shared Bottom Chrome',
+);
 assert.doesNotMatch(
   appShellStyles,
   /html\[data-storefront-presentation='push'\]\s+\.app-shell > \.topbar/u,
@@ -126,8 +138,13 @@ assert.doesNotMatch(
 );
 assert.match(
   appShellStyles,
-  /\.storefront-route-action-host \{[\s\S]*position: fixed/u,
-  'App Shell must own the viewport-fixed route action host',
+  /\.storefront-bottom-chrome \{[\s\S]*position: fixed/u,
+  'App Shell Bottom Chrome must be the only viewport-fixed bottom owner',
+);
+assert.doesNotMatch(
+  appShellStyles,
+  /\.storefront-route-action-host \{[\s\S]{0,220}position: fixed/u,
+  'Route Action host must inherit positioning from shared Bottom Chrome',
 );
 
 assert.match(
@@ -147,13 +164,13 @@ assert.match(
 );
 assert.match(
   viewportRuntime,
-  /--app-bottom-nav-height/u,
-  'viewport runtime must publish measured Bottom Navigation height',
+  /--app-bottom-chrome-height/u,
+  'viewport runtime must publish one measured Bottom Chrome height',
 );
-assert.match(
+assert.doesNotMatch(
   viewportRuntime,
-  /--app-route-action-height/u,
-  'viewport runtime must publish measured Route Action height',
+  /--app-bottom-nav-height|--app-route-action-height/u,
+  'viewport runtime must not maintain separate Bottom Navigation and Route Action height systems',
 );
 assert.doesNotMatch(
   viewportRuntime,
@@ -172,8 +189,8 @@ assert.match(
 );
 assert.match(
   appShellStyles,
-  /\.storefront-route-action-host \{[\s\S]*var\(--app-viewport-bottom/u,
-  'App Shell Route Action must clear dynamic browser chrome',
+  /\.storefront-bottom-chrome \{[\s\S]*var\(--app-viewport-bottom/u,
+  'App Shell Bottom Chrome must clear dynamic browser chrome',
 );
 assert.match(
   appShellStyles,
@@ -182,8 +199,13 @@ assert.match(
 );
 assert.match(
   appShellStyles,
-  /var\(--app-route-action-height/u,
-  'Product content must clear the measured Route Action height',
+  /var\(--app-bottom-chrome-height/u,
+  'Storefront content must clear the measured Bottom Chrome height',
+);
+assert.doesNotMatch(
+  appShellStyles,
+  /--app-bottom-nav-height|--app-route-action-height/u,
+  'App Shell layout must not keep separate bottom chrome height formulas',
 );
 assert.doesNotMatch(
   appShellStyles,
@@ -197,13 +219,13 @@ assert.match(
 );
 assert.match(
   sectionStyles,
-  /var\(--app-bottom-nav-height/u,
-  'mobile Section geometry must clear the measured Bottom Navigation',
+  /var\(--app-bottom-chrome-height/u,
+  'mobile Section geometry must clear the measured shared Bottom Chrome',
 );
 assert.doesNotMatch(
   sectionStyles,
-  /100dvh\s*-\s*68px/u,
-  'mobile Section geometry must not duplicate a fixed Bottom Navigation height',
+  /--app-bottom-nav-height|100dvh\s*-\s*68px/u,
+  'mobile Section geometry must not duplicate an old Bottom Navigation height model',
 );
 assert.doesNotMatch(
   legacyStyles,
