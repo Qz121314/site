@@ -2,7 +2,7 @@ html,
 body,
 #root {
   min-height: 100%;
-  min-height: 100dvh;
+  min-height: var(--app-viewport-height, 100dvh);
 }
 
 .app-shell {
@@ -12,8 +12,10 @@ body,
   --v2-hairline: color-mix(in srgb, var(--line) 68%, transparent);
   --v2-muted: color-mix(in srgb, var(--muted) 86%, var(--text));
   --v2-control-bg: color-mix(in srgb, var(--surface-soft) 90%, var(--surface));
-  min-height: 100dvh;
-  padding-bottom: calc(82px + env(safe-area-inset-bottom));
+  min-height: var(--app-viewport-height, 100dvh);
+  padding-bottom: calc(
+    var(--app-bottom-nav-height, 0px) + var(--app-viewport-bottom, 0px)
+  );
   color: var(--text);
   background: var(--page-bg, #f5f6f7);
 }
@@ -23,8 +25,10 @@ html[data-theme='noir'] .app-shell {
 }
 
 .app-shell > .topbar {
-  position: sticky;
-  top: 0;
+  position: fixed;
+  top: var(--app-viewport-top, 0px);
+  right: var(--app-viewport-right, 0px);
+  left: var(--app-viewport-left, 0px);
   z-index: 58;
   min-height: calc(58px + env(safe-area-inset-top));
   justify-content: center;
@@ -132,12 +136,14 @@ html[data-theme='noir'] .app-shell {
 
 .app-shell > main {
   width: min(var(--v2-content-width), 100%);
-  min-height: calc(
-    100dvh - 136px - env(safe-area-inset-top) - env(safe-area-inset-bottom)
-  );
+  min-height: var(--app-viewport-height, 100dvh);
   margin-inline: auto;
-  padding: 14px max(var(--v2-gutter), env(safe-area-inset-right)) 36px
-    max(var(--v2-gutter), env(safe-area-inset-left));
+  padding-top: calc(
+    var(--app-viewport-top, 0px) + var(--app-header-height, 0px) + 14px
+  );
+  padding-right: max(var(--v2-gutter), env(safe-area-inset-right));
+  padding-bottom: 36px;
+  padding-left: max(var(--v2-gutter), env(safe-area-inset-left));
 }
 
 .app-shell[data-shell-route='product'] {
@@ -145,8 +151,9 @@ html[data-theme='noir'] .app-shell {
 }
 
 .app-shell[data-shell-route='product'] > main {
+  padding-top: calc(var(--app-viewport-top, 0px) + var(--app-header-height, 0px));
   padding-bottom: calc(
-    max(var(--theme-detail-cta-height, 54px), 56px) + 58px + env(safe-area-inset-bottom)
+    var(--app-route-action-height, 0px) + var(--app-viewport-bottom, 0px) + 24px
   );
 }
 
@@ -156,9 +163,9 @@ html[data-theme='noir'] .app-shell {
 
 .storefront-route-action-host {
   position: fixed;
-  right: 0;
-  bottom: 0;
-  left: 0;
+  right: var(--app-viewport-right, 0px);
+  bottom: var(--app-viewport-bottom, 0px);
+  left: var(--app-viewport-left, 0px);
   z-index: 80;
   pointer-events: none;
 }
@@ -266,7 +273,9 @@ html[data-theme='noir'] .app-shell {
   }
 
   .app-shell {
-    padding-bottom: calc(68px + env(safe-area-inset-bottom));
+    padding-bottom: calc(
+      var(--app-bottom-nav-height, 0px) + var(--app-viewport-bottom, 0px)
+    );
   }
 
   .app-shell[data-shell-route='product'] {
@@ -285,16 +294,18 @@ html[data-theme='noir'] .app-shell {
 
   .app-shell > main {
     width: 100%;
-    min-height: calc(100dvh - 126px - env(safe-area-inset-top));
-    padding-top: 10px;
+    min-height: var(--app-viewport-height, 100dvh);
+    padding-top: calc(
+      var(--app-viewport-top, 0px) + var(--app-header-height, 0px) + 10px
+    );
     padding-bottom: 30px;
   }
 
   .app-shell[data-shell-route='product'] > main {
-    min-height: calc(100dvh - 58px - env(safe-area-inset-top));
-    padding-top: 0;
+    min-height: var(--app-viewport-height, 100dvh);
+    padding-top: calc(var(--app-viewport-top, 0px) + var(--app-header-height, 0px));
     padding-bottom: calc(
-      max(var(--theme-detail-cta-height, 54px), 56px) + 58px + env(safe-area-inset-bottom)
+      var(--app-route-action-height, 0px) + var(--app-viewport-bottom, 0px) + 24px
     );
   }
 
@@ -332,11 +343,11 @@ html[data-theme='noir'] .app-shell {
 
   .app-shell > .bottom-nav {
     position: fixed;
-    right: 0;
-    bottom: 0;
-    left: 0;
+    right: var(--app-viewport-right, 0px);
+    bottom: var(--app-viewport-bottom, 0px);
+    left: var(--app-viewport-left, 0px);
     z-index: 64;
-    width: 100%;
+    width: auto;
     margin: 0;
     padding: 3px max(8px, env(safe-area-inset-right))
       calc(4px + env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
@@ -403,31 +414,25 @@ html[data-theme='noir'] .app-shell {
   }
 
   html[data-storefront-presentation='push'] .app-shell {
-    min-height: 100dvh;
-    padding-bottom: 0;
+    min-height: var(--app-viewport-height, 100dvh);
   }
 
   html[data-storefront-presentation='push'] .pwa-install-card {
     display: none;
   }
 
-  html[data-storefront-presentation='push'] .app-shell > main {
+  html[data-storefront-presentation='push']
+    .app-shell:not([data-shell-route='product'])
+    > main {
     width: 100%;
-    min-height: 100dvh;
-    padding-top: calc(8px + env(safe-area-inset-top));
+    min-height: var(--app-viewport-height, 100dvh);
+    padding-top: calc(
+      var(--app-viewport-top, 0px) + var(--app-header-height, 0px) + 8px +
+        env(safe-area-inset-top)
+    );
     padding-right: max(10px, env(safe-area-inset-right));
     padding-bottom: calc(18px + env(safe-area-inset-bottom));
     padding-left: max(10px, env(safe-area-inset-left));
-  }
-
-  html[data-storefront-presentation='push']
-    .app-shell[data-shell-route='product']
-    > main {
-    min-height: calc(100dvh - 58px - env(safe-area-inset-top));
-    padding-top: 0;
-    padding-bottom: calc(
-      max(var(--theme-detail-cta-height, 54px), 56px) + 58px + env(safe-area-inset-bottom)
-    );
   }
 
   .mobile-edge-navigation {
@@ -481,7 +486,7 @@ html[data-theme='noir'] .app-shell {
     }
 
     .app-shell:has(.messages-workspace.is-thread-open) {
-      min-height: 100dvh;
+      min-height: var(--app-viewport-height, 100dvh);
       padding-bottom: 0;
       background: var(--surface-soft, #f8f8f9);
     }
@@ -494,10 +499,11 @@ html[data-theme='noir'] .app-shell {
     .app-shell:has(.messages-workspace.is-thread-open) > main {
       width: 100%;
       max-width: none;
-      height: 100dvh;
-      min-height: 100dvh;
+      height: var(--app-viewport-height, 100dvh);
+      min-height: var(--app-viewport-height, 100dvh);
       margin: 0;
       padding: 0;
+      overflow: hidden;
     }
 
     .app-shell:has(.messages-workspace.is-thread-open) .storefront-route-view {
@@ -521,19 +527,24 @@ html[data-theme='noir'] .app-shell {
 
 @media (min-width: 768px) {
   .app-shell > main {
-    padding-top: 25px;
+    padding-top: calc(
+      var(--app-viewport-top, 0px) + var(--app-header-height, 0px) + 25px
+    );
     padding-bottom: 58px;
   }
 
   .app-shell[data-shell-route='product'] > main {
+    padding-top: calc(
+      var(--app-viewport-top, 0px) + var(--app-header-height, 0px) + 25px
+    );
     padding-bottom: calc(
-      max(var(--theme-detail-cta-height, 54px), 56px) + 58px + env(safe-area-inset-bottom)
+      var(--app-route-action-height, 0px) + var(--app-viewport-bottom, 0px) + 30px
     );
   }
 
   .app-shell > .bottom-nav {
     right: auto;
-    bottom: 14px;
+    bottom: calc(var(--app-viewport-bottom, 0px) + 14px);
     left: 50%;
     width: min(520px, calc(100% - 28px));
     border: 1px solid color-mix(in srgb, var(--line) 82%, transparent);
@@ -566,6 +577,9 @@ html[data-theme='noir'] .app-shell {
   .app-shell > main,
   .app-shell[data-shell-route='product'] > main {
     width: min(var(--v2-content-width), 100%);
+    padding-top: calc(
+      var(--app-viewport-top, 0px) + var(--app-header-height, 0px) + 25px
+    );
     padding-right: 24px;
     padding-bottom: 58px;
     padding-left: 24px;
@@ -573,7 +587,7 @@ html[data-theme='noir'] .app-shell {
 
   .app-shell > .bottom-nav {
     position: fixed;
-    top: 10px;
+    top: calc(var(--app-viewport-top, 0px) + 10px);
     right: max(24px, calc((100vw - var(--v2-content-width)) / 2));
     bottom: auto;
     left: auto;
