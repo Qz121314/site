@@ -100,7 +100,7 @@ function HomeHero({ siteName, slides }: { siteName: string; slides: PublicHeroSl
                     <ResilientImage
                       alt={slide.title || ''}
                       fallback={mediaFallback}
-                      fetchPriority={index === 0 ? 'high' : 'auto'}
+                      fetchPriority={index === 0 ? 'high' : 'low'}
                       loading={index === 0 ? 'eager' : 'lazy'}
                       src={slide.mediaUrl}
                     />
@@ -161,13 +161,7 @@ function HomeHero({ siteName, slides }: { siteName: string; slides: PublicHeroSl
   );
 }
 
-function SectionIcon({
-  priority,
-  section,
-}: {
-  priority: boolean;
-  section: PublicSection;
-}) {
+function SectionIcon({ section }: { section: PublicSection }) {
   const fallback = (
     <span aria-hidden="true">{Array.from(section.name.trim())[0] ?? '•'}</span>
   );
@@ -184,10 +178,11 @@ function SectionIcon({
     return (
       <ResilientImage
         alt=""
+        decoding="async"
         fallback={fallback}
-        fetchPriority={priority ? 'high' : 'auto'}
+        fetchPriority="low"
         height={160}
-        loading={priority ? 'eager' : 'lazy'}
+        loading="lazy"
         sizes="58px"
         src={src}
         srcSet={srcSet}
@@ -213,14 +208,14 @@ function HomeShortcuts({ sections }: { sections: PublicSection[] }) {
   return (
     <div className="home-shortcut-zone">
       <nav className="home-shortcuts home-shortcut-hero" aria-label="Sections">
-        {sections.map((section, index) => (
+        {sections.map((section) => (
           <HomeLink
             className="home-shortcut"
             href={sectionHref(section)}
             key={section.id}
           >
             <span className="home-shortcut-icon">
-              <SectionIcon priority={index === 0} section={section} />
+              <SectionIcon section={section} />
             </span>
             <span className="home-shortcut-label">{section.name}</span>
           </HomeLink>
@@ -258,7 +253,7 @@ function HomeProductTile({
         <ResilientImage
           alt=""
           fallback={<span className="home-product-cover-fallback" aria-hidden="true" />}
-          fetchPriority={priority ? 'high' : 'auto'}
+          fetchPriority={priority ? 'high' : 'low'}
           height={640}
           loading={priority ? 'eager' : 'lazy'}
           sizes="(max-width: 767px) 44vw, 176px"
@@ -423,7 +418,7 @@ export function HomeFeed({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
           <HomeRecommendationRail
             bootstrap={bootstrap}
             initialProducts={featuredProductsBySection.get(section.id) ?? []}
-            priority={section.id === priorityRecommendationSectionId}
+            priority={!hasHero && section.id === priorityRecommendationSectionId}
             section={section}
             key={section.id}
           />
