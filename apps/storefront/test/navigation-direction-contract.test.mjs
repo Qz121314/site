@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-test('shared navigation runtime owns SPA pushes before presentation chooses transitions', async () => {
+test('shared navigation runtime owns SPA push and route direction', async () => {
   const [
     presentationSource,
     edgeNavigationSource,
