@@ -41,6 +41,14 @@ test('storefront polish stays theme-led and app-native across every primary surf
   assert.match(shell, /\.app-shell > \.bottom-nav \{[\s\S]*position: fixed/u);
   assert.match(shell, /backdrop-filter: blur\(22px\)/u);
   assert.match(shell, /\.app-shell \.brand-logo \{[\s\S]*width: min\(/u);
+  assert.match(shell, /\.storefront-route-action-host \{[\s\S]*position: fixed/u);
+  assert.match(shell, /\.storefront-route-action-host \{[\s\S]*bottom: 0/u);
+  assert.match(shell, /\.storefront-detail-topbar \{/u);
+  assert.match(shell, /\.storefront-detail-back \{/u);
+  assert.doesNotMatch(
+    shell,
+    /html\[data-storefront-presentation='push'\]\s+\.app-shell > \.topbar/u,
+  );
   assert.match(
     shell,
     /\.app-shell > \.bottom-nav a\.is-active \{[\s\S]*background: transparent/u,
@@ -79,8 +87,11 @@ test('storefront polish stays theme-led and app-native across every primary surf
     /\.app-shell:has\(\.messages-workspace\.is-thread-open\) \.chat-composer/u,
   );
 
-  assert.match(detail, /\.product-detail-fixed-action \{[\s\S]*position: fixed/u);
-  assert.match(detail, /\.product-detail-fixed-action \{[\s\S]*bottom: 0/u);
+  assert.match(detail, /\.product-detail-route-action \{/u);
+  assert.doesNotMatch(
+    detail,
+    /\.product-detail-route-action \{[\s\S]{0,240}position: fixed/u,
+  );
   assert.match(
     detailFlow,
     /\.detail-mobile-media-track \{[\s\S]*scroll-snap-type: x mandatory/u,

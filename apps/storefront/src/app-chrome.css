@@ -133,7 +133,7 @@
 }
 
 :is(html, .storefront-theme-root)
-  :is(.section-catalog-back, .faq-back-link, .product-detail-back) {
+  :is(.section-catalog-back, .faq-back-link, .storefront-detail-back) {
   min-width: 44px;
   min-height: 44px;
   -webkit-tap-highlight-color: transparent;
@@ -157,25 +157,13 @@
 }
 
 :is(html, .storefront-theme-root)
-  :is(.section-catalog-back, .faq-back-link):focus-visible {
+  :is(.section-catalog-back, .faq-back-link, .storefront-detail-back):focus-visible {
   outline: 0;
   box-shadow: var(--theme-chrome-focus-ring);
 }
 
-:is(html, .storefront-theme-root) .product-detail-back {
-  width: 44px;
-  height: 44px;
-}
-
-:is(html, .storefront-theme-root) .product-detail-back:focus-visible {
-  outline: 0;
-  box-shadow:
-    0 7px 24px rgb(0 0 0 / 20%),
-    0 0 0 3px rgb(255 255 255 / 28%);
-}
-
 :is(html, .storefront-theme-root)
-  :is(.section-catalog-back, .faq-back-link, .product-detail-back):active {
+  :is(.section-catalog-back, .faq-back-link, .storefront-detail-back):active {
   opacity: 1;
   filter: brightness(var(--theme-press-brightness, 0.94));
   transform: scale(var(--theme-press-scale, 0.985));
@@ -221,7 +209,8 @@
     opacity: 0.82;
   }
 
-  :is(html, .storefront-theme-root) :is(.section-catalog-back, .faq-back-link):hover {
+  :is(html, .storefront-theme-root)
+    :is(.section-catalog-back, .faq-back-link, .storefront-detail-back):hover {
     background: color-mix(in srgb, var(--surface-soft) 82%, transparent);
   }
 }
@@ -274,7 +263,7 @@
       .section-catalog-search-clear,
       .section-catalog-back,
       .faq-back-link,
-      .product-detail-back,
+      .storefront-detail-back,
       .bottom-nav a,
       .bottom-nav .bottom-nav-icon
     ) {

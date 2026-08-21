@@ -15,7 +15,8 @@ The required order for a behavior change is:
 ```text
 confirm the new rule
 → inspect/update the affected test contract
-→ implement the change
+→ identify the owning layer and root cause
+→ implement the structural fix
 → format with the repository Prettier version
 → run the complete verification gate
 ```
@@ -30,6 +31,12 @@ implement
 → patch the test afterwards
 ```
 
+## Root-cause-first rule
+
+Do not use patch-style fixes as the default engineering method. A visible symptom must first be traced to its owning layer, state/data flow, route boundary, layout contract, or deployment contract.
+
+Avoid symptom suppression such as stacking override selectors, adding one-off route conditions, duplicating components to escape an ownership problem, or keeping obsolete implementations beside the replacement. If the root cause is structural, fix the structure and remove the superseded code in the same change. When the lesson is reusable, encode it in a repository invariant, guardrail, or stable behavior contract.
+
 ## Fixed project invariants
 
 These are defaults unless the user explicitly changes the product rule.
@@ -40,6 +47,9 @@ These are defaults unless the user explicitly changes the product rule.
 - Section search/category/tag filtering runs on already-loaded section data in the browser and must not add Worker or D1 requests per interaction.
 - Prefer batch reads, bootstrap reuse, cached/public snapshots, and local filtering over repeated Worker/D1 reads.
 - Theme recipe values are runtime/admin configuration. Production smoke tests must not hard-code a specific theme name, font pack, media style, motion style, navigation style, shadow, radius, or other mutable visual value unless that value is an explicit product invariant.
+- Storefront App Shell owns persistent chrome: Header, Bottom Navigation, and viewport-fixed route action surfaces. Route pages provide content/action intent but must not mount global fixed UI directly to `document.body`.
+- Storefront presentation/history runtime owns navigation direction and route transition semantics only. Do not use generic `push`/`pop` presentation selectors to hide or replace App Shell chrome.
+- Route transition transforms apply to route content only. Persistent Header and route action surfaces must stay outside the transformed route view so fixed/sticky behavior remains stable.
 - Production acceptance tests validate stable behavior and contracts: rendering, runtime configuration application, navigation, overflow, media ratio, CTA availability, auth boundaries, request/data contracts, and deployment health. They are not pixel-snapshot substitutes.
 - When a UI rule intentionally changes, inspect both the implementation test and any meta/source-contract test that reads the E2E source.
 - Do not add temporary debug workflows, diagnostic files, or one-off CI workarounds to the final PR.

@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import type { StorefrontLinkComponent } from '@site/storefront-ui';
 import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
-import { createPortal } from 'react-dom';
 import {
   loadProductSnapshot,
   PublicContentError,
@@ -10,8 +9,8 @@ import {
 import { loadPublicCta } from './cta';
 import { MarkdownContent } from './MarkdownContent';
 import { ResilientImage, ResilientVideo } from './ResilientMedia';
-import { sectionHref } from './routing';
 import { canNavigateStorefrontBack, navigateStorefrontBack } from './storefront-history';
+import { StorefrontRouteAction } from './StorefrontRouteAction';
 import { SYSTEM_UI } from './system-ui';
 import './product-detail-ui.css';
 import './product-detail-content-flow.css';
@@ -72,29 +71,29 @@ function LocationIcon() {
 
 function ProductDetailSkeleton() {
   return (
-    <section
-      className="product-detail-loading"
-      role="status"
-      aria-live="polite"
-      aria-busy="true"
-    >
-      <div className="product-detail-loading-navigation" aria-hidden="true">
-        <span className="loading-skeleton" />
-        <span className="loading-skeleton" />
-      </div>
-      <div className="product-detail-loading-hero" aria-hidden="true">
-        <span className="product-detail-loading-media loading-skeleton" />
-        <div className="product-detail-loading-copy">
-          <span className="is-title loading-skeleton" />
-          <span className="is-title is-short loading-skeleton" />
-          <span className="product-detail-loading-inline-action loading-skeleton" />
+    <>
+      <section
+        className="product-detail-loading"
+        role="status"
+        aria-live="polite"
+        aria-busy="true"
+      >
+        <div className="product-detail-loading-hero" aria-hidden="true">
+          <span className="product-detail-loading-media loading-skeleton" />
+          <div className="product-detail-loading-copy">
+            <span className="is-title loading-skeleton" />
+            <span className="is-title is-short loading-skeleton" />
+            <span className="product-detail-loading-inline-action loading-skeleton" />
+          </div>
         </div>
-      </div>
-      <div className="product-detail-loading-action" aria-hidden="true">
-        <span className="loading-skeleton" />
-      </div>
-      <span className="sr-only">{SYSTEM_UI.loading}</span>
-    </section>
+        <span className="sr-only">{SYSTEM_UI.loading}</span>
+      </section>
+      <StorefrontRouteAction>
+        <div className="product-detail-loading-route-action" aria-hidden="true">
+          <span className="loading-skeleton" />
+        </div>
+      </StorefrontRouteAction>
+    </>
   );
 }
 
@@ -181,7 +180,6 @@ export function ProductDetailPage({
 
   if (!product) return null;
 
-  const backHref = sectionHref({ id: product.sectionId, slug: product.sectionSlug });
   const activeMediaUrl = activeMedia?.url ?? product.coverUrl;
   const activeMediaIsVideo = Boolean(
     activeMedia?.url && isVideoMediaUrl(activeMedia.url),
@@ -305,40 +303,9 @@ export function ProductDetailPage({
     );
   }
 
-  const fixedCtaAction = (
-    <div className="product-detail-fixed-action">{renderCtaButton()}</div>
-  );
-  const site = bootstrap.site.site;
-
   return (
     <>
       <article className="product-detail-page" aria-labelledby="product-detail-title">
-        <header className="product-detail-navigation">
-          <LinkComponent
-            aria-label={SYSTEM_UI.back}
-            className="product-detail-back"
-            href={backHref}
-            onClick={handleInternalBack}
-          >
-            <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false">
-              <path d="m12.5 4.5-5.5 5.5 5.5 5.5" />
-            </svg>
-            <span className="product-detail-back-label">{SYSTEM_UI.back}</span>
-          </LinkComponent>
-          <LinkComponent className="product-detail-brand" href="/" aria-label={site.name}>
-            {site.logoUrl ? (
-              <ResilientImage
-                alt=""
-                fallback={<span>{site.name}</span>}
-                src={site.logoUrl}
-              />
-            ) : (
-              <span>{site.name}</span>
-            )}
-          </LinkComponent>
-          <span className="product-detail-nav-spacer" aria-hidden="true" />
-        </header>
-
         <div className="product-detail-hero">
           <div className="detail-gallery">
             <div
@@ -470,7 +437,9 @@ export function ProductDetailPage({
           </section>
         ) : null}
       </article>
-      {createPortal(fixedCtaAction, document.body)}
+      <StorefrontRouteAction>
+        <div className="product-detail-route-action">{renderCtaButton()}</div>
+      </StorefrontRouteAction>
     </>
   );
 }

@@ -3,8 +3,19 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
 test('product detail keeps a conversion-first mobile hierarchy', async () => {
-  const [source, styles, flowStyles, loadingStyles] = await Promise.all([
+  const [
+    source,
+    rootSource,
+    routeActionSource,
+    shellStyles,
+    styles,
+    flowStyles,
+    loadingStyles,
+  ] = await Promise.all([
     readFile(new URL('../src/ProductDetailPage.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../src/StorefrontRoot.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../src/StorefrontRouteAction.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../src/app-shell.css', import.meta.url), 'utf8'),
     readFile(new URL('../src/product-detail-ui.css', import.meta.url), 'utf8'),
     readFile(new URL('../src/product-detail-content-flow.css', import.meta.url), 'utf8'),
     readFile(new URL('../src/loading-states.css', import.meta.url), 'utf8'),
@@ -21,11 +32,30 @@ test('product detail keeps a conversion-first mobile hierarchy', async () => {
   assert.doesNotMatch(source, /product-detail-secondary-media/u);
   assert.doesNotMatch(source, /detail-mobile-thumbnails/u);
 
+  assert.match(source, /StorefrontRouteAction/u);
+  assert.match(source, /className="product-detail-route-action"/u);
+  assert.doesNotMatch(source, /createPortal/u);
+  assert.doesNotMatch(source, /document\.body/u);
+  assert.doesNotMatch(source, /product-detail-navigation/u);
+  assert.doesNotMatch(source, /product-detail-brand/u);
+
+  assert.match(rootSource, /className="storefront-route-action-host"/u);
+  assert.match(rootSource, /data-shell-header=/u);
+  assert.match(rootSource, /storefront-detail-topbar/u);
+  assert.match(routeActionSource, /StorefrontRouteActionHostContext/u);
+  assert.match(routeActionSource, /createPortal/u);
+
   assert.match(source, /const ctaFailed =/u);
   assert.match(source, /disabled=\{ctaQuery\.isFetching \|\| ctaMissing\}/u);
   assert.match(source, /<span>\{SYSTEM_UI\.retry\}<\/span>/u);
 
-  assert.match(styles, /\.product-detail-navigation \{[\s\S]*position: absolute/u);
+  assert.match(shellStyles, /\.storefront-route-action-host \{[\s\S]*position: fixed/u);
+  assert.match(shellStyles, /\.storefront-route-action-host \{[\s\S]*bottom: 0/u);
+  assert.doesNotMatch(
+    shellStyles,
+    /html\[data-storefront-presentation='push'\]\s+\.app-shell > \.topbar/u,
+  );
+
   assert.match(styles, /\.product-detail-address \{/u);
   assert.match(
     styles,
@@ -33,27 +63,25 @@ test('product detail keeps a conversion-first mobile hierarchy', async () => {
   );
   assert.match(
     styles,
-    /\.product-detail-page \{[\s\S]*padding-bottom: calc\([\s\S]*--theme-detail-cta-height/u,
-  );
-  assert.match(styles, /\.product-detail-fixed-action \{[\s\S]*position: fixed/u);
-  assert.match(styles, /\.product-detail-fixed-action \{[\s\S]*bottom: 0/u);
-  assert.match(
-    styles,
-    /\.product-detail-fixed-action \{[\s\S]*--theme-detail-cta-surface/u,
+    /\.product-detail-route-action \{[\s\S]*--theme-detail-cta-surface/u,
   );
   assert.match(styles, /box-shadow: var\(\s*--theme-detail-cta-bar-shadow/u);
-  assert.match(
+  assert.doesNotMatch(
     styles,
-    /\.product-detail-fixed-action \.cta-button,[\s\S]*min-height: max\([\s\S]*--theme-detail-cta-height[\s\S]*56px/u,
+    /\.product-detail-route-action \{[\s\S]{0,240}position: fixed/u,
   );
   assert.match(
     styles,
-    /\.product-detail-fixed-action \.cta-button,[\s\S]*font-weight: var\(--storefront-weight-semibold, 650\)/u,
+    /\.product-detail-route-action \.cta-button,[\s\S]*min-height: max\([\s\S]*--theme-detail-cta-height[\s\S]*56px/u,
   );
-  assert.match(styles, /\.product-detail-fixed-action \.cta-button:focus-visible/u);
   assert.match(
     styles,
-    /\.product-detail-fixed-action \.cta-button:active:not\(:disabled\)[\s\S]*var\(--theme-press-scale/u,
+    /\.product-detail-route-action \.cta-button,[\s\S]*font-weight: var\(--storefront-weight-semibold, 650\)/u,
+  );
+  assert.match(styles, /\.product-detail-route-action \.cta-button:focus-visible/u);
+  assert.match(
+    styles,
+    /\.product-detail-route-action \.cta-button:active:not\(:disabled\)[\s\S]*var\(--theme-press-scale/u,
   );
   assert.match(
     styles,
@@ -75,8 +103,10 @@ test('product detail keeps a conversion-first mobile hierarchy', async () => {
   assert.match(flowStyles, /@media \(min-width: 768px\)/u);
   assert.doesNotMatch(flowStyles, /product-detail-secondary-media/u);
 
-  assert.match(
+  assert.match(loadingStyles, /\.product-detail-loading-route-action \{/u);
+  assert.doesNotMatch(
     loadingStyles,
-    /\.product-detail-loading-navigation \{[\s\S]*position: absolute/u,
+    /\.product-detail-loading-route-action \{[\s\S]{0,240}position: fixed/u,
   );
+  assert.doesNotMatch(loadingStyles, /product-detail-loading-navigation/u);
 });
