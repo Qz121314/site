@@ -160,7 +160,9 @@
   }
 
   :is(html, .storefront-theme-root)
-    :is(.section-category-filter button, .section-tag-filter button):hover:not(.is-active) {
+    :is(.section-category-filter button, .section-tag-filter button):hover:not(
+      .is-active
+    ) {
     border-color: color-mix(in srgb, var(--text) 18%, var(--line));
     color: var(--text);
     background: color-mix(in srgb, var(--surface-soft) 92%, var(--surface));

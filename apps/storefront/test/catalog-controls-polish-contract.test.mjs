@@ -22,21 +22,12 @@ test('catalog cards and filters share one touch-first visual contract', async ()
   assert.match(polish, /font-weight: var\(--catalog-card-title-weight\)/u);
   assert.match(polish, /box-shadow: var\(--catalog-card-shadow-pressed\)/u);
 
-  assert.match(
-    polish,
-    /\.section-category-filter button \{[\s\S]*border-radius: 999px/u,
-  );
+  assert.match(polish, /\.section-category-filter button \{[\s\S]*border-radius: 999px/u);
   assert.match(
     polish,
     /\.section-category-filter button\.is-active \{[\s\S]*background: var\(--text\)/u,
   );
-  assert.match(
-    polish,
-    /\.section-tag-filter button\.is-active \{[\s\S]*var\(--brand\)/u,
-  );
+  assert.match(polish, /\.section-tag-filter button\.is-active \{[\s\S]*var\(--brand\)/u);
   assert.match(polish, /\.section-category-filter button:focus-visible/u);
-  assert.match(
-    polish,
-    /\.section-category-filter button::after \{[\s\S]*display: none/u,
-  );
+  assert.match(polish, /\.section-category-filter button::after \{[\s\S]*display: none/u);
 });
