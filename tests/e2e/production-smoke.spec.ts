@@ -154,9 +154,7 @@ test('messages route remains renderable with the current support configuration',
   await expectNoHorizontalOverflow(page);
 });
 
-test('a published product renders its mobile CTA surface and carousel media flow', async ({
-  page,
-}) => {
+test('a published product keeps shell chrome fixed around carousel content', async ({ page }) => {
   await page.goto('/browse/');
   const sectionHref = await page
     .locator('a[href^="/sections/"]:not([href*="/products/"])')
@@ -172,14 +170,21 @@ test('a published product renders its mobile CTA surface and carousel media flow
   test.skip(!productHref, 'No published product is available for CTA verification.');
 
   await page.goto(productHref!);
-  const fixedAction = page.locator('body > .product-detail-fixed-action');
-  const cta = fixedAction.locator('.cta-button');
+  const header = page.locator('.app-shell > .storefront-detail-topbar');
+  const actionHost = page.locator('.app-shell > .storefront-route-action-host');
+  const routeAction = actionHost.locator('.product-detail-route-action');
+  const cta = routeAction.locator('.cta-button');
   const mobileMediaTrack = page.locator('.detail-mobile-media-track');
 
-  await expect(page.locator('.product-detail-back')).toBeVisible();
-  await expect(fixedAction).toBeVisible();
+  await expect(header).toBeVisible();
+  await expect(header.locator('.storefront-detail-back')).toBeVisible();
+  await expect(actionHost).toBeVisible();
+  await expect(routeAction).toBeVisible();
   await expect(cta).toBeVisible();
+  await expect(page.locator('.product-detail-navigation')).toHaveCount(0);
   await expect(page.locator('.product-detail-secondary-media')).toHaveCount(0);
+  await expect(page.locator('.storefront-route-view .storefront-route-action-host')).toHaveCount(0);
+
   if ((await mobileMediaTrack.count()) > 0) {
     await expect(mobileMediaTrack).toBeVisible();
     const mediaContract = await mobileMediaTrack.evaluate((element) => ({
@@ -190,27 +195,38 @@ test('a published product renders its mobile CTA surface and carousel media flow
     expect(mediaContract.scrollSnapType).toContain('x');
   }
 
-  const ctaContract = await page.evaluate(() => {
-    const pageElement = document.querySelector<HTMLElement>('.product-detail-page');
-    const action = document.querySelector<HTMLElement>(
-      'body > .product-detail-fixed-action',
-    );
-    const button = action?.querySelector<HTMLElement>('.cta-button');
+  const chromeContract = await page.evaluate(() => {
+    const headerElement = document.querySelector<HTMLElement>('.storefront-detail-topbar');
+    const host = document.querySelector<HTMLElement>('.storefront-route-action-host');
+    const button = host?.querySelector<HTMLElement>('.cta-button');
     return {
-      position: action ? getComputedStyle(action).position : null,
-      viewportBottomGap: action
-        ? Math.abs(window.innerHeight - action.getBoundingClientRect().bottom)
-        : Number.POSITIVE_INFINITY,
-      actionHeight: action?.getBoundingClientRect().height ?? 0,
-      buttonHeight: button?.getBoundingClientRect().height ?? 0,
-      pagePaddingBottom: pageElement
-        ? Number.parseFloat(getComputedStyle(pageElement).paddingBottom)
-        : 0,
+      headerContract: {
+        position: headerElement ? getComputedStyle(headerElement).position : null,
+        topGap: headerElement ? Math.abs(headerElement.getBoundingClientRect().top) : Infinity,
+      },
+      ctaContract: {
+        hostPosition: host ? getComputedStyle(host).position : null,
+        viewportBottomGap: host
+          ? Math.abs(window.innerHeight - host.getBoundingClientRect().bottom)
+          : Infinity,
+        buttonHeight: button?.getBoundingClientRect().height ?? 0,
+      },
     };
   });
 
-  expect(ctaContract.position).toBe('fixed');
+  const { headerContract, ctaContract } = chromeContract;
+  expect(headerContract.position).toBe('sticky');
+  expect(headerContract.topGap).toBeLessThanOrEqual(1);
+  expect(ctaContract.hostPosition).toBe('fixed');
   expect(ctaContract.viewportBottomGap).toBeLessThanOrEqual(1);
   expect(ctaContract.buttonHeight).toBeGreaterThanOrEqual(44);
-  expect(ctaContract.pagePaddingBottom).toBeGreaterThanOrEqual(ctaContract.actionHeight);
+
+  await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
+  await expect
+    .poll(() =>
+      actionHost.evaluate((element) =>
+        Math.abs(window.innerHeight - element.getBoundingClientRect().bottom),
+      ),
+    )
+    .toBeLessThanOrEqual(1);
 });
