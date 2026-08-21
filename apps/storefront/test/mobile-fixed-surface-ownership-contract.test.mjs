@@ -7,10 +7,11 @@ function source(path) {
   return readFileSync(new URL(path, import.meta.url), 'utf8');
 }
 
-test('mobile persistent surfaces are owned by App Shell instead of route patches', () => {
+test('mobile persistent surfaces are owned by App Shell and the live visual viewport', () => {
   const main = source('../src/main.tsx');
   const root = source('../src/StorefrontRoot.tsx');
   const routeAction = source('../src/StorefrontRouteAction.tsx');
+  const viewportRuntime = source('../src/storefront-viewport-runtime.ts');
   const appShell = source('../src/app-shell.css');
   const section = source('../src/section-ui.css');
   const detail = source('../src/product-detail-ui.css');
@@ -21,16 +22,33 @@ test('mobile persistent surfaces are owned by App Shell instead of route patches
 
   assert.equal(existsSync(removedLayer), false);
   assert.doesNotMatch(main, /mobile-fixed-surfaces\.css/u);
+  assert.match(main, /installStorefrontViewportRuntime\(\)/u);
+
+  assert.match(viewportRuntime, /window\.visualViewport/u);
+  assert.match(viewportRuntime, /ResizeObserver/u);
+  assert.match(viewportRuntime, /--app-header-height/u);
+  assert.match(viewportRuntime, /--app-bottom-nav-height/u);
+  assert.match(viewportRuntime, /--app-route-action-height/u);
 
   assert.match(appShell, /\.app-shell > \.bottom-nav/u);
-  assert.match(appShell, /\.storefront-route-action-host \{[\s\S]*position: fixed/u);
+  assert.match(
+    appShell,
+    /\.app-shell > \.topbar \{[\s\S]*position: fixed;[\s\S]*--app-viewport-top/u,
+  );
+  assert.match(
+    appShell,
+    /\.storefront-route-action-host \{[\s\S]*position: fixed;[\s\S]*--app-viewport-bottom/u,
+  );
   assert.match(appShell, /env\(safe-area-inset-bottom\)/u);
   assert.match(appShell, /messages-workspace\.is-thread-open/u);
   assert.match(root, /className="storefront-route-action-host"/u);
   assert.match(root, /data-shell-route=/u);
+  assert.match(root, /observeStorefrontShellChrome/u);
   assert.match(routeAction, /createPortal\(children, host\)/u);
 
-  assert.match(section, /100dvh - 68px - env\(safe-area-inset-bottom\)/u);
+  assert.match(section, /var\(--app-viewport-height/u);
+  assert.match(section, /var\(--app-bottom-nav-height/u);
+  assert.doesNotMatch(section, /100dvh - 68px/u);
   assert.match(section, /\.section-catalog-content[\s\S]*overflow-y: auto/u);
 
   assert.match(detail, /\.product-detail-route-action \{/u);

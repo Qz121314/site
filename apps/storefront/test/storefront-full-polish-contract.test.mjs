@@ -38,11 +38,17 @@ test('storefront polish stays theme-led and app-native across every primary surf
   }
 
   assert.match(shell, /\.app-shell \.brand-lockup[\s\S]*margin-inline: auto/u);
+  assert.match(shell, /\.app-shell > \.topbar \{[\s\S]*position: fixed/u);
   assert.match(shell, /\.app-shell > \.bottom-nav \{[\s\S]*position: fixed/u);
   assert.match(shell, /backdrop-filter: blur\(22px\)/u);
   assert.match(shell, /\.app-shell \.brand-logo \{[\s\S]*width: min\(/u);
   assert.match(shell, /\.storefront-route-action-host \{[\s\S]*position: fixed/u);
-  assert.match(shell, /\.storefront-route-action-host \{[\s\S]*bottom: 0/u);
+  assert.match(
+    shell,
+    /\.storefront-route-action-host \{[\s\S]*bottom: var\(--app-viewport-bottom/u,
+  );
+  assert.match(shell, /var\(--app-header-height/u);
+  assert.match(shell, /var\(--app-route-action-height/u);
   assert.match(shell, /\.storefront-detail-topbar \{/u);
   assert.match(shell, /\.storefront-detail-back \{/u);
   assert.doesNotMatch(
@@ -99,6 +105,7 @@ test('storefront polish stays theme-led and app-native across every primary surf
   assert.match(detailFlow, /\.detail-mobile-media-count \{/u);
   assert.doesNotMatch(detailFlow, /\.product-detail-secondary-media \{/u);
 
-  assert.match(pwa, /env\(safe-area-inset-bottom\)/u);
+  assert.match(pwa, /var\(--app-viewport-bottom/u);
+  assert.match(pwa, /var\(--app-bottom-nav-height/u);
   assert.match(pwa, /\.pwa-install-card/u);
 });

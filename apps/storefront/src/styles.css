@@ -75,17 +75,6 @@ p {
   margin-top: 0;
 }
 
-.app-shell {
-  min-height: 100vh;
-  padding-bottom: calc(86px + env(safe-area-inset-bottom));
-}
-
-main {
-  width: min(1120px, 100%);
-  margin: 0 auto;
-  padding: 16px 12px 42px;
-}
-
 .eyebrow {
   margin-bottom: 4px;
   color: var(--muted);
@@ -335,7 +324,7 @@ main {
 .standalone-state {
   display: grid;
   width: min(520px, calc(100% - 28px));
-  min-height: 100dvh;
+  min-height: var(--app-viewport-height, 100dvh);
   margin: 0 auto;
   place-content: center;
   justify-items: center;
@@ -422,20 +411,12 @@ main {
 }
 
 @media (min-width: 720px) {
-  main {
-    padding: 26px 22px 58px;
-  }
-
   .product-grid {
     gap: 16px;
   }
 }
 
 @media (min-width: 980px) {
-  .app-shell {
-    padding-bottom: 0;
-  }
-
   .product-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 18px;

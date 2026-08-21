@@ -11,6 +11,11 @@ const [
   productDetailSource,
   appShellStyles,
   routeActionSource,
+  viewportRuntime,
+  sectionStyles,
+  legacyStyles,
+  storefrontIndex,
+  themeRuntime,
 ] = await Promise.all([
   readFile('package.json', 'utf8'),
   readFile('.githooks/pre-commit', 'utf8'),
@@ -21,6 +26,11 @@ const [
   readFile('apps/storefront/src/ProductDetailPage.tsx', 'utf8'),
   readFile('apps/storefront/src/app-shell.css', 'utf8'),
   readFile('apps/storefront/src/StorefrontRouteAction.tsx', 'utf8'),
+  readFile('apps/storefront/src/storefront-viewport-runtime.ts', 'utf8'),
+  readFile('apps/storefront/src/section-ui.css', 'utf8'),
+  readFile('apps/storefront/src/styles.css', 'utf8'),
+  readFile('apps/storefront/index.html', 'utf8'),
+  readFile('apps/storefront/src/theme-runtime.ts', 'utf8'),
 ]);
 
 const packageJson = JSON.parse(packageText);
@@ -118,6 +128,97 @@ assert.match(
   appShellStyles,
   /\.storefront-route-action-host \{[\s\S]*position: fixed/u,
   'App Shell must own the viewport-fixed route action host',
+);
+
+assert.match(
+  viewportRuntime,
+  /window\.visualViewport/u,
+  'Storefront fixed chrome must derive live browser geometry from VisualViewport when available',
+);
+assert.match(
+  viewportRuntime,
+  /ResizeObserver/u,
+  'Storefront App Shell chrome clearance must use measured DOM geometry',
+);
+assert.match(
+  viewportRuntime,
+  /--app-header-height/u,
+  'viewport runtime must publish measured Header height',
+);
+assert.match(
+  viewportRuntime,
+  /--app-bottom-nav-height/u,
+  'viewport runtime must publish measured Bottom Navigation height',
+);
+assert.match(
+  viewportRuntime,
+  /--app-route-action-height/u,
+  'viewport runtime must publish measured Route Action height',
+);
+assert.doesNotMatch(
+  viewportRuntime,
+  /navigator\.(?:userAgent|platform|vendor)|navigator\.userAgentData/u,
+  'viewport geometry must not use navigator UA/platform sniffing',
+);
+assert.doesNotMatch(
+  viewportRuntime,
+  /['"`](?:iPhone|Android|Safari|Chrome)['"`]/u,
+  'viewport geometry must not branch on literal device or browser identities',
+);
+assert.match(
+  appShellStyles,
+  /\.app-shell > \.topbar \{[\s\S]*position: fixed;[\s\S]*var\(--app-viewport-top/u,
+  'App Shell Header must stay fixed to the live visual viewport',
+);
+assert.match(
+  appShellStyles,
+  /\.storefront-route-action-host \{[\s\S]*var\(--app-viewport-bottom/u,
+  'App Shell Route Action must clear dynamic browser chrome',
+);
+assert.match(
+  appShellStyles,
+  /var\(--app-header-height/u,
+  'App Shell content must clear the measured Header height',
+);
+assert.match(
+  appShellStyles,
+  /var\(--app-route-action-height/u,
+  'Product content must clear the measured Route Action height',
+);
+assert.doesNotMatch(
+  appShellStyles,
+  /max\(var\(--theme-detail-cta-height[\s\S]{0,180}\+ 58px/u,
+  'Product viewport clearance must not duplicate CTA and Header design constants',
+);
+assert.match(
+  sectionStyles,
+  /var\(--app-viewport-height/u,
+  'mobile Section geometry must derive from the live viewport runtime',
+);
+assert.match(
+  sectionStyles,
+  /var\(--app-bottom-nav-height/u,
+  'mobile Section geometry must clear the measured Bottom Navigation',
+);
+assert.doesNotMatch(
+  sectionStyles,
+  /100dvh\s*-\s*68px/u,
+  'mobile Section geometry must not duplicate a fixed Bottom Navigation height',
+);
+assert.doesNotMatch(
+  legacyStyles,
+  /\.app-shell\s*\{[\s\S]{0,120}padding-bottom/u,
+  'global styles must not regain App Shell layout ownership',
+);
+assert.match(
+  storefrontIndex,
+  /interactive-widget=resizes-content/u,
+  'mobile viewport metadata must request content resizing for interactive widgets',
+);
+assert.match(
+  themeRuntime,
+  /syncThemeColor\(theme\.tokens\.pageBg\)/u,
+  'browser chrome theme-color must blend with the current page background',
 );
 
 assert.doesNotMatch(

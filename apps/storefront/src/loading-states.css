@@ -1,13 +1,15 @@
 .startup-loader {
-  min-height: 100dvh;
+  min-height: var(--app-viewport-height, 100dvh);
   background: var(--page-bg, #f5f6f7);
 }
 
 .startup-app-shell {
   position: relative;
   width: 100%;
-  min-height: 100dvh;
-  padding-bottom: calc(72px + env(safe-area-inset-bottom));
+  min-height: var(--app-viewport-height, 100dvh);
+  padding-bottom: calc(
+    72px + var(--app-viewport-bottom, 0px) + env(safe-area-inset-bottom)
+  );
   overflow: hidden;
 }
 
@@ -108,9 +110,9 @@
 
 .startup-bottom-nav-skeleton {
   position: fixed;
-  right: 0;
-  bottom: 0;
-  left: 0;
+  right: var(--app-viewport-right, 0px);
+  bottom: var(--app-viewport-bottom, 0px);
+  left: var(--app-viewport-left, 0px);
   z-index: 30;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -157,9 +159,9 @@
 
 .route-progress {
   position: fixed;
-  top: env(safe-area-inset-top, 0px);
-  right: 0;
-  left: 0;
+  top: calc(var(--app-viewport-top, 0px) + env(safe-area-inset-top, 0px));
+  right: var(--app-viewport-right, 0px);
+  left: var(--app-viewport-left, 0px);
   z-index: 140;
   height: 2px;
   overflow: hidden;

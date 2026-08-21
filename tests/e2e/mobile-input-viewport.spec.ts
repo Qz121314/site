@@ -1,4 +1,5 @@
 import { expect, test, type Locator } from '@playwright/test';
+import { findPublishedSectionRoute } from './published-storefront-fixtures';
 
 async function expectNoFocusZoomFont(locator: Locator) {
   await expect(locator).toBeVisible();
@@ -11,20 +12,35 @@ async function expectNoFocusZoomFont(locator: Locator) {
     .toBeGreaterThanOrEqual(16);
 }
 
-test('mobile text controls keep a 16px font floor to avoid focus zoom', async ({
+test('mobile text controls keep a 16px font floor inside the live visual viewport', async ({
   page,
+  request,
 }) => {
+  const publishedSection = await findPublishedSectionRoute(request);
+  expect(publishedSection).toBeTruthy();
+
   await page.goto('/browse/');
   await expectNoFocusZoomFont(page.locator('.browse-directory-search input'));
 
-  const sectionHref = await page
-    .locator('a[href^="/sections/"]:not([href*="/products/"])')
-    .first()
-    .getAttribute('href');
-  expect(sectionHref).toBeTruthy();
-
-  await page.goto(sectionHref!);
+  await page.goto(publishedSection!.sectionHref);
   await expectNoFocusZoomFont(page.locator('.section-catalog-search input'));
+
+  const viewportContract = await page.evaluate(() => {
+    const root = document.documentElement;
+    const viewport = window.visualViewport;
+    const runtimeHeight = Number.parseFloat(
+      root.style.getPropertyValue('--app-viewport-height'),
+    );
+    return {
+      runtimeMode: root.dataset.visualViewport,
+      runtimeHeight,
+      visualHeight: viewport?.height ?? window.innerHeight,
+    };
+  });
+  expect(viewportContract.runtimeMode).toBeTruthy();
+  expect(
+    Math.abs(viewportContract.runtimeHeight - viewportContract.visualHeight),
+  ).toBeLessThanOrEqual(1.5);
 
   const controlFontSizes = await page.evaluate(() => {
     const shell = document.querySelector<HTMLElement>('.app-shell');

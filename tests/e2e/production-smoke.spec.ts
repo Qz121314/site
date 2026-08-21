@@ -158,7 +158,7 @@ test('messages route remains renderable with the current support configuration',
   await expectNoHorizontalOverflow(page);
 });
 
-test('a published product keeps shell chrome fixed around carousel content', async ({
+test('a published product keeps shell chrome inside the live visual viewport', async ({
   page,
   request,
 }) => {
@@ -194,22 +194,37 @@ test('a published product keeps shell chrome fixed around carousel content', asy
   }
 
   const chromeContract = await page.evaluate(() => {
+    const root = document.documentElement;
+    const viewport = window.visualViewport;
+    const visualTop = viewport?.offsetTop ?? 0;
+    const visualHeight = viewport?.height ?? window.innerHeight;
+    const visualBottom = visualTop + visualHeight;
     const headerElement = document.querySelector<HTMLElement>(
       '.storefront-detail-topbar',
     );
     const host = document.querySelector<HTMLElement>('.storefront-route-action-host');
     const button = host?.querySelector<HTMLElement>('.cta-button');
+    const headerRect = headerElement?.getBoundingClientRect();
+    const hostRect = host?.getBoundingClientRect();
+    const cssNumber = (name: string) =>
+      Number.parseFloat(root.style.getPropertyValue(name)) || 0;
+
     return {
+      viewportRuntime: root.dataset.visualViewport,
+      runtimeViewportHeight: cssNumber('--app-viewport-height'),
+      visualHeight,
       headerContract: {
         position: headerElement ? getComputedStyle(headerElement).position : null,
-        topGap: headerElement
-          ? Math.abs(headerElement.getBoundingClientRect().top)
+        visualTopGap: headerRect ? Math.abs(headerRect.top - visualTop) : Infinity,
+        runtimeHeightGap: headerRect
+          ? Math.abs(cssNumber('--app-header-height') - headerRect.height)
           : Infinity,
       },
       ctaContract: {
         hostPosition: host ? getComputedStyle(host).position : null,
-        viewportBottomGap: host
-          ? Math.abs(window.innerHeight - host.getBoundingClientRect().bottom)
+        visualBottomGap: hostRect ? Math.abs(visualBottom - hostRect.bottom) : Infinity,
+        runtimeHeightGap: hostRect
+          ? Math.abs(cssNumber('--app-route-action-height') - hostRect.height)
           : Infinity,
         buttonHeight: button?.getBoundingClientRect().height ?? 0,
       },
@@ -217,18 +232,27 @@ test('a published product keeps shell chrome fixed around carousel content', asy
   });
 
   const { headerContract, ctaContract } = chromeContract;
-  expect(headerContract.position).toBe('sticky');
-  expect(headerContract.topGap).toBeLessThanOrEqual(1);
+  expect(chromeContract.viewportRuntime).toBeTruthy();
+  expect(
+    Math.abs(chromeContract.runtimeViewportHeight - chromeContract.visualHeight),
+  ).toBeLessThanOrEqual(1.5);
+  expect(headerContract.position).toBe('fixed');
+  expect(headerContract.visualTopGap).toBeLessThanOrEqual(1.5);
+  expect(headerContract.runtimeHeightGap).toBeLessThanOrEqual(1.5);
   expect(ctaContract.hostPosition).toBe('fixed');
-  expect(ctaContract.viewportBottomGap).toBeLessThanOrEqual(1);
+  expect(ctaContract.visualBottomGap).toBeLessThanOrEqual(1.5);
+  expect(ctaContract.runtimeHeightGap).toBeLessThanOrEqual(1.5);
   expect(ctaContract.buttonHeight).toBeGreaterThanOrEqual(44);
 
   await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
   await expect
     .poll(() =>
-      actionHost.evaluate((element) =>
-        Math.abs(window.innerHeight - element.getBoundingClientRect().bottom),
-      ),
+      actionHost.evaluate((element) => {
+        const viewport = window.visualViewport;
+        const visualBottom =
+          (viewport?.offsetTop ?? 0) + (viewport?.height ?? window.innerHeight);
+        return Math.abs(visualBottom - element.getBoundingClientRect().bottom);
+      }),
     )
-    .toBeLessThanOrEqual(1);
+    .toBeLessThanOrEqual(1.5);
 });

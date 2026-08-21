@@ -7,6 +7,7 @@ test('product detail keeps a conversion-first mobile hierarchy', async () => {
     source,
     rootSource,
     routeActionSource,
+    viewportRuntime,
     shellStyles,
     styles,
     flowStyles,
@@ -15,6 +16,7 @@ test('product detail keeps a conversion-first mobile hierarchy', async () => {
     readFile(new URL('../src/ProductDetailPage.tsx', import.meta.url), 'utf8'),
     readFile(new URL('../src/StorefrontRoot.tsx', import.meta.url), 'utf8'),
     readFile(new URL('../src/StorefrontRouteAction.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../src/storefront-viewport-runtime.ts', import.meta.url), 'utf8'),
     readFile(new URL('../src/app-shell.css', import.meta.url), 'utf8'),
     readFile(new URL('../src/product-detail-ui.css', import.meta.url), 'utf8'),
     readFile(new URL('../src/product-detail-content-flow.css', import.meta.url), 'utf8'),
@@ -42,15 +44,25 @@ test('product detail keeps a conversion-first mobile hierarchy', async () => {
   assert.match(rootSource, /className="storefront-route-action-host"/u);
   assert.match(rootSource, /data-shell-header=/u);
   assert.match(rootSource, /storefront-detail-topbar/u);
+  assert.match(rootSource, /observeStorefrontShellChrome/u);
   assert.match(routeActionSource, /StorefrontRouteActionHostContext/u);
   assert.match(routeActionSource, /createPortal/u);
+  assert.match(viewportRuntime, /--app-route-action-height/u);
 
   assert.match(source, /const ctaFailed =/u);
   assert.match(source, /disabled=\{ctaQuery\.isFetching \|\| ctaMissing\}/u);
   assert.match(source, /<span>\{SYSTEM_UI\.retry\}<\/span>/u);
 
   assert.match(shellStyles, /\.storefront-route-action-host \{[\s\S]*position: fixed/u);
-  assert.match(shellStyles, /\.storefront-route-action-host \{[\s\S]*bottom: 0/u);
+  assert.match(
+    shellStyles,
+    /\.storefront-route-action-host \{[\s\S]*bottom: var\(--app-viewport-bottom/u,
+  );
+  assert.match(shellStyles, /var\(--app-route-action-height/u);
+  assert.doesNotMatch(
+    shellStyles,
+    /max\(var\(--theme-detail-cta-height[\s\S]{0,180}\+ 58px/u,
+  );
   assert.doesNotMatch(
     shellStyles,
     /html\[data-storefront-presentation='push'\]\s+\.app-shell > \.topbar/u,

@@ -48,9 +48,12 @@ These are defaults unless the user explicitly changes the product rule.
 - Prefer batch reads, bootstrap reuse, cached/public snapshots, and local filtering over repeated Worker/D1 reads.
 - Theme recipe values are runtime/admin configuration. Production smoke tests must not hard-code a specific theme name, font pack, media style, motion style, navigation style, shadow, radius, or other mutable visual value unless that value is an explicit product invariant.
 - Storefront App Shell owns persistent chrome: Header, Bottom Navigation, and viewport-fixed route action surfaces. Route pages provide content/action intent but must not mount global fixed UI directly to `document.body`.
+- Mobile/browser fixed chrome must align to the live `VisualViewport` when available; do not use UA sniffing, device-model branches, or browser-specific magic offsets for Header, Bottom Navigation, CTA, keyboard, or browser-toolbar clearance.
+- Safe Area variables handle physical screen cutouts and home-indicator clearance. Dynamic browser chrome and virtual-keyboard geometry come from the viewport runtime; these responsibilities must not be conflated.
+- App Shell content clearance must use measured Header, Bottom Navigation, and Route Action dimensions. Do not duplicate their heights in route CSS formulas such as `CTA height + header constant` or `100dvh - nav constant`.
 - Storefront presentation/history runtime owns navigation direction and route transition semantics only. Do not use generic `push`/`pop` presentation selectors to hide or replace App Shell chrome.
-- Route transition transforms apply to route content only. Persistent Header and route action surfaces must stay outside the transformed route view so fixed/sticky behavior remains stable.
-- Production acceptance tests validate stable behavior and contracts: rendering, runtime configuration application, navigation, overflow, media ratio, CTA availability, auth boundaries, request/data contracts, and deployment health. They are not pixel-snapshot substitutes.
+- Route transition transforms apply to route content only. Persistent Header and route action surfaces must stay outside the transformed route view so their viewport positioning remains stable.
+- Production acceptance tests validate stable behavior and contracts: rendering, runtime configuration application, navigation, overflow, media ratio, CTA availability, auth boundaries, request/data contracts, viewport/chrome ownership, and deployment health. They are not pixel-snapshot substitutes.
 - When a UI rule intentionally changes, inspect both the implementation test and any meta/source-contract test that reads the E2E source.
 - Do not add temporary debug workflows, diagnostic files, or one-off CI workarounds to the final PR.
 - Do not increase Worker/D1 request counts merely to simplify frontend code when the same data can be returned in an existing request or computed locally.

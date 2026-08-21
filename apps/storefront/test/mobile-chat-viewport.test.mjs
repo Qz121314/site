@@ -7,21 +7,24 @@ function source(path) {
   return readFileSync(new URL(path, import.meta.url), 'utf8');
 }
 
-test('mobile visitor chat uses one CSS viewport model owned by the shell and conversation', () => {
+test('mobile visitor chat inherits the shared visual viewport owned by App Shell', () => {
   const html = source('../index.html');
   const main = source('../src/main.tsx');
+  const viewportRuntime = source('../src/storefront-viewport-runtime.ts');
   const appShell = source('../src/app-shell.css');
   const conversationCss = source('../src/chat-conversation.css');
 
   assert.ok(html.includes('viewport-fit=cover'));
-  assert.equal(html.includes('interactive-widget='), false);
+  assert.ok(html.includes('interactive-widget=resizes-content'));
+  assert.match(main, /installStorefrontViewportRuntime/u);
+  assert.match(viewportRuntime, /window\.visualViewport/u);
   assert.equal(main.includes('mobile-chat-viewport'), false);
   assert.equal(main.includes('installMobileChatViewportRuntime'), false);
   assert.equal(main.includes('mobile-fixed-surfaces.css'), false);
 
   assert.match(
     appShell,
-    /\.app-shell:has\(\.messages-workspace\.is-thread-open\) > main \{[\s\S]*?height: 100dvh;[\s\S]*?padding: 0;/u,
+    /\.app-shell:has\(\.messages-workspace\.is-thread-open\) > main \{[\s\S]*?height: var\(--app-viewport-height, 100dvh\);[\s\S]*?padding: 0;/u,
   );
   assert.match(
     conversationCss,
