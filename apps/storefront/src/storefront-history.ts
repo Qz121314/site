@@ -256,14 +256,19 @@ export function recordStorefrontHistoryPush(): void {
   window.scrollTo({ left: 0, top: 0, behavior: 'auto' });
 }
 
-export function syncStorefrontHistoryFromPopState(state: unknown): void {
+export function syncStorefrontHistoryFromPopState(
+  state: unknown,
+): StorefrontNavigationDirection | null {
   const sessionId = activeSessionId();
-  if (!sessionId) return;
+  if (!sessionId) return null;
   const next = readStateMeta(state, sessionId);
-  if (!next) return;
-  markNavigationDirection(next.index < lastKnownIndex ? 'back' : 'forward');
+  if (!next) return null;
+  const direction: StorefrontNavigationDirection =
+    next.index < lastKnownIndex ? 'back' : 'forward';
+  markNavigationDirection(direction);
   lastKnownIndex = next.index;
   restoreScrollPosition(readScrollPosition(state));
+  return direction;
 }
 
 export function canNavigateStorefrontBack(): boolean {
