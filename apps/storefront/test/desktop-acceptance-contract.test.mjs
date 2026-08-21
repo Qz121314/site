@@ -22,8 +22,16 @@ test('desktop production acceptance and visual v2 shell remain wired', async () 
   assert.match(mainSource, /import '\.\/app-shell\.css';/u);
   assert.doesNotMatch(mainSource, /desktop-shell\.css/u);
 
-  assert.match(appShell, /\.app-shell > \.bottom-nav/u);
-  assert.match(appShell, /\.storefront-route-action-host \{[\s\S]*position: fixed/u);
+  assert.match(appShell, /\.storefront-bottom-chrome \{[\s\S]*position: fixed/u);
+  assert.match(
+    appShell,
+    /\.storefront-bottom-chrome > \.bottom-nav \{[\s\S]*position: static/u,
+  );
+  assert.match(appShell, /\.storefront-route-action-host \{[\s\S]*pointer-events: none/u);
+  assert.doesNotMatch(
+    appShell,
+    /\.storefront-route-action-host \{[\s\S]{0,220}position: fixed/u,
+  );
   assert.match(appShell, /\.storefront-detail-topbar \{/u);
   assert.match(appShell, /article\.product-detail-page \.product-detail-inline-action/u);
   assert.doesNotMatch(appShell, /body > \.product-detail-fixed-action/u);
@@ -34,11 +42,17 @@ test('desktop production acceptance and visual v2 shell remain wired', async () 
   assert.match(sectionStyles, /grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/u);
   assert.match(sectionStyles, /\.section-category-filter button::after/u);
 
+  assert.match(desktopSpec, /\.app-shell > \.storefront-bottom-chrome > \.bottom-nav/u);
+  assert.match(desktopSpec, /bottomChromePosition/u);
+  assert.match(desktopSpec, /navigationPosition/u);
+  assert.match(desktopSpec, /toBe\('fixed'\)/u);
+  assert.match(desktopSpec, /toBe\('static'\)/u);
   assert.match(desktopSpec, /product-detail-inline-action \.cta-button/u);
   assert.match(
     desktopSpec,
     /\.storefront-route-action-host \.product-detail-route-action/u,
   );
   assert.match(desktopSpec, /\.app-shell > \.storefront-detail-topbar/u);
+  assert.doesNotMatch(desktopSpec, /\.app-shell > \.bottom-nav/u);
   assert.doesNotMatch(desktopSpec, /body > \.product-detail-fixed-action/u);
 });

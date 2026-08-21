@@ -14,7 +14,7 @@ body,
   --v2-control-bg: color-mix(in srgb, var(--surface-soft) 90%, var(--surface));
   min-height: var(--app-viewport-height, 100dvh);
   padding-bottom: calc(
-    var(--app-bottom-nav-height, 0px) + var(--app-viewport-bottom, 0px)
+    var(--app-bottom-chrome-height, 0px) + var(--app-viewport-bottom, 0px)
   );
   color: var(--text);
   background: var(--page-bg, #f5f6f7);
@@ -151,7 +151,7 @@ html[data-theme='noir'] .app-shell {
 .app-shell[data-shell-route='product'] > main {
   padding-top: calc(var(--app-viewport-top, 0px) + var(--app-header-height, 0px));
   padding-bottom: calc(
-    var(--app-route-action-height, 0px) + var(--app-viewport-bottom, 0px) + 24px
+    var(--app-bottom-chrome-height, 0px) + var(--app-viewport-bottom, 0px) + 24px
   );
 }
 
@@ -159,12 +159,34 @@ html[data-theme='noir'] .app-shell {
   min-width: 0;
 }
 
-.storefront-route-action-host {
+.storefront-bottom-chrome {
   position: fixed;
   right: var(--app-viewport-right, 0px);
   bottom: var(--app-viewport-bottom, 0px);
   left: var(--app-viewport-left, 0px);
   z-index: 80;
+  width: auto;
+  pointer-events: none;
+}
+
+.storefront-bottom-chrome:empty {
+  display: none;
+}
+
+.storefront-bottom-chrome > .bottom-nav {
+  position: static;
+  right: auto;
+  bottom: auto;
+  left: auto;
+  z-index: auto;
+  width: 100%;
+  margin: 0;
+  transform: none;
+  pointer-events: auto;
+}
+
+.storefront-route-action-host {
+  width: 100%;
   pointer-events: none;
 }
 
@@ -272,7 +294,7 @@ html[data-theme='noir'] .app-shell {
 
   .app-shell {
     padding-bottom: calc(
-      var(--app-bottom-nav-height, 0px) + var(--app-viewport-bottom, 0px)
+      var(--app-bottom-chrome-height, 0px) + var(--app-viewport-bottom, 0px)
     );
   }
 
@@ -303,7 +325,7 @@ html[data-theme='noir'] .app-shell {
     min-height: var(--app-viewport-height, 100dvh);
     padding-top: calc(var(--app-viewport-top, 0px) + var(--app-header-height, 0px));
     padding-bottom: calc(
-      var(--app-route-action-height, 0px) + var(--app-viewport-bottom, 0px) + 24px
+      var(--app-bottom-chrome-height, 0px) + var(--app-viewport-bottom, 0px) + 24px
     );
   }
 
@@ -339,14 +361,7 @@ html[data-theme='noir'] .app-shell {
     display: none;
   }
 
-  .app-shell > .bottom-nav {
-    position: fixed;
-    right: var(--app-viewport-right, 0px);
-    bottom: var(--app-viewport-bottom, 0px);
-    left: var(--app-viewport-left, 0px);
-    z-index: 64;
-    width: auto;
-    margin: 0;
+  .storefront-bottom-chrome > .bottom-nav {
     padding: 3px max(8px, env(safe-area-inset-right))
       calc(4px + env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
     border: 0;
@@ -354,11 +369,10 @@ html[data-theme='noir'] .app-shell {
     border-radius: 0;
     background: color-mix(in srgb, var(--surface, #fff) 94%, transparent);
     box-shadow: 0 -10px 28px color-mix(in srgb, var(--text) 3%, transparent);
-    transform: none;
     backdrop-filter: blur(22px) saturate(1.06);
   }
 
-  .app-shell > .bottom-nav a {
+  .storefront-bottom-chrome > .bottom-nav a {
     position: relative;
     min-height: 56px;
     gap: 1px;
@@ -371,22 +385,22 @@ html[data-theme='noir'] .app-shell {
       transform var(--app-motion-fast, 160ms) var(--app-ease-out, ease-out);
   }
 
-  .app-shell > .bottom-nav a:active {
+  .storefront-bottom-chrome > .bottom-nav a:active {
     opacity: 0.68;
     transform: scale(0.97);
   }
 
-  .app-shell > .bottom-nav a.is-active {
+  .storefront-bottom-chrome > .bottom-nav a.is-active {
     color: var(--text);
     background: transparent;
     font-weight: 640;
   }
 
-  .app-shell > .bottom-nav a::before {
+  .storefront-bottom-chrome > .bottom-nav a::before {
     display: none;
   }
 
-  .app-shell > .bottom-nav .bottom-nav-icon {
+  .storefront-bottom-chrome > .bottom-nav .bottom-nav-icon {
     width: 38px;
     height: 28px;
     border-radius: 999px;
@@ -396,16 +410,16 @@ html[data-theme='noir'] .app-shell {
       transform var(--app-motion-fast, 160ms) var(--app-ease-out, ease-out);
   }
 
-  .app-shell > .bottom-nav a.is-active .bottom-nav-icon {
+  .storefront-bottom-chrome > .bottom-nav a.is-active .bottom-nav-icon {
     background: color-mix(in srgb, var(--text) 7%, transparent);
     transform: translateY(-1px);
   }
 
-  .app-shell > .bottom-nav a.is-active .storefront-nav-svg {
+  .storefront-bottom-chrome > .bottom-nav a.is-active .storefront-nav-svg {
     stroke-width: 2.05;
   }
 
-  .app-shell > .bottom-nav small {
+  .storefront-bottom-chrome > .bottom-nav small {
     font-size: 0.61rem;
     font-weight: 560;
     letter-spacing: -0.006em;
@@ -490,7 +504,7 @@ html[data-theme='noir'] .app-shell {
     }
 
     .app-shell:has(.messages-workspace.is-thread-open) > .topbar,
-    .app-shell:has(.messages-workspace.is-thread-open) > .bottom-nav {
+    .app-shell:has(.messages-workspace.is-thread-open) > .storefront-bottom-chrome {
       display: none;
     }
 
@@ -536,19 +550,26 @@ html[data-theme='noir'] .app-shell {
       var(--app-viewport-top, 0px) + var(--app-header-height, 0px) + 25px
     );
     padding-bottom: calc(
-      var(--app-route-action-height, 0px) + var(--app-viewport-bottom, 0px) + 30px
+      var(--app-bottom-chrome-height, 0px) + var(--app-viewport-bottom, 0px) + 30px
     );
   }
 
-  .app-shell > .bottom-nav {
+  .storefront-bottom-chrome {
     right: auto;
     bottom: calc(var(--app-viewport-bottom, 0px) + 14px);
     left: 50%;
     width: min(520px, calc(100% - 28px));
+    transform: translateX(-50%);
+  }
+
+  .app-shell[data-shell-route='product'] > .storefront-bottom-chrome {
+    width: min(720px, calc(100% - 28px));
+  }
+
+  .storefront-bottom-chrome > .bottom-nav {
     border: 1px solid color-mix(in srgb, var(--line) 82%, transparent);
     border-radius: var(--theme-radius-card, 14px);
     box-shadow: 0 14px 38px color-mix(in srgb, var(--text) 10%, transparent);
-    transform: translateX(-50%);
   }
 }
 
@@ -583,28 +604,34 @@ html[data-theme='noir'] .app-shell {
     padding-left: 24px;
   }
 
-  .app-shell > .bottom-nav {
-    position: fixed;
+  .storefront-bottom-chrome {
     top: calc(var(--app-viewport-top, 0px) + 10px);
     right: max(24px, calc((100vw - var(--v2-content-width)) / 2));
     bottom: auto;
     left: auto;
     z-index: 60;
+    width: auto;
+    transform: none;
+  }
+
+  .app-shell[data-shell-route='product'] > .storefront-bottom-chrome {
+    display: none;
+  }
+
+  .storefront-bottom-chrome > .bottom-nav {
     display: flex;
     width: auto;
     align-items: center;
     gap: 19px;
-    margin: 0;
     padding: 0;
     border: 0;
     border-radius: 0;
     background: transparent;
     box-shadow: none;
-    transform: none;
     backdrop-filter: none;
   }
 
-  .app-shell > .bottom-nav a {
+  .storefront-bottom-chrome > .bottom-nav a {
     position: relative;
     display: flex;
     min-width: 0;
@@ -621,7 +648,7 @@ html[data-theme='noir'] .app-shell {
       opacity var(--app-motion-fast, 160ms) ease;
   }
 
-  .app-shell > .bottom-nav a::after {
+  .storefront-bottom-chrome > .bottom-nav a::after {
     position: absolute;
     right: 0;
     bottom: 5px;
@@ -637,7 +664,7 @@ html[data-theme='noir'] .app-shell {
       transform var(--app-motion-fast, 160ms) ease;
   }
 
-  .app-shell > .bottom-nav .bottom-nav-icon {
+  .storefront-bottom-chrome > .bottom-nav .bottom-nav-icon {
     display: grid;
     width: 19px;
     height: 19px;
@@ -645,29 +672,31 @@ html[data-theme='noir'] .app-shell {
     place-items: center;
   }
 
-  .app-shell > .bottom-nav :is(.storefront-nav-image, .storefront-nav-emoji) {
+  .storefront-bottom-chrome
+    > .bottom-nav
+    :is(.storefront-nav-image, .storefront-nav-emoji) {
     width: 18px;
     height: 18px;
     flex-basis: 18px;
   }
 
-  .app-shell > .bottom-nav .storefront-nav-emoji {
+  .storefront-bottom-chrome > .bottom-nav .storefront-nav-emoji {
     font-size: 1rem;
     line-height: 18px;
   }
 
-  .app-shell > .bottom-nav small {
+  .storefront-bottom-chrome > .bottom-nav small {
     font-size: 0.73rem;
     font-weight: 580;
     letter-spacing: -0.008em;
   }
 
-  .app-shell > .bottom-nav a.is-active {
+  .storefront-bottom-chrome > .bottom-nav a.is-active {
     color: var(--text);
     background: transparent;
   }
 
-  .app-shell > .bottom-nav a.is-active::after {
+  .storefront-bottom-chrome > .bottom-nav a.is-active::after {
     opacity: 1;
     transform: scaleX(1);
   }
@@ -678,14 +707,14 @@ html[data-theme='noir'] .app-shell {
 }
 
 @media (hover: hover) and (pointer: fine) and (min-width: 980px) {
-  .app-shell > .bottom-nav a:hover {
+  .storefront-bottom-chrome > .bottom-nav a:hover {
     color: var(--text);
     background: transparent;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .app-shell > .bottom-nav a,
+  .storefront-bottom-chrome > .bottom-nav a,
   .mobile-edge-navigation {
     transition: none;
   }

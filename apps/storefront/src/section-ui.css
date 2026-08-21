@@ -444,7 +444,7 @@
     .app-shell:has(.section-catalog) > main {
       width: 100%;
       height: calc(
-        var(--app-viewport-height, 100dvh) - var(--app-bottom-nav-height, 0px)
+        var(--app-viewport-height, 100dvh) - var(--app-bottom-chrome-height, 0px)
       );
       min-height: 0;
       margin: 0;

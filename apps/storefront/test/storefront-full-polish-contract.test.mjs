@@ -39,16 +39,21 @@ test('storefront polish stays theme-led and app-native across every primary surf
 
   assert.match(shell, /\.app-shell \.brand-lockup[\s\S]*margin-inline: auto/u);
   assert.match(shell, /\.app-shell > \.topbar \{[\s\S]*position: fixed/u);
-  assert.match(shell, /\.app-shell > \.bottom-nav \{[\s\S]*position: fixed/u);
+  assert.match(shell, /\.storefront-bottom-chrome \{[\s\S]*position: fixed/u);
   assert.match(shell, /backdrop-filter: blur\(22px\)/u);
   assert.match(shell, /\.app-shell \.brand-logo \{[\s\S]*width: min\(/u);
-  assert.match(shell, /\.storefront-route-action-host \{[\s\S]*position: fixed/u);
+  assert.doesNotMatch(
+    shell,
+    /\.storefront-route-action-host \{[\s\S]{0,220}position: fixed/u,
+  );
   assert.match(
     shell,
-    /\.storefront-route-action-host \{[\s\S]*bottom: var\(--app-viewport-bottom/u,
+    /\.storefront-bottom-chrome \{[\s\S]*bottom: var\(--app-viewport-bottom/u,
   );
   assert.match(shell, /var\(--app-header-height/u);
-  assert.match(shell, /var\(--app-route-action-height/u);
+  assert.match(shell, /var\(--app-bottom-chrome-height/u);
+  assert.doesNotMatch(shell, /var\(--app-route-action-height/u);
+  assert.doesNotMatch(shell, /var\(--app-bottom-nav-height/u);
   assert.match(shell, /\.storefront-detail-topbar \{/u);
   assert.match(shell, /\.storefront-detail-back \{/u);
   assert.doesNotMatch(
@@ -57,11 +62,11 @@ test('storefront polish stays theme-led and app-native across every primary surf
   );
   assert.match(
     shell,
-    /\.app-shell > \.bottom-nav a\.is-active \{[\s\S]*background: transparent/u,
+    /\.storefront-bottom-chrome > \.bottom-nav a\.is-active \{[\s\S]*background: transparent/u,
   );
   assert.match(
     shell,
-    /\.app-shell > \.bottom-nav a\.is-active \.bottom-nav-icon \{[\s\S]*background: color-mix/u,
+    /\.storefront-bottom-chrome > \.bottom-nav a\.is-active \.bottom-nav-icon \{[\s\S]*background: color-mix/u,
   );
 
   assert.match(hero, /\.hero-carousel-copy :is\(h1, h2\)/u);
@@ -106,6 +111,7 @@ test('storefront polish stays theme-led and app-native across every primary surf
   assert.doesNotMatch(detailFlow, /\.product-detail-secondary-media \{/u);
 
   assert.match(pwa, /var\(--app-viewport-bottom/u);
-  assert.match(pwa, /var\(--app-bottom-nav-height/u);
+  assert.match(pwa, /var\(--app-bottom-chrome-height/u);
+  assert.doesNotMatch(pwa, /var\(--app-bottom-nav-height/u);
   assert.match(pwa, /\.pwa-install-card/u);
 });
