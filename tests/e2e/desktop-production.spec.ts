@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
+import { findPublishedProductRoute } from './published-storefront-fixtures';
 
 async function expectNoHorizontalOverflow(page: Page) {
   await expect
@@ -73,18 +74,15 @@ test('desktop shell keeps the centered brand and primary navigation usable', asy
 
 test('desktop section and product detail use the PC decision layout', async ({
   page,
+  request,
 }) => {
   const pageErrors: string[] = [];
   page.on('pageerror', (error) => pageErrors.push(error.message));
 
-  await page.goto('/browse/');
-  const sectionHref = await page
-    .locator('a[href^="/sections/"]:not([href*="/products/"])')
-    .first()
-    .getAttribute('href');
-  test.skip(!sectionHref, 'No published section is available for desktop acceptance.');
+  const publishedRoute = await findPublishedProductRoute(request);
+  test.skip(!publishedRoute, 'No published product is available for desktop acceptance.');
 
-  await page.goto(sectionHref!);
+  await page.goto(publishedRoute!.sectionHref);
   await expect(page.locator('.section-catalog')).toBeVisible();
   await expect(page.locator('.app-shell > .topbar')).toBeVisible();
 
@@ -118,10 +116,7 @@ test('desktop section and product detail use the PC decision layout', async ({
     expect(layout[1]!.coverRatio ?? 0).toBeCloseTo(1, 2);
   }
 
-  const productHref = await productCards.first().getAttribute('href');
-  test.skip(!productHref, 'No published product is available for desktop acceptance.');
-
-  await page.goto(productHref!);
+  await page.goto(publishedRoute!.productHref);
   await expect(page.locator('.product-detail-page')).toBeVisible();
   await expect(page.locator('.app-shell > .storefront-detail-topbar')).toBeVisible();
   await expect(page.locator('.detail-desktop-gallery')).toBeVisible();
