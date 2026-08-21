@@ -102,7 +102,9 @@ export async function findPublishedProductRoute(
     ...(Array.isArray(bootstrap.home?.featuredProducts)
       ? bootstrap.home.featuredProducts
       : []),
-    ...(Array.isArray(bootstrap.home?.latestProducts) ? bootstrap.home.latestProducts : []),
+    ...(Array.isArray(bootstrap.home?.latestProducts)
+      ? bootstrap.home.latestProducts
+      : []),
   ];
   const homeRoute = firstProductRoute(sections, homeProducts);
   if (homeRoute) return homeRoute;
@@ -118,7 +120,9 @@ export async function findPublishedProductRoute(
     );
     if (!response.ok()) continue;
     const sectionPayload = (await response.json()) as SectionPayload;
-    const products = Array.isArray(sectionPayload.products) ? sectionPayload.products : [];
+    const products = Array.isArray(sectionPayload.products)
+      ? sectionPayload.products
+      : [];
     const route = firstProductRoute([section], products);
     if (route) return route;
   }
