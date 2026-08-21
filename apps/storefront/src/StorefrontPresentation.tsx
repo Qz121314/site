@@ -1,5 +1,11 @@
 import { useLayoutEffect } from 'react';
 import { parseStorefrontRoute } from './routing';
+import {
+  ensureStorefrontHistoryState,
+  recordStorefrontHistoryPush,
+  syncStorefrontHistoryFromPopState,
+  type StorefrontNavigationDirection,
+} from './storefront-history';
 
 const NAVIGATION_EVENT = 'storefront:navigate';
 
@@ -20,16 +26,26 @@ function presentationMode(pathname: string): StorefrontPresentationMode {
   }
 }
 
-function applyPresentationMode() {
+function transitionModeForNavigation(
+  previousMode: StorefrontPresentationMode | undefined,
+  nextMode: StorefrontPresentationMode,
+  direction: StorefrontNavigationDirection | null,
+): StorefrontTransitionMode | null {
+  if (!previousMode) return null;
+  if (previousMode === 'root' && nextMode === 'root') return 'tab';
+  if (direction === 'back') return 'pop';
+  if (direction === 'forward') return 'push';
+  if (nextMode === 'push') return 'push';
+  if (previousMode === 'push' && nextMode === 'root') return 'pop';
+  return null;
+}
+
+function applyPresentationMode(direction: StorefrontNavigationDirection | null = null) {
   const element = document.documentElement;
   const previousMode = element.dataset.storefrontPresentation as
     StorefrontPresentationMode | undefined;
   const nextMode = presentationMode(window.location.pathname);
-  let transitionMode: StorefrontTransitionMode | null = null;
-
-  if (previousMode === 'root' && nextMode === 'root') transitionMode = 'tab';
-  else if (previousMode && nextMode === 'push') transitionMode = 'push';
-  else if (previousMode === 'push' && nextMode === 'root') transitionMode = 'pop';
+  const transitionMode = transitionModeForNavigation(previousMode, nextMode, direction);
 
   element.dataset.storefrontPresentation = nextMode;
   if (transitionMode) element.dataset.storefrontTransition = transitionMode;
@@ -38,12 +54,24 @@ function applyPresentationMode() {
 
 export function StorefrontPresentation() {
   useLayoutEffect(() => {
+    ensureStorefrontHistoryState();
     applyPresentationMode();
-    window.addEventListener('popstate', applyPresentationMode);
-    window.addEventListener(NAVIGATION_EVENT, applyPresentationMode);
+
+    function handleStorefrontNavigation() {
+      recordStorefrontHistoryPush();
+      applyPresentationMode('forward');
+    }
+
+    function handlePopState(event: PopStateEvent) {
+      const direction = syncStorefrontHistoryFromPopState(event.state);
+      applyPresentationMode(direction);
+    }
+
+    window.addEventListener('popstate', handlePopState);
+    window.addEventListener(NAVIGATION_EVENT, handleStorefrontNavigation);
     return () => {
-      window.removeEventListener('popstate', applyPresentationMode);
-      window.removeEventListener(NAVIGATION_EVENT, applyPresentationMode);
+      window.removeEventListener('popstate', handlePopState);
+      window.removeEventListener(NAVIGATION_EVENT, handleStorefrontNavigation);
       delete document.documentElement.dataset.storefrontPresentation;
       delete document.documentElement.dataset.storefrontTransition;
     };
