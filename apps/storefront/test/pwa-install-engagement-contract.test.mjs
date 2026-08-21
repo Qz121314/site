@@ -17,5 +17,6 @@ test('PWA install prompt waits for browsing intent and stays session-bounded', a
   assert.match(source, /delayComplete\s*&&\s*engaged/u);
   assert.match(source, /markSessionPrompted\(\)/u);
   assert.match(styles, /\.pwa-install-card\.is-guidance/u);
-  assert.match(styles, /border-radius: max\(var\(--theme-radius-card/u);
+  assert.match(styles, /border-radius: var\(--theme-radius-card/u);
+  assert.doesNotMatch(styles, /border-radius: max\(var\(--theme-radius-card/u);
 });

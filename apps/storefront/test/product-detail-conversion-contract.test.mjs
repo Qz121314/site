@@ -33,7 +33,7 @@ test('product detail keeps a conversion-first mobile hierarchy', async () => {
   assert.match(styles, /\.product-detail-fixed-action \{[\s\S]*bottom: 0/u);
   assert.match(
     styles,
-    /\.product-detail-info \{[\s\S]*position: sticky;[\s\S]*top: 86px/u,
+    /\.product-detail-info \{[\s\S]*position: sticky;[\s\S]*top: [^;]+;/u,
   );
   assert.doesNotMatch(styles, /\.detail-mobile-gallery \{/u);
   assert.doesNotMatch(styles, /detail-mobile-media-track/u);

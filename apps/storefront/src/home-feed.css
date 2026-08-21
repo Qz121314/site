@@ -9,7 +9,7 @@
 
 .home-shortcut-zone {
   position: relative;
-  padding: 18px 0 20px;
+  padding: 20px 0 24px;
 }
 
 .home-feed.has-hero .home-shortcut-zone {
@@ -19,7 +19,7 @@
 .home-shortcuts {
   display: flex;
   min-width: 0;
-  gap: 18px;
+  gap: 17px;
   margin: 0;
   padding: 0 1px;
   overflow-x: auto;
@@ -36,12 +36,12 @@
 
 .home-shortcut {
   display: grid;
-  width: 58px;
-  min-width: 58px;
-  min-height: 72px;
+  width: 62px;
+  min-width: 62px;
+  min-height: 78px;
   align-content: start;
   justify-items: center;
-  gap: 7px;
+  gap: 8px;
   padding: 0;
   color: var(--text);
   text-align: center;
@@ -53,20 +53,21 @@
 .home-shortcut-icon {
   position: relative;
   display: grid;
-  width: 48px;
-  height: 48px;
+  width: 52px;
+  height: 52px;
   box-sizing: border-box;
   place-items: center;
   overflow: hidden;
   padding: 0;
-  border: 0;
-  border-radius: 9px;
-  background: var(--surface-soft);
-  box-shadow: none;
+  border: 1px solid color-mix(in srgb, var(--v2-hairline, var(--line)) 62%, transparent);
+  border-radius: var(--theme-radius-icon, 12px);
+  background: color-mix(in srgb, var(--surface-soft) 92%, var(--surface));
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--text) 4%, transparent);
   transform: translateZ(0);
   transition:
     opacity var(--app-motion-fast, 160ms) ease,
-    transform var(--app-motion-fast, 160ms) var(--app-ease-out);
+    transform var(--app-motion-fast, 160ms) var(--app-ease-out),
+    box-shadow var(--app-motion-fast, 160ms) ease;
 }
 
 .home-shortcut:active .home-shortcut-icon {
@@ -88,8 +89,8 @@
   height: 100%;
   place-items: center;
   color: var(--text);
-  font-size: 1.02rem;
-  font-weight: 620;
+  font-size: 1.04rem;
+  font-weight: 640;
 }
 
 .home-shortcut-label {
@@ -97,17 +98,17 @@
   width: 100%;
   overflow: hidden;
   color: var(--v2-muted, var(--muted));
-  font-size: 0.67rem;
-  font-weight: 520;
-  line-height: 1.18;
-  letter-spacing: -0.01em;
+  font-size: 0.69rem;
+  font-weight: 540;
+  line-height: 1.2;
+  letter-spacing: -0.012em;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
 
 .home-shortcut.is-more .home-shortcut-icon {
   color: var(--text);
-  background: color-mix(in srgb, var(--surface-soft) 88%, var(--line));
+  background: color-mix(in srgb, var(--surface-soft) 86%, var(--surface));
 }
 
 .home-more-glyph {
@@ -125,8 +126,8 @@
 
 .home-recommendation-feed {
   display: grid;
-  gap: 42px;
-  padding: 12px 0 44px;
+  gap: 44px;
+  padding: 10px 0 48px;
 }
 
 .home-recommendation {
@@ -135,19 +136,19 @@
 
 .home-recommendation-heading {
   display: flex;
-  min-height: 38px;
+  min-height: 40px;
   align-items: flex-end;
   justify-content: space-between;
   gap: 16px;
-  margin: 0 0 16px;
-  padding-bottom: 10px;
+  margin: 0 0 17px;
+  padding-bottom: 11px;
   border-bottom: 1px solid var(--v2-hairline, var(--line));
 }
 
 .home-recommendation-heading-copy {
   display: grid;
   min-width: 0;
-  gap: 4px;
+  gap: 5px;
 }
 
 .home-recommendation-heading h2 {
@@ -155,10 +156,10 @@
   margin: 0;
   overflow: hidden;
   color: var(--text);
-  font-size: clamp(1.2rem, 4.7vw, 1.55rem);
-  font-weight: 660;
-  line-height: 1.04;
-  letter-spacing: -0.036em;
+  font-size: clamp(1.24rem, 4.8vw, 1.58rem);
+  font-weight: 690;
+  line-height: 1.03;
+  letter-spacing: -0.038em;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -168,9 +169,9 @@
   margin: 0;
   overflow: hidden;
   color: var(--v2-muted, var(--muted));
-  font-size: 0.76rem;
-  font-weight: 430;
-  line-height: 1.38;
+  font-size: 0.77rem;
+  font-weight: 440;
+  line-height: 1.4;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 1;
 }
@@ -195,7 +196,7 @@
 
 .home-recommendation-heading > a span {
   margin-top: -1px;
-  font-size: 1.18rem;
+  font-size: 1.22rem;
   font-weight: 420;
   line-height: 1;
 }
@@ -208,7 +209,7 @@
 .home-product-rail {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 24px 10px;
+  gap: 22px 11px;
   overflow: visible;
   margin: 0;
   padding: 0;
@@ -230,14 +231,15 @@
   aspect-ratio: 1 / 1;
   overflow: hidden;
   border: 0;
-  border-radius: var(--theme-radius-media, 6px);
+  border-radius: var(--theme-radius-media, 10px);
   background: var(--theme-media-background, var(--surface-soft));
-  box-shadow: none;
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--text) 4%, transparent);
   isolation: isolate;
   transform: translateZ(0);
   transition:
     opacity var(--app-motion-fast, 160ms) ease,
-    transform var(--app-motion-base, 240ms) var(--app-ease-out);
+    transform var(--app-motion-base, 240ms) var(--app-ease-out),
+    box-shadow var(--app-motion-base, 240ms) ease;
 }
 
 .home-product-cover::before {
@@ -246,9 +248,9 @@
   z-index: 1;
   background: linear-gradient(
     180deg,
-    transparent 48%,
-    rgb(0 0 0 / 8%) 62%,
-    rgb(0 0 0 / 72%) 100%
+    transparent 44%,
+    rgb(0 0 0 / 5%) 58%,
+    rgb(0 0 0 / 74%) 100%
   );
   content: '';
   pointer-events: none;
@@ -258,7 +260,7 @@
   position: absolute;
   inset: 0;
   z-index: 3;
-  border: 1px solid color-mix(in srgb, var(--line) 36%, transparent);
+  border: 1px solid color-mix(in srgb, var(--line) 30%, transparent);
   border-radius: inherit;
   content: '';
   pointer-events: none;
@@ -285,19 +287,19 @@
 
 .home-product-title {
   position: absolute;
-  right: 10px;
-  bottom: 9px;
-  left: 10px;
+  right: 11px;
+  bottom: 10px;
+  left: 11px;
   z-index: 2;
   display: -webkit-box;
   margin: 0;
   overflow: hidden;
   color: #fff;
-  font-size: 0.84rem;
-  font-weight: 620;
+  font-size: 0.86rem;
+  font-weight: 650;
   line-height: 1.2;
-  letter-spacing: -0.018em;
-  text-shadow: 0 1px 12px rgb(0 0 0 / 38%);
+  letter-spacing: -0.02em;
+  text-shadow: 0 1px 12px rgb(0 0 0 / 36%);
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
@@ -309,6 +311,7 @@
 .home-product-skeleton {
   animation: home-feed-pulse 1.25s ease-in-out infinite alternate;
   background: color-mix(in srgb, var(--surface-soft) 92%, var(--line));
+  box-shadow: none;
 }
 
 @keyframes home-feed-pulse {
@@ -323,11 +326,19 @@
 
 @media (hover: hover) and (pointer: fine) {
   .home-shortcut:hover .home-shortcut-icon img {
-    transform: scale(1.025);
+    transform: scale(1.03);
+  }
+
+  .home-shortcut:hover .home-shortcut-icon {
+    box-shadow: 0 8px 20px color-mix(in srgb, var(--text) 6%, transparent);
   }
 
   .home-product-tile:hover .home-product-cover img {
-    transform: scale(1.018);
+    transform: scale(1.022);
+  }
+
+  .home-product-tile:hover .home-product-cover {
+    box-shadow: 0 12px 28px color-mix(in srgb, var(--text) 6%, transparent);
   }
 
   .home-recommendation-heading > a:hover {
@@ -341,69 +352,69 @@
   }
 
   .home-shortcut-zone {
-    padding-top: 16px;
+    padding-top: 18px;
   }
 
   .home-recommendation-feed {
-    gap: 38px;
+    gap: 40px;
     padding-top: 8px;
   }
 }
 
 @media (min-width: 768px) {
   .home-shortcut-zone {
-    padding: 24px 0 30px;
+    padding: 26px 0 32px;
   }
 
   .home-shortcuts {
-    gap: 22px;
+    gap: 23px;
   }
 
   .home-shortcut {
-    width: 64px;
-    min-width: 64px;
-    min-height: 78px;
+    width: 66px;
+    min-width: 66px;
+    min-height: 82px;
   }
 
   .home-shortcut-icon {
-    width: 54px;
-    height: 54px;
-    border-radius: 10px;
+    width: 56px;
+    height: 56px;
+    border-radius: var(--theme-radius-icon, 13px);
   }
 
   .home-shortcut-label {
-    font-size: 0.72rem;
+    font-size: 0.73rem;
   }
 
   .home-recommendation-heading {
-    margin-bottom: 18px;
+    margin-bottom: 19px;
   }
 
   .home-recommendation-heading h2 {
-    font-size: 1.45rem;
+    font-size: 1.48rem;
   }
 
   .home-product-rail {
     grid-template-columns: repeat(4, minmax(0, 1fr));
-    gap: 34px 16px;
+    gap: 32px 17px;
   }
 
   .home-product-title {
-    right: 12px;
-    bottom: 11px;
-    left: 12px;
-    font-size: 0.92rem;
+    right: 13px;
+    bottom: 12px;
+    left: 13px;
+    font-size: 0.94rem;
   }
 }
 
 @media (min-width: 1180px) {
   .home-recommendation-feed {
-    gap: 54px;
-    padding-bottom: 64px;
+    gap: 56px;
+    padding-bottom: 66px;
   }
 
   .home-product-rail {
-    gap: 40px 20px;
+    gap: 38px 21px;
   }
 }
 

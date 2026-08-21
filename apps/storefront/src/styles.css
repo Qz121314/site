@@ -110,39 +110,49 @@ main {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 8px;
-  margin-top: 4px;
+  gap: 9px;
+  margin-top: 5px;
 }
 
 .secondary-button {
   display: flex;
-  min-height: 42px;
+  min-height: 44px;
   align-items: center;
   justify-content: center;
-  padding: 0 16px;
-  border: 1px solid var(--line);
-  border-radius: var(--theme-radius-control, 4px);
+  padding: 0 17px;
+  border: 1px solid color-mix(in srgb, var(--line) 84%, transparent);
+  border-radius: var(--theme-radius-control, 10px);
   color: var(--text);
   background: var(--surface);
+  box-shadow: 0 4px 14px color-mix(in srgb, var(--text) 3%, transparent);
   cursor: pointer;
-  font-weight: 800;
+  font-size: 0.8rem;
+  font-weight: 690;
+  transition:
+    border-color var(--app-motion-fast, 160ms) ease,
+    color var(--app-motion-fast, 160ms) ease,
+    transform var(--app-motion-fast, 160ms) ease;
 }
 
 .secondary-button:hover {
-  border-color: color-mix(in srgb, var(--brand) 38%, var(--line));
+  border-color: color-mix(in srgb, var(--brand) 34%, var(--line));
   color: var(--brand-strong);
+}
+
+.secondary-button:active {
+  transform: scale(0.98);
 }
 
 .inline-error,
 .inline-empty {
-  padding: 14px 15px;
-  border: 1px solid color-mix(in srgb, var(--line) 82%, transparent);
+  padding: 15px 16px;
+  border: 1px solid color-mix(in srgb, var(--line) 78%, transparent);
   border-radius: var(--theme-radius-control, 10px);
   color: var(--muted);
   background: color-mix(in srgb, var(--surface) 96%, transparent);
-  box-shadow: 0 6px 20px color-mix(in srgb, #000 3%, transparent);
-  font-size: 0.8rem;
-  line-height: 1.45;
+  box-shadow: 0 7px 22px color-mix(in srgb, #000 3%, transparent);
+  font-size: 0.81rem;
+  line-height: 1.48;
 }
 
 .inline-error-action {
@@ -155,13 +165,13 @@ main {
 .inline-error-action button {
   min-height: 34px;
   flex: 0 0 auto;
-  padding: 0 11px;
-  border: 1px solid color-mix(in srgb, currentColor 20%, transparent);
+  padding: 0 12px;
+  border: 1px solid color-mix(in srgb, currentColor 18%, transparent);
   border-radius: var(--theme-radius-control, 8px);
   color: inherit;
-  background: color-mix(in srgb, var(--surface) 72%, transparent);
+  background: color-mix(in srgb, var(--surface) 76%, transparent);
   font-size: 0.75rem;
-  font-weight: 680;
+  font-weight: 690;
   cursor: pointer;
 }
 
@@ -196,15 +206,15 @@ main {
 }
 
 .inline-error {
-  border-color: color-mix(in srgb, #c84a31 22%, var(--line));
-  color: color-mix(in srgb, #a3321a 82%, var(--text));
-  background: color-mix(in srgb, #fff6f2 74%, var(--surface));
+  border-color: color-mix(in srgb, #c84a31 20%, var(--line));
+  color: color-mix(in srgb, #a3321a 80%, var(--text));
+  background: color-mix(in srgb, #fff6f2 66%, var(--surface));
 }
 
 .markdown-content {
-  color: #4f5761;
-  font-size: 0.86rem;
-  line-height: 1.7;
+  color: color-mix(in srgb, var(--text) 78%, var(--muted));
+  font-size: 0.88rem;
+  line-height: 1.72;
   overflow-wrap: anywhere;
 }
 
@@ -217,8 +227,10 @@ main {
 .markdown-content h4,
 .markdown-content h5,
 .markdown-content h6 {
-  margin: 20px 0 8px;
+  margin: 22px 0 8px;
   color: var(--text);
+  line-height: 1.22;
+  letter-spacing: -0.024em;
 }
 
 .markdown-content p,
@@ -226,7 +238,7 @@ main {
 .markdown-content ol,
 .markdown-content blockquote,
 .markdown-content pre {
-  margin-bottom: 12px;
+  margin-bottom: 13px;
 }
 
 .markdown-content ul,
@@ -236,30 +248,33 @@ main {
 
 .markdown-content blockquote {
   margin-left: 0;
-  padding: 10px 12px;
+  padding: 11px 13px;
   border-left: 3px solid var(--brand);
-  background: #fff7f4;
+  border-radius: 0 var(--theme-radius-control, 8px) var(--theme-radius-control, 8px) 0;
+  background: color-mix(in srgb, var(--brand) 6%, var(--surface));
 }
 
 .markdown-content code {
   padding: 2px 5px;
-  border-radius: 2px;
-  background: #f0f1f2;
+  border-radius: 4px;
+  background: color-mix(in srgb, var(--surface-soft) 92%, var(--line));
   font-size: 0.82em;
 }
 
 .markdown-content pre {
   max-width: 100%;
   overflow-x: auto;
-  padding: 12px;
-  border-radius: 2px;
-  background: #f0f1f2;
+  padding: 13px;
+  border: 1px solid color-mix(in srgb, var(--line) 72%, transparent);
+  border-radius: var(--theme-radius-control, 8px);
+  background: var(--surface-soft);
   overscroll-behavior-inline: contain;
   -webkit-overflow-scrolling: touch;
 }
 
 .markdown-content pre code {
   padding: 0;
+  background: transparent;
 }
 
 .markdown-content a {
@@ -279,12 +294,12 @@ main {
   width: min(100%, 520px);
   margin: 1rem auto;
   padding: 18px;
-  border: 1px dashed var(--line);
-  border-radius: var(--radius-md);
+  border: 1px dashed color-mix(in srgb, var(--line) 82%, transparent);
+  border-radius: var(--theme-radius-media, 10px);
   color: var(--muted);
   background: var(--surface-soft);
   font-size: 0.76rem;
-  font-weight: 700;
+  font-weight: 680;
   text-align: center;
 }
 
@@ -296,17 +311,25 @@ main {
   justify-content: center;
   padding: 0 18px;
   border: 0;
-  border-radius: var(--theme-radius-control, 4px);
+  border-radius: var(--theme-radius-control, 10px);
   color: #fff;
   background: var(--brand);
-  box-shadow: 0 9px 20px rgb(255 90 31 / 22%);
-  font-weight: 850;
+  box-shadow: 0 9px 22px color-mix(in srgb, var(--brand) 20%, transparent);
+  font-weight: 760;
   text-align: center;
+  transition:
+    filter var(--app-motion-fast, 160ms) ease,
+    transform var(--app-motion-fast, 160ms) ease;
 }
 
 .cta-button:hover,
 .primary-button:hover {
-  background: var(--brand-strong);
+  filter: brightness(0.98);
+}
+
+.cta-button:active,
+.primary-button:active {
+  transform: scale(0.98);
 }
 
 .standalone-state {
@@ -316,8 +339,8 @@ main {
   margin: 0 auto;
   place-content: center;
   justify-items: center;
-  gap: 10px;
-  padding: 28px 0;
+  gap: 11px;
+  padding: 30px 0;
   text-align: center;
 }
 
@@ -327,14 +350,14 @@ main {
 
 .state-mark {
   display: grid;
-  width: 56px;
-  height: 56px;
+  width: 58px;
+  height: 58px;
   place-items: center;
-  border: 1px solid color-mix(in srgb, var(--line) 82%, transparent);
-  border-radius: 18px;
-  color: color-mix(in srgb, var(--brand-strong) 72%, var(--muted));
+  border: 1px solid color-mix(in srgb, var(--line) 76%, transparent);
+  border-radius: var(--theme-radius-icon, 17px);
+  color: color-mix(in srgb, var(--brand-strong) 68%, var(--muted));
   background: color-mix(in srgb, var(--surface-soft) 88%, var(--surface));
-  box-shadow: 0 10px 28px color-mix(in srgb, #000 5%, transparent);
+  box-shadow: 0 10px 28px color-mix(in srgb, var(--text) 4%, transparent);
 }
 
 .state-mark svg {
@@ -347,30 +370,30 @@ main {
 }
 
 .standalone-state h1 {
-  font-size: 1.45rem;
-  font-weight: 680;
-  line-height: 1.1;
+  font-size: 1.48rem;
+  font-weight: 700;
+  line-height: 1.08;
 }
 
 .standalone-state p {
   max-width: 440px;
   margin-bottom: 4px;
   color: var(--muted);
-  font-size: 0.84rem;
-  line-height: 1.6;
+  font-size: 0.85rem;
+  line-height: 1.62;
 }
 
 .standalone-state button,
 .standalone-state .primary-button {
-  min-height: 40px;
+  min-height: 42px;
   margin-top: 7px;
-  padding: 0 15px;
+  padding: 0 16px;
   border: 0;
-  border-radius: var(--theme-radius-control, 8px);
-  box-shadow: 0 7px 18px color-mix(in srgb, var(--brand) 14%, transparent);
+  border-radius: var(--theme-radius-control, 10px);
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--brand) 14%, transparent);
   cursor: pointer;
-  font-size: 0.8rem;
-  font-weight: 700;
+  font-size: 0.81rem;
+  font-weight: 710;
 }
 
 @keyframes inline-loading-sweep {

@@ -8,10 +8,10 @@ body,
 .app-shell {
   --v2-content-width: 1200px;
   --v2-reading-width: 760px;
-  --v2-gutter: clamp(14px, 3.2vw, 24px);
-  --v2-hairline: color-mix(in srgb, var(--line) 72%, transparent);
-  --v2-muted: color-mix(in srgb, var(--muted) 88%, var(--text));
-  --v2-control-bg: color-mix(in srgb, var(--surface-soft) 88%, var(--surface));
+  --v2-gutter: clamp(16px, 3vw, 26px);
+  --v2-hairline: color-mix(in srgb, var(--line) 68%, transparent);
+  --v2-muted: color-mix(in srgb, var(--muted) 86%, var(--text));
+  --v2-control-bg: color-mix(in srgb, var(--surface-soft) 90%, var(--surface));
   min-height: 100dvh;
   padding-bottom: calc(82px + env(safe-area-inset-bottom));
   color: var(--text);
@@ -32,9 +32,9 @@ html[data-theme='noir'] .app-shell {
   padding-right: max(var(--v2-gutter), env(safe-area-inset-right));
   padding-left: max(var(--v2-gutter), env(safe-area-inset-left));
   border-bottom: 1px solid var(--v2-hairline);
-  background: color-mix(in srgb, var(--page-bg, #f5f6f7) 94%, transparent);
+  background: color-mix(in srgb, var(--page-bg, #f5f6f7) 92%, transparent);
   box-shadow: none;
-  backdrop-filter: blur(18px) saturate(1.05);
+  backdrop-filter: blur(22px) saturate(1.06);
 }
 
 .app-shell > .site-footer {
@@ -124,7 +124,7 @@ html[data-theme='noir'] .app-shell {
 }
 
 .storefront-nav-image {
-  border-radius: 2px;
+  border-radius: var(--theme-radius-icon, 4px);
   object-fit: cover;
 }
 
@@ -224,7 +224,7 @@ html[data-theme='noir'] .app-shell {
     width: 100%;
     min-height: calc(100dvh - 126px - env(safe-area-inset-top));
     padding-top: 10px;
-    padding-bottom: 28px;
+    padding-bottom: 30px;
   }
 
   .app-shell .brand-lockup {
@@ -236,8 +236,8 @@ html[data-theme='noir'] .app-shell {
   }
 
   .app-shell .brand-logo {
-    width: 32px;
-    height: 32px;
+    width: 33px;
+    height: 33px;
     border: 0;
     border-radius: var(--theme-primary-logo-radius, 3px);
     box-shadow: none;
@@ -266,22 +266,22 @@ html[data-theme='noir'] .app-shell {
     z-index: 64;
     width: 100%;
     margin: 0;
-    padding: 3px max(8px, env(safe-area-inset-right))
+    padding: 4px max(8px, env(safe-area-inset-right))
       calc(4px + env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
     border: 0;
     border-top: 1px solid var(--v2-hairline);
     border-radius: 0;
-    background: color-mix(in srgb, var(--surface, #fff) 94%, transparent);
-    box-shadow: none;
+    background: color-mix(in srgb, var(--surface, #fff) 92%, transparent);
+    box-shadow: 0 -8px 24px color-mix(in srgb, var(--text) 2.5%, transparent);
     transform: none;
-    backdrop-filter: blur(20px) saturate(1.04);
+    backdrop-filter: blur(22px) saturate(1.06);
   }
 
   .app-shell > .bottom-nav a {
     position: relative;
     min-height: 55px;
-    gap: 1px;
-    border-radius: 0;
+    gap: 2px;
+    border-radius: var(--theme-radius-control, 8px);
     color: var(--v2-muted);
     background: transparent;
     transition:
@@ -297,8 +297,8 @@ html[data-theme='noir'] .app-shell {
 
   .app-shell > .bottom-nav a.is-active {
     color: var(--text);
-    background: transparent;
-    font-weight: 620;
+    background: color-mix(in srgb, var(--text) 3%, transparent);
+    font-weight: 630;
   }
 
   .app-shell > .bottom-nav a::before {
@@ -323,9 +323,9 @@ html[data-theme='noir'] .app-shell {
   }
 
   .app-shell > .bottom-nav small {
-    font-size: 0.61rem;
-    font-weight: 530;
-    letter-spacing: 0;
+    font-size: 0.62rem;
+    font-weight: 550;
+    letter-spacing: -0.004em;
   }
 
   html[data-storefront-presentation='push'] .app-shell {
@@ -457,8 +457,8 @@ html[data-theme='noir'] .app-shell {
 
 @media (min-width: 768px) {
   .app-shell > main {
-    padding-top: 24px;
-    padding-bottom: 56px;
+    padding-top: 25px;
+    padding-bottom: 58px;
   }
 
   .app-shell > .bottom-nav {
@@ -466,9 +466,9 @@ html[data-theme='noir'] .app-shell {
     bottom: 14px;
     left: 50%;
     width: min(520px, calc(100% - 28px));
-    border: 1px solid var(--line);
-    border-radius: 0;
-    box-shadow: 0 14px 38px rgb(31 35 40 / 12%);
+    border: 1px solid color-mix(in srgb, var(--line) 82%, transparent);
+    border-radius: var(--theme-radius-card, 14px);
+    box-shadow: 0 14px 38px color-mix(in srgb, var(--text) 10%, transparent);
     transform: translateX(-50%);
   }
 }
@@ -490,7 +490,7 @@ html[data-theme='noir'] .app-shell {
     min-height: 62px;
     padding-top: 0;
     padding-inline: max(24px, calc((100% - var(--v2-content-width)) / 2));
-    background: color-mix(in srgb, var(--page-bg, #f5f6f7) 97%, transparent);
+    background: color-mix(in srgb, var(--page-bg, #f5f6f7) 95%, transparent);
   }
 
   .app-shell > main {
@@ -508,7 +508,7 @@ html[data-theme='noir'] .app-shell {
     display: flex;
     width: auto;
     align-items: center;
-    gap: 18px;
+    gap: 19px;
     margin: 0;
     padding: 0;
     border: 0;
@@ -541,7 +541,8 @@ html[data-theme='noir'] .app-shell {
     right: 0;
     bottom: 5px;
     left: 0;
-    height: 1px;
+    height: 2px;
+    border-radius: 999px;
     background: currentColor;
     content: '';
     opacity: 0;
@@ -572,8 +573,8 @@ html[data-theme='noir'] .app-shell {
 
   .app-shell > .bottom-nav small {
     font-size: 0.73rem;
-    font-weight: 560;
-    letter-spacing: -0.006em;
+    font-weight: 580;
+    letter-spacing: -0.008em;
   }
 
   .app-shell > .bottom-nav a.is-active {
