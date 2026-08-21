@@ -10,6 +10,17 @@
   border: 0 !important;
 }
 
+html,
+body,
+#root {
+  max-width: 100%;
+  overflow-x: clip;
+}
+
+.app-shell :is(a[href], button, [role='button'], select, summary) {
+  touch-action: manipulation;
+}
+
 @media (max-width: 767px) {
   .app-shell input,
   .app-shell select,
