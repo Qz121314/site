@@ -129,7 +129,9 @@ function itemIcon(item: BottomNavigationItemConfig): ReactNode {
         aria-hidden="true"
         alt=""
         className="storefront-nav-image"
+        decoding="async"
         fallback={builtinIcon(item.key === 'faq' ? 'help' : item.key)}
+        fetchPriority="low"
         src={item.icon.value}
       />
     );
