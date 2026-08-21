@@ -1,57 +1,84 @@
 .storefront-route-view {
+  --storefront-route-shift: clamp(12px, 3vw, 18px);
   min-width: 0;
+  backface-visibility: hidden;
+  transform-origin: center center;
+}
+
+html[data-storefront-transition] .storefront-route-view {
+  will-change: opacity, transform;
 }
 
 html[data-storefront-transition='tab'] .storefront-route-view {
-  animation: storefront-tab-enter 180ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: storefront-tab-enter var(--app-motion-fast, 140ms)
+    var(--app-ease-out, cubic-bezier(0.22, 1, 0.36, 1)) both;
 }
 
-html[data-storefront-transition='push'] .storefront-route-view {
-  animation: storefront-push-enter 220ms cubic-bezier(0.22, 1, 0.36, 1) both;
+html[data-storefront-transition='push'][data-storefront-nav-direction='forward']
+  .storefront-route-view {
+  animation: storefront-push-enter var(--app-motion-base, 220ms)
+    var(--app-ease-out, cubic-bezier(0.22, 1, 0.36, 1)) both;
 }
 
-html[data-storefront-transition='pop'] .storefront-route-view {
-  animation: storefront-pop-enter 210ms cubic-bezier(0.22, 1, 0.36, 1) both;
+html[data-storefront-transition='push'][data-storefront-nav-direction='back']
+  .storefront-route-view,
+html[data-storefront-transition='pop'][data-storefront-nav-direction='back']
+  .storefront-route-view {
+  animation: storefront-pop-enter var(--app-motion-base, 220ms)
+    var(--app-ease-out, cubic-bezier(0.22, 1, 0.36, 1)) both;
+}
+
+html[data-storefront-transition='pop'][data-storefront-nav-direction='forward']
+  .storefront-route-view {
+  animation: storefront-push-enter var(--app-motion-base, 220ms)
+    var(--app-ease-out, cubic-bezier(0.22, 1, 0.36, 1)) both;
 }
 
 @keyframes storefront-tab-enter {
   from {
-    opacity: 0.72;
-    transform: translate3d(0, 4px, 0);
+    opacity: 0.94;
+    transform: scale(0.998);
   }
 
   to {
     opacity: 1;
-    transform: translate3d(0, 0, 0);
+    transform: none;
   }
 }
 
 @keyframes storefront-push-enter {
   from {
-    opacity: 0.82;
-    transform: translate3d(12px, 0, 0) scale(0.995);
+    opacity: 0.96;
+    transform: translate3d(var(--storefront-route-shift), 0, 0);
   }
 
   to {
     opacity: 1;
-    transform: translate3d(0, 0, 0) scale(1);
+    transform: none;
   }
 }
 
 @keyframes storefront-pop-enter {
   from {
-    opacity: 0.84;
-    transform: translate3d(-10px, 0, 0) scale(0.997);
+    opacity: 0.96;
+    transform: translate3d(calc(var(--storefront-route-shift) * -1), 0, 0);
   }
 
   to {
     opacity: 1;
-    transform: translate3d(0, 0, 0) scale(1);
+    transform: none;
+  }
+}
+
+@media (min-width: 768px) {
+  .storefront-route-view {
+    --storefront-route-shift: 10px;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   html[data-storefront-transition] .storefront-route-view {
     animation: none;
+    will-change: auto;
   }
 }

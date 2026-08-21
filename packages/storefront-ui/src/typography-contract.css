@@ -9,15 +9,24 @@
     -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI Variable Display',
     'Segoe UI', Inter, Roboto, 'Helvetica Neue', Arial, ui-sans-serif, system-ui,
     sans-serif;
+  --storefront-weight-regular: 450;
+  --storefront-weight-medium: 560;
+  --storefront-weight-semibold: 650;
   --storefront-text-caption: 0.75rem;
   --storefront-text-small: 0.8125rem;
   --storefront-text-body: 0.9375rem;
   --storefront-text-label: 0.9375rem;
   font-family: var(--storefront-font-ui);
-  font-optical-sizing: auto;
+  font-feature-settings:
+    'kern' 1,
+    'liga' 1,
+    'calt' 1;
   font-kerning: normal;
+  font-optical-sizing: auto;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 :is(html, .storefront-theme-root) :is(button, input, select, textarea) {
@@ -30,7 +39,7 @@
 }
 
 :is(html, .storefront-theme-root) :is(h1, h2, h3) {
-  font-weight: 620;
+  font-weight: var(--storefront-weight-semibold);
   letter-spacing: -0.028em;
 }
 
@@ -40,7 +49,7 @@
 
 :is(html, .storefront-theme-root) .brand-lockup strong {
   font-size: 0.96rem;
-  font-weight: 650;
+  font-weight: var(--storefront-weight-semibold);
   letter-spacing: -0.012em;
   line-height: 1.08;
 }
@@ -60,25 +69,25 @@
 }
 
 :is(html, .storefront-theme-root) .app-page-heading h1 {
-  font-weight: 660;
+  font-weight: var(--storefront-weight-semibold);
   letter-spacing: -0.032em;
 }
 
 :is(html, .storefront-theme-root) .home-recommendation-heading h2 {
-  font-weight: 620;
+  font-weight: var(--storefront-weight-semibold);
   letter-spacing: -0.026em;
 }
 
 :is(html, .storefront-theme-root) .product-card-heading h3,
 :is(html, .storefront-theme-root) .home-product-tile strong {
   font-size: var(--storefront-text-label);
-  font-weight: 590;
+  font-weight: var(--storefront-weight-medium);
   letter-spacing: -0.014em;
 }
 
 :is(html, .storefront-theme-root)[data-theme='noir'] .brand-lockup strong {
   font-size: 0.8125rem;
-  font-weight: 700;
+  font-weight: var(--storefront-weight-semibold);
   letter-spacing: 0.072em;
   text-transform: uppercase;
 }
@@ -91,8 +100,8 @@
   --storefront-font-display:
     -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI Variable Display',
     'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-  --theme-heading-weight: 620;
-  --theme-label-weight: 540;
+  --theme-heading-weight: var(--storefront-weight-semibold);
+  --theme-label-weight: var(--storefront-weight-medium);
 }
 
 :is(html, .storefront-theme-root)[data-font-pack='editorial'] {
@@ -102,7 +111,7 @@
   --storefront-font-display:
     'Avenir Next', -apple-system, BlinkMacSystemFont, 'SF Pro Display',
     'Segoe UI Variable Display', 'Segoe UI', sans-serif;
-  --theme-heading-weight: 650;
+  --theme-heading-weight: var(--storefront-weight-semibold);
   --theme-label-weight: 570;
 }
 
@@ -111,7 +120,7 @@
     'Arial Nova', 'Segoe UI Variable Text', 'Segoe UI', Roboto, Arial, sans-serif;
   --storefront-font-display:
     'Arial Nova', 'Segoe UI Variable Display', 'Segoe UI', Roboto, Arial, sans-serif;
-  --theme-heading-weight: 650;
+  --theme-heading-weight: var(--storefront-weight-semibold);
   --theme-label-weight: 590;
 }
 
@@ -121,16 +130,16 @@
   --storefront-font-display:
     'Segoe UI Variable Display', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
   --theme-heading-weight: 640;
-  --theme-label-weight: 560;
+  --theme-label-weight: var(--storefront-weight-medium);
 }
 
 :is(html, .storefront-theme-root)[data-font-pack] :is(h1, h2, h3) {
-  font-weight: var(--theme-heading-weight, 620);
+  font-weight: var(--theme-heading-weight, var(--storefront-weight-semibold));
 }
 
 :is(html, .storefront-theme-root)[data-font-pack] .home-recommendation-heading h2 {
   font-size: clamp(1.25rem, 5.5vw, 1.5rem);
-  font-weight: var(--theme-heading-weight, 620);
+  font-weight: var(--theme-heading-weight, var(--storefront-weight-semibold));
   line-height: 1.08;
   letter-spacing: -0.035em;
   text-transform: none;
@@ -138,26 +147,26 @@
 
 :is(html, .storefront-theme-root)[data-font-pack] .home-product-meta strong {
   font-size: 0.875rem;
-  font-weight: var(--theme-label-weight, 540);
+  font-weight: var(--theme-label-weight, var(--storefront-weight-medium));
   line-height: 1.3;
   letter-spacing: -0.014em;
 }
 
 :is(html, .storefront-theme-root)[data-font-pack] .product-detail-summary h1 {
   font-size: clamp(1.625rem, 7vw, 2rem);
-  font-weight: var(--theme-heading-weight, 620);
+  font-weight: var(--theme-heading-weight, var(--storefront-weight-semibold));
   line-height: 1.12;
   letter-spacing: -0.04em;
 }
 
 :is(html, .storefront-theme-root)[data-font-pack] .product-detail-body {
   font-size: 0.875rem;
-  font-weight: 430;
+  font-weight: var(--storefront-weight-regular);
   line-height: 1.65;
 }
 
 :is(html, .storefront-theme-root)[data-font-pack] .bottom-nav small {
-  font-weight: 520;
+  font-weight: var(--storefront-weight-medium);
   letter-spacing: 0;
 }
 
@@ -177,7 +186,7 @@
 }
 
 :is(html, .storefront-theme-root) .bottom-nav small {
-  font-weight: 590;
+  font-weight: var(--storefront-weight-medium);
   letter-spacing: -0.012em;
 }
 
