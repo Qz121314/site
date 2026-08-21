@@ -1,14 +1,21 @@
 import assert from 'node:assert/strict';
 import { readFile, readdir } from 'node:fs/promises';
 
-const [packageText, preCommit, prePush, productionSmoke, workflowNames] =
-  await Promise.all([
-    readFile('package.json', 'utf8'),
-    readFile('.githooks/pre-commit', 'utf8'),
-    readFile('.githooks/pre-push', 'utf8'),
-    readFile('tests/e2e/production-smoke.spec.ts', 'utf8'),
-    readdir('.github/workflows'),
-  ]);
+const [
+  packageText,
+  preCommit,
+  prePush,
+  productionSmoke,
+  ciWorkflow,
+  workflowNames,
+] = await Promise.all([
+  readFile('package.json', 'utf8'),
+  readFile('.githooks/pre-commit', 'utf8'),
+  readFile('.githooks/pre-push', 'utf8'),
+  readFile('tests/e2e/production-smoke.spec.ts', 'utf8'),
+  readFile('.github/workflows/ci.yml', 'utf8'),
+  readdir('.github/workflows'),
+]);
 
 const packageJson = JSON.parse(packageText);
 const scripts = packageJson.scripts ?? {};
@@ -80,6 +87,22 @@ const brittleProductionPatterns = [
 for (const { pattern, reason } of brittleProductionPatterns) {
   assert.doesNotMatch(productionSmoke, pattern, reason);
 }
+
+assert.doesNotMatch(
+  ciWorkflow,
+  /^\s{2}deploy:\s*$/mu,
+  'CI must not allocate a second hosted runner job only for production deployment',
+);
+assert.doesNotMatch(
+  ciWorkflow,
+  /needs:\s*validate/u,
+  'main deployment must continue in the same hosted runner after validation',
+);
+assert.match(
+  ciWorkflow,
+  /cancel-in-progress:\s*\$\{\{\s*github\.event_name != 'push' \|\| github\.ref != 'refs\/heads\/main'\s*\}\}/u,
+  'main production runs must not cancel an in-progress deployment',
+);
 
 const temporaryWorkflow = workflowNames.find((name) =>
   /debug|temporary|diagnostic/iu.test(name),
