@@ -189,10 +189,24 @@ test('a published product renders its mobile CTA surface and carousel media flow
     expect(mediaContract.overflowX).toBe('auto');
     expect(mediaContract.scrollSnapType).toContain('x');
   }
-  await expect
-    .poll(() => fixedAction.evaluate((element) => getComputedStyle(element).position))
-    .toBe('fixed');
-  await expect
-    .poll(() => cta.evaluate((element) => element.getBoundingClientRect().height))
-    .toBeGreaterThanOrEqual(52);
+
+  const ctaContract = await page.evaluate(() => {
+    const pageElement = document.querySelector<HTMLElement>('.product-detail-page');
+    const action = document.querySelector<HTMLElement>('body > .product-detail-fixed-action');
+    const button = action?.querySelector<HTMLElement>('.cta-button');
+    return {
+      position: action ? getComputedStyle(action).position : null,
+      bottom: action ? getComputedStyle(action).bottom : null,
+      actionHeight: action?.getBoundingClientRect().height ?? 0,
+      buttonHeight: button?.getBoundingClientRect().height ?? 0,
+      pagePaddingBottom: pageElement
+        ? Number.parseFloat(getComputedStyle(pageElement).paddingBottom)
+        : 0,
+    };
+  });
+
+  expect(ctaContract.position).toBe('fixed');
+  expect(ctaContract.bottom).toBe('0px');
+  expect(ctaContract.buttonHeight).toBeGreaterThanOrEqual(56);
+  expect(ctaContract.pagePaddingBottom).toBeGreaterThanOrEqual(ctaContract.actionHeight);
 });
