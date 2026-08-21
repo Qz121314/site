@@ -31,7 +31,7 @@ test('storefront applies the current admin theme and keeps discovery routes heal
     };
   };
   const recipe = payload.theme?.recipe;
-  expect(recipe).toBeTruthy();
+  if (!recipe) throw new Error('Public theme recipe is missing');
 
   await page.goto('/');
   await expect(page.locator('#root')).not.toBeEmpty();
@@ -39,24 +39,23 @@ test('storefront applies the current admin theme and keeps discovery routes heal
   await expect(page.locator('.bottom-nav')).toBeVisible();
   await expect(page.locator('.home-shortcut-zone')).toBeVisible();
 
-  const appliedRecipe = await page.evaluate(() => ({
-    buttonStyle: document.documentElement.dataset.buttonStyle,
-    fontPack: document.documentElement.dataset.fontPack,
-    mediaStyle: document.documentElement.dataset.mediaStyle,
-    motionStyle: document.documentElement.dataset.motionStyle,
-    navigationStyle: document.documentElement.dataset.navigationStyle,
-  }));
-
-  for (const key of [
-    'buttonStyle',
-    'fontPack',
-    'mediaStyle',
-    'motionStyle',
-    'navigationStyle',
-  ] as const) {
-    const expectedValue = recipe?.[key];
-    if (expectedValue) expect(appliedRecipe[key]).toBe(expectedValue);
-  }
+  await expect
+    .poll(() =>
+      page.evaluate(() => ({
+        buttonStyle: document.documentElement.dataset.buttonStyle,
+        fontPack: document.documentElement.dataset.fontPack,
+        mediaStyle: document.documentElement.dataset.mediaStyle,
+        motionStyle: document.documentElement.dataset.motionStyle,
+        navigationStyle: document.documentElement.dataset.navigationStyle,
+      })),
+    )
+    .toEqual({
+      buttonStyle: recipe.buttonStyle,
+      fontPack: recipe.fontPack,
+      mediaStyle: recipe.mediaStyle,
+      motionStyle: recipe.motionStyle,
+      navigationStyle: recipe.navigationStyle,
+    });
   await expectNoHorizontalOverflow(page);
 
   await page.goto('/browse/');
