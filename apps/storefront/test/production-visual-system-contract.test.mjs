@@ -44,7 +44,21 @@ test('production acceptance guards the Visual V2 system instead of stale page pi
   assert.match(home, /\.home-product-rail \{[\s\S]*grid-template-columns: repeat\(2,/u);
   assert.match(home, /\.home-product-cover,[\s\S]*aspect-ratio: 1 \/ 1;/u);
   assert.match(browse, /\.browse-section-card \{[\s\S]*aspect-ratio: 16 \/ 10;/u);
-  assert.match(browse, /\.browse-directory-search \{[\s\S]*box-shadow: none;/u);
-  assert.match(section, /\.section-catalog-search \{[\s\S]*box-shadow: none;/u);
+  assert.match(
+    browse,
+    /\.browse-directory-search \{[\s\S]*border-radius: var\(--theme-radius-control/u,
+  );
+  assert.match(
+    browse,
+    /\.browse-directory-search \{[\s\S]*var\(--v2-control-bg, var\(--surface-soft\)\)/u,
+  );
+  assert.match(
+    section,
+    /\.section-catalog-search \{[\s\S]*border-radius: var\(--theme-radius-control/u,
+  );
+  assert.match(
+    section,
+    /\.section-catalog-search \{[\s\S]*var\(--v2-control-bg, var\(--surface-soft\)\)/u,
+  );
   assert.match(section, /\.section-product-cover \{[\s\S]*aspect-ratio: 1 \/ 1;/u);
 });
