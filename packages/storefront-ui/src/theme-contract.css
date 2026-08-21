@@ -36,6 +36,10 @@
   );
   --theme-tab-background: color-mix(in srgb, var(--surface) 90%, transparent);
   --theme-tab-shadow: none;
+  --theme-button-shadow: 0 9px 24px color-mix(in srgb, var(--brand) 18%, transparent);
+  --theme-button-press-shadow: 0 4px 12px
+    color-mix(in srgb, var(--brand) 12%, transparent);
+  --theme-button-focus-ring: 0 0 0 3px color-mix(in srgb, var(--brand) 18%, transparent);
 }
 
 /* Runtime density is authoritative. Theme-key fallbacks keep Admin preview accurate. */
@@ -158,6 +162,8 @@
   --theme-button-height: 48px;
   --theme-button-border-width: 1px;
   --theme-button-letter-spacing: 0;
+  --theme-button-shadow: none;
+  --theme-button-press-shadow: none;
 }
 
 :is(html, .storefront-theme-root)[data-button-style='soft-pill'] {
@@ -251,16 +257,64 @@
   min-height: var(--theme-button-height, 52px);
   border-width: var(--theme-button-border-width, 0px);
   border-radius: var(--theme-radius-control);
-  font-weight: 620;
+  box-shadow: var(--theme-button-shadow);
+  font-weight: var(--storefront-weight-semibold, 650);
   letter-spacing: var(--theme-button-letter-spacing, -0.01em);
+  -webkit-tap-highlight-color: transparent;
   transition:
+    box-shadow var(--app-motion-fast) ease,
     filter var(--app-motion-fast) ease,
     transform var(--app-motion-base) var(--app-ease-out);
 }
 
 :is(html, .storefront-theme-root)
+  :is(.cta-button, .product-detail-fixed-action .cta-button):focus-visible {
+  outline: 0;
+  box-shadow: var(--theme-button-shadow), var(--theme-button-focus-ring);
+}
+
+:is(html, .storefront-theme-root)
   :is(.cta-button, .product-detail-fixed-action .cta-button):active:not(:disabled) {
+  box-shadow: var(--theme-button-press-shadow);
   filter: brightness(var(--theme-press-brightness, 0.94));
+  transform: scale(var(--theme-press-scale, 0.985));
+}
+
+:is(html, .storefront-theme-root) .section-category-filter button,
+:is(html, .storefront-theme-root) .section-tag-filter button {
+  font-weight: var(--storefront-weight-medium, 560);
+  letter-spacing: -0.01em;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    border-color var(--app-motion-fast) ease,
+    color var(--app-motion-fast) ease,
+    background var(--app-motion-fast) ease,
+    box-shadow var(--app-motion-fast) ease,
+    transform var(--app-motion-fast) var(--app-ease-out);
+}
+
+:is(html, .storefront-theme-root) .section-category-filter button.is-active {
+  font-weight: var(--storefront-weight-semibold, 650);
+}
+
+:is(html, .storefront-theme-root) .section-tag-filter button {
+  min-height: 34px;
+  padding: 5px 12px;
+  border-color: color-mix(in srgb, var(--line) 72%, transparent);
+  border-radius: var(--theme-radius-chip);
+  background: color-mix(in srgb, var(--surface) 74%, transparent);
+}
+
+:is(html, .storefront-theme-root) .section-tag-filter button.is-active {
+  border-color: color-mix(in srgb, var(--brand) 34%, var(--line));
+  color: var(--text);
+  background: color-mix(in srgb, var(--brand) 10%, var(--surface));
+  box-shadow: 0 3px 10px color-mix(in srgb, var(--brand) 8%, transparent);
+}
+
+:is(html, .storefront-theme-root)
+  :is(.section-category-filter button, .section-tag-filter button):active {
+  opacity: 1;
   transform: scale(var(--theme-press-scale, 0.985));
 }
 
