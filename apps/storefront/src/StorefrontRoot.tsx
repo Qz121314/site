@@ -22,6 +22,7 @@ import { HomeFeed } from './HomeFeed';
 import { HomepageAnalytics } from './HomepageAnalytics';
 import { RouteProgress, StartupLoader } from './LoadingStates';
 import { NotFoundPage } from './NotFoundPage';
+import { ProductDetailLoadingSurface } from './ProductDetailLoadingSurface';
 import { ResilientImage } from './ResilientMedia';
 import {
   bottomNavigationActiveHref,
@@ -352,6 +353,7 @@ export function StorefrontRoot() {
   const bootstrap = bootstrapQuery.data;
   const navigationItems = bootstrap.bottomNavigation;
   let page: ReactNode;
+  let routeFallback: ReactNode = <RouteProgress />;
 
   switch (route.type) {
     case 'home':
@@ -422,6 +424,7 @@ export function StorefrontRoot() {
       );
       break;
     case 'product':
+      routeFallback = <ProductDetailLoadingSurface />;
       page = (
         <ProductDetailPage
           bootstrap={bootstrap}
@@ -455,7 +458,7 @@ export function StorefrontRoot() {
         routeKey={locationKey}
         unreadMessages={unreadMessages}
       >
-        <Suspense fallback={<RouteProgress />}>{page}</Suspense>
+        <Suspense fallback={routeFallback}>{page}</Suspense>
       </PrimaryShell>
     </>
   );

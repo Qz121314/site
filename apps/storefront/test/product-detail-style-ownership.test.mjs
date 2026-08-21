@@ -12,6 +12,7 @@ test('product detail content stays separate from App Shell chrome ownership', ()
   const main = source('../src/main.tsx');
   const root = source('../src/StorefrontRoot.tsx');
   const routeAction = source('../src/StorefrontRouteAction.tsx');
+  const loadingSurface = source('../src/ProductDetailLoadingSurface.tsx');
   const loadingCss = source('../src/loading-states.css');
   const appShellCss = source('../src/app-shell.css');
   const productDetailPage = source('../src/ProductDetailPage.tsx');
@@ -42,6 +43,13 @@ test('product detail content stays separate from App Shell chrome ownership', ()
 
   assert.match(routeAction, /StorefrontRouteActionHostContext/u);
   assert.match(routeAction, /createPortal\(children, host\)/u);
+  assert.match(loadingSurface, /StorefrontRouteAction/u);
+  assert.match(loadingSurface, /product-detail-loading-route-action/u);
+  assert.match(root, /routeFallback = <ProductDetailLoadingSurface \/>/u);
+  assert.match(root, /<Suspense fallback=\{routeFallback\}>/u);
+  assert.match(productDetailPage, /return <ProductDetailLoadingSurface \/>/u);
+  assert.doesNotMatch(productDetailPage, /function ProductDetailSkeleton/u);
+
   assert.match(productDetailPage, /StorefrontRouteAction/u);
   assert.doesNotMatch(productDetailPage, /createPortal|document\.body/u);
   assert.doesNotMatch(productDetailPage, /product-detail-navigation/u);
