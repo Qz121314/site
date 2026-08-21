@@ -60,7 +60,7 @@
   overflow: hidden;
   padding: 0;
   border: 1px solid color-mix(in srgb, var(--v2-hairline, var(--line)) 62%, transparent);
-  border-radius: max(var(--theme-radius-icon, 10px), 12px);
+  border-radius: var(--theme-radius-icon, 12px);
   background: color-mix(in srgb, var(--surface-soft) 92%, var(--surface));
   box-shadow: 0 6px 16px color-mix(in srgb, var(--text) 4%, transparent);
   transform: translateZ(0);
@@ -231,7 +231,7 @@
   aspect-ratio: 1 / 1;
   overflow: hidden;
   border: 0;
-  border-radius: max(var(--theme-radius-media, 6px), 10px);
+  border-radius: var(--theme-radius-media, 10px);
   background: var(--theme-media-background, var(--surface-soft));
   box-shadow: 0 8px 22px color-mix(in srgb, var(--text) 4%, transparent);
   isolation: isolate;
@@ -379,7 +379,7 @@
   .home-shortcut-icon {
     width: 56px;
     height: 56px;
-    border-radius: max(var(--theme-radius-icon, 10px), 13px);
+    border-radius: var(--theme-radius-icon, 13px);
   }
 
   .home-shortcut-label {
