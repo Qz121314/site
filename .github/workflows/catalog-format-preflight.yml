@@ -1,0 +1,51 @@
+name: Catalog Format Preflight
+
+on:
+  push:
+    branches: [style/storefront-catalog-controls]
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: style/storefront-catalog-controls
+
+      - name: Set up pnpm
+        run: npm install --global pnpm@11.19.0
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Apply repository Prettier
+        run: |
+          set -euo pipefail
+          pnpm exec prettier \
+            apps/storefront/src/catalog-polish.css \
+            apps/storefront/src/theme-runtime.css \
+            apps/storefront/src/main.tsx \
+            apps/storefront/test/catalog-controls-polish-contract.test.mjs \
+            --write
+          if git diff --quiet -- \
+            apps/storefront/src/catalog-polish.css \
+            apps/storefront/src/theme-runtime.css \
+            apps/storefront/src/main.tsx \
+            apps/storefront/test/catalog-controls-polish-contract.test.mjs; then
+            echo 'Formatting already clean.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
+            apps/storefront/src/catalog-polish.css \
+            apps/storefront/src/theme-runtime.css \
+            apps/storefront/src/main.tsx \
+            apps/storefront/test/catalog-controls-polish-contract.test.mjs
+          git commit -m 'chore: apply catalog prettier formatting'
+          git push origin HEAD:style/storefront-catalog-controls
