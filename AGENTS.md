@@ -40,6 +40,9 @@ These are defaults unless the user explicitly changes the product rule.
 - Section search/category/tag filtering runs on already-loaded section data in the browser and must not add Worker or D1 requests per interaction.
 - Prefer batch reads, bootstrap reuse, cached/public snapshots, and local filtering over repeated Worker/D1 reads.
 - Theme recipe values are runtime/admin configuration. Production smoke tests must not hard-code a specific theme name, font pack, media style, motion style, navigation style, shadow, radius, or other mutable visual value unless that value is an explicit product invariant.
+- Storefront App Shell owns persistent chrome: Header, Bottom Navigation, and viewport-fixed route action surfaces. Route pages provide content/action intent but must not mount global fixed UI directly to `document.body`.
+- Storefront presentation/history runtime owns navigation direction and route transition semantics only. Do not use generic `push`/`pop` presentation selectors to hide or replace App Shell chrome.
+- Route transition transforms apply to route content only. Persistent Header and route action surfaces must stay outside the transformed route view so fixed/sticky behavior remains stable.
 - Production acceptance tests validate stable behavior and contracts: rendering, runtime configuration application, navigation, overflow, media ratio, CTA availability, auth boundaries, request/data contracts, and deployment health. They are not pixel-snapshot substitutes.
 - When a UI rule intentionally changes, inspect both the implementation test and any meta/source-contract test that reads the E2E source.
 - Do not add temporary debug workflows, diagnostic files, or one-off CI workarounds to the final PR.
