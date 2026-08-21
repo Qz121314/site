@@ -33,7 +33,9 @@ const IGNORE_GESTURE_SELECTOR = [
   'select',
   '[contenteditable="true"]',
   '.hero-carousel-viewport',
+  '.home-shortcuts',
   '.home-product-rail',
+  '.section-catalog-filters',
   '.section-tag-filter',
   '.detail-gallery',
 ].join(',');
@@ -106,6 +108,10 @@ export function MobileEdgeNavigation() {
     }
 
     function handleTouchStart(event: TouchEvent) {
+      if (tracking && event.touches.length !== 1) {
+        clearGesture();
+        return;
+      }
       if (
         !mobileQuery.matches ||
         !isStandaloneApp(standaloneQuery) ||
@@ -130,7 +136,11 @@ export function MobileEdgeNavigation() {
     }
 
     function handleTouchMove(event: TouchEvent) {
-      if (!tracking || event.touches.length !== 1) return;
+      if (!tracking) return;
+      if (event.touches.length !== 1) {
+        clearGesture();
+        return;
+      }
       const touch = event.touches[0];
       if (!touch) return;
 
