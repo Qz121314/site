@@ -6,9 +6,12 @@ import {
   parseStorefrontRoute,
   productHref,
   sectionHref,
+  sectionRefHref,
 } from '../src/routing.ts';
 
 test('canonical storefront links use section, product, and FAQ article routes', () => {
+  assert.equal(sectionRefHref('home-services'), '/sections/home-services/');
+  assert.equal(sectionRefHref('home services'), '/sections/home%20services/');
   assert.equal(
     sectionHref({ id: 'section-1', slug: 'home-services' }),
     '/sections/home-services/',
