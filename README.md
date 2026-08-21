@@ -272,6 +272,33 @@ HTML critical surface
 - Startup Loader 可以拥有启动时的预测 Header / Bottom Chrome 高度，因为真实 Shell 尚未挂载、无法测量；但预测值必须跟随 App Shell breakpoint 模型，普通业务页面不允许复制这种预测方式；
 - 首屏连续性优化不能通过新增 `/theme`、导航、manifest 或其他全局 fetch 来换取视觉稳定，正常 schema-v2 仍保持单 bootstrap 启动边界。
 
+### 首屏媒体 / LCP 优先级规则
+
+首页媒体请求只允许存在一个明确的高优先级图片候选，不能把“首屏可见”简单等同于全部 `fetchPriority="high"`：
+
+```text
+存在 Hero 图片
+→ 第一张 Hero 图片：high + eager
+→ 其他 Hero 图片：low + lazy
+→ 快捷入口图片：low + lazy
+→ 首页推荐产品：low + lazy
+→ Bottom Navigation 自定义图片：low
+
+不存在 Hero
+→ 第一组有效推荐中的第一张产品图：high + eager
+→ 其余产品图：low + lazy
+```
+
+具体规则：
+
+- 第一张 Hero 图片存在时，它是首页主要 LCP 图片候选；快捷入口、推荐产品和底部导航图片不得同时提升为 `high`；
+- Hero 非首张图片保持 `lazy`，并显式使用低优先级，避免横向轮播的不可见资源与当前画面竞争；
+- Hero 视频继续只让当前 active slide 使用 `preload="auto"`，非 active 视频使用 `preload="none"`；不要为了提前播放全部视频占用首屏网络预算；
+- 没有 Hero 时才允许第一张有意义的推荐产品图片升级为 `high + eager`，避免无 Hero 页面失去明确的 LCP 候选；
+- 分区快捷入口图标即使进入浏览器首屏，也属于次级小媒体，保持 `low + lazy`；
+- Bottom Navigation 的自定义图片需要及时显示，但体积和视觉权重都不应与 Hero 竞争，因此保持正常加载并显式使用 `fetchPriority="low"`；
+- 不为了 LCP 新增独立 Worker / D1 / R2 请求，不为动态 R2 自定义域名硬编码静态 preload。优先通过现有 bootstrap 数据、浏览器资源优先级、现有图片变体和 lazy loading 调度当前请求。
+
 ### Storefront 启动请求边界
 
 正常 schema-v2 Storefront 启动把首屏必须的运行时配置合并到单个 bootstrap 请求：
