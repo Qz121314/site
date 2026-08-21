@@ -672,7 +672,9 @@ html[data-theme='noir'] .app-shell {
     place-items: center;
   }
 
-  .storefront-bottom-chrome > .bottom-nav :is(.storefront-nav-image, .storefront-nav-emoji) {
+  .storefront-bottom-chrome
+    > .bottom-nav
+    :is(.storefront-nav-image, .storefront-nav-emoji) {
     width: 18px;
     height: 18px;
     flex-basis: 18px;
