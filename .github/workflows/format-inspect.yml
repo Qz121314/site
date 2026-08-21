@@ -1,0 +1,26 @@
+name: Format Inspect
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  inspect:
+    if: github.head_ref == 'chore/repository-development-guardrails'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        run: npm install --global pnpm@11.19.0
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Print exact Prettier diff
+        run: |
+          pnpm exec prettier AGENTS.md scripts/check-repository-guardrails.mjs --write
+          git diff -- AGENTS.md scripts/check-repository-guardrails.mjs || true
