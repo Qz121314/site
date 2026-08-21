@@ -1,7 +1,10 @@
 import type { APIRequestContext } from '@playwright/test';
 
-type PublishedProductRoute = {
+type PublishedSectionRoute = {
   sectionHref: string;
+};
+
+type PublishedProductRoute = PublishedSectionRoute & {
   productHref: string;
 };
 
@@ -36,13 +39,23 @@ type SectionPayload = {
   products?: PublishedProduct[];
 };
 
-function routeFor(sectionId: string, productId: string): PublishedProductRoute {
-  const sectionRef = encodeURIComponent(sectionId);
-  const productRef = encodeURIComponent(productId);
+function sectionRoute(sectionId: string): PublishedSectionRoute {
+  return { sectionHref: `/sections/${encodeURIComponent(sectionId)}/` };
+}
+
+function productRoute(sectionId: string, productId: string): PublishedProductRoute {
   return {
-    sectionHref: `/sections/${sectionRef}/`,
-    productHref: `/sections/${sectionRef}/products/${productRef}/`,
+    ...sectionRoute(sectionId),
+    productHref: `/sections/${encodeURIComponent(sectionId)}/products/${encodeURIComponent(productId)}/`,
   };
+}
+
+function validSections(bootstrap: BootstrapPayload): PublishedSection[] {
+  return Array.isArray(bootstrap.sectionsIndex?.sections)
+    ? bootstrap.sectionsIndex.sections.filter(
+        (section) => typeof section?.id === 'string' && section.id.length > 0,
+      )
+    : [];
 }
 
 function firstProductRoute(
@@ -57,25 +70,33 @@ function firstProductRoute(
       typeof candidate.sectionId === 'string' &&
       sectionIds.has(candidate.sectionId),
   );
-  return product ? routeFor(product.sectionId, product.id) : null;
+  return product ? productRoute(product.sectionId, product.id) : null;
+}
+
+async function loadBootstrap(request: APIRequestContext): Promise<BootstrapPayload> {
+  const response = await request.get('/api/public/storefront/bootstrap', {
+    headers: { 'cache-control': 'no-cache' },
+  });
+  if (!response.ok()) {
+    throw new Error(
+      `Storefront bootstrap is unavailable during production acceptance (${response.status()}).`,
+    );
+  }
+  return (await response.json()) as BootstrapPayload;
+}
+
+export async function findPublishedSectionRoute(
+  request: APIRequestContext,
+): Promise<PublishedSectionRoute | null> {
+  const sections = validSections(await loadBootstrap(request));
+  return sections[0] ? sectionRoute(sections[0].id) : null;
 }
 
 export async function findPublishedProductRoute(
   request: APIRequestContext,
 ): Promise<PublishedProductRoute | null> {
-  const bootstrapResponse = await request.get('/api/public/storefront/bootstrap', {
-    headers: { 'cache-control': 'no-cache' },
-  });
-  if (!bootstrapResponse.ok()) {
-    throw new Error(
-      `Storefront bootstrap is unavailable during production acceptance (${bootstrapResponse.status()}).`,
-    );
-  }
-
-  const bootstrap = (await bootstrapResponse.json()) as BootstrapPayload;
-  const sections = Array.isArray(bootstrap.sectionsIndex?.sections)
-    ? bootstrap.sectionsIndex.sections
-    : [];
+  const bootstrap = await loadBootstrap(request);
+  const sections = validSections(bootstrap);
   const homeProducts = [
     ...(Array.isArray(bootstrap.home?.featuredProducts)
       ? bootstrap.home.featuredProducts
@@ -88,18 +109,17 @@ export async function findPublishedProductRoute(
   if (bootstrap.pointer?.schemaVersion !== 2 || !bootstrap.pointer.sections) return null;
 
   for (const section of sections) {
-    if (!section?.id) continue;
     const reference = bootstrap.pointer.sections[section.id];
     if (!reference?.contentVersion) continue;
-    const sectionResponse = await request.get(
+    const response = await request.get(
       `/public/modules/sections/${encodeURIComponent(section.id)}/${encodeURIComponent(reference.contentVersion)}/section.json`,
       { headers: { 'cache-control': 'no-cache' } },
     );
-    if (!sectionResponse.ok()) continue;
-    const sectionPayload = (await sectionResponse.json()) as SectionPayload;
+    if (!response.ok()) continue;
+    const sectionPayload = (await response.json()) as SectionPayload;
     const products = Array.isArray(sectionPayload.products) ? sectionPayload.products : [];
-    const sectionRoute = firstProductRoute([section], products);
-    if (sectionRoute) return sectionRoute;
+    const route = firstProductRoute([section], products);
+    if (route) return route;
   }
 
   return null;
