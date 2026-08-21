@@ -5,17 +5,29 @@ import test from 'node:test';
 const read = (path) => readFile(new URL(path, import.meta.url), 'utf8');
 
 test('Storefront chrome follows the visual viewport and measured shell geometry', async () => {
-  const [main, runtime, root, shell, section, pwa, themeRuntime, indexHtml] =
-    await Promise.all([
-      read('../src/main.tsx'),
-      read('../src/storefront-viewport-runtime.ts'),
-      read('../src/StorefrontRoot.tsx'),
-      read('../src/app-shell.css'),
-      read('../src/section-ui.css'),
-      read('../src/pwa.css'),
-      read('../src/theme-runtime.ts'),
-      read('../index.html'),
-    ]);
+  const [
+    main,
+    runtime,
+    root,
+    shell,
+    section,
+    browse,
+    loading,
+    pwa,
+    themeRuntime,
+    indexHtml,
+  ] = await Promise.all([
+    read('../src/main.tsx'),
+    read('../src/storefront-viewport-runtime.ts'),
+    read('../src/StorefrontRoot.tsx'),
+    read('../src/app-shell.css'),
+    read('../src/section-ui.css'),
+    read('../src/browse-ui.css'),
+    read('../src/loading-states.css'),
+    read('../src/pwa.css'),
+    read('../src/theme-runtime.ts'),
+    read('../index.html'),
+  ]);
 
   assert.match(main, /installStorefrontViewportRuntime\(\)/u);
 
@@ -59,6 +71,38 @@ test('Storefront chrome follows the visual viewport and measured shell geometry'
   assert.match(section, /var\(--app-bottom-chrome-height/u);
   assert.doesNotMatch(section, /var\(--app-bottom-nav-height/u);
   assert.doesNotMatch(section, /100dvh - 68px/u);
+
+  assert.match(
+    browse,
+    /@media \(max-width: 767px\) \{[\s\S]{0,420}\.browse-directory-search \{[\s\S]{0,180}position: sticky;[\s\S]{0,180}--app-viewport-top[\s\S]{0,180}--app-header-height/u,
+  );
+  assert.doesNotMatch(browse, /top: calc\(58px/u);
+
+  assert.match(loading, /--startup-header-height/u);
+  assert.match(loading, /--startup-bottom-chrome-height/u);
+  assert.match(
+    loading,
+    /\.startup-app-bar \{[\s\S]{0,260}position: fixed;[\s\S]{0,180}--app-viewport-top/u,
+  );
+  assert.match(
+    loading,
+    /\.startup-feed-skeleton \{[\s\S]{0,720}--app-viewport-top[\s\S]{0,360}--startup-bottom-chrome-height/u,
+  );
+  assert.doesNotMatch(loading, /padding-bottom: calc\([\s\S]{0,40}72px/u);
+
+  const tabletLoading = loading.slice(
+    loading.indexOf('@media (min-width: 768px)'),
+    loading.indexOf('@media (min-width: 980px)'),
+  );
+  const desktopLoading = loading.slice(loading.indexOf('@media (min-width: 980px)'));
+  assert.doesNotMatch(
+    tabletLoading,
+    /\.startup-bottom-nav-skeleton \{[\s\S]{0,300}display: none/u,
+  );
+  assert.match(
+    desktopLoading,
+    /\.startup-bottom-nav-skeleton \{[\s\S]{0,120}display: none/u,
+  );
 
   assert.match(pwa, /var\(--app-viewport-bottom/u);
   assert.match(pwa, /var\(--app-bottom-chrome-height/u);
