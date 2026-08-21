@@ -123,10 +123,14 @@ test('desktop section and product detail use the PC decision layout', async ({
 
   await page.goto(productHref!);
   await expect(page.locator('.product-detail-page')).toBeVisible();
+  await expect(page.locator('.app-shell > .storefront-detail-topbar')).toBeVisible();
   await expect(page.locator('.detail-desktop-gallery')).toBeVisible();
   await expect(page.locator('.detail-mobile-gallery')).toBeHidden();
   await expect(page.locator('.product-detail-inline-action .cta-button')).toBeVisible();
-  await expect(page.locator('body > .product-detail-fixed-action')).toBeHidden();
+  await expect(
+    page.locator('.storefront-route-action-host .product-detail-route-action'),
+  ).toBeHidden();
+  await expect(page.locator('.product-detail-navigation')).toHaveCount(0);
 
   const detailContract = await page.evaluate(() => {
     const gallery = document.querySelector<HTMLElement>('.detail-gallery');
