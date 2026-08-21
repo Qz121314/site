@@ -18,9 +18,8 @@ import {
 import { resolveHomeLayout } from './home-layout';
 import { ResilientImage, ResilientVideo } from './ResilientMedia';
 import { productHref, sectionHref } from './routing';
+import { handleStorefrontLinkClick } from './storefront-navigation-runtime';
 import { SYSTEM_UI } from './system-ui';
-
-const NAVIGATION_EVENT = 'storefront:navigate';
 
 function HomeLink({
   href = '/',
@@ -29,21 +28,7 @@ function HomeLink({
 }: AnchorHTMLAttributes<HTMLAnchorElement>) {
   const handleClick = (event: ReactMouseEvent<HTMLAnchorElement>) => {
     onClick?.(event);
-    if (
-      event.defaultPrevented ||
-      event.button !== 0 ||
-      event.metaKey ||
-      event.ctrlKey ||
-      event.shiftKey ||
-      event.altKey ||
-      !href.startsWith('/') ||
-      href.startsWith('/go/')
-    ) {
-      return;
-    }
-    event.preventDefault();
-    window.history.pushState(null, '', href);
-    window.dispatchEvent(new Event(NAVIGATION_EVENT));
+    handleStorefrontLinkClick(event, href);
   };
 
   return <a {...props} href={href} onClick={handleClick} />;
