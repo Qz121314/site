@@ -1,12 +1,6 @@
 .storefront-route-view {
-  --storefront-route-shift: clamp(12px, 3vw, 18px);
+  --storefront-route-shift: clamp(8px, 2.4vw, 14px);
   min-width: 0;
-  backface-visibility: hidden;
-  transform-origin: center center;
-}
-
-html[data-storefront-transition] .storefront-route-view {
-  will-change: opacity, transform;
 }
 
 html[data-storefront-transition='tab'] .storefront-route-view {
@@ -14,41 +8,29 @@ html[data-storefront-transition='tab'] .storefront-route-view {
     var(--app-ease-out, cubic-bezier(0.22, 1, 0.36, 1)) both;
 }
 
-html[data-storefront-transition='push'][data-storefront-nav-direction='forward']
-  .storefront-route-view {
+html[data-storefront-transition='push'] .storefront-route-view {
   animation: storefront-push-enter var(--app-motion-base, 220ms)
     var(--app-ease-out, cubic-bezier(0.22, 1, 0.36, 1)) both;
 }
 
-html[data-storefront-transition='push'][data-storefront-nav-direction='back']
-  .storefront-route-view,
-html[data-storefront-transition='pop'][data-storefront-nav-direction='back']
-  .storefront-route-view {
+html[data-storefront-transition='pop'] .storefront-route-view {
   animation: storefront-pop-enter var(--app-motion-base, 220ms)
-    var(--app-ease-out, cubic-bezier(0.22, 1, 0.36, 1)) both;
-}
-
-html[data-storefront-transition='pop'][data-storefront-nav-direction='forward']
-  .storefront-route-view {
-  animation: storefront-push-enter var(--app-motion-base, 220ms)
     var(--app-ease-out, cubic-bezier(0.22, 1, 0.36, 1)) both;
 }
 
 @keyframes storefront-tab-enter {
   from {
-    opacity: 0.94;
-    transform: scale(0.998);
+    opacity: 0.985;
   }
 
   to {
     opacity: 1;
-    transform: none;
   }
 }
 
 @keyframes storefront-push-enter {
   from {
-    opacity: 0.96;
+    opacity: 0.985;
     transform: translate3d(var(--storefront-route-shift), 0, 0);
   }
 
@@ -60,7 +42,7 @@ html[data-storefront-transition='pop'][data-storefront-nav-direction='forward']
 
 @keyframes storefront-pop-enter {
   from {
-    opacity: 0.96;
+    opacity: 0.985;
     transform: translate3d(calc(var(--storefront-route-shift) * -1), 0, 0);
   }
 
@@ -72,13 +54,12 @@ html[data-storefront-transition='pop'][data-storefront-nav-direction='forward']
 
 @media (min-width: 768px) {
   .storefront-route-view {
-    --storefront-route-shift: 10px;
+    --storefront-route-shift: 0px;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
   html[data-storefront-transition] .storefront-route-view {
     animation: none;
-    will-change: auto;
   }
 }
