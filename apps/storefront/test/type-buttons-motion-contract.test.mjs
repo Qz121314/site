@@ -50,6 +50,8 @@ test('storefront typography buttons and route motion share one app visual contra
   );
   assert.doesNotMatch(chrome, /product-detail-back/u);
   assert.match(chrome, /\.bottom-nav a:focus-visible/u);
+  assert.match(chrome, /\.storefront-bottom-chrome > \.bottom-nav/u);
+  assert.doesNotMatch(chrome, /\.app-shell > \.bottom-nav/u);
   assert.match(chrome, /--storefront-weight-regular/u);
   assert.match(chrome, /--storefront-weight-semibold/u);
 
