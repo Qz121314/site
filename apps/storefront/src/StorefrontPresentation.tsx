@@ -40,18 +40,12 @@ function transitionModeForNavigation(
   return null;
 }
 
-function applyPresentationMode(
-  direction: StorefrontNavigationDirection | null = null,
-) {
+function applyPresentationMode(direction: StorefrontNavigationDirection | null = null) {
   const element = document.documentElement;
   const previousMode = element.dataset.storefrontPresentation as
     StorefrontPresentationMode | undefined;
   const nextMode = presentationMode(window.location.pathname);
-  const transitionMode = transitionModeForNavigation(
-    previousMode,
-    nextMode,
-    direction,
-  );
+  const transitionMode = transitionModeForNavigation(previousMode, nextMode, direction);
 
   element.dataset.storefrontPresentation = nextMode;
   if (transitionMode) element.dataset.storefrontTransition = transitionMode;
