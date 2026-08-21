@@ -1,3 +1,5 @@
+import { saveCurrentStorefrontScrollPosition } from './storefront-history';
+
 export const STOREFRONT_NAVIGATION_EVENT = 'storefront:navigate';
 
 type StorefrontLinkClickEvent = {
@@ -9,6 +11,11 @@ type StorefrontLinkClickEvent = {
   shiftKey: boolean;
   preventDefault(): void;
 };
+
+function normalizedLocationKey(url: URL): string {
+  const pathname = url.pathname === '/' ? '/' : url.pathname.replace(/\/+$/u, '');
+  return `${pathname}${url.search}${url.hash}`;
+}
 
 export function handleStorefrontLinkClick(
   event: StorefrontLinkClickEvent,
@@ -28,6 +35,11 @@ export function handleStorefrontLinkClick(
   }
 
   event.preventDefault();
+  const target = new URL(href, window.location.href);
+  const current = new URL(window.location.href);
+  if (normalizedLocationKey(target) === normalizedLocationKey(current)) return true;
+
+  saveCurrentStorefrontScrollPosition();
   window.history.pushState(null, '', href);
   window.dispatchEvent(new Event(STOREFRONT_NAVIGATION_EVENT));
   return true;
