@@ -12,6 +12,7 @@ import {
   Suspense,
   useEffect,
   useLayoutEffect,
+  useRef,
   useState,
   useSyncExternalStore,
 } from 'react';
@@ -32,6 +33,7 @@ import { publishPwaInstallRuntime } from './pwa-install-runtime';
 import { canNavigateStorefrontBack, navigateStorefrontBack } from './storefront-history';
 import { primaryNavigationItems } from './storefront-navigation';
 import { StorefrontRouteActionHostProvider } from './StorefrontRouteAction';
+import { observeStorefrontShellChrome } from './storefront-viewport-runtime';
 import type { SupportConversationSummary } from './support-contract';
 import { siteSupportGateway } from './support-gateway';
 import { peekSupportVisitorIdentity } from './support-identity';
@@ -234,10 +236,17 @@ function PrimaryShell({
   routeKey: string;
   unreadMessages?: number;
 }) {
+  const shellRef = useRef<HTMLDivElement | null>(null);
   const [routeActionHost, setRouteActionHost] = useState<HTMLDivElement | null>(null);
   const site = bootstrap.site.site;
   const headerMode = shellHeaderMode(route);
   const showBottomNavigation = route.type !== 'product';
+
+  useLayoutEffect(() => {
+    const shell = shellRef.current;
+    if (!shell) return undefined;
+    return observeStorefrontShellChrome(shell);
+  }, []);
 
   return (
     <StorefrontRouteActionHostProvider host={routeActionHost}>
@@ -245,6 +254,7 @@ function PrimaryShell({
         className="app-shell"
         data-shell-header={headerMode}
         data-shell-route={route.type}
+        ref={shellRef}
       >
         {route.type === 'product' ? (
           <ProductShellHeader bootstrap={bootstrap} route={route} />
