@@ -27,4 +27,29 @@ body,
   .app-shell textarea {
     font-size: 16px !important;
   }
+
+  .browse-directory-search-clear,
+  .section-catalog-search-clear {
+    width: 44px;
+    height: 44px;
+    flex-basis: 44px;
+  }
+
+  .browse-directory-retry,
+  .section-catalog-empty-reset,
+  .hero-carousel-cta {
+    min-height: 44px;
+  }
+
+  .home-recommendation-heading > a {
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    min-height: 44px;
+    flex-basis: 44px;
+  }
+
+  .hero-carousel-arrow {
+    width: 44px;
+  }
 }
