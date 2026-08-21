@@ -130,14 +130,8 @@ export function observeStorefrontShellChrome(shell: HTMLElement): () => void {
     resizeObserver = new ResizeObserver(schedule);
   }
 
-  const mutationObserver = new MutationObserver((records) => {
-    if (records.some((record) => record.target === shell)) {
-      refreshResizeTargets();
-      return;
-    }
-    schedule();
-  });
-  mutationObserver.observe(shell, { childList: true, subtree: true });
+  const mutationObserver = new MutationObserver(refreshResizeTargets);
+  mutationObserver.observe(shell, { childList: true });
 
   window.addEventListener('resize', schedule, { passive: true });
   refreshResizeTargets();
