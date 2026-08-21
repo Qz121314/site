@@ -275,14 +275,19 @@ function PrimaryShell({
             {children}
           </div>
         </main>
-        {showBottomNavigation && navigationItems.length > 0 ? (
-          <StorefrontBottomNavigation
-            activeHref={bottomNavigationActiveHref(activePath)}
-            items={primaryNavigationItems(navigationItems, unreadMessages)}
-            LinkComponent={StorefrontLink as StorefrontLinkComponent}
-          />
-        ) : null}
-        <div className="storefront-route-action-host" ref={setRouteActionHost} />
+        <div className="storefront-bottom-chrome">
+          {showBottomNavigation ? (
+            navigationItems.length > 0 ? (
+              <StorefrontBottomNavigation
+                activeHref={bottomNavigationActiveHref(activePath)}
+                items={primaryNavigationItems(navigationItems, unreadMessages)}
+                LinkComponent={StorefrontLink as StorefrontLinkComponent}
+              />
+            ) : null
+          ) : (
+            <div className="storefront-route-action-host" ref={setRouteActionHost} />
+          )}
+        </div>
       </div>
     </StorefrontRouteActionHostProvider>
   );
