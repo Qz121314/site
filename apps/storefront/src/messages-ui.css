@@ -63,7 +63,8 @@
   gap: 13px;
   min-height: 82px;
   padding: 13px 15px;
-  border-bottom: 1px solid color-mix(in srgb, var(--app-hairline, var(--line)) 88%, transparent);
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--app-hairline, var(--line)) 88%, transparent);
   outline: 0;
   color: var(--text);
   text-decoration: none;
@@ -243,7 +244,8 @@
   gap: 10px;
   min-height: 64px;
   padding: 8px 12px;
-  border-bottom: 1px solid color-mix(in srgb, var(--app-hairline, var(--line)) 88%, transparent);
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--app-hairline, var(--line)) 88%, transparent);
   background: color-mix(in srgb, var(--surface) 92%, transparent);
   box-shadow: none;
   backdrop-filter: blur(28px) saturate(1.08);

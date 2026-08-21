@@ -23,7 +23,12 @@
   padding: calc(11px + env(safe-area-inset-top)) max(10px, env(safe-area-inset-right))
     10px max(10px, env(safe-area-inset-left));
   border: 0;
-  background: linear-gradient(to bottom, rgb(0 0 0 / 54%) 0%, rgb(0 0 0 / 18%) 60%, transparent 100%);
+  background: linear-gradient(
+    to bottom,
+    rgb(0 0 0 / 54%) 0%,
+    rgb(0 0 0 / 18%) 60%,
+    transparent 100%
+  );
   pointer-events: none;
 }
 

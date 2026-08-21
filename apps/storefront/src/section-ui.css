@@ -103,8 +103,7 @@
   align-items: center;
   gap: 10px;
   padding: 0 12px 0 15px;
-  border: 1px solid
-    color-mix(in srgb, var(--v2-hairline, var(--line)) 56%, transparent);
+  border: 1px solid color-mix(in srgb, var(--v2-hairline, var(--line)) 56%, transparent);
   border-radius: var(--theme-radius-control, 12px);
   background: color-mix(
     in srgb,
@@ -363,8 +362,7 @@
 }
 
 .section-product-cover > img {
-  transition: transform var(--app-motion-slow, 360ms)
-    var(--app-ease-out, ease-out);
+  transition: transform var(--app-motion-slow, 360ms) var(--app-ease-out, ease-out);
 }
 
 .section-product-title {
