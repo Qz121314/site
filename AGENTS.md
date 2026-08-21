@@ -15,7 +15,8 @@ The required order for a behavior change is:
 ```text
 confirm the new rule
 → inspect/update the affected test contract
-→ implement the change
+→ identify the owning layer and root cause
+→ implement the structural fix
 → format with the repository Prettier version
 → run the complete verification gate
 ```
@@ -29,6 +30,12 @@ implement
 → discover old expectations
 → patch the test afterwards
 ```
+
+## Root-cause-first rule
+
+Do not use patch-style fixes as the default engineering method. A visible symptom must first be traced to its owning layer, state/data flow, route boundary, layout contract, or deployment contract.
+
+Avoid symptom suppression such as stacking override selectors, adding one-off route conditions, duplicating components to escape an ownership problem, or keeping obsolete implementations beside the replacement. If the root cause is structural, fix the structure and remove the superseded code in the same change. When the lesson is reusable, encode it in a repository invariant, guardrail, or stable behavior contract.
 
 ## Fixed project invariants
 
