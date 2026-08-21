@@ -32,6 +32,10 @@ import {
 import { publishPwaInstallRuntime } from './pwa-install-runtime';
 import { canNavigateStorefrontBack, navigateStorefrontBack } from './storefront-history';
 import { primaryNavigationItems } from './storefront-navigation';
+import {
+  handleStorefrontLinkClick,
+  STOREFRONT_NAVIGATION_EVENT,
+} from './storefront-navigation-runtime';
 import { StorefrontRouteActionHostProvider } from './StorefrontRouteAction';
 import { observeStorefrontShellChrome } from './storefront-viewport-runtime';
 import type { SupportConversationSummary } from './support-contract';
@@ -46,8 +50,6 @@ import {
 } from './support-realtime-cache';
 import { SYSTEM_UI } from './system-ui';
 import { applyStorefrontTheme } from './theme-runtime';
-
-const NAVIGATION_EVENT = 'storefront:navigate';
 
 type ShellHeaderMode = 'brand' | 'detail' | 'hidden-mobile';
 
@@ -74,10 +76,10 @@ const MessagesPage = lazy(() =>
 
 function subscribeLocation(callback: () => void) {
   window.addEventListener('popstate', callback);
-  window.addEventListener(NAVIGATION_EVENT, callback);
+  window.addEventListener(STOREFRONT_NAVIGATION_EVENT, callback);
   return () => {
     window.removeEventListener('popstate', callback);
-    window.removeEventListener(NAVIGATION_EVENT, callback);
+    window.removeEventListener(STOREFRONT_NAVIGATION_EVENT, callback);
   };
 }
 
@@ -90,11 +92,6 @@ function pathnameFromLocationKey(locationKey: string) {
   return queryIndex === -1 ? locationKey : locationKey.slice(0, queryIndex);
 }
 
-function navigateStorefront(href: string) {
-  window.history.pushState(null, '', href);
-  window.dispatchEvent(new Event(NAVIGATION_EVENT));
-}
-
 function StorefrontLink({
   href = '/',
   onClick,
@@ -102,20 +99,7 @@ function StorefrontLink({
 }: AnchorHTMLAttributes<HTMLAnchorElement>) {
   const handleClick = (event: ReactMouseEvent<HTMLAnchorElement>) => {
     onClick?.(event);
-    if (
-      event.defaultPrevented ||
-      event.button !== 0 ||
-      event.metaKey ||
-      event.ctrlKey ||
-      event.shiftKey ||
-      event.altKey ||
-      !href.startsWith('/') ||
-      href.startsWith('/go/')
-    ) {
-      return;
-    }
-    event.preventDefault();
-    navigateStorefront(href);
+    handleStorefrontLinkClick(event, href);
   };
 
   return <a {...props} href={href} onClick={handleClick} />;
