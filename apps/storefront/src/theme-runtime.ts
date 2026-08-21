@@ -75,6 +75,7 @@ function validInstallPrompt(value: unknown): value is ThemeInstallPrompt {
     Number.isInteger(value.delaySeconds) &&
     Number(value.delaySeconds) >= 5 &&
     Number(value.delaySeconds) <= 120 &&
+    typeof value.installPrompt === 'undefined' &&
     typeof value.title === 'string' &&
     typeof value.description === 'string' &&
     typeof value.iosDescription === 'string' &&
@@ -191,7 +192,7 @@ function applyTheme(theme: PublicTheme): void {
   root.style.setProperty('--hero-glow', theme.tokens.heroGlow);
   root.style.setProperty('--shadow', theme.tokens.shadow);
   root.style.setProperty('--product-media-ratio', '1 / 1');
-  syncThemeColor(theme.tokens.brand);
+  syncThemeColor(theme.tokens.pageBg);
 }
 
 function readCachedTheme(): PublicTheme | null {
