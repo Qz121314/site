@@ -12,6 +12,7 @@ import {
   Suspense,
   useEffect,
   useLayoutEffect,
+  useState,
   useSyncExternalStore,
 } from 'react';
 import type { BottomNavigationItemConfig } from './bottom-navigation';
@@ -21,9 +22,16 @@ import { HomepageAnalytics } from './HomepageAnalytics';
 import { RouteProgress, StartupLoader } from './LoadingStates';
 import { NotFoundPage } from './NotFoundPage';
 import { ResilientImage } from './ResilientMedia';
-import { bottomNavigationActiveHref, parseStorefrontRoute } from './routing';
+import {
+  bottomNavigationActiveHref,
+  parseStorefrontRoute,
+  sectionRefHref,
+  type StorefrontRoute,
+} from './routing';
 import { publishPwaInstallRuntime } from './pwa-install-runtime';
+import { canNavigateStorefrontBack, navigateStorefrontBack } from './storefront-history';
 import { primaryNavigationItems } from './storefront-navigation';
+import { StorefrontRouteActionHostProvider } from './StorefrontRouteAction';
 import type { SupportConversationSummary } from './support-contract';
 import { siteSupportGateway } from './support-gateway';
 import { peekSupportVisitorIdentity } from './support-identity';
@@ -38,6 +46,8 @@ import { SYSTEM_UI } from './system-ui';
 import { applyStorefrontTheme } from './theme-runtime';
 
 const NAVIGATION_EVENT = 'storefront:navigate';
+
+type ShellHeaderMode = 'brand' | 'detail' | 'hidden-mobile';
 
 const BrowsePage = lazy(() =>
   import('./BrowsePage').then((module) => ({ default: module.BrowsePage })),
@@ -109,6 +119,63 @@ function StorefrontLink({
   return <a {...props} href={href} onClick={handleClick} />;
 }
 
+function handleShellBack(event: ReactMouseEvent<HTMLAnchorElement>) {
+  if (!canNavigateStorefrontBack()) return;
+  event.preventDefault();
+  navigateStorefrontBack();
+}
+
+function shellHeaderMode(route: StorefrontRoute): ShellHeaderMode {
+  if (route.type === 'product') return 'detail';
+  switch (route.type) {
+    case 'section':
+    case 'faq-article':
+    case 'message':
+    case 'message-compose':
+      return 'hidden-mobile';
+    default:
+      return 'brand';
+  }
+}
+
+function ProductShellHeader({
+  bootstrap,
+  route,
+}: {
+  bootstrap: Awaited<ReturnType<typeof loadStorefrontBootstrap>>;
+  route: Extract<StorefrontRoute, { type: 'product' }>;
+}) {
+  const site = bootstrap.site.site;
+  const backHref = route.sectionRef ? sectionRefHref(route.sectionRef) : '/browse/';
+
+  return (
+    <header className="topbar storefront-detail-topbar">
+      <StorefrontLink
+        aria-label={SYSTEM_UI.back}
+        className="storefront-detail-back"
+        href={backHref}
+        onClick={handleShellBack}
+      >
+        <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false">
+          <path d="m12.5 4.5-5.5 5.5 5.5 5.5" />
+        </svg>
+      </StorefrontLink>
+      <StorefrontLink className="brand-lockup" href="/" aria-label={site.name}>
+        <span className="brand-logo">
+          {site.logoUrl ? (
+            <ResilientImage alt="" fallback={null} src={site.logoUrl} />
+          ) : null}
+        </span>
+        <span>
+          <strong>{site.name}</strong>
+          <small>⌖ {site.locationLabel}</small>
+        </span>
+      </StorefrontLink>
+      <span className="storefront-detail-header-spacer" aria-hidden="true" />
+    </header>
+  );
+}
+
 function StorefrontMetadata({ description }: { description: string }) {
   useEffect(() => {
     let meta = document.head.querySelector<HTMLMetaElement>('meta[name="description"]');
@@ -155,6 +222,7 @@ function PrimaryShell({
   bootstrap,
   navigationItems,
   children,
+  route,
   routeKey,
   unreadMessages = 0,
 }: {
@@ -162,35 +230,51 @@ function PrimaryShell({
   bootstrap: Awaited<ReturnType<typeof loadStorefrontBootstrap>>;
   navigationItems: BottomNavigationItemConfig[];
   children: ReactNode;
+  route: StorefrontRoute;
   routeKey: string;
   unreadMessages?: number;
 }) {
+  const [routeActionHost, setRouteActionHost] = useState<HTMLDivElement | null>(null);
   const site = bootstrap.site.site;
+  const headerMode = shellHeaderMode(route);
+  const showBottomNavigation = route.type !== 'product';
+
   return (
-    <div className="app-shell">
-      <StorefrontBrandBar
-        LinkComponent={StorefrontLink as StorefrontLinkComponent}
-        locationLabel={site.locationLabel}
-        logo={
-          site.logoUrl ? (
-            <ResilientImage alt="" fallback={null} src={site.logoUrl} />
-          ) : null
-        }
-        siteName={site.name}
-      />
-      <main>
-        <div className="storefront-route-view" key={routeKey}>
-          {children}
-        </div>
-      </main>
-      {navigationItems.length > 0 ? (
-        <StorefrontBottomNavigation
-          activeHref={bottomNavigationActiveHref(activePath)}
-          items={primaryNavigationItems(navigationItems, unreadMessages)}
-          LinkComponent={StorefrontLink as StorefrontLinkComponent}
-        />
-      ) : null}
-    </div>
+    <StorefrontRouteActionHostProvider host={routeActionHost}>
+      <div
+        className="app-shell"
+        data-shell-header={headerMode}
+        data-shell-route={route.type}
+      >
+        {route.type === 'product' ? (
+          <ProductShellHeader bootstrap={bootstrap} route={route} />
+        ) : (
+          <StorefrontBrandBar
+            LinkComponent={StorefrontLink as StorefrontLinkComponent}
+            locationLabel={site.locationLabel}
+            logo={
+              site.logoUrl ? (
+                <ResilientImage alt="" fallback={null} src={site.logoUrl} />
+              ) : null
+            }
+            siteName={site.name}
+          />
+        )}
+        <main>
+          <div className="storefront-route-view" key={routeKey}>
+            {children}
+          </div>
+        </main>
+        {showBottomNavigation && navigationItems.length > 0 ? (
+          <StorefrontBottomNavigation
+            activeHref={bottomNavigationActiveHref(activePath)}
+            items={primaryNavigationItems(navigationItems, unreadMessages)}
+            LinkComponent={StorefrontLink as StorefrontLinkComponent}
+          />
+        ) : null}
+        <div className="storefront-route-action-host" ref={setRouteActionHost} />
+      </div>
+    </StorefrontRouteActionHostProvider>
   );
 }
 
@@ -368,6 +452,7 @@ export function StorefrontRoot() {
         activePath={pathname}
         bootstrap={bootstrap}
         navigationItems={navigationItems}
+        route={route}
         routeKey={locationKey}
         unreadMessages={unreadMessages}
       >
