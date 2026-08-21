@@ -42,16 +42,10 @@ test('Storefront chrome follows the visual viewport and measured shell geometry'
     shell,
     /\.storefront-route-action-host \{[\s\S]*bottom: var\(--app-viewport-bottom/u,
   );
-  assert.match(
-    shell,
-    /\.app-shell > main \{[\s\S]*var\(--app-header-height/u,
-  );
+  assert.match(shell, /\.app-shell > main \{[\s\S]*var\(--app-header-height/u);
   assert.match(shell, /var\(--app-route-action-height/u);
   assert.match(shell, /var\(--app-bottom-nav-height/u);
-  assert.doesNotMatch(
-    shell,
-    /max\(var\(--theme-detail-cta-height[\s\S]{0,160}\+ 58px/u,
-  );
+  assert.doesNotMatch(shell, /max\(var\(--theme-detail-cta-height[\s\S]{0,160}\+ 58px/u);
 
   assert.match(section, /var\(--app-viewport-height/u);
   assert.match(section, /var\(--app-bottom-nav-height/u);

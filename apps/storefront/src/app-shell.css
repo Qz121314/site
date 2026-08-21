@@ -138,9 +138,7 @@ html[data-theme='noir'] .app-shell {
   width: min(var(--v2-content-width), 100%);
   min-height: var(--app-viewport-height, 100dvh);
   margin-inline: auto;
-  padding-top: calc(
-    var(--app-viewport-top, 0px) + var(--app-header-height, 0px) + 14px
-  );
+  padding-top: calc(var(--app-viewport-top, 0px) + var(--app-header-height, 0px) + 14px);
   padding-right: max(var(--v2-gutter), env(safe-area-inset-right));
   padding-bottom: 36px;
   padding-left: max(var(--v2-gutter), env(safe-area-inset-left));
