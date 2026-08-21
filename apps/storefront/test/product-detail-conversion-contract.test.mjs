@@ -16,7 +16,9 @@ test('product detail keeps a conversion-first mobile hierarchy', async () => {
     /const bodyIsAddress = Boolean\(address && body && body === address\);/u,
   );
   assert.match(source, /className="product-detail-address"/u);
-  assert.match(source, /className="product-detail-secondary-media"/u);
+  assert.match(source, /className="detail-mobile-media-track"/u);
+  assert.match(source, /className="detail-mobile-media-count"/u);
+  assert.doesNotMatch(source, /product-detail-secondary-media/u);
   assert.doesNotMatch(source, /detail-mobile-thumbnails/u);
 
   assert.match(source, /const ctaFailed =/u);
@@ -37,17 +39,16 @@ test('product detail keeps a conversion-first mobile hierarchy', async () => {
   );
   assert.doesNotMatch(styles, /\.detail-mobile-gallery \{/u);
   assert.doesNotMatch(styles, /detail-mobile-media-track/u);
-  assert.doesNotMatch(styles, /detail-mobile-media-progress/u);
   assert.doesNotMatch(styles, /detail-mobile-media-count/u);
 
   assert.match(flowStyles, /\.detail-mobile-gallery \{/u);
+  assert.match(flowStyles, /\.detail-mobile-media-track \{/u);
+  assert.match(flowStyles, /scroll-snap-type: x mandatory/u);
+  assert.match(flowStyles, /\.detail-mobile-media-item \{[\s\S]*scroll-snap-align: start/u);
   assert.match(flowStyles, /\.detail-mobile-media-item > img/u);
-  assert.match(flowStyles, /\.product-detail-secondary-media \{/u);
-  assert.match(flowStyles, /\.product-detail-secondary-media-item > img/u);
+  assert.match(flowStyles, /\.detail-mobile-media-count \{/u);
   assert.match(flowStyles, /@media \(min-width: 768px\)/u);
-  assert.doesNotMatch(flowStyles, /detail-mobile-media-track/u);
-  assert.doesNotMatch(flowStyles, /detail-mobile-media-progress/u);
-  assert.doesNotMatch(flowStyles, /detail-mobile-media-count/u);
+  assert.doesNotMatch(flowStyles, /product-detail-secondary-media/u);
 
   assert.match(
     loadingStyles,
