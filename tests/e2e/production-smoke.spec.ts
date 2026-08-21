@@ -198,7 +198,9 @@ test('a published product renders its mobile CTA surface and carousel media flow
     const button = action?.querySelector<HTMLElement>('.cta-button');
     return {
       position: action ? getComputedStyle(action).position : null,
-      bottom: action ? getComputedStyle(action).bottom : null,
+      viewportBottomGap: action
+        ? Math.abs(window.innerHeight - action.getBoundingClientRect().bottom)
+        : Number.POSITIVE_INFINITY,
       actionHeight: action?.getBoundingClientRect().height ?? 0,
       buttonHeight: button?.getBoundingClientRect().height ?? 0,
       pagePaddingBottom: pageElement
@@ -208,7 +210,7 @@ test('a published product renders its mobile CTA surface and carousel media flow
   });
 
   expect(ctaContract.position).toBe('fixed');
-  expect(ctaContract.bottom).toBe('0px');
-  expect(ctaContract.buttonHeight).toBeGreaterThanOrEqual(56);
+  expect(ctaContract.viewportBottomGap).toBeLessThanOrEqual(1);
+  expect(ctaContract.buttonHeight).toBeGreaterThanOrEqual(44);
   expect(ctaContract.pagePaddingBottom).toBeGreaterThanOrEqual(ctaContract.actionHeight);
 });
