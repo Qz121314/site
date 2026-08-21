@@ -13,9 +13,7 @@ body,
   --v2-muted: color-mix(in srgb, var(--muted) 86%, var(--text));
   --v2-control-bg: color-mix(in srgb, var(--surface-soft) 90%, var(--surface));
   min-height: var(--app-viewport-height, 100dvh);
-  padding-bottom: calc(
-    var(--app-bottom-chrome-height, 0px) + var(--app-viewport-bottom, 0px)
-  );
+  padding-bottom: 0;
   color: var(--text);
   background: var(--page-bg, #f5f6f7);
 }
@@ -140,12 +138,10 @@ html[data-theme='noir'] .app-shell {
   margin-inline: auto;
   padding-top: calc(var(--app-viewport-top, 0px) + var(--app-header-height, 0px) + 14px);
   padding-right: max(var(--v2-gutter), env(safe-area-inset-right));
-  padding-bottom: 36px;
+  padding-bottom: calc(
+    var(--app-bottom-chrome-height, 0px) + var(--app-viewport-bottom, 0px) + 36px
+  );
   padding-left: max(var(--v2-gutter), env(safe-area-inset-left));
-}
-
-.app-shell[data-shell-route='product'] {
-  padding-bottom: 0;
 }
 
 .app-shell[data-shell-route='product'] > main {
@@ -292,16 +288,6 @@ html[data-theme='noir'] .app-shell {
     background: var(--page-bg, #f5f6f7);
   }
 
-  .app-shell {
-    padding-bottom: calc(
-      var(--app-bottom-chrome-height, 0px) + var(--app-viewport-bottom, 0px)
-    );
-  }
-
-  .app-shell[data-shell-route='product'] {
-    padding-bottom: 0;
-  }
-
   .app-shell > .topbar {
     min-height: calc(58px + env(safe-area-inset-top));
     justify-content: center;
@@ -318,7 +304,9 @@ html[data-theme='noir'] .app-shell {
     padding-top: calc(
       var(--app-viewport-top, 0px) + var(--app-header-height, 0px) + 10px
     );
-    padding-bottom: 30px;
+    padding-bottom: calc(
+      var(--app-bottom-chrome-height, 0px) + var(--app-viewport-bottom, 0px) + 30px
+    );
   }
 
   .app-shell[data-shell-route='product'] > main {
@@ -443,7 +431,9 @@ html[data-theme='noir'] .app-shell {
         env(safe-area-inset-top)
     );
     padding-right: max(10px, env(safe-area-inset-right));
-    padding-bottom: calc(18px + env(safe-area-inset-bottom));
+    padding-bottom: calc(
+      var(--app-bottom-chrome-height, 0px) + var(--app-viewport-bottom, 0px) + 18px
+    );
     padding-left: max(10px, env(safe-area-inset-left));
   }
 
@@ -542,7 +532,9 @@ html[data-theme='noir'] .app-shell {
     padding-top: calc(
       var(--app-viewport-top, 0px) + var(--app-header-height, 0px) + 25px
     );
-    padding-bottom: 58px;
+    padding-bottom: calc(
+      var(--app-bottom-chrome-height, 0px) + var(--app-viewport-bottom, 0px) + 30px
+    );
   }
 
   .app-shell[data-shell-route='product'] > main {
