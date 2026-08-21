@@ -236,8 +236,9 @@ html[data-theme='noir'] .app-shell {
   }
 
   .app-shell .brand-logo {
-    width: 33px;
-    height: 33px;
+    width: min(44vw, 148px);
+    height: 34px;
+    max-width: 148px;
     border: 0;
     border-radius: var(--theme-primary-logo-radius, 3px);
     box-shadow: none;
@@ -266,21 +267,21 @@ html[data-theme='noir'] .app-shell {
     z-index: 64;
     width: 100%;
     margin: 0;
-    padding: 4px max(8px, env(safe-area-inset-right))
+    padding: 3px max(8px, env(safe-area-inset-right))
       calc(4px + env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
     border: 0;
     border-top: 1px solid var(--v2-hairline);
     border-radius: 0;
-    background: color-mix(in srgb, var(--surface, #fff) 92%, transparent);
-    box-shadow: 0 -8px 24px color-mix(in srgb, var(--text) 2.5%, transparent);
+    background: color-mix(in srgb, var(--surface, #fff) 94%, transparent);
+    box-shadow: 0 -10px 28px color-mix(in srgb, var(--text) 3%, transparent);
     transform: none;
     backdrop-filter: blur(22px) saturate(1.06);
   }
 
   .app-shell > .bottom-nav a {
     position: relative;
-    min-height: 55px;
-    gap: 2px;
+    min-height: 56px;
+    gap: 1px;
     border-radius: var(--theme-radius-control, 8px);
     color: var(--v2-muted);
     background: transparent;
@@ -297,8 +298,8 @@ html[data-theme='noir'] .app-shell {
 
   .app-shell > .bottom-nav a.is-active {
     color: var(--text);
-    background: color-mix(in srgb, var(--text) 3%, transparent);
-    font-weight: 630;
+    background: transparent;
+    font-weight: 640;
   }
 
   .app-shell > .bottom-nav a::before {
@@ -306,15 +307,17 @@ html[data-theme='noir'] .app-shell {
   }
 
   .app-shell > .bottom-nav .bottom-nav-icon {
-    width: 30px;
-    height: 27px;
-    border-radius: 0;
+    width: 38px;
+    height: 28px;
+    border-radius: 999px;
     background: transparent;
-    transition: transform var(--app-motion-fast, 160ms) var(--app-ease-out, ease-out);
+    transition:
+      background var(--app-motion-fast, 160ms) ease,
+      transform var(--app-motion-fast, 160ms) var(--app-ease-out, ease-out);
   }
 
   .app-shell > .bottom-nav a.is-active .bottom-nav-icon {
-    background: transparent;
+    background: color-mix(in srgb, var(--text) 7%, transparent);
     transform: translateY(-1px);
   }
 
@@ -323,9 +326,9 @@ html[data-theme='noir'] .app-shell {
   }
 
   .app-shell > .bottom-nav small {
-    font-size: 0.62rem;
-    font-weight: 550;
-    letter-spacing: -0.004em;
+    font-size: 0.61rem;
+    font-weight: 560;
+    letter-spacing: -0.006em;
   }
 
   html[data-storefront-presentation='push'] .app-shell {
