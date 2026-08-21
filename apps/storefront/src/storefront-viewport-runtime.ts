@@ -85,27 +85,17 @@ export function observeStorefrontShellChrome(shell: HTMLElement): () => void {
 
   const currentElements = () => {
     const header = shell.querySelector<HTMLElement>(':scope > .topbar');
-    const bottomNav = shell.querySelector<HTMLElement>(':scope > .bottom-nav');
-    const routeAction = shell.querySelector<HTMLElement>(
-      ':scope > .storefront-route-action-host',
+    const bottomChrome = shell.querySelector<HTMLElement>(
+      ':scope > .storefront-bottom-chrome',
     );
-    return { header, bottomNav, routeAction };
+    return { header, bottomChrome };
   };
 
   const measure = () => {
     frame = null;
-    const { header, bottomNav, routeAction } = currentElements();
-    const headerHeight = renderedHeight(header);
-    const bottomNavHeight = renderedHeight(bottomNav);
-    const routeActionHeight = renderedHeight(routeAction);
-
-    writeChromeMetric('--app-header-height', headerHeight);
-    writeChromeMetric('--app-bottom-nav-height', bottomNavHeight);
-    writeChromeMetric('--app-route-action-height', routeActionHeight);
-    writeChromeMetric(
-      '--app-bottom-chrome-height',
-      Math.max(bottomNavHeight, routeActionHeight),
-    );
+    const { header, bottomChrome } = currentElements();
+    writeChromeMetric('--app-header-height', renderedHeight(header));
+    writeChromeMetric('--app-bottom-chrome-height', renderedHeight(bottomChrome));
   };
 
   const schedule = () => {
