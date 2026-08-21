@@ -24,6 +24,7 @@ import '@site/storefront-ui/theme-contract.css';
 import '@site/storefront-ui/primary-pages-theme-contract.css';
 import '@site/storefront-ui/typography-contract.css';
 import './app-chrome.css';
+import './catalog-polish.css';
 import './ui-accessibility.css';
 import './loading-states.css';
 
