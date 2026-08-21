@@ -10,6 +10,7 @@ test('shared navigation runtime owns SPA push and route direction', async () => 
     navigationRuntimeSource,
     homeSource,
     rootSource,
+    routeTransitionSource,
   ] = await Promise.all([
     readFile(new URL('../src/StorefrontPresentation.tsx', import.meta.url), 'utf8'),
     readFile(new URL('../src/MobileEdgeNavigation.tsx', import.meta.url), 'utf8'),
@@ -17,6 +18,7 @@ test('shared navigation runtime owns SPA push and route direction', async () => 
     readFile(new URL('../src/storefront-navigation-runtime.ts', import.meta.url), 'utf8'),
     readFile(new URL('../src/HomeFeed.tsx', import.meta.url), 'utf8'),
     readFile(new URL('../src/StorefrontRoot.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../src/route-transition.css', import.meta.url), 'utf8'),
   ]);
 
   assert.match(navigationRuntimeSource, /window\.history\.pushState/u);
@@ -52,6 +54,18 @@ test('shared navigation runtime owns SPA push and route direction', async () => 
   assert.match(presentationSource, /direction === 'back'/u);
   assert.match(presentationSource, /'pop'/u);
   assert.match(presentationSource, /'push'/u);
+
+  assert.match(routeTransitionSource, /data-storefront-transition='tab'/u);
+  assert.match(routeTransitionSource, /data-storefront-transition='push'/u);
+  assert.match(routeTransitionSource, /data-storefront-transition='pop'/u);
+  assert.doesNotMatch(routeTransitionSource, /data-storefront-nav-direction/u);
+  assert.doesNotMatch(routeTransitionSource, /will-change/u);
+  assert.doesNotMatch(routeTransitionSource, /scale\(/u);
+  assert.match(
+    routeTransitionSource,
+    /@media \(min-width: 768px\)[\s\S]*--storefront-route-shift: 0px/u,
+  );
+  assert.match(routeTransitionSource, /prefers-reduced-motion: reduce/u);
 
   assert.doesNotMatch(edgeNavigationSource, /recordStorefrontHistoryPush/u);
   assert.doesNotMatch(edgeNavigationSource, /syncStorefrontHistoryFromPopState/u);
