@@ -216,7 +216,7 @@
 }
 
 @media (max-width: 767px) {
-  :is(html, .storefront-theme-root) .app-shell > .bottom-nav {
+  :is(html, .storefront-theme-root) .storefront-bottom-chrome > .bottom-nav {
     padding: 4px max(8px, env(safe-area-inset-right))
       calc(5px + env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
     border-top-color: color-mix(in srgb, var(--line) 64%, transparent);
@@ -226,20 +226,23 @@
     -webkit-backdrop-filter: blur(24px) saturate(1.12);
   }
 
-  :is(html, .storefront-theme-root) .app-shell > .bottom-nav a {
+  :is(html, .storefront-theme-root) .storefront-bottom-chrome > .bottom-nav a {
     min-height: 56px;
     gap: 2px;
     border-radius: var(--theme-radius-control, 12px);
   }
 
-  :is(html, .storefront-theme-root) .app-shell > .bottom-nav .bottom-nav-icon {
+  :is(html, .storefront-theme-root)
+    .storefront-bottom-chrome
+    > .bottom-nav
+    .bottom-nav-icon {
     width: 40px;
     height: 30px;
     border-radius: var(--theme-nav-active-radius, 10px);
   }
 
   :is(html, .storefront-theme-root)
-    .app-shell
+    .storefront-bottom-chrome
     > .bottom-nav
     a.is-active
     .bottom-nav-icon {
@@ -247,7 +250,7 @@
     transform: translateY(-1px) scale(1.02);
   }
 
-  :is(html, .storefront-theme-root) .app-shell > .bottom-nav small {
+  :is(html, .storefront-theme-root) .storefront-bottom-chrome > .bottom-nav small {
     font-size: 0.6875rem;
     line-height: 1.1;
   }
