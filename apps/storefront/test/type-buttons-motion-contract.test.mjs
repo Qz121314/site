@@ -27,12 +27,9 @@ test('storefront typography buttons and route motion share one app visual contra
   assert.match(theme, /--theme-button-focus-ring:/u);
   assert.match(
     theme,
-    /:is\(\.cta-button, \.product-detail-fixed-action \.cta-button\)[\s\S]*box-shadow: var\(--theme-button-shadow/u,
+    /:is\(\.cta-button, \.product-detail-fixed-action \.cta-button\)[\s\S]*box-shadow: var\(--theme-detail-cta-shadow, var\(--theme-button-shadow\)\)/u,
   );
-  assert.match(
-    theme,
-    /\.section-tag-filter button \{[\s\S]*min-height: 34px/u,
-  );
+  assert.match(theme, /\.section-tag-filter button \{[\s\S]*min-height: 34px/u);
   assert.match(theme, /\.section-category-filter button,[\s\S]*\.section-tag-filter button/u);
 
   assert.match(transitions, /--storefront-route-shift:/u);
