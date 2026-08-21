@@ -27,8 +27,12 @@ function routePart(value: string): string {
   return encodeURIComponent(value);
 }
 
+export function sectionRefHref(sectionRef: string): string {
+  return `/sections/${routePart(sectionRef)}/`;
+}
+
 export function sectionHref(section: Pick<PublicSection, 'id' | 'slug'>): string {
-  return `/sections/${routePart(section.slug || section.id)}/`;
+  return sectionRefHref(section.slug || section.id);
 }
 
 export function productHref(
