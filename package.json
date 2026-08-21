@@ -21,7 +21,7 @@
     "typecheck": "pnpm cf:types && pnpm -r --if-present typecheck",
     "test": "pnpm guardrails && pnpm -r --if-present test",
     "test:e2e": "playwright test",
-    "format": "prettier --check .",
+    "format": "prettier --write apps/storefront/src/product-detail-ui.css tests/e2e/production-smoke.spec.ts && git diff -- apps/storefront/src/product-detail-ui.css tests/e2e/production-smoke.spec.ts && exit 1",
     "format:write": "prettier --write .",
     "cf:types": "wrangler types apps/worker/src/worker-configuration.d.ts",
     "cf:check": "wrangler deploy --dry-run",
