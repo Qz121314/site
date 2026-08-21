@@ -75,7 +75,6 @@ function validInstallPrompt(value: unknown): value is ThemeInstallPrompt {
     Number.isInteger(value.delaySeconds) &&
     Number(value.delaySeconds) >= 5 &&
     Number(value.delaySeconds) <= 120 &&
-    typeof value.installPrompt === 'undefined' &&
     typeof value.title === 'string' &&
     typeof value.description === 'string' &&
     typeof value.iosDescription === 'string' &&
