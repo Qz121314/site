@@ -33,7 +33,14 @@ test('shared navigation runtime owns SPA push and route direction', async () => 
   );
   assert.match(homeSource, /handleStorefrontLinkClick/u);
   assert.match(rootSource, /handleStorefrontLinkClick/u);
+  assert.match(rootSource, /routeKey=\{pathname\}/u);
+  assert.doesNotMatch(rootSource, /routeKey=\{locationKey\}/u);
   assert.match(presentationSource, /STOREFRONT_NAVIGATION_EVENT/u);
+  assert.match(
+    presentationSource,
+    /previousPathname && previousPathname !== nextPathname/u,
+  );
+  assert.match(presentationSource, /dataset\.storefrontPathname = nextPathname/u);
 
   for (const source of [homeSource, rootSource, presentationSource]) {
     assert.doesNotMatch(source, /window\.history\.pushState/u);

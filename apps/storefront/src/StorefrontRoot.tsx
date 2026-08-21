@@ -455,7 +455,7 @@ export function StorefrontRoot() {
         bootstrap={bootstrap}
         navigationItems={navigationItems}
         route={route}
-        routeKey={locationKey}
+        routeKey={pathname}
         unreadMessages={unreadMessages}
       >
         <Suspense fallback={routeFallback}>{page}</Suspense>
