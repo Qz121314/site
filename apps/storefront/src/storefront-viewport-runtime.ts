@@ -93,6 +93,7 @@ export function observeStorefrontShellChrome(shell: HTMLElement): () => void {
 
   const measure = () => {
     frame = null;
+    writeViewportMetrics();
     const { header, bottomChrome } = currentElements();
     writeChromeMetric('--app-header-height', renderedHeight(header));
     writeChromeMetric('--app-bottom-chrome-height', renderedHeight(bottomChrome));
