@@ -12,7 +12,7 @@ body {
   position: fixed;
   right: 10px;
   bottom: calc(
-    var(--app-mobile-bottom-nav-height, 68px) + 10px + env(safe-area-inset-bottom)
+    var(--app-viewport-bottom, 0px) + var(--app-bottom-nav-height, 0px) + 10px
   );
   left: 10px;
   z-index: 70;
@@ -184,13 +184,21 @@ body {
 @media (min-width: 768px) {
   .pwa-install-card {
     right: 24px;
-    bottom: 24px;
+    bottom: calc(
+      var(--app-viewport-bottom, 0px) + var(--app-bottom-nav-height, 0px) + 12px
+    );
     left: auto;
     margin: 0;
   }
 
   .pwa-install-handle {
     display: none;
+  }
+}
+
+@media (min-width: 980px) {
+  .pwa-install-card {
+    bottom: calc(var(--app-viewport-bottom, 0px) + 24px);
   }
 }
 
