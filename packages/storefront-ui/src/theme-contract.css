@@ -257,7 +257,7 @@
   min-height: var(--theme-button-height, 52px);
   border-width: var(--theme-button-border-width, 0px);
   border-radius: var(--theme-radius-control);
-  box-shadow: var(--theme-button-shadow);
+  box-shadow: var(--theme-detail-cta-shadow, var(--theme-button-shadow));
   font-weight: var(--storefront-weight-semibold, 650);
   letter-spacing: var(--theme-button-letter-spacing, -0.01em);
   -webkit-tap-highlight-color: transparent;
@@ -270,7 +270,9 @@
 :is(html, .storefront-theme-root)
   :is(.cta-button, .product-detail-fixed-action .cta-button):focus-visible {
   outline: 0;
-  box-shadow: var(--theme-button-shadow), var(--theme-button-focus-ring);
+  box-shadow:
+    var(--theme-detail-cta-shadow, var(--theme-button-shadow)),
+    var(--theme-button-focus-ring);
 }
 
 :is(html, .storefront-theme-root)
