@@ -1,24 +1,17 @@
 import { expect, test } from '@playwright/test';
+import { findPublishedProductRoute } from './published-storefront-fixtures';
 
 test('customer-service CTA reaches the Worker /go route as a document request', async ({
   page,
+  request,
 }) => {
-  await page.goto('/browse/');
-  const sectionHref = await page
-    .locator('a[href^="/sections/"]:not([href*="/products/"])')
-    .first()
-    .getAttribute('href');
-  test.skip(!sectionHref, 'No published section is available for CTA verification.');
+  const publishedRoute = await findPublishedProductRoute(request);
+  test.skip(!publishedRoute, 'No published product is available for CTA verification.');
 
-  await page.goto(sectionHref!);
-  const productHref = await page
-    .locator('a[href*="/products/"]')
-    .first()
-    .getAttribute('href');
-  test.skip(!productHref, 'No published product is available for CTA verification.');
-
-  await page.goto(productHref!);
-  const cta = page.locator('.product-detail-fixed-action .cta-button');
+  await page.goto(publishedRoute!.productHref);
+  const cta = page.locator(
+    '.storefront-route-action-host .product-detail-route-action .cta-button',
+  );
   await expect(cta).toBeVisible();
 
   await page.route('**/api/public/storefront/cta/*', async (route) => {
