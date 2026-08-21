@@ -32,6 +32,11 @@ test('Storefront fallback, FAQ, Messages, and touch surfaces stay app-native', a
 
   assert.match(accessibilityStyles, /overflow-x: clip/u);
   assert.match(accessibilityStyles, /touch-action: manipulation/u);
+  assert.match(accessibilityStyles, /\.browse-directory-search-clear/u);
+  assert.match(accessibilityStyles, /\.section-catalog-search-clear/u);
+  assert.match(accessibilityStyles, /\.home-recommendation-heading > a/u);
+  assert.match(accessibilityStyles, /\.hero-carousel-arrow/u);
+  assert.match(accessibilityStyles, /min-height: 44px/u);
   assert.match(edgeNavigationSource, /\.home-shortcuts/u);
   assert.match(edgeNavigationSource, /\.section-catalog-filters/u);
   assert.match(
