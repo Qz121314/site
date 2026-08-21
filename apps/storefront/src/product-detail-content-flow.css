@@ -1,3 +1,44 @@
+/* Product detail mobile media flow. Page chrome, desktop gallery, copy, and CTA stay in product-detail-ui.css. */
+
+.detail-mobile-gallery {
+  width: calc(100% + (var(--app-gutter, 10px) * 2));
+  margin-inline: calc(-1 * var(--app-gutter, 10px));
+  background: var(--theme-detail-media-background, var(--surface-soft));
+}
+
+.detail-mobile-media-stage {
+  position: relative;
+  width: 100%;
+  overflow: hidden;
+  background: var(--theme-detail-media-background, var(--surface-soft));
+}
+
+.detail-mobile-media-item {
+  width: 100%;
+  min-width: 0;
+  background: var(--theme-detail-media-background, var(--surface-soft));
+}
+
+.detail-mobile-media-item > img,
+.detail-mobile-media-item > video,
+.product-detail-secondary-media-item > img,
+.product-detail-secondary-media-item > video {
+  display: block;
+  width: 100%;
+  aspect-ratio: var(--theme-detail-media-ratio, 1 / 1);
+}
+
+.detail-mobile-media-item > img,
+.product-detail-secondary-media-item > img {
+  object-fit: contain;
+}
+
+.detail-mobile-media-item > video,
+.product-detail-secondary-media-item > video {
+  object-fit: contain;
+  background: #000;
+}
+
 .product-detail-secondary-media {
   display: grid;
   width: calc(100% + (var(--app-gutter, 10px) * 2));
@@ -10,29 +51,6 @@
   min-width: 0;
   overflow: hidden;
   background: var(--theme-detail-media-background, var(--surface-soft));
-}
-
-.product-detail-secondary-media-item > img,
-.product-detail-secondary-media-item > video,
-.product-detail-secondary-media-item > .detail-media-fallback {
-  display: block;
-  width: 100%;
-  aspect-ratio: var(--theme-detail-media-ratio, 1 / 1);
-}
-
-.product-detail-secondary-media-item > img {
-  object-fit: contain;
-}
-
-.product-detail-secondary-media-item > video {
-  object-fit: contain;
-  background: #000;
-}
-
-.product-detail-summary h1,
-.product-detail-address span {
-  min-width: 0;
-  overflow-wrap: anywhere;
 }
 
 .detail-mobile-media-stage > .detail-media-fallback,
@@ -59,6 +77,7 @@
 }
 
 @media (min-width: 768px) {
+  .detail-mobile-gallery,
   .product-detail-secondary-media {
     display: none;
   }
