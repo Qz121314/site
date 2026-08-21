@@ -130,6 +130,20 @@ guardrails
 
 同时继续遵守 **root-cause-first**：不以叠加 CSS override、一次性 route if、复制组件、保留新旧两套实现等补丁方式压住症状；先定位 owner / 数据流 / 状态边界 / 路由边界，再修根因并清理被替代代码。
 
+### 优化成本优先级
+
+项目优化不是以“CI 看起来最简洁”或“代码抽象最多”为目标。遇到多个可行方案时，按下面顺序评估总成本：
+
+```text
+1. 人工排查 / 调试 / 维护时间
+2. 生产故障和回归风险
+3. 代码与 ownership 复杂度
+4. Workers / D1 / R2 请求和资源消耗
+5. GitHub Actions minutes
+```
+
+固定工作方式：相关实现和对应 contract / test 尽量在同一个低风险 PR 中完成；先做影响分析，再一次实现、一次验证、一次 squash merge。不要把 GitHub Actions 当远程 formatter 或远程调试器；不要为了检查部署状态临时创建诊断 workflow；也不要为了节省少量 CI minutes 引入更难维护的脚本和分支流程。
+
 ### 明确不在当前范围内
 
 以下能力不是当前项目目标，也不应在常规优化中被当成“缺失功能”补充：
@@ -199,6 +213,64 @@ Cloudflare Worker + D1 + R2
 - 深色和自定义主题的导航、Markdown、代码块、骨架屏等公共表面全部由 Theme Tokens 驱动；
 - 图片 / 视频失败时显示稳定占位，不暴露浏览器破图；
 - 内容暂时加载失败可原地重试，未发布 / 不存在资源使用明确的 404 语义。
+
+### Storefront App-like UI / App Shell 硬规则
+
+Storefront 的目标不是“安装 PWA 后才像 App”，而是**用户第一次用普通手机浏览器打开网站时，首屏、导航、滚动和页面切换就应该具有 App 感**。PWA 安装只是增强，不是视觉和交互成立的前提。
+
+长期 ownership 固定为：
+
+```text
+Theme Center / shared storefront-ui
+→ 视觉 recipe / design tokens / radius / color / typography / motion / component appearance
+
+App Shell
+→ viewport / safe area / fixed Header / Bottom Chrome / main geometry / route presentation
+
+Business Route
+→ 当前页面内容和业务状态
+→ 消费 Theme 与 App Shell 契约
+→ 不重新发明全局视觉或 viewport 几何
+```
+
+必须遵守：
+
+- **前端 UI 与后台 Theme Center 永远保持关联。** 新的视觉能力优先进入 Theme Center、`packages/storefront-ui` 或现有共享 Theme Token；禁止在 Storefront 页面另建一套独立硬编码主题系统；
+- Theme Center 负责“长什么样”，App Shell 负责“固定表面在哪里、页面占多少 viewport”；不要把 Header / Bottom Chrome 高度、Safe Area、VisualViewport 几何塞进 Theme Runtime；
+- 普通业务页面不得猜测固定 Header / Bottom Chrome 高度。统一消费运行时测量的 `--app-header-height`、`--app-bottom-chrome-height` 与 `--app-viewport-*`；
+- `window.visualViewport`、浏览器地址栏收起 / 展开、旋转和软键盘导致的可视区域变化，由 Storefront viewport runtime 统一处理；页面不要各自监听并写第二套 viewport 状态；
+- Section、打开后的 Chat、FAQ Article 等只有在通用 Header 被隐藏、页面成为本地 fullscreen / internal-scroll workspace 时，才允许自己拥有局部 safe-area / scroll geometry；
+- Header 和 Bottom Chrome 是持久 App Chrome。路由切换只动画内容层，不能让 Header / Bottom Chrome 跟随页面转场位移；
+- Tab / Push / Pop 的语义由 `StorefrontPresentation` 统一决定。CSS 只消费 `data-storefront-transition='tab|push|pop'`，不要再次根据 history direction 决定另一套动画；
+- 手机 Push / Pop 只保留轻微层级位移；`>=768px` 不横向移动整页；`prefers-reduced-motion` 必须保留；
+- Back / Forward 的 scroll restoration、`MobileEdgeNavigation` click capture 与 SPA bubble navigation 的执行顺序不能随意调整。capture 先保存滚动，再由 bubble 导航；不要新增第二个全局 capture 导航 owner；
+- 顶部导航只保留一个品牌 Logo，并在 Header 内水平居中；不要在 Hero、内容区或第二层导航重复 Logo；
+- 前端只硬写系统必要 UI（例如 Back / Retry / Loading）；业务营销文案、产品内容、Hero 内容、主题和站点信息由后台发布数据决定；
+- 不使用页面级补偿 margin / padding 去修 App Shell 问题。发现遮挡、额外滚动、sticky 错位时先检查 viewport owner、measured chrome 和 main geometry。
+
+### First Paint / Startup Continuity
+
+第一次访问普通网页时也不能先出现“空白网页”，再突然变成 App。启动链路按下面的连续性检查：
+
+```text
+HTML critical surface
+→ cached/default Theme surface
+→ Startup Loader
+→ bootstrap Theme + App Shell
+→ Home Hero / shortcuts / product content
+```
+
+规则：
+
+- `index.html` 提供零请求的 critical page background，避免 JavaScript / bundled CSS 执行前出现浏览器默认纯白空窗；
+- Theme Runtime 可以使用本地缓存主题提前恢复颜色；首次没有缓存时使用稳定的 neutral fallback，不为主题增加新的启动请求；
+- `StartupLoader` 是真实 App Shell / Home 的“低信息预测布局”，不是独立设计稿；Header、Logo、Hero、快捷入口、产品网格、Bottom Chrome 的几何和断点应尽量与真实页面一致；
+- 手机 Home Hero 当前使用 `4 / 5` 与 `clamp(320px, 64vh, 540px)`，启动骨架必须保持同一几何；`>=768px` 使用与真实 Hero 对齐的 `16 / 7.2`；
+- Home 产品区手机为 2 列，`>=768px` 为 4 列；Startup Loader 不能重新做成横向产品 rail；
+- 图片 / 视频必须预留稳定布局尺寸。产品封面使用明确 `width / height` 或 `aspect-ratio`；Hero 媒体容器先确定几何，再让图片 / 视频 `object-fit`，不能等待资源下载后撑开页面；
+- First Paint 优化优先检查：页面背景闪变、Logo 宽高跳变、Header 高度跳变、Hero 高度跳变、快捷入口重排、产品网格重排、Bottom Chrome 位移和 CLS；
+- Startup Loader 可以拥有启动时的预测 Header / Bottom Chrome 高度，因为真实 Shell 尚未挂载、无法测量；但预测值必须跟随 App Shell breakpoint 模型，普通业务页面不允许复制这种预测方式；
+- 首屏连续性优化不能通过新增 `/theme`、导航、manifest 或其他全局 fetch 来换取视觉稳定，正常 schema-v2 仍保持单 bootstrap 启动边界。
 
 ### Storefront 启动请求边界
 
@@ -837,6 +909,27 @@ pnpm install --frozen-lockfile
 - Storefront / Admin SPA；
 - Storefront 分区 / 产品深链接。
 
+### PR / CI 迭代规则
+
+Storefront Polish 阶段优先降低总维护成本：
+
+```text
+先读 README 与现有 contract
+→ 确认 ownership / 根因 / 影响面
+→ 实现与受影响 contract 同步修改
+→ 推送一个完整候选版本
+→ 让同一个 PR 跑正式 CI
+→ 失败时只修真实失败项
+→ 全绿后 squash merge
+```
+
+- 不把多个互不相关的视觉实验连续塞进同一个已运行 CI 的 PR；
+- 不因为单个 CSS / contract 失败创建额外诊断 workflow；
+- Format 失败先按仓库 Prettier 结果修格式，不为了测试格式反复改功能代码；
+- Test 失败时判断是实现回归还是旧 contract 已过期。架构 owner 明确发生变化时更新 contract，不为了保留旧测试把重复 owner 加回实现；
+- Worker / D1 / R2 没有变化时，不主动增加新的请求、表、migration 或部署步骤；
+- `main` 的生产部署仍由既有单一 `CI and Deploy` workflow 负责，不为了界面“更漂亮”拆成重复 checkout / install / build 的多套 workflow。
+
 ## 本地开发
 
 安装：
@@ -897,4 +990,4 @@ site/
 - [发布验收清单](docs/acceptance-checklist.md)
 - [生产发布与恢复手册](docs/operations.md)
 
-README 用于说明**当前产品范围、已实现能力和运行方式**；`docs/` 保留更细的架构 / 数据设计背景。功能行为、migration 与文档发生变化时，应同步维护，避免 README 重新变成历史版本。
+README 用于说明**当前产品范围、已实现能力、运行方式和后续优化硬规则**。下一轮优化 Storefront / App Shell / Theme Center 前应先阅读本 README 中的 ownership、First Paint、请求边界和 PR / CI 规则；`docs/` 保留更细的架构 / 数据设计背景。功能行为、migration、UI ownership 或请求预算发生变化时，应同步维护 README，避免文档重新变成历史版本。

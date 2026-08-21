@@ -11,7 +11,10 @@ export function StartupLoader() {
           <span className="startup-hero-skeleton" />
           <div className="startup-shortcut-skeletons">
             {Array.from({ length: 6 }, (_, index) => (
-              <span key={index} />
+              <span key={index}>
+                <i />
+                <b />
+              </span>
             ))}
           </div>
           <div className="startup-section-heading-skeleton">
@@ -19,7 +22,7 @@ export function StartupLoader() {
             <i />
           </div>
           <div className="startup-product-rail-skeleton">
-            {Array.from({ length: 3 }, (_, index) => (
+            {Array.from({ length: 4 }, (_, index) => (
               <span key={index} />
             ))}
           </div>

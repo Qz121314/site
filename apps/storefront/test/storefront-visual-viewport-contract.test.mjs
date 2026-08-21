@@ -13,6 +13,9 @@ test('Storefront chrome follows the visual viewport and measured shell geometry'
     section,
     browse,
     loading,
+    loadingStates,
+    home,
+    hero,
     pwa,
     accessibility,
     themeRuntime,
@@ -25,6 +28,9 @@ test('Storefront chrome follows the visual viewport and measured shell geometry'
     read('../src/section-ui.css'),
     read('../src/browse-ui.css'),
     read('../src/loading-states.css'),
+    read('../src/LoadingStates.tsx'),
+    read('../src/home-feed.css'),
+    read('../src/hero-carousel.css'),
     read('../src/pwa.css'),
     read('../src/ui-accessibility.css'),
     read('../src/theme-runtime.ts'),
@@ -102,11 +108,38 @@ test('Storefront chrome follows the visual viewport and measured shell geometry'
   );
   assert.doesNotMatch(loading, /padding-bottom: calc\([\s\S]{0,40}72px/u);
 
+  assert.match(loading, /\.startup-brand-skeleton \{[\s\S]{0,120}height: 34px/u);
+  assert.match(
+    loading,
+    /\.startup-hero-skeleton \{[\s\S]{0,180}min-height: clamp\(320px, 64vh, 540px\);[\s\S]{0,80}aspect-ratio: 4 \/ 5/u,
+  );
+  assert.match(
+    hero,
+    /@media \(max-width: 767px\)[\s\S]*\.hero-carousel-slide \{[\s\S]{0,120}min-height: clamp\(320px, 64vh, 540px\);[\s\S]{0,80}aspect-ratio: 4 \/ 5/u,
+  );
+  assert.match(
+    loading,
+    /\.startup-product-rail-skeleton \{[\s\S]{0,160}grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/u,
+  );
+  assert.match(
+    home,
+    /\.home-product-rail \{[\s\S]{0,160}grid-template-columns: repeat\(2, minmax\(0, 1fr\)\)/u,
+  );
+  assert.match(loadingStates, /Array\.from\(\{ length: 4 \}/u);
+
   const tabletLoading = loading.slice(
     loading.indexOf('@media (min-width: 768px)'),
     loading.indexOf('@media (min-width: 980px)'),
   );
   const desktopLoading = loading.slice(loading.indexOf('@media (min-width: 980px)'));
+  assert.match(
+    tabletLoading,
+    /\.startup-hero-skeleton \{[\s\S]{0,160}min-height: 360px;[\s\S]{0,80}aspect-ratio: 16 \/ 7\.2/u,
+  );
+  assert.match(
+    tabletLoading,
+    /\.startup-product-rail-skeleton \{[\s\S]{0,160}grid-template-columns: repeat\(4, minmax\(0, 1fr\)\)/u,
+  );
   assert.doesNotMatch(
     tabletLoading,
     /\.startup-bottom-nav-skeleton \{[\s\S]{0,300}display: none/u,
@@ -128,4 +161,5 @@ test('Storefront chrome follows the visual viewport and measured shell geometry'
 
   assert.match(themeRuntime, /syncThemeColor\(theme\.tokens\.pageBg\)/u);
   assert.match(indexHtml, /interactive-widget=resizes-content/u);
+  assert.match(indexHtml, /background: var\(--page-bg, #f5f6f7\)/u);
 });
