@@ -19,7 +19,7 @@
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "typecheck": "pnpm cf:types && pnpm -r --if-present typecheck",
-    "test": "pnpm -r --if-present test",
+    "test": "pnpm guardrails && pnpm -r --if-present test",
     "test:e2e": "playwright test",
     "format": "prettier --check .",
     "format:write": "prettier --write .",
