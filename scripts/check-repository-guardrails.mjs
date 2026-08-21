@@ -81,7 +81,9 @@ for (const { pattern, reason } of brittleProductionPatterns) {
   assert.doesNotMatch(productionSmoke, pattern, reason);
 }
 
-const temporaryWorkflow = workflowNames.find((name) => /debug|temporary|diagnostic/iu.test(name));
+const temporaryWorkflow = workflowNames.find((name) =>
+  /debug|temporary|diagnostic/iu.test(name),
+);
 assert.equal(
   temporaryWorkflow,
   undefined,
