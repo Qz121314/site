@@ -1,0 +1,77 @@
+name: Route Chrome Preflight
+
+on:
+  push:
+    branches: [refactor/storefront-route-chrome]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: route-chrome-preflight-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+
+      - name: Set up pnpm
+        run: |
+          set -euo pipefail
+          npm install --global pnpm@11.19.0
+          pnpm install --frozen-lockfile
+
+      - name: Reject legacy product chrome ownership
+        run: |
+          set -euo pipefail
+          if git grep -n -E 'product-detail-fixed-action|product-detail-navigation|product-detail-loading-action' -- apps/storefront/src packages/storefront-ui/src; then
+            echo 'Legacy product chrome ownership remains in runtime source.' >&2
+            exit 1
+          fi
+
+      - name: Format changed architecture files
+        run: |
+          set -euo pipefail
+          pnpm exec prettier --write \
+            AGENTS.md \
+            apps/storefront/src/ProductDetailPage.tsx \
+            apps/storefront/src/StorefrontRoot.tsx \
+            apps/storefront/src/StorefrontRouteAction.tsx \
+            apps/storefront/src/app-chrome.css \
+            apps/storefront/src/app-shell.css \
+            apps/storefront/src/loading-states.css \
+            apps/storefront/src/product-detail-ui.css \
+            apps/storefront/src/routing.ts \
+            apps/storefront/test/desktop-acceptance-contract.test.mjs \
+            apps/storefront/test/mobile-fixed-surface-ownership-contract.test.mjs \
+            apps/storefront/test/product-detail-conversion-contract.test.mjs \
+            apps/storefront/test/product-detail-style-ownership.test.mjs \
+            apps/storefront/test/production-visual-system-contract.test.mjs \
+            apps/storefront/test/routing.test.mjs \
+            apps/storefront/test/storefront-full-polish-contract.test.mjs \
+            apps/storefront/test/type-buttons-motion-contract.test.mjs \
+            packages/storefront-ui/src/product-detail-theme-contract.css \
+            packages/storefront-ui/src/theme-contract.css \
+            scripts/check-repository-guardrails.mjs \
+            tests/e2e/desktop-production.spec.ts \
+            tests/e2e/production-smoke.spec.ts
+          pnpm guardrails
+
+      - name: Commit formatter output
+        run: |
+          set -euo pipefail
+          if git diff --quiet; then
+            echo 'Prettier made no changes.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add --all
+          git commit -m 'chore: apply route chrome preflight formatting'
+          git push origin HEAD:${{ github.ref_name }}
