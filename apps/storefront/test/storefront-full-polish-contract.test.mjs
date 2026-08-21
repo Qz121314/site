@@ -40,10 +40,20 @@ test('storefront polish stays theme-led and app-native across every primary surf
   assert.match(shell, /\.app-shell \.brand-lockup[\s\S]*margin-inline: auto/u);
   assert.match(shell, /\.app-shell > \.bottom-nav \{[\s\S]*position: fixed/u);
   assert.match(shell, /backdrop-filter: blur\(22px\)/u);
+  assert.match(shell, /\.app-shell \.brand-logo \{[\s\S]*width: min\(/u);
+  assert.match(
+    shell,
+    /\.app-shell > \.bottom-nav a\.is-active \{[\s\S]*background: transparent/u,
+  );
+  assert.match(
+    shell,
+    /\.app-shell > \.bottom-nav a\.is-active \.bottom-nav-icon \{[\s\S]*background: color-mix/u,
+  );
 
   assert.match(hero, /\.hero-carousel-copy :is\(h1, h2\)/u);
   assert.match(home, /\.home-product-rail \{[\s\S]*repeat\(2, minmax\(0, 1fr\)\)/u);
   assert.match(home, /\.home-product-title \{[\s\S]*position: absolute/u);
+  assert.match(home, /\.home-recommendation-heading > a \{[\s\S]*border-radius: 50%/u);
 
   assert.match(
     browse,
