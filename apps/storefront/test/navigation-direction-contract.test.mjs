@@ -21,6 +21,16 @@ test('shared navigation runtime owns SPA push and route direction', async () => 
 
   assert.match(navigationRuntimeSource, /window\.history\.pushState/u);
   assert.match(navigationRuntimeSource, /storefront:navigate/u);
+  assert.match(navigationRuntimeSource, /saveCurrentStorefrontScrollPosition/u);
+  assert.match(navigationRuntimeSource, /normalizedLocationKey/u);
+  assert.match(
+    navigationRuntimeSource,
+    /normalizedLocationKey\(target\) === normalizedLocationKey\(current\)/u,
+  );
+  assert.ok(
+    navigationRuntimeSource.indexOf('saveCurrentStorefrontScrollPosition()') <
+      navigationRuntimeSource.indexOf('window.history.pushState'),
+  );
   assert.match(homeSource, /handleStorefrontLinkClick/u);
   assert.match(rootSource, /handleStorefrontLinkClick/u);
   assert.match(presentationSource, /STOREFRONT_NAVIGATION_EVENT/u);
