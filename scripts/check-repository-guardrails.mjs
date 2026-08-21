@@ -1,15 +1,27 @@
 import assert from 'node:assert/strict';
 import { readFile, readdir } from 'node:fs/promises';
 
-const [packageText, preCommit, prePush, productionSmoke, ciWorkflow, workflowNames] =
-  await Promise.all([
-    readFile('package.json', 'utf8'),
-    readFile('.githooks/pre-commit', 'utf8'),
-    readFile('.githooks/pre-push', 'utf8'),
-    readFile('tests/e2e/production-smoke.spec.ts', 'utf8'),
-    readFile('.github/workflows/ci.yml', 'utf8'),
-    readdir('.github/workflows'),
-  ]);
+const [
+  packageText,
+  preCommit,
+  prePush,
+  productionSmoke,
+  ciWorkflow,
+  workflowNames,
+  productDetailSource,
+  appShellStyles,
+  routeActionSource,
+] = await Promise.all([
+  readFile('package.json', 'utf8'),
+  readFile('.githooks/pre-commit', 'utf8'),
+  readFile('.githooks/pre-push', 'utf8'),
+  readFile('tests/e2e/production-smoke.spec.ts', 'utf8'),
+  readFile('.github/workflows/ci.yml', 'utf8'),
+  readdir('.github/workflows'),
+  readFile('apps/storefront/src/ProductDetailPage.tsx', 'utf8'),
+  readFile('apps/storefront/src/app-shell.css', 'utf8'),
+  readFile('apps/storefront/src/StorefrontRouteAction.tsx', 'utf8'),
+]);
 
 const packageJson = JSON.parse(packageText);
 const scripts = packageJson.scripts ?? {};
@@ -81,6 +93,32 @@ const brittleProductionPatterns = [
 for (const { pattern, reason } of brittleProductionPatterns) {
   assert.doesNotMatch(productionSmoke, pattern, reason);
 }
+
+assert.doesNotMatch(
+  productDetailSource,
+  /createPortal|document\.body/u,
+  'route pages must not mount persistent chrome directly to document.body',
+);
+assert.match(
+  productDetailSource,
+  /StorefrontRouteAction/u,
+  'product detail must declare its bottom action through the App Shell route-action slot',
+);
+assert.match(
+  routeActionSource,
+  /createPortal\(children, host\)/u,
+  'route actions must portal only into the App Shell-owned host',
+);
+assert.doesNotMatch(
+  appShellStyles,
+  /html\[data-storefront-presentation='push'\]\s+\.app-shell > \.topbar/u,
+  'navigation presentation must not own App Shell header visibility',
+);
+assert.match(
+  appShellStyles,
+  /\.storefront-route-action-host \{[\s\S]*position: fixed/u,
+  'App Shell must own the viewport-fixed route action host',
+);
 
 assert.doesNotMatch(
   ciWorkflow,
