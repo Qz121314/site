@@ -28,6 +28,9 @@ test('production acceptance stays runtime-theme-aware and guards stable storefro
   assert.match(acceptance, /sectionContract\.coverRatio[\s\S]*toBeCloseTo\(1, 2\)/u);
   assert.match(acceptance, /\.messages-workspace/u);
   assert.match(acceptance, /\.product-detail-fixed-action/u);
+  assert.match(acceptance, /\.detail-mobile-media-track/u);
+  assert.match(acceptance, /\.product-detail-secondary-media/u);
+  assert.match(acceptance, /mediaContract\.scrollSnapType/u);
   assert.doesNotMatch(acceptance, /boxShadow[\s\S]*\.toBe\('none'\)/u);
   assert.doesNotMatch(
     acceptance,
