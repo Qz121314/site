@@ -4,15 +4,18 @@ on:
   pull_request:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
-  format-diff:
+  format-and-commit:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Checkout
+      - name: Checkout PR branch
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+          fetch-depth: 0
 
       - name: Set up Node.js and pnpm
         run: |
@@ -22,7 +25,7 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Show exact Prettier diff
+      - name: Format storefront polish
         run: |
           set -euo pipefail
           pnpm exec prettier --write \
@@ -32,17 +35,21 @@ jobs:
             apps/storefront/src/product-detail-ui.css \
             apps/storefront/src/section-ui.css \
             apps/storefront/test/storefront-full-polish-contract.test.mjs
-          git diff -- \
+
+      - name: Commit formatting
+        run: |
+          set -euo pipefail
+          if git diff --quiet; then
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add \
             apps/storefront/src/browse-ui.css \
             apps/storefront/src/faq-ui.css \
             apps/storefront/src/messages-ui.css \
             apps/storefront/src/product-detail-ui.css \
             apps/storefront/src/section-ui.css \
             apps/storefront/test/storefront-full-polish-contract.test.mjs
-          test -z "$(git status --short -- \
-            apps/storefront/src/browse-ui.css \
-            apps/storefront/src/faq-ui.css \
-            apps/storefront/src/messages-ui.css \
-            apps/storefront/src/product-detail-ui.css \
-            apps/storefront/src/section-ui.css \
-            apps/storefront/test/storefront-full-polish-contract.test.mjs)"
+          git commit -m 'chore(storefront): apply prettier formatting'
+          git push origin HEAD:${{ github.head_ref }}
