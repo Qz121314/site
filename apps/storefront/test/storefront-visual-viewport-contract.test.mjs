@@ -28,11 +28,13 @@ test('Storefront chrome follows the visual viewport and measured shell geometry'
   assert.match(runtime, /--app-viewport-bottom/u);
   assert.match(runtime, /ResizeObserver/u);
   assert.match(runtime, /--app-header-height/u);
-  assert.match(runtime, /--app-bottom-nav-height/u);
-  assert.match(runtime, /--app-route-action-height/u);
+  assert.match(runtime, /--app-bottom-chrome-height/u);
+  assert.doesNotMatch(runtime, /--app-bottom-nav-height/u);
+  assert.doesNotMatch(runtime, /--app-route-action-height/u);
 
   assert.match(root, /observeStorefrontShellChrome/u);
   assert.match(root, /ref=\{shellRef\}/u);
+  assert.match(root, /className="storefront-bottom-chrome"/u);
 
   assert.match(
     shell,
@@ -40,19 +42,22 @@ test('Storefront chrome follows the visual viewport and measured shell geometry'
   );
   assert.match(
     shell,
-    /\.storefront-route-action-host \{[\s\S]*bottom: var\(--app-viewport-bottom/u,
+    /\.storefront-bottom-chrome \{[\s\S]*position: fixed;[\s\S]*bottom: var\(--app-viewport-bottom/u,
   );
   assert.match(shell, /\.app-shell > main \{[\s\S]*var\(--app-header-height/u);
-  assert.match(shell, /var\(--app-route-action-height/u);
-  assert.match(shell, /var\(--app-bottom-nav-height/u);
+  assert.match(shell, /var\(--app-bottom-chrome-height/u);
+  assert.doesNotMatch(shell, /var\(--app-route-action-height/u);
+  assert.doesNotMatch(shell, /var\(--app-bottom-nav-height/u);
   assert.doesNotMatch(shell, /max\(var\(--theme-detail-cta-height[\s\S]{0,160}\+ 58px/u);
 
   assert.match(section, /var\(--app-viewport-height/u);
-  assert.match(section, /var\(--app-bottom-nav-height/u);
+  assert.match(section, /var\(--app-bottom-chrome-height/u);
+  assert.doesNotMatch(section, /var\(--app-bottom-nav-height/u);
   assert.doesNotMatch(section, /100dvh - 68px/u);
 
   assert.match(pwa, /var\(--app-viewport-bottom/u);
-  assert.match(pwa, /var\(--app-bottom-nav-height/u);
+  assert.match(pwa, /var\(--app-bottom-chrome-height/u);
+  assert.doesNotMatch(pwa, /var\(--app-bottom-nav-height/u);
 
   assert.match(themeRuntime, /syncThemeColor\(theme\.tokens\.pageBg\)/u);
   assert.match(indexHtml, /interactive-widget=resizes-content/u);
