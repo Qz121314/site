@@ -44,7 +44,10 @@ test('product detail keeps a conversion-first mobile hierarchy', async () => {
   assert.match(flowStyles, /\.detail-mobile-gallery \{/u);
   assert.match(flowStyles, /\.detail-mobile-media-track \{/u);
   assert.match(flowStyles, /scroll-snap-type: x mandatory/u);
-  assert.match(flowStyles, /\.detail-mobile-media-item \{[\s\S]*scroll-snap-align: start/u);
+  assert.match(
+    flowStyles,
+    /\.detail-mobile-media-item \{[\s\S]*scroll-snap-align: start/u,
+  );
   assert.match(flowStyles, /\.detail-mobile-media-item > img/u);
   assert.match(flowStyles, /\.detail-mobile-media-count \{/u);
   assert.match(flowStyles, /@media \(min-width: 768px\)/u);
