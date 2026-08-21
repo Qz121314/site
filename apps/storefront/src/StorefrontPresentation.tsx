@@ -6,8 +6,7 @@ import {
   syncStorefrontHistoryFromPopState,
   type StorefrontNavigationDirection,
 } from './storefront-history';
-
-const NAVIGATION_EVENT = 'storefront:navigate';
+import { STOREFRONT_NAVIGATION_EVENT } from './storefront-navigation-runtime';
 
 type StorefrontPresentationMode = 'root' | 'push';
 type StorefrontTransitionMode = 'tab' | 'push' | 'pop';
@@ -68,10 +67,10 @@ export function StorefrontPresentation() {
     }
 
     window.addEventListener('popstate', handlePopState);
-    window.addEventListener(NAVIGATION_EVENT, handleStorefrontNavigation);
+    window.addEventListener(STOREFRONT_NAVIGATION_EVENT, handleStorefrontNavigation);
     return () => {
       window.removeEventListener('popstate', handlePopState);
-      window.removeEventListener(NAVIGATION_EVENT, handleStorefrontNavigation);
+      window.removeEventListener(STOREFRONT_NAVIGATION_EVENT, handleStorefrontNavigation);
       delete document.documentElement.dataset.storefrontPresentation;
       delete document.documentElement.dataset.storefrontTransition;
     };

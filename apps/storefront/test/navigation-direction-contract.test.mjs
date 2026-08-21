@@ -2,12 +2,33 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-test('presentation owns history direction before choosing route transitions', async () => {
-  const [presentationSource, edgeNavigationSource, historySource] = await Promise.all([
+test('shared navigation runtime owns SPA push and route direction', async () => {
+  const [
+    presentationSource,
+    edgeNavigationSource,
+    historySource,
+    navigationRuntimeSource,
+    homeSource,
+    rootSource,
+  ] = await Promise.all([
     readFile(new URL('../src/StorefrontPresentation.tsx', import.meta.url), 'utf8'),
     readFile(new URL('../src/MobileEdgeNavigation.tsx', import.meta.url), 'utf8'),
     readFile(new URL('../src/storefront-history.ts', import.meta.url), 'utf8'),
+    readFile(new URL('../src/storefront-navigation-runtime.ts', import.meta.url), 'utf8'),
+    readFile(new URL('../src/HomeFeed.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../src/StorefrontRoot.tsx', import.meta.url), 'utf8'),
   ]);
+
+  assert.match(navigationRuntimeSource, /window\.history\.pushState/u);
+  assert.match(navigationRuntimeSource, /storefront:navigate/u);
+  assert.match(homeSource, /handleStorefrontLinkClick/u);
+  assert.match(rootSource, /handleStorefrontLinkClick/u);
+  assert.match(presentationSource, /STOREFRONT_NAVIGATION_EVENT/u);
+
+  for (const source of [homeSource, rootSource, presentationSource]) {
+    assert.doesNotMatch(source, /window\.history\.pushState/u);
+    assert.doesNotMatch(source, /const NAVIGATION_EVENT/u);
+  }
 
   assert.match(presentationSource, /recordStorefrontHistoryPush/u);
   assert.match(presentationSource, /syncStorefrontHistoryFromPopState/u);
