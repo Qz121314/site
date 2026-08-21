@@ -52,15 +52,15 @@ function isTextEntryElement(element: Element | null): boolean {
     return !element.disabled && !element.readOnly;
   }
   if (element instanceof HTMLInputElement) {
-    return !element.disabled && !element.readOnly && !NON_TEXT_INPUT_TYPES.has(element.type);
+    const acceptsText = !NON_TEXT_INPUT_TYPES.has(element.type);
+    return !element.disabled && !element.readOnly && acceptsText;
   }
   return element.isContentEditable;
 }
 
 function writeTextEntryState(): void {
-  document.documentElement.dataset.appTextEntry = isTextEntryElement(document.activeElement)
-    ? 'active'
-    : 'idle';
+  const state = isTextEntryElement(document.activeElement) ? 'active' : 'idle';
+  document.documentElement.dataset.appTextEntry = state;
 }
 
 function writeViewportMetrics(): void {
