@@ -11,12 +11,12 @@ permissions:
 
 concurrency:
   group: site-v2-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name != 'push' || github.ref != 'refs/heads/main' }}
 
 jobs:
-  validate:
+  pipeline:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 50
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -53,42 +53,22 @@ jobs:
       - name: Validate Worker bundle
         run: pnpm cf:check
 
-  deploy:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-    needs: validate
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    concurrency:
-      group: site-cloudflare-production
-      cancel-in-progress: false
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Node.js and pnpm
-        run: |
-          set -euo pipefail
-          node --version
-          node -e "if (Number(process.versions.node.split('.')[0]) < 22) { throw new Error('Node.js 22 or newer is required') }"
-          npm install --global pnpm@11.19.0
-          pnpm --version
-
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
-
       - name: Record D1 recovery bookmark
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: pnpm exec wrangler d1 time-travel info DB
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
 
       - name: Apply D1 migrations
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: pnpm db:migrate:remote
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
 
       - name: Read and verify admin-configured R2 custom domain
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         id: r2_origin
         run: |
           set -euo pipefail
@@ -125,7 +105,7 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
 
       - name: Verify selected R2 custom domain
-        if: steps.r2_origin.outputs.origin != ''
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && steps.r2_origin.outputs.origin != ''
         env:
           R2_ORIGIN: ${{ steps.r2_origin.outputs.origin }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -136,6 +116,7 @@ jobs:
           pnpm exec wrangler r2 bucket domain get service-catalog-site-assets --domain "$domain"
 
       - name: Configure public R2 CORS
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: |
           set -euo pipefail
           pnpm exec wrangler r2 bucket cors set service-catalog-site-assets \
@@ -147,6 +128,7 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
 
       - name: Probe direct R2 media reads
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         id: r2_probe
         env:
           R2_ORIGIN: ${{ steps.r2_origin.outputs.origin }}
@@ -210,10 +192,8 @@ jobs:
             echo
           fi
 
-      - name: Build production assets
-        run: pnpm build
-
       - name: Deploy business platform Worker
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         id: deploy
         run: |
           set -euo pipefail
@@ -229,6 +209,7 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
 
       - name: Smoke test production
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         env:
           BASE_URL: ${{ steps.deploy.outputs.url }}
           EXPECTED_WORKER_VERSION_ID: ${{ steps.deploy.outputs.version_id }}
@@ -412,9 +393,11 @@ jobs:
           done
 
       - name: Install production browser
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: pnpm exec playwright install --with-deps chromium
 
       - name: Browser acceptance test production
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         run: pnpm test:e2e
         env:
           BASE_URL: ${{ steps.deploy.outputs.url }}
