@@ -17,7 +17,12 @@
   overflow: hidden;
   margin: 0;
   padding: 0;
-  border: 1px solid color-mix(in srgb, var(--app-hairline, var(--theme-primary-faq-border, var(--line))) 88%, transparent);
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--app-hairline, var(--theme-primary-faq-border, var(--line))) 88%,
+      transparent
+    );
   border-radius: var(--theme-radius-card, 16px);
   background: color-mix(
     in srgb,
@@ -30,7 +35,11 @@
 
 .faq-article-list li:not(:last-child) .faq-article-row {
   border-bottom: 1px solid
-    color-mix(in srgb, var(--theme-primary-faq-border, var(--line)) 72%, transparent);
+    color-mix(
+      in srgb,
+      var(--theme-primary-faq-border, var(--line)) 72%,
+      transparent
+    );
 }
 
 .faq-article-row {
@@ -58,7 +67,8 @@
   width: 8px;
   height: 8px;
   border-top: 1.5px solid color-mix(in srgb, var(--muted) 76%, transparent);
-  border-right: 1.5px solid color-mix(in srgb, var(--muted) 76%, transparent);
+  border-right: 1.5px solid
+    color-mix(in srgb, var(--muted) 76%, transparent);
   content: '';
   transform: translateY(-50%) rotate(45deg);
 }
@@ -179,7 +189,12 @@
 
 .faq-article-body {
   padding: 28px 30px;
-  border: 1px solid color-mix(in srgb, var(--app-hairline, var(--theme-primary-faq-border, var(--line))) 88%, transparent);
+  border: 1px solid
+    color-mix(
+      in srgb,
+      var(--app-hairline, var(--theme-primary-faq-border, var(--line))) 88%,
+      transparent
+    );
   border-radius: var(--theme-radius-card, 16px);
   background: var(--theme-primary-faq-background, var(--surface));
   box-shadow: 0 10px 30px color-mix(in srgb, var(--text) 4%, transparent);
@@ -242,7 +257,11 @@
     margin: -8px -10px 0;
     padding: 0 10px;
     border-bottom: 1px solid var(--app-hairline, var(--line));
-    background: color-mix(in srgb, var(--page-bg, var(--surface)) 90%, transparent);
+    background: color-mix(
+      in srgb,
+      var(--page-bg, var(--surface)) 90%,
+      transparent
+    );
     box-shadow: none;
     backdrop-filter: blur(28px) saturate(1.08);
   }
