@@ -192,7 +192,9 @@ test('a published product renders its mobile CTA surface and carousel media flow
 
   const ctaContract = await page.evaluate(() => {
     const pageElement = document.querySelector<HTMLElement>('.product-detail-page');
-    const action = document.querySelector<HTMLElement>('body > .product-detail-fixed-action');
+    const action = document.querySelector<HTMLElement>(
+      'body > .product-detail-fixed-action',
+    );
     const button = action?.querySelector<HTMLElement>('.cta-button');
     return {
       position: action ? getComputedStyle(action).position : null,
