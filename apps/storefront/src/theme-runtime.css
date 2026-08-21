@@ -4,6 +4,17 @@
   --hero-end: #f24b18;
   --hero-glow: #ffd6c8;
   --product-media-ratio: 1 / 1;
+  --catalog-card-shadow:
+    0 1px 0 color-mix(in srgb, var(--text) 3%, transparent) inset,
+    0 9px 24px color-mix(in srgb, var(--text) 5%, transparent);
+  --catalog-card-shadow-hover:
+    0 1px 0 color-mix(in srgb, var(--text) 4%, transparent) inset,
+    0 14px 32px color-mix(in srgb, var(--text) 8%, transparent);
+  --catalog-card-shadow-pressed:
+    0 1px 0 color-mix(in srgb, var(--text) 3%, transparent) inset,
+    0 4px 12px color-mix(in srgb, var(--text) 4%, transparent);
+  --catalog-card-title-weight: 600;
+  --catalog-card-press-scale: 0.976;
 }
 
 body {
