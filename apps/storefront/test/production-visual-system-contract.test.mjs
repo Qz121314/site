@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-test('production acceptance guards the Visual V2 system instead of stale page pixels', async () => {
+test('production acceptance stays runtime-theme-aware and guards stable storefront contracts', async () => {
   const [acceptance, main, theme, home, browse, section] = await Promise.all([
     readFile(
       new URL('../../../tests/e2e/production-smoke.spec.ts', import.meta.url),
@@ -18,19 +18,24 @@ test('production acceptance guards the Visual V2 system instead of stale page pi
     readFile(new URL('../src/section-ui.css', import.meta.url), 'utf8'),
   ]);
 
-  assert.match(acceptance, /one coherent mobile visual system across discovery routes/u);
-  assert.match(acceptance, /cardRatio \?\? 0\)\.toBeCloseTo\(10 \/ 16, 1\)/u);
+  assert.match(acceptance, /\/api\/public\/theme/u);
+  assert.match(acceptance, /document\.documentElement\.dataset\.navigationStyle/u);
+  assert.match(acceptance, /expectNoHorizontalOverflow/u);
+  assert.match(acceptance, /\.home-shortcut-zone/u);
+  assert.match(acceptance, /\.browse-directory-search/u);
+  assert.match(acceptance, /\.section-catalog-search/u);
+  assert.match(acceptance, /sectionContract\.searchHeight/u);
   assert.match(
     acceptance,
-    /sectionVisualContract\.searchHeight - browseVisualContract\.searchHeight/u,
+    /sectionContract\.coverRatio[\s\S]*toBeCloseTo\(1, 2\)/u,
   );
-  assert.match(
+  assert.match(acceptance, /\.messages-workspace/u);
+  assert.match(acceptance, /\.product-detail-fixed-action/u);
+  assert.doesNotMatch(acceptance, /boxShadow[\s\S]*\.toBe\('none'\)/u);
+  assert.doesNotMatch(
     acceptance,
-    /sectionVisualContract\.productCoverRadius[\s\S]*homeVisualContract\.productCoverRadius/u,
+    /fontPack:\s*'editorial'|mediaStyle:\s*'soft'|motionStyle:\s*'restrained'|navigationStyle:\s*'quiet'/u,
   );
-  assert.doesNotMatch(acceptance, /\.toBe\('16px'\)/u);
-  assert.doesNotMatch(acceptance, /cardRadius: '14px'/u);
-  assert.doesNotMatch(acceptance, /searchRadius: '14px'/u);
 
   assert.doesNotMatch(main, /conversion-polish\.css/u);
   assert.doesNotMatch(main, /media-layout-contract\.css/u);
