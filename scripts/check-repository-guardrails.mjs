@@ -157,8 +157,13 @@ assert.match(
 );
 assert.doesNotMatch(
   viewportRuntime,
-  /userAgent|navigator\.platform|iPhone|Android|Safari|Chrome/u,
-  'viewport geometry must not use UA or device-specific offset branches',
+  /navigator\.(?:userAgent|platform|vendor)|navigator\.userAgentData/u,
+  'viewport geometry must not use navigator UA/platform sniffing',
+);
+assert.doesNotMatch(
+  viewportRuntime,
+  /['"`](?:iPhone|Android|Safari|Chrome)['"`]/u,
+  'viewport geometry must not branch on literal device or browser identities',
 );
 assert.match(
   appShellStyles,
