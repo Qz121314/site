@@ -81,7 +81,12 @@ test('storefront polish stays theme-led and app-native across every primary surf
 
   assert.match(detail, /\.product-detail-fixed-action \{[\s\S]*position: fixed/u);
   assert.match(detail, /\.product-detail-fixed-action \{[\s\S]*bottom: 0/u);
-  assert.match(detailFlow, /\.product-detail-secondary-media \{/u);
+  assert.match(
+    detailFlow,
+    /\.detail-mobile-media-track \{[\s\S]*scroll-snap-type: x mandatory/u,
+  );
+  assert.match(detailFlow, /\.detail-mobile-media-count \{/u);
+  assert.doesNotMatch(detailFlow, /\.product-detail-secondary-media \{/u);
 
   assert.match(pwa, /env\(safe-area-inset-bottom\)/u);
   assert.match(pwa, /\.pwa-install-card/u);
