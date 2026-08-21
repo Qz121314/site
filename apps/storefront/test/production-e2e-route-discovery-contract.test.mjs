@@ -11,6 +11,7 @@ test('production product E2E discovers published routes from public data and tar
   ]);
 
   assert.match(helper, /api\/public\/storefront\/bootstrap/u);
+  assert.match(helper, /findPublishedSectionRoute/u);
   assert.match(helper, /findPublishedProductRoute/u);
   assert.match(helper, /sectionsIndex/u);
   assert.match(helper, /featuredProducts/u);
@@ -18,12 +19,10 @@ test('production product E2E discovers published routes from public data and tar
 
   for (const source of [ctaSpec, smokeSpec, desktopSpec]) {
     assert.match(source, /findPublishedProductRoute/u);
-    assert.doesNotMatch(
-      source,
-      /locator\('a\[href\^="\/sections\/"\]:not\(\[href\*="\/products\/"\]\)'\)/u,
-    );
+    assert.doesNotMatch(source, /\.getAttribute\('href'\)/u);
   }
 
+  assert.match(smokeSpec, /findPublishedSectionRoute/u);
   assert.match(
     ctaSpec,
     /\.storefront-route-action-host \.product-detail-route-action \.cta-button/u,
