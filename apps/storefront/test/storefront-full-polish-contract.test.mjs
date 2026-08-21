@@ -73,6 +73,10 @@ test('storefront polish stays theme-led and app-native across every primary surf
   assert.match(home, /\.home-product-rail \{[\s\S]*repeat\(2, minmax\(0, 1fr\)\)/u);
   assert.match(home, /\.home-product-title \{[\s\S]*position: absolute/u);
   assert.match(home, /\.home-recommendation-heading > a \{[\s\S]*border-radius: 50%/u);
+  assert.doesNotMatch(
+    home,
+    /\.app-shell:has\(\.home-feed\)\s*>\s*main\s*\{[\s\S]{0,120}padding-top:\s*0/u,
+  );
 
   assert.match(
     browse,
