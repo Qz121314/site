@@ -8,6 +8,7 @@ import {
 } from './content';
 import { loadPublicCta } from './cta';
 import { MarkdownContent } from './MarkdownContent';
+import { ProductDetailLoadingSurface } from './ProductDetailLoadingSurface';
 import { ResilientImage, ResilientVideo } from './ResilientMedia';
 import { canNavigateStorefrontBack, navigateStorefrontBack } from './storefront-history';
 import { StorefrontRouteAction } from './StorefrontRouteAction';
@@ -69,34 +70,6 @@ function LocationIcon() {
   );
 }
 
-function ProductDetailSkeleton() {
-  return (
-    <>
-      <section
-        className="product-detail-loading"
-        role="status"
-        aria-live="polite"
-        aria-busy="true"
-      >
-        <div className="product-detail-loading-hero" aria-hidden="true">
-          <span className="product-detail-loading-media loading-skeleton" />
-          <div className="product-detail-loading-copy">
-            <span className="is-title loading-skeleton" />
-            <span className="is-title is-short loading-skeleton" />
-            <span className="product-detail-loading-inline-action loading-skeleton" />
-          </div>
-        </div>
-        <span className="sr-only">{SYSTEM_UI.loading}</span>
-      </section>
-      <StorefrontRouteAction>
-        <div className="product-detail-loading-route-action" aria-hidden="true">
-          <span className="loading-skeleton" />
-        </div>
-      </StorefrontRouteAction>
-    </>
-  );
-}
-
 export function ProductDetailPage({
   bootstrap,
   productRef,
@@ -144,7 +117,7 @@ export function ProductDetailPage({
   }, [product?.id]);
 
   if (query.isLoading && !product) {
-    return <ProductDetailSkeleton />;
+    return <ProductDetailLoadingSurface />;
   }
 
   if (query.error && !product) {
