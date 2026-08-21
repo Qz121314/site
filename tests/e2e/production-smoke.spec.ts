@@ -1,4 +1,8 @@
 import { expect, test, type Page } from '@playwright/test';
+import {
+  findPublishedProductRoute,
+  findPublishedSectionRoute,
+} from './published-storefront-fixtures';
 
 async function expectNoHorizontalOverflow(page: Page) {
   await expect
@@ -33,6 +37,12 @@ test('storefront applies the current admin theme and keeps discovery routes heal
   const recipe = payload.theme?.recipe;
   if (!recipe) throw new Error('Public theme recipe is missing');
 
+  const publishedSection = await findPublishedSectionRoute(request);
+  test.skip(
+    !publishedSection,
+    'No published section is available for production acceptance.',
+  );
+
   await page.goto('/');
   await expect(page.locator('#root')).not.toBeEmpty();
   await expect(page.locator('.app-shell > .topbar .brand-lockup')).toBeVisible();
@@ -64,13 +74,7 @@ test('storefront applies the current admin theme and keeps discovery routes heal
   await expect(page.locator('.browse-directory-search')).toBeVisible();
   await expectNoHorizontalOverflow(page);
 
-  const sectionHref = await page
-    .locator('a[href^="/sections/"]:not([href*="/products/"])')
-    .first()
-    .getAttribute('href');
-  test.skip(!sectionHref, 'No published section is available for production acceptance.');
-
-  await page.goto(sectionHref!);
+  await page.goto(publishedSection!.sectionHref);
   await expect(page.locator('.section-catalog-back')).toBeVisible();
   await expect(page.locator('.section-catalog-content')).toBeVisible();
   await expect(page.locator('.section-catalog-search')).toBeVisible();
@@ -156,22 +160,12 @@ test('messages route remains renderable with the current support configuration',
 
 test('a published product keeps shell chrome fixed around carousel content', async ({
   page,
+  request,
 }) => {
-  await page.goto('/browse/');
-  const sectionHref = await page
-    .locator('a[href^="/sections/"]:not([href*="/products/"])')
-    .first()
-    .getAttribute('href');
-  test.skip(!sectionHref, 'No published section is available for CTA verification.');
+  const publishedRoute = await findPublishedProductRoute(request);
+  test.skip(!publishedRoute, 'No published product is available for CTA verification.');
 
-  await page.goto(sectionHref!);
-  const productHref = await page
-    .locator('a[href*="/products/"]')
-    .first()
-    .getAttribute('href');
-  test.skip(!productHref, 'No published product is available for CTA verification.');
-
-  await page.goto(productHref!);
+  await page.goto(publishedRoute!.productHref);
   const header = page.locator('.app-shell > .storefront-detail-topbar');
   const actionHost = page.locator('.app-shell > .storefront-route-action-host');
   const routeAction = actionHost.locator('.product-detail-route-action');
