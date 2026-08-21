@@ -30,7 +30,7 @@
 
 .startup-brand-skeleton,
 .startup-hero-skeleton,
-.startup-shortcut-skeletons span,
+.startup-shortcut-skeletons :is(i, b),
 .startup-section-heading-skeleton span,
 .startup-section-heading-skeleton i,
 .startup-product-rail-skeleton span,
@@ -42,53 +42,71 @@
 }
 
 .startup-brand-skeleton {
-  width: 32px;
-  height: 32px;
-  border-radius: 10px;
+  width: min(44vw, 148px);
+  height: 34px;
+  border-radius: var(--theme-primary-logo-radius, 3px);
 }
 
 .startup-feed-skeleton {
   display: grid;
-  width: min(1120px, 100%);
+  width: min(1200px, 100%);
   min-height: var(--app-viewport-height, 100dvh);
   gap: 0;
   margin-inline: auto;
-  padding-top: calc(var(--app-viewport-top, 0px) + var(--startup-header-height) + 9px);
+  padding-top: calc(var(--app-viewport-top, 0px) + var(--startup-header-height) + 10px);
   padding-right: max(var(--app-gutter, 16px), env(safe-area-inset-right));
   padding-bottom: calc(
-    var(--startup-bottom-chrome-height) + var(--app-viewport-bottom, 0px) + 32px
+    var(--startup-bottom-chrome-height) + var(--app-viewport-bottom, 0px) + 30px
   );
   padding-left: max(var(--app-gutter, 16px), env(safe-area-inset-left));
 }
 
 .startup-hero-skeleton {
-  width: 100%;
-  min-height: 214px;
-  aspect-ratio: 16 / 9.2;
-  border-radius: 16px;
+  width: auto;
+  min-height: clamp(320px, 64vh, 540px);
+  aspect-ratio: 4 / 5;
+  margin-inline: calc(var(--app-gutter, 16px) * -1);
+  border-radius: 0;
 }
 
 .startup-shortcut-skeletons {
   display: flex;
-  gap: 12px;
-  margin-inline: calc(var(--app-gutter, 16px) * -1);
-  padding: 26px var(--app-gutter, 16px) 20px;
+  gap: 15px;
+  padding: 16px 2px 28px;
   overflow: hidden;
 }
 
-.startup-shortcut-skeletons span {
-  width: 56px;
-  height: 56px;
-  flex: 0 0 56px;
-  border-radius: 18px;
+.startup-shortcut-skeletons > span {
+  display: grid;
+  width: 66px;
+  min-width: 66px;
+  min-height: 84px;
+  align-content: start;
+  justify-items: center;
+  gap: 8px;
+}
+
+.startup-shortcut-skeletons i {
+  width: 58px;
+  height: 58px;
+  border-radius: var(--theme-radius-icon, 14px);
+}
+
+.startup-shortcut-skeletons b {
+  width: 42px;
+  height: 8px;
+  border-radius: 4px;
 }
 
 .startup-section-heading-skeleton {
   display: flex;
+  min-height: 42px;
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  margin: 2px 0 12px;
+  margin: 0 0 15px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 82%, transparent);
 }
 
 .startup-section-heading-skeleton span {
@@ -105,17 +123,14 @@
 
 .startup-product-rail-skeleton {
   display: grid;
-  grid-auto-columns: clamp(148px, 44vw, 176px);
-  grid-auto-flow: column;
-  gap: 12px;
-  margin-right: calc(var(--app-gutter, 16px) * -1);
-  overflow: hidden;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 18px 12px;
 }
 
 .startup-product-rail-skeleton span {
   width: 100%;
   aspect-ratio: 1 / 1;
-  border-radius: 14px;
+  border-radius: var(--theme-radius-media, 12px);
 }
 
 .startup-bottom-nav-skeleton {
@@ -145,7 +160,7 @@
 
 .startup-brand-skeleton::after,
 .startup-hero-skeleton::after,
-.startup-shortcut-skeletons span::after,
+.startup-shortcut-skeletons :is(i, b)::after,
 .startup-section-heading-skeleton span::after,
 .startup-section-heading-skeleton i::after,
 .startup-product-rail-skeleton span::after,
@@ -361,27 +376,39 @@ body .product-detail-cta-spinner::after {
 @media (min-width: 768px) {
   .startup-feed-skeleton {
     padding-top: calc(var(--app-viewport-top, 0px) + var(--startup-header-height) + 25px);
-    padding-right: max(24px, calc((100% - 1120px) / 2));
+    padding-right: max(24px, env(safe-area-inset-right));
     padding-bottom: calc(
       var(--startup-bottom-chrome-height) + var(--app-viewport-bottom, 0px) + 30px
     );
-    padding-left: max(24px, calc((100% - 1120px) / 2));
+    padding-left: max(24px, env(safe-area-inset-left));
   }
 
   .startup-hero-skeleton {
-    min-height: 0;
-    aspect-ratio: 16 / 7;
+    width: 100%;
+    min-height: 360px;
+    aspect-ratio: 16 / 7.2;
+    margin-inline: 0;
     border-radius: 18px;
   }
 
   .startup-shortcut-skeletons {
-    margin-inline: 0;
-    padding-inline: 0;
+    gap: 23px;
+    padding: 26px 2px 32px;
+  }
+
+  .startup-shortcut-skeletons > span {
+    width: 68px;
+    min-width: 68px;
+    min-height: 86px;
+  }
+
+  .startup-section-heading-skeleton {
+    margin-bottom: 18px;
   }
 
   .startup-product-rail-skeleton {
-    grid-auto-columns: clamp(172px, 18vw, 218px);
-    margin-right: 0;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 30px 17px;
   }
 
   .startup-bottom-nav-skeleton {
@@ -473,10 +500,16 @@ body .product-detail-cta-spinner::after {
   }
 }
 
+@media (min-width: 1180px) {
+  .startup-product-rail-skeleton {
+    gap: 36px 21px;
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
   .startup-brand-skeleton::after,
   .startup-hero-skeleton::after,
-  .startup-shortcut-skeletons span::after,
+  .startup-shortcut-skeletons :is(i, b)::after,
   .startup-section-heading-skeleton span::after,
   .startup-section-heading-skeleton i::after,
   .startup-product-rail-skeleton span::after,
