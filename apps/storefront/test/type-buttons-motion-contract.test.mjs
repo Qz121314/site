@@ -42,10 +42,7 @@ test('storefront typography buttons and route motion share one app visual contra
 
   assert.match(chrome, /--theme-search-focus-ring:/u);
   assert.match(chrome, /\.app-shell > \.topbar/u);
-  assert.match(
-    chrome,
-    /:is\(\.browse-directory-search, \.section-catalog-search\)/u,
-  );
+  assert.match(chrome, /:is\(\.browse-directory-search, \.section-catalog-search\)/u);
   assert.match(
     chrome,
     /:is\(\.section-catalog-back, \.faq-back-link, \.product-detail-back\)/u,
