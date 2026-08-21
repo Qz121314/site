@@ -31,8 +31,33 @@ test('product detail keeps a conversion-first mobile hierarchy', async () => {
     styles,
     /\.product-detail-summary h1,[\s\S]*\.product-detail-address span/u,
   );
+  assert.match(
+    styles,
+    /\.product-detail-page \{[\s\S]*padding-bottom: calc\([\s\S]*--theme-detail-cta-height/u,
+  );
   assert.match(styles, /\.product-detail-fixed-action \{[\s\S]*position: fixed/u);
   assert.match(styles, /\.product-detail-fixed-action \{[\s\S]*bottom: 0/u);
+  assert.match(
+    styles,
+    /\.product-detail-fixed-action \{[\s\S]*--theme-detail-cta-surface/u,
+  );
+  assert.match(
+    styles,
+    /\.product-detail-fixed-action \{[\s\S]*box-shadow: var\(--theme-detail-cta-bar-shadow/u,
+  );
+  assert.match(
+    styles,
+    /\.product-detail-fixed-action \.cta-button,[\s\S]*min-height: max\([\s\S]*--theme-detail-cta-height[\s\S]*56px/u,
+  );
+  assert.match(
+    styles,
+    /\.product-detail-fixed-action \.cta-button,[\s\S]*font-weight: var\(--storefront-weight-semibold, 650\)/u,
+  );
+  assert.match(styles, /\.product-detail-fixed-action \.cta-button:focus-visible/u);
+  assert.match(
+    styles,
+    /\.product-detail-fixed-action \.cta-button:active:not\(:disabled\)[\s\S]*var\(--theme-press-scale/u,
+  );
   assert.match(
     styles,
     /\.product-detail-info \{[\s\S]*position: sticky;[\s\S]*top: [^;]+;/u,
