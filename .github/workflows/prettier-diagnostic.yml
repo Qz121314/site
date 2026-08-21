@@ -1,0 +1,48 @@
+name: Prettier Diagnostic
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  format-diff:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js and pnpm
+        run: |
+          set -euo pipefail
+          npm install --global pnpm@11.19.0
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Show exact Prettier diff
+        run: |
+          set -euo pipefail
+          pnpm exec prettier --write \
+            apps/storefront/src/browse-ui.css \
+            apps/storefront/src/faq-ui.css \
+            apps/storefront/src/messages-ui.css \
+            apps/storefront/src/product-detail-ui.css \
+            apps/storefront/src/section-ui.css \
+            apps/storefront/test/storefront-full-polish-contract.test.mjs
+          git diff -- \
+            apps/storefront/src/browse-ui.css \
+            apps/storefront/src/faq-ui.css \
+            apps/storefront/src/messages-ui.css \
+            apps/storefront/src/product-detail-ui.css \
+            apps/storefront/src/section-ui.css \
+            apps/storefront/test/storefront-full-polish-contract.test.mjs
+          test -z "$(git status --short -- \
+            apps/storefront/src/browse-ui.css \
+            apps/storefront/src/faq-ui.css \
+            apps/storefront/src/messages-ui.css \
+            apps/storefront/src/product-detail-ui.css \
+            apps/storefront/src/section-ui.css \
+            apps/storefront/test/storefront-full-polish-contract.test.mjs)"
