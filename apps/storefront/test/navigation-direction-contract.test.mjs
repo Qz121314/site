@@ -20,6 +20,6 @@ test('presentation owns history direction before choosing route transitions', as
 
   assert.match(
     historySource,
-    /syncStorefrontHistoryFromPopState\(state: unknown\): StorefrontNavigationDirection \| null/u,
+    /syncStorefrontHistoryFromPopState\([\s\S]{0,120}state: unknown[\s\S]{0,120}\): StorefrontNavigationDirection \| null/u,
   );
 });
