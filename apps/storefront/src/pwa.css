@@ -12,7 +12,7 @@ body {
   position: fixed;
   right: 10px;
   bottom: calc(
-    var(--app-viewport-bottom, 0px) + var(--app-bottom-nav-height, 0px) + 10px
+    var(--app-viewport-bottom, 0px) + var(--app-bottom-chrome-height, 0px) + 10px
   );
   left: 10px;
   z-index: 70;
@@ -185,7 +185,7 @@ body {
   .pwa-install-card {
     right: 24px;
     bottom: calc(
-      var(--app-viewport-bottom, 0px) + var(--app-bottom-nav-height, 0px) + 12px
+      var(--app-viewport-bottom, 0px) + var(--app-bottom-chrome-height, 0px) + 12px
     );
     left: auto;
     margin: 0;
