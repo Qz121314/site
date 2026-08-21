@@ -1,6 +1,11 @@
 import { useQuery } from '@tanstack/react-query';
 import type { StorefrontLinkComponent } from '@site/storefront-ui';
-import { useEffect, useState, type MouseEvent as ReactMouseEvent } from 'react';
+import {
+  useEffect,
+  useRef,
+  useState,
+  type MouseEvent as ReactMouseEvent,
+} from 'react';
 import { createPortal } from 'react-dom';
 import {
   loadProductSnapshot,
@@ -110,7 +115,9 @@ export function ProductDetailPage({
   LinkComponent?: StorefrontLinkComponent;
 }) {
   const [activeMediaId, setActiveMediaId] = useState<string | null>(null);
+  const [mobileMediaIndex, setMobileMediaIndex] = useState(0);
   const [ctaAttempted, setCtaAttempted] = useState(false);
+  const mobileMediaTrackRef = useRef<HTMLDivElement | null>(null);
   const query = useQuery({
     queryKey: [
       'storefront-product',
@@ -137,7 +144,9 @@ export function ProductDetailPage({
 
   useEffect(() => {
     setActiveMediaId(null);
+    setMobileMediaIndex(0);
     setCtaAttempted(false);
+    mobileMediaTrackRef.current?.scrollTo({ left: 0, behavior: 'auto' });
   }, [product?.id]);
 
   if (query.isLoading && !product) {
@@ -198,14 +207,25 @@ export function ProductDetailPage({
             },
           ]
         : [];
-  const primaryMobileMedia = mobileGalleryItems[0] ?? null;
-  const secondaryMobileMedia = mobileGalleryItems.slice(1);
   const activeMediaFallback = (
     <div className="detail-media-fallback" aria-hidden="true" />
   );
   const address = product.address?.trim() ?? '';
   const body = product.body.trim();
   const bodyIsAddress = Boolean(address && body && body === address);
+
+  function handleMobileGalleryScroll() {
+    const track = mobileMediaTrackRef.current;
+    if (!track || track.clientWidth <= 0 || mobileGalleryItems.length <= 1) return;
+    const nextIndex = Math.max(
+      0,
+      Math.min(
+        mobileGalleryItems.length - 1,
+        Math.round(track.scrollLeft / track.clientWidth),
+      ),
+    );
+    setMobileMediaIndex((current) => (current === nextIndex ? current : nextIndex));
+  }
 
   async function handleCtaClick() {
     if (ctaQuery.isFetching) return;
@@ -326,15 +346,39 @@ export function ProductDetailPage({
 
         <div className="product-detail-hero">
           <div className="detail-gallery">
-            <div className="detail-mobile-gallery">
+            <div
+              className="detail-mobile-gallery"
+              role="region"
+              aria-roledescription="carousel"
+              aria-label={product.title}
+            >
               <div className="detail-mobile-media-stage">
-                {primaryMobileMedia ? (
-                  <div className="detail-mobile-media-item">
-                    {renderMobileMedia(primaryMobileMedia, true)}
+                {mobileGalleryItems.length > 0 ? (
+                  <div
+                    className="detail-mobile-media-track"
+                    ref={mobileMediaTrackRef}
+                    onScroll={handleMobileGalleryScroll}
+                    tabIndex={mobileGalleryItems.length > 1 ? 0 : undefined}
+                  >
+                    {mobileGalleryItems.map((item, index) => (
+                      <div
+                        className="detail-mobile-media-item"
+                        role="group"
+                        aria-label={`${index + 1} / ${mobileGalleryItems.length}`}
+                        key={item.id}
+                      >
+                        {renderMobileMedia(item, index === 0)}
+                      </div>
+                    ))}
                   </div>
                 ) : (
                   activeMediaFallback
                 )}
+                {mobileGalleryItems.length > 1 ? (
+                  <span className="detail-mobile-media-count" aria-hidden="true">
+                    {mobileMediaIndex + 1} / {mobileGalleryItems.length}
+                  </span>
+                ) : null}
               </div>
             </div>
 
@@ -423,16 +467,6 @@ export function ProductDetailPage({
 
             <div className="product-detail-inline-action">{renderCtaButton()}</div>
           </div>
-
-          {secondaryMobileMedia.length > 0 ? (
-            <div className="product-detail-secondary-media">
-              {secondaryMobileMedia.map((item) => (
-                <div className="product-detail-secondary-media-item" key={item.id}>
-                  {renderMobileMedia(item)}
-                </div>
-              ))}
-            </div>
-          ) : null}
         </div>
 
         {body && !bodyIsAddress ? (
