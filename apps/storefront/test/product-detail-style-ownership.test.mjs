@@ -40,10 +40,10 @@ test('product detail loading and shell behavior stay with their real style owner
   assert.equal(main.includes("import './product-detail-content-flow.css';"), false);
 
   assert.ok(contentFlowCss.includes('.detail-mobile-gallery {'));
-  assert.ok(contentFlowCss.includes('.product-detail-secondary-media {'));
+  assert.ok(contentFlowCss.includes('.detail-mobile-media-track {'));
+  assert.ok(contentFlowCss.includes('.detail-mobile-media-count {'));
+  assert.equal(contentFlowCss.includes('.product-detail-secondary-media {'), false);
   assert.equal(productDetailUi.includes('.detail-mobile-gallery {'), false);
-  assert.equal(productDetailUi.includes('.product-detail-secondary-media {'), false);
   assert.equal(productDetailUi.includes('detail-mobile-media-track'), false);
-  assert.equal(productDetailUi.includes('detail-mobile-media-progress'), false);
   assert.equal(productDetailUi.includes('detail-mobile-media-count'), false);
 });
