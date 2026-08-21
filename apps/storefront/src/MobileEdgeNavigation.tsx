@@ -2,12 +2,9 @@ import { useEffect, useState, type CSSProperties } from 'react';
 import {
   canNavigateStorefrontBack,
   canNavigateStorefrontForward,
-  ensureStorefrontHistoryState,
   navigateStorefrontBack,
   navigateStorefrontForward,
-  recordStorefrontHistoryPush,
   saveCurrentStorefrontScrollPosition,
-  syncStorefrontHistoryFromPopState,
   type StorefrontNavigationDirection,
 } from './storefront-history';
 
@@ -26,7 +23,6 @@ type TrackingGesture = {
 
 type StandaloneNavigator = Navigator & { standalone?: boolean };
 
-const NAVIGATION_EVENT = 'storefront:navigate';
 const EDGE_WIDTH = 26;
 const LOCK_DISTANCE = 10;
 const TRIGGER_DISTANCE = 76;
@@ -76,7 +72,6 @@ export function MobileEdgeNavigation() {
   const [gesture, setGesture] = useState<EdgeGesture | null>(null);
 
   useEffect(() => {
-    ensureStorefrontHistoryState();
     const mobileQuery = window.matchMedia('(max-width: 767px)');
     const standaloneQuery = window.matchMedia('(display-mode: standalone)');
     let tracking: TrackingGesture | null = null;
@@ -104,14 +99,6 @@ export function MobileEdgeNavigation() {
       document.addEventListener('touchmove', handleTouchMove, { passive: false });
       document.addEventListener('touchend', finishGesture, { passive: true });
       document.addEventListener('touchcancel', cancelGesture, { passive: true });
-    }
-
-    function handleStorefrontNavigation() {
-      recordStorefrontHistoryPush();
-    }
-
-    function handlePopState(event: PopStateEvent) {
-      syncStorefrontHistoryFromPopState(event.state);
     }
 
     function handleClickCapture(event: MouseEvent) {
@@ -194,14 +181,10 @@ export function MobileEdgeNavigation() {
       clearGesture();
     }
 
-    window.addEventListener(NAVIGATION_EVENT, handleStorefrontNavigation);
-    window.addEventListener('popstate', handlePopState);
     document.addEventListener('click', handleClickCapture, true);
     document.addEventListener('touchstart', handleTouchStart, { passive: true });
 
     return () => {
-      window.removeEventListener(NAVIGATION_EVENT, handleStorefrontNavigation);
-      window.removeEventListener('popstate', handlePopState);
       document.removeEventListener('click', handleClickCapture, true);
       document.removeEventListener('touchstart', handleTouchStart);
       detachTrackingListeners();
