@@ -154,7 +154,9 @@ test('messages route remains renderable with the current support configuration',
   await expectNoHorizontalOverflow(page);
 });
 
-test('a published product keeps shell chrome fixed around carousel content', async ({ page }) => {
+test('a published product keeps shell chrome fixed around carousel content', async ({
+  page,
+}) => {
   await page.goto('/browse/');
   const sectionHref = await page
     .locator('a[href^="/sections/"]:not([href*="/products/"])')
@@ -183,7 +185,9 @@ test('a published product keeps shell chrome fixed around carousel content', asy
   await expect(cta).toBeVisible();
   await expect(page.locator('.product-detail-navigation')).toHaveCount(0);
   await expect(page.locator('.product-detail-secondary-media')).toHaveCount(0);
-  await expect(page.locator('.storefront-route-view .storefront-route-action-host')).toHaveCount(0);
+  await expect(
+    page.locator('.storefront-route-view .storefront-route-action-host'),
+  ).toHaveCount(0);
 
   if ((await mobileMediaTrack.count()) > 0) {
     await expect(mobileMediaTrack).toBeVisible();
@@ -196,13 +200,17 @@ test('a published product keeps shell chrome fixed around carousel content', asy
   }
 
   const chromeContract = await page.evaluate(() => {
-    const headerElement = document.querySelector<HTMLElement>('.storefront-detail-topbar');
+    const headerElement = document.querySelector<HTMLElement>(
+      '.storefront-detail-topbar',
+    );
     const host = document.querySelector<HTMLElement>('.storefront-route-action-host');
     const button = host?.querySelector<HTMLElement>('.cta-button');
     return {
       headerContract: {
         position: headerElement ? getComputedStyle(headerElement).position : null,
-        topGap: headerElement ? Math.abs(headerElement.getBoundingClientRect().top) : Infinity,
+        topGap: headerElement
+          ? Math.abs(headerElement.getBoundingClientRect().top)
+          : Infinity,
       },
       ctaContract: {
         hostPosition: host ? getComputedStyle(host).position : null,

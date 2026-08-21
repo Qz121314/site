@@ -420,7 +420,9 @@ html[data-theme='noir'] .app-shell {
     padding-left: max(10px, env(safe-area-inset-left));
   }
 
-  html[data-storefront-presentation='push'] .app-shell[data-shell-route='product'] > main {
+  html[data-storefront-presentation='push']
+    .app-shell[data-shell-route='product']
+    > main {
     min-height: calc(100dvh - 58px - env(safe-area-inset-top));
     padding-top: 0;
     padding-bottom: calc(

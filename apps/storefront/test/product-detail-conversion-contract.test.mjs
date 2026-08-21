@@ -3,16 +3,23 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
 test('product detail keeps a conversion-first mobile hierarchy', async () => {
-  const [source, rootSource, routeActionSource, shellStyles, styles, flowStyles, loadingStyles] =
-    await Promise.all([
-      readFile(new URL('../src/ProductDetailPage.tsx', import.meta.url), 'utf8'),
-      readFile(new URL('../src/StorefrontRoot.tsx', import.meta.url), 'utf8'),
-      readFile(new URL('../src/StorefrontRouteAction.tsx', import.meta.url), 'utf8'),
-      readFile(new URL('../src/app-shell.css', import.meta.url), 'utf8'),
-      readFile(new URL('../src/product-detail-ui.css', import.meta.url), 'utf8'),
-      readFile(new URL('../src/product-detail-content-flow.css', import.meta.url), 'utf8'),
-      readFile(new URL('../src/loading-states.css', import.meta.url), 'utf8'),
-    ]);
+  const [
+    source,
+    rootSource,
+    routeActionSource,
+    shellStyles,
+    styles,
+    flowStyles,
+    loadingStyles,
+  ] = await Promise.all([
+    readFile(new URL('../src/ProductDetailPage.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../src/StorefrontRoot.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../src/StorefrontRouteAction.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../src/app-shell.css', import.meta.url), 'utf8'),
+    readFile(new URL('../src/product-detail-ui.css', import.meta.url), 'utf8'),
+    readFile(new URL('../src/product-detail-content-flow.css', import.meta.url), 'utf8'),
+    readFile(new URL('../src/loading-states.css', import.meta.url), 'utf8'),
+  ]);
 
   assert.match(source, /const address = product\.address\?\.trim\(\) \?\? '';/u);
   assert.match(
@@ -54,7 +61,10 @@ test('product detail keeps a conversion-first mobile hierarchy', async () => {
     styles,
     /\.product-detail-summary h1,[\s\S]*\.product-detail-address span/u,
   );
-  assert.match(styles, /\.product-detail-route-action \{[\s\S]*--theme-detail-cta-surface/u);
+  assert.match(
+    styles,
+    /\.product-detail-route-action \{[\s\S]*--theme-detail-cta-surface/u,
+  );
   assert.match(styles, /box-shadow: var\(\s*--theme-detail-cta-bar-shadow/u);
   assert.doesNotMatch(
     styles,

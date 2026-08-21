@@ -35,7 +35,10 @@ test('desktop production acceptance and visual v2 shell remain wired', async () 
   assert.match(sectionStyles, /\.section-category-filter button::after/u);
 
   assert.match(desktopSpec, /product-detail-inline-action \.cta-button/u);
-  assert.match(desktopSpec, /\.storefront-route-action-host \.product-detail-route-action/u);
+  assert.match(
+    desktopSpec,
+    /\.storefront-route-action-host \.product-detail-route-action/u,
+  );
   assert.match(desktopSpec, /\.app-shell > \.storefront-detail-topbar/u);
   assert.doesNotMatch(desktopSpec, /body > \.product-detail-fixed-action/u);
 });
