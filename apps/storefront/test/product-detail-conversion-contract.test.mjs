@@ -25,7 +25,10 @@ test('product detail keeps a conversion-first mobile hierarchy', async () => {
 
   assert.match(styles, /\.product-detail-navigation \{[\s\S]*position: absolute/u);
   assert.match(styles, /\.product-detail-address \{/u);
-  assert.match(styles, /\.product-detail-summary h1,[\s\S]*\.product-detail-address span/u);
+  assert.match(
+    styles,
+    /\.product-detail-summary h1,[\s\S]*\.product-detail-address span/u,
+  );
   assert.match(styles, /\.product-detail-fixed-action \{[\s\S]*position: fixed/u);
   assert.match(styles, /\.product-detail-fixed-action \{[\s\S]*bottom: 0/u);
   assert.match(
