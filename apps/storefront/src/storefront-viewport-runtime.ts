@@ -7,6 +7,19 @@ type ViewportMetrics = {
   left: number;
 };
 
+const NON_TEXT_INPUT_TYPES = new Set([
+  'button',
+  'checkbox',
+  'color',
+  'file',
+  'hidden',
+  'image',
+  'radio',
+  'range',
+  'reset',
+  'submit',
+]);
+
 let viewportRuntimeInstalled = false;
 
 function roundedPixels(value: number): string {
@@ -33,6 +46,23 @@ function currentViewportMetrics(): ViewportMetrics {
   };
 }
 
+function isTextEntryElement(element: Element | null): boolean {
+  if (!(element instanceof HTMLElement)) return false;
+  if (element instanceof HTMLTextAreaElement) {
+    return !element.disabled && !element.readOnly;
+  }
+  if (element instanceof HTMLInputElement) {
+    return !element.disabled && !element.readOnly && !NON_TEXT_INPUT_TYPES.has(element.type);
+  }
+  return element.isContentEditable;
+}
+
+function writeTextEntryState(): void {
+  document.documentElement.dataset.appTextEntry = isTextEntryElement(document.activeElement)
+    ? 'active'
+    : 'idle';
+}
+
 function writeViewportMetrics(): void {
   const root = document.documentElement;
   const metrics = currentViewportMetrics();
@@ -43,6 +73,7 @@ function writeViewportMetrics(): void {
   root.style.setProperty('--app-viewport-bottom', roundedPixels(metrics.bottom));
   root.style.setProperty('--app-viewport-left', roundedPixels(metrics.left));
   root.dataset.visualViewport = window.visualViewport ? 'active' : 'fallback';
+  writeTextEntryState();
 }
 
 export function installStorefrontViewportRuntime(): void {
@@ -67,6 +98,8 @@ export function installStorefrontViewportRuntime(): void {
   window.addEventListener('orientationchange', schedule, { passive: true });
   window.addEventListener('pageshow', schedule, { passive: true });
   document.addEventListener('visibilitychange', schedule, { passive: true });
+  document.addEventListener('focusin', schedule);
+  document.addEventListener('focusout', schedule);
 }
 
 function renderedHeight(element: HTMLElement | null): number {
