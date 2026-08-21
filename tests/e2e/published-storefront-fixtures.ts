@@ -89,7 +89,8 @@ export async function findPublishedSectionRoute(
   request: APIRequestContext,
 ): Promise<PublishedSectionRoute | null> {
   const sections = validSections(await loadBootstrap(request));
-  return sections[0] ? sectionRoute(sections[0].id) : null;
+  const section = sections[0];
+  return section ? sectionRoute(section.id) : null;
 }
 
 export async function findPublishedProductRoute(
