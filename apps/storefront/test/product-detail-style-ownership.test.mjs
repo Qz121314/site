@@ -13,6 +13,8 @@ test('product detail loading and shell behavior stay with their real style owner
   const loadingCss = source('../src/loading-states.css');
   const appShellCss = source('../src/app-shell.css');
   const productDetailPage = source('../src/ProductDetailPage.tsx');
+  const productDetailUi = source('../src/product-detail-ui.css');
+  const contentFlowCss = source('../src/product-detail-content-flow.css');
 
   assert.equal(existsSync(shellUrl), false);
   assert.equal(main.includes("import './product-detail-shell.css';"), false);
@@ -33,5 +35,15 @@ test('product detail loading and shell behavior stay with their real style owner
   );
 
   assert.ok(productDetailPage.includes("import './product-detail-ui.css';"));
+  assert.ok(productDetailPage.includes("import './product-detail-content-flow.css';"));
   assert.equal(main.includes("import './product-detail-ui.css';"), false);
+  assert.equal(main.includes("import './product-detail-content-flow.css';"), false);
+
+  assert.ok(contentFlowCss.includes('.detail-mobile-gallery {'));
+  assert.ok(contentFlowCss.includes('.product-detail-secondary-media {'));
+  assert.equal(productDetailUi.includes('.detail-mobile-gallery {'), false);
+  assert.equal(productDetailUi.includes('.product-detail-secondary-media {'), false);
+  assert.equal(productDetailUi.includes('detail-mobile-media-track'), false);
+  assert.equal(productDetailUi.includes('detail-mobile-media-progress'), false);
+  assert.equal(productDetailUi.includes('detail-mobile-media-count'), false);
 });

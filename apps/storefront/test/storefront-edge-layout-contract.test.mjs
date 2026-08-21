@@ -12,7 +12,8 @@ test('storefront edge safeguards live with their visual owners', () => {
   const base = source('../src/styles.css');
   const hero = source('../src/hero-carousel.css');
   const pwa = source('../src/pwa.css');
-  const detail = source('../src/product-detail-content-flow.css');
+  const detailUi = source('../src/product-detail-ui.css');
+  const detailFlow = source('../src/product-detail-content-flow.css');
 
   assert.ok(!main.includes("import './storefront-edge-layout.css';"));
   assert.ok(!main.includes("import './storefront-resilience.css';"));
@@ -31,8 +32,9 @@ test('storefront edge safeguards live with their visual owners', () => {
   assert.ok(pwa.includes('env(safe-area-inset-right)'));
   assert.ok(pwa.includes('env(safe-area-inset-left)'));
 
-  assert.ok(detail.includes('.product-detail-summary h1'));
-  assert.ok(detail.includes('overflow-wrap: anywhere;'));
-  assert.ok(detail.includes('.detail-mobile-media-stage > .detail-media-fallback'));
-  assert.ok(detail.includes('--theme-detail-media-ratio'));
+  assert.ok(detailUi.includes('.product-detail-summary h1'));
+  assert.ok(detailUi.includes('.product-detail-address span'));
+  assert.ok(detailUi.includes('overflow-wrap: anywhere;'));
+  assert.ok(detailFlow.includes('.detail-mobile-media-stage > .detail-media-fallback'));
+  assert.ok(detailFlow.includes('--theme-detail-media-ratio'));
 });

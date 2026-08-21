@@ -25,16 +25,30 @@ test('product detail keeps a conversion-first mobile hierarchy', async () => {
 
   assert.match(styles, /\.product-detail-navigation \{[\s\S]*position: absolute/u);
   assert.match(styles, /\.product-detail-address \{/u);
+  assert.match(
+    styles,
+    /\.product-detail-summary h1,[\s\S]*\.product-detail-address span/u,
+  );
   assert.match(styles, /\.product-detail-fixed-action \{[\s\S]*position: fixed/u);
   assert.match(styles, /\.product-detail-fixed-action \{[\s\S]*bottom: 0/u);
   assert.match(
     styles,
     /\.product-detail-info \{[\s\S]*position: sticky;[\s\S]*top: 86px/u,
   );
+  assert.doesNotMatch(styles, /\.detail-mobile-gallery \{/u);
+  assert.doesNotMatch(styles, /detail-mobile-media-track/u);
+  assert.doesNotMatch(styles, /detail-mobile-media-progress/u);
+  assert.doesNotMatch(styles, /detail-mobile-media-count/u);
 
+  assert.match(flowStyles, /\.detail-mobile-gallery \{/u);
+  assert.match(flowStyles, /\.detail-mobile-media-item > img/u);
   assert.match(flowStyles, /\.product-detail-secondary-media \{/u);
   assert.match(flowStyles, /\.product-detail-secondary-media-item > img/u);
   assert.match(flowStyles, /@media \(min-width: 768px\)/u);
+  assert.doesNotMatch(flowStyles, /detail-mobile-media-track/u);
+  assert.doesNotMatch(flowStyles, /detail-mobile-media-progress/u);
+  assert.doesNotMatch(flowStyles, /detail-mobile-media-count/u);
+
   assert.match(
     loadingStyles,
     /\.product-detail-loading-navigation \{[\s\S]*position: absolute/u,
