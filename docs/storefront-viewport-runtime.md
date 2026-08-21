@@ -9,17 +9,17 @@ VisualViewport Runtime
 ├─ publishes live visual viewport geometry
 └─ App Shell chrome measurement
    ├─ Header
-   ├─ Bottom Navigation
-   └─ Route Action / CTA
+   └─ Bottom Chrome
 
 App Shell
 ├─ fixed Header
 ├─ route content
-├─ fixed Bottom Navigation
-└─ fixed Route Action host
+└─ fixed Bottom Chrome
+   ├─ normal routes -> Bottom Navigation
+   └─ Product route -> Route Action / CTA
 ```
 
-Route pages own business content and action intent. They do not calculate browser toolbar offsets or mount global fixed surfaces directly to `document.body`.
+Route pages own business content and action intent. They do not calculate browser toolbar offsets or mount global fixed surfaces directly to `document.body`. Bottom Navigation and Product CTA are two content states of the same App Shell bottom slot, not separate viewport-positioning systems.
 
 ## Geometry sources
 
@@ -27,7 +27,7 @@ Three different geometry sources have different responsibilities:
 
 1. `window.visualViewport` describes the browser's currently visible viewport and reacts to dynamic browser chrome, zoom geometry, and supported virtual-keyboard resizing.
 2. `env(safe-area-inset-*)` protects content from physical display cutouts, rounded corners, and home-indicator areas.
-3. `ResizeObserver` measures the actual rendered size of App Shell Header, Bottom Navigation, and Route Action surfaces.
+3. `ResizeObserver` measures the actual rendered size of App Shell Header and the active Bottom Chrome content.
 
 Do not replace these with UA sniffing, device-model branches, or browser-specific magic numbers.
 
@@ -44,8 +44,6 @@ The viewport runtime publishes:
 --app-viewport-left
 
 --app-header-height
---app-bottom-nav-height
---app-route-action-height
 --app-bottom-chrome-height
 ```
 
@@ -54,11 +52,13 @@ CSS uses these values for placement and content clearance. Component design size
 ## Browser chrome behavior
 
 - Header stays fixed to the live visual viewport top.
-- Mobile Bottom Navigation stays fixed to the live visual viewport bottom.
-- Product Route Action / CTA stays fixed to the live visual viewport bottom.
-- Route content clears the measured Header and the active measured bottom chrome.
-- Section full-height browsing uses live viewport height minus the measured Bottom Navigation.
-- PWA install UI clears both browser viewport insets and the measured Bottom Navigation.
+- Bottom Chrome stays fixed to the live visual viewport bottom on mobile/tablet routes where it is used.
+- Normal routes render Bottom Navigation inside Bottom Chrome.
+- Product routes render Route Action / CTA inside the same Bottom Chrome.
+- Route content clears the measured Header and the measured active Bottom Chrome.
+- Section full-height browsing uses live viewport height minus the measured Bottom Chrome.
+- PWA install UI clears both browser viewport insets and the measured Bottom Chrome.
+- At desktop product breakpoints the Product CTA remains in the inline decision panel and the mobile Bottom Chrome is hidden.
 - `theme-color` follows the current page background token so browser/system chrome visually blends with the active light or dark theme.
 
 ## Interactive widgets
@@ -76,9 +76,11 @@ Messages and other input-heavy routes must keep the 16px mobile input font floor
 Repository contracts and production Playwright acceptance verify:
 
 - VisualViewport runtime installation;
-- measured chrome variables;
+- measured Header and Bottom Chrome variables;
 - fixed Header alignment to the visual viewport top;
-- fixed Route Action alignment to the visual viewport bottom;
-- Section geometry uses live viewport and measured navigation height;
+- fixed Bottom Chrome alignment to the visual viewport bottom;
+- Bottom Navigation and Product CTA share that same fixed owner;
+- Section geometry uses live viewport and measured Bottom Chrome height;
+- no legacy split Bottom Navigation / Route Action height system returns;
 - no legacy fixed-height viewport formulas return;
 - no UA/device-specific viewport offset logic is introduced.
