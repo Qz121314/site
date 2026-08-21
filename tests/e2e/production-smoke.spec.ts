@@ -46,7 +46,7 @@ test('storefront applies the current admin theme and keeps discovery routes heal
   await page.goto('/');
   await expect(page.locator('#root')).not.toBeEmpty();
   await expect(page.locator('.app-shell > .topbar .brand-lockup')).toBeVisible();
-  await expect(page.locator('.bottom-nav')).toBeVisible();
+  await expect(page.locator('.storefront-bottom-chrome > .bottom-nav')).toBeVisible();
   await expect(page.locator('.home-shortcut-zone')).toBeVisible();
 
   await expect
@@ -70,7 +70,7 @@ test('storefront applies the current admin theme and keeps discovery routes heal
 
   await page.goto('/browse/');
   await expect(page.locator('#root')).not.toBeEmpty();
-  await expect(page.locator('.bottom-nav')).toBeVisible();
+  await expect(page.locator('.storefront-bottom-chrome > .bottom-nav')).toBeVisible();
   await expect(page.locator('.browse-directory-search')).toBeVisible();
   await expectNoHorizontalOverflow(page);
 
@@ -167,18 +167,23 @@ test('a published product keeps shell chrome inside the live visual viewport', a
 
   await page.goto(publishedRoute!.productHref);
   const header = page.locator('.app-shell > .storefront-detail-topbar');
-  const actionHost = page.locator('.app-shell > .storefront-route-action-host');
+  const bottomChrome = page.locator('.app-shell > .storefront-bottom-chrome');
+  const actionHost = page.locator(
+    '.storefront-bottom-chrome > .storefront-route-action-host',
+  );
   const routeAction = actionHost.locator('.product-detail-route-action');
   const cta = routeAction.locator('.cta-button');
   const mobileMediaTrack = page.locator('.detail-mobile-media-track');
 
   await expect(header).toBeVisible();
   await expect(header.locator('.storefront-detail-back')).toBeVisible();
+  await expect(bottomChrome).toBeVisible();
   await expect(actionHost).toBeVisible();
   await expect(routeAction).toBeVisible();
   await expect(cta).toBeVisible();
   await expect(page.locator('.product-detail-navigation')).toHaveCount(0);
   await expect(page.locator('.product-detail-secondary-media')).toHaveCount(0);
+  await expect(page.locator('.app-shell > .storefront-route-action-host')).toHaveCount(0);
   await expect(
     page.locator('.storefront-route-view .storefront-route-action-host'),
   ).toHaveCount(0);
@@ -202,10 +207,15 @@ test('a published product keeps shell chrome inside the live visual viewport', a
     const headerElement = document.querySelector<HTMLElement>(
       '.storefront-detail-topbar',
     );
-    const host = document.querySelector<HTMLElement>('.storefront-route-action-host');
+    const bottomChromeElement = document.querySelector<HTMLElement>(
+      '.storefront-bottom-chrome',
+    );
+    const host = bottomChromeElement?.querySelector<HTMLElement>(
+      '.storefront-route-action-host',
+    );
     const button = host?.querySelector<HTMLElement>('.cta-button');
     const headerRect = headerElement?.getBoundingClientRect();
-    const hostRect = host?.getBoundingClientRect();
+    const bottomChromeRect = bottomChromeElement?.getBoundingClientRect();
     const cssNumber = (name: string) =>
       Number.parseFloat(root.style.getPropertyValue(name)) || 0;
 
@@ -221,10 +231,14 @@ test('a published product keeps shell chrome inside the live visual viewport', a
           : Infinity,
       },
       ctaContract: {
-        hostPosition: host ? getComputedStyle(host).position : null,
-        visualBottomGap: hostRect ? Math.abs(visualBottom - hostRect.bottom) : Infinity,
-        runtimeHeightGap: hostRect
-          ? Math.abs(cssNumber('--app-route-action-height') - hostRect.height)
+        chromePosition: bottomChromeElement
+          ? getComputedStyle(bottomChromeElement).position
+          : null,
+        visualBottomGap: bottomChromeRect
+          ? Math.abs(visualBottom - bottomChromeRect.bottom)
+          : Infinity,
+        runtimeHeightGap: bottomChromeRect
+          ? Math.abs(cssNumber('--app-bottom-chrome-height') - bottomChromeRect.height)
           : Infinity,
         buttonHeight: button?.getBoundingClientRect().height ?? 0,
       },
@@ -239,7 +253,7 @@ test('a published product keeps shell chrome inside the live visual viewport', a
   expect(headerContract.position).toBe('fixed');
   expect(headerContract.visualTopGap).toBeLessThanOrEqual(1.5);
   expect(headerContract.runtimeHeightGap).toBeLessThanOrEqual(1.5);
-  expect(ctaContract.hostPosition).toBe('fixed');
+  expect(ctaContract.chromePosition).toBe('fixed');
   expect(ctaContract.visualBottomGap).toBeLessThanOrEqual(1.5);
   expect(ctaContract.runtimeHeightGap).toBeLessThanOrEqual(1.5);
   expect(ctaContract.buttonHeight).toBeGreaterThanOrEqual(44);
@@ -247,7 +261,7 @@ test('a published product keeps shell chrome inside the live visual viewport', a
   await page.evaluate(() => window.scrollTo(0, document.documentElement.scrollHeight));
   await expect
     .poll(() =>
-      actionHost.evaluate((element) => {
+      bottomChrome.evaluate((element) => {
         const viewport = window.visualViewport;
         const visualBottom =
           (viewport?.offsetTop ?? 0) + (viewport?.height ?? window.innerHeight);
