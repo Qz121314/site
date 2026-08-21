@@ -22,11 +22,6 @@ body {
   background: var(--page-bg);
 }
 
-.mobile-cta-bar {
-  border-color: color-mix(in srgb, var(--line) 92%, transparent);
-  background: color-mix(in srgb, var(--surface) 95%, transparent);
-}
-
 .cta-button,
 .primary-button {
   box-shadow: 0 9px 20px color-mix(in srgb, var(--brand) 24%, transparent);
@@ -67,10 +62,6 @@ html[data-color-scheme='dark'] .inline-error {
  * enhancements layered on top of these touch-first proportions.
  */
 @media (max-width: 719px) {
-  .app-shell {
-    padding-bottom: calc(82px + env(safe-area-inset-bottom));
-  }
-
   main {
     padding: 12px 10px 34px;
   }
@@ -84,12 +75,6 @@ html[data-color-scheme='dark'] .inline-error {
   .cta-button,
   .primary-button {
     min-height: 48px;
-  }
-
-  .mobile-cta-bar {
-    right: 8px;
-    bottom: calc(76px + env(safe-area-inset-bottom));
-    left: 8px;
   }
 }
 

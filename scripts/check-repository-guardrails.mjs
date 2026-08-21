@@ -17,6 +17,7 @@ const [
   legacyStyles,
   storefrontIndex,
   themeRuntime,
+  themeRuntimeStyles,
 ] = await Promise.all([
   readFile('package.json', 'utf8'),
   readFile('.githooks/pre-commit', 'utf8'),
@@ -33,6 +34,7 @@ const [
   readFile('apps/storefront/src/styles.css', 'utf8'),
   readFile('apps/storefront/index.html', 'utf8'),
   readFile('apps/storefront/src/theme-runtime.ts', 'utf8'),
+  readFile('apps/storefront/src/theme-runtime.css', 'utf8'),
 ]);
 
 const packageJson = JSON.parse(packageText);
@@ -231,6 +233,11 @@ assert.doesNotMatch(
   legacyStyles,
   /\.app-shell\s*\{[\s\S]{0,120}padding-bottom/u,
   'global styles must not regain App Shell layout ownership',
+);
+assert.doesNotMatch(
+  themeRuntimeStyles,
+  /\.app-shell\s*\{[\s\S]{0,160}padding-bottom|--app-bottom-nav-height|--app-route-action-height|\.mobile-cta-bar/u,
+  'theme runtime styles must not own App Shell bottom geometry or legacy fixed CTA layout',
 );
 assert.match(
   storefrontIndex,

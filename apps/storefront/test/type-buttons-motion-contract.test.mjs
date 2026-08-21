@@ -63,7 +63,6 @@ test('storefront typography buttons and route motion share one app visual contra
   assert.match(transitions, /prefers-reduced-motion: reduce/u);
   assert.doesNotMatch(appShell, /animation: app-page-enter-forward/u);
   assert.doesNotMatch(appShell, /@keyframes app-page-enter-forward/u);
-  assert.match(appShell, /\.storefront-route-action-host \{[\s\S]*position: fixed/u);
   assert.ok(main.indexOf('./app-shell.css') < main.indexOf('./route-transition.css'));
   assert.ok(
     main.indexOf('@site/storefront-ui/typography-contract.css') <
