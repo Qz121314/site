@@ -53,9 +53,7 @@
   min-height: var(--app-viewport-height, 100dvh);
   gap: 0;
   margin-inline: auto;
-  padding-top: calc(
-    var(--app-viewport-top, 0px) + var(--startup-header-height) + 9px
-  );
+  padding-top: calc(var(--app-viewport-top, 0px) + var(--startup-header-height) + 9px);
   padding-right: max(var(--app-gutter, 16px), env(safe-area-inset-right));
   padding-bottom: calc(
     var(--startup-bottom-chrome-height) + var(--app-viewport-bottom, 0px) + 32px
@@ -362,9 +360,7 @@ body .product-detail-cta-spinner::after {
 
 @media (min-width: 768px) {
   .startup-feed-skeleton {
-    padding-top: calc(
-      var(--app-viewport-top, 0px) + var(--startup-header-height) + 25px
-    );
+    padding-top: calc(var(--app-viewport-top, 0px) + var(--startup-header-height) + 25px);
     padding-right: max(24px, calc((100% - 1120px) / 2));
     padding-bottom: calc(
       var(--startup-bottom-chrome-height) + var(--app-viewport-bottom, 0px) + 30px
