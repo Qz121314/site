@@ -56,10 +56,8 @@ test('storefront typography buttons and route motion share one app visual contra
   assert.match(chrome, /--storefront-weight-semibold/u);
 
   assert.match(transitions, /--storefront-route-shift:/u);
-  assert.match(
-    transitions,
-    /data-storefront-transition='push'\]\[data-storefront-nav-direction='forward'/u,
-  );
+  assert.match(transitions, /data-storefront-transition='push'/u);
+  assert.doesNotMatch(transitions, /data-storefront-nav-direction/u);
   assert.match(transitions, /animation: storefront-push-enter var\(--app-motion-base/u);
   assert.match(transitions, /animation: storefront-pop-enter var\(--app-motion-base/u);
   assert.match(transitions, /prefers-reduced-motion: reduce/u);
