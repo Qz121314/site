@@ -31,6 +31,14 @@ test('production acceptance stays runtime-theme-aware and guards stable storefro
   assert.match(acceptance, /\.detail-mobile-media-track/u);
   assert.match(acceptance, /\.product-detail-secondary-media/u);
   assert.match(acceptance, /mediaContract\.scrollSnapType/u);
+  assert.match(acceptance, /ctaContract\.viewportBottomGap/u);
+  assert.match(acceptance, /ctaContract\.buttonHeight/u);
+  assert.match(acceptance, /ctaContract\.pagePaddingBottom/u);
+  assert.match(
+    acceptance,
+    /pagePaddingBottom\)\.toBeGreaterThanOrEqual\(ctaContract\.actionHeight\)/u,
+  );
+  assert.doesNotMatch(acceptance, /\.toBe\('\d+(?:\.\d+)?px'\)/u);
   assert.doesNotMatch(acceptance, /boxShadow[\s\S]*\.toBe\('none'\)/u);
   assert.doesNotMatch(
     acceptance,
