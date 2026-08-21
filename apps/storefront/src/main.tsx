@@ -9,6 +9,7 @@ import { StorefrontRoot } from './StorefrontRoot';
 import { StorefrontRoutePreload } from './StorefrontRoutePreload';
 import { installSupportExpiryRuntime } from './support-expiry-runtime';
 import { installCachedStorefrontTheme } from './theme-runtime';
+import { installStorefrontViewportRuntime } from './storefront-viewport-runtime';
 import '@site/storefront-ui/styles.css';
 import './styles.css';
 import './theme-runtime.css';
@@ -28,6 +29,7 @@ import './catalog-polish.css';
 import './ui-accessibility.css';
 import './loading-states.css';
 
+installStorefrontViewportRuntime();
 installPublicContentFetchFallback();
 installSupportExpiryRuntime();
 installCachedStorefrontTheme();
