@@ -51,7 +51,9 @@ function applyPresentationMode(direction: StorefrontNavigationDirection | null =
   else delete element.dataset.storefrontTransition;
 }
 
-function commitStorefrontLocation(direction: StorefrontNavigationDirection | null) {
+function commitStorefrontLocation(
+  direction: StorefrontNavigationDirection | null,
+) {
   applyPresentationMode(direction);
   publishStorefrontLocationChange();
 }
