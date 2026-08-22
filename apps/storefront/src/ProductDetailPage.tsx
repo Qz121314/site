@@ -262,7 +262,9 @@ export function ProductDetailPage({
           </>
         ) : ctaQuery.data ? (
           <>
-            <span className="product-detail-cta-label">{ctaQuery.data.label}</span>
+            <span className="product-detail-cta-label">
+              {ctaQuery.data.label}
+            </span>
             <CtaArrow />
           </>
         ) : null}
@@ -334,7 +336,10 @@ export function ProductDetailPage({
                 )}
                 {mobileGalleryItems.length > 1 ? (
                   <>
-                    <span className="detail-mobile-media-count" aria-hidden="true">
+                    <span
+                      className="detail-mobile-media-count"
+                      aria-hidden="true"
+                    >
                       {mobileMediaIndex + 1} / {mobileGalleryItems.length}
                     </span>
                     <div className="detail-mobile-media-navigation">
@@ -369,7 +374,9 @@ export function ProductDetailPage({
                     >
                       {mobileGalleryItems.map((item, index) => (
                         <span
-                          className={`detail-mobile-media-dot${index === mobileMediaIndex ? ' is-active' : ''}`}
+                          className={`detail-mobile-media-dot${
+                            index === mobileMediaIndex ? ' is-active' : ''
+                          }`}
                           key={item.id}
                         />
                       ))}
