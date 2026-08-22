@@ -125,7 +125,7 @@ export function ProductDetailPage({
   const [mobileMediaIndex, setMobileMediaIndex] = useState(0);
   const mobileMediaTrackRef = useRef<HTMLDivElement | null>(null);
   const knownProduct = findKnownProductSummary(bootstrap, sectionRef, productRef);
-  const query = useQuery({
+  const query = useQuery<ProductSnapshot>({
     queryKey: [
       'storefront-product',
       bootstrap.pointer.contentVersion,
@@ -134,9 +134,9 @@ export function ProductDetailPage({
     ],
     queryFn: ({ signal }) =>
       loadProductSnapshot(bootstrap, productRef, signal, sectionRef),
-    placeholderData: knownProduct
-      ? placeholderProductSnapshot(bootstrap, knownProduct)
-      : undefined,
+    ...(knownProduct
+      ? { placeholderData: placeholderProductSnapshot(bootstrap, knownProduct) }
+      : {}),
     staleTime: Number.POSITIVE_INFINITY,
   });
   const product = query.data?.product ?? null;

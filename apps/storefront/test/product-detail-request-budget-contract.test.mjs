@@ -25,7 +25,9 @@ test('legacy product routes resolve through one cached search index instead of a
     ),
     false,
   );
-  assert.ok(content.includes('Section context is required for published service details.'));
+  assert.ok(
+    content.includes('Section context is required for published service details.'),
+  );
 });
 
 test('canonical product detail reuses remembered summary as immediate placeholder data', () => {
@@ -34,7 +36,11 @@ test('canonical product detail reuses remembered summary as immediate placeholde
   assert.ok(detail.includes('sectionRef: string;'));
   assert.ok(detail.includes('Object.values(bootstrap.productSummaries)'));
   assert.ok(detail.includes('placeholderProductSnapshot'));
-  assert.ok(detail.includes('placeholderData: knownProduct'));
+  assert.ok(
+    detail.includes(
+      'placeholderData: placeholderProductSnapshot(bootstrap, knownProduct)',
+    ),
+  );
   assert.ok(detail.includes("body: ''"));
   assert.ok(detail.includes('media: []'));
 });

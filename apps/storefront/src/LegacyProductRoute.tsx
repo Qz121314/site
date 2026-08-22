@@ -37,7 +37,10 @@ export function LegacyProductRoute({
 
   const unavailable = productsQuery.isError;
   return (
-    <section className="product-detail-state standalone-state embedded-state" role="status">
+    <section
+      className="product-detail-state standalone-state embedded-state"
+      role="status"
+    >
       <div className="state-mark">{unavailable ? '!' : '404'}</div>
       <h1>{unavailable ? SYSTEM_UI.unavailable : SYSTEM_UI.notFound}</h1>
       <div className="state-actions">
