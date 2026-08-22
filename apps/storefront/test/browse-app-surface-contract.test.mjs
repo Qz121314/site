@@ -13,7 +13,7 @@ test('browse keeps the first mobile viewport dense without adding initial produc
 
   assert.match(
     css,
-    /\.browse-section-list\.is-single \.browse-section-card \{[\s\S]*min-height: clamp\(250px, 46svh, 360px\);/u,
+    /\.browse-section-list\.is-single\s+\.browse-section-card \{[\s\S]*min-height: clamp\(250px, 46svh, 360px\);/u,
   );
   assert.match(
     css,
@@ -21,11 +21,11 @@ test('browse keeps the first mobile viewport dense without adding initial produc
   );
   assert.match(
     css,
-    /\.browse-section-list:not\(\.is-single\) \.browse-section-card:first-child \{[\s\S]*grid-column: 1 \/ -1;/u,
+    /\.browse-section-list:not\(\.is-single\)\s+\.browse-section-card:first-child \{[\s\S]*grid-column: 1 \/ -1;/u,
   );
   assert.match(
     css,
-    /\.browse-section-list:not\(\.is-single\) \.browse-section-card:nth-child\(even\):last-child \{[\s\S]*grid-column: 1 \/ -1;/u,
+    /\.browse-section-list:not\(\.is-single\)\s+\.browse-section-card:nth-child\(even\):last-child \{[\s\S]*grid-column: 1 \/ -1;/u,
   );
   assert.match(css, /\.browse-directory-search \{[\s\S]*position: sticky;/u);
 });
