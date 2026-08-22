@@ -219,6 +219,12 @@ jobs:
         run: |
           set -euo pipefail
 
+          assert_storefront_shell() {
+            local file="$1"
+            grep -F '<div id="root">' "$file"
+            grep -F 'class="boot-shell"' "$file"
+          }
+
           health=''
           health_ready=false
           for attempt in {1..40}; do
@@ -371,9 +377,12 @@ jobs:
           auth_session_with_slash="$(curl --fail --silent --show-error "$BASE_URL/api/admin/auth/session/")"
           printf '%s' "$auth_session_with_slash" | grep -F '"authenticated":false'
 
-          for path in / /admin/; do
-            curl --fail --silent --show-error "$BASE_URL$path" | grep -F '<div id="root"></div>'
-          done
+          curl --fail --silent --show-error -o /tmp/storefront-root.html "$BASE_URL/"
+          assert_storefront_shell /tmp/storefront-root.html
+
+          curl --fail --silent --show-error -o /tmp/admin-root.html "$BASE_URL/admin/"
+          grep -F '<meta name="robots" content="noindex,nofollow" />' /tmp/admin-root.html
+          grep -F '<div id="root"></div>' /tmp/admin-root.html
 
           for path in "/sections/storefront-smoke-${GITHUB_SHA}/" \
             "/sections/storefront-smoke-${GITHUB_SHA}/products/product-smoke-${GITHUB_SHA}/" \
@@ -389,7 +398,7 @@ jobs:
             grep -Eqi '^content-type: text/html' /tmp/storefront-not-found.headers
             grep -Eqi '^x-robots-tag: noindex, nofollow' /tmp/storefront-not-found.headers
             grep -F '<meta name="robots" content="noindex, nofollow" />' /tmp/storefront-not-found.body
-            grep -F '<div id="root"></div>' /tmp/storefront-not-found.body
+            assert_storefront_shell /tmp/storefront-not-found.body
           done
 
       - name: Install production browser
