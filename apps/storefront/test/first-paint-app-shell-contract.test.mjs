@@ -25,22 +25,28 @@ test('the initial HTML paint presents app-shell chrome before React starts', asy
   assert.match(html, /@media \(min-width: 980px\)[\s\S]*?\.boot-bottom-nav/u);
 });
 
-test('production smoke validates storefront boot shell separately from admin root', async () => {
-  const workflow = await readFile(
-    new URL('../../../.github/workflows/ci.yml', import.meta.url),
-    'utf8',
-  );
+test(
+  'production smoke validates storefront boot shell separately from admin root',
+  async () => {
+    const workflow = await readFile(
+      new URL('../../../.github/workflows/ci.yml', import.meta.url),
+      'utf8',
+    );
 
-  assert.match(workflow, /assert_storefront_shell\(\)/u);
-  assert.match(workflow, /grep -F 'class="boot-shell"' "\$file"/u);
-  assert.match(workflow, /assert_storefront_shell \/tmp\/storefront-root\.html/u);
-  assert.match(
-    workflow,
-    /assert_storefront_shell \/tmp\/storefront-not-found\.body/u,
-  );
-  assert.match(
-    workflow,
-    /grep -F '<div id="root"><\/div>' \/tmp\/admin-root\.html/u,
-  );
-  assert.doesNotMatch(workflow, /for path in \/ \/admin\/; do/u);
-});
+    assert.match(workflow, /assert_storefront_shell\(\)/u);
+    assert.match(workflow, /grep -F 'class="boot-shell"' "\$file"/u);
+    assert.match(
+      workflow,
+      /assert_storefront_shell \/tmp\/storefront-root\.html/u,
+    );
+    assert.match(
+      workflow,
+      /assert_storefront_shell \/tmp\/storefront-not-found\.body/u,
+    );
+    assert.match(
+      workflow,
+      /grep -F '<div id="root"><\/div>' \/tmp\/admin-root\.html/u,
+    );
+    assert.doesNotMatch(workflow, /for path in \/ \/admin\/; do/u);
+  },
+);
