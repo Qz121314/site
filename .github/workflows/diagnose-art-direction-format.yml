@@ -1,0 +1,31 @@
+name: Diagnose Art Direction Format
+
+on:
+  push:
+    branches:
+      - refactor/storefront-home-art-direction
+
+permissions:
+  contents: read
+
+jobs:
+  format:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node.js and pnpm
+        run: |
+          set -euo pipefail
+          node --version
+          node -e "if (Number(process.versions.node.split('.')[0]) < 22) { throw new Error('Node.js 22 or newer is required') }"
+          npm install --global pnpm@11.19.0
+          pnpm --version
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Print Prettier output
+        run: |
+          set -euo pipefail
+          pnpm exec prettier --write packages/storefront-ui/src/art-direction-contract.css
+          echo '---ART_DIRECTION_FORMATTED_START---'
+          cat packages/storefront-ui/src/art-direction-contract.css
+          echo '---ART_DIRECTION_FORMATTED_END---'
