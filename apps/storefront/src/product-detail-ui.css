@@ -262,13 +262,14 @@
 
 .product-detail-route-action .cta-button,
 .product-detail-inline-action .cta-button {
+  position: relative;
   display: inline-flex;
   width: min(720px, 100%);
   min-height: max(var(--theme-detail-cta-height, 54px), 56px);
   align-items: center;
   justify-content: center;
   gap: 10px;
-  padding: 0 13px 0 20px;
+  padding: 0 50px;
   border: 1px solid color-mix(in srgb, currentColor 12%, transparent);
   border-radius: var(--theme-detail-cta-radius, var(--theme-radius-control, 14px));
   color: var(--theme-detail-cta-color, #fff);
@@ -281,6 +282,7 @@
   font-weight: var(--storefront-weight-semibold, 650);
   line-height: 1.15;
   letter-spacing: -0.014em;
+  text-align: center;
   text-decoration: none;
   -webkit-tap-highlight-color: transparent;
   cursor: pointer;
@@ -296,7 +298,15 @@
 .product-detail-route-action .cta-button.is-retry,
 .product-detail-inline-action .cta-button.is-ready,
 .product-detail-inline-action .cta-button.is-retry {
-  justify-content: space-between;
+  justify-content: center;
+}
+
+.product-detail-cta-label {
+  min-width: 0;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .product-detail-route-action .cta-button:focus-visible,
@@ -332,13 +342,16 @@
 }
 
 .product-detail-cta-arrow {
+  position: absolute;
+  top: 50%;
+  right: 10px;
   display: grid;
   width: 32px;
   height: 32px;
-  flex: 0 0 32px;
   place-items: center;
   border-radius: 50%;
   background: color-mix(in srgb, currentColor 13%, transparent);
+  transform: translateY(-50%);
   transition:
     transform var(--app-motion-fast, 160ms) var(--app-ease-out, ease-out),
     background var(--app-motion-fast, 160ms) ease;
@@ -389,7 +402,7 @@
   .product-detail-inline-action
     .cta-button:hover:not(:disabled)
     .product-detail-cta-arrow {
-    transform: translateX(1px);
+    transform: translate(1px, -50%);
   }
 }
 
