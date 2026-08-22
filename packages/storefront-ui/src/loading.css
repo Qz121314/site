@@ -1,0 +1,97 @@
+.loading-halo {
+  --loading-halo-size: 32px;
+  --loading-halo-ring: 2px;
+  --loading-halo-color: var(--brand, #ff5a1f);
+  position: relative;
+  display: inline-grid;
+  width: var(--loading-halo-size);
+  height: var(--loading-halo-size);
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--loading-halo-color);
+  isolation: isolate;
+}
+
+.loading-halo::before,
+.loading-halo::after {
+  position: absolute;
+  border-radius: inherit;
+  content: '';
+}
+
+.loading-halo::before {
+  inset: 0;
+  border: var(--loading-halo-ring) solid currentColor;
+  border-right-color: transparent;
+  box-shadow: 0 0 12px currentColor;
+  opacity: 0.72;
+  animation: loading-halo-spin 900ms linear infinite;
+}
+
+.loading-halo::after {
+  inset: 31%;
+  background: currentColor;
+  box-shadow: 0 0 10px currentColor;
+  opacity: 0.42;
+  animation: loading-halo-breathe 1.15s ease-in-out infinite;
+}
+
+.loading-halo.is-small {
+  --loading-halo-size: 18px;
+  --loading-halo-ring: 1.5px;
+}
+
+.loading-halo.is-medium {
+  --loading-halo-size: 32px;
+  --loading-halo-ring: 2px;
+}
+
+.loading-halo.is-large {
+  --loading-halo-size: 46px;
+  --loading-halo-ring: 2px;
+}
+
+.loading-halo-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 260;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: rgb(0 0 0 / 3%);
+  backdrop-filter: blur(1.25px);
+  -webkit-backdrop-filter: blur(1.25px);
+  cursor: wait;
+  pointer-events: auto;
+}
+
+@keyframes loading-halo-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes loading-halo-breathe {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(0.78);
+  }
+
+  50% {
+    opacity: 0.68;
+    transform: scale(1.05);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-halo::before,
+  .loading-halo::after {
+    animation: none;
+  }
+
+  .loading-halo::after {
+    opacity: 0.5;
+  }
+}
