@@ -96,7 +96,10 @@ test('storefront polish stays theme-led and app-native across every primary surf
   assert.match(artDirection, /\[data-theme='noir'\][\s\S]*\.home-product-meta/u);
   assert.match(artDirection, /storefront-hero-image-settle/u);
   assert.match(artDirection, /prefers-reduced-motion: reduce/u);
-  assert.match(homeSource, /hero-carousel-slide\$\{index === activeIndex \? ' is-active' : ''\}/u);
+  assert.match(
+    homeSource,
+    /hero-carousel-slide\$\{index === activeIndex \? ' is-active' : ''\}/u,
+  );
   assert.match(homeSource, /className="home-product-meta"/u);
   assert.match(homeSource, /className="home-product-context"/u);
   assert.match(storefrontMain, /@site\/storefront-ui\/art-direction-contract\.css/u);
