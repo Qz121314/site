@@ -126,6 +126,14 @@
   pointer-events: none;
 }
 
+.chat-connection-state.is-error {
+  pointer-events: auto;
+}
+
+.chat-connection-retry {
+  min-width: 96px;
+}
+
 .chat-load-earlier {
   border: 0;
   border-radius: 999px;
