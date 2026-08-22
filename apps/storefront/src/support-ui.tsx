@@ -275,7 +275,7 @@ function DeliveryMark({
   if (delivery === 'sending') {
     return (
       <span className="chat-delivery-mark is-sending" aria-label={SYSTEM_UI.sending}>
-        <span className="chat-status-spinner" aria-hidden="true" />
+        <LoadingHalo className="chat-delivery-halo" size="small" />
       </span>
     );
   }
@@ -303,6 +303,22 @@ function DeliveryMark({
   );
 }
 
+function ConnectionRetry({ onRetry }: { onRetry?: (() => void) | undefined }) {
+  return (
+    <div className="chat-connection-state is-error" role="alert">
+      <span className="sr-only">{SYSTEM_UI.unavailable}</span>
+      <button
+        className="primary-button chat-connection-retry"
+        type="button"
+        disabled={!onRetry}
+        onClick={onRetry}
+      >
+        {SYSTEM_UI.retry}
+      </button>
+    </div>
+  );
+}
+
 export function MessageThreadPageContent({
   conversation,
   pendingConversation = null,
@@ -321,6 +337,8 @@ export function MessageThreadPageContent({
   onLoadEarlier,
   loadingEarlier = false,
   loadingConversation = false,
+  connectionError = false,
+  onRetryConnection,
 }: {
   conversation: SupportConversationDetail | null;
   pendingConversation?: PendingSupportConversation | null;
@@ -339,6 +357,8 @@ export function MessageThreadPageContent({
   onLoadEarlier?: (() => Promise<void>) | undefined;
   loadingEarlier?: boolean;
   loadingConversation?: boolean;
+  connectionError?: boolean;
+  onRetryConnection?: (() => void) | undefined;
 }) {
   const [draft, setDraft] = useState('');
   const [agentTyping, setAgentTyping] = useState(false);
@@ -462,9 +482,13 @@ export function MessageThreadPageContent({
           </span>
         </header>
         <div className="chat-timeline">
-          <div className="chat-empty-state" aria-hidden="true">
-            <MessageBubbleIcon />
-          </div>
+          {connectionError ? (
+            <ConnectionRetry onRetry={onRetryConnection} />
+          ) : (
+            <div className="chat-empty-state" aria-hidden="true">
+              <MessageBubbleIcon />
+            </div>
+          )}
         </div>
         <div className="chat-composer is-disabled" aria-disabled="true">
           <button type="button" disabled aria-label={SYSTEM_UI.attachment}>
@@ -557,6 +581,8 @@ export function MessageThreadPageContent({
             <LoadingHalo size="medium" />
             <span className="sr-only">{SYSTEM_UI.loading}</span>
           </div>
+        ) : connectionError && pendingConversation && !conversation ? (
+          <ConnectionRetry onRetry={onRetryConnection} />
         ) : null}
         {conversation?.nextMessageCursor && onLoadEarlier ? (
           <button
@@ -767,6 +793,8 @@ export function MessagesWorkspace({
   onLoadEarlier,
   loadingEarlier = false,
   loadingConversation = false,
+  connectionError = false,
+  onRetryConnection,
   supportAvailable = null,
 }: {
   conversations: SupportConversationDetail[] | SupportConversationSummary[];
@@ -788,6 +816,8 @@ export function MessagesWorkspace({
   onLoadEarlier?: (() => Promise<void>) | undefined;
   loadingEarlier?: boolean;
   loadingConversation?: boolean;
+  connectionError?: boolean;
+  onRetryConnection?: (() => void) | undefined;
   supportAvailable?: boolean | null;
 }) {
   const threadOpen = activeConversationRef !== null || pendingConversation !== null;
@@ -821,6 +851,8 @@ export function MessagesWorkspace({
             onLoadEarlier={onLoadEarlier}
             loadingEarlier={loadingEarlier}
             loadingConversation={loadingConversation}
+            connectionError={connectionError}
+            onRetryConnection={onRetryConnection}
           />
         ) : (
           <MessagesDetailPlaceholder />
