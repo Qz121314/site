@@ -50,7 +50,7 @@ export function handleStorefrontLinkClick(
   };
 
   if (shouldUseStorefrontViewTransition(current.pathname, target.pathname)) {
-    runStorefrontViewTransition('push', navigate);
+    runStorefrontViewTransition(navigate);
   } else {
     navigate();
   }
