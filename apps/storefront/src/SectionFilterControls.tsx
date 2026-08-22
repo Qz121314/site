@@ -29,8 +29,8 @@ export function SectionFilterControls({
   onToggleTag,
   onClearTags,
 }: {
-  categories: FilterOption[];
-  tags: FilterOption[];
+  categories: readonly FilterOption[];
+  tags: readonly FilterOption[];
   categoryId: string;
   selectedTags: ReadonlySet<string>;
   onCategoryChange: (categoryId: string) => void;
