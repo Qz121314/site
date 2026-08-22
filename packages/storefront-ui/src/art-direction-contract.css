@@ -224,8 +224,7 @@
   transition: opacity var(--app-motion-base) ease;
 }
 
-:is(html, .storefront-theme-root)
-  :is(.home-product-cover img, .home-shortcut-icon img) {
+:is(html, .storefront-theme-root) :is(.home-product-cover img, .home-shortcut-icon img) {
   filter: var(--theme-art-media-filter);
 }
 
@@ -311,7 +310,9 @@
 }
 
 :is(html, .storefront-theme-root)
-  .hero-carousel-slide.is-active .hero-carousel-media img {
+  .hero-carousel-slide.is-active
+  .hero-carousel-media
+  img {
   animation: storefront-hero-image-settle var(--theme-art-hero-settle-duration)
     var(--app-ease-out) both;
 }
@@ -352,19 +353,16 @@
 }
 
 @media (hover: hover) and (pointer: fine) {
-  :is(html, .storefront-theme-root)
-    .home-product-tile:hover .home-product-cover {
+  :is(html, .storefront-theme-root) .home-product-tile:hover .home-product-cover {
     box-shadow: var(--theme-art-media-hover-shadow);
   }
 
-  :is(html, .storefront-theme-root)
-    .home-product-tile:hover .home-product-cover img {
+  :is(html, .storefront-theme-root) .home-product-tile:hover .home-product-cover img {
     transform: scale(var(--theme-art-media-hover-scale));
   }
 }
 
-:is(html, .storefront-theme-root)
-  .home-product-tile:active .home-product-cover img {
+:is(html, .storefront-theme-root) .home-product-tile:active .home-product-cover img {
   transform: scale(var(--theme-art-media-press-scale));
 }
 
@@ -384,7 +382,9 @@
 
 @media (prefers-reduced-motion: reduce) {
   :is(html, .storefront-theme-root)
-    .hero-carousel-slide.is-active .hero-carousel-media img {
+    .hero-carousel-slide.is-active
+    .hero-carousel-media
+    img {
     animation: none;
     transform: none;
   }
