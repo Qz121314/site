@@ -64,7 +64,9 @@ function CtaArrow() {
 function MediaArrowIcon({ direction }: { direction: 'previous' | 'next' }) {
   return (
     <svg viewBox="0 0 20 20" focusable="false" aria-hidden="true">
-      <path d={direction === 'previous' ? 'm12 5-5 5 5 5' : 'm8 5 5 5-5 5'} />
+      <path
+        d={direction === 'previous' ? 'm12 5-5 5 5 5' : 'm8 5 5 5-5 5'}
+      />
     </svg>
   );
 }
@@ -192,7 +194,10 @@ export function ProductDetailPage({
   function scrollMobileGalleryToIndex(index: number) {
     const track = mobileMediaTrackRef.current;
     if (!track || mobileGalleryItems.length <= 1) return;
-    const nextIndex = Math.max(0, Math.min(mobileGalleryItems.length - 1, index));
+    const nextIndex = Math.max(
+      0,
+      Math.min(mobileGalleryItems.length - 1, index),
+    );
     track.scrollTo({ left: nextIndex * track.clientWidth, behavior: 'smooth' });
     setMobileMediaIndex(nextIndex);
   }
@@ -338,7 +343,9 @@ export function ProductDetailPage({
                         type="button"
                         aria-label="Previous media"
                         disabled={mobileMediaIndex === 0}
-                        onClick={() => scrollMobileGalleryToIndex(mobileMediaIndex - 1)}
+                        onClick={() =>
+                          scrollMobileGalleryToIndex(mobileMediaIndex - 1)
+                        }
                       >
                         <MediaArrowIcon direction="previous" />
                       </button>
@@ -346,13 +353,20 @@ export function ProductDetailPage({
                         className="detail-mobile-media-nav is-next"
                         type="button"
                         aria-label="Next media"
-                        disabled={mobileMediaIndex === mobileGalleryItems.length - 1}
-                        onClick={() => scrollMobileGalleryToIndex(mobileMediaIndex + 1)}
+                        disabled={
+                          mobileMediaIndex === mobileGalleryItems.length - 1
+                        }
+                        onClick={() =>
+                          scrollMobileGalleryToIndex(mobileMediaIndex + 1)
+                        }
                       >
                         <MediaArrowIcon direction="next" />
                       </button>
                     </div>
-                    <div className="detail-mobile-media-pagination" aria-hidden="true">
+                    <div
+                      className="detail-mobile-media-pagination"
+                      aria-hidden="true"
+                    >
                       {mobileGalleryItems.map((item, index) => (
                         <span
                           className={`detail-mobile-media-dot${index === mobileMediaIndex ? ' is-active' : ''}`}
