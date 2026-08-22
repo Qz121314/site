@@ -28,6 +28,7 @@ import '@site/storefront-ui/art-direction-contract.css';
 import '@site/storefront-ui/art-direction-primary-surfaces.css';
 import './app-chrome.css';
 import './catalog-polish.css';
+import './section-compact-filters.css';
 import './ui-accessibility.css';
 import './loading-states.css';
 
