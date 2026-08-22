@@ -7,19 +7,43 @@ function source(path) {
   return readFileSync(fileURLToPath(new URL(path, import.meta.url)), 'utf8');
 }
 
-test('customer service CTA records the handoff then enters Messages through SPA navigation', () => {
+test('customer service CTA enters the chat shell before the handoff resolves', () => {
   const productDetail = source('../src/ProductDetailPage.tsx');
+  const messagesPage = source('../src/MessagesPage.tsx');
+  const supportUi = source('../src/support-ui.tsx');
   const cta = source('../src/cta.ts');
   const navigation = source('../src/storefront-navigation-runtime.ts');
   const workerConversion = source('../../worker/src/routes/public-conversion.ts');
 
-  assert.match(productDetail, /resolveCustomerServiceCta\(cta\.path\)/u);
-  assert.match(productDetail, /pushStorefrontLocation\(path\)/u);
+  assert.doesNotMatch(productDetail, /resolveCustomerServiceCta/u);
+  assert.match(productDetail, /ctaPath: cta\.path/u);
   assert.match(
     productDetail,
-    /\['support-compose-product', composeSectionId, composeProductId\]/u,
+    /pushStorefrontLocation\(`\/messages\/new\/\?\$\{params\.toString\(\)\}`\)/u,
+  );
+  assert.match(
+    productDetail,
+    /\['support-compose-product', currentProduct\.sectionId, currentProduct\.id\]/u,
   );
   assert.match(productDetail, /window\.location\.assign\(cta\.path\)/u);
+
+  assert.match(
+    messagesPage,
+    /resolveCustomerServiceCta\(composeContext\.ctaPath, signal\)/u,
+  );
+  assert.match(
+    messagesPage,
+    /\['support-compose-handoff', composeContext\?\.ctaPath\]/u,
+  );
+  assert.match(messagesPage, /parseResolvedComposePath\(path, composeContext\)/u);
+  assert.match(
+    messagesPage,
+    /replaceStorefrontLocation\(`\/messages\/new\/\?\$\{params\.toString\(\)\}`\)/u,
+  );
+
+  assert.match(supportUi, /loadingConversation && pendingConversation && !conversation/u);
+  assert.match(supportUi, /className="chat-connection-state"/u);
+  assert.match(supportUi, /<LoadingHalo size="medium" \/>/u);
 
   assert.match(cta, /headers: \{ Accept: 'application\/json' \}/u);
   assert.match(cta, /value\.path\.startsWith\('\/messages\/new\/'\)/u);
