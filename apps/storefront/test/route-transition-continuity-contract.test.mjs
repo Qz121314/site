@@ -34,11 +34,12 @@ test('hierarchical navigation transitions only route content and keeps persisten
   assert.match(transitionRuntime, /shouldUseStorefrontViewTransition/u);
   assert.match(transitionRuntime, /fromMode === 'root' && toMode === 'root'/u);
   assert.match(transitionRuntime, /dataset\.storefrontViewTransition = 'active'/u);
+  assert.doesNotMatch(transitionRuntime, /storefrontViewTransitionMode/u);
 
   assert.match(navigationRuntime, /shouldUseStorefrontViewTransition/u);
-  assert.match(navigationRuntime, /runStorefrontViewTransition\('push'/u);
+  assert.match(navigationRuntime, /runStorefrontViewTransition\(navigate\)/u);
   assert.match(presentationSource, /shouldUseStorefrontViewTransition/u);
-  assert.match(presentationSource, /runStorefrontViewTransition/u);
+  assert.match(presentationSource, /runStorefrontViewTransition\(update\)/u);
 
   assert.match(transitionStyles, /view-transition-name: storefront-route/u);
   assert.match(
