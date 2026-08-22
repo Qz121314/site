@@ -1,0 +1,67 @@
+import { storefrontPresentationMode } from './storefront-presentation-mode';
+
+type StorefrontViewTransition = {
+  finished: Promise<void>;
+};
+type ViewTransitionDocument = Document & {
+  startViewTransition?: (
+    updateCallback: () => void | Promise<void>,
+  ) => StorefrontViewTransition;
+};
+
+function prefersReducedMotion(): boolean {
+  return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+}
+
+function waitForRouteCommit(): Promise<void> {
+  return new Promise((resolve) => window.setTimeout(resolve, 0));
+}
+
+export function shouldUseStorefrontViewTransition(
+  fromPathname: string,
+  toPathname: string,
+): boolean {
+  if (fromPathname === toPathname) return false;
+  const fromMode = storefrontPresentationMode(fromPathname);
+  const toMode = storefrontPresentationMode(toPathname);
+  return !(fromMode === 'root' && toMode === 'root');
+}
+
+export function runStorefrontViewTransition(update: () => void): boolean {
+  const transitionDocument = document as ViewTransitionDocument;
+  const startViewTransition =
+    transitionDocument.startViewTransition?.bind(transitionDocument);
+  const root = document.documentElement;
+  if (
+    !startViewTransition ||
+    prefersReducedMotion() ||
+    root.dataset.storefrontViewTransition === 'active'
+  ) {
+    update();
+    return false;
+  }
+
+  let updateRan = false;
+  const runUpdate = () => {
+    if (updateRan) return;
+    updateRan = true;
+    update();
+  };
+  const cleanup = () => {
+    delete root.dataset.storefrontViewTransition;
+  };
+
+  try {
+    root.dataset.storefrontViewTransition = 'active';
+    const transition = startViewTransition(async () => {
+      runUpdate();
+      await waitForRouteCommit();
+    });
+    void transition.finished.then(cleanup, cleanup);
+    return true;
+  } catch {
+    cleanup();
+    runUpdate();
+    return false;
+  }
+}
