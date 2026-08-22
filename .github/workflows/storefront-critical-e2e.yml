@@ -1,0 +1,45 @@
+name: Storefront Critical E2E
+
+on:
+  pull_request:
+    paths:
+      - 'apps/storefront/**'
+      - 'packages/storefront-ui/**'
+      - 'tests/e2e/customer-service-cta-*'
+      - 'playwright.config.ts'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - '.github/workflows/storefront-critical-e2e.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: storefront-critical-e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  cta-chat:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js and pnpm
+        run: |
+          set -euo pipefail
+          node --version
+          npm install --global pnpm@11.19.0
+          pnpm --version
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install Chromium
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Verify CTA chat handoff shell
+        run: pnpm exec playwright test tests/e2e/customer-service-cta-navigation.spec.ts --project=mobile-chromium
+        env:
+          E2E_LOCAL_SERVER: '1'
