@@ -1,9 +1,13 @@
 /* Product detail mobile media flow. Page chrome, desktop gallery, copy, and CTA stay in product-detail-ui.css. */
 
 .detail-mobile-gallery {
-  width: calc(100% + (var(--app-gutter, 10px) * 2));
-  margin-inline: calc(-1 * var(--app-gutter, 10px));
+  width: 100%;
+  margin-inline: 0;
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--line) 46%, transparent);
+  border-radius: var(--theme-detail-media-radius, var(--theme-radius-media, 14px));
   background: var(--theme-detail-media-background, var(--surface-soft));
+  box-shadow: 0 10px 30px color-mix(in srgb, var(--text) 5%, transparent);
 }
 
 .detail-mobile-media-stage {
@@ -62,26 +66,121 @@
 
 .detail-mobile-media-count {
   position: absolute;
-  top: calc(70px + env(safe-area-inset-top));
-  right: max(12px, env(safe-area-inset-right));
-  z-index: 5;
+  top: 12px;
+  right: 12px;
+  z-index: 6;
   display: inline-flex;
-  min-width: 42px;
-  min-height: 28px;
+  min-width: 50px;
+  min-height: 30px;
   align-items: center;
   justify-content: center;
-  padding: 4px 9px;
-  border: 1px solid rgb(255 255 255 / 13%);
+  padding: 5px 10px;
+  border: 1px solid rgb(255 255 255 / 20%);
   border-radius: 999px;
   color: #fff;
-  background: rgb(0 0 0 / 38%);
-  box-shadow: 0 6px 18px rgb(0 0 0 / 14%);
-  font-size: 0.7rem;
-  font-weight: 650;
+  background: rgb(0 0 0 / 66%);
+  box-shadow: 0 6px 20px rgb(0 0 0 / 22%);
+  font-size: 0.75rem;
+  font-weight: 760;
   font-variant-numeric: tabular-nums;
   line-height: 1;
   pointer-events: none;
   backdrop-filter: blur(12px) saturate(1.08);
+}
+
+.detail-mobile-media-navigation {
+  position: absolute;
+  inset: 0;
+  z-index: 5;
+  pointer-events: none;
+}
+
+.detail-mobile-media-nav {
+  position: absolute;
+  top: 50%;
+  display: grid;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid rgb(255 255 255 / 20%);
+  border-radius: 50%;
+  color: #fff;
+  background: rgb(0 0 0 / 52%);
+  box-shadow: 0 7px 22px rgb(0 0 0 / 18%);
+  opacity: 0.92;
+  pointer-events: auto;
+  transform: translateY(-50%);
+  cursor: pointer;
+  backdrop-filter: blur(10px) saturate(1.08);
+  transition:
+    opacity 140ms ease,
+    transform 140ms ease,
+    background 140ms ease;
+}
+
+.detail-mobile-media-nav.is-previous {
+  left: 10px;
+}
+
+.detail-mobile-media-nav.is-next {
+  right: 10px;
+}
+
+.detail-mobile-media-nav:disabled {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.detail-mobile-media-nav:active:not(:disabled) {
+  background: rgb(0 0 0 / 68%);
+  transform: translateY(-50%) scale(0.94);
+}
+
+.detail-mobile-media-nav svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.9;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.detail-mobile-media-pagination {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  z-index: 6;
+  display: flex;
+  min-height: 24px;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  padding: 5px 8px;
+  border: 1px solid rgb(255 255 255 / 12%);
+  border-radius: 999px;
+  background: rgb(0 0 0 / 34%);
+  box-shadow: 0 5px 16px rgb(0 0 0 / 13%);
+  pointer-events: none;
+  transform: translateX(-50%);
+  backdrop-filter: blur(10px) saturate(1.08);
+}
+
+.detail-mobile-media-dot {
+  display: block;
+  width: 5px;
+  height: 5px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 52%);
+  transition:
+    width 150ms ease,
+    background 150ms ease;
+}
+
+.detail-mobile-media-dot.is-active {
+  width: 15px;
+  background: #fff;
 }
 
 .detail-mobile-media-stage > .detail-media-fallback,
@@ -105,6 +204,12 @@
   content: '';
 }
 
+@media (hover: hover) and (pointer: fine) {
+  .detail-mobile-media-nav:hover:not(:disabled) {
+    background: rgb(0 0 0 / 64%);
+  }
+}
+
 @media (min-width: 768px) {
   .detail-mobile-gallery {
     display: none;
@@ -114,5 +219,10 @@
 @media (prefers-reduced-motion: reduce) {
   .detail-mobile-media-track {
     scroll-behavior: auto;
+  }
+
+  .detail-mobile-media-nav,
+  .detail-mobile-media-dot {
+    transition: none;
   }
 }
