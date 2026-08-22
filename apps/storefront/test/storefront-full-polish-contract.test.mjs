@@ -32,10 +32,23 @@ test('storefront polish stays theme-led and app-native across every primary surf
   ] = await Promise.all(
     styleFiles.map((path) => readFile(new URL(path, import.meta.url), 'utf8')),
   );
-  const [artDirection, homeSource, storefrontMain, adminMain] = await Promise.all([
+  const [
+    artDirection,
+    primaryArtDirection,
+    homeSource,
+    storefrontMain,
+    adminMain,
+  ] = await Promise.all([
     readFile(
       new URL(
         '../../../packages/storefront-ui/src/art-direction-contract.css',
+        import.meta.url,
+      ),
+      'utf8',
+    ),
+    readFile(
+      new URL(
+        '../../../packages/storefront-ui/src/art-direction-primary-surfaces.css',
         import.meta.url,
       ),
       'utf8',
@@ -99,6 +112,15 @@ test('storefront polish stays theme-led and app-native across every primary surf
   assert.match(artDirection, /\[data-theme='noir'\][\s\S]*\.home-product-meta/u);
   assert.match(artDirection, /storefront-hero-image-settle/u);
   assert.match(artDirection, /prefers-reduced-motion: reduce/u);
+  assert.match(primaryArtDirection, /\.browse-section-card-scrim/u);
+  assert.match(primaryArtDirection, /\.browse-search-product-title/u);
+  assert.match(primaryArtDirection, /\.section-product-title/u);
+  assert.match(primaryArtDirection, /\.product-detail-summary h1/u);
+  assert.match(primaryArtDirection, /\.detail-media-stage > img/u);
+  assert.match(primaryArtDirection, /var\(--theme-art-hero-overlay\)/u);
+  assert.match(primaryArtDirection, /var\(--theme-art-media-filter\)/u);
+  assert.match(primaryArtDirection, /var\(--theme-art-heading-weight\)/u);
+  assert.doesNotMatch(primaryArtDirection, /--theme-art-[\w-]+\s*:/u);
   assert.match(
     homeSource,
     /hero-carousel-slide\$\{index === activeIndex \? ' is-active' : ''\}/u,
@@ -106,6 +128,10 @@ test('storefront polish stays theme-led and app-native across every primary surf
   assert.match(homeSource, /className="home-product-meta"/u);
   assert.match(homeSource, /className="home-product-context"/u);
   assert.match(storefrontMain, /@site\/storefront-ui\/art-direction-contract\.css/u);
+  assert.match(
+    storefrontMain,
+    /@site\/storefront-ui\/art-direction-primary-surfaces\.css/u,
+  );
   assert.match(adminMain, /@site\/storefront-ui\/art-direction-contract\.css/u);
 
   assert.match(
