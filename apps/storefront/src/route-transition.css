@@ -2,6 +2,14 @@
   --storefront-route-shift: clamp(8px, 2.4vw, 14px);
 }
 
+.app-shell > .topbar {
+  view-transition-name: storefront-top-chrome;
+}
+
+.storefront-bottom-chrome {
+  view-transition-name: storefront-bottom-chrome;
+}
+
 .storefront-route-view {
   min-width: 0;
   view-transition-name: storefront-route;
@@ -29,8 +37,30 @@ html[data-storefront-view-transition='active'][data-storefront-transition]
 
 html[data-storefront-view-transition='active']::view-transition-old(root),
 html[data-storefront-view-transition='active']::view-transition-new(root),
+html[data-storefront-view-transition='active']::view-transition-group(storefront-top-chrome),
+html[data-storefront-view-transition='active']::view-transition-group(storefront-bottom-chrome),
 html[data-storefront-view-transition='active']::view-transition-group(storefront-route) {
   animation: none;
+}
+
+html[data-storefront-view-transition='active']::view-transition-old(
+  storefront-top-chrome
+),
+html[data-storefront-view-transition='active']::view-transition-old(
+  storefront-bottom-chrome
+) {
+  animation: none;
+  opacity: 0;
+}
+
+html[data-storefront-view-transition='active']::view-transition-new(
+  storefront-top-chrome
+),
+html[data-storefront-view-transition='active']::view-transition-new(
+  storefront-bottom-chrome
+) {
+  animation: none;
+  opacity: 1;
 }
 
 html[data-storefront-view-transition='active']::view-transition-old(storefront-route),
@@ -39,29 +69,29 @@ html[data-storefront-view-transition='active']::view-transition-new(storefront-r
 }
 
 html[data-storefront-view-transition='active'][data-storefront-transition='push']::view-transition-old(
-    storefront-route
-  ) {
+  storefront-route
+) {
   animation: storefront-native-push-old var(--app-motion-base, 220ms)
     var(--app-ease-out, cubic-bezier(0.22, 1, 0.36, 1)) both;
 }
 
 html[data-storefront-view-transition='active'][data-storefront-transition='push']::view-transition-new(
-    storefront-route
-  ) {
+  storefront-route
+) {
   animation: storefront-native-push-new var(--app-motion-base, 220ms)
     var(--app-ease-out, cubic-bezier(0.22, 1, 0.36, 1)) both;
 }
 
 html[data-storefront-view-transition='active'][data-storefront-transition='pop']::view-transition-old(
-    storefront-route
-  ) {
+  storefront-route
+) {
   animation: storefront-native-pop-old var(--app-motion-base, 220ms)
     var(--app-ease-out, cubic-bezier(0.22, 1, 0.36, 1)) both;
 }
 
 html[data-storefront-view-transition='active'][data-storefront-transition='pop']::view-transition-new(
-    storefront-route
-  ) {
+  storefront-route
+) {
   animation: storefront-native-pop-new var(--app-motion-base, 220ms)
     var(--app-ease-out, cubic-bezier(0.22, 1, 0.36, 1)) both;
 }
@@ -158,7 +188,13 @@ html[data-storefront-view-transition='active'][data-storefront-transition='pop']
   html[data-storefront-transition] .storefront-route-view,
   html[data-storefront-view-transition='active']::view-transition-old(root),
   html[data-storefront-view-transition='active']::view-transition-new(root),
+  html[data-storefront-view-transition='active']::view-transition-group(storefront-top-chrome),
+  html[data-storefront-view-transition='active']::view-transition-group(storefront-bottom-chrome),
   html[data-storefront-view-transition='active']::view-transition-group(storefront-route),
+  html[data-storefront-view-transition='active']::view-transition-old(storefront-top-chrome),
+  html[data-storefront-view-transition='active']::view-transition-new(storefront-top-chrome),
+  html[data-storefront-view-transition='active']::view-transition-old(storefront-bottom-chrome),
+  html[data-storefront-view-transition='active']::view-transition-new(storefront-bottom-chrome),
   html[data-storefront-view-transition='active']::view-transition-old(storefront-route),
   html[data-storefront-view-transition='active']::view-transition-new(storefront-route) {
     animation: none;
