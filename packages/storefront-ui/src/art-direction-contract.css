@@ -309,7 +309,8 @@
   transform: scale(1);
 }
 
-:is(html, .storefront-theme-root) .hero-carousel-slide.is-active .hero-carousel-media img {
+:is(html, .storefront-theme-root)
+  .hero-carousel-slide.is-active .hero-carousel-media img {
   animation: storefront-hero-image-settle var(--theme-art-hero-settle-duration)
     var(--app-ease-out) both;
 }
@@ -378,7 +379,8 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  :is(html, .storefront-theme-root) .hero-carousel-slide.is-active .hero-carousel-media img {
+  :is(html, .storefront-theme-root)
+    .hero-carousel-slide.is-active .hero-carousel-media img {
     animation: none;
     transform: none;
   }
