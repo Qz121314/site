@@ -374,6 +374,28 @@ body .product-detail-cta-spinner::after {
   }
 }
 
+@media (max-width: 767px) {
+  .startup-shortcut-skeletons {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px 8px;
+    padding: 14px 0 24px;
+    overflow: visible;
+  }
+
+  .startup-shortcut-skeletons > span {
+    width: 100%;
+    min-width: 0;
+    min-height: 80px;
+    gap: 6px;
+  }
+
+  .startup-shortcut-skeletons i {
+    width: 54px;
+    height: 54px;
+  }
+}
+
 @media (min-width: 768px) {
   .startup-feed-skeleton {
     padding-top: calc(var(--app-viewport-top, 0px) + var(--startup-header-height) + 25px);
