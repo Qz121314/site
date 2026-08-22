@@ -17,11 +17,7 @@ function prefersReducedMotion(): boolean {
 }
 
 function waitForRouteCommit(): Promise<void> {
-  return new Promise((resolve) => {
-    window.requestAnimationFrame(() => {
-      window.requestAnimationFrame(() => resolve());
-    });
-  });
+  return new Promise((resolve) => window.setTimeout(resolve, 0));
 }
 
 export function shouldUseStorefrontViewTransition(
@@ -39,7 +35,7 @@ export function runStorefrontViewTransition(
   update: () => void,
 ): boolean {
   const transitionDocument = document as ViewTransitionDocument;
-  const startViewTransition = transitionDocument.startViewTransition?.bind(document);
+  const startViewTransition = transitionDocument.startViewTransition?.bind(transitionDocument);
   if (!startViewTransition || prefersReducedMotion()) {
     update();
     return false;
@@ -53,6 +49,11 @@ export function runStorefrontViewTransition(
     updateRan = true;
     update();
   };
+  const cleanup = () => {
+    if (activeTransitionId !== transitionId) return;
+    delete root.dataset.storefrontViewTransition;
+    delete root.dataset.storefrontViewTransitionMode;
+  };
 
   try {
     root.dataset.storefrontViewTransition = 'active';
@@ -61,17 +62,10 @@ export function runStorefrontViewTransition(
       runUpdate();
       await waitForRouteCommit();
     });
-    void transition.finished.finally(() => {
-      if (activeTransitionId !== transitionId) return;
-      delete root.dataset.storefrontViewTransition;
-      delete root.dataset.storefrontViewTransitionMode;
-    });
+    void transition.finished.then(cleanup, cleanup);
     return true;
   } catch {
-    if (activeTransitionId === transitionId) {
-      delete root.dataset.storefrontViewTransition;
-      delete root.dataset.storefrontViewTransitionMode;
-    }
+    cleanup();
     runUpdate();
     return false;
   }
