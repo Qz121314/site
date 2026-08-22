@@ -19,19 +19,13 @@ test('mobile product gallery is compact and clearly communicates swipe navigatio
   assert.match(source, /className="detail-mobile-media-track"/u);
   assert.match(source, /className="detail-mobile-media-count"/u);
   assert.match(flowCss, /\.detail-mobile-gallery \{[\s\S]*width: 100%;/u);
-  assert.match(
-    flowCss,
-    /\.detail-mobile-gallery \{[\s\S]*margin-inline: 0;/u,
-  );
+  assert.match(flowCss, /\.detail-mobile-gallery \{[\s\S]*margin-inline: 0;/u);
   assert.match(flowCss, /\.detail-mobile-gallery \{[\s\S]*border-radius:/u);
   assert.match(
     flowCss,
     /\.detail-mobile-media-count \{[\s\S]*top: 12px;[\s\S]*min-width: 50px;[\s\S]*font-weight: 760;/u,
   );
-  assert.match(
-    flowCss,
-    /\.detail-mobile-media-count::after \{[\s\S]*content: '↔';/u,
-  );
+  assert.match(flowCss, /\.detail-mobile-media-count::after \{[\s\S]*content: '↔';/u);
 });
 
 test('product CTA displays the live backend label and keeps it visually centered', () => {
