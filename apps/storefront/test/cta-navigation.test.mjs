@@ -20,6 +20,8 @@ test('customer service CTA opens chat before handoff', () => {
   const workerConversion = source('../../worker/src/routes/public-conversion.ts');
 
   assert.ok(!productDetail.includes('resolveCustomerServiceCta'));
+  assert.ok(!productDetail.includes('LoadingHaloOverlay'));
+  assert.ok(!productDetail.includes('ctaNavigating'));
   contains(productDetail, 'ctaPath: cta.path');
   contains(productDetail, 'pushStorefrontLocation(');
   contains(productDetail, '/messages/new/?');
