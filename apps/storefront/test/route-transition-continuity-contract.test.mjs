@@ -17,7 +17,10 @@ test('root tabs stay lightweight while hierarchical routes opt into view transit
     ),
     true,
   );
-  assert.equal(shouldUseStorefrontViewTransition('/sections/demo-section/', '/browse/'), true);
+  assert.equal(
+    shouldUseStorefrontViewTransition('/sections/demo-section/', '/browse/'),
+    true,
+  );
 });
 
 test('hierarchical navigation transitions only route content and keeps persistent chrome stable', async () => {
@@ -41,6 +44,8 @@ test('hierarchical navigation transitions only route content and keeps persisten
   assert.match(presentationSource, /shouldUseStorefrontViewTransition/u);
   assert.match(presentationSource, /runStorefrontViewTransition\(update\)/u);
 
+  assert.match(transitionStyles, /view-transition-name: storefront-top-chrome/u);
+  assert.match(transitionStyles, /view-transition-name: storefront-bottom-chrome/u);
   assert.match(transitionStyles, /view-transition-name: storefront-route/u);
   assert.match(
     transitionStyles,
@@ -48,15 +53,19 @@ test('hierarchical navigation transitions only route content and keeps persisten
   );
   assert.match(
     transitionStyles,
-    /data-storefront-view-transition='active'[\s\S]*::view-transition-new\(root\)[\s\S]*animation: none/u,
+    /::view-transition-old\([\s\S]*storefront-top-chrome[\s\S]*\)[\s\S]*opacity: 0/u,
   );
   assert.match(
     transitionStyles,
-    /data-storefront-transition='push'[\s\S]*::view-transition-new\(storefront-route\)/u,
+    /::view-transition-new\([\s\S]*storefront-bottom-chrome[\s\S]*\)[\s\S]*opacity: 1/u,
   );
   assert.match(
     transitionStyles,
-    /data-storefront-transition='pop'[\s\S]*::view-transition-new\(storefront-route\)/u,
+    /data-storefront-transition='push'[\s\S]*::view-transition-new\([\s\S]*storefront-route/u,
+  );
+  assert.match(
+    transitionStyles,
+    /data-storefront-transition='pop'[\s\S]*::view-transition-new\([\s\S]*storefront-route/u,
   );
   assert.match(
     transitionStyles,
