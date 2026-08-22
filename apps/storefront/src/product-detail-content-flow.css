@@ -1,4 +1,4 @@
-/* Product detail mobile media flow. Page chrome, desktop gallery, copy, and CTA stay in product-detail-ui.css. */
+/* Product detail mobile surface flow. Desktop gallery and persistent CTA ownership stay in product-detail-ui.css. */
 
 .detail-mobile-gallery {
   width: 100%;
@@ -66,33 +66,33 @@
 
 .detail-mobile-media-count {
   position: absolute;
-  top: 12px;
-  right: 12px;
+  top: 10px;
+  right: 10px;
   z-index: 5;
   display: inline-flex;
-  min-width: 50px;
-  min-height: 30px;
+  min-width: 46px;
+  min-height: 28px;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  padding: 5px 10px;
-  border: 1px solid rgb(255 255 255 / 20%);
+  gap: 6px;
+  padding: 4px 9px;
+  border: 1px solid rgb(255 255 255 / 18%);
   border-radius: 999px;
   color: #fff;
-  background: rgb(0 0 0 / 66%);
-  box-shadow: 0 6px 20px rgb(0 0 0 / 22%);
-  font-size: 0.75rem;
-  font-weight: 760;
+  background: rgb(0 0 0 / 62%);
+  box-shadow: 0 4px 14px rgb(0 0 0 / 18%);
+  font-size: 0.7rem;
+  font-weight: 720;
   font-variant-numeric: tabular-nums;
   line-height: 1;
   pointer-events: none;
-  backdrop-filter: blur(12px) saturate(1.08);
+  backdrop-filter: blur(10px) saturate(1.06);
 }
 
 .detail-mobile-media-count::after {
   display: inline-block;
-  font-size: 0.8rem;
-  font-weight: 700;
+  font-size: 0.74rem;
+  font-weight: 680;
   line-height: 1;
   content: '↔';
 }
@@ -116,6 +116,46 @@
   border: 1.5px solid color-mix(in srgb, var(--muted) 36%, transparent);
   border-radius: var(--theme-radius-media, 6px);
   content: '';
+}
+
+@media (max-width: 767px) {
+  .product-detail-page {
+    width: calc(100% + (var(--v2-gutter, 16px) * 2));
+    margin-inline: calc(var(--v2-gutter, 16px) * -1);
+  }
+
+  .detail-mobile-gallery {
+    border-right: 0;
+    border-left: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  .product-detail-info {
+    padding: 18px max(var(--v2-gutter, 16px), env(safe-area-inset-right)) 0
+      max(var(--v2-gutter, 16px), env(safe-area-inset-left));
+  }
+
+  .product-detail-summary h1 {
+    font-size: clamp(1.46rem, 6.4vw, 1.82rem);
+    line-height: 1.08;
+    letter-spacing: -0.038em;
+  }
+
+  .product-detail-address {
+    margin-top: 11px;
+  }
+
+  .product-detail-body {
+    width: 100%;
+    margin-top: 14px;
+    padding-right: max(var(--v2-gutter, 16px), env(safe-area-inset-right));
+    padding-left: max(var(--v2-gutter, 16px), env(safe-area-inset-left));
+  }
+
+  .product-detail-route-action {
+    padding-top: 12px;
+  }
 }
 
 @media (min-width: 768px) {
