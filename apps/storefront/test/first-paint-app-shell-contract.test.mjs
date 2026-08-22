@@ -24,3 +24,17 @@ test('the initial HTML paint presents app-shell chrome before React starts', asy
   assert.match(html, /\.boot-bottom-nav \{[\s\S]*?position: fixed;/u);
   assert.match(html, /@media \(min-width: 980px\)[\s\S]*?\.boot-bottom-nav/u);
 });
+
+test('production smoke separates storefront and admin roots', async () => {
+  const workflowUrl = new URL('../../../.github/workflows/ci.yml', import.meta.url);
+  const source = await readFile(workflowUrl, 'utf8');
+  const has = (fragment) => source.includes(fragment);
+
+  assert.ok(has('assert_storefront_shell()'));
+  assert.ok(has('class="boot-shell"'));
+  assert.ok(has('assert_storefront_shell /tmp/storefront-root.html'));
+  assert.ok(has('assert_storefront_shell /tmp/storefront-not-found.body'));
+  assert.ok(has('/tmp/admin-root.html'));
+  assert.ok(has('<div id="root"></div>'));
+  assert.ok(!has('for path in / /admin/; do'));
+});
