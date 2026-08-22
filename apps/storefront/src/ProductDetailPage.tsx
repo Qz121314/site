@@ -61,6 +61,14 @@ function CtaArrow() {
   );
 }
 
+function MediaArrowIcon({ direction }: { direction: 'previous' | 'next' }) {
+  return (
+    <svg viewBox="0 0 20 20" focusable="false" aria-hidden="true">
+      <path d={direction === 'previous' ? 'm12 5-5 5 5 5' : 'm8 5 5 5-5 5'} />
+    </svg>
+  );
+}
+
 function LocationIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -83,7 +91,6 @@ export function ProductDetailPage({
 }) {
   const [activeMediaId, setActiveMediaId] = useState<string | null>(null);
   const [mobileMediaIndex, setMobileMediaIndex] = useState(0);
-  const [ctaAttempted, setCtaAttempted] = useState(false);
   const mobileMediaTrackRef = useRef<HTMLDivElement | null>(null);
   const query = useQuery({
     queryKey: [
@@ -99,8 +106,11 @@ export function ProductDetailPage({
   const product = query.data?.product ?? null;
   const ctaQuery = useQuery({
     queryKey: ['storefront-product-cta', product?.id],
-    enabled: false,
+    enabled: Boolean(product?.id),
     queryFn: ({ signal }) => loadPublicCta(product!.id, signal),
+    staleTime: Number.POSITIVE_INFINITY,
+    refetchOnWindowFocus: false,
+    retry: false,
   });
   const media = product?.media.filter(hasMediaUrl) ?? [];
   const activeMedia = media.find((item) => item.id === activeMediaId) ?? media[0] ?? null;
@@ -112,7 +122,6 @@ export function ProductDetailPage({
   useEffect(() => {
     setActiveMediaId(null);
     setMobileMediaIndex(0);
-    setCtaAttempted(false);
     mobileMediaTrackRef.current?.scrollTo({ left: 0, behavior: 'auto' });
   }, [product?.id]);
 
@@ -180,6 +189,14 @@ export function ProductDetailPage({
   const body = product.body.trim();
   const bodyIsAddress = Boolean(address && body && body === address);
 
+  function scrollMobileGalleryToIndex(index: number) {
+    const track = mobileMediaTrackRef.current;
+    if (!track || mobileGalleryItems.length <= 1) return;
+    const nextIndex = Math.max(0, Math.min(mobileGalleryItems.length - 1, index));
+    track.scrollTo({ left: nextIndex * track.clientWidth, behavior: 'smooth' });
+    setMobileMediaIndex(nextIndex);
+  }
+
   function handleMobileGalleryScroll() {
     const track = mobileMediaTrackRef.current;
     if (!track || track.clientWidth <= 0 || mobileGalleryItems.length <= 1) return;
@@ -195,9 +212,7 @@ export function ProductDetailPage({
 
   async function handleCtaClick() {
     if (ctaQuery.isFetching) return;
-    setCtaAttempted(true);
-    const result = await ctaQuery.refetch();
-    const cta = result.data;
+    const cta = ctaQuery.data ?? (await ctaQuery.refetch()).data;
     if (!cta) return;
     if (cta.mode === 'customer_service') {
       navigateInternalCta(cta.path);
@@ -207,25 +222,28 @@ export function ProductDetailPage({
   }
 
   const ctaMissing =
-    ctaAttempted && !ctaQuery.isFetching && !ctaQuery.error && ctaQuery.data === null;
-  const ctaFailed = ctaAttempted && !ctaQuery.isFetching && Boolean(ctaQuery.error);
+    !ctaQuery.isFetching && !ctaQuery.error && ctaQuery.data === null;
+  const ctaFailed = !ctaQuery.isFetching && Boolean(ctaQuery.error);
+  const ctaLoading = ctaQuery.isFetching || ctaQuery.isPending;
 
   function renderCtaButton() {
     const stateClass = ctaMissing
       ? ' is-unavailable'
       : ctaFailed
         ? ' is-retry'
-        : ' is-ready';
+        : ctaQuery.data
+          ? ' is-ready'
+          : ' is-loading';
 
     return (
       <button
         className={`cta-button${stateClass}`}
         type="button"
-        aria-busy={ctaQuery.isFetching || undefined}
-        disabled={ctaQuery.isFetching || ctaMissing}
+        aria-busy={ctaLoading || undefined}
+        disabled={ctaLoading || ctaMissing}
         onClick={() => void handleCtaClick()}
       >
-        {ctaQuery.isFetching ? (
+        {ctaLoading ? (
           <>
             <span className="product-detail-cta-spinner" aria-hidden="true" />
             <span className="sr-only">{SYSTEM_UI.loading}</span>
@@ -237,12 +255,12 @@ export function ProductDetailPage({
             <span>{SYSTEM_UI.retry}</span>
             <CtaArrow />
           </>
-        ) : (
+        ) : ctaQuery.data ? (
           <>
-            <span>{SYSTEM_UI.continue}</span>
+            <span className="product-detail-cta-label">{ctaQuery.data.label}</span>
             <CtaArrow />
           </>
-        )}
+        ) : null}
       </button>
     );
   }
@@ -310,9 +328,39 @@ export function ProductDetailPage({
                   activeMediaFallback
                 )}
                 {mobileGalleryItems.length > 1 ? (
-                  <span className="detail-mobile-media-count" aria-hidden="true">
-                    {mobileMediaIndex + 1} / {mobileGalleryItems.length}
-                  </span>
+                  <>
+                    <span className="detail-mobile-media-count" aria-hidden="true">
+                      {mobileMediaIndex + 1} / {mobileGalleryItems.length}
+                    </span>
+                    <div className="detail-mobile-media-navigation">
+                      <button
+                        className="detail-mobile-media-nav is-previous"
+                        type="button"
+                        aria-label="Previous media"
+                        disabled={mobileMediaIndex === 0}
+                        onClick={() => scrollMobileGalleryToIndex(mobileMediaIndex - 1)}
+                      >
+                        <MediaArrowIcon direction="previous" />
+                      </button>
+                      <button
+                        className="detail-mobile-media-nav is-next"
+                        type="button"
+                        aria-label="Next media"
+                        disabled={mobileMediaIndex === mobileGalleryItems.length - 1}
+                        onClick={() => scrollMobileGalleryToIndex(mobileMediaIndex + 1)}
+                      >
+                        <MediaArrowIcon direction="next" />
+                      </button>
+                    </div>
+                    <div className="detail-mobile-media-pagination" aria-hidden="true">
+                      {mobileGalleryItems.map((item, index) => (
+                        <span
+                          className={`detail-mobile-media-dot${index === mobileMediaIndex ? ' is-active' : ''}`}
+                          key={item.id}
+                        />
+                      ))}
+                    </div>
+                  </>
                 ) : null}
               </div>
             </div>
