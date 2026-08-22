@@ -22,11 +22,13 @@
 
 .loading-halo::before {
   inset: 0;
-  border: var(--loading-halo-ring) solid color-mix(in srgb, currentColor 18%, transparent);
+  border: var(--loading-halo-ring) solid
+    color-mix(in srgb, currentColor 18%, transparent);
   border-top-color: currentColor;
   border-right-color: color-mix(in srgb, currentColor 62%, transparent);
   box-shadow:
-    0 0 calc(var(--loading-halo-size) * 0.34) color-mix(in srgb, currentColor 24%, transparent),
+    0 0 calc(var(--loading-halo-size) * 0.34)
+      color-mix(in srgb, currentColor 24%, transparent),
     inset 0 0 calc(var(--loading-halo-size) * 0.22)
       color-mix(in srgb, currentColor 8%, transparent);
   animation: loading-halo-spin 900ms linear infinite;
