@@ -61,12 +61,10 @@ function CtaArrow() {
   );
 }
 
-function MediaArrowIcon({ direction }: { direction: 'previous' | 'next' }) {
+function MediaArrowIcon() {
   return (
     <svg viewBox="0 0 20 20" focusable="false" aria-hidden="true">
-      <path
-        d={direction === 'previous' ? 'm12 5-5 5 5 5' : 'm8 5 5 5-5 5'}
-      />
+      <path d="m8 5 5 5-5 5" />
     </svg>
   );
 }
@@ -190,16 +188,29 @@ export function ProductDetailPage({
   const address = product.address?.trim() ?? '';
   const body = product.body.trim();
   const bodyIsAddress = Boolean(address && body && body === address);
+  const canShowPreviousMedia = mobileMediaIndex > 0;
+  const canShowNextMedia = mobileMediaIndex < mobileGalleryItems.length - 1;
 
   function scrollMobileGalleryToIndex(index: number) {
     const track = mobileMediaTrackRef.current;
     if (!track || mobileGalleryItems.length <= 1) return;
-    const nextIndex = Math.max(
-      0,
-      Math.min(mobileGalleryItems.length - 1, index),
-    );
+    const nextIndex = Math.max(0, Math.min(mobileGalleryItems.length - 1, index));
     track.scrollTo({ left: nextIndex * track.clientWidth, behavior: 'smooth' });
     setMobileMediaIndex(nextIndex);
+  }
+
+  function showPreviousMobileMedia() {
+    scrollMobileGalleryToIndex(mobileMediaIndex - 1);
+  }
+
+  function showNextMobileMedia() {
+    scrollMobileGalleryToIndex(mobileMediaIndex + 1);
+  }
+
+  function mobileMediaDotClass(index: number) {
+    return index === mobileMediaIndex
+      ? 'detail-mobile-media-dot is-active'
+      : 'detail-mobile-media-dot';
   }
 
   function handleMobileGalleryScroll() {
@@ -232,11 +243,12 @@ export function ProductDetailPage({
   const ctaLoading = ctaQuery.isFetching || ctaQuery.isPending;
 
   function renderCtaButton() {
+    const cta = ctaQuery.data;
     const stateClass = ctaMissing
       ? ' is-unavailable'
       : ctaFailed
         ? ' is-retry'
-        : ctaQuery.data
+        : cta
           ? ' is-ready'
           : ' is-loading';
 
@@ -260,11 +272,9 @@ export function ProductDetailPage({
             <span>{SYSTEM_UI.retry}</span>
             <CtaArrow />
           </>
-        ) : ctaQuery.data ? (
+        ) : cta ? (
           <>
-            <span className="product-detail-cta-label">
-              {ctaQuery.data.label}
-            </span>
+            <span className="product-detail-cta-label">{cta.label}</span>
             <CtaArrow />
           </>
         ) : null}
@@ -336,47 +346,35 @@ export function ProductDetailPage({
                 )}
                 {mobileGalleryItems.length > 1 ? (
                   <>
-                    <span
-                      className="detail-mobile-media-count"
-                      aria-hidden="true"
-                    >
+                    <span className="detail-mobile-media-count" aria-hidden="true">
                       {mobileMediaIndex + 1} / {mobileGalleryItems.length}
                     </span>
                     <div className="detail-mobile-media-navigation">
-                      <button
-                        className="detail-mobile-media-nav is-previous"
-                        type="button"
-                        aria-label="Previous media"
-                        disabled={mobileMediaIndex === 0}
-                        onClick={() =>
-                          scrollMobileGalleryToIndex(mobileMediaIndex - 1)
-                        }
-                      >
-                        <MediaArrowIcon direction="previous" />
-                      </button>
-                      <button
-                        className="detail-mobile-media-nav is-next"
-                        type="button"
-                        aria-label="Next media"
-                        disabled={
-                          mobileMediaIndex === mobileGalleryItems.length - 1
-                        }
-                        onClick={() =>
-                          scrollMobileGalleryToIndex(mobileMediaIndex + 1)
-                        }
-                      >
-                        <MediaArrowIcon direction="next" />
-                      </button>
+                      {canShowPreviousMedia ? (
+                        <button
+                          className="detail-mobile-media-nav is-previous"
+                          type="button"
+                          aria-label="Previous media"
+                          onClick={showPreviousMobileMedia}
+                        >
+                          <MediaArrowIcon />
+                        </button>
+                      ) : null}
+                      {canShowNextMedia ? (
+                        <button
+                          className="detail-mobile-media-nav is-next"
+                          type="button"
+                          aria-label="Next media"
+                          onClick={showNextMobileMedia}
+                        >
+                          <MediaArrowIcon />
+                        </button>
+                      ) : null}
                     </div>
-                    <div
-                      className="detail-mobile-media-pagination"
-                      aria-hidden="true"
-                    >
+                    <div className="detail-mobile-media-pagination" aria-hidden="true">
                       {mobileGalleryItems.map((item, index) => (
                         <span
-                          className={`detail-mobile-media-dot${
-                            index === mobileMediaIndex ? ' is-active' : ''
-                          }`}
+                          className={mobileMediaDotClass(index)}
                           key={item.id}
                         />
                       ))}
