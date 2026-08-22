@@ -1,3 +1,4 @@
+import { flushSync } from 'react-dom';
 import { storefrontPresentationMode } from './storefront-presentation-mode';
 
 type StorefrontViewTransition = {
@@ -9,19 +10,21 @@ type ViewTransitionDocument = Document & {
   ) => StorefrontViewTransition;
 };
 
+const MOBILE_ROUTE_TRANSITION_QUERY = '(max-width: 767px)';
+
 function prefersReducedMotion(): boolean {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
 
-function waitForRouteCommit(): Promise<void> {
-  return new Promise((resolve) => window.setTimeout(resolve, 0));
+function usesCompactRouteMotion(): boolean {
+  return window.matchMedia(MOBILE_ROUTE_TRANSITION_QUERY).matches;
 }
 
 export function shouldUseStorefrontViewTransition(
   fromPathname: string,
   toPathname: string,
 ): boolean {
-  if (fromPathname === toPathname) return false;
+  if (fromPathname === toPathname || !usesCompactRouteMotion()) return false;
   const fromMode = storefrontPresentationMode(fromPathname);
   const toMode = storefrontPresentationMode(toPathname);
   return !(fromMode === 'root' && toMode === 'root');
@@ -45,7 +48,7 @@ export function runStorefrontViewTransition(update: () => void): boolean {
   const runUpdate = () => {
     if (updateRan) return;
     updateRan = true;
-    update();
+    flushSync(update);
   };
   const cleanup = () => {
     delete root.dataset.storefrontViewTransition;
@@ -53,10 +56,7 @@ export function runStorefrontViewTransition(update: () => void): boolean {
 
   try {
     root.dataset.storefrontViewTransition = 'active';
-    const transition = startViewTransition(async () => {
-      runUpdate();
-      await waitForRouteCommit();
-    });
+    const transition = startViewTransition(runUpdate);
     void transition.finished.then(cleanup, cleanup);
     return true;
   } catch {
