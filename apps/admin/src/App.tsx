@@ -1,3 +1,4 @@
+import { LoadingHalo } from '@site/storefront-ui/loading';
 import { useCallback, useEffect, useState } from 'react';
 import {
   AdminApiError,
@@ -117,7 +118,7 @@ export function App() {
   if (sessionState.status === 'loading') {
     return (
       <main className="loading-shell" aria-live="polite">
-        <div className="loading-indicator" aria-hidden="true" />
+        <LoadingHalo size="medium" />
         <p>正在检查后台登录状态…</p>
       </main>
     );
