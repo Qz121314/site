@@ -6,13 +6,15 @@ on:
       - ui/product-detail-gallery-affordance
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   probe:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: ui/product-detail-gallery-affordance
       - name: Set up Node.js and pnpm
         run: |
           node --version
@@ -20,9 +22,17 @@ jobs:
           pnpm --version
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
-      - name: Show Prettier output
+      - name: Apply exact Prettier output
         run: |
-          pnpm exec prettier --write apps/storefront/test/product-detail-mobile-gallery-affordance.test.mjs
-          echo '---FORMATTED FILE START---'
-          cat apps/storefront/test/product-detail-mobile-gallery-affordance.test.mjs
-          echo '---FORMATTED FILE END---'
+          set -euo pipefail
+          TARGET=apps/storefront/test/product-detail-mobile-gallery-affordance.test.mjs
+          pnpm exec prettier --write "$TARGET"
+          if git diff --quiet -- "$TARGET"; then
+            echo 'Already formatted.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add "$TARGET"
+          git commit -m 'style(storefront): format gallery contract test'
+          git push origin HEAD:ui/product-detail-gallery-affordance
