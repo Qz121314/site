@@ -11,6 +11,7 @@ import { installSupportExpiryRuntime } from './support-expiry-runtime';
 import { installCachedStorefrontTheme } from './theme-runtime';
 import { installStorefrontViewportRuntime } from './storefront-viewport-runtime';
 import '@site/storefront-ui/styles.css';
+import '@site/storefront-ui/loading.css';
 import './styles.css';
 import './theme-runtime.css';
 import './media-runtime.css';
