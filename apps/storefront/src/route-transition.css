@@ -1,6 +1,8 @@
 :root {
-  --storefront-route-turn-shift: clamp(14px, 5vw, 28px);
-  --storefront-route-turn-angle: 2.4deg;
+  --turn-x: clamp(14px, 5vw, 28px);
+  --back-x: clamp(-28px, -5vw, -14px);
+  --turn-a: -2.4deg;
+  --back-a: 2.4deg;
 }
 
 .storefront-route-view {
@@ -45,9 +47,7 @@ html[data-storefront-transition='pop'] .storefront-route-view {
 
 @keyframes storefront-page-push-enter {
   from {
-    transform: perspective(1200px)
-      translate3d(var(--storefront-route-turn-shift), 0, 0)
-      rotateY(calc(var(--storefront-route-turn-angle) * -1));
+    transform: perspective(1200px) translateX(var(--turn-x)) rotateY(var(--turn-a));
     box-shadow: -12px 0 26px color-mix(in srgb, var(--text) 7%, transparent);
   }
 
@@ -59,9 +59,7 @@ html[data-storefront-transition='pop'] .storefront-route-view {
 
 @keyframes storefront-page-pop-enter {
   from {
-    transform: perspective(1200px)
-      translate3d(calc(var(--storefront-route-turn-shift) * -1), 0, 0)
-      rotateY(var(--storefront-route-turn-angle));
+    transform: perspective(1200px) translateX(var(--back-x)) rotateY(var(--back-a));
     box-shadow: 12px 0 26px color-mix(in srgb, var(--text) 7%, transparent);
   }
 
@@ -73,8 +71,10 @@ html[data-storefront-transition='pop'] .storefront-route-view {
 
 @media (min-width: 768px) {
   :root {
-    --storefront-route-turn-shift: 8px;
-    --storefront-route-turn-angle: 0.6deg;
+    --turn-x: 8px;
+    --back-x: -8px;
+    --turn-a: -0.6deg;
+    --back-a: 0.6deg;
   }
 }
 
