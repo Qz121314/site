@@ -111,11 +111,11 @@ test('Storefront chrome follows the visual viewport and measured shell geometry'
   assert.match(loading, /\.startup-brand-skeleton \{[\s\S]{0,120}height: 34px/u);
   assert.match(
     loading,
-    /\.startup-hero-skeleton \{[\s\S]{0,180}min-height: clamp\(320px, 64vh, 540px\);[\s\S]{0,80}aspect-ratio: 4 \/ 5/u,
+    /\.startup-hero-skeleton \{[\s\S]{0,180}height: clamp\(300px, 52svh, 440px\);[\s\S]{0,80}min-height: 0;[\s\S]{0,80}aspect-ratio: auto/u,
   );
   assert.match(
     hero,
-    /@media \(max-width: 767px\)[\s\S]*\.hero-carousel-slide \{[\s\S]{0,120}min-height: clamp\(320px, 64vh, 540px\);[\s\S]{0,80}aspect-ratio: 4 \/ 5/u,
+    /@media \(max-width: 767px\)[\s\S]*\.hero-carousel-slide \{[\s\S]{0,120}height: clamp\(300px, 52svh, 440px\);[\s\S]{0,80}min-height: 0;[\s\S]{0,80}aspect-ratio: auto/u,
   );
   assert.match(
     loading,
