@@ -196,6 +196,8 @@ export function ProductDetailPage({
 
   async function handleCtaClick() {
     if (ctaQuery.isFetching || ctaNavigating) return;
+    const currentProduct = product;
+    if (!currentProduct) return;
     const cta = ctaQuery.data ?? (await ctaQuery.refetch()).data;
     if (!cta) return;
     if (cta.mode === 'customer_service') {
@@ -207,8 +209,8 @@ export function ProductDetailPage({
         const composeSectionId = target.searchParams.get('sectionId');
         if (
           query.data &&
-          composeProductId === product.id &&
-          composeSectionId === product.sectionId
+          composeProductId === currentProduct.id &&
+          composeSectionId === currentProduct.sectionId
         ) {
           queryClient.setQueryData(
             ['support-compose-product', composeSectionId, composeProductId],
