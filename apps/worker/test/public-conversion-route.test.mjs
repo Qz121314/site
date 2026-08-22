@@ -273,7 +273,10 @@ test('customer-service CTA can return the compose path for SPA navigation', asyn
   assert.equal(compose.pathname, '/messages/new/');
   assert.equal(compose.searchParams.get('productId'), 'product-1');
   assert.equal(compose.searchParams.get('sectionId'), 'section-1');
-  assert.match(compose.searchParams.get('handoffId') ?? '', /^[0-9a-f-]{36}$/u);
+  assert.match(
+    compose.searchParams.get('handoffId') ?? '',
+    /^[0-9a-f-]{36}$/u,
+  );
   assert.equal(response.headers.get('cache-control'), 'no-store, private');
   assert.equal(db.cursor, 0);
   assert.equal(
