@@ -32,6 +32,18 @@ test('storefront polish stays theme-led and app-native across every primary surf
   ] = await Promise.all(
     styleFiles.map((path) => readFile(new URL(path, import.meta.url), 'utf8')),
   );
+  const [artDirection, homeSource, storefrontMain, adminMain] = await Promise.all([
+    readFile(
+      new URL(
+        '../../../packages/storefront-ui/src/art-direction-contract.css',
+        import.meta.url,
+      ),
+      'utf8',
+    ),
+    readFile(new URL('../src/HomeFeed.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../src/main.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../../admin/src/main.tsx', import.meta.url), 'utf8'),
+  ]);
 
   for (const styles of [home, hero, browse, section, faq, messages, pwa]) {
     assert.doesNotMatch(styles, /max\(var\(--theme-radius/u);
@@ -77,6 +89,24 @@ test('storefront polish stays theme-led and app-native across every primary surf
     home,
     /\.app-shell:has\(\.home-feed\)\s*>\s*main\s*\{[\s\S]{0,120}padding-top:\s*0/u,
   );
+
+  assert.match(artDirection, /--theme-art-text-primary/u);
+  assert.match(artDirection, /--theme-art-media-filter/u);
+  assert.match(artDirection, /\[data-font-pack='editorial'\]/u);
+  assert.match(artDirection, /\[data-media-style='editorial'\]/u);
+  assert.match(artDirection, /\[data-motion-style='gentle'\]/u);
+  assert.match(artDirection, /\[data-theme='travel'\][\s\S]*text-align: center/u);
+  assert.match(artDirection, /\[data-theme='noir'\][\s\S]*\.home-product-meta/u);
+  assert.match(artDirection, /storefront-hero-image-settle/u);
+  assert.match(artDirection, /prefers-reduced-motion: reduce/u);
+  assert.match(
+    homeSource,
+    /hero-carousel-slide\$\{index === activeIndex \? ' is-active' : ''\}/u,
+  );
+  assert.match(homeSource, /className="home-product-meta"/u);
+  assert.match(homeSource, /className="home-product-context"/u);
+  assert.match(storefrontMain, /@site\/storefront-ui\/art-direction-contract\.css/u);
+  assert.match(adminMain, /@site\/storefront-ui\/art-direction-contract\.css/u);
 
   assert.match(
     browse,
