@@ -42,6 +42,7 @@ import '@site/storefront-ui/product-detail-theme-contract.css';
 import '@site/storefront-ui/primary-pages-theme-contract.css';
 import '@site/storefront-ui/typography-contract.css';
 import '@site/storefront-ui/art-direction-contract.css';
+import '@site/storefront-ui/art-direction-preview.css';
 
 installAdminUnsavedStateObserver();
 
