@@ -245,6 +245,7 @@ Business Route
 - 手机 Push / Pop 只保留轻微层级位移；`>=768px` 不横向移动整页；`prefers-reduced-motion` 必须保留；
 - Back / Forward 的 scroll restoration、`MobileEdgeNavigation` click capture 与 SPA bubble navigation 的执行顺序不能随意调整。capture 先保存滚动，再由 bubble 导航；不要新增第二个全局 capture 导航 owner；
 - 顶部导航只保留一个品牌 Logo，并在 Header 内水平居中；不要在 Hero、内容区或第二层导航重复 Logo；
+- **产品封面禁止显示分类名、分类徽标或 Tag 标签。** 分类 / 标签属于筛选和检索上下文，不得为了视觉装饰重新叠加到产品图片上；产品卡封面只承载媒体本身和允许的产品标题表现；
 - 前端只硬写系统必要 UI（例如 Back / Retry / Loading）；业务营销文案、产品内容、Hero 内容、主题和站点信息由后台发布数据决定；
 - 不使用页面级补偿 margin / padding 去修 App Shell 问题。发现遮挡、额外滚动、sticky 错位时先检查 viewport owner、measured chrome 和 main geometry。
 
@@ -356,7 +357,7 @@ GET /api/public/storefront/bootstrap
 - 搜索、分类、标签可以组合筛选；
 - 筛选基于当前已经加载的 `SectionSnapshot` 在浏览器本地完成；
 - 用户点击分类、标签、清除筛选时不新增 Workers 请求，也不新增 D1 查询；
-- 产品卡片优先呈现封面、已有分类 / 标签上下文和产品名称，不为了装饰增加前端硬写营销文案。
+- 产品卡片优先呈现封面和产品名称；分类 / 标签用于筛选与搜索，不显示为封面上的徽标、标签或分类文字。
 
 这一结构优先保证手机端快速浏览和触控效率，同时保持低请求数。即使单个分区产品数量较多，前端也优先一次取得当前公开分区所需数据后本地筛选，而不是把每次筛选动作变成后端请求。
 

@@ -258,18 +258,6 @@
   -webkit-line-clamp: 2;
 }
 
-:is(html, .storefront-theme-root) .home-product-context {
-  overflow: hidden;
-  color: var(--theme-art-text-tertiary);
-  font-size: 0.68rem;
-  font-weight: var(--theme-art-context-weight);
-  line-height: 1.3;
-  letter-spacing: var(--theme-art-context-tracking);
-  text-overflow: ellipsis;
-  text-transform: var(--theme-art-context-transform);
-  white-space: nowrap;
-}
-
 :is(html, .storefront-theme-root)[data-theme='travel'] .home-product-meta {
   padding-inline: 6px;
   text-align: center;
@@ -291,12 +279,6 @@
 :is(html, .storefront-theme-root)[data-theme='live'] .home-product-title {
   color: var(--theme-art-on-media-primary);
   text-shadow: 0 2px 16px rgb(0 0 0 / 42%);
-}
-
-:is(html, .storefront-theme-root)[data-theme='noir'] .home-product-context,
-:is(html, .storefront-theme-root)[data-theme='live'] .home-product-context {
-  color: var(--theme-art-on-media-secondary);
-  text-shadow: 0 1px 10px rgb(0 0 0 / 34%);
 }
 
 /* Media art direction: image tone is theme-led, motion is subtle and content-first. */
