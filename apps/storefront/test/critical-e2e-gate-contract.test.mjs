@@ -19,7 +19,9 @@ test('critical CTA browser acceptance runs before merge without production data'
   assert.ok(workflow.includes('--project=mobile-chromium'));
 
   assert.ok(playwright.includes("process.env.E2E_LOCAL_SERVER === '1'"));
-  assert.ok(playwright.includes("command: 'pnpm --filter @site/storefront dev'"));
+  assert.ok(playwright.includes('pnpm --filter @site/storefront build'));
+  assert.ok(playwright.includes('pnpm --filter @site/storefront preview'));
+  assert.equal(playwright.includes('pnpm --filter @site/storefront dev'), false);
 
   assert.ok(acceptance.includes('installLocalCustomerServiceCtaFixture(page)'));
   assert.ok(acceptance.includes("toBe('fetch')"));
