@@ -37,11 +37,23 @@ test('theme center combines settings and mobile preview inside one modal workben
   );
   assert.match(baseCss, /\.theme-preview-modal-backdrop\s*\{[^}]*position: fixed;/s);
   assert.ok(baseCss.includes('max-height: calc(100dvh - 32px);'));
-  assert.ok(workbenchCss.includes('width: min(100%, 1120px);'));
+
+  // The workbench selectors intentionally outrank the generic preview modal rules.
   assert.match(
     workbenchCss,
-    /\.theme-workbench-modal-body\s*\{[^}]*grid-template-columns:\s*minmax\(360px, 440px\) minmax\(360px, 1fr\);/s,
+    /\.theme-preview-modal\.theme-workbench-modal\s*\{[^}]*width:\s*min\(1180px, calc\(100vw - 32px\)\);/s,
+  );
+  assert.match(
+    workbenchCss,
+    /\.theme-preview-modal-header\s*>\s*\.theme-preview-modal-actions\s*\{[^}]*display:\s*flex;[^}]*flex-wrap:\s*nowrap;/s,
+  );
+  assert.match(
+    workbenchCss,
+    /\.theme-preview-modal-body\.theme-workbench-modal-body\s*\{[^}]*grid-template-columns:\s*minmax\(420px, 1\.08fr\) minmax\(340px, 0\.92fr\);[^}]*overflow:\s*hidden;/s,
   );
   assert.match(workbenchCss, /\.theme-settings-pane\s*\{[^}]*overflow: auto;/s);
+  assert.ok(workbenchCss.includes('scrollbar-gutter: stable;'));
+  assert.ok(workbenchCss.includes('@media (max-width: 760px)'));
+  assert.ok(workbenchCss.includes('grid-template-columns: minmax(0, 1fr);'));
   assert.ok(workbenchCss.includes('overscroll-behavior: contain;'));
 });
