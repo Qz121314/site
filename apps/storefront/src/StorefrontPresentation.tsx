@@ -1,12 +1,17 @@
 import { useLayoutEffect } from 'react';
+import { flushSync } from 'react-dom';
 import {
   ensureStorefrontHistoryState,
   recordStorefrontHistoryPush,
+  restoreStorefrontScrollPosition,
   syncStorefrontHistoryFromPopState,
   type StorefrontNavigationDirection,
 } from './storefront-history';
 import { publishStorefrontLocationChange } from './storefront-location-runtime';
-import { STOREFRONT_NAVIGATION_EVENT } from './storefront-navigation-runtime';
+import {
+  STOREFRONT_NAVIGATION_EVENT,
+  STOREFRONT_REPLACE_EVENT,
+} from './storefront-navigation-runtime';
 import {
   storefrontPresentationMode,
   type StorefrontPresentationMode,
@@ -32,7 +37,10 @@ function transitionModeForNavigation(
   return null;
 }
 
-function applyPresentationMode(direction: StorefrontNavigationDirection | null = null) {
+function applyPresentationMode(
+  direction: StorefrontNavigationDirection | null = null,
+  animate = true,
+) {
   const element = document.documentElement;
   const previousMode = element.dataset.storefrontPresentation as
     StorefrontPresentationMode | undefined;
@@ -40,7 +48,7 @@ function applyPresentationMode(direction: StorefrontNavigationDirection | null =
   const nextPathname = window.location.pathname;
   const nextMode = storefrontPresentationMode(nextPathname);
   const transitionMode =
-    previousPathname && previousPathname !== nextPathname
+    animate && previousPathname && previousPathname !== nextPathname
       ? transitionModeForNavigation(previousMode, nextMode, direction)
       : null;
 
@@ -50,8 +58,11 @@ function applyPresentationMode(direction: StorefrontNavigationDirection | null =
   else delete element.dataset.storefrontTransition;
 }
 
-function commitStorefrontLocation(direction: StorefrontNavigationDirection | null) {
-  applyPresentationMode(direction);
+function commitStorefrontLocation(
+  direction: StorefrontNavigationDirection | null,
+  animate = true,
+) {
+  applyPresentationMode(direction, animate);
   publishStorefrontLocationChange();
 }
 
@@ -65,28 +76,38 @@ export function StorefrontPresentation() {
       commitStorefrontLocation('forward');
     }
 
+    function handleStorefrontReplace() {
+      commitStorefrontLocation(null, false);
+    }
+
     function handlePopState(event: PopStateEvent) {
       const previousPathname = document.documentElement.dataset.storefrontPathname;
       const direction = syncStorefrontHistoryFromPopState(event.state);
       const nextPathname = window.location.pathname;
       const update = () => commitStorefrontLocation(direction);
+      const restore = direction
+        ? () => restoreStorefrontScrollPosition(event.state)
+        : undefined;
 
       if (
         direction &&
         previousPathname &&
         shouldUseStorefrontViewTransition(previousPathname, nextPathname)
       ) {
-        runStorefrontViewTransition(update);
+        runStorefrontViewTransition(update, restore);
       } else {
-        update();
+        flushSync(update);
+        restore?.();
       }
     }
 
     window.addEventListener('popstate', handlePopState);
     window.addEventListener(STOREFRONT_NAVIGATION_EVENT, handleStorefrontNavigation);
+    window.addEventListener(STOREFRONT_REPLACE_EVENT, handleStorefrontReplace);
     return () => {
       window.removeEventListener('popstate', handlePopState);
       window.removeEventListener(STOREFRONT_NAVIGATION_EVENT, handleStorefrontNavigation);
+      window.removeEventListener(STOREFRONT_REPLACE_EVENT, handleStorefrontReplace);
       delete document.documentElement.dataset.storefrontPresentation;
       delete document.documentElement.dataset.storefrontPathname;
       delete document.documentElement.dataset.storefrontTransition;

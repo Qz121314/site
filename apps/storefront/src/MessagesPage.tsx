@@ -8,6 +8,7 @@ import {
 import type { StorefrontLinkComponent } from '@site/storefront-ui';
 import { useEffect, useMemo, useState } from 'react';
 import { loadProductSnapshot, type StorefrontBootstrap } from './content';
+import { replaceStorefrontLocation } from './storefront-navigation-runtime';
 import type {
   SupportConversationDetail,
   SupportConversationSummary,
@@ -24,8 +25,6 @@ import {
 import { MessagesWorkspace, type PendingSupportConversation } from './support-ui';
 import './messages-ui.css';
 import './messages-media.css';
-
-const NAVIGATION_EVENT = 'storefront:navigate';
 
 type ComposeContext = { productId: string; sectionId: string; handoffId: string };
 type ConversationQueryCache = {
@@ -370,12 +369,7 @@ export function MessagesPage({
       ['support-conversation', conversation.id],
       { pages: [conversation], pageParams: [null] },
     );
-    window.history.replaceState(
-      null,
-      '',
-      `/messages/${encodeURIComponent(conversation.id)}/`,
-    );
-    window.dispatchEvent(new Event(NAVIGATION_EVENT));
+    replaceStorefrontLocation(`/messages/${encodeURIComponent(conversation.id)}/`);
   }, [compose, composeStartQuery.data, queryClient]);
 
   const sendMutation = useMutation({

@@ -5,6 +5,7 @@ import {
 } from './storefront-view-transition';
 
 export const STOREFRONT_NAVIGATION_EVENT = 'storefront:navigate';
+export const STOREFRONT_REPLACE_EVENT = 'storefront:replace';
 
 type StorefrontLinkClickEvent = {
   altKey: boolean;
@@ -19,6 +20,15 @@ type StorefrontLinkClickEvent = {
 function normalizedLocationKey(url: URL): string {
   const pathname = url.pathname === '/' ? '/' : url.pathname.replace(/\/+$/u, '');
   return `${pathname}${url.search}${url.hash}`;
+}
+
+export function replaceStorefrontLocation(href: string): void {
+  const target = new URL(href, window.location.href);
+  const current = new URL(window.location.href);
+  if (normalizedLocationKey(target) === normalizedLocationKey(current)) return;
+
+  window.history.replaceState(window.history.state, '', href);
+  window.dispatchEvent(new Event(STOREFRONT_REPLACE_EVENT));
 }
 
 export function handleStorefrontLinkClick(

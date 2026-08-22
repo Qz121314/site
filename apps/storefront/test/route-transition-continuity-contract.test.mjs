@@ -17,9 +17,13 @@ test('view transitions stay mobile and hierarchical', async () => {
   assert.match(transitionRuntime, /toMode === 'root'/u);
 });
 
-test('route snapshots stay opaque and atomic', async () => {
+test('route snapshots stay opaque, atomic, and scroll-stable', async () => {
   const transitionRuntime = await readFile(
     new URL('../src/storefront-view-transition.ts', import.meta.url),
+    'utf8',
+  );
+  const historyRuntime = await readFile(
+    new URL('../src/storefront-history.ts', import.meta.url),
     'utf8',
   );
   const navigationRuntime = await readFile(
@@ -41,11 +45,20 @@ test('route snapshots stay opaque and atomic', async () => {
   assert.match(transitionRuntime, /storefrontViewTransition = 'active'/u);
   assert.match(transitionRuntime, /flushSync/u);
   assert.match(transitionRuntime, /flushSync\(update\)/u);
+  assert.match(transitionRuntime, /afterCommit/u);
+  assert.match(transitionRuntime, /afterCommit\?\.\(\)/u);
   assert.doesNotMatch(transitionRuntime, /setTimeout/u);
   assert.doesNotMatch(transitionRuntime, /waitForRouteCommit/u);
 
   assert.match(navigationRuntime, /runStorefrontViewTransition\(navigate\)/u);
-  assert.match(presentationSource, /runStorefrontViewTransition\(update\)/u);
+  assert.match(presentationSource, /runStorefrontViewTransition\(update, restore\)/u);
+  assert.match(presentationSource, /restoreStorefrontScrollPosition/u);
+
+  const immediateRestore = historyRuntime.indexOf('restore();');
+  const scheduledRestore = historyRuntime.indexOf('window.requestAnimationFrame');
+  assert.notEqual(immediateRestore, -1);
+  assert.notEqual(scheduledRestore, -1);
+  assert.ok(immediateRestore < scheduledRestore);
 
   assert.match(transitionStyles, /view-transition-name: storefront-route/u);
   assert.match(transitionStyles, /isolation: isolate/u);

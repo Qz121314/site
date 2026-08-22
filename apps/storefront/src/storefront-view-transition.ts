@@ -30,38 +30,43 @@ export function shouldUseStorefrontViewTransition(
   return !(fromMode === 'root' && toMode === 'root');
 }
 
-export function runStorefrontViewTransition(update: () => void): boolean {
+export function runStorefrontViewTransition(
+  update: () => void,
+  afterCommit?: () => void,
+): boolean {
   const transitionDocument = document as ViewTransitionDocument;
   const startViewTransition =
     transitionDocument.startViewTransition?.bind(transitionDocument);
   const root = document.documentElement;
+  let updateRan = false;
+  const commitUpdate = () => {
+    if (updateRan) return;
+    updateRan = true;
+    flushSync(update);
+    afterCommit?.();
+  };
+
   if (
     !startViewTransition ||
     prefersReducedMotion() ||
     root.dataset.storefrontViewTransition === 'active'
   ) {
-    update();
+    commitUpdate();
     return false;
   }
 
-  let updateRan = false;
-  const runUpdate = () => {
-    if (updateRan) return;
-    updateRan = true;
-    flushSync(update);
-  };
   const cleanup = () => {
     delete root.dataset.storefrontViewTransition;
   };
 
   try {
     root.dataset.storefrontViewTransition = 'active';
-    const transition = startViewTransition(runUpdate);
+    const transition = startViewTransition(commitUpdate);
     void transition.finished.then(cleanup, cleanup);
     return true;
   } catch {
     cleanup();
-    runUpdate();
+    commitUpdate();
     return false;
   }
 }

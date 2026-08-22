@@ -26,7 +26,8 @@ test('CTA compose creates the conversation before any visitor message', () => {
   assert.ok(messages.includes('return siteSupportGateway.startConversation('));
   assert.ok(messages.includes('handoffId: composeContext.handoffId'));
   assert.ok(messages.includes('enabled: !compose'));
-  assert.ok(messages.includes('window.history.replaceState('));
+  assert.ok(messages.includes('replaceStorefrontLocation('));
+  assert.equal(messages.includes('window.history.replaceState('), false);
   assert.equal(messages.includes('setComposeOptimisticMessage'), false);
   assert.equal(contract.includes('clientMessageId: string;\n  message: string;'), false);
 
