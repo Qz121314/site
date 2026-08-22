@@ -52,20 +52,6 @@
   --loading-halo-ring: 2px;
 }
 
-.loading-halo-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 260;
-  display: grid;
-  place-items: center;
-  padding: 24px;
-  background: rgb(0 0 0 / 3%);
-  backdrop-filter: blur(1.25px);
-  -webkit-backdrop-filter: blur(1.25px);
-  cursor: wait;
-  pointer-events: auto;
-}
-
 @keyframes loading-halo-spin {
   to {
     transform: rotate(360deg);
