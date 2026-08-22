@@ -5,6 +5,7 @@ import {
   syncStorefrontHistoryFromPopState,
   type StorefrontNavigationDirection,
 } from './storefront-history';
+import { publishStorefrontLocationChange } from './storefront-location-runtime';
 import { STOREFRONT_NAVIGATION_EVENT } from './storefront-navigation-runtime';
 import {
   storefrontPresentationMode,
@@ -50,6 +51,11 @@ function applyPresentationMode(direction: StorefrontNavigationDirection | null =
   else delete element.dataset.storefrontTransition;
 }
 
+function commitStorefrontLocation(direction: StorefrontNavigationDirection | null) {
+  applyPresentationMode(direction);
+  publishStorefrontLocationChange();
+}
+
 export function StorefrontPresentation() {
   useLayoutEffect(() => {
     ensureStorefrontHistoryState();
@@ -57,14 +63,14 @@ export function StorefrontPresentation() {
 
     function handleStorefrontNavigation() {
       recordStorefrontHistoryPush();
-      applyPresentationMode('forward');
+      commitStorefrontLocation('forward');
     }
 
     function handlePopState(event: PopStateEvent) {
       const previousPathname = document.documentElement.dataset.storefrontPathname;
       const direction = syncStorefrontHistoryFromPopState(event.state);
       const nextPathname = window.location.pathname;
-      const update = () => applyPresentationMode(direction);
+      const update = () => commitStorefrontLocation(direction);
 
       if (
         direction &&
