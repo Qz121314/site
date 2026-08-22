@@ -92,7 +92,8 @@
   white-space: nowrap;
 }
 
-.theme-save-button {
+.theme-save-button,
+.theme-preview-button {
   width: auto;
   min-width: 106px;
   white-space: nowrap;
@@ -650,6 +651,97 @@
 .theme-recipe-grid select:focus {
   border-color: #ff9d79;
   box-shadow: 0 0 0 3px rgb(255 90 31 / 9%);
+}
+
+.theme-preview-modal-backdrop {
+  position: fixed;
+  z-index: 1000;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgb(15 23 42 / 58%);
+  backdrop-filter: blur(4px);
+}
+
+.theme-preview-modal {
+  display: grid;
+  width: min(100%, 520px);
+  max-height: calc(100dvh - 32px);
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / 44%);
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 28px 80px rgb(15 23 42 / 34%);
+}
+
+.theme-preview-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 13px 14px;
+  border-bottom: 1px solid #e1e6ed;
+  background: #fff;
+}
+
+.theme-preview-modal-header > div {
+  display: grid;
+  gap: 2px;
+}
+
+.theme-preview-modal-header small,
+.theme-preview-modal-header span {
+  color: #7a8390;
+  font-size: 0.62rem;
+}
+
+.theme-preview-modal-header strong {
+  color: #20293a;
+  font-size: 0.82rem;
+}
+
+.theme-preview-modal-header button {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 auto;
+  place-items: center;
+  padding: 0;
+  border: 1px solid #dfe4eb;
+  border-radius: 9px;
+  color: #59616d;
+  background: #fff;
+  cursor: pointer;
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.theme-preview-modal-header button:hover {
+  color: #20293a;
+  background: #f5f6f8;
+}
+
+.theme-preview-modal-header button:focus-visible,
+.theme-preview-button:focus-visible {
+  outline: 3px solid rgb(255 90 31 / 14%);
+  outline-offset: 2px;
+}
+
+.theme-preview-modal-body {
+  min-height: 0;
+  overflow: auto;
+  padding: 14px;
+  background: #f2f4f7;
+  overscroll-behavior: contain;
+}
+
+.theme-preview-modal-body .theme-preview-device-shell {
+  min-height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
 }
 
 .theme-preview-device-shell {

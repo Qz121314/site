@@ -12,6 +12,7 @@ import {
   useState,
   type AnchorHTMLAttributes,
 } from 'react';
+import { createPortal } from 'react-dom';
 import { AdminApiError } from './api';
 import { useAdminDirtySource } from './admin-unsaved-state';
 import {
@@ -141,6 +142,7 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
   const [importing, setImporting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   const selectedImported =
     selectedKey === 'custom' ? importedTheme?.overrides.imported : undefined;
@@ -190,6 +192,21 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
     void loadThemeCenter();
   }, [loadThemeCenter]);
 
+  useEffect(() => {
+    if (!previewOpen) return undefined;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') setPreviewOpen(false);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [previewOpen]);
+
   const selectedPreset = useMemo(() => {
     if (selectedKey === 'custom') return importedTheme;
     return presets.find((preset) => preset.key === selectedKey) ?? presets[0] ?? null;
@@ -226,7 +243,9 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
       setAccent('');
       setRecipe(recipeSelection(theme));
       setInstallPrompt(theme.installPrompt);
-      setSuccessMessage('主题已读取并转换。请先检查右侧移动端预览，再点击“保存并应用”。');
+      setSuccessMessage(
+        '主题已读取并转换。请先打开移动端预览检查效果，再点击“保存并应用”。',
+      );
     } catch (error) {
       if (isSessionError(error)) {
         onSessionExpired();
@@ -249,7 +268,9 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
       setAccent('');
       setRecipe(recipeSelection(theme));
       setInstallPrompt(theme.installPrompt);
-      setSuccessMessage('JSON 主题已转换。请检查右侧移动端预览，再点击“保存并应用”。');
+      setSuccessMessage(
+        'JSON 主题已转换。请打开移动端预览检查效果，再点击“保存并应用”。',
+      );
     } catch (error) {
       if (isSessionError(error)) {
         onSessionExpired();
@@ -351,6 +372,14 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
             <small>当前已保存主题</small>
             <strong>{currentTheme?.label ?? '未配置'}</strong>
           </div>
+          <button
+            className="secondary-button theme-preview-button"
+            type="button"
+            disabled={!selectedPreset}
+            onClick={() => setPreviewOpen(true)}
+          >
+            移动端预览
+          </button>
           <button
             className="primary-button theme-save-button"
             type="button"
@@ -542,8 +571,8 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
         <aside className="theme-preview-panel">
           <div className="theme-preview-panel-heading">
             <div className="theme-section-title">
-              <strong>移动端实时预览</strong>
-              <span>模拟用户主要访问场景；品牌色可选，留空使用主题原色。</span>
+              <strong>主题设置</strong>
+              <span>调整品牌色、UI Recipe 和安装提示；预览通过顶部按钮打开。</span>
             </div>
             {themeIsDirty ? (
               <span className="theme-unsaved-pill">待保存</span>
@@ -828,74 +857,6 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
             </div>
           ) : null}
 
-          {selectedPreset ? (
-            <div className="theme-preview-device-shell">
-              <div
-                className="theme-live-preview storefront-ui-preview storefront-theme-root"
-                data-color-scheme={selectedPreset.colorScheme}
-                data-density={recipe.density}
-                data-theme={selectedPreset.key}
-                data-font-pack={recipe.fontPack}
-                data-button-style={recipe.buttonStyle}
-                data-media-style={recipe.mediaStyle}
-                data-motion-style={recipe.motionStyle}
-                data-navigation-style={recipe.navigationStyle}
-                style={storefrontThemeStyle(selectedPreset.tokens, previewAccent)}
-              >
-                <div className="theme-preview-statusbar" aria-hidden="true">
-                  <span>9:41</span>
-                  <span>● ● ▰</span>
-                </div>
-                <StorefrontBrandBar
-                  LinkComponent={PreviewLink}
-                  locationLabel="Explore nearby"
-                  logo="S"
-                  siteName="Service"
-                />
-                <div className="theme-preview-content">
-                  <StorefrontHero
-                    description="Fast browsing designed for one-hand mobile use."
-                    eyebrow={selectedPreset.label}
-                    locationLabel="Nearby"
-                    title="Discover what fits you"
-                  />
-                  <div className="theme-preview-section-row">
-                    <strong>Featured</strong>
-                    <span>See all</span>
-                  </div>
-                  <div className="theme-preview-products product-grid">
-                    {[1, 2].map((item) => (
-                      <StorefrontProductCard
-                        categoryName="Category"
-                        href="#"
-                        key={item}
-                        LinkComponent={PreviewLink}
-                        media={
-                          <div className="theme-preview-media image-fallback">
-                            <span>1:1</span>
-                          </div>
-                        }
-                        modeLabel="Online"
-                        sectionName="Featured"
-                        tags={[{ id: `preview-${item}`, name: 'Popular' }]}
-                        title={item === 1 ? 'Product title' : 'Featured item'}
-                      />
-                    ))}
-                  </div>
-                </div>
-                <StorefrontBottomNavigation
-                  LinkComponent={PreviewLink}
-                  items={[
-                    { href: '/', icon: '⌂', label: 'Home' },
-                    { href: '/#hot', icon: '◆', label: 'Hot' },
-                    { href: '/#latest', icon: '◷', label: 'Latest' },
-                    { href: '/#faq', icon: '?', label: 'FAQ' },
-                  ]}
-                />
-              </div>
-            </div>
-          ) : null}
-
           <div className="theme-ratio-note">
             <strong>外部主题也必须服从本站移动端结构</strong>
             <p>
@@ -906,6 +867,108 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
           </div>
         </aside>
       </div>
+
+      {previewOpen && selectedPreset
+        ? createPortal(
+            <div
+              className="theme-preview-modal-backdrop"
+              onMouseDown={() => setPreviewOpen(false)}
+            >
+              <section
+                className="theme-preview-modal"
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby="theme-preview-modal-title"
+                onMouseDown={(event) => event.stopPropagation()}
+              >
+                <div className="theme-preview-modal-header">
+                  <div>
+                    <small>当前草稿主题 · {selectedPreset.label}</small>
+                    <strong id="theme-preview-modal-title">移动端实时预览</strong>
+                    <span>双列 1:1 · 触控操作 · 底部导航</span>
+                  </div>
+                  <button
+                    type="button"
+                    aria-label="关闭移动端预览"
+                    autoFocus
+                    onClick={() => setPreviewOpen(false)}
+                  >
+                    ×
+                  </button>
+                </div>
+
+                <div className="theme-preview-modal-body">
+                  <div className="theme-preview-device-shell">
+                    <div
+                      className="theme-live-preview storefront-ui-preview storefront-theme-root"
+                      data-color-scheme={selectedPreset.colorScheme}
+                      data-density={recipe.density}
+                      data-theme={selectedPreset.key}
+                      data-font-pack={recipe.fontPack}
+                      data-button-style={recipe.buttonStyle}
+                      data-media-style={recipe.mediaStyle}
+                      data-motion-style={recipe.motionStyle}
+                      data-navigation-style={recipe.navigationStyle}
+                      style={storefrontThemeStyle(selectedPreset.tokens, previewAccent)}
+                    >
+                      <div className="theme-preview-statusbar" aria-hidden="true">
+                        <span>9:41</span>
+                        <span>● ● ▰</span>
+                      </div>
+                      <StorefrontBrandBar
+                        LinkComponent={PreviewLink}
+                        locationLabel="Explore nearby"
+                        logo="S"
+                        siteName="Service"
+                      />
+                      <div className="theme-preview-content">
+                        <StorefrontHero
+                          description="Fast browsing designed for one-hand mobile use."
+                          eyebrow={selectedPreset.label}
+                          locationLabel="Nearby"
+                          title="Discover what fits you"
+                        />
+                        <div className="theme-preview-section-row">
+                          <strong>Featured</strong>
+                          <span>See all</span>
+                        </div>
+                        <div className="theme-preview-products product-grid">
+                          {[1, 2].map((item) => (
+                            <StorefrontProductCard
+                              categoryName="Category"
+                              href="#"
+                              key={item}
+                              LinkComponent={PreviewLink}
+                              media={
+                                <div className="theme-preview-media image-fallback">
+                                  <span>1:1</span>
+                                </div>
+                              }
+                              modeLabel="Online"
+                              sectionName="Featured"
+                              tags={[{ id: `preview-${item}`, name: 'Popular' }]}
+                              title={item === 1 ? 'Product title' : 'Featured item'}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                      <StorefrontBottomNavigation
+                        LinkComponent={PreviewLink}
+                        items={[
+                          { href: '/', icon: '⌂', label: 'Home' },
+                          { href: '/#hot', icon: '◆', label: 'Hot' },
+                          { href: '/#latest', icon: '◷', label: 'Latest' },
+                          { href: '/#faq', icon: '?', label: 'FAQ' },
+                        ]}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </section>
+            </div>,
+            document.body,
+          )
+        : null}
     </section>
   );
 }
