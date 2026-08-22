@@ -26,10 +26,7 @@ test('the initial HTML paint presents app-shell chrome before React starts', asy
 });
 
 test('production smoke separates storefront and admin roots', async () => {
-  const workflowUrl = new URL(
-    '../../../.github/workflows/ci.yml',
-    import.meta.url,
-  );
+  const workflowUrl = new URL('../../../.github/workflows/ci.yml', import.meta.url);
   const source = await readFile(workflowUrl, 'utf8');
   const has = (fragment) => source.includes(fragment);
 
