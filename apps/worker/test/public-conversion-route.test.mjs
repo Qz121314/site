@@ -257,6 +257,34 @@ test('customer-service CTA stays inside Site Messages and does not consume a tar
   }
 });
 
+test('customer-service CTA can return the compose path for SPA navigation', async () => {
+  const db = createConversionDb({
+    group: groupRow({ mode: 'customer_service', activeTargetCount: 2 }),
+  });
+  const response = await app.request(
+    'http://local.test/go/product-1',
+    { headers: { Accept: 'application/json' } },
+    env(db),
+  );
+
+  assert.equal(response.status, 200);
+  const payload = await response.json();
+  const compose = new URL(payload.path, 'http://local.test');
+  assert.equal(compose.pathname, '/messages/new/');
+  assert.equal(compose.searchParams.get('productId'), 'product-1');
+  assert.equal(compose.searchParams.get('sectionId'), 'section-1');
+  assert.match(compose.searchParams.get('handoffId') ?? '', /^[0-9a-f-]{36}$/u);
+  assert.equal(response.headers.get('cache-control'), 'no-store, private');
+  assert.equal(db.cursor, 0);
+  assert.equal(
+    db.statements.filter(
+      ({ kind, sql }) =>
+        kind === 'run' && /INSERT(?: OR IGNORE)? INTO conversion_events/u.test(sql),
+    ).length,
+    1,
+  );
+});
+
 test('invalid or unpublished products never consume the production cursor', async () => {
   const invalidDb = createConversionDb({ targets: [] });
   const invalidResponse = await app.request(
