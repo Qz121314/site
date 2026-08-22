@@ -1,0 +1,78 @@
+/* Theme Center preview adapter.
+   It consumes the shared Art Direction tokens without creating a second recipe. */
+
+.storefront-theme-root .hero-panel h1 {
+  color: var(--theme-art-on-media-primary);
+  font-weight: var(--theme-art-heading-weight);
+  letter-spacing: var(--theme-art-heading-tracking);
+  text-transform: var(--theme-art-heading-transform);
+}
+
+.storefront-theme-root .hero-eyebrow,
+.storefront-theme-root .hero-copy {
+  color: var(--theme-art-on-media-secondary);
+}
+
+.storefront-theme-root .product-card {
+  border-color: var(--theme-card-border, var(--line));
+  background: var(--theme-card-background, var(--surface));
+  box-shadow: var(--theme-art-media-shadow);
+}
+
+.storefront-theme-root .product-card-media {
+  background: var(--theme-media-background, var(--surface-soft));
+}
+
+.storefront-theme-root .product-card-media img {
+  filter: var(--theme-art-media-filter);
+  transition:
+    filter var(--app-motion-base) ease,
+    transform var(--app-motion-base) var(--app-ease-out);
+}
+
+.storefront-theme-root .product-card-heading h3 {
+  color: var(--theme-art-text-primary);
+  font-weight: var(--theme-art-product-title-weight);
+  letter-spacing: var(--theme-art-product-title-tracking);
+}
+
+.storefront-theme-root .product-card-heading > span,
+.storefront-theme-root .product-address {
+  color: var(--theme-art-text-tertiary);
+  font-weight: var(--theme-art-context-weight);
+  letter-spacing: var(--theme-art-context-tracking);
+  text-transform: var(--theme-art-context-transform);
+}
+
+.storefront-theme-root .product-type {
+  color: var(--theme-art-text-secondary);
+}
+
+.storefront-theme-root .tag-row span {
+  color: var(--theme-art-accent);
+}
+
+.storefront-theme-root[data-theme='travel'] .hero-panel {
+  justify-items: center;
+  text-align: center;
+}
+
+.storefront-theme-root[data-theme='travel'] .hero-panel :is(h1, p) {
+  margin-inline: auto;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .storefront-theme-root .product-card:hover {
+    box-shadow: var(--theme-art-media-hover-shadow);
+  }
+
+  .storefront-theme-root .product-card:hover .product-card-media img {
+    transform: scale(var(--theme-art-media-hover-scale));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .storefront-theme-root .product-card-media img {
+    transition: none;
+  }
+}
