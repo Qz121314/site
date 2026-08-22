@@ -7,8 +7,8 @@ function source(path) {
   return readFileSync(new URL(path, import.meta.url), 'utf8');
 }
 
-// Theme editing and mobile preview belong to one viewport workbench instead of a tall inline side panel.
-test('theme center combines settings and mobile preview inside one modal workbench', () => {
+// Theme editing and mobile preview belong to one compact viewport workbench instead of a tall inline side panel.
+test('theme center combines settings and mobile preview inside one compact modal workbench', () => {
   const view = source('../src/ThemeCenterView.tsx');
   const baseCss = source('../src/theme-center.css');
   const workbenchCss = source('../src/theme-center-workbench.css');
@@ -38,10 +38,10 @@ test('theme center combines settings and mobile preview inside one modal workben
   assert.match(baseCss, /\.theme-preview-modal-backdrop\s*\{[^}]*position: fixed;/s);
   assert.ok(baseCss.includes('max-height: calc(100dvh - 32px);'));
 
-  // The workbench selectors intentionally outrank the generic preview modal rules.
+  // The workbench stays materially smaller than the viewport on desktop and outranks generic preview rules.
   assert.match(
     workbenchCss,
-    /\.theme-preview-modal\.theme-workbench-modal\s*\{[^}]*width:\s*min\(1180px, calc\(100vw - 32px\)\);/s,
+    /\.theme-preview-modal\.theme-workbench-modal\s*\{[^}]*width:\s*min\(980px, calc\(100vw - 48px\)\);[^}]*height:\s*min\(720px, calc\(100dvh - 48px\)\);/s,
   );
   assert.match(
     workbenchCss,
@@ -49,9 +49,11 @@ test('theme center combines settings and mobile preview inside one modal workben
   );
   assert.match(
     workbenchCss,
-    /\.theme-preview-modal-body\.theme-workbench-modal-body\s*\{[^}]*grid-template-columns:\s*minmax\(420px, 1\.08fr\) minmax\(340px, 0\.92fr\);[^}]*overflow:\s*hidden;/s,
+    /\.theme-preview-modal-body\.theme-workbench-modal-body\s*\{[^}]*grid-template-columns:\s*minmax\(380px, 1\.06fr\) minmax\(300px, 0\.94fr\);[^}]*overflow:\s*hidden;/s,
   );
   assert.match(workbenchCss, /\.theme-settings-pane\s*\{[^}]*overflow: auto;/s);
+  assert.ok(workbenchCss.includes('width: min(100%, 270px);'));
+  assert.ok(workbenchCss.includes('height: 500px;'));
   assert.ok(workbenchCss.includes('scrollbar-gutter: stable;'));
   assert.ok(workbenchCss.includes('@media (max-width: 760px)'));
   assert.ok(workbenchCss.includes('grid-template-columns: minmax(0, 1fr);'));
