@@ -371,7 +371,9 @@ export function MessagesPage({
   const displayedConversation = activeConversation;
   const conversations = conversationsQuery.data ?? [];
   const composeUnavailable =
-    composeProductQuery.isError || composeHandoffQuery.isError || composeStartQuery.isError;
+    composeProductQuery.isError ||
+    composeHandoffQuery.isError ||
+    composeStartQuery.isError;
   const composeConnecting = Boolean(
     compose &&
       composeContext &&
@@ -382,6 +384,9 @@ export function MessagesPage({
   );
   const composeConnectionError = Boolean(
     compose && composeUnavailable && !composeConnecting,
+  );
+  const conversationLoading = Boolean(
+    activeConversationRef && conversationQuery.isLoading,
   );
   const workspaceSupportAvailable = compose
     ? composeUnavailable
@@ -716,9 +721,7 @@ export function MessagesPage({
             : undefined
         }
         loadingEarlier={conversationQuery.isFetchingNextPage}
-        loadingConversation={
-          Boolean(activeConversationRef && conversationQuery.isLoading) || composeConnecting
-        }
+        loadingConversation={conversationLoading || composeConnecting}
         connectionError={composeConnectionError}
         onRetryConnection={
           compose && composeUnavailable ? retryComposeConnection : undefined
