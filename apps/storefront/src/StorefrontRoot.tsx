@@ -32,11 +32,9 @@ import {
 } from './routing';
 import { publishPwaInstallRuntime } from './pwa-install-runtime';
 import { canNavigateStorefrontBack, navigateStorefrontBack } from './storefront-history';
+import { STOREFRONT_LOCATION_EVENT } from './storefront-location-runtime';
 import { primaryNavigationItems } from './storefront-navigation';
-import {
-  handleStorefrontLinkClick,
-  STOREFRONT_NAVIGATION_EVENT,
-} from './storefront-navigation-runtime';
+import { handleStorefrontLinkClick } from './storefront-navigation-runtime';
 import { StorefrontRouteActionHostProvider } from './StorefrontRouteAction';
 import { observeStorefrontShellChrome } from './storefront-viewport-runtime';
 import type { SupportConversationSummary } from './support-contract';
@@ -76,12 +74,8 @@ const MessagesPage = lazy(() =>
 );
 
 function subscribeLocation(callback: () => void) {
-  window.addEventListener('popstate', callback);
-  window.addEventListener(STOREFRONT_NAVIGATION_EVENT, callback);
-  return () => {
-    window.removeEventListener('popstate', callback);
-    window.removeEventListener(STOREFRONT_NAVIGATION_EVENT, callback);
-  };
+  window.addEventListener(STOREFRONT_LOCATION_EVENT, callback);
+  return () => window.removeEventListener(STOREFRONT_LOCATION_EVENT, callback);
 }
 
 function currentLocationKey() {
