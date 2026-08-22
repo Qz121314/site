@@ -1,5 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { StorefrontLinkComponent } from '@site/storefront-ui';
+import { LoadingHalo, LoadingHaloOverlay } from '@site/storefront-ui/loading';
 import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import {
   loadProductSnapshot,
@@ -250,7 +251,7 @@ export function ProductDetailPage({
       >
         {ctaLoading ? (
           <>
-            <span className="product-detail-cta-spinner" aria-hidden="true" />
+            <LoadingHalo size="small" />
             <span className="sr-only">{SYSTEM_UI.loading}</span>
           </>
         ) : ctaMissing ? (
@@ -436,6 +437,7 @@ export function ProductDetailPage({
       <StorefrontRouteAction>
         <div className="product-detail-route-action">{renderCtaButton()}</div>
       </StorefrontRouteAction>
+      {ctaNavigating ? <LoadingHaloOverlay label={SYSTEM_UI.loading} /> : null}
     </>
   );
 }
