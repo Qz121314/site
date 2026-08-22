@@ -18,6 +18,20 @@ function normalizedLocationKey(url: URL): string {
   return `${pathname}${url.search}${url.hash}`;
 }
 
+export function pushStorefrontLocation(href: string): void {
+  const target = new URL(href, window.location.href);
+  const current = new URL(window.location.href);
+  if (target.origin !== current.origin) {
+    window.location.assign(target.href);
+    return;
+  }
+  if (normalizedLocationKey(target) === normalizedLocationKey(current)) return;
+
+  saveCurrentStorefrontScrollPosition();
+  window.history.pushState(null, '', `${target.pathname}${target.search}${target.hash}`);
+  window.dispatchEvent(new Event(STOREFRONT_NAVIGATION_EVENT));
+}
+
 export function replaceStorefrontLocation(href: string): void {
   const target = new URL(href, window.location.href);
   const current = new URL(window.location.href);
@@ -45,12 +59,6 @@ export function handleStorefrontLinkClick(
   }
 
   event.preventDefault();
-  const target = new URL(href, window.location.href);
-  const current = new URL(window.location.href);
-  if (normalizedLocationKey(target) === normalizedLocationKey(current)) return true;
-
-  saveCurrentStorefrontScrollPosition();
-  window.history.pushState(null, '', href);
-  window.dispatchEvent(new Event(STOREFRONT_NAVIGATION_EVENT));
+  pushStorefrontLocation(href);
   return true;
 }
