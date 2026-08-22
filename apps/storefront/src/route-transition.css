@@ -1,6 +1,10 @@
-.storefront-route-view {
+:root {
   --storefront-route-shift: clamp(8px, 2.4vw, 14px);
+}
+
+.storefront-route-view {
   min-width: 0;
+  view-transition-name: storefront-route;
 }
 
 html[data-storefront-transition='tab'] .storefront-route-view {
@@ -18,9 +22,53 @@ html[data-storefront-transition='pop'] .storefront-route-view {
     var(--app-ease-out, cubic-bezier(0.22, 1, 0.36, 1)) both;
 }
 
+html[data-storefront-view-transition='active'][data-storefront-transition]
+  .storefront-route-view {
+  animation: none;
+}
+
+html[data-storefront-view-transition='active']::view-transition-old(root),
+html[data-storefront-view-transition='active']::view-transition-new(root),
+html[data-storefront-view-transition='active']::view-transition-group(storefront-route) {
+  animation: none;
+}
+
+html[data-storefront-view-transition='active']::view-transition-old(storefront-route),
+html[data-storefront-view-transition='active']::view-transition-new(storefront-route) {
+  mix-blend-mode: normal;
+}
+
+html[data-storefront-view-transition='active'][data-storefront-transition='push']::view-transition-old(
+    storefront-route
+  ) {
+  animation: storefront-native-push-old var(--app-motion-base, 220ms)
+    var(--app-ease-out, cubic-bezier(0.22, 1, 0.36, 1)) both;
+}
+
+html[data-storefront-view-transition='active'][data-storefront-transition='push']::view-transition-new(
+    storefront-route
+  ) {
+  animation: storefront-native-push-new var(--app-motion-base, 220ms)
+    var(--app-ease-out, cubic-bezier(0.22, 1, 0.36, 1)) both;
+}
+
+html[data-storefront-view-transition='active'][data-storefront-transition='pop']::view-transition-old(
+    storefront-route
+  ) {
+  animation: storefront-native-pop-old var(--app-motion-base, 220ms)
+    var(--app-ease-out, cubic-bezier(0.22, 1, 0.36, 1)) both;
+}
+
+html[data-storefront-view-transition='active'][data-storefront-transition='pop']::view-transition-new(
+    storefront-route
+  ) {
+  animation: storefront-native-pop-new var(--app-motion-base, 220ms)
+    var(--app-ease-out, cubic-bezier(0.22, 1, 0.36, 1)) both;
+}
+
 @keyframes storefront-tab-enter {
   from {
-    opacity: 0.985;
+    opacity: 0.94;
   }
 
   to {
@@ -30,7 +78,7 @@ html[data-storefront-transition='pop'] .storefront-route-view {
 
 @keyframes storefront-push-enter {
   from {
-    opacity: 0.985;
+    opacity: 0.96;
     transform: translate3d(var(--storefront-route-shift), 0, 0);
   }
 
@@ -42,7 +90,55 @@ html[data-storefront-transition='pop'] .storefront-route-view {
 
 @keyframes storefront-pop-enter {
   from {
-    opacity: 0.985;
+    opacity: 0.96;
+    transform: translate3d(calc(var(--storefront-route-shift) * -1), 0, 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes storefront-native-push-old {
+  from {
+    opacity: 1;
+    transform: none;
+  }
+
+  to {
+    opacity: 0.9;
+    transform: translate3d(calc(var(--storefront-route-shift) * -0.35), 0, 0);
+  }
+}
+
+@keyframes storefront-native-push-new {
+  from {
+    opacity: 0.96;
+    transform: translate3d(var(--storefront-route-shift), 0, 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes storefront-native-pop-old {
+  from {
+    opacity: 1;
+    transform: none;
+  }
+
+  to {
+    opacity: 0.9;
+    transform: translate3d(calc(var(--storefront-route-shift) * 0.35), 0, 0);
+  }
+}
+
+@keyframes storefront-native-pop-new {
+  from {
+    opacity: 0.96;
     transform: translate3d(calc(var(--storefront-route-shift) * -1), 0, 0);
   }
 
@@ -53,13 +149,18 @@ html[data-storefront-transition='pop'] .storefront-route-view {
 }
 
 @media (min-width: 768px) {
-  .storefront-route-view {
+  :root {
     --storefront-route-shift: 0px;
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  html[data-storefront-transition] .storefront-route-view {
+  html[data-storefront-transition] .storefront-route-view,
+  html[data-storefront-view-transition='active']::view-transition-old(root),
+  html[data-storefront-view-transition='active']::view-transition-new(root),
+  html[data-storefront-view-transition='active']::view-transition-group(storefront-route),
+  html[data-storefront-view-transition='active']::view-transition-old(storefront-route),
+  html[data-storefront-view-transition='active']::view-transition-new(storefront-route) {
     animation: none;
   }
 }
