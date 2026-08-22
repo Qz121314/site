@@ -48,6 +48,16 @@ function parseSearchSnapshot(
   return value as DerivedSearchSnapshot;
 }
 
+export function findSearchProduct(
+  products: PublicProductSummary[],
+  productRef: string,
+): PublicProductSummary | null {
+  const exactId = products.find((product) => product.id === productRef);
+  if (exactId) return exactId;
+  const slugMatches = products.filter((product) => product.slug === productRef);
+  return slugMatches.length === 1 ? (slugMatches[0] ?? null) : null;
+}
+
 export async function loadBrowseSearchProducts(
   bootstrap: StorefrontBootstrap,
   signal?: AbortSignal,

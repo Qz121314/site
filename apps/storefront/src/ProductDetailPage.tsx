@@ -5,6 +5,8 @@ import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 
 import {
   loadProductSnapshot,
   PublicContentError,
+  type ProductSnapshot,
+  type PublicProductSummary,
   type StorefrontBootstrap,
 } from './content';
 import { loadPublicCta } from './cta';
@@ -43,6 +45,45 @@ function isMissingProduct(error: unknown): boolean {
   );
 }
 
+function findKnownProductSummary(
+  bootstrap: StorefrontBootstrap,
+  sectionRef: string,
+  productRef: string,
+): PublicProductSummary | null {
+  const section = bootstrap.home.allSections.find(
+    (item) => item.id === sectionRef || item.slug === sectionRef,
+  );
+  if (!section) return null;
+  const products = Object.values(bootstrap.productSummaries).filter(
+    (product) => product.sectionId === section.id,
+  );
+  const exactId = products.find((product) => product.id === productRef);
+  if (exactId) return exactId;
+  const slugMatches = products.filter((product) => product.slug === productRef);
+  return slugMatches.length === 1 ? (slugMatches[0] ?? null) : null;
+}
+
+function placeholderProductSnapshot(
+  bootstrap: StorefrontBootstrap,
+  product: PublicProductSummary,
+): ProductSnapshot {
+  const contentVersion =
+    bootstrap.pointer.schemaVersion === 2
+      ? (bootstrap.pointer.sections[product.sectionId]?.contentVersion ??
+        bootstrap.pointer.contentVersion)
+      : bootstrap.pointer.contentVersion;
+  return {
+    schemaVersion: bootstrap.pointer.schemaVersion,
+    contentVersion,
+    publishedAt: product.publishedAt ?? bootstrap.pointer.publishedAt,
+    product: {
+      ...product,
+      body: '',
+      media: [],
+    },
+  };
+}
+
 function handleInternalBack(event: ReactMouseEvent<HTMLAnchorElement>) {
   if (!canNavigateStorefrontBack()) return;
   event.preventDefault();
@@ -76,14 +117,15 @@ export function ProductDetailPage({
 }: {
   bootstrap: StorefrontBootstrap;
   productRef: string;
-  sectionRef: string | null;
+  sectionRef: string;
   LinkComponent?: StorefrontLinkComponent;
 }) {
   const queryClient = useQueryClient();
   const [activeMediaId, setActiveMediaId] = useState<string | null>(null);
   const [mobileMediaIndex, setMobileMediaIndex] = useState(0);
   const mobileMediaTrackRef = useRef<HTMLDivElement | null>(null);
-  const query = useQuery({
+  const knownProduct = findKnownProductSummary(bootstrap, sectionRef, productRef);
+  const query = useQuery<ProductSnapshot>({
     queryKey: [
       'storefront-product',
       bootstrap.pointer.contentVersion,
@@ -92,6 +134,9 @@ export function ProductDetailPage({
     ],
     queryFn: ({ signal }) =>
       loadProductSnapshot(bootstrap, productRef, signal, sectionRef),
+    ...(knownProduct
+      ? { placeholderData: placeholderProductSnapshot(bootstrap, knownProduct) }
+      : {}),
     staleTime: Number.POSITIVE_INFINITY,
   });
   const product = query.data?.product ?? null;

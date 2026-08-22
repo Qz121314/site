@@ -1498,24 +1498,10 @@ export async function loadProductSnapshot(
       section = sectionSnapshot.section;
     }
   } else {
-    // Legacy product URLs do not carry section context. Product slugs are only
-    // unique within a section, so a partial in-memory summary set cannot prove
-    // global uniqueness safely. Preserve the authoritative all-section lookup.
-    const snapshots = await Promise.all(
-      bootstrap.home.allSections.map((item) =>
-        loadSectionSnapshot(bootstrap, item.id, signal),
-      ),
+    throw new PublicContentError(
+      'INVALID_PRODUCT',
+      'Section context is required for published service details.',
     );
-    matchedProduct = findPublishedProduct(
-      snapshots.flatMap((snapshot) => snapshot.products),
-      productRef,
-    );
-    if (matchedProduct) {
-      section =
-        bootstrap.home.allSections.find(
-          (item) => item.id === matchedProduct?.sectionId,
-        ) ?? null;
-    }
   }
 
   if (!matchedProduct || !section) {

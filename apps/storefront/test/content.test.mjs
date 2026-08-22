@@ -542,7 +542,7 @@ test('schema-v2 bootstrap falls back to eager section composition when a derived
   }
 });
 
-test('section, product and FAQ reads follow their own module versions and cache sections on demand', async () => {
+test('section, canonical product and FAQ reads follow module versions without unrelated section fan-out', async () => {
   const requests = [];
   const restore = installModularFetch(requests);
   try {
@@ -592,15 +592,13 @@ test('section, product and FAQ reads follow their own module versions and cache 
     );
     assert.equal('cta' in product.product, false);
 
-    const globallyUniqueSlug = await loadProductSnapshot(bootstrap, 'product-a-slug');
-    assert.equal(globallyUniqueSlug.product.id, 'product-a');
     assert.equal(
       requests.filter(
         (request) =>
           request.url.includes(SECTION_B_VERSION) &&
           request.url.endsWith('/section.json'),
       ).length,
-      1,
+      0,
     );
 
     const faq = await loadFaqSnapshot(bootstrap);
