@@ -1,0 +1,112 @@
+name: Apply Storefront Request Dedup
+
+on:
+  pull_request:
+    paths:
+      - 'apps/storefront/**'
+      - '.github/workflows/apply-storefront-request-dedup.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+      - run: npm install --global pnpm@11.19.0
+      - run: pnpm install --frozen-lockfile
+      - name: Apply request deduplication changes
+        run: |
+          set -euo pipefail
+          node <<'NODE'
+          const fs = require('fs');
+
+          function replaceExact(path, before, after) {
+            const source = fs.readFileSync(path, 'utf8');
+            if (!source.includes(before)) {
+              throw new Error(`Expected source block not found in ${path}`);
+            }
+            fs.writeFileSync(path, source.replace(before, after));
+          }
+
+          replaceExact(
+            'apps/storefront/src/HomeFeed.tsx',
+            `    queryKey: [\n      'storefront-home-recommendation',\n      bootstrap.pointer.contentVersion,\n      section.id,\n    ],`,
+            `    queryKey: ['storefront-section', bootstrap.pointer.contentVersion, section.id],`,
+          );
+
+          replaceExact(
+            'apps/storefront/src/SectionPage.tsx',
+            `  const query = useQuery({\n    queryKey: ['storefront-section', bootstrap.pointer.contentVersion, sectionRef],`,
+            `  const canonicalSectionId =\n    bootstrap.home.allSections.find(\n      (section) => section.id === sectionRef || section.slug === sectionRef,\n    )?.id ?? sectionRef;\n  const query = useQuery({\n    queryKey: [\n      'storefront-section',\n      bootstrap.pointer.contentVersion,\n      canonicalSectionId,\n    ],`,
+          );
+
+          replaceExact(
+            'apps/storefront/src/StorefrontRoot.tsx',
+            `  const supportRuntimeEnabled =\n    route.type === 'messages' ||\n    route.type === 'message-compose' ||\n    route.type === 'message' ||\n    Boolean(peekSupportVisitorIdentity());\n  const bootstrapQuery = useQuery({`,
+            `  const supportRuntimeEnabled =\n    route.type === 'messages' ||\n    route.type === 'message-compose' ||\n    route.type === 'message' ||\n    Boolean(peekSupportVisitorIdentity());\n  const supportConversationListEnabled =\n    supportRuntimeEnabled && route.type !== 'message-compose';\n  const bootstrapQuery = useQuery({`,
+          );
+          replaceExact(
+            'apps/storefront/src/StorefrontRoot.tsx',
+            `    enabled: supportRuntimeEnabled,\n    staleTime: Number.POSITIVE_INFINITY,`,
+            `    enabled: supportConversationListEnabled,\n    staleTime: Number.POSITIVE_INFINITY,`,
+          );
+
+          replaceExact(
+            'apps/storefront/src/support-gateway.ts',
+            `let connectionCache: {\n  expiresAt: number;\n  connections: PublicSupportConnection[];\n} | null = null;`,
+            `let connectionCache: {\n  expiresAt: number;\n  connections: PublicSupportConnection[];\n} | null = null;\nlet connectionRequest: Promise<PublicSupportConnection[]> | null = null;`,
+          );
+          replaceExact(
+            'apps/storefront/src/support-gateway.ts',
+            `export async function loadPublicSupportConnections(\n  signal?: AbortSignal,\n): Promise<PublicSupportConnection[]> {\n  const now = Date.now();\n  if (connectionCache && connectionCache.expiresAt > now)\n    return connectionCache.connections;\n  const value = await siteRequestJson(\n    '/api/public/storefront/support/connections',\n    signal,\n  );\n  const envelope = isRecord(value) ? value : null;\n  if (!envelope || !Array.isArray(envelope.connections)) {\n    throw new SupportApiError(\n      500,\n      'INVALID_SUPPORT_CONFIG',\n      'Messages returned invalid configuration.',\n    );\n  }\n  const connections = envelope.connections.map(parseConnection);\n  connectionCache = { expiresAt: now + CONNECTION_CACHE_MS, connections };\n  return connections;\n}`,
+            `export async function loadPublicSupportConnections(\n  signal?: AbortSignal,\n): Promise<PublicSupportConnection[]> {\n  const now = Date.now();\n  if (connectionCache && connectionCache.expiresAt > now)\n    return connectionCache.connections;\n  if (signal?.aborted) {\n    throw new DOMException('The operation was aborted.', 'AbortError');\n  }\n  if (!connectionRequest) {\n    // Root, realtime and Messages can mount together. Keep one tiny config read\n    // alive across those observers so a cold route transition reaches the Worker once.\n    connectionRequest = (async () => {\n      const value = await siteRequestJson(\n        '/api/public/storefront/support/connections',\n      );\n      const envelope = isRecord(value) ? value : null;\n      if (!envelope || !Array.isArray(envelope.connections)) {\n        throw new SupportApiError(\n          500,\n          'INVALID_SUPPORT_CONFIG',\n          'Messages returned invalid configuration.',\n        );\n      }\n      const connections = envelope.connections.map(parseConnection);\n      connectionCache = {\n        expiresAt: Date.now() + CONNECTION_CACHE_MS,\n        connections,\n      };\n      return connections;\n    })().finally(() => {\n      connectionRequest = null;\n    });\n  }\n  return connectionRequest;\n}`,
+          );
+
+          replaceExact(
+            'apps/storefront/src/ProductDetailPage.tsx',
+            `    staleTime: Number.POSITIVE_INFINITY,\n  });\n  const product = query.data?.product ?? null;`,
+            `    staleTime: Number.POSITIVE_INFINITY,\n    gcTime: 30 * 60_000,\n  });\n  const product = query.data?.product ?? null;`,
+          );
+          replaceExact(
+            'apps/storefront/src/ProductDetailPage.tsx',
+            `        queryClient.setQueryData(\n          ['support-compose-product', currentProduct.sectionId, currentProduct.id],\n          query.data,\n        );`,
+            `        queryClient.setQueryData(\n          [\n            'storefront-product',\n            bootstrap.pointer.contentVersion,\n            currentProduct.sectionId,\n            currentProduct.id,\n          ],\n          query.data,\n        );`,
+          );
+
+          replaceExact(
+            'apps/storefront/src/MessagesPage.tsx',
+            `  const composeProductQuery = useQuery({\n    queryKey: [\n      'support-compose-product',\n      composeContext?.sectionId,\n      composeContext?.productId,\n    ],`,
+            `  const composeProductQuery = useQuery({\n    queryKey: [\n      'storefront-product',\n      bootstrap.pointer.contentVersion,\n      composeContext?.sectionId,\n      composeContext?.productId,\n    ],`,
+          );
+          replaceExact(
+            'apps/storefront/src/MessagesPage.tsx',
+            `    staleTime: 30_000,\n    retry: 1,\n  });\n  const composeHandoffQuery`,
+            `    staleTime: Number.POSITIVE_INFINITY,\n    gcTime: 30 * 60_000,\n    retry: 1,\n  });\n  const composeHandoffQuery`,
+          );
+
+          fs.writeFileSync(
+            'apps/storefront/test/storefront-request-dedup-contract.test.mjs',
+            `import assert from 'node:assert/strict';\nimport { readFileSync } from 'node:fs';\nimport { URL } from 'node:url';\nimport test from 'node:test';\n\nfunction source(path) {\n  return readFileSync(new URL(path, import.meta.url), 'utf8');\n}\n\ntest('home and section surfaces share the canonical section query cache', () => {\n  const home = source('../src/HomeFeed.tsx');\n  const section = source('../src/SectionPage.tsx');\n\n  assert.equal(home.includes('storefront-home-recommendation'), false);\n  assert.ok(home.includes(\"['storefront-section', bootstrap.pointer.contentVersion, section.id]\"));\n  assert.ok(section.includes('const canonicalSectionId ='));\n  assert.ok(section.includes('canonicalSectionId,'));\n});\n\ntest('support connection discovery deduplicates cold concurrent consumers and compose skips list fetch', () => {\n  const gateway = source('../src/support-gateway.ts');\n  const root = source('../src/StorefrontRoot.tsx');\n\n  assert.ok(gateway.includes('let connectionRequest: Promise<PublicSupportConnection[]> | null = null;'));\n  assert.ok(gateway.includes('if (!connectionRequest)'));\n  assert.ok(gateway.includes(\"'/api/public/storefront/support/connections'\"));\n  assert.ok(gateway.includes('return connectionRequest;'));\n  assert.ok(root.includes(\"supportRuntimeEnabled && route.type !== 'message-compose'\"));\n  assert.ok(root.includes('enabled: supportConversationListEnabled'));\n});\n\ntest('product detail and compose reuse one versioned immutable product cache', () => {\n  const detail = source('../src/ProductDetailPage.tsx');\n  const messages = source('../src/MessagesPage.tsx');\n\n  assert.equal(detail.includes('support-compose-product'), false);\n  assert.equal(messages.includes('support-compose-product'), false);\n  assert.ok(detail.includes(\"'storefront-product',\"));\n  assert.ok(detail.includes('bootstrap.pointer.contentVersion,'));\n  assert.ok(messages.includes(\"'storefront-product',\"));\n  assert.ok(messages.includes('bootstrap.pointer.contentVersion,'));\n  assert.ok(detail.includes('gcTime: 30 * 60_000'));\n  assert.ok(messages.includes('gcTime: 30 * 60_000'));\n});\n`,
+          );
+          NODE
+
+          pnpm exec prettier --write \
+            apps/storefront/src/HomeFeed.tsx \
+            apps/storefront/src/SectionPage.tsx \
+            apps/storefront/src/StorefrontRoot.tsx \
+            apps/storefront/src/support-gateway.ts \
+            apps/storefront/src/ProductDetailPage.tsx \
+            apps/storefront/src/MessagesPage.tsx \
+            apps/storefront/test/storefront-request-dedup-contract.test.mjs
+
+          git rm .github/workflows/apply-storefront-request-dedup.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add apps/storefront
+          git commit -m 'perf: deduplicate storefront route requests'
+          git push origin HEAD:${{ github.event.pull_request.head.ref }}
