@@ -89,7 +89,11 @@ publicConversionRoutes.get('/:code', async (context) => {
       sectionId: product.sectionId,
       handoffId,
     });
-    return context.redirect(`/messages/new/?${query.toString()}`, 302);
+    const path = `/messages/new/?${query.toString()}`;
+    if (context.req.header('accept')?.includes('application/json')) {
+      return context.json({ path });
+    }
+    return context.redirect(path, 302);
   }
 
   // Link conversions are the only /go path that consumes Site round-robin.

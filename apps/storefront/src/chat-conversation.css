@@ -13,8 +13,8 @@
 .messages-push-toggle {
   position: absolute;
   z-index: 8;
-  top: 11px;
-  right: max(11px, env(safe-area-inset-right));
+  top: 9px;
+  right: max(10px, env(safe-area-inset-right));
   display: grid;
   width: 40px;
   height: 40px;
@@ -56,18 +56,24 @@
 
 .messages-push-toggle:disabled {
   cursor: default;
-  opacity: 0.78;
+  opacity: 0.72;
 }
 
 .chat-page {
-  background: color-mix(in srgb, var(--surface-soft) 96%, var(--surface));
+  background: color-mix(in srgb, var(--surface-soft) 98%, var(--surface));
 }
 
 .chat-header {
-  min-height: 62px;
-  padding-block: 7px;
-  background: color-mix(in srgb, var(--surface) 94%, transparent);
-  box-shadow: 0 1px 0 color-mix(in srgb, var(--line) 72%, transparent);
+  min-height: 58px;
+  padding-block: 6px;
+  background: color-mix(in srgb, var(--surface) 97%, transparent);
+  box-shadow: 0 1px 0 color-mix(in srgb, var(--line) 68%, transparent);
+}
+
+.chat-header-avatar {
+  width: 40px;
+  height: 40px;
+  box-shadow: none;
 }
 
 .chat-header-copy strong {
@@ -77,15 +83,30 @@
 }
 
 .chat-product-card {
-  width: min(760px, calc(100% - 20px));
-  margin: 9px auto 0;
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--surface) 97%, transparent);
-  box-shadow: 0 1px 6px color-mix(in srgb, var(--text) 4%, transparent);
+  width: 100%;
+  margin: 0;
+  padding: 8px 12px;
+  border: 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 62%, transparent);
+  border-radius: 0;
+  background: color-mix(in srgb, var(--surface) 98%, transparent);
+  box-shadow: none;
 }
 
 .chat-product-media {
-  border-radius: 9px;
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+}
+
+.chat-product-copy strong {
+  font-size: 0.8rem;
+  font-weight: 680;
+}
+
+.chat-product-chevron {
+  opacity: 0.62;
+  font-size: 1rem;
 }
 
 .chat-timeline {
@@ -98,8 +119,8 @@
 .chat-load-earlier {
   border: 0;
   border-radius: 999px;
-  background: color-mix(in srgb, var(--surface) 90%, transparent);
-  box-shadow: 0 1px 6px color-mix(in srgb, var(--text) 4%, transparent);
+  background: color-mix(in srgb, var(--surface) 92%, transparent);
+  box-shadow: none;
   backdrop-filter: blur(14px);
 }
 
@@ -113,11 +134,11 @@
 
 .chat-day-separator span {
   padding: 4px 9px;
-  border: 1px solid color-mix(in srgb, var(--line) 60%, transparent);
+  border: 1px solid color-mix(in srgb, var(--line) 56%, transparent);
   border-radius: 999px;
   color: var(--muted);
-  background: color-mix(in srgb, var(--surface) 86%, transparent);
-  box-shadow: 0 1px 5px color-mix(in srgb, var(--text) 3%, transparent);
+  background: color-mix(in srgb, var(--surface) 90%, transparent);
+  box-shadow: none;
   backdrop-filter: blur(16px) saturate(1.08);
   font-size: 0.59rem;
   font-weight: 700;
@@ -144,7 +165,7 @@
   padding: 7px 9px 5px;
   border: 0;
   border-radius: 14px;
-  box-shadow: 0 1px 4px color-mix(in srgb, var(--text) 4%, transparent);
+  box-shadow: none;
 }
 
 .chat-message-row.is-agent .chat-message-bubble {
@@ -154,7 +175,7 @@
 
 .chat-message-row.is-customer .chat-message-bubble {
   border-radius: 14px 14px 5px 14px;
-  background: color-mix(in srgb, var(--brand) 12%, var(--surface));
+  background: color-mix(in srgb, var(--brand) 10%, var(--surface));
 }
 
 .chat-message-row.is-agent:not(.is-group-start) .chat-message-bubble {
@@ -204,7 +225,7 @@
   align-items: center;
   gap: 3px;
   margin-top: 2px;
-  opacity: 0.78;
+  opacity: 0.72;
   font-size: 0.54rem;
   font-variant-numeric: tabular-nums;
   line-height: 1;
@@ -219,8 +240,8 @@
   gap: 6px;
   padding: 8px max(8px, env(safe-area-inset-right))
     calc(8px + env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
-  border-top-color: color-mix(in srgb, var(--line) 62%, transparent);
-  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  border-top-color: color-mix(in srgb, var(--line) 58%, transparent);
+  background: color-mix(in srgb, var(--surface) 97%, transparent);
   backdrop-filter: blur(22px) saturate(1.06);
 }
 
@@ -231,27 +252,36 @@
   font-size: 1.15rem;
 }
 
+.chat-composer > button:disabled {
+  opacity: 0.3;
+}
+
 .chat-composer textarea,
 .chat-input-placeholder {
   box-sizing: border-box;
   min-height: 40px;
   padding: 10px 14px;
-  border-color: color-mix(in srgb, var(--line) 72%, transparent);
+  border-color: color-mix(in srgb, var(--line) 68%, transparent);
   border-radius: 20px;
   background: var(--surface);
   font-size: 0.82rem;
 }
 
 .chat-composer textarea:focus {
-  border-color: color-mix(in srgb, var(--brand) 26%, var(--line));
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 6%, transparent);
+  border-color: color-mix(in srgb, var(--brand) 24%, var(--line));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 5%, transparent);
 }
 
 .chat-composer .chat-send-button {
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  box-shadow: 0 5px 14px color-mix(in srgb, var(--brand) 20%, transparent);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--brand) 16%, transparent);
+}
+
+.chat-composer .chat-send-button:disabled {
+  opacity: 0.24;
+  box-shadow: none;
 }
 
 @media (max-width: 767px) {
@@ -276,22 +306,32 @@
   }
 
   .chat-header {
-    padding-inline: 7px 10px;
+    min-height: 58px;
+    grid-template-columns: 42px 40px minmax(0, 1fr);
+    gap: 8px;
+    padding-inline: 6px 10px;
+  }
+
+  .chat-back-button {
+    width: 42px;
+    height: 42px;
   }
 
   .messages-push-host.has-push-toggle .chat-header {
-    padding-right: 56px;
+    padding-right: 54px;
   }
 
   .messages-push-toggle {
     top: calc(10px + env(safe-area-inset-top));
-    right: max(9px, env(safe-area-inset-right));
+    right: max(8px, env(safe-area-inset-right));
   }
 
   .chat-product-card {
-    width: calc(100% - 16px);
-    margin-top: 7px;
-    border-radius: 10px;
+    width: 100%;
+    margin: 0;
+    padding-right: max(12px, env(safe-area-inset-right));
+    padding-left: max(12px, env(safe-area-inset-left));
+    border-radius: 0;
   }
 
   .chat-timeline {
@@ -351,6 +391,13 @@
 }
 
 @media (min-width: 768px) {
+  .chat-product-card {
+    width: min(760px, calc(100% - 24px));
+    margin: 8px auto 0;
+    border: 1px solid color-mix(in srgb, var(--line) 58%, transparent);
+    border-radius: 10px;
+  }
+
   .chat-timeline {
     padding-block: 18px 20px;
   }
@@ -373,7 +420,7 @@
   display: inline-flex;
   align-items: center;
   gap: 3px;
-  box-shadow: 0 1px 5px color-mix(in srgb, var(--text) 4%, transparent);
+  box-shadow: none;
 }
 
 .chat-agent-typing i {

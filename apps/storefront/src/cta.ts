@@ -44,3 +44,28 @@ export async function loadPublicCta(
     path: value.path,
   };
 }
+
+export async function resolveCustomerServiceCta(
+  path: string,
+  signal?: AbortSignal,
+): Promise<string> {
+  if (!path.startsWith('/go/')) throw new Error('CTA_INVALID');
+  const response = await fetch(path, {
+    method: 'GET',
+    cache: 'no-store',
+    credentials: 'same-origin',
+    headers: { Accept: 'application/json' },
+    ...(signal ? { signal } : {}),
+  });
+  if (!response.ok) throw new Error('CTA_UNAVAILABLE');
+
+  const value = (await response.json()) as unknown;
+  if (
+    !isRecord(value) ||
+    typeof value.path !== 'string' ||
+    !value.path.startsWith('/messages/new/')
+  ) {
+    throw new Error('CTA_INVALID');
+  }
+  return value.path;
+}
