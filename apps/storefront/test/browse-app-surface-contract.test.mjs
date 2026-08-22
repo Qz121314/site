@@ -3,13 +3,17 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
 const source = readFileSync(new URL('../src/BrowsePage.tsx', import.meta.url), 'utf8');
-const css = readFileSync(new URL('../src/browse-ui.css', import.meta.url), 'utf8');
+const css = readFileSync(
+  new URL('../src/browse-app-surface.css', import.meta.url),
+  'utf8',
+);
 
 test('browse keeps the first mobile viewport dense without adding initial product requests', () => {
   assert.match(source, /enabled: normalizedSearch\.length > 0/u);
   assert.match(source, /filteredSections\.map\(\(section, index\) =>/u);
   assert.match(source, /fetchPriority=\{index === 0 \? 'high' : 'auto'\}/u);
   assert.match(source, /loading=\{index === 0 \? 'eager' : 'lazy'\}/u);
+  assert.match(source, /import '\.\/browse-app-surface\.css';/u);
 
   assert.match(
     css,
