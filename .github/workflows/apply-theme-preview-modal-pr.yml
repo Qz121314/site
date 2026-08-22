@@ -103,7 +103,7 @@ jobs:
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git rm .github/workflows/apply-theme-preview-modal.yml
           git rm .github/workflows/apply-theme-preview-modal-pr.yml
-          git rm .github/scripts/apply-theme-preview-modal.py
+          git rm -f .github/scripts/apply-theme-preview-modal.py
           git add apps/admin/src/ThemeCenterView.tsx apps/admin/src/theme-center.css apps/admin/test/theme-center-preview-modal-contract.test.mjs
           git commit -m "fix(admin): open theme mobile preview in modal"
           git push origin HEAD:fix/admin-theme-preview-modal
