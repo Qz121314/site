@@ -63,8 +63,9 @@
 
 .startup-hero-skeleton {
   width: auto;
-  min-height: clamp(320px, 64vh, 540px);
-  aspect-ratio: 4 / 5;
+  height: clamp(300px, 52svh, 440px);
+  min-height: 0;
+  aspect-ratio: auto;
   margin-inline: calc(var(--app-gutter, 16px) * -1);
   border-radius: 0;
 }
