@@ -121,7 +121,8 @@ test('storefront polish stays theme-led and app-native across every primary surf
     /hero-carousel-slide\$\{index === activeIndex \? ' is-active' : ''\}/u,
   );
   assert.match(homeSource, /className="home-product-meta"/u);
-  assert.match(homeSource, /className="home-product-context"/u);
+  assert.doesNotMatch(homeSource, /className="home-product-context"/u);
+  assert.doesNotMatch(homeSource, /home-product-context[^\n]*product\.category\.name/u);
   assert.match(storefrontMain, /@site\/storefront-ui\/art-direction-contract\.css/u);
   assert.match(
     storefrontMain,
