@@ -7,6 +7,7 @@ function source(path) {
   return readFileSync(new URL(path, import.meta.url), 'utf8');
 }
 
+// Keep mobile preview geometry outside the Theme Center settings flow.
 test('theme center mobile preview is a viewport modal instead of an inline device', () => {
   const view = source('../src/ThemeCenterView.tsx');
   const css = source('../src/theme-center.css');
