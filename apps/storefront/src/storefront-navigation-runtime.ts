@@ -1,4 +1,8 @@
-import { saveCurrentStorefrontScrollPosition } from './storefront-history';
+import {
+  canNavigateStorefrontBack,
+  navigateStorefrontBack,
+  saveCurrentStorefrontScrollPosition,
+} from './storefront-history';
 
 export const STOREFRONT_NAVIGATION_EVENT = 'storefront:navigate';
 export const STOREFRONT_REPLACE_EVENT = 'storefront:replace';
@@ -16,6 +20,10 @@ type StorefrontLinkClickEvent = {
 function normalizedLocationKey(url: URL): string {
   const pathname = url.pathname === '/' ? '/' : url.pathname.replace(/\/+$/u, '');
   return `${pathname}${url.search}${url.hash}`;
+}
+
+function isMessagesThread(pathname: string): boolean {
+  return /^\/messages\/[^/]+\/?$/u.test(pathname);
 }
 
 export function pushStorefrontLocation(href: string): void {
@@ -59,6 +67,17 @@ export function handleStorefrontLinkClick(
   }
 
   event.preventDefault();
+  const target = new URL(href, window.location.href);
+  const current = new URL(window.location.href);
+  if (
+    target.pathname === '/messages/' &&
+    isMessagesThread(current.pathname) &&
+    canNavigateStorefrontBack()
+  ) {
+    navigateStorefrontBack();
+    return true;
+  }
+
   pushStorefrontLocation(href);
   return true;
 }
