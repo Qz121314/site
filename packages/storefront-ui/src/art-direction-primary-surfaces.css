@@ -1,0 +1,158 @@
+/* Shared Art Direction adapters for Browse, Section, and Product Detail.
+   Page CSS owns structure; Theme Center owns visual emphasis and media tone.
+   This adapter consumes shared tokens and defines no independent theme recipe. */
+
+:is(html, .storefront-theme-root) .browse-section-card {
+  box-shadow: var(--theme-art-media-shadow);
+}
+
+:is(html, .storefront-theme-root) .browse-section-card-media img {
+  filter: var(--theme-art-media-filter);
+  transform: scale(1);
+}
+
+:is(html, .storefront-theme-root) .browse-section-card-scrim {
+  background: var(--theme-art-hero-overlay);
+}
+
+:is(html, .storefront-theme-root) .browse-section-card-content strong {
+  color: var(--theme-art-on-media-primary);
+  font-weight: var(--theme-art-heading-weight);
+  letter-spacing: var(--theme-art-heading-tracking);
+  text-transform: var(--theme-art-heading-transform);
+}
+
+:is(html, .storefront-theme-root) .browse-section-card-content p {
+  color: var(--theme-art-on-media-secondary);
+  font-weight: var(--theme-art-context-weight);
+  letter-spacing: var(--theme-art-context-tracking);
+}
+
+:is(html, .storefront-theme-root) .browse-section-card-arrow {
+  color: var(--theme-art-on-media-primary);
+}
+
+:is(html, .storefront-theme-root) .browse-search-product-cover,
+:is(html, .storefront-theme-root) .section-product-cover {
+  box-shadow: var(--theme-art-media-shadow);
+}
+
+:is(html, .storefront-theme-root) .browse-search-product-cover::before,
+:is(html, .storefront-theme-root) .section-product-cover::before {
+  background: var(--theme-art-hero-overlay);
+}
+
+:is(html, .storefront-theme-root) .browse-search-product-cover > img,
+:is(html, .storefront-theme-root) .section-product-cover > img {
+  filter: var(--theme-art-media-filter);
+  transform: scale(1);
+}
+
+:is(html, .storefront-theme-root) .browse-search-product-title,
+:is(html, .storefront-theme-root) .section-product-title {
+  color: var(--theme-art-on-media-primary);
+  font-weight: var(--theme-art-product-title-weight);
+  letter-spacing: var(--theme-art-product-title-tracking);
+}
+
+:is(html, .storefront-theme-root) .section-catalog-header h1 {
+  color: var(--theme-art-text-primary);
+  font-weight: var(--theme-art-heading-weight);
+  letter-spacing: var(--theme-art-heading-tracking);
+  text-transform: var(--theme-art-heading-transform);
+}
+
+:is(html, .storefront-theme-root) .section-catalog-back-label {
+  color: var(--theme-art-text-secondary);
+  font-weight: var(--theme-art-context-weight);
+  letter-spacing: var(--theme-art-context-tracking);
+}
+
+:is(html, .storefront-theme-root) .section-category-filter button,
+:is(html, .storefront-theme-root) .section-tag-filter button {
+  color: var(--theme-art-text-tertiary);
+  font-weight: var(--theme-art-context-weight);
+  letter-spacing: var(--theme-art-context-tracking);
+}
+
+:is(html, .storefront-theme-root) .section-category-filter button.is-active,
+:is(html, .storefront-theme-root) .section-tag-filter button.is-active {
+  color: var(--theme-art-text-primary);
+}
+
+:is(html, .storefront-theme-root) .product-detail-summary h1 {
+  color: var(--theme-art-text-primary);
+  font-weight: var(--theme-art-heading-weight);
+  letter-spacing: var(--theme-art-heading-tracking);
+  text-transform: var(--theme-art-heading-transform);
+}
+
+:is(html, .storefront-theme-root) .product-detail-address {
+  color: var(--theme-art-text-secondary);
+  font-weight: var(--theme-art-context-weight);
+  letter-spacing: var(--theme-art-context-tracking);
+}
+
+:is(html, .storefront-theme-root) .product-detail-body .markdown-content {
+  color: var(--theme-art-text-secondary);
+}
+
+:is(html, .storefront-theme-root)
+  .product-detail-body
+  .markdown-content
+  :is(h2, h3, h4, h5, h6) {
+  color: var(--theme-art-text-primary);
+  font-weight: var(--theme-art-product-title-weight);
+  letter-spacing: var(--theme-art-product-title-tracking);
+}
+
+:is(html, .storefront-theme-root) .detail-media-stage > img,
+:is(html, .storefront-theme-root) .detail-media-thumbnail > img,
+:is(html, .storefront-theme-root) .product-detail-body .markdown-content img {
+  filter: var(--theme-art-media-filter);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  :is(html, .storefront-theme-root) .browse-section-card:hover {
+    box-shadow: var(--theme-art-media-hover-shadow);
+  }
+
+  :is(html, .storefront-theme-root)
+    .browse-section-card:hover
+    .browse-section-card-media
+    img {
+    transform: scale(var(--theme-art-media-hover-scale));
+  }
+
+  :is(html, .storefront-theme-root)
+    .browse-search-product-card:hover
+    .browse-search-product-cover {
+    box-shadow: var(--theme-art-media-hover-shadow);
+  }
+
+  :is(html, .storefront-theme-root)
+    .browse-search-product-card:hover
+    .browse-search-product-cover
+    > img {
+    transform: scale(var(--theme-art-media-hover-scale));
+  }
+
+  :is(html, .storefront-theme-root) .section-product-card:hover .section-product-cover {
+    box-shadow: var(--theme-art-media-hover-shadow);
+  }
+
+  :is(html, .storefront-theme-root)
+    .section-product-card:hover
+    .section-product-cover
+    > img {
+    transform: scale(var(--theme-art-media-hover-scale));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :is(html, .storefront-theme-root) .browse-section-card-media img,
+  :is(html, .storefront-theme-root) .browse-search-product-cover > img,
+  :is(html, .storefront-theme-root) .section-product-cover > img {
+    transition: none;
+  }
+}
