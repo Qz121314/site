@@ -77,7 +77,7 @@ export function StorefrontPresentation() {
     }
 
     function handleStorefrontReplace() {
-      flushSync(() => commitStorefrontLocation(null, false));
+      commitStorefrontLocation(null, false);
     }
 
     function handlePopState(event: PopStateEvent) {
