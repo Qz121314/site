@@ -267,9 +267,6 @@ function HomeProductTile({
       </span>
       <span className="home-product-meta">
         <strong className="home-product-title">{product.title}</strong>
-        {product.category.name ? (
-          <span className="home-product-context">{product.category.name}</span>
-        ) : null}
       </span>
     </HomeLink>
   );
