@@ -25,6 +25,7 @@ type ScrollPosition = {
 let memorySessionId = '';
 let memoryMaxIndex = 0;
 let lastKnownIndex = 0;
+let traversalPending = false;
 
 function recordState(value: unknown): Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -113,14 +114,21 @@ function activeSessionId(): string {
   return readSessionStorage(SESSION_STORAGE_KEY) || memorySessionId;
 }
 
-function restoreScrollPosition(position: ScrollPosition): void {
-  const restore = () => {
-    window.scrollTo({ left: position.x, top: position.y, behavior: 'auto' });
-    const surface = currentScrollSurface();
-    if (surface) {
-      surface.scrollTo({ left: 0, top: position.surfaceY, behavior: 'auto' });
-    }
-  };
+function applyScrollPosition(position: ScrollPosition): void {
+  window.scrollTo({ left: position.x, top: position.y, behavior: 'auto' });
+  const surface = currentScrollSurface();
+  if (surface) {
+    surface.scrollTo({ left: 0, top: position.surfaceY, behavior: 'auto' });
+  }
+}
+
+export function restoreStorefrontScrollPosition(state: unknown): void {
+  const position = readScrollPosition(state);
+  const restore = () => applyScrollPosition(position);
+
+  // The first restore is synchronous so View Transition captures the destination
+  // at its saved position. Follow-up restores only absorb late layout/media shifts.
+  restore();
   window.requestAnimationFrame(() => {
     restore();
     window.requestAnimationFrame(restore);
@@ -259,6 +267,7 @@ export function recordStorefrontHistoryPush(): void {
 export function syncStorefrontHistoryFromPopState(
   state: unknown,
 ): StorefrontNavigationDirection | null {
+  traversalPending = false;
   const sessionId = activeSessionId();
   if (!sessionId) return null;
   const next = readStateMeta(state, sessionId);
@@ -267,15 +276,16 @@ export function syncStorefrontHistoryFromPopState(
     next.index < lastKnownIndex ? 'back' : 'forward';
   markNavigationDirection(direction);
   lastKnownIndex = next.index;
-  restoreScrollPosition(readScrollPosition(state));
   return direction;
 }
 
 export function canNavigateStorefrontBack(): boolean {
+  if (traversalPending) return false;
   return ensureStorefrontHistoryState().index > 0;
 }
 
 export function canNavigateStorefrontForward(): boolean {
+  if (traversalPending) return false;
   const current = ensureStorefrontHistoryState();
   return current.index < current.maxIndex;
 }
@@ -284,6 +294,7 @@ export function navigateStorefrontBack(): boolean {
   if (!canNavigateStorefrontBack()) return false;
   saveCurrentStorefrontScrollPosition();
   markNavigationDirection('back');
+  traversalPending = true;
   window.history.back();
   return true;
 }
@@ -292,6 +303,7 @@ export function navigateStorefrontForward(): boolean {
   if (!canNavigateStorefrontForward()) return false;
   saveCurrentStorefrontScrollPosition();
   markNavigationDirection('forward');
+  traversalPending = true;
   window.history.forward();
   return true;
 }
