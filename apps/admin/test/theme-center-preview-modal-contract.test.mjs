@@ -32,7 +32,7 @@ test('theme center combines settings and mobile preview inside one modal workben
       view.indexOf('className="theme-preview-modal-backdrop"'),
   );
   assert.ok(
-    view.indexOf('className="theme-preview-device-shell"') >
+    view.indexOf('<MobileThemePreview') >
       view.indexOf('className="theme-preview-modal-backdrop"'),
   );
   assert.match(baseCss, /\.theme-preview-modal-backdrop\s*\{[^}]*position: fixed;/s);
