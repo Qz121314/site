@@ -174,7 +174,7 @@ export function BrowsePage({
           <div
             className={`browse-section-list${filteredSections.length === 1 ? ' is-single' : ''}`}
           >
-            {filteredSections.map((section) => (
+            {filteredSections.map((section, index) => (
               <LinkComponent
                 className={`browse-section-card${section.browseBackgroundUrl ? ' has-image' : ' is-fallback'}`}
                 href={sectionHref(section)}
@@ -190,7 +190,8 @@ export function BrowsePage({
                           aria-hidden="true"
                         />
                       }
-                      loading="lazy"
+                      fetchPriority={index === 0 ? 'high' : 'auto'}
+                      loading={index === 0 ? 'eager' : 'lazy'}
                       src={section.browseBackgroundUrl}
                     />
                   ) : null}
