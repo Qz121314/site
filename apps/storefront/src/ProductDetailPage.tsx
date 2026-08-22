@@ -138,6 +138,7 @@ export function ProductDetailPage({
       ? { placeholderData: placeholderProductSnapshot(bootstrap, knownProduct) }
       : {}),
     staleTime: Number.POSITIVE_INFINITY,
+    gcTime: 30 * 60_000,
   });
   const product = query.data?.product ?? null;
   const ctaQuery = useQuery({
@@ -247,7 +248,12 @@ export function ProductDetailPage({
     if (cta.mode === 'customer_service') {
       if (query.data) {
         queryClient.setQueryData(
-          ['support-compose-product', currentProduct.sectionId, currentProduct.id],
+          [
+            'storefront-product',
+            bootstrap.pointer.contentVersion,
+            currentProduct.sectionId,
+            currentProduct.id,
+          ],
           query.data,
         );
       }

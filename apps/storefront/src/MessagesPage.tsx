@@ -280,7 +280,8 @@ export function MessagesPage({
   const composeContext = compose ? readComposeContext() : null;
   const composeProductQuery = useQuery({
     queryKey: [
-      'support-compose-product',
+      'storefront-product',
+      bootstrap.pointer.contentVersion,
       composeContext?.sectionId,
       composeContext?.productId,
     ],
@@ -294,7 +295,8 @@ export function MessagesPage({
         composeContext.sectionId,
       );
     },
-    staleTime: 30_000,
+    staleTime: Number.POSITIVE_INFINITY,
+    gcTime: 30 * 60_000,
     retry: 1,
   });
   const composeHandoffQuery = useQuery({

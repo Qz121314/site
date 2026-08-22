@@ -284,11 +284,7 @@ function HomeRecommendationRail({
   section: PublicSection;
 }) {
   const query = useQuery({
-    queryKey: [
-      'storefront-home-recommendation',
-      bootstrap.pointer.contentVersion,
-      section.id,
-    ],
+    queryKey: ['storefront-section', bootstrap.pointer.contentVersion, section.id],
     queryFn: ({ signal }) => loadSectionSnapshot(bootstrap, section.id, signal),
     enabled: initialProducts.length === 0,
     staleTime: Number.POSITIVE_INFINITY,

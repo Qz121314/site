@@ -99,8 +99,16 @@ export function SectionCatalogPage({
   const [selectedTags, setSelectedTags] = useState<Set<string>>(
     () => new Set(initialViewState.selectedTagIds),
   );
+  const canonicalSectionId =
+    bootstrap.home.allSections.find(
+      (section) => section.id === sectionRef || section.slug === sectionRef,
+    )?.id ?? sectionRef;
   const query = useQuery({
-    queryKey: ['storefront-section', bootstrap.pointer.contentVersion, sectionRef],
+    queryKey: [
+      'storefront-section',
+      bootstrap.pointer.contentVersion,
+      canonicalSectionId,
+    ],
     queryFn: ({ signal }) => loadSectionSnapshot(bootstrap, sectionRef, signal),
     staleTime: Number.POSITIVE_INFINITY,
   });

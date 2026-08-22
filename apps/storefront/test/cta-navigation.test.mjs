@@ -22,15 +22,19 @@ test('customer service CTA opens chat before handoff', () => {
   assert.ok(!productDetail.includes('resolveCustomerServiceCta'));
   assert.ok(!productDetail.includes('LoadingHaloOverlay'));
   assert.ok(!productDetail.includes('ctaNavigating'));
+  assert.ok(!productDetail.includes('support-compose-product'));
   contains(productDetail, 'ctaPath: cta.path');
   contains(productDetail, 'pushStorefrontLocation(');
   contains(productDetail, '/messages/new/?');
-  contains(productDetail, "'support-compose-product'");
+  contains(productDetail, "'storefront-product'");
+  contains(productDetail, 'bootstrap.pointer.contentVersion');
   contains(productDetail, 'window.location.assign(cta.path)');
 
   contains(messagesPage, 'resolveCustomerServiceCta(');
   contains(messagesPage, 'composeContext.ctaPath');
   contains(messagesPage, "'support-compose-handoff'");
+  contains(messagesPage, "'storefront-product'");
+  assert.ok(!messagesPage.includes('support-compose-product'));
   contains(messagesPage, 'parseResolvedComposePath(path, composeContext)');
   contains(messagesPage, 'replaceStorefrontLocation(');
 
