@@ -1,6 +1,5 @@
 import { storefrontPresentationMode } from './storefront-presentation-mode';
 
-type StorefrontViewTransitionMode = 'push' | 'pop';
 type StorefrontViewTransition = {
   finished: Promise<void>;
 };
@@ -30,10 +29,7 @@ export function shouldUseStorefrontViewTransition(
   return !(fromMode === 'root' && toMode === 'root');
 }
 
-export function runStorefrontViewTransition(
-  mode: StorefrontViewTransitionMode,
-  update: () => void,
-): boolean {
+export function runStorefrontViewTransition(update: () => void): boolean {
   const transitionDocument = document as ViewTransitionDocument;
   const startViewTransition = transitionDocument.startViewTransition?.bind(transitionDocument);
   if (!startViewTransition || prefersReducedMotion()) {
@@ -52,12 +48,10 @@ export function runStorefrontViewTransition(
   const cleanup = () => {
     if (activeTransitionId !== transitionId) return;
     delete root.dataset.storefrontViewTransition;
-    delete root.dataset.storefrontViewTransitionMode;
   };
 
   try {
     root.dataset.storefrontViewTransition = 'active';
-    root.dataset.storefrontViewTransitionMode = mode;
     const transition = startViewTransition(async () => {
       runUpdate();
       await waitForRouteCommit();
