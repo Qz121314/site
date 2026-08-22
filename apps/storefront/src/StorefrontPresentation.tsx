@@ -35,8 +35,7 @@ function transitionModeForNavigation(
 function applyPresentationMode(direction: StorefrontNavigationDirection | null = null) {
   const element = document.documentElement;
   const previousMode = element.dataset.storefrontPresentation as
-    | StorefrontPresentationMode
-    | undefined;
+    StorefrontPresentationMode | undefined;
   const previousPathname = element.dataset.storefrontPathname;
   const nextPathname = window.location.pathname;
   const nextMode = storefrontPresentationMode(nextPathname);
@@ -51,9 +50,7 @@ function applyPresentationMode(direction: StorefrontNavigationDirection | null =
   else delete element.dataset.storefrontTransition;
 }
 
-function commitStorefrontLocation(
-  direction: StorefrontNavigationDirection | null,
-) {
+function commitStorefrontLocation(direction: StorefrontNavigationDirection | null) {
   applyPresentationMode(direction);
   publishStorefrontLocationChange();
 }

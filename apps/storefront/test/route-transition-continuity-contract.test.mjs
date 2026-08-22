@@ -24,17 +24,16 @@ test('root tabs stay lightweight while hierarchical routes opt into view transit
 });
 
 test('hierarchical navigation transitions only route content and keeps persistent chrome stable', async () => {
-  const [
-    transitionRuntime,
-    navigationRuntime,
-    presentationSource,
-    transitionStyles,
-  ] = await Promise.all([
-    readFile(new URL('../src/storefront-view-transition.ts', import.meta.url), 'utf8'),
-    readFile(new URL('../src/storefront-navigation-runtime.ts', import.meta.url), 'utf8'),
-    readFile(new URL('../src/StorefrontPresentation.tsx', import.meta.url), 'utf8'),
-    readFile(new URL('../src/route-transition.css', import.meta.url), 'utf8'),
-  ]);
+  const [transitionRuntime, navigationRuntime, presentationSource, transitionStyles] =
+    await Promise.all([
+      readFile(new URL('../src/storefront-view-transition.ts', import.meta.url), 'utf8'),
+      readFile(
+        new URL('../src/storefront-navigation-runtime.ts', import.meta.url),
+        'utf8',
+      ),
+      readFile(new URL('../src/StorefrontPresentation.tsx', import.meta.url), 'utf8'),
+      readFile(new URL('../src/route-transition.css', import.meta.url), 'utf8'),
+    ]);
 
   assert.match(transitionRuntime, /startViewTransition/u);
   assert.match(transitionRuntime, /prefers-reduced-motion: reduce/u);
