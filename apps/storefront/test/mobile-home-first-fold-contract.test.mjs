@@ -3,7 +3,10 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
 test('mobile home hero leaves room for discovery content in the first fold', async () => {
-  const styles = await readFile(new URL('../src/hero-carousel.css', import.meta.url), 'utf8');
+  const styles = await readFile(
+    new URL('../src/hero-carousel.css', import.meta.url),
+    'utf8',
+  );
 
   assert.match(
     styles,
