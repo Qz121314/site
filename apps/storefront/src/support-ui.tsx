@@ -1,4 +1,5 @@
 import type { StorefrontLinkComponent } from '@site/storefront-ui';
+import { LoadingHalo } from '@site/storefront-ui/loading';
 import {
   Fragment,
   useEffect,
@@ -433,7 +434,7 @@ export function MessageThreadPageContent({
     return () => window.cancelAnimationFrame(frame);
   }, [conversation?.id, lastMessageId]);
 
-  if (loadingConversation) {
+  if (loadingConversation && !pendingConversation) {
     return (
       <section className="chat-page chat-page-unavailable" aria-busy="true">
         <div className="chat-timeline">
@@ -519,7 +520,7 @@ export function MessageThreadPageContent({
   }
 
   return (
-    <section className="chat-page">
+    <section className="chat-page" aria-busy={loadingConversation || undefined}>
       <header className="chat-header">
         <LinkComponent
           className="chat-back-button"
@@ -551,6 +552,12 @@ export function MessageThreadPageContent({
       <ProductContextCard context={productContext} LinkComponent={LinkComponent} />
 
       <div className="chat-timeline" role="log" aria-live="polite" ref={timelineRef}>
+        {loadingConversation && pendingConversation && !conversation ? (
+          <div className="chat-connection-state" role="status" aria-live="polite">
+            <LoadingHalo size="medium" />
+            <span className="sr-only">{SYSTEM_UI.loading}</span>
+          </div>
+        ) : null}
         {conversation?.nextMessageCursor && onLoadEarlier ? (
           <button
             className="chat-load-earlier"

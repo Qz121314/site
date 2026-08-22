@@ -24,22 +24,3 @@ export function LoadingHalo({
     />
   );
 }
-
-export function LoadingHaloOverlay({
-  label,
-  className = '',
-}: {
-  label: string;
-  className?: string;
-}) {
-  return (
-    <div
-      className={`loading-halo-overlay${className ? ` ${className}` : ''}`}
-      role="status"
-      aria-live="polite"
-      aria-label={label}
-    >
-      <LoadingHalo size="large" />
-    </div>
-  );
-}

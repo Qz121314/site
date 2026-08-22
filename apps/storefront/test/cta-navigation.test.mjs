@@ -7,27 +7,42 @@ function source(path) {
   return readFileSync(fileURLToPath(new URL(path, import.meta.url)), 'utf8');
 }
 
-test('customer service CTA records the handoff then enters Messages through SPA navigation', () => {
+function contains(value, fragment) {
+  assert.ok(value.includes(fragment), `Missing contract: ${fragment}`);
+}
+
+test('customer service CTA opens chat before handoff', () => {
   const productDetail = source('../src/ProductDetailPage.tsx');
+  const messagesPage = source('../src/MessagesPage.tsx');
+  const supportUi = source('../src/support-ui.tsx');
   const cta = source('../src/cta.ts');
   const navigation = source('../src/storefront-navigation-runtime.ts');
   const workerConversion = source('../../worker/src/routes/public-conversion.ts');
 
-  assert.match(productDetail, /resolveCustomerServiceCta\(cta\.path\)/u);
-  assert.match(productDetail, /pushStorefrontLocation\(path\)/u);
-  assert.match(
-    productDetail,
-    /\['support-compose-product', composeSectionId, composeProductId\]/u,
-  );
-  assert.match(productDetail, /window\.location\.assign\(cta\.path\)/u);
+  assert.ok(!productDetail.includes('resolveCustomerServiceCta'));
+  contains(productDetail, 'ctaPath: cta.path');
+  contains(productDetail, 'pushStorefrontLocation(');
+  contains(productDetail, '/messages/new/?');
+  contains(productDetail, "'support-compose-product'");
+  contains(productDetail, 'window.location.assign(cta.path)');
 
-  assert.match(cta, /headers: \{ Accept: 'application\/json' \}/u);
-  assert.match(cta, /value\.path\.startsWith\('\/messages\/new\/'\)/u);
-  assert.match(navigation, /window\.history\.pushState\(null, '',/u);
-  assert.match(navigation, /target\.pathname === '\/messages\/'/u);
-  assert.match(navigation, /navigateStorefrontBack\(\)/u);
+  contains(messagesPage, 'resolveCustomerServiceCta(');
+  contains(messagesPage, 'composeContext.ctaPath');
+  contains(messagesPage, "'support-compose-handoff'");
+  contains(messagesPage, 'parseResolvedComposePath(path, composeContext)');
+  contains(messagesPage, 'replaceStorefrontLocation(');
 
-  assert.match(workerConversion, /context\.req\.header\('accept'\)/u);
-  assert.match(workerConversion, /return context\.json\(\{ path \}\)/u);
-  assert.match(workerConversion, /return context\.redirect\(path, 302\)/u);
+  contains(supportUi, 'loadingConversation && pendingConversation');
+  contains(supportUi, 'chat-connection-state');
+  contains(supportUi, '<LoadingHalo size="medium" />');
+
+  contains(cta, "Accept: 'application/json'");
+  contains(cta, "value.path.startsWith('/messages/new/')");
+  contains(navigation, 'window.history.pushState(null');
+  contains(navigation, "target.pathname === '/messages/'");
+  contains(navigation, 'navigateStorefrontBack()');
+
+  contains(workerConversion, "context.req.header('accept')");
+  contains(workerConversion, 'return context.json({ path })');
+  contains(workerConversion, 'return context.redirect(path, 302)');
 });
