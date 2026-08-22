@@ -123,8 +123,7 @@ test('product detail keeps a conversion-first mobile hierarchy', async () => {
   );
   assert.match(flowStyles, /\.detail-mobile-media-item > img/u);
   assert.match(flowStyles, /\.detail-mobile-media-count \{/u);
-  assert.match(flowStyles, /\.detail-mobile-media-navigation \{/u);
-  assert.match(flowStyles, /\.detail-mobile-media-pagination \{/u);
+  assert.match(flowStyles, /\.detail-mobile-media-count::after \{/u);
   assert.match(flowStyles, /@media \(min-width: 768px\)/u);
   assert.doesNotMatch(flowStyles, /product-detail-secondary-media/u);
 
