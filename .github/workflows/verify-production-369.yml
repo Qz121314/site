@@ -1,0 +1,100 @@
+name: Verify Production 369
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/verify-production-369.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  production:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node.js and pnpm
+        run: |
+          set -euo pipefail
+          node -e "if (Number(process.versions.node.split('.')[0]) < 22) throw new Error('Node.js 22 or newer is required')"
+          npm install --global pnpm@11.19.0
+      - run: pnpm install --frozen-lockfile
+      - name: Verify current Cloudflare deployment
+        id: production
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          MERGED_AT: '2026-08-22T23:59:01Z'
+        run: |
+          set -euo pipefail
+          test -n "$CLOUDFLARE_API_TOKEN"
+          test -n "$CLOUDFLARE_ACCOUNT_ID"
+          api() {
+            curl --fail --silent --show-error \
+              -H "Authorization: Bearer $CLOUDFLARE_API_TOKEN" \
+              -H 'Content-Type: application/json' \
+              "$1"
+          }
+          subdomain_payload="$(api "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/subdomain")"
+          subdomain="$(printf '%s' "$subdomain_payload" | node -e '
+            const fs = require("fs");
+            const value = JSON.parse(fs.readFileSync(0, "utf8"));
+            const subdomain = value?.result?.subdomain;
+            if (typeof subdomain !== "string" || !subdomain.trim()) process.exit(1);
+            process.stdout.write(subdomain.trim());
+          ')"
+          base_url="https://service-catalog-site.${subdomain}.workers.dev"
+          echo "base_url=$base_url" >> "$GITHUB_OUTPUT"
+          echo "Production URL resolved: $base_url"
+
+          verified=false
+          for attempt in {1..90}; do
+            health="$(curl --fail --silent --show-error "$base_url/api/health" || true)"
+            worker_version="$(printf '%s' "$health" | node -e '
+              const fs = require("fs");
+              let value;
+              try { value = JSON.parse(fs.readFileSync(0, "utf8")); } catch { process.exit(1); }
+              if (value?.ok !== true || value?.environment !== "production") process.exit(1);
+              if (typeof value?.workerVersionId !== "string" || !value.workerVersionId) process.exit(1);
+              process.stdout.write(value.workerVersionId);
+            ' 2>/dev/null || true)"
+            if [[ -n "$worker_version" ]]; then
+              deployments="$(api "https://api.cloudflare.com/client/v4/accounts/$CLOUDFLARE_ACCOUNT_ID/workers/scripts/service-catalog-site/deployments" || true)"
+              if HEALTH_VERSION="$worker_version" MERGED_AT="$MERGED_AT" node -e '
+                const fs = require("fs");
+                let payload;
+                try { payload = JSON.parse(fs.readFileSync(0, "utf8")); } catch { process.exit(1); }
+                const raw = payload?.result;
+                const deployments = Array.isArray(raw) ? raw : Array.isArray(raw?.deployments) ? raw.deployments : [];
+                const version = process.env.HEALTH_VERSION;
+                const mergedAt = Date.parse(process.env.MERGED_AT);
+                const match = deployments.find((deployment) => JSON.stringify(deployment).includes(version));
+                if (!match) process.exit(1);
+                const created = Date.parse(match.created_on ?? match.created_at ?? "");
+                if (!Number.isFinite(created) || created < mergedAt) process.exit(1);
+                process.stdout.write(JSON.stringify({
+                  workerVersionId: version,
+                  deploymentId: match.id ?? null,
+                  createdOn: match.created_on ?? match.created_at ?? null,
+                }));
+              ' <<< "$deployments"; then
+                echo
+                printf '%s\n' "$health"
+                verified=true
+                break
+              fi
+            fi
+            echo "Production deployment not current yet (attempt $attempt/90)."
+            sleep 5
+          done
+          if [[ "$verified" != true ]]; then
+            echo 'Production Worker did not reach a deployment created after the #369 merge deadline.'
+            exit 1
+          fi
+      - name: Install production browser
+        run: pnpm exec playwright install --with-deps chromium
+      - name: Browser acceptance test production
+        env:
+          BASE_URL: ${{ steps.production.outputs.base_url }}
+        run: pnpm test:e2e
