@@ -461,20 +461,55 @@
   }
 
   .section-catalog-header {
-    min-height: calc(56px + env(safe-area-inset-top));
+    min-height: calc(52px + env(safe-area-inset-top));
+    grid-template-columns: 52px minmax(0, 1fr) 52px;
     flex: 0 0 auto;
     padding-top: env(safe-area-inset-top);
+    padding-right: max(8px, env(safe-area-inset-right));
+    padding-left: max(8px, env(safe-area-inset-left));
+  }
+
+  .section-catalog-back {
+    width: 44px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .section-catalog-back-label {
+    display: none;
+  }
+
+  .section-catalog-header h1 {
+    font-size: 0.94rem;
   }
 
   .section-catalog-controls {
     position: relative;
     z-index: 34;
     width: 100%;
+    gap: 8px;
     margin: 0;
-    padding: 9px var(--v2-gutter, 16px) 11px;
+    padding: 8px var(--v2-gutter, 16px) 9px;
     border-bottom: 1px solid var(--v2-hairline, var(--line));
     background: color-mix(in srgb, var(--page-bg) 94%, transparent);
     backdrop-filter: blur(18px) saturate(1.04);
+  }
+
+  .section-catalog-search {
+    min-height: 42px;
+    gap: 8px;
+    padding: 0 10px 0 13px;
+    box-shadow: none;
+  }
+
+  .section-catalog-search > svg {
+    width: 17px;
+    height: 17px;
+  }
+
+  .section-catalog-search input {
+    font-size: 16px;
+    line-height: 1.2;
   }
 
   .section-catalog-filters {
@@ -497,7 +532,8 @@
 
   .section-catalog-products {
     width: 100%;
-    padding: 15px var(--v2-gutter, 16px) 30px;
+    gap: 22px 10px;
+    padding: 12px var(--v2-gutter, 16px) 26px;
   }
 }
 
