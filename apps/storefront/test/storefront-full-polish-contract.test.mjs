@@ -34,7 +34,10 @@ test('storefront polish stays theme-led and app-native across every primary surf
   );
   const [artDirection, homeSource, storefrontMain, adminMain] = await Promise.all([
     readFile(
-      new URL('../../../packages/storefront-ui/src/art-direction-contract.css', import.meta.url),
+      new URL(
+        '../../../packages/storefront-ui/src/art-direction-contract.css',
+        import.meta.url,
+      ),
       'utf8',
     ),
     readFile(new URL('../src/HomeFeed.tsx', import.meta.url), 'utf8'),
