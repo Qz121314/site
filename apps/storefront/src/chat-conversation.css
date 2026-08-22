@@ -116,6 +116,16 @@
   scrollbar-gutter: stable;
 }
 
+.chat-connection-state {
+  display: grid;
+  min-height: 180px;
+  flex: 1 1 auto;
+  place-items: center;
+  align-content: center;
+  margin: auto;
+  pointer-events: none;
+}
+
 .chat-load-earlier {
   border: 0;
   border-radius: 999px;
