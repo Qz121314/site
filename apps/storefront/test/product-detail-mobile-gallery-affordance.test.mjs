@@ -21,7 +21,10 @@ test(
     assert.match(source, /className="detail-mobile-media-track"/u);
     assert.match(source, /className="detail-mobile-media-count"/u);
     assert.match(flowCss, /\.detail-mobile-gallery \{[\s\S]*width: 100%;/u);
-    assert.match(flowCss, /\.detail-mobile-gallery \{[\s\S]*margin-inline: 0;/u);
+    assert.match(
+      flowCss,
+      /\.detail-mobile-gallery \{[\s\S]*margin-inline: 0;/u,
+    );
     assert.match(flowCss, /\.detail-mobile-gallery \{[\s\S]*border-radius:/u);
     assert.match(
       flowCss,
