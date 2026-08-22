@@ -82,7 +82,10 @@ function HomeHero({ siteName, slides }: { siteName: string; slides: PublicHeroSl
               <span className="hero-carousel-media-fallback" aria-hidden="true" />
             );
             return (
-              <article className="hero-carousel-slide" key={slide.id}>
+              <article
+                className={`hero-carousel-slide${index === activeIndex ? ' is-active' : ''}`}
+                key={slide.id}
+              >
                 <div className="hero-carousel-media">
                   {slide.mediaKind === 'video' ? (
                     <ResilientVideo
@@ -261,7 +264,12 @@ function HomeProductTile({
           srcSet={srcSet}
           width={640}
         />
+      </span>
+      <span className="home-product-meta">
         <strong className="home-product-title">{product.title}</strong>
+        {product.category.name ? (
+          <span className="home-product-context">{product.category.name}</span>
+        ) : null}
       </span>
     </HomeLink>
   );
