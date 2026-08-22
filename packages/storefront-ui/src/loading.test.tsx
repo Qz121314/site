@@ -1,6 +1,6 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
-import { LoadingHalo, LoadingHaloOverlay } from './loading';
+import { LoadingHalo } from './loading';
 
 describe('shared Halo Loading', () => {
   it('renders reusable size variants without announcing decorative halos', () => {
@@ -9,12 +9,10 @@ describe('shared Halo Loading', () => {
     expect(html).toContain('aria-hidden="true"');
   });
 
-  it('announces blocking overlays once while keeping the inner halo decorative', () => {
-    const html = renderToStaticMarkup(<LoadingHaloOverlay label="Loading" />);
-    expect(html).toContain('class="loading-halo-overlay"');
+  it('can announce a labeled connection state directly', () => {
+    const html = renderToStaticMarkup(<LoadingHalo size="medium" label="Loading" />);
+    expect(html).toContain('class="loading-halo is-medium"');
     expect(html).toContain('role="status"');
-    expect(html).toContain('aria-live="polite"');
     expect(html).toContain('aria-label="Loading"');
-    expect(html).toContain('class="loading-halo is-large"');
   });
 });
