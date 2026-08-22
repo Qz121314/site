@@ -1,0 +1,28 @@
+name: Format Probe
+
+on:
+  push:
+    branches:
+      - ui/product-detail-gallery-affordance
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Set up Node.js and pnpm
+        run: |
+          node --version
+          npm install --global pnpm@11.19.0
+          pnpm --version
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Show Prettier output
+        run: |
+          pnpm exec prettier --write apps/storefront/test/product-detail-mobile-gallery-affordance.test.mjs
+          echo '---FORMATTED FILE START---'
+          cat apps/storefront/test/product-detail-mobile-gallery-affordance.test.mjs
+          echo '---FORMATTED FILE END---'
