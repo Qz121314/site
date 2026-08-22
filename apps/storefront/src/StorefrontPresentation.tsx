@@ -71,7 +71,7 @@ export function StorefrontPresentation() {
         previousPathname &&
         shouldUseStorefrontViewTransition(previousPathname, nextPathname)
       ) {
-        runStorefrontViewTransition(direction === 'back' ? 'pop' : 'push', update);
+        runStorefrontViewTransition(update);
       } else {
         update();
       }
