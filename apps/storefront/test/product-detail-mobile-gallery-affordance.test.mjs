@@ -16,28 +16,18 @@ const uiCss = readFileSync(
 );
 
 test('mobile product gallery is compact and clearly communicates swipe navigation', () => {
-  assert.match(source, /function scrollMobileGalleryToIndex\(index: number\)/u);
-  assert.match(source, /className="detail-mobile-media-navigation"/u);
-  assert.match(source, /className="detail-mobile-media-nav is-previous"/u);
-  assert.match(source, /className="detail-mobile-media-nav is-next"/u);
-  assert.match(source, /className="detail-mobile-media-pagination"/u);
-  assert.match(source, /mobileMediaDotClass\(index\)/u);
-
-  assert.match(
-    flowCss,
-    /\.detail-mobile-gallery \{[\s\S]*width: 100%;[\s\S]*margin-inline: 0;[\s\S]*border-radius:/u,
-  );
+  assert.match(source, /className="detail-mobile-media-track"/u);
+  assert.match(source, /className="detail-mobile-media-count"/u);
+  assert.match(flowCss, /\.detail-mobile-gallery \{[\s\S]*width: 100%;/u);
+  assert.match(flowCss, /\.detail-mobile-gallery \{[\s\S]*margin-inline: 0;/u);
+  assert.match(flowCss, /\.detail-mobile-gallery \{[\s\S]*border-radius:/u);
   assert.match(
     flowCss,
     /\.detail-mobile-media-count \{[\s\S]*top: 12px;[\s\S]*min-width: 50px;[\s\S]*font-weight: 760;/u,
   );
   assert.match(
     flowCss,
-    /\.detail-mobile-media-pagination \{[\s\S]*bottom: 10px;[\s\S]*backdrop-filter:/u,
-  );
-  assert.match(
-    flowCss,
-    /\.detail-mobile-media-nav \{[\s\S]*width: 34px;[\s\S]*height: 34px;/u,
+    /\.detail-mobile-media-count::after \{[\s\S]*content: '↔';/u,
   );
 });
 
