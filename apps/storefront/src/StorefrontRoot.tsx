@@ -291,6 +291,8 @@ export function StorefrontRoot() {
     route.type === 'message-compose' ||
     route.type === 'message' ||
     Boolean(peekSupportVisitorIdentity());
+  const supportConversationListEnabled =
+    supportRuntimeEnabled && route.type !== 'message-compose';
   const bootstrapQuery = useQuery({
     queryKey: ['storefront-bootstrap'],
     queryFn: ({ signal }) => loadStorefrontBootstrap(undefined, signal),
@@ -299,7 +301,7 @@ export function StorefrontRoot() {
   const supportConversationsQuery = useQuery({
     queryKey: ['support-conversations'],
     queryFn: ({ signal }) => siteSupportGateway.listConversations(signal),
-    enabled: supportRuntimeEnabled,
+    enabled: supportConversationListEnabled,
     staleTime: Number.POSITIVE_INFINITY,
     retry: 1,
     refetchOnWindowFocus: false,

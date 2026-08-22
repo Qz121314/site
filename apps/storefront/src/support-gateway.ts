@@ -64,6 +64,7 @@ let connectionCache: {
   expiresAt: number;
   connections: PublicSupportConnection[];
 } | null = null;
+let connectionRequest: Promise<PublicSupportConnection[]> | null = null;
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -147,21 +148,33 @@ export async function loadPublicSupportConnections(
   const now = Date.now();
   if (connectionCache && connectionCache.expiresAt > now)
     return connectionCache.connections;
-  const value = await siteRequestJson(
-    '/api/public/storefront/support/connections',
-    signal,
-  );
-  const envelope = isRecord(value) ? value : null;
-  if (!envelope || !Array.isArray(envelope.connections)) {
-    throw new SupportApiError(
-      500,
-      'INVALID_SUPPORT_CONFIG',
-      'Messages returned invalid configuration.',
-    );
+  if (signal?.aborted) {
+    throw new DOMException('The operation was aborted.', 'AbortError');
   }
-  const connections = envelope.connections.map(parseConnection);
-  connectionCache = { expiresAt: now + CONNECTION_CACHE_MS, connections };
-  return connections;
+  if (!connectionRequest) {
+    // Root, realtime and Messages can mount together. Keep one tiny config read
+    // alive across those observers so a cold route transition reaches the Worker once.
+    connectionRequest = (async () => {
+      const value = await siteRequestJson('/api/public/storefront/support/connections');
+      const envelope = isRecord(value) ? value : null;
+      if (!envelope || !Array.isArray(envelope.connections)) {
+        throw new SupportApiError(
+          500,
+          'INVALID_SUPPORT_CONFIG',
+          'Messages returned invalid configuration.',
+        );
+      }
+      const connections = envelope.connections.map(parseConnection);
+      connectionCache = {
+        expiresAt: Date.now() + CONNECTION_CACHE_MS,
+        connections,
+      };
+      return connections;
+    })().finally(() => {
+      connectionRequest = null;
+    });
+  }
+  return connectionRequest;
 }
 
 async function resolveSupportRoute(
