@@ -116,7 +116,10 @@
     box-shadow: var(--theme-art-media-hover-shadow);
   }
 
-  :is(html, .storefront-theme-root) .browse-section-card:hover .browse-section-card-media img {
+  :is(html, .storefront-theme-root)
+    .browse-section-card:hover
+    .browse-section-card-media
+    img {
     transform: scale(var(--theme-art-media-hover-scale));
   }
 
@@ -137,7 +140,10 @@
     box-shadow: var(--theme-art-media-hover-shadow);
   }
 
-  :is(html, .storefront-theme-root) .section-product-card:hover .section-product-cover > img {
+  :is(html, .storefront-theme-root)
+    .section-product-card:hover
+    .section-product-cover
+    > img {
     transform: scale(var(--theme-art-media-hover-scale));
   }
 }

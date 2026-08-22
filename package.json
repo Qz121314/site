@@ -21,7 +21,7 @@
     "typecheck": "pnpm cf:types && pnpm -r --if-present typecheck",
     "test": "pnpm guardrails && pnpm -r --if-present test",
     "test:e2e": "playwright test",
-    "format": "prettier --write apps/storefront/test/storefront-full-polish-contract.test.mjs packages/storefront-ui/src/art-direction-primary-surfaces.css && echo ---POLISH_CONTRACT_FORMATTED_START--- && cat apps/storefront/test/storefront-full-polish-contract.test.mjs && echo ---POLISH_CONTRACT_FORMATTED_END--- && echo ---PRIMARY_ART_DIRECTION_FORMATTED_START--- && cat packages/storefront-ui/src/art-direction-primary-surfaces.css && echo ---PRIMARY_ART_DIRECTION_FORMATTED_END--- && prettier --check .",
+    "format": "prettier --check .",
     "format:write": "prettier --write .",
     "cf:types": "wrangler types apps/worker/src/worker-configuration.d.ts",
     "cf:check": "wrangler deploy --dry-run",
