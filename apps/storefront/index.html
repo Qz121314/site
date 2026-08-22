@@ -25,137 +25,180 @@
         overflow-x: hidden;
       }
 
-      #root:empty {
+      .boot-shell {
         --boot-header-height: calc(58px + env(safe-area-inset-top));
         --boot-bottom-height: calc(66px + env(safe-area-inset-bottom));
-        --boot-hero-height: clamp(300px, 52svh, 440px);
-        position: relative;
         min-height: 100dvh;
         overflow: hidden;
-        background:
-          radial-gradient(
-              circle,
-              color-mix(in srgb, var(--surface-soft, #f1f2f4) 88%, var(--line, #e7e9ec))
-                0 28px,
-              transparent 29px
-            )
-            12px calc(var(--boot-header-height) + var(--boot-hero-height) + 26px) / 84px 58px
-            repeat-x,
-          linear-gradient(
-              color-mix(in srgb, var(--surface-soft, #f1f2f4) 88%, var(--line, #e7e9ec)),
-              color-mix(in srgb, var(--surface-soft, #f1f2f4) 88%, var(--line, #e7e9ec))
-            )
-            16px calc(var(--boot-header-height) + var(--boot-hero-height) + 112px) / 148px 18px
-            no-repeat,
-          linear-gradient(
-              color-mix(in srgb, var(--surface-soft, #f1f2f4) 88%, var(--line, #e7e9ec)),
-              color-mix(in srgb, var(--surface-soft, #f1f2f4) 88%, var(--line, #e7e9ec))
-            )
-            12px calc(var(--boot-header-height) + var(--boot-hero-height) + 148px) /
-            calc((100vw - 36px) / 2) calc((100vw - 36px) / 2) no-repeat,
-          linear-gradient(
-              color-mix(in srgb, var(--surface-soft, #f1f2f4) 88%, var(--line, #e7e9ec)),
-              color-mix(in srgb, var(--surface-soft, #f1f2f4) 88%, var(--line, #e7e9ec))
-            )
-            calc(50% + 6px) calc(var(--boot-header-height) + var(--boot-hero-height) + 148px) /
-            calc((100vw - 36px) / 2) calc((100vw - 36px) / 2) no-repeat,
-          linear-gradient(
-              color-mix(in srgb, var(--surface-soft, #f1f2f4) 86%, var(--line, #e7e9ec)),
-              color-mix(in srgb, var(--surface-soft, #f1f2f4) 86%, var(--line, #e7e9ec))
-            )
-            0 calc(var(--boot-header-height) + 10px) / 100% var(--boot-hero-height) no-repeat,
-          var(--page-bg, #f5f6f7);
+        background: var(--page-bg, #f5f6f7);
       }
 
-      #root:empty::before {
+      .boot-shell,
+      .boot-shell * {
+        box-sizing: border-box;
+      }
+
+      .boot-app-bar {
         position: fixed;
         top: 0;
         right: 0;
         left: 0;
         z-index: 2;
+        display: grid;
         height: var(--boot-header-height);
+        place-items: center;
+        padding-top: env(safe-area-inset-top);
         border-bottom: 1px solid var(--line, #e7e9ec);
-        background:
-          linear-gradient(
-              color-mix(in srgb, var(--surface-soft, #f1f2f4) 88%, var(--line, #e7e9ec)),
-              color-mix(in srgb, var(--surface-soft, #f1f2f4) 88%, var(--line, #e7e9ec))
-            )
-            center calc(env(safe-area-inset-top) + 12px) / min(44vw, 148px) 34px no-repeat,
-          color-mix(in srgb, var(--surface, #fff) 92%, transparent);
-        backdrop-filter: blur(22px) saturate(1.08);
-        content: '';
+        background: var(--surface, #fff);
       }
 
-      #root:empty::after {
+      .boot-brand,
+      .boot-hero,
+      .boot-shortcuts i,
+      .boot-shortcuts b,
+      .boot-section-heading span,
+      .boot-section-heading i,
+      .boot-product-grid span,
+      .boot-bottom-nav span {
+        display: block;
+        background: var(--surface-soft, #eef0f2);
+      }
+
+      .boot-brand {
+        width: min(44vw, 148px);
+        height: 34px;
+        border-radius: 4px;
+      }
+
+      .boot-main {
+        width: min(1200px, 100%);
+        margin: 0 auto;
+        padding-top: calc(var(--boot-header-height) + 10px);
+        padding-right: max(16px, env(safe-area-inset-right));
+        padding-bottom: calc(var(--boot-bottom-height) + 30px);
+        padding-left: max(16px, env(safe-area-inset-left));
+      }
+
+      .boot-hero {
+        height: clamp(300px, 52svh, 440px);
+        margin-right: -16px;
+        margin-left: -16px;
+      }
+
+      .boot-shortcuts {
+        display: flex;
+        gap: 15px;
+        padding: 16px 2px 28px;
+        overflow: hidden;
+      }
+
+      .boot-shortcuts span {
+        display: grid;
+        width: 66px;
+        min-width: 66px;
+        justify-items: center;
+        gap: 8px;
+      }
+
+      .boot-shortcuts i {
+        width: 58px;
+        height: 58px;
+        border-radius: 14px;
+      }
+
+      .boot-shortcuts b {
+        width: 42px;
+        height: 8px;
+        border-radius: 4px;
+      }
+
+      .boot-section-heading {
+        display: flex;
+        min-height: 42px;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid var(--line, #e7e9ec);
+      }
+
+      .boot-section-heading span {
+        width: min(42vw, 164px);
+        height: 20px;
+        border-radius: 7px;
+      }
+
+      .boot-section-heading i {
+        width: 20px;
+        height: 20px;
+        border-radius: 7px;
+      }
+
+      .boot-product-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 18px 12px;
+      }
+
+      .boot-product-grid span {
+        width: 100%;
+        aspect-ratio: 1 / 1;
+        border-radius: 12px;
+      }
+
+      .boot-bottom-nav {
         position: fixed;
         right: 0;
         bottom: 0;
         left: 0;
         z-index: 2;
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
         height: var(--boot-bottom-height);
+        align-items: start;
+        padding: 9px 20px env(safe-area-inset-bottom);
         border-top: 1px solid var(--line, #e7e9ec);
-        background:
-          radial-gradient(
-              circle,
-              color-mix(in srgb, var(--surface-soft, #f1f2f4) 88%, var(--line, #e7e9ec))
-                0 13px,
-              transparent 14px
-            )
-            12.5% 9px / 28px 28px no-repeat,
-          radial-gradient(
-              circle,
-              color-mix(in srgb, var(--surface-soft, #f1f2f4) 88%, var(--line, #e7e9ec))
-                0 13px,
-              transparent 14px
-            )
-            37.5% 9px / 28px 28px no-repeat,
-          radial-gradient(
-              circle,
-              color-mix(in srgb, var(--surface-soft, #f1f2f4) 88%, var(--line, #e7e9ec))
-                0 13px,
-              transparent 14px
-            )
-            62.5% 9px / 28px 28px no-repeat,
-          radial-gradient(
-              circle,
-              color-mix(in srgb, var(--surface-soft, #f1f2f4) 88%, var(--line, #e7e9ec))
-                0 13px,
-              transparent 14px
-            )
-            87.5% 9px / 28px 28px no-repeat,
-          color-mix(in srgb, var(--surface, #fff) 90%, transparent);
-        backdrop-filter: blur(24px) saturate(1.08);
-        content: '';
+        background: var(--surface, #fff);
+      }
+
+      .boot-bottom-nav span {
+        width: 28px;
+        height: 28px;
+        justify-self: center;
+        border-radius: 10px;
       }
 
       @media (min-width: 768px) {
-        #root:empty {
-          background:
-            radial-gradient(
-                circle,
-                color-mix(in srgb, var(--surface-soft, #f1f2f4) 88%, var(--line, #e7e9ec))
-                  0 28px,
-                transparent 29px
-              )
-              max(24px, calc((100vw - 1200px) / 2 + 24px))
-              calc(var(--boot-header-height) + min(440px, 39vw) + 44px) / 90px 58px repeat-x,
-            linear-gradient(
-                color-mix(in srgb, var(--surface-soft, #f1f2f4) 86%, var(--line, #e7e9ec)),
-                color-mix(in srgb, var(--surface-soft, #f1f2f4) 86%, var(--line, #e7e9ec))
-              )
-              center calc(var(--boot-header-height) + 25px) / min(1152px, calc(100% - 48px))
-              min(440px, 39vw) no-repeat,
-            var(--page-bg, #f5f6f7);
+        .boot-main {
+          padding-top: calc(var(--boot-header-height) + 25px);
+          padding-right: max(24px, env(safe-area-inset-right));
+          padding-left: max(24px, env(safe-area-inset-left));
+        }
+
+        .boot-hero {
+          height: min(440px, 39vw);
+          min-height: 360px;
+          margin: 0;
+          border-radius: 18px;
+        }
+
+        .boot-shortcuts {
+          gap: 23px;
+          padding: 26px 2px 32px;
         }
       }
 
       @media (min-width: 980px) {
-        #root:empty {
+        .boot-shell {
           --boot-header-height: 62px;
           --boot-bottom-height: 0px;
         }
 
-        #root:empty::after {
+        .boot-main {
+          padding-bottom: 58px;
+        }
+
+        .boot-bottom-nav {
           display: none;
         }
       }
@@ -169,7 +212,27 @@
     <title>Service Catalog</title>
   </head>
   <body>
-    <div id="root"></div>
+    <div id="root">
+      <div class="boot-shell" aria-hidden="true">
+        <header class="boot-app-bar"><span class="boot-brand"></span></header>
+        <main class="boot-main">
+          <div class="boot-hero"></div>
+          <div class="boot-shortcuts">
+            <span><i></i><b></b></span>
+            <span><i></i><b></b></span>
+            <span><i></i><b></b></span>
+            <span><i></i><b></b></span>
+            <span><i></i><b></b></span>
+            <span><i></i><b></b></span>
+          </div>
+          <div class="boot-section-heading"><span></span><i></i></div>
+          <div class="boot-product-grid"><span></span><span></span></div>
+        </main>
+        <nav class="boot-bottom-nav">
+          <span></span><span></span><span></span><span></span>
+        </nav>
+      </div>
+    </div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>
