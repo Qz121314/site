@@ -2,12 +2,18 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
-const source = readFileSync(new URL('../src/ProductDetailPage.tsx', import.meta.url), 'utf8');
+const source = readFileSync(
+  new URL('../src/ProductDetailPage.tsx', import.meta.url),
+  'utf8',
+);
 const flowCss = readFileSync(
   new URL('../src/product-detail-content-flow.css', import.meta.url),
   'utf8',
 );
-const uiCss = readFileSync(new URL('../src/product-detail-ui.css', import.meta.url), 'utf8');
+const uiCss = readFileSync(
+  new URL('../src/product-detail-ui.css', import.meta.url),
+  'utf8',
+);
 
 test('mobile product gallery is compact and clearly communicates swipe navigation', () => {
   assert.match(source, /function scrollMobileGalleryToIndex\(index: number\)/u);
@@ -38,7 +44,10 @@ test('mobile product gallery is compact and clearly communicates swipe navigatio
 test('product CTA displays the live backend label and keeps it visually centered', () => {
   assert.match(source, /enabled: Boolean\(product\?\.id\)/u);
   assert.match(source, /staleTime: Number\.POSITIVE_INFINITY/u);
-  assert.match(source, /<span className="product-detail-cta-label">\{ctaQuery\.data\.label\}<\/span>/u);
+  assert.match(
+    source,
+    /<span className="product-detail-cta-label">\{ctaQuery\.data\.label\}<\/span>/u,
+  );
   assert.doesNotMatch(source, /SYSTEM_UI\.continue/u);
   assert.match(
     source,
