@@ -9,8 +9,6 @@ type ViewTransitionDocument = Document & {
   ) => StorefrontViewTransition;
 };
 
-let activeTransitionId = 0;
-
 function prefersReducedMotion(): boolean {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 }
@@ -31,14 +29,18 @@ export function shouldUseStorefrontViewTransition(
 
 export function runStorefrontViewTransition(update: () => void): boolean {
   const transitionDocument = document as ViewTransitionDocument;
-  const startViewTransition = transitionDocument.startViewTransition?.bind(transitionDocument);
-  if (!startViewTransition || prefersReducedMotion()) {
+  const startViewTransition =
+    transitionDocument.startViewTransition?.bind(transitionDocument);
+  const root = document.documentElement;
+  if (
+    !startViewTransition ||
+    prefersReducedMotion() ||
+    root.dataset.storefrontViewTransition === 'active'
+  ) {
     update();
     return false;
   }
 
-  const transitionId = ++activeTransitionId;
-  const root = document.documentElement;
   let updateRan = false;
   const runUpdate = () => {
     if (updateRan) return;
@@ -46,7 +48,6 @@ export function runStorefrontViewTransition(update: () => void): boolean {
     update();
   };
   const cleanup = () => {
-    if (activeTransitionId !== transitionId) return;
     delete root.dataset.storefrontViewTransition;
   };
 
