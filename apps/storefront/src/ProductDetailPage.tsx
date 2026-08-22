@@ -6,11 +6,12 @@ import {
   PublicContentError,
   type StorefrontBootstrap,
 } from './content';
-import { loadPublicCta } from './cta';
+import { loadPublicCta, resolveCustomerServiceCta } from './cta';
 import { MarkdownContent } from './MarkdownContent';
 import { ProductDetailLoadingSurface } from './ProductDetailLoadingSurface';
 import { ResilientImage, ResilientVideo } from './ResilientMedia';
 import { canNavigateStorefrontBack, navigateStorefrontBack } from './storefront-history';
+import { pushStorefrontLocation } from './storefront-navigation-runtime';
 import { StorefrontRouteAction } from './StorefrontRouteAction';
 import { SYSTEM_UI } from './system-ui';
 import './product-detail-ui.css';
@@ -47,10 +48,6 @@ function handleInternalBack(event: ReactMouseEvent<HTMLAnchorElement>) {
   navigateStorefrontBack();
 }
 
-function navigateInternalCta(path: string) {
-  window.location.assign(path);
-}
-
 function CtaArrow() {
   return (
     <span className="product-detail-cta-arrow" aria-hidden="true">
@@ -83,6 +80,7 @@ export function ProductDetailPage({
 }) {
   const [activeMediaId, setActiveMediaId] = useState<string | null>(null);
   const [mobileMediaIndex, setMobileMediaIndex] = useState(0);
+  const [ctaNavigating, setCtaNavigating] = useState(false);
   const mobileMediaTrackRef = useRef<HTMLDivElement | null>(null);
   const query = useQuery({
     queryKey: [
@@ -114,6 +112,7 @@ export function ProductDetailPage({
   useEffect(() => {
     setActiveMediaId(null);
     setMobileMediaIndex(0);
+    setCtaNavigating(false);
     mobileMediaTrackRef.current?.scrollTo({ left: 0, behavior: 'auto' });
   }, [product?.id]);
 
@@ -195,17 +194,23 @@ export function ProductDetailPage({
   }
 
   async function handleCtaClick() {
-    if (ctaQuery.isFetching) return;
+    if (ctaQuery.isFetching || ctaNavigating) return;
     const cta = ctaQuery.data ?? (await ctaQuery.refetch()).data;
     if (!cta) return;
     if (cta.mode === 'customer_service') {
-      navigateInternalCta(cta.path);
+      setCtaNavigating(true);
+      try {
+        const path = await resolveCustomerServiceCta(cta.path);
+        pushStorefrontLocation(path);
+      } catch {
+        window.location.assign(cta.path);
+      }
       return;
     }
     window.location.assign(cta.path);
   }
 
-  const ctaLoading = ctaQuery.isFetching || ctaQuery.isPending;
+  const ctaLoading = ctaQuery.isFetching || ctaQuery.isPending || ctaNavigating;
   const ctaMissing = !ctaLoading && !ctaQuery.error && ctaQuery.data === null;
   const ctaFailed = !ctaLoading && Boolean(ctaQuery.error);
 
