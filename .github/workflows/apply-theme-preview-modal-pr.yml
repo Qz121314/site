@@ -1,0 +1,46 @@
+name: Apply Theme Preview Modal PR
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: github.head_ref == 'fix/admin-theme-preview-modal' && github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/admin-theme-preview-modal
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - run: pnpm install --frozen-lockfile
+      - run: python .github/scripts/apply-theme-preview-modal.py
+      - run: >-
+          pnpm exec prettier --write
+          apps/admin/src/ThemeCenterView.tsx
+          apps/admin/src/theme-center.css
+          apps/admin/test/theme-center-preview-modal-contract.test.mjs
+
+      - name: Commit result and clean temporary files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/apply-theme-preview-modal.yml
+          git rm .github/workflows/apply-theme-preview-modal-pr.yml
+          git rm .github/scripts/apply-theme-preview-modal.py
+          git add apps/admin/src/ThemeCenterView.tsx apps/admin/src/theme-center.css apps/admin/test/theme-center-preview-modal-contract.test.mjs
+          git commit -m "fix(admin): open theme mobile preview in modal"
+          git push origin HEAD:fix/admin-theme-preview-modal
