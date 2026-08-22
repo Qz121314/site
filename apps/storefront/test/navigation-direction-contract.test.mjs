@@ -43,6 +43,8 @@ test('shared navigation runtime owns SPA history direction', async () => {
     navigationRuntimeSource.indexOf('saveCurrentStorefrontScrollPosition()') <
       navigationRuntimeSource.indexOf('window.history.pushState'),
   );
+  assert.doesNotMatch(navigationRuntimeSource, /startViewTransition/u);
+  assert.doesNotMatch(navigationRuntimeSource, /runStorefrontViewTransition/u);
 
   assert.match(messagesSource, /replaceStorefrontLocation/u);
   assert.doesNotMatch(messagesSource, /window\.history\.replaceState/u);
@@ -55,6 +57,7 @@ test('shared navigation runtime owns SPA history direction', async () => {
   assert.doesNotMatch(rootSource, /addEventListener\('popstate'/u);
   assert.match(rootSource, /routeKey=\{pathname\}/u);
   assert.doesNotMatch(rootSource, /routeKey=\{locationKey\}/u);
+  assert.equal((rootSource.match(/className="storefront-route-view"/gu) ?? []).length, 1);
   assert.match(locationRuntimeSource, /storefront:location/u);
   assert.match(locationRuntimeSource, /publishStorefrontLocationChange/u);
 
@@ -67,7 +70,9 @@ test('shared navigation runtime owns SPA history direction', async () => {
     /previousPathname && previousPathname !== nextPathname/u,
   );
   assert.match(presentationSource, /dataset\.storefrontPathname = nextPathname/u);
-  assert.match(presentationSource, /runStorefrontViewTransition\(update, restore\)/u);
+  assert.match(presentationSource, /flushSync/u);
+  assert.doesNotMatch(presentationSource, /startViewTransition/u);
+  assert.doesNotMatch(presentationSource, /runStorefrontViewTransition/u);
 
   for (const source of [homeSource, rootSource, presentationSource]) {
     assert.doesNotMatch(source, /window\.history\.pushState/u);
@@ -91,13 +96,15 @@ test('shared navigation runtime owns SPA history direction', async () => {
   assert.match(routeTransitionSource, /data-storefront-transition='tab'/u);
   assert.match(routeTransitionSource, /data-storefront-transition='push'/u);
   assert.match(routeTransitionSource, /data-storefront-transition='pop'/u);
+  assert.match(routeTransitionSource, /storefront-page-push-enter/u);
+  assert.match(routeTransitionSource, /storefront-page-pop-enter/u);
+  assert.match(routeTransitionSource, /perspective\(1200px\)/u);
+  assert.match(routeTransitionSource, /rotateY/u);
+  assert.doesNotMatch(routeTransitionSource, /::view-transition/u);
+  assert.doesNotMatch(routeTransitionSource, /view-transition-name/u);
   assert.doesNotMatch(routeTransitionSource, /data-storefront-nav-direction/u);
   assert.doesNotMatch(routeTransitionSource, /will-change/u);
   assert.doesNotMatch(routeTransitionSource, /scale\(/u);
-  assert.match(
-    routeTransitionSource,
-    /@media \(min-width: 768px\)[\s\S]*--storefront-route-shift: 0px/u,
-  );
   assert.match(routeTransitionSource, /prefers-reduced-motion: reduce/u);
 
   assert.doesNotMatch(edgeNavigationSource, /recordStorefrontHistoryPush/u);
