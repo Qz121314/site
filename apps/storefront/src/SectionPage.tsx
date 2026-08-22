@@ -9,6 +9,7 @@ import {
 import { SquareSkeletonGrid } from './LoadingStates';
 import { ResilientImage } from './ResilientMedia';
 import { productHref } from './routing';
+import { SectionFilterControls } from './SectionFilterControls';
 import {
   canNavigateStorefrontBack,
   navigateStorefrontBack,
@@ -144,6 +145,10 @@ export function SectionCatalogPage({
     });
   }
 
+  function clearTags() {
+    setSelectedTags(new Set());
+  }
+
   function clearFilters() {
     setSearch('');
     setCategoryId('');
@@ -196,7 +201,6 @@ export function SectionCatalogPage({
 
   if (!query.data) return null;
 
-  const hasFilterOptions = query.data.categories.length > 0 || query.data.tags.length > 0;
   const hasProducts = query.data.products.length > 0;
 
   return (
@@ -237,52 +241,15 @@ export function SectionCatalogPage({
             ) : null}
           </div>
 
-          {hasFilterOptions ? (
-            <div className="section-catalog-filters" aria-label="Filters">
-              {query.data.categories.length > 0 ? (
-                <div className="section-category-filter" aria-label="Category">
-                  <button
-                    className={!categoryId ? 'is-active' : undefined}
-                    type="button"
-                    aria-pressed={!categoryId}
-                    onClick={() => setCategoryId('')}
-                  >
-                    {SYSTEM_UI.all}
-                  </button>
-                  {query.data.categories.map((category) => {
-                    const isActive = categoryId === category.id;
-                    return (
-                      <button
-                        className={isActive ? 'is-active' : undefined}
-                        key={category.id}
-                        type="button"
-                        aria-pressed={isActive}
-                        onClick={() => setCategoryId(category.id)}
-                      >
-                        {category.name}
-                      </button>
-                    );
-                  })}
-                </div>
-              ) : null}
-
-              {query.data.tags.length > 0 ? (
-                <div className="section-tag-filter" aria-label="Tags">
-                  {query.data.tags.map((tag) => (
-                    <button
-                      className={selectedTags.has(tag.id) ? 'is-active' : undefined}
-                      key={tag.id}
-                      type="button"
-                      aria-pressed={selectedTags.has(tag.id)}
-                      onClick={() => toggleTag(tag.id)}
-                    >
-                      {tag.name}
-                    </button>
-                  ))}
-                </div>
-              ) : null}
-            </div>
-          ) : null}
+          <SectionFilterControls
+            categories={query.data.categories}
+            tags={query.data.tags}
+            categoryId={categoryId}
+            selectedTags={selectedTags}
+            onCategoryChange={setCategoryId}
+            onToggleTag={toggleTag}
+            onClearTags={clearTags}
+          />
         </div>
       ) : null}
 
