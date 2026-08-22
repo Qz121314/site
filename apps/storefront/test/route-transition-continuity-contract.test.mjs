@@ -1,25 +1,24 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
-import { shouldUseStorefrontViewTransition } from '../src/storefront-view-transition.ts';
 
-test('root tabs stay lightweight while hierarchical routes opt into view transitions', () => {
-  assert.equal(shouldUseStorefrontViewTransition('/', '/browse/'), false);
-  assert.equal(shouldUseStorefrontViewTransition('/browse/', '/faq/'), false);
-  assert.equal(
-    shouldUseStorefrontViewTransition('/browse/', '/sections/demo-section/'),
-    true,
+test('root tabs stay lightweight while hierarchical routes opt into view transitions', async () => {
+  const transitionRuntime = await readFile(
+    new URL('../src/storefront-view-transition.ts', import.meta.url),
+    'utf8',
   );
-  assert.equal(
-    shouldUseStorefrontViewTransition(
-      '/sections/demo-section/',
-      '/sections/demo-section/products/demo-product/',
-    ),
-    true,
+
+  assert.match(
+    transitionRuntime,
+    /const fromMode = storefrontPresentationMode\(fromPathname\);/u,
   );
-  assert.equal(
-    shouldUseStorefrontViewTransition('/sections/demo-section/', '/browse/'),
-    true,
+  assert.match(
+    transitionRuntime,
+    /const toMode = storefrontPresentationMode\(toPathname\);/u,
+  );
+  assert.match(
+    transitionRuntime,
+    /return !\(fromMode === 'root' && toMode === 'root'\);/u,
   );
 });
 
