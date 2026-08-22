@@ -246,12 +246,13 @@
   }
 
   .hero-carousel-slide {
-    min-height: clamp(320px, 64vh, 540px);
-    aspect-ratio: 4 / 5;
+    height: clamp(300px, 52svh, 440px);
+    min-height: 0;
+    aspect-ratio: auto;
   }
 
   .hero-carousel-overlay {
-    padding: 24px max(var(--v2-gutter, 16px), env(safe-area-inset-right)) 34px
+    padding: 22px max(var(--v2-gutter, 16px), env(safe-area-inset-right)) 28px
       max(var(--v2-gutter, 16px), env(safe-area-inset-left));
     background: linear-gradient(
       180deg,
@@ -264,12 +265,12 @@
 
   .hero-carousel-copy {
     width: min(94%, 440px);
-    gap: 8px;
+    gap: 7px;
   }
 
   .hero-carousel-copy :is(h1, h2) {
     max-width: 15ch;
-    font-size: clamp(1.9rem, 8.7vw, 2.9rem);
+    font-size: clamp(1.78rem, 8vw, 2.65rem);
     font-weight: 700;
     line-height: 0.98;
   }
@@ -278,18 +279,18 @@
     display: -webkit-box;
     max-width: 38ch;
     overflow: hidden;
-    font-size: 0.81rem;
-    line-height: 1.45;
+    font-size: 0.79rem;
+    line-height: 1.42;
     -webkit-box-orient: vertical;
     -webkit-line-clamp: 2;
   }
 
   .hero-carousel-cta {
-    min-height: 40px;
-    margin-top: 5px;
-    padding-inline: 15px;
+    min-height: 38px;
+    margin-top: 4px;
+    padding-inline: 14px;
     border-radius: var(--theme-radius-control, 9px);
-    font-size: 0.76rem;
+    font-size: 0.74rem;
   }
 
   .hero-carousel-arrow {
@@ -298,7 +299,7 @@
 
   .hero-carousel-dots {
     right: max(var(--v2-gutter, 16px), env(safe-area-inset-right));
-    bottom: 16px;
+    bottom: 13px;
     padding: 4px 6px;
   }
 
