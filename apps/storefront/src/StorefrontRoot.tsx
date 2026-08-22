@@ -61,6 +61,11 @@ const FaqDirectoryPage = lazy(() =>
 const FaqArticlePage = lazy(() =>
   import('./FaqPage').then((module) => ({ default: module.FaqArticlePage })),
 );
+const LegacyProductRoute = lazy(() =>
+  import('./LegacyProductRoute').then((module) => ({
+    default: module.LegacyProductRoute,
+  })),
+);
 const ProductDetailPage = lazy(() =>
   import('./ProductDetailPage').then((module) => ({
     default: module.ProductDetailPage,
@@ -419,11 +424,17 @@ export function StorefrontRoot() {
       break;
     case 'product':
       routeFallback = <ProductDetailLoadingSurface />;
-      page = (
+      page = route.sectionRef ? (
         <ProductDetailPage
           bootstrap={bootstrap}
           productRef={route.productRef}
           sectionRef={route.sectionRef}
+          LinkComponent={StorefrontLink as StorefrontLinkComponent}
+        />
+      ) : (
+        <LegacyProductRoute
+          bootstrap={bootstrap}
+          productRef={route.productRef}
           LinkComponent={StorefrontLink as StorefrontLinkComponent}
         />
       );
