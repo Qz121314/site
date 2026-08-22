@@ -10,7 +10,7 @@ export function StartupLoader() {
         <main className="startup-feed-skeleton">
           <span className="startup-hero-skeleton" />
           <div className="startup-shortcut-skeletons">
-            {Array.from({ length: 6 }, (_, index) => (
+            {Array.from({ length: 8 }, (_, index) => (
               <span key={index}>
                 <i />
                 <b />
