@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-test('root tabs and desktop routes stay lightweight while mobile hierarchy opts into view transitions', async () => {
+test('root tabs and desktop stay light while mobile hierarchy uses view transitions', async () => {
   const transitionRuntime = await readFile(
     new URL('../src/storefront-view-transition.ts', import.meta.url),
     'utf8',
