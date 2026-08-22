@@ -51,21 +51,6 @@ input:disabled {
   color: var(--muted);
 }
 
-.loading-indicator {
-  width: 34px;
-  height: 34px;
-  border: 3px solid #d9dee7;
-  border-top-color: var(--brand);
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-  to {
-    transform: rotate(360deg);
-  }
-}
-
 .login-card {
   display: grid;
   width: min(440px, 100%);
