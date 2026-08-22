@@ -1,13 +1,13 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { StorefrontLinkComponent } from '@site/storefront-ui';
-import { LoadingHalo, LoadingHaloOverlay } from '@site/storefront-ui/loading';
+import { LoadingHalo } from '@site/storefront-ui/loading';
 import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import {
   loadProductSnapshot,
   PublicContentError,
   type StorefrontBootstrap,
 } from './content';
-import { loadPublicCta, resolveCustomerServiceCta } from './cta';
+import { loadPublicCta } from './cta';
 import { MarkdownContent } from './MarkdownContent';
 import { ProductDetailLoadingSurface } from './ProductDetailLoadingSurface';
 import { ResilientImage, ResilientVideo } from './ResilientMedia';
@@ -82,7 +82,6 @@ export function ProductDetailPage({
   const queryClient = useQueryClient();
   const [activeMediaId, setActiveMediaId] = useState<string | null>(null);
   const [mobileMediaIndex, setMobileMediaIndex] = useState(0);
-  const [ctaNavigating, setCtaNavigating] = useState(false);
   const mobileMediaTrackRef = useRef<HTMLDivElement | null>(null);
   const query = useQuery({
     queryKey: [
@@ -114,7 +113,6 @@ export function ProductDetailPage({
   useEffect(() => {
     setActiveMediaId(null);
     setMobileMediaIndex(0);
-    setCtaNavigating(false);
     mobileMediaTrackRef.current?.scrollTo({ left: 0, behavior: 'auto' });
   }, [product?.id]);
 
@@ -196,38 +194,30 @@ export function ProductDetailPage({
   }
 
   async function handleCtaClick() {
-    if (ctaQuery.isFetching || ctaNavigating) return;
+    if (ctaQuery.isFetching) return;
     const currentProduct = product;
     if (!currentProduct) return;
     const cta = ctaQuery.data ?? (await ctaQuery.refetch()).data;
     if (!cta) return;
     if (cta.mode === 'customer_service') {
-      setCtaNavigating(true);
-      try {
-        const path = await resolveCustomerServiceCta(cta.path);
-        const target = new URL(path, window.location.href);
-        const composeProductId = target.searchParams.get('productId');
-        const composeSectionId = target.searchParams.get('sectionId');
-        if (
-          query.data &&
-          composeProductId === currentProduct.id &&
-          composeSectionId === currentProduct.sectionId
-        ) {
-          queryClient.setQueryData(
-            ['support-compose-product', composeSectionId, composeProductId],
-            query.data,
-          );
-        }
-        pushStorefrontLocation(path);
-      } catch {
-        window.location.assign(cta.path);
+      if (query.data) {
+        queryClient.setQueryData(
+          ['support-compose-product', currentProduct.sectionId, currentProduct.id],
+          query.data,
+        );
       }
+      const params = new URLSearchParams({
+        productId: currentProduct.id,
+        sectionId: currentProduct.sectionId,
+        ctaPath: cta.path,
+      });
+      pushStorefrontLocation(`/messages/new/?${params.toString()}`);
       return;
     }
     window.location.assign(cta.path);
   }
 
-  const ctaLoading = ctaQuery.isFetching || ctaQuery.isPending || ctaNavigating;
+  const ctaLoading = ctaQuery.isFetching || ctaQuery.isPending;
   const ctaMissing = !ctaLoading && !ctaQuery.error && ctaQuery.data === null;
   const ctaFailed = !ctaLoading && Boolean(ctaQuery.error);
 
@@ -437,7 +427,6 @@ export function ProductDetailPage({
       <StorefrontRouteAction>
         <div className="product-detail-route-action">{renderCtaButton()}</div>
       </StorefrontRouteAction>
-      {ctaNavigating ? <LoadingHaloOverlay label={SYSTEM_UI.loading} /> : null}
     </>
   );
 }
