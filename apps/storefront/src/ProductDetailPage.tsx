@@ -61,14 +61,6 @@ function CtaArrow() {
   );
 }
 
-function MediaArrowIcon() {
-  return (
-    <svg viewBox="0 0 20 20" focusable="false" aria-hidden="true">
-      <path d="m8 5 5 5-5 5" />
-    </svg>
-  );
-}
-
 function LocationIcon() {
   return (
     <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
@@ -188,30 +180,6 @@ export function ProductDetailPage({
   const address = product.address?.trim() ?? '';
   const body = product.body.trim();
   const bodyIsAddress = Boolean(address && body && body === address);
-  const canShowPreviousMedia = mobileMediaIndex > 0;
-  const canShowNextMedia = mobileMediaIndex < mobileGalleryItems.length - 1;
-
-  function scrollMobileGalleryToIndex(index: number) {
-    const track = mobileMediaTrackRef.current;
-    if (!track || mobileGalleryItems.length <= 1) return;
-    const nextIndex = Math.max(0, Math.min(mobileGalleryItems.length - 1, index));
-    track.scrollTo({ left: nextIndex * track.clientWidth, behavior: 'smooth' });
-    setMobileMediaIndex(nextIndex);
-  }
-
-  function showPreviousMobileMedia() {
-    scrollMobileGalleryToIndex(mobileMediaIndex - 1);
-  }
-
-  function showNextMobileMedia() {
-    scrollMobileGalleryToIndex(mobileMediaIndex + 1);
-  }
-
-  function mobileMediaDotClass(index: number) {
-    return index === mobileMediaIndex
-      ? 'detail-mobile-media-dot is-active'
-      : 'detail-mobile-media-dot';
-  }
 
   function handleMobileGalleryScroll() {
     const track = mobileMediaTrackRef.current;
@@ -237,10 +205,9 @@ export function ProductDetailPage({
     window.location.assign(cta.path);
   }
 
-  const ctaMissing =
-    !ctaQuery.isFetching && !ctaQuery.error && ctaQuery.data === null;
-  const ctaFailed = !ctaQuery.isFetching && Boolean(ctaQuery.error);
   const ctaLoading = ctaQuery.isFetching || ctaQuery.isPending;
+  const ctaMissing = !ctaLoading && !ctaQuery.error && ctaQuery.data === null;
+  const ctaFailed = !ctaLoading && Boolean(ctaQuery.error);
 
   function renderCtaButton() {
     const cta = ctaQuery.data;
@@ -345,41 +312,9 @@ export function ProductDetailPage({
                   activeMediaFallback
                 )}
                 {mobileGalleryItems.length > 1 ? (
-                  <>
-                    <span className="detail-mobile-media-count" aria-hidden="true">
-                      {mobileMediaIndex + 1} / {mobileGalleryItems.length}
-                    </span>
-                    <div className="detail-mobile-media-navigation">
-                      {canShowPreviousMedia ? (
-                        <button
-                          className="detail-mobile-media-nav is-previous"
-                          type="button"
-                          aria-label="Previous media"
-                          onClick={showPreviousMobileMedia}
-                        >
-                          <MediaArrowIcon />
-                        </button>
-                      ) : null}
-                      {canShowNextMedia ? (
-                        <button
-                          className="detail-mobile-media-nav is-next"
-                          type="button"
-                          aria-label="Next media"
-                          onClick={showNextMobileMedia}
-                        >
-                          <MediaArrowIcon />
-                        </button>
-                      ) : null}
-                    </div>
-                    <div className="detail-mobile-media-pagination" aria-hidden="true">
-                      {mobileGalleryItems.map((item, index) => (
-                        <span
-                          className={mobileMediaDotClass(index)}
-                          key={item.id}
-                        />
-                      ))}
-                    </div>
-                  </>
+                  <span className="detail-mobile-media-count" aria-hidden="true">
+                    {mobileMediaIndex + 1} / {mobileGalleryItems.length}
+                  </span>
                 ) : null}
               </div>
             </div>
