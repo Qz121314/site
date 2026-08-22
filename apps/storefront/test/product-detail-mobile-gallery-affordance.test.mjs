@@ -21,7 +21,7 @@ test('mobile product gallery is compact and clearly communicates swipe navigatio
   assert.match(source, /className="detail-mobile-media-nav is-previous"/u);
   assert.match(source, /className="detail-mobile-media-nav is-next"/u);
   assert.match(source, /className="detail-mobile-media-pagination"/u);
-  assert.match(source, /className=\{`detail-mobile-media-dot/u);
+  assert.match(source, /mobileMediaDotClass\(index\)/u);
 
   assert.match(
     flowCss,
@@ -46,7 +46,7 @@ test('product CTA displays the live backend label and keeps it visually centered
   assert.match(source, /staleTime: Number\.POSITIVE_INFINITY/u);
   assert.match(
     source,
-    /<span className="product-detail-cta-label">\{ctaQuery\.data\.label\}<\/span>/u,
+    /<span className="product-detail-cta-label">\{cta\.label\}<\/span>/u,
   );
   assert.doesNotMatch(source, /SYSTEM_UI\.continue/u);
   assert.match(
