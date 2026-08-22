@@ -21,7 +21,7 @@
     "typecheck": "pnpm cf:types && pnpm -r --if-present typecheck",
     "test": "pnpm guardrails && pnpm -r --if-present test",
     "test:e2e": "playwright test",
-    "format": "prettier --write packages/storefront-ui/src/art-direction-contract.css && echo ---ART_DIRECTION_FORMATTED_START--- && cat packages/storefront-ui/src/art-direction-contract.css && echo ---ART_DIRECTION_FORMATTED_END--- && exit 1",
+    "format": "prettier --check .",
     "format:write": "prettier --write .",
     "cf:types": "wrangler types apps/worker/src/worker-configuration.d.ts",
     "cf:check": "wrangler deploy --dry-run",
