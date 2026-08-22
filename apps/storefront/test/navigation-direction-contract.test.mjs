@@ -7,6 +7,7 @@ test('shared navigation runtime owns SPA push and route direction', async () => 
     presentationSource,
     edgeNavigationSource,
     historySource,
+    locationRuntimeSource,
     navigationRuntimeSource,
     homeSource,
     rootSource,
@@ -15,6 +16,7 @@ test('shared navigation runtime owns SPA push and route direction', async () => 
     readFile(new URL('../src/StorefrontPresentation.tsx', import.meta.url), 'utf8'),
     readFile(new URL('../src/MobileEdgeNavigation.tsx', import.meta.url), 'utf8'),
     readFile(new URL('../src/storefront-history.ts', import.meta.url), 'utf8'),
+    readFile(new URL('../src/storefront-location-runtime.ts', import.meta.url), 'utf8'),
     readFile(new URL('../src/storefront-navigation-runtime.ts', import.meta.url), 'utf8'),
     readFile(new URL('../src/HomeFeed.tsx', import.meta.url), 'utf8'),
     readFile(new URL('../src/StorefrontRoot.tsx', import.meta.url), 'utf8'),
@@ -35,9 +37,15 @@ test('shared navigation runtime owns SPA push and route direction', async () => 
   );
   assert.match(homeSource, /handleStorefrontLinkClick/u);
   assert.match(rootSource, /handleStorefrontLinkClick/u);
+  assert.match(rootSource, /STOREFRONT_LOCATION_EVENT/u);
+  assert.doesNotMatch(rootSource, /STOREFRONT_NAVIGATION_EVENT/u);
+  assert.doesNotMatch(rootSource, /addEventListener\('popstate'/u);
   assert.match(rootSource, /routeKey=\{pathname\}/u);
   assert.doesNotMatch(rootSource, /routeKey=\{locationKey\}/u);
+  assert.match(locationRuntimeSource, /storefront:location/u);
+  assert.match(locationRuntimeSource, /publishStorefrontLocationChange/u);
   assert.match(presentationSource, /STOREFRONT_NAVIGATION_EVENT/u);
+  assert.match(presentationSource, /publishStorefrontLocationChange/u);
   assert.match(
     presentationSource,
     /previousPathname && previousPathname !== nextPathname/u,
