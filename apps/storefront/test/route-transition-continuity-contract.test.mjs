@@ -1,6 +1,24 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
+import { shouldUseStorefrontViewTransition } from '../src/storefront-view-transition.ts';
+
+test('root tabs stay lightweight while hierarchical routes opt into view transitions', () => {
+  assert.equal(shouldUseStorefrontViewTransition('/', '/browse/'), false);
+  assert.equal(shouldUseStorefrontViewTransition('/browse/', '/faq/'), false);
+  assert.equal(
+    shouldUseStorefrontViewTransition('/browse/', '/sections/demo-section/'),
+    true,
+  );
+  assert.equal(
+    shouldUseStorefrontViewTransition(
+      '/sections/demo-section/',
+      '/sections/demo-section/products/demo-product/',
+    ),
+    true,
+  );
+  assert.equal(shouldUseStorefrontViewTransition('/sections/demo-section/', '/browse/'), true);
+});
 
 test('hierarchical navigation transitions only route content and keeps persistent chrome stable', async () => {
   const [transitionRuntime, navigationRuntime, presentationSource, transitionStyles] =
