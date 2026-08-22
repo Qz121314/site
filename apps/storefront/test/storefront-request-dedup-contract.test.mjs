@@ -7,6 +7,8 @@ function source(path) {
   return readFileSync(new URL(path, import.meta.url), 'utf8');
 }
 
+// These source contracts keep route-level cache ownership explicit so later UI work
+// cannot silently reintroduce duplicate public reads on the primary storefront path.
 test('home and section surfaces share the canonical section query cache', () => {
   const home = source('../src/HomeFeed.tsx');
   const section = source('../src/SectionPage.tsx');
