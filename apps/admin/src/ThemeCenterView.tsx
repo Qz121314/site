@@ -172,7 +172,10 @@ function ThemeEditorControls({
             <strong>UI Recipe</strong>
             <span>模板已做好完整搭配，只开放安全范围内的品牌调整。</span>
           </div>
-          <button type="button" onClick={() => setRecipe(recipeSelection(selectedPreset))}>
+          <button
+            type="button"
+            onClick={() => setRecipe(recipeSelection(selectedPreset))}
+          >
             恢复模板
           </button>
         </div>
@@ -414,7 +417,8 @@ function ThemeEditorControls({
       <div className="theme-ratio-note">
         <strong>外部主题也必须服从本站移动端结构</strong>
         <p>
-          外部来源只能改变经过校验的颜色 Token。字体、按钮、素材、动效和导航会先映射到本站安全的 UI
+          外部来源只能改变经过校验的颜色
+          Token。字体、按钮、素材、动效和导航会先映射到本站安全的 UI
           Recipe；产品双列和业务结构保持不变。
         </p>
       </div>
