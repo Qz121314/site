@@ -8,6 +8,7 @@ import {
 import type { StorefrontLinkComponent } from '@site/storefront-ui';
 import { useEffect, useMemo, useState } from 'react';
 import { loadProductSnapshot, type StorefrontBootstrap } from './content';
+import { resolveCustomerServiceCta } from './cta';
 import { replaceStorefrontLocation } from './storefront-navigation-runtime';
 import type {
   SupportConversationDetail,
@@ -26,7 +27,20 @@ import { MessagesWorkspace, type PendingSupportConversation } from './support-ui
 import './messages-ui.css';
 import './messages-media.css';
 
-type ComposeContext = { productId: string; sectionId: string; handoffId: string };
+const HANDOFF_ID_PATTERN =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu;
+
+type ComposeContext = {
+  productId: string;
+  sectionId: string;
+  handoffId: string | null;
+  ctaPath: string | null;
+};
+type ResolvedComposeContext = {
+  productId: string;
+  sectionId: string;
+  handoffId: string;
+};
 type ConversationQueryCache = {
   pages: Array<SupportConversationDetail | null>;
   pageParams: Array<string | null>;
@@ -47,17 +61,39 @@ function readComposeContext(): ComposeContext | null {
   const params = new URLSearchParams(window.location.search);
   const productId = params.get('productId')?.trim() ?? '';
   const sectionId = params.get('sectionId')?.trim() ?? '';
-  const handoffId = params.get('handoffId')?.trim() ?? '';
+  const rawHandoffId = params.get('handoffId')?.trim() ?? '';
+  const rawCtaPath = params.get('ctaPath')?.trim() ?? '';
+  const handoffId = HANDOFF_ID_PATTERN.test(rawHandoffId) ? rawHandoffId : null;
+  const ctaPath =
+    rawCtaPath.startsWith('/go/') && rawCtaPath.length <= 240 ? rawCtaPath : null;
   if (
     !productId ||
     !sectionId ||
-    !/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/iu.test(
-      handoffId,
-    ) ||
+    (!handoffId && !ctaPath) ||
     productId.length > 120 ||
     sectionId.length > 120
   )
     return null;
+  return { productId, sectionId, handoffId, ctaPath };
+}
+
+function parseResolvedComposePath(
+  path: string,
+  expected: Pick<ComposeContext, 'productId' | 'sectionId'>,
+): ResolvedComposeContext {
+  const target = new URL(path, window.location.origin);
+  const productId = target.searchParams.get('productId')?.trim() ?? '';
+  const sectionId = target.searchParams.get('sectionId')?.trim() ?? '';
+  const handoffId = target.searchParams.get('handoffId')?.trim() ?? '';
+  if (
+    target.origin !== window.location.origin ||
+    target.pathname !== '/messages/new/' ||
+    productId !== expected.productId ||
+    sectionId !== expected.sectionId ||
+    !HANDOFF_ID_PATTERN.test(handoffId)
+  ) {
+    throw new Error('MESSAGE_CONTEXT_UNAVAILABLE');
+  }
   return { productId, sectionId, handoffId };
 }
 
@@ -261,6 +297,25 @@ export function MessagesPage({
     staleTime: 30_000,
     retry: 1,
   });
+  const composeHandoffQuery = useQuery({
+    queryKey: ['support-compose-handoff', composeContext?.ctaPath],
+    enabled: Boolean(composeContext?.ctaPath && !composeContext.handoffId),
+    queryFn: async ({ signal }) => {
+      if (!composeContext?.ctaPath) throw new Error('MESSAGE_CONTEXT_UNAVAILABLE');
+      const path = await resolveCustomerServiceCta(composeContext.ctaPath, signal);
+      return parseResolvedComposePath(path, composeContext);
+    },
+    staleTime: Number.POSITIVE_INFINITY,
+    retry: 1,
+    refetchOnWindowFocus: false,
+  });
+  const resolvedComposeContext: ResolvedComposeContext | null = composeContext?.handoffId
+    ? {
+        productId: composeContext.productId,
+        sectionId: composeContext.sectionId,
+        handoffId: composeContext.handoffId,
+      }
+    : (composeHandoffQuery.data ?? null);
 
   const activeConversation = useMemo(
     () => combineConversationPages(conversationQuery.data?.pages),
@@ -284,16 +339,16 @@ export function MessagesPage({
       }
     : null;
   const composeStartQuery = useQuery({
-    queryKey: ['support-compose-start', composeContext?.handoffId],
-    enabled: Boolean(composeContext && pendingConversation?.productHref),
+    queryKey: ['support-compose-start', resolvedComposeContext?.handoffId],
+    enabled: Boolean(resolvedComposeContext && pendingConversation?.productHref),
     queryFn: ({ signal }) => {
-      if (!composeContext || !pendingConversation?.productHref)
+      if (!resolvedComposeContext || !pendingConversation?.productHref)
         throw new Error('MESSAGE_CONTEXT_UNAVAILABLE');
       return siteSupportGateway.startConversation(
         {
-          handoffId: composeContext.handoffId,
-          productId: composeContext.productId,
-          sectionId: composeContext.sectionId,
+          handoffId: resolvedComposeContext.handoffId,
+          productId: resolvedComposeContext.productId,
+          sectionId: resolvedComposeContext.sectionId,
           productTitle: pendingConversation.productTitle,
           productCoverUrl: pendingConversation.productCoverUrl,
           productHref: pendingConversation.productHref,
@@ -315,13 +370,25 @@ export function MessagesPage({
   });
   const displayedConversation = activeConversation;
   const conversations = conversationsQuery.data ?? [];
+  const composeUnavailable = composeHandoffQuery.isError || composeStartQuery.isError;
   const workspaceSupportAvailable = compose
-    ? composeStartQuery.isError
+    ? composeUnavailable
       ? false
       : composeStartQuery.data
         ? true
         : null
     : supportAvailable;
+
+  useEffect(() => {
+    const resolved = composeHandoffQuery.data;
+    if (!compose || !resolved || composeContext?.handoffId) return;
+    const params = new URLSearchParams({
+      productId: resolved.productId,
+      sectionId: resolved.sectionId,
+      handoffId: resolved.handoffId,
+    });
+    replaceStorefrontLocation(`/messages/new/?${params.toString()}`);
+  }, [compose, composeContext?.handoffId, composeHandoffQuery.data]);
 
   useEffect(() => {
     let active = true;
@@ -633,7 +700,10 @@ export function MessagesPage({
           Boolean(
             compose &&
             composeContext &&
-            (composeProductQuery.isLoading || composeStartQuery.isFetching),
+            (composeProductQuery.isLoading ||
+              composeHandoffQuery.isFetching ||
+              (!resolvedComposeContext && !composeHandoffQuery.isError) ||
+              composeStartQuery.isFetching),
           )
         }
       />
