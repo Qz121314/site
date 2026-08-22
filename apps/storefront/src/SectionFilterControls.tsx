@@ -77,7 +77,9 @@ export function SectionFilterControls({
 
         {hasTags ? (
           <button
-            className={`section-tag-filter-trigger${selectedTags.size > 0 ? ' is-active' : ''}`}
+            className={`section-tag-filter-trigger${
+              selectedTags.size > 0 ? ' is-active' : ''
+            }`}
             type="button"
             aria-label="Tags"
             aria-expanded={tagPanelOpen}
@@ -113,7 +115,11 @@ export function SectionFilterControls({
             })}
           </div>
           {selectedTags.size > 0 ? (
-            <button className="section-tag-filter-clear" type="button" onClick={onClearTags}>
+            <button
+              className="section-tag-filter-clear"
+              type="button"
+              onClick={onClearTags}
+            >
               {SYSTEM_UI.clear}
             </button>
           ) : null}
