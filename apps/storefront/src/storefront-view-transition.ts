@@ -1,6 +1,5 @@
-import { parseStorefrontRoute } from './routing';
+import { storefrontPresentationMode } from './storefront-presentation-mode';
 
-type StorefrontPresentationMode = 'root' | 'push';
 type StorefrontViewTransitionMode = 'push' | 'pop';
 type StorefrontViewTransition = {
   finished: Promise<void>;
@@ -12,20 +11,6 @@ type ViewTransitionDocument = Document & {
 };
 
 let activeTransitionId = 0;
-
-function presentationMode(pathname: string): StorefrontPresentationMode {
-  const route = parseStorefrontRoute(pathname);
-  switch (route.type) {
-    case 'section':
-    case 'product':
-    case 'faq-article':
-    case 'message':
-    case 'message-compose':
-      return 'push';
-    default:
-      return 'root';
-  }
-}
 
 function prefersReducedMotion(): boolean {
   return window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -44,8 +29,8 @@ export function shouldUseStorefrontViewTransition(
   toPathname: string,
 ): boolean {
   if (fromPathname === toPathname) return false;
-  const fromMode = presentationMode(fromPathname);
-  const toMode = presentationMode(toPathname);
+  const fromMode = storefrontPresentationMode(fromPathname);
+  const toMode = storefrontPresentationMode(toPathname);
   return !(fromMode === 'root' && toMode === 'root');
 }
 
