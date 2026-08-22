@@ -17,6 +17,7 @@ import {
 } from './storefront-history';
 import { SYSTEM_UI } from './system-ui';
 import './browse-ui.css';
+import './browse-app-surface.css';
 
 const BROWSE_VIEW_STATE_KEY = 'browse-directory';
 
