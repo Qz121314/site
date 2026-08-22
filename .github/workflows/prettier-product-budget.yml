@@ -3,6 +3,7 @@ name: Prettier Product Budget
 on:
   pull_request:
     paths:
+      - 'apps/storefront/src/ProductDetailPage.tsx'
       - 'apps/storefront/src/LegacyProductRoute.tsx'
       - 'apps/storefront/test/product-detail-request-budget-contract.test.mjs'
       - '.github/workflows/prettier-product-budget.yml'
@@ -20,13 +21,24 @@ jobs:
           ref: ${{ github.event.pull_request.head.ref }}
       - run: npm install --global pnpm@11.19.0
       - run: pnpm install --frozen-lockfile
-      - name: Apply exact Prettier output
+      - name: Apply type-safe placeholder and exact Prettier output
         run: |
           set -euo pipefail
+          node <<'NODE'
+          const fs = require('fs');
+          const path = 'apps/storefront/src/ProductDetailPage.tsx';
+          const source = fs.readFileSync(path, 'utf8');
+          const before = `    placeholderData: knownProduct\n      ? placeholderProductSnapshot(bootstrap, knownProduct)\n      : undefined,`;
+          const after = `    placeholderData: () =>\n      knownProduct ? placeholderProductSnapshot(bootstrap, knownProduct) : undefined,`;
+          if (!source.includes(before)) throw new Error('Expected placeholderData block not found');
+          fs.writeFileSync(path, source.replace(before, after));
+          NODE
           pnpm exec prettier --write \
+            apps/storefront/src/ProductDetailPage.tsx \
             apps/storefront/src/LegacyProductRoute.tsx \
             apps/storefront/test/product-detail-request-budget-contract.test.mjs
           if git diff --quiet -- \
+            apps/storefront/src/ProductDetailPage.tsx \
             apps/storefront/src/LegacyProductRoute.tsx \
             apps/storefront/test/product-detail-request-budget-contract.test.mjs; then
             exit 0
@@ -34,7 +46,8 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add \
+            apps/storefront/src/ProductDetailPage.tsx \
             apps/storefront/src/LegacyProductRoute.tsx \
             apps/storefront/test/product-detail-request-budget-contract.test.mjs
-          git commit -m 'style: apply Prettier to product detail budget'
+          git commit -m 'fix: normalize product detail placeholder data'
           git push origin HEAD:${{ github.event.pull_request.head.ref }}
