@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { StorefrontLinkComponent } from '@site/storefront-ui';
 import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import {
@@ -78,6 +78,7 @@ export function ProductDetailPage({
   sectionRef: string | null;
   LinkComponent?: StorefrontLinkComponent;
 }) {
+  const queryClient = useQueryClient();
   const [activeMediaId, setActiveMediaId] = useState<string | null>(null);
   const [mobileMediaIndex, setMobileMediaIndex] = useState(0);
   const [ctaNavigating, setCtaNavigating] = useState(false);
@@ -201,6 +202,19 @@ export function ProductDetailPage({
       setCtaNavigating(true);
       try {
         const path = await resolveCustomerServiceCta(cta.path);
+        const target = new URL(path, window.location.href);
+        const composeProductId = target.searchParams.get('productId');
+        const composeSectionId = target.searchParams.get('sectionId');
+        if (
+          query.data &&
+          composeProductId === product.id &&
+          composeSectionId === product.sectionId
+        ) {
+          queryClient.setQueryData(
+            ['support-compose-product', composeSectionId, composeProductId],
+            query.data,
+          );
+        }
         pushStorefrontLocation(path);
       } catch {
         window.location.assign(cta.path);
