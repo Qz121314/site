@@ -306,7 +306,7 @@ export function MessagesPage({
       return parseResolvedComposePath(path, composeContext);
     },
     staleTime: Number.POSITIVE_INFINITY,
-    retry: 1,
+    retry: false,
     refetchOnWindowFocus: false,
   });
   const resolvedComposeContext: ResolvedComposeContext | null = composeContext?.handoffId
@@ -357,7 +357,7 @@ export function MessagesPage({
       );
     },
     staleTime: Number.POSITIVE_INFINITY,
-    retry: 1,
+    retry: false,
     refetchOnWindowFocus: false,
   });
   const conversationsQuery = useQuery({
@@ -370,7 +370,19 @@ export function MessagesPage({
   });
   const displayedConversation = activeConversation;
   const conversations = conversationsQuery.data ?? [];
-  const composeUnavailable = composeHandoffQuery.isError || composeStartQuery.isError;
+  const composeUnavailable =
+    composeProductQuery.isError || composeHandoffQuery.isError || composeStartQuery.isError;
+  const composeConnecting = Boolean(
+    compose &&
+      composeContext &&
+      (composeProductQuery.isLoading ||
+        composeHandoffQuery.isFetching ||
+        (!resolvedComposeContext && !composeHandoffQuery.isError) ||
+        composeStartQuery.isFetching),
+  );
+  const composeConnectionError = Boolean(
+    compose && composeUnavailable && !composeConnecting,
+  );
   const workspaceSupportAvailable = compose
     ? composeUnavailable
       ? false
@@ -627,6 +639,15 @@ export function MessagesPage({
     }
   }
 
+  function retryComposeConnection() {
+    if (composeProductQuery.isError) void composeProductQuery.refetch();
+    if (composeHandoffQuery.isError) {
+      void composeHandoffQuery.refetch();
+      return;
+    }
+    if (composeStartQuery.isError) void composeStartQuery.refetch();
+  }
+
   return (
     <div
       className={`messages-push-host${showNotificationToggle ? ' has-push-toggle' : ''}`}
@@ -696,15 +717,11 @@ export function MessagesPage({
         }
         loadingEarlier={conversationQuery.isFetchingNextPage}
         loadingConversation={
-          Boolean(activeConversationRef && conversationQuery.isLoading) ||
-          Boolean(
-            compose &&
-            composeContext &&
-            (composeProductQuery.isLoading ||
-              composeHandoffQuery.isFetching ||
-              (!resolvedComposeContext && !composeHandoffQuery.isError) ||
-              composeStartQuery.isFetching),
-          )
+          Boolean(activeConversationRef && conversationQuery.isLoading) || composeConnecting
+        }
+        connectionError={composeConnectionError}
+        onRetryConnection={
+          compose && composeUnavailable ? retryComposeConnection : undefined
         }
       />
     </div>
