@@ -27,6 +27,69 @@ jobs:
           cache: pnpm
 
       - run: pnpm install --frozen-lockfile
+
+      - name: Fix one-shot patch anchor
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('.github/scripts/apply-theme-preview-modal.py')
+          source = path.read_text()
+          old = '''load_effect = """  useEffect(() => {
+            void loadThemeCenter();
+          }, [loadThemeCenter]);
+
+          """
+          preview_effect = """  useEffect(() => {
+            void loadThemeCenter();
+          }, [loadThemeCenter]);
+
+          useEffect(() => {
+            if (!previewOpen) return undefined;
+
+            const previousOverflow = document.body.style.overflow;
+            document.body.style.overflow = 'hidden';
+            const handleKeyDown = (event: KeyboardEvent) => {
+              if (event.key === 'Escape') setPreviewOpen(false);
+            };
+            window.addEventListener('keydown', handleKeyDown);
+            return () => {
+              document.body.style.overflow = previousOverflow;
+              window.removeEventListener('keydown', handleKeyDown);
+            };
+          }, [previewOpen]);
+
+          """'''
+          new = '''load_effect = """  useEffect(() => {
+              void loadThemeCenter();
+            }, [loadThemeCenter]);
+
+          """
+          preview_effect = """  useEffect(() => {
+              void loadThemeCenter();
+            }, [loadThemeCenter]);
+
+            useEffect(() => {
+              if (!previewOpen) return undefined;
+
+              const previousOverflow = document.body.style.overflow;
+              document.body.style.overflow = 'hidden';
+              const handleKeyDown = (event: KeyboardEvent) => {
+                if (event.key === 'Escape') setPreviewOpen(false);
+              };
+              window.addEventListener('keydown', handleKeyDown);
+              return () => {
+                document.body.style.overflow = previousOverflow;
+                window.removeEventListener('keydown', handleKeyDown);
+              };
+            }, [previewOpen]);
+
+          """'''
+          if old not in source:
+              raise SystemExit('temporary patch anchor definition not found')
+          path.write_text(source.replace(old, new, 1))
+          PY
+
       - run: python .github/scripts/apply-theme-preview-modal.py
       - run: >-
           pnpm exec prettier --write
