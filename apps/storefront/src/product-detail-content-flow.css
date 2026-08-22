@@ -127,12 +127,7 @@
   right: 10px;
 }
 
-.detail-mobile-media-nav:disabled {
-  opacity: 0;
-  pointer-events: none;
-}
-
-.detail-mobile-media-nav:active:not(:disabled) {
+.detail-mobile-media-nav:active {
   background: rgb(0 0 0 / 68%);
   transform: translateY(-50%) scale(0.94);
 }
@@ -145,6 +140,10 @@
   stroke-width: 1.9;
   stroke-linecap: round;
   stroke-linejoin: round;
+}
+
+.detail-mobile-media-nav.is-previous svg {
+  transform: rotate(180deg);
 }
 
 .detail-mobile-media-pagination {
@@ -205,7 +204,7 @@
 }
 
 @media (hover: hover) and (pointer: fine) {
-  .detail-mobile-media-nav:hover:not(:disabled) {
+  .detail-mobile-media-nav:hover {
     background: rgb(0 0 0 / 64%);
   }
 }
