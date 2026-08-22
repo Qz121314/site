@@ -8,12 +8,6 @@ test('customer-service CTA reaches the Worker /go route as a document request', 
   const publishedRoute = await findPublishedProductRoute(request);
   test.skip(!publishedRoute, 'No published product is available for CTA verification.');
 
-  await page.goto(publishedRoute!.productHref);
-  const cta = page.locator(
-    '.storefront-route-action-host .product-detail-route-action .cta-button',
-  );
-  await expect(cta).toBeVisible();
-
   await page.route('**/api/public/storefront/cta/*', async (route) => {
     await route.fulfill({
       status: 200,
@@ -36,6 +30,13 @@ test('customer-service CTA reaches the Worker /go route as a document request', 
       body: '<!doctype html><title>conversion reached</title>',
     });
   });
+
+  await page.goto(publishedRoute!.productHref);
+  const cta = page.locator(
+    '.storefront-route-action-host .product-detail-route-action .cta-button',
+  );
+  await expect(cta).toBeVisible();
+  await expect(cta).toContainText('Contact');
 
   await cta.click();
   await expect.poll(() => conversionRequestType).toBe('document');
