@@ -19,6 +19,146 @@
         margin: 0;
         background: var(--page-bg, #f5f6f7);
       }
+
+      body {
+        min-width: 320px;
+        overflow-x: hidden;
+      }
+
+      #root:empty {
+        --boot-header-height: calc(58px + env(safe-area-inset-top));
+        --boot-bottom-height: calc(66px + env(safe-area-inset-bottom));
+        --boot-hero-height: clamp(300px, 52svh, 440px);
+        position: relative;
+        min-height: 100dvh;
+        overflow: hidden;
+        background:
+          radial-gradient(
+              circle,
+              color-mix(in srgb, var(--surface-soft, #f1f2f4) 88%, var(--line, #e7e9ec))
+                0 28px,
+              transparent 29px
+            )
+            12px calc(var(--boot-header-height) + var(--boot-hero-height) + 26px) / 84px 58px
+            repeat-x,
+          linear-gradient(
+              color-mix(in srgb, var(--surface-soft, #f1f2f4) 88%, var(--line, #e7e9ec)),
+              color-mix(in srgb, var(--surface-soft, #f1f2f4) 88%, var(--line, #e7e9ec))
+            )
+            16px calc(var(--boot-header-height) + var(--boot-hero-height) + 112px) / 148px 18px
+            no-repeat,
+          linear-gradient(
+              color-mix(in srgb, var(--surface-soft, #f1f2f4) 88%, var(--line, #e7e9ec)),
+              color-mix(in srgb, var(--surface-soft, #f1f2f4) 88%, var(--line, #e7e9ec))
+            )
+            12px calc(var(--boot-header-height) + var(--boot-hero-height) + 148px) /
+            calc((100vw - 36px) / 2) calc((100vw - 36px) / 2) no-repeat,
+          linear-gradient(
+              color-mix(in srgb, var(--surface-soft, #f1f2f4) 88%, var(--line, #e7e9ec)),
+              color-mix(in srgb, var(--surface-soft, #f1f2f4) 88%, var(--line, #e7e9ec))
+            )
+            calc(50% + 6px) calc(var(--boot-header-height) + var(--boot-hero-height) + 148px) /
+            calc((100vw - 36px) / 2) calc((100vw - 36px) / 2) no-repeat,
+          linear-gradient(
+              color-mix(in srgb, var(--surface-soft, #f1f2f4) 86%, var(--line, #e7e9ec)),
+              color-mix(in srgb, var(--surface-soft, #f1f2f4) 86%, var(--line, #e7e9ec))
+            )
+            0 calc(var(--boot-header-height) + 10px) / 100% var(--boot-hero-height) no-repeat,
+          var(--page-bg, #f5f6f7);
+      }
+
+      #root:empty::before {
+        position: fixed;
+        top: 0;
+        right: 0;
+        left: 0;
+        z-index: 2;
+        height: var(--boot-header-height);
+        border-bottom: 1px solid var(--line, #e7e9ec);
+        background:
+          linear-gradient(
+              color-mix(in srgb, var(--surface-soft, #f1f2f4) 88%, var(--line, #e7e9ec)),
+              color-mix(in srgb, var(--surface-soft, #f1f2f4) 88%, var(--line, #e7e9ec))
+            )
+            center calc(env(safe-area-inset-top) + 12px) / min(44vw, 148px) 34px no-repeat,
+          color-mix(in srgb, var(--surface, #fff) 92%, transparent);
+        backdrop-filter: blur(22px) saturate(1.08);
+        content: '';
+      }
+
+      #root:empty::after {
+        position: fixed;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 2;
+        height: var(--boot-bottom-height);
+        border-top: 1px solid var(--line, #e7e9ec);
+        background:
+          radial-gradient(
+              circle,
+              color-mix(in srgb, var(--surface-soft, #f1f2f4) 88%, var(--line, #e7e9ec))
+                0 13px,
+              transparent 14px
+            )
+            12.5% 9px / 28px 28px no-repeat,
+          radial-gradient(
+              circle,
+              color-mix(in srgb, var(--surface-soft, #f1f2f4) 88%, var(--line, #e7e9ec))
+                0 13px,
+              transparent 14px
+            )
+            37.5% 9px / 28px 28px no-repeat,
+          radial-gradient(
+              circle,
+              color-mix(in srgb, var(--surface-soft, #f1f2f4) 88%, var(--line, #e7e9ec))
+                0 13px,
+              transparent 14px
+            )
+            62.5% 9px / 28px 28px no-repeat,
+          radial-gradient(
+              circle,
+              color-mix(in srgb, var(--surface-soft, #f1f2f4) 88%, var(--line, #e7e9ec))
+                0 13px,
+              transparent 14px
+            )
+            87.5% 9px / 28px 28px no-repeat,
+          color-mix(in srgb, var(--surface, #fff) 90%, transparent);
+        backdrop-filter: blur(24px) saturate(1.08);
+        content: '';
+      }
+
+      @media (min-width: 768px) {
+        #root:empty {
+          background:
+            radial-gradient(
+                circle,
+                color-mix(in srgb, var(--surface-soft, #f1f2f4) 88%, var(--line, #e7e9ec))
+                  0 28px,
+                transparent 29px
+              )
+              max(24px, calc((100vw - 1200px) / 2 + 24px))
+              calc(var(--boot-header-height) + min(440px, 39vw) + 44px) / 90px 58px repeat-x,
+            linear-gradient(
+                color-mix(in srgb, var(--surface-soft, #f1f2f4) 86%, var(--line, #e7e9ec)),
+                color-mix(in srgb, var(--surface-soft, #f1f2f4) 86%, var(--line, #e7e9ec))
+              )
+              center calc(var(--boot-header-height) + 25px) / min(1152px, calc(100% - 48px))
+              min(440px, 39vw) no-repeat,
+            var(--page-bg, #f5f6f7);
+        }
+      }
+
+      @media (min-width: 980px) {
+        #root:empty {
+          --boot-header-height: 62px;
+          --boot-bottom-height: 0px;
+        }
+
+        #root:empty::after {
+          display: none;
+        }
+      }
     </style>
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
