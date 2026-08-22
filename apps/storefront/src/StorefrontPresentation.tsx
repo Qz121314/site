@@ -1,5 +1,4 @@
 import { useLayoutEffect } from 'react';
-import { parseStorefrontRoute } from './routing';
 import {
   ensureStorefrontHistoryState,
   recordStorefrontHistoryPush,
@@ -7,23 +6,16 @@ import {
   type StorefrontNavigationDirection,
 } from './storefront-history';
 import { STOREFRONT_NAVIGATION_EVENT } from './storefront-navigation-runtime';
+import {
+  storefrontPresentationMode,
+  type StorefrontPresentationMode,
+} from './storefront-presentation-mode';
+import {
+  runStorefrontViewTransition,
+  shouldUseStorefrontViewTransition,
+} from './storefront-view-transition';
 
-type StorefrontPresentationMode = 'root' | 'push';
 type StorefrontTransitionMode = 'tab' | 'push' | 'pop';
-
-function presentationMode(pathname: string): StorefrontPresentationMode {
-  const route = parseStorefrontRoute(pathname);
-  switch (route.type) {
-    case 'section':
-    case 'product':
-    case 'faq-article':
-    case 'message':
-    case 'message-compose':
-      return 'push';
-    default:
-      return 'root';
-  }
-}
 
 function transitionModeForNavigation(
   previousMode: StorefrontPresentationMode | undefined,
@@ -42,10 +34,11 @@ function transitionModeForNavigation(
 function applyPresentationMode(direction: StorefrontNavigationDirection | null = null) {
   const element = document.documentElement;
   const previousMode = element.dataset.storefrontPresentation as
-    StorefrontPresentationMode | undefined;
+    | StorefrontPresentationMode
+    | undefined;
   const previousPathname = element.dataset.storefrontPathname;
   const nextPathname = window.location.pathname;
-  const nextMode = presentationMode(nextPathname);
+  const nextMode = storefrontPresentationMode(nextPathname);
   const transitionMode =
     previousPathname && previousPathname !== nextPathname
       ? transitionModeForNavigation(previousMode, nextMode, direction)
@@ -68,8 +61,20 @@ export function StorefrontPresentation() {
     }
 
     function handlePopState(event: PopStateEvent) {
+      const previousPathname = document.documentElement.dataset.storefrontPathname;
       const direction = syncStorefrontHistoryFromPopState(event.state);
-      applyPresentationMode(direction);
+      const nextPathname = window.location.pathname;
+      const update = () => applyPresentationMode(direction);
+
+      if (
+        direction &&
+        previousPathname &&
+        shouldUseStorefrontViewTransition(previousPathname, nextPathname)
+      ) {
+        runStorefrontViewTransition(direction === 'back' ? 'pop' : 'push', update);
+      } else {
+        update();
+      }
     }
 
     window.addEventListener('popstate', handlePopState);
