@@ -15,15 +15,22 @@ const uiCss = readFileSync(
   'utf8',
 );
 
-test('mobile product gallery is compact and clearly communicates swipe navigation', () => {
+test('mobile product gallery is full-bleed and clearly communicates swipe navigation', () => {
   assert.match(source, /className="detail-mobile-media-track"/u);
   assert.match(source, /className="detail-mobile-media-count"/u);
   assert.match(flowCss, /\.detail-mobile-gallery \{[\s\S]*width: 100%;/u);
   assert.match(flowCss, /\.detail-mobile-gallery \{[\s\S]*margin-inline: 0;/u);
-  assert.match(flowCss, /\.detail-mobile-gallery \{[\s\S]*border-radius:/u);
   assert.match(
     flowCss,
-    /\.detail-mobile-media-count \{[\s\S]*top: 12px;[\s\S]*min-width: 50px;[\s\S]*font-weight: 760;/u,
+    /@media \(max-width: 767px\)[\s\S]*\.product-detail-page \{[\s\S]*width: calc\(100% \+ \(var\(--v2-gutter, 16px\) \* 2\)\);/u,
+  );
+  assert.match(
+    flowCss,
+    /@media \(max-width: 767px\)[\s\S]*\.detail-mobile-gallery \{[\s\S]*border-radius: 0;[\s\S]*box-shadow: none;/u,
+  );
+  assert.match(
+    flowCss,
+    /\.detail-mobile-media-count \{[\s\S]*top: 10px;[\s\S]*min-width: 46px;[\s\S]*font-weight: 720;/u,
   );
   assert.match(flowCss, /\.detail-mobile-media-count::after \{[\s\S]*content: '↔';/u);
 });
