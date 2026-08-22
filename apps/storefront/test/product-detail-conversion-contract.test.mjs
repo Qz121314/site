@@ -52,7 +52,11 @@ test('product detail keeps a conversion-first mobile hierarchy', async () => {
   assert.doesNotMatch(viewportRuntime, /--app-route-action-height/u);
 
   assert.match(source, /const ctaFailed =/u);
-  assert.match(source, /disabled=\{ctaQuery\.isFetching \|\| ctaMissing\}/u);
+  assert.match(source, /enabled: Boolean\(product\?\.id\)/u);
+  assert.match(source, /staleTime: Number\.POSITIVE_INFINITY/u);
+  assert.match(source, /disabled=\{ctaLoading \|\| ctaMissing\}/u);
+  assert.match(source, /className="product-detail-cta-label"/u);
+  assert.doesNotMatch(source, /SYSTEM_UI\.continue/u);
   assert.match(source, /<span>\{SYSTEM_UI\.retry\}<\/span>/u);
 
   assert.match(shellStyles, /\.storefront-bottom-chrome \{[\s\S]*position: fixed/u);
@@ -119,6 +123,7 @@ test('product detail keeps a conversion-first mobile hierarchy', async () => {
   );
   assert.match(flowStyles, /\.detail-mobile-media-item > img/u);
   assert.match(flowStyles, /\.detail-mobile-media-count \{/u);
+  assert.match(flowStyles, /\.detail-mobile-media-count::after \{/u);
   assert.match(flowStyles, /@media \(min-width: 768px\)/u);
   assert.doesNotMatch(flowStyles, /product-detail-secondary-media/u);
 

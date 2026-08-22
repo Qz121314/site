@@ -83,7 +83,6 @@ export function ProductDetailPage({
 }) {
   const [activeMediaId, setActiveMediaId] = useState<string | null>(null);
   const [mobileMediaIndex, setMobileMediaIndex] = useState(0);
-  const [ctaAttempted, setCtaAttempted] = useState(false);
   const mobileMediaTrackRef = useRef<HTMLDivElement | null>(null);
   const query = useQuery({
     queryKey: [
@@ -99,8 +98,11 @@ export function ProductDetailPage({
   const product = query.data?.product ?? null;
   const ctaQuery = useQuery({
     queryKey: ['storefront-product-cta', product?.id],
-    enabled: false,
+    enabled: Boolean(product?.id),
     queryFn: ({ signal }) => loadPublicCta(product!.id, signal),
+    staleTime: Number.POSITIVE_INFINITY,
+    refetchOnWindowFocus: false,
+    retry: false,
   });
   const media = product?.media.filter(hasMediaUrl) ?? [];
   const activeMedia = media.find((item) => item.id === activeMediaId) ?? media[0] ?? null;
@@ -112,7 +114,6 @@ export function ProductDetailPage({
   useEffect(() => {
     setActiveMediaId(null);
     setMobileMediaIndex(0);
-    setCtaAttempted(false);
     mobileMediaTrackRef.current?.scrollTo({ left: 0, behavior: 'auto' });
   }, [product?.id]);
 
@@ -195,9 +196,7 @@ export function ProductDetailPage({
 
   async function handleCtaClick() {
     if (ctaQuery.isFetching) return;
-    setCtaAttempted(true);
-    const result = await ctaQuery.refetch();
-    const cta = result.data;
+    const cta = ctaQuery.data ?? (await ctaQuery.refetch()).data;
     if (!cta) return;
     if (cta.mode === 'customer_service') {
       navigateInternalCta(cta.path);
@@ -206,26 +205,29 @@ export function ProductDetailPage({
     window.location.assign(cta.path);
   }
 
-  const ctaMissing =
-    ctaAttempted && !ctaQuery.isFetching && !ctaQuery.error && ctaQuery.data === null;
-  const ctaFailed = ctaAttempted && !ctaQuery.isFetching && Boolean(ctaQuery.error);
+  const ctaLoading = ctaQuery.isFetching || ctaQuery.isPending;
+  const ctaMissing = !ctaLoading && !ctaQuery.error && ctaQuery.data === null;
+  const ctaFailed = !ctaLoading && Boolean(ctaQuery.error);
 
   function renderCtaButton() {
+    const cta = ctaQuery.data;
     const stateClass = ctaMissing
       ? ' is-unavailable'
       : ctaFailed
         ? ' is-retry'
-        : ' is-ready';
+        : cta
+          ? ' is-ready'
+          : ' is-loading';
 
     return (
       <button
         className={`cta-button${stateClass}`}
         type="button"
-        aria-busy={ctaQuery.isFetching || undefined}
-        disabled={ctaQuery.isFetching || ctaMissing}
+        aria-busy={ctaLoading || undefined}
+        disabled={ctaLoading || ctaMissing}
         onClick={() => void handleCtaClick()}
       >
-        {ctaQuery.isFetching ? (
+        {ctaLoading ? (
           <>
             <span className="product-detail-cta-spinner" aria-hidden="true" />
             <span className="sr-only">{SYSTEM_UI.loading}</span>
@@ -237,12 +239,12 @@ export function ProductDetailPage({
             <span>{SYSTEM_UI.retry}</span>
             <CtaArrow />
           </>
-        ) : (
+        ) : cta ? (
           <>
-            <span>{SYSTEM_UI.continue}</span>
+            <span className="product-detail-cta-label">{cta.label}</span>
             <CtaArrow />
           </>
-        )}
+        ) : null}
       </button>
     );
   }
