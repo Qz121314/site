@@ -112,7 +112,7 @@
 .chat-timeline {
   gap: 2px;
   padding: 14px clamp(8px, 2.4vw, 24px) 16px;
-  background: color-mix(in srgb, var(--surface-soft) 98%, var(--surface));
+  background: color-mix(in srgb, var(--surface-soft) 96%, var(--surface));
   scrollbar-gutter: stable;
 }
 
@@ -322,7 +322,7 @@
   }
 
   .messages-push-toggle {
-    top: calc(8px + env(safe-area-inset-top));
+    top: calc(10px + env(safe-area-inset-top));
     right: max(8px, env(safe-area-inset-right));
   }
 
