@@ -14,7 +14,8 @@ export default defineConfig({
   timeout: 30_000,
   webServer: localServer
     ? {
-        command: 'pnpm --filter @site/storefront dev',
+        command:
+          'pnpm --filter @site/storefront build && pnpm --filter @site/storefront preview',
         url: baseURL,
         reuseExistingServer: !process.env.CI,
         timeout: 120_000,
