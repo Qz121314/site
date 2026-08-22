@@ -360,7 +360,36 @@
 
 @media (max-width: 767px) {
   .home-shortcut-zone {
-    padding-top: 16px;
+    padding: 14px 0 24px;
+  }
+
+  .home-shortcuts {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px 8px;
+    padding: 0;
+    overflow: visible;
+    scroll-padding-inline: 0;
+    scroll-snap-type: none;
+    overscroll-behavior-inline: auto;
+  }
+
+  .home-shortcut {
+    width: 100%;
+    min-width: 0;
+    min-height: 80px;
+    gap: 6px;
+    scroll-snap-align: none;
+  }
+
+  .home-shortcut-icon {
+    width: 54px;
+    height: 54px;
+  }
+
+  .home-shortcut-label {
+    font-size: 0.68rem;
+    line-height: 1.16;
   }
 
   .home-recommendation-feed {
