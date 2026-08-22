@@ -376,11 +376,11 @@ export function MessagesPage({
     composeStartQuery.isError;
   const composeConnecting = Boolean(
     compose &&
-      composeContext &&
-      (composeProductQuery.isLoading ||
-        composeHandoffQuery.isFetching ||
-        (!resolvedComposeContext && !composeHandoffQuery.isError) ||
-        composeStartQuery.isFetching),
+    composeContext &&
+    (composeProductQuery.isLoading ||
+      composeHandoffQuery.isFetching ||
+      (!resolvedComposeContext && !composeHandoffQuery.isError) ||
+      composeStartQuery.isFetching),
   );
   const composeConnectionError = Boolean(
     compose && composeUnavailable && !composeConnecting,
