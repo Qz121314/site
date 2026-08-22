@@ -1,0 +1,102 @@
+.loading-halo {
+  --loading-halo-size: 32px;
+  --loading-halo-ring: 2px;
+  --loading-halo-color: var(--brand, #ff5a1f);
+  position: relative;
+  display: inline-grid;
+  width: var(--loading-halo-size);
+  height: var(--loading-halo-size);
+  flex: 0 0 auto;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--loading-halo-color);
+  isolation: isolate;
+}
+
+.loading-halo::before,
+.loading-halo::after {
+  position: absolute;
+  border-radius: inherit;
+  content: '';
+}
+
+.loading-halo::before {
+  inset: 0;
+  border: var(--loading-halo-ring) solid color-mix(in srgb, currentColor 18%, transparent);
+  border-top-color: currentColor;
+  border-right-color: color-mix(in srgb, currentColor 62%, transparent);
+  box-shadow:
+    0 0 calc(var(--loading-halo-size) * 0.34) color-mix(in srgb, currentColor 24%, transparent),
+    inset 0 0 calc(var(--loading-halo-size) * 0.22)
+      color-mix(in srgb, currentColor 8%, transparent);
+  animation: loading-halo-spin 900ms linear infinite;
+}
+
+.loading-halo::after {
+  inset: 31%;
+  background: color-mix(in srgb, currentColor 78%, transparent);
+  box-shadow: 0 0 calc(var(--loading-halo-size) * 0.32) currentColor;
+  opacity: 0.48;
+  animation: loading-halo-breathe 1.15s ease-in-out infinite;
+}
+
+.loading-halo.is-small {
+  --loading-halo-size: 18px;
+  --loading-halo-ring: 1.5px;
+}
+
+.loading-halo.is-medium {
+  --loading-halo-size: 32px;
+  --loading-halo-ring: 2px;
+}
+
+.loading-halo.is-large {
+  --loading-halo-size: 46px;
+  --loading-halo-ring: 2px;
+}
+
+.loading-halo-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 260;
+  display: grid;
+  place-items: center;
+  padding:
+    max(24px, env(safe-area-inset-top)) max(24px, env(safe-area-inset-right))
+    max(24px, env(safe-area-inset-bottom)) max(24px, env(safe-area-inset-left));
+  background: color-mix(in srgb, var(--surface, #fff) 8%, transparent);
+  backdrop-filter: blur(1.25px);
+  -webkit-backdrop-filter: blur(1.25px);
+  cursor: wait;
+  pointer-events: auto;
+}
+
+@keyframes loading-halo-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes loading-halo-breathe {
+  0%,
+  100% {
+    opacity: 0.32;
+    transform: scale(0.78);
+  }
+
+  50% {
+    opacity: 0.7;
+    transform: scale(1.05);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-halo::before,
+  .loading-halo::after {
+    animation: none;
+  }
+
+  .loading-halo::after {
+    opacity: 0.52;
+  }
+}
