@@ -29,10 +29,7 @@ function isMessagesThread(pathname: string): boolean {
 export function pushStorefrontLocation(href: string): void {
   const target = new URL(href, window.location.href);
   const current = new URL(window.location.href);
-  if (target.origin !== current.origin) {
-    window.location.assign(target.href);
-    return;
-  }
+  if (target.origin !== current.origin) return;
   if (normalizedLocationKey(target) === normalizedLocationKey(current)) return;
 
   saveCurrentStorefrontScrollPosition();
