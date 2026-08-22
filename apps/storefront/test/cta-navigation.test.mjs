@@ -15,7 +15,10 @@ test('customer service CTA records the handoff then enters Messages through SPA 
 
   assert.match(productDetail, /resolveCustomerServiceCta\(cta\.path\)/u);
   assert.match(productDetail, /pushStorefrontLocation\(path\)/u);
-  assert.match(productDetail, /\['support-compose-product', composeSectionId, composeProductId\]/u);
+  assert.match(
+    productDetail,
+    /\['support-compose-product', composeSectionId, composeProductId\]/u,
+  );
   assert.match(productDetail, /window\.location\.assign\(cta\.path\)/u);
 
   assert.match(cta, /headers: \{ Accept: 'application\/json' \}/u);
