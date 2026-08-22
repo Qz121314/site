@@ -1,0 +1,39 @@
+name: Format Browse Surface
+
+on:
+  push:
+    branches:
+      - ui/browse-app-surface
+    paths:
+      - apps/storefront/src/browse-app-surface.css
+      - .github/workflows/format-browse-surface.yml
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Set up Node.js and pnpm
+        run: |
+          set -euo pipefail
+          npm install --global pnpm@11.19.0
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Format Browse surface
+        run: pnpm exec prettier --write apps/storefront/src/browse-app-surface.css
+      - name: Commit formatting
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- apps/storefront/src/browse-app-surface.css; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apps/storefront/src/browse-app-surface.css
+          git commit -m "style(storefront): format browse app surface"
+          git push origin HEAD:ui/browse-app-surface
