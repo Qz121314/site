@@ -1,8 +1,4 @@
 import { saveCurrentStorefrontScrollPosition } from './storefront-history';
-import {
-  runStorefrontViewTransition,
-  shouldUseStorefrontViewTransition,
-} from './storefront-view-transition';
 
 export const STOREFRONT_NAVIGATION_EVENT = 'storefront:navigate';
 export const STOREFRONT_REPLACE_EVENT = 'storefront:replace';
@@ -53,16 +49,8 @@ export function handleStorefrontLinkClick(
   const current = new URL(window.location.href);
   if (normalizedLocationKey(target) === normalizedLocationKey(current)) return true;
 
-  const navigate = () => {
-    saveCurrentStorefrontScrollPosition();
-    window.history.pushState(null, '', href);
-    window.dispatchEvent(new Event(STOREFRONT_NAVIGATION_EVENT));
-  };
-
-  if (shouldUseStorefrontViewTransition(current.pathname, target.pathname)) {
-    runStorefrontViewTransition(navigate);
-  } else {
-    navigate();
-  }
+  saveCurrentStorefrontScrollPosition();
+  window.history.pushState(null, '', href);
+  window.dispatchEvent(new Event(STOREFRONT_NAVIGATION_EVENT));
   return true;
 }

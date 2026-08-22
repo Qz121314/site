@@ -16,10 +16,6 @@ import {
   storefrontPresentationMode,
   type StorefrontPresentationMode,
 } from './storefront-presentation-mode';
-import {
-  runStorefrontViewTransition,
-  shouldUseStorefrontViewTransition,
-} from './storefront-view-transition';
 
 type StorefrontTransitionMode = 'tab' | 'push' | 'pop';
 
@@ -73,32 +69,17 @@ export function StorefrontPresentation() {
 
     function handleStorefrontNavigation() {
       recordStorefrontHistoryPush();
-      commitStorefrontLocation('forward');
+      flushSync(() => commitStorefrontLocation('forward'));
     }
 
     function handleStorefrontReplace() {
-      commitStorefrontLocation(null, false);
+      flushSync(() => commitStorefrontLocation(null, false));
     }
 
     function handlePopState(event: PopStateEvent) {
-      const previousPathname = document.documentElement.dataset.storefrontPathname;
       const direction = syncStorefrontHistoryFromPopState(event.state);
-      const nextPathname = window.location.pathname;
-      const update = () => commitStorefrontLocation(direction);
-      const restore = direction
-        ? () => restoreStorefrontScrollPosition(event.state)
-        : undefined;
-
-      if (
-        direction &&
-        previousPathname &&
-        shouldUseStorefrontViewTransition(previousPathname, nextPathname)
-      ) {
-        runStorefrontViewTransition(update, restore);
-      } else {
-        flushSync(update);
-        restore?.();
-      }
+      flushSync(() => commitStorefrontLocation(direction));
+      if (direction) restoreStorefrontScrollPosition(event.state);
     }
 
     window.addEventListener('popstate', handlePopState);
