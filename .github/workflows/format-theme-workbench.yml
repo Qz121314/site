@@ -1,0 +1,44 @@
+name: One-shot Theme Workbench Format
+
+on:
+  push:
+    branches:
+      - fix/theme-settings-preview-workbench
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v4
+        with:
+          ref: fix/theme-settings-preview-workbench
+          fetch-depth: 0
+
+      - name: Set up Node.js and pnpm
+        run: |
+          set -euo pipefail
+          npm install --global pnpm@11.19.0
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Format Theme Center files
+        run: pnpm exec prettier --write apps/admin/src/ThemeCenterView.tsx apps/admin/src/theme-center-workbench.css apps/admin/test/theme-center-preview-modal-contract.test.mjs
+
+      - name: Commit formatting when needed
+        run: |
+          set -euo pipefail
+          if git diff --quiet -- apps/admin/src/ThemeCenterView.tsx apps/admin/src/theme-center-workbench.css apps/admin/test/theme-center-preview-modal-contract.test.mjs; then
+            echo "Theme Center files already match Prettier."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apps/admin/src/ThemeCenterView.tsx apps/admin/src/theme-center-workbench.css apps/admin/test/theme-center-preview-modal-contract.test.mjs
+          git commit -m "style(admin): format theme center workbench"
+          git push origin HEAD:fix/theme-settings-preview-workbench
