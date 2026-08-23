@@ -19,11 +19,9 @@
   --theme-detail-cta-height: 54px;
   --theme-detail-cta-radius: var(--theme-radius-control, 14px);
   --theme-detail-cta-background: var(--brand);
-  --theme-detail-cta-color: #fff;
+  --theme-detail-cta-color: var(--theme-on-brand, #000);
   --theme-detail-cta-surface: color-mix(in srgb, var(--surface) 96%, transparent);
-  --theme-detail-cta-shadow:
-    inset 0 1px 0 color-mix(in srgb, #fff 16%, transparent),
-    0 14px 34px color-mix(in srgb, var(--brand) 18%, transparent);
+  --theme-detail-cta-shadow: var(--theme-button-shadow, none);
   --theme-detail-cta-bar-shadow: 0 -8px 24px
     color-mix(in srgb, var(--text) 6%, transparent);
 }
@@ -95,7 +93,6 @@
     var(--brand) 12%
   );
   --theme-detail-cta-radius: 2px;
-  --theme-detail-cta-shadow: 0 10px 28px color-mix(in srgb, var(--brand) 30%, transparent);
 }
 
 :is(html, .storefront-theme-root)[data-theme='saas'] {

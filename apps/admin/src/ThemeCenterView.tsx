@@ -444,7 +444,11 @@ function MobileThemePreview({
         data-media-style={recipe.mediaStyle}
         data-motion-style={recipe.motionStyle}
         data-navigation-style={recipe.navigationStyle}
-        style={storefrontThemeStyle(selectedPreset.tokens, previewAccent)}
+        style={storefrontThemeStyle(
+          selectedPreset.tokens,
+          previewAccent,
+          selectedPreset.colorScheme,
+        )}
       >
         <div className="theme-preview-statusbar" aria-hidden="true">
           <span>9:41</span>

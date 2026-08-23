@@ -27,7 +27,7 @@
   place-items: center;
   overflow: hidden;
   border-radius: var(--theme-primary-logo-radius, 3px);
-  color: #fff;
+  color: var(--theme-on-brand, #000);
   background: var(--brand, #ff5a1f);
   font-size: 1rem;
   font-weight: 900;
