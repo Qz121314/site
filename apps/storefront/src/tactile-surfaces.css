@@ -1,0 +1,213 @@
+/* Strong tactile pass: actionable surfaces should read as controls before touch. */
+
+:is(html, .storefront-theme-root) .home-shortcut {
+  box-sizing: border-box;
+  width: 72px;
+  min-width: 72px;
+  min-height: 94px;
+  gap: 6px;
+  padding: 6px 5px 8px;
+  border: 1px solid color-mix(in srgb, var(--line) 72%, transparent);
+  border-radius: 18px;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--surface) 98%, var(--brand) 2%) 0%,
+    color-mix(in srgb, var(--surface-soft) 92%, var(--surface)) 100%
+  );
+  box-shadow:
+    0 1px 0 color-mix(in srgb, var(--surface) 92%, transparent) inset,
+    0 -2px 0 color-mix(in srgb, var(--text) 9%, transparent) inset,
+    0 2px 0 color-mix(in srgb, var(--text) 7%, transparent),
+    0 8px 17px color-mix(in srgb, var(--text) 11%, transparent);
+  transform: translateY(-2px);
+  transition:
+    border-color var(--app-motion-fast, 160ms) ease,
+    background var(--app-motion-fast, 160ms) ease,
+    box-shadow var(--app-motion-fast, 160ms) ease,
+    transform var(--app-motion-fast, 160ms) var(--app-ease-out, ease-out);
+}
+
+:is(html, .storefront-theme-root) .home-shortcut-icon {
+  width: 56px;
+  height: 56px;
+  border-color: color-mix(in srgb, var(--line) 72%, transparent);
+  box-shadow:
+    0 1px 0 color-mix(in srgb, var(--surface) 76%, transparent) inset,
+    0 -1px 0 color-mix(in srgb, var(--text) 8%, transparent) inset,
+    0 3px 7px color-mix(in srgb, var(--text) 8%, transparent);
+  transform: none;
+}
+
+:is(html, .storefront-theme-root) .home-shortcut-label {
+  color: color-mix(in srgb, var(--text) 88%, var(--muted));
+  font-weight: 650;
+}
+
+:is(html, .storefront-theme-root) .home-shortcut:active {
+  border-color: color-mix(in srgb, var(--line) 82%, transparent);
+  box-shadow:
+    0 2px 4px color-mix(in srgb, var(--text) 7%, transparent) inset,
+    0 1px 0 color-mix(in srgb, var(--surface) 55%, transparent) inset,
+    0 2px 5px color-mix(in srgb, var(--text) 7%, transparent);
+  transform: translateY(2px) scale(0.975);
+}
+
+:is(html, .storefront-theme-root) .home-shortcut:active .home-shortcut-icon {
+  box-shadow:
+    0 1px 3px color-mix(in srgb, var(--text) 9%, transparent) inset,
+    0 1px 2px color-mix(in srgb, var(--text) 6%, transparent);
+  transform: none;
+}
+
+/* Covers should look like raised media buttons rather than passive images. */
+:is(html, .storefront-theme-root)
+  :is(.home-product-cover, .browse-search-product-cover, .section-product-cover) {
+  border: 1px solid color-mix(in srgb, var(--line) 52%, transparent);
+  box-shadow:
+    0 1px 0 color-mix(in srgb, var(--surface) 60%, transparent) inset,
+    0 -3px 0 color-mix(in srgb, var(--text) 11%, transparent) inset,
+    0 2px 0 color-mix(in srgb, var(--text) 8%, transparent),
+    0 9px 19px color-mix(in srgb, var(--text) 12%, transparent);
+  transform: translateY(-2px) translateZ(0);
+}
+
+:is(html, .storefront-theme-root)
+  :is(.home-product-title, .browse-search-product-title, .section-product-title) {
+  width: 100%;
+  text-align: center;
+  text-wrap: balance;
+}
+
+:is(html, .storefront-theme-root)
+  :is(
+    .home-product-tile:active .home-product-cover,
+    .browse-search-product-card:active .browse-search-product-cover,
+    .section-product-card:active .section-product-cover
+  ) {
+  box-shadow:
+    0 1px 3px color-mix(in srgb, var(--text) 9%, transparent) inset,
+    0 2px 5px color-mix(in srgb, var(--text) 8%, transparent);
+  transform: translateY(2px) scale(0.975);
+}
+
+/* Conversion buttons use the strongest physical cue. */
+:is(html, .storefront-theme-root) :is(.cta-button, .primary-button):not(:disabled) {
+  border: 1px solid color-mix(in srgb, var(--brand) 70%, var(--text));
+  box-shadow:
+    0 1px 0 rgb(255 255 255 / 34%) inset,
+    0 -3px 0 rgb(0 0 0 / 17%) inset,
+    0 3px 0 color-mix(in srgb, var(--brand) 58%, #000),
+    0 10px 20px color-mix(in srgb, var(--brand) 32%, transparent);
+  transform: translateY(-2px);
+}
+
+:is(html, .storefront-theme-root)
+  :is(.cta-button, .primary-button):active:not(:disabled) {
+  box-shadow:
+    0 2px 4px rgb(0 0 0 / 16%) inset,
+    0 1px 0 rgb(255 255 255 / 16%) inset,
+    0 2px 6px color-mix(in srgb, var(--brand) 18%, transparent);
+  transform: translateY(2px) scale(0.985);
+}
+
+/* Compact navigation controls receive a smaller but visible button base. */
+:is(html, .storefront-theme-root)
+  :is(
+    .hero-carousel-cta,
+    .hero-carousel-arrow,
+    .home-recommendation-heading > a,
+    .section-catalog-back,
+    .faq-back-link,
+    .storefront-detail-back,
+    .browse-directory-search-clear,
+    .section-catalog-search-clear
+  ) {
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--surface) 96%, var(--brand) 4%),
+    color-mix(in srgb, var(--surface-soft) 90%, var(--surface))
+  );
+  box-shadow:
+    0 1px 0 color-mix(in srgb, var(--surface) 90%, transparent) inset,
+    0 -2px 0 color-mix(in srgb, var(--text) 9%, transparent) inset,
+    0 2px 0 color-mix(in srgb, var(--text) 6%, transparent),
+    0 7px 14px color-mix(in srgb, var(--text) 10%, transparent);
+  transform: translateY(-1px);
+}
+
+:is(html, .storefront-theme-root) .bottom-nav .bottom-nav-icon {
+  box-shadow:
+    0 1px 0 color-mix(in srgb, var(--surface) 82%, transparent) inset,
+    0 -2px 0 color-mix(in srgb, var(--text) 7%, transparent) inset,
+    0 2px 0 color-mix(in srgb, var(--text) 5%, transparent),
+    0 5px 10px color-mix(in srgb, var(--text) 8%, transparent);
+  transform: translateY(-1px);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  :is(html, .storefront-theme-root) .home-shortcut:hover {
+    border-color: color-mix(in srgb, var(--brand) 20%, var(--line));
+    box-shadow:
+      0 1px 0 color-mix(in srgb, var(--surface) 96%, transparent) inset,
+      0 -2px 0 color-mix(in srgb, var(--text) 9%, transparent) inset,
+      0 3px 0 color-mix(in srgb, var(--text) 7%, transparent),
+      0 13px 24px color-mix(in srgb, var(--text) 14%, transparent);
+    transform: translateY(-4px);
+  }
+
+  :is(html, .storefront-theme-root) .home-shortcut:hover .home-shortcut-icon {
+    box-shadow:
+      0 1px 0 color-mix(in srgb, var(--surface) 82%, transparent) inset,
+      0 -1px 0 color-mix(in srgb, var(--text) 8%, transparent) inset,
+      0 4px 9px color-mix(in srgb, var(--text) 10%, transparent);
+    transform: none;
+  }
+
+  :is(html, .storefront-theme-root)
+    :is(
+      .home-product-tile:hover .home-product-cover,
+      .browse-search-product-card:hover .browse-search-product-cover,
+      .section-product-card:hover .section-product-cover
+    ) {
+    box-shadow:
+      0 1px 0 color-mix(in srgb, var(--surface) 68%, transparent) inset,
+      0 -3px 0 color-mix(in srgb, var(--text) 11%, transparent) inset,
+      0 3px 0 color-mix(in srgb, var(--text) 8%, transparent),
+      0 15px 29px color-mix(in srgb, var(--text) 15%, transparent);
+    transform: translateY(-4px);
+  }
+
+  :is(html, .storefront-theme-root)
+    :is(.cta-button, .primary-button):hover:not(:disabled) {
+    box-shadow:
+      0 1px 0 rgb(255 255 255 / 38%) inset,
+      0 -3px 0 rgb(0 0 0 / 16%) inset,
+      0 4px 0 color-mix(in srgb, var(--brand) 58%, #000),
+      0 15px 28px color-mix(in srgb, var(--brand) 36%, transparent);
+    transform: translateY(-4px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :is(html, .storefront-theme-root)
+    :is(
+      .home-shortcut,
+      .home-shortcut-icon,
+      .home-product-cover,
+      .browse-search-product-cover,
+      .section-product-cover,
+      .cta-button,
+      .primary-button,
+      .hero-carousel-cta,
+      .hero-carousel-arrow,
+      .home-recommendation-heading > a,
+      .section-catalog-back,
+      .faq-back-link,
+      .storefront-detail-back,
+      .browse-directory-search-clear,
+      .section-catalog-search-clear,
+      .bottom-nav .bottom-nav-icon
+    ) {
+    transition: none;
+  }
+}
