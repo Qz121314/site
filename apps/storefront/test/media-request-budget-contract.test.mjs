@@ -3,11 +3,20 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
 test('hero active video controls media preload', async () => {
-  const source = await readFile(new URL('../src/HomeFeed.tsx', import.meta.url), 'utf8');
+  const [homeSource, sharedSource] = await Promise.all([
+    readFile(new URL('../src/HomeFeed.tsx', import.meta.url), 'utf8'),
+    readFile(
+      new URL('../../../packages/storefront-ui/src/index.tsx', import.meta.url),
+      'utf8',
+    ),
+  ]);
 
-  assert.match(source, /autoPlay=\{index === activeIndex\}/u);
-  assert.match(source, /preload=\{index === activeIndex \? 'auto' : 'none'\}/u);
-  assert.doesNotMatch(source, /preload=\{index === 0 \? 'auto' : 'metadata'\}/u);
+  assert.match(homeSource, /autoPlay={index === 0}/u);
+  assert.match(homeSource, /preload={index === 0 \? 'auto' : 'none'}/u);
+  assert.match(sharedSource, /index === activeIndex && pageVisible/u);
+  assert.match(sharedSource, /void video\.play\(\)\.catch/u);
+  assert.match(sharedSource, /video\.pause\(\)/u);
+  assert.doesNotMatch(homeSource, /preload={index === 0 \? 'auto' : 'metadata'}/u);
 });
 
 test('home reserves high image priority for one meaningful LCP candidate', async () => {
