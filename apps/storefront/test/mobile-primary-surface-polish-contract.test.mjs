@@ -3,10 +3,17 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
 test('mobile Section, Product, and Messages keep native density and safe-area ownership', async () => {
-  const [section, detailFlow, conversation] = await Promise.all([
+  const [section, detailFlow, conversation, theme] = await Promise.all([
     readFile(new URL('../src/section-ui.css', import.meta.url), 'utf8'),
     readFile(new URL('../src/product-detail-content-flow.css', import.meta.url), 'utf8'),
     readFile(new URL('../src/chat-conversation.css', import.meta.url), 'utf8'),
+    readFile(
+      new URL(
+        '../../../packages/storefront-ui/src/primary-pages-theme-contract.css',
+        import.meta.url,
+      ),
+      'utf8',
+    ),
   ]);
 
   assert.match(
@@ -39,9 +46,11 @@ test('mobile Section, Product, and Messages keep native density and safe-area ow
     conversation,
     /@media \(max-width: 767px\)[\s\S]*\.messages-push-toggle \{[\s\S]*top: calc\(10px \+ env\(safe-area-inset-top\)\);/u,
   );
+  assert.match(theme, /--theme-primary-chat-timeline-background:/u);
   assert.match(
-    conversation,
-    /\.chat-timeline \{[\s\S]*background: color-mix\(in srgb, var\(--surface-soft\) 96%, var\(--surface\)\);/u,
+    theme,
+    /\.chat-timeline \{[\s\S]*var\(--theme-primary-chat-timeline-background\);/u,
   );
+  assert.doesNotMatch(conversation, /\.chat-timeline \{[^}]*background:/u);
   assert.doesNotMatch(conversation, /radial-gradient\(/u);
 });

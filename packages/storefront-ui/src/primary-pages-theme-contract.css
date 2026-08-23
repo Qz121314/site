@@ -12,6 +12,18 @@
   );
   --theme-primary-faq-border: var(--line);
   --theme-primary-faq-shadow: none;
+  --theme-primary-state-icon-background: color-mix(
+    in srgb,
+    var(--surface-soft) 88%,
+    var(--surface)
+  );
+  --theme-primary-state-icon-border: color-mix(in srgb, var(--line) 72%, transparent);
+  --theme-primary-state-icon-color: color-mix(
+    in srgb,
+    var(--brand-strong) 68%,
+    var(--muted)
+  );
+  --theme-primary-state-icon-shadow: var(--theme-media-shadow);
   --theme-primary-message-background: var(--surface);
   --theme-primary-message-border: var(--line);
   --theme-primary-message-row-active: var(--surface-soft);
@@ -21,7 +33,15 @@
     var(--brand) 12%,
     var(--surface)
   );
+  --theme-primary-message-avatar-border: color-mix(in srgb, var(--brand) 8%, var(--line));
+  --theme-primary-message-avatar-shadow: var(--theme-media-shadow);
+  --theme-primary-message-active-marker: 2px 0 0
+    color-mix(in srgb, var(--brand) 76%, transparent) inset;
+  --theme-primary-message-workspace-background: var(--theme-primary-message-background);
+  --theme-primary-message-workspace-border: var(--theme-primary-message-border);
+  --theme-primary-message-workspace-shadow: var(--theme-primary-message-shadow);
   --theme-primary-unread-background: var(--brand);
+  --theme-primary-unread-shadow: var(--theme-button-shadow);
   --theme-primary-chat-background: var(--surface-soft);
   --theme-primary-chat-header-background: color-mix(
     in srgb,
@@ -40,7 +60,25 @@
     var(--surface)
   );
   --theme-primary-chat-composer-background: var(--surface);
+  --theme-primary-chat-header-border: var(--app-hairline);
+  --theme-primary-chat-header-shadow: 0 1px 0 var(--app-hairline);
+  --theme-primary-chat-product-background: var(--theme-primary-message-background);
+  --theme-primary-chat-product-border: var(--theme-primary-message-border);
+  --theme-primary-chat-product-shadow: none;
+  --theme-primary-chat-bubble-border: color-mix(in srgb, var(--line) 42%, transparent);
+  --theme-primary-chat-bubble-shadow: none;
   --theme-primary-chat-input-background: var(--surface-soft);
+  --theme-primary-chat-input-border: color-mix(in srgb, var(--line) 68%, transparent);
+  --theme-primary-chat-input-focus-border: color-mix(
+    in srgb,
+    var(--brand) 24%,
+    var(--line)
+  );
+  --theme-primary-chat-input-focus-ring: var(--theme-button-focus-ring);
+  --theme-primary-chat-send-background: var(--brand);
+  --theme-primary-chat-send-color: #fff;
+  --theme-primary-chat-send-shadow: var(--theme-button-shadow);
+  --theme-primary-chat-send-press-shadow: var(--theme-button-press-shadow);
   --theme-primary-detail-panel-background: var(--theme-card-background);
   --theme-primary-detail-panel-border: var(--theme-card-border);
   --theme-primary-detail-panel-shadow: var(--theme-card-shadow);
@@ -51,6 +89,21 @@
   --theme-primary-detail-cta-bar-shadow: none;
   --theme-primary-detail-cta-background: var(--brand);
   --theme-primary-detail-cta-color: #fff;
+  --theme-primary-install-background: color-mix(in srgb, var(--surface) 94%, transparent);
+  --theme-primary-install-border: color-mix(in srgb, var(--line) 66%, transparent);
+  --theme-primary-install-shadow: var(--app-shadow-soft);
+  --theme-primary-install-icon-background: var(--theme-media-background);
+  --theme-primary-install-icon-border: var(--theme-media-border);
+  --theme-primary-install-icon-shadow: var(--theme-media-shadow);
+  --theme-primary-install-action-background: var(--brand);
+  --theme-primary-install-action-color: #fff;
+  --theme-primary-install-action-shadow: var(--theme-button-shadow);
+  --theme-primary-install-action-press-shadow: var(--theme-button-press-shadow);
+  --theme-primary-install-dismiss-background: color-mix(
+    in srgb,
+    var(--surface-soft) 76%,
+    transparent
+  );
 }
 
 :is(html, .storefront-theme-root)[data-theme='marketplace'] {
@@ -182,15 +235,28 @@
   box-shadow: var(--theme-primary-faq-shadow);
 }
 
+:is(html, .storefront-theme-root) .faq-empty-mark,
+:is(html, .storefront-theme-root) .messages-empty-icon {
+  border-color: var(--theme-primary-state-icon-border);
+  color: var(--theme-primary-state-icon-color);
+  background: var(--theme-primary-state-icon-background);
+  box-shadow: var(--theme-primary-state-icon-shadow);
+}
+
 :is(html, .storefront-theme-root) .faq-article-row {
   transition:
-    background 120ms ease,
-    color 120ms ease;
+    background var(--app-motion-fast) ease,
+    color var(--app-motion-fast) ease,
+    transform var(--app-motion-fast) var(--app-ease-out);
 }
 
 :is(html, .storefront-theme-root) .faq-article-row:is(:hover, :focus-visible, :active) {
   color: var(--brand-strong);
   background: var(--theme-primary-faq-open-background);
+}
+
+:is(html, .storefront-theme-root) .faq-article-row:active {
+  transform: scale(var(--theme-press-scale, 0.985));
 }
 
 /* Messages: familiar mobile conversation-list ergonomics without copying another brand. */
@@ -201,25 +267,37 @@
   box-shadow: var(--theme-primary-message-shadow);
 }
 
-:is(html, .storefront-theme-root) .messages-empty-icon,
 :is(html, .storefront-theme-root) :is(.conversation-avatar, .chat-header-avatar) {
+  border-color: var(--theme-primary-message-avatar-border);
   background: var(--theme-primary-message-avatar-background);
+  box-shadow: var(--theme-primary-message-avatar-shadow);
 }
 
 :is(html, .storefront-theme-root) .conversation-row {
   transition:
-    background 120ms ease,
-    transform 120ms ease;
+    background var(--app-motion-fast) ease,
+    transform var(--app-motion-fast) var(--app-ease-out);
+}
+
+:is(html, .storefront-theme-root) .conversation-row:is(:hover, :focus-visible) {
+  background: var(--theme-primary-message-row-active);
+}
+
+:is(html, .storefront-theme-root) .conversation-row.is-active {
+  background: var(--theme-primary-message-row-active);
+  box-shadow: var(--theme-primary-message-active-marker);
 }
 
 :is(html, .storefront-theme-root) .conversation-row:active {
   background: var(--theme-primary-message-row-active);
-  transform: scale(0.995);
+  transform: scale(var(--theme-press-scale, 0.985));
 }
 
 :is(html, .storefront-theme-root) .conversation-preview-row b,
 :is(html, .storefront-theme-root) .bottom-nav-badge {
+  color: #fff;
   background: var(--theme-primary-unread-background);
+  box-shadow: var(--theme-primary-unread-shadow);
 }
 
 /* Conversation surfaces inherit the same Theme Center recipe as the list. */
@@ -228,13 +306,16 @@
 }
 
 :is(html, .storefront-theme-root) .chat-header {
+  border-bottom-color: var(--theme-primary-chat-header-border);
   background: var(--theme-primary-chat-header-background);
+  box-shadow: var(--theme-primary-chat-header-shadow);
 }
 
 :is(html, .storefront-theme-root) .chat-product-card {
-  border-color: var(--theme-primary-message-border);
+  border-color: var(--theme-primary-chat-product-border);
   border-radius: var(--theme-radius-control);
-  background: var(--theme-primary-message-background);
+  background: var(--theme-primary-chat-product-background);
+  box-shadow: var(--theme-primary-chat-product-shadow);
 }
 
 :is(html, .storefront-theme-root) .chat-timeline {
@@ -247,6 +328,11 @@
     var(--theme-primary-chat-timeline-background);
 }
 
+:is(html, .storefront-theme-root) .chat-message-bubble {
+  border-color: var(--theme-primary-chat-bubble-border);
+  box-shadow: var(--theme-primary-chat-bubble-shadow);
+}
+
 :is(html, .storefront-theme-root) .chat-message-row.is-agent .chat-message-bubble {
   background: var(--theme-primary-chat-agent-bubble);
 }
@@ -256,16 +342,72 @@
 }
 
 :is(html, .storefront-theme-root) .chat-composer {
+  border-top-color: var(--theme-primary-chat-header-border);
   background: var(--theme-primary-chat-composer-background);
 }
 
 :is(html, .storefront-theme-root) :is(.chat-composer textarea, .chat-input-placeholder) {
-  border-color: var(--theme-primary-message-border);
+  border-color: var(--theme-primary-chat-input-border);
   background: var(--theme-primary-chat-input-background);
 }
 
+:is(html, .storefront-theme-root) .chat-composer textarea:focus {
+  border-color: var(--theme-primary-chat-input-focus-border);
+  box-shadow: var(--theme-primary-chat-input-focus-ring);
+}
+
+:is(html, .storefront-theme-root) .chat-composer .chat-send-button {
+  color: var(--theme-primary-chat-send-color);
+  background: var(--theme-primary-chat-send-background);
+  box-shadow: var(--theme-primary-chat-send-shadow);
+}
+
+:is(html, .storefront-theme-root) .chat-composer .chat-send-button:active:not(:disabled) {
+  box-shadow: var(--theme-primary-chat-send-press-shadow);
+}
+
+:is(html, .storefront-theme-root) .pwa-install-card {
+  border-color: var(--theme-primary-install-border);
+  background: var(--theme-primary-install-background);
+  box-shadow: var(--theme-primary-install-shadow);
+}
+
+:is(html, .storefront-theme-root) .pwa-install-icon {
+  border-color: var(--theme-primary-install-icon-border);
+  background: var(--theme-primary-install-icon-background);
+  box-shadow: var(--theme-primary-install-icon-shadow);
+}
+
+:is(html, .storefront-theme-root) .pwa-install-action {
+  color: var(--theme-primary-install-action-color);
+  background: var(--theme-primary-install-action-background);
+  box-shadow: var(--theme-primary-install-action-shadow);
+}
+
+:is(html, .storefront-theme-root) .pwa-install-action:active {
+  box-shadow: var(--theme-primary-install-action-press-shadow);
+}
+
+:is(html, .storefront-theme-root) .pwa-install-dismiss {
+  background: var(--theme-primary-install-dismiss-background);
+}
+
 @media (max-width: 767px) {
-  html .conversation-list {
+  :is(html, .storefront-theme-root) .faq-article-list {
+    border-right: 0;
+    border-left: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  :is(html, .storefront-theme-root) .faq-article-body {
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  :is(html, .storefront-theme-root) .conversation-list {
     margin-right: -10px;
     margin-left: -10px;
     border-right: 0;
@@ -274,13 +416,23 @@
     box-shadow: none;
   }
 
-  html .conversation-row {
+  :is(html, .storefront-theme-root) .conversation-row {
     padding-right: 14px;
     padding-left: 14px;
+  }
+
+  :is(html, .storefront-theme-root) .conversation-row.is-active {
+    box-shadow: none;
   }
 }
 
 @media (min-width: 768px) {
+  html .messages-workspace {
+    border-color: var(--theme-primary-message-workspace-border);
+    background: var(--theme-primary-message-workspace-background);
+    box-shadow: var(--theme-primary-message-workspace-shadow);
+  }
+
   html .chat-page {
     border-color: var(--theme-primary-message-border);
     background: var(--theme-primary-chat-background);

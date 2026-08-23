@@ -17,19 +17,7 @@
   overflow: hidden;
   margin: 0;
   padding: 0;
-  border: 1px solid
-    color-mix(
-      in srgb,
-      var(--app-hairline, var(--theme-primary-faq-border, var(--line))) 88%,
-      transparent
-    );
-  border-radius: var(--theme-radius-card, 16px);
-  background: color-mix(
-    in srgb,
-    var(--theme-primary-faq-background, var(--surface)) 97%,
-    transparent
-  );
-  box-shadow: 0 10px 30px color-mix(in srgb, var(--text) 4%, transparent);
+  border: 1px solid transparent;
   list-style: none;
 }
 
@@ -50,10 +38,6 @@
   line-height: 1.35;
   letter-spacing: -0.012em;
   text-decoration: none;
-  transition:
-    background var(--app-motion-fast, 140ms) ease,
-    color var(--app-motion-fast, 140ms) ease,
-    transform var(--app-motion-fast, 140ms) var(--app-ease-out, ease-out);
 }
 
 .faq-article-row::after {
@@ -66,21 +50,6 @@
   border-right: 1.5px solid color-mix(in srgb, var(--muted) 76%, transparent);
   content: '';
   transform: translateY(-50%) rotate(45deg);
-}
-
-.faq-article-row:hover,
-.faq-article-row:focus-visible {
-  color: var(--text);
-  background: color-mix(
-    in srgb,
-    var(--theme-primary-faq-open-background, var(--surface-soft)) 84%,
-    var(--surface)
-  );
-}
-
-.faq-article-row:active {
-  background: var(--theme-primary-faq-open-background, var(--surface-soft));
-  transform: scale(0.995);
 }
 
 .faq-empty-state {
@@ -98,11 +67,8 @@
   width: 54px;
   height: 54px;
   place-items: center;
-  border: 1px solid color-mix(in srgb, var(--line) 72%, transparent);
+  border: 1px solid transparent;
   border-radius: var(--theme-radius-icon, 17px);
-  color: color-mix(in srgb, var(--brand-strong) 68%, var(--muted));
-  background: color-mix(in srgb, var(--surface-soft) 88%, var(--surface));
-  box-shadow: 0 8px 22px color-mix(in srgb, var(--text) 4%, transparent);
 }
 
 .faq-empty-mark svg {
@@ -184,15 +150,7 @@
 
 .faq-article-body {
   padding: 28px 30px;
-  border: 1px solid
-    color-mix(
-      in srgb,
-      var(--app-hairline, var(--theme-primary-faq-border, var(--line))) 88%,
-      transparent
-    );
-  border-radius: var(--theme-radius-card, 16px);
-  background: var(--theme-primary-faq-background, var(--surface));
-  box-shadow: 0 10px 30px color-mix(in srgb, var(--text) 4%, transparent);
+  border: 1px solid transparent;
 }
 
 .faq-article-body .markdown-content {
@@ -222,8 +180,6 @@
     margin-inline: calc(var(--app-gutter, 16px) * -1);
     border-right: 0;
     border-left: 0;
-    border-radius: 0;
-    box-shadow: none;
   }
 
   .faq-article-row {
@@ -278,9 +234,6 @@
     margin: 0;
     padding: 0 2px 10px;
     border: 0;
-    border-radius: 0;
-    background: transparent;
-    box-shadow: none;
   }
 
   .faq-article-body .markdown-content {
