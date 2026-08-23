@@ -10,7 +10,7 @@ function source(path) {
 test('storefront edge safeguards live with their visual owners', () => {
   const main = source('../src/main.tsx');
   const base = source('../src/styles.css');
-  const hero = source('../src/hero-carousel.css');
+  const hero = source('../../../packages/storefront-ui/src/home.css');
   const pwa = source('../src/pwa.css');
   const detailUi = source('../src/product-detail-ui.css');
   const detailFlow = source('../src/product-detail-content-flow.css');
