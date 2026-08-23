@@ -291,7 +291,7 @@ jobs:
             const fs = require("fs");
             const value = JSON.parse(fs.readFileSync("/tmp/public-theme.json", "utf8"));
             const theme = value?.theme;
-            const keys = new Set(["marketplace", "noir", "live", "saas", "travel", "tech", "custom"]);
+            const keys = new Set(["marketplace", "noir", "live", "velvet", "midnight", "pearl", "saas", "travel", "tech", "custom"]);
             const tokenKeys = ["brand", "brandStrong", "text", "muted", "surface", "surfaceSoft", "line", "pageBg", "heroStart", "heroEnd", "heroGlow", "shadow"];
             if (!theme || !keys.has(theme.key)) process.exit(1);
             if (theme.colorScheme !== "light" && theme.colorScheme !== "dark") process.exit(1);
