@@ -149,7 +149,7 @@ body {
 @media (hover: hover) and (pointer: fine) {
   .pwa-install-dismiss:hover {
     color: var(--text, #1f2328);
-    background: var(--surface-soft, #f8f8f9);
+    background: var(--theme-primary-install-dismiss-background);
   }
 }
 
