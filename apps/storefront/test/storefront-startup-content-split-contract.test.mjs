@@ -15,26 +15,23 @@ test('home startup keeps route-only content loaders behind lazy boundaries', () 
   const bottomNavigation = source('../src/bottom-navigation.ts');
 
   assert.equal(main.includes("from './content-route'"), false);
-  assert.equal(
-    home.includes('loadSectionSnapshot,\n} from \'./content\''),
-    false,
-  );
+  assert.equal(home.includes("from './content-route'"), false);
   assert.ok(home.includes("await import('./content-route')"));
 
-  assert.equal(
-    content.includes('export async function loadSectionSnapshot('),
-    false,
-  );
-  assert.equal(
-    content.includes('export async function loadProductSnapshot('),
-    false,
-  );
-  assert.equal(content.includes('export async function loadFaqSnapshot('), false);
-  assert.ok(routeContent.includes('export async function loadSectionSnapshot('));
-  assert.ok(routeContent.includes('export async function loadProductSnapshot('));
-  assert.ok(routeContent.includes('export async function loadFaqSnapshot('));
+  for (const loader of [
+    'loadSectionSnapshot',
+    'loadProductSnapshot',
+    'loadFaqSnapshot',
+  ]) {
+    assert.equal(content.includes(`export async function ${loader}(`), false);
+    assert.ok(routeContent.includes(`export async function ${loader}(`));
+  }
 
-  assert.equal(bottomNavigation.includes('fetch('), false);
-  assert.equal(bottomNavigation.includes('parseBottomNavigationItems'), false);
-  assert.equal(bottomNavigation.includes('loadBottomNavigation'), false);
+  for (const obsoleteRuntime of [
+    'fetch(',
+    'parseBottomNavigationItems',
+    'loadBottomNavigation',
+  ]) {
+    assert.equal(bottomNavigation.includes(obsoleteRuntime), false);
+  }
 });
