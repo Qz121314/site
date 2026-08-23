@@ -1,0 +1,178 @@
+name: Storefront Content Refactor
+
+on:
+  pull_request:
+
+permissions:
+  contents: write
+
+jobs:
+  refactor:
+    if: github.head_ref == 'perf/storefront-main-chunk-cleanup' && github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.head_ref }}
+
+      - name: Apply one-shot refactor
+        run: |
+          set -euo pipefail
+          node <<'EOF'
+          const fs = require('node:fs');
+
+          function replaceRequired(source, from, to, label) {
+            if (!source.includes(from)) throw new Error(`Missing expected source: ${label}`);
+            return source.replace(from, to);
+          }
+
+          const contentPath = 'apps/storefront/src/content.ts';
+          const routePath = 'apps/storefront/src/content-route.ts';
+          if (fs.existsSync(routePath)) {
+            console.log('content-route.ts already exists; no refactor needed.');
+            process.exit(0);
+          }
+
+          let content = fs.readFileSync(contentPath, 'utf8');
+          const marker = '\nexport async function loadSectionSnapshot(';
+          const routeStart = content.indexOf(marker);
+          if (routeStart < 0) throw new Error('Route loader marker not found.');
+          const routeBody = content.slice(routeStart + 1);
+          content = content.slice(0, routeStart).trimEnd() + '\n';
+
+          const exports = [
+            ['type V2ProductSnapshot =', 'export type V2ProductSnapshot ='],
+            ['type V2FaqSnapshot =', 'export type V2FaqSnapshot ='],
+            ['function normalizeV1SectionSnapshot(', 'export function normalizeV1SectionSnapshot('],
+            ['function normalizeV1ProductSnapshot(', 'export function normalizeV1ProductSnapshot('],
+            ['function mediaUrl(', 'export function mediaUrl('],
+            ['async function loadV1File<T>(', 'export async function loadV1File<T>('],
+            ['async function loadV2File<T>(', 'export async function loadV2File<T>('],
+            ['function v2ModulePath(', 'export function v2ModulePath('],
+            ['function resolveV2Summary(', 'export function resolveV2Summary('],
+            ['async function loadV2SectionFile(', 'export async function loadV2SectionFile('],
+            ['function productReferenceKey(', 'export function productReferenceKey('],
+            ['function findRememberedProduct(', 'export function findRememberedProduct('],
+          ];
+          for (const [from, to] of exports) {
+            content = replaceRequired(content, from, to, from);
+          }
+
+          const routePrelude = `import {\n  PublicContentError,\n  findRememberedProduct,\n  loadV1File,\n  loadV2File,\n  loadV2SectionFile,\n  mediaUrl,\n  normalizeV1ProductSnapshot,\n  normalizeV1SectionSnapshot,\n  rememberStorefrontProducts,\n  resolveV2Summary,\n  v2ModulePath,\n  type FaqSnapshot,\n  type ProductSnapshot,\n  type PublicProductSummary,\n  type PublicSection,\n  type SectionSnapshot,\n  type StorefrontBootstrap,\n  type V2FaqSnapshot,\n  type V2ProductSnapshot,\n} from './content';\n\n`;
+          fs.writeFileSync(contentPath, content);
+          fs.writeFileSync(routePath, routePrelude + routeBody);
+
+          const bottomNavPath = 'apps/storefront/src/bottom-navigation.ts';
+          let bottomNav = fs.readFileSync(bottomNavPath, 'utf8');
+          const runtimeMarker = '\nfunction isRecord(';
+          const runtimeStart = bottomNav.indexOf(runtimeMarker);
+          if (runtimeStart < 0) throw new Error('Bottom navigation runtime marker not found.');
+          bottomNav = bottomNav.slice(0, runtimeStart).trimEnd() + '\n';
+          fs.writeFileSync(bottomNavPath, bottomNav);
+
+          const homePath = 'apps/storefront/src/HomeFeed.tsx';
+          let home = fs.readFileSync(homePath, 'utf8');
+          home = replaceRequired(home, '  loadSectionSnapshot,\n', '', 'HomeFeed loadSectionSnapshot import');
+          home = replaceRequired(
+            home,
+            'queryFn: ({ signal }) => loadSectionSnapshot(bootstrap, section.id, signal),',
+            `queryFn: async ({ signal }) => {\n        const { loadSectionSnapshot } = await import('./content-route');\n        return loadSectionSnapshot(bootstrap, section.id, signal);\n      },`,
+            'HomeFeed fallback loader',
+          );
+          fs.writeFileSync(homePath, home);
+
+          const sectionPath = 'apps/storefront/src/SectionPage.tsx';
+          let section = fs.readFileSync(sectionPath, 'utf8');
+          section = replaceRequired(section, '  loadSectionSnapshot,\n', '', 'SectionPage loader import');
+          section = replaceRequired(
+            section,
+            "} from './content';\n",
+            "} from './content';\nimport { loadSectionSnapshot } from './content-route';\n",
+            'SectionPage content import boundary',
+          );
+          fs.writeFileSync(sectionPath, section);
+
+          const productPath = 'apps/storefront/src/ProductDetailPage.tsx';
+          let product = fs.readFileSync(productPath, 'utf8');
+          product = replaceRequired(product, '  loadProductSnapshot,\n', '', 'ProductDetail loader import');
+          product = replaceRequired(
+            product,
+            "} from './content';\n",
+            "} from './content';\nimport { loadProductSnapshot } from './content-route';\n",
+            'ProductDetail content import boundary',
+          );
+          fs.writeFileSync(productPath, product);
+
+          const faqPath = 'apps/storefront/src/FaqPage.tsx';
+          let faq = fs.readFileSync(faqPath, 'utf8');
+          faq = replaceRequired(
+            faq,
+            "import { loadFaqSnapshot, type StorefrontBootstrap } from './content';",
+            "import type { StorefrontBootstrap } from './content';\nimport { loadFaqSnapshot } from './content-route';",
+            'FaqPage loader import',
+          );
+          fs.writeFileSync(faqPath, faq);
+
+          const messagesPath = 'apps/storefront/src/MessagesPage.tsx';
+          let messages = fs.readFileSync(messagesPath, 'utf8');
+          messages = replaceRequired(
+            messages,
+            "import { loadProductSnapshot, type StorefrontBootstrap } from './content';",
+            "import type { StorefrontBootstrap } from './content';\nimport { loadProductSnapshot } from './content-route';",
+            'MessagesPage product loader import',
+          );
+          messages = replaceRequired(
+            messages,
+            "import { replaceStorefrontLocation } from './storefront-navigation-runtime';",
+            "import { installSupportExpiryRuntime } from './support-expiry-runtime';\nimport { replaceStorefrontLocation } from './storefront-navigation-runtime';",
+            'MessagesPage expiry import',
+          );
+          messages = replaceRequired(
+            messages,
+            "  const queryClient = useQueryClient();\n",
+            "  const queryClient = useQueryClient();\n  useEffect(() => {\n    installSupportExpiryRuntime();\n  }, []);\n",
+            'MessagesPage expiry install',
+          );
+          fs.writeFileSync(messagesPath, messages);
+
+          const mainPath = 'apps/storefront/src/main.tsx';
+          let main = fs.readFileSync(mainPath, 'utf8');
+          main = replaceRequired(
+            main,
+            "import { installSupportExpiryRuntime } from './support-expiry-runtime';\n",
+            '',
+            'main expiry import',
+          );
+          main = replaceRequired(
+            main,
+            'installSupportExpiryRuntime();\n',
+            '',
+            'main expiry install',
+          );
+          fs.writeFileSync(mainPath, main);
+
+          const testPath = 'apps/storefront/test/content.test.mjs';
+          let test = fs.readFileSync(testPath, 'utf8');
+          for (const name of ['loadFaqSnapshot', 'loadProductSnapshot', 'loadSectionSnapshot']) {
+            test = replaceRequired(test, `  ${name},\n`, '', `content test ${name} import`);
+          }
+          test = replaceRequired(
+            test,
+            "} from '../src/content.ts';\n",
+            "} from '../src/content.ts';\nimport {\n  loadFaqSnapshot,\n  loadProductSnapshot,\n  loadSectionSnapshot,\n} from '../src/content-route.ts';\n",
+            'content test route imports',
+          );
+          fs.writeFileSync(testPath, test);
+          EOF
+
+          if git diff --quiet; then
+            echo 'No changes to commit.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add apps/storefront/src apps/storefront/test/content.test.mjs
+          git commit -m 'refactor: split lazy content loaders from storefront bootstrap'
+          git push origin HEAD:perf/storefront-main-chunk-cleanup
