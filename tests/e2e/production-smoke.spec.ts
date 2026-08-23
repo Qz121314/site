@@ -4,6 +4,12 @@ import {
   findPublishedSectionRoute,
 } from './published-storefront-fixtures';
 
+const MOBILE_VIEWPORTS = [
+  { label: 'compact', width: 360, height: 800 },
+  { label: 'standard', width: 390, height: 844 },
+  { label: 'large', width: 430, height: 932 },
+] as const;
+
 async function expectNoHorizontalOverflow(page: Page) {
   await expect
     .poll(() =>
@@ -12,6 +18,159 @@ async function expectNoHorizontalOverflow(page: Page) {
       ),
     )
     .toBeLessThanOrEqual(1);
+}
+
+async function expectFixedBottomChrome(page: Page) {
+  const contract = await page.evaluate(() => {
+    const viewport = window.visualViewport;
+    const visualBottom =
+      (viewport?.offsetTop ?? 0) + (viewport?.height ?? window.innerHeight);
+    const chrome = document.querySelector<HTMLElement>('.storefront-bottom-chrome');
+    const rect = chrome?.getBoundingClientRect();
+    return {
+      bottomGap: rect ? Math.abs(visualBottom - rect.bottom) : Infinity,
+      position: chrome ? getComputedStyle(chrome).position : null,
+    };
+  });
+
+  expect(contract.position).toBe('fixed');
+  expect(contract.bottomGap).toBeLessThanOrEqual(1.5);
+}
+
+for (const viewport of MOBILE_VIEWPORTS) {
+  test(`mobile ${viewport.label} viewport keeps primary routes inside one app surface`, async ({
+    page,
+    request,
+  }) => {
+    test.setTimeout(60_000);
+    await page.setViewportSize({ width: viewport.width, height: viewport.height });
+
+    const [publishedSection, publishedProduct] = await Promise.all([
+      findPublishedSectionRoute(request),
+      findPublishedProductRoute(request),
+    ]);
+    test.skip(
+      !publishedSection || !publishedProduct,
+      'Published Section and Product routes are required for the mobile matrix.',
+    );
+
+    await page.goto('/');
+    await expect(page.locator('.app-shell > .topbar')).toBeVisible();
+    await expect(page.locator('.home-shortcut-zone')).toBeVisible();
+    await expect(page.locator('.storefront-bottom-chrome > .bottom-nav')).toBeVisible();
+    const homeContract = await page.evaluate(() => {
+      const shortcuts = document.querySelector<HTMLElement>('.home-shortcuts');
+      const firstShortcut = shortcuts?.querySelector<HTMLElement>('.home-shortcut');
+      const bottomChrome = document.querySelector<HTMLElement>(
+        '.storefront-bottom-chrome',
+      );
+      const firstRect = firstShortcut?.getBoundingClientRect();
+      const bottomRect = bottomChrome?.getBoundingClientRect();
+      return {
+        shortcutColumns: shortcuts
+          ? getComputedStyle(shortcuts).gridTemplateColumns.split(' ').length
+          : 0,
+        shortcutTopGap: firstRect && bottomRect ? bottomRect.top - firstRect.top : -1,
+      };
+    });
+    expect(homeContract.shortcutColumns).toBe(4);
+    expect(homeContract.shortcutTopGap).toBeGreaterThan(0);
+    await expectFixedBottomChrome(page);
+    await expectNoHorizontalOverflow(page);
+
+    await page.goto(publishedSection!.sectionHref);
+    await expect(page.locator('.section-catalog-header')).toBeVisible();
+    await expect(page.locator('.section-catalog-controls')).toBeVisible();
+    await expect(page.locator('.section-catalog-content')).toBeVisible();
+    const sectionViewportContract = await page.evaluate(() => {
+      const header = document.querySelector<HTMLElement>('.section-catalog-header');
+      const controls = document.querySelector<HTMLElement>('.section-catalog-controls');
+      const content = document.querySelector<HTMLElement>('.section-catalog-content');
+      const bottomChrome = document.querySelector<HTMLElement>(
+        '.storefront-bottom-chrome',
+      );
+      const cards = Array.from(
+        document.querySelectorAll<HTMLElement>('.section-product-card'),
+      ).slice(0, 2);
+      const headerRect = header?.getBoundingClientRect();
+      const controlsRect = controls?.getBoundingClientRect();
+      const contentRect = content?.getBoundingClientRect();
+      const bottomRect = bottomChrome?.getBoundingClientRect();
+      const cardRects = cards.map((card) => card.getBoundingClientRect());
+      return {
+        contentBottomGap:
+          contentRect && bottomRect
+            ? Math.abs(bottomRect.top - contentRect.bottom)
+            : Infinity,
+        controlsStartGap:
+          headerRect && controlsRect ? controlsRect.top - headerRect.bottom : -Infinity,
+        cardCount: cardRects.length,
+        firstRowGap:
+          cardRects.length === 2 ? Math.abs(cardRects[0]!.top - cardRects[1]!.top) : 0,
+        secondCardStartsAfterFirst:
+          cardRects.length === 2 ? cardRects[1]!.left > cardRects[0]!.left : true,
+      };
+    });
+    expect(sectionViewportContract.controlsStartGap).toBeGreaterThanOrEqual(-1.5);
+    expect(sectionViewportContract.contentBottomGap).toBeLessThanOrEqual(1.5);
+    if (sectionViewportContract.cardCount === 2) {
+      expect(sectionViewportContract.firstRowGap).toBeLessThanOrEqual(1.5);
+      expect(sectionViewportContract.secondCardStartsAfterFirst).toBeTruthy();
+    }
+    await expectFixedBottomChrome(page);
+    await expectNoHorizontalOverflow(page);
+
+    await page.goto(publishedProduct!.productHref);
+    await expect(page.locator('.storefront-detail-topbar')).toBeVisible();
+    await expect(
+      page.locator(
+        '.storefront-bottom-chrome > .storefront-route-action-host .cta-button',
+      ),
+    ).toBeVisible();
+    const productViewportContract = await page.evaluate(() => {
+      const viewport = window.visualViewport;
+      const visualBottom =
+        (viewport?.offsetTop ?? 0) + (viewport?.height ?? window.innerHeight);
+      const header = document.querySelector<HTMLElement>('.storefront-detail-topbar');
+      const media = document.querySelector<HTMLElement>('.detail-mobile-gallery');
+      const chrome = document.querySelector<HTMLElement>('.storefront-bottom-chrome');
+      const cta = chrome?.querySelector<HTMLElement>('.cta-button');
+      const headerRect = header?.getBoundingClientRect();
+      const mediaRect = media?.getBoundingClientRect();
+      const chromeRect = chrome?.getBoundingClientRect();
+      return {
+        ctaBottomGap: chromeRect ? Math.abs(visualBottom - chromeRect.bottom) : Infinity,
+        ctaHeight: cta?.getBoundingClientRect().height ?? 0,
+        mediaStartGap:
+          headerRect && mediaRect ? mediaRect.top - headerRect.bottom : -Infinity,
+      };
+    });
+    expect(productViewportContract.ctaBottomGap).toBeLessThanOrEqual(1.5);
+    expect(productViewportContract.ctaHeight).toBeGreaterThanOrEqual(44);
+    expect(productViewportContract.mediaStartGap).toBeGreaterThanOrEqual(-1.5);
+    await expectFixedBottomChrome(page);
+    await expectNoHorizontalOverflow(page);
+
+    await page.goto('/messages/');
+    await expect(page.locator('.messages-workspace')).toBeVisible();
+    const messagesViewportContract = await page.evaluate(() => {
+      const workspace = document.querySelector<HTMLElement>('.messages-workspace');
+      const rect = workspace?.getBoundingClientRect();
+      return {
+        workspaceLeft: rect?.left ?? -1,
+        workspaceRight: rect?.right ?? Infinity,
+        workspaceWidth: rect?.width ?? 0,
+        viewportWidth: document.documentElement.clientWidth,
+      };
+    });
+    expect(messagesViewportContract.workspaceLeft).toBeGreaterThanOrEqual(0);
+    expect(messagesViewportContract.workspaceRight).toBeLessThanOrEqual(
+      messagesViewportContract.viewportWidth + 1,
+    );
+    expect(messagesViewportContract.workspaceWidth).toBeGreaterThan(0);
+    await expectFixedBottomChrome(page);
+    await expectNoHorizontalOverflow(page);
+  });
 }
 
 test('storefront applies the current admin theme and keeps discovery routes healthy', async ({

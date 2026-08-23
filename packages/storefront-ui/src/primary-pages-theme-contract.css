@@ -3,6 +3,9 @@
 :is(html, .storefront-theme-root) {
   --theme-primary-header-border: var(--app-hairline, var(--line));
   --theme-primary-header-shadow: none;
+  --theme-primary-search-shadow: var(--theme-control-shadow);
+  --theme-primary-search-focus-shadow: var(--theme-button-focus-ring);
+  --theme-primary-navigation-shadow: none;
   --theme-primary-logo-radius: 3px;
   --theme-primary-faq-background: var(--surface);
   --theme-primary-faq-open-background: color-mix(

@@ -41,7 +41,7 @@ test('storefront typography buttons and route motion share one app visual contra
     /\.section-category-filter button,[\s\S]*\.section-tag-filter button/u,
   );
 
-  assert.match(chrome, /--theme-search-focus-ring:/u);
+  assert.match(chrome, /box-shadow: var\(--theme-primary-search-focus-shadow\);/u);
   assert.match(chrome, /\.app-shell > \.topbar/u);
   assert.match(chrome, /:is\(\.browse-directory-search, \.section-catalog-search\)/u);
   assert.match(
