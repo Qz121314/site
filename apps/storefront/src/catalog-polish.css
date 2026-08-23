@@ -43,7 +43,7 @@
   font-weight: var(--catalog-card-title-weight);
   line-height: 1.22;
   letter-spacing: -0.016em;
-  text-shadow: 0 1px 12px rgb(0 0 0 / 34%);
+  text-shadow: var(--theme-art-media-title-shadow);
 }
 
 :is(html, .storefront-theme-root)

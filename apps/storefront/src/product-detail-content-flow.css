@@ -61,7 +61,7 @@
 
 .detail-mobile-media-item > video {
   object-fit: contain;
-  background: #000;
+  background: var(--theme-art-media-canvas);
 }
 
 .detail-mobile-media-count {
@@ -76,17 +76,17 @@
   justify-content: center;
   gap: 6px;
   padding: 4px 9px;
-  border: 1px solid rgb(255 255 255 / 18%);
+  border: 1px solid var(--theme-art-media-control-border);
   border-radius: 999px;
-  color: #fff;
-  background: rgb(0 0 0 / 62%);
-  box-shadow: 0 4px 14px rgb(0 0 0 / 18%);
+  color: var(--theme-art-media-control-color);
+  background: var(--theme-art-media-control-background);
+  box-shadow: var(--theme-art-media-control-shadow);
   font-size: 0.7rem;
   font-weight: 720;
   font-variant-numeric: tabular-nums;
   line-height: 1;
   pointer-events: none;
-  backdrop-filter: blur(10px) saturate(1.06);
+  backdrop-filter: var(--theme-art-media-control-backdrop);
 }
 
 .detail-mobile-media-count::after {
