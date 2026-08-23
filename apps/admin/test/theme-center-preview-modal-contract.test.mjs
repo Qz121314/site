@@ -23,6 +23,13 @@ test('theme center combines settings and mobile preview inside one compact modal
   assert.ok(view.includes('className="theme-settings-pane"'));
   assert.ok(view.includes('className="theme-preview-stage"'));
   assert.ok(view.includes('theme-modal-save-button'));
+  assert.ok(view.includes('StorefrontHero'));
+  assert.ok(view.includes('StorefrontHomeShortcut'));
+  assert.ok(view.includes('StorefrontHomeProductTile'));
+  assert.ok(view.includes('className="home-feed has-hero"'));
+  assert.ok(view.includes('className="home-shortcuts"'));
+  assert.ok(view.includes('className="home-product-rail theme-preview-products"'));
+  assert.equal(view.includes('StorefrontProductCard'), false);
   assert.ok(view.includes('aria-modal="true"'));
   assert.ok(view.includes("event.key === 'Escape'"));
   assert.ok(view.includes('onMouseDown={(event) => event.stopPropagation()}'));

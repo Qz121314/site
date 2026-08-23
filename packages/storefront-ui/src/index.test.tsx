@@ -3,12 +3,14 @@ import { describe, expect, it } from 'vitest';
 import {
   StorefrontBottomNavigation,
   StorefrontHero,
+  StorefrontHomeProductTile,
+  StorefrontHomeShortcut,
   StorefrontProductCard,
 } from './index';
 import { storefrontThemeStyle } from './theme';
 
 describe('shared storefront UI', () => {
-  it('renders the same product-card contract for storefront and theme preview consumers', () => {
+  it('renders the generic product-card contract', () => {
     const html = renderToStaticMarkup(
       <StorefrontProductCard
         categoryName="Live"
@@ -26,19 +28,26 @@ describe('shared storefront UI', () => {
     expect(html).toContain('href="/sections/live/products/demo/"');
   });
 
-  it('renders shared hero and navigation landmarks', () => {
+  it('renders the shared Home hero, shortcut, product, and navigation landmarks', () => {
     const html = renderToStaticMarkup(
       <>
         <StorefrontHero
-          description="Description"
-          eyebrow="Explore"
-          locationLabel="Global"
-          title="Title"
+          ariaLabel="Featured"
+          slides={[{ id: 'hero-1', media: <span>media</span>, title: 'Title' }]}
+        />
+        <StorefrontHomeShortcut href="/browse/" icon="◆" label="Browse" />
+        <StorefrontHomeProductTile
+          href="/products/demo/"
+          media={<span>media</span>}
+          title="Demo"
         />
         <StorefrontBottomNavigation items={[{ href: '/', icon: '⌂', label: 'Home' }]} />
       </>,
     );
-    expect(html).toContain('class="hero-panel"');
+    expect(html).toContain('class="hero-carousel is-single"');
+    expect(html).toContain('class="hero-carousel-slide is-active"');
+    expect(html).toContain('class="home-shortcut"');
+    expect(html).toContain('class="home-product-tile"');
     expect(html).toContain('class="bottom-nav"');
     expect(html).toContain('aria-label="Primary navigation"');
   });

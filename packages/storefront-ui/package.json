@@ -8,6 +8,7 @@
     "./theme": "./src/theme.ts",
     "./loading": "./src/loading.tsx",
     "./loading.css": "./src/loading.css",
+    "./home.css": "./src/home.css",
     "./theme-contract.css": "./src/theme-contract.css",
     "./product-detail-theme-contract.css": "./src/product-detail-theme-contract.css",
     "./primary-pages-theme-contract.css": "./src/primary-pages-theme-contract.css",

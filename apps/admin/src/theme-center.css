@@ -782,34 +782,80 @@
 }
 
 .theme-preview-content {
+  --v2-gutter: 8px;
   display: grid;
-  gap: 8px;
+  min-height: 0;
+  flex: 1;
+  gap: 0;
   padding: 8px;
+  overflow-y: auto;
+  scrollbar-width: none;
 }
 
-.theme-preview-section-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 1px;
+.theme-preview-content::-webkit-scrollbar {
+  display: none;
 }
 
-.theme-preview-section-row strong {
+/*
+ * The preview shell is a mobile viewport embedded in a desktop page. Container-scoped
+ * overrides keep the shared Home presentation in its real mobile geometry even when
+ * the surrounding Admin viewport matches desktop media queries.
+ */
+.theme-live-preview .hero-carousel {
+  width: auto;
+  margin-inline: calc(var(--v2-gutter) * -1);
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.theme-live-preview .hero-carousel-slide {
+  height: 230px;
+}
+
+.theme-live-preview .hero-carousel-overlay {
+  padding: 22px;
+}
+
+.theme-live-preview .home-shortcut-zone {
+  padding: 12px 0 18px;
+}
+
+.theme-live-preview .home-shortcuts {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  overflow: visible;
+}
+
+.theme-live-preview .home-shortcut {
+  width: 100%;
+  min-width: 0;
+  min-height: 62px;
+  gap: 4px;
+}
+
+.theme-live-preview .home-shortcut-icon {
+  width: 42px;
+  height: 42px;
+}
+
+.theme-live-preview .home-shortcut-label {
+  font-size: 0.56rem;
+}
+
+.theme-live-preview .home-product-rail {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.theme-live-preview .home-product-title {
   font-size: 0.62rem;
 }
 
-.theme-preview-section-row span {
-  color: var(--brand);
-  font-size: 0.49rem;
-  font-weight: 750;
-}
-
 .theme-preview-products {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 6px;
 }
 
+.theme-preview-hero-media,
 .theme-preview-media {
   display: grid;
   width: 100%;
@@ -819,6 +865,16 @@
   background: linear-gradient(145deg, var(--brand), var(--hero-end));
   font-size: 0.56rem;
   font-weight: 800;
+}
+
+.theme-preview-hero-media {
+  background:
+    radial-gradient(
+      circle at 78% 18%,
+      color-mix(in srgb, var(--hero-glow) 54%, transparent),
+      transparent 42%
+    ),
+    linear-gradient(145deg, var(--hero-start), var(--hero-end));
 }
 
 .theme-ratio-note {

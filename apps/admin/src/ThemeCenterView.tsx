@@ -2,7 +2,8 @@ import {
   StorefrontBottomNavigation,
   StorefrontBrandBar,
   StorefrontHero,
-  StorefrontProductCard,
+  StorefrontHomeProductTile,
+  StorefrontHomeShortcut,
 } from '@site/storefront-ui';
 import { storefrontThemeStyle } from '@site/storefront-ui/theme';
 import {
@@ -456,31 +457,68 @@ function MobileThemePreview({
           siteName="Service"
         />
         <div className="theme-preview-content">
-          <StorefrontHero
-            description="Fast browsing designed for one-hand mobile use."
-            eyebrow={selectedPreset.label}
-            locationLabel="Nearby"
-            title="Discover what fits you"
-          />
-          <div className="theme-preview-section-row">
-            <strong>Featured</strong>
-            <span>See all</span>
-          </div>
-          <div className="theme-preview-products product-grid">
-            {[1, 2].map((item) => (
-              <StorefrontProductCard
-                href="#"
-                key={item}
-                LinkComponent={PreviewLink}
-                media={
-                  <div className="theme-preview-media image-fallback">
-                    <span>1:1</span>
-                  </div>
-                }
-                tags={[]}
-                title={item === 1 ? 'Product title' : 'Featured item'}
-              />
-            ))}
+          <div className="home-feed has-hero">
+            <StorefrontHero
+              ariaLabel={selectedPreset.label}
+              LinkComponent={PreviewLink}
+              slides={[
+                {
+                  id: 'theme-preview-hero',
+                  media: (
+                    <div className="theme-preview-hero-media" aria-hidden="true">
+                      <span>Hero media</span>
+                    </div>
+                  ),
+                  title: 'Discover what fits you',
+                  description: 'Fast browsing designed for one-hand mobile use.',
+                },
+              ]}
+            />
+            <div className="home-shortcut-zone">
+              <nav className="home-shortcuts" aria-label="Preview sections">
+                {[
+                  ['Nearby', '⌖'],
+                  ['Popular', '◆'],
+                  ['Latest', '◷'],
+                  ['More', '••'],
+                ].map(([label = '', icon = '']) => (
+                  <StorefrontHomeShortcut
+                    href="#"
+                    icon={<span aria-hidden="true">{icon}</span>}
+                    key={label}
+                    label={label}
+                    LinkComponent={PreviewLink}
+                  />
+                ))}
+              </nav>
+            </div>
+            <div className="home-recommendation-feed">
+              <section className="home-recommendation">
+                <div className="home-recommendation-heading">
+                  <span className="home-recommendation-heading-copy">
+                    <h2>Featured</h2>
+                  </span>
+                  <PreviewLink href="#" aria-label="See all">
+                    <span aria-hidden="true">›</span>
+                  </PreviewLink>
+                </div>
+                <div className="home-product-rail theme-preview-products">
+                  {[1, 2].map((item) => (
+                    <StorefrontHomeProductTile
+                      href="#"
+                      key={item}
+                      LinkComponent={PreviewLink}
+                      media={
+                        <div className="theme-preview-media" aria-hidden="true">
+                          <span>1:1</span>
+                        </div>
+                      }
+                      title={item === 1 ? 'Product title' : 'Featured item'}
+                    />
+                  ))}
+                </div>
+              </section>
+            </div>
           </div>
         </div>
         <StorefrontBottomNavigation

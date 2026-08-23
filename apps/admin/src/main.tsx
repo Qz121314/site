@@ -38,6 +38,7 @@ import './section-editor.css';
 import './traffic-stats.css';
 import '@site/storefront-ui/styles.css';
 import '@site/storefront-ui/loading.css';
+import '@site/storefront-ui/home.css';
 import '@site/storefront-ui/theme-contract.css';
 import '@site/storefront-ui/product-detail-theme-contract.css';
 import '@site/storefront-ui/primary-pages-theme-contract.css';

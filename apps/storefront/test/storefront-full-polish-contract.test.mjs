@@ -5,8 +5,8 @@ import test from 'node:test';
 const styleFiles = [
   '../src/app-shell.css',
   '../src/styles.css',
-  '../src/hero-carousel.css',
-  '../src/home-feed.css',
+  '../../../packages/storefront-ui/src/home.css',
+  '../../../packages/storefront-ui/src/home.css',
   '../src/browse-ui.css',
   '../src/section-ui.css',
   '../src/faq-ui.css',
@@ -116,11 +116,8 @@ test('storefront polish stays theme-led and app-native across every primary surf
   assert.match(primaryArtDirection, /var\(--theme-art-media-filter\)/u);
   assert.match(primaryArtDirection, /var\(--theme-art-heading-weight\)/u);
   assert.doesNotMatch(primaryArtDirection, /--theme-art-[\w-]+\s*:/u);
-  assert.match(
-    homeSource,
-    /hero-carousel-slide\$\{index === activeIndex \? ' is-active' : ''\}/u,
-  );
-  assert.match(homeSource, /className="home-product-meta"/u);
+  assert.match(homeSource, /StorefrontHero/u);
+  assert.match(homeSource, /StorefrontHomeProductTile/u);
   assert.doesNotMatch(homeSource, /className="home-product-context"/u);
   assert.doesNotMatch(homeSource, /home-product-context[^\n]*product\.category\.name/u);
   assert.match(storefrontMain, /@site\/storefront-ui\/art-direction-contract\.css/u);

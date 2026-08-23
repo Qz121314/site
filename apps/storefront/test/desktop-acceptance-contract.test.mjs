@@ -8,7 +8,10 @@ test('desktop production acceptance and visual v2 shell remain wired', async () 
       readFile(new URL('../../../playwright.config.ts', import.meta.url), 'utf8'),
       readFile(new URL('../src/main.tsx', import.meta.url), 'utf8'),
       readFile(new URL('../src/app-shell.css', import.meta.url), 'utf8'),
-      readFile(new URL('../src/home-feed.css', import.meta.url), 'utf8'),
+      readFile(
+        new URL('../../../packages/storefront-ui/src/home.css', import.meta.url),
+        'utf8',
+      ),
       readFile(new URL('../src/section-ui.css', import.meta.url), 'utf8'),
       readFile(
         new URL('../../../tests/e2e/desktop-production.spec.ts', import.meta.url),
