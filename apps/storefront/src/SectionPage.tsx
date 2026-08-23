@@ -1,10 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import type { StorefrontLinkComponent } from '@site/storefront-ui';
 import { useEffect, useMemo, useState, type MouseEvent as ReactMouseEvent } from 'react';
-import {
-  publicImageVariantUrl,
-  type StorefrontBootstrap,
-} from './content';
+import { publicImageVariantUrl, type StorefrontBootstrap } from './content';
 import { loadSectionSnapshot } from './content-route';
 import { SquareSkeletonGrid } from './LoadingStates';
 import { ResilientImage } from './ResilientMedia';
