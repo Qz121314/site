@@ -110,7 +110,7 @@
     var(--v2-control-bg, var(--surface-soft)) 94%,
     var(--surface)
   );
-  box-shadow: 0 5px 16px color-mix(in srgb, var(--text) 3%, transparent);
+  box-shadow: var(--theme-control-shadow, none);
   transition:
     border-color var(--app-motion-fast, 160ms) ease,
     background var(--app-motion-fast, 160ms) ease,
@@ -120,7 +120,7 @@
 .section-catalog-search:focus-within {
   border-color: color-mix(in srgb, var(--brand) 24%, var(--line));
   background: var(--surface);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 5%, transparent);
+  box-shadow: var(--theme-button-focus-ring);
 }
 
 .section-catalog-search > svg {
@@ -313,10 +313,6 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-.section-product-card:active {
-  opacity: 0.82;
-  transform: scale(0.985);
-}
 
 .section-product-cover {
   position: relative;
@@ -324,9 +320,7 @@
   aspect-ratio: 1 / 1;
   overflow: hidden;
   border: 0;
-  border-radius: var(--theme-radius-media, 10px);
   background: var(--theme-media-background, var(--surface-soft));
-  box-shadow: 0 8px 22px color-mix(in srgb, var(--text) 4%, transparent);
   isolation: isolate;
 }
 
@@ -411,9 +405,6 @@
     color: var(--text);
   }
 
-  .section-product-card:hover .section-product-cover > img {
-    transform: scale(1.018);
-  }
 }
 
 @media (max-width: 767px) {
