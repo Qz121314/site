@@ -284,7 +284,7 @@ export function StorefrontProductCard({
   LinkComponent?: StorefrontLinkComponent;
   media: ReactNode;
   modeLabel?: string | null;
-  sectionName: string;
+  sectionName?: string | null;
   tags: Array<{ id: string; name: string }>;
   title: string;
 }) {
@@ -297,7 +297,7 @@ export function StorefrontProductCard({
       <div className="product-card-body">
         <div className="product-card-heading">
           <h3>{title}</h3>
-          <span>{sectionName}</span>
+          {sectionName ? <span>{sectionName}</span> : null}
         </div>
         {categoryName ? <p className="product-type">{categoryName}</p> : null}
         {tags.length > 0 ? (
