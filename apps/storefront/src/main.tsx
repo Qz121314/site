@@ -30,6 +30,7 @@ import './catalog-polish.css';
 import './section-compact-filters.css';
 import './ui-accessibility.css';
 import './loading-states.css';
+import './interaction-depth.css';
 
 installStorefrontViewportRuntime();
 installPublicContentFetchFallback();
