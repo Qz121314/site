@@ -340,7 +340,6 @@
   transform: scale(var(--theme-press-scale, 0.985));
 }
 
-
 /* Admin mobile preview stays on the touch-first recipe even on a desktop viewport. */
 .storefront-theme-root .product-grid {
   gap: var(--theme-card-gap-y) var(--theme-card-gap-x);
