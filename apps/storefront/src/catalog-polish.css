@@ -3,7 +3,7 @@
 :is(html, .storefront-theme-root)
   :is(.home-product-cover, .browse-search-product-cover, .section-product-cover) {
   border-radius: var(--theme-radius-media, 12px);
-  box-shadow: var(--catalog-card-shadow);
+  box-shadow: var(--theme-art-media-shadow, var(--catalog-card-shadow));
   transform: translateZ(0);
   transition:
     opacity var(--app-motion-fast, 160ms) ease,
@@ -61,6 +61,15 @@
   opacity: 0.94;
   box-shadow: var(--catalog-card-shadow-pressed);
   transform: scale(var(--catalog-card-press-scale));
+}
+
+:is(html, .storefront-theme-root)
+  :is(
+    .home-product-tile:active .home-product-cover img,
+    .browse-search-product-card:active .browse-search-product-cover > img,
+    .section-product-card:active .section-product-cover > img
+  ) {
+  transform: scale(var(--theme-art-media-press-scale, 1.032));
 }
 
 :is(html, .storefront-theme-root) .section-catalog-filters {
@@ -146,8 +155,7 @@
       .browse-search-product-card:hover .browse-search-product-cover,
       .section-product-card:hover .section-product-cover
     ) {
-    box-shadow: var(--catalog-card-shadow-hover);
-    transform: translateY(-2px);
+    box-shadow: var(--theme-art-media-hover-shadow, var(--catalog-card-shadow-hover));
   }
 
   :is(html, .storefront-theme-root)
@@ -156,7 +164,7 @@
       .browse-search-product-card:hover .browse-search-product-cover > img,
       .section-product-card:hover .section-product-cover > img
     ) {
-    transform: scale(1.018);
+    transform: scale(var(--theme-art-media-hover-scale, 1.018));
   }
 
   :is(html, .storefront-theme-root)
