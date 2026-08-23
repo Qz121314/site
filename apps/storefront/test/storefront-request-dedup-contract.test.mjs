@@ -24,6 +24,7 @@ test('home and section surfaces share the canonical section query cache', () => 
 test('support connection discovery deduplicates cold concurrent consumers and compose skips list fetch', () => {
   const gateway = source('../src/support-gateway.ts');
   const root = source('../src/StorefrontRoot.tsx');
+  const runtime = source('../src/StorefrontSupportRuntime.tsx');
 
   assert.ok(
     gateway.includes(
@@ -33,8 +34,10 @@ test('support connection discovery deduplicates cold concurrent consumers and co
   assert.ok(gateway.includes('if (!connectionRequest)'));
   assert.ok(gateway.includes("'/api/public/storefront/support/connections'"));
   assert.ok(gateway.includes('return connectionRequest;'));
-  assert.ok(root.includes("supportRuntimeEnabled && route.type !== 'message-compose'"));
-  assert.ok(root.includes('enabled: supportConversationListEnabled'));
+  assert.ok(root.includes("import('./StorefrontSupportRuntime')"));
+  assert.ok(root.includes("conversationListEnabled={route.type !== 'message-compose'}"));
+  assert.ok(runtime.includes("queryKey: ['support-conversations']"));
+  assert.ok(runtime.includes('enabled: conversationListEnabled'));
 });
 
 test('product detail and compose reuse one versioned immutable product cache', () => {

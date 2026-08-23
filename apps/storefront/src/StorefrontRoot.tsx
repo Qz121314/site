@@ -1,4 +1,4 @@
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import {
   StorefrontBottomNavigation,
   StorefrontBrandBar,
@@ -37,16 +37,7 @@ import { primaryNavigationItems } from './storefront-navigation';
 import { handleStorefrontLinkClick } from './storefront-navigation-runtime';
 import { StorefrontRouteActionHostProvider } from './StorefrontRouteAction';
 import { observeStorefrontShellChrome } from './storefront-viewport-runtime';
-import type { SupportConversationSummary } from './support-contract';
-import { siteSupportGateway } from './support-gateway';
 import { peekSupportVisitorIdentity } from './support-identity';
-import { syncSupportAppBadge } from './support-push';
-import { subscribeSupportRealtime } from './support-realtime';
-import {
-  applyRealtimeToConversationCache,
-  applyRealtimeToConversationList,
-  type SupportConversationQueryCache,
-} from './support-realtime-cache';
 import { SYSTEM_UI } from './system-ui';
 import { applyStorefrontTheme } from './theme-runtime';
 
@@ -76,6 +67,11 @@ const SectionCatalogPage = lazy(() =>
 );
 const MessagesPage = lazy(() =>
   import('./MessagesPage').then((module) => ({ default: module.MessagesPage })),
+);
+const StorefrontSupportRuntime = lazy(() =>
+  import('./StorefrontSupportRuntime').then((module) => ({
+    default: module.StorefrontSupportRuntime,
+  })),
 );
 
 function subscribeLocation(callback: () => void) {
@@ -278,7 +274,6 @@ function PrimaryShell({
 }
 
 export function StorefrontRoot() {
-  const queryClient = useQueryClient();
   const locationKey = useSyncExternalStore(
     subscribeLocation,
     currentLocationKey,
@@ -291,20 +286,11 @@ export function StorefrontRoot() {
     route.type === 'message-compose' ||
     route.type === 'message' ||
     Boolean(peekSupportVisitorIdentity());
-  const supportConversationListEnabled =
-    supportRuntimeEnabled && route.type !== 'message-compose';
+  const [unreadMessages, setUnreadMessages] = useState(0);
   const bootstrapQuery = useQuery({
     queryKey: ['storefront-bootstrap'],
     queryFn: ({ signal }) => loadStorefrontBootstrap(undefined, signal),
     staleTime: 30_000,
-  });
-  const supportConversationsQuery = useQuery({
-    queryKey: ['support-conversations'],
-    queryFn: ({ signal }) => siteSupportGateway.listConversations(signal),
-    enabled: supportConversationListEnabled,
-    staleTime: Number.POSITIVE_INFINITY,
-    retry: 1,
-    refetchOnWindowFocus: false,
   });
 
   useLayoutEffect(() => {
@@ -317,36 +303,9 @@ export function StorefrontRoot() {
     });
   }, [bootstrapQuery.data]);
 
-  const unreadMessages = (supportConversationsQuery.data ?? []).reduce(
-    (total, conversation) => total + conversation.unreadCount,
-    0,
-  );
-
   useEffect(() => {
-    void syncSupportAppBadge(unreadMessages);
-  }, [unreadMessages]);
-
-  useEffect(() => {
-    if (!supportRuntimeEnabled) return undefined;
-    return subscribeSupportRealtime((event) => {
-      if (event.type === 'realtime.recovered') {
-        void queryClient.invalidateQueries({ queryKey: ['support-conversations'] });
-        void queryClient.invalidateQueries({ queryKey: ['support-conversation'] });
-        return;
-      }
-      if (event.type === 'realtime.connected') return;
-      queryClient.setQueryData<SupportConversationSummary[]>(
-        ['support-conversations'],
-        (current) => applyRealtimeToConversationList(current, event),
-      );
-      if (event.conversationRef) {
-        queryClient.setQueryData<SupportConversationQueryCache>(
-          ['support-conversation', event.conversationRef],
-          (current) => applyRealtimeToConversationCache(current, event),
-        );
-      }
-    });
-  }, [queryClient, supportRuntimeEnabled]);
+    if (!supportRuntimeEnabled) setUnreadMessages(0);
+  }, [supportRuntimeEnabled]);
 
   if (bootstrapQuery.isLoading) return <StartupLoader />;
   if (bootstrapQuery.error || !bootstrapQuery.data) return <PrimaryError />;
@@ -457,6 +416,14 @@ export function StorefrontRoot() {
         pathname={pathname}
       />
       <StorefrontMetadata description={bootstrap.site.site.locationLabel.trim()} />
+      {supportRuntimeEnabled ? (
+        <Suspense fallback={null}>
+          <StorefrontSupportRuntime
+            conversationListEnabled={route.type !== 'message-compose'}
+            onUnreadMessages={setUnreadMessages}
+          />
+        </Suspense>
+      ) : null}
       <PrimaryShell
         activePath={pathname}
         bootstrap={bootstrap}
