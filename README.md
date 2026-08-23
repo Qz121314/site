@@ -267,7 +267,7 @@ HTML critical surface
 - `index.html` 提供零请求的 critical page background，避免 JavaScript / bundled CSS 执行前出现浏览器默认纯白空窗；
 - Theme Runtime 可以使用本地缓存主题提前恢复颜色；首次没有缓存时使用稳定的 neutral fallback，不为主题增加新的启动请求；
 - `StartupLoader` 是真实 App Shell / Home 的“低信息预测布局”，不是独立设计稿；Header、Logo、Hero、快捷入口、产品网格、Bottom Chrome 的几何和断点应尽量与真实页面一致；
-- 手机 Home Hero 当前使用 `4 / 5` 与 `clamp(320px, 64vh, 540px)`，启动骨架必须保持同一几何；`>=768px` 使用与真实 Hero 对齐的 `16 / 7.2`；
+- 手机 Home Hero 当前使用全宽媒体与 `clamp(300px, 52svh, 440px)`，启动骨架必须保持同一几何；`>=768px` 使用与真实 Hero 对齐的 `16 / 7.2`；
 - Home 产品区手机为 2 列，`>=768px` 为 4 列；Startup Loader 不能重新做成横向产品 rail；
 - 图片 / 视频必须预留稳定布局尺寸。产品封面使用明确 `width / height` 或 `aspect-ratio`；Hero 媒体容器先确定几何，再让图片 / 视频 `object-fit`，不能等待资源下载后撑开页面；
 - First Paint 优化优先检查：页面背景闪变、Logo 宽高跳变、Header 高度跳变、Hero 高度跳变、快捷入口重排、产品网格重排、Bottom Chrome 位移和 CLS；
