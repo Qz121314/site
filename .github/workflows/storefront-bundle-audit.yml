@@ -23,6 +23,23 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Audit storefront source references
+        run: |
+          set -euo pipefail
+          for pattern in \
+            "bottom-navigation" \
+            "support-contract" \
+            "loadSectionSnapshot" \
+            "loadProductSnapshot" \
+            "loadFaqSnapshot" \
+            "rememberStorefrontProducts" \
+            "loadCurrentPointer" \
+            "resolveMediaBaseUrl" \
+            "parseBottomNavigationItems"; do
+            echo "=== REF: $pattern ==="
+            rg -n --glob '!node_modules/**' --glob '!dist/**' --glob '!.git/**' "$pattern" . || true
+          done
+
       - name: Audit storefront bundle graph
         working-directory: apps/storefront
         run: |
