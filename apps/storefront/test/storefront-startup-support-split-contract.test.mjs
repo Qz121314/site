@@ -7,13 +7,18 @@ function source(path) {
   return readFileSync(new URL(path, import.meta.url), 'utf8');
 }
 
-test('ordinary storefront startup keeps support gateway behind route or identity activation', () => {
+test('ordinary storefront startup keeps support runtime behind route or identity activation', () => {
   const main = source('../src/main.tsx');
   const root = source('../src/StorefrontRoot.tsx');
+  const messages = source('../src/MessagesPage.tsx');
   const expiry = source('../src/support-expiry-runtime.ts');
   const runtime = source('../src/StorefrontSupportRuntime.tsx');
 
-  assert.ok(main.includes('installSupportExpiryRuntime();'));
+  assert.equal(main.includes("from './support-expiry-runtime'"), false);
+  assert.equal(main.includes('installSupportExpiryRuntime();'), false);
+  assert.ok(messages.includes("from './support-expiry-runtime'"));
+  assert.ok(messages.includes('installSupportExpiryRuntime();'));
+
   assert.equal(root.includes("from './support-gateway'"), false);
   assert.equal(root.includes("from './support-realtime'"), false);
   assert.ok(root.includes("import('./StorefrontSupportRuntime')"));
