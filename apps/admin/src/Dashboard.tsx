@@ -27,25 +27,35 @@ const AssetLibraryView = lazy(() =>
   import('./AssetLibraryView').then((module) => ({ default: module.AssetLibraryView })),
 );
 const CustomerServiceView = lazy(() =>
-  import('./CustomerServiceView').then((module) => ({ default: module.CustomerServiceView })),
+  import('./CustomerServiceView').then((module) => ({
+    default: module.CustomerServiceView,
+  })),
 );
 const SectionManagementView = lazy(() =>
-  import('./SectionManagementView').then((module) => ({ default: module.SectionManagementView })),
+  import('./SectionManagementView').then((module) => ({
+    default: module.SectionManagementView,
+  })),
 );
 const FaqManagementView = lazy(() =>
   import('./FaqManagementView').then((module) => ({ default: module.FaqManagementView })),
 );
 const ProductManagementView = lazy(() =>
-  import('./ProductManagementView').then((module) => ({ default: module.ProductManagementView })),
+  import('./ProductManagementView').then((module) => ({
+    default: module.ProductManagementView,
+  })),
 );
 const CategoryManagementView = lazy(() =>
-  import('./CategoryManagementView').then((module) => ({ default: module.CategoryManagementView })),
+  import('./CategoryManagementView').then((module) => ({
+    default: module.CategoryManagementView,
+  })),
 );
 const TagManagementView = lazy(() =>
   import('./TagManagementView').then((module) => ({ default: module.TagManagementView })),
 );
 const ConversionPoolView = lazy(() =>
-  import('./ConversionPoolView').then((module) => ({ default: module.ConversionPoolView })),
+  import('./ConversionPoolView').then((module) => ({
+    default: module.ConversionPoolView,
+  })),
 );
 
 type DynamicViewKind = 'products' | 'categories' | 'tags' | 'conversion-pool';
@@ -909,7 +919,6 @@ export function Dashboard({
             </button>
           </div>
         ) : null}
-
 
         <Suspense
           fallback={
