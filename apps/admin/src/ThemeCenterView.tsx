@@ -4,8 +4,9 @@ import {
   StorefrontHero,
   StorefrontHomeProductTile,
   StorefrontHomeShortcut,
+  StorefrontProductCard,
 } from '@site/storefront-ui';
-import { storefrontThemeStyle } from '@site/storefront-ui/theme';
+import { storefrontBrandContrast, storefrontThemeStyle } from '@site/storefront-ui/theme';
 import {
   useCallback,
   useEffect,
@@ -43,6 +44,7 @@ type ThemeCenterViewProps = {
 
 type ThemeSourceTab = 'official' | 'registry' | 'json';
 type ThemeMode = 'light' | 'dark';
+type ThemePreviewPage = 'home' | 'catalog' | 'detail' | 'messages' | 'install';
 type ThemeRecipeSelection = {
   density: ThemeDensity;
   fontPack: ThemeFontPack;
@@ -64,10 +66,20 @@ type ThemeEditorControlsProps = {
 };
 
 type MobileThemePreviewProps = {
+  installPrompt: ThemeInstallPrompt;
+  page: ThemePreviewPage;
   selectedPreset: ResolvedTheme | ThemePreset;
   recipe: ThemeRecipeSelection;
   previewAccent: string;
 };
+
+const THEME_PREVIEW_PAGES: Array<{ key: ThemePreviewPage; label: string }> = [
+  { key: 'home', label: '首页' },
+  { key: 'catalog', label: '商品' },
+  { key: 'detail', label: '详情' },
+  { key: 'messages', label: '消息' },
+  { key: 'install', label: '安装' },
+];
 
 const FONT_PACK_LABELS: Record<ThemeFontPack, string> = {
   modern: 'Modern Sans · 现代',
@@ -129,6 +141,206 @@ function importedSignature(value: ImportedThemeDefinition | undefined): string {
 
 function PreviewLink({ children, className }: AnchorHTMLAttributes<HTMLAnchorElement>) {
   return <span className={className}>{children}</span>;
+}
+
+function ThemePreviewHome({ themeLabel }: { themeLabel: string }) {
+  return (
+    <div className="home-feed has-hero">
+      <StorefrontHero
+        ariaLabel={themeLabel}
+        LinkComponent={PreviewLink}
+        slides={[
+          {
+            id: 'theme-preview-hero',
+            media: (
+              <div className="theme-preview-hero-media" aria-hidden="true">
+                <span>Hero media</span>
+              </div>
+            ),
+            title: 'Discover what fits you',
+            description: 'Fast browsing designed for one-hand mobile use.',
+          },
+        ]}
+      />
+      <div className="home-shortcut-zone">
+        <nav className="home-shortcuts" aria-label="Preview sections">
+          {[
+            ['Nearby', '⌖'],
+            ['Popular', '◆'],
+            ['Latest', '◷'],
+            ['More', '••'],
+          ].map(([label = '', icon = '']) => (
+            <StorefrontHomeShortcut
+              href="#"
+              icon={<span aria-hidden="true">{icon}</span>}
+              key={label}
+              label={label}
+              LinkComponent={PreviewLink}
+            />
+          ))}
+        </nav>
+      </div>
+      <div className="home-recommendation-feed">
+        <section className="home-recommendation">
+          <div className="home-recommendation-heading">
+            <span className="home-recommendation-heading-copy">
+              <h2>Featured</h2>
+            </span>
+            <PreviewLink href="#" aria-label="See all">
+              <span aria-hidden="true">›</span>
+            </PreviewLink>
+          </div>
+          <div className="home-product-rail theme-preview-products">
+            {[1, 2].map((item) => (
+              <StorefrontHomeProductTile
+                href="#"
+                key={item}
+                LinkComponent={PreviewLink}
+                media={
+                  <div className="theme-preview-media" aria-hidden="true">
+                    <span>1:1</span>
+                  </div>
+                }
+                title={item === 1 ? 'Product title' : 'Featured item'}
+              />
+            ))}
+          </div>
+        </section>
+      </div>
+    </div>
+  );
+}
+
+function ThemePreviewCatalog() {
+  return (
+    <section className="theme-preview-catalog" aria-label="Catalog preview">
+      <header className="theme-preview-route-heading">
+        <span>Catalog</span>
+        <strong>Explore services</strong>
+      </header>
+      <div className="theme-preview-search">⌕ Search services</div>
+      <div className="theme-preview-filter-row" aria-hidden="true">
+        <span className="is-active">All</span>
+        <span>Nearby</span>
+        <span>Popular</span>
+      </div>
+      <div className="theme-preview-catalog-grid">
+        {['Mobile service', 'Featured place', 'Quick booking', 'Local expert'].map(
+          (title, index) => (
+            <StorefrontProductCard
+              categoryName={index % 2 === 0 ? 'Service' : 'Experience'}
+              href="#"
+              key={title}
+              LinkComponent={PreviewLink}
+              media={
+                <div className="theme-preview-media" aria-hidden="true">
+                  <span>1:1</span>
+                </div>
+              }
+              modeLabel={index === 0 ? 'Online' : null}
+              sectionName="Featured"
+              tags={[{ id: `preview-${index}`, name: index % 2 ? 'Popular' : 'New' }]}
+              title={title}
+            />
+          ),
+        )}
+      </div>
+    </section>
+  );
+}
+
+function ThemePreviewDetail() {
+  return (
+    <article className="theme-preview-detail">
+      <div className="detail-media-stage theme-preview-detail-media" aria-hidden="true">
+        <span>Product media</span>
+      </div>
+      <section className="product-detail-summary theme-preview-detail-summary">
+        <span className="theme-preview-eyebrow">Featured service</span>
+        <h1>Product detail title</h1>
+        <p>Clear information, calm hierarchy, and one primary action.</p>
+        <div className="theme-preview-detail-meta">
+          <span>Fast reply</span>
+          <span>Mobile ready</span>
+        </div>
+      </section>
+      <div className="product-detail-route-action theme-preview-detail-action">
+        <button className="cta-button" type="button">
+          Contact now
+        </button>
+      </div>
+    </article>
+  );
+}
+
+function ThemePreviewMessages() {
+  return (
+    <section className="chat-page theme-preview-chat" aria-label="Messages preview">
+      <header className="chat-header theme-preview-chat-header">
+        <span className="chat-header-avatar">S</span>
+        <div>
+          <strong>Service support</strong>
+          <small>Usually replies quickly</small>
+        </div>
+      </header>
+      <div className="chat-timeline theme-preview-chat-timeline">
+        <div className="chat-message-row is-agent">
+          <p className="chat-message-bubble">Hi, how can we help?</p>
+        </div>
+        <div className="chat-message-row is-customer">
+          <p className="chat-message-bubble">Is this available today?</p>
+        </div>
+        <div className="chat-message-row is-agent">
+          <p className="chat-message-bubble">Yes — choose a time that works for you.</p>
+        </div>
+      </div>
+      <div className="chat-composer theme-preview-chat-composer">
+        <span className="chat-input-placeholder">Write a message…</span>
+        <button className="chat-send-button" type="button" aria-label="Send message">
+          ↑
+        </button>
+      </div>
+    </section>
+  );
+}
+
+function ThemePreviewInstall({ installPrompt }: { installPrompt: ThemeInstallPrompt }) {
+  return (
+    <section className="theme-preview-install" aria-label="Install prompt preview">
+      <header className="theme-preview-route-heading">
+        <span>Install experience</span>
+        <strong>Keep the service close</strong>
+      </header>
+      <div className="theme-preview-install-backdrop" aria-hidden="true">
+        <span />
+        <span />
+        <span />
+      </div>
+      {installPrompt.enabled ? (
+        <div className="pwa-install-card theme-preview-install-card">
+          <span className="pwa-install-icon" aria-hidden="true">
+            S
+          </span>
+          <div className="theme-preview-install-copy">
+            <strong>{installPrompt.title || 'Install app'}</strong>
+            <p>{installPrompt.description || 'Add it for faster access.'}</p>
+          </div>
+          <button className="pwa-install-action" type="button">
+            {installPrompt.installLabel || 'Install'}
+          </button>
+          <button className="pwa-install-dismiss" type="button">
+            {installPrompt.dismissLabel || 'Not now'}
+          </button>
+        </div>
+      ) : (
+        <div className="theme-preview-install-disabled">
+          <span aria-hidden="true">✓</span>
+          <strong>安装提示已关闭</strong>
+          <small>Storefront 不会显示安装弹窗。</small>
+        </div>
+      )}
+    </section>
+  );
 }
 
 function ThemeEditorControls({
@@ -428,6 +640,8 @@ function ThemeEditorControls({
 }
 
 function MobileThemePreview({
+  installPrompt,
+  page,
   selectedPreset,
   recipe,
   previewAccent,
@@ -460,78 +674,25 @@ function MobileThemePreview({
           logo="S"
           siteName="Service"
         />
-        <div className="theme-preview-content">
-          <div className="home-feed has-hero">
-            <StorefrontHero
-              ariaLabel={selectedPreset.label}
-              LinkComponent={PreviewLink}
-              slides={[
-                {
-                  id: 'theme-preview-hero',
-                  media: (
-                    <div className="theme-preview-hero-media" aria-hidden="true">
-                      <span>Hero media</span>
-                    </div>
-                  ),
-                  title: 'Discover what fits you',
-                  description: 'Fast browsing designed for one-hand mobile use.',
-                },
-              ]}
-            />
-            <div className="home-shortcut-zone">
-              <nav className="home-shortcuts" aria-label="Preview sections">
-                {[
-                  ['Nearby', '⌖'],
-                  ['Popular', '◆'],
-                  ['Latest', '◷'],
-                  ['More', '••'],
-                ].map(([label = '', icon = '']) => (
-                  <StorefrontHomeShortcut
-                    href="#"
-                    icon={<span aria-hidden="true">{icon}</span>}
-                    key={label}
-                    label={label}
-                    LinkComponent={PreviewLink}
-                  />
-                ))}
-              </nav>
-            </div>
-            <div className="home-recommendation-feed">
-              <section className="home-recommendation">
-                <div className="home-recommendation-heading">
-                  <span className="home-recommendation-heading-copy">
-                    <h2>Featured</h2>
-                  </span>
-                  <PreviewLink href="#" aria-label="See all">
-                    <span aria-hidden="true">›</span>
-                  </PreviewLink>
-                </div>
-                <div className="home-product-rail theme-preview-products">
-                  {[1, 2].map((item) => (
-                    <StorefrontHomeProductTile
-                      href="#"
-                      key={item}
-                      LinkComponent={PreviewLink}
-                      media={
-                        <div className="theme-preview-media" aria-hidden="true">
-                          <span>1:1</span>
-                        </div>
-                      }
-                      title={item === 1 ? 'Product title' : 'Featured item'}
-                    />
-                  ))}
-                </div>
-              </section>
-            </div>
-          </div>
+        <div className={`theme-preview-content is-${page}`}>
+          {page === 'home' ? (
+            <ThemePreviewHome themeLabel={selectedPreset.label} />
+          ) : null}
+          {page === 'catalog' ? <ThemePreviewCatalog /> : null}
+          {page === 'detail' ? <ThemePreviewDetail /> : null}
+          {page === 'messages' ? <ThemePreviewMessages /> : null}
+          {page === 'install' ? (
+            <ThemePreviewInstall installPrompt={installPrompt} />
+          ) : null}
         </div>
         <StorefrontBottomNavigation
+          activeHref={page === 'messages' ? '/messages/' : '/'}
           LinkComponent={PreviewLink}
           items={[
             { href: '/', icon: '⌂', label: 'Home' },
             { href: '/#hot', icon: '◆', label: 'Hot' },
             { href: '/#latest', icon: '◷', label: 'Latest' },
-            { href: '/#faq', icon: '?', label: 'FAQ' },
+            { href: '/messages/', icon: '✦', label: 'Messages' },
           ]}
         />
       </div>
@@ -572,6 +733,7 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [previewPage, setPreviewPage] = useState<ThemePreviewPage>('home');
 
   const selectedImported =
     selectedKey === 'custom' ? importedTheme?.overrides.imported : undefined;
@@ -647,6 +809,9 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
     normalizeAccent(accent) ??
     normalizeAccent(selectedPreset?.tokens.brand ?? '') ??
     '#ff5a1f';
+  const brandContrast = selectedPreset
+    ? storefrontBrandContrast(previewAccent, selectedPreset.colorScheme)
+    : null;
 
   function clearMessages() {
     setErrorMessage('');
@@ -1060,7 +1225,38 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
                       </div>
                       <small>修改设置后立即更新</small>
                     </div>
+                    <div
+                      className="theme-preview-page-switcher"
+                      aria-label="选择预览页面"
+                    >
+                      {THEME_PREVIEW_PAGES.map((page) => (
+                        <button
+                          key={page.key}
+                          type="button"
+                          aria-pressed={previewPage === page.key}
+                          onClick={() => setPreviewPage(page.key)}
+                        >
+                          {page.label}
+                        </button>
+                      ))}
+                    </div>
+                    <div
+                      className="theme-contrast-status"
+                      data-status={
+                        brandContrast?.ratio === null ||
+                        (brandContrast?.ratio ?? 0) >= 4.5
+                          ? 'pass'
+                          : 'warning'
+                      }
+                    >
+                      <span aria-hidden="true">●</span>
+                      {brandContrast?.ratio === null
+                        ? '品牌按钮文字已按明暗模式自动匹配'
+                        : `品牌按钮对比度 ${brandContrast?.ratio.toFixed(1)}:1 · AA`}
+                    </div>
                     <MobileThemePreview
+                      installPrompt={installPrompt}
+                      page={previewPage}
                       selectedPreset={selectedPreset}
                       recipe={recipe}
                       previewAccent={previewAccent}

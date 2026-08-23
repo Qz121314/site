@@ -26,10 +26,32 @@ test('theme center combines settings and mobile preview inside one compact modal
   assert.ok(view.includes('StorefrontHero'));
   assert.ok(view.includes('StorefrontHomeShortcut'));
   assert.ok(view.includes('StorefrontHomeProductTile'));
+  assert.ok(view.includes('StorefrontProductCard'));
   assert.ok(view.includes('className="home-feed has-hero"'));
   assert.ok(view.includes('className="home-shortcuts"'));
   assert.ok(view.includes('className="home-product-rail theme-preview-products"'));
-  assert.equal(view.includes('StorefrontProductCard'), false);
+  assert.ok(
+    view.includes(
+      "type ThemePreviewPage = 'home' | 'catalog' | 'detail' | 'messages' | 'install';",
+    ),
+  );
+  assert.ok(
+    view.includes(
+      "const [previewPage, setPreviewPage] = useState<ThemePreviewPage>('home');",
+    ),
+  );
+  assert.ok(view.includes('className="theme-preview-page-switcher"'));
+  assert.ok(view.includes('aria-pressed={previewPage === page.key}'));
+  assert.ok(view.includes('page={previewPage}'));
+  assert.ok(view.includes('className="theme-preview-catalog"'));
+  assert.ok(
+    view.includes('className="product-detail-summary theme-preview-detail-summary"'),
+  );
+  assert.ok(view.includes('className="chat-page theme-preview-chat"'));
+  assert.ok(view.includes('className="pwa-install-card theme-preview-install-card"'));
+  assert.ok(view.includes('installPrompt.enabled ?'));
+  assert.ok(view.includes('className="theme-preview-install-disabled"'));
+  assert.ok(view.includes('className="theme-contrast-status"'));
   assert.ok(view.includes('aria-modal="true"'));
   assert.ok(view.includes("event.key === 'Escape'"));
   assert.ok(view.includes('onMouseDown={(event) => event.stopPropagation()}'));
@@ -65,4 +87,9 @@ test('theme center combines settings and mobile preview inside one compact modal
   assert.ok(workbenchCss.includes('@media (max-width: 760px)'));
   assert.ok(workbenchCss.includes('grid-template-columns: minmax(0, 1fr);'));
   assert.ok(workbenchCss.includes('overscroll-behavior: contain;'));
+  assert.match(baseCss, /\.theme-preview-page-switcher\s*\{[^}]*display: grid;/s);
+  assert.match(baseCss, /\.theme-preview-catalog\s*\{[^}]*display: grid;/s);
+  assert.match(baseCss, /\.theme-preview-detail-summary\s*\{[^}]*display: grid;/s);
+  assert.match(baseCss, /\.theme-preview-chat\s*\{[^}]*display: grid;/s);
+  assert.match(baseCss, /\.theme-preview-install-card\s*\{[^}]*display: grid;/s);
 });
