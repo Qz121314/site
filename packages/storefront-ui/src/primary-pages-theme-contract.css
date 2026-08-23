@@ -368,6 +368,7 @@
 }
 
 :is(html, .storefront-theme-root) .chat-composer {
+  border-top-color: var(--theme-primary-chat-header-border);
   background: var(--theme-primary-chat-composer-background);
 }
 
@@ -418,7 +419,21 @@
 }
 
 @media (max-width: 767px) {
-  html .conversation-list {
+  :is(html, .storefront-theme-root) .faq-article-list {
+    border-right: 0;
+    border-left: 0;
+    border-radius: 0;
+    box-shadow: none;
+  }
+
+  :is(html, .storefront-theme-root) .faq-article-body {
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  :is(html, .storefront-theme-root) .conversation-list {
     margin-right: -10px;
     margin-left: -10px;
     border-right: 0;
@@ -427,9 +442,13 @@
     box-shadow: none;
   }
 
-  html .conversation-row {
+  :is(html, .storefront-theme-root) .conversation-row {
     padding-right: 14px;
     padding-left: 14px;
+  }
+
+  :is(html, .storefront-theme-root) .conversation-row.is-active {
+    box-shadow: none;
   }
 }
 
