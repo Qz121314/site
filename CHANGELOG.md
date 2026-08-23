@@ -1,5 +1,18 @@
 # Changelog
 
+## Release Candidate Closure — 2026-08-23
+
+进入最终收口与稳定维护阶段。
+
+### Closure policy
+
+- 冻结 Storefront、Admin、Worker、D1、R2、发布模型、路由与客服集成边界，不再进行非必要架构重构。
+- 冻结现有主题与视觉系统；后续仅修复明确 UI Bug、兼容性问题与真实运营问题，不继续堆叠主题、视觉 token 或布局模式。
+- 保持 Storefront bundle budget 不放宽：JavaScript gzip < 100 KiB，CSS gzip < 25 KiB。
+- Release Candidate 期间重点验证 PR → main → GitHub Actions → D1 migration → Cloudflare Worker deploy → production smoke → Playwright acceptance 的完整生产链。
+- 客服集成进入故障态验收阶段，重点验证 timeout、offline、WebSocket reconnect、后台恢复、上传失败与部分服务不可用场景。
+- 不新增 AI、广告池、复杂 RBAC / 审批、多 Worker 或新的缓存 / 数据基础设施。
+
 ## 1.0.0 — 2026-08-12
 
 首个正式商业发布基线。
