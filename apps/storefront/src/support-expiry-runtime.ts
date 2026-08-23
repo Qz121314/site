@@ -1,4 +1,5 @@
 import type { SupportGateway } from './support-contract';
+import './support-expiry-runtime.css';
 
 const NAVIGATION_EVENT = 'storefront:navigate';
 const COUNTDOWN_CLASS = 'chat-expiry-countdown';
