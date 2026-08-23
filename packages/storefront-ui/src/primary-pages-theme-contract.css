@@ -41,6 +41,16 @@
   );
   --theme-primary-chat-composer-background: var(--surface);
   --theme-primary-chat-input-background: var(--surface-soft);
+  --theme-primary-detail-panel-background: var(--theme-card-background);
+  --theme-primary-detail-panel-border: var(--theme-card-border);
+  --theme-primary-detail-panel-shadow: var(--theme-card-shadow);
+  --theme-primary-detail-media-background: var(--theme-media-background);
+  --theme-primary-detail-media-border: var(--theme-media-border);
+  --theme-primary-detail-media-shadow: var(--theme-media-shadow);
+  --theme-primary-detail-cta-surface: var(--theme-card-background);
+  --theme-primary-detail-cta-bar-shadow: none;
+  --theme-primary-detail-cta-background: var(--brand);
+  --theme-primary-detail-cta-color: #fff;
 }
 
 :is(html, .storefront-theme-root)[data-theme='marketplace'] {
