@@ -49,14 +49,8 @@ test('route motion commits one live surface without browser snapshots', async ()
   assert.match(transitionStyles, /@keyframes storefront-page-pop-enter/u);
   assert.match(transitionStyles, /--route-push-shift:/u);
   assert.match(transitionStyles, /--route-pop-shift:/u);
-  assert.match(
-    transitionStyles,
-    /translate3d\(var\(--route-push-shift\), 0, 0\)/u,
-  );
-  assert.match(
-    transitionStyles,
-    /translate3d\(var\(--route-pop-shift\), 0, 0\)/u,
-  );
+  assert.match(transitionStyles, /translate3d\(var\(--route-push-shift\), 0, 0\)/u);
+  assert.match(transitionStyles, /translate3d\(var\(--route-pop-shift\), 0, 0\)/u);
   assert.match(transitionStyles, /background: var\(--page-bg/u);
 
   assert.doesNotMatch(transitionStyles, /perspective\(/u);
