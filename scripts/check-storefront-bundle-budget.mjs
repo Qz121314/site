@@ -34,16 +34,22 @@ async function readGzipSize(assetPath) {
 async function main() {
   await stat(INDEX_HTML);
   const html = await readFile(INDEX_HTML, 'utf8');
-  const scriptMatch = html.match(/<script\b[^>]*\btype=["']module["'][^>]*\bsrc=["']([^"']+)["'][^>]*>/i);
+  const scriptMatch = html.match(
+    /<script\b[^>]*\btype=["']module["'][^>]*\bsrc=["']([^"']+)["'][^>]*>/i,
+  );
   const stylesheetMatches = [
-    ...html.matchAll(/<link\b[^>]*\brel=["']stylesheet["'][^>]*\bhref=["']([^"']+)["'][^>]*>/gi),
+    ...html.matchAll(
+      /<link\b[^>]*\brel=["']stylesheet["'][^>]*\bhref=["']([^"']+)["'][^>]*>/gi,
+    ),
   ];
 
   if (!scriptMatch?.[1]) {
     throw new Error('Could not locate the Storefront entry module in dist/index.html.');
   }
   if (stylesheetMatches.length === 0) {
-    throw new Error('Could not locate the Storefront entry stylesheet in dist/index.html.');
+    throw new Error(
+      'Could not locate the Storefront entry stylesheet in dist/index.html.',
+    );
   }
 
   const checks = [
@@ -70,7 +76,9 @@ async function main() {
   }
 
   if (failed) {
-    console.error('Storefront bundle budget exceeded. Keep the initial app shell lean or raise a budget only with an explicit performance review.');
+    console.error(
+      'Storefront bundle budget exceeded. Keep the initial app shell lean or raise a budget only with an explicit performance review.',
+    );
     process.exitCode = 1;
   }
 }
