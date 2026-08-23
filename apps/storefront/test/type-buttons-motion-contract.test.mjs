@@ -55,8 +55,8 @@ test('storefront typography buttons and route motion share one app visual contra
   assert.match(chrome, /--storefront-weight-regular/u);
   assert.match(chrome, /--storefront-weight-semibold/u);
 
-  assert.match(transitions, /--turn-x:/u);
-  assert.match(transitions, /--back-x:/u);
+  assert.match(transitions, /--route-push-shift:/u);
+  assert.match(transitions, /--route-pop-shift:/u);
   assert.match(transitions, /data-storefront-transition='push'/u);
   assert.match(transitions, /data-storefront-transition='pop'/u);
   assert.doesNotMatch(transitions, /data-storefront-nav-direction/u);
@@ -68,8 +68,22 @@ test('storefront typography buttons and route motion share one app visual contra
     transitions,
     /animation: storefront-page-pop-enter var\(--app-motion-base/u,
   );
-  assert.match(transitions, /perspective\(1200px\)/u);
-  assert.match(transitions, /rotateY/u);
+  assert.match(
+    transitions,
+    /translate3d\(var\(--route-push-shift\), 0, 0\)/u,
+  );
+  assert.match(
+    transitions,
+    /translate3d\(var\(--route-pop-shift\), 0, 0\)/u,
+  );
+  assert.match(
+    transitions,
+    /@media \(min-width: 768px\)[\s\S]*--route-push-shift: 0px;[\s\S]*--route-pop-shift: 0px;/u,
+  );
+  assert.doesNotMatch(transitions, /perspective\(/u);
+  assert.doesNotMatch(transitions, /rotateY/u);
+  assert.doesNotMatch(transitions, /box-shadow/u);
+  assert.doesNotMatch(transitions, /transform-origin/u);
   assert.doesNotMatch(transitions, /::view-transition/u);
   assert.match(transitions, /prefers-reduced-motion: reduce/u);
   assert.doesNotMatch(appShell, /animation: app-page-enter-forward/u);
