@@ -2,6 +2,7 @@
 
 :is(html, .storefront-theme-root) {
   --app-gutter: 18px;
+  --theme-on-brand: #000;
   --app-surface-raised: color-mix(in srgb, var(--surface) 96%, var(--surface-soft));
   --app-text-secondary: color-mix(in srgb, var(--text) 66%, var(--muted));
   --app-hairline: color-mix(in srgb, var(--line) 54%, transparent);

@@ -1,3 +1,5 @@
+import { storefrontBrandForeground } from '@site/storefront-ui/theme';
+
 type ThemeTokens = {
   brand: string;
   brandStrong: string;
@@ -180,6 +182,10 @@ function applyTheme(theme: PublicTheme): void {
   root.style.colorScheme = theme.colorScheme;
   root.style.setProperty('--brand', theme.tokens.brand);
   root.style.setProperty('--brand-strong', theme.tokens.brandStrong);
+  root.style.setProperty(
+    '--theme-on-brand',
+    storefrontBrandForeground(theme.tokens.brand, theme.colorScheme),
+  );
   root.style.setProperty('--text', theme.tokens.text);
   root.style.setProperty('--muted', theme.tokens.muted);
   root.style.setProperty('--surface', theme.tokens.surface);

@@ -76,7 +76,7 @@
   );
   --theme-primary-chat-input-focus-ring: var(--theme-button-focus-ring);
   --theme-primary-chat-send-background: var(--brand);
-  --theme-primary-chat-send-color: #fff;
+  --theme-primary-chat-send-color: var(--theme-on-brand, #000);
   --theme-primary-chat-send-shadow: var(--theme-button-shadow);
   --theme-primary-chat-send-press-shadow: var(--theme-button-press-shadow);
   --theme-primary-detail-panel-background: var(--theme-card-background);
@@ -88,7 +88,7 @@
   --theme-primary-detail-cta-surface: var(--theme-card-background);
   --theme-primary-detail-cta-bar-shadow: none;
   --theme-primary-detail-cta-background: var(--brand);
-  --theme-primary-detail-cta-color: #fff;
+  --theme-primary-detail-cta-color: var(--theme-on-brand, #000);
   --theme-primary-install-background: color-mix(in srgb, var(--surface) 94%, transparent);
   --theme-primary-install-border: color-mix(in srgb, var(--line) 66%, transparent);
   --theme-primary-install-shadow: var(--app-shadow-soft);
@@ -96,7 +96,7 @@
   --theme-primary-install-icon-border: var(--theme-media-border);
   --theme-primary-install-icon-shadow: var(--theme-media-shadow);
   --theme-primary-install-action-background: var(--brand);
-  --theme-primary-install-action-color: #fff;
+  --theme-primary-install-action-color: var(--theme-on-brand, #000);
   --theme-primary-install-action-shadow: var(--theme-button-shadow);
   --theme-primary-install-action-press-shadow: var(--theme-button-press-shadow);
   --theme-primary-install-dismiss-background: color-mix(
@@ -295,7 +295,7 @@
 
 :is(html, .storefront-theme-root) .conversation-preview-row b,
 :is(html, .storefront-theme-root) .bottom-nav-badge {
-  color: #fff;
+  color: var(--theme-on-brand, #000);
   background: var(--theme-primary-unread-background);
   box-shadow: var(--theme-primary-unread-shadow);
 }

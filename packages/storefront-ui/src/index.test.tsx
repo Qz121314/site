@@ -7,7 +7,7 @@ import {
   StorefrontHomeShortcut,
   StorefrontProductCard,
 } from './index';
-import { storefrontThemeStyle } from './theme';
+import { storefrontBrandForeground, storefrontThemeStyle } from './theme';
 
 describe('shared storefront UI', () => {
   it('renders the generic product-card contract', () => {
@@ -72,6 +72,16 @@ describe('shared storefront UI', () => {
     ) as Record<string, string>;
     expect(style['--brand']).toBe('#ff0000');
     expect(style['--brand-strong']).toBe('#ff0000');
+    expect(style['--theme-on-brand']).toBe('#000000');
     expect(style['--page-bg']).toBe('#888888');
+  });
+
+  it('chooses a readable foreground for every official brand family', () => {
+    expect(storefrontBrandForeground('#ff5a1f', 'light')).toBe('#000000');
+    expect(storefrontBrandForeground('#e45594', 'dark')).toBe('#000000');
+    expect(storefrontBrandForeground('#ff355d', 'dark')).toBe('#000000');
+    expect(storefrontBrandForeground('#4f46e5', 'light')).toBe('#ffffff');
+    expect(storefrontBrandForeground('#df6c4f', 'light')).toBe('#000000');
+    expect(storefrontBrandForeground('#22d3ee', 'dark')).toBe('#000000');
   });
 });

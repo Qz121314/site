@@ -301,7 +301,7 @@ p {
   padding: 0 18px;
   border: 0;
   border-radius: var(--theme-radius-control, 10px);
-  color: #fff;
+  color: var(--theme-on-brand, #000);
   background: var(--brand);
   box-shadow: 0 9px 22px color-mix(in srgb, var(--brand) 20%, transparent);
   font-weight: 760;
