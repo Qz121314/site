@@ -11,7 +11,7 @@ test('legacy product routes resolve through one cached search index instead of a
   const root = source('../src/StorefrontRoot.tsx');
   const legacy = source('../src/LegacyProductRoute.tsx');
   const search = source('../src/search-index.ts');
-  const content = source('../src/content.ts');
+  const contentRoute = source('../src/content-route.ts');
 
   assert.ok(root.includes("import('./LegacyProductRoute')"));
   assert.ok(root.includes('page = route.sectionRef ?'));
@@ -20,13 +20,13 @@ test('legacy product routes resolve through one cached search index instead of a
   assert.ok(legacy.includes('replaceStorefrontLocation(productHref(product))'));
   assert.ok(search.includes("cache: 'force-cache'"));
   assert.equal(
-    content.includes(
+    contentRoute.includes(
       'bootstrap.home.allSections.map((item) =>\n        loadSectionSnapshot(bootstrap, item.id, signal)',
     ),
     false,
   );
   assert.ok(
-    content.includes('Section context is required for published service details.'),
+    contentRoute.includes('Section context is required for published service details.'),
   );
 });
 
