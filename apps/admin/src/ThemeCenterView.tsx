@@ -481,7 +481,7 @@ function MobileThemePreview({
                   ['Popular', '◆'],
                   ['Latest', '◷'],
                   ['More', '••'],
-                ].map(([label, icon]) => (
+                ].map(([label = '', icon = '']) => (
                   <StorefrontHomeShortcut
                     href="#"
                     icon={<span aria-hidden="true">{icon}</span>}
