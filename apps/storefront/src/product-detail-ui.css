@@ -467,7 +467,7 @@
     gap: 27px;
     padding: var(--theme-detail-panel-padding, 24px);
     border: 1px solid
-      color-mix(in srgb, var(--theme-primary-detail-media-border) 76%, transparent);
+      color-mix(in srgb, var(--theme-primary-detail-panel-border) 76%, transparent);
     border-radius: var(--theme-detail-panel-radius, var(--theme-radius-card, 18px));
     background: var(--theme-primary-detail-panel-background);
     box-shadow: var(--theme-primary-detail-panel-shadow);
@@ -485,7 +485,8 @@
   .product-detail-inline-action {
     display: flex;
     padding-top: 23px;
-    border-top: 1px solid color-mix(in srgb, var(--line) 62%, transparent);
+    border-top: 1px solid
+      color-mix(in srgb, var(--theme-primary-detail-panel-border) 62%, transparent);
   }
 
   .product-detail-inline-action .cta-button {
