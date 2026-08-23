@@ -100,14 +100,8 @@ test('shared navigation runtime owns SPA history direction', async () => {
   assert.match(routeTransitionSource, /storefront-page-pop-enter/u);
   assert.match(routeTransitionSource, /--route-push-shift:/u);
   assert.match(routeTransitionSource, /--route-pop-shift:/u);
-  assert.match(
-    routeTransitionSource,
-    /translate3d\(var\(--route-push-shift\), 0, 0\)/u,
-  );
-  assert.match(
-    routeTransitionSource,
-    /translate3d\(var\(--route-pop-shift\), 0, 0\)/u,
-  );
+  assert.match(routeTransitionSource, /translate3d\(var\(--route-push-shift\), 0, 0\)/u);
+  assert.match(routeTransitionSource, /translate3d\(var\(--route-pop-shift\), 0, 0\)/u);
   assert.doesNotMatch(routeTransitionSource, /perspective\(/u);
   assert.doesNotMatch(routeTransitionSource, /rotateY/u);
   assert.doesNotMatch(routeTransitionSource, /box-shadow/u);
