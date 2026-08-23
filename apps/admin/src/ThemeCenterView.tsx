@@ -469,7 +469,6 @@ function MobileThemePreview({
           <div className="theme-preview-products product-grid">
             {[1, 2].map((item) => (
               <StorefrontProductCard
-                categoryName="Category"
                 href="#"
                 key={item}
                 LinkComponent={PreviewLink}
@@ -478,9 +477,7 @@ function MobileThemePreview({
                     <span>1:1</span>
                   </div>
                 }
-                modeLabel="Online"
-                sectionName="Featured"
-                tags={[{ id: `preview-${item}`, name: 'Popular' }]}
+                tags={[]}
                 title={item === 1 ? 'Product title' : 'Featured item'}
               />
             ))}
