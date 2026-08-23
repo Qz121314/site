@@ -294,10 +294,7 @@ export function StorefrontHomeShortcut({
   LinkComponent?: StorefrontLinkComponent;
 }) {
   return (
-    <LinkComponent
-      className={`home-shortcut${isMore ? ' is-more' : ''}`}
-      href={href}
-    >
+    <LinkComponent className={`home-shortcut${isMore ? ' is-more' : ''}`} href={href}>
       <span className="home-shortcut-icon">{icon}</span>
       <span className="home-shortcut-label">{label}</span>
     </LinkComponent>
