@@ -82,7 +82,8 @@
 }
 
 /* Primary conversion actions carry the strongest depth cue. */
-:is(html, .storefront-theme-root) :is(.cta-button, .primary-button):not(:disabled) {
+:is(html, .storefront-theme-root)
+  :is(.cta-button, .primary-button):not(:disabled) {
   position: relative;
   overflow: hidden;
   isolation: isolate;
@@ -93,17 +94,24 @@
     0 11px 23px color-mix(in srgb, var(--brand) 28%, transparent);
 }
 
-:is(html, .storefront-theme-root) :is(.cta-button, .primary-button):not(:disabled)::before {
+:is(html, .storefront-theme-root)
+  :is(.cta-button, .primary-button):not(:disabled)::before {
   position: absolute;
   inset: 0;
   z-index: -1;
   border-radius: inherit;
-  background: linear-gradient(180deg, rgb(255 255 255 / 10%), transparent 48%, rgb(0 0 0 / 6%));
+  background: linear-gradient(
+    180deg,
+    rgb(255 255 255 / 10%),
+    transparent 48%,
+    rgb(0 0 0 / 6%)
+  );
   content: '';
   pointer-events: none;
 }
 
-:is(html, .storefront-theme-root) :is(.cta-button, .primary-button):active:not(:disabled) {
+:is(html, .storefront-theme-root)
+  :is(.cta-button, .primary-button):active:not(:disabled) {
   filter: brightness(var(--theme-press-brightness, 0.96));
   box-shadow:
     0 1px 0 color-mix(in srgb, #fff 16%, transparent) inset,
@@ -206,7 +214,8 @@
     transform: translateY(-3px);
   }
 
-  :is(html, .storefront-theme-root) :is(.cta-button, .primary-button):hover:not(:disabled) {
+  :is(html, .storefront-theme-root)
+    :is(.cta-button, .primary-button):hover:not(:disabled) {
     filter: brightness(1.035);
     box-shadow:
       0 1px 0 color-mix(in srgb, #fff 32%, transparent) inset,
