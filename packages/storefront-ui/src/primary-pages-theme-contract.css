@@ -17,11 +17,7 @@
     var(--surface-soft) 88%,
     var(--surface)
   );
-  --theme-primary-state-icon-border: color-mix(
-    in srgb,
-    var(--line) 72%,
-    transparent
-  );
+  --theme-primary-state-icon-border: color-mix(in srgb, var(--line) 72%, transparent);
   --theme-primary-state-icon-color: color-mix(
     in srgb,
     var(--brand-strong) 68%,
@@ -37,17 +33,11 @@
     var(--brand) 12%,
     var(--surface)
   );
-  --theme-primary-message-avatar-border: color-mix(
-    in srgb,
-    var(--brand) 8%,
-    var(--line)
-  );
+  --theme-primary-message-avatar-border: color-mix(in srgb, var(--brand) 8%, var(--line));
   --theme-primary-message-avatar-shadow: var(--theme-media-shadow);
   --theme-primary-message-active-marker: 2px 0 0
     color-mix(in srgb, var(--brand) 76%, transparent) inset;
-  --theme-primary-message-workspace-background: var(
-    --theme-primary-message-background
-  );
+  --theme-primary-message-workspace-background: var(--theme-primary-message-background);
   --theme-primary-message-workspace-border: var(--theme-primary-message-border);
   --theme-primary-message-workspace-shadow: var(--theme-primary-message-shadow);
   --theme-primary-unread-background: var(--brand);
@@ -75,18 +65,10 @@
   --theme-primary-chat-product-background: var(--theme-primary-message-background);
   --theme-primary-chat-product-border: var(--theme-primary-message-border);
   --theme-primary-chat-product-shadow: none;
-  --theme-primary-chat-bubble-border: color-mix(
-    in srgb,
-    var(--line) 42%,
-    transparent
-  );
+  --theme-primary-chat-bubble-border: color-mix(in srgb, var(--line) 42%, transparent);
   --theme-primary-chat-bubble-shadow: none;
   --theme-primary-chat-input-background: var(--surface-soft);
-  --theme-primary-chat-input-border: color-mix(
-    in srgb,
-    var(--line) 68%,
-    transparent
-  );
+  --theme-primary-chat-input-border: color-mix(in srgb, var(--line) 68%, transparent);
   --theme-primary-chat-input-focus-border: color-mix(
     in srgb,
     var(--brand) 24%,
@@ -107,16 +89,8 @@
   --theme-primary-detail-cta-bar-shadow: none;
   --theme-primary-detail-cta-background: var(--brand);
   --theme-primary-detail-cta-color: #fff;
-  --theme-primary-install-background: color-mix(
-    in srgb,
-    var(--surface) 94%,
-    transparent
-  );
-  --theme-primary-install-border: color-mix(
-    in srgb,
-    var(--line) 66%,
-    transparent
-  );
+  --theme-primary-install-background: color-mix(in srgb, var(--surface) 94%, transparent);
+  --theme-primary-install-border: color-mix(in srgb, var(--line) 66%, transparent);
   --theme-primary-install-shadow: var(--app-shadow-soft);
   --theme-primary-install-icon-background: var(--theme-media-background);
   --theme-primary-install-icon-border: var(--theme-media-border);
