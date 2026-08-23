@@ -46,10 +46,11 @@ export type StorefrontHeroSlide = {
   cta?: { label: string; href: string } | null;
 };
 
-type StorefrontHeroCarouselProps = {
+export type StorefrontHeroCarouselProps = {
   slides: StorefrontHeroSlide[];
   LinkComponent?: StorefrontLinkComponent;
   intervalMs?: number;
+  ariaLabel?: string;
 };
 
 type StorefrontHeroLegacyProps = {
@@ -63,6 +64,7 @@ function StorefrontHeroCarousel({
   slides,
   LinkComponent = 'a',
   intervalMs = 5000,
+  ariaLabel,
 }: StorefrontHeroCarouselProps) {
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const frameRef = useRef<number | null>(null);
@@ -149,6 +151,7 @@ function StorefrontHeroCarousel({
   return (
     <section
       className={`hero-carousel${slides.length === 1 ? ' is-single' : ''}`}
+      aria-label={ariaLabel}
       aria-roledescription="carousel"
       onMouseEnter={() => setInteractionPaused(true)}
       onMouseLeave={() => setInteractionPaused(false)}
@@ -183,7 +186,7 @@ function StorefrontHeroCarousel({
             const hasCopy = Boolean(slide.title || slide.description || slide.cta);
             return (
               <article
-                className="hero-carousel-slide"
+                className={`hero-carousel-slide${index === activeIndex ? ' is-active' : ''}`}
                 data-hero-slide-index={index}
                 key={slide.id}
                 aria-hidden={index !== activeIndex}
@@ -264,6 +267,51 @@ export function StorefrontHero(
       </div>
       <span className="hero-location">⌖ {locationLabel}</span>
     </section>
+  );
+}
+
+export function StorefrontHomeShortcut({
+  href,
+  icon,
+  isMore = false,
+  label,
+  LinkComponent = 'a',
+}: {
+  href: string;
+  icon: ReactNode;
+  isMore?: boolean;
+  label: string;
+  LinkComponent?: StorefrontLinkComponent;
+}) {
+  return (
+    <LinkComponent
+      className={`home-shortcut${isMore ? ' is-more' : ''}`}
+      href={href}
+    >
+      <span className="home-shortcut-icon">{icon}</span>
+      <span className="home-shortcut-label">{label}</span>
+    </LinkComponent>
+  );
+}
+
+export function StorefrontHomeProductTile({
+  href,
+  LinkComponent = 'a',
+  media,
+  title,
+}: {
+  href: string;
+  LinkComponent?: StorefrontLinkComponent;
+  media: ReactNode;
+  title: string;
+}) {
+  return (
+    <LinkComponent className="home-product-tile" href={href}>
+      <span className="home-product-cover">{media}</span>
+      <span className="home-product-meta">
+        <strong className="home-product-title">{title}</strong>
+      </span>
+    </LinkComponent>
   );
 }
 
