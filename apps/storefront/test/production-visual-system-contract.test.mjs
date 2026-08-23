@@ -30,7 +30,7 @@ test('production acceptance stays runtime-theme-aware and guards stable storefro
   assert.match(acceptance, /width: 430, height: 932/u);
   assert.match(acceptance, /page\.setViewportSize/u);
   assert.match(acceptance, /homeContract\.shortcutColumns/u);
-  assert.match(acceptance, /sectionViewportContract\.contentBottomGap/u);
+  assert.match(acceptance, /sectionViewportContract\.contentBottomClearance/u);
   assert.match(acceptance, /productViewportContract\.ctaBottomGap/u);
   assert.match(acceptance, /messagesViewportContract\.workspaceWidth/u);
   assert.match(acceptance, /\.home-shortcut-zone/u);

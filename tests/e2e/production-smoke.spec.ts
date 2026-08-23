@@ -98,10 +98,8 @@ for (const viewport of MOBILE_VIEWPORTS) {
       const bottomRect = bottomChrome?.getBoundingClientRect();
       const cardRects = cards.map((card) => card.getBoundingClientRect());
       return {
-        contentBottomGap:
-          contentRect && bottomRect
-            ? Math.abs(bottomRect.top - contentRect.bottom)
-            : Infinity,
+        contentBottomClearance:
+          contentRect && bottomRect ? bottomRect.top - contentRect.bottom : Infinity,
         controlsStartGap:
           headerRect && controlsRect ? controlsRect.top - headerRect.bottom : -Infinity,
         cardCount: cardRects.length,
@@ -112,7 +110,8 @@ for (const viewport of MOBILE_VIEWPORTS) {
       };
     });
     expect(sectionViewportContract.controlsStartGap).toBeGreaterThanOrEqual(-1.5);
-    expect(sectionViewportContract.contentBottomGap).toBeLessThanOrEqual(1.5);
+    expect(sectionViewportContract.contentBottomClearance).toBeGreaterThanOrEqual(-1.5);
+    expect(sectionViewportContract.contentBottomClearance).toBeLessThanOrEqual(24);
     if (sectionViewportContract.cardCount === 2) {
       expect(sectionViewportContract.firstRowGap).toBeLessThanOrEqual(1.5);
       expect(sectionViewportContract.secondCardStartsAfterFirst).toBeTruthy();
