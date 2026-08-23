@@ -116,38 +116,89 @@
 
 :is(html, .storefront-theme-root)[data-theme='noir'] {
   --theme-primary-logo-radius: 3px;
-  --theme-primary-header-border: var(--app-hairline, var(--line));
+  --theme-primary-header-border: color-mix(in srgb, var(--line) 62%, transparent);
   --theme-primary-header-shadow: none;
   --theme-primary-faq-open-background: color-mix(
-    in srgb,
-    var(--surface) 96%,
-    var(--brand) 4%
-  );
-  --theme-primary-message-background: color-mix(
     in srgb,
     var(--surface) 98%,
     var(--brand) 2%
   );
-  --theme-primary-message-border: color-mix(in srgb, var(--line) 92%, var(--brand) 8%);
+  --theme-primary-message-background: color-mix(
+    in srgb,
+    var(--surface) 99%,
+    var(--brand) 1%
+  );
+  --theme-primary-message-border: color-mix(in srgb, var(--line) 68%, transparent);
   --theme-primary-message-shadow: none;
-  --theme-primary-chat-background: color-mix(in srgb, var(--surface-soft) 94%, black 6%);
+  --theme-primary-message-row-active: color-mix(
+    in srgb,
+    var(--surface-soft) 96%,
+    var(--brand) 4%
+  );
+  --theme-primary-chat-background: color-mix(in srgb, var(--surface-soft) 96%, black 4%);
+  --theme-primary-chat-header-background: color-mix(
+    in srgb,
+    var(--page-bg) 94%,
+    transparent
+  );
+  --theme-primary-chat-timeline-background: var(--page-bg);
+  --theme-primary-chat-agent-bubble: color-mix(in srgb, var(--surface) 98%, black 2%);
   --theme-primary-chat-customer-bubble: color-mix(
     in srgb,
-    var(--brand) 14%,
+    var(--brand) 16%,
     var(--surface)
   );
+  --theme-primary-chat-composer-background: color-mix(
+    in srgb,
+    var(--page-bg) 94%,
+    transparent
+  );
+  --theme-primary-install-background: color-mix(in srgb, var(--surface) 97%, transparent);
+  --theme-primary-install-border: color-mix(in srgb, var(--line) 70%, transparent);
 }
 
 :is(html, .storefront-theme-root)[data-theme='live'] {
-  --theme-primary-logo-radius: 2px;
-  --theme-primary-header-border: color-mix(in srgb, var(--brand) 26%, var(--line));
-  --theme-primary-faq-border: color-mix(in srgb, var(--brand) 20%, var(--line));
-  --theme-primary-message-border: color-mix(in srgb, var(--brand) 24%, var(--line));
+  --theme-primary-logo-radius: 3px;
+  --theme-primary-header-border: color-mix(in srgb, var(--line) 62%, transparent);
+  --theme-primary-header-shadow: none;
+  --theme-primary-faq-open-background: color-mix(
+    in srgb,
+    var(--surface) 98%,
+    var(--brand) 2%
+  );
+  --theme-primary-faq-border: color-mix(in srgb, var(--line) 68%, transparent);
+  --theme-primary-message-background: color-mix(
+    in srgb,
+    var(--surface) 99%,
+    var(--brand) 1%
+  );
+  --theme-primary-message-border: color-mix(in srgb, var(--line) 68%, transparent);
+  --theme-primary-message-shadow: none;
+  --theme-primary-message-row-active: color-mix(
+    in srgb,
+    var(--surface-soft) 96%,
+    var(--brand) 4%
+  );
+  --theme-primary-chat-background: color-mix(in srgb, var(--surface-soft) 96%, black 4%);
+  --theme-primary-chat-header-background: color-mix(
+    in srgb,
+    var(--page-bg) 94%,
+    transparent
+  );
+  --theme-primary-chat-timeline-background: var(--page-bg);
+  --theme-primary-chat-agent-bubble: color-mix(in srgb, var(--surface) 98%, black 2%);
   --theme-primary-chat-customer-bubble: color-mix(
     in srgb,
-    var(--brand) 22%,
+    var(--brand) 16%,
     var(--surface)
   );
+  --theme-primary-chat-composer-background: color-mix(
+    in srgb,
+    var(--page-bg) 94%,
+    transparent
+  );
+  --theme-primary-install-background: color-mix(in srgb, var(--surface) 97%, transparent);
+  --theme-primary-install-border: color-mix(in srgb, var(--line) 70%, transparent);
 }
 
 :is(html, .storefront-theme-root)[data-theme='saas'] {
@@ -443,16 +494,6 @@
 }
 
 :is(html, .storefront-theme-root)[data-theme='tech']
-  :is(
-    .faq-article-list,
-    .faq-article-body,
-    .messages-empty-state,
-    .conversation-list,
-    .chat-header,
-    .chat-composer,
-    .topbar
-  ),
-:is(html, .storefront-theme-root)[data-theme='noir']
   :is(
     .faq-article-list,
     .faq-article-body,

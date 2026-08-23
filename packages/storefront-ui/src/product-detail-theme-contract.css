@@ -57,42 +57,37 @@
 }
 
 :is(html, .storefront-theme-root)[data-theme='noir'] {
-  --theme-detail-media-radius: 0px;
+  --theme-detail-media-radius: 12px;
   --theme-detail-panel-radius: 0px;
-  --theme-detail-panel-background: color-mix(
-    in srgb,
-    var(--surface) 98%,
-    var(--brand) 2%
-  );
-  --theme-detail-panel-border: color-mix(in srgb, var(--line) 92%, var(--brand) 8%);
+  --theme-detail-panel-background: transparent;
+  --theme-detail-panel-border: transparent;
   --theme-detail-panel-shadow: none;
-  --theme-detail-media-background: color-mix(in srgb, var(--surface-soft) 92%, black 8%);
-  --theme-detail-media-shadow: 0 20px 56px rgb(0 0 0 / 28%);
+  --theme-detail-media-background: color-mix(in srgb, var(--surface-soft) 96%, black 4%);
+  --theme-detail-media-shadow: none;
   --theme-detail-meta-background: color-mix(
     in srgb,
-    var(--surface-soft) 96%,
-    var(--brand) 4%
+    var(--surface-soft) 98%,
+    var(--brand) 2%
   );
-  --theme-detail-cta-surface: color-mix(in srgb, var(--surface) 86%, transparent);
+  --theme-detail-cta-surface: color-mix(in srgb, var(--page-bg) 92%, transparent);
 }
 
 :is(html, .storefront-theme-root)[data-theme='live'] {
   --theme-detail-gap: 16px;
-  --theme-detail-media-radius: 0px;
+  --theme-detail-media-radius: 12px;
   --theme-detail-panel-radius: 0px;
-  --theme-detail-panel-background: color-mix(
-    in srgb,
-    var(--surface) 92%,
-    var(--brand) 8%
-  );
-  --theme-detail-panel-border: color-mix(in srgb, var(--line) 66%, var(--brand) 34%);
-  --theme-detail-panel-shadow: 0 9px 26px rgb(0 0 0 / 22%);
+  --theme-detail-panel-background: transparent;
+  --theme-detail-panel-border: transparent;
+  --theme-detail-panel-shadow: none;
+  --theme-detail-media-background: color-mix(in srgb, var(--surface-soft) 96%, black 4%);
+  --theme-detail-media-shadow: none;
   --theme-detail-meta-background: color-mix(
     in srgb,
-    var(--surface-soft) 88%,
-    var(--brand) 12%
+    var(--surface-soft) 98%,
+    var(--brand) 2%
   );
-  --theme-detail-cta-radius: 2px;
+  --theme-detail-cta-radius: 12px;
+  --theme-detail-cta-surface: color-mix(in srgb, var(--page-bg) 92%, transparent);
 }
 
 :is(html, .storefront-theme-root)[data-theme='saas'] {
@@ -143,8 +138,6 @@
 }
 
 :is(html, .storefront-theme-root)[data-theme='tech']
-  :is(.product-detail-summary, .product-detail-body, .product-detail-route-action),
-:is(html, .storefront-theme-root)[data-theme='noir']
-  :is(.product-detail-summary, .product-detail-route-action) {
+  :is(.product-detail-summary, .product-detail-body, .product-detail-route-action) {
   backdrop-filter: blur(18px);
 }
