@@ -85,7 +85,9 @@
   letter-spacing: -0.014em;
 }
 
-:is(html, .storefront-theme-root)[data-theme='noir'] .brand-lockup strong {
+:is(html, .storefront-theme-root):is([data-theme='noir'], [data-theme='velvet'])
+  .brand-lockup
+  strong {
   font-size: 0.8125rem;
   font-weight: var(--storefront-weight-semibold);
   letter-spacing: 0.072em;

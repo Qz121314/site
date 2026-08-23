@@ -16,6 +16,15 @@ export type SiteSettings = {
   showLatest: boolean;
   showMore: boolean;
   showFaq: boolean;
+  installPrompt: {
+    enabled: boolean;
+    delaySeconds: number;
+    title: string;
+    description: string;
+    iosDescription: string;
+    installLabel: string;
+    dismissLabel: string;
+  };
   updatedAt: string;
 };
 
@@ -175,6 +184,7 @@ function parseSiteSettings(value: unknown): SiteSettings {
   if (!settings) {
     throw new AdminApiError(500, 'INVALID_RESPONSE', '站点设置返回数据无效。');
   }
+  const installPrompt = asRecord(settings.installPrompt);
 
   const valid =
     typeof settings.siteName === 'string' &&
@@ -188,6 +198,14 @@ function parseSiteSettings(value: unknown): SiteSettings {
     typeof settings.showLatest === 'boolean' &&
     typeof settings.showMore === 'boolean' &&
     typeof settings.showFaq === 'boolean' &&
+    Boolean(installPrompt) &&
+    typeof installPrompt?.enabled === 'boolean' &&
+    typeof installPrompt.delaySeconds === 'number' &&
+    typeof installPrompt.title === 'string' &&
+    typeof installPrompt.description === 'string' &&
+    typeof installPrompt.iosDescription === 'string' &&
+    typeof installPrompt.installLabel === 'string' &&
+    typeof installPrompt.dismissLabel === 'string' &&
     typeof settings.updatedAt === 'string';
 
   if (!valid) {

@@ -1,127 +1,25 @@
-import {
-  StorefrontBottomNavigation,
-  StorefrontBrandBar,
-  StorefrontHero,
-  StorefrontHomeProductTile,
-  StorefrontHomeShortcut,
-  StorefrontProductCard,
-} from '@site/storefront-ui';
-import { storefrontBrandContrast, storefrontThemeStyle } from '@site/storefront-ui/theme';
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  type AnchorHTMLAttributes,
-  type Dispatch,
-  type SetStateAction,
-} from 'react';
-import { createPortal } from 'react-dom';
+import { storefrontBrandContrast } from '@site/storefront-ui/theme';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AdminApiError } from './api';
 import { useAdminDirtySource } from './admin-unsaved-state';
 import {
   fetchThemeCenter,
-  importThemeFromJson,
-  importThemeFromRegistry,
   updateThemeCenter,
-  type ImportedThemeDefinition,
   type ResolvedTheme,
-  type ThemeButtonStyle,
-  type ThemeDensity,
-  type ThemeFontPack,
-  type ThemeInstallPrompt,
   type ThemeKey,
-  type ThemeMediaStyle,
-  type ThemeMotionStyle,
-  type ThemeNavigationStyle,
   type ThemePreset,
 } from './theme-center/api';
-import './theme-center-workbench.css';
 
 type ThemeCenterViewProps = {
   onSessionExpired: () => void;
 };
 
-type ThemeSourceTab = 'official' | 'registry' | 'json';
-type ThemeMode = 'light' | 'dark';
-type ThemePreviewPage = 'home' | 'catalog' | 'detail' | 'messages' | 'install';
-type ThemeRecipeSelection = {
-  density: ThemeDensity;
-  fontPack: ThemeFontPack;
-  buttonStyle: ThemeButtonStyle;
-  mediaStyle: ThemeMediaStyle;
-  motionStyle: ThemeMotionStyle;
-  navigationStyle: ThemeNavigationStyle;
-};
-
-type ThemeEditorControlsProps = {
-  selectedPreset: ResolvedTheme | ThemePreset;
-  accent: string;
-  colorInputValue: string;
-  recipe: ThemeRecipeSelection;
-  installPrompt: ThemeInstallPrompt;
-  setAccent: Dispatch<SetStateAction<string>>;
-  setRecipe: Dispatch<SetStateAction<ThemeRecipeSelection>>;
-  setInstallPrompt: Dispatch<SetStateAction<ThemeInstallPrompt>>;
-};
-
-type MobileThemePreviewProps = {
-  installPrompt: ThemeInstallPrompt;
-  page: ThemePreviewPage;
-  selectedPreset: ResolvedTheme | ThemePreset;
-  recipe: ThemeRecipeSelection;
-  previewAccent: string;
-};
-
-const THEME_PREVIEW_PAGES: Array<{ key: ThemePreviewPage; label: string }> = [
-  { key: 'home', label: '首页' },
-  { key: 'catalog', label: '商品' },
-  { key: 'detail', label: '详情' },
-  { key: 'messages', label: '消息' },
-  { key: 'install', label: '安装' },
-];
-
-const FONT_PACK_LABELS: Record<ThemeFontPack, string> = {
-  modern: 'Modern Sans · 现代',
-  editorial: 'Soft Editorial · 高级生活方式',
-  compact: 'Compact UI · 紧凑浏览',
-  technical: 'Technical Sans · 科技',
-};
-
-const BUTTON_STYLE_LABELS: Record<ThemeButtonStyle, string> = {
-  refined: 'Refined Rectangle · 精致矩形',
-  minimal: 'Minimal Flat · 极简平面',
-  'soft-pill': 'Soft Pill · 柔和胶囊',
-};
-
-const MEDIA_STYLE_LABELS: Record<ThemeMediaStyle, string> = {
-  precise: 'Precise · 利落素材',
-  soft: 'Soft · 适度圆角',
-  editorial: 'Editorial · 摄影内容',
-};
-
-const MOTION_STYLE_LABELS: Record<ThemeMotionStyle, string> = {
-  restrained: 'Restrained · 克制',
-  gentle: 'Gentle · 柔和',
-  active: 'Active · 活跃',
-};
-
-const NAVIGATION_STYLE_LABELS: Record<ThemeNavigationStyle, string> = {
-  quiet: 'Quiet · 安静导航',
-  tinted: 'Tinted · 品牌强调',
-  solid: 'Solid · 强对比',
-};
-
-function recipeSelection(theme: ResolvedTheme | ThemePreset): ThemeRecipeSelection {
-  return {
-    density: theme.density,
-    fontPack: theme.recipe.fontPack,
-    buttonStyle: theme.recipe.buttonStyle,
-    mediaStyle: theme.recipe.mediaStyle,
-    motionStyle: theme.recipe.motionStyle,
-    navigationStyle: theme.recipe.navigationStyle,
-  };
-}
+const FONT_PACK_LABELS = {
+  modern: 'Modern Sans',
+  editorial: 'Soft Editorial',
+  compact: 'Compact UI',
+  technical: 'Technical Sans',
+} as const;
 
 function isSessionError(error: unknown): boolean {
   return (
@@ -135,618 +33,28 @@ function normalizeAccent(value: string): string | null {
   return /^#[0-9a-f]{6}$/u.test(normalized) ? normalized : null;
 }
 
-function importedSignature(value: ImportedThemeDefinition | undefined): string {
-  return value ? JSON.stringify(value) : '';
-}
-
-function PreviewLink({ children, className }: AnchorHTMLAttributes<HTMLAnchorElement>) {
-  return <span className={className}>{children}</span>;
-}
-
-function ThemePreviewHome({ themeLabel }: { themeLabel: string }) {
-  return (
-    <div className="home-feed has-hero">
-      <StorefrontHero
-        ariaLabel={themeLabel}
-        LinkComponent={PreviewLink}
-        slides={[
-          {
-            id: 'theme-preview-hero',
-            media: (
-              <div className="theme-preview-hero-media" aria-hidden="true">
-                <span>Hero media</span>
-              </div>
-            ),
-            title: 'Discover what fits you',
-            description: 'Fast browsing designed for one-hand mobile use.',
-          },
-        ]}
-      />
-      <div className="home-shortcut-zone">
-        <nav className="home-shortcuts" aria-label="Preview sections">
-          {[
-            ['Nearby', '⌖'],
-            ['Popular', '◆'],
-            ['Latest', '◷'],
-            ['More', '••'],
-          ].map(([label = '', icon = '']) => (
-            <StorefrontHomeShortcut
-              href="#"
-              icon={<span aria-hidden="true">{icon}</span>}
-              key={label}
-              label={label}
-              LinkComponent={PreviewLink}
-            />
-          ))}
-        </nav>
-      </div>
-      <div className="home-recommendation-feed">
-        <section className="home-recommendation">
-          <div className="home-recommendation-heading">
-            <span className="home-recommendation-heading-copy">
-              <h2>Featured</h2>
-            </span>
-            <PreviewLink href="#" aria-label="See all">
-              <span aria-hidden="true">›</span>
-            </PreviewLink>
-          </div>
-          <div className="home-product-rail theme-preview-products">
-            {[1, 2].map((item) => (
-              <StorefrontHomeProductTile
-                href="#"
-                key={item}
-                LinkComponent={PreviewLink}
-                media={
-                  <div className="theme-preview-media" aria-hidden="true">
-                    <span>1:1</span>
-                  </div>
-                }
-                title={item === 1 ? 'Product title' : 'Featured item'}
-              />
-            ))}
-          </div>
-        </section>
-      </div>
-    </div>
-  );
-}
-
-function ThemePreviewCatalog() {
-  return (
-    <section className="theme-preview-catalog" aria-label="Catalog preview">
-      <header className="theme-preview-route-heading">
-        <span>Catalog</span>
-        <strong>Explore services</strong>
-      </header>
-      <div className="theme-preview-search">⌕ Search services</div>
-      <div className="theme-preview-filter-row" aria-hidden="true">
-        <span className="is-active">All</span>
-        <span>Nearby</span>
-        <span>Popular</span>
-      </div>
-      <div className="theme-preview-catalog-grid">
-        {['Mobile service', 'Featured place', 'Quick booking', 'Local expert'].map(
-          (title, index) => (
-            <StorefrontProductCard
-              categoryName={index % 2 === 0 ? 'Service' : 'Experience'}
-              href="#"
-              key={title}
-              LinkComponent={PreviewLink}
-              media={
-                <div className="theme-preview-media" aria-hidden="true">
-                  <span>1:1</span>
-                </div>
-              }
-              modeLabel={index === 0 ? 'Online' : null}
-              sectionName="Featured"
-              tags={[{ id: `preview-${index}`, name: index % 2 ? 'Popular' : 'New' }]}
-              title={title}
-            />
-          ),
-        )}
-      </div>
-    </section>
-  );
-}
-
-function ThemePreviewDetail() {
-  return (
-    <article className="theme-preview-detail">
-      <div className="detail-media-stage theme-preview-detail-media" aria-hidden="true">
-        <span>Product media</span>
-      </div>
-      <section className="product-detail-summary theme-preview-detail-summary">
-        <span className="theme-preview-eyebrow">Featured service</span>
-        <h1>Product detail title</h1>
-        <p>Clear information, calm hierarchy, and one primary action.</p>
-        <div className="theme-preview-detail-meta">
-          <span>Fast reply</span>
-          <span>Mobile ready</span>
-        </div>
-      </section>
-      <div className="product-detail-route-action theme-preview-detail-action">
-        <button className="cta-button" type="button">
-          Contact now
-        </button>
-      </div>
-    </article>
-  );
-}
-
-function ThemePreviewMessages() {
-  return (
-    <section className="chat-page theme-preview-chat" aria-label="Messages preview">
-      <header className="chat-header theme-preview-chat-header">
-        <span className="chat-header-avatar">S</span>
-        <div>
-          <strong>Service support</strong>
-          <small>Usually replies quickly</small>
-        </div>
-      </header>
-      <div className="chat-timeline theme-preview-chat-timeline">
-        <div className="chat-message-row is-agent">
-          <p className="chat-message-bubble">Hi, how can we help?</p>
-        </div>
-        <div className="chat-message-row is-customer">
-          <p className="chat-message-bubble">Is this available today?</p>
-        </div>
-        <div className="chat-message-row is-agent">
-          <p className="chat-message-bubble">Yes — choose a time that works for you.</p>
-        </div>
-      </div>
-      <div className="chat-composer theme-preview-chat-composer">
-        <span className="chat-input-placeholder">Write a message…</span>
-        <button className="chat-send-button" type="button" aria-label="Send message">
-          ↑
-        </button>
-      </div>
-    </section>
-  );
-}
-
-function ThemePreviewInstall({ installPrompt }: { installPrompt: ThemeInstallPrompt }) {
-  return (
-    <section className="theme-preview-install" aria-label="Install prompt preview">
-      <header className="theme-preview-route-heading">
-        <span>Install experience</span>
-        <strong>Keep the service close</strong>
-      </header>
-      <div className="theme-preview-install-backdrop" aria-hidden="true">
-        <span />
-        <span />
-        <span />
-      </div>
-      {installPrompt.enabled ? (
-        <div className="pwa-install-card theme-preview-install-card">
-          <span className="pwa-install-icon" aria-hidden="true">
-            S
-          </span>
-          <div className="theme-preview-install-copy">
-            <strong>{installPrompt.title || 'Install app'}</strong>
-            <p>{installPrompt.description || 'Add it for faster access.'}</p>
-          </div>
-          <button className="pwa-install-action" type="button">
-            {installPrompt.installLabel || 'Install'}
-          </button>
-          <button className="pwa-install-dismiss" type="button">
-            {installPrompt.dismissLabel || 'Not now'}
-          </button>
-        </div>
-      ) : (
-        <div className="theme-preview-install-disabled">
-          <span aria-hidden="true">✓</span>
-          <strong>安装提示已关闭</strong>
-          <small>Storefront 不会显示安装弹窗。</small>
-        </div>
-      )}
-    </section>
-  );
-}
-
-function ThemeEditorControls({
-  selectedPreset,
-  accent,
-  colorInputValue,
-  recipe,
-  installPrompt,
-  setAccent,
-  setRecipe,
-  setInstallPrompt,
-}: ThemeEditorControlsProps) {
-  return (
-    <>
-      <label className="theme-accent-field">
-        <span>品牌强调色</span>
-        <div>
-          <input
-            type="color"
-            value={colorInputValue}
-            onChange={(event) => setAccent(event.target.value.toLowerCase())}
-            aria-label="选择品牌强调色"
-          />
-          <input
-            type="text"
-            value={accent}
-            placeholder={selectedPreset.tokens.brand ?? '#ff5a1f'}
-            maxLength={7}
-            onChange={(event) => setAccent(event.target.value)}
-          />
-          {accent ? (
-            <button type="button" onClick={() => setAccent('')}>
-              恢复主题色
-            </button>
-          ) : null}
-        </div>
-      </label>
-
-      <div className="theme-recipe-editor" aria-label="主题模板设置">
-        <div className="theme-recipe-heading">
-          <div>
-            <strong>UI Recipe</strong>
-            <span>模板已做好完整搭配，只开放安全范围内的品牌调整。</span>
-          </div>
-          <button
-            type="button"
-            onClick={() => setRecipe(recipeSelection(selectedPreset))}
-          >
-            恢复模板
-          </button>
-        </div>
-
-        <div className="theme-recipe-grid">
-          <label>
-            <span>字体方案</span>
-            <select
-              value={recipe.fontPack}
-              onChange={(event) =>
-                setRecipe((current) => ({
-                  ...current,
-                  fontPack: event.target.value as ThemeFontPack,
-                }))
-              }
-            >
-              {Object.entries(FONT_PACK_LABELS).map(([value, label]) => (
-                <option value={value} key={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label>
-            <span>页面密度</span>
-            <select
-              value={recipe.density}
-              onChange={(event) =>
-                setRecipe((current) => ({
-                  ...current,
-                  density: event.target.value as ThemeDensity,
-                }))
-              }
-            >
-              <option value="compact">Compact · 紧凑</option>
-              <option value="standard">Standard · 标准</option>
-              <option value="comfortable">Comfortable · 宽松</option>
-            </select>
-          </label>
-
-          <label>
-            <span>按钮方案</span>
-            <select
-              value={recipe.buttonStyle}
-              onChange={(event) =>
-                setRecipe((current) => ({
-                  ...current,
-                  buttonStyle: event.target.value as ThemeButtonStyle,
-                }))
-              }
-            >
-              {Object.entries(BUTTON_STYLE_LABELS).map(([value, label]) => (
-                <option value={value} key={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label>
-            <span>素材方案</span>
-            <select
-              value={recipe.mediaStyle}
-              onChange={(event) =>
-                setRecipe((current) => ({
-                  ...current,
-                  mediaStyle: event.target.value as ThemeMediaStyle,
-                }))
-              }
-            >
-              {Object.entries(MEDIA_STYLE_LABELS).map(([value, label]) => (
-                <option value={value} key={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label>
-            <span>点击与转场</span>
-            <select
-              value={recipe.motionStyle}
-              onChange={(event) =>
-                setRecipe((current) => ({
-                  ...current,
-                  motionStyle: event.target.value as ThemeMotionStyle,
-                }))
-              }
-            >
-              {Object.entries(MOTION_STYLE_LABELS).map(([value, label]) => (
-                <option value={value} key={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label>
-            <span>导航风格</span>
-            <select
-              value={recipe.navigationStyle}
-              onChange={(event) =>
-                setRecipe((current) => ({
-                  ...current,
-                  navigationStyle: event.target.value as ThemeNavigationStyle,
-                }))
-              }
-            >
-              {Object.entries(NAVIGATION_STYLE_LABELS).map(([value, label]) => (
-                <option value={value} key={value}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
-      </div>
-
-      <div className="theme-install-editor" aria-label="安装应用提示设置">
-        <div className="theme-recipe-heading">
-          <div>
-            <strong>安装应用提示</strong>
-            <span>用户停留指定时间后，在可安装设备上显示轻量提示。</span>
-          </div>
-          <label className="theme-install-switch">
-            <input
-              type="checkbox"
-              checked={installPrompt.enabled}
-              onChange={(event) =>
-                setInstallPrompt((current) => ({
-                  ...current,
-                  enabled: event.target.checked,
-                }))
-              }
-            />
-            <span>{installPrompt.enabled ? '已开启' : '已关闭'}</span>
-          </label>
-        </div>
-
-        <div className="theme-install-grid">
-          <label>
-            <span>延迟显示（秒）</span>
-            <input
-              type="number"
-              min={5}
-              max={120}
-              value={installPrompt.delaySeconds}
-              disabled={!installPrompt.enabled}
-              onChange={(event) =>
-                setInstallPrompt((current) => ({
-                  ...current,
-                  delaySeconds: Math.max(
-                    5,
-                    Math.min(120, Number(event.target.value) || 30),
-                  ),
-                }))
-              }
-            />
-          </label>
-          <label>
-            <span>提示标题</span>
-            <input
-              type="text"
-              maxLength={80}
-              value={installPrompt.title}
-              disabled={!installPrompt.enabled}
-              onChange={(event) =>
-                setInstallPrompt((current) => ({
-                  ...current,
-                  title: event.target.value,
-                }))
-              }
-            />
-          </label>
-          <label className="is-wide">
-            <span>桌面端说明</span>
-            <input
-              type="text"
-              maxLength={160}
-              value={installPrompt.description}
-              disabled={!installPrompt.enabled}
-              onChange={(event) =>
-                setInstallPrompt((current) => ({
-                  ...current,
-                  description: event.target.value,
-                }))
-              }
-            />
-          </label>
-          <label className="is-wide">
-            <span>iPhone / iPad 说明</span>
-            <input
-              type="text"
-              maxLength={160}
-              value={installPrompt.iosDescription}
-              disabled={!installPrompt.enabled}
-              onChange={(event) =>
-                setInstallPrompt((current) => ({
-                  ...current,
-                  iosDescription: event.target.value,
-                }))
-              }
-            />
-          </label>
-          <label>
-            <span>安装按钮</span>
-            <input
-              type="text"
-              maxLength={32}
-              value={installPrompt.installLabel}
-              disabled={!installPrompt.enabled}
-              onChange={(event) =>
-                setInstallPrompt((current) => ({
-                  ...current,
-                  installLabel: event.target.value,
-                }))
-              }
-            />
-          </label>
-          <label>
-            <span>关闭提示</span>
-            <input
-              type="text"
-              maxLength={32}
-              value={installPrompt.dismissLabel}
-              disabled={!installPrompt.enabled}
-              onChange={(event) =>
-                setInstallPrompt((current) => ({
-                  ...current,
-                  dismissLabel: event.target.value,
-                }))
-              }
-            />
-          </label>
-        </div>
-      </div>
-
-      <div className="theme-ratio-note">
-        <strong>外部主题也必须服从本站移动端结构</strong>
-        <p>
-          外部来源只能改变经过校验的颜色
-          Token。字体、按钮、素材、动效和导航会先映射到本站安全的 UI
-          Recipe；产品双列和业务结构保持不变。
-        </p>
-      </div>
-    </>
-  );
-}
-
-function MobileThemePreview({
-  installPrompt,
-  page,
-  selectedPreset,
-  recipe,
-  previewAccent,
-}: MobileThemePreviewProps) {
-  return (
-    <div className="theme-preview-device-shell">
-      <div
-        className="theme-live-preview storefront-ui-preview storefront-theme-root"
-        data-color-scheme={selectedPreset.colorScheme}
-        data-density={recipe.density}
-        data-theme={selectedPreset.key}
-        data-font-pack={recipe.fontPack}
-        data-button-style={recipe.buttonStyle}
-        data-media-style={recipe.mediaStyle}
-        data-motion-style={recipe.motionStyle}
-        data-navigation-style={recipe.navigationStyle}
-        style={storefrontThemeStyle(
-          selectedPreset.tokens,
-          previewAccent,
-          selectedPreset.colorScheme,
-        )}
-      >
-        <div className="theme-preview-statusbar" aria-hidden="true">
-          <span>9:41</span>
-          <span>● ● ▰</span>
-        </div>
-        <StorefrontBrandBar
-          LinkComponent={PreviewLink}
-          locationLabel="Explore nearby"
-          logo="S"
-          siteName="Service"
-        />
-        <div className={`theme-preview-content is-${page}`}>
-          {page === 'home' ? (
-            <ThemePreviewHome themeLabel={selectedPreset.label} />
-          ) : null}
-          {page === 'catalog' ? <ThemePreviewCatalog /> : null}
-          {page === 'detail' ? <ThemePreviewDetail /> : null}
-          {page === 'messages' ? <ThemePreviewMessages /> : null}
-          {page === 'install' ? (
-            <ThemePreviewInstall installPrompt={installPrompt} />
-          ) : null}
-        </div>
-        <StorefrontBottomNavigation
-          activeHref={page === 'messages' ? '/messages/' : '/'}
-          LinkComponent={PreviewLink}
-          items={[
-            { href: '/', icon: '⌂', label: 'Home' },
-            { href: '/#hot', icon: '◆', label: 'Hot' },
-            { href: '/#latest', icon: '◷', label: 'Latest' },
-            { href: '/messages/', icon: '✦', label: 'Messages' },
-          ]}
-        />
-      </div>
-    </div>
-  );
-}
-
 export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
   const [presets, setPresets] = useState<ThemePreset[]>([]);
   const [currentTheme, setCurrentTheme] = useState<ResolvedTheme | null>(null);
   const [selectedKey, setSelectedKey] = useState<ThemeKey>('marketplace');
-  const [importedTheme, setImportedTheme] = useState<ResolvedTheme | null>(null);
-  const [sourceTab, setSourceTab] = useState<ThemeSourceTab>('official');
-  const [registryUrl, setRegistryUrl] = useState('');
-  const [jsonText, setJsonText] = useState('');
-  const [importMode, setImportMode] = useState<ThemeMode>('light');
   const [accent, setAccent] = useState('');
-  const [recipe, setRecipe] = useState<ThemeRecipeSelection>({
-    density: 'standard',
-    fontPack: 'modern',
-    buttonStyle: 'refined',
-    mediaStyle: 'soft',
-    motionStyle: 'restrained',
-    navigationStyle: 'quiet',
-  });
-  const [installPrompt, setInstallPrompt] = useState<ThemeInstallPrompt>({
-    enabled: true,
-    delaySeconds: 30,
-    title: 'Install app',
-    description: 'Add it to your desktop for faster access.',
-    iosDescription: 'Use Share, then Add to Home Screen.',
-    installLabel: 'Install',
-    dismissLabel: 'Not now',
-  });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [importing, setImporting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
-  const [previewOpen, setPreviewOpen] = useState(false);
-  const [previewPage, setPreviewPage] = useState<ThemePreviewPage>('home');
 
-  const selectedImported =
-    selectedKey === 'custom' ? importedTheme?.overrides.imported : undefined;
-  const currentImported =
-    currentTheme?.key === 'custom' ? currentTheme.overrides.imported : undefined;
-  const themeIsDirty =
-    currentTheme !== null &&
+  const selectedPreset = useMemo<ResolvedTheme | ThemePreset | null>(() => {
+    if (selectedKey === 'custom') {
+      return currentTheme?.key === 'custom' ? currentTheme : null;
+    }
+    return presets.find((preset) => preset.key === selectedKey) ?? null;
+  }, [currentTheme, presets, selectedKey]);
+
+  const themeIsDirty = Boolean(
+    currentTheme &&
     (selectedKey !== currentTheme.key ||
-      accent.trim().toLowerCase() !==
-        (currentTheme.overrides.accent ?? '').toLowerCase() ||
-      JSON.stringify(recipe) !== JSON.stringify(recipeSelection(currentTheme)) ||
-      JSON.stringify(installPrompt) !== JSON.stringify(currentTheme.installPrompt) ||
-      importedSignature(selectedImported) !== importedSignature(currentImported));
+      accent.trim().toLowerCase() !== (currentTheme.overrides.accent ?? '')),
+  );
   useAdminDirtySource('theme-center', '主题中心', themeIsDirty);
 
   const loadThemeCenter = useCallback(async () => {
@@ -758,16 +66,6 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
       setCurrentTheme(data.theme);
       setSelectedKey(data.theme.key);
       setAccent(data.theme.overrides.accent ?? '');
-      setRecipe(recipeSelection(data.theme));
-      setInstallPrompt(data.theme.installPrompt);
-      if (data.theme.key === 'custom') {
-        setImportedTheme(data.theme);
-        setSourceTab(
-          data.theme.overrides.imported?.source === 'shadcn' ? 'registry' : 'json',
-        );
-        setImportMode(data.theme.colorScheme);
-        setRegistryUrl(data.theme.overrides.imported?.sourceUrl ?? '');
-      }
     } catch (error) {
       if (isSessionError(error)) {
         onSessionExpired();
@@ -783,36 +81,6 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
     void loadThemeCenter();
   }, [loadThemeCenter]);
 
-  useEffect(() => {
-    if (!previewOpen) return undefined;
-
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = 'hidden';
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Escape') setPreviewOpen(false);
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => {
-      document.body.style.overflow = previousOverflow;
-      window.removeEventListener('keydown', handleKeyDown);
-    };
-  }, [previewOpen]);
-
-  const selectedPreset = useMemo(() => {
-    if (selectedKey === 'custom') return importedTheme;
-    return presets.find((preset) => preset.key === selectedKey) ?? presets[0] ?? null;
-  }, [importedTheme, presets, selectedKey]);
-
-  const previewAccent =
-    normalizeAccent(accent) ?? selectedPreset?.tokens.brand ?? '#ff5a1f';
-  const colorInputValue =
-    normalizeAccent(accent) ??
-    normalizeAccent(selectedPreset?.tokens.brand ?? '') ??
-    '#ff5a1f';
-  const brandContrast = selectedPreset
-    ? storefrontBrandContrast(previewAccent, selectedPreset.colorScheme)
-    : null;
-
   function clearMessages() {
     setErrorMessage('');
     setSuccessMessage('');
@@ -820,70 +88,22 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
 
   function selectOfficialTheme(preset: ThemePreset) {
     setSelectedKey(preset.key);
-    setImportedTheme(null);
     setAccent('');
-    setRecipe(recipeSelection(preset));
-    setInstallPrompt(preset.installPrompt);
     clearMessages();
   }
 
-  async function importRegistryTheme() {
-    if (importing || !registryUrl.trim()) return;
-    setImporting(true);
+  function restoreSavedTheme() {
+    if (!currentTheme) return;
+    setSelectedKey(currentTheme.key);
+    setAccent(currentTheme.overrides.accent ?? '');
     clearMessages();
-    try {
-      const theme = await importThemeFromRegistry(registryUrl.trim(), importMode);
-      setImportedTheme(theme);
-      setSelectedKey('custom');
-      setAccent('');
-      setRecipe(recipeSelection(theme));
-      setInstallPrompt(theme.installPrompt);
-      setSuccessMessage('主题已读取并转换。请在“主题设置与预览”中检查效果后保存应用。');
-    } catch (error) {
-      if (isSessionError(error)) {
-        onSessionExpired();
-        return;
-      }
-      setErrorMessage(error instanceof Error ? error.message : '主题库读取失败。');
-    } finally {
-      setImporting(false);
-    }
-  }
-
-  async function importJsonTheme() {
-    if (importing || !jsonText.trim()) return;
-    setImporting(true);
-    clearMessages();
-    try {
-      const theme = await importThemeFromJson(jsonText.trim(), importMode);
-      setImportedTheme(theme);
-      setSelectedKey('custom');
-      setAccent('');
-      setRecipe(recipeSelection(theme));
-      setInstallPrompt(theme.installPrompt);
-      setSuccessMessage('JSON 主题已转换。请在“主题设置与预览”中检查效果后保存应用。');
-    } catch (error) {
-      if (isSessionError(error)) {
-        onSessionExpired();
-        return;
-      }
-      setErrorMessage(error instanceof Error ? error.message : '主题 JSON 导入失败。');
-    } finally {
-      setImporting(false);
-    }
   }
 
   async function saveTheme() {
     if (saving || !selectedPreset || !themeIsDirty) return;
     const normalizedAccent = accent.trim() ? normalizeAccent(accent) : null;
     if (accent.trim() && !normalizedAccent) {
-      setErrorMessage('品牌强调色请输入 6 位十六进制颜色，例如 #ff5a1f。');
-      return;
-    }
-    const imported =
-      selectedKey === 'custom' ? importedTheme?.overrides.imported : undefined;
-    if (selectedKey === 'custom' && !imported) {
-      setErrorMessage('请先从主题库或 JSON 导入一个有效主题。');
+      setErrorMessage('品牌强调色请输入 6 位十六进制颜色，例如 #e3486d。');
       return;
     }
 
@@ -893,17 +113,12 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
       const updated = await updateThemeCenter(
         selectedKey,
         normalizedAccent,
-        recipe,
-        installPrompt,
-        imported,
+        selectedKey === 'custom' ? currentTheme?.overrides.imported : undefined,
       );
       setCurrentTheme(updated);
       setSelectedKey(updated.key);
       setAccent(updated.overrides.accent ?? '');
-      setRecipe(recipeSelection(updated));
-      setInstallPrompt(updated.installPrompt);
-      if (updated.key === 'custom') setImportedTheme(updated);
-      setSuccessMessage('主题已保存并应用到用户前端。前端刷新后即可看到新主题。');
+      setSuccessMessage('主题已保存并应用。用户前端刷新后即可看到新视觉。');
     } catch (error) {
       if (isSessionError(error)) {
         onSessionExpired();
@@ -941,38 +156,55 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
     );
   }
 
+  const previewAccent =
+    normalizeAccent(accent) ?? selectedPreset?.tokens.brand ?? '#e3486d';
+  const colorInputValue =
+    normalizeAccent(accent) ??
+    normalizeAccent(selectedPreset?.tokens.brand ?? '') ??
+    '#e3486d';
+  const brandContrast = selectedPreset
+    ? storefrontBrandContrast(previewAccent, selectedPreset.colorScheme)
+    : null;
+
   return (
     <section className="theme-center" aria-labelledby="theme-center-title">
-      <div className="theme-center-heading">
+      <header className="theme-center-heading">
         <div className="theme-center-heading-copy">
           <p>用户前端视觉系统</p>
           <h2 id="theme-center-title">主题中心</h2>
-          <span>
-            以移动端为主要设计基准；PC 端作为响应式扩展。产品列表默认双列并使用 1:1
-            方形封面。
-          </span>
+          <span>选择一套完整视觉方案，只保留品牌强调色作为安全调整项。</span>
         </div>
-
-        <div className="theme-mobile-baseline" aria-label="主题设计基准">
-          <strong>移动端优先</strong>
-          <span>双列 1:1 · 触控操作 · 底部导航</span>
+        <div className="theme-center-current">
+          <small>当前已应用</small>
+          <strong>{currentTheme.label}</strong>
         </div>
-
         <div className="theme-center-actions">
-          <div className="theme-center-current">
-            <small>当前已保存主题</small>
-            <strong>{currentTheme.label}</strong>
-          </div>
+          {themeIsDirty ? (
+            <span className="theme-unsaved-pill">待保存</span>
+          ) : (
+            <span className="theme-saved-pill">已保存</span>
+          )}
           <button
-            className="secondary-button theme-preview-button"
+            className="secondary-button"
             type="button"
-            disabled={!selectedPreset}
-            onClick={() => setPreviewOpen(true)}
+            disabled={!themeIsDirty || saving}
+            onClick={restoreSavedTheme}
           >
-            主题设置与预览
+            恢复当前设置
+          </button>
+          <a className="secondary-button" href="/" target="_blank" rel="noreferrer">
+            打开用户前端
+          </a>
+          <button
+            className="primary-button theme-save-button"
+            type="button"
+            disabled={saving || !themeIsDirty}
+            onClick={() => void saveTheme()}
+          >
+            {saving ? '正在保存…' : themeIsDirty ? '保存并应用' : '已保存'}
           </button>
         </div>
-      </div>
+      </header>
 
       {errorMessage ? (
         <div className="notice notice-error" role="alert">
@@ -985,289 +217,146 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
         </div>
       ) : null}
 
-      <div className="theme-center-layout theme-center-layout-single">
-        <div className="theme-preset-panel">
-          <div className="theme-source-tabs" role="tablist" aria-label="主题来源">
-            <button
-              type="button"
-              className={sourceTab === 'official' ? 'is-active' : ''}
-              onClick={() => setSourceTab('official')}
-            >
-              官方精选
-            </button>
-            <button
-              type="button"
-              className={sourceTab === 'registry' ? 'is-active' : ''}
-              onClick={() => setSourceTab('registry')}
-            >
-              主题库
-            </button>
-            <button
-              type="button"
-              className={sourceTab === 'json' ? 'is-active' : ''}
-              onClick={() => setSourceTab('json')}
-            >
-              JSON 导入
-            </button>
-          </div>
-
-          {sourceTab === 'official' ? (
-            <>
-              <div className="theme-section-title">
-                <strong>官方精选</strong>
-                <span>经过移动端双列、触控和底部导航验证的内置主题。</span>
-              </div>
-              <div className="theme-preset-grid">
-                {presets.map((preset) => (
-                  <button
-                    className={`theme-preset-card${selectedKey === preset.key ? ' is-selected' : ''}`}
-                    type="button"
-                    key={preset.key}
-                    onClick={() => selectOfficialTheme(preset)}
-                  >
-                    <span
-                      className="theme-preset-swatch"
-                      style={{
-                        background: `linear-gradient(135deg, ${preset.tokens.heroStart}, ${preset.tokens.heroEnd})`,
-                      }}
-                    >
-                      <i style={{ background: preset.tokens.brand }} />
-                      <i style={{ background: preset.tokens.surface }} />
-                      <i style={{ background: preset.tokens.pageBg }} />
-                    </span>
-                    <span className="theme-preset-copy">
-                      <strong>{preset.label}</strong>
-                      <small>{preset.description}</small>
-                      <em>
-                        {preset.colorScheme === 'dark' ? '深色' : '浅色'} ·{' '}
-                        {FONT_PACK_LABELS[preset.recipe.fontPack].split(' · ')[0]} · V
-                        {preset.recipe.version}
-                      </em>
-                    </span>
-                  </button>
-                ))}
-              </div>
-            </>
-          ) : null}
-
-          {sourceTab === 'registry' ? (
-            <div className="theme-import-panel">
-              <div className="theme-section-title">
-                <strong>shadcn Registry 主题库</strong>
-                <span>
-                  只读取公开 HTTPS 的 registry:theme JSON，并转换为本站 Theme
-                  Tokens；不会执行外部 JS、React 或 CSS 文件。
-                </span>
-              </div>
-              <label className="theme-import-field">
-                <span>Theme JSON 地址</span>
-                <input
-                  type="url"
-                  value={registryUrl}
-                  placeholder="https://example.com/r/my-theme.json"
-                  onChange={(event) => setRegistryUrl(event.target.value)}
-                />
-              </label>
-              <div className="theme-import-row">
-                <label className="theme-import-field">
-                  <span>读取模式</span>
-                  <select
-                    value={importMode}
-                    onChange={(event) => setImportMode(event.target.value as ThemeMode)}
-                  >
-                    <option value="light">浅色 light</option>
-                    <option value="dark">深色 dark</option>
-                  </select>
-                </label>
-                <button
-                  className="primary-button theme-import-button"
-                  type="button"
-                  disabled={importing || !registryUrl.trim()}
-                  onClick={() => void importRegistryTheme()}
-                >
-                  {importing ? '正在读取…' : '读取并预览'}
-                </button>
-              </div>
-              <div className="theme-import-note">
-                <strong>安全边界</strong>
-                <span>
-                  最多读取 256 KB JSON；拒绝 localhost、私网地址和非 HTTPS
-                  地址。保存后前端只读取本站存储的标准化 Token，不依赖原主题 URL。
-                </span>
-              </div>
-            </div>
-          ) : null}
-
-          {sourceTab === 'json' ? (
-            <div className="theme-import-panel">
-              <div className="theme-section-title">
-                <strong>JSON 导入</strong>
-                <span>支持 shadcn registry:theme JSON，也支持本站标准 Theme JSON。</span>
-              </div>
-              <label className="theme-import-field">
-                <span>主题 JSON</span>
-                <textarea
-                  value={jsonText}
-                  placeholder={
-                    '{\n  "type": "registry:theme",\n  "name": "my-theme",\n  "cssVars": { "light": { ... } }\n}'
-                  }
-                  onChange={(event) => setJsonText(event.target.value)}
-                />
-              </label>
-              <div className="theme-import-row">
-                <label className="theme-import-field">
-                  <span>读取模式</span>
-                  <select
-                    value={importMode}
-                    onChange={(event) => setImportMode(event.target.value as ThemeMode)}
-                  >
-                    <option value="light">浅色 light</option>
-                    <option value="dark">深色 dark</option>
-                  </select>
-                </label>
-                <button
-                  className="primary-button theme-import-button"
-                  type="button"
-                  disabled={importing || !jsonText.trim()}
-                  onClick={() => void importJsonTheme()}
-                >
-                  {importing ? '正在解析…' : '解析并预览'}
-                </button>
-              </div>
-            </div>
-          ) : null}
-
-          {selectedKey === 'custom' && selectedPreset ? (
-            <div className="theme-imported-summary">
-              <span className="theme-imported-badge">外部主题</span>
-              <div>
-                <strong>{selectedPreset.label}</strong>
-                <small>{selectedPreset.description}</small>
-              </div>
-              <span>
-                {selectedPreset.colorScheme === 'dark' ? '深色' : '浅色'} · 已标准化
-              </span>
-            </div>
-          ) : null}
+      <div className="theme-center-surface">
+        <div className="theme-section-title">
+          <strong>官方精选</strong>
+          <span>
+            每套主题包含固定字体、按钮、素材、动效与导航方案，避免组合后互相打架。
+          </span>
         </div>
+
+        <div className="theme-preset-grid">
+          {presets.map((preset) => (
+            <button
+              className={`theme-preset-card${selectedKey === preset.key ? ' is-selected' : ''}`}
+              type="button"
+              key={preset.key}
+              aria-pressed={selectedKey === preset.key}
+              onClick={() => selectOfficialTheme(preset)}
+            >
+              <span
+                className="theme-preset-swatch"
+                style={{
+                  color: preset.tokens.text,
+                  background: `linear-gradient(145deg, ${preset.tokens.heroStart}, ${preset.tokens.heroEnd})`,
+                }}
+              >
+                <span className="theme-preset-swatch-bar" />
+                <span className="theme-preset-swatch-content">
+                  <i style={{ background: preset.tokens.surface }} />
+                  <i style={{ background: preset.tokens.surfaceSoft }} />
+                  <b style={{ background: preset.tokens.brand }} />
+                </span>
+              </span>
+              <span className="theme-preset-copy">
+                <span className="theme-preset-title">
+                  <strong>{preset.label}</strong>
+                  {selectedKey === preset.key ? <em>已选择</em> : null}
+                </span>
+                <small>{preset.description}</small>
+                <span className="theme-preset-meta">
+                  {preset.colorScheme === 'dark' ? '深色' : '浅色'} ·{' '}
+                  {FONT_PACK_LABELS[preset.recipe.fontPack]} ·{' '}
+                  {preset.recipe.motionStyle === 'restrained'
+                    ? '克制动效'
+                    : preset.recipe.motionStyle === 'gentle'
+                      ? '柔和动效'
+                      : '活跃动效'}
+                </span>
+              </span>
+            </button>
+          ))}
+        </div>
+
+        {currentTheme.key === 'custom' ? (
+          <button
+            className={`theme-preset-card theme-custom-current${selectedKey === 'custom' ? ' is-selected' : ''}`}
+            type="button"
+            aria-pressed={selectedKey === 'custom'}
+            onClick={() => {
+              setSelectedKey('custom');
+              setAccent(currentTheme.overrides.accent ?? '');
+              clearMessages();
+            }}
+          >
+            <span
+              className="theme-preset-swatch"
+              style={{
+                color: currentTheme.tokens.text,
+                background: `linear-gradient(145deg, ${currentTheme.tokens.heroStart}, ${currentTheme.tokens.heroEnd})`,
+              }}
+            />
+            <span className="theme-preset-copy">
+              <strong>{currentTheme.label}</strong>
+              <small>当前保留的外部主题。选择官方主题并保存后将替换它。</small>
+            </span>
+          </button>
+        ) : null}
       </div>
 
-      {previewOpen && selectedPreset
-        ? createPortal(
-            <div
-              className="theme-preview-modal-backdrop"
-              onMouseDown={() => setPreviewOpen(false)}
-            >
-              <section
-                className="theme-preview-modal theme-workbench-modal"
-                role="dialog"
-                aria-modal="true"
-                aria-labelledby="theme-preview-modal-title"
-                onMouseDown={(event) => event.stopPropagation()}
-              >
-                <div className="theme-preview-modal-header">
-                  <div>
-                    <small>当前草稿主题 · {selectedPreset.label}</small>
-                    <strong id="theme-preview-modal-title">主题设置与移动端预览</strong>
-                    <span>左侧调整主题，右侧实时检查移动端效果。</span>
-                  </div>
-                  <div className="theme-preview-modal-actions">
-                    {themeIsDirty ? (
-                      <span className="theme-unsaved-pill">待保存</span>
-                    ) : (
-                      <span className="theme-saved-pill">已保存</span>
-                    )}
-                    <button
-                      className="primary-button theme-modal-save-button"
-                      type="button"
-                      disabled={saving || !themeIsDirty}
-                      onClick={() => void saveTheme()}
-                    >
-                      {saving ? '正在保存…' : themeIsDirty ? '保存并应用' : '已保存'}
-                    </button>
-                    <button
-                      className="theme-preview-modal-close"
-                      type="button"
-                      aria-label="关闭主题设置与预览"
-                      autoFocus
-                      onClick={() => setPreviewOpen(false)}
-                    >
-                      ×
-                    </button>
-                  </div>
-                </div>
+      {selectedPreset ? (
+        <div className="theme-center-surface theme-accent-surface">
+          <div className="theme-accent-copy">
+            <span>当前草稿</span>
+            <strong>{selectedPreset.label}</strong>
+            <p>
+              整套视觉方案由主题中心统一维护。这里只调整品牌强调色，不会破坏页面层级、字体和交互质感。
+            </p>
+          </div>
 
-                <div className="theme-preview-modal-body theme-workbench-modal-body">
-                  <div className="theme-settings-pane">
-                    <div className="theme-preview-panel-heading">
-                      <div className="theme-section-title">
-                        <strong>主题设置</strong>
-                        <span>调整品牌色、UI Recipe 和安装提示。</span>
-                      </div>
-                    </div>
-                    <ThemeEditorControls
-                      selectedPreset={selectedPreset}
-                      accent={accent}
-                      colorInputValue={colorInputValue}
-                      recipe={recipe}
-                      installPrompt={installPrompt}
-                      setAccent={setAccent}
-                      setRecipe={setRecipe}
-                      setInstallPrompt={setInstallPrompt}
-                    />
-                  </div>
+          <label className="theme-accent-field">
+            <span>品牌强调色</span>
+            <div>
+              <input
+                type="color"
+                value={colorInputValue}
+                onChange={(event) => {
+                  setAccent(event.target.value.toLowerCase());
+                  clearMessages();
+                }}
+                aria-label="选择品牌强调色"
+              />
+              <input
+                type="text"
+                value={accent}
+                placeholder={selectedPreset.tokens.brand}
+                maxLength={7}
+                onChange={(event) => {
+                  setAccent(event.target.value);
+                  clearMessages();
+                }}
+              />
+              {accent ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAccent('');
+                    clearMessages();
+                  }}
+                >
+                  恢复主题色
+                </button>
+              ) : null}
+            </div>
+          </label>
 
-                  <div className="theme-preview-stage">
-                    <div className="theme-preview-stage-heading">
-                      <div>
-                        <strong>移动端实时预览</strong>
-                        <span>双列 1:1 · 触控操作 · 底部导航</span>
-                      </div>
-                      <small>修改设置后立即更新</small>
-                    </div>
-                    <div
-                      className="theme-preview-page-switcher"
-                      aria-label="选择预览页面"
-                    >
-                      {THEME_PREVIEW_PAGES.map((page) => (
-                        <button
-                          key={page.key}
-                          type="button"
-                          aria-pressed={previewPage === page.key}
-                          onClick={() => setPreviewPage(page.key)}
-                        >
-                          {page.label}
-                        </button>
-                      ))}
-                    </div>
-                    <div
-                      className="theme-contrast-status"
-                      data-status={
-                        brandContrast?.ratio === null ||
-                        (brandContrast?.ratio ?? 0) >= 4.5
-                          ? 'pass'
-                          : 'warning'
-                      }
-                    >
-                      <span aria-hidden="true">●</span>
-                      {brandContrast?.ratio === null
-                        ? '品牌按钮文字已按明暗模式自动匹配'
-                        : `品牌按钮对比度 ${brandContrast?.ratio.toFixed(1)}:1 · AA`}
-                    </div>
-                    <MobileThemePreview
-                      installPrompt={installPrompt}
-                      page={previewPage}
-                      selectedPreset={selectedPreset}
-                      recipe={recipe}
-                      previewAccent={previewAccent}
-                    />
-                  </div>
-                </div>
-              </section>
-            </div>,
-            document.body,
-          )
-        : null}
+          <div
+            className="theme-accent-status"
+            data-status={
+              brandContrast?.ratio === null || (brandContrast?.ratio ?? 0) >= 4.5
+                ? 'pass'
+                : 'warning'
+            }
+          >
+            <i style={{ background: previewAccent }} aria-hidden="true" />
+            <span>
+              {brandContrast === null || brandContrast.ratio === null
+                ? '按钮文字会按主题明暗自动匹配'
+                : `按钮文字对比度 ${brandContrast.ratio.toFixed(1)}:1 · AA`}
+            </span>
+          </div>
+        </div>
+      ) : null}
     </section>
   );
 }

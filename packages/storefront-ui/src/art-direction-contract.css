@@ -111,7 +111,11 @@
   --theme-art-text-tertiary: color-mix(in srgb, var(--text) 50%, var(--muted));
 }
 
-:is(html, .storefront-theme-root)[data-theme='noir'] {
+:is(html, .storefront-theme-root):is(
+  [data-theme='noir'],
+  [data-theme='velvet'],
+  [data-theme='midnight']
+) {
   --theme-art-text-primary: color-mix(in srgb, var(--text) 94%, white 6%);
   --theme-art-text-secondary: color-mix(in srgb, var(--text) 72%, var(--muted));
   --theme-art-text-tertiary: color-mix(in srgb, var(--text) 48%, var(--muted));
@@ -168,7 +172,7 @@
   --theme-art-media-filter: saturate(0.92) contrast(1.025) brightness(1.01);
 }
 
-:is(html, .storefront-theme-root)[data-theme='travel'] {
+:is(html, .storefront-theme-root):is([data-theme='travel'], [data-theme='pearl']) {
   --theme-art-text-primary: color-mix(in srgb, var(--text) 92%, var(--brand) 8%);
   --theme-art-text-secondary: color-mix(in srgb, var(--text) 66%, var(--muted));
   --theme-art-text-tertiary: color-mix(in srgb, var(--text) 48%, var(--muted));
@@ -265,12 +269,18 @@
   -webkit-line-clamp: 2;
 }
 
-:is(html, .storefront-theme-root)[data-theme='travel'] .home-product-meta {
+:is(html, .storefront-theme-root):is([data-theme='travel'], [data-theme='pearl'])
+  .home-product-meta {
   padding-inline: 6px;
   text-align: center;
 }
 
-:is(html, .storefront-theme-root)[data-theme='noir'] .home-product-meta,
+:is(html, .storefront-theme-root):is(
+    [data-theme='noir'],
+    [data-theme='velvet'],
+    [data-theme='midnight']
+  )
+  .home-product-meta,
 :is(html, .storefront-theme-root)[data-theme='live'] .home-product-meta {
   position: absolute;
   right: 10px;
@@ -282,7 +292,12 @@
   text-align: left;
 }
 
-:is(html, .storefront-theme-root)[data-theme='noir'] .home-product-title,
+:is(html, .storefront-theme-root):is(
+    [data-theme='noir'],
+    [data-theme='velvet'],
+    [data-theme='midnight']
+  )
+  .home-product-title,
 :is(html, .storefront-theme-root)[data-theme='live'] .home-product-title {
   color: var(--theme-art-on-media-primary);
   text-shadow: 0 2px 16px rgb(0 0 0 / 42%);
@@ -321,13 +336,15 @@
   color: var(--theme-art-on-media-secondary);
 }
 
-:is(html, .storefront-theme-root)[data-theme='travel'] .hero-carousel-copy {
+:is(html, .storefront-theme-root):is([data-theme='travel'], [data-theme='pearl'])
+  .hero-carousel-copy {
   margin-inline: auto;
   justify-items: center;
   text-align: center;
 }
 
-:is(html, .storefront-theme-root)[data-theme='travel'] .hero-carousel-cta {
+:is(html, .storefront-theme-root):is([data-theme='travel'], [data-theme='pearl'])
+  .hero-carousel-cta {
   justify-self: center;
 }
 
@@ -346,7 +363,12 @@
     padding-top: 12px;
   }
 
-  :is(html, .storefront-theme-root)[data-theme='noir'] .home-product-meta,
+  :is(html, .storefront-theme-root):is(
+      [data-theme='noir'],
+      [data-theme='velvet'],
+      [data-theme='midnight']
+    )
+    .home-product-meta,
   :is(html, .storefront-theme-root)[data-theme='live'] .home-product-meta {
     right: 13px;
     bottom: 12px;

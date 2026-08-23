@@ -1,5 +1,13 @@
 export type OfficialThemeKey =
-  'marketplace' | 'noir' | 'live' | 'saas' | 'travel' | 'tech';
+  | 'marketplace'
+  | 'noir'
+  | 'live'
+  | 'velvet'
+  | 'midnight'
+  | 'pearl'
+  | 'saas'
+  | 'travel'
+  | 'tech';
 export type ThemeKey = OfficialThemeKey | 'custom';
 export type ThemeColorScheme = 'light' | 'dark';
 export type ThemeFontPack = 'modern' | 'editorial' | 'compact' | 'technical';
@@ -214,6 +222,99 @@ export const THEME_PRESETS: readonly ThemePreset[] = [
       heroEnd: '#160f14',
       heroGlow: '#96264a',
       shadow: '0 18px 48px rgb(0 0 0 / 30%)',
+    },
+  },
+  {
+    key: 'velvet',
+    label: 'Velvet · 私享酒红',
+    description: '深酒红、暖黑和低饱和玫瑰金，适合私密约会与高端会员内容。',
+    colorScheme: 'dark',
+    density: 'comfortable',
+    productMediaRatio: '1:1',
+    recipe: {
+      version: 2,
+      fontPack: 'editorial',
+      buttonStyle: 'refined',
+      mediaStyle: 'editorial',
+      motionStyle: 'restrained',
+      navigationStyle: 'quiet',
+    },
+    installPrompt: DEFAULT_INSTALL_PROMPT,
+    tokens: {
+      brand: '#b6405f',
+      brandStrong: '#d46b83',
+      text: '#f4edef',
+      muted: '#a99a9f',
+      surface: '#130d0f',
+      surfaceSoft: '#1d1417',
+      line: '#332329',
+      pageBg: '#090708',
+      heroStart: '#4c1726',
+      heroEnd: '#160c10',
+      heroGlow: '#7e263f',
+      shadow: '0 22px 56px rgb(0 0 0 / 34%)',
+    },
+  },
+  {
+    key: 'midnight',
+    label: 'Midnight · 午夜蓝',
+    description: '蓝黑、冷银与雾紫强调，适合更克制、私密和现代的夜间社交体验。',
+    colorScheme: 'dark',
+    density: 'standard',
+    productMediaRatio: '1:1',
+    recipe: {
+      version: 2,
+      fontPack: 'modern',
+      buttonStyle: 'refined',
+      mediaStyle: 'soft',
+      motionStyle: 'restrained',
+      navigationStyle: 'quiet',
+    },
+    installPrompt: DEFAULT_INSTALL_PROMPT,
+    tokens: {
+      brand: '#8fa7d8',
+      brandStrong: '#b7c7e8',
+      text: '#f1f3f8',
+      muted: '#969eae',
+      surface: '#10131c',
+      surfaceSoft: '#171c28',
+      line: '#293142',
+      pageBg: '#07090f',
+      heroStart: '#202c4b',
+      heroEnd: '#0b0e18',
+      heroGlow: '#536b9f',
+      shadow: '0 22px 58px rgb(0 0 0 / 38%)',
+    },
+  },
+  {
+    key: 'pearl',
+    label: 'Pearl · 暖白珍珠',
+    description: '暖白、烟粉与深莓红，适合明亮但不过度甜美的高级生活方式约会。',
+    colorScheme: 'light',
+    density: 'comfortable',
+    productMediaRatio: '1:1',
+    recipe: {
+      version: 2,
+      fontPack: 'editorial',
+      buttonStyle: 'refined',
+      mediaStyle: 'editorial',
+      motionStyle: 'gentle',
+      navigationStyle: 'quiet',
+    },
+    installPrompt: DEFAULT_INSTALL_PROMPT,
+    tokens: {
+      brand: '#a64562',
+      brandStrong: '#7f2c46',
+      text: '#2d2226',
+      muted: '#7d6e73',
+      surface: '#fffaf6',
+      surfaceSoft: '#eee3df',
+      line: '#ded0cc',
+      pageBg: '#f5efe9',
+      heroStart: '#8e3a54',
+      heroEnd: '#c98a99',
+      heroGlow: '#efd2d5',
+      shadow: '0 18px 44px rgb(75 47 56 / 12%)',
     },
   },
   {
@@ -490,28 +591,6 @@ export function normalizeThemeOverrides(value: unknown): ThemeOverrides {
   };
 }
 
-function upgradeRetiredPresetRecipe(
-  themeKey: ThemeKey,
-  overrides: ThemeOverrides,
-): ThemeOverrides {
-  const isRetiredLiveRecipe =
-    themeKey === 'live' &&
-    overrides.fontPack === 'compact' &&
-    overrides.buttonStyle === 'soft-pill' &&
-    overrides.mediaStyle === 'soft' &&
-    overrides.motionStyle === 'active' &&
-    overrides.navigationStyle === 'solid';
-  if (!isRetiredLiveRecipe) return overrides;
-  return {
-    ...overrides,
-    fontPack: 'editorial',
-    buttonStyle: 'refined',
-    mediaStyle: 'editorial',
-    motionStyle: 'restrained',
-    navigationStyle: 'quiet',
-  };
-}
-
 export function parseThemeSettings(
   themeKey: unknown,
   overridesJson: unknown,
@@ -536,7 +615,7 @@ function applyAccent(tokens: ThemeTokens, accent: string | undefined): ThemeToke
 }
 
 export function resolveTheme(settings: ThemeSettings): ResolvedTheme {
-  const overrides = upgradeRetiredPresetRecipe(settings.key, settings.overrides);
+  const overrides = settings.overrides;
   const accent = overrides.accent;
   if (settings.key === 'custom' && overrides.imported) {
     const imported = overrides.imported;
@@ -564,15 +643,6 @@ export function resolveTheme(settings: ThemeSettings): ResolvedTheme {
   const preset = presetByKey.get(settings.key as OfficialThemeKey) ?? THEME_PRESETS[0]!;
   return {
     ...preset,
-    density: overrides.density ?? preset.density,
-    recipe: {
-      ...preset.recipe,
-      fontPack: overrides.fontPack ?? preset.recipe.fontPack,
-      buttonStyle: overrides.buttonStyle ?? preset.recipe.buttonStyle,
-      mediaStyle: overrides.mediaStyle ?? preset.recipe.mediaStyle,
-      motionStyle: overrides.motionStyle ?? preset.recipe.motionStyle,
-      navigationStyle: overrides.navigationStyle ?? preset.recipe.navigationStyle,
-    },
     installPrompt: overrides.installPrompt ?? preset.installPrompt,
     overrides,
     tokens: applyAccent(preset.tokens, accent),

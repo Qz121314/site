@@ -2,7 +2,15 @@ import { AdminApiError } from '../api';
 import { adminFetch } from '../admin-fetch';
 
 export type OfficialThemeKey =
-  'marketplace' | 'noir' | 'live' | 'saas' | 'travel' | 'tech';
+  | 'marketplace'
+  | 'noir'
+  | 'live'
+  | 'velvet'
+  | 'midnight'
+  | 'pearl'
+  | 'saas'
+  | 'travel'
+  | 'tech';
 export type ThemeKey = OfficialThemeKey | 'custom';
 export type ThemeDensity = 'compact' | 'standard' | 'comfortable';
 export type ThemeFontPack = 'modern' | 'editorial' | 'compact' | 'technical';
@@ -171,8 +179,6 @@ export async function importThemeFromJson(
 export async function updateThemeCenter(
   themeKey: ThemeKey,
   accent: string | null,
-  recipe: Omit<ThemeRecipe, 'version'> & { density: ThemeDensity },
-  installPrompt: ThemeInstallPrompt,
   imported?: ImportedThemeDefinition,
 ): Promise<ResolvedTheme> {
   const body = await themeRequest('/api/admin/theme/', {
@@ -185,13 +191,6 @@ export async function updateThemeCenter(
       themeKey,
       overrides: {
         ...(accent ? { accent } : {}),
-        density: recipe.density,
-        fontPack: recipe.fontPack,
-        buttonStyle: recipe.buttonStyle,
-        mediaStyle: recipe.mediaStyle,
-        motionStyle: recipe.motionStyle,
-        navigationStyle: recipe.navigationStyle,
-        installPrompt,
         ...(themeKey === 'custom' && imported ? { imported } : {}),
       },
     }),

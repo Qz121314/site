@@ -103,19 +103,28 @@ adminThemeRoutes.put('/', async (context) => {
   }
 
   const before = await getThemeSettings(context.env.DB);
+  const settings = {
+    ...validation.settings,
+    overrides: {
+      ...validation.settings.overrides,
+      ...(before.overrides.installPrompt
+        ? { installPrompt: before.overrides.installPrompt }
+        : {}),
+    },
+  };
   const updatedAt = new Date().toISOString();
   await context.env.DB.batch([
-    createUpdateThemeStatement(context.env.DB, validation.settings, updatedAt),
+    createUpdateThemeStatement(context.env.DB, settings, updatedAt),
     createAuditLogStatement(context.env.DB, {
       action: 'theme.updated',
       entityType: 'site_theme',
       entityId: '1',
       requestId: context.get('requestId'),
       before,
-      after: validation.settings,
+      after: settings,
       createdAt: updatedAt,
     }),
   ]);
 
-  return context.json({ theme: resolveTheme(validation.settings) });
+  return context.json({ theme: resolveTheme(settings) });
 });
