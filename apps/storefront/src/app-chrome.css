@@ -8,8 +8,6 @@
     var(--surface-soft) 8%
   );
   --theme-search-border: color-mix(in srgb, var(--line) 68%, transparent);
-  --theme-search-shadow: 0 4px 14px color-mix(in srgb, var(--text) 3%, transparent);
-  --theme-search-focus-ring: 0 0 0 3px color-mix(in srgb, var(--brand) 11%, transparent);
 }
 
 :is(html, .storefront-theme-root) .app-shell > .topbar {
@@ -52,7 +50,7 @@
   border: 1px solid var(--theme-search-border);
   border-radius: var(--theme-radius-control, 12px);
   background: var(--theme-search-background);
-  box-shadow: var(--theme-search-shadow);
+  box-shadow: var(--theme-primary-search-shadow);
   transition:
     border-color var(--app-motion-fast, 140ms) ease,
     background var(--app-motion-fast, 140ms) ease,
@@ -63,9 +61,7 @@
   :is(.browse-directory-search, .section-catalog-search):focus-within {
   border-color: color-mix(in srgb, var(--brand) 34%, var(--line));
   background: var(--surface);
-  box-shadow:
-    var(--theme-search-focus-ring),
-    0 8px 24px color-mix(in srgb, var(--text) 4%, transparent);
+  box-shadow: var(--theme-primary-search-focus-shadow);
 }
 
 :is(html, .storefront-theme-root)
@@ -221,7 +217,7 @@
       calc(5px + env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
     border-top-color: color-mix(in srgb, var(--line) 64%, transparent);
     background: var(--theme-tab-background);
-    box-shadow: 0 -10px 30px color-mix(in srgb, var(--text) 4%, transparent);
+    box-shadow: var(--theme-primary-navigation-shadow);
     backdrop-filter: blur(24px) saturate(1.12);
     -webkit-backdrop-filter: blur(24px) saturate(1.12);
   }

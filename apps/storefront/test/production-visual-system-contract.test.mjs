@@ -24,6 +24,15 @@ test('production acceptance stays runtime-theme-aware and guards stable storefro
   assert.match(acceptance, /\/api\/public\/theme/u);
   assert.match(acceptance, /document\.documentElement\.dataset\.navigationStyle/u);
   assert.match(acceptance, /expectNoHorizontalOverflow/u);
+  assert.match(acceptance, /MOBILE_VIEWPORTS/u);
+  assert.match(acceptance, /width: 360, height: 800/u);
+  assert.match(acceptance, /width: 390, height: 844/u);
+  assert.match(acceptance, /width: 430, height: 932/u);
+  assert.match(acceptance, /page\.setViewportSize/u);
+  assert.match(acceptance, /homeContract\.shortcutColumns/u);
+  assert.match(acceptance, /sectionViewportContract\.contentBottomGap/u);
+  assert.match(acceptance, /productViewportContract\.ctaBottomGap/u);
+  assert.match(acceptance, /messagesViewportContract\.workspaceWidth/u);
   assert.match(acceptance, /\.home-shortcut-zone/u);
   assert.match(acceptance, /\.browse-directory-search/u);
   assert.match(acceptance, /\.section-catalog-search/u);
