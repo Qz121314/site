@@ -40,11 +40,11 @@ test('secondary app surfaces consume one Theme Center appearance contract', asyn
   assert.doesNotMatch(pwa, /0 18px 46px/u);
   assert.doesNotMatch(pwa, /0 8px 20px/u);
 
-  assert.match(faq, /var\(--theme-primary-state-icon-shadow\)/u);
-  assert.match(messages, /var\(--theme-primary-message-workspace-shadow\)/u);
-  assert.match(messages, /var\(--theme-primary-chat-send-shadow\)/u);
-  assert.match(conversation, /var\(--theme-primary-chat-header-shadow\)/u);
-  assert.match(conversation, /var\(--theme-primary-chat-input-focus-ring\)/u);
+  assert.match(theme, /box-shadow: var\(--theme-primary-state-icon-shadow\)/u);
+  assert.match(theme, /box-shadow: var\(--theme-primary-message-workspace-shadow\)/u);
+  assert.match(theme, /box-shadow: var\(--theme-primary-chat-header-shadow\)/u);
+  assert.match(theme, /box-shadow: var\(--theme-primary-chat-input-focus-ring\)/u);
+  assert.match(theme, /box-shadow: var\(--theme-primary-chat-send-shadow\)/u);
   assert.match(pwa, /var\(--theme-primary-install-shadow\)/u);
   assert.match(pwa, /var\(--theme-primary-install-action-shadow\)/u);
 });
