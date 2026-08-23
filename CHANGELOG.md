@@ -1,17 +1,28 @@
 # Changelog
 
-## Release Candidate Closure — 2026-08-23
+## V1 Frozen / Stable Maintenance — 2026-08-23
 
-进入最终收口与稳定维护阶段。
+V1 正式完成收口，项目进入冻结与稳定维护阶段。
 
-### Closure policy
+### Frozen scope
 
-- 冻结 Storefront、Admin、Worker、D1、R2、发布模型、路由与客服集成边界，不再进行非必要架构重构。
-- 冻结现有主题与视觉系统；后续仅修复明确 UI Bug、兼容性问题与真实运营问题，不继续堆叠主题、视觉 token 或布局模式。
-- 保持 Storefront bundle budget 不放宽：JavaScript gzip < 100 KiB，CSS gzip < 25 KiB。
-- Release Candidate 期间重点验证 PR → main → GitHub Actions → D1 migration → Cloudflare Worker deploy → production smoke → Playwright acceptance 的完整生产链。
-- 客服集成进入故障态验收阶段，重点验证 timeout、offline、WebSocket reconnect、后台恢复、上传失败与部分服务不可用场景。
+- Storefront、Admin、Worker、D1、R2、发布模型、路由和客服集成边界全部冻结。
+- 现有主题、视觉系统、App Shell、导航、产品卡片、CTA、Messages 与 PWA 交互基线冻结。
+- Storefront bundle budget 保持不放宽：JavaScript gzip < 100 KiB，CSS gzip < 25 KiB。
+- 不再以“继续优化”或“继续增加功能”为目标，不进行没有真实问题支撑的架构重构、数据库重构、路由重写或视觉扩展。
 - 不新增 AI、广告池、复杂 RBAC / 审批、多 Worker 或新的缓存 / 数据基础设施。
+
+### Stable maintenance policy
+
+后续只接受以下三类变更：
+
+1. 已确认的生产 Bug 或故障；
+2. 明确的性能、兼容性或安全回退；
+3. 真实运营产生并经过确认的新需求。
+
+所有后续改动继续遵循影响分级与 root-cause-first 原则；稳定模块默认不动，修复范围保持最小且完整。
+
+生产发布继续由 `main` 的正式 CI 作为最终 release gate，持续执行 migration validation、Lint、Prettier、Typecheck、Tests、Build、Worker bundle，并在正式部署时执行 D1 / R2 / Worker / production smoke / Playwright acceptance。
 
 ## 1.0.0 — 2026-08-12
 
