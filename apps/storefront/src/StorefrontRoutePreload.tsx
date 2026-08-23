@@ -37,7 +37,7 @@ function preloadTypeForPathname(pathname: string): PreloadRouteType | null {
   }
 }
 
-export function preloadStorefrontRoute(href: string): void {
+function preloadStorefrontRoute(href: string): void {
   if (!href.startsWith('/') || href.startsWith('/go/')) return;
   const pathname = href.split(/[?#]/u, 1)[0] || '/';
   const preloadType = preloadTypeForPathname(pathname);
