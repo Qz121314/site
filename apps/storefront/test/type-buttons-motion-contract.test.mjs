@@ -68,14 +68,8 @@ test('storefront typography buttons and route motion share one app visual contra
     transitions,
     /animation: storefront-page-pop-enter var\(--app-motion-base/u,
   );
-  assert.match(
-    transitions,
-    /translate3d\(var\(--route-push-shift\), 0, 0\)/u,
-  );
-  assert.match(
-    transitions,
-    /translate3d\(var\(--route-pop-shift\), 0, 0\)/u,
-  );
+  assert.match(transitions, /translate3d\(var\(--route-push-shift\), 0, 0\)/u);
+  assert.match(transitions, /translate3d\(var\(--route-pop-shift\), 0, 0\)/u);
   assert.match(
     transitions,
     /@media \(min-width: 768px\)[\s\S]*--route-push-shift: 0px;[\s\S]*--route-pop-shift: 0px;/u,
