@@ -236,6 +236,7 @@ Business Route
 必须遵守：
 
 - **前端 UI 与后台 Theme Center 永远保持关联。** 新的视觉能力优先进入 Theme Center、`packages/storefront-ui` 或现有共享 Theme Token；禁止在 Storefront 页面另建一套独立硬编码主题系统；
+- 静态表面层级只允许由共享 Theme Token 控制。产品媒体、快捷入口、CTA 与导航不得在页面 CSS 中叠加第二套常驻阴影、厚边或悬浮位移；页面只消费统一的 media / control / button elevation 与按压反馈；
 - Theme Center 负责“长什么样”，App Shell 负责“固定表面在哪里、页面占多少 viewport”；不要把 Header / Bottom Chrome 高度、Safe Area、VisualViewport 几何塞进 Theme Runtime；
 - 普通业务页面不得猜测固定 Header / Bottom Chrome 高度。统一消费运行时测量的 `--app-header-height`、`--app-bottom-chrome-height` 与 `--app-viewport-*`；
 - `window.visualViewport`、浏览器地址栏收起 / 展开、旋转和软键盘导致的可视区域变化，由 Storefront viewport runtime 统一处理；页面不要各自监听并写第二套 viewport 状态；

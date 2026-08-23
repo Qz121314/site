@@ -62,9 +62,7 @@
   border: 1px solid color-mix(in srgb, var(--v2-hairline, var(--line)) 76%, transparent);
   border-radius: var(--theme-radius-icon, 14px);
   background: color-mix(in srgb, var(--surface-soft) 94%, var(--surface));
-  box-shadow:
-    0 1px 0 color-mix(in srgb, var(--text) 4%, transparent) inset,
-    0 7px 20px color-mix(in srgb, var(--text) 5%, transparent);
+  box-shadow: var(--theme-control-shadow, none);
   transform: translateZ(0);
   transition:
     opacity var(--app-motion-fast, 160ms) ease,
@@ -192,7 +190,7 @@
   border-radius: 50%;
   color: color-mix(in srgb, var(--text) 78%, var(--muted));
   background: color-mix(in srgb, var(--surface-soft) 90%, transparent);
-  box-shadow: 0 4px 12px color-mix(in srgb, var(--text) 3%, transparent);
+  box-shadow: var(--theme-control-shadow, none);
   text-decoration: none;
   transition:
     color var(--app-motion-fast, 160ms) ease,
@@ -240,9 +238,7 @@
   border: 0;
   border-radius: var(--theme-radius-media, 12px);
   background: var(--theme-media-background, var(--surface-soft));
-  box-shadow:
-    0 0 0 1px color-mix(in srgb, var(--line) 28%, transparent),
-    0 10px 26px color-mix(in srgb, var(--text) 5%, transparent);
+  box-shadow: var(--theme-media-shadow, none);
   isolation: isolate;
   transform: translateZ(0);
   transition:
@@ -339,7 +335,7 @@
   }
 
   .home-shortcut:hover .home-shortcut-icon {
-    box-shadow: 0 9px 24px color-mix(in srgb, var(--text) 7%, transparent);
+    box-shadow: var(--theme-control-shadow, none);
   }
 
   .home-product-tile:hover .home-product-cover img {
@@ -347,9 +343,7 @@
   }
 
   .home-product-tile:hover .home-product-cover {
-    box-shadow:
-      0 0 0 1px color-mix(in srgb, var(--line) 34%, transparent),
-      0 14px 32px color-mix(in srgb, var(--text) 7%, transparent);
+    box-shadow: var(--theme-media-hover-shadow, none);
   }
 
   .home-recommendation-heading > a:hover {
