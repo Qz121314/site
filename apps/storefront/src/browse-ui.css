@@ -22,7 +22,7 @@
     var(--v2-control-bg, var(--surface-soft)) 94%,
     var(--surface)
   );
-  box-shadow: 0 5px 16px color-mix(in srgb, var(--text) 3%, transparent);
+  box-shadow: var(--theme-control-shadow, none);
   transition:
     border-color var(--app-motion-fast, 160ms) ease,
     background var(--app-motion-fast, 160ms) ease,
@@ -32,7 +32,7 @@
 .browse-directory-search:focus-within {
   border-color: color-mix(in srgb, var(--brand) 24%, var(--line));
   background: var(--surface);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 5%, transparent);
+  box-shadow: var(--theme-button-focus-ring);
 }
 
 .browse-directory-search > svg {
@@ -112,7 +112,7 @@
   border-radius: var(--theme-browse-radius, 12px);
   color: #fff;
   background: #121318;
-  box-shadow: 0 10px 28px color-mix(in srgb, #000 8%, transparent);
+  box-shadow: var(--theme-art-media-shadow, var(--theme-media-shadow, none));
   isolation: isolate;
   transition:
     opacity var(--app-motion-fast, 160ms) ease,
@@ -265,10 +265,6 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-.browse-search-product-card:active {
-  opacity: 0.82;
-  transform: scale(0.985);
-}
 
 .browse-search-product-cover {
   position: relative;
@@ -277,9 +273,7 @@
   aspect-ratio: 1 / 1;
   overflow: hidden;
   border: 0;
-  border-radius: var(--theme-radius-media, 10px);
   background: var(--theme-media-background, var(--surface-soft));
-  box-shadow: 0 8px 22px color-mix(in srgb, var(--text) 4%, transparent);
   isolation: isolate;
 }
 
@@ -370,20 +364,17 @@
   }
 
   .browse-section-card:hover {
-    box-shadow: 0 14px 34px color-mix(in srgb, #000 11%, transparent);
+    box-shadow: var(--theme-art-media-hover-shadow, var(--theme-media-hover-shadow, none));
   }
 
   .browse-section-card:hover .browse-section-card-media img {
-    transform: scale(1.022);
+    transform: scale(var(--theme-art-media-hover-scale, 1.022));
   }
 
   .browse-section-card:hover .browse-section-card-arrow {
     transform: translateX(2px);
   }
 
-  .browse-search-product-card:hover .browse-search-product-cover > img {
-    transform: scale(1.018);
-  }
 }
 
 @media (max-width: 767px) {
