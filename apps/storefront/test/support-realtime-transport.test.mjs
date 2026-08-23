@@ -9,18 +9,20 @@ function source(path) {
 
 test('support realtime is websocket-first with REST reserved for recovery', () => {
   const root = source('../src/StorefrontRoot.tsx');
+  const runtime = source('../src/StorefrontSupportRuntime.tsx');
   const realtime = source('../src/support-realtime.ts');
   const messages = source('../src/MessagesPage.tsx');
   const media = source('../src/support-media-gateway.ts');
   const typing = source('../src/support-thread-realtime.ts');
 
-  assert.ok(!root.includes('refetchInterval: 30_000'));
-  assert.ok(root.includes("event.type === 'realtime.recovered'"));
-  assert.ok(root.includes('setQueryData'));
+  assert.ok(!runtime.includes('refetchInterval: 30_000'));
+  assert.ok(runtime.includes("event.type === 'realtime.recovered'"));
+  assert.ok(runtime.includes('setQueryData'));
   assert.ok(root.includes('Boolean(peekSupportVisitorIdentity())'));
-  assert.ok(root.includes("supportRuntimeEnabled && route.type !== 'message-compose'"));
-  assert.ok(root.includes('enabled: supportConversationListEnabled'));
-  assert.ok(root.includes('if (!supportRuntimeEnabled) return undefined;'));
+  assert.ok(root.includes("import('./StorefrontSupportRuntime')"));
+  assert.ok(root.includes("conversationListEnabled={route.type !== 'message-compose'}"));
+  assert.ok(runtime.includes('enabled: conversationListEnabled'));
+  assert.ok(runtime.includes('return subscribeSupportRealtime((event) =>'));
   assert.ok(realtime.includes("recovered ? 'realtime.recovered' : 'realtime.connected'"));
   assert.ok(realtime.includes('parseMessage(state.connection, raw.message, raw.media)'));
   assert.ok(messages.includes('staleTime: Number.POSITIVE_INFINITY'));
