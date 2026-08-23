@@ -44,13 +44,10 @@
   min-width: 0;
   overflow: hidden;
   border: 1px solid
-    color-mix(in srgb, var(--theme-detail-panel-border, var(--line)) 60%, transparent);
+    color-mix(in srgb, var(--theme-primary-detail-media-border) 60%, transparent);
   border-radius: var(--theme-detail-media-radius, var(--theme-radius-media, 16px));
-  background: var(--theme-detail-media-background, var(--surface-soft));
-  box-shadow: var(
-    --theme-detail-media-shadow,
-    0 12px 34px color-mix(in srgb, var(--text) 5%, transparent)
-  );
+  background: var(--theme-primary-detail-media-background);
+  box-shadow: var(--theme-primary-detail-media-shadow);
 }
 
 .detail-media-stage > img,
@@ -127,7 +124,7 @@
 
 .detail-thumbnail-fallback,
 .detail-media-fallback {
-  background: var(--theme-detail-media-background, var(--surface-soft));
+  background: var(--theme-primary-detail-media-background);
 }
 
 .detail-thumbnail-video-mark {
@@ -247,16 +244,11 @@
     to top,
     var(--theme-detail-cta-surface, color-mix(in srgb, var(--surface) 96%, transparent))
       0%,
-    color-mix(in srgb, var(--theme-detail-cta-surface, var(--surface)) 92%, transparent)
-      58%,
-    color-mix(in srgb, var(--theme-detail-cta-surface, var(--surface)) 52%, transparent)
-      80%,
+    color-mix(in srgb, var(--theme-primary-detail-cta-surface) 92%, transparent) 58%,
+    color-mix(in srgb, var(--theme-primary-detail-cta-surface) 52%, transparent) 80%,
     transparent 100%
   );
-  box-shadow: var(
-    --theme-detail-cta-bar-shadow,
-    0 -8px 24px color-mix(in srgb, var(--text) 6%, transparent)
-  );
+  box-shadow: var(--theme-primary-detail-cta-bar-shadow);
   pointer-events: none;
 }
 
@@ -272,8 +264,8 @@
   padding: 0 50px;
   border: 1px solid color-mix(in srgb, currentColor 12%, transparent);
   border-radius: var(--theme-detail-cta-radius, var(--theme-radius-control, 14px));
-  color: var(--theme-detail-cta-color, #fff);
-  background: var(--theme-detail-cta-background, var(--brand));
+  color: var(--theme-primary-detail-cta-color);
+  background: var(--theme-primary-detail-cta-background);
   box-shadow: var(
     --theme-detail-cta-shadow,
     0 10px 28px color-mix(in srgb, var(--brand) 18%, transparent)
@@ -473,13 +465,10 @@
     gap: 27px;
     padding: var(--theme-detail-panel-padding, 24px);
     border: 1px solid
-      color-mix(in srgb, var(--theme-detail-panel-border, var(--line)) 76%, transparent);
+      color-mix(in srgb, var(--theme-primary-detail-panel-border) 76%, transparent);
     border-radius: var(--theme-detail-panel-radius, var(--theme-radius-card, 18px));
-    background: var(--theme-detail-panel-background, var(--surface));
-    box-shadow: var(
-      --theme-detail-panel-shadow,
-      0 16px 40px color-mix(in srgb, var(--text) 5%, transparent)
-    );
+    background: var(--theme-primary-detail-panel-background);
+    box-shadow: var(--theme-primary-detail-panel-shadow);
   }
 
   .product-detail-summary h1 {
@@ -494,7 +483,8 @@
   .product-detail-inline-action {
     display: flex;
     padding-top: 23px;
-    border-top: 1px solid color-mix(in srgb, var(--line) 62%, transparent);
+    border-top: 1px solid
+      color-mix(in srgb, var(--theme-primary-detail-panel-border) 62%, transparent);
   }
 
   .product-detail-inline-action .cta-button {

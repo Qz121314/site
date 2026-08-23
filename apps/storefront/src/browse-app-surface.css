@@ -12,17 +12,6 @@
   touch-action: manipulation;
 }
 
-.browse-section-card:active {
-  opacity: 0.94;
-  transform: scale(0.985);
-}
-
-@media (hover: hover) and (pointer: fine) {
-  .browse-section-card:hover {
-    transform: translateY(-2px);
-  }
-}
-
 @media (max-width: 767px) {
   .browse-directory {
     gap: 14px;

@@ -319,20 +319,6 @@
   }
 }
 
-@media (hover: hover) and (pointer: fine) {
-  :is(html, .storefront-theme-root) .home-product-tile:hover .home-product-cover {
-    box-shadow: var(--theme-art-media-hover-shadow);
-  }
-
-  :is(html, .storefront-theme-root) .home-product-tile:hover .home-product-cover img {
-    transform: scale(var(--theme-art-media-hover-scale));
-  }
-}
-
-:is(html, .storefront-theme-root) .home-product-tile:active .home-product-cover img {
-  transform: scale(var(--theme-art-media-press-scale));
-}
-
 @media (min-width: 768px) {
   :is(html, .storefront-theme-root) .home-product-meta {
     padding-top: 12px;

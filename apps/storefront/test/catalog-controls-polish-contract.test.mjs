@@ -18,7 +18,10 @@ test('catalog cards and filters share one touch-first visual contract', async ()
   assert.match(polish, /\.home-product-cover/u);
   assert.match(polish, /\.browse-search-product-cover/u);
   assert.match(polish, /\.section-product-cover/u);
-  assert.match(polish, /box-shadow: var\(--catalog-card-shadow\)/u);
+  assert.match(
+    polish,
+    /box-shadow: var\(--theme-art-media-shadow, var\(--catalog-card-shadow\)\)/u,
+  );
   assert.match(polish, /font-weight: var\(--catalog-card-title-weight\)/u);
   assert.match(polish, /box-shadow: var\(--catalog-card-shadow-pressed\)/u);
 
