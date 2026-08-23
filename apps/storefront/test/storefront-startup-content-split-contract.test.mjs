@@ -15,11 +15,20 @@ test('home startup keeps route-only content loaders behind lazy boundaries', () 
   const bottomNavigation = source('../src/bottom-navigation.ts');
 
   assert.equal(main.includes("from './content-route'"), false);
-  assert.equal(home.includes('loadSectionSnapshot,\n} from \'./content\''), false);
+  assert.equal(
+    home.includes('loadSectionSnapshot,\n} from \'./content\''),
+    false,
+  );
   assert.ok(home.includes("await import('./content-route')"));
 
-  assert.equal(content.includes('export async function loadSectionSnapshot('), false);
-  assert.equal(content.includes('export async function loadProductSnapshot('), false);
+  assert.equal(
+    content.includes('export async function loadSectionSnapshot('),
+    false,
+  );
+  assert.equal(
+    content.includes('export async function loadProductSnapshot('),
+    false,
+  );
   assert.equal(content.includes('export async function loadFaqSnapshot('), false);
   assert.ok(routeContent.includes('export async function loadSectionSnapshot('));
   assert.ok(routeContent.includes('export async function loadProductSnapshot('));
