@@ -11,7 +11,10 @@ test('browse search remembers product summaries for later product detail navigat
 });
 
 test('product detail checks remembered summaries before section fallback', async () => {
-  const source = await readFile(new URL('../src/content.ts', import.meta.url), 'utf8');
+  const source = await readFile(
+    new URL('../src/content-route.ts', import.meta.url),
+    'utf8',
+  );
   const remembered = source.indexOf('matchedProduct = findRememberedProduct');
   const fallback = source.indexOf(
     'const sectionSnapshot = await loadSectionSnapshot',
