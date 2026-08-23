@@ -1,0 +1,258 @@
+/*
+ * Tactile interaction layer.
+ *
+ * Keep the storefront theme-led while making actionable surfaces visibly
+ * pressable. The depth is intentionally shallow: raised at rest, lighter on
+ * hover, and physically compressed on press.
+ */
+
+:is(html, .storefront-theme-root) {
+  --interaction-edge: color-mix(in srgb, var(--line) 58%, transparent);
+  --interaction-highlight: color-mix(in srgb, var(--surface) 78%, transparent);
+  --interaction-shadow-rest:
+    0 1px 0 var(--interaction-highlight) inset,
+    0 -1px 0 color-mix(in srgb, var(--text) 7%, transparent) inset,
+    0 2px 4px color-mix(in srgb, var(--text) 5%, transparent),
+    0 8px 18px color-mix(in srgb, var(--text) 9%, transparent);
+  --interaction-shadow-hover:
+    0 1px 0 var(--interaction-highlight) inset,
+    0 -1px 0 color-mix(in srgb, var(--text) 8%, transparent) inset,
+    0 3px 6px color-mix(in srgb, var(--text) 6%, transparent),
+    0 12px 24px color-mix(in srgb, var(--text) 11%, transparent);
+  --interaction-shadow-pressed:
+    0 1px 0 color-mix(in srgb, var(--surface) 52%, transparent) inset,
+    0 1px 2px color-mix(in srgb, var(--text) 5%, transparent),
+    0 3px 8px color-mix(in srgb, var(--text) 6%, transparent);
+  --interaction-press-transform: translateY(2px) scale(0.985);
+}
+
+/* Home section shortcuts: icon artwork becomes a small physical launcher. */
+:is(html, .storefront-theme-root) .home-shortcut-icon {
+  border-color: var(--interaction-edge);
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--surface) 96%, var(--brand) 4%) 0%,
+    color-mix(in srgb, var(--surface-soft) 94%, var(--surface)) 100%
+  );
+  box-shadow: var(--interaction-shadow-rest);
+}
+
+:is(html, .storefront-theme-root) .home-shortcut-icon::after {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  border-radius: inherit;
+  background: linear-gradient(
+    180deg,
+    color-mix(in srgb, var(--surface) 20%, transparent) 0%,
+    transparent 42%,
+    color-mix(in srgb, var(--text) 7%, transparent) 100%
+  );
+  content: '';
+  pointer-events: none;
+}
+
+:is(html, .storefront-theme-root) .home-shortcut:active .home-shortcut-icon {
+  opacity: 1;
+  box-shadow: var(--interaction-shadow-pressed);
+  transform: var(--interaction-press-transform);
+}
+
+/* Product covers are navigation surfaces, not passive photography. */
+:is(html, .storefront-theme-root)
+  :is(.home-product-cover, .browse-search-product-cover, .section-product-cover) {
+  border: 1px solid color-mix(in srgb, var(--line) 38%, transparent);
+  box-shadow:
+    0 1px 0 color-mix(in srgb, var(--surface) 34%, transparent) inset,
+    0 -1px 0 color-mix(in srgb, var(--text) 8%, transparent) inset,
+    0 3px 7px color-mix(in srgb, var(--text) 6%, transparent),
+    0 12px 25px color-mix(in srgb, var(--text) 9%, transparent);
+  transform: translateY(-1px) translateZ(0);
+}
+
+:is(html, .storefront-theme-root)
+  :is(
+    .home-product-tile:active .home-product-cover,
+    .browse-search-product-card:active .browse-search-product-cover,
+    .section-product-card:active .section-product-cover
+  ) {
+  opacity: 1;
+  box-shadow: var(--interaction-shadow-pressed);
+  transform: var(--interaction-press-transform);
+}
+
+/* Primary conversion actions carry the strongest depth cue. */
+:is(html, .storefront-theme-root) :is(.cta-button, .primary-button):not(:disabled) {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  box-shadow:
+    0 1px 0 color-mix(in srgb, #fff 28%, transparent) inset,
+    0 -2px 0 color-mix(in srgb, #000 14%, transparent) inset,
+    0 3px 6px color-mix(in srgb, var(--brand) 18%, transparent),
+    0 11px 23px color-mix(in srgb, var(--brand) 28%, transparent);
+}
+
+:is(html, .storefront-theme-root) :is(.cta-button, .primary-button):not(:disabled)::before {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  background: linear-gradient(180deg, rgb(255 255 255 / 10%), transparent 48%, rgb(0 0 0 / 6%));
+  content: '';
+  pointer-events: none;
+}
+
+:is(html, .storefront-theme-root) :is(.cta-button, .primary-button):active:not(:disabled) {
+  filter: brightness(var(--theme-press-brightness, 0.96));
+  box-shadow:
+    0 1px 0 color-mix(in srgb, #fff 16%, transparent) inset,
+    0 1px 3px color-mix(in srgb, var(--brand) 16%, transparent),
+    0 4px 10px color-mix(in srgb, var(--brand) 18%, transparent);
+  transform: translateY(2px) scale(0.99);
+}
+
+/* Hero and compact circular actions use medium depth. */
+:is(html, .storefront-theme-root)
+  :is(
+    .hero-carousel-cta,
+    .hero-carousel-arrow,
+    .home-recommendation-heading > a,
+    .section-catalog-back,
+    .faq-back-link,
+    .storefront-detail-back,
+    .browse-directory-search-clear,
+    .section-catalog-search-clear
+  ) {
+  border-color: var(--interaction-edge);
+  box-shadow: var(--interaction-shadow-rest);
+}
+
+:is(html, .storefront-theme-root)
+  :is(
+    .hero-carousel-cta,
+    .hero-carousel-arrow,
+    .home-recommendation-heading > a,
+    .section-catalog-back,
+    .faq-back-link,
+    .storefront-detail-back,
+    .browse-directory-search-clear,
+    .section-catalog-search-clear
+  ):active {
+  opacity: 1;
+  box-shadow: var(--interaction-shadow-pressed);
+  transform: var(--interaction-press-transform);
+}
+
+/* Filter chips should read as controls before the user touches them. */
+:is(html, .storefront-theme-root)
+  :is(.section-category-filter button, .section-tag-filter button) {
+  box-shadow:
+    0 1px 0 var(--interaction-highlight) inset,
+    0 -1px 0 color-mix(in srgb, var(--text) 5%, transparent) inset,
+    0 3px 8px color-mix(in srgb, var(--text) 6%, transparent);
+}
+
+:is(html, .storefront-theme-root)
+  :is(.section-category-filter button, .section-tag-filter button):active {
+  opacity: 1;
+  box-shadow: var(--interaction-shadow-pressed);
+  transform: var(--interaction-press-transform);
+}
+
+/* Bottom navigation icons gain a shallow button bed; active state rises more. */
+:is(html, .storefront-theme-root) .bottom-nav .bottom-nav-icon {
+  border: 1px solid color-mix(in srgb, var(--line) 34%, transparent);
+  background: color-mix(in srgb, var(--surface-soft) 48%, transparent);
+  box-shadow:
+    0 1px 0 color-mix(in srgb, var(--surface) 62%, transparent) inset,
+    0 3px 8px color-mix(in srgb, var(--text) 5%, transparent);
+}
+
+:is(html, .storefront-theme-root) .bottom-nav a.is-active .bottom-nav-icon {
+  border-color: color-mix(in srgb, var(--brand) 22%, var(--line));
+  background: var(
+    --theme-nav-active-surface,
+    color-mix(in srgb, var(--brand) 10%, var(--surface))
+  );
+  box-shadow:
+    0 1px 0 color-mix(in srgb, var(--surface) 78%, transparent) inset,
+    0 -1px 0 color-mix(in srgb, var(--brand) 10%, transparent) inset,
+    0 5px 12px color-mix(in srgb, var(--brand) 14%, transparent);
+}
+
+:is(html, .storefront-theme-root) .bottom-nav a:active .bottom-nav-icon {
+  box-shadow: var(--interaction-shadow-pressed);
+  transform: translateY(2px) scale(0.97);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  :is(html, .storefront-theme-root) .home-shortcut:hover .home-shortcut-icon {
+    box-shadow: var(--interaction-shadow-hover);
+    transform: translateY(-2px);
+  }
+
+  :is(html, .storefront-theme-root)
+    :is(
+      .home-product-tile:hover .home-product-cover,
+      .browse-search-product-card:hover .browse-search-product-cover,
+      .section-product-card:hover .section-product-cover
+    ) {
+    box-shadow:
+      0 1px 0 color-mix(in srgb, var(--surface) 38%, transparent) inset,
+      0 -1px 0 color-mix(in srgb, var(--text) 9%, transparent) inset,
+      0 4px 9px color-mix(in srgb, var(--text) 7%, transparent),
+      0 16px 32px color-mix(in srgb, var(--text) 12%, transparent);
+    transform: translateY(-3px);
+  }
+
+  :is(html, .storefront-theme-root) :is(.cta-button, .primary-button):hover:not(:disabled) {
+    filter: brightness(1.035);
+    box-shadow:
+      0 1px 0 color-mix(in srgb, #fff 32%, transparent) inset,
+      0 -2px 0 color-mix(in srgb, #000 13%, transparent) inset,
+      0 4px 8px color-mix(in srgb, var(--brand) 20%, transparent),
+      0 15px 30px color-mix(in srgb, var(--brand) 31%, transparent);
+    transform: translateY(-2px);
+  }
+
+  :is(html, .storefront-theme-root)
+    :is(
+      .hero-carousel-cta,
+      .hero-carousel-arrow,
+      .home-recommendation-heading > a,
+      .section-catalog-back,
+      .faq-back-link,
+      .storefront-detail-back,
+      .browse-directory-search-clear,
+      .section-catalog-search-clear
+    ):hover {
+    box-shadow: var(--interaction-shadow-hover);
+    transform: translateY(-1px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :is(html, .storefront-theme-root)
+    :is(
+      .home-shortcut-icon,
+      .home-product-cover,
+      .browse-search-product-cover,
+      .section-product-cover,
+      .cta-button,
+      .primary-button,
+      .hero-carousel-cta,
+      .hero-carousel-arrow,
+      .home-recommendation-heading > a,
+      .section-catalog-back,
+      .faq-back-link,
+      .storefront-detail-back,
+      .browse-directory-search-clear,
+      .section-catalog-search-clear,
+      .section-category-filter button,
+      .section-tag-filter button,
+      .bottom-nav .bottom-nav-icon
+    ) {
+    transition: none;
+  }
+}
