@@ -1,3 +1,5 @@
+import type { SupportGateway } from './support-contract';
+
 const NAVIGATION_EVENT = 'storefront:navigate';
 const COUNTDOWN_CLASS = 'chat-expiry-countdown';
 const EXPIRED_CLASS = 'is-expired';
@@ -6,7 +8,7 @@ let installed = false;
 let routeVersion = 0;
 let countdownTimer: number | null = null;
 let expiryRedirectTimer: number | null = null;
-let supportGatewayModule: Promise<typeof import('./support-gateway')> | null = null;
+let supportGatewayPromise: Promise<SupportGateway> | null = null;
 
 function activeConversationRef(): string | null {
   const match = window.location.pathname.match(/^\/messages\/([^/]+)\/?$/u);
@@ -18,14 +20,16 @@ function activeConversationRef(): string | null {
   }
 }
 
-async function loadSupportGateway() {
-  if (!supportGatewayModule) {
-    supportGatewayModule = import('./support-gateway').catch((error: unknown) => {
-      supportGatewayModule = null;
-      throw error;
-    });
+async function loadSupportGateway(): Promise<SupportGateway> {
+  if (!supportGatewayPromise) {
+    supportGatewayPromise = import('./support-gateway')
+      .then((module) => module.siteSupportGateway)
+      .catch((error: unknown) => {
+        supportGatewayPromise = null;
+        throw error;
+      });
   }
-  return (await supportGatewayModule).siteSupportGateway;
+  return supportGatewayPromise;
 }
 
 function clearTimers() {
