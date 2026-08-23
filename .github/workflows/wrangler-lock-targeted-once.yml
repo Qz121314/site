@@ -1,0 +1,36 @@
+name: Targeted Wrangler lock refresh one-shot
+
+on:
+  push:
+    branches: [chore/wrangler-4-125-targeted]
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: chore/wrangler-4-125-targeted
+
+      - name: Set up pnpm
+        run: npm install --global pnpm@11.19.0
+
+      - name: Refresh Wrangler only
+        run: pnpm --filter cloudflare-service-catalog --filter @site/worker update wrangler@4.125.0 --lockfile-only
+
+      - name: Commit lockfile
+        run: |
+          if git diff --quiet pnpm-lock.yaml; then
+            echo 'No lockfile changes required.'
+            exit 0
+          fi
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add pnpm-lock.yaml
+          git commit -m 'chore: update Wrangler lockfile only'
+          git push origin HEAD:chore/wrangler-4-125-targeted
