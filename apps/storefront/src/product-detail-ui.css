@@ -244,10 +244,8 @@
     to top,
     var(--theme-detail-cta-surface, color-mix(in srgb, var(--surface) 96%, transparent))
       0%,
-    color-mix(in srgb, var(--theme-primary-detail-cta-surface) 92%, transparent)
-      58%,
-    color-mix(in srgb, var(--theme-primary-detail-cta-surface) 52%, transparent)
-      80%,
+    color-mix(in srgb, var(--theme-primary-detail-cta-surface) 92%, transparent) 58%,
+    color-mix(in srgb, var(--theme-primary-detail-cta-surface) 52%, transparent) 80%,
     transparent 100%
   );
   box-shadow: var(--theme-primary-detail-cta-bar-shadow);
