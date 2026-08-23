@@ -160,6 +160,51 @@ test('Live uses the restrained intimate visual recipe', () => {
   assert.equal(resolved.tokens.brand, '#e3486d');
 });
 
+test('retired saved Live V2 recipe upgrades without discarding other overrides', () => {
+  const settings = parseThemeSettings(
+    'live',
+    JSON.stringify({
+      density: 'standard',
+      fontPack: 'compact',
+      buttonStyle: 'soft-pill',
+      mediaStyle: 'soft',
+      motionStyle: 'active',
+      navigationStyle: 'solid',
+      accent: '#c94d72',
+    }),
+  );
+  const resolved = resolveTheme(settings);
+  assert.deepEqual(resolved.recipe, {
+    version: 2,
+    fontPack: 'editorial',
+    buttonStyle: 'refined',
+    mediaStyle: 'editorial',
+    motionStyle: 'restrained',
+    navigationStyle: 'quiet',
+  });
+  assert.equal(resolved.density, 'standard');
+  assert.equal(resolved.tokens.brand, '#c94d72');
+  assert.equal(resolved.overrides.installPrompt, undefined);
+});
+
+test('a distinct custom Live recipe remains operator-controlled', () => {
+  const resolved = resolveTheme({
+    key: 'live',
+    overrides: {
+      fontPack: 'modern',
+      buttonStyle: 'minimal',
+      mediaStyle: 'precise',
+      motionStyle: 'gentle',
+      navigationStyle: 'tinted',
+    },
+  });
+  assert.equal(resolved.recipe.fontPack, 'modern');
+  assert.equal(resolved.recipe.buttonStyle, 'minimal');
+  assert.equal(resolved.recipe.mediaStyle, 'precise');
+  assert.equal(resolved.recipe.motionStyle, 'gentle');
+  assert.equal(resolved.recipe.navigationStyle, 'tinted');
+});
+
 test('Theme Center persists a bounded backend-driven install prompt', () => {
   const validation = validateThemeUpdate({
     themeKey: 'noir',
