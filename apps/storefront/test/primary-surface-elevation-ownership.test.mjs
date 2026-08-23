@@ -38,14 +38,8 @@ test('primary surfaces consume one Theme Center elevation contract', async () =>
   assert.match(catalog, /box-shadow: var\(--theme-art-media-hover-shadow/u);
   assert.match(catalog, /scale\(var\(--theme-art-media-press-scale/u);
 
-  assert.doesNotMatch(
-    browse,
-    /\.browse-search-product-cover \{[^}]*box-shadow:/u,
-  );
-  assert.doesNotMatch(
-    section,
-    /\.section-product-cover \{[^}]*box-shadow:/u,
-  );
+  assert.doesNotMatch(browse, /\.browse-search-product-cover \{[^}]*box-shadow:/u);
+  assert.doesNotMatch(section, /\.section-product-cover \{[^}]*box-shadow:/u);
   assert.match(
     browse,
     /\.browse-section-card \{[^}]*box-shadow: var\(--theme-art-media-shadow/u,
