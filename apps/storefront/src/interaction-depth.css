@@ -82,8 +82,7 @@
 }
 
 /* Primary conversion actions carry the strongest depth cue. */
-:is(html, .storefront-theme-root)
-  :is(.cta-button, .primary-button):not(:disabled) {
+:is(html, .storefront-theme-root) :is(.cta-button, .primary-button):not(:disabled) {
   position: relative;
   overflow: hidden;
   isolation: isolate;
