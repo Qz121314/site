@@ -111,6 +111,24 @@
   --theme-tab-background: color-mix(in srgb, var(--page-bg) 92%, transparent);
 }
 
+:is(html, .storefront-theme-root)[data-theme='velvet'] {
+  --theme-card-background: color-mix(in srgb, var(--surface) 98%, var(--brand) 2%);
+  --theme-card-border: color-mix(in srgb, var(--line) 78%, var(--brand) 22%);
+  --theme-media-background: color-mix(in srgb, var(--surface-soft) 91%, #0c0508 9%);
+  --theme-control-background: color-mix(in srgb, var(--surface) 96%, var(--brand) 4%);
+  --app-surface-raised: color-mix(in srgb, var(--surface) 97%, var(--brand) 3%);
+  --app-hairline: color-mix(in srgb, var(--line) 72%, transparent);
+}
+
+:is(html, .storefront-theme-root)[data-theme='midnight'] {
+  --theme-card-background: color-mix(in srgb, var(--surface) 98%, var(--brand) 2%);
+  --theme-card-border: color-mix(in srgb, var(--line) 82%, var(--brand) 18%);
+  --theme-media-background: color-mix(in srgb, var(--surface-soft) 90%, #050812 10%);
+  --theme-control-background: color-mix(in srgb, var(--surface) 97%, var(--brand) 3%);
+  --app-surface-raised: color-mix(in srgb, var(--surface) 98%, var(--brand) 2%);
+  --app-hairline: color-mix(in srgb, var(--line) 68%, transparent);
+}
+
 :is(html, .storefront-theme-root)[data-theme='live'] {
   --theme-radius-card: 0px;
   --theme-radius-media: 0px;
@@ -154,6 +172,19 @@
     var(--surface) 96%,
     var(--surface-soft) 4%
   );
+}
+
+:is(html, .storefront-theme-root)[data-theme='pearl'] {
+  --theme-card-background: color-mix(in srgb, var(--surface) 98%, #f7ede8 2%);
+  --theme-card-border: color-mix(in srgb, var(--line) 86%, var(--brand) 14%);
+  --theme-media-background: color-mix(in srgb, var(--surface-soft) 94%, #f8f1ed 6%);
+  --theme-control-background: color-mix(
+    in srgb,
+    var(--surface) 97%,
+    var(--surface-soft) 3%
+  );
+  --app-surface-raised: color-mix(in srgb, var(--surface) 97%, #f6ebe6 3%);
+  --app-hairline: color-mix(in srgb, var(--line) 74%, transparent);
 }
 
 :is(html, .storefront-theme-root)[data-theme='tech'] {
@@ -241,6 +272,15 @@
   --theme-radius-media: 12px;
   --theme-browse-radius: 12px;
   --theme-media-border: color-mix(in srgb, var(--line) 58%, transparent);
+  --theme-media-shadow: none;
+  --theme-media-hover-shadow: none;
+  --theme-media-pressed-shadow: none;
+}
+
+:is(html, .storefront-theme-root)[data-theme='pearl'][data-media-style] {
+  --theme-radius-media: 12px;
+  --theme-browse-radius: 10px;
+  --theme-media-border: color-mix(in srgb, var(--brand) 10%, var(--line));
   --theme-media-shadow: none;
   --theme-media-hover-shadow: none;
   --theme-media-pressed-shadow: none;

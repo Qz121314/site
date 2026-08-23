@@ -161,6 +161,66 @@
   --theme-primary-install-border: color-mix(in srgb, var(--line) 70%, transparent);
 }
 
+:is(html, .storefront-theme-root)[data-theme='velvet'] {
+  --theme-primary-faq-open-background: color-mix(
+    in srgb,
+    var(--surface) 96%,
+    var(--brand) 4%
+  );
+  --theme-primary-message-background: color-mix(
+    in srgb,
+    var(--surface) 97%,
+    var(--brand) 3%
+  );
+  --theme-primary-message-border: color-mix(in srgb, var(--line) 78%, var(--brand) 22%);
+  --theme-primary-message-row-active: color-mix(
+    in srgb,
+    var(--surface-soft) 92%,
+    var(--brand) 8%
+  );
+  --theme-primary-chat-background: color-mix(
+    in srgb,
+    var(--surface-soft) 92%,
+    #0b0507 8%
+  );
+  --theme-primary-chat-agent-bubble: color-mix(in srgb, var(--surface) 97%, #0b0507 3%);
+  --theme-primary-chat-customer-bubble: color-mix(
+    in srgb,
+    var(--brand) 19%,
+    var(--surface)
+  );
+}
+
+:is(html, .storefront-theme-root)[data-theme='midnight'] {
+  --theme-primary-faq-open-background: color-mix(
+    in srgb,
+    var(--surface) 97%,
+    var(--brand) 3%
+  );
+  --theme-primary-message-background: color-mix(
+    in srgb,
+    var(--surface) 98%,
+    var(--brand) 2%
+  );
+  --theme-primary-message-border: color-mix(in srgb, var(--line) 82%, var(--brand) 18%);
+  --theme-primary-message-row-active: color-mix(
+    in srgb,
+    var(--surface-soft) 94%,
+    var(--brand) 6%
+  );
+  --theme-primary-chat-background: color-mix(
+    in srgb,
+    var(--surface-soft) 90%,
+    #050812 10%
+  );
+  --theme-primary-chat-agent-bubble: color-mix(in srgb, var(--surface) 97%, #050812 3%);
+  --theme-primary-chat-customer-bubble: color-mix(
+    in srgb,
+    var(--brand) 15%,
+    var(--surface)
+  );
+}
+
 :is(html, .storefront-theme-root)[data-theme='live'] {
   --theme-primary-logo-radius: 3px;
   --theme-primary-header-border: color-mix(in srgb, var(--line) 62%, transparent);
@@ -222,6 +282,35 @@
     var(--surface-soft) 10%
   );
   --theme-primary-message-shadow: 0 8px 22px rgb(57 72 65 / 7%);
+}
+
+:is(html, .storefront-theme-root)[data-theme='pearl'] {
+  --theme-primary-header-shadow: none;
+  --theme-primary-faq-open-background: color-mix(
+    in srgb,
+    var(--surface) 94%,
+    var(--brand) 6%
+  );
+  --theme-primary-message-background: color-mix(
+    in srgb,
+    var(--surface) 98%,
+    var(--surface-soft) 2%
+  );
+  --theme-primary-message-border: color-mix(in srgb, var(--line) 86%, var(--brand) 14%);
+  --theme-primary-message-shadow: none;
+  --theme-primary-message-row-active: color-mix(
+    in srgb,
+    var(--surface-soft) 88%,
+    var(--brand) 12%
+  );
+  --theme-primary-chat-background: var(--page-bg);
+  --theme-primary-chat-timeline-background: var(--page-bg);
+  --theme-primary-chat-agent-bubble: var(--surface);
+  --theme-primary-chat-customer-bubble: color-mix(
+    in srgb,
+    var(--brand) 12%,
+    var(--surface)
+  );
 }
 
 :is(html, .storefront-theme-root)[data-theme='tech'] {

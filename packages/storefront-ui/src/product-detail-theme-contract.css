@@ -78,6 +78,42 @@
   --theme-detail-cta-surface: color-mix(in srgb, var(--page-bg) 92%, transparent);
 }
 
+:is(html, .storefront-theme-root)[data-theme='velvet'] {
+  --theme-detail-panel-background: transparent;
+  --theme-detail-panel-border: transparent;
+  --theme-detail-panel-shadow: none;
+  --theme-detail-media-background: color-mix(
+    in srgb,
+    var(--surface-soft) 91%,
+    #0c0508 9%
+  );
+  --theme-detail-media-shadow: none;
+  --theme-detail-meta-background: color-mix(
+    in srgb,
+    var(--surface-soft) 96%,
+    var(--brand) 4%
+  );
+  --theme-detail-cta-surface: color-mix(in srgb, var(--page-bg) 94%, transparent);
+}
+
+:is(html, .storefront-theme-root)[data-theme='midnight'] {
+  --theme-detail-panel-background: transparent;
+  --theme-detail-panel-border: transparent;
+  --theme-detail-panel-shadow: none;
+  --theme-detail-media-background: color-mix(
+    in srgb,
+    var(--surface-soft) 90%,
+    #050812 10%
+  );
+  --theme-detail-media-shadow: none;
+  --theme-detail-meta-background: color-mix(
+    in srgb,
+    var(--surface-soft) 97%,
+    var(--brand) 3%
+  );
+  --theme-detail-cta-surface: color-mix(in srgb, var(--page-bg) 95%, transparent);
+}
+
 :is(html, .storefront-theme-root)[data-theme='live'] {
   --theme-detail-gap: 16px;
   --theme-detail-media-radius: 12px;
@@ -121,6 +157,28 @@
   --theme-detail-media-shadow: 0 12px 30px rgb(57 72 65 / 10%);
   --theme-detail-meta-background: var(--surface-soft);
   --theme-detail-cta-radius: 4px;
+}
+
+:is(html, .storefront-theme-root)[data-theme='pearl'] {
+  --theme-detail-panel-background: color-mix(
+    in srgb,
+    var(--surface) 98%,
+    var(--surface-soft) 2%
+  );
+  --theme-detail-panel-border: color-mix(in srgb, var(--line) 86%, var(--brand) 14%);
+  --theme-detail-panel-shadow: none;
+  --theme-detail-media-background: color-mix(
+    in srgb,
+    var(--surface-soft) 94%,
+    #f8f1ed 6%
+  );
+  --theme-detail-media-shadow: none;
+  --theme-detail-meta-background: color-mix(
+    in srgb,
+    var(--surface-soft) 94%,
+    var(--brand) 6%
+  );
+  --theme-detail-cta-surface: color-mix(in srgb, var(--surface) 95%, transparent);
 }
 
 :is(html, .storefront-theme-root)[data-theme='tech'] {
