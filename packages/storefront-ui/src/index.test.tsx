@@ -84,6 +84,9 @@ describe('shared storefront UI', () => {
     expect(storefrontBrandForeground('#ff5a1f', 'light')).toBe('#000000');
     expect(storefrontBrandForeground('#df5d87', 'dark')).toBe('#000000');
     expect(storefrontBrandForeground('#e3486d', 'dark')).toBe('#000000');
+    expect(storefrontBrandForeground('#b6405f', 'dark')).toBe('#ffffff');
+    expect(storefrontBrandForeground('#8fa7d8', 'dark')).toBe('#000000');
+    expect(storefrontBrandForeground('#a64562', 'light')).toBe('#ffffff');
     expect(storefrontBrandForeground('#4f46e5', 'light')).toBe('#ffffff');
     expect(storefrontBrandForeground('#df6c4f', 'light')).toBe('#000000');
     expect(storefrontBrandForeground('#22d3ee', 'dark')).toBe('#000000');
@@ -94,6 +97,9 @@ describe('shared storefront UI', () => {
       '#ff5a1f',
       '#df5d87',
       '#e3486d',
+      '#b6405f',
+      '#8fa7d8',
+      '#a64562',
       '#4f46e5',
       '#df6c4f',
       '#22d3ee',

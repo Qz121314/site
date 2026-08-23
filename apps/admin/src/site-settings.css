@@ -123,3 +123,68 @@
   margin: 0;
   line-height: 1.6;
 }
+
+.admin-pwa-settings {
+  display: grid;
+  gap: 18px;
+}
+
+.admin-pwa-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 18px;
+}
+
+.admin-pwa-heading h2,
+.admin-pwa-heading p {
+  margin: 0;
+}
+
+.admin-pwa-heading p {
+  margin-top: 4px;
+  color: #7a8390;
+  font-size: 0.68rem;
+}
+
+.admin-pwa-switch {
+  display: flex;
+  min-height: 38px;
+  align-items: center;
+  gap: 8px;
+  padding: 0 12px;
+  border: 1px solid #dfe4eb;
+  border-radius: 9px;
+  color: #435066;
+  background: #f8fafc;
+  font-size: 0.68rem;
+  font-weight: 750;
+}
+
+.admin-pwa-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.admin-pwa-wide {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 720px) {
+  .admin-pwa-heading {
+    display: grid;
+  }
+
+  .admin-pwa-switch {
+    width: fit-content;
+  }
+
+  .admin-pwa-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .admin-pwa-wide {
+    grid-column: auto;
+  }
+}

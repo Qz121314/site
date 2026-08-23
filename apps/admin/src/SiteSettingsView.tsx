@@ -44,11 +44,12 @@ type DomainTestState =
   | { status: 'error'; message: string };
 
 type SaveStage = 'idle' | 'uploading-logo' | 'saving';
-type SettingsPanel = 'general' | 'home' | 'advanced';
+type SettingsPanel = 'general' | 'home' | 'pwa' | 'advanced';
 
 const SETTINGS_PANELS: Array<{ id: SettingsPanel; label: string }> = [
   { id: 'general', label: '常用设置' },
   { id: 'home', label: '首页展示' },
+  { id: 'pwa', label: 'PWA 安装' },
   { id: 'advanced', label: '高级设置' },
 ];
 
@@ -64,6 +65,7 @@ function createDraft(settings: SiteSettingsWithHero): SettingsDraft {
     showLatest: settings.showLatest,
     showMore: settings.showMore,
     showFaq: settings.showFaq,
+    installPrompt: { ...settings.installPrompt },
     heroSlides: settings.heroSlides.map((slide) => ({ ...slide })),
     bottomNavigation: settings.bottomNavigation.map((item) => ({ ...item })),
     homeLayout: {
@@ -90,6 +92,7 @@ function toInput(draft: SettingsDraft): SettingsPayload {
     showLatest: draft.showLatest,
     showMore: draft.showMore,
     showFaq: draft.showFaq,
+    installPrompt: { ...draft.installPrompt },
     heroSlides: draft.heroSlides.map((slide, index) => ({
       id: slide.id,
       mediaAssetId: slide.mediaAssetId,
@@ -449,6 +452,131 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
                   onSessionExpired={onSessionExpired}
                 />
               </>
+            ) : null}
+
+            {activePanel === 'pwa' ? (
+              <section
+                className="admin-settings-section admin-pwa-settings"
+                aria-labelledby="settings-pwa-title"
+              >
+                <div className="admin-pwa-heading">
+                  <div>
+                    <h2 id="settings-pwa-title">安装应用提示</h2>
+                    <p>控制用户停留一段时间后看到的轻量安装提示，不影响网页首屏。</p>
+                  </div>
+                  <label className="admin-pwa-switch">
+                    <input
+                      type="checkbox"
+                      checked={draft.installPrompt.enabled}
+                      disabled={busy}
+                      onChange={(event) =>
+                        updateDraft('installPrompt', {
+                          ...draft.installPrompt,
+                          enabled: event.target.checked,
+                        })
+                      }
+                    />
+                    <span>{draft.installPrompt.enabled ? '已开启' : '已关闭'}</span>
+                  </label>
+                </div>
+
+                <div className="admin-pwa-grid">
+                  <label className="field-group">
+                    <span>延迟显示（秒）</span>
+                    <input
+                      type="number"
+                      min={5}
+                      max={120}
+                      value={draft.installPrompt.delaySeconds}
+                      disabled={busy || !draft.installPrompt.enabled}
+                      onChange={(event) =>
+                        updateDraft('installPrompt', {
+                          ...draft.installPrompt,
+                          delaySeconds: Math.max(
+                            5,
+                            Math.min(120, Number(event.target.value) || 30),
+                          ),
+                        })
+                      }
+                    />
+                  </label>
+                  <label className="field-group">
+                    <span>提示标题</span>
+                    <input
+                      type="text"
+                      maxLength={80}
+                      value={draft.installPrompt.title}
+                      disabled={busy || !draft.installPrompt.enabled}
+                      onChange={(event) =>
+                        updateDraft('installPrompt', {
+                          ...draft.installPrompt,
+                          title: event.target.value,
+                        })
+                      }
+                    />
+                  </label>
+                  <label className="field-group admin-pwa-wide">
+                    <span>桌面端说明</span>
+                    <input
+                      type="text"
+                      maxLength={160}
+                      value={draft.installPrompt.description}
+                      disabled={busy || !draft.installPrompt.enabled}
+                      onChange={(event) =>
+                        updateDraft('installPrompt', {
+                          ...draft.installPrompt,
+                          description: event.target.value,
+                        })
+                      }
+                    />
+                  </label>
+                  <label className="field-group admin-pwa-wide">
+                    <span>iPhone / iPad 说明</span>
+                    <input
+                      type="text"
+                      maxLength={160}
+                      value={draft.installPrompt.iosDescription}
+                      disabled={busy || !draft.installPrompt.enabled}
+                      onChange={(event) =>
+                        updateDraft('installPrompt', {
+                          ...draft.installPrompt,
+                          iosDescription: event.target.value,
+                        })
+                      }
+                    />
+                  </label>
+                  <label className="field-group">
+                    <span>安装按钮</span>
+                    <input
+                      type="text"
+                      maxLength={32}
+                      value={draft.installPrompt.installLabel}
+                      disabled={busy || !draft.installPrompt.enabled}
+                      onChange={(event) =>
+                        updateDraft('installPrompt', {
+                          ...draft.installPrompt,
+                          installLabel: event.target.value,
+                        })
+                      }
+                    />
+                  </label>
+                  <label className="field-group">
+                    <span>关闭提示</span>
+                    <input
+                      type="text"
+                      maxLength={32}
+                      value={draft.installPrompt.dismissLabel}
+                      disabled={busy || !draft.installPrompt.enabled}
+                      onChange={(event) =>
+                        updateDraft('installPrompt', {
+                          ...draft.installPrompt,
+                          dismissLabel: event.target.value,
+                        })
+                      }
+                    />
+                  </label>
+                </div>
+              </section>
             ) : null}
 
             {activePanel === 'advanced' ? (

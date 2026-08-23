@@ -294,6 +294,8 @@
 }
 
 :is(html, .storefront-theme-root)[data-theme='noir'] .product-card,
+:is(html, .storefront-theme-root)[data-theme='velvet'] .product-card,
+:is(html, .storefront-theme-root)[data-theme='midnight'] .product-card,
 :is(html, .storefront-theme-root)[data-theme='live'] .product-card,
 :is(html, .storefront-theme-root)[data-theme='tech'] .product-card {
   box-shadow: 0 8px 24px rgb(0 0 0 / 20%);
@@ -301,6 +303,8 @@
 
 :is(html, .storefront-theme-root)[data-theme='live'] .hero-panel,
 :is(html, .storefront-theme-root)[data-theme='noir'] .hero-panel,
+:is(html, .storefront-theme-root)[data-theme='velvet'] .hero-panel,
+:is(html, .storefront-theme-root)[data-theme='midnight'] .hero-panel,
 :is(html, .storefront-theme-root)[data-theme='tech'] .hero-panel {
   border: 1px solid color-mix(in srgb, var(--line, #e7e9ec) 76%, transparent);
 }
@@ -327,11 +331,13 @@
   box-shadow: 0 2px 8px rgb(31 35 40 / 4%);
 }
 
-:is(html, .storefront-theme-root)[data-theme='travel'] .hero-panel {
+:is(html, .storefront-theme-root):is([data-theme='travel'], [data-theme='pearl'])
+  .hero-panel {
   border-radius: var(--theme-radius-card, 4px);
 }
 
-:is(html, .storefront-theme-root)[data-theme='travel'] .product-card {
+:is(html, .storefront-theme-root):is([data-theme='travel'], [data-theme='pearl'])
+  .product-card {
   border-radius: var(--theme-radius-card, 4px);
 }
 

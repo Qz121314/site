@@ -31,6 +31,12 @@ import {
   toSiteSettings,
   validateSiteSettingsInput,
 } from '../settings/site-settings';
+import {
+  createUpdateThemeStatement,
+  getThemeSettings,
+  normalizeInstallPrompt,
+  resolveTheme,
+} from '../theme/theme-center';
 import type { AppEnvironment } from '../types';
 
 const ADMIN_REQUEST_HEADER = 'x-admin-request';
@@ -121,13 +127,20 @@ export const adminSiteSettingsRoutes = new Hono<AppEnvironment>();
 adminSiteSettingsRoutes.get('/', async (context) => {
   context.header('Cache-Control', 'no-store');
   const settings = await getSiteSettings(context.env.DB);
-  const [heroSlides, bottomNavigation, homeLayout] = await Promise.all([
+  const [heroSlides, bottomNavigation, homeLayout, themeSettings] = await Promise.all([
     getSiteHeroSlides(context.env.DB, settings.mediaBaseUrl),
     getBottomNavigation(context.env.DB),
     getHomeLayout(context.env.DB),
+    getThemeSettings(context.env.DB),
   ]);
   return context.json({
-    settings: { ...settings, heroSlides, bottomNavigation, homeLayout },
+    settings: {
+      ...settings,
+      heroSlides,
+      bottomNavigation,
+      homeLayout,
+      installPrompt: resolveTheme(themeSettings).installPrompt,
+    },
   });
 });
 
@@ -158,6 +171,17 @@ adminSiteSettingsRoutes.put('/', async (context) => {
   if (!validation.ok) {
     return apiError(context, 400, 'INVALID_SITE_SETTINGS', validation.message, {
       field: validation.field,
+    });
+  }
+
+  const bodyRecord = isRecord(body) ? body : null;
+  const installPromptProvided = bodyRecord?.installPrompt !== undefined;
+  const requestedInstallPrompt = installPromptProvided
+    ? normalizeInstallPrompt(bodyRecord?.installPrompt)
+    : null;
+  if (installPromptProvided && !requestedInstallPrompt) {
+    return apiError(context, 400, 'INVALID_INSTALL_PROMPT', 'PWA 安装提示设置无效。', {
+      field: 'installPrompt',
     });
   }
 
@@ -210,10 +234,14 @@ adminSiteSettingsRoutes.put('/', async (context) => {
   }
 
   const currentSettings = await getSiteSettings(context.env.DB);
-  const [currentBottomNavigation, currentHomeLayout] = await Promise.all([
-    getBottomNavigation(context.env.DB),
-    getHomeLayout(context.env.DB),
-  ]);
+  const [currentBottomNavigation, currentHomeLayout, currentThemeSettings] =
+    await Promise.all([
+      getBottomNavigation(context.env.DB),
+      getHomeLayout(context.env.DB),
+      getThemeSettings(context.env.DB),
+    ]);
+  const installPrompt =
+    requestedInstallPrompt ?? resolveTheme(currentThemeSettings).installPrompt;
   const bottomNavigationInput = navigationValidation.provided
     ? navigationValidation.value
     : navigationInputFromCurrent(currentBottomNavigation);
@@ -288,12 +316,14 @@ adminSiteSettingsRoutes.put('/', async (context) => {
     heroSlides: resolvedHeroSlides,
     bottomNavigation: resolvedNavigation(bottomNavigationInput),
     homeLayout: homeLayoutInput,
+    installPrompt,
   };
   const current = {
     ...currentSettings,
     heroSlides: currentHeroSlides,
     bottomNavigation: currentBottomNavigation,
     homeLayout: currentHomeLayout,
+    installPrompt: resolveTheme(currentThemeSettings).installPrompt,
   };
   const statements: D1PreparedStatement[] = [
     createUpdateSiteSettingsStatement(context.env.DB, validation.value, updatedAt),
@@ -321,6 +351,21 @@ adminSiteSettingsRoutes.put('/', async (context) => {
       ...createReplaceHomeLayoutStatements(
         context.env.DB,
         homeLayoutValidation.value,
+        updatedAt,
+      ),
+    );
+  }
+  if (installPromptProvided) {
+    statements.push(
+      createUpdateThemeStatement(
+        context.env.DB,
+        {
+          ...currentThemeSettings,
+          overrides: {
+            ...currentThemeSettings.overrides,
+            installPrompt,
+          },
+        },
         updatedAt,
       ),
     );

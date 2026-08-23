@@ -160,7 +160,25 @@ test('Live uses the restrained intimate visual recipe', () => {
   assert.equal(resolved.tokens.brand, '#e3486d');
 });
 
-test('retired saved Live V2 recipe upgrades without discarding other overrides', () => {
+test('new official themes provide distinct complete visual recipes', () => {
+  const themes = [
+    ['velvet', 'dark', '#b6405f', '#090708'],
+    ['midnight', 'dark', '#8fa7d8', '#07090f'],
+    ['pearl', 'light', '#a64562', '#f5efe9'],
+  ];
+
+  for (const [key, colorScheme, brand, pageBg] of themes) {
+    const resolved = resolveTheme({ key, overrides: {} });
+    assert.equal(resolved.key, key);
+    assert.equal(resolved.colorScheme, colorScheme);
+    assert.equal(resolved.tokens.brand, brand);
+    assert.equal(resolved.tokens.pageBg, pageBg);
+    assert.equal(resolved.recipe.version, 2);
+    assert.equal(resolved.productMediaRatio, '1:1');
+  }
+});
+
+test('official themes keep their curated recipe while preserving safe overrides', () => {
   const settings = parseThemeSettings(
     'live',
     JSON.stringify({
@@ -187,7 +205,7 @@ test('retired saved Live V2 recipe upgrades without discarding other overrides',
   assert.equal(resolved.overrides.installPrompt, undefined);
 });
 
-test('a distinct custom Live recipe remains operator-controlled', () => {
+test('official theme recipe fields cannot drift through legacy overrides', () => {
   const resolved = resolveTheme({
     key: 'live',
     overrides: {
@@ -198,11 +216,11 @@ test('a distinct custom Live recipe remains operator-controlled', () => {
       navigationStyle: 'tinted',
     },
   });
-  assert.equal(resolved.recipe.fontPack, 'modern');
-  assert.equal(resolved.recipe.buttonStyle, 'minimal');
-  assert.equal(resolved.recipe.mediaStyle, 'precise');
-  assert.equal(resolved.recipe.motionStyle, 'gentle');
-  assert.equal(resolved.recipe.navigationStyle, 'tinted');
+  assert.equal(resolved.recipe.fontPack, 'editorial');
+  assert.equal(resolved.recipe.buttonStyle, 'refined');
+  assert.equal(resolved.recipe.mediaStyle, 'editorial');
+  assert.equal(resolved.recipe.motionStyle, 'restrained');
+  assert.equal(resolved.recipe.navigationStyle, 'quiet');
 });
 
 test('Theme Center persists a bounded backend-driven install prompt', () => {
@@ -229,7 +247,7 @@ test('Theme Center persists a bounded backend-driven install prompt', () => {
   assert.equal(resolveTheme(reloaded).installPrompt.dismissLabel, 'Later');
 });
 
-test('custom theme persists through the existing official-key D1 constraint', () => {
+test('custom theme persists through the official-key D1 constraint', () => {
   const validation = validateThemeUpdate({
     themeKey: 'custom',
     overrides: { imported: storedCustomTheme },
