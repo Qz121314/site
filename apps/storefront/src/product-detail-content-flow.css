@@ -4,17 +4,17 @@
   width: 100%;
   margin-inline: 0;
   overflow: hidden;
-  border: 1px solid color-mix(in srgb, var(--line) 46%, transparent);
+  border: 1px solid var(--theme-primary-detail-media-border);
   border-radius: var(--theme-detail-media-radius, var(--theme-radius-media, 14px));
-  background: var(--theme-detail-media-background, var(--surface-soft));
-  box-shadow: 0 10px 30px color-mix(in srgb, var(--text) 5%, transparent);
+  background: var(--theme-primary-detail-media-background);
+  box-shadow: var(--theme-primary-detail-media-shadow);
 }
 
 .detail-mobile-media-stage {
   position: relative;
   width: 100%;
   overflow: hidden;
-  background: var(--theme-detail-media-background, var(--surface-soft));
+  background: var(--theme-primary-detail-media-background);
 }
 
 .detail-mobile-media-track {
@@ -45,7 +45,7 @@
   flex: 0 0 100%;
   scroll-snap-align: start;
   scroll-snap-stop: always;
-  background: var(--theme-detail-media-background, var(--surface-soft));
+  background: var(--theme-primary-detail-media-background);
 }
 
 .detail-mobile-media-item > img,
@@ -106,7 +106,7 @@
   place-items: center;
   padding: 20px;
   color: var(--muted);
-  background: var(--theme-detail-media-background, var(--surface-soft));
+  background: var(--theme-primary-detail-media-background);
 }
 
 .detail-mobile-media-stage > .detail-media-fallback::before,
