@@ -47,11 +47,22 @@ test('route motion commits one live surface without browser snapshots', async ()
   assert.match(transitionStyles, /data-storefront-transition='pop'/u);
   assert.match(transitionStyles, /@keyframes storefront-page-push-enter/u);
   assert.match(transitionStyles, /@keyframes storefront-page-pop-enter/u);
-  assert.match(transitionStyles, /perspective\(1200px\)/u);
-  assert.match(transitionStyles, /rotateY/u);
-  assert.match(transitionStyles, /backface-visibility: hidden/u);
+  assert.match(transitionStyles, /--route-push-shift:/u);
+  assert.match(transitionStyles, /--route-pop-shift:/u);
+  assert.match(
+    transitionStyles,
+    /translate3d\(var\(--route-push-shift\), 0, 0\)/u,
+  );
+  assert.match(
+    transitionStyles,
+    /translate3d\(var\(--route-pop-shift\), 0, 0\)/u,
+  );
   assert.match(transitionStyles, /background: var\(--page-bg/u);
 
+  assert.doesNotMatch(transitionStyles, /perspective\(/u);
+  assert.doesNotMatch(transitionStyles, /rotateY/u);
+  assert.doesNotMatch(transitionStyles, /box-shadow/u);
+  assert.doesNotMatch(transitionStyles, /backface-visibility/u);
   assert.doesNotMatch(transitionStyles, /::view-transition/u);
   assert.doesNotMatch(transitionStyles, /view-transition-name/u);
   assert.doesNotMatch(transitionStyles, /data-storefront-view-transition/u);
