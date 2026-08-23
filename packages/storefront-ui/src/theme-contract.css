@@ -340,11 +340,6 @@
   transform: scale(var(--theme-press-scale, 0.985));
 }
 
-:is(html, .storefront-theme-root)
-  :is(.home-product-tile, .section-product-card, .browse-search-product-card):active {
-  filter: brightness(var(--theme-press-brightness, 0.94));
-  transform: scale(var(--theme-press-scale, 0.985));
-}
 
 /* Admin mobile preview stays on the touch-first recipe even on a desktop viewport. */
 .storefront-theme-root .product-grid {
