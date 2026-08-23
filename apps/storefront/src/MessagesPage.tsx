@@ -7,8 +7,10 @@ import {
 } from '@tanstack/react-query';
 import type { StorefrontLinkComponent } from '@site/storefront-ui';
 import { useEffect, useMemo, useState } from 'react';
-import { loadProductSnapshot, type StorefrontBootstrap } from './content';
+import type { StorefrontBootstrap } from './content';
+import { loadProductSnapshot } from './content-route';
 import { resolveCustomerServiceCta } from './cta';
+import { installSupportExpiryRuntime } from './support-expiry-runtime';
 import { replaceStorefrontLocation } from './storefront-navigation-runtime';
 import type {
   SupportConversationDetail,
@@ -249,6 +251,9 @@ export function MessagesPage({
   LinkComponent: StorefrontLinkComponent;
 }) {
   const queryClient = useQueryClient();
+  useEffect(() => {
+    installSupportExpiryRuntime();
+  }, []);
   const [imageProgress, setImageProgress] = useState<number | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
   const [notificationState, setNotificationState] =

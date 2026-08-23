@@ -9,7 +9,7 @@
     "preview": "vite preview --host 0.0.0.0 --port 5173",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src test vite.config.ts",
-    "test": "node --test --experimental-strip-types test/*.test.mjs"
+    "test": "node --test --experimental-strip-types --import ./test/register-ts-resolver.mjs test/*.test.mjs"
   },
   "dependencies": {
     "@site/config": "workspace:*",

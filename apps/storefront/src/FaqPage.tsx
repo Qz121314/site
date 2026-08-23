@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import type { StorefrontLinkComponent } from '@site/storefront-ui';
 import { useEffect, type MouseEvent as ReactMouseEvent } from 'react';
-import { loadFaqSnapshot, type StorefrontBootstrap } from './content';
+import type { StorefrontBootstrap } from './content';
+import { loadFaqSnapshot } from './content-route';
 import { MarkdownContent } from './MarkdownContent';
 import { faqArticleHref } from './routing';
 import { canNavigateStorefrontBack, navigateStorefrontBack } from './storefront-history';

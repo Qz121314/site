@@ -7,7 +7,6 @@ import { installPublicContentFetchFallback } from './public-content-transport';
 import { StorefrontPresentation } from './StorefrontPresentation';
 import { StorefrontRoot } from './StorefrontRoot';
 import { StorefrontRoutePreload } from './StorefrontRoutePreload';
-import { installSupportExpiryRuntime } from './support-expiry-runtime';
 import { installCachedStorefrontTheme } from './theme-runtime';
 import { installStorefrontViewportRuntime } from './storefront-viewport-runtime';
 import '@site/storefront-ui/styles.css';
@@ -20,7 +19,6 @@ import './app-shell.css';
 import './hero-carousel.css';
 import './home-feed.css';
 import './chat-conversation.css';
-import './support-expiry-runtime.css';
 import './route-transition.css';
 import '@site/storefront-ui/theme-contract.css';
 import '@site/storefront-ui/primary-pages-theme-contract.css';
@@ -35,7 +33,6 @@ import './loading-states.css';
 
 installStorefrontViewportRuntime();
 installPublicContentFetchFallback();
-installSupportExpiryRuntime();
 installCachedStorefrontTheme();
 
 if ('serviceWorker' in navigator && import.meta.env.PROD) {

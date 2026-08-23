@@ -316,7 +316,7 @@ type V2SectionSnapshot = {
   products: V2ProductSummary[];
 };
 
-type V2ProductSnapshot = {
+export type V2ProductSnapshot = {
   schemaVersion: 2;
   moduleKey: string;
   contentVersion: string;
@@ -334,7 +334,7 @@ type V2ProductSnapshot = {
   };
 };
 
-type V2FaqSnapshot = {
+export type V2FaqSnapshot = {
   schemaVersion: 2;
   moduleKey: 'faq';
   contentVersion: string;
@@ -758,7 +758,7 @@ function normalizeV1HomeSnapshot(snapshot: HomeSnapshot): HomeSnapshot {
   };
 }
 
-function normalizeV1SectionSnapshot(snapshot: SectionSnapshot): SectionSnapshot {
+export function normalizeV1SectionSnapshot(snapshot: SectionSnapshot): SectionSnapshot {
   return {
     ...snapshot,
     section: normalizeV1Section(snapshot.section),
@@ -770,7 +770,7 @@ function normalizeV1SectionSnapshot(snapshot: SectionSnapshot): SectionSnapshot 
   };
 }
 
-function normalizeV1ProductSnapshot(snapshot: ProductSnapshot): ProductSnapshot {
+export function normalizeV1ProductSnapshot(snapshot: ProductSnapshot): ProductSnapshot {
   const product = snapshot.product;
   return {
     ...snapshot,
@@ -801,7 +801,7 @@ function encodeObjectKey(key: string): string {
     .join('/');
 }
 
-function mediaUrl(mediaBaseUrl: string, objectKey: string | null): string | null {
+export function mediaUrl(mediaBaseUrl: string, objectKey: string | null): string | null {
   return mediaBaseUrl && objectKey
     ? `${mediaBaseUrl}/${encodeObjectKey(objectKey)}`
     : null;
@@ -918,7 +918,7 @@ export async function loadCurrentPointer(
   return parsePointer(value);
 }
 
-async function loadV1File<T>(
+export async function loadV1File<T>(
   origin: string,
   contentVersion: string,
   relativePath: string,
@@ -934,7 +934,7 @@ async function loadV1File<T>(
   return value as T;
 }
 
-async function loadV2File<T>(
+export async function loadV2File<T>(
   origin: string,
   moduleKey: string,
   reference: ModuleReference,
@@ -947,7 +947,7 @@ async function loadV2File<T>(
   return value as T;
 }
 
-function v2ModulePath(
+export function v2ModulePath(
   moduleKey: string,
   reference: ModuleReference,
   relativePath: string,
@@ -1000,7 +1000,7 @@ function resolveV2Section(
   };
 }
 
-function resolveV2Summary(
+export function resolveV2Summary(
   product: V2ProductSummary,
   section: PublicSection,
   mediaBaseUrl: string,
@@ -1025,7 +1025,7 @@ function resolveV2Summary(
   };
 }
 
-async function loadV2SectionFile(
+export async function loadV2SectionFile(
   origin: string,
   pointer: CurrentPointerV2,
   mediaBaseUrl: string,
@@ -1105,7 +1105,7 @@ async function loadDerivedV2Home(
   };
 }
 
-function productReferenceKey(sectionId: string, productRef: string): string {
+export function productReferenceKey(sectionId: string, productRef: string): string {
   return `${sectionId}\u0000${productRef}`;
 }
 
@@ -1126,7 +1126,7 @@ export function rememberStorefrontProducts(
   }
 }
 
-function findRememberedProduct(
+export function findRememberedProduct(
   bootstrap: Pick<StorefrontBootstrap, 'productSummaries' | 'productReferenceIds'>,
   sectionId: string,
   productRef: string,
@@ -1384,202 +1384,4 @@ export async function loadStorefrontBootstrap(
   return pointer.schemaVersion === 2
     ? loadV2Bootstrap(resolvedOrigin, pointer, signal)
     : loadV1Bootstrap(resolvedOrigin, pointer, signal);
-}
-
-export async function loadSectionSnapshot(
-  bootstrap: StorefrontBootstrap,
-  sectionRef: string,
-  signal?: AbortSignal,
-): Promise<SectionSnapshot> {
-  if (!sectionRef || sectionRef.length > 120) {
-    throw new PublicContentError(
-      'INVALID_SECTION',
-      'The requested service section is invalid.',
-    );
-  }
-  const section = bootstrap.home.allSections.find(
-    (item) => item.id === sectionRef || item.slug === sectionRef,
-  );
-  if (!section) {
-    throw new PublicContentError(
-      'CONTENT_NOT_PUBLISHED',
-      'This service section has not been published yet.',
-    );
-  }
-  const sectionId = section.id;
-  if (bootstrap.pointer.schemaVersion === 2) {
-    const cached = bootstrap.sectionSnapshots[sectionId];
-    if (cached) return cached;
-    const snapshot = await loadV2SectionFile(
-      bootstrap.origin,
-      bootstrap.pointer,
-      bootstrap.site.site.mediaBaseUrl,
-      section,
-      signal,
-    );
-    bootstrap.sectionSnapshots[sectionId] = snapshot;
-    rememberStorefrontProducts(bootstrap, snapshot.products);
-    return snapshot;
-  }
-  const snapshot = await loadV1File<SectionSnapshot>(
-    bootstrap.origin,
-    bootstrap.pointer.contentVersion,
-    `sections/${encodeURIComponent(sectionId)}.json`,
-    signal,
-  );
-  return normalizeV1SectionSnapshot(snapshot);
-}
-
-function findPublishedProduct(
-  products: PublicProductSummary[],
-  productRef: string,
-): PublicProductSummary | null {
-  const exactId = products.find((product) => product.id === productRef);
-  if (exactId) return exactId;
-  const slugMatches = products.filter((product) => product.slug === productRef);
-  return slugMatches.length === 1 ? (slugMatches[0] ?? null) : null;
-}
-
-export async function loadProductSnapshot(
-  bootstrap: StorefrontBootstrap,
-  productRef: string,
-  signal?: AbortSignal,
-  sectionRef?: string | null,
-): Promise<ProductSnapshot> {
-  if (!productRef || productRef.length > 120 || (sectionRef && sectionRef.length > 120)) {
-    throw new PublicContentError('INVALID_PRODUCT', 'The requested service is invalid.');
-  }
-  if (bootstrap.pointer.schemaVersion === 1) {
-    let productId = productRef;
-    if (sectionRef) {
-      const section = await loadSectionSnapshot(bootstrap, sectionRef, signal);
-      const product = findPublishedProduct(section.products, productRef);
-      if (!product) {
-        throw new PublicContentError(
-          'CONTENT_NOT_PUBLISHED',
-          'This service has not been published yet.',
-        );
-      }
-      productId = product.id;
-    } else {
-      const product = findPublishedProduct(
-        [...bootstrap.home.featuredProducts, ...bootstrap.home.latestProducts],
-        productRef,
-      );
-      if (product) productId = product.id;
-    }
-    const snapshot = await loadV1File<ProductSnapshot>(
-      bootstrap.origin,
-      bootstrap.pointer.contentVersion,
-      `products/${encodeURIComponent(productId)}.json`,
-      signal,
-    );
-    return normalizeV1ProductSnapshot(snapshot);
-  }
-
-  let matchedProduct: PublicProductSummary | null = null;
-  let section: PublicSection | null = null;
-
-  if (sectionRef) {
-    section =
-      bootstrap.home.allSections.find(
-        (item) => item.id === sectionRef || item.slug === sectionRef,
-      ) ?? null;
-    if (!section) {
-      throw new PublicContentError(
-        'CONTENT_NOT_PUBLISHED',
-        'This service section has not been published yet.',
-      );
-    }
-    matchedProduct = findRememberedProduct(bootstrap, section.id, productRef);
-    if (!matchedProduct) {
-      const sectionSnapshot = await loadSectionSnapshot(bootstrap, sectionRef, signal);
-      matchedProduct = findPublishedProduct(sectionSnapshot.products, productRef);
-      section = sectionSnapshot.section;
-    }
-  } else {
-    throw new PublicContentError(
-      'INVALID_PRODUCT',
-      'Section context is required for published service details.',
-    );
-  }
-
-  if (!matchedProduct || !section) {
-    throw new PublicContentError(
-      'CONTENT_NOT_PUBLISHED',
-      'This service is not part of the current published section versions.',
-    );
-  }
-  const reference = bootstrap.pointer.sections[section.id];
-  if (!reference) {
-    throw new PublicContentError(
-      'CONTENT_NOT_PUBLISHED',
-      'This service is not part of the current published section versions.',
-    );
-  }
-
-  const moduleKey = `section:${section.id}`;
-  const raw = await loadV2File<V2ProductSnapshot>(
-    bootstrap.origin,
-    moduleKey,
-    reference,
-    v2ModulePath(
-      moduleKey,
-      reference,
-      `products/${encodeURIComponent(matchedProduct.id)}.json`,
-    ),
-    signal,
-  );
-  if (raw.product.id !== matchedProduct.id || raw.product.sectionId !== section.id) {
-    throw new PublicContentError(
-      'SNAPSHOT_VERSION_MISMATCH',
-      'The published service is inconsistent.',
-    );
-  }
-  const summary = resolveV2Summary(
-    raw.product,
-    section,
-    bootstrap.site.site.mediaBaseUrl,
-  );
-  return {
-    schemaVersion: 2,
-    contentVersion: reference.contentVersion,
-    publishedAt: raw.publishedAt,
-    product: {
-      ...summary,
-      body: raw.product.body,
-      media: Array.isArray(raw.product.media)
-        ? raw.product.media.map((media) => ({
-            id: media.id,
-            url: mediaUrl(bootstrap.site.site.mediaBaseUrl, media.objectKey),
-            width: media.width,
-            height: media.height,
-            altText: media.altText,
-            sortOrder: media.sortOrder,
-          }))
-        : [],
-    },
-  };
-}
-
-export async function loadFaqSnapshot(
-  bootstrap: StorefrontBootstrap,
-  signal?: AbortSignal,
-): Promise<FaqSnapshot> {
-  if (bootstrap.pointer.schemaVersion === 1) {
-    return loadV1File<FaqSnapshot>(
-      bootstrap.origin,
-      bootstrap.pointer.contentVersion,
-      'faq.json',
-      signal,
-    );
-  }
-  const reference = bootstrap.pointer.faq;
-  return loadV2File<V2FaqSnapshot>(
-    bootstrap.origin,
-    'faq',
-    reference,
-    v2ModulePath('faq', reference, 'faq.json'),
-    signal,
-  );
 }

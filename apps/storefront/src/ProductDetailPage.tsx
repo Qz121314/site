@@ -3,12 +3,12 @@ import type { StorefrontLinkComponent } from '@site/storefront-ui';
 import { LoadingHalo } from '@site/storefront-ui/loading';
 import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import {
-  loadProductSnapshot,
   PublicContentError,
   type ProductSnapshot,
   type PublicProductSummary,
   type StorefrontBootstrap,
 } from './content';
+import { loadProductSnapshot } from './content-route';
 import { loadPublicCta } from './cta';
 import { MarkdownContent } from './MarkdownContent';
 import { ProductDetailLoadingSurface } from './ProductDetailLoadingSurface';
