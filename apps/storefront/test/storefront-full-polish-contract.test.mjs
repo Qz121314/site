@@ -6,7 +6,6 @@ const styleFiles = [
   '../src/app-shell.css',
   '../src/styles.css',
   '../../../packages/storefront-ui/src/home.css',
-  '../../../packages/storefront-ui/src/home.css',
   '../src/browse-ui.css',
   '../src/section-ui.css',
   '../src/faq-ui.css',
@@ -17,21 +16,10 @@ const styleFiles = [
 ];
 
 test('storefront polish stays theme-led and app-native across every primary surface', async () => {
-  const [
-    shell,
-    shared,
-    hero,
-    home,
-    browse,
-    section,
-    faq,
-    messages,
-    detail,
-    detailFlow,
-    pwa,
-  ] = await Promise.all(
-    styleFiles.map((path) => readFile(new URL(path, import.meta.url), 'utf8')),
-  );
+  const [shell, shared, home, browse, section, faq, messages, detail, detailFlow, pwa] =
+    await Promise.all(
+      styleFiles.map((path) => readFile(new URL(path, import.meta.url), 'utf8')),
+    );
   const [artDirection, primaryArtDirection, homeSource, storefrontMain, adminMain] =
     await Promise.all([
       readFile(
@@ -53,7 +41,7 @@ test('storefront polish stays theme-led and app-native across every primary surf
       readFile(new URL('../../admin/src/main.tsx', import.meta.url), 'utf8'),
     ]);
 
-  for (const styles of [home, hero, browse, section, faq, messages, pwa]) {
+  for (const styles of [home, browse, section, faq, messages, pwa]) {
     assert.doesNotMatch(styles, /max\(var\(--theme-radius/u);
   }
 
@@ -89,7 +77,7 @@ test('storefront polish stays theme-led and app-native across every primary surf
     /\.storefront-bottom-chrome > \.bottom-nav a\.is-active \.bottom-nav-icon \{[\s\S]*background: color-mix/u,
   );
 
-  assert.match(hero, /\.hero-carousel-copy :is\(h1, h2\)/u);
+  assert.match(home, /\.hero-carousel-copy :is\(h1, h2\)/u);
   assert.match(home, /\.home-product-rail \{[\s\S]*repeat\(2, minmax\(0, 1fr\)\)/u);
   assert.match(home, /\.home-product-title \{[\s\S]*position: absolute/u);
   assert.match(home, /\.home-recommendation-heading > a \{[\s\S]*border-radius: 50%/u);
