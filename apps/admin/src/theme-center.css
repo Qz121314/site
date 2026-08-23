@@ -796,6 +796,471 @@
   display: none;
 }
 
+.theme-preview-page-switcher {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 3px;
+  padding: 3px;
+  border: 1px solid #dce1e8;
+  border-radius: 9px;
+  background: #e8ebef;
+}
+
+.theme-preview-page-switcher button {
+  min-width: 0;
+  min-height: 29px;
+  padding: 5px 3px;
+  border: 0;
+  border-radius: 6px;
+  color: #687180;
+  background: transparent;
+  font: inherit;
+  font-size: 0.58rem;
+  font-weight: 760;
+  cursor: pointer;
+}
+
+.theme-preview-page-switcher button[aria-pressed='true'] {
+  color: #20293a;
+  background: #fff;
+  box-shadow: 0 1px 4px rgb(31 41 55 / 10%);
+}
+
+.theme-preview-page-switcher button:focus-visible {
+  outline: 2px solid #6172f3;
+  outline-offset: 1px;
+}
+
+.theme-contrast-status {
+  display: flex;
+  min-height: 26px;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 8px;
+  border: 1px solid #d7e8dc;
+  border-radius: 7px;
+  color: #347249;
+  background: #f3faf5;
+  font-size: 0.58rem;
+  font-weight: 720;
+}
+
+.theme-contrast-status > span {
+  color: #2e9d55;
+  font-size: 0.48rem;
+}
+
+.theme-contrast-status[data-status='warning'] {
+  border-color: #f1d4ae;
+  color: #92551c;
+  background: #fff8ef;
+}
+
+.theme-preview-route-heading {
+  display: grid;
+  gap: 2px;
+}
+
+.theme-preview-route-heading span,
+.theme-preview-eyebrow {
+  color: var(--brand-strong);
+  font-size: 0.52rem;
+  font-weight: 820;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.theme-preview-route-heading strong {
+  color: var(--text);
+  font-size: 0.93rem;
+  letter-spacing: -0.035em;
+}
+
+.theme-preview-catalog {
+  display: grid;
+  align-content: start;
+  gap: 8px;
+}
+
+.theme-preview-search {
+  padding: 8px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--theme-radius-control, 8px);
+  color: var(--muted);
+  background: var(--surface);
+  font-size: 0.61rem;
+}
+
+.theme-preview-filter-row {
+  display: flex;
+  gap: 5px;
+  overflow: hidden;
+}
+
+.theme-preview-filter-row span {
+  padding: 5px 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--theme-radius-chip, 7px);
+  color: var(--muted);
+  background: var(--surface);
+  font-size: 0.52rem;
+  font-weight: 740;
+  white-space: nowrap;
+}
+
+.theme-preview-filter-row .is-active {
+  border-color: color-mix(in srgb, var(--brand) 48%, var(--line));
+  color: var(--theme-on-brand);
+  background: var(--brand);
+}
+
+.theme-preview-catalog-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.theme-live-preview .theme-preview-catalog .product-card {
+  color: var(--text);
+  text-decoration: none;
+}
+
+.theme-live-preview .theme-preview-catalog .product-card-body {
+  padding: 7px;
+}
+
+.theme-live-preview .theme-preview-catalog .product-card-heading h3 {
+  font-size: 0.65rem;
+}
+
+.theme-live-preview .theme-preview-catalog .product-card-heading > span,
+.theme-live-preview .theme-preview-catalog .product-type {
+  font-size: 0.5rem;
+}
+
+.theme-live-preview .theme-preview-catalog .tag-row {
+  margin-top: 4px;
+}
+
+.theme-live-preview .theme-preview-catalog .tag-row span,
+.theme-live-preview .theme-preview-catalog .service-mode-badge {
+  font-size: 0.45rem;
+}
+
+.theme-preview-detail {
+  display: grid;
+  align-content: start;
+  gap: var(--theme-detail-gap, 14px);
+}
+
+.theme-preview-detail-media {
+  display: grid;
+  aspect-ratio: var(--theme-detail-media-ratio, 1 / 1);
+  place-items: center;
+  overflow: hidden;
+  border-radius: var(--theme-detail-media-radius);
+  color: var(--theme-on-brand);
+  background:
+    radial-gradient(
+      circle at 78% 18%,
+      color-mix(in srgb, var(--hero-glow) 54%, transparent),
+      transparent 42%
+    ),
+    linear-gradient(145deg, var(--hero-start), var(--hero-end));
+  box-shadow: var(--theme-detail-media-shadow);
+  font-size: 0.62rem;
+  font-weight: 800;
+}
+
+.theme-preview-detail-summary {
+  display: grid;
+  gap: 7px;
+  padding: var(--theme-detail-mobile-panel-padding);
+  border: 1px solid var(--theme-detail-panel-border);
+  border-radius: var(--theme-detail-panel-radius);
+  background: var(--theme-detail-panel-background);
+  box-shadow: var(--theme-detail-panel-shadow);
+}
+
+.theme-preview-detail-summary h1,
+.theme-preview-detail-summary p {
+  margin: 0;
+}
+
+.theme-preview-detail-summary h1 {
+  font-size: 1rem;
+  line-height: 1.12;
+  letter-spacing: -0.04em;
+}
+
+.theme-preview-detail-summary p {
+  color: var(--muted);
+  font-size: 0.58rem;
+  line-height: 1.45;
+}
+
+.theme-preview-detail-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.theme-preview-detail-meta span {
+  padding: 5px 7px;
+  border-radius: var(--theme-radius-chip, 6px);
+  color: var(--muted);
+  background: var(--theme-detail-meta-background);
+  font-size: 0.49rem;
+  font-weight: 720;
+}
+
+.theme-preview-detail-action {
+  padding: 7px;
+  border: 1px solid var(--theme-detail-panel-border);
+  border-radius: var(--theme-detail-panel-radius);
+  background: var(--theme-detail-cta-surface);
+  box-shadow: var(--theme-detail-cta-bar-shadow);
+}
+
+.theme-preview-detail-action .cta-button {
+  width: 100%;
+  min-height: 40px;
+  border: 0;
+  border-radius: var(--theme-detail-cta-radius);
+  color: var(--theme-detail-cta-color);
+  background: var(--theme-detail-cta-background);
+  box-shadow: var(--theme-detail-cta-shadow);
+  font: inherit;
+  font-size: 0.65rem;
+  font-weight: 820;
+}
+
+.theme-preview-content.is-messages {
+  padding: 0;
+}
+
+.theme-preview-chat {
+  display: grid;
+  min-height: 100%;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  overflow: hidden;
+}
+
+.theme-preview-chat-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px;
+  border-bottom: 1px solid var(--theme-primary-chat-header-border);
+}
+
+.theme-preview-chat-header .chat-header-avatar {
+  display: grid;
+  width: 30px;
+  height: 30px;
+  flex: 0 0 auto;
+  place-items: center;
+  border: 1px solid var(--theme-primary-message-avatar-border);
+  border-radius: 50%;
+  color: var(--theme-on-brand);
+  font-size: 0.62rem;
+  font-weight: 850;
+}
+
+.theme-preview-chat-header div {
+  display: grid;
+  gap: 1px;
+}
+
+.theme-preview-chat-header strong {
+  font-size: 0.66rem;
+}
+
+.theme-preview-chat-header small {
+  color: var(--muted);
+  font-size: 0.49rem;
+}
+
+.theme-preview-chat-timeline {
+  display: grid;
+  align-content: end;
+  gap: 7px;
+  padding: 10px 8px;
+}
+
+.theme-preview-chat .chat-message-row {
+  display: flex;
+}
+
+.theme-preview-chat .chat-message-row.is-customer {
+  justify-content: flex-end;
+}
+
+.theme-preview-chat .chat-message-bubble {
+  max-width: 78%;
+  margin: 0;
+  padding: 7px 8px;
+  border: 1px solid var(--theme-primary-chat-bubble-border);
+  border-radius: var(--theme-radius-control, 8px);
+  color: var(--text);
+  font-size: 0.56rem;
+  line-height: 1.4;
+}
+
+.theme-preview-chat-composer {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 28px;
+  gap: 6px;
+  padding: 7px;
+  border-top: 1px solid var(--theme-primary-chat-header-border);
+}
+
+.theme-preview-chat-composer .chat-input-placeholder {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  padding: 0 8px;
+  border: 1px solid var(--theme-primary-chat-input-border);
+  border-radius: var(--theme-radius-control, 8px);
+  color: var(--muted);
+  font-size: 0.52rem;
+}
+
+.theme-preview-chat-composer .chat-send-button {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--theme-radius-control, 8px);
+  font: inherit;
+  font-weight: 850;
+}
+
+.theme-preview-install {
+  position: relative;
+  display: grid;
+  min-height: 100%;
+  align-content: start;
+  gap: 12px;
+  overflow: hidden;
+}
+
+.theme-preview-install-backdrop {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 7px;
+  opacity: 0.66;
+}
+
+.theme-preview-install-backdrop span {
+  min-height: 82px;
+  border: 1px solid var(--line);
+  border-radius: var(--theme-radius-card, 8px);
+  background: linear-gradient(145deg, var(--surface-soft), var(--surface));
+}
+
+.theme-preview-install-backdrop span:first-child {
+  grid-column: 1 / -1;
+  min-height: 132px;
+  background: linear-gradient(145deg, var(--hero-start), var(--hero-end));
+}
+
+.theme-preview-install-card {
+  position: absolute;
+  right: 5px;
+  bottom: 8px;
+  left: 5px;
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) auto;
+  gap: 7px;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid var(--theme-primary-install-border);
+  border-radius: var(--theme-radius-card, 10px);
+}
+
+.theme-preview-install-card .pwa-install-icon {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border: 1px solid var(--theme-primary-install-icon-border);
+  border-radius: var(--theme-radius-control, 8px);
+  color: var(--theme-on-brand);
+  font-size: 0.75rem;
+  font-weight: 900;
+}
+
+.theme-preview-install-copy {
+  display: grid;
+  gap: 2px;
+}
+
+.theme-preview-install-copy strong {
+  font-size: 0.62rem;
+}
+
+.theme-preview-install-copy p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.49rem;
+  line-height: 1.35;
+}
+
+.theme-preview-install-card .pwa-install-action,
+.theme-preview-install-card .pwa-install-dismiss {
+  min-height: 27px;
+  padding: 5px 7px;
+  border: 0;
+  border-radius: var(--theme-radius-control, 7px);
+  font: inherit;
+  font-size: 0.49rem;
+  font-weight: 800;
+}
+
+.theme-preview-install-card .pwa-install-dismiss {
+  grid-column: 2 / -1;
+  color: var(--muted);
+}
+
+.theme-preview-install-disabled {
+  position: absolute;
+  right: 12px;
+  bottom: 18px;
+  left: 12px;
+  display: grid;
+  justify-items: center;
+  gap: 4px;
+  padding: 14px;
+  border: 1px solid var(--line);
+  border-radius: var(--theme-radius-card, 10px);
+  color: var(--text);
+  background: var(--surface);
+  box-shadow: var(--theme-card-shadow, none);
+  text-align: center;
+}
+
+.theme-preview-install-disabled > span {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  place-items: center;
+  border-radius: 50%;
+  color: var(--theme-on-brand);
+  background: var(--brand);
+  font-size: 0.63rem;
+  font-weight: 900;
+}
+
+.theme-preview-install-disabled strong {
+  font-size: 0.62rem;
+}
+
+.theme-preview-install-disabled small {
+  color: var(--muted);
+  font-size: 0.5rem;
+}
+
 /*
  * The preview shell is a mobile viewport embedded in a desktop page. Container-scoped
  * overrides keep the shared Home presentation in its real mobile geometry even when

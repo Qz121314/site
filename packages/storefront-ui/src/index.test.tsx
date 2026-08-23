@@ -7,7 +7,11 @@ import {
   StorefrontHomeShortcut,
   StorefrontProductCard,
 } from './index';
-import { storefrontBrandForeground, storefrontThemeStyle } from './theme';
+import {
+  storefrontBrandContrast,
+  storefrontBrandForeground,
+  storefrontThemeStyle,
+} from './theme';
 
 describe('shared storefront UI', () => {
   it('renders the generic product-card contract', () => {
@@ -83,5 +87,25 @@ describe('shared storefront UI', () => {
     expect(storefrontBrandForeground('#4f46e5', 'light')).toBe('#ffffff');
     expect(storefrontBrandForeground('#df6c4f', 'light')).toBe('#000000');
     expect(storefrontBrandForeground('#22d3ee', 'dark')).toBe('#000000');
+  });
+
+  it('reports the selected brand foreground contrast without guessing for CSS colors', () => {
+    for (const brand of [
+      '#ff5a1f',
+      '#e45594',
+      '#ff355d',
+      '#4f46e5',
+      '#df6c4f',
+      '#22d3ee',
+    ]) {
+      const contrast = storefrontBrandContrast(brand, 'light');
+      expect(contrast.ratio).toBeGreaterThanOrEqual(4.5);
+      expect(contrast.foreground).toMatch(/^#(?:000000|ffffff)$/u);
+    }
+
+    expect(storefrontBrandContrast('var(--external-brand)', 'dark')).toEqual({
+      foreground: 'var(--page-bg)',
+      ratio: null,
+    });
   });
 });
