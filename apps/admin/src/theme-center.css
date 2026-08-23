@@ -796,8 +796,59 @@
   display: none;
 }
 
+/*
+ * The preview shell is a mobile viewport embedded in a desktop page. Container-scoped
+ * overrides keep the shared Home presentation in its real mobile geometry even when
+ * the surrounding Admin viewport matches desktop media queries.
+ */
+.theme-live-preview .hero-carousel {
+  width: auto;
+  margin-inline: calc(var(--v2-gutter) * -1);
+  border-radius: 0;
+  box-shadow: none;
+}
+
 .theme-live-preview .hero-carousel-slide {
   height: 230px;
+}
+
+.theme-live-preview .hero-carousel-overlay {
+  padding: 22px;
+}
+
+.theme-live-preview .home-shortcut-zone {
+  padding: 12px 0 18px;
+}
+
+.theme-live-preview .home-shortcuts {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  overflow: visible;
+}
+
+.theme-live-preview .home-shortcut {
+  width: 100%;
+  min-width: 0;
+  min-height: 62px;
+  gap: 4px;
+}
+
+.theme-live-preview .home-shortcut-icon {
+  width: 42px;
+  height: 42px;
+}
+
+.theme-live-preview .home-shortcut-label {
+  font-size: 0.56rem;
+}
+
+.theme-live-preview .home-product-rail {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.theme-live-preview .home-product-title {
+  font-size: 0.62rem;
 }
 
 .theme-preview-products {
