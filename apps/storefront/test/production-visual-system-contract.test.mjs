@@ -13,7 +13,10 @@ test('production acceptance stays runtime-theme-aware and guards stable storefro
       new URL('../../../packages/storefront-ui/src/theme-contract.css', import.meta.url),
       'utf8',
     ),
-    readFile(new URL('../../../packages/storefront-ui/src/home.css', import.meta.url), 'utf8'),
+    readFile(
+      new URL('../../../packages/storefront-ui/src/home.css', import.meta.url),
+      'utf8',
+    ),
     readFile(new URL('../src/browse-ui.css', import.meta.url), 'utf8'),
     readFile(new URL('../src/section-ui.css', import.meta.url), 'utf8'),
   ]);
