@@ -1,15 +1,9 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AssetLibraryView } from './AssetLibraryView';
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AdminApiError, fetchSections, type AdminSection } from './api';
 import { useAdminUnsavedState } from './admin-unsaved-state';
-import { CategoryManagementView } from './CategoryManagementView';
-import { ConversionPoolView } from './ConversionPoolView';
-import { CustomerServiceView } from './CustomerServiceView';
-import { FaqManagementView } from './FaqManagementView';
-import {
-  ProductManagementView,
-  type ProductDependencyTarget,
-  type ProductResumeRequest,
+import type {
+  ProductDependencyTarget,
+  ProductResumeRequest,
 } from './ProductManagementView';
 import {
   fetchPublishStatus,
@@ -19,11 +13,50 @@ import {
   type PublishStatus,
   type PublishVersion,
 } from './publish-api';
-import { SectionManagementView } from './SectionManagementView';
-import { SiteSettingsView } from './SiteSettingsView';
-import { TagManagementView } from './TagManagementView';
-import { ThemeCenterView } from './ThemeCenterView';
-import { TrafficStatsView } from './TrafficStatsView';
+
+const TrafficStatsView = lazy(() =>
+  import('./TrafficStatsView').then((module) => ({ default: module.TrafficStatsView })),
+);
+const SiteSettingsView = lazy(() =>
+  import('./SiteSettingsView').then((module) => ({ default: module.SiteSettingsView })),
+);
+const ThemeCenterView = lazy(() =>
+  import('./ThemeCenterView').then((module) => ({ default: module.ThemeCenterView })),
+);
+const AssetLibraryView = lazy(() =>
+  import('./AssetLibraryView').then((module) => ({ default: module.AssetLibraryView })),
+);
+const CustomerServiceView = lazy(() =>
+  import('./CustomerServiceView').then((module) => ({
+    default: module.CustomerServiceView,
+  })),
+);
+const SectionManagementView = lazy(() =>
+  import('./SectionManagementView').then((module) => ({
+    default: module.SectionManagementView,
+  })),
+);
+const FaqManagementView = lazy(() =>
+  import('./FaqManagementView').then((module) => ({ default: module.FaqManagementView })),
+);
+const ProductManagementView = lazy(() =>
+  import('./ProductManagementView').then((module) => ({
+    default: module.ProductManagementView,
+  })),
+);
+const CategoryManagementView = lazy(() =>
+  import('./CategoryManagementView').then((module) => ({
+    default: module.CategoryManagementView,
+  })),
+);
+const TagManagementView = lazy(() =>
+  import('./TagManagementView').then((module) => ({ default: module.TagManagementView })),
+);
+const ConversionPoolView = lazy(() =>
+  import('./ConversionPoolView').then((module) => ({
+    default: module.ConversionPoolView,
+  })),
+);
 
 type DynamicViewKind = 'products' | 'categories' | 'tags' | 'conversion-pool';
 
@@ -887,60 +920,68 @@ export function Dashboard({
           </div>
         ) : null}
 
-        {activeView === 'traffic' ? (
-          <TrafficStatsView key={activeView} onSessionExpired={onSessionExpired} />
-        ) : activeView === 'settings' ? (
-          <SiteSettingsView key={activeView} onSessionExpired={onSessionExpired} />
-        ) : activeView === 'theme' ? (
-          <ThemeCenterView key={activeView} onSessionExpired={onSessionExpired} />
-        ) : activeView === 'assets' ? (
-          <AssetLibraryView key={activeView} onSessionExpired={onSessionExpired} />
-        ) : activeView === 'customer-service' ? (
-          <CustomerServiceView key={activeView} onSessionExpired={onSessionExpired} />
-        ) : activeView === 'sections' ? (
-          <SectionManagementView
-            key={activeView}
-            activeSections={sections}
-            onActiveSectionsChange={setSections}
-            onSessionExpired={onSessionExpired}
-          />
-        ) : activeView === 'faq' ? (
-          <FaqManagementView key={activeView} onSessionExpired={onSessionExpired} />
-        ) : currentSection?.kind === 'products' ? (
-          <ProductManagementView
-            key={activeView}
-            section={currentSection.section}
-            resumeRequest={currentSectionHandoff}
-            onResumeHandled={() => setProductHandoff(null)}
-            onConfigureDependency={(target, request) => {
-              setProductHandoff({
-                ...request,
-                sectionId: currentSection.section.id,
-                target,
-              });
-              commitView(`${target}:${currentSection.section.id}`);
-            }}
-            onSessionExpired={onSessionExpired}
-          />
-        ) : currentSection?.kind === 'categories' ? (
-          <CategoryManagementView
-            key={activeView}
-            section={currentSection.section}
-            onSessionExpired={onSessionExpired}
-          />
-        ) : currentSection?.kind === 'tags' ? (
-          <TagManagementView
-            key={activeView}
-            section={currentSection.section}
-            onSessionExpired={onSessionExpired}
-          />
-        ) : currentSection?.kind === 'conversion-pool' ? (
-          <ConversionPoolView
-            key={activeView}
-            section={currentSection.section}
-            onSessionExpired={onSessionExpired}
-          />
-        ) : null}
+        <Suspense
+          fallback={
+            <div className="notice" role="status" aria-live="polite">
+              正在加载当前模块…
+            </div>
+          }
+        >
+          {activeView === 'traffic' ? (
+            <TrafficStatsView key={activeView} onSessionExpired={onSessionExpired} />
+          ) : activeView === 'settings' ? (
+            <SiteSettingsView key={activeView} onSessionExpired={onSessionExpired} />
+          ) : activeView === 'theme' ? (
+            <ThemeCenterView key={activeView} onSessionExpired={onSessionExpired} />
+          ) : activeView === 'assets' ? (
+            <AssetLibraryView key={activeView} onSessionExpired={onSessionExpired} />
+          ) : activeView === 'customer-service' ? (
+            <CustomerServiceView key={activeView} onSessionExpired={onSessionExpired} />
+          ) : activeView === 'sections' ? (
+            <SectionManagementView
+              key={activeView}
+              activeSections={sections}
+              onActiveSectionsChange={setSections}
+              onSessionExpired={onSessionExpired}
+            />
+          ) : activeView === 'faq' ? (
+            <FaqManagementView key={activeView} onSessionExpired={onSessionExpired} />
+          ) : currentSection?.kind === 'products' ? (
+            <ProductManagementView
+              key={activeView}
+              section={currentSection.section}
+              resumeRequest={currentSectionHandoff}
+              onResumeHandled={() => setProductHandoff(null)}
+              onConfigureDependency={(target, request) => {
+                setProductHandoff({
+                  ...request,
+                  sectionId: currentSection.section.id,
+                  target,
+                });
+                commitView(`${target}:${currentSection.section.id}`);
+              }}
+              onSessionExpired={onSessionExpired}
+            />
+          ) : currentSection?.kind === 'categories' ? (
+            <CategoryManagementView
+              key={activeView}
+              section={currentSection.section}
+              onSessionExpired={onSessionExpired}
+            />
+          ) : currentSection?.kind === 'tags' ? (
+            <TagManagementView
+              key={activeView}
+              section={currentSection.section}
+              onSessionExpired={onSessionExpired}
+            />
+          ) : currentSection?.kind === 'conversion-pool' ? (
+            <ConversionPoolView
+              key={activeView}
+              section={currentSection.section}
+              onSessionExpired={onSessionExpired}
+            />
+          ) : null}
+        </Suspense>
 
         {rollbackTarget ? (
           <div className="admin-dialog-backdrop" role="presentation">
