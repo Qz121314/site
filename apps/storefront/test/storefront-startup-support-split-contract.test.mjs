@@ -19,7 +19,10 @@ test('ordinary storefront startup keeps support gateway behind route or identity
   assert.ok(root.includes("import('./StorefrontSupportRuntime')"));
   assert.ok(root.includes('Boolean(peekSupportVisitorIdentity())'));
 
-  assert.equal(expiry.includes("import { siteSupportGateway } from './support-gateway';"), false);
+  assert.equal(
+    expiry.includes("import { siteSupportGateway } from './support-gateway';"),
+    false,
+  );
   assert.ok(expiry.includes("import('./support-gateway')"));
   assert.ok(
     expiry.indexOf('const conversationRef = activeConversationRef();') <
