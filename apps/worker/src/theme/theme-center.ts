@@ -490,6 +490,28 @@ export function normalizeThemeOverrides(value: unknown): ThemeOverrides {
   };
 }
 
+function upgradeRetiredPresetRecipe(
+  themeKey: ThemeKey,
+  overrides: ThemeOverrides,
+): ThemeOverrides {
+  const isRetiredLiveRecipe =
+    themeKey === 'live' &&
+    overrides.fontPack === 'compact' &&
+    overrides.buttonStyle === 'soft-pill' &&
+    overrides.mediaStyle === 'soft' &&
+    overrides.motionStyle === 'active' &&
+    overrides.navigationStyle === 'solid';
+  if (!isRetiredLiveRecipe) return overrides;
+  return {
+    ...overrides,
+    fontPack: 'editorial',
+    buttonStyle: 'refined',
+    mediaStyle: 'editorial',
+    motionStyle: 'restrained',
+    navigationStyle: 'quiet',
+  };
+}
+
 export function parseThemeSettings(
   themeKey: unknown,
   overridesJson: unknown,
@@ -514,46 +536,45 @@ function applyAccent(tokens: ThemeTokens, accent: string | undefined): ThemeToke
 }
 
 export function resolveTheme(settings: ThemeSettings): ResolvedTheme {
-  const accent = settings.overrides.accent;
-  if (settings.key === 'custom' && settings.overrides.imported) {
-    const imported = settings.overrides.imported;
+  const overrides = upgradeRetiredPresetRecipe(settings.key, settings.overrides);
+  const accent = overrides.accent;
+  if (settings.key === 'custom' && overrides.imported) {
+    const imported = overrides.imported;
     const recipe: ThemeRecipe = {
       ...DEFAULT_RECIPE,
-      fontPack: settings.overrides.fontPack ?? DEFAULT_RECIPE.fontPack,
-      buttonStyle: settings.overrides.buttonStyle ?? DEFAULT_RECIPE.buttonStyle,
-      mediaStyle: settings.overrides.mediaStyle ?? DEFAULT_RECIPE.mediaStyle,
-      motionStyle: settings.overrides.motionStyle ?? DEFAULT_RECIPE.motionStyle,
-      navigationStyle:
-        settings.overrides.navigationStyle ?? DEFAULT_RECIPE.navigationStyle,
+      fontPack: overrides.fontPack ?? DEFAULT_RECIPE.fontPack,
+      buttonStyle: overrides.buttonStyle ?? DEFAULT_RECIPE.buttonStyle,
+      mediaStyle: overrides.mediaStyle ?? DEFAULT_RECIPE.mediaStyle,
+      motionStyle: overrides.motionStyle ?? DEFAULT_RECIPE.motionStyle,
+      navigationStyle: overrides.navigationStyle ?? DEFAULT_RECIPE.navigationStyle,
     };
     return {
       key: 'custom',
       label: imported.label,
       description: imported.description,
       colorScheme: imported.colorScheme,
-      density: settings.overrides.density ?? 'standard',
+      density: overrides.density ?? 'standard',
       productMediaRatio: '1:1',
       recipe,
-      installPrompt: settings.overrides.installPrompt ?? DEFAULT_INSTALL_PROMPT,
+      installPrompt: overrides.installPrompt ?? DEFAULT_INSTALL_PROMPT,
       tokens: applyAccent(imported.tokens, accent),
-      overrides: settings.overrides,
+      overrides,
     };
   }
   const preset = presetByKey.get(settings.key as OfficialThemeKey) ?? THEME_PRESETS[0]!;
   return {
     ...preset,
-    density: settings.overrides.density ?? preset.density,
+    density: overrides.density ?? preset.density,
     recipe: {
       ...preset.recipe,
-      fontPack: settings.overrides.fontPack ?? preset.recipe.fontPack,
-      buttonStyle: settings.overrides.buttonStyle ?? preset.recipe.buttonStyle,
-      mediaStyle: settings.overrides.mediaStyle ?? preset.recipe.mediaStyle,
-      motionStyle: settings.overrides.motionStyle ?? preset.recipe.motionStyle,
-      navigationStyle:
-        settings.overrides.navigationStyle ?? preset.recipe.navigationStyle,
+      fontPack: overrides.fontPack ?? preset.recipe.fontPack,
+      buttonStyle: overrides.buttonStyle ?? preset.recipe.buttonStyle,
+      mediaStyle: overrides.mediaStyle ?? preset.recipe.mediaStyle,
+      motionStyle: overrides.motionStyle ?? preset.recipe.motionStyle,
+      navigationStyle: overrides.navigationStyle ?? preset.recipe.navigationStyle,
     },
-    installPrompt: settings.overrides.installPrompt ?? preset.installPrompt,
-    overrides: settings.overrides,
+    installPrompt: overrides.installPrompt ?? preset.installPrompt,
+    overrides,
     tokens: applyAccent(preset.tokens, accent),
   };
 }
