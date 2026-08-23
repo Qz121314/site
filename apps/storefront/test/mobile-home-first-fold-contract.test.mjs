@@ -4,8 +4,8 @@ import test from 'node:test';
 
 test('mobile home keeps discovery content visible and app-like in the first fold', async () => {
   const [heroStyles, homeStyles, loadingStyles, html] = await Promise.all([
-    readFile(new URL('../src/hero-carousel.css', import.meta.url), 'utf8'),
-    readFile(new URL('../src/home-feed.css', import.meta.url), 'utf8'),
+    readFile(new URL('../../../packages/storefront-ui/src/home.css', import.meta.url), 'utf8'),
+    readFile(new URL('../../../packages/storefront-ui/src/home.css', import.meta.url), 'utf8'),
     readFile(new URL('../src/loading-states.css', import.meta.url), 'utf8'),
     readFile(new URL('../index.html', import.meta.url), 'utf8'),
   ]);
