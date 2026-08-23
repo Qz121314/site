@@ -313,7 +313,6 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-
 .section-product-cover {
   position: relative;
   width: 100%;
@@ -404,7 +403,6 @@
   .section-tag-filter button:hover:not(.is-active) {
     color: var(--text);
   }
-
 }
 
 @media (max-width: 767px) {
