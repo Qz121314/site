@@ -12,7 +12,6 @@
   touch-action: manipulation;
 }
 
-
 @media (max-width: 767px) {
   .browse-directory {
     gap: 14px;
