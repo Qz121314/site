@@ -50,6 +50,7 @@ export type StorefrontHeroCarouselProps = {
   slides: StorefrontHeroSlide[];
   LinkComponent?: StorefrontLinkComponent;
   intervalMs?: number;
+  autoAdvance?: boolean;
   ariaLabel?: string;
 };
 
@@ -64,6 +65,7 @@ function StorefrontHeroCarousel({
   slides,
   LinkComponent = 'a',
   intervalMs = 5000,
+  autoAdvance = false,
   ariaLabel,
 }: StorefrontHeroCarouselProps) {
   const viewportRef = useRef<HTMLDivElement | null>(null);
@@ -105,7 +107,14 @@ function StorefrontHeroCarousel({
   );
 
   useEffect(() => {
-    if (slides.length < 2 || interactionPaused || reducedMotion || !pageVisible) return;
+    if (
+      !autoAdvance ||
+      slides.length < 2 ||
+      interactionPaused ||
+      reducedMotion ||
+      !pageVisible
+    )
+      return;
     const timer = window.setInterval(
       () => goTo(activeIndex + 1),
       Math.max(2500, intervalMs),
@@ -113,6 +122,7 @@ function StorefrontHeroCarousel({
     return () => window.clearInterval(timer);
   }, [
     activeIndex,
+    autoAdvance,
     goTo,
     interactionPaused,
     intervalMs,
