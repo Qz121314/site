@@ -82,8 +82,8 @@ describe('shared storefront UI', () => {
 
   it('chooses a readable foreground for every official brand family', () => {
     expect(storefrontBrandForeground('#ff5a1f', 'light')).toBe('#000000');
-    expect(storefrontBrandForeground('#e45594', 'dark')).toBe('#000000');
-    expect(storefrontBrandForeground('#ff355d', 'dark')).toBe('#000000');
+    expect(storefrontBrandForeground('#df5d87', 'dark')).toBe('#000000');
+    expect(storefrontBrandForeground('#e3486d', 'dark')).toBe('#000000');
     expect(storefrontBrandForeground('#4f46e5', 'light')).toBe('#ffffff');
     expect(storefrontBrandForeground('#df6c4f', 'light')).toBe('#000000');
     expect(storefrontBrandForeground('#22d3ee', 'dark')).toBe('#000000');
@@ -92,8 +92,8 @@ describe('shared storefront UI', () => {
   it('reports the selected brand foreground contrast without guessing for CSS colors', () => {
     for (const brand of [
       '#ff5a1f',
-      '#e45594',
-      '#ff355d',
+      '#df5d87',
+      '#e3486d',
       '#4f46e5',
       '#df6c4f',
       '#22d3ee',

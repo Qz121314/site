@@ -33,9 +33,9 @@
   );
   --theme-art-product-overlay: linear-gradient(
     180deg,
-    transparent 42%,
-    rgb(0 0 0 / 8%) 62%,
-    rgb(0 0 0 / 78%) 100%
+    transparent 44%,
+    rgb(8 4 7 / 8%) 62%,
+    rgb(7 3 6 / 84%) 100%
   );
   --theme-art-product-overlay-opacity: 0;
 }
@@ -113,29 +113,51 @@
 
 :is(html, .storefront-theme-root)[data-theme='noir'] {
   --theme-art-text-primary: color-mix(in srgb, var(--text) 94%, white 6%);
-  --theme-art-text-secondary: color-mix(in srgb, var(--text) 76%, var(--muted));
-  --theme-art-text-tertiary: color-mix(in srgb, var(--text) 58%, var(--muted));
-  --theme-art-section-rule: color-mix(in srgb, var(--brand) 18%, var(--line));
-  --theme-art-media-filter: saturate(0.86) contrast(1.1) brightness(0.9);
+  --theme-art-text-secondary: color-mix(in srgb, var(--text) 72%, var(--muted));
+  --theme-art-text-tertiary: color-mix(in srgb, var(--text) 48%, var(--muted));
+  --theme-art-section-rule: color-mix(in srgb, var(--brand) 12%, var(--line));
+  --theme-art-media-filter: saturate(0.92) contrast(1.07) brightness(0.93);
   --theme-art-product-overlay-opacity: 1;
-  --theme-art-heading-transform: uppercase;
-  --theme-art-heading-tracking: 0.035em;
+  --theme-art-heading-weight: 620;
+  --theme-art-heading-transform: none;
+  --theme-art-heading-tracking: -0.034em;
+  --theme-art-product-title-weight: 600;
+  --theme-art-context-tracking: 0.02em;
+  --theme-art-media-hover-scale: 1.015;
+  --theme-art-media-press-scale: 1.022;
+  --theme-art-hero-start-scale: 1.012;
+  --theme-art-hero-settle-duration: 880ms;
+  --theme-art-hero-overlay: linear-gradient(
+    180deg,
+    rgb(12 6 10 / 2%) 8%,
+    rgb(12 6 10 / 12%) 44%,
+    color-mix(in srgb, var(--brand) 5%, rgb(7 3 6 / 62%)) 72%,
+    rgb(7 3 6 / 94%) 100%
+  );
 }
 
 :is(html, .storefront-theme-root)[data-theme='live'] {
-  --theme-art-text-primary: color-mix(in srgb, var(--text) 92%, var(--brand) 8%);
-  --theme-art-text-secondary: color-mix(in srgb, var(--text) 72%, var(--brand) 28%);
-  --theme-art-section-rule: color-mix(in srgb, var(--brand) 38%, var(--line));
-  --theme-art-media-filter: saturate(1.12) contrast(1.06) brightness(0.98);
+  --theme-art-text-primary: color-mix(in srgb, var(--text) 96%, var(--brand) 4%);
+  --theme-art-text-secondary: color-mix(in srgb, var(--text) 70%, var(--muted));
+  --theme-art-text-tertiary: color-mix(in srgb, var(--text) 48%, var(--muted));
+  --theme-art-section-rule: color-mix(in srgb, var(--brand) 14%, var(--line));
+  --theme-art-media-filter: saturate(0.98) contrast(1.06) brightness(0.94);
   --theme-art-product-overlay-opacity: 1;
-  --theme-art-heading-transform: uppercase;
-  --theme-art-heading-tracking: 0.018em;
+  --theme-art-heading-weight: 630;
+  --theme-art-heading-transform: none;
+  --theme-art-heading-tracking: -0.032em;
+  --theme-art-product-title-weight: 610;
+  --theme-art-context-tracking: 0.018em;
+  --theme-art-media-hover-scale: 1.016;
+  --theme-art-media-press-scale: 1.023;
+  --theme-art-hero-start-scale: 1.013;
+  --theme-art-hero-settle-duration: 840ms;
   --theme-art-hero-overlay: linear-gradient(
     180deg,
-    rgb(0 0 0 / 0%) 8%,
-    color-mix(in srgb, var(--brand) 8%, rgb(0 0 0 / 12%)) 42%,
-    color-mix(in srgb, var(--brand) 10%, rgb(0 0 0 / 58%)) 72%,
-    rgb(0 0 0 / 92%) 100%
+    rgb(12 6 10 / 2%) 8%,
+    rgb(12 6 10 / 11%) 44%,
+    color-mix(in srgb, var(--brand) 6%, rgb(7 3 6 / 60%)) 72%,
+    rgb(7 3 6 / 94%) 100%
   );
 }
 

@@ -121,9 +121,9 @@ test('custom imported theme can be validated and resolved without external sourc
   assert.equal(resolved.recipe.navigationStyle, 'quiet');
 });
 
-test('Premium Noir Dating V2 resolves a complete commercial UI recipe', () => {
+test('Premium Noir Dating V3 resolves a complete commercial UI recipe', () => {
   const resolved = resolveTheme({ key: 'noir', overrides: {} });
-  assert.equal(resolved.label, 'Premium Noir Dating V2');
+  assert.equal(resolved.label, 'Premium Noir Dating V3');
   assert.equal(resolved.colorScheme, 'dark');
   assert.deepEqual(resolved.recipe, {
     version: 2,
@@ -133,8 +133,8 @@ test('Premium Noir Dating V2 resolves a complete commercial UI recipe', () => {
     motionStyle: 'restrained',
     navigationStyle: 'quiet',
   });
-  assert.equal(resolved.tokens.pageBg, '#0b080b');
-  assert.equal(resolved.tokens.brand, '#e45594');
+  assert.equal(resolved.tokens.pageBg, '#0c090b');
+  assert.equal(resolved.tokens.brand, '#df5d87');
   assert.deepEqual(resolved.installPrompt, {
     enabled: true,
     delaySeconds: 30,
@@ -144,6 +144,20 @@ test('Premium Noir Dating V2 resolves a complete commercial UI recipe', () => {
     installLabel: 'Install',
     dismissLabel: 'Not now',
   });
+});
+
+test('Live uses the restrained intimate visual recipe', () => {
+  const resolved = resolveTheme({ key: 'live', overrides: {} });
+  assert.deepEqual(resolved.recipe, {
+    version: 2,
+    fontPack: 'editorial',
+    buttonStyle: 'refined',
+    mediaStyle: 'editorial',
+    motionStyle: 'restrained',
+    navigationStyle: 'quiet',
+  });
+  assert.equal(resolved.tokens.pageBg, '#0b080a');
+  assert.equal(resolved.tokens.brand, '#e3486d');
 });
 
 test('Theme Center persists a bounded backend-driven install prompt', () => {

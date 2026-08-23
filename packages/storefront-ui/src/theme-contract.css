@@ -83,34 +83,51 @@
 :is(html, .storefront-theme-root)[data-theme='noir'] {
   --theme-radius-card: 0px;
   --theme-radius-media: 0px;
-  --theme-radius-control: 14px;
-  --theme-radius-icon: 16px;
+  --theme-radius-control: 12px;
+  --theme-radius-icon: 18px;
   --theme-radius-chip: 999px;
-  --theme-card-background: color-mix(in srgb, var(--surface) 98%, var(--brand) 2%);
-  --theme-card-border: color-mix(in srgb, var(--line) 94%, var(--brand) 6%);
-  --theme-media-background: color-mix(in srgb, var(--surface-soft) 94%, black 6%);
-  --theme-control-background: color-mix(in srgb, var(--surface) 96%, transparent);
-  --app-surface-raised: color-mix(in srgb, var(--surface) 96%, var(--brand) 4%);
+  --theme-card-background: color-mix(in srgb, var(--surface) 99%, var(--brand) 1%);
+  --theme-card-border: color-mix(in srgb, var(--line) 72%, transparent);
+  --theme-media-background: color-mix(in srgb, var(--surface-soft) 96%, black 4%);
+  --theme-control-background: color-mix(in srgb, var(--surface) 94%, transparent);
+  --theme-control-shadow: none;
+  --theme-button-shadow: none;
+  --theme-button-press-shadow: none;
+  --app-surface-raised: color-mix(in srgb, var(--surface) 98%, var(--brand) 2%);
   --app-text-secondary: color-mix(in srgb, var(--text) 72%, var(--muted));
-  --app-hairline: color-mix(in srgb, var(--line) 48%, transparent);
-  --app-shadow-soft: 0 22px 64px rgb(0 0 0 / 32%);
+  --app-hairline: color-mix(in srgb, var(--line) 62%, transparent);
+  --app-shadow-soft: 0 24px 68px rgb(0 0 0 / 34%);
   --theme-header-background: color-mix(
     in srgb,
-    var(--page-bg, var(--surface)) 88%,
+    var(--page-bg, var(--surface)) 94%,
     transparent
   );
-  --theme-tab-background: color-mix(in srgb, var(--surface) 88%, transparent);
+  --theme-tab-background: color-mix(in srgb, var(--page-bg) 92%, transparent);
 }
 
 :is(html, .storefront-theme-root)[data-theme='live'] {
   --theme-radius-card: 0px;
   --theme-radius-media: 0px;
-  --theme-radius-control: 2px;
-  --theme-radius-icon: 12px;
-  --theme-radius-chip: 2px;
-  --theme-card-background: color-mix(in srgb, var(--surface) 97%, var(--brand) 3%);
-  --theme-card-border: color-mix(in srgb, var(--line) 86%, var(--brand) 14%);
-  --theme-control-background: color-mix(in srgb, var(--surface) 96%, var(--brand) 4%);
+  --theme-radius-control: 12px;
+  --theme-radius-icon: 18px;
+  --theme-radius-chip: 999px;
+  --theme-card-background: color-mix(in srgb, var(--surface) 99%, var(--brand) 1%);
+  --theme-card-border: color-mix(in srgb, var(--line) 72%, transparent);
+  --theme-media-background: color-mix(in srgb, var(--surface-soft) 96%, black 4%);
+  --theme-control-background: color-mix(in srgb, var(--surface) 94%, transparent);
+  --theme-control-shadow: none;
+  --theme-button-shadow: none;
+  --theme-button-press-shadow: none;
+  --app-surface-raised: color-mix(in srgb, var(--surface) 98%, var(--brand) 2%);
+  --app-text-secondary: color-mix(in srgb, var(--text) 72%, var(--muted));
+  --app-hairline: color-mix(in srgb, var(--line) 62%, transparent);
+  --app-shadow-soft: 0 24px 68px rgb(0 0 0 / 34%);
+  --theme-header-background: color-mix(
+    in srgb,
+    var(--page-bg, var(--surface)) 94%,
+    transparent
+  );
+  --theme-tab-background: color-mix(in srgb, var(--page-bg) 92%, transparent);
 }
 
 :is(html, .storefront-theme-root)[data-theme='saas'] {
@@ -207,6 +224,16 @@
   --theme-media-shadow: 0 6px 18px color-mix(in srgb, var(--text) 5%, transparent);
   --theme-media-hover-shadow: 0 10px 28px color-mix(in srgb, var(--text) 8%, transparent);
   --theme-media-pressed-shadow: 0 3px 10px color-mix(in srgb, var(--text) 5%, transparent);
+}
+
+:is(html, .storefront-theme-root)[data-theme='noir'][data-media-style],
+:is(html, .storefront-theme-root)[data-theme='live'][data-media-style] {
+  --theme-radius-media: 12px;
+  --theme-browse-radius: 12px;
+  --theme-media-border: color-mix(in srgb, var(--line) 58%, transparent);
+  --theme-media-shadow: none;
+  --theme-media-hover-shadow: none;
+  --theme-media-pressed-shadow: none;
 }
 
 :is(html, .storefront-theme-root)[data-motion-style='restrained'] {
