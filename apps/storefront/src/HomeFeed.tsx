@@ -75,11 +75,7 @@ function HomeHero({ siteName, slides }: { siteName: string; slides: PublicHeroSl
   });
 
   return (
-    <StorefrontHero
-      ariaLabel={siteName}
-      LinkComponent={HomeLink}
-      slides={sharedSlides}
-    />
+    <StorefrontHero ariaLabel={siteName} LinkComponent={HomeLink} slides={sharedSlides} />
   );
 }
 
