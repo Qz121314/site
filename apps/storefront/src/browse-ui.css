@@ -265,7 +265,6 @@
   -webkit-tap-highlight-color: transparent;
 }
 
-
 .browse-search-product-cover {
   position: relative;
   display: block;
@@ -364,7 +363,10 @@
   }
 
   .browse-section-card:hover {
-    box-shadow: var(--theme-art-media-hover-shadow, var(--theme-media-hover-shadow, none));
+    box-shadow: var(
+      --theme-art-media-hover-shadow,
+      var(--theme-media-hover-shadow, none)
+    );
   }
 
   .browse-section-card:hover .browse-section-card-media img {
@@ -374,7 +376,6 @@
   .browse-section-card:hover .browse-section-card-arrow {
     transform: translateX(2px);
   }
-
 }
 
 @media (max-width: 767px) {
