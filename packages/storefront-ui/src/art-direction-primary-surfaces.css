@@ -2,7 +2,6 @@
    Page CSS owns structure; Theme Center owns visual emphasis and media tone.
    This adapter consumes shared tokens and defines no independent theme recipe. */
 
-
 :is(html, .storefront-theme-root) .browse-section-card-media img {
   filter: var(--theme-art-media-filter);
   transform: scale(1);
@@ -28,7 +27,6 @@
 :is(html, .storefront-theme-root) .browse-section-card-arrow {
   color: var(--theme-art-on-media-primary);
 }
-
 
 :is(html, .storefront-theme-root) .browse-search-product-cover::before,
 :is(html, .storefront-theme-root) .section-product-cover::before {
