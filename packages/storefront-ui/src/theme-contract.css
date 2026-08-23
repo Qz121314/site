@@ -2,11 +2,7 @@
 
 :is(html, .storefront-theme-root) {
   --app-gutter: 18px;
-  --app-surface-raised: color-mix(
-    in srgb,
-    var(--surface) 96%,
-    var(--surface-soft)
-  );
+  --app-surface-raised: color-mix(in srgb, var(--surface) 96%, var(--surface-soft));
   --app-text-secondary: color-mix(in srgb, var(--text) 66%, var(--muted));
   --app-hairline: color-mix(in srgb, var(--line) 54%, transparent);
   --app-shadow-soft: 0 18px 50px color-mix(in srgb, #000 14%, transparent);
@@ -47,12 +43,11 @@
   --theme-tab-shadow: none;
   --theme-button-shadow: none;
   --theme-button-press-shadow: none;
-  --theme-button-focus-ring: 0 0 0 3px
-    color-mix(in srgb, var(--brand) 18%, transparent);
+  --theme-button-focus-ring: 0 0 0 3px color-mix(in srgb, var(--brand) 18%, transparent);
 }
 
 /* Runtime density is authoritative. Theme-key fallbacks keep Admin preview accurate. */
-:is(html, .storefront-theme-root)[data-density="compact"] {
+:is(html, .storefront-theme-root)[data-density='compact'] {
   --theme-section-space: 20px;
   --theme-card-gap-y: 14px;
   --theme-card-gap-x: 8px;
@@ -62,11 +57,11 @@
   --theme-desktop-media-size-large: 162px;
 }
 
-:is(html, .storefront-theme-root)[data-density="comfortable"],
+:is(html, .storefront-theme-root)[data-density='comfortable'],
 .storefront-theme-root:is(
-  [data-theme="noir"],
-  [data-theme="saas"],
-  [data-theme="travel"]
+  [data-theme='noir'],
+  [data-theme='saas'],
+  [data-theme='travel']
 ) {
   --theme-section-space: 30px;
   --theme-card-gap-y: 22px;
@@ -77,35 +72,23 @@
   --theme-desktop-media-size-large: 190px;
 }
 
-:is(html, .storefront-theme-root)[data-theme="marketplace"] {
+:is(html, .storefront-theme-root)[data-theme='marketplace'] {
   --theme-radius-card: 2px;
   --theme-radius-media: 0px;
   --theme-radius-control: 12px;
   --theme-radius-icon: 16px;
 }
 
-:is(html, .storefront-theme-root)[data-theme="noir"] {
+:is(html, .storefront-theme-root)[data-theme='noir'] {
   --theme-radius-card: 0px;
   --theme-radius-media: 0px;
   --theme-radius-control: 14px;
   --theme-radius-icon: 16px;
   --theme-radius-chip: 999px;
-  --theme-card-background: color-mix(
-    in srgb,
-    var(--surface) 98%,
-    var(--brand) 2%
-  );
+  --theme-card-background: color-mix(in srgb, var(--surface) 98%, var(--brand) 2%);
   --theme-card-border: color-mix(in srgb, var(--line) 94%, var(--brand) 6%);
-  --theme-media-background: color-mix(
-    in srgb,
-    var(--surface-soft) 94%,
-    black 6%
-  );
-  --theme-control-background: color-mix(
-    in srgb,
-    var(--surface) 96%,
-    transparent
-  );
+  --theme-media-background: color-mix(in srgb, var(--surface-soft) 94%, black 6%);
+  --theme-control-background: color-mix(in srgb, var(--surface) 96%, transparent);
   --app-surface-raised: color-mix(in srgb, var(--surface) 96%, var(--brand) 4%);
   --app-text-secondary: color-mix(in srgb, var(--text) 72%, var(--muted));
   --app-hairline: color-mix(in srgb, var(--line) 48%, transparent);
@@ -118,42 +101,30 @@
   --theme-tab-background: color-mix(in srgb, var(--surface) 88%, transparent);
 }
 
-:is(html, .storefront-theme-root)[data-theme="live"] {
+:is(html, .storefront-theme-root)[data-theme='live'] {
   --theme-radius-card: 0px;
   --theme-radius-media: 0px;
   --theme-radius-control: 2px;
   --theme-radius-icon: 12px;
   --theme-radius-chip: 2px;
-  --theme-card-background: color-mix(
-    in srgb,
-    var(--surface) 97%,
-    var(--brand) 3%
-  );
+  --theme-card-background: color-mix(in srgb, var(--surface) 97%, var(--brand) 3%);
   --theme-card-border: color-mix(in srgb, var(--line) 86%, var(--brand) 14%);
-  --theme-control-background: color-mix(
-    in srgb,
-    var(--surface) 96%,
-    var(--brand) 4%
-  );
+  --theme-control-background: color-mix(in srgb, var(--surface) 96%, var(--brand) 4%);
 }
 
-:is(html, .storefront-theme-root)[data-theme="saas"] {
+:is(html, .storefront-theme-root)[data-theme='saas'] {
   --theme-radius-card: 4px;
   --theme-radius-media: 2px;
   --theme-radius-control: 4px;
   --theme-radius-icon: 12px;
 }
 
-:is(html, .storefront-theme-root)[data-theme="travel"] {
+:is(html, .storefront-theme-root)[data-theme='travel'] {
   --theme-radius-card: 4px;
   --theme-radius-media: 2px;
   --theme-radius-control: 4px;
   --theme-radius-icon: 12px;
-  --theme-card-background: color-mix(
-    in srgb,
-    var(--surface) 97%,
-    var(--surface-soft) 3%
-  );
+  --theme-card-background: color-mix(in srgb, var(--surface) 97%, var(--surface-soft) 3%);
   --theme-control-background: color-mix(
     in srgb,
     var(--surface) 96%,
@@ -161,22 +132,14 @@
   );
 }
 
-:is(html, .storefront-theme-root)[data-theme="tech"] {
+:is(html, .storefront-theme-root)[data-theme='tech'] {
   --theme-radius-card: 0px;
   --theme-radius-media: 0px;
   --theme-radius-control: 2px;
   --theme-radius-icon: 12px;
-  --theme-card-background: color-mix(
-    in srgb,
-    var(--surface) 95%,
-    var(--brand) 5%
-  );
+  --theme-card-background: color-mix(in srgb, var(--surface) 95%, var(--brand) 5%);
   --theme-card-border: color-mix(in srgb, var(--line) 84%, var(--brand) 16%);
-  --theme-control-background: color-mix(
-    in srgb,
-    var(--surface) 95%,
-    var(--brand) 5%
-  );
+  --theme-control-background: color-mix(in srgb, var(--surface) 95%, var(--brand) 5%);
   --theme-header-background: color-mix(
     in srgb,
     var(--page-bg, var(--surface)) 95%,
@@ -191,18 +154,16 @@
 
 /* Published UI Recipe. These semantic layers override preset fallbacks without
    allowing business layout or content structure to drift. */
-:is(html, .storefront-theme-root)[data-button-style="refined"] {
+:is(html, .storefront-theme-root)[data-button-style='refined'] {
   --theme-radius-control: 12px;
   --theme-button-height: 52px;
   --theme-button-border-width: 0px;
   --theme-button-letter-spacing: -0.012em;
-  --theme-button-shadow: 0 4px 14px
-    color-mix(in srgb, var(--brand) 12%, transparent);
-  --theme-button-press-shadow: 0 2px 7px
-    color-mix(in srgb, var(--brand) 9%, transparent);
+  --theme-button-shadow: 0 4px 14px color-mix(in srgb, var(--brand) 12%, transparent);
+  --theme-button-press-shadow: 0 2px 7px color-mix(in srgb, var(--brand) 9%, transparent);
 }
 
-:is(html, .storefront-theme-root)[data-button-style="minimal"] {
+:is(html, .storefront-theme-root)[data-button-style='minimal'] {
   --theme-radius-control: 4px;
   --theme-button-height: 48px;
   --theme-button-border-width: 1px;
@@ -211,18 +172,16 @@
   --theme-button-press-shadow: none;
 }
 
-:is(html, .storefront-theme-root)[data-button-style="soft-pill"] {
+:is(html, .storefront-theme-root)[data-button-style='soft-pill'] {
   --theme-radius-control: 999px;
   --theme-button-height: 52px;
   --theme-button-border-width: 0px;
   --theme-button-letter-spacing: -0.008em;
-  --theme-button-shadow: 0 3px 12px
-    color-mix(in srgb, var(--brand) 10%, transparent);
-  --theme-button-press-shadow: 0 2px 6px
-    color-mix(in srgb, var(--brand) 8%, transparent);
+  --theme-button-shadow: 0 3px 12px color-mix(in srgb, var(--brand) 10%, transparent);
+  --theme-button-press-shadow: 0 2px 6px color-mix(in srgb, var(--brand) 8%, transparent);
 }
 
-:is(html, .storefront-theme-root)[data-media-style="precise"] {
+:is(html, .storefront-theme-root)[data-media-style='precise'] {
   --theme-radius-media: 0px;
   --theme-browse-radius: 0px;
   --theme-media-border: color-mix(in srgb, var(--line) 48%, transparent);
@@ -231,31 +190,25 @@
   --theme-media-pressed-shadow: none;
 }
 
-:is(html, .storefront-theme-root)[data-media-style="soft"] {
+:is(html, .storefront-theme-root)[data-media-style='soft'] {
   --theme-radius-media: 12px;
   --theme-browse-radius: 14px;
   --theme-media-border: color-mix(in srgb, var(--line) 42%, transparent);
-  --theme-media-shadow: 0 4px 14px
-    color-mix(in srgb, var(--text) 4%, transparent);
-  --theme-media-hover-shadow: 0 7px 20px
-    color-mix(in srgb, var(--text) 6%, transparent);
-  --theme-media-pressed-shadow: 0 2px 8px
-    color-mix(in srgb, var(--text) 4%, transparent);
+  --theme-media-shadow: 0 4px 14px color-mix(in srgb, var(--text) 4%, transparent);
+  --theme-media-hover-shadow: 0 7px 20px color-mix(in srgb, var(--text) 6%, transparent);
+  --theme-media-pressed-shadow: 0 2px 8px color-mix(in srgb, var(--text) 4%, transparent);
 }
 
-:is(html, .storefront-theme-root)[data-media-style="editorial"] {
+:is(html, .storefront-theme-root)[data-media-style='editorial'] {
   --theme-radius-media: 14px;
   --theme-browse-radius: 10px;
   --theme-media-border: color-mix(in srgb, var(--line) 38%, transparent);
-  --theme-media-shadow: 0 6px 18px
-    color-mix(in srgb, var(--text) 5%, transparent);
-  --theme-media-hover-shadow: 0 10px 28px
-    color-mix(in srgb, var(--text) 8%, transparent);
-  --theme-media-pressed-shadow: 0 3px 10px
-    color-mix(in srgb, var(--text) 5%, transparent);
+  --theme-media-shadow: 0 6px 18px color-mix(in srgb, var(--text) 5%, transparent);
+  --theme-media-hover-shadow: 0 10px 28px color-mix(in srgb, var(--text) 8%, transparent);
+  --theme-media-pressed-shadow: 0 3px 10px color-mix(in srgb, var(--text) 5%, transparent);
 }
 
-:is(html, .storefront-theme-root)[data-motion-style="restrained"] {
+:is(html, .storefront-theme-root)[data-motion-style='restrained'] {
   --app-motion-fast: 110ms;
   --app-motion-base: 180ms;
   --app-motion-slow: 320ms;
@@ -263,7 +216,7 @@
   --theme-press-brightness: 0.94;
 }
 
-:is(html, .storefront-theme-root)[data-motion-style="gentle"] {
+:is(html, .storefront-theme-root)[data-motion-style='gentle'] {
   --app-motion-fast: 150ms;
   --app-motion-base: 240ms;
   --app-motion-slow: 440ms;
@@ -271,7 +224,7 @@
   --theme-press-brightness: 0.96;
 }
 
-:is(html, .storefront-theme-root)[data-motion-style="active"] {
+:is(html, .storefront-theme-root)[data-motion-style='active'] {
   --app-motion-fast: 100ms;
   --app-motion-base: 200ms;
   --app-motion-slow: 360ms;
@@ -279,19 +232,19 @@
   --theme-press-brightness: 0.91;
 }
 
-:is(html, .storefront-theme-root)[data-navigation-style="quiet"] {
+:is(html, .storefront-theme-root)[data-navigation-style='quiet'] {
   --theme-nav-indicator-opacity: 0;
   --theme-nav-active-surface: transparent;
   --theme-nav-active-radius: 0px;
 }
 
-:is(html, .storefront-theme-root)[data-navigation-style="tinted"] {
+:is(html, .storefront-theme-root)[data-navigation-style='tinted'] {
   --theme-nav-indicator-opacity: 0.72;
   --theme-nav-active-surface: color-mix(in srgb, var(--brand) 10%, transparent);
   --theme-nav-active-radius: 10px;
 }
 
-:is(html, .storefront-theme-root)[data-navigation-style="solid"] {
+:is(html, .storefront-theme-root)[data-navigation-style='solid'] {
   --theme-nav-indicator-opacity: 1;
   --theme-nav-active-surface: color-mix(in srgb, var(--brand) 18%, transparent);
   --theme-nav-active-radius: 10px;
@@ -343,9 +296,7 @@
 }
 
 :is(html, .storefront-theme-root)
-  :is(.cta-button, .product-detail-route-action .cta-button):active:not(
-    :disabled
-  ) {
+  :is(.cta-button, .product-detail-route-action .cta-button):active:not(:disabled) {
   box-shadow: var(--theme-button-press-shadow);
   filter: brightness(var(--theme-press-brightness, 0.94));
   transform: scale(var(--theme-press-scale, 0.985));
@@ -390,11 +341,7 @@
 }
 
 :is(html, .storefront-theme-root)
-  :is(
-    .home-product-tile,
-    .section-product-card,
-    .browse-search-product-card
-  ):active {
+  :is(.home-product-tile, .section-product-card, .browse-search-product-card):active {
   filter: brightness(var(--theme-press-brightness, 0.94));
   transform: scale(var(--theme-press-scale, 0.985));
 }
