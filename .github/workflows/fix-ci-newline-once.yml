@@ -1,3 +1,4 @@
+# Trigger the cleanup workflow after GitHub has registered it on this branch.
 name: One-shot workflow newline cleanup
 
 on:
