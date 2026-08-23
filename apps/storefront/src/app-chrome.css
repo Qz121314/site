@@ -11,11 +11,11 @@
 }
 
 :is(html, .storefront-theme-root) .app-shell > .topbar {
-  border-bottom-color: color-mix(in srgb, var(--line) 62%, transparent);
-  background: var(--theme-header-background);
+  border-bottom-color: var(--theme-primary-header-border);
+  background: var(--theme-primary-header-background);
   box-shadow: var(--theme-primary-header-shadow, none);
-  backdrop-filter: blur(24px) saturate(1.12);
-  -webkit-backdrop-filter: blur(24px) saturate(1.12);
+  backdrop-filter: var(--theme-primary-header-backdrop);
+  -webkit-backdrop-filter: var(--theme-primary-header-backdrop);
 }
 
 :is(html, .storefront-theme-root) .app-shell .brand-lockup {
@@ -215,11 +215,11 @@
   :is(html, .storefront-theme-root) .storefront-bottom-chrome > .bottom-nav {
     padding: 4px max(8px, env(safe-area-inset-right))
       calc(5px + env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
-    border-top-color: color-mix(in srgb, var(--line) 64%, transparent);
-    background: var(--theme-tab-background);
+    border-top-color: var(--theme-primary-navigation-border);
+    background: var(--theme-primary-navigation-background);
     box-shadow: var(--theme-primary-navigation-shadow);
-    backdrop-filter: blur(24px) saturate(1.12);
-    -webkit-backdrop-filter: blur(24px) saturate(1.12);
+    backdrop-filter: var(--theme-primary-navigation-backdrop);
+    -webkit-backdrop-filter: var(--theme-primary-navigation-backdrop);
   }
 
   :is(html, .storefront-theme-root) .storefront-bottom-chrome > .bottom-nav a {
@@ -242,7 +242,7 @@
     > .bottom-nav
     a.is-active
     .bottom-nav-icon {
-    background: var(--theme-nav-active-surface, transparent);
+    background: var(--theme-primary-navigation-active-surface);
     transform: translateY(-1px) scale(1.02);
   }
 

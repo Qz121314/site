@@ -2,10 +2,16 @@
 
 :is(html, .storefront-theme-root) {
   --theme-primary-header-border: var(--app-hairline, var(--line));
+  --theme-primary-header-background: var(--theme-header-background);
+  --theme-primary-header-backdrop: blur(18px) saturate(1.04);
   --theme-primary-header-shadow: none;
   --theme-primary-search-shadow: var(--theme-control-shadow);
   --theme-primary-search-focus-shadow: var(--theme-button-focus-ring);
   --theme-primary-navigation-shadow: none;
+  --theme-primary-navigation-background: var(--theme-tab-background);
+  --theme-primary-navigation-border: color-mix(in srgb, var(--line) 64%, transparent);
+  --theme-primary-navigation-backdrop: blur(18px) saturate(1.04);
+  --theme-primary-navigation-active-surface: var(--theme-nav-active-surface, transparent);
   --theme-primary-logo-radius: 3px;
   --theme-primary-faq-background: var(--surface);
   --theme-primary-faq-open-background: color-mix(
@@ -89,9 +95,29 @@
   --theme-primary-detail-media-border: var(--theme-media-border);
   --theme-primary-detail-media-shadow: var(--theme-media-shadow);
   --theme-primary-detail-cta-surface: var(--theme-card-background);
+  --theme-primary-detail-cta-bar-background: linear-gradient(
+    to top,
+    var(--theme-detail-cta-surface, color-mix(in srgb, var(--surface) 96%, transparent))
+      0%,
+    color-mix(in srgb, var(--theme-primary-detail-cta-surface) 94%, transparent) 62%,
+    transparent 100%
+  );
   --theme-primary-detail-cta-bar-shadow: none;
   --theme-primary-detail-cta-background: var(--brand);
   --theme-primary-detail-cta-color: var(--theme-on-brand, #000);
+  --theme-primary-detail-cta-border: color-mix(
+    in srgb,
+    var(--theme-primary-detail-cta-color) 12%,
+    transparent
+  );
+  --theme-primary-detail-cta-shadow: var(--theme-button-shadow, none);
+  --theme-primary-detail-cta-focus-ring: 0 0 0 3px
+    color-mix(in srgb, var(--theme-primary-detail-cta-color) 24%, transparent);
+  --theme-primary-detail-cta-arrow-background: color-mix(
+    in srgb,
+    var(--theme-primary-detail-cta-color) 13%,
+    transparent
+  );
   --theme-primary-install-background: color-mix(in srgb, var(--surface) 94%, transparent);
   --theme-primary-install-border: color-mix(in srgb, var(--line) 66%, transparent);
   --theme-primary-install-shadow: var(--app-shadow-soft);
@@ -121,7 +147,28 @@
 ) {
   --theme-primary-logo-radius: 3px;
   --theme-primary-header-border: color-mix(in srgb, var(--line) 62%, transparent);
+  --theme-primary-header-background: color-mix(in srgb, var(--page-bg) 96%, transparent);
+  --theme-primary-header-backdrop: blur(16px) saturate(1.02);
   --theme-primary-header-shadow: none;
+  --theme-primary-navigation-background: color-mix(
+    in srgb,
+    var(--page-bg) 96%,
+    transparent
+  );
+  --theme-primary-navigation-border: color-mix(in srgb, var(--line) 72%, transparent);
+  --theme-primary-navigation-backdrop: blur(16px) saturate(1.02);
+  --theme-primary-navigation-active-surface: color-mix(
+    in srgb,
+    var(--brand) 10%,
+    transparent
+  );
+  --theme-primary-detail-cta-bar-background: linear-gradient(
+    to top,
+    var(--page-bg) 0%,
+    color-mix(in srgb, var(--page-bg) 97%, transparent) 72%,
+    transparent 100%
+  );
+  --theme-primary-detail-cta-shadow: none;
   --theme-primary-faq-open-background: color-mix(
     in srgb,
     var(--surface) 98%,
@@ -162,6 +209,15 @@
 }
 
 :is(html, .storefront-theme-root)[data-theme='velvet'] {
+  --theme-primary-navigation-active-surface: color-mix(
+    in srgb,
+    var(--brand) 14%,
+    transparent
+  );
+  --theme-primary-detail-cta-border: color-mix(in srgb, #f8e1e7 9%, transparent);
+  --theme-primary-detail-cta-focus-ring: 0 0 0 3px
+    color-mix(in srgb, var(--brand) 24%, transparent);
+  --theme-primary-detail-cta-arrow-background: rgb(255 255 255 / 12%);
   --theme-primary-faq-open-background: color-mix(
     in srgb,
     var(--surface) 96%,
@@ -192,6 +248,15 @@
 }
 
 :is(html, .storefront-theme-root)[data-theme='midnight'] {
+  --theme-primary-navigation-active-surface: color-mix(
+    in srgb,
+    var(--brand) 12%,
+    transparent
+  );
+  --theme-primary-detail-cta-border: color-mix(in srgb, #e7edff 8%, transparent);
+  --theme-primary-detail-cta-focus-ring: 0 0 0 3px
+    color-mix(in srgb, var(--brand) 22%, transparent);
+  --theme-primary-detail-cta-arrow-background: rgb(255 255 255 / 11%);
   --theme-primary-faq-open-background: color-mix(
     in srgb,
     var(--surface) 97%,
@@ -285,7 +350,28 @@
 }
 
 :is(html, .storefront-theme-root)[data-theme='pearl'] {
+  --theme-primary-header-background: color-mix(in srgb, var(--surface) 97%, transparent);
+  --theme-primary-header-backdrop: blur(14px) saturate(1.01);
   --theme-primary-header-shadow: none;
+  --theme-primary-navigation-background: color-mix(
+    in srgb,
+    var(--surface) 97%,
+    transparent
+  );
+  --theme-primary-navigation-border: color-mix(in srgb, var(--brand) 12%, var(--line));
+  --theme-primary-navigation-backdrop: blur(14px) saturate(1.01);
+  --theme-primary-navigation-active-surface: color-mix(
+    in srgb,
+    var(--brand) 10%,
+    transparent
+  );
+  --theme-primary-detail-cta-bar-background: linear-gradient(
+    to top,
+    var(--page-bg) 0%,
+    color-mix(in srgb, var(--page-bg) 98%, transparent) 72%,
+    transparent 100%
+  );
+  --theme-primary-detail-cta-shadow: none;
   --theme-primary-faq-open-background: color-mix(
     in srgb,
     var(--surface) 94%,

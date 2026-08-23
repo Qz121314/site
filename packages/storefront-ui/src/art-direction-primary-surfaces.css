@@ -98,6 +98,7 @@
 }
 
 :is(html, .storefront-theme-root) .detail-media-stage > img,
+:is(html, .storefront-theme-root) .detail-mobile-media-item > img,
 :is(html, .storefront-theme-root) .detail-media-thumbnail > img,
 :is(html, .storefront-theme-root) .product-detail-body .markdown-content img {
   filter: var(--theme-art-media-filter);

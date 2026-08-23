@@ -23,7 +23,7 @@ test('catalog cards and filters share one touch-first visual contract', async ()
     /box-shadow: var\(--theme-art-media-shadow, var\(--catalog-card-shadow\)\)/u,
   );
   assert.match(polish, /font-weight: var\(--catalog-card-title-weight\)/u);
-  assert.match(polish, /box-shadow: var\(--catalog-card-shadow-pressed\)/u);
+  assert.match(polish, /box-shadow: var\(--theme-art-media-press-shadow\)/u);
 
   assert.match(polish, /\.section-category-filter button \{[\s\S]*border-radius: 999px/u);
   assert.match(

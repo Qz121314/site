@@ -31,7 +31,7 @@
     .browse-search-product-cover::after,
     .section-product-cover::after
   ) {
-  border-color: color-mix(in srgb, var(--line) 34%, transparent);
+  border-color: var(--theme-art-media-frame);
 }
 
 :is(html, .storefront-theme-root)
@@ -59,7 +59,7 @@
     .section-product-card:active .section-product-cover
   ) {
   opacity: 0.94;
-  box-shadow: var(--catalog-card-shadow-pressed);
+  box-shadow: var(--theme-art-media-press-shadow);
   transform: scale(var(--catalog-card-press-scale));
 }
 
