@@ -1,11 +1,15 @@
 import { useQuery } from '@tanstack/react-query';
 import {
+  StorefrontHero,
+  StorefrontHomeProductTile,
+  StorefrontHomeShortcut,
+  type StorefrontHeroSlide,
+} from '@site/storefront-ui';
+import {
   type AnchorHTMLAttributes,
   type MouseEvent as ReactMouseEvent,
   useEffect,
   useMemo,
-  useRef,
-  useState,
 } from 'react';
 import {
   publicImageVariantUrl,
@@ -35,131 +39,47 @@ function HomeLink({
 
 function HomeHero({ siteName, slides }: { siteName: string; slides: PublicHeroSlide[] }) {
   const availableSlides = slides.filter((slide) => slide.mediaUrl.trim());
-  const viewportRef = useRef<HTMLDivElement | null>(null);
-  const [activeIndex, setActiveIndex] = useState(0);
+  const sharedSlides: StorefrontHeroSlide[] = availableSlides.map((slide, index) => {
+    const mediaFallback = (
+      <span className="hero-carousel-media-fallback" aria-hidden="true" />
+    );
+    const media =
+      slide.mediaKind === 'video' ? (
+        <ResilientVideo
+          aria-label={slide.title || siteName}
+          autoPlay={index === 0}
+          fallback={mediaFallback}
+          loop
+          muted
+          playsInline
+          preload={index === 0 ? 'auto' : 'none'}
+          src={slide.mediaUrl}
+        />
+      ) : (
+        <ResilientImage
+          alt={slide.title || ''}
+          fallback={mediaFallback}
+          fetchPriority={index === 0 ? 'high' : 'low'}
+          loading={index === 0 ? 'eager' : 'lazy'}
+          src={slide.mediaUrl}
+        />
+      );
 
-  if (availableSlides.length === 0) return null;
-
-  function scrollToSlide(index: number) {
-    const viewport = viewportRef.current;
-    if (!viewport) return;
-    const normalizedIndex = (index + availableSlides.length) % availableSlides.length;
-    viewport.scrollTo({
-      left: viewport.clientWidth * normalizedIndex,
-      behavior: 'smooth',
-    });
-    setActiveIndex(normalizedIndex);
-  }
+    return {
+      id: slide.id,
+      media,
+      title: slide.title,
+      description: slide.description,
+      cta: slide.cta,
+    };
+  });
 
   return (
-    <section
-      className={`hero-carousel${availableSlides.length === 1 ? ' is-single' : ''}`}
-      aria-label={siteName}
-    >
-      <div
-        className="hero-carousel-viewport"
-        ref={viewportRef}
-        onScroll={(event) => {
-          const width = event.currentTarget.clientWidth;
-          if (!width) return;
-          const nextIndex = Math.max(
-            0,
-            Math.min(
-              availableSlides.length - 1,
-              Math.round(event.currentTarget.scrollLeft / width),
-            ),
-          );
-          if (nextIndex !== activeIndex) setActiveIndex(nextIndex);
-        }}
-      >
-        <div className="hero-carousel-track">
-          {availableSlides.map((slide, index) => {
-            const hasCopy = Boolean(
-              slide.title?.trim() || slide.description?.trim() || slide.cta,
-            );
-            const mediaFallback = (
-              <span className="hero-carousel-media-fallback" aria-hidden="true" />
-            );
-            return (
-              <article
-                className={`hero-carousel-slide${index === activeIndex ? ' is-active' : ''}`}
-                key={slide.id}
-              >
-                <div className="hero-carousel-media">
-                  {slide.mediaKind === 'video' ? (
-                    <ResilientVideo
-                      key={`${slide.id}:${index === activeIndex ? 'active' : 'inactive'}`}
-                      aria-label={slide.title || siteName}
-                      autoPlay={index === activeIndex}
-                      fallback={mediaFallback}
-                      loop
-                      muted
-                      playsInline
-                      preload={index === activeIndex ? 'auto' : 'none'}
-                      src={slide.mediaUrl}
-                    />
-                  ) : (
-                    <ResilientImage
-                      alt={slide.title || ''}
-                      fallback={mediaFallback}
-                      fetchPriority={index === 0 ? 'high' : 'low'}
-                      loading={index === 0 ? 'eager' : 'lazy'}
-                      src={slide.mediaUrl}
-                    />
-                  )}
-                </div>
-                {hasCopy ? (
-                  <div className="hero-carousel-overlay">
-                    <div className="hero-carousel-copy">
-                      {slide.title?.trim() ? <h2>{slide.title}</h2> : null}
-                      {slide.description?.trim() ? <p>{slide.description}</p> : null}
-                      {slide.cta ? (
-                        <HomeLink className="hero-carousel-cta" href={slide.cta.href}>
-                          {slide.cta.label}
-                        </HomeLink>
-                      ) : null}
-                    </div>
-                  </div>
-                ) : null}
-              </article>
-            );
-          })}
-        </div>
-      </div>
-
-      {availableSlides.length > 1 ? (
-        <>
-          <button
-            className="hero-carousel-arrow is-prev"
-            type="button"
-            aria-label="Previous"
-            onClick={() => scrollToSlide(activeIndex - 1)}
-          >
-            ‹
-          </button>
-          <button
-            className="hero-carousel-arrow is-next"
-            type="button"
-            aria-label="Next"
-            onClick={() => scrollToSlide(activeIndex + 1)}
-          >
-            ›
-          </button>
-          <div className="hero-carousel-dots">
-            {availableSlides.map((slide, index) => (
-              <button
-                className={`hero-carousel-dot${index === activeIndex ? ' is-active' : ''}`}
-                type="button"
-                aria-label={`${index + 1} / ${availableSlides.length}`}
-                aria-current={index === activeIndex ? 'true' : undefined}
-                key={slide.id}
-                onClick={() => scrollToSlide(index)}
-              />
-            ))}
-          </div>
-        </>
-      ) : null}
-    </section>
+    <StorefrontHero
+      ariaLabel={siteName}
+      LinkComponent={HomeLink}
+      slides={sharedSlides}
+    />
   );
 }
 
@@ -211,23 +131,21 @@ function HomeShortcuts({ sections }: { sections: PublicSection[] }) {
     <div className="home-shortcut-zone">
       <nav className="home-shortcuts home-shortcut-hero" aria-label="Sections">
         {sections.map((section) => (
-          <HomeLink
-            className="home-shortcut"
+          <StorefrontHomeShortcut
             href={sectionHref(section)}
+            icon={<SectionIcon section={section} />}
             key={section.id}
-          >
-            <span className="home-shortcut-icon">
-              <SectionIcon section={section} />
-            </span>
-            <span className="home-shortcut-label">{section.name}</span>
-          </HomeLink>
+            label={section.name}
+            LinkComponent={HomeLink}
+          />
         ))}
-        <HomeLink className="home-shortcut is-more" href="/browse/">
-          <span className="home-shortcut-icon">
-            <MoreIcon />
-          </span>
-          <span className="home-shortcut-label">{SYSTEM_UI.more}</span>
-        </HomeLink>
+        <StorefrontHomeShortcut
+          href="/browse/"
+          icon={<MoreIcon />}
+          isMore
+          label={SYSTEM_UI.more}
+          LinkComponent={HomeLink}
+        />
       </nav>
     </div>
   );
@@ -250,8 +168,10 @@ function HomeProductTile({
     : undefined;
 
   return (
-    <HomeLink className="home-product-tile" href={productHref(product)}>
-      <span className="home-product-cover">
+    <StorefrontHomeProductTile
+      href={productHref(product)}
+      LinkComponent={HomeLink}
+      media={
         <ResilientImage
           alt=""
           fallback={<span className="home-product-cover-fallback" aria-hidden="true" />}
@@ -263,11 +183,9 @@ function HomeProductTile({
           srcSet={srcSet}
           width={640}
         />
-      </span>
-      <span className="home-product-meta">
-        <strong className="home-product-title">{product.title}</strong>
-      </span>
-    </HomeLink>
+      }
+      title={product.title}
+    />
   );
 }
 
