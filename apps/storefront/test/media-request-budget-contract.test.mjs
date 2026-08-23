@@ -11,12 +11,12 @@ test('hero active video controls media preload', async () => {
     ),
   ]);
 
-  assert.match(homeSource, /autoPlay={index === 0}/u);
-  assert.match(homeSource, /preload={index === 0 \? 'auto' : 'none'}/u);
+  assert.match(homeSource, /autoPlay=\{index === 0\}/u);
+  assert.match(homeSource, /preload=\{index === 0 \? 'auto' : 'none'\}/u);
   assert.match(sharedSource, /index === activeIndex && pageVisible/u);
   assert.match(sharedSource, /void video\.play\(\)\.catch/u);
   assert.match(sharedSource, /video\.pause\(\)/u);
-  assert.doesNotMatch(homeSource, /preload={index === 0 \? 'auto' : 'metadata'}/u);
+  assert.doesNotMatch(homeSource, /preload=\{index === 0 \? 'auto' : 'metadata'\}/u);
 });
 
 test('home reserves high image priority for one meaningful LCP candidate', async () => {
