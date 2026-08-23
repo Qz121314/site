@@ -8,7 +8,6 @@ import {
   useState,
 } from 'react';
 import {
-  loadSectionSnapshot,
   publicImageVariantUrl,
   type PublicHeroSlide,
   type PublicProductSummary,
@@ -285,7 +284,10 @@ function HomeRecommendationRail({
 }) {
   const query = useQuery({
     queryKey: ['storefront-section', bootstrap.pointer.contentVersion, section.id],
-    queryFn: ({ signal }) => loadSectionSnapshot(bootstrap, section.id, signal),
+    queryFn: async ({ signal }) => {
+        const { loadSectionSnapshot } = await import('./content-route');
+        return loadSectionSnapshot(bootstrap, section.id, signal);
+      },
     enabled: initialProducts.length === 0,
     staleTime: Number.POSITIVE_INFINITY,
   });

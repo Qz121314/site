@@ -2,14 +2,16 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
   PublicContentError,
-  loadFaqSnapshot,
-  loadProductSnapshot,
-  loadSectionSnapshot,
   loadStorefrontBootstrap,
   normalizeContentOrigin,
   publicContentUrl,
   resolveMediaBaseUrl,
 } from '../src/content.ts';
+import {
+  loadFaqSnapshot,
+  loadProductSnapshot,
+  loadSectionSnapshot,
+} from '../src/content-route.ts';
 
 const LEGACY_VERSION = '20260807074900-abcdef123456-deadbeef';
 const POINTER_VERSION = '20260807090000-pointer-feedbeef';
