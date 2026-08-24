@@ -14,9 +14,6 @@ import {
   type PublishVersion,
 } from './publish-api';
 
-const TrafficStatsView = lazy(() =>
-  import('./TrafficStatsView').then((module) => ({ default: module.TrafficStatsView })),
-);
 const SiteSettingsView = lazy(() =>
   import('./SiteSettingsView').then((module) => ({ default: module.SiteSettingsView })),
 );
@@ -61,7 +58,6 @@ const ConversionPoolView = lazy(() =>
 type DynamicViewKind = 'products' | 'categories' | 'tags' | 'conversion-pool';
 
 type AdminView =
-  | 'traffic'
   | 'settings'
   | 'theme'
   | 'assets'
@@ -101,7 +97,6 @@ type HistoryMode = 'push' | 'replace';
 
 const ADMIN_VIEW_STORAGE_KEY = 'site.admin.lastView';
 const FIXED_ADMIN_VIEWS = new Set<AdminView>([
-  'traffic',
   'settings',
   'theme',
   'assets',
@@ -150,7 +145,7 @@ function parseAdminView(value: string | null): AdminView | null {
 }
 
 function readInitialAdminView(): AdminView {
-  if (typeof window === 'undefined') return 'traffic';
+  if (typeof window === 'undefined') return 'settings';
   const fromHash = parseAdminView(window.location.hash);
   if (fromHash) return fromHash;
   try {
@@ -159,7 +154,7 @@ function readInitialAdminView(): AdminView {
   } catch {
     // Storage may be unavailable in privacy-restricted contexts.
   }
-  return 'traffic';
+  return 'settings';
 }
 
 function adminViewHash(view: AdminView): string {
@@ -186,7 +181,6 @@ function writeAdminViewLocation(view: AdminView, mode: HistoryMode): void {
 
 function getViewContext(view: AdminView, sections: AdminSection[]) {
   const fixed: Partial<Record<AdminView, { eyebrow: string; title: string }>> = {
-    traffic: { eyebrow: '流量分发账本', title: '流量统计' },
     settings: { eyebrow: '全站配置', title: '站点设置' },
     theme: { eyebrow: '用户前端视觉', title: '主题中心' },
     assets: { eyebrow: 'R2 扫描与清理', title: '素材库管理' },
@@ -573,13 +567,6 @@ export function Dashboard({
             全局管理
           </div>
           <button
-            className={activeView === 'traffic' ? 'is-active' : undefined}
-            type="button"
-            onClick={() => requestView('traffic')}
-          >
-            流量统计
-          </button>
-          <button
             className={activeView === 'settings' ? 'is-active' : undefined}
             type="button"
             onClick={() => requestView('settings')}
@@ -713,175 +700,170 @@ export function Dashboard({
                 未保存修改
               </span>
             ) : null}
-            {activeView !== 'traffic' ? (
-              <>
-                <div className="publish-version-control">
-                  <button
-                    className={`publish-status-chip${publishStatusError || publishStatus?.modules.some((module) => module.lastJob?.status === 'failed') ? ' is-error' : ''}${(publishStatus && !publishStatus.isCurrent) || unsaved.isDirty ? ' is-dirty' : ''}`}
-                    type="button"
-                    aria-expanded={publishPanelOpen}
-                    onClick={() => {
-                      const next = !publishPanelOpen;
-                      setPublishPanelOpen(next);
-                      if (next) void loadPublishStatus();
-                    }}
-                  >
-                    {publishStatusLabel(
-                      publishStatus,
-                      publishing,
-                      unsaved.isDirty,
-                      Boolean(publishStatusError),
-                    )}
-                  </button>
-                  {publishPanelOpen ? (
-                    <div className="publish-version-popover">
-                      <div className="publish-version-popover-title">
-                        <div>
-                          <strong>板块发布</strong>
-                          <small>每个板块独立保留最近 3 版</small>
-                        </div>
-                        <button
-                          type="button"
-                          onClick={() => setPublishPanelOpen(false)}
-                          aria-label="关闭"
-                        >
-                          ×
-                        </button>
-                      </div>
-                      {publishStatusError ? (
-                        <div className="publish-status-error" role="alert">
-                          <span>{publishStatusError}</span>
-                          <button type="button" onClick={() => void loadPublishStatus()}>
-                            重新读取
-                          </button>
-                        </div>
-                      ) : null}
-                      <div className="publish-module-selector">
-                        <label>
-                          <span>查看板块</span>
-                          <select
-                            value={historyModuleKey}
-                            onChange={(event) => setHistoryModuleKey(event.target.value)}
-                          >
-                            {publishStatus?.modules.map((module) => (
-                              <option key={module.key} value={module.key}>
-                                {module.label} · {moduleStateLabel(module)}
-                              </option>
-                            ))}
-                          </select>
-                        </label>
-                        <button
-                          className="secondary-button"
-                          type="button"
-                          disabled={
-                            !historyModule ||
-                            historyModule.isCurrent ||
-                            publishing ||
-                            rollingBack ||
-                            unsaved.isDirty
-                          }
-                          onClick={() =>
-                            historyModule && void handlePublish(historyModule.key)
-                          }
-                        >
-                          发布此板块
-                        </button>
-                      </div>
-                      <div className="publish-module-summary">
-                        <span>
-                          {historyModule ? moduleStateLabel(historyModule) : '未选择'}
-                        </span>
-                        <small>
-                          {historyModule?.publishedAt
-                            ? `当前版本 ${formatVersionTime(historyModule.publishedAt)}`
-                            : '尚无当前版本'}
-                        </small>
-                      </div>
-                      <div className="publish-version-list">
-                        {historyModule?.versions.length ? (
-                          historyModule.versions.map((version) => (
-                            <div
-                              className={`publish-version-row${version.isCurrent ? ' is-current' : ''}`}
-                              key={version.contentVersion}
-                            >
-                              <div>
-                                <strong>{formatVersionTime(version.publishedAt)}</strong>
-                                <small>{versionCode(version)}</small>
-                              </div>
-                              <span>
-                                {version.isCurrent ? '当前' : `${version.objectCount} 项`}
-                              </span>
-                              <button
-                                type="button"
-                                disabled={
-                                  version.isCurrent ||
-                                  publishing ||
-                                  rollingBack ||
-                                  unsaved.isDirty
-                                }
-                                onClick={() =>
-                                  setRollbackTarget({
-                                    moduleKey: historyModule.key,
-                                    moduleLabel: historyModule.label,
-                                    version,
-                                  })
-                                }
-                                title={unsaved.isDirty ? '请先处理未保存修改' : undefined}
-                              >
-                                {version.isCurrent ? '使用中' : '回退'}
-                              </button>
-                            </div>
-                          ))
-                        ) : (
-                          <div className="publish-version-empty">该板块尚无发布版本</div>
-                        )}
-                      </div>
-                      <div className="publish-module-footer">
-                        <span>{publishStatus?.dirtyCount ?? 0} 个板块待发布</span>
-                        <button
-                          className="primary-button"
-                          type="button"
-                          disabled={
-                            publishStatus?.isCurrent === true ||
-                            publishing ||
-                            rollingBack ||
-                            unsaved.isDirty
-                          }
-                          onClick={() => void handlePublish('all')}
-                        >
-                          发布全部待更新
-                        </button>
-                      </div>
-                    </div>
-                  ) : null}
-                </div>
+            <>
+              <div className="publish-version-control">
                 <button
-                  className="primary-button storefront-publish-button"
+                  className={`publish-status-chip${publishStatusError || publishStatus?.modules.some((module) => module.lastJob?.status === 'failed') ? ' is-error' : ''}${(publishStatus && !publishStatus.isCurrent) || unsaved.isDirty ? ' is-dirty' : ''}`}
                   type="button"
-                  onClick={() => void handlePublish(contextPublishKey)}
-                  disabled={
-                    publishing ||
-                    loggingOut ||
-                    rollingBack ||
-                    unsaved.isDirty ||
-                    contextIsCurrent
-                  }
-                  title={unsaved.isDirty ? unsavedTitle : undefined}
+                  aria-expanded={publishPanelOpen}
+                  onClick={() => {
+                    const next = !publishPanelOpen;
+                    setPublishPanelOpen(next);
+                    if (next) void loadPublishStatus();
+                  }}
                 >
-                  {publishingKey === contextPublishKey ||
-                  (contextPublishKey === 'all' && publishingKey === 'all')
-                    ? '发布中…'
-                    : unsaved.isDirty
-                      ? '请先保存'
-                      : contextIsCurrent
-                        ? '当前板块已最新'
-                        : modulePublishButtonLabel(
-                            contextPublishModule,
-                            contextPublishKey,
-                          )}
+                  {publishStatusLabel(
+                    publishStatus,
+                    publishing,
+                    unsaved.isDirty,
+                    Boolean(publishStatusError),
+                  )}
                 </button>
-              </>
-            ) : null}
+                {publishPanelOpen ? (
+                  <div className="publish-version-popover">
+                    <div className="publish-version-popover-title">
+                      <div>
+                        <strong>板块发布</strong>
+                        <small>每个板块独立保留最近 3 版</small>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setPublishPanelOpen(false)}
+                        aria-label="关闭"
+                      >
+                        ×
+                      </button>
+                    </div>
+                    {publishStatusError ? (
+                      <div className="publish-status-error" role="alert">
+                        <span>{publishStatusError}</span>
+                        <button type="button" onClick={() => void loadPublishStatus()}>
+                          重新读取
+                        </button>
+                      </div>
+                    ) : null}
+                    <div className="publish-module-selector">
+                      <label>
+                        <span>查看板块</span>
+                        <select
+                          value={historyModuleKey}
+                          onChange={(event) => setHistoryModuleKey(event.target.value)}
+                        >
+                          {publishStatus?.modules.map((module) => (
+                            <option key={module.key} value={module.key}>
+                              {module.label} · {moduleStateLabel(module)}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <button
+                        className="secondary-button"
+                        type="button"
+                        disabled={
+                          !historyModule ||
+                          historyModule.isCurrent ||
+                          publishing ||
+                          rollingBack ||
+                          unsaved.isDirty
+                        }
+                        onClick={() =>
+                          historyModule && void handlePublish(historyModule.key)
+                        }
+                      >
+                        发布此板块
+                      </button>
+                    </div>
+                    <div className="publish-module-summary">
+                      <span>
+                        {historyModule ? moduleStateLabel(historyModule) : '未选择'}
+                      </span>
+                      <small>
+                        {historyModule?.publishedAt
+                          ? `当前版本 ${formatVersionTime(historyModule.publishedAt)}`
+                          : '尚无当前版本'}
+                      </small>
+                    </div>
+                    <div className="publish-version-list">
+                      {historyModule?.versions.length ? (
+                        historyModule.versions.map((version) => (
+                          <div
+                            className={`publish-version-row${version.isCurrent ? ' is-current' : ''}`}
+                            key={version.contentVersion}
+                          >
+                            <div>
+                              <strong>{formatVersionTime(version.publishedAt)}</strong>
+                              <small>{versionCode(version)}</small>
+                            </div>
+                            <span>
+                              {version.isCurrent ? '当前' : `${version.objectCount} 项`}
+                            </span>
+                            <button
+                              type="button"
+                              disabled={
+                                version.isCurrent ||
+                                publishing ||
+                                rollingBack ||
+                                unsaved.isDirty
+                              }
+                              onClick={() =>
+                                setRollbackTarget({
+                                  moduleKey: historyModule.key,
+                                  moduleLabel: historyModule.label,
+                                  version,
+                                })
+                              }
+                              title={unsaved.isDirty ? '请先处理未保存修改' : undefined}
+                            >
+                              {version.isCurrent ? '使用中' : '回退'}
+                            </button>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="publish-version-empty">该板块尚无发布版本</div>
+                      )}
+                    </div>
+                    <div className="publish-module-footer">
+                      <span>{publishStatus?.dirtyCount ?? 0} 个板块待发布</span>
+                      <button
+                        className="primary-button"
+                        type="button"
+                        disabled={
+                          publishStatus?.isCurrent === true ||
+                          publishing ||
+                          rollingBack ||
+                          unsaved.isDirty
+                        }
+                        onClick={() => void handlePublish('all')}
+                      >
+                        发布全部待更新
+                      </button>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+              <button
+                className="primary-button storefront-publish-button"
+                type="button"
+                onClick={() => void handlePublish(contextPublishKey)}
+                disabled={
+                  publishing ||
+                  loggingOut ||
+                  rollingBack ||
+                  unsaved.isDirty ||
+                  contextIsCurrent
+                }
+                title={unsaved.isDirty ? unsavedTitle : undefined}
+              >
+                {publishingKey === contextPublishKey ||
+                (contextPublishKey === 'all' && publishingKey === 'all')
+                  ? '发布中…'
+                  : unsaved.isDirty
+                    ? '请先保存'
+                    : contextIsCurrent
+                      ? '当前板块已最新'
+                      : modulePublishButtonLabel(contextPublishModule, contextPublishKey)}
+              </button>
+            </>
             <span className="environment-badge">
               {expiresAt
                 ? `会话至 ${new Date(expiresAt).toLocaleTimeString('zh-CN')}`
@@ -927,9 +909,7 @@ export function Dashboard({
             </div>
           }
         >
-          {activeView === 'traffic' ? (
-            <TrafficStatsView key={activeView} onSessionExpired={onSessionExpired} />
-          ) : activeView === 'settings' ? (
+          {activeView === 'settings' ? (
             <SiteSettingsView key={activeView} onSessionExpired={onSessionExpired} />
           ) : activeView === 'theme' ? (
             <ThemeCenterView key={activeView} onSessionExpired={onSessionExpired} />
