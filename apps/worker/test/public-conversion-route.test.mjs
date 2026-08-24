@@ -109,7 +109,14 @@ function env(db) {
   };
 }
 
-test('GET /go/:code keeps link targets on production round-robin', async () => {
+function trafficWrites(db) {
+  return db.statements.filter(
+    ({ kind, sql }) =>
+      kind === 'run' && /INSERT(?: OR IGNORE)? INTO conversion_events/u.test(sql),
+  );
+}
+
+test('GET /go/:code keeps link targets on production round-robin without a Site traffic write', async () => {
   const targets = [
     targetRow({
       id: 'a',
@@ -152,13 +159,7 @@ test('GET /go/:code keeps link targets on production round-robin', async () => {
     'https://a.example/path',
   ]);
   assert.equal(db.cursor, 4);
-  assert.equal(
-    db.statements.filter(
-      ({ kind, sql }) =>
-        kind === 'run' && /INSERT(?: OR IGNORE)? INTO conversion_events/u.test(sql),
-    ).length,
-    4,
-  );
+  assert.equal(trafficWrites(db).length, 0);
 });
 
 test('GET realtime CTA state reads current configuration without consuming round-robin', async () => {
@@ -209,7 +210,7 @@ test('GET realtime CTA state hides unavailable or unbound conversion configurati
   assert.equal(unboundDb.cursor, 0);
 });
 
-test('customer-service CTA stays inside Site Messages and does not consume a target', async () => {
+test('customer-service CTA stays inside Site Messages, generates a handoff ID, and does not write a Site traffic ledger', async () => {
   const db = createConversionDb({
     group: groupRow({ mode: 'customer_service', activeTargetCount: 2 }),
   });
@@ -241,23 +242,13 @@ test('customer-service CTA stays inside Site Messages and does not consume a tar
       ),
       false,
     );
-    assert.equal(
-      db.statements.filter(
-        ({ kind, sql }) =>
-          kind === 'run' && /INSERT(?: OR IGNORE)? INTO conversion_events/u.test(sql),
-      ).length,
-      1,
-    );
-    const trafficWrite = db.statements.find(
-      ({ kind, sql }) => kind === 'run' && /INSERT INTO conversion_events/u.test(sql),
-    );
-    assert.equal(redirect.searchParams.get('handoffId'), trafficWrite?.args[0]);
+    assert.equal(trafficWrites(db).length, 0);
   } finally {
     globalThis.fetch = originalFetch;
   }
 });
 
-test('customer-service CTA can return the compose path for SPA navigation', async () => {
+test('customer-service CTA can return the compose path for SPA navigation without a Site traffic write', async () => {
   const db = createConversionDb({
     group: groupRow({ mode: 'customer_service', activeTargetCount: 2 }),
   });
@@ -276,13 +267,7 @@ test('customer-service CTA can return the compose path for SPA navigation', asyn
   assert.match(compose.searchParams.get('handoffId') ?? '', /^[0-9a-f-]{36}$/u);
   assert.equal(response.headers.get('cache-control'), 'no-store, private');
   assert.equal(db.cursor, 0);
-  assert.equal(
-    db.statements.filter(
-      ({ kind, sql }) =>
-        kind === 'run' && /INSERT(?: OR IGNORE)? INTO conversion_events/u.test(sql),
-    ).length,
-    1,
-  );
+  assert.equal(trafficWrites(db).length, 0);
 });
 
 test('invalid or unpublished products never consume the production cursor', async () => {
