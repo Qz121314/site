@@ -1,0 +1,95 @@
+name: Temporary production verification
+
+on:
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  verify-production:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'chore/verify-site-traffic-removal-deploy'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Checkout production candidate
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js and pnpm
+        run: |
+          set -euo pipefail
+          node -e "if (Number(process.versions.node.split('.')[0]) < 22) { throw new Error('Node.js 22 or newer is required') }"
+          npm install --global pnpm@11.19.0
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Validate production candidate
+        run: |
+          pnpm format
+          pnpm lint
+          pnpm typecheck
+          pnpm test
+          pnpm build
+          pnpm cf:check
+
+      - name: Apply production D1 migrations
+        run: pnpm db:migrate:remote
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Deploy production Worker
+        id: deploy
+        shell: bash
+        run: |
+          set -euo pipefail
+          pnpm exec wrangler deploy --keep-vars | tee /tmp/wrangler-deploy.log
+          url="$(grep -Eo 'https://[A-Za-z0-9.-]+\.workers\.dev' /tmp/wrangler-deploy.log | tail -n 1)"
+          version_id="$(grep -Eo 'Current Version ID: [0-9a-f-]+' /tmp/wrangler-deploy.log | tail -n 1 | awk '{print $4}')"
+          test -n "$url"
+          test -n "$version_id"
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "version_id=$version_id" >> "$GITHUB_OUTPUT"
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
+
+      - name: Smoke test deployed Worker
+        shell: bash
+        env:
+          BASE_URL: ${{ steps.deploy.outputs.url }}
+          EXPECTED_WORKER_VERSION_ID: ${{ steps.deploy.outputs.version_id }}
+        run: |
+          set -euo pipefail
+          ready=false
+          for attempt in {1..40}; do
+            health="$(curl --fail --silent --show-error "$BASE_URL/api/health" || true)"
+            if printf '%s' "$health" | node -e '
+              const fs = require("fs");
+              let value;
+              try { value = JSON.parse(fs.readFileSync(0, "utf8")); } catch { process.exit(1); }
+              if (value.ok !== true) process.exit(1);
+              if (value.environment !== "production") process.exit(1);
+              if (value.workerVersionId !== process.env.EXPECTED_WORKER_VERSION_ID) process.exit(1);
+            '; then
+              ready=true
+              printf '%s\n' "$health"
+              break
+            fi
+            sleep 3
+          done
+          test "$ready" = true
+          curl --fail --silent --show-error -o /tmp/storefront.html "$BASE_URL/"
+          grep -F '<div id="root">' /tmp/storefront.html
+          curl --fail --silent --show-error -o /tmp/admin.html "$BASE_URL/admin/"
+          grep -F '<div id="root"></div>' /tmp/admin.html
+
+      - name: Install production browser
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Browser acceptance test production
+        run: pnpm test:e2e
+        env:
+          BASE_URL: ${{ steps.deploy.outputs.url }}
