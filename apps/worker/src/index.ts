@@ -22,7 +22,6 @@ import { adminSectionRoutes } from './routes/admin-sections';
 import { adminSiteSettingsRoutes } from './routes/admin-site-settings';
 import { adminTagRoutes } from './routes/admin-tags';
 import { adminThemeRoutes } from './routes/admin-theme';
-import { adminTrafficRoutes } from './routes/admin-traffic';
 import { publicBottomNavigationRoutes } from './routes/public-bottom-navigation';
 import { publicContentRoutes } from './routes/public-content';
 import { publicConversionRoutes } from './routes/public-conversion';
@@ -118,7 +117,6 @@ app.get('/api/admin/health', (context) => {
 
 app.route('/api/admin/settings', adminSiteSettingsRoutes);
 app.route('/api/admin/theme', adminThemeRoutes);
-app.route('/api/admin/traffic', adminTrafficRoutes);
 app.route('/api/admin/customer-service', adminCustomerServiceRoutes);
 app.route('/api/admin/assets', adminAssetRoutes);
 app.route('/api/admin/assets', adminMediaDeleteRoutes);
