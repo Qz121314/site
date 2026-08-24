@@ -35,7 +35,6 @@ import './media-center.css';
 import './admin-error-boundary.css';
 import './admin-dialog-service.css';
 import './section-editor.css';
-import './traffic-stats.css';
 import '@site/storefront-ui/styles.css';
 import '@site/storefront-ui/loading.css';
 import '@site/storefront-ui/home.css';
