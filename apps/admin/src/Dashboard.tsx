@@ -861,10 +861,7 @@ export function Dashboard({
                     ? '请先保存'
                     : contextIsCurrent
                       ? '当前板块已最新'
-                      : modulePublishButtonLabel(
-                          contextPublishModule,
-                          contextPublishKey,
-                        )}
+                      : modulePublishButtonLabel(contextPublishModule, contextPublishKey)}
               </button>
             </>
             <span className="environment-badge">
