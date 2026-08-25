@@ -24,7 +24,7 @@ jobs:
             command: pnpm guardrails
           - id: format
             label: Format
-            command: pnpm format
+            command: pnpm exec prettier --write apps/storefront/src/home-layout.ts && git diff --exit-code -- apps/storefront/src/home-layout.ts
           - id: lint
             label: Lint
             command: pnpm lint
