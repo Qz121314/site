@@ -19,7 +19,7 @@ test('home recommendations stay on a single horizontal product rail', async () =
   );
   assert.match(
     polishStyles,
-    /:is\(html, \.storefront-theme-root\)[\s\S]*?:is\(\.home-product-tile, \.home-product-skeleton\) \{[\s\S]*?flex: 0 0 clamp\(148px, 42vw, 176px\);[\s\S]*?scroll-snap-align: start;/u,
+    /:is\(html, \.storefront-theme-root\)[\s\S]*?:is\(\.home-product-tile, \.home-product-skeleton\) \{[\s\S]*?flex: 0 0 clamp\(136px, calc\(\(100% - 68px\) \/ 2\), 164px\);[\s\S]*?scroll-snap-align: start;/u,
   );
   assert.match(
     polishStyles,

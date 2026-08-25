@@ -223,9 +223,9 @@
 }
 
 :is(html, .storefront-theme-root) :is(.home-product-tile, .home-product-skeleton) {
-  width: clamp(148px, 42vw, 176px);
+  width: clamp(136px, calc((100% - 68px) / 2), 164px);
   min-width: 0;
-  flex: 0 0 clamp(148px, 42vw, 176px);
+  flex: 0 0 clamp(136px, calc((100% - 68px) / 2), 164px);
   scroll-snap-align: start;
 }
 
