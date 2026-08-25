@@ -6,6 +6,7 @@ export type SiteSettings = {
   mediaBaseUrl: string | null;
   logoAssetId: string | null;
   logoUrl: string | null;
+  pwaIconAssetId: string | null;
   ga4MeasurementId: string | null;
   homeSectionLimit: number;
   showHot: boolean;
@@ -23,6 +24,7 @@ type SiteSettingsRow = {
   media_base_url: string | null;
   logo_asset_id: string | null;
   logo_object_key: string | null;
+  pwa_icon_asset_id: string | null;
   ga4_measurement_id: string | null;
   home_section_limit: number;
   show_hot: number;
@@ -169,6 +171,8 @@ export function validateSiteSettingsInput(value: unknown): ValidationResult {
   if (!locationLabel.ok) return locationLabel;
   const logoAssetId = readOptionalString(value.logoAssetId, 'logoAssetId', 100);
   if (!logoAssetId.ok) return logoAssetId;
+  const pwaIconAssetId = readOptionalString(value.pwaIconAssetId, 'pwaIconAssetId', 100);
+  if (!pwaIconAssetId.ok) return pwaIconAssetId;
 
   let mediaBaseUrl: string | null;
   try {
@@ -217,6 +221,7 @@ export function validateSiteSettingsInput(value: unknown): ValidationResult {
       locationLabel: locationLabel.value,
       mediaBaseUrl,
       logoAssetId: logoAssetId.value,
+      pwaIconAssetId: pwaIconAssetId.value,
       ga4MeasurementId: ga4MeasurementId.value,
       homeSectionLimit: value.homeSectionLimit,
       showHot: showHot.value,
@@ -234,6 +239,7 @@ function fromRow(row: SiteSettingsRow): SiteSettings {
     mediaBaseUrl: row.media_base_url,
     logoAssetId: row.logo_asset_id,
     logoUrl: optionalAssetUrl(row.media_base_url, row.logo_object_key),
+    pwaIconAssetId: row.pwa_icon_asset_id,
     ga4MeasurementId: row.ga4_measurement_id,
     homeSectionLimit: row.home_section_limit,
     showHot: row.show_hot === 1,
@@ -253,6 +259,7 @@ export async function getSiteSettings(db: D1Database): Promise<SiteSettings> {
          s.media_base_url,
          s.logo_asset_id,
          logo.object_key AS logo_object_key,
+         s.pwa_icon_asset_id,
          s.ga4_measurement_id,
          s.home_section_limit,
          s.show_hot,
@@ -285,6 +292,7 @@ export function createUpdateSiteSettingsStatement(
            location_label = ?,
            media_base_url = ?,
            logo_asset_id = ?,
+           pwa_icon_asset_id = ?,
            ga4_measurement_id = ?,
            home_section_limit = ?,
            show_hot = ?,
@@ -299,6 +307,7 @@ export function createUpdateSiteSettingsStatement(
       input.locationLabel,
       input.mediaBaseUrl,
       input.logoAssetId,
+      input.pwaIconAssetId,
       input.ga4MeasurementId,
       input.homeSectionLimit,
       input.showHot ? 1 : 0,
