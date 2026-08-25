@@ -175,7 +175,7 @@ export function HomeLayoutSettingsSection({
         {renderPlacement(
           'shortcutSectionIds',
           '快捷分区',
-          '最多 7 个。未选择时按当前已发布分区顺序自动生成；前端会补第 8 个 More。',
+          '最多手动固定 7 个。未选择时按当前已发布分区自动生成；自动入口不超过 8 个时全部展示，超过 8 个时第 8 格显示 More。',
           '添加快捷分区',
         )}
         {renderPlacement(
