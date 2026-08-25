@@ -2,15 +2,42 @@ import type { HomeLayout } from './content';
 
 export type { HomeLayout } from './content';
 
+export type ResolvedHomeShortcuts = {
+  sectionIds: string[];
+  showMore: boolean;
+};
+
+function publishedIds(
+  ids: string[],
+  publishedSectionIds: ReadonlySet<string>,
+): string[] {
+  return ids.filter((id) => publishedSectionIds.has(id));
+}
+
 function resolveIds(
   configuredIds: string[] | undefined,
   fallbackIds: string[],
   publishedSectionIds: ReadonlySet<string>,
   max: number,
 ): string[] {
-  const configured = (configuredIds ?? []).filter((id) => publishedSectionIds.has(id));
+  const configured = publishedIds(configuredIds ?? [], publishedSectionIds);
   if (configured.length > 0) return configured.slice(0, max);
-  return fallbackIds.filter((id) => publishedSectionIds.has(id)).slice(0, max);
+  return publishedIds(fallbackIds, publishedSectionIds).slice(0, max);
+}
+
+export function resolveHomeShortcuts(
+  configuredIds: string[] | undefined,
+  fallbackIds: string[],
+  publishedSectionIds: ReadonlySet<string>,
+): ResolvedHomeShortcuts {
+  const configured = publishedIds(configuredIds ?? [], publishedSectionIds);
+  const source =
+    configured.length > 0 ? configured : publishedIds(fallbackIds, publishedSectionIds);
+  const showMore = source.length > 8;
+  return {
+    sectionIds: source.slice(0, showMore ? 7 : 8),
+    showMore,
+  };
 }
 
 export function resolveHomeLayout(
