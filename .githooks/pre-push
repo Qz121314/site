@@ -1,4 +1,5 @@
 #!/usr/bin/env sh
 set -eu
 
-pnpm verify
+echo "Running fast pre-push verification..."
+node scripts/prepush-verify.mjs
