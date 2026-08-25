@@ -20,26 +20,33 @@ test('storefront polish stays theme-led and app-native across every primary surf
     await Promise.all(
       styleFiles.map((path) => readFile(new URL(path, import.meta.url), 'utf8')),
     );
-  const [artDirection, primaryArtDirection, homeSource, storefrontMain, adminMain] =
-    await Promise.all([
-      readFile(
-        new URL(
-          '../../../packages/storefront-ui/src/art-direction-contract.css',
-          import.meta.url,
-        ),
-        'utf8',
+  const [
+    artDirection,
+    primaryArtDirection,
+    homeSource,
+    storefrontMain,
+    adminMain,
+    adminStyles,
+  ] = await Promise.all([
+    readFile(
+      new URL(
+        '../../../packages/storefront-ui/src/art-direction-contract.css',
+        import.meta.url,
       ),
-      readFile(
-        new URL(
-          '../../../packages/storefront-ui/src/art-direction-primary-surfaces.css',
-          import.meta.url,
-        ),
-        'utf8',
+      'utf8',
+    ),
+    readFile(
+      new URL(
+        '../../../packages/storefront-ui/src/art-direction-primary-surfaces.css',
+        import.meta.url,
       ),
-      readFile(new URL('../src/HomeFeed.tsx', import.meta.url), 'utf8'),
-      readFile(new URL('../src/main.tsx', import.meta.url), 'utf8'),
-      readFile(new URL('../../admin/src/main.tsx', import.meta.url), 'utf8'),
-    ]);
+      'utf8',
+    ),
+    readFile(new URL('../src/HomeFeed.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../src/main.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../../admin/src/main.tsx', import.meta.url), 'utf8'),
+    readFile(new URL('../../admin/src/admin.css', import.meta.url), 'utf8'),
+  ]);
 
   for (const styles of [home, browse, section, faq, messages, pwa]) {
     assert.doesNotMatch(styles, /max\(var\(--theme-radius/u);
@@ -113,7 +120,8 @@ test('storefront polish stays theme-led and app-native across every primary surf
     storefrontMain,
     /@site\/storefront-ui\/art-direction-primary-surfaces\.css/u,
   );
-  assert.match(adminMain, /@site\/storefront-ui\/art-direction-contract\.css/u);
+  assert.match(adminMain, /import '\.\/admin\.css'/u);
+  assert.match(adminStyles, /@site\/storefront-ui\/art-direction-contract\.css/u);
 
   assert.match(
     browse,

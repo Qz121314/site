@@ -191,6 +191,51 @@ Cloudflare Worker + D1 + R2
 └─ English Storefront
 ```
 
+## UI 技术栈与 CSS 优化约束
+
+管理后台采用可维护的 **shadcn/ui 源码所有权模式**，基础组合与图标技术为：
+
+```text
+React 19
+Radix UI primitives
+class-variance-authority
+clsx + tailwind-merge
+Lucide React icons
+source-owned UI components
+CSS custom properties / runtime Theme Tokens
+```
+
+当前迁移以“不重写稳定业务页面”为原则：先把 Button、Input、Textarea 等高复用控件迁入 `apps/admin/src/components/ui`，再按真实维护需求逐步增加 Select、Dialog、Sheet、Tabs、Table、Badge、Toast 和 Skeleton。组件源码属于本仓库，不把第三方默认皮肤当成最终视觉，也不允许新旧通用组件长期并存。
+
+CSS ownership 固定为：
+
+```text
+Admin UI components
+→ 通用控件、状态、焦点、尺寸、圆角、图标与交互
+
+Admin page CSS
+→ 页面布局、业务结构与页面独有状态
+
+Storefront UI + Theme Center
+→ 用户前端视觉、主题 recipe 与共享展示组件
+
+Storefront App Shell
+→ viewport、safe area、固定导航与页面几何
+```
+
+长期硬规则：
+
+- `apps/admin/src/main.tsx` 只加载 `admin.css`，由单一 manifest 明确管理 cascade 顺序；
+- 新的后台通用控件必须进入 `components/ui`，禁止在页面 CSS 中重新定义一套按钮、输入框、弹窗或 Toast；
+- 后台功能图标统一使用 Lucide，不使用字符图标、emoji、icon font 或零散手写 SVG；
+- 不以新增 `!important`、提高选择器权重或追加“最后覆盖层”解决样式问题；
+- Storefront 保留现有 Theme Center、运行时 Token、PWA、VisualViewport 和 App Shell 契约，不强行套用后台皮肤；
+- 分类、标签和搜索继续基于已加载数据在浏览器本地计算，不因 UI 组件迁移增加 Workers / D1 请求；
+- CSS 文件数量不是唯一目标。允许职责明确的页面文件存在，但禁止相同 Token、基础控件或 overlay 契约分散在多个 owner；
+- 每次迁移必须同时删除被替代规则，并通过 format、lint、typecheck、相关测试与 affected app build。
+
+现有 `admin-ui-system.css` 中的高权重规则属于待迁移债务，只能随组件迁移减少，不能继续扩张。后续顺序固定为：通用控件 → overlay → 表格/列表 → 页面逐项清除旧覆盖；Storefront 则只做 ownership 收口和重复规则清理，不破坏可配置主题。
+
 ## Storefront：Mobile-first 用户前端
 
 真实用户主要来自移动端，因此前端和主题系统都以手机为第一设计目标。

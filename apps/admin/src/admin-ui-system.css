@@ -111,6 +111,106 @@ body {
 
 /* ---------- Shared controls ---------- */
 
+.ui-button {
+  display: inline-flex;
+  min-height: var(--admin-button-min-height, 36px);
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding-inline: var(--admin-button-padding-inline, 12px);
+  border: 1px solid transparent;
+  border-radius: var(--admin-button-radius, var(--admin-radius-sm));
+  font-size: var(--admin-button-font-size, 0.78rem);
+  font-weight: 720;
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    border-color 140ms ease,
+    color 140ms ease,
+    background-color 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.ui-button--primary {
+  border-color: var(--admin-brand);
+  color: #fff;
+  background: var(--admin-brand);
+}
+
+.ui-button--primary:not(:disabled):hover {
+  border-color: var(--admin-brand-hover);
+  background: var(--admin-brand-hover);
+}
+
+.ui-button--secondary {
+  border-color: var(--admin-border-strong);
+  color: #344054;
+  background: var(--admin-surface);
+}
+
+.ui-button--secondary:not(:disabled):hover {
+  border-color: #b9c0cb;
+  background: var(--admin-surface-subtle);
+}
+
+.ui-button--destructive {
+  border-color: var(--admin-danger);
+  color: #fff;
+  background: var(--admin-danger);
+}
+
+.ui-button--ghost {
+  color: var(--admin-text-muted);
+  background: transparent;
+}
+
+.ui-button--compact {
+  min-height: 32px;
+  padding-inline: 10px;
+  font-size: 0.74rem;
+}
+
+.ui-button--icon {
+  width: 36px;
+  min-height: 36px;
+  padding: 0;
+}
+
+.ui-input {
+  width: 100%;
+  min-height: var(--admin-control-h);
+  padding-inline: 10px;
+  border: 1px solid var(--admin-border-strong);
+  border-radius: var(--admin-radius-sm);
+  color: var(--admin-text);
+  background: var(--admin-surface);
+  font-size: 0.8rem;
+}
+
+.ui-input:focus-visible {
+  border-color: #ff9a76;
+  outline: 0;
+  box-shadow: 0 0 0 3px rgb(255 90 31 / 10%);
+}
+
+.ui-textarea {
+  width: 100%;
+  min-height: 96px;
+  padding: 9px 10px;
+  border: 1px solid var(--admin-border-strong);
+  border-radius: var(--admin-radius-sm);
+  color: var(--admin-text);
+  background: var(--admin-surface);
+  font-size: 0.8rem;
+  resize: vertical;
+}
+
+.ui-textarea:focus-visible {
+  border-color: #ff9a76;
+  outline: 0;
+  box-shadow: 0 0 0 3px rgb(255 90 31 / 10%);
+}
+
 button,
 input,
 select,

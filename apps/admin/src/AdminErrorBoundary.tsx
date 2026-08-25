@@ -1,4 +1,6 @@
 import { Component, type ErrorInfo, type ReactNode } from 'react';
+import { CircleAlert } from 'lucide-react';
+import { Button } from './components/ui/button';
 
 type AdminErrorBoundaryProps = {
   children: ReactNode;
@@ -52,7 +54,7 @@ export class AdminErrorBoundary extends Component<
       <main className="admin-crash-screen" role="alert">
         <section className="admin-crash-card">
           <div className="admin-crash-mark" aria-hidden="true">
-            !
+            <CircleAlert size={24} strokeWidth={1.8} />
           </div>
           <div className="admin-crash-copy">
             <p>后台运行异常</p>
@@ -63,16 +65,10 @@ export class AdminErrorBoundary extends Component<
             {this.state.incidentId ? <code>错误编号 {this.state.incidentId}</code> : null}
           </div>
           <div className="admin-crash-actions">
-            <button className="secondary-button" type="button" onClick={this.retry}>
+            <Button variant="secondary" onClick={this.retry}>
               重试后台
-            </button>
-            <button
-              className="primary-button"
-              type="button"
-              onClick={this.returnToSettings}
-            >
-              返回站点设置
-            </button>
+            </Button>
+            <Button onClick={this.returnToSettings}>返回站点设置</Button>
           </div>
         </section>
       </main>

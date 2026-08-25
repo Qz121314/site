@@ -118,6 +118,18 @@ These are defaults unless the user explicitly changes the product rule.
 - Do not add temporary debug workflows, diagnostic files, or one-off CI workarounds to the final PR.
 - Do not increase Worker/D1 request counts merely to simplify frontend code when the same data can be returned in an existing request or computed locally.
 
+## UI and CSS ownership contract
+
+- Admin shared controls are source-owned components under `apps/admin/src/components/ui`. New buttons, inputs, textareas, selects, dialogs, sheets, tabs, badges, tables, toasts, and loading states must extend that layer instead of adding a new page-local visual implementation.
+- Admin component composition follows the shadcn/ui ownership model with Radix primitives, class-variance-authority, `cn`, and Lucide icons. Components are copied into this repository and remain editable; do not introduce a second packaged design system.
+- Lucide is the default functional icon set. Do not use emoji, Unicode glyphs, inline one-off SVG, or text punctuation as interface icons when a matching Lucide icon exists. Product and brand artwork are exempt.
+- `admin-foundation.css` owns Admin tokens, reset, and global primitives. `admin-ui-system.css` owns shared component presentation. Page CSS owns layout and business-specific geometry only.
+- Storefront does not inherit the Admin component skin. It keeps `packages/storefront-ui`, Theme Tokens, App Shell, PWA, VisualViewport, and runtime theme ownership. Shared Storefront visual behavior belongs in `packages/storefront-ui`; route CSS may own route geometry but must consume shared tokens.
+- Do not add a CSS file for a single small component. Add to the owning shared component layer or the existing page stylesheet. A new stylesheet requires a distinct ownership boundary that cannot be expressed cleanly in an existing owner.
+- Do not add `!important` to resolve normal cascade conflicts. Fix import order, specificity, or ownership. Existing debt may only decrease; any temporary exception must explain the browser/third-party constraint beside the declaration.
+- UI migration is incremental. Do not retain a legacy shared control beside its migrated component once all consumers have moved, and do not rewrite stable business layouts merely to increase component-library coverage.
+- `apps/admin/src/main.tsx` imports only `admin.css`. The manifest owns cascade order; runtime TypeScript must not accumulate page stylesheet imports.
+
 ## Formatting is an input constraint
 
 Do not hand-guess Prettier output. Before considering a changed file complete, format it using the repository-installed version, for example:

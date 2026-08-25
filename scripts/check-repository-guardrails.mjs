@@ -18,6 +18,15 @@ const [
   storefrontIndex,
   themeRuntime,
   themeRuntimeStyles,
+  adminPackageText,
+  adminButtonSource,
+  adminButtonVariantsSource,
+  adminInputSource,
+  adminLoginSource,
+  adminErrorBoundarySource,
+  adminUiStyles,
+  adminMain,
+  adminStyleManifest,
 ] = await Promise.all([
   readFile('package.json', 'utf8'),
   readFile('.githooks/pre-commit', 'utf8'),
@@ -35,10 +44,20 @@ const [
   readFile('apps/storefront/index.html', 'utf8'),
   readFile('apps/storefront/src/theme-runtime.ts', 'utf8'),
   readFile('apps/storefront/src/theme-runtime.css', 'utf8'),
+  readFile('apps/admin/package.json', 'utf8'),
+  readFile('apps/admin/src/components/ui/button.tsx', 'utf8'),
+  readFile('apps/admin/src/components/ui/button-variants.ts', 'utf8'),
+  readFile('apps/admin/src/components/ui/input.tsx', 'utf8'),
+  readFile('apps/admin/src/LoginView.tsx', 'utf8'),
+  readFile('apps/admin/src/AdminErrorBoundary.tsx', 'utf8'),
+  readFile('apps/admin/src/admin-ui-system.css', 'utf8'),
+  readFile('apps/admin/src/main.tsx', 'utf8'),
+  readFile('apps/admin/src/admin.css', 'utf8'),
 ]);
 
 const packageJson = JSON.parse(packageText);
 const scripts = packageJson.scripts ?? {};
+const adminPackageJson = JSON.parse(adminPackageText);
 
 for (const scriptName of [
   'format',
@@ -249,6 +268,61 @@ assert.match(
   /syncThemeColor\(theme\.tokens\.pageBg\)/u,
   'browser chrome theme-color must blend with the current page background',
 );
+
+for (const dependency of [
+  '@radix-ui/react-slot',
+  'class-variance-authority',
+  'clsx',
+  'lucide-react',
+  'tailwind-merge',
+]) {
+  assert.equal(
+    typeof adminPackageJson.dependencies?.[dependency],
+    'string',
+    `Admin UI foundation dependency is missing: ${dependency}`,
+  );
+}
+
+assert.match(
+  `${adminButtonSource}\n${adminButtonVariantsSource}`,
+  /Slot[\s\S]*buttonVariants|buttonVariants[\s\S]*Slot/u,
+  'Admin Button must keep the source-owned shadcn composition boundary',
+);
+assert.match(
+  adminInputSource,
+  /className=\{cn\('ui-input'/u,
+  'Admin Input must keep the shared component class boundary',
+);
+assert.match(adminLoginSource, /<Button/u, 'Admin login must use shared Button');
+assert.match(adminLoginSource, /<Input/u, 'Admin login must use shared Input');
+assert.match(
+  adminErrorBoundarySource,
+  /CircleAlert[\s\S]*<Button/u,
+  'Admin recovery UI must use Lucide and shared Button components',
+);
+assert.match(
+  adminUiStyles,
+  /\.ui-button[\s\S]*\.ui-input/u,
+  'Admin UI stylesheet must own shared control presentation',
+);
+
+const adminCssImports = [
+  ...adminMain.matchAll(/^import\s+['"]([^'"]+\.css)['"];?$/gmu),
+].map((match) => match[1]);
+assert.deepEqual(
+  adminCssImports,
+  ['./admin.css'],
+  'Admin runtime must load one CSS manifest; keep cascade ownership in admin.css',
+);
+for (const requiredAdminOwner of [
+  "@import './admin-ui-system.css';",
+  "@import '@site/storefront-ui/theme-contract.css';",
+]) {
+  assert.ok(
+    adminStyleManifest.includes(requiredAdminOwner),
+    `Admin CSS manifest must retain owner: ${requiredAdminOwner}`,
+  );
+}
 
 assert.doesNotMatch(
   ciWorkflow,

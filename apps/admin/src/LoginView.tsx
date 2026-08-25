@@ -1,5 +1,7 @@
 import { useState, type FormEvent } from 'react';
 import { AdminApiError, loginAdmin, type AdminSessionResponse } from './api';
+import { Button } from './components/ui/button';
+import { Input } from './components/ui/input';
 
 type LoginViewProps = {
   configurationMissing: boolean;
@@ -72,7 +74,7 @@ export function LoginView({
 
         <form className="login-form" onSubmit={handleSubmit}>
           <label htmlFor="admin-password">后台密码</label>
-          <input
+          <Input
             id="admin-password"
             name="password"
             type="password"
@@ -89,9 +91,9 @@ export function LoginView({
             </p>
           ) : null}
 
-          <button className="primary-button" type="submit" disabled={submitting}>
+          <Button type="submit" disabled={submitting}>
             {submitting ? '正在验证…' : '登录后台'}
-          </button>
+          </Button>
         </form>
       </section>
     </main>

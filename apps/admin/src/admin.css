@@ -1,0 +1,49 @@
+/*
+ * Admin style manifest.
+ *
+ * Keep cascade order explicit here. `main.tsx` must import only this file so
+ * page styles cannot silently become stronger by moving imports in runtime
+ * code. Shared primitives belong in `components/ui` with their visual contract
+ * in `admin-ui-system.css`; page files own only business-specific layout.
+ */
+@import './styles.css';
+@import './site-settings.css';
+@import './bottom-navigation-settings.css';
+@import './home-layout-settings.css';
+@import './sections.css';
+@import './section-browse-presentation.css';
+@import './asset-library.css';
+@import './media-picker.css';
+@import './media-folders.css';
+@import './category-management.css';
+@import './conversion-pool.css';
+@import './product-management.css';
+@import './product-tags.css';
+@import './branding-media.css';
+@import './admin-foundation.css';
+@import './admin-scroll-ownership.css';
+@import './admin-section-workspace-nav.css';
+@import './admin-publish.css';
+@import './admin-unsaved.css';
+@import './customer-service-connections.css';
+@import './product-editor.css';
+@import './product-dependency-handoff.css';
+@import './admin-ui-system.css';
+@import './site-settings-workbench.css';
+@import './admin-sidebar.css';
+@import './theme-center.css';
+@import './faq-management.css';
+@import './markdown-media.css';
+@import './media-center.css';
+@import './admin-error-boundary.css';
+@import './admin-dialog-service.css';
+@import './section-editor.css';
+@import '@site/storefront-ui/styles.css';
+@import '@site/storefront-ui/loading.css';
+@import '@site/storefront-ui/home.css';
+@import '@site/storefront-ui/theme-contract.css';
+@import '@site/storefront-ui/product-detail-theme-contract.css';
+@import '@site/storefront-ui/primary-pages-theme-contract.css';
+@import '@site/storefront-ui/typography-contract.css';
+@import '@site/storefront-ui/art-direction-contract.css';
+@import '@site/storefront-ui/art-direction-preview.css';
