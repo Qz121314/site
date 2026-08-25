@@ -5,9 +5,12 @@ const [
   packageText,
   preCommit,
   prePush,
+  prepushVerify,
   productionSmoke,
   ciWorkflow,
+  prFullVerifyWorkflow,
   workflowNames,
+  storefrontPackageText,
   storefrontRoot,
   productDetailSource,
   appShellStyles,
@@ -31,9 +34,12 @@ const [
   readFile('package.json', 'utf8'),
   readFile('.githooks/pre-commit', 'utf8'),
   readFile('.githooks/pre-push', 'utf8'),
+  readFile('scripts/prepush-verify.mjs', 'utf8'),
   readFile('tests/e2e/production-smoke.spec.ts', 'utf8'),
   readFile('.github/workflows/ci.yml', 'utf8'),
+  readFile('.github/workflows/pr-full-verify.yml', 'utf8'),
   readdir('.github/workflows'),
+  readFile('apps/storefront/package.json', 'utf8'),
   readFile('apps/storefront/src/StorefrontRoot.tsx', 'utf8'),
   readFile('apps/storefront/src/ProductDetailPage.tsx', 'utf8'),
   readFile('apps/storefront/src/app-shell.css', 'utf8'),
@@ -57,6 +63,7 @@ const [
 
 const packageJson = JSON.parse(packageText);
 const scripts = packageJson.scripts ?? {};
+const storefrontPackageJson = JSON.parse(storefrontPackageText);
 const adminPackageJson = JSON.parse(adminPackageText);
 
 for (const scriptName of [
@@ -105,7 +112,59 @@ for (const requiredStep of [
 }
 
 assert.match(preCommit, /pnpm\s+preflight/u, 'pre-commit must run pnpm preflight');
-assert.match(prePush, /pnpm\s+verify/u, 'pre-push must run pnpm verify');
+assert.match(
+  prePush,
+  /node\s+scripts\/prepush-verify\.mjs/u,
+  'pre-push must delegate to the fast pre-push verifier',
+);
+assert.ok(
+  prepushVerify.includes('PREPUSH_BASE') && prepushVerify.includes('origin/main'),
+  'fast pre-push verification must resolve a stable comparison base',
+);
+assert.ok(
+  prepushVerify.includes('prettier') && prepushVerify.includes('eslint'),
+  'fast pre-push verification must check changed-file formatting and lint',
+);
+assert.ok(
+  prepushVerify.includes("['guardrails']") && prepushVerify.includes("['typecheck']"),
+  'fast pre-push verification must retain repository guardrails and type safety',
+);
+
+for (const requiredCommand of [
+  'pnpm guardrails',
+  'pnpm format',
+  'pnpm lint',
+  'pnpm typecheck',
+  'pnpm db:migrate:local',
+  'pnpm test',
+  'pnpm build',
+  'pnpm cf:check',
+]) {
+  assert.ok(
+    prFullVerifyWorkflow.includes(requiredCommand),
+    `PR full verification must cover: ${requiredCommand}`,
+  );
+}
+assert.match(
+  prFullVerifyWorkflow,
+  /strategy:[\s\S]*fail-fast:\s*false[\s\S]*matrix:/u,
+  'PR full verification must expose independent checks in parallel instead of serially masking later failures',
+);
+assert.match(
+  prFullVerifyWorkflow,
+  /actions\/upload-artifact@v4/u,
+  'PR full verification must retain per-check diagnostics',
+);
+assert.doesNotMatch(
+  prFullVerifyWorkflow,
+  /run:\s*pnpm\s+verify/u,
+  'PR full verification must not collapse all checks back into one serial pnpm verify step',
+);
+assert.match(
+  storefrontPackageJson.scripts?.build ?? '',
+  /check-storefront-bundle-budget\.mjs/u,
+  'Storefront build must continue enforcing the existing bundle budget',
+);
 
 const brittleProductionPatterns = [
   {

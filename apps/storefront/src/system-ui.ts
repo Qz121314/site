@@ -5,6 +5,7 @@ export const SYSTEM_UI = {
   back: 'Back',
   clear: 'Clear',
   continue: 'Continue',
+  conversationClosed: 'Conversation closed',
   dismiss: 'Dismiss',
   enableNotifications: 'Enable notifications',
   install: 'Install',
@@ -27,5 +28,6 @@ export const SYSTEM_UI = {
   temporarilyUnavailable: 'Temporarily unavailable',
   unavailable: 'Unavailable',
   unread: 'unread',
+  waitingForSupport: 'Waiting for customer service',
   yesterday: 'Yesterday',
 } as const;

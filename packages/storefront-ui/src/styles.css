@@ -191,6 +191,7 @@
   font-size: 0.86rem;
   line-height: 1.2;
   letter-spacing: -0.025em;
+  text-align: center;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
@@ -200,6 +201,7 @@
   color: var(--muted, #6f7782);
   font-size: 0.61rem;
   font-weight: 650;
+  text-align: center;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -288,16 +290,19 @@
   font-weight: 850;
 }
 
-:is(html, .storefront-theme-root)[data-color-scheme='dark'] .product-card-media,
-:is(html, .storefront-theme-root)[data-color-scheme='dark'] .image-fallback {
+:is(html, .storefront-theme-root)[data-color-scheme='dark']
+  :is(.product-card-media, .image-fallback) {
   background: var(--surface-soft, #262b32);
 }
 
-:is(html, .storefront-theme-root)[data-theme='live'] .hero-panel,
-:is(html, .storefront-theme-root)[data-theme='noir'] .hero-panel,
-:is(html, .storefront-theme-root)[data-theme='velvet'] .hero-panel,
-:is(html, .storefront-theme-root)[data-theme='midnight'] .hero-panel,
-:is(html, .storefront-theme-root)[data-theme='tech'] .hero-panel {
+:is(html, .storefront-theme-root):is(
+    [data-theme='live'],
+    [data-theme='noir'],
+    [data-theme='velvet'],
+    [data-theme='midnight'],
+    [data-theme='tech']
+  )
+  .hero-panel {
   border: 1px solid color-mix(in srgb, var(--line, #e7e9ec) 76%, transparent);
 }
 
@@ -310,8 +315,7 @@
   border-color: color-mix(in srgb, var(--brand, #ff5a1f) 24%, var(--line, #e7e9ec));
 }
 
-:is(html, .storefront-theme-root)[data-theme='saas'] .hero-panel,
-:is(html, .storefront-theme-root)[data-theme='saas'] .product-card {
+:is(html, .storefront-theme-root)[data-theme='saas'] :is(.hero-panel, .product-card) {
   border-radius: var(--theme-radius-card, 4px);
 }
 
@@ -320,12 +324,7 @@
 }
 
 :is(html, .storefront-theme-root):is([data-theme='travel'], [data-theme='pearl'])
-  .hero-panel {
-  border-radius: var(--theme-radius-card, 4px);
-}
-
-:is(html, .storefront-theme-root):is([data-theme='travel'], [data-theme='pearl'])
-  .product-card {
+  :is(.hero-panel, .product-card) {
   border-radius: var(--theme-radius-card, 4px);
 }
 

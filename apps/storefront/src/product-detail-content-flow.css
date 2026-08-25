@@ -1,5 +1,15 @@
 /* Product detail mobile surface flow. Desktop gallery and persistent CTA ownership stay in product-detail-ui.css. */
 
+.product-detail-summary h1 {
+  text-align: center;
+}
+
+.product-detail-address {
+  width: fit-content;
+  max-width: 100%;
+  margin-inline: auto;
+}
+
 .detail-mobile-gallery {
   width: 100%;
   margin-inline: 0;
@@ -120,20 +130,20 @@
 
 @media (max-width: 767px) {
   .product-detail-page {
-    width: calc(100% + (var(--v2-gutter, 16px) * 2));
-    margin-inline: calc(var(--v2-gutter, 16px) * -1);
+    width: 100%;
+    margin-inline: 0;
+    gap: 0;
   }
 
   .detail-mobile-gallery {
-    border-right: 0;
-    border-left: 0;
-    border-radius: 0;
-    box-shadow: none;
+    border: 1px solid var(--theme-art-media-frame);
+    border-radius: var(--theme-detail-media-radius, var(--theme-radius-media, 14px));
+    box-shadow: var(--theme-primary-detail-media-shadow);
   }
 
   .product-detail-info {
-    padding: 18px max(var(--v2-gutter, 16px), env(safe-area-inset-right)) 0
-      max(var(--v2-gutter, 16px), env(safe-area-inset-left));
+    padding: 16px 2px 0;
+    text-align: center;
   }
 
   .product-detail-summary h1 {
@@ -143,14 +153,16 @@
   }
 
   .product-detail-address {
-    margin-top: 11px;
+    justify-content: center;
+    margin-top: 10px;
+    text-align: left;
   }
 
   .product-detail-body {
     width: 100%;
-    margin-top: 14px;
-    padding-right: max(var(--v2-gutter, 16px), env(safe-area-inset-right));
-    padding-left: max(var(--v2-gutter, 16px), env(safe-area-inset-left));
+    margin-top: 18px;
+    padding-right: 0;
+    padding-left: 0;
   }
 
   .product-detail-route-action {

@@ -1,7 +1,7 @@
-import { storefrontBrandContrast } from '@site/storefront-ui/theme';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { AdminApiError } from './api';
 import { useAdminDirtySource } from './admin-unsaved-state';
+import { ThemeCenterPreview } from './ThemeCenterPreview';
 import {
   fetchThemeCenter,
   updateThemeCenter,
@@ -156,15 +156,9 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
     );
   }
 
-  const previewAccent =
-    normalizeAccent(accent) ?? selectedPreset?.tokens.brand ?? '#e3486d';
+  const previewAccent = normalizeAccent(accent);
   const colorInputValue =
-    normalizeAccent(accent) ??
-    normalizeAccent(selectedPreset?.tokens.brand ?? '') ??
-    '#e3486d';
-  const brandContrast = selectedPreset
-    ? storefrontBrandContrast(previewAccent, selectedPreset.colorScheme)
-    : null;
+    previewAccent ?? normalizeAccent(selectedPreset?.tokens.brand ?? '') ?? '#e3486d';
 
   return (
     <section className="theme-center" aria-labelledby="theme-center-title">
@@ -172,7 +166,7 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
         <div className="theme-center-heading-copy">
           <p>用户前端视觉系统</p>
           <h2 id="theme-center-title">主题中心</h2>
-          <span>选择一套完整视觉方案，只保留品牌强调色作为安全调整项。</span>
+          <span>选择完整视觉方案，并用真实前端组件同步检查可读性与层级。</span>
         </div>
         <div className="theme-center-current">
           <small>当前已应用</small>
@@ -295,67 +289,72 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
       </div>
 
       {selectedPreset ? (
-        <div className="theme-center-surface theme-accent-surface">
-          <div className="theme-accent-copy">
-            <span>当前草稿</span>
-            <strong>{selectedPreset.label}</strong>
-            <p>
-              整套视觉方案由主题中心统一维护。这里只调整品牌强调色，不会破坏页面层级、字体和交互质感。
-            </p>
-          </div>
+        <>
+          <div className="theme-center-surface theme-accent-surface">
+            <div className="theme-accent-copy">
+              <span>当前草稿</span>
+              <strong>{selectedPreset.label}</strong>
+              <p>
+                整套视觉方案由主题中心统一维护。这里只调整品牌强调色，不会破坏页面层级、字体和交互质感。
+              </p>
+            </div>
 
-          <label className="theme-accent-field">
-            <span>品牌强调色</span>
-            <div>
-              <input
-                type="color"
-                value={colorInputValue}
-                onChange={(event) => {
-                  setAccent(event.target.value.toLowerCase());
-                  clearMessages();
-                }}
-                aria-label="选择品牌强调色"
-              />
-              <input
-                type="text"
-                value={accent}
-                placeholder={selectedPreset.tokens.brand}
-                maxLength={7}
-                onChange={(event) => {
-                  setAccent(event.target.value);
-                  clearMessages();
-                }}
-              />
-              {accent ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    setAccent('');
+            <label className="theme-accent-field">
+              <span>品牌强调色</span>
+              <div>
+                <input
+                  type="color"
+                  value={colorInputValue}
+                  onChange={(event) => {
+                    setAccent(event.target.value.toLowerCase());
                     clearMessages();
                   }}
-                >
-                  恢复主题色
-                </button>
-              ) : null}
-            </div>
-          </label>
+                  aria-label="选择品牌强调色"
+                />
+                <input
+                  type="text"
+                  value={accent}
+                  placeholder={selectedPreset.tokens.brand}
+                  maxLength={7}
+                  onChange={(event) => {
+                    setAccent(event.target.value);
+                    clearMessages();
+                  }}
+                />
+                {accent ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAccent('');
+                      clearMessages();
+                    }}
+                  >
+                    恢复主题色
+                  </button>
+                ) : null}
+              </div>
+            </label>
 
-          <div
-            className="theme-accent-status"
-            data-status={
-              brandContrast?.ratio === null || (brandContrast?.ratio ?? 0) >= 4.5
-                ? 'pass'
-                : 'warning'
-            }
-          >
-            <i style={{ background: previewAccent }} aria-hidden="true" />
-            <span>
-              {brandContrast === null || brandContrast.ratio === null
-                ? '按钮文字会按主题明暗自动匹配'
-                : `按钮文字对比度 ${brandContrast.ratio.toFixed(1)}:1 · AA`}
-            </span>
+            <div className="theme-accent-status" data-status="pass">
+              <i
+                style={{ background: previewAccent ?? selectedPreset.tokens.brand }}
+                aria-hidden="true"
+              />
+              <span>下方预览与自动检查实时使用当前草稿</span>
+            </div>
           </div>
-        </div>
+
+          <div className="theme-center-surface theme-preview-surface">
+            <div className="theme-section-title">
+              <strong>真实组件预览</strong>
+              <span>
+                直接复用用户前端 Header、Hero CTA、快捷入口、分区标题、产品卡和 Bottom
+                Navigation。
+              </span>
+            </div>
+            <ThemeCenterPreview accent={previewAccent} theme={selectedPreset} />
+          </div>
+        </>
       ) : null}
     </section>
   );

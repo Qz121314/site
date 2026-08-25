@@ -318,6 +318,28 @@ function ConnectionRetry({ onRetry }: { onRetry?: (() => void) | undefined }) {
   );
 }
 
+function ConversationStatusNotice({
+  status,
+}: {
+  status: SupportConversationSummary['status'];
+}) {
+  if (status === 'active') return null;
+  return (
+    <div
+      className={`chat-conversation-status is-${status}`}
+      role="status"
+      aria-live="polite"
+    >
+      <span className="chat-conversation-status-dot" aria-hidden="true" />
+      <span>
+        {status === 'waiting'
+          ? SYSTEM_UI.waitingForSupport
+          : SYSTEM_UI.conversationClosed}
+      </span>
+    </div>
+  );
+}
+
 export function MessageThreadPageContent({
   conversation,
   pendingConversation = null,
@@ -567,6 +589,7 @@ export function MessageThreadPageContent({
       </header>
 
       <ProductContextCard context={productContext} LinkComponent={LinkComponent} />
+      {conversation ? <ConversationStatusNotice status={conversation.status} /> : null}
 
       <div className="chat-timeline" role="log" aria-live="polite" ref={timelineRef}>
         {loadingConversation && pendingConversation && !conversation ? (

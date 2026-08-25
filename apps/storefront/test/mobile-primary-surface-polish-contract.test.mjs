@@ -33,7 +33,11 @@ test('mobile Section, Product, Messages, and shell chrome keep native density an
 
   assert.match(
     detailFlow,
-    /@media \(max-width: 767px\)[\s\S]*\.detail-mobile-gallery \{[\s\S]*border-radius: 0;/u,
+    /@media \(max-width: 767px\)[\s\S]*\.detail-mobile-gallery \{[\s\S]*border-radius: var\(--theme-detail-media-radius, var\(--theme-radius-media, 14px\)\);/u,
+  );
+  assert.match(
+    detailFlow,
+    /@media \(max-width: 767px\)[\s\S]*\.detail-mobile-gallery \{[\s\S]*box-shadow: var\(--theme-primary-detail-media-shadow\);/u,
   );
   assert.match(
     detailFlow,

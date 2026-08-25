@@ -1,3 +1,33 @@
+@import './chat-conversation.css';
+
+.chat-conversation-status {
+  display: flex;
+  min-height: 34px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 6px 12px;
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 54%, transparent);
+  color: var(--muted);
+  background: color-mix(in srgb, var(--surface-soft) 72%, var(--surface));
+  font-size: 0.68rem;
+  font-weight: 650;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.chat-conversation-status-dot {
+  width: 6px;
+  height: 6px;
+  flex: 0 0 6px;
+  border-radius: 50%;
+  background: var(--brand);
+}
+
+.chat-conversation-status.is-closed .chat-conversation-status-dot {
+  background: var(--muted);
+}
+
 .chat-message-media {
   display: grid;
   gap: 6px;
@@ -229,6 +259,13 @@
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
+  }
+}
+
+@media (max-width: 767px) {
+  .messages-push-host:has(.messages-workspace.is-thread-open)
+    .chat-page:has(.chat-conversation-status) {
+    grid-template-rows: auto auto auto minmax(0, 1fr) auto;
   }
 }
 

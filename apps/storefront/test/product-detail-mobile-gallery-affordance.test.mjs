@@ -15,18 +15,22 @@ const uiCss = readFileSync(
   'utf8',
 );
 
-test('mobile product gallery is full-bleed and clearly communicates swipe navigation', () => {
+test('mobile product gallery preserves card continuity and clearly communicates swipe navigation', () => {
   assert.match(source, /className="detail-mobile-media-track"/u);
   assert.match(source, /className="detail-mobile-media-count"/u);
   assert.match(flowCss, /\.detail-mobile-gallery \{[\s\S]*width: 100%;/u);
   assert.match(flowCss, /\.detail-mobile-gallery \{[\s\S]*margin-inline: 0;/u);
   assert.match(
     flowCss,
-    /@media \(max-width: 767px\)[\s\S]*\.product-detail-page \{[\s\S]*width: calc\(100% \+ \(var\(--v2-gutter, 16px\) \* 2\)\);/u,
+    /@media \(max-width: 767px\)[\s\S]*\.product-detail-page \{[\s\S]*width: 100%;[\s\S]*margin-inline: 0;/u,
   );
   assert.match(
     flowCss,
-    /@media \(max-width: 767px\)[\s\S]*\.detail-mobile-gallery \{[\s\S]*border-radius: 0;[\s\S]*box-shadow: none;/u,
+    /@media \(max-width: 767px\)[\s\S]*\.detail-mobile-gallery \{[\s\S]*border: 1px solid var\(--theme-art-media-frame\);[\s\S]*border-radius: var\(--theme-detail-media-radius, var\(--theme-radius-media, 14px\)\);[\s\S]*box-shadow: var\(--theme-primary-detail-media-shadow\);/u,
+  );
+  assert.doesNotMatch(
+    flowCss,
+    /width: calc\(100% \+ \(var\(--v2-gutter, 16px\) \* 2\)\)/u,
   );
   assert.match(
     flowCss,

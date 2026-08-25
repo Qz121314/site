@@ -43,6 +43,7 @@
   font-weight: var(--catalog-card-title-weight);
   line-height: 1.22;
   letter-spacing: -0.016em;
+  text-align: center;
   text-shadow: var(--theme-art-media-title-shadow);
 }
 
