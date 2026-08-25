@@ -43,7 +43,7 @@ type DomainTestState =
   | { status: 'success'; message: string }
   | { status: 'error'; message: string };
 
-type SaveStage = 'idle' | 'uploading-logo' | 'saving';
+type SaveStage = 'idle' | 'uploading-logo' | 'uploading-pwa-icon' | 'saving';
 type SettingsPanel = 'general' | 'home' | 'pwa' | 'advanced';
 
 const SETTINGS_PANELS: Array<{ id: SettingsPanel; label: string }> = [
@@ -58,6 +58,7 @@ function createDraft(settings: SiteSettingsWithHero): SettingsDraft {
     siteName: settings.siteName,
     locationLabel: settings.locationLabel,
     logoAssetId: settings.logoAssetId,
+    pwaIconAssetId: settings.pwaIconAssetId,
     mediaBaseUrl: settings.mediaBaseUrl ?? '',
     ga4MeasurementId: settings.ga4MeasurementId ?? '',
     homeSectionLimit: settings.homeSectionLimit,
@@ -85,6 +86,7 @@ function toInput(draft: SettingsDraft): SettingsPayload {
     siteName: draft.siteName,
     locationLabel: draft.locationLabel,
     logoAssetId: draft.logoAssetId,
+    pwaIconAssetId: draft.pwaIconAssetId,
     mediaBaseUrl: draft.mediaBaseUrl.trim() || null,
     ga4MeasurementId: draft.ga4MeasurementId.trim() || null,
     homeSectionLimit: draft.homeSectionLimit,
@@ -116,9 +118,10 @@ function settingsDirty(
   settings: SiteSettingsWithHero | null,
   draft: SettingsDraft | null,
   localLogo: LocalBrandingImage | null,
+  localPwaIcon: LocalBrandingImage | null,
 ): boolean {
   if (!settings || !draft) return false;
-  if (localLogo) return true;
+  if (localLogo || localPwaIcon) return true;
   return (
     JSON.stringify(toInput(draft)) !== JSON.stringify(toInput(createDraft(settings)))
   );
@@ -135,8 +138,11 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
   const [sections, setSections] = useState<AdminSection[]>([]);
   const [activePanel, setActivePanel] = useState<SettingsPanel>('general');
   const [localLogo, setLocalLogo] = useState<LocalBrandingImage | null>(null);
+  const [localPwaIcon, setLocalPwaIcon] = useState<LocalBrandingImage | null>(null);
   const [logoPickerOpen, setLogoPickerOpen] = useState(false);
+  const [pwaIconPickerOpen, setPwaIconPickerOpen] = useState(false);
   const [processingLogo, setProcessingLogo] = useState(false);
+  const [processingPwaIcon, setProcessingPwaIcon] = useState(false);
   const [saveStage, setSaveStage] = useState<SaveStage>('idle');
   const [loading, setLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -146,10 +152,11 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
   useAdminDirtySource(
     'site-settings',
     '站点设置',
-    settingsDirty(settings, draft, localLogo),
+    settingsDirty(settings, draft, localLogo, localPwaIcon),
   );
 
   useEffect(() => () => releaseBrandingImage(localLogo), [localLogo]);
+  useEffect(() => () => releaseBrandingImage(localPwaIcon), [localPwaIcon]);
 
   const loadSettings = useCallback(async () => {
     setLoading(true);
@@ -163,6 +170,7 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
       setDraft(createDraft(result));
       setSections(activeSections);
       setLocalLogo(null);
+      setLocalPwaIcon(null);
     } catch (error) {
       if (error instanceof AdminApiError && error.status === 401) {
         onSessionExpired();
@@ -185,7 +193,7 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
   }
 
   async function selectLogo(file: File) {
-    if (processingLogo || saveStage !== 'idle') return;
+    if (processingLogo || processingPwaIcon || saveStage !== 'idle') return;
     setProcessingLogo(true);
     setErrorMessage(null);
     setSuccessMessage(null);
@@ -200,9 +208,25 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
     }
   }
 
+  async function selectPwaIcon(file: File) {
+    if (processingLogo || processingPwaIcon || saveStage !== 'idle') return;
+    setProcessingPwaIcon(true);
+    setErrorMessage(null);
+    setSuccessMessage(null);
+    try {
+      const prepared = await prepareBrandingImage(file, 'pwa-icon');
+      setLocalPwaIcon(prepared);
+      updateDraft('pwaIconAssetId', null);
+    } catch (error) {
+      setErrorMessage(error instanceof Error ? error.message : 'PWA 图标本地处理失败。');
+    } finally {
+      setProcessingPwaIcon(false);
+    }
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!draft || saveStage !== 'idle' || processingLogo) return;
+    if (!draft || saveStage !== 'idle' || processingLogo || processingPwaIcon) return;
 
     setErrorMessage(null);
     setSuccessMessage(null);
@@ -216,6 +240,19 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
           current ? { ...current, logoAssetId: uploaded.media.id } : current,
         );
         setLocalLogo(null);
+      }
+
+      if (localPwaIcon) {
+        setSaveStage('uploading-pwa-icon');
+        const uploaded = await uploadBrandingImage(
+          'pwa-icon',
+          localPwaIcon.compressedFile,
+        );
+        input = { ...input, pwaIconAssetId: uploaded.media.id };
+        setDraft((current) =>
+          current ? { ...current, pwaIconAssetId: uploaded.media.id } : current,
+        );
+        setLocalPwaIcon(null);
       }
 
       setSaveStage('saving');
@@ -283,10 +320,13 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
     );
   }
 
-  const busy = saveStage !== 'idle' || processingLogo;
+  const busy = saveStage !== 'idle' || processingLogo || processingPwaIcon;
   const logoPreviewUrl =
     localLogo?.previewUrl ??
     (draft.logoAssetId ? brandingAssetPreviewUrl(draft.logoAssetId) : null);
+  const pwaIconPreviewUrl =
+    localPwaIcon?.previewUrl ??
+    (draft.pwaIconAssetId ? brandingAssetPreviewUrl(draft.pwaIconAssetId) : null);
 
   return (
     <>
@@ -354,7 +394,7 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
                     </label>
 
                     <div className="admin-logo-field">
-                      <span className="admin-field-label">站点 Logo</span>
+                      <span className="admin-field-label">站点 Logo（网页品牌）</span>
                       <div className="admin-logo-control">
                         <div className="admin-logo-preview">
                           {logoPreviewUrl ? (
@@ -455,128 +495,213 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
             ) : null}
 
             {activePanel === 'pwa' ? (
-              <section
-                className="admin-settings-section admin-pwa-settings"
-                aria-labelledby="settings-pwa-title"
-              >
-                <div className="admin-pwa-heading">
-                  <div>
-                    <h2 id="settings-pwa-title">安装应用提示</h2>
-                    <p>控制用户停留一段时间后看到的轻量安装提示，不影响网页首屏。</p>
+              <>
+                <section
+                  className="admin-settings-section admin-pwa-icon-settings"
+                  aria-labelledby="settings-pwa-icon-title"
+                >
+                  <div className="admin-pwa-heading">
+                    <div>
+                      <h2 id="settings-pwa-icon-title">PWA 图标 / App Icon</h2>
+                      <p>
+                        独立用于手机桌面、浏览器 favicon 和 Apple Touch Icon。建议使用 1:1
+                        正方形图片，推荐 512 × 512。
+                      </p>
+                    </div>
                   </div>
-                  <label className="admin-pwa-switch">
-                    <input
-                      type="checkbox"
-                      checked={draft.installPrompt.enabled}
-                      disabled={busy}
-                      onChange={(event) =>
-                        updateDraft('installPrompt', {
-                          ...draft.installPrompt,
-                          enabled: event.target.checked,
-                        })
-                      }
-                    />
-                    <span>{draft.installPrompt.enabled ? '已开启' : '已关闭'}</span>
-                  </label>
-                </div>
+                  <div className="admin-logo-field admin-pwa-icon-field">
+                    <div className="admin-logo-control">
+                      <div className="admin-logo-preview">
+                        {pwaIconPreviewUrl ? (
+                          <img src={pwaIconPreviewUrl} alt="PWA 图标预览" />
+                        ) : (
+                          <span>App</span>
+                        )}
+                      </div>
+                      <div className="admin-logo-state">
+                        <strong>
+                          {localPwaIcon
+                            ? '待保存'
+                            : draft.pwaIconAssetId
+                              ? '已设置'
+                              : '使用默认图标'}
+                        </strong>
+                        {localPwaIcon ? (
+                          <small>
+                            {localPwaIcon.width} × {localPwaIcon.height} ·{' '}
+                            {formatBrandingBytes(localPwaIcon.compressedFile.size)}
+                          </small>
+                        ) : null}
+                      </div>
+                      <div className="admin-logo-actions">
+                        <label
+                          className={`branding-file-button${busy ? ' is-disabled' : ''}`}
+                        >
+                          <input
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            disabled={busy}
+                            onChange={(event) => {
+                              const file = event.target.files?.[0];
+                              event.currentTarget.value = '';
+                              if (file) void selectPwaIcon(file);
+                            }}
+                          />
+                          {processingPwaIcon
+                            ? '处理中…'
+                            : pwaIconPreviewUrl
+                              ? '上传替换'
+                              : '上传'}
+                        </label>
+                        <button
+                          type="button"
+                          className="admin-text-button"
+                          disabled={busy}
+                          onClick={() => setPwaIconPickerOpen(true)}
+                        >
+                          从素材中心选择
+                        </button>
+                        {pwaIconPreviewUrl ? (
+                          <button
+                            type="button"
+                            className="admin-text-button"
+                            disabled={busy}
+                            onClick={() => {
+                              setLocalPwaIcon(null);
+                              updateDraft('pwaIconAssetId', null);
+                            }}
+                          >
+                            恢复默认图标
+                          </button>
+                        ) : null}
+                      </div>
+                    </div>
+                  </div>
+                </section>
 
-                <div className="admin-pwa-grid">
-                  <label className="field-group">
-                    <span>延迟显示（秒）</span>
-                    <input
-                      type="number"
-                      min={5}
-                      max={120}
-                      value={draft.installPrompt.delaySeconds}
-                      disabled={busy || !draft.installPrompt.enabled}
-                      onChange={(event) =>
-                        updateDraft('installPrompt', {
-                          ...draft.installPrompt,
-                          delaySeconds: Math.max(
-                            5,
-                            Math.min(120, Number(event.target.value) || 30),
-                          ),
-                        })
-                      }
-                    />
-                  </label>
-                  <label className="field-group">
-                    <span>提示标题</span>
-                    <input
-                      type="text"
-                      maxLength={80}
-                      value={draft.installPrompt.title}
-                      disabled={busy || !draft.installPrompt.enabled}
-                      onChange={(event) =>
-                        updateDraft('installPrompt', {
-                          ...draft.installPrompt,
-                          title: event.target.value,
-                        })
-                      }
-                    />
-                  </label>
-                  <label className="field-group admin-pwa-wide">
-                    <span>桌面端说明</span>
-                    <input
-                      type="text"
-                      maxLength={160}
-                      value={draft.installPrompt.description}
-                      disabled={busy || !draft.installPrompt.enabled}
-                      onChange={(event) =>
-                        updateDraft('installPrompt', {
-                          ...draft.installPrompt,
-                          description: event.target.value,
-                        })
-                      }
-                    />
-                  </label>
-                  <label className="field-group admin-pwa-wide">
-                    <span>iPhone / iPad 说明</span>
-                    <input
-                      type="text"
-                      maxLength={160}
-                      value={draft.installPrompt.iosDescription}
-                      disabled={busy || !draft.installPrompt.enabled}
-                      onChange={(event) =>
-                        updateDraft('installPrompt', {
-                          ...draft.installPrompt,
-                          iosDescription: event.target.value,
-                        })
-                      }
-                    />
-                  </label>
-                  <label className="field-group">
-                    <span>安装按钮</span>
-                    <input
-                      type="text"
-                      maxLength={32}
-                      value={draft.installPrompt.installLabel}
-                      disabled={busy || !draft.installPrompt.enabled}
-                      onChange={(event) =>
-                        updateDraft('installPrompt', {
-                          ...draft.installPrompt,
-                          installLabel: event.target.value,
-                        })
-                      }
-                    />
-                  </label>
-                  <label className="field-group">
-                    <span>关闭提示</span>
-                    <input
-                      type="text"
-                      maxLength={32}
-                      value={draft.installPrompt.dismissLabel}
-                      disabled={busy || !draft.installPrompt.enabled}
-                      onChange={(event) =>
-                        updateDraft('installPrompt', {
-                          ...draft.installPrompt,
-                          dismissLabel: event.target.value,
-                        })
-                      }
-                    />
-                  </label>
-                </div>
-              </section>
+                <section
+                  className="admin-settings-section admin-pwa-settings"
+                  aria-labelledby="settings-pwa-title"
+                >
+                  <div className="admin-pwa-heading">
+                    <div>
+                      <h2 id="settings-pwa-title">安装应用提示</h2>
+                      <p>控制用户停留一段时间后看到的轻量安装提示，不影响网页首屏。</p>
+                    </div>
+                    <label className="admin-pwa-switch">
+                      <input
+                        type="checkbox"
+                        checked={draft.installPrompt.enabled}
+                        disabled={busy}
+                        onChange={(event) =>
+                          updateDraft('installPrompt', {
+                            ...draft.installPrompt,
+                            enabled: event.target.checked,
+                          })
+                        }
+                      />
+                      <span>{draft.installPrompt.enabled ? '已开启' : '已关闭'}</span>
+                    </label>
+                  </div>
+
+                  <div className="admin-pwa-grid">
+                    <label className="field-group">
+                      <span>延迟显示（秒）</span>
+                      <input
+                        type="number"
+                        min={5}
+                        max={120}
+                        value={draft.installPrompt.delaySeconds}
+                        disabled={busy || !draft.installPrompt.enabled}
+                        onChange={(event) =>
+                          updateDraft('installPrompt', {
+                            ...draft.installPrompt,
+                            delaySeconds: Math.max(
+                              5,
+                              Math.min(120, Number(event.target.value) || 30),
+                            ),
+                          })
+                        }
+                      />
+                    </label>
+                    <label className="field-group">
+                      <span>提示标题</span>
+                      <input
+                        type="text"
+                        maxLength={80}
+                        value={draft.installPrompt.title}
+                        disabled={busy || !draft.installPrompt.enabled}
+                        onChange={(event) =>
+                          updateDraft('installPrompt', {
+                            ...draft.installPrompt,
+                            title: event.target.value,
+                          })
+                        }
+                      />
+                    </label>
+                    <label className="field-group admin-pwa-wide">
+                      <span>桌面端说明</span>
+                      <input
+                        type="text"
+                        maxLength={160}
+                        value={draft.installPrompt.description}
+                        disabled={busy || !draft.installPrompt.enabled}
+                        onChange={(event) =>
+                          updateDraft('installPrompt', {
+                            ...draft.installPrompt,
+                            description: event.target.value,
+                          })
+                        }
+                      />
+                    </label>
+                    <label className="field-group admin-pwa-wide">
+                      <span>iPhone / iPad 说明</span>
+                      <input
+                        type="text"
+                        maxLength={160}
+                        value={draft.installPrompt.iosDescription}
+                        disabled={busy || !draft.installPrompt.enabled}
+                        onChange={(event) =>
+                          updateDraft('installPrompt', {
+                            ...draft.installPrompt,
+                            iosDescription: event.target.value,
+                          })
+                        }
+                      />
+                    </label>
+                    <label className="field-group">
+                      <span>安装按钮</span>
+                      <input
+                        type="text"
+                        maxLength={32}
+                        value={draft.installPrompt.installLabel}
+                        disabled={busy || !draft.installPrompt.enabled}
+                        onChange={(event) =>
+                          updateDraft('installPrompt', {
+                            ...draft.installPrompt,
+                            installLabel: event.target.value,
+                          })
+                        }
+                      />
+                    </label>
+                    <label className="field-group">
+                      <span>关闭提示</span>
+                      <input
+                        type="text"
+                        maxLength={32}
+                        value={draft.installPrompt.dismissLabel}
+                        disabled={busy || !draft.installPrompt.enabled}
+                        onChange={(event) =>
+                          updateDraft('installPrompt', {
+                            ...draft.installPrompt,
+                            dismissLabel: event.target.value,
+                          })
+                        }
+                      />
+                    </label>
+                  </div>
+                </section>
+              </>
             ) : null}
 
             {activePanel === 'advanced' ? (
@@ -660,9 +785,11 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
           >
             {saveStage === 'uploading-logo'
               ? '上传 Logo…'
-              : saveStage === 'saving'
-                ? '保存中…'
-                : '保存站点设置'}
+              : saveStage === 'uploading-pwa-icon'
+                ? '上传 PWA 图标…'
+                : saveStage === 'saving'
+                  ? '保存中…'
+                  : '保存站点设置'}
           </button>
         </div>
       </form>
@@ -680,6 +807,23 @@ export function SiteSettingsView({ onSessionExpired }: SiteSettingsViewProps) {
             updateDraft('logoAssetId', asset.id);
             setLogoPickerOpen(false);
             setSuccessMessage('已从素材中心选择 Logo，保存站点设置后生效。');
+          }}
+        />
+      ) : null}
+
+      {pwaIconPickerOpen ? (
+        <MediaPickerDialog
+          title="选择 PWA 图标"
+          role="icon"
+          allowedKinds={['image']}
+          selectedIds={draft.pwaIconAssetId ? [draft.pwaIconAssetId] : []}
+          onSessionExpired={onSessionExpired}
+          onClose={() => setPwaIconPickerOpen(false)}
+          onSelect={(asset) => {
+            setLocalPwaIcon(null);
+            updateDraft('pwaIconAssetId', asset.id);
+            setPwaIconPickerOpen(false);
+            setSuccessMessage('已从素材中心选择 PWA 图标，保存站点设置后生效。');
           }}
         />
       ) : null}
