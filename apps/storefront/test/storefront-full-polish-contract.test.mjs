@@ -27,6 +27,7 @@ test('storefront polish stays theme-led and app-native across every primary surf
     storefrontMain,
     adminMain,
     adminStyles,
+    themeContract,
   ] = await Promise.all([
     readFile(
       new URL(
@@ -46,6 +47,10 @@ test('storefront polish stays theme-led and app-native across every primary surf
     readFile(new URL('../src/main.tsx', import.meta.url), 'utf8'),
     readFile(new URL('../../admin/src/main.tsx', import.meta.url), 'utf8'),
     readFile(new URL('../../admin/src/admin.css', import.meta.url), 'utf8'),
+    readFile(
+      new URL('../../../packages/storefront-ui/src/theme-contract.css', import.meta.url),
+      'utf8',
+    ),
   ]);
 
   for (const styles of [home, browse, section, faq, messages, pwa]) {
@@ -55,7 +60,9 @@ test('storefront polish stays theme-led and app-native across every primary surf
   assert.match(shell, /\.app-shell \.brand-lockup[\s\S]*margin-inline: auto/u);
   assert.match(shell, /\.app-shell > \.topbar \{[\s\S]*position: fixed/u);
   assert.match(shell, /\.storefront-bottom-chrome \{[\s\S]*position: fixed/u);
-  assert.match(shell, /backdrop-filter: blur\(22px\)/u);
+  assert.match(shell, /--theme-navigation-backdrop/u);
+  assert.match(shell, /--theme-page-background/u);
+  assert.doesNotMatch(shell, /html\[data-theme='noir'\][\s\S]*background/u);
   assert.match(shell, /\.app-shell \.brand-logo \{[\s\S]*width: min\(/u);
   assert.doesNotMatch(
     shell,
@@ -122,6 +129,12 @@ test('storefront polish stays theme-led and app-native across every primary surf
   );
   assert.match(adminMain, /import '\.\/admin\.css'/u);
   assert.match(adminStyles, /@site\/storefront-ui\/art-direction-contract\.css/u);
+  assert.match(
+    themeContract,
+    /\[data-color-scheme='dark'\][\s\S]*--theme-page-background/u,
+  );
+  assert.match(themeContract, /--theme-navigation-material/u);
+  assert.match(themeContract, /--theme-ambient-media-shadow/u);
 
   assert.match(
     browse,

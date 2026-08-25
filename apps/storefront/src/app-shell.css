@@ -15,11 +15,7 @@ body,
   min-height: var(--app-viewport-height, 100dvh);
   padding-bottom: 0;
   color: var(--text);
-  background: var(--page-bg, #f5f6f7);
-}
-
-html[data-theme='noir'] .app-shell {
-  background: var(--page-bg, #09070a);
+  background: var(--theme-page-background, var(--page-bg, #f5f6f7));
 }
 
 .app-shell > .topbar {
@@ -33,10 +29,13 @@ html[data-theme='noir'] .app-shell {
   padding-top: env(safe-area-inset-top);
   padding-right: max(var(--v2-gutter), env(safe-area-inset-right));
   padding-left: max(var(--v2-gutter), env(safe-area-inset-left));
-  border-bottom: 1px solid var(--v2-hairline);
-  background: color-mix(in srgb, var(--page-bg, #f5f6f7) 92%, transparent);
+  border-bottom: 1px solid var(--theme-navigation-border, var(--v2-hairline));
+  background: var(
+    --theme-navigation-material,
+    color-mix(in srgb, var(--page-bg, #f5f6f7) 92%, transparent)
+  );
   box-shadow: none;
-  backdrop-filter: blur(22px) saturate(1.06);
+  backdrop-filter: var(--theme-navigation-backdrop, blur(22px) saturate(1.06));
 }
 
 .app-shell > .site-footer {

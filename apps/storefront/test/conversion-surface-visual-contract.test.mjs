@@ -81,7 +81,14 @@ test('conversion surfaces consume Theme Center material tokens without changing 
 
   assert.match(chrome, /background: var\(--theme-primary-header-background\)/u);
   assert.match(chrome, /backdrop-filter: var\(--theme-primary-header-backdrop\)/u);
-  assert.match(chrome, /background: var\(--theme-primary-navigation-background\)/u);
+  assert.match(
+    chrome,
+    /--theme-navigation-material[\s\S]*var\(--theme-primary-navigation-background\)/u,
+  );
+  assert.match(
+    chrome,
+    /--theme-navigation-backdrop[\s\S]*var\(--theme-primary-navigation-backdrop\)/u,
+  );
   assert.match(chrome, /border-top-color: var\(--theme-primary-navigation-border\)/u);
   assert.match(detail, /background: var\(--theme-primary-detail-cta-bar-background\)/u);
   assert.match(detail, /border: 1px solid var\(--theme-primary-detail-cta-border\)/u);

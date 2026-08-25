@@ -133,7 +133,9 @@ test('Premium Noir Dating V3 resolves a complete commercial UI recipe', () => {
     motionStyle: 'restrained',
     navigationStyle: 'quiet',
   });
-  assert.equal(resolved.tokens.pageBg, '#0c090b');
+  assert.equal(resolved.tokens.pageBg, '#130e12');
+  assert.equal(resolved.tokens.surface, '#20171d');
+  assert.equal(resolved.tokens.heroGlow, '#bd4f78');
   assert.equal(resolved.tokens.brand, '#df5d87');
   assert.deepEqual(resolved.installPrompt, {
     enabled: true,
@@ -156,14 +158,14 @@ test('Live uses the restrained intimate visual recipe', () => {
     motionStyle: 'restrained',
     navigationStyle: 'quiet',
   });
-  assert.equal(resolved.tokens.pageBg, '#0b080a');
+  assert.equal(resolved.tokens.pageBg, '#140d12');
   assert.equal(resolved.tokens.brand, '#e3486d');
 });
 
 test('new official themes provide distinct complete visual recipes', () => {
   const themes = [
-    ['velvet', 'dark', '#b6405f', '#090708'],
-    ['midnight', 'dark', '#8fa7d8', '#07090f'],
+    ['velvet', 'dark', '#b6405f', '#160b0f'],
+    ['midnight', 'dark', '#8fa7d8', '#0d111c'],
     ['pearl', 'light', '#a64562', '#f5efe9'],
   ];
 

@@ -238,7 +238,7 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
                 className="theme-preset-swatch"
                 style={{
                   color: preset.tokens.text,
-                  background: `linear-gradient(145deg, ${preset.tokens.heroStart}, ${preset.tokens.heroEnd})`,
+                  background: `radial-gradient(circle at 78% 12%, color-mix(in srgb, ${preset.tokens.heroGlow} 44%, transparent), transparent 52%), linear-gradient(145deg, ${preset.tokens.heroStart}, ${preset.tokens.pageBg} 58%, ${preset.tokens.heroEnd})`,
                 }}
               >
                 <span className="theme-preset-swatch-bar" />
@@ -283,7 +283,7 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
               className="theme-preset-swatch"
               style={{
                 color: currentTheme.tokens.text,
-                background: `linear-gradient(145deg, ${currentTheme.tokens.heroStart}, ${currentTheme.tokens.heroEnd})`,
+                background: `radial-gradient(circle at 78% 12%, color-mix(in srgb, ${currentTheme.tokens.heroGlow} 44%, transparent), transparent 52%), linear-gradient(145deg, ${currentTheme.tokens.heroStart}, ${currentTheme.tokens.pageBg} 58%, ${currentTheme.tokens.heroEnd})`,
               }}
             />
             <span className="theme-preset-copy">
