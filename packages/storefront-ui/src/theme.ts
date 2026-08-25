@@ -22,7 +22,7 @@ export type StorefrontBrandContrast = {
   ratio: number | null;
 };
 
-function hexLuminance(value: string): number | null {
+export function storefrontRelativeLuminance(value: string): number | null {
   const match = /^#([0-9a-f]{6})(?:[0-9a-f]{2})?$/iu.exec(value.trim());
   if (!match?.[1]) return null;
   const channels = match[1]
@@ -35,11 +35,23 @@ function hexLuminance(value: string): number | null {
   return channels[0]! * 0.2126 + channels[1]! * 0.7152 + channels[2]! * 0.0722;
 }
 
+export function storefrontContrastRatio(
+  foreground: string,
+  background: string,
+): number | null {
+  const foregroundLuminance = storefrontRelativeLuminance(foreground);
+  const backgroundLuminance = storefrontRelativeLuminance(background);
+  if (foregroundLuminance === null || backgroundLuminance === null) return null;
+  const lighter = Math.max(foregroundLuminance, backgroundLuminance);
+  const darker = Math.min(foregroundLuminance, backgroundLuminance);
+  return (lighter + 0.05) / (darker + 0.05);
+}
+
 export function storefrontBrandContrast(
   brand: string,
   colorScheme: StorefrontColorScheme,
 ): StorefrontBrandContrast {
-  const luminance = hexLuminance(brand);
+  const luminance = storefrontRelativeLuminance(brand);
   if (luminance === null) {
     return {
       foreground: colorScheme === 'light' ? 'var(--text)' : 'var(--page-bg)',
