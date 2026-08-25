@@ -549,6 +549,7 @@
 }
 
 .home-product-tile {
+  position: relative;
   display: block;
   min-width: 0;
   color: var(--text);
@@ -632,6 +633,7 @@
   font-weight: 680;
   line-height: 1.18;
   letter-spacing: -0.022em;
+  text-align: center;
   text-shadow: 0 1px 14px rgb(0 0 0 / 42%);
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
