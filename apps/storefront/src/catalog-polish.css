@@ -1,5 +1,9 @@
 /* Shared app-native polish for the storefront's high-frequency catalog surfaces. */
 
+:is(html, .storefront-theme-root) .home-product-tile {
+  position: relative;
+}
+
 :is(html, .storefront-theme-root)
   :is(.home-product-cover, .browse-search-product-cover, .section-product-cover) {
   border-radius: var(--theme-radius-media, 12px);
@@ -43,6 +47,7 @@
   font-weight: var(--catalog-card-title-weight);
   line-height: 1.22;
   letter-spacing: -0.016em;
+  text-align: center;
   text-shadow: var(--theme-art-media-title-shadow);
 }
 
