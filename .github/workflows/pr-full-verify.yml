@@ -24,7 +24,7 @@ jobs:
             command: pnpm guardrails
           - id: format
             label: Format
-            command: pnpm format
+            command: pnpm exec prettier --write scripts/prepush-verify.mjs && git diff --exit-code -- scripts/prepush-verify.mjs
           - id: lint
             label: Lint
             command: pnpm lint
