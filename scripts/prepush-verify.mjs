@@ -16,14 +16,7 @@ const prettierExtensions = new Set([
   '.yaml',
   '.yml',
 ]);
-const eslintExtensions = new Set([
-  '.cjs',
-  '.js',
-  '.jsx',
-  '.mjs',
-  '.ts',
-  '.tsx',
-]);
+const eslintExtensions = new Set(['.cjs', '.js', '.jsx', '.mjs', '.ts', '.tsx']);
 
 function run(command, args, options = {}) {
   const result = spawnSync(command, args, {
@@ -75,12 +68,7 @@ function extensionOf(file) {
 }
 
 const baseRef = resolveBaseRef();
-const diff = gitOutput(
-  'diff',
-  '--name-only',
-  '--diff-filter=ACMR',
-  `${baseRef}...HEAD`,
-);
+const diff = gitOutput('diff', '--name-only', '--diff-filter=ACMR', `${baseRef}...HEAD`);
 const changedFiles = diff ? diff.split('\n').filter(Boolean) : [];
 
 console.log(`Fast pre-push verification against ${baseRef}.`);
