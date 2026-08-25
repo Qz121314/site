@@ -64,9 +64,10 @@ export function ThemeCenterPreview({
           style={style}
         >
           <StorefrontBrandBar
-            brandMark={<PreviewIcon>◆</PreviewIcon>}
-            name="Storefront"
-            tagline={theme.label}
+            locationLabel={theme.label}
+            logo={<PreviewIcon>◆</PreviewIcon>}
+            siteName="Storefront"
+            LinkComponent={PreviewLink}
           />
 
           <div className="theme-preview-content">
