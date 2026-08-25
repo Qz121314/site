@@ -9,7 +9,7 @@ const MIME_EXTENSION: Record<string, string> = {
   'image/webp': 'webp',
 };
 
-export type BrandingImageKind = 'logo' | 'section-icon';
+export type BrandingImageKind = 'logo' | 'pwa-icon' | 'section-icon';
 
 export type BrandingMediaRecord = {
   id: string;
@@ -169,7 +169,7 @@ export async function uploadBrandingImage(
   kind: BrandingImageKind,
   file: File,
 ): Promise<BrandingImageUploadResult> {
-  if (kind !== 'logo' && kind !== 'section-icon') {
+  if (kind !== 'logo' && kind !== 'pwa-icon' && kind !== 'section-icon') {
     return {
       ok: false,
       field: 'kind',
@@ -185,7 +185,7 @@ export async function uploadBrandingImage(
       ok: false,
       field: 'file',
       code: 'IMAGE_TYPE_UNSUPPORTED',
-      message: 'Logo 和分区图标只接收浏览器压缩后的 WebP 或 JPEG。',
+      message: 'Logo、PWA 图标和分区图标只接收浏览器压缩后的 WebP 或 JPEG。',
     };
   }
   if (file.size <= 0 || file.size > MAX_IMAGE_BYTES) {
@@ -229,7 +229,8 @@ export async function uploadBrandingImage(
   const id = crypto.randomUUID();
   const now = new Date().toISOString();
   const date = now.slice(0, 7).replace('-', '/');
-  const folder = kind === 'logo' ? 'logos' : 'section-icons';
+  const folder =
+    kind === 'logo' ? 'logos' : kind === 'pwa-icon' ? 'pwa-icons' : 'section-icons';
   const objectKey = `branding/${folder}/${date}/${id}.${extension}`;
   const row: MediaAssetRow = {
     id,
