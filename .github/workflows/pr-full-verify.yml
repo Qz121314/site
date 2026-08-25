@@ -42,7 +42,7 @@ jobs:
             command: pnpm build
           - id: worker-dry-run
             label: Worker Dry Run
-            command: pnpm cf:check
+            command: pnpm build && pnpm cf:check
 
     steps:
       - name: Checkout
