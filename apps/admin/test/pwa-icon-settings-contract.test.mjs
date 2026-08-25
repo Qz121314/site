@@ -1,17 +1,15 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
-const viewUrl = new URL('../src/SiteSettingsView.tsx', import.meta.url);
-const settingsApiUrl = new URL('../src/site-hero-settings-api.ts', import.meta.url);
-const brandingUrl = new URL('../src/branding-media/local-branding-image.ts', import.meta.url);
+function source(path) {
+  return readFileSync(new URL(path, import.meta.url), 'utf8');
+}
 
-test('site settings keep webpage logo and PWA app icon as separate assets', async () => {
-  const [viewSource, settingsApiSource, brandingSource] = await Promise.all([
-    readFile(viewUrl, 'utf8'),
-    readFile(settingsApiUrl, 'utf8'),
-    readFile(brandingUrl, 'utf8'),
-  ]);
+test('site settings keep webpage logo and PWA app icon as separate assets', () => {
+  const viewSource = source('../src/SiteSettingsView.tsx');
+  const settingsApiSource = source('../src/site-hero-settings-api.ts');
+  const brandingSource = source('../src/branding-media/local-branding-image.ts');
 
   assert.match(viewSource, /站点 Logo（网页品牌）/u);
   assert.match(viewSource, /PWA 图标 \/ App Icon/u);
