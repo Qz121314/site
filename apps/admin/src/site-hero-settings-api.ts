@@ -40,6 +40,7 @@ export type HomeLayout = {
 };
 
 export type SiteSettingsWithHero = SiteSettings & {
+  pwaIconAssetId: string | null;
   heroSlides: SiteHeroSlide[];
   bottomNavigation: BottomNavigationItem[];
   homeLayout: HomeLayout;
@@ -47,6 +48,7 @@ export type SiteSettingsWithHero = SiteSettings & {
 
 export type SiteSettingsWithHeroUpdateInput = SiteSettingsUpdateInput & {
   logoAssetId: string | null;
+  pwaIconAssetId: string | null;
   heroSlides: SiteHeroSlideInput[];
   bottomNavigation: BottomNavigationItemInput[];
   homeLayout: HomeLayout;
@@ -125,10 +127,14 @@ function parseHomeLayout(value: unknown): HomeLayout {
 
 function withHero(settings: SiteSettings): SiteSettingsWithHero {
   const raw = settings as SiteSettings & {
+    pwaIconAssetId?: unknown;
     heroSlides?: unknown;
     bottomNavigation?: unknown;
     homeLayout?: unknown;
   };
+  if (typeof raw.pwaIconAssetId !== 'string' && raw.pwaIconAssetId !== null) {
+    throw new AdminApiError(500, 'INVALID_RESPONSE', 'PWA 图标设置返回数据无效。');
+  }
   if (!Array.isArray(raw.heroSlides)) {
     throw new AdminApiError(500, 'INVALID_RESPONSE', 'Hero 设置返回数据无效。');
   }
@@ -137,6 +143,7 @@ function withHero(settings: SiteSettings): SiteSettingsWithHero {
   }
   return {
     ...settings,
+    pwaIconAssetId: raw.pwaIconAssetId,
     heroSlides: raw.heroSlides.map(parseHeroSlide),
     bottomNavigation: raw.bottomNavigation.map(parseBottomNavigationItem),
     homeLayout: parseHomeLayout(raw.homeLayout),
