@@ -1,9 +1,5 @@
 /* Shared app-native polish for the storefront's high-frequency catalog surfaces. */
 
-:is(html, .storefront-theme-root) .home-product-tile {
-  position: relative;
-}
-
 :is(html, .storefront-theme-root)
   :is(.home-product-cover, .browse-search-product-cover, .section-product-cover) {
   border-radius: var(--theme-radius-media, 12px);
