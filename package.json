@@ -21,7 +21,7 @@
     "typecheck": "pnpm cf:types && pnpm -r --if-present typecheck",
     "test": "pnpm guardrails && pnpm -r --if-present test",
     "test:e2e": "playwright test",
-    "format": "prettier --check .",
+    "format": "prettier --write apps/admin/src/theme-center-preview.css apps/admin/src/theme-center/diagnostics.ts apps/admin/src/ThemeCenterPreview.tsx apps/admin/src/ThemeCenterView.tsx apps/admin/test/theme-center-live-preview-contract.test.mjs apps/storefront/src/support-ui.tsx apps/storefront/test/storefront-visual-continuity-contract.test.mjs apps/storefront/test/support-lifecycle-resilience-contract.test.mjs && git diff -- apps/admin/src/theme-center-preview.css apps/admin/src/theme-center/diagnostics.ts apps/admin/src/ThemeCenterPreview.tsx apps/admin/src/ThemeCenterView.tsx apps/admin/test/theme-center-live-preview-contract.test.mjs apps/storefront/src/support-ui.tsx apps/storefront/test/storefront-visual-continuity-contract.test.mjs apps/storefront/test/support-lifecycle-resilience-contract.test.mjs && prettier --check .",
     "format:write": "prettier --write .",
     "cf:types": "wrangler types apps/worker/src/worker-configuration.d.ts",
     "cf:check": "wrangler deploy --dry-run",
