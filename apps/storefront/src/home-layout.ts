@@ -32,7 +32,9 @@ export function resolveHomeShortcuts(
 ): ResolvedHomeShortcuts {
   const configured = publishedIds(configuredIds ?? [], publishedSectionIds);
   const source =
-    configured.length > 0 ? configured : publishedIds(fallbackIds, publishedSectionIds);
+    configured.length > 0
+      ? configured
+      : publishedIds(fallbackIds, publishedSectionIds);
   const showMore = source.length > 8;
   return {
     sectionIds: source.slice(0, showMore ? 7 : 8),
