@@ -233,6 +233,21 @@ adminSiteSettingsRoutes.put('/', async (context) => {
     );
   }
 
+  const pwaIconAsset = validation.value.pwaIconAssetId
+    ? await getReadyImageAsset(context.env.DB, validation.value.pwaIconAssetId)
+    : null;
+  if (validation.value.pwaIconAssetId && !pwaIconAsset) {
+    return apiError(
+      context,
+      409,
+      'PWA_ICON_ASSET_INVALID',
+      'PWA 图标不存在、已删除或状态异常。',
+      {
+        field: 'pwaIconAssetId',
+      },
+    );
+  }
+
   const currentSettings = await getSiteSettings(context.env.DB);
   const [currentBottomNavigation, currentHomeLayout, currentThemeSettings] =
     await Promise.all([
