@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { SYSTEM_UI } from './system-ui';
+import './section-compact-filters.css';
 
 type FilterOption = {
   id: string;
