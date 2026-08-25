@@ -7,7 +7,7 @@ function source(path) {
   return readFileSync(new URL(path, import.meta.url), 'utf8');
 }
 
-test('storefront resolves and prefers the assigned customer-service agent avatar', () => {
+test('storefront resolves the assigned agent avatar without impersonating it with product media', () => {
   const contract = source('../src/support-contract.ts');
   const gateway = source('../src/support-gateway.ts');
   const realtime = source('../src/support-realtime.ts');
@@ -22,7 +22,17 @@ test('storefront resolves and prefers the assigned customer-service agent avatar
     ),
   );
   assert.ok(realtime.includes('resolveSupportAssetUrl(connection, item.agentAvatarUrl)'));
-  assert.ok(ui.includes('conversation.agentAvatarUrl || conversation.productCoverUrl'));
+  assert.ok(ui.includes('if (conversation.agentAvatarUrl)'));
+  assert.ok(ui.includes('src={conversation.agentAvatarUrl}'));
+  assert.equal(
+    ui.includes('conversation.agentAvatarUrl || conversation.productCoverUrl'),
+    false,
+  );
+  assert.equal(
+    ui.includes('className="chat-header-avatar"') &&
+      ui.includes('src={productContext.productCoverUrl}'),
+    false,
+  );
   assert.ok(css.includes('.conversation-avatar,\n.chat-header-avatar'));
   assert.ok(css.includes('border-radius: 50%'));
   assert.ok(css.includes('object-fit: cover'));

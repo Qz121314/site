@@ -147,8 +147,7 @@ function ConversationAvatar({
 }: {
   conversation: SupportConversationSummary;
 }) {
-  const avatarUrl = conversation.agentAvatarUrl || conversation.productCoverUrl;
-  if (avatarUrl) {
+  if (conversation.agentAvatarUrl) {
     return (
       <ResilientImage
         alt=""
@@ -156,7 +155,7 @@ function ConversationAvatar({
           <span aria-hidden="true">{conversationTitle(conversation).slice(0, 1)}</span>
         }
         loading="lazy"
-        src={avatarUrl}
+        src={conversation.agentAvatarUrl}
       />
     );
   }
@@ -556,12 +555,6 @@ export function MessageThreadPageContent({
         <span className="chat-header-avatar">
           {conversation ? (
             <ConversationAvatar conversation={conversation} />
-          ) : productContext.productCoverUrl ? (
-            <ResilientImage
-              alt=""
-              fallback={<MessageBubbleIcon />}
-              src={productContext.productCoverUrl}
-            />
           ) : (
             <MessageBubbleIcon />
           )}
