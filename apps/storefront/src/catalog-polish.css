@@ -222,8 +222,7 @@
   display: none;
 }
 
-:is(html, .storefront-theme-root)
-  :is(.home-product-tile, .home-product-skeleton) {
+:is(html, .storefront-theme-root) :is(.home-product-tile, .home-product-skeleton) {
   width: clamp(148px, 42vw, 176px);
   min-width: 0;
   flex: 0 0 clamp(148px, 42vw, 176px);
@@ -235,8 +234,7 @@
     gap: 17px;
   }
 
-  :is(html, .storefront-theme-root)
-    :is(.home-product-tile, .home-product-skeleton) {
+  :is(html, .storefront-theme-root) :is(.home-product-tile, .home-product-skeleton) {
     width: 176px;
     flex-basis: 176px;
   }
