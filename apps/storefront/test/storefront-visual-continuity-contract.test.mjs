@@ -11,6 +11,7 @@ test('product titles stay centered from catalog cards into the detail first fold
   const polish = source('../src/catalog-polish.css');
   const detail = source('../src/product-detail-content-flow.css');
   const shared = source('../../../packages/storefront-ui/src/styles.css');
+  const home = source('../../../packages/storefront-ui/src/home.css');
 
   assert.ok(
     polish.includes(
@@ -18,7 +19,9 @@ test('product titles stay centered from catalog cards into the detail first fold
     ),
   );
   assert.ok(polish.includes('text-align: center;'));
-  assert.ok(polish.includes('.home-product-tile {\n  position: relative;'));
+  assert.ok(home.includes('.home-product-tile {\n  position: relative;'));
+  assert.ok(home.includes('.home-product-title {'));
+  assert.ok(home.includes('text-align: center;'));
   assert.ok(shared.includes('.product-card-heading h3'));
   assert.ok(shared.includes('text-align: center;'));
   assert.ok(detail.includes('.product-detail-summary h1 {\n  text-align: center;'));
