@@ -17,7 +17,6 @@ import './media-runtime.css';
 import './pwa.css';
 import './app-shell.css';
 import '@site/storefront-ui/home.css';
-import './chat-conversation.css';
 import './route-transition.css';
 import '@site/storefront-ui/theme-contract.css';
 import '@site/storefront-ui/primary-pages-theme-contract.css';
@@ -26,7 +25,6 @@ import '@site/storefront-ui/art-direction-contract.css';
 import '@site/storefront-ui/art-direction-primary-surfaces.css';
 import './app-chrome.css';
 import './catalog-polish.css';
-import './section-compact-filters.css';
 import './ui-accessibility.css';
 import './loading-states.css';
 
