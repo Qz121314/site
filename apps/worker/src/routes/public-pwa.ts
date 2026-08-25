@@ -10,7 +10,7 @@ type ManifestTheme = {
   themeColor: string;
 };
 
-type LogoAssetRow = {
+type PwaIconAssetRow = {
   object_key: string;
 };
 
@@ -142,18 +142,18 @@ export async function servePwaManifest(context: Context<AppEnvironment>) {
   return context.body(JSON.stringify(manifest));
 }
 
-async function loadLogoStream(
+async function loadPwaIconStream(
   context: Context<AppEnvironment>,
 ): Promise<ReadableStream<Uint8Array> | null> {
   const asset = await context.env.DB.prepare(
-    `SELECT logo.object_key
+    `SELECT icon.object_key
        FROM site_settings settings
-       JOIN media_assets logo ON logo.id = settings.logo_asset_id
+       JOIN media_assets icon ON icon.id = settings.pwa_icon_asset_id
       WHERE settings.id = 1
-        AND logo.status = 'ready'
-        AND logo.deleted_at IS NULL
-        AND logo.mime_type LIKE 'image/%'`,
-  ).first<LogoAssetRow>();
+        AND icon.status = 'ready'
+        AND icon.deleted_at IS NULL
+        AND icon.mime_type LIKE 'image/%'`,
+  ).first<PwaIconAssetRow>();
   if (!asset) return null;
   return (await context.env.ASSETS_BUCKET.get(asset.object_key))?.body ?? null;
 }
@@ -197,13 +197,15 @@ export async function servePwaIcon(context: Context<AppEnvironment>) {
 
   const theme = await resolveManifestTheme(context);
   try {
-    const logo = await loadLogoStream(context);
-    if (logo) return await transformPwaIcon(context, logo, size, theme.backgroundColor);
+    const pwaIcon = await loadPwaIconStream(context);
+    if (pwaIcon) {
+      return await transformPwaIcon(context, pwaIcon, size, theme.backgroundColor);
+    }
   } catch (error) {
     console.error(
       JSON.stringify({
         level: 'error',
-        event: 'pwa.logo_icon_failed',
+        event: 'pwa.app_icon_failed',
         size,
         errorName: error instanceof Error ? error.name : 'UnknownError',
         errorMessage: error instanceof Error ? error.message : 'Unknown PWA icon error',
