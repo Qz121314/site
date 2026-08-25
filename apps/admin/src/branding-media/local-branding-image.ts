@@ -1,4 +1,4 @@
-export type BrandingImageKind = 'logo' | 'section-icon';
+export type BrandingImageKind = 'logo' | 'pwa-icon' | 'section-icon';
 
 export type LocalBrandingImage = {
   kind: BrandingImageKind;
