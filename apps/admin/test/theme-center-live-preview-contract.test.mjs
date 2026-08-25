@@ -13,7 +13,9 @@ test('theme center preview reuses live storefront components instead of swatch-o
   const diagnostics = source('../src/theme-center/diagnostics.ts');
 
   assert.ok(view.includes("import { ThemeCenterPreview } from './ThemeCenterPreview';"));
-  assert.ok(view.includes('<ThemeCenterPreview accent={previewAccent} theme={selectedPreset} />'));
+  assert.ok(
+    view.includes('<ThemeCenterPreview accent={previewAccent} theme={selectedPreset} />'),
+  );
   assert.ok(preview.includes('StorefrontBrandBar'));
   assert.ok(preview.includes('StorefrontHero'));
   assert.ok(preview.includes('StorefrontHomeShortcut'));
@@ -21,7 +23,13 @@ test('theme center preview reuses live storefront components instead of swatch-o
   assert.ok(preview.includes('StorefrontBottomNavigation'));
   assert.ok(preview.includes('storefrontThemeStyle'));
 
-  for (const diagnostic of ["id: 'text'", "id: 'cta'", "id: 'surface'", "id: 'darkness'", "id: 'border'"]) {
+  for (const diagnostic of [
+    "id: 'text'",
+    "id: 'cta'",
+    "id: 'surface'",
+    "id: 'darkness'",
+    "id: 'border'",
+  ]) {
     assert.ok(diagnostics.includes(diagnostic));
   }
   assert.ok(diagnostics.includes('storefrontContrastRatio'));

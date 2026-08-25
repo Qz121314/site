@@ -325,10 +325,16 @@ function ConversationStatusNotice({
 }) {
   if (status === 'active') return null;
   return (
-    <div className={`chat-conversation-status is-${status}`} role="status" aria-live="polite">
+    <div
+      className={`chat-conversation-status is-${status}`}
+      role="status"
+      aria-live="polite"
+    >
       <span className="chat-conversation-status-dot" aria-hidden="true" />
       <span>
-        {status === 'waiting' ? SYSTEM_UI.waitingForSupport : SYSTEM_UI.conversationClosed}
+        {status === 'waiting'
+          ? SYSTEM_UI.waitingForSupport
+          : SYSTEM_UI.conversationClosed}
       </span>
     </div>
   );

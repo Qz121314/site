@@ -25,7 +25,10 @@ export function themeDiagnostics(
   const brand = accent || preset.tokens.brand;
   const textRatio = storefrontContrastRatio(preset.tokens.text, preset.tokens.pageBg);
   const cta = storefrontBrandContrast(brand, preset.colorScheme);
-  const surfaceRatio = storefrontContrastRatio(preset.tokens.surface, preset.tokens.pageBg);
+  const surfaceRatio = storefrontContrastRatio(
+    preset.tokens.surface,
+    preset.tokens.pageBg,
+  );
   const borderRatio = storefrontContrastRatio(preset.tokens.line, preset.tokens.surface);
   const pageLuminance = storefrontRelativeLuminance(preset.tokens.pageBg);
   const darkEnoughToLoseDepth =

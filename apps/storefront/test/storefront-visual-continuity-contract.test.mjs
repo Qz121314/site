@@ -12,14 +12,23 @@ test('product titles stay centered from catalog cards into the detail first fold
   const detail = source('../src/product-detail-content-flow.css');
   const shared = source('../../../packages/storefront-ui/src/styles.css');
 
-  assert.ok(polish.includes(':is(.home-product-title, .browse-search-product-title, .section-product-title)'));
+  assert.ok(
+    polish.includes(
+      ':is(.home-product-title, .browse-search-product-title, .section-product-title)',
+    ),
+  );
   assert.ok(polish.includes('text-align: center;'));
   assert.ok(polish.includes('.home-product-tile {\n  position: relative;'));
   assert.ok(shared.includes('.product-card-heading h3'));
   assert.ok(shared.includes('text-align: center;'));
   assert.ok(detail.includes('.product-detail-summary h1 {\n  text-align: center;'));
-  assert.ok(detail.includes('.product-detail-page {\n    width: 100%;\n    margin-inline: 0;'));
-  assert.equal(detail.includes('margin-inline: calc(var(--v2-gutter, 16px) * -1)'), false);
+  assert.ok(
+    detail.includes('.product-detail-page {\n    width: 100%;\n    margin-inline: 0;'),
+  );
+  assert.equal(
+    detail.includes('margin-inline: calc(var(--v2-gutter, 16px) * -1)'),
+    false,
+  );
   assert.ok(detail.includes('border-radius: var(--theme-detail-media-radius'));
 });
 

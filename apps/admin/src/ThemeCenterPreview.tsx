@@ -11,10 +11,7 @@ import type { AnchorHTMLAttributes, MouseEvent as ReactMouseEvent } from 'react'
 import { themeDiagnostics } from './theme-center/diagnostics';
 import type { ThemePreset } from './theme-center/api';
 
-function PreviewLink({
-  onClick,
-  ...props
-}: AnchorHTMLAttributes<HTMLAnchorElement>) {
+function PreviewLink({ onClick, ...props }: AnchorHTMLAttributes<HTMLAnchorElement>) {
   return (
     <a
       {...props}
@@ -78,7 +75,10 @@ export function ThemeCenterPreview({
               slides={heroSlides}
             />
 
-            <nav className="home-shortcuts theme-preview-shortcuts" aria-label="快捷入口预览">
+            <nav
+              className="home-shortcuts theme-preview-shortcuts"
+              aria-label="快捷入口预览"
+            >
               <StorefrontHomeShortcut
                 href="#"
                 icon={<PreviewIcon>01</PreviewIcon>}
@@ -138,7 +138,11 @@ export function ThemeCenterPreview({
               { href: '/', label: 'Home', icon: <PreviewIcon>⌂</PreviewIcon> },
               { href: '/browse/', label: 'Browse', icon: <PreviewIcon>◇</PreviewIcon> },
               { href: '/faq/', label: 'FAQ', icon: <PreviewIcon>?</PreviewIcon> },
-              { href: '/messages/', label: 'Messages', icon: <PreviewIcon>○</PreviewIcon> },
+              {
+                href: '/messages/',
+                label: 'Messages',
+                icon: <PreviewIcon>○</PreviewIcon>,
+              },
             ]}
             LinkComponent={PreviewLink}
           />

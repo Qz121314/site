@@ -348,7 +348,8 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
             <div className="theme-section-title">
               <strong>真实组件预览</strong>
               <span>
-                直接复用用户前端 Header、Hero CTA、快捷入口、分区标题、产品卡和 Bottom Navigation。
+                直接复用用户前端 Header、Hero CTA、快捷入口、分区标题、产品卡和 Bottom
+                Navigation。
               </span>
             </div>
             <ThemeCenterPreview accent={previewAccent} theme={selectedPreset} />

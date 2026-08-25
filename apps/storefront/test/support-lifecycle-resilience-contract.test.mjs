@@ -23,7 +23,9 @@ test('conversation lifecycle, image retry and realtime recovery stay explicit', 
   assert.ok(messages.includes('async function retryImage()'));
   assert.ok(messages.includes('const variables = imageMutation.variables'));
   assert.ok(messages.includes('imageMutation.mutateAsync(variables)'));
-  assert.ok(messages.includes('imageFailed={imageMutation.isError && Boolean(imagePreviewUrl)}'));
+  assert.ok(
+    messages.includes('imageFailed={imageMutation.isError && Boolean(imagePreviewUrl)}'),
+  );
   assert.ok(messages.includes('onRetryImage={'));
 
   assert.ok(realtime.includes("recovered ? 'realtime.recovered' : 'realtime.connected'"));
