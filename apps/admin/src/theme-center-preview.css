@@ -101,14 +101,6 @@
   grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.theme-preview-device .home-product-tile {
-  position: relative;
-}
-
-.theme-preview-device .home-product-title {
-  text-align: center;
-}
-
 .theme-preview-product-media {
   display: block;
   width: 100%;
