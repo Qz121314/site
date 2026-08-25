@@ -1,3 +1,5 @@
+@import './chat-conversation.css';
+
 .chat-message-media {
   display: grid;
   gap: 6px;
