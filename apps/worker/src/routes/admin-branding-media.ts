@@ -122,7 +122,7 @@ adminBrandingMediaRoutes.post('/branding', async (context) => {
   const kindValue = formData.get('kind');
   const file = formData.get('file');
   const compressionProfile = formData.get('compressionProfile');
-  if (kindValue !== 'logo' && kindValue !== 'section-icon') {
+  if (kindValue !== 'logo' && kindValue !== 'pwa-icon' && kindValue !== 'section-icon') {
     return apiError(context, 400, 'BRANDING_KIND_INVALID', '图片用途无效。', {
       field: 'kind',
     });
@@ -137,7 +137,7 @@ adminBrandingMediaRoutes.post('/branding', async (context) => {
       context,
       400,
       'BRANDING_COMPRESSION_REQUIRED',
-      'Logo 和分区图标必须先在浏览器压缩，原图不会上传到 R2。',
+      'Logo、PWA 图标和分区图标必须先在浏览器压缩，原图不会上传到 R2。',
       { field: 'file' },
     );
   }
