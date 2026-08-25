@@ -14,8 +14,10 @@ test('conversation lifecycle, image retry and realtime recovery stay explicit', 
   const systemUi = source('../src/system-ui.ts');
 
   assert.ok(ui.includes('function ConversationStatusNotice'));
-  assert.ok(ui.includes("status === 'waiting' ? SYSTEM_UI.waitingForSupport"));
-  assert.ok(ui.includes('SYSTEM_UI.conversationClosed'));
+  assert.match(
+    ui,
+    /status === 'waiting'[\s\S]*SYSTEM_UI\.waitingForSupport[\s\S]*SYSTEM_UI\.conversationClosed/u,
+  );
   assert.ok(ui.includes("conversation?.status !== 'closed'"));
   assert.ok(systemUi.includes("waitingForSupport: 'Waiting for customer service'"));
   assert.ok(systemUi.includes("conversationClosed: 'Conversation closed'"));
