@@ -15,6 +15,7 @@ test('section filters stay compact without adding network work', async () => {
   assert.match(section, /tags=\{query\.data\.tags\}/u);
   assert.match(section, /loadSectionSnapshot/u);
 
+  assert.match(filters, /import '\.\/section-compact-filters\.css';/u);
   assert.match(filters, /section-tag-filter-trigger/u);
   assert.match(filters, /aria-expanded=\{tagPanelOpen\}/u);
   assert.match(filters, /hasTags && tagPanelOpen/u);
@@ -32,8 +33,5 @@ test('section filters stay compact without adding network work', async () => {
   assert.match(styles, /\.section-tag-filter-panel \{[\s\S]*overflow-y: auto/u);
   assert.match(styles, /\.section-tag-filter \{[\s\S]*flex-wrap: wrap/u);
 
-  assert.match(
-    main,
-    /import '\.\/catalog-polish\.css';[\s\S]*import '\.\/section-compact-filters\.css';/u,
-  );
+  assert.doesNotMatch(main, /section-compact-filters\.css/u);
 });
