@@ -1,19 +1,16 @@
 import assert from 'node:assert/strict';
-import { readFile } from 'node:fs/promises';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 
-const routeUrl = new URL('../src/routes/public-pwa.ts', import.meta.url);
-const settingsUrl = new URL('../src/settings/site-settings.ts', import.meta.url);
-const mediaDeleteUrl = new URL('../src/media/media-delete.ts', import.meta.url);
-const migrationUrl = new URL('../../../migrations/0029_pwa_icon_asset.sql', import.meta.url);
+function source(path) {
+  return readFileSync(new URL(path, import.meta.url), 'utf8');
+}
 
-test('PWA app icon has an independent setting and never reads the webpage logo', async () => {
-  const [routeSource, settingsSource, mediaDeleteSource, migrationSource] = await Promise.all([
-    readFile(routeUrl, 'utf8'),
-    readFile(settingsUrl, 'utf8'),
-    readFile(mediaDeleteUrl, 'utf8'),
-    readFile(migrationUrl, 'utf8'),
-  ]);
+test('PWA app icon has an independent setting and never reads the webpage logo', () => {
+  const routeSource = source('../src/routes/public-pwa.ts');
+  const settingsSource = source('../src/settings/site-settings.ts');
+  const mediaDeleteSource = source('../src/media/media-delete.ts');
+  const migrationSource = source('../../../migrations/0029_pwa_icon_asset.sql');
 
   assert.match(routeSource, /settings\.pwa_icon_asset_id/u);
   assert.doesNotMatch(routeSource, /settings\.logo_asset_id/u);
