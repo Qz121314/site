@@ -18,7 +18,7 @@ import {
   type PublicSection,
   type StorefrontBootstrap,
 } from './content';
-import { resolveHomeLayout } from './home-layout';
+import { resolveHomeLayout, resolveHomeShortcuts } from './home-layout';
 import { ResilientImage, ResilientVideo } from './ResilientMedia';
 import { productHref, sectionHref } from './routing';
 import { handleStorefrontLinkClick } from './storefront-navigation-runtime';
@@ -122,7 +122,13 @@ function MoreIcon() {
   );
 }
 
-function HomeShortcuts({ sections }: { sections: PublicSection[] }) {
+function HomeShortcuts({
+  sections,
+  showMore,
+}: {
+  sections: PublicSection[];
+  showMore: boolean;
+}) {
   return (
     <div className="home-shortcut-zone">
       <nav className="home-shortcuts home-shortcut-hero" aria-label="Sections">
@@ -135,13 +141,15 @@ function HomeShortcuts({ sections }: { sections: PublicSection[] }) {
             LinkComponent={HomeLink}
           />
         ))}
-        <StorefrontHomeShortcut
-          href="/browse/"
-          icon={<MoreIcon />}
-          isMore
-          label={SYSTEM_UI.more}
-          LinkComponent={HomeLink}
-        />
+        {showMore ? (
+          <StorefrontHomeShortcut
+            href="/browse/"
+            icon={<MoreIcon />}
+            isMore
+            label={SYSTEM_UI.more}
+            LinkComponent={HomeLink}
+          />
+        ) : null}
       </nav>
     </div>
   );
@@ -302,13 +310,18 @@ export function HomeFeed({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
     return groups;
   }, [bootstrap.home.featuredProducts]);
   const fallbackLayout = {
-    shortcutSectionIds: availableSections.slice(0, 7).map((section) => section.id),
+    shortcutSectionIds: availableSections.map((section) => section.id),
     recommendationSectionIds: fallbackRecommendationSectionIds(bootstrap),
   };
   const layout = resolveHomeLayout(site.homeLayout, fallbackLayout, publishedSectionIds);
-  const shortcutSections = layout.shortcutSectionIds
-    .flatMap((id) => (sectionById.get(id) ? [sectionById.get(id) as PublicSection] : []))
-    .slice(0, 7);
+  const shortcutLayout = resolveHomeShortcuts(
+    site.homeLayout?.shortcutSectionIds,
+    fallbackLayout.shortcutSectionIds,
+    publishedSectionIds,
+  );
+  const shortcutSections = shortcutLayout.sectionIds.flatMap((id) =>
+    sectionById.get(id) ? [sectionById.get(id) as PublicSection] : [],
+  );
   const recommendationSections = layout.recommendationSectionIds
     .flatMap((id) => (sectionById.get(id) ? [sectionById.get(id) as PublicSection] : []))
     .slice(0, 3);
@@ -328,7 +341,7 @@ export function HomeFeed({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
     <div className={`home-feed${hasHero ? ' has-hero' : ''}`}>
       <h1 className="sr-only">{site.name}</h1>
       <HomeHero siteName={site.name} slides={heroSlides} />
-      <HomeShortcuts sections={shortcutSections} />
+      <HomeShortcuts sections={shortcutSections} showMore={shortcutLayout.showMore} />
 
       <div className="home-recommendation-feed">
         {recommendationSections.map((section) => (
