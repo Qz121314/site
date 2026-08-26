@@ -265,7 +265,7 @@ export function ProductDetailPage({
       pushStorefrontLocation(`/messages/new/?${params.toString()}`);
       return;
     }
-    window.location.assign(cta.path);
+    window.open(cta.path, '_blank', 'noopener');
   }
 
   const ctaLoading = ctaQuery.isFetching || ctaQuery.isPending;

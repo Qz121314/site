@@ -11,7 +11,7 @@ function contains(value, fragment) {
   assert.ok(value.includes(fragment), `Missing contract: ${fragment}`);
 }
 
-test('customer service CTA opens chat before handoff', () => {
+test('CTA navigation keeps customer service in-app and link handoffs in a new tab', () => {
   const productDetail = source('../src/ProductDetailPage.tsx');
   const messagesPage = source('../src/MessagesPage.tsx');
   const supportUi = source('../src/support-ui.tsx');
@@ -28,7 +28,8 @@ test('customer service CTA opens chat before handoff', () => {
   contains(productDetail, '/messages/new/?');
   contains(productDetail, "'storefront-product'");
   contains(productDetail, 'bootstrap.pointer.contentVersion');
-  contains(productDetail, 'window.location.assign(cta.path)');
+  contains(productDetail, "window.open(cta.path, '_blank', 'noopener')");
+  assert.ok(!productDetail.includes('window.location.assign(cta.path)'));
 
   contains(messagesPage, 'resolveCustomerServiceCta(');
   contains(messagesPage, 'composeContext.ctaPath');
