@@ -514,7 +514,9 @@ export function normalizeHomeLayout(value: unknown): HomeLayout {
   }
   return {
     shortcutSectionIds: normalizeHomeLayoutSectionIds(value.shortcutSectionIds, 7),
-    recommendationSectionIds: normalizeHomeLayoutSectionIds(value.recommendationSectionIds),
+    recommendationSectionIds: normalizeHomeLayoutSectionIds(
+      value.recommendationSectionIds,
+    ),
   };
 }
 
