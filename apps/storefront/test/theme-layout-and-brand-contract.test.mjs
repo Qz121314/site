@@ -60,9 +60,7 @@ test('branding is backend-driven and theme layout is invariant', async () => {
   const storefrontLayoutIndex = storefrontMain.indexOf(
     '@site/storefront-ui/layout-contract.css',
   );
-  const adminThemeIndex = adminManifest.indexOf(
-    '@site/storefront-ui/theme-contract.css',
-  );
+  const adminThemeIndex = adminManifest.indexOf('@site/storefront-ui/theme-contract.css');
   const adminLayoutIndex = adminManifest.indexOf(
     '@site/storefront-ui/layout-contract.css',
   );
