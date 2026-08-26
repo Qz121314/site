@@ -44,7 +44,10 @@ test('branding is backend-driven and theme layout is invariant', async () => {
     layout,
     /\.home-product-title \{[\s\S]*color: var\(--theme-art-on-media-primary/u,
   );
-  assert.match(layout, /\.home-product-cover::before \{[\s\S]*opacity: 1;/u);
+  assert.match(
+    layout,
+    /\.home-product-cover::before \{[\s\S]*opacity: 1 !important;/u,
+  );
   assert.match(layout, /\.hero-carousel-copy \{[\s\S]*text-align: left;/u);
   assert.match(layout, /\.hero-panel \{[\s\S]*text-align: left !important;/u);
 
