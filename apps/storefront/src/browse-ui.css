@@ -224,22 +224,33 @@
 
 .browse-section-card-arrow {
   display: grid;
-  width: 30px;
-  height: 30px;
-  flex: 0 0 30px;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
   place-items: center;
-  border: 1px solid var(--theme-art-media-control-border);
+  overflow: hidden;
+  border: 1px solid
+    color-mix(in srgb, var(--theme-art-media-control-color) 26%, transparent);
   border-radius: 50%;
   color: var(--theme-art-media-control-color);
-  background: var(--theme-art-media-control-background);
-  box-shadow: var(--theme-art-media-control-shadow);
-  backdrop-filter: var(--theme-art-media-control-backdrop);
-  transition: transform var(--app-motion-fast, 160ms) var(--app-ease-out, ease-out);
+  background:
+    linear-gradient(145deg, rgb(255 255 255 / 16%), rgb(255 255 255 / 4%)),
+    var(--theme-art-media-control-background);
+  box-shadow:
+    inset 0 1px 0 rgb(255 255 255 / 18%),
+    0 8px 20px rgb(0 0 0 / 18%);
+  backdrop-filter: blur(14px) saturate(1.12);
+  -webkit-backdrop-filter: blur(14px) saturate(1.12);
+  transition:
+    border-color var(--app-motion-fast, 160ms) ease,
+    transform var(--app-motion-fast, 160ms) var(--app-ease-out, ease-out);
 }
 
 .browse-section-card-arrow svg {
-  width: 16px;
-  height: 16px;
+  width: 17px;
+  height: 17px;
+  stroke-width: 2;
+  filter: drop-shadow(0 1px 2px rgb(0 0 0 / 24%));
 }
 
 .browse-section-card:active {
@@ -375,7 +386,12 @@
   }
 
   .browse-section-card:hover .browse-section-card-arrow {
-    transform: translateX(2px);
+    border-color: color-mix(
+      in srgb,
+      var(--theme-art-media-control-color) 36%,
+      transparent
+    );
+    transform: translateX(2px) scale(1.025);
   }
 }
 
