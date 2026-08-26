@@ -64,6 +64,7 @@ export type ImportedThemeDefinition = {
 
 export type ThemeOverrides = {
   accent?: string;
+  textColor?: string;
   density?: ThemeDensity;
   fontPack?: ThemeFontPack;
   buttonStyle?: ThemeButtonStyle;
@@ -179,6 +180,7 @@ export async function importThemeFromJson(
 export async function updateThemeCenter(
   themeKey: ThemeKey,
   accent: string | null,
+  textColor: string | null,
   imported?: ImportedThemeDefinition,
 ): Promise<ResolvedTheme> {
   const body = await themeRequest('/api/admin/theme/', {
@@ -191,6 +193,7 @@ export async function updateThemeCenter(
       themeKey,
       overrides: {
         ...(accent ? { accent } : {}),
+        ...(textColor ? { textColor } : {}),
         ...(themeKey === 'custom' && imported ? { imported } : {}),
       },
     }),
