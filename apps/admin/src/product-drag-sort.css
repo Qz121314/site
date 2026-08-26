@@ -1,0 +1,59 @@
+/* Product ordering is direct manipulation: drag the handle, then persist once on drop. */
+.product-drag-handle {
+  display: inline-grid;
+  width: 30px;
+  height: 30px;
+  place-items: center;
+  border: 1px solid #dfe4eb;
+  border-radius: 7px;
+  color: #7b8491;
+  background: #fff;
+  cursor: grab;
+  font-size: 0.86rem;
+  font-weight: 800;
+  letter-spacing: -0.18em;
+  line-height: 1;
+  user-select: none;
+  box-shadow: 0 1px 1px rgb(16 24 40 / 3%);
+}
+
+.product-drag-handle:hover,
+.product-drag-handle:focus-visible {
+  border-color: #c7ced8;
+  color: #172033;
+  background: #f8fafc;
+}
+
+.product-drag-handle:focus-visible {
+  outline: 3px solid rgb(255 90 31 / 13%);
+  outline-offset: 1px;
+}
+
+.product-drag-handle[aria-disabled='true'] {
+  cursor: not-allowed;
+  opacity: 0.38;
+}
+
+.product-drag-handle:active {
+  cursor: grabbing;
+}
+
+.product-order-index {
+  min-width: 20px !important;
+  color: #7a8492 !important;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.product-table tbody tr.is-dragging td {
+  background: #f8fafc;
+  opacity: 0.46;
+}
+
+.product-table tbody tr.is-drop-before td {
+  box-shadow: inset 0 2px 0 var(--brand, #ff5a1f);
+}
+
+.product-table tbody tr.is-drop-after td {
+  box-shadow: inset 0 -2px 0 var(--brand, #ff5a1f);
+}
