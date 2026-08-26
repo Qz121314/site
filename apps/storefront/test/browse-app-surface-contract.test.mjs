@@ -29,12 +29,13 @@ test('browse keeps the first mobile viewport dense without adding initial produc
   );
   assert.match(
     css,
-    /\.browse-section-list:not\(\.is-single\)\s+\.browse-section-card:first-child \{[\s\S]*grid-column: 1 \/ -1;/u,
+    /\.browse-section-list:not\(\.is-single\)\s+\.browse-section-card \{[\s\S]*aspect-ratio: 1 \/ 1;/u,
   );
   assert.match(
     css,
-    /\.browse-section-list:not\(\.is-single\)\s+\.browse-section-card:nth-child\(even\):last-child \{[\s\S]*grid-column: 1 \/ -1;/u,
+    /\.browse-section-list:not\(\.is-single\)\s+\.browse-section-card:first-child \{[\s\S]*grid-column: 1 \/ -1;/u,
   );
+  assert.doesNotMatch(css, /nth-child\(even\):last-child/u);
   assert.match(
     css,
     /\.browse-section-list:not\(\.is-single\)[\s\S]*\.browse-section-card:not\(:first-child\)[\s\S]*\.browse-section-card-content[\s\S]*p \{[\s\S]*display: -webkit-box;[\s\S]*-webkit-line-clamp: 2;/u,
