@@ -37,7 +37,7 @@ test('home reserves high image priority for one meaningful LCP candidate', async
     home,
     /priority=\{!hasHero && section\.id === priorityRecommendationSectionId\}/u,
   );
-  assert.match(home, /publicImageVariantUrl\(product\.coverObjectKey, 384\)/u);
+  assert.match(home, /homeProductImageVariantUrl\(product\.coverObjectKey, 384\)/u);
   assert.match(home, /\[240, 320, 384, 640, 960\]/u);
   assert.match(
     home,
