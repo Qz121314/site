@@ -186,6 +186,8 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
   const [mediaBaseUrl, setMediaBaseUrl] = useState<string | null>(null);
   const [cleanupLoaded, setCleanupLoaded] = useState(false);
   const [cleanupLoading, setCleanupLoading] = useState(false);
+  const [cleanupNextCursor, setCleanupNextCursor] = useState<string | null>(null);
+  const [cleanupScanComplete, setCleanupScanComplete] = useState(false);
   const [scannedImages, setScannedImages] = useState(0);
   const [cleaning, setCleaning] = useState(false);
   const [showCleanupDialog, setShowCleanupDialog] = useState(false);
@@ -194,6 +196,7 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
   const [query, setQuery] = useState('');
   const [cleanupError, setCleanupError] = useState<string | null>(null);
   const [cleanupSuccess, setCleanupSuccess] = useState<string | null>(null);
+  const cleanupVisitedCursorsRef = useRef<Set<string>>(new Set());
 
   useEffect(() => {
     const timeout = window.setTimeout(
@@ -316,7 +319,7 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
     }
   }
 
-  const scan = useCallback(async () => {
+  const scanFirstPage = useCallback(async () => {
     setCleanupLoading(true);
     setScannedImages(0);
     setCleanupError(null);
@@ -324,22 +327,15 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
     setSelectedKeys(new Set());
 
     try {
-      let allAssets: AdminAsset[] = [];
-      let cursor: string | undefined;
-      const visitedCursors = new Set<string>();
-
-      while (true) {
-        const page = await fetchAssetPage(cursor);
-        allAssets = mergeAssets(allAssets, page.assets);
-        setAssets(allAssets);
-        setScannedImages(allAssets.length);
-        setMediaBaseUrl(page.mediaBaseUrl);
-        if (!page.truncated || !page.cursor) break;
-        if (visitedCursors.has(page.cursor))
-          throw new Error('R2 返回了重复游标，扫描已停止。');
-        visitedCursors.add(page.cursor);
-        cursor = page.cursor;
-      }
+      const page = await fetchAssetPage();
+      const firstPageAssets = mergeAssets([], page.assets);
+      const nextCursor = page.truncated && page.cursor ? page.cursor : null;
+      cleanupVisitedCursorsRef.current = new Set(nextCursor ? [nextCursor] : []);
+      setAssets(firstPageAssets);
+      setScannedImages(firstPageAssets.length);
+      setMediaBaseUrl(page.mediaBaseUrl);
+      setCleanupNextCursor(nextCursor);
+      setCleanupScanComplete(!nextCursor);
       setCleanupLoaded(true);
     } catch (error) {
       if (isSessionError(error)) {
@@ -352,9 +348,87 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
     }
   }, [onSessionExpired]);
 
+  const scanNextPage = useCallback(async () => {
+    const cursor = cleanupNextCursor;
+    if (!cursor) return;
+
+    setCleanupLoading(true);
+    setCleanupError(null);
+    setCleanupSuccess(null);
+    try {
+      const page = await fetchAssetPage(cursor);
+      const nextAssets = mergeAssets(assets, page.assets);
+      let nextCursor: string | null = null;
+      if (page.truncated && page.cursor) {
+        if (cleanupVisitedCursorsRef.current.has(page.cursor))
+          throw new Error('R2 返回了重复游标，扫描已停止。');
+        cleanupVisitedCursorsRef.current.add(page.cursor);
+        nextCursor = page.cursor;
+      }
+      setAssets(nextAssets);
+      setScannedImages(nextAssets.length);
+      setMediaBaseUrl(page.mediaBaseUrl);
+      setCleanupNextCursor(nextCursor);
+      setCleanupScanComplete(!nextCursor);
+      setCleanupLoaded(true);
+    } catch (error) {
+      if (isSessionError(error)) {
+        onSessionExpired();
+        return;
+      }
+      setCleanupError(error instanceof Error ? error.message : 'R2 图片扫描失败。');
+    } finally {
+      setCleanupLoading(false);
+    }
+  }, [assets, cleanupNextCursor, onSessionExpired]);
+
+  const scanAllRemaining = useCallback(async () => {
+    let cursor = cleanupNextCursor;
+    if (!cursor) return;
+
+    setCleanupLoading(true);
+    setCleanupError(null);
+    setCleanupSuccess(null);
+    let allAssets = assets;
+    const visitedCursors = new Set(cleanupVisitedCursorsRef.current);
+
+    try {
+      while (cursor) {
+        const page = await fetchAssetPage(cursor);
+        allAssets = mergeAssets(allAssets, page.assets);
+        setAssets(allAssets);
+        setScannedImages(allAssets.length);
+        setMediaBaseUrl(page.mediaBaseUrl);
+
+        if (!page.truncated || !page.cursor) {
+          cursor = null;
+          setCleanupNextCursor(null);
+          setCleanupScanComplete(true);
+          break;
+        }
+        if (visitedCursors.has(page.cursor))
+          throw new Error('R2 返回了重复游标，扫描已停止。');
+        visitedCursors.add(page.cursor);
+        cleanupVisitedCursorsRef.current = new Set(visitedCursors);
+        cursor = page.cursor;
+        setCleanupNextCursor(cursor);
+        setCleanupScanComplete(false);
+      }
+      setCleanupLoaded(true);
+    } catch (error) {
+      if (isSessionError(error)) {
+        onSessionExpired();
+        return;
+      }
+      setCleanupError(error instanceof Error ? error.message : 'R2 图片扫描失败。');
+    } finally {
+      setCleanupLoading(false);
+    }
+  }, [assets, cleanupNextCursor, onSessionExpired]);
+
   useEffect(() => {
-    if (tab === 'cleanup' && !cleanupLoaded && !cleanupLoading) void scan();
-  }, [cleanupLoaded, cleanupLoading, scan, tab]);
+    if (tab === 'cleanup' && !cleanupLoaded && !cleanupLoading) void scanFirstPage();
+  }, [cleanupLoaded, cleanupLoading, scanFirstPage, tab]);
 
   useEffect(() => {
     setSelectedKeys(new Set());
@@ -659,7 +733,7 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
         setShowCleanupDialog(false);
         setSelectedKeys(new Set());
         setCleanupError(error instanceof Error ? error.message : 'R2 图片清理失败。');
-        if (error instanceof AdminApiError && error.status === 409) await scan();
+        if (error instanceof AdminApiError && error.status === 409) await scanFirstPage();
       }
     } finally {
       setCleaning(false);
@@ -1052,10 +1126,10 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
             </div>
           )}
         </>
-      ) : cleanupLoading ? (
+      ) : cleanupLoading && !cleanupLoaded ? (
         <section className="settings-card settings-loading" aria-live="polite">
           <div className="loading-indicator" aria-hidden="true" />
-          <p>正在扫描 R2 图片对象，已发现 {scannedImages} 张图片…</p>
+          <p>正在扫描首批 R2 图片对象，已发现 {scannedImages} 张图片…</p>
         </section>
       ) : (
         <>
@@ -1069,14 +1143,35 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
             <button
               className="secondary-button"
               type="button"
-              onClick={() => void scan()}
+              disabled={cleanupLoading}
+              onClick={() => void scanFirstPage()}
             >
-              重新扫描全部图片
+              从头重新扫描
             </button>
+            {cleanupNextCursor ? (
+              <button
+                className="secondary-button"
+                type="button"
+                disabled={cleanupLoading}
+                onClick={() => void scanNextPage()}
+              >
+                继续扫描下一批
+              </button>
+            ) : null}
+            {cleanupNextCursor ? (
+              <button
+                className="secondary-button"
+                type="button"
+                disabled={cleanupLoading}
+                onClick={() => void scanAllRemaining()}
+              >
+                {cleanupLoading ? '扫描中…' : '扫描全部'}
+              </button>
+            ) : null}
             <button
               className="danger-button"
               type="button"
-              disabled={selectedAssets.length === 0}
+              disabled={selectedAssets.length === 0 || cleanupLoading}
               onClick={() => setShowCleanupDialog(true)}
             >
               物理清理已选 ({selectedAssets.length})
@@ -1087,7 +1182,10 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
             <article>
               <span>扫描图片</span>
               <strong>{cleanupStats.total}</strong>
-              <small>{formatBytes(cleanupStats.bytes)}</small>
+              <small>
+                {formatBytes(cleanupStats.bytes)}
+                {cleanupScanComplete ? ' · 完整范围' : ' · 已扫描范围'}
+              </small>
             </article>
             <article>
               <span>当前使用</span>
@@ -1113,6 +1211,14 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
               扫描，用于发现和清理历史孤立图片。
             </span>
           </div>
+          {!cleanupScanComplete ? (
+            <div className="asset-safety-note">
+              <strong>分批扫描</strong>
+              <span>
+                当前统计与清理列表仅覆盖已扫描范围。继续扫描下一批，或在需要完整结果时点击“扫描全部”。
+              </span>
+            </div>
+          ) : null}
           {!mediaBaseUrl ? (
             <div className="notice notice-error" role="alert">
               尚未配置 R2 自定义域名，图片预览不可用，但扫描和引用保护仍可执行。
@@ -1168,7 +1274,7 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
               <strong>
                 {filter === 'used' ? '没有使用中的图片' : '没有未使用的图片'}
               </strong>
-              <p>可以调整搜索条件或重新扫描 R2。</p>
+              <p>可以调整搜索条件或从头重新扫描 R2。</p>
             </div>
           )}
 
