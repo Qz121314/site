@@ -33,14 +33,24 @@ describe('shared storefront UI', () => {
     expect(html).toContain('href="/sections/live/products/demo/"');
   });
 
-  it('renders the EROSDOOR wordmark as two theme-driven brand segments', () => {
+  it('renders the backend-provided site name as two theme-driven brand segments', () => {
     const html = renderToStaticMarkup(
-      <StorefrontBrandBar locationLabel="Local" logo={null} siteName="EROSDOOR" />,
+      <StorefrontBrandBar locationLabel="Local" logo={null} siteName="NOVA CLUB" />,
     );
 
     expect(html).toContain('class="brand-wordmark is-duotone"');
-    expect(html).toContain('class="brand-wordmark-accent">EROS</span>');
-    expect(html).toContain('class="brand-wordmark-primary">DOOR</span>');
+    expect(html).toContain('class="brand-wordmark-accent">NOVA</span>');
+    expect(html).toContain('class="brand-wordmark-primary">CLUB</span>');
+    expect(html).not.toContain('EROSDOOR');
+  });
+
+  it('splits a single-token backend site name without brand-specific literals', () => {
+    const html = renderToStaticMarkup(
+      <StorefrontBrandBar locationLabel="Local" logo={null} siteName="ABCDEFGH" />,
+    );
+
+    expect(html).toContain('class="brand-wordmark-accent">ABCD</span>');
+    expect(html).toContain('class="brand-wordmark-primary">EFGH</span>');
   });
 
   it('renders the shared Home hero, shortcut, product, and navigation landmarks', () => {
