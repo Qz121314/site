@@ -109,7 +109,7 @@
   font-weight: 600;
   line-height: 0.98;
   letter-spacing: 0.038em;
-  text-transform: uppercase;
+  text-transform: none;
 }
 
 :is(html, .storefront-theme-root) .brand-wordmark.is-duotone {
