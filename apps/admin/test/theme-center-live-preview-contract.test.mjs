@@ -13,9 +13,8 @@ test('theme center preview reuses live storefront components instead of swatch-o
   const diagnostics = source('../src/theme-center/diagnostics.ts');
 
   assert.ok(view.includes("import { ThemeCenterPreview } from './ThemeCenterPreview';"));
-  assert.ok(
-    view.includes('<ThemeCenterPreview accent={previewAccent} theme={selectedPreset} />'),
-  );
+  assert.ok(view.includes('accent={previewAccent}'));
+  assert.ok(view.includes('textColor={previewTextColor}'));
   assert.ok(preview.includes('StorefrontBrandBar'));
   assert.ok(preview.includes('StorefrontHero'));
   assert.ok(preview.includes('StorefrontHomeShortcut'));
