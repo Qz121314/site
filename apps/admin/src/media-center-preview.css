@@ -1,0 +1,14 @@
+/*
+ * Media-center preview geometry is reserved before lazy thumbnails resolve.
+ * This keeps large libraries visible without eagerly requesting every image.
+ */
+.media-center-preview {
+  aspect-ratio: 1 / 1;
+}
+
+.media-center-preview img,
+.media-center-preview video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
