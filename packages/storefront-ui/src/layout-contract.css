@@ -47,7 +47,9 @@
   position: static;
   inset: auto;
   color: var(--theme-art-on-media-primary, #fff);
-  text-shadow: var(--theme-art-media-title-shadow, 0 1px 12px rgb(0 0 0 / 34%));
+  text-shadow:
+    0 1px 2px rgb(0 0 0 / 78%),
+    0 2px 12px rgb(0 0 0 / 44%);
 }
 
 /* Product names are content, not decoration: wrap them and always show the full value. */
@@ -69,8 +71,21 @@
   -webkit-line-clamp: unset !important;
 }
 
+/*
+ * Cross-theme media legibility floor. Long product names can span several lines, so
+ * the lower half of every cover receives the same soft scrim regardless of the theme.
+ * This keeps text readable without introducing a visible title box over the artwork.
+ */
 :is(html, .storefront-theme-root)[data-theme] .home-product-cover::before {
-  opacity: 1;
+  background: linear-gradient(
+    180deg,
+    transparent 24%,
+    rgb(0 0 0 / 6%) 42%,
+    rgb(0 0 0 / 26%) 60%,
+    rgb(0 0 0 / 68%) 79%,
+    rgb(0 0 0 / 94%) 100%
+  ) !important;
+  opacity: 1 !important;
 }
 
 :is(html, .storefront-theme-root)[data-theme] .hero-carousel-copy {
