@@ -85,7 +85,7 @@
     rgb(0 0 0 / 68%) 79%,
     rgb(0 0 0 / 94%) 100%
   ) !important;
-  opacity: 1 !important;
+  opacity: 1;
 }
 
 :is(html, .storefront-theme-root)[data-theme] .hero-carousel-copy {
