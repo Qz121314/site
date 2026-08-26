@@ -12,6 +12,24 @@ export type StorefrontLinkComponent = ElementType<
   AnchorHTMLAttributes<HTMLAnchorElement>
 >;
 
+export function StorefrontBrandName({ siteName }: { siteName: string }) {
+  const normalizedSiteName = siteName.trim();
+  const isErosDoor = normalizedSiteName.toUpperCase() === 'EROSDOOR';
+
+  return (
+    <strong className={`brand-wordmark${isErosDoor ? ' is-duotone' : ''}`}>
+      {isErosDoor ? (
+        <>
+          <span className="brand-wordmark-accent">{normalizedSiteName.slice(0, 4)}</span>
+          <span className="brand-wordmark-primary">{normalizedSiteName.slice(4)}</span>
+        </>
+      ) : (
+        normalizedSiteName
+      )}
+    </strong>
+  );
+}
+
 export function StorefrontBrandBar({
   homeHref = '/',
   LinkComponent = 'a',
@@ -30,7 +48,7 @@ export function StorefrontBrandBar({
       <LinkComponent className="brand-lockup" href={homeHref}>
         <span className="brand-logo">{logo}</span>
         <span>
-          <strong>{siteName}</strong>
+          <StorefrontBrandName siteName={siteName} />
           <small>⌖ {locationLabel}</small>
         </span>
       </LinkComponent>
