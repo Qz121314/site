@@ -2,6 +2,7 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import {
   StorefrontBottomNavigation,
+  StorefrontBrandBar,
   StorefrontHero,
   StorefrontHomeProductTile,
   StorefrontHomeShortcut,
@@ -30,6 +31,16 @@ describe('shared storefront UI', () => {
     expect(html).toContain('class="product-card-media"');
     expect(html).toContain('class="tag-row"');
     expect(html).toContain('href="/sections/live/products/demo/"');
+  });
+
+  it('renders the EROSDOOR wordmark as two theme-driven brand segments', () => {
+    const html = renderToStaticMarkup(
+      <StorefrontBrandBar locationLabel="Local" logo={null} siteName="EROSDOOR" />,
+    );
+
+    expect(html).toContain('class="brand-wordmark is-duotone"');
+    expect(html).toContain('class="brand-wordmark-accent">EROS</span>');
+    expect(html).toContain('class="brand-wordmark-primary">DOOR</span>');
   });
 
   it('renders the shared Home hero, shortcut, product, and navigation landmarks', () => {
