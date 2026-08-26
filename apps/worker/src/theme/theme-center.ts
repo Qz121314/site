@@ -74,6 +74,7 @@ export type ImportedThemeDefinition = {
 
 export type ThemeOverrides = {
   accent?: string;
+  textColor?: string;
   density?: ThemeDensity;
   fontPack?: ThemeFontPack;
   buttonStyle?: ThemeButtonStyle;
@@ -545,6 +546,8 @@ export function normalizeThemeOverrides(value: unknown): ThemeOverrides {
   if (!isRecord(value)) return {};
   const accent =
     typeof value.accent === 'string' ? value.accent.trim().toLowerCase() : '';
+  const textColor =
+    typeof value.textColor === 'string' ? value.textColor.trim().toLowerCase() : '';
   const imported = normalizeImportedThemeDefinition(value.imported);
   const density = normalizeOption(value.density, [
     'compact',
@@ -580,6 +583,7 @@ export function normalizeThemeOverrides(value: unknown): ThemeOverrides {
   const installPrompt = normalizeInstallPrompt(value.installPrompt);
   return {
     ...(HEX_COLOR.test(accent) ? { accent } : {}),
+    ...(HEX_COLOR.test(textColor) ? { textColor } : {}),
     ...(density ? { density } : {}),
     ...(fontPack ? { fontPack } : {}),
     ...(buttonStyle ? { buttonStyle } : {}),
@@ -610,13 +614,23 @@ export function parseThemeSettings(
   return { key: requestedKey === 'custom' ? 'marketplace' : requestedKey, overrides };
 }
 
-function applyAccent(tokens: ThemeTokens, accent: string | undefined): ThemeTokens {
-  return accent ? { ...tokens, brand: accent, brandStrong: accent } : tokens;
+function applyColorOverrides(
+  tokens: ThemeTokens,
+  accent: string | undefined,
+  textColor: string | undefined,
+): ThemeTokens {
+  if (!accent && !textColor) return tokens;
+  return {
+    ...tokens,
+    ...(accent ? { brand: accent, brandStrong: accent } : {}),
+    ...(textColor ? { text: textColor } : {}),
+  };
 }
 
 export function resolveTheme(settings: ThemeSettings): ResolvedTheme {
   const overrides = settings.overrides;
   const accent = overrides.accent;
+  const textColor = overrides.textColor;
   if (settings.key === 'custom' && overrides.imported) {
     const imported = overrides.imported;
     const recipe: ThemeRecipe = {
@@ -636,7 +650,7 @@ export function resolveTheme(settings: ThemeSettings): ResolvedTheme {
       productMediaRatio: '1:1',
       recipe,
       installPrompt: overrides.installPrompt ?? DEFAULT_INSTALL_PROMPT,
-      tokens: applyAccent(imported.tokens, accent),
+      tokens: applyColorOverrides(imported.tokens, accent, textColor),
       overrides,
     };
   }
@@ -645,7 +659,7 @@ export function resolveTheme(settings: ThemeSettings): ResolvedTheme {
     ...preset,
     installPrompt: overrides.installPrompt ?? preset.installPrompt,
     overrides,
-    tokens: applyAccent(preset.tokens, accent),
+    tokens: applyColorOverrides(preset.tokens, accent, textColor),
   };
 }
 
@@ -666,6 +680,16 @@ export function validateThemeUpdate(
         ok: false,
         field: 'accent',
         message: '品牌强调色必须是 6 位十六进制颜色。',
+      };
+    }
+  }
+  if (isRecord(value.overrides) && typeof value.overrides.textColor === 'string') {
+    const textColor = value.overrides.textColor.trim();
+    if (textColor && !HEX_COLOR.test(textColor)) {
+      return {
+        ok: false,
+        field: 'textColor',
+        message: '主文字颜色必须是 6 位十六进制颜色。',
       };
     }
   }
