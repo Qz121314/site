@@ -5,7 +5,11 @@ import { adminConfirm, adminPrompt } from './admin-dialog-service';
 import { AssetTable } from './asset-library/AssetTable';
 import { CleanupAssetDialog } from './asset-library/CleanupAssetDialog';
 import { deleteMediaAssets } from './asset-library/media-delete-api';
-import { fetchMediaLibraryPage } from './asset-library/media-library-page-api';
+import { MediaAssetPreviewDialog } from './asset-library/MediaAssetPreviewDialog';
+import {
+  fetchMediaLibraryPage,
+  type MediaLibraryPage,
+} from './asset-library/media-library-page-api';
 import {
   useMediaUploadQueue,
   type MediaUploadBatchSummary,
@@ -33,6 +37,8 @@ type FolderFilter = 'all' | 'unfiled' | string;
 type AssetLibraryViewProps = {
   onSessionExpired: () => void;
 };
+
+const MEDIA_PAGE_SIZE = 24;
 
 const ROLE_OPTIONS: Array<{ value: MediaRole; label: string }> = [
   { value: 'general', label: '通用素材' },
@@ -155,8 +161,8 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
   const [managedAssets, setManagedAssets] = useState<ManagedMediaAsset[]>([]);
   const [folders, setFolders] = useState<MediaFolder[]>([]);
   const [mediaLoading, setMediaLoading] = useState(true);
-  const [mediaLoadingMore, setMediaLoadingMore] = useState(false);
   const [mediaNextCursor, setMediaNextCursor] = useState<string | null>(null);
+  const [mediaPageIndex, setMediaPageIndex] = useState(0);
   const [mediaTotal, setMediaTotal] = useState(0);
   const [mediaQuery, setMediaQuery] = useState('');
   const [debouncedMediaQuery, setDebouncedMediaQuery] = useState('');
@@ -170,9 +176,11 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
   const [folderWorking, setFolderWorking] = useState(false);
   const [deletingMedia, setDeletingMedia] = useState(false);
   const [selectedMediaIds, setSelectedMediaIds] = useState<Set<string>>(new Set());
+  const [previewAsset, setPreviewAsset] = useState<ManagedMediaAsset | null>(null);
   const [mediaError, setMediaError] = useState<string | null>(null);
   const [mediaSuccess, setMediaSuccess] = useState<string | null>(null);
   const mediaRequestVersionRef = useRef(0);
+  const mediaPageCacheRef = useRef<Map<number, MediaLibraryPage>>(new Map());
 
   const [assets, setAssets] = useState<AdminAsset[]>([]);
   const [mediaBaseUrl, setMediaBaseUrl] = useState<string | null>(null);
@@ -210,19 +218,23 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
   const loadMedia = useCallback(async () => {
     const version = mediaRequestVersionRef.current + 1;
     mediaRequestVersionRef.current = version;
+    mediaPageCacheRef.current.clear();
     setMediaLoading(true);
-    setMediaLoadingMore(false);
     setMediaError(null);
     setMediaNextCursor(null);
+    setMediaPageIndex(0);
+    setSelectedMediaIds(new Set());
+    setPreviewAsset(null);
     try {
       const page = await fetchMediaLibraryPage({
         kinds: mediaKind ? [mediaKind] : undefined,
         role: mediaRole,
         folder: folderFilter,
         query: debouncedMediaQuery,
-        limit: 80,
+        limit: MEDIA_PAGE_SIZE,
       });
       if (mediaRequestVersionRef.current !== version) return;
+      mediaPageCacheRef.current.set(0, page);
       setManagedAssets(page.assets);
       setMediaNextCursor(page.nextCursor);
       setMediaTotal(page.total);
@@ -257,10 +269,28 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
     void loadMedia();
   }, [loadMedia]);
 
-  async function loadMoreMedia() {
-    if (!mediaNextCursor || mediaLoading || mediaLoadingMore) return;
+  function applyMediaPage(pageIndex: number, page: MediaLibraryPage) {
+    setManagedAssets(page.assets);
+    setMediaNextCursor(page.nextCursor);
+    setMediaTotal(page.total);
+    setMediaPageIndex(pageIndex);
+    setSelectedMediaIds(new Set());
+    setPreviewAsset(null);
+  }
+
+  async function openMediaPage(pageIndex: number) {
+    if (pageIndex < 0 || mediaLoading || pageIndex === mediaPageIndex) return;
+
+    const cached = mediaPageCacheRef.current.get(pageIndex);
+    if (cached) {
+      applyMediaPage(pageIndex, cached);
+      return;
+    }
+
+    if (pageIndex !== mediaPageIndex + 1 || !mediaNextCursor) return;
     const version = mediaRequestVersionRef.current;
-    setMediaLoadingMore(true);
+    const cursor = mediaNextCursor;
+    setMediaLoading(true);
     setMediaError(null);
     try {
       const page = await fetchMediaLibraryPage({
@@ -268,26 +298,21 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
         role: mediaRole,
         folder: folderFilter,
         query: debouncedMediaQuery,
-        cursor: mediaNextCursor,
-        limit: 80,
+        cursor,
+        limit: MEDIA_PAGE_SIZE,
       });
       if (mediaRequestVersionRef.current !== version) return;
-      setManagedAssets((current) => {
-        const byId = new Map(current.map((asset) => [asset.id, asset]));
-        page.assets.forEach((asset) => byId.set(asset.id, asset));
-        return [...byId.values()];
-      });
-      setMediaNextCursor(page.nextCursor);
-      setMediaTotal(page.total);
+      mediaPageCacheRef.current.set(pageIndex, page);
+      applyMediaPage(pageIndex, page);
     } catch (error) {
       if (mediaRequestVersionRef.current !== version) return;
       if (isSessionError(error)) {
         onSessionExpired();
         return;
       }
-      setMediaError(error instanceof Error ? error.message : '继续加载素材失败。');
+      setMediaError(error instanceof Error ? error.message : '素材分页加载失败。');
     } finally {
-      if (mediaRequestVersionRef.current === version) setMediaLoadingMore(false);
+      if (mediaRequestVersionRef.current === version) setMediaLoading(false);
     }
   }
 
@@ -387,6 +412,8 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
   );
 
   const activeFolder = folders.find((folder) => folder.id === folderFilter) ?? null;
+  const mediaTotalPages =
+    mediaTotal > 0 ? Math.max(1, Math.ceil(mediaTotal / MEDIA_PAGE_SIZE)) : 0;
 
   function toggleMedia(id: string) {
     setSelectedMediaIds((current) => {
@@ -882,7 +909,7 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
                 disabled={managedAssets.length === 0 || deletingMedia}
                 onChange={toggleAllMedia}
               />
-              <span>全选已加载素材</span>
+              <span>全选当前页</span>
             </label>
             <div className="media-center-result-summary">
               {uploadQueue.progress.total > 0 ? (
@@ -903,8 +930,8 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
               ) : null}
               <span>
                 {mediaTotal} 个结果
-                {managedAssets.length < mediaTotal
-                  ? ` · 已加载 ${managedAssets.length}`
+                {mediaTotalPages > 0
+                  ? ` · 第 ${mediaPageIndex + 1} / ${mediaTotalPages} 页`
                   : ''}
               </span>
             </div>
@@ -934,7 +961,12 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
                         />
                         <span className="sr-only">选择 {asset.fileName}</span>
                       </label>
-                      <div className="media-center-preview">
+                      <button
+                        type="button"
+                        className="media-center-preview media-center-preview-button"
+                        aria-label={`查看 ${asset.fileName} 完整比例预览`}
+                        onClick={() => setPreviewAsset(asset)}
+                      >
                         {asset.mediaKind === 'video' ? (
                           <span>视频</span>
                         ) : (
@@ -945,7 +977,8 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
                           />
                         )}
                         <b>{kindLabel(asset.mediaKind)}</b>
-                      </div>
+                        <span className="media-center-preview-hint">查看大图</span>
+                      </button>
                       <div className="media-center-card-body">
                         <strong title={asset.fileName}>{asset.fileName}</strong>
                         <small>
@@ -987,19 +1020,29 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
                   );
                 })}
               </div>
-              {mediaNextCursor ? (
-                <div className="media-center-load-more">
+              {mediaTotalPages > 1 ? (
+                <nav className="media-center-pagination" aria-label="素材分页">
                   <button
                     type="button"
                     className="secondary-button"
-                    disabled={mediaLoadingMore}
-                    onClick={() => void loadMoreMedia()}
+                    disabled={mediaLoading || mediaPageIndex === 0}
+                    onClick={() => void openMediaPage(mediaPageIndex - 1)}
                   >
-                    {mediaLoadingMore
-                      ? '正在加载…'
-                      : `加载更多（${managedAssets.length} / ${mediaTotal}）`}
+                    上一页
                   </button>
-                </div>
+                  <span>
+                    第 {mediaPageIndex + 1} / {mediaTotalPages} 页 · 每页最多{' '}
+                    {MEDIA_PAGE_SIZE} 个
+                  </span>
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    disabled={mediaLoading || !mediaNextCursor}
+                    onClick={() => void openMediaPage(mediaPageIndex + 1)}
+                  >
+                    下一页
+                  </button>
+                </nav>
               ) : null}
             </>
           ) : (
@@ -1140,6 +1183,13 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
           ) : null}
         </>
       )}
+
+      {previewAsset ? (
+        <MediaAssetPreviewDialog
+          asset={previewAsset}
+          onClose={() => setPreviewAsset(null)}
+        />
+      ) : null}
     </section>
   );
 }
