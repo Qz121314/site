@@ -28,7 +28,7 @@ function isSessionError(error: unknown): boolean {
   );
 }
 
-function normalizeAccent(value: string): string | null {
+function normalizeHexColor(value: string): string | null {
   const normalized = value.trim().toLowerCase();
   return /^#[0-9a-f]{6}$/u.test(normalized) ? normalized : null;
 }
@@ -38,6 +38,7 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
   const [currentTheme, setCurrentTheme] = useState<ResolvedTheme | null>(null);
   const [selectedKey, setSelectedKey] = useState<ThemeKey>('marketplace');
   const [accent, setAccent] = useState('');
+  const [textColor, setTextColor] = useState('');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -53,7 +54,8 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
   const themeIsDirty = Boolean(
     currentTheme &&
     (selectedKey !== currentTheme.key ||
-      accent.trim().toLowerCase() !== (currentTheme.overrides.accent ?? '')),
+      accent.trim().toLowerCase() !== (currentTheme.overrides.accent ?? '') ||
+      textColor.trim().toLowerCase() !== (currentTheme.overrides.textColor ?? '')),
   );
   useAdminDirtySource('theme-center', '主题中心', themeIsDirty);
 
@@ -66,6 +68,7 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
       setCurrentTheme(data.theme);
       setSelectedKey(data.theme.key);
       setAccent(data.theme.overrides.accent ?? '');
+      setTextColor(data.theme.overrides.textColor ?? '');
     } catch (error) {
       if (isSessionError(error)) {
         onSessionExpired();
@@ -89,6 +92,7 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
   function selectOfficialTheme(preset: ThemePreset) {
     setSelectedKey(preset.key);
     setAccent('');
+    setTextColor('');
     clearMessages();
   }
 
@@ -96,14 +100,20 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
     if (!currentTheme) return;
     setSelectedKey(currentTheme.key);
     setAccent(currentTheme.overrides.accent ?? '');
+    setTextColor(currentTheme.overrides.textColor ?? '');
     clearMessages();
   }
 
   async function saveTheme() {
     if (saving || !selectedPreset || !themeIsDirty) return;
-    const normalizedAccent = accent.trim() ? normalizeAccent(accent) : null;
+    const normalizedAccent = accent.trim() ? normalizeHexColor(accent) : null;
+    const normalizedTextColor = textColor.trim() ? normalizeHexColor(textColor) : null;
     if (accent.trim() && !normalizedAccent) {
       setErrorMessage('品牌强调色请输入 6 位十六进制颜色，例如 #e3486d。');
+      return;
+    }
+    if (textColor.trim() && !normalizedTextColor) {
+      setErrorMessage('主文字颜色请输入 6 位十六进制颜色，例如 #f6f0f3。');
       return;
     }
 
@@ -113,11 +123,13 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
       const updated = await updateThemeCenter(
         selectedKey,
         normalizedAccent,
+        normalizedTextColor,
         selectedKey === 'custom' ? currentTheme?.overrides.imported : undefined,
       );
       setCurrentTheme(updated);
       setSelectedKey(updated.key);
       setAccent(updated.overrides.accent ?? '');
+      setTextColor(updated.overrides.textColor ?? '');
       setSuccessMessage('主题已保存并应用。用户前端刷新后即可看到新视觉。');
     } catch (error) {
       if (isSessionError(error)) {
@@ -156,9 +168,12 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
     );
   }
 
-  const previewAccent = normalizeAccent(accent);
-  const colorInputValue =
-    previewAccent ?? normalizeAccent(selectedPreset?.tokens.brand ?? '') ?? '#e3486d';
+  const previewAccent = normalizeHexColor(accent);
+  const previewTextColor = normalizeHexColor(textColor);
+  const accentInputValue =
+    previewAccent ?? normalizeHexColor(selectedPreset?.tokens.brand ?? '') ?? '#e3486d';
+  const textColorInputValue =
+    previewTextColor ?? normalizeHexColor(selectedPreset?.tokens.text ?? '') ?? '#ffffff';
 
   return (
     <section className="theme-center" aria-labelledby="theme-center-title">
@@ -270,6 +285,7 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
             onClick={() => {
               setSelectedKey('custom');
               setAccent(currentTheme.overrides.accent ?? '');
+              setTextColor(currentTheme.overrides.textColor ?? '');
               clearMessages();
             }}
           >
@@ -295,16 +311,16 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
               <span>当前草稿</span>
               <strong>{selectedPreset.label}</strong>
               <p>
-                整套视觉方案由主题中心统一维护。这里只调整品牌强调色，不会破坏页面层级、字体和交互质感。
+                整套视觉方案由主题中心统一维护。这里只调整品牌强调色和主文字颜色，不会改变页面结构、字体层级和交互布局。
               </p>
             </div>
 
-            <label className="theme-accent-field">
+            <div className="theme-accent-field">
               <span>品牌强调色</span>
               <div>
                 <input
                   type="color"
-                  value={colorInputValue}
+                  value={accentInputValue}
                   onChange={(event) => {
                     setAccent(event.target.value.toLowerCase());
                     clearMessages();
@@ -333,11 +349,49 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
                   </button>
                 ) : null}
               </div>
-            </label>
+
+              <span>主文字颜色</span>
+              <div>
+                <input
+                  type="color"
+                  value={textColorInputValue}
+                  onChange={(event) => {
+                    setTextColor(event.target.value.toLowerCase());
+                    clearMessages();
+                  }}
+                  aria-label="选择主文字颜色"
+                />
+                <input
+                  type="text"
+                  value={textColor}
+                  placeholder={selectedPreset.tokens.text}
+                  maxLength={7}
+                  onChange={(event) => {
+                    setTextColor(event.target.value);
+                    clearMessages();
+                  }}
+                />
+                {textColor ? (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setTextColor('');
+                      clearMessages();
+                    }}
+                  >
+                    恢复主题色
+                  </button>
+                ) : null}
+              </div>
+            </div>
 
             <div className="theme-accent-status" data-status="pass">
               <i
                 style={{ background: previewAccent ?? selectedPreset.tokens.brand }}
+                aria-hidden="true"
+              />
+              <i
+                style={{ background: previewTextColor ?? selectedPreset.tokens.text }}
                 aria-hidden="true"
               />
               <span>下方预览与自动检查实时使用当前草稿</span>
@@ -352,7 +406,11 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
                 Navigation。
               </span>
             </div>
-            <ThemeCenterPreview accent={previewAccent} theme={selectedPreset} />
+            <ThemeCenterPreview
+              accent={previewAccent}
+              textColor={previewTextColor}
+              theme={selectedPreset}
+            />
           </div>
         </>
       ) : null}
