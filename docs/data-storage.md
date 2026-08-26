@@ -44,10 +44,12 @@ product_media                 产品结构化媒体顺序和关联
 faqs                          Markdown FAQ
 publish_module_jobs           模块发布任务
 publish_module_versions       模块发布版本
-conversion_events             /go 分发事件账本（请求幂等、自然日归档）
+conversion_events             历史兼容表；当前运行时不再写入 Site 流量账本
 audit_logs                    后台操作审计
 idempotency_keys              防重复写入记录
 ```
+
+`conversion_events` 来自历史 migration。当前 `/go` 仅执行实时转化路由：链接模式推进转化池轮换；在线客服模式生成 `handoffId` 并进入 Messages。Site 不再提供流量统计页面或 `/api/admin/traffic`，也不再向该表写入 CTA 分发事件。历史 migration 和表结构保留，用于保证既有数据库与全新环境的 migration 链一致，不把它重新解释为当前业务存储。
 
 产品与分类、标签、转化分组等分区关系必须保持相同 `section_id`。
 

@@ -315,6 +315,8 @@ CTA 文案 / 模式 / 可用状态
 
 Facebook Pixel、Messages 导航开关和 Affiliate 检测已经从运行时模型、后台表单和新 R2 快照中移除。Messages 本身仍是 Storefront 固定消息中心入口，后续通过 Site Worker 的服务商无关接口连接独立客服系统。历史 D1 migration 中的旧列仅作为兼容遗留保留，不再读取、写入或发布；不为删除这些旧列重建生产表。
 
+Site 侧流量统计与 CTA 分发账本同样已经退役：后台不再提供流量统计页面或 `/api/admin/traffic`，`/go` 不再写入 `conversion_events`。历史 migration / 表结构仅为数据库演进兼容保留，不属于当前运行时或发布模型。
+
 ## 缓存
 
 模块版本文件：
@@ -358,11 +360,11 @@ Cloudflare Static Assets 使用 SPA fallback。`/api/*` 和 `/go/*` Worker-first
 
 ## 不受“三版”规则影响的数据
 
-以下属于独立业务 / 安全数据，不属于发布版本历史：
+以下属于独立安全 / 兼容数据，不属于发布版本历史：
 
 ```text
 audit_logs
-conversion_events（`/go` 权威分发账本；按 request_id 防止重复记账）
+conversion_events（历史兼容表；当前运行时不写入）
 ```
 
-它们不按模块最近 3 版规则删除。
+它们不按模块最近 3 版规则删除。`conversion_events` 的保留不代表 Site 流量统计功能仍在运行。
