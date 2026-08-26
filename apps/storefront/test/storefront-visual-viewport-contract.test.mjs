@@ -57,7 +57,11 @@ test('Storefront chrome follows the visual viewport and measured shell geometry'
   assert.match(runtime, /--app-bottom-chrome-height/u);
   assert.match(
     runtime,
-    /const measure = \(\) => \{[\s\S]{0,120}writeViewportMetrics\(\);[\s\S]{0,180}currentElements\(\)/u,
+    /const measure = \(\) => \{[\s\S]{0,500}currentViewportMetrics\(\);[\s\S]{0,220}currentElements\(\);[\s\S]{0,220}renderedHeight\(header\);[\s\S]{0,220}renderedHeight\(bottomChrome\);[\s\S]{0,220}writeViewportMetrics\(metrics\)/u,
+  );
+  assert.doesNotMatch(
+    runtime,
+    /const measure = \(\) => \{[\s\S]{0,180}writeViewportMetrics\(\);[\s\S]{0,180}currentElements\(\)/u,
   );
   assert.doesNotMatch(runtime, /--app-bottom-nav-height/u);
   assert.doesNotMatch(runtime, /--app-route-action-height/u);
