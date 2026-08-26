@@ -3,7 +3,10 @@ import test from 'node:test';
 import { validateHomeLayoutInput } from '../src/settings/home-layout.ts';
 
 test('Home recommendation sections are not capped at three', () => {
-  const recommendationSectionIds = Array.from({ length: 12 }, (_, index) => `section-${index + 1}`);
+  const recommendationSectionIds = Array.from(
+    { length: 12 },
+    (_, index) => `section-${index + 1}`,
+  );
   const result = validateHomeLayoutInput({
     shortcutSectionIds: [],
     recommendationSectionIds,
@@ -16,7 +19,10 @@ test('Home recommendation sections are not capped at three', () => {
 
 test('Home shortcut sections keep their seven-item cap', () => {
   const result = validateHomeLayoutInput({
-    shortcutSectionIds: Array.from({ length: 8 }, (_, index) => `shortcut-${index + 1}`),
+    shortcutSectionIds: Array.from(
+      { length: 8 },
+      (_, index) => `shortcut-${index + 1}`,
+    ),
     recommendationSectionIds: [],
   });
 
