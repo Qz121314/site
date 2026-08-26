@@ -1,6 +1,6 @@
 # 业务展示与运营平台
 
-`Qz121314/site` 是一个面向个人运营者和小团队的流量展示、分发与转化平台。客服系统是流量接待端，Site 负责记录流量从产品入口到接收方的每一次分发结果。
+`Qz121314/site` 是一个面向个人运营者和小团队的业务展示、转化与客服接入平台。Site 负责产品内容、转化入口和客服系统路由；独立 Customer Service 负责会话、消息与坐席分流。Site 不维护运行时流量统计账本。
 
 ```text
 Storefront   English 用户前端，Mobile-first
@@ -183,7 +183,6 @@ Cloudflare Worker + D1 + R2
 ├─ 分区管理
 │  └─ 每个分区独立：产品 / 分类 / 标签 / 转化池
 ├─ 客服连接管理
-├─ 流量分发账本 / 自然月统计
 ├─ FAQ / Markdown
 ├─ 热门 / 最新产品
 ├─ 模块化发布 / 历史版本 / Rollback
@@ -711,7 +710,7 @@ link               外部链接入口
 
 转化配置保存后通过 D1 实时生效，不要求重新发布 R2 内容快照。
 
-`/go/:productId` 是所有产品 CTA 的正式分发入口。链接模式需要轮换时由 `/go` 推进生产游标；在线客服模式由 `/go` 记录成功进入客服接待页的上游交付，然后进入 Storefront Messages。Site 不进行坐席轮换。
+`/go/:productId` 是所有产品 CTA 的正式分发入口。链接模式需要轮换时由 `/go` 推进生产游标；在线客服模式由 `/go` 生成唯一 `handoffId` 并进入 Storefront Messages，后续会话直接交给已验证的独立客服系统。Site 不进行坐席轮换，也不写入 Site 侧流量统计账本。
 
 ## 客服管理
 
@@ -721,7 +720,7 @@ link               外部链接入口
 
 自研客服管理系统使用独立 Git 仓库、独立 Cloudflare Worker、独立数据库和独立部署流程。本项目只保留 Messages 用户界面、Site 侧在线客服转化组和客服系统连接配置。管理员录入客服系统公网根地址与验证 Token 后，由浏览器直接调用客服系统 `/integration/v1/verify` 完成协议验证并同步当前在线客服产品目录；Site 只保存验证后返回的 `clientApiUrl` / `realtimeUrl`，验证 Token 永远不会进入 Storefront 公开配置。
 
-运行时由 Site 解析 **Product -> 在线客服转化组 -> 客服系统连接**，并把权威的产品 / 分区 / 分类上下文返回给 Storefront；之后 Conversation、Message、媒体和 WebSocket 流量都由浏览器直接访问独立客服系统，Site Worker 不代理聊天流量。独立客服系统再按“整个分区 / 指定分类 / 指定产品”的动态负责范围把会话分配给 Agent。Site 的“已分发”与客服系统的“坐席首次接待”形成上下游核对口径；转接、重新排队和重开不会重复增加坐席接待流量。完整协议见 [客服系统接入文档](docs/customer-service-integration.md)。
+运行时由 Site 解析 **Product -> 在线客服转化组 -> 客服系统连接**，并把权威的产品 / 分区 / 分类上下文返回给 Storefront；之后 Conversation、Message、媒体和 WebSocket 流量都由浏览器直接访问独立客服系统，Site Worker 不代理聊天流量。独立客服系统再按“整个分区 / 指定分类 / 指定产品”的动态负责范围把会话分配给 Agent。`handoffId` 仅用于把一次 CTA handoff 与客服系统的首次接待关联，不代表 Site 侧流量统计，也不会写入 Site 侧流量账本。转接、重新排队和重开由客服系统自己的会话规则处理。完整协议见 [客服系统接入文档](docs/customer-service-integration.md)。
 
 ### 客服运行时请求边界
 
@@ -746,7 +745,7 @@ link               外部链接入口
 - 用户进入 Messages 或客服 CTA 后可以创建 / 续用 24 小时 visitor identity；
 - 已有有效 identity 的用户离开 Messages 后，仍可在其他 Storefront 页面保持未读徽标与实时消息更新；
 - 没有客服使用历史的新访客不得请求 `/support/connections`、远端 conversations 或建立客服 WebSocket；
-- 客服按需激活不能改变会话生命周期、转化记账或独立客服系统的路由职责。
+- 客服按需激活不能改变会话生命周期、转化路由或独立客服系统的职责边界。
 
 ## Markdown
 
@@ -862,7 +861,7 @@ D1 当前业务数据
 - 主题保存后由 `/api/public/theme` 读取当前 D1 Theme Runtime；
 - 产品 CTA / 转化目标使用当前 D1 状态；
 - 转化配置变化不需要为了更新 CTA 重新生成产品 R2 快照；
-- `/go/:productId` 负责全部 CTA 的权威分发记账、链接轮换和客服入口交付；在线客服聊天数据仍直接流向独立客服系统。
+- `/go/:productId` 负责实时读取当前转化配置、链接轮换和客服 handoff；在线客服聊天数据仍直接流向独立客服系统。
 
 这样内容版本保持稳定，同时运营入口可以即时生效。
 
@@ -912,7 +911,6 @@ R2 Custom Domain
 /admin/*                  中文管理后台
 /api/*                    Worker API
 /go/:productId            实时转化跳转
-/api/admin/traffic        自然月流量分发账本
 /public/*                 当前公开内容与版本读取
 /_media/*                 已登记媒体的同源读取 fallback
 ```
@@ -938,7 +936,8 @@ Storefront 和 Admin 都由同一个正式 Cloudflare Worker 提供。
 - 业务关系由外键、触发器 / CHECK 和 API 校验共同保护；
 - 普通可删除业务实体使用软删除 / 回收站；
 - 高风险写操作保留审计；
-- 批量删除 / 排序等接口在需要时使用 idempotency key 防重。
+- 批量删除 / 排序等接口在需要时使用 idempotency key 防重；
+- 已退役功能的历史 migration 可以保留以保证 migration 链一致，但历史表或旧列不代表对应运行时功能仍然存在。
 
 ## CI 与自动部署
 
