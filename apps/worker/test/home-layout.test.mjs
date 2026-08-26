@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { validateHomeLayoutInput } from '../src/settings/home-layout.ts';
 
@@ -22,4 +23,18 @@ test('Home shortcut sections keep their seven-item cap', () => {
   assert.equal(result.ok, false);
   if (result.ok) return;
   assert.equal(result.field, 'homeLayout.shortcutSectionIds');
+});
+
+test('D1 schema keeps shortcut cap but allows recommendation slots beyond three', () => {
+  const migration = readFileSync(
+    new URL('../../../migrations/0030_expand_home_recommendation_slots.sql', import.meta.url),
+    'utf8',
+  );
+
+  assert.match(migration, /placement = 'shortcut' AND sort_order BETWEEN 0 AND 6/u);
+  assert.match(migration, /placement = 'recommendation' AND sort_order >= 0/u);
+  assert.doesNotMatch(
+    migration,
+    /placement = 'recommendation' AND sort_order BETWEEN 0 AND 2/u,
+  );
 });
