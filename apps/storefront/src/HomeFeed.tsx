@@ -270,7 +270,6 @@ function fallbackRecommendationSectionIds(bootstrap: StorefrontBootstrap): strin
   const ids: string[] = [];
   for (const product of bootstrap.home.featuredProducts) {
     if (!ids.includes(product.sectionId)) ids.push(product.sectionId);
-    if (ids.length === 3) break;
   }
   return ids;
 }
@@ -322,9 +321,9 @@ export function HomeFeed({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
   const shortcutSections = shortcutLayout.sectionIds.flatMap((id) =>
     sectionById.get(id) ? [sectionById.get(id) as PublicSection] : [],
   );
-  const recommendationSections = layout.recommendationSectionIds
-    .flatMap((id) => (sectionById.get(id) ? [sectionById.get(id) as PublicSection] : []))
-    .slice(0, 3);
+  const recommendationSections = layout.recommendationSectionIds.flatMap((id) =>
+    sectionById.get(id) ? [sectionById.get(id) as PublicSection] : [],
+  );
   const priorityRecommendationSectionId =
     recommendationSections.find(
       (section) => (featuredProductsBySection.get(section.id)?.length ?? 0) > 0,

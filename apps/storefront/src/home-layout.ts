@@ -15,11 +15,12 @@ function resolveIds(
   configuredIds: string[] | undefined,
   fallbackIds: string[],
   publishedSectionIds: ReadonlySet<string>,
-  max: number,
+  max?: number,
 ): string[] {
   const configured = publishedIds(configuredIds ?? [], publishedSectionIds);
-  if (configured.length > 0) return configured.slice(0, max);
-  return publishedIds(fallbackIds, publishedSectionIds).slice(0, max);
+  const source =
+    configured.length > 0 ? configured : publishedIds(fallbackIds, publishedSectionIds);
+  return max === undefined ? source : source.slice(0, max);
 }
 
 export function resolveHomeShortcuts(
@@ -53,7 +54,6 @@ export function resolveHomeLayout(
       configured?.recommendationSectionIds,
       fallback.recommendationSectionIds,
       publishedSectionIds,
-      3,
     ),
   };
 }
