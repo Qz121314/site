@@ -3,9 +3,9 @@ import type { HomeLayout } from './site-hero-settings-api';
 
 type HomePlacement = 'shortcutSectionIds' | 'recommendationSectionIds';
 
-const LIMITS: Record<HomePlacement, number> = {
+const LIMITS: Record<HomePlacement, number | null> = {
   shortcutSectionIds: 7,
-  recommendationSectionIds: 3,
+  recommendationSectionIds: null,
 };
 
 function moveItem(items: string[], index: number, direction: -1 | 1): string[] {
@@ -45,8 +45,9 @@ export function HomeLayoutSettingsSection({
 
   function addPlacement(placement: HomePlacement) {
     const current = value[placement];
+    const limit = LIMITS[placement];
     const nextSection = sections.find((section) => !current.includes(section.id));
-    if (!nextSection || current.length >= LIMITS[placement]) return;
+    if (!nextSection || (limit !== null && current.length >= limit)) return;
     updatePlacement(placement, [...current, nextSection.id]);
   }
 
@@ -59,7 +60,8 @@ export function HomeLayoutSettingsSection({
     const ids = value[placement];
     const limit = LIMITS[placement];
     const canAdd =
-      ids.length < limit && sections.some((section) => !ids.includes(section.id));
+      (limit === null || ids.length < limit) &&
+      sections.some((section) => !ids.includes(section.id));
 
     return (
       <div className="admin-home-layout-group">
@@ -68,9 +70,7 @@ export function HomeLayoutSettingsSection({
             <strong>{title}</strong>
             <p>{description}</p>
           </div>
-          <span>
-            {ids.length}/{limit}
-          </span>
+          <span>{limit === null ? `${ids.length} 个` : `${ids.length}/${limit}`}</span>
         </div>
 
         {ids.length > 0 ? (
@@ -181,7 +181,7 @@ export function HomeLayoutSettingsSection({
         {renderPlacement(
           'recommendationSectionIds',
           '推荐分区',
-          '最多 3 个。未选择时自动从已发布且标记“首页推荐”的产品推导分区；选择后按这里的分区顺序展示。',
+          '可按需要添加多个。未选择时自动从已发布且标记“首页推荐”的产品推导分区；选择后按这里的分区顺序展示。',
           '添加推荐分区',
         )}
       </div>
