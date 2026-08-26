@@ -58,6 +58,7 @@ type ProductManagementViewProps = {
 type ProductScope = 'active' | 'trash';
 type StatusFilter = 'all' | ProductStatus;
 type SaveStage = 'idle' | 'saving';
+type ProductDropPosition = 'before' | 'after';
 
 const emptyProductForm: ProductInput = {
   serviceMode: 'offline',
@@ -533,21 +534,15 @@ export function ProductManagementView({
     }
   }
 
-  async function moveProduct(product: AdminProduct, direction: -1 | 1) {
-    if (reorderBlocked) return;
-    const ordered = sortProducts(activeProducts);
-    const index = ordered.findIndex((item) => item.id === product.id);
-    const targetIndex = index + direction;
-    if (index < 0 || targetIndex < 0 || targetIndex >= ordered.length) return;
-    const next = [...ordered];
-    const [moved] = next.splice(index, 1);
-    if (!moved) return;
-    next.splice(targetIndex, 0, moved);
-    const normalized = next.map((item, itemIndex) => ({
+  async function persistProductOrder(nextProducts: AdminProduct[]) {
+    if (reorderBlocked || working) return;
+    const previous = sortProducts(activeProducts);
+    const normalized = nextProducts.map((item, itemIndex) => ({
       ...item,
       sortOrder: itemIndex * 10,
     }));
 
+    setActiveProducts(normalized);
     setWorking(true);
     setErrorMessage('');
     setSuccessMessage('');
@@ -556,14 +551,46 @@ export function ProductManagementView({
         section.id,
         normalized.map((item) => ({ id: item.id, sortOrder: item.sortOrder })),
       );
-      setActiveProducts(normalized);
       setSuccessMessage('产品顺序已更新。');
     } catch (error) {
+      setActiveProducts(previous);
       handleError(error);
       await loadActive();
     } finally {
       setWorking(false);
     }
+  }
+
+  async function moveProduct(product: AdminProduct, direction: -1 | 1) {
+    if (reorderBlocked || working) return;
+    const ordered = sortProducts(activeProducts);
+    const index = ordered.findIndex((item) => item.id === product.id);
+    const targetIndex = index + direction;
+    if (index < 0 || targetIndex < 0 || targetIndex >= ordered.length) return;
+    const next = [...ordered];
+    const [moved] = next.splice(index, 1);
+    if (!moved) return;
+    next.splice(targetIndex, 0, moved);
+    await persistProductOrder(next);
+  }
+
+  async function dragProduct(
+    draggedId: string,
+    targetId: string,
+    position: ProductDropPosition,
+  ) {
+    if (reorderBlocked || working || draggedId === targetId) return;
+    const ordered = sortProducts(activeProducts);
+    const dragged = ordered.find((item) => item.id === draggedId);
+    if (!dragged) return;
+
+    const next = ordered.filter((item) => item.id !== draggedId);
+    const targetIndex = next.findIndex((item) => item.id === targetId);
+    if (targetIndex < 0) return;
+    next.splice(position === 'after' ? targetIndex + 1 : targetIndex, 0, dragged);
+
+    if (next.every((item, index) => item.id === ordered[index]?.id)) return;
+    await persistProductOrder(next);
   }
 
   async function confirmDelete() {
@@ -722,6 +749,9 @@ export function ProductManagementView({
         onDelete={(product) => setPendingDeleteIds([product.id])}
         onRestore={(product) => void handleRestore(product)}
         onMove={(product, direction) => void moveProduct(product, direction)}
+        onReorder={(draggedId, targetId, position) =>
+          void dragProduct(draggedId, targetId, position)
+        }
       />
 
       {editorOpen ? (
