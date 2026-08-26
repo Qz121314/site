@@ -43,7 +43,8 @@ function splitStorefrontBrandName(siteName: string) {
 
 export function StorefrontBrandName({ siteName }: { siteName: string }) {
   const normalizedSiteName = siteName.trim().replace(/\s+/gu, ' ');
-  const { accent, primary, separatedBySpace } = splitStorefrontBrandName(normalizedSiteName);
+  const { accent, primary, separatedBySpace } =
+    splitStorefrontBrandName(normalizedSiteName);
   const isDuotone = Boolean(accent && primary);
 
   return (
