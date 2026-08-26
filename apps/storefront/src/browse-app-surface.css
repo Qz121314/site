@@ -72,6 +72,12 @@
 
   .browse-section-list:not(.is-single)
     .browse-section-card:not(:first-child)
+    .browse-section-card-copy {
+    gap: 3px;
+  }
+
+  .browse-section-list:not(.is-single)
+    .browse-section-card:not(:first-child)
     .browse-section-card-content
     strong {
     font-size: clamp(0.94rem, 4.5vw, 1.08rem);
@@ -82,7 +88,13 @@
     .browse-section-card:not(:first-child)
     .browse-section-card-content
     p {
-    display: none;
+    display: -webkit-box;
+    max-width: none;
+    color: rgb(255 255 255 / 70%);
+    font-size: clamp(0.62rem, 2.65vw, 0.69rem);
+    line-height: 1.28;
+    -webkit-box-orient: vertical;
+    -webkit-line-clamp: 2;
   }
 
   .browse-section-list:not(.is-single)
@@ -104,6 +116,12 @@
 
   .browse-section-list:not(.is-single)
     .browse-section-card:nth-child(even):last-child
+    .browse-section-card-copy {
+    gap: 5px;
+  }
+
+  .browse-section-list:not(.is-single)
+    .browse-section-card:nth-child(even):last-child
     .browse-section-card-content
     strong {
     font-size: clamp(1.22rem, 5.6vw, 1.58rem);
@@ -114,7 +132,11 @@
     .browse-section-card:nth-child(even):last-child
     .browse-section-card-content
     p {
-    display: -webkit-box;
+    max-width: 46ch;
+    color: rgb(255 255 255 / 74%);
+    font-size: 0.73rem;
+    line-height: 1.4;
+    -webkit-line-clamp: 2;
   }
 
   .browse-section-list:not(.is-single)

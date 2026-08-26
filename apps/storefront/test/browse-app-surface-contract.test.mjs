@@ -14,6 +14,10 @@ test('browse keeps the first mobile viewport dense without adding initial produc
   assert.match(source, /fetchPriority=\{index === 0 \? 'high' : 'auto'\}/u);
   assert.match(source, /loading=\{index === 0 \? 'eager' : 'lazy'\}/u);
   assert.match(source, /import '\.\/browse-app-surface\.css';/u);
+  assert.match(
+    source,
+    /\{section\.description \? <p>\{section\.description\}<\/p> : null\}/u,
+  );
 
   assert.match(
     css,
@@ -30,6 +34,10 @@ test('browse keeps the first mobile viewport dense without adding initial produc
   assert.match(
     css,
     /\.browse-section-list:not\(\.is-single\)\s+\.browse-section-card:nth-child\(even\):last-child \{[\s\S]*grid-column: 1 \/ -1;/u,
+  );
+  assert.match(
+    css,
+    /\.browse-section-list:not\(\.is-single\)[\s\S]*\.browse-section-card:not\(:first-child\)[\s\S]*\.browse-section-card-content[\s\S]*p \{[\s\S]*display: -webkit-box;[\s\S]*-webkit-line-clamp: 2;/u,
   );
   assert.match(css, /\.browse-directory-search \{[\s\S]*position: sticky;/u);
 });
