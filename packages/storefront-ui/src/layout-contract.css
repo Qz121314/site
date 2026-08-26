@@ -1,8 +1,30 @@
 /*
  * Storefront structural contract.
  * Theme Center may change visual tokens, typography tone, media treatment and motion,
- * but it must not move core product content between themes.
+ * but it must not move, resize, clamp or reflow core product content between themes.
+ *
+ * Structural custom properties are intentionally !important so a theme recipe loaded
+ * later (including lazy product-detail CSS) cannot change page geometry.
  */
+
+:is(html, .storefront-theme-root)[data-theme] {
+  --app-gutter: 18px !important;
+  --theme-section-space: 24px !important;
+  --theme-card-gap-y: 18px !important;
+  --theme-card-gap-x: 10px !important;
+  --theme-control-height: 44px !important;
+  --theme-section-icon-size: 48px !important;
+  --theme-desktop-media-size: 154px !important;
+  --theme-desktop-media-size-large: 176px !important;
+  --theme-button-height: 52px !important;
+  --theme-detail-gap: 18px !important;
+  --theme-detail-gallery-gap: 8px !important;
+  --theme-detail-media-ratio: 1 / 1 !important;
+  --theme-detail-desktop-media-ratio: 1 / 1 !important;
+  --theme-detail-panel-padding: 18px !important;
+  --theme-detail-mobile-panel-padding: 16px !important;
+  --theme-detail-cta-height: 54px !important;
+}
 
 :is(html, .storefront-theme-root)[data-theme] .home-product-tile {
   position: relative;
@@ -28,6 +50,25 @@
   text-shadow: var(--theme-art-media-title-shadow, 0 1px 12px rgb(0 0 0 / 34%));
 }
 
+/* Product names are content, not decoration: wrap them and always show the full value. */
+:is(html, .storefront-theme-root)[data-theme]
+  :is(
+    .home-product-title,
+    .browse-search-product-title,
+    .section-product-title,
+    .product-card-heading h3
+  ) {
+  display: block !important;
+  max-height: none !important;
+  overflow: visible !important;
+  overflow-wrap: anywhere !important;
+  text-overflow: clip !important;
+  white-space: normal !important;
+  word-break: normal !important;
+  -webkit-box-orient: initial !important;
+  -webkit-line-clamp: unset !important;
+}
+
 :is(html, .storefront-theme-root)[data-theme] .home-product-cover::before {
   opacity: 1;
 }
@@ -42,10 +83,31 @@
   justify-self: start;
 }
 
+/* Legacy/preview hero uses the same alignment for every theme. */
+:is(html, .storefront-theme-root)[data-theme] .hero-panel {
+  align-content: normal !important;
+  justify-items: normal !important;
+  text-align: left !important;
+}
+
+:is(html, .storefront-theme-root)[data-theme] .hero-panel :is(h1, p) {
+  margin-inline: 0 !important;
+}
+
+html[data-theme] .hero-panel {
+  min-height: 0 !important;
+}
+
 @media (min-width: 768px) {
   :is(html, .storefront-theme-root)[data-theme] .home-product-meta {
     right: 13px;
     bottom: 12px;
     left: 13px;
+  }
+}
+
+@media (min-width: 980px) {
+  html[data-theme] .hero-panel {
+    min-height: 290px !important;
   }
 }
