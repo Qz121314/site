@@ -493,7 +493,7 @@ async function loadBottomNavigation(
   return parseBottomNavigationItems(body.items);
 }
 
-function normalizeHomeLayoutSectionIds(value: unknown, max: number): string[] {
+function normalizeHomeLayoutSectionIds(value: unknown, max?: number): string[] {
   if (!Array.isArray(value)) return [];
   const output: string[] = [];
   const seen = new Set<string>();
@@ -503,21 +503,18 @@ function normalizeHomeLayoutSectionIds(value: unknown, max: number): string[] {
     }
     seen.add(item);
     output.push(item);
-    if (output.length === max) break;
+    if (max !== undefined && output.length === max) break;
   }
   return output;
 }
 
-function normalizeHomeLayout(value: unknown): HomeLayout {
+export function normalizeHomeLayout(value: unknown): HomeLayout {
   if (!isRecord(value)) {
     return { shortcutSectionIds: [], recommendationSectionIds: [] };
   }
   return {
     shortcutSectionIds: normalizeHomeLayoutSectionIds(value.shortcutSectionIds, 7),
-    recommendationSectionIds: normalizeHomeLayoutSectionIds(
-      value.recommendationSectionIds,
-      3,
-    ),
+    recommendationSectionIds: normalizeHomeLayoutSectionIds(value.recommendationSectionIds),
   };
 }
 
