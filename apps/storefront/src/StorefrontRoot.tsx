@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import {
   StorefrontBottomNavigation,
   StorefrontBrandBar,
+  StorefrontBrandName,
   type StorefrontLinkComponent,
 } from '@site/storefront-ui';
 import {
@@ -149,7 +150,7 @@ function ProductShellHeader({
           ) : null}
         </span>
         <span>
-          <strong>{site.name}</strong>
+          <StorefrontBrandName siteName={site.name} />
           <small>⌖ {site.locationLabel}</small>
         </span>
       </StorefrontLink>
