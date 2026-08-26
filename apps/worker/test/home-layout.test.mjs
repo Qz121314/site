@@ -25,16 +25,14 @@ test('Home shortcut sections keep their seven-item cap', () => {
   assert.equal(result.field, 'homeLayout.shortcutSectionIds');
 });
 
-test('D1 schema keeps shortcut cap but allows recommendation slots beyond three', () => {
-  const migration = readFileSync(
-    new URL('../../../migrations/0030_expand_home_recommendation_slots.sql', import.meta.url),
-    'utf8',
-  );
+test('D1 schema permits recommendation slots beyond three', () => {
+  const migrationPath = '../../../migrations/0030_expand_home_recommendation_slots.sql';
+  const migration = readFileSync(new URL(migrationPath, import.meta.url), 'utf8');
+  const shortcutRule = "placement = 'shortcut' AND sort_order BETWEEN 0 AND 6";
+  const recommendationRule = "placement = 'recommendation' AND sort_order >= 0";
+  const oldRule = "placement = 'recommendation' AND sort_order BETWEEN 0 AND 2";
 
-  assert.match(migration, /placement = 'shortcut' AND sort_order BETWEEN 0 AND 6/u);
-  assert.match(migration, /placement = 'recommendation' AND sort_order >= 0/u);
-  assert.doesNotMatch(
-    migration,
-    /placement = 'recommendation' AND sort_order BETWEEN 0 AND 2/u,
-  );
+  assert.ok(migration.includes(shortcutRule));
+  assert.ok(migration.includes(recommendationRule));
+  assert.ok(!migration.includes(oldRule));
 });
