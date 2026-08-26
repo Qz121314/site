@@ -637,7 +637,7 @@ function parsePointer(value: unknown): CurrentPointer {
     if (!sectionId || sectionId.length > 120 || !validModuleReference(reference)) {
       throw new PublicContentError(
         'INVALID_POINTER',
-        'The published section module is invalid.',
+        'The published content pointer is invalid.',
       );
     }
     sections[sectionId] = reference;
@@ -808,7 +808,7 @@ export function mediaUrl(mediaBaseUrl: string, objectKey: string | null): string
 
 export function publicImageVariantUrl(
   objectKey: string | null | undefined,
-  width: 96 | 160 | 240 | 320 | 384 | 640 | 960,
+  width: 96 | 160 | 240 | 384 | 640 | 960,
 ): string | null {
   if (!objectKey || objectKey.includes('..')) return null;
   const segments = objectKey.split('/');
