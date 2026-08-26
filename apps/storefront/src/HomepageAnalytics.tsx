@@ -5,7 +5,9 @@ type AnalyticsWindow = Window & {
 };
 
 const GOOGLE_TAG_SCRIPT_ID = 'storefront-ga4-script';
+const GOOGLE_TAG_LOAD_DELAY_MS = 2500;
 const initializedMeasurementIds = new Set<string>();
+let googleTagLoadScheduled = false;
 
 function dataLayer(): unknown[] {
   const target = window as AnalyticsWindow;
@@ -17,14 +19,34 @@ function gtag(...args: unknown[]) {
   dataLayer().push(args);
 }
 
-function ensureGoogleTag(measurementId: string) {
-  if (!document.getElementById(GOOGLE_TAG_SCRIPT_ID)) {
-    const script = document.createElement('script');
-    script.id = GOOGLE_TAG_SCRIPT_ID;
-    script.async = true;
-    script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(measurementId)}`;
-    document.head.append(script);
+function loadGoogleTagScript(measurementId: string) {
+  if (document.getElementById(GOOGLE_TAG_SCRIPT_ID)) return;
+
+  const script = document.createElement('script');
+  script.id = GOOGLE_TAG_SCRIPT_ID;
+  script.async = true;
+  script.fetchPriority = 'low';
+  script.src = `https://www.googletagmanager.com/gtag/js?id=${encodeURIComponent(measurementId)}`;
+  document.head.append(script);
+}
+
+function scheduleGoogleTagScript(measurementId: string) {
+  if (googleTagLoadScheduled || document.getElementById(GOOGLE_TAG_SCRIPT_ID)) return;
+  googleTagLoadScheduled = true;
+
+  const scheduleAfterLoad = () => {
+    window.setTimeout(() => loadGoogleTagScript(measurementId), GOOGLE_TAG_LOAD_DELAY_MS);
+  };
+
+  if (document.readyState === 'complete') {
+    scheduleAfterLoad();
+    return;
   }
+  window.addEventListener('load', scheduleAfterLoad, { once: true });
+}
+
+function ensureGoogleTag(measurementId: string) {
+  scheduleGoogleTagScript(measurementId);
 
   if (initializedMeasurementIds.has(measurementId)) return;
   gtag('js', new Date());

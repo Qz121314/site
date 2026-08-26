@@ -24,6 +24,13 @@ import { productHref, sectionHref } from './routing';
 import { handleStorefrontLinkClick } from './storefront-navigation-runtime';
 import { SYSTEM_UI } from './system-ui';
 
+type HomeProductImageVariantWidth = 240 | 320 | 384 | 640 | 960;
+
+const homeProductImageVariantUrl = publicImageVariantUrl as (
+  objectKey: string | null | undefined,
+  width: HomeProductImageVariantWidth,
+) => string | null;
+
 function HomeLink({
   href = '/',
   onClick,
@@ -162,11 +169,12 @@ function HomeProductTile({
   priority: boolean;
   product: PublicProductSummary;
 }) {
-  const src = publicImageVariantUrl(product.coverObjectKey, 640) ?? product.coverUrl;
+  const src = homeProductImageVariantUrl(product.coverObjectKey, 384) ?? product.coverUrl;
   const srcSet = product.coverObjectKey
-    ? ([384, 640, 960] as const)
+    ? ([240, 320, 384, 640, 960] as const)
         .map(
-          (width) => `${publicImageVariantUrl(product.coverObjectKey, width)} ${width}w`,
+          (width) =>
+            `${homeProductImageVariantUrl(product.coverObjectKey, width)} ${width}w`,
         )
         .join(', ')
     : undefined;
@@ -182,7 +190,7 @@ function HomeProductTile({
           fetchPriority={priority ? 'high' : 'low'}
           height={640}
           loading={priority ? 'eager' : 'lazy'}
-          sizes="(max-width: 767px) 44vw, 176px"
+          sizes="(max-width: 767px) clamp(136px, calc((100vw - 100px) / 2), 164px), 176px"
           src={src}
           srcSet={srcSet}
           width={640}

@@ -63,9 +63,8 @@ function writeTextEntryState(): void {
   document.documentElement.dataset.appTextEntry = state;
 }
 
-function writeViewportMetrics(): void {
+function writeViewportMetrics(metrics = currentViewportMetrics()): void {
   const root = document.documentElement;
-  const metrics = currentViewportMetrics();
   root.style.setProperty('--app-viewport-width', roundedPixels(metrics.width));
   root.style.setProperty('--app-viewport-height', roundedPixels(metrics.height));
   root.style.setProperty('--app-viewport-top', roundedPixels(metrics.top));
@@ -126,10 +125,18 @@ export function observeStorefrontShellChrome(shell: HTMLElement): () => void {
 
   const measure = () => {
     frame = null;
-    writeViewportMetrics();
+
+    // Read every layout-dependent value before mutating root styles. Mixing the
+    // viewport CSS-variable writes with getBoundingClientRect() forces the
+    // browser to synchronously flush layout during startup.
+    const metrics = currentViewportMetrics();
     const { header, bottomChrome } = currentElements();
-    writeChromeMetric('--app-header-height', renderedHeight(header));
-    writeChromeMetric('--app-bottom-chrome-height', renderedHeight(bottomChrome));
+    const headerHeight = renderedHeight(header);
+    const bottomChromeHeight = renderedHeight(bottomChrome);
+
+    writeViewportMetrics(metrics);
+    writeChromeMetric('--app-header-height', headerHeight);
+    writeChromeMetric('--app-bottom-chrome-height', bottomChromeHeight);
   };
 
   const schedule = () => {

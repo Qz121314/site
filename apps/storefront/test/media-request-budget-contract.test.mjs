@@ -20,9 +20,13 @@ test('hero active video controls media preload', async () => {
 });
 
 test('home reserves high image priority for one meaningful LCP candidate', async () => {
-  const [home, navigation] = await Promise.all([
+  const [home, navigation, imageVariants] = await Promise.all([
     readFile(new URL('../src/HomeFeed.tsx', import.meta.url), 'utf8'),
     readFile(new URL('../src/storefront-navigation.tsx', import.meta.url), 'utf8'),
+    readFile(
+      new URL('../../worker/src/public-media/public-image-variant.ts', import.meta.url),
+      'utf8',
+    ),
   ]);
 
   assert.match(home, /fetchPriority=\{index === 0 \? 'high' : 'low'\}/u);
@@ -33,6 +37,13 @@ test('home reserves high image priority for one meaningful LCP candidate', async
     home,
     /priority=\{!hasHero && section\.id === priorityRecommendationSectionId\}/u,
   );
+  assert.match(home, /homeProductImageVariantUrl\(product\.coverObjectKey, 384\)/u);
+  assert.match(home, /\[240, 320, 384, 640, 960\]/u);
+  assert.match(
+    home,
+    /sizes="\(max-width: 767px\) clamp\(136px, calc\(\(100vw - 100px\) \/ 2\), 164px\), 176px"/u,
+  );
+  assert.match(imageVariants, /\[96, 160, 240, 320, 384, 640, 960\]/u);
   assert.doesNotMatch(home, /SectionIcon priority=/u);
   assert.match(navigation, /fetchPriority="low"/u);
   assert.match(navigation, /decoding="async"/u);
