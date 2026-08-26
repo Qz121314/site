@@ -1185,7 +1185,10 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
       )}
 
       {previewAsset ? (
-        <MediaAssetPreviewDialog asset={previewAsset} onClose={() => setPreviewAsset(null)} />
+        <MediaAssetPreviewDialog
+          asset={previewAsset}
+          onClose={() => setPreviewAsset(null)}
+        />
       ) : null}
     </section>
   );

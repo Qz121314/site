@@ -17,11 +17,7 @@ type ProductTableProps = {
   onDelete: (product: AdminProduct) => void;
   onRestore: (product: AdminProduct) => void;
   onMove: (product: AdminProduct, direction: -1 | 1) => void;
-  onReorder: (
-    draggedId: string,
-    targetId: string,
-    position: ProductDropPosition,
-  ) => void;
+  onReorder: (draggedId: string, targetId: string, position: ProductDropPosition) => void;
 };
 
 function statusLabel(status: AdminProduct['status']): string {
@@ -163,7 +159,8 @@ export function ProductTable({
         </thead>
         <tbody>
           {products.map((product, index) => {
-            const targetPosition = dropTarget?.id === product.id ? dropTarget.position : null;
+            const targetPosition =
+              dropTarget?.id === product.id ? dropTarget.position : null;
             const rowClassName = [
               draggingId === product.id ? 'is-dragging' : '',
               targetPosition === 'before' ? 'is-drop-before' : '',

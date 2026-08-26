@@ -13,7 +13,10 @@ function formatBytes(value: number): string {
   return `${(value / (1024 * 1024)).toFixed(1)} MB`;
 }
 
-export function MediaAssetPreviewDialog({ asset, onClose }: MediaAssetPreviewDialogProps) {
+export function MediaAssetPreviewDialog({
+  asset,
+  onClose,
+}: MediaAssetPreviewDialogProps) {
   useEffect(() => {
     function handleKeyDown(event: KeyboardEvent) {
       if (event.key === 'Escape') onClose();
