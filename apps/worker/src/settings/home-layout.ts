@@ -23,12 +23,12 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 function normalizeIds(
   value: unknown,
   field: string,
-  max: number,
+  max?: number,
 ): { ok: true; value: string[] } | { ok: false; field: string; message: string } {
   if (!Array.isArray(value)) {
     return { ok: false, field, message: '首页分区配置必须是数组。' };
   }
-  if (value.length > max) {
+  if (max !== undefined && value.length > max) {
     return { ok: false, field, message: `首页该区域最多选择 ${max} 个分区。` };
   }
   const normalized: string[] = [];
@@ -67,7 +67,6 @@ export function validateHomeLayoutInput(value: unknown): ValidationResult {
   const recommendations = normalizeIds(
     value.recommendationSectionIds,
     'homeLayout.recommendationSectionIds',
-    3,
   );
   if (!recommendations.ok) return recommendations;
 

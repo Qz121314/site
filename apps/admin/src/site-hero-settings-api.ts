@@ -103,10 +103,10 @@ function parseBottomNavigationItem(value: unknown): BottomNavigationItem {
   return value as BottomNavigationItem;
 }
 
-function parseSectionIds(value: unknown, max: number): string[] {
+function parseSectionIds(value: unknown, max?: number): string[] {
   if (
     !Array.isArray(value) ||
-    value.length > max ||
+    (max !== undefined && value.length > max) ||
     !value.every((item) => typeof item === 'string' && item.length > 0) ||
     new Set(value).size !== value.length
   ) {
@@ -121,7 +121,7 @@ function parseHomeLayout(value: unknown): HomeLayout {
   }
   return {
     shortcutSectionIds: parseSectionIds(value.shortcutSectionIds, 7),
-    recommendationSectionIds: parseSectionIds(value.recommendationSectionIds, 3),
+    recommendationSectionIds: parseSectionIds(value.recommendationSectionIds),
   };
 }
 

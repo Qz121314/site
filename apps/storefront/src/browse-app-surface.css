@@ -55,12 +55,6 @@
     aspect-ratio: auto;
   }
 
-  .browse-section-list:not(.is-single) .browse-section-card:nth-child(even):last-child {
-    grid-column: 1 / -1;
-    min-height: 0;
-    aspect-ratio: 16 / 10;
-  }
-
   .browse-section-list:not(.is-single)
     .browse-section-card:not(:first-child)
     .browse-section-card-content {
@@ -103,47 +97,5 @@
     width: 30px;
     height: 30px;
     flex-basis: 30px;
-  }
-
-  .browse-section-list:not(.is-single)
-    .browse-section-card:nth-child(even):last-child
-    .browse-section-card-content {
-    right: 17px;
-    bottom: 16px;
-    left: 17px;
-    gap: 16px;
-  }
-
-  .browse-section-list:not(.is-single)
-    .browse-section-card:nth-child(even):last-child
-    .browse-section-card-copy {
-    gap: 5px;
-  }
-
-  .browse-section-list:not(.is-single)
-    .browse-section-card:nth-child(even):last-child
-    .browse-section-card-content
-    strong {
-    font-size: clamp(1.22rem, 5.6vw, 1.58rem);
-    letter-spacing: -0.04em;
-  }
-
-  .browse-section-list:not(.is-single)
-    .browse-section-card:nth-child(even):last-child
-    .browse-section-card-content
-    p {
-    max-width: 46ch;
-    color: rgb(255 255 255 / 74%);
-    font-size: 0.73rem;
-    line-height: 1.4;
-    -webkit-line-clamp: 2;
-  }
-
-  .browse-section-list:not(.is-single)
-    .browse-section-card:nth-child(even):last-child
-    .browse-section-card-arrow {
-    width: 34px;
-    height: 34px;
-    flex-basis: 34px;
   }
 }
