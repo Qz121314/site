@@ -1,6 +1,11 @@
 .media-picker-dialog {
+  display: grid;
   width: min(1120px, calc(100vw - 28px));
-  max-height: min(820px, calc(100vh - 28px));
+  height: min(820px, calc(100dvh - 28px));
+  min-height: 0;
+  max-height: min(820px, calc(100dvh - 28px));
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  overflow: hidden;
 }
 
 .media-picker-body {
@@ -9,6 +14,8 @@
   gap: 8px;
   padding: 0 14px 12px;
   overflow: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
 }
 
 .media-picker-filters {
@@ -221,8 +228,15 @@
 }
 
 .media-picker-footer {
+  display: flex;
   min-height: 48px;
-  padding: 7px 14px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 14px 0;
+  border-top: 1px solid #edf0f4;
+  background: #fff;
 }
 
 .media-picker-footer > span {
@@ -233,7 +247,8 @@
 @media (max-width: 760px) {
   .media-picker-dialog {
     width: calc(100vw - 16px);
-    max-height: calc(100vh - 16px);
+    height: calc(100dvh - 16px);
+    max-height: calc(100dvh - 16px);
   }
 
   .media-picker-filters {
@@ -250,6 +265,10 @@
 
   .media-picker-selection-status small {
     display: none;
+  }
+
+  .media-picker-footer {
+    padding-bottom: env(safe-area-inset-bottom);
   }
 }
 
