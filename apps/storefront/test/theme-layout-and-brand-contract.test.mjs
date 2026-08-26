@@ -13,6 +13,12 @@ const layoutUrl = new URL(
 );
 const storefrontMainUrl = new URL('../src/main.tsx', import.meta.url);
 const adminManifestUrl = new URL('../../admin/src/admin.css', import.meta.url);
+const adminThemeCenterUrl = new URL('../../admin/src/ThemeCenterView.tsx', import.meta.url);
+const adminThemeApiUrl = new URL('../../admin/src/theme-center/api.ts', import.meta.url);
+const workerThemeCenterUrl = new URL(
+  '../../worker/src/theme/theme-center.ts',
+  import.meta.url,
+);
 const themeBeforeLayout = /theme-contract\.css[\s\S]*layout-contract\.css/u;
 
 test('branding is backend-driven and theme layout is invariant', async () => {
@@ -21,6 +27,9 @@ test('branding is backend-driven and theme layout is invariant', async () => {
   const layout = await readFile(layoutUrl, 'utf8');
   const storefrontMain = await readFile(storefrontMainUrl, 'utf8');
   const adminManifest = await readFile(adminManifestUrl, 'utf8');
+  const adminThemeCenter = await readFile(adminThemeCenterUrl, 'utf8');
+  const adminThemeApi = await readFile(adminThemeApiUrl, 'utf8');
+  const workerThemeCenter = await readFile(workerThemeCenterUrl, 'utf8');
 
   assert.doesNotMatch(sharedUi, /EROSDOOR/u);
   assert.match(sharedUi, /splitStorefrontBrandName/u);
@@ -44,7 +53,9 @@ test('branding is backend-driven and theme layout is invariant', async () => {
     layout,
     /\.home-product-title \{[\s\S]*color: var\(--theme-art-on-media-primary/u,
   );
-  assert.match(layout, /\.home-product-cover::before \{[\s\S]*opacity: 1;/u);
+  assert.match(layout, /rgb\(0 0 0 \/ 94%\) 100%/u);
+  assert.match(layout, /0 1px 2px rgb\(0 0 0 \/ 78%\)/u);
+  assert.match(layout, /\.home-product-cover::before \{[\s\S]*opacity: 1 !important;/u);
   assert.match(layout, /\.hero-carousel-copy \{[\s\S]*text-align: left;/u);
   assert.match(layout, /\.hero-panel \{[\s\S]*text-align: left !important;/u);
 
@@ -54,6 +65,14 @@ test('branding is backend-driven and theme layout is invariant', async () => {
   assert.match(layout, /overflow-wrap: anywhere !important;/u);
   assert.match(layout, /white-space: normal !important;/u);
   assert.match(layout, /-webkit-line-clamp: unset !important;/u);
+
+  assert.match(adminThemeCenter, /主文字颜色/u);
+  assert.match(adminThemeCenter, /textColor=\{previewTextColor\}/u);
+  assert.match(adminThemeApi, /textColor\?: string;/u);
+  assert.match(adminThemeApi, /\.\.\.\(textColor \? \{ textColor \} : \{\}\)/u);
+  assert.match(workerThemeCenter, /textColor\?: string;/u);
+  assert.match(workerThemeCenter, /applyColorOverrides/u);
+  assert.match(workerThemeCenter, /field: 'textColor'/u);
 
   assert.match(storefrontMain, themeBeforeLayout);
   assert.match(adminManifest, themeBeforeLayout);
