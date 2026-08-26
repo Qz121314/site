@@ -9,6 +9,8 @@
     -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI Variable Display',
     'Segoe UI', Inter, Roboto, 'Helvetica Neue', Arial, ui-sans-serif, system-ui,
     sans-serif;
+  --storefront-font-brand:
+    'Bodoni 72', 'Bodoni MT', Didot, Georgia, 'Times New Roman', serif;
   --storefront-weight-regular: 450;
   --storefront-weight-medium: 560;
   --storefront-weight-semibold: 650;
@@ -34,7 +36,7 @@
 }
 
 :is(html, .storefront-theme-root)
-  :is(h1, h2, h3, .brand-lockup strong, .home-product-tile strong, .bottom-nav small) {
+  :is(h1, h2, h3, .home-product-tile strong, .bottom-nav small) {
   font-family: var(--storefront-font-display);
 }
 
@@ -92,6 +94,34 @@
   font-weight: var(--storefront-weight-semibold);
   letter-spacing: 0.072em;
   text-transform: uppercase;
+}
+
+/*
+ * The brand wordmark is intentionally separate from the theme font pack. It uses
+ * a high-contrast luxury serif while its colors remain fully theme-driven.
+ */
+:is(html, .storefront-theme-root) .brand-lockup strong.brand-wordmark {
+  display: inline-flex;
+  align-items: baseline;
+  color: var(--text);
+  font-family: var(--storefront-font-brand);
+  font-size: 1.18rem;
+  font-weight: 600;
+  line-height: 0.98;
+  letter-spacing: 0.038em;
+  text-transform: uppercase;
+}
+
+:is(html, .storefront-theme-root) .brand-wordmark.is-duotone {
+  gap: 0;
+}
+
+:is(html, .storefront-theme-root) .brand-wordmark-accent {
+  color: var(--brand-strong);
+}
+
+:is(html, .storefront-theme-root) .brand-wordmark-primary {
+  color: var(--text);
 }
 
 /* Font packs are complete typography recipes, not arbitrary font pickers. */
@@ -195,6 +225,10 @@
 @media (min-width: 720px) {
   :is(html, .storefront-theme-root) .brand-lockup strong {
     font-size: 1rem;
+  }
+
+  :is(html, .storefront-theme-root) .brand-lockup strong.brand-wordmark {
+    font-size: 1.24rem;
   }
 }
 
