@@ -169,8 +169,7 @@ function HomeProductTile({
   priority: boolean;
   product: PublicProductSummary;
 }) {
-  const src =
-    homeProductImageVariantUrl(product.coverObjectKey, 384) ?? product.coverUrl;
+  const src = homeProductImageVariantUrl(product.coverObjectKey, 384) ?? product.coverUrl;
   const srcSet = product.coverObjectKey
     ? ([240, 320, 384, 640, 960] as const)
         .map(
