@@ -18,7 +18,8 @@ function resolveIds(
   max?: number,
 ): string[] {
   const configured = publishedIds(configuredIds ?? [], publishedSectionIds);
-  const source = configured.length > 0 ? configured : publishedIds(fallbackIds, publishedSectionIds);
+  const source =
+    configured.length > 0 ? configured : publishedIds(fallbackIds, publishedSectionIds);
   return max === undefined ? source : source.slice(0, max);
 }
 
