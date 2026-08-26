@@ -3,7 +3,7 @@ import {
   publicMediaFallbackObjectKey,
 } from './public-media-fallback';
 
-export const PUBLIC_IMAGE_VARIANT_WIDTHS = [96, 160, 240, 384, 640, 960] as const;
+export const PUBLIC_IMAGE_VARIANT_WIDTHS = [96, 160, 240, 320, 384, 640, 960] as const;
 
 export type PublicImageVariant = {
   objectKey: string;
