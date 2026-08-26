@@ -12,16 +12,48 @@ export type StorefrontLinkComponent = ElementType<
   AnchorHTMLAttributes<HTMLAnchorElement>
 >;
 
+function splitStorefrontBrandName(siteName: string) {
+  const normalizedSiteName = siteName.trim().replace(/\s+/gu, ' ');
+  if (!normalizedSiteName) {
+    return { accent: '', primary: '', separatedBySpace: false };
+  }
+
+  const words = normalizedSiteName.split(' ');
+  if (words.length > 1) {
+    const pivot = Math.ceil(words.length / 2);
+    return {
+      accent: words.slice(0, pivot).join(' '),
+      primary: words.slice(pivot).join(' '),
+      separatedBySpace: true,
+    };
+  }
+
+  const characters = Array.from(normalizedSiteName);
+  if (characters.length < 2) {
+    return { accent: '', primary: normalizedSiteName, separatedBySpace: false };
+  }
+
+  const pivot = Math.ceil(characters.length / 2);
+  return {
+    accent: characters.slice(0, pivot).join(''),
+    primary: characters.slice(pivot).join(''),
+    separatedBySpace: false,
+  };
+}
+
 export function StorefrontBrandName({ siteName }: { siteName: string }) {
-  const normalizedSiteName = siteName.trim();
-  const isErosDoor = normalizedSiteName.toUpperCase() === 'EROSDOOR';
+  const normalizedSiteName = siteName.trim().replace(/\s+/gu, ' ');
+  const { accent, primary, separatedBySpace } =
+    splitStorefrontBrandName(normalizedSiteName);
+  const isDuotone = Boolean(accent && primary);
 
   return (
-    <strong className={`brand-wordmark${isErosDoor ? ' is-duotone' : ''}`}>
-      {isErosDoor ? (
+    <strong className={`brand-wordmark${isDuotone ? ' is-duotone' : ''}`}>
+      {isDuotone ? (
         <>
-          <span className="brand-wordmark-accent">{normalizedSiteName.slice(0, 4)}</span>
-          <span className="brand-wordmark-primary">{normalizedSiteName.slice(4)}</span>
+          <span className="brand-wordmark-accent">{accent}</span>
+          {separatedBySpace ? ' ' : null}
+          <span className="brand-wordmark-primary">{primary}</span>
         </>
       ) : (
         normalizedSiteName

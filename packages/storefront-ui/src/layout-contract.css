@@ -1,0 +1,51 @@
+/*
+ * Storefront structural contract.
+ * Theme Center may change visual tokens, typography tone, media treatment and motion,
+ * but it must not move core product content between themes.
+ */
+
+:is(html, .storefront-theme-root)[data-theme] .home-product-tile {
+  position: relative;
+}
+
+:is(html, .storefront-theme-root)[data-theme] .home-product-meta {
+  position: absolute;
+  right: 10px;
+  bottom: 10px;
+  left: 10px;
+  z-index: 2;
+  display: grid;
+  gap: 3px;
+  padding: 0;
+  text-align: left;
+  pointer-events: none;
+}
+
+:is(html, .storefront-theme-root)[data-theme] .home-product-title {
+  position: static;
+  inset: auto;
+  color: var(--theme-art-on-media-primary, #fff);
+  text-shadow: var(--theme-art-media-title-shadow, 0 1px 12px rgb(0 0 0 / 34%));
+}
+
+:is(html, .storefront-theme-root)[data-theme] .home-product-cover::before {
+  opacity: 1;
+}
+
+:is(html, .storefront-theme-root)[data-theme] .hero-carousel-copy {
+  margin-inline: 0;
+  justify-items: start;
+  text-align: left;
+}
+
+:is(html, .storefront-theme-root)[data-theme] .hero-carousel-cta {
+  justify-self: start;
+}
+
+@media (min-width: 768px) {
+  :is(html, .storefront-theme-root)[data-theme] .home-product-meta {
+    right: 13px;
+    bottom: 12px;
+    left: 13px;
+  }
+}
