@@ -29,12 +29,14 @@ function PreviewIcon({ children }: { children: string }) {
 
 export function ThemeCenterPreview({
   accent,
+  textColor,
   theme,
 }: {
   accent: string | null;
+  textColor: string | null;
   theme: ThemePreset;
 }) {
-  const diagnostics = themeDiagnostics(theme, accent);
+  const diagnostics = themeDiagnostics(theme, accent, textColor);
   const heroSlides: StorefrontHeroSlide[] = [
     {
       id: 'theme-preview-hero',
@@ -44,7 +46,14 @@ export function ThemeCenterPreview({
       cta: { label: 'CTA preview', href: '#' },
     },
   ];
-  const style = storefrontThemeStyle(theme.tokens, accent, theme.colorScheme);
+  const style = storefrontThemeStyle(
+    {
+      ...theme.tokens,
+      ...(textColor ? { text: textColor } : {}),
+    },
+    accent,
+    theme.colorScheme,
+  );
 
   return (
     <div className="theme-preview-layout">
@@ -152,7 +161,7 @@ export function ThemeCenterPreview({
       <div className="theme-diagnostics" aria-label="主题自动检查">
         <div className="theme-section-title">
           <strong>自动检查</strong>
-          <span>直接基于当前主题 token 与自定义强调色计算。</span>
+          <span>直接基于当前主题 token 与颜色自定义计算。</span>
         </div>
         <div className="theme-diagnostic-list">
           {diagnostics.map((diagnostic) => (
