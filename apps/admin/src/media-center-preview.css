@@ -1,9 +1,25 @@
 /*
- * Media-center preview geometry is reserved before lazy thumbnails resolve.
- * This keeps large libraries visible without eagerly requesting every image.
+ * Media-center cards favor visual inspection over raw density. Only the current
+ * page is rendered, so previews can stay large without multiplying thumbnail
+ * requests across the full library.
  */
+.media-center-grid {
+  grid-template-columns: repeat(auto-fill, minmax(176px, 1fr));
+  gap: 10px;
+}
+
+.media-center-card {
+  display: flex;
+  min-height: 248px;
+  flex-direction: column;
+}
+
 .media-center-preview {
-  aspect-ratio: 1 / 1;
+  width: 100%;
+  height: 168px;
+  min-height: 168px;
+  aspect-ratio: auto;
+  background: #f3f5f8;
 }
 
 .media-center-preview img,
@@ -11,4 +27,265 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
+}
+
+.media-center-preview-button {
+  position: relative;
+  display: grid;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  color: inherit;
+  cursor: zoom-in;
+  font: inherit;
+  appearance: none;
+}
+
+.media-center-preview-button:focus-visible {
+  z-index: 1;
+  outline: 3px solid rgb(255 90 31 / 18%);
+  outline-offset: -3px;
+}
+
+.media-center-preview-hint {
+  position: absolute;
+  right: 8px;
+  bottom: 8px;
+  left: auto;
+  display: inline-flex;
+  width: auto;
+  min-height: 24px;
+  align-items: center;
+  padding: 0 8px;
+  border-radius: 999px;
+  color: #fff !important;
+  background: rgb(17 24 39 / 72%);
+  font-size: 0.56rem !important;
+  font-weight: 720;
+  line-height: 1;
+  opacity: 0;
+  transform: translateY(3px);
+  transition:
+    opacity 120ms ease,
+    transform 120ms ease;
+  backdrop-filter: blur(5px);
+}
+
+.media-center-preview-button:hover .media-center-preview-hint,
+.media-center-preview-button:focus-visible .media-center-preview-hint {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.media-center-preview-button > b {
+  top: 8px;
+  right: 8px;
+  bottom: auto;
+}
+
+.media-center-card-body {
+  flex: 1 0 auto;
+}
+
+.media-center-pagination {
+  display: flex;
+  min-height: 38px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 4px 0 1px;
+}
+
+.media-center-pagination > span {
+  min-width: 170px;
+  color: #667085;
+  font-size: 0.64rem;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.media-center-pagination .secondary-button {
+  --admin-button-min-height: 30px;
+  --admin-button-padding-inline: 11px;
+  --admin-button-radius: 7px;
+  --admin-button-font-size: 0.65rem;
+}
+
+.media-preview-backdrop {
+  position: fixed;
+  z-index: 220;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 28px;
+  background: rgb(15 23 42 / 58%);
+  backdrop-filter: blur(6px);
+}
+
+.media-preview-dialog {
+  display: grid;
+  width: min(980px, calc(100vw - 48px));
+  max-height: calc(100dvh - 56px);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  overflow: hidden;
+  border: 1px solid rgb(255 255 255 / 65%);
+  border-radius: 16px;
+  background: #fff;
+  box-shadow: 0 28px 80px rgb(15 23 42 / 30%);
+}
+
+.media-preview-dialog > header,
+.media-preview-dialog > footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.media-preview-dialog > header {
+  min-height: 58px;
+  padding: 9px 12px 9px 16px;
+  border-bottom: 1px solid #e7eaf0;
+}
+
+.media-preview-dialog > header > div {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.media-preview-dialog > header strong {
+  overflow: hidden;
+  color: #172033;
+  font-size: 0.78rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.media-preview-dialog > header span,
+.media-preview-dialog > footer span {
+  color: #7a8492;
+  font-size: 0.64rem;
+}
+
+.media-preview-dialog > header > button {
+  display: grid;
+  width: 34px;
+  height: 34px;
+  flex: 0 0 34px;
+  place-items: center;
+  border: 1px solid #e2e6ec;
+  border-radius: 9px;
+  color: #475467;
+  background: #fff;
+  cursor: pointer;
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.media-preview-stage {
+  display: grid;
+  min-height: 240px;
+  place-items: center;
+  overflow: auto;
+  padding: 18px;
+  background:
+    linear-gradient(45deg, #eef1f5 25%, transparent 25%),
+    linear-gradient(-45deg, #eef1f5 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #eef1f5 75%),
+    linear-gradient(-45deg, transparent 75%, #eef1f5 75%),
+    #f7f8fa;
+  background-position:
+    0 0,
+    0 8px,
+    8px -8px,
+    -8px 0;
+  background-size: 16px 16px;
+}
+
+.media-preview-stage img,
+.media-preview-stage video {
+  display: block;
+  max-width: 100%;
+  max-height: calc(100dvh - 190px);
+  object-fit: contain;
+  box-shadow: 0 8px 30px rgb(15 23 42 / 14%);
+}
+
+.media-preview-stage p {
+  margin: 0;
+  color: #667085;
+  font-size: 0.72rem;
+}
+
+.media-preview-dialog > footer {
+  min-height: 46px;
+  padding: 7px 14px;
+  border-top: 1px solid #e7eaf0;
+}
+
+.media-preview-dialog > footer button {
+  min-height: 30px;
+  padding: 0 10px;
+  border: 1px solid #dfe4eb;
+  border-radius: 7px;
+  color: #475467;
+  background: #fff;
+  cursor: pointer;
+  font-size: 0.65rem;
+  font-weight: 700;
+}
+
+@media (max-width: 920px) {
+  .media-center-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .media-center-preview {
+    height: 150px;
+    min-height: 150px;
+  }
+}
+
+@media (max-width: 760px) {
+  .media-center-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .media-center-card {
+    min-height: 228px;
+  }
+
+  .media-center-preview {
+    height: 142px;
+    min-height: 142px;
+  }
+
+  .media-center-pagination {
+    justify-content: space-between;
+  }
+
+  .media-center-pagination > span {
+    min-width: 0;
+  }
+
+  .media-preview-backdrop {
+    padding: 10px;
+  }
+
+  .media-preview-dialog {
+    width: 100%;
+    max-height: calc(100dvh - 20px);
+    border-radius: 12px;
+  }
+
+  .media-preview-stage {
+    padding: 10px;
+  }
+
+  .media-preview-stage img,
+  .media-preview-stage video {
+    max-height: calc(100dvh - 160px);
+  }
 }
