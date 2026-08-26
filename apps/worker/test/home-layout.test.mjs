@@ -14,7 +14,10 @@ test('Home recommendation sections are not capped at three', () => {
 
   assert.equal(result.ok, true);
   if (!result.ok || !result.provided) return;
-  assert.deepEqual(result.value.recommendationSectionIds, recommendationSectionIds);
+  assert.deepEqual(
+    result.value.recommendationSectionIds,
+    recommendationSectionIds,
+  );
 });
 
 test('Home shortcut sections keep their seven-item cap', () => {
