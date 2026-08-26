@@ -55,14 +55,20 @@ test('branding is backend-driven and theme layout is invariant', async () => {
   assert.match(layout, /-webkit-line-clamp: unset !important;/u);
 
   const storefrontThemeIndex = storefrontMain.indexOf(
-    "@site/storefront-ui/theme-contract.css",
+    '@site/storefront-ui/theme-contract.css',
   );
   const storefrontLayoutIndex = storefrontMain.indexOf(
-    "@site/storefront-ui/layout-contract.css",
+    '@site/storefront-ui/layout-contract.css',
   );
-  const adminThemeIndex = adminManifest.indexOf('@site/storefront-ui/theme-contract.css');
-  const adminLayoutIndex = adminManifest.indexOf('@site/storefront-ui/layout-contract.css');
+  const adminThemeIndex = adminManifest.indexOf(
+    '@site/storefront-ui/theme-contract.css',
+  );
+  const adminLayoutIndex = adminManifest.indexOf(
+    '@site/storefront-ui/layout-contract.css',
+  );
 
-  assert.ok(storefrontThemeIndex >= 0 && storefrontLayoutIndex > storefrontThemeIndex);
+  assert.ok(
+    storefrontThemeIndex >= 0 && storefrontLayoutIndex > storefrontThemeIndex,
+  );
   assert.ok(adminThemeIndex >= 0 && adminLayoutIndex > adminThemeIndex);
 });
