@@ -10,8 +10,14 @@ test('GA4 queues page views immediately but defers its external script past init
 
   assert.match(source, /const GOOGLE_TAG_LOAD_DELAY_MS = 2500/u);
   assert.match(source, /script\.fetchPriority = 'low'/u);
-  assert.match(source, /window\.addEventListener\('load', scheduleAfterLoad, \{ once: true \}\)/u);
-  assert.match(source, /window\.setTimeout\([\s\S]{0,120}GOOGLE_TAG_LOAD_DELAY_MS/u);
+  assert.match(
+    source,
+    /window\.addEventListener\('load', scheduleAfterLoad, \{ once: true \}\)/u,
+  );
+  assert.match(
+    source,
+    /window\.setTimeout\([\s\S]{0,120}GOOGLE_TAG_LOAD_DELAY_MS/u,
+  );
   assert.match(source, /gtag\('event', 'page_view'/u);
   assert.match(source, /scheduleGoogleTagScript\(measurementId\)/u);
 
