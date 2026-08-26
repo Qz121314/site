@@ -21,9 +21,11 @@ function ratioLabel(ratio: number | null): string {
 export function themeDiagnostics(
   preset: Pick<ThemePreset, 'colorScheme' | 'tokens'>,
   accent?: string | null,
+  textColor?: string | null,
 ): ThemeDiagnostic[] {
   const brand = accent || preset.tokens.brand;
-  const textRatio = storefrontContrastRatio(preset.tokens.text, preset.tokens.pageBg);
+  const text = textColor || preset.tokens.text;
+  const textRatio = storefrontContrastRatio(text, preset.tokens.pageBg);
   const cta = storefrontBrandContrast(brand, preset.colorScheme);
   const surfaceRatio = storefrontContrastRatio(
     preset.tokens.surface,
