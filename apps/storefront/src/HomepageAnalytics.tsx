@@ -19,7 +19,8 @@ function dataLayer(): unknown[] {
   return target.dataLayer;
 }
 
-function gtag(..._args: unknown[]) {
+function gtag(...args: unknown[]): void;
+function gtag() {
   dataLayer().push(arguments);
 }
 
