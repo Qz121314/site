@@ -19,8 +19,9 @@ function dataLayer(): unknown[] {
   return target.dataLayer;
 }
 
-function gtag(...args: unknown[]): void;
-function gtag() {
+function gtag(..._args: unknown[]) {
+  // Google gtag.js requires the Arguments object rather than a rest-parameter array.
+  // eslint-disable-next-line prefer-rest-params
   dataLayer().push(arguments);
 }
 
