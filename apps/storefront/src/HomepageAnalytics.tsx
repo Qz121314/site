@@ -2,10 +2,14 @@ import { useEffect } from 'react';
 
 type AnalyticsWindow = Window & {
   dataLayer?: unknown[];
+  requestIdleCallback?: (
+    callback: IdleRequestCallback,
+    options?: IdleRequestOptions,
+  ) => number;
 };
 
 const GOOGLE_TAG_SCRIPT_ID = 'storefront-ga4-script';
-const GOOGLE_TAG_LOAD_DELAY_MS = 2500;
+const GOOGLE_TAG_IDLE_TIMEOUT_MS = 1000;
 const initializedMeasurementIds = new Set<string>();
 let googleTagLoadScheduled = false;
 
@@ -15,8 +19,8 @@ function dataLayer(): unknown[] {
   return target.dataLayer;
 }
 
-function gtag(...args: unknown[]) {
-  dataLayer().push(args);
+function gtag(..._args: unknown[]) {
+  dataLayer().push(arguments);
 }
 
 function loadGoogleTagScript(measurementId: string) {
@@ -34,15 +38,15 @@ function scheduleGoogleTagScript(measurementId: string) {
   if (googleTagLoadScheduled || document.getElementById(GOOGLE_TAG_SCRIPT_ID)) return;
   googleTagLoadScheduled = true;
 
-  const scheduleAfterLoad = () => {
-    window.setTimeout(() => loadGoogleTagScript(measurementId), GOOGLE_TAG_LOAD_DELAY_MS);
-  };
-
-  if (document.readyState === 'complete') {
-    scheduleAfterLoad();
+  const target = window as AnalyticsWindow;
+  if (typeof target.requestIdleCallback === 'function') {
+    target.requestIdleCallback(() => loadGoogleTagScript(measurementId), {
+      timeout: GOOGLE_TAG_IDLE_TIMEOUT_MS,
+    });
     return;
   }
-  window.addEventListener('load', scheduleAfterLoad, { once: true });
+
+  window.setTimeout(() => loadGoogleTagScript(measurementId), GOOGLE_TAG_IDLE_TIMEOUT_MS);
 }
 
 function ensureGoogleTag(measurementId: string) {
