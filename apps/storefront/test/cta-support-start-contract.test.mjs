@@ -45,6 +45,7 @@ test('no-agent responses render configured plain text or Markdown without a wait
   const messages = source('../src/MessagesPage.tsx');
   const gateway = source('../src/support-gateway.ts');
   const supportUi = source('../src/support-ui.tsx');
+  const chatStyles = source('../src/chat-conversation.css');
 
   assert.ok(messages.includes("composeStartQuery.error.code === 'NO_AGENT_AVAILABLE'"));
   assert.ok(messages.includes('noAgentNotice={noAgentNotice}'));
@@ -55,4 +56,7 @@ test('no-agent responses render configured plain text or Markdown without a wait
   assert.ok(supportUi.includes("noAgentNotice.format === 'markdown'"));
   assert.ok(supportUi.includes('<MarkdownContent source={noAgentNotice.message} />'));
   assert.ok(supportUi.includes('<p>{noAgentNotice.message}</p>'));
+  assert.ok(chatStyles.includes('.chat-no-agent-notice {'));
+  assert.ok(chatStyles.includes('text-align: center;'));
+  assert.ok(chatStyles.includes('.chat-no-agent-notice .markdown-content'));
 });
