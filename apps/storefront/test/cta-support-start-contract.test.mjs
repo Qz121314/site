@@ -46,14 +46,10 @@ test('no-agent responses render configured plain text or Markdown without a wait
   const gateway = source('../src/support-gateway.ts');
   const supportUi = source('../src/support-ui.tsx');
 
-  assert.ok(
-    messages.includes("composeStartQuery.error.code === 'NO_AGENT_AVAILABLE'"),
-  );
+  assert.ok(messages.includes("composeStartQuery.error.code === 'NO_AGENT_AVAILABLE'"));
   assert.ok(messages.includes('noAgentNotice={noAgentNotice}'));
   assert.ok(gateway.includes("readonly format: 'plain' | 'markdown' | null"));
   assert.ok(supportUi.includes("noAgentNotice.format === 'markdown'"));
-  assert.ok(
-    supportUi.includes('<MarkdownContent source={noAgentNotice.message} />'),
-  );
+  assert.ok(supportUi.includes('<MarkdownContent source={noAgentNotice.message} />'));
   assert.ok(supportUi.includes('<p>{noAgentNotice.message}</p>'));
 });
