@@ -14,6 +14,7 @@ import type {
   SupportConversationSummary,
   SupportMessage,
 } from './support-contract';
+import { MarkdownContent } from './MarkdownContent';
 import { ResilientImage } from './ResilientMedia';
 import { SYSTEM_UI } from './system-ui';
 import {
@@ -25,6 +26,11 @@ export type PendingSupportConversation = {
   productTitle: string;
   productCoverUrl: string | null;
   productHref: string | null;
+};
+
+export type NoAgentNotice = {
+  message: string;
+  format: 'plain' | 'markdown';
 };
 
 const CHAT_TIME_ZONE = 'America/Los_Angeles';
@@ -359,6 +365,7 @@ export function MessageThreadPageContent({
   loadingEarlier = false,
   loadingConversation = false,
   connectionError = false,
+  noAgentNotice = null,
   onRetryConnection,
 }: {
   conversation: SupportConversationDetail | null;
@@ -379,6 +386,7 @@ export function MessageThreadPageContent({
   loadingEarlier?: boolean;
   loadingConversation?: boolean;
   connectionError?: boolean;
+  noAgentNotice?: NoAgentNotice | null;
   onRetryConnection?: (() => void) | undefined;
 }) {
   const [draft, setDraft] = useState('');
@@ -597,6 +605,14 @@ export function MessageThreadPageContent({
             <LoadingHalo size="medium" />
             <span className="sr-only">{SYSTEM_UI.loading}</span>
           </div>
+        ) : noAgentNotice && pendingConversation && !conversation ? (
+          <div className="chat-no-agent-notice" role="status" aria-live="polite">
+            {noAgentNotice.format === 'markdown' ? (
+              <MarkdownContent source={noAgentNotice.message} />
+            ) : (
+              <p>{noAgentNotice.message}</p>
+            )}
+          </div>
         ) : connectionError && pendingConversation && !conversation ? (
           <ConnectionRetry onRetry={onRetryConnection} />
         ) : null}
@@ -810,6 +826,7 @@ export function MessagesWorkspace({
   loadingEarlier = false,
   loadingConversation = false,
   connectionError = false,
+  noAgentNotice = null,
   onRetryConnection,
   supportAvailable = null,
 }: {
@@ -833,6 +850,7 @@ export function MessagesWorkspace({
   loadingEarlier?: boolean;
   loadingConversation?: boolean;
   connectionError?: boolean;
+  noAgentNotice?: NoAgentNotice | null;
   onRetryConnection?: (() => void) | undefined;
   supportAvailable?: boolean | null;
 }) {
@@ -868,6 +886,7 @@ export function MessagesWorkspace({
             loadingEarlier={loadingEarlier}
             loadingConversation={loadingConversation}
             connectionError={connectionError}
+            noAgentNotice={noAgentNotice}
             onRetryConnection={onRetryConnection}
           />
         ) : (
