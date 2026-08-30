@@ -13,12 +13,19 @@ import { loadConversationMedia, sendConversationImage } from './support-media-ga
 export class SupportApiError extends Error {
   readonly status: number;
   readonly code: string;
+  readonly format: 'plain' | 'markdown' | null;
 
-  constructor(status: number, code: string, message: string) {
+  constructor(
+    status: number,
+    code: string,
+    message: string,
+    format: 'plain' | 'markdown' | null = null,
+  ) {
     super(message);
     this.name = 'SupportApiError';
     this.status = status;
     this.code = code;
+    this.format = format;
   }
 }
 
@@ -57,7 +64,13 @@ type RemoteConversationDetail = RemoteConversationSummary & {
   nextMessageCursor: string | null;
 };
 
-type ErrorEnvelope = { error?: { code?: string; message?: string } };
+type ErrorEnvelope = {
+  error?: {
+    code?: string;
+    message?: string;
+    format?: 'plain' | 'markdown';
+  };
+};
 
 const CONNECTION_CACHE_MS = 30_000;
 let connectionCache: {
@@ -275,6 +288,9 @@ async function remoteRequestJson(
       response.status,
       envelope?.error?.code ?? 'SUPPORT_REQUEST_FAILED',
       envelope?.error?.message ?? 'Messages is temporarily unavailable.',
+      envelope?.error?.format === 'plain' || envelope?.error?.format === 'markdown'
+        ? envelope.error.format
+        : null,
     );
   }
   return body;
