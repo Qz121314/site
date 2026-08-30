@@ -51,7 +51,7 @@ test('no-agent responses render configured plain text or Markdown without a wait
   );
   assert.ok(messages.includes('noAgentNotice={noAgentNotice}'));
   assert.ok(gateway.includes("readonly format: 'plain' | 'markdown' | null"));
-  assert.ok(supportUi.includes('noAgentNotice.format === \'markdown\''));
+  assert.ok(supportUi.includes("noAgentNotice.format === 'markdown'"));
   assert.ok(
     supportUi.includes('<MarkdownContent source={noAgentNotice.message} />'),
   );
