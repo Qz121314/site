@@ -17,7 +17,11 @@ import type {
   SupportConversationSummary,
   SupportMessage,
 } from './support-contract';
-import { loadPublicSupportConnections, siteSupportGateway } from './support-gateway';
+import {
+  loadPublicSupportConnections,
+  siteSupportGateway,
+  SupportApiError,
+} from './support-gateway';
 import { prepareSupportImage, releaseSupportImage } from './support-image-compress';
 import {
   enableSupportPush,
@@ -389,8 +393,19 @@ export function MessagesPage({
       (!resolvedComposeContext && !composeHandoffQuery.isError) ||
       composeStartQuery.isFetching),
   );
+  const noAgentError =
+    composeStartQuery.error instanceof SupportApiError &&
+    composeStartQuery.error.code === 'NO_AGENT_AVAILABLE'
+      ? composeStartQuery.error
+      : null;
+  const noAgentNotice = noAgentError
+    ? {
+        message: noAgentError.message,
+        format: noAgentError.format ?? ('plain' as const),
+      }
+    : null;
   const composeConnectionError = Boolean(
-    compose && composeUnavailable && !composeConnecting,
+    compose && composeUnavailable && !composeConnecting && !noAgentNotice,
   );
   const conversationLoading = Boolean(
     activeConversationRef && conversationQuery.isLoading,
@@ -730,6 +745,7 @@ export function MessagesPage({
         loadingEarlier={conversationQuery.isFetchingNextPage}
         loadingConversation={conversationLoading || composeConnecting}
         connectionError={composeConnectionError}
+        noAgentNotice={noAgentNotice}
         onRetryConnection={
           compose && composeUnavailable ? retryComposeConnection : undefined
         }
