@@ -532,9 +532,9 @@ export const siteSupportGateway: SupportGateway = {
             'Messages returned invalid data.',
           );
         }
-        return envelope.conversations.map((item) =>
-          normalizeSummary(connection, parseRemoteSummary(item)),
-        );
+        return envelope.conversations
+          .map((item) => normalizeSummary(connection, parseRemoteSummary(item)))
+          .filter((conversation) => conversation.status !== 'waiting');
       }),
     );
     const successful = settled.filter(
@@ -609,7 +609,16 @@ export const siteSupportGateway: SupportGateway = {
       },
       signal,
     );
-    return conversationEnvelope(route.connection, value);
+    const conversation = conversationEnvelope(route.connection, value);
+    if (conversation.status === 'waiting') {
+      throw new SupportApiError(
+        503,
+        'NO_AGENT_AVAILABLE',
+        'Customer service is currently unavailable. Please try again later.',
+        'plain',
+      );
+    }
+    return conversation;
   },
 
   async sendMessage(conversationRef: string, input: SendSupportMessageInput, signal) {

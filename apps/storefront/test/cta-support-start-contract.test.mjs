@@ -49,6 +49,9 @@ test('no-agent responses render configured plain text or Markdown without a wait
   assert.ok(messages.includes("composeStartQuery.error.code === 'NO_AGENT_AVAILABLE'"));
   assert.ok(messages.includes('noAgentNotice={noAgentNotice}'));
   assert.ok(gateway.includes("readonly format: 'plain' | 'markdown' | null"));
+  assert.ok(gateway.includes("conversation.status === 'waiting'"));
+  assert.ok(gateway.includes("'NO_AGENT_AVAILABLE'"));
+  assert.ok(gateway.includes("conversation.status !== 'waiting'"));
   assert.ok(supportUi.includes("noAgentNotice.format === 'markdown'"));
   assert.ok(supportUi.includes('<MarkdownContent source={noAgentNotice.message} />'));
   assert.ok(supportUi.includes('<p>{noAgentNotice.message}</p>'));
