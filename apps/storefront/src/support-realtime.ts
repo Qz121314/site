@@ -113,6 +113,9 @@ function parseMedia(
     `${connection.clientApiUrl.replace(/\/$/u, '')}/media/${encodeURIComponent(item.id)}/content`,
   );
   contentUrl.searchParams.set('visitorId', identity.visitorId);
+  if (identity.accessToken) {
+    contentUrl.searchParams.set('visitorToken', identity.accessToken);
+  }
   return {
     messageId: item.messageId,
     attachment: {
