@@ -44,6 +44,9 @@ export async function loadConversationMedia(
     `/conversations/${encodeURIComponent(conversationId)}/media`,
   );
   url.searchParams.set('visitorId', identity.visitorId);
+  if (identity.accessToken) {
+    url.searchParams.set('visitorToken', identity.accessToken);
+  }
   const payload = await requestJson<{ items?: RemoteMediaItem[] }>(
     url.toString(),
     undefined,
@@ -91,6 +94,9 @@ export async function sendConversationImage(
       method: 'POST',
       body: JSON.stringify({
         visitorId: identity.visitorId,
+        ...(identity.accessToken
+          ? { visitorToken: identity.accessToken }
+          : {}),
         mimeType: input.mimeType,
         byteSize: input.byteSize,
         width: input.width,
@@ -110,7 +116,12 @@ export async function sendConversationImage(
     ).toString(),
     {
       method: 'POST',
-      body: JSON.stringify({ visitorId: identity.visitorId }),
+      body: JSON.stringify({
+        visitorId: identity.visitorId,
+        ...(identity.accessToken
+          ? { visitorToken: identity.accessToken }
+          : {}),
+      }),
     },
     signal,
   );
