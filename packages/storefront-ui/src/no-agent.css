@@ -1,0 +1,191 @@
+.storefront-no-agent-notice {
+  position: relative;
+  display: grid;
+  width: min(100%, 620px);
+  min-height: 180px;
+  grid-template-columns: 42px minmax(0, 1fr);
+  align-items: start;
+  gap: 15px;
+  margin: auto;
+  padding: clamp(22px, 4vw, 32px);
+  overflow: hidden;
+  border: 1px solid color-mix(in srgb, var(--line) 76%, transparent);
+  border-radius: 17px;
+  color: var(--text);
+  background:
+    radial-gradient(
+      circle at 94% 8%,
+      color-mix(in srgb, var(--brand) 18%, transparent),
+      transparent 36%
+    ),
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--surface) 96%, var(--brand)),
+      var(--surface-soft)
+    );
+  box-shadow: var(--shadow);
+  text-align: left;
+}
+
+.storefront-no-agent-notice::after {
+  position: absolute;
+  right: 22px;
+  bottom: -30px;
+  width: 112px;
+  height: 112px;
+  border: 1px solid color-mix(in srgb, var(--brand) 19%, transparent);
+  border-radius: 50%;
+  content: '';
+  pointer-events: none;
+}
+
+.storefront-no-agent-notice-mark {
+  display: grid;
+  width: 42px;
+  height: 42px;
+  align-content: center;
+  gap: 4px;
+  padding: 0 10px;
+  border: 1px solid color-mix(in srgb, var(--brand) 26%, var(--line));
+  border-radius: 13px;
+  color: var(--brand-strong);
+  background: color-mix(in srgb, var(--brand) 12%, var(--surface));
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--brand) 12%, transparent);
+}
+
+.storefront-no-agent-notice-mark span {
+  display: block;
+  height: 2px;
+  border-radius: 999px;
+  background: currentColor;
+}
+
+.storefront-no-agent-notice-mark span:nth-child(1) {
+  width: 100%;
+}
+
+.storefront-no-agent-notice-mark span:nth-child(2) {
+  width: 72%;
+}
+
+.storefront-no-agent-notice-mark span:nth-child(3) {
+  width: 42%;
+}
+
+.storefront-no-agent-notice-content {
+  position: relative;
+  z-index: 1;
+  min-width: 0;
+  text-wrap: pretty;
+}
+
+.storefront-no-agent-notice-content > p {
+  margin: 0;
+  color: var(--text);
+  font-size: clamp(0.95rem, 1.8vw, 1.08rem);
+  line-height: 1.7;
+}
+
+.storefront-no-agent-notice .markdown-content {
+  margin: 0;
+  color: var(--text);
+  text-align: left;
+}
+
+.storefront-no-agent-notice .markdown-content > :first-child {
+  margin-top: 0;
+}
+
+.storefront-no-agent-notice .markdown-content > :last-child {
+  margin-bottom: 0;
+}
+
+.storefront-no-agent-notice .markdown-content :is(h1, h2, h3) {
+  margin-block: 0 9px;
+  color: var(--text);
+  font-size: clamp(1.18rem, 3vw, 1.52rem);
+  line-height: 1.2;
+  letter-spacing: -0.025em;
+}
+
+.storefront-no-agent-notice .markdown-content :is(p, ul, ol, blockquote, pre, hr) {
+  margin-block: 9px;
+}
+
+.storefront-no-agent-notice .markdown-content :is(ul, ol) {
+  padding-left: 1.25rem;
+}
+
+.storefront-no-agent-notice .markdown-content :is(ul, ol) li + li {
+  margin-top: 4px;
+}
+
+.storefront-no-agent-notice .markdown-content blockquote {
+  margin-left: 0;
+  padding-left: 12px;
+  border-left: 3px solid color-mix(in srgb, var(--brand) 54%, var(--line));
+  color: var(--muted);
+}
+
+.storefront-no-agent-notice .markdown-content a {
+  color: var(--brand-strong);
+  font-weight: 700;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 3px;
+}
+
+.storefront-no-agent-notice .markdown-content code {
+  padding: 2px 5px;
+  border-radius: 5px;
+  color: var(--text);
+  background: color-mix(in srgb, var(--surface-soft) 82%, var(--brand));
+  font-size: 0.88em;
+}
+
+.storefront-no-agent-notice .markdown-content pre {
+  max-width: 100%;
+  overflow: auto;
+  padding: 11px 13px;
+  border: 1px solid color-mix(in srgb, var(--line) 68%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--surface-soft) 84%, var(--page-bg));
+}
+
+.storefront-no-agent-notice .markdown-content pre code {
+  padding: 0;
+  background: transparent;
+}
+
+.storefront-no-agent-notice .markdown-content hr {
+  border: 0;
+  border-top: 1px solid color-mix(in srgb, var(--line) 70%, transparent);
+}
+
+.storefront-no-agent-notice .markdown-content img {
+  display: block;
+  max-width: 100%;
+  height: auto;
+  margin-block: 12px;
+  border-radius: 10px;
+}
+
+@media (max-width: 560px) {
+  .storefront-no-agent-notice {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    gap: 13px;
+    padding: 22px 18px;
+    text-align: center;
+  }
+
+  .storefront-no-agent-notice-content,
+  .storefront-no-agent-notice .markdown-content {
+    width: 100%;
+    text-align: center;
+  }
+
+  .storefront-no-agent-notice .markdown-content :is(ul, ol) {
+    display: inline-block;
+    text-align: left;
+  }
+}

@@ -120,34 +120,6 @@
   pointer-events: auto;
 }
 
-.chat-no-agent-notice {
-  display: grid;
-  width: min(100%, 620px);
-  min-height: 180px;
-  place-items: center;
-  align-content: center;
-  margin: auto;
-  padding: 24px;
-  color: var(--text);
-  text-align: center;
-}
-
-.chat-no-agent-notice > p,
-.chat-no-agent-notice .markdown-content {
-  width: 100%;
-  margin: 0;
-  text-align: center;
-}
-
-.chat-no-agent-notice .markdown-content > :first-child {
-  margin-top: 0;
-}
-
-.chat-no-agent-notice .markdown-content :is(ul, ol) {
-  display: inline-block;
-  text-align: left;
-}
-
 .chat-connection-retry {
   min-width: 96px;
 }

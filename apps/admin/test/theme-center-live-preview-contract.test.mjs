@@ -20,6 +20,8 @@ test('theme center preview reuses live storefront components instead of swatch-o
   assert.ok(preview.includes('StorefrontHomeShortcut'));
   assert.ok(preview.includes('StorefrontHomeProductTile'));
   assert.ok(preview.includes('StorefrontBottomNavigation'));
+  assert.ok(preview.includes('StorefrontNoAgentNotice'));
+  assert.ok(preview.includes('format="markdown"'));
   assert.ok(preview.includes('storefrontThemeStyle'));
 
   for (const diagnostic of [

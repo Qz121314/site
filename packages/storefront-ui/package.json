@@ -17,6 +17,8 @@
     "./art-direction-primary-surfaces.css": "./src/art-direction-primary-surfaces.css",
     "./art-direction-preview.css": "./src/art-direction-preview.css",
     "./layout-contract.css": "./src/layout-contract.css",
+    "./no-agent": "./src/no-agent.tsx",
+    "./no-agent.css": "./src/no-agent.css",
     "./styles.css": "./src/styles.css"
   },
   "scripts": {

@@ -6,6 +6,7 @@ import {
   StorefrontHomeShortcut,
   type StorefrontHeroSlide,
 } from '@site/storefront-ui';
+import { StorefrontNoAgentNotice } from '@site/storefront-ui/no-agent';
 import { storefrontThemeStyle } from '@site/storefront-ui/theme';
 import type { AnchorHTMLAttributes, MouseEvent as ReactMouseEvent } from 'react';
 import { themeDiagnostics } from './theme-center/diagnostics';
@@ -138,6 +139,22 @@ export function ThemeCenterPreview({
                   title="Centered title"
                 />
               </div>
+            </section>
+
+            <section className="theme-preview-no-agent" aria-label="无客服提示语预览">
+              <span className="theme-preview-inline-label">No agent state</span>
+              <StorefrontNoAgentNotice
+                format="markdown"
+                message="## 暂时没有客服在线\n\n请在营业时间内再次联系我们。"
+              >
+                <div className="markdown-content">
+                  <h2>暂时没有客服在线</h2>
+                  <p>
+                    营业时间：<strong>9:00 AM – 11:00 PM</strong>
+                  </p>
+                  <p>请在营业时间内再次联系我们。</p>
+                </div>
+              </StorefrontNoAgentNotice>
             </section>
           </div>
 
