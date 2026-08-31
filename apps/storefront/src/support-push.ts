@@ -127,6 +127,7 @@ async function registerSubscription(conversationRef: string): Promise<PushSubscr
     redirect: 'error',
     body: JSON.stringify({
       visitorId: identity.visitorId,
+      ...(identity.accessToken ? { visitorToken: identity.accessToken } : {}),
       conversationId: remoteConversationId,
       subscription: {
         endpoint: subscription.endpoint,
