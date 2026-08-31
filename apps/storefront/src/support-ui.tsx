@@ -1,6 +1,10 @@
 import type { StorefrontLinkComponent } from '@site/storefront-ui';
 import { LoadingHalo } from '@site/storefront-ui/loading';
 import {
+  StorefrontNoAgentNotice,
+  type StorefrontNoAgentNoticeProps,
+} from '@site/storefront-ui/no-agent';
+import {
   Fragment,
   useEffect,
   useLayoutEffect,
@@ -28,10 +32,7 @@ export type PendingSupportConversation = {
   productHref: string | null;
 };
 
-export type NoAgentNotice = {
-  message: string;
-  format: 'plain' | 'markdown';
-};
+export type NoAgentNotice = Pick<StorefrontNoAgentNoticeProps, 'message' | 'format'>;
 
 const CHAT_TIME_ZONE = 'America/Los_Angeles';
 const DAY_IN_MILLISECONDS = 86_400_000;
@@ -606,13 +607,16 @@ export function MessageThreadPageContent({
             <span className="sr-only">{SYSTEM_UI.loading}</span>
           </div>
         ) : noAgentNotice && pendingConversation && !conversation ? (
-          <div className="chat-no-agent-notice" role="status" aria-live="polite">
+          <StorefrontNoAgentNotice
+            format={noAgentNotice.format}
+            message={noAgentNotice.message}
+          >
             {noAgentNotice.format === 'markdown' ? (
               <MarkdownContent source={noAgentNotice.message} />
             ) : (
               <p>{noAgentNotice.message}</p>
             )}
-          </div>
+          </StorefrontNoAgentNotice>
         ) : connectionError && pendingConversation && !conversation ? (
           <ConnectionRetry onRetry={onRetryConnection} />
         ) : null}
