@@ -7,7 +7,10 @@ import type {
   SupportGateway,
   SupportMessage,
 } from './support-contract';
-import { getSupportVisitorIdentity } from './support-identity';
+import {
+  getSupportVisitorIdentity,
+  setSupportVisitorAccessToken,
+} from './support-identity';
 import { loadConversationMedia, sendConversationImage } from './support-media-gateway';
 
 export class SupportApiError extends Error {
@@ -239,6 +242,9 @@ function clientQueryUrl(
   const identity = getSupportVisitorIdentity();
   const url = new URL(remoteUrl(connection, path));
   url.searchParams.set('visitorId', identity.visitorId);
+  if (identity.accessToken) {
+    url.searchParams.set('visitorToken', identity.accessToken);
+  }
   for (const [key, value] of Object.entries(values ?? {})) {
     if (value) url.searchParams.set(key, value);
   }
@@ -249,6 +255,7 @@ function clientBody(body: Record<string, unknown>): Record<string, unknown> {
   const identity = getSupportVisitorIdentity();
   return {
     visitorId: identity.visitorId,
+    ...(identity.accessToken ? { visitorToken: identity.accessToken } : {}),
     ...body,
   };
 }
@@ -495,6 +502,9 @@ export function buildSupportWebSocketUrl(connection: PublicSupportConnection): s
   const identity = getSupportVisitorIdentity();
   const url = new URL(connection.realtimeUrl);
   url.searchParams.set('visitorId', identity.visitorId);
+  if (identity.accessToken) {
+    url.searchParams.set('visitorToken', identity.accessToken);
+  }
   return url.toString();
 }
 
@@ -594,21 +604,16 @@ export const siteSupportGateway: SupportGateway = {
         body: JSON.stringify(
           clientBody({
             sourceHandoffId: input.handoffId,
-            product: {
-              id: route.product.id,
-              sectionId: route.product.sectionId,
-              sectionName: route.product.sectionName,
-              categoryId: route.product.categoryId,
-              categoryName: route.product.categoryName,
-              title: route.product.title,
-              href: input.productHref,
-              coverUrl: input.productCoverUrl,
-            },
+            product: { id: route.product.id },
           }),
         ),
       },
       signal,
     );
+    const envelope = isRecord(value) ? value : null;
+    if (typeof envelope?.visitorToken === 'string') {
+      setSupportVisitorAccessToken(envelope.visitorToken);
+    }
     const conversation = conversationEnvelope(route.connection, value);
     if (conversation.status === 'waiting') {
       throw new SupportApiError(
