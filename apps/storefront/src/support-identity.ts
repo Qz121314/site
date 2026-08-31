@@ -5,6 +5,7 @@ const DIGITS = '0123456789';
 
 export type SupportVisitorIdentity = {
   visitorId: string;
+  accessToken: string | null;
   expiresAt: number;
 };
 
@@ -56,6 +57,13 @@ function isValidIdentity(value: unknown, now: number): value is SupportVisitorId
   ) {
     return false;
   }
+  if (
+    candidate.accessToken !== null &&
+    (typeof candidate.accessToken !== 'string' ||
+      candidate.accessToken.length < 32 ||
+      candidate.accessToken.length > 200)
+  )
+    return false;
   if (!/^[A-Z0-9]{6}$/u.test(candidate.visitorId)) return false;
   const letters = [...candidate.visitorId].filter((character) =>
     /[A-Z]/u.test(character),
@@ -74,12 +82,16 @@ function readStoredIdentity(now: number): SupportVisitorIdentity | null {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return null;
-    const parsed = JSON.parse(raw) as unknown;
-    if (!isValidIdentity(parsed, now)) {
+    const parsed = JSON.parse(raw) as Partial<SupportVisitorIdentity>;
+    const normalized = {
+      ...parsed,
+      accessToken: parsed.accessToken ?? null,
+    };
+    if (!isValidIdentity(normalized, now)) {
       window.localStorage.removeItem(STORAGE_KEY);
       return null;
     }
-    return parsed;
+    return normalized;
   } catch {
     return volatileIdentity && isValidIdentity(volatileIdentity, now)
       ? volatileIdentity
@@ -113,10 +125,18 @@ export function getSupportVisitorIdentity(now = Date.now()): SupportVisitorIdent
   if (existing) return existing;
   const created: SupportVisitorIdentity = {
     visitorId: generateSupportVisitorId(),
+    accessToken: null,
     expiresAt: now + VISITOR_TTL_MS,
   };
   persistIdentity(created);
   return created;
+}
+
+export function setSupportVisitorAccessToken(token: string): void {
+  const normalized = token.trim();
+  if (normalized.length < 32 || normalized.length > 200) return;
+  const identity = getSupportVisitorIdentity();
+  persistIdentity({ ...identity, accessToken: normalized });
 }
 
 export const SUPPORT_VISITOR_TTL_MS = VISITOR_TTL_MS;
