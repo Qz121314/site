@@ -32,7 +32,10 @@ test('support attachment safety accepts canonical contact-card values only', () 
 
   assert.equal(normalizeSupportPresetMessage(' Hello '), 'Hello');
   assert.equal(normalizeSupportPresetMessage('   '), null);
-  assert.equal(normalizeSupportContactCardValue('sms', '+1 213 555 1234'), '+12135551234');
+  assert.equal(
+    normalizeSupportContactCardValue('sms', '+1 213 555 1234'),
+    '+12135551234',
+  );
   assert.equal(
     normalizeSupportContactCardValue('website', 'https://example.com/help'),
     'https://example.com/help',

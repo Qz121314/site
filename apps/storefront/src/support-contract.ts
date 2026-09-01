@@ -36,8 +36,7 @@ export type SupportContactCardAttachment = {
 };
 
 export type SupportMessageAttachment =
-  | SupportImageAttachment
-  | SupportContactCardAttachment;
+  SupportImageAttachment | SupportContactCardAttachment;
 
 export type SupportMessage = {
   id: string;

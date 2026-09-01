@@ -159,10 +159,7 @@ export async function sendConversationImage(
 
 function isContactCardKind(value: unknown): value is SupportContactCardKind {
   return (
-    value === 'sms' ||
-    value === 'whatsapp' ||
-    value === 'telegram' ||
-    value === 'website'
+    value === 'sms' || value === 'whatsapp' || value === 'telegram' || value === 'website'
   );
 }
 
