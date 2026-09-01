@@ -4,6 +4,10 @@ import type {
   SupportMessageAttachment,
 } from './support-contract';
 import {
+  normalizeSupportLinkValue,
+  normalizeSupportPhoneValue,
+} from './support-attachment-safety';
+import {
   buildSupportWebSocketUrl,
   loadPublicSupportConnections,
   resolveSupportAssetUrl,
@@ -106,12 +110,16 @@ function parseAttachment(
         : '';
 
   if (kind === 'phone' || kind === 'link') {
-    if (typeof item.value !== 'string' || !item.value || !label) return null;
+    const normalizedValue =
+      kind === 'phone'
+        ? normalizeSupportPhoneValue(item.value)
+        : normalizeSupportLinkValue(item.value);
+    if (!normalizedValue || !label) return null;
     return {
       id: item.id,
       kind,
       label,
-      value: item.value,
+      value: normalizedValue,
     };
   }
 
