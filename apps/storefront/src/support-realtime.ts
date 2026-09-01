@@ -1,11 +1,12 @@
 import type {
+  SupportContactCardKind,
   SupportConversationSummary,
   SupportMessage,
   SupportMessageAttachment,
 } from './support-contract';
 import {
-  normalizeSupportLinkValue,
-  normalizeSupportPhoneValue,
+  normalizeSupportContactCardValue,
+  normalizeSupportPresetMessage,
 } from './support-attachment-safety';
 import {
   buildSupportWebSocketUrl,
@@ -60,6 +61,15 @@ function nullableString(value: unknown): value is string | null {
   return value === null || typeof value === 'string';
 }
 
+function isContactCardKind(value: unknown): value is SupportContactCardKind {
+  return (
+    value === 'sms' ||
+    value === 'whatsapp' ||
+    value === 'telegram' ||
+    value === 'website'
+  );
+}
+
 function parseConversation(
   connection: PublicSupportConnection,
   value: unknown,
@@ -109,17 +119,26 @@ function parseAttachment(
           : 'Image'
         : '';
 
-  if (kind === 'phone' || kind === 'link') {
-    const normalizedValue =
-      kind === 'phone'
-        ? normalizeSupportPhoneValue(item.value)
-        : normalizeSupportLinkValue(item.value);
-    if (!normalizedValue || !label) return null;
+  if (isContactCardKind(kind)) {
+    const normalizedValue = normalizeSupportContactCardValue(kind, item.value);
+    const presetMessage = normalizeSupportPresetMessage(item.presetMessage);
+    const hasPresetMessage =
+      typeof item.presetMessage === 'string' && item.presetMessage.trim().length > 0;
+    if (
+      !normalizedValue ||
+      !label ||
+      (hasPresetMessage && !presetMessage) ||
+      (kind === 'website' && hasPresetMessage)
+    ) {
+      return null;
+    }
     return {
       id: item.id,
       kind,
       label,
       value: normalizedValue,
+      presetMessage: kind === 'website' ? null : presetMessage,
+      hasCustomIcon: item.hasCustomIcon === true,
     };
   }
 
