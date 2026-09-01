@@ -1,0 +1,40 @@
+name: Format message attachments
+
+on:
+  push:
+    branches:
+      - feat/message-attachments
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: feat/message-attachments
+      - run: |
+          node --version
+          npm install --global pnpm@11.19.0
+      - run: pnpm install --frozen-lockfile
+      - name: Format changed files
+        run: >-
+          pnpm exec prettier --write
+          apps/storefront/src/support-contract.ts
+          apps/storefront/src/support-media-gateway.ts
+          apps/storefront/src/support-realtime.ts
+      - name: Commit formatting
+        run: |
+          if git diff --quiet; then
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add \
+            apps/storefront/src/support-contract.ts \
+            apps/storefront/src/support-media-gateway.ts \
+            apps/storefront/src/support-realtime.ts
+          git commit -m "chore: format support attachment changes"
+          git push origin HEAD:feat/message-attachments
