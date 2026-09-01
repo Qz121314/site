@@ -11,9 +11,7 @@ test('mobile visitor chat inherits the shared visual viewport owned by App Shell
   const html = source('../index.html');
   const main = source('../src/main.tsx');
   const viewportRuntime = source('../src/storefront-viewport-runtime.ts');
-  const keyboardAnchorRuntime = source(
-    '../src/chat-keyboard-anchor-runtime.ts',
-  );
+  const keyboardAnchorRuntime = source('../src/chat-keyboard-anchor-runtime.ts');
   const appShell = source('../src/app-shell.css');
   const conversationCss = source('../src/chat-conversation.css');
 
@@ -43,25 +41,17 @@ test('mobile visitor chat inherits the shared visual viewport owned by App Shell
     /\.messages-push-host:has\(\.messages-workspace\.is-thread-open\) \.chat-timeline \{[\s\S]*?min-height: 0;[\s\S]*?overflow-y: auto;/u,
   );
 
-  assert.match(
-    keyboardAnchorRuntime,
+  for (const pattern of [
     /\.messages-workspace\.is-thread-open \.chat-composer/u,
-  );
-  assert.match(keyboardAnchorRuntime, /\.chat-timeline/u);
-  assert.match(keyboardAnchorRuntime, /document\.addEventListener\('focusin'/u);
-  assert.match(
-    keyboardAnchorRuntime,
+    /\.chat-timeline/u,
+    /document\.addEventListener\('focusin'/u,
     /document\.addEventListener\('focusout'/u,
-  );
-  assert.match(keyboardAnchorRuntime, /window\.visualViewport/u);
-  assert.match(
-    keyboardAnchorRuntime,
+    /window\.visualViewport/u,
     /visualViewport\?\.addEventListener\('resize', schedulePin/u,
-  );
-  assert.match(keyboardAnchorRuntime, /new ResizeObserver\(schedulePin\)/u);
-  assert.match(
-    keyboardAnchorRuntime,
+    /new ResizeObserver\(schedulePin\)/u,
     /target\.scrollTop = target\.scrollHeight;/u,
-  );
+  ]) {
+    assert.match(keyboardAnchorRuntime, pattern);
+  }
   assert.doesNotMatch(keyboardAnchorRuntime, /behavior:\s*['"]smooth['"]/u);
 });
