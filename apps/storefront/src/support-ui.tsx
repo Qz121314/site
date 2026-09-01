@@ -1,6 +1,6 @@
 import type { StorefrontLinkComponent } from '@site/storefront-ui';
 import { LoadingHalo } from '@site/storefront-ui/loading';
-import { ChevronRight, Link, Phone } from 'lucide-react';
+import { ChevronRight, Link } from 'lucide-react';
 import {
   StorefrontNoAgentNotice,
   type StorefrontNoAgentNoticeProps,
@@ -19,6 +19,7 @@ import type {
   SupportConversationSummary,
   SupportMessage,
 } from './support-contract';
+import { buildSupportContactCardHref } from './support-attachment-safety';
 import { MarkdownContent } from './MarkdownContent';
 import { ResilientImage } from './ResilientMedia';
 import { SYSTEM_UI } from './system-ui';
@@ -679,21 +680,34 @@ export function MessageThreadPageContent({
                             </a>
                           );
                         }
-                        const Icon = attachment.kind === 'phone' ? Phone : Link;
-                        const href =
-                          attachment.kind === 'phone'
-                            ? `tel:${attachment.value}`
-                            : attachment.value;
+                        const href = buildSupportContactCardHref(
+                          attachment.kind,
+                          attachment.value,
+                          attachment.presetMessage,
+                        );
+                        const brandIconSrc =
+                          attachment.kind === 'sms'
+                            ? '/icons/contact-card-imessage.svg'
+                            : attachment.kind === 'whatsapp'
+                              ? '/icons/contact-card-whatsapp.svg'
+                              : attachment.kind === 'telegram'
+                                ? '/icons/contact-card-telegram.svg'
+                                : null;
+                        const opensNewWindow = attachment.kind !== 'sms';
                         return (
                           <a
                             className="chat-contact-card"
                             href={href}
-                            target={attachment.kind === 'link' ? '_blank' : undefined}
-                            rel={attachment.kind === 'link' ? 'noreferrer' : undefined}
+                            target={opensNewWindow ? '_blank' : undefined}
+                            rel={opensNewWindow ? 'noreferrer' : undefined}
                             key={attachment.id}
                           >
                             <span className="chat-contact-card-icon" aria-hidden="true">
-                              <Icon />
+                              {brandIconSrc ? (
+                                <img src={brandIconSrc} alt="" width="20" height="20" />
+                              ) : (
+                                <Link />
+                              )}
                             </span>
                             <span>
                               <small>{attachment.label}</small>
