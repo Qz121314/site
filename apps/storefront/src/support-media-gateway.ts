@@ -4,6 +4,10 @@ import type {
   SupportMessage,
   SupportMessageAttachment,
 } from './support-contract';
+import {
+  normalizeSupportLinkValue,
+  normalizeSupportPhoneValue,
+} from './support-attachment-safety';
 import { getSupportVisitorIdentity } from './support-identity';
 import { uploadSupportImage, type SupportUploadTarget } from './support-image-upload';
 
@@ -165,18 +169,23 @@ function parseConversationAttachment(
         : '';
 
   if (item.kind === 'phone' || item.kind === 'link') {
-    if (typeof item.value !== 'string' || !item.value || !label) return null;
+    const value =
+      item.kind === 'phone'
+        ? normalizeSupportPhoneValue(item.value)
+        : normalizeSupportLinkValue(item.value);
+    if (!value || !label) return null;
     return {
       id: item.id,
       kind: item.kind,
       label,
-      value: item.value,
+      value,
     };
   }
 
   if (
     item.kind !== 'image' ||
     typeof item.mimeType !== 'string' ||
+    typeof item.byteSize !== 'number' ||
     !Number.isFinite(item.byteSize)
   ) {
     return null;
@@ -195,7 +204,7 @@ function parseConversationAttachment(
     kind: 'image',
     label,
     mimeType: item.mimeType,
-    byteSize: Number(item.byteSize),
+    byteSize: item.byteSize,
     width: typeof item.width === 'number' ? item.width : null,
     height: typeof item.height === 'number' ? item.height : null,
     originalName:
