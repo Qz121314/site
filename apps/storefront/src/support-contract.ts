@@ -24,22 +24,20 @@ export type SupportImageAttachment = {
   url: string;
 };
 
-export type SupportPhoneAttachment = {
-  id: string;
-  kind: 'phone';
-  label: string;
-  value: string;
-};
+export type SupportContactCardKind = 'sms' | 'whatsapp' | 'telegram' | 'website';
 
-export type SupportLinkAttachment = {
+export type SupportContactCardAttachment = {
   id: string;
-  kind: 'link';
+  kind: SupportContactCardKind;
   label: string;
   value: string;
+  presetMessage: string | null;
+  hasCustomIcon: boolean;
 };
 
 export type SupportMessageAttachment =
-  SupportImageAttachment | SupportPhoneAttachment | SupportLinkAttachment;
+  | SupportImageAttachment
+  | SupportContactCardAttachment;
 
 export type SupportMessage = {
   id: string;
