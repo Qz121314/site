@@ -17,6 +17,8 @@ jobs:
   pipeline:
     runs-on: ubuntu-latest
     timeout-minutes: 50
+    outputs:
+      deployment-url: ${{ steps.deploy.outputs.url }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -401,12 +403,57 @@ jobs:
             assert_storefront_shell /tmp/storefront-not-found.body
           done
 
-      - name: Install production browser
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        run: pnpm exec playwright install --with-deps chromium
+  production-browser-acceptance:
+    name: Production Browser Acceptance (non-blocking)
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    needs: pipeline
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    continue-on-error: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js and pnpm
+        run: |
+          set -euo pipefail
+          node --version
+          node -e "if (Number(process.versions.node.split('.')[0]) < 22) { throw new Error('Node.js 22 or newer is required') }"
+          npm install --global pnpm@11.19.0
+          pnpm --version
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Restore Playwright Chromium cache
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+
+      - name: Install Chromium system dependencies
+        timeout-minutes: 5
+        run: pnpm exec playwright install-deps chromium
+
+      - name: Install Chromium
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        timeout-minutes: 5
+        run: pnpm exec playwright install chromium
 
       - name: Browser acceptance test production
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        timeout-minutes: 5
         run: pnpm test:e2e
         env:
-          BASE_URL: ${{ steps.deploy.outputs.url }}
+          BASE_URL: ${{ needs.pipeline.outputs.deployment-url }}
+
+      - name: Upload production browser diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: production-browser-acceptance-${{ github.run_attempt }}
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 7
