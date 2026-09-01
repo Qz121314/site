@@ -15,6 +15,7 @@ export type SupportConversationSummary = {
 export type SupportImageAttachment = {
   id: string;
   kind: 'image';
+  label: string;
   mimeType: string;
   byteSize: number;
   width: number | null;
@@ -23,13 +24,30 @@ export type SupportImageAttachment = {
   url: string;
 };
 
+export type SupportPhoneAttachment = {
+  id: string;
+  kind: 'phone';
+  label: string;
+  value: string;
+};
+
+export type SupportLinkAttachment = {
+  id: string;
+  kind: 'link';
+  label: string;
+  value: string;
+};
+
+export type SupportMessageAttachment =
+  SupportImageAttachment | SupportPhoneAttachment | SupportLinkAttachment;
+
 export type SupportMessage = {
   id: string;
   direction: 'customer' | 'agent';
   body: string;
   sentAt: string;
   delivery: 'sending' | 'failed' | 'sent' | 'read';
-  attachments: SupportImageAttachment[];
+  attachments: SupportMessageAttachment[];
 };
 
 export type SupportConversationDetail = SupportConversationSummary & {

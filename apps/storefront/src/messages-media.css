@@ -28,9 +28,10 @@
   background: var(--muted);
 }
 
-.chat-message-media {
+.chat-message-attachments {
   display: grid;
-  gap: 6px;
+  gap: 7px;
+  margin-top: 7px;
 }
 
 .chat-message-image-link {
@@ -45,6 +46,79 @@
   max-height: 440px;
   object-fit: contain;
   background: rgba(0, 0, 0, 0.04);
+}
+
+.chat-message-action {
+  display: grid;
+  min-width: min(260px, 72vw);
+  max-width: 100%;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 11px;
+  border: 1px solid color-mix(in srgb, currentColor 13%, transparent);
+  border-radius: 12px;
+  color: inherit;
+  background: color-mix(in srgb, currentColor 5%, transparent);
+  text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+.chat-message-action:active {
+  transform: scale(0.985);
+}
+
+.chat-message-action-badge {
+  display: grid;
+  min-width: 36px;
+  height: 30px;
+  place-items: center;
+  padding: 0 5px;
+  border-radius: 9px;
+  color: inherit;
+  background: color-mix(in srgb, currentColor 9%, transparent);
+  font-size: 0.55rem;
+  font-weight: 820;
+  letter-spacing: 0.04em;
+}
+
+.chat-message-action > span:nth-child(2) {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.chat-message-action small,
+.chat-message-action strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.chat-message-action small {
+  opacity: 0.68;
+  font-size: 0.62rem;
+  font-weight: 650;
+}
+
+.chat-message-action strong {
+  font-size: 0.75rem;
+  font-weight: 760;
+}
+
+.chat-message-action-open {
+  opacity: 0.68;
+  font-size: 0.82rem;
+}
+
+.chat-message-row.is-agent .chat-message-action {
+  border-color: rgba(255, 255, 255, 0.24);
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.chat-message-row.is-agent .chat-message-action-badge {
+  background: rgba(255, 255, 255, 0.14);
 }
 
 .chat-delivery-mark {
@@ -275,12 +349,20 @@
     max-height: 52vh;
   }
 
+  .chat-message-action {
+    min-width: min(246px, 72vw);
+  }
+
   .chat-image-upload-preview {
     width: min(82%, 320px);
   }
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .chat-message-action:active {
+    transform: none;
+  }
+
   .chat-image-upload-preview {
     animation: none;
   }

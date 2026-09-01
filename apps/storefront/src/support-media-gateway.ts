@@ -1,8 +1,12 @@
 import type {
   SendSupportImageInput,
-  SupportImageAttachment,
   SupportMessage,
+  SupportMessageAttachment,
 } from './support-contract';
+import {
+  normalizeSupportLinkValue,
+  normalizeSupportPhoneValue,
+} from './support-attachment-safety';
 import { getSupportVisitorIdentity } from './support-identity';
 import { uploadSupportImage, type SupportUploadTarget } from './support-image-upload';
 
@@ -10,8 +14,21 @@ export type SupportMediaConnection = {
   clientApiUrl: string;
 };
 
-type RemoteMediaItem = {
+type RemoteConversationAttachment = {
   messageId: string;
+  id: string;
+  kind: 'image' | 'phone' | 'link';
+  label?: string | null;
+  value?: string | null;
+  mimeType?: string | null;
+  byteSize?: number | null;
+  width?: number | null;
+  height?: number | null;
+  originalName?: string | null;
+  source?: 'media' | 'snapshot';
+};
+
+type RemoteCompletedMedia = {
   id: string;
   kind: 'image';
   mimeType: string;
@@ -30,14 +47,14 @@ type InitResponse = {
 type CompleteResponse = {
   messageId: string;
   createdAt?: string;
-  media: Omit<RemoteMediaItem, 'messageId'>;
+  media: RemoteCompletedMedia;
 };
 
 export async function loadConversationMedia(
   connection: SupportMediaConnection,
   conversationId: string,
   signal?: AbortSignal,
-): Promise<Map<string, SupportImageAttachment[]>> {
+): Promise<Map<string, SupportMessageAttachment[]>> {
   const identity = getSupportVisitorIdentity();
   const url = remoteUrl(
     connection,
@@ -45,31 +62,15 @@ export async function loadConversationMedia(
   );
   url.searchParams.set('visitorId', identity.visitorId);
   if (identity.accessToken) url.searchParams.set('visitorToken', identity.accessToken);
-  const payload = await requestJson<{ items?: RemoteMediaItem[] }>(
+  const payload = await requestJson<{ items?: RemoteConversationAttachment[] }>(
     url.toString(),
     undefined,
     signal,
   );
-  const result = new Map<string, SupportImageAttachment[]>();
+  const result = new Map<string, SupportMessageAttachment[]>();
   for (const item of payload.items ?? []) {
-    if (!validMedia(item)) continue;
-    const contentUrl = remoteUrl(
-      connection,
-      `/media/${encodeURIComponent(item.id)}/content`,
-    );
-    contentUrl.searchParams.set('visitorId', identity.visitorId);
-    if (identity.accessToken)
-      contentUrl.searchParams.set('visitorToken', identity.accessToken);
-    const attachment: SupportImageAttachment = {
-      id: item.id,
-      kind: 'image',
-      mimeType: item.mimeType,
-      byteSize: item.byteSize,
-      width: item.width,
-      height: item.height,
-      originalName: item.originalName,
-      url: contentUrl.toString(),
-    };
+    const attachment = parseConversationAttachment(connection, identity, item);
+    if (!attachment || typeof item.messageId !== 'string' || !item.messageId) continue;
     const current = result.get(item.messageId) ?? [];
     current.push(attachment);
     result.set(item.messageId, current);
@@ -141,6 +142,7 @@ export async function sendConversationImage(
       {
         id: complete.media.id,
         kind: 'image',
+        label: complete.media.originalName || 'Image',
         mimeType: complete.media.mimeType,
         byteSize: complete.media.byteSize,
         width: complete.media.width,
@@ -149,6 +151,63 @@ export async function sendConversationImage(
         url: contentUrl.toString(),
       },
     ],
+  };
+}
+
+function parseConversationAttachment(
+  connection: SupportMediaConnection,
+  identity: ReturnType<typeof getSupportVisitorIdentity>,
+  item: RemoteConversationAttachment,
+): SupportMessageAttachment | null {
+  if (!item || typeof item.id !== 'string' || !item.id) return null;
+  const label =
+    typeof item.label === 'string' && item.label.trim()
+      ? item.label.trim()
+      : item.kind === 'image'
+        ? item.originalName || 'Image'
+        : '';
+
+  if (item.kind === 'phone' || item.kind === 'link') {
+    const value =
+      item.kind === 'phone'
+        ? normalizeSupportPhoneValue(item.value)
+        : normalizeSupportLinkValue(item.value);
+    if (!value || !label) return null;
+    return {
+      id: item.id,
+      kind: item.kind,
+      label,
+      value,
+    };
+  }
+
+  if (
+    item.kind !== 'image' ||
+    typeof item.mimeType !== 'string' ||
+    typeof item.byteSize !== 'number' ||
+    !Number.isFinite(item.byteSize)
+  ) {
+    return null;
+  }
+  const contentUrl = remoteUrl(
+    connection,
+    item.source === 'snapshot'
+      ? `/attachments/${encodeURIComponent(item.id)}/content`
+      : `/media/${encodeURIComponent(item.id)}/content`,
+  );
+  contentUrl.searchParams.set('visitorId', identity.visitorId);
+  if (identity.accessToken)
+    contentUrl.searchParams.set('visitorToken', identity.accessToken);
+  return {
+    id: item.id,
+    kind: 'image',
+    label,
+    mimeType: item.mimeType,
+    byteSize: item.byteSize,
+    width: typeof item.width === 'number' ? item.width : null,
+    height: typeof item.height === 'number' ? item.height : null,
+    originalName: typeof item.originalName === 'string' ? item.originalName : null,
+    url: contentUrl.toString(),
   };
 }
 
@@ -178,11 +237,7 @@ async function requestJson<T>(
   return payload;
 }
 
-function validMedia(value: RemoteMediaItem): boolean {
-  return typeof value?.messageId === 'string' && validCompletedMedia(value);
-}
-
-function validCompletedMedia(value: Omit<RemoteMediaItem, 'messageId'>): boolean {
+function validCompletedMedia(value: RemoteCompletedMedia): boolean {
   return (
     typeof value?.id === 'string' &&
     value.kind === 'image' &&

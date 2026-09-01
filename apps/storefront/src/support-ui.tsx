@@ -652,28 +652,67 @@ export function MessageThreadPageContent({
                 className={`chat-message-row is-${message.direction}${groupStart ? ' is-group-start' : ''}${groupEnd ? ' is-group-end' : ''}${message.delivery === 'failed' ? ' is-failed' : ''}`}
               >
                 <div className="chat-message-bubble">
+                  {message.body ? <p>{message.body}</p> : null}
                   {message.attachments.length > 0 ? (
-                    <div className="chat-message-media">
-                      {message.attachments.map((attachment) => (
-                        <a
-                          className="chat-message-image-link"
-                          href={attachment.url}
-                          target="_blank"
-                          rel="noreferrer"
-                          key={attachment.id}
-                        >
-                          <img
-                            className="chat-message-image"
-                            src={attachment.url}
-                            alt={attachment.originalName || 'Chat image'}
-                            loading="lazy"
-                          />
-                        </a>
-                      ))}
+                    <div className="chat-message-attachments">
+                      {message.attachments.map((attachment) => {
+                        if (attachment.kind === 'image') {
+                          return (
+                            <a
+                              className="chat-message-image-link"
+                              href={attachment.url}
+                              target="_blank"
+                              rel="noreferrer"
+                              key={attachment.id}
+                            >
+                              <img
+                                className="chat-message-image"
+                                src={attachment.url}
+                                alt={
+                                  attachment.label ||
+                                  attachment.originalName ||
+                                  'Chat image'
+                                }
+                                loading="lazy"
+                              />
+                            </a>
+                          );
+                        }
+                        if (attachment.kind === 'phone') {
+                          return (
+                            <a
+                              className="chat-message-action is-phone"
+                              href={`sms:${attachment.value}`}
+                              key={attachment.id}
+                            >
+                              <span className="chat-message-action-badge">SMS</span>
+                              <span>
+                                <small>{attachment.label}</small>
+                                <strong>{attachment.value}</strong>
+                              </span>
+                            </a>
+                          );
+                        }
+                        return (
+                          <a
+                            className="chat-message-action is-link"
+                            href={attachment.value}
+                            target="_blank"
+                            rel="noreferrer"
+                            key={attachment.id}
+                          >
+                            <span className="chat-message-action-badge">LINK</span>
+                            <span>
+                              <small>{attachment.label}</small>
+                              <strong>{attachment.value}</strong>
+                            </span>
+                            <span className="chat-message-action-open" aria-hidden="true">
+                              ↗
+                            </span>
+                          </a>
+                        );
+                      })}
                     </div>
-                  ) : null}
-                  {message.body && message.attachments.length === 0 ? (
-                    <p>{message.body}</p>
                   ) : null}
                   <span className="chat-message-meta">
                     <time dateTime={message.sentAt}>
