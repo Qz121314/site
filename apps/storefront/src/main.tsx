@@ -1,6 +1,7 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { installChatKeyboardAnchorRuntime } from './chat-keyboard-anchor-runtime';
 import { MobileEdgeNavigation } from './MobileEdgeNavigation';
 import { PwaInstallPrompt } from './PwaInstallPrompt';
 import { installPublicContentFetchFallback } from './public-content-transport';
@@ -31,6 +32,7 @@ import './ui-accessibility.css';
 import './loading-states.css';
 
 installStorefrontViewportRuntime();
+installChatKeyboardAnchorRuntime();
 installPublicContentFetchFallback();
 installCachedStorefrontTheme();
 
