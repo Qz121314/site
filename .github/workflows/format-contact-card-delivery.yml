@@ -1,9 +1,9 @@
 name: Format contact card delivery
 
 on:
-  push:
-    branches:
-      - fix/contact-card-delivery
+  pull_request:
+    types:
+      - reopened
 
 permissions:
   contents: write
