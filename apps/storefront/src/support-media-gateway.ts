@@ -1,6 +1,5 @@
 import type {
   SendSupportImageInput,
-  SupportImageAttachment,
   SupportMessage,
   SupportMessageAttachment,
 } from './support-contract';
