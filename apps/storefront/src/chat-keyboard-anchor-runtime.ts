@@ -7,8 +7,9 @@ function resolveChatTimeline(element: Element | null): HTMLElement | null {
   );
   if (!composer) return null;
   return (
-    composer.closest<HTMLElement>('.chat-page')?.querySelector<HTMLElement>('.chat-timeline') ??
-    null
+    composer
+      .closest<HTMLElement>('.chat-page')
+      ?.querySelector<HTMLElement>('.chat-timeline') ?? null
   );
 }
 
@@ -63,7 +64,8 @@ export function installChatKeyboardAnchorRuntime(): void {
   });
 
   document.addEventListener('focusout', (event) => {
-    if (!resolveChatTimeline(event.target instanceof Element ? event.target : null)) return;
+    const target = event.target instanceof Element ? event.target : null;
+    if (!resolveChatTimeline(target)) return;
     requestAnimationFrame(() => {
       if (startTracking(document.activeElement)) return;
       stopTracking();
