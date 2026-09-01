@@ -11,7 +11,9 @@ test('mobile visitor chat inherits the shared visual viewport owned by App Shell
   const html = source('../index.html');
   const main = source('../src/main.tsx');
   const viewportRuntime = source('../src/storefront-viewport-runtime.ts');
-  const keyboardAnchorRuntime = source('../src/chat-keyboard-anchor-runtime.ts');
+  const keyboardAnchorRuntime = source(
+    '../src/chat-keyboard-anchor-runtime.ts',
+  );
   const appShell = source('../src/app-shell.css');
   const conversationCss = source('../src/chat-conversation.css');
 
@@ -47,7 +49,10 @@ test('mobile visitor chat inherits the shared visual viewport owned by App Shell
   );
   assert.match(keyboardAnchorRuntime, /\.chat-timeline/u);
   assert.match(keyboardAnchorRuntime, /document\.addEventListener\('focusin'/u);
-  assert.match(keyboardAnchorRuntime, /document\.addEventListener\('focusout'/u);
+  assert.match(
+    keyboardAnchorRuntime,
+    /document\.addEventListener\('focusout'/u,
+  );
   assert.match(keyboardAnchorRuntime, /window\.visualViewport/u);
   assert.match(
     keyboardAnchorRuntime,
