@@ -9,14 +9,13 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: site-v2-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: ${{ github.event_name != 'push' || github.ref != 'refs/heads/main' }}
-
 jobs:
   pipeline:
     runs-on: ubuntu-latest
     timeout-minutes: 50
+    concurrency:
+      group: site-deploy-${{ github.ref }}
+      cancel-in-progress: ${{ github.event_name != 'push' || github.ref != 'refs/heads/main' }}
     outputs:
       deployment-url: ${{ steps.deploy.outputs.url }}
     steps:
