@@ -24,7 +24,8 @@ test('support realtime is websocket-first with REST reserved for recovery', () =
   assert.ok(runtime.includes('enabled: conversationListEnabled'));
   assert.ok(runtime.includes('return subscribeSupportRealtime((event) =>'));
   assert.ok(realtime.includes("recovered ? 'realtime.recovered' : 'realtime.connected'"));
-  assert.ok(realtime.includes('parseMessage(state.connection, raw.message, raw.media)'));
+  assert.ok(realtime.includes('raw.attachments'));
+  assert.ok(realtime.includes('raw.media'));
   assert.ok(messages.includes('staleTime: Number.POSITIVE_INFINITY'));
   assert.ok(
     !messages.includes("invalidateQueries({ queryKey: ['support-conversations'] })"),
