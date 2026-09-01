@@ -39,9 +39,7 @@ export type SupportLinkAttachment = {
 };
 
 export type SupportMessageAttachment =
-  | SupportImageAttachment
-  | SupportPhoneAttachment
-  | SupportLinkAttachment;
+  SupportImageAttachment | SupportPhoneAttachment | SupportLinkAttachment;
 
 export type SupportMessage = {
   id: string;

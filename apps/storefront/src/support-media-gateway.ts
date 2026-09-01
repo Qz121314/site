@@ -206,8 +206,7 @@ function parseConversationAttachment(
     byteSize: item.byteSize,
     width: typeof item.width === 'number' ? item.width : null,
     height: typeof item.height === 'number' ? item.height : null,
-    originalName:
-      typeof item.originalName === 'string' ? item.originalName : null,
+    originalName: typeof item.originalName === 'string' ? item.originalName : null,
     url: contentUrl.toString(),
   };
 }

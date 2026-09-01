@@ -129,7 +129,9 @@ function parseAttachment(
     typeof item.byteSize !== 'number' ||
     !Number.isFinite(item.byteSize) ||
     (item.width !== null && item.width !== undefined && typeof item.width !== 'number') ||
-    (item.height !== null && item.height !== undefined && typeof item.height !== 'number') ||
+    (item.height !== null &&
+      item.height !== undefined &&
+      typeof item.height !== 'number') ||
     (item.originalName !== null &&
       item.originalName !== undefined &&
       typeof item.originalName !== 'string')
@@ -152,8 +154,7 @@ function parseAttachment(
     byteSize: item.byteSize,
     width: typeof item.width === 'number' ? item.width : null,
     height: typeof item.height === 'number' ? item.height : null,
-    originalName:
-      typeof item.originalName === 'string' ? item.originalName : null,
+    originalName: typeof item.originalName === 'string' ? item.originalName : null,
     url: contentUrl.toString(),
   };
 }
@@ -227,12 +228,7 @@ function parseEvent(state: SocketState, raw: unknown): SupportRealtimeEvent | nu
     connectionId: state.connection.id,
     conversationRef,
     conversation,
-    message: parseMessage(
-      state.connection,
-      raw.message,
-      raw.attachments,
-      raw.media,
-    ),
+    message: parseMessage(state.connection, raw.message, raw.attachments, raw.media),
     reader: raw.reader === 'agent' || raw.reader === 'visitor' ? raw.reader : null,
     lastMessageId: typeof raw.lastMessageId === 'string' ? raw.lastMessageId : null,
   };
