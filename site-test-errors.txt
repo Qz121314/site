@@ -1,0 +1,1454 @@
+$ pnpm guardrails && pnpm -r --if-present test
+$ node scripts/check-repository-guardrails.mjs
+Repository guardrails passed.
+Scope: 6 of 7 workspace projects
+apps/worker test$ node --test --experimental-strip-types --import ./test/register-ts-resolver.mjs test/*.test.mjs
+packages/shared test$ vitest run
+packages/storefront-ui test$ vitest run
+apps/worker test: TAP version 13
+packages/storefront-ui test: [1m[46m RUN [49m[22m [36mv3.2.7 [39m[90m/home/runner/work/site/site/packages/storefront-ui[39m
+packages/shared test: [1m[46m RUN [49m[22m [36mv3.2.7 [39m[90m/home/runner/work/site/site/packages/shared[39m
+apps/worker test: # Subtest: auth bindings reject missing values while preserving legacy configured secrets
+apps/worker test: ok 1 - auth bindings reject missing values while preserving legacy configured secrets
+apps/worker test:   ---
+apps/worker test:   duration_ms: 3.043663
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # {"level":"info","event":"request.complete","requestId":"bc604126-fa3f-42de-808a-5715a3cec4ac","method":"POST","path":"/api/admin/auth/login","status":503,"durationMs":2}
+apps/worker test: # {"level":"info","event":"request.complete","requestId":"02dd72fa-2cb2-4641-bd9b-e0fefa3f2425","method":"POST","path":"/api/admin/auth/login","status":403,"durationMs":0}
+apps/worker test: # {"level":"info","event":"request.complete","requestId":"29028713-7911-4187-bd38-6865c3b1a70d","method":"POST","path":"/api/admin/auth/login","status":400,"durationMs":0}
+apps/worker test: # Subtest: admin session token accepts the valid window and rejects tampering or expiry
+apps/worker test: ok 2 - admin session token accepts the valid window and rejects tampering or expiry
+apps/worker test:   ---
+apps/worker test:   duration_ms: 25.824833
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: admin auth routes reject unconfigured and malformed login requests
+apps/worker test: ok 3 - admin auth routes reject unconfigured and malformed login requests
+apps/worker test:   ---
+apps/worker test:   duration_ms: 82.273881
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # {"level":"info","event":"request.complete","requestId":"eee25629-c873-4140-9ffe-be68ac895f9a","method":"POST","path":"/api/admin/auth/login","status":200,"durationMs":8}
+apps/worker test: # {"level":"info","event":"request.complete","requestId":"de4cd264-6de0-4863-9e7f-a4ef0a434c80","method":"GET","path":"/api/admin/auth/session","status":200,"durationMs":3}
+apps/worker test: # {"level":"info","event":"request.complete","requestId":"c9100d90-e3f6-4cd2-b7a6-a39e02896de3","method":"GET","path":"/api/admin/health","status":200,"durationMs":1}
+apps/worker test: # Subtest: successful login creates a strict HttpOnly cookie and unlocks protected routes
+apps/worker test: ok 4 - successful login creates a strict HttpOnly cookie and unlocks protected routes
+apps/worker test:   ---
+apps/worker test:   duration_ms: 19.588043
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # {"level":"info","event":"request.complete","requestId":"ccfe6632-1bff-474c-8b2e-7df0d4e9949c","method":"POST","path":"/api/admin/auth/login","status":401,"durationMs":7}
+apps/worker test: # {"level":"info","event":"request.complete","requestId":"0132460e-66d1-4e97-953a-898b7fb3d14d","method":"POST","path":"/api/admin/auth/login","status":401,"durationMs":2}
+apps/worker test: # {"level":"info","event":"request.complete","requestId":"2d9ea1d6-0eec-403b-bc5d-32863a4dfa53","method":"POST","path":"/api/admin/auth/login","status":401,"durationMs":1}
+apps/worker test: # {"level":"info","event":"request.complete","requestId":"033847a5-92cc-402a-ac2b-00a4dbc16f2c","method":"POST","path":"/api/admin/auth/login","status":401,"durationMs":2}
+apps/worker test: # {"level":"info","event":"request.complete","requestId":"8bb1d8ea-f26f-4d8f-8c14-d967e081b2bb","method":"POST","path":"/api/admin/auth/login","status":429,"durationMs":0}
+apps/worker test: # {"level":"info","event":"request.complete","requestId":"e5957588-1825-4327-8176-0de8dc972948","method":"POST","path":"/api/admin/auth/login","status":429,"durationMs":1}
+apps/worker test: # {"level":"info","event":"request.complete","requestId":"61c53691-c407-470e-a765-f22527ea7334","method":"GET","path":"/api/health","status":200,"durationMs":1}
+apps/worker test: # {"level":"info","event":"request.complete","requestId":"39b83406-9ac4-41e7-9f1c-78ff0c62f26e","method":"GET","path":"/api/health","status":200,"durationMs":1}
+apps/worker test: # Subtest: five failed logins trigger the persisted rate limit
+apps/worker test: ok 5 - five failed logins trigger the persisted rate limit
+apps/worker test:   ---
+apps/worker test:   duration_ms: 19.114699
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: global security headers cover API and browser responses
+apps/worker test: ok 6 - global security headers cover API and browser responses
+apps/worker test:   ---
+apps/worker test:   duration_ms: 1.226273
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: health reports the immutable Cloudflare Worker version metadata
+apps/worker test: ok 7 - health reports the immutable Cloudflare Worker version metadata
+apps/worker test:   ---
+apps/worker test:   duration_ms: 0.826479
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: category deletion is blocked when products still reference the category
+apps/worker test: ok 8 - category deletion is blocked when products still reference the category
+apps/worker test:   ---
+apps/worker test:   duration_ms: 104.873361
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: tag deletion is blocked while an active product references the tag
+apps/worker test: ok 9 - tag deletion is blocked while an active product references the tag
+apps/worker test:   ---
+apps/worker test:   duration_ms: 5.137436
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: customer-service connection deletion is blocked while conversion targets use it
+apps/worker test: ok 10 - customer-service connection deletion is blocked while conversion targets use it
+apps/worker test:   ---
+apps/worker test:   duration_ms: 1.706997
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: conversion-group deletion is blocked while targets or products still depend on it
+apps/worker test: ok 11 - conversion-group deletion is blocked while targets or products still depend on it
+apps/worker test:   ---
+apps/worker test:   duration_ms: 1.632356
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: FAQ batch delete is idempotent and deleted FAQs can be restored
+apps/worker test: ok 12 - FAQ batch delete is idempotent and deleted FAQs can be restored
+apps/worker test:   ---
+apps/worker test:   duration_ms: 10.73114
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: product input normalizes online address and requires cover image to belong to product media
+apps/worker test: ok 13 - product input normalizes online address and requires cover image to belong to product media
+apps/worker test:   ---
+apps/worker test:   duration_ms: 0.561935
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: published product dependency validation accepts a ready link product and rejects mode mismatch
+apps/worker test: ok 14 - published product dependency validation accepts a ready link product and rejects mode mismatch
+apps/worker test:   ---
+apps/worker test:   duration_ms: 0.74665
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: published products reject missing media while offline products may omit an address
+apps/worker test: ok 15 - published products reject missing media while offline products may omit an address
+apps/worker test:   ---
+apps/worker test:   duration_ms: 0.969982
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: product tag bindings enforce uniqueness, section ownership, enable state and the 12-tag cap
+apps/worker test: ok 16 - product tag bindings enforce uniqueness, section ownership, enable state and the 12-tag cap
+apps/worker test:   ---
+apps/worker test:   duration_ms: 0.98224
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: product create/update media statements and tag replacement preserve deterministic ordering
+apps/worker test: ok 17 - product create/update media statements and tag replacement preserve deterministic ordering
+apps/worker test:   ---
+apps/worker test:   duration_ms: 1.760937
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: an unused D1 media asset becomes snapshot-protected while the current retained version can still reference it
+apps/worker test: ok 18 - an unused D1 media asset becomes snapshot-protected while the current retained version can still reference it
+apps/worker test:   ---
+apps/worker test:   duration_ms: 2.90015
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: snapshot protection expires naturally after the guard version leaves the retained-version window
+apps/worker test: ok 19 - snapshot protection expires naturally after the guard version leaves the retained-version window
+apps/worker test:   ---
+apps/worker test:   duration_ms: 0.560984
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: a live D1 reference takes precedence and clears a stale snapshot cleanup guard
+apps/worker test: ok 20 - a live D1 reference takes precedence and clears a stale snapshot cleanup guard
+apps/worker test:   ---
+apps/worker test:   duration_ms: 0.582005
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: non-image R2 objects are never eligible for media cleanup even when D1 has no reference
+apps/worker test: ok 21 - non-image R2 objects are never eligible for media cleanup even when D1 has no reference
+apps/worker test:   ---
+apps/worker test:   duration_ms: 0.595175
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: an untracked image object with no D1 media record is cleanup-eligible and cannot receive a false snapshot guard
+apps/worker test: ok 22 - an untracked image object with no D1 media record is cleanup-eligible and cannot receive a false snapshot guard
+apps/worker test:   ---
+apps/worker test:   duration_ms: 0.488075
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: link target validation accepts HTTP(S) and strips customer-service fields
+apps/worker test: ok 23 - link target validation accepts HTTP(S) and strips customer-service fields
+apps/worker test:   ---
+apps/worker test:   duration_ms: 7.263595
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: link target validation rejects non HTTP(S) protocols
+apps/worker test: ok 24 - link target validation rejects non HTTP(S) protocols
+apps/worker test:   ---
+apps/worker test:   duration_ms: 0.39034
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: online support no longer accepts a separate conversion target
+apps/worker test: ok 25 - online support no longer accepts a separate conversion target
+apps/worker test:   ---
+apps/worker test:   duration_ms: 0.339014
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: online support group requires only a customer-service connection
+apps/worker test: ok 26 - online support group requires only a customer-service connection
+apps/worker test:   ---
+apps/worker test:   duration_ms: 0.411462
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: link group strips customer-service binding fields
+apps/worker test: ok 27 - link group strips customer-service binding fields
+apps/worker test:   ---
+apps/worker test:   duration_ms: 0.311142
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: conversion group validation rejects unsupported modes
+apps/worker test: ok 28 - conversion group validation rejects unsupported modes
+apps/worker test:   ---
+apps/worker test:   duration_ms: 0.198134
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: production link selector rotates A → B → C → A
+apps/worker test: ok 29 - production link selector rotates A → B → C → A
+apps/worker test:   ---
+apps/worker test:   duration_ms: 7.809146
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: disabled or empty link groups never consume the production cursor
+apps/worker test: ok 30 - disabled or empty link groups never consume the production cursor
+apps/worker test:   ---
+apps/worker test:   duration_ms: 0.273216
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: online support groups never enter link target rotation
+apps/worker test: ok 31 - online support groups never enter link target rotation
+apps/worker test:   ---
+apps/worker test:   duration_ms: 0.451781
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: integration parser validates public runtime endpoints and product sync
+apps/worker test: ok 32 - integration parser validates public runtime endpoints and product sync
+apps/worker test:   ---
+apps/worker test:   duration_ms: 2.05206
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: integration parser rejects invalid protocol envelopes
+apps/worker test: ok 33 - integration parser rejects invalid protocol envelopes
+apps/worker test:   ---
+apps/worker test:   duration_ms: 0.615676
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: integration parser requires HTTPS client endpoint
+apps/worker test: ok 34 - integration parser requires HTTPS client endpoint
+apps/worker test:   ---
+apps/worker test:   duration_ms: 0.283461
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: integration parser requires WSS realtime endpoint
+apps/worker test: ok 35 - integration parser requires WSS realtime endpoint
+apps/worker test:   ---
+apps/worker test:   duration_ms: 0.304282
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: integration parser rejects malformed product catalog result
+apps/worker test: ok 36 - integration parser rejects malformed product catalog result
+apps/worker test:   ---
+apps/worker test:   duration_ms: 0.37014
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: Home recommendation sections are not capped at three
+apps/worker test: ok 37 - Home recommendation sections are not capped at three
+apps/worker test:   ---
+apps/worker test:   duration_ms: 1.246322
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: Home shortcut sections keep their seven-item cap
+apps/worker test: ok 38 - Home shortcut sections keep their seven-item cap
+apps/worker test:   ---
+apps/worker test:   duration_ms: 0.232876
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: D1 schema permits recommendation slots beyond three
+apps/worker test: ok 39 - D1 schema permits recommendation slots beyond three
+apps/worker test:   ---
+apps/worker test:   duration_ms: 0.459322
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+packages/storefront-ui test:  [32m✓[39m src/loading.test.tsx [2m([22m[2m2 tests[22m[2m)[22m[32m 22[2mms[22m[39m
+packages/shared test:  [32m✓[39m src/index.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 8[2mms[22m[39m
+packages/shared test:  [32m✓[39m src/markdown.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 26[2mms[22m[39m
+apps/worker test: # Subtest: idempotency key normalization rejects missing and oversized keys
+apps/worker test: ok 40 - idempotency key normalization rejects missing and oversized keys
+apps/worker test:   ---
+apps/worker test:   duration_ms: 0.992946
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: stored idempotency responses expire exactly 24 hours later and are scoped
+apps/worker test: ok 41 - stored idempotency responses expire exactly 24 hours later and are scoped
+apps/worker test:   ---
+apps/worker test:   duration_ms: 1.325369
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: expired idempotency cleanup is bounded to 250 rows per pass
+apps/worker test: ok 42 - expired idempotency cleanup is bounded to 250 rows per pass
+apps/worker test:   ---
+apps/worker test:   duration_ms: 0.354307
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+packages/storefront-ui test:  [32m✓[39m src/index.test.tsx [2m([22m[2m7 tests[22m[2m)[22m[32m 52[2mms[22m[39m
+apps/worker test: # Subtest: read prunes expired rows before returning a valid scoped response
+apps/worker test: ok 43 - read prunes expired rows before returning a valid scoped response
+apps/worker test:   ---
+apps/worker test:   duration_ms: 0.463219
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: invalid stored JSON is treated as a cache miss instead of breaking the operation
+apps/worker test: ok 44 - invalid stored JSON is treated as a cache miss instead of breaking the operation
+apps/worker test:   ---
+apps/worker test:   duration_ms: 3.914428
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+packages/storefront-ui test: [2m Test Files [22m [1m[32m2 passed[39m[22m[90m (2)[39m
+packages/storefront-ui test: [2m      Tests [22m [1m[32m9 passed[39m[22m[90m (9)[39m
+packages/storefront-ui test: [2m   Start at [22m 06:24:16
+packages/storefront-ui test: [2m   Duration [22m 1.42s[2m (transform 695ms, setup 0ms, collect 969ms, tests 74ms, environment 6ms, prepare 638ms)[22m
+packages/shared test: [2m Test Files [22m [1m[32m2 passed[39m[22m[90m (2)[39m
+packages/shared test: [2m      Tests [22m [1m[32m7 passed[39m[22m[90m (7)[39m
+packages/shared test: [2m   Start at [22m 06:24:17
+packages/shared test: [2m   Duration [22m 1.22s[2m (transform 270ms, setup 0ms, collect 402ms, tests 35ms, environment 0ms, prepare 589ms)[22m
+apps/worker test: # Subtest: module-key validation permits the supported independent publication units only
+apps/worker test: ok 45 - module-key validation permits the supported independent publication units only
+apps/worker test:   ---
+apps/worker test:   duration_ms: 10.247781
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: modular pointer reader distinguishes the legacy pointer from a valid schema-v2 composite pointer
+apps/worker test: ok 46 - modular pointer reader distinguishes the legacy pointer from a valid schema-v2 composite pointer
+apps/worker test:   ---
+apps/worker test:   duration_ms: 5.797687
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: rolling back one business section changes only that section reference in the composite pointer
+apps/worker test: ok 47 - rolling back one business section changes only that section reference in the composite pointer
+apps/worker test:   ---
+apps/worker test:   duration_ms: 7.345608
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: modular rollback restores the entire previous composite pointer when the D1 transition fails
+apps/worker test: ok 48 - modular rollback restores the entire previous composite pointer when the D1 transition fails
+apps/worker test:   ---
+apps/worker test:   duration_ms: 0.974268
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: modular rollback refuses a version whose retained R2 manifest is missing
+apps/worker test: ok 49 - modular rollback refuses a version whose retained R2 manifest is missing
+apps/worker test:   ---
+apps/worker test:   duration_ms: 0.459003
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: public storefront discovery returns the current admin-configured R2 domain from D1
+apps/worker test: ok 50 - public storefront discovery returns the current admin-configured R2 domain from D1
+apps/worker test:   ---
+apps/worker test:   duration_ms: 88.164125
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: public storefront discovery reports an unconfigured R2 domain without inventing a default
+apps/worker test: ok 51 - public storefront discovery reports an unconfigured R2 domain without inventing a default
+apps/worker test:   ---
+apps/worker test:   duration_ms: 1.037252
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: public storefront bootstrap consolidates the critical published snapshots
+apps/worker test: ok 52 - public storefront bootstrap consolidates the critical published snapshots
+apps/worker test:   ---
+apps/worker test:   duration_ms: 10.562629
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: storefront bootstrap runtime reads media and bottom navigation in one D1 query
+apps/worker test: ok 53 - storefront bootstrap runtime reads media and bottom navigation in one D1 query
+apps/worker test:   ---
+apps/worker test:   duration_ms: 20.654078
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: storefront bootstrap runtime rejects incomplete navigation without extra D1 reads
+apps/worker test: ok 54 - storefront bootstrap runtime rejects incomplete navigation without extra D1 reads
+apps/worker test:   ---
+apps/worker test:   duration_ms: 0.315309
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # {"level":"error","event":"storefront.bootstrap_snapshot_write_failed","pointerVersion":"20260819190000-pointer-bootstrap01","errorName":"Error","errorMessage":"simulated R2 write failure"}
+apps/worker test: # Subtest: bootstrap snapshot write failure never breaks the existing published-content fallback
+apps/worker test: ok 55 - bootstrap snapshot write failure never breaks the existing published-content fallback
+apps/worker test:   ---
+apps/worker test:   duration_ms: 3.891264
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: bootstrap snapshot refuses a cached bundle from a different pointer version
+apps/worker test: ok 56 - bootstrap snapshot refuses a cached bundle from a different pointer version
+apps/worker test:   ---
+apps/worker test:   duration_ms: 0.84072
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+packages/shared test: Done
+packages/storefront-ui test: Done
+apps/worker test: # Subtest: public snapshot path accepts current and immutable snapshot JSON
+apps/worker test: ok 57 - public snapshot path accepts current and immutable snapshot JSON
+apps/worker test:   ---
+apps/worker test:   duration_ms: 1.222226
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: public snapshot path rejects traversal and non-public object shapes
+apps/worker test: ok 58 - public snapshot path rejects traversal and non-public object shapes
+apps/worker test:   ---
+apps/worker test:   duration_ms: 0.194589
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: public pointer stays short cached while immutable snapshots stay long cached
+apps/worker test: ok 59 - public pointer stays short cached while immutable snapshots stay long cached
+apps/worker test:   ---
+apps/worker test:   duration_ms: 0.184184
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: public content route reads only the requested public JSON object from R2
+apps/worker test: ok 60 - public content route reads only the requested public JSON object from R2
+apps/worker test:   ---
+apps/worker test:   duration_ms: 33.018394
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: public content route never exposes keys outside public snapshot prefixes
+apps/worker test: ok 61 - public content route never exposes keys outside public snapshot prefixes
+apps/worker test:   ---
+apps/worker test:   duration_ms: 1.030532
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # {"level":"info","event":"request.complete","requestId":"92ddd87f-b8e9-4be9-9e7c-7ee49ad76a32","method":"GET","path":"/go/product-1","status":302,"durationMs":3}
+apps/worker test: # {"level":"info","event":"request.complete","requestId":"5cf5f29a-e293-4dc6-b87c-06f1134acc07","method":"GET","path":"/go/product-1","status":302,"durationMs":1}
+apps/worker test: # {"level":"info","event":"request.complete","requestId":"97b484a6-0ce7-449e-8a74-67b06136b3eb","method":"GET","path":"/go/product-1","status":302,"durationMs":1}
+apps/worker test: # {"level":"info","event":"request.complete","requestId":"39aa03e9-e719-4d0d-8707-bab7b838dd24","method":"GET","path":"/go/product-1","status":302,"durationMs":0}
+apps/worker test: # {"level":"info","event":"request.complete","requestId":"cbae0eda-682f-4012-818b-7d4752523f0b","method":"GET","path":"/api/public/storefront/cta/product-1","status":200,"durationMs":5}
+apps/worker test: # {"level":"info","event":"request.complete","requestId":"189095f8-8108-4a16-8f85-4aff6221724f","method":"GET","path":"/api/public/storefront/cta/product-1","status":200,"durationMs":1}
+apps/worker test: # {"level":"info","event":"request.complete","requestId":"07e3af1f-5686-48af-9a7a-845ef735e544","method":"GET","path":"/api/public/storefront/cta/product-1","status":200,"durationMs":0}
+apps/worker test: # {"level":"info","event":"request.complete","requestId":"827d2d09-ef0b-43ac-8aac-acf6e1d7bc8c","method":"GET","path":"/go/product-1","status":302,"durationMs":0}
+apps/worker test: # {"level":"info","event":"request.complete","requestId":"125bdb29-6b84-424d-a3c6-e14b2e11b717","method":"GET","path":"/go/product-1","status":200,"durationMs":0}
+apps/worker test: # {"level":"info","event":"request.complete","requestId":"dee71356-50f2-42d1-b231-15ef8f4d5141","method":"GET","path":"/go/not valid","status":404,"durationMs":1}
+apps/worker test: # {"level":"info","event":"request.complete","requestId":"306dec18-a971-468d-af2a-fc67ccf46f3b","method":"GET","path":"/go/missing-product","status":404,"durationMs":0}
+apps/worker test: # Subtest: GET /go/:code keeps link targets on production round-robin without a Site traffic write
+apps/worker test: ok 62 - GET /go/:code keeps link targets on production round-robin without a Site traffic write
+apps/worker test:   ---
+apps/worker test:   duration_ms: 46.073377
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: GET realtime CTA state reads current configuration without consuming round-robin
+apps/worker test: ok 63 - GET realtime CTA state reads current configuration without consuming round-robin
+apps/worker test:   ---
+apps/worker test:   duration_ms: 10.209995
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: GET realtime CTA state hides unavailable or unbound conversion configuration
+apps/worker test: ok 64 - GET realtime CTA state hides unavailable or unbound conversion configuration
+apps/worker test:   ---
+apps/worker test:   duration_ms: 5.320713
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: customer-service CTA stays inside Site Messages, generates a handoff ID, and does not write a Site traffic ledger
+apps/worker test: ok 65 - customer-service CTA stays inside Site Messages, generates a handoff ID, and does not write a Site traffic ledger
+apps/worker test:   ---
+apps/worker test:   duration_ms: 1.566618
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: customer-service CTA can return the compose path for SPA navigation without a Site traffic write
+apps/worker test: ok 66 - customer-service CTA can return the compose path for SPA navigation without a Site traffic write
+apps/worker test:   ---
+apps/worker test:   duration_ms: 2.772811
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: invalid or unpublished products never consume the production cursor
+apps/worker test: ok 67 - invalid or unpublished products never consume the production cursor
+apps/worker test:   ---
+apps/worker test:   duration_ms: 3.881649
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: fallback path accepts tracked object keys and rejects traversal
+apps/worker test: ok 68 - fallback path accepts tracked object keys and rejects traversal
+apps/worker test:   ---
+apps/worker test:   duration_ms: 4.43388
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: same-origin fallback streams only ready D1-tracked media from R2
+apps/worker test: ok 69 - same-origin fallback streams only ready D1-tracked media from R2
+apps/worker test:   ---
+apps/worker test:   duration_ms: 41.021424
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: same-origin fallback preserves byte ranges for video playback
+apps/worker test: ok 70 - same-origin fallback preserves byte ranges for video playback
+apps/worker test:   ---
+apps/worker test:   duration_ms: 1.18404
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: untracked objects and malformed ranges never read R2
+apps/worker test: ok 71 - untracked objects and malformed ranges never read R2
+apps/worker test:   ---
+apps/worker test:   duration_ms: 1.012675
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: storefront search index serves one immutable versioned R2 object
+apps/worker test: ok 72 - storefront search index serves one immutable versioned R2 object
+apps/worker test:   ---
+apps/worker test:   duration_ms: 48.574905
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: storefront search index rejects invalid pointer versions before reading R2
+apps/worker test: ok 73 - storefront search index rejects invalid pointer versions before reading R2
+apps/worker test:   ---
+apps/worker test:   duration_ms: 1.166945
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: SEO routes return real robots text and a published-content sitemap
+apps/worker test: ok 74 - SEO routes return real robots text and a published-content sitemap
+apps/worker test:   ---
+apps/worker test:   duration_ms: 40.664488
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: Storefront HTML has route metadata, canonical URLs and structured data
+apps/worker test: ok 75 - Storefront HTML has route metadata, canonical URLs and structured data
+apps/worker test:   ---
+apps/worker test:   duration_ms: 4.091862
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: Home HTML preloads the responsive LCP image before client rendering
+apps/worker test: ok 76 - Home HTML preloads the responsive LCP image before client rendering
+apps/worker test:   ---
+apps/worker test:   duration_ms: 2.232899
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: Storefront normalizes valid routes and returns a real noindex 404
+apps/worker test: ok 77 - Storefront normalizes valid routes and returns a real noindex 404
+apps/worker test:   ---
+apps/worker test:   duration_ms: 4.895266
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # {"level":"info","event":"request.complete","requestId":"b4ababe1-be9c-4eb1-999d-7b13bc7f5004","method":"GET","path":"/api/public/storefront/support/connections","status":200,"durationMs":2}
+apps/worker test: # {"level":"info","event":"request.complete","requestId":"93552ece-72fe-4b4a-84f7-df14ed714b8f","method":"GET","path":"/api/public/storefront/support/connections","status":200,"durationMs":1}
+apps/worker test: # {"level":"info","event":"request.complete","requestId":"cb027ff9-d0f1-4309-b4f7-5e591e78aaf8","method":"GET","path":"/api/public/storefront/support/route/product-1","status":200,"durationMs":1}
+apps/worker test: # Subtest: Storefront exposes only verified public support runtime endpoints
+apps/worker test: ok 78 - Storefront exposes only verified public support runtime endpoints
+apps/worker test:   ---
+apps/worker test:   duration_ms: 28.093054
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: Storefront hides unverified support connections
+apps/worker test: ok 79 - Storefront hides unverified support connections
+apps/worker test:   ---
+apps/worker test:   duration_ms: 1.568561
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: Product support route returns customer-service connection and demand context
+apps/worker test: ok 80 - Product support route returns customer-service connection and demand context
+apps/worker test:   ---
+apps/worker test:   duration_ms: 2.004239
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: PWA app icon has an independent setting and never reads the webpage logo
+apps/worker test: ok 81 - PWA app icon has an independent setting and never reads the webpage logo
+apps/worker test:   ---
+apps/worker test:   duration_ms: 1.397998
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: storefront CSP permits secure customer-service WebSocket connections
+apps/worker test: ok 82 - storefront CSP permits secure customer-service WebSocket connections
+apps/worker test:   ---
+apps/worker test:   duration_ms: 1.221665
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: imports a shadcn registry theme into site tokens
+apps/worker test: ok 83 - imports a shadcn registry theme into site tokens
+apps/worker test:   ---
+apps/worker test:   duration_ms: 4.099433
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: normalizes legacy bare shadcn HSL triples
+apps/worker test: ok 84 - normalizes legacy bare shadcn HSL triples
+apps/worker test:   ---
+apps/worker test:   duration_ms: 0.80042
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: rejects shadcn theme when requested mode is missing
+apps/worker test: ok 85 - rejects shadcn theme when requested mode is missing
+apps/worker test:   ---
+apps/worker test:   duration_ms: 0.189081
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: custom imported theme can be validated and resolved without external source
+apps/worker test: ok 86 - custom imported theme can be validated and resolved without external source
+apps/worker test:   ---
+apps/worker test:   duration_ms: 0.786369
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: Premium Noir Dating V3 resolves a complete commercial UI recipe
+apps/worker test: ok 87 - Premium Noir Dating V3 resolves a complete commercial UI recipe
+apps/worker test:   ---
+apps/worker test:   duration_ms: 0.984513
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: Live uses the restrained intimate visual recipe
+apps/worker test: ok 88 - Live uses the restrained intimate visual recipe
+apps/worker test:   ---
+apps/worker test:   duration_ms: 0.170474
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: new official themes provide distinct complete visual recipes
+apps/worker test: ok 89 - new official themes provide distinct complete visual recipes
+apps/worker test:   ---
+apps/worker test:   duration_ms: 0.194239
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: official themes keep their curated recipe while preserving safe overrides
+apps/worker test: ok 90 - official themes keep their curated recipe while preserving safe overrides
+apps/worker test:   ---
+apps/worker test:   duration_ms: 0.360776
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: official theme recipe fields cannot drift through legacy overrides
+apps/worker test: ok 91 - official theme recipe fields cannot drift through legacy overrides
+apps/worker test:   ---
+apps/worker test:   duration_ms: 0.460545
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: Theme Center persists a bounded backend-driven install prompt
+apps/worker test: ok 92 - Theme Center persists a bounded backend-driven install prompt
+apps/worker test:   ---
+apps/worker test:   duration_ms: 0.67905
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: custom theme persists through the official-key D1 constraint
+apps/worker test: ok 93 - custom theme persists through the official-key D1 constraint
+apps/worker test:   ---
+apps/worker test:   duration_ms: 0.298514
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: # Subtest: custom key is rejected unless imported tokens are present
+apps/worker test: ok 94 - custom key is rejected unless imported tokens are present
+apps/worker test:   ---
+apps/worker test:   duration_ms: 0.166657
+apps/worker test:   type: 'test'
+apps/worker test:   ...
+apps/worker test: 1..94
+apps/worker test: # tests 94
+apps/worker test: # suites 0
+apps/worker test: # pass 94
+apps/worker test: # fail 0
+apps/worker test: # cancelled 0
+apps/worker test: # skipped 0
+apps/worker test: # todo 0
+apps/worker test: # duration_ms 3587.892825
+apps/worker test: Done
+apps/admin test$ node --test --experimental-strip-types --import ./test/register-ts-resolver.mjs test/*.test.mjs
+apps/storefront test$ node --test --experimental-strip-types --import ./test/register-ts-resolver.mjs test/*.test.mjs
+apps/admin test: TAP version 13
+apps/storefront test: TAP version 13
+apps/storefront test: # Subtest: GA4 queues page views immediately and loads the async tag during browser idle
+apps/storefront test: ok 1 - GA4 queues page views immediately and loads the async tag during browser idle
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 16.11379
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/admin test: # Subtest: published storefront source mutations notify the dashboard
+apps/admin test: ok 1 - published storefront source mutations notify the dashboard
+apps/admin test:   ---
+apps/admin test:   duration_ms: 1.317018
+apps/admin test:   type: 'test'
+apps/admin test:   ...
+apps/admin test: # Subtest: read requests never notify
+apps/admin test: ok 2 - read requests never notify
+apps/admin test:   ---
+apps/admin test:   duration_ms: 0.21516
+apps/admin test:   type: 'test'
+apps/admin test:   ...
+apps/admin test: # Subtest: mutations outside immutable publish sources do not trigger a publish-status refresh
+apps/admin test: ok 3 - mutations outside immutable publish sources do not trigger a publish-status refresh
+apps/admin test:   ---
+apps/admin test:   duration_ms: 0.202832
+apps/admin test:   type: 'test'
+apps/admin test:   ...
+apps/admin test: # Subtest: non-admin mutation paths do not notify
+apps/admin test: ok 4 - non-admin mutation paths do not notify
+apps/admin test:   ---
+apps/admin test:   duration_ms: 0.177974
+apps/admin test:   type: 'test'
+apps/admin test:   ...
+apps/admin test: # Subtest: unauthorized business admin responses expire the active session globally
+apps/admin test: ok 5 - unauthorized business admin responses expire the active session globally
+apps/admin test:   ---
+apps/admin test:   duration_ms: 0.201329
+apps/admin test:   type: 'test'
+apps/admin test:   ...
+apps/admin test: # Subtest: auth endpoints and non-401 responses do not emit session expiry
+apps/admin test: ok 6 - auth endpoints and non-401 responses do not emit session expiry
+apps/admin test:   ---
+apps/admin test:   duration_ms: 0.168601
+apps/admin test:   type: 'test'
+apps/admin test:   ...
+apps/storefront test: # Subtest: Storefront fallback, FAQ, Messages, and touch surfaces stay app-native
+apps/storefront test: ok 2 - Storefront fallback, FAQ, Messages, and touch surfaces stay app-native
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 11.71421
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: browse keeps the first mobile viewport dense without adding initial product requests
+apps/storefront test: ok 3 - browse keeps the first mobile viewport dense without adding initial product requests
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 2.359096
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: catalog cards and filters share one touch-first visual contract
+apps/storefront test: ok 4 - catalog cards and filters share one touch-first visual contract
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 13.374363
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/admin test: # Subtest: explicit dirty source enters and leaves the global unsaved snapshot
+apps/admin test: ok 7 - explicit dirty source enters and leaves the global unsaved snapshot
+apps/admin test:   ---
+apps/admin test:   duration_ms: 1.080787
+apps/admin test:   type: 'test'
+apps/admin test:   ...
+apps/admin test: # Subtest: multiple explicit dirty sources are tracked independently
+apps/admin test: ok 8 - multiple explicit dirty sources are tracked independently
+apps/admin test:   ---
+apps/admin test:   duration_ms: 0.199537
+apps/admin test:   type: 'test'
+apps/admin test:   ...
+apps/admin test: # Subtest: storage cleanup opens with one R2 page and makes deeper scanning explicit
+apps/admin test: ok 9 - storage cleanup opens with one R2 page and makes deeper scanning explicit
+apps/admin test:   ---
+apps/admin test:   duration_ms: 4.905451
+apps/admin test:   type: 'test'
+apps/admin test:   ...
+apps/storefront test: # Subtest: desktop section and browse catalog surfaces stay centered
+apps/storefront test: ok 5 - desktop section and browse catalog surfaces stay centered
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 6.971101
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: catalog and browse product cards request responsive R2 image variants
+apps/storefront test: ok 6 - catalog and browse product cards request responsive R2 image variants
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 4.507079
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: storefront attachment plus is centered geometrically instead of by font metrics
+apps/storefront test: ok 7 - storefront attachment plus is centered geometrically instead of by font metrics
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 1.256517
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: support compose failures expose explicit retry without automatic side-effect retries
+apps/storefront test: ok 8 - support compose failures expose explicit retry without automatic side-effect retries
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 4.3062
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/admin test: # Subtest: conversion API errors preserve field and dependency counts
+apps/admin test: ok 10 - conversion API errors preserve field and dependency counts
+apps/admin test:   ---
+apps/admin test:   duration_ms: 72.341909
+apps/admin test:   type: 'test'
+apps/admin test:   ...
+apps/storefront test: # Subtest: storefront mobile chat composer uses stable keyboard-safe geometry
+apps/storefront test: ok 9 - storefront mobile chat composer uses stable keyboard-safe geometry
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 4.363695
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/admin test: # Subtest: customer service admin stylesheet matches rendered workbench classes
+apps/admin test: ok 11 - customer service admin stylesheet matches rendered workbench classes
+apps/admin test:   ---
+apps/admin test:   duration_ms: 1.404067
+apps/admin test:   type: 'test'
+apps/admin test:   ...
+apps/admin test: # Subtest: Home recommendations have no fixed item cap in the admin
+apps/admin test: ok 12 - Home recommendations have no fixed item cap in the admin
+apps/admin test:   ---
+apps/admin test:   duration_ms: 1.143069
+apps/admin test:   type: 'test'
+apps/admin test:   ...
+apps/admin test: # Subtest: static JPG PNG and WebP are routed through browser compression
+apps/admin test: ok 13 - static JPG PNG and WebP are routed through browser compression
+apps/admin test:   ---
+apps/admin test:   duration_ms: 1.087326
+apps/admin test:   type: 'test'
+apps/admin test:   ...
+apps/admin test: # Subtest: GIF and video bypass static Canvas compression
+apps/admin test: ok 14 - GIF and video bypass static Canvas compression
+apps/admin test:   ---
+apps/admin test:   duration_ms: 0.205706
+apps/admin test:   type: 'test'
+apps/admin test:   ...
+apps/admin test: # Subtest: static image compression profile remains explicit
+apps/admin test: ok 15 - static image compression profile remains explicit
+apps/admin test:   ---
+apps/admin test:   duration_ms: 0.16823
+apps/admin test:   type: 'test'
+apps/admin test:   ...
+apps/admin test: # Subtest: paged media request sends server-side filters and cursor
+apps/admin test: ok 16 - paged media request sends server-side filters and cursor
+apps/admin test:   ---
+apps/admin test:   duration_ms: 123.154271
+apps/admin test:   type: 'test'
+apps/admin test:   ...
+apps/admin test: # Subtest: all-folder filter is omitted from the request
+apps/admin test: ok 17 - all-folder filter is omitted from the request
+apps/admin test:   ---
+apps/admin test:   duration_ms: 0.73996
+apps/admin test:   type: 'test'
+apps/admin test:   ...
+apps/admin test: # Subtest: invalid media page payload is rejected
+apps/admin test: ok 18 - invalid media page payload is rejected
+apps/admin test:   ---
+apps/admin test:   duration_ms: 1.43282
+apps/admin test:   type: 'test'
+apps/admin test:   ...
+apps/admin test: # Subtest: media page API errors preserve server message and code
+apps/admin test: ok 19 - media page API errors preserve server message and code
+apps/admin test:   ---
+apps/admin test:   duration_ms: 0.689565
+apps/admin test:   type: 'test'
+apps/admin test:   ...
+apps/admin test: # Subtest: drafts require core content but can be saved before publish dependencies are ready
+apps/admin test: ok 20 - drafts require core content but can be saved before publish dependencies are ready
+apps/admin test:   ---
+apps/admin test:   duration_ms: 1.421333
+apps/admin test:   type: 'test'
+apps/admin test:   ...
+apps/admin test: # Subtest: a complete online product can be published
+apps/admin test: ok 21 - a complete online product can be published
+apps/admin test:   ---
+apps/admin test:   duration_ms: 0.390821
+apps/admin test:   type: 'test'
+apps/admin test:   ...
+apps/admin test: # Subtest: published products reject unavailable classifications and excessive tags
+apps/admin test: ok 22 - published products reject unavailable classifications and excessive tags
+apps/admin test:   ---
+apps/admin test:   duration_ms: 0.376519
+apps/admin test:   type: 'test'
+apps/admin test:   ...
+apps/admin test: # Subtest: conversion groups must match the product mode and have an active target
+apps/admin test: ok 23 - conversion groups must match the product mode and have an active target
+apps/admin test:   ---
+apps/admin test:   duration_ms: 1.91092
+apps/admin test:   type: 'test'
+apps/admin test:   ...
+apps/admin test: # Subtest: published products require cover-eligible media without requiring an offline address
+apps/admin test: ok 24 - published products require cover-eligible media without requiring an offline address
+apps/admin test:   ---
+apps/admin test:   duration_ms: 0.316591
+apps/admin test:   type: 'test'
+apps/admin test:   ...
+apps/storefront test: # Subtest: content origin normalization accepts public HTTP(S) URLs and removes the trailing slash
+apps/storefront test: ok 10 - content origin normalization accepts public HTTP(S) URLs and removes the trailing slash
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 4.572977
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: public content URL builder normalizes an explicit origin
+apps/storefront test: ok 11 - public content URL builder normalizes an explicit origin
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 0.257002
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: legacy schema-v1 bootstrap remains readable and normalizes missing tags/featured order
+apps/storefront test: ok 12 - legacy schema-v1 bootstrap remains readable and normalizes missing tags/featured order
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 54.362628
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: Storefront reads JSON from its Worker and media from runtime configuration
+apps/storefront test: ok 13 - Storefront reads JSON from its Worker and media from runtime configuration
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 5.435379
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: normal schema-v2 startup gets navigation from the single bootstrap request
+apps/storefront test: ok 14 - normal schema-v2 startup gets navigation from the single bootstrap request
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 1.265961
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: changing the admin R2 domain is picked up without rebuilding the Storefront
+apps/storefront test: ok 15 - changing the admin R2 domain is picked up without rebuilding the Storefront
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 0.682545
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: schema-v2 bootstrap reads the compact home summary without preloading section snapshots
+apps/storefront test: ok 16 - schema-v2 bootstrap reads the compact home summary without preloading section snapshots
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 7.150267
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: schema-v2 bootstrap falls back to eager section composition when a derived home snapshot does not exist yet
+apps/storefront test: ok 17 - schema-v2 bootstrap falls back to eager section composition when a derived home snapshot does not exist yet
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 35.086058
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: section, canonical product and FAQ reads follow module versions without unrelated section fan-out
+apps/storefront test: ok 18 - section, canonical product and FAQ reads follow module versions without unrelated section fan-out
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 6.607991
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: product detail reuses a bootstrap product summary before loading a section snapshot
+apps/storefront test: ok 19 - product detail reuses a bootstrap product summary before loading a section snapshot
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 4.255285
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: product detail keeps the section fallback when no remembered summary is available
+apps/storefront test: ok 20 - product detail keeps the section fallback when no remembered summary is available
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 2.566264
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: schema-v2 bootstrap rejects a module whose contentVersion does not match the pointer
+apps/storefront test: ok 21 - schema-v2 bootstrap rejects a module whose contentVersion does not match the pointer
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 4.001477
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/admin test: # Subtest: publish status validates the response and uses authenticated no-cache reads
+apps/admin test: ok 25 - publish status validates the response and uses authenticated no-cache reads
+apps/admin test:   ---
+apps/admin test:   duration_ms: 82.668006
+apps/admin test:   type: 'test'
+apps/admin test:   ...
+apps/admin test: # Subtest: concurrent publish status reads share one worker request
+apps/admin test: ok 26 - concurrent publish status reads share one worker request
+apps/admin test:   ---
+apps/admin test:   duration_ms: 1.414352
+apps/admin test:   type: 'test'
+apps/admin test:   ...
+apps/admin test: # Subtest: publish status rejects malformed successful responses
+apps/admin test: ok 27 - publish status rejects malformed successful responses
+apps/admin test:   ---
+apps/admin test:   duration_ms: 1.098533
+apps/admin test:   type: 'test'
+apps/admin test:   ...
+apps/admin test: # Subtest: publish API preserves server error codes and messages
+apps/admin test: ok 28 - publish API preserves server error codes and messages
+apps/admin test:   ---
+apps/admin test:   duration_ms: 1.108328
+apps/admin test:   type: 'test'
+apps/admin test:   ...
+apps/storefront test: # Subtest: conversion surfaces consume Theme Center material tokens without changing layout ownership
+apps/storefront test: ok 22 - conversion surfaces consume Theme Center material tokens without changing layout ownership
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 14.164352
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: critical CTA browser acceptance runs before merge without production data
+apps/storefront test: ok 23 - critical CTA browser acceptance runs before merge without production data
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 6.603825
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: CTA navigation keeps customer service in-app and link handoffs in a new tab
+apps/storefront test: ok 24 - CTA navigation keeps customer service in-app and link handoffs in a new tab
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 5.051848
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: CTA compose creates the conversation before any visitor message
+apps/storefront test: ok 25 - CTA compose creates the conversation before any visitor message
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 1.593959
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: no-agent responses render configured plain text or Markdown without a waiting conversation
+apps/storefront test: ok 26 - no-agent responses render configured plain text or Markdown without a waiting conversation
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 7.184037
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/admin test: # Subtest: site settings keep webpage logo and PWA app icon as separate assets
+apps/admin test: ok 29 - site settings keep webpage logo and PWA app icon as separate assets
+apps/admin test:   ---
+apps/admin test:   duration_ms: 1.590865
+apps/admin test:   type: 'test'
+apps/admin test:   ...
+apps/storefront test: # Subtest: desktop production acceptance and visual v2 shell remain wired
+apps/storefront test: ok 27 - desktop production acceptance and visual v2 shell remain wired
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 11.513984
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/admin test: # Subtest: theme center preview reuses live storefront components instead of swatch-only mocks
+apps/admin test: ok 30 - theme center preview reuses live storefront components instead of swatch-only mocks
+apps/admin test:   ---
+apps/admin test:   duration_ms: 4.771782
+apps/admin test:   type: 'test'
+apps/admin test:   ...
+apps/admin test: # Subtest: theme center keeps theme choice and brand accent without a duplicate preview workbench
+apps/admin test: ok 31 - theme center keeps theme choice and brand accent without a duplicate preview workbench
+apps/admin test:   ---
+apps/admin test:   duration_ms: 1.421573
+apps/admin test:   type: 'test'
+apps/admin test:   ...
+apps/admin test: # Subtest: PWA install prompt is owned by Site Settings
+apps/admin test: ok 32 - PWA install prompt is owned by Site Settings
+apps/admin test:   ---
+apps/admin test:   duration_ms: 0.441356
+apps/admin test:   type: 'test'
+apps/admin test:   ...
+apps/admin test: 1..32
+apps/admin test: # tests 32
+apps/admin test: # suites 0
+apps/admin test: # pass 32
+apps/admin test: # fail 0
+apps/admin test: # cancelled 0
+apps/admin test: # skipped 0
+apps/admin test: # todo 0
+apps/admin test: # duration_ms 1476.186281
+apps/admin test: Done
+apps/storefront test: # Subtest: the initial HTML paint presents app-shell chrome before React starts
+apps/storefront test: ok 28 - the initial HTML paint presents app-shell chrome before React starts
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 5.504561
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: production smoke separates storefront and admin roots
+apps/storefront test: ok 29 - production smoke separates storefront and admin roots
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 2.367168
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: empty Home layout automatically falls back to published sections and recommendations
+apps/storefront test: ok 30 - empty Home layout automatically falls back to published sections and recommendations
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 1.776019
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: configured Home layout keeps valid operator order
+apps/storefront test: ok 31 - configured Home layout keeps valid operator order
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 0.302369
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: Home layout falls back when every configured section is outside the published pointer
+apps/storefront test: ok 32 - Home layout falls back when every configured section is outside the published pointer
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 0.290332
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: published Home layout preserves recommendation sections beyond three
+apps/storefront test: ok 33 - published Home layout preserves recommendation sections beyond three
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 1.773937
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: Home feed does not reintroduce a three-section render cap
+apps/storefront test: ok 34 - Home feed does not reintroduce a three-section render cap
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 0.57865
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: home recommendations stay on a single horizontal product rail
+apps/storefront test: ok 35 - home recommendations stay on a single horizontal product rail
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 7.818692
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: manual shortcuts do not show More just because other sections exist
+apps/storefront test: ok 36 - manual shortcuts do not show More just because other sections exist
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 2.003277
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: automatic shortcuts show every section when there are eight or fewer
+apps/storefront test: ok 37 - automatic shortcuts show every section when there are eight or fewer
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 0.216121
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: automatic shortcuts reserve the eighth slot for More only after eight sections
+apps/storefront test: ok 38 - automatic shortcuts reserve the eighth slot for More only after eight sections
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 0.250923
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: hero active video controls media preload
+apps/storefront test: ok 39 - hero active video controls media preload
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 6.611156
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: home reserves high image priority for one meaningful LCP candidate
+apps/storefront test: ok 40 - home reserves high image priority for one meaningful LCP candidate
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 5.695981
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: product detail loads one primary carousel media eagerly and defers the rest
+apps/storefront test: ok 41 - product detail loads one primary carousel media eagerly and defers the rest
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 1.543372
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: mobile visitor composer stays above the keyboard inside the conversation owner
+apps/storefront test: ok 42 - mobile visitor composer stays above the keyboard inside the conversation owner
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 1.227815
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: mobile visitor chat inherits the shared visual viewport owned by App Shell
+apps/storefront test: ok 43 - mobile visitor chat inherits the shared visual viewport owned by App Shell
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 2.112538
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: mobile persistent surfaces share one App Shell bottom chrome owner
+apps/storefront test: ok 44 - mobile persistent surfaces share one App Shell bottom chrome owner
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 2.4575
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: mobile home keeps discovery content visible and app-like in the first fold
+apps/storefront test: ok 45 - mobile home keeps discovery content visible and app-like in the first fold
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 6.332277
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: mobile Section, Product, Messages, and shell chrome keep native density and theme-owned depth
+apps/storefront test: ok 46 - mobile Section, Product, Messages, and shell chrome keep native density and theme-owned depth
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 6.66475
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: shared navigation runtime owns SPA history direction
+apps/storefront test: ok 47 - shared navigation runtime owns SPA history direction
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 8.582129
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: primary surfaces consume one Theme Center elevation contract
+apps/storefront test: ok 48 - primary surfaces consume one Theme Center elevation contract
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 6.454568
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: product detail keeps a conversion-first mobile hierarchy
+apps/storefront test: ok 49 - product detail keeps a conversion-first mobile hierarchy
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 7.204082
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: mobile product gallery preserves card continuity and clearly communicates swipe navigation
+apps/storefront test: ok 50 - mobile product gallery preserves card continuity and clearly communicates swipe navigation
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 1.981733
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: product CTA displays the live backend label and keeps it visually centered
+apps/storefront test: ok 51 - product CTA displays the live backend label and keeps it visually centered
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 0.414225
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: legacy product routes resolve through one cached search index instead of all sections
+apps/storefront test: ok 52 - legacy product routes resolve through one cached search index instead of all sections
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 1.332269
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: canonical product detail reuses remembered summary as immediate placeholder data
+apps/storefront test: ok 53 - canonical product detail reuses remembered summary as immediate placeholder data
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 0.413544
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: product detail content stays separate from App Shell chrome ownership
+apps/storefront test: ok 54 - product detail content stays separate from App Shell chrome ownership
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 2.45711
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: classification metadata remains filter-only across product presentation
+apps/storefront test: ok 55 - classification metadata remains filter-only across product presentation
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 1.660577
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: browse search remembers product summaries for later product detail navigation
+apps/storefront test: ok 56 - browse search remembers product summaries for later product detail navigation
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 5.033066
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: product detail checks remembered summaries before section fallback
+apps/storefront test: ok 57 - product detail checks remembered summaries before section fallback
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 2.017036
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: production product E2E discovers published routes from public data and targets Shell-owned CTA chrome
+apps/storefront test: ok 58 - production product E2E discovers published routes from public data and targets Shell-owned CTA chrome
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 6.187221
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: production acceptance stays runtime-theme-aware and guards stable storefront contracts
+apps/storefront test: ok 59 - production acceptance stays runtime-theme-aware and guards stable storefront contracts
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 7.040148
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: legacy cross-origin snapshot URLs remain readable during client upgrades
+apps/storefront test: ok 60 - legacy cross-origin snapshot URLs remain readable during client upgrades
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 33.128853
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: public content transport does not inject realtime domain state into snapshots
+apps/storefront test: ok 61 - public content transport does not inject realtime domain state into snapshots
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 1.983977
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: legacy cross-origin challenges fall back to the same-origin Worker
+apps/storefront test: ok 62 - legacy cross-origin challenges fall back to the same-origin Worker
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 1.324707
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: legacy JSON transport falls back while media retries stay component-owned
+apps/storefront test: ok 63 - legacy JSON transport falls back while media retries stay component-owned
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 1.10365
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: aborted public requests are not retried through the fallback route
+apps/storefront test: ok 64 - aborted public requests are not retried through the fallback route
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 0.805356
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: PWA install prompt waits for browsing intent and stays session-bounded
+apps/storefront test: ok 65 - PWA install prompt waits for browsing intent and stays session-bounded
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 10.670822
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: internal navigation preloads lazy route chunks from user intent without API requests
+apps/storefront test: ok 66 - internal navigation preloads lazy route chunks from user intent without API requests
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 6.770538
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: route motion commits one live surface without browser snapshots
+apps/storefront test: ok 67 - route motion commits one live surface without browser snapshots
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 5.995466
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: canonical storefront links use section, product, and FAQ article routes
+apps/storefront test: ok 68 - canonical storefront links use section, product, and FAQ article routes
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 1.113735
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: routing accepts primary pages, FAQ articles, canonical slug paths and legacy paths
+apps/storefront test: ok 69 - routing accepts primary pages, FAQ articles, canonical slug paths and legacy paths
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 1.526397
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: bottom navigation keeps browsing, chat, and FAQ detail routes under their primary tabs
+apps/storefront test: ok 70 - bottom navigation keeps browsing, chat, and FAQ detail routes under their primary tabs
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 0.228079
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: routing rejects malformed or oversized route parts
+apps/storefront test: ok 71 - routing rejects malformed or oversized route parts
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 0.372934
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: secondary app surfaces consume one Theme Center appearance contract
+apps/storefront test: ok 72 - secondary app surfaces consume one Theme Center appearance contract
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 5.271691
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: section filters stay compact without adding network work
+apps/storefront test: ok 73 - section filters stay compact without adding network work
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 7.592508
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: StorefrontRoot consumes bottom navigation from bootstrap without a second query
+apps/storefront test: ok 74 - StorefrontRoot consumes bottom navigation from bootstrap without a second query
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 1.256436
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: Storefront startup reuses bootstrap for live theme and PWA runtime data
+apps/storefront test: ok 75 - Storefront startup reuses bootstrap for live theme and PWA runtime data
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 6.134242
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: storefront edge safeguards live with their visual owners
+apps/storefront test: ok 76 - storefront edge safeguards live with their visual owners
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 1.623532
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: storefront polish stays theme-led and app-native across every primary surface
+apps/storefront test: ok 77 - storefront polish stays theme-led and app-native across every primary surface
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 10.936396
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: home and section surfaces share the canonical section query cache
+apps/storefront test: ok 78 - home and section surfaces share the canonical section query cache
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 1.412949
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: support connection discovery deduplicates cold concurrent consumers and compose skips list fetch
+apps/storefront test: ok 79 - support connection discovery deduplicates cold concurrent consumers and compose skips list fetch
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 0.426253
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: product detail and compose reuse one versioned immutable product cache
+apps/storefront test: ok 80 - product detail and compose reuse one versioned immutable product cache
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 0.395207
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: home startup keeps route-only content loaders behind lazy boundaries
+apps/storefront test: ok 81 - home startup keeps route-only content loaders behind lazy boundaries
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 1.182937
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: ordinary storefront startup keeps support runtime behind route or identity activation
+apps/storefront test: ok 82 - ordinary storefront startup keeps support runtime behind route or identity activation
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 1.52151
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: product titles stay centered from catalog cards into the detail first fold
+apps/storefront test: ok 83 - product titles stay centered from catalog cards into the detail first fold
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 1.415493
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: route-only support and section filter css stay out of storefront startup
+apps/storefront test: ok 84 - route-only support and section filter css stay out of storefront startup
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 0.783314
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: Storefront chrome follows the visual viewport and measured shell geometry
+apps/storefront test: ok 85 - Storefront chrome follows the visual viewport and measured shell geometry
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 8.438325
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: storefront resolves the assigned agent avatar without impersonating it with product media
+apps/storefront test: ok 86 - storefront resolves the assigned agent avatar without impersonating it with product media
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 1.70291
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: support visitor ID always contains exactly three letters and three digits
+apps/storefront test: ok 87 - support visitor ID always contains exactly three letters and three digits
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 27.717554
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: support visitor identity expires after exactly 24 hours
+apps/storefront test: ok 88 - support visitor identity expires after exactly 24 hours
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 1.900122
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: conversation lifecycle, image retry and realtime recovery stay explicit
+apps/storefront test: ok 89 - conversation lifecycle, image retry and realtime recovery stay explicit
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 2.983993
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: support attachment safety only accepts normalized phones and http(s) links
+apps/storefront test: ok 90 - support attachment safety only accepts normalized phones and http(s) links
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 1.152332
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: conversation attachment history parses phone, link, legacy image, and snapshot image safely
+apps/storefront test: ok 91 - conversation attachment history parses phone, link, legacy image, and snapshot image safely
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 42.750765
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: support realtime is websocket-first with REST reserved for recovery
+apps/storefront test: not ok 92 - support realtime is websocket-first with REST reserved for recovery
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 7.59339
+apps/storefront test:   type: 'test'
+apps/storefront test:   location: '/home/runner/work/site/site/apps/storefront/test/support-realtime-transport.test.mjs:10:1'
+apps/storefront test:   failureType: 'testCodeFailure'
+apps/storefront test:   error: |-
+apps/storefront test:     The expression evaluated to a falsy value:
+apps/storefront test:     
+apps/storefront test:       assert.ok(realtime.includes('parseMessage(state.connection, raw.message, raw.media)'))
+apps/storefront test:     
+apps/storefront test:   code: 'ERR_ASSERTION'
+apps/storefront test:   name: 'AssertionError'
+apps/storefront test:   expected: true
+apps/storefront test:   actual: false
+apps/storefront test:   operator: '=='
+apps/storefront test:   stack: |-
+apps/storefront test:     TestContext.<anonymous> (file:///home/runner/work/site/site/apps/storefront/test/support-realtime-transport.test.mjs:27:10)
+apps/storefront test:     Test.runInAsyncScope (node:async_hooks:214:14)
+apps/storefront test:     Test.run (node:internal/test_runner/test:1047:25)
+apps/storefront test:     Test.start (node:internal/test_runner/test:944:17)
+apps/storefront test:     startSubtestAfterBootstrap (node:internal/test_runner/harness:296:17)
+apps/storefront test:   ...
+apps/storefront test: # Subtest: official dating themes own distinct art direction and shared media chrome
+apps/storefront test: ok 93 - official dating themes own distinct art direction and shared media chrome
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 9.273726
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: brand-colored controls share readable foreground and restrained elevation tokens
+apps/storefront test: ok 94 - brand-colored controls share readable foreground and restrained elevation tokens
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 5.108809
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: branding is backend-driven and theme layout is invariant
+apps/storefront test: ok 95 - branding is backend-driven and theme layout is invariant
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 8.062527
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: customer-service traffic handoff ID reaches the remote conversation request
+apps/storefront test: ok 96 - customer-service traffic handoff ID reaches the remote conversation request
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 1.205711
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: storefront typography buttons and route motion share one app visual contract
+apps/storefront test: ok 97 - storefront typography buttons and route motion share one app visual contract
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 5.632937
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: # Subtest: CTA, chat connection and Admin share one Halo Loading primitive
+apps/storefront test: ok 98 - CTA, chat connection and Admin share one Halo Loading primitive
+apps/storefront test:   ---
+apps/storefront test:   duration_ms: 4.410542
+apps/storefront test:   type: 'test'
+apps/storefront test:   ...
+apps/storefront test: 1..98
+apps/storefront test: # tests 98
+apps/storefront test: # suites 0
+apps/storefront test: # pass 97
+apps/storefront test: # fail 1
+apps/storefront test: # cancelled 0
+apps/storefront test: # skipped 0
+apps/storefront test: # todo 0
+apps/storefront test: # duration_ms 3628.478132
+apps/storefront test: Failed
+/home/runner/work/site/site/apps/storefront:
+[ERR_PNPM_RECURSIVE_RUN_FIRST_FAIL] @site/storefront@1.0.0 test: `node --test --experimental-strip-types --import ./test/register-ts-resolver.mjs test/*.test.mjs`
+Exit status 1
+[ELIFECYCLE] Test failed. See above for more details.
+exit_code=1
