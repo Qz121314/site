@@ -48,7 +48,7 @@
   background: rgba(0, 0, 0, 0.04);
 }
 
-.chat-message-action {
+.chat-contact-card {
   display: grid;
   min-width: min(260px, 72vw);
   max-width: 100%;
@@ -65,59 +65,63 @@
   touch-action: manipulation;
 }
 
-.chat-message-action:active {
+.chat-contact-card:active {
   transform: scale(0.985);
 }
 
-.chat-message-action-badge {
+.chat-contact-card-icon {
   display: grid;
-  min-width: 36px;
-  height: 30px;
+  width: 34px;
+  height: 34px;
   place-items: center;
-  padding: 0 5px;
+  flex: 0 0 34px;
   border-radius: 9px;
   color: inherit;
   background: color-mix(in srgb, currentColor 9%, transparent);
-  font-size: 0.55rem;
-  font-weight: 820;
-  letter-spacing: 0.04em;
 }
 
-.chat-message-action > span:nth-child(2) {
+.chat-contact-card-icon svg {
+  width: 17px;
+  height: 17px;
+  stroke-width: 1.9;
+}
+
+.chat-contact-card > span:nth-child(2) {
   display: grid;
   min-width: 0;
   gap: 2px;
 }
 
-.chat-message-action small,
-.chat-message-action strong {
+.chat-contact-card small,
+.chat-contact-card strong {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.chat-message-action small {
+.chat-contact-card small {
   opacity: 0.68;
   font-size: 0.62rem;
   font-weight: 650;
 }
 
-.chat-message-action strong {
+.chat-contact-card strong {
   font-size: 0.75rem;
   font-weight: 760;
 }
 
-.chat-message-action-open {
+.chat-contact-card-chevron {
+  width: 16px;
+  height: 16px;
   opacity: 0.68;
-  font-size: 0.82rem;
 }
 
-.chat-message-row.is-agent .chat-message-action {
+.chat-message-row.is-agent .chat-contact-card {
   border-color: rgba(255, 255, 255, 0.24);
   background: rgba(255, 255, 255, 0.1);
 }
 
-.chat-message-row.is-agent .chat-message-action-badge {
+.chat-message-row.is-agent .chat-contact-card-icon {
   background: rgba(255, 255, 255, 0.14);
 }
 

@@ -1,5 +1,6 @@
 import type { StorefrontLinkComponent } from '@site/storefront-ui';
 import { LoadingHalo } from '@site/storefront-ui/loading';
+import { ChevronRight, Link, Phone } from 'lucide-react';
 import {
   StorefrontNoAgentNotice,
   type StorefrontNoAgentNoticeProps,
@@ -678,37 +679,30 @@ export function MessageThreadPageContent({
                             </a>
                           );
                         }
-                        if (attachment.kind === 'phone') {
-                          return (
-                            <a
-                              className="chat-message-action is-phone"
-                              href={`sms:${attachment.value}`}
-                              key={attachment.id}
-                            >
-                              <span className="chat-message-action-badge">SMS</span>
-                              <span>
-                                <small>{attachment.label}</small>
-                                <strong>{attachment.value}</strong>
-                              </span>
-                            </a>
-                          );
-                        }
+                        const Icon = attachment.kind === 'phone' ? Phone : Link;
+                        const href =
+                          attachment.kind === 'phone'
+                            ? `tel:${attachment.value}`
+                            : attachment.value;
                         return (
                           <a
-                            className="chat-message-action is-link"
-                            href={attachment.value}
-                            target="_blank"
-                            rel="noreferrer"
+                            className="chat-contact-card"
+                            href={href}
+                            target={attachment.kind === 'link' ? '_blank' : undefined}
+                            rel={attachment.kind === 'link' ? 'noreferrer' : undefined}
                             key={attachment.id}
                           >
-                            <span className="chat-message-action-badge">LINK</span>
+                            <span className="chat-contact-card-icon" aria-hidden="true">
+                              <Icon />
+                            </span>
                             <span>
                               <small>{attachment.label}</small>
                               <strong>{attachment.value}</strong>
                             </span>
-                            <span className="chat-message-action-open" aria-hidden="true">
-                              ↗
-                            </span>
+                            <ChevronRight
+                              className="chat-contact-card-chevron"
+                              aria-hidden="true"
+                            />
                           </a>
                         );
                       })}
