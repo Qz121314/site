@@ -1,11 +1,12 @@
 import type {
   SendSupportImageInput,
+  SupportContactCardKind,
   SupportMessage,
   SupportMessageAttachment,
 } from './support-contract';
 import {
-  normalizeSupportLinkValue,
-  normalizeSupportPhoneValue,
+  normalizeSupportContactCardValue,
+  normalizeSupportPresetMessage,
 } from './support-attachment-safety';
 import { getSupportVisitorIdentity } from './support-identity';
 import { uploadSupportImage, type SupportUploadTarget } from './support-image-upload';
@@ -17,9 +18,11 @@ export type SupportMediaConnection = {
 type RemoteConversationAttachment = {
   messageId: string;
   id: string;
-  kind: 'image' | 'phone' | 'link';
+  kind: 'image' | SupportContactCardKind;
   label?: string | null;
   value?: string | null;
+  presetMessage?: string | null;
+  hasCustomIcon?: boolean;
   mimeType?: string | null;
   byteSize?: number | null;
   width?: number | null;
@@ -154,6 +157,12 @@ export async function sendConversationImage(
   };
 }
 
+function isContactCardKind(value: unknown): value is SupportContactCardKind {
+  return (
+    value === 'sms' || value === 'whatsapp' || value === 'telegram' || value === 'website'
+  );
+}
+
 function parseConversationAttachment(
   connection: SupportMediaConnection,
   identity: ReturnType<typeof getSupportVisitorIdentity>,
@@ -167,17 +176,26 @@ function parseConversationAttachment(
         ? item.originalName || 'Image'
         : '';
 
-  if (item.kind === 'phone' || item.kind === 'link') {
-    const value =
-      item.kind === 'phone'
-        ? normalizeSupportPhoneValue(item.value)
-        : normalizeSupportLinkValue(item.value);
-    if (!value || !label) return null;
+  if (isContactCardKind(item.kind)) {
+    const value = normalizeSupportContactCardValue(item.kind, item.value);
+    const presetMessage = normalizeSupportPresetMessage(item.presetMessage);
+    const hasPresetMessage =
+      typeof item.presetMessage === 'string' && item.presetMessage.trim().length > 0;
+    if (
+      !value ||
+      !label ||
+      (hasPresetMessage && !presetMessage) ||
+      (item.kind === 'website' && hasPresetMessage)
+    ) {
+      return null;
+    }
     return {
       id: item.id,
       kind: item.kind,
       label,
       value,
+      presetMessage: item.kind === 'website' ? null : presetMessage,
+      hasCustomIcon: item.hasCustomIcon === true,
     };
   }
 
