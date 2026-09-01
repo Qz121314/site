@@ -1,7 +1,7 @@
 import type {
   SupportConversationSummary,
-  SupportImageAttachment,
   SupportMessage,
+  SupportMessageAttachment,
 } from './support-contract';
 import {
   buildSupportWebSocketUrl,
@@ -89,51 +89,71 @@ function parseConversation(
   };
 }
 
-function parseMedia(
+function parseAttachment(
   connection: PublicSupportConnection,
   value: unknown,
-): { messageId: string; attachment: SupportImageAttachment } | null {
+): SupportMessageAttachment | null {
   const item = isRecord(value) ? value : null;
+  if (!item || typeof item.id !== 'string' || !item.id) return null;
+  const kind = item.kind;
+  const label =
+    typeof item.label === 'string' && item.label.trim()
+      ? item.label.trim()
+      : kind === 'image'
+        ? typeof item.originalName === 'string' && item.originalName
+          ? item.originalName
+          : 'Image'
+        : '';
+
+  if (kind === 'phone' || kind === 'link') {
+    if (typeof item.value !== 'string' || !item.value || !label) return null;
+    return {
+      id: item.id,
+      kind,
+      label,
+      value: item.value,
+    };
+  }
+
   if (
-    !item ||
-    typeof item.messageId !== 'string' ||
-    typeof item.id !== 'string' ||
-    item.kind !== 'image' ||
+    kind !== 'image' ||
     typeof item.mimeType !== 'string' ||
     typeof item.byteSize !== 'number' ||
     !Number.isFinite(item.byteSize) ||
-    (item.width !== null && typeof item.width !== 'number') ||
-    (item.height !== null && typeof item.height !== 'number') ||
-    !nullableString(item.originalName)
+    (item.width !== null && item.width !== undefined && typeof item.width !== 'number') ||
+    (item.height !== null && item.height !== undefined && typeof item.height !== 'number') ||
+    (item.originalName !== null &&
+      item.originalName !== undefined &&
+      typeof item.originalName !== 'string')
   ) {
     return null;
   }
   const identity = getSupportVisitorIdentity();
   const contentUrl = new URL(
-    `${connection.clientApiUrl.replace(/\/$/u, '')}/media/${encodeURIComponent(item.id)}/content`,
+    `${connection.clientApiUrl.replace(/\/$/u, '')}/${item.source === 'snapshot' ? 'attachments' : 'media'}/${encodeURIComponent(item.id)}/content`,
   );
   contentUrl.searchParams.set('visitorId', identity.visitorId);
   if (identity.accessToken) {
     contentUrl.searchParams.set('visitorToken', identity.accessToken);
   }
   return {
-    messageId: item.messageId,
-    attachment: {
-      id: item.id,
-      kind: 'image',
-      mimeType: item.mimeType,
-      byteSize: item.byteSize,
-      width: item.width as number | null,
-      height: item.height as number | null,
-      originalName: item.originalName,
-      url: contentUrl.toString(),
-    },
+    id: item.id,
+    kind: 'image',
+    label,
+    mimeType: item.mimeType,
+    byteSize: item.byteSize,
+    width: typeof item.width === 'number' ? item.width : null,
+    height: typeof item.height === 'number' ? item.height : null,
+    originalName:
+      typeof item.originalName === 'string' ? item.originalName : null,
+    url: contentUrl.toString(),
   };
 }
 
 function parseMessage(
   connection: PublicSupportConnection,
   value: unknown,
+  attachmentsValue: unknown,
   mediaValue: unknown,
 ): SupportMessage | null {
   const item = isRecord(value) ? value : null;
@@ -150,14 +170,24 @@ function parseMessage(
   ) {
     return null;
   }
-  const media = parseMedia(connection, mediaValue);
+
+  const rawAttachments = [
+    ...(Array.isArray(item.attachments) ? item.attachments : []),
+    ...(Array.isArray(attachmentsValue) ? attachmentsValue : []),
+    ...(mediaValue ? [mediaValue] : []),
+  ];
+  const attachmentsById = new Map<string, SupportMessageAttachment>();
+  for (const rawAttachment of rawAttachments) {
+    const attachment = parseAttachment(connection, rawAttachment);
+    if (attachment) attachmentsById.set(attachment.id, attachment);
+  }
   return {
     id: item.id,
     direction: item.direction,
     body: item.body,
     sentAt: item.sentAt,
     delivery: item.delivery,
-    attachments: media && media.messageId === item.id ? [media.attachment] : [],
+    attachments: [...attachmentsById.values()],
   };
 }
 
@@ -189,7 +219,12 @@ function parseEvent(state: SocketState, raw: unknown): SupportRealtimeEvent | nu
     connectionId: state.connection.id,
     conversationRef,
     conversation,
-    message: parseMessage(state.connection, raw.message, raw.media),
+    message: parseMessage(
+      state.connection,
+      raw.message,
+      raw.attachments,
+      raw.media,
+    ),
     reader: raw.reader === 'agent' || raw.reader === 'visitor' ? raw.reader : null,
     lastMessageId: typeof raw.lastMessageId === 'string' ? raw.lastMessageId : null,
   };
