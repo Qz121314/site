@@ -722,6 +722,8 @@ link               外部链接入口
 
 运行时由 Site 解析 **Product -> 在线客服转化组 -> 客服系统连接**，并把权威的产品 / 分区 / 分类上下文返回给 Storefront；之后 Conversation、Message、媒体和 WebSocket 流量都由浏览器直接访问独立客服系统，Site Worker 不代理聊天流量。独立客服系统再按“整个分区 / 指定分类 / 指定产品”的动态负责范围把会话分配给 Agent。`handoffId` 仅用于把一次 CTA handoff 与客服系统的首次接待关联，不代表 Site 侧流量统计，也不会写入 Site 侧流量账本。转接、重新排队和重开由客服系统自己的会话规则处理。完整协议见 [客服系统接入文档](docs/customer-service-integration.md)。
 
+坐席预先配置的手机号和链接在 Messages 中统一显示为带类型图标的名片。访客点击手机号名片会打开设备拨号，点击链接名片会在新页面打开；图片仍按普通聊天图片展示。
+
 ### 客服运行时请求边界
 
 客服运行时采用**按需激活**，普通 Storefront 浏览不能因为底部存在 Messages 入口就无条件启动会话读取和 WebSocket：

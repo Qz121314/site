@@ -17,3 +17,16 @@ test('storefront attachment plus is centered geometrically instead of by font me
   assert.ok(css.includes('transform: translate(-50%, -50%);'));
   assert.ok(css.includes('font-size: 0;'));
 });
+
+test('phone and link attachments share one clickable contact-card contract', () => {
+  const ui = source('../src/support-ui.tsx');
+  const css = source('../src/messages-media.css');
+
+  assert.ok(ui.includes("from 'lucide-react'"));
+  assert.ok(ui.includes("attachment.kind === 'phone' ? Phone : Link"));
+  assert.ok(ui.includes("attachment.kind === 'phone'"));
+  assert.ok(ui.includes('`tel:${attachment.value}`'));
+  assert.ok(ui.includes('className="chat-contact-card"'));
+  assert.ok(css.includes('.chat-contact-card'));
+  assert.doesNotMatch(ui, /sms:/u);
+});
