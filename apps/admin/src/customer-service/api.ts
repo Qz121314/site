@@ -43,7 +43,8 @@ type ProductCatalog = {
   products: Array<{
     id: string;
     title: string;
-    href: null;
+    /** Canonical public product-detail URL owned by Site. */
+    href: string;
     coverUrl: string | null;
     sectionId: string;
     sectionName: string;
@@ -52,6 +53,13 @@ type ProductCatalog = {
     isEnabled: true;
   }>;
 };
+
+function publicProductHref(sectionSlug: string, productSlug: string): string {
+  return new URL(
+    `/sections/${encodeURIComponent(sectionSlug)}/products/${encodeURIComponent(productSlug)}/`,
+    window.location.origin,
+  ).toString();
+}
 
 function asRecord(value: unknown): Record<string, unknown> | null {
   return typeof value === 'object' && value !== null && !Array.isArray(value)
@@ -237,7 +245,7 @@ async function loadProductCatalog(connectionId: string): Promise<ProductCatalog>
           {
             id: product.id,
             title: product.title,
-            href: null,
+            href: publicProductHref(section.slug, product.slug),
             coverUrl: product.effectiveCoverUrl,
             sectionId: section.id,
             sectionName: section.name,
