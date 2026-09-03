@@ -22,6 +22,7 @@ export type SupportImageAttachment = {
   height: number | null;
   originalName: string | null;
   url: string;
+  fallbackUrl?: string;
 };
 
 export type SupportContactCardKind = 'sms' | 'whatsapp' | 'telegram' | 'website';

@@ -145,6 +145,19 @@ test('conversation attachment history parses all canonical contact cards and ima
             originalName: 'greeting.webp',
             source: 'snapshot',
           },
+          {
+            messageId: 'message-4',
+            id: 'signed-image',
+            kind: 'image',
+            label: 'signed.png',
+            mimeType: 'image/png',
+            byteSize: 128,
+            width: 320,
+            height: 180,
+            originalName: 'signed.png',
+            source: 'media',
+            url: 'https://account.r2.cloudflarestorage.com/bucket/chat/signed.png?X-Amz-Signature=test',
+          },
         ],
       }),
       {
@@ -194,6 +207,15 @@ test('conversation attachment history parses all canonical contact cards and ima
       assert.match(
         greetingImage.url,
         /\/client\/v1\/attachments\/greeting-image\/content\?/u,
+      );
+    }
+    const signedImage = media.get('message-4')?.[0];
+    assert.equal(signedImage?.kind, 'image');
+    if (signedImage?.kind === 'image') {
+      assert.match(signedImage.url, /X-Amz-Signature=test/u);
+      assert.match(
+        signedImage.fallbackUrl ?? '',
+        /\/client\/v1\/media\/signed-image\/content\?/u,
       );
     }
   } finally {
