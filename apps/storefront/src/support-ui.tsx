@@ -171,6 +171,37 @@ function ConversationAvatar({
   return <span aria-hidden="true">{conversationTitle(conversation).slice(0, 1)}</span>;
 }
 
+function ChatImageLink({
+  attachment,
+}: {
+  attachment: Extract<SupportMessage['attachments'][number], { kind: 'image' }>;
+}) {
+  const [url, setUrl] = useState(attachment.url);
+  const [fallbackApplied, setFallbackApplied] = useState(false);
+
+  useEffect(() => {
+    setUrl(attachment.url);
+    setFallbackApplied(false);
+  }, [attachment.id, attachment.url]);
+
+  return (
+    <a className="chat-message-image-link" href={url} target="_blank" rel="noreferrer">
+      <img
+        className="chat-message-image"
+        src={url}
+        alt={attachment.label || attachment.originalName || 'Chat image'}
+        loading="lazy"
+        onError={() => {
+          if (!fallbackApplied && attachment.fallbackUrl) {
+            setFallbackApplied(true);
+            setUrl(attachment.fallbackUrl);
+          }
+        }}
+      />
+    </a>
+  );
+}
+
 export function MessagesPageContent({
   conversations,
   activeConversationId = null,
@@ -660,34 +691,7 @@ export function MessageThreadPageContent({
                       {message.attachments.map((attachment) => {
                         if (attachment.kind === 'image') {
                           return (
-                            <a
-                              className="chat-message-image-link"
-                              href={attachment.url}
-                              target="_blank"
-                              rel="noreferrer"
-                              key={attachment.id}
-                            >
-                              <img
-                                className="chat-message-image"
-                                src={attachment.url}
-                                alt={
-                                  attachment.label ||
-                                  attachment.originalName ||
-                                  'Chat image'
-                                }
-                                loading="lazy"
-                                onError={(event) => {
-                                  const fallbackUrl = attachment.fallbackUrl;
-                                  if (
-                                    !fallbackUrl ||
-                                    event.currentTarget.dataset.fallbackApplied === 'true'
-                                  )
-                                    return;
-                                  event.currentTarget.dataset.fallbackApplied = 'true';
-                                  event.currentTarget.src = fallbackUrl;
-                                }}
-                              />
-                            </a>
+                            <ChatImageLink attachment={attachment} key={attachment.id} />
                           );
                         }
                         const href = buildSupportContactCardHref(
