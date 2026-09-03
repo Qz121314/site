@@ -11,7 +11,10 @@ import {
   getSupportVisitorIdentity,
   setSupportVisitorAccessToken,
 } from './support-identity';
-import { loadConversationMedia, sendConversationImage } from './support-media-gateway';
+import {
+  parseConversationAttachment,
+  sendConversationImage,
+} from './support-media-gateway';
 
 export class SupportApiError extends Error {
   readonly status: number;
@@ -63,7 +66,7 @@ type RemoteConversationDetail = RemoteConversationSummary & {
   productHref?: string | null;
   createdAt: string;
   expiresAt: string;
-  messages: SupportMessage[];
+  messages: Array<SupportMessage & { attachments?: unknown }>;
   nextMessageCursor: string | null;
 };
 
@@ -325,7 +328,10 @@ function parseSupportConversationRef(
   }
 }
 
-function parseMessage(value: unknown): SupportMessage {
+function parseMessage(
+  value: unknown,
+  connection?: PublicSupportConnection,
+): SupportMessage {
   const item = isRecord(value) ? value : null;
   if (
     !item ||
@@ -341,7 +347,21 @@ function parseMessage(value: unknown): SupportMessage {
       'Messages returned invalid message data.',
     );
   }
-  return { ...(item as Omit<SupportMessage, 'attachments'>), attachments: [] };
+  const attachments =
+    connection && Array.isArray(item.attachments)
+      ? item.attachments
+          .map((attachment) =>
+            parseConversationAttachment(
+              connection,
+              getSupportVisitorIdentity(),
+              attachment,
+            ),
+          )
+          .filter((attachment): attachment is SupportMessage['attachments'][number] =>
+            Boolean(attachment),
+          )
+      : [];
+  return { ...(item as Omit<SupportMessage, 'attachments'>), attachments };
 }
 
 function parseRemoteSummary(value: unknown): RemoteConversationSummary {
@@ -387,7 +407,10 @@ function normalizeSummary(
   };
 }
 
-function parseRemoteDetail(value: unknown): RemoteConversationDetail {
+function parseRemoteDetail(
+  connection: PublicSupportConnection,
+  value: unknown,
+): RemoteConversationDetail {
   const item = isRecord(value) ? value : null;
   if (
     !item ||
@@ -418,7 +441,7 @@ function parseRemoteDetail(value: unknown): RemoteConversationDetail {
     ...(productHref !== undefined ? { productHref } : {}),
     createdAt: item.createdAt,
     expiresAt: item.expiresAt,
-    messages: item.messages.map(parseMessage),
+    messages: item.messages.map((message) => parseMessage(message, connection)),
     nextMessageCursor: item.nextMessageCursor,
   };
 }
@@ -451,20 +474,10 @@ function conversationEnvelope(
       'Messages returned invalid data.',
     );
   }
-  return normalizeDetail(connection, parseRemoteDetail(envelope.conversation));
-}
-
-function attachConversationMedia(
-  conversation: SupportConversationDetail,
-  media: Map<string, SupportMessage['attachments']>,
-): SupportConversationDetail {
-  return {
-    ...conversation,
-    messages: conversation.messages.map((message) => ({
-      ...message,
-      attachments: media.get(message.id) ?? [],
-    })),
-  };
+  return normalizeDetail(
+    connection,
+    parseRemoteDetail(connection, envelope.conversation),
+  );
 }
 
 async function connectionForConversationRef(
@@ -576,19 +589,16 @@ export const siteSupportGateway: SupportGateway = {
       signal,
     );
     try {
-      const [value, media] = await Promise.all([
-        remoteRequestJson(
-          clientQueryUrl(
-            connection,
-            `/conversations/${encodeURIComponent(remoteConversationId)}`,
-            { before, limit: '30' },
-          ),
-          undefined,
-          signal,
+      const value = await remoteRequestJson(
+        clientQueryUrl(
+          connection,
+          `/conversations/${encodeURIComponent(remoteConversationId)}`,
+          { before, limit: '30' },
         ),
-        loadConversationMedia(connection, remoteConversationId, signal),
-      ]);
-      return attachConversationMedia(conversationEnvelope(connection, value), media);
+        undefined,
+        signal,
+      );
+      return conversationEnvelope(connection, value);
     } catch (error) {
       if (error instanceof SupportApiError && error.status === 404) return null;
       throw error;
