@@ -154,12 +154,14 @@ test('visitor push sync deduplicates unchanged bindings and repairs changed stat
   resetState();
 
   await t.test(
-    'unchanged subscription does not repeat config or registration',
+    'A → B → A conversation switching does not repeat registration',
     async () => {
       await Promise.all([
         syncSupportPushSubscription('connection-1:conversation-1'),
         syncSupportPushSubscription('connection-1:conversation-1'),
       ]);
+      await syncSupportPushSubscription('connection-1:conversation-2');
+      await syncSupportPushSubscription('connection-1:conversation-1');
       await syncSupportPushSubscription('connection-1:conversation-1');
 
       assert.equal(callsEndingWith('/push/config').length, 1);
@@ -175,7 +177,7 @@ test('visitor push sync deduplicates unchanged bindings and repairs changed stat
     assert.equal(callsEndingWith('/push/subscriptions').length, 2);
   });
 
-  await t.test('application server key change recreates and rebinds', async () => {
+  await t.test('cached applicationServerKey mismatch self-recovers', async () => {
     configKey = publicKeyTwoBase64;
     currentSubscription = makeSubscription('https://push.example/two', publicKeyOne);
     const cachedContext = JSON.parse(
@@ -196,14 +198,14 @@ test('visitor push sync deduplicates unchanged bindings and repairs changed stat
   });
 
   await t.test(
-    'conversation and visitor token changes cannot reuse the old binding',
+    'visitor token changes rebind while conversation changes reuse the binding',
     async () => {
       await syncSupportPushSubscription('connection-1:conversation-2');
-      assert.equal(callsEndingWith('/push/subscriptions').length, 4);
+      assert.equal(callsEndingWith('/push/subscriptions').length, 3);
 
       resetIdentity('b'.repeat(32));
       await syncSupportPushSubscription('connection-1:conversation-2');
-      assert.equal(callsEndingWith('/push/subscriptions').length, 5);
+      assert.equal(callsEndingWith('/push/subscriptions').length, 4);
     },
   );
 
@@ -214,8 +216,8 @@ test('visitor push sync deduplicates unchanged bindings and repairs changed stat
     );
     await syncSupportPushSubscription('connection-1:conversation-2');
 
-    assert.equal(callsEndingWith('/push/config').length, 6);
-    assert.equal(callsEndingWith('/push/subscriptions').length, 6);
+    assert.equal(callsEndingWith('/push/config').length, 5);
+    assert.equal(callsEndingWith('/push/subscriptions').length, 5);
   });
 
   await t.test('expired local state self-recovers', async () => {
@@ -226,7 +228,7 @@ test('visitor push sync deduplicates unchanged bindings and repairs changed stat
     await cache.put('/__support-push-context__/active', makeCacheResponse(cachedContext));
     await syncSupportPushSubscription('connection-1:conversation-2');
 
-    assert.equal(callsEndingWith('/push/config').length, 7);
-    assert.equal(callsEndingWith('/push/subscriptions').length, 7);
+    assert.equal(callsEndingWith('/push/config').length, 6);
+    assert.equal(callsEndingWith('/push/subscriptions').length, 6);
   });
 });
