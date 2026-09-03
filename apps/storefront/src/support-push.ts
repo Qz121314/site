@@ -10,7 +10,6 @@ type PushContext = {
   connectionId: string;
   clientApiUrl: string;
   visitorId: string;
-  remoteConversationId: string;
   visitorTokenFingerprint: string;
   endpoint: string;
   applicationServerKey: string;
@@ -165,7 +164,6 @@ async function registerSubscription(conversationRef: string): Promise<PushSubscr
     connectionId: connection.id,
     clientApiUrl: connection.clientApiUrl,
     visitorId: identity.visitorId,
-    remoteConversationId,
     visitorTokenFingerprint: await fingerprintVisitorToken(identity.accessToken),
     endpoint: subscription.endpoint,
     applicationServerKey: pushConfig.encodedApplicationServerKey,
@@ -192,7 +190,6 @@ async function readPushContext(): Promise<PushContext | null> {
       typeof value.connectionId !== 'string' ||
       typeof value.clientApiUrl !== 'string' ||
       typeof value.visitorId !== 'string' ||
-      typeof value.remoteConversationId !== 'string' ||
       typeof value.visitorTokenFingerprint !== 'string' ||
       typeof value.endpoint !== 'string' ||
       !value.endpoint.startsWith('https://') ||
@@ -212,19 +209,15 @@ async function readPushContext(): Promise<PushContext | null> {
 
 function samePushBinding(
   context: PushContext,
-  target: {
-    connection: PublicSupportConnection;
-    remoteConversationId: string;
-  },
+  connection: PublicSupportConnection,
   visitorId: string,
   visitorTokenFingerprint: string,
   subscription: PushSubscription,
 ): boolean {
   try {
     return (
-      context.connectionId === target.connection.id &&
-      context.clientApiUrl === target.connection.clientApiUrl &&
-      context.remoteConversationId === target.remoteConversationId &&
+      context.connectionId === connection.id &&
+      context.clientApiUrl === connection.clientApiUrl &&
       context.visitorId === visitorId &&
       context.visitorTokenFingerprint === visitorTokenFingerprint &&
       context.endpoint === subscription.endpoint &&
@@ -298,7 +291,7 @@ async function syncSupportPushSubscriptionInternal(
     context &&
     samePushBinding(
       context,
-      target,
+      target.connection,
       identity.visitorId,
       visitorTokenFingerprint,
       subscription,
