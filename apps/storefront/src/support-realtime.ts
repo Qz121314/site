@@ -155,13 +155,14 @@ function parseAttachment(
     return null;
   }
   const identity = getSupportVisitorIdentity();
-  const contentUrl = new URL(
+  const fallbackUrl = new URL(
     `${connection.clientApiUrl.replace(/\/$/u, '')}/${item.source === 'snapshot' ? 'attachments' : 'media'}/${encodeURIComponent(item.id)}/content`,
   );
-  contentUrl.searchParams.set('visitorId', identity.visitorId);
+  fallbackUrl.searchParams.set('visitorId', identity.visitorId);
   if (identity.accessToken) {
-    contentUrl.searchParams.set('visitorToken', identity.accessToken);
+    fallbackUrl.searchParams.set('visitorToken', identity.accessToken);
   }
+  const signedUrl = typeof item.url === 'string' && item.url ? item.url : null;
   return {
     id: item.id,
     kind: 'image',
@@ -171,7 +172,8 @@ function parseAttachment(
     width: typeof item.width === 'number' ? item.width : null,
     height: typeof item.height === 'number' ? item.height : null,
     originalName: typeof item.originalName === 'string' ? item.originalName : null,
-    url: contentUrl.toString(),
+    url: signedUrl ?? fallbackUrl.toString(),
+    ...(signedUrl ? { fallbackUrl: fallbackUrl.toString() } : {}),
   };
 }
 
