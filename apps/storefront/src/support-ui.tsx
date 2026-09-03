@@ -676,6 +676,16 @@ export function MessageThreadPageContent({
                                   'Chat image'
                                 }
                                 loading="lazy"
+                                onError={(event) => {
+                                  const fallbackUrl = attachment.fallbackUrl;
+                                  if (
+                                    !fallbackUrl ||
+                                    event.currentTarget.dataset.fallbackApplied === 'true'
+                                  )
+                                    return;
+                                  event.currentTarget.dataset.fallbackApplied = 'true';
+                                  event.currentTarget.src = fallbackUrl;
+                                }}
                               />
                             </a>
                           );

@@ -41,6 +41,7 @@ type RemoteCompletedMedia = {
   height: number | null;
   originalName: string | null;
   status: 'ready';
+  url?: string | null;
 };
 
 type InitResponse = {
@@ -129,13 +130,12 @@ export async function sendConversationImage(
   if (!complete?.messageId || !complete.media || !validCompletedMedia(complete.media)) {
     throw new Error('Invalid media completion response.');
   }
-  const contentUrl = remoteUrl(
+  const fallbackUrl = buildImageFallbackUrl(
     connection,
-    `/media/${encodeURIComponent(complete.media.id)}/content`,
+    identity,
+    complete.media.id,
+    'media',
   );
-  contentUrl.searchParams.set('visitorId', identity.visitorId);
-  if (identity.accessToken)
-    contentUrl.searchParams.set('visitorToken', identity.accessToken);
   return {
     id: complete.messageId,
     direction: 'customer',
@@ -152,7 +152,8 @@ export async function sendConversationImage(
         width: complete.media.width,
         height: complete.media.height,
         originalName: complete.media.originalName,
-        url: contentUrl.toString(),
+        url: complete.media.url || fallbackUrl,
+        ...(complete.media.url ? { fallbackUrl } : {}),
       },
     ],
   };
@@ -208,21 +209,13 @@ export function parseConversationAttachment(
   ) {
     return null;
   }
-  const contentUrl =
-    typeof item.url === 'string' && item.url
-      ? item.url
-      : (() => {
-          const fallback = remoteUrl(
-            connection,
-            item.source === 'snapshot'
-              ? `/attachments/${encodeURIComponent(item.id)}/content`
-              : `/media/${encodeURIComponent(item.id)}/content`,
-          );
-          fallback.searchParams.set('visitorId', identity.visitorId);
-          if (identity.accessToken)
-            fallback.searchParams.set('visitorToken', identity.accessToken);
-          return fallback.toString();
-        })();
+  const fallbackUrl = buildImageFallbackUrl(
+    connection,
+    identity,
+    item.id,
+    item.source === 'snapshot' ? 'snapshot' : 'media',
+  );
+  const contentUrl = typeof item.url === 'string' && item.url ? item.url : fallbackUrl;
   return {
     id: item.id,
     kind: 'image',
@@ -233,7 +226,26 @@ export function parseConversationAttachment(
     height: typeof item.height === 'number' ? item.height : null,
     originalName: typeof item.originalName === 'string' ? item.originalName : null,
     url: contentUrl,
+    ...(contentUrl === fallbackUrl ? {} : { fallbackUrl }),
   };
+}
+
+function buildImageFallbackUrl(
+  connection: SupportMediaConnection,
+  identity: ReturnType<typeof getSupportVisitorIdentity>,
+  id: string,
+  source: 'media' | 'snapshot',
+): string {
+  const fallback = remoteUrl(
+    connection,
+    source === 'snapshot'
+      ? `/attachments/${encodeURIComponent(id)}/content`
+      : `/media/${encodeURIComponent(id)}/content`,
+  );
+  fallback.searchParams.set('visitorId', identity.visitorId);
+  if (identity.accessToken)
+    fallback.searchParams.set('visitorToken', identity.accessToken);
+  return fallback.toString();
 }
 
 function remoteUrl(connection: SupportMediaConnection, path: string): URL {
