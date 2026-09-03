@@ -31,8 +31,34 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('push', (event) => {
-  event.waitUntil(showSupportPushNotification());
+  event.waitUntil(handleSupportPush());
 });
+
+async function handleSupportPush() {
+  if (await hasVisibleStorefrontWindow()) return;
+  await showSupportPushNotification();
+}
+
+async function hasVisibleStorefrontWindow() {
+  try {
+    const windows = await self.clients.matchAll({
+      type: 'window',
+      includeUncontrolled: true,
+    });
+    return windows.some((client) => {
+      try {
+        return (
+          new URL(client.url).origin === self.location.origin &&
+          client.visibilityState === 'visible'
+        );
+      } catch {
+        return false;
+      }
+    });
+  } catch {
+    return false;
+  }
+}
 
 self.addEventListener('notificationclick', (event) => {
   event.notification.close();

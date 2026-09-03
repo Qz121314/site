@@ -10,6 +10,11 @@ type PushContext = {
   connectionId: string;
   clientApiUrl: string;
   visitorId: string;
+  remoteConversationId: string;
+  visitorTokenFingerprint: string;
+  endpoint: string;
+  applicationServerKey: string;
+  updatedAt: number;
 };
 
 type PushConfigEnvelope = {
@@ -24,6 +29,8 @@ type BadgeNavigator = Navigator & {
 
 const SUPPORT_PUSH_CACHE = 'storefront-support-push-v1';
 const SUPPORT_PUSH_CONTEXT_URL = '/__support-push-context__/active';
+const SUPPORT_PUSH_CONTEXT_TTL_MS = 24 * 60 * 60 * 1000;
+const pushSyncRequests = new Map<string, Promise<SupportPushState>>();
 
 function supportsPush(): boolean {
   return (
@@ -60,7 +67,10 @@ async function resolveConversationConnection(conversationRef: string): Promise<{
   return { connection, remoteConversationId: parsed.remoteConversationId };
 }
 
-async function readPushConfig(connection: PublicSupportConnection): Promise<ArrayBuffer> {
+async function readPushConfig(connection: PublicSupportConnection): Promise<{
+  applicationServerKey: ArrayBuffer;
+  encodedApplicationServerKey: string;
+}> {
   const response = await fetch(`${connection.clientApiUrl}/push/config`, {
     cache: 'no-store',
     credentials: 'omit',
@@ -70,10 +80,21 @@ async function readPushConfig(connection: PublicSupportConnection): Promise<Arra
   });
   if (!response.ok) throw new Error('SUPPORT_PUSH_CONFIG_FAILED');
   const body = (await response.json()) as PushConfigEnvelope;
-  if (body.enabled !== true || typeof body.applicationServerKey !== 'string') {
+  if (
+    body.enabled !== true ||
+    typeof body.applicationServerKey !== 'string' ||
+    !body.applicationServerKey
+  ) {
     throw new Error('SUPPORT_PUSH_UNAVAILABLE');
   }
-  return base64UrlToArrayBuffer(body.applicationServerKey);
+  const encodedApplicationServerKey = body.applicationServerKey
+    .replace(/=+$/u, '')
+    .replace(/\+/gu, '-')
+    .replace(/\//gu, '_');
+  return {
+    applicationServerKey: base64UrlToArrayBuffer(encodedApplicationServerKey),
+    encodedApplicationServerKey,
+  };
 }
 
 function base64UrlToArrayBuffer(value: string): ArrayBuffer {
@@ -102,15 +123,18 @@ function sameApplicationServerKey(
 async function registerSubscription(conversationRef: string): Promise<PushSubscription> {
   const { connection, remoteConversationId } =
     await resolveConversationConnection(conversationRef);
-  const applicationServerKey = await readPushConfig(connection);
+  const pushConfig = await readPushConfig(connection);
   const registration = await navigator.serviceWorker.ready;
   let subscription = await registration.pushManager.getSubscription();
-  if (subscription && !sameApplicationServerKey(subscription, applicationServerKey)) {
+  if (
+    subscription &&
+    !sameApplicationServerKey(subscription, pushConfig.applicationServerKey)
+  ) {
     await subscription.unsubscribe();
     subscription = null;
   }
   subscription ??= await registration.pushManager.subscribe({
-    applicationServerKey,
+    applicationServerKey: pushConfig.applicationServerKey,
     userVisibleOnly: true,
   });
 
@@ -141,8 +165,77 @@ async function registerSubscription(conversationRef: string): Promise<PushSubscr
     connectionId: connection.id,
     clientApiUrl: connection.clientApiUrl,
     visitorId: identity.visitorId,
+    remoteConversationId,
+    visitorTokenFingerprint: await fingerprintVisitorToken(identity.accessToken),
+    endpoint: subscription.endpoint,
+    applicationServerKey: pushConfig.encodedApplicationServerKey,
+    updatedAt: Date.now(),
   });
   return subscription;
+}
+
+async function fingerprintVisitorToken(token: string | null): Promise<string> {
+  const bytes = new TextEncoder().encode(token ?? '');
+  const digest = await crypto.subtle.digest('SHA-256', bytes);
+  return [...new Uint8Array(digest)]
+    .map((value) => value.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+async function readPushContext(): Promise<PushContext | null> {
+  try {
+    const cache = await caches.open(SUPPORT_PUSH_CACHE);
+    const response = await cache.match(SUPPORT_PUSH_CONTEXT_URL);
+    if (!response) return null;
+    const value = (await response.json()) as Partial<PushContext>;
+    if (
+      typeof value.connectionId !== 'string' ||
+      typeof value.clientApiUrl !== 'string' ||
+      typeof value.visitorId !== 'string' ||
+      typeof value.remoteConversationId !== 'string' ||
+      typeof value.visitorTokenFingerprint !== 'string' ||
+      typeof value.endpoint !== 'string' ||
+      !value.endpoint.startsWith('https://') ||
+      typeof value.applicationServerKey !== 'string' ||
+      !value.applicationServerKey ||
+      typeof value.updatedAt !== 'number' ||
+      !Number.isFinite(value.updatedAt) ||
+      value.updatedAt < Date.now() - SUPPORT_PUSH_CONTEXT_TTL_MS
+    ) {
+      return null;
+    }
+    return value as PushContext;
+  } catch {
+    return null;
+  }
+}
+
+function samePushBinding(
+  context: PushContext,
+  target: {
+    connection: PublicSupportConnection;
+    remoteConversationId: string;
+  },
+  visitorId: string,
+  visitorTokenFingerprint: string,
+  subscription: PushSubscription,
+): boolean {
+  try {
+    return (
+      context.connectionId === target.connection.id &&
+      context.clientApiUrl === target.connection.clientApiUrl &&
+      context.remoteConversationId === target.remoteConversationId &&
+      context.visitorId === visitorId &&
+      context.visitorTokenFingerprint === visitorTokenFingerprint &&
+      context.endpoint === subscription.endpoint &&
+      sameApplicationServerKey(
+        subscription,
+        base64UrlToArrayBuffer(context.applicationServerKey),
+      )
+    );
+  } catch {
+    return false;
+  }
 }
 
 async function savePushContext(context: PushContext): Promise<void> {
@@ -177,9 +270,42 @@ export async function enableSupportPush(
 export async function syncSupportPushSubscription(
   conversationRef: string,
 ): Promise<SupportPushState> {
+  const pending = pushSyncRequests.get(conversationRef);
+  if (pending) return pending;
+  const request = syncSupportPushSubscriptionInternal(conversationRef);
+  pushSyncRequests.set(conversationRef, request);
+  void request.then(
+    () => pushSyncRequests.delete(conversationRef),
+    () => pushSyncRequests.delete(conversationRef),
+  );
+  return request;
+}
+
+async function syncSupportPushSubscriptionInternal(
+  conversationRef: string,
+): Promise<SupportPushState> {
   if (!supportsPush()) return 'unsupported';
   if (Notification.permission === 'denied') return 'blocked';
   if (Notification.permission !== 'granted') return 'prompt';
+  const target = await resolveConversationConnection(conversationRef);
+  const identity = getSupportVisitorIdentity();
+  const visitorTokenFingerprint = await fingerprintVisitorToken(identity.accessToken);
+  const registration = await navigator.serviceWorker.ready;
+  const subscription = await registration.pushManager.getSubscription();
+  const context = await readPushContext();
+  if (
+    subscription &&
+    context &&
+    samePushBinding(
+      context,
+      target,
+      identity.visitorId,
+      visitorTokenFingerprint,
+      subscription,
+    )
+  ) {
+    return 'enabled';
+  }
   await registerSubscription(conversationRef);
   return 'enabled';
 }
