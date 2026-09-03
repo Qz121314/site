@@ -41,7 +41,7 @@ type SocketState = {
 };
 
 const SOCKET_STOP_GRACE_MS = 1_500;
-const SOCKET_HEARTBEAT_MS = 25_000;
+const SOCKET_HEARTBEAT_MS = 60_000;
 const SOCKET_STALE_MS = SOCKET_HEARTBEAT_MS * 3;
 const listeners = new Set<Listener>();
 const sockets = new Map<string, SocketState>();

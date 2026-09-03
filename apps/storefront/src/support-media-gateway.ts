@@ -29,6 +29,7 @@ type RemoteConversationAttachment = {
   height?: number | null;
   originalName?: string | null;
   source?: 'media' | 'snapshot';
+  url?: string | null;
 };
 
 type RemoteCompletedMedia = {
@@ -163,7 +164,7 @@ function isContactCardKind(value: unknown): value is SupportContactCardKind {
   );
 }
 
-function parseConversationAttachment(
+export function parseConversationAttachment(
   connection: SupportMediaConnection,
   identity: ReturnType<typeof getSupportVisitorIdentity>,
   item: RemoteConversationAttachment,
@@ -207,15 +208,21 @@ function parseConversationAttachment(
   ) {
     return null;
   }
-  const contentUrl = remoteUrl(
-    connection,
-    item.source === 'snapshot'
-      ? `/attachments/${encodeURIComponent(item.id)}/content`
-      : `/media/${encodeURIComponent(item.id)}/content`,
-  );
-  contentUrl.searchParams.set('visitorId', identity.visitorId);
-  if (identity.accessToken)
-    contentUrl.searchParams.set('visitorToken', identity.accessToken);
+  const contentUrl =
+    typeof item.url === 'string' && item.url
+      ? item.url
+      : (() => {
+          const fallback = remoteUrl(
+            connection,
+            item.source === 'snapshot'
+              ? `/attachments/${encodeURIComponent(item.id)}/content`
+              : `/media/${encodeURIComponent(item.id)}/content`,
+          );
+          fallback.searchParams.set('visitorId', identity.visitorId);
+          if (identity.accessToken)
+            fallback.searchParams.set('visitorToken', identity.accessToken);
+          return fallback.toString();
+        })();
   return {
     id: item.id,
     kind: 'image',
@@ -225,7 +232,7 @@ function parseConversationAttachment(
     width: typeof item.width === 'number' ? item.width : null,
     height: typeof item.height === 'number' ? item.height : null,
     originalName: typeof item.originalName === 'string' ? item.originalName : null,
-    url: contentUrl.toString(),
+    url: contentUrl,
   };
 }
 

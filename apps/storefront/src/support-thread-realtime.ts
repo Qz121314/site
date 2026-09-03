@@ -6,7 +6,7 @@ export type SupportTypingChannel = {
 };
 
 const RECONNECT_DELAYS_MS = [750, 1_500, 3_000, 6_000, 10_000];
-const HEARTBEAT_MS = 25_000;
+const HEARTBEAT_MS = 60_000;
 
 function reconnectDelay(attempt: number): number {
   return RECONNECT_DELAYS_MS[Math.min(attempt, RECONNECT_DELAYS_MS.length - 1)] ?? 10_000;

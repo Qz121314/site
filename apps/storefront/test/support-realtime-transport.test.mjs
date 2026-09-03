@@ -24,6 +24,7 @@ test('support realtime is websocket-first with REST reserved for recovery', () =
   assert.ok(runtime.includes('enabled: conversationListEnabled'));
   assert.ok(runtime.includes('return subscribeSupportRealtime((event) =>'));
   assert.ok(realtime.includes("recovered ? 'realtime.recovered' : 'realtime.connected'"));
+  assert.ok(realtime.includes('const SOCKET_HEARTBEAT_MS = 60_000;'));
   assert.ok(realtime.includes('raw.attachments'));
   assert.ok(realtime.includes('raw.media'));
   assert.ok(messages.includes('staleTime: Number.POSITIVE_INFINITY'));
@@ -32,5 +33,6 @@ test('support realtime is websocket-first with REST reserved for recovery', () =
   );
   assert.ok(media.includes('Promise<SupportMessage>'));
   assert.ok(typing.includes("socket.send(JSON.stringify({ type: 'typing', active }))"));
+  assert.ok(typing.includes('const HEARTBEAT_MS = 60_000;'));
   assert.ok(typing.includes('buildSupportConversationWebSocketUrl'));
 });
