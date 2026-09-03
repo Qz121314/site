@@ -1,9 +1,10 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import type { SupportConversationSummary } from './support-contract';
 import { siteSupportGateway } from './support-gateway';
 import { syncSupportAppBadge } from './support-push';
 import { subscribeSupportRealtime } from './support-realtime';
+import { createSupportRecoveryCoordinator } from './support-recovery-coordinator';
 import {
   applyRealtimeToConversationCache,
   applyRealtimeToConversationList,
@@ -30,6 +31,16 @@ export function StorefrontSupportRuntime({
     (total, conversation) => total + conversation.unreadCount,
     0,
   );
+  const recoverSupport = useMemo(
+    () =>
+      createSupportRecoveryCoordinator(async () => {
+        await Promise.all([
+          queryClient.invalidateQueries({ queryKey: ['support-conversations'] }),
+          queryClient.invalidateQueries({ queryKey: ['support-conversation'] }),
+        ]);
+      }).recover,
+    [queryClient],
+  );
 
   useEffect(() => {
     onUnreadMessages(unreadMessages);
@@ -46,8 +57,7 @@ export function StorefrontSupportRuntime({
   useEffect(() => {
     return subscribeSupportRealtime((event) => {
       if (event.type === 'realtime.recovered') {
-        void queryClient.invalidateQueries({ queryKey: ['support-conversations'] });
-        void queryClient.invalidateQueries({ queryKey: ['support-conversation'] });
+        void recoverSupport();
         return;
       }
       if (event.type === 'realtime.connected') return;
@@ -62,7 +72,7 @@ export function StorefrontSupportRuntime({
         );
       }
     });
-  }, [queryClient]);
+  }, [queryClient, recoverSupport]);
 
   return null;
 }
