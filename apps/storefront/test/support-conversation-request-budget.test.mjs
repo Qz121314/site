@@ -44,6 +44,25 @@ test('conversation detail carries page attachments without a separate media requ
           expiresAt: '2026-09-04T11:00:00.000Z',
           messages: [
             {
+              id: 'message-product-1',
+              direction: 'customer',
+              body: 'Product',
+              kind: 'product_context',
+              productContext: {
+                productId: 'product-1',
+                title: 'Snapshot Product',
+                coverUrl: 'https://example.com/snapshot.webp',
+                href: 'https://example.com/snapshot-product',
+                sectionId: 'section-1',
+                sectionName: 'Section',
+                categoryId: 'category-1',
+                categoryName: 'Category',
+              },
+              sentAt: '2026-09-03T11:59:00.000Z',
+              delivery: 'read',
+              attachments: [],
+            },
+            {
               id: 'message-1',
               direction: 'agent',
               body: '',
@@ -86,10 +105,21 @@ test('conversation detail carries page attachments without a separate media requ
       'connection-1:conversation-1',
     );
     assert.equal(requested.length, 2);
-    assert.equal(detail?.messages[0]?.attachments.length, 2);
+    assert.equal(detail?.messages[0]?.kind, 'product_context');
+    assert.deepEqual(detail?.messages[0]?.productContext, {
+      productId: 'product-1',
+      title: 'Snapshot Product',
+      coverUrl: 'https://example.com/snapshot.webp',
+      href: 'https://example.com/snapshot-product',
+      sectionId: 'section-1',
+      sectionName: 'Section',
+      categoryId: 'category-1',
+      categoryName: 'Category',
+    });
+    assert.equal(detail?.messages[1]?.attachments.length, 2);
     assert.equal(detail?.nextMessageCursor, 'cursor-1');
-    assert.equal(detail?.messages[0]?.attachments[0]?.kind, 'image');
-    assert.equal(detail?.messages[0]?.attachments[1]?.kind, 'sms');
+    assert.equal(detail?.messages[1]?.attachments[0]?.kind, 'image');
+    assert.equal(detail?.messages[1]?.attachments[1]?.kind, 'sms');
   } finally {
     globalThis.fetch = originalFetch;
   }

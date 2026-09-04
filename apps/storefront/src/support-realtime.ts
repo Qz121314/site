@@ -16,6 +16,7 @@ import {
   type PublicSupportConnection,
 } from './support-gateway';
 import { getSupportVisitorIdentity } from './support-identity';
+import { parseSupportProductContext } from './support-product-context';
 
 export type SupportRealtimeEvent = {
   type: string;
@@ -208,10 +209,16 @@ function parseMessage(
     const attachment = parseAttachment(connection, rawAttachment);
     if (attachment) attachmentsById.set(attachment.id, attachment);
   }
+  const kind =
+    item.kind === 'image' || item.kind === 'product_context' ? item.kind : 'text';
+  const productContext = parseSupportProductContext(item.productContext);
+  if (kind === 'product_context' && !productContext) return null;
   return {
     id: item.id,
     direction: item.direction,
     body: item.body,
+    kind,
+    productContext: kind === 'product_context' ? productContext : null,
     sentAt: item.sentAt,
     delivery: item.delivery,
     attachments: [...attachmentsById.values()],

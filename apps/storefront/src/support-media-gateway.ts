@@ -140,6 +140,8 @@ export async function sendConversationImage(
     id: complete.messageId,
     direction: 'customer',
     body: '',
+    kind: 'image',
+    productContext: null,
     sentAt: complete.createdAt ?? new Date().toISOString(),
     delivery: 'sent',
     attachments: [

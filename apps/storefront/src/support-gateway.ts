@@ -15,6 +15,7 @@ import {
   parseConversationAttachment,
   sendConversationImage,
 } from './support-media-gateway';
+import { parseSupportProductContext } from './support-product-context';
 
 export class SupportApiError extends Error {
   readonly status: number;
@@ -361,7 +362,26 @@ function parseMessage(
             Boolean(attachment),
           )
       : [];
-  return { ...(item as Omit<SupportMessage, 'attachments'>), attachments };
+  const kind =
+    item.kind === 'image' || item.kind === 'product_context' ? item.kind : 'text';
+  const productContext = parseSupportProductContext(item.productContext);
+  if (kind === 'product_context' && !productContext) {
+    throw new SupportApiError(
+      500,
+      'INVALID_SUPPORT_RESPONSE',
+      'Messages returned invalid product context data.',
+    );
+  }
+  return {
+    id: item.id,
+    direction: item.direction,
+    body: item.body,
+    kind,
+    productContext: kind === 'product_context' ? productContext : null,
+    sentAt: item.sentAt,
+    delivery: item.delivery,
+    attachments,
+  };
 }
 
 function parseRemoteSummary(value: unknown): RemoteConversationSummary {
