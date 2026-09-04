@@ -37,7 +37,9 @@ function restoredBrowseViewState(): BrowseViewState {
 function publishedSections(bootstrap: StorefrontBootstrap): PublicSection[] {
   const pointer = bootstrap.pointer;
   if (pointer.schemaVersion !== 2) return bootstrap.home.allSections;
-  return bootstrap.home.allSections.filter((section) => Boolean(pointer.sections[section.id]));
+  return bootstrap.home.allSections.filter((section) =>
+    Boolean(pointer.sections[section.id]),
+  );
 }
 
 function productMatches(product: PublicProductSummary, keyword: string): boolean {
@@ -232,7 +234,9 @@ export function BrowsePage({
         </div>
       ) : null}
 
-      {noResults ? <div className="browse-directory-empty">{SYSTEM_UI.noResults}</div> : null}
+      {noResults ? (
+        <div className="browse-directory-empty">{SYSTEM_UI.noResults}</div>
+      ) : null}
     </section>
   );
 }
