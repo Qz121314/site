@@ -13,16 +13,31 @@ test('storefront functional controls use shared icon button and Lucide icons', (
   const browse = source('../src/BrowsePage.tsx');
   const faq = source('../src/FaqPage.tsx');
   const filters = source('../src/SectionFilterControls.tsx');
+  const section = source('../src/SectionPage.tsx');
   const product = source('../src/ProductDetailPage.tsx');
   const edgeNavigation = source('../src/MobileEdgeNavigation.tsx');
   const home = source('../src/HomeFeed.tsx');
+  const root = source('../src/StorefrontRoot.tsx');
+  const navigation = source('../src/storefront-navigation.tsx');
 
   assert.match(support, /from '@site\/storefront-ui\/icon-button'/u);
   assert.match(pwa, /from '@site\/storefront-ui\/icon-button'/u);
   assert.match(browse, /from '@site\/storefront-ui\/icon-button'/u);
   assert.match(filters, /from '@site\/storefront-ui\/icon-button'/u);
 
-  for (const content of [support, pwa, browse, faq, filters, product, edgeNavigation, home]) {
+  for (const content of [
+    support,
+    pwa,
+    browse,
+    faq,
+    filters,
+    section,
+    product,
+    edgeNavigation,
+    home,
+    root,
+    navigation,
+  ]) {
     assert.match(content, /from 'lucide-react'/u);
   }
 
@@ -31,7 +46,12 @@ test('storefront functional controls use shared icon button and Lucide icons', (
   assert.doesNotMatch(browse, /function (?:SearchIcon|ClearIcon|SectionArrowIcon)/u);
   assert.doesNotMatch(faq, /function (?:NavigationBackIcon|FaqStateIcon|MissingStateIcon)/u);
   assert.doesNotMatch(filters, /function FilterIcon/u);
+  assert.doesNotMatch(section, /function (?:SearchIcon|ClearIcon|BackIcon)/u);
   assert.doesNotMatch(product, /function LocationIcon|▶/u);
   assert.doesNotMatch(edgeNavigation, /[‹›]/u);
   assert.doesNotMatch(home, /function MoreIcon|›/u);
+  assert.match(home, /previousIcon={<ChevronLeft aria-hidden="true" \/>}/u);
+  assert.match(home, /nextIcon={<ChevronRight aria-hidden="true" \/>}/u);
+  assert.match(root, /locationIcon={<MapPin aria-hidden="true" \/>}/u);
+  assert.doesNotMatch(navigation, /function navigationIcon/u);
 });
