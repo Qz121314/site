@@ -134,10 +134,13 @@
   border: 0;
   color: var(--muted);
   background: transparent;
-  font-size: 0.65rem;
-  font-weight: 820;
   line-height: 1;
-  letter-spacing: -0.12em;
+}
+
+.chat-delivery-mark > svg {
+  width: 13px;
+  height: 13px;
+  stroke-width: 2;
 }
 
 .chat-delivery-mark.is-read {
@@ -145,15 +148,20 @@
 }
 
 .chat-delivery-mark.is-failed {
-  width: 16px;
-  min-width: 16px;
-  height: 16px;
+  width: 18px;
+  min-width: 18px;
+  height: 18px;
   border-radius: 50%;
   color: #fff;
   background: #c83b3b;
   cursor: pointer;
-  font-size: 0.62rem;
-  letter-spacing: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.chat-delivery-mark.is-failed > svg {
+  width: 11px;
+  height: 11px;
+  stroke-width: 2.25;
 }
 
 .loading-halo.chat-delivery-halo {
@@ -166,62 +174,29 @@
   border-color: color-mix(in srgb, #c83b3b 34%, var(--line));
 }
 
-.chat-attachment-picker,
-.chat-composer > button:first-child:not(.chat-send-button) {
-  position: relative;
-  display: grid;
-  width: 40px;
-  min-width: 40px;
-  height: 40px;
-  min-height: 40px;
-  place-items: center;
+.chat-attachment-picker {
   align-self: end;
-  padding: 0;
-  border: 0;
-  border-radius: 50%;
   color: var(--muted);
-  background: transparent;
-  cursor: pointer;
-  font-size: 0;
-  touch-action: manipulation;
 }
 
-.chat-attachment-picker::before,
-.chat-attachment-picker::after,
-.chat-composer > button:first-child:not(.chat-send-button)::before,
-.chat-composer > button:first-child:not(.chat-send-button)::after {
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  display: block;
-  border-radius: 999px;
-  background: currentColor;
-  content: '';
-  transform: translate(-50%, -50%);
+.chat-attachment-picker > svg {
+  width: 22px;
+  height: 22px;
 }
 
-.chat-attachment-picker::before,
-.chat-composer > button:first-child:not(.chat-send-button)::before {
-  width: 18px;
-  height: 1.8px;
-}
-
-.chat-attachment-picker::after,
-.chat-composer > button:first-child:not(.chat-send-button)::after {
-  width: 1.8px;
-  height: 18px;
-}
-
-.chat-composer > button:first-child:not(.chat-send-button):disabled {
-  cursor: default;
-}
-
-.chat-attachment-picker input {
+.chat-attachment-input {
   position: absolute;
   width: 1px;
   height: 1px;
+  overflow: hidden;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
   opacity: 0;
   pointer-events: none;
+  white-space: nowrap;
 }
 
 .chat-image-upload-preview {
@@ -325,8 +300,12 @@
   border-radius: 50%;
   color: #fff;
   background: #c83b3b;
-  font-size: 1.05rem;
-  font-weight: 850;
+}
+
+.chat-upload-failed-mark > svg {
+  width: 22px;
+  height: 22px;
+  stroke-width: 2;
 }
 
 @keyframes chat-upload-preview-in {
