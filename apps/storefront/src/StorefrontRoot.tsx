@@ -5,6 +5,7 @@ import {
   StorefrontBrandName,
   type StorefrontLinkComponent,
 } from '@site/storefront-ui';
+import { ChevronLeft, CircleAlert, MapPin } from 'lucide-react';
 import {
   type AnchorHTMLAttributes,
   type MouseEvent as ReactMouseEvent,
@@ -139,9 +140,7 @@ function ProductShellHeader({
         href={backHref}
         onClick={handleShellBack}
       >
-        <svg viewBox="0 0 20 20" aria-hidden="true" focusable="false">
-          <path d="m12.5 4.5-5.5 5.5 5.5 5.5" />
-        </svg>
+        <ChevronLeft aria-hidden="true" />
       </StorefrontLink>
       <StorefrontLink className="brand-lockup" href="/" aria-label={site.name}>
         <span className="brand-logo">
@@ -151,7 +150,10 @@ function ProductShellHeader({
         </span>
         <span>
           <StorefrontBrandName siteName={site.name} />
-          <small>⌖ {site.locationLabel}</small>
+          <small className="brand-location">
+            <MapPin aria-hidden="true" />
+            <span>{site.locationLabel}</span>
+          </small>
         </span>
       </StorefrontLink>
       <span className="storefront-detail-header-spacer" aria-hidden="true" />
@@ -177,20 +179,11 @@ function StorefrontMetadata({ description }: { description: string }) {
   return null;
 }
 
-function UnavailableIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
-      <path d="M12 4.75a7.25 7.25 0 1 1-7.25 7.25A7.25 7.25 0 0 1 12 4.75Z" />
-      <path d="M12 8.25v4.5M12 15.75h.01" />
-    </svg>
-  );
-}
-
 function PrimaryError() {
   return (
     <div className="standalone-state">
       <div className="state-mark" aria-hidden="true">
-        <UnavailableIcon />
+        <CircleAlert />
       </div>
       <h1>{SYSTEM_UI.unavailable}</h1>
       <button type="button" onClick={() => window.location.reload()}>
