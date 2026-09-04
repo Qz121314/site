@@ -9,7 +9,9 @@ function source(path) {
 
 test('mobile visitor composer stays above the keyboard inside the conversation owner', () => {
   const conversationCss = source('../src/chat-conversation.css');
-  const iconButtonCss = source('../../../packages/storefront-ui/src/icon-button.css');
+  const iconButtonCss = source(
+    '../../../packages/storefront-ui/src/icon-button.css',
+  );
 
   assert.equal(conversationCss.includes('.chat-composer:focus-within'), false);
   assert.ok(conversationCss.includes('max(8px, env(safe-area-inset-bottom))'));
