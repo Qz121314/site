@@ -1,5 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
 import type { StorefrontLinkComponent } from '@site/storefront-ui';
+import { ChevronLeft, FileQuestion, MessageCircle } from 'lucide-react';
 import { useEffect, type MouseEvent as ReactMouseEvent } from 'react';
 import type { StorefrontBootstrap } from './content';
 import { loadFaqSnapshot } from './content-route';
@@ -27,32 +28,6 @@ function handleInternalBack(event: ReactMouseEvent<HTMLAnchorElement>) {
   if (!canNavigateStorefrontBack()) return;
   event.preventDefault();
   navigateStorefrontBack();
-}
-
-function NavigationBackIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
-      <path d="m14.5 5-7 7 7 7" />
-    </svg>
-  );
-}
-
-function FaqStateIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
-      <path d="M6.5 5.5h11a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H11l-4.5 2.5v-2.5h0a2 2 0 0 1-2-2v-8a2 2 0 0 1 2-2Z" />
-      <path d="M9 10h6M9 13.5h4" />
-    </svg>
-  );
-}
-
-function MissingStateIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
-      <path d="M7 5.5h7l3 3v10H7z" />
-      <path d="M14 5.5v3h3M9.5 13h5M9.5 16h3" />
-    </svg>
-  );
 }
 
 function FaqLoadState({
@@ -118,7 +93,7 @@ export function FaqDirectoryPage({
       {query.data && query.data.faqs.length === 0 ? (
         <div className="faq-empty-state" role="status">
           <span className="faq-empty-mark" aria-hidden="true">
-            <FaqStateIcon />
+            <MessageCircle />
           </span>
           <strong>{SYSTEM_UI.noResults}</strong>
         </div>
@@ -166,13 +141,13 @@ export function FaqArticlePage({
             href="/faq/"
             onClick={handleInternalBack}
           >
-            <NavigationBackIcon />
+            <ChevronLeft aria-hidden="true" />
             <span className="sr-only">{SYSTEM_UI.back}</span>
           </LinkComponent>
         </header>
         <div className="standalone-state embedded-state">
           <div className="state-mark" aria-hidden="true">
-            <MissingStateIcon />
+            <FileQuestion />
           </div>
           <h1 id="faq-article-missing-title">{SYSTEM_UI.notFound}</h1>
         </div>
@@ -189,7 +164,7 @@ export function FaqArticlePage({
           href="/faq/"
           onClick={handleInternalBack}
         >
-          <NavigationBackIcon />
+          <ChevronLeft aria-hidden="true" />
           <span className="sr-only">{SYSTEM_UI.back}</span>
         </LinkComponent>
       </header>
