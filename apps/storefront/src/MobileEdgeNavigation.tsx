@@ -1,3 +1,4 @@
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { useEffect, useState, type CSSProperties } from 'react';
 import {
   canNavigateStorefrontBack,
@@ -216,7 +217,7 @@ export function MobileEdgeNavigation() {
       style={style}
       aria-hidden="true"
     >
-      <span>{gesture.direction === 'back' ? '‹' : '›'}</span>
+      <span>{gesture.direction === 'back' ? <ChevronLeft /> : <ChevronRight />}</span>
     </div>
   );
 }

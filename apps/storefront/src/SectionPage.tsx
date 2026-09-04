@@ -1,5 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import type { StorefrontLinkComponent } from '@site/storefront-ui';
+import { StorefrontIconButton } from '@site/storefront-ui/icon-button';
+import { ChevronLeft, CircleAlert, Search, X } from 'lucide-react';
 import { useEffect, useMemo, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import { publicImageVariantUrl, type StorefrontBootstrap } from './content';
 import { loadSectionSnapshot } from './content-route';
@@ -36,49 +38,6 @@ function restoredSectionViewState(): SectionViewState {
     ? record.selectedTagIds.filter((item): item is string => typeof item === 'string')
     : [];
   return { search, categoryId, selectedTagIds };
-}
-
-function SearchIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      aria-hidden="true"
-    >
-      <circle cx="10.8" cy="10.8" r="6.5" />
-      <path d="m16 16 4 4" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function ClearIcon() {
-  return (
-    <svg
-      viewBox="0 0 20 20"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.7"
-      aria-hidden="true"
-    >
-      <path d="m6.5 6.5 7 7M13.5 6.5l-7 7" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function BackIcon() {
-  return (
-    <svg
-      viewBox="0 0 20 20"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      aria-hidden="true"
-    >
-      <path d="m12.5 4.5-5.5 5.5 5.5 5.5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
 }
 
 export function SectionCatalogPage({
@@ -182,7 +141,9 @@ export function SectionCatalogPage({
         className="section-catalog-state standalone-state embedded-state"
         role="status"
       >
-        <div className="state-mark">!</div>
+        <div className="state-mark" aria-hidden="true">
+          <CircleAlert />
+        </div>
         <h1>{SYSTEM_UI.unavailable}</h1>
         <div className="state-actions">
           <button
@@ -217,7 +178,7 @@ export function SectionCatalogPage({
           aria-label={SYSTEM_UI.back}
           onClick={handleBack}
         >
-          <BackIcon />
+          <ChevronLeft aria-hidden="true" />
           <span className="section-catalog-back-label">{SYSTEM_UI.back}</span>
         </LinkComponent>
         <h1 id="section-catalog-title">{query.data.section.name}</h1>
@@ -226,7 +187,7 @@ export function SectionCatalogPage({
       {hasProducts ? (
         <div className="section-catalog-controls">
           <div className="section-catalog-search">
-            <SearchIcon />
+            <Search aria-hidden="true" />
             <input
               type="search"
               value={search}
@@ -235,14 +196,13 @@ export function SectionCatalogPage({
               onChange={(event) => setSearch(event.target.value)}
             />
             {search ? (
-              <button
-                type="button"
+              <StorefrontIconButton
                 className="section-catalog-search-clear"
                 aria-label={SYSTEM_UI.clear}
                 onClick={() => setSearch('')}
               >
-                <ClearIcon />
-              </button>
+                <X aria-hidden="true" />
+              </StorefrontIconButton>
             ) : null}
           </div>
 

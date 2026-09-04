@@ -9,14 +9,14 @@ function source(path) {
 
 test('mobile visitor composer stays above the keyboard inside the conversation owner', () => {
   const conversationCss = source('../src/chat-conversation.css');
+  const iconButtonCss = source('../../../packages/storefront-ui/src/icon-button.css');
 
   assert.equal(conversationCss.includes('.chat-composer:focus-within'), false);
   assert.ok(conversationCss.includes('max(8px, env(safe-area-inset-bottom))'));
   assert.ok(conversationCss.includes('font-size: 16px;'));
   assert.ok(conversationCss.includes('field-sizing: content;'));
   assert.ok(conversationCss.includes('max-height: 108px;'));
-  assert.match(
-    conversationCss,
-    /\.chat-composer \.chat-send-button \{[\s\S]*?width: 44px;[\s\S]*?height: 44px;/u,
-  );
+  assert.ok(conversationCss.includes('grid-template-columns: 44px minmax(0, 1fr) 44px;'));
+  assert.ok(conversationCss.includes('.chat-composer .storefront-icon-button'));
+  assert.ok(iconButtonCss.includes('--storefront-icon-button-size: 44px;'));
 });

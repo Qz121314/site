@@ -1,3 +1,5 @@
+import { StorefrontIconButton } from '@site/storefront-ui/icon-button';
+import { ListFilter } from 'lucide-react';
 import { useState } from 'react';
 import { SYSTEM_UI } from './system-ui';
 import './section-compact-filters.css';
@@ -6,20 +8,6 @@ type FilterOption = {
   id: string;
   name: string;
 };
-
-function FilterIcon() {
-  return (
-    <svg
-      viewBox="0 0 20 20"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.7"
-      aria-hidden="true"
-    >
-      <path d="M3.5 5.5h13M6 10h8M8.5 14.5h3" strokeLinecap="round" />
-    </svg>
-  );
-}
 
 export function SectionFilterControls({
   categories,
@@ -77,23 +65,22 @@ export function SectionFilterControls({
         )}
 
         {hasTags ? (
-          <button
+          <StorefrontIconButton
             className={`section-tag-filter-trigger${
               selectedTags.size > 0 ? ' is-active' : ''
             }`}
-            type="button"
             aria-label="Tags"
             aria-expanded={tagPanelOpen}
             aria-controls="section-tag-filter-panel"
             onClick={() => setTagPanelOpen((current) => !current)}
           >
-            <FilterIcon />
+            <ListFilter aria-hidden="true" />
             {selectedTags.size > 0 ? (
               <span className="section-tag-filter-count" aria-hidden="true">
                 {selectedTags.size}
               </span>
             ) : null}
-          </button>
+          </StorefrontIconButton>
         ) : null}
       </div>
 

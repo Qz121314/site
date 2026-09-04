@@ -1,5 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 import type { StorefrontLinkComponent } from '@site/storefront-ui';
+import { StorefrontIconButton } from '@site/storefront-ui/icon-button';
+import { ArrowRight, Search, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import {
   publicImageVariantUrl,
@@ -30,50 +32,6 @@ function restoredBrowseViewState(): BrowseViewState {
   if (!value || typeof value !== 'object' || Array.isArray(value)) return { search: '' };
   const search = (value as Record<string, unknown>).search;
   return { search: typeof search === 'string' ? search : '' };
-}
-
-function SearchIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.8"
-      aria-hidden="true"
-    >
-      <circle cx="10.8" cy="10.8" r="6.5" />
-      <path d="m16 16 4 4" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function ClearIcon() {
-  return (
-    <svg
-      viewBox="0 0 20 20"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.7"
-      aria-hidden="true"
-    >
-      <path d="m6.5 6.5 7 7M13.5 6.5l-7 7" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function SectionArrowIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.7"
-      aria-hidden="true"
-    >
-      <path d="M5 12h13" strokeLinecap="round" />
-      <path d="m14 7 5 5-5 5" strokeLinecap="round" strokeLinejoin="round" />
-    </svg>
-  );
 }
 
 function publishedSections(bootstrap: StorefrontBootstrap): PublicSection[] {
@@ -150,7 +108,7 @@ export function BrowsePage({
     <section className="browse-directory">
       <h1 className="sr-only">Browse · {bootstrap.site.site.name}</h1>
       <div className="browse-directory-search">
-        <SearchIcon />
+        <Search aria-hidden="true" />
         <input
           type="search"
           value={search}
@@ -159,14 +117,13 @@ export function BrowsePage({
           onChange={(event) => setSearch(event.target.value)}
         />
         {search ? (
-          <button
-            type="button"
+          <StorefrontIconButton
             className="browse-directory-search-clear"
             aria-label={SYSTEM_UI.clear}
             onClick={() => setSearch('')}
           >
-            <ClearIcon />
-          </button>
+            <X aria-hidden="true" />
+          </StorefrontIconButton>
         ) : null}
       </div>
 
@@ -204,7 +161,7 @@ export function BrowsePage({
                     {section.description ? <p>{section.description}</p> : null}
                   </span>
                   <span className="browse-section-card-arrow" aria-hidden="true">
-                    <SectionArrowIcon />
+                    <ArrowRight />
                   </span>
                 </span>
               </LinkComponent>

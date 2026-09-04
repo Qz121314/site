@@ -65,12 +65,14 @@ export function StorefrontBrandName({ siteName }: { siteName: string }) {
 export function StorefrontBrandBar({
   homeHref = '/',
   LinkComponent = 'a',
+  locationIcon = null,
   locationLabel,
   logo,
   siteName,
 }: {
   homeHref?: string;
   LinkComponent?: StorefrontLinkComponent;
+  locationIcon?: ReactNode;
   locationLabel: string;
   logo: ReactNode;
   siteName: string;
@@ -81,7 +83,10 @@ export function StorefrontBrandBar({
         <span className="brand-logo">{logo}</span>
         <span>
           <StorefrontBrandName siteName={siteName} />
-          <small>⌖ {locationLabel}</small>
+          <small className="brand-location">
+            {locationIcon ?? <span aria-hidden="true">⌖</span>}
+            <span>{locationLabel}</span>
+          </small>
         </span>
       </LinkComponent>
     </header>
@@ -102,6 +107,8 @@ export type StorefrontHeroCarouselProps = {
   intervalMs?: number;
   autoAdvance?: boolean;
   ariaLabel?: string;
+  previousIcon?: ReactNode;
+  nextIcon?: ReactNode;
 };
 
 type StorefrontHeroLegacyProps = {
@@ -117,6 +124,8 @@ function StorefrontHeroCarousel({
   intervalMs = 5000,
   autoAdvance = false,
   ariaLabel,
+  previousIcon = '‹',
+  nextIcon = '›',
 }: StorefrontHeroCarouselProps) {
   const viewportRef = useRef<HTMLDivElement | null>(null);
   const frameRef = useRef<number | null>(null);
@@ -282,7 +291,7 @@ function StorefrontHeroCarousel({
             aria-label="Previous slide"
             onClick={() => goTo(activeIndex - 1)}
           >
-            ‹
+            {previousIcon}
           </button>
           <button
             className="hero-carousel-arrow is-next"
@@ -290,7 +299,7 @@ function StorefrontHeroCarousel({
             aria-label="Next slide"
             onClick={() => goTo(activeIndex + 1)}
           >
-            ›
+            {nextIcon}
           </button>
           <div className="hero-carousel-dots" role="group" aria-label="Hero slides">
             {slides.map((slide, index) => (

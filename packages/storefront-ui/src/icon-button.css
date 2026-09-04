@@ -1,0 +1,86 @@
+.storefront-icon-button {
+  --storefront-icon-button-size: 44px;
+  display: inline-grid;
+  width: var(--storefront-icon-button-size);
+  min-width: var(--storefront-icon-button-size);
+  height: var(--storefront-icon-button-size);
+  min-height: var(--storefront-icon-button-size);
+  flex: 0 0 var(--storefront-icon-button-size);
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  color: var(--muted);
+  background: transparent;
+  box-shadow: none;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  transition:
+    color var(--app-motion-fast, 140ms) ease,
+    background var(--app-motion-fast, 140ms) ease,
+    box-shadow var(--app-motion-fast, 140ms) ease,
+    transform var(--app-motion-fast, 140ms) var(--app-ease-out, ease-out);
+}
+
+.storefront-icon-button[data-size='small'] {
+  --storefront-icon-button-size: 36px;
+}
+
+.storefront-icon-button > svg {
+  width: 21px;
+  height: 21px;
+  stroke-width: 1.9;
+}
+
+.storefront-icon-button[data-variant='soft'] {
+  background: color-mix(in srgb, var(--surface-soft) 78%, transparent);
+}
+
+.storefront-icon-button[data-variant='primary'] {
+  color: var(--theme-on-brand, #000);
+  background: var(--brand);
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--brand) 18%, transparent);
+}
+
+.storefront-icon-button:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--brand) 54%, transparent);
+  outline-offset: 2px;
+}
+
+.storefront-icon-button:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+.storefront-icon-button[data-variant='ghost']:active:not(:disabled),
+.storefront-icon-button[data-variant='soft']:active:not(:disabled) {
+  background: color-mix(in srgb, var(--text) 9%, transparent);
+}
+
+.storefront-icon-button:disabled {
+  cursor: default;
+  opacity: 0.32;
+  transform: none;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .storefront-icon-button[data-variant='ghost']:hover:not(:disabled),
+  .storefront-icon-button[data-variant='soft']:hover:not(:disabled) {
+    color: var(--text);
+    background: color-mix(in srgb, var(--surface-soft) 82%, transparent);
+  }
+
+  .storefront-icon-button[data-variant='primary']:hover:not(:disabled) {
+    filter: brightness(0.98);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .storefront-icon-button {
+    transition: none;
+  }
+
+  .storefront-icon-button:active:not(:disabled) {
+    transform: none;
+  }
+}
