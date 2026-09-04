@@ -1,3 +1,5 @@
+import { StorefrontIconButton } from '@site/storefront-ui/icon-button';
+import { X } from 'lucide-react';
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import { getPwaInstallRuntime, subscribePwaInstallRuntime } from './pwa-install-runtime';
 import { parseStorefrontRoute } from './routing';
@@ -297,23 +299,15 @@ export function PwaInstallPrompt() {
           {config.installLabel}
         </button>
       ) : null}
-      <button
+      <StorefrontIconButton
         className="pwa-install-dismiss"
-        type="button"
+        size="small"
         aria-label={config.dismissLabel}
         title={config.dismissLabel}
         onClick={dismiss}
       >
-        <svg
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          aria-hidden="true"
-        >
-          <path d="m7 7 10 10M17 7 7 17" strokeLinecap="round" />
-        </svg>
-      </button>
+        <X aria-hidden="true" />
+      </StorefrontIconButton>
     </aside>
   );
 }
