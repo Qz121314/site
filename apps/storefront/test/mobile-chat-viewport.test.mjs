@@ -13,7 +13,9 @@ test('mobile visitor chat inherits the shared visual viewport owned by App Shell
   const viewportRuntime = source('../src/storefront-viewport-runtime.ts');
   const keyboardAnchorRuntime = source('../src/chat-keyboard-anchor-runtime.ts');
   const appShell = source('../src/app-shell.css');
+  const messagesUi = source('../src/messages-ui.css');
   const conversationCss = source('../src/chat-conversation.css');
+  const messagesMedia = source('../src/messages-media.css');
 
   assert.ok(html.includes('viewport-fit=cover'));
   assert.ok(html.includes('interactive-widget=resizes-content'));
@@ -33,12 +35,24 @@ test('mobile visitor chat inherits the shared visual viewport owned by App Shell
     /\.messages-push-host:has\(\.messages-workspace\.is-thread-open\)[\s\S]*?height: 100%;[\s\S]*?min-height: 0;/u,
   );
   assert.match(
-    conversationCss,
-    /\.messages-push-host:has\(\.messages-workspace\.is-thread-open\) \.chat-page \{[\s\S]*?display: grid;[\s\S]*?grid-template-rows: auto auto minmax\(0, 1fr\) auto;[\s\S]*?overflow: hidden;/u,
+    messagesUi,
+    /\.chat-page \{[\s\S]*?display: flex;[\s\S]*?min-height: 0;[\s\S]*?flex-direction: column;[\s\S]*?overflow: hidden;/u,
+  );
+  assert.match(
+    messagesUi,
+    /\.chat-timeline \{[\s\S]*?min-height: 0;[\s\S]*?flex: 1 1 0;[\s\S]*?overflow-y: auto;/u,
   );
   assert.match(
     conversationCss,
     /\.messages-push-host:has\(\.messages-workspace\.is-thread-open\) \.chat-timeline \{[\s\S]*?min-height: 0;[\s\S]*?overflow-y: auto;/u,
+  );
+  assert.doesNotMatch(
+    conversationCss,
+    /\.messages-push-host:has\(\.messages-workspace\.is-thread-open\) \.chat-page \{[\s\S]*?grid-template-rows:/u,
+  );
+  assert.doesNotMatch(
+    messagesMedia,
+    /\.chat-page:has\(\.chat-conversation-status\)[\s\S]*?grid-template-rows:/u,
   );
 
   for (const pattern of [

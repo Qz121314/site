@@ -340,13 +340,6 @@
   }
 }
 
-@media (max-width: 767px) {
-  .messages-push-host:has(.messages-workspace.is-thread-open)
-    .chat-page:has(.chat-conversation-status) {
-    grid-template-rows: auto auto auto minmax(0, 1fr) auto;
-  }
-}
-
 @media (max-width: 640px) {
   .chat-message-image {
     width: min(100%, 300px);
