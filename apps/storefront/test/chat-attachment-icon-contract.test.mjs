@@ -10,12 +10,8 @@ function source(path) {
 test('storefront chat actions use semantic icon buttons without native tap highlight', () => {
   const ui = source('../src/support-ui.tsx');
   const main = source('../src/main.tsx');
-  const iconButton = source(
-    '../../../packages/storefront-ui/src/icon-button.tsx',
-  );
-  const iconButtonCss = source(
-    '../../../packages/storefront-ui/src/icon-button.css',
-  );
+  const iconButton = source('../../../packages/storefront-ui/src/icon-button.tsx');
+  const iconButtonCss = source('../../../packages/storefront-ui/src/icon-button.css');
   const iconButtonImport =
     "import { StorefrontIconButton } from '@site/storefront-ui/icon-button';";
 
@@ -27,15 +23,13 @@ test('storefront chat actions use semantic icon buttons without native tap highl
   assert.doesNotMatch(ui, /[＋➤]/u);
 
   assert.ok(iconButton.includes('<button'));
-  assert.ok(iconButton.includes("data-variant={variant}"));
-  assert.ok(
-    iconButtonCss.includes('-webkit-tap-highlight-color: transparent;'),
-  );
+  assert.ok(iconButton.includes('data-variant={variant}'));
+  assert.ok(iconButtonCss.includes('-webkit-tap-highlight-color: transparent;'));
   assert.ok(iconButtonCss.includes('touch-action: manipulation;'));
   assert.ok(iconButtonCss.includes('.storefront-icon-button:focus-visible'));
   assert.ok(iconButtonCss.includes('border-radius: 999px;'));
   assert.ok(iconButtonCss.includes('transform: scale(0.94);'));
-  assert.ok(main.includes("@site/storefront-ui/icon-button.css"));
+  assert.ok(main.includes('@site/storefront-ui/icon-button.css'));
 });
 
 test('canonical contact cards share one clickable visitor contract', () => {
