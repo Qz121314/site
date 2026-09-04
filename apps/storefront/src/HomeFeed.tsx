@@ -5,6 +5,7 @@ import {
   StorefrontHomeShortcut,
   type StorefrontHeroSlide,
 } from '@site/storefront-ui';
+import { ChevronRight, Grid2X2 } from 'lucide-react';
 import {
   type AnchorHTMLAttributes,
   type MouseEvent as ReactMouseEvent,
@@ -118,17 +119,6 @@ function SectionIcon({ section }: { section: PublicSection }) {
   return <span aria-hidden="true">{section.icon.value || fallback}</span>;
 }
 
-function MoreIcon() {
-  return (
-    <span className="home-more-glyph" aria-hidden="true">
-      <i />
-      <i />
-      <i />
-      <i />
-    </span>
-  );
-}
-
 function HomeShortcuts({
   sections,
   showMore,
@@ -151,7 +141,7 @@ function HomeShortcuts({
         {showMore ? (
           <StorefrontHomeShortcut
             href="/browse/"
-            icon={<MoreIcon />}
+            icon={<Grid2X2 aria-hidden="true" />}
             isMore
             label={SYSTEM_UI.more}
             LinkComponent={HomeLink}
@@ -250,7 +240,7 @@ function HomeRecommendationRail({
           href={sectionHref(section)}
           aria-label={`${SYSTEM_UI.more}: ${section.name}`}
         >
-          <span aria-hidden="true">›</span>
+          <ChevronRight aria-hidden="true" />
         </HomeLink>
       </div>
       {initialProducts.length === 0 && query.isLoading && !query.data ? (
