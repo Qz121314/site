@@ -7,7 +7,7 @@ function source(path) {
   return readFileSync(new URL(path, import.meta.url), 'utf8');
 }
 
-test('CTA compose creates the conversation before any visitor message', () => {
+test('CTA compose does not invent a separate visitor text message', () => {
   const messages = source('../src/MessagesPage.tsx');
   const contract = source('../src/support-contract.ts');
   const gateway = source('../src/support-gateway.ts');
@@ -31,7 +31,8 @@ test('CTA compose creates the conversation before any visitor message', () => {
   assert.equal(messages.includes('setComposeOptimisticMessage'), false);
   assert.equal(contract.includes('clientMessageId: string;\n  message: string;'), false);
 
-  // Regression guard: creating a conversation must not carry visitor content.
+  // The customer-service system persists the CTA itself as product_context.
+  // Site must not invent a second text message during conversation creation.
   const conversationCreation = gateway.slice(startConversation, sendMessage);
   assert.ok(conversationCreation.includes('sourceHandoffId: input.handoffId'));
   assert.equal(

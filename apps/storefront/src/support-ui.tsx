@@ -18,6 +18,7 @@ import type {
   SupportConversationDetail,
   SupportConversationSummary,
   SupportMessage,
+  SupportProductContextSnapshot,
 } from './support-contract';
 import { buildSupportContactCardHref } from './support-attachment-safety';
 import { MarkdownContent } from './MarkdownContent';
@@ -301,6 +302,37 @@ function ProductContextCard({
     </LinkComponent>
   ) : (
     <div className="chat-product-card">{body}</div>
+  );
+}
+
+function ProductContextMessageCard({
+  context,
+  LinkComponent,
+}: {
+  context: SupportProductContextSnapshot;
+  LinkComponent: StorefrontLinkComponent;
+}) {
+  const details = [context.sectionName, context.categoryName].filter(Boolean).join(' · ');
+  const body = (
+    <>
+      <span className="chat-product-message-media">
+        {context.coverUrl ? (
+          <ResilientImage alt="" fallback={null} loading="lazy" src={context.coverUrl} />
+        ) : null}
+      </span>
+      <span className="chat-product-message-copy">
+        <strong>{context.title}</strong>
+        {details ? <small>{details}</small> : null}
+      </span>
+      <ChevronRight className="chat-product-message-chevron" aria-hidden="true" />
+    </>
+  );
+  return context.href ? (
+    <LinkComponent className="chat-product-message-card" href={context.href}>
+      {body}
+    </LinkComponent>
+  ) : (
+    <div className="chat-product-message-card">{body}</div>
   );
 }
 
@@ -630,7 +662,9 @@ export function MessageThreadPageContent({
         ) : null}
       </header>
 
-      <ProductContextCard context={productContext} LinkComponent={LinkComponent} />
+      {pendingConversation ? (
+        <ProductContextCard context={productContext} LinkComponent={LinkComponent} />
+      ) : null}
       {conversation ? <ConversationStatusNotice status={conversation.status} /> : null}
 
       <div className="chat-timeline" role="log" aria-live="polite" ref={timelineRef}>
@@ -682,11 +716,19 @@ export function MessageThreadPageContent({
                 </div>
               ) : null}
               <div
-                className={`chat-message-row is-${message.direction}${groupStart ? ' is-group-start' : ''}${groupEnd ? ' is-group-end' : ''}${message.delivery === 'failed' ? ' is-failed' : ''}`}
+                className={`chat-message-row is-${message.direction}${message.kind === 'product_context' ? ' is-product-context' : ''}${groupStart ? ' is-group-start' : ''}${groupEnd ? ' is-group-end' : ''}${message.delivery === 'failed' ? ' is-failed' : ''}`}
               >
                 <div className="chat-message-bubble">
-                  {message.body ? <p>{message.body}</p> : null}
-                  {message.attachments.length > 0 ? (
+                  {message.kind === 'product_context' && message.productContext ? (
+                    <ProductContextMessageCard
+                      context={message.productContext}
+                      LinkComponent={LinkComponent}
+                    />
+                  ) : message.body ? (
+                    <p>{message.body}</p>
+                  ) : null}
+                  {message.kind !== 'product_context' &&
+                  message.attachments.length > 0 ? (
                     <div className="chat-message-attachments">
                       {message.attachments.map((attachment) => {
                         if (attachment.kind === 'image') {

@@ -328,7 +328,7 @@ GET {clientApiUrl}/conversations/{conversationId}?visitorId=A7C2D9&before={curso
 
 ### 创建 Conversation
 
-只有用户真正发送第一条消息时才创建 Conversation：
+用户点击在线客服 CTA 后创建或复用 Conversation。客服系统会把这次 CTA 本身保存为 visitor `product_context` message；Site 不额外生成一条文本消息：
 
 ```http
 POST {clientApiUrl}/conversations
@@ -338,8 +338,7 @@ Content-Type: application/json
 ```json
 {
   "visitorId": "A7C2D9",
-  "clientMessageId": "uuid",
-  "message": "Hello",
+  "sourceHandoffId": "uuid",
   "product": {
     "id": "product-id",
     "sectionId": "west",
@@ -352,6 +351,26 @@ Content-Type: application/json
   }
 }
 ```
+
+会话历史与 WebSocket 的 `message` 可包含：
+
+```json
+{
+  "kind": "product_context",
+  "productContext": {
+    "productId": "product-id",
+    "title": "Product title",
+    "coverUrl": "https://media.example.com/product.webp",
+    "href": "/sections/west/products/product-id/",
+    "sectionId": "west",
+    "sectionName": "West",
+    "categoryId": "massage",
+    "categoryName": "Massage"
+  }
+}
+```
+
+Storefront 使用消息携带的 snapshot 渲染时间线产品卡，不为历史消息重新查询产品目录。后续目录修改不会改写已发送的产品卡。
 
 没有远端 Group 参数。客服系统根据：
 

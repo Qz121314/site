@@ -492,6 +492,8 @@ export function MessagesPage({
         id: optimisticId,
         direction: 'customer',
         body: variables.body,
+        kind: 'text',
+        productContext: null,
         sentAt: variables.sentAt,
         delivery: 'sending',
         attachments: [],

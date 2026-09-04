@@ -39,10 +39,23 @@ export type SupportContactCardAttachment = {
 export type SupportMessageAttachment =
   SupportImageAttachment | SupportContactCardAttachment;
 
+export type SupportProductContextSnapshot = {
+  productId: string;
+  title: string;
+  coverUrl: string | null;
+  href: string;
+  sectionId: string;
+  sectionName: string | null;
+  categoryId: string | null;
+  categoryName: string | null;
+};
+
 export type SupportMessage = {
   id: string;
   direction: 'customer' | 'agent';
   body: string;
+  kind: 'text' | 'image' | 'product_context';
+  productContext: SupportProductContextSnapshot | null;
   sentAt: string;
   delivery: 'sending' | 'failed' | 'sent' | 'read';
   attachments: SupportMessageAttachment[];
