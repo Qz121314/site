@@ -235,6 +235,7 @@ function PrimaryShell({
         ) : (
           <StorefrontBrandBar
             LinkComponent={StorefrontLink as StorefrontLinkComponent}
+            locationIcon={<MapPin aria-hidden="true" />}
             locationLabel={site.locationLabel}
             logo={
               site.logoUrl ? (
