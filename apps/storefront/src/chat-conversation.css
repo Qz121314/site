@@ -96,8 +96,11 @@
 }
 
 .chat-product-chevron {
+  width: 18px;
+  height: 18px;
+  color: var(--muted);
   opacity: 0.62;
-  font-size: 1rem;
+  stroke-width: 1.8;
 }
 
 .chat-timeline {
@@ -301,22 +304,15 @@
 }
 
 .chat-composer {
-  grid-template-columns: 40px minmax(0, 1fr) 42px;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
   gap: 6px;
   padding: 8px max(8px, env(safe-area-inset-right))
     calc(8px + env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
   backdrop-filter: blur(22px) saturate(1.06);
 }
 
-.chat-composer > button {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  font-size: 1.15rem;
-}
-
-.chat-composer > button:disabled {
-  opacity: 0.3;
+.chat-composer .storefront-icon-button {
+  align-self: end;
 }
 
 .chat-composer textarea,
@@ -326,12 +322,6 @@
   padding: 10px 14px;
   border-radius: 20px;
   font-size: 0.82rem;
-}
-
-.chat-composer .chat-send-button {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
 }
 
 .chat-composer .chat-send-button:disabled {
@@ -396,7 +386,7 @@
   }
 
   .chat-composer {
-    grid-template-columns: 40px minmax(0, 1fr) 44px;
+    grid-template-columns: 44px minmax(0, 1fr) 44px;
     align-items: end;
     gap: 6px;
     padding: 6px max(8px, env(safe-area-inset-right))
@@ -428,14 +418,6 @@
     border-radius: 22px;
     font-size: 16px;
     line-height: 22px;
-  }
-
-  .chat-composer .chat-send-button {
-    width: 44px;
-    min-width: 44px;
-    height: 44px;
-    min-height: 44px;
-    align-self: end;
   }
 }
 
