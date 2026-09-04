@@ -8,6 +8,8 @@
     "./theme": "./src/theme.ts",
     "./loading": "./src/loading.tsx",
     "./loading.css": "./src/loading.css",
+    "./icon-button": "./src/icon-button.tsx",
+    "./icon-button.css": "./src/icon-button.css",
     "./home.css": "./src/home.css",
     "./theme-contract.css": "./src/theme-contract.css",
     "./product-detail-theme-contract.css": "./src/product-detail-theme-contract.css",
