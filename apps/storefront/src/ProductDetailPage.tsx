@@ -1,6 +1,7 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { StorefrontLinkComponent } from '@site/storefront-ui';
 import { LoadingHalo } from '@site/storefront-ui/loading';
+import { ChevronRight, CircleAlert, MapPin, Play } from 'lucide-react';
 import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import {
   PublicContentError,
@@ -93,19 +94,8 @@ function handleInternalBack(event: ReactMouseEvent<HTMLAnchorElement>) {
 function CtaArrow() {
   return (
     <span className="product-detail-cta-arrow" aria-hidden="true">
-      <svg viewBox="0 0 20 20" focusable="false">
-        <path d="m8 5 5 5-5 5" />
-      </svg>
+      <ChevronRight />
     </span>
-  );
-}
-
-function LocationIcon() {
-  return (
-    <svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-      <path d="M12 21s6-5.18 6-11a6 6 0 1 0-12 0c0 5.82 6 11 6 11Z" />
-      <circle cx="12" cy="10" r="2.15" />
-    </svg>
   );
 }
 
@@ -173,7 +163,9 @@ export function ProductDetailPage({
         className="product-detail-state standalone-state embedded-state"
         role="status"
       >
-        <div className="state-mark">{missing ? '404' : '!'}</div>
+        <div className="state-mark" aria-hidden="true">
+          {missing ? '404' : <CircleAlert />}
+        </div>
         <h1>{missing ? SYSTEM_UI.notFound : SYSTEM_UI.unavailable}</h1>
         <div className="state-actions">
           {!missing ? (
@@ -435,7 +427,7 @@ export function ProductDetailPage({
                               className="detail-thumbnail-video-mark"
                               aria-hidden="true"
                             >
-                              ▶
+                              <Play />
                             </span>
                           </>
                         ) : (
@@ -459,7 +451,7 @@ export function ProductDetailPage({
               <h1 id="product-detail-title">{product.title}</h1>
               {address ? (
                 <div className="product-detail-address">
-                  <LocationIcon />
+                  <MapPin aria-hidden="true" />
                   <span>{address}</span>
                 </div>
               ) : null}
