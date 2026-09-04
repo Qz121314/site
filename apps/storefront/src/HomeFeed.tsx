@@ -5,7 +5,7 @@ import {
   StorefrontHomeShortcut,
   type StorefrontHeroSlide,
 } from '@site/storefront-ui';
-import { ChevronRight, Grid2X2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Grid2X2 } from 'lucide-react';
 import {
   type AnchorHTMLAttributes,
   type MouseEvent as ReactMouseEvent,
@@ -83,7 +83,13 @@ function HomeHero({ siteName, slides }: { siteName: string; slides: PublicHeroSl
   });
 
   return (
-    <StorefrontHero ariaLabel={siteName} LinkComponent={HomeLink} slides={sharedSlides} />
+    <StorefrontHero
+      ariaLabel={siteName}
+      LinkComponent={HomeLink}
+      nextIcon={<ChevronRight aria-hidden="true" />}
+      previousIcon={<ChevronLeft aria-hidden="true" />}
+      slides={sharedSlides}
+    />
   );
 }
 
