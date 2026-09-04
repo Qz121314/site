@@ -217,9 +217,7 @@ export function MobileEdgeNavigation() {
       style={style}
       aria-hidden="true"
     >
-      <span>
-        {gesture.direction === 'back' ? <ChevronLeft /> : <ChevronRight />}
-      </span>
+      <span>{gesture.direction === 'back' ? <ChevronLeft /> : <ChevronRight />}</span>
     </div>
   );
 }
