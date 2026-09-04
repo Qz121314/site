@@ -7,15 +7,27 @@ function source(path) {
   return readFileSync(new URL(path, import.meta.url), 'utf8');
 }
 
-test('storefront attachment plus is centered geometrically instead of by font metrics', () => {
-  const css = source('../src/messages-media.css');
+test('storefront chat actions use semantic icon buttons without native tap highlight', () => {
+  const ui = source('../src/support-ui.tsx');
+  const main = source('../src/main.tsx');
+  const iconButton = source('../../../packages/storefront-ui/src/icon-button.tsx');
+  const iconButtonCss = source('../../../packages/storefront-ui/src/icon-button.css');
 
-  assert.ok(css.includes('.chat-attachment-picker::before,'));
-  assert.ok(css.includes('.chat-attachment-picker::after,'));
-  assert.ok(css.includes('top: 50%;'));
-  assert.ok(css.includes('left: 50%;'));
-  assert.ok(css.includes('transform: translate(-50%, -50%);'));
-  assert.ok(css.includes('font-size: 0;'));
+  assert.ok(ui.includes("import { StorefrontIconButton } from '@site/storefront-ui/icon-button';"));
+  assert.match(ui, /\bPlus\b/u);
+  assert.match(ui, /\bSendHorizontal\b/u);
+  assert.ok(ui.includes('attachmentInputRef.current?.click()'));
+  assert.ok(ui.includes('className="chat-attachment-input"'));
+  assert.doesNotMatch(ui, /[＋➤]/u);
+
+  assert.ok(iconButton.includes('<button'));
+  assert.ok(iconButton.includes("data-variant={variant}"));
+  assert.ok(iconButtonCss.includes('-webkit-tap-highlight-color: transparent;'));
+  assert.ok(iconButtonCss.includes('touch-action: manipulation;'));
+  assert.ok(iconButtonCss.includes('.storefront-icon-button:focus-visible'));
+  assert.ok(iconButtonCss.includes('border-radius: 999px;'));
+  assert.ok(iconButtonCss.includes('transform: scale(0.94);'));
+  assert.ok(main.includes("@site/storefront-ui/icon-button.css"));
 });
 
 test('canonical contact cards share one clickable visitor contract', () => {
