@@ -61,6 +61,12 @@ test(
     assert.ok(home.includes('previousIcon={<ChevronLeft aria-hidden="true" />}'));
     assert.ok(home.includes('nextIcon={<ChevronRight aria-hidden="true" />}'));
     assert.ok(root.includes('locationIcon={<MapPin aria-hidden="true" />}'));
-    assert.doesNotMatch(navigation, /function navigationIcon/u);
+    assert.match(navigation, /function navigationIcon\(Icon: typeof House\)/u);
+    assert.ok(
+      navigation.includes(
+        '<Icon className="storefront-nav-svg" aria-hidden="true" />',
+      ),
+    );
+    assert.doesNotMatch(navigation, /<svg/u);
   },
 );
