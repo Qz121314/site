@@ -1,6 +1,18 @@
 import type { StorefrontLinkComponent } from '@site/storefront-ui';
+import { StorefrontIconButton } from '@site/storefront-ui/icon-button';
 import { LoadingHalo } from '@site/storefront-ui/loading';
-import { ChevronRight, Link } from 'lucide-react';
+import {
+  Check,
+  CheckCheck,
+  ChevronLeft,
+  ChevronRight,
+  CircleAlert,
+  Link,
+  MessageCircle,
+  Plus,
+  RotateCcw,
+  SendHorizontal,
+} from 'lucide-react';
 import {
   StorefrontNoAgentNotice,
   type StorefrontNoAgentNoticeProps,
@@ -48,29 +60,6 @@ const chatDayPartsFormatter = new Intl.DateTimeFormat('en-US', {
   month: 'numeric',
   day: 'numeric',
 });
-
-function MessageBubbleIcon() {
-  return (
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="1.7"
-      aria-hidden="true"
-    >
-      <path d="M20 11.6a7.6 7.6 0 0 1-8 7.2 8.8 8.8 0 0 1-3.2-.7L4 19.5l1.4-4.2a7 7 0 0 1-1.1-3.7 7.6 7.6 0 0 1 8-7.2 7.6 7.6 0 0 1 7.7 7.2Z" />
-      <path d="M8.5 11.7h.01M12 11.7h.01M15.5 11.7h.01" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-function NavigationBackIcon() {
-  return (
-    <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false">
-      <path d="m14.5 5-7 7 7 7" />
-    </svg>
-  );
-}
 
 function chatDayNumber(date: Date): number {
   const parts = chatDayPartsFormatter.formatToParts(date);
@@ -223,7 +212,7 @@ export function MessagesPageContent({
       {orderedConversations.length === 0 ? (
         <div className="messages-empty-state" role="status">
           <span className="messages-empty-icon" aria-hidden="true">
-            <MessageBubbleIcon />
+            <MessageCircle />
           </span>
           {supportAvailable === false ? <strong>{SYSTEM_UI.noSupport}</strong> : null}
         </div>
@@ -290,9 +279,7 @@ function ProductContextCard({
       <span className="chat-product-copy">
         <strong>{context.productTitle}</strong>
       </span>
-      <span className="chat-product-chevron" aria-hidden="true">
-        ›
-      </span>
+      <ChevronRight className="chat-product-chevron" aria-hidden="true" />
     </>
   );
 
@@ -359,7 +346,7 @@ function DeliveryMark({
         title={SYSTEM_UI.retry}
         onClick={onRetry}
       >
-        !
+        <RotateCcw aria-hidden="true" />
       </button>
     );
   }
@@ -369,7 +356,11 @@ function DeliveryMark({
       aria-label={delivery === 'read' ? SYSTEM_UI.read : SYSTEM_UI.sent}
       title={delivery === 'read' ? SYSTEM_UI.read : SYSTEM_UI.sent}
     >
-      {delivery === 'read' ? '✓✓' : '✓'}
+      {delivery === 'read' ? (
+        <CheckCheck aria-hidden="true" />
+      ) : (
+        <Check aria-hidden="true" />
+      )}
     </span>
   );
 }
@@ -458,6 +449,7 @@ export function MessageThreadPageContent({
   const [draft, setDraft] = useState('');
   const [agentTyping, setAgentTyping] = useState(false);
   const timelineRef = useRef<HTMLDivElement | null>(null);
+  const attachmentInputRef = useRef<HTMLInputElement | null>(null);
   const openedConversationRef = useRef<string | null>(null);
   const typingChannelRef = useRef<SupportTypingChannel | null>(null);
   const localTypingTimerRef = useRef<number | null>(null);
@@ -554,7 +546,7 @@ export function MessageThreadPageContent({
       <section className="chat-page chat-page-unavailable" aria-busy="true">
         <div className="chat-timeline">
           <div className="chat-empty-state" aria-hidden="true">
-            <MessageBubbleIcon />
+            <MessageCircle />
           </div>
         </div>
       </section>
@@ -570,10 +562,10 @@ export function MessageThreadPageContent({
             href="/messages/"
             aria-label={SYSTEM_UI.back}
           >
-            <NavigationBackIcon />
+            <ChevronLeft aria-hidden="true" />
           </LinkComponent>
           <span className="chat-header-avatar" aria-hidden="true">
-            <MessageBubbleIcon />
+            <MessageCircle />
           </span>
         </header>
         <div className="chat-timeline">
@@ -581,23 +573,27 @@ export function MessageThreadPageContent({
             <ConnectionRetry onRetry={onRetryConnection} />
           ) : (
             <div className="chat-empty-state" aria-hidden="true">
-              <MessageBubbleIcon />
+              <MessageCircle />
             </div>
           )}
         </div>
         <div className="chat-composer is-disabled" aria-disabled="true">
-          <button type="button" disabled aria-label={SYSTEM_UI.attachment}>
-            ＋
-          </button>
-          <div className="chat-input-placeholder">{SYSTEM_UI.message}</div>
-          <button
-            type="button"
+          <StorefrontIconButton
+            className="chat-attachment-picker"
             disabled
-            className="chat-send-button"
-            aria-label={SYSTEM_UI.send}
+            aria-label={SYSTEM_UI.attachment}
           >
-            ➤
-          </button>
+            <Plus aria-hidden="true" />
+          </StorefrontIconButton>
+          <div className="chat-input-placeholder">{SYSTEM_UI.message}</div>
+          <StorefrontIconButton
+            className="chat-send-button"
+            disabled
+            aria-label={SYSTEM_UI.send}
+            variant="primary"
+          >
+            <SendHorizontal aria-hidden="true" />
+          </StorefrontIconButton>
         </div>
       </section>
     );
@@ -646,13 +642,13 @@ export function MessageThreadPageContent({
           href="/messages/"
           aria-label={SYSTEM_UI.back}
         >
-          <NavigationBackIcon />
+          <ChevronLeft aria-hidden="true" />
         </LinkComponent>
         <span className="chat-header-avatar">
           {conversation ? (
             <ConversationAvatar conversation={conversation} />
           ) : (
-            <MessageBubbleIcon />
+            <MessageCircle aria-hidden="true" />
           )}
         </span>
         {headerTitle ? (
@@ -831,7 +827,7 @@ export function MessageThreadPageContent({
           >
             {imageFailed ? (
               <span className="chat-upload-failed-mark" aria-hidden="true">
-                !
+                <CircleAlert />
               </span>
             ) : (
               <span
@@ -849,25 +845,27 @@ export function MessageThreadPageContent({
         className={`chat-composer${canSend ? '' : ' is-disabled'}`}
         onSubmit={(event) => void submit(event)}
       >
-        {canSendImage ? (
-          <label className="chat-attachment-picker" aria-label={SYSTEM_UI.attachment}>
-            ＋
-            <input
-              type="file"
-              accept="image/jpeg,image/png,image/webp,image/gif"
-              disabled={imageSending}
-              onChange={(event) => {
-                const file = event.target.files?.[0];
-                event.currentTarget.value = '';
-                if (file && onSendImage) void onSendImage(file);
-              }}
-            />
-          </label>
-        ) : (
-          <button type="button" disabled aria-label={SYSTEM_UI.attachment}>
-            ＋
-          </button>
-        )}
+        <StorefrontIconButton
+          className="chat-attachment-picker"
+          disabled={!canSendImage || imageSending}
+          aria-label={SYSTEM_UI.attachment}
+          onClick={() => attachmentInputRef.current?.click()}
+        >
+          <Plus aria-hidden="true" />
+        </StorefrontIconButton>
+        <input
+          ref={attachmentInputRef}
+          className="chat-attachment-input"
+          type="file"
+          accept="image/jpeg,image/png,image/webp,image/gif"
+          disabled={!canSendImage || imageSending}
+          tabIndex={-1}
+          onChange={(event) => {
+            const file = event.target.files?.[0];
+            event.currentTarget.value = '';
+            if (file && onSendImage) void onSendImage(file);
+          }}
+        />
         <textarea
           rows={1}
           aria-label={SYSTEM_UI.message}
@@ -891,14 +889,15 @@ export function MessageThreadPageContent({
             }
           }}
         />
-        <button
+        <StorefrontIconButton
           type="submit"
           disabled={!canSend || sending || !draft.trim()}
           className="chat-send-button"
           aria-label={SYSTEM_UI.send}
+          variant="primary"
         >
-          ➤
-        </button>
+          <SendHorizontal aria-hidden="true" />
+        </StorefrontIconButton>
       </form>
     </section>
   );
@@ -907,7 +906,7 @@ export function MessageThreadPageContent({
 function MessagesDetailPlaceholder() {
   return (
     <div className="messages-detail-placeholder" aria-hidden="true">
-      <MessageBubbleIcon />
+      <MessageCircle />
     </div>
   );
 }
