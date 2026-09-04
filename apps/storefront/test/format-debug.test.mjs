@@ -8,10 +8,18 @@ const files = [
   'test/storefront-functional-icon-contract.test.mjs',
 ];
 
+const prettierOptions = {
+  parser: 'babel',
+  singleQuote: true,
+  trailingComma: 'all',
+  printWidth: 90,
+  semi: true,
+};
+
 test('debug exact prettier output', async () => {
   for (const file of files) {
     const source = readFileSync(file, 'utf8');
-    const formatted = await format(source, { parser: 'babel' });
+    const formatted = await format(source, prettierOptions);
     if (source === formatted) continue;
     console.log(`PRETTIER_BEGIN:${file}`);
     console.log(formatted);
