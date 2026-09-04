@@ -349,12 +349,6 @@
     min-height: 0;
   }
 
-  .messages-push-host:has(.messages-workspace.is-thread-open) .chat-page {
-    display: grid;
-    grid-template-rows: auto auto minmax(0, 1fr) auto;
-    overflow: hidden;
-  }
-
   .messages-push-host:has(.messages-workspace.is-thread-open) .chat-timeline {
     min-height: 0;
     overflow-y: auto;
