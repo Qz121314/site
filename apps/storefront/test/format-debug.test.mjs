@@ -3,9 +3,9 @@ import { format } from 'prettier';
 import test from 'node:test';
 
 const files = [
-  'apps/storefront/test/chat-attachment-icon-contract.test.mjs',
-  'apps/storefront/test/mobile-chat-composer-keyboard-clearance.test.mjs',
-  'apps/storefront/test/storefront-functional-icon-contract.test.mjs',
+  'test/chat-attachment-icon-contract.test.mjs',
+  'test/mobile-chat-composer-keyboard-clearance.test.mjs',
+  'test/storefront-functional-icon-contract.test.mjs',
 ];
 
 test('debug exact prettier output', async () => {
