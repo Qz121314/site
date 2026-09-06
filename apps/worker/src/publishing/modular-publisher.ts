@@ -186,6 +186,14 @@ type FaqRow = {
   question: string;
   answer: string;
   sort_order: number;
+  is_enabled: number;
+};
+
+type MessageArticleRow = {
+  article_id: string;
+  question: string;
+  answer: string;
+  sort_order: number;
 };
 
 type ModuleVersionRow = {
@@ -225,6 +233,7 @@ type Source = {
   products: ProductRow[];
   mediaByProduct: Map<string, ProductMediaRow[]>;
   faqs: FaqRow[];
+  messageArticles: MessageArticleRow[];
   publicTags: PublicProductTag[];
   tagsByProduct: Map<string, BoundProductTag[]>;
 };
@@ -595,12 +604,24 @@ async function loadSource(db: D1Database): Promise<Source> {
   const faqs = (
     await db
       .prepare(
-        `SELECT id, question, answer, sort_order
+        `SELECT id, question, answer, sort_order, is_enabled
          FROM faqs
-         WHERE deleted_at IS NULL AND is_enabled = 1
+         WHERE deleted_at IS NULL
          ORDER BY sort_order ASC, created_at ASC`,
       )
       .all<FaqRow>()
+  ).results;
+
+  const messageArticles = (
+    await db
+      .prepare(
+        `SELECT mar.article_id, f.question, f.answer, mar.sort_order
+         FROM message_article_references mar
+         JOIN faqs f ON f.id = mar.article_id
+         WHERE mar.is_enabled = 1 AND f.deleted_at IS NULL
+         ORDER BY mar.sort_order ASC, mar.article_id ASC`,
+      )
+      .all<MessageArticleRow>()
   ).results;
 
   const [publicTags, tagsByProduct, homeLayout] = await Promise.all([
@@ -629,6 +650,7 @@ async function loadSource(db: D1Database): Promise<Source> {
     products,
     mediaByProduct,
     faqs,
+    messageArticles,
     publicTags,
     tagsByProduct,
   };
@@ -755,12 +777,45 @@ function sectionPublicData(source: Source, sectionId: string) {
   return { section, categories, tags, products };
 }
 
+function articleModel(source: Source) {
+  return source.faqs.map((article) => ({
+    id: article.id,
+    title: article.question,
+    body: article.answer,
+    sortOrder: article.sort_order,
+  }));
+}
+
 function faqModel(source: Source) {
-  return source.faqs.map((faq) => ({
-    id: faq.id,
-    title: faq.question,
-    body: faq.answer,
-    sortOrder: faq.sort_order,
+  return source.faqs
+    .filter((article) => article.is_enabled === 1)
+    .map((article) => ({
+      id: article.id,
+      title: article.question,
+      body: article.answer,
+      sortOrder: article.sort_order,
+    }));
+}
+
+function markdownPreview(value: string): string {
+  return value
+    .replace(/```[\s\S]*?```/gu, ' ')
+    .replace(/`([^`]+)`/gu, '$1')
+    .replace(/!\[[^\]]*\]\([^)]+\)/gu, ' ')
+    .replace(/\[([^\]]+)\]\([^)]+\)/gu, '$1')
+    .replace(/^[ \t]{0,3}(?:#{1,6}|>|[-+*])(?:[ \t]+|$)/gmu, ' ')
+    .replace(/[*_~\\]+/gu, '')
+    .replace(/\s+/gu, ' ')
+    .trim()
+    .slice(0, 160);
+}
+
+function messageArticleModel(source: Source) {
+  return source.messageArticles.map((article) => ({
+    articleId: article.article_id,
+    title: article.question,
+    preview: markdownPreview(article.answer),
+    sortOrder: article.sort_order,
   }));
 }
 
@@ -810,18 +865,34 @@ function modulePayload(source: Source, moduleKey: string): ModulePayload {
   }
 
   if (moduleKey === 'faq') {
+    const articles = articleModel(source);
     const faqs = faqModel(source);
+    const messageArticles = messageArticleModel(source);
     return {
       moduleKey,
       kind: 'faq',
       sectionId: null,
-      label: 'FAQ',
-      stateModel: faqs,
+      label: '文章中心',
+      stateModel: { articles, faqs, messageArticles },
       mediaKeys: [],
       buildFiles: (contentVersion, publishedAt) => [
         {
           relativePath: 'faq.json',
           value: { schemaVersion: 2, moduleKey, contentVersion, publishedAt, faqs },
+        },
+        {
+          relativePath: 'articles.json',
+          value: { schemaVersion: 2, moduleKey, contentVersion, publishedAt, articles },
+        },
+        {
+          relativePath: 'messages.json',
+          value: {
+            schemaVersion: 2,
+            moduleKey,
+            contentVersion,
+            publishedAt,
+            articles: messageArticles,
+          },
         },
       ],
     };

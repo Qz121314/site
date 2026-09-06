@@ -293,9 +293,21 @@ test('public storefront discovery reports an unconfigured R2 domain without inve
 
 test('public storefront bootstrap consolidates the critical published snapshots', async () => {
   const bucket = createBucket();
-  const site = { schemaVersion: 2, site: { name: 'Example' } };
+  const publishedSite = { schemaVersion: 2, site: { name: 'Example' } };
   const sectionsIndex = { schemaVersion: 2, sections: [] };
   const home = { schemaVersion: 2, featuredProducts: [] };
+  const messageArticles = [
+    {
+      articleId: 'article-a',
+      title: 'Announcement',
+      preview: 'Short preview',
+      sortOrder: 0,
+    },
+  ];
+  const site = {
+    schemaVersion: 2,
+    site: { name: 'Example', navigation: { messageArticles } },
+  };
   const bottomNavigation = [
     {
       key: 'home',
@@ -324,11 +336,15 @@ test('public storefront bootstrap consolidates the critical published snapshots'
   ];
   bucket.objects.set(
     SITE.manifestKey.replace(/manifest\.json$/u, 'site.json'),
-    JSON.stringify(site),
+    JSON.stringify(publishedSite),
   );
   bucket.objects.set(
     INDEX.manifestKey.replace(/manifest\.json$/u, 'sections.json'),
     JSON.stringify(sectionsIndex),
+  );
+  bucket.objects.set(
+    FAQ.manifestKey.replace(/manifest\.json$/u, 'messages.json'),
+    JSON.stringify({ schemaVersion: 2, moduleKey: 'faq', articles: messageArticles }),
   );
   bucket.objects.set(
     `public/home/${POINTER.contentVersion}/home.json`,
@@ -427,6 +443,7 @@ test('public storefront bootstrap consolidates the critical published snapshots'
     SITE.manifestKey.replace(/manifest\.json$/u, 'site.json'),
     INDEX.manifestKey.replace(/manifest\.json$/u, 'sections.json'),
     `public/home/${POINTER.contentVersion}/home.json`,
+    FAQ.manifestKey.replace(/manifest\.json$/u, 'messages.json'),
   ]);
   assert.equal(bucket.writes.at(-1)?.key, bundleKey);
 
