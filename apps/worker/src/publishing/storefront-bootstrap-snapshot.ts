@@ -44,6 +44,24 @@ async function readPublishedJson(bucket: R2Bucket, key: string): Promise<unknown
   }
 }
 
+function attachMessageArticles(siteEnvelope: JsonRecord, messages: unknown): JsonRecord {
+  const site = isRecord(siteEnvelope.site) ? siteEnvelope.site : null;
+  if (!site) return siteEnvelope;
+  const navigation = isRecord(site.navigation) ? site.navigation : {};
+  const messageArticles =
+    isRecord(messages) && Array.isArray(messages.articles) ? messages.articles : [];
+  return {
+    ...siteEnvelope,
+    site: {
+      ...site,
+      navigation: {
+        ...navigation,
+        messageArticles,
+      },
+    },
+  };
+}
+
 export function storefrontBootstrapSnapshotKey(pointerVersion: string): string {
   return `${BOOTSTRAP_PREFIX}/${encodeURIComponent(pointerVersion)}/bootstrap.json`;
 }
@@ -54,7 +72,7 @@ function parseBootstrapSnapshot(
 ): StorefrontPublishedBootstrapSnapshot | null {
   if (
     !isRecord(value) ||
-    value.schemaVersion !== 1 ||
+    value.schemaVersion !== 2 ||
     value.pointerVersion !== pointerVersion ||
     !isRecord(value.site) ||
     !isRecord(value.sectionsIndex) ||
@@ -91,14 +109,17 @@ export async function loadStorefrontPublishedBootstrap(
 
   const sitePath = publishedFile(pointerValue.site, 'site.json');
   const sectionsPath = publishedFile(pointerValue.sectionsIndex, 'sections.json');
+  const messageArticlesPath = publishedFile(pointerValue.faq, 'messages.json');
   if (!sitePath || !sectionsPath) return null;
 
-  const [site, sectionsIndex, home] = await Promise.all([
+  const [rawSite, sectionsIndex, home, messages] = await Promise.all([
     readPublishedJson(bucket, sitePath),
     readPublishedJson(bucket, sectionsPath),
     readPublishedJson(bucket, `public/home/${pointerVersion}/home.json`),
+    messageArticlesPath ? readPublishedJson(bucket, messageArticlesPath) : null,
   ]);
-  if (!isRecord(site) || !isRecord(sectionsIndex) || !isRecord(home)) return null;
+  if (!isRecord(rawSite) || !isRecord(sectionsIndex) || !isRecord(home)) return null;
+  const site = attachMessageArticles(rawSite, messages);
 
   const snapshot: StorefrontPublishedBootstrapSnapshot = {
     site,
@@ -109,7 +130,7 @@ export async function loadStorefrontPublishedBootstrap(
     await bucket.put(
       snapshotKey,
       JSON.stringify({
-        schemaVersion: 1,
+        schemaVersion: 2,
         pointerVersion,
         site,
         sectionsIndex,
