@@ -42,7 +42,7 @@ Shared runtime packages are classified conservatively against every built applic
 
 CI/deploy may read production D1 only when the release action requires it:
 
-- migration safety/release actions for a migration diff (or explicit manual override);
+- migration safety/release actions for a migration diff (or the dedicated `force_d1_migrations` manual override);
 - minimal R2 validation metadata only inside the R2 validation branch.
 
 Do not use production D1 as a PR test database. Do not scan business tables for statistics/integrity during deployment. Do not read `site_settings.media_base_url` on ordinary code deployments merely to construct an R2 probe target.
@@ -57,4 +57,4 @@ Docs-only, tests-only, repository contract changes, workflow-only changes, and p
 
 ## Manual override
 
-`workflow_dispatch` exposes explicit `force_deploy` and `force_cloudflare_validation` inputs. Remote actions remain restricted to the `main` ref. Defaults are false.
+`workflow_dispatch` exposes explicit `force_deploy`, `force_cloudflare_validation`, and `force_d1_migrations` inputs. The generic validation override cannot apply migrations; that requires the dedicated migration override. Remote actions remain restricted to the `main` ref. Defaults are false.

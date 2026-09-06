@@ -4,7 +4,10 @@ import prettier from 'prettier';
 import { ESLint } from 'eslint';
 
 function git(args) {
-  return execFileSync('git', args, { encoding: 'utf8', stdio: ['ignore', 'pipe', 'pipe'] });
+  return execFileSync('git', args, {
+    encoding: 'utf8',
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
 }
 
 if (!existsSync('.git')) {
@@ -38,7 +41,8 @@ for (const file of files) {
   const info = await prettier.getFileInfo(file);
   if (info.ignored || !info.inferredParser) continue;
   const source = readFileSync(file, 'utf8');
-  const formatted = await prettier.format(source, { filepath: file });
+  const options = (await prettier.resolveConfig(file)) ?? {};
+  const formatted = await prettier.format(source, { ...options, filepath: file });
   if (formatted !== source) {
     writeFileSync(file, formatted, 'utf8');
     formattedFiles.push(file);
@@ -54,4 +58,6 @@ if (lintable.length > 0) {
   lintFixed = results.filter((result) => result.output).length;
 }
 
-console.log(`Changed-file fix complete: ${files.size} file(s), ${formattedFiles.length} formatted, ${lintFixed} ESLint-fixed.`);
+console.log(
+  `Changed-file fix complete: ${files.size} file(s), ${formattedFiles.length} formatted, ${lintFixed} ESLint-fixed.`,
+);

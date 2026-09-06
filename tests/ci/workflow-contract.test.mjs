@@ -30,12 +30,17 @@ function namedStep(workflow, name) {
 
 function expectCondition(step, ...tokens) {
   assert.match(step, /^\s*if:/m, 'step must have an explicit condition');
-  for (const token of tokens) assert.equal(step.includes(token), true, `condition must include ${token}`);
+  for (const token of tokens)
+    assert.equal(step.includes(token), true, `condition must include ${token}`);
 }
 
-test('remote D1 migration actions are migration-gated', () => {
-  expectCondition(namedStep(mainWorkflow, 'Record D1 recovery bookmark'), 'migration_changed', 'force_cloudflare_validation');
-  expectCondition(namedStep(mainWorkflow, 'Apply D1 migrations'), 'migration_changed', 'force_cloudflare_validation');
+test('remote D1 migration actions require a migration diff or dedicated override', () => {
+  for (const name of ['Record D1 recovery bookmark', 'Apply D1 migrations']) {
+    const step = namedStep(mainWorkflow, name);
+    expectCondition(step, 'migration_changed', 'force_d1_migrations');
+    assert.doesNotMatch(step, /force_cloudflare_validation/);
+  }
+  assert.match(mainWorkflow, /force_d1_migrations:/);
 });
 
 test('R2 management and probes are R2-config gated', () => {
@@ -45,21 +50,38 @@ test('R2 management and probes are R2-config gated', () => {
     'Configure and verify public R2 CORS',
     'Probe direct R2 media reads',
   ]) {
-    expectCondition(namedStep(mainWorkflow, name), 'r2_validation_required', 'force_cloudflare_validation');
+    expectCondition(
+      namedStep(mainWorkflow, name),
+      'r2_validation_required',
+      'force_cloudflare_validation',
+    );
   }
 });
 
 test('deploy and production acceptance are change-aware', () => {
-  expectCondition(namedStep(mainWorkflow, 'Deploy business platform Worker'), 'deploy_required', 'force_deploy');
-  expectCondition(namedStep(mainWorkflow, 'Minimal production smoke'), 'steps.deploy.outputs.deployed');
-  expectCondition(namedStep(mainWorkflow, 'Deep production HTTP acceptance'), 'deep_smoke_relevant');
+  expectCondition(
+    namedStep(mainWorkflow, 'Deploy business platform Worker'),
+    'deploy_required',
+    'force_deploy',
+  );
+  expectCondition(
+    namedStep(mainWorkflow, 'Minimal production smoke'),
+    'steps.deploy.outputs.deployed',
+  );
+  expectCondition(
+    namedStep(mainWorkflow, 'Deep production HTTP acceptance'),
+    'deep_smoke_relevant',
+  );
   assert.match(mainWorkflow, /production_browser_relevant/);
   assert.match(mainWorkflow, /needs\.pipeline\.outputs\.deployed == 'true'/);
   assert.doesNotMatch(mainWorkflow, /continue-on-error:\s*true/);
 });
 
 test('PR validation is local-only and executes the canonical verify gate', () => {
-  assert.doesNotMatch(prWorkflow, /--remote|CLOUDFLARE_API_TOKEN|wrangler\s+deploy(?!\s+--dry-run)/i);
+  assert.doesNotMatch(
+    prWorkflow,
+    /--remote|CLOUDFLARE_API_TOKEN|wrangler\s+deploy(?!\s+--dry-run)/i,
+  );
   assert.match(prWorkflow, /run:\s*pnpm verify/);
 });
 
@@ -91,7 +113,10 @@ test('main release verifies/builds once before direct Wrangler deploy', () => {
 
 test('classification summary explains remote no-op decisions', () => {
   const summary = namedStep(mainWorkflow, 'Publish Cloudflare classification summary');
-  assert.match(summary, /Skip remote D1: no migration diff/);
+  assert.match(
+    summary,
+    /Skip remote D1: no migration diff or explicit migration override/,
+  );
   assert.match(summary, /Skip R2 validation: no R2 config diff/);
   assert.match(summary, /Skip production deploy: no deploy-impacting diff/);
 });

@@ -16,13 +16,21 @@ for (const path of inputPaths) {
 }
 const expected = hash.digest('hex');
 
-if (existsSync(outputPath) && existsSync(stampPath) && readFileSync(stampPath, 'utf8').trim() === expected) {
+if (
+  existsSync(outputPath) &&
+  existsSync(stampPath) &&
+  readFileSync(stampPath, 'utf8').trim() === expected
+) {
   console.log('Wrangler types are current; reusing generated output.');
   process.exit(0);
 }
 
-const command = process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm';
-const result = spawnSync(command, ['exec', 'wrangler', 'types', outputPath], {
+const command = process.platform === 'win32' ? process.env.ComSpec || 'cmd.exe' : 'pnpm';
+const args =
+  process.platform === 'win32'
+    ? ['/d', '/s', '/c', `pnpm exec wrangler types ${outputPath}`]
+    : ['exec', 'wrangler', 'types', outputPath];
+const result = spawnSync(command, args, {
   stdio: 'inherit',
   shell: false,
 });

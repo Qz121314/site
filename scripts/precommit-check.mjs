@@ -40,7 +40,8 @@ for (const file of files) {
   } catch {
     continue;
   }
-  const formatted = await prettier.format(source, { filepath: file });
+  const options = (await prettier.resolveConfig(file)) ?? {};
+  const formatted = await prettier.format(source, { ...options, filepath: file });
   if (formatted !== source) formatFailures.push(file);
 }
 
@@ -55,9 +56,15 @@ if (lintable.length > 0) {
     } catch {
       continue;
     }
-    const [result] = await eslint.lintText(source, { filePath: file, warnIgnored: false });
+    const [result] = await eslint.lintText(source, {
+      filePath: file,
+      warnIgnored: false,
+    });
     if (result && result.errorCount > 0) {
-      lintFailures.push({ file, messages: result.messages.filter((message) => message.severity === 2) });
+      lintFailures.push({
+        file,
+        messages: result.messages.filter((message) => message.severity === 2),
+      });
     }
   }
 }
@@ -73,7 +80,9 @@ if (formatFailures.length > 0 || lintFailures.length > 0) {
     for (const failure of lintFailures) {
       console.error(`- ${failure.file}`);
       for (const message of failure.messages) {
-        console.error(`  ${message.line ?? 0}:${message.column ?? 0} ${message.message} (${message.ruleId ?? 'eslint'})`);
+        console.error(
+          `  ${message.line ?? 0}:${message.column ?? 0} ${message.message} (${message.ruleId ?? 'eslint'})`,
+        );
       }
     }
   }

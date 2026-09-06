@@ -22,16 +22,17 @@ const OUTPUT_KEYS = [
 ];
 
 const normalizePath = (value) => value.replaceAll('\\', '/').replace(/^\.\//, '');
-const startsWithAny = (value, prefixes) => prefixes.some((prefix) => value.startsWith(prefix));
 const matchesAny = (value, patterns) => patterns.some((pattern) => pattern.test(value));
 
 const isDocumentation = (path) =>
   path !== 'AGENTS.md' &&
-  (path === 'README.md' || path === 'CHANGELOG.md' || path.startsWith('docs/') || /\.md$/i.test(path));
+  (path === 'README.md' ||
+    path === 'CHANGELOG.md' ||
+    path.startsWith('docs/') ||
+    /\.md$/i.test(path));
 
 const isTestPath = (path) =>
-  startsWithAny(path, ['tests/', 'test/']) ||
-  /(^|\/)__tests__\//.test(path) ||
+  /(^|\/)(?:test|tests|__tests__)\//.test(path) ||
   /\.(?:test|spec)\.[cm]?[jt]sx?$/.test(path);
 
 const isDevelopmentTooling = (path) =>
@@ -65,14 +66,31 @@ export function classifyFiles(inputFiles) {
   const files = [...new Set(inputFiles.map(normalizePath).filter(Boolean))].sort();
 
   const migrationChanged = files.some((path) => path.startsWith('migrations/'));
-  const directStorefrontChanged = files.some((path) => path.startsWith('apps/storefront/'));
-  const directAdminChanged = files.some((path) => path.startsWith('apps/admin/'));
-  const directWorkerChanged = files.some((path) => path.startsWith('apps/worker/'));
-  const storefrontUiChanged = files.some((path) => path.startsWith('packages/storefront-ui/'));
-  const sharedChanged = files.some((path) => path.startsWith('packages/shared/'));
-  const configPackageChanged = files.some((path) => path.startsWith('packages/config/'));
+  const isRuntimePath = (path) => !isTestPath(path);
+  const directStorefrontChanged = files.some(
+    (path) => isRuntimePath(path) && path.startsWith('apps/storefront/'),
+  );
+  const directAdminChanged = files.some(
+    (path) => isRuntimePath(path) && path.startsWith('apps/admin/'),
+  );
+  const directWorkerChanged = files.some(
+    (path) => isRuntimePath(path) && path.startsWith('apps/worker/'),
+  );
+  const storefrontUiChanged = files.some(
+    (path) => isRuntimePath(path) && path.startsWith('packages/storefront-ui/'),
+  );
+  const sharedChanged = files.some(
+    (path) => isRuntimePath(path) && path.startsWith('packages/shared/'),
+  );
+  const configPackageChanged = files.some(
+    (path) => isRuntimePath(path) && path.startsWith('packages/config/'),
+  );
 
-  const storefrontChanged = directStorefrontChanged || storefrontUiChanged || sharedChanged || configPackageChanged;
+  const storefrontChanged =
+    directStorefrontChanged ||
+    storefrontUiChanged ||
+    sharedChanged ||
+    configPackageChanged;
   const adminChanged = directAdminChanged || sharedChanged || configPackageChanged;
   const workerChanged = directWorkerChanged || sharedChanged || configPackageChanged;
 
@@ -90,7 +108,9 @@ export function classifyFiles(inputFiles) {
   const publicRuntimeChanged = publicWorkerChanged;
 
   const productionBrowserContractChanged = files.some(
-    (path) => path === 'playwright.config.ts' || matchesAny(path, PRODUCTION_BROWSER_CONTRACT_PATTERNS),
+    (path) =>
+      path === 'playwright.config.ts' ||
+      matchesAny(path, PRODUCTION_BROWSER_CONTRACT_PATTERNS),
   );
 
   const buildOrReleaseInputChanged = files.some((path) =>
@@ -104,7 +124,9 @@ export function classifyFiles(inputFiles) {
   );
 
   const productionConfigChanged = files.some((path) =>
-    /^(?:apps\/(?:storefront|admin)\/)?(?:vite|tsconfig).*\.(?:ts|js|mjs|json)$/.test(path),
+    /^(?:apps\/(?:storefront|admin)\/)?(?:vite|tsconfig).*\.(?:ts|js|mjs|json)$/.test(
+      path,
+    ),
   );
 
   const deployRequired =
@@ -118,13 +140,21 @@ export function classifyFiles(inputFiles) {
 
   const r2ValidationRequired = r2ConfigChanged;
   const infraValidationRequired = r2ConfigChanged || wranglerConfigChanged;
-  const productionBrowserRelevant = storefrontChanged || publicRuntimeChanged || productionBrowserContractChanged;
-  const deepSmokeRelevant = storefrontChanged || publicRuntimeChanged || r2ValidationRequired || wranglerConfigChanged;
+  const productionBrowserRelevant =
+    storefrontChanged || publicRuntimeChanged || productionBrowserContractChanged;
+  const deepSmokeRelevant =
+    storefrontChanged ||
+    publicRuntimeChanged ||
+    r2ValidationRequired ||
+    wranglerConfigChanged;
 
   const docsOnly = files.length > 0 && files.every(isDocumentation);
   const testsOnly = files.length > 0 && files.every(isTestPath);
   const developmentToolingOnly =
-    files.length > 0 && files.every((path) => isDocumentation(path) || isDevelopmentTooling(path) || isTestPath(path));
+    files.length > 0 &&
+    files.every(
+      (path) => isDocumentation(path) || isDevelopmentTooling(path) || isTestPath(path),
+    );
 
   return {
     files,
@@ -171,7 +201,9 @@ function resolveFilesFromGit() {
 
 function writeGithubOutputs(classification) {
   if (!process.env.GITHUB_OUTPUT) return;
-  const lines = OUTPUT_KEYS.map((key) => `${key}=${classification[key] ? 'true' : 'false'}`);
+  const lines = OUTPUT_KEYS.map(
+    (key) => `${key}=${classification[key] ? 'true' : 'false'}`,
+  );
   appendFileSync(process.env.GITHUB_OUTPUT, `${lines.join('\n')}\n`, 'utf8');
 }
 
@@ -184,7 +216,8 @@ function printSummary(classification) {
   for (const file of classification.files) console.log(`- ${file}`);
 }
 
-const isMainModule = process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1];
+const isMainModule =
+  process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1];
 if (isMainModule) {
   const filesJson = readArg('--files-json');
   const files = filesJson ? JSON.parse(filesJson) : resolveFilesFromGit();

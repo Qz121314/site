@@ -2,13 +2,18 @@ const baseUrl = process.env.BASE_URL?.replace(/\/$/, '');
 const expectedVersionId = process.env.EXPECTED_WORKER_VERSION_ID?.trim();
 
 if (!baseUrl || !expectedVersionId) {
-  throw new Error('BASE_URL and EXPECTED_WORKER_VERSION_ID are required for production smoke');
+  throw new Error(
+    'BASE_URL and EXPECTED_WORKER_VERSION_ID are required for production smoke',
+  );
 }
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 async function fetchRequired(path, init) {
-  const response = await fetch(`${baseUrl}${path}`, { ...init, signal: AbortSignal.timeout(15_000) });
+  const response = await fetch(`${baseUrl}${path}`, {
+    ...init,
+    signal: AbortSignal.timeout(15_000),
+  });
   if (!response.ok) throw new Error(`${path} returned HTTP ${response.status}`);
   return response;
 }
@@ -33,7 +38,10 @@ for (const delayMs of [0, 1_000, 2_000, 4_000]) {
   }
 }
 
-if (!health) throw new Error(`Worker version ${expectedVersionId} did not become healthy within bounded retries`);
+if (!health)
+  throw new Error(
+    `Worker version ${expectedVersionId} did not become healthy within bounded retries`,
+  );
 console.log(`Worker version confirmed: ${health.workerVersionId}`);
 
 const shellResponse = await fetchRequired('/');
@@ -46,6 +54,10 @@ console.log('Storefront app shell confirmed.');
 const currentResponse = await fetchRequired('/public/current.json');
 const current = await currentResponse.json();
 if (current.schemaVersion !== 1 && current.schemaVersion !== 2) {
-  throw new Error(`Unsupported current publication schemaVersion: ${current.schemaVersion}`);
+  throw new Error(
+    `Unsupported current publication schemaVersion: ${current.schemaVersion}`,
+  );
 }
-console.log(`Current publication pointer confirmed (schemaVersion=${current.schemaVersion}).`);
+console.log(
+  `Current publication pointer confirmed (schemaVersion=${current.schemaVersion}).`,
+);

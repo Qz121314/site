@@ -4,7 +4,8 @@ import { classifyFiles } from '../../scripts/classify-cloudflare-changes.mjs';
 
 function expectFlags(files, expected) {
   const actual = classifyFiles(files);
-  for (const [key, value] of Object.entries(expected)) assert.equal(actual[key], value, `${key} for ${files.join(', ')}`);
+  for (const [key, value] of Object.entries(expected))
+    assert.equal(actual[key], value, `${key} for ${files.join(', ')}`);
 }
 
 test('docs-only is a production Cloudflare no-op', () => {
@@ -20,13 +21,16 @@ test('docs-only is a production Cloudflare no-op', () => {
 });
 
 test('repository contract and workflow tooling do not deploy by themselves', () => {
-  expectFlags(['AGENTS.md', '.github/workflows/pr-full-verify.yml', 'scripts/dev-preflight.mjs'], {
-    docs_only: false,
-    development_tooling_only: true,
-    deploy_required: false,
-    d1_remote_required: false,
-    r2_validation_required: false,
-  });
+  expectFlags(
+    ['AGENTS.md', '.github/workflows/pr-full-verify.yml', 'scripts/dev-preflight.mjs'],
+    {
+      docs_only: false,
+      development_tooling_only: true,
+      deploy_required: false,
+      d1_remote_required: false,
+      r2_validation_required: false,
+    },
+  );
 });
 
 test('storefront-only changes deploy and run production browser acceptance', () => {
@@ -117,4 +121,29 @@ test('tests-only changes do not access production Cloudflare resources', () => {
     d1_remote_required: false,
     r2_validation_required: false,
   });
+});
+
+test('nested application test helpers do not masquerade as runtime changes', () => {
+  expectFlags(
+    ['apps/storefront/test/register-ts-resolver.mjs', 'apps/worker/test/sqlite-d1.mjs'],
+    {
+      tests_only: true,
+      storefront_changed: false,
+      worker_changed: false,
+      deploy_required: false,
+      production_browser_relevant: false,
+    },
+  );
+});
+
+test('normalizes and de-duplicates Windows paths before classification', () => {
+  const classification = classifyFiles([
+    '.\\apps\\storefront\\test\\register-ts-resolver.mjs',
+    'apps/storefront/test/register-ts-resolver.mjs',
+  ]);
+  assert.deepEqual(classification.files, [
+    'apps/storefront/test/register-ts-resolver.mjs',
+  ]);
+  assert.equal(classification.tests_only, true);
+  assert.equal(classification.deploy_required, false);
 });

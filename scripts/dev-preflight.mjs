@@ -30,7 +30,9 @@ const requiredScripts = [
 ];
 
 const failures = [];
-const packageJson = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8'));
+const packageJson = JSON.parse(
+  readFileSync(new URL('../package.json', import.meta.url), 'utf8'),
+);
 
 function major(version) {
   const match = String(version).match(/(\d+)/);
@@ -41,14 +43,30 @@ function check(condition, message) {
   if (!condition) failures.push(message);
 }
 
-check(major(process.versions.node) >= 22, `Node.js 22+ is required; found ${process.versions.node}`);
-check(packageJson.packageManager === 'pnpm@11.19.0', 'packageManager must remain pinned to pnpm@11.19.0');
-check(major(packageJson.engines?.node) >= 22, 'package.json engines.node must require Node.js 22+');
-check(major(packageJson.engines?.pnpm) >= 11, 'package.json engines.pnpm must require pnpm 11+');
+check(
+  major(process.versions.node) >= 22,
+  `Node.js 22+ is required; found ${process.versions.node}`,
+);
+check(
+  packageJson.packageManager === 'pnpm@11.19.0',
+  'packageManager must remain pinned to pnpm@11.19.0',
+);
+check(
+  major(packageJson.engines?.node) >= 22,
+  'package.json engines.node must require Node.js 22+',
+);
+check(
+  major(packageJson.engines?.pnpm) >= 11,
+  'package.json engines.pnpm must require pnpm 11+',
+);
 
 let pnpmVersion = '';
 try {
-  pnpmVersion = execFileSync(process.platform === 'win32' ? 'pnpm.cmd' : 'pnpm', ['--version'], {
+  const pnpmCommand =
+    process.platform === 'win32' ? process.env.ComSpec || 'cmd.exe' : 'pnpm';
+  const pnpmArgs =
+    process.platform === 'win32' ? ['/d', '/s', '/c', 'pnpm --version'] : ['--version'];
+  pnpmVersion = execFileSync(pnpmCommand, pnpmArgs, {
     encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'pipe'],
   }).trim();
@@ -57,12 +75,23 @@ try {
   failures.push(`pnpm is required and must be executable: ${error.message}`);
 }
 
-for (const file of rootFiles) check(existsSync(file), `Required repository contract file is missing: ${file}`);
+for (const file of rootFiles)
+  check(existsSync(file), `Required repository contract file is missing: ${file}`);
 for (const script of requiredScripts) {
-  check(typeof packageJson.scripts?.[script] === 'string' && packageJson.scripts[script].trim(), `Missing package script: ${script}`);
+  check(
+    typeof packageJson.scripts?.[script] === 'string' &&
+      packageJson.scripts[script].trim(),
+    `Missing package script: ${script}`,
+  );
 }
-check(packageJson.scripts?.prepare === 'node scripts/setup-git-hooks.mjs', 'prepare must install the repository-owned git hooks');
-check(packageJson.scripts?.['precommit:check'] === 'node scripts/precommit-check.mjs', 'precommit:check must use the repository-owned staged-file gate');
+check(
+  packageJson.scripts?.prepare === 'node scripts/setup-git-hooks.mjs',
+  'prepare must install the repository-owned git hooks',
+);
+check(
+  packageJson.scripts?.['precommit:check'] === 'node scripts/precommit-check.mjs',
+  'precommit:check must use the repository-owned staged-file gate',
+);
 
 if (existsSync('.git')) {
   try {
@@ -70,7 +99,10 @@ if (existsSync('.git')) {
       encoding: 'utf8',
       stdio: ['ignore', 'pipe', 'pipe'],
     }).trim();
-    check(hooksPath === '.githooks', `git core.hooksPath must be .githooks; found ${hooksPath || '(unset)'}`);
+    check(
+      hooksPath === '.githooks',
+      `git core.hooksPath must be .githooks; found ${hooksPath || '(unset)'}`,
+    );
   } catch {
     failures.push('Unable to verify git core.hooksPath; run pnpm prepare and retry');
   }
@@ -83,7 +115,9 @@ if (failures.length > 0) {
   for (const failure of failures) console.error(`- ${failure}`);
   process.exitCode = 1;
 } else {
-  console.log(`Development preflight passed (Node ${process.versions.node}, pnpm ${pnpmVersion}).`);
+  console.log(
+    `Development preflight passed (Node ${process.versions.node}, pnpm ${pnpmVersion}).`,
+  );
   console.log('Recommended flow:');
   console.log('  pnpm preflight:dev');
   console.log('  implement in logical batches');

@@ -12,7 +12,6 @@ test('official dating themes own distinct art direction and shared media chrome'
     catalog,
     detailFlow,
     shared,
-    deploymentWorkflow,
   ] = await Promise.all([
     readFile(
       new URL(
@@ -46,7 +45,6 @@ test('official dating themes own distinct art direction and shared media chrome'
       new URL('../../../packages/storefront-ui/src/styles.css', import.meta.url),
       'utf8',
     ),
-    readFile(new URL('../../../.github/workflows/ci.yml', import.meta.url), 'utf8'),
   ]);
 
   for (const themeKey of ['velvet', 'midnight', 'pearl']) {
@@ -100,11 +98,4 @@ test('official dating themes own distinct art direction and shared media chrome'
     /\[data-theme='velvet'\][\s\S]{0,180}\.product-card[\s\S]{0,120}box-shadow: 0 8px 24px/u,
   );
   assert.match(shared, /\.product-card \{[\s\S]*box-shadow: var\(--theme-card-shadow/u);
-
-  for (const themeKey of ['velvet', 'midnight', 'pearl']) {
-    assert.match(
-      deploymentWorkflow,
-      new RegExp(`const keys = new Set\\(\\[[^\\]]*"${themeKey}"`, 'u'),
-    );
-  }
 });

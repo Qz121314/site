@@ -15,6 +15,11 @@ on:
         required: false
         default: false
         type: boolean
+      force_d1_migrations:
+        description: Explicitly run remote D1 migration recovery/apply without a migration diff (main only)
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -31,6 +36,7 @@ jobs:
       deployed: ${{ steps.deploy.outputs.deployed }}
       production_browser_relevant: ${{ steps.changes.outputs.production_browser_relevant }}
       force_cloudflare_validation: ${{ steps.manual.outputs.force_cloudflare_validation }}
+      force_d1_migrations: ${{ steps.manual.outputs.force_d1_migrations }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -58,9 +64,11 @@ jobs:
         env:
           FORCE_DEPLOY: ${{ inputs.force_deploy || false }}
           FORCE_CLOUDFLARE_VALIDATION: ${{ inputs.force_cloudflare_validation || false }}
+          FORCE_D1_MIGRATIONS: ${{ inputs.force_d1_migrations || false }}
         run: |
           echo "force_deploy=$FORCE_DEPLOY" >> "$GITHUB_OUTPUT"
           echo "force_cloudflare_validation=$FORCE_CLOUDFLARE_VALIDATION" >> "$GITHUB_OUTPUT"
+          echo "force_d1_migrations=$FORCE_D1_MIGRATIONS" >> "$GITHUB_OUTPUT"
 
       - name: Classify Cloudflare-impacting changes
         id: changes
@@ -76,6 +84,7 @@ jobs:
           BROWSER_RELEVANT: ${{ steps.changes.outputs.production_browser_relevant }}
           FORCE_DEPLOY: ${{ steps.manual.outputs.force_deploy }}
           FORCE_CF: ${{ steps.manual.outputs.force_cloudflare_validation }}
+          FORCE_D1_MIGRATIONS: ${{ steps.manual.outputs.force_d1_migrations }}
         run: |
           {
             echo '## Cloudflare change classification'
@@ -91,7 +100,7 @@ jobs:
             echo "deploy_required=${{ steps.changes.outputs.deploy_required }}"
             echo "docs_only=${{ steps.changes.outputs.docs_only }}"
             echo '```'
-            if [[ "$MIGRATION_CHANGED" != true && "$FORCE_CF" != true ]]; then echo 'Skip remote D1: no migration diff.'; fi
+            if [[ "$MIGRATION_CHANGED" != true && "$FORCE_D1_MIGRATIONS" != true ]]; then echo 'Skip remote D1: no migration diff or explicit migration override.'; fi
             if [[ "$R2_VALIDATION_REQUIRED" != true && "$FORCE_CF" != true ]]; then echo 'Skip R2 validation: no R2 config diff.'; fi
             if [[ "$DEPLOY_REQUIRED" != true && "$FORCE_DEPLOY" != true ]]; then echo 'Skip production deploy: no deploy-impacting diff.'; fi
             if [[ "$BROWSER_RELEVANT" != true && "$FORCE_CF" != true ]]; then echo 'Skip production browser acceptance: no relevant public/browser diff.'; fi
@@ -101,14 +110,14 @@ jobs:
         run: pnpm verify
 
       - name: Record D1 recovery bookmark
-        if: github.ref == 'refs/heads/main' && (steps.changes.outputs.migration_changed == 'true' || steps.manual.outputs.force_cloudflare_validation == 'true')
+        if: github.ref == 'refs/heads/main' && (steps.changes.outputs.migration_changed == 'true' || steps.manual.outputs.force_d1_migrations == 'true')
         run: pnpm exec wrangler d1 time-travel info DB
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
 
       - name: Apply D1 migrations
-        if: github.ref == 'refs/heads/main' && (steps.changes.outputs.migration_changed == 'true' || steps.manual.outputs.force_cloudflare_validation == 'true')
+        if: github.ref == 'refs/heads/main' && (steps.changes.outputs.migration_changed == 'true' || steps.manual.outputs.force_d1_migrations == 'true')
         run: pnpm db:migrate:remote
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
