@@ -1,0 +1,87 @@
+name: Phase B Format Once
+
+on:
+  push:
+    branches:
+      - refactor/admin-experience-system-settings
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout branch
+        uses: actions/checkout@v7
+        with:
+          ref: refactor/admin-experience-system-settings
+          fetch-depth: 0
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Apply canonical formatting
+        run: |
+          pnpm exec prettier --write \
+            apps/admin/src/BottomNavigationSettingsSection.tsx \
+            apps/admin/src/experience/HomeExperienceView.tsx \
+            apps/admin/src/experience/MessagesExperienceView.tsx \
+            apps/admin/src/experience/NavigationSettingsView.tsx \
+            apps/admin/src/experience/PwaSettingsView.tsx \
+            apps/admin/src/settings/SiteSettingsProvider.tsx \
+            apps/admin/src/system/SystemAdvancedView.tsx \
+            apps/admin/src/system/SystemGeneralView.tsx \
+            apps/admin/src/system/SystemInfrastructureView.tsx \
+            apps/admin/test/admin-navigation.test.mjs \
+            apps/admin/test/pwa-icon-settings-contract.test.mjs
+          pnpm exec eslint --fix \
+            apps/admin/src/BottomNavigationSettingsSection.tsx \
+            apps/admin/src/experience/HomeExperienceView.tsx \
+            apps/admin/src/experience/MessagesExperienceView.tsx \
+            apps/admin/src/experience/NavigationSettingsView.tsx \
+            apps/admin/src/experience/PwaSettingsView.tsx \
+            apps/admin/src/settings/SiteSettingsProvider.tsx \
+            apps/admin/src/system/SystemAdvancedView.tsx \
+            apps/admin/src/system/SystemGeneralView.tsx \
+            apps/admin/src/system/SystemInfrastructureView.tsx \
+            apps/admin/test/admin-navigation.test.mjs \
+            apps/admin/test/pwa-icon-settings-contract.test.mjs
+          pnpm exec prettier --write \
+            apps/admin/src/BottomNavigationSettingsSection.tsx \
+            apps/admin/src/experience/HomeExperienceView.tsx \
+            apps/admin/src/experience/MessagesExperienceView.tsx \
+            apps/admin/src/experience/NavigationSettingsView.tsx \
+            apps/admin/src/experience/PwaSettingsView.tsx \
+            apps/admin/src/settings/SiteSettingsProvider.tsx \
+            apps/admin/src/system/SystemAdvancedView.tsx \
+            apps/admin/src/system/SystemGeneralView.tsx \
+            apps/admin/src/system/SystemInfrastructureView.tsx \
+            apps/admin/test/admin-navigation.test.mjs \
+            apps/admin/test/pwa-icon-settings-contract.test.mjs
+
+      - name: Commit formatting if needed
+        run: |
+          if git diff --quiet; then
+            echo "No formatting changes required."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apps/admin/src apps/admin/test
+          git commit -m "style(admin): apply canonical formatting"
+          git push origin HEAD:refactor/admin-experience-system-settings
