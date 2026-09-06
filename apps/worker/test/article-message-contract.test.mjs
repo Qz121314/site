@@ -3,10 +3,8 @@ import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { Hono } from 'hono';
 import {
-  buildArticlePublicationFiles,
-  buildArticlePublicationState,
-  computePublishedStateRevision,
-  deriveArticlePreview,
+  getModularPublishStatus,
+  publishModularStorefront,
 } from '../src/publishing/modular-publisher.ts';
 import { adminMessageArticleRoutes } from '../src/routes/admin-message-articles.ts';
 
@@ -96,21 +94,6 @@ function createMessageArticleDb() {
       return statements.map(() => ({ success: true, meta: { changes: 1 } }));
     },
   };
-}
-
-function requestJson(app, method, body) {
-  return app.request(
-    'https://admin.example.com/',
-    {
-      method,
-      headers: {
-        'content-type': 'application/json',
-        'x-admin-request': '1',
-      },
-      body: JSON.stringify(body),
-    },
-    { DB: body?.db },
-  );
 }
 
 test('0031 keeps faqs intact and gives Messages references FK, ordering, and soft-delete pruning', () => {
@@ -245,97 +228,222 @@ test('PUT /message-articles keeps the established admin write header contract', 
   assert.equal(db.batches.length, 0);
 });
 
-const publicationArticles = [
-  {
-    id: 'article-a',
-    question: 'Enabled article',
-    answer: '# Hello **world**\n\nSee [well-being guide](https://example.com).',
-    sort_order: 10,
-    is_enabled: 1,
+const BASE_POINTER = {
+  schemaVersion: 2,
+  contentVersion: '20260906110000-pointer-before01',
+  publishedAt: '2026-09-06T11:00:00.000Z',
+  site: {
+    contentVersion: 'site-version',
+    manifestKey: 'public/modules/site/site-version/manifest.json',
+    sourceRevision: 'site-source',
+    publishedAt: '2026-09-06T11:00:00.000Z',
   },
-  {
-    id: 'article-b',
-    question: 'Generic-only article',
-    answer: 'Full generic body',
-    sort_order: 20,
-    is_enabled: 0,
+  sectionsIndex: {
+    contentVersion: 'index-version',
+    manifestKey: 'public/modules/sections-index/index-version/manifest.json',
+    sourceRevision: 'index-source',
+    publishedAt: '2026-09-06T11:00:00.000Z',
   },
-];
-const publicationMessages = [
-  {
-    article_id: 'article-b',
-    question: 'Generic-only article',
-    answer: 'Full generic body',
-    sort_order: 0,
+  faq: {
+    contentVersion: 'faq-before',
+    manifestKey: 'public/modules/faq/faq-before/manifest.json',
+    sourceRevision: 'faq-old-source',
+    publishedAt: '2026-09-06T11:00:00.000Z',
   },
-];
+  sections: {},
+};
 
-test('article publication keeps legacy FAQ behavior while publishing generic articles and lightweight Messages metadata', () => {
-  const state = buildArticlePublicationState(publicationArticles, publicationMessages);
+function createPublicationDb() {
+  const state = {
+    faqs: [
+      {
+        id: 'article-a',
+        question: 'Enabled FAQ article',
+        answer:
+          '# Welcome **everyone**\n\nRead [the guide](https://example.com).\n\n```js\nprivateExample()\n```',
+        sort_order: 10,
+        is_enabled: 1,
+      },
+      {
+        id: 'article-b',
+        question: 'Messages only article',
+        answer: 'Messages article body that stays in articles.json only.',
+        sort_order: 20,
+        is_enabled: 0,
+      },
+    ],
+    messageArticles: [
+      {
+        article_id: 'article-b',
+        question: 'Messages only article',
+        answer: 'Messages article body that stays in articles.json only.',
+        sort_order: 0,
+      },
+    ],
+  };
+  const runs = [];
+  const batches = [];
+
+  function rowsFor(sql) {
+    if (sql.includes('FROM site_hero_slides')) return [];
+    if (sql.includes('FROM categories c')) return [];
+    if (sql.includes('FROM product_media pm')) return [];
+    if (sql.includes('FROM products p')) return [];
+    if (sql.includes('FROM product_tags_catalog t')) return [];
+    if (sql.includes('FROM site_home_section_slots')) return [];
+    if (sql.includes('FROM message_article_references mar')) {
+      return state.messageArticles.map((row) => ({ ...row }));
+    }
+    if (sql.includes('FROM faqs')) return state.faqs.map((row) => ({ ...row }));
+    if (sql.includes('FROM sections s')) return [];
+    if (sql.includes('FROM publish_module_versions v')) return [];
+    if (sql.includes('FROM publish_module_jobs')) return [];
+    throw new Error(`Unexpected publication all SQL: ${sql}`);
+  }
+
+  return {
+    state,
+    runs,
+    batches,
+    prepare(sql) {
+      const statement = {
+        sql,
+        args: [],
+        bind(...args) {
+          this.args = args;
+          return this;
+        },
+        async first() {
+          if (this.sql.includes('FROM site_settings ss')) {
+            return {
+              site_name: 'Example',
+              location_label: 'Anywhere',
+              media_base_url: 'https://media.example.com',
+              logo_asset_id: null,
+              logo_object_key: null,
+              home_section_limit: 8,
+              show_hot: 1,
+              show_latest: 1,
+              show_more: 1,
+              show_faq: 1,
+              ga4_measurement_id: null,
+            };
+          }
+          if (this.sql.includes("WHERE status = 'building'")) return null;
+          throw new Error(`Unexpected publication first SQL: ${this.sql}`);
+        },
+        async all() {
+          return { results: rowsFor(this.sql) };
+        },
+        async run() {
+          runs.push({ sql: this.sql, args: [...this.args] });
+          return { success: true, meta: { changes: 1 } };
+        },
+      };
+      return statement;
+    },
+    async batch(statements) {
+      batches.push(statements.map((statement) => ({ sql: statement.sql, args: statement.args })));
+      return statements.map(() => ({ success: true, meta: { changes: 1 } }));
+    },
+  };
+}
+
+function createPublicationBucket() {
+  const objects = new Map([['public/current.json', JSON.stringify(BASE_POINTER)]]);
+  const writes = [];
+  return {
+    objects,
+    writes,
+    async get(key) {
+      const body = objects.get(key);
+      if (body === undefined) return null;
+      return {
+        async text() {
+          return body;
+        },
+      };
+    },
+    async put(key, body, options) {
+      const text = String(body);
+      objects.set(key, text);
+      writes.push({ key, body: text, options });
+      return { key };
+    },
+    async list() {
+      return { objects: [], truncated: false };
+    },
+    async delete() {},
+  };
+}
+
+function writtenJson(bucket, suffix) {
+  const write = bucket.writes.find((item) => item.key.endsWith(suffix));
+  assert.ok(write, `Expected R2 write ending in ${suffix}`);
+  return { key: write.key, value: JSON.parse(write.body) };
+}
+
+test('faq module atomically publishes legacy FAQ, generic Article, and lightweight Messages files', async () => {
+  const db = createPublicationDb();
+  const bucket = createPublicationBucket();
+  const result = await publishModularStorefront(db, bucket, 'publish-request', 'faq');
+
+  assert.equal(result.publications.length, 1);
+  assert.equal(result.publications[0].moduleKey, 'faq');
+  assert.equal(result.publications[0].unchanged, false);
+
+  const faq = writtenJson(bucket, '/faq.json');
+  const articles = writtenJson(bucket, '/articles.json');
+  const messages = writtenJson(bucket, '/messages.json');
+  const manifest = writtenJson(bucket, '/manifest.json');
+
   assert.deepEqual(
-    state.faqs.map((article) => article.id),
+    faq.value.faqs.map((article) => article.id),
     ['article-a'],
   );
   assert.deepEqual(
-    state.articles.map((article) => article.id),
+    articles.value.articles.map((article) => article.id),
     ['article-a', 'article-b'],
   );
-  assert.deepEqual(state.messageArticles, [
+  assert.deepEqual(messages.value.articles, [
     {
       articleId: 'article-b',
-      title: 'Generic-only article',
-      preview: 'Full generic body',
+      title: 'Messages only article',
+      preview: 'Messages article body that stays in articles.json only.',
       sortOrder: 0,
     },
   ]);
-  assert.equal('body' in state.messageArticles[0], false);
-
-  const files = buildArticlePublicationFiles(
-    publicationArticles,
-    publicationMessages,
-    'article-content-version',
-    NOW,
-  );
+  assert.equal(messages.value.articles.some((article) => 'body' in article), false);
+  assert.equal(JSON.stringify(messages.value).includes('privateExample'), false);
   assert.deepEqual(
-    files.map((file) => file.relativePath),
-    ['faq.json', 'articles.json', 'messages.json'],
+    manifest.value.files.map((file) => file.path).sort(),
+    ['articles.json', 'faq.json', 'messages.json'],
   );
-  const faq = files.find((file) => file.relativePath === 'faq.json').value;
-  const articles = files.find((file) => file.relativePath === 'articles.json').value;
-  const messages = files.find((file) => file.relativePath === 'messages.json').value;
-  assert.deepEqual(faq.faqs.map((article) => article.id), ['article-a']);
-  assert.deepEqual(articles.articles.map((article) => article.id), [
-    'article-a',
-    'article-b',
-  ]);
-  assert.deepEqual(messages.articles, state.messageArticles);
-  assert.equal(JSON.stringify(messages).includes('Full generic body'), true);
-  assert.equal(JSON.stringify(messages).includes('Full generic body"'), true);
-  assert.equal(messages.articles.some((article) => 'body' in article), false);
+  assert.equal(faq.value.contentVersion, articles.value.contentVersion);
+  assert.equal(articles.value.contentVersion, messages.value.contentVersion);
+  assert.equal(messages.value.contentVersion, manifest.value.contentVersion);
+
+  const pointer = JSON.parse(bucket.objects.get('public/current.json'));
+  assert.equal(pointer.schemaVersion, 2);
+  assert.equal(pointer.faq.contentVersion, messages.value.contentVersion);
+  assert.equal(pointer.faq.manifestKey, manifest.key);
 });
 
-test('Markdown preview removes presentation syntax without corrupting ordinary hyphens', () => {
-  assert.equal(
-    deriveArticlePreview(
-      '# Welcome\n\nRead the [well-being guide](https://example.com) and **stay-ready**.\n\n```js\nsecret()\n```',
-    ),
-    'Welcome Read the well-being guide and stay-ready.',
-  );
-});
+test('Article content and Messages placement both make the shared faq publication module dirty', async () => {
+  const db = createPublicationDb();
+  const bucket = createPublicationBucket();
+  await publishModularStorefront(db, bucket, 'publish-request', 'faq');
 
-test('article body changes and Messages placement changes both change the faq module source revision', async () => {
-  const baseState = buildArticlePublicationState(publicationArticles, publicationMessages);
-  const contentState = buildArticlePublicationState(
-    publicationArticles.map((article) =>
-      article.id === 'article-a' ? { ...article, answer: `${article.answer}\nChanged` } : article,
-    ),
-    publicationMessages,
-  );
-  const placementState = buildArticlePublicationState(publicationArticles, [
-    { ...publicationMessages[0], sort_order: 8 },
-  ]);
+  let status = await getModularPublishStatus(db, bucket);
+  assert.equal(status.modules.find((module) => module.key === 'faq').isCurrent, true);
 
-  const baseRevision = await computePublishedStateRevision(baseState);
-  assert.notEqual(await computePublishedStateRevision(contentState), baseRevision);
-  assert.notEqual(await computePublishedStateRevision(placementState), baseRevision);
+  const originalBody = db.state.faqs[0].answer;
+  db.state.faqs[0].answer = `${originalBody}\nChanged content`;
+  status = await getModularPublishStatus(db, bucket);
+  assert.equal(status.modules.find((module) => module.key === 'faq').isCurrent, false);
+
+  db.state.faqs[0].answer = originalBody;
+  db.state.messageArticles[0].sort_order = 7;
+  status = await getModularPublishStatus(db, bucket);
+  assert.equal(status.modules.find((module) => module.key === 'faq').isCurrent, false);
 });
