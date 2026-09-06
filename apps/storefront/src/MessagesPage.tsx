@@ -10,6 +10,8 @@ import { useEffect, useMemo, useState } from 'react';
 import type { StorefrontBootstrap } from './content';
 import { loadProductSnapshot } from './content-route';
 import { resolveCustomerServiceCta } from './cta';
+import { MessagesArticleListWorkspace } from './MessagesArticleListWorkspace';
+import { getMessageArticlesFromBootstrap } from './messages-articles';
 import { installSupportExpiryRuntime } from './support-expiry-runtime';
 import { replaceStorefrontLocation } from './storefront-navigation-runtime';
 import type {
@@ -381,6 +383,7 @@ export function MessagesPage({
   });
   const displayedConversation = activeConversation;
   const conversations = conversationsQuery.data ?? [];
+  const messageArticles = getMessageArticlesFromBootstrap(bootstrap);
   const composeUnavailable =
     composeProductQuery.isError ||
     composeHandoffQuery.isError ||
@@ -624,6 +627,7 @@ export function MessagesPage({
         ? 'Notifications blocked'
         : 'Enable notifications';
   const workspaceConversationRef = compose ? '__new__' : activeConversationRef;
+  const showMessageArticles = !compose && activeConversationRef === null;
 
   async function retryMessage(message: SupportMessage) {
     const clientMessageId = message.id.startsWith('local:')
@@ -702,56 +706,65 @@ export function MessagesPage({
           <NotificationBellIcon enabled={notificationState === 'enabled'} />
         </button>
       ) : null}
-      <MessagesWorkspace
-        activeConversation={displayedConversation}
-        activeConversationRef={workspaceConversationRef}
-        conversations={conversations}
-        pendingConversation={pendingConversation}
-        supportAvailable={workspaceSupportAvailable}
-        LinkComponent={LinkComponent}
-        onSendMessage={
-          supportAvailable && activeConversationRef
-            ? async (body) => {
-                await sendMutation.mutateAsync({
-                  body,
-                  clientMessageId: crypto.randomUUID(),
-                  sentAt: new Date().toISOString(),
-                  conversationRef: activeConversationRef,
-                });
-              }
-            : undefined
-        }
-        onRetryMessage={
-          supportAvailable && activeConversationRef ? retryMessage : undefined
-        }
-        sending={sendMutation.isPending}
-        sendError={null}
-        onSendImage={supportAvailable && activeConversationRef ? sendImage : undefined}
-        onRetryImage={
-          supportAvailable && activeConversationRef && imageMutation.isError
-            ? retryImage
-            : undefined
-        }
-        imageSending={imageMutation.isPending}
-        imageFailed={imageMutation.isError && Boolean(imagePreviewUrl)}
-        imageProgress={imageProgress}
-        imagePreviewUrl={imagePreviewUrl}
-        imageError={null}
-        onLoadEarlier={
-          activeConversation?.nextMessageCursor
-            ? async () => {
-                await conversationQuery.fetchNextPage();
-              }
-            : undefined
-        }
-        loadingEarlier={conversationQuery.isFetchingNextPage}
-        loadingConversation={conversationLoading || composeConnecting}
-        connectionError={composeConnectionError}
-        noAgentNotice={noAgentNotice}
-        onRetryConnection={
-          compose && composeUnavailable ? retryComposeConnection : undefined
-        }
-      />
+      {showMessageArticles ? (
+        <MessagesArticleListWorkspace
+          articles={messageArticles}
+          conversations={conversations}
+          LinkComponent={LinkComponent}
+          supportAvailable={workspaceSupportAvailable}
+        />
+      ) : (
+        <MessagesWorkspace
+          activeConversation={displayedConversation}
+          activeConversationRef={workspaceConversationRef}
+          conversations={conversations}
+          pendingConversation={pendingConversation}
+          supportAvailable={workspaceSupportAvailable}
+          LinkComponent={LinkComponent}
+          onSendMessage={
+            supportAvailable && activeConversationRef
+              ? async (body) => {
+                  await sendMutation.mutateAsync({
+                    body,
+                    clientMessageId: crypto.randomUUID(),
+                    sentAt: new Date().toISOString(),
+                    conversationRef: activeConversationRef,
+                  });
+                }
+              : undefined
+          }
+          onRetryMessage={
+            supportAvailable && activeConversationRef ? retryMessage : undefined
+          }
+          sending={sendMutation.isPending}
+          sendError={null}
+          onSendImage={supportAvailable && activeConversationRef ? sendImage : undefined}
+          onRetryImage={
+            supportAvailable && activeConversationRef && imageMutation.isError
+              ? retryImage
+              : undefined
+          }
+          imageSending={imageMutation.isPending}
+          imageFailed={imageMutation.isError && Boolean(imagePreviewUrl)}
+          imageProgress={imageProgress}
+          imagePreviewUrl={imagePreviewUrl}
+          imageError={null}
+          onLoadEarlier={
+            activeConversation?.nextMessageCursor
+              ? async () => {
+                  await conversationQuery.fetchNextPage();
+                }
+              : undefined
+          }
+          loadingEarlier={conversationQuery.isFetchingNextPage}
+          loadingConversation={conversationLoading || composeConnecting}
+          connectionError={composeConnectionError}
+          noAgentNotice={noAgentNotice}
+          onRetryConnection={
+            compose && composeUnavailable ? retryComposeConnection : undefined
+          }
+        />
+      )}
     </div>
   );
 }

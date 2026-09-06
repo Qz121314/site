@@ -20,6 +20,67 @@ import {
   type V2ProductSnapshot,
 } from './content';
 
+export type PublicArticle = {
+  id: string;
+  title: string;
+  body: string;
+  sortOrder: number;
+};
+
+type ArticlesSnapshot = {
+  schemaVersion: 1 | 2;
+  contentVersion: string;
+  publishedAt: string;
+  articles: unknown[];
+};
+
+type V2ArticlesSnapshot = ArticlesSnapshot & {
+  schemaVersion: 2;
+  moduleKey: 'faq';
+};
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
+}
+
+function parsePublishedArticle(value: unknown): PublicArticle | null {
+  if (!isRecord(value)) return null;
+  if (
+    typeof value.id !== 'string' ||
+    !value.id ||
+    typeof value.title !== 'string' ||
+    typeof value.body !== 'string' ||
+    typeof value.sortOrder !== 'number' ||
+    !Number.isFinite(value.sortOrder)
+  ) {
+    return null;
+  }
+  return {
+    id: value.id,
+    title: value.title,
+    body: value.body,
+    sortOrder: value.sortOrder,
+  };
+}
+
+function findPublishedArticle(
+  snapshot: ArticlesSnapshot,
+  articleId: string,
+): PublicArticle {
+  const article = Array.isArray(snapshot.articles)
+    ? snapshot.articles
+        .map((value) => parsePublishedArticle(value))
+        .find((value) => value?.id === articleId)
+    : null;
+  if (!article) {
+    throw new PublicContentError(
+      'CONTENT_NOT_PUBLISHED',
+      'This article has not been published yet.',
+    );
+  }
+  return article;
+}
+
 export async function loadSectionSnapshot(
   bootstrap: StorefrontBootstrap,
   sectionRef: string,
@@ -216,4 +277,32 @@ export async function loadFaqSnapshot(
     v2ModulePath('faq', reference, 'faq.json'),
     signal,
   );
+}
+
+export async function loadArticleSnapshot(
+  bootstrap: StorefrontBootstrap,
+  articleId: string,
+  signal?: AbortSignal,
+): Promise<PublicArticle> {
+  if (!articleId || articleId.length > 120) {
+    throw new PublicContentError('CONTENT_NOT_PUBLISHED', 'This article is unavailable.');
+  }
+  if (bootstrap.pointer.schemaVersion === 1) {
+    const snapshot = await loadV1File<ArticlesSnapshot>(
+      bootstrap.origin,
+      bootstrap.pointer.contentVersion,
+      'articles.json',
+      signal,
+    );
+    return findPublishedArticle(snapshot, articleId);
+  }
+  const reference = bootstrap.pointer.faq;
+  const snapshot = await loadV2File<V2ArticlesSnapshot>(
+    bootstrap.origin,
+    'faq',
+    reference,
+    v2ModulePath('faq', reference, 'articles.json'),
+    signal,
+  );
+  return findPublishedArticle(snapshot, articleId);
 }

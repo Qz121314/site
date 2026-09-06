@@ -1,0 +1,122 @@
+.messages-article-list {
+  display: grid;
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--app-hairline, var(--line)) 88%, transparent);
+}
+
+.messages-article-row {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) 20px;
+  min-height: 82px;
+  align-items: center;
+  gap: 13px;
+  padding: 13px 15px;
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--app-hairline, var(--line)) 88%, transparent);
+  outline: 0;
+  color: var(--text);
+  text-decoration: none;
+}
+
+.messages-article-row:last-child {
+  border-bottom: 0;
+}
+
+.messages-article-row:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--brand) 36%, transparent);
+  outline-offset: -2px;
+}
+
+.messages-article-icon {
+  display: grid;
+  width: 48px;
+  height: 48px;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: var(--theme-radius-icon, 17px);
+  background: var(--surface-soft);
+}
+
+.messages-article-icon svg {
+  width: 23px;
+  height: 23px;
+}
+
+.messages-article-copy {
+  display: grid;
+  min-width: 0;
+  gap: 5px;
+}
+
+.messages-article-copy strong,
+.messages-article-copy > span {
+  overflow: hidden;
+  min-width: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.messages-article-copy strong {
+  font-size: 0.91rem;
+  font-weight: 620;
+  letter-spacing: -0.014em;
+}
+
+.messages-article-row.is-unread .messages-article-copy strong {
+  font-weight: 710;
+}
+
+.messages-article-copy > span {
+  color: var(--muted);
+  font-size: 0.76rem;
+  line-height: 1.35;
+}
+
+.messages-article-status {
+  display: grid;
+  min-width: 20px;
+  place-items: center;
+}
+
+.messages-article-unread-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--brand-strong);
+}
+
+@media (max-width: 767px) {
+  .messages-article-list {
+    margin-inline: calc(var(--app-gutter, 16px) * -1);
+  }
+
+  .messages-article-row {
+    padding-right: max(var(--app-gutter, 16px), env(safe-area-inset-right));
+    padding-left: max(var(--app-gutter, 16px), env(safe-area-inset-left));
+  }
+}
+
+@media (min-width: 768px) {
+  .messages-article-workspace .messages-sidebar {
+    overflow-y: auto;
+  }
+
+  .messages-article-workspace .messages-page {
+    height: auto;
+  }
+
+  .messages-article-workspace .conversation-list {
+    overflow: visible;
+  }
+
+  .messages-article-workspace .messages-empty-state {
+    height: auto;
+    min-height: 320px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .messages-article-row {
+    transition: none;
+  }
+}
