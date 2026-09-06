@@ -6,6 +6,7 @@ import type {
   BottomNavigationItem,
   BottomNavigationKey,
 } from './site-hero-settings-api';
+import './bottom-navigation-settings.css';
 
 const BUILTIN_OPTIONS = [
   ['home', 'Home'],
@@ -58,7 +59,11 @@ export function BottomNavigationSettingsSection({
   onChange: (value: BottomNavigationItem[]) => void;
   onSessionExpired: () => void;
 }) {
+  const [editingKey, setEditingKey] = useState<BottomNavigationKey | null>(null);
   const [pickerKey, setPickerKey] = useState<BottomNavigationKey | null>(null);
+  const editingItem = editingKey
+    ? (value.find((item) => item.key === editingKey) ?? null)
+    : null;
   const pickerItem = pickerKey
     ? (value.find((item) => item.key === pickerKey) ?? null)
     : null;
@@ -86,148 +91,189 @@ export function BottomNavigationSettingsSection({
   }
 
   return (
-    <section
-      className="admin-settings-section"
-      aria-labelledby="settings-bottom-navigation-title"
-    >
+    <section className="admin-navigation-manager" aria-labelledby="bottom-navigation-title">
       <div className="admin-settings-section-heading">
         <div>
-          <h2 id="settings-bottom-navigation-title">底部导航</h2>
+          <h2 id="bottom-navigation-title">前台底部导航</h2>
           <p className="admin-settings-section-description">
-            路由固定，避免误配置；显示状态、名称和图标可以自由调整。图标支持内置
-            Icon、Emoji 和素材图片。Messages 的显示状态不受客服连接配置影响。
+            路径固定；名称、图标与显示状态可以调整。点击一行打开紧凑编辑区。
           </p>
         </div>
       </div>
 
-      <div className="admin-bottom-navigation-grid">
-        {value.map((item) => (
-          <article
-            className={`admin-bottom-navigation-card${item.enabled ? '' : ' is-disabled'}`}
-            key={item.key}
-          >
-            <header className="admin-bottom-navigation-card-header">
-              <div className="admin-bottom-navigation-preview" aria-hidden="true">
-                {iconPreview(item)}
-              </div>
-              <div className="admin-bottom-navigation-identity">
-                <strong>{item.label || item.key}</strong>
-                <small>{ROUTE_LABELS[item.key]}</small>
-              </div>
-              <label className="admin-bottom-navigation-switch">
-                <input
-                  type="checkbox"
-                  checked={item.enabled}
-                  disabled={busy}
-                  onChange={(event) =>
-                    onChange(
-                      updateItem(value, item.key, { enabled: event.target.checked }),
-                    )
-                  }
-                />
-                <span>{item.enabled ? '显示' : '隐藏'}</span>
-              </label>
-            </header>
-
-            <div className="admin-bottom-navigation-fields">
-              <label className="field-group">
-                <span>名称</span>
-                <input
-                  type="text"
-                  lang="en"
-                  maxLength={24}
-                  value={item.label}
-                  disabled={busy}
-                  onChange={(event) =>
-                    onChange(updateItem(value, item.key, { label: event.target.value }))
-                  }
-                />
-              </label>
-
-              <label className="field-group">
-                <span>图标来源</span>
-                <select
-                  value={item.iconType}
-                  disabled={busy}
-                  onChange={(event) =>
-                    setIconType(item.key, event.target.value as BottomNavigationIconType)
-                  }
+      <div className="admin-bottom-navigation-list" role="list" aria-label="底部导航入口">
+        {value.map((item) => {
+          const expanded = editingKey === item.key;
+          return (
+            <div className="admin-bottom-navigation-row-wrap" role="listitem" key={item.key}>
+              <button
+                className={`admin-bottom-navigation-row${expanded ? ' is-selected' : ''}`}
+                type="button"
+                disabled={busy}
+                aria-expanded={expanded}
+                aria-controls={`bottom-nav-editor-${item.key}`}
+                onClick={() => setEditingKey(expanded ? null : item.key)}
+              >
+                <span
+                  className="admin-bottom-navigation-preview"
+                  role="img"
+                  aria-label={`${item.label || item.key} 图标预览`}
                 >
-                  <option value="builtin">内置 Icon</option>
-                  <option value="emoji">Emoji</option>
-                  <option value="asset">素材图片</option>
-                </select>
-              </label>
+                  {iconPreview(item)}
+                </span>
+                <span className="admin-bottom-navigation-identity">
+                  <strong>{item.label || item.key}</strong>
+                  <small>{ROUTE_LABELS[item.key]}</small>
+                </span>
+                <span className="admin-bottom-navigation-source">
+                  {item.iconType === 'builtin'
+                    ? '内置 Icon'
+                    : item.iconType === 'emoji'
+                      ? 'Emoji'
+                      : '素材图片'}
+                </span>
+                <span
+                  className={`admin-bottom-navigation-status${item.enabled ? ' is-enabled' : ''}`}
+                >
+                  {item.enabled ? '显示' : '隐藏'}
+                </span>
+                <span className="admin-bottom-navigation-row-action">
+                  {expanded ? '收起' : '编辑'}
+                </span>
+              </button>
 
-              {item.iconType === 'builtin' ? (
-                <label className="field-group admin-bottom-navigation-icon-field">
-                  <span>Icon</span>
-                  <select
-                    value={item.iconValue ?? 'home'}
-                    disabled={busy}
-                    onChange={(event) =>
-                      onChange(
-                        updateItem(value, item.key, { iconValue: event.target.value }),
-                      )
-                    }
-                  >
-                    {BUILTIN_OPTIONS.map(([value, label]) => (
-                      <option value={value} key={value}>
-                        {label}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              ) : null}
-
-              {item.iconType === 'emoji' ? (
-                <label className="field-group admin-bottom-navigation-icon-field">
-                  <span>Emoji</span>
-                  <input
-                    type="text"
-                    maxLength={16}
-                    value={item.iconValue ?? ''}
-                    disabled={busy}
-                    placeholder="✨"
-                    onChange={(event) =>
-                      onChange(
-                        updateItem(value, item.key, { iconValue: event.target.value }),
-                      )
-                    }
-                  />
-                </label>
-              ) : null}
-
-              {item.iconType === 'asset' ? (
-                <div className="field-group admin-bottom-navigation-icon-field">
-                  <span>图片</span>
-                  <div className="admin-bottom-navigation-image-actions">
-                    <button
-                      className="secondary-button"
-                      type="button"
+              {expanded && editingItem ? (
+                <div
+                  className="admin-bottom-navigation-editor"
+                  id={`bottom-nav-editor-${item.key}`}
+                  aria-label={`${editingItem.label || editingItem.key} 导航设置`}
+                >
+                  <label className="field-group">
+                    <span>名称</span>
+                    <input
+                      type="text"
+                      maxLength={24}
+                      value={editingItem.label}
                       disabled={busy}
-                      onClick={() => setPickerKey(item.key)}
+                      onChange={(event) =>
+                        onChange(
+                          updateItem(value, editingItem.key, { label: event.target.value }),
+                        )
+                      }
+                    />
+                  </label>
+
+                  <label className="field-group">
+                    <span>图标来源</span>
+                    <select
+                      value={editingItem.iconType}
+                      disabled={busy}
+                      onChange={(event) =>
+                        setIconType(
+                          editingItem.key,
+                          event.target.value as BottomNavigationIconType,
+                        )
+                      }
                     >
-                      {item.iconAssetId ? '更换图片' : '从素材中心选择'}
-                    </button>
-                    {item.iconAssetId ? (
-                      <button
-                        className="admin-text-button"
-                        type="button"
+                      <option value="builtin">内置 Icon</option>
+                      <option value="emoji">Emoji</option>
+                      <option value="asset">素材图片</option>
+                    </select>
+                  </label>
+
+                  {editingItem.iconType === 'builtin' ? (
+                    <label className="field-group">
+                      <span>Icon</span>
+                      <select
+                        value={editingItem.iconValue ?? 'home'}
                         disabled={busy}
-                        onClick={() =>
-                          onChange(updateItem(value, item.key, { iconAssetId: null }))
+                        onChange={(event) =>
+                          onChange(
+                            updateItem(value, editingItem.key, {
+                              iconValue: event.target.value,
+                            }),
+                          )
                         }
                       >
-                        移除
-                      </button>
-                    ) : null}
-                  </div>
+                        {BUILTIN_OPTIONS.map(([optionValue, label]) => (
+                          <option value={optionValue} key={optionValue}>
+                            {label}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  ) : null}
+
+                  {editingItem.iconType === 'emoji' ? (
+                    <label className="field-group">
+                      <span>Emoji</span>
+                      <input
+                        type="text"
+                        maxLength={16}
+                        value={editingItem.iconValue ?? ''}
+                        disabled={busy}
+                        placeholder="✨"
+                        onChange={(event) =>
+                          onChange(
+                            updateItem(value, editingItem.key, {
+                              iconValue: event.target.value,
+                            }),
+                          )
+                        }
+                      />
+                    </label>
+                  ) : null}
+
+                  {editingItem.iconType === 'asset' ? (
+                    <div className="field-group">
+                      <span>图片</span>
+                      <div className="admin-bottom-navigation-image-actions">
+                        <button
+                          className="secondary-button"
+                          type="button"
+                          disabled={busy}
+                          onClick={() => setPickerKey(editingItem.key)}
+                        >
+                          {editingItem.iconAssetId ? '更换图片' : '从素材中心选择'}
+                        </button>
+                        {editingItem.iconAssetId ? (
+                          <button
+                            className="admin-text-button"
+                            type="button"
+                            disabled={busy}
+                            onClick={() =>
+                              onChange(
+                                updateItem(value, editingItem.key, { iconAssetId: null }),
+                              )
+                            }
+                          >
+                            移除
+                          </button>
+                        ) : null}
+                      </div>
+                    </div>
+                  ) : null}
+
+                  <label className="admin-bottom-navigation-switch">
+                    <input
+                      type="checkbox"
+                      checked={editingItem.enabled}
+                      disabled={busy}
+                      onChange={(event) =>
+                        onChange(
+                          updateItem(value, editingItem.key, {
+                            enabled: event.target.checked,
+                          }),
+                        )
+                      }
+                    />
+                    <span>{editingItem.enabled ? '显示此入口' : '隐藏此入口'}</span>
+                  </label>
                 </div>
               ) : null}
             </div>
-          </article>
-        ))}
+          );
+        })}
       </div>
 
       {pickerKey && pickerItem ? (
