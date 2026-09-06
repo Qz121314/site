@@ -43,7 +43,7 @@ test('pre-commit is staged-file oriented and not a full verify gate', () => {
   assert.match(hook, /pnpm precommit:check/);
   assert.doesNotMatch(hook, /pnpm (?:preflight|verify|test|build|typecheck)/);
   assert.match(precommit, /diff', '--cached'/);
-  assert.match(precommit, /git', \[`show`|git\(\['show'/);
+  assert.match(precommit, /git\(\['show'/);
   assert.doesNotMatch(precommit, /wrangler|--remote|https?:\/\//i);
 });
 
