@@ -23,9 +23,7 @@ function parseArticleIds(value: unknown): string[] | null {
   if (value.articleIds.length > MAX_MESSAGE_ARTICLES) return null;
   const articleIds = value.articleIds.filter(
     (articleId): articleId is string =>
-      typeof articleId === 'string' &&
-      articleId.length > 0 &&
-      articleId.length <= 120,
+      typeof articleId === 'string' && articleId.length > 0 && articleId.length <= 120,
   );
   if (articleIds.length !== value.articleIds.length) return null;
   return new Set(articleIds).size === articleIds.length ? articleIds : null;
@@ -109,13 +107,11 @@ adminMessageArticleRoutes.put('/', async (context) => {
   await context.env.DB.batch([
     context.env.DB.prepare('DELETE FROM message_article_references'),
     ...articleIds.map((articleId, sortOrder) =>
-      context.env.DB
-        .prepare(
-          `INSERT INTO message_article_references (
+      context.env.DB.prepare(
+        `INSERT INTO message_article_references (
              article_id, sort_order, is_enabled, created_at, updated_at
            ) VALUES (?, ?, 1, ?, ?)`,
-        )
-        .bind(articleId, sortOrder, now, now),
+      ).bind(articleId, sortOrder, now, now),
     ),
     createAuditLogStatement(context.env.DB, {
       action: 'messages.articles_updated',
