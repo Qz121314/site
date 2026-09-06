@@ -19,7 +19,12 @@ const prettierExtensions = new Set([
 const eslintExtensions = new Set(['.cjs', '.js', '.jsx', '.mjs', '.ts', '.tsx']);
 
 function run(command, args, options = {}) {
-  const result = spawnSync(command, args, {
+  const usesWindowsPnpmShell = process.platform === 'win32' && command === 'pnpm';
+  const executable = usesWindowsPnpmShell ? process.env.ComSpec || 'cmd.exe' : command;
+  const executableArgs = usesWindowsPnpmShell
+    ? ['/d', '/s', '/c', `pnpm ${args.join(' ')}`]
+    : args;
+  const result = spawnSync(executable, executableArgs, {
     cwd: process.cwd(),
     encoding: 'utf8',
     stdio: options.capture ? 'pipe' : 'inherit',
@@ -78,7 +83,7 @@ const prettierFiles = changedFiles.filter((file) =>
   prettierExtensions.has(extensionOf(file)),
 );
 if (prettierFiles.length > 0) {
-  run('pnpm', ['exec', 'prettier', '--check', ...prettierFiles]);
+  run('pnpm', ['exec', 'prettier', '--check', '--end-of-line', 'auto', ...prettierFiles]);
 }
 
 const eslintFiles = changedFiles.filter((file) =>

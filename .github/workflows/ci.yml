@@ -3,8 +3,23 @@ name: CI and Deploy
 on:
   push:
     branches: [main]
-  pull_request:
   workflow_dispatch:
+    inputs:
+      force_deploy:
+        description: Force a production Worker deploy even when the classifier reports no deploy-impacting diff
+        required: false
+        default: false
+        type: boolean
+      force_cloudflare_validation:
+        description: Force migration/R2/deep production validation for an explicit operator-run release check
+        required: false
+        default: false
+        type: boolean
+      force_d1_migrations:
+        description: Explicitly run remote D1 migration recovery/apply without a migration diff (main only)
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -15,61 +30,101 @@ jobs:
     timeout-minutes: 50
     concurrency:
       group: site-deploy-${{ github.ref }}
-      cancel-in-progress: ${{ github.event_name != 'push' || github.ref != 'refs/heads/main' }}
+      cancel-in-progress: false
     outputs:
-      deployment-url: ${{ steps.deploy.outputs.url }}
+      deployment_url: ${{ steps.deploy.outputs.url }}
+      deployed: ${{ steps.deploy.outputs.deployed }}
+      production_browser_relevant: ${{ steps.changes.outputs.production_browser_relevant }}
+      force_cloudflare_validation: ${{ steps.manual.outputs.force_cloudflare_validation }}
+      force_d1_migrations: ${{ steps.manual.outputs.force_d1_migrations }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
 
-      - name: Set up Node.js and pnpm
-        run: |
-          set -euo pipefail
-          node --version
-          node -e "if (Number(process.versions.node.split('.')[0]) < 22) { throw new Error('Node.js 22 or newer is required') }"
-          npm install --global pnpm@11.19.0
-          pnpm --version
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Validate D1 migrations
-        run: pnpm db:migrate:local
+      - name: Resolve manual release flags
+        id: manual
+        env:
+          FORCE_DEPLOY: ${{ inputs.force_deploy || false }}
+          FORCE_CLOUDFLARE_VALIDATION: ${{ inputs.force_cloudflare_validation || false }}
+          FORCE_D1_MIGRATIONS: ${{ inputs.force_d1_migrations || false }}
+        run: |
+          echo "force_deploy=$FORCE_DEPLOY" >> "$GITHUB_OUTPUT"
+          echo "force_cloudflare_validation=$FORCE_CLOUDFLARE_VALIDATION" >> "$GITHUB_OUTPUT"
+          echo "force_d1_migrations=$FORCE_D1_MIGRATIONS" >> "$GITHUB_OUTPUT"
 
-      - name: Lint
-        run: pnpm lint
+      - name: Classify Cloudflare-impacting changes
+        id: changes
+        env:
+          CF_CHANGE_BASE_SHA: ${{ github.event.before }}
+        run: node scripts/classify-cloudflare-changes.mjs --head "$GITHUB_SHA"
 
-      - name: Format
-        run: pnpm format
+      - name: Publish Cloudflare classification summary
+        env:
+          MIGRATION_CHANGED: ${{ steps.changes.outputs.migration_changed }}
+          R2_VALIDATION_REQUIRED: ${{ steps.changes.outputs.r2_validation_required }}
+          DEPLOY_REQUIRED: ${{ steps.changes.outputs.deploy_required }}
+          BROWSER_RELEVANT: ${{ steps.changes.outputs.production_browser_relevant }}
+          FORCE_DEPLOY: ${{ steps.manual.outputs.force_deploy }}
+          FORCE_CF: ${{ steps.manual.outputs.force_cloudflare_validation }}
+          FORCE_D1_MIGRATIONS: ${{ steps.manual.outputs.force_d1_migrations }}
+        run: |
+          {
+            echo '## Cloudflare change classification'
+            echo '```text'
+            echo "migration_changed=${{ steps.changes.outputs.migration_changed }}"
+            echo "worker_changed=${{ steps.changes.outputs.worker_changed }}"
+            echo "storefront_changed=${{ steps.changes.outputs.storefront_changed }}"
+            echo "admin_changed=${{ steps.changes.outputs.admin_changed }}"
+            echo "r2_config_changed=${{ steps.changes.outputs.r2_config_changed }}"
+            echo "wrangler_config_changed=${{ steps.changes.outputs.wrangler_config_changed }}"
+            echo "public_runtime_changed=${{ steps.changes.outputs.public_runtime_changed }}"
+            echo "production_browser_relevant=${{ steps.changes.outputs.production_browser_relevant }}"
+            echo "deploy_required=${{ steps.changes.outputs.deploy_required }}"
+            echo "docs_only=${{ steps.changes.outputs.docs_only }}"
+            echo '```'
+            if [[ "$MIGRATION_CHANGED" != true && "$FORCE_D1_MIGRATIONS" != true ]]; then echo 'Skip remote D1: no migration diff or explicit migration override.'; fi
+            if [[ "$R2_VALIDATION_REQUIRED" != true && "$FORCE_CF" != true ]]; then echo 'Skip R2 validation: no R2 config diff.'; fi
+            if [[ "$DEPLOY_REQUIRED" != true && "$FORCE_DEPLOY" != true ]]; then echo 'Skip production deploy: no deploy-impacting diff.'; fi
+            if [[ "$BROWSER_RELEVANT" != true && "$FORCE_CF" != true ]]; then echo 'Skip production browser acceptance: no relevant public/browser diff.'; fi
+          } | tee -a "$GITHUB_STEP_SUMMARY"
 
-      - name: Typecheck
-        run: pnpm typecheck
-
-      - name: Test
-        run: pnpm test
-
-      - name: Build
-        run: pnpm build
-
-      - name: Validate Worker bundle
-        run: pnpm cf:check
+      - name: Full local-first verification
+        run: pnpm verify
 
       - name: Record D1 recovery bookmark
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' && (steps.changes.outputs.migration_changed == 'true' || steps.manual.outputs.force_d1_migrations == 'true')
         run: pnpm exec wrangler d1 time-travel info DB
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
 
       - name: Apply D1 migrations
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' && (steps.changes.outputs.migration_changed == 'true' || steps.manual.outputs.force_d1_migrations == 'true')
         run: pnpm db:migrate:remote
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
 
-      - name: Read and verify admin-configured R2 custom domain
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      - name: Read R2 validation metadata from production D1
+        if: github.ref == 'refs/heads/main' && (steps.changes.outputs.r2_validation_required == 'true' || steps.manual.outputs.force_cloudflare_validation == 'true')
         id: r2_origin
         run: |
           set -euo pipefail
@@ -96,9 +151,7 @@ jobs:
             exit 0
           fi
 
-          origin="$(PREFERRED_R2_PUBLIC_ORIGIN="$configured" \
-            R2_BUCKET_NAME='service-catalog-site-assets' \
-            node scripts/resolve-r2-public-origin.mjs)"
+          origin="$(PREFERRED_R2_PUBLIC_ORIGIN="$configured" R2_BUCKET_NAME='service-catalog-site-assets' node scripts/resolve-r2-public-origin.mjs)"
           echo "origin=$origin" >> "$GITHUB_OUTPUT"
           echo "Verified admin-configured R2 custom-domain read origin: $origin"
         env:
@@ -106,7 +159,7 @@ jobs:
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
 
       - name: Verify selected R2 custom domain
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main' && steps.r2_origin.outputs.origin != ''
+        if: github.ref == 'refs/heads/main' && (steps.changes.outputs.r2_validation_required == 'true' || steps.manual.outputs.force_cloudflare_validation == 'true') && steps.r2_origin.outputs.origin != ''
         env:
           R2_ORIGIN: ${{ steps.r2_origin.outputs.origin }}
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
@@ -116,40 +169,31 @@ jobs:
           domain="$(node -e 'process.stdout.write(new URL(process.env.R2_ORIGIN).hostname)')"
           pnpm exec wrangler r2 bucket domain get service-catalog-site-assets --domain "$domain"
 
-      - name: Configure public R2 CORS
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      - name: Configure and verify public R2 CORS
+        if: github.ref == 'refs/heads/main' && (steps.changes.outputs.r2_validation_required == 'true' || steps.manual.outputs.force_cloudflare_validation == 'true')
         run: |
           set -euo pipefail
-          pnpm exec wrangler r2 bucket cors set service-catalog-site-assets \
-            --file config/r2-public-cors.json \
-            --force
+          pnpm exec wrangler r2 bucket cors set service-catalog-site-assets --file config/r2-public-cors.json --force
           pnpm exec wrangler r2 bucket cors list service-catalog-site-assets
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
 
       - name: Probe direct R2 media reads
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
-        id: r2_probe
+        if: github.ref == 'refs/heads/main' && (steps.changes.outputs.r2_validation_required == 'true' || steps.manual.outputs.force_cloudflare_validation == 'true')
         env:
           R2_ORIGIN: ${{ steps.r2_origin.outputs.origin }}
           MEDIA_OBJECT_KEY: ${{ steps.r2_origin.outputs.media_key }}
         run: |
           set -euo pipefail
           if [[ -z "$R2_ORIGIN" ]]; then
-            echo 'ready=false' >> "$GITHUB_OUTPUT"
-            echo 'status=not-configured' >> "$GITHUB_OUTPUT"
             echo '::warning::DIRECT_R2_NOT_CONFIGURED - configure and test the R2 custom domain in Admin > Site Settings.'
             exit 0
           fi
           if [[ -z "$MEDIA_OBJECT_KEY" ]]; then
-            echo 'ready=false' >> "$GITHUB_OUTPUT"
-            echo 'status=no-ready-media' >> "$GITHUB_OUTPUT"
             echo '::warning::DIRECT_R2_MEDIA_UNTESTED - no ready media asset exists yet.'
             exit 0
           fi
-
-          probe_origin='https://storefront-probe.invalid'
           media_path="$(MEDIA_OBJECT_KEY="$MEDIA_OBJECT_KEY" node -e '
             const key = process.env.MEDIA_OBJECT_KEY;
             const segments = key.split("/");
@@ -158,43 +202,15 @@ jobs:
           ')"
           headers="$(mktemp)"
           body="$(mktemp)"
-          status="$(curl --silent --show-error \
-            --connect-timeout 10 \
-            --max-time 20 \
-            --range 0-0 \
-            -H "Origin: $probe_origin" \
-            -D "$headers" \
-            -o "$body" \
-            -w '%{http_code}' \
-            "$R2_ORIGIN/$media_path" || true)"
-          cors="$(awk 'BEGIN{IGNORECASE=1} /^access-control-allow-origin:/ {gsub("\r", ""); sub(/^[^:]+:[[:space:]]*/, ""); print; exit}' "$headers")"
-          content_type="$(awk 'BEGIN{IGNORECASE=1} /^content-type:/ {gsub("\r", ""); sub(/^[^:]+:[[:space:]]*/, ""); print; exit}' "$headers")"
-
-          ready=false
-          if [[ "$status" == '206' \
-            && "$(wc -c < "$body")" == '1' \
-            && "$content_type" =~ ^(image|video)/ \
-            && ( "$cors" == '*' || "$cors" == "$probe_origin" ) ]]; then
-            ready=true
-          fi
-          echo "ready=$ready" >> "$GITHUB_OUTPUT"
-          echo "status=$status" >> "$GITHUB_OUTPUT"
-          echo "Direct R2 media probe: HTTP $status, type='${content_type:-missing}', CORS='${cors:-missing}', ready=$ready"
-
-          if [[ "$ready" != true ]]; then
-            echo '::warning::DIRECT_R2_MEDIA_BLOCKED - Storefront will retry tracked media through its same-origin /_media/* route.'
-            if grep -Eqi '^cf-mitigated:[[:space:]]*challenge' "$headers"; then
-              echo 'Direct R2 diagnosis: Cloudflare challenge (cf-mitigated: challenge).'
-            fi
-            echo '--- direct R2 response headers ---'
-            cat "$headers"
-            echo '--- direct R2 response body preview ---'
-            head -c 800 "$body" || true
-            echo
-          fi
+          status="$(curl --silent --show-error --connect-timeout 10 --max-time 20 --range 0-0 -H 'Origin: https://storefront-probe.invalid' -D "$headers" -o "$body" -w '%{http_code}' "$R2_ORIGIN/$media_path")"
+          test "$status" = '206'
+          test "$(wc -c < "$body")" = '1'
+          grep -Eqi '^content-type: (image|video)/' "$headers"
+          grep -Eqi '^access-control-allow-origin: (\*|https://storefront-probe\.invalid)' "$headers"
+          echo 'DIRECT_R2_MEDIA_READ=ready'
 
       - name: Deploy business platform Worker
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        if: github.ref == 'refs/heads/main' && (steps.changes.outputs.deploy_required == 'true' || steps.manual.outputs.force_deploy == 'true')
         id: deploy
         run: |
           set -euo pipefail
@@ -205,221 +221,46 @@ jobs:
           test -n "$version_id"
           echo "url=$url" >> "$GITHUB_OUTPUT"
           echo "version_id=$version_id" >> "$GITHUB_OUTPUT"
+          echo 'deployed=true' >> "$GITHUB_OUTPUT"
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
 
-      - name: Smoke test production
-        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+      - name: Minimal production smoke
+        if: steps.deploy.outputs.deployed == 'true'
+        run: node scripts/production-smoke.mjs
         env:
           BASE_URL: ${{ steps.deploy.outputs.url }}
           EXPECTED_WORKER_VERSION_ID: ${{ steps.deploy.outputs.version_id }}
-          R2_ORIGIN: ${{ steps.r2_origin.outputs.origin }}
-          DIRECT_R2_READY: ${{ steps.r2_probe.outputs.ready }}
-          MEDIA_OBJECT_KEY: ${{ steps.r2_origin.outputs.media_key }}
-        run: |
-          set -euo pipefail
 
-          assert_storefront_shell() {
-            local file="$1"
-            grep -F '<div id="root">' "$file"
-            grep -F 'class="boot-shell"' "$file"
-          }
-
-          health=''
-          health_ready=false
-          for attempt in {1..40}; do
-            health="$(curl --fail --silent --show-error "$BASE_URL/api/health" || true)"
-            if printf '%s' "$health" | node -e '
-              const fs = require("fs");
-              let value;
-              try {
-                value = JSON.parse(fs.readFileSync(0, "utf8"));
-              } catch {
-                process.exit(1);
-              }
-              if (value.ok !== true) process.exit(1);
-              if (value.environment !== "production") process.exit(1);
-              if (value.publicLanguage !== "en") process.exit(1);
-              if (value.workerVersionId !== process.env.EXPECTED_WORKER_VERSION_ID) process.exit(1);
-            '; then
-              health_ready=true
-              break
-            fi
-            sleep 3
-          done
-          if [[ "$health_ready" != true ]]; then
-            echo 'Worker version metadata did not propagate before the smoke-test deadline.'
-            echo "Expected Worker Version ID: $EXPECTED_WORKER_VERSION_ID"
-            printf '%s\n' "$health"
-            exit 1
-          fi
-          printf '%s\n' "$health"
-
-          security_headers_ready=false
-          for attempt in 1 2 3 4 5; do
-            if curl --fail --silent --show-error -D /tmp/security.headers -o /dev/null "$BASE_URL/" \
-              && grep -Eqi '^content-security-policy: .*frame-ancestors '\''none'\''' /tmp/security.headers \
-              && grep -Eqi '^x-content-type-options: nosniff' /tmp/security.headers \
-              && grep -Eqi '^x-frame-options: DENY' /tmp/security.headers \
-              && grep -Eqi '^referrer-policy: strict-origin-when-cross-origin' /tmp/security.headers; then
-              security_headers_ready=true
-              break
-            fi
-            sleep 3
-          done
-          if [[ "$security_headers_ready" != true ]]; then
-            echo 'Security headers did not propagate before the smoke-test deadline.'
-            cat /tmp/security.headers || true
-            exit 1
-          fi
-
-          media_config="$(curl --fail --silent --show-error "$BASE_URL/api/public/storefront/media-base-url")"
-          printf '%s' "$media_config" | R2_ORIGIN="$R2_ORIGIN" node -e '
-            const fs = require("fs");
-            const value = JSON.parse(fs.readFileSync(0, "utf8"));
-            const expected = process.env.R2_ORIGIN.trim() || null;
-            if (value.mediaBaseUrl !== expected) process.exit(1);
-          '
-
-          curl --fail --silent --show-error \
-            -D /tmp/public-theme.headers \
-            -o /tmp/public-theme.json \
-            "$BASE_URL/api/public/theme"
-          grep -Eqi '^content-type: application/json' /tmp/public-theme.headers
-          grep -Eqi '^cache-control: public, max-age=30, must-revalidate' /tmp/public-theme.headers
-          node -e '
-            const fs = require("fs");
-            const value = JSON.parse(fs.readFileSync("/tmp/public-theme.json", "utf8"));
-            const theme = value?.theme;
-            const keys = new Set(["marketplace", "noir", "live", "velvet", "midnight", "pearl", "saas", "travel", "tech", "custom"]);
-            const tokenKeys = ["brand", "brandStrong", "text", "muted", "surface", "surfaceSoft", "line", "pageBg", "heroStart", "heroEnd", "heroGlow", "shadow"];
-            if (!theme || !keys.has(theme.key)) process.exit(1);
-            if (theme.colorScheme !== "light" && theme.colorScheme !== "dark") process.exit(1);
-            if (theme.productMediaRatio !== "1:1") process.exit(1);
-            if (!theme.tokens || tokenKeys.some((key) => typeof theme.tokens[key] !== "string" || !theme.tokens[key])) process.exit(1);
-          '
-
-          curl --fail --silent --show-error \
-            -D /tmp/storefront-current.headers \
-            -o /tmp/storefront-current.json \
-            "$BASE_URL/public/current.json"
-          grep -Eqi '^content-type: application/json' /tmp/storefront-current.headers
-          grep -Eqi '^cache-control: public, max-age=30, must-revalidate' /tmp/storefront-current.headers
-          node -e "const fs=require('fs'); const value=JSON.parse(fs.readFileSync('/tmp/storefront-current.json','utf8')); if(value.schemaVersion!==1&&value.schemaVersion!==2) process.exit(1);"
-          curl --fail --silent --show-error --head "$BASE_URL/public/current.json" >/dev/null
-
-          if [[ -n "$MEDIA_OBJECT_KEY" ]]; then
-            media_path="$(MEDIA_OBJECT_KEY="$MEDIA_OBJECT_KEY" node -e '
-              const key = process.env.MEDIA_OBJECT_KEY;
-              const segments = key.split("/");
-              if (segments.some((segment) => !segment || segment === "." || segment === "..")) process.exit(1);
-              process.stdout.write(segments.map(encodeURIComponent).join("/"));
-            ')"
-            media_status="$(curl --silent --show-error \
-              --connect-timeout 10 \
-              --max-time 20 \
-              --range 0-0 \
-              -D /tmp/media-fallback.headers \
-              -o /tmp/media-fallback.body \
-              -w '%{http_code}' \
-              "$BASE_URL/_media/$media_path")"
-            test "$media_status" = '206'
-            test "$(wc -c < /tmp/media-fallback.body)" = '1'
-            grep -Eqi '^content-type: (image|video)/' /tmp/media-fallback.headers
-            grep -Eqi '^content-range: bytes 0-0/[1-9][0-9]*' /tmp/media-fallback.headers
-            grep -Eqi '^cache-control: public, max-age=' /tmp/media-fallback.headers
-            echo 'SAME_ORIGIN_MEDIA_FALLBACK=ready'
-          else
-            echo '::warning::SAME_ORIGIN_MEDIA_FALLBACK=untested - no ready media asset exists yet.'
-          fi
-
-          if [[ -n "$R2_ORIGIN" && -n "$MEDIA_OBJECT_KEY" ]]; then
-            media_path="$(MEDIA_OBJECT_KEY="$MEDIA_OBJECT_KEY" node -e '
-              const key = process.env.MEDIA_OBJECT_KEY;
-              const segments = key.split("/");
-              if (segments.some((segment) => !segment || segment === "." || segment === "..")) process.exit(1);
-              process.stdout.write(segments.map(encodeURIComponent).join("/"));
-            ')"
-            direct_headers="$(mktemp)"
-            direct_body="$(mktemp)"
-            direct_status="$(curl --silent --show-error \
-              --connect-timeout 10 \
-              --max-time 20 \
-              --range 0-0 \
-              -H "Origin: $BASE_URL" \
-              -D "$direct_headers" \
-              -o "$direct_body" \
-              -w '%{http_code}' \
-              "$R2_ORIGIN/$media_path" || true)"
-            direct_cors="$(awk 'BEGIN{IGNORECASE=1} /^access-control-allow-origin:/ {gsub("\r", ""); sub(/^[^:]+:[[:space:]]*/, ""); print; exit}' "$direct_headers")"
-            direct_content_type="$(awk 'BEGIN{IGNORECASE=1} /^content-type:/ {gsub("\r", ""); sub(/^[^:]+:[[:space:]]*/, ""); print; exit}' "$direct_headers")"
-            if [[ "$direct_status" == '206' \
-              && "$(wc -c < "$direct_body")" == '1' \
-              && "$direct_content_type" =~ ^(image|video)/ \
-              && ( "$direct_cors" == '*' || "$direct_cors" == "$BASE_URL" ) ]]; then
-              echo 'DIRECT_R2_MEDIA_READ=ready'
-            else
-              echo '::warning::DIRECT_R2_MEDIA_READ=blocked - tracked media remains available through the tested same-origin /_media/* fallback.'
-              echo "Direct R2 media status: HTTP $direct_status, type='${direct_content_type:-missing}', CORS='${direct_cors:-missing}', predeploy_ready=$DIRECT_R2_READY"
-              if grep -Eqi '^cf-mitigated:[[:space:]]*challenge' "$direct_headers"; then
-                echo 'Direct R2 diagnosis: Cloudflare challenge (cf-mitigated: challenge).'
-              fi
-            fi
-          elif [[ -z "$R2_ORIGIN" ]]; then
-            echo '::warning::DIRECT_R2_MEDIA_READ=not-configured'
-          else
-            echo '::warning::DIRECT_R2_MEDIA_READ=untested-no-ready-media'
-          fi
-
-          auth_session="$(curl --fail --silent --show-error "$BASE_URL/api/admin/auth/session")"
-          printf '%s' "$auth_session" | grep -F '"authenticated":false'
-
-          auth_session_with_slash="$(curl --fail --silent --show-error "$BASE_URL/api/admin/auth/session/")"
-          printf '%s' "$auth_session_with_slash" | grep -F '"authenticated":false'
-
-          curl --fail --silent --show-error -o /tmp/storefront-root.html "$BASE_URL/"
-          assert_storefront_shell /tmp/storefront-root.html
-
-          curl --fail --silent --show-error -o /tmp/admin-root.html "$BASE_URL/admin/"
-          grep -F '<meta name="robots" content="noindex,nofollow" />' /tmp/admin-root.html
-          grep -F '<div id="root"></div>' /tmp/admin-root.html
-
-          for path in "/sections/storefront-smoke-${GITHUB_SHA}/" \
-            "/sections/storefront-smoke-${GITHUB_SHA}/products/product-smoke-${GITHUB_SHA}/" \
-            "/products/storefront-smoke-${GITHUB_SHA}/"; do
-            status="$(curl --silent --show-error \
-              -H 'Accept: text/html' \
-              -H 'Sec-Fetch-Mode: navigate' \
-              -D /tmp/storefront-not-found.headers \
-              -o /tmp/storefront-not-found.body \
-              -w '%{http_code}' \
-              "$BASE_URL$path")"
-            test "$status" = '404'
-            grep -Eqi '^content-type: text/html' /tmp/storefront-not-found.headers
-            grep -Eqi '^x-robots-tag: noindex, nofollow' /tmp/storefront-not-found.headers
-            grep -F '<meta name="robots" content="noindex, nofollow" />' /tmp/storefront-not-found.body
-            assert_storefront_shell /tmp/storefront-not-found.body
-          done
+      - name: Deep production HTTP acceptance
+        if: steps.deploy.outputs.deployed == 'true' && (steps.changes.outputs.deep_smoke_relevant == 'true' || steps.manual.outputs.force_cloudflare_validation == 'true')
+        run: node scripts/production-deep-smoke.mjs
+        env:
+          BASE_URL: ${{ steps.deploy.outputs.url }}
 
   production-browser-acceptance:
-    name: Production Browser Acceptance (non-blocking)
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    name: Production Browser Acceptance
+    if: needs.pipeline.outputs.deployed == 'true' && (needs.pipeline.outputs.production_browser_relevant == 'true' || needs.pipeline.outputs.force_cloudflare_validation == 'true')
     needs: pipeline
     runs-on: ubuntu-latest
     timeout-minutes: 15
-    continue-on-error: true
     steps:
       - name: Checkout
         uses: actions/checkout@v7
 
-      - name: Set up Node.js and pnpm
-        run: |
-          set -euo pipefail
-          node --version
-          node -e "if (Number(process.versions.node.split('.')[0]) < 22) { throw new Error('Node.js 22 or newer is required') }"
-          npm install --global pnpm@11.19.0
-          pnpm --version
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
@@ -444,7 +285,7 @@ jobs:
         timeout-minutes: 5
         run: pnpm test:e2e
         env:
-          BASE_URL: ${{ needs.pipeline.outputs.deployment-url }}
+          BASE_URL: ${{ needs.pipeline.outputs.deployment_url }}
 
       - name: Upload production browser diagnostics
         if: always()

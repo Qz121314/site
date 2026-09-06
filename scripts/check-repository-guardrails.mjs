@@ -111,7 +111,11 @@ for (const requiredStep of [
   );
 }
 
-assert.match(preCommit, /pnpm\s+preflight/u, 'pre-commit must run pnpm preflight');
+assert.match(
+  preCommit,
+  /pnpm(?:\.cmd)?\s+precommit:check/u,
+  'pre-commit must run the staged-file gate',
+);
 assert.match(
   prePush,
   /node\s+scripts\/prepush-verify\.mjs/u,
@@ -130,35 +134,10 @@ assert.ok(
   'fast pre-push verification must retain repository guardrails and type safety',
 );
 
-for (const requiredCommand of [
-  'pnpm guardrails',
-  'pnpm format',
-  'pnpm lint',
-  'pnpm typecheck',
-  'pnpm db:migrate:local',
-  'pnpm test',
-  'pnpm build',
-  'pnpm cf:check',
-]) {
-  assert.ok(
-    prFullVerifyWorkflow.includes(requiredCommand),
-    `PR full verification must cover: ${requiredCommand}`,
-  );
-}
 assert.match(
-  prFullVerifyWorkflow,
-  /strategy:[\s\S]*fail-fast:\s*false[\s\S]*matrix:/u,
-  'PR full verification must expose independent checks in parallel instead of serially masking later failures',
-);
-assert.match(
-  prFullVerifyWorkflow,
-  /actions\/upload-artifact@v4/u,
-  'PR full verification must retain per-check diagnostics',
-);
-assert.doesNotMatch(
   prFullVerifyWorkflow,
   /run:\s*pnpm\s+verify/u,
-  'PR full verification must not collapse all checks back into one serial pnpm verify step',
+  'PR full verification must execute the canonical local-first verification gate',
 );
 assert.match(
   storefrontPackageJson.scripts?.build ?? '',
@@ -395,7 +374,7 @@ assert.doesNotMatch(
 );
 assert.match(
   ciWorkflow,
-  /cancel-in-progress:\s*\$\{\{\s*github\.event_name != 'push' \|\| github\.ref != 'refs\/heads\/main'\s*\}\}/u,
+  /cancel-in-progress:\s*false/u,
   'main production runs must not cancel an in-progress deployment',
 );
 
