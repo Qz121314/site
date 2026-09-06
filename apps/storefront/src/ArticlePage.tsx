@@ -25,7 +25,11 @@ function handleInternalBack(event: ReactMouseEvent<HTMLAnchorElement>) {
   navigateStorefrontBack();
 }
 
-function ArticleNavigation({ LinkComponent }: { LinkComponent: StorefrontLinkComponent }) {
+function ArticleNavigation({
+  LinkComponent,
+}: {
+  LinkComponent: StorefrontLinkComponent;
+}) {
   return (
     <header className="faq-article-navigation">
       <LinkComponent
