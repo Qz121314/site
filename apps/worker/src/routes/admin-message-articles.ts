@@ -23,7 +23,9 @@ function parseArticleIds(value: unknown): string[] | null {
   if (value.articleIds.length > MAX_MESSAGE_ARTICLES) return null;
   const articleIds = value.articleIds.filter(
     (articleId): articleId is string =>
-      typeof articleId === 'string' && articleId.length > 0 && articleId.length <= 120,
+      typeof articleId === 'string' &&
+      articleId.length > 0 &&
+      articleId.length <= 120,
   );
   if (articleIds.length !== value.articleIds.length) return null;
   return new Set(articleIds).size === articleIds.length ? articleIds : null;
