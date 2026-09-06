@@ -7,8 +7,10 @@ import {
   parseDynamicView,
   readInitialAdminView,
   rememberAdminView,
+  SETTINGS_ADMIN_VIEWS,
   writeAdminViewLocation,
   type AdminView,
+  type SettingsAdminView,
 } from './admin-navigation';
 import { useAdminUnsavedState } from './admin-unsaved-state';
 import { Button } from './components/ui/button';
@@ -29,8 +31,10 @@ import {
 } from './shell/AdminPublishingControls';
 import { AdminShell } from './shell/AdminShell';
 
-const SiteSettingsView = lazy(() =>
-  import('./SiteSettingsView').then((module) => ({ default: module.SiteSettingsView })),
+const SiteSettingsWorkspace = lazy(() =>
+  import('./settings/SiteSettingsWorkspace').then((module) => ({
+    default: module.SiteSettingsWorkspace,
+  })),
 );
 const ThemeCenterView = lazy(() =>
   import('./ThemeCenterView').then((module) => ({ default: module.ThemeCenterView })),
@@ -88,6 +92,7 @@ type PendingDiscardAction =
   { kind: 'navigate'; view: AdminView } | { kind: 'logout' } | null;
 
 type HistoryMode = 'push' | 'replace';
+type WorkspaceWidth = 'narrow' | 'medium' | 'full';
 
 function isSessionError(error: unknown): boolean {
   return (
@@ -96,28 +101,37 @@ function isSessionError(error: unknown): boolean {
   );
 }
 
+function isSettingsView(view: AdminView): view is SettingsAdminView {
+  return SETTINGS_ADMIN_VIEWS.has(view as SettingsAdminView);
+}
+
 function publishKeyForView(view: AdminView): string {
-  if (view === 'settings' || view === 'theme') return 'site';
+  if (isSettingsView(view) || view === 'theme') return 'site';
   if (view === 'faq') return 'faq';
   if (view === 'sections') return 'sections-index';
   const dynamic = parseDynamicView(view);
   return dynamic ? `section:${dynamic.sectionId}` : 'all';
 }
 
-function ShellPlaceholder({ view }: { view: 'dashboard' | 'system' }) {
+function workspaceWidthForView(view: AdminView): WorkspaceWidth {
+  if (view === 'system-general' || view === 'system-advanced') return 'narrow';
+  if (
+    view === 'home' ||
+    view === 'navigation' ||
+    view === 'messages' ||
+    view === 'pwa' ||
+    view === 'system-infrastructure'
+  ) {
+    return 'medium';
+  }
+  return 'full';
+}
+
+function ShellPlaceholder() {
   return (
-    <section
-      className="admin-shell-placeholder"
-      aria-label={view === 'dashboard' ? '仪表盘' : '系统'}
-    >
-      <strong>
-        {view === 'dashboard' ? '选择一个业务域开始管理' : '系统级操作保持统一入口'}
-      </strong>
-      <p>
-        {view === 'dashboard'
-          ? '仪表盘当前作为管理工作区入口，不新增统计或业务功能。'
-          : '发布、版本回退、会话状态和退出登录继续由顶部全局操作区统一管理。'}
-      </p>
+    <section className="admin-shell-placeholder" aria-label="仪表盘">
+      <strong>选择一个业务域开始管理</strong>
+      <p>仪表盘当前作为管理工作区入口，不新增统计或业务功能。</p>
     </section>
   );
 }
@@ -425,6 +439,7 @@ export function Dashboard({
         onNavigate={requestView}
         topBarActions={topBarActions}
         pageSecondaryAction={pageSecondaryAction}
+        workspaceWidth={workspaceWidthForView(activeView)}
       >
         {publishFeedback ? (
           <div
@@ -455,10 +470,15 @@ export function Dashboard({
             </div>
           }
         >
-          {activeView === 'dashboard' || activeView === 'system' ? (
-            <ShellPlaceholder view={activeView} />
-          ) : activeView === 'settings' ? (
-            <SiteSettingsView key={activeView} onSessionExpired={onSessionExpired} />
+          {activeView === 'dashboard' ? (
+            <ShellPlaceholder />
+          ) : isSettingsView(activeView) ? (
+            <SiteSettingsWorkspace
+              view={activeView}
+              sections={sections}
+              onNavigate={requestView}
+              onSessionExpired={onSessionExpired}
+            />
           ) : activeView === 'theme' ? (
             <ThemeCenterView key={activeView} onSessionExpired={onSessionExpired} />
           ) : activeView === 'assets' ? (
