@@ -1,0 +1,64 @@
+name: Step A Preview Fix Once
+
+on:
+  push:
+    branches:
+      - feat/article-center-message-notifications
+
+permissions:
+  contents: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js and pnpm
+        run: |
+          set -euo pipefail
+          npm install --global pnpm@11.19.0
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Apply preview semantics regression fix
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          publisher = Path('apps/worker/src/publishing/modular-publisher.ts')
+          text = publisher.read_text()
+          old = ".replace(/[#>*_~\\\\-]+/gu, ' ')"
+          new = ".replace(/^[ \\t]{0,3}(?:#{1,6}|>|[-+*])(?:[ \\t]+|$)/gmu, ' ')\n    .replace(/[*_~\\\\]+/gu, '')"
+          if old not in text:
+              raise SystemExit('publisher preview marker expression not found')
+          publisher.write_text(text.replace(old, new, 1))
+
+          test_file = Path('apps/worker/test/article-message-contract.test.mjs')
+          test_text = test_file.read_text()
+          old_body = "Messages article body that stays in articles.json only."
+          new_body = "Messages article body keeps well-being and stay-ready wording."
+          if test_text.count(old_body) != 3:
+              raise SystemExit(f'unexpected preview fixture count: {test_text.count(old_body)}')
+          test_file.write_text(test_text.replace(old_body, new_body))
+          PY
+
+          pnpm exec prettier --write \
+            apps/worker/src/publishing/modular-publisher.ts \
+            apps/worker/test/article-message-contract.test.mjs
+          pnpm exec prettier --check \
+            apps/worker/src/publishing/modular-publisher.ts \
+            apps/worker/test/article-message-contract.test.mjs
+
+      - name: Commit fix
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apps/worker/src/publishing/modular-publisher.ts apps/worker/test/article-message-contract.test.mjs
+          git diff --cached --check
+          git commit -m "fix(content): preserve hyphens in article previews"
+          git push
