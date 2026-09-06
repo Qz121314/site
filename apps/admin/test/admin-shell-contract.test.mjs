@@ -41,10 +41,7 @@ test('unsaved and history guards stay wired', async () => {
     /setPendingDiscardAction\(\{ kind: 'navigate', view: nextView \}\)/,
   );
   assert.match(dashboard, /function requestLogout\(\)/);
-  assert.match(
-    dashboard,
-    /setPendingDiscardAction\(\{ kind: 'logout' \}\)/,
-  );
+  assert.match(dashboard, /setPendingDiscardAction\(\{ kind: 'logout' \}\)/);
   assert.match(dashboard, /window\.addEventListener\('beforeunload'/);
   assert.match(dashboard, /window\.addEventListener\('hashchange'/);
   assert.match(dashboard, /window\.addEventListener\('popstate'/);
@@ -90,35 +87,21 @@ test('responsive shell avoids fixed-height clipping', async () => {
   const combined = `${shellCss}\n${sidebarCss}\n${workspaceCss}\n${scrollCss}`;
 
   assert.match(shellCss, /@media \(min-width: 1200px\)/);
-  assert.match(
-    shellCss,
-    /grid-template-columns: 220px 200px minmax\(0, 1fr\)/,
-  );
-  assert.match(
-    shellCss,
-    /@media \(min-width: 900px\) and \(max-width: 1199px\)/,
-  );
-  assert.match(
-    shellCss,
-    /grid-template-columns: 88px 188px minmax\(0, 1fr\)/,
-  );
+  assert.match(shellCss, /grid-template-columns: 220px 200px minmax\(0, 1fr\)/);
+  assert.match(shellCss, /@media \(min-width: 900px\) and \(max-width: 1199px\)/);
+  assert.match(shellCss, /grid-template-columns: 88px 188px minmax\(0, 1fr\)/);
   assert.match(shellCss, /@media \(max-width: 899px\)/);
   assert.match(sidebarCss, /min-height: 44px/);
   assert.match(workspaceCss, /env\(safe-area-inset-top\)/);
   assert.match(workspaceCss, /env\(safe-area-inset-bottom\)/);
-  assert.match(
-    scrollCss,
-    /\.admin-workspace-content[\s\S]*overflow-y: auto/,
-  );
+  assert.match(scrollCss, /\.admin-workspace-content[\s\S]*overflow-y: auto/);
   assert.doesNotMatch(scrollCss, /max-height: calc\(100dvh/);
   assert.doesNotMatch(combined, /!important/);
 });
 
 test('global publish and logout controls remain available', async () => {
   const dashboard = await source('../src/Dashboard.tsx');
-  const publishing = await source(
-    '../src/shell/AdminPublishingControls.tsx',
-  );
+  const publishing = await source('../src/shell/AdminPublishingControls.tsx');
 
   assert.match(dashboard, /AdminPublishingControls/);
   assert.match(dashboard, /rollbackStorefront/);

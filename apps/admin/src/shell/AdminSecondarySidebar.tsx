@@ -61,11 +61,7 @@ export function AdminSecondarySidebar({
                   }}
                 >
                   <span>{item.label}</span>
-                  <ChevronRight
-                    aria-hidden="true"
-                    size={15}
-                    strokeWidth={1.8}
-                  />
+                  <ChevronRight aria-hidden="true" size={15} strokeWidth={1.8} />
                 </Button>
               </div>
             );

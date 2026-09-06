@@ -85,9 +85,7 @@ type ProductHandoff = ProductResumeRequest & {
 
 type PublishFeedback = { type: 'success' | 'error'; message: string } | null;
 type PendingDiscardAction =
-  | { kind: 'navigate'; view: AdminView }
-  | { kind: 'logout' }
-  | null;
+  { kind: 'navigate'; view: AdminView } | { kind: 'logout' } | null;
 
 type HistoryMode = 'push' | 'replace';
 
@@ -556,7 +554,11 @@ export function Dashboard({
               >
                 取消
               </Button>
-              <Button type="button" disabled={rollingBack} onClick={() => void handleRollback()}>
+              <Button
+                type="button"
+                disabled={rollingBack}
+                onClick={() => void handleRollback()}
+              >
                 {rollingBack ? '正在回退…' : '确认回退'}
               </Button>
             </div>
@@ -596,7 +598,11 @@ export function Dashboard({
               >
                 继续编辑
               </Button>
-              <Button variant="destructive" type="button" onClick={confirmDiscardAndContinue}>
+              <Button
+                variant="destructive"
+                type="button"
+                onClick={confirmDiscardAndContinue}
+              >
                 {pendingDiscardAction.kind === 'logout'
                   ? '放弃修改并退出'
                   : '放弃修改并切换'}

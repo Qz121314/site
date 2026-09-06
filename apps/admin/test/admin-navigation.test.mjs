@@ -31,14 +31,10 @@ test('fixed views resolve to intended domains', () => {
     ['system', 'system'],
   ]);
 
-  assert.deepEqual([...LEGACY_FIXED_ADMIN_VIEWS], [
-    'settings',
-    'theme',
-    'assets',
-    'customer-service',
-    'faq',
-    'sections',
-  ]);
+  assert.deepEqual(
+    [...LEGACY_FIXED_ADMIN_VIEWS],
+    ['settings', 'theme', 'assets', 'customer-service', 'faq', 'sections'],
+  );
   for (const [view, domain] of expected) {
     assert.equal(getAdminDomainForView(view), domain);
   }

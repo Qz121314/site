@@ -1,10 +1,6 @@
 import type { AdminSection } from './api';
 
-export type DynamicViewKind =
-  | 'products'
-  | 'categories'
-  | 'tags'
-  | 'conversion-pool';
+export type DynamicViewKind = 'products' | 'categories' | 'tags' | 'conversion-pool';
 
 export type AdminView =
   | 'dashboard'
@@ -116,9 +112,7 @@ export function readInitialAdminView(): AdminView {
   if (fromHash) return fromHash;
 
   try {
-    const stored = parseAdminView(
-      window.localStorage.getItem(ADMIN_VIEW_STORAGE_KEY),
-    );
+    const stored = parseAdminView(window.localStorage.getItem(ADMIN_VIEW_STORAGE_KEY));
     if (stored) return stored;
   } catch {
     // Storage may be unavailable in privacy-restricted contexts.
@@ -140,10 +134,7 @@ export function rememberAdminView(view: AdminView): void {
   }
 }
 
-export function writeAdminViewLocation(
-  view: AdminView,
-  mode: 'push' | 'replace',
-): void {
+export function writeAdminViewLocation(view: AdminView, mode: 'push' | 'replace'): void {
   if (typeof window === 'undefined') return;
   const hash = adminViewHash(view);
   rememberAdminView(view);

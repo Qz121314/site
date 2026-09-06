@@ -1,11 +1,7 @@
 import { X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { Button } from '../components/ui/button';
-import type {
-  PublishModuleStatus,
-  PublishStatus,
-  PublishVersion,
-} from '../publish-api';
+import type { PublishModuleStatus, PublishStatus, PublishVersion } from '../publish-api';
 
 export type RollbackTarget = {
   moduleKey: string;
@@ -103,17 +99,13 @@ export function AdminPublishingControls({
     [contextKey, status?.modules],
   );
   const historyModule = useMemo(
-    () =>
-      status?.modules.find((module) => module.key === historyModuleKey) ?? null,
+    () => status?.modules.find((module) => module.key === historyModuleKey) ?? null,
     [historyModuleKey, status?.modules],
   );
   const contextIsCurrent =
-    contextKey === 'all'
-      ? status?.isCurrent === true
-      : contextModule?.isCurrent === true;
+    contextKey === 'all' ? status?.isCurrent === true : contextModule?.isCurrent === true;
   const hasFailedModule =
-    status?.modules.some((module) => module.lastJob?.status === 'failed') ??
-    false;
+    status?.modules.some((module) => module.lastJob?.status === 'failed') ?? false;
   const statusClassName = [
     'publish-status-chip',
     statusError || hasFailedModule ? 'is-error' : '',
@@ -128,10 +120,7 @@ export function AdminPublishingControls({
     rollingBack ||
     hasUnsavedChanges;
   const allPublishDisabled =
-    status?.isCurrent === true ||
-    publishing ||
-    rollingBack ||
-    hasUnsavedChanges;
+    status?.isCurrent === true || publishing || rollingBack || hasUnsavedChanges;
   const contextPublishDisabled =
     publishing || rollingBack || hasUnsavedChanges || contextIsCurrent;
 
@@ -228,9 +217,7 @@ export function AdminPublishingControls({
               </Button>
             </div>
             <div className="publish-module-summary">
-              <span>
-                {historyModule ? moduleStateLabel(historyModule) : '未选择'}
-              </span>
+              <span>{historyModule ? moduleStateLabel(historyModule) : '未选择'}</span>
               <small>
                 {historyModule?.publishedAt
                   ? `当前版本 ${formatVersionTime(historyModule.publishedAt)}`
@@ -241,10 +228,7 @@ export function AdminPublishingControls({
               {historyModule?.versions.length ? (
                 historyModule.versions.map((version) => {
                   const versionRollbackDisabled =
-                    version.isCurrent ||
-                    publishing ||
-                    rollingBack ||
-                    hasUnsavedChanges;
+                    version.isCurrent || publishing || rollingBack || hasUnsavedChanges;
                   return (
                     <div
                       className={`publish-version-row${version.isCurrent ? ' is-current' : ''}`}
@@ -268,9 +252,7 @@ export function AdminPublishingControls({
                             version,
                           })
                         }
-                        title={
-                          hasUnsavedChanges ? '请先处理未保存修改' : undefined
-                        }
+                        title={hasUnsavedChanges ? '请先处理未保存修改' : undefined}
                       >
                         {version.isCurrent ? '使用中' : '回退'}
                       </Button>
@@ -278,9 +260,7 @@ export function AdminPublishingControls({
                   );
                 })
               ) : (
-                <div className="publish-version-empty">
-                  该板块尚无发布版本
-                </div>
+                <div className="publish-version-empty">该板块尚无发布版本</div>
               )}
             </div>
             <div className="publish-module-footer">
@@ -303,8 +283,7 @@ export function AdminPublishingControls({
         disabled={contextPublishDisabled}
         title={hasUnsavedChanges ? unsavedTitle : undefined}
       >
-        {publishingKey === contextKey ||
-        (contextKey === 'all' && publishingKey === 'all')
+        {publishingKey === contextKey || (contextKey === 'all' && publishingKey === 'all')
           ? '发布中…'
           : hasUnsavedChanges
             ? '请先保存'

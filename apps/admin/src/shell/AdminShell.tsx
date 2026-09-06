@@ -1,11 +1,5 @@
 import { X } from 'lucide-react';
-import {
-  useEffect,
-  useRef,
-  useState,
-  type MouseEvent,
-  type ReactNode,
-} from 'react';
+import { useEffect, useRef, useState, type MouseEvent, type ReactNode } from 'react';
 import { Button } from '../components/ui/button';
 import {
   getAdminDomainForView,
@@ -93,9 +87,7 @@ export function AdminShell({
     return () => {
       document.body.style.overflow = previousOverflow;
       document.removeEventListener('keydown', handleKeyDown);
-      document
-        .querySelector<HTMLElement>('.admin-mobile-nav-trigger')
-        ?.focus();
+      document.querySelector<HTMLElement>('.admin-mobile-nav-trigger')?.focus();
     };
   }, [navigationOpen]);
 
