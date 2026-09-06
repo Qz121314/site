@@ -1,0 +1,46 @@
+name: Step A Prettier Once
+
+on:
+  push:
+    branches:
+      - feat/article-center-message-notifications
+
+permissions:
+  contents: read
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Set up Node.js and pnpm
+        run: |
+          set -euo pipefail
+          node --version
+          npm install --global pnpm@11.19.0
+          pnpm --version
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Format Step A targets
+        run: |
+          pnpm exec prettier --write \
+            apps/worker/src/routes/admin-message-articles.ts \
+            apps/worker/test/article-message-contract.test.mjs
+          pnpm exec prettier --check \
+            apps/worker/src/routes/admin-message-articles.ts \
+            apps/worker/test/article-message-contract.test.mjs
+
+      - name: Upload formatted files
+        uses: actions/upload-artifact@v4
+        with:
+          name: step-a-prettier-output
+          path: |
+            apps/worker/src/routes/admin-message-articles.ts
+            apps/worker/test/article-message-contract.test.mjs
+          if-no-files-found: error
+          retention-days: 1
