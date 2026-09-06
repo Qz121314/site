@@ -23,6 +23,13 @@ import { loadStorefrontBootstrap } from './content';
 import { HomeFeed } from './HomeFeed';
 import { HomepageAnalytics } from './HomepageAnalytics';
 import { RouteProgress, StartupLoader } from './LoadingStates';
+import {
+  composeMessagesBadge,
+  countUnreadMessageArticles,
+  getMessageArticleReadSnapshot,
+  getMessageArticlesFromBootstrap,
+  subscribeMessageArticleReadState,
+} from './messages-articles';
 import { NotFoundPage } from './NotFoundPage';
 import { ProductDetailLoadingSurface } from './ProductDetailLoadingSurface';
 import { ResilientImage } from './ResilientMedia';
@@ -45,6 +52,7 @@ import { applyStorefrontTheme } from './theme-runtime';
 
 type ShellHeaderMode = 'brand' | 'detail' | 'hidden-mobile';
 
+const ArticlePage = lazy(() => import('./ArticlePage'));
 const BrowsePage = lazy(() =>
   import('./BrowsePage').then((module) => ({ default: module.BrowsePage })),
 );
@@ -112,6 +120,7 @@ function handleShellBack(event: ReactMouseEvent<HTMLAnchorElement>) {
 function shellHeaderMode(route: StorefrontRoute): ShellHeaderMode {
   if (route.type === 'product') return 'detail';
   switch (route.type) {
+    case 'article':
     case 'section':
     case 'faq-article':
     case 'message':
@@ -274,6 +283,11 @@ export function StorefrontRoot() {
     currentLocationKey,
     () => '/',
   );
+  const articleReadSnapshot = useSyncExternalStore(
+    subscribeMessageArticleReadState,
+    getMessageArticleReadSnapshot,
+    () => '[]',
+  );
   const pathname = pathnameFromLocationKey(locationKey) || '/';
   const route = parseStorefrontRoute(pathname);
   const supportRuntimeEnabled =
@@ -281,7 +295,7 @@ export function StorefrontRoot() {
     route.type === 'message-compose' ||
     route.type === 'message' ||
     Boolean(peekSupportVisitorIdentity());
-  const [unreadMessages, setUnreadMessages] = useState(0);
+  const [supportUnread, setSupportUnread] = useState(0);
   const bootstrapQuery = useQuery({
     queryKey: ['storefront-bootstrap'],
     queryFn: ({ signal }) => loadStorefrontBootstrap(undefined, signal),
@@ -299,7 +313,7 @@ export function StorefrontRoot() {
   }, [bootstrapQuery.data]);
 
   useEffect(() => {
-    if (!supportRuntimeEnabled) setUnreadMessages(0);
+    if (!supportRuntimeEnabled) setSupportUnread(0);
   }, [supportRuntimeEnabled]);
 
   if (bootstrapQuery.isLoading) return <StartupLoader />;
@@ -307,6 +321,10 @@ export function StorefrontRoot() {
 
   const bootstrap = bootstrapQuery.data;
   const navigationItems = bootstrap.bottomNavigation;
+  const messageArticles = getMessageArticlesFromBootstrap(bootstrap);
+  const readArticleIds = new Set<string>(JSON.parse(articleReadSnapshot));
+  const articleUnread = countUnreadMessageArticles(messageArticles, readArticleIds);
+  const messagesBadge = composeMessagesBadge(supportUnread, articleUnread);
   let page: ReactNode;
   let routeFallback: ReactNode = <RouteProgress />;
 
@@ -369,6 +387,15 @@ export function StorefrontRoot() {
         />
       );
       break;
+    case 'article':
+      page = (
+        <ArticlePage
+          articleId={route.articleId}
+          bootstrap={bootstrap}
+          LinkComponent={StorefrontLink as StorefrontLinkComponent}
+        />
+      );
+      break;
     case 'section':
       page = (
         <SectionCatalogPage
@@ -415,7 +442,7 @@ export function StorefrontRoot() {
         <Suspense fallback={null}>
           <StorefrontSupportRuntime
             conversationListEnabled={route.type !== 'message-compose'}
-            onUnreadMessages={setUnreadMessages}
+            onUnreadMessages={setSupportUnread}
           />
         </Suspense>
       ) : null}
@@ -425,7 +452,7 @@ export function StorefrontRoot() {
         navigationItems={navigationItems}
         route={route}
         routeKey={pathname}
-        unreadMessages={unreadMessages}
+        unreadMessages={messagesBadge}
       >
         <Suspense fallback={routeFallback}>{page}</Suspense>
       </PrimaryShell>
