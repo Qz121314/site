@@ -59,6 +59,26 @@ Cloudflare hard rules:
 - CI is final verification, not the first formatter/lint/contract feedback loop;
 - safety checks are moved to the correct environment/trigger, not removed to gain speed.
 
+## Change classifier and release overrides
+
+Treat `scripts/classify-cloudflare-changes.mjs` as the release-authority boundary. Before changing CI, deployment code, a migration, or a Cloudflare configuration, add or update its contract tests for the path and resource classification. Test fixtures may be nested under `test`, `tests`, or `__tests__`; they are not runtime deployment impact merely because they sit below an application directory. Normalize Windows paths and deduplicate path input before classifying it.
+
+Keep PR workflows local-first. A pull-request workflow may run local D1 migrations, builds, tests, and a Worker dry-run, but it must never receive credentials or steps that read or mutate production D1/R2, or deploy a production Worker.
+
+On `main`, use each manual `workflow_dispatch` override only for its named resource boundary:
+
+- `force_deploy` permits the normal Worker deployment gate; it does not authorize D1 migrations or R2 validation.
+- `force_cloudflare_validation` permits generic remote R2/deep/browser validation when those checks are otherwise not classified as required; it does not authorize D1 migration recovery or application.
+- `force_d1_migrations` is the sole manual override for a remote D1 migration recovery/read/apply path. Keep it explicit, main-only, and separate from generic Cloudflare validation.
+
+Do not widen a generic deployment or validation flag into a migration override. A remote D1 migration remains authorized only by a migration diff or `force_d1_migrations`; a remote R2 operation only by its classified R2 requirement or its dedicated generic validation override; and a Worker deploy only by classified deploy impact or `force_deploy`.
+
+For every PR update, retrieve the exact remote latest-head SHA and require the relevant required workflows to be green for that SHA before merge. After merge, inspect the `main` workflow for the merge SHA and report which classified remote operations actually ran or were skipped.
+
+## Cross-platform commit gates
+
+Use the repository scripts and hooks instead of hand-written platform fallbacks. Hooks must validate the exact staged contents and resolve the repository Prettier configuration before formatting or checking a file. On a Windows checkout where automatic CRLF conversion creates a whole-repository formatting diff, do not rewrite unrelated files to chase that false diff: run changed-file checks locally and obtain the canonical full `pnpm format` result in an LF checkout or CI.
+
 ## Mandatory sequence before editing
 
 1. Classify the requested change as S, M, or L before editing. The level is based on impact/risk, not the number of changed files.
