@@ -16,9 +16,9 @@
   display: grid;
   gap: 10px;
   padding: 20px;
-  border: 1px solid var(--admin-border);
+  border: 1px solid #dfe4ea;
   border-radius: 12px;
-  background: var(--admin-surface);
+  background: #fff;
 }
 
 .settings-workspace-state.is-error {
@@ -27,16 +27,16 @@
 
 .settings-workspace-state p {
   margin: 0;
-  color: var(--admin-muted);
+  color: #667085;
 }
 
 .settings-workspace-section {
   display: grid;
   gap: 18px;
   padding: 22px;
-  border: 1px solid var(--admin-border);
+  border: 1px solid #dfe4ea;
   border-radius: 12px;
-  background: var(--admin-surface);
+  background: #fff;
 }
 
 .settings-workspace-heading {
@@ -55,7 +55,7 @@
 .settings-workspace-heading p {
   margin-top: 6px;
   max-width: 720px;
-  color: var(--admin-muted);
+  color: #667085;
   line-height: 1.55;
 }
 
@@ -77,22 +77,22 @@
 }
 
 .settings-workspace-status {
-  margin-right: auto;
-  color: var(--admin-muted);
+  margin: 0 auto 0 0;
+  color: #667085;
   font-size: 13px;
 }
 
 .settings-workspace-status.is-success {
-  color: var(--admin-success-text);
+  color: #166534;
 }
 
 .settings-workspace-status.is-error {
-  color: var(--admin-danger-text);
+  color: #b42318;
 }
 
 .settings-inline-note {
   margin: 0;
-  color: var(--admin-muted);
+  color: #667085;
   font-size: 13px;
   line-height: 1.55;
 }
@@ -110,10 +110,10 @@
   width: 96px;
   height: 96px;
   overflow: hidden;
-  border: 1px solid var(--admin-border);
+  border: 1px solid #dfe4ea;
   border-radius: 12px;
-  background: var(--admin-surface-subtle);
-  color: var(--admin-muted);
+  background: #f8fafc;
+  color: #667085;
 }
 
 .settings-media-preview img {
@@ -130,7 +130,7 @@
 
 .settings-media-copy p {
   margin: 0;
-  color: var(--admin-muted);
+  color: #667085;
   line-height: 1.5;
 }
 
@@ -152,7 +152,7 @@
   gap: 16px;
   min-height: 48px;
   padding: 10px 0;
-  border-bottom: 1px solid var(--admin-border);
+  border-bottom: 1px solid #e5e9f0;
 }
 
 .settings-toggle-row:last-child {
@@ -165,7 +165,7 @@
 }
 
 .settings-toggle-copy small {
-  color: var(--admin-muted);
+  color: #667085;
 }
 
 @media (max-width: 720px) {
