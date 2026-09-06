@@ -63,7 +63,10 @@ function parsePublishedArticle(value: unknown): PublicArticle | null {
   };
 }
 
-function findPublishedArticle(snapshot: ArticlesSnapshot, articleId: string): PublicArticle {
+function findPublishedArticle(
+  snapshot: ArticlesSnapshot,
+  articleId: string,
+): PublicArticle {
   const article = Array.isArray(snapshot.articles)
     ? snapshot.articles
         .map((value) => parsePublishedArticle(value))
