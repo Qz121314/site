@@ -61,6 +61,8 @@ Do not use production D1 as a PR test database. Do not scan business tables for 
 
 Docs-only, tests-only, repository contract changes, workflow-only changes, and pure development tooling do not independently authorize production D1/R2/deploy/browser work. They still receive their normal CI quality checks.
 
+When validating a no-op release path on `main`, use a commit limited to these classes and inspect the workflow steps, not only the overall conclusion. The expected resource result is D1 skip, R2 skip, Worker deploy skip, smoke skip, and browser acceptance skip.
+
 ## Manual override
 
 `workflow_dispatch` exposes explicit `force_deploy`, `force_cloudflare_validation`, and `force_d1_migrations` inputs. The generic validation override cannot apply migrations; that requires the dedicated migration override. Remote actions remain restricted to the `main` ref. Defaults are false.
