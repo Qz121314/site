@@ -269,7 +269,7 @@ function createPublicationDb() {
       {
         id: 'article-b',
         question: 'Messages only article',
-        answer: 'Messages article body that stays in articles.json only.',
+        answer: 'Messages article body keeps well-being and stay-ready wording.',
         sort_order: 20,
         is_enabled: 0,
       },
@@ -278,7 +278,7 @@ function createPublicationDb() {
       {
         article_id: 'article-b',
         question: 'Messages only article',
-        answer: 'Messages article body that stays in articles.json only.',
+        answer: 'Messages article body keeps well-being and stay-ready wording.',
         sort_order: 0,
       },
     ],
@@ -413,7 +413,7 @@ test('faq module atomically publishes legacy FAQ, generic Article, and lightweig
     {
       articleId: 'article-b',
       title: 'Messages only article',
-      preview: 'Messages article body that stays in articles.json only.',
+      preview: 'Messages article body keeps well-being and stay-ready wording.',
       sortOrder: 0,
     },
   ]);

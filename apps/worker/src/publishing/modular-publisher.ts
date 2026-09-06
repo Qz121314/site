@@ -803,7 +803,8 @@ function markdownPreview(value: string): string {
     .replace(/`([^`]+)`/gu, '$1')
     .replace(/!\[[^\]]*\]\([^)]+\)/gu, ' ')
     .replace(/\[([^\]]+)\]\([^)]+\)/gu, '$1')
-    .replace(/[#>*_~\\-]+/gu, ' ')
+    .replace(/^[ \t]{0,3}(?:#{1,6}|>|[-+*])(?:[ \t]+|$)/gmu, ' ')
+    .replace(/[*_~\\]+/gu, '')
     .replace(/\s+/gu, ' ')
     .trim()
     .slice(0, 160);
