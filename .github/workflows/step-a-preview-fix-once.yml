@@ -6,7 +6,7 @@ on:
       - feat/article-center-message-notifications
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   fix:
@@ -53,12 +53,12 @@ jobs:
             apps/worker/src/publishing/modular-publisher.ts \
             apps/worker/test/article-message-contract.test.mjs
 
-      - name: Commit fix
-        run: |
-          set -euo pipefail
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add apps/worker/src/publishing/modular-publisher.ts apps/worker/test/article-message-contract.test.mjs
-          git diff --cached --check
-          git commit -m "fix(content): preserve hyphens in article previews"
-          git push
+      - name: Upload fixed files
+        uses: actions/upload-artifact@v4
+        with:
+          name: step-a-preview-fix-output
+          path: |
+            apps/worker/src/publishing/modular-publisher.ts
+            apps/worker/test/article-message-contract.test.mjs
+          if-no-files-found: error
+          retention-days: 1
