@@ -1,0 +1,251 @@
+/* Admin workspace, page-header and top-bar ownership. */
+
+.admin-top-bar {
+  position: relative;
+  z-index: 80;
+  display: flex;
+  min-height: 64px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 10px 20px;
+  border-bottom: 1px solid #e4e8ef;
+  background: rgb(255 255 255 / 96%);
+}
+
+.admin-top-bar-context {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-top-bar-context > div {
+  display: grid;
+  min-width: 0;
+  gap: 1px;
+}
+
+.admin-top-bar-context span {
+  overflow: hidden;
+  color: #7a8494;
+  font-size: 0.66rem;
+  font-weight: 700;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-top-bar-context strong {
+  overflow: hidden;
+  color: #172033;
+  font-size: 0.82rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-top-bar-actions,
+.admin-page-actions {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.admin-top-bar-actions .publish-version-control {
+  display: block;
+}
+
+.admin-mobile-nav-trigger.ui-button {
+  display: none;
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.admin-main {
+  display: flex;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
+  flex: 1 1 auto;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+}
+
+.admin-page-header {
+  display: flex;
+  flex: 0 0 auto;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 24px clamp(20px, 3vw, 40px) 20px;
+  border-bottom: 1px solid #e8ecf1;
+  background: #fff;
+}
+
+.admin-page-header-copy {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+}
+
+.admin-page-eyebrow {
+  margin: 0;
+  color: #d94d1a;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+.admin-page-title-row {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+
+.admin-page-title-row h1 {
+  margin: 0;
+  color: #172033;
+  font-size: clamp(1.35rem, 2vw, 1.75rem);
+  letter-spacing: -0.035em;
+}
+
+.admin-page-description {
+  max-width: 720px;
+  margin: 0;
+  color: #697386;
+  font-size: 0.82rem;
+  line-height: 1.55;
+}
+
+.admin-page-status {
+  display: flex;
+  align-items: center;
+}
+
+.admin-workspace {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex: 1 1 auto;
+  justify-content: center;
+}
+
+.admin-workspace-content {
+  width: 100%;
+  min-width: 0;
+  padding: 24px clamp(20px, 3vw, 40px) 48px;
+}
+
+.admin-workspace--narrow .admin-workspace-content {
+  max-width: 760px;
+}
+
+.admin-workspace--medium .admin-workspace-content {
+  max-width: 1040px;
+}
+
+.admin-workspace--full .admin-workspace-content {
+  max-width: 100%;
+}
+
+.admin-shell-placeholder {
+  display: grid;
+  max-width: 680px;
+  gap: 6px;
+  padding: 22px 0;
+  border-top: 1px solid #dfe4ea;
+  border-bottom: 1px solid #dfe4ea;
+}
+
+.admin-shell-placeholder strong {
+  color: #172033;
+  font-size: 0.95rem;
+}
+
+.admin-shell-placeholder p {
+  margin: 0;
+  color: #697386;
+  font-size: 0.82rem;
+  line-height: 1.6;
+}
+
+@media (max-width: 1199px) {
+  .admin-top-bar {
+    padding-inline: 14px;
+  }
+
+  .admin-top-bar-actions .environment-badge {
+    display: none;
+  }
+}
+
+@media (max-width: 899px) {
+  .admin-top-bar {
+    position: sticky;
+    top: 0;
+    min-height: calc(60px + env(safe-area-inset-top));
+    padding: calc(8px + env(safe-area-inset-top)) 12px 8px;
+  }
+
+  .admin-mobile-nav-trigger.ui-button {
+    display: inline-flex;
+  }
+
+  .admin-top-bar-actions {
+    flex-wrap: wrap;
+  }
+
+  .admin-top-bar-actions .publish-status-chip,
+  .admin-top-bar-actions .storefront-publish-button,
+  .admin-top-bar-actions > .ui-button {
+    min-height: 44px;
+  }
+
+  .admin-page-header {
+    display: grid;
+    gap: 14px;
+    padding: 20px 16px 16px;
+  }
+
+  .admin-page-actions {
+    justify-content: flex-start;
+  }
+
+  .admin-workspace-content {
+    padding: 18px 16px calc(32px + env(safe-area-inset-bottom));
+  }
+}
+
+@media (max-width: 560px) {
+  .admin-top-bar {
+    flex-wrap: wrap;
+    align-items: flex-start;
+  }
+
+  .admin-top-bar-context {
+    width: 100%;
+  }
+
+  .admin-top-bar-context span {
+    display: none;
+  }
+
+  .admin-top-bar-actions {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  .storefront-publish-button.ui-button,
+  .publish-status-chip.ui-button,
+  .admin-top-bar-actions > .ui-button {
+    padding-inline: 10px;
+    font-size: 0.7rem;
+  }
+}

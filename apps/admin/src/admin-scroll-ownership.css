@@ -1,9 +1,6 @@
-/* Desktop workbench scroll policy.
- * The browser viewport stays fixed. Navigation, data surfaces and long forms own
- * their scrolling deliberately so users do not encounter nested arbitrary panes.
- */
+/* Admin shell scroll ownership. The workspace scrolls as a coherent page; navigation owns only navigation overflow. */
 
-@media (min-width: 1024px) {
+@media (min-width: 900px) {
   html,
   body,
   #root {
@@ -19,122 +16,45 @@
     overflow: hidden;
   }
 
-  .sidebar {
+  .admin-primary-sidebar,
+  .admin-secondary-sidebar,
+  .admin-shell-workspace {
     height: 100dvh;
     min-height: 0;
-    overflow: hidden;
   }
 
-  .admin-nav {
+  .admin-primary-nav,
+  .admin-secondary-nav {
     min-height: 0;
     overflow-y: auto;
     overscroll-behavior: contain;
     scrollbar-width: thin;
   }
 
-  .admin-main {
-    display: flex;
-    width: 100%;
-    height: 100dvh;
-    min-height: 0;
-    flex-direction: column;
-    margin: 0;
+  .admin-shell-workspace,
+  .admin-main,
+  .admin-workspace {
     overflow: hidden;
   }
 
-  .admin-header {
-    position: relative;
-    top: auto;
-    flex: 0 0 auto;
-    background: transparent;
-    backdrop-filter: none;
-  }
-
-  .admin-main > .notice {
-    position: fixed;
-    z-index: 170;
-    top: 10px;
-    left: 50%;
-    width: max-content;
-    max-width: min(560px, calc(100vw - 40px));
-    margin: 0;
-    transform: translateX(-50%);
-  }
-
-  .admin-main > .settings-form,
-  .admin-main > .theme-center,
-  .admin-main > .section-management,
-  .admin-main > .category-management,
-  .admin-main > .product-management,
-  .admin-main > .conversion-pool,
-  .admin-main > .faq-management,
-  .admin-main > .asset-library-page,
-  .admin-main > .customer-service-workbench {
+  .admin-workspace-content {
     min-height: 0;
-    flex: 1 1 auto;
-  }
-
-  /* Configuration pages scroll as one coherent page when they genuinely exceed the viewport. */
-  .admin-main > .settings-form,
-  .admin-main > .theme-center,
-  .admin-main > .conversion-pool {
     overflow-y: auto;
     overscroll-behavior: contain;
     scrollbar-width: thin;
   }
+}
 
-  /* The shared settings UI declares overflow:visible!important. Override it here
-   * at the viewport-policy layer so shorter pages stay compact and taller pages
-   * remain reachable without introducing inner panel scrollbars. */
-  .admin-main > .settings-form {
-    align-content: start;
-    overflow-y: auto !important;
+@media (max-width: 899px) {
+  html,
+  body,
+  #root {
+    min-height: 100%;
   }
 
-  /* List workbenches use a stable vertical flow. This deliberately overrides
-   * older page-level CSS Grid roots whose auto rows stretched into blank space. */
-  .admin-main > .section-management,
-  .admin-main > .category-management,
-  .admin-main > .product-management,
-  .admin-main > .faq-management,
-  .admin-main > .asset-library-page,
-  .admin-main > .customer-service-workbench {
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
-
-  /* Only the data surface scrolls on list workbenches. */
-  .section-table-wrap,
-  .category-table-wrap,
-  .product-table-wrap,
-  .asset-table-wrap,
-  .customer-service-table-wrap {
+  .admin-main,
+  .admin-workspace,
+  .admin-workspace-content {
     min-height: 0;
-    max-height: calc(100dvh - 104px);
-    overflow: auto;
-    overscroll-behavior: contain;
-    scrollbar-width: thin;
-  }
-
-  .faq-list {
-    min-height: 0;
-    max-height: calc(100dvh - 104px);
-    overflow-y: auto;
-    overscroll-behavior: contain;
-    scrollbar-width: thin;
-  }
-
-  /* Conversion management is a two-level workflow. Let the page itself scroll
-   * instead of nesting a group-table scrollbar inside a target-panel scrollbar. */
-  .admin-main > .conversion-pool .conversion-table-wrap {
-    max-height: none !important;
-    overflow-x: auto !important;
-    overflow-y: visible !important;
-  }
-
-  .admin-main > .conversion-pool .conversion-target-panel {
-    max-height: none !important;
-    overflow: visible !important;
   }
 }
