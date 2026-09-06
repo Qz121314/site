@@ -1,6 +1,11 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { classifyFiles } from '../../scripts/classify-cloudflare-changes.mjs';
+import {
+  classifyFiles,
+  classifyPackageJsonChange,
+  classifyPnpmLockfileChange,
+  classifyWranglerConfigChange,
+} from '../../scripts/classify-cloudflare-changes.mjs';
 
 function expectFlags(files, expected) {
   const actual = classifyFiles(files);
@@ -94,7 +99,7 @@ test('R2 config-only changes validate R2 without forcing Worker deploy', () => {
   });
 });
 
-test('wrangler config changes deploy and run non-R2 infra/deep validation', () => {
+test('wrangler Worker config changes deploy and run non-R2 infra/deep validation', () => {
   expectFlags(['wrangler.jsonc'], {
     wrangler_config_changed: true,
     deploy_required: true,
@@ -102,6 +107,135 @@ test('wrangler config changes deploy and run non-R2 infra/deep validation', () =
     infra_validation_required: true,
     deep_smoke_relevant: true,
   });
+});
+
+test('package development scripts and development dependencies are a production no-op', () => {
+  const before = JSON.stringify({
+    scripts: { lint: 'eslint .', build: 'vite build' },
+    devDependencies: { eslint: '^9.0.0' },
+  });
+  const after = JSON.stringify({
+    scripts: { lint: 'eslint . --cache', build: 'vite build' },
+    devDependencies: { eslint: '^9.1.0' },
+  });
+  assert.equal(classifyPackageJsonChange(before, after), false);
+  expectFlags(['package.json'], { deploy_required: true });
+  assert.equal(
+    classifyFiles(['package.json'], {
+      packageJson: classifyPackageJsonChange(before, after),
+    }).deploy_required,
+    false,
+  );
+});
+
+test('package runtime dependencies and build scripts require a deploy', () => {
+  assert.equal(
+    classifyPackageJsonChange(
+      JSON.stringify({ dependencies: { react: '19.0.0' } }),
+      JSON.stringify({ dependencies: { react: '19.1.0' } }),
+    ),
+    true,
+  );
+  assert.equal(
+    classifyPackageJsonChange(
+      JSON.stringify({ scripts: { build: 'vite build' } }),
+      JSON.stringify({ scripts: { build: 'vite build --minify esbuild' } }),
+    ),
+    true,
+  );
+});
+
+test('lockfile changes limited to dev dependencies are a production no-op', () => {
+  const before = `lockfileVersion: '9.0'
+\nimporters:
+\n  .:
+    devDependencies:
+      eslint:
+        version: 9.0.0
+\n  apps/storefront:
+    dependencies:
+      react:
+        version: 19.0.0
+`;
+  const after = before.replace(
+    'eslint:\n        version: 9.0.0',
+    'eslint:\n        version: 9.1.0',
+  );
+  assert.equal(classifyPnpmLockfileChange(before, after), false);
+});
+
+test('lockfile runtime dependency changes require a deploy', () => {
+  const before = `lockfileVersion: '9.0'
+\nimporters:
+\n  apps/storefront:
+    dependencies:
+      react:
+        version: 19.0.0
+`;
+  const after = before.replace('version: 19.0.0', 'version: 19.1.0');
+  assert.equal(classifyPnpmLockfileChange(before, after), true);
+});
+
+test('wrangler config changes identify D1, R2, assets, and Worker impact separately', () => {
+  const base = `{
+  // JSONC comment
+  "name": "site",
+  "main": "apps/worker/src/index.ts",
+  "assets": { "directory": "./dist" },
+  "d1_databases": [{ "binding": "DB", "database_id": "one" }],
+  "r2_buckets": [{ "binding": "ASSETS", "bucket_name": "one" }],
+}`;
+  const d1 = classifyWranglerConfigChange(
+    base,
+    base.replace('"one" }],\n  "r2', '"two" }],\n  "r2'),
+  );
+  assert.deepEqual(d1, {
+    changed: true,
+    worker: false,
+    d1: true,
+    r2: false,
+    assets: false,
+  });
+  const r2 = classifyWranglerConfigChange(
+    base,
+    base.replace('bucket_name": "one', 'bucket_name": "two'),
+  );
+  assert.deepEqual(r2, {
+    changed: true,
+    worker: false,
+    d1: false,
+    r2: true,
+    assets: false,
+  });
+  const assets = classifyWranglerConfigChange(base, base.replace('./dist', './public'));
+  assert.deepEqual(assets, {
+    changed: true,
+    worker: false,
+    d1: false,
+    r2: false,
+    assets: true,
+  });
+  const worker = classifyWranglerConfigChange(
+    base,
+    base.replace('"site"', '"site-next"'),
+  );
+  assert.deepEqual(worker, {
+    changed: true,
+    worker: true,
+    d1: false,
+    r2: false,
+    assets: false,
+  });
+});
+
+test('resource-aware Wrangler R2 config requires R2 validation without a D1 migration', () => {
+  const classification = classifyFiles(['wrangler.jsonc'], {
+    wrangler: { changed: true, worker: false, d1: false, r2: true, assets: false },
+  });
+  assert.equal(classification.wrangler_r2_config_changed, true);
+  assert.equal(classification.r2_validation_required, true);
+  assert.equal(classification.d1_remote_required, false);
+  assert.equal(classification.deploy_required, true);
 });
 
 test('shared package changes conservatively affect all built applications', () => {

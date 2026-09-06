@@ -63,6 +63,8 @@ Cloudflare hard rules:
 
 Treat `scripts/classify-cloudflare-changes.mjs` as the release-authority boundary. Before changing CI, deployment code, a migration, or a Cloudflare configuration, add or update its contract tests for the path and resource classification. Test fixtures may be nested under `test`, `tests`, or `__tests__`; they are not runtime deployment impact merely because they sit below an application directory. Normalize Windows paths and deduplicate path input before classifying it.
 
+Do not classify a release solely by a changed filename when the classifier can compare its base and head content. `package.json`/lockfile changes limited to development dependencies or non-production scripts are production no-ops; runtime dependency and build/deploy changes are not. Classify `wrangler.jsonc` independently for Worker, D1 binding, R2 binding, and Assets changes. A D1 binding change does not authorize migration application; an R2 binding change may authorize only the R2 validation branch; every effective Wrangler configuration change still needs a Worker deploy.
+
 Keep PR workflows local-first. A pull-request workflow may run local D1 migrations, builds, tests, and a Worker dry-run, but it must never receive credentials or steps that read or mutate production D1/R2, or deploy a production Worker.
 
 On `main`, use each manual `workflow_dispatch` override only for its named resource boundary:

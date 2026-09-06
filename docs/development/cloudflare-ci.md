@@ -26,6 +26,10 @@ storefront_changed
 admin_changed
 r2_config_changed
 wrangler_config_changed
+wrangler_worker_config_changed
+wrangler_d1_config_changed
+wrangler_r2_config_changed
+wrangler_assets_config_changed
 public_runtime_changed
 production_browser_relevant
 deploy_required
@@ -36,7 +40,9 @@ infra_validation_required
 deep_smoke_relevant
 ```
 
-Shared runtime packages are classified conservatively against every built application they can affect. `wrangler.jsonc` triggers deployment/deep infrastructure validation but does not by itself authorize R2 mutation. R2 remote management remains gated by `r2_config_changed`.
+Shared runtime packages are classified conservatively against every built application they can affect. The classifier reads both versions of `wrangler.jsonc`: Worker fields, `d1_databases`, `r2_buckets`, and `assets` produce separate outputs. Every effective Wrangler configuration change requires a Worker deployment because it changes the deployed configuration; only an R2 binding change adds R2 validation, and a D1 binding change never authorizes a D1 migration. Assets configuration adds public browser/deep acceptance. R2 remote management remains gated by an R2 configuration or R2 binding change.
+
+`package.json` and `pnpm-lock.yaml` are content-classified rather than path-classified. Runtime dependency changes and build/deploy script changes require a deploy. Root development dependencies, non-production scripts, and lockfile changes limited to importer `devDependencies` do not. When source content cannot be inspected, the classifier remains conservative and treats the release input as deploy-impacting.
 
 ## Production D1 budget
 
