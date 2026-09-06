@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import {
+  articleHref,
   bottomNavigationActiveHref,
   faqArticleHref,
   parseStorefrontRoute,
@@ -9,7 +10,7 @@ import {
   sectionRefHref,
 } from '../src/routing.ts';
 
-test('canonical storefront links use section, product, and FAQ article routes', () => {
+test('canonical storefront links use section, product, FAQ, and generic article routes', () => {
   assert.equal(sectionRefHref('home-services'), '/sections/home-services/');
   assert.equal(sectionRefHref('home services'), '/sections/home%20services/');
   assert.equal(
@@ -26,9 +27,10 @@ test('canonical storefront links use section, product, and FAQ article routes', 
     '/sections/home-services/products/deep-clean/',
   );
   assert.equal(faqArticleHref('faq-1'), '/faq/faq-1/');
+  assert.equal(articleHref('article-1'), '/articles/article-1/');
 });
 
-test('routing accepts primary pages, FAQ articles, canonical slug paths and legacy paths', () => {
+test('routing accepts primary pages, FAQ articles, generic articles, canonical slug paths and legacy paths', () => {
   assert.deepEqual(parseStorefrontRoute('/browse/'), { type: 'discover' });
   assert.deepEqual(parseStorefrontRoute('/discover/'), { type: 'discover' });
   assert.deepEqual(parseStorefrontRoute('/messages/'), { type: 'messages' });
@@ -40,6 +42,10 @@ test('routing accepts primary pages, FAQ articles, canonical slug paths and lega
   assert.deepEqual(parseStorefrontRoute('/faq/faq-1/'), {
     type: 'faq-article',
     articleRef: 'faq-1',
+  });
+  assert.deepEqual(parseStorefrontRoute('/articles/article-1/'), {
+    type: 'article',
+    articleId: 'article-1',
   });
   assert.deepEqual(parseStorefrontRoute('/sections/home-services/'), {
     type: 'section',
@@ -57,7 +63,7 @@ test('routing accepts primary pages, FAQ articles, canonical slug paths and lega
   });
 });
 
-test('bottom navigation keeps browsing, chat, and FAQ detail routes under their primary tabs', () => {
+test('bottom navigation keeps browsing, chat, article, and FAQ detail routes under their primary tabs', () => {
   assert.equal(bottomNavigationActiveHref('/'), '/');
   assert.equal(bottomNavigationActiveHref('/browse/'), '/browse/');
   assert.equal(bottomNavigationActiveHref('/discover/'), '/browse/');
@@ -69,6 +75,7 @@ test('bottom navigation keeps browsing, chat, and FAQ detail routes under their 
   assert.equal(bottomNavigationActiveHref('/products/product-1/'), '/browse/');
   assert.equal(bottomNavigationActiveHref('/messages/'), '/messages/');
   assert.equal(bottomNavigationActiveHref('/messages/conversation-1/'), '/messages/');
+  assert.equal(bottomNavigationActiveHref('/articles/article-1/'), '/messages/');
   assert.equal(bottomNavigationActiveHref('/faq/'), '/faq/');
   assert.equal(bottomNavigationActiveHref('/faq/faq-1/'), '/faq/');
 });
@@ -84,5 +91,9 @@ test('routing rejects malformed or oversized route parts', () => {
   assert.deepEqual(parseStorefrontRoute(`/faq/${'a'.repeat(121)}/`), {
     type: 'not-found',
   });
+  assert.deepEqual(parseStorefrontRoute(`/articles/${'a'.repeat(121)}/`), {
+    type: 'not-found',
+  });
+  assert.deepEqual(parseStorefrontRoute('/articles/%E0%A4%A/'), { type: 'not-found' });
   assert.deepEqual(parseStorefrontRoute('/unknown/path/'), { type: 'not-found' });
 });
