@@ -27,10 +27,10 @@ jobs:
       group: site-deploy-${{ github.ref }}
       cancel-in-progress: false
     outputs:
-      deployment-url: ${{ steps.deploy.outputs.url }}
+      deployment_url: ${{ steps.deploy.outputs.url }}
       deployed: ${{ steps.deploy.outputs.deployed }}
-      production-browser-relevant: ${{ steps.changes.outputs.production_browser_relevant }}
-      force-cloudflare-validation: ${{ steps.manual.outputs.force_cloudflare_validation }}
+      production_browser_relevant: ${{ steps.changes.outputs.production_browser_relevant }}
+      force_cloudflare_validation: ${{ steps.manual.outputs.force_cloudflare_validation }}
     steps:
       - name: Checkout
         uses: actions/checkout@v7
@@ -92,7 +92,7 @@ jobs:
             echo "docs_only=${{ steps.changes.outputs.docs_only }}"
             echo '```'
             if [[ "$MIGRATION_CHANGED" != true && "$FORCE_CF" != true ]]; then echo 'Skip remote D1: no migration diff.'; fi
-            if [[ "$R2_VALIDATION_REQUIRED" != true && "$FORCE_CF" != true ]]; then echo 'Skip R2 validation: no R2/wrangler config diff.'; fi
+            if [[ "$R2_VALIDATION_REQUIRED" != true && "$FORCE_CF" != true ]]; then echo 'Skip R2 validation: no R2 config diff.'; fi
             if [[ "$DEPLOY_REQUIRED" != true && "$FORCE_DEPLOY" != true ]]; then echo 'Skip production deploy: no deploy-impacting diff.'; fi
             if [[ "$BROWSER_RELEVANT" != true && "$FORCE_CF" != true ]]; then echo 'Skip production browser acceptance: no relevant public/browser diff.'; fi
           } | tee -a "$GITHUB_STEP_SUMMARY"
@@ -232,7 +232,7 @@ jobs:
 
   production-browser-acceptance:
     name: Production Browser Acceptance
-    if: needs.pipeline.outputs.deployed == 'true' && (needs.pipeline.outputs.production-browser-relevant == 'true' || needs.pipeline.outputs.force-cloudflare-validation == 'true')
+    if: needs.pipeline.outputs.deployed == 'true' && (needs.pipeline.outputs.production_browser_relevant == 'true' || needs.pipeline.outputs.force_cloudflare_validation == 'true')
     needs: pipeline
     runs-on: ubuntu-latest
     timeout-minutes: 15
@@ -276,7 +276,7 @@ jobs:
         timeout-minutes: 5
         run: pnpm test:e2e
         env:
-          BASE_URL: ${{ needs.pipeline.outputs.deployment-url }}
+          BASE_URL: ${{ needs.pipeline.outputs.deployment_url }}
 
       - name: Upload production browser diagnostics
         if: always()
