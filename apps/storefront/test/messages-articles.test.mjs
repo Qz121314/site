@@ -88,7 +88,10 @@ test(
     const storage = memoryStorage();
 
     assert.deepEqual([...readMessageArticleReadIds(storage)], []);
-    assert.equal(countUnreadMessageArticles(active, readMessageArticleReadIds(storage)), 2);
+    assert.equal(
+      countUnreadMessageArticles(active, readMessageArticleReadIds(storage)),
+      2,
+    );
   },
 );
 
@@ -131,7 +134,10 @@ test('ghost IDs and inactive articles do not affect current unread count', () =>
     { articleId: 'article-b', title: 'B', preview: 'B', sortOrder: 1 },
   ];
 
-  assert.equal(countUnreadMessageArticles(active, readMessageArticleReadIds(storage)), 1);
+  assert.equal(
+    countUnreadMessageArticles(active, readMessageArticleReadIds(storage)),
+    1,
+  );
 });
 
 test(
@@ -147,7 +153,10 @@ test(
       },
     ];
 
-    assert.equal(countUnreadMessageArticles(active, readMessageArticleReadIds(storage)), 0);
+    assert.equal(
+      countUnreadMessageArticles(active, readMessageArticleReadIds(storage)),
+      0,
+    );
   },
 );
 
