@@ -51,7 +51,9 @@ function preloadArticleContent(
   route: Extract<StorefrontRoute, { type: 'article' }>,
   queryClient: QueryClient,
 ): void {
-  const bootstrap = queryClient.getQueryData<StorefrontBootstrap>(['storefront-bootstrap']);
+  const bootstrap = queryClient.getQueryData<StorefrontBootstrap>([
+    'storefront-bootstrap',
+  ]);
   if (!bootstrap) return;
   const contentVersion = articleContentVersion(bootstrap);
   void import('./content-route').then(({ loadArticleSnapshot }) =>
