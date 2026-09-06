@@ -15,6 +15,7 @@ const OUTPUT_KEYS = [
   'docs_only',
   'd1_remote_required',
   'r2_validation_required',
+  'infra_validation_required',
   'deep_smoke_relevant',
   'tests_only',
   'development_tooling_only',
@@ -42,14 +43,17 @@ const isDevelopmentTooling = (path) =>
   path === 'scripts/precommit-check.mjs' ||
   path === 'scripts/fix-changed.mjs' ||
   path === 'scripts/classify-cloudflare-changes.mjs' ||
+  path === 'scripts/ensure-wrangler-types.mjs' ||
+  path === 'scripts/production-smoke.mjs' ||
+  path === 'scripts/production-deep-smoke.mjs' ||
   path.startsWith('tests/ci/') ||
   path.startsWith('.github/workflows/');
 
 const PUBLIC_WORKER_PATTERNS = [
-  /^apps\/worker\/src\/routes\/(?:public|storefront|media|articles?)(?:[/.]|$)/,
-  /^apps\/worker\/src\/(?:public|publishing|storefront|media)(?:[/.]|$)/,
+  /^apps\/worker\/src\/routes\/(?:public|storefront|media|articles?)(?:[-/.]|$)/,
+  /^apps\/worker\/src\/(?:public|publishing|storefront|media)(?:[-/.]|$)/,
   /^apps\/worker\/src\/(?:index|app)\.[cm]?[jt]s$/,
-  /^apps\/worker\/src\/(?:http|security)(?:[/.]|$)/,
+  /^apps\/worker\/src\/(?:http|security)(?:[-/.]|$)/,
 ];
 
 const PRODUCTION_BROWSER_CONTRACT_PATTERNS = [
@@ -112,9 +116,10 @@ export function classifyFiles(inputFiles) {
     buildOrReleaseInputChanged ||
     productionConfigChanged;
 
-  const r2ValidationRequired = r2ConfigChanged || wranglerConfigChanged;
+  const r2ValidationRequired = r2ConfigChanged;
+  const infraValidationRequired = r2ConfigChanged || wranglerConfigChanged;
   const productionBrowserRelevant = storefrontChanged || publicRuntimeChanged || productionBrowserContractChanged;
-  const deepSmokeRelevant = storefrontChanged || publicRuntimeChanged || r2ValidationRequired;
+  const deepSmokeRelevant = storefrontChanged || publicRuntimeChanged || r2ValidationRequired || wranglerConfigChanged;
 
   const docsOnly = files.length > 0 && files.every(isDocumentation);
   const testsOnly = files.length > 0 && files.every(isTestPath);
@@ -135,6 +140,7 @@ export function classifyFiles(inputFiles) {
     docs_only: docsOnly,
     d1_remote_required: migrationChanged,
     r2_validation_required: r2ValidationRequired,
+    infra_validation_required: infraValidationRequired,
     deep_smoke_relevant: deepSmokeRelevant,
     tests_only: testsOnly,
     development_tooling_only: developmentToolingOnly,
