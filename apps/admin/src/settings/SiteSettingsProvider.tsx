@@ -74,7 +74,6 @@ export function SiteSettingsProvider({
       try {
         const updated = await updateSiteSettingsWithHero(input);
         setSettings(updated);
-        window.dispatchEvent(new CustomEvent('admin:data-mutated'));
         return updated;
       } catch (error) {
         if (isSessionError(error)) onSessionExpired();
