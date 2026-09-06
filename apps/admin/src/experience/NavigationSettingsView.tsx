@@ -1,7 +1,10 @@
 import { useState, type FormEvent } from 'react';
 import { useAdminDirtySource } from '../admin-unsaved-state';
 import { BottomNavigationSettingsSection } from '../BottomNavigationSettingsSection';
-import type { BottomNavigationItem, SiteSettingsWithHero } from '../site-hero-settings-api';
+import type {
+  BottomNavigationItem,
+  SiteSettingsWithHero,
+} from '../site-hero-settings-api';
 import {
   cloneBottomNavigation,
   settingsValueEqual,
@@ -21,9 +24,10 @@ export function NavigationSettingsView({
   const { settings, saveSettings } = useSiteSettingsController();
   const [draft, setDraft] = useState(() => createNavigationDraft(settings));
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(
-    null,
-  );
+  const [message, setMessage] = useState<{
+    type: 'success' | 'error';
+    text: string;
+  } | null>(null);
   const dirty = !settingsValueEqual(draft, createNavigationDraft(settings));
 
   useAdminDirtySource('navigation-settings', '导航设置', dirty);
@@ -37,7 +41,9 @@ export function NavigationSettingsView({
       const base = toSiteSettingsUpdateInput(settings);
       const updated = await saveSettings({
         ...base,
-        bottomNavigation: draft.map(({ sortOrder: _sortOrder, ...item }) => ({ ...item })),
+        bottomNavigation: draft.map(({ sortOrder: _sortOrder, ...item }) => ({
+          ...item,
+        })),
       });
       setDraft(createNavigationDraft(updated));
       setMessage({ type: 'success', text: '导航设置已保存。' });

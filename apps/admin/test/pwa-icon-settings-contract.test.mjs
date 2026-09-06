@@ -21,7 +21,10 @@ test('system general and PWA keep logo and app icon as separate assets', () => {
   assert.match(pwaSource, /pwaIconAssetId/u);
   assert.match(pwaSource, /role="icon"/u);
   assert.match(brandingHookSource, /prepareBrandingImage\(file, kind\)/u);
-  assert.match(brandingHookSource, /uploadBrandingImage\(kind, localImage\.compressedFile\)/u);
+  assert.match(
+    brandingHookSource,
+    /uploadBrandingImage\(kind, localImage\.compressedFile\)/u,
+  );
   assert.match(settingsApiSource, /pwaIconAssetId/u);
   assert.match(brandingSource, /'pwa-icon'/u);
 });

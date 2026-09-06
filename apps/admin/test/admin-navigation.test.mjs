@@ -101,7 +101,10 @@ test('new hashes parse and legacy settings aliases normalize deterministically',
 
 test('experience and system secondary navigation match Phase B IA exactly', () => {
   assert.deepEqual(
-    getAdminSecondaryItems('experience', sections).map(({ view, label }) => [view, label]),
+    getAdminSecondaryItems('experience', sections).map(({ view, label }) => [
+      view,
+      label,
+    ]),
     [
       ['home', '首页'],
       ['navigation', '导航'],

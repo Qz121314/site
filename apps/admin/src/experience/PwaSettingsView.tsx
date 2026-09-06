@@ -23,18 +23,15 @@ function createPwaDraft(settings: SiteSettingsWithHero): PwaDraft {
   };
 }
 
-export function PwaSettingsView({
-  onSessionExpired,
-}: {
-  onSessionExpired: () => void;
-}) {
+export function PwaSettingsView({ onSessionExpired }: { onSessionExpired: () => void }) {
   const { settings, saveSettings } = useSiteSettingsController();
   const [draft, setDraft] = useState<PwaDraft>(() => createPwaDraft(settings));
   const [pickerOpen, setPickerOpen] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(
-    null,
-  );
+  const [message, setMessage] = useState<{
+    type: 'success' | 'error';
+    text: string;
+  } | null>(null);
   const branding = useBrandingImageDraft({
     kind: 'pwa-icon',
     assetId: draft.pwaIconAssetId,
@@ -123,12 +120,18 @@ export function PwaSettingsView({
                         setMessage({
                           type: 'error',
                           text:
-                            error instanceof Error ? error.message : 'PWA 图标本地处理失败。',
+                            error instanceof Error
+                              ? error.message
+                              : 'PWA 图标本地处理失败。',
                         });
                       });
                     }}
                   />
-                  {branding.processing ? '处理中…' : branding.previewUrl ? '上传替换' : '上传'}
+                  {branding.processing
+                    ? '处理中…'
+                    : branding.previewUrl
+                      ? '上传替换'
+                      : '上传'}
                 </label>
                 <button
                   className="admin-text-button"
@@ -153,7 +156,10 @@ export function PwaSettingsView({
           </div>
         </section>
 
-        <section className="settings-workspace-section" aria-labelledby="pwa-prompt-title">
+        <section
+          className="settings-workspace-section"
+          aria-labelledby="pwa-prompt-title"
+        >
           <div className="settings-workspace-heading">
             <div>
               <h2 id="pwa-prompt-title">安装提示</h2>
@@ -164,7 +170,9 @@ export function PwaSettingsView({
                 type="checkbox"
                 checked={draft.installPrompt.enabled}
                 disabled={busy}
-                onChange={(event) => updateInstallPrompt({ enabled: event.target.checked })}
+                onChange={(event) =>
+                  updateInstallPrompt({ enabled: event.target.checked })
+                }
               />
               <span>{draft.installPrompt.enabled ? '已开启' : '已关闭'}</span>
             </label>
@@ -181,7 +189,10 @@ export function PwaSettingsView({
                 disabled={busy || !draft.installPrompt.enabled}
                 onChange={(event) =>
                   updateInstallPrompt({
-                    delaySeconds: Math.max(5, Math.min(120, Number(event.target.value) || 30)),
+                    delaySeconds: Math.max(
+                      5,
+                      Math.min(120, Number(event.target.value) || 30),
+                    ),
                   })
                 }
               />
@@ -203,7 +214,9 @@ export function PwaSettingsView({
                 maxLength={160}
                 value={draft.installPrompt.description}
                 disabled={busy || !draft.installPrompt.enabled}
-                onChange={(event) => updateInstallPrompt({ description: event.target.value })}
+                onChange={(event) =>
+                  updateInstallPrompt({ description: event.target.value })
+                }
               />
             </label>
             <label className="field-group settings-field-span-two">
@@ -213,7 +226,9 @@ export function PwaSettingsView({
                 maxLength={160}
                 value={draft.installPrompt.iosDescription}
                 disabled={busy || !draft.installPrompt.enabled}
-                onChange={(event) => updateInstallPrompt({ iosDescription: event.target.value })}
+                onChange={(event) =>
+                  updateInstallPrompt({ iosDescription: event.target.value })
+                }
               />
             </label>
             <label className="field-group">
@@ -223,7 +238,9 @@ export function PwaSettingsView({
                 maxLength={32}
                 value={draft.installPrompt.installLabel}
                 disabled={busy || !draft.installPrompt.enabled}
-                onChange={(event) => updateInstallPrompt({ installLabel: event.target.value })}
+                onChange={(event) =>
+                  updateInstallPrompt({ installLabel: event.target.value })
+                }
               />
             </label>
             <label className="field-group">
@@ -233,7 +250,9 @@ export function PwaSettingsView({
                 maxLength={32}
                 value={draft.installPrompt.dismissLabel}
                 disabled={busy || !draft.installPrompt.enabled}
-                onChange={(event) => updateInstallPrompt({ dismissLabel: event.target.value })}
+                onChange={(event) =>
+                  updateInstallPrompt({ dismissLabel: event.target.value })
+                }
               />
             </label>
           </div>

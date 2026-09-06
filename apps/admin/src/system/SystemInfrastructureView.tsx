@@ -27,9 +27,10 @@ export function SystemInfrastructureView({
   const { settings, saveSettings } = useSiteSettingsController();
   const [draft, setDraft] = useState(() => createInfrastructureDraft(settings));
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(
-    null,
-  );
+  const [message, setMessage] = useState<{
+    type: 'success' | 'error';
+    text: string;
+  } | null>(null);
   const [domainTest, setDomainTest] = useState<DomainTestState>({ status: 'idle' });
   const dirty = !settingsValueEqual(draft, createInfrastructureDraft(settings));
 
@@ -88,7 +89,10 @@ export function SystemInfrastructureView({
 
   return (
     <form className="settings-workspace is-medium" onSubmit={handleSubmit}>
-      <section className="settings-workspace-section" aria-labelledby="infrastructure-title">
+      <section
+        className="settings-workspace-section"
+        aria-labelledby="infrastructure-title"
+      >
         <div className="settings-workspace-heading">
           <div>
             <h2 id="infrastructure-title">媒体域名</h2>

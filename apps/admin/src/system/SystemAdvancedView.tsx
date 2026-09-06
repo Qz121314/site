@@ -20,9 +20,10 @@ export function SystemAdvancedView({
   const { settings, saveSettings } = useSiteSettingsController();
   const [draft, setDraft] = useState(() => createAdvancedDraft(settings));
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(
-    null,
-  );
+  const [message, setMessage] = useState<{
+    type: 'success' | 'error';
+    text: string;
+  } | null>(null);
   const dirty = !settingsValueEqual(draft, createAdvancedDraft(settings));
 
   useAdminDirtySource('system-advanced', '系统高级设置', dirty);
@@ -52,7 +53,10 @@ export function SystemAdvancedView({
 
   return (
     <form className="settings-workspace is-narrow" onSubmit={handleSubmit}>
-      <section className="settings-workspace-section" aria-labelledby="advanced-analytics-title">
+      <section
+        className="settings-workspace-section"
+        aria-labelledby="advanced-analytics-title"
+      >
         <div className="settings-workspace-heading">
           <div>
             <h2 id="advanced-analytics-title">统计集成</h2>

@@ -34,9 +34,10 @@ export function SystemGeneralView({
   const [draft, setDraft] = useState<GeneralDraft>(() => createGeneralDraft(settings));
   const [pickerOpen, setPickerOpen] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(
-    null,
-  );
+  const [message, setMessage] = useState<{
+    type: 'success' | 'error';
+    text: string;
+  } | null>(null);
   const branding = useBrandingImageDraft({
     kind: 'logo',
     assetId: draft.logoAssetId,
@@ -44,7 +45,8 @@ export function SystemGeneralView({
       setDraft((current) => ({ ...current, logoAssetId })),
   });
   const dirty =
-    Boolean(branding.localImage) || !settingsValueEqual(draft, createGeneralDraft(settings));
+    Boolean(branding.localImage) ||
+    !settingsValueEqual(draft, createGeneralDraft(settings));
 
   useAdminDirtySource('system-general', '系统常规设置', dirty);
 
@@ -79,7 +81,10 @@ export function SystemGeneralView({
   return (
     <>
       <form className="settings-workspace is-narrow" onSubmit={handleSubmit}>
-        <section className="settings-workspace-section" aria-labelledby="system-general-title">
+        <section
+          className="settings-workspace-section"
+          aria-labelledby="system-general-title"
+        >
           <div className="settings-workspace-heading">
             <div>
               <h2 id="system-general-title">站点身份</h2>
@@ -116,7 +121,10 @@ export function SystemGeneralView({
           </div>
         </section>
 
-        <section className="settings-workspace-section" aria-labelledby="system-logo-title">
+        <section
+          className="settings-workspace-section"
+          aria-labelledby="system-logo-title"
+        >
           <div className="settings-workspace-heading">
             <div>
               <h2 id="system-logo-title">站点 Logo</h2>
@@ -154,12 +162,19 @@ export function SystemGeneralView({
                       void branding.selectFile(file).catch((error: unknown) => {
                         setMessage({
                           type: 'error',
-                          text: error instanceof Error ? error.message : 'Logo 本地处理失败。',
+                          text:
+                            error instanceof Error
+                              ? error.message
+                              : 'Logo 本地处理失败。',
                         });
                       });
                     }}
                   />
-                  {branding.processing ? '处理中…' : branding.previewUrl ? '上传替换' : '上传'}
+                  {branding.processing
+                    ? '处理中…'
+                    : branding.previewUrl
+                      ? '上传替换'
+                      : '上传'}
                 </label>
                 <button
                   className="admin-text-button"

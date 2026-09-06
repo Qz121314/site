@@ -17,9 +17,7 @@ import {
 
 type SiteSettingsContextValue = {
   settings: SiteSettingsWithHero;
-  saveSettings: (
-    input: SiteSettingsWithHeroUpdateInput,
-  ) => Promise<SiteSettingsWithHero>;
+  saveSettings: (input: SiteSettingsWithHeroUpdateInput) => Promise<SiteSettingsWithHero>;
 };
 
 const SiteSettingsContext = createContext<SiteSettingsContextValue | null>(null);
@@ -122,7 +120,9 @@ export function SiteSettingsProvider({
 export function useSiteSettingsController(): SiteSettingsContextValue {
   const value = useContext(SiteSettingsContext);
   if (!value) {
-    throw new Error('useSiteSettingsController must be used inside SiteSettingsProvider.');
+    throw new Error(
+      'useSiteSettingsController must be used inside SiteSettingsProvider.',
+    );
   }
   return value;
 }

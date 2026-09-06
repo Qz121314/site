@@ -91,7 +91,10 @@ export function BottomNavigationSettingsSection({
   }
 
   return (
-    <section className="admin-navigation-manager" aria-labelledby="bottom-navigation-title">
+    <section
+      className="admin-navigation-manager"
+      aria-labelledby="bottom-navigation-title"
+    >
       <div className="admin-settings-section-heading">
         <div>
           <h2 id="bottom-navigation-title">前台底部导航</h2>
@@ -105,7 +108,11 @@ export function BottomNavigationSettingsSection({
         {value.map((item) => {
           const expanded = editingKey === item.key;
           return (
-            <div className="admin-bottom-navigation-row-wrap" role="listitem" key={item.key}>
+            <div
+              className="admin-bottom-navigation-row-wrap"
+              role="listitem"
+              key={item.key}
+            >
               <button
                 className={`admin-bottom-navigation-row${expanded ? ' is-selected' : ''}`}
                 type="button"
@@ -157,7 +164,9 @@ export function BottomNavigationSettingsSection({
                       disabled={busy}
                       onChange={(event) =>
                         onChange(
-                          updateItem(value, editingItem.key, { label: event.target.value }),
+                          updateItem(value, editingItem.key, {
+                            label: event.target.value,
+                          }),
                         )
                       }
                     />

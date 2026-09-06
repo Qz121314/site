@@ -51,9 +51,10 @@ export function HomeExperienceView({
   const { settings, saveSettings } = useSiteSettingsController();
   const [draft, setDraft] = useState<HomeDraft>(() => createHomeDraft(settings));
   const [saving, setSaving] = useState(false);
-  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(
-    null,
-  );
+  const [message, setMessage] = useState<{
+    type: 'success' | 'error';
+    text: string;
+  } | null>(null);
   const dirty = !settingsValueEqual(draft, createHomeDraft(settings));
 
   useAdminDirtySource('homepage-settings', '首页设置', dirty);
@@ -100,8 +101,14 @@ export function HomeExperienceView({
   }
 
   return (
-    <form className="settings-workspace home-experience-workspace" onSubmit={handleSubmit}>
-      <section className="settings-workspace-section" aria-labelledby="home-content-title">
+    <form
+      className="settings-workspace home-experience-workspace"
+      onSubmit={handleSubmit}
+    >
+      <section
+        className="settings-workspace-section"
+        aria-labelledby="home-content-title"
+      >
         <div className="settings-workspace-heading">
           <div>
             <h2 id="home-content-title">首页展示</h2>
@@ -123,7 +130,14 @@ export function HomeExperienceView({
               </span>
               <input
                 type="checkbox"
-                checked={draft[field as keyof Pick<HomeDraft, 'showHot' | 'showLatest' | 'showMore' | 'showFaq'>] as boolean}
+                checked={
+                  draft[
+                    field as keyof Pick<
+                      HomeDraft,
+                      'showHot' | 'showLatest' | 'showMore' | 'showFaq'
+                    >
+                  ] as boolean
+                }
                 disabled={saving}
                 onChange={(event) =>
                   setDraft((current) => ({
@@ -147,7 +161,10 @@ export function HomeExperienceView({
             onChange={(event) =>
               setDraft((current) => ({
                 ...current,
-                homeSectionLimit: Math.max(1, Math.min(24, Number(event.target.value) || 1)),
+                homeSectionLimit: Math.max(
+                  1,
+                  Math.min(24, Number(event.target.value) || 1),
+                ),
               }))
             }
           />
