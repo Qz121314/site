@@ -22,8 +22,6 @@
 @import './product-tags.css';
 @import './branding-media.css';
 @import './admin-foundation.css';
-@import './admin-scroll-ownership.css';
-@import './admin-section-workspace-nav.css';
 @import './admin-publish.css';
 @import './admin-unsaved.css';
 @import './customer-service-connections.css';
@@ -31,7 +29,6 @@
 @import './product-dependency-handoff.css';
 @import './admin-ui-system.css';
 @import './site-settings-workbench.css';
-@import './admin-sidebar.css';
 @import './theme-center.css';
 @import './theme-center-preview.css';
 @import './faq-management.css';
@@ -41,6 +38,10 @@
 @import './admin-error-boundary.css';
 @import './admin-dialog-service.css';
 @import './section-editor.css';
+@import './admin-shell.css';
+@import './admin-sidebar.css';
+@import './admin-workspace.css';
+@import './admin-scroll-ownership.css';
 @import '@site/storefront-ui/styles.css';
 @import '@site/storefront-ui/loading.css';
 @import '@site/storefront-ui/no-agent.css';
