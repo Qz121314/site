@@ -2,6 +2,63 @@
 
 This file is a hard prerequisite for every code change in this repository. Read it before editing implementation, tests, CI, migrations, or deployment code.
 
+## Mandatory source-of-truth index
+
+Use one owner for each class of rule. Do not create competing copies.
+
+- `AGENTS.md`: mandatory development sequence, S/M/L gates, fixed repository invariants, and release rules.
+- `package.json`: executable repository commands and tool entry points.
+- `.editorconfig`, `prettier.config.mjs`, `eslint.config.mjs`: concrete editor/format/lint configuration. Do not copy their specific values into this file.
+- `docs/development/workflow.md`: operational development/PR sequence.
+- `docs/development/formatting.md`: changed-file formatting and commit-gate details.
+- `docs/development/testing.md`: local-first and production test ownership.
+- `docs/development/cloudflare-ci.md`: Cloudflare change-classification and remote-resource budget.
+- `docs/development/database.md`: local/remote D1 release rules.
+- `docs/development/deployment.md`: build reuse, deployment, smoke, and cache behavior.
+- `README.md`: current product/architecture behavior; it is not a second copy of the development contract.
+
+## Mandatory executable workflow
+
+The repository-wide sequence is:
+
+```text
+preflight
+→ implement
+→ incremental validation
+→ commit gate
+→ PR CI
+→ release
+```
+
+Before editing, run:
+
+```bash
+pnpm preflight:dev
+```
+
+For every logical batch/commit candidate, run the changed-file fixer/formatter, then Prettier check, lint, typecheck, and the targeted tests owned by the changed contract. The repository pre-commit hook verifies the exact staged contents with Prettier and ESLint; it intentionally does not run the complete test/build gate.
+
+For L-level work and the final candidate for any architecture/data/CI/deployment change, run:
+
+```bash
+pnpm verify
+```
+
+PR PASS is always tied to the exact latest PR HEAD SHA. A successful run for an older SHA must never be reported as latest-head PASS.
+
+Release is change-aware. Production D1, R2, Worker deployment, minimal smoke, deep smoke, and browser acceptance are authorized by `scripts/classify-cloudflare-changes.mjs` and the main workflow. A `main` push is not itself authorization for every Cloudflare remote operation.
+
+Cloudflare hard rules:
+
+- PR validation uses local resources and Worker dry-run by default; it must not read/mutate production D1/R2 or deploy the production Worker.
+- no migration diff means no migration-specific production D1 recovery/read/apply operation;
+- no R2 configuration diff means no production R2 mutation/domain/probe operation;
+- no deploy-impacting diff means no production Worker deploy;
+- minimal production smoke runs only after an actual deploy and remains bounded;
+- deep HTTP/browser production acceptance is risk-classified, not unconditional;
+- CI is final verification, not the first formatter/lint/contract feedback loop;
+- safety checks are moved to the correct environment/trigger, not removed to gain speed.
+
 ## Mandatory sequence before editing
 
 1. Classify the requested change as S, M, or L before editing. The level is based on impact/risk, not the number of changed files.
@@ -135,10 +192,10 @@ These are defaults unless the user explicitly changes the product rule.
 Do not hand-guess Prettier output. Before considering a changed file complete, format it using the repository-installed version, for example:
 
 ```bash
-pnpm exec prettier --write <changed-files>
+pnpm fix:changed
 ```
 
-Then run the change-level verification gate. A formatting failure in remote CI means the local completion gate was skipped.
+Then run `pnpm format` plus the change-level verification gate. A formatting failure in remote CI means the local completion gate was skipped.
 
 ## Completion gates
 
@@ -157,7 +214,8 @@ pnpm verify
 The complete verification gate is:
 
 ```text
-guardrails
+preflight:dev
+→ guardrails
 → format
 → lint
 → typecheck
