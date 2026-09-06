@@ -34,7 +34,10 @@ export function AdminSecondarySidebar({
         <h2>{domain?.label ?? '管理'}</h2>
         <p>{domain?.description}</p>
       </div>
-      <nav className="admin-secondary-nav" aria-label={`${domain?.label ?? '管理'}二级导航`}>
+      <nav
+        className="admin-secondary-nav"
+        aria-label={`${domain?.label ?? '管理'}二级导航`}
+      >
         {items.length === 0 ? (
           <p className="admin-secondary-empty">当前没有可用入口。</p>
         ) : (
@@ -44,7 +47,9 @@ export function AdminSecondarySidebar({
             const active = item.view === activeView;
             return (
               <div className="admin-secondary-item" key={item.view}>
-                {showGroup ? <div className="admin-secondary-group">{item.group}</div> : null}
+                {showGroup ? (
+                  <div className="admin-secondary-group">{item.group}</div>
+                ) : null}
                 <Button
                   className={`admin-secondary-link${active ? ' is-active' : ''}`}
                   variant="ghost"
@@ -56,7 +61,11 @@ export function AdminSecondarySidebar({
                   }}
                 >
                   <span>{item.label}</span>
-                  <ChevronRight aria-hidden="true" size={15} strokeWidth={1.8} />
+                  <ChevronRight
+                    aria-hidden="true"
+                    size={15}
+                    strokeWidth={1.8}
+                  />
                 </Button>
               </div>
             );

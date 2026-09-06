@@ -1,6 +1,10 @@
 import type { AdminSection } from './api';
 
-export type DynamicViewKind = 'products' | 'categories' | 'tags' | 'conversion-pool';
+export type DynamicViewKind =
+  | 'products'
+  | 'categories'
+  | 'tags'
+  | 'conversion-pool';
 
 export type AdminView =
   | 'dashboard'
@@ -70,10 +74,9 @@ export const FIXED_ADMIN_VIEWS = new Set<AdminView>([
   'system',
 ]);
 
-export function parseDynamicView(view: AdminView | string): {
-  kind: DynamicViewKind;
-  sectionId: string;
-} | null {
+export function parseDynamicView(
+  view: AdminView | string,
+): { kind: DynamicViewKind; sectionId: string } | null {
   const separatorIndex = view.indexOf(':');
   if (separatorIndex < 0) return null;
 
@@ -101,7 +104,9 @@ export function parseAdminView(value: string | null): AdminView | null {
     return null;
   }
 
-  if (FIXED_ADMIN_VIEWS.has(normalized as AdminView)) return normalized as AdminView;
+  if (FIXED_ADMIN_VIEWS.has(normalized as AdminView)) {
+    return normalized as AdminView;
+  }
   return parseDynamicView(normalized) ? (normalized as AdminView) : null;
 }
 
@@ -111,7 +116,9 @@ export function readInitialAdminView(): AdminView {
   if (fromHash) return fromHash;
 
   try {
-    const stored = parseAdminView(window.localStorage.getItem(ADMIN_VIEW_STORAGE_KEY));
+    const stored = parseAdminView(
+      window.localStorage.getItem(ADMIN_VIEW_STORAGE_KEY),
+    );
     if (stored) return stored;
   } catch {
     // Storage may be unavailable in privacy-restricted contexts.
@@ -197,7 +204,11 @@ export function getAdminSecondaryItems(
         { view: 'sections', label: '分区管理', group: '结构' },
         ...sections.flatMap<AdminNavItem>((section) => [
           { view: `products:${section.id}`, label: '商品', group: section.name },
-          { view: `categories:${section.id}`, label: '分类', group: section.name },
+          {
+            view: `categories:${section.id}`,
+            label: '分类',
+            group: section.name,
+          },
           { view: `tags:${section.id}`, label: '标签', group: section.name },
         ]),
       ];
@@ -226,7 +237,8 @@ export function getAdminViewContext(
   sections: AdminSection[],
 ): AdminViewContext {
   const domain = getAdminDomainForView(view);
-  const domainLabel = ADMIN_DOMAINS.find((item) => item.id === domain)?.label ?? '管理后台';
+  const domainLabel =
+    ADMIN_DOMAINS.find((item) => item.id === domain)?.label ?? '管理后台';
 
   const fixed: Partial<Record<AdminView, Omit<AdminViewContext, 'domain'>>> = {
     dashboard: {

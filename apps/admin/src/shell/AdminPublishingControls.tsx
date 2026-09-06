@@ -1,7 +1,11 @@
 import { X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import type { PublishModuleStatus, PublishStatus, PublishVersion } from '../publish-api';
 import { Button } from '../components/ui/button';
+import type {
+  PublishModuleStatus,
+  PublishStatus,
+  PublishVersion,
+} from '../publish-api';
 
 export type RollbackTarget = {
   moduleKey: string;
@@ -33,8 +37,9 @@ function publishStatusLabel(
   if (hasError) return '发布状态读取失败';
   if (!status) return '读取发布状态';
   if (status.bootstrapRequired) return '需要首次发布';
-  if (status.modules.some((module) => module.lastJob?.status === 'failed'))
+  if (status.modules.some((module) => module.lastJob?.status === 'failed')) {
     return '部分板块发布失败';
+  }
   if (status.dirtyCount > 0) return `${status.dirtyCount} 项待发布`;
   return '前台已是最新';
 }
@@ -54,7 +59,10 @@ function versionCode(version: PublishVersion): string {
   return version.contentVersion.slice(-8);
 }
 
-function modulePublishButtonLabel(module: PublishModuleStatus | null, key: string): string {
+function modulePublishButtonLabel(
+  module: PublishModuleStatus | null,
+  key: string,
+): string {
   if (key === 'all') return '发布全部';
   if (!module) return '发布当前板块';
   switch (module.kind) {
@@ -95,15 +103,44 @@ export function AdminPublishingControls({
     [contextKey, status?.modules],
   );
   const historyModule = useMemo(
-    () => status?.modules.find((module) => module.key === historyModuleKey) ?? null,
+    () =>
+      status?.modules.find((module) => module.key === historyModuleKey) ?? null,
     [historyModuleKey, status?.modules],
   );
   const contextIsCurrent =
-    contextKey === 'all' ? status?.isCurrent === true : contextModule?.isCurrent === true;
+    contextKey === 'all'
+      ? status?.isCurrent === true
+      : contextModule?.isCurrent === true;
+  const hasFailedModule =
+    status?.modules.some((module) => module.lastJob?.status === 'failed') ??
+    false;
+  const statusClassName = [
+    'publish-status-chip',
+    statusError || hasFailedModule ? 'is-error' : '',
+    (status && !status.isCurrent) || hasUnsavedChanges ? 'is-dirty' : '',
+  ]
+    .filter(Boolean)
+    .join(' ');
+  const historyPublishDisabled =
+    !historyModule ||
+    historyModule.isCurrent ||
+    publishing ||
+    rollingBack ||
+    hasUnsavedChanges;
+  const allPublishDisabled =
+    status?.isCurrent === true ||
+    publishing ||
+    rollingBack ||
+    hasUnsavedChanges;
+  const contextPublishDisabled =
+    publishing || rollingBack || hasUnsavedChanges || contextIsCurrent;
 
   useEffect(() => {
     if (!status?.modules.length) return;
-    if (contextKey !== 'all' && status.modules.some((module) => module.key === contextKey)) {
+    if (
+      contextKey !== 'all' &&
+      status.modules.some((module) => module.key === contextKey)
+    ) {
       setHistoryModuleKey(contextKey);
       return;
     }
@@ -125,7 +162,7 @@ export function AdminPublishingControls({
       ) : null}
       <div className="publish-version-control">
         <Button
-          className={`publish-status-chip${statusError || status?.modules.some((module) => module.lastJob?.status === 'failed') ? ' is-error' : ''}${(status && !status.isCurrent) || hasUnsavedChanges ? ' is-dirty' : ''}`}
+          className={statusClassName}
           variant="ghost"
           type="button"
           aria-expanded={panelOpen}
@@ -135,7 +172,12 @@ export function AdminPublishingControls({
             if (next) onRefresh();
           }}
         >
-          {publishStatusLabel(status, publishing, hasUnsavedChanges, Boolean(statusError))}
+          {publishStatusLabel(
+            status,
+            publishing,
+            hasUnsavedChanges,
+            Boolean(statusError),
+          )}
         </Button>
         {panelOpen ? (
           <div className="publish-version-popover">
@@ -179,20 +221,16 @@ export function AdminPublishingControls({
               <Button
                 variant="secondary"
                 type="button"
-                disabled={
-                  !historyModule ||
-                  historyModule.isCurrent ||
-                  publishing ||
-                  rollingBack ||
-                  hasUnsavedChanges
-                }
+                disabled={historyPublishDisabled}
                 onClick={() => historyModule && onPublish(historyModule.key)}
               >
                 发布此板块
               </Button>
             </div>
             <div className="publish-module-summary">
-              <span>{historyModule ? moduleStateLabel(historyModule) : '未选择'}</span>
+              <span>
+                {historyModule ? moduleStateLabel(historyModule) : '未选择'}
+              </span>
               <small>
                 {historyModule?.publishedAt
                   ? `当前版本 ${formatVersionTime(historyModule.publishedAt)}`
@@ -201,52 +239,55 @@ export function AdminPublishingControls({
             </div>
             <div className="publish-version-list">
               {historyModule?.versions.length ? (
-                historyModule.versions.map((version) => (
-                  <div
-                    className={`publish-version-row${version.isCurrent ? ' is-current' : ''}`}
-                    key={version.contentVersion}
-                  >
-                    <div>
-                      <strong>{formatVersionTime(version.publishedAt)}</strong>
-                      <small>{versionCode(version)}</small>
-                    </div>
-                    <span>{version.isCurrent ? '当前' : `${version.objectCount} 项`}</span>
-                    <Button
-                      variant="ghost"
-                      type="button"
-                      disabled={
-                        version.isCurrent ||
-                        publishing ||
-                        rollingBack ||
-                        hasUnsavedChanges
-                      }
-                      onClick={() =>
-                        onRequestRollback({
-                          moduleKey: historyModule.key,
-                          moduleLabel: historyModule.label,
-                          version,
-                        })
-                      }
-                      title={hasUnsavedChanges ? '请先处理未保存修改' : undefined}
+                historyModule.versions.map((version) => {
+                  const versionRollbackDisabled =
+                    version.isCurrent ||
+                    publishing ||
+                    rollingBack ||
+                    hasUnsavedChanges;
+                  return (
+                    <div
+                      className={`publish-version-row${version.isCurrent ? ' is-current' : ''}`}
+                      key={version.contentVersion}
                     >
-                      {version.isCurrent ? '使用中' : '回退'}
-                    </Button>
-                  </div>
-                ))
+                      <div>
+                        <strong>{formatVersionTime(version.publishedAt)}</strong>
+                        <small>{versionCode(version)}</small>
+                      </div>
+                      <span>
+                        {version.isCurrent ? '当前' : `${version.objectCount} 项`}
+                      </span>
+                      <Button
+                        variant="ghost"
+                        type="button"
+                        disabled={versionRollbackDisabled}
+                        onClick={() =>
+                          onRequestRollback({
+                            moduleKey: historyModule.key,
+                            moduleLabel: historyModule.label,
+                            version,
+                          })
+                        }
+                        title={
+                          hasUnsavedChanges ? '请先处理未保存修改' : undefined
+                        }
+                      >
+                        {version.isCurrent ? '使用中' : '回退'}
+                      </Button>
+                    </div>
+                  );
+                })
               ) : (
-                <div className="publish-version-empty">该板块尚无发布版本</div>
+                <div className="publish-version-empty">
+                  该板块尚无发布版本
+                </div>
               )}
             </div>
             <div className="publish-module-footer">
               <span>{status?.dirtyCount ?? 0} 个板块待发布</span>
               <Button
                 type="button"
-                disabled={
-                  status?.isCurrent === true ||
-                  publishing ||
-                  rollingBack ||
-                  hasUnsavedChanges
-                }
+                disabled={allPublishDisabled}
                 onClick={() => onPublish('all')}
               >
                 发布全部待更新
@@ -259,10 +300,11 @@ export function AdminPublishingControls({
         className="storefront-publish-button"
         type="button"
         onClick={() => onPublish(contextKey)}
-        disabled={publishing || rollingBack || hasUnsavedChanges || contextIsCurrent}
+        disabled={contextPublishDisabled}
         title={hasUnsavedChanges ? unsavedTitle : undefined}
       >
-        {publishingKey === contextKey || (contextKey === 'all' && publishingKey === 'all')
+        {publishingKey === contextKey ||
+        (contextKey === 'all' && publishingKey === 'all')
           ? '发布中…'
           : hasUnsavedChanges
             ? '请先保存'

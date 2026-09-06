@@ -19,7 +19,7 @@ const sections = [
   { id: 'beta', name: 'Beta' },
 ];
 
-test('every fixed Admin view resolves to exactly one intended domain', () => {
+test('fixed views resolve to intended domains', () => {
   const expected = new Map([
     ['dashboard', 'dashboard'],
     ['settings', 'experience'],
@@ -44,7 +44,7 @@ test('every fixed Admin view resolves to exactly one intended domain', () => {
   }
 });
 
-test('dynamic section views preserve catalog and operations ownership', () => {
+test('dynamic views preserve domain ownership', () => {
   assert.deepEqual(parseDynamicView('products:alpha'), {
     kind: 'products',
     sectionId: 'alpha',
@@ -57,7 +57,7 @@ test('dynamic section views preserve catalog and operations ownership', () => {
   assert.equal(parseDynamicView('unknown:alpha'), null);
 });
 
-test('legacy hashes remain valid and invalid dynamic hashes are rejected', () => {
+test('legacy hashes remain valid', () => {
   const legacy = [
     'settings',
     'theme',
@@ -80,7 +80,7 @@ test('legacy hashes remain valid and invalid dynamic hashes are rejected', () =>
   assert.equal(parseAdminView('#%E0%A4%A'), null);
 });
 
-test('secondary navigation has no duplicate production view ownership', () => {
+test('secondary items are unique', () => {
   const allViews = ADMIN_DOMAINS.flatMap((domain) =>
     getAdminSecondaryItems(domain.id, sections).map((item) => item.view),
   );
@@ -105,7 +105,7 @@ test('secondary navigation has no duplicate production view ownership', () => {
   );
 });
 
-test('domain defaults remain static and operations does not invent a section', () => {
+test('domain defaults remain static', () => {
   assert.equal(getAdminDefaultViewForDomain('experience', sections), 'settings');
   assert.equal(getAdminDefaultViewForDomain('catalog', sections), 'sections');
   assert.equal(
@@ -115,7 +115,7 @@ test('domain defaults remain static and operations does not invent a section', (
   assert.equal(getAdminDefaultViewForDomain('operations', []), null);
 });
 
-test('last-view storage and hash/history contract remain compatible', () => {
+test('last-view and history remain compatible', () => {
   const previousWindow = globalThis.window;
   const storage = new Map([[ADMIN_VIEW_STORAGE_KEY, 'faq']]);
   const historyCalls = [];
