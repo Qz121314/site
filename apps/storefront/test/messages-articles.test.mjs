@@ -76,18 +76,21 @@ test(
   },
 );
 
-test('first visit treats every active message article as unread without support identity', () => {
-  const active = getMessageArticlesFromBootstrap(
-    bootstrapWithMessageArticles([
-      { articleId: 'article-a', title: 'A', preview: 'A', sortOrder: 0 },
-      { articleId: 'article-b', title: 'B', preview: 'B', sortOrder: 1 },
-    ]),
-  );
-  const storage = memoryStorage();
+test(
+  'first visit treats every active message article as unread without support identity',
+  () => {
+    const active = getMessageArticlesFromBootstrap(
+      bootstrapWithMessageArticles([
+        { articleId: 'article-a', title: 'A', preview: 'A', sortOrder: 0 },
+        { articleId: 'article-b', title: 'B', preview: 'B', sortOrder: 1 },
+      ]),
+    );
+    const storage = memoryStorage();
 
-  assert.deepEqual([...readMessageArticleReadIds(storage)], []);
-  assert.equal(countUnreadMessageArticles(active, readMessageArticleReadIds(storage)), 2);
-});
+    assert.deepEqual([...readMessageArticleReadIds(storage)], []);
+    assert.equal(countUnreadMessageArticles(active, readMessageArticleReadIds(storage)), 2);
+  },
+);
 
 test(
   'marking one article read persists only its ID and leaves other active articles unread',
@@ -131,19 +134,22 @@ test('ghost IDs and inactive articles do not affect current unread count', () =>
   assert.equal(countUnreadMessageArticles(active, readMessageArticleReadIds(storage)), 1);
 });
 
-test('editing article metadata does not make an already-read article unread again', () => {
-  const storage = memoryStorage('["article-a"]');
-  const active = [
-    {
-      articleId: 'article-a',
-      title: 'Updated title',
-      preview: 'Updated preview',
-      sortOrder: 999,
-    },
-  ];
+test(
+  'editing article metadata does not make an already-read article unread again',
+  () => {
+    const storage = memoryStorage('["article-a"]');
+    const active = [
+      {
+        articleId: 'article-a',
+        title: 'Updated title',
+        preview: 'Updated preview',
+        sortOrder: 999,
+      },
+    ];
 
-  assert.equal(countUnreadMessageArticles(active, readMessageArticleReadIds(storage)), 0);
-});
+    assert.equal(countUnreadMessageArticles(active, readMessageArticleReadIds(storage)), 0);
+  },
+);
 
 test(
   'messages badge composes independent support and article unread counts safely',
