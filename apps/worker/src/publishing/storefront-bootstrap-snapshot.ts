@@ -1,7 +1,15 @@
 const IMMUTABLE_CACHE = 'public, max-age=31536000, immutable';
 const BOOTSTRAP_PREFIX = 'public/bootstrap';
+const BOOTSTRAP_SCHEMA_VERSION = 3;
 
 type JsonRecord = Record<string, unknown>;
+
+type MessageArticleMetadata = {
+  articleId: string;
+  title: string;
+  preview: string;
+  sortOrder: number;
+};
 
 export type StorefrontPublishedBootstrapSnapshot = {
   site: JsonRecord;
@@ -44,12 +52,38 @@ async function readPublishedJson(bucket: R2Bucket, key: string): Promise<unknown
   }
 }
 
+function sanitizeMessageArticles(value: unknown): MessageArticleMetadata[] {
+  if (!Array.isArray(value)) return [];
+  const articles: MessageArticleMetadata[] = [];
+  for (const item of value) {
+    if (
+      !isRecord(item) ||
+      typeof item.articleId !== 'string' ||
+      typeof item.title !== 'string' ||
+      typeof item.preview !== 'string' ||
+      typeof item.sortOrder !== 'number' ||
+      !Number.isInteger(item.sortOrder)
+    ) {
+      continue;
+    }
+    articles.push({
+      articleId: item.articleId,
+      title: item.title,
+      preview: item.preview,
+      sortOrder: item.sortOrder,
+    });
+  }
+  return articles;
+}
+
 function attachMessageArticles(siteEnvelope: JsonRecord, messages: unknown): JsonRecord {
   const site = isRecord(siteEnvelope.site) ? siteEnvelope.site : null;
   if (!site) return siteEnvelope;
   const navigation = isRecord(site.navigation) ? site.navigation : {};
   const messageArticles =
-    isRecord(messages) && Array.isArray(messages.articles) ? messages.articles : [];
+    isRecord(messages) && Array.isArray(messages.articles)
+      ? sanitizeMessageArticles(messages.articles)
+      : [];
   return {
     ...siteEnvelope,
     site: {
@@ -62,6 +96,13 @@ function attachMessageArticles(siteEnvelope: JsonRecord, messages: unknown): Jso
   };
 }
 
+function sanitizeCachedSiteEnvelope(siteEnvelope: JsonRecord): JsonRecord | null {
+  const site = isRecord(siteEnvelope.site) ? siteEnvelope.site : null;
+  const navigation = site && isRecord(site.navigation) ? site.navigation : null;
+  if (!navigation || !Array.isArray(navigation.messageArticles)) return null;
+  return attachMessageArticles(siteEnvelope, { articles: navigation.messageArticles });
+}
+
 export function storefrontBootstrapSnapshotKey(pointerVersion: string): string {
   return `${BOOTSTRAP_PREFIX}/${encodeURIComponent(pointerVersion)}/bootstrap.json`;
 }
@@ -72,7 +113,7 @@ function parseBootstrapSnapshot(
 ): StorefrontPublishedBootstrapSnapshot | null {
   if (
     !isRecord(value) ||
-    value.schemaVersion !== 2 ||
+    value.schemaVersion !== BOOTSTRAP_SCHEMA_VERSION ||
     value.pointerVersion !== pointerVersion ||
     !isRecord(value.site) ||
     !isRecord(value.sectionsIndex) ||
@@ -80,8 +121,10 @@ function parseBootstrapSnapshot(
   ) {
     return null;
   }
+  const site = sanitizeCachedSiteEnvelope(value.site);
+  if (!site) return null;
   return {
-    site: value.site,
+    site,
     sectionsIndex: value.sectionsIndex,
     home: value.home,
   };
@@ -130,7 +173,7 @@ export async function loadStorefrontPublishedBootstrap(
     await bucket.put(
       snapshotKey,
       JSON.stringify({
-        schemaVersion: 2,
+        schemaVersion: BOOTSTRAP_SCHEMA_VERSION,
         pointerVersion,
         site,
         sectionsIndex,
