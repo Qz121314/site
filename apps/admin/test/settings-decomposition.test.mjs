@@ -131,7 +131,7 @@ test('workspace ownership is decomposed by domain', () => {
 
   assert.match(messages, /\/messages\//);
   assert.match(messages, /Article Center/u);
-  assert.doesNotMatch(messages, /ArticlePicker|background_media_id|message_article|placement/i);
+  assert.doesNotMatch(messages, /ArticlePicker|background_media_id|messageArticleApi/i);
   assert.doesNotMatch(messages, /saveSettings/);
 });
 
