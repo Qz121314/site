@@ -130,7 +130,10 @@ export function markMessageArticleRead(
   if (readIds.has(normalized)) return;
   readIds.add(normalized);
   try {
-    storage.setItem(MESSAGE_ARTICLE_READ_STORAGE_KEY, JSON.stringify([...readIds].sort()));
+    storage.setItem(
+      MESSAGE_ARTICLE_READ_STORAGE_KEY,
+      JSON.stringify([...readIds].sort()),
+    );
   } catch {
     return;
   }
@@ -157,6 +160,9 @@ function safeUnread(value: number): number {
   return Number.isFinite(value) ? Math.max(0, Math.floor(value)) : 0;
 }
 
-export function composeMessagesBadge(supportUnread: number, articleUnread: number): number {
+export function composeMessagesBadge(
+  supportUnread: number,
+  articleUnread: number,
+): number {
   return safeUnread(supportUnread) + safeUnread(articleUnread);
 }
