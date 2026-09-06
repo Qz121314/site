@@ -4,6 +4,7 @@ import type { SupportConversationSummary } from './support-contract';
 import { MessagesArticleList } from './MessagesArticleList';
 import type { MessageArticleMetadata } from './messages-articles';
 import { MessagesPageContent } from './support-ui';
+import './messages-articles.css';
 
 export function MessagesArticleListWorkspace({
   articles,
