@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { useAdminDirtySource } from '../admin-unsaved-state';
 import { MediaPickerDialog } from '../asset-library/MediaPickerDialog';
 import { formatBrandingBytes } from '../branding-media/local-branding-image';
-import type { SiteSettings, SiteSettingsWithHero } from '../site-hero-settings-api';
+import type { SiteSettingsWithHero } from '../site-hero-settings-api';
 import {
   settingsValueEqual,
   toSiteSettingsUpdateInput,
