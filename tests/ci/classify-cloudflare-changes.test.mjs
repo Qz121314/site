@@ -84,16 +84,19 @@ test('R2 config-only changes validate R2 without forcing Worker deploy', () => {
   expectFlags(['config/r2-public-cors.json'], {
     r2_config_changed: true,
     r2_validation_required: true,
+    infra_validation_required: true,
     deploy_required: false,
     d1_remote_required: false,
   });
 });
 
-test('wrangler config changes deploy and run relevant infra validation', () => {
+test('wrangler config changes deploy and run non-R2 infra/deep validation', () => {
   expectFlags(['wrangler.jsonc'], {
     wrangler_config_changed: true,
     deploy_required: true,
-    r2_validation_required: true,
+    r2_validation_required: false,
+    infra_validation_required: true,
+    deep_smoke_relevant: true,
   });
 });
 
