@@ -3,9 +3,9 @@ import { existsSync } from 'node:fs';
 import prettier from 'prettier';
 import { ESLint } from 'eslint';
 
-function git(args, options = {}) {
+function git(args) {
   return execFileSync('git', args, {
-    encoding: options.encoding ?? 'utf8',
+    encoding: 'utf8',
     stdio: ['ignore', 'pipe', 'pipe'],
   });
 }
@@ -31,7 +31,7 @@ if (files.length === 0) {
 
 const formatFailures = [];
 for (const file of files) {
-  const info = await prettier.getFileInfo(file, { ignorePath: '.prettierignore' });
+  const info = await prettier.getFileInfo(file);
   if (info.ignored || !info.inferredParser) continue;
 
   let source;
