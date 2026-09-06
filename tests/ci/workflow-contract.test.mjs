@@ -41,6 +41,7 @@ test('remote D1 migration actions are migration-gated', () => {
 test('R2 management and probes are R2-config gated', () => {
   for (const name of [
     'Read R2 validation metadata from production D1',
+    'Verify selected R2 custom domain',
     'Configure and verify public R2 CORS',
     'Probe direct R2 media reads',
   ]) {
@@ -52,15 +53,14 @@ test('deploy and production acceptance are change-aware', () => {
   expectCondition(namedStep(mainWorkflow, 'Deploy business platform Worker'), 'deploy_required', 'force_deploy');
   expectCondition(namedStep(mainWorkflow, 'Minimal production smoke'), 'steps.deploy.outputs.deployed');
   expectCondition(namedStep(mainWorkflow, 'Deep production HTTP acceptance'), 'deep_smoke_relevant');
-  assert.match(mainWorkflow, /production-browser-relevant/);
+  assert.match(mainWorkflow, /production_browser_relevant/);
   assert.match(mainWorkflow, /needs\.pipeline\.outputs\.deployed == 'true'/);
   assert.doesNotMatch(mainWorkflow, /continue-on-error:\s*true/);
 });
 
-test('PR validation is local-only', () => {
+test('PR validation is local-only and executes the canonical verify gate', () => {
   assert.doesNotMatch(prWorkflow, /--remote|CLOUDFLARE_API_TOKEN|wrangler\s+deploy(?!\s+--dry-run)/i);
-  assert.match(prWorkflow, /pnpm db:migrate:local/);
-  assert.match(prWorkflow, /pnpm cf:check/);
+  assert.match(prWorkflow, /run:\s*pnpm verify/);
 });
 
 test('pnpm store caching is lockfile-keyed and node_modules is not cached', () => {
@@ -76,12 +76,10 @@ test('Playwright Chromium cache is preserved', () => {
   assert.match(e2eWorkflow, /path:\s*~\/\.cache\/ms-playwright/);
 });
 
-test('PR build and dry-run reuse one production build', () => {
-  const buildCommands = prWorkflow.match(/run:\s*pnpm build\b/g) ?? [];
-  assert.equal(buildCommands.length, 1);
-  const dryRun = namedStep(prWorkflow, 'Validate Worker bundle from built output');
-  assert.match(dryRun, /pnpm cf:check/);
-  assert.doesNotMatch(dryRun, /pnpm build/);
+test('PR verification builds once through pnpm verify', () => {
+  assert.equal((prWorkflow.match(/run:\s*pnpm verify\b/g) ?? []).length, 1);
+  assert.equal((prWorkflow.match(/run:\s*pnpm build\b/g) ?? []).length, 0);
+  assert.equal((prWorkflow.match(/run:\s*pnpm cf:check\b/g) ?? []).length, 0);
 });
 
 test('main release verifies/builds once before direct Wrangler deploy', () => {
@@ -94,6 +92,6 @@ test('main release verifies/builds once before direct Wrangler deploy', () => {
 test('classification summary explains remote no-op decisions', () => {
   const summary = namedStep(mainWorkflow, 'Publish Cloudflare classification summary');
   assert.match(summary, /Skip remote D1: no migration diff/);
-  assert.match(summary, /Skip R2 validation: no R2\/wrangler config diff/);
+  assert.match(summary, /Skip R2 validation: no R2 config diff/);
   assert.match(summary, /Skip production deploy: no deploy-impacting diff/);
 });
