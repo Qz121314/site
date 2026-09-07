@@ -1,6 +1,7 @@
 import {
   ArrowDown,
   ArrowUp,
+  Check,
   Eye,
   Image as ImageIcon,
   PencilLine,
@@ -12,11 +13,13 @@ import { useEffect, useMemo, useState } from 'react';
 import type { AdminView } from '../../admin-navigation';
 import { useAdminDirtySource } from '../../admin-unsaved-state';
 import { fetchArticles, type AdminArticle } from '../../article-center/api';
-import { fetchMediaLibrary, type ManagedMediaAsset } from '../../asset-library/api';
+import { MediaPickerDialog } from '../../asset-library/MediaPickerDialog';
 import { brandingAssetPreviewUrl } from '../../branding-media/api';
 import { Button } from '../../components/ui/button';
 import { AdminDialog } from '../../components/ui/dialog';
 import { AdminFeedbackState } from '../../components/ui/feedback-state';
+import { Input } from '../../components/ui/input';
+import { AdminStatusBadge } from '../../components/ui/status-badge';
 import { fetchMessageArticlePlacements, saveMessageArticlePlacements } from './api';
 import {
   addDraftArticle,
@@ -27,7 +30,6 @@ import {
   setDraftBackground,
   type MessageArticleDraft,
 } from './draft';
-import './messages-articles.css';
 
 function messageFor(error: unknown): string {
   return error instanceof Error ? error.message : 'Messages 文章配置请求失败。';
@@ -42,6 +44,21 @@ function excerpt(body: string): string {
     .replace(/\s+/g, ' ')
     .trim();
   return plain.length > 150 ? `${plain.slice(0, 147)}…` : plain;
+}
+
+function reloadExpiredAdminSession() {
+  window.location.reload();
+}
+
+function ArticleStatusBadge({ article }: { article: AdminArticle | undefined }) {
+  if (!article) {
+    return <AdminStatusBadge tone="warning">文章状态不可用</AdminStatusBadge>;
+  }
+  return (
+    <AdminStatusBadge tone={article.isActive ? 'success' : 'default'}>
+      {article.isActive ? '文章已启用' : '文章已停用'}
+    </AdminStatusBadge>
+  );
 }
 
 function AddArticleDialog({
@@ -91,14 +108,12 @@ function AddArticleDialog({
       open={open}
       title="添加 Messages 文章"
       eyebrow="Article Center"
-      description="从已启用的 Article Center 内容资产中选择。已加入 Messages 的文章不会重复出现。"
+      description="从 Article Center 的非回收站内容资产中选择。文章自身启用状态独立于 Messages placement；已加入的文章不会重复出现。"
       size="large"
       onClose={onClose}
       footer={
         <>
-          <span className="messages-articles-dialog-count">
-            已选择 {selected.size} 篇
-          </span>
+          <span className="messages-articles-dialog-count">已选择 {selected.size} 篇</span>
           <Button variant="secondary" onClick={onClose}>
             取消
           </Button>
@@ -114,15 +129,16 @@ function AddArticleDialog({
         </>
       }
     >
-      <label className="messages-articles-search">
+      <div className="messages-articles-search">
         <Search aria-hidden="true" size={16} />
-        <input
+        <Input
           type="search"
           value={query}
           placeholder="搜索文章标题或正文"
+          aria-label="搜索文章标题或正文"
           onChange={(event) => setQuery(event.target.value)}
         />
-      </label>
+      </div>
       {available.length > 0 ? (
         <div
           className="messages-articles-picker-list"
@@ -141,13 +157,18 @@ function AddArticleDialog({
                 onClick={() => toggle(article.id)}
               >
                 <span className="messages-articles-picker-check" aria-hidden="true">
-                  {isSelected ? '✓' : ''}
+                  {isSelected ? <Check size={14} /> : null}
                 </span>
                 <span>
                   <strong>{article.title}</strong>
                   <small>{excerpt(article.body) || '暂无正文摘要'}</small>
                 </span>
-                <em>已启用</em>
+                <AdminStatusBadge
+                  tone={article.isActive ? 'success' : 'default'}
+                  showIcon={false}
+                >
+                  {article.isActive ? '已启用' : '已停用'}
+                </AdminStatusBadge>
               </button>
             );
           })}
@@ -159,117 +180,7 @@ function AddArticleDialog({
           description={
             query
               ? '请调整搜索关键词。'
-              : '当前已启用文章都已加入 Messages，或 Article Center 暂无可用文章。'
-          }
-          compact
-        />
-      )}
-    </AdminDialog>
-  );
-}
-
-function BackgroundPickerDialog({
-  open,
-  selectedId,
-  onClose,
-  onSelect,
-}: {
-  open: boolean;
-  selectedId: string | null;
-  onClose: () => void;
-  onSelect: (asset: ManagedMediaAsset) => void;
-}) {
-  const [assets, setAssets] = useState<ManagedMediaAsset[]>([]);
-  const [query, setQuery] = useState('');
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState('');
-
-  useEffect(() => {
-    if (!open) return;
-    let active = true;
-    setQuery('');
-    setLoading(true);
-    setError('');
-    void fetchMediaLibrary({ kind: 'image' })
-      .then((items) => {
-        if (active) setAssets(items.filter((asset) => asset.mediaKind === 'image'));
-      })
-      .catch((reason: unknown) => {
-        if (active) setError(messageFor(reason));
-      })
-      .finally(() => {
-        if (active) setLoading(false);
-      });
-    return () => {
-      active = false;
-    };
-  }, [open]);
-
-  const filtered = useMemo(() => {
-    const keyword = query.trim().toLocaleLowerCase('zh-CN');
-    if (!keyword) return assets;
-    return assets.filter((asset) =>
-      `${asset.fileName} ${asset.folderName ?? ''}`
-        .toLocaleLowerCase('zh-CN')
-        .includes(keyword),
-    );
-  }, [assets, query]);
-
-  return (
-    <AdminDialog
-      open={open}
-      title="选择卡片背景"
-      eyebrow="Asset Library"
-      description="只显示素材中心中可用的静态图片。选择只更新当前草稿，不会创建新的素材用途引用。"
-      size="large"
-      onClose={onClose}
-    >
-      <label className="messages-articles-search">
-        <Search aria-hidden="true" size={16} />
-        <input
-          type="search"
-          value={query}
-          placeholder="搜索图片名称或文件夹"
-          onChange={(event) => setQuery(event.target.value)}
-        />
-      </label>
-      {error ? (
-        <AdminFeedbackState
-          kind="error"
-          title="背景素材加载失败"
-          description={error}
-          action={<Button onClick={onClose}>关闭后重试</Button>}
-          compact
-        />
-      ) : loading ? (
-        <AdminFeedbackState kind="loading" title="正在读取素材中心" compact />
-      ) : filtered.length > 0 ? (
-        <div className="messages-articles-media-grid">
-          {filtered.map((asset) => (
-            <button
-              key={asset.id}
-              type="button"
-              className={`messages-articles-media-card${selectedId === asset.id ? ' is-selected' : ''}`}
-              aria-pressed={selectedId === asset.id}
-              onClick={() => {
-                onSelect(asset);
-                onClose();
-              }}
-            >
-              <img src={brandingAssetPreviewUrl(asset.id)} alt="" loading="lazy" />
-              <span>
-                <strong>{asset.fileName}</strong>
-                <small>{asset.folderName || '未分组'}</small>
-              </span>
-            </button>
-          ))}
-        </div>
-      ) : (
-        <AdminFeedbackState
-          kind="empty"
-          title={query ? '没有匹配图片' : '暂无可用背景图片'}
-          description={
-            query ? '请调整搜索关键词。' : '请先在素材中心准备 ready 状态的图片。'
+              : '当前非回收站文章都已加入 Messages，或 Article Center 暂无可用文章。'
           }
           compact
         />
@@ -399,9 +310,7 @@ export function MessagesArticlesSection({
       const next = normalizeDraft(placements);
       setTitles((current) => {
         const updated = new Map(current);
-        placements.forEach((placement) =>
-          updated.set(placement.articleId, placement.title),
-        );
+        placements.forEach((placement) => updated.set(placement.articleId, placement.title));
         return updated;
       });
       setServerDraft(next);
@@ -418,6 +327,9 @@ export function MessagesArticlesSection({
   const previewPlacement = previewTarget
     ? draft.find((placement) => placement.articleId === previewTarget)
     : undefined;
+  const backgroundPlacement = backgroundTarget
+    ? draft.find((placement) => placement.articleId === backgroundTarget)
+    : undefined;
 
   return (
     <section
@@ -427,9 +339,7 @@ export function MessagesArticlesSection({
       <div className="settings-workspace-heading messages-articles-heading">
         <div>
           <h2 id="messages-article-title">Messages Articles</h2>
-          <p>
-            从 Article Center 组织 Messages 中展示的文章入口，并独立配置 placement 背景。
-          </p>
+          <p>从 Article Center 组织 Messages 中展示的文章入口，并独立配置 placement 背景。</p>
         </div>
         <div className="messages-articles-toolbar">
           <Button variant="secondary" onClick={() => onNavigate('faq')}>
@@ -474,18 +384,13 @@ export function MessagesArticlesSection({
           </div>
           {draft.map((placement, index) => {
             const article = articleById.get(placement.articleId);
-            const title =
-              article?.title || titles.get(placement.articleId) || placement.articleId;
+            const title = article?.title || titles.get(placement.articleId) || placement.articleId;
             return (
               <div className="messages-articles-row" key={placement.articleId}>
                 <div className="messages-articles-article">
                   <div>
                     <strong>{title}</strong>
-                    <span
-                      className={`messages-articles-status${article ? ' is-active' : ''}`}
-                    >
-                      {article ? '文章已启用' : '文章当前未启用'}
-                    </span>
+                    <ArticleStatusBadge article={article} />
                   </div>
                   <small>
                     {article
@@ -522,9 +427,7 @@ export function MessagesArticlesSection({
                         variant="ghost"
                         size="compact"
                         onClick={() =>
-                          updateDraft(
-                            setDraftBackground(draft, placement.articleId, null),
-                          )
+                          updateDraft(setDraftBackground(draft, placement.articleId, null))
                         }
                       >
                         清除
@@ -551,9 +454,7 @@ export function MessagesArticlesSection({
                     size="icon"
                     aria-label={`下移 ${title}`}
                     disabled={index === draft.length - 1}
-                    onClick={() =>
-                      updateDraft(moveDraftArticle(draft, placement.articleId, 1))
-                    }
+                    onClick={() => updateDraft(moveDraftArticle(draft, placement.articleId, 1))}
                   >
                     <ArrowDown aria-hidden="true" size={17} />
                   </Button>
@@ -572,9 +473,7 @@ export function MessagesArticlesSection({
                     variant="ghost"
                     size="icon"
                     aria-label={`移除 ${title}`}
-                    onClick={() =>
-                      updateDraft(removeDraftArticle(draft, placement.articleId))
-                    }
+                    onClick={() => updateDraft(removeDraftArticle(draft, placement.articleId))}
                   >
                     <Trash2 aria-hidden="true" size={17} />
                   </Button>
@@ -587,9 +486,7 @@ export function MessagesArticlesSection({
 
       <div className="messages-articles-savebar" data-dirty={dirty ? 'true' : 'false'}>
         <div>
-          <strong>
-            {dirty ? '有未保存修改' : saved ? '配置已保存' : '当前配置已同步'}
-          </strong>
+          <strong>{dirty ? '有未保存修改' : saved ? '配置已保存' : '当前配置已同步'}</strong>
           <span>
             {dirty
               ? '排序、背景、添加或移除只存在于当前草稿，保存后才会生效。'
@@ -610,20 +507,20 @@ export function MessagesArticlesSection({
         onAdd={addArticles}
       />
 
-      <BackgroundPickerDialog
-        open={backgroundTarget !== null}
-        selectedId={
-          backgroundTarget
-            ? (draft.find((placement) => placement.articleId === backgroundTarget)
-                ?.backgroundMediaId ?? null)
-            : null
-        }
-        onClose={() => setBackgroundTarget(null)}
-        onSelect={(asset) => {
-          if (!backgroundTarget) return;
-          updateDraft(setDraftBackground(draft, backgroundTarget, asset.id));
-        }}
-      />
+      {backgroundTarget !== null ? (
+        <MediaPickerDialog
+          title="选择卡片背景"
+          selectionMode="reference-only"
+          allowedKinds={['image']}
+          currentAssetId={backgroundPlacement?.backgroundMediaId ?? null}
+          onClose={() => setBackgroundTarget(null)}
+          onSessionExpired={reloadExpiredAdminSession}
+          onSelect={(asset) => {
+            updateDraft(setDraftBackground(draft, backgroundTarget, asset.id));
+            setBackgroundTarget(null);
+          }}
+        />
+      ) : null}
 
       <PlacementPreviewDialog
         open={previewTarget !== null}
