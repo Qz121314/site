@@ -70,19 +70,15 @@ test('0032 adds a nullable background media placement reference without disturbi
     const background = columns.find((column) => column.name === 'background_media_id');
     assert.ok(background);
     assert.equal(background.notnull, 0);
-    assert.deepEqual(
-      db
-        .prepare(
-          'SELECT article_id, background_media_id, sort_order, is_enabled FROM message_article_references',
-        )
-        .get(),
-      {
-        article_id: 'article-a',
-        background_media_id: null,
-        sort_order: 7,
-        is_enabled: 1,
-      },
-    );
+    const preserved = db
+      .prepare(
+        'SELECT article_id, background_media_id, sort_order, is_enabled FROM message_article_references',
+      )
+      .get();
+    assert.equal(preserved.article_id, 'article-a');
+    assert.equal(preserved.background_media_id, null);
+    assert.equal(preserved.sort_order, 7);
+    assert.equal(preserved.is_enabled, 1);
 
     db.prepare(
       'UPDATE message_article_references SET background_media_id = ? WHERE article_id = ?',
