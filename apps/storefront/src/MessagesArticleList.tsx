@@ -37,9 +37,7 @@ function MessagesArticleRow({
         </span>
       ) : null}
       <span className="messages-article-row-copy">
-        <span className="sr-only">
-          {unread ? 'Unread article. ' : 'Read article. '}
-        </span>
+        <span className="sr-only">{unread ? 'Unread article. ' : 'Read article. '}</span>
         {unread ? (
           <span
             aria-hidden="true"
