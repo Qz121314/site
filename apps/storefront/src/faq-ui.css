@@ -171,6 +171,157 @@
   gap: 12px;
 }
 
+.app-shell[data-shell-route='article'] {
+  background: var(--surface);
+}
+
+.article-reading-page {
+  width: min(720px, 100%);
+  gap: 0;
+  overflow: visible;
+  background: var(--surface);
+}
+
+.article-reading-navigation {
+  display: grid;
+  min-height: 52px;
+  grid-template-columns: 44px minmax(0, 1fr) 44px;
+  align-items: center;
+  border-bottom: 1px solid var(--app-hairline, var(--line));
+  background: var(--surface);
+}
+
+.article-reading-navigation .faq-back-link {
+  grid-column: 1;
+  justify-self: start;
+}
+
+.article-reading-navigation-title {
+  min-width: 0;
+  grid-column: 2;
+  color: color-mix(in srgb, var(--text) 68%, var(--muted));
+  font-size: 0.78rem;
+  font-weight: 650;
+  letter-spacing: -0.01em;
+  line-height: 1.2;
+  text-align: center;
+}
+
+.article-reading-navigation-spacer {
+  width: 44px;
+  height: 44px;
+  grid-column: 3;
+  justify-self: end;
+}
+
+.article-reading-header {
+  padding: 42px 30px 24px;
+}
+
+.article-reading-header h1 {
+  max-width: 680px;
+  font-size: clamp(2rem, 5vw, 2.35rem);
+  font-weight: 700;
+  line-height: 1.14;
+  letter-spacing: -0.038em;
+  text-wrap: balance;
+}
+
+.article-reading-body {
+  min-width: 0;
+  padding: 0 30px 56px;
+  border: 0;
+}
+
+.article-reading-body .markdown-content {
+  min-width: 0;
+  color: color-mix(in srgb, var(--text) 88%, var(--muted));
+  font-size: 1rem;
+  line-height: 1.76;
+  overflow-wrap: anywhere;
+}
+
+.article-reading-body .markdown-content h2 {
+  margin: 2.1em 0 0.7em;
+  font-size: 1.36rem;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+}
+
+.article-reading-body .markdown-content h3 {
+  margin: 1.9em 0 0.65em;
+  font-size: 1.14rem;
+  font-weight: 680;
+  line-height: 1.25;
+  letter-spacing: -0.022em;
+}
+
+.article-reading-body .markdown-content :is(p, ul, ol, blockquote, pre) {
+  margin-top: 0;
+  margin-bottom: 1.05em;
+}
+
+.article-reading-body .markdown-content :is(ul, ol) {
+  padding-left: 1.4rem;
+}
+
+.article-reading-body .markdown-content li + li {
+  margin-top: 0.35em;
+}
+
+.article-reading-body .markdown-content blockquote {
+  padding: 0.15em 0 0.15em 1rem;
+  border-left: 3px solid color-mix(in srgb, var(--brand) 72%, var(--line));
+  border-radius: 0;
+  color: color-mix(in srgb, var(--text) 80%, var(--muted));
+  background: transparent;
+}
+
+.article-reading-body .markdown-content a {
+  overflow-wrap: anywhere;
+  color: var(--brand-strong);
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.18em;
+}
+
+.article-reading-body .markdown-content strong {
+  color: var(--text);
+  font-weight: 700;
+}
+
+.article-reading-body .markdown-content code {
+  overflow-wrap: anywhere;
+}
+
+.article-reading-body .markdown-content pre {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: auto;
+  padding: 14px 15px;
+  border-color: color-mix(in srgb, var(--line) 84%, transparent);
+  background: var(--surface-soft);
+}
+
+.article-reading-body .markdown-content pre code {
+  white-space: pre;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
+.article-reading-body .markdown-content img {
+  width: auto;
+  max-width: 100%;
+  height: auto;
+  margin: 1.5em auto;
+}
+
+.article-reading-body .markdown-content hr {
+  margin: 2em 0;
+  border: 0;
+  border-top: 1px solid var(--app-hairline, var(--line));
+}
+
 @media (max-width: 767px) {
   .faq-directory {
     gap: 11px;
@@ -239,6 +390,53 @@
   .faq-article-body .markdown-content {
     font-size: 0.93rem;
     line-height: 1.77;
+  }
+
+  .article-reading-page {
+    width: 100%;
+    gap: 0;
+  }
+
+  .article-reading-navigation {
+    top: var(--app-viewport-top, 0px);
+    min-height: calc(52px + env(safe-area-inset-top));
+    margin: -10px -10px 0;
+    padding-top: env(safe-area-inset-top);
+    padding-right: max(10px, env(safe-area-inset-right));
+    padding-left: max(10px, env(safe-area-inset-left));
+    background: color-mix(in srgb, var(--surface) 94%, transparent);
+    backdrop-filter: blur(22px) saturate(1.04);
+  }
+
+  .article-reading-navigation .faq-back-link {
+    height: 52px;
+  }
+
+  .article-reading-header {
+    padding: 34px 2px 22px;
+  }
+
+  .article-reading-header h1 {
+    font-size: clamp(1.8rem, 8vw, 2rem);
+    line-height: 1.14;
+    letter-spacing: -0.036em;
+  }
+
+  .article-reading-body {
+    padding: 0 2px 28px;
+  }
+
+  .article-reading-body .markdown-content {
+    font-size: 1rem;
+    line-height: 1.76;
+  }
+
+  .article-reading-body .markdown-content h2 {
+    font-size: 1.3rem;
+  }
+
+  .article-reading-body .markdown-content h3 {
+    font-size: 1.12rem;
   }
 }
 
