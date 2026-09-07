@@ -30,6 +30,14 @@ test('Admin placement API validates ready image media and keeps ordered replacem
   assert.match(source, /mime_type LIKE 'image\/%'/u);
   assert.match(source, /DELETE FROM message_article_references/u);
   assert.match(source, /background_media_id/u);
+  assert.match(source, /LEFT JOIN media_assets background/u);
+  assert.match(source, /background.status = 'ready'/u);
+  assert.match(source, /background.deleted_at IS NULL/u);
+  assert.match(source, /'isEnabled' in value/u);
+  assert.doesNotMatch(source, /isEnabled:\s*boolean/u);
+  assert.doesNotMatch(source, /isEnabled:\s*row\.is_enabled/u);
+  assert.doesNotMatch(source, /placement\.isEnabled/u);
+  assert.match(source, /VALUES \(\?, \?, \?, 1, \?, \?\)/u);
   assert.doesNotMatch(source, /INSERT INTO faqs[\s\S]*background/iu);
 });
 

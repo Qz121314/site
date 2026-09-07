@@ -18,13 +18,11 @@ type MessageArticleReference = {
   backgroundMediaId: string | null;
   sortOrder: number;
   enabled: boolean;
-  isEnabled: boolean;
 };
 
 type MessageArticlePlacementInput = {
   articleId: string;
   backgroundMediaId: string | null;
-  isEnabled: boolean;
 };
 
 type ParsedMessageArticleInput = {
@@ -50,14 +48,14 @@ function parseLegacyArticleIds(value: unknown): ParsedMessageArticleInput | null
     placements: articleIds.map((articleId) => ({
       articleId,
       backgroundMediaId: null,
-      isEnabled: true,
     })),
     legacyArticleIds: articleIds,
   };
 }
 
 function parsePlacement(value: unknown): MessageArticlePlacementInput | null {
-  if (!isRecord(value) || !validReferenceId(value.articleId)) return null;
+  if (!isRecord(value) || !validReferenceId(value.articleId) || 'isEnabled' in value)
+    return null;
   const rawBackground = value.backgroundMediaId;
   const backgroundMediaId =
     rawBackground === undefined || rawBackground === null
@@ -66,9 +64,7 @@ function parsePlacement(value: unknown): MessageArticlePlacementInput | null {
         ? rawBackground
         : undefined;
   if (backgroundMediaId === undefined) return null;
-  const isEnabled = value.isEnabled === undefined ? true : value.isEnabled;
-  if (typeof isEnabled !== 'boolean') return null;
-  return { articleId: value.articleId, backgroundMediaId, isEnabled };
+  return { articleId: value.articleId, backgroundMediaId };
 }
 
 function parsePlacementInput(value: unknown): ParsedMessageArticleInput | null {
@@ -95,9 +91,15 @@ async function listReferences(db: D1Database): Promise<MessageArticleReference[]
   const rows = (
     await db
       .prepare(
-        `SELECT mar.article_id, mar.background_media_id, mar.sort_order, mar.is_enabled, f.question
+        `SELECT mar.article_id,
+                CASE WHEN background.id IS NOT NULL THEN mar.background_media_id ELSE NULL END AS background_media_id,
+                mar.sort_order, mar.is_enabled, f.question
          FROM message_article_references mar
          JOIN faqs f ON f.id = mar.article_id
+         LEFT JOIN media_assets background
+           ON background.id = mar.background_media_id
+          AND background.status = 'ready'
+          AND background.deleted_at IS NULL
          WHERE f.deleted_at IS NULL
          ORDER BY mar.sort_order ASC, mar.article_id ASC`,
       )
@@ -115,7 +117,6 @@ async function listReferences(db: D1Database): Promise<MessageArticleReference[]
     backgroundMediaId: row.background_media_id ?? null,
     sortOrder: row.sort_order,
     enabled: row.is_enabled === 1,
-    isEnabled: row.is_enabled === 1,
   }));
 }
 
@@ -223,15 +224,8 @@ adminMessageArticleRoutes.put('/', async (context) => {
         context.env.DB.prepare(
           `INSERT INTO message_article_references (
                article_id, background_media_id, sort_order, is_enabled, created_at, updated_at
-             ) VALUES (?, ?, ?, ?, ?, ?)`,
-        ).bind(
-          placement.articleId,
-          placement.backgroundMediaId,
-          sortOrder,
-          placement.isEnabled ? 1 : 0,
-          now,
-          now,
-        ),
+             ) VALUES (?, ?, ?, 1, ?, ?)`,
+        ).bind(placement.articleId, placement.backgroundMediaId, sortOrder, now, now),
       );
 
   await context.env.DB.batch([
@@ -249,7 +243,6 @@ adminMessageArticleRoutes.put('/', async (context) => {
             placements: parsed.placements.map((placement) => ({
               articleId: placement.articleId,
               backgroundMediaId: placement.backgroundMediaId,
-              isEnabled: placement.isEnabled,
             })),
           },
       createdAt: now,

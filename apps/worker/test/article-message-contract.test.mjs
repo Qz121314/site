@@ -52,6 +52,15 @@ function createMessageArticleDb() {
       'media-video',
       { id: 'media-video', status: 'ready', deleted_at: null, mime_type: 'video/mp4' },
     ],
+    [
+      'media-processing',
+      {
+        id: 'media-processing',
+        status: 'processing',
+        deleted_at: null,
+        mime_type: 'image/webp',
+      },
+    ],
   ]);
   let references = [
     {
@@ -73,6 +82,11 @@ function createMessageArticleDb() {
     get references() {
       return references.map((reference) => ({ ...reference }));
     },
+    setReferenceBackground(articleId, backgroundMediaId) {
+      const reference = references.find((item) => item.article_id === articleId);
+      if (!reference) throw new Error(`Unknown article reference: ${articleId}`);
+      reference.background_media_id = backgroundMediaId;
+    },
     batches,
     prepare(sql) {
       const statement = {
@@ -87,10 +101,19 @@ function createMessageArticleDb() {
             return {
               results: references
                 .filter((reference) => !articles.get(reference.article_id)?.deleted_at)
-                .map((reference) => ({
-                  ...reference,
-                  question: articles.get(reference.article_id)?.question,
-                }))
+                .map((reference) => {
+                  const background = reference.background_media_id
+                    ? media.get(reference.background_media_id)
+                    : null;
+                  return {
+                    ...reference,
+                    background_media_id:
+                      background?.status === 'ready' && background.deleted_at === null
+                        ? reference.background_media_id
+                        : null,
+                    question: articles.get(reference.article_id)?.question,
+                  };
+                })
                 .sort(
                   (left, right) =>
                     left.sort_order - right.sort_order ||
@@ -139,7 +162,7 @@ function createMessageArticleDb() {
               article_id: statement.args[0],
               background_media_id: statement.args[1],
               sort_order: statement.args[2],
-              is_enabled: statement.args[3],
+              is_enabled: 1,
             });
           } else {
             references.push({
@@ -194,7 +217,6 @@ test('GET /message-articles returns deterministic placement order and compatibil
         backgroundMediaId: null,
         sortOrder: 10,
         enabled: true,
-        isEnabled: true,
       },
       {
         articleId: 'article-a',
@@ -202,11 +224,31 @@ test('GET /message-articles returns deterministic placement order and compatibil
         backgroundMediaId: null,
         sortOrder: 20,
         enabled: true,
-        isEnabled: true,
       },
     ],
   });
   assert.equal(response.headers.get('cache-control'), 'no-store');
+});
+
+test('GET /message-articles nulls stale background media without dropping placements', async () => {
+  for (const [backgroundMediaId, expected] of [
+    ['media-ready', 'media-ready'],
+    ['media-deleted', null],
+    ['media-processing', null],
+    ['missing-media', null],
+  ]) {
+    const db = createMessageArticleDb();
+    db.setReferenceBackground('article-a', backgroundMediaId);
+    const app = withRequestId(adminMessageArticleRoutes);
+    const response = await app.request('https://admin.example.com/', {}, { DB: db });
+
+    assert.equal(response.status, 200);
+    const body = await response.json();
+    assert.equal(body.articles.length, 2);
+    const article = body.articles.find((item) => item.articleId === 'article-a');
+    assert.equal(article.backgroundMediaId, expected);
+    assert.equal(Object.hasOwn(article, 'isEnabled'), false);
+  }
 });
 
 test('PUT /message-articles replaces the full list and persists input order deterministically', async () => {
@@ -231,7 +273,6 @@ test('PUT /message-articles replaces the full list and persists input order dete
         backgroundMediaId: null,
         sortOrder: 0,
         enabled: true,
-        isEnabled: true,
       },
       {
         articleId: 'article-b',
@@ -239,7 +280,6 @@ test('PUT /message-articles replaces the full list and persists input order dete
         backgroundMediaId: null,
         sortOrder: 1,
         enabled: true,
-        isEnabled: true,
       },
     ],
   });
@@ -258,7 +298,7 @@ test('PUT /message-articles replaces the full list and persists input order dete
   assert.ok(audit.args.includes('message_article_reference'));
 });
 
-test('PUT /message-articles accepts placement presentation metadata, null backgrounds, ordering, and enabled state', async () => {
+test('PUT /message-articles accepts placement background metadata and preserves enabled semantics', async () => {
   const db = createMessageArticleDb();
   const app = withRequestId(adminMessageArticleRoutes);
   const response = await app.request(
@@ -268,12 +308,8 @@ test('PUT /message-articles accepts placement presentation metadata, null backgr
       headers: { 'content-type': 'application/json', 'x-admin-request': '1' },
       body: JSON.stringify({
         articles: [
-          {
-            articleId: 'article-a',
-            backgroundMediaId: 'media-ready',
-            isEnabled: false,
-          },
-          { articleId: 'article-b', backgroundMediaId: null, isEnabled: true },
+          { articleId: 'article-a', backgroundMediaId: 'media-ready' },
+          { articleId: 'article-b', backgroundMediaId: null },
         ],
       }),
     },
@@ -288,8 +324,7 @@ test('PUT /message-articles accepts placement presentation metadata, null backgr
         title: 'Article A',
         backgroundMediaId: 'media-ready',
         sortOrder: 0,
-        enabled: false,
-        isEnabled: false,
+        enabled: true,
       },
       {
         articleId: 'article-b',
@@ -297,7 +332,6 @@ test('PUT /message-articles accepts placement presentation metadata, null backgr
         backgroundMediaId: null,
         sortOrder: 1,
         enabled: true,
-        isEnabled: true,
       },
     ],
   });
@@ -306,7 +340,7 @@ test('PUT /message-articles accepts placement presentation metadata, null backgr
       article_id: 'article-a',
       background_media_id: 'media-ready',
       sort_order: 0,
-      is_enabled: 0,
+      is_enabled: 1,
     },
     {
       article_id: 'article-b',
@@ -315,6 +349,25 @@ test('PUT /message-articles accepts placement presentation metadata, null backgr
       is_enabled: 1,
     },
   ]);
+});
+
+test('PUT /message-articles rejects C0 enabled editing aliases', async () => {
+  const db = createMessageArticleDb();
+  const app = withRequestId(adminMessageArticleRoutes);
+  const response = await app.request(
+    'https://admin.example.com/',
+    {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json', 'x-admin-request': '1' },
+      body: JSON.stringify({
+        articles: [{ articleId: 'article-a', backgroundMediaId: null, isEnabled: false }],
+      }),
+    },
+    { DB: db },
+  );
+
+  assert.equal(response.status, 400);
+  assert.equal(db.batches.length, 0);
 });
 
 test('PUT /message-articles rejects unavailable or non-image background media before writes', async () => {
