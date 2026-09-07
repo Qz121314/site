@@ -1,3 +1,4 @@
+import { AdminStatusBadge } from '../components/ui/status-badge';
 import type { AdminAsset, AssetReferenceCounts } from './api';
 
 function formatBytes(value: number): string {
@@ -22,12 +23,12 @@ function referenceLabels(references: AssetReferenceCounts): string[] {
   return labels;
 }
 
-function cleanupStatus(asset: AdminAsset): { label: string; className: string } {
-  if (asset.usageStatus === 'used') return { label: '使用中', className: 'blocked' };
+function cleanupStatus(asset: AdminAsset): { label: string; tone: 'success' | 'warning' | 'default' } {
+  if (asset.usageStatus === 'used') return { label: '使用中', tone: 'default' };
   if (asset.cleanupBlockedReason === 'SNAPSHOT_RETENTION') {
-    return { label: '快照保护', className: 'blocked' };
+    return { label: '快照保护', tone: 'warning' };
   }
-  return { label: '可清理', className: 'eligible' };
+  return { label: '可清理', tone: 'success' };
 }
 
 type AssetTableProps = {
@@ -50,8 +51,8 @@ export function AssetTable({
   const eligibleCount = assets.filter((asset) => asset.cleanupEligible).length;
 
   return (
-    <div className="asset-table-wrap">
-      <table className="asset-table">
+    <div className="asset-table-wrap ui-data-table-wrap">
+      <table className="asset-table ui-data-table">
         <thead>
           <tr>
             <th className="asset-select-cell">
@@ -74,6 +75,7 @@ export function AssetTable({
           {assets.map((asset) => {
             const references = referenceLabels(asset.references);
             const status = cleanupStatus(asset);
+            const selected = selectedKeys.has(asset.key);
             const unclassifiedReferenceCount = Math.max(
               0,
               asset.referenceCount -
@@ -86,12 +88,16 @@ export function AssetTable({
               references.unshift(`Hero × ${unclassifiedReferenceCount}`);
             }
             return (
-              <tr key={asset.key}>
+              <tr
+                key={asset.key}
+                className={`ui-data-row${selected ? ' is-selected' : ''}`}
+                aria-selected={asset.cleanupEligible ? selected : undefined}
+              >
                 <td className="asset-select-cell">
                   <input
                     type="checkbox"
                     aria-label={`选择 ${asset.key}`}
-                    checked={selectedKeys.has(asset.key)}
+                    checked={selected}
                     disabled={working || !asset.cleanupEligible}
                     onChange={() => onToggle(asset.key)}
                   />
@@ -118,9 +124,7 @@ export function AssetTable({
                   </div>
                 </td>
                 <td>
-                  <span className={`asset-cleanup-status ${status.className}`}>
-                    {status.label}
-                  </span>
+                  <AdminStatusBadge tone={status.tone}>{status.label}</AdminStatusBadge>
                 </td>
                 <td>
                   {references.length > 0 ? (
