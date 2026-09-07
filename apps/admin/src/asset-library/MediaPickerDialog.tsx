@@ -10,10 +10,7 @@ import {
   type MediaRole,
 } from './api';
 import { assignMediaRole } from './media-role-api';
-import {
-  prepareMediaPickerSelection,
-  type MediaPickerSelectionMode,
-} from './media-picker-selection';
+import { prepareMediaPickerSelection } from './media-picker-selection';
 
 type MediaPickerBaseProps = {
   title: string;
@@ -66,7 +63,6 @@ export function MediaPickerDialog(props: MediaPickerDialogProps) {
     onClose,
     onSessionExpired,
   } = props;
-  const selectionMode: MediaPickerSelectionMode = props.selectionMode ?? 'assign-role';
   const [assets, setAssets] = useState<ManagedMediaAsset[]>([]);
   const [loading, setLoading] = useState(true);
   const [workingId, setWorkingId] = useState<string | null>(null);
@@ -116,7 +112,7 @@ export function MediaPickerDialog(props: MediaPickerDialogProps) {
     try {
       const selectedAsset = await prepareMediaPickerSelection(
         asset,
-        selectionMode === 'reference-only'
+        props.selectionMode === 'reference-only'
           ? { mode: 'reference-only' }
           : { mode: 'assign-role', role: props.role },
         assignMediaRole,
