@@ -72,6 +72,7 @@ test('shared status form feedback dialog drawer and action-bar patterns are sema
   const form = await source('../src/components/ui/form-section.tsx');
   const feedback = await source('../src/components/ui/feedback-state.tsx');
   const dialog = await source('../src/components/ui/dialog.tsx');
+  const dialogBehavior = await source('../src/components/ui/dialog-behavior.ts');
   const actions = await source('../src/components/ui/action-bar.tsx');
   const shell = await source('../src/shell/AdminShell.tsx');
   const css = await source('../src/admin-ui-system.css');
@@ -87,8 +88,10 @@ test('shared status form feedback dialog drawer and action-bar patterns are sema
   assert.match(feedback, /'empty' \| 'loading' \| 'error'/);
   assert.match(feedback, /role=\{kind === 'error' \? 'alert' : 'status'\}/);
   assert.match(dialog, /aria-modal="true"/);
-  assert.match(dialog, /event\.key === 'Escape'/);
-  assert.match(dialog, /event\.key !== 'Tab'/);
+  assert.match(dialog, /shouldDismissAdminDialogKey\(event\.key, closeDisabledRef\.current\)/);
+  assert.match(dialog, /isAdminDialogFocusTraversalKey\(event\.key\)/);
+  assert.match(dialogBehavior, /key === 'Escape' && !closeDisabled/);
+  assert.match(dialogBehavior, /key === 'Tab'/);
   assert.match(dialog, /previousFocus\.current\?\.focus\(\)/);
   assert.match(actions, /AdminActionBar/);
   assert.match(actions, /is-sticky/);
