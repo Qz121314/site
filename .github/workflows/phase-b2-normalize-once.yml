@@ -1,0 +1,93 @@
+name: Phase B.2 Normalize Once
+
+on:
+  push:
+    branches:
+      - refactor/admin-catalog-workspace-navigation
+
+permissions:
+  contents: write
+
+jobs:
+  normalize:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: refactor/admin-catalog-workspace-navigation
+          fetch-depth: 0
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+          run_install: false
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - name: Install current dependencies
+        run: pnpm install --no-frozen-lockfile
+      - name: Patch FAQ editor accessibility contract
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('apps/admin/src/FaqManagementView.tsx')
+          text = path.read_text()
+          old = '''                  <div>\n                    <strong>正文</strong>\n                  </div>'''
+          new = '''                  <label htmlFor="faq-body">\n                    <strong>正文</strong>\n                  </label>'''
+          if old not in text:
+              raise SystemExit('FAQ body label target not found')
+          text = text.replace(old, new, 1)
+          old_edit = '''                      className={editorMode === 'edit' ? 'is-active' : undefined}\n                      onClick={() => setEditorMode('edit')}'''
+          new_edit = '''                      className={editorMode === 'edit' ? 'is-active' : undefined}\n                      aria-pressed={editorMode === 'edit'}\n                      onClick={() => setEditorMode('edit')}'''
+          if old_edit not in text:
+              raise SystemExit('FAQ edit mode target not found')
+          text = text.replace(old_edit, new_edit, 1)
+          old_preview = '''                      className={editorMode === 'preview' ? 'is-active' : undefined}\n                      onClick={() => setEditorMode('preview')}'''
+          new_preview = '''                      className={editorMode === 'preview' ? 'is-active' : undefined}\n                      aria-pressed={editorMode === 'preview'}\n                      onClick={() => setEditorMode('preview')}'''
+          if old_preview not in text:
+              raise SystemExit('FAQ preview mode target not found')
+          text = text.replace(old_preview, new_preview, 1)
+          old_textarea = '''                  <textarea\n                    value={form.body}'''
+          new_textarea = '''                  <textarea\n                    id="faq-body"\n                    value={form.body}'''
+          if old_textarea not in text:
+              raise SystemExit('FAQ textarea target not found')
+          text = text.replace(old_textarea, new_textarea, 1)
+          path.write_text(text)
+          PY
+      - name: Refresh workspace lockfile
+        run: pnpm install --lockfile-only --no-frozen-lockfile
+      - name: Apply canonical formatting
+        run: >-
+          pnpm exec prettier --write
+          apps/admin/src/admin-navigation.ts
+          apps/admin/src/admin.css
+          apps/admin/src/admin-section-workspace-nav.css
+          apps/admin/src/catalog/CatalogWorkspaceSwitcher.tsx
+          apps/admin/src/shell/AdminSecondarySidebar.tsx
+          apps/admin/src/shell/AdminShell.tsx
+          apps/admin/src/FaqManagementView.tsx
+          apps/admin/src/faq-management/MarkdownPreview.tsx
+          apps/admin/test/catalog-workspace-navigation.test.mjs
+          apps/admin/test/faq-markdown-contract.test.mjs
+          apps/storefront/src/MarkdownContent.tsx
+          packages/storefront-ui/package.json
+          packages/storefront-ui/src/markdown-content.tsx
+          packages/storefront-ui/src/markdown-content.test.tsx
+          pnpm-lock.yaml
+      - name: Commit normalized implementation
+        run: |
+          git add apps/admin apps/storefront/src/MarkdownContent.tsx packages/storefront-ui pnpm-lock.yaml
+          if git diff --cached --quiet; then
+            echo "No normalization changes required."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "chore(admin): normalize Phase B.2 implementation"
+          git push origin HEAD:refactor/admin-catalog-workspace-navigation
