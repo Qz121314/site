@@ -25,6 +25,7 @@
     "test": "pnpm guardrails && pnpm test:ci-contracts && pnpm -r --if-present test",
     "test:ci-contracts": "node --test tests/ci/*.test.mjs",
     "test:e2e": "playwright test",
+    "test:admin-shell:e2e": "playwright test tests/e2e/admin-shell.spec.ts --project=admin-desktop-chromium",
     "format": "prettier --check .",
     "format:write": "prettier --write .",
     "cf:types": "node scripts/ensure-wrangler-types.mjs",

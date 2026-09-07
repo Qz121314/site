@@ -40,3 +40,35 @@ jobs:
 
       - name: Check storefront bundle budget
         run: node scripts/check-storefront-bundle-budget.mjs
+
+      - name: Restore Playwright Chromium cache
+        id: playwright-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-chromium-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+
+      - name: Install Chromium system dependencies
+        timeout-minutes: 5
+        run: pnpm exec playwright install-deps chromium
+
+      - name: Install Chromium
+        if: steps.playwright-cache.outputs.cache-hit != 'true'
+        timeout-minutes: 5
+        run: pnpm exec playwright install chromium
+
+      - name: Verify Admin desktop shell
+        run: pnpm test:admin-shell:e2e
+        env:
+          E2E_ADMIN_LOCAL_SERVER: '1'
+
+      - name: Upload Admin browser diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: admin-desktop-shell-e2e-${{ github.run_attempt }}
+          path: |
+            playwright-report/
+            test-results/
+          if-no-files-found: ignore
+          retention-days: 7
