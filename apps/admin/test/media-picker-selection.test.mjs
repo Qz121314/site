@@ -48,6 +48,7 @@ test('normal media picker selection skips duplicate role assignment', async () =
   assert.equal(selected, original);
 });
 
+// Regression guard: weak placement references must never mutate MediaRole ownership.
 test('reference-only media picker selection never calls assignMediaRole equivalent', async () => {
   let called = false;
   const original = asset({ roles: ['general'] });
