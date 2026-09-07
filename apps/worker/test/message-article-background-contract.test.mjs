@@ -53,18 +53,28 @@ test('publication resolves public object keys without failing missing media', ()
   );
 });
 
-test('media lifecycle treats placement backgrounds as in-use without cascade deletion', () => {
+test('media lifecycle treats placement backgrounds as weak references while snapshots retain published media', () => {
   const managedDelete = read('../src/media/media-delete.ts');
   const cleanup = read('../src/assets/asset-library.ts');
+  const publisher = read('../src/publishing/modular-publisher.ts');
+  const migration = read('../../../migrations/0032_message_article_background_media.sql');
 
   for (const source of [managedDelete, cleanup]) {
-    assert.match(source, /message_article_references/u);
-    assert.match(source, /background_media_id/u);
+    assert.doesNotMatch(source, /message_article_references/u);
+    assert.doesNotMatch(source, /message_article_background_count/u);
+    assert.doesNotMatch(source, /background_media_id/u);
   }
-  assert.match(managedDelete, /message_article_background_count/u);
-  assert.match(cleanup, /message_article_background_count/u);
+
   assert.match(cleanup, /countReferences\(toReferenceCounts\(row\)\)/u);
-  assert.doesNotMatch(cleanup, /return \(\s*countRowReferences\(row\)/u);
+  assert.match(managedDelete, /protectedMediaKeys/u);
+  assert.match(managedDelete, /publish_module_versions/u);
+  assert.match(cleanup, /getSnapshotProtection/u);
+  assert.match(cleanup, /publish_module_versions/u);
+  assert.match(
+    publisher,
+    /source\.messageArticles\.map\(\(article\) => article\.background_object_key\)/u,
+  );
+  assert.match(migration, /REFERENCES media_assets\(id\) ON DELETE SET NULL/u);
 });
 
 test('bootstrap and Storefront metadata plumbing adds no media API or D1 lookup', () => {
