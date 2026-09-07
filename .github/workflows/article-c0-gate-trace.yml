@@ -42,20 +42,16 @@ jobs:
       - name: Ensure fix gate is clean
         run: git diff --exit-code
 
-      - name: Trace modular publication
+      - name: Trace modular publication non-bootstrap contracts
         run: |
           node --test --experimental-strip-types \
+            --test-name-pattern="module-key|modular pointer|rolling back|modular rollback|public storefront discovery" \
             --import ./apps/worker/test/register-ts-resolver.mjs \
             apps/worker/test/modular-publication.test.mjs
 
-      - name: Trace public bootstrap runtime
+      - name: Trace modular publication bootstrap contract
         run: |
           node --test --experimental-strip-types \
+            --test-name-pattern="public storefront bootstrap consolidates" \
             --import ./apps/worker/test/register-ts-resolver.mjs \
-            apps/worker/test/public-bootstrap-runtime.test.mjs
-
-      - name: Trace public content
-        run: |
-          node --test --experimental-strip-types \
-            --import ./apps/worker/test/register-ts-resolver.mjs \
-            apps/worker/test/public-content.test.mjs
+            apps/worker/test/modular-publication.test.mjs
