@@ -135,14 +135,17 @@ test('Messages Articles stay title-only and mark read only on the reading page',
     const colorChannels = alphaColor.match(/[\d.]+/gu)?.map(Number) ?? [];
     const lineHeight = Number.parseFloat(getComputedStyle(alphaTitle).lineHeight);
     const titleHeight = alphaTitle.getBoundingClientRect().height;
+    const mediaTitleIsLight =
+      colorChannels.length >= 3 &&
+      colorChannels[0] + colorChannels[1] + colorChannels[2] > 650;
+    const titleFitsTwoLines =
+      Number.isFinite(lineHeight) && titleHeight <= lineHeight * 2.1;
 
     return {
-      mediaTitleIsLight:
-        colorChannels.length >= 3 &&
-        colorChannels[0] + colorChannels[1] + colorChannels[2] > 650,
+      mediaTitleIsLight,
       mediaTitleDiffersFromNeutral: alphaColor !== betaColor,
       failedMediaMatchesNeutral: gammaColor === betaColor,
-      titleFitsTwoLines: Number.isFinite(lineHeight) && titleHeight <= lineHeight * 2.1,
+      titleFitsTwoLines,
     };
   });
   expect(rowPresentation).toEqual({
@@ -222,24 +225,25 @@ test('Messages Articles stay title-only and mark read only on the reading page',
   expect(fixture.articleDetailRequests()).toBe(1);
 
   const readingLayout = await page.evaluate(() => {
-    const navigation = document.querySelector<HTMLElement>('.article-reading-navigation');
+    const nav = document.querySelector<HTMLElement>('.article-reading-navigation');
     const title = document.querySelector<HTMLElement>('#article-title');
     const body = document.querySelector<HTMLElement>('.article-reading-body');
     const image = document.querySelector<HTMLImageElement>(
       '.article-reading-body img[alt="Reading diagram"]',
     );
     const codeBlock = document.querySelector<HTMLElement>('.article-reading-body pre');
-    if (!navigation || !title || !body || !image || !codeBlock) return null;
+    if (!nav || !title || !body || !image || !codeBlock) return null;
 
     const titleRect = title.getBoundingClientRect();
     const bodyRect = body.getBoundingClientRect();
     const imageRect = image.getBoundingClientRect();
-    const navigationStyle = getComputedStyle(navigation);
+    const stickyHeader = getComputedStyle(nav).position === 'sticky';
+    const titleFitsViewport =
+      titleRect.left >= -1 && titleRect.right <= window.innerWidth + 1;
 
     return {
-      stickyHeader: navigationStyle.position === 'sticky',
-      titleFitsViewport:
-        titleRect.left >= -1 && titleRect.right <= window.innerWidth + 1,
+      stickyHeader,
+      titleFitsViewport,
       imageFitsReadingWidth: imageRect.width <= bodyRect.width + 1,
       codeContainedByReadingWidth: codeBlock.clientWidth <= body.clientWidth + 1,
       codeCanScrollInternally: codeBlock.scrollWidth >= codeBlock.clientWidth,
@@ -260,12 +264,12 @@ test('Messages Articles stay title-only and mark read only on the reading page',
 
   await page.getByRole('link', { name: 'Back' }).click();
   await expect(page).toHaveURL('/messages/');
-  const returnedAlphaRow = page.getByRole('link', { name: /Read article.*Alpha guide/u });
+  const readAlphaRow = page.getByRole('link', { name: /Read article.*Alpha guide/u });
   const betaUnreadIndicator = page
     .getByRole('link', { name: /Unread article.*Beta guide/u })
     .locator('[data-unread-indicator]');
-  await expect(returnedAlphaRow).toHaveAttribute('data-read-state', 'read');
-  await expect(returnedAlphaRow.locator('[data-unread-indicator]')).toHaveCount(0);
+  await expect(readAlphaRow).toHaveAttribute('data-read-state', 'read');
+  await expect(readAlphaRow.locator('[data-unread-indicator]')).toHaveCount(0);
   await expect(betaUnreadIndicator).toHaveCount(1);
   await expect(messagesNav.getByText('5')).toBeVisible();
   expect(
@@ -304,10 +308,12 @@ test('desktop viewport keeps Messages compact and Article reading width bounded'
     const article = document.querySelector<HTMLElement>('.article-reading-page');
     if (!article) return null;
     const rect = article.getBoundingClientRect();
+    const horizontallyCentered =
+      Math.abs(rect.left - (window.innerWidth - rect.right)) < 2;
+
     return {
       boundedReadingWidth: rect.width <= 760,
-      horizontallyCentered:
-        Math.abs(rect.left - (window.innerWidth - rect.right)) < 2,
+      horizontallyCentered,
       noHorizontalOverflow: document.documentElement.scrollWidth <= window.innerWidth,
     };
   });
