@@ -369,7 +369,7 @@ function toAdminAsset(
 ): AdminAsset {
   const contentType = object.httpMetadata?.contentType ?? inferContentType(object.key);
   const references = toReferenceCounts(row);
-  const referenceCount = countReferences(toReferenceCounts(row));
+  const referenceCount = countReferences(references);
   const cleanupBlockedReason: AssetCleanupBlockedReason =
     referenceCount > 0 ? 'IN_USE' : snapshotProtected ? 'SNAPSHOT_RETENTION' : null;
 
