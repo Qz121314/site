@@ -119,7 +119,7 @@ export function countReferences(references: AssetReferenceCounts): number {
 
 function countRowReferences(row: MediaAssetReferenceRow | null): number {
   return (
-    countRowReferences(row) + (row?.message_article_background_count ?? 0)
+    countReferences(toReferenceCounts(row)) + (row?.message_article_background_count ?? 0)
   );
 }
 
@@ -328,9 +328,7 @@ function modularRetentionBlocked(
   key: string,
   protectedKeys: Set<string>,
 ): boolean {
-  return Boolean(
-    row && countRowReferences(row) === 0 && protectedKeys.has(key),
-  );
+  return Boolean(row && countRowReferences(row) === 0 && protectedKeys.has(key));
 }
 
 export async function getMediaAssetReferenceRows(
@@ -381,7 +379,7 @@ function toAdminAsset(
 ): AdminAsset {
   const contentType = object.httpMetadata?.contentType ?? inferContentType(object.key);
   const references = toReferenceCounts(row);
-  const referenceCount = countReferences(references);
+  const referenceCount = countRowReferences(row);
   const cleanupBlockedReason: AssetCleanupBlockedReason =
     referenceCount > 0 ? 'IN_USE' : snapshotProtected ? 'SNAPSHOT_RETENTION' : null;
 
