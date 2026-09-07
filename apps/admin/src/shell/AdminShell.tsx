@@ -1,6 +1,11 @@
 import { X } from 'lucide-react';
 import { useEffect, useRef, useState, type MouseEvent, type ReactNode } from 'react';
-import { getCatalogWorkspaceContext, getAdminDomainForView, type AdminView, type AdminViewContext } from '../admin-navigation';
+import {
+  getCatalogWorkspaceContext,
+  getAdminDomainForView,
+  type AdminView,
+  type AdminViewContext,
+} from '../admin-navigation';
 import type { AdminSection } from '../api';
 import { CatalogWorkspaceSwitcher } from '../catalog/CatalogWorkspaceSwitcher';
 import { Button } from '../components/ui/button';

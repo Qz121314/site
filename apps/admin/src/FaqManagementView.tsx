@@ -532,13 +532,14 @@ export function FaqManagementView({ onSessionExpired }: FaqManagementViewProps) 
               </div>
               <div className="faq-body-field">
                 <div className="faq-body-label">
-                  <div>
+                  <label htmlFor="faq-body">
                     <strong>正文</strong>
-                  </div>
+                  </label>
                   <div className="faq-editor-tabs" role="tablist">
                     <button
                       type="button"
                       className={editorMode === 'edit' ? 'is-active' : undefined}
+                      aria-pressed={editorMode === 'edit'}
                       onClick={() => setEditorMode('edit')}
                     >
                       编辑
@@ -546,6 +547,7 @@ export function FaqManagementView({ onSessionExpired }: FaqManagementViewProps) 
                     <button
                       type="button"
                       className={editorMode === 'preview' ? 'is-active' : undefined}
+                      aria-pressed={editorMode === 'preview'}
                       onClick={() => setEditorMode('preview')}
                     >
                       预览
@@ -554,6 +556,7 @@ export function FaqManagementView({ onSessionExpired }: FaqManagementViewProps) 
                 </div>
                 {editorMode === 'edit' ? (
                   <textarea
+                    id="faq-body"
                     value={form.body}
                     required
                     maxLength={20_000}

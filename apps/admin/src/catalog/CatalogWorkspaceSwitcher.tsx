@@ -41,7 +41,9 @@ export function CatalogWorkspaceSwitcher({
               variant="ghost"
               type="button"
               aria-current={active ? 'page' : undefined}
-              onClick={() => onNavigate(catalogViewForResource(item.resource, context.sectionId))}
+              onClick={() =>
+                onNavigate(catalogViewForResource(item.resource, context.sectionId))
+              }
             >
               {item.label}
             </Button>

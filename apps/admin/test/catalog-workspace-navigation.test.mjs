@@ -28,9 +28,18 @@ test('catalog secondary navigation owns only structure and section selection', (
       ['products:live-cam', 'LIVE CAM', null],
     ],
   );
-  assert.equal(items.some((item) => item.label === '商品'), false);
-  assert.equal(items.some((item) => item.label === '分类'), false);
-  assert.equal(items.some((item) => item.label === '标签'), false);
+  assert.equal(
+    items.some((item) => item.label === '商品'),
+    false,
+  );
+  assert.equal(
+    items.some((item) => item.label === '分类'),
+    false,
+  );
+  assert.equal(
+    items.some((item) => item.label === '标签'),
+    false,
+  );
 });
 
 test('catalog workspace context deterministically separates section and resource type', () => {
@@ -77,7 +86,10 @@ test('catalog workspace switcher is semantic, request-neutral and uses the guard
   assert.match(switcher, /aria-label=/);
   assert.match(switcher, /aria-current=\{active \? 'page' : undefined\}/);
   assert.match(switcher, /catalogViewForResource/);
-  assert.doesNotMatch(switcher, /location\.hash|history\.(pushState|replaceState)|fetch\(/);
+  assert.doesNotMatch(
+    switcher,
+    /location\.hash|history\.(pushState|replaceState)|fetch\(/,
+  );
   assert.match(css, /display:\s*flex/);
   assert.match(css, /overflow-x:\s*auto/);
   assert.match(css, /min-height:\s*44px/);

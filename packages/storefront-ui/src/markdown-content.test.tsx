@@ -23,7 +23,9 @@ describe('MarkdownContent', () => {
 
     expect(html).toContain('<h2>Heading</h2>');
     expect(html).toContain('<ul><li>First</li><li>Second</li></ul>');
-    expect(html).toContain('<a href="https://openai.com" rel="noopener noreferrer" target="_blank">OpenAI</a>');
+    expect(html).toContain(
+      '<a href="https://openai.com" rel="noopener noreferrer" target="_blank">OpenAI</a>',
+    );
     expect(html).toContain('<em>emphasis</em>');
     expect(html).toContain('<code>inline</code>');
     expect(html).toContain('<pre><code>const ok = true;</code></pre>');

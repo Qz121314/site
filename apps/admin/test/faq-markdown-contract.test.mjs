@@ -39,7 +39,10 @@ test('Storefront FAQ and generic Article routes keep using the same Markdown ren
   assert.match(articlePage, /<MarkdownContent source=\{article\.body\}/);
   assert.match(storefrontMarkdown, /@site\/storefront-ui\/markdown-content/);
   assert.match(storefrontMarkdown, /ResilientImage/);
-  assert.doesNotMatch(storefrontMarkdown, /function renderInline|function renderBlock|parseMarkdown/);
+  assert.doesNotMatch(
+    storefrontMarkdown,
+    /function renderInline|function renderBlock|parseMarkdown/,
+  );
 });
 
 test('FAQ publish mapping remains owned by the faq module', async () => {

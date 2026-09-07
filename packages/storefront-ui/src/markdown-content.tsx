@@ -128,7 +128,9 @@ function renderBlock(
 export function MarkdownContent({ source, renderImage }: MarkdownContentProps) {
   return (
     <div className="markdown-content">
-      {parseMarkdown(source).map((block, index) => renderBlock(block, index, renderImage))}
+      {parseMarkdown(source).map((block, index) =>
+        renderBlock(block, index, renderImage),
+      )}
     </div>
   );
 }

@@ -1,7 +1,10 @@
 import type { AdminSection } from './api';
 
 export type DynamicViewKind = 'products' | 'categories' | 'tags' | 'conversion-pool';
-export type CatalogResourceKind = Extract<DynamicViewKind, 'products' | 'categories' | 'tags'>;
+export type CatalogResourceKind = Extract<
+  DynamicViewKind,
+  'products' | 'categories' | 'tags'
+>;
 
 export type CatalogWorkspaceContext = {
   sectionId: string;
@@ -113,7 +116,9 @@ export function parseDynamicView(
   return { kind, sectionId };
 }
 
-export function getCatalogWorkspaceContext(view: AdminView): CatalogWorkspaceContext | null {
+export function getCatalogWorkspaceContext(
+  view: AdminView,
+): CatalogWorkspaceContext | null {
   const dynamic = parseDynamicView(view);
   if (
     !dynamic ||
