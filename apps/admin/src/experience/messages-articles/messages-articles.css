@@ -77,23 +77,6 @@
   -webkit-line-clamp: 2;
 }
 
-.messages-articles-status {
-  flex: none;
-  padding: 2px 7px;
-  border: 1px solid #e3e7ed;
-  border-radius: 999px;
-  background: #f8fafc;
-  color: #667085;
-  font-size: 10px;
-  font-weight: 700;
-}
-
-.messages-articles-status.is-active {
-  border-color: #b7e3c8;
-  background: #f0faf4;
-  color: #166534;
-}
-
 .messages-articles-background {
   display: flex;
   min-width: 0;
@@ -193,30 +176,21 @@
 }
 
 .messages-articles-search {
+  position: relative;
   display: flex;
-  min-height: 44px;
   align-items: center;
-  gap: 8px;
-  padding: 0 12px;
-  border: 1px solid #d8dee7;
-  border-radius: 8px;
-  background: #fff;
-  color: #667085;
 }
 
-.messages-articles-search:focus-within {
-  border-color: #98a8bf;
-  box-shadow: 0 0 0 3px rgb(73 103 148 / 10%);
+.messages-articles-search > svg {
+  position: absolute;
+  left: 12px;
+  z-index: 1;
+  pointer-events: none;
 }
 
-.messages-articles-search input {
+.messages-articles-search .ui-input {
   width: 100%;
-  min-width: 0;
-  border: 0;
-  outline: 0;
-  background: transparent;
-  color: #172033;
-  font: inherit;
+  padding-left: 36px;
 }
 
 .messages-articles-dialog-count {
@@ -265,13 +239,11 @@
   place-items: center;
   border: 1px solid #cfd6df;
   border-radius: 6px;
-  color: #fff;
-  font-size: 12px;
-  font-weight: 800;
 }
 
 .messages-articles-picker-row.is-selected .messages-articles-picker-check {
   border-color: #344b6b;
+  color: #fff;
   background: #344b6b;
 }
 
@@ -297,67 +269,8 @@
   white-space: nowrap;
 }
 
-.messages-articles-picker-row em {
-  color: #166534;
-  font-size: 10px;
-  font-style: normal;
-  font-weight: 700;
-}
-
-.messages-articles-media-grid {
-  display: grid;
-  max-height: min(60vh, 560px);
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 10px;
-  margin-top: 12px;
-  overflow: auto;
-}
-
-.messages-articles-media-card {
-  min-width: 0;
-  overflow: hidden;
-  padding: 0;
-  border: 1px solid #e1e6ed;
-  border-radius: 8px;
-  background: #fff;
-  text-align: left;
-  cursor: pointer;
-}
-
-.messages-articles-media-card.is-selected {
-  border-color: #344b6b;
-  box-shadow: 0 0 0 2px rgb(52 75 107 / 12%);
-}
-
-.messages-articles-media-card img {
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  display: block;
-  object-fit: cover;
-  background: #f5f7fa;
-}
-
-.messages-articles-media-card span {
-  display: grid;
-  gap: 2px;
-  padding: 8px 9px 10px;
-}
-
-.messages-articles-media-card strong,
-.messages-articles-media-card small {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.messages-articles-media-card strong {
-  color: #172033;
-  font-size: 12px;
-}
-
-.messages-articles-media-card small {
-  color: #667085;
-  font-size: 10px;
+.messages-articles-picker-row .ui-status-badge {
+  justify-self: end;
 }
 
 .messages-articles-preview {
@@ -487,10 +400,6 @@
     bottom: auto;
   }
 
-  .messages-articles-media-grid {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
   .messages-articles-picker-row {
     min-height: 72px;
   }
@@ -503,15 +412,12 @@
     width: 100%;
   }
 
-  .messages-articles-media-grid {
-    grid-template-columns: 1fr;
-  }
-
   .messages-articles-picker-row {
     grid-template-columns: 24px minmax(0, 1fr);
   }
 
-  .messages-articles-picker-row em {
+  .messages-articles-picker-row .ui-status-badge {
     grid-column: 2;
+    justify-self: start;
   }
 }
