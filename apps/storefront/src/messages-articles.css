@@ -50,7 +50,7 @@
   object-fit: cover;
 }
 
-.messages-article-row-media::after {
+.messages-article-row-media:has(img)::after {
   position: absolute;
   inset: 0;
   background: linear-gradient(
