@@ -163,7 +163,9 @@ test('zero Articles leaves the support list unchanged', async ({ page }) => {
 
   await page.goto('/messages/');
 
-  await expect(page.getByRole('region', { name: 'Recommended articles' })).toHaveCount(0);
+  await expect(
+    page.getByRole('region', { name: 'Recommended articles' }),
+  ).toHaveCount(0);
   await expect(page.getByText('Conversations')).toHaveCount(0);
   await expect(
     page.getByRole('link', { name: /Support.*Support product/u }),
