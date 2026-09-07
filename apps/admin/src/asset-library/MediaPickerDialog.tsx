@@ -155,21 +155,12 @@ export function MediaPickerDialog({
                 <span className="media-picker-preview">
                   {asset.mediaKind === 'video' ? (
                     asset.publicUrl ? (
-                      <video
-                        src={asset.publicUrl}
-                        muted
-                        playsInline
-                        preload="metadata"
-                      />
+                      <video src={asset.publicUrl} muted playsInline preload="metadata" />
                     ) : (
                       <i>视频</i>
                     )
                   ) : (
-                    <img
-                      src={brandingAssetPreviewUrl(asset.id)}
-                      alt=""
-                      loading="lazy"
-                    />
+                    <img src={brandingAssetPreviewUrl(asset.id)} alt="" loading="lazy" />
                   )}
                   <b>{kindLabel(asset.mediaKind)}</b>
                 </span>

@@ -1,11 +1,5 @@
 import { X } from 'lucide-react';
-import {
-  useEffect,
-  useId,
-  useRef,
-  type MouseEvent,
-  type ReactNode,
-} from 'react';
+import { useEffect, useId, useRef, type MouseEvent, type ReactNode } from 'react';
 import { cn } from '../../lib/cn';
 import { Button } from './button';
 

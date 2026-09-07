@@ -58,11 +58,7 @@ export function SiteSettingsWorkspace({
     <SiteSettingsProvider onSessionExpired={onSessionExpired}>
       <Suspense
         fallback={
-          <AdminFeedbackState
-            kind="loading"
-            title="正在加载设置工作区"
-            compact
-          />
+          <AdminFeedbackState kind="loading" title="正在加载设置工作区" compact />
         }
       >
         {view === 'home' ? (

@@ -41,12 +41,30 @@ test('segmented control and selected navigation use strong non-color-only state'
   assert.match(sharedCss, /\.ui-segmented-item:focus-visible/);
   assert.match(sharedCss, /\.ui-segmented-item[^{}]*[{][\s\S]*min-height:\s*44px/);
 
-  assert.match(sidebarCss, /\.admin-primary-link\.ui-button\.is-active[\s\S]*background:/);
-  assert.match(sidebarCss, /\.admin-primary-link\.ui-button\.is-active[\s\S]*box-shadow:/);
-  assert.match(sidebarCss, /\.admin-secondary-link\.ui-button\.is-active[\s\S]*background:/);
-  assert.match(sidebarCss, /\.admin-secondary-link\.ui-button\.is-active[\s\S]*box-shadow:/);
-  assert.match(navigationCss, /\.admin-bottom-navigation-row\.is-selected[\s\S]*background:/);
-  assert.match(navigationCss, /\.admin-bottom-navigation-row\.is-selected[\s\S]*box-shadow:/);
+  assert.match(
+    sidebarCss,
+    /\.admin-primary-link\.ui-button\.is-active[\s\S]*background:/,
+  );
+  assert.match(
+    sidebarCss,
+    /\.admin-primary-link\.ui-button\.is-active[\s\S]*box-shadow:/,
+  );
+  assert.match(
+    sidebarCss,
+    /\.admin-secondary-link\.ui-button\.is-active[\s\S]*background:/,
+  );
+  assert.match(
+    sidebarCss,
+    /\.admin-secondary-link\.ui-button\.is-active[\s\S]*box-shadow:/,
+  );
+  assert.match(
+    navigationCss,
+    /\.admin-bottom-navigation-row\.is-selected[\s\S]*background:/,
+  );
+  assert.match(
+    navigationCss,
+    /\.admin-bottom-navigation-row\.is-selected[\s\S]*box-shadow:/,
+  );
 });
 
 test('shared status form feedback dialog drawer and action-bar patterns are semantic', async () => {

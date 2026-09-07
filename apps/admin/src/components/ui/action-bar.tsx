@@ -15,10 +15,7 @@ export function AdminActionBar({
   ...props
 }: AdminActionBarProps) {
   return (
-    <div
-      className={cn('ui-action-bar', sticky && 'is-sticky', className)}
-      {...props}
-    >
+    <div className={cn('ui-action-bar', sticky && 'is-sticky', className)} {...props}>
       <div className="ui-action-bar-status">{status}</div>
       <div className="ui-action-bar-actions">{children}</div>
     </div>

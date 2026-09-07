@@ -89,12 +89,7 @@ export function NavigationSettingsView({
           ) : null
         }
       >
-        <Button
-          variant="primary"
-          type="submit"
-          loading={saving}
-          disabled={!dirty}
-        >
+        <Button variant="primary" type="submit" loading={saving} disabled={!dirty}>
           保存导航设置
         </Button>
       </AdminActionBar>
