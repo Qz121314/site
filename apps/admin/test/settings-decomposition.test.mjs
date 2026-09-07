@@ -110,6 +110,9 @@ test('workspace ownership is decomposed by domain', () => {
   const home = source('../src/experience/HomeExperienceView.tsx');
   const navigation = source('../src/experience/NavigationSettingsView.tsx');
   const messages = source('../src/experience/MessagesExperienceView.tsx');
+  const messagesArticles = source(
+    '../src/experience/messages-articles/MessagesArticlesSection.tsx',
+  );
   const pwa = source('../src/experience/PwaSettingsView.tsx');
   const general = source('../src/system/SystemGeneralView.tsx');
   const infrastructure = source('../src/system/SystemInfrastructureView.tsx');
@@ -130,7 +133,7 @@ test('workspace ownership is decomposed by domain', () => {
   assert.match(advanced, /ga4MeasurementId/);
 
   assert.match(messages, /\/messages\//);
-  assert.match(messages, /Article Center/u);
+  assert.match(messagesArticles, /Article Center/u);
   assert.doesNotMatch(messages, /ArticlePicker|background_media_id|messageArticleApi/i);
   assert.doesNotMatch(messages, /saveSettings/);
 });
@@ -139,6 +142,10 @@ test('dirty ownership is workspace-specific', () => {
   const sources = [
     ['../src/experience/HomeExperienceView.tsx', 'homepage-settings'],
     ['../src/experience/NavigationSettingsView.tsx', 'navigation-settings'],
+    [
+      '../src/experience/messages-articles/MessagesArticlesSection.tsx',
+      'messages-articles',
+    ],
     ['../src/experience/PwaSettingsView.tsx', 'pwa-settings'],
     ['../src/system/SystemGeneralView.tsx', 'system-general'],
     ['../src/system/SystemInfrastructureView.tsx', 'system-infrastructure'],
