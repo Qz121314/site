@@ -35,11 +35,11 @@ test('segmented control and selected navigation use strong non-color-only state'
   assert.match(segmented, /aria-pressed=\{selected\}/);
   assert.match(segmented, /aria-current=\{current \? 'page' : undefined\}/);
   assert.match(sharedCss, /\.ui-segmented-control[\s\S]*overflow-x:\s*auto/);
-  assert.match(sharedCss, /\.ui-segmented-item[^\{]*\.is-selected[\s\S]*background:/);
-  assert.match(sharedCss, /\.ui-segmented-item[^\{]*\.is-selected[\s\S]*border-color:/);
-  assert.match(sharedCss, /\.ui-segmented-item[^\{]*\.is-selected[\s\S]*font-weight:/);
+  assert.match(sharedCss, /\.ui-segmented-item[^{}]*\.is-selected[\s\S]*background:/);
+  assert.match(sharedCss, /\.ui-segmented-item[^{}]*\.is-selected[\s\S]*border-color:/);
+  assert.match(sharedCss, /\.ui-segmented-item[^{}]*\.is-selected[\s\S]*font-weight:/);
   assert.match(sharedCss, /\.ui-segmented-item:focus-visible/);
-  assert.match(sharedCss, /\.ui-segmented-item[^\{]*\{[\s\S]*min-height:\s*44px/);
+  assert.match(sharedCss, /\.ui-segmented-item[^{}]*[{][\s\S]*min-height:\s*44px/);
 
   assert.match(sidebarCss, /\.admin-primary-link\.ui-button\.is-active[\s\S]*background:/);
   assert.match(sidebarCss, /\.admin-primary-link\.ui-button\.is-active[\s\S]*box-shadow:/);
