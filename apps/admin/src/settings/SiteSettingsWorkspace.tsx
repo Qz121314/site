@@ -1,6 +1,7 @@
 import { lazy, Suspense } from 'react';
 import type { AdminSection } from '../api';
 import type { AdminView, SettingsAdminView } from '../admin-navigation';
+import { AdminFeedbackState } from '../components/ui/feedback-state';
 import { SiteSettingsProvider } from './SiteSettingsProvider';
 import './settings-workspace.css';
 
@@ -57,9 +58,11 @@ export function SiteSettingsWorkspace({
     <SiteSettingsProvider onSessionExpired={onSessionExpired}>
       <Suspense
         fallback={
-          <div className="settings-workspace-state" role="status" aria-live="polite">
-            正在加载设置工作区…
-          </div>
+          <AdminFeedbackState
+            kind="loading"
+            title="正在加载设置工作区"
+            compact
+          />
         }
       >
         {view === 'home' ? (
