@@ -39,6 +39,14 @@ jobs:
       - name: Run changed-file fixer
         run: pnpm fix:changed
 
+      - name: Apply canonical formatting to Phase B.1 files
+        run: |
+          pnpm exec prettier --write \
+            apps/admin/src/admin-navigation.ts \
+            apps/admin/src/shell/AdminPrimarySidebar.tsx \
+            apps/admin/test/admin-navigation.test.mjs \
+            apps/admin/test/admin-shell-contract.test.mjs
+
       - name: Run formatting check
         run: pnpm format
 
