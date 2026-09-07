@@ -15,9 +15,10 @@ const MAX_REFERENCE_ID_LENGTH = 120;
 type MessageArticleReference = {
   articleId: string;
   title: string;
-  backgroundMediaId?: string | null;
+  backgroundMediaId: string | null;
   sortOrder: number;
   enabled: boolean;
+  isEnabled: boolean;
 };
 
 type MessageArticlePlacementInput = {
@@ -108,18 +109,14 @@ async function listReferences(db: D1Database): Promise<MessageArticleReference[]
         question: string;
       }>()
   ).results;
-  return rows.map((row) => {
-    const reference: MessageArticleReference = {
-      articleId: row.article_id,
-      title: row.question,
-      sortOrder: row.sort_order,
-      enabled: row.is_enabled === 1,
-    };
-    if (row.background_media_id !== undefined) {
-      reference.backgroundMediaId = row.background_media_id;
-    }
-    return reference;
-  });
+  return rows.map((row) => ({
+    articleId: row.article_id,
+    title: row.question,
+    backgroundMediaId: row.background_media_id ?? null,
+    sortOrder: row.sort_order,
+    enabled: row.is_enabled === 1,
+    isEnabled: row.is_enabled === 1,
+  }));
 }
 
 async function validateArticles(db: D1Database, articleIds: string[]): Promise<boolean> {

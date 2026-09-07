@@ -194,6 +194,7 @@ test('GET /message-articles returns deterministic placement order and compatibil
         backgroundMediaId: null,
         sortOrder: 10,
         enabled: true,
+        isEnabled: true,
       },
       {
         articleId: 'article-a',
@@ -201,6 +202,7 @@ test('GET /message-articles returns deterministic placement order and compatibil
         backgroundMediaId: null,
         sortOrder: 20,
         enabled: true,
+        isEnabled: true,
       },
     ],
   });
@@ -229,6 +231,7 @@ test('PUT /message-articles replaces the full list and persists input order dete
         backgroundMediaId: null,
         sortOrder: 0,
         enabled: true,
+        isEnabled: true,
       },
       {
         articleId: 'article-b',
@@ -236,6 +239,7 @@ test('PUT /message-articles replaces the full list and persists input order dete
         backgroundMediaId: null,
         sortOrder: 1,
         enabled: true,
+        isEnabled: true,
       },
     ],
   });
@@ -285,6 +289,7 @@ test('PUT /message-articles accepts placement presentation metadata, null backgr
         backgroundMediaId: 'media-ready',
         sortOrder: 0,
         enabled: false,
+        isEnabled: false,
       },
       {
         articleId: 'article-b',
@@ -292,6 +297,7 @@ test('PUT /message-articles accepts placement presentation metadata, null backgr
         backgroundMediaId: null,
         sortOrder: 1,
         enabled: true,
+        isEnabled: true,
       },
     ],
   });

@@ -7,7 +7,7 @@ export type MessageArticleMetadata = {
   articleId: string;
   title: string;
   preview: string;
-  backgroundObjectKey?: string | null;
+  backgroundObjectKey: string | null;
   sortOrder: number;
 };
 
@@ -53,14 +53,14 @@ function parseMessageArticle(value: unknown): MessageArticleMetadata | null {
   ) {
     return null;
   }
-  const article: MessageArticleMetadata = { articleId, title, preview, sortOrder };
-  if (
-    typeof value.backgroundObjectKey === 'string' ||
-    value.backgroundObjectKey === null
-  ) {
-    article.backgroundObjectKey = value.backgroundObjectKey;
-  }
-  return article;
+  return {
+    articleId,
+    title,
+    preview,
+    backgroundObjectKey:
+      typeof value.backgroundObjectKey === 'string' ? value.backgroundObjectKey : null,
+    sortOrder,
+  };
 }
 
 export function getMessageArticlesFromBootstrap(

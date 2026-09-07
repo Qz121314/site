@@ -157,6 +157,7 @@ test('bootstrap accepts legacy Messages Article metadata without a background fi
       articleId: 'article-legacy',
       title: 'Legacy article',
       preview: 'Legacy preview',
+      backgroundObjectKey: null,
       sortOrder: 0,
     },
   ]);
@@ -205,6 +206,7 @@ test('bootstrap cache rejects a pre-Messages schema-v2 bundle at the same pointe
       articleId: 'article-a',
       title: 'Announcement',
       preview: 'Fresh preview',
+      backgroundObjectKey: null,
       sortOrder: 0,
     },
   ]);

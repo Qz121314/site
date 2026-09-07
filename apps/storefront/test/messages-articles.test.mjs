@@ -65,7 +65,13 @@ test('bootstrap message article metadata is sanitized, sorted, deduplicated, and
   );
 
   assert.deepEqual(articles, [
-    { articleId: 'article-a', title: 'Alpha', preview: 'First', sortOrder: 10 },
+    {
+      articleId: 'article-a',
+      title: 'Alpha',
+      preview: 'First',
+      backgroundObjectKey: null,
+      sortOrder: 10,
+    },
     {
       articleId: 'article-b',
       title: 'Beta',

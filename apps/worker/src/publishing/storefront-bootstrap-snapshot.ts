@@ -8,7 +8,7 @@ type MessageArticleMetadata = {
   articleId: string;
   title: string;
   preview: string;
-  backgroundObjectKey?: string | null;
+  backgroundObjectKey: string | null;
   sortOrder: number;
 };
 
@@ -67,19 +67,14 @@ function sanitizeMessageArticles(value: unknown): MessageArticleMetadata[] {
     ) {
       continue;
     }
-    const article: MessageArticleMetadata = {
+    articles.push({
       articleId: item.articleId,
       title: item.title,
       preview: item.preview,
+      backgroundObjectKey:
+        typeof item.backgroundObjectKey === 'string' ? item.backgroundObjectKey : null,
       sortOrder: item.sortOrder,
-    };
-    if (
-      typeof item.backgroundObjectKey === 'string' ||
-      item.backgroundObjectKey === null
-    ) {
-      article.backgroundObjectKey = item.backgroundObjectKey;
-    }
-    articles.push(article);
+    });
   }
   return articles;
 }
