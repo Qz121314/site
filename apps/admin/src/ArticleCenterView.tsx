@@ -1,14 +1,12 @@
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  type FormEvent,
-} from 'react';
+import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { AdminApiError } from './api';
 import { ArticleEditorDialog } from './article-center/ArticleEditorDialog';
 import { ArticleTable } from './article-center/ArticleTable';
 import { DeleteArticleDialog } from './article-center/DeleteArticleDialog';
+import {
+  moveAndNormalizeArticleOrder,
+  sortArticlesByDefault,
+} from './article-center/article-order';
 import {
   batchDeleteArticles,
   createArticle,
@@ -36,6 +34,7 @@ import {
   AdminSegmentedControl,
   AdminSegmentedItem,
 } from './components/ui/segmented-control';
+import { Select } from './components/ui/select';
 
 type ArticleCenterViewProps = {
   onSessionExpired: () => void;
@@ -63,15 +62,6 @@ function describeArticleError(error: unknown): string {
   return error.message.replaceAll('FAQ', '文章');
 }
 
-function sortByDefault(articles: AdminArticle[]): AdminArticle[] {
-  return [...articles].sort(
-    (left, right) =>
-      left.sortOrder - right.sortOrder ||
-      right.updatedAt.localeCompare(left.updatedAt) ||
-      left.title.localeCompare(right.title, 'zh-CN'),
-  );
-}
-
 export function ArticleCenterView({ onSessionExpired }: ArticleCenterViewProps) {
   const [scope, setScope] = useState<ArticleScope>('active');
   const [activeArticles, setActiveArticles] = useState<AdminArticle[]>([]);
@@ -82,8 +72,7 @@ export function ArticleCenterView({ onSessionExpired }: ArticleCenterViewProps) 
   const [statusFilter, setStatusFilter] = useState<ArticleStatusFilter>('all');
   const [sortMode, setSortMode] = useState<ArticleSortMode>('default');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [editingArticle, setEditingArticle] =
-    useState<AdminArticle | null>(null);
+  const [editingArticle, setEditingArticle] = useState<AdminArticle | null>(null);
   const [form, setForm] = useState<ArticleInput>(emptyArticleForm);
   const [editorOpen, setEditorOpen] = useState(false);
   const [previewing, setPreviewing] = useState(false);
@@ -135,18 +124,10 @@ export function ArticleCenterView({ onSessionExpired }: ArticleCenterViewProps) 
     const filtered = sourceArticles.filter((article) => {
       const normalizedTitle = article.title.toLocaleLowerCase('zh-CN');
       if (keyword && !normalizedTitle.includes(keyword)) return false;
-      if (
-        scope === 'active' &&
-        statusFilter === 'active' &&
-        !article.isActive
-      ) {
+      if (scope === 'active' && statusFilter === 'active' && !article.isActive) {
         return false;
       }
-      if (
-        scope === 'active' &&
-        statusFilter === 'inactive' &&
-        article.isActive
-      ) {
+      if (scope === 'active' && statusFilter === 'inactive' && article.isActive) {
         return false;
       }
       return true;
@@ -162,7 +143,7 @@ export function ArticleCenterView({ onSessionExpired }: ArticleCenterViewProps) 
         right.updatedAt.localeCompare(left.updatedAt),
       );
     }
-    return sortByDefault(filtered);
+    return sortArticlesByDefault(filtered);
   }, [scope, search, sortMode, sourceArticles, statusFilter]);
 
   const allVisibleSelected =
@@ -264,25 +245,20 @@ export function ArticleCenterView({ onSessionExpired }: ArticleCenterViewProps) 
 
   async function moveArticle(article: AdminArticle, direction: -1 | 1) {
     if (reorderDisabled) return;
-    const ordered = sortByDefault(activeArticles).map((item) => ({ ...item }));
-    const currentIndex = ordered.findIndex((item) => item.id === article.id);
-    const targetIndex = currentIndex + direction;
-    const current = ordered[currentIndex];
-    const target = ordered[targetIndex];
-    if (!current || !target) return;
-
-    const currentOrder = current.sortOrder;
-    current.sortOrder = target.sortOrder;
-    target.sortOrder = currentOrder;
+    const normalizedOrder = moveAndNormalizeArticleOrder(
+      activeArticles,
+      article.id,
+      direction,
+    );
+    if (!normalizedOrder) return;
 
     setWorking(true);
     clearMessages();
     try {
-      await reorderArticles([
-        { id: current.id, sortOrder: current.sortOrder },
-        { id: target.id, sortOrder: target.sortOrder },
-      ]);
-      setActiveArticles(ordered);
+      await reorderArticles(
+        normalizedOrder.map(({ id, sortOrder }) => ({ id, sortOrder })),
+      );
+      setActiveArticles(normalizedOrder);
       setSuccessMessage('文章顺序已更新。');
     } catch (error) {
       handleError(error);
@@ -320,9 +296,7 @@ export function ArticleCenterView({ onSessionExpired }: ArticleCenterViewProps) 
     clearMessages();
     try {
       const restored = await restoreArticle(article.id);
-      setTrashArticles((current) =>
-        current.filter((item) => item.id !== article.id),
-      );
+      setTrashArticles((current) => current.filter((item) => item.id !== article.id));
       setActiveArticles((current) => [...current, restored]);
       setSuccessMessage(`文章“${restored.title}”已恢复。`);
     } catch (error) {
@@ -398,9 +372,7 @@ export function ArticleCenterView({ onSessionExpired }: ArticleCenterViewProps) 
       allVisibleSelected={allVisibleSelected}
       working={working}
       reorderDisabled={reorderDisabled}
-      onToggleSelect={(id) =>
-        setSelectedIds((current) => toggleSelection(current, id))
-      }
+      onToggleSelect={(id) => setSelectedIds((current) => toggleSelection(current, id))}
       onToggleSelectAll={() =>
         setSelectedIds((current) =>
           toggleVisibleSelection(
@@ -478,17 +450,14 @@ export function ArticleCenterView({ onSessionExpired }: ArticleCenterViewProps) 
         ) : null}
         <label className="article-sort-field">
           <span>排序</span>
-          <select
-            className="ui-input"
+          <Select
             value={sortMode}
-            onChange={(event) =>
-              updateSortMode(event.target.value as ArticleSortMode)
-            }
+            onChange={(event) => updateSortMode(event.target.value as ArticleSortMode)}
           >
             <option value="default">默认顺序</option>
             <option value="title">标题</option>
             <option value="updated">更新时间</option>
-          </select>
+          </Select>
         </label>
       </AdminToolbar>
 

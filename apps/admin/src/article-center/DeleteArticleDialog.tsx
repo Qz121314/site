@@ -40,9 +40,7 @@ export function DeleteArticleDialog({
         </>
       }
     >
-      <p className="delete-warning">
-        删除后文章进入回收站；现有 backend 删除语义保持不变。
-      </p>
+      <p className="delete-warning">删除后文章会进入回收站，可稍后恢复。</p>
     </AdminDialog>
   );
 }

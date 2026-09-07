@@ -50,9 +50,7 @@ test('Article Admin adapter preserves FAQ transport', async () => {
 test('Storefront routes keep the shared Markdown adapter', async () => {
   const faqPage = await source('../../storefront/src/FaqPage.tsx');
   const articlePage = await source('../../storefront/src/ArticlePage.tsx');
-  const storefrontMarkdown = await source(
-    '../../storefront/src/MarkdownContent.tsx',
-  );
+  const storefrontMarkdown = await source('../../storefront/src/MarkdownContent.tsx');
 
   assert.match(faqPage, /<MarkdownContent source=\{article\.body\}/);
   assert.match(articlePage, /<MarkdownContent source=\{article\.body\}/);

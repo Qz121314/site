@@ -60,9 +60,7 @@ export async function fetchArticles(
   return (await fetchFaqs(scope)).map(fromLegacyFaq);
 }
 
-export async function createArticle(
-  input: ArticleInput,
-): Promise<AdminArticle> {
+export async function createArticle(input: ArticleInput): Promise<AdminArticle> {
   return fromLegacyFaq(await createFaq(toLegacyFaqInput(input)));
 }
 
