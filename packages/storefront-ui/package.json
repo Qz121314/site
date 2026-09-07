@@ -10,6 +10,7 @@
     "./loading.css": "./src/loading.css",
     "./icon-button": "./src/icon-button.tsx",
     "./icon-button.css": "./src/icon-button.css",
+    "./markdown-content": "./src/markdown-content.tsx",
     "./home.css": "./src/home.css",
     "./theme-contract.css": "./src/theme-contract.css",
     "./product-detail-theme-contract.css": "./src/product-detail-theme-contract.css",
@@ -28,6 +29,7 @@
     "test": "vitest run"
   },
   "dependencies": {
+    "@site/shared": "workspace:*",
     "react": "^19.0.0"
   },
   "devDependencies": {
