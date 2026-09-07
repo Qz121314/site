@@ -2,38 +2,33 @@ import type { StorefrontLinkComponent } from '@site/storefront-ui';
 import { ChevronRight } from 'lucide-react';
 import { useSyncExternalStore } from 'react';
 import { mediaUrl } from './content';
-import { ResilientImage } from './ResilientMedia';
 import {
-  articleHref,
-  isMessageArticleRead,
+  getMessageArticleReadSnapshot,
   subscribeMessageArticleReadState,
-  type MessageArticlePlacementMetadata,
+  type MessageArticleMetadata,
 } from './messages-articles';
+import { ResilientImage } from './ResilientMedia';
+import { articleHref } from './routing';
 import './messages-articles.css';
 
 function MessagesArticleRow({
   article,
   mediaBaseUrl,
   LinkComponent,
+  unread,
 }: {
-  article: MessageArticlePlacementMetadata;
+  article: MessageArticleMetadata;
   mediaBaseUrl: string;
   LinkComponent: StorefrontLinkComponent;
+  unread: boolean;
 }) {
-  const read = useSyncExternalStore(
-    subscribeMessageArticleReadState,
-    () => isMessageArticleRead(article.articleId),
-    () => false,
-  );
-  const backgroundUrl = article.backgroundObjectKey
-    ? mediaUrl(mediaBaseUrl, article.backgroundObjectKey)
-    : null;
+  const backgroundUrl = mediaUrl(mediaBaseUrl, article.backgroundObjectKey);
 
   return (
     <LinkComponent
       className="messages-article-row"
       data-article-id={article.articleId}
-      data-read-state={read ? 'read' : 'unread'}
+      data-read-state={unread ? 'unread' : 'read'}
       href={articleHref(article.articleId)}
     >
       {backgroundUrl ? (
@@ -42,12 +37,14 @@ function MessagesArticleRow({
         </span>
       ) : null}
       <span className="messages-article-row-copy">
-        <span className="sr-only">{read ? 'Read article.' : 'Unread article.'}</span>
-        <span className="messages-article-row-kicker" aria-hidden="true">
-          {read ? 'Article' : 'New'}
+        <span className="messages-article-row-kicker">
+          <span className="sr-only">
+            {unread ? 'Unread article. ' : 'Read article. '}
+          </span>
+          {unread ? 'New' : 'Article'}
         </span>
         <h3>{article.title}</h3>
-        <p>{article.preview}</p>
+        {article.preview ? <p>{article.preview}</p> : null}
       </span>
       <span className="messages-article-row-affordance" aria-hidden="true">
         <ChevronRight />
@@ -61,10 +58,17 @@ export function MessagesArticleList({
   mediaBaseUrl,
   LinkComponent,
 }: {
-  articles: MessageArticlePlacementMetadata[];
+  articles: MessageArticleMetadata[];
   mediaBaseUrl: string;
   LinkComponent: StorefrontLinkComponent;
 }) {
+  const readSnapshot = useSyncExternalStore(
+    subscribeMessageArticleReadState,
+    getMessageArticleReadSnapshot,
+    () => '[]',
+  );
+  const readIds = new Set<string>(JSON.parse(readSnapshot));
+
   if (articles.length === 0) return null;
 
   return (
@@ -75,6 +79,7 @@ export function MessagesArticleList({
           key={article.articleId}
           LinkComponent={LinkComponent}
           mediaBaseUrl={mediaBaseUrl}
+          unread={!readIds.has(article.articleId)}
         />
       ))}
     </>
