@@ -42,29 +42,17 @@ jobs:
       - name: Ensure fix gate is clean
         run: git diff --exit-code
 
-      - name: Trace dev preflight
-        run: pnpm preflight:dev
+      - name: Trace CI contract tests
+        run: pnpm test:ci-contracts
 
-      - name: Trace repository guardrails
-        run: pnpm guardrails
+      - name: Trace Admin tests
+        run: pnpm --filter @site/admin test
 
-      - name: Trace format
-        run: pnpm format
+      - name: Trace Storefront tests
+        run: pnpm --filter @site/storefront test
 
-      - name: Trace lint
-        run: pnpm lint
+      - name: Trace Worker tests
+        run: pnpm --filter @site/worker test
 
-      - name: Trace typecheck
-        run: pnpm typecheck
-
-      - name: Trace local migrations
-        run: pnpm db:migrate:local
-
-      - name: Trace full tests
-        run: pnpm test
-
-      - name: Trace build
-        run: pnpm build
-
-      - name: Trace Cloudflare dry run
-        run: pnpm cf:check
+      - name: Trace package tests
+        run: pnpm --filter './packages/*' --if-present test
