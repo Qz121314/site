@@ -1,5 +1,23 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { AdminApiError, type AdminSection } from './api';
+import { Button } from './components/ui/button';
+import {
+  AdminSearchField,
+  AdminSelectionBar,
+  AdminToolbar,
+} from './components/ui/management-workspace';
+import {
+  toggleSelection,
+  toggleVisibleSelection,
+} from './components/ui/management-selection';
+import {
+  AdminSegmentedControl,
+  AdminSegmentedItem,
+} from './components/ui/segmented-control';
+import { AdminDialog } from './components/ui/dialog';
+import { AdminFeedbackState } from './components/ui/feedback-state';
+import { AdminStatusBadge } from './components/ui/status-badge';
+import { ArrowDown, ArrowUp } from 'lucide-react';
 import {
   batchDeleteProductTags,
   createProductTag,
@@ -256,23 +274,17 @@ export function TagManagementView({ section, onSessionExpired }: TagManagementVi
   }
 
   function toggleSelect(id: string) {
-    setSelectedIds((current) => {
-      const next = new Set(current);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+    setSelectedIds((current) => toggleSelection(current, id));
   }
 
   function toggleSelectAll() {
-    setSelectedIds((current) => {
-      const next = new Set(current);
-      filteredTags.forEach((tag) => {
-        if (allVisibleSelected) next.delete(tag.id);
-        else next.add(tag.id);
-      });
-      return next;
-    });
+    setSelectedIds((current) =>
+      toggleVisibleSelection(
+        current,
+        filteredTags.map((tag) => tag.id),
+        allVisibleSelected,
+      ),
+    );
   }
 
   return (
@@ -280,44 +292,37 @@ export function TagManagementView({ section, onSessionExpired }: TagManagementVi
       className="category-management tag-management"
       aria-labelledby="tag-management-title"
     >
-      <div className="category-management-toolbar">
-        <div>
-          <p>当前分区</p>
-          <h2 id="tag-management-title">{section.name} · 标签管理</h2>
-          <span>标签用于产品的第二维度属性，一个产品可以选择多个标签。</span>
-        </div>
-        <button className="primary-button" type="button" onClick={openCreateEditor}>
-          新增标签
-        </button>
-      </div>
-
-      <div className="category-filter-bar">
-        <div className="scope-tabs" role="tablist" aria-label="标签状态">
-          <button
-            type="button"
-            className={scope === 'active' ? 'is-active' : undefined}
-            onClick={() => void changeScope('active')}
-          >
-            当前标签 <span>{activeTags.length}</span>
-          </button>
-          <button
-            type="button"
-            className={scope === 'trash' ? 'is-active' : undefined}
-            onClick={() => void changeScope('trash')}
-          >
-            回收站 <span>{trashTags.length}</span>
-          </button>
-        </div>
-        <label className="category-search">
-          <span>搜索</span>
-          <input
-            type="search"
-            value={search}
-            placeholder="标签名称"
-            onChange={(event) => setSearch(event.target.value)}
-          />
-        </label>
-      </div>
+      <AdminToolbar
+        aria-label={`${section.name} 标签管理工具栏`}
+        leading={
+          <AdminSegmentedControl ariaLabel="标签状态">
+            <AdminSegmentedItem
+              selected={scope === 'active'}
+              onClick={() => void changeScope('active')}
+            >
+              当前标签 {activeTags.length}
+            </AdminSegmentedItem>
+            <AdminSegmentedItem
+              selected={scope === 'trash'}
+              onClick={() => void changeScope('trash')}
+            >
+              回收站 {trashTags.length}
+            </AdminSegmentedItem>
+          </AdminSegmentedControl>
+        }
+        trailing={
+          <Button variant="primary" onClick={openCreateEditor}>
+            新增标签
+          </Button>
+        }
+      >
+        <AdminSearchField
+          label="搜索标签"
+          value={search}
+          placeholder="标签名称"
+          onChange={(event) => setSearch(event.target.value)}
+        />
+      </AdminToolbar>
 
       {!editorOpen && errorMessage ? (
         <div className="notice notice-error" role="alert">
@@ -331,28 +336,29 @@ export function TagManagementView({ section, onSessionExpired }: TagManagementVi
       ) : null}
 
       {scope === 'active' && selectedIds.size > 0 ? (
-        <div className="selection-toolbar">
-          <span>已选择 {selectedIds.size} 个标签</span>
-          <button
-            type="button"
-            className="danger-button"
+        <AdminSelectionBar count={selectedIds.size} noun="标签">
+          <Button
+            variant="danger"
             disabled={working}
             onClick={() => setPendingDeleteIds([...selectedIds])}
           >
             批量删除
-          </button>
-        </div>
+          </Button>
+        </AdminSelectionBar>
       ) : null}
 
       {loading ? (
-        <div className="category-table-wrap category-table-empty">
-          <div className="loading-indicator" aria-hidden="true" />
-          <p>正在读取标签…</p>
-        </div>
+        <AdminFeedbackState kind="loading" title="正在读取标签…" />
       ) : filteredTags.length === 0 ? (
-        <div className="category-table-wrap category-table-empty">
-          <strong>{scope === 'active' ? '当前分区还没有标签' : '回收站为空'}</strong>
-        </div>
+        <AdminFeedbackState
+          kind="empty"
+          title={scope === 'active' ? '当前分区还没有标签' : '回收站为空'}
+          description={
+            scope === 'active'
+              ? '使用上方“新增标签”开始录入。'
+              : '已删除标签会显示在这里。'
+          }
+        />
       ) : (
         <div className="category-table-wrap">
           <table className="category-table">
@@ -377,7 +383,11 @@ export function TagManagementView({ section, onSessionExpired }: TagManagementVi
             </thead>
             <tbody>
               {filteredTags.map((tag, index) => (
-                <tr key={tag.id}>
+                <tr
+                  key={tag.id}
+                  className={`ui-data-row${selectedIds.has(tag.id) ? ' is-selected' : ''}`}
+                  aria-selected={scope === 'active' ? selectedIds.has(tag.id) : undefined}
+                >
                   <td className="checkbox-cell">
                     {scope === 'active' ? (
                       <input
@@ -410,15 +420,19 @@ export function TagManagementView({ section, onSessionExpired }: TagManagementVi
                       <div className="sort-controls">
                         <span>{tag.sortOrder}</span>
                         <div>
-                          <button
-                            type="button"
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            aria-label={`上移 ${tag.name}`}
                             disabled={working || reorderBlocked || index === 0}
                             onClick={() => void moveTag(tag, -1)}
                           >
-                            ↑
-                          </button>
-                          <button
-                            type="button"
+                            <ArrowUp aria-hidden="true" size={15} />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            aria-label={`下移 ${tag.name}`}
                             disabled={
                               working ||
                               reorderBlocked ||
@@ -426,8 +440,8 @@ export function TagManagementView({ section, onSessionExpired }: TagManagementVi
                             }
                             onClick={() => void moveTag(tag, 1)}
                           >
-                            ↓
-                          </button>
+                            <ArrowDown aria-hidden="true" size={15} />
+                          </Button>
                         </div>
                       </div>
                     ) : (
@@ -436,16 +450,19 @@ export function TagManagementView({ section, onSessionExpired }: TagManagementVi
                   </td>
                   <td>
                     {scope === 'active' ? (
-                      <button
-                        type="button"
-                        className={`status-pill ${tag.isEnabled ? 'is-enabled' : 'is-disabled'}`}
+                      <Button
+                        variant="ghost"
+                        size="compact"
                         disabled={working}
+                        aria-label={`${tag.isEnabled ? '停用' : '启用'}标签 ${tag.name}`}
                         onClick={() => void toggleEnabled(tag)}
                       >
-                        {tag.isEnabled ? '已启用' : '已停用'}
-                      </button>
+                        <AdminStatusBadge tone={tag.isEnabled ? 'success' : 'default'}>
+                          {tag.isEnabled ? '已启用' : '已停用'}
+                        </AdminStatusBadge>
+                      </Button>
                     ) : (
-                      <span className="status-pill is-deleted">已删除</span>
+                      <AdminStatusBadge tone="warning">已删除</AdminStatusBadge>
                     )}
                   </td>
                   <td className="actions-cell">
@@ -484,132 +501,108 @@ export function TagManagementView({ section, onSessionExpired }: TagManagementVi
         </div>
       )}
 
-      {editorOpen ? (
-        <div className="admin-dialog-backdrop" role="presentation">
-          <section
-            className="admin-dialog"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="tag-editor-title"
-          >
-            <div className="admin-dialog-header">
-              <div>
-                <p>{section.name} · 标签</p>
-                <h3 id="tag-editor-title">{editingTag ? '编辑标签' : '新增标签'}</h3>
-              </div>
-              <button
-                type="button"
-                aria-label="关闭"
-                disabled={saving}
-                onClick={() => setEditorOpen(false)}
-              >
-                ×
-              </button>
+      <AdminDialog
+        open={editorOpen}
+        title={editingTag ? '编辑标签' : '新增标签'}
+        eyebrow={`${section.name} · 标签`}
+        onClose={() => setEditorOpen(false)}
+        closeDisabled={saving}
+        size="small"
+      >
+        <form className="category-editor-form" onSubmit={(event) => void saveTag(event)}>
+          {errorMessage ? (
+            <div className="notice notice-error" role="alert">
+              {errorMessage}
             </div>
-            <form
-              className="category-editor-form"
-              onSubmit={(event) => void saveTag(event)}
+          ) : null}
+          <label>
+            <span>标签名称</span>
+            <input
+              type="text"
+              autoFocus
+              required
+              maxLength={80}
+              value={form.name}
+              onChange={(event) => {
+                setForm((current) => ({ ...current, name: event.target.value }));
+                setErrorMessage('');
+              }}
+            />
+          </label>
+          <label>
+            <span>排序</span>
+            <input
+              type="number"
+              min={0}
+              max={1_000_000}
+              step={1}
+              required
+              value={form.sortOrder}
+              onChange={(event) => {
+                setForm((current) => ({
+                  ...current,
+                  sortOrder: Number(event.target.value),
+                }));
+                setErrorMessage('');
+              }}
+            />
+          </label>
+          <label className="category-enabled-field">
+            <input
+              type="checkbox"
+              checked={form.isEnabled}
+              onChange={(event) => {
+                setForm((current) => ({ ...current, isEnabled: event.target.checked }));
+                setErrorMessage('');
+              }}
+            />
+            <span>启用标签</span>
+          </label>
+          <div className="admin-dialog-actions">
+            <Button
+              variant="secondary"
+              disabled={saving}
+              onClick={() => setEditorOpen(false)}
             >
-              {errorMessage ? (
-                <div className="notice notice-error" role="alert">
-                  {errorMessage}
-                </div>
-              ) : null}
-              <label>
-                <span>标签名称</span>
-                <input
-                  type="text"
-                  autoFocus
-                  required
-                  maxLength={80}
-                  value={form.name}
-                  onChange={(event) => {
-                    setForm((current) => ({ ...current, name: event.target.value }));
-                    setErrorMessage('');
-                  }}
-                />
-              </label>
-              <label>
-                <span>排序</span>
-                <input
-                  type="number"
-                  min={0}
-                  max={1_000_000}
-                  step={1}
-                  required
-                  value={form.sortOrder}
-                  onChange={(event) => {
-                    setForm((current) => ({
-                      ...current,
-                      sortOrder: Number(event.target.value),
-                    }));
-                    setErrorMessage('');
-                  }}
-                />
-              </label>
-              <label className="category-enabled-field">
-                <input
-                  type="checkbox"
-                  checked={form.isEnabled}
-                  onChange={(event) => {
-                    setForm((current) => ({
-                      ...current,
-                      isEnabled: event.target.checked,
-                    }));
-                    setErrorMessage('');
-                  }}
-                />
-                <span>启用标签</span>
-              </label>
-              <div className="admin-dialog-actions">
-                <button
-                  type="button"
-                  className="secondary-button"
-                  disabled={saving}
-                  onClick={() => setEditorOpen(false)}
-                >
-                  取消
-                </button>
-                <button type="submit" className="primary-button" disabled={saving}>
-                  {saving ? '保存中…' : '保存'}
-                </button>
-              </div>
-            </form>
-          </section>
-        </div>
-      ) : null}
+              取消
+            </Button>
+            <Button type="submit" variant="primary" loading={saving}>
+              保存
+            </Button>
+          </div>
+        </form>
+      </AdminDialog>
 
-      {pendingDeleteIds.length > 0 ? (
-        <div className="admin-dialog-backdrop" role="presentation">
-          <section className="admin-dialog" role="dialog" aria-modal="true">
-            <div className="admin-dialog-header">
-              <div>
-                <p>删除标签</p>
-                <h3>确认删除 {pendingDeleteIds.length} 个标签？</h3>
-              </div>
-            </div>
-            <p>正在被产品引用的标签不会被删除。</p>
-            <div className="admin-dialog-actions">
-              <button
-                type="button"
-                className="secondary-button"
-                disabled={working}
-                onClick={() => setPendingDeleteIds([])}
-              >
-                取消
-              </button>
-              <button
-                type="button"
-                className="danger-button"
-                disabled={working}
-                onClick={() => void confirmDelete()}
-              >
-                {working ? '处理中…' : '确认删除'}
-              </button>
-            </div>
-          </section>
-        </div>
-      ) : null}
+      <AdminDialog
+        open={pendingDeleteIds.length > 0}
+        title={`确认删除 ${pendingDeleteIds.length} 个标签？`}
+        eyebrow="删除标签"
+        description="正在被产品引用的标签不会被删除。"
+        role="alertdialog"
+        onClose={() => setPendingDeleteIds([])}
+        closeDisabled={working}
+        size="small"
+        footer={
+          <>
+            <Button
+              variant="secondary"
+              disabled={working}
+              onClick={() => setPendingDeleteIds([])}
+            >
+              取消
+            </Button>
+            <Button
+              variant="danger"
+              loading={working}
+              onClick={() => void confirmDelete()}
+            >
+              确认删除
+            </Button>
+          </>
+        }
+      >
+        <p>删除后标签会进入回收站，现有服务端引用保护规则保持不变。</p>
+      </AdminDialog>
     </section>
   );
 }

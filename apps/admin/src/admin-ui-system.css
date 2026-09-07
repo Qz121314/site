@@ -1470,3 +1470,154 @@ textarea {
     transition-duration: 1ms;
   }
 }
+
+/* ---------- Phase D management workspaces ---------- */
+.ui-management-toolbar {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 8px;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-md);
+  background: var(--admin-surface);
+  box-shadow: var(--admin-shadow-card);
+}
+
+.ui-management-toolbar-leading,
+.ui-management-toolbar-controls,
+.ui-management-toolbar-trailing,
+.ui-management-selection-actions,
+.ui-row-actions,
+.ui-sort-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.ui-management-toolbar-controls {
+  flex: 1 1 auto;
+  min-width: 180px;
+}
+
+.ui-management-toolbar-trailing {
+  margin-left: auto;
+}
+
+.ui-management-search {
+  position: relative;
+  display: flex;
+  flex: 1 1 260px;
+  min-width: 180px;
+  align-items: center;
+}
+
+.ui-management-search > svg {
+  position: absolute;
+  z-index: 1;
+  left: 10px;
+  color: var(--admin-text-subtle);
+  pointer-events: none;
+}
+
+.ui-management-search .ui-input {
+  padding-left: 34px;
+}
+
+.ui-management-filter {
+  display: grid;
+  gap: 3px;
+  color: var(--admin-text-muted);
+  font-size: 0.68rem;
+  font-weight: 700;
+}
+
+.ui-management-filter select {
+  min-height: var(--admin-control-h);
+  padding: 0 28px 0 9px;
+  border: 1px solid var(--admin-border-strong);
+  border-radius: var(--admin-radius-sm);
+  color: var(--admin-text);
+  background: var(--admin-surface);
+  font-size: 0.76rem;
+}
+
+.ui-management-selection-bar {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 10px;
+  padding: 6px 8px 6px 12px;
+  border: 1px solid #ffb79d;
+  border-radius: var(--admin-radius-sm);
+  background: var(--admin-brand-soft);
+}
+
+.ui-management-selection-bar > strong {
+  color: #8a3417;
+  font-size: 0.76rem;
+}
+
+.ui-management-selection-actions {
+  margin-left: auto;
+}
+
+.ui-data-row.is-selected > td,
+.ui-data-row[aria-selected='true'] > td {
+  background: var(--admin-brand-soft);
+}
+
+.ui-data-row.is-selected > td:first-child,
+.ui-data-row[aria-selected='true'] > td:first-child {
+  box-shadow: inset 3px 0 0 var(--admin-brand);
+}
+
+.ui-row-action-danger {
+  color: var(--admin-danger);
+}
+
+.ui-sort-actions .ui-button--icon {
+  width: 32px;
+  min-height: 32px;
+}
+
+@media (max-width: 760px) {
+  .ui-management-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .ui-management-toolbar-leading,
+  .ui-management-toolbar-controls,
+  .ui-management-toolbar-trailing {
+    width: 100%;
+  }
+
+  .ui-management-toolbar-controls {
+    flex-wrap: wrap;
+  }
+
+  .ui-management-toolbar-trailing {
+    margin-left: 0;
+    justify-content: flex-end;
+  }
+
+  .ui-management-search {
+    flex-basis: 100%;
+  }
+
+  .ui-management-selection-bar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .ui-management-selection-actions {
+    width: 100%;
+    margin-left: 0;
+    flex-wrap: wrap;
+  }
+
+  .ui-management-selection-actions .ui-button {
+    min-height: 44px;
+  }
+}

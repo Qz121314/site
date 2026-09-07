@@ -1,5 +1,19 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { AdminApiError, type AdminSection } from './api';
+import { Button } from './components/ui/button';
+import {
+  AdminSearchField,
+  AdminSelectionBar,
+  AdminToolbar,
+} from './components/ui/management-workspace';
+import {
+  toggleSelection,
+  toggleVisibleSelection,
+} from './components/ui/management-selection';
+import {
+  AdminSegmentedControl,
+  AdminSegmentedItem,
+} from './components/ui/segmented-control';
 import { MediaLibraryPickerDialog } from './asset-library/MediaLibraryPickerDialog';
 import type { ManagedMediaAsset } from './asset-library/api';
 import {
@@ -634,23 +648,17 @@ export function ProductManagementView({
   }
 
   function toggleSelect(id: string) {
-    setSelectedIds((current) => {
-      const next = new Set(current);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+    setSelectedIds((current) => toggleSelection(current, id));
   }
 
   function toggleSelectAll() {
-    setSelectedIds((current) => {
-      const next = new Set(current);
-      filteredProducts.forEach((product) => {
-        if (allVisibleSelected) next.delete(product.id);
-        else next.add(product.id);
-      });
-      return next;
-    });
+    setSelectedIds((current) =>
+      toggleVisibleSelection(
+        current,
+        filteredProducts.map((product) => product.id),
+        allVisibleSelected,
+      ),
+    );
   }
 
   const selectedMediaIds = media.flatMap((item) =>
@@ -659,44 +667,37 @@ export function ProductManagementView({
 
   return (
     <section className="product-management" aria-labelledby="product-management-title">
-      <div className="product-management-toolbar">
-        <div>
-          <p>当前分区</p>
-          <h2 id="product-management-title">{section.name} · 产品管理</h2>
-          <span>产品、分类、标签和转化分组全部限制在“{section.name}”分区内。</span>
-        </div>
-        <button className="primary-button" type="button" onClick={openCreateEditor}>
-          新增产品
-        </button>
-      </div>
-
-      <div className="product-filter-bar">
-        <div className="scope-tabs" role="tablist" aria-label="产品范围">
-          <button
-            type="button"
-            className={scope === 'active' ? 'is-active' : undefined}
-            onClick={() => void changeScope('active')}
-          >
-            当前产品 <span>{activeProducts.length}</span>
-          </button>
-          <button
-            type="button"
-            className={scope === 'trash' ? 'is-active' : undefined}
-            onClick={() => void changeScope('trash')}
-          >
-            回收站 <span>{trashProducts.length}</span>
-          </button>
-        </div>
-        <label className="product-search">
-          <span>搜索</span>
-          <input
-            type="search"
-            value={search}
-            placeholder="标题、分类、标签或转化分组"
-            onChange={(event) => setSearch(event.target.value)}
-          />
-        </label>
-        <label className="product-status-filter">
+      <AdminToolbar
+        aria-label={`${section.name} 产品管理工具栏`}
+        leading={
+          <AdminSegmentedControl ariaLabel="产品范围">
+            <AdminSegmentedItem
+              selected={scope === 'active'}
+              onClick={() => void changeScope('active')}
+            >
+              当前产品 {activeProducts.length}
+            </AdminSegmentedItem>
+            <AdminSegmentedItem
+              selected={scope === 'trash'}
+              onClick={() => void changeScope('trash')}
+            >
+              回收站 {trashProducts.length}
+            </AdminSegmentedItem>
+          </AdminSegmentedControl>
+        }
+        trailing={
+          <Button variant="primary" onClick={openCreateEditor}>
+            新增产品
+          </Button>
+        }
+      >
+        <AdminSearchField
+          label="搜索产品"
+          value={search}
+          placeholder="标题、分类、标签或转化分组"
+          onChange={(event) => setSearch(event.target.value)}
+        />
+        <label className="ui-management-filter">
           <span>状态</span>
           <select
             value={statusFilter}
@@ -708,7 +709,7 @@ export function ProductManagementView({
             <option value="archived">已归档</option>
           </select>
         </label>
-      </div>
+      </AdminToolbar>
 
       {!editorOpen && errorMessage ? (
         <div className="notice notice-error" role="alert">
@@ -722,17 +723,15 @@ export function ProductManagementView({
       ) : null}
 
       {scope === 'active' && selectedIds.size > 0 ? (
-        <div className="selection-toolbar">
-          <span>已选择 {selectedIds.size} 个产品</span>
-          <button
-            className="danger-button"
-            type="button"
+        <AdminSelectionBar count={selectedIds.size} noun="产品">
+          <Button
+            variant="danger"
             disabled={working}
             onClick={() => setPendingDeleteIds([...selectedIds])}
           >
             批量删除
-          </button>
-        </div>
+          </Button>
+        </AdminSelectionBar>
       ) : null}
 
       <ProductTable
