@@ -37,14 +37,15 @@ function MessagesArticleRow({
         </span>
       ) : null}
       <span className="messages-article-row-copy">
-        <span className="messages-article-row-kicker">
-          <span className="sr-only">
-            {unread ? 'Unread article. ' : 'Read article. '}
-          </span>
-          {unread ? 'New' : 'Article'}
-        </span>
+        <span className="sr-only">{unread ? 'Unread article. ' : 'Read article. '}</span>
+        {unread ? (
+          <span
+            aria-hidden="true"
+            className="messages-article-row-unread-dot"
+            data-unread-indicator="true"
+          />
+        ) : null}
         <h3>{article.title}</h3>
-        {article.preview ? <p>{article.preview}</p> : null}
       </span>
       <span className="messages-article-row-affordance" aria-hidden="true">
         <ChevronRight />

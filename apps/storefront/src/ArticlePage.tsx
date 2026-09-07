@@ -31,7 +31,7 @@ function ArticleNavigation({
   LinkComponent: StorefrontLinkComponent;
 }) {
   return (
-    <header className="faq-article-navigation">
+    <header className="faq-article-navigation article-reading-navigation">
       <LinkComponent
         aria-label={SYSTEM_UI.back}
         className="faq-back-link"
@@ -41,6 +41,8 @@ function ArticleNavigation({
         <ChevronLeft aria-hidden="true" />
         <span className="sr-only">{SYSTEM_UI.back}</span>
       </LinkComponent>
+      <span className="article-reading-navigation-title">Article</span>
+      <span className="article-reading-navigation-spacer" aria-hidden="true" />
     </header>
   );
 }
@@ -95,7 +97,7 @@ export default function ArticlePage({
   if (!article) {
     return (
       <section
-        className="faq-article-detail faq-article-missing"
+        className="faq-article-detail faq-article-missing article-reading-page"
         aria-labelledby="article-missing-title"
       >
         <ArticleNavigation LinkComponent={LinkComponent} />
@@ -110,12 +112,15 @@ export default function ArticlePage({
   }
 
   return (
-    <article className="faq-article-detail" aria-labelledby="article-title">
+    <article
+      className="faq-article-detail article-reading-page"
+      aria-labelledby="article-title"
+    >
       <ArticleNavigation LinkComponent={LinkComponent} />
-      <header className="faq-article-header">
+      <header className="faq-article-header article-reading-header">
         <h1 id="article-title">{article.title}</h1>
       </header>
-      <div className="faq-article-body">
+      <div className="faq-article-body article-reading-body">
         <MarkdownContent source={article.body} />
       </div>
     </article>
