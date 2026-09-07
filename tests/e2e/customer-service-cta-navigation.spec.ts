@@ -143,9 +143,7 @@ test('Messages Article cards mark read only on detail', async ({ page }) => {
     page.getByRole('heading', { name: 'Alpha guide', level: 1 }),
   ).toBeVisible();
   await expect
-    .poll(() =>
-      page.evaluate(() => localStorage.getItem('site:messages:read-articles')),
-    )
+    .poll(() => page.evaluate(() => localStorage.getItem('site:messages:read-articles')))
     .toBe(JSON.stringify([MESSAGE_ARTICLE_IDS.alpha]));
   expect(fixture.articleDetailRequests()).toBe(1);
 
