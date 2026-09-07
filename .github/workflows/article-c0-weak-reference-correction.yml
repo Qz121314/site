@@ -1,0 +1,121 @@
+name: Article C0 Weak Reference Correction
+
+on:
+  push:
+    branches:
+      - feat/message-article-background-media-contract
+    paths:
+      - .github/workflows/article-c0-weak-reference-correction.yml
+
+permissions:
+  contents: write
+
+jobs:
+  correct:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+          run_install: false
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Apply weak-reference correction
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_once(path, old, new):
+              p = Path(path)
+              source = p.read_text()
+              count = source.count(old)
+              if count != 1:
+                  raise SystemExit(f'{path}: expected one replacement, found {count}: {old[:100]!r}')
+              p.write_text(source.replace(old, new, 1))
+
+          media_delete = 'apps/worker/src/media/media-delete.ts'
+          replace_once(
+              media_delete,
+              "  product_gallery_count: number;\n  message_article_background_count: number;\n",
+              "  product_gallery_count: number;\n",
+          )
+          replace_once(
+              media_delete,
+              """           (SELECT COUNT(*) FROM products p WHERE p.cover_asset_id = ma.id) AS product_cover_count,\n           (SELECT COUNT(*) FROM product_media pm WHERE pm.media_asset_id = ma.id) AS product_gallery_count,\n           (\n             SELECT COUNT(*)\n             FROM message_article_references mar\n             WHERE mar.background_media_id = ma.id\n           ) AS message_article_background_count\n""",
+              """           (SELECT COUNT(*) FROM products p WHERE p.cover_asset_id = ma.id) AS product_cover_count,\n           (SELECT COUNT(*) FROM product_media pm WHERE pm.media_asset_id = ma.id) AS product_gallery_count\n""",
+          )
+          replace_once(
+              media_delete,
+              """      row.product_cover_count +\n      row.product_gallery_count +\n      row.message_article_background_count >\n    0\n""",
+              """      row.product_cover_count +\n      row.product_gallery_count >\n    0\n""",
+          )
+          replace_once(
+              media_delete,
+              """             AND NOT EXISTS (SELECT 1 FROM product_media pm WHERE pm.media_asset_id = media_assets.id)\n             AND NOT EXISTS (\n               SELECT 1\n               FROM message_article_references mar\n               WHERE mar.background_media_id = media_assets.id\n             )`,\n""",
+              """             AND NOT EXISTS (SELECT 1 FROM product_media pm WHERE pm.media_asset_id = media_assets.id)`,\n""",
+          )
+
+          asset_library = 'apps/worker/src/assets/asset-library.ts'
+          replace_once(
+              asset_library,
+              "  product_gallery_count: number;\n  message_article_background_count: number;\n",
+              "  product_gallery_count: number;\n",
+          )
+          replace_once(
+              asset_library,
+              """function countRowReferences(row: MediaAssetReferenceRow | null): number {\n  return (\n    countReferences(toReferenceCounts(row)) + (row?.message_article_background_count ?? 0)\n  );\n}\n""",
+              """function countRowReferences(row: MediaAssetReferenceRow | null): number {\n  return countReferences(toReferenceCounts(row));\n}\n""",
+          )
+          replace_once(
+              asset_library,
+              """         (SELECT COUNT(*) FROM products p WHERE p.cover_asset_id = ma.id) AS product_cover_count,\n         (SELECT COUNT(*) FROM product_media pm WHERE pm.media_asset_id = ma.id)\n           AS product_gallery_count,\n         (\n           SELECT COUNT(*)\n           FROM message_article_references mar\n           WHERE mar.background_media_id = ma.id\n         ) AS message_article_background_count\n""",
+              """         (SELECT COUNT(*) FROM products p WHERE p.cover_asset_id = ma.id) AS product_cover_count,\n         (SELECT COUNT(*) FROM product_media pm WHERE pm.media_asset_id = ma.id)\n           AS product_gallery_count\n""",
+          )
+          replace_once(
+              asset_library,
+              """         AND NOT EXISTS (\n           SELECT 1 FROM product_media pm WHERE pm.media_asset_id = media_assets.id\n         )\n         AND NOT EXISTS (\n           SELECT 1\n           FROM message_article_references mar\n           WHERE mar.background_media_id = media_assets.id\n         )`,\n""",
+              """         AND NOT EXISTS (\n           SELECT 1 FROM product_media pm WHERE pm.media_asset_id = media_assets.id\n         )`,\n""",
+          )
+
+          contract_path = Path('apps/worker/test/message-article-background-contract.test.mjs')
+          contract = contract_path.read_text()
+          old = """test('media lifecycle treats placement backgrounds as in-use without cascade deletion', () => {\n  const managedDelete = read('../src/media/media-delete.ts');\n  const cleanup = read('../src/assets/asset-library.ts');\n\n  for (const source of [managedDelete, cleanup]) {\n    assert.match(source, /message_article_references/u);\n    assert.match(source, /background_media_id/u);\n  }\n  assert.match(managedDelete, /message_article_background_count/u);\n  assert.match(cleanup, /message_article_background_count/u);\n  assert.match(cleanup, /countReferences\\(toReferenceCounts\\(row\\)\\)/u);\n  assert.doesNotMatch(cleanup, /return \\(\\s*countRowReferences\\(row\\)/u);\n});\n"""
+          new = """test('media lifecycle treats placement backgrounds as weak references while snapshots retain published media', () => {\n  const managedDelete = read('../src/media/media-delete.ts');\n  const cleanup = read('../src/assets/asset-library.ts');\n  const publisher = read('../src/publishing/modular-publisher.ts');\n  const migration = read('../../../migrations/0032_message_article_background_media.sql');\n\n  for (const source of [managedDelete, cleanup]) {\n    assert.doesNotMatch(source, /message_article_references/u);\n    assert.doesNotMatch(source, /message_article_background_count/u);\n    assert.doesNotMatch(source, /background_media_id/u);\n  }\n\n  assert.match(cleanup, /countReferences\\(toReferenceCounts\\(row\\)\\)/u);\n  assert.match(managedDelete, /protectedMediaKeys/u);\n  assert.match(managedDelete, /publish_module_versions/u);\n  assert.match(cleanup, /getSnapshotProtection/u);\n  assert.match(cleanup, /publish_module_versions/u);\n  assert.match(\n    publisher,\n    /source\\.messageArticles\\.map\\(\\(article\\) => article\\.background_object_key\\)/u,\n  );\n  assert.match(migration, /REFERENCES media_assets\\(id\\) ON DELETE SET NULL/u);\n});\n"""
+          if contract.count(old) != 1:
+              raise SystemExit(f'contract test replacement expected once, found {contract.count(old)}')
+          contract_path.write_text(contract.replace(old, new, 1))
+          PY
+      - name: Run changed-file fixer
+        run: pnpm fix:changed
+      - name: Run formatting check
+        run: pnpm format
+      - name: Run targeted weak-reference contract
+        run: |
+          node --test --experimental-strip-types \
+            --import ./apps/worker/test/register-ts-resolver.mjs \
+            apps/worker/test/message-article-background-contract.test.mjs \
+            apps/worker/test/article-message-contract.test.mjs
+      - name: Run full repository verify
+        run: pnpm verify
+      - name: Commit verified correction
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apps/worker/src/media/media-delete.ts \
+                  apps/worker/src/assets/asset-library.ts \
+                  apps/worker/test/message-article-background-contract.test.mjs
+          git diff --cached --quiet && exit 0
+          git commit -m "fix(content): treat article backgrounds as weak media references"
+          git push origin HEAD:feat/message-article-background-media-contract
