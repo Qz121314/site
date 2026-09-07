@@ -7,6 +7,7 @@ export type MessageArticleMetadata = {
   articleId: string;
   title: string;
   preview: string;
+  backgroundObjectKey?: string | null;
   sortOrder: number;
 };
 
@@ -52,7 +53,11 @@ function parseMessageArticle(value: unknown): MessageArticleMetadata | null {
   ) {
     return null;
   }
-  return { articleId, title, preview, sortOrder };
+  const article: MessageArticleMetadata = { articleId, title, preview, sortOrder };
+  if (typeof value.backgroundObjectKey === 'string' || value.backgroundObjectKey === null) {
+    article.backgroundObjectKey = value.backgroundObjectKey;
+  }
+  return article;
 }
 
 export function getMessageArticlesFromBootstrap(
