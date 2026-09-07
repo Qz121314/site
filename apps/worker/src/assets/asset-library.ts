@@ -116,10 +116,6 @@ export function countReferences(references: AssetReferenceCounts): number {
   );
 }
 
-function countRowReferences(row: MediaAssetReferenceRow | null): number {
-  return countReferences(toReferenceCounts(row));
-}
-
 export function isValidR2ObjectKey(key: string): boolean {
   return key.length > 0 && key.length <= 1024 && !key.includes('\0');
 }
@@ -267,7 +263,7 @@ async function synchronizeCleanupGuards(
   const statements: D1PreparedStatement[] = [];
 
   for (const row of rows.values()) {
-    const referenceCount = countRowReferences(row);
+    const referenceCount = countReferences(toReferenceCounts(row));
     const existing = guards.get(row.object_key);
 
     if (referenceCount > 0 || !guardVersion) {
@@ -316,7 +312,7 @@ function legacyRetentionBlocked(
     row &&
     guard &&
     retainedVersions.has(guard.guard_content_version) &&
-    countRowReferences(row) === 0,
+    countReferences(toReferenceCounts(row)) === 0,
   );
 }
 
@@ -325,7 +321,9 @@ function modularRetentionBlocked(
   key: string,
   protectedKeys: Set<string>,
 ): boolean {
-  return Boolean(row && countRowReferences(row) === 0 && protectedKeys.has(key));
+  return Boolean(
+    row && countReferences(toReferenceCounts(row)) === 0 && protectedKeys.has(key),
+  );
 }
 
 export async function getMediaAssetReferenceRows(
@@ -371,7 +369,7 @@ function toAdminAsset(
 ): AdminAsset {
   const contentType = object.httpMetadata?.contentType ?? inferContentType(object.key);
   const references = toReferenceCounts(row);
-  const referenceCount = countRowReferences(row);
+  const referenceCount = countReferences(toReferenceCounts(row));
   const cleanupBlockedReason: AssetCleanupBlockedReason =
     referenceCount > 0 ? 'IN_USE' : snapshotProtected ? 'SNAPSHOT_RETENTION' : null;
 
@@ -471,7 +469,7 @@ export async function evaluateCleanupCandidates(
   return keys.map((key, index) => {
     const object = objects[index] ?? null;
     const row = rows.get(key) ?? null;
-    const referenceCount = countRowReferences(row);
+    const referenceCount = countReferences(toReferenceCounts(row));
     const contentType = object?.httpMetadata?.contentType ?? inferContentType(key);
     const isImage = isImageObject(key, contentType);
     const snapshotProtected = protection.modular
