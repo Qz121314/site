@@ -360,8 +360,8 @@ export function TagManagementView({ section, onSessionExpired }: TagManagementVi
           }
         />
       ) : (
-        <div className="category-table-wrap">
-          <table className="category-table">
+        <div className="category-table-wrap ui-data-table-wrap">
+          <table className="category-table ui-data-table">
             <thead>
               <tr>
                 <th className="checkbox-cell">
@@ -419,7 +419,7 @@ export function TagManagementView({ section, onSessionExpired }: TagManagementVi
                     {scope === 'active' ? (
                       <div className="sort-controls">
                         <span>{tag.sortOrder}</span>
-                        <div>
+                        <div className="ui-sort-actions">
                           <Button
                             variant="ghost"
                             size="icon"
@@ -466,33 +466,41 @@ export function TagManagementView({ section, onSessionExpired }: TagManagementVi
                     )}
                   </td>
                   <td className="actions-cell">
-                    {scope === 'active' ? (
-                      <>
-                        <button
-                          type="button"
+                    <div className="ui-row-actions">
+                      {scope === 'active' ? (
+                        <>
+                          <Button
+                            variant="ghost"
+                            size="compact"
+                            disabled={working}
+                            aria-label={`编辑标签 ${tag.name}`}
+                            onClick={() => openEditEditor(tag)}
+                          >
+                            编辑
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="compact"
+                            className="ui-row-action-danger"
+                            disabled={working}
+                            aria-label={`删除标签 ${tag.name}`}
+                            onClick={() => setPendingDeleteIds([tag.id])}
+                          >
+                            删除
+                          </Button>
+                        </>
+                      ) : (
+                        <Button
+                          variant="secondary"
+                          size="compact"
                           disabled={working}
-                          onClick={() => openEditEditor(tag)}
+                          aria-label={`恢复标签 ${tag.name}`}
+                          onClick={() => void restoreTag(tag)}
                         >
-                          编辑
-                        </button>
-                        <button
-                          type="button"
-                          className="text-danger"
-                          disabled={working}
-                          onClick={() => setPendingDeleteIds([tag.id])}
-                        >
-                          删除
-                        </button>
-                      </>
-                    ) : (
-                      <button
-                        type="button"
-                        disabled={working}
-                        onClick={() => void restoreTag(tag)}
-                      >
-                        恢复
-                      </button>
-                    )}
+                          恢复
+                        </Button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}

@@ -47,7 +47,9 @@ export function CategoryTable({
         kind="empty"
         title={scope === 'active' ? '当前分区还没有分类' : '回收站为空'}
         description={
-          scope === 'active' ? '使用上方“新增分类”开始录入。' : '已删除的分类会显示在这里。'
+          scope === 'active'
+            ? '使用上方“新增分类”开始录入。'
+            : '已删除的分类会显示在这里。'
         }
       />
     );

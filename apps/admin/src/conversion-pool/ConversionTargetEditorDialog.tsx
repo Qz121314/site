@@ -92,7 +92,9 @@ export function ConversionTargetEditorDialog({
           <input
             type="checkbox"
             checked={form.isEnabled}
-            onChange={(event) => onFormChange({ ...form, isEnabled: event.target.checked })}
+            onChange={(event) =>
+              onFormChange({ ...form, isEnabled: event.target.checked })
+            }
           />
         </label>
 

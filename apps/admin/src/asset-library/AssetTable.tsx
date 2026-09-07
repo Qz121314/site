@@ -23,7 +23,10 @@ function referenceLabels(references: AssetReferenceCounts): string[] {
   return labels;
 }
 
-function cleanupStatus(asset: AdminAsset): { label: string; tone: 'success' | 'warning' | 'default' } {
+function cleanupStatus(asset: AdminAsset): {
+  label: string;
+  tone: 'success' | 'warning' | 'default';
+} {
   if (asset.usageStatus === 'used') return { label: '使用中', tone: 'default' };
   if (asset.cleanupBlockedReason === 'SNAPSHOT_RETENTION') {
     return { label: '快照保护', tone: 'warning' };

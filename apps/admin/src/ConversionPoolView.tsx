@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
+import { ArrowDown, ArrowUp } from 'lucide-react';
 import { AdminApiError, type AdminSection } from './api';
 import { Button } from './components/ui/button';
 import {
@@ -700,7 +701,7 @@ export function ConversionPoolView({ section, onSessionExpired }: Props) {
         </AdminSelectionBar>
       ) : null}
 
-      <div className="conversion-table-wrap">
+      <div className="conversion-table-wrap ui-data-table-wrap">
         {groupsLoading ? (
           <AdminFeedbackState kind="loading" title="正在读取转化分组…" />
         ) : filteredGroups.length === 0 ? (
@@ -710,7 +711,7 @@ export function ConversionPoolView({ section, onSessionExpired }: Props) {
             description="使用上方新增操作创建当前分区的转化分组。"
           />
         ) : (
-          <table className="conversion-table">
+          <table className="conversion-table ui-data-table">
             <thead>
               <tr>
                 {groupScope === 'active' ? (
@@ -815,16 +816,20 @@ export function ConversionPoolView({ section, onSessionExpired }: Props) {
                     {groupScope === 'active' ? (
                       <div className="sort-controls">
                         <span>{group.sortOrder}</span>
-                        <div>
-                          <button
-                            type="button"
+                        <div className="ui-sort-actions">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            aria-label={`上移 ${group.name}`}
                             disabled={working || groupReorderBlocked || index === 0}
                             onClick={() => void moveGroup(group, -1)}
                           >
-                            ↑
-                          </button>
-                          <button
-                            type="button"
+                            <ArrowUp aria-hidden="true" size={15} />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            aria-label={`下移 ${group.name}`}
                             disabled={
                               working ||
                               groupReorderBlocked ||
@@ -832,8 +837,8 @@ export function ConversionPoolView({ section, onSessionExpired }: Props) {
                             }
                             onClick={() => void moveGroup(group, 1)}
                           >
-                            ↓
-                          </button>
+                            <ArrowDown aria-hidden="true" size={15} />
+                          </Button>
                         </div>
                       </div>
                     ) : (
@@ -841,56 +846,71 @@ export function ConversionPoolView({ section, onSessionExpired }: Props) {
                     )}
                   </td>
                   <td className="actions-cell">
-                    {groupScope === 'active' ? (
-                      <>
-                        {group.mode === 'link' ? (
-                          <>
-                            <button
-                              type="button"
-                              onClick={() => setSelectedGroupId(group.id)}
-                            >
-                              管理链接
-                            </button>
-                            <button
-                              type="button"
-                              disabled={
-                                working ||
-                                group.activeTargetCount === 0 ||
-                                !group.isEnabled
-                              }
-                              onClick={() => void runRotationPreview(group)}
-                            >
-                              测试轮换
-                            </button>
-                          </>
-                        ) : null}
-                        <button type="button" onClick={() => openEditGroup(group)}>
-                          编辑
-                        </button>
-                        <button
-                          className="text-danger"
-                          type="button"
-                          disabled={
-                            working ||
-                            group.productCount > 0 ||
-                            (group.mode === 'link' && group.targetCount > 0)
-                          }
-                          onClick={() =>
-                            setDeleteState({ kind: 'group', ids: [group.id] })
-                          }
+                    <div className="ui-row-actions">
+                      {groupScope === 'active' ? (
+                        <>
+                          {group.mode === 'link' ? (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="compact"
+                                aria-label={`管理 ${group.name} 的链接`}
+                                onClick={() => setSelectedGroupId(group.id)}
+                              >
+                                管理链接
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="compact"
+                                disabled={
+                                  working ||
+                                  group.activeTargetCount === 0 ||
+                                  !group.isEnabled
+                                }
+                                aria-label={`测试 ${group.name} 轮换`}
+                                onClick={() => void runRotationPreview(group)}
+                              >
+                                测试轮换
+                              </Button>
+                            </>
+                          ) : null}
+                          <Button
+                            variant="ghost"
+                            size="compact"
+                            aria-label={`编辑转化分组 ${group.name}`}
+                            onClick={() => openEditGroup(group)}
+                          >
+                            编辑
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="compact"
+                            className="ui-row-action-danger"
+                            disabled={
+                              working ||
+                              group.productCount > 0 ||
+                              (group.mode === 'link' && group.targetCount > 0)
+                            }
+                            aria-label={`删除转化分组 ${group.name}`}
+                            onClick={() =>
+                              setDeleteState({ kind: 'group', ids: [group.id] })
+                            }
+                          >
+                            删除
+                          </Button>
+                        </>
+                      ) : (
+                        <Button
+                          variant="secondary"
+                          size="compact"
+                          disabled={working}
+                          aria-label={`恢复转化分组 ${group.name}`}
+                          onClick={() => void restoreGroup(group)}
                         >
-                          删除
-                        </button>
-                      </>
-                    ) : (
-                      <button
-                        type="button"
-                        disabled={working}
-                        onClick={() => void restoreGroup(group)}
-                      >
-                        恢复
-                      </button>
-                    )}
+                          恢复
+                        </Button>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -965,7 +985,7 @@ export function ConversionPoolView({ section, onSessionExpired }: Props) {
                 description="为当前链接分组添加第一个跳转地址。"
               />
             ) : (
-              <table className="conversion-table conversion-target-table">
+              <table className="conversion-table conversion-target-table ui-data-table">
                 <thead>
                   <tr>
                     {targetScope === 'active' ? (
@@ -1046,16 +1066,20 @@ export function ConversionPoolView({ section, onSessionExpired }: Props) {
                         {targetScope === 'active' ? (
                           <div className="sort-controls">
                             <span>{target.sortOrder}</span>
-                            <div>
-                              <button
-                                type="button"
+                            <div className="ui-sort-actions">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                aria-label={`上移 ${target.name}`}
                                 disabled={working || targetReorderBlocked || index === 0}
                                 onClick={() => void moveTarget(target, -1)}
                               >
-                                ↑
-                              </button>
-                              <button
-                                type="button"
+                                <ArrowUp aria-hidden="true" size={15} />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                aria-label={`下移 ${target.name}`}
                                 disabled={
                                   working ||
                                   targetReorderBlocked ||
@@ -1063,8 +1087,8 @@ export function ConversionPoolView({ section, onSessionExpired }: Props) {
                                 }
                                 onClick={() => void moveTarget(target, 1)}
                               >
-                                ↓
-                              </button>
+                                <ArrowDown aria-hidden="true" size={15} />
+                              </Button>
                             </div>
                           </div>
                         ) : (
@@ -1072,31 +1096,42 @@ export function ConversionPoolView({ section, onSessionExpired }: Props) {
                         )}
                       </td>
                       <td className="actions-cell">
-                        {targetScope === 'active' ? (
-                          <>
-                            <button type="button" onClick={() => openEditTarget(target)}>
-                              编辑
-                            </button>
-                            <button
-                              className="text-danger"
-                              type="button"
+                        <div className="ui-row-actions">
+                          {targetScope === 'active' ? (
+                            <>
+                              <Button
+                                variant="ghost"
+                                size="compact"
+                                aria-label={`编辑链接 ${target.name}`}
+                                onClick={() => openEditTarget(target)}
+                              >
+                                编辑
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="compact"
+                                className="ui-row-action-danger"
+                                disabled={working}
+                                aria-label={`删除链接 ${target.name}`}
+                                onClick={() =>
+                                  setDeleteState({ kind: 'target', ids: [target.id] })
+                                }
+                              >
+                                删除
+                              </Button>
+                            </>
+                          ) : (
+                            <Button
+                              variant="secondary"
+                              size="compact"
                               disabled={working}
-                              onClick={() =>
-                                setDeleteState({ kind: 'target', ids: [target.id] })
-                              }
+                              aria-label={`恢复链接 ${target.name}`}
+                              onClick={() => void restoreTarget(target)}
                             >
-                              删除
-                            </button>
-                          </>
-                        ) : (
-                          <button
-                            type="button"
-                            disabled={working}
-                            onClick={() => void restoreTarget(target)}
-                          >
-                            恢复
-                          </button>
-                        )}
+                              恢复
+                            </Button>
+                          )}
+                        </div>
                       </td>
                     </tr>
                   ))}

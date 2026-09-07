@@ -35,7 +35,9 @@ export function DeleteSectionDialog({
         </>
       }
     >
-      <p className="delete-warning">现有依赖保护、分区 ID 和动态 Catalog routing 不变。</p>
+      <p className="delete-warning">
+        现有依赖保护、分区 ID 和动态 Catalog routing 不变。
+      </p>
     </AdminDialog>
   );
 }

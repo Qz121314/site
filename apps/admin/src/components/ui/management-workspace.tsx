@@ -59,7 +59,9 @@ export function AdminSelectionBar({
       aria-live="polite"
       {...props}
     >
-      <strong>已选择 {count} 个{noun}</strong>
+      <strong>
+        已选择 {count} 个{noun}
+      </strong>
       <div className="ui-management-selection-actions">{children}</div>
     </div>
   );
