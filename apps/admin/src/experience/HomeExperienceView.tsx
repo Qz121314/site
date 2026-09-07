@@ -26,6 +26,17 @@ type HomeDraft = {
   homeLayout: HomeLayout;
 };
 
+type HomeVisibilityField = 'showHot' | 'showLatest' | 'showMore' | 'showFaq';
+
+const HOME_VISIBILITY_FIELDS: ReadonlyArray<
+  readonly [HomeVisibilityField, string, string]
+> = [
+  ['showHot', '热门内容', '显示 Hot 首页内容区块'],
+  ['showLatest', '最新内容', '显示 Latest 首页内容区块'],
+  ['showMore', 'More 入口', '允许首页显示 More 入口'],
+  ['showFaq', 'FAQ 区域', '在首页展示 FAQ 相关入口'],
+];
+
 function createHomeDraft(settings: SiteSettingsWithHero): HomeDraft {
   return {
     showHot: settings.showHot,
@@ -117,12 +128,7 @@ export function HomeExperienceView({
         </div>
 
         <div className="settings-toggle-list">
-          {[
-            ['showHot', '热门内容', '显示 Hot 首页内容区块'],
-            ['showLatest', '最新内容', '显示 Latest 首页内容区块'],
-            ['showMore', 'More 入口', '允许首页显示 More 入口'],
-            ['showFaq', 'FAQ 区域', '在首页展示 FAQ 相关入口'],
-          ].map(([field, label, description]) => (
+          {HOME_VISIBILITY_FIELDS.map(([field, label, description]) => (
             <label className="settings-toggle-row" key={field}>
               <span className="settings-toggle-copy">
                 <strong>{label}</strong>
@@ -130,14 +136,7 @@ export function HomeExperienceView({
               </span>
               <input
                 type="checkbox"
-                checked={
-                  draft[
-                    field as keyof Pick<
-                      HomeDraft,
-                      'showHot' | 'showLatest' | 'showMore' | 'showFaq'
-                    >
-                  ] as boolean
-                }
+                checked={draft[field]}
                 disabled={saving}
                 onChange={(event) =>
                   setDraft((current) => ({
