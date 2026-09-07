@@ -1,12 +1,9 @@
 import { X } from 'lucide-react';
 import { useEffect, useRef, useState, type MouseEvent, type ReactNode } from 'react';
-import { Button } from '../components/ui/button';
-import {
-  getAdminDomainForView,
-  type AdminView,
-  type AdminViewContext,
-} from '../admin-navigation';
+import { getCatalogWorkspaceContext, getAdminDomainForView, type AdminView, type AdminViewContext } from '../admin-navigation';
 import type { AdminSection } from '../api';
+import { CatalogWorkspaceSwitcher } from '../catalog/CatalogWorkspaceSwitcher';
+import { Button } from '../components/ui/button';
 import { AdminPageHeader } from './AdminPageHeader';
 import { AdminPrimarySidebar } from './AdminPrimarySidebar';
 import { AdminSecondarySidebar } from './AdminSecondarySidebar';
@@ -50,6 +47,10 @@ export function AdminShell({
   const [navigationOpen, setNavigationOpen] = useState(false);
   const drawerRef = useRef<HTMLDivElement>(null);
   const activeDomain = getAdminDomainForView(activeView);
+  const catalogContext = getCatalogWorkspaceContext(activeView);
+  const catalogSection = catalogContext
+    ? sections.find((section) => section.id === catalogContext.sectionId)
+    : null;
 
   useEffect(() => {
     if (!navigationOpen) return;
@@ -135,7 +136,16 @@ export function AdminShell({
             primaryAction={pagePrimaryAction}
             secondaryAction={pageSecondaryAction}
           />
-          <AdminWorkspace width={workspaceWidth}>{children}</AdminWorkspace>
+          <AdminWorkspace width={workspaceWidth}>
+            {catalogContext ? (
+              <CatalogWorkspaceSwitcher
+                activeView={activeView}
+                sectionName={catalogSection?.name ?? catalogContext.sectionId}
+                onNavigate={onNavigate}
+              />
+            ) : null}
+            {children}
+          </AdminWorkspace>
         </main>
       </div>
 
