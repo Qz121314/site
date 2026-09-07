@@ -2,7 +2,7 @@ import type { StorefrontLinkComponent } from '@site/storefront-ui';
 import { useQueryClient } from '@tanstack/react-query';
 import type { StorefrontBootstrap } from './content';
 import { MessagesArticleList } from './MessagesArticleList';
-import type { MessageArticlePlacementMetadata } from './messages-articles';
+import type { MessageArticleMetadata } from './messages-articles';
 import { MessagesPageContent } from './support-ui';
 import type { SupportConversationSummary } from './support-contract';
 
@@ -12,7 +12,7 @@ export function MessagesArticleListWorkspace({
   supportAvailable,
   LinkComponent,
 }: {
-  articles: MessageArticlePlacementMetadata[];
+  articles: MessageArticleMetadata[];
   conversations: SupportConversationSummary[];
   supportAvailable: boolean | null;
   LinkComponent: StorefrontLinkComponent;
