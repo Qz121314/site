@@ -1,5 +1,4 @@
-/* FAQ management is loaded after the shared admin system so this page owns its
- * final workbench geometry without relying on competing override layers. */
+/* FAQ page owns workbench geometry; shared controls own interaction state. */
 
 .faq-management {
   position: relative;
@@ -22,8 +21,8 @@
   box-shadow: var(--admin-shadow-card);
 }
 
-.faq-filter-bar .scope-tabs {
-  align-self: center;
+.faq-scope-segmented {
+  max-width: 100%;
 }
 
 .faq-filter-bar .faq-search {
@@ -51,12 +50,9 @@
   background: #fff;
   box-shadow: none;
   font-size: 0.77rem;
-  transition:
-    border-color 140ms ease,
-    box-shadow 140ms ease;
 }
 
-.faq-filter-bar .faq-search input:focus {
+.faq-filter-bar .faq-search input:focus-visible {
   border-color: #ff9a76;
   outline: 0;
   box-shadow: 0 0 0 3px rgb(255 90 31 / 10%);
@@ -64,7 +60,6 @@
 
 .faq-create-button {
   min-width: 98px;
-  margin: 0;
 }
 
 .faq-list {
@@ -152,78 +147,18 @@
   gap: 4px;
 }
 
-.faq-card-actions button {
-  appearance: none;
-  min-width: 28px;
-  min-height: 28px;
-  margin-left: 0;
-  padding: 3px 8px;
-  border: 1px solid #dfe4eb;
-  border-radius: 6px;
-  color: #475467;
-  background: #fff;
-  box-shadow: 0 1px 1px rgb(16 24 40 / 3%);
-  cursor: pointer;
-  font-size: 0.69rem;
-  font-weight: 700;
-  line-height: 1;
-  transition:
-    color 120ms ease,
-    border-color 120ms ease,
-    background 120ms ease;
-}
-
-.faq-card-actions button:not(:disabled):hover {
-  border-color: #c7ced8;
-  color: #172033;
-  background: #f8fafc;
+.faq-card-actions .ui-button--icon {
+  width: 30px;
+  min-height: 30px;
 }
 
 .faq-card-actions .text-danger {
-  border-color: transparent;
-  color: #b42318;
-  background: transparent;
-  box-shadow: none;
-}
-
-.faq-card-actions .text-danger:not(:disabled):hover {
-  border-color: #fecdca;
-  color: #912018;
-  background: #fff1f0;
-}
-
-.faq-card-actions button:disabled {
-  cursor: not-allowed;
-  opacity: 0.4;
-}
-
-.faq-empty-state {
-  display: grid;
-  min-height: 112px;
-  flex: 0 0 auto;
-  place-items: center;
-  padding: 24px 20px;
-  border: 1px dashed var(--admin-border);
-  border-radius: var(--admin-radius-md);
-  color: var(--admin-text-muted);
-  background: var(--admin-surface);
-  box-sizing: border-box;
-  text-align: center;
-}
-
-.faq-empty-state strong {
-  color: var(--admin-text);
-  font-size: 0.9rem;
-}
-
-.faq-editor-dialog {
-  width: min(720px, calc(100vw - 32px));
+  color: var(--admin-danger);
 }
 
 .faq-editor-form {
   display: grid;
   gap: 12px;
-  margin-top: 0;
 }
 
 .faq-editor-form label {
@@ -233,44 +168,15 @@
 
 .faq-editor-form label > span {
   display: block;
-  margin-bottom: 5px;
   color: #344054;
   font-size: 0.73rem;
   font-weight: 700;
 }
 
-.faq-editor-form input[type='text'] {
+.faq-editor-form .ui-input,
+.faq-editor-form .ui-textarea {
   width: 100%;
   box-sizing: border-box;
-}
-
-.faq-editor-form input[type='text'],
-.faq-editor-form input[type='number'],
-.faq-editor-form textarea {
-  min-height: var(--admin-control-h);
-  padding-inline: 10px;
-  border: 1px solid var(--admin-border-strong);
-  border-radius: var(--admin-radius-sm);
-  color: var(--admin-text);
-  background: #fff;
-  box-shadow: none;
-  font-size: 0.8rem;
-  transition:
-    border-color 140ms ease,
-    box-shadow 140ms ease;
-}
-
-.faq-editor-form textarea {
-  padding: 8px 10px;
-  line-height: 1.5;
-}
-
-.faq-editor-form input[type='text']:focus,
-.faq-editor-form input[type='number']:focus,
-.faq-editor-form textarea:focus {
-  border-color: #ff9a76;
-  outline: 0;
-  box-shadow: 0 0 0 3px rgb(255 90 31 / 10%);
 }
 
 .faq-editor-meta-grid {
@@ -278,12 +184,6 @@
   grid-template-columns: minmax(120px, 180px) minmax(200px, 1fr);
   align-items: end;
   gap: 10px;
-}
-
-.faq-editor-meta-grid input[type='number'] {
-  width: 100%;
-  min-height: 36px;
-  box-sizing: border-box;
 }
 
 .faq-enabled-field {
@@ -318,38 +218,9 @@
   font-size: 0.73rem;
 }
 
-.faq-editor-tabs {
-  display: flex;
-  gap: 2px;
-  padding: 2px;
-  border: 1px solid var(--admin-border);
-  border-radius: 8px;
-  background: #f0f2f5;
-}
-
-.faq-editor-tabs button {
-  min-height: 29px;
-  padding-inline: 9px;
-  border: 0;
-  border-radius: 6px;
-  color: var(--admin-text-muted);
-  background: transparent;
-  cursor: pointer;
-  font-size: 0.71rem;
-  font-weight: 700;
-}
-
-.faq-editor-tabs button.is-active {
-  color: var(--admin-text);
-  background: #fff;
-  box-shadow: 0 1px 2px rgb(16 24 40 / 8%);
-}
-
-.faq-editor-form textarea {
-  width: 100%;
+.faq-editor-form .ui-textarea {
   min-height: 260px;
   max-height: 50vh;
-  box-sizing: border-box;
   resize: vertical;
   font:
     0.78rem/1.6 ui-monospace,
@@ -401,9 +272,11 @@
 .faq-markdown-preview h1 {
   font-size: 1.35rem;
 }
+
 .faq-markdown-preview h2 {
   font-size: 1.15rem;
 }
+
 .faq-markdown-preview h3 {
   font-size: 1rem;
 }
@@ -459,16 +332,13 @@
 }
 
 @media (max-width: 1023px) {
-  .faq-management {
+  .faq-management,
+  .faq-list {
     overflow: visible;
   }
 
   .faq-filter-bar {
     grid-template-columns: auto minmax(220px, 1fr) auto;
-  }
-
-  .faq-list {
-    overflow: visible;
   }
 }
 
@@ -483,15 +353,12 @@
     align-items: stretch;
   }
 
-  .faq-filter-bar .scope-tabs {
+  .faq-scope-segmented {
     width: max-content;
     max-width: 100%;
   }
 
-  .faq-filter-bar .faq-search input {
-    width: 100%;
-  }
-
+  .faq-filter-bar .faq-search input,
   .faq-create-button {
     width: 100%;
   }
