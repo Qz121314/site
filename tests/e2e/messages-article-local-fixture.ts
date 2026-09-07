@@ -7,6 +7,7 @@ const INDEX_VERSION = 'article-index-0001';
 const FAQ_VERSION = 'article-faq-000001';
 const MEDIA_ORIGIN = 'https://media.example.test';
 const SUPPORT_ORIGIN = 'https://support.example.test';
+const ALPHA_TITLE = 'Alpha guide for a reliable long-form customer journey';
 
 export const MESSAGE_ARTICLE_IDS = {
   alpha: 'article-alpha',
@@ -31,7 +32,7 @@ const messageArticles = [
   },
   {
     articleId: MESSAGE_ARTICLE_IDS.alpha,
-    title: 'Alpha guide',
+    title: ALPHA_TITLE,
     preview: 'The first recommended article from bootstrap metadata.',
     backgroundObjectKey: 'messages/alpha.svg',
     sortOrder: 10,
@@ -189,7 +190,7 @@ const articles = {
   articles: [
     {
       id: MESSAGE_ARTICLE_IDS.alpha,
-      title: 'Alpha guide',
+      title: ALPHA_TITLE,
       body: alphaArticleBody,
       sortOrder: 10,
     },
