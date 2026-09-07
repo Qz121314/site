@@ -52,8 +52,7 @@ jobs:
             apps/worker/test/article-message-contract.test.mjs \
             apps/worker/test/message-article-background-contract.test.mjs \
             apps/worker/test/message-article-migration.test.mjs \
-            apps/worker/test/public-bootstrap-snapshot.test.mjs \
-            migrations/0032_message_article_background_media.sql
+            apps/worker/test/public-bootstrap-snapshot.test.mjs
 
       - name: Commit normalized implementation
         run: |
