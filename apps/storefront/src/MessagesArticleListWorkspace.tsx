@@ -1,5 +1,6 @@
 import type { StorefrontLinkComponent } from '@site/storefront-ui';
 import { useQueryClient } from '@tanstack/react-query';
+import { MessageCircle } from 'lucide-react';
 import type { StorefrontBootstrap } from './content';
 import { MessagesArticleList } from './MessagesArticleList';
 import type { MessageArticleMetadata } from './messages-articles';
@@ -40,7 +41,9 @@ export function MessagesArticleListWorkspace({
         </div>
       </aside>
       <div className="messages-detail">
-        <div className="messages-detail-placeholder" aria-hidden="true" />
+        <div className="messages-detail-placeholder" aria-hidden="true">
+          <MessageCircle />
+        </div>
       </div>
     </section>
   );
