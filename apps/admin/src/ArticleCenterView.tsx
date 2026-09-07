@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type FormEvent,
+} from 'react';
 import { AdminApiError } from './api';
 import { ArticleEditorDialog } from './article-center/ArticleEditorDialog';
 import { ArticleTable } from './article-center/ArticleTable';
@@ -76,7 +82,8 @@ export function ArticleCenterView({ onSessionExpired }: ArticleCenterViewProps) 
   const [statusFilter, setStatusFilter] = useState<ArticleStatusFilter>('all');
   const [sortMode, setSortMode] = useState<ArticleSortMode>('default');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
-  const [editingArticle, setEditingArticle] = useState<AdminArticle | null>(null);
+  const [editingArticle, setEditingArticle] =
+    useState<AdminArticle | null>(null);
   const [form, setForm] = useState<ArticleInput>(emptyArticleForm);
   const [editorOpen, setEditorOpen] = useState(false);
   const [previewing, setPreviewing] = useState(false);
@@ -126,17 +133,34 @@ export function ArticleCenterView({ onSessionExpired }: ArticleCenterViewProps) 
   const visibleArticles = useMemo(() => {
     const keyword = search.trim().toLocaleLowerCase('zh-CN');
     const filtered = sourceArticles.filter((article) => {
-      if (keyword && !article.title.toLocaleLowerCase('zh-CN').includes(keyword)) return false;
-      if (scope === 'active' && statusFilter === 'active' && !article.isActive) return false;
-      if (scope === 'active' && statusFilter === 'inactive' && article.isActive) return false;
+      const normalizedTitle = article.title.toLocaleLowerCase('zh-CN');
+      if (keyword && !normalizedTitle.includes(keyword)) return false;
+      if (
+        scope === 'active' &&
+        statusFilter === 'active' &&
+        !article.isActive
+      ) {
+        return false;
+      }
+      if (
+        scope === 'active' &&
+        statusFilter === 'inactive' &&
+        article.isActive
+      ) {
+        return false;
+      }
       return true;
     });
 
     if (sortMode === 'title') {
-      return [...filtered].sort((left, right) => left.title.localeCompare(right.title, 'zh-CN'));
+      return [...filtered].sort((left, right) =>
+        left.title.localeCompare(right.title, 'zh-CN'),
+      );
     }
     if (sortMode === 'updated') {
-      return [...filtered].sort((left, right) => right.updatedAt.localeCompare(left.updatedAt));
+      return [...filtered].sort((left, right) =>
+        right.updatedAt.localeCompare(left.updatedAt),
+      );
     }
     return sortByDefault(filtered);
   }, [scope, search, sortMode, sourceArticles, statusFilter]);
@@ -296,7 +320,9 @@ export function ArticleCenterView({ onSessionExpired }: ArticleCenterViewProps) 
     clearMessages();
     try {
       const restored = await restoreArticle(article.id);
-      setTrashArticles((current) => current.filter((item) => item.id !== article.id));
+      setTrashArticles((current) =>
+        current.filter((item) => item.id !== article.id),
+      );
       setActiveArticles((current) => [...current, restored]);
       setSuccessMessage(`文章“${restored.title}”已恢复。`);
     } catch (error) {
@@ -344,7 +370,9 @@ export function ArticleCenterView({ onSessionExpired }: ArticleCenterViewProps) 
       kind="empty"
       title={scope === 'active' ? '暂无文章' : '回收站为空'}
       description={
-        scope === 'active' ? '创建第一篇可复用 Markdown 文章。' : '已删除的文章会显示在这里。'
+        scope === 'active'
+          ? '创建第一篇可复用 Markdown 文章。'
+          : '已删除的文章会显示在这里。'
       }
       compact
       action={
@@ -370,7 +398,9 @@ export function ArticleCenterView({ onSessionExpired }: ArticleCenterViewProps) 
       allVisibleSelected={allVisibleSelected}
       working={working}
       reorderDisabled={reorderDisabled}
-      onToggleSelect={(id) => setSelectedIds((current) => toggleSelection(current, id))}
+      onToggleSelect={(id) =>
+        setSelectedIds((current) => toggleSelection(current, id))
+      }
       onToggleSelectAll={() =>
         setSelectedIds((current) =>
           toggleVisibleSelection(
@@ -409,7 +439,11 @@ export function ArticleCenterView({ onSessionExpired }: ArticleCenterViewProps) 
           </AdminSegmentedControl>
         }
         trailing={
-          <Button variant="primary" onClick={openCreateEditor} disabled={scope !== 'active'}>
+          <Button
+            variant="primary"
+            onClick={openCreateEditor}
+            disabled={scope !== 'active'}
+          >
             新建文章
           </Button>
         }
@@ -447,7 +481,9 @@ export function ArticleCenterView({ onSessionExpired }: ArticleCenterViewProps) 
           <select
             className="ui-input"
             value={sortMode}
-            onChange={(event) => updateSortMode(event.target.value as ArticleSortMode)}
+            onChange={(event) =>
+              updateSortMode(event.target.value as ArticleSortMode)
+            }
           >
             <option value="default">默认顺序</option>
             <option value="title">标题</option>

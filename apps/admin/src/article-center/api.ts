@@ -54,15 +54,22 @@ function toLegacyFaqInput(input: ArticleInput): FaqInput {
 
 // Product semantics are Article. The compatibility transport intentionally remains FAQ:
 // /api/admin/faqs -> legacy FAQ record -> D1 faqs.question/answer.
-export async function fetchArticles(scope: ArticleScope = 'active'): Promise<AdminArticle[]> {
+export async function fetchArticles(
+  scope: ArticleScope = 'active',
+): Promise<AdminArticle[]> {
   return (await fetchFaqs(scope)).map(fromLegacyFaq);
 }
 
-export async function createArticle(input: ArticleInput): Promise<AdminArticle> {
+export async function createArticle(
+  input: ArticleInput,
+): Promise<AdminArticle> {
   return fromLegacyFaq(await createFaq(toLegacyFaqInput(input)));
 }
 
-export async function updateArticle(id: string, input: ArticleInput): Promise<AdminArticle> {
+export async function updateArticle(
+  id: string,
+  input: ArticleInput,
+): Promise<AdminArticle> {
   return fromLegacyFaq(await updateFaq(id, toLegacyFaqInput(input)));
 }
 

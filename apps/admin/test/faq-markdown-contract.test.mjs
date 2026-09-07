@@ -6,7 +6,7 @@ async function source(relativePath) {
   return readFile(new URL(relativePath, import.meta.url), 'utf8');
 }
 
-test('Article editor keeps raw Markdown as the editable source without client-side trimming', async () => {
+test('Article editor preserves raw Markdown source', async () => {
   const view = await source('../src/ArticleCenterView.tsx');
   const editor = await source('../src/article-center/ArticleEditorDialog.tsx');
   const adapter = await source('../src/article-center/api.ts');
@@ -23,17 +23,20 @@ test('Article editor keeps raw Markdown as the editable source without client-si
   assert.match(editor, />\s*预览\s*</);
 });
 
-test('Admin Article preview reuses shared MarkdownContent and performs zero backend requests', async () => {
+test('Admin Article preview stays client-side and shared', async () => {
   const editor = await source('../src/article-center/ArticleEditorDialog.tsx');
   const preview = await source('../src/article-center/MarkdownPreview.tsx');
 
   assert.match(editor, /<MarkdownPreview markdown=\{form\.body\}/);
   assert.match(preview, /@site\/storefront-ui\/markdown-content/);
   assert.match(preview, /<MarkdownContent source=\{markdown\}/);
-  assert.doesNotMatch(preview, /parseMarkdown|fetch\(|adminFetch|createArticle|updateArticle/);
+  assert.doesNotMatch(
+    preview,
+    /parseMarkdown|fetch\(|adminFetch|createArticle|updateArticle/,
+  );
 });
 
-test('Article Admin adapter preserves the legacy FAQ transport contract', async () => {
+test('Article Admin adapter preserves FAQ transport', async () => {
   const adapter = await source('../src/article-center/api.ts');
   const legacyTransport = await source('../src/faq-management/api.ts');
 
@@ -44,10 +47,12 @@ test('Article Admin adapter preserves the legacy FAQ transport contract', async 
   assert.doesNotMatch(legacyTransport, /\/api\/admin\/articles/);
 });
 
-test('Storefront FAQ and generic Article routes keep using the same Markdown renderer adapter', async () => {
+test('Storefront routes keep the shared Markdown adapter', async () => {
   const faqPage = await source('../../storefront/src/FaqPage.tsx');
   const articlePage = await source('../../storefront/src/ArticlePage.tsx');
-  const storefrontMarkdown = await source('../../storefront/src/MarkdownContent.tsx');
+  const storefrontMarkdown = await source(
+    '../../storefront/src/MarkdownContent.tsx',
+  );
 
   assert.match(faqPage, /<MarkdownContent source=\{article\.body\}/);
   assert.match(articlePage, /<MarkdownContent source=\{article\.body\}/);
@@ -59,7 +64,7 @@ test('Storefront FAQ and generic Article routes keep using the same Markdown ren
   );
 });
 
-test('Article Center keeps the internal faq publish mapping', async () => {
+test('Article Center keeps the faq publish mapping', async () => {
   const dashboard = await source('../src/Dashboard.tsx');
   const compatibilityView = await source('../src/FaqManagementView.tsx');
 
