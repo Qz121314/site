@@ -6,6 +6,7 @@ on:
       - refactor/admin-management-workspaces
     paths:
       - scripts/phase-d-apply.py
+      - scripts/phase-d-fix.py
       - .github/workflows/phase-d-apply.yml
 
 permissions:
@@ -22,7 +23,9 @@ jobs:
           ref: refactor/admin-management-workspaces
 
       - name: Apply scoped Phase D patch
-        run: python scripts/phase-d-apply.py
+        run: |
+          python scripts/phase-d-apply.py
+          python scripts/phase-d-fix.py
 
       - name: Set up pnpm
         uses: pnpm/action-setup@v4
