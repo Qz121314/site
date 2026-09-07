@@ -42,6 +42,7 @@
 @import './admin-sidebar.css';
 @import './admin-workspace.css';
 @import './admin-scroll-ownership.css';
+@import './admin-section-workspace-nav.css';
 @import '@site/storefront-ui/styles.css';
 @import '@site/storefront-ui/loading.css';
 @import '@site/storefront-ui/no-agent.css';
