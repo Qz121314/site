@@ -2,6 +2,10 @@ import { X } from 'lucide-react';
 import { useEffect, useId, useRef, type MouseEvent, type ReactNode } from 'react';
 import { cn } from '../../lib/cn';
 import { Button } from './button';
+import {
+  isAdminDialogFocusTraversalKey,
+  shouldDismissAdminDialogKey,
+} from './dialog-behavior';
 
 const FOCUSABLE_SELECTOR = [
   'button:not([disabled])',
@@ -62,12 +66,12 @@ export function AdminDialog({
     dialog?.querySelector<HTMLElement>(FOCUSABLE_SELECTOR)?.focus();
 
     const handleKeyDown = (event: globalThis.KeyboardEvent) => {
-      if (event.key === 'Escape' && !closeDisabledRef.current) {
+      if (shouldDismissAdminDialogKey(event.key, closeDisabledRef.current)) {
         event.preventDefault();
         closeRef.current();
         return;
       }
-      if (event.key !== 'Tab' || !dialog) return;
+      if (!isAdminDialogFocusTraversalKey(event.key) || !dialog) return;
 
       const focusable = Array.from(
         dialog.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR),

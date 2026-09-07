@@ -1,5 +1,9 @@
+import { ArrowDown, ArrowUp } from 'lucide-react';
 import type { AdminSection, SectionScope } from '../api';
 import { brandingAssetPreviewUrl } from '../branding-media/api';
+import { Button } from '../components/ui/button';
+import { AdminFeedbackState } from '../components/ui/feedback-state';
+import { AdminStatusBadge } from '../components/ui/status-badge';
 
 type SectionTableProps = {
   scope: SectionScope;
@@ -34,9 +38,27 @@ export function SectionTable({
   onRestore,
   onMove,
 }: SectionTableProps) {
+  if (loading) {
+    return <AdminFeedbackState kind="loading" title="正在读取回收站…" />;
+  }
+
+  if (sections.length === 0) {
+    return (
+      <AdminFeedbackState
+        kind="empty"
+        title="没有符合条件的分区"
+        description={
+          scope === 'active'
+            ? '创建第一个分区后会立即生成左侧业务菜单。'
+            : '已删除分区会显示在这里。'
+        }
+      />
+    );
+  }
+
   return (
-    <div className="section-table-wrap">
-      <table className="section-table">
+    <div className="section-table-wrap ui-data-table-wrap">
+      <table className="section-table ui-data-table">
         <thead>
           <tr>
             <th className="checkbox-cell">
@@ -57,123 +79,135 @@ export function SectionTable({
           </tr>
         </thead>
         <tbody>
-          {sections.map((section, index) => (
-            <tr key={section.id}>
-              <td className="checkbox-cell">
-                {scope === 'active' ? (
-                  <input
-                    type="checkbox"
-                    aria-label={`选择 ${section.name}`}
-                    checked={selectedIds.has(section.id)}
-                    onChange={() => onToggleSelect(section.id)}
-                  />
-                ) : null}
-              </td>
-              <td>
-                <div className="section-identity">
-                  <span
-                    className={`section-icon${section.iconAssetId ? ' has-image' : ''}`}
-                    aria-hidden="true"
-                  >
-                    {section.iconAssetId ? (
-                      <img src={brandingAssetPreviewUrl(section.iconAssetId)} alt="" />
-                    ) : (
-                      (section.iconValue ?? '◈')
-                    )}
-                  </span>
-                  <div>
-                    <strong>{section.name}</strong>
-                    <small>/{section.slug}</small>
-                  </div>
-                </div>
-              </td>
-              <td>
-                <div className="sort-controls">
-                  <strong>{section.sortOrder}</strong>
+          {sections.map((section, index) => {
+            const selected = selectedIds.has(section.id);
+            return (
+              <tr
+                key={section.id}
+                className={`ui-data-row${selected ? ' is-selected' : ''}`}
+                aria-selected={scope === 'active' ? selected : undefined}
+              >
+                <td className="checkbox-cell">
                   {scope === 'active' ? (
-                    <div>
-                      <button
-                        type="button"
-                        aria-label={`上移 ${section.name}`}
-                        disabled={working || reorderDisabled || index === 0}
-                        onClick={() => onMove(section, -1)}
-                      >
-                        ↑
-                      </button>
-                      <button
-                        type="button"
-                        aria-label={`下移 ${section.name}`}
-                        disabled={
-                          working || reorderDisabled || index === sections.length - 1
-                        }
-                        onClick={() => onMove(section, 1)}
-                      >
-                        ↓
-                      </button>
-                    </div>
+                    <input
+                      type="checkbox"
+                      aria-label={`选择 ${section.name}`}
+                      checked={selected}
+                      onChange={() => onToggleSelect(section.id)}
+                    />
                   ) : null}
-                </div>
-              </td>
-              <td>
-                {scope === 'trash' ? (
-                  <span className="status-pill is-deleted">已删除</span>
-                ) : (
-                  <button
-                    className={`status-pill ${section.isEnabled ? 'is-enabled' : 'is-disabled'}`}
-                    type="button"
-                    disabled={working}
-                    onClick={() => onToggleEnabled(section)}
-                  >
-                    {section.isEnabled ? '已启用' : '已停用'}
-                  </button>
-                )}
-              </td>
-              <td>
-                <span className="relation-count">产品 {section.productCount}</span>
-                <span className="relation-count">
-                  转化 {section.conversionMethodCount}
-                </span>
-              </td>
-              <td className="actions-cell">
-                {scope === 'trash' ? (
-                  <button
-                    type="button"
-                    disabled={working}
-                    onClick={() => onRestore(section)}
-                  >
-                    恢复
-                  </button>
-                ) : (
-                  <>
-                    <button type="button" onClick={() => onEdit(section)}>
-                      编辑
-                    </button>
-                    <button
-                      className="text-danger"
-                      type="button"
-                      disabled={working}
-                      onClick={() => onDelete(section)}
+                </td>
+                <td>
+                  <div className="section-identity">
+                    <span
+                      className={`section-icon${section.iconAssetId ? ' has-image' : ''}`}
+                      aria-hidden="true"
                     >
-                      删除
-                    </button>
-                  </>
-                )}
-              </td>
-            </tr>
-          ))}
+                      {section.iconAssetId ? (
+                        <img src={brandingAssetPreviewUrl(section.iconAssetId)} alt="" />
+                      ) : (
+                        (section.iconValue ?? '◈')
+                      )}
+                    </span>
+                    <div>
+                      <strong>{section.name}</strong>
+                      <small>/{section.slug}</small>
+                    </div>
+                  </div>
+                </td>
+                <td>
+                  <div className="sort-controls">
+                    <strong>{section.sortOrder}</strong>
+                    {scope === 'active' ? (
+                      <div className="ui-sort-actions">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label={`上移 ${section.name}`}
+                          disabled={working || reorderDisabled || index === 0}
+                          onClick={() => onMove(section, -1)}
+                        >
+                          <ArrowUp aria-hidden="true" size={15} />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          aria-label={`下移 ${section.name}`}
+                          disabled={
+                            working || reorderDisabled || index === sections.length - 1
+                          }
+                          onClick={() => onMove(section, 1)}
+                        >
+                          <ArrowDown aria-hidden="true" size={15} />
+                        </Button>
+                      </div>
+                    ) : null}
+                  </div>
+                </td>
+                <td>
+                  {scope === 'trash' ? (
+                    <AdminStatusBadge tone="warning">已删除</AdminStatusBadge>
+                  ) : (
+                    <Button
+                      variant="ghost"
+                      size="compact"
+                      disabled={working}
+                      aria-label={`${section.isEnabled ? '停用' : '启用'}分区 ${section.name}`}
+                      onClick={() => onToggleEnabled(section)}
+                    >
+                      <AdminStatusBadge tone={section.isEnabled ? 'success' : 'default'}>
+                        {section.isEnabled ? '已启用' : '已停用'}
+                      </AdminStatusBadge>
+                    </Button>
+                  )}
+                </td>
+                <td>
+                  <span className="relation-count">产品 {section.productCount}</span>
+                  <span className="relation-count">
+                    转化 {section.conversionMethodCount}
+                  </span>
+                </td>
+                <td className="actions-cell">
+                  <div className="ui-row-actions">
+                    {scope === 'trash' ? (
+                      <Button
+                        variant="secondary"
+                        size="compact"
+                        disabled={working}
+                        aria-label={`恢复分区 ${section.name}`}
+                        onClick={() => onRestore(section)}
+                      >
+                        恢复
+                      </Button>
+                    ) : (
+                      <>
+                        <Button
+                          variant="ghost"
+                          size="compact"
+                          aria-label={`编辑分区 ${section.name}`}
+                          onClick={() => onEdit(section)}
+                        >
+                          编辑
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="compact"
+                          className="ui-row-action-danger"
+                          disabled={working}
+                          aria-label={`删除分区 ${section.name}`}
+                          onClick={() => onDelete(section)}
+                        >
+                          删除
+                        </Button>
+                      </>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            );
+          })}
         </tbody>
       </table>
-
-      {loading || sections.length === 0 ? (
-        <div className="section-table-empty">
-          <strong>{loading ? '正在读取回收站…' : '没有符合条件的分区'}</strong>
-          <p>
-            {scope === 'active'
-              ? '创建第一个分区后会立即生成左侧业务菜单。'
-              : '已删除分区会显示在这里。'}
-          </p>
-        </div>
-      ) : null}
     </div>
   );
 }

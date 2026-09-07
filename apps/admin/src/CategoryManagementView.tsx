@@ -1,5 +1,19 @@
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { AdminApiError, type AdminSection } from './api';
+import { Button } from './components/ui/button';
+import {
+  AdminSearchField,
+  AdminSelectionBar,
+  AdminToolbar,
+} from './components/ui/management-workspace';
+import {
+  toggleSelection,
+  toggleVisibleSelection,
+} from './components/ui/management-selection';
+import {
+  AdminSegmentedControl,
+  AdminSegmentedItem,
+} from './components/ui/segmented-control';
 import { CategoryEditorDialog } from './category-management/CategoryEditorDialog';
 import { CategoryTable } from './category-management/CategoryTable';
 import { DeleteCategoryDialog } from './category-management/DeleteCategoryDialog';
@@ -286,66 +300,52 @@ export function CategoryManagementView({
   }
 
   function toggleSelect(id: string) {
-    setSelectedIds((current) => {
-      const next = new Set(current);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+    setSelectedIds((current) => toggleSelection(current, id));
   }
 
   function toggleSelectAll() {
-    setSelectedIds((current) => {
-      const next = new Set(current);
-      filteredCategories.forEach((category) => {
-        if (allVisibleSelected) next.delete(category.id);
-        else next.add(category.id);
-      });
-      return next;
-    });
+    setSelectedIds((current) =>
+      toggleVisibleSelection(
+        current,
+        filteredCategories.map((category) => category.id),
+        allVisibleSelected,
+      ),
+    );
   }
 
   return (
     <section className="category-management" aria-labelledby="category-management-title">
-      <div className="category-management-toolbar">
-        <div>
-          <p>当前分区</p>
-          <h2 id="category-management-title">{section.name} · 分类管理</h2>
-          <span>分类仅在“{section.name}”分区内使用，产品录入时只能选择本分区分类。</span>
-        </div>
-        <button className="primary-button" type="button" onClick={openCreateEditor}>
-          新增分类
-        </button>
-      </div>
-
-      <div className="category-filter-bar">
-        <div className="scope-tabs" role="tablist" aria-label="分类状态">
-          <button
-            type="button"
-            className={scope === 'active' ? 'is-active' : undefined}
-            onClick={() => void changeScope('active')}
-          >
-            当前分类 <span>{activeCategories.length}</span>
-          </button>
-          <button
-            type="button"
-            className={scope === 'trash' ? 'is-active' : undefined}
-            onClick={() => void changeScope('trash')}
-          >
-            回收站 <span>{trashCategories.length}</span>
-          </button>
-        </div>
-
-        <label className="category-search">
-          <span>搜索</span>
-          <input
-            type="search"
-            value={search}
-            placeholder="分类名称"
-            onChange={(event) => setSearch(event.target.value)}
-          />
-        </label>
-      </div>
+      <AdminToolbar
+        aria-label={`${section.name} 分类管理工具栏`}
+        leading={
+          <AdminSegmentedControl ariaLabel="分类状态">
+            <AdminSegmentedItem
+              selected={scope === 'active'}
+              onClick={() => void changeScope('active')}
+            >
+              当前分类 {activeCategories.length}
+            </AdminSegmentedItem>
+            <AdminSegmentedItem
+              selected={scope === 'trash'}
+              onClick={() => void changeScope('trash')}
+            >
+              回收站 {trashCategories.length}
+            </AdminSegmentedItem>
+          </AdminSegmentedControl>
+        }
+        trailing={
+          <Button variant="primary" onClick={openCreateEditor}>
+            新增分类
+          </Button>
+        }
+      >
+        <AdminSearchField
+          label="搜索分类"
+          value={search}
+          placeholder="分类名称"
+          onChange={(event) => setSearch(event.target.value)}
+        />
+      </AdminToolbar>
 
       {!editorOpen && errorMessage ? (
         <div className="notice notice-error" role="alert">
@@ -359,17 +359,15 @@ export function CategoryManagementView({
       ) : null}
 
       {scope === 'active' && selectedIds.size > 0 ? (
-        <div className="selection-toolbar">
-          <span>已选择 {selectedIds.size} 个分类</span>
-          <button
-            type="button"
-            className="danger-button"
+        <AdminSelectionBar count={selectedIds.size} noun="分类">
+          <Button
+            variant="danger"
             disabled={working}
             onClick={() => setPendingDeleteIds([...selectedIds])}
           >
             批量删除
-          </button>
-        </div>
+          </Button>
+        </AdminSelectionBar>
       ) : null}
 
       <CategoryTable

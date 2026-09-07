@@ -1,3 +1,6 @@
+import { Button } from '../components/ui/button';
+import { AdminDialog } from '../components/ui/dialog';
+
 type DeleteSectionDialogProps = {
   count: number;
   working: boolean;
@@ -12,36 +15,29 @@ export function DeleteSectionDialog({
   onConfirm,
 }: DeleteSectionDialogProps) {
   return (
-    <div className="admin-dialog-backdrop" role="presentation">
-      <section
-        className="admin-dialog admin-dialog-small"
-        role="alertdialog"
-        aria-modal="true"
-        aria-labelledby="delete-title"
-      >
-        <div className="admin-dialog-header">
-          <div>
-            <p>软删除确认</p>
-            <h3 id="delete-title">删除 {count} 个分区？</h3>
-          </div>
-        </div>
-        <p className="delete-warning">
-          分区将进入回收站并自动停用。存在关联产品或转化方式的分区不会被删除。
-        </p>
-        <div className="admin-dialog-actions">
-          <button type="button" className="secondary-button" onClick={onCancel}>
+    <AdminDialog
+      open
+      title={`删除 ${count} 个分区？`}
+      eyebrow="软删除确认"
+      description="分区将进入回收站并自动停用。存在关联产品或转化方式的分区不会被删除。"
+      role="alertdialog"
+      size="small"
+      closeDisabled={working}
+      onClose={onCancel}
+      footer={
+        <>
+          <Button variant="secondary" disabled={working} onClick={onCancel}>
             取消
-          </button>
-          <button
-            type="button"
-            className="danger-button"
-            disabled={working}
-            onClick={onConfirm}
-          >
-            {working ? '正在删除…' : '确认删除'}
-          </button>
-        </div>
-      </section>
-    </div>
+          </Button>
+          <Button variant="danger" loading={working} onClick={onConfirm}>
+            确认删除
+          </Button>
+        </>
+      }
+    >
+      <p className="delete-warning">
+        现有依赖保护、分区 ID 和动态 Catalog routing 不变。
+      </p>
+    </AdminDialog>
   );
 }

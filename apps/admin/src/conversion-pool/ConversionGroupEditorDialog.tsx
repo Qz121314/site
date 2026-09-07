@@ -1,5 +1,7 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { AdminApiError } from '../api';
+import { Button } from '../components/ui/button';
+import { AdminDialog } from '../components/ui/dialog';
 import {
   fetchCustomerServiceConnections,
   type CustomerServiceConnection,
@@ -87,194 +89,177 @@ export function ConversionGroupEditorDialog({
   }, [isCustomerService, onSessionExpired]);
 
   return (
-    <div className="admin-dialog-backdrop" role="presentation">
-      <section
-        className="admin-dialog conversion-editor-dialog"
-        role="dialog"
-        aria-modal="true"
-        aria-labelledby="conversion-group-editor-title"
-      >
-        <div className="admin-dialog-header">
-          <div>
-            <p>{sectionName} · 转化池</p>
-            <h3 id="conversion-group-editor-title">
-              {editingGroup ? '编辑转化分组' : '新增转化分组'}
-            </h3>
+    <AdminDialog
+      open
+      title={editingGroup ? '编辑转化分组' : '新增转化分组'}
+      eyebrow={`${sectionName} · 转化池`}
+      onClose={onClose}
+      closeDisabled={saving}
+      size="medium"
+      className="conversion-editor-dialog"
+    >
+      <form className="conversion-editor-form" onSubmit={onSubmit}>
+        {errorMessage ? (
+          <div className="notice notice-error" role="alert">
+            {errorMessage}
           </div>
-          <button type="button" aria-label="关闭" disabled={saving} onClick={onClose}>
-            ×
-          </button>
-        </div>
+        ) : null}
 
-        <form className="conversion-editor-form" onSubmit={onSubmit}>
-          {errorMessage ? (
-            <div className="notice notice-error" role="alert">
-              {errorMessage}
-            </div>
-          ) : null}
+        <label>
+          <span>分组名称</span>
+          <input
+            type="text"
+            value={form.name}
+            autoFocus
+            required
+            maxLength={100}
+            placeholder="例如：在线客服"
+            onChange={(event) => onFormChange({ ...form, name: event.target.value })}
+          />
+          <small>产品录入时直接选择这个转化分组。</small>
+        </label>
 
-          <label>
-            <span>分组名称</span>
-            <input
-              type="text"
-              value={form.name}
-              autoFocus
-              required
-              maxLength={100}
-              placeholder="例如：在线客服"
-              onChange={(event) => onFormChange({ ...form, name: event.target.value })}
-            />
-            <small>产品录入时直接选择这个转化分组。</small>
-          </label>
+        <fieldset>
+          <legend>分组类型</legend>
+          <div className="conversion-mode-options">
+            {modeOptions.map((option) => (
+              <button
+                key={option.value}
+                type="button"
+                className={form.mode === option.value ? 'is-selected' : undefined}
+                aria-pressed={form.mode === option.value}
+                disabled={saving || modeLocked}
+                onClick={() =>
+                  onFormChange({
+                    ...form,
+                    mode: option.value,
+                    customerServiceConnectionId: null,
+                    remoteGroupId: null,
+                    remoteGroupName: null,
+                  })
+                }
+              >
+                <strong>{option.title}</strong>
+                <span>{option.description}</span>
+              </button>
+            ))}
+          </div>
+          {modeLocked ? <small>链接分组已有入口时不能修改类型。</small> : null}
+        </fieldset>
 
-          <fieldset>
-            <legend>分组类型</legend>
-            <div className="conversion-mode-options">
-              {modeOptions.map((option) => (
-                <button
-                  key={option.value}
-                  type="button"
-                  className={form.mode === option.value ? 'is-selected' : undefined}
-                  aria-pressed={form.mode === option.value}
-                  disabled={saving || modeLocked}
-                  onClick={() =>
-                    onFormChange({
-                      ...form,
-                      mode: option.value,
-                      customerServiceConnectionId: null,
-                      remoteGroupId: null,
-                      remoteGroupName: null,
-                    })
-                  }
-                >
-                  <strong>{option.title}</strong>
-                  <span>{option.description}</span>
-                </button>
-              ))}
-            </div>
-            {modeLocked ? <small>链接分组已有入口时不能修改类型。</small> : null}
-          </fieldset>
-
-          {isCustomerService ? (
-            <>
-              <label>
-                <span>客服系统</span>
-                <select
-                  value={form.customerServiceConnectionId ?? ''}
-                  required
-                  disabled={connectionsLoading || saving}
-                  onChange={(event) => {
-                    const connectionId = event.target.value || null;
-                    onFormChange({
-                      ...form,
-                      customerServiceConnectionId: connectionId,
-                      remoteGroupId: null,
-                      remoteGroupName: null,
-                    });
-                  }}
-                >
-                  <option value="">
-                    {connectionsLoading ? '正在读取…' : '选择客服系统'}
-                  </option>
-                  {connections.map((connection) => {
-                    const available = Boolean(
-                      connection.isEnabled &&
-                      connection.verifiedAt &&
-                      connection.clientApiUrl &&
-                      connection.realtimeUrl,
-                    );
-                    return (
-                      <option
-                        key={connection.id}
-                        value={connection.id}
-                        disabled={!available}
-                      >
-                        {connection.name}
-                        {available ? '' : '（未验证）'}
-                      </option>
-                    );
-                  })}
-                </select>
-                <small>
-                  Site
-                  只绑定客服系统。访客会话直接连接客服系统，并按产品匹配管理员分配的客服坐席。
-                </small>
-              </label>
-
-              {integrationError ? (
-                <p className="inline-status is-error">{integrationError}</p>
-              ) : null}
-            </>
-          ) : null}
-
-          <label>
-            <span>CTA 按钮文字</span>
-            <input
-              type="text"
-              value={form.buttonLabel}
-              required
-              maxLength={80}
-              placeholder={form.mode === 'link' ? '例如：Book Now' : '例如：Contact Us'}
-              onChange={(event) =>
-                onFormChange({ ...form, buttonLabel: event.target.value })
-              }
-            />
-          </label>
-
-          <label>
-            <span>排序</span>
-            <input
-              type="number"
-              min={0}
-              max={1_000_000}
-              step={1}
-              required
-              value={form.sortOrder}
-              onChange={(event) =>
-                onFormChange({ ...form, sortOrder: Number(event.target.value) })
-              }
-            />
-          </label>
-
-          <label className="switch-row">
-            <span>
-              <strong>启用分组</strong>
+        {isCustomerService ? (
+          <>
+            <label>
+              <span>客服系统</span>
+              <select
+                value={form.customerServiceConnectionId ?? ''}
+                required
+                disabled={connectionsLoading || saving}
+                onChange={(event) => {
+                  const connectionId = event.target.value || null;
+                  onFormChange({
+                    ...form,
+                    customerServiceConnectionId: connectionId,
+                    remoteGroupId: null,
+                    remoteGroupName: null,
+                  });
+                }}
+              >
+                <option value="">
+                  {connectionsLoading ? '正在读取…' : '选择客服系统'}
+                </option>
+                {connections.map((connection) => {
+                  const available = Boolean(
+                    connection.isEnabled &&
+                    connection.verifiedAt &&
+                    connection.clientApiUrl &&
+                    connection.realtimeUrl,
+                  );
+                  return (
+                    <option
+                      key={connection.id}
+                      value={connection.id}
+                      disabled={!available}
+                    >
+                      {connection.name}
+                      {available ? '' : '（未验证）'}
+                    </option>
+                  );
+                })}
+              </select>
               <small>
-                {isCustomerService
-                  ? '客服系统已验证后，绑定本分组的产品会直接使用该客服系统。'
-                  : '至少需要一个启用的链接入口。'}
+                Site
+                只绑定客服系统。访客会话直接连接客服系统，并按产品匹配管理员分配的客服坐席。
               </small>
-            </span>
-            <input
-              type="checkbox"
-              checked={form.isEnabled}
-              onChange={(event) =>
-                onFormChange({ ...form, isEnabled: event.target.checked })
-              }
-            />
-          </label>
+            </label>
 
-          <div className="admin-dialog-actions">
-            <button
-              className="secondary-button"
-              type="button"
-              disabled={saving}
-              onClick={onClose}
-            >
-              取消
-            </button>
-            <button
-              className="primary-button"
-              type="submit"
-              disabled={
-                saving || (isCustomerService && !form.customerServiceConnectionId)
-              }
-            >
-              {saving ? '正在保存…' : '保存分组'}
-            </button>
-          </div>
-        </form>
-      </section>
-    </div>
+            {integrationError ? (
+              <p className="inline-status is-error">{integrationError}</p>
+            ) : null}
+          </>
+        ) : null}
+
+        <label>
+          <span>CTA 按钮文字</span>
+          <input
+            type="text"
+            value={form.buttonLabel}
+            required
+            maxLength={80}
+            placeholder={form.mode === 'link' ? '例如：Book Now' : '例如：Contact Us'}
+            onChange={(event) =>
+              onFormChange({ ...form, buttonLabel: event.target.value })
+            }
+          />
+        </label>
+
+        <label>
+          <span>排序</span>
+          <input
+            type="number"
+            min={0}
+            max={1_000_000}
+            step={1}
+            required
+            value={form.sortOrder}
+            onChange={(event) =>
+              onFormChange({ ...form, sortOrder: Number(event.target.value) })
+            }
+          />
+        </label>
+
+        <label className="switch-row">
+          <span>
+            <strong>启用分组</strong>
+            <small>
+              {isCustomerService
+                ? '客服系统已验证后，绑定本分组的产品会直接使用该客服系统。'
+                : '至少需要一个启用的链接入口。'}
+            </small>
+          </span>
+          <input
+            type="checkbox"
+            checked={form.isEnabled}
+            onChange={(event) =>
+              onFormChange({ ...form, isEnabled: event.target.checked })
+            }
+          />
+        </label>
+
+        <div className="admin-dialog-actions">
+          <Button variant="secondary" disabled={saving} onClick={onClose}>
+            取消
+          </Button>
+          <Button
+            type="submit"
+            variant="primary"
+            loading={saving}
+            disabled={isCustomerService && !form.customerServiceConnectionId}
+          >
+            保存分组
+          </Button>
+        </div>
+      </form>
+    </AdminDialog>
   );
 }

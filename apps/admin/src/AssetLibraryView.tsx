@@ -1,5 +1,21 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AdminApiError } from './api';
+import { Button } from './components/ui/button';
+import {
+  AdminSearchField,
+  AdminSelectionBar,
+  AdminToolbar,
+} from './components/ui/management-workspace';
+import {
+  toggleSelection,
+  toggleVisibleSelection,
+} from './components/ui/management-selection';
+import {
+  AdminSegmentedControl,
+  AdminSegmentedItem,
+} from './components/ui/segmented-control';
+import { AdminFeedbackState } from './components/ui/feedback-state';
+import { AdminStatusBadge } from './components/ui/status-badge';
 import { adminMediaThumbnailUrl } from './branding-media/api';
 import { adminConfirm, adminPrompt } from './admin-dialog-service';
 import { AssetTable } from './asset-library/AssetTable';
@@ -119,7 +135,17 @@ function UploadMediaCard({ item }: { item: MediaUploadQueueItem }) {
             <img src={previewUrl} alt="" />
           )
         ) : null}
-        <b>{uploadStatusLabel(item)}</b>
+        <AdminStatusBadge
+          tone={
+            item.status === 'error'
+              ? 'danger'
+              : item.status === 'uploaded' || item.status === 'reused'
+                ? 'success'
+                : 'info'
+          }
+        >
+          {uploadStatusLabel(item)}
+        </AdminStatusBadge>
         <i className="media-center-upload-progress" aria-hidden="true" />
       </div>
       <div className="media-center-card-body">
@@ -490,23 +516,17 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
     mediaTotal > 0 ? Math.max(1, Math.ceil(mediaTotal / MEDIA_PAGE_SIZE)) : 0;
 
   function toggleMedia(id: string) {
-    setSelectedMediaIds((current) => {
-      const next = new Set(current);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+    setSelectedMediaIds((current) => toggleSelection(current, id));
   }
 
   function toggleAllMedia() {
-    setSelectedMediaIds((current) => {
-      const next = new Set(current);
-      managedAssets.forEach((asset) => {
-        if (allManagedSelected) next.delete(asset.id);
-        else next.add(asset.id);
-      });
-      return next;
-    });
+    setSelectedMediaIds((current) =>
+      toggleVisibleSelection(
+        current,
+        managedAssets.map((asset) => asset.id),
+        allManagedSelected,
+      ),
+    );
   }
 
   function reportUploadSummary(summary: MediaUploadBatchSummary) {
@@ -693,23 +713,13 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
   }
 
   function toggleKey(key: string) {
-    setSelectedKeys((current) => {
-      const next = new Set(current);
-      if (next.has(key)) next.delete(key);
-      else next.add(key);
-      return next;
-    });
+    setSelectedKeys((current) => toggleSelection(current, key));
   }
 
   function toggleAll() {
-    setSelectedKeys((current) => {
-      const next = new Set(current);
-      visibleCleanupKeys.forEach((key) => {
-        if (allUnusedSelected) next.delete(key);
-        else next.add(key);
-      });
-      return next;
-    });
+    setSelectedKeys((current) =>
+      toggleVisibleSelection(current, visibleCleanupKeys, allUnusedSelected),
+    );
   }
 
   async function confirmCleanup() {
@@ -748,22 +758,20 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
           <h2>素材中心</h2>
           <p>所有图片、GIF 和视频统一在这里上传，再由产品、Logo、图标和正文引用。</p>
         </div>
-        <div className="media-center-tabs" role="tablist" aria-label="素材中心模式">
-          <button
-            type="button"
-            className={tab === 'library' ? 'is-active' : undefined}
+        <AdminSegmentedControl ariaLabel="素材中心模式" className="media-center-tabs">
+          <AdminSegmentedItem
+            selected={tab === 'library'}
             onClick={() => setTab('library')}
           >
             素材中心
-          </button>
-          <button
-            type="button"
-            className={tab === 'cleanup' ? 'is-active' : undefined}
+          </AdminSegmentedItem>
+          <AdminSegmentedItem
+            selected={tab === 'cleanup'}
             onClick={() => setTab('cleanup')}
           >
             存储清理
-          </button>
-        </div>
+          </AdminSegmentedItem>
+        </AdminSegmentedControl>
       </div>
 
       {tab === 'library' ? (
@@ -892,59 +900,70 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
             </p>
           ) : null}
 
-          <div className="media-center-toolbar">
-            <input
-              type="search"
+          <AdminToolbar aria-label="素材筛选工具栏" className="media-center-toolbar">
+            <AdminSearchField
+              label="搜索素材"
               value={mediaQuery}
               placeholder="搜索文件名、文件夹或格式"
               onChange={(event) => setMediaQuery(event.target.value)}
             />
-            <select
-              value={folderFilter}
-              onChange={(event) => setFolderFilter(event.target.value)}
-            >
-              <option value="all">全部文件夹</option>
-              <option value="unfiled">未分组</option>
-              {folders.map((folder) => (
-                <option key={folder.id} value={folder.id}>
-                  {folder.name} ({folder.assetCount})
-                </option>
-              ))}
-            </select>
-            <select
-              value={mediaKind}
-              onChange={(event) => setMediaKind(event.target.value as MediaKind | '')}
-            >
-              {KIND_OPTIONS.map((option) => (
-                <option key={option.value || 'all'} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            <select
-              value={mediaRole}
-              onChange={(event) => setMediaRole(event.target.value as MediaRole | '')}
-            >
-              <option value="">全部用途</option>
-              {ROLE_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-            <button
-              type="button"
-              className="secondary-button"
+            <label className="ui-management-filter">
+              <span>文件夹</span>
+              <select
+                value={folderFilter}
+                onChange={(event) => setFolderFilter(event.target.value)}
+              >
+                <option value="all">全部文件夹</option>
+                <option value="unfiled">未分组</option>
+                {folders.map((folder) => (
+                  <option key={folder.id} value={folder.id}>
+                    {folder.name} ({folder.assetCount})
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="ui-management-filter">
+              <span>格式</span>
+              <select
+                value={mediaKind}
+                onChange={(event) => setMediaKind(event.target.value as MediaKind | '')}
+              >
+                {KIND_OPTIONS.map((option) => (
+                  <option key={option.value || 'all'} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <label className="ui-management-filter">
+              <span>用途</span>
+              <select
+                value={mediaRole}
+                onChange={(event) => setMediaRole(event.target.value as MediaRole | '')}
+              >
+                <option value="">全部用途</option>
+                {ROLE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <Button
+              variant="secondary"
               onClick={() => void loadMedia()}
               disabled={mediaLoading || uploadQueue.running}
             >
               刷新
-            </button>
-          </div>
+            </Button>
+          </AdminToolbar>
 
           {selectedManagedAssets.length > 0 ? (
-            <div className="media-center-selection-toolbar">
-              <span>已选择 {selectedManagedAssets.length} 个素材</span>
+            <AdminSelectionBar
+              count={selectedManagedAssets.length}
+              noun="素材"
+              className="media-center-selection-toolbar"
+            >
               <select
                 value={moveFolderId}
                 onChange={(event) => setMoveFolderId(event.target.value)}
@@ -956,23 +975,22 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
                   </option>
                 ))}
               </select>
-              <button
-                type="button"
-                className="secondary-button"
+              <Button
+                variant="secondary"
                 disabled={folderWorking || uploadQueue.running}
                 onClick={() => void handleMoveSelected()}
               >
                 移动已选
-              </button>
-              <button
-                type="button"
-                className="danger-button"
-                disabled={deletingMedia || uploadQueue.running}
+              </Button>
+              <Button
+                variant="danger"
+                loading={deletingMedia}
+                disabled={uploadQueue.running}
                 onClick={() => void handleDeleteManaged()}
               >
-                {deletingMedia ? '删除中…' : '删除已选'}
-              </button>
-            </div>
+                删除已选
+              </Button>
+            </AdminSelectionBar>
           ) : null}
 
           <div className="media-center-select-all">
@@ -1012,7 +1030,7 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
           </div>
 
           {mediaLoading && uploadQueue.items.length === 0 ? (
-            <div className="media-center-empty">正在读取素材…</div>
+            <AdminFeedbackState kind="loading" title="正在读取素材…" />
           ) : managedAssets.length > 0 || uploadQueue.items.length > 0 ? (
             <>
               <div className="media-center-grid">
@@ -1025,6 +1043,7 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
                     <article
                       className={`media-center-card${selectedMediaIds.has(asset.id) ? ' is-selected' : ''}`}
                       key={asset.id}
+                      aria-selected={selectedMediaIds.has(asset.id)}
                     >
                       <label className="media-center-card-select">
                         <input
@@ -1056,7 +1075,7 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
                       <div className="media-center-card-body">
                         <strong title={asset.fileName}>{asset.fileName}</strong>
                         <small>
-                          {asset.folderName ? `📁 ${asset.folderName} · ` : '未分组 · '}
+                          {asset.folderName ? `${asset.folderName} · ` : '未分组 · '}
                           {asset.width && asset.height
                             ? `${asset.width} × ${asset.height}`
                             : '尺寸未知'}
@@ -1120,63 +1139,67 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
               ) : null}
             </>
           ) : (
-            <div className="media-center-empty">
-              <strong>没有匹配的素材</strong>
-              <p>调整文件夹或筛选条件，或者上传新的素材。</p>
-            </div>
+            <AdminFeedbackState
+              kind="empty"
+              title="没有匹配的素材"
+              description="调整文件夹或筛选条件，或者上传新的素材。"
+            />
           )}
         </>
       ) : cleanupLoading && !cleanupLoaded ? (
-        <section className="settings-card settings-loading" aria-live="polite">
-          <div className="loading-indicator" aria-hidden="true" />
-          <p>正在扫描首批 R2 图片对象，已发现 {scannedImages} 张图片…</p>
-        </section>
+        <AdminFeedbackState
+          kind="loading"
+          title="正在扫描首批 R2 图片对象…"
+          description={`已发现 ${scannedImages} 张图片。`}
+        />
       ) : (
         <>
-          <div className="asset-library-actions media-cleanup-actions">
-            <div>
-              <strong>底层存储清理</strong>
-              <span>
-                仅用于清理没有业务引用、且已经退出最近 3 个可回退快照的图片对象。
-              </span>
-            </div>
-            <button
-              className="secondary-button"
-              type="button"
+          <AdminToolbar
+            aria-label="R2 存储清理操作"
+            leading={
+              <div className="media-cleanup-copy">
+                <strong>底层存储清理</strong>
+                <span>
+                  仅用于清理没有业务引用、且已经退出最近 3 个可回退快照的图片对象。
+                </span>
+              </div>
+            }
+            trailing={
+              <Button
+                variant="danger"
+                disabled={selectedAssets.length === 0 || cleanupLoading}
+                onClick={() => setShowCleanupDialog(true)}
+              >
+                物理清理已选 ({selectedAssets.length})
+              </Button>
+            }
+          >
+            <Button
+              variant="secondary"
               disabled={cleanupLoading}
               onClick={() => void scanFirstPage()}
             >
               从头重新扫描
-            </button>
+            </Button>
             {cleanupNextCursor ? (
-              <button
-                className="secondary-button"
-                type="button"
+              <Button
+                variant="secondary"
                 disabled={cleanupLoading}
                 onClick={() => void scanNextPage()}
               >
                 继续扫描下一批
-              </button>
+              </Button>
             ) : null}
             {cleanupNextCursor ? (
-              <button
-                className="secondary-button"
-                type="button"
-                disabled={cleanupLoading}
+              <Button
+                variant="secondary"
+                loading={cleanupLoading}
                 onClick={() => void scanAllRemaining()}
               >
-                {cleanupLoading ? '扫描中…' : '扫描全部'}
-              </button>
+                扫描全部
+              </Button>
             ) : null}
-            <button
-              className="danger-button"
-              type="button"
-              disabled={selectedAssets.length === 0 || cleanupLoading}
-              onClick={() => setShowCleanupDialog(true)}
-            >
-              物理清理已选 ({selectedAssets.length})
-            </button>
-          </div>
+          </AdminToolbar>
 
           <div className="asset-summary-grid">
             <article>
@@ -1235,30 +1258,44 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
             </p>
           ) : null}
 
-          <div className="asset-toolbar">
-            <input
-              type="search"
+          <AdminToolbar
+            aria-label="R2 图片筛选工具栏"
+            leading={
+              <AdminSegmentedControl ariaLabel="图片使用状态">
+                <AdminSegmentedItem
+                  selected={filter === 'used'}
+                  onClick={() => setFilter('used')}
+                >
+                  使用中 ({cleanupStats.used})
+                </AdminSegmentedItem>
+                <AdminSegmentedItem
+                  selected={filter === 'unused'}
+                  onClick={() => setFilter('unused')}
+                >
+                  未使用 ({cleanupStats.protected + cleanupStats.eligible})
+                </AdminSegmentedItem>
+              </AdminSegmentedControl>
+            }
+          >
+            <AdminSearchField
+              label="搜索 R2 图片"
               value={query}
               placeholder="搜索图片路径或 Content-Type"
               onChange={(event) => setQuery(event.target.value)}
             />
-            <div className="asset-filter-group" aria-label="图片使用状态">
-              <button
-                type="button"
-                className={filter === 'used' ? 'is-active' : undefined}
-                onClick={() => setFilter('used')}
+          </AdminToolbar>
+
+          {selectedAssets.length > 0 ? (
+            <AdminSelectionBar count={selectedAssets.length} noun="可清理图片">
+              <Button
+                variant="danger"
+                disabled={cleanupLoading}
+                onClick={() => setShowCleanupDialog(true)}
               >
-                使用中 ({cleanupStats.used})
-              </button>
-              <button
-                type="button"
-                className={filter === 'unused' ? 'is-active' : undefined}
-                onClick={() => setFilter('unused')}
-              >
-                未使用 ({cleanupStats.protected + cleanupStats.eligible})
-              </button>
-            </div>
-          </div>
+                永久删除已选
+              </Button>
+            </AdminSelectionBar>
+          ) : null}
 
           {filteredAssets.length > 0 ? (
             <AssetTable
@@ -1270,12 +1307,11 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
               onToggleAll={toggleAll}
             />
           ) : (
-            <div className="asset-empty-state">
-              <strong>
-                {filter === 'used' ? '没有使用中的图片' : '没有未使用的图片'}
-              </strong>
-              <p>可以调整搜索条件或从头重新扫描 R2。</p>
-            </div>
+            <AdminFeedbackState
+              kind="empty"
+              title={filter === 'used' ? '没有使用中的图片' : '没有未使用的图片'}
+              description="可以调整搜索条件或从头重新扫描 R2。"
+            />
           )}
 
           {showCleanupDialog ? (

@@ -18,6 +18,20 @@ import {
   releaseBrandingImage,
   type LocalBrandingImage,
 } from './branding-media/local-branding-image';
+import { Button } from './components/ui/button';
+import {
+  AdminSearchField,
+  AdminSelectionBar,
+  AdminToolbar,
+} from './components/ui/management-workspace';
+import {
+  toggleSelection,
+  toggleVisibleSelection,
+} from './components/ui/management-selection';
+import {
+  AdminSegmentedControl,
+  AdminSegmentedItem,
+} from './components/ui/segmented-control';
 import { DeleteSectionDialog } from './section-management/DeleteSectionDialog';
 import { SectionEditorDialog } from './section-management/SectionEditorDialog';
 import { SectionTable } from './section-management/SectionTable';
@@ -362,23 +376,17 @@ export function SectionManagementView({
   }
 
   function toggleSelect(id: string) {
-    setSelectedIds((current) => {
-      const next = new Set(current);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
+    setSelectedIds((current) => toggleSelection(current, id));
   }
 
   function toggleSelectAll() {
-    setSelectedIds((current) => {
-      const next = new Set(current);
-      filteredSections.forEach((section) => {
-        if (allVisibleSelected) next.delete(section.id);
-        else next.add(section.id);
-      });
-      return next;
-    });
+    setSelectedIds((current) =>
+      toggleVisibleSelection(
+        current,
+        filteredSections.map((section) => section.id),
+        allVisibleSelected,
+      ),
+    );
   }
 
   const iconPreviewUrl =
@@ -390,47 +398,37 @@ export function SectionManagementView({
 
   return (
     <section className="section-management" aria-labelledby="section-management-title">
-      <div className="section-management-toolbar">
-        <div>
-          <p>动态业务结构</p>
-          <h2 id="section-management-title">分区管理</h2>
-          <span>
-            Icon 用于 Home 快捷入口；Browse
-            使用背景图、名称、简介和产品数量展示详细分区卡片。
-          </span>
-        </div>
-        <button className="primary-button" type="button" onClick={openCreateEditor}>
-          新增分区
-        </button>
-      </div>
-
-      <div className="section-filter-bar">
-        <div className="scope-tabs" role="tablist" aria-label="分区状态">
-          <button
-            type="button"
-            className={scope === 'active' ? 'is-active' : undefined}
-            onClick={() => void changeScope('active')}
-          >
-            当前分区 <span>{activeSections.length}</span>
-          </button>
-          <button
-            type="button"
-            className={scope === 'trash' ? 'is-active' : undefined}
-            onClick={() => void changeScope('trash')}
-          >
-            回收站 <span>{trashSections.length}</span>
-          </button>
-        </div>
-        <label className="section-search">
-          <span>搜索</span>
-          <input
-            type="search"
-            value={search}
-            placeholder="名称、简介或 slug"
-            onChange={(event) => setSearch(event.target.value)}
-          />
-        </label>
-      </div>
+      <AdminToolbar
+        aria-label="分区管理工具栏"
+        leading={
+          <AdminSegmentedControl ariaLabel="分区状态">
+            <AdminSegmentedItem
+              selected={scope === 'active'}
+              onClick={() => void changeScope('active')}
+            >
+              当前分区 {activeSections.length}
+            </AdminSegmentedItem>
+            <AdminSegmentedItem
+              selected={scope === 'trash'}
+              onClick={() => void changeScope('trash')}
+            >
+              回收站 {trashSections.length}
+            </AdminSegmentedItem>
+          </AdminSegmentedControl>
+        }
+        trailing={
+          <Button variant="primary" onClick={openCreateEditor}>
+            新增分区
+          </Button>
+        }
+      >
+        <AdminSearchField
+          label="搜索分区"
+          value={search}
+          placeholder="名称、简介或 slug"
+          onChange={(event) => setSearch(event.target.value)}
+        />
+      </AdminToolbar>
 
       {errorMessage && !editorOpen ? (
         <div className="notice notice-error" role="alert">
@@ -444,17 +442,15 @@ export function SectionManagementView({
       ) : null}
 
       {scope === 'active' && selectedIds.size > 0 ? (
-        <div className="selection-toolbar">
-          <span>已选择 {selectedIds.size} 个分区</span>
-          <button
-            type="button"
-            className="danger-button"
+        <AdminSelectionBar count={selectedIds.size} noun="分区">
+          <Button
+            variant="danger"
             disabled={working}
             onClick={() => setPendingDeleteIds([...selectedIds])}
           >
             批量删除
-          </button>
-        </div>
+          </Button>
+        </AdminSelectionBar>
       ) : null}
 
       <SectionTable
