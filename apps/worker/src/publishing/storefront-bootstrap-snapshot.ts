@@ -73,7 +73,10 @@ function sanitizeMessageArticles(value: unknown): MessageArticleMetadata[] {
       preview: item.preview,
       sortOrder: item.sortOrder,
     };
-    if (typeof item.backgroundObjectKey === 'string' || item.backgroundObjectKey === null) {
+    if (
+      typeof item.backgroundObjectKey === 'string' ||
+      item.backgroundObjectKey === null
+    ) {
       article.backgroundObjectKey = item.backgroundObjectKey;
     }
     articles.push(article);

@@ -54,7 +54,10 @@ function parseMessageArticle(value: unknown): MessageArticleMetadata | null {
     return null;
   }
   const article: MessageArticleMetadata = { articleId, title, preview, sortOrder };
-  if (typeof value.backgroundObjectKey === 'string' || value.backgroundObjectKey === null) {
+  if (
+    typeof value.backgroundObjectKey === 'string' ||
+    value.backgroundObjectKey === null
+  ) {
     article.backgroundObjectKey = value.backgroundObjectKey;
   }
   return article;

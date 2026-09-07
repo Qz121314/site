@@ -33,7 +33,9 @@ type ParsedMessageArticleInput = {
 
 function validReferenceId(value: unknown): value is string {
   return (
-    typeof value === 'string' && value.length > 0 && value.length <= MAX_REFERENCE_ID_LENGTH
+    typeof value === 'string' &&
+    value.length > 0 &&
+    value.length <= MAX_REFERENCE_ID_LENGTH
   );
 }
 
@@ -214,29 +216,25 @@ adminMessageArticleRoutes.put('/', async (context) => {
   const requestId = context.get('requestId');
   const insertStatements = parsed.legacyArticleIds
     ? parsed.legacyArticleIds.map((articleId, sortOrder) =>
-        context.env.DB
-          .prepare(
-            `INSERT INTO message_article_references (
+        context.env.DB.prepare(
+          `INSERT INTO message_article_references (
                article_id, sort_order, is_enabled, created_at, updated_at
              ) VALUES (?, ?, 1, ?, ?)`,
-          )
-          .bind(articleId, sortOrder, now, now),
+        ).bind(articleId, sortOrder, now, now),
       )
     : parsed.placements.map((placement, sortOrder) =>
-        context.env.DB
-          .prepare(
-            `INSERT INTO message_article_references (
+        context.env.DB.prepare(
+          `INSERT INTO message_article_references (
                article_id, background_media_id, sort_order, is_enabled, created_at, updated_at
              ) VALUES (?, ?, ?, ?, ?, ?)`,
-          )
-          .bind(
-            placement.articleId,
-            placement.backgroundMediaId,
-            sortOrder,
-            placement.isEnabled ? 1 : 0,
-            now,
-            now,
-          ),
+        ).bind(
+          placement.articleId,
+          placement.backgroundMediaId,
+          sortOrder,
+          placement.isEnabled ? 1 : 0,
+          now,
+          now,
+        ),
       );
 
   await context.env.DB.batch([

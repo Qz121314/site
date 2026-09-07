@@ -169,4 +169,3 @@ test('background metadata introduces no media API or extra bootstrap fetch path'
   assert.doesNotMatch(source, /\/api\/[^'"`]*media/iu);
   assert.match(source, /site:messages:read-articles/u);
 });
-

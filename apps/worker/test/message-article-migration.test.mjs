@@ -8,7 +8,10 @@ const migration = readFileSync(
   'utf8',
 );
 const presentationMigration = readFileSync(
-  new URL('../../../migrations/0032_message_article_background_media.sql', import.meta.url),
+  new URL(
+    '../../../migrations/0032_message_article_background_media.sql',
+    import.meta.url,
+  ),
   'utf8',
 );
 
@@ -101,4 +104,3 @@ test('0032 adds a nullable background media placement reference without disturbi
     db.close();
   }
 });
-
