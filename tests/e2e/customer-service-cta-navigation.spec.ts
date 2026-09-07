@@ -119,27 +119,30 @@ test('Messages Article rows mark read only on detail', async ({ page }) => {
     const list = document.querySelector('[data-messages-list="conversation-flow"]');
     const article = document.querySelector('.messages-article-row');
     const conversation = document.querySelector('.conversation-row');
-    const main = document.querySelector('.app-shell > main');
-    if (!list || !article || !conversation || !main) return null;
+    const sidebar = document.querySelector('.messages-sidebar');
+    if (!list || !article || !conversation || !sidebar) return null;
 
     const listRect = list.getBoundingClientRect();
     const articleRect = article.getBoundingClientRect();
     const conversationRect = conversation.getBoundingClientRect();
-    const mainRect = main.getBoundingClientRect();
+    const sidebarRect = sidebar.getBoundingClientRect();
+    const rootStyles = getComputedStyle(document.documentElement);
+    const appGutter = Number.parseFloat(rootStyles.getPropertyValue('--app-gutter'));
     const tolerance = 1;
 
     return {
       rowsShareEdges:
         Math.abs(articleRect.left - conversationRect.left) < tolerance &&
         Math.abs(articleRect.right - conversationRect.right) < tolerance,
-      listOwnsMainEdges:
-        Math.abs(listRect.left - mainRect.left) < tolerance &&
-        Math.abs(listRect.right - mainRect.right) < tolerance,
+      listPreservesNativeFullBleed:
+        Number.isFinite(appGutter) &&
+        Math.abs(listRect.left - (sidebarRect.left - appGutter)) < tolerance &&
+        Math.abs(listRect.right - (sidebarRect.right + appGutter)) < tolerance,
     };
   });
   expect(nativeListGeometry).toEqual({
     rowsShareEdges: true,
-    listOwnsMainEdges: true,
+    listPreservesNativeFullBleed: true,
   });
 
   expect(
