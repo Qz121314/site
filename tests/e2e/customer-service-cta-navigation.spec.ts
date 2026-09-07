@@ -212,7 +212,9 @@ test('Messages Articles stay title-only and mark read only on the reading page',
   await expect(page.getByText('First unordered point')).toBeVisible();
   await expect(page.getByText('First ordered step')).toBeVisible();
   await expect(
-    page.getByText('A concise quoted note that should remain visually distinct from the body copy.'),
+    page.getByText(
+      'A concise quoted note that should remain visually distinct from the body copy.',
+    ),
   ).toBeVisible();
   await expect(page.getByRole('link', { name: 'a reference' })).toHaveAttribute(
     'href',
