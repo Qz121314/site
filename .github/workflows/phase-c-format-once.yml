@@ -1,0 +1,42 @@
+name: Phase C Format Once
+
+on:
+  push:
+    branches:
+      - refactor/admin-commercial-ui-patterns
+
+permissions:
+  contents: write
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+          run_install: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - run: pnpm install --frozen-lockfile
+      - name: Format exact Phase C files
+        run: >-
+          pnpm exec prettier --write
+          apps/admin/src/asset-library/MediaPickerDialog.tsx
+          apps/admin/src/components/ui/action-bar.tsx
+          apps/admin/src/components/ui/dialog.tsx
+          apps/admin/src/experience/NavigationSettingsView.tsx
+          apps/admin/src/settings/SiteSettingsWorkspace.tsx
+          apps/admin/test/admin-commercial-ui-patterns.test.mjs
+      - name: Commit formatting
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apps/admin/src/asset-library/MediaPickerDialog.tsx apps/admin/src/components/ui/action-bar.tsx apps/admin/src/components/ui/dialog.tsx apps/admin/src/experience/NavigationSettingsView.tsx apps/admin/src/settings/SiteSettingsWorkspace.tsx apps/admin/test/admin-commercial-ui-patterns.test.mjs
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "style(admin): apply canonical Phase C formatting"
+          git push
