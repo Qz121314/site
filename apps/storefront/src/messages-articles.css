@@ -128,6 +128,17 @@
   height: 18px;
 }
 
+@media (max-width: 767px) {
+  .messages-native-list {
+    margin-inline: calc(var(--app-gutter, 16px) * -1);
+  }
+
+  .messages-article-row {
+    padding-right: max(var(--app-gutter, 16px), env(safe-area-inset-right));
+    padding-left: max(var(--app-gutter, 16px), env(safe-area-inset-left));
+  }
+}
+
 @media (min-width: 760px) {
   .messages-article-workspace .messages-sidebar {
     overflow-y: auto;
