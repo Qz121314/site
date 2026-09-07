@@ -67,7 +67,7 @@ test('customer-service CTA opens the chat shell before the Worker handoff resolv
   releaseHandoff();
 });
 
-test('Messages Article cards mark read only on detail', async ({ page }) => {
+test('Messages Article rows mark read only on detail', async ({ page }) => {
   test.skip(
     !useLocalFixture,
     'Messages Article acceptance uses the deterministic local fixture.',
@@ -78,45 +78,72 @@ test('Messages Article cards mark read only on detail', async ({ page }) => {
 
   await page.goto('/messages/');
 
-  const articleRegion = page.getByRole('region', { name: 'Recommended articles' });
-  await expect(articleRegion).toBeVisible();
-  const articleLinks = articleRegion.getByRole('link');
-  await expect(articleLinks).toHaveCount(3);
-  await expect(articleLinks.locator('h3')).toHaveText([
-    'Alpha guide',
-    'Beta guide',
-    'Gamma guide',
-  ]);
-  await expect(articleLinks.nth(0)).toContainText(
+  const listFlow = page.locator('[data-messages-list="conversation-flow"]');
+  await expect(listFlow).toBeVisible();
+  const flowLinks = listFlow.getByRole('link');
+  await expect(flowLinks).toHaveCount(4);
+  await expect(flowLinks.nth(0)).toContainText('Alpha guide');
+  await expect(flowLinks.nth(1)).toContainText('Beta guide');
+  await expect(flowLinks.nth(2)).toContainText('Gamma guide');
+  await expect(flowLinks.nth(3)).toContainText('Support');
+  await expect(flowLinks.nth(0)).toContainText(
     'The first recommended article from bootstrap metadata.',
   );
-  await expect(articleLinks.nth(1)).toContainText(
+  await expect(flowLinks.nth(1)).toContainText(
     'A neutral card without background media.',
   );
   await expect(page.getByText('Malformed placement')).toHaveCount(0);
-  await expect(page.getByText('Conversations')).toBeVisible();
-  await expect(
-    page.getByRole('link', { name: /Support.*Support product/u }),
-  ).toBeVisible();
+  await expect(page.getByText('Recommended articles', { exact: true })).toHaveCount(0);
+  await expect(page.getByText('Conversations', { exact: true })).toHaveCount(0);
 
-  const alphaCard = page.getByRole('link', { name: /Alpha guide/u });
-  const betaCard = page.getByRole('link', { name: /Beta guide/u });
-  const gammaCard = page.getByRole('link', { name: /Gamma guide/u });
-  await expect(alphaCard).toHaveAttribute(
+  const alphaRow = page.getByRole('link', { name: /Alpha guide/u });
+  const betaRow = page.getByRole('link', { name: /Beta guide/u });
+  const gammaRow = page.getByRole('link', { name: /Gamma guide/u });
+  await expect(alphaRow).toHaveAttribute(
     'href',
     `/articles/${encodeURIComponent(MESSAGE_ARTICLE_IDS.alpha)}/`,
   );
-  await expect(alphaCard).toHaveAttribute('data-read-state', 'unread');
-  await expect(alphaCard.getByText('New')).toBeVisible();
-  await expect(betaCard.getByText('New')).toBeVisible();
-  await expect(gammaCard.getByText('New')).toBeVisible();
-  await expect(betaCard.locator('img')).toHaveCount(0);
-  await expect(alphaCard.locator('img')).toHaveAttribute(
+  await expect(alphaRow).toHaveAttribute('data-read-state', 'unread');
+  await expect(alphaRow.getByText('New')).toBeVisible();
+  await expect(betaRow.getByText('New')).toBeVisible();
+  await expect(gammaRow.getByText('New')).toBeVisible();
+  await expect(betaRow.locator('img')).toHaveCount(0);
+  await expect(alphaRow.locator('img')).toHaveAttribute(
     'src',
     'https://media.example.test/messages/alpha.svg',
   );
-  await expect(alphaCard.locator('img')).toBeVisible();
-  await expect(gammaCard.locator('img')).toHaveCount(0);
+  await expect(alphaRow.locator('img')).toBeVisible();
+  await expect(gammaRow.locator('img')).toHaveCount(0);
+
+  const nativeListGeometry = await page.evaluate(() => {
+    const list = document.querySelector('[data-messages-list="conversation-flow"]');
+    const article = document.querySelector('.messages-article-row');
+    const conversation = document.querySelector('.conversation-row');
+    const sidebar = document.querySelector('.messages-sidebar');
+    if (!list || !article || !conversation || !sidebar) return null;
+
+    const listRect = list.getBoundingClientRect();
+    const articleRect = article.getBoundingClientRect();
+    const conversationRect = conversation.getBoundingClientRect();
+    const sidebarRect = sidebar.getBoundingClientRect();
+    const rootStyles = getComputedStyle(document.documentElement);
+    const appGutter = Number.parseFloat(rootStyles.getPropertyValue('--app-gutter'));
+    const tolerance = 1;
+
+    return {
+      rowsShareEdges:
+        Math.abs(articleRect.left - conversationRect.left) < tolerance &&
+        Math.abs(articleRect.right - conversationRect.right) < tolerance,
+      listPreservesNativeFullBleed:
+        Number.isFinite(appGutter) &&
+        Math.abs(listRect.left - (sidebarRect.left - appGutter)) < tolerance &&
+        Math.abs(listRect.right - (sidebarRect.right + appGutter)) < tolerance,
+    };
+  });
+  expect(nativeListGeometry).toEqual({
+    rowsShareEdges: true,
+    listPreservesNativeFullBleed: true,
+  });
 
   expect(
     await page.evaluate(() => localStorage.getItem('site:messages:read-articles')),
@@ -130,7 +157,7 @@ test('Messages Article cards mark read only on detail', async ({ page }) => {
     .getByRole('link', { name: 'Messages' });
   await expect(messagesNav.getByText('6')).toBeVisible();
 
-  await alphaCard.click();
+  await alphaRow.click();
   await expect(page).toHaveURL(`/articles/${MESSAGE_ARTICLE_IDS.alpha}/`);
   await expect(
     page.getByRole('heading', { name: 'Alpha guide', level: 1 }),
@@ -139,9 +166,9 @@ test('Messages Article cards mark read only on detail', async ({ page }) => {
 
   await page.getByRole('link', { name: 'Back' }).click();
   await expect(page).toHaveURL('/messages/');
-  const returnedAlphaCard = page.getByRole('link', { name: /Alpha guide/u });
-  await expect(returnedAlphaCard).toHaveAttribute('data-read-state', 'read');
-  await expect(returnedAlphaCard.getByText('New')).toHaveCount(0);
+  const returnedAlphaRow = page.getByRole('link', { name: /Alpha guide/u });
+  await expect(returnedAlphaRow).toHaveAttribute('data-read-state', 'read');
+  await expect(returnedAlphaRow.getByText('New')).toHaveCount(0);
   await expect(
     page.getByRole('link', { name: /Beta guide/u }).getByText('New'),
   ).toBeVisible();
@@ -163,11 +190,13 @@ test('zero Articles leaves the support list unchanged', async ({ page }) => {
 
   await page.goto('/messages/');
 
-  await expect(page.getByRole('region', { name: 'Recommended articles' })).toHaveCount(0);
-  await expect(page.getByText('Conversations')).toHaveCount(0);
-  await expect(
-    page.getByRole('link', { name: /Support.*Support product/u }),
-  ).toBeVisible();
+  const listFlow = page.locator('[data-messages-list="conversation-flow"]');
+  await expect(listFlow).toBeVisible();
+  const flowLinks = listFlow.getByRole('link');
+  await expect(flowLinks).toHaveCount(1);
+  await expect(flowLinks.nth(0)).toContainText('Support');
+  await expect(page.getByText('Recommended articles', { exact: true })).toHaveCount(0);
+  await expect(page.getByText('Conversations', { exact: true })).toHaveCount(0);
   expect(
     await page.evaluate(() => localStorage.getItem('site:messages:read-articles')),
   ).toBe(null);

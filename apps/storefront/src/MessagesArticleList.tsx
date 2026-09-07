@@ -1,5 +1,5 @@
 import type { StorefrontLinkComponent } from '@site/storefront-ui';
-import { ChevronRight, FileText } from 'lucide-react';
+import { ChevronRight } from 'lucide-react';
 import { useSyncExternalStore } from 'react';
 import { mediaUrl } from './content';
 import {
@@ -9,34 +9,35 @@ import {
 } from './messages-articles';
 import { ResilientImage } from './ResilientMedia';
 import { articleHref } from './routing';
+import './messages-articles.css';
 
-function MessagesArticleCard({
+function MessagesArticleRow({
   article,
-  LinkComponent,
   mediaBaseUrl,
+  LinkComponent,
   unread,
 }: {
   article: MessageArticleMetadata;
-  LinkComponent: StorefrontLinkComponent;
   mediaBaseUrl: string;
+  LinkComponent: StorefrontLinkComponent;
   unread: boolean;
 }) {
   const backgroundUrl = mediaUrl(mediaBaseUrl, article.backgroundObjectKey);
 
   return (
     <LinkComponent
-      className={`messages-article-card${unread ? ' is-unread' : ''}`}
+      className="messages-article-row"
       data-article-id={article.articleId}
       data-read-state={unread ? 'unread' : 'read'}
       href={articleHref(article.articleId)}
     >
       {backgroundUrl ? (
-        <span className="messages-article-card-media" aria-hidden="true">
-          <ResilientImage alt="" loading="lazy" src={backgroundUrl} />
+        <span className="messages-article-row-media" aria-hidden="true">
+          <ResilientImage alt="" fallback={null} loading="lazy" src={backgroundUrl} />
         </span>
       ) : null}
-      <span className="messages-article-card-copy">
-        <span className="messages-article-card-kicker">
+      <span className="messages-article-row-copy">
+        <span className="messages-article-row-kicker">
           <span className="sr-only">
             {unread ? 'Unread article. ' : 'Read article. '}
           </span>
@@ -45,7 +46,7 @@ function MessagesArticleCard({
         <h3>{article.title}</h3>
         {article.preview ? <p>{article.preview}</p> : null}
       </span>
-      <span className="messages-article-card-affordance" aria-hidden="true">
+      <span className="messages-article-row-affordance" aria-hidden="true">
         <ChevronRight />
       </span>
     </LinkComponent>
@@ -54,12 +55,12 @@ function MessagesArticleCard({
 
 export function MessagesArticleList({
   articles,
-  LinkComponent = 'a',
   mediaBaseUrl,
+  LinkComponent,
 }: {
   articles: MessageArticleMetadata[];
-  LinkComponent?: StorefrontLinkComponent;
   mediaBaseUrl: string;
+  LinkComponent: StorefrontLinkComponent;
 }) {
   const readSnapshot = useSyncExternalStore(
     subscribeMessageArticleReadState,
@@ -71,27 +72,16 @@ export function MessagesArticleList({
   if (articles.length === 0) return null;
 
   return (
-    <section
-      className="messages-article-section"
-      aria-labelledby="messages-article-heading"
-    >
-      <header className="messages-article-section-header">
-        <span className="messages-article-section-icon" aria-hidden="true">
-          <FileText />
-        </span>
-        <h2 id="messages-article-heading">Recommended articles</h2>
-      </header>
-      <div className="messages-article-list">
-        {articles.map((article) => (
-          <MessagesArticleCard
-            article={article}
-            key={article.articleId}
-            LinkComponent={LinkComponent}
-            mediaBaseUrl={mediaBaseUrl}
-            unread={!readIds.has(article.articleId)}
-          />
-        ))}
-      </div>
-    </section>
+    <>
+      {articles.map((article) => (
+        <MessagesArticleRow
+          article={article}
+          key={article.articleId}
+          LinkComponent={LinkComponent}
+          mediaBaseUrl={mediaBaseUrl}
+          unread={!readIds.has(article.articleId)}
+        />
+      ))}
+    </>
   );
 }
