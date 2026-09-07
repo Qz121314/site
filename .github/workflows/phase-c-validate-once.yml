@@ -1,0 +1,52 @@
+name: Phase C Validate Once
+
+on:
+  push:
+    branches:
+      - refactor/admin-commercial-ui-patterns
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+          run_install: false
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Run changed-file fixer
+        run: pnpm fix:changed
+      - name: Require clean fixer output
+        run: git diff --exit-code
+      - name: Run formatting check
+        run: pnpm format
+      - name: Run lint
+        run: pnpm lint
+      - name: Run typecheck
+        run: pnpm typecheck
+      - name: Run targeted Admin pattern tests
+        run: >-
+          pnpm --dir apps/admin exec node --test --experimental-strip-types
+          --import ./test/register-ts-resolver.mjs
+          test/admin-commercial-ui-patterns.test.mjs
+          test/admin-shell-contract.test.mjs
+          test/catalog-workspace-navigation.test.mjs
+          test/faq-markdown-contract.test.mjs
+          test/settings-decomposition.test.mjs
+          test/pwa-icon-settings-contract.test.mjs
+      - name: Run complete repository verification
+        run: pnpm verify
