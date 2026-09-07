@@ -1,19 +1,63 @@
 import type { StorefrontLinkComponent } from '@site/storefront-ui';
-import { FileText } from 'lucide-react';
+import { ChevronRight, FileText } from 'lucide-react';
 import { useSyncExternalStore } from 'react';
+import { mediaUrl } from './content';
 import {
   getMessageArticleReadSnapshot,
   subscribeMessageArticleReadState,
   type MessageArticleMetadata,
 } from './messages-articles';
+import { ResilientImage } from './ResilientMedia';
 import { articleHref } from './routing';
+
+function MessagesArticleCard({
+  article,
+  LinkComponent,
+  mediaBaseUrl,
+  unread,
+}: {
+  article: MessageArticleMetadata;
+  LinkComponent: StorefrontLinkComponent;
+  mediaBaseUrl: string;
+  unread: boolean;
+}) {
+  const backgroundUrl = mediaUrl(mediaBaseUrl, article.backgroundObjectKey);
+
+  return (
+    <LinkComponent
+      className={`messages-article-card${unread ? ' is-unread' : ''}`}
+      data-article-id={article.articleId}
+      data-read-state={unread ? 'unread' : 'read'}
+      href={articleHref(article.articleId)}
+    >
+      {backgroundUrl ? (
+        <span className="messages-article-card-media" aria-hidden="true">
+          <ResilientImage alt="" loading="lazy" src={backgroundUrl} />
+        </span>
+      ) : null}
+      <span className="messages-article-card-copy">
+        <span className="messages-article-card-kicker">
+          <span className="sr-only">{unread ? 'Unread article. ' : 'Read article. '}</span>
+          {unread ? 'New' : 'Article'}
+        </span>
+        <h3>{article.title}</h3>
+        {article.preview ? <p>{article.preview}</p> : null}
+      </span>
+      <span className="messages-article-card-affordance" aria-hidden="true">
+        <ChevronRight />
+      </span>
+    </LinkComponent>
+  );
+}
 
 export function MessagesArticleList({
   articles,
   LinkComponent = 'a',
+  mediaBaseUrl,
 }: {
   articles: MessageArticleMetadata[];
   LinkComponent?: StorefrontLinkComponent;
+  mediaBaseUrl: string;
 }) {
   const readSnapshot = useSyncExternalStore(
     subscribeMessageArticleReadState,
@@ -25,34 +69,24 @@ export function MessagesArticleList({
   if (articles.length === 0) return null;
 
   return (
-    <section className="messages-article-list" aria-label="Articles">
-      {articles.map((article) => {
-        const unread = !readIds.has(article.articleId);
-        return (
-          <LinkComponent
-            aria-label={`${unread ? 'Unread article' : 'Article'}: ${article.title}`}
-            className={`messages-article-row${unread ? ' is-unread' : ''}`}
-            href={articleHref(article.articleId)}
+    <section className="messages-article-section" aria-labelledby="messages-article-heading">
+      <header className="messages-article-section-header">
+        <span className="messages-article-section-icon" aria-hidden="true">
+          <FileText />
+        </span>
+        <h2 id="messages-article-heading">Recommended articles</h2>
+      </header>
+      <div className="messages-article-list">
+        {articles.map((article) => (
+          <MessagesArticleCard
+            article={article}
             key={article.articleId}
-          >
-            <span className="messages-article-icon" aria-hidden="true">
-              <FileText />
-            </span>
-            <span className="messages-article-copy">
-              <strong>{article.title}</strong>
-              <span>{article.preview}</span>
-            </span>
-            <span className="messages-article-status">
-              {unread ? (
-                <>
-                  <span className="messages-article-unread-dot" aria-hidden="true" />
-                  <span className="sr-only">Unread article</span>
-                </>
-              ) : null}
-            </span>
-          </LinkComponent>
-        );
-      })}
+            LinkComponent={LinkComponent}
+            mediaBaseUrl={mediaBaseUrl}
+            unread={!readIds.has(article.articleId)}
+          />
+        ))}
+      </div>
     </section>
   );
 }

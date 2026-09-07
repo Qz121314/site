@@ -42,7 +42,7 @@ test('bootstrap message article metadata is sanitized, sorted, deduplicated, and
         articleId: 'article-b',
         title: 'Beta',
         preview: 'Second',
-        backgroundObjectKey: 'media/messages/beta.webp',
+        backgroundObjectKey: ' media/messages/beta.webp ',
         sortOrder: 20,
         body: '# Full Markdown must not escape bootstrap metadata',
       },
@@ -50,6 +50,7 @@ test('bootstrap message article metadata is sanitized, sorted, deduplicated, and
         articleId: 'article-a',
         title: 'Alpha',
         preview: 'First',
+        backgroundObjectKey: '   ',
         sortOrder: 10,
       },
       {
@@ -139,9 +140,18 @@ test('ghost IDs and inactive articles do not affect current unread count', () =>
   assert.equal(countUnreadMessageArticles(active, readMessageArticleReadIds(storage)), 1);
 });
 
-test('editing article metadata does not make an already-read article unread again', () => {
+test('editing or reordering article metadata does not reset Article-ID read state', () => {
   const storage = memoryStorage('["article-a"]');
-  const active = [
+  const original = [
+    {
+      articleId: 'article-a',
+      title: 'Original title',
+      preview: 'Original preview',
+      backgroundObjectKey: 'media/messages/original.webp',
+      sortOrder: 0,
+    },
+  ];
+  const updated = [
     {
       articleId: 'article-a',
       title: 'Updated title',
@@ -151,7 +161,8 @@ test('editing article metadata does not make an already-read article unread agai
     },
   ];
 
-  assert.equal(countUnreadMessageArticles(active, readMessageArticleReadIds(storage)), 0);
+  assert.equal(countUnreadMessageArticles(original, readMessageArticleReadIds(storage)), 0);
+  assert.equal(countUnreadMessageArticles(updated, readMessageArticleReadIds(storage)), 0);
 });
 
 test('messages badge composes independent support and article unread counts safely', () => {
@@ -166,12 +177,25 @@ test('messages badge composes independent support and article unread counts safe
   assert.equal(composeMessagesBadge(2.9, 1.9), 3);
 });
 
-test('background metadata introduces no media API or extra bootstrap fetch path', () => {
-  const source = readFileSync(
+test('Messages Article presentation remains bootstrap-only and creates no fetch owner', () => {
+  const helperSource = readFileSync(
     new URL('../src/messages-articles.ts', import.meta.url),
     'utf8',
   );
+  const listSource = readFileSync(
+    new URL('../src/MessagesArticleList.tsx', import.meta.url),
+    'utf8',
+  );
+  const workspaceSource = readFileSync(
+    new URL('../src/MessagesArticleListWorkspace.tsx', import.meta.url),
+    'utf8',
+  );
+  const source = `${helperSource}\n${listSource}\n${workspaceSource}`;
+
   assert.doesNotMatch(source, /\bfetch\s*\(/u);
-  assert.doesNotMatch(source, /\/api\/[^'"`]*media/iu);
-  assert.match(source, /site:messages:read-articles/u);
+  assert.doesNotMatch(source, /\/api\/[^'"`]*(?:article|media)/iu);
+  assert.doesNotMatch(source, /siteSupportGateway|loadPublicSupportConnections/u);
+  assert.match(workspaceSource, /getQueryData<StorefrontBootstrap>/u);
+  assert.match(listSource, /mediaUrl\(mediaBaseUrl, article\.backgroundObjectKey\)/u);
+  assert.match(helperSource, /site:messages:read-articles/u);
 });
