@@ -157,6 +157,30 @@ const bootstrap = {
   ],
 };
 
+const alphaArticleBody = `A focused reading paragraph with **strong text**, [a reference](https://example.com/reference), and \`inline code\`.
+
+# Reading section
+
+- First unordered point
+- Second unordered point
+
+1. First ordered step
+2. Second ordered step
+
+> A concise quoted note that should remain visually distinct from the body copy.
+
+## Details
+
+![Reading diagram](https://media.example.test/articles/reading.svg)
+
+---
+
+\`\`\`js
+const longValue = 'article-reading-code-abcdefghijklmnopqrstuvwxyz-abcdefghijklmnopqrstuvwxyz-abcdefghijklmnopqrstuvwxyz';
+\`\`\`
+
+https://example.com/articles/this-is-a-deliberately-long-url-segment-that-must-wrap-without-expanding-the-page`;
+
 const articles = {
   schemaVersion: 2,
   moduleKey: 'faq',
@@ -166,19 +190,19 @@ const articles = {
     {
       id: MESSAGE_ARTICLE_IDS.alpha,
       title: 'Alpha guide',
-      body: '# Alpha guide\n\nAlpha article detail.',
+      body: alphaArticleBody,
       sortOrder: 10,
     },
     {
       id: MESSAGE_ARTICLE_IDS.beta,
       title: 'Beta guide',
-      body: '# Beta guide\n\nBeta article detail.',
+      body: '# Beta section\n\nBeta article detail.',
       sortOrder: 20,
     },
     {
       id: MESSAGE_ARTICLE_IDS.gamma,
       title: 'Gamma guide',
-      body: '# Gamma guide\n\nGamma article detail.',
+      body: '# Gamma section\n\nGamma article detail.',
       sortOrder: 30,
     },
   ],
@@ -223,11 +247,18 @@ export async function installLocalMessagesArticleFixture(
     await route.fulfill({
       status: 200,
       contentType: 'image/svg+xml',
-      body: '<svg xmlns="http://www.w3.org/2000/svg" width="8" height="8"><rect width="8" height="8" fill="#ddd"/></svg>',
+      body: '<svg xmlns="http://www.w3.org/2000/svg" width="80" height="40"><rect width="80" height="40" fill="#284b63"/><circle cx="64" cy="20" r="14" fill="#9ad1d4"/></svg>',
     });
   });
   await page.route(`${MEDIA_ORIGIN}/messages/missing.svg`, (route) => route.abort());
   await page.route('**/_media/messages/missing.svg', (route) => route.abort());
+  await page.route(`${MEDIA_ORIGIN}/articles/reading.svg`, async (route) => {
+    await route.fulfill({
+      status: 200,
+      contentType: 'image/svg+xml',
+      body: '<svg xmlns="http://www.w3.org/2000/svg" width="640" height="320"><rect width="640" height="320" fill="#eef2f4"/><path d="M80 220 L220 100 L340 180 L450 90 L560 220" fill="none" stroke="#284b63" stroke-width="18"/></svg>',
+    });
+  });
   await page.route('**/api/public/storefront/support/connections', async (route) => {
     supportHttpRequestCount += 1;
     await route.fulfill({
