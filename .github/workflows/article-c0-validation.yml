@@ -1,5 +1,6 @@
 name: Article C0 Validation
 
+# Re-run after final contract normalization.
 on:
   push:
     branches:
