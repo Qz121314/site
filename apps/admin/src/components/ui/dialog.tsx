@@ -49,8 +49,12 @@ export function AdminDialog({
 }: AdminDialogProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const previousFocus = useRef<HTMLElement | null>(null);
+  const closeRef = useRef(onClose);
+  const closeDisabledRef = useRef(closeDisabled);
   const titleId = useId();
   const descriptionId = useId();
+  closeRef.current = onClose;
+  closeDisabledRef.current = closeDisabled;
 
   useEffect(() => {
     if (!open) return;
@@ -64,9 +68,9 @@ export function AdminDialog({
     dialog?.querySelector<HTMLElement>(FOCUSABLE_SELECTOR)?.focus();
 
     const handleKeyDown = (event: globalThis.KeyboardEvent) => {
-      if (event.key === 'Escape' && !closeDisabled) {
+      if (event.key === 'Escape' && !closeDisabledRef.current) {
         event.preventDefault();
-        onClose();
+        closeRef.current();
         return;
       }
       if (event.key !== 'Tab' || !dialog) return;
@@ -96,7 +100,7 @@ export function AdminDialog({
       document.removeEventListener('keydown', handleKeyDown);
       previousFocus.current?.focus();
     };
-  }, [closeDisabled, onClose, open]);
+  }, [open]);
 
   if (!open) return null;
 
