@@ -20,7 +20,7 @@ async function source(relativePath) {
 test('catalog secondary navigation owns only structure and section selection', () => {
   const items = getAdminSecondaryItems('catalog', sections);
   assert.deepEqual(
-    items.map(({ view, label, groupLabel }) => [view, label, groupLabel ?? null]),
+    items.map(({ view, label, group }) => [view, label, group ?? null]),
     [
       ['sections', '分区管理', '结构'],
       ['products:escorts', 'ESCORTS', '分区'],
@@ -66,11 +66,13 @@ test('catalog sidebar section selection follows section context instead of exact
 
 test('catalog workspace switcher is semantic, request-neutral and uses the guarded navigation path', async () => {
   const dashboard = await source('../src/Dashboard.tsx');
+  const shell = await source('../src/shell/AdminShell.tsx');
   const switcher = await source('../src/catalog/CatalogWorkspaceSwitcher.tsx');
   const css = await source('../src/admin-section-workspace-nav.css');
 
-  assert.match(dashboard, /<CatalogWorkspaceSwitcher/);
   assert.match(dashboard, /onNavigate=\{requestView\}/);
+  assert.match(shell, /<CatalogWorkspaceSwitcher/);
+  assert.match(shell, /onNavigate=\{onNavigate\}/);
   assert.match(switcher, /<nav/);
   assert.match(switcher, /aria-label=/);
   assert.match(switcher, /aria-current=\{active \? 'page' : undefined\}/);
