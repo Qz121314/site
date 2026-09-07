@@ -103,10 +103,7 @@ test('first visit treats active Articles as unread without support identity', ()
   const storage = memoryStorage();
 
   assert.deepEqual([...readMessageArticleReadIds(storage)], []);
-  assert.equal(
-    countUnreadMessageArticles(active, readMessageArticleReadIds(storage)),
-    2,
-  );
+  assert.equal(countUnreadMessageArticles(active, readMessageArticleReadIds(storage)), 2);
 });
 
 test('marking an Article read persists only its Article ID', () => {
@@ -145,10 +142,7 @@ test('ghost IDs and inactive articles do not affect current unread count', () =>
     { articleId: 'article-b', title: 'B', preview: 'B', sortOrder: 1 },
   ];
 
-  assert.equal(
-    countUnreadMessageArticles(active, readMessageArticleReadIds(storage)),
-    1,
-  );
+  assert.equal(countUnreadMessageArticles(active, readMessageArticleReadIds(storage)), 1);
 });
 
 test('editing Article metadata does not reset Article-ID read state', () => {
