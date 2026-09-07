@@ -163,9 +163,7 @@ test('zero Articles leaves the support list unchanged', async ({ page }) => {
 
   await page.goto('/messages/');
 
-  await expect(
-    page.getByRole('region', { name: 'Recommended articles' }),
-  ).toHaveCount(0);
+  await expect(page.getByRole('region', { name: 'Recommended articles' })).toHaveCount(0);
   await expect(page.getByText('Conversations')).toHaveCount(0);
   await expect(
     page.getByRole('link', { name: /Support.*Support product/u }),
@@ -174,26 +172,6 @@ test('zero Articles leaves the support list unchanged', async ({ page }) => {
     await page.evaluate(() => localStorage.getItem('site:messages:read-articles')),
   ).toBe(null);
   expect(
-    await page.evaluate(
-      () => document.documentElement.scrollWidth <= window.innerWidth,
-    ),
+    await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
   ).toBe(true);
-});
-
-test('C3 Prettier diagnostic', async () => {
-  const [{ readFile }, prettier] = await Promise.all([
-    import('node:fs/promises'),
-    import('prettier'),
-  ]);
-  const source = await readFile(new URL(import.meta.url), 'utf8');
-  const marker = "\ntest('C3 Prettier diagnostic'";
-  const target = `${source.slice(0, source.indexOf(marker)).trimEnd()}\n`;
-  const formatted = await prettier.format(target, {
-    parser: 'typescript',
-    singleQuote: true,
-    trailingComma: 'all',
-    printWidth: 90,
-    semi: true,
-  });
-  console.log(`C3_PRETTIER_CANONICAL=${JSON.stringify(formatted)}`);
 });
