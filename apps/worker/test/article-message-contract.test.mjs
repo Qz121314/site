@@ -29,9 +29,43 @@ function createMessageArticleDb() {
       { id: 'article-deleted', question: 'Deleted article', deleted_at: NOW },
     ],
   ]);
+  const media = new Map([
+    [
+      'media-ready',
+      {
+        id: 'media-ready',
+        status: 'ready',
+        deleted_at: null,
+        mime_type: 'image/webp',
+      },
+    ],
+    [
+      'media-deleted',
+      {
+        id: 'media-deleted',
+        status: 'deleted',
+        deleted_at: NOW,
+        mime_type: 'image/webp',
+      },
+    ],
+    [
+      'media-video',
+      { id: 'media-video', status: 'ready', deleted_at: null, mime_type: 'video/mp4' },
+    ],
+  ]);
   let references = [
-    { article_id: 'article-a', sort_order: 20, is_enabled: 1 },
-    { article_id: 'article-b', sort_order: 10, is_enabled: 1 },
+    {
+      article_id: 'article-a',
+      background_media_id: null,
+      sort_order: 20,
+      is_enabled: 1,
+    },
+    {
+      article_id: 'article-b',
+      background_media_id: null,
+      sort_order: 10,
+      is_enabled: 1,
+    },
   ];
   const batches = [];
 
@@ -71,6 +105,20 @@ function createMessageArticleDb() {
                 .map((id) => ({ id })),
             };
           }
+          if (this.sql.includes('FROM media_assets')) {
+            return {
+              results: this.args
+                .map((id) => media.get(id))
+                .filter(
+                  (asset) =>
+                    asset &&
+                    asset.status === 'ready' &&
+                    asset.deleted_at === null &&
+                    asset.mime_type.startsWith('image/'),
+                )
+                .map((asset) => ({ id: asset.id })),
+            };
+          }
           throw new Error(`Unexpected all SQL: ${this.sql}`);
         },
       };
@@ -86,11 +134,21 @@ function createMessageArticleDb() {
           continue;
         }
         if (statement.sql.includes('INSERT INTO message_article_references')) {
-          references.push({
-            article_id: statement.args[0],
-            sort_order: statement.args[1],
-            is_enabled: 1,
-          });
+          if (statement.sql.includes('background_media_id')) {
+            references.push({
+              article_id: statement.args[0],
+              background_media_id: statement.args[1],
+              sort_order: statement.args[2],
+              is_enabled: statement.args[3],
+            });
+          } else {
+            references.push({
+              article_id: statement.args[0],
+              background_media_id: null,
+              sort_order: statement.args[1],
+              is_enabled: 1,
+            });
+          }
         }
       }
       return statements.map(() => ({ success: true, meta: { changes: 1 } }));
@@ -130,8 +188,20 @@ test('GET /message-articles returns deterministic placement order and compatibil
   assert.equal(response.status, 200);
   assert.deepEqual(await response.json(), {
     articles: [
-      { articleId: 'article-b', title: 'Article B', sortOrder: 10, enabled: true },
-      { articleId: 'article-a', title: 'Article A', sortOrder: 20, enabled: true },
+      {
+        articleId: 'article-b',
+        title: 'Article B',
+        backgroundMediaId: null,
+        sortOrder: 10,
+        enabled: true,
+      },
+      {
+        articleId: 'article-a',
+        title: 'Article A',
+        backgroundMediaId: null,
+        sortOrder: 20,
+        enabled: true,
+      },
     ],
   });
   assert.equal(response.headers.get('cache-control'), 'no-store');
@@ -153,8 +223,20 @@ test('PUT /message-articles replaces the full list and persists input order dete
   assert.equal(response.status, 200);
   assert.deepEqual(await response.json(), {
     articles: [
-      { articleId: 'article-a', title: 'Article A', sortOrder: 0, enabled: true },
-      { articleId: 'article-b', title: 'Article B', sortOrder: 1, enabled: true },
+      {
+        articleId: 'article-a',
+        title: 'Article A',
+        backgroundMediaId: null,
+        sortOrder: 0,
+        enabled: true,
+      },
+      {
+        articleId: 'article-b',
+        title: 'Article B',
+        backgroundMediaId: null,
+        sortOrder: 1,
+        enabled: true,
+      },
     ],
   });
   assert.deepEqual(
@@ -170,6 +252,106 @@ test('PUT /message-articles replaces the full list and persists input order dete
   assert.ok(audit);
   assert.ok(audit.args.includes('messages.articles_updated'));
   assert.ok(audit.args.includes('message_article_reference'));
+});
+
+test('PUT /message-articles accepts placement presentation metadata, null backgrounds, ordering, and enabled state', async () => {
+  const db = createMessageArticleDb();
+  const app = withRequestId(adminMessageArticleRoutes);
+  const response = await app.request(
+    'https://admin.example.com/',
+    {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json', 'x-admin-request': '1' },
+      body: JSON.stringify({
+        articles: [
+          {
+            articleId: 'article-a',
+            backgroundMediaId: 'media-ready',
+            isEnabled: false,
+          },
+          { articleId: 'article-b', backgroundMediaId: null, isEnabled: true },
+        ],
+      }),
+    },
+    { DB: db },
+  );
+
+  assert.equal(response.status, 200);
+  assert.deepEqual(await response.json(), {
+    articles: [
+      {
+        articleId: 'article-a',
+        title: 'Article A',
+        backgroundMediaId: 'media-ready',
+        sortOrder: 0,
+        enabled: false,
+      },
+      {
+        articleId: 'article-b',
+        title: 'Article B',
+        backgroundMediaId: null,
+        sortOrder: 1,
+        enabled: true,
+      },
+    ],
+  });
+  assert.deepEqual(db.references, [
+    {
+      article_id: 'article-a',
+      background_media_id: 'media-ready',
+      sort_order: 0,
+      is_enabled: 0,
+    },
+    {
+      article_id: 'article-b',
+      background_media_id: null,
+      sort_order: 1,
+      is_enabled: 1,
+    },
+  ]);
+});
+
+test('PUT /message-articles rejects unavailable or non-image background media before writes', async () => {
+  for (const backgroundMediaId of ['missing-media', 'media-deleted', 'media-video']) {
+    const db = createMessageArticleDb();
+    const app = withRequestId(adminMessageArticleRoutes);
+    const response = await app.request(
+      'https://admin.example.com/',
+      {
+        method: 'PUT',
+        headers: { 'content-type': 'application/json', 'x-admin-request': '1' },
+        body: JSON.stringify({
+          articles: [{ articleId: 'article-a', backgroundMediaId }],
+        }),
+      },
+      { DB: db },
+    );
+
+    assert.equal(response.status, 400);
+    assert.equal(db.batches.length, 0);
+  }
+});
+
+test('PUT /message-articles rejects duplicate placement article ids before writes', async () => {
+  const db = createMessageArticleDb();
+  const app = withRequestId(adminMessageArticleRoutes);
+  const response = await app.request(
+    'https://admin.example.com/',
+    {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json', 'x-admin-request': '1' },
+      body: JSON.stringify({
+        articles: [
+          { articleId: 'article-a', backgroundMediaId: null },
+          { articleId: 'article-a', backgroundMediaId: 'media-ready' },
+        ],
+      }),
+    },
+    { DB: db },
+  );
+
+  assert.equal(response.status, 400);
+  assert.equal(db.batches.length, 0);
 });
 
 test('PUT /message-articles rejects duplicate, nonexistent, and deleted article ids before writes', async () => {
@@ -279,7 +461,17 @@ function createPublicationDb() {
         article_id: 'article-b',
         question: 'Messages only article',
         answer: 'Messages article body keeps well-being and stay-ready wording.',
+        background_object_key: 'media/messages/article-b.webp',
         sort_order: 0,
+        is_enabled: 1,
+      },
+      {
+        article_id: 'article-a',
+        question: 'Enabled FAQ article',
+        answer: '# Welcome **everyone**',
+        background_object_key: 'media/messages/disabled.webp',
+        sort_order: 1,
+        is_enabled: 0,
       },
     ],
   };
@@ -294,7 +486,9 @@ function createPublicationDb() {
     if (sql.includes('FROM product_tags_catalog t')) return [];
     if (sql.includes('FROM site_home_section_slots')) return [];
     if (sql.includes('FROM message_article_references mar')) {
-      return state.messageArticles.map((row) => ({ ...row }));
+      return state.messageArticles
+        .filter((row) => row.is_enabled !== 0)
+        .map((row) => ({ ...row }));
     }
     if (sql.includes('FROM faqs')) return state.faqs.map((row) => ({ ...row }));
     if (sql.includes('FROM sections s')) return [];
@@ -414,6 +608,7 @@ test('faq module atomically publishes legacy FAQ, generic Article, and lightweig
       articleId: 'article-b',
       title: 'Messages only article',
       preview: 'Messages article body keeps well-being and stay-ready wording.',
+      backgroundObjectKey: 'media/messages/article-b.webp',
       sortOrder: 0,
     },
   ]);
@@ -435,6 +630,24 @@ test('faq module atomically publishes legacy FAQ, generic Article, and lightweig
   assert.equal(pointer.schemaVersion, 2);
   assert.equal(pointer.faq.contentVersion, messages.value.contentVersion);
   assert.equal(pointer.faq.manifestKey, manifest.key);
+});
+
+test('faq publication keeps a placement and publishes null when background media is unavailable', async () => {
+  const db = createPublicationDb();
+  db.state.messageArticles[0].background_object_key = null;
+  const bucket = createPublicationBucket();
+
+  await publishModularStorefront(db, bucket, 'publish-request-missing-background', 'faq');
+  const messages = writtenJson(bucket, '/messages.json');
+  assert.deepEqual(messages.value.articles, [
+    {
+      articleId: 'article-b',
+      title: 'Messages only article',
+      preview: 'Messages article body keeps well-being and stay-ready wording.',
+      backgroundObjectKey: null,
+      sortOrder: 0,
+    },
+  ]);
 });
 
 test('Article content and Messages placement both make the shared faq publication module dirty', async () => {
