@@ -113,7 +113,9 @@ function AddArticleDialog({
       onClose={onClose}
       footer={
         <>
-          <span className="messages-articles-dialog-count">已选择 {selected.size} 篇</span>
+          <span className="messages-articles-dialog-count">
+            已选择 {selected.size} 篇
+          </span>
           <Button variant="secondary" onClick={onClose}>
             取消
           </Button>
@@ -310,7 +312,9 @@ export function MessagesArticlesSection({
       const next = normalizeDraft(placements);
       setTitles((current) => {
         const updated = new Map(current);
-        placements.forEach((placement) => updated.set(placement.articleId, placement.title));
+        placements.forEach((placement) =>
+          updated.set(placement.articleId, placement.title),
+        );
         return updated;
       });
       setServerDraft(next);
@@ -339,7 +343,9 @@ export function MessagesArticlesSection({
       <div className="settings-workspace-heading messages-articles-heading">
         <div>
           <h2 id="messages-article-title">Messages Articles</h2>
-          <p>从 Article Center 组织 Messages 中展示的文章入口，并独立配置 placement 背景。</p>
+          <p>
+            从 Article Center 组织 Messages 中展示的文章入口，并独立配置 placement 背景。
+          </p>
         </div>
         <div className="messages-articles-toolbar">
           <Button variant="secondary" onClick={() => onNavigate('faq')}>
@@ -384,7 +390,8 @@ export function MessagesArticlesSection({
           </div>
           {draft.map((placement, index) => {
             const article = articleById.get(placement.articleId);
-            const title = article?.title || titles.get(placement.articleId) || placement.articleId;
+            const title =
+              article?.title || titles.get(placement.articleId) || placement.articleId;
             return (
               <div className="messages-articles-row" key={placement.articleId}>
                 <div className="messages-articles-article">
@@ -427,7 +434,9 @@ export function MessagesArticlesSection({
                         variant="ghost"
                         size="compact"
                         onClick={() =>
-                          updateDraft(setDraftBackground(draft, placement.articleId, null))
+                          updateDraft(
+                            setDraftBackground(draft, placement.articleId, null),
+                          )
                         }
                       >
                         清除
@@ -454,7 +463,9 @@ export function MessagesArticlesSection({
                     size="icon"
                     aria-label={`下移 ${title}`}
                     disabled={index === draft.length - 1}
-                    onClick={() => updateDraft(moveDraftArticle(draft, placement.articleId, 1))}
+                    onClick={() =>
+                      updateDraft(moveDraftArticle(draft, placement.articleId, 1))
+                    }
                   >
                     <ArrowDown aria-hidden="true" size={17} />
                   </Button>
@@ -473,7 +484,9 @@ export function MessagesArticlesSection({
                     variant="ghost"
                     size="icon"
                     aria-label={`移除 ${title}`}
-                    onClick={() => updateDraft(removeDraftArticle(draft, placement.articleId))}
+                    onClick={() =>
+                      updateDraft(removeDraftArticle(draft, placement.articleId))
+                    }
                   >
                     <Trash2 aria-hidden="true" size={17} />
                   </Button>
@@ -486,7 +499,9 @@ export function MessagesArticlesSection({
 
       <div className="messages-articles-savebar" data-dirty={dirty ? 'true' : 'false'}>
         <div>
-          <strong>{dirty ? '有未保存修改' : saved ? '配置已保存' : '当前配置已同步'}</strong>
+          <strong>
+            {dirty ? '有未保存修改' : saved ? '配置已保存' : '当前配置已同步'}
+          </strong>
           <span>
             {dirty
               ? '排序、背景、添加或移除只存在于当前草稿，保存后才会生效。'

@@ -29,7 +29,10 @@ const cssPath = new URL(
   import.meta.url,
 );
 const adminCssPath = new URL('../src/admin.css', import.meta.url);
-const mediaPickerPath = new URL('../src/asset-library/MediaPickerDialog.tsx', import.meta.url);
+const mediaPickerPath = new URL(
+  '../src/asset-library/MediaPickerDialog.tsx',
+  import.meta.url,
+);
 const apiPath = new URL('../src/experience/messages-articles/api.ts', import.meta.url);
 
 function installBrowserStubs() {
@@ -278,7 +281,10 @@ test('Messages Articles adopts shared Input, AdminStatusBadge, Lucide Check and 
   assert.doesNotMatch(source, /import ['"]\.\/messages-articles\.css['"]/);
   assert.match(adminCss, /experience\/messages-articles\/messages-articles\.css/);
   assert.doesNotMatch(css, /\.messages-articles-status/);
-  assert.doesNotMatch(css, /\.messages-articles-media-grid|\.messages-articles-media-card/);
+  assert.doesNotMatch(
+    css,
+    /\.messages-articles-media-grid|\.messages-articles-media-card/,
+  );
 });
 
 test('workspace exposes explicit save, retry and local dirty state', async () => {
