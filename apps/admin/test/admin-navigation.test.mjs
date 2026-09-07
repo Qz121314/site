@@ -166,15 +166,7 @@ test('secondary items are unique and legacy placeholders are retired', () => {
   const catalog = getAdminSecondaryItems('catalog', sections);
   assert.deepEqual(
     catalog.map((item) => item.view),
-    [
-      'sections',
-      'products:alpha',
-      'categories:alpha',
-      'tags:alpha',
-      'products:beta',
-      'categories:beta',
-      'tags:beta',
-    ],
+    ['sections', 'products:alpha', 'products:beta'],
   );
   assert.deepEqual(
     getAdminSecondaryItems('operations', sections).map((item) => item.view),
@@ -212,6 +204,33 @@ test('legacy localStorage settings value normalizes to system general', () => {
 
   try {
     assert.equal(readInitialAdminView(), 'system-general');
+  } finally {
+    if (previousWindow === undefined) delete globalThis.window;
+    else globalThis.window = previousWindow;
+  }
+});
+
+test('dynamic catalog localStorage lastView values remain compatible', () => {
+  const previousWindow = globalThis.window;
+  const storage = new Map([[ADMIN_VIEW_STORAGE_KEY, 'products:alpha']]);
+  globalThis.window = {
+    location: { hash: '', pathname: '/admin', search: '' },
+    localStorage: {
+      getItem(key) {
+        return storage.get(key) ?? null;
+      },
+      setItem(key, value) {
+        storage.set(key, value);
+      },
+    },
+    history: { pushState() {}, replaceState() {} },
+  };
+
+  try {
+    for (const view of ['products:alpha', 'categories:alpha', 'tags:alpha']) {
+      storage.set(ADMIN_VIEW_STORAGE_KEY, view);
+      assert.equal(readInitialAdminView(), view);
+    }
   } finally {
     if (previousWindow === undefined) delete globalThis.window;
     else globalThis.window = previousWindow;
