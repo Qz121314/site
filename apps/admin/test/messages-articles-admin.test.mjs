@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
+import { fetchArticles } from '../src/article-center/api.ts';
 import {
   addDraftArticle,
   draftsEqual,
@@ -27,6 +28,8 @@ const cssPath = new URL(
   '../src/experience/messages-articles/messages-articles.css',
   import.meta.url,
 );
+const adminCssPath = new URL('../src/admin.css', import.meta.url);
+const mediaPickerPath = new URL('../src/asset-library/MediaPickerDialog.tsx', import.meta.url);
 const apiPath = new URL('../src/experience/messages-articles/api.ts', import.meta.url);
 
 function installBrowserStubs() {
@@ -87,6 +90,40 @@ test('GET hydration parses Messages Article placement rows in server order', asy
         { articleId: 'article-b', backgroundMediaId: 'media-b', sortOrder: 1 },
       ],
     );
+  } finally {
+    globalThis.fetch = previousFetch;
+  }
+});
+
+test("Article scope='active' preserves isActive=false instead of deriving enabled from presence", async () => {
+  installBrowserStubs();
+  const previousFetch = globalThis.fetch;
+  globalThis.fetch = async (input) => {
+    assert.equal(input, '/api/admin/faqs/?scope=active');
+    return jsonResponse({
+      faqs: [
+        {
+          id: 'inactive-article',
+          title: 'Paused article',
+          body: 'Body',
+          sortOrder: 0,
+          isEnabled: false,
+          createdAt: '2026-09-07T00:00:00.000Z',
+          updatedAt: '2026-09-07T00:00:00.000Z',
+          deletedAt: null,
+        },
+      ],
+    });
+  };
+  try {
+    const articles = await fetchArticles('active');
+    assert.equal(articles.length, 1);
+    assert.equal(articles[0].isActive, false);
+
+    const source = await readFile(componentPath, 'utf8');
+    assert.match(source, /article\.isActive \? '文章已启用' : '文章已停用'/);
+    assert.match(source, /article\.isActive \? '已启用' : '已停用'/);
+    assert.doesNotMatch(source, /article \? '文章已启用'/);
   } finally {
     globalThis.fetch = previousFetch;
   }
@@ -200,12 +237,21 @@ test('dirty comparison tracks order and placement background state', () => {
   assert.equal(draftsEqual(saved, setDraftBackground(saved, 'a', 'media-a')), false);
 });
 
-test('Messages Articles UI reuses Article Center and Asset Library owners', async () => {
-  const source = await readFile(componentPath, 'utf8');
+test('Messages Articles UI reuses Article Center and shared reference-only MediaPicker owners', async () => {
+  const [source, mediaPicker] = await Promise.all([
+    readFile(componentPath, 'utf8'),
+    readFile(mediaPickerPath, 'utf8'),
+  ]);
   assert.match(source, /fetchArticles\('active'\)/);
-  assert.match(source, /fetchMediaLibrary\(\{ kind: 'image' \}\)/);
+  assert.match(source, /<MediaPickerDialog/);
+  assert.match(source, /selectionMode="reference-only"/);
+  assert.match(source, /allowedKinds=\{\['image'\]\}/);
+  assert.match(source, /currentAssetId=/);
+  assert.match(mediaPicker, /fetchMediaLibrary\(\)/);
   assert.match(source, /brandingAssetPreviewUrl/);
   assert.match(source, /onNavigate\('faq'\)/);
+  assert.doesNotMatch(source, /function BackgroundPickerDialog/);
+  assert.doesNotMatch(source, /fetchMediaLibrary/);
   assert.doesNotMatch(source, /ArticleEditorDialog/);
   assert.doesNotMatch(source, /assignMediaRole/);
   assert.doesNotMatch(source, /uploadMediaAsset/);
@@ -217,6 +263,22 @@ test('Add Article flow is searchable, multi-select and excludes existing placeme
   assert.match(source, /aria-multiselectable="true"/);
   assert.match(source, /搜索文章标题或正文/);
   assert.match(source, /addDraftArticle/);
+});
+
+test('Messages Articles adopts shared Input, AdminStatusBadge, Lucide Check and CSS manifest ownership', async () => {
+  const [source, css, adminCss] = await Promise.all([
+    readFile(componentPath, 'utf8'),
+    readFile(cssPath, 'utf8'),
+    readFile(adminCssPath, 'utf8'),
+  ]);
+  assert.match(source, /import \{ Input \} from '..\/..\/components\/ui\/input'/);
+  assert.match(source, /AdminStatusBadge/);
+  assert.match(source, /\bCheck\b/);
+  assert.doesNotMatch(source, /✓/);
+  assert.doesNotMatch(source, /import ['"]\.\/messages-articles\.css['"]/);
+  assert.match(adminCss, /experience\/messages-articles\/messages-articles\.css/);
+  assert.doesNotMatch(css, /\.messages-articles-status/);
+  assert.doesNotMatch(css, /\.messages-articles-media-grid|\.messages-articles-media-card/);
 });
 
 test('workspace exposes explicit save, retry and local dirty state', async () => {
