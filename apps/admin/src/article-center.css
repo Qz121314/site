@@ -1,0 +1,322 @@
+.article-center {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  align-content: start;
+  gap: 10px;
+}
+
+.article-center .ui-management-toolbar {
+  align-items: center;
+}
+
+.article-center .ui-management-toolbar-controls {
+  flex-wrap: wrap;
+}
+
+.article-center .ui-management-search {
+  min-width: min(280px, 100%);
+  flex: 1 1 260px;
+}
+
+.article-sort-field {
+  display: inline-flex;
+  min-width: 172px;
+  align-items: center;
+  gap: 8px;
+  color: #667085;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.article-sort-field .ui-input {
+  min-width: 0;
+  height: 34px;
+  flex: 1;
+}
+
+.article-table-wrap {
+  min-width: 0;
+  overflow-x: auto;
+  border: 1px solid var(--admin-border, #e2e6ec);
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(16 24 40 / 3%);
+}
+
+.article-table {
+  width: 100%;
+  min-width: 760px;
+}
+
+.article-table .checkbox-cell {
+  width: 38px;
+}
+
+.article-table .checkbox-cell input {
+  width: 16px;
+  height: 16px;
+}
+
+.article-title-cell {
+  min-width: 0;
+  max-width: 520px;
+}
+
+.article-title-cell strong {
+  display: block;
+  overflow: hidden;
+  color: #172033;
+  font-size: 0.78rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.article-sort-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.article-sort-controls > span {
+  min-width: 28px;
+  color: #475467;
+  font-variant-numeric: tabular-nums;
+}
+
+.article-table .actions-cell {
+  width: 138px;
+}
+
+.article-editor-form {
+  display: grid;
+  min-width: 0;
+  gap: 16px;
+}
+
+.article-field {
+  display: grid;
+  min-width: 0;
+  gap: 7px;
+}
+
+.article-field > span,
+.article-field-label {
+  color: #344054;
+  font-size: 0.76rem;
+  font-weight: 740;
+}
+
+.article-editor-heading-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.article-markdown-source,
+.article-markdown-preview {
+  width: 100%;
+  min-height: 320px;
+  max-height: min(52vh, 560px);
+  box-sizing: border-box;
+  overflow: auto;
+}
+
+.article-markdown-source {
+  resize: vertical;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  line-height: 1.6;
+  tab-size: 2;
+}
+
+.article-markdown-preview {
+  padding: 16px;
+  border: 1px solid var(--admin-border, #e2e6ec);
+  border-radius: 8px;
+  background: #fbfcfd;
+}
+
+.article-editor-meta-grid {
+  display: grid;
+  grid-template-columns: minmax(160px, 220px) minmax(220px, 1fr);
+  gap: 16px;
+  align-items: end;
+}
+
+@media (max-width: 900px) {
+  .article-center .ui-management-toolbar,
+  .article-center .ui-management-toolbar-leading,
+  .article-center .ui-management-toolbar-controls,
+  .article-center .ui-management-toolbar-trailing {
+    width: 100%;
+  }
+
+  .article-center .ui-management-toolbar-leading .ui-segmented-control,
+  .article-center .ui-management-toolbar-trailing .ui-button {
+    width: 100%;
+  }
+
+  .article-center .ui-management-toolbar-leading .ui-segmented-item {
+    flex: 1;
+  }
+
+  .article-sort-field {
+    min-width: 0;
+    flex: 1 1 180px;
+  }
+
+  .article-editor-meta-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 720px) {
+  .article-center {
+    gap: 12px;
+  }
+
+  .article-center .ui-management-toolbar-controls {
+    display: grid;
+    grid-template-columns: 1fr;
+  }
+
+  .article-center .ui-management-search,
+  .article-sort-field,
+  .article-sort-field .ui-input,
+  .article-center .ui-management-toolbar-controls .ui-segmented-control {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .article-center .ui-management-toolbar-controls .ui-segmented-item {
+    min-height: 44px;
+    flex: 1;
+  }
+
+  .article-sort-field {
+    display: grid;
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .article-sort-field .ui-input {
+    min-height: 44px;
+  }
+
+  .article-table-wrap {
+    overflow: visible;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    box-shadow: none;
+  }
+
+  .article-table,
+  .article-table tbody {
+    display: block;
+    width: 100%;
+    min-width: 0;
+  }
+
+  .article-table thead {
+    display: none;
+  }
+
+  .article-table tr {
+    display: grid;
+    width: 100%;
+    box-sizing: border-box;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 0 12px;
+    margin-bottom: 10px;
+    padding: 10px 12px;
+    border: 1px solid var(--admin-border, #e2e6ec);
+    border-radius: 9px;
+    background: #fff;
+  }
+
+  .article-table td,
+  .article-table .checkbox-cell,
+  .article-table .actions-cell {
+    display: flex;
+    width: auto;
+    min-width: 0;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 6px 0;
+    border: 0;
+  }
+
+  .article-table td::before {
+    flex: 0 0 auto;
+    color: #98a2b3;
+    content: attr(data-label);
+    font-size: 0.67rem;
+    font-weight: 700;
+  }
+
+  .article-table td[data-label='标题'],
+  .article-table td[data-label='操作'] {
+    grid-column: 1 / -1;
+  }
+
+  .article-table td[data-label='标题'] {
+    display: block;
+    padding-bottom: 9px;
+    border-bottom: 1px solid #edf0f4;
+  }
+
+  .article-table td[data-label='标题']::before {
+    display: none;
+  }
+
+  .article-title-cell,
+  .article-title-cell strong {
+    max-width: none;
+    white-space: normal;
+  }
+
+  .article-table .checkbox-cell {
+    justify-content: flex-start;
+  }
+
+  .article-table .checkbox-cell::before {
+    display: none;
+  }
+
+  .article-table .ui-button,
+  .article-table .ui-sort-actions .ui-button,
+  .article-center .ui-management-toolbar-trailing .ui-button {
+    min-height: 44px;
+  }
+
+  .article-table .ui-sort-actions .ui-button {
+    min-width: 44px;
+  }
+
+  .article-table .ui-row-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .article-editor-heading-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .article-editor-heading-row .ui-segmented-control,
+  .article-editor-heading-row .ui-segmented-item {
+    width: 100%;
+  }
+
+  .article-editor-heading-row .ui-segmented-item {
+    min-height: 44px;
+  }
+
+  .article-markdown-source,
+  .article-markdown-preview {
+    min-height: 260px;
+    max-height: 46vh;
+  }
+}

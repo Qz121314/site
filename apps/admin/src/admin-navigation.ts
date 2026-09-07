@@ -275,7 +275,7 @@ export function getAdminSecondaryItems(
     case 'media':
       return [
         { view: 'assets', label: '素材库' },
-        { view: 'faq', label: 'FAQ 管理' },
+        { view: 'faq', label: '文章中心' },
       ];
     case 'integrations':
       return [{ view: 'customer-service', label: '客服管理' }];
@@ -338,9 +338,9 @@ export function getAdminViewContext(
       description: '管理 Site 与 Customer Service 的连接配置。',
     },
     faq: {
-      eyebrow: `${domainLabel} / FAQ`,
-      title: 'FAQ 管理',
-      description: '管理当前公开 FAQ Markdown 内容。',
+      eyebrow: `${domainLabel} / 文章`,
+      title: '文章中心',
+      description: '管理可复用的 Markdown 文章内容。',
     },
     sections: {
       eyebrow: `${domainLabel} / 分区`,

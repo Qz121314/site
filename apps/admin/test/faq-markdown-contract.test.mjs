@@ -6,30 +6,42 @@ async function source(relativePath) {
   return readFile(new URL(relativePath, import.meta.url), 'utf8');
 }
 
-test('FAQ editor keeps raw Markdown as the editable and persisted source', async () => {
-  const faq = await source('../src/FaqManagementView.tsx');
+test('Article editor keeps raw Markdown as the editable source without client-side trimming', async () => {
+  const view = await source('../src/ArticleCenterView.tsx');
+  const editor = await source('../src/article-center/ArticleEditorDialog.tsx');
+  const adapter = await source('../src/article-center/api.ts');
 
-  assert.match(faq, /htmlFor="faq-body"/);
-  assert.match(faq, /id="faq-body"/);
-  assert.match(faq, /value=\{form\.body\}/);
-  assert.match(faq, /body:\s*event\.target\.value/);
-  assert.match(faq, /updateFaq\(editingFaq\.id, form\)/);
-  assert.match(faq, /createFaq\(form\)/);
-  assert.doesNotMatch(faq, /body:\s*form\.body\.trim\(\)/);
-  assert.match(faq, /AdminSegmentedControl/);
-  assert.match(faq, /AdminSegmentedItem/);
-  assert.match(faq, /selected=\{editorMode === 'edit'\}/);
-  assert.match(faq, /selected=\{editorMode === 'preview'\}/);
+  assert.match(editor, /value=\{form\.body\}/);
+  assert.match(editor, /body:\s*event\.target\.value/);
+  assert.match(view, /updateArticle\(editingArticle\.id, form\)/);
+  assert.match(view, /createArticle\(form\)/);
+  assert.doesNotMatch(view, /body:\s*form\.body\.trim\(\)/);
+  assert.doesNotMatch(editor, /body:\s*form\.body\.trim\(\)/);
+  assert.doesNotMatch(adapter, /body:\s*input\.body\.trim\(\)/);
+  assert.match(editor, /AdminSegmentedControl/);
+  assert.match(editor, />\s*编辑\s*</);
+  assert.match(editor, />\s*预览\s*</);
 });
 
-test('Admin FAQ preview reuses the shared MarkdownContent renderer without backend requests', async () => {
-  const faq = await source('../src/FaqManagementView.tsx');
-  const preview = await source('../src/faq-management/MarkdownPreview.tsx');
+test('Admin Article preview reuses shared MarkdownContent and performs zero backend requests', async () => {
+  const editor = await source('../src/article-center/ArticleEditorDialog.tsx');
+  const preview = await source('../src/article-center/MarkdownPreview.tsx');
 
-  assert.match(faq, /<MarkdownPreview source=\{form\.body\}/);
+  assert.match(editor, /<MarkdownPreview markdown=\{form\.body\}/);
   assert.match(preview, /@site\/storefront-ui\/markdown-content/);
-  assert.match(preview, /<MarkdownContent source=\{source\}/);
-  assert.doesNotMatch(preview, /parseMarkdown|fetch\(|adminFetch|createFaq|updateFaq/);
+  assert.match(preview, /<MarkdownContent source=\{markdown\}/);
+  assert.doesNotMatch(preview, /parseMarkdown|fetch\(|adminFetch|createArticle|updateArticle/);
+});
+
+test('Article Admin adapter preserves the legacy FAQ transport contract', async () => {
+  const adapter = await source('../src/article-center/api.ts');
+  const legacyTransport = await source('../src/faq-management/api.ts');
+
+  assert.match(adapter, /isActive:\s*faq\.isEnabled/);
+  assert.match(adapter, /isEnabled:\s*input\.isActive/);
+  assert.match(legacyTransport, /\/api\/admin\/faqs/);
+  assert.doesNotMatch(adapter, /\/api\/admin\/articles/);
+  assert.doesNotMatch(legacyTransport, /\/api\/admin\/articles/);
 });
 
 test('Storefront FAQ and generic Article routes keep using the same Markdown renderer adapter', async () => {
@@ -47,7 +59,10 @@ test('Storefront FAQ and generic Article routes keep using the same Markdown ren
   );
 });
 
-test('FAQ publish mapping remains owned by the faq module', async () => {
+test('Article Center keeps the internal faq publish mapping', async () => {
   const dashboard = await source('../src/Dashboard.tsx');
+  const compatibilityView = await source('../src/FaqManagementView.tsx');
+
   assert.match(dashboard, /if \(view === 'faq'\) return 'faq';/);
+  assert.match(compatibilityView, /ArticleCenterView as FaqManagementView/);
 });

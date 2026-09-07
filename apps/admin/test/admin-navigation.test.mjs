@@ -8,6 +8,7 @@ import {
   getAdminDefaultViewForDomain,
   getAdminDomainForView,
   getAdminSecondaryItems,
+  getAdminViewContext,
   parseAdminView,
   parseDynamicView,
   readInitialAdminView,
@@ -144,15 +145,22 @@ test('experience and system secondary navigation match Phase B IA exactly', () =
   );
 });
 
-test('asset secondary navigation owns media and FAQ assets in fixed order', () => {
+test('asset secondary navigation exposes Article Center while preserving faq view compatibility', () => {
   assert.deepEqual(
     getAdminSecondaryItems('media', sections).map(({ view, label }) => [view, label]),
     [
       ['assets', '素材库'],
-      ['faq', 'FAQ 管理'],
+      ['faq', '文章中心'],
     ],
   );
   assert.equal(getAdminDefaultViewForDomain('media', sections), 'assets');
+  assert.equal(parseAdminView('#faq'), 'faq');
+  assert.equal(adminViewHash('faq'), '#faq');
+
+  const context = getAdminViewContext('faq', sections);
+  assert.equal(context.eyebrow, '素材 / 文章');
+  assert.equal(context.title, '文章中心');
+  assert.equal(context.description, '管理可复用的 Markdown 文章内容。');
 });
 
 test('secondary items are unique and legacy placeholders are retired', () => {
