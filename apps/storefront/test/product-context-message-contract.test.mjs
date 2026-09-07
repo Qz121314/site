@@ -21,8 +21,14 @@ test('product context parser preserves the complete customer-service snapshot', 
 });
 
 test('history and realtime share product-context validation before presentation', () => {
-  const gateway = readFileSync(new URL('../src/support-gateway.ts', import.meta.url), 'utf8');
-  const realtime = readFileSync(new URL('../src/support-realtime.ts', import.meta.url), 'utf8');
+  const gateway = readFileSync(
+    new URL('../src/support-gateway.ts', import.meta.url),
+    'utf8',
+  );
+  const realtime = readFileSync(
+    new URL('../src/support-realtime.ts', import.meta.url),
+    'utf8',
+  );
 
   assert.match(gateway, /parseSupportProductContext\(item\.productContext\)/u);
   assert.match(realtime, /parseSupportProductContext\(item\.productContext\)/u);

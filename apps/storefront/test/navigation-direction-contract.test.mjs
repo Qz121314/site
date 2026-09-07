@@ -3,12 +3,16 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
 test('shared navigation runtime owns SPA history direction and scroll restoration', async () => {
-  const [historySource, navigationSource, presentationSource, rootSource] = await Promise.all([
-    readFile(new URL('../src/storefront-history.ts', import.meta.url), 'utf8'),
-    readFile(new URL('../src/storefront-navigation-runtime.ts', import.meta.url), 'utf8'),
-    readFile(new URL('../src/StorefrontPresentation.tsx', import.meta.url), 'utf8'),
-    readFile(new URL('../src/StorefrontRoot.tsx', import.meta.url), 'utf8'),
-  ]);
+  const [historySource, navigationSource, presentationSource, rootSource] =
+    await Promise.all([
+      readFile(new URL('../src/storefront-history.ts', import.meta.url), 'utf8'),
+      readFile(
+        new URL('../src/storefront-navigation-runtime.ts', import.meta.url),
+        'utf8',
+      ),
+      readFile(new URL('../src/StorefrontPresentation.tsx', import.meta.url), 'utf8'),
+      readFile(new URL('../src/StorefrontRoot.tsx', import.meta.url), 'utf8'),
+    ]);
 
   assert.match(navigationSource, /window\.history\.pushState/u);
   assert.match(navigationSource, /saveCurrentStorefrontScrollPosition/u);

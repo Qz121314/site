@@ -14,8 +14,14 @@ test('storefront resolves the assigned agent avatar without substituting product
 
   assert.match(contract, /agentAvatarUrl: string \| null/u);
   assert.match(gateway, /resolveSupportAssetUrl/u);
-  assert.match(gateway, /agentAvatarUrl: resolveSupportAssetUrl\(connection, remote\.agentAvatarUrl\)/u);
+  assert.match(
+    gateway,
+    /agentAvatarUrl: resolveSupportAssetUrl\(connection, remote\.agentAvatarUrl\)/u,
+  );
   assert.match(realtime, /resolveSupportAssetUrl\(connection, item\.agentAvatarUrl\)/u);
   assert.match(ui, /conversation\.agentAvatarUrl/u);
-  assert.doesNotMatch(ui, /conversation\.agentAvatarUrl \|\| conversation\.productCoverUrl/u);
+  assert.doesNotMatch(
+    ui,
+    /conversation\.agentAvatarUrl \|\| conversation\.productCoverUrl/u,
+  );
 });

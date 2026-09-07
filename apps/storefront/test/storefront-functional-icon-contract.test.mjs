@@ -21,7 +21,17 @@ test('storefront functional controls keep shared icon dependencies instead of pa
     assert.match(content, /from '@site\/storefront-ui\/icon-button'/u);
   }
 
-  for (const content of [support, pwa, browse, filters, section, product, home, root, navigation]) {
+  for (const content of [
+    support,
+    pwa,
+    browse,
+    filters,
+    section,
+    product,
+    home,
+    root,
+    navigation,
+  ]) {
     assert.match(content, /from 'lucide-react'/u);
   }
 

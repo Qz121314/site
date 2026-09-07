@@ -5,7 +5,10 @@ import test from 'node:test';
 test('hero video media work stays limited to the active visible slide', async () => {
   const [homeSource, sharedSource] = await Promise.all([
     readFile(new URL('../src/HomeFeed.tsx', import.meta.url), 'utf8'),
-    readFile(new URL('../../../packages/storefront-ui/src/index.tsx', import.meta.url), 'utf8'),
+    readFile(
+      new URL('../../../packages/storefront-ui/src/index.tsx', import.meta.url),
+      'utf8',
+    ),
   ]);
 
   assert.match(homeSource, /autoPlay=\{index === 0\}/u);

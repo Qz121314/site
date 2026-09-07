@@ -3,12 +3,16 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
 test('route transitions commit one live surface and restore history scroll without browser snapshots', async () => {
-  const [historyRuntime, navigationRuntime, presentationSource, rootSource] = await Promise.all([
-    readFile(new URL('../src/storefront-history.ts', import.meta.url), 'utf8'),
-    readFile(new URL('../src/storefront-navigation-runtime.ts', import.meta.url), 'utf8'),
-    readFile(new URL('../src/StorefrontPresentation.tsx', import.meta.url), 'utf8'),
-    readFile(new URL('../src/StorefrontRoot.tsx', import.meta.url), 'utf8'),
-  ]);
+  const [historyRuntime, navigationRuntime, presentationSource, rootSource] =
+    await Promise.all([
+      readFile(new URL('../src/storefront-history.ts', import.meta.url), 'utf8'),
+      readFile(
+        new URL('../src/storefront-navigation-runtime.ts', import.meta.url),
+        'utf8',
+      ),
+      readFile(new URL('../src/StorefrontPresentation.tsx', import.meta.url), 'utf8'),
+      readFile(new URL('../src/StorefrontRoot.tsx', import.meta.url), 'utf8'),
+    ]);
 
   assert.doesNotMatch(navigationRuntime, /startViewTransition/u);
   assert.doesNotMatch(presentationSource, /startViewTransition/u);
