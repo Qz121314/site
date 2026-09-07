@@ -115,6 +115,33 @@ test('Messages Article rows mark read only on detail', async ({ page }) => {
   await expect(alphaRow.locator('img')).toBeVisible();
   await expect(gammaRow.locator('img')).toHaveCount(0);
 
+  const nativeListGeometry = await page.evaluate(() => {
+    const list = document.querySelector('[data-messages-list="conversation-flow"]');
+    const article = document.querySelector('.messages-article-row');
+    const conversation = document.querySelector('.conversation-row');
+    const main = document.querySelector('.app-shell > main');
+    if (!list || !article || !conversation || !main) return null;
+
+    const listRect = list.getBoundingClientRect();
+    const articleRect = article.getBoundingClientRect();
+    const conversationRect = conversation.getBoundingClientRect();
+    const mainRect = main.getBoundingClientRect();
+    const tolerance = 1;
+
+    return {
+      rowsShareEdges:
+        Math.abs(articleRect.left - conversationRect.left) < tolerance &&
+        Math.abs(articleRect.right - conversationRect.right) < tolerance,
+      listOwnsMainEdges:
+        Math.abs(listRect.left - mainRect.left) < tolerance &&
+        Math.abs(listRect.right - mainRect.right) < tolerance,
+    };
+  });
+  expect(nativeListGeometry).toEqual({
+    rowsShareEdges: true,
+    listOwnsMainEdges: true,
+  });
+
   expect(
     await page.evaluate(() => localStorage.getItem('site:messages:read-articles')),
   ).toBe(null);
