@@ -5,8 +5,9 @@ export const buttonVariants = cva('ui-button', {
     variant: {
       primary: 'ui-button--primary',
       secondary: 'ui-button--secondary',
-      destructive: 'ui-button--destructive',
       ghost: 'ui-button--ghost',
+      danger: 'ui-button--danger',
+      destructive: 'ui-button--danger',
     },
     size: {
       default: 'ui-button--default',
