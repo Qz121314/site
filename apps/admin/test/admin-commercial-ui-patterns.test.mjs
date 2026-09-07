@@ -17,7 +17,7 @@ test('shared button hierarchy exposes primary secondary ghost and danger with ex
   assert.match(variants, /destructive:\s*'ui-button--danger'/);
   assert.match(button, /loading\?: boolean/);
   assert.match(button, /aria-busy=\{loading \|\| undefined\}/);
-  assert.match(button, /disabled=\{loading \|\| disabled\}/);
+  assert.match(button, /disabled=\{asChild \? undefined : loading \|\| disabled\}/);
   assert.match(button, /LoaderCircle/);
   assert.match(css, /\.ui-button--danger/);
   assert.match(css, /\.ui-button:disabled[\s\S]*cursor:\s*not-allowed/);
@@ -35,11 +35,11 @@ test('segmented control and selected navigation use strong non-color-only state'
   assert.match(segmented, /aria-pressed=\{selected\}/);
   assert.match(segmented, /aria-current=\{current \? 'page' : undefined\}/);
   assert.match(sharedCss, /\.ui-segmented-control[\s\S]*overflow-x:\s*auto/);
-  assert.match(sharedCss, /\.ui-segmented-item\.is-selected[\s\S]*background:/);
-  assert.match(sharedCss, /\.ui-segmented-item\.is-selected[\s\S]*border-color:/);
-  assert.match(sharedCss, /\.ui-segmented-item\.is-selected[\s\S]*font-weight:/);
+  assert.match(sharedCss, /\.ui-segmented-item[^\{]*\.is-selected[\s\S]*background:/);
+  assert.match(sharedCss, /\.ui-segmented-item[^\{]*\.is-selected[\s\S]*border-color:/);
+  assert.match(sharedCss, /\.ui-segmented-item[^\{]*\.is-selected[\s\S]*font-weight:/);
   assert.match(sharedCss, /\.ui-segmented-item:focus-visible/);
-  assert.match(sharedCss, /min-height:\s*44px/);
+  assert.match(sharedCss, /\.ui-segmented-item[^\{]*\{[\s\S]*min-height:\s*44px/);
 
   assert.match(sidebarCss, /\.admin-primary-link\.ui-button\.is-active[\s\S]*background:/);
   assert.match(sidebarCss, /\.admin-primary-link\.ui-button\.is-active[\s\S]*box-shadow:/);
@@ -136,5 +136,4 @@ test('Phase C shared CSS adds no important overrides or oversized radii', async 
   assert.doesNotMatch(phaseC, /border-radius:\s*(?:2[0-9]|[3-9][0-9])px/);
   assert.match(phaseC, /prefers-reduced-motion/);
   assert.match(phaseC, /safe-area-inset-bottom/);
-}
-);
+});
