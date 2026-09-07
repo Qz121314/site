@@ -88,7 +88,10 @@ test('shared status form feedback dialog drawer and action-bar patterns are sema
   assert.match(feedback, /'empty' \| 'loading' \| 'error'/);
   assert.match(feedback, /role=\{kind === 'error' \? 'alert' : 'status'\}/);
   assert.match(dialog, /aria-modal="true"/);
-  assert.match(dialog, /shouldDismissAdminDialogKey\(event\.key, closeDisabledRef\.current\)/);
+  assert.match(
+    dialog,
+    /shouldDismissAdminDialogKey\(event\.key, closeDisabledRef\.current\)/,
+  );
   assert.match(dialog, /isAdminDialogFocusTraversalKey\(event\.key\)/);
   assert.match(dialogBehavior, /key === 'Escape' && !closeDisabled/);
   assert.match(dialogBehavior, /key === 'Tab'/);
