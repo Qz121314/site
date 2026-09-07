@@ -1,0 +1,492 @@
+name: Phase C Style Once
+
+on:
+  push:
+    branches:
+      - refactor/admin-commercial-ui-patterns
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    if: ${{ !contains(github.event.head_commit.message, 'style(admin): apply Phase C commercial patterns') }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Apply shared commercial patterns
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          faq = Path('apps/admin/src/FaqManagementView.tsx')
+          text = faq.read_text()
+          text = text.replace('className="scope-tabs"', 'className="faq-scope-segmented"')
+          faq.write_text(text)
+
+          css = Path('apps/admin/src/admin-ui-system.css')
+          current = css.read_text()
+          marker = '/* ---------- Commercial patterns ---------- */'
+          if marker not in current:
+              current += r'''
+
+/* ---------- Commercial patterns ---------- */
+
+.ui-button:focus-visible {
+  outline: 2px solid var(--admin-brand);
+  outline-offset: 2px;
+}
+
+.ui-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
+.ui-button--ghost:not(:disabled):hover {
+  color: var(--admin-text);
+  background: #f2f4f7;
+}
+
+.ui-button--danger {
+  border-color: var(--admin-danger);
+  color: #fff;
+  background: var(--admin-danger);
+}
+
+.ui-button--danger:not(:disabled):hover {
+  border-color: #912018;
+  background: #912018;
+}
+
+.ui-button-spinner,
+.ui-feedback-state-spinner {
+  animation: admin-commercial-spin 700ms linear infinite;
+}
+
+.ui-segmented-control {
+  display: flex;
+  min-width: 0;
+  width: fit-content;
+  max-width: 100%;
+  align-items: center;
+  gap: 3px;
+  padding: 3px;
+  overflow-x: auto;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-sm);
+  background: #f1f3f6;
+  scrollbar-width: thin;
+}
+
+.ui-segmented-item.ui-button {
+  min-width: max-content;
+  min-height: 44px;
+  flex: 0 0 auto;
+  padding-inline: 12px;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: var(--admin-text-muted);
+  background: transparent;
+  box-shadow: none;
+  font-weight: 680;
+  white-space: nowrap;
+}
+
+.ui-segmented-item.ui-button:hover:not(:disabled):not(.is-selected) {
+  color: var(--admin-text);
+  background: rgb(255 255 255 / 68%);
+}
+
+.ui-segmented-item.ui-button.is-selected {
+  color: var(--admin-text);
+  border-color: rgb(244 90 38 / 34%);
+  background: var(--admin-brand-soft);
+  box-shadow: inset 0 -2px 0 var(--admin-brand);
+  font-weight: 800;
+}
+
+.ui-segmented-item:focus-visible {
+  outline: 2px solid var(--admin-brand);
+  outline-offset: -2px;
+}
+
+.ui-status-badge {
+  display: inline-flex;
+  width: fit-content;
+  min-height: 26px;
+  align-items: center;
+  gap: 5px;
+  padding: 3px 8px;
+  border: 1px solid var(--admin-border);
+  border-radius: 999px;
+  color: #475467;
+  background: #f8fafc;
+  font-size: 0.69rem;
+  font-weight: 740;
+  line-height: 1.2;
+}
+
+.ui-status-badge--success {
+  border-color: #a6d8bd;
+  color: #05603a;
+  background: #ecfdf3;
+}
+
+.ui-status-badge--warning {
+  border-color: #f3cf88;
+  color: #854a0e;
+  background: #fffaeb;
+}
+
+.ui-status-badge--danger {
+  border-color: #f0b7b2;
+  color: #9f271e;
+  background: #fff1f0;
+}
+
+.ui-status-badge--info {
+  border-color: #b7cdf7;
+  color: #254f9c;
+  background: #eff6ff;
+}
+
+.ui-form-section {
+  display: grid;
+  gap: 16px;
+  padding: 18px 0;
+  border-bottom: 1px solid var(--admin-border);
+}
+
+.ui-form-section:first-child {
+  padding-top: 0;
+}
+
+.ui-form-section:last-of-type {
+  border-bottom: 0;
+}
+
+.ui-form-section-header {
+  display: grid;
+  gap: 5px;
+}
+
+.ui-form-section-header h2,
+.ui-form-section-header p {
+  margin: 0;
+}
+
+.ui-form-section-header h2 {
+  color: var(--admin-text);
+  font-size: 0.9rem;
+  font-weight: 800;
+}
+
+.ui-form-section-header p {
+  max-width: 680px;
+  color: var(--admin-text-muted);
+  font-size: 0.75rem;
+  line-height: 1.55;
+}
+
+.ui-form-section-body {
+  display: grid;
+  gap: 14px;
+}
+
+.ui-field-row {
+  display: grid;
+  grid-template-columns: minmax(160px, 0.72fr) minmax(0, 1.28fr);
+  align-items: start;
+  gap: 18px;
+  min-width: 0;
+  padding-block: 4px;
+}
+
+.ui-field-row-copy {
+  display: grid;
+  gap: 4px;
+  padding-top: 8px;
+}
+
+.ui-field-row-copy label,
+.ui-field-row-copy strong {
+  color: #344054;
+  font-size: 0.76rem;
+  font-weight: 760;
+}
+
+.ui-field-row-copy p {
+  margin: 0;
+  color: var(--admin-text-muted);
+  font-size: 0.7rem;
+  line-height: 1.5;
+}
+
+.ui-field-row-status {
+  padding-top: 3px;
+}
+
+.ui-field-row-control {
+  min-width: 0;
+}
+
+.ui-feedback-state {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  min-height: 92px;
+  align-items: center;
+  gap: 12px;
+  padding: 16px;
+  border: 1px dashed var(--admin-border-strong);
+  border-radius: var(--admin-radius-md);
+  color: var(--admin-text-muted);
+  background: var(--admin-surface-subtle);
+}
+
+.ui-feedback-state.is-compact {
+  min-height: 58px;
+  padding: 10px 12px;
+}
+
+.ui-feedback-state--error {
+  border-style: solid;
+  border-color: #efc0bb;
+  color: #8f2d24;
+  background: #fff7f6;
+}
+
+.ui-feedback-state-copy {
+  display: grid;
+  gap: 3px;
+}
+
+.ui-feedback-state-copy strong,
+.ui-feedback-state-copy p {
+  margin: 0;
+}
+
+.ui-feedback-state-copy strong {
+  color: var(--admin-text);
+  font-size: 0.8rem;
+}
+
+.ui-feedback-state-copy p {
+  font-size: 0.72rem;
+  line-height: 1.5;
+}
+
+.ui-dialog-backdrop,
+.ui-drawer-backdrop {
+  position: fixed;
+  z-index: 1200;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 16px;
+  background: rgb(15 23 42 / 48%);
+}
+
+.ui-dialog {
+  display: grid;
+  width: min(640px, calc(100vw - 32px));
+  max-height: min(86dvh, 820px);
+  grid-template-rows: auto minmax(0, 1fr) auto;
+  overflow: hidden;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-lg);
+  background: var(--admin-surface);
+  box-shadow: var(--admin-shadow-float);
+}
+
+.ui-dialog--small {
+  width: min(420px, calc(100vw - 32px));
+}
+
+.ui-dialog--large {
+  width: min(1120px, calc(100vw - 32px));
+}
+
+.ui-dialog-header,
+.ui-dialog-footer,
+.ui-drawer-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px 14px;
+}
+
+.ui-dialog-header {
+  border-bottom: 1px solid var(--admin-border);
+}
+
+.ui-dialog-heading {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.ui-dialog-heading span {
+  color: var(--admin-text-subtle);
+  font-size: 0.65rem;
+  font-weight: 760;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.ui-dialog-heading h3,
+.ui-dialog-heading p {
+  margin: 0;
+}
+
+.ui-dialog-heading h3 {
+  color: var(--admin-text);
+  font-size: 0.98rem;
+  font-weight: 800;
+}
+
+.ui-dialog-heading p {
+  color: var(--admin-text-muted);
+  font-size: 0.72rem;
+  line-height: 1.45;
+}
+
+.ui-dialog-body,
+.ui-drawer-body {
+  min-height: 0;
+  padding: 14px;
+  overflow: auto;
+  overscroll-behavior: contain;
+}
+
+.ui-dialog-footer {
+  justify-content: flex-end;
+  border-top: 1px solid var(--admin-border);
+  background: #fbfcfd;
+}
+
+.ui-drawer-backdrop {
+  place-items: stretch start;
+  padding: 0;
+}
+
+.ui-drawer {
+  display: grid;
+  width: min(92vw, 390px);
+  height: 100dvh;
+  grid-template-rows: auto minmax(0, 1fr);
+  overflow: hidden;
+  background: var(--admin-surface);
+  box-shadow: 18px 0 40px rgb(15 23 42 / 20%);
+}
+
+.ui-drawer-header {
+  border-bottom: 1px solid var(--admin-border);
+}
+
+.ui-action-bar {
+  display: flex;
+  min-height: 52px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-md);
+  background: rgb(255 255 255 / 96%);
+  box-shadow: var(--admin-shadow-card);
+}
+
+.ui-action-bar.is-sticky {
+  position: sticky;
+  z-index: 20;
+  bottom: 0;
+  padding-bottom: calc(8px + env(safe-area-inset-bottom));
+  backdrop-filter: blur(10px);
+}
+
+.ui-action-bar-status {
+  min-width: 0;
+  margin-right: auto;
+}
+
+.ui-action-bar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+@keyframes admin-commercial-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (max-width: 720px) {
+  .ui-field-row {
+    grid-template-columns: 1fr;
+    gap: 8px;
+  }
+
+  .ui-field-row-copy {
+    padding-top: 0;
+  }
+
+  .ui-feedback-state {
+    grid-template-columns: auto minmax(0, 1fr);
+  }
+
+  .ui-feedback-state-action {
+    grid-column: 1 / -1;
+  }
+
+  .ui-dialog-backdrop {
+    padding: 8px;
+  }
+
+  .ui-dialog,
+  .ui-dialog--small,
+  .ui-dialog--large {
+    width: calc(100vw - 16px);
+    max-height: calc(100dvh - 16px);
+  }
+
+  .ui-dialog-footer,
+  .ui-action-bar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .ui-dialog-footer > .ui-button,
+  .ui-action-bar-actions,
+  .ui-action-bar-actions > .ui-button {
+    width: 100%;
+  }
+
+  .ui-action-bar-status {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-button,
+  .ui-segmented-item,
+  .ui-button-spinner,
+  .ui-feedback-state-spinner {
+    animation-duration: 1ms;
+    transition-duration: 1ms;
+  }
+}
+'''
+          css.write_text(current)
+          PY
+      - name: Commit pattern styles
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apps/admin/src/admin-ui-system.css apps/admin/src/FaqManagementView.tsx
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "style(admin): apply Phase C commercial patterns"
+          git push
