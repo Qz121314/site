@@ -140,12 +140,7 @@ const bootstrap = {
     },
   },
   bottomNavigation: [
-    {
-      key: 'home',
-      label: 'Home',
-      enabled: true,
-      icon: { type: 'builtin', value: null },
-    },
+    { key: 'home', label: 'Home', enabled: true, icon: { type: 'builtin', value: null } },
     {
       key: 'browse',
       label: 'Browse',
@@ -158,12 +153,7 @@ const bootstrap = {
       enabled: true,
       icon: { type: 'builtin', value: null },
     },
-    {
-      key: 'faq',
-      label: 'FAQ',
-      enabled: true,
-      icon: { type: 'builtin', value: null },
-    },
+    { key: 'faq', label: 'FAQ', enabled: true, icon: { type: 'builtin', value: null } },
   ],
 };
 
@@ -236,30 +226,25 @@ export async function installLocalMessagesArticleFixture(
       body: '<svg xmlns="http://www.w3.org/2000/svg" width="8" height="8"><rect width="8" height="8" fill="#ddd"/></svg>',
     });
   });
-  await page.route(`${MEDIA_ORIGIN}/messages/missing.svg`, (route) =>
-    route.abort(),
-  );
+  await page.route(`${MEDIA_ORIGIN}/messages/missing.svg`, (route) => route.abort());
   await page.route('**/_media/messages/missing.svg', (route) => route.abort());
-  await page.route(
-    '**/api/public/storefront/support/connections',
-    async (route) => {
-      supportHttpRequestCount += 1;
-      await route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          connections: [
-            {
-              id: 'support-test',
-              clientApiUrl: `${SUPPORT_ORIGIN}/client`,
-              realtimeUrl: `${SUPPORT_ORIGIN.replace('https:', 'wss:')}/realtime`,
-              protocolVersion: 'v1',
-            },
-          ],
-        }),
-      });
-    },
-  );
+  await page.route('**/api/public/storefront/support/connections', async (route) => {
+    supportHttpRequestCount += 1;
+    await route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        connections: [
+          {
+            id: 'support-test',
+            clientApiUrl: `${SUPPORT_ORIGIN}/client`,
+            realtimeUrl: `${SUPPORT_ORIGIN.replace('https:', 'wss:')}/realtime`,
+            protocolVersion: 'v1',
+          },
+        ],
+      }),
+    });
+  });
   await page.route(`${SUPPORT_ORIGIN}/client/conversations**`, async (route) => {
     supportHttpRequestCount += 1;
     if (route.request().method() !== 'GET') supportMutationRequestCount += 1;
