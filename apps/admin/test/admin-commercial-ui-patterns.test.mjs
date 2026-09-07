@@ -112,7 +112,9 @@ test('reference pages adopt the shared patterns without adding request behavior'
   const general = await source('../src/system/SystemGeneralView.tsx');
   const infrastructure = await source('../src/system/SystemInfrastructureView.tsx');
   const catalog = await source('../src/catalog/CatalogWorkspaceSwitcher.tsx');
-  const faq = await source('../src/FaqManagementView.tsx');
+  const articleCenter = await source('../src/ArticleCenterView.tsx');
+  const articleEditor = await source('../src/article-center/ArticleEditorDialog.tsx');
+  const articleDeletion = await source('../src/article-center/DeleteArticleDialog.tsx');
   const mediaPicker = await source('../src/asset-library/MediaPickerDialog.tsx');
 
   assert.match(navigation, /<AdminActionBar/);
@@ -135,16 +137,22 @@ test('reference pages adopt the shared patterns without adding request behavior'
   assert.match(catalog, /AdminSegmentedItem/);
   assert.match(catalog, /selected=\{active\}/);
 
-  assert.match(faq, /AdminDialog/);
-  assert.match(faq, /AdminSegmentedControl/);
-  assert.match(faq, /AdminSegmentedItem/);
-  assert.match(faq, /AdminFeedbackState/);
-  assert.match(faq, /variant="primary"/);
-  assert.match(faq, /variant="secondary"/);
-  assert.match(faq, /variant="danger"/);
+  assert.match(articleEditor, /AdminDialog/);
+  assert.match(articleCenter, /AdminSegmentedControl/);
+  assert.match(articleCenter, /AdminSegmentedItem/);
+  assert.match(articleCenter, /AdminFeedbackState/);
+  assert.match(articleCenter, /variant="primary"/);
+  assert.match(articleEditor, /variant="secondary"/);
+  assert.match(articleDeletion, /variant="danger"/);
   assert.match(mediaPicker, /AdminDialog/);
 
-  for (const sharedSource of [navigation, bottomNavigation, general, catalog]) {
+  for (const sharedSource of [
+    navigation,
+    bottomNavigation,
+    general,
+    catalog,
+    articleCenter,
+  ]) {
     assert.doesNotMatch(sharedSource, /fetch\(|setInterval\(|setTimeout\(/);
   }
 });
