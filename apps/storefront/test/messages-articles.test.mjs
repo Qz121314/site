@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import {
   MESSAGE_ARTICLE_READ_STORAGE_KEY,
@@ -41,6 +42,7 @@ test('bootstrap message article metadata is sanitized, sorted, deduplicated, and
         articleId: 'article-b',
         title: 'Beta',
         preview: 'Second',
+        backgroundObjectKey: 'media/messages/beta.webp',
         sortOrder: 20,
         body: '# Full Markdown must not escape bootstrap metadata',
       },
@@ -63,8 +65,20 @@ test('bootstrap message article metadata is sanitized, sorted, deduplicated, and
   );
 
   assert.deepEqual(articles, [
-    { articleId: 'article-a', title: 'Alpha', preview: 'First', sortOrder: 10 },
-    { articleId: 'article-b', title: 'Beta', preview: 'Second', sortOrder: 20 },
+    {
+      articleId: 'article-a',
+      title: 'Alpha',
+      preview: 'First',
+      backgroundObjectKey: null,
+      sortOrder: 10,
+    },
+    {
+      articleId: 'article-b',
+      title: 'Beta',
+      preview: 'Second',
+      backgroundObjectKey: 'media/messages/beta.webp',
+      sortOrder: 20,
+    },
   ]);
   assert.equal('body' in articles[1], false);
   assert.deepEqual(
@@ -132,6 +146,7 @@ test('editing article metadata does not make an already-read article unread agai
       articleId: 'article-a',
       title: 'Updated title',
       preview: 'Updated preview',
+      backgroundObjectKey: 'media/messages/changed.webp',
       sortOrder: 999,
     },
   ];
@@ -149,4 +164,14 @@ test('messages badge composes independent support and article unread counts safe
   );
   assert.equal(composeMessagesBadge(-1, Number.NaN), 0);
   assert.equal(composeMessagesBadge(2.9, 1.9), 3);
+});
+
+test('background metadata introduces no media API or extra bootstrap fetch path', () => {
+  const source = readFileSync(
+    new URL('../src/messages-articles.ts', import.meta.url),
+    'utf8',
+  );
+  assert.doesNotMatch(source, /\bfetch\s*\(/u);
+  assert.doesNotMatch(source, /\/api\/[^'"`]*media/iu);
+  assert.match(source, /site:messages:read-articles/u);
 });

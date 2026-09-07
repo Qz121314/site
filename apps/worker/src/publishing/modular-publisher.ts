@@ -193,6 +193,7 @@ type MessageArticleRow = {
   article_id: string;
   question: string;
   answer: string;
+  background_object_key: string | null;
   sort_order: number;
 };
 
@@ -615,9 +616,18 @@ async function loadSource(db: D1Database): Promise<Source> {
   const messageArticles = (
     await db
       .prepare(
-        `SELECT mar.article_id, f.question, f.answer, mar.sort_order
+        `SELECT
+           mar.article_id,
+           f.question,
+           f.answer,
+           background.object_key AS background_object_key,
+           mar.sort_order
          FROM message_article_references mar
          JOIN faqs f ON f.id = mar.article_id
+         LEFT JOIN media_assets background
+           ON background.id = mar.background_media_id
+          AND background.status = 'ready'
+          AND background.deleted_at IS NULL
          WHERE mar.is_enabled = 1 AND f.deleted_at IS NULL
          ORDER BY mar.sort_order ASC, mar.article_id ASC`,
       )
@@ -815,6 +825,7 @@ function messageArticleModel(source: Source) {
     articleId: article.article_id,
     title: article.question,
     preview: markdownPreview(article.answer),
+    backgroundObjectKey: article.background_object_key,
     sortOrder: article.sort_order,
   }));
 }
@@ -874,7 +885,9 @@ function modulePayload(source: Source, moduleKey: string): ModulePayload {
       sectionId: null,
       label: '文章中心',
       stateModel: { articles, faqs, messageArticles },
-      mediaKeys: [],
+      mediaKeys: uniqueStrings(
+        source.messageArticles.map((article) => article.background_object_key),
+      ),
       buildFiles: (contentVersion, publishedAt) => [
         {
           relativePath: 'faq.json',

@@ -8,6 +8,7 @@ type MessageArticleMetadata = {
   articleId: string;
   title: string;
   preview: string;
+  backgroundObjectKey: string | null;
   sortOrder: number;
 };
 
@@ -70,6 +71,8 @@ function sanitizeMessageArticles(value: unknown): MessageArticleMetadata[] {
       articleId: item.articleId,
       title: item.title,
       preview: item.preview,
+      backgroundObjectKey:
+        typeof item.backgroundObjectKey === 'string' ? item.backgroundObjectKey : null,
       sortOrder: item.sortOrder,
     });
   }

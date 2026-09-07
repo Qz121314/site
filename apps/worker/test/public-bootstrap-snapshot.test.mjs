@@ -109,6 +109,7 @@ test('bootstrap carries only lightweight active Messages Article metadata and pr
           articleId: 'article-a',
           title: 'Announcement',
           preview: 'Short preview',
+          backgroundObjectKey: 'media/messages/announcement.webp',
           sortOrder: 0,
           body: '# Full Markdown that must not enter bootstrap',
           internalFlag: true,
@@ -125,11 +126,41 @@ test('bootstrap carries only lightweight active Messages Article metadata and pr
       articleId: 'article-a',
       title: 'Announcement',
       preview: 'Short preview',
+      backgroundObjectKey: 'media/messages/announcement.webp',
       sortOrder: 0,
     },
   ]);
   assert.equal(JSON.stringify(snapshot).includes('Full Markdown'), false);
   assert.equal(JSON.stringify(snapshot).includes('internalFlag'), false);
+});
+
+test('bootstrap accepts legacy Messages Article metadata without a background field', async () => {
+  const objects = sourceObjects({
+    messages: {
+      schemaVersion: 2,
+      moduleKey: 'faq',
+      articles: [
+        {
+          articleId: 'article-legacy',
+          title: 'Legacy article',
+          preview: 'Legacy preview',
+          sortOrder: 0,
+        },
+      ],
+    },
+  });
+  const bucket = createBucket(objects);
+
+  const snapshot = await loadStorefrontPublishedBootstrap(bucket, pointer);
+  assert.deepEqual(snapshot.site.site.navigation.messageArticles, [
+    {
+      articleId: 'article-legacy',
+      title: 'Legacy article',
+      preview: 'Legacy preview',
+      backgroundObjectKey: null,
+      sortOrder: 0,
+    },
+  ]);
 });
 
 test('bootstrap safely falls back to an empty Messages Article list for an older faq publication without messages.json', async () => {
@@ -175,6 +206,7 @@ test('bootstrap cache rejects a pre-Messages schema-v2 bundle at the same pointe
       articleId: 'article-a',
       title: 'Announcement',
       preview: 'Fresh preview',
+      backgroundObjectKey: null,
       sortOrder: 0,
     },
   ]);
