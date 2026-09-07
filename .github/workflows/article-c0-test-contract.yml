@@ -21,7 +21,9 @@ jobs:
           fetch-depth: 0
 
       - name: Apply Article C0 test contract
-        run: python scripts/article-c0-test-contract.py
+        run: |
+          sed -i "s/test('faq module status becomes dirty when Message Article placement changes'/test('Article content and Messages placement both make the shared faq publication module dirty'/" scripts/article-c0-test-contract.py
+          python scripts/article-c0-test-contract.py
 
       - name: Commit tests
         run: |
