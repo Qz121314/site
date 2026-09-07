@@ -301,6 +301,7 @@ test('public storefront bootstrap consolidates the critical published snapshots'
       articleId: 'article-a',
       title: 'Announcement',
       preview: 'Short preview',
+      backgroundObjectKey: null,
       sortOrder: 0,
     },
   ];
