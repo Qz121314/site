@@ -1,6 +1,6 @@
 .admin-shell {
   min-height: 100vh;
-  background: #f4f6f9;
+  background: #f3f5f8;
 }
 
 .admin-desktop-primary,
@@ -73,14 +73,14 @@
 @media (min-width: 1200px) {
   .admin-shell {
     display: grid;
-    grid-template-columns: 220px 200px minmax(0, 1fr);
+    grid-template-columns: 224px 216px minmax(0, 1fr);
   }
 }
 
 @media (min-width: 900px) and (max-width: 1199px) {
   .admin-shell {
     display: grid;
-    grid-template-columns: 88px 188px minmax(0, 1fr);
+    grid-template-columns: 88px 200px minmax(0, 1fr);
   }
 }
 

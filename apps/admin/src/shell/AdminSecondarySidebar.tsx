@@ -3,7 +3,6 @@ import { Button } from '../components/ui/button';
 import {
   ADMIN_DOMAINS,
   getAdminSecondaryItems,
-  getCatalogWorkspaceContext,
   type AdminDomain,
   type AdminView,
 } from '../admin-navigation';
@@ -26,8 +25,6 @@ export function AdminSecondarySidebar({
 }: AdminSecondarySidebarProps) {
   const domain = ADMIN_DOMAINS.find((item) => item.id === activeDomain);
   const items = getAdminSecondaryItems(activeDomain, sections);
-  const activeCatalogContext = getCatalogWorkspaceContext(activeView);
-  const activeSectionId = activeCatalogContext?.sectionId ?? null;
   let previousGroup: string | undefined;
 
   return (
@@ -50,12 +47,7 @@ export function AdminSecondarySidebar({
           items.map((item) => {
             const showGroup = item.group && item.group !== previousGroup;
             previousGroup = item.group;
-            const itemCatalogContext = getCatalogWorkspaceContext(item.view);
-            const itemSectionId = itemCatalogContext?.sectionId ?? null;
-            const active =
-              activeDomain === 'catalog' && activeSectionId && itemSectionId
-                ? activeSectionId === itemSectionId
-                : item.view === activeView;
+            const active = item.view === activeView;
             return (
               <div className="admin-secondary-item" key={item.view}>
                 {showGroup ? (

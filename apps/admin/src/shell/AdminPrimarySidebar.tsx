@@ -1,10 +1,10 @@
 import {
   Boxes,
+  FileText,
   Gauge,
-  Images,
   Megaphone,
-  Palette,
-  Plug,
+  MessageSquare,
+  PanelTop,
   Settings2,
   type LucideIcon,
 } from 'lucide-react';
@@ -20,10 +20,10 @@ import type { AdminSection } from '../api';
 const DOMAIN_ICONS: Record<AdminDomain, LucideIcon> = {
   dashboard: Gauge,
   catalog: Boxes,
-  experience: Palette,
+  site: PanelTop,
+  content: FileText,
   operations: Megaphone,
-  media: Images,
-  integrations: Plug,
+  engagement: MessageSquare,
   system: Settings2,
 };
 

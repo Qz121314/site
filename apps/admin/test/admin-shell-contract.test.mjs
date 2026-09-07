@@ -90,12 +90,15 @@ test('responsive shell avoids fixed-height clipping', async () => {
   const scrollCss = await source('../src/admin-scroll-ownership.css');
   const settingsCss = await source('../src/settings/settings-workspace.css');
   const navigationCss = await source('../src/bottom-navigation-settings.css');
+  const workspace = await source('../src/shell/AdminWorkspace.tsx');
   const combined = `${shellCss}\n${sidebarCss}\n${workspaceCss}\n${scrollCss}\n${settingsCss}\n${navigationCss}`;
 
   assert.match(shellCss, /@media \(min-width: 1200px\)/);
-  assert.match(shellCss, /grid-template-columns: 220px 200px minmax\(0, 1fr\)/);
+  assert.match(shellCss, /grid-template-columns: 224px 216px minmax\(0, 1fr\)/);
   assert.match(shellCss, /@media \(min-width: 900px\) and \(max-width: 1199px\)/);
-  assert.match(shellCss, /grid-template-columns: 88px 188px minmax\(0, 1fr\)/);
+  assert.match(shellCss, /grid-template-columns: 88px 200px minmax\(0, 1fr\)/);
+  assert.match(workspaceCss, /position: sticky/);
+  assert.match(workspace, /'split-pane'/);
   assert.match(shellCss, /@media \(max-width: 899px\)/);
   assert.match(sidebarCss, /min-height: 44px/);
   assert.match(workspaceCss, /env\(safe-area-inset-top\)/);

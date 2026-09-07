@@ -24,7 +24,7 @@ type AdminShellProps = {
   pageStatus?: ReactNode;
   pagePrimaryAction?: ReactNode;
   pageSecondaryAction?: ReactNode;
-  workspaceWidth?: 'narrow' | 'medium' | 'full';
+  workspaceWidth?: 'narrow' | 'medium' | 'wide' | 'split-pane';
   children: ReactNode;
 };
 
@@ -46,7 +46,7 @@ export function AdminShell({
   pageStatus,
   pagePrimaryAction,
   pageSecondaryAction,
-  workspaceWidth = 'full',
+  workspaceWidth = 'wide',
   children,
 }: AdminShellProps) {
   const [navigationOpen, setNavigationOpen] = useState(false);

@@ -31,13 +31,7 @@ export type AdminView =
   | `${DynamicViewKind}:${string}`;
 
 export type AdminDomain =
-  | 'dashboard'
-  | 'catalog'
-  | 'experience'
-  | 'operations'
-  | 'media'
-  | 'integrations'
-  | 'system';
+  'dashboard' | 'catalog' | 'site' | 'content' | 'operations' | 'engagement' | 'system';
 
 export type AdminDomainDefinition = {
   id: AdminDomain;
@@ -63,10 +57,10 @@ export const ADMIN_VIEW_STORAGE_KEY = 'site.admin.lastView';
 export const ADMIN_DOMAINS: readonly AdminDomainDefinition[] = [
   { id: 'dashboard', label: '仪表盘', description: '管理后台概览' },
   { id: 'catalog', label: '商品', description: '分区与商品目录' },
-  { id: 'experience', label: '体验', description: '站点体验与主题' },
+  { id: 'site', label: '站点', description: '站点展示与导航配置' },
+  { id: 'content', label: '内容', description: '可复用文章与素材资产' },
   { id: 'operations', label: '运营', description: '转化运营工具' },
-  { id: 'media', label: '素材', description: '可复用素材与媒体资产' },
-  { id: 'integrations', label: '集成', description: '外部服务连接' },
+  { id: 'engagement', label: '客户互动', description: '消息与客服接入' },
   { id: 'system', label: '系统', description: '站点身份与技术配置' },
 ];
 
@@ -196,7 +190,7 @@ export function writeAdminViewLocation(view: AdminView, mode: 'push' | 'replace'
 
 export function getAdminDomainForView(view: AdminView): AdminDomain {
   if (view === 'dashboard') return 'dashboard';
-  if (view === 'faq' || view === 'assets') return 'media';
+  if (view === 'faq' || view === 'assets') return 'content';
   if (view === 'sections') return 'catalog';
   if (
     view === 'home' ||
@@ -205,9 +199,9 @@ export function getAdminDomainForView(view: AdminView): AdminDomain {
     view === 'theme' ||
     view === 'pwa'
   ) {
-    return 'experience';
+    return view === 'messages' ? 'engagement' : view === 'pwa' ? 'system' : 'site';
   }
-  if (view === 'customer-service') return 'integrations';
+  if (view === 'customer-service') return 'engagement';
   if (
     view === 'system-general' ||
     view === 'system-infrastructure' ||
@@ -229,14 +223,14 @@ export function getAdminDefaultViewForDomain(
       return 'dashboard';
     case 'catalog':
       return 'sections';
-    case 'experience':
+    case 'site':
       return 'home';
+    case 'content':
+      return 'faq';
     case 'operations':
       return sections[0] ? `conversion-pool:${sections[0].id}` : null;
-    case 'media':
-      return 'assets';
-    case 'integrations':
-      return 'customer-service';
+    case 'engagement':
+      return 'messages';
     case 'system':
       return 'system-general';
   }
@@ -252,19 +246,22 @@ export function getAdminSecondaryItems(
     case 'catalog':
       return [
         { view: 'sections', label: '分区管理', group: '结构' },
-        ...sections.map<AdminNavItem>((section, index) => ({
-          view: `products:${section.id}`,
-          label: section.name,
-          ...(index === 0 ? { group: '分区' } : {}),
-        })),
+        ...sections.flatMap<AdminNavItem>((section) => [
+          { view: `products:${section.id}`, label: '商品', group: section.name },
+          { view: `categories:${section.id}`, label: '分类' },
+          { view: `tags:${section.id}`, label: '标签' },
+        ]),
       ];
-    case 'experience':
+    case 'site':
       return [
         { view: 'home', label: '首页' },
         { view: 'navigation', label: '导航' },
-        { view: 'messages', label: 'Messages' },
         { view: 'theme', label: '主题' },
-        { view: 'pwa', label: 'PWA' },
+      ];
+    case 'content':
+      return [
+        { view: 'faq', label: '文章中心' },
+        { view: 'assets', label: '素材库' },
       ];
     case 'operations':
       return sections.map((section) => ({
@@ -272,18 +269,17 @@ export function getAdminSecondaryItems(
         label: '转化池',
         group: section.name,
       }));
-    case 'media':
+    case 'engagement':
       return [
-        { view: 'assets', label: '素材库' },
-        { view: 'faq', label: '文章中心' },
+        { view: 'messages', label: 'Messages' },
+        { view: 'customer-service', label: '客服接入' },
       ];
-    case 'integrations':
-      return [{ view: 'customer-service', label: '客服管理' }];
     case 'system':
       return [
-        { view: 'system-general', label: '常规' },
+        { view: 'system-general', label: '基本设置' },
+        { view: 'pwa', label: '应用安装' },
         { view: 'system-infrastructure', label: '基础设施' },
-        { view: 'system-advanced', label: '高级' },
+        { view: 'system-advanced', label: '高级设置' },
       ];
   }
 }
@@ -323,18 +319,18 @@ export function getAdminViewContext(
       description: '管理 Storefront 的视觉主题与运行时样式配置。',
     },
     pwa: {
-      eyebrow: `${domainLabel} / PWA`,
-      title: 'PWA',
+      eyebrow: `${domainLabel} / 应用安装`,
+      title: '应用安装',
       description: '管理应用图标与安装提示体验。',
     },
     assets: {
-      eyebrow: `${domainLabel} / 素材`,
+      eyebrow: `${domainLabel} / 素材库`,
       title: '素材库管理',
       description: '管理上传素材、文件夹与存储清理。',
     },
     'customer-service': {
-      eyebrow: `${domainLabel} / 客服`,
-      title: '客服管理',
+      eyebrow: `${domainLabel} / 客服接入`,
+      title: '客服接入',
       description: '管理 Site 与 Customer Service 的连接配置。',
     },
     faq: {
@@ -348,8 +344,8 @@ export function getAdminViewContext(
       description: '管理业务分区及其展示顺序。',
     },
     'system-general': {
-      eyebrow: `${domainLabel} / 常规`,
-      title: '常规',
+      eyebrow: `${domainLabel} / 基本设置`,
+      title: '基本设置',
       description: '管理站点名称、位置标签与品牌标识。',
     },
     'system-infrastructure': {
@@ -358,8 +354,8 @@ export function getAdminViewContext(
       description: '管理媒体域名与存储访问相关技术配置。',
     },
     'system-advanced': {
-      eyebrow: `${domainLabel} / 高级`,
-      title: '高级',
+      eyebrow: `${domainLabel} / 高级设置`,
+      title: '高级设置',
       description: '管理可选的高级站点集成参数。',
     },
   };

@@ -92,7 +92,7 @@ type PendingDiscardAction =
   { kind: 'navigate'; view: AdminView } | { kind: 'logout' } | null;
 
 type HistoryMode = 'push' | 'replace';
-type WorkspaceWidth = 'narrow' | 'medium' | 'full';
+type WorkspaceWidth = 'narrow' | 'medium' | 'wide' | 'split-pane';
 
 function isSessionError(error: unknown): boolean {
   return (
@@ -124,7 +124,8 @@ function workspaceWidthForView(view: AdminView): WorkspaceWidth {
   ) {
     return 'medium';
   }
-  return 'full';
+  if (parseDynamicView(view)) return 'split-pane';
+  return 'wide';
 }
 
 function ShellPlaceholder() {
