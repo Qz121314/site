@@ -9,11 +9,13 @@ async function source(relativePath) {
 test('FAQ editor keeps raw Markdown as the editable and persisted source', async () => {
   const faq = await source('../src/FaqManagementView.tsx');
 
+  assert.match(faq, /htmlFor="faq-body"/);
   assert.match(faq, /id="faq-body"/);
-  assert.match(faq, /value=\{editorForm\.body\}/);
-  assert.match(faq, /body:\s*e\.target\.value/);
-  assert.match(faq, /body:\s*editorForm\.body[,\n]/);
-  assert.doesNotMatch(faq, /body:\s*editorForm\.body\.trim\(\)/);
+  assert.match(faq, /value=\{form\.body\}/);
+  assert.match(faq, /body:\s*event\.target\.value/);
+  assert.match(faq, /updateFaq\(editingFaq\.id, form\)/);
+  assert.match(faq, /createFaq\(form\)/);
+  assert.doesNotMatch(faq, /body:\s*form\.body\.trim\(\)/);
   assert.match(faq, /aria-pressed=\{editorMode === 'edit'\}/);
   assert.match(faq, /aria-pressed=\{editorMode === 'preview'\}/);
 });
@@ -22,7 +24,7 @@ test('Admin FAQ preview reuses the shared MarkdownContent renderer without backe
   const faq = await source('../src/FaqManagementView.tsx');
   const preview = await source('../src/faq-management/MarkdownPreview.tsx');
 
-  assert.match(faq, /<MarkdownPreview source=\{editorForm\.body\}/);
+  assert.match(faq, /<MarkdownPreview source=\{form\.body\}/);
   assert.match(preview, /@site\/storefront-ui\/markdown-content/);
   assert.match(preview, /<MarkdownContent source=\{source\}/);
   assert.doesNotMatch(preview, /parseMarkdown|fetch\(|adminFetch|createFaq|updateFaq/);
