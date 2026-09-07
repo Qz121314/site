@@ -42,44 +42,20 @@ jobs:
       - name: Ensure fix gate is clean
         run: git diff --exit-code
 
-      - name: Trace Worker legacy admin and routing tests
+      - name: Trace modular publication
         run: |
           node --test --experimental-strip-types \
             --import ./apps/worker/test/register-ts-resolver.mjs \
-            apps/worker/test/admin-auth.test.mjs \
-            apps/worker/test/admin-crud-constraints.test.mjs \
-            apps/worker/test/conversion-pool.test.mjs \
-            apps/worker/test/customer-service-provider.test.mjs \
-            apps/worker/test/home-layout.test.mjs \
-            apps/worker/test/idempotency.test.mjs \
-            apps/worker/test/pwa-icon-source-contract.test.mjs \
-            apps/worker/test/security-headers.test.mjs \
-            apps/worker/test/theme-import.test.mjs
+            apps/worker/test/modular-publication.test.mjs
 
-      - name: Trace Worker publication and bootstrap tests
+      - name: Trace public bootstrap runtime
         run: |
           node --test --experimental-strip-types \
             --import ./apps/worker/test/register-ts-resolver.mjs \
-            apps/worker/test/modular-publication.test.mjs \
-            apps/worker/test/public-bootstrap-runtime.test.mjs \
+            apps/worker/test/public-bootstrap-runtime.test.mjs
+
+      - name: Trace public content
+        run: |
+          node --test --experimental-strip-types \
+            --import ./apps/worker/test/register-ts-resolver.mjs \
             apps/worker/test/public-content.test.mjs
-
-      - name: Trace Worker remaining public tests
-        run: |
-          node --test --experimental-strip-types \
-            --import ./apps/worker/test/register-ts-resolver.mjs \
-            apps/worker/test/public-conversion-route.test.mjs \
-            apps/worker/test/public-media-fallback.test.mjs \
-            apps/worker/test/public-search-index.test.mjs \
-            apps/worker/test/public-seo.test.mjs \
-            apps/worker/test/public-support-config.test.mjs
-
-      - name: Reconfirm targeted Article C0 Worker tests
-        run: |
-          node --test --experimental-strip-types \
-            --import ./apps/worker/test/register-ts-resolver.mjs \
-            apps/worker/test/message-article-migration.test.mjs \
-            apps/worker/test/article-message-contract.test.mjs \
-            apps/worker/test/message-article-background-contract.test.mjs \
-            apps/worker/test/public-bootstrap-snapshot.test.mjs \
-            apps/worker/test/asset-cleanup-integration.test.mjs
