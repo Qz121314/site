@@ -1,6 +1,6 @@
 name: Article C0 Validation
 
-# Re-run after final contract normalization.
+# Re-run after final contract normalization and targeted test-runner fixes.
 on:
   push:
     branches:
@@ -52,14 +52,20 @@ jobs:
       - name: Typecheck
         run: pnpm typecheck
 
-      - name: Targeted Article C0 contracts
+      - name: Targeted Worker Article C0 contracts
         run: |
-          node --test \
+          node --test --experimental-strip-types \
+            --import ./apps/worker/test/register-ts-resolver.mjs \
             apps/worker/test/message-article-migration.test.mjs \
             apps/worker/test/article-message-contract.test.mjs \
             apps/worker/test/message-article-background-contract.test.mjs \
             apps/worker/test/public-bootstrap-snapshot.test.mjs \
-            apps/worker/test/asset-cleanup-integration.test.mjs \
+            apps/worker/test/asset-cleanup-integration.test.mjs
+
+      - name: Targeted Storefront Article C0 contracts
+        run: |
+          node --test --experimental-strip-types \
+            --import ./apps/storefront/test/register-ts-resolver.mjs \
             apps/storefront/test/messages-articles.test.mjs
 
       - name: Full repository verify
