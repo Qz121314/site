@@ -1,6 +1,7 @@
 import type { AdminView } from '../admin-navigation';
 import { useSiteSettingsController } from '../settings/SiteSettingsProvider';
 import './experience-settings.css';
+import { MessagesArticlesSection } from './messages-articles/MessagesArticlesSection';
 
 export function MessagesExperienceView({
   onNavigate,
@@ -58,21 +59,7 @@ export function MessagesExperienceView({
         </div>
       </section>
 
-      <section
-        className="settings-workspace-section"
-        aria-labelledby="messages-article-title"
-      >
-        <div className="settings-workspace-heading">
-          <div>
-            <h2 id="messages-article-title">文章卡片</h2>
-            <p>
-              此功能将在 Article Center 功能阶段开放。本 Phase
-              不创建文章选择、排序、背景图或 placement 数据。
-            </p>
-          </div>
-        </div>
-        <p className="settings-inline-note">当前没有需要保存的 Messages 专属设置。</p>
-      </section>
+      <MessagesArticlesSection onNavigate={onNavigate} />
     </div>
   );
 }
