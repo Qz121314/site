@@ -56,3 +56,5 @@ jobs:
 
       - name: Full repository verify
         run: pnpm verify
+
+# Temporary Phase D validation runner; removed before PR creation.
