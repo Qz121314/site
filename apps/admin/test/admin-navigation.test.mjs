@@ -19,6 +19,25 @@ const sections = [
   { id: 'beta', name: 'Beta' },
 ];
 
+test('primary domains consolidate content into visible asset domain', () => {
+  assert.deepEqual(
+    ADMIN_DOMAINS.map(({ id, label }) => [id, label]),
+    [
+      ['dashboard', '仪表盘'],
+      ['catalog', '商品'],
+      ['experience', '体验'],
+      ['operations', '运营'],
+      ['media', '素材'],
+      ['integrations', '集成'],
+      ['system', '系统'],
+    ],
+  );
+  assert.equal(
+    ADMIN_DOMAINS.some((domain) => domain.id === 'content'),
+    false,
+  );
+});
+
 test('fixed settings views resolve to intended domains', () => {
   const expected = new Map([
     ['dashboard', 'dashboard'],
@@ -32,7 +51,7 @@ test('fixed settings views resolve to intended domains', () => {
     ['system-advanced', 'system'],
     ['assets', 'media'],
     ['customer-service', 'integrations'],
-    ['faq', 'content'],
+    ['faq', 'media'],
     ['sections', 'catalog'],
   ]);
 
@@ -94,6 +113,8 @@ test('new hashes parse and legacy settings aliases normalize deterministically',
   assert.equal(parseAdminView('settings'), 'system-general');
   assert.equal(parseAdminView('#system'), 'system-general');
   assert.equal(parseAdminView('system'), 'system-general');
+  assert.equal(parseAdminView('#faq'), 'faq');
+  assert.equal(parseAdminView('#assets'), 'assets');
   assert.equal(parseAdminView('#products%3A'), null);
   assert.equal(parseAdminView('#unknown%3Aalpha'), null);
   assert.equal(parseAdminView('#%E0%A4%A'), null);
@@ -123,7 +144,18 @@ test('experience and system secondary navigation match Phase B IA exactly', () =
   );
 });
 
-test('secondary items are unique and system placeholder is retired', () => {
+test('asset secondary navigation owns media and FAQ assets in fixed order', () => {
+  assert.deepEqual(
+    getAdminSecondaryItems('media', sections).map(({ view, label }) => [view, label]),
+    [
+      ['assets', '素材库'],
+      ['faq', 'FAQ 管理'],
+    ],
+  );
+  assert.equal(getAdminDefaultViewForDomain('media', sections), 'assets');
+});
+
+test('secondary items are unique and legacy placeholders are retired', () => {
   const allViews = ADMIN_DOMAINS.flatMap((domain) =>
     getAdminSecondaryItems(domain.id, sections).map((item) => item.view),
   );
@@ -154,6 +186,7 @@ test('domain defaults use the decomposed workspaces', () => {
   assert.equal(getAdminDefaultViewForDomain('experience', sections), 'home');
   assert.equal(getAdminDefaultViewForDomain('system', sections), 'system-general');
   assert.equal(getAdminDefaultViewForDomain('catalog', sections), 'sections');
+  assert.equal(getAdminDefaultViewForDomain('media', sections), 'assets');
   assert.equal(
     getAdminDefaultViewForDomain('operations', sections),
     'conversion-pool:alpha',
@@ -185,7 +218,7 @@ test('legacy localStorage settings value normalizes to system general', () => {
   }
 });
 
-test('last-view and history remain compatible', () => {
+test('last-view and history remain compatible for FAQ and assets', () => {
   const previousWindow = globalThis.window;
   const storage = new Map([[ADMIN_VIEW_STORAGE_KEY, 'faq']]);
   const historyCalls = [];
@@ -211,6 +244,8 @@ test('last-view and history remain compatible', () => {
 
   try {
     assert.equal(readInitialAdminView(), 'faq');
+    storage.set(ADMIN_VIEW_STORAGE_KEY, 'assets');
+    assert.equal(readInitialAdminView(), 'assets');
     assert.equal(adminViewHash('products:alpha'), '#products%3Aalpha');
     writeAdminViewLocation('theme', 'push');
     assert.equal(storage.get(ADMIN_VIEW_STORAGE_KEY), 'theme');

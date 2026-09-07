@@ -1,6 +1,5 @@
 import {
   Boxes,
-  FileText,
   Gauge,
   Images,
   Megaphone,
@@ -20,7 +19,6 @@ import type { AdminSection } from '../api';
 
 const DOMAIN_ICONS: Record<AdminDomain, LucideIcon> = {
   dashboard: Gauge,
-  content: FileText,
   catalog: Boxes,
   experience: Palette,
   operations: Megaphone,

@@ -114,6 +114,7 @@ test('global publish and logout controls remain available', async () => {
   assert.match(dashboard, /AdminPublishingControls/);
   assert.match(dashboard, /rollbackStorefront/);
   assert.match(dashboard, /requestLogout/);
+  assert.match(dashboard, /if \(view === 'faq'\) return 'faq';/);
   assert.match(publishing, /发布全部待更新/);
   assert.match(publishing, /onRequestRollback/);
   assert.match(publishing, /publish-version-popover/);
