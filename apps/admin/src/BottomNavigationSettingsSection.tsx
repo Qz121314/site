@@ -1,6 +1,8 @@
 import { useState } from 'react';
 import { MediaPickerDialog } from './asset-library/MediaPickerDialog';
 import { brandingAssetPreviewUrl } from './branding-media/api';
+import { Button } from './components/ui/button';
+import { AdminStatusBadge } from './components/ui/status-badge';
 import type {
   BottomNavigationIconType,
   BottomNavigationItem,
@@ -139,11 +141,9 @@ export function BottomNavigationSettingsSection({
                       ? 'Emoji'
                       : '素材图片'}
                 </span>
-                <span
-                  className={`admin-bottom-navigation-status${item.enabled ? ' is-enabled' : ''}`}
-                >
+                <AdminStatusBadge tone={item.enabled ? 'success' : 'default'}>
                   {item.enabled ? '显示' : '隐藏'}
-                </span>
+                </AdminStatusBadge>
                 <span className="admin-bottom-navigation-row-action">
                   {expanded ? '收起' : '编辑'}
                 </span>
@@ -237,17 +237,19 @@ export function BottomNavigationSettingsSection({
                     <div className="field-group">
                       <span>图片</span>
                       <div className="admin-bottom-navigation-image-actions">
-                        <button
-                          className="secondary-button"
+                        <Button
+                          variant="secondary"
+                          size="compact"
                           type="button"
                           disabled={busy}
                           onClick={() => setPickerKey(editingItem.key)}
                         >
                           {editingItem.iconAssetId ? '更换图片' : '从素材中心选择'}
-                        </button>
+                        </Button>
                         {editingItem.iconAssetId ? (
-                          <button
-                            className="admin-text-button"
+                          <Button
+                            variant="ghost"
+                            size="compact"
                             type="button"
                             disabled={busy}
                             onClick={() =>
@@ -257,7 +259,7 @@ export function BottomNavigationSettingsSection({
                             }
                           >
                             移除
-                          </button>
+                          </Button>
                         ) : null}
                       </div>
                     </div>
