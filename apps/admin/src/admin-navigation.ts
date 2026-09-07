@@ -1,6 +1,15 @@
 import type { AdminSection } from './api';
 
 export type DynamicViewKind = 'products' | 'categories' | 'tags' | 'conversion-pool';
+export type CatalogResourceKind = Extract<
+  DynamicViewKind,
+  'products' | 'categories' | 'tags'
+>;
+
+export type CatalogWorkspaceContext = {
+  sectionId: string;
+  resource: CatalogResourceKind;
+};
 
 export type SettingsAdminView =
   | 'home'
@@ -105,6 +114,29 @@ export function parseDynamicView(
   }
 
   return { kind, sectionId };
+}
+
+export function getCatalogWorkspaceContext(
+  view: AdminView,
+): CatalogWorkspaceContext | null {
+  const dynamic = parseDynamicView(view);
+  if (
+    !dynamic ||
+    (dynamic.kind !== 'products' &&
+      dynamic.kind !== 'categories' &&
+      dynamic.kind !== 'tags')
+  ) {
+    return null;
+  }
+
+  return { sectionId: dynamic.sectionId, resource: dynamic.kind };
+}
+
+export function catalogViewForResource(
+  resource: CatalogResourceKind,
+  sectionId: string,
+): AdminView {
+  return `${resource}:${sectionId}`;
 }
 
 export function parseAdminView(value: string | null): AdminView | null {
@@ -220,15 +252,11 @@ export function getAdminSecondaryItems(
     case 'catalog':
       return [
         { view: 'sections', label: '分区管理', group: '结构' },
-        ...sections.flatMap<AdminNavItem>((section) => [
-          { view: `products:${section.id}`, label: '商品', group: section.name },
-          {
-            view: `categories:${section.id}`,
-            label: '分类',
-            group: section.name,
-          },
-          { view: `tags:${section.id}`, label: '标签', group: section.name },
-        ]),
+        ...sections.map<AdminNavItem>((section, index) => ({
+          view: `products:${section.id}`,
+          label: section.name,
+          ...(index === 0 ? { group: '分区' } : {}),
+        })),
       ];
     case 'experience':
       return [
