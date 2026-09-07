@@ -67,7 +67,9 @@ test('customer-service CTA opens the chat shell before the Worker handoff resolv
   releaseHandoff();
 });
 
-test('Messages Article rows mark read only on detail', async ({ page }) => {
+test('Messages Articles stay title-only and mark read only on the reading page', async ({
+  page,
+}) => {
   test.skip(
     !useLocalFixture,
     'Messages Article acceptance uses the deterministic local fixture.',
@@ -86,27 +88,27 @@ test('Messages Article rows mark read only on detail', async ({ page }) => {
   await expect(flowLinks.nth(1)).toContainText('Beta guide');
   await expect(flowLinks.nth(2)).toContainText('Gamma guide');
   await expect(flowLinks.nth(3)).toContainText('Support');
-  await expect(flowLinks.nth(0)).toContainText(
-    'The first recommended article from bootstrap metadata.',
-  );
-  await expect(flowLinks.nth(1)).toContainText(
-    'A neutral card without background media.',
-  );
+  await expect(
+    page.getByText('The first recommended article from bootstrap metadata.'),
+  ).toHaveCount(0);
+  await expect(page.getByText('A neutral card without background media.')).toHaveCount(0);
   await expect(page.getByText('Malformed placement')).toHaveCount(0);
   await expect(page.getByText('Recommended articles', { exact: true })).toHaveCount(0);
   await expect(page.getByText('Conversations', { exact: true })).toHaveCount(0);
+  await expect(page.getByText('New', { exact: true })).toHaveCount(0);
+  await expect(page.getByText('Article', { exact: true })).toHaveCount(0);
 
-  const alphaRow = page.getByRole('link', { name: /Alpha guide/u });
-  const betaRow = page.getByRole('link', { name: /Beta guide/u });
-  const gammaRow = page.getByRole('link', { name: /Gamma guide/u });
+  const alphaRow = page.getByRole('link', { name: /Unread article.*Alpha guide/u });
+  const betaRow = page.getByRole('link', { name: /Unread article.*Beta guide/u });
+  const gammaRow = page.getByRole('link', { name: /Unread article.*Gamma guide/u });
   await expect(alphaRow).toHaveAttribute(
     'href',
     `/articles/${encodeURIComponent(MESSAGE_ARTICLE_IDS.alpha)}/`,
   );
   await expect(alphaRow).toHaveAttribute('data-read-state', 'unread');
-  await expect(alphaRow.getByText('New')).toBeVisible();
-  await expect(betaRow.getByText('New')).toBeVisible();
-  await expect(gammaRow.getByText('New')).toBeVisible();
+  await expect(alphaRow.locator('[data-unread-indicator]')).toHaveCount(1);
+  await expect(betaRow.locator('[data-unread-indicator]')).toHaveCount(1);
+  await expect(gammaRow.locator('[data-unread-indicator]')).toHaveCount(1);
   await expect(betaRow.locator('img')).toHaveCount(0);
   await expect(alphaRow.locator('img')).toHaveAttribute(
     'src',
@@ -114,6 +116,46 @@ test('Messages Article rows mark read only on detail', async ({ page }) => {
   );
   await expect(alphaRow.locator('img')).toBeVisible();
   await expect(gammaRow.locator('img')).toHaveCount(0);
+
+  const rowPresentation = await page.evaluate(() => {
+    const alphaTitle = document.querySelector<HTMLElement>(
+      '[data-article-id="article-alpha"] h3',
+    );
+    const betaTitle = document.querySelector<HTMLElement>(
+      '[data-article-id="article-beta"] h3',
+    );
+    const gammaTitle = document.querySelector<HTMLElement>(
+      '[data-article-id="article-gamma"] h3',
+    );
+    const articleRow = document.querySelector<HTMLElement>(
+      '[data-article-id="article-alpha"]',
+    );
+    if (!alphaTitle || !betaTitle || !gammaTitle || !articleRow) return null;
+
+    const alphaColor = getComputedStyle(alphaTitle).color;
+    const betaColor = getComputedStyle(betaTitle).color;
+    const gammaColor = getComputedStyle(gammaTitle).color;
+    const colorChannels = alphaColor.match(/[\d.]+/gu)?.map(Number) ?? [];
+    const lineHeight = Number.parseFloat(getComputedStyle(alphaTitle).lineHeight);
+    const titleHeight = alphaTitle.getBoundingClientRect().height;
+
+    return {
+      mediaTitleIsLight:
+        colorChannels.length >= 3 && colorChannels[0] + colorChannels[1] + colorChannels[2] > 650,
+      mediaTitleDiffersFromNeutral: alphaColor !== betaColor,
+      failedMediaMatchesNeutral: gammaColor === betaColor,
+      titleFitsTwoLines:
+        Number.isFinite(lineHeight) && titleHeight <= lineHeight * 2.1,
+      rowFitsViewport: articleRow.getBoundingClientRect().right <= window.innerWidth + 1,
+    };
+  });
+  expect(rowPresentation).toEqual({
+    mediaTitleIsLight: true,
+    mediaTitleDiffersFromNeutral: true,
+    failedMediaMatchesNeutral: true,
+    titleFitsTwoLines: true,
+    rowFitsViewport: true,
+  });
 
   const nativeListGeometry = await page.evaluate(() => {
     const list = document.querySelector('[data-messages-list="conversation-flow"]');
@@ -138,11 +180,13 @@ test('Messages Article rows mark read only on detail', async ({ page }) => {
         Number.isFinite(appGutter) &&
         Math.abs(listRect.left - (sidebarRect.left - appGutter)) < tolerance &&
         Math.abs(listRect.right - (sidebarRect.right + appGutter)) < tolerance,
+      noHorizontalOverflow: document.documentElement.scrollWidth <= window.innerWidth,
     };
   });
   expect(nativeListGeometry).toEqual({
     rowsShareEdges: true,
     listPreservesNativeFullBleed: true,
+    noHorizontalOverflow: true,
   });
 
   expect(
@@ -159,19 +203,72 @@ test('Messages Article rows mark read only on detail', async ({ page }) => {
 
   await alphaRow.click();
   await expect(page).toHaveURL(`/articles/${MESSAGE_ARTICLE_IDS.alpha}/`);
+  const articleTitle = page.getByRole('heading', { name: /Alpha guide/u, level: 1 });
+  await expect(articleTitle).toBeVisible();
+  await expect(page.getByText('Article', { exact: true })).toBeVisible();
+  await expect(page.getByRole('link', { name: 'Back' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Reading section', level: 2 })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Details', level: 3 })).toBeVisible();
+  await expect(page.getByText('First unordered point')).toBeVisible();
+  await expect(page.getByText('First ordered step')).toBeVisible();
   await expect(
-    page.getByRole('heading', { name: 'Alpha guide', level: 1 }),
+    page.getByText('A concise quoted note that should remain visually distinct from the body copy.'),
   ).toBeVisible();
+  await expect(page.getByRole('link', { name: 'a reference' })).toHaveAttribute(
+    'href',
+    'https://example.com/reference',
+  );
+  await expect(page.getByText('inline code', { exact: true })).toBeVisible();
+  await expect(page.locator('article pre code')).toContainText('article-reading-code');
+  await expect(page.getByRole('img', { name: 'Reading diagram' })).toBeVisible();
+  await expect(page.locator('article hr')).toHaveCount(1);
   expect(fixture.articleDetailRequests()).toBe(1);
+
+  const readingLayout = await page.evaluate(() => {
+    const navigation = document.querySelector<HTMLElement>('.article-reading-navigation');
+    const title = document.querySelector<HTMLElement>('#article-title');
+    const body = document.querySelector<HTMLElement>('.article-reading-body');
+    const image = document.querySelector<HTMLImageElement>(
+      '.article-reading-body img[alt="Reading diagram"]',
+    );
+    const codeBlock = document.querySelector<HTMLElement>('.article-reading-body pre');
+    if (!navigation || !title || !body || !image || !codeBlock) return null;
+
+    const titleRect = title.getBoundingClientRect();
+    const bodyRect = body.getBoundingClientRect();
+    const imageRect = image.getBoundingClientRect();
+    const navigationStyle = getComputedStyle(navigation);
+
+    return {
+      stickyHeader: navigationStyle.position === 'sticky',
+      titleFitsViewport:
+        titleRect.left >= -1 && titleRect.right <= window.innerWidth + 1,
+      imageFitsReadingWidth: imageRect.width <= bodyRect.width + 1,
+      codeContainedByReadingWidth: codeBlock.clientWidth <= body.clientWidth + 1,
+      codeCanScrollInternally: codeBlock.scrollWidth >= codeBlock.clientWidth,
+      noHorizontalOverflow: document.documentElement.scrollWidth <= window.innerWidth,
+    };
+  });
+  expect(readingLayout).toEqual({
+    stickyHeader: true,
+    titleFitsViewport: true,
+    imageFitsReadingWidth: true,
+    codeContainedByReadingWidth: true,
+    codeCanScrollInternally: true,
+    noHorizontalOverflow: true,
+  });
+  expect(
+    await page.evaluate(() => localStorage.getItem('site:messages:read-articles')),
+  ).toBe(JSON.stringify([MESSAGE_ARTICLE_IDS.alpha]));
 
   await page.getByRole('link', { name: 'Back' }).click();
   await expect(page).toHaveURL('/messages/');
-  const returnedAlphaRow = page.getByRole('link', { name: /Alpha guide/u });
+  const returnedAlphaRow = page.getByRole('link', { name: /Read article.*Alpha guide/u });
   await expect(returnedAlphaRow).toHaveAttribute('data-read-state', 'read');
-  await expect(returnedAlphaRow.getByText('New')).toHaveCount(0);
+  await expect(returnedAlphaRow.locator('[data-unread-indicator]')).toHaveCount(0);
   await expect(
-    page.getByRole('link', { name: /Beta guide/u }).getByText('New'),
-  ).toBeVisible();
+    page.getByRole('link', { name: /Unread article.*Beta guide/u }).locator('[data-unread-indicator]'),
+  ).toHaveCount(1);
   await expect(messagesNav.getByText('5')).toBeVisible();
   expect(
     await page.evaluate(() => localStorage.getItem('site:messages:read-articles')),
@@ -179,6 +276,45 @@ test('Messages Article rows mark read only on detail', async ({ page }) => {
   expect(fixture.supportHttpRequests()).toBe(supportRequestsBeforeArticle);
   expect(fixture.supportMutationRequests()).toBe(0);
   expect(pageErrors).toEqual([]);
+});
+
+test('desktop viewport keeps Messages compact and Article reading width bounded', async ({
+  page,
+}) => {
+  test.skip(
+    !useLocalFixture,
+    'Messages Article acceptance uses the deterministic local fixture.',
+  );
+  await page.setViewportSize({ width: 1280, height: 800 });
+  await installLocalMessagesArticleFixture(page);
+
+  await page.goto('/messages/');
+  const alphaRow = page.getByRole('link', { name: /Unread article.*Alpha guide/u });
+  await expect(alphaRow).toBeVisible();
+  await expect(page.locator('.messages-detail-placeholder')).toBeVisible();
+  expect(
+    await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+  ).toBe(true);
+
+  await alphaRow.click();
+  await expect(page).toHaveURL(`/articles/${MESSAGE_ARTICLE_IDS.alpha}/`);
+  await expect(page.getByRole('heading', { name: /Alpha guide/u, level: 1 })).toBeVisible();
+
+  const desktopReading = await page.evaluate(() => {
+    const article = document.querySelector<HTMLElement>('.article-reading-page');
+    if (!article) return null;
+    const rect = article.getBoundingClientRect();
+    return {
+      boundedReadingWidth: rect.width <= 760,
+      horizontallyCentered: Math.abs(rect.left - (window.innerWidth - rect.right)) < 2,
+      noHorizontalOverflow: document.documentElement.scrollWidth <= window.innerWidth,
+    };
+  });
+  expect(desktopReading).toEqual({
+    boundedReadingWidth: true,
+    horizontallyCentered: true,
+    noHorizontalOverflow: true,
+  });
 });
 
 test('zero Articles leaves the support list unchanged', async ({ page }) => {
