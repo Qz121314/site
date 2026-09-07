@@ -7,7 +7,7 @@ export type AdminFeedbackKind = 'empty' | 'loading' | 'error';
 type AdminFeedbackStateProps = {
   kind: AdminFeedbackKind;
   title: string;
-  description?: string;
+  description?: string | undefined;
   action?: ReactNode;
   compact?: boolean;
 };
