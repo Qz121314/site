@@ -1,0 +1,41 @@
+.system-domain-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: end;
+}
+
+.system-domain-test-button {
+  min-height: 44px;
+}
+
+.settings-inline-switch {
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 8px;
+  color: #475467;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.settings-inline-switch input {
+  width: 18px;
+  height: 18px;
+}
+
+.settings-field-span-two {
+  grid-column: 1 / -1;
+}
+
+@media (max-width: 640px) {
+  .system-domain-row {
+    grid-template-columns: 1fr;
+  }
+
+  .system-domain-test-button,
+  .settings-field-span-two {
+    width: 100%;
+    grid-column: auto;
+  }
+}

@@ -2,15 +2,23 @@ import type { AdminSection } from './api';
 
 export type DynamicViewKind = 'products' | 'categories' | 'tags' | 'conversion-pool';
 
+export type SettingsAdminView =
+  | 'home'
+  | 'navigation'
+  | 'messages'
+  | 'pwa'
+  | 'system-general'
+  | 'system-infrastructure'
+  | 'system-advanced';
+
 export type AdminView =
   | 'dashboard'
-  | 'settings'
+  | SettingsAdminView
   | 'theme'
   | 'assets'
   | 'customer-service'
   | 'faq'
   | 'sections'
-  | 'system'
   | `${DynamicViewKind}:${string}`;
 
 export type AdminDomain =
@@ -52,23 +60,33 @@ export const ADMIN_DOMAINS: readonly AdminDomainDefinition[] = [
   { id: 'operations', label: '运营', description: '转化运营工具' },
   { id: 'media', label: '媒体', description: '素材与媒体资产' },
   { id: 'integrations', label: '集成', description: '外部服务连接' },
-  { id: 'system', label: '系统', description: '全局系统上下文' },
+  { id: 'system', label: '系统', description: '站点身份与技术配置' },
 ];
 
-export const LEGACY_FIXED_ADMIN_VIEWS = [
-  'settings',
+export const SETTINGS_ADMIN_VIEWS = new Set<SettingsAdminView>([
+  'home',
+  'navigation',
+  'messages',
+  'pwa',
+  'system-general',
+  'system-infrastructure',
+  'system-advanced',
+]);
+
+export const FIXED_ADMIN_VIEWS = new Set<AdminView>([
+  'dashboard',
+  ...SETTINGS_ADMIN_VIEWS,
   'theme',
   'assets',
   'customer-service',
   'faq',
   'sections',
-] as const satisfies readonly AdminView[];
-
-export const FIXED_ADMIN_VIEWS = new Set<AdminView>([
-  'dashboard',
-  ...LEGACY_FIXED_ADMIN_VIEWS,
-  'system',
 ]);
+
+const LEGACY_ADMIN_VIEW_ALIASES: Readonly<Record<string, AdminView>> = {
+  settings: 'system-general',
+  system: 'system-general',
+};
 
 export function parseDynamicView(
   view: AdminView | string,
@@ -100,6 +118,8 @@ export function parseAdminView(value: string | null): AdminView | null {
     return null;
   }
 
+  const legacyAlias = LEGACY_ADMIN_VIEW_ALIASES[normalized];
+  if (legacyAlias) return legacyAlias;
   if (FIXED_ADMIN_VIEWS.has(normalized as AdminView)) {
     return normalized as AdminView;
   }
@@ -107,7 +127,7 @@ export function parseAdminView(value: string | null): AdminView | null {
 }
 
 export function readInitialAdminView(): AdminView {
-  if (typeof window === 'undefined') return 'settings';
+  if (typeof window === 'undefined') return 'home';
   const fromHash = parseAdminView(window.location.hash);
   if (fromHash) return fromHash;
 
@@ -118,7 +138,7 @@ export function readInitialAdminView(): AdminView {
     // Storage may be unavailable in privacy-restricted contexts.
   }
 
-  return 'settings';
+  return 'home';
 }
 
 export function adminViewHash(view: AdminView): string {
@@ -148,10 +168,24 @@ export function getAdminDomainForView(view: AdminView): AdminDomain {
   if (view === 'dashboard') return 'dashboard';
   if (view === 'faq') return 'content';
   if (view === 'sections') return 'catalog';
-  if (view === 'settings' || view === 'theme') return 'experience';
+  if (
+    view === 'home' ||
+    view === 'navigation' ||
+    view === 'messages' ||
+    view === 'theme' ||
+    view === 'pwa'
+  ) {
+    return 'experience';
+  }
   if (view === 'assets') return 'media';
   if (view === 'customer-service') return 'integrations';
-  if (view === 'system') return 'system';
+  if (
+    view === 'system-general' ||
+    view === 'system-infrastructure' ||
+    view === 'system-advanced'
+  ) {
+    return 'system';
+  }
 
   const dynamic = parseDynamicView(view);
   return dynamic?.kind === 'conversion-pool' ? 'operations' : 'catalog';
@@ -169,7 +203,7 @@ export function getAdminDefaultViewForDomain(
     case 'catalog':
       return 'sections';
     case 'experience':
-      return 'settings';
+      return 'home';
     case 'operations':
       return sections[0] ? `conversion-pool:${sections[0].id}` : null;
     case 'media':
@@ -177,7 +211,7 @@ export function getAdminDefaultViewForDomain(
     case 'integrations':
       return 'customer-service';
     case 'system':
-      return 'system';
+      return 'system-general';
   }
 }
 
@@ -205,8 +239,11 @@ export function getAdminSecondaryItems(
       ];
     case 'experience':
       return [
-        { view: 'settings', label: '站点设置' },
-        { view: 'theme', label: '主题中心' },
+        { view: 'home', label: '首页' },
+        { view: 'navigation', label: '导航' },
+        { view: 'messages', label: 'Messages' },
+        { view: 'theme', label: '主题' },
+        { view: 'pwa', label: 'PWA' },
       ];
     case 'operations':
       return sections.map((section) => ({
@@ -219,7 +256,11 @@ export function getAdminSecondaryItems(
     case 'integrations':
       return [{ view: 'customer-service', label: '客服管理' }];
     case 'system':
-      return [{ view: 'system', label: '系统概览' }];
+      return [
+        { view: 'system-general', label: '常规' },
+        { view: 'system-infrastructure', label: '基础设施' },
+        { view: 'system-advanced', label: '高级' },
+      ];
   }
 }
 
@@ -237,15 +278,30 @@ export function getAdminViewContext(
       title: '管理后台',
       description: '从左侧业务域进入现有管理工作区。',
     },
-    settings: {
-      eyebrow: `${domainLabel} / 站点`,
-      title: '站点设置',
-      description: '管理站点基础信息、首页展示、PWA 与高级设置。',
+    home: {
+      eyebrow: `${domainLabel} / 首页`,
+      title: '首页',
+      description: '管理 Storefront 首页展示内容、Hero 与布局。',
+    },
+    navigation: {
+      eyebrow: `${domainLabel} / 导航`,
+      title: '导航',
+      description: '管理 Storefront 主导航入口、图标与可见性。',
+    },
+    messages: {
+      eyebrow: `${domainLabel} / Messages`,
+      title: 'Messages',
+      description: '管理 Messages 页面相关体验设置与入口上下文。',
     },
     theme: {
       eyebrow: `${domainLabel} / 主题`,
       title: '主题中心',
       description: '管理 Storefront 的视觉主题与运行时样式配置。',
+    },
+    pwa: {
+      eyebrow: `${domainLabel} / PWA`,
+      title: 'PWA',
+      description: '管理应用图标与安装提示体验。',
     },
     assets: {
       eyebrow: `${domainLabel} / 素材`,
@@ -267,10 +323,20 @@ export function getAdminViewContext(
       title: '分区管理',
       description: '管理业务分区及其展示顺序。',
     },
-    system: {
-      eyebrow: domainLabel,
-      title: '系统',
-      description: '发布、版本与会话状态继续由全局操作区统一管理。',
+    'system-general': {
+      eyebrow: `${domainLabel} / 常规`,
+      title: '常规',
+      description: '管理站点名称、位置标签与品牌标识。',
+    },
+    'system-infrastructure': {
+      eyebrow: `${domainLabel} / 基础设施`,
+      title: '基础设施',
+      description: '管理媒体域名与存储访问相关技术配置。',
+    },
+    'system-advanced': {
+      eyebrow: `${domainLabel} / 高级`,
+      title: '高级',
+      description: '管理可选的高级站点集成参数。',
     },
   };
   const fixedContext = fixed[view];

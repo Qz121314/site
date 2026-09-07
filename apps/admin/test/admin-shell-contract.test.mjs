@@ -10,7 +10,7 @@ test('feature implementations stay lazy and request-neutral', async () => {
   const dashboard = await source('../src/Dashboard.tsx');
   const navigation = await source('../src/admin-navigation.ts');
   const features = [
-    'SiteSettingsView',
+    'SiteSettingsWorkspace',
     'ThemeCenterView',
     'AssetLibraryView',
     'CustomerServiceView',
@@ -26,6 +26,7 @@ test('feature implementations stay lazy and request-neutral', async () => {
     assert.match(dashboard, new RegExp(`const ${feature} = lazy\\(\\(\\) =>`));
   }
 
+  assert.doesNotMatch(dashboard, /const SiteSettingsView = lazy/);
   assert.equal((dashboard.match(/fetchSections\('active'\)/g) ?? []).length, 1);
   assert.equal((dashboard.match(/fetchPublishStatus\(\)/g) ?? []).length, 1);
   assert.doesNotMatch(navigation, /fetchSections|fetchPublishStatus|fetch\(/);
@@ -48,17 +49,20 @@ test('unsaved and history guards stay wired', async () => {
   assert.match(dashboard, /commitView\('sections', 'replace'\)/);
 });
 
-test('two-level shell exposes semantic navigation', async () => {
+test('two-level shell exposes semantic navigation and width contract', async () => {
   const shell = await source('../src/shell/AdminShell.tsx');
   const primary = await source('../src/shell/AdminPrimarySidebar.tsx');
   const secondary = await source('../src/shell/AdminSecondarySidebar.tsx');
   const pageHeader = await source('../src/shell/AdminPageHeader.tsx');
   const workspace = await source('../src/shell/AdminWorkspace.tsx');
+  const dashboard = await source('../src/Dashboard.tsx');
 
   assert.match(shell, /AdminPrimarySidebar/);
   assert.match(shell, /AdminSecondarySidebar/);
   assert.match(shell, /AdminPageHeader/);
   assert.match(shell, /AdminWorkspace/);
+  assert.match(shell, /<AdminWorkspace width=\{workspaceWidth\}>/);
+  assert.match(dashboard, /workspaceWidthForView/);
   assert.match(primary, /aria-label="后台一级导航"/);
   assert.match(primary, /aria-current=\{active \? 'location' : undefined\}/);
   assert.match(secondary, /aria-label="后台二级导航"/);
@@ -84,7 +88,9 @@ test('responsive shell avoids fixed-height clipping', async () => {
   const sidebarCss = await source('../src/admin-sidebar.css');
   const workspaceCss = await source('../src/admin-workspace.css');
   const scrollCss = await source('../src/admin-scroll-ownership.css');
-  const combined = `${shellCss}\n${sidebarCss}\n${workspaceCss}\n${scrollCss}`;
+  const settingsCss = await source('../src/settings/settings-workspace.css');
+  const navigationCss = await source('../src/bottom-navigation-settings.css');
+  const combined = `${shellCss}\n${sidebarCss}\n${workspaceCss}\n${scrollCss}\n${settingsCss}\n${navigationCss}`;
 
   assert.match(shellCss, /@media \(min-width: 1200px\)/);
   assert.match(shellCss, /grid-template-columns: 220px 200px minmax\(0, 1fr\)/);
@@ -95,6 +101,8 @@ test('responsive shell avoids fixed-height clipping', async () => {
   assert.match(workspaceCss, /env\(safe-area-inset-top\)/);
   assert.match(workspaceCss, /env\(safe-area-inset-bottom\)/);
   assert.match(scrollCss, /\.admin-workspace-content[\s\S]*overflow-y: auto/);
+  assert.match(settingsCss, /@media \(max-width: 720px\)/);
+  assert.match(navigationCss, /@media \(max-width: 760px\)/);
   assert.doesNotMatch(scrollCss, /max-height: calc\(100dvh/);
   assert.doesNotMatch(combined, /!important/);
 });

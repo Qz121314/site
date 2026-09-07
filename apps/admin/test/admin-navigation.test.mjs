@@ -3,7 +3,7 @@ import test from 'node:test';
 import {
   ADMIN_DOMAINS,
   ADMIN_VIEW_STORAGE_KEY,
-  LEGACY_FIXED_ADMIN_VIEWS,
+  SETTINGS_ADMIN_VIEWS,
   adminViewHash,
   getAdminDefaultViewForDomain,
   getAdminDomainForView,
@@ -19,21 +19,34 @@ const sections = [
   { id: 'beta', name: 'Beta' },
 ];
 
-test('fixed views resolve to intended domains', () => {
+test('fixed settings views resolve to intended domains', () => {
   const expected = new Map([
     ['dashboard', 'dashboard'],
-    ['settings', 'experience'],
+    ['home', 'experience'],
+    ['navigation', 'experience'],
+    ['messages', 'experience'],
     ['theme', 'experience'],
+    ['pwa', 'experience'],
+    ['system-general', 'system'],
+    ['system-infrastructure', 'system'],
+    ['system-advanced', 'system'],
     ['assets', 'media'],
     ['customer-service', 'integrations'],
     ['faq', 'content'],
     ['sections', 'catalog'],
-    ['system', 'system'],
   ]);
 
   assert.deepEqual(
-    [...LEGACY_FIXED_ADMIN_VIEWS],
-    ['settings', 'theme', 'assets', 'customer-service', 'faq', 'sections'],
+    [...SETTINGS_ADMIN_VIEWS],
+    [
+      'home',
+      'navigation',
+      'messages',
+      'pwa',
+      'system-general',
+      'system-infrastructure',
+      'system-advanced',
+    ],
   );
   for (const [view, domain] of expected) {
     assert.equal(getAdminDomainForView(view), domain);
@@ -53,10 +66,16 @@ test('dynamic views preserve domain ownership', () => {
   assert.equal(parseDynamicView('unknown:alpha'), null);
 });
 
-test('legacy hashes remain valid', () => {
-  const legacy = [
-    'settings',
+test('new hashes parse and legacy settings aliases normalize deterministically', () => {
+  const canonical = [
+    'home',
+    'navigation',
+    'messages',
     'theme',
+    'pwa',
+    'system-general',
+    'system-infrastructure',
+    'system-advanced',
     'assets',
     'customer-service',
     'faq',
@@ -67,20 +86,50 @@ test('legacy hashes remain valid', () => {
     'conversion-pool:alpha',
   ];
 
-  for (const view of legacy) {
+  for (const view of canonical) {
     assert.equal(parseAdminView(`#${encodeURIComponent(view)}`), view);
     assert.equal(parseAdminView(view), view);
   }
+  assert.equal(parseAdminView('#settings'), 'system-general');
+  assert.equal(parseAdminView('settings'), 'system-general');
+  assert.equal(parseAdminView('#system'), 'system-general');
+  assert.equal(parseAdminView('system'), 'system-general');
   assert.equal(parseAdminView('#products%3A'), null);
   assert.equal(parseAdminView('#unknown%3Aalpha'), null);
   assert.equal(parseAdminView('#%E0%A4%A'), null);
 });
 
-test('secondary items are unique', () => {
+test('experience and system secondary navigation match Phase B IA exactly', () => {
+  assert.deepEqual(
+    getAdminSecondaryItems('experience', sections).map(({ view, label }) => [
+      view,
+      label,
+    ]),
+    [
+      ['home', '首页'],
+      ['navigation', '导航'],
+      ['messages', 'Messages'],
+      ['theme', '主题'],
+      ['pwa', 'PWA'],
+    ],
+  );
+  assert.deepEqual(
+    getAdminSecondaryItems('system', sections).map(({ view, label }) => [view, label]),
+    [
+      ['system-general', '常规'],
+      ['system-infrastructure', '基础设施'],
+      ['system-advanced', '高级'],
+    ],
+  );
+});
+
+test('secondary items are unique and system placeholder is retired', () => {
   const allViews = ADMIN_DOMAINS.flatMap((domain) =>
     getAdminSecondaryItems(domain.id, sections).map((item) => item.view),
   );
   assert.equal(new Set(allViews).size, allViews.length);
+  assert.equal(allViews.includes('settings'), false);
+  assert.equal(allViews.includes('system'), false);
 
   const catalog = getAdminSecondaryItems('catalog', sections);
   assert.deepEqual(
@@ -101,14 +150,39 @@ test('secondary items are unique', () => {
   );
 });
 
-test('domain defaults remain static', () => {
-  assert.equal(getAdminDefaultViewForDomain('experience', sections), 'settings');
+test('domain defaults use the decomposed workspaces', () => {
+  assert.equal(getAdminDefaultViewForDomain('experience', sections), 'home');
+  assert.equal(getAdminDefaultViewForDomain('system', sections), 'system-general');
   assert.equal(getAdminDefaultViewForDomain('catalog', sections), 'sections');
   assert.equal(
     getAdminDefaultViewForDomain('operations', sections),
     'conversion-pool:alpha',
   );
   assert.equal(getAdminDefaultViewForDomain('operations', []), null);
+});
+
+test('legacy localStorage settings value normalizes to system general', () => {
+  const previousWindow = globalThis.window;
+  const storage = new Map([[ADMIN_VIEW_STORAGE_KEY, 'settings']]);
+  globalThis.window = {
+    location: { hash: '', pathname: '/admin', search: '' },
+    localStorage: {
+      getItem(key) {
+        return storage.get(key) ?? null;
+      },
+      setItem(key, value) {
+        storage.set(key, value);
+      },
+    },
+    history: { pushState() {}, replaceState() {} },
+  };
+
+  try {
+    assert.equal(readInitialAdminView(), 'system-general');
+  } finally {
+    if (previousWindow === undefined) delete globalThis.window;
+    else globalThis.window = previousWindow;
+  }
 });
 
 test('last-view and history remain compatible', () => {
