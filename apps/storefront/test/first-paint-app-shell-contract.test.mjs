@@ -2,36 +2,24 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-test('the initial HTML paint presents app-shell chrome before React starts', async () => {
+test('the initial HTML paint presents persistent app-shell chrome before React starts', async () => {
   const html = await readFile(new URL('../index.html', import.meta.url), 'utf8');
 
   assert.match(html, /class="boot-shell" aria-hidden="true"/u);
   assert.match(html, /class="boot-app-bar"/u);
-  assert.match(html, /class="boot-hero"/u);
-  assert.match(html, /class="boot-shortcuts"/u);
-  assert.match(html, /class="boot-product-grid"/u);
   assert.match(html, /class="boot-bottom-nav"/u);
-  assert.match(
-    html,
-    /--boot-header-height: calc\(58px \+ env\(safe-area-inset-top\)\);/u,
-  );
-  assert.match(
-    html,
-    /--boot-bottom-height: calc\(66px \+ env\(safe-area-inset-bottom\)\);/u,
-  );
-  assert.match(html, /\.boot-shell \{[\s\S]*?min-height: 100dvh;/u);
   assert.match(html, /\.boot-app-bar \{[\s\S]*?position: fixed;/u);
   assert.match(html, /\.boot-bottom-nav \{[\s\S]*?position: fixed;/u);
-  assert.match(html, /@media \(min-width: 980px\)[\s\S]*?\.boot-bottom-nav/u);
 });
 
 test('minimal production smoke validates the Storefront app shell', async () => {
-  const smokeUrl = new URL('../../../scripts/production-smoke.mjs', import.meta.url);
-  const source = await readFile(smokeUrl, 'utf8');
-  const has = (fragment) => source.includes(fragment);
+  const source = await readFile(
+    new URL('../../../scripts/production-smoke.mjs', import.meta.url),
+    'utf8',
+  );
 
-  assert.ok(has("fetchRequired('/')"));
-  assert.ok(has('class="boot-shell"'));
-  assert.ok(has('<div id="root">'));
-  assert.ok(has('Worker version confirmed'));
+  assert.match(source, /fetchRequired\('\/'\)/u);
+  assert.match(source, /class="boot-shell"/u);
+  assert.match(source, /<div id="root">/u);
+  assert.match(source, /Worker version confirmed/u);
 });

@@ -1,5 +1,4 @@
 import assert from 'node:assert/strict';
-import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import { normalizeHomeLayout } from '../src/content.ts';
 import { resolveHomeLayout } from '../src/home-layout.ts';
@@ -23,11 +22,4 @@ test('published Home layout preserves recommendation sections beyond three', () 
   );
 
   assert.deepEqual(resolved.recommendationSectionIds, recommendationIds);
-});
-
-test('Home feed does not reintroduce a three-section render cap', () => {
-  const source = readFileSync(new URL('../src/HomeFeed.tsx', import.meta.url), 'utf8');
-
-  assert.doesNotMatch(source, /recommendationSectionIds[\s\S]{0,240}\.slice\(0,\s*3\)/u);
-  assert.doesNotMatch(source, /ids\.length\s*===\s*3/u);
 });

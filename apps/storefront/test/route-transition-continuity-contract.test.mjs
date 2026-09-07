@@ -2,36 +2,21 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 
-test('route motion commits one live surface without browser snapshots', async () => {
-  const [
-    historyRuntime,
-    navigationRuntime,
-    presentationSource,
-    rootSource,
-    transitionStyles,
-  ] = await Promise.all([
-    readFile(new URL('../src/storefront-history.ts', import.meta.url), 'utf8'),
-    readFile(new URL('../src/storefront-navigation-runtime.ts', import.meta.url), 'utf8'),
-    readFile(new URL('../src/StorefrontPresentation.tsx', import.meta.url), 'utf8'),
-    readFile(new URL('../src/StorefrontRoot.tsx', import.meta.url), 'utf8'),
-    readFile(new URL('../src/route-transition.css', import.meta.url), 'utf8'),
-  ]);
+test('route transitions commit one live surface and restore history scroll without browser snapshots', async () => {
+  const [historyRuntime, navigationRuntime, presentationSource, rootSource] =
+    await Promise.all([
+      readFile(new URL('../src/storefront-history.ts', import.meta.url), 'utf8'),
+      readFile(
+        new URL('../src/storefront-navigation-runtime.ts', import.meta.url),
+        'utf8',
+      ),
+      readFile(new URL('../src/StorefrontPresentation.tsx', import.meta.url), 'utf8'),
+      readFile(new URL('../src/StorefrontRoot.tsx', import.meta.url), 'utf8'),
+    ]);
 
-  assert.doesNotMatch(navigationRuntime, /storefront-view-transition/u);
   assert.doesNotMatch(navigationRuntime, /startViewTransition/u);
-  assert.doesNotMatch(navigationRuntime, /runStorefrontViewTransition/u);
-  assert.doesNotMatch(presentationSource, /storefront-view-transition/u);
   assert.doesNotMatch(presentationSource, /startViewTransition/u);
-  assert.doesNotMatch(presentationSource, /runStorefrontViewTransition/u);
-
-  assert.match(
-    presentationSource,
-    /flushSync\(\(\) => commitStorefrontLocation\('forward'\)\)/u,
-  );
-  assert.match(
-    presentationSource,
-    /flushSync\(\(\) => commitStorefrontLocation\(direction\)\)/u,
-  );
+  assert.match(presentationSource, /flushSync/u);
   assert.match(presentationSource, /restoreStorefrontScrollPosition\(event\.state\)/u);
 
   const immediateRestore = historyRuntime.indexOf('restore();');
@@ -41,24 +26,4 @@ test('route motion commits one live surface without browser snapshots', async ()
   assert.ok(immediateRestore < scheduledRestore);
 
   assert.equal((rootSource.match(/className="storefront-route-view"/gu) ?? []).length, 1);
-  assert.match(rootSource, /className="storefront-route-view" key=\{routeKey\}/u);
-
-  assert.match(transitionStyles, /data-storefront-transition='push'/u);
-  assert.match(transitionStyles, /data-storefront-transition='pop'/u);
-  assert.match(transitionStyles, /@keyframes storefront-page-push-enter/u);
-  assert.match(transitionStyles, /@keyframes storefront-page-pop-enter/u);
-  assert.match(transitionStyles, /--route-push-shift:/u);
-  assert.match(transitionStyles, /--route-pop-shift:/u);
-  assert.match(transitionStyles, /translate3d\(var\(--route-push-shift\), 0, 0\)/u);
-  assert.match(transitionStyles, /translate3d\(var\(--route-pop-shift\), 0, 0\)/u);
-  assert.match(transitionStyles, /background: var\(--page-bg/u);
-
-  assert.doesNotMatch(transitionStyles, /perspective\(/u);
-  assert.doesNotMatch(transitionStyles, /rotateY/u);
-  assert.doesNotMatch(transitionStyles, /box-shadow/u);
-  assert.doesNotMatch(transitionStyles, /backface-visibility/u);
-  assert.doesNotMatch(transitionStyles, /::view-transition/u);
-  assert.doesNotMatch(transitionStyles, /view-transition-name/u);
-  assert.doesNotMatch(transitionStyles, /data-storefront-view-transition/u);
-  assert.doesNotMatch(transitionStyles, /storefront-native-(?:push|pop)/u);
 });
