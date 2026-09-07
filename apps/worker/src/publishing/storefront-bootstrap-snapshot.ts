@@ -8,6 +8,7 @@ type MessageArticleMetadata = {
   articleId: string;
   title: string;
   preview: string;
+  backgroundObjectKey?: string | null;
   sortOrder: number;
 };
 
@@ -66,12 +67,16 @@ function sanitizeMessageArticles(value: unknown): MessageArticleMetadata[] {
     ) {
       continue;
     }
-    articles.push({
+    const article: MessageArticleMetadata = {
       articleId: item.articleId,
       title: item.title,
       preview: item.preview,
       sortOrder: item.sortOrder,
-    });
+    };
+    if (typeof item.backgroundObjectKey === 'string' || item.backgroundObjectKey === null) {
+      article.backgroundObjectKey = item.backgroundObjectKey;
+    }
+    articles.push(article);
   }
   return articles;
 }
