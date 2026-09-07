@@ -18,7 +18,9 @@ export function MessagesArticleListWorkspace({
   LinkComponent: StorefrontLinkComponent;
 }) {
   const queryClient = useQueryClient();
-  const bootstrap = queryClient.getQueryData<StorefrontBootstrap>(['storefront-bootstrap']);
+  const bootstrap = queryClient.getQueryData<StorefrontBootstrap>([
+    'storefront-bootstrap',
+  ]);
   const mediaBaseUrl = bootstrap?.site.site.mediaBaseUrl ?? '';
 
   return (
