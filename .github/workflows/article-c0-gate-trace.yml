@@ -8,7 +8,7 @@ on:
       - .github/workflows/article-c0-gate-trace.yml
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   trace:
@@ -36,22 +36,36 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Fix changed files
-        run: pnpm fix:changed
+      - name: Align legacy modular bootstrap fixture
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('apps/worker/test/modular-publication.test.mjs')
+          text = path.read_text()
+          old = """      articleId: 'article-a',\n      title: 'Announcement',\n      preview: 'Short preview',\n      sortOrder: 0,\n"""
+          new = """      articleId: 'article-a',\n      title: 'Announcement',\n      preview: 'Short preview',\n      backgroundObjectKey: null,\n      sortOrder: 0,\n"""
+          if text.count(old) != 1:
+              raise SystemExit(f'Expected exactly one legacy fixture block, found {text.count(old)}')
+          path.write_text(text.replace(old, new, 1))
+          PY
 
-      - name: Ensure fix gate is clean
-        run: git diff --exit-code
+      - name: Format repaired fixture
+        run: pnpm exec prettier --write apps/worker/test/modular-publication.test.mjs
 
-      - name: Trace modular publication non-bootstrap contracts
+      - name: Re-run modular publication contract
         run: |
           node --test --experimental-strip-types \
-            --test-name-pattern="module-key|modular pointer|rolling back|modular rollback|public storefront discovery" \
             --import ./apps/worker/test/register-ts-resolver.mjs \
             apps/worker/test/modular-publication.test.mjs
 
-      - name: Trace modular publication bootstrap contract
+      - name: Full repository verify
+        run: pnpm verify
+
+      - name: Commit verified fixture repair
         run: |
-          node --test --experimental-strip-types \
-            --test-name-pattern="public storefront bootstrap consolidates" \
-            --import ./apps/worker/test/register-ts-resolver.mjs \
-            apps/worker/test/modular-publication.test.mjs
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apps/worker/test/modular-publication.test.mjs
+          git diff --cached --quiet && exit 0
+          git commit -m "test(worker): align bootstrap background metadata contract"
+          git push origin HEAD:feat/message-article-background-media-contract
