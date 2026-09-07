@@ -1,0 +1,66 @@
+name: Article C0 Final Weak Reference Cleanup
+
+on:
+  push:
+    branches:
+      - feat/message-article-background-media-contract
+    paths:
+      - .github/workflows/article-c0-final-weak-reference-cleanup.yml
+
+permissions:
+  contents: write
+
+jobs:
+  clean:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+          run_install: false
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+      - name: Restore original asset reference expression
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('apps/worker/src/assets/asset-library.ts')
+          source = path.read_text()
+          old = '  const referenceCount = countReferences(toReferenceCounts(row));\n'
+          new = '  const referenceCount = countReferences(references);\n'
+          if source.count(old) != 1:
+              raise SystemExit(f'expected one final reference expression, found {source.count(old)}')
+          path.write_text(source.replace(old, new, 1))
+          PY
+      - name: Run changed-file fixer
+        run: pnpm fix:changed
+      - name: Run formatting check
+        run: pnpm format
+      - name: Run targeted weak-reference contract
+        run: |
+          node --test --experimental-strip-types \
+            --import ./apps/worker/test/register-ts-resolver.mjs \
+            apps/worker/test/message-article-background-contract.test.mjs \
+            apps/worker/test/article-message-contract.test.mjs
+      - name: Run full repository verify
+        run: pnpm verify
+      - name: Commit verified cleanup
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apps/worker/src/assets/asset-library.ts
+          git diff --cached --quiet && exit 0
+          git commit -m "chore(content): restore asset library reference counting baseline"
+          git push origin HEAD:feat/message-article-background-media-contract
