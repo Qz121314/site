@@ -1,0 +1,53 @@
+name: Phase D Finalize
+
+on:
+  push:
+    branches:
+      - refactor/admin-management-workspaces
+    paths:
+      - scripts/phase-d-finalize.py
+      - .github/workflows/phase-d-finalize.yml
+
+permissions:
+  contents: write
+
+jobs:
+  finalize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: refactor/admin-management-workspaces
+
+      - name: Apply final scoped UI adoption
+        run: python scripts/phase-d-finalize.py
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Format scoped Admin sources
+        run: pnpm exec prettier --write apps/admin/src apps/admin/test/admin-management-workspace-behavior.test.mjs
+
+      - name: Commit final UI adoption
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apps/admin/src apps/admin/test/admin-management-workspace-behavior.test.mjs
+          git diff --cached --check
+          git commit -m "refactor(admin): finish management workspace pattern adoption"
+          git push origin HEAD:refactor/admin-management-workspaces
