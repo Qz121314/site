@@ -1,4 +1,8 @@
+import { GripVertical } from 'lucide-react';
 import { useState, type DragEvent, type KeyboardEvent } from 'react';
+import { Button } from '../components/ui/button';
+import { AdminFeedbackState } from '../components/ui/feedback-state';
+import { AdminStatusBadge, type AdminStatusTone } from '../components/ui/status-badge';
 import type { AdminProduct } from './api';
 
 type ProductDropPosition = 'before' | 'after';
@@ -29,6 +33,12 @@ function statusLabel(status: AdminProduct['status']): string {
     default:
       return '草稿';
   }
+}
+
+function statusTone(status: AdminProduct['status']): AdminStatusTone {
+  if (status === 'published') return 'success';
+  if (status === 'archived') return 'warning';
+  return 'default';
 }
 
 function serviceModeLabel(mode: AdminProduct['serviceMode']): string {
@@ -117,24 +127,29 @@ export function ProductTable({
 
   if (loading) {
     return (
-      <div className="settings-card settings-loading" aria-live="polite">
-        <div className="loading-indicator" aria-hidden="true" />
-        <p>正在读取产品…</p>
-      </div>
+      <AdminFeedbackState
+        kind="loading"
+        title="正在读取产品…"
+        description="产品、分类、标签和转化配置会保持当前分区上下文。"
+      />
     );
   }
 
   if (products.length === 0) {
     return (
-      <div className="product-empty-state">
-        <strong>{scope === 'active' ? '当前没有产品' : '回收站为空'}</strong>
-      </div>
+      <AdminFeedbackState
+        kind="empty"
+        title={scope === 'active' ? '当前没有产品' : '回收站为空'}
+        description={
+          scope === 'active' ? '使用上方“新增产品”开始录入。' : '已删除产品会显示在这里。'
+        }
+      />
     );
   }
 
   return (
-    <div className="product-table-wrap">
-      <table className="product-table product-table-with-tags">
+    <div className="product-table-wrap ui-data-table-wrap">
+      <table className="product-table product-table-with-tags ui-data-table">
         <thead>
           <tr>
             <th className="product-select-column">
@@ -161,7 +176,10 @@ export function ProductTable({
           {products.map((product, index) => {
             const targetPosition =
               dropTarget?.id === product.id ? dropTarget.position : null;
+            const selected = selectedIds.has(product.id);
             const rowClassName = [
+              'ui-data-row',
+              selected ? 'is-selected' : '',
               draggingId === product.id ? 'is-dragging' : '',
               targetPosition === 'before' ? 'is-drop-before' : '',
               targetPosition === 'after' ? 'is-drop-after' : '',
@@ -172,7 +190,8 @@ export function ProductTable({
             return (
               <tr
                 key={product.id}
-                className={rowClassName || undefined}
+                className={rowClassName}
+                aria-selected={scope === 'active' ? selected : undefined}
                 onDragOver={(event) => handleDragOver(event, product)}
                 onDrop={(event) => handleDrop(event, product)}
                 onDragEnd={clearDragState}
@@ -182,7 +201,7 @@ export function ProductTable({
                     <input
                       type="checkbox"
                       aria-label={`选择产品 ${product.title}`}
-                      checked={selectedIds.has(product.id)}
+                      checked={selected}
                       onChange={() => onToggleSelect(product.id)}
                     />
                   ) : null}
@@ -227,9 +246,9 @@ export function ProductTable({
                   )}
                 </td>
                 <td>
-                  <span className={`product-status-badge is-${product.status}`}>
+                  <AdminStatusBadge tone={statusTone(product.status)}>
                     {statusLabel(product.status)}
-                  </span>
+                  </AdminStatusBadge>
                 </td>
                 <td>
                   <div className="product-order-cell">
@@ -250,40 +269,46 @@ export function ProductTable({
                         onDragStart={(event) => handleDragStart(event, product)}
                         onKeyDown={(event) => handleHandleKeyDown(event, product, index)}
                       >
-                        ⋮⋮
+                        <GripVertical aria-hidden="true" size={17} />
                       </span>
                     ) : null}
                   </div>
                 </td>
                 <td>{formatDate(product.updatedAt)}</td>
                 <td>
-                  <div className="product-row-actions">
+                  <div className="product-row-actions ui-row-actions">
                     {scope === 'active' ? (
                       <>
-                        <button
-                          type="button"
+                        <Button
+                          variant="ghost"
+                          size="compact"
                           disabled={working}
+                          aria-label={`编辑产品 ${product.title}`}
                           onClick={() => onEdit(product)}
                         >
                           编辑
-                        </button>
-                        <button
-                          className="text-danger"
-                          type="button"
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="compact"
+                          className="ui-row-action-danger"
                           disabled={working}
+                          aria-label={`删除产品 ${product.title}`}
                           onClick={() => onDelete(product)}
                         >
                           删除
-                        </button>
+                        </Button>
                       </>
                     ) : (
-                      <button
-                        type="button"
+                      <Button
+                        variant="secondary"
+                        size="compact"
                         disabled={working}
+                        aria-label={`恢复产品 ${product.title}`}
                         onClick={() => onRestore(product)}
                       >
                         恢复
-                      </button>
+                      </Button>
                     )}
                   </div>
                 </td>
