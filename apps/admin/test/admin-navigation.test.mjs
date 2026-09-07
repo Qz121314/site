@@ -32,7 +32,10 @@ test('primary domains consolidate content into visible asset domain', () => {
       ['system', '系统'],
     ],
   );
-  assert.equal(ADMIN_DOMAINS.some((domain) => domain.id === 'content'), false);
+  assert.equal(
+    ADMIN_DOMAINS.some((domain) => domain.id === 'content'),
+    false,
+  );
 });
 
 test('fixed settings views resolve to intended domains', () => {
