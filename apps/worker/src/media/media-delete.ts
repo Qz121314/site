@@ -26,6 +26,7 @@ type MediaReferenceRow = MediaDeleteRow & {
   section_browse_background_count: number;
   product_cover_count: number;
   product_gallery_count: number;
+  message_article_background_count: number;
 };
 
 type SnapshotRow = { media_keys_json: string };
@@ -79,7 +80,12 @@ async function referenceRows(
            (SELECT COUNT(*) FROM sections s WHERE s.icon_asset_id = ma.id) AS section_icon_count,
            (SELECT COUNT(*) FROM sections s WHERE s.browse_background_asset_id = ma.id) AS section_browse_background_count,
            (SELECT COUNT(*) FROM products p WHERE p.cover_asset_id = ma.id) AS product_cover_count,
-           (SELECT COUNT(*) FROM product_media pm WHERE pm.media_asset_id = ma.id) AS product_gallery_count
+           (SELECT COUNT(*) FROM product_media pm WHERE pm.media_asset_id = ma.id) AS product_gallery_count,
+           (
+             SELECT COUNT(*)
+             FROM message_article_references mar
+             WHERE mar.background_media_id = ma.id
+           ) AS message_article_background_count
          FROM media_assets ma
          WHERE ma.id IN (${placeholders(ids.length)})
            AND ma.status = 'ready'
@@ -99,7 +105,8 @@ function hasReferences(row: MediaReferenceRow): boolean {
       row.section_icon_count +
       row.section_browse_background_count +
       row.product_cover_count +
-      row.product_gallery_count >
+      row.product_gallery_count +
+      row.message_article_background_count >
     0
   );
 }
@@ -146,7 +153,12 @@ export async function deleteManagedMediaAssets(
              AND NOT EXISTS (SELECT 1 FROM sections s WHERE s.icon_asset_id = media_assets.id)
              AND NOT EXISTS (SELECT 1 FROM sections s WHERE s.browse_background_asset_id = media_assets.id)
              AND NOT EXISTS (SELECT 1 FROM products p WHERE p.cover_asset_id = media_assets.id)
-             AND NOT EXISTS (SELECT 1 FROM product_media pm WHERE pm.media_asset_id = media_assets.id)`,
+             AND NOT EXISTS (SELECT 1 FROM product_media pm WHERE pm.media_asset_id = media_assets.id)
+             AND NOT EXISTS (
+               SELECT 1
+               FROM message_article_references mar
+               WHERE mar.background_media_id = media_assets.id
+             )`,
         )
         .bind(now, now, row.id, row.updated_at),
     ),
