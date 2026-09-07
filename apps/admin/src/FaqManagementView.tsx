@@ -1,5 +1,15 @@
+import { ArrowDown, ArrowUp } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
 import { AdminApiError } from './api';
+import { Button } from './components/ui/button';
+import { AdminDialog } from './components/ui/dialog';
+import { AdminFeedbackState } from './components/ui/feedback-state';
+import { Input } from './components/ui/input';
+import {
+  AdminSegmentedControl,
+  AdminSegmentedItem,
+} from './components/ui/segmented-control';
+import { Textarea } from './components/ui/textarea';
 import {
   batchDeleteFaqs,
   createFaq,
@@ -284,22 +294,22 @@ export function FaqManagementView({ onSessionExpired }: FaqManagementViewProps) 
   return (
     <section className="faq-management" aria-label="FAQ 管理">
       <div className="faq-filter-bar">
-        <div className="scope-tabs" role="tablist" aria-label="FAQ 状态">
-          <button
+        <AdminSegmentedControl ariaLabel="FAQ 状态" className="scope-tabs">
+          <AdminSegmentedItem
+            selected={scope === 'active'}
             type="button"
-            className={scope === 'active' ? 'is-active' : undefined}
             onClick={() => void changeScope('active')}
           >
             当前 FAQ <span>{activeFaqs.length}</span>
-          </button>
-          <button
+          </AdminSegmentedItem>
+          <AdminSegmentedItem
+            selected={scope === 'trash'}
             type="button"
-            className={scope === 'trash' ? 'is-active' : undefined}
             onClick={() => void changeScope('trash')}
           >
             回收站 <span>{trashFaqs.length}</span>
-          </button>
-        </div>
+          </AdminSegmentedItem>
+        </AdminSegmentedControl>
         <label className="faq-search">
           <span>搜索</span>
           <input
@@ -309,13 +319,14 @@ export function FaqManagementView({ onSessionExpired }: FaqManagementViewProps) 
             onChange={(event) => setSearch(event.target.value)}
           />
         </label>
-        <button
-          className="primary-button faq-create-button"
+        <Button
+          className="faq-create-button"
+          variant="primary"
           type="button"
           onClick={openCreateEditor}
         >
           新增 FAQ
-        </button>
+        </Button>
       </div>
 
       {!editorOpen && errorMessage ? (
@@ -332,22 +343,20 @@ export function FaqManagementView({ onSessionExpired }: FaqManagementViewProps) 
       {scope === 'active' && selectedIds.size > 0 ? (
         <div className="selection-toolbar">
           <span>已选择 {selectedIds.size} 条 FAQ</span>
-          <button
-            className="danger-button"
+          <Button
+            variant="danger"
+            size="compact"
             type="button"
             disabled={working}
             onClick={() => setPendingDeleteIds([...selectedIds])}
           >
             批量删除
-          </button>
+          </Button>
         </div>
       ) : null}
 
       {loading ? (
-        <div className="settings-card settings-loading">
-          <div className="loading-indicator" />
-          <p>正在读取 FAQ…</p>
-        </div>
+        <AdminFeedbackState kind="loading" title="正在读取 FAQ" compact />
       ) : filteredFaqs.length ? (
         <div className="faq-list">
           {scope === 'active' ? (
@@ -392,239 +401,241 @@ export function FaqManagementView({ onSessionExpired }: FaqManagementViewProps) 
               <div className="faq-card-actions">
                 {scope === 'active' ? (
                   <>
-                    <button
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       type="button"
+                      aria-label="上移 FAQ"
                       title={canReorder ? '上移' : '搜索状态下不可排序'}
                       disabled={working || !canReorder || index === 0}
                       onClick={() => void moveFaq(faq, -1)}
                     >
-                      ↑
-                    </button>
-                    <button
+                      <ArrowUp aria-hidden="true" size={15} />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
                       type="button"
+                      aria-label="下移 FAQ"
                       title={canReorder ? '下移' : '搜索状态下不可排序'}
                       disabled={
                         working || !canReorder || index === filteredFaqs.length - 1
                       }
                       onClick={() => void moveFaq(faq, 1)}
                     >
-                      ↓
-                    </button>
-                    <button
+                      <ArrowDown aria-hidden="true" size={15} />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="compact"
                       type="button"
                       disabled={working}
                       onClick={() => openEditEditor(faq)}
                     >
                       编辑
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="compact"
                       className="text-danger"
                       type="button"
                       disabled={working}
                       onClick={() => setPendingDeleteIds([faq.id])}
                     >
                       删除
-                    </button>
+                    </Button>
                   </>
                 ) : (
-                  <button
+                  <Button
+                    variant="secondary"
+                    size="compact"
                     type="button"
                     disabled={working}
                     onClick={() => void handleRestore(faq)}
                   >
                     恢复
-                  </button>
+                  </Button>
                 )}
               </div>
             </article>
           ))}
         </div>
       ) : (
-        <div className="faq-empty-state">
-          <strong>
-            {search
+        <AdminFeedbackState
+          kind="empty"
+          title={
+            search
               ? '没有符合条件的 FAQ'
               : scope === 'trash'
                 ? '回收站为空'
-                : '还没有 FAQ'}
-          </strong>
-        </div>
+                : '还没有 FAQ'
+          }
+          description={search ? '请调整搜索关键词后重试。' : undefined}
+        />
       )}
 
-      {editorOpen ? (
-        <div className="admin-dialog-backdrop" role="presentation">
-          <section
-            className="admin-dialog faq-editor-dialog"
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="faq-editor-title"
-          >
-            <div className="admin-dialog-header">
-              <div>
-                <p>FAQ 内容</p>
-                <h3 id="faq-editor-title">{editingFaq ? '编辑 FAQ' : '新增 FAQ'}</h3>
-              </div>
-              <button
-                type="button"
-                aria-label="关闭"
-                disabled={saving}
-                onClick={() => setEditorOpen(false)}
-              >
-                ×
-              </button>
-            </div>
-            <form
-              className="faq-editor-form"
-              onSubmit={(event) => void handleSave(event)}
+      <AdminDialog
+        open={editorOpen}
+        title={editingFaq ? '编辑 FAQ' : '新增 FAQ'}
+        eyebrow="FAQ 内容"
+        onClose={() => setEditorOpen(false)}
+        closeDisabled={saving}
+        size="medium"
+        footer={
+          <>
+            <Button
+              variant="secondary"
+              type="button"
+              disabled={saving}
+              onClick={() => setEditorOpen(false)}
             >
-              {errorMessage ? (
-                <div className="notice notice-error" role="alert">
-                  {errorMessage}
-                </div>
-              ) : null}
-              <label>
-                <span>标题</span>
-                <input
-                  type="text"
-                  value={form.title}
-                  autoFocus
-                  required
-                  maxLength={300}
-                  onChange={(event) => {
-                    setForm((current) => ({ ...current, title: event.target.value }));
-                    setErrorMessage('');
-                  }}
-                />
+              取消
+            </Button>
+            <Button
+              variant="primary"
+              type="submit"
+              form="faq-editor-form"
+              loading={saving}
+            >
+              保存 FAQ
+            </Button>
+          </>
+        }
+      >
+        <form
+          id="faq-editor-form"
+          className="faq-editor-form"
+          onSubmit={(event) => void handleSave(event)}
+        >
+          {errorMessage ? (
+            <AdminFeedbackState
+              kind="error"
+              title="FAQ 无法保存"
+              description={errorMessage}
+              compact
+            />
+          ) : null}
+          <label>
+            <span>标题</span>
+            <Input
+              type="text"
+              value={form.title}
+              autoFocus
+              required
+              maxLength={300}
+              onChange={(event) => {
+                setForm((current) => ({ ...current, title: event.target.value }));
+                setErrorMessage('');
+              }}
+            />
+          </label>
+          <div className="faq-editor-meta-grid">
+            <label>
+              <span>排序</span>
+              <Input
+                type="number"
+                min={0}
+                max={1_000_000}
+                step={1}
+                required
+                value={form.sortOrder}
+                onChange={(event) => {
+                  setForm((current) => ({
+                    ...current,
+                    sortOrder: Number(event.target.value),
+                  }));
+                  setErrorMessage('');
+                }}
+              />
+            </label>
+            <label className="faq-enabled-field">
+              <input
+                type="checkbox"
+                checked={form.isEnabled}
+                onChange={(event) => {
+                  setForm((current) => ({
+                    ...current,
+                    isEnabled: event.target.checked,
+                  }));
+                  setErrorMessage('');
+                }}
+              />
+              <span>启用前台展示</span>
+            </label>
+          </div>
+          <div className="faq-body-field">
+            <div className="faq-body-label">
+              <label htmlFor="faq-body">
+                <strong>正文</strong>
               </label>
-              <div className="faq-editor-meta-grid">
-                <label>
-                  <span>排序</span>
-                  <input
-                    type="number"
-                    min={0}
-                    max={1_000_000}
-                    step={1}
-                    required
-                    value={form.sortOrder}
-                    onChange={(event) => {
-                      setForm((current) => ({
-                        ...current,
-                        sortOrder: Number(event.target.value),
-                      }));
-                      setErrorMessage('');
-                    }}
-                  />
-                </label>
-                <label className="faq-enabled-field">
-                  <input
-                    type="checkbox"
-                    checked={form.isEnabled}
-                    onChange={(event) => {
-                      setForm((current) => ({
-                        ...current,
-                        isEnabled: event.target.checked,
-                      }));
-                      setErrorMessage('');
-                    }}
-                  />
-                  <span>启用前台展示</span>
-                </label>
-              </div>
-              <div className="faq-body-field">
-                <div className="faq-body-label">
-                  <label htmlFor="faq-body">
-                    <strong>正文</strong>
-                  </label>
-                  <div className="faq-editor-tabs" role="tablist">
-                    <button
-                      type="button"
-                      className={editorMode === 'edit' ? 'is-active' : undefined}
-                      aria-pressed={editorMode === 'edit'}
-                      onClick={() => setEditorMode('edit')}
-                    >
-                      编辑
-                    </button>
-                    <button
-                      type="button"
-                      className={editorMode === 'preview' ? 'is-active' : undefined}
-                      aria-pressed={editorMode === 'preview'}
-                      onClick={() => setEditorMode('preview')}
-                    >
-                      预览
-                    </button>
-                  </div>
-                </div>
-                {editorMode === 'edit' ? (
-                  <textarea
-                    id="faq-body"
-                    value={form.body}
-                    required
-                    maxLength={20_000}
-                    onChange={(event) => {
-                      setForm((current) => ({ ...current, body: event.target.value }));
-                      setErrorMessage('');
-                    }}
-                  />
-                ) : (
-                  <MarkdownPreview source={form.body} />
-                )}
-              </div>
-              <div className="admin-dialog-actions">
-                <button
+              <AdminSegmentedControl ariaLabel="FAQ 正文模式">
+                <AdminSegmentedItem
+                  selected={editorMode === 'edit'}
                   type="button"
-                  className="secondary-button"
-                  disabled={saving}
-                  onClick={() => setEditorOpen(false)}
+                  onClick={() => setEditorMode('edit')}
                 >
-                  取消
-                </button>
-                <button className="primary-button" type="submit" disabled={saving}>
-                  {saving ? '正在保存…' : '保存 FAQ'}
-                </button>
-              </div>
-            </form>
-          </section>
-        </div>
-      ) : null}
+                  编辑
+                </AdminSegmentedItem>
+                <AdminSegmentedItem
+                  selected={editorMode === 'preview'}
+                  type="button"
+                  onClick={() => setEditorMode('preview')}
+                >
+                  预览
+                </AdminSegmentedItem>
+              </AdminSegmentedControl>
+            </div>
+            {editorMode === 'edit' ? (
+              <Textarea
+                id="faq-body"
+                value={form.body}
+                required
+                maxLength={20_000}
+                onChange={(event) => {
+                  setForm((current) => ({ ...current, body: event.target.value }));
+                  setErrorMessage('');
+                }}
+              />
+            ) : (
+              <MarkdownPreview source={form.body} />
+            )}
+          </div>
+        </form>
+      </AdminDialog>
 
-      {pendingDeleteIds.length > 0 ? (
-        <div className="admin-dialog-backdrop" role="presentation">
-          <section
-            className="admin-dialog admin-dialog-small"
-            role="alertdialog"
-            aria-modal="true"
-            aria-labelledby="faq-delete-title"
-          >
-            <div className="admin-dialog-header">
-              <div>
-                <p>删除 FAQ</p>
-                <h3 id="faq-delete-title">移入回收站？</h3>
-              </div>
-            </div>
-            <p className="delete-warning">
-              将 {pendingDeleteIds.length} 条 FAQ 移入回收站，可随后恢复。
-            </p>
-            <div className="admin-dialog-actions">
-              <button
-                type="button"
-                className="secondary-button"
-                disabled={working}
-                onClick={() => setPendingDeleteIds([])}
-              >
-                取消
-              </button>
-              <button
-                type="button"
-                className="danger-button"
-                disabled={working}
-                onClick={() => void confirmDelete()}
-              >
-                {working ? '正在删除…' : '确认删除'}
-              </button>
-            </div>
-          </section>
-        </div>
-      ) : null}
+      <AdminDialog
+        open={pendingDeleteIds.length > 0}
+        title="移入回收站？"
+        eyebrow="删除 FAQ"
+        description={`将 ${pendingDeleteIds.length} 条 FAQ 移入回收站，可随后恢复。`}
+        role="alertdialog"
+        size="small"
+        showClose={false}
+        closeDisabled={working}
+        onClose={() => setPendingDeleteIds([])}
+        footer={
+          <>
+            <Button
+              variant="secondary"
+              type="button"
+              disabled={working}
+              onClick={() => setPendingDeleteIds([])}
+            >
+              取消
+            </Button>
+            <Button
+              variant="danger"
+              type="button"
+              loading={working}
+              onClick={() => void confirmDelete()}
+            >
+              确认删除
+            </Button>
+          </>
+        }
+      >
+        <p className="delete-warning">删除后不会立即永久清除内容。</p>
+      </AdminDialog>
     </section>
   );
 }
