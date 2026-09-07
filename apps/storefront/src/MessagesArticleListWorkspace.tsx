@@ -20,7 +20,9 @@ export function MessagesArticleListWorkspace({
   supportAvailable?: boolean | null;
 }) {
   const queryClient = useQueryClient();
-  const bootstrap = queryClient.getQueryData<StorefrontBootstrap>(['storefront-bootstrap']);
+  const bootstrap = queryClient.getQueryData<StorefrontBootstrap>([
+    'storefront-bootstrap',
+  ]);
   const mediaBaseUrl = bootstrap?.site.site.mediaBaseUrl ?? '';
   const hasArticles = articles.length > 0;
 

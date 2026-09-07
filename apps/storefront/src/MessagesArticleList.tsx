@@ -37,7 +37,9 @@ function MessagesArticleCard({
       ) : null}
       <span className="messages-article-card-copy">
         <span className="messages-article-card-kicker">
-          <span className="sr-only">{unread ? 'Unread article. ' : 'Read article. '}</span>
+          <span className="sr-only">
+            {unread ? 'Unread article. ' : 'Read article. '}
+          </span>
           {unread ? 'New' : 'Article'}
         </span>
         <h3>{article.title}</h3>
@@ -69,7 +71,10 @@ export function MessagesArticleList({
   if (articles.length === 0) return null;
 
   return (
-    <section className="messages-article-section" aria-labelledby="messages-article-heading">
+    <section
+      className="messages-article-section"
+      aria-labelledby="messages-article-heading"
+    >
       <header className="messages-article-section-header">
         <span className="messages-article-section-icon" aria-hidden="true">
           <FileText />

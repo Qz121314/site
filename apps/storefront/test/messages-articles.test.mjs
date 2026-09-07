@@ -35,88 +35,105 @@ function bootstrapWithMessageArticles(messageArticles) {
   };
 }
 
-test('bootstrap message article metadata is sanitized, sorted, deduplicated, and body-free', () => {
-  const articles = getMessageArticlesFromBootstrap(
-    bootstrapWithMessageArticles([
-      {
-        articleId: 'article-b',
-        title: 'Beta',
-        preview: 'Second',
-        backgroundObjectKey: ' media/messages/beta.webp ',
-        sortOrder: 20,
-        body: '# Full Markdown must not escape bootstrap metadata',
-      },
+test(
+  'bootstrap message article metadata is sanitized, sorted, deduplicated, and body-free',
+  () => {
+    const articles = getMessageArticlesFromBootstrap(
+      bootstrapWithMessageArticles([
+        {
+          articleId: 'article-b',
+          title: 'Beta',
+          preview: 'Second',
+          backgroundObjectKey: ' media/messages/beta.webp ',
+          sortOrder: 20,
+          body: '# Full Markdown must not escape bootstrap metadata',
+        },
+        {
+          articleId: 'article-a',
+          title: 'Alpha',
+          preview: 'First',
+          backgroundObjectKey: '   ',
+          sortOrder: 10,
+        },
+        {
+          articleId: 'article-a',
+          title: 'Duplicate Alpha',
+          preview: 'Duplicate',
+          sortOrder: 30,
+        },
+        { articleId: '', title: 'Bad', preview: 'Bad', sortOrder: 0 },
+        {
+          articleId: 'article-c',
+          title: 'Bad sort',
+          preview: 'Bad',
+          sortOrder: '1',
+        },
+        null,
+      ]),
+    );
+
+    assert.deepEqual(articles, [
       {
         articleId: 'article-a',
         title: 'Alpha',
         preview: 'First',
-        backgroundObjectKey: '   ',
+        backgroundObjectKey: null,
         sortOrder: 10,
       },
       {
-        articleId: 'article-a',
-        title: 'Duplicate Alpha',
-        preview: 'Duplicate',
-        sortOrder: 30,
+        articleId: 'article-b',
+        title: 'Beta',
+        preview: 'Second',
+        backgroundObjectKey: 'media/messages/beta.webp',
+        sortOrder: 20,
       },
-      { articleId: '', title: 'Bad', preview: 'Bad', sortOrder: 0 },
-      { articleId: 'article-c', title: 'Bad sort', preview: 'Bad', sortOrder: '1' },
-      null,
-    ]),
-  );
+    ]);
+    assert.equal('body' in articles[1], false);
+    assert.deepEqual(
+      getMessageArticlesFromBootstrap(bootstrapWithMessageArticles(undefined)),
+      [],
+    );
+  },
+);
 
-  assert.deepEqual(articles, [
-    {
-      articleId: 'article-a',
-      title: 'Alpha',
-      preview: 'First',
-      backgroundObjectKey: null,
-      sortOrder: 10,
-    },
-    {
-      articleId: 'article-b',
-      title: 'Beta',
-      preview: 'Second',
-      backgroundObjectKey: 'media/messages/beta.webp',
-      sortOrder: 20,
-    },
-  ]);
-  assert.equal('body' in articles[1], false);
-  assert.deepEqual(
-    getMessageArticlesFromBootstrap(bootstrapWithMessageArticles(undefined)),
-    [],
-  );
-});
+test(
+  'first visit treats every active message article as unread without support identity',
+  () => {
+    const active = getMessageArticlesFromBootstrap(
+      bootstrapWithMessageArticles([
+        { articleId: 'article-a', title: 'A', preview: 'A', sortOrder: 0 },
+        { articleId: 'article-b', title: 'B', preview: 'B', sortOrder: 1 },
+      ]),
+    );
+    const storage = memoryStorage();
 
-test('first visit treats every active message article as unread without support identity', () => {
-  const active = getMessageArticlesFromBootstrap(
-    bootstrapWithMessageArticles([
+    assert.deepEqual([...readMessageArticleReadIds(storage)], []);
+    assert.equal(
+      countUnreadMessageArticles(active, readMessageArticleReadIds(storage)),
+      2,
+    );
+  },
+);
+
+test(
+  'marking one article read persists only its ID and leaves other active articles unread',
+  () => {
+    const active = [
       { articleId: 'article-a', title: 'A', preview: 'A', sortOrder: 0 },
       { articleId: 'article-b', title: 'B', preview: 'B', sortOrder: 1 },
-    ]),
-  );
-  const storage = memoryStorage();
+      { articleId: 'article-c', title: 'C', preview: 'C', sortOrder: 2 },
+    ];
+    const storage = memoryStorage();
 
-  assert.deepEqual([...readMessageArticleReadIds(storage)], []);
-  assert.equal(countUnreadMessageArticles(active, readMessageArticleReadIds(storage)), 2);
-});
+    markMessageArticleRead('article-b', storage, false);
 
-test('marking one article read persists only its ID and leaves other active articles unread', () => {
-  const active = [
-    { articleId: 'article-a', title: 'A', preview: 'A', sortOrder: 0 },
-    { articleId: 'article-b', title: 'B', preview: 'B', sortOrder: 1 },
-    { articleId: 'article-c', title: 'C', preview: 'C', sortOrder: 2 },
-  ];
-  const storage = memoryStorage();
-
-  markMessageArticleRead('article-b', storage, false);
-
-  assert.deepEqual(JSON.parse(storage.value()), ['article-b']);
-  const readIds = readMessageArticleReadIds(storage);
-  assert.equal(readIds.has('article-b'), true);
-  assert.equal(readIds.has('article-a'), false);
-  assert.equal(countUnreadMessageArticles(active, readIds), 2);
-});
+    assert.deepEqual(JSON.parse(storage.value()), ['article-b']);
+    const readIds = readMessageArticleReadIds(storage);
+    assert.equal(readIds.has('article-b'), true);
+    assert.equal(readIds.has('article-a'), false);
+    assert.equal(countUnreadMessageArticles(active, readIds), 2);
+  },
+);
 
 test('malformed and duplicate localStorage state recovers safely', () => {
   assert.deepEqual([...readMessageArticleReadIds(memoryStorage('{bad json'))], []);
@@ -137,65 +154,89 @@ test('ghost IDs and inactive articles do not affect current unread count', () =>
     { articleId: 'article-b', title: 'B', preview: 'B', sortOrder: 1 },
   ];
 
-  assert.equal(countUnreadMessageArticles(active, readMessageArticleReadIds(storage)), 1);
-});
-
-test('editing or reordering article metadata does not reset Article-ID read state', () => {
-  const storage = memoryStorage('["article-a"]');
-  const original = [
-    {
-      articleId: 'article-a',
-      title: 'Original title',
-      preview: 'Original preview',
-      backgroundObjectKey: 'media/messages/original.webp',
-      sortOrder: 0,
-    },
-  ];
-  const updated = [
-    {
-      articleId: 'article-a',
-      title: 'Updated title',
-      preview: 'Updated preview',
-      backgroundObjectKey: 'media/messages/changed.webp',
-      sortOrder: 999,
-    },
-  ];
-
-  assert.equal(countUnreadMessageArticles(original, readMessageArticleReadIds(storage)), 0);
-  assert.equal(countUnreadMessageArticles(updated, readMessageArticleReadIds(storage)), 0);
-});
-
-test('messages badge composes independent support and article unread counts safely', () => {
-  assert.equal(composeMessagesBadge(0, 2), 2);
-  assert.equal(composeMessagesBadge(3, 2), 5);
   assert.equal(
-    composeMessagesBadge(0, 2),
-    2,
-    'support reset must preserve article unread',
+    countUnreadMessageArticles(active, readMessageArticleReadIds(storage)),
+    1,
   );
-  assert.equal(composeMessagesBadge(-1, Number.NaN), 0);
-  assert.equal(composeMessagesBadge(2.9, 1.9), 3);
 });
 
-test('Messages Article presentation remains bootstrap-only and creates no fetch owner', () => {
-  const helperSource = readFileSync(
-    new URL('../src/messages-articles.ts', import.meta.url),
-    'utf8',
-  );
-  const listSource = readFileSync(
-    new URL('../src/MessagesArticleList.tsx', import.meta.url),
-    'utf8',
-  );
-  const workspaceSource = readFileSync(
-    new URL('../src/MessagesArticleListWorkspace.tsx', import.meta.url),
-    'utf8',
-  );
-  const source = `${helperSource}\n${listSource}\n${workspaceSource}`;
+test(
+  'editing or reordering article metadata does not reset Article-ID read state',
+  () => {
+    const storage = memoryStorage('["article-a"]');
+    const original = [
+      {
+        articleId: 'article-a',
+        title: 'Original title',
+        preview: 'Original preview',
+        backgroundObjectKey: 'media/messages/original.webp',
+        sortOrder: 0,
+      },
+    ];
+    const updated = [
+      {
+        articleId: 'article-a',
+        title: 'Updated title',
+        preview: 'Updated preview',
+        backgroundObjectKey: 'media/messages/changed.webp',
+        sortOrder: 999,
+      },
+    ];
 
-  assert.doesNotMatch(source, /\bfetch\s*\(/u);
-  assert.doesNotMatch(source, /\/api\/[^'"`]*(?:article|media)/iu);
-  assert.doesNotMatch(source, /siteSupportGateway|loadPublicSupportConnections/u);
-  assert.match(workspaceSource, /getQueryData<StorefrontBootstrap>/u);
-  assert.match(listSource, /mediaUrl\(mediaBaseUrl, article\.backgroundObjectKey\)/u);
-  assert.match(helperSource, /site:messages:read-articles/u);
-});
+    assert.equal(
+      countUnreadMessageArticles(original, readMessageArticleReadIds(storage)),
+      0,
+    );
+    assert.equal(
+      countUnreadMessageArticles(updated, readMessageArticleReadIds(storage)),
+      0,
+    );
+  },
+);
+
+test(
+  'messages badge composes independent support and article unread counts safely',
+  () => {
+    assert.equal(composeMessagesBadge(0, 2), 2);
+    assert.equal(composeMessagesBadge(3, 2), 5);
+    assert.equal(
+      composeMessagesBadge(0, 2),
+      2,
+      'support reset must preserve article unread',
+    );
+    assert.equal(composeMessagesBadge(-1, Number.NaN), 0);
+    assert.equal(composeMessagesBadge(2.9, 1.9), 3);
+  },
+);
+
+test(
+  'Messages Article presentation remains bootstrap-only and creates no fetch owner',
+  () => {
+    const helperSource = readFileSync(
+      new URL('../src/messages-articles.ts', import.meta.url),
+      'utf8',
+    );
+    const listSource = readFileSync(
+      new URL('../src/MessagesArticleList.tsx', import.meta.url),
+      'utf8',
+    );
+    const workspaceSource = readFileSync(
+      new URL('../src/MessagesArticleListWorkspace.tsx', import.meta.url),
+      'utf8',
+    );
+    const source = `${helperSource}\n${listSource}\n${workspaceSource}`;
+
+    assert.doesNotMatch(source, /\bfetch\s*\(/u);
+    assert.doesNotMatch(source, /\/api\/[^'"`]*(?:article|media)/iu);
+    assert.doesNotMatch(
+      source,
+      /siteSupportGateway|loadPublicSupportConnections/u,
+    );
+    assert.match(workspaceSource, /getQueryData<StorefrontBootstrap>/u);
+    assert.match(
+      listSource,
+      /mediaUrl\(mediaBaseUrl, article\.backgroundObjectKey\)/u,
+    );
+    assert.match(helperSource, /site:messages:read-articles/u);
+  },
+);
