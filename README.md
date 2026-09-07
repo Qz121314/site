@@ -83,6 +83,7 @@ Home
 - 产品详情、结构化图片/GIF/视频和 Markdown；
 - `/go/:productId` 实时 CTA 分发；
 - Messages / Customer Service 接入；
+- Messages promotional Article cards；
 - Article generic detail route；
 - PWA 安装与 Service Worker；
 - runtime Theme、Bottom Navigation 和媒体域名配置。
@@ -120,20 +121,21 @@ Article
 ≠ Customer Service data
 ```
 
-截至当前 C2 baseline，已经完成：
+截至当前 C3 baseline，已经完成：
 
 - Admin Article Center 管理与 Markdown 编辑体验；
 - reusable Article 数据/公开内容契约；
 - Admin Messages Article placement 配置，可选择 0..N 个 Article；
 - placement 可保存独立背景素材引用；
 - Storefront bootstrap 可携带 active Messages Article 的轻量 metadata；
+- Storefront Messages 顶部按 placement 顺序呈现 promotional Article Cards，并支持独立背景媒体；
 - Article unread 与 support unread 独立计算；
 - Messages badge 可以组合 support unread + Article unread；
 - generic Article route：`/articles/:articleId/`。
 
 兼容边界仍然保留：历史 FAQ storage/publication module 和 `/faq/`、`/faq/:id/` 路由继续可读，旧 FAQ 内容不会因为 Article Center 抽象而失效。兼容命名不代表新内容模型仍以 FAQ 为中心。
 
-**C3 尚未完成。** 当前不要把 Storefront Messages conversation list 顶部的 promotional Article Cards 视为已经交付；C3 将负责把已配置 placement 正式呈现为 Storefront Messages Article Cards。现阶段 README 只描述已经存在的 metadata/unread/routing contract，不提前声明卡片 UI 完成。
+Storefront Messages Article Cards 只消费现有 bootstrap metadata，不为列表新增 Article、媒体 metadata 或 support request。打开 Messages 本身不会标记 Article 已读；只有成功进入对应 generic Article detail 后才按 Article ID 记录 read state。背景媒体继续使用当前 `mediaBaseUrl + object_key` abstraction，加载失败时退化为无背景但仍可访问的 Article Card。
 
 ## Conversion and Customer Service
 

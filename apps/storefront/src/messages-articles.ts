@@ -43,6 +43,8 @@ function parseMessageArticle(value: unknown): MessageArticleMetadata | null {
   const articleId = typeof value.articleId === 'string' ? value.articleId.trim() : '';
   const title = typeof value.title === 'string' ? value.title.trim() : '';
   const preview = typeof value.preview === 'string' ? value.preview.trim() : '';
+  const backgroundObjectKey =
+    typeof value.backgroundObjectKey === 'string' ? value.backgroundObjectKey.trim() : '';
   const sortOrder = value.sortOrder;
   if (
     !articleId ||
@@ -57,8 +59,7 @@ function parseMessageArticle(value: unknown): MessageArticleMetadata | null {
     articleId,
     title,
     preview,
-    backgroundObjectKey:
-      typeof value.backgroundObjectKey === 'string' ? value.backgroundObjectKey : null,
+    backgroundObjectKey: backgroundObjectKey || null,
     sortOrder,
   };
 }
