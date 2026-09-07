@@ -24,54 +24,8 @@
 }
 
 .section-workspace-nav {
-  display: flex;
   min-width: 0;
-  align-items: center;
-  gap: 4px;
-  overflow-x: auto;
-  scrollbar-width: thin;
-}
-
-.section-workspace-nav .ui-button {
-  min-width: 72px;
-  min-height: 44px;
-  flex: 0 0 auto;
-  padding: 0 12px;
-  border: 1px solid transparent;
-  border-radius: 7px;
-  color: #667085;
-  background: transparent;
-  box-shadow: none;
-  font-size: 0.78rem;
-  font-weight: 680;
-  white-space: nowrap;
-}
-
-.section-workspace-nav .ui-button:hover:not(:disabled) {
-  color: #273142;
-  border-color: #e0e5ec;
-  background: #f3f5f7;
-}
-
-.section-workspace-nav .ui-button.is-active {
-  color: #172033;
-  border-color: rgb(244 90 38 / 42%);
-  background: rgb(244 90 38 / 10%);
-  box-shadow: inset 0 0 0 1px rgb(244 90 38 / 8%);
-  font-weight: 800;
-}
-
-.section-workspace-nav .ui-button:focus-visible {
-  outline: 2px solid #f45a26;
-  outline-offset: -2px;
-}
-
-.admin-secondary-sidebar.is-catalog .admin-secondary-link.ui-button.is-active {
-  color: #172033;
-  border-color: rgb(244 90 38 / 32%);
-  background: rgb(244 90 38 / 9%);
-  box-shadow: inset 4px 0 0 #f45a26;
-  font-weight: 800;
+  flex: 0 1 auto;
 }
 
 @media (min-width: 900px) {
@@ -95,11 +49,5 @@
   .section-workspace-nav {
     flex: 1 1 auto;
     overscroll-behavior-inline: contain;
-  }
-
-  .section-workspace-nav .ui-button {
-    min-width: 68px;
-    min-height: 44px;
-    padding-inline: 11px;
   }
 }
