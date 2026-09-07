@@ -144,6 +144,7 @@ App Shell owns persistent Header, Bottom Navigation, route action host and fixed
 ## UI ownership
 
 **Admin**
+
 - Shared controls: `apps/admin/src/components/ui`.
 - Radix/shadcn-style primitives, `cn`, class-variance-authority and Lucide are the shared component model; no second packaged Admin design system.
 - `admin-foundation.css` owns tokens/reset/global primitives; `admin-ui-system.css` owns shared component presentation; page CSS owns page/business layout.
@@ -151,6 +152,7 @@ App Shell owns persistent Header, Bottom Navigation, route action host and fixed
 - Do not solve normal cascade ownership with new `!important` or a final override layer.
 
 **Storefront**
+
 - Keeps its own `packages/storefront-ui`, Theme Tokens, App Shell, PWA and VisualViewport ownership.
 - Shared appearance belongs in `packages/storefront-ui`; route CSS owns route geometry and consumes shared tokens. Do not apply Admin skin to Storefront.
 
