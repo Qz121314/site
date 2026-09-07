@@ -1,0 +1,75 @@
+name: Phase B.1 Validate Once
+
+on:
+  push:
+    branches:
+      - refactor/admin-content-asset-ia
+
+permissions:
+  contents: write
+
+jobs:
+  validate:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          ref: refactor/admin-content-asset-ia
+          fetch-depth: 0
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 11.19.0
+          run_install: false
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Run changed-file fixer
+        run: pnpm fix:changed
+
+      - name: Run formatting check
+        run: pnpm format
+
+      - name: Run lint
+        run: pnpm lint
+
+      - name: Run typecheck
+        run: pnpm typecheck
+
+      - name: Run targeted Admin IA tests
+        run: >-
+          pnpm --dir apps/admin exec node --test --experimental-strip-types
+          --import ./test/register-ts-resolver.mjs
+          test/admin-navigation.test.mjs
+          test/admin-shell-contract.test.mjs
+
+      - name: Run complete repository verification
+        run: pnpm verify
+
+      - name: Commit canonical fixer output if needed
+        run: |
+          git add \
+            apps/admin/src/admin-navigation.ts \
+            apps/admin/src/shell/AdminPrimarySidebar.tsx \
+            apps/admin/test/admin-navigation.test.mjs \
+            apps/admin/test/admin-shell-contract.test.mjs
+          if git diff --cached --quiet; then
+            echo "No fixer changes required."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git commit -m "style(admin): apply canonical Phase B.1 formatting"
+          git push origin HEAD:refactor/admin-content-asset-ia
