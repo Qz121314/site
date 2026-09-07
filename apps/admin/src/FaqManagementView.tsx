@@ -294,7 +294,7 @@ export function FaqManagementView({ onSessionExpired }: FaqManagementViewProps) 
   return (
     <section className="faq-management" aria-label="FAQ 管理">
       <div className="faq-filter-bar">
-        <AdminSegmentedControl ariaLabel="FAQ 状态" className="scope-tabs">
+        <AdminSegmentedControl ariaLabel="FAQ 状态" className="faq-scope-segmented">
           <AdminSegmentedItem
             selected={scope === 'active'}
             type="button"
