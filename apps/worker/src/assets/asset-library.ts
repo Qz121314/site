@@ -37,6 +37,7 @@ export type MediaAssetReferenceRow = {
   section_icon_count: number;
   product_cover_count: number;
   product_gallery_count: number;
+  message_article_background_count: number;
 };
 
 type AssetCleanupGuardRow = {
@@ -113,6 +114,12 @@ export function countReferences(references: AssetReferenceCounts): number {
     references.sectionIcon +
     references.productCover +
     references.productGallery
+  );
+}
+
+function countRowReferences(row: MediaAssetReferenceRow | null): number {
+  return (
+    countRowReferences(row) + (row?.message_article_background_count ?? 0)
   );
 }
 
@@ -263,7 +270,7 @@ async function synchronizeCleanupGuards(
   const statements: D1PreparedStatement[] = [];
 
   for (const row of rows.values()) {
-    const referenceCount = countReferences(toReferenceCounts(row));
+    const referenceCount = countRowReferences(row);
     const existing = guards.get(row.object_key);
 
     if (referenceCount > 0 || !guardVersion) {
@@ -312,7 +319,7 @@ function legacyRetentionBlocked(
     row &&
     guard &&
     retainedVersions.has(guard.guard_content_version) &&
-    countReferences(toReferenceCounts(row)) === 0,
+    countRowReferences(row) === 0,
   );
 }
 
@@ -322,7 +329,7 @@ function modularRetentionBlocked(
   protectedKeys: Set<string>,
 ): boolean {
   return Boolean(
-    row && countReferences(toReferenceCounts(row)) === 0 && protectedKeys.has(key),
+    row && countRowReferences(row) === 0 && protectedKeys.has(key),
   );
 }
 
@@ -351,7 +358,12 @@ export async function getMediaAssetReferenceRows(
          ) AS section_icon_count,
          (SELECT COUNT(*) FROM products p WHERE p.cover_asset_id = ma.id) AS product_cover_count,
          (SELECT COUNT(*) FROM product_media pm WHERE pm.media_asset_id = ma.id)
-           AS product_gallery_count
+           AS product_gallery_count,
+         (
+           SELECT COUNT(*)
+           FROM message_article_references mar
+           WHERE mar.background_media_id = ma.id
+         ) AS message_article_background_count
        FROM media_assets ma
        WHERE ma.object_key IN (${buildPlaceholders(keys.length)})`,
     )
@@ -469,7 +481,7 @@ export async function evaluateCleanupCandidates(
   return keys.map((key, index) => {
     const object = objects[index] ?? null;
     const row = rows.get(key) ?? null;
-    const referenceCount = countReferences(toReferenceCounts(row));
+    const referenceCount = countRowReferences(row);
     const contentType = object?.httpMetadata?.contentType ?? inferContentType(key);
     const isImage = isImageObject(key, contentType);
     const snapshotProtected = protection.modular
@@ -510,6 +522,11 @@ export function createMarkMediaAssetDeletedStatement(
          AND NOT EXISTS (SELECT 1 FROM products p WHERE p.cover_asset_id = media_assets.id)
          AND NOT EXISTS (
            SELECT 1 FROM product_media pm WHERE pm.media_asset_id = media_assets.id
+         )
+         AND NOT EXISTS (
+           SELECT 1
+           FROM message_article_references mar
+           WHERE mar.background_media_id = media_assets.id
          )`,
     )
     .bind(now, now, row.id, row.updated_at);
