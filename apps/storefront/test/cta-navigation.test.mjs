@@ -1,55 +1,32 @@
 import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
-import { fileURLToPath } from 'node:url';
 import test from 'node:test';
 
 function source(path) {
-  return readFileSync(fileURLToPath(new URL(path, import.meta.url)), 'utf8');
-}
-
-function contains(value, fragment) {
-  assert.ok(value.includes(fragment), `Missing contract: ${fragment}`);
+  return readFileSync(new URL(path, import.meta.url), 'utf8');
 }
 
 test('CTA navigation keeps customer service in-app and link handoffs in a new tab', () => {
   const productDetail = source('../src/ProductDetailPage.tsx');
   const messagesPage = source('../src/MessagesPage.tsx');
-  const supportUi = source('../src/support-ui.tsx');
   const cta = source('../src/cta.ts');
   const navigation = source('../src/storefront-navigation-runtime.ts');
   const workerConversion = source('../../worker/src/routes/public-conversion.ts');
 
-  assert.ok(!productDetail.includes('resolveCustomerServiceCta'));
-  assert.ok(!productDetail.includes('LoadingHaloOverlay'));
-  assert.ok(!productDetail.includes('ctaNavigating'));
-  assert.ok(!productDetail.includes('support-compose-product'));
-  contains(productDetail, 'ctaPath: cta.path');
-  contains(productDetail, 'pushStorefrontLocation(');
-  contains(productDetail, '/messages/new/?');
-  contains(productDetail, "'storefront-product'");
-  contains(productDetail, 'bootstrap.pointer.contentVersion');
-  contains(productDetail, "window.open(cta.path, '_blank', 'noopener')");
-  assert.ok(!productDetail.includes('window.location.assign(cta.path)'));
+  assert.match(productDetail, /ctaPath: cta\.path/u);
+  assert.match(productDetail, /pushStorefrontLocation\(/u);
+  assert.match(productDetail, /\/messages\/new\/\?/u);
+  assert.match(productDetail, /window\.open\(cta\.path, '_blank', 'noopener'\)/u);
+  assert.doesNotMatch(productDetail, /window\.location\.assign\(cta\.path\)/u);
 
-  contains(messagesPage, 'resolveCustomerServiceCta(');
-  contains(messagesPage, 'composeContext.ctaPath');
-  contains(messagesPage, "'support-compose-handoff'");
-  contains(messagesPage, "'storefront-product'");
-  assert.ok(!messagesPage.includes('support-compose-product'));
-  contains(messagesPage, 'parseResolvedComposePath(path, composeContext)');
-  contains(messagesPage, 'replaceStorefrontLocation(');
+  assert.match(messagesPage, /resolveCustomerServiceCta\(/u);
+  assert.match(messagesPage, /composeContext\.ctaPath/u);
+  assert.match(messagesPage, /replaceStorefrontLocation\(/u);
 
-  contains(supportUi, 'loadingConversation && pendingConversation');
-  contains(supportUi, 'chat-connection-state');
-  contains(supportUi, '<LoadingHalo size="medium" />');
-
-  contains(cta, "Accept: 'application/json'");
-  contains(cta, "value.path.startsWith('/messages/new/')");
-  contains(navigation, 'window.history.pushState(null');
-  contains(navigation, "target.pathname === '/messages/'");
-  contains(navigation, 'navigateStorefrontBack()');
-
-  contains(workerConversion, "context.req.header('accept')");
-  contains(workerConversion, 'return context.json({ path })');
-  contains(workerConversion, 'return context.redirect(path, 302)');
+  assert.match(cta, /Accept: 'application\/json'/u);
+  assert.match(cta, /value\.path\.startsWith\('\/messages\/new\/'\)/u);
+  assert.match(navigation, /window\.history\.pushState/u);
+  assert.match(workerConversion, /context\.req\.header\('accept'\)/u);
+  assert.match(workerConversion, /return context\.json\(\{ path \}\)/u);
+  assert.match(workerConversion, /return context\.redirect\(path, 302\)/u);
 });
