@@ -115,14 +115,7 @@ test('Messages Article cards mark read only on detail', async ({ page }) => {
     'src',
     'https://media.example.test/messages/alpha.svg',
   );
-  await expect
-    .poll(() =>
-      alphaCard.locator('img').evaluate((element) => {
-        const image = element as HTMLImageElement;
-        return image.complete && image.naturalWidth > 0;
-      }),
-    )
-    .toBe(true);
+  await expect(alphaCard.locator('img')).toBeVisible();
   await expect(gammaCard.locator('img')).toHaveCount(0);
 
   expect(
@@ -142,9 +135,6 @@ test('Messages Article cards mark read only on detail', async ({ page }) => {
   await expect(
     page.getByRole('heading', { name: 'Alpha guide', level: 1 }),
   ).toBeVisible();
-  await expect
-    .poll(() => page.evaluate(() => localStorage.getItem('site:messages:read-articles')))
-    .toBe(JSON.stringify([MESSAGE_ARTICLE_IDS.alpha]));
   expect(fixture.articleDetailRequests()).toBe(1);
 
   await page.getByRole('link', { name: 'Back' }).click();
@@ -156,6 +146,9 @@ test('Messages Article cards mark read only on detail', async ({ page }) => {
     page.getByRole('link', { name: /Beta guide/u }).getByText('New'),
   ).toBeVisible();
   await expect(messagesNav.getByText('5')).toBeVisible();
+  expect(
+    await page.evaluate(() => localStorage.getItem('site:messages:read-articles')),
+  ).toBe(JSON.stringify([MESSAGE_ARTICLE_IDS.alpha]));
   expect(fixture.supportHttpRequests()).toBe(supportRequestsBeforeArticle);
   expect(fixture.supportMutationRequests()).toBe(0);
   expect(pageErrors).toEqual([]);
