@@ -23,7 +23,6 @@ export type AdminView =
 
 export type AdminDomain =
   | 'dashboard'
-  | 'content'
   | 'catalog'
   | 'experience'
   | 'operations'
@@ -54,11 +53,10 @@ export const ADMIN_VIEW_STORAGE_KEY = 'site.admin.lastView';
 
 export const ADMIN_DOMAINS: readonly AdminDomainDefinition[] = [
   { id: 'dashboard', label: '仪表盘', description: '管理后台概览' },
-  { id: 'content', label: '内容', description: '公共内容管理' },
   { id: 'catalog', label: '商品', description: '分区与商品目录' },
   { id: 'experience', label: '体验', description: '站点体验与主题' },
   { id: 'operations', label: '运营', description: '转化运营工具' },
-  { id: 'media', label: '媒体', description: '素材与媒体资产' },
+  { id: 'media', label: '素材', description: '可复用素材与媒体资产' },
   { id: 'integrations', label: '集成', description: '外部服务连接' },
   { id: 'system', label: '系统', description: '站点身份与技术配置' },
 ];
@@ -166,7 +164,7 @@ export function writeAdminViewLocation(view: AdminView, mode: 'push' | 'replace'
 
 export function getAdminDomainForView(view: AdminView): AdminDomain {
   if (view === 'dashboard') return 'dashboard';
-  if (view === 'faq') return 'content';
+  if (view === 'faq' || view === 'assets') return 'media';
   if (view === 'sections') return 'catalog';
   if (
     view === 'home' ||
@@ -177,7 +175,6 @@ export function getAdminDomainForView(view: AdminView): AdminDomain {
   ) {
     return 'experience';
   }
-  if (view === 'assets') return 'media';
   if (view === 'customer-service') return 'integrations';
   if (
     view === 'system-general' ||
@@ -198,8 +195,6 @@ export function getAdminDefaultViewForDomain(
   switch (domain) {
     case 'dashboard':
       return 'dashboard';
-    case 'content':
-      return 'faq';
     case 'catalog':
       return 'sections';
     case 'experience':
@@ -222,8 +217,6 @@ export function getAdminSecondaryItems(
   switch (domain) {
     case 'dashboard':
       return [{ view: 'dashboard', label: '概览' }];
-    case 'content':
-      return [{ view: 'faq', label: 'FAQ 管理' }];
     case 'catalog':
       return [
         { view: 'sections', label: '分区管理', group: '结构' },
@@ -252,7 +245,10 @@ export function getAdminSecondaryItems(
         group: section.name,
       }));
     case 'media':
-      return [{ view: 'assets', label: '素材库' }];
+      return [
+        { view: 'assets', label: '素材库' },
+        { view: 'faq', label: 'FAQ 管理' },
+      ];
     case 'integrations':
       return [{ view: 'customer-service', label: '客服管理' }];
     case 'system':
