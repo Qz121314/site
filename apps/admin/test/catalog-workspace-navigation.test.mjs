@@ -94,8 +94,14 @@ test('catalog workspace switcher uses the shared segmented pattern and guarded n
   );
   assert.match(sharedCss, /\.ui-segmented-control[\s\S]*overflow-x:\s*auto/);
   assert.match(sharedCss, /\.ui-segmented-item[\s\S]*min-height:\s*44px/);
-  assert.match(sharedCss, /\.ui-segmented-item\.is-selected[\s\S]*background:/);
-  assert.match(sharedCss, /\.ui-segmented-item\.is-selected[\s\S]*border-color:/);
+  assert.match(
+    sharedCss,
+    /\.ui-segmented-item\.ui-button\.is-selected[\s\S]*background:/,
+  );
+  assert.match(
+    sharedCss,
+    /\.ui-segmented-item\.ui-button\.is-selected[\s\S]*border-color:/,
+  );
   assert.match(sharedCss, /\.ui-segmented-item:focus-visible/);
   assert.match(layoutCss, /catalog-workspace-switcher/);
   assert.match(layoutCss, /@media \(max-width: 899px\)/);
