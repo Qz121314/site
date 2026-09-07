@@ -1,0 +1,32 @@
+name: Article C0 Implementation
+
+on:
+  push:
+    branches:
+      - feat/message-article-background-media-contract
+    paths:
+      - .github/workflows/article-c0-implementation.yml
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Apply Article C0 implementation
+        run: python scripts/article-c0-implementation.py
+
+      - name: Commit implementation
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add apps/worker/src/publishing/modular-publisher.ts apps/worker/src/assets/asset-library.ts
+          git commit -m "feat(content): publish message article background media metadata"
+          git push origin HEAD:feat/message-article-background-media-contract
