@@ -10,16 +10,32 @@ import {
   type MediaRole,
 } from './api';
 import { assignMediaRole } from './media-role-api';
+import {
+  prepareMediaPickerSelection,
+  type MediaPickerSelectionMode,
+} from './media-picker-selection';
 
-type MediaPickerDialogProps = {
+type MediaPickerBaseProps = {
   title: string;
-  role: MediaRole;
   allowedKinds: MediaKind[];
   selectedIds?: string[];
+  currentAssetId?: string | null;
   onSelect: (asset: ManagedMediaAsset) => void;
   onClose: () => void;
   onSessionExpired: () => void;
 };
+
+type RoleAssignmentMediaPickerProps = MediaPickerBaseProps & {
+  selectionMode?: 'assign-role';
+  role: MediaRole;
+};
+
+type ReferenceOnlyMediaPickerProps = MediaPickerBaseProps & {
+  selectionMode: 'reference-only';
+  role?: never;
+};
+
+type MediaPickerDialogProps = RoleAssignmentMediaPickerProps | ReferenceOnlyMediaPickerProps;
 
 function isSessionError(error: unknown): boolean {
   return (
@@ -40,15 +56,17 @@ function kindLabel(kind: MediaKind): string {
   return '图片';
 }
 
-export function MediaPickerDialog({
-  title,
-  role,
-  allowedKinds,
-  selectedIds = [],
-  onSelect,
-  onClose,
-  onSessionExpired,
-}: MediaPickerDialogProps) {
+export function MediaPickerDialog(props: MediaPickerDialogProps) {
+  const {
+    title,
+    allowedKinds,
+    selectedIds = [],
+    currentAssetId = null,
+    onSelect,
+    onClose,
+    onSessionExpired,
+  } = props;
+  const selectionMode: MediaPickerSelectionMode = props.selectionMode ?? 'assign-role';
   const [assets, setAssets] = useState<ManagedMediaAsset[]>([]);
   const [loading, setLoading] = useState(true);
   const [workingId, setWorkingId] = useState<string | null>(null);
@@ -96,11 +114,14 @@ export function MediaPickerDialog({
     setWorkingId(asset.id);
     setErrorMessage('');
     try {
-      if (!asset.roles.includes(role)) await assignMediaRole(asset.id, role);
-      onSelect({
-        ...asset,
-        roles: asset.roles.includes(role) ? asset.roles : [...asset.roles, role],
-      });
+      const selectedAsset = await prepareMediaPickerSelection(
+        asset,
+        selectionMode === 'reference-only'
+          ? { mode: 'reference-only' }
+          : { mode: 'assign-role', role: props.role },
+        assignMediaRole,
+      );
+      onSelect(selectedAsset);
     } catch (error) {
       if (isSessionError(error)) {
         onSessionExpired();
@@ -144,38 +165,48 @@ export function MediaPickerDialog({
           <AdminFeedbackState kind="loading" title="正在读取素材" compact />
         ) : filtered.length > 0 ? (
           <div className="media-picker-grid">
-            {filtered.map((asset) => (
-              <button
-                className="media-picker-card"
-                type="button"
-                key={asset.id}
-                disabled={workingId !== null}
-                onClick={() => void choose(asset)}
-              >
-                <span className="media-picker-preview">
-                  {asset.mediaKind === 'video' ? (
-                    asset.publicUrl ? (
-                      <video src={asset.publicUrl} muted playsInline preload="metadata" />
+            {filtered.map((asset) => {
+              const isCurrent = currentAssetId === asset.id;
+              return (
+                <button
+                  className={`media-picker-card${isCurrent ? ' is-selected' : ''}`}
+                  type="button"
+                  key={asset.id}
+                  aria-pressed={isCurrent}
+                  disabled={workingId !== null}
+                  onClick={() => void choose(asset)}
+                >
+                  <span className="media-picker-preview">
+                    {asset.mediaKind === 'video' ? (
+                      asset.publicUrl ? (
+                        <video src={asset.publicUrl} muted playsInline preload="metadata" />
+                      ) : (
+                        <i>视频</i>
+                      )
                     ) : (
-                      <i>视频</i>
-                    )
-                  ) : (
-                    <img src={brandingAssetPreviewUrl(asset.id)} alt="" loading="lazy" />
-                  )}
-                  <b>{kindLabel(asset.mediaKind)}</b>
-                </span>
-                <span className="media-picker-copy">
-                  <strong title={asset.fileName}>{asset.fileName}</strong>
-                  <small>
-                    {asset.width && asset.height
-                      ? `${asset.width} × ${asset.height} · `
-                      : ''}
-                    {formatBytes(asset.byteSize)}
-                  </small>
-                  <em>{workingId === asset.id ? '正在选择…' : '使用此素材'}</em>
-                </span>
-              </button>
-            ))}
+                      <img src={brandingAssetPreviewUrl(asset.id)} alt="" loading="lazy" />
+                    )}
+                    <b>{kindLabel(asset.mediaKind)}</b>
+                  </span>
+                  <span className="media-picker-copy">
+                    <strong title={asset.fileName}>{asset.fileName}</strong>
+                    <small>
+                      {asset.width && asset.height
+                        ? `${asset.width} × ${asset.height} · `
+                        : ''}
+                      {formatBytes(asset.byteSize)}
+                    </small>
+                    <em>
+                      {workingId === asset.id
+                        ? '正在选择…'
+                        : isCurrent
+                          ? '当前使用'
+                          : '使用此素材'}
+                    </em>
+                  </span>
+                </button>
+              );
+            })}
           </div>
         ) : (
           <AdminFeedbackState
