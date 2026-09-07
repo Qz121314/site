@@ -8,6 +8,8 @@ import {
   type ReactNode,
 } from 'react';
 import { AdminApiError } from '../api';
+import { Button } from '../components/ui/button';
+import { AdminFeedbackState } from '../components/ui/feedback-state';
 import {
   fetchSiteSettingsWithHero,
   updateSiteSettingsWithHero,
@@ -88,25 +90,31 @@ export function SiteSettingsProvider({
 
   if (loading) {
     return (
-      <div className="settings-workspace-state" role="status" aria-live="polite">
-        正在读取站点设置…
-      </div>
+      <AdminFeedbackState
+        kind="loading"
+        title="正在读取站点设置"
+        description="设置工作区会在数据就绪后保持当前布局。"
+        compact
+      />
     );
   }
 
   if (!contextValue) {
     return (
-      <section className="settings-workspace-state is-error" role="alert">
-        <strong>无法读取站点设置</strong>
-        <p>{errorMessage || '请检查后台接口后重试。'}</p>
-        <button
-          className="secondary-button"
-          type="button"
-          onClick={() => setReloadToken((value) => value + 1)}
-        >
-          重新加载
-        </button>
-      </section>
+      <AdminFeedbackState
+        kind="error"
+        title="无法读取站点设置"
+        description={errorMessage || '请检查后台接口后重试。'}
+        action={
+          <Button
+            variant="secondary"
+            type="button"
+            onClick={() => setReloadToken((value) => value + 1)}
+          >
+            重新加载
+          </Button>
+        }
+      />
     );
   }
 

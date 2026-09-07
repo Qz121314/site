@@ -73,28 +73,37 @@ test('catalog sidebar section selection follows section context instead of exact
   assert.doesNotMatch(secondary, /sectionName.*·.*item\.label/);
 });
 
-test('catalog workspace switcher is semantic, request-neutral and uses the guarded navigation path', async () => {
+test('catalog workspace switcher uses the shared segmented pattern and guarded navigation path', async () => {
   const dashboard = await source('../src/Dashboard.tsx');
   const shell = await source('../src/shell/AdminShell.tsx');
   const switcher = await source('../src/catalog/CatalogWorkspaceSwitcher.tsx');
-  const css = await source('../src/admin-section-workspace-nav.css');
+  const sharedCss = await source('../src/admin-ui-system.css');
+  const layoutCss = await source('../src/admin-section-workspace-nav.css');
 
   assert.match(dashboard, /onNavigate=\{requestView\}/);
   assert.match(shell, /<CatalogWorkspaceSwitcher/);
   assert.match(shell, /onNavigate=\{onNavigate\}/);
-  assert.match(switcher, /<nav/);
-  assert.match(switcher, /aria-label=/);
-  assert.match(switcher, /aria-current=\{active \? 'page' : undefined\}/);
+  assert.match(switcher, /AdminSegmentedControl/);
+  assert.match(switcher, /AdminSegmentedItem/);
+  assert.match(switcher, /selected=\{active\}/);
+  assert.match(switcher, /current=\{active\}/);
   assert.match(switcher, /catalogViewForResource/);
   assert.doesNotMatch(
     switcher,
     /location\.hash|history\.(pushState|replaceState)|fetch\(/,
   );
-  assert.match(css, /display:\s*flex/);
-  assert.match(css, /overflow-x:\s*auto/);
-  assert.match(css, /min-height:\s*44px/);
-  assert.match(css, /\.is-active[\s\S]*background:/);
-  assert.match(css, /\.is-active[\s\S]*border/);
-  assert.match(css, /focus-visible/);
-  assert.doesNotMatch(css, /!important/);
+  assert.match(sharedCss, /\.ui-segmented-control[\s\S]*overflow-x:\s*auto/);
+  assert.match(sharedCss, /\.ui-segmented-item[\s\S]*min-height:\s*44px/);
+  assert.match(
+    sharedCss,
+    /\.ui-segmented-item\.ui-button\.is-selected[\s\S]*background:/,
+  );
+  assert.match(
+    sharedCss,
+    /\.ui-segmented-item\.ui-button\.is-selected[\s\S]*border-color:/,
+  );
+  assert.match(sharedCss, /\.ui-segmented-item:focus-visible/);
+  assert.match(layoutCss, /catalog-workspace-switcher/);
+  assert.match(layoutCss, /@media \(max-width: 899px\)/);
+  assert.doesNotMatch(layoutCss, /!important/);
 });

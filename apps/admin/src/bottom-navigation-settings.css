@@ -34,7 +34,7 @@
 
 .admin-bottom-navigation-row {
   display: grid;
-  grid-template-columns: 44px minmax(140px, 1fr) minmax(110px, 0.55fr) 78px 64px;
+  grid-template-columns: 44px minmax(140px, 1fr) minmax(110px, 0.55fr) auto 64px;
   width: 100%;
   min-height: 60px;
   align-items: center;
@@ -45,17 +45,29 @@
   color: #172033;
   text-align: left;
   cursor: pointer;
+  transition:
+    background-color 140ms ease,
+    box-shadow 140ms ease;
 }
 
-.admin-bottom-navigation-row:hover,
-.admin-bottom-navigation-row.is-selected {
+.admin-bottom-navigation-row:hover:not(:disabled):not(.is-selected) {
   background: #f7f9fc;
+}
+
+.admin-bottom-navigation-row.is-selected {
+  background: #fff3ed;
+  box-shadow: inset 4px 0 0 #f45a26;
+}
+
+.admin-bottom-navigation-row.is-selected .admin-bottom-navigation-identity strong {
+  color: #172033;
+  font-weight: 800;
 }
 
 .admin-bottom-navigation-row:focus-visible {
   position: relative;
   z-index: 1;
-  outline: 2px solid #2563eb;
+  outline: 2px solid #f45a26;
   outline-offset: -2px;
 }
 
@@ -115,26 +127,6 @@
   font-size: 0.72rem;
 }
 
-.admin-bottom-navigation-status {
-  display: inline-flex;
-  width: fit-content;
-  min-height: 26px;
-  align-items: center;
-  padding: 3px 8px;
-  border: 1px solid #dfe4ea;
-  border-radius: 999px;
-  background: #f8fafc;
-  color: #667085;
-  font-size: 0.7rem;
-  font-weight: 700;
-}
-
-.admin-bottom-navigation-status.is-enabled {
-  border-color: #b7e3c8;
-  background: #f0faf4;
-  color: #166534;
-}
-
 .admin-bottom-navigation-row-action {
   justify-self: end;
   font-weight: 700;
@@ -180,7 +172,7 @@
     display: none;
   }
 
-  .admin-bottom-navigation-status {
+  .admin-bottom-navigation-row .ui-status-badge {
     justify-self: end;
   }
 

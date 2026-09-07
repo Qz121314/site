@@ -2,6 +2,11 @@ import { useState, type FormEvent } from 'react';
 import { useAdminDirtySource } from '../admin-unsaved-state';
 import { MediaPickerDialog } from '../asset-library/MediaPickerDialog';
 import { formatBrandingBytes } from '../branding-media/local-branding-image';
+import { AdminActionBar } from '../components/ui/action-bar';
+import { Button } from '../components/ui/button';
+import { AdminFieldRow, AdminFormSection } from '../components/ui/form-section';
+import { Input } from '../components/ui/input';
+import { AdminStatusBadge } from '../components/ui/status-badge';
 import type { SiteSettingsWithHero } from '../site-hero-settings-api';
 import {
   settingsValueEqual,
@@ -81,21 +86,14 @@ export function SystemGeneralView({
   return (
     <>
       <form className="settings-workspace is-narrow" onSubmit={handleSubmit}>
-        <section
-          className="settings-workspace-section"
-          aria-labelledby="system-general-title"
+        <AdminFormSection
+          title="站点身份"
+          description="管理全站通用名称、说明与 Logo，不包含首页布局、PWA 或技术基础设施。"
         >
-          <div className="settings-workspace-heading">
-            <div>
-              <h2 id="system-general-title">站点身份</h2>
-              <p>管理全站通用名称、说明与 Logo，不包含首页布局、PWA 或技术基础设施。</p>
-            </div>
-          </div>
-
           <div className="settings-workspace-fields">
-            <label className="field-group">
-              <span>站点名称</span>
-              <input
+            <AdminFieldRow label="站点名称" htmlFor="system-site-name">
+              <Input
+                id="system-site-name"
                 type="text"
                 value={draft.siteName}
                 disabled={busy}
@@ -103,10 +101,10 @@ export function SystemGeneralView({
                   setDraft((current) => ({ ...current, siteName: event.target.value }))
                 }
               />
-            </label>
-            <label className="field-group">
-              <span>站点说明</span>
-              <input
+            </AdminFieldRow>
+            <AdminFieldRow label="站点说明" htmlFor="system-location-label">
+              <Input
+                id="system-location-label"
                 type="text"
                 value={draft.locationLabel}
                 disabled={busy}
@@ -117,101 +115,111 @@ export function SystemGeneralView({
                   }))
                 }
               />
-            </label>
+            </AdminFieldRow>
           </div>
-        </section>
+        </AdminFormSection>
 
-        <section
-          className="settings-workspace-section"
-          aria-labelledby="system-logo-title"
+        <AdminFormSection
+          title="站点 Logo"
+          description="继续使用现有 branding media pipeline，可上传新图片或从素材中心选择。"
         >
-          <div className="settings-workspace-heading">
-            <div>
-              <h2 id="system-logo-title">站点 Logo</h2>
-              <p>继续使用现有 branding media pipeline，可上传新图片或从素材中心选择。</p>
-            </div>
-          </div>
-
-          <div className="settings-media-control">
-            <div className="settings-media-preview">
-              {branding.previewUrl ? (
-                <img src={branding.previewUrl} alt="站点 Logo 预览" />
-              ) : (
-                <span>Logo</span>
-              )}
-            </div>
-            <div className="settings-media-copy">
-              <p>
-                {branding.localImage
-                  ? `待保存 · ${branding.localImage.width} × ${branding.localImage.height} · ${formatBrandingBytes(branding.localImage.compressedFile.size)}`
-                  : draft.logoAssetId
-                    ? '已设置站点 Logo。'
-                    : '当前未设置 Logo。'}
-              </p>
-              <div className="settings-media-actions">
-                <label className={`branding-file-button${busy ? ' is-disabled' : ''}`}>
-                  <input
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    disabled={busy}
-                    onChange={(event) => {
-                      const file = event.target.files?.[0];
-                      event.currentTarget.value = '';
-                      if (!file) return;
-                      setMessage(null);
-                      void branding.selectFile(file).catch((error: unknown) => {
-                        setMessage({
-                          type: 'error',
-                          text:
-                            error instanceof Error
-                              ? error.message
-                              : 'Logo 本地处理失败。',
-                        });
-                      });
-                    }}
-                  />
-                  {branding.processing
-                    ? '处理中…'
-                    : branding.previewUrl
-                      ? '上传替换'
-                      : '上传'}
-                </label>
-                <button
-                  className="admin-text-button"
-                  type="button"
-                  disabled={busy}
-                  onClick={() => setPickerOpen(true)}
-                >
-                  从素材中心选择
-                </button>
+          <AdminFieldRow
+            label="Logo"
+            description="用于前台品牌展示，上传内容会在保存时通过现有媒体管线处理。"
+          >
+            <div className="settings-media-control">
+              <div className="settings-media-preview">
                 {branding.previewUrl ? (
-                  <button
-                    className="admin-text-button"
+                  <img src={branding.previewUrl} alt="站点 Logo 预览" />
+                ) : (
+                  <span>Logo</span>
+                )}
+              </div>
+              <div className="settings-media-copy">
+                <p>
+                  {branding.localImage
+                    ? `待保存 · ${branding.localImage.width} × ${branding.localImage.height} · ${formatBrandingBytes(branding.localImage.compressedFile.size)}`
+                    : draft.logoAssetId
+                      ? '已设置站点 Logo。'
+                      : '当前未设置 Logo。'}
+                </p>
+                <div className="settings-media-actions">
+                  <label className={`branding-file-button${busy ? ' is-disabled' : ''}`}>
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/webp"
+                      disabled={busy}
+                      onChange={(event) => {
+                        const file = event.target.files?.[0];
+                        event.currentTarget.value = '';
+                        if (!file) return;
+                        setMessage(null);
+                        void branding.selectFile(file).catch((error: unknown) => {
+                          setMessage({
+                            type: 'error',
+                            text:
+                              error instanceof Error
+                                ? error.message
+                                : 'Logo 本地处理失败。',
+                          });
+                        });
+                      }}
+                    />
+                    {branding.processing
+                      ? '处理中…'
+                      : branding.previewUrl
+                        ? '上传替换'
+                        : '上传'}
+                  </label>
+                  <Button
+                    variant="secondary"
+                    size="compact"
                     type="button"
                     disabled={busy}
-                    onClick={branding.clear}
+                    onClick={() => setPickerOpen(true)}
                   >
-                    移除
-                  </button>
-                ) : null}
+                    从素材中心选择
+                  </Button>
+                  {branding.previewUrl ? (
+                    <Button
+                      variant="ghost"
+                      size="compact"
+                      type="button"
+                      disabled={busy}
+                      onClick={branding.clear}
+                    >
+                      移除
+                    </Button>
+                  ) : null}
+                </div>
               </div>
             </div>
-          </div>
-        </section>
+          </AdminFieldRow>
+        </AdminFormSection>
 
-        <div className="settings-workspace-actions">
-          {message ? (
-            <span
-              className={`settings-workspace-status is-${message.type}`}
-              role={message.type === 'error' ? 'alert' : 'status'}
-            >
-              {message.text}
-            </span>
-          ) : null}
-          <button className="primary-button" type="submit" disabled={!dirty || busy}>
-            {saving ? '保存中…' : '保存常规设置'}
-          </button>
-        </div>
+        <AdminActionBar
+          status={
+            message ? (
+              <AdminStatusBadge
+                tone={message.type === 'success' ? 'success' : 'danger'}
+                role={message.type === 'error' ? 'alert' : 'status'}
+              >
+                {message.text}
+              </AdminStatusBadge>
+            ) : dirty ? (
+              <AdminStatusBadge tone="warning">未保存更改</AdminStatusBadge>
+            ) : null
+          }
+        >
+          <Button
+            variant="primary"
+            type="submit"
+            loading={saving}
+            disabled={!dirty || branding.processing}
+          >
+            保存常规设置
+          </Button>
+        </AdminActionBar>
       </form>
 
       {pickerOpen ? (

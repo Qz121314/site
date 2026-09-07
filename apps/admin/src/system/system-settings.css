@@ -1,11 +1,13 @@
-.system-domain-row {
+.system-domain-row,
+.system-domain-control {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 12px;
   align-items: end;
 }
 
-.system-domain-test-button {
+.system-domain-test-button,
+.system-domain-control > .ui-button {
   min-height: 44px;
 }
 
@@ -29,11 +31,13 @@
 }
 
 @media (max-width: 640px) {
-  .system-domain-row {
+  .system-domain-row,
+  .system-domain-control {
     grid-template-columns: 1fr;
   }
 
   .system-domain-test-button,
+  .system-domain-control > .ui-button,
   .settings-field-span-two {
     width: 100%;
     grid-column: auto;

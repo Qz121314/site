@@ -1,10 +1,13 @@
-import { Button } from '../components/ui/button';
 import {
   catalogViewForResource,
   getCatalogWorkspaceContext,
   type AdminView,
   type CatalogResourceKind,
 } from '../admin-navigation';
+import {
+  AdminSegmentedControl,
+  AdminSegmentedItem,
+} from '../components/ui/segmented-control';
 
 const RESOURCE_ITEMS: readonly { resource: CatalogResourceKind; label: string }[] = [
   { resource: 'products', label: '商品' },
@@ -31,25 +34,27 @@ export function CatalogWorkspaceSwitcher({
       <strong className="catalog-workspace-section" title={sectionName}>
         {sectionName}
       </strong>
-      <nav className="section-workspace-nav" aria-label={`${sectionName} 资源工作区`}>
+      <AdminSegmentedControl
+        className="section-workspace-nav"
+        ariaLabel={`${sectionName} 资源工作区`}
+      >
         {RESOURCE_ITEMS.map((item) => {
           const active = item.resource === context.resource;
           return (
-            <Button
-              className={active ? 'is-active' : undefined}
+            <AdminSegmentedItem
+              selected={active}
+              current={active}
               key={item.resource}
-              variant="ghost"
               type="button"
-              aria-current={active ? 'page' : undefined}
               onClick={() =>
                 onNavigate(catalogViewForResource(item.resource, context.sectionId))
               }
             >
               {item.label}
-            </Button>
+            </AdminSegmentedItem>
           );
         })}
-      </nav>
+      </AdminSegmentedControl>
     </div>
   );
 }

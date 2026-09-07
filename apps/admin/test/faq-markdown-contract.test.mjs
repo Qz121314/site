@@ -16,8 +16,10 @@ test('FAQ editor keeps raw Markdown as the editable and persisted source', async
   assert.match(faq, /updateFaq\(editingFaq\.id, form\)/);
   assert.match(faq, /createFaq\(form\)/);
   assert.doesNotMatch(faq, /body:\s*form\.body\.trim\(\)/);
-  assert.match(faq, /aria-pressed=\{editorMode === 'edit'\}/);
-  assert.match(faq, /aria-pressed=\{editorMode === 'preview'\}/);
+  assert.match(faq, /AdminSegmentedControl/);
+  assert.match(faq, /AdminSegmentedItem/);
+  assert.match(faq, /selected=\{editorMode === 'edit'\}/);
+  assert.match(faq, /selected=\{editorMode === 'preview'\}/);
 });
 
 test('Admin FAQ preview reuses the shared MarkdownContent renderer without backend requests', async () => {

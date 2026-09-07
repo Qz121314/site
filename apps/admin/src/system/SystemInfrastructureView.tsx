@@ -1,6 +1,11 @@
 import { useState, type FormEvent } from 'react';
 import { AdminApiError, testMediaDomain } from '../api';
 import { useAdminDirtySource } from '../admin-unsaved-state';
+import { AdminActionBar } from '../components/ui/action-bar';
+import { Button } from '../components/ui/button';
+import { AdminFieldRow, AdminFormSection } from '../components/ui/form-section';
+import { Input } from '../components/ui/input';
+import { AdminStatusBadge } from '../components/ui/status-badge';
 import type { SiteSettingsWithHero } from '../site-hero-settings-api';
 import {
   settingsValueEqual,
@@ -85,25 +90,35 @@ export function SystemInfrastructureView({
     }
   }
 
-  const busy = saving || domainTest.status === 'testing';
+  const testing = domainTest.status === 'testing';
+  const busy = saving || testing;
 
   return (
     <form className="settings-workspace is-medium" onSubmit={handleSubmit}>
-      <section
-        className="settings-workspace-section"
-        aria-labelledby="infrastructure-title"
+      <AdminFormSection
+        title="媒体域名"
+        description="配置 R2 自定义域名。连接测试继续使用现有验证 API，不改变后端校验行为。"
       >
-        <div className="settings-workspace-heading">
-          <div>
-            <h2 id="infrastructure-title">媒体域名</h2>
-            <p>配置 R2 自定义域名。连接测试继续使用现有验证 API，不改变后端校验行为。</p>
-          </div>
-        </div>
-
-        <div className="system-domain-row">
-          <label className="field-group">
-            <span>R2 自定义域名</span>
-            <input
+        <AdminFieldRow
+          label="R2 自定义域名"
+          description="用于公开媒体读取；保存前可验证当前地址是否可访问。"
+          htmlFor="system-media-base-url"
+          status={
+            domainTest.status === 'success' || domainTest.status === 'error' ? (
+              <AdminStatusBadge
+                tone={domainTest.status === 'success' ? 'success' : 'danger'}
+                role={domainTest.status === 'error' ? 'alert' : 'status'}
+              >
+                {domainTest.message}
+              </AdminStatusBadge>
+            ) : testing ? (
+              <AdminStatusBadge tone="info">正在测试连接</AdminStatusBadge>
+            ) : null
+          }
+        >
+          <div className="system-domain-control">
+            <Input
+              id="system-media-base-url"
               type="url"
               value={draft.mediaBaseUrl}
               placeholder="https://assets.example.com"
@@ -114,40 +129,42 @@ export function SystemInfrastructureView({
                 setMessage(null);
               }}
             />
-          </label>
-          <button
-            className="secondary-button system-domain-test-button"
-            type="button"
-            disabled={busy || !draft.mediaBaseUrl.trim()}
-            onClick={() => void handleDomainTest()}
-          >
-            {domainTest.status === 'testing' ? '测试中…' : '测试连接'}
-          </button>
-        </div>
+            <Button
+              variant="secondary"
+              type="button"
+              loading={testing}
+              disabled={saving || !draft.mediaBaseUrl.trim()}
+              onClick={() => void handleDomainTest()}
+            >
+              测试连接
+            </Button>
+          </div>
+        </AdminFieldRow>
+      </AdminFormSection>
 
-        {domainTest.status === 'success' || domainTest.status === 'error' ? (
-          <p
-            className={`settings-workspace-status is-${domainTest.status}`}
-            role={domainTest.status === 'error' ? 'alert' : 'status'}
-          >
-            {domainTest.message}
-          </p>
-        ) : null}
-      </section>
-
-      <div className="settings-workspace-actions">
-        {message ? (
-          <span
-            className={`settings-workspace-status is-${message.type}`}
-            role={message.type === 'error' ? 'alert' : 'status'}
-          >
-            {message.text}
-          </span>
-        ) : null}
-        <button className="primary-button" type="submit" disabled={!dirty || busy}>
-          {saving ? '保存中…' : '保存基础设施设置'}
-        </button>
-      </div>
+      <AdminActionBar
+        status={
+          message ? (
+            <AdminStatusBadge
+              tone={message.type === 'success' ? 'success' : 'danger'}
+              role={message.type === 'error' ? 'alert' : 'status'}
+            >
+              {message.text}
+            </AdminStatusBadge>
+          ) : dirty ? (
+            <AdminStatusBadge tone="warning">未保存更改</AdminStatusBadge>
+          ) : null
+        }
+      >
+        <Button
+          variant="primary"
+          type="submit"
+          loading={saving}
+          disabled={!dirty || testing}
+        >
+          保存基础设施设置
+        </Button>
+      </AdminActionBar>
     </form>
   );
 }

@@ -156,18 +156,18 @@ export function AdminShell({
 
       {navigationOpen ? (
         <div
-          className="admin-mobile-drawer-backdrop"
+          className="admin-mobile-drawer-backdrop ui-drawer-backdrop"
           role="presentation"
           onMouseDown={handleDrawerBackdrop}
         >
           <div
             ref={drawerRef}
-            className="admin-mobile-drawer"
+            className="admin-mobile-drawer ui-drawer"
             role="dialog"
             aria-modal="true"
             aria-label="后台导航"
           >
-            <div className="admin-mobile-drawer-header">
+            <div className="admin-mobile-drawer-header ui-drawer-header">
               <div>
                 <span>Navigation</span>
                 <strong>后台导航</strong>
@@ -182,7 +182,7 @@ export function AdminShell({
                 <X aria-hidden="true" size={20} />
               </Button>
             </div>
-            <div className="admin-mobile-drawer-content">
+            <div className="admin-mobile-drawer-content ui-drawer-body">
               <AdminPrimarySidebar
                 activeDomain={activeDomain}
                 sections={sections}

@@ -1,6 +1,9 @@
 import { useState, type FormEvent } from 'react';
 import { useAdminDirtySource } from '../admin-unsaved-state';
 import { BottomNavigationSettingsSection } from '../BottomNavigationSettingsSection';
+import { AdminActionBar } from '../components/ui/action-bar';
+import { Button } from '../components/ui/button';
+import { AdminStatusBadge } from '../components/ui/status-badge';
 import type {
   BottomNavigationItem,
   SiteSettingsWithHero,
@@ -71,19 +74,25 @@ export function NavigationSettingsView({
         />
       </section>
 
-      <div className="settings-workspace-actions">
-        {message ? (
-          <span
-            className={`settings-workspace-status is-${message.type}`}
-            role={message.type === 'error' ? 'alert' : 'status'}
-          >
-            {message.text}
-          </span>
-        ) : null}
-        <button className="primary-button" type="submit" disabled={!dirty || saving}>
-          {saving ? '保存中…' : '保存导航设置'}
-        </button>
-      </div>
+      <AdminActionBar
+        sticky
+        status={
+          message ? (
+            <AdminStatusBadge
+              tone={message.type === 'success' ? 'success' : 'danger'}
+              role={message.type === 'error' ? 'alert' : 'status'}
+            >
+              {message.text}
+            </AdminStatusBadge>
+          ) : dirty ? (
+            <AdminStatusBadge tone="warning">未保存更改</AdminStatusBadge>
+          ) : null
+        }
+      >
+        <Button variant="primary" type="submit" loading={saving} disabled={!dirty}>
+          保存导航设置
+        </Button>
+      </AdminActionBar>
     </form>
   );
 }
