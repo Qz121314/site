@@ -3,6 +3,7 @@ import { Button } from '../components/ui/button';
 import {
   ADMIN_DOMAINS,
   getAdminSecondaryItems,
+  getCatalogWorkspaceContext,
   type AdminDomain,
   type AdminView,
 } from '../admin-navigation';
@@ -25,10 +26,15 @@ export function AdminSecondarySidebar({
 }: AdminSecondarySidebarProps) {
   const domain = ADMIN_DOMAINS.find((item) => item.id === activeDomain);
   const items = getAdminSecondaryItems(activeDomain, sections);
+  const activeCatalogContext = getCatalogWorkspaceContext(activeView);
+  const activeSectionId = activeCatalogContext?.sectionId ?? null;
   let previousGroup: string | undefined;
 
   return (
-    <aside className="admin-secondary-sidebar" aria-label="后台二级导航">
+    <aside
+      className={`admin-secondary-sidebar${activeDomain === 'catalog' ? ' is-catalog' : ''}`}
+      aria-label="后台二级导航"
+    >
       <div className="admin-secondary-heading">
         <span>Workspace</span>
         <h2>{domain?.label ?? '管理'}</h2>
@@ -44,7 +50,12 @@ export function AdminSecondarySidebar({
           items.map((item) => {
             const showGroup = item.group && item.group !== previousGroup;
             previousGroup = item.group;
-            const active = item.view === activeView;
+            const itemCatalogContext = getCatalogWorkspaceContext(item.view);
+            const itemSectionId = itemCatalogContext?.sectionId ?? null;
+            const active =
+              activeDomain === 'catalog' && activeSectionId && itemSectionId
+                ? activeSectionId === itemSectionId
+                : item.view === activeView;
             return (
               <div className="admin-secondary-item" key={item.view}>
                 {showGroup ? (
