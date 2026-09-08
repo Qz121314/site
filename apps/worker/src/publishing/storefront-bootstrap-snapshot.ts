@@ -1,6 +1,6 @@
 const IMMUTABLE_CACHE = 'public, max-age=31536000, immutable';
 const BOOTSTRAP_PREFIX = 'public/bootstrap';
-const BOOTSTRAP_SCHEMA_VERSION = 3;
+const BOOTSTRAP_SCHEMA_VERSION = 4;
 
 type JsonRecord = Record<string, unknown>;
 
@@ -16,6 +16,7 @@ export type StorefrontPublishedBootstrapSnapshot = {
   site: JsonRecord;
   sectionsIndex: JsonRecord;
   home: JsonRecord;
+  runtime: JsonRecord;
 };
 
 function isRecord(value: unknown): value is JsonRecord {
@@ -106,6 +107,20 @@ function sanitizeCachedSiteEnvelope(siteEnvelope: JsonRecord): JsonRecord | null
   return attachMessageArticles(siteEnvelope, { articles: navigation.messageArticles });
 }
 
+function runtimeFromSiteEnvelope(siteEnvelope: JsonRecord): JsonRecord | null {
+  const site = isRecord(siteEnvelope.site) ? siteEnvelope.site : null;
+  const runtime = site && isRecord(site.runtime) ? site.runtime : null;
+  if (
+    !runtime ||
+    !(typeof runtime.mediaBaseUrl === 'string' || runtime.mediaBaseUrl === null) ||
+    !isRecord(runtime.theme) ||
+    !Array.isArray(runtime.bottomNavigation)
+  ) {
+    return null;
+  }
+  return runtime;
+}
+
 export function storefrontBootstrapSnapshotKey(pointerVersion: string): string {
   return `${BOOTSTRAP_PREFIX}/${encodeURIComponent(pointerVersion)}/bootstrap.json`;
 }
@@ -125,12 +140,57 @@ function parseBootstrapSnapshot(
     return null;
   }
   const site = sanitizeCachedSiteEnvelope(value.site);
-  if (!site) return null;
+  const runtime = site ? runtimeFromSiteEnvelope(site) : null;
+  if (!site || !runtime) return null;
   return {
     site,
     sectionsIndex: value.sectionsIndex,
     home: value.home,
+    runtime,
   };
+}
+
+export async function writeStorefrontPublishedBootstrap(
+  bucket: R2Bucket,
+  pointerValue: unknown,
+): Promise<void> {
+  if (!isRecord(pointerValue) || !validPointerVersion(pointerValue.contentVersion)) {
+    throw new Error('Invalid published bootstrap pointer.');
+  }
+  const pointerVersion = pointerValue.contentVersion;
+  const sitePath = publishedFile(pointerValue.site, 'site.json');
+  const sectionsPath = publishedFile(pointerValue.sectionsIndex, 'sections.json');
+  const messageArticlesPath = publishedFile(pointerValue.faq, 'messages.json');
+  if (!sitePath || !sectionsPath)
+    throw new Error('Published bootstrap modules are incomplete.');
+  const [rawSite, sectionsIndex, home, messages] = await Promise.all([
+    readPublishedJson(bucket, sitePath),
+    readPublishedJson(bucket, sectionsPath),
+    readPublishedJson(bucket, `public/home/${pointerVersion}/home.json`),
+    messageArticlesPath ? readPublishedJson(bucket, messageArticlesPath) : null,
+  ]);
+  if (!isRecord(rawSite) || !isRecord(sectionsIndex) || !isRecord(home)) {
+    throw new Error('Published bootstrap artifacts are incomplete.');
+  }
+  const site = attachMessageArticles(rawSite, messages);
+  if (!runtimeFromSiteEnvelope(site))
+    throw new Error('Published bootstrap runtime is incomplete.');
+  await bucket.put(
+    storefrontBootstrapSnapshotKey(pointerVersion),
+    JSON.stringify({
+      schemaVersion: BOOTSTRAP_SCHEMA_VERSION,
+      pointerVersion,
+      site,
+      sectionsIndex,
+      home,
+    }),
+    {
+      httpMetadata: {
+        contentType: 'application/json; charset=utf-8',
+        cacheControl: IMMUTABLE_CACHE,
+      },
+    },
+  );
 }
 
 export async function loadStorefrontPublishedBootstrap(
@@ -145,63 +205,11 @@ export async function loadStorefrontPublishedBootstrap(
     return null;
   }
 
-  const pointerVersion = pointerValue.contentVersion;
-  const snapshotKey = storefrontBootstrapSnapshotKey(pointerVersion);
-  const cached = parseBootstrapSnapshot(
-    await readPublishedJson(bucket, snapshotKey),
-    pointerVersion,
+  return parseBootstrapSnapshot(
+    await readPublishedJson(
+      bucket,
+      storefrontBootstrapSnapshotKey(pointerValue.contentVersion),
+    ),
+    pointerValue.contentVersion,
   );
-  if (cached) return cached;
-
-  const sitePath = publishedFile(pointerValue.site, 'site.json');
-  const sectionsPath = publishedFile(pointerValue.sectionsIndex, 'sections.json');
-  const messageArticlesPath = publishedFile(pointerValue.faq, 'messages.json');
-  if (!sitePath || !sectionsPath) return null;
-
-  const [rawSite, sectionsIndex, home, messages] = await Promise.all([
-    readPublishedJson(bucket, sitePath),
-    readPublishedJson(bucket, sectionsPath),
-    readPublishedJson(bucket, `public/home/${pointerVersion}/home.json`),
-    messageArticlesPath ? readPublishedJson(bucket, messageArticlesPath) : null,
-  ]);
-  if (!isRecord(rawSite) || !isRecord(sectionsIndex) || !isRecord(home)) return null;
-  const site = attachMessageArticles(rawSite, messages);
-
-  const snapshot: StorefrontPublishedBootstrapSnapshot = {
-    site,
-    sectionsIndex,
-    home,
-  };
-  try {
-    await bucket.put(
-      snapshotKey,
-      JSON.stringify({
-        schemaVersion: BOOTSTRAP_SCHEMA_VERSION,
-        pointerVersion,
-        site,
-        sectionsIndex,
-        home,
-      }),
-      {
-        httpMetadata: {
-          contentType: 'application/json; charset=utf-8',
-          cacheControl: IMMUTABLE_CACHE,
-        },
-        customMetadata: { pointerVersion, kind: 'storefront-bootstrap' },
-      },
-    );
-  } catch (error) {
-    console.error(
-      JSON.stringify({
-        level: 'error',
-        event: 'storefront.bootstrap_snapshot_write_failed',
-        pointerVersion,
-        errorName: error instanceof Error ? error.name : 'UnknownError',
-        errorMessage:
-          error instanceof Error ? error.message : 'Unknown bootstrap snapshot error',
-      }),
-    );
-  }
-
-  return snapshot;
 }

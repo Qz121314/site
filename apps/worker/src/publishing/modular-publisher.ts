@@ -6,6 +6,9 @@ import {
   type PublicProductTag,
 } from '../products/product-tags';
 import { getHomeLayout, type HomeLayout } from '../settings/home-layout';
+import { BOTTOM_NAVIGATION_KEYS } from '../settings/bottom-navigation';
+import { buildMediaUrl } from '../media/media-url';
+import { parseThemeSettings, resolveTheme } from '../theme/theme-center';
 
 const CURRENT_KEY = 'public/current.json';
 const IMMUTABLE_CACHE = 'public, max-age=31536000, immutable';
@@ -94,6 +97,8 @@ export type ModularPublishResult = {
   publications: PublishModuleResult[];
 };
 
+export type BeforePointerCommit = (pointer: ModularStorefrontPointer) => Promise<void>;
+
 export class ModularPublicationError extends Error {
   readonly code: string;
   readonly status: 400 | 404 | 409 | 503;
@@ -118,6 +123,16 @@ type SiteRow = {
   show_more: number;
   show_faq: number;
   ga4_measurement_id: string | null;
+  theme_key: string | null;
+  theme_overrides_json: string | null;
+};
+type BottomNavigationRow = {
+  item_key: string;
+  label: string;
+  icon_type: string;
+  icon_value: string | null;
+  is_enabled: number;
+  icon_object_key: string | null;
 };
 
 type HeroSlideRow = {
@@ -237,6 +252,7 @@ type Source = {
   messageArticles: MessageArticleRow[];
   publicTags: PublicProductTag[];
   tagsByProduct: Map<string, BoundProductTag[]>;
+  bottomNavigation: BottomNavigationRow[];
 };
 
 type ModulePayload = {
@@ -457,6 +473,7 @@ async function loadSource(db: D1Database): Promise<Source> {
          ss.show_more,
          ss.show_faq,
          ss.ga4_measurement_id
+         ,ss.theme_key, ss.theme_overrides_json
        FROM site_settings ss
        LEFT JOIN media_assets ma
          ON ma.id = ss.logo_asset_id
@@ -633,6 +650,13 @@ async function loadSource(db: D1Database): Promise<Source> {
       )
       .all<MessageArticleRow>()
   ).results;
+  const bottomNavigation = (
+    await db
+      .prepare(
+        `SELECT nav.item_key, nav.label, nav.icon_type, nav.icon_value, nav.is_enabled, asset.object_key AS icon_object_key FROM site_bottom_navigation nav LEFT JOIN media_assets asset ON asset.id = nav.icon_asset_id AND asset.status = 'ready' AND asset.deleted_at IS NULL ORDER BY nav.sort_order ASC, nav.item_key ASC`,
+      )
+      .all<BottomNavigationRow>()
+  ).results;
 
   const [publicTags, tagsByProduct, homeLayout] = await Promise.all([
     listEnabledPublicProductTags(db),
@@ -663,6 +687,7 @@ async function loadSource(db: D1Database): Promise<Source> {
     messageArticles,
     publicTags,
     tagsByProduct,
+    bottomNavigation,
   };
 }
 
@@ -670,7 +695,32 @@ function sitePublicModel(
   site: SiteRow,
   heroSlides: HeroSlideRow[],
   homeLayout: HomeLayout,
+  bottomNavigation: BottomNavigationRow[],
 ) {
+  const navigationByKey = new Map(bottomNavigation.map((item) => [item.item_key, item]));
+  const publicBottomNavigation = BOTTOM_NAVIGATION_KEYS.map((key) => {
+    const item = navigationByKey.get(key);
+    if (!item)
+      throw new ModularPublicationError(
+        'PUBLISH_BOOTSTRAP_INCOMPLETE',
+        '底部导航发布数据不完整。',
+      );
+    return {
+      key,
+      label: item.label,
+      enabled: item.is_enabled === 1,
+      icon:
+        item.icon_type === 'asset'
+          ? {
+              type: 'image',
+              value:
+                site.media_base_url && item.icon_object_key
+                  ? buildMediaUrl(site.media_base_url, item.icon_object_key)
+                  : null,
+            }
+          : { type: item.icon_type, value: item.icon_value },
+    };
+  });
   return {
     name: site.site_name,
     locationLabel: site.location_label,
@@ -704,6 +754,11 @@ function sitePublicModel(
     },
     analytics: {
       ga4MeasurementId: site.ga4_measurement_id,
+    },
+    runtime: {
+      mediaBaseUrl: site.media_base_url,
+      theme: resolveTheme(parseThemeSettings(site.theme_key, site.theme_overrides_json)),
+      bottomNavigation: publicBottomNavigation,
     },
   };
 }
@@ -832,7 +887,12 @@ function messageArticleModel(source: Source) {
 
 function modulePayload(source: Source, moduleKey: string): ModulePayload {
   if (moduleKey === 'site') {
-    const site = sitePublicModel(source.site, source.heroSlides, source.homeLayout);
+    const site = sitePublicModel(
+      source.site,
+      source.heroSlides,
+      source.homeLayout,
+      source.bottomNavigation,
+    );
     return {
       moduleKey,
       kind: 'site',
@@ -1487,6 +1547,7 @@ export async function publishModularStorefront(
   bucket: R2Bucket,
   requestId: string,
   requestedModuleKey: string = 'all',
+  beforePointerCommit?: BeforePointerCommit,
 ): Promise<ModularPublishResult> {
   const normalized = normalizePublishModuleKey(requestedModuleKey);
   if (!normalized) {
@@ -1623,6 +1684,7 @@ export async function publishModularStorefront(
     nextPointer = { ...nextPointer, sections };
   }
 
+  await beforePointerCommit?.(nextPointer);
   await bucket.put(CURRENT_KEY, JSON.stringify(nextPointer), {
     httpMetadata: {
       contentType: 'application/json; charset=utf-8',
@@ -1712,6 +1774,7 @@ export async function rollbackModularModule(
   moduleKeyInput: string,
   contentVersion: string,
   requestId: string,
+  beforePointerCommit?: BeforePointerCommit,
 ): Promise<PublishModuleVersion> {
   const moduleKey = normalizePublishModuleKey(moduleKeyInput);
   if (!moduleKey || moduleKey === 'all') {
@@ -1811,6 +1874,7 @@ export async function rollbackModularModule(
     };
   }
 
+  await beforePointerCommit?.(nextPointer);
   await bucket.put(CURRENT_KEY, JSON.stringify(nextPointer), {
     httpMetadata: {
       contentType: 'application/json; charset=utf-8',

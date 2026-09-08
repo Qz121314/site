@@ -33,23 +33,50 @@ const pointer = {
 const messagePath = pointer.faq.manifestKey.replace(/manifest\.json$/u, 'messages.json');
 
 function sourceObjects({ messages = null } = {}) {
+  const articles = Array.isArray(messages?.articles)
+    ? messages.articles.map((article) => ({
+        articleId: article.articleId,
+        title: article.title,
+        preview: article.preview,
+        backgroundObjectKey: article.backgroundObjectKey ?? null,
+        sortOrder: article.sortOrder,
+      }))
+    : [];
+  const site = {
+    schemaVersion: 2,
+    site: {
+      name: 'Example',
+      navigation: { showFaq: true, messageArticles: articles },
+      runtime: {
+        mediaBaseUrl: 'https://media.example.com',
+        theme: {},
+        bottomNavigation: [],
+      },
+    },
+  };
+  const sectionsIndex = { schemaVersion: 2, sections: [] };
+  const home = { schemaVersion: 2, featuredProducts: [], latestProducts: [] };
   const objects = new Map([
     [
       pointer.site.manifestKey.replace(/manifest\.json$/u, 'site.json'),
-      JSON.stringify({
-        schemaVersion: 2,
-        site: { name: 'Example', navigation: { showFaq: true } },
-      }),
+      JSON.stringify(site),
     ],
     [
       pointer.sectionsIndex.manifestKey.replace(/manifest\.json$/u, 'sections.json'),
-      JSON.stringify({ schemaVersion: 2, sections: [] }),
+      JSON.stringify(sectionsIndex),
     ],
-    [
-      `public/home/${pointer.contentVersion}/home.json`,
-      JSON.stringify({ schemaVersion: 2, featuredProducts: [], latestProducts: [] }),
-    ],
+    [`public/home/${pointer.contentVersion}/home.json`, JSON.stringify(home)],
   ]);
+  objects.set(
+    storefrontBootstrapSnapshotKey(pointer.contentVersion),
+    JSON.stringify({
+      schemaVersion: 4,
+      pointerVersion: pointer.contentVersion,
+      site,
+      sectionsIndex,
+      home,
+    }),
+  );
   if (messages !== null) objects.set(messagePath, JSON.stringify(messages));
   return objects;
 }
@@ -81,7 +108,7 @@ function createBucket(objects, { failWrites = false } = {}) {
   };
 }
 
-test('bootstrap snapshot write failure never breaks the existing published-content fallback', async () => {
+test('bootstrap reads a complete published artifact without runtime reconstruction', async () => {
   const objects = sourceObjects();
   const bucket = createBucket(objects, { failWrites: true });
 
@@ -92,11 +119,8 @@ test('bootstrap snapshot write failure never breaks the existing published-conte
   assert.deepEqual(snapshot.home.featuredProducts, []);
   assert.deepEqual(bucket.reads, [
     storefrontBootstrapSnapshotKey(pointer.contentVersion),
-    pointer.site.manifestKey.replace(/manifest\.json$/u, 'site.json'),
-    pointer.sectionsIndex.manifestKey.replace(/manifest\.json$/u, 'sections.json'),
-    `public/home/${pointer.contentVersion}/home.json`,
-    messagePath,
   ]);
+  assert.equal(bucket.writes.length, 0);
 });
 
 test('bootstrap carries only lightweight active Messages Article metadata and preserves existing navigation', async () => {
@@ -163,16 +187,18 @@ test('bootstrap accepts legacy Messages Article metadata without a background fi
   ]);
 });
 
-test('bootstrap safely falls back to an empty Messages Article list for an older faq publication without messages.json', async () => {
+test('bootstrap preserves an empty published Messages Article list without reading FAQ modules', async () => {
   const objects = sourceObjects();
   const bucket = createBucket(objects);
 
   const snapshot = await loadStorefrontPublishedBootstrap(bucket, pointer);
   assert.deepEqual(snapshot.site.site.navigation.messageArticles, []);
-  assert.ok(bucket.reads.includes(messagePath));
+  assert.deepEqual(bucket.reads, [
+    storefrontBootstrapSnapshotKey(pointer.contentVersion),
+  ]);
 });
 
-test('bootstrap cache rejects a pre-Messages schema-v2 bundle at the same pointer version and rebuilds it', async () => {
+test('bootstrap rejects a stale schema bundle rather than rebuilding it at runtime', async () => {
   const objects = sourceObjects({
     messages: {
       schemaVersion: 2,
@@ -200,24 +226,14 @@ test('bootstrap cache rejects a pre-Messages schema-v2 bundle at the same pointe
   const bucket = createBucket(objects);
 
   const snapshot = await loadStorefrontPublishedBootstrap(bucket, pointer);
-  assert.equal(snapshot.site.site.name, 'Example');
-  assert.deepEqual(snapshot.site.site.navigation.messageArticles, [
-    {
-      articleId: 'article-a',
-      title: 'Announcement',
-      preview: 'Fresh preview',
-      backgroundObjectKey: null,
-      sortOrder: 0,
-    },
+  assert.equal(snapshot, null);
+  assert.deepEqual(bucket.reads, [
+    storefrontBootstrapSnapshotKey(pointer.contentVersion),
   ]);
-  assert.deepEqual(
-    bucket.writes.map((write) => write.key),
-    [storefrontBootstrapSnapshotKey(pointer.contentVersion)],
-  );
-  assert.equal(JSON.parse(bucket.writes[0].body).schemaVersion, 3);
+  assert.equal(bucket.writes.length, 0);
 });
 
-test('bootstrap snapshot refuses a cached bundle from a different pointer version', async () => {
+test('bootstrap snapshot refuses a cached bundle from a different pointer version without rebuilding it', async () => {
   const objects = sourceObjects();
   objects.set(
     storefrontBootstrapSnapshotKey(pointer.contentVersion),
@@ -232,9 +248,9 @@ test('bootstrap snapshot refuses a cached bundle from a different pointer versio
   const bucket = createBucket(objects);
 
   const snapshot = await loadStorefrontPublishedBootstrap(bucket, pointer);
-  assert.equal(snapshot.site.site.name, 'Example');
-  assert.deepEqual(
-    bucket.writes.map((write) => write.key),
-    [storefrontBootstrapSnapshotKey(pointer.contentVersion)],
-  );
+  assert.equal(snapshot, null);
+  assert.deepEqual(bucket.reads, [
+    storefrontBootstrapSnapshotKey(pointer.contentVersion),
+  ]);
+  assert.equal(bucket.writes.length, 0);
 });

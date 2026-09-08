@@ -538,6 +538,41 @@ function createPublicationDb() {
   const batches = [];
 
   function rowsFor(sql) {
+    if (sql.includes('FROM site_bottom_navigation nav'))
+      return [
+        {
+          item_key: 'home',
+          label: 'Home',
+          icon_type: 'builtin',
+          icon_value: 'home',
+          is_enabled: 1,
+          icon_object_key: null,
+        },
+        {
+          item_key: 'browse',
+          label: 'Browse',
+          icon_type: 'builtin',
+          icon_value: 'browse',
+          is_enabled: 1,
+          icon_object_key: null,
+        },
+        {
+          item_key: 'messages',
+          label: 'Messages',
+          icon_type: 'builtin',
+          icon_value: 'messages',
+          is_enabled: 1,
+          icon_object_key: null,
+        },
+        {
+          item_key: 'faq',
+          label: 'FAQ',
+          icon_type: 'builtin',
+          icon_value: 'faq',
+          is_enabled: 1,
+          icon_object_key: null,
+        },
+      ];
     if (sql.includes('FROM site_hero_slides')) return [];
     if (sql.includes('FROM categories c')) return [];
     if (sql.includes('FROM product_media pm')) return [];
@@ -582,6 +617,8 @@ function createPublicationDb() {
               show_more: 1,
               show_faq: 1,
               ga4_measurement_id: null,
+              theme_key: 'saas',
+              theme_overrides_json: '{}',
             };
           }
           if (this.sql.includes("WHERE status = 'building'")) return null;

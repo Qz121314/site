@@ -10,6 +10,7 @@ import {
   type ModuleReference,
   type PublishModuleVersion,
 } from './modular-publisher';
+import { writeStorefrontPublishedBootstrap } from './storefront-bootstrap-snapshot';
 
 const DERIVED_HOME_PREFIX = 'public/home';
 const DERIVED_SEARCH_PREFIX = 'public/search';
@@ -80,8 +81,12 @@ async function readSectionProducts(
 
 async function readDerivedSnapshotSource(
   bucket: R2Bucket,
+  suppliedPointer?: ModularStorefrontPointer,
 ): Promise<DerivedSnapshotSource | null> {
-  const { pointer } = await readModularPointer(bucket);
+  const { pointer: currentPointer } = suppliedPointer
+    ? { pointer: suppliedPointer }
+    : await readModularPointer(bucket);
+  const pointer = currentPointer;
   if (!pointer) return null;
 
   const products = (
@@ -217,8 +222,11 @@ export async function materializeDerivedSearchSnapshot(
   return source ? writeDerivedSearchSnapshot(bucket, source) : null;
 }
 
-async function materializeDerivedSnapshots(bucket: R2Bucket): Promise<void> {
-  const source = await readDerivedSnapshotSource(bucket);
+async function materializeDerivedSnapshots(
+  bucket: R2Bucket,
+  pointer?: ModularStorefrontPointer,
+): Promise<void> {
+  const source = await readDerivedSnapshotSource(bucket, pointer);
   if (!source) return;
   await Promise.all([
     writeDerivedHomeSnapshot(bucket, source),
@@ -226,20 +234,12 @@ async function materializeDerivedSnapshots(bucket: R2Bucket): Promise<void> {
   ]);
 }
 
-async function refreshDerivedSnapshotsBestEffort(bucket: R2Bucket): Promise<void> {
-  try {
-    await materializeDerivedSnapshots(bucket);
-  } catch (error) {
-    console.error(
-      JSON.stringify({
-        level: 'error',
-        event: 'storefront.derived_snapshots_failed',
-        errorName: error instanceof Error ? error.name : 'UnknownError',
-        errorMessage:
-          error instanceof Error ? error.message : 'Unknown derived-snapshot error',
-      }),
-    );
-  }
+async function refreshPublishedBootstrap(
+  bucket: R2Bucket,
+  pointer: ModularStorefrontPointer,
+): Promise<void> {
+  await materializeDerivedSnapshots(bucket, pointer);
+  await writeStorefrontPublishedBootstrap(bucket, pointer);
 }
 
 export async function publishModularStorefront(
@@ -248,8 +248,9 @@ export async function publishModularStorefront(
   requestId: string,
   requestedModuleKey: string = 'all',
 ): Promise<ModularPublishResult> {
-  const result = await publishCore(db, bucket, requestId, requestedModuleKey);
-  await refreshDerivedSnapshotsBestEffort(bucket);
+  const result = await publishCore(db, bucket, requestId, requestedModuleKey, (pointer) =>
+    refreshPublishedBootstrap(bucket, pointer),
+  );
   return result;
 }
 
@@ -260,8 +261,14 @@ export async function rollbackModularModule(
   contentVersion: string,
   requestId: string,
 ): Promise<PublishModuleVersion> {
-  const result = await rollbackCore(db, bucket, moduleKey, contentVersion, requestId);
-  await refreshDerivedSnapshotsBestEffort(bucket);
+  const result = await rollbackCore(
+    db,
+    bucket,
+    moduleKey,
+    contentVersion,
+    requestId,
+    (pointer) => refreshPublishedBootstrap(bucket, pointer),
+  );
   return result;
 }
 

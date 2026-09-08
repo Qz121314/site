@@ -335,6 +335,11 @@ test('public storefront bootstrap consolidates the critical published snapshots'
       icon: { type: 'emoji', value: '?' },
     },
   ];
+  site.site.runtime = {
+    mediaBaseUrl: 'https://media.example.com',
+    theme: resolveTheme({ key: 'saas', overrides: {} }),
+    bottomNavigation,
+  };
   bucket.objects.set(
     SITE.manifestKey.replace(/manifest\.json$/u, 'site.json'),
     JSON.stringify(publishedSite),
@@ -351,75 +356,32 @@ test('public storefront bootstrap consolidates the critical published snapshots'
     `public/home/${POINTER.contentVersion}/home.json`,
     JSON.stringify(home),
   );
-  const db = {
-    prepare(sql) {
-      assert.match(sql, /ss\.theme_key/u);
-      assert.match(sql, /ss\.theme_overrides_json/u);
-      assert.match(sql, /CROSS JOIN site_bottom_navigation nav/u);
-      assert.match(sql, /LEFT JOIN media_assets asset/u);
-      return {
-        async all() {
-          return {
-            results: [
-              {
-                media_base_url: 'https://media.example.com',
-                theme_key: 'saas',
-                theme_overrides_json: '{}',
-                item_key: 'home',
-                label: 'Home',
-                icon_type: 'builtin',
-                icon_value: 'home',
-                is_enabled: 1,
-                sort_order: 0,
-                icon_object_key: null,
-              },
-              {
-                media_base_url: 'https://media.example.com',
-                theme_key: 'saas',
-                theme_overrides_json: '{}',
-                item_key: 'browse',
-                label: 'Browse',
-                icon_type: 'asset',
-                icon_value: null,
-                is_enabled: 1,
-                sort_order: 1,
-                icon_object_key: 'navigation/browse.webp',
-              },
-              {
-                media_base_url: 'https://media.example.com',
-                theme_key: 'saas',
-                theme_overrides_json: '{}',
-                item_key: 'messages',
-                label: 'Messages',
-                icon_type: 'builtin',
-                icon_value: 'messages',
-                is_enabled: 1,
-                sort_order: 2,
-                icon_object_key: null,
-              },
-              {
-                media_base_url: 'https://media.example.com',
-                theme_key: 'saas',
-                theme_overrides_json: '{}',
-                item_key: 'faq',
-                label: 'FAQ',
-                icon_type: 'emoji',
-                icon_value: '?',
-                is_enabled: 0,
-                sort_order: 3,
-                icon_object_key: null,
-              },
-            ],
-          };
-        },
-      };
+  bucket.objects.set(
+    `public/bootstrap/${POINTER.contentVersion}/bootstrap.json`,
+    JSON.stringify({
+      schemaVersion: 4,
+      pointerVersion: POINTER.contentVersion,
+      site,
+      sectionsIndex,
+      home,
+    }),
+  );
+  const db = new Proxy(
+    {},
+    {
+      get: () => {
+        throw new Error('bootstrap must not access D1');
+      },
     },
-  };
+  );
 
   const response = await publicStorefrontConfigRoutes.request(
     'https://storefront.example.com/bootstrap',
     {},
-    { DB: db, ASSETS_BUCKET: bucket },
+    {
+      DB: db,
+      ASSETS_BUCKET: bucket,
+    },
   );
   assert.equal(response.status, 200);
   assert.equal(
@@ -438,21 +400,17 @@ test('public storefront bootstrap consolidates the critical published snapshots'
   assert.deepEqual(await response.json(), expected);
 
   const bundleKey = `public/bootstrap/${POINTER.contentVersion}/bootstrap.json`;
-  assert.deepEqual(bucket.reads, [
-    'public/current.json',
-    bundleKey,
-    SITE.manifestKey.replace(/manifest\.json$/u, 'site.json'),
-    INDEX.manifestKey.replace(/manifest\.json$/u, 'sections.json'),
-    `public/home/${POINTER.contentVersion}/home.json`,
-    FAQ.manifestKey.replace(/manifest\.json$/u, 'messages.json'),
-  ]);
-  assert.equal(bucket.writes.at(-1)?.key, bundleKey);
+  assert.deepEqual(bucket.reads, ['public/current.json', bundleKey]);
+  assert.equal(bucket.writes.length, 0);
 
   bucket.reads.length = 0;
   const secondResponse = await publicStorefrontConfigRoutes.request(
     'https://storefront.example.com/bootstrap',
     {},
-    { DB: db, ASSETS_BUCKET: bucket },
+    {
+      DB: db,
+      ASSETS_BUCKET: bucket,
+    },
   );
   assert.equal(secondResponse.status, 200);
   assert.deepEqual(await secondResponse.json(), expected);
