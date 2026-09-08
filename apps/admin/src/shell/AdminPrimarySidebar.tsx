@@ -69,7 +69,8 @@ export function AdminPrimarySidebar({
           const Icon = DOMAIN_ICONS[domain.id];
           const defaultView = getAdminDefaultViewForDomain(domain.id, sections);
           const active = activeDomain === domain.id;
-          const items = active ? getAdminSecondaryItems(domain.id, sections) : [];
+          const expandable = active && domain.id !== 'dashboard';
+          const items = expandable ? getAdminSecondaryItems(domain.id, sections) : [];
           const visibleItems =
             domain.id === 'catalog'
               ? items.filter((item) => item.view === 'sections' || item.group)
@@ -93,7 +94,7 @@ export function AdminPrimarySidebar({
               >
                 <Icon aria-hidden="true" size={17} strokeWidth={1.8} />
                 <span>{domain.label}</span>
-                {active ? (
+                {expandable ? (
                   <ChevronDown
                     className="admin-nav-chevron"
                     aria-hidden="true"
@@ -101,7 +102,7 @@ export function AdminPrimarySidebar({
                   />
                 ) : null}
               </Button>
-              {active && visibleItems.length > 0 ? (
+              {expandable && visibleItems.length > 0 ? (
                 <div className="admin-nav-subitems">
                   {visibleItems.map((item) => {
                     const isSelected = item.view === activeView;
