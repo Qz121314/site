@@ -13,11 +13,13 @@ const rootFiles = [
 
 const requiredScripts = [
   'preflight:dev',
+  'dev:local',
   'fix:changed',
   'precommit:check',
   'guardrails',
   'preflight',
   'verify',
+  'verify:local',
   'format',
   'lint',
   'typecheck',

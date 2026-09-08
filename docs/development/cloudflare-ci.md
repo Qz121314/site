@@ -2,6 +2,19 @@
 
 Production Cloudflare resources are release dependencies, not general CI fixtures.
 
+## Development quota policy
+
+Local development and verification must use Wrangler's local D1/R2 state and the local Worker. `pnpm dev:local` starts that topology, while the Vite apps proxy API/media traffic to `http://localhost:8787`. `pnpm verify:local` is an alias for the local-first `pnpm verify` gate; it does not invoke production D1 or a deployed Worker.
+
+Remote operations are deliberately explicit:
+
+- `pnpm db:migrate:remote` applies production D1 migrations and is release-only.
+- `wrangler deploy` publishes a Worker and must not be part of an edit/test loop.
+- Production smoke and browser acceptance run only after a classified deployment.
+- Batch changes and run one release validation/deployment instead of deploying after each change.
+
+If a new development command can reach production Cloudflare, it must be opt-in, named as a remote/release operation, and covered by the classifier or an explicit manual override.
+
 ## Hard rules
 
 1. PR validation is local-first and must not access production Cloudflare resources.

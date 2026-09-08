@@ -19,6 +19,25 @@ Before editing, run:
 pnpm preflight:dev
 ```
 
+## Local-first development
+
+Start the complete local stack with:
+
+```bash
+pnpm dev:local
+```
+
+The Worker uses Wrangler's local D1/R2 state on port `8787`; Storefront and Admin proxy their API/media paths to that Worker. This path does not call the production Worker or production D1. Keep the local stack running while iterating instead of opening the deployed site for every change.
+
+The normal local verification commands are also explicit:
+
+```bash
+pnpm db:migrate:local
+pnpm verify:local
+```
+
+`pnpm db:migrate:remote`, `wrangler deploy`, production smoke, and production browser acceptance are release operations. Run them only once the candidate is ready and the change-aware CI/release gate authorizes them. Do not use production as a development database or test fixture.
+
 Then classify the change as S, M, or L from `AGENTS.md`, inspect the affected implementation and tests, and keep each logical batch small enough to validate locally.
 
 Before each logical commit candidate:

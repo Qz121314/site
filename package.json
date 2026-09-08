@@ -10,6 +10,7 @@
   },
   "scripts": {
     "dev": "pnpm --parallel --filter @site/storefront --filter @site/admin --filter @site/worker run dev",
+    "dev:local": "pnpm dev",
     "prepare": "node scripts/setup-git-hooks.mjs",
     "preflight:dev": "node scripts/dev-preflight.mjs",
     "fix:changed": "node scripts/fix-changed.mjs",
@@ -19,6 +20,7 @@
     "guardrails": "node scripts/check-repository-guardrails.mjs",
     "preflight": "pnpm preflight:dev && pnpm guardrails && pnpm format && pnpm lint && pnpm typecheck",
     "verify": "pnpm preflight && pnpm db:migrate:local && pnpm test && pnpm build && pnpm cf:check",
+    "verify:local": "pnpm verify",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
     "typecheck": "pnpm cf:types && pnpm -r --if-present typecheck",

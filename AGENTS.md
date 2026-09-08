@@ -135,6 +135,15 @@ Unless the user explicitly changes them:
 
 ## Cloudflare Free-Plan Resource Contract
 
+### Local-first development budget
+
+- `pnpm dev` and `pnpm dev:local` are the only normal development entry points. They run Wrangler with local D1/R2 emulation and proxy Storefront/Admin API traffic to `http://localhost:8787`.
+- Do not point local Vite development at the production Worker or production D1. Use production URLs only for an explicit post-deploy smoke or browser acceptance check.
+- `pnpm db:migrate:local`, `pnpm verify`, and `pnpm verify:local` must remain local-only. The remote migration command is an explicit release operation, not a development shortcut.
+- Do not run `wrangler deploy`, `pnpm db:migrate:remote`, production smoke, or production browser acceptance while iterating on ordinary code changes. Batch changes locally, then deploy once after the required gate passes.
+- A local verification loop may stop at `pnpm format`, `pnpm lint`, `pnpm typecheck`, targeted tests, and the affected app build. Use `pnpm verify:local` for an L-level or release candidate; it does not consume production Worker or D1 quota.
+- Any new script that can access production Cloudflare resources must be explicit, separately named, and documented here and in `docs/development/cloudflare-ci.md`.
+
 - **Static assets:** HTML, JS, CSS, fonts, icons and ordinary static assets MUST be served by Static Assets without invoking the Worker whenever possible.
 - **Worker:** MUST be reserved for dynamic, API or transactional paths. MUST NOT restore global `assets.run_worker_first=true` without explicit architectural justification.
 - **Storefront public reads:** Published public content MUST prefer static snapshot/CDN paths. New ordinary navigation MUST NOT add D1 reads without explicit approval.
