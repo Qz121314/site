@@ -45,24 +45,12 @@ app.use('*', securityHeaders);
 
 app.use('*', async (context, next) => {
   const requestId = context.req.header('cf-ray') ?? crypto.randomUUID();
-  const startedAt = Date.now();
   context.set('requestId', requestId);
 
   try {
     await next();
   } finally {
     context.header('x-request-id', requestId);
-    console.log(
-      JSON.stringify({
-        level: 'info',
-        event: 'request.complete',
-        requestId,
-        method: context.req.method,
-        path: context.req.path,
-        status: context.res.status,
-        durationMs: Date.now() - startedAt,
-      }),
-    );
   }
 });
 
