@@ -1,4 +1,4 @@
-import protocolConfig from './storefront-bootstrap-protocol.json';
+import protocolConfig from './storefront-bootstrap-protocol.json' with { type: 'json' };
 
 export type StorefrontBootstrapProtocolDescriptor = {
   schemaVersion: number;
@@ -56,5 +56,9 @@ export function storefrontBootstrapProtocolDescriptor(): StorefrontBootstrapProt
 
 export function sanitizeStorefrontBootstrapCapabilities(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
-  return [...new Set(value.filter((item): item is string => typeof item === 'string' && item.length > 0))];
+  return [
+    ...new Set(
+      value.filter((item): item is string => typeof item === 'string' && item.length > 0),
+    ),
+  ];
 }
