@@ -66,7 +66,9 @@ export function AdminPrimarySidebar({
       aria-label="后台一级导航"
     >
       <div className="admin-brand">
-        <span>SP</span>
+        <span>
+          <img src="/admin/icons/app-icon.svg" alt="" />
+        </span>
         <strong>业务运营后台</strong>
       </div>
       <nav className="admin-primary-nav" aria-label="管理业务域">
