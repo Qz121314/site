@@ -114,7 +114,7 @@ jobs:
         run: pnpm verify
 
       - name: Verify published bootstrap compatibility
-        if: github.ref == 'refs/heads/main' && steps.changes.outputs.public_runtime_changed == 'true' && (steps.changes.outputs.deploy_required == 'true' || steps.manual.outputs.force_deploy == 'true')
+        if: github.ref == 'refs/heads/main' && ((steps.changes.outputs.public_runtime_changed == 'true' && steps.changes.outputs.deploy_required == 'true') || steps.manual.outputs.force_deploy == 'true')
         run: node scripts/check-storefront-bootstrap-compatibility.mjs
         env:
           R2_BUCKET_NAME: service-catalog-site-assets
