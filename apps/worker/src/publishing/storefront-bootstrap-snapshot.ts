@@ -1,6 +1,13 @@
+import {
+  STOREFRONT_BOOTSTRAP_SCHEMA_CURRENT,
+  isReadableStorefrontBootstrapSchema,
+  sanitizeStorefrontBootstrapCapabilities,
+  storefrontBootstrapProtocolDescriptor,
+  type StorefrontBootstrapProtocolDescriptor,
+} from './storefront-bootstrap-protocol';
+
 const IMMUTABLE_CACHE = 'public, max-age=31536000, immutable';
 const BOOTSTRAP_PREFIX = 'public/bootstrap';
-const BOOTSTRAP_SCHEMA_VERSION = 4;
 
 type JsonRecord = Record<string, unknown>;
 
@@ -13,6 +20,8 @@ type MessageArticleMetadata = {
 };
 
 export type StorefrontPublishedBootstrapSnapshot = {
+  schemaVersion: number;
+  protocol: StorefrontBootstrapProtocolDescriptor;
   site: JsonRecord;
   sectionsIndex: JsonRecord;
   home: JsonRecord;
@@ -121,6 +130,34 @@ function runtimeFromSiteEnvelope(siteEnvelope: JsonRecord): JsonRecord | null {
   return runtime;
 }
 
+function protocolMetadata(
+  value: unknown,
+  schemaVersion: number,
+): StorefrontBootstrapProtocolDescriptor | null {
+  if (value === undefined) {
+    return {
+      schemaVersion,
+      minReadableSchemaVersion: schemaVersion,
+      capabilities: [],
+    };
+  }
+  if (
+    !isRecord(value) ||
+    value.schemaVersion !== schemaVersion ||
+    typeof value.minReadableSchemaVersion !== 'number' ||
+    !Number.isInteger(value.minReadableSchemaVersion) ||
+    value.minReadableSchemaVersion < 1 ||
+    value.minReadableSchemaVersion > schemaVersion
+  ) {
+    return null;
+  }
+  return {
+    schemaVersion,
+    minReadableSchemaVersion: value.minReadableSchemaVersion,
+    capabilities: sanitizeStorefrontBootstrapCapabilities(value.capabilities),
+  };
+}
+
 export function storefrontBootstrapSnapshotKey(pointerVersion: string): string {
   return `${BOOTSTRAP_PREFIX}/${encodeURIComponent(pointerVersion)}/bootstrap.json`;
 }
@@ -131,7 +168,7 @@ function parseBootstrapSnapshot(
 ): StorefrontPublishedBootstrapSnapshot | null {
   if (
     !isRecord(value) ||
-    value.schemaVersion !== BOOTSTRAP_SCHEMA_VERSION ||
+    !isReadableStorefrontBootstrapSchema(value.schemaVersion) ||
     value.pointerVersion !== pointerVersion ||
     !isRecord(value.site) ||
     !isRecord(value.sectionsIndex) ||
@@ -139,10 +176,14 @@ function parseBootstrapSnapshot(
   ) {
     return null;
   }
+  const schemaVersion = value.schemaVersion;
+  const protocol = protocolMetadata(value.protocol, schemaVersion);
   const site = sanitizeCachedSiteEnvelope(value.site);
   const runtime = site ? runtimeFromSiteEnvelope(site) : null;
-  if (!site || !runtime) return null;
+  if (!protocol || !site || !runtime) return null;
   return {
+    schemaVersion,
+    protocol,
     site,
     sectionsIndex: value.sectionsIndex,
     home: value.home,
@@ -178,7 +219,8 @@ export async function writeStorefrontPublishedBootstrap(
   await bucket.put(
     storefrontBootstrapSnapshotKey(pointerVersion),
     JSON.stringify({
-      schemaVersion: BOOTSTRAP_SCHEMA_VERSION,
+      schemaVersion: STOREFRONT_BOOTSTRAP_SCHEMA_CURRENT,
+      protocol: storefrontBootstrapProtocolDescriptor(),
       pointerVersion,
       site,
       sectionsIndex,
