@@ -118,10 +118,13 @@ test('workspace ownership is decomposed by domain', () => {
   const infrastructure = source('../src/system/SystemInfrastructureView.tsx');
   const advanced = source('../src/system/SystemAdvancedView.tsx');
 
-  assert.match(home, /SiteHeroSettingsSection/);
   assert.match(home, /HomeLayoutSettingsSection/);
-  assert.match(home, /showHot/);
-  assert.match(home, /homeSectionLimit/);
+  assert.match(home, /保存首页分区/);
+  assert.match(home, /toSiteSettingsUpdateInput/);
+  assert.doesNotMatch(
+    home,
+    /SiteHeroSettingsSection|showHot|showLatest|showMore|showFaq|homeSectionLimit/,
+  );
   assert.match(navigation, /BottomNavigationSettingsSection/);
   assert.match(pwa, /installPrompt/);
   assert.match(pwa, /pwaIconAssetId/);

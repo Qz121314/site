@@ -2,53 +2,21 @@ import { useState, type FormEvent } from 'react';
 import type { AdminSection } from '../api';
 import { useAdminDirtySource } from '../admin-unsaved-state';
 import { HomeLayoutSettingsSection } from '../HomeLayoutSettingsSection';
-import { SiteHeroSettingsSection } from '../SiteHeroSettingsSection';
-import type {
-  HomeLayout,
-  SiteHeroSlide,
-  SiteSettingsWithHero,
-} from '../site-hero-settings-api';
+import { AdminActionBar } from '../components/ui/action-bar';
+import { Button } from '../components/ui/button';
+import { AdminStatusBadge } from '../components/ui/status-badge';
+import type { HomeLayout, SiteSettingsWithHero } from '../site-hero-settings-api';
 import {
-  cloneHeroSlides,
   settingsValueEqual,
   toSiteSettingsUpdateInput,
 } from '../settings/site-settings-state';
 import { useSiteSettingsController } from '../settings/SiteSettingsProvider';
 import './experience-settings.css';
 
-type HomeDraft = {
-  showHot: boolean;
-  showLatest: boolean;
-  showMore: boolean;
-  showFaq: boolean;
-  homeSectionLimit: number;
-  heroSlides: SiteHeroSlide[];
-  homeLayout: HomeLayout;
-};
-
-type HomeVisibilityField = 'showHot' | 'showLatest' | 'showMore' | 'showFaq';
-
-const HOME_VISIBILITY_FIELDS: ReadonlyArray<
-  readonly [HomeVisibilityField, string, string]
-> = [
-  ['showHot', '热门内容', '显示 Hot 首页内容区块'],
-  ['showLatest', '最新内容', '显示 Latest 首页内容区块'],
-  ['showMore', 'More 入口', '允许首页显示 More 入口'],
-  ['showFaq', 'FAQ 区域', '在首页展示 FAQ 相关入口'],
-];
-
-function createHomeDraft(settings: SiteSettingsWithHero): HomeDraft {
+function createHomeDraft(settings: SiteSettingsWithHero): HomeLayout {
   return {
-    showHot: settings.showHot,
-    showLatest: settings.showLatest,
-    showMore: settings.showMore,
-    showFaq: settings.showFaq,
-    homeSectionLimit: settings.homeSectionLimit,
-    heroSlides: cloneHeroSlides(settings.heroSlides),
-    homeLayout: {
-      shortcutSectionIds: [...settings.homeLayout.shortcutSectionIds],
-      recommendationSectionIds: [...settings.homeLayout.recommendationSectionIds],
-    },
+    shortcutSectionIds: [...settings.homeLayout.shortcutSectionIds],
+    recommendationSectionIds: [...settings.homeLayout.recommendationSectionIds],
   };
 }
 
@@ -60,7 +28,7 @@ export function HomeExperienceView({
   onSessionExpired: () => void;
 }) {
   const { settings, saveSettings } = useSiteSettingsController();
-  const [draft, setDraft] = useState<HomeDraft>(() => createHomeDraft(settings));
+  const [draft, setDraft] = useState<HomeLayout>(() => createHomeDraft(settings));
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{
     type: 'success' | 'error';
@@ -79,32 +47,18 @@ export function HomeExperienceView({
       const base = toSiteSettingsUpdateInput(settings);
       const updated = await saveSettings({
         ...base,
-        showHot: draft.showHot,
-        showLatest: draft.showLatest,
-        showMore: draft.showMore,
-        showFaq: draft.showFaq,
-        homeSectionLimit: draft.homeSectionLimit,
-        heroSlides: draft.heroSlides.map((slide, index) => ({
-          id: slide.id,
-          mediaAssetId: slide.mediaAssetId,
-          title: slide.title?.trim() || null,
-          description: slide.description?.trim() || null,
-          ctaLabel: slide.ctaLabel?.trim() || null,
-          ctaHref: slide.ctaHref?.trim() || null,
-          sortOrder: index,
-        })),
         homeLayout: {
-          shortcutSectionIds: [...draft.homeLayout.shortcutSectionIds],
-          recommendationSectionIds: [...draft.homeLayout.recommendationSectionIds],
+          shortcutSectionIds: [...draft.shortcutSectionIds],
+          recommendationSectionIds: [...draft.recommendationSectionIds],
         },
       });
       setDraft(createHomeDraft(updated));
-      setMessage({ type: 'success', text: '首页设置已保存。' });
+      setMessage({ type: 'success', text: '首页分区已保存。' });
     } catch (error) {
       if (error instanceof Error && error.message.includes('SESSION')) onSessionExpired();
       setMessage({
         type: 'error',
-        text: error instanceof Error ? error.message : '首页设置保存失败。',
+        text: error instanceof Error ? error.message : '首页分区保存失败。',
       });
     } finally {
       setSaving(false);
@@ -113,90 +67,35 @@ export function HomeExperienceView({
 
   return (
     <form
-      className="settings-workspace home-experience-workspace"
+      className="settings-workspace is-medium home-experience-workspace"
       onSubmit={handleSubmit}
     >
-      <section
-        className="settings-workspace-section"
-        aria-labelledby="home-content-title"
-      >
-        <div className="settings-workspace-heading">
-          <div>
-            <h2 id="home-content-title">首页展示</h2>
-            <p>控制首页内容区块与每个推荐分区的展示数量，不影响其他 Storefront 页面。</p>
-          </div>
-        </div>
-
-        <div className="settings-toggle-list">
-          {HOME_VISIBILITY_FIELDS.map(([field, label, description]) => (
-            <label className="settings-toggle-row" key={field}>
-              <span className="settings-toggle-copy">
-                <strong>{label}</strong>
-                <small>{description}</small>
-              </span>
-              <input
-                type="checkbox"
-                checked={draft[field]}
-                disabled={saving}
-                onChange={(event) =>
-                  setDraft((current) => ({
-                    ...current,
-                    [field]: event.target.checked,
-                  }))
-                }
-              />
-            </label>
-          ))}
-        </div>
-
-        <label className="field-group home-section-limit-field">
-          <span>每个首页推荐分区最多显示</span>
-          <input
-            type="number"
-            min={1}
-            max={24}
-            value={draft.homeSectionLimit}
-            disabled={saving}
-            onChange={(event) =>
-              setDraft((current) => ({
-                ...current,
-                homeSectionLimit: Math.max(
-                  1,
-                  Math.min(24, Number(event.target.value) || 1),
-                ),
-              }))
-            }
-          />
-        </label>
-      </section>
-
-      <SiteHeroSettingsSection
-        slides={draft.heroSlides}
-        busy={saving}
-        onChange={(heroSlides) => setDraft((current) => ({ ...current, heroSlides }))}
-        onSessionExpired={onSessionExpired}
-      />
-
       <HomeLayoutSettingsSection
-        value={draft.homeLayout}
+        value={draft}
         sections={sections}
         busy={saving}
-        onChange={(homeLayout) => setDraft((current) => ({ ...current, homeLayout }))}
+        onChange={setDraft}
       />
 
-      <div className="settings-workspace-actions">
-        {message ? (
-          <span
-            className={`settings-workspace-status is-${message.type}`}
-            role={message.type === 'error' ? 'alert' : 'status'}
-          >
-            {message.text}
-          </span>
-        ) : null}
-        <button className="primary-button" type="submit" disabled={saving || !dirty}>
-          {saving ? '保存中…' : '保存首页设置'}
-        </button>
-      </div>
+      <AdminActionBar
+        sticky
+        status={
+          message ? (
+            <AdminStatusBadge
+              tone={message.type === 'success' ? 'success' : 'danger'}
+              role={message.type === 'error' ? 'alert' : 'status'}
+            >
+              {message.text}
+            </AdminStatusBadge>
+          ) : dirty ? (
+            <AdminStatusBadge tone="warning">未保存更改</AdminStatusBadge>
+          ) : null
+        }
+      >
+        <Button variant="primary" type="submit" loading={saving} disabled={!dirty}>
+          保存首页分区
+        </Button>
+      </AdminActionBar>
     </form>
   );
 }
