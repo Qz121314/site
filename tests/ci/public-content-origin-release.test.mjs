@@ -33,7 +33,10 @@ test('production workflow wires the repository public-content origin before veri
     /^    env:\n      VITE_PUBLIC_CONTENT_ORIGIN: \$\{\{ vars\.VITE_PUBLIC_CONTENT_ORIGIN \}\}$/m,
   );
 
-  const validation = namedStep(mainWorkflow, 'Validate Storefront public content origin');
+  const validation = namedStep(
+    mainWorkflow,
+    'Validate Storefront public content origin',
+  );
   assert.match(validation, /deploy_required/);
   assert.match(validation, /force_deploy/);
   assert.match(validation, /node scripts\/validate-public-content-origin\.mjs/);
@@ -46,8 +49,14 @@ test('production workflow wires the repository public-content origin before veri
 });
 
 test('public-content origin validator accepts only HTTPS root origins', () => {
-  assert.equal(validatePublicContentOrigin('https://cdn.example.com'), 'https://cdn.example.com');
-  assert.equal(validatePublicContentOrigin('https://cdn.example.com/'), 'https://cdn.example.com');
+  assert.equal(
+    validatePublicContentOrigin('https://cdn.example.com'),
+    'https://cdn.example.com',
+  );
+  assert.equal(
+    validatePublicContentOrigin('https://cdn.example.com/'),
+    'https://cdn.example.com',
+  );
 
   for (const value of [
     undefined,
