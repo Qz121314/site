@@ -6,6 +6,7 @@ import {
   type AdminView,
   type AdminViewContext,
 } from '../admin-navigation';
+import type { AdminNavigationPreferences } from '../admin-navigation-preferences';
 import type { AdminSection } from '../api';
 import { CatalogWorkspaceSwitcher } from '../catalog/CatalogWorkspaceSwitcher';
 import { Button } from '../components/ui/button';
@@ -26,6 +27,7 @@ type AdminShellProps = {
   pageSecondaryAction?: ReactNode;
   workspaceWidth?: 'narrow' | 'medium' | 'wide' | 'split-pane';
   children: ReactNode;
+  navigationPreferences: AdminNavigationPreferences;
 };
 
 const FOCUSABLE_SELECTOR = [
@@ -48,6 +50,7 @@ export function AdminShell({
   pageSecondaryAction,
   workspaceWidth = 'wide',
   children,
+  navigationPreferences,
 }: AdminShellProps) {
   const [navigationOpen, setNavigationOpen] = useState(false);
   const drawerRef = useRef<HTMLDivElement>(null);
@@ -111,6 +114,7 @@ export function AdminShell({
           activeDomain={activeDomain}
           sections={sections}
           onNavigate={onNavigate}
+          navigationPreferences={navigationPreferences}
         />
       </div>
       <div className="admin-desktop-secondary">
@@ -119,17 +123,12 @@ export function AdminShell({
           activeView={activeView}
           sections={sections}
           onNavigate={onNavigate}
+          navigationPreferences={navigationPreferences}
         />
       </div>
 
       <div className="admin-shell-workspace">
         <AdminTopBar
-          context={
-            <>
-              <span>{context.eyebrow}</span>
-              <strong>{context.title}</strong>
-            </>
-          }
           actions={topBarActions}
           onOpenNavigation={() => {
             drawerTriggerRef.current =
@@ -141,7 +140,6 @@ export function AdminShell({
         />
         <main className="admin-main">
           <AdminPageHeader
-            eyebrow={context.eyebrow}
             title={context.title}
             description={context.description}
             status={pageStatus}
@@ -194,6 +192,7 @@ export function AdminShell({
                 activeDomain={activeDomain}
                 sections={sections}
                 onNavigate={onNavigate}
+                navigationPreferences={navigationPreferences}
               />
               <AdminSecondarySidebar
                 activeDomain={activeDomain}
@@ -201,6 +200,7 @@ export function AdminShell({
                 sections={sections}
                 onNavigate={onNavigate}
                 onItemSelected={() => setNavigationOpen(false)}
+                navigationPreferences={navigationPreferences}
               />
             </div>
           </div>

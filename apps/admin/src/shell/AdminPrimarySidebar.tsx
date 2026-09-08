@@ -10,11 +10,14 @@ import {
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import {
-  ADMIN_DOMAINS,
   getAdminDefaultViewForDomain,
   type AdminDomain,
   type AdminView,
 } from '../admin-navigation';
+import {
+  orderedAdminDomains,
+  type AdminNavigationPreferences,
+} from '../admin-navigation-preferences';
 import type { AdminSection } from '../api';
 
 const DOMAIN_ICONS: Record<AdminDomain, LucideIcon> = {
@@ -32,6 +35,7 @@ type AdminPrimarySidebarProps = {
   sections: AdminSection[];
   onNavigate: (view: AdminView) => void;
   onDomainSelected?: () => void;
+  navigationPreferences: AdminNavigationPreferences;
 };
 
 export function AdminPrimarySidebar({
@@ -39,6 +43,7 @@ export function AdminPrimarySidebar({
   sections,
   onNavigate,
   onDomainSelected,
+  navigationPreferences,
 }: AdminPrimarySidebarProps) {
   return (
     <aside className="admin-primary-sidebar" aria-label="后台一级导航">
@@ -47,7 +52,7 @@ export function AdminPrimarySidebar({
         <strong>业务运营后台</strong>
       </div>
       <nav className="admin-primary-nav" aria-label="管理业务域">
-        {ADMIN_DOMAINS.map((domain) => {
+        {orderedAdminDomains(navigationPreferences).map((domain) => {
           const Icon = DOMAIN_ICONS[domain.id];
           const defaultView = getAdminDefaultViewForDomain(domain.id, sections);
           const active = activeDomain === domain.id;

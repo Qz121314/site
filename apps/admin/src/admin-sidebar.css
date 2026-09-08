@@ -10,9 +10,9 @@
 .admin-primary-sidebar {
   height: 100%;
   padding: 12px 10px;
-  color: #aeb6c2;
+  color: var(--nav-text);
   border-right: 1px solid rgb(255 255 255 / 6%);
-  background: #151922;
+  background: var(--nav);
 }
 
 .admin-brand {
@@ -31,10 +31,10 @@
   height: 34px;
   flex: 0 0 34px;
   place-items: center;
-  border: 1px solid rgb(255 122 74 / 28%);
+  border: 1px solid rgb(255 255 255 / 14%);
   border-radius: 8px;
   color: #fff;
-  background: #f45a26;
+  background: #334155;
   font-size: 0.78rem;
   font-weight: 800;
 }
@@ -87,20 +87,20 @@
 
 .admin-primary-link.ui-button.is-active {
   color: #fff;
-  border-color: rgb(244 90 38 / 30%);
-  background: rgb(244 90 38 / 15%);
-  box-shadow: inset 3px 0 0 #f45a26;
+  border-color: rgb(148 163 184 / 24%);
+  background: rgb(255 255 255 / 9%);
+  box-shadow: inset 3px 0 0 #60a5fa;
   font-weight: 780;
 }
 
 .admin-primary-link.ui-button.is-active > svg {
-  color: #ffb59b;
+  color: #93c5fd;
   stroke-width: 2.1;
 }
 
 .admin-primary-link.ui-button:focus-visible,
 .admin-secondary-link.ui-button:focus-visible {
-  outline: 2px solid #f45a26;
+  outline: 2px solid #60a5fa;
   outline-offset: -2px;
 }
 
@@ -182,14 +182,14 @@
 
 .admin-secondary-link.ui-button.is-active {
   color: #172033;
-  border-color: #f0c6b7;
-  background: #fff3ed;
-  box-shadow: inset 3px 0 0 #f45a26;
+  border-color: #dbeafe;
+  background: #eff6ff;
+  box-shadow: inset 3px 0 0 #2563eb;
   font-weight: 780;
 }
 
 .admin-secondary-link.ui-button.is-active > svg {
-  color: #d94a18;
+  color: #2563eb;
 }
 
 .admin-secondary-link.ui-button > svg {

@@ -3,12 +3,11 @@ import type { ReactNode } from 'react';
 import { Button } from '../components/ui/button';
 
 type AdminTopBarProps = {
-  context: ReactNode;
   actions?: ReactNode;
   onOpenNavigation: () => void;
 };
 
-export function AdminTopBar({ context, actions, onOpenNavigation }: AdminTopBarProps) {
+export function AdminTopBar({ actions, onOpenNavigation }: AdminTopBarProps) {
   return (
     <header className="admin-top-bar">
       <div className="admin-top-bar-context">
@@ -22,7 +21,6 @@ export function AdminTopBar({ context, actions, onOpenNavigation }: AdminTopBarP
         >
           <Menu aria-hidden="true" size={20} />
         </Button>
-        <div>{context}</div>
       </div>
       {actions ? <div className="admin-top-bar-actions">{actions}</div> : null}
     </header>

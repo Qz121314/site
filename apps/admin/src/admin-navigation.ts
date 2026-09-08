@@ -28,6 +28,7 @@ export type AdminView =
   | 'customer-service'
   | 'faq'
   | 'sections'
+  | 'system-navigation'
   | `${DynamicViewKind}:${string}`;
 
 export type AdminDomain =
@@ -82,6 +83,7 @@ export const FIXED_ADMIN_VIEWS = new Set<AdminView>([
   'customer-service',
   'faq',
   'sections',
+  'system-navigation',
 ]);
 
 const LEGACY_ADMIN_VIEW_ALIASES: Readonly<Record<string, AdminView>> = {
@@ -277,6 +279,7 @@ export function getAdminSecondaryItems(
     case 'system':
       return [
         { view: 'system-general', label: '基本设置' },
+        { view: 'system-navigation', label: '界面偏好' },
         { view: 'pwa', label: '应用安装' },
         { view: 'system-infrastructure', label: '基础设施' },
         { view: 'system-advanced', label: '高级设置' },
@@ -299,62 +302,67 @@ export function getAdminViewContext(
       description: '从左侧业务域进入现有管理工作区。',
     },
     home: {
-      eyebrow: `${domainLabel} / 首页`,
+      eyebrow: domainLabel,
       title: '首页',
-      description: '管理 Storefront 首页展示内容、Hero 与布局。',
+      description: '管理仍在使用的首页 Hero 与分区布局。',
     },
     navigation: {
-      eyebrow: `${domainLabel} / 导航`,
+      eyebrow: domainLabel,
       title: '导航',
       description: '管理 Storefront 主导航入口、图标与可见性。',
     },
     messages: {
-      eyebrow: `${domainLabel} / Messages`,
+      eyebrow: domainLabel,
       title: 'Messages',
       description: '管理 Messages 页面相关体验设置与入口上下文。',
     },
     theme: {
-      eyebrow: `${domainLabel} / 主题`,
+      eyebrow: domainLabel,
       title: '主题中心',
       description: '管理 Storefront 的视觉主题与运行时样式配置。',
     },
     pwa: {
-      eyebrow: `${domainLabel} / 应用安装`,
+      eyebrow: domainLabel,
       title: '应用安装',
       description: '管理应用图标与安装提示体验。',
     },
     assets: {
-      eyebrow: `${domainLabel} / 素材库`,
+      eyebrow: domainLabel,
       title: '素材库管理',
       description: '管理上传素材、文件夹与存储清理。',
     },
     'customer-service': {
-      eyebrow: `${domainLabel} / 客服接入`,
+      eyebrow: domainLabel,
       title: '客服接入',
       description: '管理 Site 与 Customer Service 的连接配置。',
     },
     faq: {
-      eyebrow: `${domainLabel} / 文章`,
+      eyebrow: domainLabel,
       title: '文章中心',
       description: '管理可复用的 Markdown 文章内容。',
     },
     sections: {
-      eyebrow: `${domainLabel} / 分区`,
+      eyebrow: domainLabel,
       title: '分区管理',
       description: '管理业务分区及其展示顺序。',
     },
     'system-general': {
-      eyebrow: `${domainLabel} / 基本设置`,
+      eyebrow: domainLabel,
       title: '基本设置',
       description: '管理站点名称、位置标签与品牌标识。',
     },
+    'system-navigation': {
+      eyebrow: domainLabel,
+      title: '界面偏好',
+      description: '调整后台一级与二级导航显示顺序。',
+    },
     'system-infrastructure': {
-      eyebrow: `${domainLabel} / 基础设施`,
+      eyebrow: domainLabel,
       title: '基础设施',
       description: '管理媒体域名与存储访问相关技术配置。',
     },
     'system-advanced': {
-      eyebrow: `${domainLabel} / 高级设置`,
+      eyebrow: domainLabel,
       title: '高级设置',
       description: '管理可选的高级站点集成参数。',
     },
@@ -383,7 +391,7 @@ export function getAdminViewContext(
 
   return {
     domain,
-    eyebrow: `${domainLabel} / ${sectionName}`,
+    eyebrow: domainLabel,
     title: kindLabels[dynamic.kind],
     description: `管理“${sectionName}”分区的${kindLabels[dynamic.kind]}。`,
   };

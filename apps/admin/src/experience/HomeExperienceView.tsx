@@ -17,33 +17,12 @@ import { useSiteSettingsController } from '../settings/SiteSettingsProvider';
 import './experience-settings.css';
 
 type HomeDraft = {
-  showHot: boolean;
-  showLatest: boolean;
-  showMore: boolean;
-  showFaq: boolean;
-  homeSectionLimit: number;
   heroSlides: SiteHeroSlide[];
   homeLayout: HomeLayout;
 };
 
-type HomeVisibilityField = 'showHot' | 'showLatest' | 'showMore' | 'showFaq';
-
-const HOME_VISIBILITY_FIELDS: ReadonlyArray<
-  readonly [HomeVisibilityField, string, string]
-> = [
-  ['showHot', '热门内容', '显示 Hot 首页内容区块'],
-  ['showLatest', '最新内容', '显示 Latest 首页内容区块'],
-  ['showMore', 'More 入口', '允许首页显示 More 入口'],
-  ['showFaq', 'FAQ 区域', '在首页展示 FAQ 相关入口'],
-];
-
 function createHomeDraft(settings: SiteSettingsWithHero): HomeDraft {
   return {
-    showHot: settings.showHot,
-    showLatest: settings.showLatest,
-    showMore: settings.showMore,
-    showFaq: settings.showFaq,
-    homeSectionLimit: settings.homeSectionLimit,
     heroSlides: cloneHeroSlides(settings.heroSlides),
     homeLayout: {
       shortcutSectionIds: [...settings.homeLayout.shortcutSectionIds],
@@ -79,11 +58,6 @@ export function HomeExperienceView({
       const base = toSiteSettingsUpdateInput(settings);
       const updated = await saveSettings({
         ...base,
-        showHot: draft.showHot,
-        showLatest: draft.showLatest,
-        showMore: draft.showMore,
-        showFaq: draft.showFaq,
-        homeSectionLimit: draft.homeSectionLimit,
         heroSlides: draft.heroSlides.map((slide, index) => ({
           id: slide.id,
           mediaAssetId: slide.mediaAssetId,
@@ -116,60 +90,6 @@ export function HomeExperienceView({
       className="settings-workspace home-experience-workspace"
       onSubmit={handleSubmit}
     >
-      <section
-        className="settings-workspace-section"
-        aria-labelledby="home-content-title"
-      >
-        <div className="settings-workspace-heading">
-          <div>
-            <h2 id="home-content-title">首页展示</h2>
-            <p>控制首页内容区块与每个推荐分区的展示数量，不影响其他 Storefront 页面。</p>
-          </div>
-        </div>
-
-        <div className="settings-toggle-list">
-          {HOME_VISIBILITY_FIELDS.map(([field, label, description]) => (
-            <label className="settings-toggle-row" key={field}>
-              <span className="settings-toggle-copy">
-                <strong>{label}</strong>
-                <small>{description}</small>
-              </span>
-              <input
-                type="checkbox"
-                checked={draft[field]}
-                disabled={saving}
-                onChange={(event) =>
-                  setDraft((current) => ({
-                    ...current,
-                    [field]: event.target.checked,
-                  }))
-                }
-              />
-            </label>
-          ))}
-        </div>
-
-        <label className="field-group home-section-limit-field">
-          <span>每个首页推荐分区最多显示</span>
-          <input
-            type="number"
-            min={1}
-            max={24}
-            value={draft.homeSectionLimit}
-            disabled={saving}
-            onChange={(event) =>
-              setDraft((current) => ({
-                ...current,
-                homeSectionLimit: Math.max(
-                  1,
-                  Math.min(24, Number(event.target.value) || 1),
-                ),
-              }))
-            }
-          />
-        </label>
-      </section>
-
       <SiteHeroSettingsSection
         slides={draft.heroSlides}
         busy={saving}

@@ -12,6 +12,11 @@ import {
   type AdminView,
   type SettingsAdminView,
 } from './admin-navigation';
+import {
+  readAdminNavigationPreferences,
+  saveAdminNavigationPreferences,
+  type AdminNavigationPreferences,
+} from './admin-navigation-preferences';
 import { useAdminUnsavedState } from './admin-unsaved-state';
 import { Button } from './components/ui/button';
 import type {
@@ -73,6 +78,11 @@ const ConversionPoolView = lazy(() =>
     default: module.ConversionPoolView,
   })),
 );
+const SystemNavigationView = lazy(() =>
+  import('./system/SystemNavigationView').then((module) => ({
+    default: module.SystemNavigationView,
+  })),
+);
 
 type DashboardProps = {
   expiresAt: string | undefined;
@@ -120,6 +130,7 @@ function workspaceWidthForView(view: AdminView): WorkspaceWidth {
     view === 'navigation' ||
     view === 'messages' ||
     view === 'pwa' ||
+    view === 'system-navigation' ||
     view === 'system-infrastructure'
   ) {
     return 'medium';
@@ -145,6 +156,8 @@ export function Dashboard({
   onSessionExpired,
 }: DashboardProps) {
   const [activeView, setActiveView] = useState<AdminView>(readInitialAdminView);
+  const [navigationPreferences, setNavigationPreferences] =
+    useState<AdminNavigationPreferences>(readAdminNavigationPreferences);
   const initialViewRef = useRef(activeView);
   const [sections, setSections] = useState<AdminSection[]>([]);
   const [sectionsLoading, setSectionsLoading] = useState(true);
@@ -281,6 +294,11 @@ export function Dashboard({
       return;
     }
     onLogout();
+  }
+
+  function updateNavigationPreferences(next: AdminNavigationPreferences) {
+    setNavigationPreferences(next);
+    saveAdminNavigationPreferences(next);
   }
 
   function confirmDiscardAndContinue() {
@@ -441,6 +459,7 @@ export function Dashboard({
         topBarActions={topBarActions}
         pageSecondaryAction={pageSecondaryAction}
         workspaceWidth={workspaceWidthForView(activeView)}
+        navigationPreferences={navigationPreferences}
       >
         {publishFeedback ? (
           <div
@@ -495,6 +514,12 @@ export function Dashboard({
             />
           ) : activeView === 'faq' ? (
             <FaqManagementView key={activeView} onSessionExpired={onSessionExpired} />
+          ) : activeView === 'system-navigation' ? (
+            <SystemNavigationView
+              sections={sections}
+              value={navigationPreferences}
+              onChange={updateNavigationPreferences}
+            />
           ) : currentSection?.kind === 'products' ? (
             <ProductManagementView
               key={activeView}

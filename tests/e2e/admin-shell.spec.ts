@@ -263,7 +263,7 @@ test('Admin shell exposes final IA, route compatibility, and desktop geometry', 
     ['站点', ['首页', '导航', '主题']],
     ['内容', ['文章中心', '素材库']],
     ['客户互动', ['Messages', '客服接入']],
-    ['系统', ['基本设置', '应用安装', '基础设施', '高级设置']],
+    ['系统', ['基本设置', '界面偏好', '应用安装', '基础设施', '高级设置']],
   ] as const) {
     await primary.getByRole('button', { name: domain }).click();
     const navigation = page.getByRole('navigation', { name: `${domain}二级导航` });
@@ -273,6 +273,22 @@ test('Admin shell exposes final IA, route compatibility, and desktop geometry', 
   for (const width of [1024, 1366, 1440, 1920]) {
     await expectShellGeometry(page, width);
   }
+});
+
+test('navigation order saves locally, restores on reload, and can reset', async ({
+  page,
+}) => {
+  await installAdminFixture(page);
+  await page.goto('/admin/#system-navigation');
+  await expect(page.getByRole('heading', { name: '界面偏好' })).toBeVisible();
+
+  await page.getByRole('button', { name: '下移仪表盘', exact: true }).click();
+  const primary = page.getByRole('navigation', { name: '管理业务域' });
+  await expect(primary.getByRole('button').first()).toHaveText('商品');
+  await page.reload();
+  await expect(primary.getByRole('button').first()).toHaveText('商品');
+  await page.getByRole('button', { name: '恢复全部默认顺序' }).click();
+  await expect(primary.getByRole('button').first()).toHaveText('仪表盘');
 });
 
 test('narrow viewport uses the accessible drawer without horizontal overflow', async ({

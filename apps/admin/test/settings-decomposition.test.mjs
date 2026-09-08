@@ -120,8 +120,7 @@ test('workspace ownership is decomposed by domain', () => {
 
   assert.match(home, /SiteHeroSettingsSection/);
   assert.match(home, /HomeLayoutSettingsSection/);
-  assert.match(home, /showHot/);
-  assert.match(home, /homeSectionLimit/);
+  assert.doesNotMatch(home, /showHot|showLatest|showMore|showFaq|homeSectionLimit/);
   assert.match(navigation, /BottomNavigationSettingsSection/);
   assert.match(pwa, /installPrompt/);
   assert.match(pwa, /pwaIconAssetId/);
