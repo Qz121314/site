@@ -133,14 +133,18 @@ themeCenter.presets = [
   },
 ];
 
-async function installAdminFixture(page: Page) {
+type AdminFixtureOptions = {
+  expiresAt?: string | null;
+};
+
+async function installAdminFixture(page: Page, options: AdminFixtureOptions = {}) {
   await page.route('**/api/admin/**', async (route) => {
     await route.fulfill({ contentType: 'application/json', body: '{}' });
   });
   await page.route('**/api/admin/auth/session', async (route) => {
     await route.fulfill({
       contentType: 'application/json',
-      body: JSON.stringify({ authenticated: true, expiresAt: null }),
+      body: JSON.stringify({ authenticated: true, expiresAt: options.expiresAt ?? null }),
     });
   });
   await page.route('**/api/admin/sections/?scope=active', async (route) => {
@@ -196,16 +200,17 @@ async function expectShellGeometry(page: Page, width: number) {
   const geometry = await page.evaluate(() => {
     const primary = document.querySelector<HTMLElement>('.admin-desktop-primary');
     const secondary = document.querySelector<HTMLElement>('.admin-desktop-secondary');
-    const topBar = document.querySelector<HTMLElement>('.admin-top-bar');
     const workspace = document.querySelector<HTMLElement>('.admin-workspace-content');
-    if (!primary || !secondary || !topBar || !workspace) return null;
+    if (!primary || !secondary || !workspace) return null;
     const primaryRect = primary.getBoundingClientRect();
     const secondaryRect = secondary.getBoundingClientRect();
-    const topBarRect = topBar.getBoundingClientRect();
+    const workspaceRect = workspace.getBoundingClientRect();
     return {
       primaryVisible: primaryRect.width > 0,
       secondaryVisible: secondaryRect.width > 0,
-      topBarAtViewportTop: Math.abs(topBarRect.top) < 1,
+      globalTopBarRemoved: document.querySelector('.admin-top-bar') === null,
+      visualPageHeaderRemoved: document.querySelector('.admin-page-header') === null,
+      workspaceStartsAtTop: workspaceRect.top < 20,
       workspaceScrollsIndependently: getComputedStyle(workspace).overflowY === 'auto',
       noHorizontalOverflow: document.documentElement.scrollWidth <= window.innerWidth,
     };
@@ -213,20 +218,34 @@ async function expectShellGeometry(page: Page, width: number) {
   expect(geometry).toEqual({
     primaryVisible: true,
     secondaryVisible: true,
-    topBarAtViewportTop: true,
+    globalTopBarRemoved: true,
+    visualPageHeaderRemoved: true,
+    workspaceStartsAtTop: true,
     workspaceScrollsIndependently: true,
     noHorizontalOverflow: true,
   });
 }
 
-test('Admin shell exposes final IA, route compatibility, and desktop geometry', async ({
+async function expectVisuallyHiddenHeading(page: Page, text: string) {
+  const heading = page.locator('h1.admin-visually-hidden');
+  await expect(heading).toHaveText(text);
+  await expect(heading).toHaveCSS('position', 'absolute');
+  await expect(heading).toHaveCSS('width', '1px');
+  await expect(heading).toHaveCSS('height', '1px');
+  await expect(heading).toHaveCSS('overflow', 'hidden');
+  await expect(heading).toHaveCSS('clip-path', 'inset(50%)');
+}
+
+test('Admin shell exposes final IA, route compatibility, and zero-chrome desktop geometry', async ({
   page,
 }) => {
   await installAdminFixture(page);
   await page.goto('/admin/#settings');
 
   await expect(page.getByRole('navigation', { name: '管理业务域' })).toBeVisible();
-  await expect(page.getByRole('heading', { name: '基本设置' })).toBeVisible();
+  await expectVisuallyHiddenHeading(page, '基本设置');
+  await expect(page.locator('.admin-top-bar')).toHaveCount(0);
+  await expect(page.locator('.admin-page-header')).toHaveCount(0);
 
   const primary = page.getByRole('navigation', { name: '管理业务域' });
   await expect(primary.getByRole('button')).toHaveText([
@@ -238,6 +257,9 @@ test('Admin shell exposes final IA, route compatibility, and desktop geometry', 
     '客户互动',
     '系统',
   ]);
+  await expect(
+    page.locator('.admin-desktop-primary').getByRole('button', { name: '退出登录' }),
+  ).toBeVisible();
 
   await primary.getByRole('button', { name: '商品' }).click();
   await expect(page).toHaveURL(/#sections$/u);
@@ -275,12 +297,47 @@ test('Admin shell exposes final IA, route compatibility, and desktop geometry', 
   }
 });
 
+test('publish status is local to publish-capable workspaces', async ({ page }) => {
+  await installAdminFixture(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/admin/#assets');
+
+  await expect(page.locator('.publish-version-control')).toHaveCount(0);
+  await expect(page.locator('.admin-workspace-toolbar')).toHaveCount(0);
+
+  const contentNavigation = page.getByRole('navigation', { name: '内容二级导航' });
+  await contentNavigation.getByRole('button', { name: '文章中心' }).click();
+  await expect(page.locator('.publish-version-control')).toBeVisible();
+  await expect(page.locator('.admin-workspace-toolbar')).toBeVisible();
+
+  await page
+    .getByRole('navigation', { name: '管理业务域' })
+    .getByRole('button', { name: '系统' })
+    .click();
+  await page
+    .getByRole('navigation', { name: '系统二级导航' })
+    .getByRole('button', { name: '界面偏好' })
+    .click();
+  await expect(page.locator('.publish-version-control')).toHaveCount(0);
+});
+
+test('session status stays absent until expiry is near', async ({ page }) => {
+  await installAdminFixture(page, {
+    expiresAt: new Date(Date.now() + 4 * 60 * 1000).toISOString(),
+  });
+  await page.goto('/admin/#dashboard');
+
+  await expect(page.locator('.admin-session-warning')).toBeVisible();
+  await expect(page.locator('.admin-top-bar')).toHaveCount(0);
+  await expect(page.locator('.environment-badge')).toHaveCount(0);
+});
+
 test('navigation order saves locally, restores on reload, and can reset', async ({
   page,
 }) => {
   await installAdminFixture(page);
   await page.goto('/admin/#system-navigation');
-  await expect(page.getByRole('heading', { name: '界面偏好' })).toBeVisible();
+  await expect(page.locator('h1.admin-visually-hidden')).toHaveText('界面偏好');
 
   await page.getByRole('button', { name: '下移仪表盘', exact: true }).click();
   const primary = page.getByRole('navigation', { name: '管理业务域' });
@@ -301,6 +358,7 @@ test('narrow viewport uses the accessible drawer without horizontal overflow', a
   await expect(page.locator('.admin-desktop-primary')).toBeHidden();
   await expect(page.locator('.admin-desktop-secondary')).toBeHidden();
   await expect(page.getByRole('button', { name: '打开后台导航' })).toBeVisible();
+  await expect(page.locator('.admin-top-bar')).toHaveCount(0);
   await expect
     .poll(() =>
       page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
@@ -311,6 +369,7 @@ test('narrow viewport uses the accessible drawer without horizontal overflow', a
   const drawer = page.getByRole('dialog', { name: '后台导航' });
   await expect(drawer).toBeVisible();
   await expect(drawer.getByRole('navigation', { name: '管理业务域' })).toBeVisible();
+  await expect(drawer.getByRole('button', { name: '退出登录' })).toBeVisible();
 
   await drawer.getByRole('button', { name: '站点' }).click();
   await drawer
@@ -358,7 +417,7 @@ test('long settings forms stay reachable inside the workspace scroll owner', asy
   await page.setViewportSize({ width: 820, height: 500 });
   await page.goto('/admin/#pwa');
 
-  await expect(page.getByRole('heading', { name: '应用安装' })).toBeVisible();
+  await expect(page.locator('h1.admin-visually-hidden')).toHaveText('应用安装');
   await expect(page.getByRole('heading', { name: '安装提示' })).toBeVisible();
 
   const scrollState = await page.evaluate(() => {
@@ -442,7 +501,7 @@ test('Asset Library retains its empty state without adding a page overflow owner
     .getByRole('button', { name: '素材库' })
     .click();
 
-  await expect(page.getByRole('heading', { name: '素材库管理' })).toBeVisible();
+  await expectVisuallyHiddenHeading(page, '素材库管理');
   await expect(page.getByText('没有匹配的素材')).toBeVisible();
   await expect
     .poll(() =>
@@ -463,7 +522,7 @@ test('unsaved navigation keeps the active workspace until discard is confirmed',
 }) => {
   await installAdminFixture(page);
   await page.goto('/admin/#settings');
-  await expect(page.getByRole('heading', { name: '基本设置' })).toBeVisible();
+  await expect(page.locator('h1.admin-visually-hidden')).toHaveText('基本设置');
 
   await page.getByLabel('站点名称').fill('Unsaved Admin Shell');
   await expect(page.getByText('未保存更改')).toBeVisible();

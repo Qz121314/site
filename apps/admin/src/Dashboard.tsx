@@ -115,12 +115,12 @@ function isSettingsView(view: AdminView): view is SettingsAdminView {
   return SETTINGS_ADMIN_VIEWS.has(view as SettingsAdminView);
 }
 
-function publishKeyForView(view: AdminView): string {
+function publishKeyForView(view: AdminView): string | null {
   if (isSettingsView(view) || view === 'theme') return 'site';
   if (view === 'faq') return 'faq';
   if (view === 'sections') return 'sections-index';
   const dynamic = parseDynamicView(view);
-  return dynamic ? `section:${dynamic.sectionId}` : 'all';
+  return dynamic ? `section:${dynamic.sectionId}` : null;
 }
 
 function workspaceWidthForView(view: AdminView): WorkspaceWidth {
@@ -407,36 +407,21 @@ export function Dashboard({
       ? productHandoff
       : null;
 
-  const topBarActions = (
-    <>
-      <AdminPublishingControls
-        key={activeView}
-        status={publishStatus}
-        statusError={publishStatusError}
-        contextKey={contextPublishKey}
-        publishingKey={publishingKey}
-        rollingBack={rollingBack || loggingOut}
-        hasUnsavedChanges={unsaved.isDirty}
-        unsavedTitle={unsavedTitle}
-        onRefresh={() => void loadPublishStatus()}
-        onPublish={(moduleKey) => void handlePublish(moduleKey)}
-        onRequestRollback={setRollbackTarget}
-      />
-      <span className="environment-badge">
-        {expiresAt
-          ? `会话至 ${new Date(expiresAt).toLocaleTimeString('zh-CN')}`
-          : 'PRODUCTION'}
-      </span>
-      <Button
-        variant="secondary"
-        type="button"
-        onClick={requestLogout}
-        disabled={loggingOut || publishingKey !== null || rollingBack}
-      >
-        {loggingOut ? '正在退出…' : '退出登录'}
-      </Button>
-    </>
-  );
+  const workspaceActions = contextPublishKey ? (
+    <AdminPublishingControls
+      key={activeView}
+      status={publishStatus}
+      statusError={publishStatusError}
+      contextKey={contextPublishKey}
+      publishingKey={publishingKey}
+      rollingBack={rollingBack || loggingOut}
+      hasUnsavedChanges={unsaved.isDirty}
+      unsavedTitle={unsavedTitle}
+      onRefresh={() => void loadPublishStatus()}
+      onPublish={(moduleKey) => void handlePublish(moduleKey)}
+      onRequestRollback={setRollbackTarget}
+    />
+  ) : null;
 
   const pageSecondaryAction =
     currentSectionHandoff && currentSection?.kind !== 'products' ? (
@@ -456,10 +441,14 @@ export function Dashboard({
         sections={sections}
         context={context}
         onNavigate={requestView}
-        topBarActions={topBarActions}
+        workspaceActions={workspaceActions}
         pageSecondaryAction={pageSecondaryAction}
         workspaceWidth={workspaceWidthForView(activeView)}
         navigationPreferences={navigationPreferences}
+        onLogout={requestLogout}
+        loggingOut={loggingOut}
+        logoutDisabled={publishingKey !== null || rollingBack}
+        sessionExpiresAt={expiresAt}
       >
         {publishFeedback ? (
           <div

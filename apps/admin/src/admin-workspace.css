@@ -1,45 +1,4 @@
-/* Admin workspace, page-header and top-bar ownership. */
-
-.admin-top-bar {
-  position: sticky;
-  top: 0;
-  z-index: 80;
-  display: flex;
-  min-height: 56px;
-  flex: 0 0 auto;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 8px 20px;
-  border-bottom: 1px solid #e4e8ef;
-  background: rgb(255 255 255 / 96%);
-}
-
-.admin-top-bar-context {
-  display: flex;
-  min-width: 0;
-  align-items: center;
-}
-
-.admin-top-bar-actions,
-.admin-page-actions {
-  display: flex;
-  min-width: 0;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 8px;
-}
-
-.admin-top-bar-actions .publish-version-control {
-  display: block;
-}
-
-.admin-mobile-nav-trigger.ui-button {
-  display: none;
-  min-width: 44px;
-  min-height: 44px;
-}
+/* Zero-chrome Admin workspace ownership. */
 
 .admin-main {
   display: flex;
@@ -52,58 +11,37 @@
   padding: 0;
 }
 
-.admin-page-header {
-  display: flex;
-  flex: 0 0 auto;
-  align-items: flex-start;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 18px clamp(16px, 2.5vw, 32px) 16px;
-  border-bottom: 1px solid #e8ecf1;
-  background: #fff;
+.admin-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
 
-.admin-page-header-copy {
-  display: grid;
-  min-width: 0;
-  gap: 4px;
+.admin-mobile-nav-trigger.ui-button {
+  display: none;
 }
 
-.admin-page-eyebrow {
-  margin: 0;
-  color: #64748b;
-  font-size: 0.68rem;
-  font-weight: 800;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-}
-
-.admin-page-title-row {
-  display: flex;
-  min-width: 0;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 10px;
-}
-
-.admin-page-title-row h1 {
-  margin: 0;
-  color: #172033;
-  font-size: clamp(1.35rem, 2vw, 1.75rem);
-  letter-spacing: -0.035em;
-}
-
-.admin-page-description {
-  max-width: 720px;
-  margin: 0;
-  color: #697386;
-  font-size: 0.82rem;
-  line-height: 1.45;
-}
-
-.admin-page-status {
-  display: flex;
-  align-items: center;
+.admin-session-warning {
+  position: fixed;
+  z-index: 180;
+  top: 12px;
+  right: 12px;
+  max-width: min(360px, calc(100vw - 24px));
+  padding: 9px 12px;
+  border: 1px solid #f5d38c;
+  border-radius: 8px;
+  color: #7c4a03;
+  background: #fff9e8;
+  box-shadow: 0 10px 28px rgb(15 23 42 / 12%);
+  font-size: 0.76rem;
+  line-height: 1.4;
 }
 
 .admin-workspace {
@@ -117,7 +55,7 @@
 .admin-workspace-content {
   width: 100%;
   min-width: 0;
-  padding: 16px clamp(16px, 2.5vw, 32px) 28px;
+  padding: 10px clamp(12px, 1.7vw, 24px) 20px;
 }
 
 .admin-workspace--narrow .admin-workspace-content {
@@ -136,96 +74,115 @@
   max-width: none;
 }
 
+.admin-workspace-toolbar {
+  position: sticky;
+  z-index: 40;
+  top: 0;
+  display: flex;
+  min-width: 0;
+  min-height: 40px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin: -10px 0 10px;
+  padding: 8px 0;
+  border-bottom: 1px solid #e4e8ef;
+  background: rgb(246 248 251 / 96%);
+  backdrop-filter: blur(8px);
+}
+
+.admin-workspace-status,
+.admin-workspace-actions {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+}
+
+.admin-workspace-actions {
+  margin-left: auto;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.admin-workspace-actions .publish-version-control {
+  display: block;
+}
+
 .admin-shell-placeholder {
   display: grid;
   max-width: 680px;
-  gap: 6px;
-  padding: 22px 0;
-  border-top: 1px solid #dfe4ea;
+  gap: 4px;
+  padding: 12px 0;
   border-bottom: 1px solid #dfe4ea;
 }
 
 .admin-shell-placeholder strong {
   color: #172033;
-  font-size: 0.95rem;
+  font-size: 0.9rem;
 }
 
 .admin-shell-placeholder p {
   margin: 0;
   color: #697386;
-  font-size: 0.82rem;
-  line-height: 1.6;
-}
-
-@media (max-width: 1199px) {
-  .admin-top-bar {
-    padding-inline: 14px;
-  }
-
-  .admin-top-bar-actions .environment-badge {
-    display: none;
-  }
+  font-size: 0.78rem;
+  line-height: 1.5;
 }
 
 @media (max-width: 899px) {
-  .admin-top-bar {
-    position: sticky;
-    top: 0;
-    min-height: calc(60px + env(safe-area-inset-top));
-    padding: calc(8px + env(safe-area-inset-top)) 12px 8px;
-  }
-
   .admin-mobile-nav-trigger.ui-button {
+    position: fixed;
+    z-index: 120;
+    left: 12px;
+    bottom: calc(12px + env(safe-area-inset-bottom));
     display: inline-flex;
+    width: 42px;
+    min-width: 42px;
+    height: 42px;
+    min-height: 42px;
+    border-color: #d8dee8;
+    background: rgb(255 255 255 / 96%);
+    box-shadow: 0 8px 24px rgb(15 23 42 / 16%);
   }
 
-  .admin-top-bar-actions {
-    flex-wrap: wrap;
-  }
-
-  .admin-top-bar-actions .publish-status-chip,
-  .admin-top-bar-actions .storefront-publish-button,
-  .admin-top-bar-actions > .ui-button {
-    min-height: 44px;
-  }
-
-  .admin-page-header {
-    display: grid;
-    gap: 14px;
-    padding: 16px;
-  }
-
-  .admin-page-actions {
-    justify-content: flex-start;
+  .admin-session-warning {
+    top: calc(10px + env(safe-area-inset-top));
+    right: 10px;
+    left: 10px;
+    max-width: none;
   }
 
   .admin-workspace-content {
-    padding: 14px 16px calc(24px + env(safe-area-inset-bottom));
+    padding: 10px 12px calc(64px + env(safe-area-inset-bottom));
+  }
+
+  .admin-workspace-toolbar {
+    align-items: flex-start;
+  }
+
+  .admin-workspace-actions {
+    width: 100%;
+  }
+
+  .admin-workspace-actions .publish-status-chip,
+  .admin-workspace-actions .storefront-publish-button,
+  .admin-workspace-actions > .ui-button {
+    min-height: 40px;
   }
 }
 
 @media (max-width: 560px) {
-  .admin-top-bar {
-    flex-wrap: wrap;
-    align-items: flex-start;
+  .admin-workspace-toolbar {
+    display: grid;
   }
 
-  .admin-top-bar-context {
-    width: 100%;
-  }
-
-  .admin-top-bar-context span {
-    display: none;
-  }
-
-  .admin-top-bar-actions {
-    width: 100%;
+  .admin-workspace-actions {
     justify-content: flex-start;
   }
 
   .storefront-publish-button.ui-button,
   .publish-status-chip.ui-button,
-  .admin-top-bar-actions > .ui-button {
+  .admin-workspace-actions > .ui-button {
     padding-inline: 10px;
     font-size: 0.7rem;
   }
