@@ -1,4 +1,4 @@
-import { X } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import { useEffect, useRef, useState, type MouseEvent, type ReactNode } from 'react';
 import {
   getCatalogWorkspaceContext,
@@ -10,10 +10,8 @@ import type { AdminNavigationPreferences } from '../admin-navigation-preferences
 import type { AdminSection } from '../api';
 import { CatalogWorkspaceSwitcher } from '../catalog/CatalogWorkspaceSwitcher';
 import { Button } from '../components/ui/button';
-import { AdminPageHeader } from './AdminPageHeader';
 import { AdminPrimarySidebar } from './AdminPrimarySidebar';
 import { AdminSecondarySidebar } from './AdminSecondarySidebar';
-import { AdminTopBar } from './AdminTopBar';
 import { AdminWorkspace } from './AdminWorkspace';
 
 type AdminShellProps = {
@@ -21,13 +19,17 @@ type AdminShellProps = {
   sections: AdminSection[];
   context: AdminViewContext;
   onNavigate: (view: AdminView) => void;
-  topBarActions?: ReactNode;
+  workspaceActions?: ReactNode;
   pageStatus?: ReactNode;
   pagePrimaryAction?: ReactNode;
   pageSecondaryAction?: ReactNode;
   workspaceWidth?: 'narrow' | 'medium' | 'wide' | 'split-pane';
   children: ReactNode;
   navigationPreferences: AdminNavigationPreferences;
+  onLogout: () => void;
+  loggingOut: boolean;
+  logoutDisabled?: boolean;
+  sessionExpiresAt?: string;
 };
 
 const FOCUSABLE_SELECTOR = [
@@ -39,20 +41,27 @@ const FOCUSABLE_SELECTOR = [
   '[tabindex]:not([tabindex="-1"])',
 ].join(',');
 
+const SESSION_WARNING_MS = 5 * 60 * 1000;
+
 export function AdminShell({
   activeView,
   sections,
   context,
   onNavigate,
-  topBarActions,
+  workspaceActions,
   pageStatus,
   pagePrimaryAction,
   pageSecondaryAction,
   workspaceWidth = 'wide',
   children,
   navigationPreferences,
+  onLogout,
+  loggingOut,
+  logoutDisabled = false,
+  sessionExpiresAt,
 }: AdminShellProps) {
   const [navigationOpen, setNavigationOpen] = useState(false);
+  const [sessionExpiring, setSessionExpiring] = useState(false);
   const drawerRef = useRef<HTMLDivElement>(null);
   const drawerTriggerRef = useRef<HTMLElement | null>(null);
   const activeDomain = getAdminDomainForView(activeView);
@@ -60,6 +69,35 @@ export function AdminShell({
   const catalogSection = catalogContext
     ? sections.find((section) => section.id === catalogContext.sectionId)
     : null;
+  const hasWorkspaceToolbar = Boolean(
+    workspaceActions || pageStatus || pagePrimaryAction || pageSecondaryAction,
+  );
+
+  useEffect(() => {
+    if (!sessionExpiresAt) {
+      setSessionExpiring(false);
+      return;
+    }
+
+    const expiresAtMs = Date.parse(sessionExpiresAt);
+    if (Number.isNaN(expiresAtMs)) {
+      setSessionExpiring(false);
+      return;
+    }
+
+    const remainingMs = expiresAtMs - Date.now();
+    if (remainingMs <= SESSION_WARNING_MS) {
+      setSessionExpiring(remainingMs > 0);
+      return;
+    }
+
+    setSessionExpiring(false);
+    const warningTimer = window.setTimeout(
+      () => setSessionExpiring(true),
+      remainingMs - SESSION_WARNING_MS,
+    );
+    return () => window.clearTimeout(warningTimer);
+  }, [sessionExpiresAt]);
 
   useEffect(() => {
     if (!navigationOpen) return;
@@ -103,6 +141,12 @@ export function AdminShell({
     };
   }, [navigationOpen]);
 
+  function openNavigation() {
+    drawerTriggerRef.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    setNavigationOpen(true);
+  }
+
   function handleDrawerBackdrop(event: MouseEvent<HTMLDivElement>) {
     if (event.target === event.currentTarget) setNavigationOpen(false);
   }
@@ -115,6 +159,9 @@ export function AdminShell({
           sections={sections}
           onNavigate={onNavigate}
           navigationPreferences={navigationPreferences}
+          onLogout={onLogout}
+          loggingOut={loggingOut}
+          logoutDisabled={logoutDisabled}
         />
       </div>
       <div className="admin-desktop-secondary">
@@ -128,24 +175,23 @@ export function AdminShell({
       </div>
 
       <div className="admin-shell-workspace">
-        <AdminTopBar
-          actions={topBarActions}
-          onOpenNavigation={() => {
-            drawerTriggerRef.current =
-              document.activeElement instanceof HTMLElement
-                ? document.activeElement
-                : null;
-            setNavigationOpen(true);
-          }}
-        />
+        <Button
+          className="admin-mobile-nav-trigger"
+          variant="secondary"
+          size="icon"
+          type="button"
+          aria-label="打开后台导航"
+          onClick={openNavigation}
+        >
+          <Menu aria-hidden="true" size={18} />
+        </Button>
+        {sessionExpiring ? (
+          <div className="admin-session-warning" role="status" aria-live="polite">
+            登录会话即将过期，请保存当前修改。
+          </div>
+        ) : null}
         <main className="admin-main">
-          <AdminPageHeader
-            title={context.title}
-            description={context.description}
-            status={pageStatus}
-            primaryAction={pagePrimaryAction}
-            secondaryAction={pageSecondaryAction}
-          />
+          <h1 className="admin-visually-hidden">{context.title}</h1>
           <AdminWorkspace width={workspaceWidth}>
             {catalogContext ? (
               <CatalogWorkspaceSwitcher
@@ -153,6 +199,16 @@ export function AdminShell({
                 sectionName={catalogSection?.name ?? catalogContext.sectionId}
                 onNavigate={onNavigate}
               />
+            ) : null}
+            {hasWorkspaceToolbar ? (
+              <div className="admin-workspace-toolbar" aria-label="当前工作区操作">
+                {pageStatus ? <div className="admin-workspace-status">{pageStatus}</div> : null}
+                <div className="admin-workspace-actions">
+                  {pageSecondaryAction}
+                  {pagePrimaryAction}
+                  {workspaceActions}
+                </div>
+              </div>
             ) : null}
             {children}
           </AdminWorkspace>
@@ -173,10 +229,7 @@ export function AdminShell({
             aria-label="后台导航"
           >
             <div className="admin-mobile-drawer-header ui-drawer-header">
-              <div>
-                <span>Navigation</span>
-                <strong>后台导航</strong>
-              </div>
+              <strong>后台导航</strong>
               <Button
                 variant="ghost"
                 size="icon"
@@ -193,6 +246,9 @@ export function AdminShell({
                 sections={sections}
                 onNavigate={onNavigate}
                 navigationPreferences={navigationPreferences}
+                onLogout={onLogout}
+                loggingOut={loggingOut}
+                logoutDisabled={logoutDisabled}
               />
               <AdminSecondarySidebar
                 activeDomain={activeDomain}
