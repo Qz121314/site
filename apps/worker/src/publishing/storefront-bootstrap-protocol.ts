@@ -16,7 +16,9 @@ function assertProtocolConfig(): void {
     throw new Error('Storefront bootstrap minimum readable schema is invalid.');
   }
   if (current - minimum > 1) {
-    throw new Error('Storefront bootstrap compatibility window must remain bounded to N/N-1.');
+    throw new Error(
+      'Storefront bootstrap compatibility window must remain bounded to N/N-1.',
+    );
   }
   if (
     !Array.isArray(protocolConfig.capabilities) ||
@@ -58,9 +60,7 @@ export function sanitizeStorefrontBootstrapCapabilities(value: unknown): string[
   if (!Array.isArray(value)) return [];
   return [
     ...new Set(
-      value.filter(
-        (item): item is string => typeof item === 'string' && item.length > 0,
-      ),
+      value.filter((item): item is string => typeof item === 'string' && item.length > 0),
     ),
   ];
 }
