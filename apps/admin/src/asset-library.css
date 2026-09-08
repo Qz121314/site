@@ -264,12 +264,6 @@
   display: none;
 }
 
-@media (min-width: 1024px) {
-  .asset-table-wrap {
-    max-height: calc(100dvh - 190px);
-  }
-}
-
 @media (max-width: 900px) {
   .asset-summary-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));

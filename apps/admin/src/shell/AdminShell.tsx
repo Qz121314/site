@@ -51,6 +51,7 @@ export function AdminShell({
 }: AdminShellProps) {
   const [navigationOpen, setNavigationOpen] = useState(false);
   const drawerRef = useRef<HTMLDivElement>(null);
+  const drawerTriggerRef = useRef<HTMLElement | null>(null);
   const activeDomain = getAdminDomainForView(activeView);
   const catalogContext = getCatalogWorkspaceContext(activeView);
   const catalogSection = catalogContext
@@ -95,7 +96,7 @@ export function AdminShell({
     return () => {
       document.body.style.overflow = previousOverflow;
       document.removeEventListener('keydown', handleKeyDown);
-      document.querySelector<HTMLElement>('.admin-mobile-nav-trigger')?.focus();
+      drawerTriggerRef.current?.focus();
     };
   }, [navigationOpen]);
 
@@ -130,7 +131,13 @@ export function AdminShell({
             </>
           }
           actions={topBarActions}
-          onOpenNavigation={() => setNavigationOpen(true)}
+          onOpenNavigation={() => {
+            drawerTriggerRef.current =
+              document.activeElement instanceof HTMLElement
+                ? document.activeElement
+                : null;
+            setNavigationOpen(true);
+          }}
         />
         <main className="admin-main">
           <AdminPageHeader

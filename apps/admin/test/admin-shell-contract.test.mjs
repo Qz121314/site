@@ -78,7 +78,7 @@ test('mobile drawer owns accessibility behavior', async () => {
   assert.match(shell, /event\.key === 'Escape'/);
   assert.match(shell, /event\.key !== 'Tab'/);
   assert.match(shell, /document\.body\.style\.overflow = 'hidden'/);
-  assert.match(shell, /admin-mobile-nav-trigger'\)\?\.focus\(\)/);
+  assert.match(shell, /drawerTriggerRef\.current\?\.focus\(\)/);
   assert.match(shell, /aria-modal="true"/);
   assert.match(shell, /aria-label="后台导航"/);
 });
