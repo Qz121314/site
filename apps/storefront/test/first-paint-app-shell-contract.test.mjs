@@ -8,6 +8,10 @@ test('the initial HTML paint presents persistent app-shell chrome before React s
   assert.match(html, /class="boot-shell" aria-hidden="true"/u);
   assert.match(html, /class="boot-app-bar"/u);
   assert.match(html, /class="boot-bottom-nav"/u);
+  assert.match(
+    html,
+    /rel="preload"[\s\S]*?as="fetch"[\s\S]*?\/api\/public\/storefront\/bootstrap/u,
+  );
   assert.match(html, /\.boot-app-bar \{[\s\S]*?position: fixed;/u);
   assert.match(html, /\.boot-bottom-nav \{[\s\S]*?position: fixed;/u);
 });
