@@ -226,6 +226,16 @@ async function expectShellGeometry(page: Page, width: number) {
   });
 }
 
+async function expectVisuallyHiddenHeading(page: Page, text: string) {
+  const heading = page.locator('h1.admin-visually-hidden');
+  await expect(heading).toHaveText(text);
+  await expect(heading).toHaveCSS('position', 'absolute');
+  await expect(heading).toHaveCSS('width', '1px');
+  await expect(heading).toHaveCSS('height', '1px');
+  await expect(heading).toHaveCSS('overflow', 'hidden');
+  await expect(heading).toHaveCSS('clip-path', 'inset(50%)');
+}
+
 test('Admin shell exposes final IA, route compatibility, and zero-chrome desktop geometry', async ({
   page,
 }) => {
@@ -233,8 +243,7 @@ test('Admin shell exposes final IA, route compatibility, and zero-chrome desktop
   await page.goto('/admin/#settings');
 
   await expect(page.getByRole('navigation', { name: '管理业务域' })).toBeVisible();
-  await expect(page.locator('h1.admin-visually-hidden')).toHaveText('基本设置');
-  await expect(page.locator('h1.admin-visually-hidden')).toBeHidden();
+  await expectVisuallyHiddenHeading(page, '基本设置');
   await expect(page.locator('.admin-top-bar')).toHaveCount(0);
   await expect(page.locator('.admin-page-header')).toHaveCount(0);
 
@@ -492,8 +501,7 @@ test('Asset Library retains its empty state without adding a page overflow owner
     .getByRole('button', { name: '素材库' })
     .click();
 
-  await expect(page.locator('h1.admin-visually-hidden')).toHaveText('素材库管理');
-  await expect(page.locator('h1.admin-visually-hidden')).toBeHidden();
+  await expectVisuallyHiddenHeading(page, '素材库管理');
   await expect(page.getByText('没有匹配的素材')).toBeVisible();
   await expect
     .poll(() =>
