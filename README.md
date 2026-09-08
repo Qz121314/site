@@ -168,6 +168,8 @@ Admin 是中文、小团队、高密度运营工作区，采用统一两级导�
 
 Admin 共享控件由 `apps/admin/src/components/ui` source-owned component layer 管理；Storefront 不继承 Admin skin。Admin 与 Storefront 可以共享数据和设计 token 语义，但保持各自明确的 UI ownership。
 
+Admin workspace 的壳层负责两级导航、窄屏 Drawer、页面标题和唯一的内容滚动 owner。桌面端导航与内容区域各自滚动，窄屏时页面内容保持完整可达；页面与业务组件不得再创建竞争性的固定高度或全局滚动容器。最终 UI 回归验收覆盖 820、1024、1366、1440 和 1920px，并检查水平溢出、长表单/保存区可达性以及 Drawer 的键盘焦点行为。
+
 ## Theme and presentation
 
 主题采用“一套业务组件 + Theme Tokens + 多主题 recipe”的模型。主题可以控制颜色、明暗模式、字体、按钮、媒体、motion、navigation 和表面层级，但不能替换业务路由结构或执行第三方程序代码。

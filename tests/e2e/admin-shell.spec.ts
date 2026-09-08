@@ -177,6 +177,18 @@ async function installAdminFixture(page: Page) {
       body: JSON.stringify({ ...themeCenter, theme: themeCenter.theme }),
     });
   });
+  await page.route('**/api/admin/assets/library/page?**', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({ assets: [], nextCursor: null, total: 0 }),
+    });
+  });
+  await page.route('**/api/admin/assets/folders', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({ folders: [] }),
+    });
+  });
 }
 
 async function expectShellGeometry(page: Page, width: number) {
@@ -258,7 +270,7 @@ test('Admin shell exposes final IA, route compatibility, and desktop geometry', 
     await expect(navigation.getByRole('button')).toHaveText(secondaryItems);
   }
 
-  for (const width of [1366, 1440, 1920]) {
+  for (const width of [1024, 1366, 1440, 1920]) {
     await expectShellGeometry(page, width);
   }
 });
@@ -296,6 +308,31 @@ test('narrow viewport uses the accessible drawer without horizontal overflow', a
       page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
     )
     .toBe(true);
+});
+
+test('drawer traps keyboard focus, closes with Escape, and restores the trigger', async ({
+  page,
+}) => {
+  await installAdminFixture(page);
+  await page.setViewportSize({ width: 820, height: 900 });
+  await page.goto('/admin/#dashboard');
+
+  const trigger = page.getByRole('button', { name: '打开后台导航' });
+  await trigger.focus();
+  await page.keyboard.press('Enter');
+
+  const drawer = page.getByRole('dialog', { name: '后台导航' });
+  await expect(drawer).toBeVisible();
+  await expect(drawer.getByRole('button', { name: '关闭后台导航' })).toBeFocused();
+
+  await page.keyboard.press('Shift+Tab');
+  await expect(drawer.locator('button').last()).toBeFocused();
+  await page.keyboard.press('Tab');
+  await expect(drawer.getByRole('button', { name: '关闭后台导航' })).toBeFocused();
+
+  await page.keyboard.press('Escape');
+  await expect(drawer).toBeHidden();
+  await expect(trigger).toBeFocused();
 });
 
 test('long settings forms stay reachable inside the workspace scroll owner', async ({
@@ -372,6 +409,37 @@ test('Theme Studio keeps theme changes in a draft preview until explicitly saved
       )
       .toBe(true);
   }
+});
+
+test('Asset Library retains its empty state without adding a page overflow owner', async ({
+  page,
+}) => {
+  await installAdminFixture(page);
+  await page.setViewportSize({ width: 1024, height: 700 });
+  await page.goto('/admin/#home');
+  await page
+    .getByRole('navigation', { name: '管理业务域' })
+    .getByRole('button', { name: '内容' })
+    .click();
+  await page
+    .getByRole('navigation', { name: '内容二级导航' })
+    .getByRole('button', { name: '素材库' })
+    .click();
+
+  await expect(page.getByRole('heading', { name: '素材库管理' })).toBeVisible();
+  await expect(page.getByText('没有匹配的素材')).toBeVisible();
+  await expect
+    .poll(() =>
+      page.evaluate(() => ({
+        pageHasNoHorizontalOverflow:
+          document.documentElement.scrollWidth <= window.innerWidth,
+        workspaceOwnsOverflow:
+          getComputedStyle(
+            document.querySelector<HTMLElement>('.admin-workspace-content')!,
+          ).overflowY === 'auto',
+      })),
+    )
+    .toEqual({ pageHasNoHorizontalOverflow: true, workspaceOwnsOverflow: true });
 });
 
 test('unsaved navigation keeps the active workspace until discard is confirmed', async ({
