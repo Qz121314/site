@@ -33,6 +33,6 @@ Warm browser with a healthy learned origin:
 
 Stale-origin recovery is bounded to one failed direct attempt plus one R2-only Worker bootstrap, after which the new Admin-published origin is cached.
 
-`VITE_PUBLIC_CONTENT_ORIGIN` is not a required production configuration contract. The release validator tolerates it being absent; a supplied value is only syntax-checked as a safe HTTPS root origin and Storefront production runtime does not read it.
+`VITE_PUBLIC_CONTENT_ORIGIN` is not a required production configuration contract. Storefront production runtime does not read it; the Admin-published runtime `mediaBaseUrl` is authoritative.
 
 This phase does not change `/_image/*`, `/_media/*`, `/public/search/*`, bootstrap schema versions, publisher pointer-last ordering, or the Admin ownership of R2 custom-domain configuration.

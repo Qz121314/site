@@ -1,8 +1,16 @@
 import { Hono, type Context } from 'hono';
-import { resolvePublicImageVariant } from '../public-media/public-image-variant';
+import {
+  publicImageVariantRequest,
+  resolvePublicImageVariant,
+} from '../public-media/public-image-variant';
 import type { AppEnvironment } from '../types';
 
 export const publicImageVariantRoutes = new Hono<AppEnvironment>();
+
+function workerCache(): Cache | null {
+  if (typeof caches === 'undefined') return null;
+  return (caches as unknown as { default?: Cache }).default ?? null;
+}
 
 function notFound() {
   return new Response(null, {
@@ -26,10 +34,17 @@ function imageHeaders(source: R2Object, contentType = 'image/webp'): Headers {
 }
 
 async function serveVariant(context: Context<AppEnvironment>) {
-  const variant = await resolvePublicImageVariant(
-    context.env.DB,
-    new URL(context.req.url).pathname,
-  );
+  const cacheKey = new Request(new URL(context.req.url).toString(), {
+    method: 'GET',
+  });
+  const cache = workerCache();
+  const cached = cache ? await cache.match(cacheKey) : null;
+  if (cached) return cached;
+
+  const pathname = new URL(context.req.url).pathname;
+  if (!publicImageVariantRequest(pathname)) return notFound();
+
+  const variant = await resolvePublicImageVariant(context.env.DB, pathname);
   if (!variant) return notFound();
 
   const source = await context.env.ASSETS_BUCKET.get(variant.objectKey);
@@ -56,11 +71,13 @@ async function serveVariant(context: Context<AppEnvironment>) {
       source,
       transformed.headers.get('content-type') ?? 'image/webp',
     );
-    return new Response(transformed.body, {
+    const response = new Response(transformed.body, {
       status: transformed.status,
       statusText: transformed.statusText,
       headers,
     });
+    if (cache) context.executionCtx.waitUntil(cache.put(cacheKey, response.clone()));
+    return response;
   } catch (error) {
     console.error(
       JSON.stringify({
@@ -78,7 +95,9 @@ async function serveVariant(context: Context<AppEnvironment>) {
       source.httpMetadata?.contentType ?? 'application/octet-stream',
     );
     headers.set('Cache-Control', 'public, max-age=60, must-revalidate');
-    return new Response(sourceBytes, { headers });
+    const response = new Response(sourceBytes, { headers });
+    if (cache) context.executionCtx.waitUntil(cache.put(cacheKey, response.clone()));
+    return response;
   }
 }
 

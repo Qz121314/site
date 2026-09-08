@@ -13,6 +13,11 @@ import type { AppEnvironment } from '../types';
 
 export const publicStorefrontConfigRoutes = new Hono<AppEnvironment>();
 
+function workerCache(): Cache | null {
+  if (typeof caches === 'undefined') return null;
+  return (caches as unknown as { default?: Cache }).default ?? null;
+}
+
 const IMMUTABLE_CACHE = 'public, max-age=31536000, immutable';
 
 type PublicSupportConnection = {
@@ -74,6 +79,13 @@ publicStorefrontConfigRoutes.get('/media-base-url', async (context) => {
 });
 
 publicStorefrontConfigRoutes.get('/bootstrap', async (context) => {
+  const cacheKey = new Request(new URL(context.req.url).toString(), {
+    method: 'GET',
+  });
+  const cache = workerCache();
+  const cached = cache ? await cache.match(cacheKey) : null;
+  if (cached) return cached;
+
   const pointerValue = await readPublishedJson(
     context.env.ASSETS_BUCKET,
     'public/current.json',
@@ -92,7 +104,7 @@ publicStorefrontConfigRoutes.get('/bootstrap', async (context) => {
 
   context.header('Cache-Control', 'public, max-age=30, must-revalidate');
   context.header('X-Robots-Tag', 'noindex, nofollow');
-  return context.json({
+  const response = context.json({
     pointer: pointerValue,
     site,
     sectionsIndex,
@@ -101,6 +113,8 @@ publicStorefrontConfigRoutes.get('/bootstrap', async (context) => {
     theme: publishedBootstrap.runtime.theme,
     bottomNavigation: publishedBootstrap.runtime.bottomNavigation,
   });
+  if (cache) context.executionCtx.waitUntil(cache.put(cacheKey, response.clone()));
+  return response;
 });
 
 publicStorefrontConfigRoutes.get('/search-index/:pointerVersion', async (context) => {

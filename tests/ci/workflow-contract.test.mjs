@@ -38,7 +38,7 @@ function workflowJob(workflow, id) {
   const match = new RegExp(
     `^  ${id}:\\n([\\s\\S]*?)(?=^  [A-Za-z0-9_-]+:|(?![\\s\\S]))`,
     'm',
-  ).exec(workflow);
+  ).exec(workflow.replace(/\r\n/g, '\n'));
   assert.notEqual(match, null, `missing workflow job: ${id}`);
   return match[1];
 }

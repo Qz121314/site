@@ -28,8 +28,6 @@ jobs:
   pipeline:
     runs-on: ubuntu-latest
     timeout-minutes: 50
-    env:
-      VITE_PUBLIC_CONTENT_ORIGIN: ${{ vars.VITE_PUBLIC_CONTENT_ORIGIN }}
     concurrency:
       group: site-deploy-${{ github.ref }}
       cancel-in-progress: false
@@ -77,10 +75,6 @@ jobs:
         env:
           CF_CHANGE_BASE_SHA: ${{ github.event.before }}
         run: node scripts/classify-cloudflare-changes.mjs --head "$GITHUB_SHA"
-
-      - name: Validate Storefront public content origin
-        if: github.ref == 'refs/heads/main' && (steps.changes.outputs.deploy_required == 'true' || steps.manual.outputs.force_deploy == 'true')
-        run: node scripts/validate-public-content-origin.mjs
 
       - name: Publish Cloudflare classification summary
         env:
