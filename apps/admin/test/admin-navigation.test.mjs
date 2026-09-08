@@ -20,21 +20,21 @@ const sections = [
   { id: 'beta', name: 'Beta' },
 ];
 
-test('primary domains consolidate content into visible asset domain', () => {
+test('primary domains follow the final P1 information architecture', () => {
   assert.deepEqual(
     ADMIN_DOMAINS.map(({ id, label }) => [id, label]),
     [
       ['dashboard', '仪表盘'],
       ['catalog', '商品'],
-      ['experience', '体验'],
+      ['site', '站点'],
+      ['content', '内容'],
       ['operations', '运营'],
-      ['media', '素材'],
-      ['integrations', '集成'],
+      ['engagement', '客户互动'],
       ['system', '系统'],
     ],
   );
   assert.equal(
-    ADMIN_DOMAINS.some((domain) => domain.id === 'content'),
+    ADMIN_DOMAINS.some((domain) => domain.id === 'experience'),
     false,
   );
 });
@@ -42,17 +42,17 @@ test('primary domains consolidate content into visible asset domain', () => {
 test('fixed settings views resolve to intended domains', () => {
   const expected = new Map([
     ['dashboard', 'dashboard'],
-    ['home', 'experience'],
-    ['navigation', 'experience'],
-    ['messages', 'experience'],
-    ['theme', 'experience'],
-    ['pwa', 'experience'],
+    ['home', 'site'],
+    ['navigation', 'site'],
+    ['messages', 'engagement'],
+    ['theme', 'site'],
+    ['pwa', 'system'],
     ['system-general', 'system'],
     ['system-infrastructure', 'system'],
     ['system-advanced', 'system'],
-    ['assets', 'media'],
-    ['customer-service', 'integrations'],
-    ['faq', 'media'],
+    ['assets', 'content'],
+    ['customer-service', 'engagement'],
+    ['faq', 'content'],
     ['sections', 'catalog'],
   ]);
 
@@ -121,44 +121,50 @@ test('new hashes parse and legacy settings aliases normalize deterministically',
   assert.equal(parseAdminView('#%E0%A4%A'), null);
 });
 
-test('experience and system secondary navigation match Phase B IA exactly', () => {
+test('site, engagement, and system navigation match final P1 IA exactly', () => {
   assert.deepEqual(
-    getAdminSecondaryItems('experience', sections).map(({ view, label }) => [
+    getAdminSecondaryItems('site', sections).map(({ view, label }) => [view, label]),
+    [
+      ['home', '首页'],
+      ['navigation', '导航'],
+      ['theme', '主题'],
+    ],
+  );
+  assert.deepEqual(
+    getAdminSecondaryItems('engagement', sections).map(({ view, label }) => [
       view,
       label,
     ]),
     [
-      ['home', '首页'],
-      ['navigation', '导航'],
       ['messages', 'Messages'],
-      ['theme', '主题'],
-      ['pwa', 'PWA'],
+      ['customer-service', '客服接入'],
     ],
   );
   assert.deepEqual(
     getAdminSecondaryItems('system', sections).map(({ view, label }) => [view, label]),
     [
-      ['system-general', '常规'],
+      ['system-general', '基本设置'],
+      ['pwa', '应用安装'],
       ['system-infrastructure', '基础设施'],
-      ['system-advanced', '高级'],
+      ['system-advanced', '高级设置'],
     ],
   );
 });
 
-test('asset secondary navigation exposes Article Center while preserving faq view compatibility', () => {
+test('content navigation exposes Article Center and Asset Library while preserving faq compatibility', () => {
   assert.deepEqual(
-    getAdminSecondaryItems('media', sections).map(({ view, label }) => [view, label]),
+    getAdminSecondaryItems('content', sections).map(({ view, label }) => [view, label]),
     [
-      ['assets', '素材库'],
       ['faq', '文章中心'],
+      ['assets', '素材库'],
     ],
   );
-  assert.equal(getAdminDefaultViewForDomain('media', sections), 'assets');
+  assert.equal(getAdminDefaultViewForDomain('content', sections), 'faq');
   assert.equal(parseAdminView('#faq'), 'faq');
   assert.equal(adminViewHash('faq'), '#faq');
 
   const context = getAdminViewContext('faq', sections);
-  assert.equal(context.eyebrow, '素材 / 文章');
+  assert.equal(context.eyebrow, '内容 / 文章');
   assert.equal(context.title, '文章中心');
   assert.equal(context.description, '管理可复用的 Markdown 文章内容。');
 });
@@ -174,7 +180,15 @@ test('secondary items are unique and legacy placeholders are retired', () => {
   const catalog = getAdminSecondaryItems('catalog', sections);
   assert.deepEqual(
     catalog.map((item) => item.view),
-    ['sections', 'products:alpha', 'products:beta'],
+    [
+      'sections',
+      'products:alpha',
+      'categories:alpha',
+      'tags:alpha',
+      'products:beta',
+      'categories:beta',
+      'tags:beta',
+    ],
   );
   assert.deepEqual(
     getAdminSecondaryItems('operations', sections).map((item) => item.view),
@@ -183,10 +197,11 @@ test('secondary items are unique and legacy placeholders are retired', () => {
 });
 
 test('domain defaults use the decomposed workspaces', () => {
-  assert.equal(getAdminDefaultViewForDomain('experience', sections), 'home');
+  assert.equal(getAdminDefaultViewForDomain('site', sections), 'home');
   assert.equal(getAdminDefaultViewForDomain('system', sections), 'system-general');
   assert.equal(getAdminDefaultViewForDomain('catalog', sections), 'sections');
-  assert.equal(getAdminDefaultViewForDomain('media', sections), 'assets');
+  assert.equal(getAdminDefaultViewForDomain('content', sections), 'faq');
+  assert.equal(getAdminDefaultViewForDomain('engagement', sections), 'messages');
   assert.equal(
     getAdminDefaultViewForDomain('operations', sections),
     'conversion-pool:alpha',

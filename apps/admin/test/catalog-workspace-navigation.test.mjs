@@ -17,28 +17,34 @@ async function source(relativePath) {
   return readFile(new URL(relativePath, import.meta.url), 'utf8');
 }
 
-test('catalog secondary navigation owns only structure and section selection', () => {
+test('catalog secondary navigation exposes structure and every section resource workspace', () => {
   const items = getAdminSecondaryItems('catalog', sections);
   assert.deepEqual(
     items.map(({ view, label, group }) => [view, label, group ?? null]),
     [
       ['sections', '分区管理', '结构'],
-      ['products:escorts', 'ESCORTS', '分区'],
-      ['products:dating', 'DATING', null],
-      ['products:live-cam', 'LIVE CAM', null],
+      ['products:escorts', '商品', 'ESCORTS'],
+      ['categories:escorts', '分类', null],
+      ['tags:escorts', '标签', null],
+      ['products:dating', '商品', 'DATING'],
+      ['categories:dating', '分类', null],
+      ['tags:dating', '标签', null],
+      ['products:live-cam', '商品', 'LIVE CAM'],
+      ['categories:live-cam', '分类', null],
+      ['tags:live-cam', '标签', null],
     ],
   );
   assert.equal(
     items.some((item) => item.label === '商品'),
-    false,
+    true,
   );
   assert.equal(
     items.some((item) => item.label === '分类'),
-    false,
+    true,
   );
   assert.equal(
     items.some((item) => item.label === '标签'),
-    false,
+    true,
   );
 });
 
@@ -64,11 +70,9 @@ test('catalog workspace switcher preserves the active section id', () => {
   assert.equal(catalogViewForResource('tags', 'dating'), 'tags:dating');
 });
 
-test('catalog sidebar section selection follows section context instead of exact resource view', async () => {
+test('catalog sidebar selection identifies the exact resource route', async () => {
   const secondary = await source('../src/shell/AdminSecondarySidebar.tsx');
-  assert.match(secondary, /getCatalogWorkspaceContext/);
-  assert.match(secondary, /activeSectionId/);
-  assert.match(secondary, /itemSectionId/);
+  assert.match(secondary, /item\.view === activeView/);
   assert.match(secondary, /aria-current=\{active \? 'page' : undefined\}/);
   assert.doesNotMatch(secondary, /sectionName.*·.*item\.label/);
 });

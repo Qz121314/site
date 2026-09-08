@@ -83,6 +83,8 @@ test('PR validation is local-only and executes the canonical verify gate', () =>
     /--remote|CLOUDFLARE_API_TOKEN|wrangler\s+deploy(?!\s+--dry-run)/i,
   );
   assert.match(prWorkflow, /run:\s*pnpm verify/);
+  assert.match(prWorkflow, /name:\s*Verify Admin desktop shell/);
+  assert.match(prWorkflow, /E2E_ADMIN_LOCAL_SERVER: '1'/);
 });
 
 test('pnpm store caching is lockfile-keyed and node_modules is not cached', () => {
@@ -96,6 +98,7 @@ test('pnpm store caching is lockfile-keyed and node_modules is not cached', () =
 test('Playwright Chromium cache is preserved', () => {
   assert.match(mainWorkflow, /path:\s*~\/\.cache\/ms-playwright/);
   assert.match(e2eWorkflow, /path:\s*~\/\.cache\/ms-playwright/);
+  assert.match(prWorkflow, /path:\s*~\/\.cache\/ms-playwright/);
 });
 
 test('PR verification builds once through pnpm verify', () => {
