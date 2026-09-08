@@ -156,7 +156,7 @@
 @media (min-width: 900px) and (max-width: 1199px) {
   .admin-shell {
     display: grid;
-    grid-template-columns: 78px minmax(0, 1fr);
+    grid-template-columns: 224px minmax(0, 1fr);
   }
 }
 

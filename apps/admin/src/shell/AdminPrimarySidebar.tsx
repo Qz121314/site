@@ -1,5 +1,6 @@
 import {
   Boxes,
+  ChevronDown,
   FileText,
   Gauge,
   LogOut,
@@ -92,7 +93,13 @@ export function AdminPrimarySidebar({
               >
                 <Icon aria-hidden="true" size={17} strokeWidth={1.8} />
                 <span>{domain.label}</span>
-                {active ? <span className="admin-nav-chevron">⌄</span> : null}
+                {active ? (
+                  <ChevronDown
+                    className="admin-nav-chevron"
+                    aria-hidden="true"
+                    size={14}
+                  />
+                ) : null}
               </Button>
               {active && visibleItems.length > 0 ? (
                 <div className="admin-nav-subitems">

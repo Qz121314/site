@@ -131,8 +131,8 @@
 
 .dashboard-launcher {
   display: grid;
-  gap: 16px;
-  padding-top: 6px;
+  gap: 10px;
+  padding-top: 2px;
 }
 .dashboard-section {
   border: 1px solid #e0e5eb;
@@ -140,11 +140,11 @@
 }
 .dashboard-section-heading {
   display: flex;
-  min-height: 55px;
+  min-height: 45px;
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 10px 14px;
+  padding: 7px 12px;
   border-bottom: 1px solid #e7ebf0;
 }
 .dashboard-section-heading h2 {
@@ -172,16 +172,16 @@
 .dashboard-entry-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 8px;
-  padding: 12px;
+  gap: 6px;
+  padding: 8px;
 }
 .dashboard-entry,
 .dashboard-section-link {
   display: flex;
   min-width: 0;
   align-items: center;
-  gap: 10px;
-  padding: 11px;
+  gap: 8px;
+  padding: 8px 9px;
   border: 1px solid #e2e7ed;
   border-radius: 5px;
   color: #7b8796;
@@ -199,9 +199,9 @@
 }
 .dashboard-entry-icon {
   display: grid;
-  width: 30px;
-  height: 30px;
-  flex: 0 0 30px;
+  width: 26px;
+  height: 26px;
+  flex: 0 0 26px;
   place-items: center;
   border: 1px solid #e1e7ef;
   border-radius: 4px;
@@ -236,17 +236,20 @@
   flex: 0 0 auto;
 }
 .dashboard-metadata {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0 18px;
   margin: 0;
-  padding: 3px 14px;
+  padding: 4px 12px;
 }
 .dashboard-metadata > div {
   display: grid;
-  grid-template-columns: 120px minmax(0, 1fr);
-  min-height: 37px;
+  grid-template-columns: 52px minmax(0, 1fr);
+  min-height: 32px;
   align-items: center;
   border-bottom: 1px solid #edf0f3;
 }
-.dashboard-metadata > div:last-child {
+.dashboard-metadata > div:nth-last-child(-n + 3) {
   border-bottom: 0;
 }
 .dashboard-metadata dt {
@@ -261,9 +264,9 @@
 }
 .dashboard-section-list {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 8px;
-  padding: 12px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  padding: 8px;
 }
 .dashboard-section-link > svg:first-child {
   color: #647084;
@@ -281,6 +284,16 @@
   }
   .dashboard-metadata > div {
     grid-template-columns: 92px minmax(0, 1fr);
+  }
+  .dashboard-metadata {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .dashboard-metadata > div:nth-last-child(-n + 3) {
+    border-bottom: 1px solid #edf0f3;
+  }
+  .dashboard-metadata > div:last-child {
+    border-bottom: 0;
   }
 }
 
