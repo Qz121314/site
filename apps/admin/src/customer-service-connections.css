@@ -1,7 +1,8 @@
-/* Customer service connections use the same dense, low-friction workbench as other admin data pages. */
-
+/* Customer service business layout. AdminWorkspace owns global width; shared
+ * controls and semantic states use the canonical Admin foundation. */
 .customer-service-workbench {
   display: flex;
+  width: 100%;
   min-height: 0;
   flex: 1 1 auto;
   flex-direction: column;
@@ -11,14 +12,14 @@
 .customer-service-commandbar {
   display: grid;
   grid-template-columns: max-content minmax(0, 1fr);
-  min-height: 46px;
+  min-height: var(--admin-command-h);
   align-items: center;
-  gap: 10px;
-  padding: 6px 7px;
-  border: 1px solid var(--admin-border, #e2e6ec);
-  border-radius: 10px;
-  background: #fff;
-  box-shadow: 0 1px 2px rgb(16 24 40 / 3%);
+  gap: 8px;
+  padding: 3px 6px;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-md);
+  background: var(--admin-surface);
+  box-shadow: var(--admin-shadow-card);
 }
 
 .customer-service-commandbar .segmented-control {
@@ -26,46 +27,48 @@
   width: fit-content;
   align-items: center;
   gap: 2px;
-  padding: 3px;
-  border: 1px solid var(--admin-border, #e2e6ec);
-  border-radius: 8px;
-  background: #f1f3f6;
+  padding: 2px;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-sm);
+  background: var(--admin-surface-subtle);
 }
 
 .customer-service-commandbar .segmented-control button {
   appearance: none;
-  min-height: 31px;
-  padding: 0 12px;
-  border: 0;
-  border-radius: 6px;
-  color: #667085;
+  min-height: 30px;
+  padding: 0 9px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  color: var(--admin-text-muted);
   background: transparent;
   cursor: pointer;
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   font-weight: 720;
   line-height: 1;
-  transition:
-    color 140ms ease,
-    background 140ms ease,
-    box-shadow 140ms ease;
 }
 
 .customer-service-commandbar .segmented-control button:not(.is-active):hover {
-  color: #344054;
-  background: rgb(255 255 255 / 72%);
+  color: var(--admin-text);
+  background: rgb(255 255 255 / 74%);
 }
 
 .customer-service-commandbar .segmented-control button.is-active {
-  color: #fff;
-  background: #202632;
-  box-shadow: 0 1px 3px rgb(16 24 40 / 18%);
+  border-color: #bfdbfe;
+  color: var(--admin-brand-hover);
+  background: var(--admin-brand-soft);
+  box-shadow: inset 0 -2px 0 var(--admin-brand);
+}
+
+.customer-service-commandbar .segmented-control button:focus-visible {
+  outline: 2px solid var(--focus-ring);
+  outline-offset: 1px;
 }
 
 .customer-service-toolbar-actions {
   display: grid;
   grid-template-columns: minmax(220px, 420px) max-content;
   justify-content: end;
-  gap: 8px;
+  gap: 6px;
 }
 
 .customer-service-search {
@@ -75,48 +78,48 @@
 
 .customer-service-search input {
   width: 100%;
-  min-height: 34px;
+  min-height: var(--admin-control-h);
   box-sizing: border-box;
-  padding: 0 10px;
-  border: 1px solid var(--admin-border-strong, #cfd5df);
-  border-radius: 7px;
-  background: #fff;
-  color: var(--admin-text, #172033);
+  padding: 0 9px;
+  border: 1px solid var(--admin-border-strong);
+  border-radius: var(--admin-radius-sm);
+  color: var(--admin-text);
+  background: var(--admin-surface);
   outline: 0;
-  font-size: 0.77rem;
+  font-size: 0.76rem;
 }
 
 .customer-service-search input:focus {
-  border-color: #ff9a76;
-  box-shadow: 0 0 0 3px rgb(255 90 31 / 10%);
+  border-color: var(--admin-brand);
+  box-shadow: 0 0 0 2px rgb(37 99 235 / 14%);
 }
 
 .customer-service-workbench .selection-toolbar {
   display: flex;
-  min-height: 38px;
+  min-height: var(--admin-command-h);
   align-items: center;
   justify-content: flex-end;
-  gap: 10px;
-  padding: 5px 7px;
-  border: 1px solid #f1d5cf;
-  border-radius: 9px;
-  background: #fff8f6;
+  gap: 8px;
+  padding: 4px 7px;
+  border: 1px solid #bfdbfe;
+  border-radius: var(--admin-radius-sm);
+  background: var(--admin-brand-soft);
 }
 
 .customer-service-workbench .selection-toolbar span {
   margin-right: auto;
-  color: #667085;
-  font-size: 0.74rem;
-  font-weight: 650;
+  color: var(--admin-brand-hover);
+  font-size: 0.73rem;
+  font-weight: 700;
 }
 
 .customer-service-table-wrap {
   min-height: 0;
   overflow: auto;
-  border: 1px solid var(--admin-border, #e2e6ec);
-  border-radius: 10px;
-  background: #fff;
-  box-shadow: 0 1px 2px rgb(16 24 40 / 3%);
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-md);
+  background: var(--admin-surface);
+  box-shadow: var(--admin-shadow-card);
   overscroll-behavior: contain;
 }
 
@@ -128,7 +131,7 @@
 
 .customer-service-table th,
 .customer-service-table td {
-  padding: 8px 10px;
+  padding: 6px 8px;
   vertical-align: middle;
   border-bottom: 1px solid #edf0f4;
 }
@@ -137,41 +140,45 @@
   position: sticky;
   z-index: 1;
   top: 0;
-  height: 36px;
-  color: #667085;
-  background: #f8f9fb;
+  height: 34px;
+  color: var(--admin-text-muted);
+  background: var(--admin-surface-subtle);
   text-align: left;
-  font-size: 0.65rem;
+  font-size: 0.64rem;
   font-weight: 760;
   letter-spacing: 0.02em;
 }
 
 .customer-service-table td {
-  min-height: 46px;
+  min-height: var(--admin-row-h);
   color: #475467;
-  font-size: 0.76rem;
+  font-size: 0.75rem;
 }
 
 .customer-service-table td > strong {
-  color: #273244;
+  color: var(--admin-text);
   font-weight: 720;
 }
 
 .customer-service-table tbody tr:hover td {
-  background: #fafbfc;
+  background: var(--admin-surface-subtle);
 }
 
 .customer-service-table tbody tr:has(input[type='checkbox']:checked) td {
-  background: #fffaf7;
+  background: var(--admin-brand-soft);
+}
+
+.customer-service-table tbody tr:has(input[type='checkbox']:checked) td:first-child {
+  box-shadow: inset 2px 0 0 var(--admin-brand);
 }
 
 .customer-service-table tbody tr:only-child td[colspan] {
-  height: 118px;
-  padding: 24px;
-  color: #667085;
-  background: #fff;
+  height: 112px;
+  padding: 22px;
+  color: var(--admin-text-muted);
+  background: var(--admin-surface);
   text-align: center;
-  font-size: 0.76rem;
+  font-size: 0.75rem;
   font-weight: 650;
 }
 
@@ -192,7 +199,7 @@
   overflow: hidden;
   color: #475467;
   font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
-  font-size: 0.7rem;
+  font-size: 0.69rem;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -206,30 +213,26 @@
 .customer-service-table .table-action {
   appearance: none;
   min-height: 28px;
-  padding: 3px 8px;
-  border: 1px solid #dfe4eb;
-  border-radius: 6px;
+  padding: 3px 7px;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-sm);
   color: #475467;
-  background: #fff;
+  background: var(--admin-surface);
   box-shadow: 0 1px 1px rgb(16 24 40 / 3%);
   cursor: pointer;
   font-size: 0.69rem;
   font-weight: 700;
-  transition:
-    color 120ms ease,
-    border-color 120ms ease,
-    background 120ms ease;
 }
 
 .customer-service-table .table-action:not(:disabled):hover {
-  border-color: #c7ced8;
-  color: #172033;
-  background: #f8fafc;
+  border-color: var(--admin-border-strong);
+  color: var(--admin-text);
+  background: var(--admin-surface-subtle);
 }
 
 .customer-service-table .table-action.is-danger {
   border-color: transparent;
-  color: #b42318;
+  color: var(--admin-danger);
   background: transparent;
   box-shadow: none;
 }
@@ -237,7 +240,7 @@
 .customer-service-table .table-action.is-danger:not(:disabled):hover {
   border-color: #fecdca;
   color: #912018;
-  background: #fff1f0;
+  background: var(--admin-danger-soft);
 }
 
 .customer-service-table .table-action:disabled {
@@ -251,57 +254,57 @@
 
 .customer-service-editor-form {
   display: grid;
-  gap: 13px;
+  gap: 11px;
 }
 
 .customer-service-editor-form > label {
   display: grid;
-  gap: 5px;
+  gap: 4px;
 }
 
 .customer-service-editor-form label > span:not(.sr-only) {
   color: #344054;
-  font-size: 0.73rem;
+  font-size: 0.72rem;
   font-weight: 700;
 }
 
 .customer-service-editor-form label > small {
-  color: #98a2b3;
-  font-size: 0.69rem;
+  color: var(--admin-text-subtle);
+  font-size: 0.68rem;
   line-height: 1.45;
 }
 
 .customer-service-editor-form input[type='text'],
 .customer-service-editor-form input[type='url'],
 .customer-service-editor-form input[type='password'] {
-  box-sizing: border-box;
   width: 100%;
-  min-height: 38px;
-  padding-inline: 10px;
-  border: 1px solid var(--admin-border-strong, #cfd5df);
-  border-radius: 8px;
-  background: #fff;
-  color: var(--admin-text, #172033);
+  min-height: var(--admin-control-h);
+  box-sizing: border-box;
+  padding-inline: 9px;
+  border: 1px solid var(--admin-border-strong);
+  border-radius: var(--admin-radius-sm);
+  color: var(--admin-text);
+  background: var(--admin-surface);
   outline: 0;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
 }
 
 .customer-service-editor-form
   input:is([type='text'], [type='url'], [type='password']):focus {
-  border-color: #ff9a76;
-  box-shadow: 0 0 0 3px rgb(255 90 31 / 10%);
+  border-color: var(--admin-brand);
+  box-shadow: 0 0 0 2px rgb(37 99 235 / 14%);
 }
 
 .customer-service-editor-form .switch-row {
   display: flex;
-  min-height: 52px;
+  min-height: 46px;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding: 9px 11px;
-  border: 1px solid #e5e9ef;
-  border-radius: 8px;
-  background: #f9fafb;
+  gap: 12px;
+  padding: 7px 9px;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-sm);
+  background: var(--admin-surface-subtle);
 }
 
 .customer-service-editor-form .switch-row > span {
@@ -311,31 +314,24 @@
 
 .customer-service-editor-form .switch-row strong {
   color: #344054;
-  font-size: 0.74rem;
+  font-size: 0.73rem;
 }
 
 .customer-service-editor-form .switch-row small {
-  color: #98a2b3;
-  font-size: 0.68rem;
+  color: var(--admin-text-subtle);
+  font-size: 0.67rem;
   font-weight: 500;
 }
 
 .customer-service-editor-form .admin-dialog-actions {
   position: sticky;
-  bottom: -16px;
   z-index: 2;
+  bottom: -16px;
   margin: 2px -16px -16px;
-  padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
-  border-top: 1px solid #edf0f4;
+  padding: 10px 16px calc(10px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--admin-border);
   background: rgb(255 255 255 / 96%);
   backdrop-filter: blur(10px);
-}
-
-@media (min-width: 1024px) {
-  .customer-service-workbench {
-    width: min(1180px, 100%);
-    margin-inline: auto;
-  }
 }
 
 @media (max-width: 900px) {
@@ -362,6 +358,12 @@
   .customer-service-commandbar .segmented-control button,
   .customer-service-toolbar-actions .primary-button {
     width: 100%;
+  }
+
+  .customer-service-commandbar .segmented-control button,
+  .customer-service-toolbar-actions .primary-button,
+  .customer-service-search input {
+    min-height: 44px;
   }
 
   .customer-service-commandbar .segmented-control button {

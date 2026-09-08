@@ -1,6 +1,6 @@
 .admin-shell {
   min-height: 100vh;
-  background: #f3f5f8;
+  background: var(--page-color);
 }
 
 .admin-desktop-primary,
@@ -13,7 +13,7 @@
   display: flex;
   min-height: 100vh;
   flex-direction: column;
-  background: #f6f8fb;
+  background: var(--page-color);
 }
 
 .admin-mobile-drawer-backdrop {
@@ -31,18 +31,18 @@
   min-width: 0;
   flex-direction: column;
   padding-bottom: env(safe-area-inset-bottom);
-  background: #fff;
+  background: var(--surface-color);
   box-shadow: 24px 0 64px rgb(15 23 42 / 24%);
 }
 
 .admin-mobile-drawer-header {
   display: flex;
-  min-height: 64px;
+  min-height: 56px;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  padding: max(12px, env(safe-area-inset-top)) 14px 12px;
-  border-bottom: 1px solid #e5e9f0;
+  gap: 12px;
+  padding: max(10px, env(safe-area-inset-top)) 12px 10px;
+  border-bottom: 1px solid var(--border-color);
 }
 
 .admin-mobile-drawer-header > div {
@@ -51,7 +51,7 @@
 }
 
 .admin-mobile-drawer-header span {
-  color: #8a94a3;
+  color: var(--muted-text);
   font-size: 0.68rem;
   font-weight: 700;
   letter-spacing: 0.08em;
@@ -59,8 +59,8 @@
 }
 
 .admin-mobile-drawer-header strong {
-  color: #172033;
-  font-size: 0.92rem;
+  color: var(--heading-color);
+  font-size: 0.9rem;
 }
 
 .admin-mobile-drawer-content {
@@ -73,14 +73,14 @@
 @media (min-width: 1200px) {
   .admin-shell {
     display: grid;
-    grid-template-columns: 224px 216px minmax(0, 1fr);
+    grid-template-columns: 172px 180px minmax(0, 1fr);
   }
 }
 
 @media (min-width: 900px) and (max-width: 1199px) {
   .admin-shell {
     display: grid;
-    grid-template-columns: 88px 200px minmax(0, 1fr);
+    grid-template-columns: 68px 180px minmax(0, 1fr);
   }
 }
 
