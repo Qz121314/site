@@ -60,10 +60,7 @@ test('two-level shell exposes zero-chrome navigation', async () => {
   assert.match(shell, /AdminSecondarySidebar/);
   assert.match(shell, /AdminWorkspace/);
   assert.match(shell, /<AdminWorkspace width=\{workspaceWidth\}>/);
-  assert.match(
-    shell,
-    /<h1 className="admin-visually-hidden">\{context\.title\}<\/h1>/,
-  );
+  assert.match(shell, /<h1 className="admin-visually-hidden">\{context\.title\}<\/h1>/);
   assert.doesNotMatch(shell, /AdminTopBar|AdminPageHeader/);
   assert.match(dashboard, /workspaceWidthForView/);
   assert.match(primary, /aria-label="后台一级导航"/);
@@ -100,16 +97,10 @@ test('responsive shell avoids clipping and page chrome', async () => {
   assert.match(shellCss, /grid-template-columns:[\s\S]*minmax\(0, 1fr\)/);
   assert.match(shellCss, /admin-mobile-drawer-backdrop/);
   assert.match(workspace, /'split-pane'/);
-  assert.match(
-    scrollCss,
-    /\.admin-workspace-content[\s\S]*overflow-y: auto/,
-  );
+  assert.match(scrollCss, /\.admin-workspace-content[\s\S]*overflow-y: auto/);
   assert.match(workspaceCss, /\.admin-visually-hidden/);
   assert.match(workspaceCss, /\.admin-workspace-toolbar/);
-  assert.doesNotMatch(
-    workspaceCss,
-    /\.admin-top-bar|\.admin-page-header/,
-  );
+  assert.doesNotMatch(workspaceCss, /\.admin-top-bar|\.admin-page-header/);
   assert.doesNotMatch(scrollCss, /max-height: calc\(100dvh/);
   assert.doesNotMatch(combined, /!important/);
 });
@@ -124,10 +115,7 @@ test('publish, logout, and session state use local ownership', async () => {
     dashboard,
     /function publishKeyForView\(view: AdminView\): string \| null/,
   );
-  assert.match(
-    dashboard,
-    /return dynamic \? `section:\$\{dynamic\.sectionId\}` : null/,
-  );
+  assert.match(dashboard, /return dynamic \? `section:\$\{dynamic\.sectionId\}` : null/);
   assert.match(dashboard, /const workspaceActions = contextPublishKey \?/);
   assert.doesNotMatch(dashboard, /topBarActions|environment-badge|会话至/);
   assert.match(dashboard, /onLogout=\{requestLogout\}/);
