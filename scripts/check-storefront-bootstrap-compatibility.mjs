@@ -1,6 +1,6 @@
 import { execFileSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
-import { fileURLToPath, pathToFileURL } from 'node:url';
+import { pathToFileURL } from 'node:url';
 
 const PROTOCOL_CONFIG_URL = new URL(
   '../apps/worker/src/publishing/storefront-bootstrap-protocol.json',
@@ -137,7 +137,9 @@ export function runPublishedBootstrapCompatibilityCheck({
   bucketName,
   readRemoteJson = readRemoteR2Json,
 } = {}) {
-  if (!bucketName) throw new Error('R2_BUCKET_NAME is required for bootstrap compatibility check.');
+  if (!bucketName) {
+    throw new Error('R2_BUCKET_NAME is required for bootstrap compatibility check.');
+  }
   const protocol = loadBootstrapProtocolConfig();
   const pointer = parsePublishedPointer(readRemoteJson(bucketName, POINTER_KEY));
   const bootstrap = parsePublishedBootstrap(
@@ -146,9 +148,7 @@ export function runPublishedBootstrapCompatibilityCheck({
   return assertPublishedBootstrapCompatible(protocol, bootstrap);
 }
 
-const entrypoint = process.argv[1]
-  ? pathToFileURL(fileURLToPath(pathToFileURL(process.argv[1]))).href
-  : '';
+const entrypoint = process.argv[1] ? pathToFileURL(process.argv[1]).href : '';
 if (entrypoint === import.meta.url) {
   try {
     const result = runPublishedBootstrapCompatibilityCheck({
