@@ -124,9 +124,9 @@ test('P8A owns one blue Admin palette and compact desktop geometry', async () =>
   assert.match(foundationCss, /--danger:/);
   assert.match(foundationCss, /--info:/);
 
-  const localCssImports = [
-    ...adminManifest.matchAll(/@import '(\.[^']+\.css)'/g),
-  ].map((match) => match[1]);
+  const localCssImports = [...adminManifest.matchAll(/@import '(\.[^']+\.css)'/g)].map(
+    (match) => match[1],
+  );
   const manifestUrl = new URL('../src/admin.css', import.meta.url);
   const localCss = await Promise.all(
     localCssImports.map((relativePath) =>
