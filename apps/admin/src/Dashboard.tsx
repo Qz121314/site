@@ -304,7 +304,7 @@ export function Dashboard({
     useState<AdminNavigationPreferences>(readAdminNavigationPreferences);
   const initialViewRef = useRef(activeView);
   const [sections, setSections] = useState<AdminSection[]>([]);
-  const [logoAssetId, setLogoAssetId] = useState<string | null>(null);
+  const [pwaIconAssetId, setPwaIconAssetId] = useState<string | null>(null);
   const [sectionsLoading, setSectionsLoading] = useState(true);
   const [sectionsError, setSectionsError] = useState('');
   const [publishStatus, setPublishStatus] = useState<PublishStatus | null>(null);
@@ -349,10 +349,10 @@ export function Dashboard({
     }
   }, [onSessionExpired]);
 
-  const loadSiteBranding = useCallback(async () => {
+  const loadPwaIcon = useCallback(async () => {
     try {
       const settings = await fetchSiteSettings();
-      setLogoAssetId(settings.logoAssetId);
+      setPwaIconAssetId(settings.pwaIconAssetId);
     } catch (error) {
       if (isSessionError(error)) onSessionExpired();
     }
@@ -377,8 +377,8 @@ export function Dashboard({
   useEffect(() => {
     void loadSections();
     void loadPublishStatus();
-    void loadSiteBranding();
-  }, [loadPublishStatus, loadSections, loadSiteBranding]);
+    void loadPwaIcon();
+  }, [loadPwaIcon, loadPublishStatus, loadSections]);
 
   useEffect(() => {
     const handleMutation = () => void loadPublishStatus();
@@ -604,7 +604,7 @@ export function Dashboard({
         loggingOut={loggingOut}
         logoutDisabled={publishingKey !== null || rollingBack}
         sessionExpiresAt={expiresAt}
-        logoAssetId={logoAssetId}
+        pwaIconAssetId={pwaIconAssetId}
       >
         {publishFeedback ? (
           <div

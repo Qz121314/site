@@ -46,7 +46,7 @@ type AdminPrimarySidebarProps = {
   loggingOut: boolean;
   logoutDisabled?: boolean;
   collapsed?: boolean;
-  logoAssetId?: string | null;
+  pwaIconAssetId?: string | null;
 };
 
 export function AdminPrimarySidebar({
@@ -61,7 +61,7 @@ export function AdminPrimarySidebar({
   loggingOut,
   logoutDisabled = false,
   collapsed = false,
-  logoAssetId = null,
+  pwaIconAssetId = null,
 }: AdminPrimarySidebarProps) {
   return (
     <aside
@@ -70,12 +70,12 @@ export function AdminPrimarySidebar({
     >
       <div className="admin-brand">
         <span>
-          {logoAssetId ? (
+          {pwaIconAssetId ? (
             <img
-              src={brandingAssetPreviewUrl(logoAssetId)}
+              src={brandingAssetPreviewUrl(pwaIconAssetId)}
               alt=""
               onError={(event) => {
-                event.currentTarget.style.display = 'none';
+                event.currentTarget.src = '/api/public/pwa/icon/192';
               }}
             />
           ) : (
