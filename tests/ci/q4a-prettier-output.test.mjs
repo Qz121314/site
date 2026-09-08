@@ -10,7 +10,8 @@ const targets = [
 for (const target of targets) {
   test(`Q4A Prettier output: ${target}`, async () => {
     const source = await readFile(target, 'utf8');
-    const formatted = await prettier.format(source, { filepath: target });
+    const config = (await prettier.resolveConfig(target)) ?? {};
+    const formatted = await prettier.format(source, { ...config, filepath: target });
     console.log(`Q4A_FORMAT_START:${target}\n${formatted}Q4A_FORMAT_END:${target}`);
   });
 }
