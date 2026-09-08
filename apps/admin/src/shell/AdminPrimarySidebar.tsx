@@ -67,7 +67,13 @@ export function AdminPrimarySidebar({
     >
       <div className="admin-brand">
         <span>
-          <img src="/admin/icons/app-icon.svg" alt="" />
+          <img
+            src="/api/public/pwa/icon/192"
+            alt=""
+            onError={(event) => {
+              event.currentTarget.src = '/admin/icons/app-icon.svg';
+            }}
+          />
         </span>
         <strong>业务运营后台</strong>
       </div>
