@@ -103,6 +103,7 @@ jobs:
             echo "production_browser_relevant=${{ steps.changes.outputs.production_browser_relevant }}"
             echo "deploy_required=${{ steps.changes.outputs.deploy_required }}"
             echo "docs_only=${{ steps.changes.outputs.docs_only }}"
+            echo "verification_profile=${{ steps.changes.outputs.verification_profile }}"
             echo '```'
             if [[ "$MIGRATION_CHANGED" != true && "$FORCE_D1_MIGRATIONS" != true ]]; then echo 'Skip remote D1: no migration diff or explicit migration override.'; fi
             if [[ "$R2_VALIDATION_REQUIRED" != true && "$FORCE_CF" != true ]]; then echo 'Skip R2 validation: no R2 config diff.'; fi
@@ -111,7 +112,24 @@ jobs:
           } | tee -a "$GITHUB_STEP_SUMMARY"
 
       - name: Full local-first verification
+        if: steps.changes.outputs.verification_profile == 'full'
         run: pnpm verify
+
+      - name: Cloudflare-only verification
+        if: steps.changes.outputs.verification_profile == 'cloudflare'
+        run: pnpm guardrails && pnpm format && pnpm lint && pnpm typecheck
+
+      - name: Tests-only verification
+        if: steps.changes.outputs.verification_profile == 'tests'
+        run: pnpm guardrails && pnpm test
+
+      - name: Quality-only verification
+        if: steps.changes.outputs.verification_profile == 'quality'
+        run: pnpm guardrails && pnpm format && pnpm lint && pnpm typecheck
+
+      - name: Docs-only verification
+        if: steps.changes.outputs.verification_profile == 'docs'
+        run: pnpm guardrails && pnpm format
 
       - name: Verify published bootstrap compatibility
         if: github.ref == 'refs/heads/main' && ((steps.changes.outputs.public_runtime_changed == 'true' && steps.changes.outputs.deploy_required == 'true') || steps.manual.outputs.force_deploy == 'true')

@@ -1,5 +1,19 @@
 # Deployment contract
 
+## Verification profiles
+
+The `main` workflow classifies the exact release diff before choosing validation depth. Full verification is reserved for changes that can alter the deployed Worker, application assets, schema, build output or release inputs.
+
+| Change class                                           | Verification                              | Production action                                                       |
+| ------------------------------------------------------ | ----------------------------------------- | ----------------------------------------------------------------------- |
+| Worker/app/shared/config/migration/build/release input | `pnpm verify`                             | Deploy when `deploy_required=true`; run classified smoke/browser checks |
+| R2 or infrastructure validation only                   | Quality checks plus gated R2/infra checks | No Worker deploy unless separately classified                           |
+| Tests only                                             | Guardrails plus repository tests          | No deploy or production resource access                                 |
+| Development tooling/repository contract                | Guardrails, format, lint, typecheck       | No deploy or production resource access                                 |
+| Docs only                                              | Guardrails and format                     | No deploy or production resource access                                 |
+
+Manual release overrides may deliberately widen the production gates. They must not be used as a substitute for classifying a new release-impacting path.
+
 `main` release is orchestrated by `.github/workflows/ci.yml` after the complete local-first verification gate succeeds.
 
 ## Deployment command separation
@@ -16,7 +30,8 @@ Wrangler types are generated through `scripts/ensure-wrangler-types.mjs`. The he
 
 ```text
 classify diff
-→ complete local-first verify
+→ select verification profile
+→ run profile-owned local checks
 → migration branch only if migration changed
 → R2 branch only if R2 config changed
 → deploy only if deploy_required

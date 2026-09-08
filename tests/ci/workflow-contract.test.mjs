@@ -150,8 +150,19 @@ test('PR Full Verify preserves independent validation layers as parallel jobs', 
   assert.doesNotMatch(prWorkflow, /run:\s*pnpm verify\b/);
 });
 
-test('main release verifies/builds once before direct Wrangler deploy', () => {
-  assert.match(mainWorkflow, /run:\s*pnpm verify/);
+test('main release selects verification depth before direct Wrangler deploy', () => {
+  const full = namedStep(mainWorkflow, 'Full local-first verification');
+  assert.match(full, /verification_profile == 'full'/);
+  assert.match(full, /run:\s*pnpm verify/);
+  for (const name of [
+    'Cloudflare-only verification',
+    'Tests-only verification',
+    'Quality-only verification',
+    'Docs-only verification',
+  ]) {
+    const step = namedStep(mainWorkflow, name);
+    assert.match(step, /verification_profile/);
+  }
   const deploy = namedStep(mainWorkflow, 'Deploy business platform Worker');
   assert.match(deploy, /pnpm exec wrangler deploy --keep-vars/);
   assert.doesNotMatch(deploy, /pnpm build|db:migrate:remote/);

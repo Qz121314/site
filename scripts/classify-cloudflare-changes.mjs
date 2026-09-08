@@ -23,6 +23,7 @@ const OUTPUT_KEYS = [
   'deep_smoke_relevant',
   'tests_only',
   'development_tooling_only',
+  'verification_profile',
 ];
 
 const normalizePath = (value) => value.replaceAll('\\', '/').replace(/^\.\//, '');
@@ -317,6 +318,17 @@ export function classifyFiles(inputFiles, impacts = {}) {
     files.every(
       (path) => isDocumentation(path) || isDevelopmentTooling(path) || isTestPath(path),
     );
+  const verificationProfile = deployRequired
+    ? 'full'
+    : r2ValidationRequired || infraValidationRequired
+      ? 'cloudflare'
+      : testsOnly
+        ? 'tests'
+        : docsOnly
+          ? 'docs'
+          : developmentToolingOnly
+            ? 'quality'
+            : 'full';
 
   return {
     files,
@@ -340,6 +352,7 @@ export function classifyFiles(inputFiles, impacts = {}) {
     deep_smoke_relevant: deepSmokeRelevant,
     tests_only: testsOnly,
     development_tooling_only: developmentToolingOnly,
+    verification_profile: verificationProfile,
   };
 }
 
@@ -399,7 +412,8 @@ function resolveFilesFromGit() {
 function writeGithubOutputs(classification) {
   if (!process.env.GITHUB_OUTPUT) return;
   const lines = OUTPUT_KEYS.map(
-    (key) => `${key}=${classification[key] ? 'true' : 'false'}`,
+    (key) =>
+      `${key}=${key === 'verification_profile' ? classification[key] : classification[key] ? 'true' : 'false'}`,
   );
   appendFileSync(process.env.GITHUB_OUTPUT, `${lines.join('\n')}\n`, 'utf8');
 }

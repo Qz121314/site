@@ -99,6 +99,18 @@ Hard boundaries:
 
 Classifier outputs, Wrangler boundaries and overrides: `docs/development/cloudflare-ci.md`. D1 procedure: `docs/development/database.md`. Deployment/smoke: `docs/development/deployment.md`.
 
+### Verification depth
+
+The main release workflow is profile-driven. Do not make every `main` push run `pnpm verify` by default:
+
+- `full`: Worker, Storefront, Admin, shared/config, migrations, Wrangler, production build or release-input changes. Run `pnpm verify` before deployment.
+- `cloudflare`: R2-only or infrastructure validation without an application deploy. Run quality/type checks and the gated Cloudflare validation; do not deploy the Worker unless the classifier says so.
+- `tests`: test-only changes. Run guardrails and repository tests, but do not build, migrate or access production Cloudflare.
+- `quality`: repository tooling and development-only changes. Run guardrails, formatting, lint and typecheck.
+- `docs`: documentation-only changes. Run guardrails and formatting only.
+
+The classifier owns this profile. A new release-impacting path must conservatively promote to `full`; never reduce a profile only to shorten CI. Manual `force_deploy` and `force_cloudflare_validation` still run their explicit production gates.
+
 ## Testing hard rules
 
 Canonical policy: `docs/development/testing.md`.

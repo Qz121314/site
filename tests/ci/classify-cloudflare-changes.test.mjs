@@ -22,6 +22,7 @@ test('docs-only is a production Cloudflare no-op', () => {
     d1_remote_required: false,
     r2_validation_required: false,
     production_browser_relevant: false,
+    verification_profile: 'docs',
   });
 });
 
@@ -34,6 +35,7 @@ test('repository contract and workflow tooling do not deploy by themselves', () 
       deploy_required: false,
       d1_remote_required: false,
       r2_validation_required: false,
+      verification_profile: 'quality',
     },
   );
 });
@@ -47,6 +49,7 @@ test('storefront-only changes deploy and run production browser acceptance', () 
     migration_changed: false,
     r2_config_changed: false,
     production_browser_relevant: true,
+    verification_profile: 'full',
   });
 });
 
@@ -57,6 +60,7 @@ test('admin-only changes deploy without storefront production browser acceptance
     worker_changed: false,
     deploy_required: true,
     production_browser_relevant: false,
+    verification_profile: 'full',
   });
 });
 
@@ -66,6 +70,7 @@ test('worker-only changes deploy', () => {
     storefront_changed: false,
     admin_changed: false,
     deploy_required: true,
+    verification_profile: 'full',
   });
 });
 
@@ -76,6 +81,7 @@ test('public Worker route changes require deep and browser acceptance', () => {
     deploy_required: true,
     deep_smoke_relevant: true,
     production_browser_relevant: true,
+    verification_profile: 'full',
   });
 });
 
@@ -86,6 +92,7 @@ test('migration-only changes retain remote D1 safety and deployment', () => {
     deploy_required: true,
     r2_config_changed: false,
     r2_validation_required: false,
+    verification_profile: 'full',
   });
 });
 
@@ -96,6 +103,7 @@ test('R2 config-only changes validate R2 without forcing Worker deploy', () => {
     infra_validation_required: true,
     deploy_required: false,
     d1_remote_required: false,
+    verification_profile: 'cloudflare',
   });
 });
 
@@ -106,6 +114,7 @@ test('wrangler Worker config changes deploy and run non-R2 infra/deep validation
     r2_validation_required: false,
     infra_validation_required: true,
     deep_smoke_relevant: true,
+    verification_profile: 'full',
   });
 });
 
@@ -252,6 +261,7 @@ test('tests-only changes do not access production Cloudflare resources', () => {
   expectFlags(['tests/unit/example.test.ts'], {
     tests_only: true,
     deploy_required: false,
+    verification_profile: 'tests',
     d1_remote_required: false,
     r2_validation_required: false,
   });

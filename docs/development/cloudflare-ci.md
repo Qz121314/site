@@ -18,6 +18,18 @@ Production Cloudflare resources are release dependencies, not general CI fixture
 
 `scripts/classify-cloudflare-changes.mjs` is the repository-owned release classifier. It accepts an explicit Git base/head range, uses `git merge-base`, and writes stable boolean outputs to `$GITHUB_OUTPUT`.
 
+It also writes the string output `verification_profile`, which controls how much local validation the main release workflow performs:
+
+| Profile      | Use                                                                     | Main validation                                                      |
+| ------------ | ----------------------------------------------------------------------- | -------------------------------------------------------------------- |
+| `full`       | Worker, app, shared/config, migration, Wrangler, build or release input | `pnpm verify`                                                        |
+| `cloudflare` | R2/infrastructure validation without an application deploy              | guardrails, format, lint and typecheck; then gated Cloudflare checks |
+| `tests`      | Test-only changes                                                       | guardrails and repository tests                                      |
+| `quality`    | Development tooling/repository contract changes                         | guardrails, format, lint and typecheck                               |
+| `docs`       | Documentation-only changes                                              | guardrails and format                                                |
+
+This prevents no-op, documentation and test-only pushes from paying the full build, local migration and Worker dry-run cost. A release-impacting classification must remain `full`; the profile is an optimization boundary, not a reason to weaken coverage.
+
 Core outputs include:
 
 ```text
@@ -39,6 +51,7 @@ d1_remote_required
 r2_validation_required
 infra_validation_required
 deep_smoke_relevant
+verification_profile
 ```
 
 Shared runtime packages are classified conservatively against every built application they can affect. The classifier reads both versions of `wrangler.jsonc`: Worker fields, `d1_databases`, `r2_buckets`, and `assets` produce separate outputs. Every effective Wrangler configuration change requires a Worker deployment because it changes the deployed configuration; only an R2 binding change adds R2 validation, and a D1 binding change never authorizes a D1 migration. Assets configuration adds public browser/deep acceptance. R2 remote management remains gated by an R2 configuration or R2 binding change.
@@ -71,9 +84,9 @@ Do not use production D1 as a PR test database. Do not scan business tables for 
 
 The bootstrap compatibility gate is the narrow exception for public runtime releases and manual forced Worker deployments: it is read-only, limited to the two active publication objects described above, and exists to prevent an incompatible Worker from reaching production. It does not authorize any R2 configuration change, media probe, list operation, write, or delete.
 
-## No-op classes
+## No-op and lightweight verification classes
 
-Docs-only, tests-only, repository contract changes, workflow-only changes, and pure development tooling do not independently authorize production D1/R2/deploy/browser work. They still receive their normal CI quality checks.
+Docs-only, tests-only, repository contract changes, workflow-only changes, and pure development tooling do not independently authorize production D1/R2/deploy/browser work. They receive the classifier-selected lightweight profile rather than the full `pnpm verify` aggregate. A workflow or classifier change is treated as development tooling for release-resource purposes, but its own contract tests must still protect the classifier and gating rules.
 
 When validating a no-op release path on `main`, use a commit limited to these classes and inspect the workflow steps, not only the overall conclusion. The expected resource result is D1 skip, R2 skip, Worker deploy skip, smoke skip, and browser acceptance skip.
 
