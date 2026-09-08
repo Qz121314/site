@@ -166,15 +166,12 @@ publicStorefrontConfigRoutes.get('/search-index/:pointerVersion', async (context
 });
 
 publicStorefrontConfigRoutes.get('/cta/:productId', async (context) => {
-  setPublicRuntimeHeaders(context);
   const productId = context.req.param('productId').trim();
-  if (!validPublicId(productId)) {
-    return context.json({ available: false });
-  }
-  const { cta } = await resolvePublicCta(context.env.DB, productId);
-  return cta
-    ? context.json({ available: true, ...cta })
-    : context.json({ available: false });
+  return cachedPublicJson(context, async () => {
+    if (!validPublicId(productId)) return { available: false };
+    const { cta } = await resolvePublicCta(context.env.DB, productId);
+    return cta ? { available: true, ...cta } : { available: false };
+  });
 });
 
 /**

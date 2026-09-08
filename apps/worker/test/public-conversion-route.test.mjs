@@ -179,7 +179,10 @@ test('GET realtime CTA state reads current configuration without consuming round
     mode: 'link',
     path: '/go/product-1',
   });
-  assert.equal(response.headers.get('cache-control'), 'no-store');
+  assert.equal(
+    response.headers.get('cache-control'),
+    'public, max-age=30, must-revalidate',
+  );
   assert.equal(db.cursor, 0);
 });
 
