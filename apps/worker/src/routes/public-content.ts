@@ -7,6 +7,11 @@ import type { AppEnvironment } from '../types';
 
 export const publicContentRoutes = new Hono<AppEnvironment>();
 
+function workerCache(): Cache | null {
+  if (typeof caches === 'undefined') return null;
+  return (caches as unknown as { default?: Cache }).default ?? null;
+}
+
 function notFound(context: Context<AppEnvironment>) {
   context.header('Cache-Control', 'no-store');
   return context.json(
@@ -48,12 +53,21 @@ async function serveGet(context: Context<AppEnvironment>) {
   const objectKey = publicSnapshotObjectKey(requestSnapshotPath(context));
   if (!objectKey) return notFound(context);
 
+  const cacheKey = new Request(new URL(context.req.url).toString(), {
+    method: 'GET',
+  });
+  const cache = workerCache();
+  const cached = cache ? await cache.match(cacheKey) : null;
+  if (cached) return cached;
+
   const object = await context.env.ASSETS_BUCKET.get(objectKey);
   if (!object) return notFound(context);
-  return new Response(object.body, {
+  const response = new Response(object.body, {
     status: 200,
     headers: responseHeaders(objectKey, object),
   });
+  if (cache) context.executionCtx.waitUntil(cache.put(cacheKey, response.clone()));
+  return response;
 }
 
 async function serveHead(context: Context<AppEnvironment>) {

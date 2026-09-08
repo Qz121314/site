@@ -7,6 +7,11 @@ import type { AppEnvironment } from '../types';
 
 export const publicMediaFallbackRoutes = new Hono<AppEnvironment>();
 
+function workerCache(): Cache | null {
+  if (typeof caches === 'undefined') return null;
+  return (caches as unknown as { default?: Cache }).default ?? null;
+}
+
 function notFound(_context: Context<AppEnvironment>) {
   return new Response(null, {
     status: 404,
@@ -92,6 +97,13 @@ async function serveGet(context: Context<AppEnvironment>) {
   const rangeHeader = context.req.header('range');
   if (!validRangeHeader(rangeHeader)) return invalidRange();
 
+  const cacheKey = new Request(new URL(context.req.url).toString(), {
+    method: 'GET',
+  });
+  const cache = !rangeHeader ? workerCache() : null;
+  const cached = cache ? await cache.match(cacheKey) : null;
+  if (cached) return cached;
+
   const objectKey = await resolveTrackedKey(context);
   if (!objectKey) return notFound(context);
 
@@ -101,10 +113,12 @@ async function serveGet(context: Context<AppEnvironment>) {
   );
   if (!object) return notFound(context);
 
-  return new Response(object.body, {
+  const response = new Response(object.body, {
     status: object.range ? 206 : 200,
     headers: responseHeaders(object),
   });
+  if (cache) context.executionCtx.waitUntil(cache.put(cacheKey, response.clone()));
+  return response;
 }
 
 async function serveHead(context: Context<AppEnvironment>) {
