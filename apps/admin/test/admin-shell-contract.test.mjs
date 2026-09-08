@@ -49,29 +49,31 @@ test('unsaved and history guards stay wired', async () => {
   assert.match(dashboard, /commitView\('sections', 'replace'\)/);
 });
 
-test('two-level shell exposes semantic navigation and width contract', async () => {
+test('two-level shell exposes semantic zero-chrome navigation and width contract', async () => {
   const shell = await source('../src/shell/AdminShell.tsx');
   const primary = await source('../src/shell/AdminPrimarySidebar.tsx');
   const secondary = await source('../src/shell/AdminSecondarySidebar.tsx');
-  const pageHeader = await source('../src/shell/AdminPageHeader.tsx');
   const workspace = await source('../src/shell/AdminWorkspace.tsx');
   const dashboard = await source('../src/Dashboard.tsx');
 
   assert.match(shell, /AdminPrimarySidebar/);
   assert.match(shell, /AdminSecondarySidebar/);
-  assert.match(shell, /AdminPageHeader/);
   assert.match(shell, /AdminWorkspace/);
   assert.match(shell, /<AdminWorkspace width=\{workspaceWidth\}>/);
+  assert.match(shell, /<h1 className="admin-visually-hidden">\{context\.title\}<\/h1>/);
+  assert.doesNotMatch(shell, /AdminTopBar|AdminPageHeader/);
   assert.match(dashboard, /workspaceWidthForView/);
   assert.match(primary, /aria-label="后台一级导航"/);
   assert.match(primary, /aria-current=\{active \? 'location' : undefined\}/);
+  assert.match(primary, /admin-primary-account/);
+  assert.match(primary, /退出登录/);
   assert.match(secondary, /aria-label="后台二级导航"/);
   assert.match(secondary, /aria-current=\{active \? 'page' : undefined\}/);
-  assert.match(pageHeader, /admin-page-header/);
+  assert.doesNotMatch(secondary, /admin-secondary-heading|Workspace/);
   assert.match(workspace, /admin-workspace--\$\{width\}/);
 });
 
-test('mobile drawer owns accessibility behavior', async () => {
+test('mobile drawer owns accessibility behavior without restoring a global header', async () => {
   const shell = await source('../src/shell/AdminShell.tsx');
 
   assert.match(shell, /FOCUSABLE_SELECTOR/);
@@ -81,9 +83,11 @@ test('mobile drawer owns accessibility behavior', async () => {
   assert.match(shell, /drawerTriggerRef\.current\?\.focus\(\)/);
   assert.match(shell, /aria-modal="true"/);
   assert.match(shell, /aria-label="后台导航"/);
+  assert.match(shell, /className="admin-mobile-nav-trigger"/);
+  assert.doesNotMatch(shell, /<header/);
 });
 
-test('responsive shell avoids fixed-height clipping', async () => {
+test('responsive shell avoids fixed-height clipping and page-level chrome', async () => {
   const shellCss = await source('../src/admin-shell.css');
   const workspaceCss = await source('../src/admin-workspace.css');
   const scrollCss = await source('../src/admin-scroll-ownership.css');
@@ -94,18 +98,28 @@ test('responsive shell avoids fixed-height clipping', async () => {
   assert.match(shellCss, /admin-mobile-drawer-backdrop/);
   assert.match(workspace, /'split-pane'/);
   assert.match(scrollCss, /\.admin-workspace-content[\s\S]*overflow-y: auto/);
+  assert.match(workspaceCss, /\.admin-visually-hidden/);
+  assert.match(workspaceCss, /\.admin-workspace-toolbar/);
+  assert.doesNotMatch(workspaceCss, /\.admin-top-bar|\.admin-page-header/);
   assert.doesNotMatch(scrollCss, /max-height: calc\(100dvh/);
   assert.doesNotMatch(combined, /!important/);
 });
 
-test('global publish and logout controls remain available', async () => {
+test('publish, logout, and session state have explicit local ownership', async () => {
   const dashboard = await source('../src/Dashboard.tsx');
+  const shell = await source('../src/shell/AdminShell.tsx');
+  const primary = await source('../src/shell/AdminPrimarySidebar.tsx');
   const publishing = await source('../src/shell/AdminPublishingControls.tsx');
 
-  assert.match(dashboard, /AdminPublishingControls/);
-  assert.match(dashboard, /rollbackStorefront/);
-  assert.match(dashboard, /requestLogout/);
-  assert.match(dashboard, /if \(view === 'faq'\) return 'faq';/);
+  assert.match(dashboard, /function publishKeyForView\(view: AdminView\): string \| null/);
+  assert.match(dashboard, /return dynamic \? `section:\$\{dynamic\.sectionId\}` : null/);
+  assert.match(dashboard, /const workspaceActions = contextPublishKey \?/);
+  assert.doesNotMatch(dashboard, /topBarActions|environment-badge|会话至/);
+  assert.match(dashboard, /onLogout=\{requestLogout\}/);
+  assert.match(dashboard, /sessionExpiresAt=\{expiresAt\}/);
+  assert.match(shell, /SESSION_WARNING_MS/);
+  assert.match(shell, /admin-session-warning/);
+  assert.match(primary, /onClick=\{onLogout\}/);
   assert.match(publishing, /发布全部待更新/);
   assert.match(publishing, /onRequestRollback/);
   assert.match(publishing, /publish-version-popover/);
