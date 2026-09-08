@@ -31,7 +31,9 @@ export function validateBootstrapProtocolConfig(value) {
     throw new Error('Storefront bootstrap protocol schema range is invalid.');
   }
   if (currentSchemaVersion - minReadableSchemaVersion > 1) {
-    throw new Error('Storefront bootstrap compatibility window must remain bounded to N/N-1.');
+    throw new Error(
+      'Storefront bootstrap compatibility window must remain bounded to N/N-1.',
+    );
   }
   if (
     !Array.isArray(value.capabilities) ||
