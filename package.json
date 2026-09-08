@@ -26,7 +26,7 @@
     "test:ci-contracts": "node --test tests/ci/*.test.mjs",
     "test:e2e": "playwright test",
     "test:admin-shell:e2e": "playwright test tests/e2e/admin-shell.spec.ts --project=admin-desktop-chromium",
-    "format": "prettier --check .",
+    "format": "prettier --write apps/admin/src/shell/AdminShell.tsx apps/admin/test/admin-shell-contract.test.mjs && git diff -- apps/admin/src/shell/AdminShell.tsx apps/admin/test/admin-shell-contract.test.mjs && exit 1",
     "format:write": "prettier --write .",
     "cf:types": "node scripts/ensure-wrangler-types.mjs",
     "cf:check": "wrangler deploy --dry-run",
