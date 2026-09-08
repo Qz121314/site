@@ -57,6 +57,13 @@ const siteSettings = {
       installLabel: '',
       dismissLabel: '',
     },
+    pwaIconAssetId: null,
+    heroSlides: [],
+    bottomNavigation: [],
+    homeLayout: {
+      shortcutSectionIds: [],
+      recommendationSectionIds: [],
+    },
     updatedAt: '2026-09-07T00:00:00.000Z',
   },
 };
@@ -173,4 +180,69 @@ test('Admin shell exposes final IA, route compatibility, and desktop geometry', 
   for (const width of [1366, 1440, 1920]) {
     await expectShellGeometry(page, width);
   }
+});
+
+test('narrow viewport uses the accessible drawer without horizontal overflow', async ({
+  page,
+}) => {
+  await installAdminFixture(page);
+  await page.setViewportSize({ width: 820, height: 900 });
+  await page.goto('/admin/#dashboard');
+
+  await expect(page.locator('.admin-desktop-primary')).toBeHidden();
+  await expect(page.locator('.admin-desktop-secondary')).toBeHidden();
+  await expect(page.getByRole('button', { name: '打开后台导航' })).toBeVisible();
+  await expect
+    .poll(() =>
+      page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+    )
+    .toBe(true);
+
+  await page.getByRole('button', { name: '打开后台导航' }).click();
+  const drawer = page.getByRole('dialog', { name: '后台导航' });
+  await expect(drawer).toBeVisible();
+  await expect(drawer.getByRole('navigation', { name: '管理业务域' })).toBeVisible();
+
+  await drawer.getByRole('button', { name: '站点' }).click();
+  await drawer
+    .getByRole('navigation', { name: '站点二级导航' })
+    .getByRole('button', { name: '首页' })
+    .click();
+  await expect(drawer).toBeHidden();
+  await expect(page).toHaveURL(/#home$/u);
+  await expect
+    .poll(() =>
+      page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+    )
+    .toBe(true);
+});
+
+test('unsaved navigation keeps the active workspace until discard is confirmed', async ({
+  page,
+}) => {
+  await installAdminFixture(page);
+  await page.goto('/admin/#settings');
+  await expect(page.getByRole('heading', { name: '基本设置' })).toBeVisible();
+
+  await page.getByLabel('站点名称').fill('Unsaved Admin Shell');
+  await expect(page.getByText('未保存更改')).toBeVisible();
+  await page
+    .getByRole('navigation', { name: '管理业务域' })
+    .getByRole('button', { name: '站点' })
+    .click();
+
+  const discardDialog = page.getByRole('alertdialog', { name: '放弃当前修改？' });
+  await expect(discardDialog).toBeVisible();
+  await expect(page).toHaveURL(/#system-general$/u);
+  await discardDialog.getByRole('button', { name: '继续编辑' }).click();
+  await expect(discardDialog).toBeHidden();
+  await expect(page).toHaveURL(/#system-general$/u);
+
+  await page
+    .getByRole('navigation', { name: '管理业务域' })
+    .getByRole('button', { name: '站点' })
+    .click();
+  await discardDialog.getByRole('button', { name: '放弃修改并切换' }).click();
+  await expect(discardDialog).toBeHidden();
+  await expect(page).toHaveURL(/#home$/u);
 });

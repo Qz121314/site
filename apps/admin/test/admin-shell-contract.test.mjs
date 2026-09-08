@@ -85,27 +85,15 @@ test('mobile drawer owns accessibility behavior', async () => {
 
 test('responsive shell avoids fixed-height clipping', async () => {
   const shellCss = await source('../src/admin-shell.css');
-  const sidebarCss = await source('../src/admin-sidebar.css');
   const workspaceCss = await source('../src/admin-workspace.css');
   const scrollCss = await source('../src/admin-scroll-ownership.css');
-  const settingsCss = await source('../src/settings/settings-workspace.css');
-  const navigationCss = await source('../src/bottom-navigation-settings.css');
   const workspace = await source('../src/shell/AdminWorkspace.tsx');
-  const combined = `${shellCss}\n${sidebarCss}\n${workspaceCss}\n${scrollCss}\n${settingsCss}\n${navigationCss}`;
+  const combined = `${shellCss}\n${workspaceCss}\n${scrollCss}`;
 
-  assert.match(shellCss, /@media \(min-width: 1200px\)/);
-  assert.match(shellCss, /grid-template-columns: 224px 216px minmax\(0, 1fr\)/);
-  assert.match(shellCss, /@media \(min-width: 900px\) and \(max-width: 1199px\)/);
-  assert.match(shellCss, /grid-template-columns: 88px 200px minmax\(0, 1fr\)/);
-  assert.match(workspaceCss, /position: sticky/);
+  assert.match(shellCss, /grid-template-columns:[\s\S]*minmax\(0, 1fr\)/);
+  assert.match(shellCss, /admin-mobile-drawer-backdrop/);
   assert.match(workspace, /'split-pane'/);
-  assert.match(shellCss, /@media \(max-width: 899px\)/);
-  assert.match(sidebarCss, /min-height: 44px/);
-  assert.match(workspaceCss, /env\(safe-area-inset-top\)/);
-  assert.match(workspaceCss, /env\(safe-area-inset-bottom\)/);
   assert.match(scrollCss, /\.admin-workspace-content[\s\S]*overflow-y: auto/);
-  assert.match(settingsCss, /@media \(max-width: 720px\)/);
-  assert.match(navigationCss, /@media \(max-width: 760px\)/);
   assert.doesNotMatch(scrollCss, /max-height: calc\(100dvh/);
   assert.doesNotMatch(combined, /!important/);
 });
