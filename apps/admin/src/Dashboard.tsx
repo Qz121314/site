@@ -387,6 +387,16 @@ export function Dashboard({
   }, [loadPublishStatus]);
 
   useEffect(() => {
+    const handlePwaIconUpdated = (event: Event) => {
+      const assetId = (event as CustomEvent<{ assetId?: unknown }>).detail?.assetId;
+      setPwaIconAssetId(typeof assetId === 'string' ? assetId : null);
+    };
+    window.addEventListener('admin:pwa-icon-updated', handlePwaIconUpdated);
+    return () =>
+      window.removeEventListener('admin:pwa-icon-updated', handlePwaIconUpdated);
+  }, []);
+
+  useEffect(() => {
     if (!unsaved.isDirty) return;
     const handleBeforeUnload = (event: BeforeUnloadEvent) => {
       event.preventDefault();
