@@ -46,7 +46,7 @@ type AdminPrimarySidebarProps = {
   loggingOut: boolean;
   logoutDisabled?: boolean;
   collapsed?: boolean;
-  pwaIconAssetId?: string | null;
+  logoAssetId?: string | null;
 };
 
 export function AdminPrimarySidebar({
@@ -61,7 +61,7 @@ export function AdminPrimarySidebar({
   loggingOut,
   logoutDisabled = false,
   collapsed = false,
-  pwaIconAssetId = null,
+  logoAssetId = null,
 }: AdminPrimarySidebarProps) {
   return (
     <aside
@@ -70,17 +70,17 @@ export function AdminPrimarySidebar({
     >
       <div className="admin-brand">
         <span>
-          <img
-            src={
-              pwaIconAssetId
-                ? brandingAssetPreviewUrl(pwaIconAssetId)
-                : '/api/public/pwa/icon/192'
-            }
-            alt=""
-            onError={(event) => {
-              event.currentTarget.src = '/admin/icons/app-icon.svg';
-            }}
-          />
+          {logoAssetId ? (
+            <img
+              src={brandingAssetPreviewUrl(logoAssetId)}
+              alt=""
+              onError={(event) => {
+                event.currentTarget.style.display = 'none';
+              }}
+            />
+          ) : (
+            'SP'
+          )}
         </span>
         <strong>业务运营后台</strong>
       </div>
