@@ -7,11 +7,8 @@ import {
   listCustomerServiceConnections,
   type CustomerServiceConnectionRecord,
 } from '../customer-service/customer-service-connections';
-import { buildMediaUrl } from '../media/media-url';
 import { loadStorefrontPublishedBootstrap } from '../publishing/storefront-bootstrap-snapshot';
 import { materializeDerivedSearchSnapshot } from '../publishing/storefront-publisher';
-import { BOTTOM_NAVIGATION_KEYS } from '../settings/bottom-navigation';
-import { parseThemeSettings, resolveTheme } from '../theme/theme-center';
 import type { AppEnvironment } from '../types';
 
 export const publicStorefrontConfigRoutes = new Hono<AppEnvironment>();
@@ -25,39 +22,10 @@ type PublicSupportConnection = {
   protocolVersion: 'v1';
 };
 
-type StorefrontRuntimeRow = {
-  media_base_url: string | null;
-  theme_key: string | null;
-  theme_overrides_json: string | null;
-  item_key: string;
-  label: string;
-  icon_type: string;
-  icon_value: string | null;
-  is_enabled: number;
-  sort_order: number;
-  icon_object_key: string | null;
-};
-
-type StorefrontBootstrapRuntime = {
-  mediaBaseUrl: string | null;
-  theme: ReturnType<typeof resolveTheme>;
-  bottomNavigation: Array<{
-    key: (typeof BOTTOM_NAVIGATION_KEYS)[number];
-    label: string;
-    enabled: boolean;
-    icon: {
-      type: 'builtin' | 'emoji' | 'image';
-      value: string | null;
-    };
-  }>;
-};
-
 type JsonRecord = Record<string, unknown>;
-
 function isRecord(value: unknown): value is JsonRecord {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
-
 async function readPublishedJson(bucket: R2Bucket, key: string): Promise<unknown | null> {
   const object = await bucket.get(key);
   if (!object) return null;
@@ -67,18 +35,15 @@ async function readPublishedJson(bucket: R2Bucket, key: string): Promise<unknown
     return null;
   }
 }
-
 function setPublicRuntimeHeaders(context: Context<AppEnvironment>) {
   context.header('Cache-Control', 'no-store');
   context.header('X-Robots-Tag', 'noindex, nofollow');
 }
-
 function toPublicSupportConnection(
   connection: CustomerServiceConnectionRecord,
 ): PublicSupportConnection | null {
-  if (!connection.clientApiUrl || !connection.realtimeUrl || !connection.verifiedAt) {
+  if (!connection.clientApiUrl || !connection.realtimeUrl || !connection.verifiedAt)
     return null;
-  }
   return {
     id: connection.id,
     clientApiUrl: connection.clientApiUrl,
@@ -86,97 +51,14 @@ function toPublicSupportConnection(
     protocolVersion: 'v1',
   };
 }
-
 function validPublicId(value: string): boolean {
   return Boolean(value && value.length <= 100 && /^[A-Za-z0-9-]+$/u.test(value));
 }
-
 function validPointerVersion(value: string): boolean {
   return Boolean(value && value.length <= 180 && /^[A-Za-z0-9-]+$/u.test(value));
 }
-
 function searchSnapshotKey(pointerVersion: string): string {
   return `public/search/${encodeURIComponent(pointerVersion)}/search.json`;
-}
-
-export async function getStorefrontBootstrapRuntime(
-  db: D1Database,
-): Promise<StorefrontBootstrapRuntime | null> {
-  const rows = (
-    await db
-      .prepare(
-        `SELECT
-           ss.media_base_url,
-           ss.theme_key,
-           ss.theme_overrides_json,
-           nav.item_key,
-           nav.label,
-           nav.icon_type,
-           nav.icon_value,
-           nav.is_enabled,
-           nav.sort_order,
-           asset.object_key AS icon_object_key
-         FROM site_settings ss
-         CROSS JOIN site_bottom_navigation nav
-         LEFT JOIN media_assets asset
-           ON asset.id = nav.icon_asset_id
-          AND asset.status = 'ready'
-          AND asset.deleted_at IS NULL
-          AND asset.media_kind IN ('image', 'animated_image')
-         WHERE ss.id = 1
-         ORDER BY nav.sort_order ASC, nav.item_key ASC`,
-      )
-      .all<StorefrontRuntimeRow>()
-  ).results;
-
-  if (rows.length !== BOTTOM_NAVIGATION_KEYS.length) return null;
-  const byKey = new Map(rows.map((row) => [row.item_key, row]));
-  const first = rows[0];
-  if (!first) return null;
-  const mediaBaseUrl = first.media_base_url;
-  const themeKey = first.theme_key;
-  const themeOverridesJson = first.theme_overrides_json;
-  if (
-    rows.some(
-      (row) =>
-        row.media_base_url !== mediaBaseUrl ||
-        row.theme_key !== themeKey ||
-        row.theme_overrides_json !== themeOverridesJson,
-    )
-  ) {
-    return null;
-  }
-  const theme = resolveTheme(parseThemeSettings(themeKey, themeOverridesJson));
-
-  const bottomNavigation: StorefrontBootstrapRuntime['bottomNavigation'] = [];
-  for (const key of BOTTOM_NAVIGATION_KEYS) {
-    const row = byKey.get(key);
-    if (!row || typeof row.label !== 'string') return null;
-    if (row.icon_type === 'builtin' || row.icon_type === 'emoji') {
-      bottomNavigation.push({
-        key,
-        label: row.label,
-        enabled: row.is_enabled === 1,
-        icon: { type: row.icon_type, value: row.icon_value },
-      });
-      continue;
-    }
-    if (row.icon_type !== 'asset') return null;
-    bottomNavigation.push({
-      key,
-      label: row.label,
-      enabled: row.is_enabled === 1,
-      icon: {
-        type: 'image',
-        value:
-          mediaBaseUrl && row.icon_object_key
-            ? buildMediaUrl(mediaBaseUrl, row.icon_object_key)
-            : null,
-      },
-    });
-  }
-
-  return { mediaBaseUrl, theme, bottomNavigation };
 }
 
 publicStorefrontConfigRoutes.get('/content-origin', async (context) => {
@@ -192,11 +74,11 @@ publicStorefrontConfigRoutes.get('/media-base-url', async (context) => {
 });
 
 publicStorefrontConfigRoutes.get('/bootstrap', async (context) => {
-  const [pointerValue, runtime] = await Promise.all([
-    readPublishedJson(context.env.ASSETS_BUCKET, 'public/current.json'),
-    getStorefrontBootstrapRuntime(context.env.DB),
-  ]);
-  if (!isRecord(pointerValue) || pointerValue.schemaVersion !== 2 || !runtime) {
+  const pointerValue = await readPublishedJson(
+    context.env.ASSETS_BUCKET,
+    'public/current.json',
+  );
+  if (!isRecord(pointerValue) || pointerValue.schemaVersion !== 2) {
     return context.json({ available: false }, 404);
   }
   const publishedBootstrap = await loadStorefrontPublishedBootstrap(
@@ -215,9 +97,9 @@ publicStorefrontConfigRoutes.get('/bootstrap', async (context) => {
     site,
     sectionsIndex,
     home,
-    mediaBaseUrl: runtime.mediaBaseUrl,
-    theme: runtime.theme,
-    bottomNavigation: runtime.bottomNavigation,
+    mediaBaseUrl: publishedBootstrap.runtime.mediaBaseUrl,
+    theme: publishedBootstrap.runtime.theme,
+    bottomNavigation: publishedBootstrap.runtime.bottomNavigation,
   });
 });
 

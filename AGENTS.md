@@ -126,6 +126,7 @@ Unless the user explicitly changes them:
 - **Static assets:** HTML, JS, CSS, fonts, icons and ordinary static assets MUST be served by Static Assets without invoking the Worker whenever possible.
 - **Worker:** MUST be reserved for dynamic, API or transactional paths. MUST NOT restore global `assets.run_worker_first=true` without explicit architectural justification.
 - **Storefront public reads:** Published public content MUST prefer static snapshot/CDN paths. New ordinary navigation MUST NOT add D1 reads without explicit approval.
+- **Bootstrap:** Published Storefront bootstrap MUST NOT read production D1 during ordinary visitor startup; required public configuration MUST be projected into published snapshots during Admin publish.
 - **Search/filter/navigation:** Client-side search, filtering, category and tag switching MUST NOT create Worker/D1 requests when published data already suffices.
 - **Media:** Normal media delivery MUST prefer direct CDN/R2 custom-domain paths; Worker media routes are fallback or special-processing paths, not the default.
 - **Customer Service:** Ordinary storefront browsing MUST NOT initialize customer-service identity, conversation or WebSocket work.
