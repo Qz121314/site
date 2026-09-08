@@ -58,7 +58,9 @@ export function sanitizeStorefrontBootstrapCapabilities(value: unknown): string[
   if (!Array.isArray(value)) return [];
   return [
     ...new Set(
-      value.filter((item): item is string => typeof item === 'string' && item.length > 0),
+      value.filter(
+        (item): item is string => typeof item === 'string' && item.length > 0,
+      ),
     ),
   ];
 }
