@@ -301,12 +301,12 @@ export function getAdminViewContext(
     home: {
       eyebrow: `${domainLabel} / 首页`,
       title: '首页',
-      description: '管理 Storefront 首页展示内容、Hero 与布局。',
+      description: '管理首页的快捷分区与推荐分区。',
     },
     navigation: {
       eyebrow: `${domainLabel} / 导航`,
       title: '导航',
-      description: '管理 Storefront 主导航入口、图标与可见性。',
+      description: '管理 Storefront Bottom Navigation 的入口、图标与可见性。',
     },
     messages: {
       eyebrow: `${domainLabel} / Messages`,

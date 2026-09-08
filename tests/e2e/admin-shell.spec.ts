@@ -69,6 +69,8 @@ const siteSettings = {
 };
 
 async function installAdminFixture(page: Page) {
+  const settings = structuredClone(siteSettings);
+  let lastSettingsUpdate: unknown = null;
   await page.route('**/api/admin/**', async (route) => {
     await route.fulfill({ contentType: 'application/json', body: '{}' });
   });
@@ -91,11 +93,23 @@ async function installAdminFixture(page: Page) {
     });
   });
   await page.route('**/api/admin/settings/', async (route) => {
+    if (route.request().method() === 'PUT') {
+      const input = route.request().postDataJSON() as Record<string, unknown>;
+      settings.settings = {
+        ...settings.settings,
+        ...input,
+        updatedAt: '2026-09-07T00:01:00.000Z',
+      };
+      lastSettingsUpdate = input;
+    }
     await route.fulfill({
       contentType: 'application/json',
-      body: JSON.stringify(siteSettings),
+      body: JSON.stringify(settings),
     });
   });
+  return {
+    lastSettingsUpdate: () => lastSettingsUpdate,
+  };
 }
 
 async function expectShellGeometry(page: Page, width: number) {
@@ -245,4 +259,57 @@ test('unsaved navigation keeps the active workspace until discard is confirmed',
   await discardDialog.getByRole('button', { name: '放弃修改并切换' }).click();
   await expect(discardDialog).toBeHidden();
   await expect(page).toHaveURL(/#home$/u);
+});
+
+test('Site workspaces keep homepage placement and Bottom Navigation ownership focused', async ({
+  page,
+}) => {
+  const fixture = await installAdminFixture(page);
+  await page.setViewportSize({ width: 1366, height: 900 });
+  await page.goto('/admin/#home');
+
+  await expect(page.getByRole('heading', { name: '首页分区' })).toBeVisible();
+  await expect(page.getByText('Hero 区域', { exact: true })).toHaveCount(0);
+  await expect(page.getByText('热门内容', { exact: true })).toHaveCount(0);
+  await expect(page.getByText('每个首页推荐分区最多显示', { exact: true })).toHaveCount(
+    0,
+  );
+
+  const shortcuts = page.getByRole('region', { name: '快捷分区' });
+  await shortcuts.getByLabel('添加快捷分区').selectOption('alpha');
+  await shortcuts.getByRole('button', { name: '添加快捷分区' }).click();
+  await shortcuts.getByLabel('添加快捷分区').selectOption('beta');
+  await shortcuts.getByRole('button', { name: '添加快捷分区' }).click();
+  await expect(shortcuts.locator('.admin-home-layout-row')).toHaveCount(2);
+  await shortcuts
+    .locator('.admin-home-layout-row')
+    .nth(1)
+    .dragTo(shortcuts.locator('.admin-home-layout-row').nth(0));
+  await expect(shortcuts.locator('.admin-home-layout-row').first()).toContainText('Beta');
+  await shortcuts
+    .locator('.admin-home-layout-row')
+    .filter({ hasText: 'Alpha' })
+    .getByRole('button', { name: '移除' })
+    .click();
+
+  const recommendations = page.getByRole('region', { name: '推荐分区' });
+  await recommendations.getByLabel('添加推荐分区').selectOption('alpha');
+  await recommendations.getByRole('button', { name: '添加推荐分区' }).click();
+  await expect(recommendations.locator('.admin-home-layout-row')).toContainText('Alpha');
+  await page.getByRole('button', { name: '保存首页分区' }).click();
+  await expect(page.getByText('首页分区已保存。')).toBeVisible();
+  expect(fixture.lastSettingsUpdate()).toMatchObject({
+    homeLayout: {
+      shortcutSectionIds: ['beta'],
+      recommendationSectionIds: ['alpha'],
+    },
+  });
+
+  await page.goto('/admin/#navigation');
+  await expect(page.getByRole('heading', { name: '前台底部导航' })).toBeVisible();
+  await expect(page.getByText('首页分区', { exact: true })).toHaveCount(0);
+  await expect(page.getByText('Hero 区域', { exact: true })).toHaveCount(0);
+
+  await page.goto('/admin/#theme');
+  await expect(page.getByRole('heading', { name: '主题中心' })).toBeVisible();
 });

@@ -23,14 +23,10 @@ test('theme center keeps theme choice and brand accent without a duplicate previ
   assert.equal(view.includes('theme-center-workbench.css'), false);
 });
 
-test('PWA install prompt is owned by Site Settings', () => {
-  const view = source('../src/SiteSettingsView.tsx');
+test('PWA install prompt is owned by its dedicated Site workspace', () => {
+  const view = source('../src/experience/PwaSettingsView.tsx');
 
-  assert.ok(
-    view.includes("type SettingsPanel = 'general' | 'home' | 'pwa' | 'advanced';"),
-  );
-  assert.ok(view.includes("{ id: 'pwa', label: 'PWA 安装' }"));
-  assert.ok(view.includes('安装应用提示'));
+  assert.ok(view.includes('安装提示'));
   assert.ok(view.includes('延迟显示（秒）'));
   assert.ok(view.includes('iPhone / iPad 说明'));
 });

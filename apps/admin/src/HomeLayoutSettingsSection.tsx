@@ -1,3 +1,4 @@
+import { useState, type DragEvent } from 'react';
 import type { AdminSection } from './api';
 import type { HomeLayout } from './site-hero-settings-api';
 
@@ -20,10 +21,6 @@ function moveItem(items: string[], index: number, direction: -1 | 1): string[] {
   return next;
 }
 
-function replaceItem(items: string[], index: number, sectionId: string): string[] {
-  return items.map((item, itemIndex) => (itemIndex === index ? sectionId : item));
-}
-
 function removeItem(items: string[], index: number): string[] {
   return items.filter((_, itemIndex) => itemIndex !== index);
 }
@@ -39,6 +36,15 @@ export function HomeLayoutSettingsSection({
   busy: boolean;
   onChange: (value: HomeLayout) => void;
 }) {
+  const [addSelection, setAddSelection] = useState<Record<HomePlacement, string>>({
+    shortcutSectionIds: '',
+    recommendationSectionIds: '',
+  });
+  const [dragging, setDragging] = useState<{
+    placement: HomePlacement;
+    index: number;
+  } | null>(null);
+
   function updatePlacement(placement: HomePlacement, ids: string[]) {
     onChange({ ...value, [placement]: ids });
   }
@@ -46,9 +52,27 @@ export function HomeLayoutSettingsSection({
   function addPlacement(placement: HomePlacement) {
     const current = value[placement];
     const limit = LIMITS[placement];
-    const nextSection = sections.find((section) => !current.includes(section.id));
-    if (!nextSection || (limit !== null && current.length >= limit)) return;
-    updatePlacement(placement, [...current, nextSection.id]);
+    const sectionId = addSelection[placement];
+    if (
+      !sectionId ||
+      current.includes(sectionId) ||
+      (limit !== null && current.length >= limit)
+    ) {
+      return;
+    }
+    updatePlacement(placement, [...current, sectionId]);
+    setAddSelection((currentSelection) => ({ ...currentSelection, [placement]: '' }));
+  }
+
+  function moveByDrag(placement: HomePlacement, targetIndex: number) {
+    if (!dragging || dragging.placement !== placement || dragging.index === targetIndex) {
+      return;
+    }
+    const next = [...value[placement]];
+    const [moved] = next.splice(dragging.index, 1);
+    if (!moved) return;
+    next.splice(targetIndex, 0, moved);
+    updatePlacement(placement, next);
   }
 
   function renderPlacement(
@@ -59,12 +83,11 @@ export function HomeLayoutSettingsSection({
   ) {
     const ids = value[placement];
     const limit = LIMITS[placement];
-    const canAdd =
-      (limit === null || ids.length < limit) &&
-      sections.some((section) => !ids.includes(section.id));
+    const availableSections = sections.filter((section) => !ids.includes(section.id));
+    const canAdd = (limit === null || ids.length < limit) && availableSections.length > 0;
 
     return (
-      <div className="admin-home-layout-group">
+      <section className="admin-home-layout-group" aria-label={title}>
         <div className="admin-home-layout-heading">
           <div>
             <strong>{title}</strong>
@@ -78,31 +101,36 @@ export function HomeLayoutSettingsSection({
             {ids.map((sectionId, index) => {
               const selected = sections.find((section) => section.id === sectionId);
               return (
-                <div className="admin-home-layout-row" key={`${placement}:${sectionId}`}>
-                  <span className="admin-home-layout-order">{index + 1}</span>
-                  <label className="field-group">
-                    <span>分区</span>
-                    <select
-                      value={sectionId}
-                      disabled={busy}
-                      onChange={(event) =>
-                        updatePlacement(
-                          placement,
-                          replaceItem(ids, index, event.target.value),
-                        )
-                      }
-                    >
-                      {sections.map((section) => (
-                        <option
-                          key={section.id}
-                          value={section.id}
-                          disabled={section.id !== sectionId && ids.includes(section.id)}
-                        >
-                          {section.name}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
+                <article
+                  className={`admin-home-layout-row${
+                    dragging?.placement === placement && dragging.index === index
+                      ? ' is-dragging'
+                      : ''
+                  }`}
+                  draggable={!busy}
+                  key={`${placement}:${sectionId}`}
+                  onDragEnd={() => setDragging(null)}
+                  onDragOver={(event: DragEvent<HTMLElement>) => {
+                    if (dragging?.placement !== placement) return;
+                    event.preventDefault();
+                  }}
+                  onDragStart={(event: DragEvent<HTMLElement>) => {
+                    event.dataTransfer.effectAllowed = 'move';
+                    setDragging({ placement, index });
+                  }}
+                  onDrop={(event: DragEvent<HTMLElement>) => {
+                    event.preventDefault();
+                    moveByDrag(placement, index);
+                    setDragging(null);
+                  }}
+                >
+                  <span className="admin-home-layout-drag" aria-hidden="true">
+                    ⋮⋮
+                  </span>
+                  <span className="admin-home-layout-identity">
+                    <strong>{selected?.name ?? '不可用分区'}</strong>
+                    <small>{selected ? `/sections/${selected.slug}/` : sectionId}</small>
+                  </span>
                   <div className="admin-home-layout-row-actions">
                     <button
                       type="button"
@@ -129,30 +157,47 @@ export function HomeLayoutSettingsSection({
                       移除
                     </button>
                   </div>
-                  {selected ? (
-                    <small className="admin-home-layout-route">
-                      /sections/{selected.slug}/
-                    </small>
-                  ) : null}
-                </div>
+                </article>
               );
             })}
           </div>
         ) : (
-          <div className="admin-home-layout-empty">
-            未固定分区，将按已发布内容自动生成。
-          </div>
+          <div className="admin-home-layout-empty">尚未选择分区。</div>
         )}
 
-        <button
-          type="button"
-          className="secondary-button admin-home-layout-add"
-          disabled={busy || !canAdd}
-          onClick={() => addPlacement(placement)}
-        >
-          {addLabel}
-        </button>
-      </div>
+        <div className="admin-home-layout-add">
+          <label className="sr-only" htmlFor={`${placement}-add-section`}>
+            {addLabel}
+          </label>
+          <select
+            id={`${placement}-add-section`}
+            aria-label={addLabel}
+            disabled={busy || !canAdd}
+            value={addSelection[placement]}
+            onChange={(event) =>
+              setAddSelection((currentSelection) => ({
+                ...currentSelection,
+                [placement]: event.target.value,
+              }))
+            }
+          >
+            <option value="">选择现有分区</option>
+            {availableSections.map((section) => (
+              <option key={section.id} value={section.id}>
+                {section.name}
+              </option>
+            ))}
+          </select>
+          <button
+            type="button"
+            className="secondary-button"
+            disabled={busy || !canAdd || !addSelection[placement]}
+            onClick={() => addPlacement(placement)}
+          >
+            {addLabel}
+          </button>
+        </div>
+      </section>
     );
   }
 
@@ -163,10 +208,9 @@ export function HomeLayoutSettingsSection({
     >
       <div className="admin-settings-section-heading">
         <div>
-          <h2 id="settings-home-layout-title">首页布局</h2>
+          <h2 id="settings-home-layout-title">首页分区</h2>
           <p className="admin-settings-section-description">
-            Home 固定为
-            Logo、Hero、快捷分区、推荐分区产品横滑和底部导航；这里用于固定首页分区及顺序，未选择时会从当前已发布内容自动生成。
+            选择首页使用的现有分区，并通过拖拽或方向按钮调整展示顺序。
           </p>
         </div>
       </div>
@@ -175,13 +219,13 @@ export function HomeLayoutSettingsSection({
         {renderPlacement(
           'shortcutSectionIds',
           '快捷分区',
-          '最多手动固定 7 个。未选择时按当前已发布分区自动生成；自动入口不超过 8 个时全部展示，超过 8 个时第 8 格显示 More。',
+          '选择作为首页快捷入口的分区，最多 7 个。',
           '添加快捷分区',
         )}
         {renderPlacement(
           'recommendationSectionIds',
           '推荐分区',
-          '可按需要添加多个。未选择时自动从已发布且标记“首页推荐”的产品推导分区；选择后按这里的分区顺序展示。',
+          '选择在首页展示商品横滑的分区，并按这里的顺序呈现。',
           '添加推荐分区',
         )}
       </div>
