@@ -34,6 +34,15 @@ function expectCondition(step, ...tokens) {
     assert.equal(step.includes(token), true, `condition must include ${token}`);
 }
 
+function workflowJob(workflow, id) {
+  const match = new RegExp(
+    `^  ${id}:\\n([\\s\\S]*?)(?=^  [A-Za-z0-9_-]+:|(?![\\s\\S]))`,
+    'm',
+  ).exec(workflow);
+  assert.notEqual(match, null, `missing workflow job: ${id}`);
+  return match[1];
+}
+
 test('remote D1 migration actions require a migration diff or dedicated override', () => {
   for (const name of ['Record D1 recovery bookmark', 'Apply D1 migrations']) {
     const step = namedStep(mainWorkflow, name);
@@ -77,12 +86,11 @@ test('deploy and production acceptance are change-aware', () => {
   assert.doesNotMatch(mainWorkflow, /continue-on-error:\s*true/);
 });
 
-test('PR validation is local-only and executes the canonical verify gate', () => {
+test('PR validation is local-only and keeps the Admin browser fixture local', () => {
   assert.doesNotMatch(
     prWorkflow,
     /--remote|CLOUDFLARE_API_TOKEN|wrangler\s+deploy(?!\s+--dry-run)/i,
   );
-  assert.match(prWorkflow, /run:\s*pnpm verify/);
   assert.match(prWorkflow, /name:\s*Verify Admin desktop shell/);
   assert.match(prWorkflow, /E2E_ADMIN_LOCAL_SERVER: '1'/);
 });
@@ -101,10 +109,28 @@ test('Playwright Chromium cache is preserved', () => {
   assert.match(prWorkflow, /path:\s*~\/\.cache\/ms-playwright/);
 });
 
-test('PR verification builds once through pnpm verify', () => {
-  assert.equal((prWorkflow.match(/run:\s*pnpm verify\b/g) ?? []).length, 1);
-  assert.equal((prWorkflow.match(/run:\s*pnpm build\b/g) ?? []).length, 0);
-  assert.equal((prWorkflow.match(/run:\s*pnpm cf:check\b/g) ?? []).length, 0);
+test('PR Full Verify preserves independent validation layers as parallel jobs', () => {
+  const quality = workflowJob(prWorkflow, 'quality');
+  const repositoryTests = workflowJob(prWorkflow, 'tests');
+  const build = workflowJob(prWorkflow, 'build-dry-run');
+  const adminPlaywright = workflowJob(prWorkflow, 'admin-playwright');
+
+  assert.match(quality, /name:\s*Quality \+ Local D1/);
+  assert.match(quality, /run:\s*pnpm preflight/);
+  assert.match(quality, /run:\s*pnpm db:migrate:local/);
+  assert.match(repositoryTests, /name:\s*Tests/);
+  assert.match(repositoryTests, /run:\s*pnpm test/);
+  assert.match(build, /name:\s*Build \+ Worker/);
+  assert.match(build, /run:\s*pnpm build/);
+  assert.match(build, /check-storefront-bundle-budget\.mjs/);
+  assert.match(build, /run:\s*pnpm cf:check/);
+  assert.match(adminPlaywright, /name:\s*Admin Playwright/);
+  assert.match(adminPlaywright, /run:\s*pnpm test:admin-shell:e2e/);
+
+  for (const job of [quality, repositoryTests, build, adminPlaywright])
+    assert.doesNotMatch(job, /^\s+needs:/m);
+
+  assert.doesNotMatch(prWorkflow, /run:\s*pnpm verify\b/);
 });
 
 test('main release verifies/builds once before direct Wrangler deploy', () => {
