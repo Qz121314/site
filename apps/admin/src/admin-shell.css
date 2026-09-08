@@ -156,12 +156,20 @@
     display: grid;
     grid-template-columns: 232px minmax(0, 1fr);
   }
+
+  .admin-shell.is-sidebar-collapsed {
+    grid-template-columns: 64px minmax(0, 1fr);
+  }
 }
 
 @media (min-width: 900px) and (max-width: 1199px) {
   .admin-shell {
     display: grid;
     grid-template-columns: 224px minmax(0, 1fr);
+  }
+
+  .admin-shell.is-sidebar-collapsed {
+    grid-template-columns: 64px minmax(0, 1fr);
   }
 }
 

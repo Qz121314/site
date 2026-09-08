@@ -6,6 +6,8 @@ import {
   LogOut,
   Megaphone,
   MessageSquare,
+  PanelLeftClose,
+  PanelLeftOpen,
   PanelTop,
   Settings2,
   type LucideIcon,
@@ -44,6 +46,8 @@ type AdminPrimarySidebarProps = {
   onLogout: () => void;
   loggingOut: boolean;
   logoutDisabled?: boolean;
+  collapsed?: boolean;
+  onToggleCollapsed?: () => void;
 };
 
 export function AdminPrimarySidebar({
@@ -57,12 +61,33 @@ export function AdminPrimarySidebar({
   onLogout,
   loggingOut,
   logoutDisabled = false,
+  collapsed = false,
+  onToggleCollapsed,
 }: AdminPrimarySidebarProps) {
   return (
-    <aside className="admin-primary-sidebar" aria-label="后台一级导航">
+    <aside
+      className={`admin-primary-sidebar${collapsed ? ' is-collapsed' : ''}`}
+      aria-label="后台一级导航"
+    >
       <div className="admin-brand">
         <span>SP</span>
         <strong>业务运营后台</strong>
+        {onToggleCollapsed ? (
+          <Button
+            className="admin-sidebar-toggle"
+            variant="ghost"
+            size="icon"
+            type="button"
+            aria-label={collapsed ? '展开侧边栏' : '折叠侧边栏'}
+            onClick={onToggleCollapsed}
+          >
+            {collapsed ? (
+              <PanelLeftOpen aria-hidden="true" size={16} />
+            ) : (
+              <PanelLeftClose aria-hidden="true" size={16} />
+            )}
+          </Button>
+        ) : null}
       </div>
       <nav className="admin-primary-nav" aria-label="管理业务域">
         {orderedAdminDomains(navigationPreferences).map((domain) => {
@@ -102,7 +127,7 @@ export function AdminPrimarySidebar({
                   />
                 ) : null}
               </Button>
-              {expandable && visibleItems.length > 0 ? (
+              {!collapsed && expandable && visibleItems.length > 0 ? (
                 <div className="admin-nav-subitems">
                   {visibleItems.map((item) => {
                     const isSelected = item.view === activeView;

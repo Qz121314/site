@@ -60,6 +60,7 @@ export function AdminShell({
   sessionExpiresAt,
 }: AdminShellProps) {
   const [navigationOpen, setNavigationOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [sessionExpiring, setSessionExpiring] = useState(false);
   const drawerRef = useRef<HTMLDivElement>(null);
   const drawerTriggerRef = useRef<HTMLElement | null>(null);
@@ -151,7 +152,7 @@ export function AdminShell({
   }
 
   return (
-    <div className="admin-shell">
+    <div className={`admin-shell${sidebarCollapsed ? ' is-sidebar-collapsed' : ''}`}>
       <div className="admin-desktop-primary">
         <AdminPrimarySidebar
           activeDomain={activeDomain}
@@ -162,6 +163,8 @@ export function AdminShell({
           onLogout={onLogout}
           loggingOut={loggingOut}
           logoutDisabled={logoutDisabled}
+          collapsed={sidebarCollapsed}
+          onToggleCollapsed={() => setSidebarCollapsed((current) => !current)}
         />
       </div>
 

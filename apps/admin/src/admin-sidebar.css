@@ -48,6 +48,52 @@
   white-space: nowrap;
 }
 
+.admin-sidebar-toggle.ui-button {
+  min-width: 25px;
+  width: 25px;
+  height: 25px;
+  min-height: 25px;
+  margin-left: auto;
+  padding: 0;
+  border-radius: 4px;
+  color: #9aa6b5;
+}
+
+.admin-sidebar-toggle.ui-button:hover:not(:disabled) {
+  color: #fff;
+  background: rgb(255 255 255 / 9%);
+}
+
+.admin-primary-sidebar.is-collapsed .admin-brand {
+  justify-content: center;
+  margin-inline: 0;
+}
+.admin-primary-sidebar.is-collapsed .admin-brand strong {
+  display: none;
+}
+.admin-primary-sidebar.is-collapsed .admin-sidebar-toggle.ui-button {
+  margin-left: 0;
+}
+.admin-primary-sidebar.is-collapsed .admin-primary-link.ui-button {
+  justify-content: center;
+  padding-inline: 0;
+}
+.admin-primary-sidebar.is-collapsed
+  .admin-primary-link.ui-button
+  > span:not(.admin-nav-chevron) {
+  display: none;
+}
+.admin-primary-sidebar.is-collapsed .admin-nav-chevron {
+  display: none;
+}
+.admin-primary-sidebar.is-collapsed .admin-primary-logout.ui-button {
+  justify-content: center;
+  padding-inline: 0;
+}
+.admin-primary-sidebar.is-collapsed .admin-primary-logout.ui-button > span {
+  display: none;
+}
+
 .admin-primary-nav,
 .admin-secondary-nav {
   display: flex;
