@@ -4,6 +4,10 @@ import test from 'node:test';
 import { validatePublicContentOrigin } from '../../scripts/validate-public-content-origin.mjs';
 
 const mainWorkflow = readFileSync('.github/workflows/ci.yml', 'utf8');
+const storefrontTransport = readFileSync(
+  'apps/storefront/src/public-content-transport.ts',
+  'utf8',
+);
 
 function namedStep(workflow, name) {
   const lines = workflow.split(/\r?\n/);
@@ -27,25 +31,28 @@ function namedStep(workflow, name) {
   return lines.slice(start, end).join('\n');
 }
 
-test('production workflow wires the repository public-content origin before verification/build', () => {
-  assert.match(
-    mainWorkflow,
-    /^[ ]{4}env:\n[ ]{6}VITE_PUBLIC_CONTENT_ORIGIN: \$\{\{ vars\.VITE_PUBLIC_CONTENT_ORIGIN \}\}$/m,
-  );
-
+test('production release permits Admin-published runtime CDN origin discovery', () => {
   const validation = namedStep(mainWorkflow, 'Validate Storefront public content origin');
   assert.match(validation, /deploy_required/);
   assert.match(validation, /force_deploy/);
   assert.match(validation, /node scripts\/validate-public-content-origin\.mjs/);
-
   assert.ok(
     mainWorkflow.indexOf('- name: Validate Storefront public content origin') <
       mainWorkflow.indexOf('- name: Full local-first verification'),
-    'production origin validation must happen before pnpm verify builds Storefront',
+    'optional origin validation must stay before pnpm verify',
+  );
+
+  assert.equal(validatePublicContentOrigin(undefined), null);
+  assert.equal(validatePublicContentOrigin(''), null);
+  assert.equal(validatePublicContentOrigin('   '), null);
+  assert.doesNotMatch(
+    storefrontTransport,
+    /import\.meta\.env\.VITE_PUBLIC_CONTENT_ORIGIN/,
+    'production Storefront must not depend on a duplicate build-time CDN origin',
   );
 });
 
-test('public-content origin validator accepts only HTTPS root origins', () => {
+test('optional public-content origin override accepts only HTTPS root origins when supplied', () => {
   assert.equal(
     validatePublicContentOrigin('https://cdn.example.com'),
     'https://cdn.example.com',
@@ -56,9 +63,6 @@ test('public-content origin validator accepts only HTTPS root origins', () => {
   );
 
   for (const value of [
-    undefined,
-    '',
-    '   ',
     'not-a-url',
     'http://cdn.example.com',
     'https://cdn.example.com/public',
