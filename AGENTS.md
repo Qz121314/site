@@ -147,6 +147,7 @@ Unless the user explicitly changes them:
 - **Static assets:** HTML, JS, CSS, fonts, icons and ordinary static assets MUST be served by Static Assets without invoking the Worker whenever possible.
 - **Worker:** MUST be reserved for dynamic, API or transactional paths. MUST NOT restore global `assets.run_worker_first=true` without explicit architectural justification.
 - **Storefront public reads:** Published public content MUST prefer static snapshot/CDN paths. New ordinary navigation MUST NOT add D1 reads without explicit approval.
+- **Public runtime config:** Read-only public theme, navigation, and media-origin compatibility endpoints MUST use bounded edge caching when they still need D1. A `Cache-Control` header alone is insufficient; the Worker should use Cache API or a published snapshot.
 - **Bootstrap:** Published Storefront bootstrap MUST NOT read production D1 during ordinary visitor startup; required public configuration MUST be projected into published snapshots during Admin publish.
 - **Bootstrap rollout:** Published bootstrap schema is a versioned protocol. Breaking changes MUST use a bounded reader overlap plus the main pre-deploy compatibility gate; additive optional fields/capabilities SHOULD stay on the current schema. Runtime D1 fallback is forbidden.
 - **Search/filter/navigation:** Client-side search, filtering, category and tag switching MUST NOT create Worker/D1 requests when published data already suffices.

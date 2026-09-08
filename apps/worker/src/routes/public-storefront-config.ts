@@ -44,6 +44,22 @@ function setPublicRuntimeHeaders(context: Context<AppEnvironment>) {
   context.header('Cache-Control', 'no-store');
   context.header('X-Robots-Tag', 'noindex, nofollow');
 }
+
+async function cachedPublicJson<T>(
+  context: Context<AppEnvironment>,
+  load: () => Promise<T>,
+): Promise<Response> {
+  const cacheKey = new Request(new URL(context.req.url).toString(), { method: 'GET' });
+  const cache = workerCache();
+  const cached = cache ? await cache.match(cacheKey) : null;
+  if (cached) return cached;
+
+  context.header('Cache-Control', 'public, max-age=30, must-revalidate');
+  context.header('X-Robots-Tag', 'noindex, nofollow');
+  const response = context.json(await load());
+  if (cache) context.executionCtx.waitUntil(cache.put(cacheKey, response.clone()));
+  return response;
+}
 function toPublicSupportConnection(
   connection: CustomerServiceConnectionRecord,
 ): PublicSupportConnection | null {
@@ -67,15 +83,15 @@ function searchSnapshotKey(pointerVersion: string): string {
 }
 
 publicStorefrontConfigRoutes.get('/content-origin', async (context) => {
-  const contentOrigin = await getMediaBaseUrl(context.env.DB);
-  setPublicRuntimeHeaders(context);
-  return context.json({ contentOrigin });
+  return cachedPublicJson(context, async () => ({
+    contentOrigin: await getMediaBaseUrl(context.env.DB),
+  }));
 });
 
 publicStorefrontConfigRoutes.get('/media-base-url', async (context) => {
-  const mediaBaseUrl = await getMediaBaseUrl(context.env.DB);
-  setPublicRuntimeHeaders(context);
-  return context.json({ mediaBaseUrl });
+  return cachedPublicJson(context, async () => ({
+    mediaBaseUrl: await getMediaBaseUrl(context.env.DB),
+  }));
 });
 
 publicStorefrontConfigRoutes.get('/bootstrap', async (context) => {

@@ -268,7 +268,10 @@ test('public storefront discovery returns the current admin-configured R2 domain
   );
   assert.equal(response.status, 200);
   assert.deepEqual(await response.json(), { mediaBaseUrl: 'https://media.example.com' });
-  assert.equal(response.headers.get('cache-control'), 'no-store');
+  assert.equal(
+    response.headers.get('cache-control'),
+    'public, max-age=30, must-revalidate',
+  );
 });
 
 test('public storefront discovery reports an unconfigured R2 domain without inventing a default', async () => {

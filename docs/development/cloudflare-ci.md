@@ -15,6 +15,10 @@ Remote operations are deliberately explicit:
 
 If a new development command can reach production Cloudflare, it must be opt-in, named as a remote/release operation, and covered by the classifier or an explicit manual override.
 
+## Runtime request budget
+
+Public runtime configuration that remains on a compatibility API must be edge-cached for its bounded freshness window. The response header and the Worker Cache API are both required; setting `Cache-Control` without caching the D1-backed result still repeats the D1 query on every Worker request. Published Storefront bootstrap and immutable content remain the preferred path and should not be replaced with new D1 reads.
+
 ## Hard rules
 
 1. PR validation is local-first and must not access production Cloudflare resources.
