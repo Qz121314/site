@@ -1,49 +1,43 @@
 .settings-workspace {
   display: grid;
-  gap: 12px;
-  width: min(100%, 1120px);
+  width: 100%;
+  min-width: 0;
+  gap: 10px;
 }
 
-.settings-workspace.is-narrow {
-  width: min(100%, 720px);
-}
-
+.settings-workspace.is-narrow,
 .settings-workspace.is-medium {
-  width: min(100%, 920px);
+  width: 100%;
 }
 
 .settings-workspace-state {
   display: grid;
-  gap: 10px;
-  padding: 20px;
-  border: 1px solid #dfe4ea;
-  border-radius: 12px;
-  background: #fff;
-}
-
-.settings-workspace-state.is-error {
-  max-width: 720px;
+  gap: 8px;
+  padding: 16px;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-md);
+  background: var(--admin-surface);
 }
 
 .settings-workspace-state p {
   margin: 0;
-  color: #667085;
+  color: var(--admin-text-muted);
 }
 
 .settings-workspace-section {
   display: grid;
-  gap: 12px;
-  padding: 16px;
-  border: 1px solid #dfe4ea;
-  border-radius: 12px;
-  background: #fff;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-md);
+  background: var(--admin-surface);
 }
 
 .settings-workspace-heading {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 16px;
+  gap: 12px;
 }
 
 .settings-workspace-heading h2,
@@ -53,15 +47,14 @@
 }
 
 .settings-workspace-heading p {
-  margin-top: 6px;
-  max-width: 720px;
-  color: #667085;
-  line-height: 1.55;
+  margin-top: 4px;
+  color: var(--admin-text-muted);
+  line-height: 1.5;
 }
 
 .settings-workspace-fields {
   display: grid;
-  gap: 12px;
+  gap: 10px;
 }
 
 .settings-workspace-fields.is-two-column {
@@ -72,48 +65,48 @@
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 8px;
+  gap: 6px;
   padding-top: 0;
 }
 
 .settings-workspace-status {
   margin: 0 auto 0 0;
-  color: #667085;
-  font-size: 13px;
+  color: var(--admin-text-muted);
+  font-size: 12px;
 }
 
 .settings-workspace-status.is-success {
-  color: #166534;
+  color: var(--success);
 }
 
 .settings-workspace-status.is-error {
-  color: #b42318;
+  color: var(--danger);
 }
 
 .settings-inline-note {
   margin: 0;
-  color: #667085;
-  font-size: 13px;
-  line-height: 1.55;
+  color: var(--admin-text-muted);
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 .settings-media-control {
   display: grid;
-  grid-template-columns: 96px minmax(0, 1fr);
-  gap: 16px;
+  grid-template-columns: 88px minmax(0, 1fr);
+  gap: 12px;
   align-items: center;
 }
 
 .settings-media-preview {
   display: grid;
+  width: 88px;
+  height: 88px;
   place-items: center;
-  width: 96px;
-  height: 96px;
   overflow: hidden;
-  border: 1px solid #dfe4ea;
-  border-radius: 12px;
-  background: #f8fafc;
-  color: #667085;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-md);
+  color: var(--admin-text-muted);
+  background: var(--admin-surface-subtle);
 }
 
 .settings-media-preview img {
@@ -124,35 +117,35 @@
 
 .settings-media-copy {
   display: grid;
-  gap: 10px;
+  gap: 8px;
   min-width: 0;
 }
 
 .settings-media-copy p {
   margin: 0;
-  color: #667085;
+  color: var(--admin-text-muted);
   line-height: 1.5;
 }
 
 .settings-media-actions {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 6px;
 }
 
 .settings-toggle-list {
   display: grid;
-  gap: 10px;
+  gap: 6px;
 }
 
 .settings-toggle-row {
   display: flex;
+  min-height: 42px;
   align-items: center;
   justify-content: space-between;
-  gap: 16px;
-  min-height: 48px;
-  padding: 10px 0;
-  border-bottom: 1px solid #e5e9f0;
+  gap: 12px;
+  padding: 7px 0;
+  border-bottom: 1px solid var(--admin-border);
 }
 
 .settings-toggle-row:last-child {
@@ -161,16 +154,16 @@
 
 .settings-toggle-copy {
   display: grid;
-  gap: 3px;
+  gap: 2px;
 }
 
 .settings-toggle-copy small {
-  color: #667085;
+  color: var(--admin-text-muted);
 }
 
 @media (max-width: 720px) {
   .settings-workspace-section {
-    padding: 16px;
+    padding: 14px;
   }
 
   .settings-workspace-heading,
