@@ -4,19 +4,17 @@ const VARIABLE_NAME = 'VITE_PUBLIC_CONTENT_ORIGIN';
 
 export function validatePublicContentOrigin(value) {
   const raw = typeof value === 'string' ? value.trim() : '';
-  if (!raw) {
-    throw new Error(`${VARIABLE_NAME} must be configured for a production deploy.`);
-  }
+  if (!raw) return null;
 
   let url;
   try {
     url = new URL(raw);
   } catch {
-    throw new Error(`${VARIABLE_NAME} must be a valid URL.`);
+    throw new Error(`${VARIABLE_NAME} must be a valid URL when provided.`);
   }
 
   if (url.protocol !== 'https:') {
-    throw new Error(`${VARIABLE_NAME} must use HTTPS.`);
+    throw new Error(`${VARIABLE_NAME} must use HTTPS when provided.`);
   }
   if (url.username || url.password) {
     throw new Error(`${VARIABLE_NAME} must not include username or password.`);
@@ -44,7 +42,13 @@ function isDirectExecution() {
 if (isDirectExecution()) {
   try {
     const origin = validateConfiguredPublicContentOrigin();
-    console.log(`Validated ${VARIABLE_NAME}: ${origin}`);
+    if (origin) {
+      console.log(`Validated optional ${VARIABLE_NAME}: ${origin}`);
+    } else {
+      console.log(
+        `No ${VARIABLE_NAME} configured; Storefront will learn the Admin-published CDN origin from the R2-only bootstrap.`,
+      );
+    }
   } catch (error) {
     console.error(error instanceof Error ? error.message : String(error));
     process.exitCode = 1;
