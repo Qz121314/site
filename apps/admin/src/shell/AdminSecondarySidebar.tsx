@@ -33,11 +33,6 @@ export function AdminSecondarySidebar({
       className={`admin-secondary-sidebar${activeDomain === 'catalog' ? ' is-catalog' : ''}`}
       aria-label="后台二级导航"
     >
-      <div className="admin-secondary-heading">
-        <span>Workspace</span>
-        <h2>{domain?.label ?? '管理'}</h2>
-        <p>{domain?.description}</p>
-      </div>
       <nav
         className="admin-secondary-nav"
         aria-label={`${domain?.label ?? '管理'}二级导航`}
