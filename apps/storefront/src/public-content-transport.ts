@@ -215,10 +215,12 @@ function directBootstrapBundle(pointer: unknown, value: unknown): JsonRecord | n
   ) {
     return null;
   }
-  const runtime = value.site.site.runtime as JsonRecord;
+  const siteEnvelope = value.site;
+  const site = siteEnvelope.site as JsonRecord;
+  const runtime = site.runtime as JsonRecord;
   return {
     pointer,
-    site: value.site,
+    site: siteEnvelope,
     sectionsIndex: value.sectionsIndex,
     home: value.home,
     mediaBaseUrl: runtime.mediaBaseUrl,
