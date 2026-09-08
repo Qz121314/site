@@ -1,5 +1,10 @@
 .admin-shell {
-  min-height: 100vh;
+  width: min(1480px, calc(100vw - 32px));
+  min-height: calc(100vh - 32px);
+  margin: 16px auto;
+  overflow: hidden;
+  border: 1px solid #dfe4ea;
+  border-radius: 10px;
   background: #f5f6f8;
 }
 
@@ -11,7 +16,7 @@
 
 .admin-shell-workspace {
   display: flex;
-  min-height: 100vh;
+  min-height: calc(100vh - 32px);
   flex-direction: column;
   background: #f6f8fb;
 }
@@ -172,7 +177,14 @@
   }
 
   .admin-shell-workspace {
-    min-height: 100dvh;
+    min-height: calc(100dvh - 16px);
+  }
+
+  .admin-shell {
+    width: calc(100vw - 16px);
+    min-height: calc(100dvh - 16px);
+    margin: 8px auto;
+    border-radius: 8px;
   }
 }
 
