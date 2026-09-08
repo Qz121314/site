@@ -30,7 +30,7 @@ function namedStep(workflow, name) {
 test('production workflow wires the repository public-content origin before verification/build', () => {
   assert.match(
     mainWorkflow,
-    /^    env:\n      VITE_PUBLIC_CONTENT_ORIGIN: \$\{\{ vars\.VITE_PUBLIC_CONTENT_ORIGIN \}\}$/m,
+    /^[ ]{4}env:\n[ ]{6}VITE_PUBLIC_CONTENT_ORIGIN: \$\{\{ vars\.VITE_PUBLIC_CONTENT_ORIGIN \}\}$/m,
   );
 
   const validation = namedStep(mainWorkflow, 'Validate Storefront public content origin');
