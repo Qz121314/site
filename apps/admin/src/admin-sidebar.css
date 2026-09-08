@@ -9,7 +9,7 @@
 
 .admin-primary-sidebar {
   height: 100%;
-  padding: 12px 10px;
+  padding: 10px 8px;
   color: var(--nav-text);
   border-right: 1px solid rgb(255 255 255 / 6%);
   background: var(--nav);
@@ -17,32 +17,32 @@
 
 .admin-brand {
   display: flex;
-  min-height: 52px;
+  min-height: 46px;
   align-items: center;
-  gap: 10px;
-  margin: 0 4px 10px;
-  padding: 4px 3px 12px;
+  gap: 9px;
+  margin: 0 3px 8px;
+  padding: 3px 3px 10px;
   border-bottom: 1px solid rgb(255 255 255 / 8%);
 }
 
 .admin-brand > span {
   display: grid;
-  width: 34px;
-  height: 34px;
-  flex: 0 0 34px;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
   place-items: center;
   border: 1px solid rgb(255 255 255 / 14%);
-  border-radius: 8px;
+  border-radius: 7px;
   color: #fff;
   background: #334155;
-  font-size: 0.78rem;
+  font-size: 0.75rem;
   font-weight: 800;
 }
 
 .admin-brand strong {
   overflow: hidden;
   color: #f4f6f8;
-  font-size: 0.86rem;
+  font-size: 0.82rem;
   font-weight: 720;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -56,31 +56,34 @@
 }
 
 .admin-primary-nav {
-  gap: 3px;
-  padding: 0 3px 8px;
+  gap: 2px;
+  padding: 0 2px 8px;
 }
 
 .admin-primary-link.ui-button,
-.admin-secondary-link.ui-button {
+.admin-secondary-link.ui-button,
+.admin-primary-logout.ui-button {
   width: 100%;
-  min-height: 44px;
+  min-height: 40px;
   justify-content: flex-start;
   border: 1px solid transparent;
   box-shadow: none;
   text-align: left;
 }
 
-.admin-primary-link.ui-button {
-  gap: 10px;
-  padding-inline: 10px;
+.admin-primary-link.ui-button,
+.admin-primary-logout.ui-button {
+  gap: 9px;
+  padding-inline: 9px;
   border-radius: 7px;
   color: #adb6c4;
   background: transparent;
-  font-size: 0.81rem;
+  font-size: 0.78rem;
   font-weight: 650;
 }
 
-.admin-primary-link.ui-button:hover:not(:disabled):not(.is-active) {
+.admin-primary-link.ui-button:hover:not(:disabled):not(.is-active),
+.admin-primary-logout.ui-button:hover:not(:disabled) {
   color: #f4f6f8;
   background: rgb(255 255 255 / 5%);
 }
@@ -99,13 +102,25 @@
 }
 
 .admin-primary-link.ui-button:focus-visible,
-.admin-secondary-link.ui-button:focus-visible {
+.admin-secondary-link.ui-button:focus-visible,
+.admin-primary-logout.ui-button:focus-visible {
   outline: 2px solid #60a5fa;
   outline-offset: -2px;
 }
 
-.admin-primary-link.ui-button:disabled {
+.admin-primary-link.ui-button:disabled,
+.admin-primary-logout.ui-button:disabled {
   opacity: 0.48;
+}
+
+.admin-primary-account {
+  margin-top: auto;
+  padding: 8px 2px 0;
+  border-top: 1px solid rgb(255 255 255 / 8%);
+}
+
+.admin-primary-logout.ui-button > svg {
+  flex: 0 0 auto;
 }
 
 .admin-secondary-sidebar {
@@ -114,38 +129,9 @@
   background: #fbfcfd;
 }
 
-.admin-secondary-heading {
-  display: grid;
-  gap: 4px;
-  padding: 22px 18px 18px;
-  border-bottom: 1px solid #e9edf2;
-}
-
-.admin-secondary-heading > span {
-  color: #8b95a5;
-  font-size: 0.65rem;
-  font-weight: 750;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-}
-
-.admin-secondary-heading h2 {
-  margin: 0;
-  color: #172033;
-  font-size: 1rem;
-  letter-spacing: -0.02em;
-}
-
-.admin-secondary-heading p {
-  margin: 0;
-  color: #7a8494;
-  font-size: 0.72rem;
-  line-height: 1.45;
-}
-
 .admin-secondary-nav {
   gap: 2px;
-  padding: 10px 9px 18px;
+  padding: 8px 8px 16px;
 }
 
 .admin-secondary-item {
@@ -155,9 +141,9 @@
 
 .admin-secondary-group {
   overflow: hidden;
-  margin: 8px 8px 3px;
+  margin: 7px 8px 2px;
   color: #8a94a3;
-  font-size: 0.64rem;
+  font-size: 0.62rem;
   font-weight: 750;
   letter-spacing: 0.03em;
   text-overflow: ellipsis;
@@ -167,11 +153,11 @@
 .admin-secondary-link.ui-button {
   justify-content: space-between;
   gap: 8px;
-  padding-inline: 10px 8px;
+  padding-inline: 9px 7px;
   border-radius: 7px;
   color: #4c596b;
   background: transparent;
-  font-size: 0.78rem;
+  font-size: 0.76rem;
   font-weight: 620;
 }
 
@@ -206,7 +192,7 @@
 
 @media (min-width: 900px) and (max-width: 1199px) {
   .admin-primary-sidebar {
-    padding-inline: 7px;
+    padding-inline: 6px;
   }
 
   .admin-brand {
@@ -214,18 +200,24 @@
     margin-inline: 0;
   }
 
-  .admin-brand strong {
+  .admin-brand strong,
+  .admin-primary-logout.ui-button > span {
     display: none;
   }
 
   .admin-primary-link.ui-button {
-    min-height: 58px;
+    min-height: 54px;
     flex-direction: column;
     justify-content: center;
     gap: 4px;
-    padding: 6px 2px;
-    font-size: 0.67rem;
+    padding: 5px 2px;
+    font-size: 0.65rem;
     text-align: center;
+  }
+
+  .admin-primary-logout.ui-button {
+    justify-content: center;
+    padding-inline: 0;
   }
 }
 
@@ -237,7 +229,7 @@
   }
 
   .admin-mobile-drawer .admin-primary-sidebar {
-    padding: 10px;
+    padding: 8px 10px;
   }
 
   .admin-mobile-drawer .admin-brand {
@@ -247,14 +239,14 @@
   .admin-mobile-drawer .admin-primary-nav {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
-    gap: 6px;
+    gap: 5px;
+  }
+
+  .admin-mobile-drawer .admin-primary-account {
+    margin-top: 4px;
   }
 
   .admin-mobile-drawer .admin-secondary-sidebar {
     border-top: 1px solid #e4e8ef;
-  }
-
-  .admin-mobile-drawer .admin-secondary-heading {
-    padding: 16px 18px 12px;
   }
 }
