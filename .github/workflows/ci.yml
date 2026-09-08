@@ -113,6 +113,14 @@ jobs:
       - name: Full local-first verification
         run: pnpm verify
 
+      - name: Verify published bootstrap compatibility
+        if: github.ref == 'refs/heads/main' && steps.changes.outputs.public_runtime_changed == 'true' && (steps.changes.outputs.deploy_required == 'true' || steps.manual.outputs.force_deploy == 'true')
+        run: node scripts/check-storefront-bootstrap-compatibility.mjs
+        env:
+          R2_BUCKET_NAME: service-catalog-site-assets
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ vars.CLOUDFLARE_ACCOUNT_ID || secrets.CLOUDFLARE_ACCOUNT_ID }}
+
       - name: Record D1 recovery bookmark
         if: github.ref == 'refs/heads/main' && (steps.changes.outputs.migration_changed == 'true' || steps.manual.outputs.force_d1_migrations == 'true')
         run: pnpm exec wrangler d1 time-travel info DB
