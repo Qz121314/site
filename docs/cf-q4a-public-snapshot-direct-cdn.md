@@ -1,6 +1,6 @@
 # CF-Q4A public snapshot direct-CDN contract
 
-Storefront bootstrap may read published JSON directly from an R2 Custom Domain / CDN when the release build provides `VITE_PUBLIC_CONTENT_ORIGIN`.
+Storefront bootstrap may read published JSON directly from an R2 Custom Domain / CDN when the build provides `VITE_PUBLIC_CONTENT_ORIGIN`.
 
 The value is a release/build-time configuration contract. Storefront source must not hardcode a production hostname, and runtime startup must not discover this origin through D1 or a Worker endpoint.
 
@@ -15,6 +15,8 @@ If direct transport is unavailable or invalid, Storefront falls back once to sam
 
 `public/current.json` keeps short-cache/revalidation publication semantics. Versioned `public/bootstrap/<version>/bootstrap.json` remains immutable and long-cacheable. Existing R2 CORS (`GET`/`HEAD`) is sufficient for the cross-origin JSON reads.
 
-Release configuration must expose the active public R2/CDN origin as `VITE_PUBLIC_CONTENT_ORIGIN` during the Storefront build, for example from a stable GitHub Actions or release variable wired before `pnpm verify` / the production Vite build. Browser startup must never discover the value from production D1. If the release intentionally omits the value, Storefront remains on the bounded same-origin Worker bootstrap path rather than inventing or hardcoding an origin.
+Production release configuration must expose the active public R2/CDN origin through the GitHub Actions Repository Variable `VITE_PUBLIC_CONTENT_ORIGIN`. The main release workflow injects that variable into the pipeline environment before `pnpm verify`, so the Storefront production Vite build receives it directly. When a production deploy is required (or explicitly forced), the workflow validates the value before the build and fails fast if it is missing, malformed, non-HTTPS, contains credentials/query/hash, or contains a non-root path.
+
+Local development and PR validation may omit the variable and use the bounded same-origin Worker bootstrap fallback. A production deploy may not silently roll out without the configured direct-CDN origin. Browser startup must never discover the value from production D1.
 
 This phase does not change `/_image/*`, `/_media/*`, `/public/search/*`, bootstrap schema versions, publisher pointer-last ordering, or production Cloudflare configuration.
