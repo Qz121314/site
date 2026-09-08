@@ -32,6 +32,61 @@ const productSummary = {
   sortOrder: 0,
 };
 
+const theme = {
+  key: 'marketplace',
+  colorScheme: 'light',
+  density: 'standard',
+  productMediaRatio: '1:1',
+  recipe: {
+    version: 2,
+    fontPack: 'modern',
+    buttonStyle: 'refined',
+    mediaStyle: 'precise',
+    motionStyle: 'restrained',
+    navigationStyle: 'quiet',
+  },
+  installPrompt: {
+    enabled: false,
+    delaySeconds: 30,
+    title: '',
+    description: '',
+    iosDescription: '',
+    installLabel: '',
+    dismissLabel: '',
+  },
+  tokens: {
+    brand: '#ff5a1f',
+    brandStrong: '#d8430d',
+    text: '#17191c',
+    muted: '#73777f',
+    surface: '#ffffff',
+    surfaceSoft: '#f5f6f8',
+    line: '#e5e7eb',
+    pageBg: '#f5f6f8',
+    heroStart: '#ffffff',
+    heroEnd: '#f5f6f8',
+    heroGlow: '#ffede5',
+    shadow: 'rgba(0, 0, 0, 0.08)',
+  },
+};
+
+const bottomNavigation = [
+  { key: 'home', label: 'Home', enabled: true, icon: { type: 'builtin', value: null } },
+  {
+    key: 'browse',
+    label: 'Browse',
+    enabled: true,
+    icon: { type: 'builtin', value: null },
+  },
+  {
+    key: 'messages',
+    label: 'Messages',
+    enabled: true,
+    icon: { type: 'builtin', value: null },
+  },
+  { key: 'faq', label: 'FAQ', enabled: true, icon: { type: 'builtin', value: null } },
+];
+
 const bootstrap = {
   pointer: {
     schemaVersion: 2,
@@ -64,6 +119,12 @@ const bootstrap = {
         showLatest: true,
         showMore: true,
         showFaq: true,
+        messageArticles: [],
+      },
+      runtime: {
+        mediaBaseUrl: null,
+        theme,
+        bottomNavigation,
       },
       analytics: { ga4MeasurementId: null },
     },
@@ -93,59 +154,8 @@ const bootstrap = {
     latestProducts: [productSummary],
   },
   mediaBaseUrl: null,
-  theme: {
-    key: 'marketplace',
-    colorScheme: 'light',
-    density: 'standard',
-    productMediaRatio: '1:1',
-    recipe: {
-      version: 2,
-      fontPack: 'modern',
-      buttonStyle: 'refined',
-      mediaStyle: 'precise',
-      motionStyle: 'restrained',
-      navigationStyle: 'quiet',
-    },
-    installPrompt: {
-      enabled: false,
-      delaySeconds: 30,
-      title: '',
-      description: '',
-      iosDescription: '',
-      installLabel: '',
-      dismissLabel: '',
-    },
-    tokens: {
-      brand: '#ff5a1f',
-      brandStrong: '#d8430d',
-      text: '#17191c',
-      muted: '#73777f',
-      surface: '#ffffff',
-      surfaceSoft: '#f5f6f8',
-      line: '#e5e7eb',
-      pageBg: '#f5f6f8',
-      heroStart: '#ffffff',
-      heroEnd: '#f5f6f8',
-      heroGlow: '#ffede5',
-      shadow: 'rgba(0, 0, 0, 0.08)',
-    },
-  },
-  bottomNavigation: [
-    { key: 'home', label: 'Home', enabled: true, icon: { type: 'builtin', value: null } },
-    {
-      key: 'browse',
-      label: 'Browse',
-      enabled: true,
-      icon: { type: 'builtin', value: null },
-    },
-    {
-      key: 'messages',
-      label: 'Messages',
-      enabled: true,
-      icon: { type: 'builtin', value: null },
-    },
-    { key: 'faq', label: 'FAQ', enabled: true, icon: { type: 'builtin', value: null } },
-  ],
+  theme,
+  bottomNavigation,
 };
 
 const product = {
