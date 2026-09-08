@@ -213,8 +213,24 @@ function DashboardLauncher({
             <span className="dashboard-kicker">Repository</span>
             <h2>项目概况</h2>
           </div>
-          <a href="https://github.com/Qz121314/site" target="_blank" rel="noreferrer">
-            在 GitHub 中查看 ↗
+          <a
+            className="dashboard-repository-link"
+            href="https://github.com/Qz121314/site"
+            target="_blank"
+            rel="noreferrer"
+            aria-label="在 GitHub 中查看 Qz121314/site 仓库"
+            title="在 GitHub 中查看仓库"
+          >
+            <svg
+              aria-hidden="true"
+              className="dashboard-github-mark"
+              viewBox="0 0 24 24"
+              width="17"
+              height="17"
+              fill="currentColor"
+            >
+              <path d="M12 .297a12 12 0 0 0-3.79 23.384c.6.113.82-.26.82-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.09-.745.083-.73.083-.73 1.205.084 1.84 1.237 1.84 1.237 1.07 1.835 2.807 1.305 3.492.998.108-.776.418-1.305.762-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.124-.303-.535-1.523.117-3.176 0 0 1.008-.322 3.3 1.23a11.5 11.5 0 0 1 6.006 0c2.29-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.873.118 3.176.77.84 1.233 1.91 1.233 3.22 0 4.61-2.806 5.625-5.48 5.92.43.372.823 1.103.823 2.222v3.293c0 .32.216.694.825.576A12 12 0 0 0 12 .297" />
+            </svg>
           </a>
         </div>
         <dl className="dashboard-metadata">
