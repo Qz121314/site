@@ -301,7 +301,10 @@ export function createPublicContentFetch(
       url.origin === normalizedPageOrigin &&
       (url.pathname === CURRENT_POINTER_PATH || LEGACY_BOOTSTRAP_PATHS.has(url.pathname))
     ) {
-      return jsonResponse({ available: false, code: 'PUBLISHED_BOOTSTRAP_UNAVAILABLE' }, 503);
+      return jsonResponse(
+        { available: false, code: 'PUBLISHED_BOOTSTRAP_UNAVAILABLE' },
+        503,
+      );
     }
 
     if (
@@ -309,7 +312,8 @@ export function createPublicContentFetch(
       url.origin === normalizedPageOrigin &&
       url.pathname === STOREFRONT_BOOTSTRAP_PATH
     ) {
-      const signal = init?.signal ?? (input instanceof Request ? input.signal : undefined);
+      const signal =
+        init?.signal ?? (input instanceof Request ? input.signal : undefined);
       if (normalizedDirectOrigin && normalizedDirectOrigin !== normalizedPageOrigin) {
         try {
           const directBundle = await loadDirectBootstrap(
@@ -332,7 +336,10 @@ export function createPublicContentFetch(
       }
 
       bootstrapRecoveryClosed = true;
-      return jsonResponse({ available: false, code: 'PUBLISHED_BOOTSTRAP_UNAVAILABLE' }, 503);
+      return jsonResponse(
+        { available: false, code: 'PUBLISHED_BOOTSTRAP_UNAVAILABLE' },
+        503,
+      );
     }
 
     if (!isPublicSnapshotPath(url.pathname)) return originalFetch(input, init);
@@ -352,7 +359,8 @@ export function createPublicContentFetch(
       blockedUntil.set(url.origin, now() + DIRECT_FAILURE_COOLDOWN_MS);
       return originalFetch(retryInput, init);
     } catch (error) {
-      const signal = init?.signal ?? (input instanceof Request ? input.signal : undefined);
+      const signal =
+        init?.signal ?? (input instanceof Request ? input.signal : undefined);
       if (signal?.aborted) throw error;
       blockedUntil.set(url.origin, now() + DIRECT_FAILURE_COOLDOWN_MS);
       return originalFetch(retryInput, init);

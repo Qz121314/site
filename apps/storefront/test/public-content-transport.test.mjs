@@ -11,6 +11,7 @@ import {
 const APP_ORIGIN = 'https://app.example.com';
 const CDN_ORIGIN = 'https://cdn.example.com';
 const POINTER_VERSION = 'content-20260908-abcdef';
+const WORKER_BOOTSTRAP_URL = `${APP_ORIGIN}/api/public/storefront/bootstrap`;
 
 function jsonResponse(value, status = 200, headers = {}) {
   return new Response(JSON.stringify(value), {
@@ -86,8 +87,18 @@ function themeFixture() {
 function bottomNavigationFixture() {
   return [
     { key: 'home', label: 'Home', enabled: true, icon: { type: 'builtin', value: null } },
-    { key: 'browse', label: 'Browse', enabled: true, icon: { type: 'builtin', value: null } },
-    { key: 'messages', label: 'Messages', enabled: true, icon: { type: 'builtin', value: null } },
+    {
+      key: 'browse',
+      label: 'Browse',
+      enabled: true,
+      icon: { type: 'builtin', value: null },
+    },
+    {
+      key: 'messages',
+      label: 'Messages',
+      enabled: true,
+      icon: { type: 'builtin', value: null },
+    },
     { key: 'faq', label: 'FAQ', enabled: true, icon: { type: 'builtin', value: null } },
   ];
 }
@@ -186,14 +197,14 @@ async function withMockedFetch(mockFetch, run) {
 test('browser direct bootstrap schema constants stay synchronized with the published protocol', () => {
   const protocol = JSON.parse(
     readFileSync(
-      new URL('../../worker/src/publishing/storefront-bootstrap-protocol.json', import.meta.url),
+      new URL(
+        '../../worker/src/publishing/storefront-bootstrap-protocol.json',
+        import.meta.url,
+      ),
       'utf8',
     ),
   );
-  assert.equal(
-    STOREFRONT_DIRECT_BOOTSTRAP_SCHEMA_CURRENT,
-    protocol.currentSchemaVersion,
-  );
+  assert.equal(STOREFRONT_DIRECT_BOOTSTRAP_SCHEMA_CURRENT, protocol.currentSchemaVersion);
   assert.equal(
     STOREFRONT_DIRECT_BOOTSTRAP_SCHEMA_MIN_READABLE,
     protocol.minReadableSchemaVersion,
@@ -228,7 +239,10 @@ test('healthy storefront bootstrap reads current and versioned bootstrap directl
     `${CDN_ORIGIN}/public/current.json`,
     `${CDN_ORIGIN}/public/bootstrap/${POINTER_VERSION}/bootstrap.json`,
   ]);
-  assert.equal(calls.some((url) => url.includes('/api/public/')), false);
+  assert.equal(
+    calls.some((url) => url.includes('/api/public/')),
+    false,
+  );
 });
 
 test('CDN failure falls back once to the R2-only Worker bootstrap', async () => {
@@ -239,7 +253,7 @@ test('CDN failure falls back once to the R2-only Worker bootstrap', async () => 
     if (url === `${CDN_ORIGIN}/public/current.json`) {
       return jsonResponse({ unavailable: true }, 503);
     }
-    if (url === '/api/public/storefront/bootstrap') {
+    if (url === WORKER_BOOTSTRAP_URL) {
       return jsonResponse(workerBootstrapFixture());
     }
     throw new Error(`Unexpected request: ${url}`);
@@ -255,10 +269,7 @@ test('CDN failure falls back once to the R2-only Worker bootstrap', async () => 
     loadStorefrontBootstrap(APP_ORIGIN),
   );
   assert.equal(bootstrap.site.site.name, 'Example Site');
-  assert.deepEqual(calls, [
-    `${CDN_ORIGIN}/public/current.json`,
-    '/api/public/storefront/bootstrap',
-  ]);
+  assert.deepEqual(calls, [`${CDN_ORIGIN}/public/current.json`, WORKER_BOOTSTRAP_URL]);
 });
 
 test('invalid direct JSON falls back to the R2-only Worker bootstrap', async () => {
@@ -266,14 +277,15 @@ test('invalid direct JSON falls back to the R2-only Worker bootstrap', async () 
   const originalFetch = async (input) => {
     const url = String(input);
     calls.push(url);
-    if (url === `${CDN_ORIGIN}/public/current.json`) return jsonResponse(pointerFixture());
+    if (url === `${CDN_ORIGIN}/public/current.json`)
+      return jsonResponse(pointerFixture());
     if (url === `${CDN_ORIGIN}/public/bootstrap/${POINTER_VERSION}/bootstrap.json`) {
       return new Response('{', {
         status: 200,
         headers: { 'content-type': 'application/json; charset=utf-8' },
       });
     }
-    if (url === '/api/public/storefront/bootstrap') {
+    if (url === WORKER_BOOTSTRAP_URL) {
       return jsonResponse(workerBootstrapFixture());
     }
     throw new Error(`Unexpected request: ${url}`);
@@ -292,15 +304,12 @@ test('invalid direct JSON falls back to the R2-only Worker bootstrap', async () 
   assert.deepEqual(calls, [
     `${CDN_ORIGIN}/public/current.json`,
     `${CDN_ORIGIN}/public/bootstrap/${POINTER_VERSION}/bootstrap.json`,
-    '/api/public/storefront/bootstrap',
+    WORKER_BOOTSTRAP_URL,
   ]);
 });
 
 for (const [name, mutate] of [
-  [
-    'invalid protocol schema',
-    (snapshot) => ({ ...snapshot, schemaVersion: 99 }),
-  ],
+  ['invalid protocol schema', (snapshot) => ({ ...snapshot, schemaVersion: 99 })],
   [
     'pointer mismatch',
     (snapshot) => ({ ...snapshot, pointerVersion: 'content-20260908-mismatch' }),
@@ -321,11 +330,12 @@ for (const [name, mutate] of [
     const originalFetch = async (input) => {
       const url = String(input);
       calls.push(url);
-      if (url === `${CDN_ORIGIN}/public/current.json`) return jsonResponse(pointerFixture());
+      if (url === `${CDN_ORIGIN}/public/current.json`)
+        return jsonResponse(pointerFixture());
       if (url === `${CDN_ORIGIN}/public/bootstrap/${POINTER_VERSION}/bootstrap.json`) {
         return jsonResponse(mutate(publishedBootstrapFixture()));
       }
-      if (url === '/api/public/storefront/bootstrap') {
+      if (url === WORKER_BOOTSTRAP_URL) {
         return jsonResponse({ available: false }, 404);
       }
       throw new Error(`Legacy recovery escaped transport closure: ${url}`);
@@ -344,11 +354,20 @@ for (const [name, mutate] of [
     assert.deepEqual(calls, [
       `${CDN_ORIGIN}/public/current.json`,
       `${CDN_ORIGIN}/public/bootstrap/${POINTER_VERSION}/bootstrap.json`,
-      '/api/public/storefront/bootstrap',
+      WORKER_BOOTSTRAP_URL,
     ]);
-    assert.equal(calls.some((url) => url.includes('media-base-url')), false);
-    assert.equal(calls.some((url) => url.includes('/api/public/theme')), false);
-    assert.equal(calls.some((url) => url.includes('bottom-navigation')), false);
+    assert.equal(
+      calls.some((url) => url.includes('media-base-url')),
+      false,
+    );
+    assert.equal(
+      calls.some((url) => url.includes('/api/public/theme')),
+      false,
+    );
+    assert.equal(
+      calls.some((url) => url.includes('bottom-navigation')),
+      false,
+    );
   });
 }
 
@@ -366,7 +385,7 @@ test('Cloudflare challenge on direct pointer uses the single Worker bootstrap fa
         },
       });
     }
-    if (url === '/api/public/storefront/bootstrap') {
+    if (url === WORKER_BOOTSTRAP_URL) {
       return jsonResponse(workerBootstrapFixture());
     }
     throw new Error(`Unexpected request: ${url}`);
@@ -381,10 +400,7 @@ test('Cloudflare challenge on direct pointer uses the single Worker bootstrap fa
     loadStorefrontBootstrap(APP_ORIGIN),
   );
   assert.equal(bootstrap.site.site.name, 'Example Site');
-  assert.deepEqual(calls, [
-    `${CDN_ORIGIN}/public/current.json`,
-    '/api/public/storefront/bootstrap',
-  ]);
+  assert.deepEqual(calls, [`${CDN_ORIGIN}/public/current.json`, WORKER_BOOTSTRAP_URL]);
 });
 
 test('legacy cross-origin snapshot URLs remain readable during client upgrades', async () => {
