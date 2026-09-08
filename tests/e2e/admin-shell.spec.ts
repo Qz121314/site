@@ -68,6 +68,71 @@ const siteSettings = {
   },
 };
 
+const themeCenter = {
+  theme: {
+    key: 'marketplace',
+    label: 'Marketplace',
+    description: 'Default theme',
+    colorScheme: 'light',
+    density: 'standard',
+    productMediaRatio: '1:1',
+    recipe: {
+      version: 2,
+      fontPack: 'modern',
+      buttonStyle: 'refined',
+      mediaStyle: 'precise',
+      motionStyle: 'restrained',
+      navigationStyle: 'quiet',
+    },
+    installPrompt: {
+      enabled: false,
+      delaySeconds: 30,
+      title: '',
+      description: '',
+      iosDescription: '',
+      installLabel: '',
+      dismissLabel: '',
+    },
+    tokens: {
+      brand: '#e3486d',
+      brandStrong: '#c9365c',
+      text: '#1c2534',
+      muted: '#667085',
+      surface: '#ffffff',
+      surfaceSoft: '#f5f7fa',
+      line: '#dce1e8',
+      pageBg: '#f7f8fa',
+      heroStart: '#fde9ef',
+      heroEnd: '#f3f5f9',
+      heroGlow: '#e3486d',
+      shadow: '0 1px 2px rgb(0 0 0 / 8%)',
+    },
+    overrides: {},
+  },
+  presets: [],
+};
+themeCenter.presets = [
+  themeCenter.theme,
+  {
+    ...themeCenter.theme,
+    key: 'noir',
+    label: 'Noir',
+    colorScheme: 'dark',
+    tokens: {
+      ...themeCenter.theme.tokens,
+      brand: '#d89b4b',
+      text: '#f5f0e8',
+      surface: '#20242b',
+      surfaceSoft: '#2c313a',
+      line: '#4d5663',
+      pageBg: '#14171c',
+      heroStart: '#28231d',
+      heroEnd: '#15181e',
+      heroGlow: '#d89b4b',
+    },
+  },
+];
+
 async function installAdminFixture(page: Page) {
   await page.route('**/api/admin/**', async (route) => {
     await route.fulfill({ contentType: 'application/json', body: '{}' });
@@ -94,6 +159,22 @@ async function installAdminFixture(page: Page) {
     await route.fulfill({
       contentType: 'application/json',
       body: JSON.stringify(siteSettings),
+    });
+  });
+  await page.route('**/api/admin/theme/', async (route) => {
+    if (route.request().method() === 'PUT') {
+      const payload = route.request().postDataJSON() as {
+        themeKey: string;
+        overrides: { accent?: string; textColor?: string };
+      };
+      const preset =
+        themeCenter.presets.find((item) => item.key === payload.themeKey) ??
+        themeCenter.theme;
+      themeCenter.theme = { ...preset, overrides: payload.overrides };
+    }
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({ ...themeCenter, theme: themeCenter.theme }),
     });
   });
 }
@@ -215,6 +296,47 @@ test('narrow viewport uses the accessible drawer without horizontal overflow', a
       page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
     )
     .toBe(true);
+});
+
+test('Theme Studio keeps theme changes in a draft preview until explicitly saved', async ({
+  page,
+}) => {
+  await installAdminFixture(page);
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await page.goto('/admin/#theme');
+
+  await expect(page.getByRole('heading', { name: 'Theme Studio' })).toBeVisible();
+  await expect(page.getByText('当前主题').locator('..')).toContainText('Marketplace');
+  await page.getByRole('button', { name: /Noir/ }).click();
+  await expect(page.getByText('未保存', { exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: '保存并应用' })).toBeEnabled();
+  await page.getByLabel('选择品牌强调色').fill('#123456');
+  await expect(page.locator('.theme-preview-device')).toHaveAttribute(
+    'data-theme',
+    'noir',
+  );
+  await page.getByRole('button', { name: '恢复当前设置' }).click();
+  await expect(page.getByText('已保存', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: /Noir/ }).click();
+  await page.getByRole('button', { name: '保存并应用' }).click();
+  await expect(page.getByText('主题已保存并应用。')).toBeVisible();
+
+  await page.getByRole('button', { name: 'Mobile' }).click();
+  await expect(page.locator('.theme-preview-shell')).toHaveAttribute(
+    'data-viewport',
+    'mobile',
+  );
+  await expect(page.locator('.theme-preview-device .bottom-nav')).toBeVisible();
+
+  for (const width of [820, 1366, 1440, 1920]) {
+    await page.setViewportSize({ width, height: 900 });
+    if (width === 820) await page.getByRole('button', { name: '检查器' }).click();
+    await expect
+      .poll(() =>
+        page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
+      )
+      .toBe(true);
+  }
 });
 
 test('unsaved navigation keeps the active workspace until discard is confirmed', async ({

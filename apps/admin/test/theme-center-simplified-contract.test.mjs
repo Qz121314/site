@@ -7,20 +7,20 @@ function source(path) {
   return readFileSync(new URL(path, import.meta.url), 'utf8');
 }
 
-test('theme center keeps theme choice and brand accent without a duplicate preview workbench', () => {
+test('Theme Studio keeps draft-only selection and the existing safe persistence boundary', () => {
   const view = source('../src/ThemeCenterView.tsx');
 
-  assert.ok(view.includes('官方精选'));
+  assert.ok(view.includes('主题方案库'));
   assert.ok(view.includes('品牌强调色'));
+  assert.ok(view.includes('主文字颜色'));
   assert.ok(view.includes('保存并应用'));
   assert.ok(view.includes('打开用户前端'));
-  assert.ok(view.includes('恢复主题色'));
-  assert.ok(view.includes('整套视觉方案'));
-  assert.equal(view.includes('ThemePreview'), false);
+  assert.ok(view.includes('恢复当前设置'));
+  assert.ok(view.includes('useAdminDirtySource'));
+  assert.ok(view.includes('themeDiagnostics'));
   assert.equal(view.includes('createPortal'), false);
-  assert.equal(view.includes('UI Recipe'), false);
-  assert.equal(view.includes('安装应用提示'), false);
-  assert.equal(view.includes('theme-center-workbench.css'), false);
+  assert.equal(view.includes('importThemeFromRegistry'), false);
+  assert.equal(view.includes('importThemeFromJson'), false);
 });
 
 test('PWA install prompt is owned by Site Settings', () => {

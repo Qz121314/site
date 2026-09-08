@@ -7,30 +7,24 @@ function source(path) {
   return readFileSync(new URL(path, import.meta.url), 'utf8');
 }
 
-test('theme center preview reuses live storefront components instead of swatch-only mocks', () => {
+test('Theme Studio preview reuses live storefront home components without restoring Hero semantics', () => {
   const view = source('../src/ThemeCenterView.tsx');
   const preview = source('../src/ThemeCenterPreview.tsx');
   const diagnostics = source('../src/theme-center/diagnostics.ts');
 
   assert.ok(view.includes("import { ThemeCenterPreview } from './ThemeCenterPreview';"));
-  assert.ok(view.includes('accent={previewAccent}'));
-  assert.ok(view.includes('textColor={previewTextColor}'));
+  assert.ok(view.includes('Theme Library'));
+  assert.ok(view.includes('Live Storefront Preview'));
+  assert.ok(view.includes('Theme Inspector'));
+  assert.ok(view.includes('viewport={viewport}'));
   assert.ok(preview.includes('StorefrontBrandBar'));
-  assert.ok(preview.includes('StorefrontHero'));
   assert.ok(preview.includes('StorefrontHomeShortcut'));
   assert.ok(preview.includes('StorefrontHomeProductTile'));
   assert.ok(preview.includes('StorefrontBottomNavigation'));
-  assert.ok(preview.includes('StorefrontNoAgentNotice'));
-  assert.ok(preview.includes('format="markdown"'));
   assert.ok(preview.includes('storefrontThemeStyle'));
+  assert.equal(preview.includes('StorefrontHero'), false);
 
-  for (const diagnostic of [
-    "id: 'text'",
-    "id: 'cta'",
-    "id: 'surface'",
-    "id: 'darkness'",
-    "id: 'border'",
-  ]) {
+  for (const diagnostic of ["id: 'text'", "id: 'cta'", "id: 'surface'", "id: 'border'"]) {
     assert.ok(diagnostics.includes(diagnostic));
   }
   assert.ok(diagnostics.includes('storefrontContrastRatio'));
