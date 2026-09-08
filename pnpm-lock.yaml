@@ -29,7 +29,7 @@ importers:
         specifier: ^16.0.0
         version: 16.5.0
       prettier:
-        specifier: ^3.0.0
+        specifier: 3.9.6
         version: 3.9.6
       typescript:
         specifier: ^5.9.0
