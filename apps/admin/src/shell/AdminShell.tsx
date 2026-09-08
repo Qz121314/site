@@ -29,7 +29,7 @@ type AdminShellProps = {
   onLogout: () => void;
   loggingOut: boolean;
   logoutDisabled?: boolean;
-  sessionExpiresAt?: string;
+  sessionExpiresAt?: string | undefined;
 };
 
 const FOCUSABLE_SELECTOR = [
