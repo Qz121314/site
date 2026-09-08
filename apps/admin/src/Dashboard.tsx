@@ -1,4 +1,16 @@
-import { X } from 'lucide-react';
+import {
+  ArrowRight,
+  Boxes,
+  FileText,
+  FolderKanban,
+  Image,
+  LayoutDashboard,
+  MessageSquare,
+  PanelTop,
+  PenLine,
+  Settings2,
+  X,
+} from 'lucide-react';
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AdminApiError, fetchSections, type AdminSection } from './api';
 import {
@@ -139,12 +151,123 @@ function workspaceWidthForView(view: AdminView): WorkspaceWidth {
   return 'wide';
 }
 
-function ShellPlaceholder() {
+const PROJECT_METADATA = [
+  ['仓库', 'Qz121314/site'],
+  ['技术栈', 'React / Vite / TypeScript'],
+  ['部署', 'Cloudflare Workers / Pages'],
+  ['数据', 'D1 / R2'],
+  ['包管理', 'pnpm'],
+  ['内容', 'Markdown 文章'],
+] as const;
+
+function DashboardLauncher({
+  sections,
+  onNavigate,
+}: {
+  sections: AdminSection[];
+  onNavigate: (view: AdminView) => void;
+}) {
+  const entries = [
+    ['首页', '管理首页布局', 'home', PanelTop],
+    ['导航', '管理 Storefront 导航', 'navigation', LayoutDashboard],
+    ['主题中心', '管理视觉主题配置', 'theme', PenLine],
+    ['文章中心', '管理 Markdown 内容', 'faq', FileText],
+    ['素材库', '管理上传素材与文件夹', 'assets', Image],
+    ['Messages', '管理消息文章配置', 'messages', MessageSquare],
+    ['客服接入', '管理客服连接配置', 'customer-service', Settings2],
+    ['基本设置', '管理站点基础配置', 'system-general', Settings2],
+  ] as const;
   return (
-    <section className="admin-shell-placeholder" aria-label="仪表盘">
-      <strong>选择一个业务域开始管理</strong>
-      <p>仪表盘当前作为管理工作区入口，不新增统计或业务功能。</p>
-    </section>
+    <div className="dashboard-launcher">
+      <section className="dashboard-section">
+        <div className="dashboard-section-heading">
+          <div>
+            <span className="dashboard-kicker">Workspace</span>
+            <h2>常用入口</h2>
+          </div>
+          <span className="dashboard-count">{entries.length} 个入口</span>
+        </div>
+        <div className="dashboard-entry-grid">
+          {entries.map(([label, description, view, Icon]) => (
+            <button
+              className="dashboard-entry"
+              key={view}
+              type="button"
+              onClick={() => onNavigate(view)}
+            >
+              <span className="dashboard-entry-icon">
+                <Icon size={17} strokeWidth={1.8} />
+              </span>
+              <span>
+                <strong>{label}</strong>
+                <small>{description}</small>
+              </span>
+              <ArrowRight size={15} />
+            </button>
+          ))}
+        </div>
+      </section>
+      <section className="dashboard-section">
+        <div className="dashboard-section-heading">
+          <div>
+            <span className="dashboard-kicker">Repository</span>
+            <h2>项目概况</h2>
+          </div>
+          <a href="https://github.com/Qz121314/site" target="_blank" rel="noreferrer">
+            在 GitHub 中查看 ↗
+          </a>
+        </div>
+        <dl className="dashboard-metadata">
+          {PROJECT_METADATA.map(([label, value]) => (
+            <div key={label}>
+              <dt>{label}</dt>
+              <dd>{value}</dd>
+            </div>
+          ))}
+        </dl>
+      </section>
+      <section className="dashboard-section">
+        <div className="dashboard-section-heading">
+          <div>
+            <span className="dashboard-kicker">Catalog</span>
+            <h2>分区入口</h2>
+          </div>
+          <span className="dashboard-count">{sections.length} 个分区</span>
+        </div>
+        <div className="dashboard-section-list">
+          <button
+            className="dashboard-section-link"
+            type="button"
+            onClick={() => onNavigate('sections')}
+          >
+            <FolderKanban size={17} />
+            <span>
+              <strong>分区管理</strong>
+              <small>管理所有分区</small>
+            </span>
+            <ArrowRight size={15} />
+          </button>
+          {sections.map((section) => (
+            <button
+              className="dashboard-section-link"
+              key={section.id}
+              type="button"
+              onClick={() => onNavigate(`products:${section.id}`)}
+            >
+              <Boxes size={17} />
+              <span>
+                <strong>{section.name}</strong>
+                <small>
+                  {section.productCount} 个产品 · {section.conversionMethodCount}{' '}
+                  个转化方法
+                </small>
+              </span>
+              <ArrowRight size={15} />
+            </button>
+          ))}
+        </div>
+      </section>
+    </div>
   );
 }
 
@@ -480,7 +603,7 @@ export function Dashboard({
           }
         >
           {activeView === 'dashboard' ? (
-            <ShellPlaceholder />
+            <DashboardLauncher sections={sections} onNavigate={requestView} />
           ) : isSettingsView(activeView) ? (
             <SiteSettingsWorkspace
               view={activeView}

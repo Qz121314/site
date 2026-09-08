@@ -12,6 +12,7 @@ import {
 import { Button } from '../components/ui/button';
 import {
   getAdminDefaultViewForDomain,
+  getAdminSecondaryItems,
   type AdminDomain,
   type AdminView,
 } from '../admin-navigation';
@@ -33,9 +34,11 @@ const DOMAIN_ICONS: Record<AdminDomain, LucideIcon> = {
 
 type AdminPrimarySidebarProps = {
   activeDomain: AdminDomain;
+  activeView: AdminView;
   sections: AdminSection[];
   onNavigate: (view: AdminView) => void;
   onDomainSelected?: () => void;
+  onItemSelected?: () => void;
   navigationPreferences: AdminNavigationPreferences;
   onLogout: () => void;
   loggingOut: boolean;
@@ -44,9 +47,11 @@ type AdminPrimarySidebarProps = {
 
 export function AdminPrimarySidebar({
   activeDomain,
+  activeView,
   sections,
   onNavigate,
   onDomainSelected,
+  onItemSelected,
   navigationPreferences,
   onLogout,
   loggingOut,
@@ -63,24 +68,61 @@ export function AdminPrimarySidebar({
           const Icon = DOMAIN_ICONS[domain.id];
           const defaultView = getAdminDefaultViewForDomain(domain.id, sections);
           const active = activeDomain === domain.id;
+          const items = active ? getAdminSecondaryItems(domain.id, sections) : [];
+          const visibleItems =
+            domain.id === 'catalog'
+              ? items.filter((item) => item.view === 'sections' || item.group)
+              : items;
           return (
-            <Button
-              key={domain.id}
-              className={`admin-primary-link${active ? ' is-active' : ''}`}
-              variant="ghost"
-              type="button"
-              disabled={!defaultView}
-              aria-current={active ? 'location' : undefined}
-              aria-label={defaultView ? domain.label : `${domain.label}（暂无可用分区）`}
-              onClick={() => {
-                if (!defaultView) return;
-                onNavigate(defaultView);
-                onDomainSelected?.();
-              }}
-            >
-              <Icon aria-hidden="true" size={18} strokeWidth={1.8} />
-              <span>{domain.label}</span>
-            </Button>
+            <div className="admin-nav-domain" key={domain.id}>
+              <Button
+                className={`admin-primary-link${active ? ' is-active' : ''}`}
+                variant="ghost"
+                type="button"
+                disabled={!defaultView}
+                aria-current={active ? 'location' : undefined}
+                aria-label={
+                  defaultView ? domain.label : `${domain.label}（暂无可用分区）`
+                }
+                onClick={() => {
+                  if (!defaultView) return;
+                  onNavigate(defaultView);
+                  onDomainSelected?.();
+                }}
+              >
+                <Icon aria-hidden="true" size={17} strokeWidth={1.8} />
+                <span>{domain.label}</span>
+                {active ? <span className="admin-nav-chevron">⌄</span> : null}
+              </Button>
+              {active && visibleItems.length > 0 ? (
+                <div className="admin-nav-subitems">
+                  {visibleItems.map((item) => {
+                    const isSelected = item.view === activeView;
+                    const label =
+                      domain.id === 'catalog' && item.view !== 'sections' && item.group
+                        ? item.group
+                        : item.label;
+                    const actualTarget = item.view;
+                    return (
+                      <Button
+                        key={`${item.view}-${item.group ?? ''}`}
+                        className={`admin-subnav-link${isSelected ? ' is-active' : ''}`}
+                        variant="ghost"
+                        type="button"
+                        aria-current={isSelected ? 'page' : undefined}
+                        onClick={() => {
+                          onNavigate(actualTarget);
+                          onItemSelected?.();
+                        }}
+                      >
+                        <span className="admin-subnav-dot" aria-hidden="true" />
+                        <span>{label}</span>
+                      </Button>
+                    );
+                  })}
+                </div>
+              ) : null}
+            </div>
           );
         })}
       </nav>

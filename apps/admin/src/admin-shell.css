@@ -1,6 +1,6 @@
 .admin-shell {
   min-height: 100vh;
-  background: #f3f5f8;
+  background: #f5f6f8;
 }
 
 .admin-desktop-primary,
@@ -14,6 +14,82 @@
   min-height: 100vh;
   flex-direction: column;
   background: #f6f8fb;
+}
+
+.admin-topbar {
+  display: flex;
+  min-height: 46px;
+  align-items: center;
+  gap: 18px;
+  padding: 0 20px;
+  border-bottom: 1px solid #e1e5ea;
+  background: #fff;
+}
+
+.admin-breadcrumb {
+  display: flex;
+  min-width: 190px;
+  align-items: center;
+  gap: 8px;
+  color: #8a93a1;
+  font-size: 0.74rem;
+}
+
+.admin-breadcrumb strong {
+  color: #1f2937;
+  font-weight: 700;
+}
+
+.admin-command-search {
+  display: flex;
+  width: min(420px, 42vw);
+  height: 30px;
+  align-items: center;
+  gap: 7px;
+  margin-left: auto;
+  padding: 0 8px 0 10px;
+  border: 1px solid #dfe4eb;
+  border-radius: 5px;
+  color: #7b8796;
+  background: #fafbfc;
+}
+
+.admin-command-search input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  color: #273244;
+  background: transparent;
+  font-size: 0.72rem;
+}
+
+.admin-command-search kbd {
+  padding: 2px 5px;
+  border: 1px solid #dfe4eb;
+  border-radius: 3px;
+  color: #8a93a1;
+  background: #fff;
+  font-size: 0.62rem;
+  white-space: nowrap;
+}
+
+.admin-topbar-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  color: #7c8795;
+}
+.admin-avatar {
+  display: grid;
+  width: 25px;
+  height: 25px;
+  place-items: center;
+  border-radius: 50%;
+  color: #fff;
+  background: #687384;
+  font-size: 0.68rem;
+  font-weight: 700;
 }
 
 .admin-mobile-drawer-backdrop {
@@ -73,14 +149,14 @@
 @media (min-width: 1200px) {
   .admin-shell {
     display: grid;
-    grid-template-columns: 224px 216px minmax(0, 1fr);
+    grid-template-columns: 232px minmax(0, 1fr);
   }
 }
 
 @media (min-width: 900px) and (max-width: 1199px) {
   .admin-shell {
     display: grid;
-    grid-template-columns: 88px 200px minmax(0, 1fr);
+    grid-template-columns: 78px minmax(0, 1fr);
   }
 }
 
@@ -91,12 +167,32 @@
 }
 
 @media (max-width: 899px) {
-  .admin-desktop-primary,
-  .admin-desktop-secondary {
+  .admin-desktop-primary {
     display: none;
   }
 
   .admin-shell-workspace {
     min-height: 100dvh;
+  }
+}
+
+@media (max-width: 560px) {
+  .admin-topbar {
+    gap: 10px;
+    padding-inline: 12px;
+  }
+  .admin-breadcrumb {
+    min-width: 0;
+  }
+  .admin-breadcrumb span:first-child,
+  .admin-breadcrumb span:nth-child(2) {
+    display: none;
+  }
+  .admin-command-search {
+    width: auto;
+    flex: 1;
+  }
+  .admin-topbar-meta {
+    gap: 8px;
   }
 }

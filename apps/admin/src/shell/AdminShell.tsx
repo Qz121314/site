@@ -11,7 +11,6 @@ import type { AdminSection } from '../api';
 import { CatalogWorkspaceSwitcher } from '../catalog/CatalogWorkspaceSwitcher';
 import { Button } from '../components/ui/button';
 import { AdminPrimarySidebar } from './AdminPrimarySidebar';
-import { AdminSecondarySidebar } from './AdminSecondarySidebar';
 import { AdminWorkspace } from './AdminWorkspace';
 
 type AdminShellProps = {
@@ -156,21 +155,13 @@ export function AdminShell({
       <div className="admin-desktop-primary">
         <AdminPrimarySidebar
           activeDomain={activeDomain}
+          activeView={activeView}
           sections={sections}
           onNavigate={onNavigate}
           navigationPreferences={navigationPreferences}
           onLogout={onLogout}
           loggingOut={loggingOut}
           logoutDisabled={logoutDisabled}
-        />
-      </div>
-      <div className="admin-desktop-secondary">
-        <AdminSecondarySidebar
-          activeDomain={activeDomain}
-          activeView={activeView}
-          sections={sections}
-          onNavigate={onNavigate}
-          navigationPreferences={navigationPreferences}
         />
       </div>
 
@@ -185,6 +176,27 @@ export function AdminShell({
         >
           <Menu aria-hidden="true" size={18} />
         </Button>
+        <header className="admin-topbar">
+          <div className="admin-breadcrumb">
+            <span>{context.eyebrow}</span>
+            <span aria-hidden="true">/</span>
+            <strong>{context.title}</strong>
+          </div>
+          <div className="admin-command-search" role="search">
+            <span aria-hidden="true">⌕</span>
+            <input
+              aria-label="搜索功能、页面或内容"
+              placeholder="搜索功能、页面或内容…"
+            />
+            <kbd>⌘ K</kbd>
+          </div>
+          <div className="admin-topbar-meta" aria-label="账户操作">
+            <span aria-hidden="true">♧</span>
+            <span className="admin-avatar" aria-hidden="true">
+              Q
+            </span>
+          </div>
+        </header>
         {sessionExpiring ? (
           <div className="admin-session-warning" role="status" aria-live="polite">
             登录会话即将过期，请保存当前修改。
@@ -245,20 +257,14 @@ export function AdminShell({
             <div className="admin-mobile-drawer-content ui-drawer-body">
               <AdminPrimarySidebar
                 activeDomain={activeDomain}
+                activeView={activeView}
                 sections={sections}
                 onNavigate={onNavigate}
                 navigationPreferences={navigationPreferences}
                 onLogout={onLogout}
                 loggingOut={loggingOut}
                 logoutDisabled={logoutDisabled}
-              />
-              <AdminSecondarySidebar
-                activeDomain={activeDomain}
-                activeView={activeView}
-                sections={sections}
-                onNavigate={onNavigate}
                 onItemSelected={() => setNavigationOpen(false)}
-                navigationPreferences={navigationPreferences}
               />
             </div>
           </div>
