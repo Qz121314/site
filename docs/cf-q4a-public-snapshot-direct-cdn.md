@@ -15,6 +15,6 @@ If direct transport is unavailable or invalid, Storefront falls back once to sam
 
 `public/current.json` keeps short-cache/revalidation publication semantics. Versioned `public/bootstrap/<version>/bootstrap.json` remains immutable and long-cacheable. Existing R2 CORS (`GET`/`HEAD`) is sufficient for the cross-origin JSON reads.
 
-Release configuration must expose the active public R2/CDN origin as `VITE_PUBLIC_CONTENT_ORIGIN` during the Storefront build, for example from a GitHub Actions or release variable. Browser startup must never discover the value from production D1. If the release intentionally omits the value, Storefront remains on the bounded same-origin Worker bootstrap path rather than inventing or hardcoding an origin.
+Release configuration must expose the active public R2/CDN origin as `VITE_PUBLIC_CONTENT_ORIGIN` during the Storefront build, for example from a stable GitHub Actions or release variable wired before `pnpm verify` / the production Vite build. Browser startup must never discover the value from production D1. If the release intentionally omits the value, Storefront remains on the bounded same-origin Worker bootstrap path rather than inventing or hardcoding an origin.
 
 This phase does not change `/_image/*`, `/_media/*`, `/public/search/*`, bootstrap schema versions, publisher pointer-last ordering, or production Cloudflare configuration.
