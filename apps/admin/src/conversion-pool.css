@@ -1,5 +1,5 @@
-/* Conversion Pool is a two-level operational workbench. Dashboard owns the
- * visible page title; the selected group's target panel keeps its own context. */
+/* Conversion Pool business layout. Shared control/table presentation is owned
+ * by admin-ui-system.css. */
 .conversion-pool {
   display: grid;
   width: 100%;
@@ -18,20 +18,19 @@
   position: absolute;
   width: 1px;
   height: 1px;
-  padding: 0;
-  margin: -1px;
   overflow: hidden;
+  margin: -1px;
+  padding: 0;
+  border: 0;
   clip: rect(0 0 0 0);
   white-space: nowrap;
-  border: 0;
 }
 
 .conversion-pool-heading > .primary-button {
   grid-column: 3;
   grid-row: 1;
-  min-height: 34px;
+  min-height: var(--admin-control-h);
   align-self: center;
-  padding: 0 12px;
 }
 
 .conversion-pool > .notice,
@@ -41,38 +40,29 @@
   grid-column: 1 / -1;
 }
 
-.conversion-pool > .selection-toolbar,
-.conversion-target-panel > .selection-toolbar {
-  min-height: 38px;
-  padding: 4px 7px;
-  border-radius: 8px;
-}
-
-/* Scope switches use the same compact segmented-control language as the other
- * Admin data workbenches. */
 .conversion-pool .scope-tabs {
   display: inline-flex;
   width: fit-content;
   align-items: center;
   gap: 2px;
-  padding: 3px;
-  border: 1px solid var(--admin-border, #e2e6ec);
-  border-radius: 9px;
-  background: #f1f3f6;
+  padding: 2px;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-sm);
+  background: var(--admin-surface-subtle);
 }
 
 .conversion-pool .scope-tabs button {
   appearance: none;
-  min-height: 28px;
+  min-height: 30px;
   gap: 6px;
-  padding: 0 10px;
-  border: 0;
-  border-radius: 6px;
-  color: #667085;
+  padding: 0 8px;
+  border: 1px solid transparent;
+  border-radius: 5px;
+  color: var(--admin-text-muted);
   background: transparent;
   cursor: pointer;
   font: inherit;
-  font-size: 0.71rem;
+  font-size: 0.7rem;
   font-weight: 720;
   line-height: 1;
 }
@@ -81,30 +71,26 @@
   min-width: 18px;
   padding: 2px 5px;
   border-radius: 999px;
+  color: inherit;
   background: rgb(255 255 255 / 72%);
-  color: #667085;
-  font-size: 0.63rem;
+  font-size: 0.62rem;
   text-align: center;
 }
 
 .conversion-pool .scope-tabs button:not(.is-active):hover {
-  color: #344054;
-  background: rgb(255 255 255 / 72%);
+  color: var(--admin-text);
+  background: rgb(255 255 255 / 74%);
 }
 
 .conversion-pool .scope-tabs button.is-active {
-  color: #fff;
-  background: #202632;
-  box-shadow: 0 1px 3px rgb(16 24 40 / 18%);
-}
-
-.conversion-pool .scope-tabs button.is-active span {
-  color: #fff;
-  background: rgb(255 255 255 / 14%);
+  border-color: #bfdbfe;
+  color: var(--admin-brand-hover);
+  background: var(--admin-brand-soft);
+  box-shadow: inset 0 -2px 0 var(--admin-brand);
 }
 
 .conversion-pool .scope-tabs button:focus-visible {
-  outline: 3px solid rgb(255 90 31 / 14%);
+  outline: 2px solid var(--focus-ring);
   outline-offset: 1px;
 }
 
@@ -116,15 +102,15 @@
 
 .conversion-filter-bar {
   display: grid;
-  min-height: 42px;
+  min-height: var(--admin-command-h);
   grid-template-columns: auto minmax(240px, 1fr);
   align-items: center;
-  gap: 8px;
-  padding: 4px 6px;
-  border: 1px solid var(--admin-border, #e2e6ec);
-  border-radius: 9px;
-  background: #fff;
-  box-shadow: 0 1px 2px rgb(16 24 40 / 3%);
+  gap: 6px;
+  padding: 3px 6px;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-md);
+  background: var(--admin-surface);
+  box-shadow: var(--admin-shadow-card);
 }
 
 .conversion-search {
@@ -145,34 +131,30 @@
 
 .conversion-search input {
   width: 100%;
-  min-height: 34px;
+  min-height: var(--admin-control-h);
   box-sizing: border-box;
-  padding: 0 10px;
-  border: 1px solid var(--admin-border-strong, #cfd5df);
-  border-radius: 7px;
-  background: #fff;
+  padding: 0 9px;
+  border: 1px solid var(--admin-border-strong);
+  border-radius: var(--admin-radius-sm);
+  color: var(--admin-text);
+  background: var(--admin-surface);
   outline: 0;
   font: inherit;
-  font-size: 0.77rem;
+  font-size: 0.76rem;
 }
 
 .conversion-search input:focus {
-  border-color: #ff9a76;
-  box-shadow: 0 0 0 3px rgb(255 90 31 / 10%);
+  border-color: var(--admin-brand);
+  box-shadow: 0 0 0 2px rgb(37 99 235 / 14%);
 }
 
 .conversion-table-wrap {
   min-height: 0;
   overflow: auto;
-  border: 1px solid var(--admin-border, #e2e6ec);
-  border-radius: 10px;
-  background: #fff;
-  box-shadow: 0 1px 2px rgb(16 24 40 / 3%);
 }
 
 .conversion-table {
   width: 100%;
-  border-collapse: collapse;
 }
 
 .conversion-pool > .conversion-table-wrap .conversion-table {
@@ -183,39 +165,8 @@
   min-width: 820px;
 }
 
-.conversion-table th,
-.conversion-table td {
-  padding: 7px 9px;
-  border-bottom: 1px solid #edf0f4;
-  text-align: left;
-  vertical-align: middle;
-}
-
-.conversion-table th {
-  height: 36px;
-  color: #667085;
-  background: #f8f9fb;
-  font-size: 0.65rem;
-  font-weight: 760;
-  letter-spacing: 0.02em;
-  white-space: nowrap;
-}
-
-.conversion-table td {
-  min-height: 44px;
-  font-size: 0.76rem;
-}
-
-.conversion-table tbody tr:last-child td {
-  border-bottom: 0;
-}
-
-.conversion-table tbody tr:hover td {
-  background: #fafbfc;
-}
-
 .conversion-table tbody tr.is-selected-row td {
-  background: #fff8f5;
+  background: var(--admin-brand-soft);
 }
 
 .conversion-table .checkbox-cell {
@@ -242,17 +193,17 @@
 .conversion-group-identity small,
 .conversion-cell-note {
   margin-top: 2px;
-  color: var(--admin-text-muted, #667085);
-  font-size: 0.66rem;
+  color: var(--admin-text-muted);
+  font-size: 0.65rem;
 }
 
 .conversion-mode-icon {
   display: grid;
-  width: 34px;
-  height: 34px;
-  flex: 0 0 34px;
+  width: 32px;
+  height: 32px;
+  flex: 0 0 32px;
   place-items: center;
-  border-radius: 8px;
+  border-radius: 7px;
   font-size: 9px;
   font-weight: 800;
   letter-spacing: 0.04em;
@@ -264,42 +215,25 @@
 }
 
 .conversion-mode-icon.is-link {
-  color: #4338ca;
-  background: #eef2ff;
+  color: var(--admin-brand-hover);
+  background: var(--admin-brand-soft);
 }
 
 .conversion-pool .sort-controls {
-  gap: 6px;
+  gap: 5px;
 }
 
 .conversion-pool .sort-controls > span {
   min-width: 24px;
   color: #475467;
-  font-size: 0.71rem;
+  font-size: 0.7rem;
 }
 
 .conversion-pool .sort-controls button {
   width: 28px;
   height: 28px;
-  border-color: #dfe4eb;
-  border-radius: 6px;
-  color: #475467;
-  box-shadow: 0 1px 1px rgb(16 24 40 / 3%);
 }
 
-.conversion-pool .sort-controls button:not(:disabled):hover {
-  border-color: #c7ced8;
-  color: #172033;
-  background: #f8fafc;
-}
-
-.conversion-pool .status-pill {
-  padding: 5px 8px;
-  font-size: 0.68rem;
-}
-
-/* Row actions are quiet utility controls. Destructive actions remain distinct
- * without becoming a second primary button. */
 .conversion-pool .actions-cell {
   white-space: nowrap;
 }
@@ -314,13 +248,13 @@
 
 .conversion-pool .actions-cell button {
   appearance: none;
-  min-height: 27px;
+  min-height: 28px;
   margin-left: 4px;
-  padding: 3px 8px;
-  border: 1px solid #dfe4eb;
-  border-radius: 6px;
+  padding: 3px 7px;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-sm);
   color: #475467;
-  background: #fff;
+  background: var(--admin-surface);
   box-shadow: 0 1px 1px rgb(16 24 40 / 3%);
   cursor: pointer;
   font: inherit;
@@ -329,14 +263,14 @@
 }
 
 .conversion-pool .actions-cell button:not(:disabled):hover {
-  border-color: #c7ced8;
-  color: #172033;
-  background: #f8fafc;
+  border-color: var(--admin-border-strong);
+  color: var(--admin-text);
+  background: var(--admin-surface-subtle);
 }
 
 .conversion-pool .actions-cell .text-danger {
   border-color: transparent;
-  color: #b42318;
+  color: var(--admin-danger);
   background: transparent;
   box-shadow: none;
 }
@@ -344,7 +278,7 @@
 .conversion-pool .actions-cell .text-danger:not(:disabled):hover {
   border-color: #fecdca;
   color: #912018;
-  background: #fff1f0;
+  background: var(--admin-danger-soft);
 }
 
 .conversion-pool .actions-cell button:disabled,
@@ -354,9 +288,9 @@
 }
 
 .conversion-table tbody tr.is-selected-row .actions-cell button:first-child {
-  border-color: #ffc3ad;
-  color: #9a3412;
-  background: #fff5f0;
+  border-color: #93c5fd;
+  color: var(--admin-brand-hover);
+  background: var(--admin-brand-soft);
 }
 
 .conversion-empty {
@@ -365,25 +299,23 @@
   place-items: center;
   align-content: center;
   gap: 4px;
-  padding: 24px 16px;
-  color: var(--admin-text-muted, #667085);
+  padding: 22px 14px;
+  color: var(--admin-text-muted);
   text-align: center;
 }
 
 .conversion-empty strong {
   display: block;
   margin: 0;
-  color: #344054;
-  font-size: 0.8rem;
+  color: var(--admin-text);
+  font-size: 0.78rem;
 }
 
 .conversion-empty p {
   margin: 0;
-  font-size: 0.7rem;
+  font-size: 0.69rem;
 }
 
-/* Second-level target editing is related operational data, not a decorative
- * feature card. It uses the full available workbench width. */
 .conversion-target-panel {
   display: grid;
   width: 100%;
@@ -391,15 +323,15 @@
   box-sizing: border-box;
   gap: 8px;
   padding: 8px;
-  border: 1px solid var(--admin-border, #e2e6ec);
-  border-radius: 10px;
-  background: #f8f9fb;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-md);
+  background: var(--admin-surface-subtle);
   box-shadow: none;
 }
 
 .conversion-target-heading {
   display: flex;
-  min-height: 34px;
+  min-height: var(--admin-control-h);
   align-items: center;
   justify-content: space-between;
   gap: 8px;
@@ -411,16 +343,16 @@
 
 .conversion-target-heading h3 {
   margin: 0;
-  color: #172033;
-  font-size: 0.82rem;
+  color: var(--admin-text);
+  font-size: 0.8rem;
   font-weight: 760;
 }
 
 .conversion-target-heading > div > span {
   display: block;
   margin-top: 2px;
-  color: var(--admin-text-muted, #667085);
-  font-size: 0.68rem;
+  color: var(--admin-text-muted);
+  font-size: 0.67rem;
 }
 
 .conversion-target-heading-actions {
@@ -430,13 +362,13 @@
 
 .conversion-target-heading-actions button {
   min-height: 32px;
-  padding-inline: 10px;
-  font-size: 0.72rem;
+  padding-inline: 9px;
+  font-size: 0.71rem;
 }
 
 .conversion-target-panel .conversion-filter-bar,
 .conversion-target-panel .conversion-table-wrap {
-  background: #fff;
+  background: var(--admin-surface);
 }
 
 .conversion-target-table td:first-child + td strong,
@@ -454,8 +386,8 @@
 
 .conversion-rotation-result {
   border-color: #bfdbfe;
-  background: #eff6ff;
-  color: #1d4ed8;
+  color: var(--admin-info);
+  background: var(--admin-info-soft);
 }
 
 .conversion-editor-dialog {
@@ -471,9 +403,9 @@
 .conversion-editor-form label > span,
 .conversion-editor-form legend {
   display: block;
-  margin-bottom: 5px;
+  margin-bottom: 4px;
   color: #344054;
-  font-size: 0.73rem;
+  font-size: 0.72rem;
   font-weight: 700;
 }
 
@@ -482,14 +414,15 @@
 .conversion-editor-form input[type='number'],
 .conversion-editor-form textarea {
   width: 100%;
-  min-height: 36px;
+  min-height: var(--admin-control-h);
   box-sizing: border-box;
-  padding: 8px 10px;
-  border: 1px solid var(--admin-border-strong, #cfd5df);
-  border-radius: 8px;
-  background: #fff;
+  padding: 7px 9px;
+  border: 1px solid var(--admin-border-strong);
+  border-radius: var(--admin-radius-sm);
+  color: var(--admin-text);
+  background: var(--admin-surface);
   font: inherit;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
 }
 
 .conversion-editor-form textarea {
@@ -511,16 +444,16 @@
 .conversion-mode-options {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 7px;
+  gap: 6px;
 }
 
 .conversion-mode-options button {
-  min-height: 54px;
-  padding: 8px 10px;
-  border: 1px solid var(--admin-border, #e2e6ec);
-  border-radius: 8px;
-  background: #fff;
+  min-height: 50px;
+  padding: 7px 9px;
+  border: 1px solid var(--admin-border);
+  border-radius: var(--admin-radius-sm);
   color: #344054;
+  background: var(--admin-surface);
   font: inherit;
   text-align: left;
   cursor: pointer;
@@ -532,21 +465,21 @@
 }
 
 .conversion-mode-options button strong {
-  font-size: 0.76rem;
+  font-size: 0.74rem;
 }
 
 .conversion-mode-options button span {
   margin-top: 2px;
-  color: var(--admin-text-muted, #667085);
-  font-size: 0.66rem;
+  color: var(--admin-text-muted);
+  font-size: 0.65rem;
   line-height: 1.35;
 }
 
 .conversion-mode-options button.is-selected {
-  border-color: #ff9a76;
-  color: #9a3412;
-  background: #fff5f0;
-  box-shadow: 0 0 0 2px rgb(255 90 31 / 8%);
+  border-color: #93c5fd;
+  color: var(--admin-brand-hover);
+  background: var(--admin-brand-soft);
+  box-shadow: 0 0 0 2px rgb(37 99 235 / 10%);
 }
 
 @media (max-width: 1100px) {
@@ -567,6 +500,7 @@
   }
 
   .conversion-pool > .conversion-filter-bar .scope-tabs button {
+    min-height: 44px;
     flex: 1;
     justify-content: center;
   }
@@ -574,6 +508,13 @@
   .conversion-pool > .conversion-filter-bar .conversion-search {
     grid-column: 1;
     grid-row: 2;
+  }
+
+  .conversion-search input,
+  .conversion-pool-heading > .primary-button,
+  .conversion-target-heading-actions button,
+  .conversion-mode-options button {
+    min-height: 44px;
   }
 
   .conversion-pool-heading > .primary-button {
