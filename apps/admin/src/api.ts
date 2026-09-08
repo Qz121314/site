@@ -10,6 +10,7 @@ export type SiteSettings = {
   locationLabel: string;
   mediaBaseUrl: string | null;
   logoAssetId: string | null;
+  pwaIconAssetId: string | null;
   ga4MeasurementId: string | null;
   homeSectionLimit: number;
   showHot: boolean;
@@ -191,6 +192,7 @@ function parseSiteSettings(value: unknown): SiteSettings {
     typeof settings.locationLabel === 'string' &&
     (typeof settings.mediaBaseUrl === 'string' || settings.mediaBaseUrl === null) &&
     (typeof settings.logoAssetId === 'string' || settings.logoAssetId === null) &&
+    (typeof settings.pwaIconAssetId === 'string' || settings.pwaIconAssetId === null) &&
     (typeof settings.ga4MeasurementId === 'string' ||
       settings.ga4MeasurementId === null) &&
     typeof settings.homeSectionLimit === 'number' &&

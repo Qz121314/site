@@ -12,7 +12,12 @@ import {
   X,
 } from 'lucide-react';
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AdminApiError, fetchSections, type AdminSection } from './api';
+import {
+  AdminApiError,
+  fetchSections,
+  fetchSiteSettings,
+  type AdminSection,
+} from './api';
 import {
   getAdminViewContext,
   parseAdminView,
@@ -299,6 +304,7 @@ export function Dashboard({
     useState<AdminNavigationPreferences>(readAdminNavigationPreferences);
   const initialViewRef = useRef(activeView);
   const [sections, setSections] = useState<AdminSection[]>([]);
+  const [pwaIconAssetId, setPwaIconAssetId] = useState<string | null>(null);
   const [sectionsLoading, setSectionsLoading] = useState(true);
   const [sectionsError, setSectionsError] = useState('');
   const [publishStatus, setPublishStatus] = useState<PublishStatus | null>(null);
@@ -343,6 +349,15 @@ export function Dashboard({
     }
   }, [onSessionExpired]);
 
+  const loadPwaIcon = useCallback(async () => {
+    try {
+      const settings = await fetchSiteSettings();
+      setPwaIconAssetId(settings.pwaIconAssetId);
+    } catch (error) {
+      if (isSessionError(error)) onSessionExpired();
+    }
+  }, [onSessionExpired]);
+
   const commitView = useCallback(
     (nextView: AdminView, mode: HistoryMode = 'push') => {
       if (nextView === activeView) {
@@ -362,7 +377,8 @@ export function Dashboard({
   useEffect(() => {
     void loadSections();
     void loadPublishStatus();
-  }, [loadPublishStatus, loadSections]);
+    void loadPwaIcon();
+  }, [loadPwaIcon, loadPublishStatus, loadSections]);
 
   useEffect(() => {
     const handleMutation = () => void loadPublishStatus();
@@ -588,6 +604,7 @@ export function Dashboard({
         loggingOut={loggingOut}
         logoutDisabled={publishingKey !== null || rollingBack}
         sessionExpiresAt={expiresAt}
+        pwaIconAssetId={pwaIconAssetId}
       >
         {publishFeedback ? (
           <div

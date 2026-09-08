@@ -11,6 +11,7 @@ import {
   type LucideIcon,
 } from 'lucide-react';
 import { Button } from '../components/ui/button';
+import { brandingAssetPreviewUrl } from '../branding-media/api';
 import {
   getAdminDefaultViewForDomain,
   getAdminSecondaryItems,
@@ -45,6 +46,7 @@ type AdminPrimarySidebarProps = {
   loggingOut: boolean;
   logoutDisabled?: boolean;
   collapsed?: boolean;
+  pwaIconAssetId?: string | null;
 };
 
 export function AdminPrimarySidebar({
@@ -59,6 +61,7 @@ export function AdminPrimarySidebar({
   loggingOut,
   logoutDisabled = false,
   collapsed = false,
+  pwaIconAssetId = null,
 }: AdminPrimarySidebarProps) {
   return (
     <aside
@@ -68,7 +71,11 @@ export function AdminPrimarySidebar({
       <div className="admin-brand">
         <span>
           <img
-            src="/api/public/pwa/icon/192"
+            src={
+              pwaIconAssetId
+                ? brandingAssetPreviewUrl(pwaIconAssetId)
+                : '/api/public/pwa/icon/192'
+            }
             alt=""
             onError={(event) => {
               event.currentTarget.src = '/admin/icons/app-icon.svg';

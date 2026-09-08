@@ -29,6 +29,7 @@ type AdminShellProps = {
   loggingOut: boolean;
   logoutDisabled?: boolean;
   sessionExpiresAt?: string | undefined;
+  pwaIconAssetId?: string | null;
 };
 
 const FOCUSABLE_SELECTOR = [
@@ -58,6 +59,7 @@ export function AdminShell({
   loggingOut,
   logoutDisabled = false,
   sessionExpiresAt,
+  pwaIconAssetId = null,
 }: AdminShellProps) {
   const [navigationOpen, setNavigationOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -164,6 +166,7 @@ export function AdminShell({
           loggingOut={loggingOut}
           logoutDisabled={logoutDisabled}
           collapsed={sidebarCollapsed}
+          pwaIconAssetId={pwaIconAssetId}
         />
       </div>
 
@@ -280,6 +283,7 @@ export function AdminShell({
                 onLogout={onLogout}
                 loggingOut={loggingOut}
                 logoutDisabled={logoutDisabled}
+                pwaIconAssetId={pwaIconAssetId}
                 onItemSelected={() => setNavigationOpen(false)}
               />
             </div>
