@@ -49,7 +49,7 @@ test('unsaved and history guards stay wired', async () => {
   assert.match(dashboard, /commitView\('sections', 'replace'\)/);
 });
 
-test('two-level shell exposes semantic zero-chrome navigation and width contract', async () => {
+test('two-level shell exposes zero-chrome navigation', async () => {
   const shell = await source('../src/shell/AdminShell.tsx');
   const primary = await source('../src/shell/AdminPrimarySidebar.tsx');
   const secondary = await source('../src/shell/AdminSecondarySidebar.tsx');
@@ -60,7 +60,10 @@ test('two-level shell exposes semantic zero-chrome navigation and width contract
   assert.match(shell, /AdminSecondarySidebar/);
   assert.match(shell, /AdminWorkspace/);
   assert.match(shell, /<AdminWorkspace width=\{workspaceWidth\}>/);
-  assert.match(shell, /<h1 className="admin-visually-hidden">\{context\.title\}<\/h1>/);
+  assert.match(
+    shell,
+    /<h1 className="admin-visually-hidden">\{context\.title\}<\/h1>/,
+  );
   assert.doesNotMatch(shell, /AdminTopBar|AdminPageHeader/);
   assert.match(dashboard, /workspaceWidthForView/);
   assert.match(primary, /aria-label="后台一级导航"/);
@@ -73,7 +76,7 @@ test('two-level shell exposes semantic zero-chrome navigation and width contract
   assert.match(workspace, /admin-workspace--\$\{width\}/);
 });
 
-test('mobile drawer owns accessibility behavior without restoring a global header', async () => {
+test('mobile drawer stays accessible without a global header', async () => {
   const shell = await source('../src/shell/AdminShell.tsx');
 
   assert.match(shell, /FOCUSABLE_SELECTOR/);
@@ -87,7 +90,7 @@ test('mobile drawer owns accessibility behavior without restoring a global heade
   assert.doesNotMatch(shell, /<header/);
 });
 
-test('responsive shell avoids fixed-height clipping and page-level chrome', async () => {
+test('responsive shell avoids clipping and page chrome', async () => {
   const shellCss = await source('../src/admin-shell.css');
   const workspaceCss = await source('../src/admin-workspace.css');
   const scrollCss = await source('../src/admin-scroll-ownership.css');
@@ -97,22 +100,34 @@ test('responsive shell avoids fixed-height clipping and page-level chrome', asyn
   assert.match(shellCss, /grid-template-columns:[\s\S]*minmax\(0, 1fr\)/);
   assert.match(shellCss, /admin-mobile-drawer-backdrop/);
   assert.match(workspace, /'split-pane'/);
-  assert.match(scrollCss, /\.admin-workspace-content[\s\S]*overflow-y: auto/);
+  assert.match(
+    scrollCss,
+    /\.admin-workspace-content[\s\S]*overflow-y: auto/,
+  );
   assert.match(workspaceCss, /\.admin-visually-hidden/);
   assert.match(workspaceCss, /\.admin-workspace-toolbar/);
-  assert.doesNotMatch(workspaceCss, /\.admin-top-bar|\.admin-page-header/);
+  assert.doesNotMatch(
+    workspaceCss,
+    /\.admin-top-bar|\.admin-page-header/,
+  );
   assert.doesNotMatch(scrollCss, /max-height: calc\(100dvh/);
   assert.doesNotMatch(combined, /!important/);
 });
 
-test('publish, logout, and session state have explicit local ownership', async () => {
+test('publish, logout, and session state use local ownership', async () => {
   const dashboard = await source('../src/Dashboard.tsx');
   const shell = await source('../src/shell/AdminShell.tsx');
   const primary = await source('../src/shell/AdminPrimarySidebar.tsx');
   const publishing = await source('../src/shell/AdminPublishingControls.tsx');
 
-  assert.match(dashboard, /function publishKeyForView\(view: AdminView\): string \| null/);
-  assert.match(dashboard, /return dynamic \? `section:\$\{dynamic\.sectionId\}` : null/);
+  assert.match(
+    dashboard,
+    /function publishKeyForView\(view: AdminView\): string \| null/,
+  );
+  assert.match(
+    dashboard,
+    /return dynamic \? `section:\$\{dynamic\.sectionId\}` : null/,
+  );
   assert.match(dashboard, /const workspaceActions = contextPublishKey \?/);
   assert.doesNotMatch(dashboard, /topBarActions|environment-badge|会话至/);
   assert.match(dashboard, /onLogout=\{requestLogout\}/);
