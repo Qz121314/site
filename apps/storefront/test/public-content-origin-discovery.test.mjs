@@ -77,7 +77,10 @@ function homeEnvelopeFixture() {
   };
 }
 
-function publishedBootstrapFixture(pointer = pointerFixture(), mediaBaseUrl = CDN_ORIGIN) {
+function publishedBootstrapFixture(
+  pointer = pointerFixture(),
+  mediaBaseUrl = CDN_ORIGIN,
+) {
   return {
     schemaVersion: STOREFRONT_DIRECT_BOOTSTRAP_SCHEMA_CURRENT,
     protocol: {
@@ -92,7 +95,10 @@ function publishedBootstrapFixture(pointer = pointerFixture(), mediaBaseUrl = CD
   };
 }
 
-function workerBootstrapFixture(pointer = pointerFixture(), mediaBaseUrl = CDN_ORIGIN) {
+function workerBootstrapFixture(
+  pointer = pointerFixture(),
+  mediaBaseUrl = CDN_ORIGIN,
+) {
   const published = publishedBootstrapFixture(pointer, mediaBaseUrl);
   return {
     pointer,
@@ -119,81 +125,93 @@ function memoryOriginStore(initialValue = null) {
   };
 }
 
-test('cold bootstrap learns the Admin-published CDN origin and the next bootstrap is Worker-free', async () => {
-  const pointer = pointerFixture();
-  const calls = [];
-  const store = memoryOriginStore();
-  const originalFetch = async (input) => {
-    const url = String(input);
-    calls.push(url);
-    if (url === WORKER_BOOTSTRAP_URL) return jsonResponse(workerBootstrapFixture(pointer));
-    if (url === `${CDN_ORIGIN}/public/current.json`) return jsonResponse(pointer);
-    if (url === `${CDN_ORIGIN}/public/bootstrap/${POINTER_VERSION}/bootstrap.json`) {
-      return jsonResponse(publishedBootstrapFixture(pointer));
-    }
-    throw new Error(`Unexpected request: ${url}`);
-  };
-  const wrapped = createPublicContentFetch(
-    originalFetch,
-    APP_ORIGIN,
-    Date.now,
-    null,
-    store,
-  );
+test(
+  'cold bootstrap learns the Admin-published CDN origin and the next bootstrap is Worker-free',
+  async () => {
+    const pointer = pointerFixture();
+    const calls = [];
+    const store = memoryOriginStore();
+    const originalFetch = async (input) => {
+      const url = String(input);
+      calls.push(url);
+      if (url === WORKER_BOOTSTRAP_URL)
+        return jsonResponse(workerBootstrapFixture(pointer));
+      if (url === `${CDN_ORIGIN}/public/current.json`) return jsonResponse(pointer);
+      if (
+        url === `${CDN_ORIGIN}/public/bootstrap/${POINTER_VERSION}/bootstrap.json`
+      ) {
+        return jsonResponse(publishedBootstrapFixture(pointer));
+      }
+      throw new Error(`Unexpected request: ${url}`);
+    };
+    const wrapped = createPublicContentFetch(
+      originalFetch,
+      APP_ORIGIN,
+      Date.now,
+      null,
+      store,
+    );
 
-  const coldResponse = await wrapped(WORKER_BOOTSTRAP_URL);
-  assert.equal(coldResponse.status, 200);
-  assert.equal(store.value(), CDN_ORIGIN);
-  assert.deepEqual(calls, [WORKER_BOOTSTRAP_URL]);
+    const coldResponse = await wrapped(WORKER_BOOTSTRAP_URL);
+    assert.equal(coldResponse.status, 200);
+    assert.equal(store.value(), CDN_ORIGIN);
+    assert.deepEqual(calls, [WORKER_BOOTSTRAP_URL]);
 
-  calls.length = 0;
-  const warmResponse = await wrapped(WORKER_BOOTSTRAP_URL);
-  assert.equal(warmResponse.status, 200);
-  assert.deepEqual(calls, [
-    `${CDN_ORIGIN}/public/current.json`,
-    `${CDN_ORIGIN}/public/bootstrap/${POINTER_VERSION}/bootstrap.json`,
-  ]);
-  assert.equal(calls.some((url) => url.includes('/api/public/')), false);
-});
+    calls.length = 0;
+    const warmResponse = await wrapped(WORKER_BOOTSTRAP_URL);
+    assert.equal(warmResponse.status, 200);
+    assert.deepEqual(calls, [
+      `${CDN_ORIGIN}/public/current.json`,
+      `${CDN_ORIGIN}/public/bootstrap/${POINTER_VERSION}/bootstrap.json`,
+    ]);
+    assert.equal(calls.some((url) => url.includes('/api/public/')), false);
+  },
+);
 
-test('stale cached CDN origin falls back to the R2-only Worker bootstrap and self-heals', async () => {
-  const pointer = pointerFixture();
-  const calls = [];
-  const store = memoryOriginStore(OLD_CDN_ORIGIN);
-  const originalFetch = async (input) => {
-    const url = String(input);
-    calls.push(url);
-    if (url === `${OLD_CDN_ORIGIN}/public/current.json`) {
-      return jsonResponse({ unavailable: true }, 503);
-    }
-    if (url === WORKER_BOOTSTRAP_URL) return jsonResponse(workerBootstrapFixture(pointer));
-    if (url === `${CDN_ORIGIN}/public/current.json`) return jsonResponse(pointer);
-    if (url === `${CDN_ORIGIN}/public/bootstrap/${POINTER_VERSION}/bootstrap.json`) {
-      return jsonResponse(publishedBootstrapFixture(pointer));
-    }
-    throw new Error(`Unexpected request: ${url}`);
-  };
-  const wrapped = createPublicContentFetch(
-    originalFetch,
-    APP_ORIGIN,
-    Date.now,
-    null,
-    store,
-  );
+test(
+  'stale cached CDN origin falls back to the R2-only Worker bootstrap and self-heals',
+  async () => {
+    const pointer = pointerFixture();
+    const calls = [];
+    const store = memoryOriginStore(OLD_CDN_ORIGIN);
+    const originalFetch = async (input) => {
+      const url = String(input);
+      calls.push(url);
+      if (url === `${OLD_CDN_ORIGIN}/public/current.json`) {
+        return jsonResponse({ unavailable: true }, 503);
+      }
+      if (url === WORKER_BOOTSTRAP_URL)
+        return jsonResponse(workerBootstrapFixture(pointer));
+      if (url === `${CDN_ORIGIN}/public/current.json`) return jsonResponse(pointer);
+      if (
+        url === `${CDN_ORIGIN}/public/bootstrap/${POINTER_VERSION}/bootstrap.json`
+      ) {
+        return jsonResponse(publishedBootstrapFixture(pointer));
+      }
+      throw new Error(`Unexpected request: ${url}`);
+    };
+    const wrapped = createPublicContentFetch(
+      originalFetch,
+      APP_ORIGIN,
+      Date.now,
+      null,
+      store,
+    );
 
-  const recoveredResponse = await wrapped(WORKER_BOOTSTRAP_URL);
-  assert.equal(recoveredResponse.status, 200);
-  assert.equal(store.value(), CDN_ORIGIN);
-  assert.deepEqual(calls, [
-    `${OLD_CDN_ORIGIN}/public/current.json`,
-    WORKER_BOOTSTRAP_URL,
-  ]);
-  assert.equal(calls.some((url) => url.includes('media-base-url')), false);
+    const recoveredResponse = await wrapped(WORKER_BOOTSTRAP_URL);
+    assert.equal(recoveredResponse.status, 200);
+    assert.equal(store.value(), CDN_ORIGIN);
+    assert.deepEqual(calls, [
+      `${OLD_CDN_ORIGIN}/public/current.json`,
+      WORKER_BOOTSTRAP_URL,
+    ]);
+    assert.equal(calls.some((url) => url.includes('media-base-url')), false);
 
-  calls.length = 0;
-  await wrapped(WORKER_BOOTSTRAP_URL);
-  assert.deepEqual(calls, [
-    `${CDN_ORIGIN}/public/current.json`,
-    `${CDN_ORIGIN}/public/bootstrap/${POINTER_VERSION}/bootstrap.json`,
-  ]);
-});
+    calls.length = 0;
+    await wrapped(WORKER_BOOTSTRAP_URL);
+    assert.deepEqual(calls, [
+      `${CDN_ORIGIN}/public/current.json`,
+      `${CDN_ORIGIN}/public/bootstrap/${POINTER_VERSION}/bootstrap.json`,
+    ]);
+  },
+);
