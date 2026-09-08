@@ -2,7 +2,7 @@
   width: min(1480px, calc(100vw - 32px));
   min-height: calc(100vh - 32px);
   margin: 16px auto;
-  overflow: hidden;
+  overflow: visible;
   border: 1px solid #dfe4ea;
   border-radius: 10px;
   background: #f5f6f8;
@@ -19,6 +19,8 @@
   min-height: calc(100vh - 32px);
   flex-direction: column;
   background: #f6f8fb;
+  overflow: hidden;
+  border-radius: 0 10px 10px 0;
 }
 
 .admin-topbar {

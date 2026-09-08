@@ -9,6 +9,7 @@
 
 .admin-primary-sidebar {
   height: 100%;
+  position: relative;
   padding: 10px 8px;
   color: var(--nav-text);
   border-right: 1px solid rgb(255 255 255 / 6%);
@@ -51,8 +52,10 @@
 
 .admin-sidebar-toggle.ui-button {
   position: absolute;
-  top: 10px;
-  right: 6px;
+  top: 50%;
+  right: -13px;
+  z-index: 5;
+  transform: translateY(-50%);
   min-width: 25px;
   width: 25px;
   height: 25px;
@@ -60,6 +63,8 @@
   padding: 0;
   border-radius: 4px;
   color: #9aa6b5;
+  background: #111827;
+  box-shadow: 2px 0 0 #111827;
 }
 
 .admin-sidebar-toggle.ui-button:hover:not(:disabled) {
@@ -83,8 +88,7 @@
   font-size: 0.68rem;
 }
 .admin-primary-sidebar.is-collapsed .admin-sidebar-toggle.ui-button {
-  top: 9px;
-  right: 2px;
+  right: -13px;
   width: 20px;
   min-width: 20px;
   border: 1px solid rgb(255 255 255 / 12%);
