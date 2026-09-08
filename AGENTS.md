@@ -121,6 +121,17 @@ Unless the user explicitly changes them:
 - Request budget, dedup, bootstrap reuse, startup split and lazy support activation are architecture contracts.
 - Do not increase Worker/D1/R2 request counts merely to simplify frontend code.
 
+## Cloudflare Free-Plan Resource Contract
+
+- **Static assets:** HTML, JS, CSS, fonts, icons and ordinary static assets MUST be served by Static Assets without invoking the Worker whenever possible.
+- **Worker:** MUST be reserved for dynamic, API or transactional paths. MUST NOT restore global `assets.run_worker_first=true` without explicit architectural justification.
+- **Storefront public reads:** Published public content MUST prefer static snapshot/CDN paths. New ordinary navigation MUST NOT add D1 reads without explicit approval.
+- **Search/filter/navigation:** Client-side search, filtering, category and tag switching MUST NOT create Worker/D1 requests when published data already suffices.
+- **Media:** Normal media delivery MUST prefer direct CDN/R2 custom-domain paths; Worker media routes are fallback or special-processing paths, not the default.
+- **Customer Service:** Ordinary storefront browsing MUST NOT initialize customer-service identity, conversation or WebSocket work.
+- **CI/CD:** No-op deployment or publish paths MUST avoid unnecessary production D1, R2 or Worker operations.
+- **Review:** Any change that increases Worker invocations, D1 rows read/written, R2 operations or production Cloudflare access MUST explain the need and include a request/resource-budget impact assessment.
+
 ### App Shell / viewport
 
 App Shell owns persistent Header, Bottom Navigation, route action host and fixed viewport geometry.
