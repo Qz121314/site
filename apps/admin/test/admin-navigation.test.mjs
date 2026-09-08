@@ -144,6 +144,7 @@ test('site, engagement, and system navigation match final P1 IA exactly', () => 
     getAdminSecondaryItems('system', sections).map(({ view, label }) => [view, label]),
     [
       ['system-general', '基本设置'],
+      ['system-navigation', '界面偏好'],
       ['pwa', '应用安装'],
       ['system-infrastructure', '基础设施'],
       ['system-advanced', '高级设置'],
@@ -164,7 +165,7 @@ test('content navigation exposes Article Center and Asset Library while preservi
   assert.equal(adminViewHash('faq'), '#faq');
 
   const context = getAdminViewContext('faq', sections);
-  assert.equal(context.eyebrow, '内容 / 文章');
+  assert.equal(context.eyebrow, '内容');
   assert.equal(context.title, '文章中心');
   assert.equal(context.description, '管理可复用的 Markdown 文章内容。');
 });

@@ -1,11 +1,10 @@
 import { ChevronRight } from 'lucide-react';
 import { Button } from '../components/ui/button';
+import { ADMIN_DOMAINS, type AdminDomain, type AdminView } from '../admin-navigation';
 import {
-  ADMIN_DOMAINS,
-  getAdminSecondaryItems,
-  type AdminDomain,
-  type AdminView,
-} from '../admin-navigation';
+  orderedAdminSecondaryItems,
+  type AdminNavigationPreferences,
+} from '../admin-navigation-preferences';
 import type { AdminSection } from '../api';
 
 type AdminSecondarySidebarProps = {
@@ -14,6 +13,7 @@ type AdminSecondarySidebarProps = {
   sections: AdminSection[];
   onNavigate: (view: AdminView) => void;
   onItemSelected?: () => void;
+  navigationPreferences: AdminNavigationPreferences;
 };
 
 export function AdminSecondarySidebar({
@@ -22,9 +22,10 @@ export function AdminSecondarySidebar({
   sections,
   onNavigate,
   onItemSelected,
+  navigationPreferences,
 }: AdminSecondarySidebarProps) {
   const domain = ADMIN_DOMAINS.find((item) => item.id === activeDomain);
-  const items = getAdminSecondaryItems(activeDomain, sections);
+  const items = orderedAdminSecondaryItems(activeDomain, sections, navigationPreferences);
   let previousGroup: string | undefined;
 
   return (

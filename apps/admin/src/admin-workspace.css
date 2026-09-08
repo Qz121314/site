@@ -19,30 +19,6 @@
   display: flex;
   min-width: 0;
   align-items: center;
-  gap: 10px;
-}
-
-.admin-top-bar-context > div {
-  display: grid;
-  min-width: 0;
-  gap: 1px;
-}
-
-.admin-top-bar-context span {
-  overflow: hidden;
-  color: #7a8494;
-  font-size: 0.66rem;
-  font-weight: 700;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.admin-top-bar-context strong {
-  overflow: hidden;
-  color: #172033;
-  font-size: 0.82rem;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .admin-top-bar-actions,
@@ -95,7 +71,7 @@
 
 .admin-page-eyebrow {
   margin: 0;
-  color: #d94d1a;
+  color: #64748b;
   font-size: 0.68rem;
   font-weight: 800;
   letter-spacing: 0.07em;

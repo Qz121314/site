@@ -1,24 +1,24 @@
 :root {
-  --page-color: #f5f6f8;
+  --page-color: #f3f5f7;
   --surface-color: #ffffff;
-  --surface-subtle: #fafbfc;
-  --surface-muted: #f1f3f6;
-  --border-color: #e2e5ea;
-  --border-strong: #d4d9e1;
-  --muted-text: #697386;
-  --text-color: #172033;
-  --heading-color: #111827;
-  --brand: #ff5a1f;
-  --brand-dark: #e34912;
-  --brand-soft: #fff1eb;
-  --nav: #151922;
-  --nav-soft: #202632;
-  --nav-text: #aeb6c4;
+  --surface-subtle: #f8fafc;
+  --surface-muted: #eef2f6;
+  --border-color: #dce3ea;
+  --border-strong: #c5d0dc;
+  --muted-text: #64748b;
+  --text-color: #1e293b;
+  --heading-color: #0f172a;
+  --brand: #2563eb;
+  --brand-dark: #1d4ed8;
+  --brand-soft: #eff6ff;
+  --nav: #111827;
+  --nav-soft: #1f2937;
+  --nav-text: #b6c2d0;
   --nav-heading: #f7f8fa;
   --success: #067647;
   --success-soft: #ecfdf3;
-  --warning: #9a3412;
-  --warning-soft: #fff7ed;
+  --warning: #a16207;
+  --warning-soft: #fefce8;
   --danger: #b42318;
   --danger-soft: #fff1f0;
   --info: #175cd3;
@@ -40,7 +40,7 @@ html {
 body {
   color: var(--text-color);
   background:
-    radial-gradient(circle at 78% -10%, rgb(255 90 31 / 5%), transparent 32rem),
+    radial-gradient(circle at 78% -10%, rgb(37 99 235 / 4%), transparent 32rem),
     var(--page-color);
 }
 
@@ -60,7 +60,7 @@ input:focus-visible,
 textarea:focus-visible,
 select:focus-visible,
 a:focus-visible {
-  outline: 3px solid rgb(255 90 31 / 18%);
+  outline: 3px solid rgb(37 99 235 / 22%);
   outline-offset: 2px;
 }
 
@@ -70,8 +70,8 @@ input[type='radio'] {
 }
 
 ::selection {
-  color: #7c2d12;
-  background: #ffddcf;
+  color: #1e3a8a;
+  background: #dbeafe;
 }
 
 .admin-main {
@@ -139,14 +139,14 @@ input[type='radio'] {
 .primary-button {
   margin-top: 0;
   border-color: var(--brand);
-  background: linear-gradient(180deg, #ff6b35, #f0521b);
-  box-shadow: 0 6px 15px rgb(255 90 31 / 18%);
+  background: var(--brand);
+  box-shadow: 0 5px 12px rgb(37 99 235 / 18%);
 }
 
 .primary-button:not(:disabled):hover {
   border-color: var(--brand-dark);
-  background: linear-gradient(180deg, #f85b22, #df410c);
-  box-shadow: 0 8px 20px rgb(255 90 31 / 23%);
+  background: var(--brand-dark);
+  box-shadow: 0 7px 16px rgb(37 99 235 / 22%);
   transform: translateY(-1px);
 }
 
