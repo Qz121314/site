@@ -169,6 +169,20 @@
   color: #2563eb;
   text-decoration: none;
 }
+.dashboard-repository-link {
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 6px;
+}
+.dashboard-repository-link:hover,
+.dashboard-repository-link:focus-visible {
+  border-color: #b9d2ff;
+  background: #f5f8ff;
+}
 .dashboard-entry-grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
