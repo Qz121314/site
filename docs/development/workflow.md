@@ -47,6 +47,19 @@ A PR is eligible for review only when the current PR HEAD has completed the requ
 
 PR validation is local-first. It may use local D1 and Worker dry-run, but it must not read or mutate production D1/R2 and must not deploy the production Worker.
 
+### PR verification topology
+
+`pnpm verify` is the canonical aggregate command for a local or final L-level candidate. It is not a requirement for the PR workflow to execute every validation layer in one serial job.
+
+The PR Full Verify workflow schedules independent layers separately when their dependency graph permits it:
+
+- **Quality + Local D1** owns repository guardrails, formatting, lint, typecheck, and local migration validation.
+- **Tests** owns repository tests, including CI contract tests.
+- **Build + Worker** owns the production build, storefront bundle budget, and Worker dry-run.
+- **Admin Playwright** owns the deterministic local Admin browser acceptance and its Admin build/server lifecycle.
+
+These jobs must remain independent unless a concrete runtime artifact or ordering dependency requires otherwise. The Admin browser job builds and serves its own local Admin artifact, so it does not wait for the general build job. Parallel scheduling never authorizes omission or dilution of a required check. GitHub Actions on the exact latest PR HEAD remains the final PR gate.
+
 ## Release rule
 
 Merging to `main` does not imply every Cloudflare operation should run. `scripts/classify-cloudflare-changes.mjs` classifies the release diff and the main workflow gates D1, R2, deployment, minimal smoke, deep smoke, and production browser acceptance from those outputs.
