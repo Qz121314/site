@@ -36,7 +36,9 @@ export function validateConfiguredPublicContentOrigin(env = process.env) {
 }
 
 function isDirectExecution() {
-  return Boolean(process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href);
+  return Boolean(
+    process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href,
+  );
 }
 
 if (isDirectExecution()) {
