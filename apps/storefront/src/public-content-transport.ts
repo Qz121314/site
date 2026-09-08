@@ -3,6 +3,12 @@ type FetchFunction = (input: RequestInfo | URL, init?: RequestInit) => Promise<R
 type JsonRecord = Record<string, unknown>;
 type NowFunction = () => number;
 
+export type PublicContentOriginStore = {
+  get(): string | null;
+  set(origin: string): void;
+  clear(): void;
+};
+
 const PUBLIC_SNAPSHOT_PREFIXES = [
   '/public/bootstrap/',
   '/public/versions/',
@@ -16,6 +22,7 @@ const LEGACY_BOOTSTRAP_PATHS = new Set([
   '/api/public/bottom-navigation/',
 ]);
 const DIRECT_FAILURE_COOLDOWN_MS = 5 * 60_000;
+const DIRECT_ORIGIN_STORAGE_KEY = 'site.storefront.public-content-origin.v1';
 const VERSION_PATTERN = /^[A-Za-z0-9-]{12,180}$/;
 
 // Keep these synchronized with the published protocol descriptor. A contract test
@@ -38,6 +45,48 @@ function normalizeOrigin(value: string | null | undefined): string | null {
   } catch {
     return null;
   }
+}
+
+function readStoredOrigin(store: PublicContentOriginStore | null): string | null {
+  if (!store) return null;
+  try {
+    return store.get();
+  } catch {
+    return null;
+  }
+}
+
+function writeStoredOrigin(store: PublicContentOriginStore | null, origin: string): void {
+  if (!store) return;
+  try {
+    store.set(origin);
+  } catch {
+    // Storage failures must not block Storefront bootstrap.
+  }
+}
+
+function clearStoredOrigin(store: PublicContentOriginStore | null): void {
+  if (!store) return;
+  try {
+    store.clear();
+  } catch {
+    // Storage failures must not block Storefront bootstrap.
+  }
+}
+
+function browserDirectOriginStore(): PublicContentOriginStore | null {
+  if (typeof window === 'undefined') return null;
+  let storage: Storage;
+  try {
+    storage = window.localStorage;
+  } catch {
+    return null;
+  }
+  return {
+    get: () => storage.getItem(DIRECT_ORIGIN_STORAGE_KEY),
+    set: (origin) => storage.setItem(DIRECT_ORIGIN_STORAGE_KEY, origin),
+    clear: () => storage.removeItem(DIRECT_ORIGIN_STORAGE_KEY),
+  };
 }
 
 function requestUrl(input: RequestInfo | URL, pageOrigin: string): URL | null {
@@ -273,21 +322,32 @@ async function loadDirectBootstrap(
   return bundle;
 }
 
-function configuredDirectOrigin(): string | null {
-  if (typeof window === 'undefined') return null;
-  return normalizeOrigin(import.meta.env.VITE_PUBLIC_CONTENT_ORIGIN);
-}
-
 export function createPublicContentFetch(
   originalFetch: FetchFunction,
   pageOrigin: string,
   now: NowFunction = Date.now,
   publicContentOrigin: string | null = null,
+  directOriginStore: PublicContentOriginStore | null = null,
 ): FetchFunction {
   const normalizedPageOrigin = normalizeOrigin(pageOrigin) ?? pageOrigin;
-  const normalizedDirectOrigin = normalizeOrigin(publicContentOrigin);
+  const configuredDirectOrigin = normalizeOrigin(publicContentOrigin);
+  let learnedDirectOrigin = configuredDirectOrigin
+    ? null
+    : normalizeOrigin(readStoredOrigin(directOriginStore));
   const blockedUntil = new Map<string, number>();
   let bootstrapRecoveryClosed = false;
+
+  const syncLearnedDirectOrigin = (value: unknown) => {
+    if (configuredDirectOrigin) return;
+    const nextOrigin = typeof value === 'string' ? normalizeOrigin(value) : null;
+    if (!nextOrigin || nextOrigin === normalizedPageOrigin) {
+      learnedDirectOrigin = null;
+      clearStoredOrigin(directOriginStore);
+      return;
+    }
+    learnedDirectOrigin = nextOrigin;
+    writeStoredOrigin(directOriginStore, nextOrigin);
+  };
 
   return async (input, init) => {
     const url = requestUrl(input, normalizedPageOrigin);
@@ -314,23 +374,29 @@ export function createPublicContentFetch(
     ) {
       const signal =
         init?.signal ?? (input instanceof Request ? input.signal : undefined);
-      if (normalizedDirectOrigin && normalizedDirectOrigin !== normalizedPageOrigin) {
+      const directOrigin = configuredDirectOrigin ?? learnedDirectOrigin;
+      if (directOrigin && directOrigin !== normalizedPageOrigin) {
         try {
           const directBundle = await loadDirectBootstrap(
             originalFetch,
-            normalizedDirectOrigin,
+            directOrigin,
             signal ?? undefined,
           );
+          syncLearnedDirectOrigin(directBundle.mediaBaseUrl);
           return jsonResponse(directBundle);
         } catch (error) {
           if (signal?.aborted) throw error;
+          syncLearnedDirectOrigin(null);
         }
       }
 
       try {
         const fallbackResponse = await originalFetch(input, init);
         const fallbackValue = await parseValidatedJsonResponse(fallbackResponse);
-        if (validWorkerBootstrapBundle(fallbackValue)) return fallbackResponse;
+        if (validWorkerBootstrapBundle(fallbackValue)) {
+          syncLearnedDirectOrigin(fallbackValue.mediaBaseUrl);
+          return fallbackResponse;
+        }
       } catch (error) {
         if (signal?.aborted) throw error;
       }
@@ -375,6 +441,7 @@ export function installPublicContentFetchFallback(): void {
     originalFetch,
     window.location.origin,
     Date.now,
-    configuredDirectOrigin(),
+    null,
+    browserDirectOriginStore(),
   ) as typeof window.fetch;
 }
