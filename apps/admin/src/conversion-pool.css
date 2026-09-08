@@ -549,17 +549,6 @@
   box-shadow: 0 0 0 2px rgb(255 90 31 / 8%);
 }
 
-@media (min-width: 1024px) {
-  .conversion-pool > .conversion-table-wrap {
-    max-height: 300px;
-  }
-
-  .conversion-target-panel {
-    max-height: calc(100dvh - 360px);
-    overflow: auto;
-  }
-}
-
 @media (max-width: 1100px) {
   .conversion-table-wrap {
     overflow-x: auto;

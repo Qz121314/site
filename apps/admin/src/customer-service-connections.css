@@ -335,11 +335,6 @@
   .customer-service-workbench {
     width: min(1180px, 100%);
     margin-inline: auto;
-    overflow: hidden;
-  }
-
-  .customer-service-table-wrap {
-    max-height: calc(100dvh - 150px);
   }
 }
 
