@@ -33,6 +33,10 @@
   background: #fff;
 }
 
+.admin-topbar .admin-sidebar-toggle {
+  flex: 0 0 auto;
+}
+
 .admin-breadcrumb {
   display: flex;
   min-width: 190px;
@@ -182,6 +186,10 @@
 }
 
 @media (max-width: 899px) {
+  .admin-topbar .admin-sidebar-toggle {
+    display: none;
+  }
+
   .admin-desktop-primary {
     display: none;
   }

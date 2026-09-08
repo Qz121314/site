@@ -6,8 +6,6 @@ import {
   LogOut,
   Megaphone,
   MessageSquare,
-  PanelLeftClose,
-  PanelLeftOpen,
   PanelTop,
   Settings2,
   type LucideIcon,
@@ -47,7 +45,6 @@ type AdminPrimarySidebarProps = {
   loggingOut: boolean;
   logoutDisabled?: boolean;
   collapsed?: boolean;
-  onToggleCollapsed?: () => void;
 };
 
 export function AdminPrimarySidebar({
@@ -62,7 +59,6 @@ export function AdminPrimarySidebar({
   loggingOut,
   logoutDisabled = false,
   collapsed = false,
-  onToggleCollapsed,
 }: AdminPrimarySidebarProps) {
   return (
     <aside
@@ -73,22 +69,6 @@ export function AdminPrimarySidebar({
         <span>SP</span>
         <strong>业务运营后台</strong>
       </div>
-      {onToggleCollapsed ? (
-        <Button
-          className="admin-sidebar-toggle"
-          variant="ghost"
-          size="icon"
-          type="button"
-          aria-label={collapsed ? '展开侧边栏' : '折叠侧边栏'}
-          onClick={onToggleCollapsed}
-        >
-          {collapsed ? (
-            <PanelLeftOpen aria-hidden="true" size={16} />
-          ) : (
-            <PanelLeftClose aria-hidden="true" size={16} />
-          )}
-        </Button>
-      ) : null}
       <nav className="admin-primary-nav" aria-label="管理业务域">
         {orderedAdminDomains(navigationPreferences).map((domain) => {
           const Icon = DOMAIN_ICONS[domain.id];

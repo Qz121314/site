@@ -1,4 +1,4 @@
-import { Menu, X } from 'lucide-react';
+import { Menu, PanelLeftClose, PanelLeftOpen, X } from 'lucide-react';
 import { useEffect, useRef, useState, type MouseEvent, type ReactNode } from 'react';
 import {
   getCatalogWorkspaceContext,
@@ -164,7 +164,6 @@ export function AdminShell({
           loggingOut={loggingOut}
           logoutDisabled={logoutDisabled}
           collapsed={sidebarCollapsed}
-          onToggleCollapsed={() => setSidebarCollapsed((current) => !current)}
         />
       </div>
 
@@ -180,6 +179,20 @@ export function AdminShell({
           <Menu aria-hidden="true" size={18} />
         </Button>
         <header className="admin-topbar">
+          <Button
+            className="admin-sidebar-toggle"
+            variant="ghost"
+            size="icon"
+            type="button"
+            aria-label={sidebarCollapsed ? '展开侧边栏' : '折叠侧边栏'}
+            onClick={() => setSidebarCollapsed((current) => !current)}
+          >
+            {sidebarCollapsed ? (
+              <PanelLeftOpen aria-hidden="true" size={17} />
+            ) : (
+              <PanelLeftClose aria-hidden="true" size={17} />
+            )}
+          </Button>
           <div className="admin-breadcrumb">
             <span>{context.eyebrow}</span>
             <span aria-hidden="true">/</span>
