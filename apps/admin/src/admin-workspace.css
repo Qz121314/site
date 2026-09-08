@@ -81,8 +81,8 @@
   flex: 0 0 auto;
   align-items: flex-start;
   justify-content: space-between;
-  gap: 24px;
-  padding: 24px clamp(20px, 3vw, 40px) 20px;
+  gap: 16px;
+  padding: 18px clamp(16px, 2.5vw, 32px) 16px;
   border-bottom: 1px solid #e8ecf1;
   background: #fff;
 }
@@ -90,7 +90,7 @@
 .admin-page-header-copy {
   display: grid;
   min-width: 0;
-  gap: 6px;
+  gap: 4px;
 }
 
 .admin-page-eyebrow {
@@ -122,7 +122,7 @@
   margin: 0;
   color: #697386;
   font-size: 0.82rem;
-  line-height: 1.55;
+  line-height: 1.45;
 }
 
 .admin-page-status {
@@ -141,7 +141,7 @@
 .admin-workspace-content {
   width: 100%;
   min-width: 0;
-  padding: 20px clamp(20px, 3vw, 40px) 40px;
+  padding: 16px clamp(16px, 2.5vw, 32px) 28px;
 }
 
 .admin-workspace--narrow .admin-workspace-content {
@@ -216,7 +216,7 @@
   .admin-page-header {
     display: grid;
     gap: 14px;
-    padding: 20px 16px 16px;
+    padding: 16px;
   }
 
   .admin-page-actions {
@@ -224,7 +224,7 @@
   }
 
   .admin-workspace-content {
-    padding: 18px 16px calc(32px + env(safe-area-inset-bottom));
+    padding: 14px 16px calc(24px + env(safe-area-inset-bottom));
   }
 }
 

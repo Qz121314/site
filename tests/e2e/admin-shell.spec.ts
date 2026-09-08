@@ -298,6 +298,41 @@ test('narrow viewport uses the accessible drawer without horizontal overflow', a
     .toBe(true);
 });
 
+test('long settings forms stay reachable inside the workspace scroll owner', async ({
+  page,
+}) => {
+  await installAdminFixture(page);
+  await page.setViewportSize({ width: 820, height: 500 });
+  await page.goto('/admin/#pwa');
+
+  await expect(page.getByRole('heading', { name: '应用安装' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: '安装提示' })).toBeVisible();
+
+  const scrollState = await page.evaluate(() => {
+    const workspace = document.querySelector<HTMLElement>('.admin-workspace-content');
+    if (!workspace) return null;
+    const workspaceOwnsScroll = workspace.scrollHeight > workspace.clientHeight;
+    if (workspaceOwnsScroll) workspace.scrollTop = workspace.scrollHeight;
+    else window.scrollTo(0, document.documentElement.scrollHeight);
+    return {
+      scrolls:
+        workspaceOwnsScroll || document.documentElement.scrollHeight > window.innerHeight,
+      reachedEnd: workspaceOwnsScroll
+        ? workspace.scrollTop + workspace.clientHeight >= workspace.scrollHeight
+        : window.scrollY + window.innerHeight >= document.documentElement.scrollHeight,
+      pageHasNoHorizontalOverflow:
+        document.documentElement.scrollWidth <= window.innerWidth,
+    };
+  });
+
+  expect(scrollState).toEqual({
+    scrolls: true,
+    reachedEnd: true,
+    pageHasNoHorizontalOverflow: true,
+  });
+  await expect(page.getByRole('button', { name: '保存 PWA 设置' })).toBeVisible();
+});
+
 test('Theme Studio keeps theme changes in a draft preview until explicitly saved', async ({
   page,
 }) => {
