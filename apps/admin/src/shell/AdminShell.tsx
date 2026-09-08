@@ -1,11 +1,5 @@
 import { Menu, X } from 'lucide-react';
-import {
-  useEffect,
-  useRef,
-  useState,
-  type MouseEvent,
-  type ReactNode,
-} from 'react';
+import { useEffect, useRef, useState, type MouseEvent, type ReactNode } from 'react';
 import {
   getCatalogWorkspaceContext,
   getAdminDomainForView,
@@ -149,9 +143,7 @@ export function AdminShell({
 
   function openNavigation() {
     drawerTriggerRef.current =
-      document.activeElement instanceof HTMLElement
-        ? document.activeElement
-        : null;
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
     setNavigationOpen(true);
   }
 
