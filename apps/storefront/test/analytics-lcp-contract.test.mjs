@@ -14,5 +14,8 @@ test('analytics keeps page-view emission separate from deferred tag loading', as
   assert.match(source, /window\.setTimeout/u);
   assert.match(source, /script\.async = true/u);
   assert.match(source, /script\.fetchPriority = 'low'/u);
+  assert.match(source, /GOOGLE_TAG_IDLE_TIMEOUT_MS = 3000/u);
+  assert.match(source, /pointerdown/u);
+  assert.match(source, /loadAfterInteraction/u);
   assert.doesNotMatch(source, /window\.addEventListener\('load'/u);
 });

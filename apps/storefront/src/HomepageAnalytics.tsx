@@ -9,7 +9,8 @@ type AnalyticsWindow = Window & {
 };
 
 const GOOGLE_TAG_SCRIPT_ID = 'storefront-ga4-script';
-const GOOGLE_TAG_IDLE_TIMEOUT_MS = 1000;
+const GOOGLE_TAG_IDLE_TIMEOUT_MS = 3000;
+const GOOGLE_TAG_INTERACTION_EVENTS = ['pointerdown', 'keydown', 'scroll'] as const;
 const initializedMeasurementIds = new Set<string>();
 let googleTagLoadScheduled = false;
 
@@ -41,14 +42,32 @@ function scheduleGoogleTagScript(measurementId: string) {
   googleTagLoadScheduled = true;
 
   const target = window as AnalyticsWindow;
-  if (typeof target.requestIdleCallback === 'function') {
-    target.requestIdleCallback(() => loadGoogleTagScript(measurementId), {
-      timeout: GOOGLE_TAG_IDLE_TIMEOUT_MS,
-    });
-    return;
+  let settled = false;
+  const cleanup = () => {
+    for (const event of GOOGLE_TAG_INTERACTION_EVENTS) {
+      window.removeEventListener(event, loadAfterInteraction);
+    }
+  };
+  const load = () => {
+    if (settled) return;
+    settled = true;
+    cleanup();
+    loadGoogleTagScript(measurementId);
+  };
+  function loadAfterInteraction() {
+    load();
+  }
+  for (const event of GOOGLE_TAG_INTERACTION_EVENTS) {
+    window.addEventListener(event, loadAfterInteraction, { once: true, passive: true });
   }
 
-  window.setTimeout(() => loadGoogleTagScript(measurementId), GOOGLE_TAG_IDLE_TIMEOUT_MS);
+  window.setTimeout(() => {
+    if (typeof target.requestIdleCallback === 'function') {
+      target.requestIdleCallback(load, { timeout: 1000 });
+      return;
+    }
+    load();
+  }, GOOGLE_TAG_IDLE_TIMEOUT_MS);
 }
 
 function ensureGoogleTag(measurementId: string) {
