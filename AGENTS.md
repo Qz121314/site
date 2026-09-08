@@ -75,6 +75,14 @@ PR status is tied to the **exact latest PR HEAD SHA**.
 
 Details: `docs/development/workflow.md`.
 
+## PR CI parallelism
+
+`pnpm verify` remains the canonical aggregate repository verification command for local and final validation. It does not require PR GitHub Actions to use one serial mega-job.
+
+When the dependency graph allows it, independent PR validation layers must be separate parallel jobs. Do not collapse independent PR checks into one serial `pnpm verify` job merely to execute the canonical command once.
+
+Parallelization must not weaken or skip required validation. Exact latest-head CI remains the final PR gate. Operational topology details: `docs/development/workflow.md`.
+
 ## Classifier-owned release
 
 `scripts/classify-cloudflare-changes.mjs` is the release-authority boundary. A `main` push does not authorize every Cloudflare remote operation.

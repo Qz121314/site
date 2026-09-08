@@ -42,6 +42,17 @@ test('AGENTS points to preflight, exact-head CI, and classifier-owned release', 
     assert.match(agents, new RegExp(doc.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')));
 });
 
+test('AGENTS preserves the PR CI parallelism contract', () => {
+  assert.match(agents, /canonical aggregate repository verification command/i);
+  assert.match(agents, /independent PR validation layers.*parallel jobs/i);
+  assert.match(
+    agents,
+    /Do not collapse independent PR checks.*serial `pnpm verify` job/i,
+  );
+  assert.match(agents, /Parallelization must not weaken or skip required validation/i);
+  assert.match(agents, /Exact latest-head CI remains the final PR gate/i);
+});
+
 test('development docs have one owned structure', () => {
   for (const doc of requiredDocs)
     assert.equal(existsSync(doc), true, `${doc} must exist`);

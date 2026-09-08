@@ -134,10 +134,22 @@ assert.ok(
   'fast pre-push verification must retain repository guardrails and type safety',
 );
 
-assert.match(
+for (const requiredLayer of [
+  'pnpm preflight',
+  'pnpm db:migrate:local',
+  'pnpm test',
+  'pnpm build',
+  'pnpm cf:check',
+]) {
+  assert.ok(
+    prFullVerifyWorkflow.includes(requiredLayer),
+    `PR full verification must retain its required layer: ${requiredLayer}`,
+  );
+}
+assert.doesNotMatch(
   prFullVerifyWorkflow,
   /run:\s*pnpm\s+verify/u,
-  'PR full verification must execute the canonical local-first verification gate',
+  'PR full verification must not collapse independent layers into a verify mega-job',
 );
 assert.match(
   storefrontPackageJson.scripts?.build ?? '',
