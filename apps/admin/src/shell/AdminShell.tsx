@@ -1,5 +1,11 @@
 import { Menu, X } from 'lucide-react';
-import { useEffect, useRef, useState, type MouseEvent, type ReactNode } from 'react';
+import {
+  useEffect,
+  useRef,
+  useState,
+  type MouseEvent,
+  type ReactNode,
+} from 'react';
 import {
   getCatalogWorkspaceContext,
   getAdminDomainForView,
@@ -143,7 +149,9 @@ export function AdminShell({
 
   function openNavigation() {
     drawerTriggerRef.current =
-      document.activeElement instanceof HTMLElement ? document.activeElement : null;
+      document.activeElement instanceof HTMLElement
+        ? document.activeElement
+        : null;
     setNavigationOpen(true);
   }
 
@@ -202,7 +210,9 @@ export function AdminShell({
             ) : null}
             {hasWorkspaceToolbar ? (
               <div className="admin-workspace-toolbar" aria-label="当前工作区操作">
-                {pageStatus ? <div className="admin-workspace-status">{pageStatus}</div> : null}
+                {pageStatus ? (
+                  <div className="admin-workspace-status">{pageStatus}</div>
+                ) : null}
                 <div className="admin-workspace-actions">
                   {pageSecondaryAction}
                   {pagePrimaryAction}
