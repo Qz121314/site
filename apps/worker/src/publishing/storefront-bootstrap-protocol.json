@@ -1,0 +1,10 @@
+{
+  "currentSchemaVersion": 4,
+  "minReadableSchemaVersion": 4,
+  "capabilities": [
+    "published-runtime-config",
+    "lightweight-message-articles",
+    "sections-index",
+    "home-index"
+  ]
+}

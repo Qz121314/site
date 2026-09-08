@@ -67,6 +67,23 @@ test('R2 management and probes are R2-config gated', () => {
   }
 });
 
+test('published bootstrap compatibility is checked before public runtime deployment', () => {
+  const gate = namedStep(mainWorkflow, 'Verify published bootstrap compatibility');
+  expectCondition(gate, 'public_runtime_changed', 'deploy_required', 'force_deploy');
+  assert.match(
+    gate,
+    /\(\(steps\.changes\.outputs\.public_runtime_changed == 'true' && steps\.changes\.outputs\.deploy_required == 'true'\) \|\| steps\.manual\.outputs\.force_deploy == 'true'\)/,
+  );
+  assert.match(gate, /check-storefront-bootstrap-compatibility\.mjs/);
+  assert.match(gate, /R2_BUCKET_NAME:\s*service-catalog-site-assets/);
+  assert.doesNotMatch(gate, /wrangler\s+d1|r2\s+object\s+(?:put|delete)|cors\s+set/i);
+  assert.ok(
+    mainWorkflow.indexOf('- name: Verify published bootstrap compatibility') <
+      mainWorkflow.indexOf('- name: Deploy business platform Worker'),
+    'bootstrap compatibility must be checked before Worker deploy',
+  );
+});
+
 test('deploy and production acceptance are change-aware', () => {
   expectCondition(
     namedStep(mainWorkflow, 'Deploy business platform Worker'),

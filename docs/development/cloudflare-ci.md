@@ -12,6 +12,7 @@ Production Cloudflare resources are release dependencies, not general CI fixture
 6. Deep production HTTP/browser acceptance is change-classified rather than unconditional.
 7. CI does not replace local formatting/lint/type/targeted-test gates.
 8. Safety checks are moved to the correct environment and trigger; they are not deleted merely to save CI time.
+9. A public Worker runtime change or manual `force_deploy` must prove that the currently published Storefront bootstrap schema is inside the candidate runtime's readable protocol range before deployment.
 
 ## Classifier
 
@@ -44,6 +45,17 @@ Shared runtime packages are classified conservatively against every built applic
 
 `package.json` and `pnpm-lock.yaml` are content-classified rather than path-classified. Runtime dependency changes and build/deploy script changes require a deploy. Root development dependencies, non-production scripts, and lockfile changes limited to importer `devDependencies` do not. When source content cannot be inspected, the classifier remains conservative and treats the release input as deploy-impacting.
 
+## Published bootstrap compatibility gate
+
+`apps/worker/src/publishing/storefront-bootstrap-protocol.json` is the single release-owned bootstrap schema range. The publisher writes `currentSchemaVersion`; the runtime may read only the bounded range from `minReadableSchemaVersion` through `currentSchemaVersion`. The range must never exceed N/N-1.
+
+Before a classified `public_runtime_changed` Worker deployment or any manual `force_deploy`, `scripts/check-storefront-bootstrap-compatibility.mjs` performs exactly two read-only production R2 object reads:
+
+1. `public/current.json` to resolve the active pointer version;
+2. `public/bootstrap/<pointerVersion>/bootstrap.json` to read its actual schema version.
+
+The deployment is blocked when the active bootstrap schema falls outside the candidate runtime's readable range. This gate does not query D1, does not mutate R2, and does not run in PR validation. Breaking schema rollouts therefore use a bounded overlap: deploy a reader that accepts N-1/N, publish N, then retire N-1 only after production points at N. Additive optional fields/capabilities should not bump the schema.
+
 ## Production D1 budget
 
 CI/deploy may read production D1 only when the release action requires it:
@@ -57,6 +69,8 @@ Do not use production D1 as a PR test database. Do not scan business tables for 
 
 `config/r2-public-cors.json` and the repository R2 validation helper are R2 release inputs. Only relevant changes (or an explicit operator override) may run custom-domain checks, `cors set/list`, or direct-media probes. `cors set --force` is never an unconditional main-push action.
 
+The bootstrap compatibility gate is the narrow exception for public runtime releases and manual forced Worker deployments: it is read-only, limited to the two active publication objects described above, and exists to prevent an incompatible Worker from reaching production. It does not authorize any R2 configuration change, media probe, list operation, write, or delete.
+
 ## No-op classes
 
 Docs-only, tests-only, repository contract changes, workflow-only changes, and pure development tooling do not independently authorize production D1/R2/deploy/browser work. They still receive their normal CI quality checks.
@@ -65,4 +79,4 @@ When validating a no-op release path on `main`, use a commit limited to these cl
 
 ## Manual override
 
-`workflow_dispatch` exposes explicit `force_deploy`, `force_cloudflare_validation`, and `force_d1_migrations` inputs. The generic validation override cannot apply migrations; that requires the dedicated migration override. Remote actions remain restricted to the `main` ref. Defaults are false.
+`workflow_dispatch` exposes explicit `force_deploy`, `force_cloudflare_validation`, and `force_d1_migrations` inputs. The generic validation override cannot apply migrations; that requires the dedicated migration override. A manual `force_deploy` still runs the published bootstrap compatibility gate before the Worker can deploy. Remote actions remain restricted to the `main` ref. Defaults are false.

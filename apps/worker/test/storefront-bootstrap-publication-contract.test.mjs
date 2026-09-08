@@ -10,6 +10,14 @@ const storefrontPublisherUrl = new URL(
   '../src/publishing/storefront-publisher.ts',
   import.meta.url,
 );
+const bootstrapSnapshotUrl = new URL(
+  '../src/publishing/storefront-bootstrap-snapshot.ts',
+  import.meta.url,
+);
+const bootstrapProtocolUrl = new URL(
+  '../src/publishing/storefront-bootstrap-protocol.json',
+  import.meta.url,
+);
 
 test('publish and rollback materialize bootstrap artifacts before committing the public pointer', async () => {
   const [modularPublisher, storefrontPublisher] = await Promise.all([
@@ -44,4 +52,25 @@ test('publish and rollback materialize bootstrap artifacts before committing the
     storefrontPublisher,
     /rollbackCore\([\s\S]*?\(pointer\) => refreshPublishedBootstrap\(bucket, pointer\)/u,
   );
+});
+
+test('publisher writes the repository-owned current bootstrap protocol', async () => {
+  const [bootstrapSnapshot, protocolBody] = await Promise.all([
+    readFile(bootstrapSnapshotUrl, 'utf8'),
+    readFile(bootstrapProtocolUrl, 'utf8'),
+  ]);
+  const protocol = JSON.parse(protocolBody);
+
+  assert.equal(protocol.currentSchemaVersion, 4);
+  assert.equal(protocol.minReadableSchemaVersion, 4);
+  assert.ok(protocol.currentSchemaVersion - protocol.minReadableSchemaVersion <= 1);
+  assert.match(
+    bootstrapSnapshot,
+    /schemaVersion:\s*STOREFRONT_BOOTSTRAP_SCHEMA_CURRENT/u,
+  );
+  assert.match(
+    bootstrapSnapshot,
+    /protocol:\s*storefrontBootstrapProtocolDescriptor\(\)/u,
+  );
+  assert.doesNotMatch(bootstrapSnapshot, /const BOOTSTRAP_SCHEMA_VERSION\s*=/u);
 });
