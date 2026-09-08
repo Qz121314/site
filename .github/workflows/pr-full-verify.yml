@@ -35,8 +35,11 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Development and quality preflight
-        run: pnpm preflight
+      - name: Print exact Prettier output for Q3 files
+        run: |
+          pnpm exec prettier --write apps/worker/src/publishing/storefront-bootstrap-protocol.ts scripts/check-storefront-bootstrap-compatibility.mjs
+          git diff -- apps/worker/src/publishing/storefront-bootstrap-protocol.ts scripts/check-storefront-bootstrap-compatibility.mjs
+          exit 1
 
       - name: Validate D1 migrations locally
         run: pnpm db:migrate:local
