@@ -105,6 +105,56 @@ test('responsive shell avoids clipping and page chrome', async () => {
   assert.doesNotMatch(combined, /!important/);
 });
 
+test('P8A owns one blue Admin palette and compact desktop geometry', async () => {
+  const adminManifest = await source('../src/admin.css');
+  const foundationCss = await source('../src/admin-foundation.css');
+  const uiSystemCss = await source('../src/admin-ui-system.css');
+  const stylesCss = await source('../src/styles.css');
+  const shellCss = await source('../src/admin-shell.css');
+  const sidebarCss = await source('../src/admin-sidebar.css');
+  const workspaceCss = await source('../src/admin-workspace.css');
+  const settingsWorkspaceCss = await source('../src/settings/settings-workspace.css');
+  const themeCss = await source('../src/theme-center.css');
+
+  assert.match(foundationCss, /--brand:\s*#2563eb/);
+  assert.match(foundationCss, /--brand-dark:\s*#1d4ed8/);
+  assert.match(foundationCss, /--brand-soft:\s*#eff6ff/);
+  assert.match(foundationCss, /--success:/);
+  assert.match(foundationCss, /--warning:/);
+  assert.match(foundationCss, /--danger:/);
+  assert.match(foundationCss, /--info:/);
+
+  const localCssImports = [
+    ...adminManifest.matchAll(/@import '(\.[^']+\.css)'/g),
+  ].map((match) => match[1]);
+  const manifestUrl = new URL('../src/admin.css', import.meta.url);
+  const localCss = await Promise.all(
+    localCssImports.map((relativePath) => readFile(new URL(relativePath, manifestUrl), 'utf8')),
+  );
+  const legacyOrange = /#ff5a1f|#e84b12|#ff9a76|rgb\(255\s+90\s+31\s*\//i;
+  assert.doesNotMatch(localCss.join('\n'), legacyOrange);
+
+  assert.match(shellCss, /grid-template-columns:\s*172px 180px minmax\(0, 1fr\)/);
+  assert.match(shellCss, /grid-template-columns:\s*68px 180px minmax\(0, 1fr\)/);
+  assert.match(sidebarCss, /\.admin-primary-link\.ui-button[\s\S]*min-height:\s*36px/);
+  assert.match(sidebarCss, /\.admin-secondary-link\.ui-button[\s\S]*min-height:\s*34px/);
+  assert.match(uiSystemCss, /--admin-control-h:\s*34px/);
+  assert.match(uiSystemCss, /--admin-command-h:\s*40px/);
+  assert.match(uiSystemCss, /--admin-row-h:\s*42px/);
+
+  assert.match(
+    workspaceCss,
+    /\.admin-workspace--wide \.admin-workspace-content,[\s\S]*\.admin-workspace--split-pane \.admin-workspace-content[\s\S]*max-width:\s*none/,
+  );
+  assert.doesNotMatch(settingsWorkspaceCss, /max-width:/);
+  assert.doesNotMatch(themeCss, /100dvh\s*-\s*148px/);
+  assert.match(themeCss, /\.theme-studio[\s\S]*height:\s*100%/);
+
+  assert.doesNotMatch(stylesCss, /\.admin-header|\.environment-badge|\.admin-main/);
+  assert.doesNotMatch(foundationCss, /\.admin-header|\.admin-main/);
+  assert.doesNotMatch(uiSystemCss, /!important/);
+});
+
 test('publish, logout, and session state use local ownership', async () => {
   const dashboard = await source('../src/Dashboard.tsx');
   const shell = await source('../src/shell/AdminShell.tsx');
