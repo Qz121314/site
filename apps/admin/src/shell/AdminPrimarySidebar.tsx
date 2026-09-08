@@ -2,6 +2,7 @@ import {
   Boxes,
   FileText,
   Gauge,
+  LogOut,
   Megaphone,
   MessageSquare,
   PanelTop,
@@ -36,6 +37,9 @@ type AdminPrimarySidebarProps = {
   onNavigate: (view: AdminView) => void;
   onDomainSelected?: () => void;
   navigationPreferences: AdminNavigationPreferences;
+  onLogout: () => void;
+  loggingOut: boolean;
+  logoutDisabled?: boolean;
 };
 
 export function AdminPrimarySidebar({
@@ -44,6 +48,9 @@ export function AdminPrimarySidebar({
   onNavigate,
   onDomainSelected,
   navigationPreferences,
+  onLogout,
+  loggingOut,
+  logoutDisabled = false,
 }: AdminPrimarySidebarProps) {
   return (
     <aside className="admin-primary-sidebar" aria-label="后台一级导航">
@@ -77,6 +84,18 @@ export function AdminPrimarySidebar({
           );
         })}
       </nav>
+      <div className="admin-primary-account">
+        <Button
+          className="admin-primary-logout"
+          variant="ghost"
+          type="button"
+          onClick={onLogout}
+          disabled={loggingOut || logoutDisabled}
+        >
+          <LogOut aria-hidden="true" size={17} strokeWidth={1.8} />
+          <span>{loggingOut ? '正在退出…' : '退出登录'}</span>
+        </Button>
+      </div>
     </aside>
   );
 }
