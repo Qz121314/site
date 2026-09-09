@@ -249,6 +249,15 @@
 .theme-preview-toolbar {
   justify-content: center;
 }
+.theme-preview-toolbar .ui-segmented-control {
+  display: inline-flex;
+  width: auto;
+  flex-direction: row;
+  flex-wrap: nowrap;
+}
+.theme-preview-toolbar .ui-segmented-item.ui-button {
+  width: auto;
+}
 .theme-studio-pane-heading > div {
   display: grid;
   min-width: 0;
