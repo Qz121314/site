@@ -782,13 +782,13 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
           <div className="media-center-command-dock">
             <div className="media-folder-create-bar">
               <div>
-                <strong>文件夹</strong>
-                <small>用于整理素材</small>
+                <strong>分组</strong>
+                <small>整理素材</small>
               </div>
               <input
                 value={newFolderName}
                 maxLength={80}
-                placeholder="新建文件夹"
+                placeholder="新建分组"
                 onChange={(event) => setNewFolderName(event.target.value)}
               />
               <button
@@ -797,7 +797,7 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
                 disabled={!newFolderName.trim() || folderWorking || uploadQueue.running}
                 onClick={() => void handleCreateFolder()}
               >
-                新建
+                新建分组
               </button>
               {activeFolder ? (
                 <button
