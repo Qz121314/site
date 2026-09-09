@@ -141,8 +141,8 @@
 
 .media-center-command-bar .ui-management-toolbar-controls {
   display: grid;
-  grid-template-columns: auto minmax(122px, 150px) minmax(112px, 138px) auto;
-  gap: 6px;
+  grid-template-columns: auto minmax(122px, 150px) minmax(112px, 138px) auto auto;
+  gap: 5px;
   align-items: center;
 }
 
@@ -175,9 +175,14 @@
   --admin-button-font-size: 0.67rem;
 }
 
-.media-center-command-bar .ui-button:last-child {
+.media-center-command-bar .ui-button[aria-label='刷新素材'] {
   width: 32px;
   padding: 0;
+}
+
+.media-center-command-layout-toggle {
+  justify-self: start;
+  margin-left: 0;
 }
 
 .media-center-page .media-folder-create-bar,
@@ -1342,7 +1347,7 @@
   }
 
   .media-center-command-bar .ui-management-toolbar-controls {
-    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto auto;
   }
 
   .media-center-command-bar .ui-button:first-child {

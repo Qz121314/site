@@ -851,6 +851,30 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
               >
                 <RefreshCw aria-hidden="true" size={15} />
               </Button>
+              <div
+                className="media-center-view-toggle media-center-command-layout-toggle"
+                role="group"
+                aria-label="素材排列方式"
+              >
+                <button
+                  type="button"
+                  className={mediaLayout === 'grid' ? 'is-active' : ''}
+                  aria-label="网格排列"
+                  aria-pressed={mediaLayout === 'grid'}
+                  onClick={() => setMediaLayout('grid')}
+                >
+                  <Grid2X2 aria-hidden="true" size={14} />
+                </button>
+                <button
+                  type="button"
+                  className={mediaLayout === 'list' ? 'is-active' : ''}
+                  aria-label="列表排列"
+                  aria-pressed={mediaLayout === 'list'}
+                  onClick={() => setMediaLayout('list')}
+                >
+                  <List aria-hidden="true" size={14} />
+                </button>
+              </div>
             </AdminToolbar>
 
             {mediaError ? (
@@ -933,30 +957,6 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
                   ? ` · 第 ${mediaPageIndex + 1} / ${mediaTotalPages} 页`
                   : ''}
               </span>
-            </div>
-            <div
-              className="media-center-view-toggle"
-              role="group"
-              aria-label="素材排列方式"
-            >
-              <button
-                type="button"
-                className={mediaLayout === 'grid' ? 'is-active' : ''}
-                aria-label="网格排列"
-                aria-pressed={mediaLayout === 'grid'}
-                onClick={() => setMediaLayout('grid')}
-              >
-                <Grid2X2 aria-hidden="true" size={14} />
-              </button>
-              <button
-                type="button"
-                className={mediaLayout === 'list' ? 'is-active' : ''}
-                aria-label="列表排列"
-                aria-pressed={mediaLayout === 'list'}
-                onClick={() => setMediaLayout('list')}
-              >
-                <List aria-hidden="true" size={14} />
-              </button>
             </div>
           </div>
 
