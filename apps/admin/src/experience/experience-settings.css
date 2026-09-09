@@ -11,6 +11,33 @@
   gap: 10px;
 }
 
+.home-experience-commandbar {
+  display: flex;
+  min-height: 44px;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 7px;
+  border: 1px solid var(--admin-border, #dfe4ea);
+  border-radius: var(--admin-radius-md, 10px);
+  background: var(--admin-surface, #fff);
+  box-shadow: var(--admin-shadow-card, 0 1px 2px rgb(16 24 40 / 3%));
+}
+
+.home-experience-commandbar .ui-segmented-control {
+  min-width: 0;
+  flex: 1 1 auto;
+}
+
+.home-experience-commandbar .settings-workspace-status {
+  margin-left: auto;
+  white-space: nowrap;
+}
+
+.home-experience-commandbar .primary-button {
+  min-height: 32px;
+  white-space: nowrap;
+}
+
 .home-experience-workspace .hero-settings-heading,
 .home-experience-workspace .admin-settings-section-heading {
   align-items: center;
@@ -59,6 +86,10 @@
   gap: 8px;
 }
 
+.home-experience-workspace .admin-home-layout-grid.is-single-panel {
+  grid-template-columns: minmax(0, 1fr);
+}
+
 .home-experience-workspace .admin-home-layout-group {
   gap: 8px;
   padding: 12px;
@@ -94,6 +125,21 @@
 
 .home-experience-workspace .admin-home-layout-add {
   min-height: 32px;
+}
+
+@media (max-width: 720px) {
+  .home-experience-commandbar {
+    align-items: stretch;
+    flex-wrap: wrap;
+  }
+
+  .home-experience-commandbar .ui-segmented-control {
+    width: 100%;
+  }
+
+  .home-experience-commandbar .settings-workspace-status {
+    margin-left: 0;
+  }
 }
 
 .home-section-limit-field {
