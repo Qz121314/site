@@ -1,5 +1,99 @@
 .home-experience-workspace .admin-settings-section {
-  border-radius: 12px;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--admin-border, #dfe4ea);
+  border-radius: var(--admin-radius-md, 10px);
+  background: var(--admin-surface, #fff);
+  box-shadow: var(--admin-shadow-card, 0 1px 2px rgb(16 24 40 / 3%));
+}
+
+.home-experience-workspace {
+  gap: 10px;
+}
+
+.home-experience-workspace .hero-settings-heading,
+.home-experience-workspace .admin-settings-section-heading {
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--admin-border, #e2e6ec);
+}
+
+.home-experience-workspace .hero-settings-heading h2,
+.home-experience-workspace .admin-settings-section-heading h2 {
+  margin: 0;
+  color: var(--admin-text, #172033);
+  font-size: 0.98rem;
+  font-weight: 780;
+  letter-spacing: -0.015em;
+}
+
+.home-experience-workspace .hero-settings-heading p,
+.home-experience-workspace .admin-settings-section-description {
+  margin: 3px 0 0;
+  color: var(--admin-text-muted, #667085);
+  font-size: 0.72rem;
+  line-height: 1.45;
+}
+
+.home-experience-workspace .hero-settings-empty,
+.home-experience-workspace .admin-home-layout-empty {
+  min-height: 104px;
+  padding: 14px;
+  border-radius: var(--admin-radius-md, 10px);
+  background: var(--admin-surface-subtle, #f8f9fb);
+}
+
+.home-experience-workspace .hero-settings-note {
+  margin: 0;
+  padding: 8px 10px;
+  border: 1px solid #ffd6e5;
+  border-radius: var(--admin-radius-sm, 8px);
+  background: var(--admin-brand-soft, #fff0f6);
+  color: var(--admin-text-muted, #667085);
+  font-size: 0.7rem;
+  line-height: 1.45;
+}
+
+.home-experience-workspace .admin-home-layout-grid {
+  gap: 8px;
+}
+
+.home-experience-workspace .admin-home-layout-group {
+  gap: 8px;
+  padding: 12px;
+  border-color: var(--admin-border, #e2e6ec);
+  border-radius: var(--admin-radius-md, 10px);
+  background: var(--admin-surface-subtle, #f8f9fb);
+  box-shadow: none;
+}
+
+.home-experience-workspace .admin-home-layout-heading {
+  align-items: center;
+  gap: 8px;
+  padding-bottom: 7px;
+  border-bottom: 1px solid var(--admin-border, #e2e6ec);
+}
+
+.home-experience-workspace .admin-home-layout-heading strong {
+  font-size: 0.84rem;
+}
+
+.home-experience-workspace .admin-home-layout-heading p {
+  margin-top: 2px;
+  font-size: 0.68rem;
+  line-height: 1.4;
+}
+
+.home-experience-workspace .admin-home-layout-heading > span {
+  padding: 3px 7px;
+  color: var(--admin-brand, #ec1767);
+  background: var(--admin-brand-soft, #fff0f6);
+  font-size: 0.66rem;
+}
+
+.home-experience-workspace .admin-home-layout-add {
+  min-height: 32px;
 }
 
 .home-section-limit-field {

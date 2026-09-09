@@ -158,7 +158,7 @@ export function HomeLayoutSettingsSection({
 
   return (
     <section
-      className="admin-settings-section"
+      className="admin-settings-section home-layout-settings-section"
       aria-labelledby="settings-home-layout-title"
     >
       <div className="admin-settings-section-heading">
