@@ -418,7 +418,22 @@ export function MessagesArticlesSection({
             <Plus aria-hidden="true" size={16} />
             添加卡片
           </Button>
+          <Button loading={saving} disabled={!dirty} onClick={() => void save()}>
+            {saving ? '保存中' : saveError ? '重试保存' : '保存配置'}
+          </Button>
         </div>
+      </div>
+
+      <div className="messages-articles-statusline" data-dirty={dirty ? 'true' : 'false'}>
+        <strong>
+          {dirty ? '有未保存修改' : saved ? '配置已保存' : '当前配置已同步'}
+        </strong>
+        <span>
+          {dirty
+            ? '排序、背景、添加或移除只存在于当前草稿，保存后才会生效。'
+            : 'placement 是否存在即表示是否展示，不使用额外 enabled 开关。'}
+        </span>
+        {saveError ? <em role="alert">{saveError}</em> : null}
       </div>
 
       {loadError ? (
@@ -552,23 +567,6 @@ export function MessagesArticlesSection({
           })}
         </div>
       )}
-
-      <div className="messages-articles-savebar" data-dirty={dirty ? 'true' : 'false'}>
-        <div>
-          <strong>
-            {dirty ? '有未保存修改' : saved ? '配置已保存' : '当前配置已同步'}
-          </strong>
-          <span>
-            {dirty
-              ? '排序、背景、添加或移除只存在于当前草稿，保存后才会生效。'
-              : 'placement 是否存在即表示是否展示，不使用额外 enabled 开关。'}
-          </span>
-          {saveError ? <em role="alert">{saveError}</em> : null}
-        </div>
-        <Button loading={saving} disabled={!dirty} onClick={() => void save()}>
-          {saving ? '保存中' : saveError ? '重试保存' : '保存配置'}
-        </Button>
-      </div>
 
       <AddMessageCardDialog
         open={cardOpen}

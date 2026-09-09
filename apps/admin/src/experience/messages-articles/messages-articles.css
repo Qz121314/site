@@ -141,65 +141,44 @@
   text-align: center;
 }
 
-.messages-articles-savebar {
-  position: sticky;
-  bottom: 8px;
-  z-index: 4;
+.messages-articles-statusline {
   display: flex;
-  margin: 2px -2px -2px;
-  padding: 10px 2px 0;
   align-items: center;
-  justify-content: space-between;
+  flex-wrap: wrap;
   gap: 12px;
-  border-top: 1px solid var(--admin-border, #dce3ec);
-  background: rgb(255 255 255 / 94%);
-  backdrop-filter: blur(8px);
+  min-height: 22px;
+  padding: 0 2px;
 }
 
-.messages-articles-savebar[data-dirty='true'] {
-  border-top-color: color-mix(
-    in srgb,
-    var(--admin-brand, #ec1767) 38%,
-    var(--admin-border, #dce3ec)
-  );
+.messages-articles-statusline[data-dirty='true'] {
+  color: var(--admin-brand, #ec1767);
 }
 
-.messages-articles-savebar > div {
-  display: grid;
-  gap: 2px;
-}
-
-.messages-articles-savebar strong {
+.messages-articles-statusline > strong {
   color: var(--admin-text, #172033);
-  font-size: 12px;
+  font-size: 11px;
 }
 
-.messages-articles-savebar span {
+.messages-articles-statusline > span {
   color: var(--admin-text-muted, #667085);
   font-size: 10px;
 }
 
-.messages-articles-savebar .ui-button {
-  min-height: 32px;
-  white-space: nowrap;
+.messages-articles-statusline > em {
+  margin-left: auto;
+  color: #b42318;
+  font-size: 10px;
+  font-style: normal;
 }
 
-.messages-articles-savebar .ui-button--primary {
-  min-width: 84px;
-}
-
-.messages-articles-savebar .ui-button:disabled {
+.messages-articles-toolbar .ui-button:last-child:disabled {
   border-color: var(--admin-border, #dce3ec);
   color: var(--admin-text-subtle, #8a94a6);
   background: var(--admin-surface-subtle, #f8fafc);
 }
 
-.messages-articles-savebar em {
-  margin-top: 3px;
-  color: #b42318;
-  font-size: 11px;
-  font-style: normal;
-}
+/* The save action lives in the heading toolbar; long card lists never move
+ * the primary action away. */
 
 .messages-card-config {
   display: grid;
@@ -458,8 +437,7 @@
 }
 
 @media (max-width: 720px) {
-  .messages-articles-heading,
-  .messages-articles-savebar {
+  .messages-articles-heading {
     align-items: stretch;
     flex-direction: column;
   }
@@ -472,8 +450,7 @@
     flex: 1 1 auto;
   }
 
-  .messages-articles-toolbar .ui-button,
-  .messages-articles-savebar .ui-button {
+  .messages-articles-toolbar .ui-button {
     min-height: 44px;
   }
 
@@ -511,11 +488,6 @@
   .messages-articles-background-actions .ui-button {
     min-width: 44px;
     min-height: 44px;
-  }
-
-  .messages-articles-savebar {
-    position: static;
-    bottom: auto;
   }
 
   .messages-card-config {

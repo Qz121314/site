@@ -291,7 +291,7 @@ test('Messages Articles adopts shared Input, AdminStatusBadge, Lucide Check and 
   assert.doesNotMatch(source, /✓/);
   assert.doesNotMatch(source, /import ['"]\.\/messages-articles\.css['"]/);
   assert.match(adminCss, /experience\/messages-articles\/messages-articles\.css/);
-  assert.doesNotMatch(css, /\.messages-articles-status/);
+  assert.match(css, /\.messages-articles-statusline/);
   assert.doesNotMatch(
     css,
     /\.messages-articles-media-grid|\.messages-articles-media-card/,
