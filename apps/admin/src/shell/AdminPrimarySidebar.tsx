@@ -34,6 +34,10 @@ const DOMAIN_ICONS: Record<AdminDomain, LucideIcon> = {
   system: Settings2,
 };
 
+const DEFAULT_PWA_ICON_URL = import.meta.env.DEV
+  ? 'https://www.erosdoor.com/api/public/pwa/icon/192'
+  : '/api/public/pwa/icon/192';
+
 type AdminPrimarySidebarProps = {
   activeDomain: AdminDomain;
   activeView: AdminView;
@@ -70,17 +74,17 @@ export function AdminPrimarySidebar({
     >
       <div className="admin-brand">
         <span>
-          {pwaIconAssetId ? (
-            <img
-              src={brandingAssetPreviewUrl(pwaIconAssetId)}
-              alt=""
-              onError={(event) => {
-                event.currentTarget.src = '/api/public/pwa/icon/192';
-              }}
-            />
-          ) : (
-            'SP'
-          )}
+          <img
+            src={
+              pwaIconAssetId
+                ? brandingAssetPreviewUrl(pwaIconAssetId)
+                : DEFAULT_PWA_ICON_URL
+            }
+            alt=""
+            onError={(event) => {
+              event.currentTarget.style.display = 'none';
+            }}
+          />
         </span>
         <strong>业务运营后台</strong>
       </div>
