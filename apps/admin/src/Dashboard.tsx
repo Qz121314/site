@@ -177,7 +177,7 @@ function DashboardLauncher({
   const entries = [
     ['首页', '管理首页布局', 'home', PanelTop],
     ['导航', '管理 Storefront 导航', 'navigation', LayoutDashboard],
-    ['主题中心', '管理视觉主题配置', 'theme', PenLine],
+    ['视觉系统', '管理前端主题与组件样式', 'theme', PenLine],
     ['文章中心', '管理 Markdown 内容', 'faq', FileText],
     ['素材库', '管理上传素材与文件夹', 'assets', Image],
     ['Messages', '会话列表卡片配置', 'messages', MessageSquare],

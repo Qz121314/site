@@ -16,6 +16,7 @@ import {
   type ResolvedTheme,
   type ThemeKey,
   type ThemePreset,
+  type ThemeVisualOverrides,
 } from './theme-center/api';
 
 type ThemeCenterViewProps = {
@@ -29,18 +30,49 @@ const FONT_PACK_LABELS = {
   technical: 'Technical Sans',
 } as const;
 const MOTION_LABELS = { restrained: '克制', gentle: '柔和', active: '活跃' } as const;
-const READ_ONLY_METADATA = [
-  [
-    'Color Mode',
-    (theme: ThemePreset) => (theme.colorScheme === 'dark' ? 'Dark' : 'Light'),
+const VISUAL_RULE_OPTIONS = {
+  density: [
+    ['compact', '紧凑'],
+    ['standard', '标准'],
+    ['comfortable', '舒展'],
   ],
-  ['Font Pack', (theme: ThemePreset) => FONT_PACK_LABELS[theme.recipe.fontPack]],
-  ['Button Style', (theme: ThemePreset) => theme.recipe.buttonStyle],
-  ['Media Style', (theme: ThemePreset) => theme.recipe.mediaStyle],
-  ['Motion Style', (theme: ThemePreset) => MOTION_LABELS[theme.recipe.motionStyle]],
-  ['Navigation Style', (theme: ThemePreset) => theme.recipe.navigationStyle],
-  ['Density', (theme: ThemePreset) => theme.density],
-] as const;
+  fontPack: [
+    ['modern', '现代无衬线'],
+    ['editorial', '柔和编辑'],
+    ['compact', '紧凑界面'],
+    ['technical', '技术感'],
+  ],
+  buttonStyle: [
+    ['refined', '精致'],
+    ['minimal', '极简'],
+    ['soft-pill', '柔和圆角'],
+  ],
+  mediaStyle: [
+    ['precise', '规整'],
+    ['soft', '柔和'],
+    ['editorial', '编辑感'],
+  ],
+  motionStyle: [
+    ['restrained', '克制'],
+    ['gentle', '柔和'],
+    ['active', '活跃'],
+  ],
+  navigationStyle: [
+    ['quiet', '安静'],
+    ['tinted', '轻着色'],
+    ['solid', '实色'],
+  ],
+} as const;
+function visualOverridesFor(theme: ThemePreset): Required<ThemeVisualOverrides> {
+  return {
+    density: theme.density,
+    fontPack: theme.recipe.fontPack,
+    buttonStyle: theme.recipe.buttonStyle,
+    mediaStyle: theme.recipe.mediaStyle,
+    motionStyle: theme.recipe.motionStyle,
+    navigationStyle: theme.recipe.navigationStyle,
+  };
+}
 function isSessionError(error: unknown) {
   return (
     error instanceof AdminApiError &&
@@ -76,6 +108,14 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
   const [importedDraft, setImportedDraft] = useState<
     ImportedThemeDefinition | undefined
   >();
+  const [visualOverrides, setVisualOverrides] = useState<Required<ThemeVisualOverrides>>({
+    density: 'standard',
+    fontPack: 'modern',
+    buttonStyle: 'refined',
+    mediaStyle: 'soft',
+    motionStyle: 'restrained',
+    navigationStyle: 'quiet',
+  });
   const [viewport, setViewport] = useState<'desktop' | 'mobile'>('desktop');
   const [previewRevision, setPreviewRevision] = useState(0);
   const [libraryOpen, setLibraryOpen] = useState(false);
@@ -113,7 +153,9 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
       accent.trim().toLowerCase() !== (currentTheme.overrides.accent ?? '') ||
       textColor.trim().toLowerCase() !== (currentTheme.overrides.textColor ?? '') ||
       JSON.stringify(importedDraft ?? null) !==
-        JSON.stringify(currentTheme.overrides.imported ?? null)),
+        JSON.stringify(currentTheme.overrides.imported ?? null) ||
+      JSON.stringify(visualOverrides) !==
+        JSON.stringify(visualOverridesFor(currentTheme))),
   );
   useAdminDirtySource('theme-center', 'Theme Studio', themeIsDirty);
   const loadThemeCenter = useCallback(async () => {
@@ -127,6 +169,7 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
       setAccent(data.theme.overrides.accent ?? '');
       setTextColor(data.theme.overrides.textColor ?? '');
       setImportedDraft(data.theme.overrides.imported);
+      setVisualOverrides(visualOverridesFor(data.theme));
     } catch (error) {
       if (isSessionError(error)) {
         onSessionExpired();
@@ -149,6 +192,7 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
     setAccent('');
     setTextColor('');
     setImportedDraft(undefined);
+    setVisualOverrides(visualOverridesFor(theme));
     clearMessages();
   }
   function restoreSavedTheme() {
@@ -157,6 +201,7 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
     setAccent(currentTheme.overrides.accent ?? '');
     setTextColor(currentTheme.overrides.textColor ?? '');
     setImportedDraft(currentTheme.overrides.imported);
+    setVisualOverrides(visualOverridesFor(currentTheme));
     clearMessages();
   }
   async function saveTheme() {
@@ -179,12 +224,14 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
         normalizedAccent,
         normalizedTextColor,
         selectedKey === 'custom' ? importedDraft : undefined,
+        visualOverrides,
       );
       setCurrentTheme(updated);
       setSelectedKey(updated.key);
       setAccent(updated.overrides.accent ?? '');
       setTextColor(updated.overrides.textColor ?? '');
       setImportedDraft(updated.overrides.imported);
+      setVisualOverrides(visualOverridesFor(updated));
       setSuccessMessage('主题已保存并应用。');
     } catch (error) {
       if (isSessionError(error)) {
@@ -212,6 +259,7 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
       setSelectedKey('custom');
       setAccent('');
       setTextColor('');
+      setVisualOverrides(visualOverridesFor(imported));
       setImportOpen(false);
       setImportValue('');
       setSuccessMessage('主题已导入到草稿预览；保存后才会应用到用户前端。');
@@ -256,6 +304,13 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
   const diagnostics = selectedPreset
     ? themeDiagnostics(selectedPreset, previewAccent, previewTextColor)
     : [];
+  const previewTheme = selectedPreset
+    ? {
+        ...selectedPreset,
+        density: visualOverrides.density,
+        recipe: { ...selectedPreset.recipe, ...visualOverrides },
+      }
+    : null;
   const libraryThemes =
     currentTheme.key === 'custom' ? [currentTheme, ...presets] : presets;
   return (
@@ -374,12 +429,12 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
               </button>
             </div>
           </div>
-          {selectedPreset ? (
+          {previewTheme ? (
             <ThemeCenterPreview
-              key={`${selectedPreset.key}-${previewRevision}`}
+              key={`${previewTheme.key}-${previewRevision}`}
               accent={previewAccent}
               textColor={previewTextColor}
-              theme={selectedPreset}
+              theme={previewTheme}
               viewport={viewport}
             />
           ) : null}
@@ -460,17 +515,125 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
               </div>
               <div className="theme-inspector-section">
                 <div className="theme-inspector-label">
-                  <strong>Theme metadata</strong>
-                  <span>只读</span>
+                  <strong>组件规则</strong>
+                  <span>可保存</span>
                 </div>
-                <dl className="theme-metadata">
-                  {READ_ONLY_METADATA.map(([label, value]) => (
-                    <div key={label}>
-                      <dt>{label}</dt>
-                      <dd>{value(selectedPreset)}</dd>
-                    </div>
-                  ))}
-                </dl>
+                <div className="theme-rule-grid">
+                  <label>
+                    页面密度
+                    <select
+                      value={visualOverrides.density}
+                      onChange={(event) =>
+                        setVisualOverrides((current) => ({
+                          ...current,
+                          density: event.target
+                            .value as Required<ThemeVisualOverrides>['density'],
+                        }))
+                      }
+                    >
+                      {VISUAL_RULE_OPTIONS.density.map(([value, label]) => (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    字体体系
+                    <select
+                      value={visualOverrides.fontPack}
+                      onChange={(event) =>
+                        setVisualOverrides((current) => ({
+                          ...current,
+                          fontPack: event.target
+                            .value as Required<ThemeVisualOverrides>['fontPack'],
+                        }))
+                      }
+                    >
+                      {VISUAL_RULE_OPTIONS.fontPack.map(([value, label]) => (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    按钮样式
+                    <select
+                      value={visualOverrides.buttonStyle}
+                      onChange={(event) =>
+                        setVisualOverrides((current) => ({
+                          ...current,
+                          buttonStyle: event.target
+                            .value as Required<ThemeVisualOverrides>['buttonStyle'],
+                        }))
+                      }
+                    >
+                      {VISUAL_RULE_OPTIONS.buttonStyle.map(([value, label]) => (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    媒体呈现
+                    <select
+                      value={visualOverrides.mediaStyle}
+                      onChange={(event) =>
+                        setVisualOverrides((current) => ({
+                          ...current,
+                          mediaStyle: event.target
+                            .value as Required<ThemeVisualOverrides>['mediaStyle'],
+                        }))
+                      }
+                    >
+                      {VISUAL_RULE_OPTIONS.mediaStyle.map(([value, label]) => (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    动效节奏
+                    <select
+                      value={visualOverrides.motionStyle}
+                      onChange={(event) =>
+                        setVisualOverrides((current) => ({
+                          ...current,
+                          motionStyle: event.target
+                            .value as Required<ThemeVisualOverrides>['motionStyle'],
+                        }))
+                      }
+                    >
+                      {VISUAL_RULE_OPTIONS.motionStyle.map(([value, label]) => (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                  <label>
+                    导航外观
+                    <select
+                      value={visualOverrides.navigationStyle}
+                      onChange={(event) =>
+                        setVisualOverrides((current) => ({
+                          ...current,
+                          navigationStyle: event.target
+                            .value as Required<ThemeVisualOverrides>['navigationStyle'],
+                        }))
+                      }
+                    >
+                      {VISUAL_RULE_OPTIONS.navigationStyle.map(([value, label]) => (
+                        <option key={value} value={value}>
+                          {label}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
               </div>
               <div
                 className="theme-inspector-section theme-diagnostics"

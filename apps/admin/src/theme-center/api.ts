@@ -75,6 +75,16 @@ export type ThemeOverrides = {
   imported?: ImportedThemeDefinition;
 };
 
+export type ThemeVisualOverrides = Pick<
+  ThemeOverrides,
+  | 'density'
+  | 'fontPack'
+  | 'buttonStyle'
+  | 'mediaStyle'
+  | 'motionStyle'
+  | 'navigationStyle'
+>;
+
 export type ThemePreset = {
   key: ThemeKey;
   label: string;
@@ -182,6 +192,7 @@ export async function updateThemeCenter(
   accent: string | null,
   textColor: string | null,
   imported?: ImportedThemeDefinition,
+  visualOverrides: ThemeVisualOverrides = {},
 ): Promise<ResolvedTheme> {
   const body = await themeRequest('/api/admin/theme/', {
     method: 'PUT',
@@ -194,6 +205,7 @@ export async function updateThemeCenter(
       overrides: {
         ...(accent ? { accent } : {}),
         ...(textColor ? { textColor } : {}),
+        ...visualOverrides,
         ...(themeKey === 'custom' && imported ? { imported } : {}),
       },
     }),

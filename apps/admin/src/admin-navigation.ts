@@ -57,7 +57,7 @@ export const ADMIN_VIEW_STORAGE_KEY = 'site.admin.lastView';
 export const ADMIN_DOMAINS: readonly AdminDomainDefinition[] = [
   { id: 'dashboard', label: '仪表盘', description: '管理后台概览' },
   { id: 'catalog', label: '商品', description: '分区与商品目录' },
-  { id: 'site', label: '站点', description: '站点展示与导航配置' },
+  { id: 'site', label: '设计中心', description: '管理前端页面展示、导航与视觉规则' },
   { id: 'content', label: '内容', description: '可复用文章与素材资产' },
   { id: 'operations', label: '运营', description: '转化运营工具' },
   { id: 'engagement', label: '客户互动', description: '消息与客服接入' },
@@ -257,7 +257,7 @@ export function getAdminSecondaryItems(
       return [
         { view: 'home', label: '首页' },
         { view: 'navigation', label: '导航' },
-        { view: 'theme', label: '主题' },
+        { view: 'theme', label: '视觉系统' },
       ];
     case 'content':
       return [
@@ -316,8 +316,8 @@ export function getAdminViewContext(
     },
     theme: {
       eyebrow: domainLabel,
-      title: '主题中心',
-      description: '管理 Storefront 的视觉主题与运行时样式配置。',
+      title: '视觉系统',
+      description: '管理 Storefront 的主题、组件样式与响应式展示规则。',
     },
     pwa: {
       eyebrow: domainLabel,

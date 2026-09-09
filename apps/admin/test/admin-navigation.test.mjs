@@ -26,7 +26,7 @@ test('primary domains follow the final P1 information architecture', () => {
     [
       ['dashboard', '仪表盘'],
       ['catalog', '商品'],
-      ['site', '站点'],
+      ['site', '设计中心'],
       ['content', '内容'],
       ['operations', '运营'],
       ['engagement', '客户互动'],
@@ -128,7 +128,7 @@ test('site, engagement, and system navigation match final P1 IA exactly', () => 
     [
       ['home', '首页'],
       ['navigation', '导航'],
-      ['theme', '主题'],
+      ['theme', '视觉系统'],
     ],
   );
   assert.deepEqual(
