@@ -258,7 +258,7 @@ function parseMediaFolder(value: unknown): MediaFolder {
     typeof folder.createdAt !== 'string' ||
     typeof folder.updatedAt !== 'string'
   ) {
-    throw new AdminApiError(500, 'INVALID_RESPONSE', '素材文件夹返回数据无效。');
+    throw new AdminApiError(500, 'INVALID_RESPONSE', '素材分组返回数据无效。');
   }
   return {
     id: folder.id,
@@ -351,7 +351,7 @@ export async function fetchMediaFolders(): Promise<MediaFolder[]> {
   const body = await requestJson('/api/admin/assets/folders');
   const folders = asRecord(body)?.folders;
   if (!Array.isArray(folders)) {
-    throw new AdminApiError(500, 'INVALID_RESPONSE', '素材文件夹列表返回数据无效。');
+    throw new AdminApiError(500, 'INVALID_RESPONSE', '素材分组列表返回数据无效。');
   }
   return folders.map(parseMediaFolder);
 }
