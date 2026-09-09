@@ -24,10 +24,11 @@
 .media-center-tabs {
   display: inline-flex;
   align-items: stretch;
-  gap: 20px;
+  gap: 16px;
   padding: 0;
   border: 0;
   border-radius: 0;
+  overflow: visible;
   background: transparent;
 }
 
@@ -240,22 +241,35 @@
   margin: 0;
 }
 
-/* Search is dominant; filters are subordinate and align to one baseline. */
+/* Search is dominant; filters stay on the same baseline inside one toolbar. */
 .media-center-toolbar {
-  display: grid;
-  grid-template-columns: minmax(280px, 1fr) minmax(145px, 190px) 135px 145px auto;
-  min-height: 38px;
+  display: flex;
+  min-height: 40px;
   align-items: center;
   gap: 6px;
-  padding: 0;
-  border: 0;
-  background: transparent;
+  padding: 4px 6px;
 }
 
-.media-center-toolbar input,
-.media-center-toolbar select {
+.media-center-toolbar .ui-management-toolbar-controls {
+  display: grid;
   width: 100%;
-  padding: 0 9px;
+  min-width: 0;
+  grid-template-columns:
+    minmax(190px, 1.45fr) repeat(2, minmax(108px, 0.82fr)) minmax(112px, 0.9fr)
+    auto;
+  align-items: end;
+  gap: 6px;
+}
+
+.media-center-toolbar .ui-management-search,
+.media-center-toolbar .ui-management-filter,
+.media-center-toolbar .ui-button {
+  min-width: 0;
+}
+
+.media-center-toolbar .ui-management-search input,
+.media-center-toolbar .ui-management-filter select {
+  width: 100%;
 }
 
 .media-center-toolbar .secondary-button {
@@ -739,21 +753,21 @@
     padding-left: 0;
   }
 
-  .media-center-toolbar {
-    grid-template-columns: minmax(220px, 1fr) 160px 130px 140px auto;
+  .media-center-toolbar .ui-management-toolbar-controls {
+    grid-template-columns:
+      minmax(190px, 1.35fr) repeat(2, minmax(104px, 0.82fr)) minmax(108px, 0.9fr)
+      auto;
   }
 }
 
 @media (max-width: 920px) {
-  .media-center-toolbar {
-    grid-template-columns: 1fr 1fr;
+  .media-center-toolbar .ui-management-toolbar-controls {
+    grid-template-columns:
+      minmax(180px, 1.25fr) repeat(2, minmax(100px, 0.82fr)) minmax(104px, 0.9fr)
+      auto;
   }
 
-  .media-center-toolbar input {
-    grid-column: 1 / -1;
-  }
-
-  .media-center-toolbar .secondary-button {
+  .media-center-toolbar .ui-button {
     width: 100%;
   }
 
@@ -792,6 +806,13 @@
   .media-center-tabs {
     width: 100%;
     justify-content: flex-start;
+  }
+
+  .media-center-toolbar .ui-management-toolbar-controls {
+    display: flex;
+    width: 100%;
+    align-items: stretch;
+    flex-direction: column;
   }
 
   .media-center-page .media-folder-create-bar,
