@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import { fetchArticles } from '../src/article-center/api.ts';
 import {
+  addDraftCard,
   addDraftArticle,
   draftsEqual,
   moveDraftArticle,
@@ -181,6 +182,12 @@ test('draft hydration removes duplicate article IDs without mutating placement d
   );
 });
 
+test('adding a Messages card commits article and background as one placement', () => {
+  const added = addDraftCard([], 'article-1', 'media-1');
+  assert.deepEqual(added, [{ articleId: 'article-1', backgroundMediaId: 'media-1' }]);
+  assert.equal(addDraftCard(added, 'article-1', 'media-2'), added);
+});
+
 test('add prevents duplicate article IDs and remove keeps remaining order', () => {
   const initial = [{ articleId: 'a', backgroundMediaId: null }];
   assert.equal(addDraftArticle(initial, 'a'), initial);
@@ -260,12 +267,16 @@ test('Messages Articles UI reuses Article Center and shared reference-only Media
   assert.doesNotMatch(source, /uploadMediaAsset/);
 });
 
-test('Add Article flow is searchable, multi-select and excludes existing placement IDs', async () => {
+test('Add Messages Card flow selects one article and requires a background', async () => {
   const source = await readFile(componentPath, 'utf8');
   assert.match(source, /existingIds\.has\(article\.id\)/);
-  assert.match(source, /aria-multiselectable="true"/);
+  assert.doesNotMatch(source, /aria-multiselectable="true"/);
   assert.match(source, /搜索文章标题或正文/);
-  assert.match(source, /addDraftArticle/);
+  assert.match(source, /添加 Messages Articles 卡片/);
+  assert.match(source, /从素材库选择背景图/);
+  assert.match(source, /onAddCard/);
+  assert.match(source, /!selectedArticleId \|\| !selectedBackgroundMediaId/);
+  assert.match(source, /addDraftCard/);
 });
 
 test('Messages Articles adopts shared Input, AdminStatusBadge, Lucide Check and CSS manifest ownership', async () => {
@@ -280,7 +291,7 @@ test('Messages Articles adopts shared Input, AdminStatusBadge, Lucide Check and 
   assert.doesNotMatch(source, /✓/);
   assert.doesNotMatch(source, /import ['"]\.\/messages-articles\.css['"]/);
   assert.match(adminCss, /experience\/messages-articles\/messages-articles\.css/);
-  assert.doesNotMatch(css, /\.messages-articles-status/);
+  assert.match(css, /\.messages-articles-global-actions/);
   assert.doesNotMatch(
     css,
     /\.messages-articles-media-grid|\.messages-articles-media-card/,
@@ -292,17 +303,17 @@ test('workspace exposes explicit save, retry and local dirty state', async () =>
   assert.match(source, /const dirty = !draftsEqual\(draft, serverDraft\)/);
   assert.match(source, /saveMessageArticlePlacements\(draft\)/);
   assert.match(source, /重试保存/);
-  assert.match(source, /有未保存修改/);
+  assert.match(source, /disabled=\{!dirty\}/);
+  assert.match(source, /messages-articles-global-actions/);
   assert.match(source, /setServerDraft\(next\)/);
   assert.match(source, /useAdminDirtySource\('messages-articles'/);
 });
 
 test('existing Messages settings remain mounted above the independent Messages Articles workspace', async () => {
   const source = await readFile(messagesViewPath, 'utf8');
-  assert.match(source, /messages-experience-summary/);
-  assert.match(source, /\/messages\//);
-  assert.match(source, /onNavigate\('navigation'\)/);
-  assert.match(source, /<MessagesArticlesSection onNavigate=\{onNavigate\} \/>/);
+  assert.match(source, /<MessagesArticlesSection/);
+  assert.match(source, /onActionsChange=\{onActionsChange\}/);
+  assert.doesNotMatch(source, /页面概况|文章配置|messages-experience-summary/);
 });
 
 test('C2 introduces no writable enabled semantic or Storefront rendering dependency', async () => {

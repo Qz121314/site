@@ -92,7 +92,7 @@
 }
 
 .product-management .scope-tabs button:focus-visible {
-  outline: 3px solid rgb(255 90 31 / 14%);
+  outline: 3px solid rgb(236 23 103 / 14%);
   outline-offset: 1px;
 }
 
@@ -150,9 +150,9 @@
 
 .product-search input:focus,
 .product-status-filter select:focus {
-  border-color: #ff9a76;
+  border-color: #ff8ab8;
   outline: 0;
-  box-shadow: 0 0 0 3px rgb(255 90 31 / 10%);
+  box-shadow: 0 0 0 3px rgb(236 23 103 / 10%);
 }
 
 .product-editor-form input:focus,

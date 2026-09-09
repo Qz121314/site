@@ -1,0 +1,227 @@
+/*
+ * Dashboard system layer
+ *
+ * The dashboard is the visual reference for every admin workbench: a quiet
+ * canvas, compact white surfaces, and information arranged in clear groups.
+ * This file is intentionally imported last so feature pages inherit that
+ * rhythm without each page needing a separate visual language.
+ */
+
+:root {
+  --admin-workspace-max: 1280px;
+  --admin-dashboard-line: #e5e9ef;
+  --admin-dashboard-muted: #7b8796;
+  --admin-dashboard-soft: #f8fafc;
+}
+
+.admin-workspace-content {
+  max-width: var(--admin-workspace-max);
+  padding: 14px clamp(16px, 2.4vw, 32px) 28px;
+}
+
+.admin-workspace--narrow .admin-workspace-content {
+  max-width: 780px;
+}
+
+.admin-workspace--medium .admin-workspace-content {
+  max-width: 1020px;
+}
+
+.admin-workspace-toolbar {
+  min-height: 38px;
+  margin: -14px 0 14px;
+  padding: 7px 0;
+  border-color: var(--admin-dashboard-line);
+  background: rgb(246 248 251 / 96%);
+}
+
+/* Shared document-like surfaces used by data tables, settings and workbenches. */
+.settings-workspace,
+.article-center,
+.customer-service-workbench,
+.theme-center,
+.section-management,
+.category-management,
+.product-management,
+.conversion-pool,
+.messages-articles-workspace,
+.media-center {
+  gap: 10px;
+}
+
+.settings-workspace-section,
+.settings-workspace-state,
+.customer-service-commandbar,
+.customer-service-table-wrap,
+.article-table-wrap,
+.messages-articles-list,
+.messages-card-config-panel,
+.theme-studio-workspace {
+  border-color: var(--admin-dashboard-line);
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+.settings-workspace-section,
+.settings-workspace-state {
+  padding: 12px 14px;
+}
+
+.settings-workspace-heading h2,
+.settings-workspace-heading h3 {
+  font-size: 0.92rem;
+}
+
+.settings-workspace-heading p,
+.settings-inline-note {
+  font-size: 0.7rem;
+  line-height: 1.45;
+}
+
+.settings-workspace-actions,
+.settings-workspace > .ui-action-bar {
+  min-height: 44px;
+  padding-top: 7px;
+}
+
+/* Every list workspace gets the same shallow command strip as the dashboard. */
+.ui-management-toolbar,
+.customer-service-commandbar {
+  min-height: 42px;
+  padding: 5px 7px;
+  border-color: var(--admin-dashboard-line);
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+.ui-management-toolbar-controls,
+.ui-management-toolbar-leading,
+.ui-management-toolbar-trailing {
+  gap: 6px;
+}
+
+.ui-management-search .ui-input,
+.customer-service-search input,
+.article-sort-field .ui-input {
+  min-height: 32px;
+  border-color: #d9e0e8;
+  border-radius: 6px;
+  font-size: 0.73rem;
+}
+
+.ui-management-filter select {
+  min-height: 32px;
+  border-color: #d9e0e8;
+  border-radius: 6px;
+  font-size: 0.72rem;
+}
+
+.ui-management-selection-bar,
+.customer-service-workbench .selection-toolbar {
+  min-height: 38px;
+  padding: 5px 8px 5px 10px;
+  border-color: #f4d2df;
+  border-radius: 7px;
+  background: #fff8fb;
+}
+
+/* Tables are information surfaces, not detached floating cards. */
+.section-table-wrap,
+.category-table-wrap,
+.conversion-table-wrap,
+.product-table-wrap,
+.article-table-wrap,
+.customer-service-table-wrap {
+  border-color: var(--admin-dashboard-line);
+  border-radius: 8px;
+  box-shadow: none;
+}
+
+.admin-table th,
+.customer-service-table th,
+.messages-articles-list-head {
+  color: #667085;
+  background: var(--admin-dashboard-soft);
+  font-size: 0.64rem;
+  letter-spacing: 0.035em;
+}
+
+.admin-table th,
+.admin-table td,
+.customer-service-table th,
+.customer-service-table td {
+  border-color: #edf0f4;
+}
+
+.admin-table td,
+.customer-service-table td {
+  font-size: 0.74rem;
+}
+
+.ui-feedback-state {
+  min-height: 104px;
+  padding: 14px;
+  border-color: #d8dee7;
+  border-radius: 8px;
+  background: #fbfcfe;
+}
+
+/* Local settings panes use the same compact segmented navigation contract. */
+.ui-segmented-control,
+.customer-service-commandbar .segmented-control {
+  gap: 2px;
+  padding: 2px;
+  border-color: var(--admin-dashboard-line);
+  border-radius: 7px;
+  background: #f3f5f8;
+}
+
+.ui-segmented-item.ui-button,
+.customer-service-commandbar .segmented-control button {
+  min-height: 30px;
+  padding-inline: 10px;
+  border-radius: 5px;
+  font-size: 0.71rem;
+}
+
+.ui-segmented-item.ui-button.is-selected,
+.customer-service-commandbar .segmented-control button.is-active {
+  color: var(--admin-text);
+  border-color: #ffc5da;
+  background: #fff;
+  box-shadow: inset 0 -2px 0 var(--admin-brand);
+}
+
+.theme-studio-workspace {
+  background: var(--admin-surface);
+}
+
+.theme-library,
+.theme-inspector {
+  background: #fbfcfe;
+}
+
+.messages-articles-heading {
+  padding-bottom: 8px;
+  border-color: var(--admin-dashboard-line);
+}
+
+.messages-articles-row {
+  min-height: 68px;
+  padding-block: 8px;
+}
+
+@media (max-width: 760px) {
+  .admin-workspace-content {
+    padding: 10px 12px 20px;
+  }
+
+  .admin-workspace-toolbar {
+    margin: -10px 0 10px;
+  }
+
+  .settings-workspace-section,
+  .settings-workspace-state {
+    padding: 11px;
+  }
+}

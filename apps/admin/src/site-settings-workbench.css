@@ -66,7 +66,7 @@
 }
 
 .admin-settings-tab:focus-visible {
-  outline: 2px solid rgb(255 90 31 / 30%);
+  outline: 2px solid rgb(236 23 103 / 30%);
   outline-offset: 1px;
 }
 

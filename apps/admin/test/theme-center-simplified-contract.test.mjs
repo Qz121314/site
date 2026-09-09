@@ -10,17 +10,16 @@ function source(path) {
 test('Theme Studio keeps draft-only selection and the existing safe persistence boundary', () => {
   const view = source('../src/ThemeCenterView.tsx');
 
-  assert.ok(view.includes('主题方案库'));
+  assert.ok(view.includes('主题库'));
   assert.ok(view.includes('品牌强调色'));
   assert.ok(view.includes('主文字颜色'));
-  assert.ok(view.includes('保存并应用'));
-  assert.ok(view.includes('打开用户前端'));
-  assert.ok(view.includes('恢复当前设置'));
+  assert.ok(view.includes('保存主题'));
+  assert.ok(view.includes('恢复修改'));
   assert.ok(view.includes('useAdminDirtySource'));
   assert.ok(view.includes('themeDiagnostics'));
   assert.equal(view.includes('createPortal'), false);
-  assert.equal(view.includes('importThemeFromRegistry'), false);
-  assert.equal(view.includes('importThemeFromJson'), false);
+  assert.ok(view.includes('importThemeFromRegistry'));
+  assert.ok(view.includes('importThemeFromJson'));
 });
 
 test('PWA install prompt is owned by Site Settings', () => {

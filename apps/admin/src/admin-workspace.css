@@ -105,10 +105,6 @@
   justify-content: flex-end;
 }
 
-.admin-workspace-actions .publish-version-control {
-  display: block;
-}
-
 .admin-shell-placeholder {
   display: grid;
   max-width: 680px;
@@ -127,6 +123,188 @@
   color: #697386;
   font-size: 0.78rem;
   line-height: 1.5;
+}
+
+.dashboard-launcher {
+  display: grid;
+  gap: 10px;
+  padding-top: 2px;
+}
+.dashboard-section {
+  border: 1px solid #e0e5eb;
+  background: #fff;
+}
+.dashboard-section-heading {
+  display: flex;
+  min-height: 45px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 7px 12px;
+  border-bottom: 1px solid #e7ebf0;
+}
+.dashboard-section-heading h2 {
+  margin: 2px 0 0;
+  color: #1f2937;
+  font-size: 0.98rem;
+  letter-spacing: -0.015em;
+}
+.dashboard-kicker {
+  color: #8a94a3;
+  font-size: 0.63rem;
+  font-weight: 750;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+.dashboard-count,
+.dashboard-section-heading a {
+  color: #7b8796;
+  font-size: 0.7rem;
+}
+.dashboard-section-heading a {
+  color: #ec1767;
+  text-decoration: none;
+}
+.dashboard-repository-link {
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid transparent;
+  border-radius: 6px;
+}
+.dashboard-repository-link:hover,
+.dashboard-repository-link:focus-visible {
+  border-color: #ffc2d8;
+  background: #fff6f9;
+}
+.dashboard-entry-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+  padding: 8px;
+}
+.dashboard-entry,
+.dashboard-section-link {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 9px;
+  border: 1px solid #e2e7ed;
+  border-radius: 5px;
+  color: #7b8796;
+  background: #fff;
+  cursor: pointer;
+  text-align: left;
+  transition:
+    border-color 150ms ease,
+    background 150ms ease;
+}
+.dashboard-entry:hover,
+.dashboard-section-link:hover {
+  border-color: #9fc2f7;
+  background: #f8fbff;
+}
+.dashboard-entry-icon {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  flex: 0 0 26px;
+  place-items: center;
+  border: 1px solid #e1e7ef;
+  border-radius: 4px;
+  color: #ec1767;
+  background: #f5f9ff;
+}
+.dashboard-entry span:nth-child(2),
+.dashboard-section-link span {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+.dashboard-entry strong,
+.dashboard-section-link strong {
+  overflow: hidden;
+  color: #263244;
+  font-size: 0.78rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dashboard-entry small,
+.dashboard-section-link small {
+  overflow: hidden;
+  color: #8a94a3;
+  font-size: 0.65rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.dashboard-entry > svg,
+.dashboard-section-link > svg:last-child {
+  margin-left: auto;
+  flex: 0 0 auto;
+}
+.dashboard-metadata {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0 18px;
+  margin: 0;
+  padding: 4px 12px;
+}
+.dashboard-metadata > div {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr);
+  min-height: 32px;
+  align-items: center;
+  border-bottom: 1px solid #edf0f3;
+}
+.dashboard-metadata > div:nth-last-child(-n + 3) {
+  border-bottom: 0;
+}
+.dashboard-metadata dt {
+  color: #647084;
+  font-size: 0.72rem;
+  font-weight: 650;
+}
+.dashboard-metadata dd {
+  margin: 0;
+  color: #263244;
+  font-size: 0.74rem;
+}
+.dashboard-section-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  padding: 8px;
+}
+.dashboard-section-link > svg:first-child {
+  color: #647084;
+}
+
+@media (max-width: 900px) {
+  .dashboard-entry-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+@media (max-width: 560px) {
+  .dashboard-entry-grid,
+  .dashboard-section-list {
+    grid-template-columns: 1fr;
+  }
+  .dashboard-metadata > div {
+    grid-template-columns: 92px minmax(0, 1fr);
+  }
+  .dashboard-metadata {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+  .dashboard-metadata > div:nth-last-child(-n + 3) {
+    border-bottom: 1px solid #edf0f3;
+  }
+  .dashboard-metadata > div:last-child {
+    border-bottom: 0;
+  }
 }
 
 @media (max-width: 899px) {
@@ -164,8 +342,6 @@
     width: 100%;
   }
 
-  .admin-workspace-actions .publish-status-chip,
-  .admin-workspace-actions .storefront-publish-button,
   .admin-workspace-actions > .ui-button {
     min-height: 40px;
   }
@@ -180,8 +356,6 @@
     justify-content: flex-start;
   }
 
-  .storefront-publish-button.ui-button,
-  .publish-status-chip.ui-button,
   .admin-workspace-actions > .ui-button {
     padding-inline: 10px;
     font-size: 0.7rem;

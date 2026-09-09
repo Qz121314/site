@@ -5,11 +5,10 @@ import {
   Eye,
   Image as ImageIcon,
   PencilLine,
-  Plus,
   Search,
   Trash2,
 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { AdminView } from '../../admin-navigation';
 import { useAdminDirtySource } from '../../admin-unsaved-state';
 import { fetchArticles, type AdminArticle } from '../../article-center/api';
@@ -22,7 +21,7 @@ import { Input } from '../../components/ui/input';
 import { AdminStatusBadge } from '../../components/ui/status-badge';
 import { fetchMessageArticlePlacements, saveMessageArticlePlacements } from './api';
 import {
-  addDraftArticle,
+  addDraftCard,
   draftsEqual,
   moveDraftArticle,
   normalizeDraft,
@@ -61,26 +60,34 @@ function ArticleStatusBadge({ article }: { article: AdminArticle | undefined }) 
   );
 }
 
-function AddArticleDialog({
+function AddMessageCardDialog({
   open,
   articles,
   existingIds,
   onClose,
-  onAdd,
+  onAddCard,
+  onSessionExpired,
 }: {
   open: boolean;
   articles: AdminArticle[];
   existingIds: Set<string>;
   onClose: () => void;
-  onAdd: (articleIds: string[]) => void;
+  onAddCard: (articleId: string, backgroundMediaId: string) => void;
+  onSessionExpired: () => void;
 }) {
   const [query, setQuery] = useState('');
-  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [selectedArticleId, setSelectedArticleId] = useState<string | null>(null);
+  const [selectedBackgroundMediaId, setSelectedBackgroundMediaId] = useState<
+    string | null
+  >(null);
+  const [backgroundPickerOpen, setBackgroundPickerOpen] = useState(false);
 
   useEffect(() => {
     if (!open) return;
     setQuery('');
-    setSelected(new Set());
+    setSelectedArticleId(null);
+    setSelectedBackgroundMediaId(null);
+    setBackgroundPickerOpen(false);
   }, [open]);
 
   const available = useMemo(() => {
@@ -94,100 +101,157 @@ function AddArticleDialog({
     });
   }, [articles, existingIds, query]);
 
-  function toggle(id: string) {
-    setSelected((current) => {
-      const next = new Set(current);
-      if (next.has(id)) next.delete(id);
-      else next.add(id);
-      return next;
-    });
-  }
+  const selectedArticle = articles.find((article) => article.id === selectedArticleId);
 
   return (
-    <AdminDialog
-      open={open}
-      title="添加 Messages 文章"
-      eyebrow="Article Center"
-      description="从 Article Center 的非回收站内容资产中选择。文章自身启用状态独立于 Messages placement；已加入的文章不会重复出现。"
-      size="large"
-      onClose={onClose}
-      footer={
-        <>
-          <span className="messages-articles-dialog-count">
-            已选择 {selected.size} 篇
-          </span>
-          <Button variant="secondary" onClick={onClose}>
-            取消
-          </Button>
-          <Button
-            disabled={selected.size === 0}
-            onClick={() => {
-              onAdd([...selected]);
-              onClose();
-            }}
+    <>
+      <AdminDialog
+        open={open}
+        title="添加 Messages Articles 卡片"
+        eyebrow="Messages Articles"
+        description="配置访客端会话列表卡片。一张卡片由背景图和文章内容组成。"
+        size="large"
+        onClose={onClose}
+        footer={
+          <>
+            <span className="messages-articles-dialog-count">
+              {selectedArticle ? '已选择文章' : '请选择文章'}
+              <span aria-hidden="true"> · </span>
+              {selectedBackgroundMediaId ? '已选择背景图' : '请选择背景图'}
+            </span>
+            <Button variant="secondary" onClick={onClose}>
+              取消
+            </Button>
+            <Button
+              disabled={!selectedArticleId || !selectedBackgroundMediaId}
+              onClick={() => {
+                if (!selectedArticleId || !selectedBackgroundMediaId) return;
+                onAddCard(selectedArticleId, selectedBackgroundMediaId);
+                onClose();
+              }}
+            >
+              添加卡片
+            </Button>
+          </>
+        }
+      >
+        <div className="messages-card-config">
+          <section
+            className="messages-card-config-panel"
+            aria-labelledby="card-background-title"
           >
-            添加到配置
-          </Button>
-        </>
-      }
-    >
-      <div className="messages-articles-search">
-        <Search aria-hidden="true" size={16} />
-        <Input
-          type="search"
-          value={query}
-          placeholder="搜索文章标题或正文"
-          aria-label="搜索文章标题或正文"
-          onChange={(event) => setQuery(event.target.value)}
-        />
-      </div>
-      {available.length > 0 ? (
-        <div
-          className="messages-articles-picker-list"
-          role="listbox"
-          aria-multiselectable="true"
-        >
-          {available.map((article) => {
-            const isSelected = selected.has(article.id);
-            return (
-              <button
-                key={article.id}
-                type="button"
-                role="option"
-                aria-selected={isSelected}
-                className={`messages-articles-picker-row${isSelected ? ' is-selected' : ''}`}
-                onClick={() => toggle(article.id)}
-              >
-                <span className="messages-articles-picker-check" aria-hidden="true">
-                  {isSelected ? <Check size={14} /> : null}
-                </span>
+            <div className="messages-card-config-heading">
+              <div>
+                <span>STEP 01</span>
+                <h4 id="card-background-title">背景图</h4>
+              </div>
+              <AdminStatusBadge tone={selectedBackgroundMediaId ? 'success' : 'default'}>
+                {selectedBackgroundMediaId ? '已选择' : '必选'}
+              </AdminStatusBadge>
+            </div>
+            <div className="messages-card-background-preview">
+              {selectedBackgroundMediaId ? (
+                <img
+                  src={brandingAssetPreviewUrl(selectedBackgroundMediaId)}
+                  alt="已选择的卡片背景图"
+                />
+              ) : (
                 <span>
-                  <strong>{article.title}</strong>
-                  <small>{excerpt(article.body) || '暂无正文摘要'}</small>
+                  <ImageIcon aria-hidden="true" size={22} />
+                  从素材库选择背景图
                 </span>
-                <AdminStatusBadge
-                  tone={article.isActive ? 'success' : 'default'}
-                  showIcon={false}
-                >
-                  {article.isActive ? '已启用' : '已停用'}
-                </AdminStatusBadge>
-              </button>
-            );
-          })}
+              )}
+            </div>
+            <Button variant="secondary" onClick={() => setBackgroundPickerOpen(true)}>
+              <ImageIcon aria-hidden="true" size={15} />
+              {selectedBackgroundMediaId ? '更换背景图' : '从素材库选择'}
+            </Button>
+          </section>
+
+          <section
+            className="messages-card-config-panel messages-card-article-picker"
+            aria-labelledby="card-article-title"
+          >
+            <div className="messages-card-config-heading">
+              <div>
+                <span>STEP 02</span>
+                <h4 id="card-article-title">文章内容</h4>
+              </div>
+              <AdminStatusBadge tone={selectedArticleId ? 'success' : 'default'}>
+                {selectedArticleId ? '已选择' : '必选'}
+              </AdminStatusBadge>
+            </div>
+            <div className="messages-articles-search">
+              <Search aria-hidden="true" size={16} />
+              <Input
+                type="search"
+                value={query}
+                placeholder="搜索文章标题或正文"
+                aria-label="搜索文章标题或正文"
+                onChange={(event) => setQuery(event.target.value)}
+              />
+            </div>
+            {available.length > 0 ? (
+              <div className="messages-articles-picker-list" role="listbox">
+                {available.map((article) => {
+                  const isSelected = selectedArticleId === article.id;
+                  return (
+                    <button
+                      key={article.id}
+                      type="button"
+                      role="option"
+                      aria-selected={isSelected}
+                      className={`messages-articles-picker-row${isSelected ? ' is-selected' : ''}`}
+                      onClick={() => setSelectedArticleId(article.id)}
+                    >
+                      <span className="messages-articles-picker-check" aria-hidden="true">
+                        {isSelected ? <Check size={14} /> : null}
+                      </span>
+                      <span>
+                        <strong>{article.title}</strong>
+                        <small>{excerpt(article.body) || '暂无正文摘要'}</small>
+                      </span>
+                      <AdminStatusBadge
+                        tone={article.isActive ? 'success' : 'default'}
+                        showIcon={false}
+                      >
+                        {article.isActive ? '已启用' : '已停用'}
+                      </AdminStatusBadge>
+                    </button>
+                  );
+                })}
+              </div>
+            ) : (
+              <AdminFeedbackState
+                kind="empty"
+                title={query ? '没有匹配文章' : '没有可添加文章'}
+                description={
+                  query
+                    ? '请调整搜索关键词。'
+                    : '当前非回收站文章都已加入 Messages，或 Article Center 暂无可用文章。'
+                }
+                compact
+              />
+            )}
+          </section>
         </div>
-      ) : (
-        <AdminFeedbackState
-          kind="empty"
-          title={query ? '没有匹配文章' : '没有可添加文章'}
-          description={
-            query
-              ? '请调整搜索关键词。'
-              : '当前非回收站文章都已加入 Messages，或 Article Center 暂无可用文章。'
-          }
-          compact
+      </AdminDialog>
+
+      {backgroundPickerOpen ? (
+        <MediaPickerDialog
+          title="选择卡片背景图"
+          selectionMode="reference-only"
+          allowedKinds={['image']}
+          currentAssetId={selectedBackgroundMediaId}
+          onClose={() => setBackgroundPickerOpen(false)}
+          onSessionExpired={onSessionExpired}
+          onSelect={(asset) => {
+            setSelectedBackgroundMediaId(asset.id);
+            setBackgroundPickerOpen(false);
+          }}
         />
-      )}
-    </AdminDialog>
+      ) : null}
+    </>
   );
 }
 
@@ -235,8 +299,10 @@ function PlacementPreviewDialog({
 
 export function MessagesArticlesSection({
   onNavigate,
+  onActionsChange,
 }: {
   onNavigate: (view: AdminView) => void;
+  onActionsChange: (actions: ReactNode | null) => void;
 }) {
   const [articles, setArticles] = useState<AdminArticle[]>([]);
   const [titles, setTitles] = useState<Map<string, string>>(new Map());
@@ -246,8 +312,7 @@ export function MessagesArticlesSection({
   const [loadError, setLoadError] = useState('');
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
-  const [saved, setSaved] = useState(false);
-  const [addOpen, setAddOpen] = useState(false);
+  const [cardOpen, setCardOpen] = useState(false);
   const [backgroundTarget, setBackgroundTarget] = useState<string | null>(null);
   const [previewTarget, setPreviewTarget] = useState<string | null>(null);
 
@@ -266,7 +331,6 @@ export function MessagesArticlesSection({
       );
       setServerDraft(nextDraft);
       setDraft(nextDraft);
-      setSaved(false);
       setSaveError('');
     } catch (error) {
       setLoadError(messageFor(error));
@@ -292,13 +356,11 @@ export function MessagesArticlesSection({
 
   function updateDraft(next: MessageArticleDraft[]) {
     setDraft(next);
-    setSaved(false);
     setSaveError('');
   }
 
-  function addArticles(articleIds: string[]) {
-    let next = draft;
-    for (const articleId of articleIds) next = addDraftArticle(next, articleId);
+  function addCard(articleId: string, backgroundMediaId: string) {
+    const next = addDraftCard(draft, articleId, backgroundMediaId);
     if (next !== draft) updateDraft(next);
   }
 
@@ -306,7 +368,6 @@ export function MessagesArticlesSection({
     if (!dirty || saving) return;
     setSaving(true);
     setSaveError('');
-    setSaved(false);
     try {
       const placements = await saveMessageArticlePlacements(draft);
       const next = normalizeDraft(placements);
@@ -319,13 +380,39 @@ export function MessagesArticlesSection({
       });
       setServerDraft(next);
       setDraft(next);
-      setSaved(true);
     } catch (error) {
       setSaveError(messageFor(error));
     } finally {
       setSaving(false);
     }
   }
+
+  useEffect(() => {
+    onActionsChange(
+      <div className="messages-articles-global-actions">
+        <Button variant="secondary" size="compact" onClick={() => onNavigate('faq')}>
+          <PencilLine aria-hidden="true" size={15} />
+          打开文章中心
+        </Button>
+        <Button
+          size="compact"
+          onClick={() => setCardOpen(true)}
+          disabled={loading || !!loadError}
+        >
+          添加卡片
+        </Button>
+        <Button
+          size="compact"
+          loading={saving}
+          disabled={!dirty}
+          onClick={() => void save()}
+        >
+          {saving ? '保存中' : saveError ? '重试保存' : '保存配置'}
+        </Button>
+      </div>,
+    );
+    return () => onActionsChange(null);
+  }, [dirty, loadError, loading, onActionsChange, onNavigate, saveError, saving]);
 
   const previewArticle = previewTarget ? articleById.get(previewTarget) : undefined;
   const previewPlacement = previewTarget
@@ -342,20 +429,7 @@ export function MessagesArticlesSection({
     >
       <div className="settings-workspace-heading messages-articles-heading">
         <div>
-          <h2 id="messages-article-title">Messages Articles</h2>
-          <p>
-            从 Article Center 组织 Messages 中展示的文章入口，并独立配置 placement 背景。
-          </p>
-        </div>
-        <div className="messages-articles-toolbar">
-          <Button variant="secondary" onClick={() => onNavigate('faq')}>
-            <PencilLine aria-hidden="true" size={15} />
-            打开文章中心
-          </Button>
-          <Button onClick={() => setAddOpen(true)} disabled={loading || !!loadError}>
-            <Plus aria-hidden="true" size={16} />
-            添加文章
-          </Button>
+          <h2 id="messages-article-title">会话列表卡片配置</h2>
         </div>
       </div>
 
@@ -369,17 +443,7 @@ export function MessagesArticlesSection({
       ) : loading ? (
         <AdminFeedbackState kind="loading" title="正在读取 Messages Articles" />
       ) : draft.length === 0 ? (
-        <AdminFeedbackState
-          kind="empty"
-          title="尚未配置 Messages 文章"
-          description="添加 Article Center 内容后，它们会按当前顺序成为 active placement。"
-          action={
-            <Button onClick={() => setAddOpen(true)}>
-              <Plus aria-hidden="true" size={16} />
-              添加文章
-            </Button>
-          }
-        />
+        <AdminFeedbackState kind="empty" title="尚未配置 Messages 卡片" />
       ) : (
         <div className="messages-articles-list">
           <div className="messages-articles-list-head" aria-hidden="true">
@@ -497,29 +561,13 @@ export function MessagesArticlesSection({
         </div>
       )}
 
-      <div className="messages-articles-savebar" data-dirty={dirty ? 'true' : 'false'}>
-        <div>
-          <strong>
-            {dirty ? '有未保存修改' : saved ? '配置已保存' : '当前配置已同步'}
-          </strong>
-          <span>
-            {dirty
-              ? '排序、背景、添加或移除只存在于当前草稿，保存后才会生效。'
-              : 'placement 是否存在即表示是否展示，不使用额外 enabled 开关。'}
-          </span>
-          {saveError ? <em role="alert">{saveError}</em> : null}
-        </div>
-        <Button loading={saving} disabled={!dirty} onClick={() => void save()}>
-          {saving ? '保存中' : saveError ? '重试保存' : '保存 Messages Articles'}
-        </Button>
-      </div>
-
-      <AddArticleDialog
-        open={addOpen}
+      <AddMessageCardDialog
+        open={cardOpen}
         articles={articles}
         existingIds={existingIds}
-        onClose={() => setAddOpen(false)}
-        onAdd={addArticles}
+        onClose={() => setCardOpen(false)}
+        onAddCard={addCard}
+        onSessionExpired={reloadExpiredAdminSession}
       />
 
       {backgroundTarget !== null ? (

@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Grid2X2, List, RefreshCw } from 'lucide-react';
 import { AdminApiError } from './api';
 import { Button } from './components/ui/button';
+import { AdminDialog } from './components/ui/dialog';
 import {
   AdminSearchField,
   AdminSelectionBar,
@@ -49,6 +51,8 @@ import {
 type AssetFilter = 'used' | 'unused';
 type WorkbenchTab = 'library' | 'cleanup';
 type FolderFilter = 'all' | 'unfiled' | string;
+type MediaLayout = 'grid' | 'list';
+type UploadDialogMode = 'files' | 'folder' | null;
 
 type AssetLibraryViewProps = {
   onSessionExpired: () => void;
@@ -178,11 +182,12 @@ function mergeAssets(current: AdminAsset[], incoming: AdminAsset[]): AdminAsset[
 function rootFolderName(files: File[]): string {
   const path = files.find((file) => file.webkitRelativePath)?.webkitRelativePath ?? '';
   const root = path.split('/').filter(Boolean)[0]?.trim();
-  return root || '导入文件夹';
+  return root || '导入分组';
 }
 
 export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
   const [tab, setTab] = useState<WorkbenchTab>('library');
+  const [mediaLayout, setMediaLayout] = useState<MediaLayout>('grid');
 
   const [managedAssets, setManagedAssets] = useState<ManagedMediaAsset[]>([]);
   const [folders, setFolders] = useState<MediaFolder[]>([]);
@@ -190,14 +195,11 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
   const [mediaNextCursor, setMediaNextCursor] = useState<string | null>(null);
   const [mediaPageIndex, setMediaPageIndex] = useState(0);
   const [mediaTotal, setMediaTotal] = useState(0);
-  const [mediaQuery, setMediaQuery] = useState('');
-  const [debouncedMediaQuery, setDebouncedMediaQuery] = useState('');
   const [mediaKind, setMediaKind] = useState<MediaKind | ''>('');
-  const [mediaRole, setMediaRole] = useState<MediaRole | ''>('');
   const [folderFilter, setFolderFilter] = useState<FolderFilter>('all');
-  const [uploadRole, setUploadRole] = useState<MediaRole>('general');
-  const [uploadFolderId, setUploadFolderId] = useState('');
-  const [newFolderName, setNewFolderName] = useState('');
+  const [uploadDialogMode, setUploadDialogMode] = useState<UploadDialogMode>(null);
+  const [uploadGroupName, setUploadGroupName] = useState('');
+  const uploadRole: MediaRole = 'general';
   const [moveFolderId, setMoveFolderId] = useState('');
   const [folderWorking, setFolderWorking] = useState(false);
   const [deletingMedia, setDeletingMedia] = useState(false);
@@ -224,14 +226,6 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
   const [cleanupSuccess, setCleanupSuccess] = useState<string | null>(null);
   const cleanupVisitedCursorsRef = useRef<Set<string>>(new Set());
 
-  useEffect(() => {
-    const timeout = window.setTimeout(
-      () => setDebouncedMediaQuery(mediaQuery.trim()),
-      220,
-    );
-    return () => window.clearTimeout(timeout);
-  }, [mediaQuery]);
-
   const loadFolders = useCallback(async () => {
     try {
       setFolders(await fetchMediaFolders());
@@ -240,7 +234,7 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
         onSessionExpired();
         return;
       }
-      setMediaError(error instanceof Error ? error.message : '素材文件夹加载失败。');
+      setMediaError(error instanceof Error ? error.message : '素材分组加载失败。');
     }
   }, [onSessionExpired]);
 
@@ -257,9 +251,7 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
     try {
       const page = await fetchMediaLibraryPage({
         kinds: mediaKind ? [mediaKind] : undefined,
-        role: mediaRole,
         folder: folderFilter,
-        query: debouncedMediaQuery,
         limit: MEDIA_PAGE_SIZE,
       });
       if (mediaRequestVersionRef.current !== version) return;
@@ -279,7 +271,7 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
     } finally {
       if (mediaRequestVersionRef.current === version) setMediaLoading(false);
     }
-  }, [debouncedMediaQuery, folderFilter, mediaKind, mediaRole, onSessionExpired]);
+  }, [folderFilter, mediaKind, onSessionExpired]);
 
   const refreshMediaAndFolders = useCallback(async () => {
     await Promise.all([loadMedia(), loadFolders()]);
@@ -324,9 +316,7 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
     try {
       const page = await fetchMediaLibraryPage({
         kinds: mediaKind ? [mediaKind] : undefined,
-        role: mediaRole,
         folder: folderFilter,
-        query: debouncedMediaQuery,
         cursor,
         limit: MEDIA_PAGE_SIZE,
       });
@@ -462,7 +452,7 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
 
   useEffect(() => {
     setSelectedMediaIds(new Set());
-  }, [folderFilter, mediaKind, mediaRole]);
+  }, [folderFilter, mediaKind]);
 
   const allManagedSelected =
     managedAssets.length > 0 &&
@@ -511,7 +501,8 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
     [assets],
   );
 
-  const activeFolder = folders.find((folder) => folder.id === folderFilter) ?? null;
+  const activeFolder =
+    folders.find((folder) => folder.name.trim() === uploadGroupName.trim()) ?? null;
   const mediaTotalPages =
     mediaTotal > 0 ? Math.max(1, Math.ceil(mediaTotal / MEDIA_PAGE_SIZE)) : 0;
 
@@ -551,6 +542,11 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
     reportUploadSummary(summary);
   }
 
+  function openUploadDialog() {
+    setUploadGroupName('');
+    setUploadDialogMode('files');
+  }
+
   async function retryFailedUploads() {
     if (uploadQueue.running) return;
     setMediaError(null);
@@ -565,7 +561,6 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
     setMediaError(null);
     try {
       const result = await createMediaFolder(rootFolderName(files));
-      setUploadFolderId(result.folder.id);
       setFolderFilter(result.folder.id);
       await loadFolders();
       await uploadFiles(files, result.folder.id);
@@ -574,41 +569,51 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
         onSessionExpired();
         return;
       }
-      setMediaError(error instanceof Error ? error.message : '文件夹上传失败。');
+      setMediaError(error instanceof Error ? error.message : '文件夹导入失败。');
     } finally {
       setFolderWorking(false);
     }
   }
 
-  async function handleCreateFolder() {
-    const name = newFolderName.trim();
+  async function resolveUploadGroupId() {
+    const name = uploadGroupName.trim();
     if (!name || folderWorking) return;
+    const existing = folders.find((folder) => folder.name.trim() === name);
+    if (existing) return existing.id;
     setFolderWorking(true);
     setMediaError(null);
     try {
       const result = await createMediaFolder(name);
-      setNewFolderName('');
       await loadFolders();
       setFolderFilter(result.folder.id);
-      setUploadFolderId(result.folder.id);
       setMediaSuccess(
         result.reused
-          ? `已切换到已有文件夹“${result.folder.name}”。`
-          : `已创建文件夹“${result.folder.name}”。`,
+          ? `已切换到已有分组“${result.folder.name}”。`
+          : `已创建分组“${result.folder.name}”。`,
       );
+      return result.folder.id;
     } catch (error) {
       if (isSessionError(error)) onSessionExpired();
-      else setMediaError(error instanceof Error ? error.message : '创建文件夹失败。');
+      else setMediaError(error instanceof Error ? error.message : '创建分组失败。');
+      return null;
     } finally {
       setFolderWorking(false);
     }
+  }
+
+  async function handleDialogFileUpload(files: File[]) {
+    if (files.length === 0 || uploadQueue.running) return;
+    const groupId = await resolveUploadGroupId();
+    if (!groupId) return;
+    setUploadDialogMode(null);
+    await uploadFiles(files, groupId);
   }
 
   async function handleRenameFolder() {
     if (!activeFolder || folderWorking) return;
     const name = await adminPrompt({
-      eyebrow: '素材文件夹',
-      title: '重命名文件夹',
+      eyebrow: '素材分组',
+      title: '重命名分组',
       message: '只修改素材中心的整理名称，不会移动 R2 对象或影响现有引用。',
       initialValue: activeFolder.name,
       confirmLabel: '保存名称',
@@ -619,10 +624,11 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
     try {
       const updated = await renameMediaFolder(activeFolder.id, name);
       await refreshMediaAndFolders();
-      setMediaSuccess(`文件夹已重命名为“${updated.name}”。`);
+      setUploadGroupName(updated.name);
+      setMediaSuccess(`分组已重命名为“${updated.name}”。`);
     } catch (error) {
       if (isSessionError(error)) onSessionExpired();
-      else setMediaError(error instanceof Error ? error.message : '重命名文件夹失败。');
+      else setMediaError(error instanceof Error ? error.message : '重命名分组失败。');
     } finally {
       setFolderWorking(false);
     }
@@ -631,23 +637,23 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
   async function handleDeleteFolder() {
     if (!activeFolder || folderWorking) return;
     const confirmed = await adminConfirm({
-      eyebrow: '素材文件夹',
+      eyebrow: '素材分组',
       title: `删除“${activeFolder.name}”？`,
-      message: '只删除文件夹分组；其中素材不会删除，而是自动移动到“未分组”。',
-      confirmLabel: '删除文件夹',
+      message: '只删除分组；其中素材不会删除，而是自动移至“未分组”。',
+      confirmLabel: '删除分组',
       danger: true,
     });
     if (!confirmed) return;
     setFolderWorking(true);
     try {
       await deleteMediaFolder(activeFolder.id);
+      setUploadGroupName('');
       setFolderFilter('unfiled');
-      if (uploadFolderId === activeFolder.id) setUploadFolderId('');
       await loadFolders();
-      setMediaSuccess('文件夹已删除，原有素材已移动到“未分组”。');
+      setMediaSuccess('分组已删除，原有素材已移动到“未分组”。');
     } catch (error) {
       if (isSessionError(error)) onSessionExpired();
-      else setMediaError(error instanceof Error ? error.message : '删除文件夹失败。');
+      else setMediaError(error instanceof Error ? error.message : '删除分组失败。');
     } finally {
       setFolderWorking(false);
     }
@@ -666,12 +672,31 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
       setSelectedMediaIds(new Set());
       await refreshMediaAndFolders();
       const target = targetId
-        ? (folders.find((folder) => folder.id === targetId)?.name ?? '目标文件夹')
+        ? (folders.find((folder) => folder.id === targetId)?.name ?? '目标分组')
         : '未分组';
       setMediaSuccess(`已将 ${movedCount} 个素材移动到“${target}”。`);
     } catch (error) {
       if (isSessionError(error)) onSessionExpired();
       else setMediaError(error instanceof Error ? error.message : '移动素材失败。');
+    } finally {
+      setFolderWorking(false);
+    }
+  }
+
+  async function handleMoveAsset(assetId: string, groupId: string) {
+    if (folderWorking || uploadQueue.running) return;
+    setFolderWorking(true);
+    setMediaError(null);
+    try {
+      await moveMediaAssets([assetId], groupId || null);
+      await refreshMediaAndFolders();
+      const target = groupId
+        ? (folders.find((folder) => folder.id === groupId)?.name ?? '目标分组')
+        : '未分组';
+      setMediaSuccess(`素材已移入“${target}”。`);
+    } catch (error) {
+      if (isSessionError(error)) onSessionExpired();
+      else setMediaError(error instanceof Error ? error.message : '修改素材分组失败。');
     } finally {
       setFolderWorking(false);
     }
@@ -763,7 +788,7 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
             selected={tab === 'library'}
             onClick={() => setTab('library')}
           >
-            素材中心
+            素材库
           </AdminSegmentedItem>
           <AdminSegmentedItem
             selected={tab === 'cleanup'}
@@ -776,187 +801,93 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
 
       {tab === 'library' ? (
         <>
-          <div className="media-folder-create-bar">
-            <div>
-              <strong>素材文件夹</strong>
-              <small>一层分组即可；文件夹上传会自动使用本地顶层目录名。</small>
-            </div>
-            <input
-              value={newFolderName}
-              maxLength={80}
-              placeholder="新建文件夹，例如 Product A"
-              onChange={(event) => setNewFolderName(event.target.value)}
-            />
-            <button
-              className="secondary-button"
-              type="button"
-              disabled={!newFolderName.trim() || folderWorking || uploadQueue.running}
-              onClick={() => void handleCreateFolder()}
+          <>
+            <AdminToolbar
+              aria-label="素材操作工具栏"
+              className="media-center-command-bar"
             >
-              新建文件夹
-            </button>
-            {activeFolder ? (
-              <button
-                type="button"
-                className="secondary-button"
-                disabled={folderWorking || uploadQueue.running}
-                onClick={() => void handleRenameFolder()}
-              >
-                重命名当前文件夹
-              </button>
-            ) : null}
-            {activeFolder ? (
-              <button
-                type="button"
-                className="danger-button"
-                disabled={folderWorking || uploadQueue.running}
-                onClick={() => void handleDeleteFolder()}
-              >
-                删除当前文件夹
-              </button>
-            ) : null}
-          </div>
-
-          <div className="media-center-upload-bar">
-            <label>
-              <span>素材用途</span>
-              <select
-                value={uploadRole}
-                disabled={uploadQueue.running}
-                onChange={(event) => setUploadRole(event.target.value as MediaRole)}
-              >
-                {ROLE_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              <span>上传到文件夹</span>
-              <select
-                value={uploadFolderId}
-                disabled={uploadQueue.running}
-                onChange={(event) => setUploadFolderId(event.target.value)}
-              >
-                <option value="">未分组</option>
-                {folders.map((folder) => (
-                  <option key={folder.id} value={folder.id}>
-                    {folder.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label
-              className={`media-center-upload-button${uploadQueue.running ? ' is-disabled' : ''}`}
-            >
-              <input
-                type="file"
-                accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm"
-                multiple
-                disabled={uploadQueue.running}
-                onChange={(event) => {
-                  const files = Array.from(event.currentTarget.files ?? []);
-                  event.currentTarget.value = '';
-                  void uploadFiles(files, uploadFolderId || null);
-                }}
-              />
-              {uploadQueue.running ? '上传中…' : '上传文件'}
-            </label>
-            <label
-              className={`media-center-upload-button is-folder-upload${uploadQueue.running || folderWorking ? ' is-disabled' : ''}`}
-            >
-              <input
-                ref={(node) => {
-                  if (!node) return;
-                  node.setAttribute('webkitdirectory', '');
-                  node.setAttribute('directory', '');
-                }}
-                type="file"
-                multiple
+              <Button
+                variant="primary"
                 disabled={uploadQueue.running || folderWorking}
-                onChange={(event) => {
-                  const files = Array.from(event.currentTarget.files ?? []);
-                  event.currentTarget.value = '';
-                  void handleFolderUpload(files);
-                }}
-              />
-              {uploadQueue.running || folderWorking ? '处理中…' : '上传文件夹'}
-            </label>
-            <small>
-              静态图片先在浏览器压缩；队列最多并发处理 3
-              个文件。单个失败不会中断后续文件。
-            </small>
-          </div>
+                onClick={openUploadDialog}
+              >
+                {uploadQueue.running ? '上传中…' : '上传素材'}
+              </Button>
+              <label className="ui-management-filter">
+                <span>分组筛选</span>
+                <select
+                  value={folderFilter}
+                  onChange={(event) => setFolderFilter(event.target.value)}
+                >
+                  <option value="all">全部分组</option>
+                  <option value="unfiled">未分组</option>
+                  {folders.map((folder) => (
+                    <option key={folder.id} value={folder.id}>
+                      {folder.name} ({folder.assetCount})
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label className="ui-management-filter">
+                <span>格式筛选</span>
+                <select
+                  value={mediaKind}
+                  onChange={(event) => setMediaKind(event.target.value as MediaKind | '')}
+                >
+                  {KIND_OPTIONS.map((option) => (
+                    <option key={option.value || 'all'} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <Button
+                variant="secondary"
+                size="icon"
+                aria-label="刷新素材"
+                title="刷新素材"
+                onClick={() => void loadMedia()}
+                disabled={mediaLoading || uploadQueue.running}
+              >
+                <RefreshCw aria-hidden="true" size={15} />
+              </Button>
+              <div
+                className="media-center-view-toggle media-center-command-layout-toggle"
+                role="group"
+                aria-label="素材排列方式"
+              >
+                <button
+                  type="button"
+                  className={mediaLayout === 'grid' ? 'is-active' : ''}
+                  aria-label="网格排列"
+                  aria-pressed={mediaLayout === 'grid'}
+                  onClick={() => setMediaLayout('grid')}
+                >
+                  <Grid2X2 aria-hidden="true" size={14} />
+                </button>
+                <button
+                  type="button"
+                  className={mediaLayout === 'list' ? 'is-active' : ''}
+                  aria-label="列表排列"
+                  aria-pressed={mediaLayout === 'list'}
+                  onClick={() => setMediaLayout('list')}
+                >
+                  <List aria-hidden="true" size={14} />
+                </button>
+              </div>
+            </AdminToolbar>
 
-          {mediaError ? (
-            <p className="inline-status is-error" role="alert">
-              {mediaError}
-            </p>
-          ) : null}
-          {mediaSuccess ? (
-            <p className="inline-status is-success" role="status">
-              {mediaSuccess}
-            </p>
-          ) : null}
-
-          <AdminToolbar aria-label="素材筛选工具栏" className="media-center-toolbar">
-            <AdminSearchField
-              label="搜索素材"
-              value={mediaQuery}
-              placeholder="搜索文件名、文件夹或格式"
-              onChange={(event) => setMediaQuery(event.target.value)}
-            />
-            <label className="ui-management-filter">
-              <span>文件夹</span>
-              <select
-                value={folderFilter}
-                onChange={(event) => setFolderFilter(event.target.value)}
-              >
-                <option value="all">全部文件夹</option>
-                <option value="unfiled">未分组</option>
-                {folders.map((folder) => (
-                  <option key={folder.id} value={folder.id}>
-                    {folder.name} ({folder.assetCount})
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="ui-management-filter">
-              <span>格式</span>
-              <select
-                value={mediaKind}
-                onChange={(event) => setMediaKind(event.target.value as MediaKind | '')}
-              >
-                {KIND_OPTIONS.map((option) => (
-                  <option key={option.value || 'all'} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="ui-management-filter">
-              <span>用途</span>
-              <select
-                value={mediaRole}
-                onChange={(event) => setMediaRole(event.target.value as MediaRole | '')}
-              >
-                <option value="">全部用途</option>
-                {ROLE_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <Button
-              variant="secondary"
-              onClick={() => void loadMedia()}
-              disabled={mediaLoading || uploadQueue.running}
-            >
-              刷新
-            </Button>
-          </AdminToolbar>
+            {mediaError ? (
+              <p className="inline-status is-error" role="alert">
+                {mediaError}
+              </p>
+            ) : null}
+            {mediaSuccess ? (
+              <p className="inline-status is-success" role="status">
+                {mediaSuccess}
+              </p>
+            ) : null}
+          </>
 
           {selectedManagedAssets.length > 0 ? (
             <AdminSelectionBar
@@ -968,7 +899,7 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
                 value={moveFolderId}
                 onChange={(event) => setMoveFolderId(event.target.value)}
               >
-                <option value="">移动到未分组</option>
+                <option value="">移出分组</option>
                 {folders.map((folder) => (
                   <option key={folder.id} value={folder.id}>
                     移动到 {folder.name}
@@ -1033,7 +964,7 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
             <AdminFeedbackState kind="loading" title="正在读取素材…" />
           ) : managedAssets.length > 0 || uploadQueue.items.length > 0 ? (
             <>
-              <div className="media-center-grid">
+              <div className={`media-center-grid is-${mediaLayout}`}>
                 {uploadQueue.items.map((item) => (
                   <UploadMediaCard item={item} key={item.id} />
                 ))}
@@ -1091,6 +1022,23 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
                           ))}
                         </div>
                       </div>
+                      <label className="media-center-card-group">
+                        <span>所属分组</span>
+                        <select
+                          value={asset.folderId ?? ''}
+                          disabled={folderWorking || uploadQueue.running}
+                          onChange={(event) =>
+                            void handleMoveAsset(asset.id, event.currentTarget.value)
+                          }
+                        >
+                          <option value="">未分组</option>
+                          {folders.map((folder) => (
+                            <option key={folder.id} value={folder.id}>
+                              {folder.name}
+                            </option>
+                          ))}
+                        </select>
+                      </label>
                       <div className="media-center-card-actions">
                         {asset.publicUrl ? (
                           <button
@@ -1142,7 +1090,7 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
             <AdminFeedbackState
               kind="empty"
               title="没有匹配的素材"
-              description="调整文件夹或筛选条件，或者上传新的素材。"
+              description="调整分组或筛选条件，或者上传新的素材。"
             />
           )}
         </>
@@ -1331,6 +1279,115 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
           asset={previewAsset}
           onClose={() => setPreviewAsset(null)}
         />
+      ) : null}
+
+      {uploadDialogMode ? (
+        <AdminDialog
+          open
+          eyebrow="上传管理"
+          title="上传素材"
+          onClose={() => setUploadDialogMode(null)}
+          size="small"
+          className="media-upload-dialog"
+          footer={
+            <Button variant="secondary" onClick={() => setUploadDialogMode(null)}>
+              取消
+            </Button>
+          }
+        >
+          <div className="media-upload-dialog-mode" role="group" aria-label="上传方式">
+            <button
+              type="button"
+              className={uploadDialogMode === 'files' ? 'is-active' : ''}
+              onClick={() => setUploadDialogMode('files')}
+            >
+              上传文件
+            </button>
+            <button
+              type="button"
+              className={uploadDialogMode === 'folder' ? 'is-active' : ''}
+              onClick={() => setUploadDialogMode('folder')}
+            >
+              上传文件夹
+            </button>
+          </div>
+
+          {uploadDialogMode === 'files' ? (
+            <div className="media-upload-dialog-form">
+              <label>
+                <span>所属分组</span>
+                <input
+                  list="media-upload-groups"
+                  value={uploadGroupName}
+                  maxLength={80}
+                  placeholder="选择或输入新分组名"
+                  onChange={(event) => setUploadGroupName(event.target.value)}
+                />
+                <datalist id="media-upload-groups">
+                  {folders.map((folder) => (
+                    <option key={folder.id} value={folder.name} />
+                  ))}
+                </datalist>
+              </label>
+              {activeFolder ? (
+                <div className="media-upload-dialog-group-actions">
+                  <Button
+                    variant="ghost"
+                    disabled={folderWorking || uploadQueue.running}
+                    onClick={() => void handleRenameFolder()}
+                  >
+                    重命名
+                  </Button>
+                  <Button
+                    variant="danger"
+                    disabled={folderWorking || uploadQueue.running}
+                    onClick={() => void handleDeleteFolder()}
+                  >
+                    删除
+                  </Button>
+                </div>
+              ) : null}
+              <label
+                className={`media-upload-dialog-file${!uploadGroupName.trim() || uploadQueue.running ? ' is-disabled' : ''}`}
+              >
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm"
+                  multiple
+                  disabled={!uploadGroupName.trim() || uploadQueue.running}
+                  onChange={(event) => {
+                    const files = Array.from(event.currentTarget.files ?? []);
+                    event.currentTarget.value = '';
+                    void handleDialogFileUpload(files);
+                  }}
+                />
+                选择素材并上传
+              </label>
+            </div>
+          ) : (
+            <label
+              className={`media-upload-dialog-file${uploadQueue.running || folderWorking ? ' is-disabled' : ''}`}
+            >
+              <input
+                ref={(node) => {
+                  if (!node) return;
+                  node.setAttribute('webkitdirectory', '');
+                  node.setAttribute('directory', '');
+                }}
+                type="file"
+                multiple
+                disabled={uploadQueue.running || folderWorking}
+                onChange={(event) => {
+                  const files = Array.from(event.currentTarget.files ?? []);
+                  event.currentTarget.value = '';
+                  setUploadDialogMode(null);
+                  void handleFolderUpload(files);
+                }}
+              />
+              选择文件夹并上传
+            </label>
+          )}
+        </AdminDialog>
       ) : null}
     </section>
   );

@@ -1,20 +1,29 @@
 .messages-articles-heading {
-  align-items: flex-start;
-  gap: 16px;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--admin-border, #e2e6ec);
 }
 
-.messages-articles-toolbar {
+.messages-articles-global-actions {
   display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
+  flex: none;
+  flex-wrap: nowrap;
+  gap: 6px;
   justify-content: flex-end;
+}
+
+.messages-articles-global-actions .ui-button {
+  min-height: 32px;
+  padding-inline: 10px;
+  font-size: 0.72rem;
 }
 
 .messages-articles-list {
   overflow: hidden;
-  border: 1px solid #e5e9f0;
-  border-radius: 10px;
-  background: #fff;
+  border: 1px solid var(--admin-border, #e5e9f0);
+  border-radius: var(--admin-radius-md, 10px);
+  background: var(--admin-surface, #fff);
 }
 
 .messages-articles-list-head,
@@ -26,20 +35,20 @@
 }
 
 .messages-articles-list-head {
-  min-height: 38px;
-  padding: 0 14px;
-  border-bottom: 1px solid #e5e9f0;
-  background: #f8fafc;
-  color: #667085;
-  font-size: 11px;
+  min-height: 34px;
+  padding: 0 12px;
+  border-bottom: 1px solid var(--admin-border, #e5e9f0);
+  background: var(--admin-surface-subtle, #f8fafc);
+  color: var(--admin-text-muted, #667085);
+  font-size: 10px;
   font-weight: 750;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
 
 .messages-articles-row {
-  min-height: 92px;
-  padding: 12px 14px;
+  min-height: 78px;
+  padding: 10px 12px;
   border-bottom: 1px solid #edf0f4;
 }
 
@@ -61,7 +70,7 @@
 .messages-articles-article strong {
   overflow: hidden;
   color: #172033;
-  font-size: 14px;
+  font-size: 13px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -69,9 +78,9 @@
 .messages-articles-article small {
   display: -webkit-box;
   overflow: hidden;
-  margin-top: 5px;
-  color: #667085;
-  font-size: 12px;
+  margin-top: 3px;
+  color: var(--admin-text-muted, #667085);
+  font-size: 11px;
   line-height: 1.45;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
@@ -85,13 +94,13 @@
 }
 
 .messages-articles-thumb {
-  width: 72px;
-  height: 48px;
+  width: 64px;
+  height: 42px;
   flex: none;
   overflow: hidden;
-  border: 1px solid #e1e6ed;
-  border-radius: 7px;
-  background: #f5f7fa;
+  border: 1px solid var(--admin-border, #e1e6ed);
+  border-radius: var(--admin-radius-sm, 8px);
+  background: var(--admin-surface-subtle, #f5f7fa);
 }
 
 .messages-articles-thumb img {
@@ -132,47 +141,101 @@
   text-align: center;
 }
 
-.messages-articles-savebar {
-  position: sticky;
-  bottom: 12px;
-  z-index: 4;
+.messages-articles-global-actions .ui-button:last-child:disabled {
+  border-color: var(--admin-border, #dce3ec);
+  color: var(--admin-text-subtle, #8a94a6);
+  background: var(--admin-surface-subtle, #f8fafc);
+}
+
+/* The save action lives in the heading toolbar; long card lists never move
+ * the primary action away. */
+
+.messages-card-config {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.85fr) minmax(300px, 1.15fr);
+  gap: 12px;
+}
+
+.messages-card-config-panel {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--admin-border, #e2e6ec);
+  border-radius: var(--admin-radius-md, 10px);
+  background: var(--admin-surface-subtle, #f8f9fb);
+}
+
+.messages-card-config-heading {
   display: flex;
-  margin-top: 14px;
-  padding: 12px 14px;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
-  gap: 16px;
-  border: 1px solid #dce3ec;
-  border-radius: 10px;
-  background: rgb(255 255 255 / 96%);
-  box-shadow: 0 8px 22px rgb(15 23 42 / 8%);
-  backdrop-filter: blur(10px);
+  gap: 8px;
 }
 
-.messages-articles-savebar[data-dirty='true'] {
-  border-color: #b8c7df;
-}
-
-.messages-articles-savebar > div {
+.messages-card-config-heading > div {
   display: grid;
   gap: 2px;
 }
 
-.messages-articles-savebar strong {
-  color: #172033;
-  font-size: 13px;
+.messages-card-config-heading span {
+  color: var(--admin-text-subtle, #8a94a6);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
 }
 
-.messages-articles-savebar span {
-  color: #667085;
-  font-size: 11px;
+.messages-card-config-heading h4 {
+  margin: 0;
+  color: var(--admin-text, #172033);
+  font-size: 0.82rem;
+  font-weight: 780;
 }
 
-.messages-articles-savebar em {
-  margin-top: 3px;
-  color: #b42318;
-  font-size: 11px;
-  font-style: normal;
+.messages-card-config-panel > .ui-button {
+  min-height: 32px;
+  width: 100%;
+}
+
+.messages-card-background-preview {
+  display: grid;
+  min-height: 156px;
+  place-items: center;
+  overflow: hidden;
+  border: 1px dashed var(--admin-border-strong, #cfd5df);
+  border-radius: var(--admin-radius-sm, 8px);
+  background: var(--admin-surface, #fff);
+  color: var(--admin-text-subtle, #8a94a6);
+  font-size: 0.7rem;
+}
+
+.messages-card-background-preview img {
+  width: 100%;
+  height: 100%;
+  min-height: 156px;
+  object-fit: cover;
+}
+
+.messages-card-background-preview span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.messages-card-article-picker .messages-articles-picker-list {
+  max-height: 294px;
+  margin-top: 0;
+  background: var(--admin-surface, #fff);
+}
+
+.messages-card-article-picker .messages-articles-picker-row {
+  min-height: 58px;
+  padding: 8px 10px;
+}
+
+.messages-card-article-picker .ui-feedback-state {
+  min-height: 156px;
 }
 
 .messages-articles-search {
@@ -344,18 +407,20 @@
 }
 
 @media (max-width: 720px) {
-  .messages-articles-heading,
-  .messages-articles-savebar {
+  .messages-articles-heading {
     align-items: stretch;
     flex-direction: column;
   }
 
-  .messages-articles-toolbar {
+  .messages-articles-global-actions {
     justify-content: flex-start;
   }
 
-  .messages-articles-toolbar .ui-button,
-  .messages-articles-savebar .ui-button {
+  .messages-articles-global-actions .ui-button {
+    flex: 1 1 auto;
+  }
+
+  .messages-articles-global-actions .ui-button {
     min-height: 44px;
   }
 
@@ -395,9 +460,8 @@
     min-height: 44px;
   }
 
-  .messages-articles-savebar {
-    position: static;
-    bottom: auto;
+  .messages-card-config {
+    grid-template-columns: 1fr;
   }
 
   .messages-articles-picker-row {
@@ -406,7 +470,7 @@
 }
 
 @media (max-width: 440px) {
-  .messages-articles-toolbar {
+  .messages-articles-global-actions {
     display: grid;
     grid-template-columns: 1fr;
     width: 100%;

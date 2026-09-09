@@ -49,31 +49,31 @@ test('unsaved and history guards stay wired', async () => {
   assert.match(dashboard, /commitView\('sections', 'replace'\)/);
 });
 
-test('two-level shell exposes zero-chrome navigation', async () => {
+test('single shell exposes compact navigation and workspace context', async () => {
   const shell = await source('../src/shell/AdminShell.tsx');
   const primary = await source('../src/shell/AdminPrimarySidebar.tsx');
-  const secondary = await source('../src/shell/AdminSecondarySidebar.tsx');
   const workspace = await source('../src/shell/AdminWorkspace.tsx');
   const dashboard = await source('../src/Dashboard.tsx');
 
   assert.match(shell, /AdminPrimarySidebar/);
-  assert.match(shell, /AdminSecondarySidebar/);
+  assert.doesNotMatch(shell, /AdminSecondarySidebar/);
+  assert.match(shell, /className="admin-topbar"/);
   assert.match(shell, /AdminWorkspace/);
   assert.match(shell, /<AdminWorkspace width=\{workspaceWidth\}>/);
   assert.match(shell, /<h1 className="admin-visually-hidden">\{context\.title\}<\/h1>/);
-  assert.doesNotMatch(shell, /AdminTopBar|AdminPageHeader/);
   assert.match(dashboard, /workspaceWidthForView/);
   assert.match(primary, /aria-label="后台一级导航"/);
   assert.match(primary, /aria-current=\{active \? 'location' : undefined\}/);
   assert.match(primary, /admin-primary-account/);
   assert.match(primary, /退出登录/);
-  assert.match(secondary, /aria-label="后台二级导航"/);
-  assert.match(secondary, /aria-current=\{active \? 'page' : undefined\}/);
-  assert.doesNotMatch(secondary, /admin-secondary-heading|Workspace/);
+  assert.match(primary, /orderedAdminSecondaryItems/);
+  assert.match(primary, /navigationOrdering/);
+  assert.match(shell, /admin-navigation-order-toggle/);
+  assert.match(primary, /admin-nav-subitems/);
   assert.match(workspace, /admin-workspace--\$\{width\}/);
 });
 
-test('mobile drawer stays accessible without a global header', async () => {
+test('mobile drawer stays accessible alongside the compact header', async () => {
   const shell = await source('../src/shell/AdminShell.tsx');
 
   assert.match(shell, /FOCUSABLE_SELECTOR/);
@@ -84,7 +84,7 @@ test('mobile drawer stays accessible without a global header', async () => {
   assert.match(shell, /aria-modal="true"/);
   assert.match(shell, /aria-label="后台导航"/);
   assert.match(shell, /className="admin-mobile-nav-trigger"/);
-  assert.doesNotMatch(shell, /<header/);
+  assert.match(shell, /<header className="admin-topbar">/);
 });
 
 test('responsive shell avoids clipping and page chrome', async () => {
@@ -109,21 +109,30 @@ test('publish, logout, and session state use local ownership', async () => {
   const dashboard = await source('../src/Dashboard.tsx');
   const shell = await source('../src/shell/AdminShell.tsx');
   const primary = await source('../src/shell/AdminPrimarySidebar.tsx');
-  const publishing = await source('../src/shell/AdminPublishingControls.tsx');
+  const publishing = await source('../src/shell/WorkspacePublishMenu.tsx');
 
   assert.match(
     dashboard,
     /function publishKeyForView\(view: AdminView\): string \| null/,
   );
   assert.match(dashboard, /return dynamic \? `section:\$\{dynamic\.sectionId\}` : null/);
-  assert.match(dashboard, /const workspaceActions = contextPublishKey \?/);
+  assert.match(dashboard, /const publishingActions = contextPublishKey \?/);
+  assert.match(dashboard, /const localWorkspaceActions =/);
+  assert.match(dashboard, /activeView === 'theme'/);
+  assert.match(dashboard, /onActionsChange=\{setThemeActions\}/);
   assert.doesNotMatch(dashboard, /topBarActions|environment-badge|会话至/);
   assert.match(dashboard, /onLogout=\{requestLogout\}/);
   assert.match(dashboard, /sessionExpiresAt=\{expiresAt\}/);
   assert.match(shell, /SESSION_WARNING_MS/);
   assert.match(shell, /admin-session-warning/);
   assert.match(primary, /onClick=\{onLogout\}/);
-  assert.match(publishing, /发布全部待更新/);
+  assert.match(dashboard, /<WorkspacePublishMenu/);
+  assert.match(publishing, /contextKey/);
+  assert.match(publishing, /发布当前板块/);
+  assert.match(publishing, /aria-label="发布当前板块"/);
+  assert.match(publishing, /请先保存当前修改/);
+  assert.match(publishing, /onKeyDown/);
+  assert.doesNotMatch(publishing, /发布全部待更新/);
   assert.match(publishing, /onRequestRollback/);
-  assert.match(publishing, /publish-version-popover/);
+  assert.match(publishing, /workspace-publish-dropdown/);
 });

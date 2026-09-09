@@ -4,7 +4,7 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev --local --config ../../wrangler.jsonc",
+    "dev": "wrangler dev --local --config ../../wrangler.jsonc --compatibility-date 2026-08-06",
     "build": "tsc --noEmit",
     "typecheck": "tsc --noEmit",
     "lint": "eslint src test",

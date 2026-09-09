@@ -8,9 +8,10 @@
   --muted-text: #64748b;
   --text-color: #1e293b;
   --heading-color: #0f172a;
-  --brand: #2563eb;
-  --brand-dark: #1d4ed8;
-  --brand-soft: #eff6ff;
+  --brand: #ec1767;
+  --brand-dark: #c40f52;
+  --brand-soft: #fff0f6;
+  --brand-glow: #ff4f91;
   --nav: #111827;
   --nav-soft: #1f2937;
   --nav-text: #b6c2d0;
@@ -21,8 +22,8 @@
   --warning-soft: #fefce8;
   --danger: #b42318;
   --danger-soft: #fff1f0;
-  --info: #175cd3;
-  --info-soft: #eff8ff;
+  --info: #c40f52;
+  --info-soft: #fff0f6;
   --radius-sm: 9px;
   --radius-md: 13px;
   --radius-lg: 18px;
@@ -40,7 +41,7 @@ html {
 body {
   color: var(--text-color);
   background:
-    radial-gradient(circle at 78% -10%, rgb(37 99 235 / 4%), transparent 32rem),
+    radial-gradient(circle at 78% -10%, rgb(236 23 103 / 4%), transparent 32rem),
     var(--page-color);
 }
 
@@ -60,7 +61,7 @@ input:focus-visible,
 textarea:focus-visible,
 select:focus-visible,
 a:focus-visible {
-  outline: 3px solid rgb(37 99 235 / 22%);
+  outline: 3px solid rgb(236 23 103 / 22%);
   outline-offset: 2px;
 }
 
@@ -71,7 +72,7 @@ input[type='radio'] {
 
 ::selection {
   color: #1e3a8a;
-  background: #dbeafe;
+  background: #ffe0ed;
 }
 
 .admin-main {
@@ -352,7 +353,7 @@ select:disabled {
 .product-editor-form textarea:focus {
   border-color: var(--brand);
   outline: 0;
-  box-shadow: 0 0 0 3px rgb(255 90 31 / 12%);
+  box-shadow: 0 0 0 3px rgb(236 23 103 / 12%);
 }
 
 /* Tables */
@@ -642,10 +643,10 @@ select:disabled {
 }
 
 .conversion-mode-options button.is-selected {
-  border-color: #ff9d79;
+  border-color: #ff8ab8;
   color: #9a3412;
   background: var(--brand-soft);
-  box-shadow: 0 0 0 2px rgb(255 90 31 / 10%);
+  box-shadow: 0 0 0 2px rgb(236 23 103 / 10%);
 }
 
 /* Product media */
@@ -682,8 +683,8 @@ select:disabled {
 }
 
 .product-media-card.is-cover {
-  border-color: #ff8b60;
-  box-shadow: 0 0 0 2px rgb(255 90 31 / 11%);
+  border-color: #ff4f91;
+  box-shadow: 0 0 0 2px rgb(236 23 103 / 11%);
 }
 
 .product-media-preview b {
@@ -769,7 +770,7 @@ select:disabled {
 .login-shell,
 .loading-shell {
   background:
-    radial-gradient(circle at 15% 0%, rgb(255 90 31 / 10%), transparent 28rem),
+    radial-gradient(circle at 15% 0%, rgb(236 23 103 / 10%), transparent 28rem),
     radial-gradient(circle at 90% 100%, rgb(17 24 39 / 8%), transparent 30rem),
     var(--page-color);
 }
@@ -786,7 +787,7 @@ select:disabled {
 .login-brand {
   border-radius: 14px;
   background: linear-gradient(145deg, #ff6c37, #ee4711);
-  box-shadow: 0 9px 24px rgb(255 90 31 / 22%);
+  box-shadow: 0 9px 24px rgb(236 23 103 / 22%);
 }
 
 .login-form input {

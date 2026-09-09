@@ -1,7 +1,14 @@
 import { useState, type FormEvent } from 'react';
 import type { AdminSection } from '../api';
 import { useAdminDirtySource } from '../admin-unsaved-state';
-import { HomeLayoutSettingsSection } from '../HomeLayoutSettingsSection';
+import {
+  HomeLayoutSettingsSection,
+  type HomePlacement,
+} from '../HomeLayoutSettingsSection';
+import {
+  AdminSegmentedControl,
+  AdminSegmentedItem,
+} from '../components/ui/segmented-control';
 import { SiteHeroSettingsSection } from '../SiteHeroSettingsSection';
 import type {
   HomeLayout,
@@ -20,6 +27,8 @@ type HomeDraft = {
   heroSlides: SiteHeroSlide[];
   homeLayout: HomeLayout;
 };
+
+type HomeWorkspacePanel = 'hero' | HomePlacement;
 
 function createHomeDraft(settings: SiteSettingsWithHero): HomeDraft {
   return {
@@ -41,6 +50,7 @@ export function HomeExperienceView({
   const { settings, saveSettings } = useSiteSettingsController();
   const [draft, setDraft] = useState<HomeDraft>(() => createHomeDraft(settings));
   const [saving, setSaving] = useState(false);
+  const [activePanel, setActivePanel] = useState<HomeWorkspacePanel>('hero');
   const [message, setMessage] = useState<{
     type: 'success' | 'error';
     text: string;
@@ -90,21 +100,34 @@ export function HomeExperienceView({
       className="settings-workspace home-experience-workspace"
       onSubmit={handleSubmit}
     >
-      <SiteHeroSettingsSection
-        slides={draft.heroSlides}
-        busy={saving}
-        onChange={(heroSlides) => setDraft((current) => ({ ...current, heroSlides }))}
-        onSessionExpired={onSessionExpired}
-      />
+      <div className="home-experience-commandbar">
+        <AdminSegmentedControl ariaLabel="首页设置工作区">
+          <AdminSegmentedItem
+            selected={activePanel === 'hero'}
+            current={activePanel === 'hero'}
+            type="button"
+            onClick={() => setActivePanel('hero')}
+          >
+            Hero 区设置
+          </AdminSegmentedItem>
+          <AdminSegmentedItem
+            selected={activePanel === 'shortcutSectionIds'}
+            current={activePanel === 'shortcutSectionIds'}
+            type="button"
+            onClick={() => setActivePanel('shortcutSectionIds')}
+          >
+            快捷分区
+          </AdminSegmentedItem>
+          <AdminSegmentedItem
+            selected={activePanel === 'recommendationSectionIds'}
+            current={activePanel === 'recommendationSectionIds'}
+            type="button"
+            onClick={() => setActivePanel('recommendationSectionIds')}
+          >
+            推荐分区
+          </AdminSegmentedItem>
+        </AdminSegmentedControl>
 
-      <HomeLayoutSettingsSection
-        value={draft.homeLayout}
-        sections={sections}
-        busy={saving}
-        onChange={(homeLayout) => setDraft((current) => ({ ...current, homeLayout }))}
-      />
-
-      <div className="settings-workspace-actions">
         {message ? (
           <span
             className={`settings-workspace-status is-${message.type}`}
@@ -117,6 +140,23 @@ export function HomeExperienceView({
           {saving ? '保存中…' : '保存首页设置'}
         </button>
       </div>
+
+      {activePanel === 'hero' ? (
+        <SiteHeroSettingsSection
+          slides={draft.heroSlides}
+          busy={saving}
+          onChange={(heroSlides) => setDraft((current) => ({ ...current, heroSlides }))}
+          onSessionExpired={onSessionExpired}
+        />
+      ) : (
+        <HomeLayoutSettingsSection
+          value={draft.homeLayout}
+          sections={sections}
+          busy={saving}
+          placement={activePanel}
+          onChange={(homeLayout) => setDraft((current) => ({ ...current, homeLayout }))}
+        />
+      )}
     </form>
   );
 }

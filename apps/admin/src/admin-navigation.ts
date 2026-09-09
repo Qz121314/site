@@ -28,7 +28,6 @@ export type AdminView =
   | 'customer-service'
   | 'faq'
   | 'sections'
-  | 'system-navigation'
   | `${DynamicViewKind}:${string}`;
 
 export type AdminDomain =
@@ -58,7 +57,7 @@ export const ADMIN_VIEW_STORAGE_KEY = 'site.admin.lastView';
 export const ADMIN_DOMAINS: readonly AdminDomainDefinition[] = [
   { id: 'dashboard', label: '仪表盘', description: '管理后台概览' },
   { id: 'catalog', label: '商品', description: '分区与商品目录' },
-  { id: 'site', label: '站点', description: '站点展示与导航配置' },
+  { id: 'site', label: '设计中心', description: '管理前端页面展示、导航与视觉规则' },
   { id: 'content', label: '内容', description: '可复用文章与素材资产' },
   { id: 'operations', label: '运营', description: '转化运营工具' },
   { id: 'engagement', label: '客户互动', description: '消息与客服接入' },
@@ -83,12 +82,12 @@ export const FIXED_ADMIN_VIEWS = new Set<AdminView>([
   'customer-service',
   'faq',
   'sections',
-  'system-navigation',
 ]);
 
 const LEGACY_ADMIN_VIEW_ALIASES: Readonly<Record<string, AdminView>> = {
   settings: 'system-general',
   system: 'system-general',
+  'system-navigation': 'system-general',
 };
 
 export function parseDynamicView(
@@ -258,7 +257,7 @@ export function getAdminSecondaryItems(
       return [
         { view: 'home', label: '首页' },
         { view: 'navigation', label: '导航' },
-        { view: 'theme', label: '主题' },
+        { view: 'theme', label: '视觉系统' },
       ];
     case 'content':
       return [
@@ -279,7 +278,6 @@ export function getAdminSecondaryItems(
     case 'system':
       return [
         { view: 'system-general', label: '基本设置' },
-        { view: 'system-navigation', label: '界面偏好' },
         { view: 'pwa', label: '应用安装' },
         { view: 'system-infrastructure', label: '基础设施' },
         { view: 'system-advanced', label: '高级设置' },
@@ -318,8 +316,8 @@ export function getAdminViewContext(
     },
     theme: {
       eyebrow: domainLabel,
-      title: '主题中心',
-      description: '管理 Storefront 的视觉主题与运行时样式配置。',
+      title: '视觉系统',
+      description: '管理 Storefront 的主题、组件样式与响应式展示规则。',
     },
     pwa: {
       eyebrow: domainLabel,
@@ -350,11 +348,6 @@ export function getAdminViewContext(
       eyebrow: domainLabel,
       title: '基本设置',
       description: '管理站点名称、位置标签与品牌标识。',
-    },
-    'system-navigation': {
-      eyebrow: domainLabel,
-      title: '界面偏好',
-      description: '调整后台一级与二级导航显示顺序。',
     },
     'system-infrastructure': {
       eyebrow: domainLabel,

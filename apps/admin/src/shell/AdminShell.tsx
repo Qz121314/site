@@ -1,4 +1,4 @@
-import { Menu, X } from 'lucide-react';
+import { ListOrdered, Menu, PanelLeftClose, PanelLeftOpen, X } from 'lucide-react';
 import { useEffect, useRef, useState, type MouseEvent, type ReactNode } from 'react';
 import {
   getCatalogWorkspaceContext,
@@ -6,12 +6,14 @@ import {
   type AdminView,
   type AdminViewContext,
 } from '../admin-navigation';
-import type { AdminNavigationPreferences } from '../admin-navigation-preferences';
+import {
+  orderedAdminSecondaryItems,
+  type AdminNavigationPreferences,
+} from '../admin-navigation-preferences';
 import type { AdminSection } from '../api';
 import { CatalogWorkspaceSwitcher } from '../catalog/CatalogWorkspaceSwitcher';
 import { Button } from '../components/ui/button';
 import { AdminPrimarySidebar } from './AdminPrimarySidebar';
-import { AdminSecondarySidebar } from './AdminSecondarySidebar';
 import { AdminWorkspace } from './AdminWorkspace';
 
 type AdminShellProps = {
@@ -26,10 +28,12 @@ type AdminShellProps = {
   workspaceWidth?: 'narrow' | 'medium' | 'wide' | 'split-pane';
   children: ReactNode;
   navigationPreferences: AdminNavigationPreferences;
+  onNavigationPreferencesChange: (value: AdminNavigationPreferences) => void;
   onLogout: () => void;
   loggingOut: boolean;
   logoutDisabled?: boolean;
   sessionExpiresAt?: string | undefined;
+  pwaIconAssetId?: string | null;
 };
 
 const FOCUSABLE_SELECTOR = [
@@ -55,12 +59,16 @@ export function AdminShell({
   workspaceWidth = 'wide',
   children,
   navigationPreferences,
+  onNavigationPreferencesChange,
   onLogout,
   loggingOut,
   logoutDisabled = false,
   sessionExpiresAt,
+  pwaIconAssetId = null,
 }: AdminShellProps) {
   const [navigationOpen, setNavigationOpen] = useState(false);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [navigationOrdering, setNavigationOrdering] = useState(false);
   const [sessionExpiring, setSessionExpiring] = useState(false);
   const drawerRef = useRef<HTMLDivElement>(null);
   const drawerTriggerRef = useRef<HTMLElement | null>(null);
@@ -72,6 +80,13 @@ export function AdminShell({
   const hasWorkspaceToolbar = Boolean(
     workspaceActions || pageStatus || pagePrimaryAction || pageSecondaryAction,
   );
+  const collapsedSecondaryItems = sidebarCollapsed
+    ? orderedAdminSecondaryItems(activeDomain, sections, navigationPreferences)
+    : [];
+  const visibleCollapsedSecondaryItems =
+    activeDomain === 'catalog'
+      ? collapsedSecondaryItems.filter((item) => item.view === 'sections' || item.group)
+      : collapsedSecondaryItems;
 
   useEffect(() => {
     if (!sessionExpiresAt) {
@@ -152,25 +167,21 @@ export function AdminShell({
   }
 
   return (
-    <div className="admin-shell">
+    <div className={`admin-shell${sidebarCollapsed ? ' is-sidebar-collapsed' : ''}`}>
       <div className="admin-desktop-primary">
         <AdminPrimarySidebar
-          activeDomain={activeDomain}
-          sections={sections}
-          onNavigate={onNavigate}
-          navigationPreferences={navigationPreferences}
-          onLogout={onLogout}
-          loggingOut={loggingOut}
-          logoutDisabled={logoutDisabled}
-        />
-      </div>
-      <div className="admin-desktop-secondary">
-        <AdminSecondarySidebar
           activeDomain={activeDomain}
           activeView={activeView}
           sections={sections}
           onNavigate={onNavigate}
           navigationPreferences={navigationPreferences}
+          onNavigationPreferencesChange={onNavigationPreferencesChange}
+          navigationOrdering={navigationOrdering}
+          onLogout={onLogout}
+          loggingOut={loggingOut}
+          logoutDisabled={logoutDisabled}
+          collapsed={sidebarCollapsed}
+          pwaIconAssetId={pwaIconAssetId}
         />
       </div>
 
@@ -185,6 +196,62 @@ export function AdminShell({
         >
           <Menu aria-hidden="true" size={18} />
         </Button>
+        <header className="admin-topbar">
+          <Button
+            className="admin-sidebar-toggle"
+            variant="ghost"
+            size="icon"
+            type="button"
+            aria-label={sidebarCollapsed ? '展开侧边栏' : '折叠侧边栏'}
+            onClick={() => {
+              setSidebarCollapsed((current) => !current);
+              setNavigationOrdering(false);
+            }}
+          >
+            {sidebarCollapsed ? (
+              <PanelLeftOpen aria-hidden="true" size={17} />
+            ) : (
+              <PanelLeftClose aria-hidden="true" size={17} />
+            )}
+          </Button>
+          <Button
+            className={`admin-navigation-order-toggle${navigationOrdering ? ' is-active' : ''}`}
+            variant="ghost"
+            size="icon"
+            type="button"
+            aria-label={navigationOrdering ? '完成菜单排序' : '开启菜单拖拽排序'}
+            aria-pressed={navigationOrdering}
+            title={navigationOrdering ? '完成排序' : '拖拽排序'}
+            onClick={() => {
+              setNavigationOrdering((current) => {
+                const next = !current;
+                if (next) setSidebarCollapsed(false);
+                return next;
+              });
+            }}
+          >
+            <ListOrdered aria-hidden="true" size={16} />
+          </Button>
+          <div className="admin-breadcrumb">
+            <span>{context.eyebrow}</span>
+            <span aria-hidden="true">/</span>
+            <strong>{context.title}</strong>
+          </div>
+          <div className="admin-command-search" role="search">
+            <span aria-hidden="true">⌕</span>
+            <input
+              aria-label="搜索功能、页面或内容"
+              placeholder="搜索功能、页面或内容…"
+            />
+            <kbd>⌘ K</kbd>
+          </div>
+          <div className="admin-topbar-meta" aria-label="账户操作">
+            <span aria-hidden="true">♧</span>
+            <span className="admin-avatar" aria-hidden="true">
+              Q
+            </span>
+          </div>
+        </header>
         {sessionExpiring ? (
           <div className="admin-session-warning" role="status" aria-live="polite">
             登录会话即将过期，请保存当前修改。
@@ -193,6 +260,36 @@ export function AdminShell({
         <main className="admin-main">
           <h1 className="admin-visually-hidden">{context.title}</h1>
           <AdminWorkspace width={workspaceWidth}>
+            {sidebarCollapsed &&
+            activeDomain !== 'dashboard' &&
+            visibleCollapsedSecondaryItems.length > 0 ? (
+              <nav
+                className="admin-collapsed-secondary-nav"
+                aria-label={`${context.eyebrow}二级导航`}
+              >
+                <span className="admin-collapsed-secondary-label">{context.eyebrow}</span>
+                <div className="admin-collapsed-secondary-items">
+                  {visibleCollapsedSecondaryItems.map((item) => {
+                    const label =
+                      activeDomain === 'catalog' && item.view !== 'sections' && item.group
+                        ? item.group
+                        : item.label;
+                    return (
+                      <Button
+                        className={`admin-collapsed-secondary-link${item.view === activeView ? ' is-active' : ''}`}
+                        key={`${item.view}-${item.group ?? ''}`}
+                        variant="ghost"
+                        type="button"
+                        aria-current={item.view === activeView ? 'page' : undefined}
+                        onClick={() => onNavigate(item.view)}
+                      >
+                        {label}
+                      </Button>
+                    );
+                  })}
+                </div>
+              </nav>
+            ) : null}
             {catalogContext ? (
               <CatalogWorkspaceSwitcher
                 activeView={activeView}
@@ -245,20 +342,16 @@ export function AdminShell({
             <div className="admin-mobile-drawer-content ui-drawer-body">
               <AdminPrimarySidebar
                 activeDomain={activeDomain}
-                sections={sections}
-                onNavigate={onNavigate}
-                navigationPreferences={navigationPreferences}
-                onLogout={onLogout}
-                loggingOut={loggingOut}
-                logoutDisabled={logoutDisabled}
-              />
-              <AdminSecondarySidebar
-                activeDomain={activeDomain}
                 activeView={activeView}
                 sections={sections}
                 onNavigate={onNavigate}
-                onItemSelected={() => setNavigationOpen(false)}
                 navigationPreferences={navigationPreferences}
+                onNavigationPreferencesChange={onNavigationPreferencesChange}
+                onLogout={onLogout}
+                loggingOut={loggingOut}
+                logoutDisabled={logoutDisabled}
+                pwaIconAssetId={pwaIconAssetId}
+                onItemSelected={() => setNavigationOpen(false)}
               />
             </div>
           </div>

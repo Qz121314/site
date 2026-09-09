@@ -96,7 +96,7 @@ export function MediaLibraryPickerDialog({
           onSessionExpired();
           return;
         }
-        setErrorMessage(error instanceof Error ? error.message : '素材文件夹加载失败。');
+        setErrorMessage(error instanceof Error ? error.message : '素材分组加载失败。');
       }
     })();
     return () => {
@@ -228,15 +228,15 @@ export function MediaLibraryPickerDialog({
               type="search"
               value={query}
               autoFocus
-              placeholder="搜索文件名、文件夹或格式"
+              placeholder="搜索文件名、分组或格式"
               onChange={(event) => setQuery(event.target.value)}
             />
             <select
               value={folderFilter}
               onChange={(event) => setFolderFilter(event.target.value)}
-              aria-label="素材文件夹"
+              aria-label="素材分组"
             >
-              <option value="all">全部文件夹</option>
+              <option value="all">全部分组</option>
               <option value="unfiled">未分组</option>
               {folders.map((folder) => (
                 <option key={folder.id} value={folder.id}>
@@ -353,7 +353,7 @@ export function MediaLibraryPickerDialog({
           ) : (
             <div className="media-picker-empty">
               <strong>没有匹配的素材</strong>
-              <p>请先到素材中心上传素材，或调整文件夹和格式筛选。</p>
+              <p>请先到素材中心上传素材，或调整分组和格式筛选。</p>
             </div>
           )}
         </div>

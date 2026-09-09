@@ -24,10 +24,11 @@
 .media-center-tabs {
   display: inline-flex;
   align-items: stretch;
-  gap: 20px;
+  gap: 16px;
   padding: 0;
   border: 0;
   border-radius: 0;
+  overflow: visible;
   background: transparent;
 }
 
@@ -67,21 +68,199 @@
 }
 
 .media-center-tabs button.is-active::after {
-  background: var(--brand, #ff5a1f);
+  background: var(--brand, #ec1767);
 }
 
-/* Folder commands are a compact command row, not a content card. */
-.media-center-page .media-folder-create-bar {
+/* Folder and upload commands share one compact dock. */
+.media-center-command-dock {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  padding: 4px;
+  border: 1px solid #e2e6ec;
+  border-radius: 9px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(16 24 40 / 2%);
+}
+
+.media-center-primary-bar {
+  display: grid;
+  grid-template-columns: minmax(215px, 1.05fr) minmax(150px, 0.82fr) minmax(250px, 1.2fr);
+  align-items: stretch;
+  gap: 6px;
+}
+
+.media-center-primary-bar > .media-center-command-dock {
+  display: contents;
+}
+
+.media-center-primary-bar .media-folder-create-bar,
+.media-center-primary-bar .media-center-upload-bar,
+.media-center-primary-bar > .media-center-toolbar {
+  min-width: 0;
+  border: 1px solid #e2e6ec;
+  border-radius: 9px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(16 24 40 / 2%);
+}
+
+.media-center-primary-bar .media-folder-create-bar,
+.media-center-primary-bar .media-center-upload-bar {
+  padding: 4px 6px;
+}
+
+.media-center-primary-bar .media-folder-create-bar {
+  border-right: 1px solid #e2e6ec;
+}
+
+.media-center-primary-bar > .media-center-toolbar {
+  display: flex;
+  min-height: 42px;
+  align-items: center;
+  padding: 4px 6px;
+}
+
+.media-center-primary-bar > .media-center-toolbar .ui-management-toolbar-controls {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 5px;
+}
+
+/* The library header is intentionally one compact command row. */
+.media-center-command-bar {
+  display: flex;
+  width: fit-content;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.media-center-command-bar .ui-management-toolbar-controls {
+  display: grid;
+  grid-template-columns: auto minmax(122px, 150px) minmax(112px, 138px) auto auto;
+  gap: 5px;
+  align-items: center;
+}
+
+.media-center-command-bar .ui-management-filter > span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+.media-center-command-bar .ui-management-filter select {
+  width: 100%;
+  height: 32px;
+  padding: 0 26px 0 9px;
+  border: 1px solid #d8dee8;
+  border-radius: 7px;
+  outline: 0;
+  color: #475467;
+  background: #fff;
+  font-size: 0.67rem;
+  font-weight: 680;
+}
+
+.media-center-command-bar .ui-button {
+  --admin-button-min-height: 32px;
+  --admin-button-padding-inline: 10px;
+  --admin-button-radius: 7px;
+  --admin-button-font-size: 0.67rem;
+}
+
+.media-center-command-bar .ui-button[aria-label='刷新素材'] {
+  width: 32px;
+  padding: 0;
+}
+
+.media-center-command-layout-toggle {
+  justify-self: start;
+  margin-left: 0;
+}
+
+.media-center-page .media-folder-create-bar,
+.media-center-upload-bar {
   display: flex;
   min-height: 42px;
   align-items: center;
   flex-wrap: nowrap;
   gap: 6px;
-  padding: 5px 7px;
+  padding: 4px 6px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.media-center-page .media-folder-create-bar {
+  flex: 0 1 43%;
+  border-right: 1px solid #edf0f4;
+}
+
+/* The library command bar is a three-zone layout, not one joined control strip. */
+.media-center-primary-bar .media-folder-create-bar {
+  flex: initial;
+  min-height: 42px;
   border: 1px solid #e2e6ec;
   border-radius: 9px;
   background: #fff;
   box-shadow: 0 1px 2px rgb(16 24 40 / 2%);
+}
+
+.media-center-upload-details {
+  position: relative;
+  min-width: 0;
+  flex: 1 1 57%;
+}
+
+.media-center-upload-details > summary,
+.media-center-filter-details > summary {
+  display: inline-flex;
+  min-height: 31px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 10px;
+  border: 1px solid #d8dee8;
+  border-radius: 7px;
+  color: #344054;
+  background: #f4f6f8;
+  cursor: pointer;
+  font-size: 0.67rem;
+  font-weight: 760;
+  list-style: none;
+  white-space: nowrap;
+}
+
+.media-center-upload-details > summary::-webkit-details-marker,
+.media-center-filter-details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.media-center-upload-details[open] > summary,
+.media-center-filter-details[open] > summary {
+  color: #202632;
+  border-color: #f2a080;
+  background: #fff8f5;
+}
+
+.media-center-upload-details .media-center-upload-bar {
+  position: absolute;
+  z-index: 5;
+  top: calc(100% + 5px);
+  right: 0;
+  min-width: min(510px, 72vw);
+  padding: 8px;
+  border: 1px solid #e2e6ec;
+  border-radius: 9px;
+  background: #fff;
+  box-shadow: 0 10px 24px rgb(16 24 40 / 12%);
 }
 
 .media-center-page .media-folder-create-bar > div {
@@ -104,7 +283,7 @@
 }
 
 .media-center-page .media-folder-create-bar input {
-  width: min(300px, 28vw);
+  width: min(180px, 18vw);
   height: 31px;
   min-width: 190px;
   padding: 0 9px;
@@ -116,12 +295,30 @@
   font-size: 0.7rem;
 }
 
+.media-center-primary-bar .media-folder-create-bar select {
+  width: min(150px, 15vw);
+  height: 31px;
+  min-width: 112px;
+  padding: 0 25px 0 8px;
+  border: 1px solid #d8dee8;
+  border-radius: 7px;
+  outline: 0;
+  color: #344054;
+  background: #fff;
+  font-size: 0.68rem;
+}
+
+.media-center-primary-bar .media-folder-create-bar input {
+  width: min(120px, 12vw);
+  min-width: 82px;
+}
+
 .media-center-page .media-folder-create-bar input:focus,
 .media-center-toolbar input:focus,
 .media-center-toolbar select:focus,
 .media-center-upload-bar select:focus {
   border-color: #f2a080;
-  box-shadow: 0 0 0 2px rgb(255 90 31 / 8%);
+  box-shadow: 0 0 0 2px rgb(236 23 103 / 8%);
 }
 
 .media-center-page .media-folder-create-bar .secondary-button,
@@ -133,18 +330,147 @@
   white-space: nowrap;
 }
 
-/* Upload row: labels are inline so the row stays short but remains self-explanatory. */
-.media-center-upload-bar {
+/* Each card owns one operator scenario: folders, upload, or filtering. */
+.media-center-primary-bar {
+  grid-template-columns: minmax(230px, 1.08fr) minmax(150px, 0.7fr) minmax(245px, 1.08fr);
+}
+
+.media-center-panel-title {
   display: flex;
-  min-height: 44px;
-  align-items: center;
-  flex-wrap: nowrap;
+  min-width: 0;
+  align-items: baseline;
+  gap: 5px;
+  color: #344054;
+  font-size: 0.67rem;
+  font-weight: 790;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.media-center-panel-title small {
+  overflow: hidden;
+  color: #98a2b3;
+  font-size: 0.59rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+}
+
+.media-center-primary-bar .media-folder-create-bar {
+  display: grid;
+  grid-template-areas:
+    'title title'
+    'select select'
+    'name create'
+    'rename remove';
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-content: start;
+  gap: 4px;
+  padding: 7px;
+}
+
+.media-center-primary-bar .media-folder-create-bar > .media-center-panel-title {
+  grid-area: title;
+}
+
+.media-center-primary-bar .media-folder-create-bar > select {
+  grid-area: select;
+  width: 100%;
+  min-width: 0;
+}
+
+.media-center-primary-bar .media-folder-create-bar > input {
+  grid-area: name;
+  width: 100%;
+  min-width: 0;
+}
+
+.media-center-primary-bar .media-folder-create-bar > button:nth-of-type(1) {
+  grid-area: create;
+}
+
+.media-center-primary-bar .media-folder-create-bar > button:nth-of-type(2) {
+  grid-area: rename;
+}
+
+.media-center-primary-bar .media-folder-create-bar > button:nth-of-type(3) {
+  grid-area: remove;
+}
+
+.media-center-primary-bar .media-center-upload-bar {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start;
+  gap: 5px;
+  padding: 7px;
+}
+
+.media-center-primary-bar .media-center-upload-bar > .media-center-panel-title {
+  grid-column: 1 / -1;
+}
+
+.media-center-primary-bar .media-center-upload-button {
+  width: 100%;
+  padding-inline: 7px;
+}
+
+.media-center-primary-bar .media-center-upload-bar > p {
+  margin: 0;
+  align-self: center;
+  color: #7a8492;
+  font-size: 0.57rem;
+  line-height: 1.35;
+}
+
+.media-center-primary-bar .media-center-upload-bar > .ui-button {
+  align-self: center;
+  justify-self: end;
+  --admin-button-min-height: 30px;
+  --admin-button-padding-inline: 9px;
+  --admin-button-font-size: 0.65rem;
+}
+
+.media-center-primary-bar > .media-center-toolbar {
+  align-items: stretch;
+  padding: 7px;
+}
+
+.media-center-primary-bar > .media-center-toolbar .ui-management-toolbar-controls {
+  grid-template-areas:
+    'title title title'
+    'folder kind refresh';
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  align-content: start;
+}
+
+.media-center-primary-bar > .media-center-toolbar .media-center-panel-title {
+  grid-area: title;
+}
+
+.media-center-primary-bar > .media-center-toolbar .ui-management-filter:nth-child(2) {
+  grid-area: folder;
+}
+
+.media-center-primary-bar > .media-center-toolbar .ui-management-filter:nth-child(3) {
+  grid-area: kind;
+}
+
+.media-center-primary-bar > .media-center-toolbar .ui-button {
+  grid-area: refresh;
+}
+
+.media-center-primary-bar .ui-management-filter > span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+/* Upload controls stay inline so the dock remains short. */
+.media-center-upload-bar {
+  flex: 1 1 57%;
   gap: 8px;
-  padding: 5px 7px;
-  border: 1px solid #e2e6ec;
-  border-radius: 9px;
-  background: #fff;
-  box-shadow: 0 1px 2px rgb(16 24 40 / 2%);
 }
 
 .media-center-upload-bar > label {
@@ -232,22 +558,55 @@
   margin: 0;
 }
 
-/* Search is dominant; filters are subordinate and align to one baseline. */
+/* Search is dominant; filters stay on the same baseline inside one toolbar. */
 .media-center-toolbar {
-  display: grid;
-  grid-template-columns: minmax(280px, 1fr) minmax(145px, 190px) 135px 145px auto;
-  min-height: 38px;
+  display: flex;
+  min-height: 40px;
   align-items: center;
   gap: 6px;
-  padding: 0;
-  border: 0;
-  background: transparent;
+  padding: 4px 6px;
 }
 
-.media-center-toolbar input,
-.media-center-toolbar select {
+.media-center-toolbar .ui-management-toolbar-controls {
+  display: grid;
   width: 100%;
-  padding: 0 9px;
+  min-width: 0;
+  grid-template-columns:
+    minmax(190px, 1.45fr) repeat(2, minmax(108px, 0.82fr)) minmax(112px, 0.9fr)
+    auto;
+  align-items: end;
+  gap: 6px;
+}
+
+.media-center-filter-details {
+  position: relative;
+  min-width: 0;
+}
+
+.media-center-filter-options {
+  position: absolute;
+  z-index: 5;
+  top: calc(100% + 6px);
+  right: 0;
+  display: flex;
+  gap: 8px;
+  min-width: 270px;
+  padding: 9px;
+  border: 1px solid #e2e6ec;
+  border-radius: 9px;
+  background: #fff;
+  box-shadow: 0 10px 24px rgb(16 24 40 / 12%);
+}
+
+.media-center-toolbar .ui-management-search,
+.media-center-toolbar .ui-management-filter,
+.media-center-toolbar .ui-button {
+  min-width: 0;
+}
+
+.media-center-toolbar .ui-management-search input,
+.media-center-toolbar .ui-management-filter select {
+  width: 100%;
 }
 
 .media-center-toolbar .secondary-button {
@@ -421,6 +780,39 @@
   white-space: nowrap;
 }
 
+.media-center-card-group {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 5px;
+  padding: 0 6px 5px;
+}
+
+.media-center-card-group > span {
+  flex: 0 0 auto;
+  color: #98a2b3;
+  font-size: 0.52rem;
+  font-weight: 700;
+}
+
+.media-center-card-group select {
+  width: 100%;
+  min-width: 0;
+  height: 24px;
+  padding: 0 22px 0 6px;
+  border: 1px solid #e2e6ec;
+  border-radius: 6px;
+  outline: 0;
+  color: #536174;
+  background: #fff;
+  font-size: 0.56rem;
+}
+
+.media-center-card-group select:focus {
+  border-color: #f2a080;
+  box-shadow: 0 0 0 2px rgb(236 23 103 / 8%);
+}
+
 .media-center-role-list {
   display: flex;
   min-height: 16px;
@@ -461,12 +853,138 @@
   background: #f8f9fb;
 }
 
+.media-upload-dialog .ui-dialog-body {
+  display: grid;
+  gap: 12px;
+}
+
+.media-upload-dialog-mode {
+  display: inline-flex;
+  width: fit-content;
+  padding: 3px;
+  border-radius: 8px;
+  background: #f1f3f6;
+}
+
+.media-upload-dialog-mode button {
+  min-height: 30px;
+  padding: 0 11px;
+  border: 0;
+  border-radius: 6px;
+  color: #667085;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.68rem;
+  font-weight: 720;
+}
+
+.media-upload-dialog-mode button.is-active {
+  color: #202632;
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(16 24 40 / 9%);
+}
+
+.media-upload-dialog-form {
+  display: grid;
+  gap: 10px;
+}
+
+.media-upload-dialog-form > label:first-child {
+  display: grid;
+  gap: 5px;
+  color: #475467;
+  font-size: 0.7rem;
+  font-weight: 700;
+}
+
+.media-upload-dialog-form input {
+  width: 100%;
+  height: 36px;
+  padding: 0 29px 0 10px;
+  border: 1px solid #d8dee8;
+  border-radius: 8px;
+  outline: 0;
+  color: #344054;
+  background: #fff;
+  font-size: 0.72rem;
+}
+
+.media-upload-dialog-group-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: -3px;
+}
+
+.media-upload-dialog-group-actions .ui-button {
+  --admin-button-min-height: 28px;
+  --admin-button-padding-inline: 8px;
+  --admin-button-font-size: 0.64rem;
+}
+
+.media-upload-dialog-file {
+  position: relative;
+  display: inline-flex;
+  min-height: 36px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
+  overflow: hidden;
+  border-radius: 8px;
+  color: #fff;
+  background: #202632;
+  cursor: pointer;
+  font-size: 0.7rem;
+  font-weight: 760;
+}
+
+.media-upload-dialog-file.is-disabled {
+  opacity: 0.48;
+  cursor: default;
+}
+
+.media-upload-dialog-file input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
 .media-center-result-summary {
   display: inline-flex;
   min-width: 0;
   align-items: center;
   justify-content: flex-end;
   gap: 7px;
+}
+
+.media-center-view-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid #e2e6ec;
+  border-radius: 7px;
+  background: #f4f6f8;
+}
+
+.media-center-view-toggle button {
+  display: grid;
+  width: 26px;
+  height: 25px;
+  place-items: center;
+  border: 0;
+  border-radius: 5px;
+  color: #7a8492;
+  background: transparent;
+  cursor: pointer;
+}
+
+.media-center-view-toggle button:hover,
+.media-center-view-toggle button.is-active {
+  color: #202632;
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(16 24 40 / 8%);
 }
 
 .media-center-result-summary button {
@@ -479,6 +997,43 @@
   cursor: pointer;
   font-size: 0.56rem;
   font-weight: 700;
+}
+
+.media-center-grid.is-list {
+  grid-template-columns: 1fr;
+  gap: 5px;
+}
+
+.media-center-grid.is-list .media-center-card {
+  grid-template-columns: 96px minmax(0, 1fr) auto;
+  min-height: 82px;
+}
+
+.media-center-grid.is-list .media-center-upload-card {
+  grid-template-columns: 96px minmax(0, 1fr);
+}
+
+.media-center-grid.is-list .media-center-preview {
+  grid-row: 1 / span 2;
+  min-height: 82px;
+}
+
+.media-center-grid.is-list .media-center-upload-card .media-center-preview {
+  grid-row: auto;
+}
+
+.media-center-grid.is-list .media-center-card-body {
+  align-content: center;
+  padding: 8px 10px;
+}
+
+.media-center-grid.is-list .media-center-card-actions {
+  min-width: 76px;
+  align-self: stretch;
+  align-items: center;
+  justify-content: center;
+  border-top: 0;
+  border-left: 1px solid #f0f2f5;
 }
 
 .media-center-upload-summary {
@@ -514,7 +1069,7 @@
   width: 42%;
   height: 100%;
   border-radius: 999px;
-  background: var(--brand, #ff5a1f);
+  background: var(--brand, #ec1767);
   content: '';
   animation: media-center-upload-progress 1s ease-in-out infinite alternate;
 }
@@ -714,27 +1269,52 @@
     flex-wrap: wrap;
   }
 
+  .media-center-page .media-folder-create-bar {
+    flex-basis: auto;
+    border-right: 0;
+    border-bottom: 1px solid #edf0f4;
+  }
+
+  .media-center-upload-details {
+    flex-basis: auto;
+  }
+
   .media-center-upload-bar > small {
     width: 100%;
     flex-basis: 100%;
     padding-left: 0;
   }
 
-  .media-center-toolbar {
-    grid-template-columns: minmax(220px, 1fr) 160px 130px 140px auto;
+  .media-center-toolbar .ui-management-toolbar-controls {
+    grid-template-columns:
+      minmax(200px, 1.35fr) minmax(140px, 0.9fr) minmax(104px, 0.7fr)
+      auto;
   }
 }
 
 @media (max-width: 920px) {
-  .media-center-toolbar {
-    grid-template-columns: 1fr 1fr;
+  .media-center-primary-bar {
+    grid-template-columns: minmax(210px, 1fr) minmax(155px, 0.85fr) minmax(245px, 1.1fr);
   }
 
-  .media-center-toolbar input {
-    grid-column: 1 / -1;
+  .media-center-upload-details .media-center-upload-bar {
+    position: static;
+    min-width: 0;
+    margin-top: 5px;
+    box-shadow: none;
   }
 
-  .media-center-toolbar .secondary-button {
+  .media-center-upload-details[open] {
+    flex: 1 1 100%;
+  }
+
+  .media-center-toolbar .ui-management-toolbar-controls {
+    grid-template-columns:
+      minmax(180px, 1.25fr) minmax(130px, 0.9fr) minmax(98px, 0.7fr)
+      auto;
+  }
+
+  .media-center-toolbar .ui-button {
     width: 100%;
   }
 
@@ -762,6 +1342,18 @@
 }
 
 @media (max-width: 760px) {
+  .media-center-command-bar {
+    width: 100%;
+  }
+
+  .media-center-command-bar .ui-management-toolbar-controls {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto auto;
+  }
+
+  .media-center-command-bar .ui-button:first-child {
+    grid-column: 1 / -1;
+  }
+
   .media-center-page {
     gap: 7px;
   }
@@ -775,6 +1367,42 @@
     justify-content: flex-start;
   }
 
+  .media-center-command-dock {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .media-center-primary-bar {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .media-center-primary-bar > .media-center-command-dock {
+    display: flex;
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .media-center-filter-options {
+    position: static;
+    min-width: 0;
+    margin-top: 6px;
+    box-shadow: none;
+  }
+
+  .media-center-toolbar .ui-management-toolbar-controls {
+    display: flex;
+    width: 100%;
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .media-center-primary-bar > .media-center-toolbar .ui-management-toolbar-controls {
+    display: flex;
+    align-items: stretch;
+    flex-direction: column;
+  }
+
   .media-center-page .media-folder-create-bar,
   .media-center-upload-bar,
   .media-center-selection-toolbar,
@@ -783,6 +1411,10 @@
   .media-center-page .asset-toolbar {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .media-center-command-dock {
+    gap: 0;
   }
 
   .media-center-page .media-folder-create-bar > div {

@@ -26,7 +26,7 @@ test('primary domains follow the final P1 information architecture', () => {
     [
       ['dashboard', '仪表盘'],
       ['catalog', '商品'],
-      ['site', '站点'],
+      ['site', '设计中心'],
       ['content', '内容'],
       ['operations', '运营'],
       ['engagement', '客户互动'],
@@ -111,6 +111,7 @@ test('new hashes parse and legacy settings aliases normalize deterministically',
     assert.equal(parseAdminView(view), view);
   }
   assert.equal(parseAdminView('#settings'), 'system-general');
+  assert.equal(parseAdminView('#system-navigation'), 'system-general');
   assert.equal(parseAdminView('settings'), 'system-general');
   assert.equal(parseAdminView('#system'), 'system-general');
   assert.equal(parseAdminView('system'), 'system-general');
@@ -127,7 +128,7 @@ test('site, engagement, and system navigation match final P1 IA exactly', () => 
     [
       ['home', '首页'],
       ['navigation', '导航'],
-      ['theme', '主题'],
+      ['theme', '视觉系统'],
     ],
   );
   assert.deepEqual(
@@ -144,7 +145,6 @@ test('site, engagement, and system navigation match final P1 IA exactly', () => 
     getAdminSecondaryItems('system', sections).map(({ view, label }) => [view, label]),
     [
       ['system-general', '基本设置'],
-      ['system-navigation', '界面偏好'],
       ['pwa', '应用安装'],
       ['system-infrastructure', '基础设施'],
       ['system-advanced', '高级设置'],

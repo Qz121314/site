@@ -1,6 +1,32 @@
-import { X } from 'lucide-react';
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { AdminApiError, fetchSections, type AdminSection } from './api';
+import {
+  ArrowRight,
+  Boxes,
+  FileText,
+  FolderKanban,
+  Image,
+  LayoutDashboard,
+  MessageSquare,
+  PanelTop,
+  PenLine,
+  Settings2,
+  X,
+} from 'lucide-react';
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
+import {
+  AdminApiError,
+  fetchSections,
+  fetchSiteSettings,
+  type AdminSection,
+} from './api';
 import {
   getAdminViewContext,
   parseAdminView,
@@ -29,11 +55,7 @@ import {
   rollbackStorefront,
   type PublishStatus,
 } from './publish-api';
-import {
-  AdminPublishingControls,
-  formatVersionTime,
-  type RollbackTarget,
-} from './shell/AdminPublishingControls';
+import { WorkspacePublishMenu, type RollbackTarget } from './shell/WorkspacePublishMenu';
 import { AdminShell } from './shell/AdminShell';
 
 const SiteSettingsWorkspace = lazy(() =>
@@ -78,12 +100,6 @@ const ConversionPoolView = lazy(() =>
     default: module.ConversionPoolView,
   })),
 );
-const SystemNavigationView = lazy(() =>
-  import('./system/SystemNavigationView').then((module) => ({
-    default: module.SystemNavigationView,
-  })),
-);
-
 type DashboardProps = {
   expiresAt: string | undefined;
   loggingOut: boolean;
@@ -103,6 +119,17 @@ type PendingDiscardAction =
 
 type HistoryMode = 'push' | 'replace';
 type WorkspaceWidth = 'narrow' | 'medium' | 'wide' | 'split-pane';
+
+function formatVersionTime(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString('zh-CN', {
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
 
 function isSessionError(error: unknown): boolean {
   return (
@@ -130,7 +157,6 @@ function workspaceWidthForView(view: AdminView): WorkspaceWidth {
     view === 'navigation' ||
     view === 'messages' ||
     view === 'pwa' ||
-    view === 'system-navigation' ||
     view === 'system-infrastructure'
   ) {
     return 'medium';
@@ -139,12 +165,139 @@ function workspaceWidthForView(view: AdminView): WorkspaceWidth {
   return 'wide';
 }
 
-function ShellPlaceholder() {
+const PROJECT_METADATA = [
+  ['仓库', 'Qz121314/site'],
+  ['技术栈', 'React / Vite / TypeScript'],
+  ['部署', 'Cloudflare Workers / Pages'],
+  ['数据', 'D1 / R2'],
+  ['包管理', 'pnpm'],
+  ['内容', 'Markdown 文章'],
+] as const;
+
+function DashboardLauncher({
+  sections,
+  onNavigate,
+}: {
+  sections: AdminSection[];
+  onNavigate: (view: AdminView) => void;
+}) {
+  const entries = [
+    ['首页', '管理首页布局', 'home', PanelTop],
+    ['导航', '管理 Storefront 导航', 'navigation', LayoutDashboard],
+    ['视觉系统', '管理前端主题与组件样式', 'theme', PenLine],
+    ['文章中心', '管理 Markdown 内容', 'faq', FileText],
+    ['素材库', '管理上传素材与文件夹', 'assets', Image],
+    ['Messages', '会话列表卡片配置', 'messages', MessageSquare],
+    ['客服接入', '管理客服连接配置', 'customer-service', Settings2],
+    ['基本设置', '管理站点基础配置', 'system-general', Settings2],
+  ] as const;
   return (
-    <section className="admin-shell-placeholder" aria-label="仪表盘">
-      <strong>选择一个业务域开始管理</strong>
-      <p>仪表盘当前作为管理工作区入口，不新增统计或业务功能。</p>
-    </section>
+    <div className="dashboard-launcher">
+      <section className="dashboard-section">
+        <div className="dashboard-section-heading">
+          <div>
+            <span className="dashboard-kicker">Workspace</span>
+            <h2>常用入口</h2>
+          </div>
+          <span className="dashboard-count">{entries.length} 个入口</span>
+        </div>
+        <div className="dashboard-entry-grid">
+          {entries.map(([label, description, view, Icon]) => (
+            <button
+              className="dashboard-entry"
+              key={view}
+              type="button"
+              onClick={() => onNavigate(view)}
+            >
+              <span className="dashboard-entry-icon">
+                <Icon size={17} strokeWidth={1.8} />
+              </span>
+              <span>
+                <strong>{label}</strong>
+                <small>{description}</small>
+              </span>
+              <ArrowRight size={15} />
+            </button>
+          ))}
+        </div>
+      </section>
+      <section className="dashboard-section">
+        <div className="dashboard-section-heading">
+          <div>
+            <span className="dashboard-kicker">Repository</span>
+            <h2>项目概况</h2>
+          </div>
+          <a
+            className="dashboard-repository-link"
+            href="https://github.com/Qz121314/site"
+            target="_blank"
+            rel="noreferrer"
+            aria-label="在 GitHub 中查看 Qz121314/site 仓库"
+            title="在 GitHub 中查看仓库"
+          >
+            <svg
+              aria-hidden="true"
+              className="dashboard-github-mark"
+              viewBox="0 0 24 24"
+              width="17"
+              height="17"
+              fill="currentColor"
+            >
+              <path d="M12 .297a12 12 0 0 0-3.79 23.384c.6.113.82-.26.82-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.09-.745.083-.73.083-.73 1.205.084 1.84 1.237 1.84 1.237 1.07 1.835 2.807 1.305 3.492.998.108-.776.418-1.305.762-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.124-.303-.535-1.523.117-3.176 0 0 1.008-.322 3.3 1.23a11.5 11.5 0 0 1 6.006 0c2.29-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.873.118 3.176.77.84 1.233 1.91 1.233 3.22 0 4.61-2.806 5.625-5.48 5.92.43.372.823 1.103.823 2.222v3.293c0 .32.216.694.825.576A12 12 0 0 0 12 .297" />
+            </svg>
+          </a>
+        </div>
+        <dl className="dashboard-metadata">
+          {PROJECT_METADATA.map(([label, value]) => (
+            <div key={label}>
+              <dt>{label}</dt>
+              <dd>{value}</dd>
+            </div>
+          ))}
+        </dl>
+      </section>
+      <section className="dashboard-section">
+        <div className="dashboard-section-heading">
+          <div>
+            <span className="dashboard-kicker">Catalog</span>
+            <h2>分区入口</h2>
+          </div>
+          <span className="dashboard-count">{sections.length} 个分区</span>
+        </div>
+        <div className="dashboard-section-list">
+          <button
+            className="dashboard-section-link"
+            type="button"
+            onClick={() => onNavigate('sections')}
+          >
+            <FolderKanban size={17} />
+            <span>
+              <strong>分区管理</strong>
+              <small>管理所有分区</small>
+            </span>
+            <ArrowRight size={15} />
+          </button>
+          {sections.map((section) => (
+            <button
+              className="dashboard-section-link"
+              key={section.id}
+              type="button"
+              onClick={() => onNavigate(`products:${section.id}`)}
+            >
+              <Boxes size={17} />
+              <span>
+                <strong>{section.name}</strong>
+                <small>
+                  {section.productCount} 个产品 · {section.conversionMethodCount}{' '}
+                  个转化方法
+                </small>
+              </span>
+              <ArrowRight size={15} />
+            </button>
+          ))}
+        </div>
+      </section>
+    </div>
   );
 }
 
@@ -160,6 +313,7 @@ export function Dashboard({
     useState<AdminNavigationPreferences>(readAdminNavigationPreferences);
   const initialViewRef = useRef(activeView);
   const [sections, setSections] = useState<AdminSection[]>([]);
+  const [pwaIconAssetId, setPwaIconAssetId] = useState<string | null>(null);
   const [sectionsLoading, setSectionsLoading] = useState(true);
   const [sectionsError, setSectionsError] = useState('');
   const [publishStatus, setPublishStatus] = useState<PublishStatus | null>(null);
@@ -171,7 +325,17 @@ export function Dashboard({
   const [pendingDiscardAction, setPendingDiscardAction] =
     useState<PendingDiscardAction>(null);
   const [productHandoff, setProductHandoff] = useState<ProductHandoff | null>(null);
+  const [messagesActions, setMessagesActions] = useState<ReactNode>(null);
+  const [themeActions, setThemeActions] = useState<ReactNode>(null);
   const unsaved = useAdminUnsavedState();
+
+  useEffect(() => {
+    if (activeView !== 'messages') setMessagesActions(null);
+  }, [activeView]);
+
+  useEffect(() => {
+    if (activeView !== 'theme') setThemeActions(null);
+  }, [activeView]);
 
   const loadSections = useCallback(async () => {
     setSectionsLoading(true);
@@ -204,6 +368,15 @@ export function Dashboard({
     }
   }, [onSessionExpired]);
 
+  const loadPwaIcon = useCallback(async () => {
+    try {
+      const settings = await fetchSiteSettings();
+      setPwaIconAssetId(settings.pwaIconAssetId);
+    } catch (error) {
+      if (isSessionError(error)) onSessionExpired();
+    }
+  }, [onSessionExpired]);
+
   const commitView = useCallback(
     (nextView: AdminView, mode: HistoryMode = 'push') => {
       if (nextView === activeView) {
@@ -223,13 +396,24 @@ export function Dashboard({
   useEffect(() => {
     void loadSections();
     void loadPublishStatus();
-  }, [loadPublishStatus, loadSections]);
+    void loadPwaIcon();
+  }, [loadPwaIcon, loadPublishStatus, loadSections]);
 
   useEffect(() => {
     const handleMutation = () => void loadPublishStatus();
     window.addEventListener('admin:data-mutated', handleMutation);
     return () => window.removeEventListener('admin:data-mutated', handleMutation);
   }, [loadPublishStatus]);
+
+  useEffect(() => {
+    const handlePwaIconUpdated = (event: Event) => {
+      const assetId = (event as CustomEvent<{ assetId?: unknown }>).detail?.assetId;
+      setPwaIconAssetId(typeof assetId === 'string' ? assetId : null);
+    };
+    window.addEventListener('admin:pwa-icon-updated', handlePwaIconUpdated);
+    return () =>
+      window.removeEventListener('admin:pwa-icon-updated', handlePwaIconUpdated);
+  }, []);
 
   useEffect(() => {
     if (!unsaved.isDirty) return;
@@ -407,8 +591,8 @@ export function Dashboard({
       ? productHandoff
       : null;
 
-  const workspaceActions = contextPublishKey ? (
-    <AdminPublishingControls
+  const publishingActions = contextPublishKey ? (
+    <WorkspacePublishMenu
       key={activeView}
       status={publishStatus}
       statusError={publishStatusError}
@@ -422,6 +606,19 @@ export function Dashboard({
       onRequestRollback={setRollbackTarget}
     />
   ) : null;
+  const localWorkspaceActions =
+    activeView === 'theme'
+      ? themeActions
+      : activeView === 'messages'
+        ? messagesActions
+        : null;
+  const workspaceActions =
+    publishingActions || localWorkspaceActions ? (
+      <>
+        {publishingActions}
+        {localWorkspaceActions}
+      </>
+    ) : null;
 
   const pageSecondaryAction =
     currentSectionHandoff && currentSection?.kind !== 'products' ? (
@@ -445,10 +642,12 @@ export function Dashboard({
         pageSecondaryAction={pageSecondaryAction}
         workspaceWidth={workspaceWidthForView(activeView)}
         navigationPreferences={navigationPreferences}
+        onNavigationPreferencesChange={updateNavigationPreferences}
         onLogout={requestLogout}
         loggingOut={loggingOut}
         logoutDisabled={publishingKey !== null || rollingBack}
         sessionExpiresAt={expiresAt}
+        pwaIconAssetId={pwaIconAssetId}
       >
         {publishFeedback ? (
           <div
@@ -480,16 +679,21 @@ export function Dashboard({
           }
         >
           {activeView === 'dashboard' ? (
-            <ShellPlaceholder />
+            <DashboardLauncher sections={sections} onNavigate={requestView} />
           ) : isSettingsView(activeView) ? (
             <SiteSettingsWorkspace
               view={activeView}
               sections={sections}
               onNavigate={requestView}
               onSessionExpired={onSessionExpired}
+              onMessagesActionsChange={setMessagesActions}
             />
           ) : activeView === 'theme' ? (
-            <ThemeCenterView key={activeView} onSessionExpired={onSessionExpired} />
+            <ThemeCenterView
+              key={activeView}
+              onSessionExpired={onSessionExpired}
+              onActionsChange={setThemeActions}
+            />
           ) : activeView === 'assets' ? (
             <AssetLibraryView key={activeView} onSessionExpired={onSessionExpired} />
           ) : activeView === 'customer-service' ? (
@@ -503,12 +707,6 @@ export function Dashboard({
             />
           ) : activeView === 'faq' ? (
             <FaqManagementView key={activeView} onSessionExpired={onSessionExpired} />
-          ) : activeView === 'system-navigation' ? (
-            <SystemNavigationView
-              sections={sections}
-              value={navigationPreferences}
-              onChange={updateNavigationPreferences}
-            />
           ) : currentSection?.kind === 'products' ? (
             <ProductManagementView
               key={activeView}

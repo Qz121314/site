@@ -65,6 +65,11 @@ export function PwaSettingsView({ onSessionExpired }: { onSessionExpired: () => 
         installPrompt: { ...draft.installPrompt },
       });
       setDraft(createPwaDraft(updated));
+      window.dispatchEvent(
+        new CustomEvent('admin:pwa-icon-updated', {
+          detail: { assetId: updated.pwaIconAssetId },
+        }),
+      );
       setMessage({ type: 'success', text: 'PWA 设置已保存。' });
     } catch (error) {
       setMessage({

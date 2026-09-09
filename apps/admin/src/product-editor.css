@@ -385,8 +385,8 @@
 }
 
 .product-editor-dialog .product-media-card.is-cover {
-  border-color: #ff9a76;
-  box-shadow: 0 0 0 2px rgb(255 90 31 / 10%);
+  border-color: #ff8ab8;
+  box-shadow: 0 0 0 2px rgb(236 23 103 / 10%);
 }
 
 .product-editor-dialog .product-media-preview {
@@ -429,7 +429,7 @@
   .product-media-preview
   .product-media-badges
   b:not(.is-kind-badge) {
-  background: #ff5a1f;
+  background: #ec1767;
 }
 
 .product-editor-dialog .product-media-meta {
@@ -516,7 +516,7 @@
 }
 
 .product-editor-dialog button:focus-visible {
-  outline: 3px solid rgb(255 90 31 / 14%);
+  outline: 3px solid rgb(236 23 103 / 14%);
   outline-offset: 1px;
 }
 

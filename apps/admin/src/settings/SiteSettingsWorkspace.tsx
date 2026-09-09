@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react';
+import { lazy, Suspense, type ReactNode } from 'react';
 import type { AdminSection } from '../api';
 import type { AdminView, SettingsAdminView } from '../admin-navigation';
 import { AdminFeedbackState } from '../components/ui/feedback-state';
@@ -46,6 +46,7 @@ type SiteSettingsWorkspaceProps = {
   sections: AdminSection[];
   onNavigate: (view: AdminView) => void;
   onSessionExpired: () => void;
+  onMessagesActionsChange: (actions: ReactNode | null) => void;
 };
 
 export function SiteSettingsWorkspace({
@@ -53,6 +54,7 @@ export function SiteSettingsWorkspace({
   sections,
   onNavigate,
   onSessionExpired,
+  onMessagesActionsChange,
 }: SiteSettingsWorkspaceProps) {
   return (
     <SiteSettingsProvider onSessionExpired={onSessionExpired}>
@@ -66,7 +68,10 @@ export function SiteSettingsWorkspace({
         ) : view === 'navigation' ? (
           <NavigationSettingsView onSessionExpired={onSessionExpired} />
         ) : view === 'messages' ? (
-          <MessagesExperienceView onNavigate={onNavigate} />
+          <MessagesExperienceView
+            onNavigate={onNavigate}
+            onActionsChange={onMessagesActionsChange}
+          />
         ) : view === 'pwa' ? (
           <PwaSettingsView onSessionExpired={onSessionExpired} />
         ) : view === 'system-general' ? (
