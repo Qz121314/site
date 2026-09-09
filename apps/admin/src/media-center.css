@@ -101,6 +101,55 @@
   border-right: 1px solid #edf0f4;
 }
 
+.media-center-upload-details {
+  position: relative;
+  min-width: 0;
+  flex: 1 1 57%;
+}
+
+.media-center-upload-details > summary,
+.media-center-filter-details > summary {
+  display: inline-flex;
+  min-height: 31px;
+  align-items: center;
+  justify-content: center;
+  padding: 0 10px;
+  border: 1px solid #d8dee8;
+  border-radius: 7px;
+  color: #344054;
+  background: #f4f6f8;
+  cursor: pointer;
+  font-size: 0.67rem;
+  font-weight: 760;
+  list-style: none;
+  white-space: nowrap;
+}
+
+.media-center-upload-details > summary::-webkit-details-marker,
+.media-center-filter-details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.media-center-upload-details[open] > summary,
+.media-center-filter-details[open] > summary {
+  color: #202632;
+  border-color: #f2a080;
+  background: #fff8f5;
+}
+
+.media-center-upload-details .media-center-upload-bar {
+  position: absolute;
+  z-index: 5;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: min(510px, 72vw);
+  padding: 8px;
+  border: 1px solid #e2e6ec;
+  border-radius: 9px;
+  background: #fff;
+  box-shadow: 0 10px 24px rgb(16 24 40 / 12%);
+}
+
 .media-center-page .media-folder-create-bar > div {
   display: flex;
   min-width: auto;
@@ -259,6 +308,26 @@
     auto;
   align-items: end;
   gap: 6px;
+}
+
+.media-center-filter-details {
+  position: relative;
+  min-width: 0;
+}
+
+.media-center-filter-options {
+  position: absolute;
+  z-index: 5;
+  top: calc(100% + 6px);
+  right: 0;
+  display: flex;
+  gap: 8px;
+  min-width: 270px;
+  padding: 9px;
+  border: 1px solid #e2e6ec;
+  border-radius: 9px;
+  background: #fff;
+  box-shadow: 0 10px 24px rgb(16 24 40 / 12%);
 }
 
 .media-center-toolbar .ui-management-search,
@@ -813,6 +882,10 @@
     border-bottom: 1px solid #edf0f4;
   }
 
+  .media-center-upload-details {
+    flex-basis: auto;
+  }
+
   .media-center-upload-bar > small {
     width: 100%;
     flex-basis: 100%;
@@ -821,7 +894,7 @@
 
   .media-center-toolbar .ui-management-toolbar-controls {
     grid-template-columns:
-      minmax(190px, 1.35fr) repeat(2, minmax(104px, 0.82fr)) minmax(108px, 0.9fr)
+      minmax(200px, 1.35fr) minmax(140px, 0.9fr) minmax(104px, 0.7fr)
       auto;
   }
 }
@@ -829,7 +902,7 @@
 @media (max-width: 920px) {
   .media-center-toolbar .ui-management-toolbar-controls {
     grid-template-columns:
-      minmax(180px, 1.25fr) repeat(2, minmax(100px, 0.82fr)) minmax(104px, 0.9fr)
+      minmax(180px, 1.25fr) minmax(130px, 0.9fr) minmax(98px, 0.7fr)
       auto;
   }
 
@@ -872,6 +945,13 @@
   .media-center-tabs {
     width: 100%;
     justify-content: flex-start;
+  }
+
+  .media-center-filter-options {
+    position: static;
+    min-width: 0;
+    margin-top: 6px;
+    box-shadow: none;
   }
 
   .media-center-toolbar .ui-management-toolbar-controls {

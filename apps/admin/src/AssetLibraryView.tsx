@@ -821,77 +821,80 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
               ) : null}
             </div>
 
-            <div className="media-center-upload-bar">
-              <label>
-                <span>素材用途</span>
-                <select
-                  value={uploadRole}
-                  disabled={uploadQueue.running}
-                  onChange={(event) => setUploadRole(event.target.value as MediaRole)}
+            <details className="media-center-upload-details">
+              <summary>上传素材</summary>
+              <div className="media-center-upload-bar">
+                <label>
+                  <span>素材用途</span>
+                  <select
+                    value={uploadRole}
+                    disabled={uploadQueue.running}
+                    onChange={(event) => setUploadRole(event.target.value as MediaRole)}
+                  >
+                    {ROLE_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label>
+                  <span>上传到文件夹</span>
+                  <select
+                    value={uploadFolderId}
+                    disabled={uploadQueue.running}
+                    onChange={(event) => setUploadFolderId(event.target.value)}
+                  >
+                    <option value="">未分组</option>
+                    {folders.map((folder) => (
+                      <option key={folder.id} value={folder.id}>
+                        {folder.name}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label
+                  className={`media-center-upload-button${uploadQueue.running ? ' is-disabled' : ''}`}
                 >
-                  {ROLE_OPTIONS.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label>
-                <span>上传到文件夹</span>
-                <select
-                  value={uploadFolderId}
-                  disabled={uploadQueue.running}
-                  onChange={(event) => setUploadFolderId(event.target.value)}
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm"
+                    multiple
+                    disabled={uploadQueue.running}
+                    onChange={(event) => {
+                      const files = Array.from(event.currentTarget.files ?? []);
+                      event.currentTarget.value = '';
+                      void uploadFiles(files, uploadFolderId || null);
+                    }}
+                  />
+                  {uploadQueue.running ? '上传中…' : '上传文件'}
+                </label>
+                <label
+                  className={`media-center-upload-button is-folder-upload${uploadQueue.running || folderWorking ? ' is-disabled' : ''}`}
                 >
-                  <option value="">未分组</option>
-                  {folders.map((folder) => (
-                    <option key={folder.id} value={folder.id}>
-                      {folder.name}
-                    </option>
-                  ))}
-                </select>
-              </label>
-              <label
-                className={`media-center-upload-button${uploadQueue.running ? ' is-disabled' : ''}`}
-              >
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm"
-                  multiple
-                  disabled={uploadQueue.running}
-                  onChange={(event) => {
-                    const files = Array.from(event.currentTarget.files ?? []);
-                    event.currentTarget.value = '';
-                    void uploadFiles(files, uploadFolderId || null);
-                  }}
-                />
-                {uploadQueue.running ? '上传中…' : '上传文件'}
-              </label>
-              <label
-                className={`media-center-upload-button is-folder-upload${uploadQueue.running || folderWorking ? ' is-disabled' : ''}`}
-              >
-                <input
-                  ref={(node) => {
-                    if (!node) return;
-                    node.setAttribute('webkitdirectory', '');
-                    node.setAttribute('directory', '');
-                  }}
-                  type="file"
-                  multiple
-                  disabled={uploadQueue.running || folderWorking}
-                  onChange={(event) => {
-                    const files = Array.from(event.currentTarget.files ?? []);
-                    event.currentTarget.value = '';
-                    void handleFolderUpload(files);
-                  }}
-                />
-                {uploadQueue.running || folderWorking ? '处理中…' : '上传文件夹'}
-              </label>
-              <small>
-                静态图片先在浏览器压缩；队列最多并发处理 3
-                个文件。单个失败不会中断后续文件。
-              </small>
-            </div>
+                  <input
+                    ref={(node) => {
+                      if (!node) return;
+                      node.setAttribute('webkitdirectory', '');
+                      node.setAttribute('directory', '');
+                    }}
+                    type="file"
+                    multiple
+                    disabled={uploadQueue.running || folderWorking}
+                    onChange={(event) => {
+                      const files = Array.from(event.currentTarget.files ?? []);
+                      event.currentTarget.value = '';
+                      void handleFolderUpload(files);
+                    }}
+                  />
+                  {uploadQueue.running || folderWorking ? '处理中…' : '上传文件夹'}
+                </label>
+                <small>
+                  静态图片先在浏览器压缩；队列最多并发处理 3
+                  个文件。单个失败不会中断后续文件。
+                </small>
+              </div>
+            </details>
           </div>
 
           {mediaError ? (
@@ -927,33 +930,42 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
                 ))}
               </select>
             </label>
-            <label className="ui-management-filter">
-              <span>格式</span>
-              <select
-                value={mediaKind}
-                onChange={(event) => setMediaKind(event.target.value as MediaKind | '')}
-              >
-                {KIND_OPTIONS.map((option) => (
-                  <option key={option.value || 'all'} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="ui-management-filter">
-              <span>用途</span>
-              <select
-                value={mediaRole}
-                onChange={(event) => setMediaRole(event.target.value as MediaRole | '')}
-              >
-                <option value="">全部用途</option>
-                {ROLE_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </label>
+            <details className="media-center-filter-details">
+              <summary>更多筛选</summary>
+              <div className="media-center-filter-options">
+                <label className="ui-management-filter">
+                  <span>格式</span>
+                  <select
+                    value={mediaKind}
+                    onChange={(event) =>
+                      setMediaKind(event.target.value as MediaKind | '')
+                    }
+                  >
+                    {KIND_OPTIONS.map((option) => (
+                      <option key={option.value || 'all'} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+                <label className="ui-management-filter">
+                  <span>用途</span>
+                  <select
+                    value={mediaRole}
+                    onChange={(event) =>
+                      setMediaRole(event.target.value as MediaRole | '')
+                    }
+                  >
+                    <option value="">全部用途</option>
+                    {ROLE_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+            </details>
             <Button
               variant="secondary"
               onClick={() => void loadMedia()}
