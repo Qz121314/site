@@ -1,4 +1,4 @@
-import { Menu, PanelLeftClose, PanelLeftOpen, X } from 'lucide-react';
+import { ListOrdered, Menu, PanelLeftClose, PanelLeftOpen, X } from 'lucide-react';
 import { useEffect, useRef, useState, type MouseEvent, type ReactNode } from 'react';
 import {
   getCatalogWorkspaceContext,
@@ -25,6 +25,7 @@ type AdminShellProps = {
   workspaceWidth?: 'narrow' | 'medium' | 'wide' | 'split-pane';
   children: ReactNode;
   navigationPreferences: AdminNavigationPreferences;
+  onNavigationPreferencesChange: (value: AdminNavigationPreferences) => void;
   onLogout: () => void;
   loggingOut: boolean;
   logoutDisabled?: boolean;
@@ -55,6 +56,7 @@ export function AdminShell({
   workspaceWidth = 'wide',
   children,
   navigationPreferences,
+  onNavigationPreferencesChange,
   onLogout,
   loggingOut,
   logoutDisabled = false,
@@ -63,6 +65,7 @@ export function AdminShell({
 }: AdminShellProps) {
   const [navigationOpen, setNavigationOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [navigationOrdering, setNavigationOrdering] = useState(false);
   const [sessionExpiring, setSessionExpiring] = useState(false);
   const drawerRef = useRef<HTMLDivElement>(null);
   const drawerTriggerRef = useRef<HTMLElement | null>(null);
@@ -162,6 +165,8 @@ export function AdminShell({
           sections={sections}
           onNavigate={onNavigate}
           navigationPreferences={navigationPreferences}
+          onNavigationPreferencesChange={onNavigationPreferencesChange}
+          navigationOrdering={navigationOrdering}
           onLogout={onLogout}
           loggingOut={loggingOut}
           logoutDisabled={logoutDisabled}
@@ -188,13 +193,34 @@ export function AdminShell({
             size="icon"
             type="button"
             aria-label={sidebarCollapsed ? '展开侧边栏' : '折叠侧边栏'}
-            onClick={() => setSidebarCollapsed((current) => !current)}
+            onClick={() => {
+              setSidebarCollapsed((current) => !current);
+              setNavigationOrdering(false);
+            }}
           >
             {sidebarCollapsed ? (
               <PanelLeftOpen aria-hidden="true" size={17} />
             ) : (
               <PanelLeftClose aria-hidden="true" size={17} />
             )}
+          </Button>
+          <Button
+            className={`admin-navigation-order-toggle${navigationOrdering ? ' is-active' : ''}`}
+            variant="ghost"
+            size="icon"
+            type="button"
+            aria-label={navigationOrdering ? '完成菜单排序' : '开启菜单拖拽排序'}
+            aria-pressed={navigationOrdering}
+            title={navigationOrdering ? '完成排序' : '拖拽排序'}
+            onClick={() => {
+              setNavigationOrdering((current) => {
+                const next = !current;
+                if (next) setSidebarCollapsed(false);
+                return next;
+              });
+            }}
+          >
+            <ListOrdered aria-hidden="true" size={16} />
           </Button>
           <div className="admin-breadcrumb">
             <span>{context.eyebrow}</span>
@@ -280,6 +306,7 @@ export function AdminShell({
                 sections={sections}
                 onNavigate={onNavigate}
                 navigationPreferences={navigationPreferences}
+                onNavigationPreferencesChange={onNavigationPreferencesChange}
                 onLogout={onLogout}
                 loggingOut={loggingOut}
                 logoutDisabled={logoutDisabled}

@@ -28,7 +28,6 @@ export type AdminView =
   | 'customer-service'
   | 'faq'
   | 'sections'
-  | 'system-navigation'
   | `${DynamicViewKind}:${string}`;
 
 export type AdminDomain =
@@ -83,12 +82,12 @@ export const FIXED_ADMIN_VIEWS = new Set<AdminView>([
   'customer-service',
   'faq',
   'sections',
-  'system-navigation',
 ]);
 
 const LEGACY_ADMIN_VIEW_ALIASES: Readonly<Record<string, AdminView>> = {
   settings: 'system-general',
   system: 'system-general',
+  'system-navigation': 'system-general',
 };
 
 export function parseDynamicView(
@@ -205,7 +204,6 @@ export function getAdminDomainForView(view: AdminView): AdminDomain {
   }
   if (view === 'customer-service') return 'engagement';
   if (
-    view === 'system-navigation' ||
     view === 'system-general' ||
     view === 'system-infrastructure' ||
     view === 'system-advanced'
@@ -280,7 +278,6 @@ export function getAdminSecondaryItems(
     case 'system':
       return [
         { view: 'system-general', label: '基本设置' },
-        { view: 'system-navigation', label: '界面偏好' },
         { view: 'pwa', label: '应用安装' },
         { view: 'system-infrastructure', label: '基础设施' },
         { view: 'system-advanced', label: '高级设置' },
@@ -351,11 +348,6 @@ export function getAdminViewContext(
       eyebrow: domainLabel,
       title: '基本设置',
       description: '管理站点名称、位置标签与品牌标识。',
-    },
-    'system-navigation': {
-      eyebrow: domainLabel,
-      title: '界面偏好',
-      description: '调整后台一级与二级导航显示顺序。',
     },
     'system-infrastructure': {
       eyebrow: domainLabel,

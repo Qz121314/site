@@ -3,6 +3,7 @@ import {
   ChevronDown,
   FileText,
   Gauge,
+  GripVertical,
   LogOut,
   Megaphone,
   MessageSquare,
@@ -10,16 +11,17 @@ import {
   Settings2,
   type LucideIcon,
 } from 'lucide-react';
+import { useState } from 'react';
 import { Button } from '../components/ui/button';
 import { brandingAssetPreviewUrl } from '../branding-media/api';
 import {
   getAdminDefaultViewForDomain,
-  getAdminSecondaryItems,
   type AdminDomain,
   type AdminView,
 } from '../admin-navigation';
 import {
   orderedAdminDomains,
+  orderedAdminSecondaryItems,
   type AdminNavigationPreferences,
 } from '../admin-navigation-preferences';
 import type { AdminSection } from '../api';
@@ -46,6 +48,8 @@ type AdminPrimarySidebarProps = {
   onDomainSelected?: () => void;
   onItemSelected?: () => void;
   navigationPreferences: AdminNavigationPreferences;
+  onNavigationPreferencesChange: (value: AdminNavigationPreferences) => void;
+  navigationOrdering?: boolean;
   onLogout: () => void;
   loggingOut: boolean;
   logoutDisabled?: boolean;
@@ -61,12 +65,53 @@ export function AdminPrimarySidebar({
   onDomainSelected,
   onItemSelected,
   navigationPreferences,
+  onNavigationPreferencesChange,
+  navigationOrdering = false,
   onLogout,
   loggingOut,
   logoutDisabled = false,
   collapsed = false,
   pwaIconAssetId = null,
 }: AdminPrimarySidebarProps) {
+  const [dragging, setDragging] = useState<string | null>(null);
+  const domains = orderedAdminDomains(navigationPreferences);
+
+  function move<T>(items: readonly T[], from: number, to: number): T[] {
+    if (from < 0 || to < 0 || from === to || to >= items.length) return [...items];
+    const next = [...items];
+    const [item] = next.splice(from, 1);
+    next.splice(to, 0, item as T);
+    return next;
+  }
+
+  function moveDomain(target: AdminDomain) {
+    if (!dragging?.startsWith('primary:')) return;
+    const source = dragging.slice('primary:'.length) as AdminDomain;
+    const ordered = domains.map((item) => item.id);
+    onNavigationPreferencesChange({
+      ...navigationPreferences,
+      primary: move(ordered, ordered.indexOf(source), ordered.indexOf(target)),
+    });
+  }
+
+  function moveSecondary(domain: AdminDomain, target: AdminView) {
+    const prefix = `secondary:${domain}:`;
+    if (!dragging?.startsWith(prefix)) return;
+    const source = dragging.slice(prefix.length) as AdminView;
+    const ordered = orderedAdminSecondaryItems(
+      domain,
+      sections,
+      navigationPreferences,
+    ).map((item) => item.view);
+    onNavigationPreferencesChange({
+      ...navigationPreferences,
+      secondary: {
+        ...navigationPreferences.secondary,
+        [domain]: move(ordered, ordered.indexOf(source), ordered.indexOf(target)),
+      },
+    });
+  }
+
   return (
     <aside
       className={`admin-primary-sidebar${collapsed ? ' is-collapsed' : ''}`}
@@ -89,18 +134,40 @@ export function AdminPrimarySidebar({
         <strong>业务运营后台</strong>
       </div>
       <nav className="admin-primary-nav" aria-label="管理业务域">
-        {orderedAdminDomains(navigationPreferences).map((domain) => {
+        {domains.map((domain) => {
           const Icon = DOMAIN_ICONS[domain.id];
           const defaultView = getAdminDefaultViewForDomain(domain.id, sections);
           const active = activeDomain === domain.id;
           const expandable = active && domain.id !== 'dashboard';
-          const items = expandable ? getAdminSecondaryItems(domain.id, sections) : [];
+          const items = expandable
+            ? orderedAdminSecondaryItems(domain.id, sections, navigationPreferences)
+            : [];
           const visibleItems =
             domain.id === 'catalog'
               ? items.filter((item) => item.view === 'sections' || item.group)
               : items;
           return (
-            <div className="admin-nav-domain" key={domain.id}>
+            <div
+              className={`admin-nav-domain${navigationOrdering ? ' is-ordering' : ''}`}
+              draggable={navigationOrdering}
+              key={domain.id}
+              onDragEnd={() => setDragging(null)}
+              onDragOver={(event) => {
+                if (!navigationOrdering || !dragging?.startsWith('primary:')) return;
+                event.preventDefault();
+              }}
+              onDragStart={(event) => {
+                if (!navigationOrdering) return;
+                event.dataTransfer.effectAllowed = 'move';
+                setDragging(`primary:${domain.id}`);
+              }}
+              onDrop={(event) => {
+                if (!navigationOrdering || !dragging?.startsWith('primary:')) return;
+                event.preventDefault();
+                moveDomain(domain.id);
+                setDragging(null);
+              }}
+            >
               <Button
                 className={`admin-primary-link${active ? ' is-active' : ''}`}
                 variant="ghost"
@@ -111,11 +178,18 @@ export function AdminPrimarySidebar({
                   defaultView ? domain.label : `${domain.label}（暂无可用分区）`
                 }
                 onClick={() => {
-                  if (!defaultView) return;
+                  if (!defaultView || navigationOrdering) return;
                   onNavigate(defaultView);
                   onDomainSelected?.();
                 }}
               >
+                {navigationOrdering ? (
+                  <GripVertical
+                    className="admin-nav-drag-handle"
+                    aria-hidden="true"
+                    size={14}
+                  />
+                ) : null}
                 <Icon aria-hidden="true" size={17} strokeWidth={1.8} />
                 <span>{domain.label}</span>
                 {expandable ? (
@@ -142,11 +216,48 @@ export function AdminPrimarySidebar({
                         variant="ghost"
                         type="button"
                         aria-current={isSelected ? 'page' : undefined}
+                        draggable={navigationOrdering}
+                        onDragEnd={() => setDragging(null)}
+                        onDragOver={(event) => {
+                          if (
+                            !navigationOrdering ||
+                            !dragging?.startsWith(`secondary:${domain.id}:`)
+                          ) {
+                            return;
+                          }
+                          event.preventDefault();
+                        }}
+                        onDragStart={(event) => {
+                          if (!navigationOrdering) return;
+                          event.stopPropagation();
+                          event.dataTransfer.effectAllowed = 'move';
+                          setDragging(`secondary:${domain.id}:${item.view}`);
+                        }}
+                        onDrop={(event) => {
+                          if (
+                            !navigationOrdering ||
+                            !dragging?.startsWith(`secondary:${domain.id}:`)
+                          ) {
+                            return;
+                          }
+                          event.preventDefault();
+                          event.stopPropagation();
+                          moveSecondary(domain.id, item.view);
+                          setDragging(null);
+                        }}
                         onClick={() => {
+                          if (navigationOrdering) return;
                           onNavigate(actualTarget);
                           onItemSelected?.();
                         }}
                       >
+                        {navigationOrdering ? (
+                          <GripVertical
+                            className="admin-subnav-drag-handle"
+                            aria-hidden="true"
+                            size={13}
+                          />
+                        ) : null}
                         <span className="admin-subnav-dot" aria-hidden="true" />
                         <span>{label}</span>
                       </Button>

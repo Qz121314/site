@@ -186,7 +186,8 @@
 }
 
 @media (max-width: 899px) {
-  .admin-topbar .admin-sidebar-toggle {
+  .admin-topbar .admin-sidebar-toggle,
+  .admin-topbar .admin-navigation-order-toggle {
     display: none;
   }
 

@@ -47,7 +47,6 @@ test('fixed settings views resolve to intended domains', () => {
     ['messages', 'engagement'],
     ['theme', 'site'],
     ['pwa', 'system'],
-    ['system-navigation', 'system'],
     ['system-general', 'system'],
     ['system-infrastructure', 'system'],
     ['system-advanced', 'system'],
@@ -94,7 +93,6 @@ test('new hashes parse and legacy settings aliases normalize deterministically',
     'messages',
     'theme',
     'pwa',
-    'system-navigation',
     'system-general',
     'system-infrastructure',
     'system-advanced',
@@ -113,6 +111,7 @@ test('new hashes parse and legacy settings aliases normalize deterministically',
     assert.equal(parseAdminView(view), view);
   }
   assert.equal(parseAdminView('#settings'), 'system-general');
+  assert.equal(parseAdminView('#system-navigation'), 'system-general');
   assert.equal(parseAdminView('settings'), 'system-general');
   assert.equal(parseAdminView('#system'), 'system-general');
   assert.equal(parseAdminView('system'), 'system-general');
@@ -146,7 +145,6 @@ test('site, engagement, and system navigation match final P1 IA exactly', () => 
     getAdminSecondaryItems('system', sections).map(({ view, label }) => [view, label]),
     [
       ['system-general', '基本设置'],
-      ['system-navigation', '界面偏好'],
       ['pwa', '应用安装'],
       ['system-infrastructure', '基础设施'],
       ['system-advanced', '高级设置'],

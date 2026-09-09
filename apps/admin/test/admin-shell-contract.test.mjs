@@ -66,7 +66,9 @@ test('single shell exposes compact navigation and workspace context', async () =
   assert.match(primary, /aria-current=\{active \? 'location' : undefined\}/);
   assert.match(primary, /admin-primary-account/);
   assert.match(primary, /退出登录/);
-  assert.match(primary, /getAdminSecondaryItems/);
+  assert.match(primary, /orderedAdminSecondaryItems/);
+  assert.match(primary, /navigationOrdering/);
+  assert.match(shell, /admin-navigation-order-toggle/);
   assert.match(primary, /admin-nav-subitems/);
   assert.match(workspace, /admin-workspace--\$\{width\}/);
 });

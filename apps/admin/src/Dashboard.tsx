@@ -104,12 +104,6 @@ const ConversionPoolView = lazy(() =>
     default: module.ConversionPoolView,
   })),
 );
-const SystemNavigationView = lazy(() =>
-  import('./system/SystemNavigationView').then((module) => ({
-    default: module.SystemNavigationView,
-  })),
-);
-
 type DashboardProps = {
   expiresAt: string | undefined;
   loggingOut: boolean;
@@ -156,7 +150,6 @@ function workspaceWidthForView(view: AdminView): WorkspaceWidth {
     view === 'navigation' ||
     view === 'messages' ||
     view === 'pwa' ||
-    view === 'system-navigation' ||
     view === 'system-infrastructure'
   ) {
     return 'medium';
@@ -631,6 +624,7 @@ export function Dashboard({
         pageSecondaryAction={pageSecondaryAction}
         workspaceWidth={workspaceWidthForView(activeView)}
         navigationPreferences={navigationPreferences}
+        onNavigationPreferencesChange={updateNavigationPreferences}
         onLogout={requestLogout}
         loggingOut={loggingOut}
         logoutDisabled={publishingKey !== null || rollingBack}
@@ -691,12 +685,6 @@ export function Dashboard({
             />
           ) : activeView === 'faq' ? (
             <FaqManagementView key={activeView} onSessionExpired={onSessionExpired} />
-          ) : activeView === 'system-navigation' ? (
-            <SystemNavigationView
-              sections={sections}
-              value={navigationPreferences}
-              onChange={updateNavigationPreferences}
-            />
           ) : currentSection?.kind === 'products' ? (
             <ProductManagementView
               key={activeView}

@@ -76,6 +76,25 @@
   background: #fff6f9;
 }
 
+.admin-navigation-order-toggle.ui-button {
+  min-width: 25px;
+  width: 25px;
+  height: 25px;
+  min-height: 25px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: 6px;
+  color: #8b96a5;
+  background: transparent;
+}
+
+.admin-navigation-order-toggle.ui-button:hover:not(:disabled),
+.admin-navigation-order-toggle.ui-button.is-active {
+  color: var(--brand);
+  border-color: #ffc2d8;
+  background: #fff6f9;
+}
+
 .admin-primary-sidebar.is-collapsed .admin-brand {
   justify-content: center;
   margin-inline: 0;
@@ -134,6 +153,25 @@
   display: grid;
   gap: 1px;
 }
+.admin-nav-domain.is-ordering {
+  cursor: grab;
+}
+.admin-nav-domain.is-ordering:active {
+  cursor: grabbing;
+}
+.admin-nav-drag-handle,
+.admin-subnav-drag-handle {
+  flex: 0 0 auto;
+  color: #7e8a9a;
+}
+.admin-nav-domain.is-ordering .admin-primary-link.ui-button,
+.admin-nav-domain.is-ordering .admin-subnav-link.ui-button {
+  cursor: grab;
+}
+.admin-nav-domain.is-ordering .admin-primary-link.ui-button:hover:not(:disabled),
+.admin-nav-domain.is-ordering .admin-subnav-link.ui-button:hover:not(:disabled) {
+  transform: none;
+}
 .admin-nav-chevron {
   margin-left: auto;
   color: #94a3b8;
@@ -155,6 +193,9 @@
   color: #9ba7b6;
   font-size: 0.7rem;
   font-weight: 560;
+}
+.admin-subnav-link.ui-button .admin-subnav-drag-handle + .admin-subnav-dot {
+  margin-left: -3px;
 }
 .admin-subnav-link.ui-button:hover:not(:disabled),
 .admin-subnav-link.ui-button.is-active {
