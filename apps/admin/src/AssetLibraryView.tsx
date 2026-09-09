@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Grid2X2, List } from 'lucide-react';
 import { AdminApiError } from './api';
 import { Button } from './components/ui/button';
 import {
@@ -49,6 +50,7 @@ import {
 type AssetFilter = 'used' | 'unused';
 type WorkbenchTab = 'library' | 'cleanup';
 type FolderFilter = 'all' | 'unfiled' | string;
+type MediaLayout = 'grid' | 'list';
 
 type AssetLibraryViewProps = {
   onSessionExpired: () => void;
@@ -183,6 +185,7 @@ function rootFolderName(files: File[]): string {
 
 export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
   const [tab, setTab] = useState<WorkbenchTab>('library');
+  const [mediaLayout, setMediaLayout] = useState<MediaLayout>('grid');
 
   const [managedAssets, setManagedAssets] = useState<ManagedMediaAsset[]>([]);
   const [folders, setFolders] = useState<MediaFolder[]>([]);
@@ -1029,13 +1032,37 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
                   : ''}
               </span>
             </div>
+            <div
+              className="media-center-view-toggle"
+              role="group"
+              aria-label="素材排列方式"
+            >
+              <button
+                type="button"
+                className={mediaLayout === 'grid' ? 'is-active' : ''}
+                aria-label="网格排列"
+                aria-pressed={mediaLayout === 'grid'}
+                onClick={() => setMediaLayout('grid')}
+              >
+                <Grid2X2 aria-hidden="true" size={14} />
+              </button>
+              <button
+                type="button"
+                className={mediaLayout === 'list' ? 'is-active' : ''}
+                aria-label="列表排列"
+                aria-pressed={mediaLayout === 'list'}
+                onClick={() => setMediaLayout('list')}
+              >
+                <List aria-hidden="true" size={14} />
+              </button>
+            </div>
           </div>
 
           {mediaLoading && uploadQueue.items.length === 0 ? (
             <AdminFeedbackState kind="loading" title="正在读取素材…" />
           ) : managedAssets.length > 0 || uploadQueue.items.length > 0 ? (
             <>
-              <div className="media-center-grid">
+              <div className={`media-center-grid is-${mediaLayout}`}>
                 {uploadQueue.items.map((item) => (
                   <UploadMediaCard item={item} key={item.id} />
                 ))}

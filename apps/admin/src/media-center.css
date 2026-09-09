@@ -491,6 +491,35 @@
   gap: 7px;
 }
 
+.media-center-view-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 2px;
+  border: 1px solid #e2e6ec;
+  border-radius: 7px;
+  background: #f4f6f8;
+}
+
+.media-center-view-toggle button {
+  display: grid;
+  width: 26px;
+  height: 25px;
+  place-items: center;
+  border: 0;
+  border-radius: 5px;
+  color: #7a8492;
+  background: transparent;
+  cursor: pointer;
+}
+
+.media-center-view-toggle button:hover,
+.media-center-view-toggle button.is-active {
+  color: #202632;
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(16 24 40 / 8%);
+}
+
 .media-center-result-summary button {
   min-height: 22px;
   padding: 0 6px;
@@ -501,6 +530,43 @@
   cursor: pointer;
   font-size: 0.56rem;
   font-weight: 700;
+}
+
+.media-center-grid.is-list {
+  grid-template-columns: 1fr;
+  gap: 5px;
+}
+
+.media-center-grid.is-list .media-center-card {
+  grid-template-columns: 96px minmax(0, 1fr) auto;
+  min-height: 82px;
+}
+
+.media-center-grid.is-list .media-center-upload-card {
+  grid-template-columns: 96px minmax(0, 1fr);
+}
+
+.media-center-grid.is-list .media-center-preview {
+  grid-row: 1 / span 2;
+  min-height: 82px;
+}
+
+.media-center-grid.is-list .media-center-upload-card .media-center-preview {
+  grid-row: auto;
+}
+
+.media-center-grid.is-list .media-center-card-body {
+  align-content: center;
+  padding: 8px 10px;
+}
+
+.media-center-grid.is-list .media-center-card-actions {
+  min-width: 76px;
+  align-self: stretch;
+  align-items: center;
+  justify-content: center;
+  border-top: 0;
+  border-left: 1px solid #f0f2f5;
 }
 
 .media-center-upload-summary {
