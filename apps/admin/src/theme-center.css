@@ -178,10 +178,10 @@
 .theme-preview-edge-toggle {
   position: absolute;
   z-index: 4;
-  top: 50%;
+  top: 10px;
   display: grid;
-  width: 30px;
-  height: 38px;
+  width: 28px;
+  height: 28px;
   place-items: center;
   padding: 0;
   border: 1px solid #d4dde8;
@@ -190,13 +190,12 @@
   background: #fff;
   box-shadow: 0 4px 12px rgb(34 48 68 / 12%);
   cursor: pointer;
-  transform: translateY(-50%);
 }
 .theme-preview-edge-toggle.is-left {
-  left: 8px;
+  left: 10px;
 }
 .theme-preview-edge-toggle.is-right {
-  right: 8px;
+  right: 10px;
 }
 .theme-preview-edge-toggle:hover {
   border-color: #d5b6c3;
