@@ -55,11 +55,7 @@ import {
   rollbackStorefront,
   type PublishStatus,
 } from './publish-api';
-import {
-  AdminPublishingControls,
-  formatVersionTime,
-  type RollbackTarget,
-} from './shell/AdminPublishingControls';
+import { WorkspacePublishMenu, type RollbackTarget } from './shell/WorkspacePublishMenu';
 import { AdminShell } from './shell/AdminShell';
 
 const SiteSettingsWorkspace = lazy(() =>
@@ -123,6 +119,17 @@ type PendingDiscardAction =
 
 type HistoryMode = 'push' | 'replace';
 type WorkspaceWidth = 'narrow' | 'medium' | 'wide' | 'split-pane';
+
+function formatVersionTime(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return value;
+  return date.toLocaleString('zh-CN', {
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+}
 
 function isSessionError(error: unknown): boolean {
   return (
@@ -580,7 +587,7 @@ export function Dashboard({
       : null;
 
   const publishingActions = contextPublishKey ? (
-    <AdminPublishingControls
+    <WorkspacePublishMenu
       key={activeView}
       status={publishStatus}
       statusError={publishStatusError}

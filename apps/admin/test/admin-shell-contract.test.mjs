@@ -109,7 +109,7 @@ test('publish, logout, and session state use local ownership', async () => {
   const dashboard = await source('../src/Dashboard.tsx');
   const shell = await source('../src/shell/AdminShell.tsx');
   const primary = await source('../src/shell/AdminPrimarySidebar.tsx');
-  const publishing = await source('../src/shell/AdminPublishingControls.tsx');
+  const publishing = await source('../src/shell/WorkspacePublishMenu.tsx');
 
   assert.match(
     dashboard,
@@ -124,7 +124,13 @@ test('publish, logout, and session state use local ownership', async () => {
   assert.match(shell, /SESSION_WARNING_MS/);
   assert.match(shell, /admin-session-warning/);
   assert.match(primary, /onClick=\{onLogout\}/);
-  assert.match(publishing, /发布全部待更新/);
+  assert.match(dashboard, /<WorkspacePublishMenu/);
+  assert.match(publishing, /contextKey/);
+  assert.match(publishing, /发布当前板块/);
+  assert.match(publishing, /aria-label="发布当前板块"/);
+  assert.match(publishing, /请先保存当前修改/);
+  assert.match(publishing, /onKeyDown/);
+  assert.doesNotMatch(publishing, /发布全部待更新/);
   assert.match(publishing, /onRequestRollback/);
-  assert.match(publishing, /publish-version-popover/);
+  assert.match(publishing, /workspace-publish-dropdown/);
 });

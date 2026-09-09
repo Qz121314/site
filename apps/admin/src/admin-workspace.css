@@ -105,10 +105,6 @@
   justify-content: flex-end;
 }
 
-.admin-workspace-actions .publish-version-control {
-  display: block;
-}
-
 .admin-shell-placeholder {
   display: grid;
   max-width: 680px;
@@ -346,8 +342,6 @@
     width: 100%;
   }
 
-  .admin-workspace-actions .publish-status-chip,
-  .admin-workspace-actions .storefront-publish-button,
   .admin-workspace-actions > .ui-button {
     min-height: 40px;
   }
@@ -362,8 +356,6 @@
     justify-content: flex-start;
   }
 
-  .storefront-publish-button.ui-button,
-  .publish-status-chip.ui-button,
   .admin-workspace-actions > .ui-button {
     padding-inline: 10px;
     font-size: 0.7rem;

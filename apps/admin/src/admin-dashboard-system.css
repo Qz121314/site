@@ -192,12 +192,6 @@
   box-shadow: inset 0 -2px 0 var(--admin-brand);
 }
 
-/* Preserve theme editing's split-pane affordance while making its framing match. */
-.theme-studio-heading {
-  padding: 2px 0 10px;
-  border-color: var(--admin-dashboard-line);
-}
-
 .theme-studio-workspace {
   background: var(--admin-surface);
 }

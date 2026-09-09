@@ -313,37 +313,6 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
     currentTheme.key === 'custom' ? [currentTheme, ...presets] : presets;
   return (
     <section className="theme-center theme-studio" aria-labelledby="theme-center-title">
-      <header className="theme-command-bar">
-        <div className="theme-command-summary">
-          {selectedPreset ? <ThemeSwatch theme={selectedPreset} /> : null}
-          <div>
-            <h2 id="theme-center-title">{selectedPreset?.label ?? '视觉系统'}</h2>
-            <small>
-              {selectedPreset?.colorScheme === 'dark' ? 'Dark' : 'Light'} ·{' '}
-              {FONT_PACK_LABELS[visualOverrides.fontPack]}
-            </small>
-          </div>
-          <em data-dirty={themeIsDirty}>{themeIsDirty ? '未保存' : '已保存'}</em>
-        </div>
-        <div className="theme-command-actions">
-          <button
-            className="secondary-button"
-            type="button"
-            disabled={!themeIsDirty || saving}
-            onClick={restoreSavedTheme}
-          >
-            恢复修改
-          </button>
-          <button
-            className="primary-button"
-            type="button"
-            disabled={saving || !themeIsDirty}
-            onClick={() => void saveTheme()}
-          >
-            {saving ? '正在保存…' : '保存主题'}
-          </button>
-        </div>
-      </header>
       {errorMessage ? (
         <div className="notice notice-error" role="alert">
           {errorMessage}
@@ -359,7 +328,7 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
           <div className="theme-studio-pane-heading">
             <div>
               <span>主题</span>
-              <strong>主题库</strong>
+              <strong id="theme-center-title">主题库</strong>
             </div>
             <button
               className="theme-library-add"
@@ -672,6 +641,24 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
                   </div>
                 ) : null}
               </div>
+              <footer className="theme-inspector-actions">
+                <button
+                  className="secondary-button"
+                  type="button"
+                  disabled={!themeIsDirty || saving}
+                  onClick={restoreSavedTheme}
+                >
+                  恢复修改
+                </button>
+                <button
+                  className="primary-button"
+                  type="button"
+                  disabled={saving || !themeIsDirty}
+                  onClick={() => void saveTheme()}
+                >
+                  {saving ? '正在保存…' : '保存主题'}
+                </button>
+              </footer>
             </>
           ) : null}
         </aside>
