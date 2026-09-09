@@ -5,7 +5,7 @@
   border-bottom: 1px solid var(--admin-border, #e2e6ec);
 }
 
-.messages-articles-toolbar {
+.messages-articles-global-actions {
   display: flex;
   flex: none;
   flex-wrap: nowrap;
@@ -13,7 +13,7 @@
   justify-content: flex-end;
 }
 
-.messages-articles-toolbar .ui-button {
+.messages-articles-global-actions .ui-button {
   min-height: 32px;
   padding-inline: 10px;
   font-size: 0.72rem;
@@ -141,37 +141,7 @@
   text-align: center;
 }
 
-.messages-articles-statusline {
-  display: flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 12px;
-  min-height: 22px;
-  padding: 0 2px;
-}
-
-.messages-articles-statusline[data-dirty='true'] {
-  color: var(--admin-brand, #ec1767);
-}
-
-.messages-articles-statusline > strong {
-  color: var(--admin-text, #172033);
-  font-size: 11px;
-}
-
-.messages-articles-statusline > span {
-  color: var(--admin-text-muted, #667085);
-  font-size: 10px;
-}
-
-.messages-articles-statusline > em {
-  margin-left: auto;
-  color: #b42318;
-  font-size: 10px;
-  font-style: normal;
-}
-
-.messages-articles-toolbar .ui-button:last-child:disabled {
+.messages-articles-global-actions .ui-button:last-child:disabled {
   border-color: var(--admin-border, #dce3ec);
   color: var(--admin-text-subtle, #8a94a6);
   background: var(--admin-surface-subtle, #f8fafc);
@@ -442,15 +412,15 @@
     flex-direction: column;
   }
 
-  .messages-articles-toolbar {
+  .messages-articles-global-actions {
     justify-content: flex-start;
   }
 
-  .messages-articles-toolbar .ui-button {
+  .messages-articles-global-actions .ui-button {
     flex: 1 1 auto;
   }
 
-  .messages-articles-toolbar .ui-button {
+  .messages-articles-global-actions .ui-button {
     min-height: 44px;
   }
 
@@ -500,7 +470,7 @@
 }
 
 @media (max-width: 440px) {
-  .messages-articles-toolbar {
+  .messages-articles-global-actions {
     display: grid;
     grid-template-columns: 1fr;
     width: 100%;
