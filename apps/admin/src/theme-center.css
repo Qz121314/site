@@ -198,14 +198,14 @@
   cursor: pointer;
 }
 .theme-pane-edge-toggle.is-library {
-  right: 0;
-  border-right: 0;
-  border-radius: 6px 0 0 6px;
-}
-.theme-pane-edge-toggle.is-inspector {
-  left: 0;
+  right: -14px;
   border-left: 0;
   border-radius: 0 6px 6px 0;
+}
+.theme-pane-edge-toggle.is-inspector {
+  left: -14px;
+  border-right: 0;
+  border-radius: 6px 0 0 6px;
 }
 .theme-pane-edge-toggle:hover {
   border-color: #d5b6c3;
