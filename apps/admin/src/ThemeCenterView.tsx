@@ -420,54 +420,54 @@ export function ThemeCenterView({
         className={`theme-studio-workspace${libraryCollapsed ? ' is-library-collapsed' : ''}${inspectorCollapsed ? ' is-inspector-collapsed' : ''}`}
       >
         <aside className="theme-library" data-collapsed={libraryCollapsed}>
-          <div className="theme-studio-pane-heading">
-            <div>
-              <span>主题</span>
-              <strong id="theme-center-title">主题库</strong>
-            </div>
-            <button
-              className="theme-library-add"
-              type="button"
-              onClick={() => setImportOpen(true)}
-            >
-              上传主题
-            </button>
-          </div>
-          <div className="theme-library-list">
-            {libraryThemes.map((theme) => (
+          <div className="theme-pane-scroll">
+            <div className="theme-studio-pane-heading">
+              <div>
+                <span>主题</span>
+                <strong id="theme-center-title">主题库</strong>
+              </div>
               <button
-                className={`theme-library-item${selectedKey === theme.key ? ' is-selected' : ''}`}
-                key={theme.key}
+                className="theme-library-add"
                 type="button"
-                aria-pressed={selectedKey === theme.key}
-                onClick={() => {
-                  if (theme.key === 'custom') {
-                    setSelectedKey('custom');
-                    setAccent(currentTheme.overrides.accent ?? '');
-                    setTextColor(currentTheme.overrides.textColor ?? '');
-                  } else selectTheme(theme);
-                  clearMessages();
-                }}
+                onClick={() => setImportOpen(true)}
               >
-                <ThemeSwatch theme={theme} />
-                <span className="theme-library-copy">
-                  <span>
-                    <strong>{theme.label}</strong>
-                    {currentTheme.key === theme.key ? <em>当前使用</em> : null}
-                  </span>
-                  <small>
-                    {theme.colorScheme === 'dark' ? 'Dark' : 'Light'} ·{' '}
-                    {FONT_PACK_LABELS[theme.recipe.fontPack]}
-                  </small>
-                </span>
-                <i className="theme-library-selection" aria-hidden="true" />
+                上传主题
               </button>
-            ))}
+            </div>
+            <div className="theme-library-list">
+              {libraryThemes.map((theme) => (
+                <button
+                  className={`theme-library-item${selectedKey === theme.key ? ' is-selected' : ''}`}
+                  key={theme.key}
+                  type="button"
+                  aria-pressed={selectedKey === theme.key}
+                  onClick={() => {
+                    if (theme.key === 'custom') {
+                      setSelectedKey('custom');
+                      setAccent(currentTheme.overrides.accent ?? '');
+                      setTextColor(currentTheme.overrides.textColor ?? '');
+                    } else selectTheme(theme);
+                    clearMessages();
+                  }}
+                >
+                  <ThemeSwatch theme={theme} />
+                  <span className="theme-library-copy">
+                    <span>
+                      <strong>{theme.label}</strong>
+                      {currentTheme.key === theme.key ? <em>当前使用</em> : null}
+                    </span>
+                    <small>
+                      {theme.colorScheme === 'dark' ? 'Dark' : 'Light'} ·{' '}
+                      {FONT_PACK_LABELS[theme.recipe.fontPack]}
+                    </small>
+                  </span>
+                  <i className="theme-library-selection" aria-hidden="true" />
+                </button>
+              ))}
+            </div>
           </div>
-        </aside>
-        <main className="theme-live-preview">
           <button
-            className="theme-preview-edge-toggle is-left"
+            className="theme-pane-edge-toggle is-library"
             type="button"
             aria-label={libraryCollapsed ? '展开主题库' : '收起主题库'}
             title={libraryCollapsed ? '展开主题库' : '收起主题库'}
@@ -479,6 +479,8 @@ export function ThemeCenterView({
               <PanelLeftClose aria-hidden="true" size={15} />
             )}
           </button>
+        </aside>
+        <main className="theme-live-preview">
           {previewTheme ? (
             <ThemeCenterPreview
               key={previewTheme.key}
@@ -489,8 +491,313 @@ export function ThemeCenterView({
               previewSize={previewSize}
             />
           ) : null}
+        </main>
+        <aside className="theme-inspector" data-collapsed={inspectorCollapsed}>
+          <div className="theme-pane-scroll">
+            <div className="theme-studio-pane-heading">
+              <div>
+                <span>视觉系统</span>
+                <strong>样式设置</strong>
+              </div>
+              <small>草稿编辑</small>
+            </div>
+            {selectedPreset ? (
+              <>
+                <div className="theme-inspector-section">
+                  <div className="theme-inspector-label">
+                    <strong>预览</strong>
+                  </div>
+                  <AdminSegmentedControl ariaLabel="预览设备">
+                    <AdminSegmentedItem
+                      selected={viewport === 'desktop'}
+                      type="button"
+                      onClick={() => selectViewport('desktop')}
+                    >
+                      桌面
+                    </AdminSegmentedItem>
+                    <AdminSegmentedItem
+                      selected={viewport === 'mobile'}
+                      type="button"
+                      onClick={() => selectViewport('mobile')}
+                    >
+                      移动端
+                    </AdminSegmentedItem>
+                  </AdminSegmentedControl>
+                  <label>
+                    {viewport === 'desktop' ? 'PC 模板' : '手机模板'}
+                    <select
+                      value={previewPreset}
+                      onChange={(event) => selectPreviewPreset(event.target.value)}
+                    >
+                      {PREVIEW_PRESETS[viewport].map((preset) => (
+                        <option key={preset.label} value={preset.label}>
+                          {preset.label}
+                        </option>
+                      ))}
+                      <option value="自定义尺寸">自定义尺寸</option>
+                    </select>
+                  </label>
+                  <div className="theme-preview-size-inputs" aria-label="自定义预览尺寸">
+                    <label>
+                      宽
+                      <input
+                        type="number"
+                        min="280"
+                        max="2560"
+                        value={previewSize.width}
+                        onChange={(event) =>
+                          updatePreviewSize('width', event.target.value)
+                        }
+                      />
+                    </label>
+                    <span aria-hidden="true">×</span>
+                    <label>
+                      高
+                      <input
+                        type="number"
+                        min="280"
+                        max="2560"
+                        value={previewSize.height}
+                        onChange={(event) =>
+                          updatePreviewSize('height', event.target.value)
+                        }
+                      />
+                    </label>
+                  </div>
+                </div>
+                <div className="theme-inspector-section">
+                  <div className="theme-inspector-label">
+                    <strong>外观</strong>
+                    <span>可保存</span>
+                  </div>
+                  <label>
+                    品牌强调色
+                    <div className="theme-color-control">
+                      <input
+                        type="color"
+                        value={accentInputValue}
+                        onChange={(event) => {
+                          setAccent(event.target.value.toLowerCase());
+                          clearMessages();
+                        }}
+                        aria-label="选择品牌强调色"
+                      />
+                      <input
+                        type="text"
+                        value={accent}
+                        placeholder={selectedPreset.tokens.brand}
+                        maxLength={7}
+                        onChange={(event) => {
+                          setAccent(event.target.value);
+                          clearMessages();
+                        }}
+                      />
+                      {accent ? (
+                        <button type="button" onClick={() => setAccent('')}>
+                          恢复
+                        </button>
+                      ) : null}
+                    </div>
+                  </label>
+                  <label>
+                    主文字颜色
+                    <div className="theme-color-control">
+                      <input
+                        type="color"
+                        value={textColorInputValue}
+                        onChange={(event) => {
+                          setTextColor(event.target.value.toLowerCase());
+                          clearMessages();
+                        }}
+                        aria-label="选择主文字颜色"
+                      />
+                      <input
+                        type="text"
+                        value={textColor}
+                        placeholder={selectedPreset.tokens.text}
+                        maxLength={7}
+                        onChange={(event) => {
+                          setTextColor(event.target.value);
+                          clearMessages();
+                        }}
+                      />
+                      {textColor ? (
+                        <button type="button" onClick={() => setTextColor('')}>
+                          恢复
+                        </button>
+                      ) : null}
+                    </div>
+                  </label>
+                </div>
+                <div className="theme-inspector-section">
+                  <div className="theme-inspector-label">
+                    <strong>组件</strong>
+                    <span>可保存</span>
+                  </div>
+                  <div className="theme-rule-grid">
+                    <label>
+                      页面密度
+                      <select
+                        value={visualOverrides.density}
+                        onChange={(event) =>
+                          setVisualOverrides((current) => ({
+                            ...current,
+                            density: event.target
+                              .value as Required<ThemeVisualOverrides>['density'],
+                          }))
+                        }
+                      >
+                        {VISUAL_RULE_OPTIONS.density.map(([value, label]) => (
+                          <option key={value} value={value}>
+                            {label}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label>
+                      字体体系
+                      <select
+                        value={visualOverrides.fontPack}
+                        onChange={(event) =>
+                          setVisualOverrides((current) => ({
+                            ...current,
+                            fontPack: event.target
+                              .value as Required<ThemeVisualOverrides>['fontPack'],
+                          }))
+                        }
+                      >
+                        {VISUAL_RULE_OPTIONS.fontPack.map(([value, label]) => (
+                          <option key={value} value={value}>
+                            {label}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label>
+                      按钮样式
+                      <select
+                        value={visualOverrides.buttonStyle}
+                        onChange={(event) =>
+                          setVisualOverrides((current) => ({
+                            ...current,
+                            buttonStyle: event.target
+                              .value as Required<ThemeVisualOverrides>['buttonStyle'],
+                          }))
+                        }
+                      >
+                        {VISUAL_RULE_OPTIONS.buttonStyle.map(([value, label]) => (
+                          <option key={value} value={value}>
+                            {label}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label>
+                      媒体呈现
+                      <select
+                        value={visualOverrides.mediaStyle}
+                        onChange={(event) =>
+                          setVisualOverrides((current) => ({
+                            ...current,
+                            mediaStyle: event.target
+                              .value as Required<ThemeVisualOverrides>['mediaStyle'],
+                          }))
+                        }
+                      >
+                        {VISUAL_RULE_OPTIONS.mediaStyle.map(([value, label]) => (
+                          <option key={value} value={value}>
+                            {label}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label>
+                      动效节奏
+                      <select
+                        value={visualOverrides.motionStyle}
+                        onChange={(event) =>
+                          setVisualOverrides((current) => ({
+                            ...current,
+                            motionStyle: event.target
+                              .value as Required<ThemeVisualOverrides>['motionStyle'],
+                          }))
+                        }
+                      >
+                        {VISUAL_RULE_OPTIONS.motionStyle.map(([value, label]) => (
+                          <option key={value} value={value}>
+                            {label}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                    <label>
+                      导航外观
+                      <select
+                        value={visualOverrides.navigationStyle}
+                        onChange={(event) =>
+                          setVisualOverrides((current) => ({
+                            ...current,
+                            navigationStyle: event.target
+                              .value as Required<ThemeVisualOverrides>['navigationStyle'],
+                          }))
+                        }
+                      >
+                        {VISUAL_RULE_OPTIONS.navigationStyle.map(([value, label]) => (
+                          <option key={value} value={value}>
+                            {label}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  </div>
+                </div>
+                <div
+                  className="theme-inspector-section theme-diagnostics"
+                  aria-label="视觉检查"
+                  data-open={diagnosticsOpen || hasDiagnosticWarning}
+                >
+                  <div className="theme-inspector-label">
+                    <strong>视觉诊断</strong>
+                    <button
+                      type="button"
+                      onClick={() => setDiagnosticsOpen((value) => !value)}
+                    >
+                      {hasDiagnosticWarning ? '需检查' : '良好'}
+                    </button>
+                  </div>
+                  {diagnosticsOpen || hasDiagnosticWarning ? (
+                    <div className="theme-diagnostic-list">
+                      {diagnostics.map((diagnostic) => (
+                        <div
+                          className="theme-diagnostic-item"
+                          data-status={diagnostic.status}
+                          key={diagnostic.id}
+                        >
+                          <span className="theme-diagnostic-mark" aria-hidden="true">
+                            {diagnostic.status === 'pass' ? '✓' : '!'}
+                          </span>
+                          <span>
+                            <strong>
+                              {diagnostic.label === '文字 / 背景'
+                                ? '主要文字对比度'
+                                : diagnostic.label === 'Surface 层级'
+                                  ? 'Product Card 层级'
+                                  : diagnostic.label === '边框可见性'
+                                    ? '导航可读性'
+                                    : diagnostic.label}
+                            </strong>
+                            <small>{diagnostic.detail}</small>
+                          </span>
+                        </div>
+                      ))}
+                    </div>
+                  ) : null}
+                </div>
+              </>
+            ) : null}
+          </div>
           <button
-            className="theme-preview-edge-toggle is-right"
+            className="theme-pane-edge-toggle is-inspector"
             type="button"
             aria-label={inspectorCollapsed ? '展开样式设置' : '收起样式设置'}
             title={inspectorCollapsed ? '展开样式设置' : '收起样式设置'}
@@ -502,307 +809,6 @@ export function ThemeCenterView({
               <PanelRightClose aria-hidden="true" size={15} />
             )}
           </button>
-        </main>
-        <aside className="theme-inspector" data-collapsed={inspectorCollapsed}>
-          <div className="theme-studio-pane-heading">
-            <div>
-              <span>视觉系统</span>
-              <strong>样式设置</strong>
-            </div>
-            <small>草稿编辑</small>
-          </div>
-          {selectedPreset ? (
-            <>
-              <div className="theme-inspector-section">
-                <div className="theme-inspector-label">
-                  <strong>预览</strong>
-                </div>
-                <AdminSegmentedControl ariaLabel="预览设备">
-                  <AdminSegmentedItem
-                    selected={viewport === 'desktop'}
-                    type="button"
-                    onClick={() => selectViewport('desktop')}
-                  >
-                    桌面
-                  </AdminSegmentedItem>
-                  <AdminSegmentedItem
-                    selected={viewport === 'mobile'}
-                    type="button"
-                    onClick={() => selectViewport('mobile')}
-                  >
-                    移动端
-                  </AdminSegmentedItem>
-                </AdminSegmentedControl>
-                <label>
-                  {viewport === 'desktop' ? 'PC 模板' : '手机模板'}
-                  <select
-                    value={previewPreset}
-                    onChange={(event) => selectPreviewPreset(event.target.value)}
-                  >
-                    {PREVIEW_PRESETS[viewport].map((preset) => (
-                      <option key={preset.label} value={preset.label}>
-                        {preset.label}
-                      </option>
-                    ))}
-                    <option value="自定义尺寸">自定义尺寸</option>
-                  </select>
-                </label>
-                <div className="theme-preview-size-inputs" aria-label="自定义预览尺寸">
-                  <label>
-                    宽
-                    <input
-                      type="number"
-                      min="280"
-                      max="2560"
-                      value={previewSize.width}
-                      onChange={(event) => updatePreviewSize('width', event.target.value)}
-                    />
-                  </label>
-                  <span aria-hidden="true">×</span>
-                  <label>
-                    高
-                    <input
-                      type="number"
-                      min="280"
-                      max="2560"
-                      value={previewSize.height}
-                      onChange={(event) =>
-                        updatePreviewSize('height', event.target.value)
-                      }
-                    />
-                  </label>
-                </div>
-              </div>
-              <div className="theme-inspector-section">
-                <div className="theme-inspector-label">
-                  <strong>外观</strong>
-                  <span>可保存</span>
-                </div>
-                <label>
-                  品牌强调色
-                  <div className="theme-color-control">
-                    <input
-                      type="color"
-                      value={accentInputValue}
-                      onChange={(event) => {
-                        setAccent(event.target.value.toLowerCase());
-                        clearMessages();
-                      }}
-                      aria-label="选择品牌强调色"
-                    />
-                    <input
-                      type="text"
-                      value={accent}
-                      placeholder={selectedPreset.tokens.brand}
-                      maxLength={7}
-                      onChange={(event) => {
-                        setAccent(event.target.value);
-                        clearMessages();
-                      }}
-                    />
-                    {accent ? (
-                      <button type="button" onClick={() => setAccent('')}>
-                        恢复
-                      </button>
-                    ) : null}
-                  </div>
-                </label>
-                <label>
-                  主文字颜色
-                  <div className="theme-color-control">
-                    <input
-                      type="color"
-                      value={textColorInputValue}
-                      onChange={(event) => {
-                        setTextColor(event.target.value.toLowerCase());
-                        clearMessages();
-                      }}
-                      aria-label="选择主文字颜色"
-                    />
-                    <input
-                      type="text"
-                      value={textColor}
-                      placeholder={selectedPreset.tokens.text}
-                      maxLength={7}
-                      onChange={(event) => {
-                        setTextColor(event.target.value);
-                        clearMessages();
-                      }}
-                    />
-                    {textColor ? (
-                      <button type="button" onClick={() => setTextColor('')}>
-                        恢复
-                      </button>
-                    ) : null}
-                  </div>
-                </label>
-              </div>
-              <div className="theme-inspector-section">
-                <div className="theme-inspector-label">
-                  <strong>组件</strong>
-                  <span>可保存</span>
-                </div>
-                <div className="theme-rule-grid">
-                  <label>
-                    页面密度
-                    <select
-                      value={visualOverrides.density}
-                      onChange={(event) =>
-                        setVisualOverrides((current) => ({
-                          ...current,
-                          density: event.target
-                            .value as Required<ThemeVisualOverrides>['density'],
-                        }))
-                      }
-                    >
-                      {VISUAL_RULE_OPTIONS.density.map(([value, label]) => (
-                        <option key={value} value={value}>
-                          {label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label>
-                    字体体系
-                    <select
-                      value={visualOverrides.fontPack}
-                      onChange={(event) =>
-                        setVisualOverrides((current) => ({
-                          ...current,
-                          fontPack: event.target
-                            .value as Required<ThemeVisualOverrides>['fontPack'],
-                        }))
-                      }
-                    >
-                      {VISUAL_RULE_OPTIONS.fontPack.map(([value, label]) => (
-                        <option key={value} value={value}>
-                          {label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label>
-                    按钮样式
-                    <select
-                      value={visualOverrides.buttonStyle}
-                      onChange={(event) =>
-                        setVisualOverrides((current) => ({
-                          ...current,
-                          buttonStyle: event.target
-                            .value as Required<ThemeVisualOverrides>['buttonStyle'],
-                        }))
-                      }
-                    >
-                      {VISUAL_RULE_OPTIONS.buttonStyle.map(([value, label]) => (
-                        <option key={value} value={value}>
-                          {label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label>
-                    媒体呈现
-                    <select
-                      value={visualOverrides.mediaStyle}
-                      onChange={(event) =>
-                        setVisualOverrides((current) => ({
-                          ...current,
-                          mediaStyle: event.target
-                            .value as Required<ThemeVisualOverrides>['mediaStyle'],
-                        }))
-                      }
-                    >
-                      {VISUAL_RULE_OPTIONS.mediaStyle.map(([value, label]) => (
-                        <option key={value} value={value}>
-                          {label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label>
-                    动效节奏
-                    <select
-                      value={visualOverrides.motionStyle}
-                      onChange={(event) =>
-                        setVisualOverrides((current) => ({
-                          ...current,
-                          motionStyle: event.target
-                            .value as Required<ThemeVisualOverrides>['motionStyle'],
-                        }))
-                      }
-                    >
-                      {VISUAL_RULE_OPTIONS.motionStyle.map(([value, label]) => (
-                        <option key={value} value={value}>
-                          {label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                  <label>
-                    导航外观
-                    <select
-                      value={visualOverrides.navigationStyle}
-                      onChange={(event) =>
-                        setVisualOverrides((current) => ({
-                          ...current,
-                          navigationStyle: event.target
-                            .value as Required<ThemeVisualOverrides>['navigationStyle'],
-                        }))
-                      }
-                    >
-                      {VISUAL_RULE_OPTIONS.navigationStyle.map(([value, label]) => (
-                        <option key={value} value={value}>
-                          {label}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                </div>
-              </div>
-              <div
-                className="theme-inspector-section theme-diagnostics"
-                aria-label="视觉检查"
-                data-open={diagnosticsOpen || hasDiagnosticWarning}
-              >
-                <div className="theme-inspector-label">
-                  <strong>视觉诊断</strong>
-                  <button
-                    type="button"
-                    onClick={() => setDiagnosticsOpen((value) => !value)}
-                  >
-                    {hasDiagnosticWarning ? '需检查' : '良好'}
-                  </button>
-                </div>
-                {diagnosticsOpen || hasDiagnosticWarning ? (
-                  <div className="theme-diagnostic-list">
-                    {diagnostics.map((diagnostic) => (
-                      <div
-                        className="theme-diagnostic-item"
-                        data-status={diagnostic.status}
-                        key={diagnostic.id}
-                      >
-                        <span className="theme-diagnostic-mark" aria-hidden="true">
-                          {diagnostic.status === 'pass' ? '✓' : '!'}
-                        </span>
-                        <span>
-                          <strong>
-                            {diagnostic.label === '文字 / 背景'
-                              ? '主要文字对比度'
-                              : diagnostic.label === 'Surface 层级'
-                                ? 'Product Card 层级'
-                                : diagnostic.label === '边框可见性'
-                                  ? '导航可读性'
-                                  : diagnostic.label}
-                          </strong>
-                          <small>{diagnostic.detail}</small>
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                ) : null}
-              </div>
-            </>
-          ) : null}
         </aside>
       </div>
       {importOpen ? (

@@ -145,9 +145,16 @@
 }
 .theme-library,
 .theme-inspector {
+  position: relative;
   min-width: 0;
-  overflow-y: auto;
+  overflow: visible;
   background: #fbfcfe;
+}
+.theme-pane-scroll {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow-y: auto;
 }
 .theme-library {
   border-right: 1px solid #e4e8ee;
@@ -175,9 +182,9 @@
   font-weight: 750;
   cursor: pointer;
 }
-.theme-preview-edge-toggle {
+.theme-pane-edge-toggle {
   position: absolute;
-  z-index: 4;
+  z-index: 6;
   top: 10px;
   display: grid;
   width: 28px;
@@ -191,13 +198,13 @@
   box-shadow: 0 4px 12px rgb(34 48 68 / 12%);
   cursor: pointer;
 }
-.theme-preview-edge-toggle.is-left {
-  left: 10px;
+.theme-pane-edge-toggle.is-library {
+  right: -14px;
 }
-.theme-preview-edge-toggle.is-right {
-  right: 10px;
+.theme-pane-edge-toggle.is-inspector {
+  left: -14px;
 }
-.theme-preview-edge-toggle:hover {
+.theme-pane-edge-toggle:hover {
   border-color: #d5b6c3;
   color: #a13d60;
   background: #fff7fa;
@@ -206,8 +213,8 @@
 .theme-inspector[data-collapsed='true'] {
   overflow: hidden;
 }
-.theme-library[data-collapsed='true'] > *,
-.theme-inspector[data-collapsed='true'] > * {
+.theme-library[data-collapsed='true'] .theme-pane-scroll,
+.theme-inspector[data-collapsed='true'] .theme-pane-scroll {
   display: none;
 }
 .theme-library-add:hover {
