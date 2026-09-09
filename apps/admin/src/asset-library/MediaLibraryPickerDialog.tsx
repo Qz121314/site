@@ -237,7 +237,7 @@ export function MediaLibraryPickerDialog({
               aria-label="素材文件夹"
             >
               <option value="all">全部文件夹</option>
-              <option value="unfiled">未分组</option>
+              <option value="unfiled">未放入文件夹</option>
               {folders.map((folder) => (
                 <option key={folder.id} value={folder.id}>
                   {folder.name} ({folder.assetCount})
@@ -317,7 +317,9 @@ export function MediaLibraryPickerDialog({
                       <span className="media-picker-copy">
                         <strong title={asset.fileName}>{asset.fileName}</strong>
                         <small>
-                          {asset.folderName ? `${asset.folderName} · ` : '未分组 · '}
+                          {asset.folderName
+                            ? `${asset.folderName} · `
+                            : '未放入文件夹 · '}
                           {asset.width && asset.height
                             ? `${asset.width} × ${asset.height} · `
                             : ''}

@@ -622,7 +622,7 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
     const confirmed = await adminConfirm({
       eyebrow: '素材文件夹',
       title: `删除“${activeFolder.name}”？`,
-      message: '只删除文件夹分组；其中素材不会删除，而是自动移动到“未分组”。',
+      message: '只删除文件夹；其中素材不会删除，而是自动移动到“未放入文件夹”。',
       confirmLabel: '删除文件夹',
       danger: true,
     });
@@ -632,7 +632,7 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
       await deleteMediaFolder(activeFolder.id);
       setFolderFilter('unfiled');
       await loadFolders();
-      setMediaSuccess('文件夹已删除，原有素材已移动到“未分组”。');
+      setMediaSuccess('文件夹已删除，原有素材已移动到“未放入文件夹”。');
     } catch (error) {
       if (isSessionError(error)) onSessionExpired();
       else setMediaError(error instanceof Error ? error.message : '删除文件夹失败。');
@@ -655,7 +655,7 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
       await refreshMediaAndFolders();
       const target = targetId
         ? (folders.find((folder) => folder.id === targetId)?.name ?? '目标文件夹')
-        : '未分组';
+        : '未放入文件夹';
       setMediaSuccess(`已将 ${movedCount} 个素材移动到“${target}”。`);
     } catch (error) {
       if (isSessionError(error)) onSessionExpired();
@@ -768,13 +768,13 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
             <div className="media-center-command-dock">
               <div className="media-folder-create-bar">
                 <div>
-                  <strong>分组</strong>
+                  <strong>文件夹</strong>
                   <small>整理素材</small>
                 </div>
                 <input
                   value={newFolderName}
                   maxLength={80}
-                  placeholder="新建分组"
+                  placeholder="新建文件夹"
                   onChange={(event) => setNewFolderName(event.target.value)}
                 />
                 <button
@@ -783,7 +783,7 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
                   disabled={!newFolderName.trim() || folderWorking || uploadQueue.running}
                   onClick={() => void handleCreateFolder()}
                 >
-                  新建分组
+                  新建文件夹
                 </button>
                 {activeFolder ? (
                   <button
@@ -859,7 +859,7 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
                   onChange={(event) => setFolderFilter(event.target.value)}
                 >
                   <option value="all">全部文件夹</option>
-                  <option value="unfiled">未分组</option>
+                  <option value="unfiled">未放入文件夹</option>
                   {folders.map((folder) => (
                     <option key={folder.id} value={folder.id}>
                       {folder.name} ({folder.assetCount})
@@ -911,7 +911,7 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
                 value={moveFolderId}
                 onChange={(event) => setMoveFolderId(event.target.value)}
               >
-                <option value="">移动到未分组</option>
+                <option value="">移出文件夹</option>
                 {folders.map((folder) => (
                   <option key={folder.id} value={folder.id}>
                     移动到 {folder.name}
@@ -1042,7 +1042,9 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
                       <div className="media-center-card-body">
                         <strong title={asset.fileName}>{asset.fileName}</strong>
                         <small>
-                          {asset.folderName ? `${asset.folderName} · ` : '未分组 · '}
+                          {asset.folderName
+                            ? `${asset.folderName} · `
+                            : '未放入文件夹 · '}
                           {asset.width && asset.height
                             ? `${asset.width} × ${asset.height}`
                             : '尺寸未知'}
