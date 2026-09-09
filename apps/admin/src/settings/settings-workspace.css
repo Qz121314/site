@@ -1,6 +1,6 @@
 .settings-workspace {
   display: grid;
-  gap: 12px;
+  gap: 10px;
   width: min(100%, 1120px);
 }
 
@@ -32,11 +32,12 @@
 
 .settings-workspace-section {
   display: grid;
-  gap: 12px;
-  padding: 16px;
-  border: 1px solid #dfe4ea;
-  border-radius: 12px;
-  background: #fff;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--admin-border, #dfe4ea);
+  border-radius: var(--admin-radius-md, 10px);
+  background: var(--admin-surface, #fff);
+  box-shadow: var(--admin-shadow-card, 0 1px 2px rgb(16 24 40 / 3%));
 }
 
 .settings-workspace-heading {
@@ -52,16 +53,25 @@
   margin: 0;
 }
 
+.settings-workspace-heading h2,
+.settings-workspace-heading h3 {
+  color: var(--admin-text, #172033);
+  font-size: 0.98rem;
+  font-weight: 780;
+  letter-spacing: -0.015em;
+}
+
 .settings-workspace-heading p {
-  margin-top: 6px;
+  margin-top: 3px;
   max-width: 720px;
-  color: #667085;
-  line-height: 1.55;
+  color: var(--admin-text-muted, #667085);
+  font-size: 0.72rem;
+  line-height: 1.45;
 }
 
 .settings-workspace-fields {
   display: grid;
-  gap: 12px;
+  gap: 10px;
 }
 
 .settings-workspace-fields.is-two-column {
@@ -70,10 +80,26 @@
 
 .settings-workspace-actions {
   display: flex;
+  min-height: 52px;
   align-items: center;
   justify-content: flex-end;
   gap: 8px;
-  padding-top: 0;
+  padding: 8px 2px 0;
+  border-top: 1px solid var(--admin-border, #e2e6ec);
+}
+
+.settings-workspace > .ui-action-bar {
+  min-height: 52px;
+  padding: 8px 2px 0;
+  border: 0;
+  border-top: 1px solid var(--admin-border, #e2e6ec);
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.settings-workspace > .ui-action-bar.is-sticky {
+  backdrop-filter: none;
 }
 
 .settings-workspace-status {
