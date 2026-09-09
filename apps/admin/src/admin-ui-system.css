@@ -1480,9 +1480,9 @@ textarea {
   .category-management,
   .product-management,
   .conversion-pool {
-    display: flex !important;
-    flex-direction: column !important;
-    gap: var(--admin-gap-2) !important;
+    display: flex;
+    flex-direction: column;
+    gap: var(--admin-gap-2);
   }
 
   .section-management > .ui-management-toolbar,
