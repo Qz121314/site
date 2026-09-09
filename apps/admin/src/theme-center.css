@@ -228,10 +228,6 @@
   outline-offset: 2px;
   opacity: 1;
 }
-.theme-library[data-collapsed='true'],
-.theme-inspector[data-collapsed='true'] {
-  overflow: hidden;
-}
 .theme-library[data-collapsed='true'] .theme-pane-scroll,
 .theme-inspector[data-collapsed='true'] .theme-pane-scroll {
   display: none;
