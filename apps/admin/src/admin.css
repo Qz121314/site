@@ -45,6 +45,7 @@
 @import './admin-scroll-ownership.css';
 @import './admin-section-workspace-nav.css';
 @import './system/system-settings.css';
+@import './admin-dashboard-system.css';
 @import '@site/storefront-ui/styles.css';
 @import '@site/storefront-ui/loading.css';
 @import '@site/storefront-ui/no-agent.css';
