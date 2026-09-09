@@ -201,6 +201,94 @@
   font-style: normal;
 }
 
+.messages-card-config {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.85fr) minmax(300px, 1.15fr);
+  gap: 12px;
+}
+
+.messages-card-config-panel {
+  display: grid;
+  align-content: start;
+  gap: 10px;
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--admin-border, #e2e6ec);
+  border-radius: var(--admin-radius-md, 10px);
+  background: var(--admin-surface-subtle, #f8f9fb);
+}
+
+.messages-card-config-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.messages-card-config-heading > div {
+  display: grid;
+  gap: 2px;
+}
+
+.messages-card-config-heading span {
+  color: var(--admin-text-subtle, #8a94a6);
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.messages-card-config-heading h4 {
+  margin: 0;
+  color: var(--admin-text, #172033);
+  font-size: 0.82rem;
+  font-weight: 780;
+}
+
+.messages-card-config-panel > .ui-button {
+  min-height: 32px;
+  width: 100%;
+}
+
+.messages-card-background-preview {
+  display: grid;
+  min-height: 156px;
+  place-items: center;
+  overflow: hidden;
+  border: 1px dashed var(--admin-border-strong, #cfd5df);
+  border-radius: var(--admin-radius-sm, 8px);
+  background: var(--admin-surface, #fff);
+  color: var(--admin-text-subtle, #8a94a6);
+  font-size: 0.7rem;
+}
+
+.messages-card-background-preview img {
+  width: 100%;
+  height: 100%;
+  min-height: 156px;
+  object-fit: cover;
+}
+
+.messages-card-background-preview span {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.messages-card-article-picker .messages-articles-picker-list {
+  max-height: 294px;
+  margin-top: 0;
+  background: var(--admin-surface, #fff);
+}
+
+.messages-card-article-picker .messages-articles-picker-row {
+  min-height: 58px;
+  padding: 8px 10px;
+}
+
+.messages-card-article-picker .ui-feedback-state {
+  min-height: 156px;
+}
+
 .messages-articles-search {
   position: relative;
   display: flex;
@@ -428,6 +516,10 @@
   .messages-articles-savebar {
     position: static;
     bottom: auto;
+  }
+
+  .messages-card-config {
+    grid-template-columns: 1fr;
   }
 
   .messages-articles-picker-row {

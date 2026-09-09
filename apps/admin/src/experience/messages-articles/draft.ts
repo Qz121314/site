@@ -21,6 +21,15 @@ export function addDraftArticle(
   return [...draft, { articleId, backgroundMediaId: null }];
 }
 
+export function addDraftCard(
+  draft: MessageArticleDraft[],
+  articleId: string,
+  backgroundMediaId: string,
+): MessageArticleDraft[] {
+  if (draft.some((placement) => placement.articleId === articleId)) return draft;
+  return [...draft, { articleId, backgroundMediaId }];
+}
+
 export function removeDraftArticle(
   draft: MessageArticleDraft[],
   articleId: string,
