@@ -614,6 +614,130 @@ textarea {
 
 /* ---------- Site settings ---------- */
 
+/* Settings workspaces use the same compact panel rhythm as the dashboard. */
+.hero-settings-section,
+.admin-home-layout-grid {
+  gap: 8px;
+}
+
+.hero-settings-heading,
+.admin-home-layout-heading {
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--admin-border);
+}
+
+.hero-settings-heading h2,
+.admin-home-layout-heading strong {
+  margin: 0;
+  color: var(--admin-text);
+  font-size: 0.98rem;
+  font-weight: 780;
+  letter-spacing: -0.015em;
+}
+
+.hero-settings-heading p,
+.admin-home-layout-heading p,
+.hero-settings-note {
+  margin: 3px 0 0;
+  color: var(--admin-text-muted);
+  font-size: 0.7rem;
+  line-height: 1.45;
+}
+
+.hero-settings-heading .secondary-button,
+.admin-home-layout-add {
+  min-height: 32px;
+  white-space: nowrap;
+}
+
+.hero-settings-empty,
+.admin-home-layout-empty {
+  min-height: 104px;
+  padding: 14px;
+  border-radius: var(--admin-radius-md);
+  background: var(--admin-surface-subtle);
+}
+
+.hero-settings-empty strong {
+  color: var(--admin-text);
+  font-size: 0.84rem;
+}
+
+.hero-settings-empty span,
+.hero-settings-note {
+  font-size: 0.7rem;
+}
+
+.hero-settings-note {
+  padding: 8px 10px;
+  border: 1px solid #ffd6e5;
+  border-radius: var(--admin-radius-sm);
+  background: var(--admin-brand-soft);
+}
+
+.hero-slide-list {
+  gap: 8px;
+}
+
+.hero-slide-card {
+  grid-template-columns: 150px minmax(0, 1fr) auto;
+  gap: 10px;
+  padding: 10px;
+  border-radius: var(--admin-radius-md);
+  box-shadow: var(--admin-shadow-card);
+}
+
+.hero-slide-preview {
+  border-radius: var(--admin-radius-sm);
+}
+
+.admin-home-layout-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.admin-home-layout-group {
+  gap: 8px;
+  padding: 12px;
+  border-color: var(--admin-border);
+  border-radius: var(--admin-radius-md);
+  background: var(--admin-surface);
+  box-shadow: var(--admin-shadow-card);
+}
+
+.admin-home-layout-heading p {
+  max-width: 680px;
+}
+
+.admin-home-layout-heading > span {
+  padding: 3px 7px;
+  color: var(--admin-text-muted);
+  background: var(--admin-surface-muted);
+  font-size: 0.68rem;
+}
+
+.admin-home-layout-list {
+  gap: 6px;
+}
+
+.admin-home-layout-row {
+  grid-template-columns: 26px minmax(0, 1fr) auto;
+  gap: 8px;
+  padding: 8px;
+  border-color: var(--admin-border);
+  border-radius: var(--admin-radius-sm);
+}
+
+.admin-home-layout-order {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  color: var(--admin-brand);
+  background: var(--admin-brand-soft);
+  font-size: 0.72rem;
+}
+
 .admin-settings-page {
   display: grid !important;
   gap: 8px !important;
