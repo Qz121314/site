@@ -185,7 +185,7 @@
 .theme-pane-edge-toggle {
   position: absolute;
   z-index: 6;
-  top: 66px;
+  top: -1px;
   display: grid;
   width: 20px;
   height: 32px;
