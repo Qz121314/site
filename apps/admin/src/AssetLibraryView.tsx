@@ -193,8 +193,6 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
   const [mediaNextCursor, setMediaNextCursor] = useState<string | null>(null);
   const [mediaPageIndex, setMediaPageIndex] = useState(0);
   const [mediaTotal, setMediaTotal] = useState(0);
-  const [mediaQuery, setMediaQuery] = useState('');
-  const [debouncedMediaQuery, setDebouncedMediaQuery] = useState('');
   const [mediaKind, setMediaKind] = useState<MediaKind | ''>('');
   const [folderFilter, setFolderFilter] = useState<FolderFilter>('all');
   const uploadRole: MediaRole = 'general';
@@ -225,14 +223,6 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
   const [cleanupSuccess, setCleanupSuccess] = useState<string | null>(null);
   const cleanupVisitedCursorsRef = useRef<Set<string>>(new Set());
 
-  useEffect(() => {
-    const timeout = window.setTimeout(
-      () => setDebouncedMediaQuery(mediaQuery.trim()),
-      220,
-    );
-    return () => window.clearTimeout(timeout);
-  }, [mediaQuery]);
-
   const loadFolders = useCallback(async () => {
     try {
       setFolders(await fetchMediaFolders());
@@ -259,7 +249,6 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
       const page = await fetchMediaLibraryPage({
         kinds: mediaKind ? [mediaKind] : undefined,
         folder: folderFilter,
-        query: debouncedMediaQuery,
         limit: MEDIA_PAGE_SIZE,
       });
       if (mediaRequestVersionRef.current !== version) return;
@@ -279,7 +268,7 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
     } finally {
       if (mediaRequestVersionRef.current === version) setMediaLoading(false);
     }
-  }, [debouncedMediaQuery, folderFilter, mediaKind, onSessionExpired]);
+  }, [folderFilter, mediaKind, onSessionExpired]);
 
   const refreshMediaAndFolders = useCallback(async () => {
     await Promise.all([loadMedia(), loadFolders()]);
@@ -325,7 +314,6 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
       const page = await fetchMediaLibraryPage({
         kinds: mediaKind ? [mediaKind] : undefined,
         folder: folderFilter,
-        query: debouncedMediaQuery,
         cursor,
         limit: MEDIA_PAGE_SIZE,
       });
@@ -776,146 +764,142 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
 
       {tab === 'library' ? (
         <>
-          <div className="media-center-command-dock">
-            <div className="media-folder-create-bar">
-              <div>
-                <strong>分组</strong>
-                <small>整理素材</small>
-              </div>
-              <input
-                value={newFolderName}
-                maxLength={80}
-                placeholder="新建分组"
-                onChange={(event) => setNewFolderName(event.target.value)}
-              />
-              <button
-                className="secondary-button"
-                type="button"
-                disabled={!newFolderName.trim() || folderWorking || uploadQueue.running}
-                onClick={() => void handleCreateFolder()}
-              >
-                新建分组
-              </button>
-              {activeFolder ? (
+          <div className="media-center-primary-bar">
+            <div className="media-center-command-dock">
+              <div className="media-folder-create-bar">
+                <div>
+                  <strong>分组</strong>
+                  <small>整理素材</small>
+                </div>
+                <input
+                  value={newFolderName}
+                  maxLength={80}
+                  placeholder="新建分组"
+                  onChange={(event) => setNewFolderName(event.target.value)}
+                />
                 <button
-                  type="button"
                   className="secondary-button"
-                  disabled={folderWorking || uploadQueue.running}
-                  onClick={() => void handleRenameFolder()}
-                >
-                  重命名
-                </button>
-              ) : null}
-              {activeFolder ? (
-                <button
                   type="button"
-                  className="danger-button"
-                  disabled={folderWorking || uploadQueue.running}
-                  onClick={() => void handleDeleteFolder()}
+                  disabled={!newFolderName.trim() || folderWorking || uploadQueue.running}
+                  onClick={() => void handleCreateFolder()}
                 >
-                  删除
+                  新建分组
                 </button>
-              ) : null}
+                {activeFolder ? (
+                  <button
+                    type="button"
+                    className="secondary-button"
+                    disabled={folderWorking || uploadQueue.running}
+                    onClick={() => void handleRenameFolder()}
+                  >
+                    重命名
+                  </button>
+                ) : null}
+                {activeFolder ? (
+                  <button
+                    type="button"
+                    className="danger-button"
+                    disabled={folderWorking || uploadQueue.running}
+                    onClick={() => void handleDeleteFolder()}
+                  >
+                    删除
+                  </button>
+                ) : null}
+              </div>
+
+              <div className="media-center-upload-bar">
+                <label
+                  className={`media-center-upload-button${uploadQueue.running ? ' is-disabled' : ''}`}
+                >
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm"
+                    multiple
+                    disabled={uploadQueue.running}
+                    onChange={(event) => {
+                      const files = Array.from(event.currentTarget.files ?? []);
+                      event.currentTarget.value = '';
+                      void uploadFiles(files, currentUploadFolderId());
+                    }}
+                  />
+                  {uploadQueue.running ? '上传中…' : '上传文件'}
+                </label>
+                <label
+                  className={`media-center-upload-button is-folder-upload${uploadQueue.running || folderWorking ? ' is-disabled' : ''}`}
+                >
+                  <input
+                    ref={(node) => {
+                      if (!node) return;
+                      node.setAttribute('webkitdirectory', '');
+                      node.setAttribute('directory', '');
+                    }}
+                    type="file"
+                    multiple
+                    disabled={uploadQueue.running || folderWorking}
+                    onChange={(event) => {
+                      const files = Array.from(event.currentTarget.files ?? []);
+                      event.currentTarget.value = '';
+                      void handleFolderUpload(files);
+                    }}
+                  />
+                  {uploadQueue.running || folderWorking ? '处理中…' : '上传文件夹'}
+                </label>
+                <small>
+                  静态图片先在浏览器压缩；队列最多并发处理 3
+                  个文件。单个失败不会中断后续文件。
+                </small>
+              </div>
             </div>
 
-            <div className="media-center-upload-bar">
-              <label
-                className={`media-center-upload-button${uploadQueue.running ? ' is-disabled' : ''}`}
-              >
-                <input
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm"
-                  multiple
-                  disabled={uploadQueue.running}
-                  onChange={(event) => {
-                    const files = Array.from(event.currentTarget.files ?? []);
-                    event.currentTarget.value = '';
-                    void uploadFiles(files, currentUploadFolderId());
-                  }}
-                />
-                {uploadQueue.running ? '上传中…' : '上传文件'}
+            <AdminToolbar aria-label="素材筛选工具栏" className="media-center-toolbar">
+              <label className="ui-management-filter">
+                <span>文件夹</span>
+                <select
+                  value={folderFilter}
+                  onChange={(event) => setFolderFilter(event.target.value)}
+                >
+                  <option value="all">全部文件夹</option>
+                  <option value="unfiled">未分组</option>
+                  {folders.map((folder) => (
+                    <option key={folder.id} value={folder.id}>
+                      {folder.name} ({folder.assetCount})
+                    </option>
+                  ))}
+                </select>
               </label>
-              <label
-                className={`media-center-upload-button is-folder-upload${uploadQueue.running || folderWorking ? ' is-disabled' : ''}`}
-              >
-                <input
-                  ref={(node) => {
-                    if (!node) return;
-                    node.setAttribute('webkitdirectory', '');
-                    node.setAttribute('directory', '');
-                  }}
-                  type="file"
-                  multiple
-                  disabled={uploadQueue.running || folderWorking}
-                  onChange={(event) => {
-                    const files = Array.from(event.currentTarget.files ?? []);
-                    event.currentTarget.value = '';
-                    void handleFolderUpload(files);
-                  }}
-                />
-                {uploadQueue.running || folderWorking ? '处理中…' : '上传文件夹'}
+              <label className="ui-management-filter">
+                <span>格式</span>
+                <select
+                  value={mediaKind}
+                  onChange={(event) => setMediaKind(event.target.value as MediaKind | '')}
+                >
+                  {KIND_OPTIONS.map((option) => (
+                    <option key={option.value || 'all'} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
               </label>
-              <small>
-                静态图片先在浏览器压缩；队列最多并发处理 3
-                个文件。单个失败不会中断后续文件。
-              </small>
-            </div>
+              <Button
+                variant="secondary"
+                onClick={() => void loadMedia()}
+                disabled={mediaLoading || uploadQueue.running}
+              >
+                刷新
+              </Button>
+            </AdminToolbar>
+
+            {mediaError ? (
+              <p className="inline-status is-error" role="alert">
+                {mediaError}
+              </p>
+            ) : null}
+            {mediaSuccess ? (
+              <p className="inline-status is-success" role="status">
+                {mediaSuccess}
+              </p>
+            ) : null}
           </div>
-
-          {mediaError ? (
-            <p className="inline-status is-error" role="alert">
-              {mediaError}
-            </p>
-          ) : null}
-          {mediaSuccess ? (
-            <p className="inline-status is-success" role="status">
-              {mediaSuccess}
-            </p>
-          ) : null}
-
-          <AdminToolbar aria-label="素材筛选工具栏" className="media-center-toolbar">
-            <AdminSearchField
-              label="搜索素材"
-              value={mediaQuery}
-              placeholder="搜索文件名、文件夹或格式"
-              onChange={(event) => setMediaQuery(event.target.value)}
-            />
-            <label className="ui-management-filter">
-              <span>文件夹</span>
-              <select
-                value={folderFilter}
-                onChange={(event) => setFolderFilter(event.target.value)}
-              >
-                <option value="all">全部文件夹</option>
-                <option value="unfiled">未分组</option>
-                {folders.map((folder) => (
-                  <option key={folder.id} value={folder.id}>
-                    {folder.name} ({folder.assetCount})
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="ui-management-filter">
-              <span>格式</span>
-              <select
-                value={mediaKind}
-                onChange={(event) => setMediaKind(event.target.value as MediaKind | '')}
-              >
-                {KIND_OPTIONS.map((option) => (
-                  <option key={option.value || 'all'} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <Button
-              variant="secondary"
-              onClick={() => void loadMedia()}
-              disabled={mediaLoading || uploadQueue.running}
-            >
-              刷新
-            </Button>
-          </AdminToolbar>
 
           {selectedManagedAssets.length > 0 ? (
             <AdminSelectionBar

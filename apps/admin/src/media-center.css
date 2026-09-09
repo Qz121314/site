@@ -83,6 +83,51 @@
   box-shadow: 0 1px 2px rgb(16 24 40 / 2%);
 }
 
+.media-center-primary-bar {
+  display: grid;
+  grid-template-columns: minmax(215px, 1.05fr) minmax(150px, 0.82fr) minmax(250px, 1.2fr);
+  align-items: stretch;
+  gap: 6px;
+}
+
+.media-center-primary-bar > .media-center-command-dock {
+  display: contents;
+}
+
+.media-center-primary-bar .media-folder-create-bar,
+.media-center-primary-bar .media-center-upload-bar,
+.media-center-primary-bar > .media-center-toolbar {
+  min-width: 0;
+  border: 1px solid #e2e6ec;
+  border-radius: 9px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(16 24 40 / 2%);
+}
+
+.media-center-primary-bar .media-folder-create-bar,
+.media-center-primary-bar .media-center-upload-bar {
+  padding: 4px 6px;
+}
+
+.media-center-primary-bar .media-folder-create-bar {
+  border-right: 1px solid #e2e6ec;
+}
+
+.media-center-primary-bar > .media-center-toolbar {
+  display: flex;
+  min-height: 42px;
+  align-items: center;
+  padding: 4px 6px;
+}
+
+.media-center-primary-bar > .media-center-toolbar .ui-management-toolbar-controls {
+  display: grid;
+  width: 100%;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  gap: 5px;
+}
+
 .media-center-page .media-folder-create-bar,
 .media-center-upload-bar {
   display: flex;
@@ -100,6 +145,16 @@
 .media-center-page .media-folder-create-bar {
   flex: 0 1 43%;
   border-right: 1px solid #edf0f4;
+}
+
+/* The library command bar is a three-zone layout, not one joined control strip. */
+.media-center-primary-bar .media-folder-create-bar {
+  flex: initial;
+  min-height: 42px;
+  border: 1px solid #e2e6ec;
+  border-radius: 9px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(16 24 40 / 2%);
 }
 
 .media-center-upload-details {
@@ -896,6 +951,10 @@
 }
 
 @media (max-width: 920px) {
+  .media-center-primary-bar {
+    grid-template-columns: minmax(210px, 1fr) minmax(155px, 0.85fr) minmax(245px, 1.1fr);
+  }
+
   .media-center-upload-details .media-center-upload-bar {
     position: static;
     min-width: 0;
@@ -959,6 +1018,17 @@
     flex-direction: column;
   }
 
+  .media-center-primary-bar {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .media-center-primary-bar > .media-center-command-dock {
+    display: flex;
+    align-items: stretch;
+    flex-direction: column;
+  }
+
   .media-center-filter-options {
     position: static;
     min-width: 0;
@@ -969,6 +1039,12 @@
   .media-center-toolbar .ui-management-toolbar-controls {
     display: flex;
     width: 100%;
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .media-center-primary-bar > .media-center-toolbar .ui-management-toolbar-controls {
+    display: flex;
     align-items: stretch;
     flex-direction: column;
   }
