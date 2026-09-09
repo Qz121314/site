@@ -154,18 +154,20 @@
   background: #f1f4f8;
 }
 .theme-library-add {
-  width: 26px;
-  height: 26px;
-  border: 0;
-  border-radius: 5px;
-  color: #445064;
-  background: #f2f5f8;
-  font-size: 1.1rem;
+  min-height: 28px;
+  padding: 0 8px;
+  border: 1px solid #d8e0e9;
+  border-radius: 6px;
+  color: #4d5c70;
+  background: #fff;
+  font-size: 0.62rem;
+  font-weight: 750;
   cursor: pointer;
 }
 .theme-library-add:hover {
-  color: #d92567;
-  background: #fff0f6;
+  border-color: #d5b6c3;
+  color: #a13d60;
+  background: #fff7fa;
 }
 .theme-studio-pane-heading {
   min-height: 58px;
@@ -287,22 +289,40 @@
   padding: 13px;
   border-bottom: 1px solid #e5e9ef;
 }
-.theme-inspector-actions {
-  position: sticky;
-  bottom: 0;
-  display: flex;
-  justify-content: flex-end;
-  gap: 7px;
-  padding: 10px 12px;
-  border-top: 1px solid #e2e7ee;
-  background: rgb(255 255 255 / 96%);
-  box-shadow: 0 -5px 16px rgb(27 39 57 / 7%);
+.theme-global-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
 }
-.theme-inspector-actions .secondary-button,
-.theme-inspector-actions .primary-button {
+.theme-global-actions .ui-button {
   min-height: 30px;
   padding-inline: 9px;
   font-size: 0.65rem;
+}
+.theme-preview-size-inputs {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: end;
+  gap: 5px;
+}
+.theme-preview-size-inputs label {
+  display: grid;
+  gap: 4px;
+}
+.theme-preview-size-inputs input {
+  width: 100%;
+  min-height: 30px;
+  padding: 4px 6px;
+  border: 1px solid #d7dee7;
+  border-radius: 6px;
+  color: #283548;
+  background: #fff;
+  font: inherit;
+  font-size: 0.65rem;
+}
+.theme-preview-size-inputs > span {
+  padding-bottom: 7px;
+  color: #9aa4b2;
 }
 .theme-inspector-label {
   display: flex;

@@ -1,10 +1,11 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { AdminApiError } from './api';
 import { useAdminDirtySource } from './admin-unsaved-state';
 import {
   AdminSegmentedControl,
   AdminSegmentedItem,
 } from './components/ui/segmented-control';
+import { Button } from './components/ui/button';
 import { ThemeCenterPreview } from './ThemeCenterPreview';
 import { themeDiagnostics } from './theme-center/diagnostics';
 import {
@@ -21,8 +22,26 @@ import {
 
 type ThemeCenterViewProps = {
   onSessionExpired: () => void;
+  onActionsChange: (actions: ReactNode | null) => void;
 };
 type ThemeImportSource = 'url' | 'json';
+type PreviewViewport = 'desktop' | 'mobile';
+type PreviewSize = { width: number; height: number };
+const PREVIEW_PRESETS: Record<
+  PreviewViewport,
+  readonly { label: string; size: PreviewSize }[]
+> = {
+  desktop: [
+    { label: '1440 × 900', size: { width: 1440, height: 900 } },
+    { label: '1280 × 800', size: { width: 1280, height: 800 } },
+    { label: '1024 × 768', size: { width: 1024, height: 768 } },
+  ],
+  mobile: [
+    { label: 'iPhone 15 · 393 × 852', size: { width: 393, height: 852 } },
+    { label: 'Pixel 8 · 412 × 915', size: { width: 412, height: 915 } },
+    { label: 'iPhone SE · 375 × 667', size: { width: 375, height: 667 } },
+  ],
+};
 const FONT_PACK_LABELS = {
   modern: 'Modern Sans',
   editorial: 'Soft Editorial',
@@ -98,7 +117,10 @@ function ThemeSwatch({ theme }: { theme: ThemePreset }) {
   );
 }
 
-export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
+export function ThemeCenterView({
+  onSessionExpired,
+  onActionsChange,
+}: ThemeCenterViewProps) {
   const [presets, setPresets] = useState<ThemePreset[]>([]);
   const [currentTheme, setCurrentTheme] = useState<ResolvedTheme | null>(null);
   const [selectedKey, setSelectedKey] = useState<ThemeKey>('marketplace');
@@ -115,11 +137,20 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
     motionStyle: 'restrained',
     navigationStyle: 'quiet',
   });
-  const [viewport, setViewport] = useState<'desktop' | 'mobile'>('desktop');
+  const [viewport, setViewport] = useState<PreviewViewport>('desktop');
+  const [previewPreset, setPreviewPreset] = useState('1440 × 900');
+  const [previewSize, setPreviewSize] = useState<PreviewSize>({
+    width: 1440,
+    height: 900,
+  });
   const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [importSource, setImportSource] = useState<ThemeImportSource>('url');
   const [importMode, setImportMode] = useState<'light' | 'dark'>('light');
+  const themeActionsRef = useRef<{ save: () => void; restore: () => void }>({
+    save: () => undefined,
+    restore: () => undefined,
+  });
   const [importValue, setImportValue] = useState('');
   const [importing, setImporting] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -240,6 +271,60 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
       setSaving(false);
     }
   }
+  themeActionsRef.current = {
+    save: () => void saveTheme(),
+    restore: restoreSavedTheme,
+  };
+  useEffect(() => {
+    onActionsChange(
+      <div className="theme-global-actions">
+        <Button
+          variant="secondary"
+          size="compact"
+          type="button"
+          disabled={!themeIsDirty || saving}
+          onClick={() => themeActionsRef.current.restore()}
+        >
+          恢复修改
+        </Button>
+        <Button
+          size="compact"
+          type="button"
+          disabled={saving || !themeIsDirty}
+          onClick={() => themeActionsRef.current.save()}
+        >
+          {saving ? '正在保存…' : '保存主题'}
+        </Button>
+      </div>,
+    );
+    return () => onActionsChange(null);
+  }, [onActionsChange, saving, themeIsDirty]);
+
+  function selectViewport(nextViewport: PreviewViewport) {
+    const defaultPreset = PREVIEW_PRESETS[nextViewport][0];
+    if (!defaultPreset) return;
+    setViewport(nextViewport);
+    setPreviewPreset(defaultPreset.label);
+    setPreviewSize(defaultPreset.size);
+  }
+
+  function selectPreviewPreset(value: string) {
+    setPreviewPreset(value);
+    const preset = PREVIEW_PRESETS[viewport].find((item) => item.label === value);
+    if (preset) setPreviewSize(preset.size);
+  }
+
+  function updatePreviewSize(key: keyof PreviewSize, value: string) {
+    const parsed = Number.parseInt(value, 10);
+    setPreviewPreset('自定义尺寸');
+    setPreviewSize((current) => ({
+      ...current,
+      [key]: Number.isFinite(parsed)
+        ? Math.min(Math.max(parsed, 280), 2560)
+        : current[key],
+    }));
+  }
+
   async function importTheme() {
     if (importing || !importValue.trim()) return;
     setImporting(true);
@@ -333,10 +418,10 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
             <button
               className="theme-library-add"
               type="button"
-              aria-label="导入主题"
+              aria-label="上传主题"
               onClick={() => setImportOpen(true)}
             >
-              +
+              上传主题
             </button>
           </div>
           <div className="theme-library-list">
@@ -379,6 +464,7 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
               textColor={previewTextColor}
               theme={previewTheme}
               viewport={viewport}
+              previewSize={previewSize}
             />
           ) : null}
         </main>
@@ -400,18 +486,57 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
                   <AdminSegmentedItem
                     selected={viewport === 'desktop'}
                     type="button"
-                    onClick={() => setViewport('desktop')}
+                    onClick={() => selectViewport('desktop')}
                   >
                     桌面
                   </AdminSegmentedItem>
                   <AdminSegmentedItem
                     selected={viewport === 'mobile'}
                     type="button"
-                    onClick={() => setViewport('mobile')}
+                    onClick={() => selectViewport('mobile')}
                   >
                     移动端
                   </AdminSegmentedItem>
                 </AdminSegmentedControl>
+                <label>
+                  {viewport === 'desktop' ? 'PC 模板' : '手机模板'}
+                  <select
+                    value={previewPreset}
+                    onChange={(event) => selectPreviewPreset(event.target.value)}
+                  >
+                    {PREVIEW_PRESETS[viewport].map((preset) => (
+                      <option key={preset.label} value={preset.label}>
+                        {preset.label}
+                      </option>
+                    ))}
+                    <option value="自定义尺寸">自定义尺寸</option>
+                  </select>
+                </label>
+                <div className="theme-preview-size-inputs" aria-label="自定义预览尺寸">
+                  <label>
+                    宽
+                    <input
+                      type="number"
+                      min="280"
+                      max="2560"
+                      value={previewSize.width}
+                      onChange={(event) => updatePreviewSize('width', event.target.value)}
+                    />
+                  </label>
+                  <span aria-hidden="true">×</span>
+                  <label>
+                    高
+                    <input
+                      type="number"
+                      min="280"
+                      max="2560"
+                      value={previewSize.height}
+                      onChange={(event) =>
+                        updatePreviewSize('height', event.target.value)
+                      }
+                    />
+                  </label>
+                </div>
               </div>
               <div className="theme-inspector-section">
                 <div className="theme-inspector-label">
@@ -641,24 +766,6 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
                   </div>
                 ) : null}
               </div>
-              <footer className="theme-inspector-actions">
-                <button
-                  className="secondary-button"
-                  type="button"
-                  disabled={!themeIsDirty || saving}
-                  onClick={restoreSavedTheme}
-                >
-                  恢复修改
-                </button>
-                <button
-                  className="primary-button"
-                  type="button"
-                  disabled={saving || !themeIsDirty}
-                  onClick={() => void saveTheme()}
-                >
-                  {saving ? '正在保存…' : '保存主题'}
-                </button>
-              </footer>
             </>
           ) : null}
         </aside>

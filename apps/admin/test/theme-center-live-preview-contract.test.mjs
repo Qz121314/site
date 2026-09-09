@@ -17,10 +17,15 @@ test('Theme Studio preview reuses live storefront home components without restor
   assert.ok(view.includes('主题库'));
   assert.ok(view.includes('样式设置'));
   assert.ok(view.includes('viewport={viewport}'));
-  assert.ok(view.includes('theme-inspector-actions'));
+  assert.ok(view.includes('theme-global-actions'));
+  assert.ok(view.includes('PC 模板'));
+  assert.ok(view.includes('手机模板'));
+  assert.ok(view.includes('自定义预览尺寸'));
+  assert.ok(preview.includes('theme-preview-frame'));
   assert.equal(view.includes('theme-command-bar'), false);
   assert.equal(view.includes('theme-preview-toolbar'), false);
-  assert.ok(styles.includes('.theme-inspector-actions'));
+  assert.ok(styles.includes('.theme-global-actions'));
+  assert.equal(styles.includes('.theme-inspector-actions'), false);
   assert.equal(styles.includes('.theme-action-bar'), false);
   assert.equal(styles.includes('100dvh -'), false);
   assert.ok(preview.includes('StorefrontBrandBar'));

@@ -117,7 +117,9 @@ test('publish, logout, and session state use local ownership', async () => {
   );
   assert.match(dashboard, /return dynamic \? `section:\$\{dynamic\.sectionId\}` : null/);
   assert.match(dashboard, /const publishingActions = contextPublishKey \?/);
-  assert.match(dashboard, /activeView === 'messages' \? messagesActions : null/);
+  assert.match(dashboard, /const localWorkspaceActions =/);
+  assert.match(dashboard, /activeView === 'theme'/);
+  assert.match(dashboard, /onActionsChange=\{setThemeActions\}/);
   assert.doesNotMatch(dashboard, /topBarActions|environment-badge|会话至/);
   assert.match(dashboard, /onLogout=\{requestLogout\}/);
   assert.match(dashboard, /sessionExpiresAt=\{expiresAt\}/);

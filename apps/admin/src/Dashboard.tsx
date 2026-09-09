@@ -326,10 +326,15 @@ export function Dashboard({
     useState<PendingDiscardAction>(null);
   const [productHandoff, setProductHandoff] = useState<ProductHandoff | null>(null);
   const [messagesActions, setMessagesActions] = useState<ReactNode>(null);
+  const [themeActions, setThemeActions] = useState<ReactNode>(null);
   const unsaved = useAdminUnsavedState();
 
   useEffect(() => {
     if (activeView !== 'messages') setMessagesActions(null);
+  }, [activeView]);
+
+  useEffect(() => {
+    if (activeView !== 'theme') setThemeActions(null);
   }, [activeView]);
 
   const loadSections = useCallback(async () => {
@@ -601,11 +606,17 @@ export function Dashboard({
       onRequestRollback={setRollbackTarget}
     />
   ) : null;
+  const localWorkspaceActions =
+    activeView === 'theme'
+      ? themeActions
+      : activeView === 'messages'
+        ? messagesActions
+        : null;
   const workspaceActions =
-    publishingActions || messagesActions ? (
+    publishingActions || localWorkspaceActions ? (
       <>
         {publishingActions}
-        {activeView === 'messages' ? messagesActions : null}
+        {localWorkspaceActions}
       </>
     ) : null;
 
@@ -678,7 +689,11 @@ export function Dashboard({
               onMessagesActionsChange={setMessagesActions}
             />
           ) : activeView === 'theme' ? (
-            <ThemeCenterView key={activeView} onSessionExpired={onSessionExpired} />
+            <ThemeCenterView
+              key={activeView}
+              onSessionExpired={onSessionExpired}
+              onActionsChange={setThemeActions}
+            />
           ) : activeView === 'assets' ? (
             <AssetLibraryView key={activeView} onSessionExpired={onSessionExpired} />
           ) : activeView === 'customer-service' ? (
