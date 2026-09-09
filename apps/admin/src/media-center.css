@@ -124,7 +124,7 @@
   display: grid;
   width: 100%;
   min-width: 0;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 5px;
 }
 
@@ -236,6 +236,24 @@
   color: #344054;
   background: #fff;
   font-size: 0.7rem;
+}
+
+.media-center-primary-bar .media-folder-create-bar select {
+  width: min(150px, 15vw);
+  height: 31px;
+  min-width: 112px;
+  padding: 0 25px 0 8px;
+  border: 1px solid #d8dee8;
+  border-radius: 7px;
+  outline: 0;
+  color: #344054;
+  background: #fff;
+  font-size: 0.68rem;
+}
+
+.media-center-primary-bar .media-folder-create-bar input {
+  width: min(120px, 12vw);
+  min-width: 82px;
 }
 
 .media-center-page .media-folder-create-bar input:focus,

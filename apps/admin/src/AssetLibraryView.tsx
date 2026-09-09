@@ -769,12 +769,25 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
               <div className="media-folder-create-bar">
                 <div>
                   <strong>文件夹</strong>
-                  <small>整理素材</small>
+                  <small>选择或新建</small>
                 </div>
+                <select
+                  value={folderFilter}
+                  onChange={(event) => setFolderFilter(event.target.value)}
+                  aria-label="选择文件夹"
+                >
+                  <option value="all">全部文件夹</option>
+                  <option value="unfiled">未放入文件夹</option>
+                  {folders.map((folder) => (
+                    <option key={folder.id} value={folder.id}>
+                      {folder.name} ({folder.assetCount})
+                    </option>
+                  ))}
+                </select>
                 <input
                   value={newFolderName}
                   maxLength={80}
-                  placeholder="新建文件夹"
+                  placeholder="文件夹名称"
                   onChange={(event) => setNewFolderName(event.target.value)}
                 />
                 <button
@@ -783,7 +796,7 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
                   disabled={!newFolderName.trim() || folderWorking || uploadQueue.running}
                   onClick={() => void handleCreateFolder()}
                 >
-                  新建文件夹
+                  新建
                 </button>
                 {activeFolder ? (
                   <button
@@ -852,21 +865,6 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
             </div>
 
             <AdminToolbar aria-label="素材筛选工具栏" className="media-center-toolbar">
-              <label className="ui-management-filter">
-                <span>文件夹</span>
-                <select
-                  value={folderFilter}
-                  onChange={(event) => setFolderFilter(event.target.value)}
-                >
-                  <option value="all">全部文件夹</option>
-                  <option value="unfiled">未放入文件夹</option>
-                  {folders.map((folder) => (
-                    <option key={folder.id} value={folder.id}>
-                      {folder.name} ({folder.assetCount})
-                    </option>
-                  ))}
-                </select>
-              </label>
               <label className="ui-management-filter">
                 <span>格式</span>
                 <select
