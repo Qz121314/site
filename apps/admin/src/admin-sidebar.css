@@ -176,6 +176,10 @@
   margin-left: auto;
   color: #94a3b8;
   font-size: 0.9rem;
+  transition: transform 150ms ease;
+}
+.admin-nav-chevron.is-expanded {
+  transform: rotate(180deg);
 }
 .admin-nav-subitems {
   display: grid;

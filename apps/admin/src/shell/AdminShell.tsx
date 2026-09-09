@@ -6,7 +6,10 @@ import {
   type AdminView,
   type AdminViewContext,
 } from '../admin-navigation';
-import type { AdminNavigationPreferences } from '../admin-navigation-preferences';
+import {
+  orderedAdminSecondaryItems,
+  type AdminNavigationPreferences,
+} from '../admin-navigation-preferences';
 import type { AdminSection } from '../api';
 import { CatalogWorkspaceSwitcher } from '../catalog/CatalogWorkspaceSwitcher';
 import { Button } from '../components/ui/button';
@@ -77,6 +80,13 @@ export function AdminShell({
   const hasWorkspaceToolbar = Boolean(
     workspaceActions || pageStatus || pagePrimaryAction || pageSecondaryAction,
   );
+  const collapsedSecondaryItems = sidebarCollapsed
+    ? orderedAdminSecondaryItems(activeDomain, sections, navigationPreferences)
+    : [];
+  const visibleCollapsedSecondaryItems =
+    activeDomain === 'catalog'
+      ? collapsedSecondaryItems.filter((item) => item.view === 'sections' || item.group)
+      : collapsedSecondaryItems;
 
   useEffect(() => {
     if (!sessionExpiresAt) {
@@ -250,6 +260,36 @@ export function AdminShell({
         <main className="admin-main">
           <h1 className="admin-visually-hidden">{context.title}</h1>
           <AdminWorkspace width={workspaceWidth}>
+            {sidebarCollapsed &&
+            activeDomain !== 'dashboard' &&
+            visibleCollapsedSecondaryItems.length > 0 ? (
+              <nav
+                className="admin-collapsed-secondary-nav"
+                aria-label={`${context.eyebrow}二级导航`}
+              >
+                <span className="admin-collapsed-secondary-label">{context.eyebrow}</span>
+                <div className="admin-collapsed-secondary-items">
+                  {visibleCollapsedSecondaryItems.map((item) => {
+                    const label =
+                      activeDomain === 'catalog' && item.view !== 'sections' && item.group
+                        ? item.group
+                        : item.label;
+                    return (
+                      <Button
+                        className={`admin-collapsed-secondary-link${item.view === activeView ? ' is-active' : ''}`}
+                        key={`${item.view}-${item.group ?? ''}`}
+                        variant="ghost"
+                        type="button"
+                        aria-current={item.view === activeView ? 'page' : undefined}
+                        onClick={() => onNavigate(item.view)}
+                      >
+                        {label}
+                      </Button>
+                    );
+                  })}
+                </div>
+              </nav>
+            ) : null}
             {catalogContext ? (
               <CatalogWorkspaceSwitcher
                 activeView={activeView}

@@ -11,7 +11,7 @@ import {
   Settings2,
   type LucideIcon,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Button } from '../components/ui/button';
 import { brandingAssetPreviewUrl } from '../branding-media/api';
 import {
@@ -74,7 +74,12 @@ export function AdminPrimarySidebar({
   pwaIconAssetId = null,
 }: AdminPrimarySidebarProps) {
   const [dragging, setDragging] = useState<string | null>(null);
+  const [expandedDomain, setExpandedDomain] = useState<AdminDomain | null>(activeDomain);
   const domains = orderedAdminDomains(navigationPreferences);
+
+  useEffect(() => {
+    setExpandedDomain(activeDomain);
+  }, [activeDomain]);
 
   function move<T>(items: readonly T[], from: number, to: number): T[] {
     if (from < 0 || to < 0 || from === to || to >= items.length) return [...items];
@@ -139,6 +144,7 @@ export function AdminPrimarySidebar({
           const defaultView = getAdminDefaultViewForDomain(domain.id, sections);
           const active = activeDomain === domain.id;
           const expandable = active && domain.id !== 'dashboard';
+          const isExpanded = expandable && expandedDomain === domain.id;
           const items = expandable
             ? orderedAdminSecondaryItems(domain.id, sections, navigationPreferences)
             : [];
@@ -179,6 +185,12 @@ export function AdminPrimarySidebar({
                 }
                 onClick={() => {
                   if (!defaultView || navigationOrdering) return;
+                  if (active && domain.id !== 'dashboard') {
+                    setExpandedDomain((current) =>
+                      current === domain.id ? null : domain.id,
+                    );
+                    return;
+                  }
                   onNavigate(defaultView);
                   onDomainSelected?.();
                 }}
@@ -194,13 +206,13 @@ export function AdminPrimarySidebar({
                 <span>{domain.label}</span>
                 {expandable ? (
                   <ChevronDown
-                    className="admin-nav-chevron"
+                    className={`admin-nav-chevron${isExpanded ? ' is-expanded' : ''}`}
                     aria-hidden="true"
                     size={14}
                   />
                 ) : null}
               </Button>
-              {!collapsed && expandable && visibleItems.length > 0 ? (
+              {!collapsed && isExpanded && visibleItems.length > 0 ? (
                 <div className="admin-nav-subitems">
                   {visibleItems.map((item) => {
                     const isSelected = item.view === activeView;
