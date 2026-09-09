@@ -6,8 +6,8 @@
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   --nav: #111827;
-  --brand: #ff5a1f;
-  --brand-dark: #d9480f;
+  --brand: #ec1767;
+  --brand-dark: #c40f52;
   --muted: #697386;
   --line: #e4e8ef;
   --surface: #ffffff;
@@ -42,7 +42,7 @@ input:disabled {
   place-items: center;
   padding: 24px;
   background:
-    radial-gradient(circle at top left, rgb(255 90 31 / 12%), transparent 34rem), #f4f6f9;
+    radial-gradient(circle at top left, rgb(236 23 103 / 12%), transparent 34rem), #f4f6f9;
 }
 
 .loading-shell {
@@ -136,7 +136,7 @@ input:disabled {
 
 .login-form input:focus {
   border-color: var(--brand);
-  box-shadow: 0 0 0 3px rgb(255 90 31 / 13%);
+  box-shadow: 0 0 0 3px rgb(236 23 103 / 13%);
 }
 
 .form-error {

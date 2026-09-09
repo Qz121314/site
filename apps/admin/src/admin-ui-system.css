@@ -13,9 +13,9 @@
   --admin-text: #172033;
   --admin-text-muted: #667085;
   --admin-text-subtle: #8a94a6;
-  --admin-brand: #ff5a1f;
-  --admin-brand-hover: #e84b12;
-  --admin-brand-soft: #fff2ec;
+  --admin-brand: #ec1767;
+  --admin-brand-hover: #c40f52;
+  --admin-brand-soft: #fff0f6;
   --admin-danger: #b42318;
   --admin-success: #067647;
   --admin-radius-xs: 6px;
@@ -188,9 +188,9 @@ body {
 }
 
 .ui-input:focus-visible {
-  border-color: #ff9a76;
+  border-color: #ff4f91;
   outline: 0;
-  box-shadow: 0 0 0 3px rgb(255 90 31 / 10%);
+  box-shadow: 0 0 0 3px rgb(236 23 103 / 12%);
 }
 
 .ui-textarea {
@@ -206,9 +206,9 @@ body {
 }
 
 .ui-textarea:focus-visible {
-  border-color: #ff9a76;
+  border-color: #ff4f91;
   outline: 0;
-  box-shadow: 0 0 0 3px rgb(255 90 31 / 10%);
+  box-shadow: 0 0 0 3px rgb(236 23 103 / 12%);
 }
 
 button,
@@ -297,9 +297,9 @@ textarea {
 .product-editor-form input:focus,
 .product-editor-form select:focus,
 .product-editor-form textarea:focus {
-  border-color: #ff9a76 !important;
+  border-color: #ff4f91 !important;
   outline: 0 !important;
-  box-shadow: 0 0 0 3px rgb(255 90 31 / 10%) !important;
+  box-shadow: 0 0 0 3px rgb(236 23 103 / 12%) !important;
 }
 
 .primary-button,
@@ -421,7 +421,7 @@ textarea {
 
 .scope-tabs button.is-active {
   color: #fff !important;
-  background: #202632 !important;
+  background: linear-gradient(135deg, #ec1767, #c40f52) !important;
   box-shadow: none !important;
 }
 
@@ -562,7 +562,7 @@ textarea {
 .product-table tbody tr:focus-within td,
 .asset-table tbody tr:focus-within td,
 .conversion-table tbody tr:focus-within td {
-  background: #fffaf7 !important;
+  background: #fff7fa !important;
 }
 
 .actions-cell button,

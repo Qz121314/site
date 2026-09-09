@@ -166,7 +166,7 @@
   font-size: 0.7rem;
 }
 .dashboard-section-heading a {
-  color: #2563eb;
+  color: #ec1767;
   text-decoration: none;
 }
 .dashboard-repository-link {
@@ -180,8 +180,8 @@
 }
 .dashboard-repository-link:hover,
 .dashboard-repository-link:focus-visible {
-  border-color: #b9d2ff;
-  background: #f5f8ff;
+  border-color: #ffc2d8;
+  background: #fff6f9;
 }
 .dashboard-entry-grid {
   display: grid;
@@ -219,7 +219,7 @@
   place-items: center;
   border: 1px solid #e1e7ef;
   border-radius: 4px;
-  color: #2563eb;
+  color: #ec1767;
   background: #f5f9ff;
 }
 .dashboard-entry span:nth-child(2),

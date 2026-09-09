@@ -353,7 +353,7 @@ select:disabled {
 .product-editor-form textarea:focus {
   border-color: var(--brand);
   outline: 0;
-  box-shadow: 0 0 0 3px rgb(255 90 31 / 12%);
+  box-shadow: 0 0 0 3px rgb(236 23 103 / 12%);
 }
 
 /* Tables */
@@ -643,10 +643,10 @@ select:disabled {
 }
 
 .conversion-mode-options button.is-selected {
-  border-color: #ff9d79;
+  border-color: #ff8ab8;
   color: #9a3412;
   background: var(--brand-soft);
-  box-shadow: 0 0 0 2px rgb(255 90 31 / 10%);
+  box-shadow: 0 0 0 2px rgb(236 23 103 / 10%);
 }
 
 /* Product media */
@@ -683,8 +683,8 @@ select:disabled {
 }
 
 .product-media-card.is-cover {
-  border-color: #ff8b60;
-  box-shadow: 0 0 0 2px rgb(255 90 31 / 11%);
+  border-color: #ff4f91;
+  box-shadow: 0 0 0 2px rgb(236 23 103 / 11%);
 }
 
 .product-media-preview b {
@@ -770,7 +770,7 @@ select:disabled {
 .login-shell,
 .loading-shell {
   background:
-    radial-gradient(circle at 15% 0%, rgb(255 90 31 / 10%), transparent 28rem),
+    radial-gradient(circle at 15% 0%, rgb(236 23 103 / 10%), transparent 28rem),
     radial-gradient(circle at 90% 100%, rgb(17 24 39 / 8%), transparent 30rem),
     var(--page-color);
 }
@@ -787,7 +787,7 @@ select:disabled {
 .login-brand {
   border-radius: 14px;
   background: linear-gradient(145deg, #ff6c37, #ee4711);
-  box-shadow: 0 9px 24px rgb(255 90 31 / 22%);
+  box-shadow: 0 9px 24px rgb(236 23 103 / 22%);
 }
 
 .login-form input {

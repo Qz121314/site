@@ -43,7 +43,7 @@
 
 .media-center-preview-button:focus-visible {
   z-index: 1;
-  outline: 3px solid rgb(255 90 31 / 18%);
+  outline: 3px solid rgb(236 23 103 / 18%);
   outline-offset: -3px;
 }
 

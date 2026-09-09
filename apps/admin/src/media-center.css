@@ -67,7 +67,7 @@
 }
 
 .media-center-tabs button.is-active::after {
-  background: var(--brand, #ff5a1f);
+  background: var(--brand, #ec1767);
 }
 
 /* Folder commands are a compact command row, not a content card. */
@@ -121,7 +121,7 @@
 .media-center-toolbar select:focus,
 .media-center-upload-bar select:focus {
   border-color: #f2a080;
-  box-shadow: 0 0 0 2px rgb(255 90 31 / 8%);
+  box-shadow: 0 0 0 2px rgb(236 23 103 / 8%);
 }
 
 .media-center-page .media-folder-create-bar .secondary-button,
@@ -514,7 +514,7 @@
   width: 42%;
   height: 100%;
   border-radius: 999px;
-  background: var(--brand, #ff5a1f);
+  background: var(--brand, #ec1767);
   content: '';
   animation: media-center-upload-progress 1s ease-in-out infinite alternate;
 }

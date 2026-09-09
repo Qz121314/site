@@ -36,7 +36,7 @@
 
 .field-group input:focus {
   border-color: var(--brand);
-  box-shadow: 0 0 0 3px rgb(255 90 31 / 13%);
+  box-shadow: 0 0 0 3px rgb(236 23 103 / 13%);
 }
 
 .field-group small {

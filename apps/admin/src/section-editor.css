@@ -137,8 +137,8 @@
 }
 
 .section-editor-dialog .section-editor-form textarea:focus {
-  border-color: #ff9a76 !important;
-  box-shadow: 0 0 0 3px rgb(255 90 31 / 10%) !important;
+  border-color: #ff8ab8 !important;
+  box-shadow: 0 0 0 3px rgb(236 23 103 / 10%) !important;
 }
 
 .section-editor-visual-grid {
@@ -237,10 +237,10 @@
 }
 
 .section-editor-dialog .icon-picker button.is-selected {
-  border-color: #ff9a76 !important;
+  border-color: #ff8ab8 !important;
   background: #fff2ec !important;
   color: #c2410c !important;
-  box-shadow: 0 0 0 2px rgb(255 90 31 / 8%) !important;
+  box-shadow: 0 0 0 2px rgb(236 23 103 / 8%) !important;
 }
 
 .section-editor-settings-card {
@@ -286,7 +286,7 @@
   min-height: 18px !important;
   margin: 0;
   padding: 0 !important;
-  accent-color: var(--admin-brand, #ff5a1f);
+  accent-color: var(--admin-brand, #ec1767);
   box-shadow: none !important;
 }
 

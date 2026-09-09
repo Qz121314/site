@@ -87,8 +87,8 @@
 }
 
 .customer-service-search input:focus {
-  border-color: #ff9a76;
-  box-shadow: 0 0 0 3px rgb(255 90 31 / 10%);
+  border-color: #ff8ab8;
+  box-shadow: 0 0 0 3px rgb(236 23 103 / 10%);
 }
 
 .customer-service-workbench .selection-toolbar {
@@ -288,8 +288,8 @@
 
 .customer-service-editor-form
   input:is([type='text'], [type='url'], [type='password']):focus {
-  border-color: #ff9a76;
-  box-shadow: 0 0 0 3px rgb(255 90 31 / 10%);
+  border-color: #ff8ab8;
+  box-shadow: 0 0 0 3px rgb(236 23 103 / 10%);
 }
 
 .customer-service-editor-form .switch-row {
