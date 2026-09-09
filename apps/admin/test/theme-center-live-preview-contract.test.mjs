@@ -23,6 +23,8 @@ test('Theme Studio preview reuses live storefront home components without restor
   assert.ok(view.includes('手机模板'));
   assert.ok(view.includes('自定义预览尺寸'));
   assert.ok(view.includes('theme-pane-edge-toggle'));
+  assert.ok(view.includes('aria-expanded={!libraryCollapsed}'));
+  assert.ok(view.includes('aria-expanded={!inspectorCollapsed}'));
   assert.ok(view.includes('收起主题库'));
   assert.ok(view.includes('展开样式设置'));
   assert.ok(preview.includes('theme-preview-frame'));
@@ -32,6 +34,7 @@ test('Theme Studio preview reuses live storefront home components without restor
   assert.equal(view.includes('theme-preview-toolbar'), false);
   assert.ok(styles.includes('.theme-global-actions'));
   assert.ok(styles.includes('.theme-pane-edge-toggle'));
+  assert.ok(styles.includes('.theme-pane-edge-toggle:focus-visible'));
   assert.ok(styles.includes('.is-library-collapsed'));
   assert.ok(styles.includes('.is-inspector-collapsed'));
   assert.equal(styles.includes('.theme-inspector-actions'), false);

@@ -470,6 +470,7 @@ export function ThemeCenterView({
             className="theme-pane-edge-toggle is-library"
             type="button"
             aria-label={libraryCollapsed ? '展开主题库' : '收起主题库'}
+            aria-expanded={!libraryCollapsed}
             title={libraryCollapsed ? '展开主题库' : '收起主题库'}
             onClick={() => setLibraryCollapsed((collapsed) => !collapsed)}
           >
@@ -800,6 +801,7 @@ export function ThemeCenterView({
             className="theme-pane-edge-toggle is-inspector"
             type="button"
             aria-label={inspectorCollapsed ? '展开样式设置' : '收起样式设置'}
+            aria-expanded={!inspectorCollapsed}
             title={inspectorCollapsed ? '展开样式设置' : '收起样式设置'}
             onClick={() => setInspectorCollapsed((collapsed) => !collapsed)}
           >

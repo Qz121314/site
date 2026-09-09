@@ -185,32 +185,44 @@
 .theme-pane-edge-toggle {
   position: absolute;
   z-index: 6;
-  top: 10px;
+  top: 64px;
   display: grid;
-  width: 28px;
-  height: 28px;
+  width: 22px;
+  height: 30px;
   place-items: center;
   padding: 0;
-  border: 1px solid #d4dde8;
-  border-radius: 6px;
-  color: #65758a;
+  border: 1px solid #dbe3ed;
+  border-radius: 5px;
+  color: #7c899a;
   background: #fbfcfe;
   cursor: pointer;
+  opacity: 0.76;
+  transition:
+    color 140ms ease,
+    border-color 140ms ease,
+    background 140ms ease,
+    opacity 140ms ease;
 }
 .theme-pane-edge-toggle.is-library {
-  right: -14px;
+  right: -11px;
   border-left: 0;
-  border-radius: 0 6px 6px 0;
+  border-radius: 0 5px 5px 0;
 }
 .theme-pane-edge-toggle.is-inspector {
-  left: -14px;
+  left: -11px;
   border-right: 0;
-  border-radius: 6px 0 0 6px;
+  border-radius: 5px 0 0 5px;
 }
 .theme-pane-edge-toggle:hover {
-  border-color: #d5b6c3;
+  border-color: #b9c5d4;
   color: #a13d60;
   background: #fff7fa;
+  opacity: 1;
+}
+.theme-pane-edge-toggle:focus-visible {
+  outline: 2px solid #e3486d;
+  outline-offset: 2px;
+  opacity: 1;
 }
 .theme-library[data-collapsed='true'],
 .theme-inspector[data-collapsed='true'] {
