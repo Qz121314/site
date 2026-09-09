@@ -8,9 +8,10 @@
   --muted-text: #64748b;
   --text-color: #1e293b;
   --heading-color: #0f172a;
-  --brand: #2563eb;
-  --brand-dark: #1d4ed8;
-  --brand-soft: #eff6ff;
+  --brand: #ec1767;
+  --brand-dark: #c40f52;
+  --brand-soft: #fff0f6;
+  --brand-glow: #ff4f91;
   --nav: #111827;
   --nav-soft: #1f2937;
   --nav-text: #b6c2d0;
@@ -21,8 +22,8 @@
   --warning-soft: #fefce8;
   --danger: #b42318;
   --danger-soft: #fff1f0;
-  --info: #175cd3;
-  --info-soft: #eff8ff;
+  --info: #c40f52;
+  --info-soft: #fff0f6;
   --radius-sm: 9px;
   --radius-md: 13px;
   --radius-lg: 18px;
@@ -40,7 +41,7 @@ html {
 body {
   color: var(--text-color);
   background:
-    radial-gradient(circle at 78% -10%, rgb(37 99 235 / 4%), transparent 32rem),
+    radial-gradient(circle at 78% -10%, rgb(236 23 103 / 4%), transparent 32rem),
     var(--page-color);
 }
 
@@ -60,7 +61,7 @@ input:focus-visible,
 textarea:focus-visible,
 select:focus-visible,
 a:focus-visible {
-  outline: 3px solid rgb(37 99 235 / 22%);
+  outline: 3px solid rgb(236 23 103 / 22%);
   outline-offset: 2px;
 }
 
@@ -71,7 +72,7 @@ input[type='radio'] {
 
 ::selection {
   color: #1e3a8a;
-  background: #dbeafe;
+  background: #ffe0ed;
 }
 
 .admin-main {

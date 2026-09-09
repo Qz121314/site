@@ -71,9 +71,9 @@
 }
 
 .admin-sidebar-toggle.ui-button:hover:not(:disabled) {
-  color: #155eef;
-  border-color: #b9d2ff;
-  background: #f5f8ff;
+  color: var(--brand);
+  border-color: #ffc2d8;
+  background: #fff6f9;
 }
 
 .admin-primary-sidebar.is-collapsed .admin-brand {
@@ -162,7 +162,7 @@
   background: rgb(255 255 255 / 8%);
 }
 .admin-subnav-link.ui-button.is-active {
-  box-shadow: inset 2px 0 0 #60a5fa;
+  box-shadow: inset 2px 0 0 var(--brand-glow);
 }
 .admin-subnav-dot {
   width: 4px;
@@ -192,35 +192,50 @@
   background: transparent;
   font-size: 0.78rem;
   font-weight: 650;
+  position: relative;
+  overflow: hidden;
+  transition:
+    color 160ms ease,
+    background 160ms ease,
+    box-shadow 180ms ease,
+    transform 160ms ease;
 }
 
 .admin-primary-link.ui-button:hover:not(:disabled):not(.is-active),
 .admin-primary-logout.ui-button:hover:not(:disabled) {
   color: #f4f6f8;
   background: rgb(255 255 255 / 5%);
+  transform: translateX(2px);
 }
 
 .admin-primary-link.ui-button.is-active {
   color: #f8fafc;
   border-color: transparent;
-  background: #1d2939;
-  box-shadow: inset 3px 0 0 #60a5fa;
+  background: linear-gradient(100deg, rgb(236 23 103 / 22%), #1d2939 72%);
+  box-shadow:
+    inset 3px 0 0 var(--brand-glow),
+    0 0 22px rgb(236 23 103 / 8%);
   font-weight: 780;
+  animation: admin-nav-select-in 180ms ease-out both;
 }
 
 .admin-primary-sidebar.is-collapsed .admin-primary-link.ui-button.is-active {
-  background: rgb(59 130 246 / 16%);
+  background: linear-gradient(145deg, rgb(236 23 103 / 26%), rgb(255 79 145 / 8%));
+  box-shadow:
+    inset 3px 0 0 var(--brand-glow),
+    0 0 20px rgb(236 23 103 / 12%);
 }
 
 .admin-primary-link.ui-button.is-active > svg {
-  color: #93c5fd;
+  color: var(--brand-glow);
   stroke-width: 2.1;
+  filter: drop-shadow(0 0 5px rgb(255 79 145 / 30%));
 }
 
 .admin-primary-link.ui-button:focus-visible,
 .admin-secondary-link.ui-button:focus-visible,
 .admin-primary-logout.ui-button:focus-visible {
-  outline: 2px solid #60a5fa;
+  outline: 2px solid var(--brand-glow);
   outline-offset: -2px;
 }
 
@@ -284,14 +299,38 @@
 
 .admin-secondary-link.ui-button.is-active {
   color: #172033;
-  border-color: #dbeafe;
-  background: #eff6ff;
-  box-shadow: inset 3px 0 0 #2563eb;
+  border-color: #ffc2d8;
+  background: linear-gradient(100deg, #fff0f6, #fffafd);
+  box-shadow:
+    inset 3px 0 0 var(--brand),
+    0 4px 14px rgb(236 23 103 / 7%);
   font-weight: 780;
+  animation: admin-nav-select-in 180ms ease-out both;
 }
 
 .admin-secondary-link.ui-button.is-active > svg {
-  color: #2563eb;
+  color: var(--brand);
+}
+
+@keyframes admin-nav-select-in {
+  from {
+    opacity: 0.72;
+    transform: translateX(-3px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-primary-link.ui-button,
+  .admin-secondary-link.ui-button,
+  .admin-primary-link.ui-button.is-active,
+  .admin-secondary-link.ui-button.is-active {
+    animation: none;
+    transition: none;
+  }
 }
 
 .admin-secondary-link.ui-button > svg {
