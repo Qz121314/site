@@ -54,6 +54,100 @@
   justify-content: flex-end;
   gap: 8px;
 }
+.theme-layout-workspace {
+  display: grid;
+  min-height: 0;
+  gap: 10px;
+  overflow: auto;
+  padding: 1px;
+}
+.theme-layout-intro {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 11px 13px;
+  border: 1px solid #dfe5ec;
+  border-radius: 10px;
+  background: #fff;
+}
+.theme-layout-intro > div {
+  display: grid;
+  gap: 2px;
+}
+.theme-layout-intro span,
+.theme-import-dialog > div:first-child > span {
+  color: #8a6370;
+  font-size: 0.62rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.theme-layout-intro strong {
+  color: #172033;
+  font-size: 0.86rem;
+}
+.theme-layout-intro small {
+  max-width: 520px;
+  color: #697586;
+  font-size: 0.7rem;
+  line-height: 1.45;
+  text-align: right;
+}
+.theme-import-backdrop {
+  position: fixed;
+  z-index: 60;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgb(15 23 42 / 28%);
+}
+.theme-import-dialog {
+  display: grid;
+  width: min(100%, 510px);
+  gap: 12px;
+  padding: 16px;
+  border: 1px solid #dfe5ec;
+  border-radius: 12px;
+  background: #fff;
+  box-shadow: 0 18px 50px rgb(15 23 42 / 20%);
+}
+.theme-import-dialog h3 {
+  margin: 2px 0 0;
+  color: #172033;
+  font-size: 1rem;
+}
+.theme-import-dialog label {
+  display: grid;
+  gap: 6px;
+  color: #526072;
+  font-size: 0.71rem;
+  font-weight: 700;
+}
+.theme-import-dialog input,
+.theme-import-dialog textarea,
+.theme-import-dialog select {
+  width: 100%;
+  min-height: 34px;
+  padding: 7px 9px;
+  border: 1px solid #d7dee7;
+  border-radius: 7px;
+  color: #253044;
+  background: #fff;
+  font: inherit;
+}
+.theme-import-dialog textarea {
+  min-height: 150px;
+  resize: vertical;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: 0.68rem;
+}
+.theme-import-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
 .theme-studio-panel-toggle {
   display: none;
 }
@@ -454,5 +548,12 @@
   }
   .theme-action-bar a {
     display: none;
+  }
+  .theme-layout-intro {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+  .theme-layout-intro small {
+    text-align: left;
   }
 }
