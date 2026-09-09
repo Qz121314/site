@@ -13,9 +13,8 @@ test('Theme Studio preview reuses live storefront home components without restor
   const diagnostics = source('../src/theme-center/diagnostics.ts');
 
   assert.ok(view.includes("import { ThemeCenterPreview } from './ThemeCenterPreview';"));
-  assert.ok(view.includes('Theme Library'));
-  assert.ok(view.includes('Live Storefront Preview'));
-  assert.ok(view.includes('Theme Inspector'));
+  assert.ok(view.includes('主题库'));
+  assert.ok(view.includes('样式设置'));
   assert.ok(view.includes('viewport={viewport}'));
   assert.ok(preview.includes('StorefrontBrandBar'));
   assert.ok(preview.includes('StorefrontHomeShortcut'));

@@ -294,6 +294,32 @@
   padding: 8px 2px 0;
   border-top: 1px solid rgb(255 255 255 / 8%);
 }
+.admin-primary-storefront {
+  display: flex;
+  min-height: 36px;
+  align-items: center;
+  gap: 9px;
+  margin: 0 2px 7px;
+  padding: 0 9px;
+  border: 1px solid rgb(255 255 255 / 10%);
+  border-radius: 6px;
+  color: #d9e0ea;
+  text-decoration: none;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+.admin-primary-storefront:hover {
+  color: #fff;
+  background: rgb(255 255 255 / 7%);
+}
+.admin-primary-sidebar.is-collapsed .admin-primary-storefront {
+  width: 42px;
+  justify-content: center;
+  padding: 0;
+}
+.admin-primary-sidebar.is-collapsed .admin-primary-storefront span {
+  display: none;
+}
 
 .admin-primary-logout.ui-button > svg {
   flex: 0 0 auto;

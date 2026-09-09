@@ -29,7 +29,6 @@ const FONT_PACK_LABELS = {
   compact: 'Compact UI',
   technical: 'Technical Sans',
 } as const;
-const MOTION_LABELS = { restrained: '克制', gentle: '柔和', active: '活跃' } as const;
 const VISUAL_RULE_OPTIONS = {
   density: [
     ['compact', '紧凑'],
@@ -117,9 +116,7 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
     navigationStyle: 'quiet',
   });
   const [viewport, setViewport] = useState<'desktop' | 'mobile'>('desktop');
-  const [previewRevision, setPreviewRevision] = useState(0);
-  const [libraryOpen, setLibraryOpen] = useState(false);
-  const [inspectorOpen, setInspectorOpen] = useState(false);
+  const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [importSource, setImportSource] = useState<ThemeImportSource>('url');
   const [importMode, setImportMode] = useState<'light' | 'dark'>('light');
@@ -304,6 +301,7 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
   const diagnostics = selectedPreset
     ? themeDiagnostics(selectedPreset, previewAccent, previewTextColor)
     : [];
+  const hasDiagnosticWarning = diagnostics.some((item) => item.status === 'warning');
   const previewTheme = selectedPreset
     ? {
         ...selectedPreset,
@@ -315,35 +313,34 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
     currentTheme.key === 'custom' ? [currentTheme, ...presets] : presets;
   return (
     <section className="theme-center theme-studio" aria-labelledby="theme-center-title">
-      <header className="theme-studio-heading">
-        <div>
-          <p>站点 / 主题</p>
-          <h2 id="theme-center-title">站点设计</h2>
-          <span>在草稿中调整前端视觉；保存后才会应用到用户前端。</span>
+      <header className="theme-command-bar">
+        <div className="theme-command-summary">
+          {selectedPreset ? <ThemeSwatch theme={selectedPreset} /> : null}
+          <div>
+            <h2 id="theme-center-title">{selectedPreset?.label ?? '视觉系统'}</h2>
+            <small>
+              {selectedPreset?.colorScheme === 'dark' ? 'Dark' : 'Light'} ·{' '}
+              {FONT_PACK_LABELS[visualOverrides.fontPack]}
+            </small>
+          </div>
+          <em data-dirty={themeIsDirty}>{themeIsDirty ? '未保存' : '已保存'}</em>
         </div>
-        <div className="theme-studio-heading-actions">
+        <div className="theme-command-actions">
           <button
             className="secondary-button"
             type="button"
-            onClick={() => setImportOpen(true)}
+            disabled={!themeIsDirty || saving}
+            onClick={restoreSavedTheme}
           >
-            导入主题
+            恢复修改
           </button>
           <button
-            className="secondary-button theme-studio-panel-toggle"
+            className="primary-button"
             type="button"
-            aria-expanded={libraryOpen}
-            onClick={() => setLibraryOpen((value) => !value)}
+            disabled={saving || !themeIsDirty}
+            onClick={() => void saveTheme()}
           >
-            主题库
-          </button>
-          <button
-            className="secondary-button theme-studio-panel-toggle"
-            type="button"
-            aria-expanded={inspectorOpen}
-            onClick={() => setInspectorOpen((value) => !value)}
-          >
-            检查器
+            {saving ? '正在保存…' : '保存主题'}
           </button>
         </div>
       </header>
@@ -358,13 +355,20 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
         </div>
       ) : null}
       <div className="theme-studio-workspace">
-        <aside className="theme-library" data-open={libraryOpen}>
+        <aside className="theme-library">
           <div className="theme-studio-pane-heading">
             <div>
-              <span>Theme Library</span>
-              <strong>主题方案库</strong>
+              <span>主题</span>
+              <strong>主题库</strong>
             </div>
-            <small>{libraryThemes.length} 个可用方案</small>
+            <button
+              className="theme-library-add"
+              type="button"
+              aria-label="导入主题"
+              onClick={() => setImportOpen(true)}
+            >
+              +
+            </button>
           </div>
           <div className="theme-library-list">
             {libraryThemes.map((theme) => (
@@ -390,8 +394,7 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
                   </span>
                   <small>
                     {theme.colorScheme === 'dark' ? 'Dark' : 'Light'} ·{' '}
-                    {FONT_PACK_LABELS[theme.recipe.fontPack]} ·{' '}
-                    {MOTION_LABELS[theme.recipe.motionStyle]}
+                    {FONT_PACK_LABELS[theme.recipe.fontPack]}
                   </small>
                 </span>
                 <i className="theme-library-selection" aria-hidden="true" />
@@ -400,38 +403,9 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
           </div>
         </aside>
         <main className="theme-live-preview">
-          <div className="theme-studio-pane-heading">
-            <div>
-              <span>Live Storefront Preview</span>
-              <strong>实时用户前端预览</strong>
-            </div>
-            <div className="theme-preview-toolbar" role="group" aria-label="预览控制">
-              <button
-                type="button"
-                aria-pressed={viewport === 'desktop'}
-                onClick={() => setViewport('desktop')}
-              >
-                Desktop
-              </button>
-              <button
-                type="button"
-                aria-pressed={viewport === 'mobile'}
-                onClick={() => setViewport('mobile')}
-              >
-                Mobile
-              </button>
-              <span>100%</span>
-              <button
-                type="button"
-                onClick={() => setPreviewRevision((value) => value + 1)}
-              >
-                Refresh
-              </button>
-            </div>
-          </div>
           {previewTheme ? (
             <ThemeCenterPreview
-              key={`${previewTheme.key}-${previewRevision}`}
+              key={previewTheme.key}
               accent={previewAccent}
               textColor={previewTextColor}
               theme={previewTheme}
@@ -439,11 +413,11 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
             />
           ) : null}
         </main>
-        <aside className="theme-inspector" data-open={inspectorOpen}>
+        <aside className="theme-inspector">
           <div className="theme-studio-pane-heading">
             <div>
-              <span>Theme Inspector</span>
-              <strong>主题检查器</strong>
+              <span>视觉系统</span>
+              <strong>样式设置</strong>
             </div>
             <small>草稿编辑</small>
           </div>
@@ -451,7 +425,28 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
             <>
               <div className="theme-inspector-section">
                 <div className="theme-inspector-label">
-                  <strong>安全 Override</strong>
+                  <strong>预览</strong>
+                </div>
+                <AdminSegmentedControl ariaLabel="预览设备">
+                  <AdminSegmentedItem
+                    selected={viewport === 'desktop'}
+                    type="button"
+                    onClick={() => setViewport('desktop')}
+                  >
+                    桌面
+                  </AdminSegmentedItem>
+                  <AdminSegmentedItem
+                    selected={viewport === 'mobile'}
+                    type="button"
+                    onClick={() => setViewport('mobile')}
+                  >
+                    移动端
+                  </AdminSegmentedItem>
+                </AdminSegmentedControl>
+              </div>
+              <div className="theme-inspector-section">
+                <div className="theme-inspector-label">
+                  <strong>外观</strong>
                   <span>可保存</span>
                 </div>
                 <label>
@@ -515,7 +510,7 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
               </div>
               <div className="theme-inspector-section">
                 <div className="theme-inspector-label">
-                  <strong>组件规则</strong>
+                  <strong>组件</strong>
                   <span>可保存</span>
                 </div>
                 <div className="theme-rule-grid">
@@ -638,69 +633,49 @@ export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
               <div
                 className="theme-inspector-section theme-diagnostics"
                 aria-label="视觉检查"
+                data-open={diagnosticsOpen || hasDiagnosticWarning}
               >
                 <div className="theme-inspector-label">
-                  <strong>Visual Diagnostics</strong>
-                  <span>实时</span>
+                  <strong>视觉诊断</strong>
+                  <button
+                    type="button"
+                    onClick={() => setDiagnosticsOpen((value) => !value)}
+                  >
+                    {hasDiagnosticWarning ? '需检查' : '良好'}
+                  </button>
                 </div>
-                <div className="theme-diagnostic-list">
-                  {diagnostics.map((diagnostic) => (
-                    <div
-                      className="theme-diagnostic-item"
-                      data-status={diagnostic.status}
-                      key={diagnostic.id}
-                    >
-                      <span className="theme-diagnostic-mark" aria-hidden="true">
-                        {diagnostic.status === 'pass' ? '✓' : '!'}
-                      </span>
-                      <span>
-                        <strong>
-                          {diagnostic.label === '文字 / 背景'
-                            ? '主要文字对比度'
-                            : diagnostic.label === 'Surface 层级'
-                              ? 'Product Card 层级'
-                              : diagnostic.label === '边框可见性'
-                                ? '导航可读性'
-                                : diagnostic.label}
-                        </strong>
-                        <small>{diagnostic.detail}</small>
-                      </span>
-                    </div>
-                  ))}
-                </div>
+                {diagnosticsOpen || hasDiagnosticWarning ? (
+                  <div className="theme-diagnostic-list">
+                    {diagnostics.map((diagnostic) => (
+                      <div
+                        className="theme-diagnostic-item"
+                        data-status={diagnostic.status}
+                        key={diagnostic.id}
+                      >
+                        <span className="theme-diagnostic-mark" aria-hidden="true">
+                          {diagnostic.status === 'pass' ? '✓' : '!'}
+                        </span>
+                        <span>
+                          <strong>
+                            {diagnostic.label === '文字 / 背景'
+                              ? '主要文字对比度'
+                              : diagnostic.label === 'Surface 层级'
+                                ? 'Product Card 层级'
+                                : diagnostic.label === '边框可见性'
+                                  ? '导航可读性'
+                                  : diagnostic.label}
+                          </strong>
+                          <small>{diagnostic.detail}</small>
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
               </div>
             </>
           ) : null}
         </aside>
       </div>
-      <footer className="theme-action-bar">
-        <div>
-          <span>当前主题</span>
-          <strong>{currentTheme.label}</strong>
-          <em data-dirty={themeIsDirty}>{themeIsDirty ? '未保存' : '已保存'}</em>
-        </div>
-        <div>
-          <button
-            className="secondary-button"
-            type="button"
-            disabled={!themeIsDirty || saving}
-            onClick={restoreSavedTheme}
-          >
-            恢复当前设置
-          </button>
-          <a className="secondary-button" href="/" target="_blank" rel="noreferrer">
-            打开用户前端
-          </a>
-          <button
-            className="primary-button"
-            type="button"
-            disabled={saving || !themeIsDirty}
-            onClick={() => void saveTheme()}
-          >
-            {saving ? '正在保存…' : '保存并应用'}
-          </button>
-        </div>
-      </footer>
       {importOpen ? (
         <div
           className="theme-import-backdrop"

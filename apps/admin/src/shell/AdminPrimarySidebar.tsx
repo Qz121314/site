@@ -2,6 +2,7 @@ import {
   Boxes,
   ChevronDown,
   FileText,
+  ExternalLink,
   Gauge,
   GripVertical,
   LogOut,
@@ -282,6 +283,10 @@ export function AdminPrimarySidebar({
         })}
       </nav>
       <div className="admin-primary-account">
+        <a className="admin-primary-storefront" href="/" target="_blank" rel="noreferrer">
+          <ExternalLink aria-hidden="true" size={16} strokeWidth={1.8} />
+          <span>打开前端</span>
+        </a>
         <Button
           className="admin-primary-logout"
           variant="ghost"

@@ -4,10 +4,15 @@
   gap: 12px;
 }
 .theme-studio {
-  grid-template-rows: auto minmax(0, 1fr) auto;
-  height: min(820px, calc(100dvh - 148px));
+  grid-template-rows: auto minmax(0, 1fr);
+  height: 100%;
 }
-.theme-studio-heading,
+.admin-workspace-content:has(.theme-studio) {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+.theme-command-bar,
 .theme-studio-pane-heading,
 .theme-action-bar {
   display: flex;
@@ -15,6 +20,51 @@
   align-items: center;
   justify-content: space-between;
   gap: 14px;
+}
+.theme-command-bar {
+  min-height: 56px;
+  padding: 7px 10px;
+  border: 1px solid #dfe5ec;
+  border-radius: 8px;
+  background: #fff;
+}
+.theme-command-summary,
+.theme-command-actions {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 9px;
+}
+.theme-command-summary .theme-library-swatch {
+  width: 36px;
+  height: 36px;
+  flex-basis: 36px;
+}
+.theme-command-summary > div {
+  display: grid;
+  gap: 2px;
+}
+.theme-command-summary h2 {
+  margin: 0;
+  color: #172033;
+  font-size: 0.9rem;
+}
+.theme-command-summary small {
+  color: #7c8796;
+  font-size: 0.65rem;
+}
+.theme-command-summary em {
+  padding: 3px 7px;
+  border-radius: 99px;
+  color: #a33b5c;
+  background: #fff0f6;
+  font-size: 0.58rem;
+  font-style: normal;
+  font-weight: 800;
+}
+.theme-command-summary em[data-dirty='false'] {
+  color: #397055;
+  background: #edf7f1;
 }
 .theme-studio-heading {
   padding: 2px 0 12px;
@@ -137,6 +187,16 @@
   background: #fff;
   font: inherit;
 }
+.theme-diagnostics .theme-inspector-label button {
+  border: 0;
+  border-radius: 99px;
+  color: #397055;
+  background: #edf7f1;
+  padding: 3px 7px;
+  font-size: 0.58rem;
+  font-weight: 800;
+  cursor: pointer;
+}
 .theme-studio-panel-toggle {
   display: none;
 }
@@ -144,7 +204,7 @@
   display: grid;
   min-width: 0;
   min-height: 0;
-  grid-template-columns: minmax(205px, 260px) minmax(420px, 1fr) minmax(235px, 310px);
+  grid-template-columns: minmax(190px, 238px) minmax(420px, 1fr) minmax(252px, 300px);
   overflow: hidden;
   border: 1px solid #dfe5ec;
   border-radius: 12px;
@@ -167,9 +227,23 @@
   display: grid;
   min-width: 0;
   min-height: 0;
-  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
   overflow: hidden;
   background: #f1f4f8;
+}
+.theme-library-add {
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: 5px;
+  color: #445064;
+  background: #f2f5f8;
+  font-size: 1.1rem;
+  cursor: pointer;
+}
+.theme-library-add:hover {
+  color: #d92567;
+  background: #fff0f6;
 }
 .theme-studio-pane-heading {
   min-height: 58px;
