@@ -763,7 +763,7 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
             selected={tab === 'library'}
             onClick={() => setTab('library')}
           >
-            素材中心
+            素材库
           </AdminSegmentedItem>
           <AdminSegmentedItem
             selected={tab === 'cleanup'}
@@ -776,117 +776,119 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
 
       {tab === 'library' ? (
         <>
-          <div className="media-folder-create-bar">
-            <div>
-              <strong>素材文件夹</strong>
-              <small>一层分组即可；文件夹上传会自动使用本地顶层目录名。</small>
-            </div>
-            <input
-              value={newFolderName}
-              maxLength={80}
-              placeholder="新建文件夹，例如 Product A"
-              onChange={(event) => setNewFolderName(event.target.value)}
-            />
-            <button
-              className="secondary-button"
-              type="button"
-              disabled={!newFolderName.trim() || folderWorking || uploadQueue.running}
-              onClick={() => void handleCreateFolder()}
-            >
-              新建文件夹
-            </button>
-            {activeFolder ? (
+          <div className="media-center-command-dock">
+            <div className="media-folder-create-bar">
+              <div>
+                <strong>文件夹</strong>
+                <small>用于整理素材</small>
+              </div>
+              <input
+                value={newFolderName}
+                maxLength={80}
+                placeholder="新建文件夹"
+                onChange={(event) => setNewFolderName(event.target.value)}
+              />
               <button
-                type="button"
                 className="secondary-button"
-                disabled={folderWorking || uploadQueue.running}
-                onClick={() => void handleRenameFolder()}
-              >
-                重命名当前文件夹
-              </button>
-            ) : null}
-            {activeFolder ? (
-              <button
                 type="button"
-                className="danger-button"
-                disabled={folderWorking || uploadQueue.running}
-                onClick={() => void handleDeleteFolder()}
+                disabled={!newFolderName.trim() || folderWorking || uploadQueue.running}
+                onClick={() => void handleCreateFolder()}
               >
-                删除当前文件夹
+                新建
               </button>
-            ) : null}
-          </div>
+              {activeFolder ? (
+                <button
+                  type="button"
+                  className="secondary-button"
+                  disabled={folderWorking || uploadQueue.running}
+                  onClick={() => void handleRenameFolder()}
+                >
+                  重命名
+                </button>
+              ) : null}
+              {activeFolder ? (
+                <button
+                  type="button"
+                  className="danger-button"
+                  disabled={folderWorking || uploadQueue.running}
+                  onClick={() => void handleDeleteFolder()}
+                >
+                  删除
+                </button>
+              ) : null}
+            </div>
 
-          <div className="media-center-upload-bar">
-            <label>
-              <span>素材用途</span>
-              <select
-                value={uploadRole}
-                disabled={uploadQueue.running}
-                onChange={(event) => setUploadRole(event.target.value as MediaRole)}
+            <div className="media-center-upload-bar">
+              <label>
+                <span>素材用途</span>
+                <select
+                  value={uploadRole}
+                  disabled={uploadQueue.running}
+                  onChange={(event) => setUploadRole(event.target.value as MediaRole)}
+                >
+                  {ROLE_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label>
+                <span>上传到文件夹</span>
+                <select
+                  value={uploadFolderId}
+                  disabled={uploadQueue.running}
+                  onChange={(event) => setUploadFolderId(event.target.value)}
+                >
+                  <option value="">未分组</option>
+                  {folders.map((folder) => (
+                    <option key={folder.id} value={folder.id}>
+                      {folder.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+              <label
+                className={`media-center-upload-button${uploadQueue.running ? ' is-disabled' : ''}`}
               >
-                {ROLE_OPTIONS.map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label>
-              <span>上传到文件夹</span>
-              <select
-                value={uploadFolderId}
-                disabled={uploadQueue.running}
-                onChange={(event) => setUploadFolderId(event.target.value)}
+                <input
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm"
+                  multiple
+                  disabled={uploadQueue.running}
+                  onChange={(event) => {
+                    const files = Array.from(event.currentTarget.files ?? []);
+                    event.currentTarget.value = '';
+                    void uploadFiles(files, uploadFolderId || null);
+                  }}
+                />
+                {uploadQueue.running ? '上传中…' : '上传文件'}
+              </label>
+              <label
+                className={`media-center-upload-button is-folder-upload${uploadQueue.running || folderWorking ? ' is-disabled' : ''}`}
               >
-                <option value="">未分组</option>
-                {folders.map((folder) => (
-                  <option key={folder.id} value={folder.id}>
-                    {folder.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label
-              className={`media-center-upload-button${uploadQueue.running ? ' is-disabled' : ''}`}
-            >
-              <input
-                type="file"
-                accept="image/jpeg,image/png,image/webp,image/gif,video/mp4,video/webm"
-                multiple
-                disabled={uploadQueue.running}
-                onChange={(event) => {
-                  const files = Array.from(event.currentTarget.files ?? []);
-                  event.currentTarget.value = '';
-                  void uploadFiles(files, uploadFolderId || null);
-                }}
-              />
-              {uploadQueue.running ? '上传中…' : '上传文件'}
-            </label>
-            <label
-              className={`media-center-upload-button is-folder-upload${uploadQueue.running || folderWorking ? ' is-disabled' : ''}`}
-            >
-              <input
-                ref={(node) => {
-                  if (!node) return;
-                  node.setAttribute('webkitdirectory', '');
-                  node.setAttribute('directory', '');
-                }}
-                type="file"
-                multiple
-                disabled={uploadQueue.running || folderWorking}
-                onChange={(event) => {
-                  const files = Array.from(event.currentTarget.files ?? []);
-                  event.currentTarget.value = '';
-                  void handleFolderUpload(files);
-                }}
-              />
-              {uploadQueue.running || folderWorking ? '处理中…' : '上传文件夹'}
-            </label>
-            <small>
-              静态图片先在浏览器压缩；队列最多并发处理 3
-              个文件。单个失败不会中断后续文件。
-            </small>
+                <input
+                  ref={(node) => {
+                    if (!node) return;
+                    node.setAttribute('webkitdirectory', '');
+                    node.setAttribute('directory', '');
+                  }}
+                  type="file"
+                  multiple
+                  disabled={uploadQueue.running || folderWorking}
+                  onChange={(event) => {
+                    const files = Array.from(event.currentTarget.files ?? []);
+                    event.currentTarget.value = '';
+                    void handleFolderUpload(files);
+                  }}
+                />
+                {uploadQueue.running || folderWorking ? '处理中…' : '上传文件夹'}
+              </label>
+              <small>
+                静态图片先在浏览器压缩；队列最多并发处理 3
+                个文件。单个失败不会中断后续文件。
+              </small>
+            </div>
           </div>
 
           {mediaError ? (

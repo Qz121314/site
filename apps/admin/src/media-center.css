@@ -70,18 +70,34 @@
   background: var(--brand, #ec1767);
 }
 
-/* Folder commands are a compact command row, not a content card. */
-.media-center-page .media-folder-create-bar {
+/* Folder and upload commands share one compact dock. */
+.media-center-command-dock {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  border: 1px solid #e2e6ec;
+  border-radius: 9px;
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(16 24 40 / 2%);
+}
+
+.media-center-page .media-folder-create-bar,
+.media-center-upload-bar {
   display: flex;
   min-height: 42px;
   align-items: center;
   flex-wrap: nowrap;
   gap: 6px;
   padding: 5px 7px;
-  border: 1px solid #e2e6ec;
-  border-radius: 9px;
-  background: #fff;
-  box-shadow: 0 1px 2px rgb(16 24 40 / 2%);
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.media-center-page .media-folder-create-bar {
+  flex: 0 1 43%;
+  border-right: 1px solid #edf0f4;
 }
 
 .media-center-page .media-folder-create-bar > div {
@@ -104,7 +120,7 @@
 }
 
 .media-center-page .media-folder-create-bar input {
-  width: min(300px, 28vw);
+  width: min(180px, 18vw);
   height: 31px;
   min-width: 190px;
   padding: 0 9px;
@@ -133,18 +149,10 @@
   white-space: nowrap;
 }
 
-/* Upload row: labels are inline so the row stays short but remains self-explanatory. */
+/* Upload controls stay inline so the dock remains short. */
 .media-center-upload-bar {
-  display: flex;
-  min-height: 44px;
-  align-items: center;
-  flex-wrap: nowrap;
+  flex: 1 1 57%;
   gap: 8px;
-  padding: 5px 7px;
-  border: 1px solid #e2e6ec;
-  border-radius: 9px;
-  background: #fff;
-  box-shadow: 0 1px 2px rgb(16 24 40 / 2%);
 }
 
 .media-center-upload-bar > label {
@@ -709,9 +717,20 @@
 }
 
 @media (max-width: 1320px) {
+  .media-center-command-dock {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
   .media-center-page .media-folder-create-bar,
   .media-center-upload-bar {
     flex-wrap: wrap;
+  }
+
+  .media-center-page .media-folder-create-bar {
+    flex-basis: auto;
+    border-right: 0;
+    border-bottom: 1px solid #edf0f4;
   }
 
   .media-center-upload-bar > small {
@@ -783,6 +802,10 @@
   .media-center-page .asset-toolbar {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .media-center-command-dock {
+    gap: 0;
   }
 
   .media-center-page .media-folder-create-bar > div {
