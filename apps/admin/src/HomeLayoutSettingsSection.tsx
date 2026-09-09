@@ -39,7 +39,7 @@ export function HomeLayoutSettingsSection({
   sections: AdminSection[];
   busy: boolean;
   onChange: (value: HomeLayout) => void;
-  placement: HomePlacement;
+  placement?: HomePlacement;
 }) {
   function updatePlacement(placement: HomePlacement, ids: string[]) {
     onChange({ ...value, [placement]: ids });
@@ -158,27 +158,34 @@ export function HomeLayoutSettingsSection({
     );
   }
 
-  const content =
-    placement === 'shortcutSectionIds'
-      ? renderPlacement(
-          'shortcutSectionIds',
-          '快捷分区',
-          '最多手动固定 7 个。未选择时按当前已发布分区自动生成；自动入口不超过 8 个时全部展示，超过 8 个时第 8 格显示 More。',
-          '添加快捷分区',
-        )
-      : renderPlacement(
-          'recommendationSectionIds',
-          '推荐分区',
-          '可按需要添加多个。未选择时自动从已发布且标记“首页推荐”的产品推导分区；选择后按这里的分区顺序展示。',
-          '添加推荐分区',
-        );
+  const shortcutPanel = renderPlacement(
+    'shortcutSectionIds',
+    '快捷分区',
+    '最多手动固定 7 个。未选择时按当前已发布分区自动生成；自动入口不超过 8 个时全部展示，超过 8 个时第 8 格显示 More。',
+    '添加快捷分区',
+  );
+  const recommendationPanel = renderPlacement(
+    'recommendationSectionIds',
+    '推荐分区',
+    '可按需要添加多个。未选择时自动从已发布且标记“首页推荐”的产品推导分区；选择后按这里的分区顺序展示。',
+    '添加推荐分区',
+  );
 
   return (
     <section
       className="admin-settings-section home-layout-settings-section"
-      aria-label={placement === 'shortcutSectionIds' ? '快捷分区设置' : '推荐分区设置'}
+      aria-label={
+        placement === 'shortcutSectionIds'
+          ? '快捷分区设置'
+          : placement === 'recommendationSectionIds'
+            ? '推荐分区设置'
+            : '首页布局设置'
+      }
     >
-      <div className="admin-home-layout-grid is-single-panel">{content}</div>
+      <div className={`admin-home-layout-grid${placement ? ' is-single-panel' : ''}`}>
+        {placement === 'recommendationSectionIds' ? recommendationPanel : shortcutPanel}
+        {placement ? null : recommendationPanel}
+      </div>
     </section>
   );
 }
