@@ -1472,6 +1472,44 @@ textarea {
 }
 
 /* ---------- Phase D management workspaces ---------- */
+@media (min-width: 900px) {
+  /* Every data workspace is one coherent panel. The legacy page grids used to
+   * place the toolbar and empty/table state in separate columns, which made an
+   * empty workbench look like unrelated floating cards. */
+  .section-management,
+  .category-management,
+  .product-management,
+  .conversion-pool {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: var(--admin-gap-2) !important;
+  }
+
+  .section-management > .ui-management-toolbar,
+  .category-management > .ui-management-toolbar,
+  .product-management > .ui-management-toolbar,
+  .conversion-pool > .ui-management-toolbar,
+  .section-management > .ui-management-selection-bar,
+  .category-management > .ui-management-selection-bar,
+  .product-management > .ui-management-selection-bar,
+  .conversion-pool > .ui-management-selection-bar,
+  .section-management > .ui-feedback-state,
+  .category-management > .ui-feedback-state,
+  .product-management > .ui-feedback-state,
+  .conversion-pool > .ui-feedback-state {
+    width: 100%;
+  }
+
+  .section-management > .ui-feedback-state,
+  .category-management > .ui-feedback-state,
+  .product-management > .ui-feedback-state,
+  .conversion-pool > .ui-feedback-state {
+    min-height: 168px;
+    justify-content: center;
+    text-align: left;
+  }
+}
+
 .ui-management-toolbar {
   display: flex;
   min-width: 0;
