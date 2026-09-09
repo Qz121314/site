@@ -420,38 +420,18 @@ export function ThemeCenterView({
         className={`theme-studio-workspace${libraryCollapsed ? ' is-library-collapsed' : ''}${inspectorCollapsed ? ' is-inspector-collapsed' : ''}`}
       >
         <aside className="theme-library" data-collapsed={libraryCollapsed}>
-          <button
-            className="theme-pane-collapsed-trigger"
-            type="button"
-            aria-label="展开主题库"
-            title="展开主题库"
-            onClick={() => setLibraryCollapsed(false)}
-          >
-            <PanelLeftOpen aria-hidden="true" size={16} />
-          </button>
           <div className="theme-studio-pane-heading">
             <div>
               <span>主题</span>
               <strong id="theme-center-title">主题库</strong>
             </div>
-            <div className="theme-pane-heading-actions">
-              <button
-                className="theme-library-add"
-                type="button"
-                onClick={() => setImportOpen(true)}
-              >
-                上传主题
-              </button>
-              <button
-                className="theme-pane-collapse-button"
-                type="button"
-                aria-label="收起主题库"
-                title="收起主题库"
-                onClick={() => setLibraryCollapsed(true)}
-              >
-                <PanelLeftClose aria-hidden="true" size={15} />
-              </button>
-            </div>
+            <button
+              className="theme-library-add"
+              type="button"
+              onClick={() => setImportOpen(true)}
+            >
+              上传主题
+            </button>
           </div>
           <div className="theme-library-list">
             {libraryThemes.map((theme) => (
@@ -486,6 +466,19 @@ export function ThemeCenterView({
           </div>
         </aside>
         <main className="theme-live-preview">
+          <button
+            className="theme-preview-edge-toggle is-left"
+            type="button"
+            aria-label={libraryCollapsed ? '展开主题库' : '收起主题库'}
+            title={libraryCollapsed ? '展开主题库' : '收起主题库'}
+            onClick={() => setLibraryCollapsed((collapsed) => !collapsed)}
+          >
+            {libraryCollapsed ? (
+              <PanelLeftOpen aria-hidden="true" size={15} />
+            ) : (
+              <PanelLeftClose aria-hidden="true" size={15} />
+            )}
+          </button>
           {previewTheme ? (
             <ThemeCenterPreview
               key={previewTheme.key}
@@ -496,34 +489,27 @@ export function ThemeCenterView({
               previewSize={previewSize}
             />
           ) : null}
+          <button
+            className="theme-preview-edge-toggle is-right"
+            type="button"
+            aria-label={inspectorCollapsed ? '展开样式设置' : '收起样式设置'}
+            title={inspectorCollapsed ? '展开样式设置' : '收起样式设置'}
+            onClick={() => setInspectorCollapsed((collapsed) => !collapsed)}
+          >
+            {inspectorCollapsed ? (
+              <PanelRightOpen aria-hidden="true" size={15} />
+            ) : (
+              <PanelRightClose aria-hidden="true" size={15} />
+            )}
+          </button>
         </main>
         <aside className="theme-inspector" data-collapsed={inspectorCollapsed}>
-          <button
-            className="theme-pane-collapsed-trigger"
-            type="button"
-            aria-label="展开样式设置"
-            title="展开样式设置"
-            onClick={() => setInspectorCollapsed(false)}
-          >
-            <PanelRightOpen aria-hidden="true" size={16} />
-          </button>
           <div className="theme-studio-pane-heading">
             <div>
               <span>视觉系统</span>
               <strong>样式设置</strong>
             </div>
-            <div className="theme-pane-heading-actions">
-              <small>草稿编辑</small>
-              <button
-                className="theme-pane-collapse-button"
-                type="button"
-                aria-label="收起样式设置"
-                title="收起样式设置"
-                onClick={() => setInspectorCollapsed(true)}
-              >
-                <PanelRightClose aria-hidden="true" size={15} />
-              </button>
-            </div>
+            <small>草稿编辑</small>
           </div>
           {selectedPreset ? (
             <>
