@@ -128,6 +128,58 @@
   gap: 5px;
 }
 
+/* The library header is intentionally one compact command row. */
+.media-center-command-bar {
+  display: flex;
+  width: fit-content;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.media-center-command-bar .ui-management-toolbar-controls {
+  display: grid;
+  grid-template-columns: auto minmax(122px, 150px) minmax(112px, 138px) auto;
+  gap: 6px;
+  align-items: center;
+}
+
+.media-center-command-bar .ui-management-filter > span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
+.media-center-command-bar .ui-management-filter select {
+  width: 100%;
+  height: 32px;
+  padding: 0 26px 0 9px;
+  border: 1px solid #d8dee8;
+  border-radius: 7px;
+  outline: 0;
+  color: #475467;
+  background: #fff;
+  font-size: 0.67rem;
+  font-weight: 680;
+}
+
+.media-center-command-bar .ui-button {
+  --admin-button-min-height: 32px;
+  --admin-button-padding-inline: 10px;
+  --admin-button-radius: 7px;
+  --admin-button-font-size: 0.67rem;
+}
+
+.media-center-command-bar .ui-button:last-child {
+  width: 32px;
+  padding: 0;
+}
+
 .media-center-page .media-folder-create-bar,
 .media-center-upload-bar {
   display: flex;
@@ -840,7 +892,7 @@
   font-weight: 700;
 }
 
-.media-upload-dialog-form select {
+.media-upload-dialog-form input {
   width: 100%;
   height: 36px;
   padding: 0 29px 0 10px;
@@ -850,6 +902,18 @@
   color: #344054;
   background: #fff;
   font-size: 0.72rem;
+}
+
+.media-upload-dialog-group-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: -3px;
+}
+
+.media-upload-dialog-group-actions .ui-button {
+  --admin-button-min-height: 28px;
+  --admin-button-padding-inline: 8px;
+  --admin-button-font-size: 0.64rem;
 }
 
 .media-upload-dialog-file {
@@ -1273,6 +1337,18 @@
 }
 
 @media (max-width: 760px) {
+  .media-center-command-bar {
+    width: 100%;
+  }
+
+  .media-center-command-bar .ui-management-toolbar-controls {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  }
+
+  .media-center-command-bar .ui-button:first-child {
+    grid-column: 1 / -1;
+  }
+
   .media-center-page {
     gap: 7px;
   }
