@@ -273,6 +273,127 @@
   white-space: nowrap;
 }
 
+/* Each card owns one operator scenario: folders, upload, or filtering. */
+.media-center-primary-bar {
+  grid-template-columns: minmax(230px, 1.08fr) minmax(150px, 0.7fr) minmax(245px, 1.08fr);
+}
+
+.media-center-panel-title {
+  display: flex;
+  min-width: 0;
+  align-items: baseline;
+  gap: 5px;
+  color: #344054;
+  font-size: 0.67rem;
+  font-weight: 790;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.media-center-panel-title small {
+  overflow: hidden;
+  color: #98a2b3;
+  font-size: 0.59rem;
+  font-weight: 600;
+  text-overflow: ellipsis;
+}
+
+.media-center-primary-bar .media-folder-create-bar {
+  display: grid;
+  grid-template-areas:
+    'title title'
+    'select select'
+    'name create'
+    'rename remove';
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-content: start;
+  gap: 4px;
+  padding: 7px;
+}
+
+.media-center-primary-bar .media-folder-create-bar > .media-center-panel-title {
+  grid-area: title;
+}
+
+.media-center-primary-bar .media-folder-create-bar > select {
+  grid-area: select;
+  width: 100%;
+  min-width: 0;
+}
+
+.media-center-primary-bar .media-folder-create-bar > input {
+  grid-area: name;
+  width: 100%;
+  min-width: 0;
+}
+
+.media-center-primary-bar .media-folder-create-bar > button:nth-of-type(1) {
+  grid-area: create;
+}
+
+.media-center-primary-bar .media-folder-create-bar > button:nth-of-type(2) {
+  grid-area: rename;
+}
+
+.media-center-primary-bar .media-folder-create-bar > button:nth-of-type(3) {
+  grid-area: remove;
+}
+
+.media-center-primary-bar .media-center-upload-bar {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  align-content: start;
+  gap: 5px;
+  padding: 7px;
+}
+
+.media-center-primary-bar .media-center-upload-bar > .media-center-panel-title {
+  grid-column: 1 / -1;
+}
+
+.media-center-primary-bar .media-center-upload-button {
+  width: 100%;
+  padding-inline: 7px;
+}
+
+.media-center-primary-bar > .media-center-toolbar {
+  align-items: stretch;
+  padding: 7px;
+}
+
+.media-center-primary-bar > .media-center-toolbar .ui-management-toolbar-controls {
+  grid-template-areas:
+    'title title title'
+    'folder kind refresh';
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  align-content: start;
+}
+
+.media-center-primary-bar > .media-center-toolbar .media-center-panel-title {
+  grid-area: title;
+}
+
+.media-center-primary-bar > .media-center-toolbar .ui-management-filter:nth-child(2) {
+  grid-area: folder;
+}
+
+.media-center-primary-bar > .media-center-toolbar .ui-management-filter:nth-child(3) {
+  grid-area: kind;
+}
+
+.media-center-primary-bar > .media-center-toolbar .ui-button {
+  grid-area: refresh;
+}
+
+.media-center-primary-bar .ui-management-filter > span {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+}
+
 /* Upload controls stay inline so the dock remains short. */
 .media-center-upload-bar {
   flex: 1 1 57%;

@@ -195,6 +195,7 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
   const [mediaTotal, setMediaTotal] = useState(0);
   const [mediaKind, setMediaKind] = useState<MediaKind | ''>('');
   const [folderFilter, setFolderFilter] = useState<FolderFilter>('all');
+  const [managedFolderId, setManagedFolderId] = useState('');
   const uploadRole: MediaRole = 'general';
   const [newFolderName, setNewFolderName] = useState('');
   const [moveFolderId, setMoveFolderId] = useState('');
@@ -498,7 +499,7 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
     [assets],
   );
 
-  const activeFolder = folders.find((folder) => folder.id === folderFilter) ?? null;
+  const activeFolder = folders.find((folder) => folder.id === managedFolderId) ?? null;
   const mediaTotalPages =
     mediaTotal > 0 ? Math.max(1, Math.ceil(mediaTotal / MEDIA_PAGE_SIZE)) : 0;
 
@@ -557,6 +558,7 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
     try {
       const result = await createMediaFolder(rootFolderName(files));
       setFolderFilter(result.folder.id);
+      setManagedFolderId(result.folder.id);
       await loadFolders();
       await uploadFiles(files, result.folder.id);
     } catch (error) {
@@ -580,6 +582,7 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
       setNewFolderName('');
       await loadFolders();
       setFolderFilter(result.folder.id);
+      setManagedFolderId(result.folder.id);
       setMediaSuccess(
         result.reused
           ? `已切换到已有文件夹“${result.folder.name}”。`
@@ -630,6 +633,7 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
     setFolderWorking(true);
     try {
       await deleteMediaFolder(activeFolder.id);
+      setManagedFolderId('');
       setFolderFilter('unfiled');
       await loadFolders();
       setMediaSuccess('文件夹已删除，原有素材已移动到“未放入文件夹”。');
@@ -767,17 +771,16 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
           <div className="media-center-primary-bar">
             <div className="media-center-command-dock">
               <div className="media-folder-create-bar">
-                <div>
-                  <strong>文件夹</strong>
-                  <small>选择或新建</small>
+                <div className="media-center-panel-title">
+                  <strong>文件夹管理</strong>
+                  <small>新建、重命名或删除</small>
                 </div>
                 <select
-                  value={folderFilter}
-                  onChange={(event) => setFolderFilter(event.target.value)}
-                  aria-label="选择文件夹"
+                  value={managedFolderId}
+                  onChange={(event) => setManagedFolderId(event.target.value)}
+                  aria-label="选择要管理的文件夹"
                 >
-                  <option value="all">全部文件夹</option>
-                  <option value="unfiled">未放入文件夹</option>
+                  <option value="">选择文件夹</option>
                   {folders.map((folder) => (
                     <option key={folder.id} value={folder.id}>
                       {folder.name} ({folder.assetCount})
@@ -821,6 +824,7 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
               </div>
 
               <div className="media-center-upload-bar">
+                <strong className="media-center-panel-title">上传管理</strong>
                 <label
                   className={`media-center-upload-button${uploadQueue.running ? ' is-disabled' : ''}`}
                 >
@@ -865,6 +869,22 @@ export function AssetLibraryView({ onSessionExpired }: AssetLibraryViewProps) {
             </div>
 
             <AdminToolbar aria-label="素材筛选工具栏" className="media-center-toolbar">
+              <strong className="media-center-panel-title">筛选管理</strong>
+              <label className="ui-management-filter">
+                <span>文件夹</span>
+                <select
+                  value={folderFilter}
+                  onChange={(event) => setFolderFilter(event.target.value)}
+                >
+                  <option value="all">全部文件夹</option>
+                  <option value="unfiled">未放入文件夹</option>
+                  {folders.map((folder) => (
+                    <option key={folder.id} value={folder.id}>
+                      {folder.name} ({folder.assetCount})
+                    </option>
+                  ))}
+                </select>
+              </label>
               <label className="ui-management-filter">
                 <span>格式</span>
                 <select
