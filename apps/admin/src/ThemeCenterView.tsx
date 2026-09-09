@@ -405,7 +405,7 @@ export function ThemeCenterView({
   const libraryThemes =
     currentTheme.key === 'custom' ? [currentTheme, ...presets] : presets;
   return (
-    <section className="theme-center theme-studio" aria-labelledby="theme-center-title">
+    <section className="theme-center theme-studio" aria-label="主题中心">
       {errorMessage ? (
         <div className="notice notice-error" role="alert">
           {errorMessage}
@@ -421,11 +421,7 @@ export function ThemeCenterView({
       >
         <aside className="theme-library" data-collapsed={libraryCollapsed}>
           <div className="theme-pane-scroll">
-            <div className="theme-studio-pane-heading">
-              <div>
-                <span>主题</span>
-                <strong id="theme-center-title">主题库</strong>
-              </div>
+            <div className="theme-studio-pane-heading theme-library-toolbar">
               <button
                 className="theme-library-add"
                 type="button"
@@ -495,35 +491,27 @@ export function ThemeCenterView({
         </main>
         <aside className="theme-inspector" data-collapsed={inspectorCollapsed}>
           <div className="theme-pane-scroll">
-            <div className="theme-studio-pane-heading">
-              <div>
-                <span>视觉系统</span>
-                <strong>样式设置</strong>
-              </div>
-              <small>草稿编辑</small>
+            <div className="theme-studio-pane-heading theme-preview-toolbar">
+              <AdminSegmentedControl ariaLabel="预览设备">
+                <AdminSegmentedItem
+                  selected={viewport === 'desktop'}
+                  type="button"
+                  onClick={() => selectViewport('desktop')}
+                >
+                  桌面
+                </AdminSegmentedItem>
+                <AdminSegmentedItem
+                  selected={viewport === 'mobile'}
+                  type="button"
+                  onClick={() => selectViewport('mobile')}
+                >
+                  移动端
+                </AdminSegmentedItem>
+              </AdminSegmentedControl>
             </div>
             {selectedPreset ? (
               <>
                 <div className="theme-inspector-section">
-                  <div className="theme-inspector-label">
-                    <strong>预览</strong>
-                  </div>
-                  <AdminSegmentedControl ariaLabel="预览设备">
-                    <AdminSegmentedItem
-                      selected={viewport === 'desktop'}
-                      type="button"
-                      onClick={() => selectViewport('desktop')}
-                    >
-                      桌面
-                    </AdminSegmentedItem>
-                    <AdminSegmentedItem
-                      selected={viewport === 'mobile'}
-                      type="button"
-                      onClick={() => selectViewport('mobile')}
-                    >
-                      移动端
-                    </AdminSegmentedItem>
-                  </AdminSegmentedControl>
                   <label>
                     {viewport === 'desktop' ? 'PC 模板' : '手机模板'}
                     <select

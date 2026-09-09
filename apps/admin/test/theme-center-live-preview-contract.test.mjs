@@ -31,7 +31,8 @@ test('Theme Studio preview reuses live storefront home components without restor
   assert.ok(preview.includes('theme-preview-scale-box'));
   assert.ok(preview.includes('ResizeObserver'));
   assert.equal(view.includes('theme-command-bar'), false);
-  assert.equal(view.includes('theme-preview-toolbar'), false);
+  assert.ok(view.includes('theme-library-toolbar'));
+  assert.ok(view.includes('theme-preview-toolbar'));
   assert.ok(styles.includes('.theme-global-actions'));
   assert.ok(styles.includes('.theme-pane-edge-toggle'));
   assert.ok(styles.includes('.theme-pane-edge-toggle:focus-visible'));

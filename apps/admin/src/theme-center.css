@@ -238,10 +238,16 @@
   background: #fff7fa;
 }
 .theme-studio-pane-heading {
+  display: flex;
+  align-items: center;
   min-height: 58px;
   padding: 10px 12px;
   border-bottom: 1px solid #e5e9ef;
   background: rgb(255 255 255 / 90%);
+}
+.theme-library-toolbar,
+.theme-preview-toolbar {
+  justify-content: center;
 }
 .theme-studio-pane-heading > div {
   display: grid;
