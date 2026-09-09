@@ -21,8 +21,6 @@ test('Theme Studio keeps draft-only selection and the existing safe persistence 
   assert.equal(view.includes('createPortal'), false);
   assert.ok(view.includes('importThemeFromRegistry'));
   assert.ok(view.includes('importThemeFromJson'));
-  assert.ok(view.includes('站点设计模式'));
-  assert.ok(view.includes('首页布局'));
 });
 
 test('PWA install prompt is owned by Site Settings', () => {

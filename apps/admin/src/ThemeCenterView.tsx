@@ -1,12 +1,10 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { AdminApiError, type AdminSection } from './api';
+import { AdminApiError } from './api';
 import { useAdminDirtySource } from './admin-unsaved-state';
 import {
   AdminSegmentedControl,
   AdminSegmentedItem,
 } from './components/ui/segmented-control';
-import { HomeExperienceView } from './experience/HomeExperienceView';
-import { SiteSettingsProvider } from './settings/SiteSettingsProvider';
 import { ThemeCenterPreview } from './ThemeCenterPreview';
 import { themeDiagnostics } from './theme-center/diagnostics';
 import {
@@ -22,9 +20,7 @@ import {
 
 type ThemeCenterViewProps = {
   onSessionExpired: () => void;
-  sections: AdminSection[];
 };
-type ThemeStudioMode = 'visual' | 'layout';
 type ThemeImportSource = 'url' | 'json';
 const FONT_PACK_LABELS = {
   modern: 'Modern Sans',
@@ -71,11 +67,10 @@ function ThemeSwatch({ theme }: { theme: ThemePreset }) {
   );
 }
 
-export function ThemeCenterView({ onSessionExpired, sections }: ThemeCenterViewProps) {
+export function ThemeCenterView({ onSessionExpired }: ThemeCenterViewProps) {
   const [presets, setPresets] = useState<ThemePreset[]>([]);
   const [currentTheme, setCurrentTheme] = useState<ResolvedTheme | null>(null);
   const [selectedKey, setSelectedKey] = useState<ThemeKey>('marketplace');
-  const [studioMode, setStudioMode] = useState<ThemeStudioMode>('visual');
   const [accent, setAccent] = useState('');
   const [textColor, setTextColor] = useState('');
   const [importedDraft, setImportedDraft] = useState<
@@ -269,54 +264,32 @@ export function ThemeCenterView({ onSessionExpired, sections }: ThemeCenterViewP
         <div>
           <p>站点 / 主题</p>
           <h2 id="theme-center-title">站点设计</h2>
-          <span>视觉主题与首页结构在同一工作区管理，保存后才会应用到用户前端。</span>
+          <span>在草稿中调整前端视觉；保存后才会应用到用户前端。</span>
         </div>
         <div className="theme-studio-heading-actions">
-          <AdminSegmentedControl ariaLabel="站点设计模式">
-            <AdminSegmentedItem
-              selected={studioMode === 'visual'}
-              type="button"
-              onClick={() => setStudioMode('visual')}
-            >
-              视觉
-            </AdminSegmentedItem>
-            <AdminSegmentedItem
-              selected={studioMode === 'layout'}
-              type="button"
-              onClick={() => setStudioMode('layout')}
-            >
-              布局
-            </AdminSegmentedItem>
-          </AdminSegmentedControl>
-          {studioMode === 'visual' ? (
-            <button
-              className="secondary-button"
-              type="button"
-              onClick={() => setImportOpen(true)}
-            >
-              导入主题
-            </button>
-          ) : null}
-          {studioMode === 'visual' ? (
-            <button
-              className="secondary-button theme-studio-panel-toggle"
-              type="button"
-              aria-expanded={libraryOpen}
-              onClick={() => setLibraryOpen((value) => !value)}
-            >
-              主题库
-            </button>
-          ) : null}
-          {studioMode === 'visual' ? (
-            <button
-              className="secondary-button theme-studio-panel-toggle"
-              type="button"
-              aria-expanded={inspectorOpen}
-              onClick={() => setInspectorOpen((value) => !value)}
-            >
-              检查器
-            </button>
-          ) : null}
+          <button
+            className="secondary-button"
+            type="button"
+            onClick={() => setImportOpen(true)}
+          >
+            导入主题
+          </button>
+          <button
+            className="secondary-button theme-studio-panel-toggle"
+            type="button"
+            aria-expanded={libraryOpen}
+            onClick={() => setLibraryOpen((value) => !value)}
+          >
+            主题库
+          </button>
+          <button
+            className="secondary-button theme-studio-panel-toggle"
+            type="button"
+            aria-expanded={inspectorOpen}
+            onClick={() => setInspectorOpen((value) => !value)}
+          >
+            检查器
+          </button>
         </div>
       </header>
       {errorMessage ? (
@@ -329,261 +302,242 @@ export function ThemeCenterView({ onSessionExpired, sections }: ThemeCenterViewP
           {successMessage}
         </div>
       ) : null}
-      {studioMode === 'layout' ? (
-        <div className="theme-layout-workspace">
-          <div className="theme-layout-intro">
+      <div className="theme-studio-workspace">
+        <aside className="theme-library" data-open={libraryOpen}>
+          <div className="theme-studio-pane-heading">
             <div>
-              <span>Layout Studio</span>
-              <strong>首页布局</strong>
+              <span>Theme Library</span>
+              <strong>主题方案库</strong>
             </div>
-            <small>
-              受控区块会直接映射到真实首页，避免自由页面搭建造成前端结构失控。
-            </small>
+            <small>{libraryThemes.length} 个可用方案</small>
           </div>
-          <SiteSettingsProvider onSessionExpired={onSessionExpired}>
-            <HomeExperienceView sections={sections} onSessionExpired={onSessionExpired} />
-          </SiteSettingsProvider>
-        </div>
-      ) : (
-        <div className="theme-studio-workspace">
-          <aside className="theme-library" data-open={libraryOpen}>
-            <div className="theme-studio-pane-heading">
-              <div>
-                <span>Theme Library</span>
-                <strong>主题方案库</strong>
-              </div>
-              <small>{libraryThemes.length} 个可用方案</small>
-            </div>
-            <div className="theme-library-list">
-              {libraryThemes.map((theme) => (
-                <button
-                  className={`theme-library-item${selectedKey === theme.key ? ' is-selected' : ''}`}
-                  key={theme.key}
-                  type="button"
-                  aria-pressed={selectedKey === theme.key}
-                  onClick={() => {
-                    if (theme.key === 'custom') {
-                      setSelectedKey('custom');
-                      setAccent(currentTheme.overrides.accent ?? '');
-                      setTextColor(currentTheme.overrides.textColor ?? '');
-                    } else selectTheme(theme);
-                    clearMessages();
-                  }}
-                >
-                  <ThemeSwatch theme={theme} />
-                  <span className="theme-library-copy">
-                    <span>
-                      <strong>{theme.label}</strong>
-                      {currentTheme.key === theme.key ? <em>当前使用</em> : null}
-                    </span>
-                    <small>
-                      {theme.colorScheme === 'dark' ? 'Dark' : 'Light'} ·{' '}
-                      {FONT_PACK_LABELS[theme.recipe.fontPack]} ·{' '}
-                      {MOTION_LABELS[theme.recipe.motionStyle]}
-                    </small>
+          <div className="theme-library-list">
+            {libraryThemes.map((theme) => (
+              <button
+                className={`theme-library-item${selectedKey === theme.key ? ' is-selected' : ''}`}
+                key={theme.key}
+                type="button"
+                aria-pressed={selectedKey === theme.key}
+                onClick={() => {
+                  if (theme.key === 'custom') {
+                    setSelectedKey('custom');
+                    setAccent(currentTheme.overrides.accent ?? '');
+                    setTextColor(currentTheme.overrides.textColor ?? '');
+                  } else selectTheme(theme);
+                  clearMessages();
+                }}
+              >
+                <ThemeSwatch theme={theme} />
+                <span className="theme-library-copy">
+                  <span>
+                    <strong>{theme.label}</strong>
+                    {currentTheme.key === theme.key ? <em>当前使用</em> : null}
                   </span>
-                  <i className="theme-library-selection" aria-hidden="true" />
-                </button>
-              ))}
+                  <small>
+                    {theme.colorScheme === 'dark' ? 'Dark' : 'Light'} ·{' '}
+                    {FONT_PACK_LABELS[theme.recipe.fontPack]} ·{' '}
+                    {MOTION_LABELS[theme.recipe.motionStyle]}
+                  </small>
+                </span>
+                <i className="theme-library-selection" aria-hidden="true" />
+              </button>
+            ))}
+          </div>
+        </aside>
+        <main className="theme-live-preview">
+          <div className="theme-studio-pane-heading">
+            <div>
+              <span>Live Storefront Preview</span>
+              <strong>实时用户前端预览</strong>
             </div>
-          </aside>
-          <main className="theme-live-preview">
-            <div className="theme-studio-pane-heading">
-              <div>
-                <span>Live Storefront Preview</span>
-                <strong>实时用户前端预览</strong>
-              </div>
-              <div className="theme-preview-toolbar" role="group" aria-label="预览控制">
-                <button
-                  type="button"
-                  aria-pressed={viewport === 'desktop'}
-                  onClick={() => setViewport('desktop')}
-                >
-                  Desktop
-                </button>
-                <button
-                  type="button"
-                  aria-pressed={viewport === 'mobile'}
-                  onClick={() => setViewport('mobile')}
-                >
-                  Mobile
-                </button>
-                <span>100%</span>
-                <button
-                  type="button"
-                  onClick={() => setPreviewRevision((value) => value + 1)}
-                >
-                  Refresh
-                </button>
-              </div>
+            <div className="theme-preview-toolbar" role="group" aria-label="预览控制">
+              <button
+                type="button"
+                aria-pressed={viewport === 'desktop'}
+                onClick={() => setViewport('desktop')}
+              >
+                Desktop
+              </button>
+              <button
+                type="button"
+                aria-pressed={viewport === 'mobile'}
+                onClick={() => setViewport('mobile')}
+              >
+                Mobile
+              </button>
+              <span>100%</span>
+              <button
+                type="button"
+                onClick={() => setPreviewRevision((value) => value + 1)}
+              >
+                Refresh
+              </button>
             </div>
-            {selectedPreset ? (
-              <ThemeCenterPreview
-                key={`${selectedPreset.key}-${previewRevision}`}
-                accent={previewAccent}
-                textColor={previewTextColor}
-                theme={selectedPreset}
-                viewport={viewport}
-              />
-            ) : null}
-          </main>
-          <aside className="theme-inspector" data-open={inspectorOpen}>
-            <div className="theme-studio-pane-heading">
-              <div>
-                <span>Theme Inspector</span>
-                <strong>主题检查器</strong>
-              </div>
-              <small>草稿编辑</small>
+          </div>
+          {selectedPreset ? (
+            <ThemeCenterPreview
+              key={`${selectedPreset.key}-${previewRevision}`}
+              accent={previewAccent}
+              textColor={previewTextColor}
+              theme={selectedPreset}
+              viewport={viewport}
+            />
+          ) : null}
+        </main>
+        <aside className="theme-inspector" data-open={inspectorOpen}>
+          <div className="theme-studio-pane-heading">
+            <div>
+              <span>Theme Inspector</span>
+              <strong>主题检查器</strong>
             </div>
-            {selectedPreset ? (
-              <>
-                <div className="theme-inspector-section">
-                  <div className="theme-inspector-label">
-                    <strong>安全 Override</strong>
-                    <span>可保存</span>
+            <small>草稿编辑</small>
+          </div>
+          {selectedPreset ? (
+            <>
+              <div className="theme-inspector-section">
+                <div className="theme-inspector-label">
+                  <strong>安全 Override</strong>
+                  <span>可保存</span>
+                </div>
+                <label>
+                  品牌强调色
+                  <div className="theme-color-control">
+                    <input
+                      type="color"
+                      value={accentInputValue}
+                      onChange={(event) => {
+                        setAccent(event.target.value.toLowerCase());
+                        clearMessages();
+                      }}
+                      aria-label="选择品牌强调色"
+                    />
+                    <input
+                      type="text"
+                      value={accent}
+                      placeholder={selectedPreset.tokens.brand}
+                      maxLength={7}
+                      onChange={(event) => {
+                        setAccent(event.target.value);
+                        clearMessages();
+                      }}
+                    />
+                    {accent ? (
+                      <button type="button" onClick={() => setAccent('')}>
+                        恢复
+                      </button>
+                    ) : null}
                   </div>
-                  <label>
-                    品牌强调色
-                    <div className="theme-color-control">
-                      <input
-                        type="color"
-                        value={accentInputValue}
-                        onChange={(event) => {
-                          setAccent(event.target.value.toLowerCase());
-                          clearMessages();
-                        }}
-                        aria-label="选择品牌强调色"
-                      />
-                      <input
-                        type="text"
-                        value={accent}
-                        placeholder={selectedPreset.tokens.brand}
-                        maxLength={7}
-                        onChange={(event) => {
-                          setAccent(event.target.value);
-                          clearMessages();
-                        }}
-                      />
-                      {accent ? (
-                        <button type="button" onClick={() => setAccent('')}>
-                          恢复
-                        </button>
-                      ) : null}
+                </label>
+                <label>
+                  主文字颜色
+                  <div className="theme-color-control">
+                    <input
+                      type="color"
+                      value={textColorInputValue}
+                      onChange={(event) => {
+                        setTextColor(event.target.value.toLowerCase());
+                        clearMessages();
+                      }}
+                      aria-label="选择主文字颜色"
+                    />
+                    <input
+                      type="text"
+                      value={textColor}
+                      placeholder={selectedPreset.tokens.text}
+                      maxLength={7}
+                      onChange={(event) => {
+                        setTextColor(event.target.value);
+                        clearMessages();
+                      }}
+                    />
+                    {textColor ? (
+                      <button type="button" onClick={() => setTextColor('')}>
+                        恢复
+                      </button>
+                    ) : null}
+                  </div>
+                </label>
+              </div>
+              <div className="theme-inspector-section">
+                <div className="theme-inspector-label">
+                  <strong>Theme metadata</strong>
+                  <span>只读</span>
+                </div>
+                <dl className="theme-metadata">
+                  {READ_ONLY_METADATA.map(([label, value]) => (
+                    <div key={label}>
+                      <dt>{label}</dt>
+                      <dd>{value(selectedPreset)}</dd>
                     </div>
-                  </label>
-                  <label>
-                    主文字颜色
-                    <div className="theme-color-control">
-                      <input
-                        type="color"
-                        value={textColorInputValue}
-                        onChange={(event) => {
-                          setTextColor(event.target.value.toLowerCase());
-                          clearMessages();
-                        }}
-                        aria-label="选择主文字颜色"
-                      />
-                      <input
-                        type="text"
-                        value={textColor}
-                        placeholder={selectedPreset.tokens.text}
-                        maxLength={7}
-                        onChange={(event) => {
-                          setTextColor(event.target.value);
-                          clearMessages();
-                        }}
-                      />
-                      {textColor ? (
-                        <button type="button" onClick={() => setTextColor('')}>
-                          恢复
-                        </button>
-                      ) : null}
+                  ))}
+                </dl>
+              </div>
+              <div
+                className="theme-inspector-section theme-diagnostics"
+                aria-label="视觉检查"
+              >
+                <div className="theme-inspector-label">
+                  <strong>Visual Diagnostics</strong>
+                  <span>实时</span>
+                </div>
+                <div className="theme-diagnostic-list">
+                  {diagnostics.map((diagnostic) => (
+                    <div
+                      className="theme-diagnostic-item"
+                      data-status={diagnostic.status}
+                      key={diagnostic.id}
+                    >
+                      <span className="theme-diagnostic-mark" aria-hidden="true">
+                        {diagnostic.status === 'pass' ? '✓' : '!'}
+                      </span>
+                      <span>
+                        <strong>
+                          {diagnostic.label === '文字 / 背景'
+                            ? '主要文字对比度'
+                            : diagnostic.label === 'Surface 层级'
+                              ? 'Product Card 层级'
+                              : diagnostic.label === '边框可见性'
+                                ? '导航可读性'
+                                : diagnostic.label}
+                        </strong>
+                        <small>{diagnostic.detail}</small>
+                      </span>
                     </div>
-                  </label>
+                  ))}
                 </div>
-                <div className="theme-inspector-section">
-                  <div className="theme-inspector-label">
-                    <strong>Theme metadata</strong>
-                    <span>只读</span>
-                  </div>
-                  <dl className="theme-metadata">
-                    {READ_ONLY_METADATA.map(([label, value]) => (
-                      <div key={label}>
-                        <dt>{label}</dt>
-                        <dd>{value(selectedPreset)}</dd>
-                      </div>
-                    ))}
-                  </dl>
-                </div>
-                <div
-                  className="theme-inspector-section theme-diagnostics"
-                  aria-label="视觉检查"
-                >
-                  <div className="theme-inspector-label">
-                    <strong>Visual Diagnostics</strong>
-                    <span>实时</span>
-                  </div>
-                  <div className="theme-diagnostic-list">
-                    {diagnostics.map((diagnostic) => (
-                      <div
-                        className="theme-diagnostic-item"
-                        data-status={diagnostic.status}
-                        key={diagnostic.id}
-                      >
-                        <span className="theme-diagnostic-mark" aria-hidden="true">
-                          {diagnostic.status === 'pass' ? '✓' : '!'}
-                        </span>
-                        <span>
-                          <strong>
-                            {diagnostic.label === '文字 / 背景'
-                              ? '主要文字对比度'
-                              : diagnostic.label === 'Surface 层级'
-                                ? 'Product Card 层级'
-                                : diagnostic.label === '边框可见性'
-                                  ? '导航可读性'
-                                  : diagnostic.label}
-                          </strong>
-                          <small>{diagnostic.detail}</small>
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </>
-            ) : null}
-          </aside>
+              </div>
+            </>
+          ) : null}
+        </aside>
+      </div>
+      <footer className="theme-action-bar">
+        <div>
+          <span>当前主题</span>
+          <strong>{currentTheme.label}</strong>
+          <em data-dirty={themeIsDirty}>{themeIsDirty ? '未保存' : '已保存'}</em>
         </div>
-      )}
-      {studioMode === 'visual' ? (
-        <footer className="theme-action-bar">
-          <div>
-            <span>当前主题</span>
-            <strong>{currentTheme.label}</strong>
-            <em data-dirty={themeIsDirty}>{themeIsDirty ? '未保存' : '已保存'}</em>
-          </div>
-          <div>
-            <button
-              className="secondary-button"
-              type="button"
-              disabled={!themeIsDirty || saving}
-              onClick={restoreSavedTheme}
-            >
-              恢复当前设置
-            </button>
-            <a className="secondary-button" href="/" target="_blank" rel="noreferrer">
-              打开用户前端
-            </a>
-            <button
-              className="primary-button"
-              type="button"
-              disabled={saving || !themeIsDirty}
-              onClick={() => void saveTheme()}
-            >
-              {saving ? '正在保存…' : '保存并应用'}
-            </button>
-          </div>
-        </footer>
-      ) : null}
+        <div>
+          <button
+            className="secondary-button"
+            type="button"
+            disabled={!themeIsDirty || saving}
+            onClick={restoreSavedTheme}
+          >
+            恢复当前设置
+          </button>
+          <a className="secondary-button" href="/" target="_blank" rel="noreferrer">
+            打开用户前端
+          </a>
+          <button
+            className="primary-button"
+            type="button"
+            disabled={saving || !themeIsDirty}
+            onClick={() => void saveTheme()}
+          >
+            {saving ? '正在保存…' : '保存并应用'}
+          </button>
+        </div>
+      </footer>
       {importOpen ? (
         <div
           className="theme-import-backdrop"

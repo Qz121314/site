@@ -671,11 +671,7 @@ export function Dashboard({
               onMessagesActionsChange={setMessagesActions}
             />
           ) : activeView === 'theme' ? (
-            <ThemeCenterView
-              key={activeView}
-              onSessionExpired={onSessionExpired}
-              sections={sections}
-            />
+            <ThemeCenterView key={activeView} onSessionExpired={onSessionExpired} />
           ) : activeView === 'assets' ? (
             <AssetLibraryView key={activeView} onSessionExpired={onSessionExpired} />
           ) : activeView === 'customer-service' ? (
