@@ -1,3 +1,9 @@
+import {
+  PanelLeftClose,
+  PanelLeftOpen,
+  PanelRightClose,
+  PanelRightOpen,
+} from 'lucide-react';
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import { AdminApiError } from './api';
 import { useAdminDirtySource } from './admin-unsaved-state';
@@ -144,6 +150,8 @@ export function ThemeCenterView({
     height: 900,
   });
   const [diagnosticsOpen, setDiagnosticsOpen] = useState(false);
+  const [libraryCollapsed, setLibraryCollapsed] = useState(false);
+  const [inspectorCollapsed, setInspectorCollapsed] = useState(false);
   const [importOpen, setImportOpen] = useState(false);
   const [importSource, setImportSource] = useState<ThemeImportSource>('url');
   const [importMode, setImportMode] = useState<'light' | 'dark'>('light');
@@ -408,21 +416,42 @@ export function ThemeCenterView({
           {successMessage}
         </div>
       ) : null}
-      <div className="theme-studio-workspace">
-        <aside className="theme-library">
+      <div
+        className={`theme-studio-workspace${libraryCollapsed ? ' is-library-collapsed' : ''}${inspectorCollapsed ? ' is-inspector-collapsed' : ''}`}
+      >
+        <aside className="theme-library" data-collapsed={libraryCollapsed}>
+          <button
+            className="theme-pane-collapsed-trigger"
+            type="button"
+            aria-label="展开主题库"
+            title="展开主题库"
+            onClick={() => setLibraryCollapsed(false)}
+          >
+            <PanelLeftOpen aria-hidden="true" size={16} />
+          </button>
           <div className="theme-studio-pane-heading">
             <div>
               <span>主题</span>
               <strong id="theme-center-title">主题库</strong>
             </div>
-            <button
-              className="theme-library-add"
-              type="button"
-              aria-label="上传主题"
-              onClick={() => setImportOpen(true)}
-            >
-              上传主题
-            </button>
+            <div className="theme-pane-heading-actions">
+              <button
+                className="theme-library-add"
+                type="button"
+                onClick={() => setImportOpen(true)}
+              >
+                上传主题
+              </button>
+              <button
+                className="theme-pane-collapse-button"
+                type="button"
+                aria-label="收起主题库"
+                title="收起主题库"
+                onClick={() => setLibraryCollapsed(true)}
+              >
+                <PanelLeftClose aria-hidden="true" size={15} />
+              </button>
+            </div>
           </div>
           <div className="theme-library-list">
             {libraryThemes.map((theme) => (
@@ -468,13 +497,33 @@ export function ThemeCenterView({
             />
           ) : null}
         </main>
-        <aside className="theme-inspector">
+        <aside className="theme-inspector" data-collapsed={inspectorCollapsed}>
+          <button
+            className="theme-pane-collapsed-trigger"
+            type="button"
+            aria-label="展开样式设置"
+            title="展开样式设置"
+            onClick={() => setInspectorCollapsed(false)}
+          >
+            <PanelRightOpen aria-hidden="true" size={16} />
+          </button>
           <div className="theme-studio-pane-heading">
             <div>
               <span>视觉系统</span>
               <strong>样式设置</strong>
             </div>
-            <small>草稿编辑</small>
+            <div className="theme-pane-heading-actions">
+              <small>草稿编辑</small>
+              <button
+                className="theme-pane-collapse-button"
+                type="button"
+                aria-label="收起样式设置"
+                title="收起样式设置"
+                onClick={() => setInspectorCollapsed(true)}
+              >
+                <PanelRightClose aria-hidden="true" size={15} />
+              </button>
+            </div>
           </div>
           {selectedPreset ? (
             <>
