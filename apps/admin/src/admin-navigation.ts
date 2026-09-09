@@ -205,6 +205,7 @@ export function getAdminDomainForView(view: AdminView): AdminDomain {
   }
   if (view === 'customer-service') return 'engagement';
   if (
+    view === 'system-navigation' ||
     view === 'system-general' ||
     view === 'system-infrastructure' ||
     view === 'system-advanced'
