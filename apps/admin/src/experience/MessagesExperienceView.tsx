@@ -1,4 +1,9 @@
+import { useState } from 'react';
 import type { AdminView } from '../admin-navigation';
+import {
+  AdminSegmentedControl,
+  AdminSegmentedItem,
+} from '../components/ui/segmented-control';
 import { useSiteSettingsController } from '../settings/SiteSettingsProvider';
 import './experience-settings.css';
 import { MessagesArticlesSection } from './messages-articles/MessagesArticlesSection';
@@ -9,12 +14,35 @@ export function MessagesExperienceView({
   onNavigate: (view: AdminView) => void;
 }) {
   const { settings } = useSiteSettingsController();
+  const [activePanel, setActivePanel] = useState<'overview' | 'articles'>('overview');
   const messagesItem = settings.bottomNavigation.find((item) => item.key === 'messages');
   const enabled = messagesItem?.enabled === true;
 
   return (
-    <div className="settings-workspace is-medium">
+    <div className="settings-workspace is-medium messages-experience-workspace">
+      <div className="messages-experience-commandbar">
+        <AdminSegmentedControl ariaLabel="Messages 工作区">
+          <AdminSegmentedItem
+            selected={activePanel === 'overview'}
+            current={activePanel === 'overview'}
+            type="button"
+            onClick={() => setActivePanel('overview')}
+          >
+            页面概况
+          </AdminSegmentedItem>
+          <AdminSegmentedItem
+            selected={activePanel === 'articles'}
+            current={activePanel === 'articles'}
+            type="button"
+            onClick={() => setActivePanel('articles')}
+          >
+            文章配置
+          </AdminSegmentedItem>
+        </AdminSegmentedControl>
+      </div>
+
       <section
+        hidden={activePanel !== 'overview'}
         className="settings-workspace-section"
         aria-labelledby="messages-page-title"
       >
@@ -59,7 +87,9 @@ export function MessagesExperienceView({
         </div>
       </section>
 
-      <MessagesArticlesSection onNavigate={onNavigate} />
+      <div hidden={activePanel !== 'articles'}>
+        <MessagesArticlesSection onNavigate={onNavigate} />
+      </div>
     </div>
   );
 }
