@@ -11,7 +11,16 @@ import {
   Settings2,
   X,
 } from 'lucide-react';
-import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import {
+  lazy,
+  Suspense,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ReactNode,
+} from 'react';
 import {
   AdminApiError,
   fetchSections,
@@ -178,7 +187,7 @@ function DashboardLauncher({
     ['主题中心', '管理视觉主题配置', 'theme', PenLine],
     ['文章中心', '管理 Markdown 内容', 'faq', FileText],
     ['素材库', '管理上传素材与文件夹', 'assets', Image],
-    ['Messages', '管理消息文章配置', 'messages', MessageSquare],
+    ['Messages', '会话列表卡片配置', 'messages', MessageSquare],
     ['客服接入', '管理客服连接配置', 'customer-service', Settings2],
     ['基本设置', '管理站点基础配置', 'system-general', Settings2],
   ] as const;
@@ -316,7 +325,12 @@ export function Dashboard({
   const [pendingDiscardAction, setPendingDiscardAction] =
     useState<PendingDiscardAction>(null);
   const [productHandoff, setProductHandoff] = useState<ProductHandoff | null>(null);
+  const [messagesActions, setMessagesActions] = useState<ReactNode>(null);
   const unsaved = useAdminUnsavedState();
+
+  useEffect(() => {
+    if (activeView !== 'messages') setMessagesActions(null);
+  }, [activeView]);
 
   const loadSections = useCallback(async () => {
     setSectionsLoading(true);
@@ -572,7 +586,7 @@ export function Dashboard({
       ? productHandoff
       : null;
 
-  const workspaceActions = contextPublishKey ? (
+  const publishingActions = contextPublishKey ? (
     <AdminPublishingControls
       key={activeView}
       status={publishStatus}
@@ -587,6 +601,13 @@ export function Dashboard({
       onRequestRollback={setRollbackTarget}
     />
   ) : null;
+  const workspaceActions =
+    publishingActions || messagesActions ? (
+      <>
+        {publishingActions}
+        {activeView === 'messages' ? messagesActions : null}
+      </>
+    ) : null;
 
   const pageSecondaryAction =
     currentSectionHandoff && currentSection?.kind !== 'products' ? (
@@ -653,6 +674,7 @@ export function Dashboard({
               sections={sections}
               onNavigate={requestView}
               onSessionExpired={onSessionExpired}
+              onMessagesActionsChange={setMessagesActions}
             />
           ) : activeView === 'theme' ? (
             <ThemeCenterView key={activeView} onSessionExpired={onSessionExpired} />

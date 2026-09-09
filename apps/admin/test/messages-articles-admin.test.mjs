@@ -291,7 +291,7 @@ test('Messages Articles adopts shared Input, AdminStatusBadge, Lucide Check and 
   assert.doesNotMatch(source, /✓/);
   assert.doesNotMatch(source, /import ['"]\.\/messages-articles\.css['"]/);
   assert.match(adminCss, /experience\/messages-articles\/messages-articles\.css/);
-  assert.match(css, /\.messages-articles-statusline/);
+  assert.match(css, /\.messages-articles-global-actions/);
   assert.doesNotMatch(
     css,
     /\.messages-articles-media-grid|\.messages-articles-media-card/,
@@ -303,17 +303,17 @@ test('workspace exposes explicit save, retry and local dirty state', async () =>
   assert.match(source, /const dirty = !draftsEqual\(draft, serverDraft\)/);
   assert.match(source, /saveMessageArticlePlacements\(draft\)/);
   assert.match(source, /重试保存/);
-  assert.match(source, /有未保存修改/);
+  assert.match(source, /disabled=\{!dirty\}/);
+  assert.match(source, /messages-articles-global-actions/);
   assert.match(source, /setServerDraft\(next\)/);
   assert.match(source, /useAdminDirtySource\('messages-articles'/);
 });
 
 test('existing Messages settings remain mounted above the independent Messages Articles workspace', async () => {
   const source = await readFile(messagesViewPath, 'utf8');
-  assert.match(source, /messages-experience-summary/);
-  assert.match(source, /\/messages\//);
-  assert.match(source, /onNavigate\('navigation'\)/);
-  assert.match(source, /<MessagesArticlesSection onNavigate=\{onNavigate\} \/>/);
+  assert.match(source, /<MessagesArticlesSection/);
+  assert.match(source, /onActionsChange=\{onActionsChange\}/);
+  assert.doesNotMatch(source, /页面概况|文章配置|messages-experience-summary/);
 });
 
 test('C2 introduces no writable enabled semantic or Storefront rendering dependency', async () => {

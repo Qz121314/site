@@ -5,11 +5,10 @@ import {
   Eye,
   Image as ImageIcon,
   PencilLine,
-  Plus,
   Search,
   Trash2,
 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import type { AdminView } from '../../admin-navigation';
 import { useAdminDirtySource } from '../../admin-unsaved-state';
 import { fetchArticles, type AdminArticle } from '../../article-center/api';
@@ -300,8 +299,10 @@ function PlacementPreviewDialog({
 
 export function MessagesArticlesSection({
   onNavigate,
+  onActionsChange,
 }: {
   onNavigate: (view: AdminView) => void;
+  onActionsChange: (actions: ReactNode | null) => void;
 }) {
   const [articles, setArticles] = useState<AdminArticle[]>([]);
   const [titles, setTitles] = useState<Map<string, string>>(new Map());
@@ -311,7 +312,6 @@ export function MessagesArticlesSection({
   const [loadError, setLoadError] = useState('');
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
-  const [saved, setSaved] = useState(false);
   const [cardOpen, setCardOpen] = useState(false);
   const [backgroundTarget, setBackgroundTarget] = useState<string | null>(null);
   const [previewTarget, setPreviewTarget] = useState<string | null>(null);
@@ -331,7 +331,6 @@ export function MessagesArticlesSection({
       );
       setServerDraft(nextDraft);
       setDraft(nextDraft);
-      setSaved(false);
       setSaveError('');
     } catch (error) {
       setLoadError(messageFor(error));
@@ -357,7 +356,6 @@ export function MessagesArticlesSection({
 
   function updateDraft(next: MessageArticleDraft[]) {
     setDraft(next);
-    setSaved(false);
     setSaveError('');
   }
 
@@ -370,7 +368,6 @@ export function MessagesArticlesSection({
     if (!dirty || saving) return;
     setSaving(true);
     setSaveError('');
-    setSaved(false);
     try {
       const placements = await saveMessageArticlePlacements(draft);
       const next = normalizeDraft(placements);
@@ -383,13 +380,39 @@ export function MessagesArticlesSection({
       });
       setServerDraft(next);
       setDraft(next);
-      setSaved(true);
     } catch (error) {
       setSaveError(messageFor(error));
     } finally {
       setSaving(false);
     }
   }
+
+  useEffect(() => {
+    onActionsChange(
+      <div className="messages-articles-global-actions">
+        <Button variant="secondary" size="compact" onClick={() => onNavigate('faq')}>
+          <PencilLine aria-hidden="true" size={15} />
+          打开文章中心
+        </Button>
+        <Button
+          size="compact"
+          onClick={() => setCardOpen(true)}
+          disabled={loading || !!loadError}
+        >
+          添加卡片
+        </Button>
+        <Button
+          size="compact"
+          loading={saving}
+          disabled={!dirty}
+          onClick={() => void save()}
+        >
+          {saving ? '保存中' : saveError ? '重试保存' : '保存配置'}
+        </Button>
+      </div>,
+    );
+    return () => onActionsChange(null);
+  }, [dirty, loadError, loading, onActionsChange, onNavigate, saveError, saving]);
 
   const previewArticle = previewTarget ? articleById.get(previewTarget) : undefined;
   const previewPlacement = previewTarget
@@ -406,34 +429,8 @@ export function MessagesArticlesSection({
     >
       <div className="settings-workspace-heading messages-articles-heading">
         <div>
-          <h2 id="messages-article-title">Messages Articles</h2>
-          <p>管理访客端会话列表中的卡片；每张卡片由背景图和文章内容组成。</p>
+          <h2 id="messages-article-title">会话列表卡片配置</h2>
         </div>
-        <div className="messages-articles-toolbar">
-          <Button variant="secondary" onClick={() => onNavigate('faq')}>
-            <PencilLine aria-hidden="true" size={15} />
-            打开文章中心
-          </Button>
-          <Button onClick={() => setCardOpen(true)} disabled={loading || !!loadError}>
-            <Plus aria-hidden="true" size={16} />
-            添加卡片
-          </Button>
-          <Button loading={saving} disabled={!dirty} onClick={() => void save()}>
-            {saving ? '保存中' : saveError ? '重试保存' : '保存配置'}
-          </Button>
-        </div>
-      </div>
-
-      <div className="messages-articles-statusline" data-dirty={dirty ? 'true' : 'false'}>
-        <strong>
-          {dirty ? '有未保存修改' : saved ? '配置已保存' : '当前配置已同步'}
-        </strong>
-        <span>
-          {dirty
-            ? '排序、背景、添加或移除只存在于当前草稿，保存后才会生效。'
-            : 'placement 是否存在即表示是否展示，不使用额外 enabled 开关。'}
-        </span>
-        {saveError ? <em role="alert">{saveError}</em> : null}
       </div>
 
       {loadError ? (
@@ -446,11 +443,7 @@ export function MessagesArticlesSection({
       ) : loading ? (
         <AdminFeedbackState kind="loading" title="正在读取 Messages Articles" />
       ) : draft.length === 0 ? (
-        <AdminFeedbackState
-          kind="empty"
-          title="尚未配置 Messages 卡片"
-          description="点击右上角“添加卡片”，为访客端会话列表配置背景图和文章内容。"
-        />
+        <AdminFeedbackState kind="empty" title="尚未配置 Messages 卡片" />
       ) : (
         <div className="messages-articles-list">
           <div className="messages-articles-list-head" aria-hidden="true">

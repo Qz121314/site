@@ -114,7 +114,8 @@ test('publish, logout, and session state use local ownership', async () => {
     /function publishKeyForView\(view: AdminView\): string \| null/,
   );
   assert.match(dashboard, /return dynamic \? `section:\$\{dynamic\.sectionId\}` : null/);
-  assert.match(dashboard, /const workspaceActions = contextPublishKey \?/);
+  assert.match(dashboard, /const publishingActions = contextPublishKey \?/);
+  assert.match(dashboard, /activeView === 'messages' \? messagesActions : null/);
   assert.doesNotMatch(dashboard, /topBarActions|environment-badge|会话至/);
   assert.match(dashboard, /onLogout=\{requestLogout\}/);
   assert.match(dashboard, /sessionExpiresAt=\{expiresAt\}/);
