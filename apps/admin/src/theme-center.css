@@ -192,17 +192,20 @@
   place-items: center;
   padding: 0;
   border: 1px solid #d4dde8;
-  border-radius: 8px;
+  border-radius: 6px;
   color: #65758a;
-  background: #fff;
-  box-shadow: 0 4px 12px rgb(34 48 68 / 12%);
+  background: #fbfcfe;
   cursor: pointer;
 }
 .theme-pane-edge-toggle.is-library {
-  right: -14px;
+  right: 0;
+  border-right: 0;
+  border-radius: 6px 0 0 6px;
 }
 .theme-pane-edge-toggle.is-inspector {
-  left: -14px;
+  left: 0;
+  border-left: 0;
+  border-radius: 0 6px 6px 0;
 }
 .theme-pane-edge-toggle:hover {
   border-color: #d5b6c3;
