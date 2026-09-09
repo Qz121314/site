@@ -7,13 +7,16 @@
 
 .messages-articles-toolbar {
   display: flex;
-  flex-wrap: wrap;
+  flex: none;
+  flex-wrap: nowrap;
   gap: 6px;
   justify-content: flex-end;
 }
 
 .messages-articles-toolbar .ui-button {
   min-height: 32px;
+  padding-inline: 10px;
+  font-size: 0.72rem;
 }
 
 .messages-articles-list {
@@ -179,6 +182,10 @@
 .messages-articles-savebar .ui-button {
   min-height: 32px;
   white-space: nowrap;
+}
+
+.messages-articles-savebar .ui-button--primary {
+  min-width: 84px;
 }
 
 .messages-articles-savebar .ui-button:disabled {
@@ -371,6 +378,10 @@
 
   .messages-articles-toolbar {
     justify-content: flex-start;
+  }
+
+  .messages-articles-toolbar .ui-button {
+    flex: 1 1 auto;
   }
 
   .messages-articles-toolbar .ui-button,

@@ -373,12 +373,6 @@ export function MessagesArticlesSection({
           kind="empty"
           title="尚未配置 Messages 文章"
           description="添加 Article Center 内容后，它们会按当前顺序成为 active placement。"
-          action={
-            <Button onClick={() => setAddOpen(true)}>
-              <Plus aria-hidden="true" size={16} />
-              添加文章
-            </Button>
-          }
         />
       ) : (
         <div className="messages-articles-list">
@@ -510,7 +504,7 @@ export function MessagesArticlesSection({
           {saveError ? <em role="alert">{saveError}</em> : null}
         </div>
         <Button loading={saving} disabled={!dirty} onClick={() => void save()}>
-          {saving ? '保存中' : saveError ? '重试保存' : '保存 Messages Articles'}
+          {saving ? '保存中' : saveError ? '重试保存' : '保存配置'}
         </Button>
       </div>
 
