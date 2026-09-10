@@ -168,8 +168,8 @@ export function ProductTable({
             <th>标签</th>
             <th>状态</th>
             <th>排序</th>
-            <th>更新时间</th>
             <th>操作</th>
+            <th>更新时间</th>
           </tr>
         </thead>
         <tbody>
@@ -274,7 +274,6 @@ export function ProductTable({
                     ) : null}
                   </div>
                 </td>
-                <td>{formatDate(product.updatedAt)}</td>
                 <td>
                   <div className="product-row-actions ui-row-actions">
                     {scope === 'active' ? (
@@ -312,6 +311,7 @@ export function ProductTable({
                     )}
                   </div>
                 </td>
+                <td>{formatDate(product.updatedAt)}</td>
               </tr>
             );
           })}

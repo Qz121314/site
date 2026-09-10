@@ -196,13 +196,14 @@
 
 .product-table {
   width: 100%;
-  min-width: 1080px;
+  min-width: 0;
+  table-layout: fixed;
   border-collapse: collapse;
 }
 
 .product-table th,
 .product-table td {
-  padding: 7px 9px;
+  padding: 6px 8px;
   border-bottom: 1px solid #edf0f4;
   text-align: left;
   vertical-align: middle;
@@ -235,6 +236,47 @@
   text-align: center;
 }
 
+.product-table th:nth-child(2),
+.product-table td:nth-child(2) {
+  width: 25%;
+}
+
+.product-table th:nth-child(3),
+.product-table td:nth-child(3) {
+  width: 14%;
+}
+
+.product-table th:nth-child(4),
+.product-table td:nth-child(4) {
+  width: 9%;
+}
+
+.product-table th:nth-child(5),
+.product-table td:nth-child(5) {
+  width: 11%;
+}
+
+.product-table th:nth-child(6),
+.product-table td:nth-child(6) {
+  width: 10%;
+}
+
+.product-table th:nth-child(7),
+.product-table td:nth-child(7) {
+  width: 8%;
+}
+
+.product-table th:nth-child(8),
+.product-table td:nth-child(8) {
+  width: 14%;
+}
+
+.product-table th:nth-child(9),
+.product-table td:nth-child(9) {
+  width: 132px;
+  white-space: nowrap;
+}
+
 .product-select-column input {
   width: 16px;
   height: 16px;
@@ -242,7 +284,7 @@
 
 .product-table-identity {
   display: flex;
-  min-width: 230px;
+  min-width: 0;
   align-items: center;
   gap: 8px;
 }
@@ -275,7 +317,7 @@
 
 .product-table-identity strong {
   overflow: hidden;
-  max-width: 220px;
+  max-width: 100%;
   color: #172033;
   font-size: 0.76rem;
   text-overflow: ellipsis;
@@ -299,13 +341,13 @@
 
 .product-table-stack {
   display: grid;
-  min-width: 135px;
+  min-width: 0;
   gap: 2px;
 }
 
 .product-table-tags {
   display: flex;
-  max-width: 220px;
+  max-width: 100%;
   flex-wrap: wrap;
   gap: 3px;
 }

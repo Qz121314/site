@@ -523,6 +523,11 @@ textarea {
   border-collapse: collapse !important;
 }
 
+.product-table {
+  min-width: 0;
+  table-layout: fixed;
+}
+
 .section-table th,
 .category-table th,
 .product-table th,
