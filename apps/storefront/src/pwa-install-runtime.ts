@@ -47,6 +47,23 @@ export function getPwaInstallEvent(): PwaBeforeInstallPromptEvent | null {
   return currentInstallEvent;
 }
 
+export async function requestPwaInstall(): Promise<'accepted' | 'dismissed' | null> {
+  if (!currentInstallEvent) return null;
+  const event = currentInstallEvent;
+  try {
+    await event.prompt();
+    const choice = await event.userChoice;
+    currentInstallEvent = null;
+    if (choice.outcome === 'accepted') installed = true;
+    for (const listener of listeners) listener();
+    return choice.outcome;
+  } catch {
+    currentInstallEvent = null;
+    for (const listener of listeners) listener();
+    return null;
+  }
+}
+
 export function isPwaInstalled(): boolean {
   return installed;
 }

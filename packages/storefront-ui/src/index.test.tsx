@@ -53,6 +53,20 @@ describe('shared storefront UI', () => {
     expect(html).toContain('class="brand-wordmark-primary">EFGH</span>');
   });
 
+  it('renders an optional right-side brand action without changing the home link', () => {
+    const html = renderToStaticMarkup(
+      <StorefrontBrandBar
+        locationLabel="Local"
+        logo={null}
+        rightAction={<button type="button">Install</button>}
+        siteName="NOVA CLUB"
+      />,
+    );
+
+    expect(html).toContain('>Install</button>');
+    expect(html).toContain('class="brand-lockup"');
+  });
+
   it('renders the shared Home hero, shortcut, product, and navigation landmarks', () => {
     const html = renderToStaticMarkup(
       <>

@@ -5,6 +5,7 @@ import { getPwaInstallRuntime, subscribePwaInstallRuntime } from './pwa-install-
 import {
   getPwaInstallEvent,
   isPwaInstalled,
+  requestPwaInstall,
   type PwaBeforeInstallPromptEvent,
 } from './pwa-install-runtime';
 import { parseStorefrontRoute } from './routing';
@@ -126,6 +127,7 @@ export function PwaInstallPrompt() {
     getPwaInstallEvent,
   );
   const [showIosHint, setShowIosHint] = useState(false);
+  const [manualRequest, setManualRequest] = useState(false);
   const [delayComplete, setDelayComplete] = useState(false);
   const [engaged, setEngaged] = useState(
     () => directInstallRequest || routeSignalsStrongIntent(window.location.pathname),
@@ -207,6 +209,18 @@ export function PwaInstallPrompt() {
   }, [directInstallRequest, engaged, installed, sessionSuppressed]);
 
   useEffect(() => {
+    const handleManualRequest = () => {
+      setManualRequest(true);
+      setEngaged(true);
+      setDelayComplete(true);
+      if (isIosDevice()) setShowIosHint(true);
+    };
+    window.addEventListener('storefront:pwa-install-request', handleManualRequest);
+    return () =>
+      window.removeEventListener('storefront:pwa-install-request', handleManualRequest);
+  }, []);
+
+  useEffect(() => {
     if (
       !config?.enabled ||
       installed ||
@@ -270,27 +284,21 @@ export function PwaInstallPrompt() {
 
   const install = async () => {
     if (!installEvent) return;
-    try {
-      await installEvent.prompt();
-      const choice = await installEvent.userChoice;
-      if (choice.outcome === 'accepted') {
-        clearDismissal();
-        setInstalled(true);
-        setInstallEvent(null);
-        return;
-      }
-      dismiss();
-    } catch {
+    const outcome = await requestPwaInstall();
+    if (outcome === 'accepted') {
+      clearDismissal();
+      setInstalled(true);
       setInstallEvent(null);
+      return;
     }
+    if (outcome === 'dismissed') dismiss();
   };
 
   const shouldShow = Boolean(
     config?.enabled &&
     appName &&
-    delayComplete &&
-    engaged &&
-    (directInstallRequest || !sessionSuppressed) &&
+    (manualRequest || (delayComplete && engaged)) &&
+    (directInstallRequest || manualRequest || !sessionSuppressed) &&
     !dismissed &&
     !installed &&
     (installEvent || showIosHint),

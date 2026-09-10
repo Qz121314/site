@@ -68,6 +68,7 @@ export function StorefrontBrandBar({
   locationIcon = null,
   locationLabel,
   logo,
+  rightAction = null,
   siteName,
 }: {
   homeHref?: string;
@@ -75,6 +76,7 @@ export function StorefrontBrandBar({
   locationIcon?: ReactNode;
   locationLabel: string;
   logo: ReactNode;
+  rightAction?: ReactNode;
   siteName: string;
 }) {
   return (
@@ -89,6 +91,7 @@ export function StorefrontBrandBar({
           </small>
         </span>
       </LinkComponent>
+      {rightAction}
     </header>
   );
 }

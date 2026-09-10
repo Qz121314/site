@@ -31,6 +31,7 @@ import {
   subscribeMessageArticleReadState,
 } from './messages-articles';
 import { NotFoundPage } from './NotFoundPage';
+import { PwaInstallButton } from './PwaInstallButton';
 import { ProductDetailLoadingSurface } from './ProductDetailLoadingSurface';
 import { ResilientImage } from './ResilientMedia';
 import {
@@ -251,6 +252,7 @@ function PrimaryShell({
                 <ResilientImage alt="" fallback={null} src={site.logoUrl} />
               ) : null
             }
+            rightAction={<PwaInstallButton />}
             siteName={site.name}
           />
         )}
