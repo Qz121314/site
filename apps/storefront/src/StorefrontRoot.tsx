@@ -5,7 +5,7 @@ import {
   StorefrontBrandName,
   type StorefrontLinkComponent,
 } from '@site/storefront-ui';
-import { ChevronLeft, CircleAlert, MapPin } from 'lucide-react';
+import { Bell, ChevronLeft, CircleAlert, MapPin } from 'lucide-react';
 import {
   type AnchorHTMLAttributes,
   type MouseEvent as ReactMouseEvent,
@@ -203,6 +203,24 @@ function PrimaryError() {
   );
 }
 
+function StorefrontMessageButton({ unreadCount }: { unreadCount: number }) {
+  return (
+    <StorefrontLink
+      aria-label={unreadCount > 0 ? `消息，${unreadCount} 条未读` : '消息'}
+      className="storefront-icon-button topbar-message-button"
+      href="/messages/"
+      title="消息"
+    >
+      <Bell aria-hidden="true" />
+      {unreadCount > 0 ? (
+        <span className="topbar-message-badge" aria-hidden="true">
+          {unreadCount > 99 ? '99+' : unreadCount}
+        </span>
+      ) : null}
+    </StorefrontLink>
+  );
+}
+
 function PrimaryShell({
   activePath,
   bootstrap,
@@ -252,7 +270,12 @@ function PrimaryShell({
                 <ResilientImage alt="" fallback={null} src={site.logoUrl} />
               ) : null
             }
-            rightAction={<PwaInstallButton />}
+            rightAction={
+              <div className="topbar-actions">
+                <PwaInstallButton />
+                <StorefrontMessageButton unreadCount={unreadMessages} />
+              </div>
+            }
             siteName={site.name}
           />
         )}

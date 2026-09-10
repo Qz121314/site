@@ -19,13 +19,20 @@
   gap: 8px;
 }
 
-.topbar > .storefront-icon-button {
+.topbar-actions {
+  position: absolute;
+  right: max(11px, env(safe-area-inset-right));
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.topbar-actions > .pwa-install-control,
+.topbar-actions > .storefront-icon-button {
   flex: 0 0 auto;
 }
 
-.topbar > .pwa-install-button {
-  position: absolute;
-  right: max(11px, env(safe-area-inset-right));
+.topbar-actions .pwa-install-button {
   width: auto;
   min-width: auto;
   padding: 0 10px;
@@ -35,18 +42,63 @@
   font-weight: 760;
 }
 
-.topbar > .pwa-install-button svg {
+.topbar-actions .pwa-install-button svg,
+.topbar-message-button svg {
   width: 17px;
   height: 17px;
 }
 
+.pwa-install-control {
+  position: relative;
+}
+
+.pwa-install-status {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 90;
+  width: max-content;
+  max-width: min(290px, calc(100vw - 24px));
+  padding: 8px 10px;
+  border: 1px solid var(--line, #e7e9ec);
+  border-radius: var(--theme-radius-control, 8px);
+  color: var(--text, #1f2328);
+  background: var(--surface, #fff);
+  box-shadow: var(--shadow, 0 8px 24px rgb(31 35 40 / 12%));
+  font-size: 0.7rem;
+  line-height: 1.35;
+}
+
+.topbar-message-button {
+  position: relative;
+  color: var(--text, #1f2328);
+}
+
+.topbar-message-badge {
+  position: absolute;
+  top: 1px;
+  right: 0;
+  display: grid;
+  min-width: 16px;
+  height: 16px;
+  place-items: center;
+  padding: 0 3px;
+  border: 2px solid var(--surface, #fff);
+  border-radius: 999px;
+  color: #fff;
+  background: #d92d20;
+  font-size: 0.5rem;
+  font-weight: 850;
+  line-height: 1;
+}
+
 @media (min-width: 768px) {
-  .topbar > .pwa-install-button {
+  .topbar-actions .pwa-install-button {
     width: 36px;
     padding: 0;
   }
 
-  .topbar > .pwa-install-button span {
+  .topbar-actions .pwa-install-button span {
     display: none;
   }
 }

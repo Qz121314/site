@@ -302,7 +302,7 @@ body::-webkit-scrollbar {
 
   .app-shell > .topbar {
     min-height: calc(58px + env(safe-area-inset-top));
-    justify-content: center;
+    justify-content: flex-start;
     padding-bottom: 0;
   }
 
@@ -330,11 +330,11 @@ body::-webkit-scrollbar {
   }
 
   .app-shell .brand-lockup {
-    width: min(100%, calc(100vw - 32px));
-    justify-content: center;
+    width: auto;
+    justify-content: flex-start;
     gap: 8px;
     margin: 0;
-    text-align: center;
+    text-align: left;
   }
 
   .app-shell .brand-logo {
@@ -347,7 +347,7 @@ body::-webkit-scrollbar {
   }
 
   .app-shell .brand-lockup > span:last-child {
-    justify-items: center;
+    justify-items: start;
   }
 
   .app-shell .brand-lockup strong {
