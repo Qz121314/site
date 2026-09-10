@@ -256,6 +256,7 @@
     height: 3px;
     border-radius: 999px;
     background: var(--brand-strong, var(--brand));
+    content: '';
     opacity: 0;
     transform: translateX(-50%) scaleX(0.6);
     transform-origin: center;
