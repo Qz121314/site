@@ -26,18 +26,19 @@ export function PwaInstallButton() {
     getPwaInstallRuntime,
     getPwaInstallRuntime,
   );
-  const installAvailable = Boolean(getPwaInstallEvent());
   const [status, setStatus] = useState<string | null>(null);
   const shouldShow = Boolean(runtime?.appName && !isPwaInstalled() && !isStandalone());
 
   if (!shouldShow) return null;
 
   const handleClick = async () => {
-    if (installAvailable) {
+    // The browser can dispatch beforeinstallprompt after this component renders.
+    // Read the runtime at click time so we never use a stale availability value.
+    if (getPwaInstallEvent()) {
       const outcome = await requestPwaInstall();
       if (outcome === 'accepted') setStatus('App installed');
       else if (outcome === 'dismissed') setStatus('Installation canceled');
-      else setStatus('This browser does not support one-tap installation');
+      else setStatus('Installation is not available right now. Please try again');
       return;
     }
     if (isIosDevice()) {
@@ -46,9 +47,7 @@ export function PwaInstallButton() {
       window.setTimeout(() => setStatus(null), 4_000);
       return;
     }
-    setStatus(
-      'This browser does not support one-tap installation. Use the browser menu to add this site to your home screen',
-    );
+    setStatus('Open your browser menu to add this site to your home screen');
     window.setTimeout(() => setStatus(null), 4_000);
   };
 
