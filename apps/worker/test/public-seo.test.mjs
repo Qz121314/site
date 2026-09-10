@@ -169,7 +169,7 @@ test('Home HTML preloads the responsive LCP image before client rendering', asyn
   assert.equal(response.status, 200);
   const html = await response.text();
   assert.match(html, /rel="preload" as="image"/u);
-  assert.match(html, /\/_image\/square\/640\/media\/product\.webp/u);
+  assert.match(html, /\/_image\/square\/240\/media\/product\.webp/u);
   assert.match(html, /imagesrcset=/u);
   assert.match(html, /fetchpriority="high"/u);
 });

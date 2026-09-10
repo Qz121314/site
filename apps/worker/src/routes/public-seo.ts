@@ -329,7 +329,10 @@ function sameOriginMediaPath(objectKey: string | null): string | null {
   return `/_media/${segments.map(routePart).join('/')}`;
 }
 
-function publicImageVariantPath(objectKey: string, width: 384 | 640 | 960): string {
+function publicImageVariantPath(
+  objectKey: string,
+  width: 240 | 320 | 384 | 640 | 960,
+): string {
   return `/_image/square/${width}/${objectKey.split('/').map(routePart).join('/')}`;
 }
 
@@ -602,8 +605,8 @@ function metadataMarkup(page: SeoPage, origin: string): string {
   const jsonLd = JSON.stringify(page.jsonLd).replaceAll('<', '\\u003c');
   const preloadImage = page.preloadImageKey
     ? {
-        href: absoluteUrl(origin, publicImageVariantPath(page.preloadImageKey, 640)),
-        srcSet: ([384, 640, 960] as const)
+        href: absoluteUrl(origin, publicImageVariantPath(page.preloadImageKey, 240)),
+        srcSet: ([240, 320, 384, 640, 960] as const)
           .map(
             (width) =>
               `${absoluteUrl(origin, publicImageVariantPath(page.preloadImageKey as string, width))} ${width}w`,
@@ -614,7 +617,7 @@ function metadataMarkup(page: SeoPage, origin: string): string {
   return [
     ...(preloadImage
       ? [
-          `<link rel="preload" as="image" href="${escapeHtml(preloadImage.href)}" imagesrcset="${escapeHtml(preloadImage.srcSet)}" imagesizes="(max-width: 767px) 44vw, 176px" fetchpriority="high" />`,
+          `<link rel="preload" as="image" href="${escapeHtml(preloadImage.href)}" imagesrcset="${escapeHtml(preloadImage.srcSet)}" imagesizes="(max-width: 767px) clamp(136px, calc((100vw - 100px) / 2), 164px), 176px" fetchpriority="high" />`,
         ]
       : []),
     `<meta name="description" content="${escapeHtml(page.description)}" />`,
