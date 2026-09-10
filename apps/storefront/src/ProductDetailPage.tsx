@@ -2,7 +2,13 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { StorefrontLinkComponent } from '@site/storefront-ui';
 import { LoadingHalo } from '@site/storefront-ui/loading';
 import { ChevronRight, CircleAlert, MapPin, Play } from 'lucide-react';
-import { useEffect, useRef, useState, type MouseEvent as ReactMouseEvent } from 'react';
+import {
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+  type MouseEvent as ReactMouseEvent,
+} from 'react';
 import {
   PublicContentError,
   type ProductSnapshot,
@@ -16,6 +22,7 @@ import { ProductDetailLoadingSurface } from './ProductDetailLoadingSurface';
 import { ResilientImage, ResilientVideo } from './ResilientMedia';
 import { canNavigateStorefrontBack, navigateStorefrontBack } from './storefront-history';
 import { pushStorefrontLocation } from './storefront-navigation-runtime';
+import { startStorefrontSharedElementTransition } from './storefront-shared-transition';
 import { StorefrontRouteAction } from './StorefrontRouteAction';
 import { SYSTEM_UI } from './system-ui';
 import './product-detail-ui.css';
@@ -142,6 +149,11 @@ export function ProductDetailPage({
   });
   const media = product?.media.filter(hasMediaUrl) ?? [];
   const activeMedia = media.find((item) => item.id === activeMediaId) ?? media[0] ?? null;
+
+  useLayoutEffect(() => {
+    if (!product) return;
+    startStorefrontSharedElementTransition();
+  }, [product]);
 
   useEffect(() => {
     if (product) document.title = `${product.title} · ${bootstrap.site.site.name}`;

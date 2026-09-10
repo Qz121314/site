@@ -11,6 +11,7 @@ import { StorefrontRoot } from './StorefrontRoot';
 import { StorefrontRoutePreload } from './StorefrontRoutePreload';
 import { installCachedStorefrontTheme } from './theme-runtime';
 import { installStorefrontViewportRuntime } from './storefront-viewport-runtime';
+import { installStorefrontScrollReveal } from './storefront-scroll-reveal';
 import '@site/storefront-ui/styles.css';
 import '@site/storefront-ui/icon-button.css';
 import '@site/storefront-ui/loading.css';
@@ -30,8 +31,10 @@ import './app-chrome.css';
 import './catalog-polish.css';
 import './ui-accessibility.css';
 import './loading-states.css';
+import './interaction-motion.css';
 
 installStorefrontViewportRuntime();
+installStorefrontScrollReveal();
 installChatKeyboardAnchorRuntime();
 installPublicContentFetchFallback();
 installCachedStorefrontTheme();

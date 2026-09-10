@@ -45,6 +45,7 @@ import { canNavigateStorefrontBack, navigateStorefrontBack } from './storefront-
 import { STOREFRONT_LOCATION_EVENT } from './storefront-location-runtime';
 import { primaryNavigationItems } from './storefront-navigation';
 import { handleStorefrontLinkClick } from './storefront-navigation-runtime';
+import { captureStorefrontSharedElement } from './storefront-shared-transition';
 import { StorefrontRouteActionHostProvider } from './StorefrontRouteAction';
 import { observeStorefrontShellChrome } from './storefront-viewport-runtime';
 import { peekSupportVisitorIdentity } from './support-identity';
@@ -106,6 +107,7 @@ function StorefrontLink({
 }: AnchorHTMLAttributes<HTMLAnchorElement>) {
   const handleClick = (event: ReactMouseEvent<HTMLAnchorElement>) => {
     onClick?.(event);
+    captureStorefrontSharedElement(event.currentTarget, href);
     handleStorefrontLinkClick(event, href);
   };
 

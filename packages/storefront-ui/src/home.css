@@ -75,6 +75,10 @@
   transform: scale(1.001);
 }
 
+.hero-carousel-slide.is-active .hero-carousel-media img {
+  animation: storefront-hero-drift 12s var(--route-transition-ease, ease-out) both;
+}
+
 .hero-carousel-overlay {
   position: absolute;
   inset: 0;
@@ -89,6 +93,7 @@
     rgb(0 0 0 / 42%) 72%,
     rgb(0 0 0 / 84%) 100%
   );
+  animation: storefront-hero-scrim-enter 720ms var(--route-transition-ease, ease-out) both;
 }
 
 .hero-carousel-copy {
@@ -97,6 +102,52 @@
   gap: 10px;
   color: #fff;
   text-shadow: var(--theme-art-hero-copy-shadow);
+}
+
+.hero-carousel-copy > * {
+  animation: storefront-hero-copy-enter 620ms var(--route-transition-ease, ease-out) both;
+}
+
+.hero-carousel-copy > :nth-child(2) {
+  animation-delay: 90ms;
+}
+
+.hero-carousel-copy > :nth-child(3) {
+  animation-delay: 150ms;
+}
+
+@keyframes storefront-hero-drift {
+  from {
+    transform: scale(1.035) translate3d(0, 0, 0);
+  }
+
+  to {
+    transform: scale(1.065) translate3d(-0.6%, -0.4%, 0);
+  }
+}
+
+@keyframes storefront-hero-scrim-enter {
+  from {
+    opacity: 0;
+    clip-path: inset(14% 0 0 0);
+  }
+
+  to {
+    opacity: 1;
+    clip-path: inset(0);
+  }
+}
+
+@keyframes storefront-hero-copy-enter {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 12px, 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
 }
 
 .hero-carousel-copy :is(h1, h2) {
@@ -317,6 +368,16 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+  .hero-carousel-slide.is-active .hero-carousel-media img,
+  .hero-carousel-overlay,
+  .hero-carousel-copy > * {
+    animation: none;
+  }
+
+  .hero-carousel-overlay {
+    clip-path: none;
+  }
+
   .hero-carousel-viewport {
     scroll-behavior: auto;
   }

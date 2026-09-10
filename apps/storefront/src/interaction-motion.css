@@ -1,0 +1,85 @@
+.storefront-scroll-reveal {
+  opacity: 0;
+  transform: translate3d(0, 18px, 0);
+  transition:
+    opacity 520ms var(--route-transition-ease, cubic-bezier(0.22, 1, 0.36, 1)),
+    transform 520ms var(--route-transition-ease, cubic-bezier(0.22, 1, 0.36, 1));
+}
+
+.storefront-scroll-reveal.is-revealed {
+  opacity: 1;
+  transform: none;
+}
+
+.storefront-media-reveal {
+  opacity: 0;
+  transform: scale(1.015);
+  transition:
+    opacity 480ms var(--route-transition-ease, cubic-bezier(0.22, 1, 0.36, 1)),
+    transform 900ms var(--route-transition-ease, cubic-bezier(0.22, 1, 0.36, 1));
+}
+
+.storefront-media-reveal.is-loaded {
+  opacity: 1;
+  transform: none;
+}
+
+html[data-storefront-shared-transition='product-active']
+  :is(.detail-media-stage, .detail-mobile-media-stage) {
+  animation: storefront-shared-product-enter 680ms
+    var(--route-transition-ease, cubic-bezier(0.22, 1, 0.36, 1)) both;
+  transform-origin: 0 0;
+  will-change: transform, border-radius;
+}
+
+@keyframes storefront-shared-product-enter {
+  from {
+    opacity: 0.72;
+    transform: translate3d(var(--shared-delta-x), var(--shared-delta-y), 0)
+      scale(var(--shared-scale-x), var(--shared-scale-y));
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+:is(.product-card, .section-product-card, .browse-section-card, .home-product-tile) {
+  transition:
+    opacity var(--app-motion-fast, 160ms) ease,
+    transform var(--app-motion-base, 240ms) var(--route-transition-ease, ease-out),
+    box-shadow var(--app-motion-base, 240ms) ease;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  :is(
+    .product-card,
+    .section-product-card,
+    .browse-section-card,
+    .home-product-tile
+  ):hover {
+    transform: translateY(-3px);
+  }
+
+  :is(
+      .product-card,
+      .section-product-card,
+      .browse-section-card,
+      .home-product-tile
+    ):hover
+    img {
+    transform: scale(1.035);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .storefront-scroll-reveal,
+  .storefront-media-reveal,
+  html[data-storefront-shared-transition='product-active']
+    :is(.detail-media-stage, .detail-mobile-media-stage) {
+    opacity: 1;
+    transform: none;
+    transition: none;
+  }
+}

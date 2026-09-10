@@ -1,12 +1,16 @@
 :root {
   --route-push-shift: clamp(8px, 3vw, 14px);
   --route-pop-shift: clamp(-14px, -3vw, -8px);
+  --route-transition-duration: 420ms;
+  --route-transition-ease: cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .storefront-route-view {
   min-width: 0;
   isolation: isolate;
   background: var(--page-bg, #f5f6f7);
+  transform-origin: 50% 12%;
+  will-change: opacity, transform, filter;
 }
 
 html[data-theme='noir'] .storefront-route-view {
@@ -14,48 +18,71 @@ html[data-theme='noir'] .storefront-route-view {
 }
 
 html[data-storefront-transition='tab'] .storefront-route-view {
-  animation: storefront-tab-enter var(--app-motion-fast, 140ms)
-    var(--app-ease-out, cubic-bezier(0.22, 1, 0.36, 1)) both;
+  animation: storefront-tab-enter var(--route-transition-duration)
+    var(--route-transition-ease) both;
 }
 
 html[data-storefront-transition='push'] .storefront-route-view {
-  animation: storefront-page-push-enter var(--app-motion-base, 210ms)
-    var(--app-ease-out, cubic-bezier(0.22, 1, 0.36, 1)) both;
+  animation: storefront-page-push-enter var(--route-transition-duration)
+    var(--route-transition-ease) both;
 }
 
 html[data-storefront-transition='pop'] .storefront-route-view {
-  animation: storefront-page-pop-enter var(--app-motion-base, 200ms)
-    var(--app-ease-out, cubic-bezier(0.22, 1, 0.36, 1)) both;
+  animation: storefront-page-pop-enter var(--route-transition-duration)
+    var(--route-transition-ease) both;
+}
+
+/* The route surface arrives first; its page content follows a beat later. */
+html[data-storefront-transition] .storefront-route-view > * {
+  animation: storefront-content-enter 520ms var(--route-transition-ease) 45ms both;
 }
 
 @keyframes storefront-tab-enter {
   from {
-    opacity: 0.97;
-    transform: translate3d(0, 2px, 0);
+    opacity: 0;
+    filter: blur(3px);
+    transform: translate3d(0, 10px, 0) scale(0.994);
   }
 
   to {
     opacity: 1;
+    filter: blur(0);
     transform: none;
   }
 }
 
 @keyframes storefront-page-push-enter {
   from {
-    opacity: 0.985;
-    transform: translate3d(var(--route-push-shift), 0, 0);
+    opacity: 0;
+    filter: blur(4px);
+    transform: translate3d(var(--route-push-shift), 8px, 0) scale(0.992);
   }
 
   to {
     opacity: 1;
+    filter: blur(0);
     transform: none;
   }
 }
 
 @keyframes storefront-page-pop-enter {
   from {
-    opacity: 0.985;
-    transform: translate3d(var(--route-pop-shift), 0, 0);
+    opacity: 0;
+    filter: blur(4px);
+    transform: translate3d(var(--route-pop-shift), 8px, 0) scale(0.992);
+  }
+
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: none;
+  }
+}
+
+@keyframes storefront-content-enter {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 7px, 0);
   }
 
   to {
@@ -73,6 +100,12 @@ html[data-storefront-transition='pop'] .storefront-route-view {
 
 @media (prefers-reduced-motion: reduce) {
   html[data-storefront-transition] .storefront-route-view {
+    animation: none;
+    filter: none;
+    transform: none;
+  }
+
+  html[data-storefront-transition] .storefront-route-view > * {
     animation: none;
   }
 }
