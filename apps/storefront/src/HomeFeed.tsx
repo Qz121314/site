@@ -165,7 +165,7 @@ function HomeProductTile({
   priority: boolean;
   product: PublicProductSummary;
 }) {
-  const src = homeProductImageVariantUrl(product.coverObjectKey, 384) ?? product.coverUrl;
+  const src = homeProductImageVariantUrl(product.coverObjectKey, 240) ?? product.coverUrl;
   const srcSet = product.coverObjectKey
     ? ([240, 320, 384, 640, 960] as const)
         .map(
@@ -184,12 +184,12 @@ function HomeProductTile({
           alt=""
           fallback={<span className="home-product-cover-fallback" aria-hidden="true" />}
           fetchPriority={priority ? 'high' : 'low'}
-          height={640}
+          height={240}
           loading={priority ? 'eager' : 'lazy'}
           sizes="(max-width: 767px) clamp(136px, calc((100vw - 100px) / 2), 164px), 176px"
           src={src}
           srcSet={srcSet}
-          width={640}
+          width={240}
         />
       }
       title={product.title}

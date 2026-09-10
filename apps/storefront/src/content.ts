@@ -1295,7 +1295,7 @@ async function loadV2BootstrapBundle(
   try {
     value = await fetchJson(
       publicContentUrl(origin, 'api/public/storefront/bootstrap'),
-      'no-cache',
+      'default',
       signal,
     );
   } catch (error) {
