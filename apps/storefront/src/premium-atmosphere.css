@@ -1,0 +1,60 @@
+/* Low-contrast atmosphere: no assets, no timers, and no layout-affecting layers. */
+
+.app-shell {
+  background:
+    radial-gradient(
+      circle at 50% -12%,
+      color-mix(in srgb, var(--brand) 6%, transparent),
+      transparent 38%
+    ),
+    var(--theme-page-background, var(--page-bg, #f5f6f7));
+}
+
+.storefront-route-view {
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--surface) 24%, transparent),
+      transparent 220px
+    ),
+    var(--page-bg, #f5f6f7);
+}
+
+html[data-theme='noir'] .storefront-route-view {
+  background:
+    radial-gradient(
+      circle at 50% -10%,
+      color-mix(in srgb, var(--brand) 8%, transparent),
+      transparent 42%
+    ),
+    var(--page-bg, #09070a);
+}
+
+.detail-media-stage {
+  box-shadow:
+    var(--theme-primary-detail-media-shadow, none),
+    0 20px 64px color-mix(in srgb, var(--brand) 7%, transparent);
+}
+
+.detail-mobile-media-stage {
+  box-shadow: 0 18px 54px color-mix(in srgb, var(--brand) 6%, transparent);
+}
+
+.product-detail-route-action {
+  background: linear-gradient(
+    180deg,
+    color-mix(
+      in srgb,
+      var(--theme-primary-detail-cta-bar-background, var(--surface)) 72%,
+      transparent
+    ),
+    var(--theme-primary-detail-cta-bar-background, var(--surface))
+  );
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .detail-media-stage,
+  .detail-mobile-media-stage {
+    box-shadow: var(--theme-primary-detail-media-shadow, none);
+  }
+}

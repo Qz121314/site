@@ -1,0 +1,192 @@
+/* Quiet premium finish: material, type rhythm, and focus details share theme tokens. */
+
+:is(.product-card, .section-product-card, .home-product-tile, .browse-section-card) {
+  -webkit-tap-highlight-color: transparent;
+}
+
+:is(.product-card, .section-product-card) {
+  position: relative;
+}
+
+:is(.product-card, .section-product-card)::after {
+  position: absolute;
+  inset: 0;
+  border: 1px solid color-mix(in srgb, var(--text) 7%, transparent);
+  border-radius: inherit;
+  content: '';
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--app-motion-base, 240ms) ease;
+}
+
+:is(.product-card, .section-product-card):hover::after {
+  opacity: 1;
+}
+
+:is(.product-card, .section-product-card) :is(h3, .section-product-title),
+.home-product-title,
+.browse-search-product-title {
+  letter-spacing: -0.025em;
+  text-wrap: balance;
+}
+
+:is(.product-card, .section-product-card) :is(h3, .section-product-title)::after {
+  display: inline-block;
+  margin-left: 0.38em;
+  color: var(--brand-strong);
+  content: '↗';
+  opacity: 0;
+  transform: translate3d(-4px, 3px, 0);
+  transition:
+    opacity var(--app-motion-fast, 160ms) ease,
+    transform var(--app-motion-fast, 160ms) var(--route-transition-ease, ease-out);
+}
+
+.image-fallback,
+.home-product-cover-fallback,
+.detail-media-fallback {
+  background:
+    radial-gradient(
+      circle at 30% 18%,
+      color-mix(in srgb, var(--brand) 12%, transparent),
+      transparent 45%
+    ),
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--surface-soft) 88%, var(--line)),
+      var(--surface-soft)
+    );
+}
+
+.product-detail-summary h1 {
+  max-width: 18ch;
+  text-wrap: balance;
+}
+
+.product-detail-info {
+  gap: 3px;
+}
+
+.product-detail-inline-action {
+  margin-top: 17px;
+}
+
+.product-detail-body {
+  position: relative;
+  padding-top: 20px;
+}
+
+.product-detail-body::before {
+  position: absolute;
+  top: 0;
+  left: 4px;
+  width: 42px;
+  height: 1px;
+  background: color-mix(in srgb, var(--brand) 58%, var(--line));
+  content: '';
+}
+
+:is(html, .storefront-theme-root) .app-shell > .topbar {
+  transition:
+    background var(--app-motion-base, 240ms) ease,
+    border-color var(--app-motion-base, 240ms) ease,
+    box-shadow var(--app-motion-base, 240ms) ease;
+}
+
+html[data-storefront-scrolled] .app-shell > .topbar {
+  border-bottom-color: color-mix(in srgb, var(--brand) 13%, var(--line));
+  background: color-mix(in srgb, var(--surface) 94%, transparent);
+  box-shadow: 0 8px 24px color-mix(in srgb, var(--text) 7%, transparent);
+}
+
+html[data-storefront-scrolled] .app-shell .brand-lockup {
+  transform: scale(0.97);
+}
+
+html[data-storefront-scrolled] .app-shell .topbar-message-button {
+  transform: translateY(-1px);
+}
+
+.topbar-message-badge {
+  animation: storefront-badge-arrive 600ms var(--route-transition-ease, ease-out) both;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  :is(.product-card, .section-product-card):hover :is(h3, .section-product-title)::after {
+    opacity: 0.9;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes storefront-badge-arrive {
+  from {
+    opacity: 0;
+    transform: scale(0.72);
+  }
+
+  70% {
+    opacity: 1;
+    transform: scale(1.08);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.loading-skeleton,
+.home-product-skeleton,
+.startup-hero-skeleton,
+.startup-brand-skeleton,
+.startup-section-heading-skeleton,
+.startup-product-rail-skeleton {
+  background-image: linear-gradient(
+    105deg,
+    color-mix(in srgb, var(--surface-soft) 92%, var(--line)) 18%,
+    color-mix(in srgb, var(--surface) 82%, var(--brand) 5%) 42%,
+    color-mix(in srgb, var(--surface-soft) 92%, var(--line)) 68%
+  );
+  background-size: 220% 100%;
+  animation: storefront-premium-shimmer 1.8s ease-in-out infinite;
+}
+
+@keyframes storefront-premium-shimmer {
+  from {
+    background-position: 120% 0;
+  }
+
+  to {
+    background-position: -80% 0;
+  }
+}
+
+@media (max-width: 767px) {
+  .product-detail-summary h1 {
+    max-width: 16ch;
+  }
+
+  .product-detail-body {
+    padding-top: 18px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .loading-skeleton,
+  .home-product-skeleton,
+  .startup-hero-skeleton,
+  .startup-brand-skeleton,
+  .startup-section-heading-skeleton,
+  .startup-product-rail-skeleton {
+    animation: none;
+  }
+
+  html[data-storefront-scrolled] .app-shell .brand-lockup,
+  html[data-storefront-scrolled] .app-shell .topbar-message-button {
+    transform: none;
+  }
+
+  .topbar-message-badge {
+    animation: none;
+  }
+}
