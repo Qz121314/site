@@ -47,6 +47,37 @@
   font-weight: 650;
 }
 
+.messages-empty-browse {
+  display: inline-flex;
+  min-height: 42px;
+  align-items: center;
+  justify-content: center;
+  margin-top: 7px;
+  padding: 0 18px;
+  border: 1px solid color-mix(in srgb, var(--brand) 42%, var(--line));
+  border-radius: var(--theme-radius-control, 12px);
+  color: var(--surface);
+  background: var(--brand);
+  box-shadow: 0 7px 16px color-mix(in srgb, var(--brand) 18%, transparent);
+  font-size: 0.8rem;
+  font-weight: 700;
+  text-decoration: none;
+  transition:
+    background var(--app-motion-fast, 140ms) ease,
+    opacity var(--app-motion-fast, 140ms) ease,
+    transform var(--app-motion-fast, 140ms) var(--app-ease-out, ease-out);
+}
+
+.messages-empty-browse:active {
+  opacity: 0.86;
+  transform: scale(0.97);
+}
+
+.messages-empty-browse:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--brand) 48%, transparent);
+  outline-offset: 3px;
+}
+
 .conversation-list {
   overflow: hidden;
 }

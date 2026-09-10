@@ -3,6 +3,7 @@ export const SYSTEM_UI = {
   all: 'All',
   attachment: 'Attachment',
   back: 'Back',
+  browse: 'Browse',
   clear: 'Clear',
   continue: 'Continue',
   conversationClosed: 'Conversation closed',

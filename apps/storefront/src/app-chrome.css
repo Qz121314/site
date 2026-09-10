@@ -235,6 +235,7 @@
     min-height: 56px;
     gap: 2px;
     border-radius: var(--theme-radius-control, 12px);
+    -webkit-tap-highlight-color: transparent;
   }
 
   :is(html, .storefront-theme-root)
@@ -243,7 +244,36 @@
     .bottom-nav-icon {
     width: 40px;
     height: 30px;
-    border-radius: var(--theme-nav-active-radius, 10px);
+    border-radius: 0;
+    background: transparent;
+  }
+
+  :is(html, .storefront-theme-root) .storefront-bottom-chrome > .bottom-nav a::before {
+    display: block;
+    top: 2px;
+    left: 50%;
+    width: 20px;
+    height: 3px;
+    border-radius: 999px;
+    background: var(--brand-strong, var(--brand));
+    opacity: 0;
+    transform: translateX(-50%) scaleX(0.6);
+    transform-origin: center;
+    transition:
+      opacity var(--app-motion-fast, 160ms) ease,
+      transform var(--app-motion-fast, 160ms) var(--app-ease-out, ease-out);
+  }
+
+  :is(html, .storefront-theme-root) .storefront-bottom-chrome > .bottom-nav a.is-active {
+    color: var(--brand-strong, var(--brand));
+  }
+
+  :is(html, .storefront-theme-root)
+    .storefront-bottom-chrome
+    > .bottom-nav
+    a.is-active::before {
+    opacity: 1;
+    transform: translateX(-50%) scaleX(1);
   }
 
   :is(html, .storefront-theme-root)
@@ -251,8 +281,13 @@
     > .bottom-nav
     a.is-active
     .bottom-nav-icon {
-    background: var(--theme-primary-navigation-active-surface);
-    transform: translateY(-1px) scale(1.02);
+    background: transparent;
+    transform: none;
+  }
+
+  :is(html, .storefront-theme-root) .storefront-bottom-chrome > .bottom-nav a:active {
+    opacity: 0.82;
+    transform: scale(0.97);
   }
 
   :is(html, .storefront-theme-root) .storefront-bottom-chrome > .bottom-nav small {
@@ -273,7 +308,8 @@
       .faq-back-link,
       .storefront-detail-back,
       .bottom-nav a,
-      .bottom-nav .bottom-nav-icon
+      .bottom-nav .bottom-nav-icon,
+      .bottom-nav a::before
     ) {
     transition: none;
   }

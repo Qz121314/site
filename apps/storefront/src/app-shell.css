@@ -378,13 +378,9 @@ body,
   }
 
   .storefront-bottom-chrome > .bottom-nav a.is-active {
-    color: var(--text);
+    color: var(--brand-strong, var(--brand));
     background: transparent;
     font-weight: 640;
-  }
-
-  .storefront-bottom-chrome > .bottom-nav a::before {
-    display: none;
   }
 
   .storefront-bottom-chrome > .bottom-nav .bottom-nav-icon {
@@ -398,8 +394,7 @@ body,
   }
 
   .storefront-bottom-chrome > .bottom-nav a.is-active .bottom-nav-icon {
-    background: color-mix(in srgb, var(--text) 7%, transparent);
-    transform: translateY(-1px);
+    transform: none;
   }
 
   .storefront-bottom-chrome > .bottom-nav a.is-active .storefront-nav-svg {

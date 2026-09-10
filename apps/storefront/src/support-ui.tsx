@@ -214,7 +214,12 @@ export function MessagesPageContent({
           <span className="messages-empty-icon" aria-hidden="true">
             <MessageCircle />
           </span>
-          {supportAvailable === false ? <strong>{SYSTEM_UI.noSupport}</strong> : null}
+          <strong>
+            {supportAvailable === false ? SYSTEM_UI.noSupport : 'No conversations yet'}
+          </strong>
+          <LinkComponent className="messages-empty-browse" href="/browse/">
+            {SYSTEM_UI.browse}
+          </LinkComponent>
         </div>
       ) : (
         <div className="conversation-list" role="list">
