@@ -2,8 +2,9 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
 import { installChatKeyboardAnchorRuntime } from './chat-keyboard-anchor-runtime';
+import { DeferredPwaInstallPrompt } from './DeferredPwaInstallPrompt';
 import { MobileEdgeNavigation } from './MobileEdgeNavigation';
-import { PwaInstallPrompt } from './PwaInstallPrompt';
+import { installPwaInstallEventCapture } from './pwa-install-runtime';
 import { installPublicContentFetchFallback } from './public-content-transport';
 import { StorefrontPresentation } from './StorefrontPresentation';
 import { StorefrontRoot } from './StorefrontRoot';
@@ -34,6 +35,7 @@ installStorefrontViewportRuntime();
 installChatKeyboardAnchorRuntime();
 installPublicContentFetchFallback();
 installCachedStorefrontTheme();
+installPwaInstallEventCapture();
 
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
   window.addEventListener('load', () => {
@@ -67,7 +69,7 @@ createRoot(root).render(
       <StorefrontRoutePreload />
       <MobileEdgeNavigation />
       <StorefrontRoot />
-      <PwaInstallPrompt />
+      <DeferredPwaInstallPrompt />
     </QueryClientProvider>
   </StrictMode>,
 );

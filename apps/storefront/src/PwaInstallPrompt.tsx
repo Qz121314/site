@@ -2,12 +2,13 @@ import { StorefrontIconButton } from '@site/storefront-ui/icon-button';
 import { X } from 'lucide-react';
 import { useEffect, useState, useSyncExternalStore } from 'react';
 import { getPwaInstallRuntime, subscribePwaInstallRuntime } from './pwa-install-runtime';
+import {
+  getPwaInstallEvent,
+  isPwaInstalled,
+  type PwaBeforeInstallPromptEvent,
+} from './pwa-install-runtime';
 import { parseStorefrontRoute } from './routing';
-
-type BeforeInstallPromptEvent = Event & {
-  prompt: () => Promise<void>;
-  userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
-};
+import './pwa.css';
 
 type NavigatorWithStandalone = Navigator & { standalone?: boolean };
 
@@ -121,14 +122,16 @@ export function PwaInstallPrompt() {
   const appName = runtime?.appName ?? null;
   const config = runtime?.config ?? null;
   const directInstallRequest = hasDirectInstallRequest();
-  const [installEvent, setInstallEvent] = useState<BeforeInstallPromptEvent | null>(null);
+  const [installEvent, setInstallEvent] = useState<PwaBeforeInstallPromptEvent | null>(
+    getPwaInstallEvent,
+  );
   const [showIosHint, setShowIosHint] = useState(false);
   const [delayComplete, setDelayComplete] = useState(false);
   const [engaged, setEngaged] = useState(
     () => directInstallRequest || routeSignalsStrongIntent(window.location.pathname),
   );
   const [dismissed, setDismissed] = useState(false);
-  const [installed, setInstalled] = useState(isStandalone);
+  const [installed, setInstalled] = useState(() => isStandalone() || isPwaInstalled());
   const [sessionSuppressed] = useState(hasSessionPrompted);
 
   useEffect(() => {
@@ -144,7 +147,7 @@ export function PwaInstallPrompt() {
 
     const handleInstallPrompt = (event: Event) => {
       event.preventDefault();
-      setInstallEvent(event as BeforeInstallPromptEvent);
+      setInstallEvent(event as PwaBeforeInstallPromptEvent);
     };
     const handleInstalled = () => {
       clearDismissal();
