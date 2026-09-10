@@ -61,7 +61,6 @@ export function PwaInstallButton() {
         variant="soft"
       >
         <Download aria-hidden="true" />
-        <span>安装</span>
       </StorefrontIconButton>
       {status ? (
         <span className="pwa-install-status" role="status">
