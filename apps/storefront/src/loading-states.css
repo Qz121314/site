@@ -137,7 +137,7 @@
 .startup-bottom-nav-skeleton {
   position: fixed;
   right: var(--app-viewport-right, 0px);
-  bottom: var(--app-viewport-bottom, 0px);
+  bottom: var(--app-bottom-chrome-inset, 0px);
   left: var(--app-viewport-left, 0px);
   z-index: 30;
   display: grid;

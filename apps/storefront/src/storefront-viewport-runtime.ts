@@ -58,9 +58,11 @@ function isTextEntryElement(element: Element | null): boolean {
   return element.isContentEditable;
 }
 
-function writeTextEntryState(): void {
-  const state = isTextEntryElement(document.activeElement) ? 'active' : 'idle';
+function writeTextEntryState(): boolean {
+  const active = isTextEntryElement(document.activeElement);
+  const state = active ? 'active' : 'idle';
   document.documentElement.dataset.appTextEntry = state;
+  return active;
 }
 
 function writeViewportMetrics(metrics = currentViewportMetrics()): void {
@@ -71,8 +73,11 @@ function writeViewportMetrics(metrics = currentViewportMetrics()): void {
   root.style.setProperty('--app-viewport-right', roundedPixels(metrics.right));
   root.style.setProperty('--app-viewport-bottom', roundedPixels(metrics.bottom));
   root.style.setProperty('--app-viewport-left', roundedPixels(metrics.left));
+  root.style.setProperty(
+    '--app-bottom-chrome-inset',
+    roundedPixels(writeTextEntryState() ? metrics.bottom : 0),
+  );
   root.dataset.visualViewport = window.visualViewport ? 'active' : 'fallback';
-  writeTextEntryState();
 }
 
 export function installStorefrontViewportRuntime(): void {

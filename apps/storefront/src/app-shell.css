@@ -170,7 +170,7 @@ body::-webkit-scrollbar {
 .storefront-bottom-chrome {
   position: fixed;
   right: var(--app-viewport-right, 0px);
-  bottom: var(--app-viewport-bottom, 0px);
+  bottom: var(--app-bottom-chrome-inset, 0px);
   left: var(--app-viewport-left, 0px);
   z-index: 80;
   width: auto;

@@ -23,6 +23,7 @@ test('Storefront App Shell owns live VisualViewport and measured fixed-chrome ge
   assert.match(runtime, /--app-viewport-height/u);
   assert.match(runtime, /--app-viewport-top/u);
   assert.match(runtime, /--app-viewport-bottom/u);
+  assert.match(runtime, /--app-bottom-chrome-inset/u);
   assert.match(runtime, /--app-header-height/u);
   assert.match(runtime, /--app-bottom-chrome-height/u);
   assert.doesNotMatch(runtime, /--app-bottom-nav-height/u);
