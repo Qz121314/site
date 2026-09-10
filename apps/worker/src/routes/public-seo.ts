@@ -70,8 +70,14 @@ type SeoPage = {
   redirectPath?: string;
 };
 
-const PAGE_CACHE_CONTROL = 'public, max-age=0, must-revalidate';
+const PAGE_CACHE_CONTROL =
+  'public, max-age=0, s-maxage=30, stale-while-revalidate=60, must-revalidate';
 const SEO_CACHE_CONTROL = 'public, max-age=300, stale-while-revalidate=3600';
+
+function workerCache(): Cache | null {
+  if (typeof caches === 'undefined') return null;
+  return (caches as unknown as { default?: Cache }).default ?? null;
+}
 
 function isRecord(value: unknown): value is JsonRecord {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -650,6 +656,14 @@ function withPageHeaders(response: Response, page: SeoPage): Headers {
 
 export async function serveStorefrontDocument(context: Context<AppEnvironment>) {
   const requestUrl = new URL(context.req.url);
+  const cacheKey = new Request(requestUrl.toString(), { method: 'GET' });
+  const cache = workerCache();
+  const cached = cache ? await cache.match(cacheKey) : null;
+  if (cached) {
+    return context.req.method === 'HEAD'
+      ? new Response(null, { status: cached.status, headers: cached.headers })
+      : cached;
+  }
   const page = await resolveSeoPage(
     context.env.ASSETS_BUCKET,
     requestUrl.origin,
@@ -672,10 +686,14 @@ export async function serveStorefrontDocument(context: Context<AppEnvironment>) 
     `    ${metadataMarkup(page, requestUrl.origin)}\n  </head>`,
   );
   const headers = withPageHeaders(shell, page);
-  return new Response(context.req.method === 'HEAD' ? null : html, {
+  const response = new Response(context.req.method === 'HEAD' ? null : html, {
     status: page.status,
     headers,
   });
+  if (cache && page.status === 200 && !page.redirectPath) {
+    context.executionCtx.waitUntil(cache.put(cacheKey, response.clone()));
+  }
+  return response;
 }
 
 export async function serveStaticAsset(context: Context<AppEnvironment>) {
