@@ -8,6 +8,11 @@
   overflow: hidden;
 }
 
+/* The legacy picker is portaled to body and must sit above the shared dialogs. */
+.media-picker-backdrop {
+  z-index: 1300;
+}
+
 .media-picker-body {
   display: grid;
   min-height: 0;
