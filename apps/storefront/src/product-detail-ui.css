@@ -433,8 +433,9 @@
   }
 
   .detail-gallery {
-    width: 100%;
+    width: min(100%, calc(100dvh - 164px));
     max-width: 620px;
+    margin-inline: auto;
   }
 
   .detail-media-thumbnail {
@@ -499,7 +500,8 @@
   }
 
   .detail-gallery {
-    max-width: none;
+    width: min(100%, calc(100dvh - 164px));
+    max-width: 620px;
   }
 
   .product-detail-info {

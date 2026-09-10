@@ -131,10 +131,12 @@
 }
 
 :is(html, .storefront-theme-root) .section-category-filter button.is-active {
-  border-color: var(--text);
-  color: var(--surface);
-  background: var(--text);
-  box-shadow: 0 5px 14px color-mix(in srgb, var(--text) 12%, transparent);
+  border-color: color-mix(in srgb, var(--brand-strong) 34%, var(--line));
+  color: color-mix(in srgb, var(--brand-strong) 88%, var(--text));
+  background: color-mix(in srgb, var(--brand) 14%, var(--surface));
+  box-shadow:
+    0 1px 0 color-mix(in srgb, var(--surface) 72%, transparent) inset,
+    0 5px 14px color-mix(in srgb, var(--brand) 10%, transparent);
 }
 
 :is(html, .storefront-theme-root) .section-tag-filter button {
@@ -190,9 +192,9 @@
     :is(.section-category-filter button, .section-tag-filter button):hover:not(
       .is-active
     ) {
-    border-color: color-mix(in srgb, var(--text) 18%, var(--line));
-    color: var(--text);
-    background: color-mix(in srgb, var(--surface-soft) 92%, var(--surface));
+    border-color: color-mix(in srgb, var(--brand) 24%, var(--line));
+    color: color-mix(in srgb, var(--brand-strong) 76%, var(--text));
+    background: color-mix(in srgb, var(--brand) 6%, var(--surface));
   }
 }
 
