@@ -4,6 +4,9 @@ import {
   getConversionGroup,
   selectNextConversionTarget,
 } from '../conversion-pool/conversion-pool';
+import { getRoutableProduct } from '../conversion-pool/public-cta';
+import { getCustomerServiceConnection } from '../customer-service/customer-service-connections';
+import { renderH5Runtime, type H5RuntimeBinding } from '../h5-support-runtime';
 import type { AppEnvironment } from '../types';
 import { getH5PublicSettings } from '../settings/h5-settings';
 
@@ -51,22 +54,25 @@ function runtimeResponse(
   pageId: string,
   ctas: Array<{
     id: string;
+    key: string;
     label: string;
     selector: string;
     sectionId: string | null;
     conversionGroupId: string | null;
+    mode: 'customer_service' | 'link' | null;
   }>,
 ): Response {
-  const bindings = ctas.map((cta) => ({
+  const bindings: H5RuntimeBinding[] = ctas.map((cta) => ({
+    key: cta.key,
     selector: cta.selector,
     label: cta.label,
     href:
       cta.sectionId && cta.conversionGroupId
         ? `/pages/cta/${encodeURIComponent(pageId)}/${encodeURIComponent(cta.id)}`
         : null,
+    mode: cta.mode,
   }));
-  const serializedBindings = JSON.stringify(bindings);
-  const source = `(function(){const b=${serializedBindings};function apply(){b.forEach(function(i){document.querySelectorAll(i.selector).forEach(function(e){if(i.label)e.textContent=i.label;if(i.href&&!e.dataset.siteCtaBound){e.dataset.siteCtaBound='1';e.addEventListener('click',function(event){event.preventDefault();window.location.href=i.href},{capture:true})}})})}if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',apply)}else{apply()}})();`;
+  const source = renderH5Runtime(bindings);
   return new Response(source, {
     headers: {
       'Cache-Control': 'no-store',
@@ -125,7 +131,7 @@ async function servePage(context: Context<AppEnvironment>) {
   headers.set('X-Robots-Tag', 'noindex, nofollow');
   headers.set(
     'Content-Security-Policy',
-    "default-src 'self' https: data: blob:; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' https: data: blob:; font-src 'self' https: data:; frame-ancestors 'none'",
+    "default-src 'self' https: data: blob:; script-src 'self' 'unsafe-inline' https:; style-src 'self' 'unsafe-inline' https:; img-src 'self' https: data: blob:; font-src 'self' https: data:; connect-src 'self' https: wss:; frame-ancestors 'none'",
   );
   headers.set(
     'Cache-Control',
@@ -146,15 +152,22 @@ publicPageRoutes.get('/__runtime/:pageId', async (context) => {
     .first<{ published_version_id: string | null }>();
   if (!page?.published_version_id) return notFound(context);
   const ctas = await context.env.DB.prepare(
-    `SELECT id, label, selector, section_id AS sectionId, conversion_group_id AS conversionGroupId FROM h5_page_ctas WHERE version_id = ?`,
+    `SELECT c.id, c.cta_key AS key, c.label, c.selector, c.section_id AS sectionId,
+            c.conversion_group_id AS conversionGroupId, g.mode
+     FROM h5_page_ctas c
+     LEFT JOIN conversion_groups g
+       ON g.section_id = c.section_id AND g.id = c.conversion_group_id
+     WHERE c.version_id = ?`,
   )
     .bind(page.published_version_id)
     .all<{
       id: string;
+      key: string;
       label: string;
       selector: string;
       sectionId: string | null;
       conversionGroupId: string | null;
+      mode: 'customer_service' | 'link' | null;
     }>();
   return runtimeResponse(pageId, ctas.results);
 });
@@ -163,10 +176,18 @@ publicPageRoutes.get('/cta/:pageId/:ctaId', async (context) => {
   const pageId = context.req.param('pageId');
   const ctaId = context.req.param('ctaId');
   const cta = await context.env.DB.prepare(
-    `SELECT section_id, conversion_group_id FROM h5_page_ctas c JOIN h5_page_versions v ON v.id = c.version_id JOIN h5_pages p ON p.id = v.page_id AND p.published_version_id = v.id WHERE p.id = ? AND c.id = ? AND p.status = 'published'`,
+    `SELECT c.section_id, c.conversion_group_id, c.product_id
+     FROM h5_page_ctas c
+     JOIN h5_page_versions v ON v.id = c.version_id
+     JOIN h5_pages p ON p.id = v.page_id AND p.published_version_id = v.id
+     WHERE p.id = ? AND c.id = ? AND p.status = 'published'`,
   )
     .bind(pageId, ctaId)
-    .first<{ section_id: string | null; conversion_group_id: string | null }>();
+    .first<{
+      section_id: string | null;
+      conversion_group_id: string | null;
+      product_id: string | null;
+    }>();
   if (!cta?.section_id || !cta.conversion_group_id) return notFound(context);
   const group = await getConversionGroup(
     context.env.DB,
@@ -177,10 +198,52 @@ publicPageRoutes.get('/cta/:pageId/:ctaId', async (context) => {
     !group ||
     group.deletedAt ||
     !group.isEnabled ||
-    group.activeTargetCount < 1 ||
-    group.mode !== 'link'
+    (group.mode === 'link' && group.activeTargetCount < 1)
   )
     return notFound(context);
+  if (group.mode === 'customer_service') {
+    if (!cta.product_id || !group.customerServiceConnectionId) return notFound(context);
+    const product = await getRoutableProduct(context.env.DB, cta.product_id);
+    if (
+      !product ||
+      product.sectionId !== cta.section_id ||
+      product.conversionGroupId !== cta.conversion_group_id
+    )
+      return notFound(context);
+    const connection = await getCustomerServiceConnection(
+      context.env.DB,
+      group.customerServiceConnectionId,
+    );
+    if (
+      !connection ||
+      connection.deletedAt ||
+      !connection.isEnabled ||
+      !connection.clientApiUrl ||
+      !connection.realtimeUrl ||
+      !connection.verifiedAt
+    )
+      return notFound(context);
+    context.header('Cache-Control', 'no-store, private');
+    context.header('Referrer-Policy', 'no-referrer');
+    return context.json({
+      mode: 'customer_service',
+      handoffId: crypto.randomUUID(),
+      connection: {
+        id: connection.id,
+        clientApiUrl: connection.clientApiUrl,
+        realtimeUrl: connection.realtimeUrl,
+        protocolVersion: 'v1',
+      },
+      product: {
+        id: product.id,
+        sectionId: product.sectionId,
+        sectionName: product.sectionName,
+        categoryId: product.categoryId,
+        categoryName: product.categoryName,
+        title: product.title,
+      },
+    });
+  }
   const target = await selectNextConversionTarget(
     context.env.DB,
     group,

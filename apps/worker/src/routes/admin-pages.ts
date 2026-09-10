@@ -224,7 +224,7 @@ adminPageRoutes.get('/:pageId', async (context) => {
     return apiError(context, 404, 'PAGE_VERSION_NOT_FOUND', '页面版本不存在。');
   const ctas = (
     await context.env.DB.prepare(
-      `SELECT id, cta_key, label, file_path, selector, section_id, conversion_group_id
+      `SELECT id, cta_key, label, file_path, selector, section_id, conversion_group_id, product_id
        FROM h5_page_ctas WHERE version_id = ? ORDER BY rowid ASC`,
     )
       .bind(version.id)
@@ -236,6 +236,7 @@ adminPageRoutes.get('/:pageId', async (context) => {
         selector: string;
         section_id: string | null;
         conversion_group_id: string | null;
+        product_id: string | null;
       }>()
   ).results;
   return context.json({
@@ -257,6 +258,7 @@ adminPageRoutes.get('/:pageId', async (context) => {
         selector: cta.selector,
         sectionId: cta.section_id,
         conversionGroupId: cta.conversion_group_id,
+        productId: cta.product_id,
       })),
     },
   });
@@ -491,7 +493,8 @@ adminPageRoutes.put('/:pageId/ctas', async (context) => {
         !(
           binding.conversionGroupId === null ||
           typeof binding.conversionGroupId === 'string'
-        ),
+        ) ||
+        !(binding.productId === null || typeof binding.productId === 'string'),
     )
   )
     return apiError(context, 400, 'INVALID_CTA_BINDINGS', 'CTA 绑定数据无效。');
@@ -506,10 +509,10 @@ adminPageRoutes.put('/:pageId/ctas', async (context) => {
       );
     if (binding.sectionId && binding.conversionGroupId) {
       const validGroup = await context.env.DB.prepare(
-        'SELECT id FROM conversion_groups WHERE section_id = ? AND id = ? AND deleted_at IS NULL AND is_enabled = 1',
+        'SELECT id, mode FROM conversion_groups WHERE section_id = ? AND id = ? AND deleted_at IS NULL AND is_enabled = 1',
       )
         .bind(binding.sectionId, binding.conversionGroupId)
-        .first<{ id: string }>();
+        .first<{ id: string; mode: 'customer_service' | 'link' }>();
       if (!validGroup)
         return apiError(
           context,
@@ -517,14 +520,52 @@ adminPageRoutes.put('/:pageId/ctas', async (context) => {
           'INVALID_CONVERSION_GROUP',
           '所选转化池不存在或未启用。',
         );
+      if (validGroup.mode === 'customer_service' && !binding.productId)
+        return apiError(
+          context,
+          400,
+          'H5_SUPPORT_PRODUCT_REQUIRED',
+          '在线客服 CTA 必须选择一个已发布且绑定该转化池的咨询产品。',
+        );
+      if (validGroup.mode === 'link' && binding.productId)
+        return apiError(
+          context,
+          400,
+          'H5_LINK_PRODUCT_FORBIDDEN',
+          '链接 CTA 不能绑定咨询产品。',
+        );
+      if (binding.productId) {
+        const validProduct = await context.env.DB.prepare(
+          `SELECT id FROM products
+           WHERE id = ? AND section_id = ? AND conversion_group_id = ?
+             AND status = 'published' AND deleted_at IS NULL`,
+        )
+          .bind(binding.productId, binding.sectionId, binding.conversionGroupId)
+          .first<{ id: string }>();
+        if (!validProduct)
+          return apiError(
+            context,
+            400,
+            'INVALID_H5_SUPPORT_PRODUCT',
+            '咨询产品必须是已发布且已绑定当前在线客服转化池的产品。',
+          );
+      }
+    } else if (binding.productId) {
+      return apiError(
+        context,
+        400,
+        'H5_SUPPORT_PRODUCT_UNBOUND',
+        '未绑定转化池的 CTA 不能设置咨询产品。',
+      );
     }
     statements.push(
       context.env.DB.prepare(
-        'UPDATE h5_page_ctas SET label = ?, section_id = ?, conversion_group_id = ? WHERE id = ? AND version_id = ?',
+        'UPDATE h5_page_ctas SET label = ?, section_id = ?, conversion_group_id = ?, product_id = ? WHERE id = ? AND version_id = ?',
       ).bind(
         binding.label.trim(),
         binding.sectionId,
         binding.conversionGroupId,
+        binding.productId,
         binding.ctaId,
         version.id,
       ),
