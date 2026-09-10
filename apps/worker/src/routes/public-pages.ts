@@ -4,7 +4,6 @@ import {
   getConversionGroup,
   selectNextConversionTarget,
 } from '../conversion-pool/conversion-pool';
-import { getRoutableProduct } from '../conversion-pool/public-cta';
 import { getCustomerServiceConnection } from '../customer-service/customer-service-connections';
 import { renderH5Runtime, type H5RuntimeBinding } from '../h5-support-runtime';
 import type { AppEnvironment } from '../types';
@@ -176,7 +175,8 @@ publicPageRoutes.get('/cta/:pageId/:ctaId', async (context) => {
   const pageId = context.req.param('pageId');
   const ctaId = context.req.param('ctaId');
   const cta = await context.env.DB.prepare(
-    `SELECT c.section_id, c.conversion_group_id, c.product_id
+    `SELECT c.section_id, c.conversion_group_id, c.cta_key,
+            p.slug AS page_slug, p.name AS page_name
      FROM h5_page_ctas c
      JOIN h5_page_versions v ON v.id = c.version_id
      JOIN h5_pages p ON p.id = v.page_id AND p.published_version_id = v.id
@@ -186,7 +186,9 @@ publicPageRoutes.get('/cta/:pageId/:ctaId', async (context) => {
     .first<{
       section_id: string | null;
       conversion_group_id: string | null;
-      product_id: string | null;
+      cta_key: string;
+      page_slug: string;
+      page_name: string;
     }>();
   if (!cta?.section_id || !cta.conversion_group_id) return notFound(context);
   const group = await getConversionGroup(
@@ -202,14 +204,7 @@ publicPageRoutes.get('/cta/:pageId/:ctaId', async (context) => {
   )
     return notFound(context);
   if (group.mode === 'customer_service') {
-    if (!cta.product_id || !group.customerServiceConnectionId) return notFound(context);
-    const product = await getRoutableProduct(context.env.DB, cta.product_id);
-    if (
-      !product ||
-      product.sectionId !== cta.section_id ||
-      product.conversionGroupId !== cta.conversion_group_id
-    )
-      return notFound(context);
+    if (!group.customerServiceConnectionId) return notFound(context);
     const connection = await getCustomerServiceConnection(
       context.env.DB,
       group.customerServiceConnectionId,
@@ -235,12 +230,18 @@ publicPageRoutes.get('/cta/:pageId/:ctaId', async (context) => {
         protocolVersion: 'v1',
       },
       product: {
-        id: product.id,
-        sectionId: product.sectionId,
-        sectionName: product.sectionName,
-        categoryId: product.categoryId,
-        categoryName: product.categoryName,
-        title: product.title,
+        id: `h5-page:${pageId}`,
+        title: cta.page_name,
+        href: `/pages/${encodeURIComponent(cta.page_slug)}/`,
+        sourceType: 'h5_page',
+      },
+      source: {
+        type: 'h5_page',
+        pageId,
+        pageName: cta.page_name,
+        pageSlug: cta.page_slug,
+        ctaId,
+        ctaKey: cta.cta_key,
       },
     });
   }

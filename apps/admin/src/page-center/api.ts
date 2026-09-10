@@ -24,7 +24,6 @@ export type H5PageDetail = H5Page & {
     selector: string;
     sectionId: string | null;
     conversionGroupId: string | null;
-    productId: string | null;
   }>;
 };
 
@@ -124,7 +123,6 @@ export async function fetchH5Page(pageId: string): Promise<H5PageDetail> {
             sectionId: typeof cta.sectionId === 'string' ? cta.sectionId : null,
             conversionGroupId:
               typeof cta.conversionGroupId === 'string' ? cta.conversionGroupId : null,
-            productId: typeof cta.productId === 'string' ? cta.productId : null,
           };
         })
       : [],
@@ -169,7 +167,6 @@ export async function saveH5CtaBindings(
     label: string;
     sectionId: string | null;
     conversionGroupId: string | null;
-    productId: string | null;
   }>,
 ) {
   await request(`/api/admin/pages/${encodeURIComponent(pageId)}/ctas`, {

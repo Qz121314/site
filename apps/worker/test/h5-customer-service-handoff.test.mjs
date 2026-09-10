@@ -56,26 +56,17 @@ function createDb() {
           if (sql.includes('h5_public_settings')) {
             return { public_origin: 'https://pages.example.com', updated_at: NOW };
           }
-          if (sql.includes('FROM h5_page_ctas c') && sql.includes('product_id')) {
+          if (sql.includes('FROM h5_page_ctas c') && sql.includes('page_name')) {
             return {
               section_id: 'section-1',
               conversion_group_id: 'group-1',
-              product_id: 'product-1',
+              cta_key: 'consult',
+              page_slug: 'consultation',
+              page_name: 'Consultation page',
             };
           }
           if (sql.trimStart().startsWith('SELECT\n  c.id')) return connectionRow();
           if (sql.includes('FROM conversion_groups g')) return groupRow();
-          if (sql.includes('FROM products p')) {
-            return {
-              id: 'product-1',
-              section_id: 'section-1',
-              section_name: 'Services',
-              category_id: null,
-              category_name: null,
-              title: 'Consultation',
-              conversion_group_id: 'group-1',
-            };
-          }
           if (sql.includes('FROM h5_pages WHERE id = ?')) {
             return { published_version_id: 'version-1' };
           }
@@ -145,6 +136,19 @@ test('bound H5 customer-service CTA returns only public handoff data', async () 
     realtimeUrl: 'wss://support.example.com/client/v1/realtime',
     protocolVersion: 'v1',
   });
-  assert.equal(body.product.id, 'product-1');
+  assert.deepEqual(body.product, {
+    id: 'h5-page:page-1',
+    title: 'Consultation page',
+    href: '/pages/consultation/',
+    sourceType: 'h5_page',
+  });
+  assert.deepEqual(body.source, {
+    type: 'h5_page',
+    pageId: 'page-1',
+    pageName: 'Consultation page',
+    pageSlug: 'consultation',
+    ctaId: 'cta-1',
+    ctaKey: 'consult',
+  });
   assert.equal(JSON.stringify(body).includes('private-token'), false);
 });

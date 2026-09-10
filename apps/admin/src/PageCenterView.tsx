@@ -8,7 +8,6 @@ import { Input } from './components/ui/input';
 import { Select } from './components/ui/select';
 import { AdminStatusBadge } from './components/ui/status-badge';
 import { fetchConversionGroups, type AdminConversionGroup } from './conversion-pool/api';
-import { fetchProducts, type AdminProduct } from './product-management/api';
 import {
   deleteH5Page,
   fetchH5Pages,
@@ -32,7 +31,6 @@ type UploadedCta = {
   label: string;
   sectionId: string;
   conversionGroupId: string;
-  productId: string;
 };
 
 function publicSiteOrigin(): string {
@@ -50,7 +48,6 @@ export function PageCenterView({ sections, onSessionExpired }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [pages, setPages] = useState<H5Page[]>([]);
   const [groups, setGroups] = useState<AdminConversionGroup[]>([]);
-  const [products, setProducts] = useState<AdminProduct[]>([]);
   const [h5PublicOrigin, setH5PublicOrigin] = useState<string | null>(null);
   const [domainDialogOpen, setDomainDialogOpen] = useState(false);
   const [domainDraft, setDomainDraft] = useState('');
@@ -72,19 +69,15 @@ export function PageCenterView({ sections, onSessionExpired }: Props) {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [nextPages, nextGroups, nextProducts, nextH5Settings] = await Promise.all([
+      const [nextPages, nextGroups, nextH5Settings] = await Promise.all([
         fetchH5Pages(),
         Promise.all(sections.map((section) => fetchConversionGroups(section.id))).then(
           (items) => items.flat(),
-        ),
-        Promise.all(sections.map((section) => fetchProducts(section.id))).then((items) =>
-          items.flat().filter((product) => product.status === 'published'),
         ),
         fetchH5PublicSettings(),
       ]);
       setPages(nextPages);
       setGroups(nextGroups);
-      setProducts(nextProducts);
       setH5PublicOrigin(nextH5Settings.publicOrigin);
     } catch (error) {
       if ((error as { status?: number }).status === 401) onSessionExpired();
@@ -156,7 +149,6 @@ export function PageCenterView({ sections, onSessionExpired }: Props) {
           label: cta.label,
           sectionId: cta.sectionId ?? '',
           conversionGroupId: cta.conversionGroupId ?? '',
-          productId: cta.productId ?? '',
         })),
       });
       setConfigurationOpen(true);
@@ -242,7 +234,6 @@ export function PageCenterView({ sections, onSessionExpired }: Props) {
           ...cta,
           sectionId: '',
           conversionGroupId: '',
-          productId: '',
         })),
       });
       setConfigurationOpen(true);
@@ -275,27 +266,17 @@ export function PageCenterView({ sections, onSessionExpired }: Props) {
       });
       return;
     }
-    if (
-      uploaded.ctas.some((cta) => {
-        const group = availableGroups.find((item) => item.id === cta.conversionGroupId);
-        return group?.mode === 'customer_service' && !cta.productId;
-      })
-    ) {
-      setFeedback({ type: 'error', message: '请为每个在线客服 CTA 选择咨询产品。' });
-      return;
-    }
     setBusy(true);
     try {
       await updateH5PageName(uploaded.id, name);
       await saveH5CtaBindings(
         uploaded.id,
         uploaded.versionId,
-        uploaded.ctas.map(({ id, label, sectionId, conversionGroupId, productId }) => ({
+        uploaded.ctas.map(({ id, label, sectionId, conversionGroupId }) => ({
           ctaId: id,
           label: label.trim(),
           sectionId: sectionId || null,
           conversionGroupId: conversionGroupId || null,
-          productId: productId || null,
         })),
       );
       await publishH5Page(uploaded.id);
@@ -501,7 +482,6 @@ export function PageCenterView({ sections, onSessionExpired }: Props) {
                                   ...item,
                                   sectionId: group?.sectionId ?? '',
                                   conversionGroupId: group?.id ?? '',
-                                  productId: '',
                                 }
                               : item,
                           ),
@@ -525,36 +505,6 @@ export function PageCenterView({ sections, onSessionExpired }: Props) {
                         );
                       })}
                     </Select>
-                    {availableGroups.find((group) => group.id === cta.conversionGroupId)
-                      ?.mode === 'customer_service' ? (
-                      <Select
-                        value={cta.productId}
-                        onChange={(event) =>
-                          setUploaded({
-                            ...uploaded,
-                            ctas: uploaded.ctas.map((item, itemIndex) =>
-                              itemIndex === index
-                                ? { ...item, productId: event.target.value }
-                                : item,
-                            ),
-                          })
-                        }
-                        aria-label={`${cta.key} 咨询产品`}
-                      >
-                        <option value="">选择咨询产品</option>
-                        {products
-                          .filter(
-                            (product) =>
-                              product.sectionId === cta.sectionId &&
-                              product.conversionGroupId === cta.conversionGroupId,
-                          )
-                          .map((product) => (
-                            <option value={product.id} key={product.id}>
-                              {product.title}
-                            </option>
-                          ))}
-                      </Select>
-                    ) : null}
                   </div>
                 ))
               ) : (
