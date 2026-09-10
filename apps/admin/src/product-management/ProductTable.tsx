@@ -45,11 +45,6 @@ function serviceModeLabel(mode: AdminProduct['serviceMode']): string {
   return mode === 'online' ? '线上服务' : '线下服务';
 }
 
-function formatDate(value: string): string {
-  const date = new Date(value);
-  return Number.isNaN(date.getTime()) ? value : date.toLocaleString('zh-CN');
-}
-
 export function ProductTable({
   scope,
   products,
@@ -169,7 +164,6 @@ export function ProductTable({
             <th>状态</th>
             <th>排序</th>
             <th>操作</th>
-            <th>更新时间</th>
           </tr>
         </thead>
         <tbody>
@@ -311,7 +305,6 @@ export function ProductTable({
                     )}
                   </div>
                 </td>
-                <td>{formatDate(product.updatedAt)}</td>
               </tr>
             );
           })}

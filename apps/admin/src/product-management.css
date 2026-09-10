@@ -271,12 +271,6 @@
   width: 14%;
 }
 
-.product-table th:nth-child(9),
-.product-table td:nth-child(9) {
-  width: 132px;
-  white-space: nowrap;
-}
-
 .product-select-column input {
   width: 16px;
   height: 16px;

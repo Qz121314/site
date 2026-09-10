@@ -698,8 +698,8 @@ export function ProductManagementView({
           onChange={(event) => setSearch(event.target.value)}
         />
         <label className="ui-management-filter">
-          <span>状态</span>
           <select
+            aria-label="产品状态"
             value={statusFilter}
             onChange={(event) => setStatusFilter(event.target.value as StatusFilter)}
           >

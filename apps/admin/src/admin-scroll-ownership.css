@@ -38,7 +38,7 @@
   }
 
   .admin-workspace-content {
-    min-height: 0;
+    height: 100%;
     overflow-y: auto;
     overscroll-behavior: contain;
     scrollbar-width: thin;
@@ -56,5 +56,17 @@
   .admin-workspace,
   .admin-workspace-content {
     min-height: 0;
+  }
+
+  .admin-shell-workspace {
+    height: calc(100dvh - 16px);
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .admin-workspace-content {
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
   }
 }

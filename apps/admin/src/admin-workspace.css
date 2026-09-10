@@ -53,8 +53,10 @@
 }
 
 .admin-workspace-content {
+  flex: 1 1 auto;
   width: 100%;
   min-width: 0;
+  min-height: 0;
   padding: 10px clamp(12px, 1.7vw, 24px) 20px;
 }
 
@@ -75,9 +77,6 @@
 }
 
 .admin-workspace-toolbar {
-  position: sticky;
-  z-index: 40;
-  top: 0;
   display: flex;
   min-width: 0;
   min-height: 40px;
@@ -88,7 +87,6 @@
   padding: 8px 0;
   border-bottom: 1px solid #e4e8ef;
   background: rgb(246 248 251 / 96%);
-  backdrop-filter: blur(8px);
 }
 
 .admin-workspace-status,
