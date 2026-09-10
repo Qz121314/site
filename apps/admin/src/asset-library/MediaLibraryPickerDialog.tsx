@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { AdminApiError } from '../api';
 import { brandingAssetPreviewUrl } from '../branding-media/api';
 import {
@@ -198,7 +199,7 @@ export function MediaLibraryPickerDialog({
     }
   }
 
-  return (
+  const dialog = (
     <div className="admin-dialog-backdrop media-picker-backdrop" role="presentation">
       <section
         className="admin-dialog media-picker-dialog"
@@ -374,4 +375,6 @@ export function MediaLibraryPickerDialog({
       </section>
     </div>
   );
+
+  return createPortal(dialog, document.body);
 }

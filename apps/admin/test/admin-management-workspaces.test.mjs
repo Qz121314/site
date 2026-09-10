@@ -94,6 +94,13 @@ test('management editors and destructive confirmations reuse AdminDialog', async
   assert.match(productEditor, /onClose=\{\(\) => void requestClose\(\)\}/);
 });
 
+test('product media picker is rendered outside the product editor stacking context', async () => {
+  const picker = await read('asset-library/MediaLibraryPickerDialog.tsx');
+
+  assert.match(picker, /createPortal/);
+  assert.match(picker, /createPortal\(dialog, document\.body\)/);
+});
+
 test('Phase D shared CSS owns generic management patterns without important overrides', async () => {
   const css = await read('admin-ui-system.css');
   assert.match(css, /Phase D management workspaces/);
