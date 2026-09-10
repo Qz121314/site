@@ -576,3 +576,21 @@
     animation: none;
   }
 }
+
+@media (max-width: 767px) {
+  .product-detail-info .product-detail-body {
+    width: 100%;
+    margin: 18px 0 0;
+    padding: 18px 0 0;
+    border-top: 1px solid color-mix(in srgb, var(--line) 74%, transparent);
+  }
+}
+
+@media (min-width: 768px) {
+  .product-detail-info .product-detail-body {
+    width: 100%;
+    margin: 0;
+    padding: 20px 0 0;
+    border-top: 1px solid color-mix(in srgb, var(--line) 78%, transparent);
+  }
+}

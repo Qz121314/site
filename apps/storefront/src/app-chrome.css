@@ -327,10 +327,18 @@
   }
 
   :is(html, .storefront-theme-root) .app-shell > .topbar .topbar-actions {
+    top: 6px;
     right: max(24px, calc((100vw - var(--v2-content-width, 1200px)) / 2));
+    height: 50px;
+    padding: 4px 8px 4px 4px;
     gap: 8px;
-    padding-left: 16px;
-    border-left: 1px solid var(--theme-primary-header-border, var(--line));
+    border: 1px solid var(--theme-primary-navigation-border, var(--line));
+    border-left: 0;
+    border-radius: 0 16px 16px 0;
+    background: color-mix(in srgb, var(--surface) 78%, transparent);
+    box-shadow: 0 12px 30px color-mix(in srgb, var(--text) 10%, transparent);
+    backdrop-filter: blur(18px) saturate(1.08);
+    -webkit-backdrop-filter: blur(18px) saturate(1.08);
   }
 
   :is(html, .storefront-theme-root)
@@ -373,7 +381,8 @@
   }
 
   :is(html, .storefront-theme-root) .storefront-bottom-chrome {
-    right: max(156px, calc((100vw - var(--v2-content-width, 1200px)) / 2 + 156px));
+    top: calc(var(--app-viewport-top, 0px) + 6px);
+    right: max(124px, calc((100vw - var(--v2-content-width, 1200px)) / 2 + 124px));
   }
 
   :is(html, .storefront-theme-root) .storefront-bottom-chrome > .bottom-nav {
@@ -381,7 +390,8 @@
     gap: 4px;
     padding: 4px;
     border: 1px solid var(--theme-primary-navigation-border, var(--line));
-    border-radius: 16px;
+    border-right: 0;
+    border-radius: 16px 0 0 16px;
     background: color-mix(in srgb, var(--surface) 78%, transparent);
     box-shadow: 0 12px 30px color-mix(in srgb, var(--text) 10%, transparent);
     backdrop-filter: blur(18px) saturate(1.08);

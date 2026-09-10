@@ -459,14 +459,14 @@ export function ProductDetailPage({
             </section>
 
             <div className="product-detail-inline-action">{renderCtaButton()}</div>
+
+            {body && !bodyIsAddress ? (
+              <section className="product-detail-body">
+                <MarkdownContent source={product.body} />
+              </section>
+            ) : null}
           </div>
         </div>
-
-        {body && !bodyIsAddress ? (
-          <section className="product-detail-body">
-            <MarkdownContent source={product.body} />
-          </section>
-        ) : null}
       </article>
       <StorefrontRouteAction>
         <div className="product-detail-route-action">{renderCtaButton()}</div>
