@@ -14,7 +14,6 @@
 
 .brand-lockup {
   display: flex;
-  flex: 1 1 auto;
   min-width: 0;
   align-items: center;
   gap: 8px;
@@ -25,6 +24,8 @@
 }
 
 .topbar > .pwa-install-button {
+  position: absolute;
+  right: max(11px, env(safe-area-inset-right));
   width: auto;
   min-width: auto;
   padding: 0 10px;
