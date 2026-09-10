@@ -1,6 +1,8 @@
 import type { StorefrontLinkComponent } from '@site/storefront-ui';
 import { StorefrontIconButton } from '@site/storefront-ui/icon-button';
 import { LoadingHalo } from '@site/storefront-ui/loading';
+import '@site/storefront-ui/loading.css';
+import '@site/storefront-ui/no-agent.css';
 import {
   Check,
   CheckCheck,

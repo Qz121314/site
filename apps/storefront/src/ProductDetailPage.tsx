@@ -21,6 +21,7 @@ import { SYSTEM_UI } from './system-ui';
 import './product-detail-ui.css';
 import './product-detail-content-flow.css';
 import '@site/storefront-ui/product-detail-theme-contract.css';
+import '@site/storefront-ui/art-direction-primary-surfaces.css';
 
 function isVideoMediaUrl(value: string): boolean {
   try {

@@ -17,6 +17,7 @@ import {
 } from './storefront-history';
 import { SYSTEM_UI } from './system-ui';
 import './section-ui.css';
+import '@site/storefront-ui/art-direction-primary-surfaces.css';
 
 const SECTION_VIEW_STATE_KEY = 'section-catalog';
 

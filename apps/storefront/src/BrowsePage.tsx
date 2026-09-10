@@ -20,6 +20,7 @@ import {
 import { SYSTEM_UI } from './system-ui';
 import './browse-ui.css';
 import './browse-app-surface.css';
+import '@site/storefront-ui/art-direction-primary-surfaces.css';
 
 const BROWSE_VIEW_STATE_KEY = 'browse-directory';
 

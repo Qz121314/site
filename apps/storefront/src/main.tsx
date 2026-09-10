@@ -13,7 +13,6 @@ import { installStorefrontViewportRuntime } from './storefront-viewport-runtime'
 import '@site/storefront-ui/styles.css';
 import '@site/storefront-ui/icon-button.css';
 import '@site/storefront-ui/loading.css';
-import '@site/storefront-ui/no-agent.css';
 import './styles.css';
 import './theme-runtime.css';
 import './media-runtime.css';
@@ -25,7 +24,6 @@ import '@site/storefront-ui/theme-contract.css';
 import '@site/storefront-ui/primary-pages-theme-contract.css';
 import '@site/storefront-ui/typography-contract.css';
 import '@site/storefront-ui/art-direction-contract.css';
-import '@site/storefront-ui/art-direction-primary-surfaces.css';
 import '@site/storefront-ui/layout-contract.css';
 import './app-chrome.css';
 import './catalog-polish.css';
