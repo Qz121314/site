@@ -24,8 +24,9 @@ test('home reserves eager image work for the primary LCP candidate', async () =>
     readFile(new URL('../src/storefront-navigation.tsx', import.meta.url), 'utf8'),
   ]);
 
-  assert.match(home, /fetchPriority=\{index === 0 \? 'high' : 'low'\}/u);
-  assert.match(home, /loading=\{index === 0 \? 'eager' : 'lazy'\}/u);
+  assert.match(home, /priority=\{priority && index < 3\}/u);
+  assert.match(home, /fetchPriority=\{priority \? 'high' : 'low'\}/u);
+  assert.match(home, /loading=\{priority \? 'eager' : 'lazy'\}/u);
   assert.match(home, /homeProductImageVariantUrl\(product\.coverObjectKey/u);
   assert.match(navigation, /fetchPriority="low"/u);
 });

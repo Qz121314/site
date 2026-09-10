@@ -251,12 +251,19 @@ function validHomeEnvelope(value: unknown, pointerVersion: string): value is Jso
 
 function directBootstrapBundle(pointer: unknown, value: unknown): JsonRecord | null {
   if (!validPointer(pointer) || !isRecord(value)) return null;
+  // Keep already-published schema-v4 snapshots readable. The publisher now
+  // writes the protocol descriptor, but older immutable snapshots may not.
+  const protocol = value.protocol ?? {
+    schemaVersion: value.schemaVersion,
+    minReadableSchemaVersion: value.schemaVersion,
+    capabilities: [],
+  };
   if (
     typeof value.schemaVersion !== 'number' ||
     !Number.isInteger(value.schemaVersion) ||
     value.schemaVersion < STOREFRONT_DIRECT_BOOTSTRAP_SCHEMA_MIN_READABLE ||
     value.schemaVersion > STOREFRONT_DIRECT_BOOTSTRAP_SCHEMA_CURRENT ||
-    !validProtocol(value.protocol, value.schemaVersion) ||
+    !validProtocol(protocol, value.schemaVersion) ||
     value.pointerVersion !== pointer.contentVersion ||
     !validSiteEnvelope(value.site, pointer) ||
     !validSectionsEnvelope(value.sectionsIndex, pointer) ||

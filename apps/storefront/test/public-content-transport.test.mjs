@@ -245,6 +245,38 @@ test('healthy storefront bootstrap reads current and versioned bootstrap directl
   );
 });
 
+test('legacy schema-v4 direct bootstrap without protocol avoids Worker fallback', async () => {
+  const pointer = pointerFixture();
+  const calls = [];
+  const legacySnapshot = publishedBootstrapFixture(pointer);
+  delete legacySnapshot.protocol;
+  const originalFetch = async (input) => {
+    const url = String(input);
+    calls.push(url);
+    if (url === `${CDN_ORIGIN}/public/current.json`) return jsonResponse(pointer);
+    if (url === `${CDN_ORIGIN}/public/bootstrap/${POINTER_VERSION}/bootstrap.json`) {
+      return jsonResponse(legacySnapshot);
+    }
+    throw new Error(`Unexpected Worker request: ${url}`);
+  };
+  const wrapped = createPublicContentFetch(
+    originalFetch,
+    APP_ORIGIN,
+    Date.now,
+    CDN_ORIGIN,
+  );
+
+  const bootstrap = await withMockedFetch(wrapped, () =>
+    loadStorefrontBootstrap(APP_ORIGIN),
+  );
+
+  assert.equal(bootstrap.site.site.name, 'Example Site');
+  assert.deepEqual(calls, [
+    `${CDN_ORIGIN}/public/current.json`,
+    `${CDN_ORIGIN}/public/bootstrap/${POINTER_VERSION}/bootstrap.json`,
+  ]);
+});
+
 test('CDN failure falls back once to the R2-only Worker bootstrap', async () => {
   const calls = [];
   const originalFetch = async (input) => {

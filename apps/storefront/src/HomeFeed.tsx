@@ -259,7 +259,7 @@ function HomeRecommendationRail({
         <div className="home-product-rail">
           {products.map((product, index) => (
             <HomeProductTile
-              priority={priority && index === 0}
+              priority={priority && index < 3}
               product={product}
               key={product.id}
             />
