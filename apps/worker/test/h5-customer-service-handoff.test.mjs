@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 import h5App from '../src/h5-index.ts';
+import siteApp from '../src/index.ts';
 
 const NOW = '2026-09-10T00:00:00.000Z';
 
@@ -45,7 +46,7 @@ function connectionRow() {
   };
 }
 
-function createDb() {
+function createDb({ linkedProduct = false } = {}) {
   return {
     prepare(sql) {
       return {
@@ -63,6 +64,11 @@ function createDb() {
               cta_key: 'consult',
               page_slug: 'consultation',
               page_name: 'Consultation page',
+              product_id: linkedProduct ? 'product-1' : null,
+              product_slug: linkedProduct ? 'consultation-product' : null,
+              product_title: linkedProduct ? 'Consultation product' : null,
+              product_section_id: linkedProduct ? 'section-1' : null,
+              product_section_slug: linkedProduct ? 'west' : null,
               section_name: 'West',
             };
           }
@@ -96,9 +102,9 @@ function createDb() {
   };
 }
 
-function env() {
+function env(options) {
   return {
-    DB: createDb(),
+    DB: createDb(options),
     ASSETS_BUCKET: {},
     ASSETS: {},
     ENVIRONMENT: 'test',
@@ -118,6 +124,17 @@ test('published H5 runtime injects a customer-service chat bridge for bound CTA'
   assert.match(source, /site-h5-support-visitor-v1/u);
   assert.match(source, /customer_service/u);
   assert.match(source, /site:h5-support:connected/u);
+});
+
+test('main-site H5 runtime uses main-site CTA routes', async () => {
+  const response = await siteApp.request(
+    'https://site.example.com/h5-runtime/page-1',
+    undefined,
+    env(),
+  );
+
+  assert.equal(response.status, 200);
+  assert.match(await response.text(), /\/h5-cta\/page-1\/cta-1/u);
 });
 
 test('bound H5 customer-service CTA returns only public handoff data', async () => {
@@ -160,4 +177,30 @@ test('bound H5 customer-service CTA returns only public handoff data', async () 
     ctaKey: 'consult',
   });
   assert.equal(JSON.stringify(body).includes('private-token'), false);
+});
+
+test('linked H5 customer-service CTA uses the ordinary product identity', async () => {
+  const response = await h5App.request(
+    'https://pages.example.com/pages/cta/page-1/cta-1',
+    { headers: { Accept: 'application/json' } },
+    env({ linkedProduct: true }),
+  );
+
+  assert.equal(response.status, 200);
+  const body = await response.json();
+  assert.equal(body.product.id, 'product-1');
+  assert.equal(body.product.sourceType, 'product');
+  assert.equal(body.product.presentationMode, 'h5');
+  assert.equal(body.product.h5PageId, 'page-1');
+  assert.equal(body.product.href, '/sections/west/products/consultation-product/');
+  assert.deepEqual(body.source, {
+    type: 'product',
+    productId: 'product-1',
+    presentationMode: 'h5',
+    h5PageId: 'page-1',
+    pageName: 'Consultation page',
+    pageSlug: 'consultation',
+    ctaId: 'cta-1',
+    ctaKey: 'consult',
+  });
 });

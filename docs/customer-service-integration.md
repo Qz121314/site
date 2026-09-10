@@ -154,28 +154,16 @@ Site Admin 会把当前属于该客服连接的在线客服产品目录一并同
         "categoryId": "massage",
         "categoryName": "Massage",
         "isEnabled": true,
-        "sourceType": "product"
-      },
-      {
-        "id": "h5-page:landing-page-id",
-        "title": "Consultation landing page",
-        "href": "https://pages.example.com/pages/consultation/",
-        "coverUrl": null,
-        "sectionId": "west",
-        "sectionName": "West",
-        "categoryId": null,
-        "categoryName": null,
-        "isEnabled": true,
-        "sourceType": "h5_page",
-        "pageId": "landing-page-id",
-        "pageSlug": "consultation"
+        "sourceType": "product",
+        "presentationMode": "h5",
+        "h5PageId": "landing-page-id"
       }
     ]
   }
 }
 ```
 
-已发布的 H5 页面只要有一个 CTA 绑定到该客服连接，就会作为独立的 `h5_page` 产品同步；它不会复用主站商品 ID。一个页面可以通过多个 CTA 进入不同客服连接和分流范围；每个连接都会收到相同的页面产品 ID，客服端可用 `sourceType`、`pageId` 与 `pageSlug` 明确显示落地页来源，并按该页面范围配置客服分流。
+H5 页面在页面中心保存时会同时创建一个普通产品记录，并以 `presentationMode: "h5"` 标记其独立展示方式。它使用主站产品 ID、分区、转化分组和公开地址同步到客服系统，不再创建 `h5-page:<id>` 这种第二产品身份。客服端可以通过 `presentationMode` 与 `h5PageId` 识别落地页来源，同时仍按产品所属分区和转化分组参与客服分流。一个 H5 产品的所有 CTA 共用该产品的转化分组；多个客服坐席的分配由该转化分组内部完成。
 
 客服系统当前接受最多 5000 个产品。同步采用“先禁用旧目录，再 upsert 本次目录”的方式，因此客服后台看到的是 Site 当前权威产品集合。
 

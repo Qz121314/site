@@ -14,6 +14,7 @@ import {
   fetchH5Page,
   publishH5Page,
   saveH5CtaBindings,
+  saveH5Product,
   fetchH5PublicSettings,
   saveH5PublicSettings,
   updateH5PageName,
@@ -56,6 +57,7 @@ export function PageCenterView({ sections, onSessionExpired }: Props) {
     id: string;
     versionId: string;
     name: string;
+    productSectionId: string;
     ctas: UploadedCta[];
   } | null>(null);
   const [configurationOpen, setConfigurationOpen] = useState(false);
@@ -143,6 +145,7 @@ export function PageCenterView({ sections, onSessionExpired }: Props) {
         id: detail.id,
         versionId: detail.versionId,
         name: detail.name,
+        productSectionId: detail.productSectionId ?? detail.ctas[0]?.sectionId ?? '',
         ctas: detail.ctas.map((cta) => ({
           id: cta.id,
           key: cta.key,
@@ -230,6 +233,7 @@ export function PageCenterView({ sections, onSessionExpired }: Props) {
         id: result.id,
         versionId: result.versionId,
         name: parsed.name,
+        productSectionId: '',
         ctas: result.ctas.map((cta) => ({
           ...cta,
           sectionId: '',
@@ -266,19 +270,24 @@ export function PageCenterView({ sections, onSessionExpired }: Props) {
       });
       return;
     }
+    if (!uploaded.productSectionId) {
+      setFeedback({ type: 'error', message: '请选择 H5 产品所属分区。' });
+      return;
+    }
     setBusy(true);
     try {
       await updateH5PageName(uploaded.id, name);
       await saveH5CtaBindings(
         uploaded.id,
         uploaded.versionId,
-        uploaded.ctas.map(({ id, label, sectionId, conversionGroupId }) => ({
+        uploaded.ctas.map(({ id, label }) => ({
           ctaId: id,
           label: label.trim(),
-          sectionId: sectionId || null,
-          conversionGroupId: conversionGroupId || null,
+          sectionId: uploaded.productSectionId || null,
+          conversionGroupId: uploaded.ctas[0]?.conversionGroupId || null,
         })),
       );
+      await saveH5Product(uploaded.id, uploaded.productSectionId);
       await publishH5Page(uploaded.id);
       setFeedback({ type: 'success', message: '页面设置已保存。' });
       await load();
@@ -450,6 +459,75 @@ export function PageCenterView({ sections, onSessionExpired }: Props) {
           ) : null}
           {uploaded ? (
             <div className="page-center__config-content">
+              <div className="page-center__product-routing">
+                <label>
+                  产品所属分区
+                  <Select
+                    value={uploaded.productSectionId}
+                    onChange={(event) => {
+                      const sectionId = event.target.value;
+                      setUploaded({
+                        ...uploaded,
+                        productSectionId: sectionId,
+                        ctas: uploaded.ctas.map((cta) => ({
+                          ...cta,
+                          sectionId,
+                          conversionGroupId:
+                            availableGroups.find(
+                              (group) =>
+                                group.id === cta.conversionGroupId &&
+                                group.sectionId === sectionId,
+                            )?.id ?? '',
+                        })),
+                      });
+                    }}
+                  >
+                    <option value="">选择产品分区</option>
+                    {sections.map((section) => (
+                      <option value={section.id} key={section.id}>
+                        {section.name}
+                      </option>
+                    ))}
+                  </Select>
+                </label>
+                <label>
+                  产品转化分组
+                  <Select
+                    value={uploaded.ctas[0]?.conversionGroupId ?? ''}
+                    onChange={(event) => {
+                      const group = availableGroups.find(
+                        (item) => item.id === event.target.value,
+                      );
+                      setUploaded({
+                        ...uploaded,
+                        productSectionId: group?.sectionId ?? uploaded.productSectionId,
+                        ctas: uploaded.ctas.map((cta) => ({
+                          ...cta,
+                          sectionId: group?.sectionId ?? uploaded.productSectionId,
+                          conversionGroupId: group?.id ?? '',
+                        })),
+                      });
+                    }}
+                  >
+                    <option value="">不绑定转化分组</option>
+                    {sections.map((section) => {
+                      const sectionGroups = availableGroups.filter(
+                        (group) => group.sectionId === section.id,
+                      );
+                      if (!sectionGroups.length) return null;
+                      return (
+                        <optgroup label={section.name} key={section.id}>
+                          {sectionGroups.map((group) => (
+                            <option value={group.id} key={group.id}>
+                              {group.name}
+                            </option>
+                          ))}
+                        </optgroup>
+                      );
+                    })}
+                  </Select>
+                </label>
+              </div>
               {uploaded.ctas.length ? (
                 uploaded.ctas.map((cta, index) => (
                   <div className="page-center__cta" key={cta.id}>
@@ -468,43 +546,6 @@ export function PageCenterView({ sections, onSessionExpired }: Props) {
                       }
                       aria-label={`${cta.key} 行动号召`}
                     />
-                    <Select
-                      value={cta.conversionGroupId}
-                      onChange={(event) => {
-                        const group = availableGroups.find(
-                          (item) => item.id === event.target.value,
-                        );
-                        setUploaded({
-                          ...uploaded,
-                          ctas: uploaded.ctas.map((item, itemIndex) =>
-                            itemIndex === index
-                              ? {
-                                  ...item,
-                                  sectionId: group?.sectionId ?? '',
-                                  conversionGroupId: group?.id ?? '',
-                                }
-                              : item,
-                          ),
-                        });
-                      }}
-                    >
-                      <option value="">选择转化池</option>
-                      {sections.map((section) => {
-                        const sectionGroups = availableGroups.filter(
-                          (group) => group.sectionId === section.id,
-                        );
-                        if (!sectionGroups.length) return null;
-                        return (
-                          <optgroup label={section.name} key={section.id}>
-                            {sectionGroups.map((group) => (
-                              <option value={group.id} key={group.id}>
-                                {group.name}
-                              </option>
-                            ))}
-                          </optgroup>
-                        );
-                      })}
-                    </Select>
                   </div>
                 ))
               ) : (

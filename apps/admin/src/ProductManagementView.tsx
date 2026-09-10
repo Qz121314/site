@@ -75,6 +75,7 @@ type SaveStage = 'idle' | 'saving';
 type ProductDropPosition = 'before' | 'after';
 
 const emptyProductForm: ProductInput = {
+  presentationMode: 'standard',
   serviceMode: 'offline',
   title: '',
   body: '',
@@ -113,6 +114,7 @@ function describeError(error: unknown): string {
 
 function productToInput(product: AdminProduct): ProductInput {
   return {
+    presentationMode: product.presentationMode,
     serviceMode: product.serviceMode,
     title: product.title,
     body: product.body,

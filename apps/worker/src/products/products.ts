@@ -6,6 +6,7 @@ import {
 } from '../conversion-pool/conversion-pool';
 
 export type ProductServiceMode = 'online' | 'offline';
+export type ProductPresentationMode = 'standard' | 'h5';
 export type ProductStatus = 'draft' | 'published' | 'archived';
 export type ProductScope = 'active' | 'trash' | 'all';
 
@@ -26,6 +27,8 @@ export type ProductRecord = {
   id: string;
   sectionId: string;
   slug: string;
+  presentationMode: ProductPresentationMode;
+  h5PageId: string | null;
   serviceMode: ProductServiceMode;
   title: string;
   body: string;
@@ -51,6 +54,7 @@ export type ProductRecord = {
 };
 
 export type ProductInput = {
+  presentationMode?: ProductPresentationMode;
   serviceMode: ProductServiceMode;
   title: string;
   body: string;
@@ -69,6 +73,8 @@ type ProductRow = {
   id: string;
   section_id: string;
   slug: string;
+  presentation_mode: ProductPresentationMode;
+  h5_page_id: string | null;
   service_mode: ProductServiceMode;
   title: string;
   body: string;
@@ -205,6 +211,10 @@ export function validateProductInput(value: unknown): ValidationResult<ProductIn
   if (!isRecord(value)) {
     return { ok: false, field: 'form', message: '产品数据无效。' };
   }
+  const presentationMode = value.presentationMode ?? 'standard';
+  if (presentationMode !== 'standard' && presentationMode !== 'h5') {
+    return { ok: false, field: 'presentationMode', message: '产品展示方式无效。' };
+  }
   if (value.serviceMode !== 'online' && value.serviceMode !== 'offline') {
     return { ok: false, field: 'serviceMode', message: '请选择线上服务或线下服务。' };
   }
@@ -247,6 +257,7 @@ export function validateProductInput(value: unknown): ValidationResult<ProductIn
   return {
     ok: true,
     value: {
+      presentationMode,
       serviceMode: value.serviceMode,
       title: title.value,
       body: body.value,
@@ -370,6 +381,8 @@ function mapProduct(row: ProductRow): ProductRecord {
     id: row.id,
     sectionId: row.section_id,
     slug: row.slug,
+    presentationMode: row.presentation_mode,
+    h5PageId: row.h5_page_id,
     serviceMode: row.service_mode,
     title: row.title,
     body: row.body,
@@ -401,6 +414,8 @@ const PRODUCT_SELECT = `SELECT
   p.id,
   p.section_id,
   p.slug,
+  p.presentation_mode,
+  h5.id AS h5_page_id,
   p.service_mode,
   p.title,
   p.body,
@@ -428,6 +443,7 @@ const PRODUCT_SELECT = `SELECT
   p.deleted_at,
   ss.media_base_url
 FROM products p
+LEFT JOIN h5_pages h5 ON h5.product_id = p.id AND h5.deleted_at IS NULL
 LEFT JOIN categories c ON c.id = p.category_id
 LEFT JOIN conversion_groups cg ON cg.id = p.conversion_group_id
 LEFT JOIN media_assets ma ON ma.id = COALESCE(
@@ -535,6 +551,8 @@ export function createProduct(
     id,
     sectionId,
     slug: `${slugBase(input.title)}-${id.slice(0, 8)}`,
+    presentationMode: input.presentationMode ?? 'standard',
+    h5PageId: null,
     serviceMode: input.serviceMode,
     title: input.title,
     body: input.body,
@@ -565,8 +583,8 @@ export function createProduct(
            id, section_id, slug, service_mode, title, body, address,
            cover_asset_id, conversion_method_id, is_featured, featured_order,
            status, published_at, created_at, updated_at, deleted_at,
-           category_id, conversion_group_id, sort_order
-         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?)`,
+           category_id, conversion_group_id, sort_order, presentation_mode
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?)`,
       )
       .bind(
         product.id,
@@ -586,6 +604,7 @@ export function createProduct(
         product.categoryId,
         product.conversionGroupId,
         product.sortOrder,
+        product.presentationMode,
       ),
   ];
   input.mediaAssetIds.forEach((assetId, index) => {
@@ -616,7 +635,8 @@ export function createUpdateProductStatements(
         `UPDATE products
          SET service_mode = ?, title = ?, body = ?, address = ?, category_id = ?,
              conversion_group_id = ?, cover_asset_id = ?, is_featured = ?,
-             featured_order = ?, sort_order = ?, status = ?, published_at = ?, updated_at = ?
+             featured_order = ?, sort_order = ?, status = ?, published_at = ?, updated_at = ?,
+             presentation_mode = ?
          WHERE section_id = ? AND id = ? AND deleted_at IS NULL`,
       )
       .bind(
@@ -633,6 +653,7 @@ export function createUpdateProductStatements(
         input.status,
         publishedAt,
         now,
+        input.presentationMode ?? current.presentationMode,
         current.sectionId,
         current.id,
       ),

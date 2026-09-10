@@ -29,7 +29,12 @@ import { publicContentRoutes } from './routes/public-content';
 import { publicConversionRoutes } from './routes/public-conversion';
 import { publicImageVariantRoutes } from './routes/public-image-variant';
 import { publicMediaFallbackRoutes } from './routes/public-media-fallback';
-import { publicPageRoutes } from './routes/public-pages';
+import {
+  publicPageRoutes,
+  serveH5Cta,
+  serveH5Product,
+  serveH5Runtime,
+} from './routes/public-pages';
 import { servePwaIcon, servePwaManifest } from './routes/public-pwa';
 import {
   serveRobots,
@@ -129,6 +134,10 @@ app.route('/api/admin/sections', adminSectionBatchRoutes);
 app.route('/api/admin/sections', adminSectionRoutes);
 
 app.route('/go', publicConversionRoutes);
+app.get('/sections/:sectionSlug/products/:productSlug', serveH5Product);
+app.get('/sections/:sectionSlug/products/:productSlug/*', serveH5Product);
+app.get('/h5-runtime/:pageId', serveH5Runtime);
+app.get('/h5-cta/:pageId/:ctaId', serveH5Cta);
 app.route('/pages', publicPageRoutes);
 
 app.on(['GET', 'HEAD'], '*', async (context) => {

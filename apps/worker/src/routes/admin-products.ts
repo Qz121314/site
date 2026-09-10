@@ -226,6 +226,25 @@ adminProductRoutes.put('/:sectionId/products/:id', async (context) => {
     });
   }
 
+  if (current.presentationMode === 'h5' && validation.value.status === 'published') {
+    const page = current.h5PageId
+      ? await context.env.DB.prepare(
+          `SELECT id FROM h5_pages
+           WHERE id = ? AND product_id = ? AND status = 'published' AND deleted_at IS NULL`,
+        )
+          .bind(current.h5PageId, current.id)
+          .first<{ id: string }>()
+      : null;
+    if (!page) {
+      return apiError(
+        context,
+        409,
+        'H5_PAGE_REQUIRED',
+        'H5 产品需要先在页面中心发布对应页面。',
+      );
+    }
+  }
+
   const now = new Date().toISOString();
   const updated: ProductRecord = {
     ...current,
@@ -238,9 +257,21 @@ adminProductRoutes.put('/:sectionId/products/:id', async (context) => {
         ? (current.publishedAt ?? now)
         : current.publishedAt,
   };
+  const h5LifecycleStatements =
+    current.presentationMode === 'h5' &&
+    current.h5PageId &&
+    validation.value.status !== 'published'
+      ? [
+          context.env.DB.prepare(
+            `UPDATE h5_pages SET status = ?, updated_at = ?
+             WHERE id = ? AND product_id = ? AND deleted_at IS NULL`,
+          ).bind(validation.value.status, now, current.h5PageId, current.id),
+        ]
+      : [];
   await context.env.DB.batch([
     ...createUpdateProductStatements(context.env.DB, current, validation.value, now),
     ...createReplaceProductTagStatements(context.env.DB, current.id, tagIds.value, now),
+    ...h5LifecycleStatements,
     createAuditLogStatement(context.env.DB, {
       action: 'product.updated',
       entityType: 'product',
@@ -274,6 +305,14 @@ adminProductRoutes.delete('/:sectionId/products/:id', async (context) => {
   const deleted: ProductRecord = { ...current, deletedAt: now, updatedAt: now };
   await context.env.DB.batch([
     createDeleteProductStatement(context.env.DB, sectionId, current.id, now),
+    ...(current.presentationMode === 'h5' && current.h5PageId
+      ? [
+          context.env.DB.prepare(
+            `UPDATE h5_pages SET status = 'archived', updated_at = ?
+             WHERE id = ? AND deleted_at IS NULL`,
+          ).bind(now, current.h5PageId),
+        ]
+      : []),
     createAuditLogStatement(context.env.DB, {
       action: 'product.deleted',
       entityType: 'product',
@@ -304,6 +343,14 @@ adminProductRoutes.post('/:sectionId/products/:id/restore', async (context) => {
   try {
     await context.env.DB.batch([
       createRestoreProductStatement(context.env.DB, sectionId, current.id, now),
+      ...(current.presentationMode === 'h5' && current.h5PageId
+        ? [
+            context.env.DB.prepare(
+              `UPDATE h5_pages SET status = 'draft', updated_at = ?
+               WHERE id = ? AND deleted_at IS NULL`,
+            ).bind(now, current.h5PageId),
+          ]
+        : []),
       createAuditLogStatement(context.env.DB, {
         action: 'product.restored',
         entityType: 'product',

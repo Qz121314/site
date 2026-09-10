@@ -9,6 +9,8 @@ export type H5Page = {
   publishedVersionId: string | null;
   versionNumber: number | null;
   ctaCount: number;
+  productId: string | null;
+  productSectionId: string | null;
   createdAt: string;
   updatedAt: string;
   publicUrl: string;
@@ -68,6 +70,9 @@ function parsePage(value: unknown): H5Page {
       typeof page.publishedVersionId === 'string' ? page.publishedVersionId : null,
     versionNumber: typeof page.versionNumber === 'number' ? page.versionNumber : null,
     ctaCount: typeof page.ctaCount === 'number' ? page.ctaCount : 0,
+    productId: typeof page.productId === 'string' ? page.productId : null,
+    productSectionId:
+      typeof page.productSectionId === 'string' ? page.productSectionId : null,
     createdAt: String(page.createdAt ?? ''),
     updatedAt: String(page.updatedAt ?? ''),
     publicUrl: String(page.publicUrl ?? ''),
@@ -111,6 +116,7 @@ export async function fetchH5Page(pageId: string): Promise<H5PageDetail> {
   return {
     ...parsePage(page),
     versionId: String(page.versionId ?? ''),
+    productId: typeof page.productId === 'string' ? page.productId : null,
     ctas: Array.isArray(page.ctas)
       ? page.ctas.map((value) => {
           const cta = record(value);
@@ -174,6 +180,25 @@ export async function saveH5CtaBindings(
     headers: { 'content-type': 'application/json', 'x-admin-request': '1' },
     body: JSON.stringify({ versionId, bindings }),
   });
+}
+
+export async function saveH5Product(
+  pageId: string,
+  sectionId: string,
+): Promise<{ id: string; slug: string; sectionId: string }> {
+  const body = record(
+    await request(`/api/admin/pages/${encodeURIComponent(pageId)}/product`, {
+      method: 'PUT',
+      headers: { 'content-type': 'application/json', 'x-admin-request': '1' },
+      body: JSON.stringify({ sectionId }),
+    }),
+  );
+  const product = record(body.product);
+  return {
+    id: String(product.id ?? ''),
+    slug: String(product.slug ?? ''),
+    sectionId: String(product.sectionId ?? ''),
+  };
 }
 
 export async function updateH5PageName(pageId: string, name: string) {

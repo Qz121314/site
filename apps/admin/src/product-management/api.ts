@@ -2,6 +2,7 @@ import { AdminApiError } from '../api';
 import { adminFetch } from '../admin-fetch';
 
 export type ProductServiceMode = 'online' | 'offline';
+export type ProductPresentationMode = 'standard' | 'h5';
 export type ProductStatus = 'draft' | 'published' | 'archived';
 export type ProductScope = 'active' | 'trash' | 'all';
 
@@ -29,6 +30,8 @@ export type AdminProduct = {
   id: string;
   sectionId: string;
   slug: string;
+  presentationMode: ProductPresentationMode;
+  h5PageId: string | null;
   serviceMode: ProductServiceMode;
   title: string;
   body: string;
@@ -56,6 +59,7 @@ export type AdminProduct = {
 };
 
 export type ProductInput = {
+  presentationMode?: ProductPresentationMode;
   serviceMode: ProductServiceMode;
   title: string;
   body: string;
@@ -161,6 +165,8 @@ function parseProduct(value: unknown): AdminProduct {
     typeof product.id !== 'string' ||
     typeof product.sectionId !== 'string' ||
     typeof product.slug !== 'string' ||
+    (product.presentationMode !== 'standard' && product.presentationMode !== 'h5') ||
+    (typeof product.h5PageId !== 'string' && product.h5PageId !== null) ||
     (product.serviceMode !== 'online' && product.serviceMode !== 'offline') ||
     typeof product.title !== 'string' ||
     typeof product.body !== 'string' ||

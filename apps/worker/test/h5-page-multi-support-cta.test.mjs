@@ -32,7 +32,7 @@ function createDb() {
   };
 }
 
-test('H5 page allows CTAs to enter separate customer-service distribution paths', async () => {
+test('H5 page rejects CTAs with conflicting product routing', async () => {
   const db = createDb();
   const response = await adminPageRoutes.request(
     'https://site.example.com/page-1/ctas',
@@ -63,7 +63,7 @@ test('H5 page allows CTAs to enter separate customer-service distribution paths'
     { DB: db },
   );
 
-  assert.equal(response.status, 200);
-  assert.deepEqual(await response.json(), { ok: true });
-  assert.equal(db.batchCalls, 1);
+  assert.equal(response.status, 400);
+  assert.equal((await response.json()).error.code, 'H5_PRODUCT_CONVERSION_CONFLICT');
+  assert.equal(db.batchCalls, 0);
 });

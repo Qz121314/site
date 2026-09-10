@@ -212,6 +212,7 @@ export function ProductTable({
                     <div>
                       <strong>{product.title}</strong>
                       <small>/{product.slug}</small>
+                      {product.presentationMode === 'h5' ? <b>H5 展示</b> : null}
                       {product.isFeatured ? <b>热门</b> : null}
                     </div>
                   </div>

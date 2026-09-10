@@ -1,5 +1,7 @@
 import { Hono } from 'hono';
 import { apiError } from '../http/api-response';
+import { createProduct, getProduct, type ProductInput } from '../products/products';
+import { getConversionGroup } from '../conversion-pool/conversion-pool';
 import type { AppEnvironment } from '../types';
 import {
   createUpdateH5PublicSettingsStatement,
@@ -127,10 +129,13 @@ adminPageRoutes.get('/', async (context) => {
   const h5Origin = configured.publicOrigin;
   const rows = (
     await context.env.DB.prepare(
-      `SELECT p.id, p.slug, p.name, p.status, p.published_version_id,
+      `SELECT p.id, p.slug, p.name, p.status, p.published_version_id, p.product_id,
+              product.slug AS product_slug, section.slug AS product_section_slug,
               p.created_at, p.updated_at, v.version_number,
               (SELECT COUNT(*) FROM h5_page_ctas c WHERE c.version_id = v.id) AS cta_count
        FROM h5_pages p
+       LEFT JOIN products product ON product.id = p.product_id AND product.deleted_at IS NULL
+       LEFT JOIN sections section ON section.id = product.section_id AND section.deleted_at IS NULL
        LEFT JOIN h5_page_versions v ON v.id = p.published_version_id
        WHERE p.deleted_at IS NULL
        ORDER BY p.updated_at DESC, p.name COLLATE NOCASE ASC`,
@@ -140,6 +145,9 @@ adminPageRoutes.get('/', async (context) => {
       name: string;
       status: string;
       published_version_id: string | null;
+      product_id: string | null;
+      product_slug: string | null;
+      product_section_slug: string | null;
       created_at: string;
       updated_at: string;
       version_number: number | null;
@@ -157,7 +165,13 @@ adminPageRoutes.get('/', async (context) => {
       ctaCount: row.cta_count,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
-      publicUrl: h5Origin ? `${h5Origin}/pages/${row.slug}/` : `/pages/${row.slug}/`,
+      productId: row.product_id,
+      publicUrl:
+        row.product_slug && row.product_section_slug
+          ? `/sections/${encodeURIComponent(row.product_section_slug)}/products/${encodeURIComponent(row.product_slug)}/`
+          : h5Origin
+            ? `${h5Origin}/pages/${row.slug}/`
+            : `/pages/${row.slug}/`,
     })),
   });
 });
@@ -199,7 +213,11 @@ adminPageRoutes.put('/settings', async (context) => {
 
 adminPageRoutes.get('/:pageId', async (context) => {
   const page = await context.env.DB.prepare(
-    `SELECT id, slug, name, status, published_version_id FROM h5_pages WHERE id = ? AND deleted_at IS NULL`,
+    `SELECT page.id, page.slug, page.name, page.status, page.published_version_id,
+            page.product_id, product.section_id AS product_section_id
+     FROM h5_pages page
+     LEFT JOIN products product ON product.id = page.product_id AND product.deleted_at IS NULL
+     WHERE page.id = ? AND page.deleted_at IS NULL`,
   )
     .bind(context.req.param('pageId'))
     .first<{
@@ -208,6 +226,8 @@ adminPageRoutes.get('/:pageId', async (context) => {
       name: string;
       status: string;
       published_version_id: string | null;
+      product_id: string | null;
+      product_section_id: string | null;
     }>();
   if (!page) return apiError(context, 404, 'PAGE_NOT_FOUND', '页面不存在。');
   const version = await context.env.DB.prepare(
@@ -249,6 +269,8 @@ adminPageRoutes.get('/:pageId', async (context) => {
       versionNumber: version.version_number,
       createdAt: version.created_at,
       publishedAt: version.published_at,
+      productId: page.product_id,
+      productSectionId: page.product_section_id,
       ctas: ctas.map((cta) => ({
         id: cta.id,
         key: cta.cta_key,
@@ -286,18 +308,161 @@ adminPageRoutes.put('/:pageId', async (context) => {
 
   const pageId = context.req.param('pageId');
   const page = await context.env.DB.prepare(
-    'SELECT id FROM h5_pages WHERE id = ? AND deleted_at IS NULL',
+    'SELECT id, product_id FROM h5_pages WHERE id = ? AND deleted_at IS NULL',
   )
     .bind(pageId)
-    .first<{ id: string }>();
+    .first<{ id: string; product_id: string | null }>();
   if (!page) return apiError(context, 404, 'PAGE_NOT_FOUND', '页面不存在。');
 
-  await context.env.DB.prepare(
-    'UPDATE h5_pages SET name = ?, updated_at = ? WHERE id = ?',
-  )
-    .bind(body.name.trim(), new Date().toISOString(), pageId)
-    .run();
+  const now = new Date().toISOString();
+  const statements = [
+    context.env.DB.prepare(
+      'UPDATE h5_pages SET name = ?, updated_at = ? WHERE id = ?',
+    ).bind(body.name.trim(), now, pageId),
+  ];
+  if (page.product_id) {
+    statements.push(
+      context.env.DB.prepare(
+        'UPDATE products SET title = ?, updated_at = ? WHERE id = ?',
+      ).bind(body.name.trim(), now, page.product_id),
+    );
+  }
+  await context.env.DB.batch(statements);
   return context.json({ ok: true });
+});
+
+adminPageRoutes.put('/:pageId/product', async (context) => {
+  if (!hasAdminRequestHeader(context))
+    return apiError(context, 403, 'ADMIN_REQUEST_REQUIRED', '后台请求标识无效。');
+  let body: unknown;
+  try {
+    body = await readJsonBody(context);
+  } catch (error) {
+    return jsonBodyError(context, error);
+  }
+  if (!isRecord(body) || typeof body.sectionId !== 'string' || !body.sectionId.trim()) {
+    return apiError(context, 400, 'INVALID_H5_PRODUCT', 'H5 产品分区无效。');
+  }
+
+  const pageId = context.req.param('pageId');
+  const page = await context.env.DB.prepare(
+    `SELECT id, name, product_id FROM h5_pages WHERE id = ? AND deleted_at IS NULL`,
+  )
+    .bind(pageId)
+    .first<{ id: string; name: string; product_id: string | null }>();
+  if (!page) return apiError(context, 404, 'PAGE_NOT_FOUND', '页面不存在。');
+
+  const ctas = (
+    await context.env.DB.prepare(
+      `SELECT section_id, conversion_group_id
+       FROM h5_page_ctas c
+       JOIN h5_page_versions v ON v.id = c.version_id
+       WHERE v.page_id = ? AND c.section_id IS NOT NULL AND c.conversion_group_id IS NOT NULL`,
+    )
+      .bind(pageId)
+      .all<{ section_id: string; conversion_group_id: string }>()
+  ).results;
+  const boundRefs = new Set(
+    ctas.map((cta) => `${cta.section_id}\u0000${cta.conversion_group_id}`),
+  );
+  if (boundRefs.size > 1) {
+    return apiError(
+      context,
+      400,
+      'H5_PRODUCT_CONVERSION_CONFLICT',
+      '同一 H5 产品的 CTA 必须使用同一个转化分组。',
+    );
+  }
+  const bound = ctas[0] ?? null;
+  if (bound && bound.section_id !== body.sectionId) {
+    return apiError(
+      context,
+      400,
+      'H5_PRODUCT_SECTION_MISMATCH',
+      'H5 产品分区必须与 CTA 转化分组所属分区一致。',
+    );
+  }
+
+  const conversionGroupId = bound?.conversion_group_id ?? null;
+  const group = conversionGroupId
+    ? await getConversionGroup(context.env.DB, body.sectionId, conversionGroupId)
+    : null;
+  if (conversionGroupId && (!group || group.deletedAt || !group.isEnabled)) {
+    return apiError(
+      context,
+      400,
+      'INVALID_CONVERSION_GROUP',
+      '所选转化分组不存在或未启用。',
+    );
+  }
+
+  const now = new Date().toISOString();
+  const serviceMode = group?.mode === 'customer_service' ? 'offline' : 'online';
+  const productInput: ProductInput = {
+    presentationMode: 'h5',
+    serviceMode,
+    title: page.name,
+    body: `H5 landing page: ${page.name}`,
+    address: null,
+    categoryId: null,
+    conversionGroupId,
+    coverAssetId: null,
+    mediaAssetIds: [],
+    isFeatured: false,
+    featuredOrder: 0,
+    sortOrder: 0,
+    status: 'draft',
+  };
+
+  if (page.product_id) {
+    const current = await getProduct(context.env.DB, body.sectionId, page.product_id);
+    if (!current || current.deletedAt) {
+      return apiError(
+        context,
+        409,
+        'H5_PRODUCT_NOT_FOUND',
+        'H5 产品关联已失效，请重新上传页面。',
+      );
+    }
+    await context.env.DB.batch([
+      context.env.DB.prepare(
+        `UPDATE products
+         SET service_mode = ?, title = ?, body = ?, conversion_group_id = ?,
+             presentation_mode = 'h5', updated_at = ?
+         WHERE id = ? AND section_id = ? AND deleted_at IS NULL`,
+      ).bind(
+        serviceMode,
+        page.name,
+        productInput.body,
+        conversionGroupId,
+        now,
+        current.id,
+        current.sectionId,
+      ),
+    ]);
+  } else {
+    const created = createProduct(context.env.DB, body.sectionId, productInput, now);
+    await context.env.DB.batch([
+      ...created.statements,
+      context.env.DB.prepare(
+        'UPDATE h5_pages SET product_id = ?, updated_at = ? WHERE id = ?',
+      ).bind(created.product.id, now, pageId),
+    ]);
+  }
+
+  const productId =
+    page.product_id ??
+    (
+      await context.env.DB.prepare('SELECT product_id FROM h5_pages WHERE id = ?')
+        .bind(pageId)
+        .first<{ product_id: string }>()
+    )?.product_id;
+  const product = productId
+    ? await getProduct(context.env.DB, body.sectionId, productId)
+    : null;
+  if (!product)
+    return apiError(context, 500, 'H5_PRODUCT_CREATE_FAILED', 'H5 产品创建失败。');
+  return context.json({ product });
 });
 
 adminPageRoutes.delete('/:pageId', async (context) => {
@@ -306,10 +471,10 @@ adminPageRoutes.delete('/:pageId', async (context) => {
 
   const pageId = context.req.param('pageId');
   const page = await context.env.DB.prepare(
-    'SELECT id FROM h5_pages WHERE id = ? AND deleted_at IS NULL',
+    'SELECT id, product_id FROM h5_pages WHERE id = ? AND deleted_at IS NULL',
   )
     .bind(pageId)
-    .first<{ id: string }>();
+    .first<{ id: string; product_id: string | null }>();
   if (!page) return apiError(context, 404, 'PAGE_NOT_FOUND', '页面不存在。');
 
   const files = (
@@ -328,7 +493,21 @@ adminPageRoutes.delete('/:pageId', async (context) => {
   await Promise.all(
     files.map((file) => context.env.ASSETS_BUCKET.delete(file.object_key)),
   );
-  await context.env.DB.prepare('DELETE FROM h5_pages WHERE id = ?').bind(pageId).run();
+  const now = new Date().toISOString();
+  const statements = [] as D1PreparedStatement[];
+  if (page.product_id) {
+    statements.push(
+      context.env.DB.prepare(
+        `UPDATE products
+         SET status = 'archived', deleted_at = COALESCE(deleted_at, ?), updated_at = ?
+         WHERE id = ?`,
+      ).bind(now, now, page.product_id),
+    );
+  }
+  statements.push(
+    context.env.DB.prepare('DELETE FROM h5_pages WHERE id = ?').bind(pageId),
+  );
+  await context.env.DB.batch(statements);
 
   return context.json({ ok: true });
 });
@@ -495,6 +674,19 @@ adminPageRoutes.put('/:pageId/ctas', async (context) => {
     )
   )
     return apiError(context, 400, 'INVALID_CTA_BINDINGS', 'CTA 绑定数据无效。');
+  const boundRefs = new Set(
+    bindings
+      .filter((binding) => binding.sectionId && binding.conversionGroupId)
+      .map((binding) => `${binding.sectionId}\u0000${binding.conversionGroupId}`),
+  );
+  if (boundRefs.size > 1) {
+    return apiError(
+      context,
+      400,
+      'H5_PRODUCT_CONVERSION_CONFLICT',
+      '同一 H5 产品的 CTA 必须使用同一个转化分组。',
+    );
+  }
   const statements = [];
   for (const binding of bindings) {
     if ((binding.sectionId === null) !== (binding.conversionGroupId === null))
@@ -539,30 +731,91 @@ adminPageRoutes.post('/:pageId/publish', async (context) => {
     return apiError(context, 403, 'ADMIN_REQUEST_REQUIRED', '后台请求标识无效。');
   const pageId = context.req.param('pageId');
   const row = await context.env.DB.prepare(
-    'SELECT v.id, v.version_number FROM h5_page_versions v WHERE v.page_id = ? ORDER BY v.version_number DESC LIMIT 1',
+    `SELECT v.id, v.version_number, p.product_id
+     FROM h5_page_versions v
+     JOIN h5_pages p ON p.id = v.page_id
+     WHERE v.page_id = ? ORDER BY v.version_number DESC LIMIT 1`,
   )
     .bind(pageId)
-    .first<{ id: string; version_number: number }>();
+    .first<{ id: string; version_number: number; product_id: string | null }>();
   if (!row) return apiError(context, 404, 'PAGE_NOT_FOUND', '页面不存在。');
   const now = new Date().toISOString();
-  await context.env.DB.batch([
+  const statements = [
     context.env.DB.prepare(
       `UPDATE h5_pages SET status = 'published', published_version_id = ?, updated_at = ? WHERE id = ? AND deleted_at IS NULL`,
     ).bind(row.id, now, pageId),
     context.env.DB.prepare(
       'UPDATE h5_page_versions SET published_at = ? WHERE id = ?',
     ).bind(now, row.id),
-  ]);
+  ];
+  if (row.product_id) {
+    const product = await context.env.DB.prepare(
+      `SELECT section_id, service_mode, conversion_group_id
+       FROM products
+       WHERE id = ? AND presentation_mode = 'h5' AND deleted_at IS NULL`,
+    )
+      .bind(row.product_id)
+      .first<{
+        section_id: string;
+        service_mode: 'online' | 'offline';
+        conversion_group_id: string | null;
+      }>();
+    if (!product) {
+      return apiError(context, 409, 'H5_PRODUCT_NOT_FOUND', '关联的 H5 产品不存在。');
+    }
+    if (!product.conversion_group_id) {
+      return apiError(
+        context,
+        400,
+        'CONVERSION_GROUP_REQUIRED',
+        '发布 H5 页面前，请先绑定产品转化分组。',
+      );
+    }
+    const group = await getConversionGroup(
+      context.env.DB,
+      product.section_id,
+      product.conversion_group_id,
+    );
+    const expectedMode = product.service_mode === 'offline' ? 'customer_service' : 'link';
+    if (
+      !group ||
+      group.deletedAt ||
+      !group.isEnabled ||
+      group.mode !== expectedMode ||
+      group.activeTargetCount < 1
+    ) {
+      return apiError(
+        context,
+        400,
+        'INVALID_CONVERSION_GROUP',
+        '产品转化分组不存在、未启用或没有可用入口。',
+      );
+    }
+    statements.push(
+      context.env.DB.prepare(
+        `UPDATE products SET status = 'published', published_at = COALESCE(published_at, ?), updated_at = ?
+         WHERE id = ? AND deleted_at IS NULL`,
+      ).bind(now, now, row.product_id),
+    );
+  }
+  await context.env.DB.batch(statements);
   return context.json({ ok: true, versionId: row.id, versionNumber: row.version_number });
 });
 
 adminPageRoutes.post('/:pageId/archive', async (context) => {
   if (!hasAdminRequestHeader(context))
     return apiError(context, 403, 'ADMIN_REQUEST_REQUIRED', '后台请求标识无效。');
-  await context.env.DB.prepare(
-    `UPDATE h5_pages SET status = 'archived', updated_at = ? WHERE id = ? AND deleted_at IS NULL`,
-  )
-    .bind(new Date().toISOString(), context.req.param('pageId'))
-    .run();
+  const now = new Date().toISOString();
+  await context.env.DB.batch([
+    context.env.DB.prepare(
+      `UPDATE h5_pages SET status = 'archived', updated_at = ? WHERE id = ? AND deleted_at IS NULL`,
+    ).bind(now, context.req.param('pageId')),
+    context.env.DB.prepare(
+      `UPDATE products
+       SET status = 'archived', updated_at = ?
+       WHERE id = (SELECT product_id FROM h5_pages WHERE id = ?)
+         AND deleted_at IS NULL`,
+    ).bind(now, context.req.param('pageId')),
+  ]);
   return context.json({ ok: true });
 });

@@ -8,6 +8,7 @@ import { getCustomerServiceConnection } from '../customer-service/customer-servi
 import { renderH5Runtime, type H5RuntimeBinding } from '../h5-support-runtime';
 import type { AppEnvironment } from '../types';
 import { getH5PublicSettings } from '../settings/h5-settings';
+import { serveStorefrontDocument } from './public-seo';
 
 function hasControlCharacters(value: string): boolean {
   return [...value].some((character) => {
@@ -42,8 +43,12 @@ function notFound(context: Context<AppEnvironment>) {
   return context.text('Not Found', 404);
 }
 
-function injectCtaScript(html: string, pageId: string): string {
-  const script = `<script src="/pages/__runtime/${encodeURIComponent(pageId)}" defer></script>`;
+function injectCtaScript(
+  html: string,
+  pageId: string,
+  runtimePath = '/pages/__runtime',
+): string {
+  const script = `<script src="${runtimePath}/${encodeURIComponent(pageId)}" defer></script>`;
   return /<\/body>/iu.test(html)
     ? html.replace(/<\/body>/iu, `${script}</body>`)
     : `${html}${script}`;
@@ -60,6 +65,7 @@ function runtimeResponse(
     conversionGroupId: string | null;
     mode: 'customer_service' | 'link' | null;
   }>,
+  ctaPath = '/pages/cta',
 ): Response {
   const bindings: H5RuntimeBinding[] = ctas.map((cta) => ({
     key: cta.key,
@@ -67,7 +73,7 @@ function runtimeResponse(
     label: cta.label,
     href:
       cta.sectionId && cta.conversionGroupId
-        ? `/pages/cta/${encodeURIComponent(pageId)}/${encodeURIComponent(cta.id)}`
+        ? `${ctaPath}/${encodeURIComponent(pageId)}/${encodeURIComponent(cta.id)}`
         : null,
     mode: cta.mode,
   }));
@@ -115,10 +121,20 @@ async function servePage(context: Context<AppEnvironment>) {
     .bind(slug)
     .first<{ id: string; published_version_id: string | null }>();
   if (!page?.published_version_id) return notFound(context);
+  return serveH5Version(context, page.id, page.published_version_id, path);
+}
+
+async function serveH5Version(
+  context: Context<AppEnvironment>,
+  pageId: string,
+  versionId: string,
+  path: string,
+  runtimePath = '/pages/__runtime',
+) {
   const file = await context.env.DB.prepare(
     `SELECT object_key, mime_type FROM h5_page_files WHERE version_id = ? AND path = ?`,
   )
-    .bind(page.published_version_id, path)
+    .bind(versionId, path)
     .first<{ object_key: string; mime_type: string }>();
   if (!file) return notFound(context);
   const object = await context.env.ASSETS_BUCKET.get(file.object_key);
@@ -139,11 +155,40 @@ async function servePage(context: Context<AppEnvironment>) {
   if (path !== 'index.html' || !file.mime_type.startsWith('text/html'))
     return new Response(object.body, { headers });
   const html = await object.text();
-  return new Response(injectCtaScript(html, page.id), { headers });
+  return new Response(injectCtaScript(html, pageId, runtimePath), { headers });
 }
 
-publicPageRoutes.get('/__runtime/:pageId', async (context) => {
-  const pageId = context.req.param('pageId');
+export async function serveH5Product(context: Context<AppEnvironment>) {
+  const sectionRef = context.req.param('sectionSlug')?.trim() ?? '';
+  const productRef = context.req.param('productSlug')?.trim() ?? '';
+  if (!sectionRef || !productRef) return serveStorefrontDocument(context);
+  const product = await context.env.DB.prepare(
+    `SELECT p.id, h.id AS page_id, h.published_version_id
+     FROM products p
+     JOIN sections s ON s.id = p.section_id AND s.deleted_at IS NULL AND s.is_enabled = 1
+     JOIN h5_pages h ON h.product_id = p.id AND h.deleted_at IS NULL
+     WHERE p.presentation_mode = 'h5'
+       AND p.status = 'published'
+       AND p.deleted_at IS NULL
+       AND (s.slug = ? OR s.id = ?)
+       AND (p.slug = ? OR p.id = ?)`,
+  )
+    .bind(sectionRef, sectionRef, productRef, productRef)
+    .first<{ id: string; page_id: string; published_version_id: string | null }>();
+  if (!product?.published_version_id) return serveStorefrontDocument(context);
+  const path = cleanPath(context.req.param('*') ?? 'index.html');
+  if (!path) return notFound(context);
+  return serveH5Version(
+    context,
+    product.page_id,
+    product.published_version_id,
+    path,
+    '/h5-runtime',
+  );
+}
+
+async function serveRuntime(context: Context<AppEnvironment>, ctaPath = '/pages/cta') {
+  const pageId = context.req.param('pageId') ?? '';
   const page = await context.env.DB.prepare(
     `SELECT published_version_id FROM h5_pages WHERE id = ? AND status = 'published' AND deleted_at IS NULL`,
   )
@@ -168,19 +213,32 @@ publicPageRoutes.get('/__runtime/:pageId', async (context) => {
       conversionGroupId: string | null;
       mode: 'customer_service' | 'link' | null;
     }>();
-  return runtimeResponse(pageId, ctas.results);
-});
+  return runtimeResponse(pageId, ctas.results, ctaPath);
+}
 
-publicPageRoutes.get('/cta/:pageId/:ctaId', async (context) => {
+publicPageRoutes.get('/__runtime/:pageId', (context) => serveRuntime(context));
+
+export const serveH5Runtime = (context: Context<AppEnvironment>) =>
+  serveRuntime(context, '/h5-cta');
+
+async function serveCta(context: Context<AppEnvironment>) {
   const pageId = context.req.param('pageId');
   const ctaId = context.req.param('ctaId');
   const cta = await context.env.DB.prepare(
     `SELECT c.section_id, c.conversion_group_id, c.cta_key,
-            p.slug AS page_slug, p.name AS page_name, s.name AS section_name
+            p.slug AS page_slug, p.name AS page_name, p.product_id,
+            product.slug AS product_slug, product.title AS product_title,
+            product.section_id AS product_section_id,
+            product_section.slug AS product_section_slug,
+            s.name AS section_name
      FROM h5_page_ctas c
      JOIN h5_page_versions v ON v.id = c.version_id
      JOIN h5_pages p ON p.id = v.page_id AND p.published_version_id = v.id
      JOIN sections s ON s.id = c.section_id AND s.deleted_at IS NULL AND s.is_enabled = 1
+     LEFT JOIN products product ON product.id = p.product_id AND product.deleted_at IS NULL
+     LEFT JOIN sections product_section
+       ON product_section.id = product.section_id
+      AND product_section.deleted_at IS NULL
      WHERE p.id = ? AND c.id = ? AND p.status = 'published'`,
   )
     .bind(pageId, ctaId)
@@ -190,6 +248,11 @@ publicPageRoutes.get('/cta/:pageId/:ctaId', async (context) => {
       cta_key: string;
       page_slug: string;
       page_name: string;
+      product_id: string | null;
+      product_slug: string | null;
+      product_title: string | null;
+      product_section_id: string | null;
+      product_section_slug: string | null;
       section_name: string;
     }>();
   if (!cta?.section_id || !cta.conversion_group_id) return notFound(context);
@@ -222,6 +285,55 @@ publicPageRoutes.get('/cta/:pageId/:ctaId', async (context) => {
       return notFound(context);
     context.header('Cache-Control', 'no-store, private');
     context.header('Referrer-Policy', 'no-referrer');
+    const product =
+      cta.product_id && cta.product_slug && cta.product_section_slug
+        ? {
+            id: cta.product_id,
+            title: cta.product_title ?? cta.page_name,
+            href: `/sections/${encodeURIComponent(cta.product_section_slug)}/products/${encodeURIComponent(cta.product_slug)}/`,
+            coverUrl: null,
+            sectionId: cta.product_section_id ?? cta.section_id,
+            sectionName: cta.section_name,
+            categoryId: null,
+            categoryName: null,
+            isEnabled: true,
+            sourceType: 'product' as const,
+            presentationMode: 'h5' as const,
+            h5PageId: pageId,
+          }
+        : {
+            id: `h5-page:${pageId}`,
+            title: cta.page_name,
+            href: `/pages/${encodeURIComponent(cta.page_slug)}/`,
+            coverUrl: null,
+            sectionId: cta.section_id,
+            sectionName: cta.section_name,
+            categoryId: null,
+            categoryName: null,
+            isEnabled: true,
+            sourceType: 'h5_page' as const,
+            pageId,
+            pageSlug: cta.page_slug,
+          };
+    const source = cta.product_id
+      ? {
+          type: 'product' as const,
+          productId: cta.product_id,
+          presentationMode: 'h5' as const,
+          h5PageId: pageId,
+          pageName: cta.page_name,
+          pageSlug: cta.page_slug,
+          ctaId,
+          ctaKey: cta.cta_key,
+        }
+      : {
+          type: 'h5_page' as const,
+          pageId,
+          pageName: cta.page_name,
+          pageSlug: cta.page_slug,
+          ctaId,
+          ctaKey: cta.cta_key,
+        };
     return context.json({
       mode: 'customer_service',
       handoffId: crypto.randomUUID(),
@@ -231,28 +343,8 @@ publicPageRoutes.get('/cta/:pageId/:ctaId', async (context) => {
         realtimeUrl: connection.realtimeUrl,
         protocolVersion: 'v1',
       },
-      product: {
-        id: `h5-page:${pageId}`,
-        title: cta.page_name,
-        href: `/pages/${encodeURIComponent(cta.page_slug)}/`,
-        coverUrl: null,
-        sectionId: cta.section_id,
-        sectionName: cta.section_name,
-        categoryId: null,
-        categoryName: null,
-        isEnabled: true,
-        sourceType: 'h5_page',
-        pageId,
-        pageSlug: cta.page_slug,
-      },
-      source: {
-        type: 'h5_page',
-        pageId,
-        pageName: cta.page_name,
-        pageSlug: cta.page_slug,
-        ctaId,
-        ctaKey: cta.cta_key,
-      },
+      product,
+      source,
     });
   }
   const target = await selectNextConversionTarget(
@@ -264,7 +356,10 @@ publicPageRoutes.get('/cta/:pageId/:ctaId', async (context) => {
   context.header('Cache-Control', 'no-store, private');
   context.header('Referrer-Policy', 'no-referrer');
   return context.redirect(target.endpointUrl, 302);
-});
+}
+
+publicPageRoutes.get('/cta/:pageId/:ctaId', serveCta);
+export const serveH5Cta = serveCta;
 
 publicPageRoutes.get('/:slug', servePage);
 publicPageRoutes.get('/:slug/*', servePage);
