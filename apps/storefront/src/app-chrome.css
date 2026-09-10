@@ -316,3 +316,125 @@
     transition: none;
   }
 }
+
+@media (min-width: 768px) {
+  :is(html, .storefront-theme-root) .app-shell > .topbar {
+    justify-content: flex-start;
+  }
+
+  :is(html, .storefront-theme-root) .app-shell .brand-lockup {
+    margin-inline: 0;
+  }
+
+  :is(html, .storefront-theme-root) .app-shell > .topbar .topbar-actions {
+    right: max(24px, calc((100vw - var(--v2-content-width, 1200px)) / 2));
+    gap: 8px;
+    padding-left: 16px;
+    border-left: 1px solid var(--theme-primary-header-border, var(--line));
+  }
+
+  :is(html, .storefront-theme-root)
+    .app-shell
+    > .topbar
+    .topbar-actions
+    :is(.pwa-install-button, .topbar-message-button) {
+    display: grid;
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    place-items: center;
+    border: 1px solid var(--theme-primary-navigation-border, var(--line));
+    border-radius: 12px;
+    color: var(--v2-muted, var(--muted));
+    background: color-mix(in srgb, var(--surface) 74%, transparent);
+    transition:
+      color var(--app-motion-fast, 140ms) ease,
+      background var(--app-motion-fast, 140ms) ease,
+      border-color var(--app-motion-fast, 140ms) ease,
+      transform var(--app-motion-fast, 140ms) var(--app-ease-out, ease-out);
+  }
+
+  :is(html, .storefront-theme-root)
+    .app-shell
+    > .topbar
+    .topbar-actions
+    :is(.pwa-install-button, .topbar-message-button):hover {
+    color: var(--text);
+    border-color: color-mix(in srgb, var(--text) 22%, var(--line));
+    background: var(--surface);
+  }
+
+  :is(html, .storefront-theme-root)
+    .app-shell
+    > .topbar
+    .topbar-actions
+    :is(.pwa-install-button, .topbar-message-button):active {
+    transform: scale(0.96);
+  }
+
+  :is(html, .storefront-theme-root) .storefront-bottom-chrome {
+    right: max(156px, calc((100vw - var(--v2-content-width, 1200px)) / 2 + 156px));
+  }
+
+  :is(html, .storefront-theme-root) .storefront-bottom-chrome > .bottom-nav {
+    display: flex;
+    gap: 4px;
+    padding: 4px;
+    border: 1px solid var(--theme-primary-navigation-border, var(--line));
+    border-radius: 16px;
+    background: color-mix(in srgb, var(--surface) 78%, transparent);
+    box-shadow: 0 12px 30px color-mix(in srgb, var(--text) 10%, transparent);
+    backdrop-filter: blur(18px) saturate(1.08);
+    -webkit-backdrop-filter: blur(18px) saturate(1.08);
+  }
+
+  :is(html, .storefront-theme-root) .storefront-bottom-chrome > .bottom-nav a {
+    min-width: 104px;
+    min-height: 42px;
+    gap: 7px;
+    padding: 0 14px;
+    border: 1px solid transparent;
+    border-radius: 12px;
+    color: var(--v2-muted, var(--muted));
+    transition:
+      color var(--app-motion-fast, 140ms) ease,
+      background var(--app-motion-fast, 140ms) ease,
+      box-shadow var(--app-motion-fast, 140ms) ease,
+      transform var(--app-motion-fast, 140ms) var(--app-ease-out, ease-out);
+  }
+
+  :is(html, .storefront-theme-root) .storefront-bottom-chrome > .bottom-nav a::after {
+    display: none;
+  }
+
+  :is(html, .storefront-theme-root) .storefront-bottom-chrome > .bottom-nav a.is-active {
+    color: var(--surface, #fff);
+    background: var(--text);
+    box-shadow: 0 5px 14px color-mix(in srgb, var(--text) 18%, transparent);
+  }
+
+  :is(html, .storefront-theme-root)
+    .storefront-bottom-chrome
+    > .bottom-nav
+    a:hover:not(.is-active) {
+    color: var(--text);
+    background: color-mix(in srgb, var(--surface-soft) 88%, var(--surface));
+  }
+
+  :is(html, .storefront-theme-root) .storefront-bottom-chrome > .bottom-nav small {
+    font-size: 0.78rem;
+    font-weight: var(--storefront-weight-semibold, 650);
+    letter-spacing: -0.012em;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :is(html, .storefront-theme-root)
+    .app-shell
+    > .topbar
+    .topbar-actions
+    :is(.pwa-install-button, .topbar-message-button),
+  :is(html, .storefront-theme-root) .storefront-bottom-chrome > .bottom-nav a {
+    transition: none;
+  }
+}

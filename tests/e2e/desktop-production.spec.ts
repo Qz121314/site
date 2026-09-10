@@ -11,7 +11,7 @@ async function expectNoHorizontalOverflow(page: Page) {
     .toBeLessThanOrEqual(1);
 }
 
-test('desktop shell keeps the centered brand and primary navigation usable', async ({
+test('desktop shell keeps the left brand and primary navigation usable', async ({
   page,
 }) => {
   const pageErrors: string[] = [];
@@ -35,9 +35,7 @@ test('desktop shell keeps the centered brand and primary navigation usable', asy
     const brandRect = brand?.getBoundingClientRect();
     const navigationRect = navigation?.getBoundingClientRect();
     return {
-      brandCenterDelta: brandRect
-        ? Math.abs(brandRect.left + brandRect.width / 2 - window.innerWidth / 2)
-        : Number.POSITIVE_INFINITY,
+      brandLeft: brandRect?.left ?? Number.POSITIVE_INFINITY,
       bottomChromePosition: bottomChrome ? getComputedStyle(bottomChrome).position : null,
       navigationPosition: navigation ? getComputedStyle(navigation).position : null,
       navigationInsideTopbar:
@@ -52,7 +50,8 @@ test('desktop shell keeps the centered brand and primary navigation usable', asy
 
   expect(shellContract.bottomChromePosition).toBe('fixed');
   expect(shellContract.navigationPosition).toBe('static');
-  expect(shellContract.brandCenterDelta).toBeLessThanOrEqual(1.5);
+  expect(shellContract.brandLeft).toBeGreaterThanOrEqual(20);
+  expect(shellContract.brandLeft).toBeLessThan(96);
   expect(shellContract.navigationInsideTopbar).toBeTruthy();
   expect(shellContract.navigationClearsBrand).toBeTruthy();
   await expectNoHorizontalOverflow(page);

@@ -775,7 +775,8 @@
   }
 
   .home-product-rail {
-    gap: 36px 21px;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 28px 18px;
   }
 }
 

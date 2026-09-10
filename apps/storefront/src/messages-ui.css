@@ -592,13 +592,17 @@
     grid-template-columns: minmax(300px, 360px) minmax(0, 1fr);
     margin-inline: auto;
     overflow: hidden;
-    border: 1px solid transparent;
+    border: 1px solid color-mix(in srgb, var(--line) 78%, transparent);
+    border-radius: 20px;
+    background: var(--surface);
+    box-shadow: 0 18px 44px color-mix(in srgb, var(--text) 10%, transparent);
   }
 
   .messages-sidebar {
     min-height: 0;
+    padding: 8px;
     border-right: 1px solid color-mix(in srgb, var(--line) 72%, transparent);
-    background: var(--surface);
+    background: color-mix(in srgb, var(--surface-soft) 74%, var(--surface));
   }
 
   .messages-page {
@@ -629,10 +633,58 @@
 
   .chat-header {
     grid-template-columns: 42px minmax(0, 1fr);
+    min-height: 72px;
+    padding: 12px 20px;
+    background: var(--surface);
   }
 
   .chat-back-button {
     display: none;
+  }
+
+  .conversation-row {
+    min-height: 74px;
+    margin: 3px 0;
+    padding: 12px 13px;
+    border: 1px solid transparent;
+    border-radius: 13px;
+  }
+
+  .conversation-row.is-active {
+    border-color: color-mix(in srgb, var(--brand) 20%, var(--line));
+    background: color-mix(in srgb, var(--brand) 8%, var(--surface));
+  }
+
+  .conversation-row:hover:not(.is-active) {
+    background: color-mix(in srgb, var(--surface) 82%, var(--line));
+  }
+
+  .messages-detail-placeholder {
+    background: color-mix(in srgb, var(--surface-soft) 66%, var(--surface));
+  }
+
+  .chat-product-card {
+    margin: 14px 20px 0;
+    padding: 11px;
+    border-color: color-mix(in srgb, var(--line) 76%, transparent);
+    border-radius: 14px;
+    background: color-mix(in srgb, var(--surface-soft) 72%, var(--surface));
+  }
+
+  .chat-timeline {
+    padding: 24px 28px;
+    background: color-mix(in srgb, var(--surface-soft) 42%, var(--surface));
+  }
+
+  .chat-composer {
+    padding: 14px 20px 16px;
+    background: var(--surface);
+  }
+
+  .chat-composer textarea,
+  .chat-input-placeholder {
+    border-color: color-mix(in srgb, var(--line) 82%, transparent);
+    background: var(--surface-soft);
   }
 }
 

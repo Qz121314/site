@@ -155,4 +155,14 @@
   .messages-article-workspace .messages-detail-placeholder {
     height: 100%;
   }
+
+  .messages-article-workspace .messages-article-row {
+    margin: 3px 0;
+    border: 1px solid transparent;
+    border-radius: 13px;
+  }
+
+  .messages-article-workspace .messages-article-row:hover {
+    border-color: color-mix(in srgb, var(--line) 72%, transparent);
+  }
 }
