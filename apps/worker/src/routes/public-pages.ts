@@ -176,10 +176,11 @@ publicPageRoutes.get('/cta/:pageId/:ctaId', async (context) => {
   const ctaId = context.req.param('ctaId');
   const cta = await context.env.DB.prepare(
     `SELECT c.section_id, c.conversion_group_id, c.cta_key,
-            p.slug AS page_slug, p.name AS page_name
+            p.slug AS page_slug, p.name AS page_name, s.name AS section_name
      FROM h5_page_ctas c
      JOIN h5_page_versions v ON v.id = c.version_id
      JOIN h5_pages p ON p.id = v.page_id AND p.published_version_id = v.id
+     JOIN sections s ON s.id = c.section_id AND s.deleted_at IS NULL AND s.is_enabled = 1
      WHERE p.id = ? AND c.id = ? AND p.status = 'published'`,
   )
     .bind(pageId, ctaId)
@@ -189,6 +190,7 @@ publicPageRoutes.get('/cta/:pageId/:ctaId', async (context) => {
       cta_key: string;
       page_slug: string;
       page_name: string;
+      section_name: string;
     }>();
   if (!cta?.section_id || !cta.conversion_group_id) return notFound(context);
   const group = await getConversionGroup(
@@ -233,7 +235,15 @@ publicPageRoutes.get('/cta/:pageId/:ctaId', async (context) => {
         id: `h5-page:${pageId}`,
         title: cta.page_name,
         href: `/pages/${encodeURIComponent(cta.page_slug)}/`,
+        coverUrl: null,
+        sectionId: cta.section_id,
+        sectionName: cta.section_name,
+        categoryId: null,
+        categoryName: null,
+        isEnabled: true,
         sourceType: 'h5_page',
+        pageId,
+        pageSlug: cta.page_slug,
       },
       source: {
         type: 'h5_page',

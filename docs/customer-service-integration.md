@@ -153,12 +153,29 @@ Site Admin 会把当前属于该客服连接的在线客服产品目录一并同
         "sectionName": "West",
         "categoryId": "massage",
         "categoryName": "Massage",
-        "isEnabled": true
+        "isEnabled": true,
+        "sourceType": "product"
+      },
+      {
+        "id": "h5-page:landing-page-id",
+        "title": "Consultation landing page",
+        "href": "https://pages.example.com/pages/consultation/",
+        "coverUrl": null,
+        "sectionId": "west",
+        "sectionName": "West",
+        "categoryId": null,
+        "categoryName": null,
+        "isEnabled": true,
+        "sourceType": "h5_page",
+        "pageId": "landing-page-id",
+        "pageSlug": "consultation"
       }
     ]
   }
 }
 ```
+
+已发布的 H5 页面只要有一个 CTA 绑定到该客服连接，就会作为独立的 `h5_page` 产品同步；它不会复用主站商品 ID。客服端可用 `sourceType`、`pageId` 与 `pageSlug` 明确显示落地页来源。一个 H5 页面所有在线客服 CTA 必须属于同一分区和客服连接，避免一个页面被同步成冲突的客服产品。
 
 客服系统当前接受最多 5000 个产品。同步采用“先禁用旧目录，再 upsert 本次目录”的方式，因此客服后台看到的是 Site 当前权威产品集合。
 

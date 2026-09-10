@@ -496,6 +496,7 @@ adminPageRoutes.put('/:pageId/ctas', async (context) => {
   )
     return apiError(context, 400, 'INVALID_CTA_BINDINGS', 'CTA 绑定数据无效。');
   const statements = [];
+  const customerServiceOwners = new Set<string>();
   for (const binding of bindings) {
     if ((binding.sectionId === null) !== (binding.conversionGroupId === null))
       return apiError(
@@ -506,10 +507,16 @@ adminPageRoutes.put('/:pageId/ctas', async (context) => {
       );
     if (binding.sectionId && binding.conversionGroupId) {
       const validGroup = await context.env.DB.prepare(
-        'SELECT id FROM conversion_groups WHERE section_id = ? AND id = ? AND deleted_at IS NULL AND is_enabled = 1',
+        `SELECT id, mode, customer_service_connection_id
+         FROM conversion_groups
+         WHERE section_id = ? AND id = ? AND deleted_at IS NULL AND is_enabled = 1`,
       )
         .bind(binding.sectionId, binding.conversionGroupId)
-        .first<{ id: string }>();
+        .first<{
+          id: string;
+          mode: 'link' | 'customer_service';
+          customer_service_connection_id: string | null;
+        }>();
       if (!validGroup)
         return apiError(
           context,
@@ -517,6 +524,18 @@ adminPageRoutes.put('/:pageId/ctas', async (context) => {
           'INVALID_CONVERSION_GROUP',
           '所选转化池不存在或未启用。',
         );
+      if (validGroup.mode === 'customer_service') {
+        if (!validGroup.customer_service_connection_id)
+          return apiError(
+            context,
+            400,
+            'INVALID_CONVERSION_GROUP',
+            '在线客服转化池缺少客服连接。',
+          );
+        customerServiceOwners.add(
+          `${binding.sectionId}\u0000${validGroup.customer_service_connection_id}`,
+        );
+      }
     }
     statements.push(
       context.env.DB.prepare(
@@ -530,6 +549,13 @@ adminPageRoutes.put('/:pageId/ctas', async (context) => {
       ),
     );
   }
+  if (customerServiceOwners.size > 1)
+    return apiError(
+      context,
+      400,
+      'H5_SUPPORT_OWNER_CONFLICT',
+      '同一落地页的在线客服 CTA 必须属于同一个分区和客服连接。',
+    );
   if (statements.length) await context.env.DB.batch(statements);
   return context.json({ ok: true });
 });

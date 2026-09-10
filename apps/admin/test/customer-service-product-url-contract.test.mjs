@@ -12,5 +12,8 @@ test('customer-service catalog sync carries Site canonical product URLs', () => 
   assert.ok(source.includes('function publicProductHref('));
   assert.ok(source.includes('window.location.origin'));
   assert.ok(source.includes('href: publicProductHref(section.slug, product.slug)'));
+  assert.ok(source.includes("sourceType: 'h5_page' as const"));
+  assert.ok(source.includes('id: `h5-page:${page.id}`'));
+  assert.ok(source.includes('fetchH5Pages()'));
   assert.equal(source.includes('href: null'), false);
 });

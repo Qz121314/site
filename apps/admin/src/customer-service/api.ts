@@ -1,6 +1,7 @@
 import { AdminApiError, fetchSections } from '../api';
 import { adminFetch } from '../admin-fetch';
 import { fetchConversionGroups } from '../conversion-pool/api';
+import { fetchH5Page, fetchH5Pages } from '../page-center/api';
 import { fetchProducts } from '../product-management/api';
 
 export type CustomerServiceScope = 'active' | 'trash' | 'all';
@@ -51,6 +52,10 @@ type ProductCatalog = {
     categoryId: string | null;
     categoryName: string | null;
     isEnabled: true;
+    /** Distinguishes Storefront products from independent H5 landing-page subjects. */
+    sourceType: 'product' | 'h5_page';
+    pageId?: string;
+    pageSlug?: string;
   }>;
 };
 
@@ -216,49 +221,100 @@ export async function batchDeleteCustomerServiceConnections(
 
 async function loadProductCatalog(connectionId: string): Promise<ProductCatalog> {
   const sections = await fetchSections('active');
-  const products = await Promise.all(
-    sections.map(async (section) => {
-      const [sectionProducts, conversionGroups] = await Promise.all([
-        fetchProducts(section.id, 'active'),
-        fetchConversionGroups(section.id, 'active'),
-      ]);
-      const groupById = new Map(conversionGroups.map((group) => [group.id, group]));
+  const [sectionCatalogs, h5Pages] = await Promise.all([
+    Promise.all(
+      sections.map(async (section) => {
+        const [sectionProducts, conversionGroups] = await Promise.all([
+          fetchProducts(section.id, 'active'),
+          fetchConversionGroups(section.id, 'active'),
+        ]);
+        const groupById = new Map(conversionGroups.map((group) => [group.id, group]));
+        const products = sectionProducts.flatMap((product) => {
+          const group = product.conversionGroupId
+            ? groupById.get(product.conversionGroupId)
+            : undefined;
+          if (
+            product.status !== 'published' ||
+            product.deletedAt ||
+            product.conversionMode !== 'customer_service' ||
+            !group ||
+            group.deletedAt ||
+            !group.isEnabled ||
+            group.mode !== 'customer_service' ||
+            group.customerServiceConnectionId !== connectionId
+          ) {
+            return [];
+          }
 
-      return sectionProducts.flatMap((product) => {
-        const group = product.conversionGroupId
-          ? groupById.get(product.conversionGroupId)
-          : undefined;
-        if (
-          product.status !== 'published' ||
-          product.deletedAt ||
-          product.conversionMode !== 'customer_service' ||
-          !group ||
-          group.deletedAt ||
-          !group.isEnabled ||
-          group.mode !== 'customer_service' ||
-          group.customerServiceConnectionId !== connectionId
-        ) {
-          return [];
-        }
+          return [
+            {
+              id: product.id,
+              title: product.title,
+              href: publicProductHref(section.slug, product.slug),
+              coverUrl: product.effectiveCoverUrl,
+              sectionId: section.id,
+              sectionName: section.name,
+              categoryId: product.categoryId,
+              categoryName: product.categoryName,
+              isEnabled: true as const,
+              sourceType: 'product' as const,
+            },
+          ];
+        });
+        return { conversionGroups, products };
+      }),
+    ),
+    fetchH5Pages(),
+  ]);
 
-        return [
-          {
-            id: product.id,
-            title: product.title,
-            href: publicProductHref(section.slug, product.slug),
-            coverUrl: product.effectiveCoverUrl,
-            sectionId: section.id,
-            sectionName: section.name,
-            categoryId: product.categoryId,
-            categoryName: product.categoryName,
-            isEnabled: true as const,
-          },
-        ];
-      });
-    }),
+  const groupsById = new Map(
+    sectionCatalogs.flatMap(({ conversionGroups }) =>
+      conversionGroups.map((group) => [group.id, group] as const),
+    ),
   );
+  const sectionById = new Map(sections.map((section) => [section.id, section]));
+  const publishedH5Pages = await Promise.all(
+    h5Pages
+      .filter((page) => page.status === 'published')
+      .map((page) => fetchH5Page(page.id)),
+  );
+  const h5Products = publishedH5Pages.flatMap((page) => {
+    const matchingCta = page.ctas.find((cta) => {
+      if (!cta.sectionId || !cta.conversionGroupId) return false;
+      const group = groupsById.get(cta.conversionGroupId);
+      return (
+        group?.mode === 'customer_service' &&
+        group.isEnabled &&
+        !group.deletedAt &&
+        group.customerServiceConnectionId === connectionId
+      );
+    });
+    const section = matchingCta?.sectionId
+      ? sectionById.get(matchingCta.sectionId)
+      : undefined;
+    if (!matchingCta || !section) return [];
 
-  return { products: products.flat() };
+    return [
+      {
+        id: `h5-page:${page.id}`,
+        title: page.name,
+        href: page.publicUrl,
+        coverUrl: null,
+        sectionId: section.id,
+        sectionName: section.name,
+        categoryId: null,
+        categoryName: null,
+        isEnabled: true as const,
+        sourceType: 'h5_page' as const,
+        pageId: page.id,
+        pageSlug: page.slug,
+      },
+    ];
+  });
+
+  return {
+    products: [...sectionCatalogs.flatMap((catalog) => catalog.products), ...h5Products],
+  };
 }
 
 async function verifyPublicCustomerService(

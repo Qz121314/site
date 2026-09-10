@@ -63,6 +63,7 @@ function createDb() {
               cta_key: 'consult',
               page_slug: 'consultation',
               page_name: 'Consultation page',
+              section_name: 'West',
             };
           }
           if (sql.trimStart().startsWith('SELECT\n  c.id')) return connectionRow();
@@ -140,7 +141,15 @@ test('bound H5 customer-service CTA returns only public handoff data', async () 
     id: 'h5-page:page-1',
     title: 'Consultation page',
     href: '/pages/consultation/',
+    coverUrl: null,
+    sectionId: 'section-1',
+    sectionName: 'West',
+    categoryId: null,
+    categoryName: null,
+    isEnabled: true,
     sourceType: 'h5_page',
+    pageId: 'page-1',
+    pageSlug: 'consultation',
   });
   assert.deepEqual(body.source, {
     type: 'h5_page',
