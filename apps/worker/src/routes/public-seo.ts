@@ -22,6 +22,9 @@ type PublicPointer = {
 type PublishedSite = {
   name: string;
   locationLabel: string;
+  homeLayout?: {
+    recommendationSectionIds: string[];
+  };
 };
 
 type PublishedSection = {
@@ -168,7 +171,18 @@ function parseSite(value: unknown): PublishedSite | null {
   if (!isRecord(value) || !isRecord(value.site)) return null;
   const name = cleanText(value.site.name, 80);
   const locationLabel = cleanText(value.site.locationLabel, 180);
-  return name && locationLabel ? { name, locationLabel } : null;
+  const rawHomeLayout = isRecord(value.site.homeLayout) ? value.site.homeLayout : null;
+  const recommendationSectionIds = rawHomeLayout?.recommendationSectionIds;
+  const homeLayout = Array.isArray(recommendationSectionIds)
+    ? {
+        recommendationSectionIds: recommendationSectionIds.filter(
+          (id): id is string => typeof id === 'string' && id.length > 0,
+        ),
+      }
+    : undefined;
+  return name && locationLabel
+    ? { name, locationLabel, ...(homeLayout ? { homeLayout } : {}) }
+    : null;
 }
 
 function parseSections(value: unknown): PublishedSection[] | null {
@@ -345,9 +359,53 @@ async function loadHomePreloadImageKey(
     `public/home/${content.pointer.contentVersion}/home.json`,
   );
   if (!isRecord(value) || !Array.isArray(value.featuredProducts)) return null;
-  for (const product of value.featuredProducts) {
-    if (!isRecord(product) || typeof product.coverObjectKey !== 'string') continue;
-    if (sameOriginMediaPath(product.coverObjectKey)) return product.coverObjectKey;
+  const products = value.featuredProducts.filter(
+    (product): product is JsonRecord =>
+      isRecord(product) && typeof product.coverObjectKey === 'string',
+  );
+  const publishedSectionIds = new Set(
+    content.sections
+      .filter((section) => content.pointer.sections[section.id])
+      .map((section) => section.id),
+  );
+  const configuredSectionIds = content.site.homeLayout?.recommendationSectionIds.filter(
+    (id) => publishedSectionIds.has(id),
+  );
+  const fallbackSectionIds = products.reduce<string[]>((ids, product) => {
+    const sectionId = typeof product.sectionId === 'string' ? product.sectionId : null;
+    if (sectionId && !ids.includes(sectionId)) ids.push(sectionId);
+    return ids;
+  }, []);
+  const sectionIds =
+    configuredSectionIds && configuredSectionIds.length > 0
+      ? configuredSectionIds
+      : fallbackSectionIds;
+
+  if (sectionIds.length === 0) {
+    const firstProduct = products.find((product) => {
+      const objectKey = product.coverObjectKey;
+      return typeof objectKey === 'string' && sameOriginMediaPath(objectKey);
+    });
+    return typeof firstProduct?.coverObjectKey === 'string'
+      ? firstProduct.coverObjectKey
+      : null;
+  }
+
+  for (const sectionId of sectionIds) {
+    const sectionProducts = products
+      .filter((product) => product.sectionId === sectionId)
+      .sort(
+        (left, right) =>
+          Number(left.featuredOrder ?? 0) - Number(right.featuredOrder ?? 0) ||
+          Number(left.sortOrder ?? 0) - Number(right.sortOrder ?? 0) ||
+          String(left.title ?? '').localeCompare(String(right.title ?? '')),
+      );
+    for (const product of sectionProducts) {
+      const objectKey = product.coverObjectKey;
+      if (typeof objectKey === 'string' && sameOriginMediaPath(objectKey)) {
+        return objectKey;
+      }
+    }
   }
   return null;
 }
