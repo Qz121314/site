@@ -5,12 +5,15 @@
 }
 .theme-studio {
   grid-template-rows: auto minmax(0, 1fr);
-  height: 100%;
+  flex: 1 1 auto;
+  min-height: 0;
 }
-.admin-workspace-content:has(.theme-studio) {
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
+@media (min-width: 900px) {
+  .admin-workspace-content:has(.theme-studio) {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
 }
 .theme-studio-pane-heading {
   display: flex;
@@ -128,6 +131,7 @@
   min-width: 0;
   min-height: 0;
   grid-template-columns: minmax(190px, 238px) minmax(420px, 1fr) minmax(252px, 300px);
+  grid-template-rows: minmax(0, 1fr);
   overflow: hidden;
   border: 1px solid #dfe5ec;
   border-radius: 12px;

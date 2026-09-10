@@ -28,6 +28,7 @@ test('Static Assets bypass the Worker while the explicit dynamic route contract 
   assert.deepEqual(workerFirst, [
     '/api/*',
     '/go/*',
+    '/pages/*',
     '/public/*',
     '/_media/*',
     '/_image/*',

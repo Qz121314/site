@@ -12,9 +12,13 @@ const BOOTSTRAP_PREFIX = 'public/bootstrap';
 type JsonRecord = Record<string, unknown>;
 
 type MessageArticleMetadata = {
-  articleId: string;
+  cardId: string;
   title: string;
   preview: string;
+  targetKind: 'article' | 'page' | 'link';
+  targetRef: string;
+  sectionId: string | null;
+  conversionGroupId: string | null;
   backgroundObjectKey: string | null;
   sortOrder: number;
 };
@@ -67,20 +71,32 @@ function sanitizeMessageArticles(value: unknown): MessageArticleMetadata[] {
   if (!Array.isArray(value)) return [];
   const articles: MessageArticleMetadata[] = [];
   for (const item of value) {
+    const cardId = isRecord(item) && typeof item.cardId === 'string' ? item.cardId : null;
+    const targetKind = isRecord(item) ? item.targetKind : undefined;
+    const targetRef = isRecord(item) ? item.targetRef : null;
     if (
       !isRecord(item) ||
-      typeof item.articleId !== 'string' ||
+      typeof cardId !== 'string' ||
       typeof item.title !== 'string' ||
       typeof item.preview !== 'string' ||
+      !['article', 'page', 'link'].includes(String(targetKind)) ||
+      typeof targetRef !== 'string' ||
+      (item.sectionId !== null && typeof item.sectionId !== 'string') ||
+      (item.conversionGroupId !== null && typeof item.conversionGroupId !== 'string') ||
       typeof item.sortOrder !== 'number' ||
       !Number.isInteger(item.sortOrder)
     ) {
       continue;
     }
     articles.push({
-      articleId: item.articleId,
+      cardId,
       title: item.title,
       preview: item.preview,
+      targetKind: targetKind as 'article' | 'page' | 'link',
+      targetRef,
+      sectionId: typeof item.sectionId === 'string' ? item.sectionId : null,
+      conversionGroupId:
+        typeof item.conversionGroupId === 'string' ? item.conversionGroupId : null,
       backgroundObjectKey:
         typeof item.backgroundObjectKey === 'string' ? item.backgroundObjectKey : null,
       sortOrder: item.sortOrder,

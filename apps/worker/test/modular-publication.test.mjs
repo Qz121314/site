@@ -301,9 +301,13 @@ test('public storefront bootstrap consolidates the critical published snapshots'
   const home = { schemaVersion: 2, featuredProducts: [] };
   const messageArticles = [
     {
-      articleId: 'article-a',
+      cardId: 'card-a',
       title: 'Announcement',
       preview: 'Short preview',
+      targetKind: 'article',
+      targetRef: 'article-a',
+      sectionId: null,
+      conversionGroupId: null,
       backgroundObjectKey: null,
       sortOrder: 0,
     },

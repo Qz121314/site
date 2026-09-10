@@ -1,10 +1,7 @@
 import { useEffect, useSyncExternalStore } from 'react';
 
 const LEGACY_PROTECTED_FORM_SELECTOR = '.admin-dialog form:not(.product-editor-form)';
-const SPECIAL_DRAFT_ACTION_SELECTOR = [
-  '.icon-picker button',
-  '.section-icon-upload-actions button',
-].join(', ');
+const SPECIAL_DRAFT_ACTION_SELECTOR = '.section-icon-upload-actions button';
 
 export type AdminUnsavedSnapshot = {
   isDirty: boolean;

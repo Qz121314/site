@@ -15,6 +15,7 @@ import { adminMediaDeleteRoutes } from './routes/admin-media-delete';
 import { adminMediaFolderRoutes } from './routes/admin-media-folders';
 import { adminMediaRoleRoutes } from './routes/admin-media-roles';
 import { adminMessageArticleRoutes } from './routes/admin-message-articles';
+import { adminPageRoutes } from './routes/admin-pages';
 import { adminPublishRoutes } from './routes/admin-publish';
 import { adminProductBatchRoutes } from './routes/admin-product-batch';
 import { adminProductRoutes } from './routes/admin-products';
@@ -28,6 +29,7 @@ import { publicContentRoutes } from './routes/public-content';
 import { publicConversionRoutes } from './routes/public-conversion';
 import { publicImageVariantRoutes } from './routes/public-image-variant';
 import { publicMediaFallbackRoutes } from './routes/public-media-fallback';
+import { publicPageRoutes } from './routes/public-pages';
 import { servePwaIcon, servePwaManifest } from './routes/public-pwa';
 import {
   serveRobots,
@@ -114,6 +116,7 @@ app.route('/api/admin/assets', adminMediaFolderRoutes);
 app.route('/api/admin/media', adminBrandingMediaRoutes);
 app.route('/api/admin/faqs', adminFaqRoutes);
 app.route('/api/admin/message-articles', adminMessageArticleRoutes);
+app.route('/api/admin/pages', adminPageRoutes);
 app.route('/api/admin/publish', adminPublishRoutes);
 app.route('/api/admin/sections', adminProductBatchRoutes);
 app.route('/api/admin/sections', adminProductRoutes);
@@ -126,6 +129,7 @@ app.route('/api/admin/sections', adminSectionBatchRoutes);
 app.route('/api/admin/sections', adminSectionRoutes);
 
 app.route('/go', publicConversionRoutes);
+app.route('/pages', publicPageRoutes);
 
 app.on(['GET', 'HEAD'], '*', async (context) => {
   const pathname = new URL(context.req.url).pathname;
@@ -134,7 +138,8 @@ app.on(['GET', 'HEAD'], '*', async (context) => {
     pathname.startsWith('/public/') ||
     pathname.startsWith('/_media/') ||
     pathname.startsWith('/_image/') ||
-    pathname.startsWith('/go/')
+    pathname.startsWith('/go/') ||
+    pathname.startsWith('/pages/')
   ) {
     return context.json(
       {

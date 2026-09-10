@@ -6,7 +6,7 @@ import {
   type LocalBrandingImage,
 } from '../branding-media/local-branding-image';
 import type { AdminSection } from '../api';
-import { sectionIconOptions, type SectionEditorInput } from './config';
+import type { SectionEditorInput } from './config';
 
 type SectionEditorDialogProps = {
   editingSection: AdminSection | null;
@@ -23,7 +23,6 @@ type SectionEditorDialogProps = {
   onOpenBrowseBackgroundPicker: () => void;
   onRemoveImageIcon: () => void;
   onRemoveBrowseBackground: () => void;
-  onSelectFallbackIcon: (icon: string) => void;
   onClose: () => void;
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 };
@@ -43,7 +42,6 @@ export function SectionEditorDialog({
   onOpenBrowseBackgroundPicker,
   onRemoveImageIcon,
   onRemoveBrowseBackground,
-  onSelectFallbackIcon,
   onClose,
   onSubmit,
 }: SectionEditorDialogProps) {
@@ -53,7 +51,6 @@ export function SectionEditorDialog({
     <AdminDialog
       open
       title={editingSection ? '编辑分区' : '新增分区'}
-      description="配置前端显示内容、快捷入口和 Browse 卡片样式。"
       onClose={onClose}
       closeDisabled={busy}
       size="large"
@@ -70,7 +67,6 @@ export function SectionEditorDialog({
           <div className="section-editor-card-heading">
             <div>
               <strong>基本信息</strong>
-              <small>这里的内容直接用于前端展示。</small>
             </div>
           </div>
           <div className="section-editor-fields-grid">
@@ -86,7 +82,6 @@ export function SectionEditorDialog({
                 disabled={busy}
                 onChange={(event) => onFormChange({ ...form, name: event.target.value })}
               />
-              <small>填写用户前端实际显示的 English 名称。</small>
             </label>
 
             <label>
@@ -101,7 +96,6 @@ export function SectionEditorDialog({
                   onFormChange({ ...form, description: event.target.value })
                 }
               />
-              <small>用于 Browse 分区视觉卡；留空时前端不显示简介。</small>
             </label>
           </div>
         </section>
@@ -114,14 +108,11 @@ export function SectionEditorDialog({
                 {iconPreviewUrl ? (
                   <img src={iconPreviewUrl} alt="分区图标预览" />
                 ) : (
-                  <span aria-hidden="true">
-                    {form.iconValue || sectionIconOptions[0]}
-                  </span>
+                  <span className="section-icon-empty">未选择</span>
                 )}
               </div>
               <div className="section-icon-upload-copy">
-                <strong>{iconPreviewUrl ? '图片图标' : '字符图标'}</strong>
-                <p>只用于 Home 的快捷分区入口；Browse 页面不会使用这个图标。</p>
+                <strong>快捷图标</strong>
                 {localIcon ? (
                   <small>
                     {localIcon.width} × {localIcon.height} ·{' '}
@@ -185,7 +176,6 @@ export function SectionEditorDialog({
                 <strong>
                   {browseBackgroundPreviewUrl ? '已设置背景图' : '使用主题背景'}
                 </strong>
-                <p>只用于 Browse 页面分区视觉卡，不影响 Home 快捷图标和产品封面。</p>
                 <div className="section-icon-upload-actions">
                   <button
                     type="button"
@@ -211,64 +201,23 @@ export function SectionEditorDialog({
           </fieldset>
         </div>
 
-        <div className="section-editor-bottom-grid">
-          <fieldset className="section-editor-card section-editor-fallback-card">
-            <legend>备用字符图标</legend>
-            <small className="section-icon-help">
-              没有图片图标时使用；点击字符会直接切回字符图标。
-            </small>
-            <div className="icon-picker">
-              {sectionIconOptions.map((icon) => (
-                <button
-                  key={icon}
-                  type="button"
-                  disabled={busy}
-                  className={
-                    !iconPreviewUrl && form.iconValue === icon ? 'is-selected' : undefined
-                  }
-                  aria-label={`选择图标 ${icon}`}
-                  onClick={() => onSelectFallbackIcon(icon)}
-                >
-                  {icon}
-                </button>
-              ))}
-            </div>
-          </fieldset>
-
-          <section className="section-editor-card section-editor-settings-card">
-            <label className="section-editor-sort-field">
-              <span>排序</span>
-              <input
-                type="number"
-                min="0"
-                max="1000000"
-                step="1"
-                required
-                value={form.sortOrder}
-                disabled={busy}
-                onChange={(event) =>
-                  onFormChange({ ...form, sortOrder: Number(event.target.value) || 0 })
-                }
-              />
-              <small>数字越小越靠前。</small>
-            </label>
-
-            <label className="section-enabled-toggle">
-              <span>
-                <strong>启用分区</strong>
-                <small>关闭后不进入前端发布内容。</small>
-              </span>
-              <input
-                type="checkbox"
-                checked={form.isEnabled}
-                disabled={busy}
-                onChange={(event) =>
-                  onFormChange({ ...form, isEnabled: event.target.checked })
-                }
-              />
-            </label>
-          </section>
-        </div>
+        <section className="section-editor-card section-editor-settings-card">
+          <label className="section-editor-sort-field">
+            <span>排序</span>
+            <input
+              type="number"
+              min="0"
+              max="1000000"
+              step="1"
+              required
+              value={form.sortOrder}
+              disabled={busy}
+              onChange={(event) =>
+                onFormChange({ ...form, sortOrder: Number(event.target.value) || 0 })
+              }
+            />
+          </label>
+        </section>
 
         <div className="admin-dialog-actions">
           <Button variant="secondary" disabled={busy} onClick={onClose}>

@@ -24,6 +24,40 @@ function unavailable(
 
 export const publicConversionRoutes = new Hono<AppEnvironment>();
 
+publicConversionRoutes.get('/message-card/:cardId', async (context) => {
+  setRedirectHeaders(context);
+  const cardId = context.req.param('cardId').trim();
+  const card = await context.env.DB.prepare(
+    `SELECT section_id, conversion_group_id
+     FROM message_cta_cards
+     WHERE id = ? AND is_enabled = 1 AND conversion_group_id IS NOT NULL`,
+  )
+    .bind(cardId)
+    .first<{ section_id: string; conversion_group_id: string }>();
+  if (!card?.section_id || !card.conversion_group_id) {
+    return unavailable(context, 404, 'This contact option is unavailable.');
+  }
+  const group = await getConversionGroup(
+    context.env.DB,
+    card.section_id,
+    card.conversion_group_id,
+  );
+  if (!group || group.deletedAt || !group.isEnabled || group.activeTargetCount < 1) {
+    return unavailable(context, 409, 'This contact option is temporarily unavailable.');
+  }
+  if (group.mode === 'customer_service') {
+    return context.redirect('/messages/new/', 302);
+  }
+  const target = await selectNextConversionTarget(
+    context.env.DB,
+    group,
+    new Date().toISOString(),
+  );
+  if (!target?.endpointUrl)
+    return unavailable(context, 409, 'This contact option is temporarily unavailable.');
+  return context.redirect(target.endpointUrl, 302);
+});
+
 publicConversionRoutes.get('/:code', async (context) => {
   setRedirectHeaders(context);
   const code = context.req.param('code').trim();

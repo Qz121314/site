@@ -35,11 +35,7 @@ import {
 import { DeleteSectionDialog } from './section-management/DeleteSectionDialog';
 import { SectionEditorDialog } from './section-management/SectionEditorDialog';
 import { SectionTable } from './section-management/SectionTable';
-import {
-  emptySectionForm,
-  sectionIconOptions,
-  type SectionEditorInput,
-} from './section-management/config';
+import { emptySectionForm, type SectionEditorInput } from './section-management/config';
 
 type SectionManagementViewProps = {
   activeSections: AdminSection[];
@@ -185,7 +181,7 @@ export function SectionManagementView({
     setForm({
       name: section.name,
       description: presentation.description ?? '',
-      iconValue: section.iconValue ?? sectionIconOptions[0],
+      iconValue: section.iconValue ?? '',
       iconAssetId: section.iconAssetId,
       browseBackgroundAssetId: presentation.browseBackgroundAssetId,
       sortOrder: section.sortOrder,
@@ -226,14 +222,8 @@ export function SectionManagementView({
     setForm((current) => ({
       ...current,
       iconAssetId: null,
-      iconValue: current.iconValue || sectionIconOptions[0],
+      iconValue: '',
     }));
-  }
-
-  function selectFallbackIcon(icon: string) {
-    setErrorMessage('');
-    setLocalIcon(null);
-    setForm((current) => ({ ...current, iconAssetId: null, iconValue: icon }));
   }
 
   async function handleSave(event: FormEvent<HTMLFormElement>) {
@@ -286,7 +276,7 @@ export function SectionManagementView({
       const input: SectionEditorInput = {
         name: section.name,
         description: presentation.description ?? '',
-        iconValue: section.iconValue ?? sectionIconOptions[0],
+        iconValue: section.iconValue ?? '',
         iconAssetId: section.iconAssetId,
         browseBackgroundAssetId: presentation.browseBackgroundAssetId,
         sortOrder: section.sortOrder,
@@ -497,7 +487,6 @@ export function SectionManagementView({
           onRemoveBrowseBackground={() =>
             setForm((current) => ({ ...current, browseBackgroundAssetId: null }))
           }
-          onSelectFallbackIcon={selectFallbackIcon}
           onClose={closeEditor}
           onSubmit={(event) => void handleSave(event)}
         />

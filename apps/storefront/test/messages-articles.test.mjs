@@ -39,31 +39,46 @@ test('bootstrap metadata is sanitized, sorted, deduplicated, and body-free', () 
   const articles = getMessageArticlesFromBootstrap(
     bootstrapWithMessageArticles([
       {
-        articleId: 'article-b',
+        cardId: 'card-b',
         title: 'Beta',
         preview: 'Second',
+        targetKind: 'article',
+        targetRef: 'article-b',
         backgroundObjectKey: ' media/messages/beta.webp ',
         sortOrder: 20,
         body: '# Full Markdown must not escape bootstrap metadata',
       },
       {
-        articleId: 'article-a',
+        cardId: 'card-a',
         title: 'Alpha',
         preview: 'First',
+        targetKind: 'article',
+        targetRef: 'article-a',
         backgroundObjectKey: '   ',
         sortOrder: 10,
       },
       {
-        articleId: 'article-a',
+        cardId: 'card-a',
         title: 'Duplicate Alpha',
         preview: 'Duplicate',
+        targetKind: 'article',
+        targetRef: 'article-a',
         sortOrder: 30,
       },
-      { articleId: '', title: 'Bad', preview: 'Bad', sortOrder: 0 },
       {
-        articleId: 'article-c',
+        cardId: '',
+        title: 'Bad',
+        preview: 'Bad',
+        targetKind: 'article',
+        targetRef: 'bad',
+        sortOrder: 0,
+      },
+      {
+        cardId: 'card-c',
         title: 'Bad sort',
         preview: 'Bad',
+        targetKind: 'article',
+        targetRef: 'article-c',
         sortOrder: '1',
       },
       null,
@@ -72,16 +87,24 @@ test('bootstrap metadata is sanitized, sorted, deduplicated, and body-free', () 
 
   assert.deepEqual(articles, [
     {
-      articleId: 'article-a',
+      cardId: 'card-a',
       title: 'Alpha',
       preview: 'First',
+      targetKind: 'article',
+      targetRef: 'article-a',
+      sectionId: null,
+      conversionGroupId: null,
       backgroundObjectKey: null,
       sortOrder: 10,
     },
     {
-      articleId: 'article-b',
+      cardId: 'card-b',
       title: 'Beta',
       preview: 'Second',
+      targetKind: 'article',
+      targetRef: 'article-b',
+      sectionId: null,
+      conversionGroupId: null,
       backgroundObjectKey: 'media/messages/beta.webp',
       sortOrder: 20,
     },
@@ -96,8 +119,22 @@ test('bootstrap metadata is sanitized, sorted, deduplicated, and body-free', () 
 test('first visit treats active Articles as unread without support identity', () => {
   const active = getMessageArticlesFromBootstrap(
     bootstrapWithMessageArticles([
-      { articleId: 'article-a', title: 'A', preview: 'A', sortOrder: 0 },
-      { articleId: 'article-b', title: 'B', preview: 'B', sortOrder: 1 },
+      {
+        cardId: 'card-a',
+        title: 'A',
+        preview: 'A',
+        targetKind: 'article',
+        targetRef: 'article-a',
+        sortOrder: 0,
+      },
+      {
+        cardId: 'card-b',
+        title: 'B',
+        preview: 'B',
+        targetKind: 'article',
+        targetRef: 'article-b',
+        sortOrder: 1,
+      },
     ]),
   );
   const storage = memoryStorage();
@@ -108,18 +145,39 @@ test('first visit treats active Articles as unread without support identity', ()
 
 test('marking an Article read persists only its Article ID', () => {
   const active = [
-    { articleId: 'article-a', title: 'A', preview: 'A', sortOrder: 0 },
-    { articleId: 'article-b', title: 'B', preview: 'B', sortOrder: 1 },
-    { articleId: 'article-c', title: 'C', preview: 'C', sortOrder: 2 },
+    {
+      cardId: 'card-a',
+      title: 'A',
+      preview: 'A',
+      targetKind: 'article',
+      targetRef: 'article-a',
+      sortOrder: 0,
+    },
+    {
+      cardId: 'card-b',
+      title: 'B',
+      preview: 'B',
+      targetKind: 'article',
+      targetRef: 'article-b',
+      sortOrder: 1,
+    },
+    {
+      cardId: 'card-c',
+      title: 'C',
+      preview: 'C',
+      targetKind: 'article',
+      targetRef: 'article-c',
+      sortOrder: 2,
+    },
   ];
   const storage = memoryStorage();
 
-  markMessageArticleRead('article-b', storage, false);
+  markMessageArticleRead('card-b', storage, false);
 
-  assert.deepEqual(JSON.parse(storage.value()), ['article-b']);
+  assert.deepEqual(JSON.parse(storage.value()), ['card-b']);
   const readIds = readMessageArticleReadIds(storage);
-  assert.equal(readIds.has('article-b'), true);
-  assert.equal(readIds.has('article-a'), false);
+  assert.equal(readIds.has('card-b'), true);
+  assert.equal(readIds.has('card-a'), false);
   assert.equal(countUnreadMessageArticles(active, readIds), 2);
 });
 
@@ -136,32 +194,50 @@ test('malformed and duplicate localStorage state recovers safely', () => {
 });
 
 test('ghost IDs and inactive articles do not affect current unread count', () => {
-  const storage = memoryStorage('["ghost","article-a"]');
+  const storage = memoryStorage('["ghost","card-a"]');
   const active = [
-    { articleId: 'article-a', title: 'A', preview: 'A', sortOrder: 0 },
-    { articleId: 'article-b', title: 'B', preview: 'B', sortOrder: 1 },
+    {
+      cardId: 'card-a',
+      title: 'A',
+      preview: 'A',
+      targetKind: 'article',
+      targetRef: 'article-a',
+      sortOrder: 0,
+    },
+    {
+      cardId: 'card-b',
+      title: 'B',
+      preview: 'B',
+      targetKind: 'article',
+      targetRef: 'article-b',
+      sortOrder: 1,
+    },
   ];
 
   assert.equal(countUnreadMessageArticles(active, readMessageArticleReadIds(storage)), 1);
 });
 
 test('editing Article metadata does not reset Article-ID read state', () => {
-  const storage = memoryStorage('["article-a"]');
+  const storage = memoryStorage('["card-a"]');
   const original = [
     {
-      articleId: 'article-a',
+      cardId: 'card-a',
       title: 'Original title',
       preview: 'Original preview',
       backgroundObjectKey: 'media/messages/original.webp',
+      targetKind: 'article',
+      targetRef: 'article-a',
       sortOrder: 0,
     },
   ];
   const updated = [
     {
-      articleId: 'article-a',
+      cardId: 'card-a',
       title: 'Updated title',
       preview: 'Updated preview',
       backgroundObjectKey: 'media/messages/changed.webp',
+      targetKind: 'article',
+      targetRef: 'article-a',
       sortOrder: 999,
     },
   ];

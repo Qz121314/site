@@ -85,11 +85,11 @@ export function SystemGeneralView({
 
   return (
     <>
-      <form className="settings-workspace is-narrow" onSubmit={handleSubmit}>
-        <AdminFormSection
-          title="站点身份"
-          description="管理全站通用名称、说明与 Logo，不包含首页布局、PWA 或技术基础设施。"
-        >
+      <form
+        className="settings-workspace settings-workspace--general is-narrow"
+        onSubmit={handleSubmit}
+      >
+        <AdminFormSection title="站点身份">
           <div className="settings-workspace-fields">
             <AdminFieldRow label="站点名称" htmlFor="system-site-name">
               <Input
@@ -119,14 +119,8 @@ export function SystemGeneralView({
           </div>
         </AdminFormSection>
 
-        <AdminFormSection
-          title="站点 Logo"
-          description="继续使用现有 branding media pipeline，可上传新图片或从素材中心选择。"
-        >
-          <AdminFieldRow
-            label="Logo"
-            description="用于前台品牌展示，上传内容会在保存时通过现有媒体管线处理。"
-          >
+        <AdminFormSection title="站点 Logo">
+          <AdminFieldRow label="Logo">
             <div className="settings-media-control">
               <div className="settings-media-preview">
                 {branding.previewUrl ? (

@@ -23,13 +23,18 @@ function MessagesArticleRow({
   unread: boolean;
 }) {
   const backgroundUrl = mediaUrl(mediaBaseUrl, article.backgroundObjectKey);
+  const href = article.conversionGroupId
+    ? `/go/message-card/${encodeURIComponent(article.cardId)}`
+    : article.targetKind === 'article'
+      ? articleHref(article.targetRef)
+      : article.targetRef;
 
   return (
     <LinkComponent
       className="messages-article-row"
-      data-article-id={article.articleId}
+      data-article-id={article.cardId}
       data-read-state={unread ? 'unread' : 'read'}
-      href={articleHref(article.articleId)}
+      href={href}
     >
       {backgroundUrl ? (
         <span className="messages-article-row-media" aria-hidden="true">
@@ -77,10 +82,10 @@ export function MessagesArticleList({
       {articles.map((article) => (
         <MessagesArticleRow
           article={article}
-          key={article.articleId}
+          key={article.cardId}
           LinkComponent={LinkComponent}
           mediaBaseUrl={mediaBaseUrl}
-          unread={!readIds.has(article.articleId)}
+          unread={!readIds.has(article.cardId)}
         />
       ))}
     </>

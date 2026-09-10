@@ -1,7 +1,6 @@
 import type { FormEvent } from 'react';
 import { Button } from '../components/ui/button';
 import { AdminDialog } from '../components/ui/dialog';
-import { Input } from '../components/ui/input';
 import {
   AdminSegmentedControl,
   AdminSegmentedItem,
@@ -44,15 +43,33 @@ export function ArticleEditorDialog({
       size="large"
       closeDisabled={saving}
       onClose={onClose}
-      footer={
-        <>
-          <Button variant="secondary" disabled={saving} onClick={onClose}>
-            取消
-          </Button>
+      headerActions={
+        <div className="article-editor-header-actions">
+          <AdminSegmentedControl ariaLabel="文章状态">
+            <AdminSegmentedItem
+              type="button"
+              selected={form.isActive}
+              onClick={() => onFormChange({ ...form, isActive: true })}
+            >
+              启用
+            </AdminSegmentedItem>
+            <AdminSegmentedItem
+              type="button"
+              selected={!form.isActive}
+              onClick={() => onFormChange({ ...form, isActive: false })}
+            >
+              停用
+            </AdminSegmentedItem>
+          </AdminSegmentedControl>
           <Button type="submit" form="article-editor-form" loading={saving}>
             {editingArticle ? '保存修改' : '创建文章'}
           </Button>
-        </>
+        </div>
+      }
+      footer={
+        <Button variant="secondary" disabled={saving} onClick={onClose}>
+          取消
+        </Button>
       }
     >
       <form id="article-editor-form" className="article-editor-form" onSubmit={onSubmit}>
@@ -62,92 +79,54 @@ export function ArticleEditorDialog({
           </div>
         ) : null}
 
-        <label className="article-field">
-          <span>标题</span>
-          <Input
-            name="title"
-            value={form.title}
-            maxLength={300}
-            required
-            autoComplete="off"
-            onChange={(event) => onFormChange({ ...form, title: event.target.value })}
-          />
-        </label>
-
-        <div className="article-editor-heading-row">
-          <span className="article-field-label">正文</span>
-          <AdminSegmentedControl ariaLabel="Markdown 编辑模式">
-            <AdminSegmentedItem
-              type="button"
-              selected={!previewing}
-              onClick={() => onPreviewingChange(false)}
-            >
-              编辑
-            </AdminSegmentedItem>
-            <AdminSegmentedItem
-              type="button"
-              selected={previewing}
-              onClick={() => onPreviewingChange(true)}
-            >
-              预览
-            </AdminSegmentedItem>
-          </AdminSegmentedControl>
-        </div>
-
-        {previewing ? (
-          <MarkdownPreview markdown={form.body} />
-        ) : (
-          <Textarea
-            className="article-markdown-source"
-            name="body"
-            value={form.body}
-            required
-            maxLength={20000}
-            spellCheck={false}
-            onChange={(event) => onFormChange({ ...form, body: event.target.value })}
-          />
-        )}
-
-        <div className="article-editor-meta-grid">
-          <label className="article-field">
-            <span>排序</span>
-            <Input
-              name="sortOrder"
-              type="number"
-              min={0}
-              max={1000000}
-              step={1}
-              value={form.sortOrder}
-              required
-              onChange={(event) =>
-                onFormChange({
-                  ...form,
-                  sortOrder: Number(event.target.value),
-                })
-              }
-            />
-          </label>
-
-          <div className="article-field">
-            <span>状态</span>
-            <AdminSegmentedControl ariaLabel="文章状态">
+        <section className="article-editor-section article-editor-body-section">
+          <div className="article-editor-heading-row">
+            <div>
+              <span className="article-field-label">文章内容（Markdown）</span>
+              <small>
+                标题和正文统一写在同一个 Markdown 文档中，使用 # 一级标题作为文章标题
+              </small>
+            </div>
+            <AdminSegmentedControl ariaLabel="Markdown 编辑模式">
               <AdminSegmentedItem
                 type="button"
-                selected={form.isActive}
-                onClick={() => onFormChange({ ...form, isActive: true })}
+                selected={!previewing}
+                onClick={() => onPreviewingChange(false)}
               >
-                启用
+                编辑
               </AdminSegmentedItem>
               <AdminSegmentedItem
                 type="button"
-                selected={!form.isActive}
-                onClick={() => onFormChange({ ...form, isActive: false })}
+                selected={previewing}
+                onClick={() => onPreviewingChange(true)}
               >
-                停用
+                预览
               </AdminSegmentedItem>
             </AdminSegmentedControl>
           </div>
-        </div>
+
+          {previewing ? (
+            <MarkdownPreview markdown={form.body} />
+          ) : (
+            <Textarea
+              className="article-markdown-source"
+              name="body"
+              value={form.body}
+              required
+              maxLength={20000}
+              spellCheck={false}
+              placeholder={
+                '请输入 Markdown 文档，例如：\n\n# 文章标题\n\n这里是文章正文。'
+              }
+              aria-label="文章正文 Markdown"
+              onChange={(event) => onFormChange({ ...form, body: event.target.value })}
+            />
+          )}
+          <div className="article-editor-body-footer">
+            <span>使用 # 一级标题定义文章标题，支持段落、列表、链接和引用</span>
+            <span>{form.body.length}/20000</span>
+          </div>
+        </section>
       </form>
     </AdminDialog>
   );

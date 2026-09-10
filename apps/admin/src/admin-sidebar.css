@@ -71,9 +71,9 @@
 }
 
 .admin-sidebar-toggle.ui-button:hover:not(:disabled) {
-  color: var(--brand);
-  border-color: #ffc2d8;
-  background: #fff6f9;
+  color: #344054;
+  border-color: #cfd5df;
+  background: #f5f6f8;
 }
 
 .admin-navigation-order-toggle.ui-button {
@@ -90,9 +90,9 @@
 
 .admin-navigation-order-toggle.ui-button:hover:not(:disabled),
 .admin-navigation-order-toggle.ui-button.is-active {
-  color: var(--brand);
-  border-color: #ffc2d8;
-  background: #fff6f9;
+  color: #344054;
+  border-color: #cfd5df;
+  background: #f5f6f8;
 }
 
 .admin-primary-sidebar.is-collapsed .admin-brand {
@@ -250,37 +250,32 @@
 .admin-primary-logout.ui-button:hover:not(:disabled) {
   color: #f4f6f8;
   background: rgb(255 255 255 / 5%);
-  transform: translateX(2px);
+  transform: none;
 }
 
 .admin-primary-link.ui-button.is-active {
   color: #f8fafc;
   border-color: transparent;
-  background: linear-gradient(100deg, rgb(236 23 103 / 22%), #1d2939 72%);
-  box-shadow:
-    inset 3px 0 0 var(--brand-glow),
-    0 0 22px rgb(236 23 103 / 8%);
+  background: #202938;
+  box-shadow: inset 2px 0 0 #d0d5dd;
   font-weight: 780;
-  animation: admin-nav-select-in 180ms ease-out both;
 }
 
 .admin-primary-sidebar.is-collapsed .admin-primary-link.ui-button.is-active {
-  background: linear-gradient(145deg, rgb(236 23 103 / 26%), rgb(255 79 145 / 8%));
-  box-shadow:
-    inset 3px 0 0 var(--brand-glow),
-    0 0 20px rgb(236 23 103 / 12%);
+  background: #202938;
+  box-shadow: inset 2px 0 0 #d0d5dd;
 }
 
 .admin-primary-link.ui-button.is-active > svg {
-  color: var(--brand-glow);
-  stroke-width: 2.1;
-  filter: drop-shadow(0 0 5px rgb(255 79 145 / 30%));
+  color: #fff;
+  stroke-width: 2;
+  filter: none;
 }
 
 .admin-primary-link.ui-button:focus-visible,
 .admin-secondary-link.ui-button:focus-visible,
 .admin-primary-logout.ui-button:focus-visible {
-  outline: 2px solid var(--brand-glow);
+  outline: 2px solid rgb(255 255 255 / 42%);
   outline-offset: -2px;
 }
 
@@ -370,38 +365,14 @@
 
 .admin-secondary-link.ui-button.is-active {
   color: #172033;
-  border-color: #ffc2d8;
-  background: linear-gradient(100deg, #fff0f6, #fffafd);
-  box-shadow:
-    inset 3px 0 0 var(--brand),
-    0 4px 14px rgb(236 23 103 / 7%);
+  border-color: transparent;
+  background: #eef1f4;
+  box-shadow: inset 2px 0 0 #172033;
   font-weight: 780;
-  animation: admin-nav-select-in 180ms ease-out both;
 }
 
 .admin-secondary-link.ui-button.is-active > svg {
-  color: var(--brand);
-}
-
-@keyframes admin-nav-select-in {
-  from {
-    opacity: 0.72;
-    transform: translateX(-3px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .admin-primary-link.ui-button,
-  .admin-secondary-link.ui-button,
-  .admin-primary-link.ui-button.is-active,
-  .admin-secondary-link.ui-button.is-active {
-    animation: none;
-    transition: none;
-  }
+  color: #172033;
 }
 
 .admin-secondary-link.ui-button > svg {

@@ -16,12 +16,12 @@
   min-height: 132px;
   place-items: center;
   overflow: hidden;
-  border: 1px solid var(--admin-line, #e2e5e9);
+  border: 1px solid var(--admin-border, #e2e5e9);
   border-radius: 14px;
-  color: var(--admin-muted, #6f7782);
+  color: var(--admin-text-muted, #6f7782);
   background:
     linear-gradient(135deg, rgb(20 25 32 / 6%), transparent),
-    var(--admin-surface-soft, #f6f7f8);
+    var(--admin-surface-subtle, #f6f7f8);
   font-size: 0.78rem;
   font-weight: 700;
 }

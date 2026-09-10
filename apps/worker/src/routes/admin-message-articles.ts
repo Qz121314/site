@@ -2,6 +2,7 @@ import { Hono } from 'hono';
 import { createAuditLogStatement } from '../audit/write-audit-log';
 import { apiError } from '../http/api-response';
 import type { AppEnvironment } from '../types';
+import { getH5PublicSettings } from '../settings/h5-settings';
 import {
   hasAdminRequestHeader,
   isRecord,
@@ -9,245 +10,311 @@ import {
   readJsonBody,
 } from './admin-section-shared';
 
-const MAX_MESSAGE_ARTICLES = 100;
-const MAX_REFERENCE_ID_LENGTH = 120;
+const MAX_CARDS = 100;
+const MAX_ID_LENGTH = 120;
+const MAX_TITLE_LENGTH = 300;
+const MAX_TARGET_LENGTH = 1000;
+type TargetKind = 'article' | 'page' | 'link';
 
-type MessageArticleReference = {
-  articleId: string;
+type MessageCard = {
+  id: string;
   title: string;
   backgroundMediaId: string | null;
+  targetKind: TargetKind;
+  targetRef: string;
+  targetLabel: string;
+  sectionId: string | null;
+  conversionGroupId: string | null;
   sortOrder: number;
   enabled: boolean;
 };
 
-type MessageArticlePlacementInput = {
-  articleId: string;
+type MessageCardInput = {
+  id?: string;
+  title: string;
   backgroundMediaId: string | null;
+  targetKind: TargetKind;
+  targetRef: string;
+  sectionId: string | null;
+  conversionGroupId: string | null;
 };
 
-type ParsedMessageArticleInput = {
-  placements: MessageArticlePlacementInput[];
-  legacyArticleIds: string[] | null;
-};
-
-function validReferenceId(value: unknown): value is string {
-  return (
-    typeof value === 'string' &&
-    value.length > 0 &&
-    value.length <= MAX_REFERENCE_ID_LENGTH
-  );
+function validId(value: unknown): value is string {
+  return typeof value === 'string' && value.length > 0 && value.length <= MAX_ID_LENGTH;
 }
 
-function parseLegacyArticleIds(value: unknown): ParsedMessageArticleInput | null {
-  if (!isRecord(value) || !Array.isArray(value.articleIds)) return null;
-  if (value.articleIds.length > MAX_MESSAGE_ARTICLES) return null;
-  const articleIds = value.articleIds.filter(validReferenceId);
-  if (articleIds.length !== value.articleIds.length) return null;
-  if (new Set(articleIds).size !== articleIds.length) return null;
+function validTargetKind(value: unknown): value is TargetKind {
+  return value === 'article' || value === 'page' || value === 'link';
+}
+
+function parseCard(value: unknown): MessageCardInput | null {
+  if (!isRecord(value)) return null;
+  const title = typeof value.title === 'string' ? value.title.trim() : '';
+  const targetRef = typeof value.targetRef === 'string' ? value.targetRef.trim() : '';
+  const backgroundMediaId =
+    value.backgroundMediaId === null || value.backgroundMediaId === undefined
+      ? null
+      : validId(value.backgroundMediaId)
+        ? value.backgroundMediaId
+        : undefined;
+  const sectionId =
+    value.sectionId === null || value.sectionId === undefined
+      ? null
+      : validId(value.sectionId)
+        ? value.sectionId
+        : undefined;
+  const conversionGroupId =
+    value.conversionGroupId === null || value.conversionGroupId === undefined
+      ? null
+      : validId(value.conversionGroupId)
+        ? value.conversionGroupId
+        : undefined;
+  if (
+    (value.id !== undefined && !validId(value.id)) ||
+    !title ||
+    title.length > MAX_TITLE_LENGTH ||
+    !validTargetKind(value.targetKind) ||
+    !targetRef ||
+    targetRef.length > MAX_TARGET_LENGTH ||
+    backgroundMediaId === undefined ||
+    sectionId === undefined ||
+    conversionGroupId === undefined
+  )
+    return null;
   return {
-    placements: articleIds.map((articleId) => ({
-      articleId,
-      backgroundMediaId: null,
-    })),
-    legacyArticleIds: articleIds,
+    ...(typeof value.id === 'string' ? { id: value.id } : {}),
+    title,
+    backgroundMediaId,
+    targetKind: value.targetKind,
+    targetRef,
+    sectionId,
+    conversionGroupId,
   };
 }
 
-function parsePlacement(value: unknown): MessageArticlePlacementInput | null {
-  if (!isRecord(value) || !validReferenceId(value.articleId) || 'isEnabled' in value)
-    return null;
-  const rawBackground = value.backgroundMediaId;
-  const backgroundMediaId =
-    rawBackground === undefined || rawBackground === null
-      ? null
-      : validReferenceId(rawBackground)
-        ? rawBackground
-        : undefined;
-  if (backgroundMediaId === undefined) return null;
-  return { articleId: value.articleId, backgroundMediaId };
+function parseCards(value: unknown): MessageCardInput[] | null {
+  const raw = isRecord(value) && Array.isArray(value.cards) ? value.cards : value;
+  if (!Array.isArray(raw) || raw.length > MAX_CARDS) return null;
+  const cards = raw.map(parseCard);
+  if (cards.some((card) => card === null)) return null;
+  const ids = cards.map((card) => card?.id).filter((id): id is string => Boolean(id));
+  if (new Set(ids).size !== ids.length) return null;
+  return cards.filter((card): card is MessageCardInput => card !== null);
 }
 
-function parsePlacementInput(value: unknown): ParsedMessageArticleInput | null {
-  const legacy = parseLegacyArticleIds(value);
-  if (legacy) return legacy;
-
-  const rawArticles = Array.isArray(value)
-    ? value
-    : isRecord(value) && Array.isArray(value.articles)
-      ? value.articles
-      : null;
-  if (!rawArticles || rawArticles.length > MAX_MESSAGE_ARTICLES) return null;
-  const placements = rawArticles.map(parsePlacement);
-  if (placements.some((placement) => placement === null)) return null;
-  const validPlacements = placements.filter(
-    (placement): placement is MessageArticlePlacementInput => placement !== null,
-  );
-  const articleIds = validPlacements.map((placement) => placement.articleId);
-  if (new Set(articleIds).size !== articleIds.length) return null;
-  return { placements: validPlacements, legacyArticleIds: null };
-}
-
-async function listReferences(db: D1Database): Promise<MessageArticleReference[]> {
+async function listCards(db: D1Database): Promise<MessageCard[]> {
   const rows = (
     await db
       .prepare(
-        `SELECT mar.article_id,
-                CASE WHEN background.id IS NOT NULL THEN mar.background_media_id ELSE NULL END AS background_media_id,
-                mar.sort_order, mar.is_enabled, f.question
-         FROM message_article_references mar
-         JOIN faqs f ON f.id = mar.article_id
-         LEFT JOIN media_assets background
-           ON background.id = mar.background_media_id
-          AND background.status = 'ready'
-          AND background.deleted_at IS NULL
-         WHERE f.deleted_at IS NULL
-         ORDER BY mar.sort_order ASC, mar.article_id ASC`,
+        `SELECT c.id, c.title, c.background_media_id, c.target_kind, c.target_ref,
+                c.section_id, c.conversion_group_id, c.sort_order, c.is_enabled,
+                COALESCE(f.question, p.name, c.target_ref) AS target_label
+         FROM message_cta_cards c
+         LEFT JOIN faqs f ON c.target_kind = 'article' AND f.id = c.target_ref
+         LEFT JOIN h5_pages p ON c.target_kind = 'page' AND p.slug = c.target_ref
+         WHERE c.is_enabled = 1
+         ORDER BY c.sort_order ASC, c.id ASC`,
       )
       .all<{
-        article_id: string;
-        background_media_id?: string | null;
+        id: string;
+        title: string;
+        background_media_id: string | null;
+        target_kind: TargetKind;
+        target_ref: string;
+        target_label: string;
+        section_id: string | null;
+        conversion_group_id: string | null;
         sort_order: number;
         is_enabled: number;
-        question: string;
       }>()
   ).results;
   return rows.map((row) => ({
-    articleId: row.article_id,
-    title: row.question,
-    backgroundMediaId: row.background_media_id ?? null,
+    id: row.id,
+    title: row.title,
+    backgroundMediaId: row.background_media_id,
+    targetKind: row.target_kind,
+    targetRef: row.target_ref,
+    targetLabel: row.target_label,
+    sectionId: row.section_id,
+    conversionGroupId: row.conversion_group_id,
     sortOrder: row.sort_order,
     enabled: row.is_enabled === 1,
   }));
 }
 
-async function validateArticles(db: D1Database, articleIds: string[]): Promise<boolean> {
-  if (articleIds.length === 0) return true;
-  const placeholders = articleIds.map(() => '?').join(', ');
-  const rows = (
-    await db
-      .prepare(`SELECT id FROM faqs WHERE deleted_at IS NULL AND id IN (${placeholders})`)
-      .bind(...articleIds)
-      .all<{ id: string }>()
-  ).results;
-  return rows.length === articleIds.length;
+async function validateTargets(
+  db: D1Database,
+  cards: MessageCardInput[],
+  h5PublicOrigin: string | null,
+): Promise<string | null> {
+  for (const card of cards) {
+    if (card.targetKind === 'link') {
+      try {
+        const url = new URL(card.targetRef);
+        if (url.protocol !== 'http:' && url.protocol !== 'https:')
+          return '链接必须使用 http 或 https。';
+      } catch {
+        return '外部链接格式无效。';
+      }
+    } else if (card.targetKind === 'article') {
+      const row = await db
+        .prepare('SELECT id FROM faqs WHERE id = ? AND deleted_at IS NULL')
+        .bind(card.targetRef)
+        .first();
+      if (!row) return '所选文章不存在或已进入回收站。';
+    } else {
+      if (!h5PublicOrigin) return '请先配置 H5 公网域名，再绑定 H5 页面。';
+      let pageUrl: URL;
+      try {
+        pageUrl = new URL(card.targetRef);
+      } catch {
+        return 'H5 页面链接格式无效。';
+      }
+      if (pageUrl.origin !== h5PublicOrigin) {
+        return 'H5 页面链接必须使用已配置的 H5 公网域名。';
+      }
+      const slug = pageUrl.pathname.match(
+        /^\/pages\/([a-z0-9][a-z0-9-]{0,63})\/?$/u,
+      )?.[1];
+      if (!slug) return 'H5 页面链接路径无效。';
+      const row = await db
+        .prepare(
+          "SELECT id FROM h5_pages WHERE slug = ? AND status = 'published' AND deleted_at IS NULL",
+        )
+        .bind(slug)
+        .first();
+      if (!row) return '所选 H5 页面不存在或尚未发布。';
+    }
+  }
+  return null;
 }
 
-async function validateBackgroundMedia(
+async function validateReferences(
   db: D1Database,
-  mediaIds: string[],
-): Promise<boolean> {
-  if (mediaIds.length === 0) return true;
-  const placeholders = mediaIds.map(() => '?').join(', ');
-  const rows = (
-    await db
+  cards: MessageCardInput[],
+): Promise<string | null> {
+  const mediaIds = [
+    ...new Set(
+      cards
+        .map((card) => card.backgroundMediaId)
+        .filter((id): id is string => Boolean(id)),
+    ),
+  ];
+  if (mediaIds.length) {
+    const placeholders = mediaIds.map(() => '?').join(', ');
+    const rows = await db
       .prepare(
-        `SELECT id
-         FROM media_assets
-         WHERE id IN (${placeholders})
-           AND status = 'ready'
-           AND deleted_at IS NULL
-           AND mime_type LIKE 'image/%'`,
+        `SELECT id FROM media_assets WHERE id IN (${placeholders}) AND status = 'ready' AND deleted_at IS NULL AND mime_type LIKE 'image/%'`,
       )
       .bind(...mediaIds)
-      .all<{ id: string }>()
-  ).results;
-  return rows.length === mediaIds.length;
+      .all();
+    if (rows.results.length !== mediaIds.length)
+      return '背景图不存在、已删除或状态异常。';
+  }
+  for (const card of cards) {
+    if ((card.sectionId === null) !== (card.conversionGroupId === null))
+      return '转化池绑定信息不完整。';
+    if (card.sectionId && card.conversionGroupId) {
+      const group = await db
+        .prepare(
+          'SELECT id FROM conversion_groups WHERE section_id = ? AND id = ? AND deleted_at IS NULL AND is_enabled = 1',
+        )
+        .bind(card.sectionId, card.conversionGroupId)
+        .first();
+      if (!group) return '所选转化池不存在或已停用。';
+    }
+  }
+  return null;
 }
 
 export const adminMessageArticleRoutes = new Hono<AppEnvironment>();
 
+adminMessageArticleRoutes.get('/options', async (context) => {
+  context.header('Cache-Control', 'no-store');
+  const [articles, pages, groups, settings] = await Promise.all([
+    context.env.DB.prepare(
+      'SELECT id, question AS title FROM faqs WHERE deleted_at IS NULL AND is_enabled = 1 ORDER BY sort_order ASC, created_at ASC',
+    ).all(),
+    context.env.DB.prepare(
+      "SELECT id, slug, name FROM h5_pages WHERE status = 'published' AND deleted_at IS NULL ORDER BY updated_at DESC",
+    ).all(),
+    context.env.DB.prepare(
+      'SELECT cg.id, cg.section_id, cg.name, s.name AS section_name FROM conversion_groups cg JOIN sections s ON s.id = cg.section_id WHERE cg.deleted_at IS NULL AND cg.is_enabled = 1 AND s.deleted_at IS NULL ORDER BY s.sort_order ASC, cg.sort_order ASC, cg.created_at ASC',
+    ).all(),
+    getH5PublicSettings(context.env.DB),
+  ]);
+  const origin = settings.publicOrigin?.replace(/\/$/u, '') ?? '';
+  return context.json({
+    articles: articles.results,
+    pages: origin
+      ? pages.results.map((page) => ({
+          ...page,
+          url: `${origin}/pages/${page.slug}/`,
+        }))
+      : [],
+    h5OriginConfigured: Boolean(origin),
+    conversionGroups: groups.results,
+  });
+});
+
 adminMessageArticleRoutes.get('/', async (context) => {
   context.header('Cache-Control', 'no-store');
-  return context.json({ articles: await listReferences(context.env.DB) });
+  return context.json({ cards: await listCards(context.env.DB) });
 });
 
 adminMessageArticleRoutes.put('/', async (context) => {
   context.header('Cache-Control', 'no-store');
-  if (!hasAdminRequestHeader(context)) {
+  if (!hasAdminRequestHeader(context))
     return apiError(context, 403, 'ADMIN_REQUEST_REQUIRED', '后台请求标识无效。');
-  }
-
   let body: unknown;
   try {
     body = await readJsonBody(context);
   } catch (error) {
     return jsonBodyError(context, error);
   }
-  const parsed = parsePlacementInput(body);
-  if (!parsed) {
-    return apiError(
-      context,
-      400,
-      'INVALID_MESSAGE_ARTICLES',
-      'Messages 文章配置无效或包含重复文章。',
-    );
-  }
-
-  const articleIds = parsed.placements.map((placement) => placement.articleId);
-  if (!(await validateArticles(context.env.DB, articleIds))) {
-    return apiError(
-      context,
-      400,
-      'MESSAGE_ARTICLE_NOT_AVAILABLE',
-      '所选文章不存在或已进入回收站。',
-    );
-  }
-
-  const backgroundMediaIds = [
-    ...new Set(
-      parsed.placements
-        .map((placement) => placement.backgroundMediaId)
-        .filter((mediaId): mediaId is string => mediaId !== null),
-    ),
-  ];
-  if (!(await validateBackgroundMedia(context.env.DB, backgroundMediaIds))) {
-    return apiError(
-      context,
-      400,
-      'MESSAGE_ARTICLE_BACKGROUND_NOT_AVAILABLE',
-      '所选背景图片不存在、已删除或状态异常。',
-      { field: 'backgroundMediaId' },
-    );
-  }
-
+  const cards = parseCards(body);
+  if (!cards)
+    return apiError(context, 400, 'INVALID_MESSAGE_CARDS', 'Message 卡片配置无效。');
+  const h5PublicOrigin =
+    (await getH5PublicSettings(context.env.DB)).publicOrigin?.replace(/\/$/u, '') ?? null;
+  const targetError = await validateTargets(context.env.DB, cards, h5PublicOrigin);
+  if (targetError)
+    return apiError(context, 400, 'MESSAGE_CARD_TARGET_INVALID', targetError);
+  const referenceError = await validateReferences(context.env.DB, cards);
+  if (referenceError)
+    return apiError(context, 400, 'MESSAGE_CARD_REFERENCE_INVALID', referenceError);
   const now = new Date().toISOString();
-  const requestId = context.get('requestId');
-  const insertStatements = parsed.legacyArticleIds
-    ? parsed.legacyArticleIds.map((articleId, sortOrder) =>
-        context.env.DB.prepare(
-          `INSERT INTO message_article_references (
-               article_id, sort_order, is_enabled, created_at, updated_at
-             ) VALUES (?, ?, 1, ?, ?)`,
-        ).bind(articleId, sortOrder, now, now),
-      )
-    : parsed.placements.map((placement, sortOrder) =>
-        context.env.DB.prepare(
-          `INSERT INTO message_article_references (
-               article_id, background_media_id, sort_order, is_enabled, created_at, updated_at
-             ) VALUES (?, ?, ?, 1, ?, ?)`,
-        ).bind(placement.articleId, placement.backgroundMediaId, sortOrder, now, now),
-      );
-
+  const rows = cards.map((card, sortOrder) => {
+    const id = card.id ?? crypto.randomUUID();
+    return context.env.DB.prepare(
+      `INSERT INTO message_cta_cards
+       (id, title, background_media_id, target_kind, target_ref, section_id,
+        conversion_group_id, sort_order, is_enabled, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?)`,
+    ).bind(
+      id,
+      card.title,
+      card.backgroundMediaId,
+      card.targetKind,
+      card.targetRef,
+      card.sectionId,
+      card.conversionGroupId,
+      sortOrder,
+      now,
+      now,
+    );
+  });
   await context.env.DB.batch([
-    context.env.DB.prepare('DELETE FROM message_article_references'),
-    ...insertStatements,
+    context.env.DB.prepare('DELETE FROM message_cta_cards'),
+    ...rows,
     createAuditLogStatement(context.env.DB, {
-      action: 'messages.articles_updated',
-      entityType: 'message_article_reference',
+      action: 'messages.cards_updated',
+      entityType: 'message_cta_card',
       entityId: 'messages',
-      requestId,
-      metadata: parsed.legacyArticleIds
-        ? { articleIds: parsed.legacyArticleIds }
-        : {
-            articleIds,
-            placements: parsed.placements.map((placement) => ({
-              articleId: placement.articleId,
-              backgroundMediaId: placement.backgroundMediaId,
-            })),
-          },
+      requestId: context.get('requestId'),
+      metadata: { count: cards.length },
       createdAt: now,
     }),
   ]);
-
-  return context.json({ articles: await listReferences(context.env.DB) });
+  return context.json({ cards: await listCards(context.env.DB) });
 });

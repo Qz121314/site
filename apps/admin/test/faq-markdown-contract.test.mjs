@@ -13,8 +13,9 @@ test('Article editor preserves raw Markdown source', async () => {
 
   assert.match(editor, /value=\{form\.body\}/);
   assert.match(editor, /body:\s*event\.target\.value/);
+  assert.match(view, /const articleForm = \{ \.\.\.form, title \}/);
   assert.match(view, /updateArticle\(editingArticle\.id, form\)/);
-  assert.match(view, /createArticle\(form\)/);
+  assert.match(view, /createArticle\(articleForm\)/);
   assert.doesNotMatch(view, /body:\s*form\.body\.trim\(\)/);
   assert.doesNotMatch(editor, /body:\s*form\.body\.trim\(\)/);
   assert.doesNotMatch(adapter, /body:\s*input\.body\.trim\(\)/);

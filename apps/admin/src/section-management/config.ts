@@ -1,20 +1,5 @@
 import type { SectionInput } from '../api';
 
-export const sectionIconOptions = [
-  '◈',
-  '◎',
-  '◇',
-  '✦',
-  '⌂',
-  '◉',
-  '◆',
-  '▣',
-  '✚',
-  '✺',
-  '⬡',
-  '◫',
-] as const;
-
 export type SectionEditorInput = SectionInput & {
   description: string;
   iconAssetId: string | null;
@@ -24,7 +9,7 @@ export type SectionEditorInput = SectionInput & {
 export const emptySectionForm: SectionEditorInput = {
   name: '',
   description: '',
-  iconValue: sectionIconOptions[0],
+  iconValue: '',
   iconAssetId: null,
   browseBackgroundAssetId: null,
   sortOrder: 0,

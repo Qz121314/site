@@ -8,26 +8,25 @@
   --admin-canvas: #f5f6f8;
   --admin-surface: #ffffff;
   --admin-surface-subtle: #f8f9fb;
+  --admin-surface-muted: #f3f5f8;
   --admin-border: #e2e6ec;
   --admin-border-strong: #cfd5df;
   --admin-text: #172033;
   --admin-text-muted: #667085;
   --admin-text-subtle: #8a94a6;
-  --admin-brand: #ec1767;
-  --admin-brand-hover: #c40f52;
-  --admin-brand-soft: #fff0f6;
+  --admin-brand: #10a37f;
+  --admin-brand-hover: #0d8f70;
+  --admin-brand-soft: #edf9f5;
   --admin-danger: #b42318;
   --admin-success: #067647;
+  --admin-success-soft: #ecfdf3;
   --admin-radius-xs: 6px;
   --admin-radius-sm: 8px;
   --admin-radius-md: 10px;
   --admin-radius-lg: 12px;
   --admin-control-h: 36px;
   --admin-row-h: 44px;
-  --admin-gap-1: 4px;
   --admin-gap-2: 8px;
-  --admin-gap-3: 12px;
-  --admin-gap-4: 16px;
   --admin-shadow-card: 0 1px 2px rgb(16 24 40 / 3%);
   --admin-shadow-float: 0 18px 44px rgb(16 24 40 / 16%);
 }
@@ -132,14 +131,14 @@ body {
 }
 
 .ui-button--primary {
-  border-color: var(--admin-brand);
+  border-color: var(--admin-text);
   color: #fff;
-  background: var(--admin-brand);
+  background: var(--admin-text);
 }
 
 .ui-button--primary:not(:disabled):hover {
-  border-color: var(--admin-brand-hover);
-  background: var(--admin-brand-hover);
+  border-color: #000;
+  background: #000;
 }
 
 .ui-button--secondary {
@@ -188,9 +187,9 @@ body {
 }
 
 .ui-input:focus-visible {
-  border-color: #ff4f91;
+  border-color: var(--admin-brand);
   outline: 0;
-  box-shadow: 0 0 0 3px rgb(236 23 103 / 12%);
+  box-shadow: 0 0 0 3px rgb(16 163 127 / 14%);
 }
 
 .ui-textarea {
@@ -206,9 +205,9 @@ body {
 }
 
 .ui-textarea:focus-visible {
-  border-color: #ff4f91;
+  border-color: var(--admin-brand);
   outline: 0;
-  box-shadow: 0 0 0 3px rgb(236 23 103 / 12%);
+  box-shadow: 0 0 0 3px rgb(16 163 127 / 14%);
 }
 
 button,
@@ -297,9 +296,9 @@ textarea {
 .product-editor-form input:focus,
 .product-editor-form select:focus,
 .product-editor-form textarea:focus {
-  border-color: #ff4f91 !important;
+  border-color: var(--admin-brand) !important;
   outline: 0 !important;
-  box-shadow: 0 0 0 3px rgb(236 23 103 / 12%) !important;
+  box-shadow: 0 0 0 3px rgb(16 163 127 / 14%) !important;
 }
 
 .primary-button,
@@ -319,13 +318,13 @@ textarea {
 }
 
 .primary-button {
-  border-color: var(--admin-brand) !important;
-  background: var(--admin-brand) !important;
+  border-color: var(--admin-text) !important;
+  background: var(--admin-text) !important;
 }
 
 .primary-button:not(:disabled):hover {
-  border-color: var(--admin-brand-hover) !important;
-  background: var(--admin-brand-hover) !important;
+  border-color: #000 !important;
+  background: #000 !important;
   box-shadow: none !important;
   transform: none !important;
 }
@@ -420,9 +419,10 @@ textarea {
 }
 
 .scope-tabs button.is-active {
-  color: #fff !important;
-  background: linear-gradient(135deg, #ec1767, #c40f52) !important;
-  box-shadow: none !important;
+  color: var(--admin-text) !important;
+  border-color: var(--admin-border-strong) !important;
+  background: var(--admin-surface) !important;
+  box-shadow: 0 1px 2px rgb(16 24 40 / 8%) !important;
 }
 
 .product-editor-tabs button.is-active {
@@ -1005,7 +1005,7 @@ textarea {
 
 .admin-dialog {
   border: 1px solid var(--admin-border) !important;
-  border-radius: 12px !important;
+  border-radius: 10px !important;
   background: #fff !important;
   box-shadow: var(--admin-shadow-float) !important;
 }
@@ -1465,6 +1465,17 @@ textarea {
   color: var(--admin-text-muted);
   font-size: 0.72rem;
   line-height: 1.45;
+}
+
+.ui-dialog-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.ui-dialog-header-actions .ui-button {
+  white-space: nowrap;
 }
 
 .ui-dialog-body,

@@ -1,7 +1,6 @@
 import { useState, type FormEvent } from 'react';
 import { useAdminDirtySource } from '../admin-unsaved-state';
 import { MediaPickerDialog } from '../asset-library/MediaPickerDialog';
-import { formatBrandingBytes } from '../branding-media/local-branding-image';
 import type { SiteSettingsWithHero } from '../site-hero-settings-api';
 import {
   settingsValueEqual,
@@ -28,6 +27,7 @@ export function PwaSettingsView({ onSessionExpired }: { onSessionExpired: () => 
   const [draft, setDraft] = useState<PwaDraft>(() => createPwaDraft(settings));
   const [pickerOpen, setPickerOpen] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
   const [message, setMessage] = useState<{
     type: 'success' | 'error';
     text: string;
@@ -82,108 +82,83 @@ export function PwaSettingsView({ onSessionExpired }: { onSessionExpired: () => 
   }
 
   const busy = saving || branding.processing;
+  const pwaInstallUrl = new URL('/?pwa-install=1', window.location.origin).toString();
+
+  async function copyPwaInstallUrl() {
+    try {
+      await navigator.clipboard.writeText(pwaInstallUrl);
+      setLinkCopied(true);
+      window.setTimeout(() => setLinkCopied(false), 1800);
+    } catch {
+      setMessage({ type: 'error', text: '链接复制失败，请手动复制。' });
+    }
+  }
 
   return (
     <>
-      <form className="settings-workspace is-medium" onSubmit={handleSubmit}>
-        <section className="settings-workspace-section" aria-labelledby="pwa-icon-title">
-          <div className="settings-workspace-heading">
-            <div>
-              <h2 id="pwa-icon-title">应用图标</h2>
-              <p>用于桌面图标、favicon 与 Apple Touch Icon。建议使用 1:1 正方形图片。</p>
-            </div>
-          </div>
-
-          <div className="settings-media-control">
-            <div className="settings-media-preview">
-              {branding.previewUrl ? (
-                <img src={branding.previewUrl} alt="PWA 图标预览" />
-              ) : (
-                <span>App</span>
-              )}
-            </div>
-            <div className="settings-media-copy">
-              <p>
-                {branding.localImage
-                  ? `待保存 · ${branding.localImage.width} × ${branding.localImage.height} · ${formatBrandingBytes(branding.localImage.compressedFile.size)}`
-                  : draft.pwaIconAssetId
-                    ? '已设置独立 PWA 图标。'
-                    : '当前使用默认图标。'}
-              </p>
-              <div className="settings-media-actions">
-                <label className={`branding-file-button${busy ? ' is-disabled' : ''}`}>
-                  <input
-                    type="file"
-                    accept="image/jpeg,image/png,image/webp"
-                    disabled={busy}
-                    onChange={(event) => {
-                      const file = event.target.files?.[0];
-                      event.currentTarget.value = '';
-                      if (!file) return;
-                      setMessage(null);
-                      void branding.selectFile(file).catch((error: unknown) => {
-                        setMessage({
-                          type: 'error',
-                          text:
-                            error instanceof Error
-                              ? error.message
-                              : 'PWA 图标本地处理失败。',
-                        });
-                      });
-                    }}
-                  />
-                  {branding.processing
-                    ? '处理中…'
-                    : branding.previewUrl
-                      ? '上传替换'
-                      : '上传'}
-                </label>
+      <form
+        className="settings-workspace settings-workspace--pwa is-medium"
+        onSubmit={handleSubmit}
+      >
+        <section
+          className="settings-workspace-section pwa-settings-panel"
+          aria-label="应用安装"
+        >
+          <div className="pwa-settings-top-row">
+            <div className="pwa-icon-layout">
+              <div className="settings-media-control" aria-label="应用图标">
                 <button
-                  className="admin-text-button"
+                  className={`pwa-icon-upload-target${busy ? ' is-disabled' : ''}`}
                   type="button"
+                  aria-label="从素材中心选择应用图标"
                   disabled={busy}
                   onClick={() => setPickerOpen(true)}
                 >
-                  从素材中心选择
+                  {branding.previewUrl ? (
+                    <img src={branding.previewUrl} alt="PWA 图标预览" />
+                  ) : (
+                    <span aria-hidden="true">+</span>
+                  )}
                 </button>
-                {branding.previewUrl ? (
-                  <button
-                    className="admin-text-button"
-                    type="button"
-                    disabled={busy}
-                    onClick={branding.clear}
-                  >
-                    恢复默认图标
-                  </button>
-                ) : null}
+                <div className="settings-media-copy">
+                  <div className="settings-media-actions">
+                    {branding.previewUrl ? (
+                      <button
+                        className="admin-text-button"
+                        type="button"
+                        disabled={busy}
+                        onClick={branding.clear}
+                      >
+                        恢复默认图标
+                      </button>
+                    ) : null}
+                  </div>
+                </div>
               </div>
             </div>
-          </div>
-        </section>
-
-        <section
-          className="settings-workspace-section"
-          aria-labelledby="pwa-prompt-title"
-        >
-          <div className="settings-workspace-heading">
-            <div>
-              <h2 id="pwa-prompt-title">安装提示</h2>
-              <p>控制用户停留一段时间后看到的轻量安装提示，不影响网页首屏。</p>
+            <div className="pwa-settings-heading-actions">
+              <button
+                className="ui-button ui-button--primary ui-button--compact pwa-save-button"
+                type="submit"
+                disabled={!dirty || busy}
+              >
+                {saving ? '保存中…' : '保存 PWA 设置'}
+              </button>
+              <label className="settings-inline-switch">
+                <input
+                  type="checkbox"
+                  checked={draft.installPrompt.enabled}
+                  disabled={busy}
+                  onChange={(event) =>
+                    updateInstallPrompt({ enabled: event.target.checked })
+                  }
+                />
+                <span>{draft.installPrompt.enabled ? '已开启' : '已关闭'}</span>
+              </label>
             </div>
-            <label className="settings-inline-switch">
-              <input
-                type="checkbox"
-                checked={draft.installPrompt.enabled}
-                disabled={busy}
-                onChange={(event) =>
-                  updateInstallPrompt({ enabled: event.target.checked })
-                }
-              />
-              <span>{draft.installPrompt.enabled ? '已开启' : '已关闭'}</span>
-            </label>
           </div>
 
-          <div className="settings-workspace-fields is-two-column">
+          <div className="settings-workspace-fields is-two-column pwa-install-fields">
             <label className="field-group">
               <span>延迟显示（秒）</span>
               <input
@@ -212,6 +187,18 @@ export function PwaSettingsView({ onSessionExpired }: { onSessionExpired: () => 
                 onChange={(event) => updateInstallPrompt({ title: event.target.value })}
               />
             </label>
+            <label className="field-group pwa-install-action-field">
+              <span>安装按钮</span>
+              <input
+                type="text"
+                maxLength={32}
+                value={draft.installPrompt.installLabel}
+                disabled={busy || !draft.installPrompt.enabled}
+                onChange={(event) =>
+                  updateInstallPrompt({ installLabel: event.target.value })
+                }
+              />
+            </label>
             <label className="field-group settings-field-span-two">
               <span>桌面端说明</span>
               <input
@@ -236,19 +223,7 @@ export function PwaSettingsView({ onSessionExpired }: { onSessionExpired: () => 
                 }
               />
             </label>
-            <label className="field-group">
-              <span>安装按钮</span>
-              <input
-                type="text"
-                maxLength={32}
-                value={draft.installPrompt.installLabel}
-                disabled={busy || !draft.installPrompt.enabled}
-                onChange={(event) =>
-                  updateInstallPrompt({ installLabel: event.target.value })
-                }
-              />
-            </label>
-            <label className="field-group">
+            <label className="field-group pwa-dismiss-field">
               <span>关闭提示</span>
               <input
                 type="text"
@@ -261,6 +236,19 @@ export function PwaSettingsView({ onSessionExpired }: { onSessionExpired: () => 
               />
             </label>
           </div>
+          <div className="pwa-install-link-row">
+            <label className="field-group">
+              <span>PWA 专属安装链接</span>
+              <input type="url" readOnly value={pwaInstallUrl} />
+            </label>
+            <button
+              className="ui-button ui-button--secondary ui-button--compact"
+              type="button"
+              onClick={() => void copyPwaInstallUrl()}
+            >
+              {linkCopied ? '已复制' : '复制链接'}
+            </button>
+          </div>
         </section>
 
         <div className="settings-workspace-actions">
@@ -272,9 +260,6 @@ export function PwaSettingsView({ onSessionExpired }: { onSessionExpired: () => 
               {message.text}
             </span>
           ) : null}
-          <button className="primary-button" type="submit" disabled={!dirty || busy}>
-            {saving ? '保存中…' : '保存 PWA 设置'}
-          </button>
         </div>
       </form>
 

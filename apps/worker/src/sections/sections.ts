@@ -132,7 +132,7 @@ export function validateSectionInput(value: unknown): ValidationResult {
     return {
       ok: false,
       field: 'iconValue',
-      message: '请上传分区图标或选择一个备用字符图标。',
+      message: '请上传分区快捷图标。',
     };
   }
 

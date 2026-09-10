@@ -2,15 +2,25 @@ import { AdminApiError } from '../../api';
 import { adminFetch } from '../../admin-fetch';
 
 export type MessageArticlePlacement = {
-  articleId: string;
+  id: string;
   title: string;
   backgroundMediaId: string | null;
+  targetKind: 'article' | 'page' | 'link';
+  targetRef: string;
+  targetLabel: string;
+  sectionId: string | null;
+  conversionGroupId: string | null;
   sortOrder: number;
 };
 
 export type MessageArticlePlacementInput = {
-  articleId: string;
+  id?: string;
+  title: string;
   backgroundMediaId: string | null;
+  targetKind: 'article' | 'page' | 'link';
+  targetRef: string;
+  sectionId: string | null;
+  conversionGroupId: string | null;
 };
 
 function asRecord(value: unknown): Record<string, unknown> | null {
@@ -28,28 +38,42 @@ function parsePlacement(value: unknown): MessageArticlePlacement {
   const placement = asRecord(value);
   if (
     !placement ||
-    typeof placement.articleId !== 'string' ||
+    typeof placement.id !== 'string' ||
     typeof placement.title !== 'string' ||
     (typeof placement.backgroundMediaId !== 'string' &&
       placement.backgroundMediaId !== null) ||
+    !['article', 'page', 'link'].includes(String(placement.targetKind)) ||
+    typeof placement.targetRef !== 'string' ||
+    typeof placement.targetLabel !== 'string' ||
+    (placement.sectionId !== null && typeof placement.sectionId !== 'string') ||
+    (placement.conversionGroupId !== null &&
+      typeof placement.conversionGroupId !== 'string') ||
     typeof placement.sortOrder !== 'number'
   ) {
-    throw new AdminApiError(500, 'INVALID_RESPONSE', 'Messages 文章配置返回数据无效。');
+    throw new AdminApiError(500, 'INVALID_RESPONSE', 'Messages 卡片配置返回数据无效。');
   }
   return {
-    articleId: placement.articleId,
+    id: placement.id,
     title: placement.title,
     backgroundMediaId: placement.backgroundMediaId,
+    targetKind: placement.targetKind as MessageArticlePlacement['targetKind'],
+    targetRef: placement.targetRef,
+    targetLabel: placement.targetLabel,
+    sectionId: typeof placement.sectionId === 'string' ? placement.sectionId : null,
+    conversionGroupId:
+      typeof placement.conversionGroupId === 'string'
+        ? placement.conversionGroupId
+        : null,
     sortOrder: placement.sortOrder,
   };
 }
 
 function parseEnvelope(value: unknown): MessageArticlePlacement[] {
-  const articles = asRecord(value)?.articles;
-  if (!Array.isArray(articles)) {
-    throw new AdminApiError(500, 'INVALID_RESPONSE', 'Messages 文章配置返回数据无效。');
+  const cards = asRecord(value)?.cards;
+  if (!Array.isArray(cards)) {
+    throw new AdminApiError(500, 'INVALID_RESPONSE', 'Messages 卡片配置返回数据无效。');
   }
-  return articles.map(parsePlacement).sort((a, b) => a.sortOrder - b.sortOrder);
+  return cards.map(parsePlacement).sort((a, b) => a.sortOrder - b.sortOrder);
 }
 
 async function requestJson(path: string, init?: RequestInit): Promise<unknown> {
@@ -74,8 +98,38 @@ export function fetchMessageArticlePlacements(): Promise<MessageArticlePlacement
   return requestJson('/api/admin/message-articles').then(parseEnvelope);
 }
 
+export type MessageCardOptions = {
+  articles: Array<{ id: string; title: string }>;
+  pages: Array<{ id: string; slug: string; name: string; url: string }>;
+  h5OriginConfigured: boolean;
+  conversionGroups: Array<{
+    id: string;
+    section_id: string;
+    name: string;
+    section_name: string;
+  }>;
+};
+
+export function fetchMessageCardOptions(): Promise<MessageCardOptions> {
+  return requestJson('/api/admin/message-articles/options').then((value) => {
+    const result = asRecord(value);
+    return {
+      articles: Array.isArray(result?.articles)
+        ? (result.articles as MessageCardOptions['articles'])
+        : [],
+      pages: Array.isArray(result?.pages)
+        ? (result.pages as MessageCardOptions['pages'])
+        : [],
+      h5OriginConfigured: result?.h5OriginConfigured === true,
+      conversionGroups: Array.isArray(result?.conversionGroups)
+        ? (result.conversionGroups as MessageCardOptions['conversionGroups'])
+        : [],
+    };
+  });
+}
+
 export function saveMessageArticlePlacements(
-  articles: MessageArticlePlacementInput[],
+  cards: MessageArticlePlacementInput[],
 ): Promise<MessageArticlePlacement[]> {
   return requestJson('/api/admin/message-articles', {
     method: 'PUT',
@@ -83,6 +137,6 @@ export function saveMessageArticlePlacements(
       'content-type': 'application/json',
       'x-admin-request': '1',
     },
-    body: JSON.stringify({ articles }),
+    body: JSON.stringify({ cards }),
   }).then(parseEnvelope);
 }

@@ -234,8 +234,12 @@ export function AdminShell({
           </Button>
           <div className="admin-breadcrumb">
             <span>{context.eyebrow}</span>
-            <span aria-hidden="true">/</span>
-            <strong>{context.title}</strong>
+            {activeView !== 'pwa' ? (
+              <>
+                <span aria-hidden="true">/</span>
+                <strong>{context.title}</strong>
+              </>
+            ) : null}
           </div>
           <div className="admin-command-search" role="search">
             <span aria-hidden="true">⌕</span>

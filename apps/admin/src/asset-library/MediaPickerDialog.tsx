@@ -4,9 +4,11 @@ import { brandingAssetPreviewUrl } from '../branding-media/api';
 import { AdminDialog } from '../components/ui/dialog';
 import { AdminFeedbackState } from '../components/ui/feedback-state';
 import {
+  fetchMediaFolders,
   fetchMediaLibrary,
   type ManagedMediaAsset,
   type MediaKind,
+  type MediaFolder,
   type MediaRole,
 } from './api';
 import { assignMediaRole } from './media-role-api';
@@ -54,6 +56,8 @@ function kindLabel(kind: MediaKind): string {
   return '图片';
 }
 
+type FolderFilter = 'all' | 'unfiled' | string;
+
 export function MediaPickerDialog(props: MediaPickerDialogProps) {
   const {
     title,
@@ -65,9 +69,12 @@ export function MediaPickerDialog(props: MediaPickerDialogProps) {
     onSessionExpired,
   } = props;
   const [assets, setAssets] = useState<ManagedMediaAsset[]>([]);
+  const [folders, setFolders] = useState<MediaFolder[]>([]);
   const [loading, setLoading] = useState(true);
   const [workingId, setWorkingId] = useState<string | null>(null);
   const [query, setQuery] = useState('');
+  const [folderFilter, setFolderFilter] = useState<FolderFilter>('all');
+  const [kindFilter, setKindFilter] = useState<MediaKind | 'all'>('all');
   const [errorMessage, setErrorMessage] = useState('');
 
   useEffect(() => {
@@ -93,18 +100,47 @@ export function MediaPickerDialog(props: MediaPickerDialogProps) {
     };
   }, [onSessionExpired]);
 
+  useEffect(() => {
+    let active = true;
+    void fetchMediaFolders()
+      .then((result) => {
+        if (active) setFolders(result);
+      })
+      .catch((error: unknown) => {
+        if (!active) return;
+        if (isSessionError(error)) {
+          onSessionExpired();
+          return;
+        }
+        setErrorMessage(error instanceof Error ? error.message : '素材分组加载失败。');
+      });
+    return () => {
+      active = false;
+    };
+  }, [onSessionExpired]);
+
   const filtered = useMemo(() => {
     const allowed = new Set(allowedKinds);
     const selected = new Set(selectedIds);
     const keyword = query.trim().toLowerCase();
     return assets.filter((asset) => {
-      if (!allowed.has(asset.mediaKind) || selected.has(asset.id)) return false;
+      if (
+        !allowed.has(asset.mediaKind) ||
+        selected.has(asset.id) ||
+        (kindFilter !== 'all' && asset.mediaKind !== kindFilter) ||
+        (folderFilter === 'unfiled' && asset.folderId !== null) ||
+        (folderFilter !== 'all' &&
+          folderFilter !== 'unfiled' &&
+          asset.folderId !== folderFilter)
+      ) {
+        return false;
+      }
       if (!keyword) return true;
       return `${asset.fileName} ${asset.mimeType} ${asset.roles.join(' ')}`
         .toLowerCase()
         .includes(keyword);
     });
-  }, [allowedKinds, assets, query, selectedIds]);
+  }, [allowedKinds, assets, folderFilter, kindFilter, query, selectedIds]);
 
   async function choose(asset: ManagedMediaAsset) {
     if (workingId) return;
@@ -141,14 +177,41 @@ export function MediaPickerDialog(props: MediaPickerDialogProps) {
       className="media-picker-dialog"
     >
       <div className="media-picker-body">
-        <input
-          className="media-picker-search"
-          type="search"
-          value={query}
-          autoFocus
-          placeholder="搜索文件名或格式"
-          onChange={(event) => setQuery(event.target.value)}
-        />
+        <div className="media-picker-filters">
+          <input
+            className="media-picker-search"
+            type="search"
+            value={query}
+            autoFocus
+            placeholder="搜索文件名或格式"
+            onChange={(event) => setQuery(event.target.value)}
+          />
+          <select
+            value={folderFilter}
+            onChange={(event) => setFolderFilter(event.target.value)}
+            aria-label="素材分组"
+          >
+            <option value="all">全部分组</option>
+            <option value="unfiled">未分组</option>
+            {folders.map((folder) => (
+              <option key={folder.id} value={folder.id}>
+                {folder.name} ({folder.assetCount})
+              </option>
+            ))}
+          </select>
+          <select
+            value={kindFilter}
+            onChange={(event) => setKindFilter(event.target.value as MediaKind | 'all')}
+            aria-label="素材格式"
+          >
+            <option value="all">全部格式</option>
+            {allowedKinds.includes('image') ? <option value="image">图片</option> : null}
+            {allowedKinds.includes('animated_image') ? (
+              <option value="animated_image">GIF</option>
+            ) : null}
+            {allowedKinds.includes('video') ? <option value="video">视频</option> : null}
+          </select>
+        </div>
         {errorMessage ? (
           <AdminFeedbackState
             kind="error"

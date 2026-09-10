@@ -6,11 +6,17 @@ import { MessagesArticlesSection } from './messages-articles/MessagesArticlesSec
 export function MessagesExperienceView({
   onNavigate,
   onActionsChange,
+  onSessionExpired,
 }: {
   onNavigate: (view: AdminView) => void;
   onActionsChange: (actions: ReactNode | null) => void;
+  onSessionExpired: () => void;
 }) {
   return (
-    <MessagesArticlesSection onNavigate={onNavigate} onActionsChange={onActionsChange} />
+    <MessagesArticlesSection
+      onNavigate={onNavigate}
+      onActionsChange={onActionsChange}
+      onSessionExpired={onSessionExpired}
+    />
   );
 }

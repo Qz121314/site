@@ -103,7 +103,7 @@ test('settings provider bounds reads and writes without polling', () => {
   assert.match(workspace, /view === 'pwa'/);
   assert.match(workspace, /view === 'system-general'/);
   assert.match(workspace, /view === 'system-infrastructure'/);
-  assert.match(workspace, /SystemAdvancedView/);
+  assert.match(workspace, /SystemSettingsView/);
 });
 
 test('workspace ownership is decomposed by domain', () => {
@@ -132,7 +132,7 @@ test('workspace ownership is decomposed by domain', () => {
   assert.match(advanced, /ga4MeasurementId/);
 
   assert.match(messages, /MessagesArticlesSection/);
-  assert.match(messagesArticles, /Article Center/u);
+  assert.match(messagesArticles, /Messages CTA|CTA 卡片/u);
   assert.doesNotMatch(messages, /ArticlePicker|background_media_id|messageArticleApi/i);
   assert.doesNotMatch(messages, /saveSettings/);
 });

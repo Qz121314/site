@@ -25,19 +25,9 @@ const PwaSettingsView = lazy(() =>
     default: module.PwaSettingsView,
   })),
 );
-const SystemGeneralView = lazy(() =>
-  import('../system/SystemGeneralView').then((module) => ({
-    default: module.SystemGeneralView,
-  })),
-);
-const SystemInfrastructureView = lazy(() =>
-  import('../system/SystemInfrastructureView').then((module) => ({
-    default: module.SystemInfrastructureView,
-  })),
-);
-const SystemAdvancedView = lazy(() =>
-  import('../system/SystemAdvancedView').then((module) => ({
-    default: module.SystemAdvancedView,
+const SystemSettingsView = lazy(() =>
+  import('../system/SystemSettingsView').then((module) => ({
+    default: module.SystemSettingsView,
   })),
 );
 
@@ -71,16 +61,15 @@ export function SiteSettingsWorkspace({
           <MessagesExperienceView
             onNavigate={onNavigate}
             onActionsChange={onMessagesActionsChange}
+            onSessionExpired={onSessionExpired}
           />
         ) : view === 'pwa' ? (
           <PwaSettingsView onSessionExpired={onSessionExpired} />
-        ) : view === 'system-general' ? (
-          <SystemGeneralView onSessionExpired={onSessionExpired} />
-        ) : view === 'system-infrastructure' ? (
-          <SystemInfrastructureView onSessionExpired={onSessionExpired} />
-        ) : (
-          <SystemAdvancedView onSessionExpired={onSessionExpired} />
-        )}
+        ) : view === 'system-general' ||
+          view === 'system-infrastructure' ||
+          view === 'system-advanced' ? (
+          <SystemSettingsView onSessionExpired={onSessionExpired} />
+        ) : null}
       </Suspense>
     </SiteSettingsProvider>
   );

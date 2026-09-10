@@ -87,17 +87,6 @@
   padding: 0 5px;
 }
 
-.section-editor-card-heading small,
-.section-editor-dialog .section-icon-help {
-  color: var(--admin-text-muted, #667085);
-  font-size: 0.66rem;
-  line-height: 1.45;
-}
-
-.section-editor-dialog .section-icon-help {
-  margin: 0 0 9px;
-}
-
 .section-editor-fields-grid {
   display: grid;
   grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr);
@@ -109,15 +98,8 @@
   min-width: 0;
 }
 
-.section-editor-dialog .section-editor-form label > span,
-.section-editor-dialog .section-editor-form label > small {
+.section-editor-dialog .section-editor-form label > span {
   line-height: 1.4;
-}
-
-.section-editor-dialog .section-editor-form label > small {
-  margin-top: 5px !important;
-  color: var(--admin-text-muted, #667085) !important;
-  font-size: 0.65rem;
 }
 
 .section-editor-dialog .section-editor-form textarea {
@@ -172,6 +154,12 @@
   object-fit: cover;
 }
 
+.section-editor-dialog .section-icon-empty {
+  color: var(--admin-text-muted, #667085);
+  font-size: 0.68rem;
+  white-space: nowrap;
+}
+
 .section-editor-dialog .section-browse-background-preview {
   width: 150px;
   min-height: 0 !important;
@@ -191,12 +179,6 @@
   font-weight: 760;
 }
 
-.section-editor-dialog .section-icon-upload-copy p {
-  color: var(--admin-text-muted, #667085);
-  font-size: 0.67rem;
-  line-height: 1.45;
-}
-
 .section-editor-dialog .section-icon-upload-copy small {
   color: #667085;
   font-size: 0.64rem;
@@ -210,84 +192,12 @@
   margin-top: 3px;
 }
 
-.section-editor-bottom-grid {
-  display: grid;
-  grid-template-columns: minmax(0, 1.2fr) minmax(260px, 0.8fr);
-  gap: 12px;
-}
-
-.section-editor-dialog .icon-picker {
-  display: grid;
-  grid-template-columns: repeat(6, 36px) !important;
-  gap: 6px !important;
-  justify-content: start;
-}
-
-.section-editor-dialog .icon-picker button {
-  width: 36px;
-  height: 36px;
-  min-height: 36px;
-  border-radius: 8px !important;
-  font-size: 16px !important;
-}
-
-.section-editor-dialog .icon-picker button:not(.is-selected):hover {
-  border-color: #b9c0cb;
-  background: #f8f9fb;
-}
-
-.section-editor-dialog .icon-picker button.is-selected {
-  border-color: #ff8ab8 !important;
-  background: #fff2ec !important;
-  color: #c2410c !important;
-  box-shadow: 0 0 0 2px rgb(236 23 103 / 8%) !important;
-}
-
 .section-editor-settings-card {
-  display: grid;
-  grid-template-columns: minmax(96px, 0.38fr) minmax(0, 0.62fr);
-  align-items: stretch;
-  gap: 10px;
+  display: block;
 }
 
 .section-editor-dialog .section-editor-sort-field input {
   width: 100% !important;
-}
-
-.section-editor-dialog .section-editor-switch-row {
-  min-height: 64px;
-  margin: 0;
-  padding: 9px 10px;
-  border-color: var(--admin-border, #e2e6ec);
-  border-radius: 8px;
-  background: #fafbfc;
-}
-
-.section-editor-dialog .section-editor-switch-row > span {
-  display: grid;
-  gap: 2px;
-}
-
-.section-editor-dialog .section-editor-switch-row > span strong {
-  color: #344054;
-  font-size: 0.72rem;
-}
-
-.section-editor-dialog .section-editor-switch-row > span small {
-  margin: 0;
-  color: var(--admin-text-muted, #667085);
-  font-size: 0.63rem;
-  line-height: 1.35;
-}
-
-.section-editor-dialog .section-editor-switch-row input[type='checkbox'] {
-  width: 18px !important;
-  height: 18px !important;
-  min-height: 18px !important;
-  margin: 0;
-  padding: 0 !important;
-  accent-color: var(--admin-brand, #ec1767);
-  box-shadow: none !important;
 }
 
 .section-editor-dialog .admin-dialog-actions {
@@ -308,18 +218,13 @@
   }
 
   .section-editor-fields-grid,
-  .section-editor-visual-grid,
-  .section-editor-bottom-grid {
+  .section-editor-visual-grid {
     grid-template-columns: 1fr;
   }
 
   .section-editor-dialog .section-browse-background-preview {
     width: 132px;
     height: 78px;
-  }
-
-  .section-editor-settings-card {
-    grid-template-columns: minmax(100px, 0.4fr) minmax(0, 0.6fr);
   }
 }
 
@@ -350,20 +255,6 @@
   .section-editor-dialog .section-browse-background-preview {
     width: 64px;
     height: 64px;
-  }
-
-  .section-editor-dialog .icon-picker {
-    grid-template-columns: repeat(6, 34px) !important;
-  }
-
-  .section-editor-dialog .icon-picker button {
-    width: 34px;
-    height: 34px;
-    min-height: 34px;
-  }
-
-  .section-editor-settings-card {
-    grid-template-columns: 1fr;
   }
 
   .section-editor-dialog .admin-dialog-actions {

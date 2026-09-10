@@ -79,14 +79,14 @@ test('published bootstrap compatibility is checked before public runtime deploym
   assert.doesNotMatch(gate, /wrangler\s+d1|r2\s+object\s+(?:put|delete)|cors\s+set/i);
   assert.ok(
     mainWorkflow.indexOf('- name: Verify published bootstrap compatibility') <
-      mainWorkflow.indexOf('- name: Deploy business platform Worker'),
+      mainWorkflow.indexOf('- name: Deploy business platform Workers'),
     'bootstrap compatibility must be checked before Worker deploy',
   );
 });
 
 test('deploy and production acceptance are change-aware', () => {
   expectCondition(
-    namedStep(mainWorkflow, 'Deploy business platform Worker'),
+    namedStep(mainWorkflow, 'Deploy business platform Workers'),
     'deploy_required',
     'force_deploy',
   );
@@ -163,7 +163,7 @@ test('main release selects verification depth before direct Wrangler deploy', ()
     const step = namedStep(mainWorkflow, name);
     assert.match(step, /verification_profile/);
   }
-  const deploy = namedStep(mainWorkflow, 'Deploy business platform Worker');
+  const deploy = namedStep(mainWorkflow, 'Deploy business platform Workers');
   assert.match(deploy, /pnpm exec wrangler deploy --keep-vars/);
   assert.doesNotMatch(deploy, /pnpm build|db:migrate:remote/);
 });

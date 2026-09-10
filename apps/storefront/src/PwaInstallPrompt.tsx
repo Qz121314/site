@@ -15,6 +15,7 @@ const NAVIGATION_EVENT = 'storefront:navigate';
 const DISMISS_COOLDOWN_MS = 7 * 24 * 60 * 60 * 1_000;
 const DISMISSED_KEY = 'storefront:pwa-install-dismissed:v3';
 const SESSION_PROMPTED_KEY = 'storefront:pwa-install-presented:v1';
+const DIRECT_INSTALL_PARAM = 'pwa-install';
 const ENGAGEMENT_SCROLL_PX = 420;
 const ENGAGEMENT_ROUTE_COUNT = 2;
 
@@ -107,6 +108,10 @@ function scrollDepthFromEvent(event: Event): number {
   return Math.max(window.scrollY, document.documentElement.scrollTop);
 }
 
+function hasDirectInstallRequest(): boolean {
+  return new URLSearchParams(window.location.search).get(DIRECT_INSTALL_PARAM) === '1';
+}
+
 export function PwaInstallPrompt() {
   const runtime = useSyncExternalStore(
     subscribePwaInstallRuntime,
@@ -115,11 +120,12 @@ export function PwaInstallPrompt() {
   );
   const appName = runtime?.appName ?? null;
   const config = runtime?.config ?? null;
+  const directInstallRequest = hasDirectInstallRequest();
   const [installEvent, setInstallEvent] = useState<BeforeInstallPromptEvent | null>(null);
   const [showIosHint, setShowIosHint] = useState(false);
   const [delayComplete, setDelayComplete] = useState(false);
-  const [engaged, setEngaged] = useState(() =>
-    routeSignalsStrongIntent(window.location.pathname),
+  const [engaged, setEngaged] = useState(
+    () => directInstallRequest || routeSignalsStrongIntent(window.location.pathname),
   );
   const [dismissed, setDismissed] = useState(false);
   const [installed, setInstalled] = useState(isStandalone);
@@ -130,7 +136,11 @@ export function PwaInstallPrompt() {
   }, [appName]);
 
   useEffect(() => {
-    if (installed || sessionSuppressed || hasActiveDismissal()) return;
+    if (
+      installed ||
+      (!directInstallRequest && (sessionSuppressed || hasActiveDismissal()))
+    )
+      return;
 
     const handleInstallPrompt = (event: Event) => {
       event.preventDefault();
@@ -154,10 +164,15 @@ export function PwaInstallPrompt() {
       window.removeEventListener('beforeinstallprompt', handleInstallPrompt);
       window.removeEventListener('appinstalled', handleInstalled);
     };
-  }, [installed, sessionSuppressed]);
+  }, [directInstallRequest, installed, sessionSuppressed]);
 
   useEffect(() => {
-    if (engaged || installed || sessionSuppressed || hasActiveDismissal()) return;
+    if (
+      engaged ||
+      installed ||
+      (!directInstallRequest && (sessionSuppressed || hasActiveDismissal()))
+    )
+      return;
 
     const visitedPaths = new Set<string>();
     const recordCurrentRoute = () => {
@@ -186,11 +201,19 @@ export function PwaInstallPrompt() {
       window.removeEventListener('scroll', handleScroll);
       document.removeEventListener('scroll', handleScroll, true);
     };
-  }, [engaged, installed, sessionSuppressed]);
+  }, [directInstallRequest, engaged, installed, sessionSuppressed]);
 
   useEffect(() => {
-    if (!config?.enabled || installed || sessionSuppressed || hasActiveDismissal())
+    if (
+      !config?.enabled ||
+      installed ||
+      (!directInstallRequest && (sessionSuppressed || hasActiveDismissal()))
+    )
       return;
+    if (directInstallRequest) {
+      setDelayComplete(true);
+      return;
+    }
     setDelayComplete(false);
     let remainingMs = config.delaySeconds * 1_000;
     let visibleSince = document.visibilityState === 'visible' ? Date.now() : null;
@@ -231,7 +254,7 @@ export function PwaInstallPrompt() {
       clearDelayTimer();
       document.removeEventListener('visibilitychange', handleVisibilityChange);
     };
-  }, [config, installed, sessionSuppressed]);
+  }, [config, directInstallRequest, installed, sessionSuppressed]);
 
   const dismiss = () => {
     setDismissed(true);
@@ -264,7 +287,7 @@ export function PwaInstallPrompt() {
     appName &&
     delayComplete &&
     engaged &&
-    !sessionSuppressed &&
+    (directInstallRequest || !sessionSuppressed) &&
     !dismissed &&
     !installed &&
     (installEvent || showIosHint),
@@ -279,7 +302,7 @@ export function PwaInstallPrompt() {
   return (
     <aside
       className={`pwa-install-card${showIosHint && !installEvent ? ' is-guidance' : ''}`}
-      aria-label={config.title}
+      aria-label={config.title || 'PWA 安装'}
       aria-live="polite"
     >
       <span className="pwa-install-handle" aria-hidden="true" />
@@ -287,13 +310,20 @@ export function PwaInstallPrompt() {
         <img src="/api/public/pwa/icon/192" alt="" />
       </div>
       <div className="pwa-install-copy">
-        <strong>{config.title || appName}</strong>
-        <span>{installEvent ? config.description : config.iosDescription}</span>
+        {config.title ? <strong>{config.title}</strong> : null}
+        {installEvent ? (
+          config.description ? (
+            <span>{config.description}</span>
+          ) : null
+        ) : config.iosDescription ? (
+          <span>{config.iosDescription}</span>
+        ) : null}
       </div>
       {installEvent ? (
         <button
           className="pwa-install-action"
           type="button"
+          aria-label={config.installLabel || '安装 PWA'}
           onClick={() => void install()}
         >
           {config.installLabel}
@@ -302,8 +332,8 @@ export function PwaInstallPrompt() {
       <StorefrontIconButton
         className="pwa-install-dismiss"
         size="small"
-        aria-label={config.dismissLabel}
-        title={config.dismissLabel}
+        aria-label={config.dismissLabel || '关闭'}
+        title={config.dismissLabel || '关闭'}
         onClick={dismiss}
       >
         <X aria-hidden="true" />

@@ -249,6 +249,37 @@ test('Theme Center persists a bounded backend-driven install prompt', () => {
   assert.equal(resolveTheme(reloaded).installPrompt.dismissLabel, 'Later');
 });
 
+test('Theme Center preserves intentionally blank install prompt copy', () => {
+  const validation = validateThemeUpdate({
+    themeKey: 'noir',
+    overrides: {
+      installPrompt: {
+        enabled: true,
+        delaySeconds: 45,
+        title: '',
+        description: '',
+        iosDescription: '',
+        installLabel: '',
+        dismissLabel: '',
+      },
+    },
+  });
+  assert.equal(validation.ok, true);
+  const reloaded = parseThemeSettings(
+    'noir',
+    JSON.stringify(validation.settings.overrides),
+  );
+  assert.deepEqual(resolveTheme(reloaded).installPrompt, {
+    enabled: true,
+    delaySeconds: 45,
+    title: '',
+    description: '',
+    iosDescription: '',
+    installLabel: '',
+    dismissLabel: '',
+  });
+});
+
 test('custom theme persists through the official-key D1 constraint', () => {
   const validation = validateThemeUpdate({
     themeKey: 'custom',

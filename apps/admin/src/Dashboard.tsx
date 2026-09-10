@@ -69,6 +69,9 @@ const ThemeCenterView = lazy(() =>
 const AssetLibraryView = lazy(() =>
   import('./AssetLibraryView').then((module) => ({ default: module.AssetLibraryView })),
 );
+const PageCenterView = lazy(() =>
+  import('./PageCenterView').then((module) => ({ default: module.PageCenterView })),
+);
 const CustomerServiceView = lazy(() =>
   import('./CustomerServiceView').then((module) => ({
     default: module.CustomerServiceView,
@@ -151,7 +154,7 @@ function publishKeyForView(view: AdminView): string | null {
 }
 
 function workspaceWidthForView(view: AdminView): WorkspaceWidth {
-  if (view === 'system-general' || view === 'system-advanced') return 'narrow';
+  if (view === 'system-general') return 'medium';
   if (
     view === 'home' ||
     view === 'navigation' ||
@@ -696,6 +699,12 @@ export function Dashboard({
             />
           ) : activeView === 'assets' ? (
             <AssetLibraryView key={activeView} onSessionExpired={onSessionExpired} />
+          ) : activeView === 'pages' ? (
+            <PageCenterView
+              key={activeView}
+              sections={sections}
+              onSessionExpired={onSessionExpired}
+            />
           ) : activeView === 'customer-service' ? (
             <CustomerServiceView key={activeView} onSessionExpired={onSessionExpired} />
           ) : activeView === 'sections' ? (

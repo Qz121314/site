@@ -50,6 +50,19 @@ const emptyArticleForm: ArticleInput = {
   isActive: true,
 };
 
+function markdownTitle(body: string): string {
+  const heading = body.match(/^#\s+(.+)$/mu)?.[1]?.trim() ?? '';
+  return heading
+    .replace(/\s+#*\s*$/u, '')
+    .trim()
+    .slice(0, 300);
+}
+
+function markdownWithTitle(article: AdminArticle): string {
+  if (/^#\s+.+$/mu.test(article.body)) return article.body;
+  return `# ${article.title}\n\n${article.body}`.trim();
+}
+
 function isSessionError(error: unknown): boolean {
   return (
     error instanceof AdminApiError &&
@@ -186,7 +199,7 @@ export function ArticleCenterView({ onSessionExpired }: ArticleCenterViewProps) 
     setEditingArticle(article);
     setForm({
       title: article.title,
-      body: article.body,
+      body: markdownWithTitle(article),
       sortOrder: article.sortOrder,
       isActive: article.isActive,
     });
@@ -203,14 +216,21 @@ export function ArticleCenterView({ onSessionExpired }: ArticleCenterViewProps) 
     setErrorMessage('');
     setSuccessMessage('');
     try {
+      const title = markdownTitle(form.body);
+      if (!title) {
+        setErrorMessage('请在 Markdown 文档中添加一级标题，例如：# 文章标题。');
+        return;
+      }
+      const articleForm = { ...form, title };
       if (editingArticle) {
+        const form = articleForm;
         const updated = await updateArticle(editingArticle.id, form);
         setActiveArticles((current) =>
           current.map((item) => (item.id === updated.id ? updated : item)),
         );
         setSuccessMessage(`文章“${updated.title}”已更新。`);
       } else {
-        const created = await createArticle(form);
+        const created = await createArticle(articleForm);
         setActiveArticles((current) => [...current, created]);
         setSuccessMessage(`文章“${created.title}”已创建。`);
       }

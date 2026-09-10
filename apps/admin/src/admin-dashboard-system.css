@@ -10,7 +10,6 @@
 :root {
   --admin-workspace-max: 1280px;
   --admin-dashboard-line: #e5e9ef;
-  --admin-dashboard-muted: #7b8796;
   --admin-dashboard-soft: #f8fafc;
 }
 
@@ -120,9 +119,9 @@
 .customer-service-workbench .selection-toolbar {
   min-height: 38px;
   padding: 5px 8px 5px 10px;
-  border-color: #f4d2df;
+  border-color: #d0d5dd;
   border-radius: 7px;
-  background: #fff8fb;
+  background: #f7f8fa;
 }
 
 /* Tables are information surfaces, not detached floating cards. */
@@ -187,9 +186,9 @@
 .ui-segmented-item.ui-button.is-selected,
 .customer-service-commandbar .segmented-control button.is-active {
   color: var(--admin-text);
-  border-color: #ffc5da;
+  border-color: #cfd5df;
   background: #fff;
-  box-shadow: inset 0 -2px 0 var(--admin-brand);
+  box-shadow: 0 1px 2px rgb(16 24 40 / 8%);
 }
 
 .theme-studio-workspace {
@@ -211,6 +210,137 @@
   padding-block: 8px;
 }
 
+/* ---------- Table headers across all data pages ---------- */
+.section-table th,
+.category-table th,
+.conversion-table th,
+.product-table th,
+.article-table th {
+  color: #667085;
+  background: var(--admin-dashboard-soft);
+  font-size: 0.64rem;
+  letter-spacing: 0.035em;
+}
+
+.section-table td,
+.category-table td,
+.conversion-table td,
+.product-table td {
+  font-size: 0.74rem;
+}
+
+.section-table th,
+.section-table td,
+.category-table th,
+.category-table td,
+.conversion-table th,
+.conversion-table td,
+.product-table th,
+.product-table td,
+.article-table th,
+.article-table td {
+  border-color: #edf0f4;
+}
+
+/* ---------- Section management scope tabs follow the dashboard segmented control ---------- */
+.section-management .scope-tabs {
+  gap: 2px;
+  padding: 2px;
+  border-color: var(--admin-dashboard-line);
+  border-radius: 7px;
+  background: #f3f5f8;
+}
+
+.section-management .scope-tabs button {
+  min-height: 30px;
+  padding-inline: 10px;
+  border-radius: 5px;
+  font-size: 0.71rem;
+  font-weight: 720;
+  color: #667085;
+  gap: 6px;
+}
+
+.section-management .scope-tabs button:not(.is-active):hover {
+  color: #344054;
+  background: rgb(255 255 255 / 72%);
+}
+
+.section-management .scope-tabs button.is-active {
+  color: var(--admin-text);
+  background: #fff;
+  border-color: #cfd5df;
+  box-shadow: 0 1px 2px rgb(16 24 40 / 8%);
+}
+
+.section-management .scope-tabs button span {
+  min-width: 18px;
+  padding: 2px 5px;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 72%);
+  color: #667085;
+  font-size: 0.63rem;
+}
+
+.section-management .scope-tabs button.is-active span {
+  color: var(--admin-text);
+  background: rgb(255 255 255 / 72%);
+}
+
+/* ---------- Dialogs ---------- */
+.admin-dialog-backdrop {
+  backdrop-filter: blur(6px);
+}
+
+.admin-dialog {
+  border-radius: 10px;
+}
+
+.admin-dialog-header > button {
+  border-color: var(--admin-border);
+  background: var(--admin-surface-subtle);
+}
+
+.admin-dialog-actions {
+  bottom: -22px;
+  margin: 20px -22px -22px;
+  padding: 13px 22px;
+  border-top: 1px solid var(--admin-border);
+  background: rgb(255 255 255 / 94%);
+  backdrop-filter: blur(12px);
+}
+
+/* ---------- Admin settings tabs follow the dashboard segmented control ---------- */
+.admin-settings-tabs {
+  gap: 2px;
+  padding: 2px;
+  border-color: var(--admin-dashboard-line);
+  border-radius: 7px;
+  background: #f3f5f8;
+}
+
+.admin-settings-tab {
+  min-height: 30px;
+  padding-inline: 10px;
+  border-radius: 5px;
+  font-size: 0.71rem;
+}
+
+.admin-settings-tab:not(.is-active):hover {
+  color: #344054;
+  background: rgb(255 255 255 / 72%);
+}
+
+.admin-settings-tab.is-active {
+  color: var(--admin-text);
+  background: #fff;
+  border-color: #cfd5df;
+  box-shadow: 0 1px 2px rgb(16 24 40 / 8%);
+}
+
+.admin-settings-tab.is-active::after {
+  display: none;
+}
 @media (max-width: 760px) {
   .admin-workspace-content {
     padding: 10px 12px 20px;

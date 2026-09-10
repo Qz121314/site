@@ -24,45 +24,11 @@
   display: flex;
   min-width: 0;
   align-items: center;
-  gap: 3px;
-  padding: 3px;
-  border: 1px solid var(--admin-border);
-  border-radius: 9px;
-  background: #f3f5f8;
 }
 
 .admin-settings-tab {
-  min-height: 32px;
-  padding: 0 13px;
-  border: 0;
-  border-radius: 7px;
-  color: #667085;
-  background: transparent;
   cursor: pointer;
-  font-size: 0.76rem;
-  font-weight: 740;
   white-space: nowrap;
-}
-
-.admin-settings-tab:hover {
-  color: #344054;
-  background: rgb(255 255 255 / 70%);
-}
-
-.admin-settings-tab.is-active {
-  color: #172033;
-  background: #fff;
-  box-shadow: 0 1px 3px rgb(16 24 40 / 9%);
-}
-
-.admin-settings-tab.is-active::after {
-  content: '';
-  display: block;
-  width: 16px;
-  height: 2px;
-  margin: 3px auto -5px;
-  border-radius: 999px;
-  background: var(--admin-brand);
 }
 
 .admin-settings-tab:focus-visible {

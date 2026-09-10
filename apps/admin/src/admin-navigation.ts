@@ -25,6 +25,7 @@ export type AdminView =
   | SettingsAdminView
   | 'theme'
   | 'assets'
+  | 'pages'
   | 'customer-service'
   | 'faq'
   | 'sections'
@@ -79,6 +80,7 @@ export const FIXED_ADMIN_VIEWS = new Set<AdminView>([
   ...SETTINGS_ADMIN_VIEWS,
   'theme',
   'assets',
+  'pages',
   'customer-service',
   'faq',
   'sections',
@@ -88,6 +90,8 @@ const LEGACY_ADMIN_VIEW_ALIASES: Readonly<Record<string, AdminView>> = {
   settings: 'system-general',
   system: 'system-general',
   'system-navigation': 'system-general',
+  'system-infrastructure': 'system-general',
+  'system-advanced': 'system-general',
 };
 
 export function parseDynamicView(
@@ -191,7 +195,7 @@ export function writeAdminViewLocation(view: AdminView, mode: 'push' | 'replace'
 
 export function getAdminDomainForView(view: AdminView): AdminDomain {
   if (view === 'dashboard') return 'dashboard';
-  if (view === 'faq' || view === 'assets') return 'content';
+  if (view === 'faq' || view === 'assets' || view === 'pages') return 'content';
   if (view === 'sections') return 'catalog';
   if (
     view === 'home' ||
@@ -263,6 +267,7 @@ export function getAdminSecondaryItems(
       return [
         { view: 'faq', label: '文章中心' },
         { view: 'assets', label: '素材库' },
+        { view: 'pages', label: '页面中心' },
       ];
     case 'operations':
       return sections.map((section) => ({
@@ -277,10 +282,8 @@ export function getAdminSecondaryItems(
       ];
     case 'system':
       return [
-        { view: 'system-general', label: '基本设置' },
+        { view: 'system-general', label: '系统设置' },
         { view: 'pwa', label: '应用安装' },
-        { view: 'system-infrastructure', label: '基础设施' },
-        { view: 'system-advanced', label: '高级设置' },
       ];
   }
 }
@@ -329,6 +332,11 @@ export function getAdminViewContext(
       title: '素材库管理',
       description: '管理上传素材、文件夹与存储清理。',
     },
+    pages: {
+      eyebrow: domainLabel,
+      title: '页面中心',
+      description: '上传外部 H5 页面包，识别 CTA 并绑定转化池。',
+    },
     'customer-service': {
       eyebrow: domainLabel,
       title: '客服接入',
@@ -346,18 +354,8 @@ export function getAdminViewContext(
     },
     'system-general': {
       eyebrow: domainLabel,
-      title: '基本设置',
-      description: '管理站点名称、位置标签与品牌标识。',
-    },
-    'system-infrastructure': {
-      eyebrow: domainLabel,
-      title: '基础设施',
-      description: '管理媒体域名与存储访问相关技术配置。',
-    },
-    'system-advanced': {
-      eyebrow: domainLabel,
-      title: '高级设置',
-      description: '管理可选的高级站点集成参数。',
+      title: '系统设置',
+      description: '统一管理站点身份、媒体域名与可选集成配置。',
     },
   };
   const fixedContext = fixed[view];

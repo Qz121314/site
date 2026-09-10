@@ -13,7 +13,12 @@ const staticSecurityHeaderBlock = Object.entries(securityHeaders)
   .map(([name, value]) => `  ${name}: ${value}`)
   .join('\n');
 
-await rm(dist, { recursive: true, force: true });
+try {
+  await rm(dist, { recursive: true, force: true, maxRetries: 5, retryDelay: 200 });
+} catch (error) {
+  if (error?.code !== 'EBUSY') throw error;
+  console.warn('Root dist is in use; refreshing its generated assets in place.');
+}
 await mkdir(dist, { recursive: true });
 await cp(storefrontDist, dist, { recursive: true });
 

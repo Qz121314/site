@@ -94,8 +94,6 @@ test('new hashes parse and legacy settings aliases normalize deterministically',
     'theme',
     'pwa',
     'system-general',
-    'system-infrastructure',
-    'system-advanced',
     'assets',
     'customer-service',
     'faq',
@@ -112,6 +110,8 @@ test('new hashes parse and legacy settings aliases normalize deterministically',
   }
   assert.equal(parseAdminView('#settings'), 'system-general');
   assert.equal(parseAdminView('#system-navigation'), 'system-general');
+  assert.equal(parseAdminView('#system-infrastructure'), 'system-general');
+  assert.equal(parseAdminView('#system-advanced'), 'system-general');
   assert.equal(parseAdminView('settings'), 'system-general');
   assert.equal(parseAdminView('#system'), 'system-general');
   assert.equal(parseAdminView('system'), 'system-general');
@@ -144,20 +144,19 @@ test('site, engagement, and system navigation match final P1 IA exactly', () => 
   assert.deepEqual(
     getAdminSecondaryItems('system', sections).map(({ view, label }) => [view, label]),
     [
-      ['system-general', '基本设置'],
+      ['system-general', '系统设置'],
       ['pwa', '应用安装'],
-      ['system-infrastructure', '基础设施'],
-      ['system-advanced', '高级设置'],
     ],
   );
 });
 
-test('content navigation exposes Article Center and Asset Library while preserving faq compatibility', () => {
+test('content navigation exposes Article Center, Asset Library and Page Center', () => {
   assert.deepEqual(
     getAdminSecondaryItems('content', sections).map(({ view, label }) => [view, label]),
     [
       ['faq', '文章中心'],
       ['assets', '素材库'],
+      ['pages', '页面中心'],
     ],
   );
   assert.equal(getAdminDefaultViewForDomain('content', sections), 'faq');

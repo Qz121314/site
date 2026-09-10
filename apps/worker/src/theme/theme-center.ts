@@ -430,6 +430,12 @@ function cleanText(value: unknown, maxLength: number): string | null {
   return text ? text.slice(0, maxLength) : null;
 }
 
+function cleanOptionalText(value: unknown, maxLength: number, fallback: string): string {
+  if (typeof value !== 'string') return fallback;
+  const text = stripControlCharacters(value).replace(/\s+/gu, ' ').trim();
+  return text.slice(0, maxLength);
+}
+
 function safeColor(value: unknown): string | null {
   if (typeof value !== 'string') return null;
   const color = value.trim();
@@ -531,14 +537,27 @@ export function normalizeInstallPrompt(value: unknown): ThemeInstallPrompt | nul
       Number.isInteger(delay) && delay >= 5 && delay <= 120
         ? delay
         : DEFAULT_INSTALL_PROMPT.delaySeconds,
-    title: cleanText(value.title, 80) ?? DEFAULT_INSTALL_PROMPT.title,
-    description: cleanText(value.description, 160) ?? DEFAULT_INSTALL_PROMPT.description,
-    iosDescription:
-      cleanText(value.iosDescription, 160) ?? DEFAULT_INSTALL_PROMPT.iosDescription,
-    installLabel:
-      cleanText(value.installLabel, 32) ?? DEFAULT_INSTALL_PROMPT.installLabel,
-    dismissLabel:
-      cleanText(value.dismissLabel, 32) ?? DEFAULT_INSTALL_PROMPT.dismissLabel,
+    title: cleanOptionalText(value.title, 80, DEFAULT_INSTALL_PROMPT.title),
+    description: cleanOptionalText(
+      value.description,
+      160,
+      DEFAULT_INSTALL_PROMPT.description,
+    ),
+    iosDescription: cleanOptionalText(
+      value.iosDescription,
+      160,
+      DEFAULT_INSTALL_PROMPT.iosDescription,
+    ),
+    installLabel: cleanOptionalText(
+      value.installLabel,
+      32,
+      DEFAULT_INSTALL_PROMPT.installLabel,
+    ),
+    dismissLabel: cleanOptionalText(
+      value.dismissLabel,
+      32,
+      DEFAULT_INSTALL_PROMPT.dismissLabel,
+    ),
   };
 }
 

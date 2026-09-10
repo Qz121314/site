@@ -1,15 +1,15 @@
 .settings-workspace {
   display: grid;
-  gap: 10px;
+  gap: 12px;
   width: min(100%, 1120px);
 }
 
 .settings-workspace.is-narrow {
-  width: min(100%, 720px);
+  width: min(100%, 860px);
 }
 
 .settings-workspace.is-medium {
-  width: min(100%, 920px);
+  width: min(100%, 1040px);
 }
 
 .settings-workspace-state {
@@ -32,12 +32,12 @@
 
 .settings-workspace-section {
   display: grid;
-  gap: 10px;
-  padding: 14px;
+  gap: 14px;
+  padding: 18px 20px;
   border: 1px solid var(--admin-border, #dfe4ea);
-  border-radius: var(--admin-radius-md, 10px);
+  border-radius: 10px;
   background: var(--admin-surface, #fff);
-  box-shadow: var(--admin-shadow-card, 0 1px 2px rgb(16 24 40 / 3%));
+  box-shadow: none;
 }
 
 .settings-workspace-heading {
@@ -45,6 +45,8 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--admin-dashboard-line, #e5e9ef);
 }
 
 .settings-workspace-heading h2,
@@ -56,7 +58,7 @@
 .settings-workspace-heading h2,
 .settings-workspace-heading h3 {
   color: var(--admin-text, #172033);
-  font-size: 0.98rem;
+  font-size: 0.94rem;
   font-weight: 780;
   letter-spacing: -0.015em;
 }
@@ -71,7 +73,7 @@
 
 .settings-workspace-fields {
   display: grid;
-  gap: 10px;
+  gap: 8px;
 }
 
 .settings-workspace-fields.is-two-column {
@@ -80,11 +82,11 @@
 
 .settings-workspace-actions {
   display: flex;
-  min-height: 52px;
+  min-height: 48px;
   align-items: center;
   justify-content: flex-end;
   gap: 8px;
-  padding: 8px 2px 0;
+  padding: 10px 2px 0;
   border-top: 1px solid var(--admin-border, #e2e6ec);
 }
 
@@ -125,19 +127,24 @@
 
 .settings-media-control {
   display: grid;
-  grid-template-columns: 96px minmax(0, 1fr);
-  gap: 16px;
+  grid-template-columns: 88px minmax(0, 1fr);
+  gap: 14px;
   align-items: center;
+  width: min(100%, 560px);
+  padding: 10px;
+  border: 1px solid #edf0f4;
+  border-radius: 10px;
+  background: #fbfcfe;
 }
 
 .settings-media-preview {
   display: grid;
   place-items: center;
-  width: 96px;
-  height: 96px;
+  width: 88px;
+  height: 88px;
   overflow: hidden;
   border: 1px solid #dfe4ea;
-  border-radius: 12px;
+  border-radius: 10px;
   background: #f8fafc;
   color: #667085;
 }
@@ -150,7 +157,8 @@
 
 .settings-media-copy {
   display: grid;
-  gap: 10px;
+  gap: 8px;
+  max-width: 460px;
   min-width: 0;
 }
 
@@ -192,6 +200,266 @@
 
 .settings-toggle-copy small {
   color: #667085;
+}
+
+.settings-workspace--general .ui-form-section {
+  gap: 12px;
+}
+
+.settings-workspace--general .ui-form-section:last-of-type {
+  max-width: 760px;
+}
+
+.settings-workspace--general .ui-field-row {
+  min-height: 48px;
+  padding-block: 2px;
+}
+
+.settings-workspace--general .settings-media-control {
+  min-height: 80px;
+}
+
+.settings-workspace--pwa .settings-workspace-section:first-child {
+  width: auto;
+  padding-bottom: 16px;
+}
+
+.settings-workspace--pwa .settings-workspace-heading {
+  align-items: center;
+}
+
+.settings-workspace--pwa .pwa-settings-heading-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.settings-workspace--pwa .pwa-save-button {
+  min-height: 32px;
+  padding-inline: 12px;
+  font-size: 0.74rem;
+}
+
+.settings-workspace--pwa .settings-inline-switch {
+  min-height: 30px;
+  padding: 4px 9px 4px 6px;
+  border: 1px solid var(--admin-dashboard-line, #e5e9ef);
+  border-radius: 999px;
+  background: #f8fafc;
+  color: #667085;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.settings-workspace--pwa .settings-inline-switch:has(input:checked) {
+  border-color: #b7e4d4;
+  background: #effaf6;
+  color: #087f5b;
+}
+
+.settings-workspace--pwa .settings-inline-switch input {
+  appearance: none;
+  position: relative;
+  width: 28px;
+  height: 16px;
+  margin: 0;
+  border-radius: 999px;
+  background: #cbd5e1;
+  cursor: pointer;
+  transition: background-color 120ms ease;
+}
+
+.settings-workspace--pwa .settings-inline-switch input::after {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(15 23 42 / 18%);
+  content: '';
+  transition: transform 120ms ease;
+}
+
+.settings-workspace--pwa .settings-inline-switch input:checked {
+  background: #10a37f;
+}
+
+.settings-workspace--pwa .settings-inline-switch input:checked::after {
+  transform: translateX(12px);
+}
+
+.settings-workspace--pwa .settings-workspace-fields {
+  gap: 12px;
+}
+
+.settings-workspace--pwa .field-group > span {
+  font-size: 0.72rem;
+}
+
+.settings-workspace--pwa .pwa-settings-panel {
+  width: min(100%, 920px);
+  margin-inline: auto;
+  min-width: 0;
+  padding: 16px 18px;
+}
+
+.settings-workspace--pwa .pwa-settings-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 64px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--admin-dashboard-line, #e5e9ef);
+}
+
+.settings-workspace--pwa .pwa-icon-layout {
+  display: block;
+  min-width: 0;
+}
+
+.settings-workspace--pwa .settings-media-control {
+  grid-template-columns: 64px minmax(0, 1fr);
+  width: auto;
+  gap: 12px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.settings-workspace--pwa .settings-media-preview {
+  display: block;
+  width: 64px;
+  height: 64px;
+  border: 0;
+  background: transparent;
+}
+
+.settings-workspace--pwa .pwa-icon-upload-target {
+  display: grid;
+  place-items: center;
+  width: 54px;
+  height: 54px;
+  overflow: hidden;
+  border: 1px dashed #b9c3d0;
+  border-radius: 10px;
+  color: #667085;
+  background: #f8fafc;
+  cursor: pointer;
+  transition:
+    border-color 120ms ease,
+    color 120ms ease,
+    background-color 120ms ease;
+}
+
+.settings-workspace--pwa .pwa-icon-upload-target:hover {
+  border-color: var(--admin-brand, #10a37f);
+  color: var(--admin-brand, #10a37f);
+  background: #f0faf7;
+}
+
+.settings-workspace--pwa .pwa-icon-upload-target.is-disabled {
+  cursor: default;
+  opacity: 0.55;
+}
+
+.settings-workspace--pwa .pwa-icon-upload-target input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.settings-workspace--pwa .pwa-icon-upload-target span {
+  font-size: 1.6rem;
+  font-weight: 400;
+  line-height: 1;
+}
+
+.settings-workspace--pwa .pwa-icon-upload-target img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.settings-workspace--pwa .pwa-install-fields {
+  gap: 8px 10px;
+  align-items: end;
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--admin-dashboard-line, #e5e9ef);
+}
+
+.settings-workspace--pwa .pwa-install-fields input {
+  min-height: 32px;
+  font-size: 0.76rem;
+}
+
+.settings-workspace--pwa .pwa-install-link-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: end;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--admin-dashboard-line, #e5e9ef);
+}
+
+.settings-workspace--pwa .pwa-install-link-row input {
+  min-height: 32px;
+  color: var(--admin-text-muted, #667085);
+  font-size: 0.74rem;
+}
+
+.settings-workspace--pwa .pwa-install-link-row .ui-button {
+  min-height: 32px;
+  white-space: nowrap;
+}
+
+.settings-workspace--pwa .pwa-install-fields .field-group > span {
+  font-size: 0.68rem;
+}
+
+.settings-workspace--pwa .pwa-install-action-field,
+.settings-workspace--pwa .pwa-dismiss-field {
+  grid-row: 2;
+}
+
+.settings-workspace--pwa .pwa-install-action-field {
+  grid-column: 1;
+}
+
+.settings-workspace--pwa .pwa-dismiss-field {
+  grid-column: 2;
+}
+
+@media (max-width: 720px) {
+  .settings-workspace--pwa .pwa-settings-top-row {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .settings-workspace--pwa .pwa-settings-heading-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .settings-workspace--pwa .pwa-install-link-row {
+    grid-template-columns: 1fr;
+  }
+
+  .settings-workspace--pwa .pwa-install-link-row .ui-button {
+    justify-self: start;
+  }
+
+  .settings-workspace--pwa .pwa-install-action-field,
+  .settings-workspace--pwa .pwa-dismiss-field {
+    grid-column: auto;
+    grid-row: auto;
+  }
 }
 
 @media (max-width: 720px) {

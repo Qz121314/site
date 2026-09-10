@@ -35,9 +35,13 @@ const messagePath = pointer.faq.manifestKey.replace(/manifest\.json$/u, 'message
 function sourceObjects({ messages = null } = {}) {
   const articles = Array.isArray(messages?.articles)
     ? messages.articles.map((article) => ({
-        articleId: article.articleId,
+        cardId: article.cardId,
         title: article.title,
         preview: article.preview,
+        targetKind: article.targetKind,
+        targetRef: article.targetRef,
+        sectionId: article.sectionId ?? null,
+        conversionGroupId: article.conversionGroupId ?? null,
         backgroundObjectKey: article.backgroundObjectKey ?? null,
         sortOrder: article.sortOrder,
       }))
@@ -130,9 +134,13 @@ test('bootstrap carries only lightweight active Messages Article metadata and pr
       moduleKey: 'faq',
       articles: [
         {
-          articleId: 'article-a',
+          cardId: 'card-a',
           title: 'Announcement',
           preview: 'Short preview',
+          targetKind: 'article',
+          targetRef: 'article-a',
+          sectionId: null,
+          conversionGroupId: null,
           backgroundObjectKey: 'media/messages/announcement.webp',
           sortOrder: 0,
           body: '# Full Markdown that must not enter bootstrap',
@@ -147,9 +155,13 @@ test('bootstrap carries only lightweight active Messages Article metadata and pr
   assert.equal(snapshot.site.site.navigation.showFaq, true);
   assert.deepEqual(snapshot.site.site.navigation.messageArticles, [
     {
-      articleId: 'article-a',
+      cardId: 'card-a',
       title: 'Announcement',
       preview: 'Short preview',
+      targetKind: 'article',
+      targetRef: 'article-a',
+      sectionId: null,
+      conversionGroupId: null,
       backgroundObjectKey: 'media/messages/announcement.webp',
       sortOrder: 0,
     },
@@ -158,7 +170,7 @@ test('bootstrap carries only lightweight active Messages Article metadata and pr
   assert.equal(JSON.stringify(snapshot).includes('internalFlag'), false);
 });
 
-test('bootstrap accepts legacy Messages Article metadata without a background field', async () => {
+test('bootstrap ignores incomplete legacy metadata instead of reviving the removed contract', async () => {
   const objects = sourceObjects({
     messages: {
       schemaVersion: 2,
@@ -176,15 +188,7 @@ test('bootstrap accepts legacy Messages Article metadata without a background fi
   const bucket = createBucket(objects);
 
   const snapshot = await loadStorefrontPublishedBootstrap(bucket, pointer);
-  assert.deepEqual(snapshot.site.site.navigation.messageArticles, [
-    {
-      articleId: 'article-legacy',
-      title: 'Legacy article',
-      preview: 'Legacy preview',
-      backgroundObjectKey: null,
-      sortOrder: 0,
-    },
-  ]);
+  assert.deepEqual(snapshot.site.site.navigation.messageArticles, []);
 });
 
 test('bootstrap preserves an empty published Messages Article list without reading FAQ modules', async () => {

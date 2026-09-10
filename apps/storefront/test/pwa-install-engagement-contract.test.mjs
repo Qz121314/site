@@ -12,6 +12,8 @@ test('PWA install prompt waits for browsing intent and stays session-bounded', a
   assert.match(source, /ENGAGEMENT_SCROLL_PX/u);
   assert.match(source, /ENGAGEMENT_ROUTE_COUNT/u);
   assert.match(source, /routeSignalsStrongIntent/u);
+  assert.match(source, /DIRECT_INSTALL_PARAM/u);
+  assert.match(source, /hasDirectInstallRequest/u);
   assert.match(source, /window\.addEventListener\(NAVIGATION_EVENT/u);
   assert.match(source, /document\.addEventListener\('scroll'/u);
   assert.match(source, /delayComplete\s*&&\s*engaged/u);

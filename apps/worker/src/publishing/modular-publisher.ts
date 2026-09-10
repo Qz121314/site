@@ -205,10 +205,14 @@ type FaqRow = {
 };
 
 type MessageArticleRow = {
-  article_id: string;
-  question: string;
-  answer: string;
+  id: string;
+  title: string;
+  target_kind: 'article' | 'page' | 'link';
+  target_ref: string;
+  target_label: string;
   background_object_key: string | null;
+  section_id: string | null;
+  conversion_group_id: string | null;
   sort_order: number;
 };
 
@@ -634,19 +638,24 @@ async function loadSource(db: D1Database): Promise<Source> {
     await db
       .prepare(
         `SELECT
-           mar.article_id,
-           f.question,
-           f.answer,
+           c.id,
+           c.title,
+           c.target_kind,
+           c.target_ref,
+           COALESCE(f.question, p.name, c.target_ref) AS target_label,
            background.object_key AS background_object_key,
-           mar.sort_order
-         FROM message_article_references mar
-         JOIN faqs f ON f.id = mar.article_id
+           c.section_id,
+           c.conversion_group_id,
+           c.sort_order
+         FROM message_cta_cards c
+         LEFT JOIN faqs f ON c.target_kind = 'article' AND f.id = c.target_ref
+         LEFT JOIN h5_pages p ON c.target_kind = 'page' AND p.slug = c.target_ref
          LEFT JOIN media_assets background
-           ON background.id = mar.background_media_id
+           ON background.id = c.background_media_id
           AND background.status = 'ready'
           AND background.deleted_at IS NULL
-         WHERE mar.is_enabled = 1 AND f.deleted_at IS NULL
-         ORDER BY mar.sort_order ASC, mar.article_id ASC`,
+         WHERE c.is_enabled = 1
+         ORDER BY c.sort_order ASC, c.id ASC`,
       )
       .all<MessageArticleRow>()
   ).results;
@@ -862,24 +871,15 @@ function faqModel(source: Source) {
     }));
 }
 
-function markdownPreview(value: string): string {
-  return value
-    .replace(/```[\s\S]*?```/gu, ' ')
-    .replace(/`([^`]+)`/gu, '$1')
-    .replace(/!\[[^\]]*\]\([^)]+\)/gu, ' ')
-    .replace(/\[([^\]]+)\]\([^)]+\)/gu, '$1')
-    .replace(/^[ \t]{0,3}(?:#{1,6}|>|[-+*])(?:[ \t]+|$)/gmu, ' ')
-    .replace(/[*_~\\]+/gu, '')
-    .replace(/\s+/gu, ' ')
-    .trim()
-    .slice(0, 160);
-}
-
 function messageArticleModel(source: Source) {
   return source.messageArticles.map((article) => ({
-    articleId: article.article_id,
-    title: article.question,
-    preview: markdownPreview(article.answer),
+    cardId: article.id,
+    title: article.title,
+    preview: article.target_label,
+    targetKind: article.target_kind,
+    targetRef: article.target_ref,
+    sectionId: article.section_id,
+    conversionGroupId: article.conversion_group_id,
     backgroundObjectKey: article.background_object_key,
     sortOrder: article.sort_order,
   }));

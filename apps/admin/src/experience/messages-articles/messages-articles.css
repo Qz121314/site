@@ -156,6 +156,55 @@
   gap: 12px;
 }
 
+.messages-card-editor {
+  display: grid;
+  gap: 14px;
+}
+
+.messages-card-editor-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.messages-card-field {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+}
+
+.messages-card-field > span {
+  color: var(--admin-text, #172033);
+  font-size: 0.74rem;
+  font-weight: 720;
+}
+
+.messages-card-background-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 34px;
+}
+
+.messages-card-background-thumb {
+  display: grid;
+  width: 52px;
+  height: 34px;
+  flex: none;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid var(--admin-border, #e2e6ec);
+  border-radius: 7px;
+  color: var(--admin-text-subtle, #98a2b3);
+  background: var(--admin-surface-subtle, #f8fafc);
+}
+
+.messages-card-background-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
 .messages-card-config-panel {
   display: grid;
   align-content: start;
@@ -461,6 +510,10 @@
   }
 
   .messages-card-config {
+    grid-template-columns: 1fr;
+  }
+
+  .messages-card-editor-grid {
     grid-template-columns: 1fr;
   }
 

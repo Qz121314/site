@@ -4,9 +4,13 @@ export const MESSAGE_ARTICLE_READ_STORAGE_KEY = 'site:messages:read-articles';
 const MESSAGE_ARTICLE_READ_EVENT = 'site:messages:read-articles-change';
 
 export type MessageArticleMetadata = {
-  articleId: string;
+  cardId: string;
   title: string;
   preview: string;
+  targetKind: 'article' | 'page' | 'link';
+  targetRef: string;
+  sectionId: string | null;
+  conversionGroupId: string | null;
   backgroundObjectKey: string | null;
   sortOrder: number;
 };
@@ -40,25 +44,36 @@ function bootstrapMessageArticles(value: unknown): unknown {
 
 function parseMessageArticle(value: unknown): MessageArticleMetadata | null {
   if (!isRecord(value)) return null;
-  const articleId = typeof value.articleId === 'string' ? value.articleId.trim() : '';
+  const cardId = typeof value.cardId === 'string' ? value.cardId.trim() : '';
   const title = typeof value.title === 'string' ? value.title.trim() : '';
   const preview = typeof value.preview === 'string' ? value.preview.trim() : '';
+  const targetKind = value.targetKind;
+  const targetRef = typeof value.targetRef === 'string' ? value.targetRef.trim() : '';
+  const sectionId = typeof value.sectionId === 'string' ? value.sectionId.trim() : null;
+  const conversionGroupId =
+    typeof value.conversionGroupId === 'string' ? value.conversionGroupId.trim() : null;
   const backgroundObjectKey =
     typeof value.backgroundObjectKey === 'string' ? value.backgroundObjectKey.trim() : '';
   const sortOrder = value.sortOrder;
   if (
-    !articleId ||
-    articleId.length > 120 ||
+    !cardId ||
+    cardId.length > 120 ||
     !title ||
+    !['article', 'page', 'link'].includes(String(targetKind)) ||
+    !targetRef ||
     typeof sortOrder !== 'number' ||
     !Number.isFinite(sortOrder)
   ) {
     return null;
   }
   return {
-    articleId,
+    cardId,
     title,
     preview,
+    targetKind: targetKind as MessageArticleMetadata['targetKind'],
+    targetRef,
+    sectionId,
+    conversionGroupId,
     backgroundObjectKey: backgroundObjectKey || null,
     sortOrder,
   };
@@ -75,13 +90,13 @@ export function getMessageArticlesFromBootstrap(
     .sort(
       (left, right) =>
         left.sortOrder - right.sortOrder ||
-        left.articleId.localeCompare(right.articleId) ||
+        left.cardId.localeCompare(right.cardId) ||
         left.title.localeCompare(right.title),
     );
   const seen = new Set<string>();
   return sorted.filter((article) => {
-    if (seen.has(article.articleId)) return false;
-    seen.add(article.articleId);
+    if (seen.has(article.cardId)) return false;
+    seen.add(article.cardId);
     return true;
   });
 }
@@ -129,11 +144,11 @@ export function subscribeMessageArticleReadState(callback: () => void): () => vo
 }
 
 export function markMessageArticleRead(
-  articleId: string,
+  cardId: string,
   storage: ReadWriteStorage | null = browserStorage(),
   notify = true,
 ): void {
-  const normalized = articleId.trim();
+  const normalized = cardId.trim();
   if (!storage || !normalized || normalized.length > 120) return;
   const readIds = readMessageArticleReadIds(storage);
   if (readIds.has(normalized)) return;
@@ -156,11 +171,11 @@ export function countUnreadMessageArticles(
   readIds: ReadonlySet<string>,
 ): number {
   const activeIds = new Set(
-    activeArticles.map((article) => article.articleId).filter((articleId) => articleId),
+    activeArticles.map((article) => article.cardId).filter((cardId) => cardId),
   );
   let unread = 0;
-  for (const articleId of activeIds) {
-    if (!readIds.has(articleId)) unread += 1;
+  for (const cardId of activeIds) {
+    if (!readIds.has(cardId)) unread += 1;
   }
   return unread;
 }

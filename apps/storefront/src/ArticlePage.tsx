@@ -63,7 +63,7 @@ export default function ArticlePage({
   });
   const article = query.data ?? null;
   const isActiveMessageArticle = getMessageArticlesFromBootstrap(bootstrap).some(
-    (item) => item.articleId === articleId,
+    (item) => item.targetKind === 'article' && item.targetRef === articleId,
   );
   const missing =
     query.error instanceof PublicContentError &&

@@ -19,6 +19,7 @@ const FOCUSABLE_SELECTOR = [
 type AdminDialogProps = {
   open: boolean;
   title: string;
+  ariaLabel?: string;
   eyebrow?: string;
   description?: string;
   onClose: () => void;
@@ -28,12 +29,16 @@ type AdminDialogProps = {
   size?: 'small' | 'medium' | 'large';
   className?: string;
   children: ReactNode;
+  showHeading?: boolean;
+  headerLeading?: ReactNode;
+  headerActions?: ReactNode;
   footer?: ReactNode;
 };
 
 export function AdminDialog({
   open,
   title,
+  ariaLabel,
   eyebrow,
   description,
   onClose,
@@ -43,6 +48,9 @@ export function AdminDialog({
   size = 'medium',
   className,
   children,
+  showHeading = true,
+  headerLeading,
+  headerActions,
   footer,
 }: AdminDialogProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
@@ -113,16 +121,25 @@ export function AdminDialog({
         className={cn('ui-dialog', `ui-dialog--${size}`, className)}
         role={role}
         aria-modal="true"
-        aria-labelledby={titleId}
+        aria-label={ariaLabel}
+        aria-labelledby={ariaLabel ? undefined : titleId}
         aria-describedby={description ? descriptionId : undefined}
         tabIndex={-1}
       >
         <header className="ui-dialog-header">
-          <div className="ui-dialog-heading">
-            {eyebrow ? <span>{eyebrow}</span> : null}
-            <h3 id={titleId}>{title}</h3>
-            {description ? <p id={descriptionId}>{description}</p> : null}
-          </div>
+          {showHeading ? (
+            <div className="ui-dialog-heading">
+              {eyebrow ? <span>{eyebrow}</span> : null}
+              <h3 id={titleId}>{title}</h3>
+              {description ? <p id={descriptionId}>{description}</p> : null}
+            </div>
+          ) : null}
+          {headerLeading ? (
+            <div className="ui-dialog-header-leading">{headerLeading}</div>
+          ) : null}
+          {headerActions ? (
+            <div className="ui-dialog-header-actions">{headerActions}</div>
+          ) : null}
           {showClose ? (
             <Button
               variant="ghost"
