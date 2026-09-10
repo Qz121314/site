@@ -249,6 +249,7 @@
   }
 
   :is(html, .storefront-theme-root) .storefront-bottom-chrome > .bottom-nav a::before {
+    position: absolute;
     display: block;
     top: 2px;
     left: 50%;
