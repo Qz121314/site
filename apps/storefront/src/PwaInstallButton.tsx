@@ -35,29 +35,31 @@ export function PwaInstallButton() {
   const handleClick = async () => {
     if (installAvailable) {
       const outcome = await requestPwaInstall();
-      if (outcome === 'accepted') setStatus('已安装');
-      else if (outcome === 'dismissed') setStatus('已取消安装');
-      else setStatus('当前浏览器暂不支持一键安装');
+      if (outcome === 'accepted') setStatus('App installed');
+      else if (outcome === 'dismissed') setStatus('Installation canceled');
+      else setStatus('This browser does not support one-tap installation');
       return;
     }
     if (isIosDevice()) {
       window.dispatchEvent(new Event('storefront:pwa-install-request'));
-      setStatus('请点击浏览器的分享按钮，再选择“添加到主屏幕”');
+      setStatus('Tap your browser’s Share button, then select “Add to Home Screen”');
       window.setTimeout(() => setStatus(null), 4_000);
       return;
     }
-    setStatus('当前浏览器暂不支持一键安装，请使用浏览器菜单添加到主屏幕');
+    setStatus(
+      'This browser does not support one-tap installation. Use the browser menu to add this site to your home screen',
+    );
     window.setTimeout(() => setStatus(null), 4_000);
   };
 
   return (
     <div className="pwa-install-control">
       <StorefrontIconButton
-        aria-label="安装应用"
+        aria-label="Install app"
         className="pwa-install-button"
         onClick={() => void handleClick()}
         size="small"
-        title="安装应用"
+        title="Install app"
         variant="soft"
       >
         <Download aria-hidden="true" />

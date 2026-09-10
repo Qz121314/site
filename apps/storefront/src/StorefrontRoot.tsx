@@ -206,10 +206,10 @@ function PrimaryError() {
 function StorefrontMessageButton({ unreadCount }: { unreadCount: number }) {
   return (
     <StorefrontLink
-      aria-label={unreadCount > 0 ? `消息，${unreadCount} 条未读` : '消息'}
+      aria-label={unreadCount > 0 ? `Messages, ${unreadCount} unread` : 'Messages'}
       className="storefront-icon-button topbar-message-button"
       href="/messages/"
-      title="消息"
+      title="Messages"
     >
       <Bell aria-hidden="true" />
       {unreadCount > 0 ? (

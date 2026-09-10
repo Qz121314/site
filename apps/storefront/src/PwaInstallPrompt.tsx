@@ -313,7 +313,7 @@ export function PwaInstallPrompt() {
   return (
     <aside
       className={`pwa-install-card${showIosHint && !installEvent ? ' is-guidance' : ''}`}
-      aria-label={config.title || 'PWA 安装'}
+      aria-label={config.title || 'PWA installation'}
       aria-live="polite"
     >
       <span className="pwa-install-handle" aria-hidden="true" />
@@ -334,7 +334,7 @@ export function PwaInstallPrompt() {
         <button
           className="pwa-install-action"
           type="button"
-          aria-label={config.installLabel || '安装 PWA'}
+          aria-label={config.installLabel || 'Install PWA'}
           onClick={() => void install()}
         >
           {config.installLabel}
@@ -343,8 +343,8 @@ export function PwaInstallPrompt() {
       <StorefrontIconButton
         className="pwa-install-dismiss"
         size="small"
-        aria-label={config.dismissLabel || '关闭'}
-        title={config.dismissLabel || '关闭'}
+        aria-label={config.dismissLabel || 'Close'}
+        title={config.dismissLabel || 'Close'}
         onClick={dismiss}
       >
         <X aria-hidden="true" />
