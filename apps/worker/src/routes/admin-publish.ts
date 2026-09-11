@@ -8,7 +8,10 @@ import {
   rollbackModularModule,
 } from '../publishing/storefront-publisher';
 import { getLanding } from '../landing/landing-pages';
-import { publishLandingPublication } from '../publishing/landing-publisher';
+import {
+  publishLandingPublication,
+  validateLandingPublication,
+} from '../publishing/landing-publisher';
 import type { AppEnvironment } from '../types';
 import { hasAdminRequestHeader, isRecord } from './admin-section-shared';
 
@@ -133,6 +136,10 @@ adminPublishRoutes.post('/landings/:id', async (context) => {
       'LANDING_NOT_PUBLISHABLE',
       '只有已发布落地页可以生成 publication。',
     );
+  }
+  const validation = await validateLandingPublication(context.env.DB, landing);
+  if (!validation.ok) {
+    return apiError(context, 409, validation.code, validation.message);
   }
   try {
     const publication = await publishLandingPublication(

@@ -5,8 +5,21 @@ import { loadLandingSnapshot } from '../src/landing/landing-content.ts';
 test('Landing snapshot uses its independent immutable publication artifact', async () => {
   const calls = [];
   const originalFetch = globalThis.fetch;
+  let version = 'version-1';
   globalThis.fetch = async (input) => {
-    calls.push(String(input));
+    const url = String(input);
+    calls.push(url);
+    if (url.includes('/pointers/')) {
+      return new Response(
+        JSON.stringify({
+          schemaVersion: 1,
+          slug: 'summer-offer',
+          artifactKey: `public/landing-publications/v1/artifacts/landing-1/${version}.json`,
+          publishedAt: '2026-09-11T00:00:00.000Z',
+        }),
+        { status: 200, headers: { 'content-type': 'application/json' } },
+      );
+    }
     return new Response(
       JSON.stringify({
         schemaVersion: 1,
@@ -15,7 +28,7 @@ test('Landing snapshot uses its independent immutable publication artifact', asy
           templateKey: 'direct_response',
           product: {
             id: 'product-hidden',
-            media: [{ id: 'media-1', url: 'https://cdn/media.webp' }],
+            media: [{ id: 'media-1', publicUrl: 'https://cdn/media.webp' }],
           },
           resolved: {
             headline: 'Custom headline',
@@ -39,7 +52,18 @@ test('Landing snapshot uses its independent immutable publication artifact', asy
     const snapshot = await loadLandingSnapshot('summer-offer');
     assert.equal(snapshot.model.product.id, 'product-hidden');
     assert.equal(snapshot.model.resolved.heroAsset.publicUrl, 'https://cdn/hero.webp');
-    assert.deepEqual(calls, ['/public/landing-publications/v1/summer-offer.json']);
+    assert.deepEqual(calls, [
+      '/public/landing-publications/v1/pointers/summer-offer.json',
+      '/public/landing-publications/v1/artifacts/landing-1/version-1.json',
+    ]);
+    version = 'version-2';
+    calls.length = 0;
+    const republished = await loadLandingSnapshot('summer-offer');
+    assert.equal(republished.model.resolved.headline, 'Custom headline');
+    assert.deepEqual(calls, [
+      '/public/landing-publications/v1/pointers/summer-offer.json',
+      '/public/landing-publications/v1/artifacts/landing-1/version-2.json',
+    ]);
   } finally {
     globalThis.fetch = originalFetch;
   }

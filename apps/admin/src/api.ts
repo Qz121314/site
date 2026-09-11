@@ -434,6 +434,36 @@ export function deleteLanding(id: string): Promise<AdminLanding> {
   );
 }
 
+export type LandingPublishResult = {
+  key: string;
+  pointerKey: string;
+  artifactKey: string;
+};
+
+function parseLandingPublishResult(value: unknown): LandingPublishResult {
+  const publication = asRecord(asRecord(value)?.publication);
+  if (
+    !publication ||
+    typeof publication.key !== 'string' ||
+    typeof publication.pointerKey !== 'string' ||
+    typeof publication.artifactKey !== 'string'
+  ) {
+    throw new AdminApiError(500, 'INVALID_RESPONSE', '落地页发布返回数据无效。');
+  }
+  return {
+    key: publication.key,
+    pointerKey: publication.pointerKey,
+    artifactKey: publication.artifactKey,
+  };
+}
+
+export function publishLanding(id: string): Promise<LandingPublishResult> {
+  return adminJsonRequest(
+    `/api/admin/publish/landings/${encodeURIComponent(id)}`,
+    'POST',
+  ).then(parseLandingPublishResult);
+}
+
 export function createSection(input: SectionInput): Promise<AdminSection> {
   return adminJsonRequest('/api/admin/sections/', 'POST', input).then(
     parseSectionEnvelope,

@@ -2,7 +2,7 @@ import { PublicContentError } from '../content';
 
 export type LandingMedia = {
   id: string;
-  url: string | null;
+  publicUrl: string | null;
   width: number | null;
   height: number | null;
   altText: string | null;
@@ -38,6 +38,26 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
+type LandingPublicationPointer = {
+  schemaVersion: 1;
+  slug: string;
+  artifactKey: string;
+  publishedAt: string;
+};
+
+function isLandingPointer(value: unknown): value is LandingPublicationPointer {
+  return (
+    isRecord(value) &&
+    value.schemaVersion === 1 &&
+    typeof value.slug === 'string' &&
+    typeof value.artifactKey === 'string' &&
+    /^public\/landing-publications\/v1\/artifacts\/[A-Za-z0-9._-]+\/[A-Za-z0-9._-]+\.json$/u.test(
+      value.artifactKey,
+    ) &&
+    typeof value.publishedAt === 'string'
+  );
+}
+
 function isLandingSnapshot(value: unknown): value is LandingSnapshot {
   if (!isRecord(value) || value.schemaVersion !== 1 || !isRecord(value.model))
     return false;
@@ -66,8 +86,31 @@ export async function loadLandingSnapshot(
   slug: string,
   signal?: AbortSignal,
 ): Promise<LandingSnapshot> {
+  const pointerResponse = await fetch(
+    `/public/landing-publications/v1/pointers/${encodeURIComponent(slug)}.json`,
+    {
+      method: 'GET',
+      cache: 'force-cache',
+      credentials: 'same-origin',
+      headers: { Accept: 'application/json' },
+      ...(signal ? { signal } : {}),
+    },
+  );
+  if (!pointerResponse.ok) {
+    throw new PublicContentError(
+      'CONTENT_NOT_PUBLISHED',
+      'This landing page is unavailable.',
+    );
+  }
+  const pointerValue: unknown = await pointerResponse.json();
+  if (!isLandingPointer(pointerValue) || pointerValue.slug !== slug) {
+    throw new PublicContentError(
+      'SNAPSHOT_VERSION_MISMATCH',
+      'The landing page is inconsistent.',
+    );
+  }
   const response = await fetch(
-    `/public/landing-publications/v1/${encodeURIComponent(slug)}.json`,
+    `/public/${pointerValue.artifactKey.slice('public/'.length)}`,
     {
       method: 'GET',
       cache: 'force-cache',

@@ -9,7 +9,11 @@ import {
   validateLandingDependencies,
   validateLandingInput,
 } from '../src/landing/landing-pages.ts';
-import { validateLandingPublication } from '../src/publishing/landing-publisher.ts';
+import {
+  landingPublicationKey,
+  revokeLandingPublication,
+  validateLandingPublication,
+} from '../src/publishing/landing-publisher.ts';
 import app from '../src/index.ts';
 import { ADMIN_SESSION_COOKIE, createAdminSessionToken } from '../src/auth/session.ts';
 
@@ -551,7 +555,7 @@ async function routeRequest(db, path, method, body, headers = {}) {
       DB: db,
       SESSION_SECRET: 'test-secret',
       ADMIN_PASSWORD: 'password',
-      ASSETS_BUCKET: {},
+      ASSETS_BUCKET: { async delete() {} },
       ASSETS: {},
       ENVIRONMENT: 'test',
       APP_VERSION: 'test',
@@ -616,6 +620,15 @@ test('Landing Admin routes perform authenticated CRUD, soft delete, restore, val
   assert.equal((await restoredResponse.json()).landing.status, 'draft');
   const notFound = await routeRequest(db, '/api/admin/landings/missing', 'GET');
   assert.equal(notFound.status, 404);
+});
+
+test('Landing publication revocation removes the active pointer without touching immutable artifacts', async () => {
+  const deleted = [];
+  await revokeLandingPublication(
+    { delete: async (key) => deleted.push(key) },
+    'summer-offer',
+  );
+  assert.deepEqual(deleted, [landingPublicationKey('summer-offer')]);
 });
 
 test('Landing Admin route keeps Hero validation specific to ready image assets', async () => {

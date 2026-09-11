@@ -6,6 +6,7 @@ import {
   fetchLandingProductOptions,
   fetchLandings,
   updateLanding,
+  publishLanding,
   type AdminLanding,
   type AdminLandingInput,
   type AdminLandingProductOption,
@@ -38,6 +39,7 @@ export function LandingPagesView({ onSessionExpired }: { onSessionExpired: () =>
   const [error, setError] = useState('');
   const [working, setWorking] = useState(false);
   const [heroPickerOpen, setHeroPickerOpen] = useState(false);
+  const [publishedUrl, setPublishedUrl] = useState<string | null>(null);
   const load = useCallback(
     () =>
       Promise.all([fetchLandings(), fetchLandingProductOptions()])
@@ -63,6 +65,7 @@ export function LandingPagesView({ onSessionExpired }: { onSessionExpired: () =>
   );
   function open(item?: AdminLanding) {
     setError('');
+    setPublishedUrl(null);
     setEditing(item ?? null);
     setEditorOpen(true);
     setForm(
@@ -83,21 +86,39 @@ export function LandingPagesView({ onSessionExpired }: { onSessionExpired: () =>
         : blank(products[0]?.id),
     );
   }
-  async function save(event: React.FormEvent) {
+  async function save(event: React.FormEvent, shouldPublish = false) {
     event.preventDefault();
     setWorking(true);
     setError('');
     try {
+      const nextForm = shouldPublish ? { ...form, status: 'published' as const } : form;
       const saved = editing
-        ? await updateLanding(editing.id, form)
-        : await createLanding(form);
+        ? await updateLanding(editing.id, nextForm)
+        : await createLanding(nextForm);
       setItems((current) =>
         editing
           ? current.map((item) => (item.id === saved.id ? saved : item))
           : [saved, ...current],
       );
-      setEditing(null);
-      setEditorOpen(false);
+      if (shouldPublish) {
+        await publishLanding(saved.id);
+        setPublishedUrl(`${window.location.origin}/l/${saved.slug}/`);
+      }
+      setEditing(saved);
+      setForm({
+        name: saved.name,
+        slug: saved.slug,
+        productId: saved.productId,
+        templateKey: saved.templateKey,
+        chatTemplateKey: saved.chatTemplateKey,
+        headlineOverride: saved.headlineOverride,
+        subheadlineOverride: saved.subheadlineOverride,
+        heroAssetId: saved.heroAssetId,
+        ctaLabelOverride: saved.ctaLabelOverride,
+        chatWelcomeOverride: saved.chatWelcomeOverride,
+        status: saved.status,
+      });
+      if (!shouldPublish) setEditorOpen(false);
     } catch (e) {
       if (e instanceof AdminApiError && e.status === 401) onSessionExpired();
       setError(e instanceof Error ? e.message : '保存失败。');
@@ -293,6 +314,14 @@ export function LandingPagesView({ onSessionExpired }: { onSessionExpired: () =>
             <Button
               variant="secondary"
               type="button"
+              disabled={working}
+              onClick={(event) => void save(event as unknown as React.FormEvent, true)}
+            >
+              保存并发布
+            </Button>{' '}
+            <Button
+              variant="secondary"
+              type="button"
               onClick={() => {
                 setEditing(null);
                 setEditorOpen(false);
@@ -301,6 +330,18 @@ export function LandingPagesView({ onSessionExpired }: { onSessionExpired: () =>
               取消
             </Button>
           </div>
+          {publishedUrl ? (
+            <div className="notice notice-success" role="status">
+              已发布：<a href={publishedUrl}>{publishedUrl}</a>{' '}
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => void navigator.clipboard.writeText(publishedUrl)}
+              >
+                复制链接
+              </Button>
+            </div>
+          ) : null}
         </form>
       ) : (
         <div className="product-table-wrap">

@@ -1,5 +1,6 @@
 import type { Context } from 'hono';
 import type { AppEnvironment } from '../types';
+import { landingPublicationKey } from '../publishing/landing-publisher';
 
 type JsonRecord = Record<string, unknown>;
 
@@ -84,6 +85,13 @@ type LandingPublication = {
       heroAsset: { objectKey: string } | null;
     };
   };
+};
+
+type LandingPublicationPointer = {
+  schemaVersion: 1;
+  slug: string;
+  artifactKey: string;
+  publishedAt: string;
 };
 
 const PAGE_CACHE_CONTROL =
@@ -180,7 +188,19 @@ async function readLandingPublication(
   bucket: R2Bucket,
   slug: string,
 ): Promise<LandingPublication | null> {
-  const value = await readJson(bucket, `public/landing-publications/v1/${slug}.json`);
+  const pointerValue = await readJson(bucket, landingPublicationKey(slug));
+  if (
+    !isRecord(pointerValue) ||
+    pointerValue.schemaVersion !== 1 ||
+    pointerValue.slug !== slug ||
+    typeof pointerValue.artifactKey !== 'string' ||
+    !/^public\/landing-publications\/v1\/artifacts\/[A-Za-z0-9._-]+\/[A-Za-z0-9._-]+\.json$/u.test(
+      pointerValue.artifactKey,
+    )
+  )
+    return null;
+  const pointer = pointerValue as unknown as LandingPublicationPointer;
+  const value = await readJson(bucket, pointer.artifactKey);
   if (!isRecord(value) || value.schemaVersion !== 1 || !isRecord(value.model))
     return null;
   const landing = value.model.landing;
@@ -193,6 +213,7 @@ async function readLandingPublication(
     typeof resolved.headline !== 'string'
   )
     return null;
+  if (value.key !== pointer.artifactKey) return null;
   return value as unknown as LandingPublication;
 }
 
@@ -774,9 +795,10 @@ function withPageHeaders(response: Response, page: SeoPage): Headers {
 
 export async function serveStorefrontDocument(context: Context<AppEnvironment>) {
   const requestUrl = new URL(context.req.url);
+  const isLandingPath = /^\/l\/[^/]+\/?$/u.test(requestUrl.pathname);
   const cacheKey = new Request(requestUrl.toString(), { method: 'GET' });
   const cache = workerCache();
-  const cached = cache ? await cache.match(cacheKey) : null;
+  const cached = cache && !isLandingPath ? await cache.match(cacheKey) : null;
   if (cached) {
     return context.req.method === 'HEAD'
       ? new Response(null, { status: cached.status, headers: cached.headers })
@@ -808,7 +830,7 @@ export async function serveStorefrontDocument(context: Context<AppEnvironment>) 
     status: page.status,
     headers,
   });
-  if (cache && page.status === 200 && !page.redirectPath) {
+  if (cache && !isLandingPath && page.status === 200 && !page.redirectPath) {
     context.executionCtx.waitUntil(cache.put(cacheKey, response.clone()));
   }
   return response;

@@ -2,7 +2,8 @@ const PUBLIC_PREFIXES = [
   'public/versions/',
   'public/modules/',
   'public/home/',
-  'public/landing-publications/v1/',
+  'public/landing-publications/v1/pointers/',
+  'public/landing-publications/v1/artifacts/',
 ] as const;
 const SEGMENT_PATTERN = /^[A-Za-z0-9._-]+$/u;
 
@@ -39,7 +40,10 @@ export function publicSnapshotCacheControl(
   objectKey: string,
   storedValue?: string,
 ): string {
-  if (objectKey === 'public/current.json') {
+  if (
+    objectKey === 'public/current.json' ||
+    objectKey.startsWith('public/landing-publications/v1/pointers/')
+  ) {
     return 'public, max-age=30, must-revalidate';
   }
   return storedValue?.trim() || 'public, max-age=31536000, immutable';

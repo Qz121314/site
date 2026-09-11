@@ -187,7 +187,8 @@ test('Storefront normalizes valid routes and returns a real noindex 404', async 
 
 test('published Landing documents resolve from their independent R2 artifact', async () => {
   const requested = [];
-  const landingKey = 'public/landing-publications/v1/summer-offer.json';
+  const pointerKey = 'public/landing-publications/v1/pointers/summer-offer.json';
+  const landingKey = 'public/landing-publications/v1/artifacts/landing-1/version-1.json';
   const landingObject = {
     schemaVersion: 1,
     key: landingKey,
@@ -201,14 +202,20 @@ test('published Landing documents resolve from their independent R2 artifact', a
       },
     },
   };
+  const pointerObject = {
+    schemaVersion: 1,
+    slug: 'summer-offer',
+    artifactKey: landingKey,
+    publishedAt: '2026-09-11T00:00:00.000Z',
+  };
   const landingEnv = {
     ASSETS_BUCKET: {
       async get(key) {
         requested.push(key);
-        if (key !== landingKey) return null;
+        if (key !== pointerKey && key !== landingKey) return null;
         return {
           async text() {
-            return JSON.stringify(landingObject);
+            return JSON.stringify(key === pointerKey ? pointerObject : landingObject);
           },
         };
       },
@@ -229,7 +236,7 @@ test('published Landing documents resolve from their independent R2 artifact', a
   );
   assert.equal(response.status, 200);
   assert.match(await response.text(), /Summer headline/u);
-  assert.deepEqual(requested, [landingKey]);
+  assert.deepEqual(requested, [pointerKey, landingKey]);
 
   const missing = await app.request('https://example.com/l/missing/', {}, landingEnv);
   assert.equal(missing.status, 404);

@@ -21,8 +21,12 @@ test('public snapshot path accepts current and immutable snapshot JSON', () => {
     'public/home/pointer-123456/home.json',
   );
   assert.equal(
-    publicSnapshotObjectKey('landing-publications/v1/summer-offer.json'),
-    'public/landing-publications/v1/summer-offer.json',
+    publicSnapshotObjectKey('landing-publications/v1/pointers/summer-offer.json'),
+    'public/landing-publications/v1/pointers/summer-offer.json',
+  );
+  assert.equal(
+    publicSnapshotObjectKey('landing-publications/v1/artifacts/landing-1/version-1.json'),
+    'public/landing-publications/v1/artifacts/landing-1/version-1.json',
   );
 });
 
@@ -52,6 +56,13 @@ test('public pointer stays short cached while immutable snapshots stay long cach
       'public, max-age=31536000, immutable',
     ),
     'public, max-age=31536000, immutable',
+  );
+  assert.equal(
+    publicSnapshotCacheControl(
+      'public/landing-publications/v1/pointers/summer-offer.json',
+      'public, max-age=31536000, immutable',
+    ),
+    'public, max-age=30, must-revalidate',
   );
 });
 

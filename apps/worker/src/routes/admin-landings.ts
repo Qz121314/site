@@ -12,6 +12,7 @@ import {
   type LandingRecord,
 } from '../landing/landing-pages';
 import type { AppEnvironment } from '../types';
+import { revokeLandingPublication } from '../publishing/landing-publisher';
 import {
   hasAdminRequestHeader,
   jsonBodyError,
@@ -165,6 +166,9 @@ adminLandingRoutes.put('/:id', async (c) => {
       return apiError(c, 409, 'LANDING_SLUG_CONFLICT', '已存在相同的落地页地址。');
     throw error;
   }
+  if (current.slug !== updated.slug || updated.status !== 'published') {
+    await revokeLandingPublication(c.env.ASSETS_BUCKET, current.slug);
+  }
   return c.json({ landing: updated });
 });
 adminLandingRoutes.delete('/:id', async (c) => {
@@ -193,6 +197,7 @@ adminLandingRoutes.delete('/:id', async (c) => {
       createdAt: now,
     }),
   ]);
+  await revokeLandingPublication(c.env.ASSETS_BUCKET, current.slug);
   return c.json({ landing: deleted });
 });
 adminLandingRoutes.post('/:id/restore', async (c) => {
@@ -228,5 +233,6 @@ adminLandingRoutes.post('/:id/restore', async (c) => {
       return apiError(c, 409, 'LANDING_RESTORE_CONFLICT', '落地页地址已被占用。');
     throw error;
   }
+  await revokeLandingPublication(c.env.ASSETS_BUCKET, current.slug);
   return c.json({ landing: restored });
 });

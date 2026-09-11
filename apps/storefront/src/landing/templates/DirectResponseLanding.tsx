@@ -13,7 +13,7 @@ export function DirectResponseLanding({
   LinkComponent?: StorefrontLinkComponent;
 }) {
   const { landing, product, resolved } = snapshot.model;
-  const gallery = product.media.filter((media) => media.url);
+  const gallery = product.media.filter((media) => media.publicUrl);
 
   useEffect(() => {
     document.title = landing.name || resolved.headline;
@@ -47,7 +47,7 @@ export function DirectResponseLanding({
                 key={media.id}
                 alt={media.altText ?? resolved.headline}
                 loading="lazy"
-                src={media.url}
+                src={media.publicUrl}
               />
             ))}
           </section>
