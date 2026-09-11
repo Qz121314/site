@@ -525,6 +525,28 @@ async function resolveSeoPage(
   origin: string,
   pathname: string,
 ): Promise<SeoPage | null> {
+  const landingChatMatch = /^\/l\/([^/]+)\/chat(?:\/[^/]+)?\/?$/u.exec(pathname);
+  if (landingChatMatch) {
+    const slug = decodeRoutePart(landingChatMatch[1] ?? '');
+    const publication = slug ? await readLandingPublication(bucket, slug) : null;
+    if (!publication) return null;
+    const title = publication.model.resolved.headline;
+    const description =
+      publication.model.resolved.subheadline ?? publication.model.landing.name;
+    const canonicalPath = pathname.endsWith('/') ? pathname : `${pathname}/`;
+    const imagePath = sameOriginMediaPath(
+      publication.model.resolved.heroAsset?.objectKey ?? null,
+    );
+    return {
+      status: 200,
+      canonicalPath,
+      title,
+      description,
+      imagePath,
+      noindex: true,
+      jsonLd: webpageJsonLd(origin, canonicalPath, title, description, title, imagePath),
+    };
+  }
   const landingMatch = /^\/l\/([^/]+)\/?$/u.exec(pathname);
   if (landingMatch) {
     const slug = decodeRoutePart(landingMatch[1] ?? '');

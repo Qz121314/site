@@ -62,6 +62,8 @@ export type SupportMessage = {
 };
 
 export type SupportConversationDetail = SupportConversationSummary & {
+  productId: string;
+  sectionId: string;
   productHref: string | null;
   createdAt: string;
   expiresAt: string;

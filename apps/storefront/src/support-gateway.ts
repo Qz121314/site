@@ -472,6 +472,8 @@ function normalizeDetail(
 ): SupportConversationDetail {
   return {
     ...normalizeSummary(connection, remote),
+    productId: remote.productId,
+    sectionId: remote.sectionId,
     productHref:
       remote.productHref ??
       `/sections/${encodeURIComponent(remote.sectionId)}/products/${encodeURIComponent(remote.productId)}/`,

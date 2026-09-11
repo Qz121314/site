@@ -65,6 +65,16 @@ test('routing accepts primary pages, FAQ articles, generic articles, canonical s
     type: 'landing',
     slug: 'summer-offer',
   });
+  assert.deepEqual(parseStorefrontRoute('/l/summer-offer/chat/'), {
+    type: 'landing-chat',
+    slug: 'summer-offer',
+    conversationRef: null,
+  });
+  assert.deepEqual(parseStorefrontRoute('/l/summer-offer/chat/connection%3Aremote-1/'), {
+    type: 'landing-chat',
+    slug: 'summer-offer',
+    conversationRef: 'connection:remote-1',
+  });
 });
 
 test('bottom navigation keeps browsing, chat, article, and FAQ detail routes under their primary tabs', () => {

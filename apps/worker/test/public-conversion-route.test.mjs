@@ -52,6 +52,7 @@ function createConversionDb({
   },
   group = groupRow(),
   targets = [],
+  landing = null,
 } = {}) {
   let nextIndex = 0;
   const statements = [];
@@ -77,6 +78,7 @@ function createConversionDb({
           ) {
             return product;
           }
+          if (this.sql.includes('FROM landing_pages')) return landing;
           if (this.sql.includes('FROM conversion_groups g')) return group;
           if (this.sql.includes('INSERT INTO conversion_group_rotation')) {
             const selected = nextIndex;
@@ -271,6 +273,35 @@ test('customer-service CTA can return the compose path for SPA navigation withou
   assert.equal(response.headers.get('cache-control'), 'no-store, private');
   assert.equal(db.cursor, 0);
   assert.equal(trafficWrites(db).length, 0);
+});
+
+test('Landing CTA carries a validated landing context into Landing Chat', async () => {
+  const db = createConversionDb({
+    group: groupRow({ mode: 'customer_service', activeTargetCount: 2 }),
+    landing: { product_id: 'product-1' },
+  });
+  const response = await app.request(
+    'http://local.test/go/product-1?landingSlug=summer-offer',
+    { headers: { Accept: 'application/json' } },
+    env(db),
+  );
+  assert.equal(response.status, 200);
+  const path = new URL((await response.json()).path, 'http://local.test');
+  assert.equal(path.pathname, '/l/summer-offer/chat/');
+  assert.equal(path.searchParams.get('landingSlug'), 'summer-offer');
+  assert.equal(path.searchParams.get('productId'), 'product-1');
+  assert.match(path.searchParams.get('handoffId') ?? '', /^[0-9a-f-]{36}$/u);
+
+  const mismatchDb = createConversionDb({
+    group: groupRow({ mode: 'customer_service', activeTargetCount: 2 }),
+    landing: { product_id: 'different-product' },
+  });
+  const mismatch = await app.request(
+    'http://local.test/go/product-1?landingSlug=summer-offer',
+    undefined,
+    env(mismatchDb),
+  );
+  assert.equal(mismatch.status, 404);
 });
 
 test('invalid or unpublished products never consume the production cursor', async () => {

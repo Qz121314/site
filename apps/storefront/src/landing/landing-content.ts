@@ -16,6 +16,9 @@ export type LandingSnapshot = {
     templateKey: 'direct_response';
     product: {
       id: string;
+      title: string;
+      sectionId: string;
+      effectiveCoverUrl: string | null;
       media: LandingMedia[];
     };
     resolved: {
@@ -30,6 +33,7 @@ export type LandingSnapshot = {
         height: number | null;
       } | null;
       ctaLabel: string | null;
+      chatWelcome: string | null;
     };
   };
 };
@@ -71,6 +75,10 @@ function isLandingSnapshot(value: unknown): value is LandingSnapshot {
     typeof landing.name === 'string' &&
     isRecord(product) &&
     typeof product.id === 'string' &&
+    typeof product.title === 'string' &&
+    typeof product.sectionId === 'string' &&
+    (product.effectiveCoverUrl === null ||
+      typeof product.effectiveCoverUrl === 'string') &&
     Array.isArray(product.media) &&
     model.templateKey === 'direct_response' &&
     isRecord(resolved) &&
@@ -78,7 +86,8 @@ function isLandingSnapshot(value: unknown): value is LandingSnapshot {
     (resolved.subheadline === null || typeof resolved.subheadline === 'string') &&
     typeof resolved.body === 'string' &&
     (resolved.heroAsset === null || isRecord(resolved.heroAsset)) &&
-    (resolved.ctaLabel === null || typeof resolved.ctaLabel === 'string')
+    (resolved.ctaLabel === null || typeof resolved.ctaLabel === 'string') &&
+    (resolved.chatWelcome === null || typeof resolved.chatWelcome === 'string')
   );
 }
 

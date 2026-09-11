@@ -76,6 +76,22 @@ publicConversionRoutes.get('/:code', async (context) => {
     return unavailable(context, 409, 'This contact option is temporarily unavailable.');
   }
 
+  const landingSlug = context.req.query('landingSlug')?.trim() ?? '';
+  if (landingSlug) {
+    if (!/^[a-z0-9-]{1,120}$/u.test(landingSlug)) {
+      return unavailable(context, 404, 'This landing page is unavailable.');
+    }
+    const landing = await context.env.DB.prepare(
+      `SELECT product_id FROM landing_pages
+       WHERE slug = ? AND status = 'published' AND deleted_at IS NULL`,
+    )
+      .bind(landingSlug)
+      .first<{ product_id: string }>();
+    if (!landing || landing.product_id !== product.id) {
+      return unavailable(context, 404, 'This landing page is unavailable.');
+    }
+  }
+
   const group = await getConversionGroup(
     context.env.DB,
     product.sectionId,
@@ -92,7 +108,10 @@ publicConversionRoutes.get('/:code', async (context) => {
       sectionId: product.sectionId,
       handoffId,
     });
-    const path = `/messages/new/?${query.toString()}`;
+    if (landingSlug) query.set('landingSlug', landingSlug);
+    const path = landingSlug
+      ? `/l/${encodeURIComponent(landingSlug)}/chat/?${query.toString()}`
+      : `/messages/new/?${query.toString()}`;
     if (context.req.header('accept')?.includes('application/json')) {
       return context.json({ path });
     }

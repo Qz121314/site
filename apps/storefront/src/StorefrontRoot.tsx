@@ -88,6 +88,11 @@ const StorefrontSupportRuntime = lazy(() =>
 const LandingPage = lazy(() =>
   import('./landing/LandingPage').then((module) => ({ default: module.LandingPage })),
 );
+const LandingChatPage = lazy(() =>
+  import('./landing/LandingChatPage').then((module) => ({
+    default: module.LandingChatPage,
+  })),
+);
 
 function subscribeLocation(callback: () => void) {
   window.addEventListener(STOREFRONT_LOCATION_EVENT, callback);
@@ -330,7 +335,7 @@ export function StorefrontRoot() {
     queryKey: ['storefront-bootstrap'],
     queryFn: ({ signal }) => loadStorefrontBootstrap(undefined, signal),
     staleTime: 30_000,
-    enabled: route.type !== 'landing',
+    enabled: route.type !== 'landing' && route.type !== 'landing-chat',
   });
 
   useLayoutEffect(() => {
@@ -347,10 +352,14 @@ export function StorefrontRoot() {
     if (!supportRuntimeEnabled) setSupportUnread(0);
   }, [supportRuntimeEnabled]);
 
-  if (route.type === 'landing') {
+  if (route.type === 'landing' || route.type === 'landing-chat') {
     return (
       <Suspense fallback={<StartupLoader />}>
-        <LandingPage slug={route.slug} />
+        {route.type === 'landing' ? (
+          <LandingPage slug={route.slug} />
+        ) : (
+          <LandingChatPage slug={route.slug} conversationRef={route.conversationRef} />
+        )}
       </Suspense>
     );
   }

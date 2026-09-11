@@ -57,7 +57,7 @@ export function DirectResponseLanding({
           <div className="landing-cta-wrap">
             <LinkComponent
               className="landing-cta"
-              href={`/go/${encodeURIComponent(product.id)}/`}
+              href={`/go/${encodeURIComponent(product.id)}/?landingSlug=${encodeURIComponent(landing.slug)}`}
             >
               {resolved.ctaLabel}
             </LinkComponent>

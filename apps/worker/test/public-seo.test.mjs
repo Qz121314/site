@@ -238,6 +238,13 @@ test('published Landing documents resolve from their independent R2 artifact', a
   assert.match(await response.text(), /Summer headline/u);
   assert.deepEqual(requested, [pointerKey, landingKey]);
 
+  const chatResponse = await app.request(
+    'https://example.com/l/summer-offer/chat/',
+    {},
+    landingEnv,
+  );
+  assert.equal(chatResponse.status, 200);
+
   const missing = await app.request('https://example.com/l/missing/', {}, landingEnv);
   assert.equal(missing.status, 404);
 });

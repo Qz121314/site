@@ -28,6 +28,9 @@ test('Landing snapshot uses its independent immutable publication artifact', asy
           templateKey: 'direct_response',
           product: {
             id: 'product-hidden',
+            title: 'Product Hidden',
+            sectionId: 'section-1',
+            effectiveCoverUrl: 'https://cdn/cover.webp',
             media: [{ id: 'media-1', publicUrl: 'https://cdn/media.webp' }],
           },
           resolved: {
@@ -42,6 +45,7 @@ test('Landing snapshot uses its independent immutable publication artifact', asy
               height: 900,
             },
             ctaLabel: 'Contact now',
+            chatWelcome: null,
           },
         },
       }),

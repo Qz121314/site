@@ -12,6 +12,7 @@ export type StorefrontRoute =
   | { type: 'section'; sectionRef: string }
   | { type: 'product'; productRef: string; sectionRef: string | null }
   | { type: 'landing'; slug: string }
+  | { type: 'landing-chat'; slug: string; conversationRef: string | null }
   | { type: 'not-found' };
 
 export type BottomNavigationHref = '/' | '/browse/' | '/messages/' | '/faq/';
@@ -88,6 +89,21 @@ export function parseStorefrontRoute(pathname: string): StorefrontRoute {
     return { type: 'message-compose' };
   if (pathname === '/faq' || pathname === '/faq/') return { type: 'faq' };
 
+  const landingChatMatch = /^\/l\/([^/]+)\/chat\/?$/.exec(pathname);
+  if (landingChatMatch) {
+    const slug = decodeRoutePart(landingChatMatch[1] ?? '');
+    return slug
+      ? { type: 'landing-chat', slug, conversationRef: null }
+      : { type: 'not-found' };
+  }
+  const landingConversationMatch = /^\/l\/([^/]+)\/chat\/([^/]+)\/?$/.exec(pathname);
+  if (landingConversationMatch) {
+    const slug = decodeRoutePart(landingConversationMatch[1] ?? '');
+    const conversationRef = decodeRoutePart(landingConversationMatch[2] ?? '');
+    return slug && conversationRef
+      ? { type: 'landing-chat', slug, conversationRef }
+      : { type: 'not-found' };
+  }
   const landingMatch = /^\/l\/([^/]+)\/?$/.exec(pathname);
   if (landingMatch) {
     const slug = decodeRoutePart(landingMatch[1] ?? '');
