@@ -8,18 +8,19 @@ function source(path) {
 
 test('CTA compose creates the remote conversation without inventing a visitor text message', () => {
   const messages = source('../src/MessagesPage.tsx');
+  const core = source('../src/support-chat-core.ts');
   const contract = source('../src/support-contract.ts');
   const gateway = source('../src/support-gateway.ts');
 
   const startQuery = messages.indexOf("queryKey: ['support-compose-start'");
-  const sendMutation = messages.indexOf('const sendMutation = useMutation');
+  const sendMutation = core.indexOf('const sendMutation = useMutation');
   const startConversation = gateway.indexOf(
     'async startConversation(input: StartSupportConversationInput, signal)',
   );
   const sendMessage = gateway.indexOf('async sendMessage(conversationRef: string');
 
   assert.ok(startQuery >= 0);
-  assert.ok(sendMutation > startQuery);
+  assert.ok(sendMutation >= 0);
   assert.ok(startConversation >= 0);
   assert.ok(sendMessage > startConversation);
   assert.match(messages, /return siteSupportGateway\.startConversation\(/u);

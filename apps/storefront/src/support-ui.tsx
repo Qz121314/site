@@ -38,10 +38,7 @@ import { buildSupportContactCardHref } from './support-attachment-safety';
 import { MarkdownContent } from './MarkdownContent';
 import { ResilientImage } from './ResilientMedia';
 import { SYSTEM_UI } from './system-ui';
-import {
-  openSupportTypingChannel,
-  type SupportTypingChannel,
-} from './support-thread-realtime';
+import { useSupportTypingCore } from './support-chat-core';
 
 export type PendingSupportConversation = {
   productTitle: string;
@@ -53,8 +50,6 @@ export type NoAgentNotice = Pick<StorefrontNoAgentNoticeProps, 'message' | 'form
 
 const CHAT_TIME_ZONE = 'America/Los_Angeles';
 const DAY_IN_MILLISECONDS = 86_400_000;
-const SUPPORT_TYPING_IDLE_MS = 1_400;
-const SUPPORT_REMOTE_TYPING_STALE_MS = 3_000;
 
 const chatDayPartsFormatter = new Intl.DateTimeFormat('en-US', {
   timeZone: CHAT_TIME_ZONE,
@@ -454,81 +449,15 @@ export function MessageThreadPageContent({
   onRetryConnection?: (() => void) | undefined;
 }) {
   const [draft, setDraft] = useState('');
-  const [agentTyping, setAgentTyping] = useState(false);
+  const typing = useSupportTypingCore(conversation?.id ?? null);
   const timelineRef = useRef<HTMLDivElement | null>(null);
   const attachmentInputRef = useRef<HTMLInputElement | null>(null);
   const openedConversationRef = useRef<string | null>(null);
-  const typingChannelRef = useRef<SupportTypingChannel | null>(null);
-  const localTypingTimerRef = useRef<number | null>(null);
-  const remoteTypingTimerRef = useRef<number | null>(null);
   const lastMessageId = conversation?.messages.at(-1)?.id ?? null;
-  const typingConversationId = conversation?.id ?? null;
 
   useEffect(() => {
     setDraft('');
   }, [conversation?.id, pendingConversation?.productHref]);
-
-  useEffect(() => {
-    let disposed = false;
-    setAgentTyping(false);
-    typingChannelRef.current?.close();
-    typingChannelRef.current = null;
-    if (!typingConversationId || typingConversationId === '__new__') {
-      return () => {
-        disposed = true;
-      };
-    }
-
-    void openSupportTypingChannel(typingConversationId, (active) => {
-      if (disposed) return;
-      if (remoteTypingTimerRef.current !== null) {
-        window.clearTimeout(remoteTypingTimerRef.current);
-      }
-      setAgentTyping(active);
-      remoteTypingTimerRef.current = active
-        ? window.setTimeout(() => {
-            remoteTypingTimerRef.current = null;
-            setAgentTyping(false);
-          }, SUPPORT_REMOTE_TYPING_STALE_MS)
-        : null;
-    })
-      .then((channel) => {
-        if (disposed) {
-          channel.close();
-          return;
-        }
-        typingChannelRef.current = channel;
-      })
-      .catch(() => undefined);
-
-    return () => {
-      disposed = true;
-      typingChannelRef.current?.close();
-      typingChannelRef.current = null;
-      if (localTypingTimerRef.current !== null) {
-        window.clearTimeout(localTypingTimerRef.current);
-        localTypingTimerRef.current = null;
-      }
-      if (remoteTypingTimerRef.current !== null) {
-        window.clearTimeout(remoteTypingTimerRef.current);
-        remoteTypingTimerRef.current = null;
-      }
-    };
-  }, [typingConversationId]);
-
-  function signalCustomerTyping(value: string) {
-    if (localTypingTimerRef.current !== null) {
-      window.clearTimeout(localTypingTimerRef.current);
-      localTypingTimerRef.current = null;
-    }
-    const active = Boolean(value.trim());
-    typingChannelRef.current?.setTyping(active);
-    if (!active) return;
-    localTypingTimerRef.current = window.setTimeout(() => {
-      localTypingTimerRef.current = null;
-      typingChannelRef.current?.setTyping(false);
-    }, SUPPORT_TYPING_IDLE_MS);
-  }
 
   useLayoutEffect(() => {
     const timeline = timelineRef.current;
@@ -629,11 +558,7 @@ export function MessageThreadPageContent({
     const body = draft.trim();
     if (!body || !canSend || !onSendMessage || sending) return;
     setDraft('');
-    typingChannelRef.current?.setTyping(false);
-    if (localTypingTimerRef.current !== null) {
-      window.clearTimeout(localTypingTimerRef.current);
-      localTypingTimerRef.current = null;
-    }
+    typing.setTyping('');
     try {
       await onSendMessage(body);
     } catch {
@@ -801,7 +726,7 @@ export function MessageThreadPageContent({
             </Fragment>
           );
         })}
-        {agentTyping ? (
+        {typing.agentTyping ? (
           <div className="chat-agent-typing" role="status" aria-live="polite">
             <span aria-hidden="true">
               <i />
@@ -882,9 +807,9 @@ export function MessageThreadPageContent({
           maxLength={4000}
           onChange={(event) => {
             setDraft(event.target.value);
-            signalCustomerTyping(event.target.value);
+            typing.setTyping(event.target.value);
           }}
-          onBlur={() => typingChannelRef.current?.setTyping(false)}
+          onBlur={() => typing.setTyping('')}
           onKeyDown={(event) => {
             if (
               event.key === 'Enter' &&

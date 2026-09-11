@@ -1,12 +1,6 @@
-import {
-  useInfiniteQuery,
-  useMutation,
-  useQuery,
-  useQueryClient,
-  type QueryClient,
-} from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import type { StorefrontLinkComponent } from '@site/storefront-ui';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import type { StorefrontBootstrap } from './content';
 import { loadProductSnapshot } from './content-route';
 import { resolveCustomerServiceCta } from './cta';
@@ -17,14 +11,12 @@ import { replaceStorefrontLocation } from './storefront-navigation-runtime';
 import type {
   SupportConversationDetail,
   SupportConversationSummary,
-  SupportMessage,
 } from './support-contract';
 import {
   loadPublicSupportConnections,
   siteSupportGateway,
   SupportApiError,
 } from './support-gateway';
-import { prepareSupportImage, releaseSupportImage } from './support-image-compress';
 import {
   enableSupportPush,
   readSupportPushState,
@@ -32,6 +24,7 @@ import {
   type SupportPushState,
 } from './support-push';
 import { MessagesWorkspace, type PendingSupportConversation } from './support-ui';
+import { useSupportChatCore } from './support-chat-core';
 import './messages-ui.css';
 import './messages-media.css';
 
@@ -48,21 +41,6 @@ type ResolvedComposeContext = {
   productId: string;
   sectionId: string;
   handoffId: string;
-};
-type ConversationQueryCache = {
-  pages: Array<SupportConversationDetail | null>;
-  pageParams: Array<string | null>;
-};
-type SendMessageVariables = {
-  body: string;
-  clientMessageId: string;
-  sentAt: string;
-  conversationRef: string | null;
-};
-type ImageMutationVariables = {
-  file: File;
-  previewUrl: string;
-  conversationRef: string;
 };
 
 function readComposeContext(): ComposeContext | null {
@@ -115,32 +93,6 @@ function NotificationBellIcon({ enabled }: { enabled: boolean }) {
   );
 }
 
-function combineConversationPages(
-  pages: Array<SupportConversationDetail | null> | undefined,
-): SupportConversationDetail | null {
-  const validPages =
-    pages?.filter((page): page is SupportConversationDetail => Boolean(page)) ?? [];
-  const latest = validPages[0];
-  if (!latest) return null;
-
-  const seen = new Set<string>();
-  const messages: SupportMessage[] = [];
-  for (const page of [...validPages].reverse()) {
-    for (const message of page.messages) {
-      if (seen.has(message.id)) continue;
-      seen.add(message.id);
-      messages.push(message);
-    }
-  }
-
-  const oldestLoaded = validPages[validPages.length - 1];
-  return {
-    ...latest,
-    messages,
-    nextMessageCursor: oldestLoaded?.nextMessageCursor ?? null,
-  };
-}
-
 function conversationSummary(
   conversation: SupportConversationDetail,
 ): SupportConversationSummary {
@@ -155,94 +107,6 @@ function conversationSummary(
     unreadCount: conversation.unreadCount,
     status: conversation.status,
   };
-}
-
-function updateConversationCache(
-  queryClient: QueryClient,
-  conversationRef: string,
-  update: (conversation: SupportConversationDetail) => SupportConversationDetail,
-) {
-  queryClient.setQueryData<ConversationQueryCache>(
-    ['support-conversation', conversationRef],
-    (current) => {
-      if (!current?.pages[0]) return current;
-      return {
-        ...current,
-        pages: current.pages.map((page, index) =>
-          index === 0 && page ? update(page) : page,
-        ),
-      };
-    },
-  );
-}
-
-function upsertOptimisticMessage(
-  queryClient: QueryClient,
-  conversationRef: string,
-  message: SupportMessage,
-) {
-  updateConversationCache(queryClient, conversationRef, (conversation) => {
-    const exists = conversation.messages.some((item) => item.id === message.id);
-    return {
-      ...conversation,
-      lastMessage: message.body,
-      lastMessageAt: message.sentAt,
-      messages: exists
-        ? conversation.messages.map((item) => (item.id === message.id ? message : item))
-        : [...conversation.messages, message],
-    };
-  });
-}
-
-function replaceOptimisticMessage(
-  queryClient: QueryClient,
-  conversationRef: string,
-  optimisticId: string,
-  message: SupportMessage,
-) {
-  updateConversationCache(queryClient, conversationRef, (conversation) => ({
-    ...conversation,
-    lastMessage: message.body,
-    lastMessageAt: message.sentAt,
-    messages: conversation.messages.map((item) =>
-      item.id === optimisticId ? message : item,
-    ),
-  }));
-}
-
-function updateOptimisticDelivery(
-  queryClient: QueryClient,
-  conversationRef: string,
-  optimisticId: string,
-  delivery: SupportMessage['delivery'],
-) {
-  updateConversationCache(queryClient, conversationRef, (conversation) => ({
-    ...conversation,
-    messages: conversation.messages.map((item) =>
-      item.id === optimisticId ? { ...item, delivery } : item,
-    ),
-  }));
-}
-
-function updateConversationPreview(
-  queryClient: QueryClient,
-  conversationRef: string,
-  body: string,
-  sentAt: string,
-) {
-  queryClient.setQueryData<SupportConversationSummary[]>(
-    ['support-conversations'],
-    (current) =>
-      current?.map((conversation) =>
-        conversation.id === conversationRef
-          ? {
-              ...conversation,
-              lastMessage: body,
-              lastMessageAt: sentAt,
-            }
-          : conversation,
-      ) ?? current,
-  );
 }
 
 export function MessagesPage({
@@ -260,8 +124,6 @@ export function MessagesPage({
   useEffect(() => {
     installSupportExpiryRuntime();
   }, []);
-  const [imageProgress, setImageProgress] = useState<number | null>(null);
-  const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
   const [notificationState, setNotificationState] =
     useState<SupportPushState>('unsupported');
   const [notificationBusy, setNotificationBusy] = useState(false);
@@ -275,18 +137,9 @@ export function MessagesPage({
   const supportAvailable = supportConnectionsQuery.isSuccess
     ? supportConnectionsQuery.data.length > 0
     : null;
-  const conversationQuery = useInfiniteQuery({
-    queryKey: ['support-conversation', activeConversationRef],
-    enabled: Boolean(activeConversationRef),
-    initialPageParam: null as string | null,
-    queryFn: ({ pageParam, signal }) => {
-      if (!activeConversationRef) return Promise.resolve(null);
-      return siteSupportGateway.getConversation(activeConversationRef, pageParam, signal);
-    },
-    getNextPageParam: (page) => page?.nextMessageCursor ?? undefined,
-    staleTime: Number.POSITIVE_INFINITY,
-    retry: 1,
-    refetchOnWindowFocus: false,
+  const chatCore = useSupportChatCore({
+    conversationRef: activeConversationRef,
+    startInput: null,
   });
   const composeContext = compose ? readComposeContext() : null;
   const composeProductQuery = useQuery({
@@ -330,10 +183,7 @@ export function MessagesPage({
       }
     : (composeHandoffQuery.data ?? null);
 
-  const activeConversation = useMemo(
-    () => combineConversationPages(conversationQuery.data?.pages),
-    [conversationQuery.data?.pages],
-  );
+  const activeConversation = chatCore.conversation;
   const composeProduct = composeProductQuery.data?.product ?? null;
   const sortedProductMedia = composeProduct
     ? [...composeProduct.media].sort((left, right) => left.sortOrder - right.sortOrder)
@@ -410,9 +260,7 @@ export function MessagesPage({
   const composeConnectionError = Boolean(
     compose && composeUnavailable && !composeConnecting && !noAgentNotice,
   );
-  const conversationLoading = Boolean(
-    activeConversationRef && conversationQuery.isLoading,
-  );
+  const conversationLoading = Boolean(activeConversationRef && chatCore.loading);
   const workspaceSupportAvailable = compose
     ? composeUnavailable
       ? false
@@ -474,149 +322,9 @@ export function MessagesPage({
         return [summary, ...withoutCurrent];
       },
     );
-    queryClient.setQueryData<ConversationQueryCache>(
-      ['support-conversation', conversation.id],
-      { pages: [conversation], pageParams: [null] },
-    );
+    queryClient.setQueryData(['support-conversation', conversation.id], conversation);
     replaceStorefrontLocation(`/messages/${encodeURIComponent(conversation.id)}/`);
   }, [compose, composeStartQuery.data, queryClient]);
-
-  const sendMutation = useMutation({
-    mutationFn: async (variables: SendMessageVariables) => {
-      if (!variables.conversationRef) throw new Error('MESSAGE_CONTEXT_UNAVAILABLE');
-      return siteSupportGateway.sendMessage(variables.conversationRef, {
-        clientMessageId: variables.clientMessageId,
-        body: variables.body,
-      });
-    },
-    onMutate: (variables) => {
-      const optimisticId = `local:${variables.clientMessageId}`;
-      const optimisticMessage: SupportMessage = {
-        id: optimisticId,
-        direction: 'customer',
-        body: variables.body,
-        kind: 'text',
-        productContext: null,
-        sentAt: variables.sentAt,
-        delivery: 'sending',
-        attachments: [],
-      };
-      if (variables.conversationRef) {
-        upsertOptimisticMessage(
-          queryClient,
-          variables.conversationRef,
-          optimisticMessage,
-        );
-        updateConversationPreview(
-          queryClient,
-          variables.conversationRef,
-          variables.body,
-          variables.sentAt,
-        );
-      }
-      return { optimisticId };
-    },
-    onSuccess: (message, variables, context) => {
-      if (!variables.conversationRef) return;
-      replaceOptimisticMessage(
-        queryClient,
-        variables.conversationRef,
-        context.optimisticId,
-        message,
-      );
-      updateConversationPreview(
-        queryClient,
-        variables.conversationRef,
-        message.body,
-        message.sentAt,
-      );
-    },
-    onError: (_error, variables, context) => {
-      if (!variables.conversationRef) return;
-      const optimisticId = context?.optimisticId ?? `local:${variables.clientMessageId}`;
-      updateOptimisticDelivery(
-        queryClient,
-        variables.conversationRef,
-        optimisticId,
-        'failed',
-      );
-    },
-  });
-
-  const imageMutation = useMutation({
-    mutationFn: async ({ file, conversationRef }: ImageMutationVariables) => {
-      const image = await prepareSupportImage(file);
-      try {
-        return await siteSupportGateway.sendImage(
-          conversationRef,
-          {
-            blob: image.blob,
-            mimeType: image.mimeType,
-            byteSize: image.byteSize,
-            width: image.width,
-            height: image.height,
-            originalName: image.originalName,
-          },
-          setImageProgress,
-        );
-      } finally {
-        releaseSupportImage(image);
-      }
-    },
-    onSuccess: (message, variables) => {
-      upsertOptimisticMessage(queryClient, variables.conversationRef, message);
-      updateConversationPreview(
-        queryClient,
-        variables.conversationRef,
-        message.body,
-        message.sentAt,
-      );
-      setImagePreviewUrl((current) =>
-        current === variables.previewUrl ? null : current,
-      );
-      setImageProgress(null);
-      URL.revokeObjectURL(variables.previewUrl);
-    },
-    onError: () => {
-      setImageProgress(null);
-    },
-  });
-
-  useEffect(() => {
-    if (
-      !activeConversationRef ||
-      !activeConversation ||
-      activeConversation.unreadCount <= 0
-    )
-      return;
-    const lastAgentMessage =
-      [...activeConversation.messages]
-        .reverse()
-        .find((message) => message.direction === 'agent')?.id ?? null;
-    void siteSupportGateway
-      .markConversationRead(activeConversationRef, lastAgentMessage)
-      .then(() => {
-        queryClient.setQueryData<SupportConversationSummary[]>(
-          ['support-conversations'],
-          (current) =>
-            current?.map((conversation) =>
-              conversation.id === activeConversationRef
-                ? { ...conversation, unreadCount: 0 }
-                : conversation,
-            ) ?? current,
-        );
-        updateConversationCache(queryClient, activeConversationRef, (conversation) => ({
-          ...conversation,
-          unreadCount: 0,
-          messages: conversation.messages.map((message) =>
-            message.direction === 'agent' && message.delivery === 'sent'
-              ? { ...message, delivery: 'read' }
-              : message,
-          ),
-        }));
-      })
-      .catch(() => undefined);
-  }, [activeConversationRef, activeConversation, queryClient]);
 
   const showNotificationToggle =
     Boolean(activeConversationRef) && notificationState !== 'unsupported';
@@ -628,49 +336,6 @@ export function MessagesPage({
         : 'Enable notifications';
   const workspaceConversationRef = compose ? '__new__' : activeConversationRef;
   const showMessageArticles = !compose && activeConversationRef === null;
-
-  async function retryMessage(message: SupportMessage) {
-    const clientMessageId = message.id.startsWith('local:')
-      ? message.id.slice('local:'.length)
-      : crypto.randomUUID();
-    await sendMutation.mutateAsync({
-      body: message.body,
-      clientMessageId,
-      sentAt: message.sentAt,
-      conversationRef: activeConversationRef,
-    });
-  }
-
-  async function sendImage(file: File) {
-    if (!activeConversationRef) return;
-    if (imagePreviewUrl && imageMutation.isError) {
-      URL.revokeObjectURL(imagePreviewUrl);
-      setImagePreviewUrl(null);
-    }
-    const previewUrl = URL.createObjectURL(file);
-    setImagePreviewUrl(previewUrl);
-    setImageProgress(0);
-    try {
-      await imageMutation.mutateAsync({
-        file,
-        previewUrl,
-        conversationRef: activeConversationRef,
-      });
-    } catch {
-      // The preview remains visible with an inline retry state.
-    }
-  }
-
-  async function retryImage() {
-    const variables = imageMutation.variables;
-    if (!variables || imageMutation.isPending) return;
-    setImageProgress(0);
-    try {
-      await imageMutation.mutateAsync(variables);
-    } catch {
-      // The same preview remains available for another retry.
-    }
-  }
 
   function retryComposeConnection() {
     if (composeProductQuery.isError) void composeProductQuery.refetch();
@@ -722,41 +387,34 @@ export function MessagesPage({
           supportAvailable={workspaceSupportAvailable}
           LinkComponent={LinkComponent}
           onSendMessage={
-            supportAvailable && activeConversationRef
-              ? async (body) => {
-                  await sendMutation.mutateAsync({
-                    body,
-                    clientMessageId: crypto.randomUUID(),
-                    sentAt: new Date().toISOString(),
-                    conversationRef: activeConversationRef,
-                  });
-                }
-              : undefined
+            supportAvailable && activeConversationRef ? chatCore.send : undefined
           }
           onRetryMessage={
-            supportAvailable && activeConversationRef ? retryMessage : undefined
+            supportAvailable && activeConversationRef ? chatCore.retryMessage : undefined
           }
-          sending={sendMutation.isPending}
-          sendError={null}
-          onSendImage={supportAvailable && activeConversationRef ? sendImage : undefined}
+          sending={chatCore.sending}
+          sendError={
+            chatCore.sendError instanceof Error ? chatCore.sendError.message : null
+          }
+          onSendImage={
+            supportAvailable && activeConversationRef ? chatCore.sendImage : undefined
+          }
           onRetryImage={
-            supportAvailable && activeConversationRef && imageMutation.isError
-              ? retryImage
+            supportAvailable && activeConversationRef && chatCore.imageFailed
+              ? chatCore.retryImage
               : undefined
           }
-          imageSending={imageMutation.isPending}
-          imageFailed={imageMutation.isError && Boolean(imagePreviewUrl)}
-          imageProgress={imageProgress}
-          imagePreviewUrl={imagePreviewUrl}
-          imageError={null}
+          imageSending={chatCore.imageSending}
+          imageFailed={chatCore.imageFailed}
+          imageProgress={chatCore.imageProgress}
+          imagePreviewUrl={chatCore.imagePreviewUrl}
+          imageError={
+            chatCore.imageError instanceof Error ? chatCore.imageError.message : null
+          }
           onLoadEarlier={
-            activeConversation?.nextMessageCursor
-              ? async () => {
-                  await conversationQuery.fetchNextPage();
-                }
-              : undefined
+            activeConversation?.nextMessageCursor ? chatCore.loadEarlier : undefined
           }
-          loadingEarlier={conversationQuery.isFetchingNextPage}
+          loadingEarlier={chatCore.loadingEarlier}
           loadingConversation={conversationLoading || composeConnecting}
           connectionError={composeConnectionError}
           noAgentNotice={noAgentNotice}

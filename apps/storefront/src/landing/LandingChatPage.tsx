@@ -209,6 +209,16 @@ export function LandingChatPage({
           Uploading {Math.round((chat.imageProgress ?? 0) * 100)}%
         </span>
       ) : null}
+      {chat.imagePreviewUrl ? (
+        <div className="landing-chat-image-preview">
+          <img src={chat.imagePreviewUrl} alt="Selected upload" />
+          {chat.imageFailed ? (
+            <button type="button" onClick={() => void chat.retryImage()}>
+              Retry image
+            </button>
+          ) : null}
+        </div>
+      ) : null}
       <form className="landing-chat-composer" onSubmit={(event) => void submit(event)}>
         <label className="landing-chat-attach">
           <span aria-hidden="true">＋</span>
@@ -228,7 +238,11 @@ export function LandingChatPage({
           rows={1}
           value={draft}
           disabled={!conversation || conversation.status === 'closed'}
-          onChange={(event) => setDraft(event.target.value)}
+          onChange={(event) => {
+            setDraft(event.target.value);
+            chat.setTyping(event.target.value);
+          }}
+          onBlur={() => chat.setTyping('')}
           placeholder="Write a message"
         />
         <button

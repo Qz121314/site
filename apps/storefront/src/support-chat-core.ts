@@ -1,39 +1,109 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type {
   StartSupportConversationInput,
   SupportConversationDetail,
+  SupportConversationSummary,
   SupportMessage,
 } from './support-contract';
 import { siteSupportGateway, SupportApiError } from './support-gateway';
 import { prepareSupportImage, releaseSupportImage } from './support-image-compress';
 import { subscribeSupportRealtime } from './support-realtime';
-import { openSupportTypingChannel } from './support-thread-realtime';
+import {
+  applyRealtimeToConversationCache,
+  failSupportMessage,
+  mergeSupportConversation,
+  normalizeSupportConversation,
+  replaceSupportMessage,
+  type SupportConversationQueryCache,
+  upsertSupportMessage,
+} from './support-realtime-cache';
+import {
+  openSupportTypingChannel,
+  type SupportTypingChannel,
+} from './support-thread-realtime';
 
-type ChatCoreOptions = {
+export type ChatCoreOptions = {
   conversationRef: string | null;
   startInput: StartSupportConversationInput | null;
 };
+const TYPING_IDLE_MS = 1_400;
+const REMOTE_TYPING_STALE_MS = 3_000;
 
-function appendMessage(
+export function useSupportTypingCore(conversationRef: string | null) {
+  const [agentTyping, setAgentTyping] = useState(false);
+  const channelRef = useRef<SupportTypingChannel | null>(null);
+  const idleTimerRef = useRef<number | null>(null);
+  const remoteTimerRef = useRef<number | null>(null);
+  useEffect(() => {
+    let disposed = false;
+    setAgentTyping(false);
+    channelRef.current?.close();
+    channelRef.current = null;
+    if (!conversationRef || conversationRef === '__new__') return undefined;
+    void openSupportTypingChannel(conversationRef, (active) => {
+      if (disposed) return;
+      if (remoteTimerRef.current !== null) window.clearTimeout(remoteTimerRef.current);
+      setAgentTyping(active);
+      remoteTimerRef.current = active
+        ? window.setTimeout(() => setAgentTyping(false), REMOTE_TYPING_STALE_MS)
+        : null;
+    })
+      .then((channel) => {
+        if (disposed) channel.close();
+        else channelRef.current = channel;
+      })
+      .catch(() => undefined);
+    return () => {
+      disposed = true;
+      channelRef.current?.close();
+      channelRef.current = null;
+      if (idleTimerRef.current !== null) window.clearTimeout(idleTimerRef.current);
+      if (remoteTimerRef.current !== null) window.clearTimeout(remoteTimerRef.current);
+      idleTimerRef.current = null;
+      remoteTimerRef.current = null;
+    };
+  }, [conversationRef]);
+  function setTyping(value: string) {
+    if (idleTimerRef.current !== null) window.clearTimeout(idleTimerRef.current);
+    const active = Boolean(value.trim());
+    channelRef.current?.setTyping(active);
+    idleTimerRef.current = active
+      ? window.setTimeout(() => {
+          idleTimerRef.current = null;
+          channelRef.current?.setTyping(false);
+        }, TYPING_IDLE_MS)
+      : null;
+  }
+  return { agentTyping, setTyping };
+}
+
+function updateSummary(
+  queryClient: ReturnType<typeof useQueryClient>,
   conversation: SupportConversationDetail,
-  message: SupportMessage,
-): SupportConversationDetail {
-  if (conversation.messages.some((item) => item.id === message.id)) return conversation;
-  return {
-    ...conversation,
-    lastMessage: message.body,
-    lastMessageAt: message.sentAt,
-    messages: [...conversation.messages, message],
+) {
+  const summary: SupportConversationSummary = {
+    id: conversation.id,
+    agentName: conversation.agentName,
+    agentAvatarUrl: conversation.agentAvatarUrl,
+    productTitle: conversation.productTitle,
+    productCoverUrl: conversation.productCoverUrl,
+    lastMessage: conversation.lastMessage,
+    lastMessageAt: conversation.lastMessageAt,
+    unreadCount: conversation.unreadCount,
+    status: conversation.status,
   };
+  queryClient.setQueryData<SupportConversationSummary[]>(
+    ['support-conversations'],
+    (current) => [summary, ...(current ?? []).filter((item) => item.id !== summary.id)],
+  );
 }
 
 export function useSupportChatCore({ conversationRef, startInput }: ChatCoreOptions) {
   const queryClient = useQueryClient();
-  const [agentTyping, setAgentTyping] = useState(false);
+  const typing = useSupportTypingCore(conversationRef);
   const [imageProgress, setImageProgress] = useState<number | null>(null);
   const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
-
   const conversationQuery = useQuery({
     queryKey: ['support-conversation', conversationRef],
     enabled: Boolean(conversationRef),
@@ -46,7 +116,7 @@ export function useSupportChatCore({ conversationRef, startInput }: ChatCoreOpti
     refetchOnWindowFocus: false,
   });
   const startQuery = useQuery({
-    queryKey: ['support-landing-start', startInput?.handoffId],
+    queryKey: ['support-conversation-start', startInput?.handoffId],
     enabled: Boolean(startInput && !conversationRef),
     queryFn: ({ signal }) => {
       if (!startInput) throw new Error('MESSAGE_CONTEXT_UNAVAILABLE');
@@ -56,49 +126,31 @@ export function useSupportChatCore({ conversationRef, startInput }: ChatCoreOpti
     retry: false,
     refetchOnWindowFocus: false,
   });
-  const conversation = conversationQuery.data ?? startQuery.data ?? null;
   const activeRef = conversationRef ?? startQuery.data?.id ?? null;
-
+  const conversation = conversationQuery.data ?? startQuery.data ?? null;
   useEffect(() => {
-    if (!startQuery.data) return;
-    queryClient.setQueryData(
-      ['support-conversation', startQuery.data.id],
-      startQuery.data,
-    );
+    if (startQuery.data)
+      queryClient.setQueryData(
+        ['support-conversation', startQuery.data.id],
+        normalizeSupportConversation(startQuery.data),
+      );
   }, [queryClient, startQuery.data]);
-
   useEffect(() => {
-    if (!activeRef) return;
+    if (!activeRef) return undefined;
     return subscribeSupportRealtime((event) => {
       if (event.conversationRef !== activeRef) return;
-      if (event.message) {
-        queryClient.setQueryData<SupportConversationDetail>(
-          ['support-conversation', activeRef],
-          (current) => (current ? appendMessage(current, event.message!) : current),
-        );
+      if (event.type === 'realtime.recovered') {
+        void queryClient.refetchQueries({
+          queryKey: ['support-conversation', activeRef],
+        });
+        return;
       }
+      queryClient.setQueryData<SupportConversationQueryCache>(
+        ['support-conversation', activeRef],
+        (current) => applyRealtimeToConversationCache(current, event),
+      );
     });
   }, [activeRef, queryClient]);
-
-  useEffect(() => {
-    if (!activeRef) return;
-    let closed = false;
-    let typingChannel: Awaited<ReturnType<typeof openSupportTypingChannel>> | null = null;
-    void openSupportTypingChannel(activeRef, (active) => {
-      if (!closed) setAgentTyping(active);
-    })
-      .then((nextChannel) => {
-        if (closed) nextChannel.close();
-        else typingChannel = nextChannel;
-      })
-      .catch(() => undefined);
-    return () => {
-      closed = true;
-      typingChannel?.close();
-      setAgentTyping(false);
-    };
-  }, [activeRef]);
-
   useEffect(() => {
     if (!activeRef || !conversation || conversation.unreadCount <= 0) return;
     const lastAgentMessage =
@@ -107,29 +159,37 @@ export function useSupportChatCore({ conversationRef, startInput }: ChatCoreOpti
         .find((message) => message.direction === 'agent')?.id ?? null;
     void siteSupportGateway
       .markConversationRead(activeRef, lastAgentMessage)
-      .then(() => {
-        queryClient.setQueryData<SupportConversationDetail>(
+      .then(() =>
+        queryClient.setQueryData<SupportConversationQueryCache>(
           ['support-conversation', activeRef],
           (current) => (current ? { ...current, unreadCount: 0 } : current),
-        );
-      })
+        ),
+      )
       .catch(() => undefined);
   }, [activeRef, conversation, queryClient]);
-
+  const earlierMutation = useMutation({
+    mutationFn: ({ ref, cursor }: { ref: string; cursor: string }) =>
+      siteSupportGateway.getConversation(ref, cursor),
+    onSuccess: (page) => {
+      if (page)
+        queryClient.setQueryData<SupportConversationQueryCache>(
+          ['support-conversation', page.id],
+          (current) => mergeSupportConversation(current, page),
+        );
+    },
+  });
   const sendMutation = useMutation({
-    mutationFn: async ({
+    mutationFn: ({
       body,
       clientMessageId,
+      ref,
     }: {
       body: string;
       clientMessageId: string;
-    }) => {
-      if (!activeRef) throw new Error('MESSAGE_CONTEXT_UNAVAILABLE');
-      return siteSupportGateway.sendMessage(activeRef, { body, clientMessageId });
-    },
-    onMutate: ({ body, clientMessageId }) => {
-      if (!activeRef) return;
-      const optimistic: SupportMessage = {
+      ref: string;
+    }) => siteSupportGateway.sendMessage(ref, { body, clientMessageId }),
+    onMutate: ({ body, clientMessageId, ref }) => {
+      const message: SupportMessage = {
         id: `local:${clientMessageId}`,
         direction: 'customer',
         body,
@@ -139,54 +199,45 @@ export function useSupportChatCore({ conversationRef, startInput }: ChatCoreOpti
         delivery: 'sending',
         attachments: [],
       };
-      queryClient.setQueryData<SupportConversationDetail>(
-        ['support-conversation', activeRef],
-        (current) => (current ? appendMessage(current, optimistic) : current),
+      queryClient.setQueryData<SupportConversationQueryCache>(
+        ['support-conversation', ref],
+        (current) => (current ? upsertSupportMessage(current, message) : current),
       );
     },
-    onSuccess: (message, { clientMessageId }) => {
-      if (!activeRef) return;
-      queryClient.setQueryData<SupportConversationDetail>(
-        ['support-conversation', activeRef],
+    onSuccess: (message, { clientMessageId, ref }) => {
+      queryClient.setQueryData<SupportConversationQueryCache>(
+        ['support-conversation', ref],
         (current) =>
           current
-            ? {
-                ...current,
-                messages: current.messages.map((item) =>
-                  item.id === `local:${clientMessageId}` ? message : item,
-                ),
-                lastMessage: message.body,
-                lastMessageAt: message.sentAt,
-              }
+            ? replaceSupportMessage(current, `local:${clientMessageId}`, message)
             : current,
       );
+      const updated = queryClient.getQueryData<SupportConversationQueryCache>([
+        'support-conversation',
+        ref,
+      ]);
+      if (updated) updateSummary(queryClient, updated);
     },
-    onError: (_error, { clientMessageId }) => {
-      if (!activeRef) return;
-      queryClient.setQueryData<SupportConversationDetail>(
-        ['support-conversation', activeRef],
+    onError: (_error, { clientMessageId, ref }) =>
+      queryClient.setQueryData<SupportConversationQueryCache>(
+        ['support-conversation', ref],
         (current) =>
-          current
-            ? {
-                ...current,
-                messages: current.messages.map((item) =>
-                  item.id === `local:${clientMessageId}`
-                    ? { ...item, delivery: 'failed' as const }
-                    : item,
-                ),
-              }
-            : current,
-      );
-    },
+          current ? failSupportMessage(current, `local:${clientMessageId}`) : current,
+      ),
   });
-
   const imageMutation = useMutation({
-    mutationFn: async ({ file }: { file: File; previewUrl: string }) => {
-      if (!activeRef) throw new Error('MESSAGE_CONTEXT_UNAVAILABLE');
+    mutationFn: async ({
+      file,
+      ref,
+    }: {
+      file: File;
+      previewUrl: string;
+      ref: string;
+    }) => {
       const image = await prepareSupportImage(file);
       try {
         return await siteSupportGateway.sendImage(
-          activeRef,
+          ref,
           {
             blob: image.blob,
             mimeType: image.mimeType,
@@ -201,46 +252,46 @@ export function useSupportChatCore({ conversationRef, startInput }: ChatCoreOpti
         releaseSupportImage(image);
       }
     },
-    onSuccess: (message, { previewUrl }) => {
-      if (activeRef) {
-        queryClient.setQueryData<SupportConversationDetail>(
-          ['support-conversation', activeRef],
-          (current) => (current ? appendMessage(current, message) : current),
-        );
-      }
+    onSuccess: (message, { previewUrl, ref }) => {
+      queryClient.setQueryData<SupportConversationQueryCache>(
+        ['support-conversation', ref],
+        (current) => (current ? upsertSupportMessage(current, message) : current),
+      );
       setImageProgress(null);
       setImagePreviewUrl((current) => (current === previewUrl ? null : current));
       URL.revokeObjectURL(previewUrl);
     },
     onError: () => setImageProgress(null),
   });
-
   async function send(body: string) {
-    await sendMutation.mutateAsync({ body, clientMessageId: crypto.randomUUID() });
+    if (activeRef)
+      await sendMutation.mutateAsync({
+        body,
+        clientMessageId: crypto.randomUUID(),
+        ref: activeRef,
+      });
   }
-
   async function retryMessage(message: SupportMessage) {
-    await sendMutation.mutateAsync({
-      body: message.body,
-      clientMessageId: message.id.startsWith('local:')
-        ? message.id.slice('local:'.length)
-        : crypto.randomUUID(),
-    });
+    if (activeRef)
+      await sendMutation.mutateAsync({
+        body: message.body,
+        clientMessageId: message.id.startsWith('local:')
+          ? message.id.slice(6)
+          : crypto.randomUUID(),
+        ref: activeRef,
+      });
   }
-
   async function sendImage(file: File) {
     if (!activeRef) return;
-    if (imagePreviewUrl) URL.revokeObjectURL(imagePreviewUrl);
     const previewUrl = URL.createObjectURL(file);
     setImagePreviewUrl(previewUrl);
     setImageProgress(0);
     try {
-      await imageMutation.mutateAsync({ file, previewUrl });
+      await imageMutation.mutateAsync({ file, previewUrl, ref: activeRef });
     } catch {
-      // The preview remains available for retry.
+      /* preview remains available */
     }
   }
-
   async function retryImage() {
     const variables = imageMutation.variables;
     if (!variables || imageMutation.isPending) return;
@@ -248,19 +299,18 @@ export function useSupportChatCore({ conversationRef, startInput }: ChatCoreOpti
     try {
       await imageMutation.mutateAsync(variables);
     } catch {
-      // The preview remains available for another retry.
+      /* preview remains available */
     }
   }
-
   const error = conversationQuery.error ?? startQuery.error ?? null;
-  const noAgent = error instanceof SupportApiError && error.code === 'NO_AGENT_AVAILABLE';
   return {
     conversation,
     activeRef,
     loading: conversationQuery.isLoading || startQuery.isFetching,
     error,
-    noAgent,
-    agentTyping,
+    noAgent: error instanceof SupportApiError && error.code === 'NO_AGENT_AVAILABLE',
+    agentTyping: typing.agentTyping,
+    setTyping: typing.setTyping,
     send,
     retryMessage,
     sending: sendMutation.isPending,
@@ -272,6 +322,14 @@ export function useSupportChatCore({ conversationRef, startInput }: ChatCoreOpti
     imageProgress,
     imagePreviewUrl,
     imageError: imageMutation.error,
+    loadEarlier: async () => {
+      if (activeRef && conversation?.nextMessageCursor)
+        await earlierMutation.mutateAsync({
+          ref: activeRef,
+          cursor: conversation.nextMessageCursor,
+        });
+    },
+    loadingEarlier: earlierMutation.isPending,
     retryConnection: () => {
       if (conversationRef) void conversationQuery.refetch();
       else void startQuery.refetch();
