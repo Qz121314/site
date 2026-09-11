@@ -146,7 +146,7 @@ export function ProductTable({
 
   return (
     <div className="product-table-wrap ui-data-table-wrap">
-      <table className="product-table product-table-with-tags ui-data-table">
+      <table className="product-table ui-data-table">
         <thead>
           <tr>
             <th className="product-select-column">
@@ -162,8 +162,6 @@ export function ProductTable({
             <th>产品</th>
             <th>服务与转化</th>
             <th>分类</th>
-            <th>标签</th>
-            <th>状态</th>
             <th>排序</th>
             <th>操作</th>
           </tr>
@@ -212,7 +210,12 @@ export function ProductTable({
                       )}
                     </div>
                     <div>
-                      <strong>{product.title}</strong>
+                      <div className="product-table-title-row">
+                        <strong>{product.title}</strong>
+                        <AdminStatusBadge tone={statusTone(product.status)}>
+                          {statusLabel(product.status)}
+                        </AdminStatusBadge>
+                      </div>
                       <small>/{product.slug}</small>
                       {product.presentationMode === 'h5' ? <b>H5 展示</b> : null}
                       {!product.isVisible ? <b>前端隐藏</b> : null}
@@ -227,27 +230,6 @@ export function ProductTable({
                   </div>
                 </td>
                 <td>{product.categoryName ?? '未分类'}</td>
-                <td>
-                  {product.tags.length > 0 ? (
-                    <div className="product-table-tags">
-                      {product.tags.map((tag) => (
-                        <span
-                          key={tag.id}
-                          className={!tag.isEnabled ? 'is-disabled' : undefined}
-                        >
-                          {tag.name}
-                        </span>
-                      ))}
-                    </div>
-                  ) : (
-                    <span className="product-tags-none">—</span>
-                  )}
-                </td>
-                <td>
-                  <AdminStatusBadge tone={statusTone(product.status)}>
-                    {statusLabel(product.status)}
-                  </AdminStatusBadge>
-                </td>
                 <td>
                   <div className="product-order-cell">
                     <span className="product-order-index">{index + 1}</span>
