@@ -772,6 +772,7 @@ export function ProductManagementView({
       ) : null}
 
       <ProductTable
+        sectionId={section.id}
         scope={scope}
         products={filteredProducts}
         loading={loading}

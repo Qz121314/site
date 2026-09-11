@@ -1,5 +1,12 @@
 import { GripVertical } from 'lucide-react';
-import { useState, type DragEvent, type KeyboardEvent } from 'react';
+import {
+  useEffect,
+  useRef,
+  useState,
+  type DragEvent,
+  type KeyboardEvent,
+  type PointerEvent as ReactPointerEvent,
+} from 'react';
 import { Button } from '../components/ui/button';
 import { AdminFeedbackState } from '../components/ui/feedback-state';
 import { AdminStatusBadge, type AdminStatusTone } from '../components/ui/status-badge';
@@ -8,6 +15,7 @@ import type { AdminProduct } from './api';
 type ProductDropPosition = 'before' | 'after';
 
 type ProductTableProps = {
+  sectionId: string;
   scope: 'active' | 'trash';
   products: AdminProduct[];
   loading: boolean;
@@ -24,6 +32,38 @@ type ProductTableProps = {
   onMove: (product: AdminProduct, direction: -1 | 1) => void;
   onReorder: (draggedId: string, targetId: string, position: ProductDropPosition) => void;
 };
+
+const PRODUCT_TABLE_COLUMN_COUNT = 6;
+const DEFAULT_COLUMN_WIDTHS = [4, 29, 19, 15, 13, 20];
+const MIN_COLUMN_WIDTHS = [4, 18, 15, 10, 9, 15];
+
+type ColumnResizeState = {
+  index: number;
+  startX: number;
+  startWidths: number[];
+};
+
+function columnWidthsStorageKey(sectionId: string): string {
+  return `site.admin.product-table-columns.v1:${sectionId}`;
+}
+
+function readColumnWidths(sectionId: string): number[] {
+  try {
+    const parsed = JSON.parse(
+      window.localStorage.getItem(columnWidthsStorageKey(sectionId)) ?? 'null',
+    );
+    if (
+      !Array.isArray(parsed) ||
+      parsed.length !== PRODUCT_TABLE_COLUMN_COUNT ||
+      parsed.some((value) => typeof value !== 'number' || value < 0)
+    ) {
+      return DEFAULT_COLUMN_WIDTHS;
+    }
+    return parsed;
+  } catch {
+    return DEFAULT_COLUMN_WIDTHS;
+  }
+}
 
 function statusLabel(status: AdminProduct['status']): string {
   switch (status) {
@@ -47,6 +87,7 @@ function serviceModeLabel(mode: AdminProduct['serviceMode']): string {
 }
 
 export function ProductTable({
+  sectionId,
   scope,
   products,
   loading,
@@ -63,12 +104,96 @@ export function ProductTable({
   onMove,
   onReorder,
 }: ProductTableProps) {
+  const tableRef = useRef<HTMLTableElement>(null);
+  const resizeRef = useRef<ColumnResizeState | null>(null);
+  const loadedSectionRef = useRef<string | null>(null);
+  const [columnWidths, setColumnWidths] = useState(() => readColumnWidths(sectionId));
   const [draggingId, setDraggingId] = useState<string | null>(null);
   const [dropTarget, setDropTarget] = useState<{
     id: string;
     position: ProductDropPosition;
   } | null>(null);
   const canReorder = scope === 'active' && !working && !reorderDisabled;
+
+  useEffect(() => {
+    loadedSectionRef.current = sectionId;
+    setColumnWidths(readColumnWidths(sectionId));
+  }, [sectionId]);
+
+  useEffect(() => {
+    if (loadedSectionRef.current !== sectionId) return;
+    try {
+      window.localStorage.setItem(
+        columnWidthsStorageKey(sectionId),
+        JSON.stringify(columnWidths),
+      );
+    } catch {
+      // Column layout remains usable when browser storage is unavailable.
+    }
+  }, [columnWidths, sectionId]);
+
+  useEffect(() => {
+    function handlePointerMove(event: globalThis.PointerEvent) {
+      const resize = resizeRef.current;
+      const table = tableRef.current;
+      if (!resize || !table) return;
+      const tableWidth = table.getBoundingClientRect().width;
+      if (tableWidth <= 0) return;
+
+      const delta = ((event.clientX - resize.startX) / tableWidth) * 100;
+      const nextIndex = resize.index + 1;
+      const nextWidths = [...resize.startWidths];
+      const currentMin = MIN_COLUMN_WIDTHS[resize.index] ?? 0;
+      const nextMin = MIN_COLUMN_WIDTHS[nextIndex] ?? 0;
+      const startCurrent = resize.startWidths[resize.index] ?? 0;
+      const startNext = resize.startWidths[nextIndex] ?? 0;
+      const currentWidth = Math.max(currentMin, startCurrent + delta);
+      const adjustedDelta = currentWidth - startCurrent;
+      nextWidths[resize.index] = currentWidth;
+      nextWidths[nextIndex] = startNext - adjustedDelta;
+      if (nextWidths[nextIndex] < nextMin) return;
+      setColumnWidths(nextWidths);
+    }
+
+    function handlePointerUp() {
+      resizeRef.current = null;
+      document.body.classList.remove('is-resizing-product-columns');
+    }
+
+    window.addEventListener('pointermove', handlePointerMove);
+    window.addEventListener('pointerup', handlePointerUp);
+    return () => {
+      window.removeEventListener('pointermove', handlePointerMove);
+      window.removeEventListener('pointerup', handlePointerUp);
+    };
+  }, []);
+
+  function beginColumnResize(index: number, event: ReactPointerEvent<HTMLSpanElement>) {
+    event.preventDefault();
+    event.stopPropagation();
+    resizeRef.current = {
+      index,
+      startX: event.clientX,
+      startWidths: columnWidths,
+    };
+    document.body.classList.add('is-resizing-product-columns');
+  }
+
+  function renderColumnHeader(label: string, index: number) {
+    return (
+      <th>
+        <span>{label}</span>
+        {index < PRODUCT_TABLE_COLUMN_COUNT - 1 ? (
+          <span
+            className="product-column-resizer"
+            role="separator"
+            aria-label={`调整${label}列宽`}
+            onPointerDown={(event) => beginColumnResize(index, event)}
+          />
+        ) : null}
+      </th>
+    );
+  }
 
   function clearDragState() {
     setDraggingId(null);
@@ -146,7 +271,12 @@ export function ProductTable({
 
   return (
     <div className="product-table-wrap ui-data-table-wrap">
-      <table className="product-table ui-data-table">
+      <table ref={tableRef} className="product-table ui-data-table">
+        <colgroup>
+          {columnWidths.map((width, index) => (
+            <col key={index} style={{ width: `${width}%` }} />
+          ))}
+        </colgroup>
         <thead>
           <tr>
             <th className="product-select-column">
@@ -159,11 +289,11 @@ export function ProductTable({
                 />
               ) : null}
             </th>
-            <th>产品</th>
-            <th>服务与转化</th>
-            <th>分类</th>
-            <th>排序</th>
-            <th>操作</th>
+            {renderColumnHeader('产品', 1)}
+            {renderColumnHeader('服务与转化', 2)}
+            {renderColumnHeader('分类', 3)}
+            {renderColumnHeader('排序', 4)}
+            {renderColumnHeader('操作', 5)}
           </tr>
         </thead>
         <tbody>

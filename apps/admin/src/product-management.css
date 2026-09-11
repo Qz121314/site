@@ -210,6 +210,7 @@
 }
 
 .product-table th {
+  position: relative;
   height: 36px;
   color: #667085;
   background: #f8f9fb;
@@ -217,6 +218,36 @@
   font-weight: 760;
   letter-spacing: 0.02em;
   white-space: nowrap;
+}
+
+.product-column-resizer {
+  position: absolute;
+  z-index: 1;
+  top: 0;
+  right: -5px;
+  bottom: 0;
+  width: 10px;
+  cursor: col-resize;
+}
+
+.product-column-resizer::after {
+  position: absolute;
+  top: 8px;
+  right: 4px;
+  bottom: 8px;
+  width: 1px;
+  background: transparent;
+  content: '';
+}
+
+.product-column-resizer:hover::after,
+.is-resizing-product-columns .product-column-resizer::after {
+  background: var(--brand, #ff1767);
+}
+
+body.is-resizing-product-columns {
+  cursor: col-resize;
+  user-select: none;
 }
 
 .product-table td {
