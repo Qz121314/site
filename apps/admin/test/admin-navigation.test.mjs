@@ -191,7 +191,7 @@ test('secondary items are unique and legacy placeholders are retired', () => {
   );
   assert.deepEqual(
     getAdminSecondaryItems('operations', sections).map((item) => item.view),
-    ['conversion-pool:alpha', 'conversion-pool:beta'],
+    ['landing-pages', 'conversion-pool:alpha', 'conversion-pool:beta'],
   );
 });
 
@@ -201,11 +201,8 @@ test('domain defaults use the decomposed workspaces', () => {
   assert.equal(getAdminDefaultViewForDomain('catalog', sections), 'sections');
   assert.equal(getAdminDefaultViewForDomain('content', sections), 'faq');
   assert.equal(getAdminDefaultViewForDomain('engagement', sections), 'messages');
-  assert.equal(
-    getAdminDefaultViewForDomain('operations', sections),
-    'conversion-pool:alpha',
-  );
-  assert.equal(getAdminDefaultViewForDomain('operations', []), null);
+  assert.equal(getAdminDefaultViewForDomain('operations', sections), 'landing-pages');
+  assert.equal(getAdminDefaultViewForDomain('operations', []), 'landing-pages');
 });
 
 test('legacy localStorage settings value normalizes to system general', () => {

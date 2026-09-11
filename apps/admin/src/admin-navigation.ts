@@ -26,6 +26,7 @@ export type AdminView =
   | 'theme'
   | 'assets'
   | 'customer-service'
+  | 'landing-pages'
   | 'faq'
   | 'sections'
   | `${DynamicViewKind}:${string}`;
@@ -80,6 +81,7 @@ export const FIXED_ADMIN_VIEWS = new Set<AdminView>([
   'theme',
   'assets',
   'customer-service',
+  'landing-pages',
   'faq',
   'sections',
 ]);
@@ -205,6 +207,7 @@ export function getAdminDomainForView(view: AdminView): AdminDomain {
     return view === 'messages' ? 'engagement' : view === 'pwa' ? 'system' : 'site';
   }
   if (view === 'customer-service') return 'engagement';
+  if (view === 'landing-pages') return 'operations';
   if (
     view === 'system-general' ||
     view === 'system-infrastructure' ||
@@ -219,7 +222,7 @@ export function getAdminDomainForView(view: AdminView): AdminDomain {
 
 export function getAdminDefaultViewForDomain(
   domain: AdminDomain,
-  sections: AdminSection[],
+  _sections: AdminSection[],
 ): AdminView | null {
   switch (domain) {
     case 'dashboard':
@@ -231,7 +234,7 @@ export function getAdminDefaultViewForDomain(
     case 'content':
       return 'faq';
     case 'operations':
-      return sections[0] ? `conversion-pool:${sections[0].id}` : null;
+      return 'landing-pages';
     case 'engagement':
       return 'messages';
     case 'system':
@@ -267,11 +270,14 @@ export function getAdminSecondaryItems(
         { view: 'assets', label: '素材库' },
       ];
     case 'operations':
-      return sections.map((section) => ({
-        view: `conversion-pool:${section.id}`,
-        label: '转化池',
-        group: section.name,
-      }));
+      return [
+        { view: 'landing-pages', label: '广告落地页' },
+        ...sections.map((section) => ({
+          view: `conversion-pool:${section.id}` as AdminView,
+          label: '转化池',
+          group: section.name,
+        })),
+      ];
     case 'engagement':
       return [
         { view: 'messages', label: 'Messages' },
@@ -333,6 +339,11 @@ export function getAdminViewContext(
       eyebrow: domainLabel,
       title: '客服接入',
       description: '管理 Site 与 Customer Service 的连接配置。',
+    },
+    'landing-pages': {
+      eyebrow: domainLabel,
+      title: '广告落地页',
+      description: '管理广告入口、来源产品与落地页覆盖配置。',
     },
     faq: {
       eyebrow: domainLabel,

@@ -100,6 +100,9 @@ const ConversionPoolView = lazy(() =>
     default: module.ConversionPoolView,
   })),
 );
+const LandingPagesView = lazy(() =>
+  import('./LandingPagesView').then((module) => ({ default: module.LandingPagesView })),
+);
 type DashboardProps = {
   expiresAt: string | undefined;
   loggingOut: boolean;
@@ -707,6 +710,8 @@ export function Dashboard({
             />
           ) : activeView === 'faq' ? (
             <FaqManagementView key={activeView} onSessionExpired={onSessionExpired} />
+          ) : activeView === 'landing-pages' ? (
+            <LandingPagesView key={activeView} onSessionExpired={onSessionExpired} />
           ) : currentSection?.kind === 'products' ? (
             <ProductManagementView
               key={activeView}

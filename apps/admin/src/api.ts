@@ -55,6 +55,34 @@ export type AdminSection = {
   conversionMethodCount: number;
 };
 
+export type AdminLandingStatus = 'draft' | 'published' | 'archived';
+export type AdminLanding = {
+  id: string;
+  name: string;
+  slug: string;
+  productId: string;
+  templateKey: 'direct_response' | 'visual_story' | 'chat_first';
+  chatTemplateKey: 'match_landing';
+  headlineOverride: string | null;
+  subheadlineOverride: string | null;
+  heroAssetId: string | null;
+  ctaLabelOverride: string | null;
+  chatWelcomeOverride: string | null;
+  status: AdminLandingStatus;
+  publishedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt: string | null;
+};
+export type AdminLandingProductOption = {
+  id: string;
+  sectionId: string;
+  sectionName: string;
+  title: string;
+  status: 'draft' | 'published' | 'archived';
+  isVisible: boolean;
+};
+
 export type SectionInput = {
   name: string;
   iconValue: string;
@@ -338,6 +366,67 @@ export async function testMediaDomain(
 export function fetchSections(scope: SectionScope = 'active'): Promise<AdminSection[]> {
   return requestJson(`/api/admin/sections/?scope=${encodeURIComponent(scope)}`).then(
     parseSectionList,
+  );
+}
+
+function parseLanding(value: unknown): AdminLanding {
+  const item = asRecord(value);
+  if (
+    !item ||
+    typeof item.id !== 'string' ||
+    typeof item.name !== 'string' ||
+    typeof item.slug !== 'string' ||
+    typeof item.productId !== 'string' ||
+    !['direct_response', 'visual_story', 'chat_first'].includes(
+      String(item.templateKey),
+    ) ||
+    item.chatTemplateKey !== 'match_landing' ||
+    !['draft', 'published', 'archived'].includes(String(item.status))
+  )
+    throw new AdminApiError(500, 'INVALID_RESPONSE', '落地页返回数据无效。');
+  return item as unknown as AdminLanding;
+}
+function parseLandingEnvelope(value: unknown): AdminLanding {
+  return parseLanding(asRecord(value)?.landing);
+}
+export function fetchLandings(): Promise<AdminLanding[]> {
+  return requestJson('/api/admin/landings/').then((value) => {
+    const items = asRecord(value)?.landings;
+    if (!Array.isArray(items))
+      throw new AdminApiError(500, 'INVALID_RESPONSE', '落地页列表返回数据无效。');
+    return items.map(parseLanding);
+  });
+}
+export function fetchLandingProductOptions(): Promise<AdminLandingProductOption[]> {
+  return requestJson('/api/admin/landings/products/options').then((value) => {
+    const items = asRecord(value)?.products;
+    if (!Array.isArray(items))
+      throw new AdminApiError(500, 'INVALID_RESPONSE', '产品选项返回数据无效。');
+    return items as AdminLandingProductOption[];
+  });
+}
+export type AdminLandingInput = Omit<
+  AdminLanding,
+  'id' | 'publishedAt' | 'createdAt' | 'updatedAt' | 'deletedAt'
+>;
+export function createLanding(input: AdminLandingInput): Promise<AdminLanding> {
+  return adminJsonRequest('/api/admin/landings/', 'POST', input).then(
+    parseLandingEnvelope,
+  );
+}
+export function updateLanding(
+  id: string,
+  input: AdminLandingInput,
+): Promise<AdminLanding> {
+  return adminJsonRequest(
+    `/api/admin/landings/${encodeURIComponent(id)}`,
+    'PUT',
+    input,
+  ).then(parseLandingEnvelope);
+}
+export function deleteLanding(id: string): Promise<AdminLanding> {
+  return adminJsonRequest(`/api/admin/landings/${encodeURIComponent(id)}`, 'DELETE').then(
+    parseLandingEnvelope,
   );
 }
 
