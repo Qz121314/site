@@ -7,6 +7,8 @@ import {
   publishModularStorefront,
   rollbackModularModule,
 } from '../publishing/storefront-publisher';
+import { getLanding } from '../landing/landing-pages';
+import { publishLandingPublication } from '../publishing/landing-publisher';
 import type { AppEnvironment } from '../types';
 import { hasAdminRequestHeader, isRecord } from './admin-section-shared';
 
@@ -110,6 +112,38 @@ adminPublishRoutes.post('/rollback', async (context) => {
   } catch (error) {
     if (error instanceof ModularPublicationError) {
       return apiError(context, error.status, error.code, error.message);
+    }
+    throw error;
+  }
+});
+
+adminPublishRoutes.post('/landings/:id', async (context) => {
+  context.header('Cache-Control', 'no-store');
+  if (!hasAdminRequestHeader(context)) {
+    return apiError(context, 403, 'ADMIN_REQUEST_REQUIRED', '后台请求标识无效。');
+  }
+  const landing = await getLanding(context.env.DB, context.req.param('id'));
+  if (!landing || landing.deletedAt) {
+    return apiError(context, 404, 'LANDING_NOT_FOUND', '落地页不存在或已进入回收站。');
+  }
+  if (landing.status !== 'published') {
+    return apiError(
+      context,
+      409,
+      'LANDING_NOT_PUBLISHABLE',
+      '只有已发布落地页可以生成 publication。',
+    );
+  }
+  try {
+    const publication = await publishLandingPublication(
+      context.env.DB,
+      context.env.ASSETS_BUCKET,
+      landing,
+    );
+    return context.json({ publication }, 201);
+  } catch (error) {
+    if (error instanceof Error && error.message.startsWith('LANDING_')) {
+      return apiError(context, 409, error.message, '落地页 publication 生成失败。');
     }
     throw error;
   }

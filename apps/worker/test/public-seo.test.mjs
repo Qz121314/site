@@ -184,3 +184,53 @@ test('Storefront normalizes valid routes and returns a real noindex 404', async 
   assert.equal(missing.headers.get('x-robots-tag'), 'noindex, nofollow');
   assert.match(await missing.text(), /<meta name="robots" content="noindex, nofollow"/u);
 });
+
+test('published Landing documents resolve from their independent R2 artifact', async () => {
+  const requested = [];
+  const landingKey = 'public/landing-publications/v1/summer-offer.json';
+  const landingObject = {
+    schemaVersion: 1,
+    key: landingKey,
+    model: {
+      landing: { slug: 'summer-offer', name: 'Summer Offer' },
+      templateKey: 'direct_response',
+      resolved: {
+        headline: 'Summer headline',
+        subheadline: 'Summer details',
+        heroAsset: { objectKey: 'media/hero.webp' },
+      },
+    },
+  };
+  const landingEnv = {
+    ASSETS_BUCKET: {
+      async get(key) {
+        requested.push(key);
+        if (key !== landingKey) return null;
+        return {
+          async text() {
+            return JSON.stringify(landingObject);
+          },
+        };
+      },
+    },
+    ASSETS: {
+      async fetch() {
+        return new Response(
+          '<!doctype html><html><head><title>Service Catalog</title></head><body><div id="root"></div></body></html>',
+          { headers: { 'content-type': 'text/html; charset=utf-8' } },
+        );
+      },
+    },
+  };
+  const response = await app.request(
+    'https://example.com/l/summer-offer/',
+    {},
+    landingEnv,
+  );
+  assert.equal(response.status, 200);
+  assert.match(await response.text(), /Summer headline/u);
+  assert.deepEqual(requested, [landingKey]);
+
+  const missing = await app.request('https://example.com/l/missing/', {}, landingEnv);
+  assert.equal(missing.status, 404);
+});

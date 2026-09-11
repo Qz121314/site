@@ -85,6 +85,9 @@ const StorefrontSupportRuntime = lazy(() =>
     default: module.StorefrontSupportRuntime,
   })),
 );
+const LandingPage = lazy(() =>
+  import('./landing/LandingPage').then((module) => ({ default: module.LandingPage })),
+);
 
 function subscribeLocation(callback: () => void) {
   window.addEventListener(STOREFRONT_LOCATION_EVENT, callback);
@@ -327,6 +330,7 @@ export function StorefrontRoot() {
     queryKey: ['storefront-bootstrap'],
     queryFn: ({ signal }) => loadStorefrontBootstrap(undefined, signal),
     staleTime: 30_000,
+    enabled: route.type !== 'landing',
   });
 
   useLayoutEffect(() => {
@@ -342,6 +346,14 @@ export function StorefrontRoot() {
   useEffect(() => {
     if (!supportRuntimeEnabled) setSupportUnread(0);
   }, [supportRuntimeEnabled]);
+
+  if (route.type === 'landing') {
+    return (
+      <Suspense fallback={<StartupLoader />}>
+        <LandingPage slug={route.slug} />
+      </Suspense>
+    );
+  }
 
   if (bootstrapQuery.isLoading) return <StartupLoader />;
   if (bootstrapQuery.error || !bootstrapQuery.data) return <PrimaryError />;

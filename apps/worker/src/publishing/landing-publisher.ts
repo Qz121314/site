@@ -6,11 +6,19 @@ import {
 } from '../landing/landing-pages';
 
 export const LANDING_PUBLICATION_SCHEMA_VERSION = 1;
-export const LANDING_PUBLICATION_PREFIX = 'landing-publication/v1';
+export const LANDING_PUBLICATION_PREFIX = 'public/landing-publications/v1';
 
 export function landingPublicationKey(slug: string): string {
   return `${LANDING_PUBLICATION_PREFIX}/${slug}.json`;
 }
+
+export const LANDING_PUBLICATION_CACHE_CONTROL = 'public, max-age=31536000, immutable';
+
+export type LandingPublication = {
+  schemaVersion: typeof LANDING_PUBLICATION_SCHEMA_VERSION;
+  key: string;
+  model: LandingBuildModel;
+};
 
 export async function validateLandingPublication(db: D1Database, landing: LandingRecord) {
   if (landing.deletedAt || landing.status !== 'published')
@@ -43,7 +51,7 @@ export async function validateLandingPublication(db: D1Database, landing: Landin
 export async function buildLandingPublication(
   db: D1Database,
   landing: LandingRecord,
-): Promise<{ schemaVersion: number; key: string; model: LandingBuildModel } | null> {
+): Promise<LandingPublication | null> {
   const validation = await validateLandingPublication(db, landing);
   if (!validation.ok) return null;
   const model = await buildLandingModel(db, landing);
@@ -54,4 +62,27 @@ export async function buildLandingPublication(
         model,
       }
     : null;
+}
+
+export async function publishLandingPublication(
+  db: D1Database,
+  bucket: R2Bucket,
+  landing: LandingRecord,
+): Promise<LandingPublication> {
+  const publication = await buildLandingPublication(db, landing);
+  if (!publication) {
+    throw new Error('LANDING_PUBLICATION_BUILD_FAILED');
+  }
+  await bucket.put(publication.key, JSON.stringify(publication), {
+    httpMetadata: {
+      contentType: 'application/json; charset=utf-8',
+      cacheControl: LANDING_PUBLICATION_CACHE_CONTROL,
+    },
+    customMetadata: {
+      publicationType: 'landing',
+      schemaVersion: String(LANDING_PUBLICATION_SCHEMA_VERSION),
+      slug: landing.slug,
+    },
+  });
+  return publication;
 }

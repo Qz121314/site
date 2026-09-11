@@ -73,6 +73,19 @@ type SeoPage = {
   redirectPath?: string;
 };
 
+type LandingPublication = {
+  schemaVersion: 1;
+  key: string;
+  model: {
+    landing: { slug: string; name: string };
+    resolved: {
+      headline: string;
+      subheadline: string | null;
+      heroAsset: { objectKey: string } | null;
+    };
+  };
+};
+
 const PAGE_CACHE_CONTROL =
   'public, max-age=0, s-maxage=30, stale-while-revalidate=60, must-revalidate';
 const SEO_CACHE_CONTROL = 'public, max-age=300, stale-while-revalidate=3600';
@@ -161,6 +174,26 @@ async function readJson(bucket: R2Bucket, key: string): Promise<unknown | null> 
   } catch {
     return null;
   }
+}
+
+async function readLandingPublication(
+  bucket: R2Bucket,
+  slug: string,
+): Promise<LandingPublication | null> {
+  const value = await readJson(bucket, `public/landing-publications/v1/${slug}.json`);
+  if (!isRecord(value) || value.schemaVersion !== 1 || !isRecord(value.model))
+    return null;
+  const landing = value.model.landing;
+  const resolved = value.model.resolved;
+  if (
+    !isRecord(landing) ||
+    typeof landing.slug !== 'string' ||
+    typeof landing.name !== 'string' ||
+    !isRecord(resolved) ||
+    typeof resolved.headline !== 'string'
+  )
+    return null;
+  return value as unknown as LandingPublication;
 }
 
 function referenceFile(reference: ModuleReference, relativePath: string): string {
@@ -471,6 +504,30 @@ async function resolveSeoPage(
   origin: string,
   pathname: string,
 ): Promise<SeoPage | null> {
+  const landingMatch = /^\/l\/([^/]+)\/?$/u.exec(pathname);
+  if (landingMatch) {
+    const slug = decodeRoutePart(landingMatch[1] ?? '');
+    const publication = slug ? await readLandingPublication(bucket, slug) : null;
+    if (!publication) return null;
+    const canonicalPath = `/l/${routePart(publication.model.landing.slug)}/`;
+    const title = publication.model.resolved.headline;
+    const description =
+      publication.model.resolved.subheadline ?? publication.model.landing.name;
+    const imagePath = sameOriginMediaPath(
+      publication.model.resolved.heroAsset?.objectKey ?? null,
+    );
+    const page: SeoPage = {
+      status: 200,
+      canonicalPath,
+      title,
+      description,
+      imagePath,
+      noindex: false,
+      jsonLd: webpageJsonLd(origin, canonicalPath, title, description, title, imagePath),
+    };
+    return pathname !== canonicalPath ? { ...page, redirectPath: canonicalPath } : page;
+  }
+
   const content = await loadPublishedContent(bucket);
   if (!content) return null;
   const { site } = content;

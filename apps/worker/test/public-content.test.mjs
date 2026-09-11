@@ -20,6 +20,10 @@ test('public snapshot path accepts current and immutable snapshot JSON', () => {
     publicSnapshotObjectKey('home/pointer-123456/home.json'),
     'public/home/pointer-123456/home.json',
   );
+  assert.equal(
+    publicSnapshotObjectKey('landing-publications/v1/summer-offer.json'),
+    'public/landing-publications/v1/summer-offer.json',
+  );
 });
 
 test('public snapshot path rejects traversal and non-public object shapes', () => {

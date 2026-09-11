@@ -88,7 +88,7 @@ test('landing publication contract keeps a separate namespaced static artifact',
     'utf8',
   );
   assert.match(source, /LANDING_PUBLICATION_SCHEMA_VERSION = 1/u);
-  assert.match(source, /landing-publication\/v1/u);
+  assert.match(source, /public\/landing-publications\/v1/u);
   assert.match(source, /validateLandingPublication/u);
   assert.match(source, /buildLandingModel/u);
   assert.doesNotMatch(source, /is_visible\s*=\s*1/u);

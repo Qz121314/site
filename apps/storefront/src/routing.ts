@@ -11,6 +11,7 @@ export type StorefrontRoute =
   | { type: 'article'; articleId: string }
   | { type: 'section'; sectionRef: string }
   | { type: 'product'; productRef: string; sectionRef: string | null }
+  | { type: 'landing'; slug: string }
   | { type: 'not-found' };
 
 export type BottomNavigationHref = '/' | '/browse/' | '/messages/' | '/faq/';
@@ -86,6 +87,12 @@ export function parseStorefrontRoute(pathname: string): StorefrontRoute {
   if (pathname === '/messages/new' || pathname === '/messages/new/')
     return { type: 'message-compose' };
   if (pathname === '/faq' || pathname === '/faq/') return { type: 'faq' };
+
+  const landingMatch = /^\/l\/([^/]+)\/?$/.exec(pathname);
+  if (landingMatch) {
+    const slug = decodeRoutePart(landingMatch[1] ?? '');
+    return slug ? { type: 'landing', slug } : { type: 'not-found' };
+  }
 
   const messageMatch = /^\/messages\/([^/]+)\/?$/.exec(pathname);
   if (messageMatch) {

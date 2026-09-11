@@ -1,16 +1,18 @@
 import { lazy, Suspense, useEffect, useState } from 'react';
+import { parseStorefrontRoute } from './routing';
 
 const PwaInstallPrompt = lazy(() =>
   import('./PwaInstallPrompt').then((module) => ({ default: module.PwaInstallPrompt })),
 );
 
 export function DeferredPwaInstallPrompt() {
+  const isLanding = parseStorefrontRoute(window.location.pathname).type === 'landing';
   const [ready, setReady] = useState(
     () => new URLSearchParams(window.location.search).get('pwa-install') === '1',
   );
 
   useEffect(() => {
-    if (ready) return;
+    if (ready || isLanding) return;
     const activate = () => {
       const schedule =
         window.requestIdleCallback ??
@@ -20,9 +22,9 @@ export function DeferredPwaInstallPrompt() {
     if (document.readyState === 'complete') activate();
     else window.addEventListener('load', activate, { once: true });
     return () => window.removeEventListener('load', activate);
-  }, [ready]);
+  }, [isLanding, ready]);
 
-  return ready ? (
+  return !isLanding && ready ? (
     <Suspense fallback={null}>
       <PwaInstallPrompt />
     </Suspense>
