@@ -16,6 +16,7 @@ const sections = ['Alpha', 'Beta'].map((name, index) => ({
   iconAssetId: null,
   sortOrder: index,
   isEnabled: true,
+  isVisible: true,
   createdAt: '2026-09-07T00:00:00.000Z',
   updatedAt: '2026-09-07T00:00:00.000Z',
   deletedAt: null,
@@ -193,34 +194,41 @@ async function installAdminFixture(page: Page, options: AdminFixtureOptions = {}
       body: JSON.stringify({ folders: [] }),
     });
   });
+  await page.route('**/api/public/pwa/icon/*', async (route) => {
+    await route.fulfill({
+      contentType: 'image/svg+xml',
+      body: '<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1" />',
+    });
+  });
 }
 
 async function expectShellGeometry(page: Page, width: number) {
   await page.setViewportSize({ width, height: 900 });
   const geometry = await page.evaluate(() => {
     const primary = document.querySelector<HTMLElement>('.admin-desktop-primary');
-    const secondary = document.querySelector<HTMLElement>('.admin-desktop-secondary');
     const workspace = document.querySelector<HTMLElement>('.admin-workspace-content');
-    if (!primary || !secondary || !workspace) return null;
+    const topbar = document.querySelector<HTMLElement>('.admin-topbar');
+    if (!primary || !workspace || !topbar) return null;
     const primaryRect = primary.getBoundingClientRect();
-    const secondaryRect = secondary.getBoundingClientRect();
     const workspaceRect = workspace.getBoundingClientRect();
+    const topbarRect = topbar.getBoundingClientRect();
     return {
       primaryVisible: primaryRect.width > 0,
-      secondaryVisible: secondaryRect.width > 0,
-      globalTopBarRemoved: document.querySelector('.admin-top-bar') === null,
+      secondaryNavigationEmbedded:
+        document.querySelector('.admin-secondary-sidebar') === null,
+      topbarPresent: topbarRect.height > 0,
       visualPageHeaderRemoved: document.querySelector('.admin-page-header') === null,
-      workspaceStartsAtTop: workspaceRect.top < 20,
+      workspaceBelowTopbar: workspaceRect.top >= topbarRect.bottom,
       workspaceScrollsIndependently: getComputedStyle(workspace).overflowY === 'auto',
       noHorizontalOverflow: document.documentElement.scrollWidth <= window.innerWidth,
     };
   });
   expect(geometry).toEqual({
     primaryVisible: true,
-    secondaryVisible: true,
-    globalTopBarRemoved: true,
+    secondaryNavigationEmbedded: true,
+    topbarPresent: true,
     visualPageHeaderRemoved: true,
-    workspaceStartsAtTop: true,
+    workspaceBelowTopbar: true,
     workspaceScrollsIndependently: true,
     noHorizontalOverflow: true,
   });
@@ -236,60 +244,56 @@ async function expectVisuallyHiddenHeading(page: Page, text: string) {
   await expect(heading).toHaveCSS('clip-path', 'inset(50%)');
 }
 
-test('Admin shell exposes final IA, route compatibility, and zero-chrome desktop geometry', async ({
+test('Admin shell exposes final IA, route compatibility, and current desktop geometry', async ({
   page,
 }) => {
   await installAdminFixture(page);
   await page.goto('/admin/#settings');
 
   await expect(page.getByRole('navigation', { name: '管理业务域' })).toBeVisible();
-  await expectVisuallyHiddenHeading(page, '基本设置');
-  await expect(page.locator('.admin-top-bar')).toHaveCount(0);
+  await expectVisuallyHiddenHeading(page, '系统设置');
+  await expect(page.locator('.admin-topbar')).toBeVisible();
   await expect(page.locator('.admin-page-header')).toHaveCount(0);
 
   const primary = page.getByRole('navigation', { name: '管理业务域' });
-  await expect(primary.getByRole('button')).toHaveText([
-    '仪表盘',
-    '商品',
-    '站点',
-    '内容',
-    '运营',
-    '客户互动',
-    '系统',
-  ]);
+  await expect(
+    page.locator('.admin-primary-nav > .admin-nav-domain > .admin-primary-link'),
+  ).toHaveText(['仪表盘', '商品', '设计中心', '内容', '运营', '客户互动', '系统']);
   await expect(
     page.locator('.admin-desktop-primary').getByRole('button', { name: '退出登录' }),
   ).toBeVisible();
 
   await primary.getByRole('button', { name: '商品' }).click();
   await expect(page).toHaveURL(/#sections$/u);
-  const catalog = page.getByRole('navigation', { name: '商品二级导航' });
-  await expect(catalog.getByRole('button')).toHaveText([
+  const catalog = page.locator('.admin-primary-link.is-active').locator('..');
+  await expect(catalog.locator('.admin-primary-link')).toHaveText('商品');
+  await expect(catalog.locator('.admin-subnav-link')).toHaveText([
     '分区管理',
-    '商品',
-    '分类',
-    '标签',
-    '商品',
-    '分类',
-    '标签',
+    'Alpha',
+    'Beta',
   ]);
 
-  await catalog.getByRole('button', { name: '分类' }).first().click();
+  await page.goto('/admin/#categories%3Aalpha');
   await expect(page).toHaveURL(/#categories%3Aalpha$/u);
-  await expect(catalog.getByRole('button', { name: '分类' }).first()).toHaveAttribute(
+  const catalogSwitcher = page.locator('.section-workspace-nav');
+  await expect(catalogSwitcher.getByRole('button')).toHaveText(['商品', '分类', '标签']);
+  await expect(catalogSwitcher.getByRole('button', { name: '分类' })).toHaveAttribute(
     'aria-current',
     'page',
   );
 
   for (const [domain, secondaryItems] of [
-    ['站点', ['首页', '导航', '主题']],
+    ['设计中心', ['首页', '导航', '视觉系统']],
     ['内容', ['文章中心', '素材库']],
     ['客户互动', ['Messages', '客服接入']],
-    ['系统', ['基本设置', '界面偏好', '应用安装', '基础设施', '高级设置']],
+    ['系统', ['系统设置', '应用安装']],
   ] as const) {
     await primary.getByRole('button', { name: domain }).click();
-    const navigation = page.getByRole('navigation', { name: `${domain}二级导航` });
-    await expect(navigation.getByRole('button')).toHaveText(secondaryItems);
+    const navigation = page
+      .locator('.admin-primary-link.is-active')
+      .locator('..')
+      .locator('.admin-subnav-link');
+    await expect(navigation).toHaveText(secondaryItems);
   }
 
   for (const width of [1024, 1366, 1440, 1920]) {
@@ -297,28 +301,20 @@ test('Admin shell exposes final IA, route compatibility, and zero-chrome desktop
   }
 });
 
-test('publish status is local to publish-capable workspaces', async ({ page }) => {
+test('publish status is shown only in publish-capable workspaces', async ({ page }) => {
   await installAdminFixture(page);
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/admin/#assets');
 
-  await expect(page.locator('.publish-version-control')).toHaveCount(0);
+  await expect(page.locator('.workspace-publish-menu')).toHaveCount(0);
   await expect(page.locator('.admin-workspace-toolbar')).toHaveCount(0);
 
-  const contentNavigation = page.getByRole('navigation', { name: '内容二级导航' });
-  await contentNavigation.getByRole('button', { name: '文章中心' }).click();
-  await expect(page.locator('.publish-version-control')).toBeVisible();
+  await page.goto('/admin/#faq');
+  await expect(page.locator('.workspace-publish-menu')).toBeVisible();
   await expect(page.locator('.admin-workspace-toolbar')).toBeVisible();
 
-  await page
-    .getByRole('navigation', { name: '管理业务域' })
-    .getByRole('button', { name: '系统' })
-    .click();
-  await page
-    .getByRole('navigation', { name: '系统二级导航' })
-    .getByRole('button', { name: '界面偏好' })
-    .click();
-  await expect(page.locator('.publish-version-control')).toHaveCount(0);
+  await page.goto('/admin/#system-general');
+  await expect(page.locator('.workspace-publish-menu')).toBeVisible();
 });
 
 test('session status stays absent until expiry is near', async ({ page }) => {
@@ -328,24 +324,17 @@ test('session status stays absent until expiry is near', async ({ page }) => {
   await page.goto('/admin/#dashboard');
 
   await expect(page.locator('.admin-session-warning')).toBeVisible();
-  await expect(page.locator('.admin-top-bar')).toHaveCount(0);
+  await expect(page.locator('.admin-topbar')).toBeVisible();
   await expect(page.locator('.environment-badge')).toHaveCount(0);
 });
 
-test('navigation order saves locally, restores on reload, and can reset', async ({
+test('legacy navigation hash resolves to the current system settings workspace', async ({
   page,
 }) => {
   await installAdminFixture(page);
   await page.goto('/admin/#system-navigation');
-  await expect(page.locator('h1.admin-visually-hidden')).toHaveText('界面偏好');
-
-  await page.getByRole('button', { name: '下移仪表盘', exact: true }).click();
-  const primary = page.getByRole('navigation', { name: '管理业务域' });
-  await expect(primary.getByRole('button').first()).toHaveText('商品');
-  await page.reload();
-  await expect(primary.getByRole('button').first()).toHaveText('商品');
-  await page.getByRole('button', { name: '恢复全部默认顺序' }).click();
-  await expect(primary.getByRole('button').first()).toHaveText('仪表盘');
+  await expect(page.locator('h1.admin-visually-hidden')).toHaveText('系统设置');
+  await expect(page.getByLabel('系统设置')).toBeVisible();
 });
 
 test('narrow viewport uses the accessible drawer without horizontal overflow', async ({
@@ -356,9 +345,8 @@ test('narrow viewport uses the accessible drawer without horizontal overflow', a
   await page.goto('/admin/#dashboard');
 
   await expect(page.locator('.admin-desktop-primary')).toBeHidden();
-  await expect(page.locator('.admin-desktop-secondary')).toBeHidden();
   await expect(page.getByRole('button', { name: '打开后台导航' })).toBeVisible();
-  await expect(page.locator('.admin-top-bar')).toHaveCount(0);
+  await expect(page.locator('.admin-topbar')).toBeVisible();
   await expect
     .poll(() =>
       page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
@@ -371,9 +359,10 @@ test('narrow viewport uses the accessible drawer without horizontal overflow', a
   await expect(drawer.getByRole('navigation', { name: '管理业务域' })).toBeVisible();
   await expect(drawer.getByRole('button', { name: '退出登录' })).toBeVisible();
 
-  await drawer.getByRole('button', { name: '站点' }).click();
+  await drawer.getByRole('button', { name: '设计中心' }).click();
   await drawer
-    .getByRole('navigation', { name: '站点二级导航' })
+    .locator('.admin-primary-link.is-active')
+    .locator('..')
     .getByRole('button', { name: '首页' })
     .click();
   await expect(drawer).toBeHidden();
@@ -418,7 +407,7 @@ test('long settings forms stay reachable inside the workspace scroll owner', asy
   await page.goto('/admin/#pwa');
 
   await expect(page.locator('h1.admin-visually-hidden')).toHaveText('应用安装');
-  await expect(page.getByRole('heading', { name: '安装提示' })).toBeVisible();
+  await expect(page.getByText('提示标题', { exact: true })).toBeVisible();
 
   const scrollState = await page.evaluate(() => {
     const workspace = document.querySelector<HTMLElement>('.admin-workspace-content');
@@ -445,30 +434,28 @@ test('long settings forms stay reachable inside the workspace scroll owner', asy
   await expect(page.getByRole('button', { name: '保存 PWA 设置' })).toBeVisible();
 });
 
-test('Theme Studio keeps theme changes in a draft preview until explicitly saved', async ({
+test('视觉系统 keeps theme changes in a draft preview until explicitly saved', async ({
   page,
 }) => {
   await installAdminFixture(page);
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/admin/#theme');
 
-  await expect(page.getByRole('heading', { name: 'Theme Studio' })).toBeVisible();
-  await expect(page.getByText('当前主题').locator('..')).toContainText('Marketplace');
+  await expect(page.locator('.theme-center[aria-label="主题中心"]')).toBeVisible();
+  await expect(page.getByText('当前使用', { exact: true })).toBeVisible();
   await page.getByRole('button', { name: /Noir/ }).click();
-  await expect(page.getByText('未保存', { exact: true })).toBeVisible();
-  await expect(page.getByRole('button', { name: '保存并应用' })).toBeEnabled();
+  await expect(page.getByRole('button', { name: '保存主题' })).toBeEnabled();
   await page.getByLabel('选择品牌强调色').fill('#123456');
   await expect(page.locator('.theme-preview-device')).toHaveAttribute(
     'data-theme',
     'noir',
   );
-  await page.getByRole('button', { name: '恢复当前设置' }).click();
-  await expect(page.getByText('已保存', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: '恢复修改' }).click();
   await page.getByRole('button', { name: /Noir/ }).click();
-  await page.getByRole('button', { name: '保存并应用' }).click();
+  await page.getByRole('button', { name: '保存主题' }).click();
   await expect(page.getByText('主题已保存并应用。')).toBeVisible();
 
-  await page.getByRole('button', { name: 'Mobile' }).click();
+  await page.getByRole('button', { name: '移动端' }).click();
   await expect(page.locator('.theme-preview-shell')).toHaveAttribute(
     'data-viewport',
     'mobile',
@@ -477,7 +464,12 @@ test('Theme Studio keeps theme changes in a draft preview until explicitly saved
 
   for (const width of [820, 1366, 1440, 1920]) {
     await page.setViewportSize({ width, height: 900 });
-    if (width === 820) await page.getByRole('button', { name: '检查器' }).click();
+    if (width === 820) {
+      await page
+        .getByRole('button', { name: /样式设置/ })
+        .first()
+        .click();
+    }
     await expect
       .poll(() =>
         page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth),
@@ -497,7 +489,8 @@ test('Asset Library retains its empty state without adding a page overflow owner
     .getByRole('button', { name: '内容' })
     .click();
   await page
-    .getByRole('navigation', { name: '内容二级导航' })
+    .locator('.admin-primary-link.is-active')
+    .locator('..')
     .getByRole('button', { name: '素材库' })
     .click();
 
@@ -522,13 +515,13 @@ test('unsaved navigation keeps the active workspace until discard is confirmed',
 }) => {
   await installAdminFixture(page);
   await page.goto('/admin/#settings');
-  await expect(page.locator('h1.admin-visually-hidden')).toHaveText('基本设置');
+  await expect(page.locator('h1.admin-visually-hidden')).toHaveText('系统设置');
 
   await page.getByLabel('站点名称').fill('Unsaved Admin Shell');
   await expect(page.getByText('未保存更改')).toBeVisible();
   await page
     .getByRole('navigation', { name: '管理业务域' })
-    .getByRole('button', { name: '站点' })
+    .getByRole('button', { name: '设计中心' })
     .click();
 
   const discardDialog = page.getByRole('alertdialog', { name: '放弃当前修改？' });
@@ -540,7 +533,7 @@ test('unsaved navigation keeps the active workspace until discard is confirmed',
 
   await page
     .getByRole('navigation', { name: '管理业务域' })
-    .getByRole('button', { name: '站点' })
+    .getByRole('button', { name: '设计中心' })
     .click();
   await discardDialog.getByRole('button', { name: '放弃修改并切换' }).click();
   await expect(discardDialog).toBeHidden();

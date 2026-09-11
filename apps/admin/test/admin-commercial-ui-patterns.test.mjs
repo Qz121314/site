@@ -96,6 +96,7 @@ test('shared status form feedback dialog drawer and action-bar patterns are sema
   assert.match(dialogBehavior, /key === 'Escape' && !closeDisabled/);
   assert.match(dialogBehavior, /key === 'Tab'/);
   assert.match(dialog, /previousFocus\.current\?\.focus\(\)/);
+  assert.match(dialog, /initialFocus === 'dialog'/u);
   assert.match(actions, /AdminActionBar/);
   assert.match(actions, /is-sticky/);
   assert.match(shell, /ui-drawer-backdrop/);
@@ -116,6 +117,8 @@ test('reference pages adopt the shared patterns without adding request behavior'
   const articleEditor = await source('../src/article-center/ArticleEditorDialog.tsx');
   const articleDeletion = await source('../src/article-center/DeleteArticleDialog.tsx');
   const mediaPicker = await source('../src/asset-library/MediaPickerDialog.tsx');
+  assert.match(mediaPicker, /initialFocus="dialog"/u);
+  assert.doesNotMatch(mediaPicker, /autoFocus/u);
 
   assert.match(navigation, /<AdminActionBar/);
   assert.match(navigation, /<Button[\s\S]*variant="primary"/);

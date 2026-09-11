@@ -228,7 +228,6 @@ export function MediaLibraryPickerDialog({
               className="media-picker-search"
               type="search"
               value={query}
-              autoFocus
               placeholder="搜索文件名、分组或格式"
               onChange={(event) => setQuery(event.target.value)}
             />

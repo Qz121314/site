@@ -33,6 +33,7 @@ type AdminDialogProps = {
   headerLeading?: ReactNode;
   headerActions?: ReactNode;
   footer?: ReactNode;
+  initialFocus?: 'dialog' | 'first';
 };
 
 export function AdminDialog({
@@ -52,6 +53,7 @@ export function AdminDialog({
   headerLeading,
   headerActions,
   footer,
+  initialFocus = 'first',
 }: AdminDialogProps) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const previousFocus = useRef<HTMLElement | null>(null);
@@ -71,7 +73,11 @@ export function AdminDialog({
     document.body.style.overflow = 'hidden';
 
     const dialog = dialogRef.current;
-    dialog?.querySelector<HTMLElement>(FOCUSABLE_SELECTOR)?.focus();
+    if (initialFocus === 'dialog') {
+      dialog?.focus();
+    } else {
+      dialog?.querySelector<HTMLElement>(FOCUSABLE_SELECTOR)?.focus();
+    }
 
     const handleKeyDown = (event: globalThis.KeyboardEvent) => {
       if (shouldDismissAdminDialogKey(event.key, closeDisabledRef.current)) {
@@ -106,7 +112,7 @@ export function AdminDialog({
       document.removeEventListener('keydown', handleKeyDown);
       previousFocus.current?.focus();
     };
-  }, [open]);
+  }, [initialFocus, open]);
 
   if (!open) return null;
 
