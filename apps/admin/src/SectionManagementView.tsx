@@ -186,6 +186,7 @@ export function SectionManagementView({
       browseBackgroundAssetId: presentation.browseBackgroundAssetId,
       sortOrder: section.sortOrder,
       isEnabled: section.isEnabled,
+      isVisible: section.isVisible,
     });
     setLocalIcon(null);
     setErrorMessage('');
@@ -281,6 +282,7 @@ export function SectionManagementView({
         browseBackgroundAssetId: presentation.browseBackgroundAssetId,
         sortOrder: section.sortOrder,
         isEnabled: !section.isEnabled,
+        isVisible: section.isVisible,
       };
       const updated = await updateSection(section.id, input);
       onActiveSectionsChange(

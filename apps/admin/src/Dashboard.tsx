@@ -69,9 +69,6 @@ const ThemeCenterView = lazy(() =>
 const AssetLibraryView = lazy(() =>
   import('./AssetLibraryView').then((module) => ({ default: module.AssetLibraryView })),
 );
-const PageCenterView = lazy(() =>
-  import('./PageCenterView').then((module) => ({ default: module.PageCenterView })),
-);
 const CustomerServiceView = lazy(() =>
   import('./CustomerServiceView').then((module) => ({
     default: module.CustomerServiceView,
@@ -699,12 +696,6 @@ export function Dashboard({
             />
           ) : activeView === 'assets' ? (
             <AssetLibraryView key={activeView} onSessionExpired={onSessionExpired} />
-          ) : activeView === 'pages' ? (
-            <PageCenterView
-              key={activeView}
-              sections={sections}
-              onSessionExpired={onSessionExpired}
-            />
           ) : activeView === 'customer-service' ? (
             <CustomerServiceView key={activeView} onSessionExpired={onSessionExpired} />
           ) : activeView === 'sections' ? (

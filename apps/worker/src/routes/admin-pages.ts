@@ -400,6 +400,7 @@ adminPageRoutes.put('/:pageId/product', async (context) => {
   const serviceMode = group?.mode === 'customer_service' ? 'offline' : 'online';
   const productInput: ProductInput = {
     presentationMode: 'h5',
+    isVisible: false,
     serviceMode,
     title: page.name,
     body: `H5 landing page: ${page.name}`,
@@ -428,7 +429,7 @@ adminPageRoutes.put('/:pageId/product', async (context) => {
       context.env.DB.prepare(
         `UPDATE products
          SET service_mode = ?, title = ?, body = ?, conversion_group_id = ?,
-             presentation_mode = 'h5', updated_at = ?
+             presentation_mode = 'h5', is_visible = 0, updated_at = ?
          WHERE id = ? AND section_id = ? AND deleted_at IS NULL`,
       ).bind(
         serviceMode,

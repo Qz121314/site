@@ -540,7 +540,7 @@ async function loadSource(db: D1Database): Promise<Source> {
            ON background.id = s.browse_background_asset_id
           AND background.status = 'ready'
           AND background.deleted_at IS NULL
-         WHERE s.deleted_at IS NULL AND s.is_enabled = 1
+         WHERE s.deleted_at IS NULL AND s.is_enabled = 1 AND s.is_visible = 1
          ORDER BY s.sort_order ASC, s.name COLLATE NOCASE ASC`,
       )
       .all<SectionRow>()
@@ -556,6 +556,7 @@ async function loadSource(db: D1Database): Promise<Source> {
            AND c.is_enabled = 1
            AND s.deleted_at IS NULL
            AND s.is_enabled = 1
+           AND s.is_visible = 1
          ORDER BY c.section_id, c.sort_order ASC, c.name COLLATE NOCASE ASC`,
       )
       .all<CategoryRow>()
@@ -585,13 +586,14 @@ async function loadSource(db: D1Database): Promise<Source> {
            ON s.id = p.section_id
           AND s.deleted_at IS NULL
           AND s.is_enabled = 1
+          AND s.is_visible = 1
          LEFT JOIN categories c ON c.id = p.category_id AND c.deleted_at IS NULL
          LEFT JOIN media_assets cover ON cover.id = COALESCE(
            p.cover_asset_id,
            (SELECT pm.media_asset_id FROM product_media pm
              WHERE pm.product_id = p.id ORDER BY pm.sort_order ASC LIMIT 1)
          ) AND cover.status = 'ready' AND cover.deleted_at IS NULL
-         WHERE p.deleted_at IS NULL AND p.status = 'published'
+         WHERE p.deleted_at IS NULL AND p.status = 'published' AND p.is_visible = 1
          ORDER BY p.section_id, p.sort_order ASC, p.updated_at DESC`,
       )
       .all<ProductRow>()
@@ -616,6 +618,7 @@ async function loadSource(db: D1Database): Promise<Source> {
            AND p.status = 'published'
            AND s.deleted_at IS NULL
            AND s.is_enabled = 1
+           AND s.is_visible = 1
            AND ma.deleted_at IS NULL
            AND ma.status = 'ready'
          ORDER BY pm.product_id, pm.sort_order ASC`,

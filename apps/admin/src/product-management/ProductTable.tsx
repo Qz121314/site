@@ -19,6 +19,7 @@ type ProductTableProps = {
   onToggleSelectAll: () => void;
   onEdit: (product: AdminProduct) => void;
   onDelete: (product: AdminProduct) => void;
+  onCopyLink: (product: AdminProduct) => void;
   onRestore: (product: AdminProduct) => void;
   onMove: (product: AdminProduct, direction: -1 | 1) => void;
   onReorder: (draggedId: string, targetId: string, position: ProductDropPosition) => void;
@@ -57,6 +58,7 @@ export function ProductTable({
   onToggleSelectAll,
   onEdit,
   onDelete,
+  onCopyLink,
   onRestore,
   onMove,
   onReorder,
@@ -213,6 +215,7 @@ export function ProductTable({
                       <strong>{product.title}</strong>
                       <small>/{product.slug}</small>
                       {product.presentationMode === 'h5' ? <b>H5 展示</b> : null}
+                      {!product.isVisible ? <b>前端隐藏</b> : null}
                       {product.isFeatured ? <b>热门</b> : null}
                     </div>
                   </div>
@@ -273,6 +276,15 @@ export function ProductTable({
                   <div className="product-row-actions ui-row-actions">
                     {scope === 'active' ? (
                       <>
+                        <Button
+                          variant="ghost"
+                          size="compact"
+                          disabled={working}
+                          aria-label={`复制产品链接 ${product.title}`}
+                          onClick={() => onCopyLink(product)}
+                        >
+                          复制链接
+                        </Button>
                         <Button
                           variant="ghost"
                           size="compact"

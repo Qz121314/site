@@ -54,6 +54,32 @@
   background: #fbfcfe;
 }
 
+.product-toolbar-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.product-h5-package-summary,
+.product-h5-cta-list {
+  display: grid;
+  gap: 5px;
+}
+
+.product-h5-package-summary {
+  padding: 10px 12px;
+  border: 1px solid #e4e8ef;
+  border-radius: 10px;
+  background: #fbfcfe;
+}
+
+.product-h5-package-summary small,
+.product-h5-cta-list + small {
+  color: #667085;
+  font-size: 0.69rem;
+}
+
 .product-core-title {
   grid-column: 1 / 5;
 }

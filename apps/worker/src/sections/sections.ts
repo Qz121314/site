@@ -13,6 +13,7 @@ export type SectionRecord = {
   browseBackgroundUrl: string | null;
   sortOrder: number;
   isEnabled: boolean;
+  isVisible: boolean;
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
@@ -28,6 +29,7 @@ export type SectionInput = {
   browseBackgroundAssetId: string | null;
   sortOrder: number;
   isEnabled: boolean;
+  isVisible?: boolean;
 };
 
 export type SectionScope = 'active' | 'trash' | 'all';
@@ -46,6 +48,7 @@ type SectionRow = {
   media_base_url: string | null;
   sort_order: number;
   is_enabled: number;
+  is_visible: number;
   created_at: string;
   updated_at: string;
   deleted_at: string | null;
@@ -147,6 +150,10 @@ export function validateSectionInput(value: unknown): ValidationResult {
   if (typeof value.isEnabled !== 'boolean') {
     return { ok: false, field: 'isEnabled', message: '必须选择启用或停用。' };
   }
+  const isVisible = value.isVisible ?? true;
+  if (typeof isVisible !== 'boolean') {
+    return { ok: false, field: 'isVisible', message: '必须选择显示或隐藏。' };
+  }
 
   return {
     ok: true,
@@ -158,6 +165,7 @@ export function validateSectionInput(value: unknown): ValidationResult {
       browseBackgroundAssetId: browseBackgroundAssetId.value,
       sortOrder: value.sortOrder,
       isEnabled: value.isEnabled,
+      isVisible,
     },
   };
 }
@@ -179,6 +187,7 @@ function mapSection(row: SectionRow): SectionRecord {
     ),
     sortOrder: row.sort_order,
     isEnabled: row.is_enabled === 1,
+    isVisible: row.is_visible === 1,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
     deletedAt: row.deleted_at,
@@ -201,6 +210,7 @@ const SECTION_SELECT = `SELECT
   settings.media_base_url,
   s.sort_order,
   s.is_enabled,
+  s.is_visible,
   s.created_at,
   s.updated_at,
   s.deleted_at,
@@ -296,6 +306,7 @@ export async function createSectionStatements(
     browseBackgroundUrl: null,
     sortOrder: input.sortOrder,
     isEnabled: input.isEnabled,
+    isVisible: input.isVisible !== false,
     createdAt: now,
     updatedAt: now,
     deletedAt: null,
@@ -310,8 +321,9 @@ export async function createSectionStatements(
         .prepare(
           `INSERT INTO sections (
              id, slug, name, description, icon_type, icon_value, icon_asset_id,
-             browse_background_asset_id, sort_order, is_enabled, created_at, updated_at, deleted_at
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)`,
+             browse_background_asset_id, sort_order, is_enabled, is_visible,
+             created_at, updated_at, deleted_at
+           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)`,
         )
         .bind(
           section.id,
@@ -324,6 +336,7 @@ export async function createSectionStatements(
           section.browseBackgroundAssetId,
           section.sortOrder,
           section.isEnabled ? 1 : 0,
+          section.isVisible ? 1 : 0,
           section.createdAt,
           section.updatedAt,
         ),
@@ -342,7 +355,8 @@ export function createUpdateSectionStatement(
     .prepare(
       `UPDATE sections
        SET name = ?, description = ?, icon_type = ?, icon_value = ?, icon_asset_id = ?,
-           browse_background_asset_id = ?, sort_order = ?, is_enabled = ?, updated_at = ?
+           browse_background_asset_id = ?, sort_order = ?, is_enabled = ?, is_visible = ?,
+           updated_at = ?
        WHERE id = ? AND deleted_at IS NULL`,
     )
     .bind(
@@ -354,6 +368,7 @@ export function createUpdateSectionStatement(
       input.browseBackgroundAssetId,
       input.sortOrder,
       input.isEnabled ? 1 : 0,
+      input.isVisible === false ? 0 : 1,
       now,
       id,
     );

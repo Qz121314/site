@@ -150,13 +150,12 @@ test('site, engagement, and system navigation match final P1 IA exactly', () => 
   );
 });
 
-test('content navigation exposes Article Center, Asset Library and Page Center', () => {
+test('content navigation exposes Article Center and Asset Library without Page Center', () => {
   assert.deepEqual(
     getAdminSecondaryItems('content', sections).map(({ view, label }) => [view, label]),
     [
       ['faq', '文章中心'],
       ['assets', '素材库'],
-      ['pages', '页面中心'],
     ],
   );
   assert.equal(getAdminDefaultViewForDomain('content', sections), 'faq');

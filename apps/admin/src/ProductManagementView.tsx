@@ -23,6 +23,7 @@ import {
 } from './category-management/api';
 import { fetchConversionGroups, type AdminConversionGroup } from './conversion-pool/api';
 import { DeleteProductDialog } from './product-management/DeleteProductDialog';
+import { H5ProductCreateDialog } from './product-management/H5ProductCreateDialog';
 import { ProductEditorDialog } from './product-management/ProductEditorDialog';
 import { ProductTable } from './product-management/ProductTable';
 import {
@@ -76,6 +77,7 @@ type ProductDropPosition = 'before' | 'after';
 
 const emptyProductForm: ProductInput = {
   presentationMode: 'standard',
+  isVisible: true,
   serviceMode: 'offline',
   title: '',
   body: '',
@@ -115,6 +117,7 @@ function describeError(error: unknown): string {
 function productToInput(product: AdminProduct): ProductInput {
   return {
     presentationMode: product.presentationMode,
+    isVisible: product.isVisible,
     serviceMode: product.serviceMode,
     title: product.title,
     body: product.body,
@@ -129,6 +132,17 @@ function productToInput(product: AdminProduct): ProductInput {
     sortOrder: product.sortOrder,
     status: product.status,
   };
+}
+
+function publicSiteOrigin(): string {
+  if (
+    typeof window !== 'undefined' &&
+    window.location.hostname === 'localhost' &&
+    window.location.port === '5174'
+  ) {
+    return `${window.location.protocol}//${window.location.hostname}:5173`;
+  }
+  return window.location.origin;
 }
 
 function managedMediaToProductMedia(
@@ -175,6 +189,7 @@ export function ProductManagementView({
   const [media, setMedia] = useState<ProductEditorImage[]>([]);
   const [coverKey, setCoverKey] = useState<string | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
+  const [h5CreateOpen, setH5CreateOpen] = useState(false);
   const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
   const [resumeNotice, setResumeNotice] = useState(false);
   const [saveStage, setSaveStage] = useState<SaveStage>('idle');
@@ -228,6 +243,7 @@ export function ProductManagementView({
     setSelectedIds(new Set());
     setTrashProducts([]);
     setEditorOpen(false);
+    setH5CreateOpen(false);
     setMediaPickerOpen(false);
     setResumeNotice(false);
     setErrorMessage('');
@@ -339,6 +355,20 @@ export function ProductManagementView({
     setCoverKey(null);
     setResumeNotice(false);
     setEditorOpen(false);
+  }
+
+  async function copyProductLink(product: AdminProduct) {
+    const link = new URL(
+      `/sections/${encodeURIComponent(section.slug)}/products/${encodeURIComponent(product.slug)}/`,
+      publicSiteOrigin(),
+    ).toString();
+    try {
+      await navigator.clipboard.writeText(link);
+      setSuccessMessage('产品链接已复制。');
+      setErrorMessage('');
+    } catch {
+      setErrorMessage(`复制失败，请手动复制：${link}`);
+    }
   }
 
   function addMediaFromLibrary(asset: ManagedMediaAsset) {
@@ -688,9 +718,14 @@ export function ProductManagementView({
           </AdminSegmentedControl>
         }
         trailing={
-          <Button variant="primary" onClick={openCreateEditor}>
-            新增产品
-          </Button>
+          <div className="product-toolbar-actions">
+            <Button variant="secondary" onClick={() => setH5CreateOpen(true)}>
+              新增 H5 商品
+            </Button>
+            <Button variant="primary" onClick={openCreateEditor}>
+              新增产品
+            </Button>
+          </div>
         }
       >
         <AdminSearchField
@@ -748,6 +783,7 @@ export function ProductManagementView({
         onToggleSelectAll={toggleSelectAll}
         onEdit={(product) => void openProductEditor(product.id)}
         onDelete={(product) => setPendingDeleteIds([product.id])}
+        onCopyLink={(product) => void copyProductLink(product)}
         onRestore={(product) => void handleRestore(product)}
         onMove={(product, direction) => void moveProduct(product, direction)}
         onReorder={(draggedId, targetId, position) =>
@@ -794,6 +830,19 @@ export function ProductManagementView({
           onConfigureDependency={(target) => void handleConfigureDependency(target)}
           onClose={closeEditor}
           onSubmit={(event) => void handleSave(event)}
+        />
+      ) : null}
+
+      {h5CreateOpen ? (
+        <H5ProductCreateDialog
+          sectionId={section.id}
+          sectionName={section.name}
+          groups={groups}
+          onClose={() => setH5CreateOpen(false)}
+          onSaved={async () => {
+            await loadActive();
+            setSuccessMessage('H5 商品已发布。');
+          }}
         />
       ) : null}
 

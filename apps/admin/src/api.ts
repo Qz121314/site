@@ -47,6 +47,7 @@ export type AdminSection = {
   iconAssetId: string | null;
   sortOrder: number;
   isEnabled: boolean;
+  isVisible: boolean;
   createdAt: string;
   updatedAt: string;
   deletedAt: string | null;
@@ -59,6 +60,7 @@ export type SectionInput = {
   iconValue: string;
   sortOrder: number;
   isEnabled: boolean;
+  isVisible: boolean;
 };
 
 export type SectionScope = 'active' | 'trash' | 'all';
@@ -232,6 +234,7 @@ function parseSectionRecord(value: unknown): AdminSection {
     (typeof section.iconAssetId === 'string' || section.iconAssetId === null) &&
     typeof section.sortOrder === 'number' &&
     typeof section.isEnabled === 'boolean' &&
+    typeof section.isVisible === 'boolean' &&
     typeof section.createdAt === 'string' &&
     typeof section.updatedAt === 'string' &&
     (typeof section.deletedAt === 'string' || section.deletedAt === null) &&

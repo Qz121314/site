@@ -14,4 +14,5 @@ export const emptySectionForm: SectionEditorInput = {
   browseBackgroundAssetId: null,
   sortOrder: 0,
   isEnabled: true,
+  isVisible: true,
 };

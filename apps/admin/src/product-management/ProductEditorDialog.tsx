@@ -503,6 +503,20 @@ export function ProductEditorDialog({
             </select>
           </label>
 
+          <label className="product-switch-field product-core-visibility">
+            <input
+              type="checkbox"
+              checked={form.isVisible !== false}
+              onChange={(event) => patch({ isVisible: event.target.checked })}
+            />
+            <span>
+              <strong>前端展示</strong>
+              <small>
+                {form.isVisible !== false ? '商品会出现在主站' : '仅后台保留，前端隐藏'}
+              </small>
+            </span>
+          </label>
+
           <label className="product-field product-core-sort">
             <span>产品排序</span>
             <input

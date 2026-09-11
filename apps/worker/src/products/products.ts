@@ -29,6 +29,7 @@ export type ProductRecord = {
   slug: string;
   presentationMode: ProductPresentationMode;
   h5PageId: string | null;
+  isVisible: boolean;
   serviceMode: ProductServiceMode;
   title: string;
   body: string;
@@ -55,6 +56,7 @@ export type ProductRecord = {
 
 export type ProductInput = {
   presentationMode?: ProductPresentationMode;
+  isVisible?: boolean;
   serviceMode: ProductServiceMode;
   title: string;
   body: string;
@@ -75,6 +77,7 @@ type ProductRow = {
   slug: string;
   presentation_mode: ProductPresentationMode;
   h5_page_id: string | null;
+  is_visible: number;
   service_mode: ProductServiceMode;
   title: string;
   body: string;
@@ -215,6 +218,10 @@ export function validateProductInput(value: unknown): ValidationResult<ProductIn
   if (presentationMode !== 'standard' && presentationMode !== 'h5') {
     return { ok: false, field: 'presentationMode', message: '产品展示方式无效。' };
   }
+  const isVisible = presentationMode === 'h5' ? false : (value.isVisible ?? true);
+  if (typeof isVisible !== 'boolean') {
+    return { ok: false, field: 'isVisible', message: '必须选择显示或隐藏。' };
+  }
   if (value.serviceMode !== 'online' && value.serviceMode !== 'offline') {
     return { ok: false, field: 'serviceMode', message: '请选择线上服务或线下服务。' };
   }
@@ -258,6 +265,7 @@ export function validateProductInput(value: unknown): ValidationResult<ProductIn
     ok: true,
     value: {
       presentationMode,
+      isVisible,
       serviceMode: value.serviceMode,
       title: title.value,
       body: body.value,
@@ -383,6 +391,7 @@ function mapProduct(row: ProductRow): ProductRecord {
     slug: row.slug,
     presentationMode: row.presentation_mode,
     h5PageId: row.h5_page_id,
+    isVisible: row.is_visible === 1,
     serviceMode: row.service_mode,
     title: row.title,
     body: row.body,
@@ -416,6 +425,7 @@ const PRODUCT_SELECT = `SELECT
   p.slug,
   p.presentation_mode,
   h5.id AS h5_page_id,
+  p.is_visible,
   p.service_mode,
   p.title,
   p.body,
@@ -552,6 +562,7 @@ export function createProduct(
     sectionId,
     slug: `${slugBase(input.title)}-${id.slice(0, 8)}`,
     presentationMode: input.presentationMode ?? 'standard',
+    isVisible: input.presentationMode === 'h5' ? false : input.isVisible !== false,
     h5PageId: null,
     serviceMode: input.serviceMode,
     title: input.title,
@@ -583,8 +594,8 @@ export function createProduct(
            id, section_id, slug, service_mode, title, body, address,
            cover_asset_id, conversion_method_id, is_featured, featured_order,
            status, published_at, created_at, updated_at, deleted_at,
-           category_id, conversion_group_id, sort_order, presentation_mode
-         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?)`,
+           category_id, conversion_group_id, sort_order, presentation_mode, is_visible
+         ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?, ?, NULL, ?, ?, ?, ?, ?)`,
       )
       .bind(
         product.id,
@@ -605,6 +616,7 @@ export function createProduct(
         product.conversionGroupId,
         product.sortOrder,
         product.presentationMode,
+        product.isVisible ? 1 : 0,
       ),
   ];
   input.mediaAssetIds.forEach((assetId, index) => {
@@ -636,7 +648,7 @@ export function createUpdateProductStatements(
          SET service_mode = ?, title = ?, body = ?, address = ?, category_id = ?,
              conversion_group_id = ?, cover_asset_id = ?, is_featured = ?,
              featured_order = ?, sort_order = ?, status = ?, published_at = ?, updated_at = ?,
-             presentation_mode = ?
+             presentation_mode = ?, is_visible = ?
          WHERE section_id = ? AND id = ? AND deleted_at IS NULL`,
       )
       .bind(
@@ -654,6 +666,7 @@ export function createUpdateProductStatements(
         publishedAt,
         now,
         input.presentationMode ?? current.presentationMode,
+        input.isVisible === false ? 0 : 1,
         current.sectionId,
         current.id,
       ),

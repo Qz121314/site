@@ -80,7 +80,6 @@ export const FIXED_ADMIN_VIEWS = new Set<AdminView>([
   ...SETTINGS_ADMIN_VIEWS,
   'theme',
   'assets',
-  'pages',
   'customer-service',
   'faq',
   'sections',
@@ -267,7 +266,6 @@ export function getAdminSecondaryItems(
       return [
         { view: 'faq', label: '文章中心' },
         { view: 'assets', label: '素材库' },
-        { view: 'pages', label: '页面中心' },
       ];
     case 'operations':
       return sections.map((section) => ({
@@ -335,7 +333,7 @@ export function getAdminViewContext(
     pages: {
       eyebrow: domainLabel,
       title: '页面中心',
-      description: '上传外部 H5 页面包，识别 CTA 并绑定转化池。',
+      description: '历史 H5 页面入口已迁移到商品中心。',
     },
     'customer-service': {
       eyebrow: domainLabel,

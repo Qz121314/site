@@ -148,17 +148,24 @@ export function SectionTable({
                   {scope === 'trash' ? (
                     <AdminStatusBadge tone="warning">已删除</AdminStatusBadge>
                   ) : (
-                    <Button
-                      variant="ghost"
-                      size="compact"
-                      disabled={working}
-                      aria-label={`${section.isEnabled ? '停用' : '启用'}分区 ${section.name}`}
-                      onClick={() => onToggleEnabled(section)}
-                    >
-                      <AdminStatusBadge tone={section.isEnabled ? 'success' : 'default'}>
-                        {section.isEnabled ? '已启用' : '已停用'}
+                    <div className="section-status-stack">
+                      <Button
+                        variant="ghost"
+                        size="compact"
+                        disabled={working}
+                        aria-label={`${section.isEnabled ? '停用' : '启用'}分区 ${section.name}`}
+                        onClick={() => onToggleEnabled(section)}
+                      >
+                        <AdminStatusBadge
+                          tone={section.isEnabled ? 'success' : 'default'}
+                        >
+                          {section.isEnabled ? '已启用' : '已停用'}
+                        </AdminStatusBadge>
+                      </Button>
+                      <AdminStatusBadge tone={section.isVisible ? 'default' : 'warning'}>
+                        {section.isVisible ? '前端显示' : '前端隐藏'}
                       </AdminStatusBadge>
-                    </Button>
+                    </div>
                   )}
                 </td>
                 <td>

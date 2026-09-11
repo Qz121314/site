@@ -217,6 +217,20 @@ export function SectionEditorDialog({
               }
             />
           </label>
+          <label className="section-editor-visibility-field">
+            <input
+              type="checkbox"
+              checked={form.isVisible}
+              disabled={busy}
+              onChange={(event) =>
+                onFormChange({ ...form, isVisible: event.target.checked })
+              }
+            />
+            <span>
+              <strong>前端展示</strong>
+              <small>{form.isVisible ? '在主站公开展示' : '仅后台保留，前端隐藏'}</small>
+            </span>
+          </label>
         </section>
 
         <div className="admin-dialog-actions">
