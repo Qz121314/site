@@ -65,6 +65,8 @@ export function MediaLibraryPickerDialog({
   onClose,
   onSessionExpired,
 }: MediaLibraryPickerDialogProps) {
+  const dialogRef = useRef<HTMLElement>(null);
+  const previousFocusRef = useRef<HTMLElement | null>(null);
   const [assets, setAssets] = useState<ManagedMediaAsset[]>([]);
   const [folders, setFolders] = useState<MediaFolder[]>([]);
   const [loading, setLoading] = useState(true);
@@ -79,6 +81,19 @@ export function MediaLibraryPickerDialog({
   const [errorMessage, setErrorMessage] = useState('');
   const requestVersionRef = useRef(0);
   const allowedKindsKey = allowedKinds.join(',');
+
+  useEffect(() => {
+    previousFocusRef.current =
+      document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    dialogRef.current?.focus();
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      previousFocusRef.current?.focus();
+    };
+  }, []);
 
   useEffect(() => {
     const timeout = window.setTimeout(() => setDebouncedQuery(query.trim()), 220);
@@ -202,10 +217,12 @@ export function MediaLibraryPickerDialog({
   const dialog = (
     <div className="admin-dialog-backdrop media-picker-backdrop" role="presentation">
       <section
+        ref={dialogRef}
         className="admin-dialog media-picker-dialog"
         role="dialog"
         aria-modal="true"
         aria-labelledby="media-library-picker-title"
+        tabIndex={-1}
       >
         <div className="admin-dialog-header">
           <div>

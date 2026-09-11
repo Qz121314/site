@@ -10,9 +10,13 @@
 
 /* The legacy picker is portaled to body and must sit above the shared dialogs. */
 .media-picker-backdrop {
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
   position: fixed;
   z-index: 1300;
   inset: 0;
+  padding: 14px;
   overflow: hidden;
   isolation: isolate;
 }
@@ -254,6 +258,11 @@
 }
 
 @media (max-width: 760px) {
+  .media-picker-backdrop {
+    align-items: flex-end;
+    padding: 10px;
+  }
+
   .media-picker-dialog {
     width: calc(100vw - 16px);
     height: calc(100dvh - 16px);
