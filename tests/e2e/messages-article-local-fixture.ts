@@ -24,28 +24,34 @@ const moduleReference = (contentVersion: string) => ({
 
 const messageArticles = [
   {
-    articleId: MESSAGE_ARTICLE_IDS.beta,
+    cardId: MESSAGE_ARTICLE_IDS.beta,
     title: 'Beta guide',
     preview: 'A neutral card without background media.',
+    targetKind: 'article',
+    targetRef: MESSAGE_ARTICLE_IDS.beta,
     backgroundObjectKey: null,
     sortOrder: 20,
   },
   {
-    articleId: MESSAGE_ARTICLE_IDS.alpha,
+    cardId: MESSAGE_ARTICLE_IDS.alpha,
     title: ALPHA_TITLE,
     preview: 'The first recommended article from bootstrap metadata.',
+    targetKind: 'article',
+    targetRef: MESSAGE_ARTICLE_IDS.alpha,
     backgroundObjectKey: 'messages/alpha.svg',
     sortOrder: 10,
   },
   {
-    articleId: MESSAGE_ARTICLE_IDS.gamma,
+    cardId: MESSAGE_ARTICLE_IDS.gamma,
     title: 'Gamma guide',
     preview: 'A card that remains usable when its background cannot load.',
+    targetKind: 'article',
+    targetRef: MESSAGE_ARTICLE_IDS.gamma,
     backgroundObjectKey: 'messages/missing.svg',
     sortOrder: 30,
   },
   {
-    articleId: '',
+    cardId: '',
     title: 'Malformed placement',
     preview: 'This item must be isolated.',
     backgroundObjectKey: null,
