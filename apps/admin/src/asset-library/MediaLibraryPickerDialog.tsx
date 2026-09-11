@@ -323,6 +323,8 @@ export function MediaLibraryPickerDialog({
                           <img
                             src={brandingAssetPreviewUrl(asset.id)}
                             alt=""
+                            width={asset.width ?? undefined}
+                            height={asset.height ?? undefined}
                             loading="lazy"
                           />
                         )}

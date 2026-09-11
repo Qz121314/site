@@ -27,6 +27,8 @@
   gap: 8px;
   padding: 0 14px 12px;
   overflow: auto;
+  overflow-anchor: none;
+  scroll-behavior: auto;
   overscroll-behavior: contain;
   scrollbar-width: thin;
 }
@@ -130,8 +132,10 @@
 }
 
 .media-picker-preview img {
+  display: block;
   width: 100%;
   height: 100%;
+  aspect-ratio: 1 / 1;
   object-fit: contain;
 }
 
