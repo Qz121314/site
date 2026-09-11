@@ -19,6 +19,12 @@ export async function validateLandingPublication(db: D1Database, landing: Landin
       code: 'LANDING_NOT_PUBLISHABLE',
       message: '只有未删除的已发布落地页可以生成 publication。',
     };
+  if (landing.templateKey !== 'direct_response')
+    return {
+      ok: false as const,
+      code: 'LANDING_TEMPLATE_NOT_PUBLISHABLE',
+      message: '当前只有 Direct Response 模板可以生成 publication。',
+    };
   return validateLandingDependencies(db, {
     name: landing.name,
     slug: landing.slug,

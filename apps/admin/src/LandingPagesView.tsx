@@ -11,6 +11,8 @@ import {
   type AdminLandingProductOption,
 } from './api';
 import { Button } from './components/ui/button';
+import { MediaLibraryPickerDialog } from './asset-library/MediaLibraryPickerDialog';
+import type { ManagedMediaAsset } from './asset-library/api';
 
 const blank = (productId = ''): AdminLandingInput => ({
   name: '',
@@ -35,6 +37,7 @@ export function LandingPagesView({ onSessionExpired }: { onSessionExpired: () =>
   const [search, setSearch] = useState('');
   const [error, setError] = useState('');
   const [working, setWorking] = useState(false);
+  const [heroPickerOpen, setHeroPickerOpen] = useState(false);
   const load = useCallback(
     () =>
       Promise.all([fetchLandings(), fetchLandingProductOptions()])
@@ -178,9 +181,12 @@ export function LandingPagesView({ onSessionExpired }: { onSessionExpired: () =>
           </label>
           {product ? (
             <div className="notice">
-              Product：{product.title} ·{' '}
-              {product.isVisible ? 'Storefront 展示' : 'Storefront 隐藏'} ·{' '}
-              {product.status}
+              <strong>Product 数据（只读）</strong>：{product.title} · 分区{' '}
+              {product.sectionName} · 状态 {product.status} ·{' '}
+              {product.isVisible ? 'Storefront 展示' : 'Storefront 隐藏'} · 封面{' '}
+              {product.coverAssetId ?? '无'} · 媒体 {product.mediaCount} · 转化池{' '}
+              {product.conversionGroupName ?? '未配置'} · CTA{' '}
+              {product.buttonLabel ?? '默认'}
             </div>
           ) : null}
           <label>
@@ -195,10 +201,39 @@ export function LandingPagesView({ onSessionExpired }: { onSessionExpired: () =>
               }
             >
               <option value="direct_response">Direct Response</option>
-              <option value="visual_story">Visual Story（预留）</option>
-              <option value="chat_first">Chat First（预留）</option>
             </select>
           </label>
+          <fieldset>
+            <legend>Hero Override</legend>
+            <p>
+              {form.heroAssetId
+                ? `已选择自定义素材：${form.heroAssetId}`
+                : '跟随 Product 封面'}
+            </p>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setHeroPickerOpen(true)}
+            >
+              选择自定义 Hero
+            </Button>{' '}
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => setForm({ ...form, heroAssetId: null })}
+            >
+              跟随 Product 封面
+            </Button>{' '}
+            {form.heroAssetId ? (
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setForm({ ...form, heroAssetId: null })}
+              >
+                清除 Override
+              </Button>
+            ) : null}
+          </fieldset>
           <label>
             <span>状态</span>
             <select
@@ -307,6 +342,22 @@ export function LandingPagesView({ onSessionExpired }: { onSessionExpired: () =>
           </table>
         </div>
       )}
+      {editorOpen && heroPickerOpen ? (
+        <MediaLibraryPickerDialog
+          title="选择 Landing Hero"
+          role="hero"
+          allowedKinds={['image']}
+          selectedIds={[]}
+          maxSelections={1}
+          onSessionExpired={onSessionExpired}
+          onClose={() => setHeroPickerOpen(false)}
+          onDone={() => setHeroPickerOpen(false)}
+          onSelect={(asset: ManagedMediaAsset) => {
+            setForm({ ...form, heroAssetId: asset.id });
+            setHeroPickerOpen(false);
+          }}
+        />
+      ) : null}
     </section>
   );
 }

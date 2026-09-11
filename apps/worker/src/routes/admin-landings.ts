@@ -38,7 +38,14 @@ adminLandingRoutes.get('/', async (c) => {
 });
 adminLandingRoutes.get('/products/options', async (c) => {
   const rows = await c.env.DB.prepare(
-    `SELECT p.id,p.section_id,p.title,p.status,p.is_visible,s.name AS section_name FROM products p JOIN sections s ON s.id=p.section_id WHERE p.deleted_at IS NULL AND s.deleted_at IS NULL ORDER BY s.sort_order,p.sort_order,p.title`,
+    `SELECT p.id,p.section_id,p.title,p.status,p.is_visible,s.name AS section_name,
+       COALESCE(p.cover_asset_id,(SELECT pm.media_asset_id FROM product_media pm WHERE pm.product_id=p.id ORDER BY pm.sort_order LIMIT 1)) AS cover_asset_id,
+       (SELECT COUNT(*) FROM product_media pm WHERE pm.product_id=p.id) AS media_count,
+       cg.name AS conversion_group_name,cg.button_label
+     FROM products p JOIN sections s ON s.id=p.section_id
+     LEFT JOIN conversion_groups cg ON cg.id=p.conversion_group_id
+     WHERE p.deleted_at IS NULL AND s.deleted_at IS NULL
+     ORDER BY s.sort_order,p.sort_order,p.title`,
   ).all<{
     id: string;
     section_id: string;
@@ -46,6 +53,10 @@ adminLandingRoutes.get('/products/options', async (c) => {
     status: string;
     is_visible: number;
     section_name: string;
+    cover_asset_id: string | null;
+    media_count: number;
+    conversion_group_name: string | null;
+    button_label: string | null;
   }>();
   return c.json({
     products: rows.results.map((row) => ({
@@ -55,6 +66,10 @@ adminLandingRoutes.get('/products/options', async (c) => {
       status: row.status,
       isVisible: row.is_visible === 1,
       sectionName: row.section_name,
+      coverAssetId: row.cover_asset_id,
+      mediaCount: row.media_count,
+      conversionGroupName: row.conversion_group_name,
+      buttonLabel: row.button_label,
     })),
   });
 });

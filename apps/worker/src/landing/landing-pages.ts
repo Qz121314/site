@@ -1,4 +1,5 @@
 import { getProduct, type ProductRecord, type ProductStatus } from '../products/products';
+import { buildAssetPublicUrl, getMediaBaseUrl } from '../assets/asset-library';
 
 export type LandingTemplateKey = 'direct_response' | 'visual_story' | 'chat_first';
 export type LandingChatTemplateKey = 'match_landing';
@@ -44,14 +45,45 @@ export type LandingBuildModel = {
   product: ProductRecord;
   resolved: {
     headline: string;
-    subheadline: string;
+    subheadline: string | null;
+    body: string;
     heroAssetId: string | null;
+    heroAsset: LandingHeroAsset | null;
     ctaLabel: string | null;
     chatWelcome: string | null;
   };
   templateKey: LandingTemplateKey;
   chatTemplateKey: LandingChatTemplateKey;
 };
+
+export type LandingHeroAsset = {
+  assetId: string;
+  objectKey: string;
+  publicUrl: string | null;
+  width: number | null;
+  height: number | null;
+};
+
+export function resolveLandingPresentation(
+  landing: Pick<
+    LandingRecord,
+    'headlineOverride' | 'subheadlineOverride' | 'heroAssetId' | 'ctaLabelOverride'
+  >,
+  product: Pick<
+    ProductRecord,
+    'title' | 'body' | 'effectiveCoverAssetId' | 'buttonLabel'
+  >,
+  heroAsset: LandingHeroAsset | null,
+) {
+  return {
+    headline: landing.headlineOverride ?? product.title,
+    subheadline: landing.subheadlineOverride,
+    body: product.body,
+    heroAssetId: landing.heroAssetId ?? product.effectiveCoverAssetId,
+    heroAsset,
+    ctaLabel: landing.ctaLabelOverride ?? product.buttonLabel,
+  };
+}
 
 type LandingRow = {
   id: string;
@@ -136,6 +168,12 @@ export function validateLandingInput(value: unknown): ValidationResult {
     typeof input.heroAssetId !== 'string'
   )
     return { ok: false, field: 'heroAssetId', message: 'Hero 素材引用无效。' };
+  if (status === 'published' && templateKey !== 'direct_response')
+    return {
+      ok: false,
+      field: 'templateKey',
+      message: '当前只有 Direct Response 模板可以发布。',
+    };
   return {
     ok: true,
     value: {
@@ -344,14 +382,35 @@ export async function buildLandingModel(
   if (!productRow) return null;
   const product = await getProduct(db, productRow.section_id, landing.productId);
   if (!product) return null;
+  const heroAssetId = landing.heroAssetId ?? product.effectiveCoverAssetId;
+  let heroAsset: LandingHeroAsset | null = null;
+  if (heroAssetId) {
+    const asset = await db
+      .prepare(
+        `SELECT id,object_key,width,height FROM media_assets WHERE id=? AND status='ready' AND deleted_at IS NULL`,
+      )
+      .bind(heroAssetId)
+      .first<{
+        id: string;
+        object_key: string;
+        width: number | null;
+        height: number | null;
+      }>();
+    if (asset) {
+      heroAsset = {
+        assetId: asset.id,
+        objectKey: asset.object_key,
+        publicUrl: buildAssetPublicUrl(await getMediaBaseUrl(db), asset.object_key),
+        width: asset.width,
+        height: asset.height,
+      };
+    }
+  }
   return {
     landing,
     product,
     resolved: {
-      headline: landing.headlineOverride ?? product.title,
-      subheadline: landing.subheadlineOverride ?? product.body,
-      heroAssetId: landing.heroAssetId ?? product.effectiveCoverAssetId,
-      ctaLabel: landing.ctaLabelOverride ?? product.buttonLabel,
+      ...resolveLandingPresentation(landing, product, heroAsset),
       chatWelcome: landing.chatWelcomeOverride,
     },
     templateKey: landing.templateKey,

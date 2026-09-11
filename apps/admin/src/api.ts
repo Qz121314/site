@@ -81,6 +81,10 @@ export type AdminLandingProductOption = {
   title: string;
   status: 'draft' | 'published' | 'archived';
   isVisible: boolean;
+  coverAssetId: string | null;
+  mediaCount: number;
+  conversionGroupName: string | null;
+  buttonLabel: string | null;
 };
 
 export type SectionInput = {
