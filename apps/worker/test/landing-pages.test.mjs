@@ -10,6 +10,8 @@ import {
   validateLandingInput,
 } from '../src/landing/landing-pages.ts';
 import { validateLandingPublication } from '../src/publishing/landing-publisher.ts';
+import app from '../src/index.ts';
+import { ADMIN_SESSION_COOKIE, createAdminSessionToken } from '../src/auth/session.ts';
 
 function d1(db) {
   return {
@@ -322,3 +324,318 @@ function dbForPublication() {
     },
   };
 }
+
+function routeDb() {
+  const state = {
+    products: new Map([
+      [
+        'product-a',
+        {
+          status: 'published',
+          deleted_at: null,
+          section_deleted_at: null,
+          section_enabled: 1,
+        },
+      ],
+      [
+        'product-draft',
+        {
+          status: 'draft',
+          deleted_at: null,
+          section_deleted_at: null,
+          section_enabled: 1,
+        },
+      ],
+    ]),
+    assets: new Map([
+      [
+        'ready-image',
+        { id: 'ready-image', status: 'ready', deleted_at: null, mime_type: 'image/jpeg' },
+      ],
+      [
+        'deleted-image',
+        {
+          id: 'deleted-image',
+          status: 'ready',
+          deleted_at: 'deleted',
+          mime_type: 'image/jpeg',
+        },
+      ],
+      [
+        'pending-image',
+        {
+          id: 'pending-image',
+          status: 'pending',
+          deleted_at: null,
+          mime_type: 'image/jpeg',
+        },
+      ],
+      [
+        'ready-video',
+        { id: 'ready-video', status: 'ready', deleted_at: null, mime_type: 'video/mp4' },
+      ],
+    ]),
+    landings: new Map(),
+  };
+  return {
+    state,
+    prepare(sql) {
+      let args = [];
+      return {
+        bind(...values) {
+          args = values;
+          return this;
+        },
+        async first() {
+          if (sql.includes('FROM landing_pages')) {
+            const row = state.landings.get(args[0]);
+            return row ? { ...row } : null;
+          }
+          if (sql.includes('SELECT p.id,p.status')) {
+            const product = state.products.get(args[0]);
+            return product ? { id: args[0], ...product } : null;
+          }
+          if (sql.includes('FROM media_assets')) {
+            const asset = state.assets.get(args[0]);
+            return asset &&
+              asset.status === 'ready' &&
+              asset.deleted_at === null &&
+              asset.mime_type.startsWith('image/')
+              ? { id: asset.id }
+              : null;
+          }
+          return null;
+        },
+        async all() {
+          return {
+            results: [...state.landings.values()]
+              .filter((row) =>
+                sql.includes('deleted_at IS NOT NULL')
+                  ? row.deleted_at !== null
+                  : !sql.includes('deleted_at IS NULL') || row.deleted_at === null,
+              )
+              .map((row) => ({ ...row })),
+          };
+        },
+        async run() {
+          if (sql.includes('INSERT INTO landing_pages')) {
+            if (
+              [...state.landings.values()].some(
+                (row) => row.slug === args[2] && row.deleted_at === null,
+              )
+            )
+              throw new Error(
+                'UNIQUE constraint failed: landing_pages_active_slug_unique',
+              );
+            const [
+              id,
+              name,
+              slug,
+              product_id,
+              template_key,
+              chat_template_key,
+              headline_override,
+              subheadline_override,
+              hero_asset_id,
+              cta_label_override,
+              chat_welcome_override,
+              status,
+              published_at,
+              created_at,
+              updated_at,
+              deleted_at,
+            ] = args;
+            state.landings.set(id, {
+              id,
+              name,
+              slug,
+              product_id,
+              template_key,
+              chat_template_key,
+              headline_override,
+              subheadline_override,
+              hero_asset_id,
+              cta_label_override,
+              chat_welcome_override,
+              status,
+              published_at,
+              created_at,
+              updated_at,
+              deleted_at,
+            });
+          } else if (sql.includes('UPDATE landing_pages SET name=')) {
+            const [
+              name,
+              slug,
+              product_id,
+              template_key,
+              chat_template_key,
+              headline_override,
+              subheadline_override,
+              hero_asset_id,
+              cta_label_override,
+              chat_welcome_override,
+              status,
+              published_at,
+              updated_at,
+              id,
+            ] = args;
+            if (
+              [...state.landings.values()].some(
+                (row) => row.id !== id && row.slug === slug && row.deleted_at === null,
+              )
+            )
+              throw new Error(
+                'UNIQUE constraint failed: landing_pages_active_slug_unique',
+              );
+            Object.assign(state.landings.get(id), {
+              name,
+              slug,
+              product_id,
+              template_key,
+              chat_template_key,
+              headline_override,
+              subheadline_override,
+              hero_asset_id,
+              cta_label_override,
+              chat_welcome_override,
+              status,
+              published_at,
+              updated_at,
+            });
+          } else if (sql.includes("SET status='archived'")) {
+            const [deleted_at, updated_at, id] = args;
+            Object.assign(state.landings.get(id), {
+              status: 'archived',
+              deleted_at,
+              updated_at,
+            });
+          } else if (sql.includes("SET status='draft'")) {
+            const [updated_at, id] = args;
+            Object.assign(state.landings.get(id), {
+              status: 'draft',
+              deleted_at: null,
+              published_at: null,
+              updated_at,
+            });
+          }
+          return { success: true, meta: { changes: 1 } };
+        },
+      };
+    },
+    async batch(statements) {
+      return Promise.all(statements.map((statement) => statement.run()));
+    },
+  };
+}
+
+async function adminCookie() {
+  const { token } = await createAdminSessionToken('test-secret', Date.now());
+  return `${ADMIN_SESSION_COOKIE}=${token}`;
+}
+
+async function routeRequest(db, path, method, body, headers = {}) {
+  return app.request(
+    `https://example.test${path}`,
+    {
+      method,
+      headers: {
+        cookie: await adminCookie(),
+        ...(method !== 'GET' ? { 'x-admin-request': '1' } : {}),
+        ...(body === undefined ? {} : { 'content-type': 'application/json' }),
+        ...headers,
+      },
+      ...(body === undefined ? {} : { body: JSON.stringify(body) }),
+    },
+    {
+      DB: db,
+      SESSION_SECRET: 'test-secret',
+      ADMIN_PASSWORD: 'password',
+      ASSETS_BUCKET: {},
+      ASSETS: {},
+      ENVIRONMENT: 'test',
+      APP_VERSION: 'test',
+    },
+  );
+}
+
+test('Landing Admin routes perform authenticated CRUD, soft delete, restore, validation, and conflict handling', async () => {
+  const db = routeDb();
+  const body = input({
+    name: 'Route Landing',
+    slug: 'route-landing',
+    productId: 'product-a',
+  });
+  const missingMarker = await routeRequest(db, '/api/admin/landings/', 'POST', body, {
+    'x-admin-request': '0',
+  });
+  assert.equal(missingMarker.status, 403);
+  const createdResponse = await routeRequest(db, '/api/admin/landings/', 'POST', body);
+  assert.equal(createdResponse.status, 201);
+  const created = (await createdResponse.json()).landing;
+  const listResponse = await routeRequest(db, '/api/admin/landings/', 'GET');
+  assert.equal((await listResponse.json()).landings.length, 1);
+  const detailResponse = await routeRequest(
+    db,
+    `/api/admin/landings/${created.id}`,
+    'GET',
+  );
+  assert.equal((await detailResponse.json()).landing.slug, 'route-landing');
+  const updateResponse = await routeRequest(
+    db,
+    `/api/admin/landings/${created.id}`,
+    'PUT',
+    { ...body, name: 'Updated Landing', slug: 'updated-landing' },
+  );
+  assert.equal((await updateResponse.json()).landing.name, 'Updated Landing');
+  const invalidProduct = await routeRequest(db, '/api/admin/landings/', 'POST', {
+    ...body,
+    slug: 'invalid-product',
+    productId: 'missing',
+  });
+  assert.equal(invalidProduct.status, 409);
+  const duplicate = await routeRequest(db, '/api/admin/landings/', 'POST', {
+    ...body,
+    name: 'Duplicate',
+    slug: 'updated-landing',
+  });
+  assert.equal(duplicate.status, 409);
+  const deletedResponse = await routeRequest(
+    db,
+    `/api/admin/landings/${created.id}`,
+    'DELETE',
+  );
+  assert.equal((await deletedResponse.json()).landing.deletedAt !== null, true);
+  const restoredResponse = await routeRequest(
+    db,
+    `/api/admin/landings/${created.id}/restore`,
+    'POST',
+    undefined,
+    { 'x-admin-request': '1' },
+  );
+  assert.equal((await restoredResponse.json()).landing.status, 'draft');
+  const notFound = await routeRequest(db, '/api/admin/landings/missing', 'GET');
+  assert.equal(notFound.status, 404);
+});
+
+test('Landing Admin route keeps Hero validation specific to ready image assets', async () => {
+  for (const [assetId, expected] of [
+    ['ready-image', 201],
+    ['deleted-image', 409],
+    ['pending-image', 409],
+    ['ready-video', 409],
+  ]) {
+    const response = await routeRequest(
+      routeDb(),
+      '/api/admin/landings/',
+      'POST',
+      input({
+        name: assetId,
+        slug: `hero-${assetId}`,
+        status: 'published',
+        heroAssetId: assetId,
+      }),
+    );
+    assert.equal(response.status, expected, assetId);
+  }
+});
