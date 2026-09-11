@@ -509,12 +509,7 @@ export function ProductEditorDialog({
               checked={form.isVisible !== false}
               onChange={(event) => patch({ isVisible: event.target.checked })}
             />
-            <span>
-              <strong>前端展示</strong>
-              <small>
-                {form.isVisible !== false ? '商品会出现在主站' : '仅后台保留，前端隐藏'}
-              </small>
-            </span>
+            <span>前端展示</span>
           </label>
 
           <label className="product-field product-core-sort">
@@ -608,10 +603,7 @@ export function ProductEditorDialog({
             aria-labelledby="product-media-title"
           >
             <div className="product-media-heading">
-              <div>
-                <strong id="product-media-title">产品媒体</strong>
-                <small>素材请先上传到素材中心；这里仅负责选择、排序和设置封面。</small>
-              </div>
+              <strong id="product-media-title">产品媒体</strong>
               <button
                 type="button"
                 className="product-upload-button"
@@ -705,7 +697,6 @@ export function ProductEditorDialog({
             ) : (
               <div className="product-media-empty">
                 <strong>尚未选择产品媒体</strong>
-                <p>先在素材中心完成上传和分组，再从这里查看缩略图并选择。</p>
               </div>
             )}
 
