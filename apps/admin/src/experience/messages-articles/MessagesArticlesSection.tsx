@@ -36,11 +36,7 @@ const emptyCard = (options: MessageCardOptions): MessageArticleDraft => ({
 });
 
 function targetLabel(card: MessageArticleDraft) {
-  return card.targetKind === 'article'
-    ? '文章'
-    : card.targetKind === 'page'
-      ? 'H5 页面'
-      : '外部链接';
+  return card.targetKind === 'article' ? '文章' : '外部链接';
 }
 
 function CardEditor({
@@ -57,12 +53,7 @@ function CardEditor({
   onSessionExpired: () => void;
 }) {
   const [pickerOpen, setPickerOpen] = useState(false);
-  const targets =
-    card.targetKind === 'article'
-      ? options.articles
-      : card.targetKind === 'page'
-        ? options.pages
-        : [];
+  const targets = card.targetKind === 'article' ? options.articles : [];
   return (
     <>
       <AdminDialog
@@ -101,9 +92,6 @@ function CardEditor({
                 }
               >
                 <option value="article">文章</option>
-                <option value="page" disabled={!options.h5OriginConfigured}>
-                  H5 页面{options.h5OriginConfigured ? '' : '（请先配置域名）'}
-                </option>
                 <option value="link">外部链接</option>
               </Select>
             </label>
@@ -126,25 +114,18 @@ function CardEditor({
                 <Select
                   value={card.targetRef}
                   onChange={(event) => {
-                    const option = targets.find(
-                      (item) =>
-                        ('slug' in item ? item.url : item.id) === event.target.value,
-                    );
+                    const option = targets.find((item) => item.id === event.target.value);
                     onChange({
                       ...card,
                       targetRef: event.target.value,
-                      targetLabel: option
-                        ? 'title' in option
-                          ? option.title
-                          : option.name
-                        : '',
+                      targetLabel: option?.title ?? '',
                     });
                   }}
                 >
                   <option value="">请选择{targetLabel(card)}</option>
                   {targets.map((item) => (
-                    <option key={item.id} value={'slug' in item ? item.url : item.id}>
-                      {'title' in item ? item.title : item.name}
+                    <option key={item.id} value={item.id}>
+                      {item.title}
                     </option>
                   ))}
                 </Select>

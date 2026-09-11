@@ -245,15 +245,10 @@ jobs:
         run: |
           set -euo pipefail
           pnpm exec wrangler deploy --keep-vars | tee /tmp/wrangler-deploy.log
-          pnpm exec wrangler deploy --config wrangler.h5.jsonc --keep-vars | tee /tmp/wrangler-h5-deploy.log
           url="$(grep -Eo 'https://[A-Za-z0-9.-]+\.workers\.dev' /tmp/wrangler-deploy.log | tail -n 1)"
           version_id="$(grep -Eo 'Current Version ID: [0-9a-f-]+' /tmp/wrangler-deploy.log | tail -n 1 | awk '{print $4}')"
-          h5_url="$(grep -Eo 'https://[A-Za-z0-9.-]+\.workers\.dev' /tmp/wrangler-h5-deploy.log | tail -n 1)"
-          h5_version_id="$(grep -Eo 'Current Version ID: [0-9a-f-]+' /tmp/wrangler-h5-deploy.log | tail -n 1 | awk '{print $4}')"
           test -n "$url"
           test -n "$version_id"
-          test -n "$h5_url"
-          test -n "$h5_version_id"
           echo "url=$url" >> "$GITHUB_OUTPUT"
           echo "version_id=$version_id" >> "$GITHUB_OUTPUT"
           echo 'deployed=true' >> "$GITHUB_OUTPUT"

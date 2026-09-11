@@ -2,7 +2,6 @@ import { Hono } from 'hono';
 import { createAuditLogStatement } from '../audit/write-audit-log';
 import { apiError } from '../http/api-response';
 import type { AppEnvironment } from '../types';
-import { getH5PublicSettings } from '../settings/h5-settings';
 import {
   hasAdminRequestHeader,
   isRecord,
@@ -14,7 +13,7 @@ const MAX_CARDS = 100;
 const MAX_ID_LENGTH = 120;
 const MAX_TITLE_LENGTH = 300;
 const MAX_TARGET_LENGTH = 1000;
-type TargetKind = 'article' | 'page' | 'link';
+type TargetKind = 'article' | 'link';
 
 type MessageCard = {
   id: string;
@@ -44,7 +43,7 @@ function validId(value: unknown): value is string {
 }
 
 function validTargetKind(value: unknown): value is TargetKind {
-  return value === 'article' || value === 'page' || value === 'link';
+  return value === 'article' || value === 'link';
 }
 
 function parseCard(value: unknown): MessageCardInput | null {
@@ -111,7 +110,6 @@ async function listCards(db: D1Database): Promise<MessageCard[]> {
                 COALESCE(f.question, p.name, c.target_ref) AS target_label
          FROM message_cta_cards c
          LEFT JOIN faqs f ON c.target_kind = 'article' AND f.id = c.target_ref
-         LEFT JOIN h5_pages p ON c.target_kind = 'page' AND p.slug = c.target_ref
          WHERE c.is_enabled = 1
          ORDER BY c.sort_order ASC, c.id ASC`,
       )
@@ -145,7 +143,6 @@ async function listCards(db: D1Database): Promise<MessageCard[]> {
 async function validateTargets(
   db: D1Database,
   cards: MessageCardInput[],
-  h5PublicOrigin: string | null,
 ): Promise<string | null> {
   for (const card of cards) {
     if (card.targetKind === 'link') {
@@ -162,28 +159,6 @@ async function validateTargets(
         .bind(card.targetRef)
         .first();
       if (!row) return '所选文章不存在或已进入回收站。';
-    } else {
-      if (!h5PublicOrigin) return '请先配置 H5 公网域名，再绑定 H5 页面。';
-      let pageUrl: URL;
-      try {
-        pageUrl = new URL(card.targetRef);
-      } catch {
-        return 'H5 页面链接格式无效。';
-      }
-      if (pageUrl.origin !== h5PublicOrigin) {
-        return 'H5 页面链接必须使用已配置的 H5 公网域名。';
-      }
-      const slug = pageUrl.pathname.match(
-        /^\/pages\/([a-z0-9][a-z0-9-]{0,63})\/?$/u,
-      )?.[1];
-      if (!slug) return 'H5 页面链接路径无效。';
-      const row = await db
-        .prepare(
-          "SELECT id FROM h5_pages WHERE slug = ? AND status = 'published' AND deleted_at IS NULL",
-        )
-        .bind(slug)
-        .first();
-      if (!row) return '所选 H5 页面不存在或尚未发布。';
     }
   }
   return null;
@@ -231,28 +206,16 @@ export const adminMessageArticleRoutes = new Hono<AppEnvironment>();
 
 adminMessageArticleRoutes.get('/options', async (context) => {
   context.header('Cache-Control', 'no-store');
-  const [articles, pages, groups, settings] = await Promise.all([
+  const [articles, groups] = await Promise.all([
     context.env.DB.prepare(
       'SELECT id, question AS title FROM faqs WHERE deleted_at IS NULL AND is_enabled = 1 ORDER BY sort_order ASC, created_at ASC',
     ).all(),
     context.env.DB.prepare(
-      "SELECT id, slug, name FROM h5_pages WHERE status = 'published' AND deleted_at IS NULL ORDER BY updated_at DESC",
-    ).all(),
-    context.env.DB.prepare(
       'SELECT cg.id, cg.section_id, cg.name, s.name AS section_name FROM conversion_groups cg JOIN sections s ON s.id = cg.section_id WHERE cg.deleted_at IS NULL AND cg.is_enabled = 1 AND s.deleted_at IS NULL ORDER BY s.sort_order ASC, cg.sort_order ASC, cg.created_at ASC',
     ).all(),
-    getH5PublicSettings(context.env.DB),
   ]);
-  const origin = settings.publicOrigin?.replace(/\/$/u, '') ?? '';
   return context.json({
     articles: articles.results,
-    pages: origin
-      ? pages.results.map((page) => ({
-          ...page,
-          url: `${origin}/pages/${page.slug}/`,
-        }))
-      : [],
-    h5OriginConfigured: Boolean(origin),
     conversionGroups: groups.results,
   });
 });
@@ -275,9 +238,7 @@ adminMessageArticleRoutes.put('/', async (context) => {
   const cards = parseCards(body);
   if (!cards)
     return apiError(context, 400, 'INVALID_MESSAGE_CARDS', 'Message 卡片配置无效。');
-  const h5PublicOrigin =
-    (await getH5PublicSettings(context.env.DB)).publicOrigin?.replace(/\/$/u, '') ?? null;
-  const targetError = await validateTargets(context.env.DB, cards, h5PublicOrigin);
+  const targetError = await validateTargets(context.env.DB, cards);
   if (targetError)
     return apiError(context, 400, 'MESSAGE_CARD_TARGET_INVALID', targetError);
   const referenceError = await validateReferences(context.env.DB, cards);

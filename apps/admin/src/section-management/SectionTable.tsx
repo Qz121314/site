@@ -149,22 +149,30 @@ export function SectionTable({
                     <AdminStatusBadge tone="warning">已删除</AdminStatusBadge>
                   ) : (
                     <div className="section-status-stack">
-                      <Button
-                        variant="ghost"
-                        size="compact"
-                        disabled={working}
-                        aria-label={`${section.isEnabled ? '停用' : '启用'}分区 ${section.name}`}
-                        onClick={() => onToggleEnabled(section)}
-                      >
-                        <AdminStatusBadge
-                          tone={section.isEnabled ? 'success' : 'default'}
+                      <div className="section-status-line">
+                        <span className="section-status-label">业务状态</span>
+                        <Button
+                          variant="ghost"
+                          size="compact"
+                          disabled={working}
+                          aria-label={`${section.isEnabled ? '停用' : '启用'}分区 ${section.name}`}
+                          onClick={() => onToggleEnabled(section)}
                         >
-                          {section.isEnabled ? '已启用' : '已停用'}
+                          <AdminStatusBadge
+                            tone={section.isEnabled ? 'success' : 'default'}
+                          >
+                            {section.isEnabled ? '已启用' : '已停用'}
+                          </AdminStatusBadge>
+                        </Button>
+                      </div>
+                      <div className="section-status-line">
+                        <span className="section-status-label">前端展示</span>
+                        <AdminStatusBadge
+                          tone={section.isVisible ? 'default' : 'warning'}
+                        >
+                          {section.isVisible ? '显示' : '隐藏'}
                         </AdminStatusBadge>
-                      </Button>
-                      <AdminStatusBadge tone={section.isVisible ? 'default' : 'warning'}>
-                        {section.isVisible ? '前端显示' : '前端隐藏'}
-                      </AdminStatusBadge>
+                      </div>
                     </div>
                   )}
                 </td>

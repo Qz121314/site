@@ -25,7 +25,6 @@ export type AdminView =
   | SettingsAdminView
   | 'theme'
   | 'assets'
-  | 'pages'
   | 'customer-service'
   | 'faq'
   | 'sections'
@@ -194,7 +193,7 @@ export function writeAdminViewLocation(view: AdminView, mode: 'push' | 'replace'
 
 export function getAdminDomainForView(view: AdminView): AdminDomain {
   if (view === 'dashboard') return 'dashboard';
-  if (view === 'faq' || view === 'assets' || view === 'pages') return 'content';
+  if (view === 'faq' || view === 'assets') return 'content';
   if (view === 'sections') return 'catalog';
   if (
     view === 'home' ||
@@ -329,11 +328,6 @@ export function getAdminViewContext(
       eyebrow: domainLabel,
       title: '素材库管理',
       description: '管理上传素材、文件夹与存储清理。',
-    },
-    pages: {
-      eyebrow: domainLabel,
-      title: '页面中心',
-      description: '历史 H5 页面入口已迁移到商品中心。',
     },
     'customer-service': {
       eyebrow: domainLabel,

@@ -13,7 +13,5 @@ test('customer-service catalog sync carries Site canonical product URLs', () => 
   assert.ok(source.includes('window.location.origin'));
   assert.ok(source.includes('href: publicProductHref(section.slug, product.slug)'));
   assert.ok(source.includes("sourceType: 'product' as const"));
-  assert.ok(source.includes('presentationMode: product.presentationMode'));
-  assert.ok(source.includes('h5PageId: product.h5PageId'));
   assert.equal(source.includes('href: null'), false);
 });

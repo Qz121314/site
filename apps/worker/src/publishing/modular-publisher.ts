@@ -207,7 +207,7 @@ type FaqRow = {
 type MessageArticleRow = {
   id: string;
   title: string;
-  target_kind: 'article' | 'page' | 'link';
+  target_kind: 'article' | 'link';
   target_ref: string;
   target_label: string;
   background_object_key: string | null;
@@ -645,14 +645,13 @@ async function loadSource(db: D1Database): Promise<Source> {
            c.title,
            c.target_kind,
            c.target_ref,
-           COALESCE(f.question, p.name, c.target_ref) AS target_label,
+           COALESCE(f.question, c.target_ref) AS target_label,
            background.object_key AS background_object_key,
            c.section_id,
            c.conversion_group_id,
            c.sort_order
          FROM message_cta_cards c
          LEFT JOIN faqs f ON c.target_kind = 'article' AND f.id = c.target_ref
-         LEFT JOIN h5_pages p ON c.target_kind = 'page' AND p.slug = c.target_ref
          LEFT JOIN media_assets background
            ON background.id = c.background_media_id
           AND background.status = 'ready'

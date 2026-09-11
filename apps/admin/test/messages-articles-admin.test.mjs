@@ -68,13 +68,13 @@ const cardA = {
 
 const cardB = {
   id: 'card-b',
-  title: '打开 H5',
+  title: '打开链接',
   backgroundMediaId: 'media-b',
-  targetKind: 'page',
-  targetRef: 'https://h5.example.com/pages/demo/',
-  targetLabel: '演示页面',
-  sectionId: 'section-a',
-  conversionGroupId: 'group-a',
+  targetKind: 'link',
+  targetRef: 'https://example.com/demo',
+  targetLabel: '演示链接',
+  sectionId: null,
+  conversionGroupId: null,
   sortOrder: 1,
 };
 
@@ -91,29 +91,26 @@ test('GET hydration parses generic Message CTA cards in server order', async () 
       cards.map(({ id }) => id),
       ['card-a', 'card-b'],
     );
-    assert.equal(cards[1].targetKind, 'page');
-    assert.equal(cards[1].targetRef, 'https://h5.example.com/pages/demo/');
+    assert.equal(cards[1].targetKind, 'link');
+    assert.equal(cards[1].targetRef, 'https://example.com/demo');
   } finally {
     globalThis.fetch = previousFetch;
   }
 });
 
-test('card options expose H5 origin readiness without inventing a page URL', async () => {
+test('card options expose article and conversion targets', async () => {
   installBrowserStubs();
   const previousFetch = globalThis.fetch;
   globalThis.fetch = async (input) => {
     assert.equal(input, '/api/admin/message-articles/options');
     return jsonResponse({
       articles: [{ id: 'article-a', title: '活动说明' }],
-      pages: [],
-      h5OriginConfigured: false,
       conversionGroups: [],
     });
   };
   try {
     const options = await fetchMessageCardOptions();
-    assert.equal(options.h5OriginConfigured, false);
-    assert.deepEqual(options.pages, []);
+    assert.deepEqual(options.conversionGroups, []);
   } finally {
     globalThis.fetch = previousFetch;
   }
@@ -233,7 +230,6 @@ test('Messages CTA UI uses shared reference-only media selection and generic tar
   assert.match(source, /conversionGroupId/);
   assert.match(source, /selectionMode="reference-only"/);
   assert.match(source, /allowedKinds=\{\['image'\]\}/);
-  assert.match(source, /h5OriginConfigured/);
   assert.match(mediaPicker, /fetchMediaLibrary\(\)/);
   assert.doesNotMatch(source, /fetchMediaLibrary/);
   assert.doesNotMatch(source, /ArticleEditorDialog/);

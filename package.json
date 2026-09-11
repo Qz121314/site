@@ -31,12 +31,11 @@
     "format": "prettier --check .",
     "format:write": "prettier --write .",
     "cf:types": "node scripts/ensure-wrangler-types.mjs",
-    "cf:check": "wrangler deploy --dry-run && wrangler deploy --config wrangler.h5.jsonc --dry-run",
+    "cf:check": "wrangler deploy --dry-run",
     "db:migrations:list": "wrangler d1 migrations list DB --local",
     "db:migrate:local": "wrangler d1 migrations apply DB --local",
     "db:migrate:remote": "wrangler d1 migrations apply DB --remote",
     "deploy:worker": "pnpm build && wrangler deploy --keep-vars",
-    "deploy:h5-worker": "pnpm build && wrangler deploy --config wrangler.h5.jsonc --keep-vars",
     "deploy": "pnpm deploy:worker"
   },
   "devDependencies": {

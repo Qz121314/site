@@ -5,7 +5,7 @@ export type MessageArticlePlacement = {
   id: string;
   title: string;
   backgroundMediaId: string | null;
-  targetKind: 'article' | 'page' | 'link';
+  targetKind: 'article' | 'link';
   targetRef: string;
   targetLabel: string;
   sectionId: string | null;
@@ -17,7 +17,7 @@ export type MessageArticlePlacementInput = {
   id?: string;
   title: string;
   backgroundMediaId: string | null;
-  targetKind: 'article' | 'page' | 'link';
+  targetKind: 'article' | 'link';
   targetRef: string;
   sectionId: string | null;
   conversionGroupId: string | null;
@@ -42,7 +42,7 @@ function parsePlacement(value: unknown): MessageArticlePlacement {
     typeof placement.title !== 'string' ||
     (typeof placement.backgroundMediaId !== 'string' &&
       placement.backgroundMediaId !== null) ||
-    !['article', 'page', 'link'].includes(String(placement.targetKind)) ||
+    !['article', 'link'].includes(String(placement.targetKind)) ||
     typeof placement.targetRef !== 'string' ||
     typeof placement.targetLabel !== 'string' ||
     (placement.sectionId !== null && typeof placement.sectionId !== 'string') ||
@@ -100,8 +100,6 @@ export function fetchMessageArticlePlacements(): Promise<MessageArticlePlacement
 
 export type MessageCardOptions = {
   articles: Array<{ id: string; title: string }>;
-  pages: Array<{ id: string; slug: string; name: string; url: string }>;
-  h5OriginConfigured: boolean;
   conversionGroups: Array<{
     id: string;
     section_id: string;
@@ -117,10 +115,6 @@ export function fetchMessageCardOptions(): Promise<MessageCardOptions> {
       articles: Array.isArray(result?.articles)
         ? (result.articles as MessageCardOptions['articles'])
         : [],
-      pages: Array.isArray(result?.pages)
-        ? (result.pages as MessageCardOptions['pages'])
-        : [],
-      h5OriginConfigured: result?.h5OriginConfigured === true,
       conversionGroups: Array.isArray(result?.conversionGroups)
         ? (result.conversionGroups as MessageCardOptions['conversionGroups'])
         : [],

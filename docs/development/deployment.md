@@ -16,26 +16,6 @@ Manual release overrides may deliberately widen the production gates. They must 
 
 `main` release is orchestrated by `.github/workflows/ci.yml` after the complete local-first verification gate succeeds.
 
-## H5 public subdomain
-
-Published H5 pages use the HTTPS origin saved from Admin > Page Center > 添加域名,
-for example `https://pages.example.com`. The Page Center then returns links such as
-`https://pages.example.com/pages/summer-sale/`; the `/pages/*` route remains the
-public H5 route on that hostname. Leave the variable empty for local development,
-where the Admin app keeps using the Storefront development origin.
-
-The H5 runtime is deployed as a separate Worker with `wrangler.h5.jsonc`. The main
-Worker continues to serve the Admin and Storefront, while the H5 Worker reads the
-same D1 and R2 bindings for published page data and files. The H5 origin saved in
-Page Center's D1 setting is the single source of truth for generated public links
-and host validation. Deploy the main Worker with `pnpm deploy:worker` and the H5
-Worker with `pnpm deploy:h5-worker`.
-
-The subdomain must be connected to the H5 Worker as a Cloudflare Custom Domain before
-using it in production. Do not use a wildcard or a placeholder hostname in the
-production variable. Keep the H5 hostname separate from the Admin hostname so
-uploaded H5 code is not served from the Admin origin.
-
 ## Deployment command separation
 
 `pnpm deploy:worker` builds and deploys the Worker/static bundle. It does not apply remote D1 migrations. The compatibility `pnpm deploy` alias delegates to `deploy:worker` and therefore also does not migrate production D1.

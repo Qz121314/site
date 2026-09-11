@@ -154,16 +154,12 @@ Site Admin 会把当前属于该客服连接的在线客服产品目录一并同
         "categoryId": "massage",
         "categoryName": "Massage",
         "isEnabled": true,
-        "sourceType": "product",
-        "presentationMode": "h5",
-        "h5PageId": "landing-page-id"
+        "sourceType": "product"
       }
     ]
   }
 }
 ```
-
-H5 页面在页面中心保存时会同时创建一个普通产品记录，并以 `presentationMode: "h5"` 标记其独立展示方式。它使用主站产品 ID、分区、转化分组和公开地址同步到客服系统，不再创建 `h5-page:<id>` 这种第二产品身份。客服端可以通过 `presentationMode` 与 `h5PageId` 识别落地页来源，同时仍按产品所属分区和转化分组参与客服分流。一个 H5 产品的所有 CTA 共用该产品的转化分组；多个客服坐席的分配由该转化分组内部完成。
 
 客服系统当前接受最多 5000 个产品。同步采用“先禁用旧目录，再 upsert 本次目录”的方式，因此客服后台看到的是 Site 当前权威产品集合。
 

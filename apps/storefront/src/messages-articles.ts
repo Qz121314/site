@@ -7,7 +7,7 @@ export type MessageArticleMetadata = {
   cardId: string;
   title: string;
   preview: string;
-  targetKind: 'article' | 'page' | 'link';
+  targetKind: 'article' | 'link';
   targetRef: string;
   sectionId: string | null;
   conversionGroupId: string | null;
@@ -59,7 +59,7 @@ function parseMessageArticle(value: unknown): MessageArticleMetadata | null {
     !cardId ||
     cardId.length > 120 ||
     !title ||
-    !['article', 'page', 'link'].includes(String(targetKind)) ||
+    !['article', 'link'].includes(String(targetKind)) ||
     !targetRef ||
     typeof sortOrder !== 'number' ||
     !Number.isFinite(sortOrder)

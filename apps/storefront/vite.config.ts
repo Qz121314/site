@@ -19,10 +19,6 @@ export default defineConfig({
         target: 'http://localhost:8787',
         changeOrigin: true,
       },
-      '/pages': {
-        target: 'http://localhost:8787',
-        changeOrigin: true,
-      },
       '/public': {
         target: 'http://localhost:8787',
         changeOrigin: true,

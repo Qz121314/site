@@ -1,3 +1,4 @@
+import { X } from 'lucide-react';
 import { useMemo, useState, type FormEvent, type KeyboardEvent } from 'react';
 import { Button } from '../components/ui/button';
 import { AdminDialog } from '../components/ui/dialog';
@@ -28,7 +29,6 @@ import type {
 type ProductDependencyTarget = 'categories' | 'tags' | 'conversion-pool';
 
 type ProductEditorDialogProps = {
-  sectionName: string;
   editingProduct: AdminProduct | null;
   form: ProductInput;
   media: ProductEditorImage[];
@@ -43,7 +43,7 @@ type ProductEditorDialogProps = {
   onFormChange: (next: ProductInput) => void;
   onOpenMediaPicker: () => void;
   onRemoveMedia: (key: string) => void;
-  onMoveMedia: (key: string, direction: -1 | 1) => void;
+  onReorderMedia: (draggedKey: string, targetKey: string) => void;
   onSetCover: (key: string | null) => void;
   onCreateCategory?: (name: string) => Promise<AdminCategory>;
   onCreateTag?: (name: string) => Promise<AdminProductTag>;
@@ -52,7 +52,6 @@ type ProductEditorDialogProps = {
   onSubmit: (event: FormEvent<HTMLFormElement>) => void;
 };
 
-type BodyMode = 'edit' | 'preview';
 type InlineCreateKind = 'category' | 'tag' | null;
 
 function modeLabel(mode: ProductServiceMode): string {
@@ -131,7 +130,6 @@ function mediaIds(media: ProductEditorImage[]): string[] {
 }
 
 export function ProductEditorDialog({
-  sectionName,
   editingProduct,
   form,
   media,
@@ -146,7 +144,7 @@ export function ProductEditorDialog({
   onFormChange,
   onOpenMediaPicker,
   onRemoveMedia,
-  onMoveMedia,
+  onReorderMedia,
   onSetCover,
   onCreateCategory,
   onCreateTag,
@@ -154,13 +152,13 @@ export function ProductEditorDialog({
   onClose,
   onSubmit,
 }: ProductEditorDialogProps) {
-  const [bodyMode, setBodyMode] = useState<BodyMode>('edit');
   const [categoryText, setCategoryText] = useState(
     () => categories.find((category) => category.id === form.categoryId)?.name ?? '',
   );
   const [tagText, setTagText] = useState('');
   const [creatingInline, setCreatingInline] = useState<InlineCreateKind>(null);
   const [inlineError, setInlineError] = useState('');
+  const [draggingMediaKey, setDraggingMediaKey] = useState<string | null>(null);
 
   const baselineCategoryText = editingProduct?.categoryId
     ? (categories.find((category) => category.id === editingProduct.categoryId)?.name ??
@@ -329,30 +327,86 @@ export function ProductEditorDialog({
     <AdminDialog
       open
       title={editingProduct ? '编辑产品' : '新增产品'}
-      eyebrow={`${sectionName} · 产品内容`}
+      ariaLabel={`${editingProduct ? '编辑' : '新增'}产品`}
+      showHeading={false}
       onClose={() => void requestClose()}
       closeDisabled={busy}
       size="large"
       className="product-editor-dialog"
       headerActions={
         <div className="product-editor-header-actions">
-          <label className="product-switch-field product-header-visibility">
-            <input
-              type="checkbox"
-              checked={form.isVisible !== false}
-              onChange={(event) => patch({ isVisible: event.target.checked })}
-            />
-            <span>前端展示</span>
-          </label>
-          <Button
-            type="submit"
-            form="product-editor-form"
-            variant="primary"
-            loading={saveStage === 'saving'}
-            disabled={handoffBusy}
+          <div
+            className="product-header-settings product-header-settings-left"
+            aria-label="产品状态设置"
           >
-            {saveButtonLabel(saveStage, editingProduct)}
-          </Button>
+            <label className="product-header-setting">
+              <span>发布状态</span>
+              <select
+                aria-label="发布状态"
+                value={form.status}
+                onChange={(event) =>
+                  patch({ status: event.target.value as ProductStatus })
+                }
+              >
+                <option value="draft">草稿</option>
+                <option value="published">发布</option>
+                <option value="archived">归档</option>
+              </select>
+            </label>
+            <label className="product-header-featured-setting">
+              <input
+                type="checkbox"
+                checked={form.isVisible !== false}
+                onChange={(event) => patch({ isVisible: event.target.checked })}
+              />
+              <span>前端展示</span>
+            </label>
+            <label className="product-header-featured-setting">
+              <input
+                type="checkbox"
+                checked={form.isFeatured}
+                onChange={(event) => patch({ isFeatured: event.target.checked })}
+              />
+              <span>首页推荐</span>
+            </label>
+          </div>
+          <div
+            className="product-header-settings product-header-settings-right"
+            aria-label="产品排序设置"
+          >
+            <label className="product-header-setting product-header-order-setting">
+              <span>排序</span>
+              <input
+                aria-label="产品排序"
+                type="number"
+                min={0}
+                max={1_000_000}
+                value={form.sortOrder}
+                onChange={(event) => patch({ sortOrder: Number(event.target.value) })}
+              />
+            </label>
+            <label className="product-header-setting product-header-order-setting">
+              <span>推荐排序</span>
+              <input
+                aria-label="首页推荐排序"
+                type="number"
+                min={0}
+                max={1_000_000}
+                value={form.featuredOrder}
+                disabled={!form.isFeatured}
+                onChange={(event) => patch({ featuredOrder: Number(event.target.value) })}
+              />
+            </label>
+            <Button
+              type="submit"
+              form="product-editor-form"
+              variant="primary"
+              loading={saveStage === 'saving'}
+              disabled={handoffBusy}
+            >
+              {saveButtonLabel(saveStage, editingProduct)}
+            </Button>
+          </div>
         </div>
       }
     >
@@ -511,52 +565,6 @@ export function ProductEditorDialog({
               </div>
             ) : null}
           </div>
-
-          <label className="product-field product-core-status">
-            <span>发布状态</span>
-            <select
-              value={form.status}
-              onChange={(event) => patch({ status: event.target.value as ProductStatus })}
-            >
-              <option value="draft">草稿</option>
-              <option value="published">发布</option>
-              <option value="archived">归档</option>
-            </select>
-          </label>
-
-          <label className="product-field product-core-sort">
-            <span>产品排序</span>
-            <input
-              type="number"
-              min={0}
-              max={1_000_000}
-              value={form.sortOrder}
-              onChange={(event) => patch({ sortOrder: Number(event.target.value) })}
-            />
-          </label>
-
-          <label className="product-switch-field product-core-featured">
-            <input
-              type="checkbox"
-              checked={form.isFeatured}
-              onChange={(event) => patch({ isFeatured: event.target.checked })}
-            />
-            <span>
-              <strong>首页推荐</strong>
-            </span>
-          </label>
-
-          <label className="product-field product-core-featured-sort">
-            <span>首页推荐排序</span>
-            <input
-              type="number"
-              min={0}
-              max={1_000_000}
-              value={form.featuredOrder}
-              disabled={!form.isFeatured}
-              onChange={(event) => patch({ featuredOrder: Number(event.target.value) })}
-            />
-          </label>
         </div>
 
         {inlineError ? (
@@ -569,28 +577,8 @@ export function ProductEditorDialog({
           <div className="product-body-field">
             <div className="product-body-heading">
               <strong>产品正文 · Markdown</strong>
-              <div
-                className="product-editor-tabs"
-                role="tablist"
-                aria-label="正文编辑模式"
-              >
-                <button
-                  type="button"
-                  className={bodyMode === 'edit' ? 'is-active' : undefined}
-                  onClick={() => setBodyMode('edit')}
-                >
-                  编辑
-                </button>
-                <button
-                  type="button"
-                  className={bodyMode === 'preview' ? 'is-active' : undefined}
-                  onClick={() => setBodyMode('preview')}
-                >
-                  预览
-                </button>
-              </div>
             </div>
-            {bodyMode === 'edit' ? (
+            <div className="product-body-content">
               <textarea
                 value={form.body}
                 maxLength={20_000}
@@ -599,7 +587,6 @@ export function ProductEditorDialog({
                 }
                 onChange={(event) => patch({ body: event.target.value })}
               />
-            ) : (
               <div className="product-markdown-preview">
                 {form.body.trim() ? (
                   <MarkdownPreview source={form.body} />
@@ -607,7 +594,7 @@ export function ProductEditorDialog({
                   <p className="product-preview-empty">正文为空。</p>
                 )}
               </div>
-            )}
+            </div>
           </div>
 
           <section
@@ -630,15 +617,36 @@ export function ProductEditorDialog({
               <div className="product-media-grid">
                 {media.map((item, index) => {
                   const previewUrl = getEditorImagePreviewUrl(item);
-                  const dimensions = getEditorImageDimensions(item);
                   const fileName = getEditorImageFileName(item);
                   const video = isEditorMediaVideo(item);
                   const coverEligible = isEditorMediaCoverEligible(item);
                   const isCover = effectiveCoverKey === item.key;
                   return (
                     <article
-                      className={`product-media-card${isCover ? ' is-cover' : ''}`}
+                      className={`product-media-card${isCover ? ' is-cover' : ''}${draggingMediaKey === item.key ? ' is-dragging' : ''}`}
                       key={item.key}
+                      tabIndex={0}
+                      aria-label={`媒体 ${index + 1}：${fileName}，可拖拽调整顺序`}
+                      draggable={!busy}
+                      onDragStart={(event) => {
+                        event.dataTransfer.effectAllowed = 'move';
+                        event.dataTransfer.setData('text/plain', item.key);
+                        setDraggingMediaKey(item.key);
+                      }}
+                      onDragOver={(event) => {
+                        if (!draggingMediaKey || draggingMediaKey === item.key) return;
+                        event.preventDefault();
+                        event.dataTransfer.dropEffect = 'move';
+                      }}
+                      onDrop={(event) => {
+                        event.preventDefault();
+                        const draggedKey = event.dataTransfer.getData('text/plain');
+                        if (draggedKey && draggedKey !== item.key) {
+                          onReorderMedia(draggedKey, item.key);
+                        }
+                        setDraggingMediaKey(null);
+                      }}
+                      onDragEnd={() => setDraggingMediaKey(null)}
                     >
                       <div className="product-media-preview">
                         {previewUrl ? (
@@ -658,49 +666,43 @@ export function ProductEditorDialog({
                         )}
                         <div className="product-media-badges">
                           <b className="is-kind-badge">{editorMediaKindLabel(item)}</b>
-                          {isCover ? <b>封面</b> : null}
+                          {coverEligible ? (
+                            <button
+                              className={`product-media-cover-button${isCover ? ' is-active' : ''}`}
+                              type="button"
+                              disabled={isCover || busy}
+                              title={isCover ? '当前封面' : '设为封面'}
+                              aria-label={isCover ? '当前封面' : `设为封面 ${fileName}`}
+                              onClick={() => onSetCover(item.key)}
+                            >
+                              {isCover ? '封面' : '设为封面'}
+                            </button>
+                          ) : null}
                         </div>
+                        <button
+                          className="product-media-remove-button"
+                          type="button"
+                          disabled={busy}
+                          aria-label={`移除媒体 ${fileName}`}
+                          onClick={() => onRemoveMedia(item.key)}
+                        >
+                          <X aria-hidden="true" size={12} />
+                        </button>
                       </div>
                       <div className="product-media-meta">
                         <strong title={fileName}>{fileName}</strong>
                         <small>
-                          {dimensions.width && dimensions.height
-                            ? `${dimensions.width} × ${dimensions.height}`
-                            : '尺寸未知'}{' '}
+                          {(() => {
+                            const dimensions = getEditorImageDimensions(item);
+                            return dimensions.width && dimensions.height
+                              ? `${dimensions.width} × ${dimensions.height}`
+                              : '尺寸未知';
+                          })()}{' '}
                           · {formatImageBytes(getEditorImageByteSize(item))}
                         </small>
                       </div>
-                      <div className="product-media-actions">
-                        <button
-                          type="button"
-                          disabled={index === 0 || busy}
-                          onClick={() => onMoveMedia(item.key, -1)}
-                        >
-                          前移
-                        </button>
-                        <button
-                          type="button"
-                          disabled={index === media.length - 1 || busy}
-                          onClick={() => onMoveMedia(item.key, 1)}
-                        >
-                          后移
-                        </button>
-                        <button
-                          type="button"
-                          disabled={!coverEligible || isCover || busy}
-                          title={!coverEligible ? '视频不能作为产品封面' : undefined}
-                          onClick={() => onSetCover(item.key)}
-                        >
-                          封面
-                        </button>
-                        <button
-                          className="text-danger"
-                          type="button"
-                          disabled={busy}
-                          onClick={() => onRemoveMedia(item.key)}
-                        >
-                          移除
-                        </button>
+                      <div className="product-media-drag-hint" aria-hidden="true">
+                        拖拽调整顺序
                       </div>
                     </article>
                   );

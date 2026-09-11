@@ -379,7 +379,6 @@ export function ProductTable({
                         </AdminStatusBadge>
                       </div>
                       <small>/{product.slug}</small>
-                      {product.presentationMode === 'h5' ? <b>H5 展示</b> : null}
                       {!product.isVisible ? <b>前端隐藏</b> : null}
                       {product.isFeatured ? <b>热门</b> : null}
                     </div>

@@ -23,7 +23,6 @@ import {
 } from './category-management/api';
 import { fetchConversionGroups, type AdminConversionGroup } from './conversion-pool/api';
 import { DeleteProductDialog } from './product-management/DeleteProductDialog';
-import { H5ProductCreateDialog } from './product-management/H5ProductCreateDialog';
 import { ProductEditorDialog } from './product-management/ProductEditorDialog';
 import { ProductTable } from './product-management/ProductTable';
 import {
@@ -76,7 +75,6 @@ type SaveStage = 'idle' | 'saving';
 type ProductDropPosition = 'before' | 'after';
 
 const emptyProductForm: ProductInput = {
-  presentationMode: 'standard',
   isVisible: true,
   serviceMode: 'offline',
   title: '',
@@ -116,7 +114,6 @@ function describeError(error: unknown): string {
 
 function productToInput(product: AdminProduct): ProductInput {
   return {
-    presentationMode: product.presentationMode,
     isVisible: product.isVisible,
     serviceMode: product.serviceMode,
     title: product.title,
@@ -189,7 +186,6 @@ export function ProductManagementView({
   const [media, setMedia] = useState<ProductEditorImage[]>([]);
   const [coverKey, setCoverKey] = useState<string | null>(null);
   const [editorOpen, setEditorOpen] = useState(false);
-  const [h5CreateOpen, setH5CreateOpen] = useState(false);
   const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
   const [resumeNotice, setResumeNotice] = useState(false);
   const [saveStage, setSaveStage] = useState<SaveStage>('idle');
@@ -243,7 +239,6 @@ export function ProductManagementView({
     setSelectedIds(new Set());
     setTrashProducts([]);
     setEditorOpen(false);
-    setH5CreateOpen(false);
     setMediaPickerOpen(false);
     setResumeNotice(false);
     setErrorMessage('');
@@ -391,15 +386,17 @@ export function ProductManagementView({
     if (coverKey === key) setCoverKey(null);
   }
 
-  function moveMedia(key: string, direction: -1 | 1) {
+  function reorderMedia(draggedKey: string, targetKey: string) {
     setMedia((current) => {
+      const draggedIndex = current.findIndex((item) => item.key === draggedKey);
+      const targetIndex = current.findIndex((item) => item.key === targetKey);
+      if (draggedIndex < 0 || targetIndex < 0 || draggedIndex === targetIndex) {
+        return current;
+      }
       const next = [...current];
-      const index = next.findIndex((item) => item.key === key);
-      const targetIndex = index + direction;
-      if (index < 0 || targetIndex < 0 || targetIndex >= next.length) return current;
-      const [item] = next.splice(index, 1);
-      if (!item) return current;
-      next.splice(targetIndex, 0, item);
+      const [dragged] = next.splice(draggedIndex, 1);
+      if (!dragged) return current;
+      next.splice(targetIndex, 0, dragged);
       return next;
     });
   }
@@ -719,9 +716,6 @@ export function ProductManagementView({
         }
         trailing={
           <div className="product-toolbar-actions">
-            <Button variant="secondary" onClick={() => setH5CreateOpen(true)}>
-              新增 H5 商品
-            </Button>
             <Button variant="primary" onClick={openCreateEditor}>
               新增产品
             </Button>
@@ -794,7 +788,6 @@ export function ProductManagementView({
 
       {editorOpen ? (
         <ProductEditorDialog
-          sectionName={section.name}
           editingProduct={editingProduct}
           form={form}
           media={media}
@@ -818,9 +811,9 @@ export function ProductManagementView({
             setErrorMessage('');
             removeMedia(key);
           }}
-          onMoveMedia={(key, direction) => {
+          onReorderMedia={(draggedKey, targetKey) => {
             setErrorMessage('');
-            moveMedia(key, direction);
+            reorderMedia(draggedKey, targetKey);
           }}
           onSetCover={(key) => {
             setErrorMessage('');
@@ -831,19 +824,6 @@ export function ProductManagementView({
           onConfigureDependency={(target) => void handleConfigureDependency(target)}
           onClose={closeEditor}
           onSubmit={(event) => void handleSave(event)}
-        />
-      ) : null}
-
-      {h5CreateOpen ? (
-        <H5ProductCreateDialog
-          sectionId={section.id}
-          sectionName={section.name}
-          groups={groups}
-          onClose={() => setH5CreateOpen(false)}
-          onSaved={async () => {
-            await loadActive();
-            setSuccessMessage('H5 商品已发布。');
-          }}
         />
       ) : null}
 

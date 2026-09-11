@@ -233,8 +233,28 @@
 
 .section-status-stack {
   display: grid;
-  justify-items: start;
-  gap: 4px;
+  min-width: 132px;
+  gap: 6px;
+  padding: 2px 0;
+}
+
+.section-status-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.section-status-label {
+  color: #8490a3;
+  font-size: 0.64rem;
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.section-status-line .ui-button {
+  min-height: 0;
+  padding: 0;
 }
 
 .section-editor-dialog .section-editor-sort-field input {

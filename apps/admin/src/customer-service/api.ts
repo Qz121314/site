@@ -51,10 +51,7 @@ type ProductCatalog = {
     categoryId: string | null;
     categoryName: string | null;
     isEnabled: true;
-    /** Keeps H5 presentation metadata while using the ordinary product identity. */
     sourceType: 'product';
-    presentationMode: 'standard' | 'h5';
-    h5PageId: string | null;
   }>;
 };
 
@@ -257,8 +254,6 @@ async function loadProductCatalog(connectionId: string): Promise<ProductCatalog>
             categoryName: product.categoryName,
             isEnabled: true as const,
             sourceType: 'product' as const,
-            presentationMode: product.presentationMode,
-            h5PageId: product.h5PageId,
           },
         ];
       });

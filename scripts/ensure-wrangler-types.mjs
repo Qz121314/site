@@ -5,12 +5,7 @@ import { spawnSync } from 'node:child_process';
 
 const outputPath = 'apps/worker/src/worker-configuration.d.ts';
 const stampPath = '.wrangler/generated-types-input.sha256';
-const inputPaths = [
-  'wrangler.jsonc',
-  'wrangler.h5.jsonc',
-  'package.json',
-  'pnpm-lock.yaml',
-];
+const inputPaths = ['wrangler.jsonc', 'package.json', 'pnpm-lock.yaml'];
 
 const hash = createHash('sha256');
 for (const path of inputPaths) {

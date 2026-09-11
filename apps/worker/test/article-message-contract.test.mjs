@@ -4,8 +4,6 @@ import test from 'node:test';
 import { Hono } from 'hono';
 import { adminMessageArticleRoutes } from '../src/routes/admin-message-articles.ts';
 
-const NOW = '2026-09-06T12:00:00.000Z';
-
 function withRequestId(routes) {
   const app = new Hono();
   app.use('*', async (context, next) => {
@@ -16,7 +14,7 @@ function withRequestId(routes) {
   return app;
 }
 
-function createDb({ origin = 'https://h5.example.com' } = {}) {
+function createDb() {
   const cards = [
     {
       id: 'card-b',
@@ -44,7 +42,6 @@ function createDb({ origin = 'https://h5.example.com' } = {}) {
     },
   ];
   const articles = new Set(['article-a']);
-  const pages = new Set(['demo']);
   const prepared = [];
   return {
     cards,
@@ -58,14 +55,8 @@ function createDb({ origin = 'https://h5.example.com' } = {}) {
           return this;
         },
         async first() {
-          if (this.sql.includes('h5_public_settings')) {
-            return { public_origin: origin, updated_at: NOW };
-          }
           if (this.sql.includes('SELECT id FROM faqs')) {
             return articles.has(this.args[0]) ? { id: this.args[0] } : null;
-          }
-          if (this.sql.includes('SELECT id FROM h5_pages')) {
-            return pages.has(this.args[0]) ? { id: this.args[0] } : null;
           }
           return null;
         },
@@ -82,9 +73,6 @@ function createDb({ origin = 'https://h5.example.com' } = {}) {
           }
           if (this.sql.includes('FROM faqs')) {
             return { results: [{ id: 'article-a', title: 'Article A' }] };
-          }
-          if (this.sql.includes('FROM h5_pages')) {
-            return { results: [{ id: 'page-demo', slug: 'demo', name: 'Demo' }] };
           }
           if (this.sql.includes('FROM conversion_groups')) return { results: [] };
           throw new Error(`Unexpected all SQL: ${this.sql}`);
@@ -130,7 +118,7 @@ test('GET returns generic CTA cards in deterministic order', async () => {
   assert.equal(body.cards[1].targetRef, 'https://example.com/b');
 });
 
-test('PUT accepts article, page, and link CTA targets with optional conversion binding', async () => {
+test('PUT accepts article and link CTA targets with optional conversion binding', async () => {
   const db = createDb();
   const payload = {
     cards: [
@@ -140,15 +128,6 @@ test('PUT accepts article, page, and link CTA targets with optional conversion b
         backgroundMediaId: null,
         targetKind: 'article',
         targetRef: 'article-a',
-        sectionId: null,
-        conversionGroupId: null,
-      },
-      {
-        id: 'card-page',
-        title: 'Open H5',
-        backgroundMediaId: null,
-        targetKind: 'page',
-        targetRef: 'https://h5.example.com/pages/demo/',
         sectionId: null,
         conversionGroupId: null,
       },
@@ -179,60 +158,4 @@ test('PUT accepts article, page, and link CTA targets with optional conversion b
     ),
     true,
   );
-});
-
-test('empty H5 origin rejects page binding instead of accepting a fake localhost link', async () => {
-  const db = createDb({ origin: null });
-  const response = await app.request(
-    'https://admin.example.com/',
-    {
-      method: 'PUT',
-      headers: { 'x-admin-request': '1', 'content-type': 'application/json' },
-      body: JSON.stringify({
-        cards: [
-          {
-            title: 'H5',
-            targetKind: 'page',
-            targetRef: 'https://h5.example.com/pages/demo/',
-            backgroundMediaId: null,
-            sectionId: null,
-            conversionGroupId: null,
-          },
-        ],
-      }),
-    },
-    { DB: db },
-  );
-  assert.equal(response.status, 400);
-  assert.equal((await response.json()).error.code, 'MESSAGE_CARD_TARGET_INVALID');
-});
-
-test('H5 page binding rejects a configured-origin mismatch and invalid page path', async () => {
-  const db = createDb();
-  for (const targetRef of [
-    'https://other.example.com/pages/demo/',
-    'https://h5.example.com/demo',
-  ]) {
-    const response = await app.request(
-      'https://admin.example.com/',
-      {
-        method: 'PUT',
-        headers: { 'x-admin-request': '1', 'content-type': 'application/json' },
-        body: JSON.stringify({
-          cards: [
-            {
-              title: 'H5',
-              targetKind: 'page',
-              targetRef,
-              backgroundMediaId: null,
-              sectionId: null,
-              conversionGroupId: null,
-            },
-          ],
-        }),
-      },
-      { DB: db },
-    );
-    assert.equal(response.status, 400);
-  }
 });
