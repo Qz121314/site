@@ -100,7 +100,10 @@ test('product media picker is rendered outside the product editor stacking conte
 
   assert.match(picker, /createPortal/);
   assert.match(picker, /createPortal\(dialog, document\.body\)/);
-  assert.match(pickerCss, /\.media-picker-backdrop\s*\{[\s\S]*z-index:\s*1300/);
+  assert.match(
+    pickerCss,
+    /\.media-picker-backdrop\s*\{[\s\S]*position:\s*fixed[\s\S]*z-index:\s*1300[\s\S]*inset:\s*0/u,
+  );
 });
 
 test('Phase D shared CSS owns generic management patterns without important overrides', async () => {

@@ -175,6 +175,7 @@ export function MediaPickerDialog(props: MediaPickerDialogProps) {
       closeDisabled={workingId !== null}
       size="large"
       className="media-picker-dialog"
+      initialFocus="dialog"
     >
       <div className="media-picker-body">
         <div className="media-picker-filters">
@@ -182,7 +183,6 @@ export function MediaPickerDialog(props: MediaPickerDialogProps) {
             className="media-picker-search"
             type="search"
             value={query}
-            autoFocus
             placeholder="搜索文件名或格式"
             onChange={(event) => setQuery(event.target.value)}
           />
