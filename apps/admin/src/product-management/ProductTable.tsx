@@ -171,12 +171,30 @@ export function ProductTable({
   function beginColumnResize(index: number, event: ReactPointerEvent<HTMLSpanElement>) {
     event.preventDefault();
     event.stopPropagation();
+    event.currentTarget.setPointerCapture(event.pointerId);
     resizeRef.current = {
       index,
       startX: event.clientX,
       startWidths: columnWidths,
     };
     document.body.classList.add('is-resizing-product-columns');
+  }
+
+  function nudgeColumnResize(index: number, delta: number) {
+    setColumnWidths((currentWidths) => {
+      const nextIndex = index + 1;
+      const currentWidth = Math.max(
+        MIN_COLUMN_WIDTHS[index] ?? 0,
+        (currentWidths[index] ?? 0) + delta,
+      );
+      const nextWidth =
+        (currentWidths[nextIndex] ?? 0) - (currentWidth - (currentWidths[index] ?? 0));
+      if (nextWidth < (MIN_COLUMN_WIDTHS[nextIndex] ?? 0)) return currentWidths;
+      const nextWidths = [...currentWidths];
+      nextWidths[index] = currentWidth;
+      nextWidths[nextIndex] = nextWidth;
+      return nextWidths;
+    });
   }
 
   function renderColumnHeader(label: string, index: number) {
@@ -187,8 +205,20 @@ export function ProductTable({
           <span
             className="product-column-resizer"
             role="separator"
+            tabIndex={0}
             aria-label={`调整${label}列宽`}
+            title="拖动调整列宽"
             onPointerDown={(event) => beginColumnResize(index, event)}
+            onKeyDown={(event) => {
+              if (event.key === 'ArrowLeft') {
+                event.preventDefault();
+                nudgeColumnResize(index, -1);
+              }
+              if (event.key === 'ArrowRight') {
+                event.preventDefault();
+                nudgeColumnResize(index, 1);
+              }
+            }}
           />
         ) : null}
       </th>

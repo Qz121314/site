@@ -228,6 +228,7 @@
   bottom: 0;
   width: 10px;
   cursor: col-resize;
+  outline: 0;
 }
 
 .product-column-resizer::after {
@@ -236,11 +237,12 @@
   right: 4px;
   bottom: 8px;
   width: 1px;
-  background: transparent;
+  background: #cbd3df;
   content: '';
 }
 
 .product-column-resizer:hover::after,
+.product-column-resizer:focus-visible::after,
 .is-resizing-product-columns .product-column-resizer::after {
   background: var(--brand, #ff1767);
 }
