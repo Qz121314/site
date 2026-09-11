@@ -103,6 +103,13 @@ test('product media picker is rendered outside the product editor stacking conte
   assert.match(pickerCss, /\.media-picker-backdrop\s*\{[\s\S]*z-index:\s*1300/);
 });
 
+test('shared media picker is rendered outside the workspace scroll container', async () => {
+  const picker = await read('asset-library/MediaPickerDialog.tsx');
+
+  assert.match(picker, /import \{ createPortal \} from 'react-dom'/);
+  assert.match(picker, /return createPortal\(dialog, document\.body\)/);
+});
+
 test('Phase D shared CSS owns generic management patterns without important overrides', async () => {
   const css = await read('admin-ui-system.css');
   assert.match(css, /Phase D management workspaces/);
