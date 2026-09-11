@@ -38,7 +38,6 @@ import { buildSupportContactCardHref } from './support-attachment-safety';
 import { MarkdownContent } from './MarkdownContent';
 import { ResilientImage } from './ResilientMedia';
 import { SYSTEM_UI } from './system-ui';
-import { useSupportTypingCore } from './support-chat-core';
 
 export type PendingSupportConversation = {
   productTitle: string;
@@ -426,6 +425,8 @@ export function MessageThreadPageContent({
   connectionError = false,
   noAgentNotice = null,
   onRetryConnection,
+  agentTyping = false,
+  onTypingChange = () => undefined,
 }: {
   conversation: SupportConversationDetail | null;
   pendingConversation?: PendingSupportConversation | null;
@@ -447,9 +448,10 @@ export function MessageThreadPageContent({
   connectionError?: boolean;
   noAgentNotice?: NoAgentNotice | null;
   onRetryConnection?: (() => void) | undefined;
+  agentTyping?: boolean;
+  onTypingChange?: (value: string) => void;
 }) {
   const [draft, setDraft] = useState('');
-  const typing = useSupportTypingCore(conversation?.id ?? null);
   const timelineRef = useRef<HTMLDivElement | null>(null);
   const attachmentInputRef = useRef<HTMLInputElement | null>(null);
   const openedConversationRef = useRef<string | null>(null);
@@ -558,7 +560,7 @@ export function MessageThreadPageContent({
     const body = draft.trim();
     if (!body || !canSend || !onSendMessage || sending) return;
     setDraft('');
-    typing.setTyping('');
+    onTypingChange('');
     try {
       await onSendMessage(body);
     } catch {
@@ -726,7 +728,7 @@ export function MessageThreadPageContent({
             </Fragment>
           );
         })}
-        {typing.agentTyping ? (
+        {agentTyping ? (
           <div className="chat-agent-typing" role="status" aria-live="polite">
             <span aria-hidden="true">
               <i />
@@ -807,9 +809,9 @@ export function MessageThreadPageContent({
           maxLength={4000}
           onChange={(event) => {
             setDraft(event.target.value);
-            typing.setTyping(event.target.value);
+            onTypingChange(event.target.value);
           }}
-          onBlur={() => typing.setTyping('')}
+          onBlur={() => onTypingChange('')}
           onKeyDown={(event) => {
             if (
               event.key === 'Enter' &&
@@ -866,6 +868,8 @@ export function MessagesWorkspace({
   connectionError = false,
   noAgentNotice = null,
   onRetryConnection,
+  agentTyping = false,
+  onTypingChange = () => undefined,
   supportAvailable = null,
 }: {
   conversations: SupportConversationDetail[] | SupportConversationSummary[];
@@ -890,6 +894,8 @@ export function MessagesWorkspace({
   connectionError?: boolean;
   noAgentNotice?: NoAgentNotice | null;
   onRetryConnection?: (() => void) | undefined;
+  agentTyping?: boolean;
+  onTypingChange?: (value: string) => void;
   supportAvailable?: boolean | null;
 }) {
   const threadOpen = activeConversationRef !== null || pendingConversation !== null;
@@ -926,6 +932,8 @@ export function MessagesWorkspace({
             connectionError={connectionError}
             noAgentNotice={noAgentNotice}
             onRetryConnection={onRetryConnection}
+            agentTyping={agentTyping}
+            onTypingChange={onTypingChange}
           />
         ) : (
           <MessagesDetailPlaceholder />

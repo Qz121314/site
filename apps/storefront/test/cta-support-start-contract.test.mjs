@@ -12,19 +12,19 @@ test('CTA compose creates the remote conversation without inventing a visitor te
   const contract = source('../src/support-contract.ts');
   const gateway = source('../src/support-gateway.ts');
 
-  const startQuery = messages.indexOf("queryKey: ['support-compose-start'");
   const sendMutation = core.indexOf('const sendMutation = useMutation');
   const startConversation = gateway.indexOf(
     'async startConversation(input: StartSupportConversationInput, signal)',
   );
   const sendMessage = gateway.indexOf('async sendMessage(conversationRef: string');
 
-  assert.ok(startQuery >= 0);
   assert.ok(sendMutation >= 0);
+  assert.doesNotMatch(messages, /siteSupportGateway\.startConversation\(/u);
+  assert.match(core, /siteSupportGateway\.startConversation\(startInput/u);
   assert.ok(startConversation >= 0);
   assert.ok(sendMessage > startConversation);
-  assert.match(messages, /return siteSupportGateway\.startConversation\(/u);
-  assert.match(messages, /handoffId: composeContext\.handoffId/u);
+  assert.match(messages, /useSupportChatCore/u);
+  assert.match(messages, /handoffId: resolvedComposeContext\.handoffId/u);
   assert.doesNotMatch(messages, /setComposeOptimisticMessage/u);
   assert.doesNotMatch(contract, /clientMessageId: string;\s*message: string;/u);
 

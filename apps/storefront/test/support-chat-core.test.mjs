@@ -1,4 +1,5 @@
 import assert from 'node:assert/strict';
+import { readFileSync } from 'node:fs';
 import test from 'node:test';
 import {
   applyRealtimeToConversationCache,
@@ -51,6 +52,13 @@ test('Messages and Landing share one normalized conversation cache shape', () =>
   );
   assert.equal(merged.nextMessageCursor, 'cursor-1');
   assert.equal(Array.isArray(merged.pages), false);
+});
+
+test('pagination cursor reaches a terminal null instead of reopening the prior page', () => {
+  const first = conversation();
+  const terminal = { ...conversation([message('agent-2')]), nextMessageCursor: null };
+  const merged = mergeSupportConversation(first, terminal);
+  assert.equal(merged.nextMessageCursor, null);
 });
 
 test('shared realtime updates message, status, agent, unread and read state', () => {
@@ -110,4 +118,19 @@ test('realtime recovery keeps the normalized cache eligible for a REST refresh',
     lastMessageId: null,
   });
   assert.deepEqual(recovered, current);
+});
+
+test('recovery is handled before conversation filtering for the real null-ref event shape', () => {
+  const core = readFileSync(
+    new URL('../src/support-chat-core.ts', import.meta.url),
+    'utf8',
+  );
+  assert.ok(
+    core.indexOf("event.type === 'realtime.recovered'") <
+      core.indexOf('event.conversationRef !== activeRef'),
+  );
+  assert.match(
+    core,
+    /refetchQueries\(\{\s*queryKey: \['support-conversation', activeRef\]/u,
+  );
 });

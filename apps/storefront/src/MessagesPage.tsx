@@ -137,10 +137,6 @@ export function MessagesPage({
   const supportAvailable = supportConnectionsQuery.isSuccess
     ? supportConnectionsQuery.data.length > 0
     : null;
-  const chatCore = useSupportChatCore({
-    conversationRef: activeConversationRef,
-    startInput: null,
-  });
   const composeContext = compose ? readComposeContext() : null;
   const composeProductQuery = useQuery({
     queryKey: [
@@ -183,7 +179,6 @@ export function MessagesPage({
       }
     : (composeHandoffQuery.data ?? null);
 
-  const activeConversation = chatCore.conversation;
   const composeProduct = composeProductQuery.data?.product ?? null;
   const sortedProductMedia = composeProduct
     ? [...composeProduct.media].sort((left, right) => left.sortOrder - right.sortOrder)
@@ -201,28 +196,21 @@ export function MessagesPage({
         productHref: `/sections/${encodeURIComponent(composeProduct.sectionId)}/products/${encodeURIComponent(composeProduct.id)}/`,
       }
     : null;
-  const composeStartQuery = useQuery({
-    queryKey: ['support-compose-start', resolvedComposeContext?.handoffId],
-    enabled: Boolean(resolvedComposeContext && pendingConversation?.productHref),
-    queryFn: ({ signal }) => {
-      if (!resolvedComposeContext || !pendingConversation?.productHref)
-        throw new Error('MESSAGE_CONTEXT_UNAVAILABLE');
-      return siteSupportGateway.startConversation(
-        {
-          handoffId: resolvedComposeContext.handoffId,
-          productId: resolvedComposeContext.productId,
-          sectionId: resolvedComposeContext.sectionId,
-          productTitle: pendingConversation.productTitle,
-          productCoverUrl: pendingConversation.productCoverUrl,
-          productHref: pendingConversation.productHref,
-        },
-        signal,
-      );
-    },
-    staleTime: Number.POSITIVE_INFINITY,
-    retry: false,
-    refetchOnWindowFocus: false,
+  const chatCore = useSupportChatCore({
+    conversationRef: activeConversationRef,
+    startInput:
+      resolvedComposeContext && pendingConversation?.productHref
+        ? {
+            handoffId: resolvedComposeContext.handoffId,
+            productId: resolvedComposeContext.productId,
+            sectionId: resolvedComposeContext.sectionId,
+            productTitle: pendingConversation.productTitle,
+            productCoverUrl: pendingConversation.productCoverUrl,
+            productHref: pendingConversation.productHref,
+          }
+        : null,
   });
+  const activeConversation = chatCore.conversation;
   const conversationsQuery = useQuery({
     queryKey: ['support-conversations'],
     queryFn: ({ signal }) => siteSupportGateway.listConversations(signal),
@@ -235,21 +223,19 @@ export function MessagesPage({
   const conversations = conversationsQuery.data ?? [];
   const messageArticles = getMessageArticlesFromBootstrap(bootstrap);
   const composeUnavailable =
-    composeProductQuery.isError ||
-    composeHandoffQuery.isError ||
-    composeStartQuery.isError;
+    composeProductQuery.isError || composeHandoffQuery.isError || chatCore.error !== null;
   const composeConnecting = Boolean(
     compose &&
     composeContext &&
     (composeProductQuery.isLoading ||
       composeHandoffQuery.isFetching ||
       (!resolvedComposeContext && !composeHandoffQuery.isError) ||
-      composeStartQuery.isFetching),
+      chatCore.loading),
   );
   const noAgentError =
-    composeStartQuery.error instanceof SupportApiError &&
-    composeStartQuery.error.code === 'NO_AGENT_AVAILABLE'
-      ? composeStartQuery.error
+    chatCore.error instanceof SupportApiError &&
+    chatCore.error.code === 'NO_AGENT_AVAILABLE'
+      ? chatCore.error
       : null;
   const noAgentNotice = noAgentError
     ? {
@@ -264,7 +250,7 @@ export function MessagesPage({
   const workspaceSupportAvailable = compose
     ? composeUnavailable
       ? false
-      : composeStartQuery.data
+      : chatCore.conversation
         ? true
         : null
     : supportAvailable;
@@ -311,7 +297,7 @@ export function MessagesPage({
   }, [activeConversationRef]);
 
   useEffect(() => {
-    const conversation = composeStartQuery.data;
+    const conversation = chatCore.conversation;
     if (!compose || !conversation) return;
 
     queryClient.setQueryData<SupportConversationSummary[]>(
@@ -324,7 +310,7 @@ export function MessagesPage({
     );
     queryClient.setQueryData(['support-conversation', conversation.id], conversation);
     replaceStorefrontLocation(`/messages/${encodeURIComponent(conversation.id)}/`);
-  }, [compose, composeStartQuery.data, queryClient]);
+  }, [compose, chatCore.conversation, queryClient]);
 
   const showNotificationToggle =
     Boolean(activeConversationRef) && notificationState !== 'unsupported';
@@ -343,7 +329,7 @@ export function MessagesPage({
       void composeHandoffQuery.refetch();
       return;
     }
-    if (composeStartQuery.isError) void composeStartQuery.refetch();
+    chatCore.retryConnection();
   }
 
   return (
@@ -421,6 +407,8 @@ export function MessagesPage({
           onRetryConnection={
             compose && composeUnavailable ? retryComposeConnection : undefined
           }
+          agentTyping={chatCore.agentTyping}
+          onTypingChange={chatCore.setTyping}
         />
       )}
     </div>

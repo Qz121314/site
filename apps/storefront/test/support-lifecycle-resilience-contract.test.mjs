@@ -9,20 +9,17 @@ function source(path) {
 test('support lifecycle keeps side-effect retries explicit and realtime recovery automatic', () => {
   const ui = source('../src/support-ui.tsx');
   const messages = source('../src/MessagesPage.tsx');
+  const core = source('../src/support-chat-core.ts');
   const realtime = source('../src/support-realtime.ts');
 
-  const handoffStart = messages.indexOf("queryKey: ['support-compose-handoff'");
-  const handoffEnd = messages.indexOf('const resolvedComposeContext', handoffStart);
-  const startStart = messages.indexOf("queryKey: ['support-compose-start'");
-  const startEnd = messages.indexOf('const conversationsQuery', startStart);
-  const handoffQuery = messages.slice(handoffStart, handoffEnd);
-  const startQuery = messages.slice(startStart, startEnd);
+  const startStart = core.indexOf("queryKey: ['support-conversation-start'");
+  const startEnd = core.indexOf('const activeRef', startStart);
+  const startQuery = core.slice(startStart, startEnd);
 
-  assert.ok(handoffStart >= 0);
   assert.ok(startStart >= 0);
-  assert.match(handoffQuery, /retry: false/u);
   assert.match(startQuery, /retry: false/u);
   assert.match(messages, /retryComposeConnection/u);
+  assert.doesNotMatch(messages, /support-compose-start/u);
 
   assert.match(ui, /status === 'waiting'/u);
   assert.match(ui, /SYSTEM_UI\.waitingForSupport/u);

@@ -49,7 +49,7 @@ export function mergeSupportConversation(
     ...current,
     ...incoming,
     messages: mergeMessages(current.messages, incoming.messages),
-    nextMessageCursor: incoming.nextMessageCursor ?? current.nextMessageCursor,
+    nextMessageCursor: incoming.nextMessageCursor,
   });
 }
 

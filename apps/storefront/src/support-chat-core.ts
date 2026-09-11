@@ -138,13 +138,13 @@ export function useSupportChatCore({ conversationRef, startInput }: ChatCoreOpti
   useEffect(() => {
     if (!activeRef) return undefined;
     return subscribeSupportRealtime((event) => {
-      if (event.conversationRef !== activeRef) return;
       if (event.type === 'realtime.recovered') {
         void queryClient.refetchQueries({
           queryKey: ['support-conversation', activeRef],
         });
         return;
       }
+      if (event.conversationRef !== activeRef) return;
       queryClient.setQueryData<SupportConversationQueryCache>(
         ['support-conversation', activeRef],
         (current) => applyRealtimeToConversationCache(current, event),
