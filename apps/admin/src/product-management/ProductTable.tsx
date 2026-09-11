@@ -219,7 +219,9 @@ export function ProductTable({
                 nudgeColumnResize(index, 1);
               }
             }}
-          />
+          >
+            <GripVertical aria-hidden="true" size={13} strokeWidth={2.4} />
+          </span>
         ) : null}
       </th>
     );
