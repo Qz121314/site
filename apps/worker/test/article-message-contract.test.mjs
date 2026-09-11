@@ -61,6 +61,9 @@ function createDb() {
           return null;
         },
         async all() {
+          if (this.sql.includes('p.name')) {
+            throw new Error('unknown Product alias in CTA card query');
+          }
           if (this.sql.includes('FROM message_cta_cards')) {
             return {
               results: [...cards].sort(

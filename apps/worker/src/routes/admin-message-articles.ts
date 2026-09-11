@@ -107,7 +107,7 @@ async function listCards(db: D1Database): Promise<MessageCard[]> {
       .prepare(
         `SELECT c.id, c.title, c.background_media_id, c.target_kind, c.target_ref,
                 c.section_id, c.conversion_group_id, c.sort_order, c.is_enabled,
-                COALESCE(f.question, p.name, c.target_ref) AS target_label
+                COALESCE(f.question, c.target_ref) AS target_label
          FROM message_cta_cards c
          LEFT JOIN faqs f ON c.target_kind = 'article' AND f.id = c.target_ref
          WHERE c.is_enabled = 1
