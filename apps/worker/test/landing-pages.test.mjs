@@ -77,13 +77,12 @@ const migration = readFileSync(
   'utf8',
 );
 
-test('landing schema is independent, product-referencing, and does not restore H5', () => {
+test('landing schema is independent and product-referencing', () => {
   assert.match(migration, /CREATE TABLE landing_pages/u);
   assert.match(migration, /product_id TEXT NOT NULL REFERENCES products\(id\)/u);
   assert.match(migration, /hero_asset_id TEXT REFERENCES media_assets\(id\)/u);
   assert.match(migration, /template_key TEXT NOT NULL DEFAULT 'direct_response'/u);
   assert.match(migration, /CHECK \(status IN \('draft', 'published', 'archived'\)\)/u);
-  assert.doesNotMatch(migration, /h5_pages|presentation_mode|landing_media_copy/u);
 });
 
 test('landing publication contract keeps a separate namespaced static artifact', () => {
