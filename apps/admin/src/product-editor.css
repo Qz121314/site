@@ -27,6 +27,35 @@
   background: #fff;
 }
 
+.product-editor-header-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.product-editor-header-actions .product-header-visibility {
+  min-height: 34px;
+  padding: 0 10px;
+  border: 1px solid #d5dce7;
+  border-radius: 8px;
+  background: #fff;
+  white-space: nowrap;
+}
+
+.product-editor-header-actions .product-header-visibility span {
+  color: #243047;
+  font-size: 0.74rem;
+  font-weight: 720;
+}
+
+.product-editor-header-actions .ui-button {
+  min-height: 34px;
+  padding-inline: 14px;
+  font-size: 0.75rem;
+  white-space: nowrap;
+}
+
 .product-editor-form {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -539,25 +568,6 @@
 
 .product-editor-dialog .product-auto-cover {
   margin: 0 7px 7px;
-}
-
-.product-editor-form > .admin-dialog-actions {
-  position: sticky;
-  z-index: 10;
-  bottom: -10px;
-  display: flex;
-  justify-content: flex-end;
-  gap: 8px;
-  margin: 0;
-  padding: 7px 0 1px;
-  border-top: 1px solid #e5eaf1;
-  background: #fff;
-}
-
-.product-editor-dialog .admin-dialog-actions button {
-  min-height: 34px;
-  padding-inline: 15px;
-  font-size: 0.75rem;
 }
 
 .product-editor-dialog button:focus-visible {

@@ -334,8 +334,29 @@ export function ProductEditorDialog({
       closeDisabled={busy}
       size="large"
       className="product-editor-dialog"
+      headerActions={
+        <div className="product-editor-header-actions">
+          <label className="product-switch-field product-header-visibility">
+            <input
+              type="checkbox"
+              checked={form.isVisible !== false}
+              onChange={(event) => patch({ isVisible: event.target.checked })}
+            />
+            <span>前端展示</span>
+          </label>
+          <Button
+            type="submit"
+            form="product-editor-form"
+            variant="primary"
+            loading={saveStage === 'saving'}
+            disabled={handoffBusy}
+          >
+            {saveButtonLabel(saveStage, editingProduct)}
+          </Button>
+        </div>
+      }
     >
-      <form className="product-editor-form" onSubmit={onSubmit}>
+      <form id="product-editor-form" className="product-editor-form" onSubmit={onSubmit}>
         {errorMessage ? (
           <div className="notice notice-error" role="alert">
             {errorMessage}
@@ -501,15 +522,6 @@ export function ProductEditorDialog({
               <option value="published">发布</option>
               <option value="archived">归档</option>
             </select>
-          </label>
-
-          <label className="product-switch-field product-core-visibility">
-            <input
-              type="checkbox"
-              checked={form.isVisible !== false}
-              onChange={(event) => patch({ isVisible: event.target.checked })}
-            />
-            <span>前端展示</span>
           </label>
 
           <label className="product-field product-core-sort">
@@ -711,20 +723,6 @@ export function ProductEditorDialog({
               </button>
             ) : null}
           </section>
-        </div>
-
-        <div className="admin-dialog-actions">
-          <Button variant="secondary" disabled={busy} onClick={() => void requestClose()}>
-            取消
-          </Button>
-          <Button
-            type="submit"
-            variant="primary"
-            loading={saveStage === 'saving'}
-            disabled={handoffBusy}
-          >
-            {saveButtonLabel(saveStage, editingProduct)}
-          </Button>
         </div>
       </form>
     </AdminDialog>
