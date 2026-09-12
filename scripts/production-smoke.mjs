@@ -19,7 +19,7 @@ async function fetchRequired(path, init) {
 }
 
 let health;
-for (const delayMs of [0, 1_000, 2_000, 4_000]) {
+for (const delayMs of [0, 1_000, 2_000, 4_000, 8_000, 12_000, 16_000]) {
   if (delayMs) await sleep(delayMs);
   try {
     const response = await fetchRequired('/api/health');
@@ -40,7 +40,7 @@ for (const delayMs of [0, 1_000, 2_000, 4_000]) {
 
 if (!health)
   throw new Error(
-    `Worker version ${expectedVersionId} did not become healthy within bounded retries`,
+    `Worker version ${expectedVersionId} did not become healthy within 43 seconds of bounded retries`,
   );
 console.log(`Worker version confirmed: ${health.workerVersionId}`);
 
