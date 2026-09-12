@@ -453,19 +453,19 @@
 
 :is(html, .storefront-theme-root) .home-recommendation.is-compact .home-product-rail {
   justify-content: flex-start;
-  gap: 2px;
+  gap: 10px;
 }
 
 :is(html, .storefront-theme-root) .home-recommendation.is-compact .home-product-tile {
-  flex: 0 0 72px;
-  width: 72px;
-  min-width: 72px;
+  flex: 0 0 86px;
+  width: 86px;
+  min-width: 86px;
   padding: 0;
 }
 
 :is(html, .storefront-theme-root) .home-recommendation.is-compact .home-product-cover {
-  width: 72px;
-  height: 72px;
+  width: 86px;
+  height: 86px;
   aspect-ratio: 1;
   border-radius: 50%;
 }
