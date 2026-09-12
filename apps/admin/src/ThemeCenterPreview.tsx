@@ -1,7 +1,6 @@
 import {
   StorefrontBottomNavigation,
   StorefrontBrandBar,
-  StorefrontHomeProductTile,
   StorefrontHomeShortcut,
 } from '@site/storefront-ui';
 import { storefrontThemeStyle } from '@site/storefront-ui/theme';
@@ -86,6 +85,16 @@ export function ThemeCenterPreview({
     ? content.products.filter((product) => product.sectionId === primarySection.id)
     : content.products;
   const visibleProducts = primaryProducts.length > 0 ? primaryProducts : content.products;
+  const categories = Array.from(
+    new Map(
+      visibleProducts
+        .filter((product) => product.category.id && product.category.name)
+        .map((product) => [
+          product.category.id as string,
+          product.category.name as string,
+        ]),
+    ),
+  );
   const logo = content.logoUrl ? (
     <img alt="" src={content.logoUrl} />
   ) : (
@@ -139,11 +148,11 @@ export function ThemeCenterPreview({
                   ))}
                 </nav>
                 <section
-                  className="theme-preview-section"
-                  aria-label="推荐分区与产品卡预览"
+                  className="theme-preview-section home-primary-directory"
+                  aria-label="主分区产品名称预览"
                 >
-                  <div className="home-recommendation-heading">
-                    <span className="home-recommendation-heading-copy">
+                  <div className="home-primary-directory-heading">
+                    <span>
                       <h2>{primarySection?.name ?? content.siteName}</h2>
                       {primarySection?.description ? (
                         <p>{primarySection.description}</p>
@@ -153,21 +162,31 @@ export function ThemeCenterPreview({
                       <span aria-hidden="true">›</span>
                     </PreviewLink>
                   </div>
-                  <div className="home-product-rail theme-preview-products">
+                  {categories.length > 0 ? (
+                    <div className="home-primary-directory-categories" role="tablist">
+                      {categories.map(([id, name], index) => (
+                        <button
+                          aria-selected={index === 0}
+                          className={index === 0 ? 'is-active' : undefined}
+                          key={id}
+                          role="tab"
+                          type="button"
+                        >
+                          {name}
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
+                  <div className="home-primary-directory-list">
                     {visibleProducts.map((product) => (
-                      <StorefrontHomeProductTile
+                      <PreviewLink
+                        className="home-primary-directory-link"
                         href={`/sections/${encodeURIComponent(primarySection?.slug ?? '')}/products/${encodeURIComponent(product.slug)}/`}
                         key={product.id}
-                        LinkComponent={PreviewLink}
-                        media={
-                          product.coverUrl ? (
-                            <img alt="" src={product.coverUrl} />
-                          ) : (
-                            <span className="theme-preview-product-media" />
-                          )
-                        }
-                        title={product.title}
-                      />
+                      >
+                        <span>{product.title}</span>
+                        <span aria-hidden="true">›</span>
+                      </PreviewLink>
                     ))}
                   </div>
                 </section>

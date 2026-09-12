@@ -30,6 +30,7 @@ export type ThemePreviewContent = {
     sectionId: string;
     title: string;
     coverUrl: string | null;
+    category: { id: string | null; name: string | null };
   }>;
   navigation: Array<{ href: string; label: string }>;
 };
@@ -235,6 +236,16 @@ export async function loadThemePreviewContent(): Promise<ThemePreviewContent> {
           sectionId: typeof value.sectionId === 'string' ? value.sectionId : '',
           title: typeof value.title === 'string' ? value.title : '',
           coverUrl: objectUrl(mediaBaseUrl, value.coverObjectKey),
+          category: {
+            id:
+              isRecord(value.category) && typeof value.category.id === 'string'
+                ? value.category.id
+                : null,
+            name:
+              isRecord(value.category) && typeof value.category.name === 'string'
+                ? value.category.name
+                : null,
+          },
         },
       ];
     })

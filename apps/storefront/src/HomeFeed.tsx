@@ -11,6 +11,7 @@ import {
   type MouseEvent as ReactMouseEvent,
   useEffect,
   useMemo,
+  useState,
 } from 'react';
 import {
   publicImageVariantUrl,
@@ -289,6 +290,11 @@ function HomePrimaryDirectory({
     staleTime: Number.POSITIVE_INFINITY,
   });
   const products = query.data?.products ?? initialProducts;
+  const categories = query.data?.categories ?? [];
+  const [selectedCategoryId, setSelectedCategoryId] = useState<string | null>(null);
+  const visibleProducts = selectedCategoryId
+    ? products.filter((product) => product.category.id === selectedCategoryId)
+    : products;
 
   return (
     <section
@@ -309,6 +315,30 @@ function HomePrimaryDirectory({
             <ChevronRight aria-hidden="true" />
           </HomeLink>
         </div>
+        {categories.length > 0 ? (
+          <div
+            className="home-primary-directory-categories"
+            role="tablist"
+            aria-label="Categories"
+          >
+            {categories.map((category) => (
+              <button
+                aria-selected={selectedCategoryId === category.id}
+                className={selectedCategoryId === category.id ? 'is-active' : undefined}
+                key={category.id}
+                onClick={() =>
+                  setSelectedCategoryId((current) =>
+                    current === category.id ? null : category.id,
+                  )
+                }
+                role="tab"
+                type="button"
+              >
+                {category.name}
+              </button>
+            ))}
+          </div>
+        ) : null}
         {query.isLoading && !query.data ? (
           <div className="home-primary-directory-list" aria-hidden="true">
             {Array.from({ length: 8 }, (_, index) => (
@@ -317,7 +347,7 @@ function HomePrimaryDirectory({
           </div>
         ) : (
           <div className="home-primary-directory-list">
-            {products.map((product) => (
+            {visibleProducts.map((product) => (
               <HomeLink
                 className="home-primary-directory-link"
                 href={productHref(product)}
