@@ -9,6 +9,7 @@ import { getHomeLayout, type HomeLayout } from '../settings/home-layout';
 import { BOTTOM_NAVIGATION_KEYS } from '../settings/bottom-navigation';
 import { buildMediaUrl } from '../media/media-url';
 import { parseThemeSettings, resolveTheme } from '../theme/theme-center';
+import { resolveStorefrontLayoutConfig, type StorefrontLayoutConfig } from '@site/shared';
 
 const CURRENT_KEY = 'public/current.json';
 const IMMUTABLE_CACHE = 'public, max-age=31536000, immutable';
@@ -125,6 +126,7 @@ type SiteRow = {
   ga4_measurement_id: string | null;
   theme_key: string | null;
   theme_overrides_json: string | null;
+  storefront_layout_json: string | null;
 };
 type BottomNavigationRow = {
   item_key: string;
@@ -248,6 +250,7 @@ type Source = {
   site: SiteRow;
   heroSlides: HeroSlideRow[];
   homeLayout: HomeLayout;
+  storefrontLayout: StorefrontLayoutConfig;
   sections: SectionRow[];
   categories: CategoryRow[];
   products: ProductRow[];
@@ -258,6 +261,15 @@ type Source = {
   tagsByProduct: Map<string, BoundProductTag[]>;
   bottomNavigation: BottomNavigationRow[];
 };
+
+function parseJson(value: string | null): unknown {
+  if (!value) return null;
+  try {
+    return JSON.parse(value) as unknown;
+  } catch {
+    return null;
+  }
+}
 
 type ModulePayload = {
   moduleKey: string;
@@ -478,6 +490,7 @@ async function loadSource(db: D1Database): Promise<Source> {
          ss.show_faq,
          ss.ga4_measurement_id
          ,ss.theme_key, ss.theme_overrides_json
+         ,ss.storefront_layout_json
        FROM site_settings ss
        LEFT JOIN media_assets ma
          ON ma.id = ss.logo_asset_id
@@ -690,6 +703,9 @@ async function loadSource(db: D1Database): Promise<Source> {
     site,
     heroSlides,
     homeLayout,
+    storefrontLayout: resolveStorefrontLayoutConfig(
+      parseJson(site.storefront_layout_json),
+    ),
     sections,
     categories,
     products,
@@ -706,6 +722,7 @@ function sitePublicModel(
   site: SiteRow,
   heroSlides: HeroSlideRow[],
   homeLayout: HomeLayout,
+  storefrontLayout: StorefrontLayoutConfig,
   bottomNavigation: BottomNavigationRow[],
 ) {
   const navigationByKey = new Map(bottomNavigation.map((item) => [item.item_key, item]));
@@ -738,6 +755,7 @@ function sitePublicModel(
     logoObjectKey: site.logo_object_key,
     homeSectionLimit: site.home_section_limit,
     homeLayout,
+    storefrontLayout,
     hero:
       heroSlides.length > 0
         ? {
@@ -893,6 +911,7 @@ function modulePayload(source: Source, moduleKey: string): ModulePayload {
       source.site,
       source.heroSlides,
       source.homeLayout,
+      source.storefrontLayout,
       source.bottomNavigation,
     );
     return {

@@ -127,6 +127,38 @@
   min-height: 32px;
 }
 
+.admin-layout-center-list {
+  display: grid;
+  gap: 12px;
+}
+
+.admin-layout-center-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(180px, 260px);
+  align-items: center;
+  gap: 20px;
+  padding: 16px 18px;
+  border: 1px solid var(--admin-line, #e5e7eb);
+  border-radius: 12px;
+  background: var(--admin-surface, #fff);
+}
+
+.admin-layout-center-row span {
+  display: grid;
+  gap: 4px;
+}
+
+.admin-layout-center-row small {
+  color: var(--admin-muted, #6b7280);
+}
+
+@media (max-width: 720px) {
+  .admin-layout-center-row {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+}
+
 @media (max-width: 720px) {
   .home-experience-commandbar {
     align-items: stretch;

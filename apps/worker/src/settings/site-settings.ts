@@ -1,4 +1,5 @@
 import { buildAssetPublicUrl } from '../assets/asset-library';
+import { resolveStorefrontLayoutConfig, type StorefrontLayoutConfig } from '@site/shared';
 
 export type SiteSettings = {
   siteName: string;
@@ -13,6 +14,7 @@ export type SiteSettings = {
   showLatest: boolean;
   showMore: boolean;
   showFaq: boolean;
+  storefrontLayout: StorefrontLayoutConfig;
   updatedAt: string;
 };
 
@@ -31,6 +33,7 @@ type SiteSettingsRow = {
   show_latest: number;
   show_more: number;
   show_faq: number;
+  storefront_layout_json: string | null;
   updated_at: string;
 };
 
@@ -214,6 +217,8 @@ export function validateSiteSettingsInput(value: unknown): ValidationResult {
   const showFaq = readBoolean(value.showFaq, 'showFaq');
   if (!showFaq.ok) return showFaq;
 
+  const storefrontLayout = resolveStorefrontLayoutConfig(value.storefrontLayout);
+
   return {
     ok: true,
     value: {
@@ -228,6 +233,7 @@ export function validateSiteSettingsInput(value: unknown): ValidationResult {
       showLatest: showLatest.value,
       showMore: showMore.value,
       showFaq: showFaq.value,
+      storefrontLayout,
     },
   };
 }
@@ -246,8 +252,18 @@ function fromRow(row: SiteSettingsRow): SiteSettings {
     showLatest: row.show_latest === 1,
     showMore: row.show_more === 1,
     showFaq: row.show_faq === 1,
+    storefrontLayout: parseStorefrontLayout(row.storefront_layout_json),
     updatedAt: row.updated_at,
   };
+}
+
+function parseStorefrontLayout(value: string | null): StorefrontLayoutConfig {
+  if (!value) return resolveStorefrontLayoutConfig(null);
+  try {
+    return resolveStorefrontLayoutConfig(JSON.parse(value) as unknown);
+  } catch {
+    return resolveStorefrontLayoutConfig(null);
+  }
 }
 
 export async function getSiteSettings(db: D1Database): Promise<SiteSettings> {
@@ -266,6 +282,7 @@ export async function getSiteSettings(db: D1Database): Promise<SiteSettings> {
          s.show_latest,
          s.show_more,
          s.show_faq,
+         s.storefront_layout_json,
          s.updated_at
        FROM site_settings s
        LEFT JOIN media_assets logo
@@ -299,6 +316,7 @@ export function createUpdateSiteSettingsStatement(
            show_latest = ?,
            show_more = ?,
            show_faq = ?,
+           storefront_layout_json = ?,
            updated_at = ?
        WHERE id = 1`,
     )
@@ -314,6 +332,7 @@ export function createUpdateSiteSettingsStatement(
       input.showLatest ? 1 : 0,
       input.showMore ? 1 : 0,
       input.showFaq ? 1 : 0,
+      JSON.stringify(input.storefrontLayout),
       updatedAt,
     );
 }

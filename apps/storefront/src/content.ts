@@ -1,3 +1,9 @@
+import {
+  defaultStorefrontLayoutConfig,
+  resolveStorefrontLayoutConfig,
+  type StorefrontLayoutConfig,
+} from '@site/shared';
+
 export type BottomNavigationItemConfig = {
   key: 'home' | 'browse' | 'messages' | 'faq';
   label: string;
@@ -135,6 +141,7 @@ export type PublicSite = {
   logoUrl: string | null;
   homeSectionLimit?: number;
   homeLayout?: HomeLayout;
+  storefrontLayout?: StorefrontLayoutConfig;
   hero?: PublicHero | null;
   navigation: {
     showHot: boolean;
@@ -251,6 +258,7 @@ type V2SiteSnapshot = {
     logoObjectKey: string | null;
     homeSectionLimit: number;
     homeLayout?: HomeLayout;
+    storefrontLayout?: unknown;
     hero?: {
       slides: Array<{
         id: string;
@@ -518,6 +526,10 @@ export function normalizeHomeLayout(value: unknown): HomeLayout {
       value.recommendationSectionIds,
     ),
   };
+}
+
+export function normalizeStorefrontLayout(value: unknown): StorefrontLayoutConfig {
+  return resolveStorefrontLayoutConfig(value ?? defaultStorefrontLayoutConfig);
 }
 
 export function normalizeContentOrigin(value: string | undefined | null): string | null {
@@ -1194,6 +1206,7 @@ async function loadV2Bootstrap(
     logoUrl: mediaUrl(mediaBaseUrl, rawSite.site.logoObjectKey),
     homeSectionLimit: rawSite.site.homeSectionLimit,
     homeLayout: normalizeHomeLayout(rawSite.site.homeLayout),
+    storefrontLayout: normalizeStorefrontLayout(rawSite.site.storefrontLayout),
     hero: resolveV2Hero(rawSite.site.hero, mediaBaseUrl),
     navigation: rawSite.site.navigation,
     analytics: rawSite.site.analytics,

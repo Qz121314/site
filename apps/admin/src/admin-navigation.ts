@@ -13,6 +13,7 @@ export type CatalogWorkspaceContext = {
 
 export type SettingsAdminView =
   | 'home'
+  | 'layout'
   | 'navigation'
   | 'messages'
   | 'pwa'
@@ -66,6 +67,7 @@ export const ADMIN_DOMAINS: readonly AdminDomainDefinition[] = [
 
 export const SETTINGS_ADMIN_VIEWS = new Set<SettingsAdminView>([
   'home',
+  'layout',
   'navigation',
   'messages',
   'pwa',
@@ -197,6 +199,7 @@ export function getAdminDomainForView(view: AdminView): AdminDomain {
   if (view === 'sections') return 'catalog';
   if (
     view === 'home' ||
+    view === 'layout' ||
     view === 'navigation' ||
     view === 'messages' ||
     view === 'theme' ||
@@ -258,6 +261,7 @@ export function getAdminSecondaryItems(
     case 'site':
       return [
         { view: 'home', label: '首页' },
+        { view: 'layout', label: '布局中心' },
         { view: 'navigation', label: '导航' },
         { view: 'theme', label: '视觉系统' },
       ];
@@ -303,6 +307,11 @@ export function getAdminViewContext(
       eyebrow: domainLabel,
       title: '首页',
       description: '管理仍在使用的首页 Hero 与分区布局。',
+    },
+    layout: {
+      eyebrow: domainLabel,
+      title: '布局中心',
+      description: '管理 Storefront 各页面的布局方案。当前布局作为默认兼容方案保留。',
     },
     navigation: {
       eyebrow: domainLabel,

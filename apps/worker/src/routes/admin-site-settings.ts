@@ -139,6 +139,7 @@ adminSiteSettingsRoutes.get('/', async (context) => {
       heroSlides,
       bottomNavigation,
       homeLayout,
+      storefrontLayout: settings.storefrontLayout,
       installPrompt: resolveTheme(themeSettings).installPrompt,
     },
   });
@@ -263,6 +264,14 @@ adminSiteSettingsRoutes.put('/', async (context) => {
   const homeLayoutInput = homeLayoutValidation.provided
     ? homeLayoutValidation.value
     : currentHomeLayout;
+  const storefrontLayoutInput =
+    bodyRecord?.storefrontLayout !== undefined
+      ? validation.value.storefrontLayout
+      : currentSettings.storefrontLayout;
+  const siteSettingsInput = {
+    ...validation.value,
+    storefrontLayout: storefrontLayoutInput,
+  };
 
   const selectedHomeSectionIds = [
     ...homeLayoutInput.shortcutSectionIds,
@@ -327,10 +336,11 @@ adminSiteSettingsRoutes.put('/', async (context) => {
     validation.value.mediaBaseUrl,
   );
   const updated = {
-    ...toSiteSettings(validation.value, logoAsset?.object_key ?? null, updatedAt),
+    ...toSiteSettings(siteSettingsInput, logoAsset?.object_key ?? null, updatedAt),
     heroSlides: resolvedHeroSlides,
     bottomNavigation: resolvedNavigation(bottomNavigationInput),
     homeLayout: homeLayoutInput,
+    storefrontLayout: storefrontLayoutInput,
     installPrompt,
   };
   const current = {
@@ -338,10 +348,11 @@ adminSiteSettingsRoutes.put('/', async (context) => {
     heroSlides: currentHeroSlides,
     bottomNavigation: currentBottomNavigation,
     homeLayout: currentHomeLayout,
+    storefrontLayout: currentSettings.storefrontLayout,
     installPrompt: resolveTheme(currentThemeSettings).installPrompt,
   };
   const statements: D1PreparedStatement[] = [
-    createUpdateSiteSettingsStatement(context.env.DB, validation.value, updatedAt),
+    createUpdateSiteSettingsStatement(context.env.DB, siteSettingsInput, updatedAt),
   ];
   if (heroValidation.provided) {
     statements.push(

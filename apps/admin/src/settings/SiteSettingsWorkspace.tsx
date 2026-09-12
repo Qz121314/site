@@ -10,6 +10,11 @@ const HomeExperienceView = lazy(() =>
     default: module.HomeExperienceView,
   })),
 );
+const LayoutCenterView = lazy(() =>
+  import('../experience/LayoutCenterView').then((module) => ({
+    default: module.LayoutCenterView,
+  })),
+);
 const NavigationSettingsView = lazy(() =>
   import('../experience/NavigationSettingsView').then((module) => ({
     default: module.NavigationSettingsView,
@@ -55,6 +60,8 @@ export function SiteSettingsWorkspace({
       >
         {view === 'home' ? (
           <HomeExperienceView sections={sections} onSessionExpired={onSessionExpired} />
+        ) : view === 'layout' ? (
+          <LayoutCenterView onSessionExpired={onSessionExpired} />
         ) : view === 'navigation' ? (
           <NavigationSettingsView onSessionExpired={onSessionExpired} />
         ) : view === 'messages' ? (

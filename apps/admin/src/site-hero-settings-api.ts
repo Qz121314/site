@@ -6,6 +6,7 @@ import {
   type SiteSettingsUpdateInput,
 } from './api';
 import type { MediaKind } from './asset-library/api';
+import type { StorefrontLayoutConfig } from '@site/shared';
 
 export type SiteHeroSlide = {
   id: string;
@@ -44,6 +45,7 @@ export type SiteSettingsWithHero = SiteSettings & {
   heroSlides: SiteHeroSlide[];
   bottomNavigation: BottomNavigationItem[];
   homeLayout: HomeLayout;
+  storefrontLayout: StorefrontLayoutConfig;
 };
 
 export type SiteSettingsWithHeroUpdateInput = SiteSettingsUpdateInput & {
@@ -52,6 +54,7 @@ export type SiteSettingsWithHeroUpdateInput = SiteSettingsUpdateInput & {
   heroSlides: SiteHeroSlideInput[];
   bottomNavigation: BottomNavigationItemInput[];
   homeLayout: HomeLayout;
+  storefrontLayout: StorefrontLayoutConfig;
 };
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -147,6 +150,7 @@ function withHero(settings: SiteSettings): SiteSettingsWithHero {
     heroSlides: raw.heroSlides.map(parseHeroSlide),
     bottomNavigation: raw.bottomNavigation.map(parseBottomNavigationItem),
     homeLayout: parseHomeLayout(raw.homeLayout),
+    storefrontLayout: raw.storefrontLayout as StorefrontLayoutConfig,
   };
 }
 

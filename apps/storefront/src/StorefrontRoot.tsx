@@ -33,6 +33,7 @@ import {
 import { NotFoundPage } from './NotFoundPage';
 import { PwaInstallButton } from './PwaInstallButton';
 import { ProductDetailLoadingSurface } from './ProductDetailLoadingSurface';
+import { StorefrontPageLayout } from './layout-runtime';
 import { ResilientImage } from './ResilientMedia';
 import {
   bottomNavigationActiveHref,
@@ -481,7 +482,26 @@ export function StorefrontRoot() {
         routeKey={pathname}
         unreadMessages={messagesBadge}
       >
-        <Suspense fallback={routeFallback}>{page}</Suspense>
+        <StorefrontPageLayout
+          bootstrap={bootstrap}
+          page={
+            route.type === 'discover'
+              ? 'browse'
+              : route.type === 'section'
+                ? 'section'
+                : route.type === 'product'
+                  ? 'product'
+                  : route.type === 'article' || route.type === 'faq-article'
+                    ? 'article'
+                    : route.type === 'messages' ||
+                        route.type === 'message' ||
+                        route.type === 'message-compose'
+                      ? 'messages'
+                      : 'home'
+          }
+        >
+          <Suspense fallback={routeFallback}>{page}</Suspense>
+        </StorefrontPageLayout>
       </PrimaryShell>
     </>
   );

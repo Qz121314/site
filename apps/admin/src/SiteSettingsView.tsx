@@ -73,6 +73,7 @@ function createDraft(settings: SiteSettingsWithHero): SettingsDraft {
       shortcutSectionIds: [...settings.homeLayout.shortcutSectionIds],
       recommendationSectionIds: [...settings.homeLayout.recommendationSectionIds],
     },
+    storefrontLayout: { ...settings.storefrontLayout },
   };
 }
 
@@ -111,6 +112,7 @@ function toInput(draft: SettingsDraft): SettingsPayload {
       shortcutSectionIds: [...draft.homeLayout.shortcutSectionIds],
       recommendationSectionIds: [...draft.homeLayout.recommendationSectionIds],
     },
+    storefrontLayout: { ...draft.storefrontLayout },
   };
 }
 

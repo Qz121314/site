@@ -43,6 +43,7 @@ test('fixed settings views resolve to intended domains', () => {
   const expected = new Map([
     ['dashboard', 'dashboard'],
     ['home', 'site'],
+    ['layout', 'site'],
     ['navigation', 'site'],
     ['messages', 'engagement'],
     ['theme', 'site'],
@@ -60,6 +61,7 @@ test('fixed settings views resolve to intended domains', () => {
     [...SETTINGS_ADMIN_VIEWS],
     [
       'home',
+      'layout',
       'navigation',
       'messages',
       'pwa',
@@ -127,6 +129,7 @@ test('site, engagement, and system navigation match final P1 IA exactly', () => 
     getAdminSecondaryItems('site', sections).map(({ view, label }) => [view, label]),
     [
       ['home', '首页'],
+      ['layout', '布局中心'],
       ['navigation', '导航'],
       ['theme', '视觉系统'],
     ],

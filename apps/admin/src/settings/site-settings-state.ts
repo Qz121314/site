@@ -52,6 +52,7 @@ export function toSiteSettingsUpdateInput(
       shortcutSectionIds: [...settings.homeLayout.shortcutSectionIds],
       recommendationSectionIds: [...settings.homeLayout.recommendationSectionIds],
     },
+    storefrontLayout: { ...settings.storefrontLayout },
   };
 }
 

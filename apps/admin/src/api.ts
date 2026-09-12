@@ -1,4 +1,5 @@
 import { adminFetch } from './admin-fetch';
+import type { StorefrontLayoutConfig } from '@site/shared';
 
 export type AdminSessionResponse = {
   authenticated: boolean;
@@ -17,6 +18,7 @@ export type SiteSettings = {
   showLatest: boolean;
   showMore: boolean;
   showFaq: boolean;
+  storefrontLayout: StorefrontLayoutConfig;
   installPrompt: {
     enabled: boolean;
     delaySeconds: number;
@@ -202,6 +204,7 @@ function parseSiteSettings(value: unknown): SiteSettings {
     typeof settings.showLatest === 'boolean' &&
     typeof settings.showMore === 'boolean' &&
     typeof settings.showFaq === 'boolean' &&
+    settings.storefrontLayout !== undefined &&
     Boolean(installPrompt) &&
     typeof installPrompt?.enabled === 'boolean' &&
     typeof installPrompt.delaySeconds === 'number' &&
