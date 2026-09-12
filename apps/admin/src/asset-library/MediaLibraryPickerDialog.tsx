@@ -55,7 +55,6 @@ function mediaKindsFromKey(value: string): MediaKind[] {
 }
 
 export function MediaLibraryPickerDialog({
-  title,
   role,
   allowedKinds,
   selectedIds = [],
@@ -221,14 +220,10 @@ export function MediaLibraryPickerDialog({
         className="admin-dialog media-picker-dialog"
         role="dialog"
         aria-modal="true"
-        aria-labelledby="media-library-picker-title"
+        aria-label="素材选择"
         tabIndex={-1}
       >
-        <div className="admin-dialog-header">
-          <div>
-            <p>素材中心</p>
-            <h3 id="media-library-picker-title">{title}</h3>
-          </div>
+        <div className="admin-dialog-header media-picker-header">
           <button
             type="button"
             aria-label="关闭"

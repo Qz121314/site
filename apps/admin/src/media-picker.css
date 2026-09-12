@@ -41,9 +41,19 @@
 }
 
 .media-picker-filters {
+  position: sticky;
+  z-index: 2;
+  top: 0;
   display: grid;
   grid-template-columns: minmax(260px, 1fr) 180px 140px;
   gap: 6px;
+  padding: 10px 0 8px;
+  background: #fff;
+  box-shadow: 0 1px 0 #edf0f4;
+}
+
+.media-picker-header {
+  justify-content: flex-end;
 }
 
 .media-picker-search,
