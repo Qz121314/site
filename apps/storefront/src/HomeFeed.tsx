@@ -295,19 +295,6 @@ function HomePrimaryDirectory({
       className="home-primary-directory"
       aria-labelledby="home-primary-directory-title"
     >
-      <div className="home-primary-directory-media">
-        {section.browseBackgroundUrl ? (
-          <ResilientImage
-            alt=""
-            loading="lazy"
-            src={section.browseBackgroundUrl}
-            width={640}
-            height={420}
-          />
-        ) : (
-          <span aria-hidden="true">{Array.from(section.name.trim())[0] ?? '•'}</span>
-        )}
-      </div>
       <div className="home-primary-directory-body">
         <div className="home-primary-directory-heading">
           <span>
