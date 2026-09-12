@@ -33,6 +33,13 @@
   scrollbar-width: thin;
 }
 
+.ui-dialog.media-picker-dialog > .ui-dialog-body {
+  display: grid;
+  min-height: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
 .media-picker-filters {
   display: grid;
   grid-template-columns: minmax(260px, 1fr) 180px 140px;
