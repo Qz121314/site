@@ -78,21 +78,41 @@ export function LayoutCenterView({ onSessionExpired }: { onSessionExpired: () =>
       <section className="admin-settings-section">
         <div className="admin-settings-section-heading">
           <div>
-            <h2>Storefront 页面布局</h2>
+            <span className="admin-layout-center-eyebrow">STOREFRONT EXPERIENCE</span>
+            <h2>页面布局方案</h2>
             <p>
-              当前已将现有线上布局注册为默认方案。后续新增方案后，可在这里逐页切换测试。
+              管理各页面使用的布局方案。当前线上布局已安全注册为默认方案，后续可逐页切换测试。
             </p>
           </div>
         </div>
+        <div className="admin-layout-center-overview">
+          <div className="admin-layout-center-overview-mark" aria-hidden="true">
+            <span>01</span>
+          </div>
+          <div>
+            <div className="admin-layout-center-overview-title">
+              <strong>当前布局</strong>
+              <span className="admin-layout-center-status">线上默认</span>
+            </div>
+            <p>现有网站正在使用的布局结构，适用于全部页面。</p>
+          </div>
+          <span className="admin-layout-center-overview-count">
+            覆盖 {PAGES.length} 个页面
+          </span>
+        </div>
         <div className="admin-layout-center-list">
-          {PAGES.map((page) => (
+          {PAGES.map((page, index) => (
             <label className="admin-layout-center-row" key={page.key}>
-              <span>
+              <span className="admin-layout-center-row-index" aria-hidden="true">
+                {String(index + 1).padStart(2, '0')}
+              </span>
+              <span className="admin-layout-center-row-copy">
                 <strong>{page.label}</strong>
                 <small>{page.description}</small>
               </span>
               <select
                 value={draft[page.key]}
+                aria-label={`${page.label}布局方案`}
                 disabled={saving}
                 onChange={(event) =>
                   setDraft((current) => ({
