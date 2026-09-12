@@ -7,13 +7,26 @@ test('the initial HTML paint presents persistent app-shell chrome before React s
 
   assert.match(html, /class="boot-shell" aria-hidden="true"/u);
   assert.match(html, /class="boot-app-bar"/u);
-  assert.match(html, /class="boot-bottom-nav"/u);
   assert.doesNotMatch(
     html,
     /rel="preload"[\s\S]*?as="fetch"[\s\S]*?\/api\/public\/storefront\/bootstrap/u,
   );
   assert.match(html, /\.boot-app-bar \{[\s\S]*?position: fixed;/u);
-  assert.match(html, /\.boot-bottom-nav \{[\s\S]*?position: fixed;/u);
+  assert.doesNotMatch(html, /boot-(hero|shortcuts|section-heading|product-grid)/u);
+});
+
+test('startup loading surface does not invent homepage content before bootstrap data arrives', async () => {
+  const source = await readFile(
+    new URL('../src/LoadingStates.tsx', import.meta.url),
+    'utf8',
+  );
+  const startupLoader = source.slice(0, source.indexOf('export function RouteProgress'));
+
+  assert.doesNotMatch(
+    startupLoader,
+    /startup-(hero|shortcuts|section-heading|product-rail)/u,
+  );
+  assert.doesNotMatch(startupLoader, /Array\.from\(\{ length:/u);
 });
 
 test('minimal production smoke validates the Storefront app shell', async () => {

@@ -8,30 +8,10 @@ export function StartupLoader() {
           <span className="startup-brand-skeleton" />
         </header>
         <main className="startup-feed-skeleton">
-          <span className="startup-hero-skeleton" />
-          <div className="startup-shortcut-skeletons">
-            {Array.from({ length: 8 }, (_, index) => (
-              <span key={index}>
-                <i />
-                <b />
-              </span>
-            ))}
-          </div>
-          <div className="startup-section-heading-skeleton">
-            <span />
-            <i />
-          </div>
-          <div className="startup-product-rail-skeleton">
-            {Array.from({ length: 4 }, (_, index) => (
-              <span key={index} />
-            ))}
+          <div className="startup-loading-panel">
+            <span className="startup-loading-line" />
           </div>
         </main>
-        <nav className="startup-bottom-nav-skeleton">
-          {Array.from({ length: 4 }, (_, index) => (
-            <span key={index} />
-          ))}
-        </nav>
       </div>
       <span className="sr-only">{SYSTEM_UI.loading}</span>
     </div>
