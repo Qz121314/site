@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import { createAuditLogStatement } from '../audit/write-audit-log';
 import { apiError } from '../http/api-response';
 import {
-  THEME_PRESETS,
+  ACTIVE_THEME_PRESETS,
   createUpdateThemeStatement,
   getThemeSettings,
   resolveTheme,
@@ -24,7 +24,7 @@ adminThemeRoutes.get('/', async (context) => {
   const settings = await getThemeSettings(context.env.DB);
   return context.json({
     theme: resolveTheme(settings),
-    presets: THEME_PRESETS,
+    presets: ACTIVE_THEME_PRESETS,
   });
 });
 

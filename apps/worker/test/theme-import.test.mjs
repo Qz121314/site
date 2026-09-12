@@ -121,113 +121,28 @@ test('custom imported theme can be validated and resolved without external sourc
   assert.equal(resolved.recipe.navigationStyle, 'quiet');
 });
 
-test('Premium Noir Dating V3 resolves a complete commercial UI recipe', () => {
-  const resolved = resolveTheme({ key: 'noir', overrides: {} });
-  assert.equal(resolved.label, 'Premium Noir Dating V3');
-  assert.equal(resolved.colorScheme, 'dark');
-  assert.deepEqual(resolved.recipe, {
-    version: 2,
-    fontPack: 'editorial',
-    buttonStyle: 'refined',
-    mediaStyle: 'soft',
-    motionStyle: 'restrained',
-    navigationStyle: 'quiet',
-  });
-  assert.equal(resolved.tokens.pageBg, '#130e12');
-  assert.equal(resolved.tokens.surface, '#20171d');
-  assert.equal(resolved.tokens.heroGlow, '#bd4f78');
-  assert.equal(resolved.tokens.brand, '#df5d87');
-  assert.deepEqual(resolved.installPrompt, {
-    enabled: true,
-    delaySeconds: 30,
-    title: 'Install app',
-    description: 'Add it to your desktop for faster access.',
-    iosDescription: 'Use Share, then Add to Home Screen.',
-    installLabel: 'Install',
-    dismissLabel: 'Not now',
-  });
-});
-
-test('Live uses the restrained intimate visual recipe', () => {
-  const resolved = resolveTheme({ key: 'live', overrides: {} });
-  assert.deepEqual(resolved.recipe, {
-    version: 2,
-    fontPack: 'editorial',
-    buttonStyle: 'refined',
-    mediaStyle: 'editorial',
-    motionStyle: 'restrained',
-    navigationStyle: 'quiet',
-  });
-  assert.equal(resolved.tokens.pageBg, '#140d12');
-  assert.equal(resolved.tokens.brand, '#e3486d');
-});
-
-test('new official themes provide distinct complete visual recipes', () => {
-  const themes = [
-    ['velvet', 'dark', '#b6405f', '#160b0f'],
-    ['midnight', 'dark', '#8fa7d8', '#0d111c'],
-    ['pearl', 'light', '#a64562', '#f5efe9'],
-  ];
-
-  for (const [key, colorScheme, brand, pageBg] of themes) {
-    const resolved = resolveTheme({ key, overrides: {} });
-    assert.equal(resolved.key, key);
-    assert.equal(resolved.colorScheme, colorScheme);
-    assert.equal(resolved.tokens.brand, brand);
-    assert.equal(resolved.tokens.pageBg, pageBg);
-    assert.equal(resolved.recipe.version, 2);
-    assert.equal(resolved.productMediaRatio, '1:1');
-  }
-});
-
-test('official themes keep their curated recipe while preserving safe overrides', () => {
+test('Pearl is the only selectable official theme and preserves safe overrides', () => {
   const settings = parseThemeSettings(
-    'live',
+    'retired-theme',
     JSON.stringify({
       density: 'standard',
       fontPack: 'compact',
-      buttonStyle: 'soft-pill',
-      mediaStyle: 'soft',
-      motionStyle: 'active',
-      navigationStyle: 'solid',
       accent: '#c94d72',
     }),
   );
   const resolved = resolveTheme(settings);
-  assert.deepEqual(resolved.recipe, {
-    version: 2,
-    fontPack: 'editorial',
-    buttonStyle: 'refined',
-    mediaStyle: 'editorial',
-    motionStyle: 'restrained',
-    navigationStyle: 'quiet',
-  });
-  assert.equal(resolved.density, 'standard');
+  assert.equal(resolved.key, 'pearl');
+  assert.equal(resolved.label, 'Pearl · 暖白珍珠');
+  assert.equal(resolved.colorScheme, 'light');
+  assert.equal(resolved.density, 'comfortable');
   assert.equal(resolved.tokens.brand, '#c94d72');
-  assert.equal(resolved.overrides.installPrompt, undefined);
-});
-
-test('official theme recipe fields cannot drift through legacy overrides', () => {
-  const resolved = resolveTheme({
-    key: 'live',
-    overrides: {
-      fontPack: 'modern',
-      buttonStyle: 'minimal',
-      mediaStyle: 'precise',
-      motionStyle: 'gentle',
-      navigationStyle: 'tinted',
-    },
-  });
   assert.equal(resolved.recipe.fontPack, 'editorial');
-  assert.equal(resolved.recipe.buttonStyle, 'refined');
-  assert.equal(resolved.recipe.mediaStyle, 'editorial');
-  assert.equal(resolved.recipe.motionStyle, 'restrained');
-  assert.equal(resolved.recipe.navigationStyle, 'quiet');
+  assert.equal(resolved.recipe.motionStyle, 'gentle');
 });
 
-test('Theme Center persists a bounded backend-driven install prompt', () => {
+test('Theme Center persists a bounded backend-driven install prompt for Pearl', () => {
   const validation = validateThemeUpdate({
-    themeKey: 'noir',
+    themeKey: 'pearl',
     overrides: {
       installPrompt: {
         enabled: true,
@@ -242,42 +157,11 @@ test('Theme Center persists a bounded backend-driven install prompt', () => {
   });
   assert.equal(validation.ok, true);
   const reloaded = parseThemeSettings(
-    'noir',
+    'pearl',
     JSON.stringify(validation.settings.overrides),
   );
   assert.equal(reloaded.overrides.installPrompt?.delaySeconds, 45);
   assert.equal(resolveTheme(reloaded).installPrompt.dismissLabel, 'Later');
-});
-
-test('Theme Center preserves intentionally blank install prompt copy', () => {
-  const validation = validateThemeUpdate({
-    themeKey: 'noir',
-    overrides: {
-      installPrompt: {
-        enabled: true,
-        delaySeconds: 45,
-        title: '',
-        description: '',
-        iosDescription: '',
-        installLabel: '',
-        dismissLabel: '',
-      },
-    },
-  });
-  assert.equal(validation.ok, true);
-  const reloaded = parseThemeSettings(
-    'noir',
-    JSON.stringify(validation.settings.overrides),
-  );
-  assert.deepEqual(resolveTheme(reloaded).installPrompt, {
-    enabled: true,
-    delaySeconds: 45,
-    title: '',
-    description: '',
-    iosDescription: '',
-    installLabel: '',
-    dismissLabel: '',
-  });
 });
 
 test('custom theme persists through the official-key D1 constraint', () => {
@@ -286,10 +170,10 @@ test('custom theme persists through the official-key D1 constraint', () => {
     overrides: { imported: storedCustomTheme },
   });
   assert.equal(validation.ok, true);
-  assert.equal(persistedThemeKey(validation.settings), 'marketplace');
+  assert.equal(persistedThemeKey(validation.settings), 'pearl');
 
   const reloaded = parseThemeSettings(
-    'marketplace',
+    'pearl',
     JSON.stringify(validation.settings.overrides),
   );
   assert.equal(reloaded.key, 'custom');

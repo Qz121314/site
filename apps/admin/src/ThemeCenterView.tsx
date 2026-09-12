@@ -129,7 +129,7 @@ export function ThemeCenterView({
 }: ThemeCenterViewProps) {
   const [presets, setPresets] = useState<ThemePreset[]>([]);
   const [currentTheme, setCurrentTheme] = useState<ResolvedTheme | null>(null);
-  const [selectedKey, setSelectedKey] = useState<ThemeKey>('marketplace');
+  const [selectedKey, setSelectedKey] = useState<ThemeKey>('pearl');
   const [accent, setAccent] = useState('');
   const [textColor, setTextColor] = useState('');
   const [importedDraft, setImportedDraft] = useState<

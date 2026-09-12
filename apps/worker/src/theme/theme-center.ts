@@ -9,6 +9,7 @@ export type OfficialThemeKey =
   | 'travel'
   | 'tech';
 export type ThemeKey = OfficialThemeKey | 'custom';
+const ACTIVE_THEME_KEY: OfficialThemeKey = 'pearl';
 export type ThemeColorScheme = 'light' | 'dark';
 export type ThemeFontPack = 'modern' | 'editorial' | 'compact' | 'technical';
 export type ThemeButtonStyle = 'refined' | 'minimal' | 'soft-pill';
@@ -411,7 +412,14 @@ export const THEME_PRESETS: readonly ThemePreset[] = [
   },
 ] as const;
 
-const presetByKey = new Map(THEME_PRESETS.map((preset) => [preset.key, preset]));
+// Keep Pearl as the only selectable built-in theme while allowing the old
+// preset definitions to remain source-compatible until the new visual system
+// replaces them.
+export const ACTIVE_THEME_PRESETS: readonly ThemePreset[] = THEME_PRESETS.filter(
+  (preset) => preset.key === ACTIVE_THEME_KEY,
+);
+
+const presetByKey = new Map(ACTIVE_THEME_PRESETS.map((preset) => [preset.key, preset]));
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null && !Array.isArray(value);
@@ -521,10 +529,7 @@ export function normalizeImportedThemeDefinition(
 }
 
 export function isThemeKey(value: unknown): value is ThemeKey {
-  return (
-    value === 'custom' ||
-    (typeof value === 'string' && presetByKey.has(value as OfficialThemeKey))
-  );
+  return value === 'custom' || value === ACTIVE_THEME_KEY;
 }
 
 export function normalizeInstallPrompt(value: unknown): ThemeInstallPrompt | null {
@@ -618,7 +623,7 @@ export function parseThemeSettings(
   themeKey: unknown,
   overridesJson: unknown,
 ): ThemeSettings {
-  const requestedKey = isThemeKey(themeKey) ? themeKey : 'marketplace';
+  const requestedKey = isThemeKey(themeKey) ? themeKey : ACTIVE_THEME_KEY;
   let overrides: ThemeOverrides = {};
   if (typeof overridesJson === 'string' && overridesJson) {
     try {
@@ -630,7 +635,7 @@ export function parseThemeSettings(
   if (overrides.imported) {
     return { key: 'custom', overrides };
   }
-  return { key: requestedKey === 'custom' ? 'marketplace' : requestedKey, overrides };
+  return { key: requestedKey === 'custom' ? ACTIVE_THEME_KEY : requestedKey, overrides };
 }
 
 function applyColorOverrides(
@@ -673,7 +678,8 @@ export function resolveTheme(settings: ThemeSettings): ResolvedTheme {
       overrides,
     };
   }
-  const preset = presetByKey.get(settings.key as OfficialThemeKey) ?? THEME_PRESETS[0]!;
+  const preset =
+    presetByKey.get(settings.key as OfficialThemeKey) ?? ACTIVE_THEME_PRESETS[0]!;
   return {
     ...preset,
     installPrompt: overrides.installPrompt ?? preset.installPrompt,
@@ -723,7 +729,7 @@ export function validateThemeUpdate(
 }
 
 export function persistedThemeKey(settings: ThemeSettings): OfficialThemeKey {
-  return settings.key === 'custom' ? 'marketplace' : settings.key;
+  return settings.key === 'custom' ? ACTIVE_THEME_KEY : settings.key;
 }
 
 export async function getThemeSettings(db: D1Database): Promise<ThemeSettings> {
