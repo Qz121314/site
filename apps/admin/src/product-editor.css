@@ -401,6 +401,57 @@
   background: #fbfcfe;
 }
 
+.product-editor-dialog .product-body-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.product-editor-dialog .product-body-heading > div:first-child {
+  display: grid;
+  gap: 2px;
+}
+
+.product-editor-dialog .product-body-heading small {
+  color: #667085;
+  font-size: 0.64rem;
+  line-height: 1.2;
+}
+
+.product-editor-dialog .product-markdown-toolbar {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 2px;
+  border: 1px solid #e0e5ec;
+  border-radius: 7px;
+  background: #f1f3f6;
+}
+
+.product-editor-dialog .product-markdown-toolbar button {
+  min-height: 26px;
+  padding: 3px 7px;
+  border: 0;
+  border-radius: 5px;
+  color: #526070;
+  background: transparent;
+  cursor: pointer;
+  font-size: 0.66rem;
+  font-weight: 720;
+}
+
+.product-editor-dialog .product-markdown-toolbar button:not(:disabled):hover {
+  color: #243047;
+  background: #fff;
+}
+
+.product-editor-dialog .product-markdown-toolbar button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
 .product-editor-dialog .product-body-content {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -463,6 +514,21 @@
   overflow: visible;
   border-left: 0;
   font-size: 0.78rem;
+}
+
+.product-editor-dialog .product-markdown-footer {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 5px 10px 7px;
+  color: #667085;
+  font-size: 0.64rem;
+  line-height: 1.25;
+}
+
+.product-editor-dialog .product-markdown-footer span:last-child {
+  flex: 0 0 auto;
+  font-variant-numeric: tabular-nums;
 }
 
 .product-editor-dialog .product-upload-button {
@@ -815,6 +881,19 @@
     border-right: 0;
     border-bottom: 1px solid #edf0f4;
     border-radius: 0;
+  }
+
+  .product-editor-dialog .product-body-heading {
+    align-items: flex-start;
+  }
+
+  .product-editor-dialog .product-markdown-toolbar {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .product-editor-dialog .product-markdown-toolbar button {
+    flex: 1 1 auto;
   }
 
   .product-editor-dialog .product-media-grid {

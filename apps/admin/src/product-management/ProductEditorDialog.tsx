@@ -1,5 +1,5 @@
 import { X } from 'lucide-react';
-import { useMemo, useState, type FormEvent, type KeyboardEvent } from 'react';
+import { useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
 import { Button } from '../components/ui/button';
 import { AdminDialog } from '../components/ui/dialog';
 import { adminConfirm } from '../admin-dialog-service';
@@ -53,6 +53,62 @@ type ProductEditorDialogProps = {
 };
 
 type InlineCreateKind = 'category' | 'tag' | null;
+
+type MarkdownAction = {
+  label: string;
+  title: string;
+  before: string;
+  after?: string;
+  placeholder: string;
+};
+
+const markdownActions: MarkdownAction[] = [
+  {
+    label: 'H2',
+    title: '插入二级标题',
+    before: '## ',
+    placeholder: '小标题',
+  },
+  {
+    label: '粗体',
+    title: '加粗选中文字',
+    before: '**',
+    after: '**',
+    placeholder: '重点文字',
+  },
+  {
+    label: '列表',
+    title: '插入列表项',
+    before: '- ',
+    placeholder: '列表内容',
+  },
+  {
+    label: '提示',
+    title: '插入提示引用块',
+    before: '> ',
+    placeholder: '提示内容',
+  },
+  {
+    label: '链接',
+    title: '插入安全链接',
+    before: '[',
+    after: '](https://example.com)',
+    placeholder: '链接文字',
+  },
+  {
+    label: '代码',
+    title: '插入行内代码',
+    before: '`',
+    after: '`',
+    placeholder: '代码内容',
+  },
+  {
+    label: '分隔线',
+    title: '插入分隔线',
+    before: '---',
+    placeholder: '',
+  },
+];
 
 function modeLabel(mode: ProductServiceMode): string {
   return mode === 'online' ? '线上服务' : '线下服务';
@@ -159,6 +215,7 @@ export function ProductEditorDialog({
   const [creatingInline, setCreatingInline] = useState<InlineCreateKind>(null);
   const [inlineError, setInlineError] = useState('');
   const [draggingMediaKey, setDraggingMediaKey] = useState<string | null>(null);
+  const markdownTextareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   const baselineCategoryText = editingProduct?.categoryId
     ? (categories.find((category) => category.id === editingProduct.categoryId)?.name ??
@@ -207,6 +264,25 @@ export function ProductEditorDialog({
 
   function patch(patchValue: Partial<ProductInput>) {
     onFormChange({ ...form, ...patchValue });
+  }
+
+  function applyMarkdownAction(action: MarkdownAction) {
+    const textarea = markdownTextareaRef.current;
+    if (!textarea) return;
+
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const selected = form.body.slice(start, end);
+    const content = selected || action.placeholder;
+    const replacement = `${action.before}${content}${action.after ?? ''}`;
+    const nextBody = `${form.body.slice(0, start)}${replacement}${form.body.slice(end)}`;
+    patch({ body: nextBody });
+
+    requestAnimationFrame(() => {
+      textarea.focus();
+      const selectionStart = start + action.before.length;
+      textarea.setSelectionRange(selectionStart, selectionStart + content.length);
+    });
   }
 
   async function requestClose() {
@@ -576,15 +652,30 @@ export function ProductEditorDialog({
         <div className="product-content-grid">
           <div className="product-body-field">
             <div className="product-body-heading">
-              <strong>产品正文 · Markdown</strong>
+              <div>
+                <strong>产品正文 · Markdown</strong>
+                <small>内容将按详情页样式实时渲染</small>
+              </div>
+              <div className="product-markdown-toolbar" aria-label="Markdown 快捷格式">
+                {markdownActions.map((action) => (
+                  <button
+                    key={action.label}
+                    type="button"
+                    title={action.title}
+                    disabled={busy}
+                    onClick={() => applyMarkdownAction(action)}
+                  >
+                    {action.label}
+                  </button>
+                ))}
+              </div>
             </div>
             <div className="product-body-content">
               <textarea
+                ref={markdownTextareaRef}
                 value={form.body}
                 maxLength={20_000}
-                placeholder={
-                  '支持 Markdown：标题、粗体、列表、引用、链接和代码等。\n\n输入产品介绍、服务内容和注意事项。'
-                }
+                placeholder={'输入产品介绍、服务内容和注意事项。可使用上方快捷格式。'}
                 onChange={(event) => patch({ body: event.target.value })}
               />
               <div className="product-markdown-preview">
@@ -594,6 +685,10 @@ export function ProductEditorDialog({
                   <p className="product-preview-empty">正文为空。</p>
                 )}
               </div>
+            </div>
+            <div className="product-markdown-footer">
+              <span>支持标题、粗体、列表、引用、链接、代码和分隔线</span>
+              <span>{form.body.length.toLocaleString()} / 20,000</span>
             </div>
           </div>
 
