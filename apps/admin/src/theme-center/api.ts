@@ -23,6 +23,7 @@ export type ThemePreviewContent = {
     name: string;
     description: string;
     iconUrl: string | null;
+    browseBackgroundUrl: string | null;
   }>;
   products: Array<{
     id: string;
@@ -222,6 +223,12 @@ export async function loadThemePreviewContent(): Promise<ThemePreviewContent> {
           name: typeof value.name === 'string' ? value.name : '',
           description: typeof value.description === 'string' ? value.description : '',
           iconUrl: objectUrl(mediaBaseUrl, icon.objectKey),
+          browseBackgroundUrl: objectUrl(
+            mediaBaseUrl,
+            typeof value.browseBackgroundObjectKey === 'string'
+              ? value.browseBackgroundObjectKey
+              : null,
+          ),
         },
       ];
     })

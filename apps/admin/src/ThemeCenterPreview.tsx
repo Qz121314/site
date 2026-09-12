@@ -151,6 +151,11 @@ export function ThemeCenterPreview({
                   className="theme-preview-section home-primary-directory"
                   aria-label="主分区产品名称预览"
                 >
+                  {primarySection?.browseBackgroundUrl ? (
+                    <div className="home-primary-directory-visual" aria-hidden="true">
+                      <img alt="" src={primarySection.browseBackgroundUrl} />
+                    </div>
+                  ) : null}
                   <div className="home-primary-directory-heading">
                     <span>
                       <h2>{primarySection?.name ?? content.siteName}</h2>
