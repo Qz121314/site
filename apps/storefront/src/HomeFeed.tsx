@@ -295,24 +295,12 @@ function HomePrimaryDirectory({
   const visibleProducts = selectedCategoryId
     ? products.filter((product) => product.category.id === selectedCategoryId)
     : products;
-  const browseBackgroundUrl = section.browseBackgroundUrl;
 
   return (
     <section
       className="home-primary-directory"
       aria-labelledby="home-primary-directory-title"
     >
-      {browseBackgroundUrl ? (
-        <div className="home-primary-directory-visual" aria-hidden="true">
-          <ResilientImage
-            alt=""
-            decoding="async"
-            fallback={<span className="home-primary-directory-visual-fallback" />}
-            loading="eager"
-            src={browseBackgroundUrl}
-          />
-        </div>
-      ) : null}
       <div className="home-primary-directory-body">
         <div className="home-primary-directory-heading">
           <span>
