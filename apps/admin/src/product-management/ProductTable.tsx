@@ -26,6 +26,7 @@ type ProductTableProps = {
   onToggleSelect: (id: string) => void;
   onToggleSelectAll: () => void;
   onEdit: (product: AdminProduct) => void;
+  onCopy: (product: AdminProduct) => void;
   onDelete: (product: AdminProduct) => void;
   onCopyLink: (product: AdminProduct) => void;
   onRestore: (product: AdminProduct) => void;
@@ -98,6 +99,7 @@ export function ProductTable({
   onToggleSelect,
   onToggleSelectAll,
   onEdit,
+  onCopy,
   onDelete,
   onCopyLink,
   onRestore,
@@ -427,6 +429,15 @@ export function ProductTable({
                           onClick={() => onCopyLink(product)}
                         >
                           复制链接
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="compact"
+                          disabled={working}
+                          aria-label={`复制产品 ${product.title}`}
+                          onClick={() => onCopy(product)}
+                        >
+                          复制
                         </Button>
                         <Button
                           variant="ghost"

@@ -180,6 +180,8 @@ export function ProductManagementView({
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [statusFilter, setStatusFilter] = useState<StatusFilter>('all');
+  const [categoryFilter, setCategoryFilter] = useState('all');
+  const [tagFilter, setTagFilter] = useState('all');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [editingProduct, setEditingProduct] = useState<AdminProduct | null>(null);
   const [form, setForm] = useState<ProductInput>(emptyProductForm);
@@ -236,6 +238,8 @@ export function ProductManagementView({
     setScope('active');
     setSearch('');
     setStatusFilter('all');
+    setCategoryFilter('all');
+    setTagFilter('all');
     setSelectedIds(new Set());
     setTrashProducts([]);
     setEditorOpen(false);
@@ -301,18 +305,24 @@ export function ProductManagementView({
     const keyword = search.trim().toLowerCase();
     return sourceProducts.filter((product) => {
       if (statusFilter !== 'all' && product.status !== statusFilter) return false;
+      if (categoryFilter !== 'all' && product.categoryId !== categoryFilter) return false;
+      if (tagFilter !== 'all' && !product.tagIds.includes(tagFilter)) return false;
       if (!keyword) return true;
       return `${product.title} ${product.categoryName ?? ''} ${product.tags.map((tag) => tag.name).join(' ')} ${product.conversionGroupName ?? ''}`
         .toLowerCase()
         .includes(keyword);
     });
-  }, [search, sourceProducts, statusFilter]);
+  }, [categoryFilter, search, sourceProducts, statusFilter, tagFilter]);
 
   const allVisibleSelected =
     filteredProducts.length > 0 &&
     filteredProducts.every((product) => selectedIds.has(product.id));
   const reorderBlocked =
-    scope !== 'active' || Boolean(search.trim()) || statusFilter !== 'all';
+    scope !== 'active' ||
+    Boolean(search.trim()) ||
+    statusFilter !== 'all' ||
+    categoryFilter !== 'all' ||
+    tagFilter !== 'all';
   const saving = saveStage !== 'idle';
 
   async function changeScope(nextScope: ProductScope) {
@@ -341,6 +351,37 @@ export function ProductManagementView({
     setErrorMessage('');
     setSuccessMessage('');
     setEditorOpen(true);
+  }
+
+  async function openCopyEditor(product: AdminProduct) {
+    setWorking(true);
+    setErrorMessage('');
+    setSuccessMessage('');
+    try {
+      const detailed = await fetchProduct(section.id, product.id);
+      const sortOrder = activeProducts.length
+        ? Math.max(...activeProducts.map((item) => item.sortOrder)) + 10
+        : 0;
+      setEditingProduct(null);
+      setForm({
+        ...productToInput(detailed),
+        title: `${detailed.title} 副本`,
+        coverAssetId: null,
+        mediaAssetIds: [],
+        isFeatured: false,
+        featuredOrder: 0,
+        sortOrder,
+        status: 'draft',
+      });
+      setMedia([]);
+      setCoverKey(null);
+      setResumeNotice(false);
+      setEditorOpen(true);
+    } catch (error) {
+      handleError(error);
+    } finally {
+      setWorking(false);
+    }
   }
 
   function closeEditor() {
@@ -740,6 +781,34 @@ export function ProductManagementView({
             <option value="archived">已归档</option>
           </select>
         </label>
+        <label className="ui-management-filter">
+          <select
+            aria-label="产品分类"
+            value={categoryFilter}
+            onChange={(event) => setCategoryFilter(event.target.value)}
+          >
+            <option value="all">全部分类</option>
+            {categories.map((category) => (
+              <option key={category.id} value={category.id}>
+                {category.name}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="ui-management-filter">
+          <select
+            aria-label="产品标签"
+            value={tagFilter}
+            onChange={(event) => setTagFilter(event.target.value)}
+          >
+            <option value="all">全部标签</option>
+            {tags.map((tag) => (
+              <option key={tag.id} value={tag.id}>
+                {tag.name}
+              </option>
+            ))}
+          </select>
+        </label>
       </AdminToolbar>
 
       {!editorOpen && errorMessage ? (
@@ -777,6 +846,7 @@ export function ProductManagementView({
         onToggleSelect={toggleSelect}
         onToggleSelectAll={toggleSelectAll}
         onEdit={(product) => void openProductEditor(product.id)}
+        onCopy={(product) => void openCopyEditor(product)}
         onDelete={(product) => setPendingDeleteIds([product.id])}
         onCopyLink={(product) => void copyProductLink(product)}
         onRestore={(product) => void handleRestore(product)}
