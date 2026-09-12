@@ -13,7 +13,7 @@ import {
   type CSSProperties,
   type MouseEvent as ReactMouseEvent,
 } from 'react';
-import type { ThemePreset } from './theme-center/api';
+import type { ThemePreset, ThemePreviewContent } from './theme-center/api';
 
 function PreviewLink({ onClick, ...props }: AnchorHTMLAttributes<HTMLAnchorElement>) {
   return (
@@ -33,12 +33,14 @@ function PreviewIcon({ children }: { children: string }) {
 
 export function ThemeCenterPreview({
   accent,
+  content,
   textColor,
   theme,
   viewport,
   previewSize,
 }: {
   accent: string | null;
+  content: ThemePreviewContent;
   textColor: string | null;
   theme: ThemePreset;
   viewport: 'desktop' | 'mobile';
@@ -79,6 +81,16 @@ export function ThemeCenterPreview({
     height: `${previewSize.height}px`,
     transform: `scale(${previewScale})`,
   } satisfies CSSProperties;
+  const primarySection = content.sections[0] ?? null;
+  const primaryProducts = primarySection
+    ? content.products.filter((product) => product.sectionId === primarySection.id)
+    : content.products;
+  const visibleProducts = primaryProducts.length > 0 ? primaryProducts : content.products;
+  const logo = content.logoUrl ? (
+    <img alt="" src={content.logoUrl} />
+  ) : (
+    <PreviewIcon>◆</PreviewIcon>
+  );
   return (
     <div className="theme-preview-shell" data-viewport={viewport} ref={shellRef}>
       <div className="theme-preview-stage">
@@ -100,9 +112,9 @@ export function ThemeCenterPreview({
               style={style}
             >
               <StorefrontBrandBar
-                locationLabel={theme.label}
-                logo={<PreviewIcon>◆</PreviewIcon>}
-                siteName="Storefront"
+                locationLabel={content.locationLabel}
+                logo={logo}
+                siteName={content.siteName}
                 LinkComponent={PreviewLink}
               />
               <div className="theme-preview-content">
@@ -110,30 +122,21 @@ export function ThemeCenterPreview({
                   className="home-shortcuts theme-preview-shortcuts"
                   aria-label="快捷入口预览"
                 >
-                  <StorefrontHomeShortcut
-                    href="#"
-                    icon={<PreviewIcon>01</PreviewIcon>}
-                    label="Explore"
-                    LinkComponent={PreviewLink}
-                  />
-                  <StorefrontHomeShortcut
-                    href="#"
-                    icon={<PreviewIcon>02</PreviewIcon>}
-                    label="Live"
-                    LinkComponent={PreviewLink}
-                  />
-                  <StorefrontHomeShortcut
-                    href="#"
-                    icon={<PreviewIcon>03</PreviewIcon>}
-                    label="Popular"
-                    LinkComponent={PreviewLink}
-                  />
-                  <StorefrontHomeShortcut
-                    href="#"
-                    icon={<PreviewIcon>04</PreviewIcon>}
-                    label="More"
-                    LinkComponent={PreviewLink}
-                  />
+                  {content.sections.map((section) => (
+                    <StorefrontHomeShortcut
+                      href={`/sections/${encodeURIComponent(section.slug)}/`}
+                      icon={
+                        section.iconUrl ? (
+                          <img alt="" src={section.iconUrl} />
+                        ) : (
+                          <PreviewIcon>{Array.from(section.name)[0] ?? '•'}</PreviewIcon>
+                        )
+                      }
+                      key={section.id}
+                      label={section.name}
+                      LinkComponent={PreviewLink}
+                    />
+                  ))}
                 </nav>
                 <section
                   className="theme-preview-section"
@@ -141,48 +144,41 @@ export function ThemeCenterPreview({
                 >
                   <div className="home-recommendation-heading">
                     <span className="home-recommendation-heading-copy">
-                      <h2>Featured</h2>
-                      <p>Recommended for you</p>
+                      <h2>{primarySection?.name ?? content.siteName}</h2>
+                      {primarySection?.description ? (
+                        <p>{primarySection.description}</p>
+                      ) : null}
                     </span>
                     <PreviewLink href="#" aria-label="查看全部">
                       <span aria-hidden="true">›</span>
                     </PreviewLink>
                   </div>
                   <div className="home-product-rail theme-preview-products">
-                    <StorefrontHomeProductTile
-                      href="#"
-                      LinkComponent={PreviewLink}
-                      media={<span className="theme-preview-product-media is-primary" />}
-                      title="Product name"
-                    />
-                    <StorefrontHomeProductTile
-                      href="#"
-                      LinkComponent={PreviewLink}
-                      media={
-                        <span className="theme-preview-product-media is-secondary" />
-                      }
-                      title="New arrival"
-                    />
+                    {visibleProducts.map((product) => (
+                      <StorefrontHomeProductTile
+                        href={`/sections/${encodeURIComponent(primarySection?.slug ?? '')}/products/${encodeURIComponent(product.slug)}/`}
+                        key={product.id}
+                        LinkComponent={PreviewLink}
+                        media={
+                          product.coverUrl ? (
+                            <img alt="" src={product.coverUrl} />
+                          ) : (
+                            <span className="theme-preview-product-media" />
+                          )
+                        }
+                        title={product.title}
+                      />
+                    ))}
                   </div>
                 </section>
               </div>
-              {viewport === 'mobile' ? (
+              {viewport === 'mobile' && content.navigation.length > 0 ? (
                 <StorefrontBottomNavigation
-                  activeHref="/"
-                  items={[
-                    { href: '/', label: 'Home', icon: <PreviewIcon>⌂</PreviewIcon> },
-                    {
-                      href: '/browse/',
-                      label: 'Browse',
-                      icon: <PreviewIcon>◇</PreviewIcon>,
-                    },
-                    { href: '/faq/', label: 'FAQ', icon: <PreviewIcon>?</PreviewIcon> },
-                    {
-                      href: '/messages/',
-                      label: 'Messages',
-                      icon: <PreviewIcon>○</PreviewIcon>,
-                    },
-                  ]}
+                  activeHref={content.navigation[0]?.href ?? '/'}
+                  items={content.navigation.map((item) => ({
+                    ...item,
+                    icon: <PreviewIcon>{Array.from(item.label)[0] ?? '•'}</PreviewIcon>,
+                  }))}
                   LinkComponent={PreviewLink}
                 />
               ) : null}

@@ -16,6 +16,7 @@ import { ThemeCenterPreview } from './ThemeCenterPreview';
 import { themeDiagnostics } from './theme-center/diagnostics';
 import {
   fetchThemeCenter,
+  loadThemePreviewContent,
   importThemeFromJson,
   importThemeFromRegistry,
   updateThemeCenter,
@@ -23,6 +24,7 @@ import {
   type ResolvedTheme,
   type ThemeKey,
   type ThemePreset,
+  type ThemePreviewContent,
   type ThemeVisualOverrides,
 } from './theme-center/api';
 
@@ -128,6 +130,7 @@ export function ThemeCenterView({
   onActionsChange,
 }: ThemeCenterViewProps) {
   const [presets, setPresets] = useState<ThemePreset[]>([]);
+  const [previewContent, setPreviewContent] = useState<ThemePreviewContent | null>(null);
   const [currentTheme, setCurrentTheme] = useState<ResolvedTheme | null>(null);
   const [selectedKey, setSelectedKey] = useState<ThemeKey>('pearl');
   const [accent, setAccent] = useState('');
@@ -198,8 +201,12 @@ export function ThemeCenterView({
     setLoading(true);
     setErrorMessage('');
     try {
-      const data = await fetchThemeCenter();
+      const [data, content] = await Promise.all([
+        fetchThemeCenter(),
+        loadThemePreviewContent(),
+      ]);
       setPresets(data.presets);
+      setPreviewContent(content);
       setCurrentTheme(data.theme);
       setSelectedKey(data.theme.key);
       setAccent(data.theme.overrides.accent ?? '');
@@ -478,10 +485,11 @@ export function ThemeCenterView({
           </button>
         </aside>
         <main className="theme-live-preview">
-          {previewTheme ? (
+          {previewTheme && previewContent ? (
             <ThemeCenterPreview
               key={previewTheme.key}
               accent={previewAccent}
+              content={previewContent}
               textColor={previewTextColor}
               theme={previewTheme}
               viewport={viewport}

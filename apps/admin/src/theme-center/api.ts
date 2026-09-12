@@ -12,6 +12,27 @@ export type OfficialThemeKey =
   | 'travel'
   | 'tech';
 export type ThemeKey = OfficialThemeKey | 'custom';
+
+export type ThemePreviewContent = {
+  siteName: string;
+  locationLabel: string;
+  logoUrl: string | null;
+  sections: Array<{
+    id: string;
+    slug: string;
+    name: string;
+    description: string;
+    iconUrl: string | null;
+  }>;
+  products: Array<{
+    id: string;
+    slug: string;
+    sectionId: string;
+    title: string;
+    coverUrl: string | null;
+  }>;
+  navigation: Array<{ href: string; label: string }>;
+};
 export type ThemeDensity = 'compact' | 'standard' | 'comfortable';
 export type ThemeFontPack = 'modern' | 'editorial' | 'compact' | 'technical';
 export type ThemeButtonStyle = 'refined' | 'minimal' | 'soft-pill';
@@ -154,6 +175,87 @@ export async function fetchThemeCenter(): Promise<ThemeCenterResponse> {
   return {
     theme: parseTheme(envelope.theme),
     presets: envelope.presets as ThemePreset[],
+  };
+}
+
+function objectUrl(baseUrl: string, objectKey: unknown): string | null {
+  if (typeof objectKey !== 'string' || !objectKey.trim() || objectKey.includes('..')) {
+    return null;
+  }
+  return `${baseUrl.replace(/\/$/u, '')}/${objectKey
+    .split('/')
+    .map((segment) => encodeURIComponent(segment))
+    .join('/')}`;
+}
+
+export async function loadThemePreviewContent(): Promise<ThemePreviewContent> {
+  const response = await fetch('/api/public/storefront/bootstrap', {
+    credentials: 'same-origin',
+    cache: 'no-store',
+    headers: { Accept: 'application/json' },
+  });
+  const body = (await readJson(response)) as Record<string, unknown> | null;
+  if (!response.ok || !body) {
+    throw new AdminApiError(
+      500,
+      'PREVIEW_CONTENT_UNAVAILABLE',
+      '无法读取已发布的前端预览数据。',
+    );
+  }
+  const site = isRecord(body.site) && isRecord(body.site.site) ? body.site.site : {};
+  const home = isRecord(body.home) ? body.home : {};
+  const mediaBaseUrl = typeof body.mediaBaseUrl === 'string' ? body.mediaBaseUrl : '';
+  const rawSections = Array.isArray(home.allSections)
+    ? home.allSections
+    : Array.isArray(home.sections)
+      ? home.sections
+      : [];
+  const sections = rawSections
+    .flatMap((value) => {
+      if (!isRecord(value)) return [];
+      const icon = isRecord(value.icon) ? value.icon : {};
+      return [
+        {
+          id: typeof value.id === 'string' ? value.id : '',
+          slug: typeof value.slug === 'string' ? value.slug : '',
+          name: typeof value.name === 'string' ? value.name : '',
+          description: typeof value.description === 'string' ? value.description : '',
+          iconUrl: objectUrl(mediaBaseUrl, icon.objectKey),
+        },
+      ];
+    })
+    .filter((section) => section.id && section.slug && section.name);
+  const products = (Array.isArray(home.featuredProducts) ? home.featuredProducts : [])
+    .flatMap((value) => {
+      if (!isRecord(value)) return [];
+      return [
+        {
+          id: typeof value.id === 'string' ? value.id : '',
+          slug: typeof value.slug === 'string' ? value.slug : '',
+          sectionId: typeof value.sectionId === 'string' ? value.sectionId : '',
+          title: typeof value.title === 'string' ? value.title : '',
+          coverUrl: objectUrl(mediaBaseUrl, value.coverObjectKey),
+        },
+      ];
+    })
+    .filter(
+      (product) => product.id && product.slug && product.sectionId && product.title,
+    );
+  const navigation = (
+    Array.isArray(body.bottomNavigation) ? body.bottomNavigation : []
+  ).flatMap((value) => {
+    if (!isRecord(value)) return [];
+    const href = typeof value.href === 'string' ? value.href : '';
+    const label = typeof value.label === 'string' ? value.label : '';
+    return href && label ? [{ href, label }] : [];
+  });
+  return {
+    siteName: typeof site.name === 'string' ? site.name : '',
+    locationLabel: typeof site.locationLabel === 'string' ? site.locationLabel : '',
+    logoUrl: objectUrl(mediaBaseUrl, site.logoObjectKey),
+    sections,
+    products,
+    navigation,
   };
 }
 
