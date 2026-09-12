@@ -153,6 +153,7 @@ test('PR Full Verify preserves independent validation layers as parallel jobs', 
 test('main release selects verification depth before direct Wrangler deploy', () => {
   const full = namedStep(mainWorkflow, 'Full local-first verification');
   assert.match(full, /verification_profile == 'full'/);
+  assert.match(full, /force_deploy == 'true'/);
   assert.match(full, /run:\s*pnpm verify/);
   for (const name of [
     'Cloudflare-only verification',
@@ -162,6 +163,7 @@ test('main release selects verification depth before direct Wrangler deploy', ()
   ]) {
     const step = namedStep(mainWorkflow, name);
     assert.match(step, /verification_profile/);
+    assert.match(step, /force_deploy != 'true'/);
   }
   const deploy = namedStep(mainWorkflow, 'Deploy business platform Workers');
   assert.match(deploy, /pnpm exec wrangler deploy --keep-vars/);

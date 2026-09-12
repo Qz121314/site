@@ -112,23 +112,23 @@ jobs:
           } | tee -a "$GITHUB_STEP_SUMMARY"
 
       - name: Full local-first verification
-        if: steps.changes.outputs.verification_profile == 'full'
+        if: steps.changes.outputs.verification_profile == 'full' || steps.manual.outputs.force_deploy == 'true'
         run: pnpm verify
 
       - name: Cloudflare-only verification
-        if: steps.changes.outputs.verification_profile == 'cloudflare'
+        if: steps.changes.outputs.verification_profile == 'cloudflare' && steps.manual.outputs.force_deploy != 'true'
         run: pnpm guardrails && pnpm format && pnpm lint && pnpm typecheck
 
       - name: Tests-only verification
-        if: steps.changes.outputs.verification_profile == 'tests'
+        if: steps.changes.outputs.verification_profile == 'tests' && steps.manual.outputs.force_deploy != 'true'
         run: pnpm guardrails && pnpm test
 
       - name: Quality-only verification
-        if: steps.changes.outputs.verification_profile == 'quality'
+        if: steps.changes.outputs.verification_profile == 'quality' && steps.manual.outputs.force_deploy != 'true'
         run: pnpm guardrails && pnpm format && pnpm lint && pnpm typecheck
 
       - name: Docs-only verification
-        if: steps.changes.outputs.verification_profile == 'docs'
+        if: steps.changes.outputs.verification_profile == 'docs' && steps.manual.outputs.force_deploy != 'true'
         run: pnpm guardrails && pnpm format
 
       - name: Verify published bootstrap compatibility
