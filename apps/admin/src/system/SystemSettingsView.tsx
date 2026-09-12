@@ -130,19 +130,32 @@ export function SystemSettingsView({
           aria-label="系统设置"
         >
           <div className="system-settings-top-row">
-            <button
-              className="system-settings-logo-button"
-              type="button"
-              aria-label="选择站点 Logo"
-              disabled={busy}
-              onClick={() => setPickerOpen(true)}
-            >
+            <div className="system-settings-logo-control">
+              <button
+                className="system-settings-logo-button"
+                type="button"
+                aria-label="选择站点 Logo"
+                disabled={busy}
+                onClick={() => setPickerOpen(true)}
+              >
+                {branding.previewUrl ? (
+                  <img src={branding.previewUrl} alt="站点 Logo 预览" />
+                ) : (
+                  <span aria-hidden="true">+</span>
+                )}
+              </button>
               {branding.previewUrl ? (
-                <img src={branding.previewUrl} alt="站点 Logo 预览" />
-              ) : (
-                <span aria-hidden="true">+</span>
-              )}
-            </button>
+                <Button
+                  variant="ghost"
+                  size="compact"
+                  type="button"
+                  disabled={busy}
+                  onClick={branding.clear}
+                >
+                  清除 Logo
+                </Button>
+              ) : null}
+            </div>
             <div className="system-settings-top-actions">
               {message ? (
                 <AdminStatusBadge

@@ -52,6 +52,13 @@
   border-bottom: 1px solid var(--admin-dashboard-line, #e5e9ef);
 }
 
+.system-settings-logo-control {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
 .system-settings-logo-button {
   display: grid;
   place-items: center;
