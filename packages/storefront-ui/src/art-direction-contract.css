@@ -452,7 +452,7 @@
 }
 
 :is(html, .storefront-theme-root) .home-recommendation.is-compact .home-product-rail {
-  gap: 10px;
+  gap: 6px;
 }
 
 :is(html, .storefront-theme-root) .home-recommendation.is-compact .home-product-tile {
@@ -465,7 +465,7 @@
   width: 72px;
   height: 72px;
   aspect-ratio: 1;
-  border-radius: var(--theme-radius-media, 14px);
+  border-radius: 50%;
 }
 
 :is(html, .storefront-theme-root)

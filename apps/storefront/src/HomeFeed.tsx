@@ -467,7 +467,7 @@ export function HomeFeed({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
             initialProducts={featuredProductsBySection.get(section.id) ?? []}
             priority={!hasHero && section.id === priorityRecommendationSectionId}
             section={section}
-            compact={isTemplateA}
+            compact
             key={section.id}
           />
         ))}
