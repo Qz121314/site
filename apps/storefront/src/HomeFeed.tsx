@@ -444,7 +444,11 @@ export function HomeFeed({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
   }, [site.name]);
 
   return (
-    <div className={`home-feed${hasHero ? ' has-hero' : ''}`}>
+    <div
+      className={`home-feed${hasHero ? ' has-hero' : ''}${
+        isTemplateA ? ' is-template-a' : ''
+      }`}
+    >
       <h1 className="sr-only">{site.name}</h1>
       <HomeHero siteName={site.name} slides={heroSlides} />
       <HomeShortcuts sections={shortcutSections} showMore={shortcutLayout.showMore} />

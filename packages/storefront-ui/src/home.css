@@ -401,6 +401,10 @@
   padding: 14px 0 14px;
 }
 
+.home-feed.is-template-a .home-shortcut-zone {
+  padding-bottom: 6px;
+}
+
 .home-feed.has-hero .home-shortcut-zone {
   margin-top: 2px;
 }
@@ -522,7 +526,7 @@
 .home-template-a-feed {
   display: grid;
   gap: 40px;
-  padding: 6px 0 48px;
+  padding: 0 0 48px;
 }
 
 .home-primary-directory {
@@ -1042,7 +1046,7 @@
 
   .home-template-a-feed {
     gap: 38px;
-    padding-top: 4px;
+    padding-top: 0;
   }
 
   .home-primary-directory {
