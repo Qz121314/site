@@ -66,14 +66,31 @@ for (const viewport of MOBILE_VIEWPORTS) {
       );
       const firstRect = firstShortcut?.getBoundingClientRect();
       const bottomRect = bottomChrome?.getBoundingClientRect();
+      const shortcutRects = shortcuts
+        ? Array.from(shortcuts.querySelectorAll<HTMLElement>('.home-shortcut')).map(
+            (shortcut) => shortcut.getBoundingClientRect(),
+          )
+        : [];
+      const containerRect = shortcuts?.getBoundingClientRect();
       return {
-        shortcutColumns: shortcuts
-          ? getComputedStyle(shortcuts).gridTemplateColumns.split(' ').length
-          : 0,
+        display: shortcuts ? getComputedStyle(shortcuts).display : '',
+        overflowX: shortcuts ? getComputedStyle(shortcuts).overflowX : '',
+        fifthFullyVisible:
+          shortcutRects.length >= 5 && containerRect
+            ? shortcutRects[4].right <= containerRect.right + 1.5
+            : false,
+        sixthPartiallyVisible:
+          shortcutRects.length >= 6 && containerRect
+            ? shortcutRects[5].left < containerRect.right &&
+              shortcutRects[5].right > containerRect.right
+            : true,
         shortcutTopGap: firstRect && bottomRect ? bottomRect.top - firstRect.top : -1,
       };
     });
-    expect(homeContract.shortcutColumns).toBe(4);
+    expect(homeContract.display).toBe('flex');
+    expect(homeContract.overflowX).toBe('auto');
+    expect(homeContract.fifthFullyVisible).toBe(true);
+    expect(homeContract.sixthPartiallyVisible).toBe(true);
     expect(homeContract.shortcutTopGap).toBeGreaterThan(0);
     await expectFixedBottomChrome(page);
     await expectNoHorizontalOverflow(page);
