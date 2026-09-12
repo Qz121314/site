@@ -117,11 +117,14 @@ export function LayoutCenterView({ onSessionExpired }: { onSessionExpired: () =>
                 onChange={(event) =>
                   setDraft((current) => ({
                     ...current,
-                    [page.key]: event.target.value as 'current',
+                    [page.key]: event.target.value as 'current' | 'template-a',
                   }))
                 }
               >
                 <option value="current">当前布局（默认）</option>
+                {page.key === 'home' ? (
+                  <option value="template-a">模板 A · 主分区聚焦</option>
+                ) : null}
               </select>
             </label>
           ))}

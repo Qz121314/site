@@ -1,6 +1,7 @@
 import {
   defaultStorefrontLayoutConfig,
   resolveStorefrontLayoutConfig,
+  type StorefrontLayoutKey,
   type StorefrontLayoutPage,
 } from '@site/shared';
 import type { StorefrontBootstrap } from './content';
@@ -8,7 +9,7 @@ import type { StorefrontBootstrap } from './content';
 export function layoutForPage(
   bootstrap: StorefrontBootstrap,
   page: StorefrontLayoutPage,
-): 'current' {
+): StorefrontLayoutKey {
   return resolveStorefrontLayoutConfig(
     bootstrap.site.site.storefrontLayout ?? defaultStorefrontLayoutConfig,
   )[page];

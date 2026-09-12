@@ -20,6 +20,7 @@ import {
   type StorefrontBootstrap,
 } from './content';
 import { resolveHomeLayout, resolveHomeShortcuts } from './home-layout';
+import { layoutForPage } from './layout-config';
 import { ResilientImage, ResilientVideo } from './ResilientMedia';
 import { productHref, sectionHref } from './routing';
 import { handleStorefrontLinkClick } from './storefront-navigation-runtime';
@@ -270,6 +271,82 @@ function HomeRecommendationRail({
   );
 }
 
+function HomePrimaryDirectory({
+  bootstrap,
+  initialProducts,
+  section,
+}: {
+  bootstrap: StorefrontBootstrap;
+  initialProducts: PublicProductSummary[];
+  section: PublicSection;
+}) {
+  const query = useQuery({
+    queryKey: ['storefront-section', bootstrap.pointer.contentVersion, section.id],
+    queryFn: async ({ signal }) => {
+      const { loadSectionSnapshot } = await import('./content-route');
+      return loadSectionSnapshot(bootstrap, section.id, signal);
+    },
+    staleTime: Number.POSITIVE_INFINITY,
+  });
+  const products = query.data?.products ?? initialProducts;
+
+  return (
+    <section
+      className="home-primary-directory"
+      aria-labelledby="home-primary-directory-title"
+    >
+      <div className="home-primary-directory-media">
+        {section.browseBackgroundUrl ? (
+          <ResilientImage
+            alt=""
+            loading="lazy"
+            src={section.browseBackgroundUrl}
+            width={640}
+            height={420}
+          />
+        ) : (
+          <span aria-hidden="true">{Array.from(section.name.trim())[0] ?? '•'}</span>
+        )}
+      </div>
+      <div className="home-primary-directory-body">
+        <div className="home-primary-directory-heading">
+          <span>
+            <h2 id="home-primary-directory-title">{section.name}</h2>
+            {section.description ? <p>{section.description}</p> : null}
+          </span>
+          <HomeLink
+            href={sectionHref(section)}
+            aria-label={`${SYSTEM_UI.more}: ${section.name}`}
+          >
+            {SYSTEM_UI.more}
+            <ChevronRight aria-hidden="true" />
+          </HomeLink>
+        </div>
+        {query.isLoading && !query.data ? (
+          <div className="home-primary-directory-list" aria-hidden="true">
+            {Array.from({ length: 8 }, (_, index) => (
+              <span className="home-primary-directory-skeleton" key={index} />
+            ))}
+          </div>
+        ) : (
+          <div className="home-primary-directory-list">
+            {products.map((product) => (
+              <HomeLink
+                className="home-primary-directory-link"
+                href={productHref(product)}
+                key={product.id}
+              >
+                <span>{product.title}</span>
+                <ChevronRight aria-hidden="true" />
+              </HomeLink>
+            ))}
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
+
 function fallbackRecommendationSectionIds(bootstrap: StorefrontBootstrap): string[] {
   const ids: string[] = [];
   for (const product of bootstrap.home.featuredProducts) {
@@ -334,6 +411,11 @@ export function HomeFeed({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
     )?.id ?? recommendationSections[0]?.id;
   const heroSlides = site.hero?.slides ?? [];
   const hasHero = heroSlides.some((slide) => slide.mediaUrl.trim());
+  const isTemplateA = layoutForPage(bootstrap, 'home') === 'template-a';
+  const primarySection = availableSections[0];
+  const secondarySections = recommendationSections.filter(
+    (section) => section.id !== primarySection?.id,
+  );
 
   useEffect(() => {
     document.documentElement.lang = 'en';
@@ -346,8 +428,15 @@ export function HomeFeed({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
       <HomeHero siteName={site.name} slides={heroSlides} />
       <HomeShortcuts sections={shortcutSections} showMore={shortcutLayout.showMore} />
 
-      <div className="home-recommendation-feed">
-        {recommendationSections.map((section) => (
+      <div className={isTemplateA ? 'home-template-a-feed' : 'home-recommendation-feed'}>
+        {isTemplateA && primarySection ? (
+          <HomePrimaryDirectory
+            bootstrap={bootstrap}
+            initialProducts={featuredProductsBySection.get(primarySection.id) ?? []}
+            section={primarySection}
+          />
+        ) : null}
+        {(isTemplateA ? secondarySections : recommendationSections).map((section) => (
           <HomeRecommendationRail
             bootstrap={bootstrap}
             initialProducts={featuredProductsBySection.get(section.id) ?? []}

@@ -8,7 +8,7 @@ export const storefrontLayoutPages = [
 ] as const;
 
 export type StorefrontLayoutPage = (typeof storefrontLayoutPages)[number];
-export type StorefrontLayoutKey = 'current';
+export type StorefrontLayoutKey = 'current' | 'template-a';
 
 export type StorefrontLayoutConfig = Record<StorefrontLayoutPage, StorefrontLayoutKey>;
 
@@ -30,7 +30,9 @@ export function resolveStorefrontLayoutConfig(value: unknown): StorefrontLayoutC
   return Object.fromEntries(
     storefrontLayoutPages.map((page) => [
       page,
-      record[page] === 'current' ? 'current' : defaultStorefrontLayoutConfig[page],
+      record[page] === 'current' || record[page] === 'template-a'
+        ? record[page]
+        : defaultStorefrontLayoutConfig[page],
     ]),
   ) as StorefrontLayoutConfig;
 }
