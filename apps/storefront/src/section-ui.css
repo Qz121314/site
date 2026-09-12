@@ -442,6 +442,7 @@
     }
 
     .app-shell:has(.section-catalog) .storefront-route-view,
+    .app-shell:has(.section-catalog) .storefront-page-layout,
     .app-shell:has(.section-catalog) .section-catalog {
       width: 100%;
       height: 100%;
