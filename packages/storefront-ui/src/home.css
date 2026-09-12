@@ -666,7 +666,12 @@
 .home-primary-directory-categories {
   display: flex;
   gap: 8px;
-  margin: 0 0 18px;
+  margin: 0 0 16px;
+  padding: 4px;
+  border: 1px solid color-mix(in srgb, var(--brand) 18%, var(--line));
+  border-radius: var(--theme-radius-control, 14px);
+  background: color-mix(in srgb, var(--surface-soft) 82%, transparent);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 76%);
   overflow-x: auto;
   scrollbar-width: none;
 }
@@ -682,20 +687,16 @@
 }
 
 .home-primary-directory-categories button {
-  min-height: 34px;
+  min-height: 40px;
   flex: 0 0 auto;
-  padding: 6px 14px;
-  border: 1px solid color-mix(in srgb, var(--line) 58%, #fff 42%);
-  border-radius: 999px;
-  color: var(--muted);
-  background: linear-gradient(
-    180deg,
-    color-mix(in srgb, #fff 58%, transparent),
-    color-mix(in srgb, var(--surface) 42%, transparent)
-  );
+  padding: 7px 16px;
+  border: 1px solid transparent;
+  border-radius: calc(var(--theme-radius-control, 14px) - 3px);
+  color: color-mix(in srgb, var(--text) 72%, var(--muted));
+  background: transparent;
   font: inherit;
-  font-size: 0.72rem;
-  font-weight: 700;
+  font-size: 0.8rem;
+  font-weight: 720;
   cursor: pointer;
   text-align: center;
   transition:
@@ -708,6 +709,7 @@
 .home-primary-directory-categories button:hover {
   border-color: color-mix(in srgb, var(--brand) 42%, var(--line));
   color: var(--brand-strong);
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
 }
 
 .home-primary-directory-categories button.is-active {
