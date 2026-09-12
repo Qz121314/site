@@ -435,6 +435,63 @@
   -webkit-line-clamp: 2;
 }
 
+/* Secondary homepage sections stay discoverable without competing with the primary directory. */
+:is(html, .storefront-theme-root) .home-recommendation.is-compact .home-product-rail {
+  gap: 10px;
+}
+
+:is(html, .storefront-theme-root) .home-recommendation.is-compact .home-product-tile {
+  display: grid;
+  width: 220px;
+  min-width: 220px;
+  min-height: 76px;
+  grid-template-columns: 60px minmax(0, 1fr);
+  align-items: center;
+  padding: 8px;
+  border: 1px solid color-mix(in srgb, var(--line) 72%, transparent);
+  border-radius: var(--theme-radius-card, 16px);
+  background: color-mix(in srgb, var(--surface) 82%, transparent);
+  box-shadow: var(--theme-card-shadow, none);
+}
+
+:is(html, .storefront-theme-root) .home-recommendation.is-compact .home-product-cover {
+  width: 60px;
+  height: 60px;
+  aspect-ratio: 1;
+  border-radius: 50%;
+}
+
+:is(html, .storefront-theme-root)
+  .home-recommendation.is-compact
+  .home-product-cover::before {
+  display: none;
+}
+
+:is(html, .storefront-theme-root) .home-recommendation.is-compact .home-product-meta {
+  min-width: 0;
+  padding: 0 4px 0 10px;
+}
+
+:is(html, .storefront-theme-root) .home-recommendation.is-compact .home-product-title {
+  color: var(--theme-art-text-primary);
+  font-size: 0.86rem;
+  line-height: 1.25;
+  text-shadow: none;
+}
+
+@media (min-width: 768px) {
+  :is(html, .storefront-theme-root) .home-recommendation.is-compact .home-product-tile {
+    width: 250px;
+    min-width: 250px;
+    grid-template-columns: 68px minmax(0, 1fr);
+  }
+
+  :is(html, .storefront-theme-root) .home-recommendation.is-compact .home-product-cover {
+    width: 68px;
+    height: 68px;
+  }
+}
+
 :is(html, .storefront-theme-root):is([data-theme='travel'], [data-theme='pearl'])
   .home-product-meta {
   padding-inline: 6px;

@@ -204,11 +204,13 @@ function HomeRecommendationRail({
   initialProducts,
   priority,
   section,
+  compact = false,
 }: {
   bootstrap: StorefrontBootstrap;
   initialProducts: PublicProductSummary[];
   priority: boolean;
   section: PublicSection;
+  compact?: boolean;
 }) {
   const query = useQuery({
     queryKey: ['storefront-section', bootstrap.pointer.contentVersion, section.id],
@@ -236,7 +238,7 @@ function HomeRecommendationRail({
 
   return (
     <section
-      className="home-recommendation"
+      className={`home-recommendation${compact ? ' is-compact' : ''}`}
       aria-labelledby={`home-recommendation-${section.id}`}
     >
       <div className="home-recommendation-heading">
@@ -461,6 +463,7 @@ export function HomeFeed({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
             initialProducts={featuredProductsBySection.get(section.id) ?? []}
             priority={!hasHero && section.id === priorityRecommendationSectionId}
             section={section}
+            compact={isTemplateA}
             key={section.id}
           />
         ))}
