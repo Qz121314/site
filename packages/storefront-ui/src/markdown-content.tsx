@@ -29,6 +29,12 @@ function renderInline(
         return <em key={key}>{node.value}</em>;
       case 'strike':
         return <s key={key}>{node.value}</s>;
+      case 'styled':
+        return (
+          <span className={`markdown-inline is-${node.style}`} key={key}>
+            {node.value}
+          </span>
+        );
       case 'link': {
         const external = /^https?:/i.test(node.href);
         return (
@@ -122,6 +128,21 @@ function renderBlock(
       );
     case 'divider':
       return <hr key={key} />;
+    case 'callout':
+      return (
+        <section className={`markdown-callout is-${block.variant}`} key={key}>
+          {block.title ? (
+            <strong className="markdown-callout-title">
+              {renderInline(block.title, renderImage)}
+            </strong>
+          ) : null}
+          {block.lines.length > 0 ? (
+            <div className="markdown-callout-body">
+              {renderLines(block.lines, renderImage)}
+            </div>
+          ) : null}
+        </section>
+      );
   }
 }
 

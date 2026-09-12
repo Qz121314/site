@@ -424,6 +424,8 @@
   display: inline-flex;
   align-items: center;
   gap: 3px;
+  max-width: 100%;
+  overflow-x: auto;
   padding: 2px;
   border: 1px solid #e0e5ec;
   border-radius: 7px;
@@ -889,11 +891,11 @@
 
   .product-editor-dialog .product-markdown-toolbar {
     width: 100%;
-    justify-content: space-between;
+    justify-content: flex-start;
   }
 
   .product-editor-dialog .product-markdown-toolbar button {
-    flex: 1 1 auto;
+    flex: 0 0 auto;
   }
 
   .product-editor-dialog .product-media-grid {

@@ -11,6 +11,7 @@
     "./icon-button": "./src/icon-button.tsx",
     "./icon-button.css": "./src/icon-button.css",
     "./markdown-content": "./src/markdown-content.tsx",
+    "./markdown-content.css": "./src/markdown-content.css",
     "./home.css": "./src/home.css",
     "./theme-contract.css": "./src/theme-contract.css",
     "./product-detail-theme-contract.css": "./src/product-detail-theme-contract.css",

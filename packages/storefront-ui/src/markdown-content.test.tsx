@@ -30,4 +30,25 @@ describe('MarkdownContent', () => {
     expect(html).toContain('<code>inline</code>');
     expect(html).toContain('<pre><code>const ok = true;</code></pre>');
   });
+
+  it('renders semantic inline styles and Markdown callouts without raw HTML', () => {
+    const html = renderToStaticMarkup(
+      <MarkdownContent
+        source={[
+          '{accent}Featured{/accent} {badge}New{/badge}',
+          '',
+          ':::cta Ready to continue?',
+          '[Contact us](https://example.com/contact)',
+          ':::',
+        ].join('\n')}
+      />,
+    );
+
+    expect(html).toContain('<span class="markdown-inline is-accent">Featured</span>');
+    expect(html).toContain('<span class="markdown-inline is-badge">New</span>');
+    expect(html).toContain('<section class="markdown-callout is-cta">');
+    expect(html).toContain(
+      '<strong class="markdown-callout-title">Ready to continue?</strong>',
+    );
+  });
 });

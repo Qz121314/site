@@ -47,6 +47,7 @@
 @import './system/system-settings.css';
 @import './admin-dashboard-system.css';
 @import '@site/storefront-ui/styles.css';
+@import '@site/storefront-ui/markdown-content.css';
 @import '@site/storefront-ui/loading.css';
 @import '@site/storefront-ui/no-agent.css';
 @import '@site/storefront-ui/home.css';

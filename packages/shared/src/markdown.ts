@@ -1,9 +1,12 @@
+export type MarkdownInlineStyle = 'accent' | 'highlight' | 'muted' | 'badge';
+
 export type MarkdownInlineNode =
   | { type: 'text'; value: string }
   | { type: 'code'; value: string }
   | { type: 'strong'; value: string }
   | { type: 'emphasis'; value: string }
   | { type: 'strike'; value: string }
+  | { type: 'styled'; style: MarkdownInlineStyle; value: string }
   | { type: 'link'; value: string; href: string }
   | { type: 'image'; alt: string; src: string };
 
@@ -14,10 +17,18 @@ export type MarkdownBlock =
   | { type: 'unordered-list'; items: MarkdownInlineNode[][] }
   | { type: 'ordered-list'; items: MarkdownInlineNode[][] }
   | { type: 'code'; value: string; language: string | null }
-  | { type: 'divider' };
+  | { type: 'divider' }
+  | {
+      type: 'callout';
+      variant: 'notice' | 'tip' | 'cta';
+      title: MarkdownInlineNode[] | null;
+      lines: MarkdownInlineNode[][];
+    };
 
 const INLINE_PATTERN =
-  /(!\[[^\]\n]*\]\([^)\n]+\)|`[^`\n]+`|\*\*[^*\n]+\*\*|__[^_\n]+__|~~[^~\n]+~~|\[[^\]\n]+\]\([^)\n]+\)|\*[^*\n]+\*|_[^_\n]+_)/g;
+  /(\{(?:accent|highlight|muted|badge)\}[^{}\n]+\{\/(?:accent|highlight|muted|badge)\}|!\[[^\]\n]*\]\([^)\n]+\)|`[^`\n]+`|\*\*[^*\n]+\*\*|__[^_\n]+__|~~[^~\n]+~~|\[[^\]\n]+\]\([^)\n]+\)|\*[^*\n]+\*|_[^_\n]+_)/g;
+
+const CALLOUT_START_PATTERN = /^:::(notice|tip|cta)(?:\s+(.+?))?\s*$/;
 
 function safeHref(value: string): string | null {
   const href = value.trim();
@@ -46,6 +57,17 @@ function safeImageSrc(value: string): string | null {
 }
 
 function parseInlineToken(token: string): MarkdownInlineNode {
+  const styled =
+    /^\{(accent|highlight|muted|badge)\}(.+)\{\/(accent|highlight|muted|badge)\}$/.exec(
+      token,
+    );
+  if (styled && styled[1] === styled[3]) {
+    return {
+      type: 'styled',
+      style: styled[1] as MarkdownInlineStyle,
+      value: styled[2] ?? '',
+    };
+  }
   if (token.startsWith('![')) {
     const match = /^!\[([^\]]*)\]\(([^)]+)\)$/.exec(token);
     const src = match ? safeImageSrc(match[2] ?? '') : null;
@@ -132,6 +154,16 @@ function isBlockStart(line: string): boolean {
   );
 }
 
+function calloutClosingIndex(lines: string[], startIndex: number): number | null {
+  if (!CALLOUT_START_PATTERN.test(lines[startIndex] ?? '')) return null;
+
+  for (let index = startIndex + 1; index < lines.length; index += 1) {
+    if (/^:::\s*$/.test(lines[index] ?? '')) return index;
+  }
+
+  return null;
+}
+
 export function parseMarkdown(source: string): MarkdownBlock[] {
   const lines = source.replace(/\r\n?/g, '\n').split('\n');
   const blocks: MarkdownBlock[] = [];
@@ -172,6 +204,21 @@ export function parseMarkdown(source: string): MarkdownBlock[] {
     if (isDivider(line)) {
       blocks.push({ type: 'divider' });
       index += 1;
+      continue;
+    }
+
+    const callout = CALLOUT_START_PATTERN.exec(line);
+    const calloutEnd = calloutClosingIndex(lines, index);
+    if (callout && calloutEnd !== null) {
+      blocks.push({
+        type: 'callout',
+        variant: callout[1] as 'notice' | 'tip' | 'cta',
+        title: callout[2] ? parseInlineMarkdown(callout[2]) : null,
+        lines: lines
+          .slice(index + 1, calloutEnd)
+          .map((contentLine) => parseInlineMarkdown(contentLine)),
+      });
+      index = calloutEnd + 1;
       continue;
     }
 
@@ -216,7 +263,8 @@ export function parseMarkdown(source: string): MarkdownBlock[] {
       const paragraphLine = lines[index] ?? '';
       if (
         !paragraphLine.trim() ||
-        (paragraphLines.length > 0 && isBlockStart(paragraphLine))
+        (paragraphLines.length > 0 &&
+          (isBlockStart(paragraphLine) || calloutClosingIndex(lines, index) !== null))
       ) {
         break;
       }

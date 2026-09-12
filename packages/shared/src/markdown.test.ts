@@ -60,6 +60,43 @@ describe('parseMarkdown', () => {
     ]);
   });
 
+  it('parses theme-aware inline styles and callout blocks', () => {
+    expect(
+      parseMarkdown(
+        '{accent}重点{/accent} {highlight}高亮{/highlight}\n\n:::notice Important Note\n请先确认可用时间。\n:::',
+      ),
+    ).toEqual([
+      {
+        type: 'paragraph',
+        lines: [
+          [
+            { type: 'styled', style: 'accent', value: '重点' },
+            { type: 'text', value: ' ' },
+            { type: 'styled', style: 'highlight', value: '高亮' },
+          ],
+        ],
+      },
+      {
+        type: 'callout',
+        variant: 'notice',
+        title: [{ type: 'text', value: 'Important Note' }],
+        lines: [[{ type: 'text', value: '请先确认可用时间。' }]],
+      },
+    ]);
+  });
+
+  it('keeps an unfinished callout directive as regular text', () => {
+    expect(parseMarkdown(':::tip\n尚未结束')).toEqual([
+      {
+        type: 'paragraph',
+        lines: [
+          [{ type: 'text', value: ':::tip' }],
+          [{ type: 'text', value: '尚未结束' }],
+        ],
+      },
+    ]);
+  });
+
   it('rejects unsafe Markdown image sources as plain text', () => {
     expect(parseMarkdown('![bad](javascript:alert)')).toEqual([
       {

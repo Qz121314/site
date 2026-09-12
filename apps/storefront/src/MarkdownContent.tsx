@@ -2,6 +2,7 @@ import {
   MarkdownContent as SharedMarkdownContent,
   type MarkdownImageRenderer,
 } from '@site/storefront-ui/markdown-content';
+import '@site/storefront-ui/markdown-content.css';
 import { ResilientImage } from './ResilientMedia';
 
 const renderStorefrontImage: MarkdownImageRenderer = ({ alt, key, src }) => (

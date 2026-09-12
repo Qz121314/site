@@ -18,4 +18,5 @@ export {
   parseMarkdown,
   type MarkdownBlock,
   type MarkdownInlineNode,
+  type MarkdownInlineStyle,
 } from './markdown';

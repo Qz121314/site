@@ -1,0 +1,92 @@
+/* Semantic Markdown extensions. Content chooses meaning; theme tokens choose appearance. */
+
+.markdown-content .markdown-inline {
+  font-weight: 700;
+}
+
+.markdown-content .markdown-inline.is-accent {
+  color: var(--brand-strong, var(--brand));
+}
+
+.markdown-content .markdown-inline.is-highlight {
+  padding: 0.08em 0.36em;
+  border-radius: 0.36em;
+  color: var(--text);
+  background: color-mix(in srgb, var(--brand) 13%, var(--surface));
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+}
+
+.markdown-content .markdown-inline.is-muted {
+  color: var(--muted);
+  font-size: 0.94em;
+  font-weight: 560;
+}
+
+.markdown-content .markdown-inline.is-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 1.72em;
+  padding: 0.08em 0.56em;
+  border: 1px solid color-mix(in srgb, var(--brand) 20%, var(--line));
+  border-radius: 999px;
+  color: var(--brand-strong, var(--brand));
+  background: color-mix(in srgb, var(--brand) 8%, var(--surface));
+  font-size: 0.82em;
+  letter-spacing: 0.01em;
+  white-space: nowrap;
+}
+
+.markdown-content .markdown-callout {
+  display: grid;
+  gap: 6px;
+  margin: 16px 0;
+  padding: 14px 15px;
+  border: 1px solid color-mix(in srgb, var(--line) 78%, transparent);
+  border-radius: var(--theme-radius-card, 14px);
+  background: color-mix(in srgb, var(--surface) 92%, var(--surface-soft));
+  box-shadow: 0 8px 22px color-mix(in srgb, var(--text) 4%, transparent);
+}
+
+.markdown-content .markdown-callout-title {
+  color: var(--text);
+  font-size: 0.94em;
+  line-height: 1.35;
+}
+
+.markdown-content .markdown-callout-body {
+  color: color-mix(in srgb, var(--text) 74%, var(--muted));
+  line-height: 1.65;
+}
+
+.markdown-content .markdown-callout.is-notice {
+  border-left: 3px solid var(--brand);
+  background: color-mix(in srgb, var(--brand) 7%, var(--surface));
+}
+
+.markdown-content .markdown-callout.is-tip {
+  background: color-mix(in srgb, var(--surface-soft) 76%, var(--surface));
+}
+
+.markdown-content .markdown-callout.is-cta {
+  border-color: color-mix(in srgb, var(--brand) 32%, transparent);
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--brand) 14%, var(--surface)),
+    color-mix(in srgb, var(--brand) 5%, var(--surface))
+  );
+}
+
+.markdown-content .markdown-callout.is-cta a {
+  display: inline-flex;
+  min-height: 34px;
+  align-items: center;
+  margin-top: 6px;
+  padding: 0 12px;
+  border-radius: var(--theme-radius-control, 9px);
+  color: var(--theme-on-brand, #fff);
+  background: var(--brand);
+  font-size: 0.88em;
+  font-weight: 760;
+  text-decoration: none;
+}

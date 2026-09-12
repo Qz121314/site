@@ -108,6 +108,55 @@ const markdownActions: MarkdownAction[] = [
     before: '---',
     placeholder: '',
   },
+  {
+    label: '品牌色',
+    title: '插入跟随当前主题的品牌色文字',
+    before: '{accent}',
+    after: '{/accent}',
+    placeholder: '重点文字',
+  },
+  {
+    label: '高亮',
+    title: '插入带背景的高亮文字',
+    before: '{highlight}',
+    after: '{/highlight}',
+    placeholder: '高亮文字',
+  },
+  {
+    label: '弱化',
+    title: '插入辅助说明文字',
+    before: '{muted}',
+    after: '{/muted}',
+    placeholder: '辅助说明',
+  },
+  {
+    label: '标签',
+    title: '插入主题化小标签',
+    before: '{badge}',
+    after: '{/badge}',
+    placeholder: '标签文字',
+  },
+  {
+    label: '提示卡',
+    title: '插入重要提示卡片',
+    before: ':::notice Important Note\n',
+    after: '\n:::',
+    placeholder: '提示内容',
+  },
+  {
+    label: '说明卡',
+    title: '插入普通说明卡片',
+    before: ':::tip\n',
+    after: '\n:::',
+    placeholder: '说明内容',
+  },
+  {
+    label: 'CTA',
+    title: '插入正文转化卡片',
+    before: ':::cta Ready to continue?\n',
+    after: '\n:::',
+    placeholder: 'Use the product action button below to continue.',
+  },
 ];
 
 function modeLabel(mode: ProductServiceMode): string {
@@ -687,7 +736,7 @@ export function ProductEditorDialog({
               </div>
             </div>
             <div className="product-markdown-footer">
-              <span>支持标题、粗体、列表、引用、链接、代码和分隔线</span>
+              <span>支持主题色、高亮、标签、提示卡、说明卡和 CTA 卡片</span>
               <span>{form.body.length.toLocaleString()} / 20,000</span>
             </div>
           </div>
