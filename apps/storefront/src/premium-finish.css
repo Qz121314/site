@@ -138,8 +138,11 @@ html[data-storefront-scrolled] .app-shell .topbar-message-button {
 .loading-skeleton,
 .home-product-skeleton,
 .startup-brand-skeleton,
+.startup-brand-copy-skeleton,
+.startup-action-skeletons,
 .startup-loading-panel,
-.startup-loading-line {
+.startup-loading-line,
+.startup-bottom-nav-skeleton {
   background-image: linear-gradient(
     105deg,
     color-mix(in srgb, var(--surface-soft) 92%, var(--line)) 18%,
@@ -174,8 +177,11 @@ html[data-storefront-scrolled] .app-shell .topbar-message-button {
   .loading-skeleton,
   .home-product-skeleton,
   .startup-brand-skeleton,
+  .startup-brand-copy-skeleton,
+  .startup-action-skeletons,
   .startup-loading-panel,
-  .startup-loading-line {
+  .startup-loading-line,
+  .startup-bottom-nav-skeleton {
     animation: none;
   }
 

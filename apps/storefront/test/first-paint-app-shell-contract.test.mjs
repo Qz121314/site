@@ -27,6 +27,8 @@ test('startup loading surface does not invent homepage content before bootstrap 
     /startup-(hero|shortcuts|section-heading|product-rail)/u,
   );
   assert.doesNotMatch(startupLoader, /Array\.from\(\{ length:/u);
+  assert.match(startupLoader, /startup-action-skeletons/u);
+  assert.match(startupLoader, /startup-bottom-nav-skeleton/u);
 });
 
 test('minimal production smoke validates the Storefront app shell', async () => {

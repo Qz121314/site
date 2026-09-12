@@ -53,16 +53,69 @@
       }
 
       .boot-brand,
+      .boot-brand-copy b,
+      .boot-brand-copy i,
       .boot-loading-line,
-      .boot-loading-panel {
+      .boot-loading-panel,
+      .boot-actions i,
+      .boot-bottom-nav i,
+      .boot-bottom-nav b {
         display: block;
-        background: var(--surface-soft, #eef0f2);
+        background-color: var(--surface-soft, #eef0f2);
+        background-image: linear-gradient(
+          105deg,
+          color-mix(in srgb, var(--surface-soft, #eef0f2) 92%, var(--line, #e7e9ec)) 18%,
+          color-mix(in srgb, var(--surface, #fff) 82%, var(--brand, #ff5a1f) 5%) 42%,
+          color-mix(in srgb, var(--surface-soft, #eef0f2) 92%, var(--line, #e7e9ec)) 68%
+        );
+        background-size: 220% 100%;
+        animation: boot-skeleton-shimmer 1.8s ease-in-out infinite;
       }
 
       .boot-brand {
-        width: min(44vw, 148px);
-        height: 34px;
+        width: 38px;
+        height: 38px;
         border-radius: 4px;
+      }
+
+      .boot-brand-lockup {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        margin-inline: auto;
+      }
+
+      .boot-brand-copy {
+        display: grid;
+        gap: 4px;
+      }
+
+      .boot-brand-copy b {
+        width: 82px;
+        height: 10px;
+        border-radius: 999px;
+      }
+
+      .boot-brand-copy i {
+        width: 56px;
+        height: 7px;
+        border-radius: 999px;
+      }
+
+      .boot-actions {
+        position: absolute;
+        right: max(11px, env(safe-area-inset-right));
+        display: flex;
+        gap: 4px;
+      }
+
+      .boot-actions i {
+        display: block;
+        width: 36px;
+        height: 36px;
+        border: 1px solid var(--line, #e7e9ec);
+        border-radius: 10px;
+        background: var(--surface-soft, #eef0f2);
       }
 
       .boot-main {
@@ -92,6 +145,67 @@
         opacity: 0.72;
       }
 
+      .boot-bottom-nav {
+        position: fixed;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        z-index: 2;
+        display: grid;
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+        height: var(--boot-bottom-height);
+        align-items: start;
+        padding: 9px 20px env(safe-area-inset-bottom);
+        border-top: 1px solid var(--line, #e7e9ec);
+        background: var(--surface, #fff);
+      }
+
+      .boot-bottom-nav span {
+        display: grid;
+        justify-items: center;
+        gap: 5px;
+      }
+
+      .boot-bottom-nav i,
+      .boot-bottom-nav b {
+        display: block;
+        background: var(--surface-soft, #eef0f2);
+      }
+
+      .boot-bottom-nav i {
+        width: 28px;
+        height: 28px;
+        border-radius: 10px;
+      }
+
+      .boot-bottom-nav b {
+        width: 34px;
+        height: 6px;
+        border-radius: 999px;
+      }
+
+      @keyframes boot-skeleton-shimmer {
+        from {
+          background-position: 120% 0;
+        }
+        to {
+          background-position: -80% 0;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .boot-brand,
+        .boot-brand-copy b,
+        .boot-brand-copy i,
+        .boot-loading-line,
+        .boot-loading-panel,
+        .boot-actions i,
+        .boot-bottom-nav i,
+        .boot-bottom-nav b {
+          animation: none;
+        }
+      }
+
       @media (min-width: 768px) {
         .boot-main {
           padding-top: calc(var(--boot-header-height) + 25px);
@@ -109,6 +223,16 @@
         .boot-main {
           padding-bottom: 58px;
         }
+
+        .boot-bottom-nav {
+          display: none;
+        }
+      }
+
+      @media (max-width: 767px) {
+        .boot-brand-lockup {
+          margin-inline: 0;
+        }
       }
     </style>
     <meta name="mobile-web-app-capable" content="yes" />
@@ -122,10 +246,20 @@
   <body>
     <div id="root">
       <div class="boot-shell" aria-hidden="true">
-        <header class="boot-app-bar"><span class="boot-brand"></span></header>
+        <header class="boot-app-bar">
+          <span class="boot-brand-lockup">
+            <span class="boot-brand"></span>
+            <span class="boot-brand-copy"><b></b><i></i></span>
+          </span>
+          <span class="boot-actions"><i></i><i></i></span>
+        </header>
         <main class="boot-main">
           <div class="boot-loading-panel"><span class="boot-loading-line"></span></div>
         </main>
+        <nav class="boot-bottom-nav">
+          <span><i></i><b></b></span><span><i></i><b></b></span>
+          <span><i></i><b></b></span><span><i></i><b></b></span>
+        </nav>
       </div>
     </div>
     <script type="module" src="/src/main.tsx"></script>

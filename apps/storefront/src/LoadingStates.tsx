@@ -5,13 +5,41 @@ export function StartupLoader() {
     <div className="startup-loader" role="status" aria-live="polite" aria-busy="true">
       <div className="startup-app-shell" aria-hidden="true">
         <header className="startup-app-bar">
-          <span className="startup-brand-skeleton" />
+          <span className="startup-brand-lockup">
+            <span className="startup-brand-skeleton" />
+            <span className="startup-brand-copy-skeleton">
+              <b />
+              <i />
+            </span>
+          </span>
+          <span className="startup-action-skeletons">
+            <i />
+            <i />
+          </span>
         </header>
         <main className="startup-feed-skeleton">
           <div className="startup-loading-panel">
             <span className="startup-loading-line" />
           </div>
         </main>
+        <nav className="startup-bottom-nav-skeleton">
+          <span>
+            <i />
+            <b />
+          </span>
+          <span>
+            <i />
+            <b />
+          </span>
+          <span>
+            <i />
+            <b />
+          </span>
+          <span>
+            <i />
+            <b />
+          </span>
+        </nav>
       </div>
       <span className="sr-only">{SYSTEM_UI.loading}</span>
     </div>
