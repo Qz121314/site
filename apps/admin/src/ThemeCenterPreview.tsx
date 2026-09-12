@@ -168,7 +168,12 @@ export function ThemeCenterPreview({
                     </PreviewLink>
                   </div>
                   {categories.length > 0 ? (
-                    <div className="home-primary-directory-categories" role="tablist">
+                    <div
+                      className={`home-primary-directory-categories${
+                        categories.length <= 4 ? ' is-balanced' : ''
+                      }`}
+                      role="tablist"
+                    >
                       {categories.map(([id, name], index) => (
                         <button
                           aria-selected={index === 0}

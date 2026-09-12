@@ -329,7 +329,9 @@ function HomePrimaryDirectory({
         </div>
         {categories.length > 0 ? (
           <div
-            className="home-primary-directory-categories"
+            className={`home-primary-directory-categories${
+              categories.length <= 4 ? ' is-balanced' : ''
+            }`}
             role="tablist"
             aria-label="Categories"
           >

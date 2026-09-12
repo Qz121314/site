@@ -398,7 +398,7 @@
 
 .home-shortcut-zone {
   position: relative;
-  padding: 18px 0 28px;
+  padding: 14px 0 14px;
 }
 
 .home-feed.has-hero .home-shortcut-zone {
@@ -408,7 +408,7 @@
 .home-shortcuts {
   display: flex;
   min-width: 0;
-  gap: 15px;
+  gap: 11px;
   margin: 0;
   padding: 0 2px;
   overflow-x: auto;
@@ -425,12 +425,12 @@
 
 .home-shortcut {
   display: grid;
-  width: 66px;
-  min-width: 66px;
-  min-height: 84px;
+  width: 58px;
+  min-width: 58px;
+  min-height: 72px;
   align-content: start;
   justify-items: center;
-  gap: 8px;
+  gap: 6px;
   padding: 0;
   color: var(--text);
   text-align: center;
@@ -442,8 +442,8 @@
 .home-shortcut-icon {
   position: relative;
   display: grid;
-  width: 58px;
-  height: 58px;
+  width: 46px;
+  height: 46px;
   box-sizing: border-box;
   place-items: center;
   overflow: hidden;
@@ -478,7 +478,7 @@
   height: 100%;
   place-items: center;
   color: var(--text);
-  font-size: 1.08rem;
+  font-size: 0.94rem;
   font-weight: 640;
 }
 
@@ -487,7 +487,7 @@
   width: 100%;
   overflow: hidden;
   color: color-mix(in srgb, var(--text) 76%, var(--muted));
-  font-size: 0.7rem;
+  font-size: 0.66rem;
   font-weight: 590;
   line-height: 1.18;
   letter-spacing: -0.012em;
@@ -667,6 +667,12 @@
   scrollbar-width: none;
 }
 
+.home-primary-directory-categories.is-balanced {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
+  overflow: visible;
+}
+
 .home-primary-directory-categories::-webkit-scrollbar {
   display: none;
 }
@@ -687,6 +693,7 @@
   font-size: 0.72rem;
   font-weight: 700;
   cursor: pointer;
+  text-align: center;
   transition:
     color 160ms ease,
     background 160ms ease,
@@ -996,12 +1003,12 @@
 
 @media (max-width: 767px) {
   .home-shortcut-zone {
-    padding: 14px 0 24px;
+    padding: 10px 0 12px;
   }
 
   .home-shortcuts {
     display: flex;
-    gap: 8px;
+    gap: 6px;
     padding: 0;
     overflow-x: auto;
     scroll-padding-inline: 0;
@@ -1010,21 +1017,21 @@
   }
 
   .home-shortcut {
-    flex: 0 0 calc((100% - 56px) / 5);
-    width: calc((100% - 56px) / 5);
-    min-width: calc((100% - 56px) / 5);
-    min-height: 80px;
-    gap: 6px;
+    flex: 0 0 54px;
+    width: 54px;
+    min-width: 54px;
+    min-height: 66px;
+    gap: 4px;
     scroll-snap-align: start;
   }
 
   .home-shortcut-icon {
-    width: 44px;
-    height: 44px;
+    width: 34px;
+    height: 34px;
   }
 
   .home-shortcut-label {
-    font-size: 0.68rem;
+    font-size: 0.62rem;
     line-height: 1.16;
   }
 
