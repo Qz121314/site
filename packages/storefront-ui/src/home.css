@@ -637,6 +637,14 @@
     color-mix(in srgb, var(--v2-hairline, var(--line)) 82%, transparent);
 }
 
+.home-primary-directory-heading-copy {
+  display: flex;
+  min-width: 0;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 6px 10px;
+}
+
 .home-primary-directory-heading h2 {
   margin: 0;
   color: var(--text);
@@ -646,21 +654,9 @@
 }
 
 .home-primary-directory-heading p {
-  margin: 6px 0 0;
+  margin: 0;
   color: var(--v2-muted, var(--muted));
   font-size: 0.78rem;
-}
-
-.home-primary-directory-heading > a {
-  display: inline-flex;
-  flex: 0 0 auto;
-  align-items: center;
-  gap: 3px;
-  padding-top: 5px;
-  color: var(--brand-strong, var(--brand));
-  font-size: 0.76rem;
-  font-weight: 650;
-  text-decoration: none;
 }
 
 .home-primary-directory-categories {
@@ -719,7 +715,6 @@
   box-shadow: 0 8px 18px color-mix(in srgb, var(--brand-strong) 20%, transparent);
 }
 
-.home-primary-directory-heading > a svg,
 .home-primary-directory-link svg {
   width: 16px;
   height: 16px;

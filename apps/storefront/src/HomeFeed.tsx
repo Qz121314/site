@@ -305,17 +305,10 @@ function HomePrimaryDirectory({
     >
       <div className="home-primary-directory-body">
         <div className="home-primary-directory-heading">
-          <span>
+          <span className="home-primary-directory-heading-copy">
             <h2 id="home-primary-directory-title">{section.name}</h2>
             {section.description ? <p>{section.description}</p> : null}
           </span>
-          <HomeLink
-            href={sectionHref(section)}
-            aria-label={`${SYSTEM_UI.more}: ${section.name}`}
-          >
-            {SYSTEM_UI.more}
-            <ChevronRight aria-hidden="true" />
-          </HomeLink>
         </div>
         {categories.length > 0 ? (
           <div
