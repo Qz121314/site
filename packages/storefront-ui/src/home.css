@@ -721,6 +721,9 @@
 .home-primary-directory-link svg {
   width: 16px;
   height: 16px;
+  flex: 0 0 16px;
+  color: color-mix(in srgb, var(--brand-strong) 78%, var(--text));
+  stroke-width: 2.25;
 }
 
 .home-primary-directory-list {
@@ -734,6 +737,7 @@
 .home-primary-directory-skeleton {
   display: flex;
   min-width: 0;
+  height: 48px;
   min-height: 48px;
   align-items: center;
   justify-content: space-between;
@@ -754,6 +758,8 @@
 }
 
 .home-primary-directory-link span {
+  display: block;
+  flex: 1 1 auto;
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
