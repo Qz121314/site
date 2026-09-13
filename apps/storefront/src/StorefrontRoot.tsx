@@ -20,7 +20,6 @@ import {
 } from 'react';
 import type { BottomNavigationItemConfig } from './bottom-navigation';
 import { loadStorefrontBootstrap } from './content';
-import { HomeFeed } from './HomeFeed';
 import { HomepageAnalytics } from './HomepageAnalytics';
 import { RouteProgress, StartupLoader } from './LoadingStates';
 import {
@@ -56,6 +55,9 @@ import { applyStorefrontTheme } from './theme-runtime';
 type ShellHeaderMode = 'brand' | 'detail' | 'hidden-mobile';
 
 const ArticlePage = lazy(() => import('./ArticlePage'));
+const HomeFeed = lazy(() =>
+  import('./HomeFeed').then((module) => ({ default: module.HomeFeed })),
+);
 const BrowsePage = lazy(() =>
   import('./BrowsePage').then((module) => ({ default: module.BrowsePage })),
 );

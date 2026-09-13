@@ -21,7 +21,6 @@ import './theme-runtime.css';
 import './media-runtime.css';
 import './pwa.css';
 import './app-shell.css';
-import '@site/storefront-ui/home.css';
 import './route-transition.css';
 import '@site/storefront-ui/theme-contract.css';
 import '@site/storefront-ui/primary-pages-theme-contract.css';

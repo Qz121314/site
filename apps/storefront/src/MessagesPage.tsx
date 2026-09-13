@@ -25,12 +25,7 @@ import {
   SupportApiError,
 } from './support-gateway';
 import { prepareSupportImage, releaseSupportImage } from './support-image-compress';
-import {
-  enableSupportPush,
-  readSupportPushState,
-  syncSupportPushSubscription,
-  type SupportPushState,
-} from './support-push';
+import type { SupportPushState } from './support-push';
 import { MessagesWorkspace, type PendingSupportConversation } from './support-ui';
 import './messages-ui.css';
 import './messages-media.css';
@@ -441,15 +436,17 @@ export function MessagesPage({
       };
     }
 
-    void readSupportPushState()
-      .then(async (state) => {
-        if (state !== 'enabled') return state;
-        try {
-          return await syncSupportPushSubscription(activeConversationRef);
-        } catch {
-          return state;
-        }
-      })
+    void import('./support-push')
+      .then(({ readSupportPushState, syncSupportPushSubscription }) =>
+        readSupportPushState().then(async (state) => {
+          if (state !== 'enabled') return state;
+          try {
+            return await syncSupportPushSubscription(activeConversationRef);
+          } catch {
+            return state;
+          }
+        }),
+      )
       .then((state) => {
         if (active) setNotificationState(state);
       })
@@ -695,9 +692,11 @@ export function MessagesPage({
           onClick={() => {
             if (!activeConversationRef || notificationState !== 'prompt') return;
             setNotificationBusy(true);
-            void enableSupportPush(activeConversationRef)
+            void import('./support-push')
+              .then(({ enableSupportPush }) => enableSupportPush(activeConversationRef))
               .then(setNotificationState)
               .catch(async () => {
+                const { readSupportPushState } = await import('./support-push');
                 setNotificationState(await readSupportPushState());
               })
               .finally(() => setNotificationBusy(false));
