@@ -658,13 +658,13 @@
   }
 
   .messages-native-list > .messages-page > .conversation-row {
-    min-height: 80px;
-    width: calc(100% - 32px);
-    margin-inline: 16px;
-    padding: 13px 14px;
-    border-color: color-mix(in srgb, var(--line) 64%, transparent);
-    background: color-mix(in srgb, var(--surface) 97%, transparent);
-    box-shadow: 0 8px 20px color-mix(in srgb, var(--text) 6%, transparent);
+    min-height: 82px;
+    width: calc(100% - 40px);
+    margin-inline: 20px;
+    padding: 14px 16px;
+    border-color: color-mix(in srgb, var(--line) 76%, transparent);
+    background: var(--surface);
+    box-shadow: 0 7px 18px color-mix(in srgb, var(--text) 7%, transparent);
   }
 
   .conversation-heading-row strong {
@@ -672,10 +672,13 @@
   }
 
   .conversation-heading-row time {
+    align-self: flex-start;
+    margin-top: 2px;
     font-size: 0.75rem;
   }
 
   .conversation-preview-row > span {
+    color: color-mix(in srgb, var(--muted) 76%, var(--text));
     font-size: 0.875rem;
     line-height: 1.35;
   }
