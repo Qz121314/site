@@ -6,7 +6,7 @@ import type {
   SupportConversationSummary,
   SupportGateway,
   SupportMessage,
-  SupportQuickReply,
+  SupportGreetingCta,
 } from './support-contract';
 import {
   getSupportVisitorIdentity,
@@ -69,7 +69,7 @@ type RemoteConversationDetail = RemoteConversationSummary & {
   createdAt: string;
   expiresAt: string;
   messages: Array<SupportMessage & { attachments?: unknown }>;
-  quickReplies?: SupportQuickReply[];
+  greetingCtas?: SupportGreetingCta[];
   nextMessageCursor: string | null;
 };
 
@@ -339,9 +339,7 @@ function parseMessage(
   if (
     !item ||
     typeof item.id !== 'string' ||
-    (item.direction !== 'customer' &&
-      item.direction !== 'agent' &&
-      item.direction !== 'system') ||
+    (item.direction !== 'customer' && item.direction !== 'agent') ||
     typeof item.body !== 'string' ||
     typeof item.sentAt !== 'string' ||
     (item.delivery !== 'sending' && item.delivery !== 'sent' && item.delivery !== 'read')
@@ -352,7 +350,6 @@ function parseMessage(
       'Messages returned invalid message data.',
     );
   }
-  const direction = item.direction === 'customer' ? 'customer' : 'agent';
   const attachments =
     connection && Array.isArray(item.attachments)
       ? item.attachments
@@ -379,7 +376,7 @@ function parseMessage(
   }
   return {
     id: item.id,
-    direction,
+    direction: item.direction,
     body: item.body,
     kind,
     productContext: kind === 'product_context' ? productContext : null,
@@ -461,20 +458,21 @@ function parseRemoteDetail(
     }
     productHref = item.productHref;
   }
-  const quickReplies = item.quickReplies === undefined ? [] : item.quickReplies;
+  const greetingCtas = item.greetingCtas === undefined ? [] : item.greetingCtas;
   if (
-    !Array.isArray(quickReplies) ||
-    quickReplies.some(
-      (reply) =>
-        !isRecord(reply) ||
-        typeof reply.id !== 'string' ||
-        typeof reply.question !== 'string',
+    !Array.isArray(greetingCtas) ||
+    greetingCtas.some(
+      (cta) =>
+        !isRecord(cta) ||
+        typeof cta.id !== 'string' ||
+        typeof cta.label !== 'string' ||
+        typeof cta.greetingMessageId !== 'string',
     )
   ) {
     throw new SupportApiError(
       500,
       'INVALID_SUPPORT_RESPONSE',
-      'Messages returned invalid quick reply data.',
+      'Messages returned invalid greeting CTA data.',
     );
   }
   return {
@@ -483,7 +481,7 @@ function parseRemoteDetail(
     createdAt: item.createdAt,
     expiresAt: item.expiresAt,
     messages: item.messages.map((message) => parseMessage(message, connection)),
-    quickReplies,
+    greetingCtas,
     nextMessageCursor: item.nextMessageCursor,
   };
 }
@@ -500,7 +498,7 @@ function normalizeDetail(
     createdAt: remote.createdAt,
     expiresAt: remote.expiresAt,
     messages: remote.messages,
-    quickReplies: remote.quickReplies ?? [],
+    greetingCtas: remote.greetingCtas ?? [],
     nextMessageCursor: remote.nextMessageCursor,
   };
 }
@@ -704,7 +702,7 @@ export const siteSupportGateway: SupportGateway = {
     return parseMessage(envelope?.message);
   },
 
-  async sendQuickReply(conversationRef, quickReplyId, clientMessageId, signal) {
+  async sendGreetingCta(conversationRef, ctaId, clientMessageId, signal) {
     const { connection, remoteConversationId } = await connectionForConversationRef(
       conversationRef,
       signal,
@@ -712,7 +710,7 @@ export const siteSupportGateway: SupportGateway = {
     const value = await remoteRequestJson(
       remoteUrl(
         connection,
-        `/conversations/${encodeURIComponent(remoteConversationId)}/quick-replies/${encodeURIComponent(quickReplyId)}`,
+        `/conversations/${encodeURIComponent(remoteConversationId)}/greeting-ctas/${encodeURIComponent(ctaId)}`,
       ),
       {
         method: 'POST',
@@ -725,7 +723,7 @@ export const siteSupportGateway: SupportGateway = {
       throw new SupportApiError(
         500,
         'INVALID_SUPPORT_RESPONSE',
-        'Messages returned invalid quick reply data.',
+        'Messages returned invalid greeting CTA data.',
       );
     }
     return envelope.messages.map((message) => parseMessage(message, connection));

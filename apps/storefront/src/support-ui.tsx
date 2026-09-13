@@ -31,6 +31,7 @@ import {
 import type {
   SupportConversationDetail,
   SupportConversationSummary,
+  SupportGreetingCta,
   SupportMessage,
   SupportProductContextSnapshot,
 } from './support-contract';
@@ -419,8 +420,8 @@ export function MessageThreadPageContent({
   LinkComponent = 'a',
   onSendMessage,
   onRetryMessage,
-  onQuickReply,
-  quickReplySending = false,
+  onGreetingCta,
+  greetingCtaSending = false,
   sending = false,
   sendError = null,
   onSendImage,
@@ -442,8 +443,8 @@ export function MessageThreadPageContent({
   LinkComponent?: StorefrontLinkComponent;
   onSendMessage?: ((body: string) => Promise<void>) | undefined;
   onRetryMessage?: ((message: SupportMessage) => Promise<void>) | undefined;
-  onQuickReply?: ((quickReplyId: string) => Promise<void>) | undefined;
-  quickReplySending?: boolean;
+  onGreetingCta?: ((ctaId: string) => Promise<void>) | undefined;
+  greetingCtaSending?: boolean;
   sending?: boolean;
   sendError?: string | null;
   onSendImage?: ((file: File) => Promise<void>) | undefined;
@@ -623,7 +624,12 @@ export function MessageThreadPageContent({
     (pendingConversation !== null || conversation?.status !== 'closed');
   const canSendImage =
     Boolean(onSendImage) && Boolean(conversation) && conversation?.status !== 'closed';
-  const quickReplies = conversation?.quickReplies ?? [];
+  const greetingCtasByMessageId = new Map<string, SupportGreetingCta[]>();
+  for (const cta of conversation?.greetingCtas ?? []) {
+    const current = greetingCtasByMessageId.get(cta.greetingMessageId) ?? [];
+    current.push(cta);
+    greetingCtasByMessageId.set(cta.greetingMessageId, current);
+  }
   const headerTitle = conversation
     ? conversationTitle(conversation)
     : (pendingConversation?.productTitle ?? '');
@@ -811,6 +817,24 @@ export function MessageThreadPageContent({
                   </span>
                 </div>
               </div>
+              {message.direction === 'agent' &&
+              greetingCtasByMessageId.has(message.id) &&
+              onGreetingCta &&
+              canSend ? (
+                <div className="chat-greeting-ctas">
+                  {greetingCtasByMessageId.get(message.id)?.map((cta) => (
+                    <button
+                      className="chat-greeting-cta"
+                      type="button"
+                      key={cta.id}
+                      disabled={greetingCtaSending}
+                      onClick={() => void onGreetingCta(cta.id)}
+                    >
+                      {cta.label}
+                    </button>
+                  ))}
+                </div>
+              ) : null}
             </Fragment>
           );
         })}
@@ -830,23 +854,6 @@ export function MessageThreadPageContent({
         <p className="inline-error chat-send-error" role="alert">
           {imageError || sendError}
         </p>
-      ) : null}
-      {quickReplies.length > 0 && onQuickReply && canSend ? (
-        <div className="chat-quick-replies">
-          <div className="chat-quick-replies-list">
-            {quickReplies.map((quickReply) => (
-              <button
-                className="chat-quick-reply"
-                type="button"
-                key={quickReply.id}
-                disabled={quickReplySending}
-                onClick={() => void onQuickReply(quickReply.id)}
-              >
-                {quickReply.question}
-              </button>
-            ))}
-          </div>
-        </div>
       ) : null}
       {imagePreviewUrl ? (
         <div
@@ -956,8 +963,8 @@ export function MessagesWorkspace({
   LinkComponent = 'a',
   onSendMessage,
   onRetryMessage,
-  onQuickReply,
-  quickReplySending = false,
+  onGreetingCta,
+  greetingCtaSending = false,
   sending = false,
   sendError = null,
   onSendImage,
@@ -982,8 +989,8 @@ export function MessagesWorkspace({
   LinkComponent?: StorefrontLinkComponent;
   onSendMessage?: ((body: string) => Promise<void>) | undefined;
   onRetryMessage?: ((message: SupportMessage) => Promise<void>) | undefined;
-  onQuickReply?: ((quickReplyId: string) => Promise<void>) | undefined;
-  quickReplySending?: boolean;
+  onGreetingCta?: ((ctaId: string) => Promise<void>) | undefined;
+  greetingCtaSending?: boolean;
   sending?: boolean;
   sendError?: string | null;
   onSendImage?: ((file: File) => Promise<void>) | undefined;
@@ -1020,8 +1027,8 @@ export function MessagesWorkspace({
             LinkComponent={LinkComponent}
             onSendMessage={onSendMessage}
             onRetryMessage={onRetryMessage}
-            onQuickReply={onQuickReply}
-            quickReplySending={quickReplySending}
+            onGreetingCta={onGreetingCta}
+            greetingCtaSending={greetingCtaSending}
             sending={sending}
             sendError={sendError}
             onSendImage={onSendImage}
