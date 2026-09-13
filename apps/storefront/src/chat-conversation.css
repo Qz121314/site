@@ -237,6 +237,7 @@
 }
 
 .chat-message-row.is-customer .chat-message-bubble {
+  color: var(--text);
   border-radius: 14px 14px 5px 14px;
 }
 
@@ -277,7 +278,10 @@
 }
 
 .chat-message-bubble p {
-  font-size: 0.84rem;
+  color: inherit;
+  font-family: var(--storefront-font-ui);
+  font-size: 0.88rem;
+  font-weight: var(--storefront-weight-regular, 450);
   line-height: 1.42;
   letter-spacing: -0.005em;
 }
@@ -359,7 +363,8 @@
 }
 
 .chat-message-row.is-customer .chat-message-meta {
-  color: color-mix(in srgb, var(--brand-strong) 62%, var(--muted));
+  color: color-mix(in srgb, var(--brand-strong) 82%, var(--text));
+  opacity: 0.86;
 }
 
 .chat-composer {
