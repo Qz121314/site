@@ -640,8 +640,8 @@
     display: grid;
     gap: 10px;
     overflow: visible;
-    padding: 12px max(24px, env(safe-area-inset-right)) 20px
-      max(24px, env(safe-area-inset-left));
+    padding: 14px max(16px, env(safe-area-inset-right)) 24px
+      max(16px, env(safe-area-inset-left));
   }
 
   .conversation-row {
@@ -651,6 +651,19 @@
     border-radius: var(--theme-radius-card, 16px);
     background: color-mix(in srgb, var(--surface) 94%, transparent);
     box-shadow: 0 6px 16px color-mix(in srgb, var(--text) 5%, transparent);
+  }
+
+  .messages-native-list > .messages-page > .conversation-list {
+    gap: 12px;
+  }
+
+  .messages-native-list > .messages-page > .conversation-row {
+    width: 100%;
+    min-height: 76px;
+    padding: 13px 14px;
+    border-color: color-mix(in srgb, var(--line) 64%, transparent);
+    background: color-mix(in srgb, var(--surface) 97%, transparent);
+    box-shadow: 0 8px 20px color-mix(in srgb, var(--text) 6%, transparent);
   }
 
   .messages-page-header {
