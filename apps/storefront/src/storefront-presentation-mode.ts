@@ -8,6 +8,7 @@ export function storefrontPresentationMode(pathname: string): StorefrontPresenta
     case 'section':
     case 'product':
     case 'faq-article':
+    case 'messages':
     case 'message':
     case 'message-compose':
       return 'push';

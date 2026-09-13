@@ -450,8 +450,8 @@ body::-webkit-scrollbar {
   }
 
   html[data-storefront-presentation='push']
-    .app-shell
-    > main:has(.messages-workspace:not(.is-thread-open)) {
+    .app-shell[data-shell-route='messages']
+    > main {
     width: 100%;
     min-height: var(--app-viewport-height, 100dvh);
     padding-top: calc(var(--app-viewport-top, 0px) + var(--app-header-height, 0px));

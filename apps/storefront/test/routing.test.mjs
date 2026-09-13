@@ -9,6 +9,7 @@ import {
   sectionHref,
   sectionRefHref,
 } from '../src/routing.ts';
+import { storefrontPresentationMode } from '../src/storefront-presentation-mode.ts';
 
 test('canonical storefront links use section, product, FAQ, and generic article routes', () => {
   assert.equal(sectionRefHref('home-services'), '/sections/home-services/');
@@ -78,6 +79,11 @@ test('bottom navigation keeps browsing, chat, article, and FAQ detail routes und
   assert.equal(bottomNavigationActiveHref('/articles/article-1/'), '/messages/');
   assert.equal(bottomNavigationActiveHref('/faq/'), '/faq/');
   assert.equal(bottomNavigationActiveHref('/faq/faq-1/'), '/faq/');
+});
+
+test('messages routes use the app-style push presentation', () => {
+  assert.equal(storefrontPresentationMode('/messages/'), 'push');
+  assert.equal(storefrontPresentationMode('/messages/conversation-1/'), 'push');
 });
 
 test('routing rejects malformed or oversized route parts', () => {
