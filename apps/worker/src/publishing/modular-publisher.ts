@@ -868,7 +868,13 @@ function sectionPublicData(source: Source, sectionId: string) {
       },
     };
   });
-  return { section, categories, tags, products };
+  return {
+    section,
+    categories,
+    tags,
+    products,
+    directProductId: products.length === 1 ? (products[0]?.summary.id ?? null) : null,
+  };
 }
 
 function articleModel(source: Source) {
@@ -1026,6 +1032,7 @@ function modulePayload(source: Source, moduleKey: string): ModulePayload {
           contentVersion,
           publishedAt,
           sectionId,
+          directProductId: data.directProductId,
           categories: data.categories,
           tags: data.tags,
           products: data.products.map((product) => product.summary),

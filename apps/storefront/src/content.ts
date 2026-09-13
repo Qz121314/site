@@ -205,6 +205,7 @@ export type SectionSnapshot = {
   section: PublicSection;
   categories: PublicCategory[];
   tags: PublicTag[];
+  directProductId: string | null;
   products: PublicProductSummary[];
 };
 
@@ -321,6 +322,7 @@ type V2SectionSnapshot = {
   sectionId: string;
   categories: PublicCategory[];
   tags: PublicTag[];
+  directProductId?: string | null;
   products: V2ProductSummary[];
 };
 
@@ -775,6 +777,8 @@ export function normalizeV1SectionSnapshot(snapshot: SectionSnapshot): SectionSn
     section: normalizeV1Section(snapshot.section),
     categories: Array.isArray(snapshot.categories) ? snapshot.categories : [],
     tags: Array.isArray(snapshot.tags) ? snapshot.tags : [],
+    directProductId:
+      typeof snapshot.directProductId === 'string' ? snapshot.directProductId : null,
     products: Array.isArray(snapshot.products)
       ? snapshot.products.map(normalizeV1Summary)
       : [],
@@ -1071,6 +1075,7 @@ export async function loadV2SectionFile(
     section,
     categories: Array.isArray(raw.categories) ? raw.categories : [],
     tags: Array.isArray(raw.tags) ? raw.tags : [],
+    directProductId: typeof raw.directProductId === 'string' ? raw.directProductId : null,
     products: Array.isArray(raw.products)
       ? raw.products.map((product) => resolveV2Summary(product, section, mediaBaseUrl))
       : [],

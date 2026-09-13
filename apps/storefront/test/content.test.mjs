@@ -115,6 +115,7 @@ function sectionModule(sectionId, version, productId, featuredOrder) {
       { id: `category-${sectionId}`, sectionId, name: 'Primary', sortOrder: 0 },
     ],
     tags: [{ id: `tag-${sectionId}`, sectionId, name: 'Verified', sortOrder: 0 }],
+    directProductId: productId,
     products: [
       {
         id: productId,
@@ -556,6 +557,7 @@ test('section, canonical product and FAQ reads follow module versions without un
 
     const section = await loadSectionSnapshot(bootstrap, 'section-a');
     assert.equal(section.contentVersion, SECTION_A_VERSION);
+    assert.equal(section.directProductId, 'product-a');
     assert.equal(
       section.products[0].coverUrl,
       'https://media.example.com/products/product-a/cover.webp',

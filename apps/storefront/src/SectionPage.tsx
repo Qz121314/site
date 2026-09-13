@@ -15,7 +15,7 @@ import {
   readCurrentStorefrontViewState,
   writeCurrentStorefrontViewState,
 } from './storefront-history';
-import { pushStorefrontLocation } from './storefront-navigation-runtime';
+import { replaceStorefrontLocation } from './storefront-navigation-runtime';
 import { SYSTEM_UI } from './system-ui';
 import './section-ui.css';
 import '@site/storefront-ui/art-direction-primary-surfaces.css';
@@ -129,11 +129,16 @@ export function SectionCatalogPage({
 
   const hasFilters = Boolean(search.trim() || categoryId || selectedTags.size > 0);
 
+  const directProduct = useMemo(() => {
+    const data = query.data;
+    if (!data?.directProductId) return null;
+    return data.products.find((product) => product.id === data.directProductId) ?? null;
+  }, [query.data]);
+
   useEffect(() => {
-    if (!query.data || hasFilters || query.data.products.length !== 1) return;
-    const [product] = query.data.products;
-    if (product) pushStorefrontLocation(productHref(product));
-  }, [hasFilters, query.data]);
+    if (!directProduct || hasFilters) return;
+    replaceStorefrontLocation(productHref(directProduct));
+  }, [directProduct, hasFilters]);
 
   if (query.isLoading && !query.data) {
     return (
@@ -175,7 +180,7 @@ export function SectionCatalogPage({
 
   if (!query.data) return null;
 
-  if (!hasFilters && query.data.products.length === 1) {
+  if (!hasFilters && directProduct) {
     return (
       <section className="section-catalog-state" aria-busy="true">
         <SquareSkeletonGrid count={1} />

@@ -74,3 +74,16 @@ test('publisher writes the repository-owned current bootstrap protocol', async (
   );
   assert.doesNotMatch(bootstrapSnapshot, /const BOOTSTRAP_SCHEMA_VERSION\s*=/u);
 });
+
+test('section snapshots carry the publish-time direct-product decision', async () => {
+  const modularPublisher = await readFile(modularPublisherUrl, 'utf8');
+
+  assert.match(
+    modularPublisher,
+    /directProductId:\s*products\.length === 1 \? \(products\[0\]\?\.summary\.id \?\? null\) : null/u,
+  );
+  assert.match(
+    modularPublisher,
+    /sectionId,\s*directProductId:\s*data\.directProductId,/u,
+  );
+});
