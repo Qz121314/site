@@ -210,7 +210,10 @@ export function MessagesPageContent({
   );
 
   return (
-    <section className="messages-page">
+    <section className="messages-page" aria-labelledby="messages-page-title">
+      <header className="messages-page-header">
+        <h1 id="messages-page-title">Messages</h1>
+      </header>
       {orderedConversations.length === 0 ? (
         <div className="messages-empty-state" role="status">
           <span className="messages-empty-icon" aria-hidden="true">
@@ -673,7 +676,12 @@ export function MessageThreadPageContent({
       <div className="chat-timeline" role="log" aria-live="polite" ref={timelineRef}>
         {loadingConversation && pendingConversation && !conversation ? (
           <div className="chat-connection-state" role="status" aria-live="polite">
-            <LoadingHalo size="medium" />
+            <div className="chat-loading-skeleton" aria-hidden="true">
+              <span className="chat-loading-skeleton-bubble is-agent" />
+              <span className="chat-loading-skeleton-bubble is-agent is-short" />
+              <span className="chat-loading-skeleton-bubble is-customer" />
+            </div>
+            <LoadingHalo size="small" />
             <span className="sr-only">{SYSTEM_UI.loading}</span>
           </div>
         ) : noAgentNotice && pendingConversation && !conversation ? (

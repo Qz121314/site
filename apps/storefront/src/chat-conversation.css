@@ -118,12 +118,59 @@
 
 .chat-connection-state {
   display: grid;
-  min-height: 180px;
+  min-height: 220px;
   flex: 1 1 auto;
   place-items: center;
   align-content: center;
+  gap: 12px;
   margin: auto;
   pointer-events: none;
+}
+
+.chat-loading-skeleton {
+  display: grid;
+  width: min(100%, 300px);
+  gap: 8px;
+  padding: 0 8px;
+}
+
+.chat-loading-skeleton-bubble {
+  display: block;
+  width: 68%;
+  height: 42px;
+  border-radius: 14px 14px 14px 5px;
+  background: linear-gradient(
+    105deg,
+    color-mix(in srgb, var(--surface-soft) 78%, transparent) 28%,
+    color-mix(in srgb, var(--surface) 94%, transparent) 45%,
+    color-mix(in srgb, var(--surface-soft) 78%, transparent) 62%
+  );
+  background-size: 220% 100%;
+  box-shadow: 0 5px 16px color-mix(in srgb, var(--shadow) 6%, transparent);
+  animation: chat-skeleton-shimmer 1.8s ease-in-out infinite;
+}
+
+.chat-loading-skeleton-bubble.is-short {
+  width: 46%;
+  height: 30px;
+}
+
+.chat-loading-skeleton-bubble.is-customer {
+  width: 58%;
+  justify-self: end;
+  border-radius: 14px 14px 5px 14px;
+  animation-delay: 120ms;
+}
+
+@keyframes chat-skeleton-shimmer {
+  0%,
+  100% {
+    background-position: 100% 0;
+  }
+
+  50% {
+    background-position: 0 0;
+  }
 }
 
 .chat-connection-state.is-error {
@@ -332,8 +379,14 @@
 }
 
 .chat-composer .chat-send-button:disabled {
-  opacity: 0.24;
+  opacity: 0.42;
   box-shadow: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .chat-loading-skeleton-bubble {
+    animation: none;
+  }
 }
 
 @media (max-width: 767px) {

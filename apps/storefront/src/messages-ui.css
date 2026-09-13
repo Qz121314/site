@@ -13,6 +13,23 @@
   min-height: 0;
 }
 
+.messages-page-header {
+  display: flex;
+  min-height: 54px;
+  align-items: center;
+  padding: 0 var(--app-gutter, 16px);
+  border-bottom: 1px solid
+    color-mix(in srgb, var(--app-hairline, var(--line)) 72%, transparent);
+}
+
+.messages-page-header h1 {
+  margin: 0;
+  color: var(--text);
+  font-size: 1.1rem;
+  font-weight: 720;
+  letter-spacing: -0.018em;
+}
+
 .messages-empty-state {
   display: grid;
   min-height: 320px;
@@ -86,8 +103,8 @@
   display: grid;
   grid-template-columns: 48px minmax(0, 1fr);
   gap: 13px;
-  min-height: 82px;
-  padding: 13px 15px;
+  min-height: 76px;
+  padding: 11px 15px;
   border-bottom: 1px solid
     color-mix(in srgb, var(--app-hairline, var(--line)) 88%, transparent);
   outline: 0;
@@ -119,8 +136,8 @@
 }
 
 .conversation-avatar {
-  width: 48px;
-  height: 48px;
+  width: 46px;
+  height: 46px;
 }
 
 .conversation-avatar img,
@@ -296,7 +313,7 @@
 
 .chat-header-copy strong {
   color: var(--text);
-  font-size: 0.88rem;
+  font-size: 0.96rem;
   font-weight: 650;
 }
 
@@ -315,6 +332,21 @@
   border: 1px solid transparent;
   color: var(--text);
   text-decoration: none;
+  box-shadow: 0 5px 16px color-mix(in srgb, var(--text) 4%, transparent);
+  transition:
+    border-color var(--app-motion-fast, 140ms) ease,
+    background var(--app-motion-fast, 140ms) ease,
+    transform var(--app-motion-fast, 140ms) var(--app-ease-out, ease-out);
+}
+
+.chat-product-card:hover,
+.chat-product-card:focus-visible {
+  border-color: color-mix(in srgb, var(--brand) 24%, var(--line));
+  background: color-mix(in srgb, var(--brand) 5%, var(--surface-soft));
+}
+
+.chat-product-card:active {
+  transform: scale(0.99);
 }
 
 .chat-product-media {
@@ -404,11 +436,20 @@
 }
 
 .chat-message-row.is-agent .chat-message-bubble {
+  background: color-mix(in srgb, var(--surface-soft) 82%, var(--surface));
+  box-shadow: 0 3px 12px color-mix(in srgb, var(--text) 4%, transparent);
   border-top-left-radius: 6px;
 }
 
 .chat-message-row.is-customer .chat-message-bubble {
+  color: var(--surface);
+  background: var(--brand);
+  box-shadow: 0 3px 12px color-mix(in srgb, var(--brand) 16%, transparent);
   border-top-right-radius: 6px;
+}
+
+.chat-message-row.is-customer .chat-message-bubble p {
+  color: inherit;
 }
 
 .chat-message-bubble p {
@@ -514,6 +555,11 @@
     background var(--app-motion-fast, 140ms) ease;
 }
 
+.chat-composer textarea:focus-visible {
+  border-color: color-mix(in srgb, var(--brand) 48%, var(--line));
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--brand) 14%, transparent);
+}
+
 .chat-input-placeholder {
   color: var(--muted);
 }
@@ -535,6 +581,10 @@
 .chat-composer .chat-send-button:disabled {
   opacity: 0.38;
   box-shadow: none;
+}
+
+.chat-composer .chat-send-button:not(:disabled) {
+  box-shadow: 0 6px 14px color-mix(in srgb, var(--brand) 20%, transparent);
 }
 
 .chat-composer.is-disabled {
@@ -563,9 +613,13 @@
   }
 
   .conversation-row {
-    min-height: 82px;
+    min-height: 76px;
     padding-right: max(var(--app-gutter, 16px), env(safe-area-inset-right));
     padding-left: max(var(--app-gutter, 16px), env(safe-area-inset-left));
+  }
+
+  .messages-page-header {
+    min-height: 50px;
   }
 
   .conversation-row.is-active {
