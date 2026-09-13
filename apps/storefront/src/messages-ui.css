@@ -11,6 +11,7 @@
 
 .messages-page {
   min-height: 0;
+  background: var(--surface-soft, var(--surface));
 }
 
 .messages-page-header {
