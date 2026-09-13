@@ -1102,15 +1102,6 @@ function validatePayload(source: Source, payload: ModulePayload): void {
         `产品“${product.title}”选择的分类已不可用，当前分区无法发布。`,
       );
     }
-    if (
-      (source.mediaByProduct.get(product.id) ?? []).length === 0 ||
-      !product.effective_cover_object_key
-    ) {
-      throw new ModularPublicationError(
-        'PRODUCT_MEDIA_INVALID',
-        `产品“${product.title}”缺少可用图片。`,
-      );
-    }
   }
 }
 
