@@ -832,8 +832,7 @@ export function MessageThreadPageContent({
         </p>
       ) : null}
       {quickReplies.length > 0 && onQuickReply && canSend ? (
-        <div className="chat-quick-replies" aria-label="常见问题">
-          <span className="chat-quick-replies-label">常见问题</span>
+        <div className="chat-quick-replies">
           <div className="chat-quick-replies-list">
             {quickReplies.map((quickReply) => (
               <button
