@@ -703,6 +703,8 @@
 
   .messages-native-list > .messages-page > .conversation-list {
     gap: 12px;
+    padding-left: max(24px, env(safe-area-inset-left));
+    padding-right: max(24px, env(safe-area-inset-right));
   }
 
   .messages-native-list > .messages-page > .conversation-list > .conversation-row {
