@@ -139,6 +139,24 @@ function shellHeaderMode(route: StorefrontRoute): ShellHeaderMode {
   }
 }
 
+function productBackHref(
+  bootstrap: Awaited<ReturnType<typeof loadStorefrontBootstrap>>,
+  route: Extract<StorefrontRoute, { type: 'product' }>,
+): string {
+  if (!route.sectionRef) return '/browse/';
+  const section = bootstrap.home.allSections.find(
+    (item) => item.id === route.sectionRef || item.slug === route.sectionRef,
+  );
+  if (!section) return '/browse/';
+  const snapshot = bootstrap.sectionSnapshots[section.id];
+  if (!snapshot) return '/browse/';
+  const product = snapshot.products.find(
+    (item) => item.id === route.productRef || item.slug === route.productRef,
+  );
+  if (!product || snapshot.directProductId === product.id) return '/browse/';
+  return sectionRefHref(route.sectionRef);
+}
+
 function ProductShellHeader({
   bootstrap,
   route,
@@ -147,7 +165,7 @@ function ProductShellHeader({
   route: Extract<StorefrontRoute, { type: 'product' }>;
 }) {
   const site = bootstrap.site.site;
-  const backHref = route.sectionRef ? sectionRefHref(route.sectionRef) : '/browse/';
+  const backHref = productBackHref(bootstrap, route);
 
   return (
     <header className="topbar storefront-detail-topbar">
