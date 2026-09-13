@@ -66,13 +66,14 @@ export type SupportConversationDetail = SupportConversationSummary & {
   createdAt: string;
   expiresAt: string;
   messages: SupportMessage[];
-  quickReplies: SupportQuickReply[];
+  greetingCtas: SupportGreetingCta[];
   nextMessageCursor: string | null;
 };
 
-export type SupportQuickReply = {
+export type SupportGreetingCta = {
   id: string;
-  question: string;
+  label: string;
+  greetingMessageId: string;
 };
 
 export type StartSupportConversationInput = {
@@ -119,9 +120,9 @@ export interface SupportGateway {
     input: SendSupportMessageInput,
     signal?: AbortSignal,
   ): Promise<SupportMessage>;
-  sendQuickReply(
+  sendGreetingCta(
     conversationRef: string,
-    quickReplyId: string,
+    ctaId: string,
     clientMessageId: string,
     signal?: AbortSignal,
   ): Promise<SupportMessage[]>;

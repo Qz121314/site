@@ -540,18 +540,18 @@ export function MessagesPage({
     },
   });
 
-  const quickReplyMutation = useMutation({
+  const greetingCtaMutation = useMutation({
     mutationFn: async ({
       conversationRef,
-      quickReplyId,
+      ctaId,
     }: {
       conversationRef: string;
-      quickReplyId: string;
+      ctaId: string;
     }) =>
-      siteSupportGateway.sendQuickReply(
+      siteSupportGateway.sendGreetingCta(
         conversationRef,
-        quickReplyId,
-        `quick-reply:${crypto.randomUUID()}`,
+        ctaId,
+        `greeting-cta:${crypto.randomUUID()}`,
       ),
     onSuccess: (messages, variables) => {
       for (const message of messages) {
@@ -764,19 +764,23 @@ export function MessagesPage({
           onRetryMessage={
             supportAvailable && activeConversationRef ? retryMessage : undefined
           }
-          onQuickReply={
+          onGreetingCta={
             supportAvailable && activeConversationRef
-              ? async (quickReplyId) => {
-                  await quickReplyMutation.mutateAsync({
+              ? async (ctaId) => {
+                  await greetingCtaMutation.mutateAsync({
                     conversationRef: activeConversationRef,
-                    quickReplyId,
+                    ctaId,
                   });
                 }
               : undefined
           }
-          quickReplySending={quickReplyMutation.isPending}
+          greetingCtaSending={greetingCtaMutation.isPending}
           sending={sendMutation.isPending}
-          sendError={null}
+          sendError={
+            greetingCtaMutation.isError
+              ? 'Unable to send your selection. Please try again.'
+              : null
+          }
           onSendImage={supportAvailable && activeConversationRef ? sendImage : undefined}
           onRetryImage={
             supportAvailable && activeConversationRef && imageMutation.isError
