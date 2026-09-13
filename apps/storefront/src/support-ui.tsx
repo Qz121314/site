@@ -419,6 +419,8 @@ export function MessageThreadPageContent({
   LinkComponent = 'a',
   onSendMessage,
   onRetryMessage,
+  onQuickReply,
+  quickReplySending = false,
   sending = false,
   sendError = null,
   onSendImage,
@@ -440,6 +442,8 @@ export function MessageThreadPageContent({
   LinkComponent?: StorefrontLinkComponent;
   onSendMessage?: ((body: string) => Promise<void>) | undefined;
   onRetryMessage?: ((message: SupportMessage) => Promise<void>) | undefined;
+  onQuickReply?: ((quickReplyId: string) => Promise<void>) | undefined;
+  quickReplySending?: boolean;
   sending?: boolean;
   sendError?: string | null;
   onSendImage?: ((file: File) => Promise<void>) | undefined;
@@ -619,6 +623,7 @@ export function MessageThreadPageContent({
     (pendingConversation !== null || conversation?.status !== 'closed');
   const canSendImage =
     Boolean(onSendImage) && Boolean(conversation) && conversation?.status !== 'closed';
+  const quickReplies = conversation?.quickReplies ?? [];
   const headerTitle = conversation
     ? conversationTitle(conversation)
     : (pendingConversation?.productTitle ?? '');
@@ -826,6 +831,24 @@ export function MessageThreadPageContent({
           {imageError || sendError}
         </p>
       ) : null}
+      {quickReplies.length > 0 && onQuickReply && canSend ? (
+        <div className="chat-quick-replies" aria-label="常见问题">
+          <span className="chat-quick-replies-label">常见问题</span>
+          <div className="chat-quick-replies-list">
+            {quickReplies.map((quickReply) => (
+              <button
+                className="chat-quick-reply"
+                type="button"
+                key={quickReply.id}
+                disabled={quickReplySending}
+                onClick={() => void onQuickReply(quickReply.id)}
+              >
+                {quickReply.question}
+              </button>
+            ))}
+          </div>
+        </div>
+      ) : null}
       {imagePreviewUrl ? (
         <div
           className={`chat-image-upload-preview${imageFailed ? ' is-failed' : ''}`}
@@ -934,6 +957,8 @@ export function MessagesWorkspace({
   LinkComponent = 'a',
   onSendMessage,
   onRetryMessage,
+  onQuickReply,
+  quickReplySending = false,
   sending = false,
   sendError = null,
   onSendImage,
@@ -958,6 +983,8 @@ export function MessagesWorkspace({
   LinkComponent?: StorefrontLinkComponent;
   onSendMessage?: ((body: string) => Promise<void>) | undefined;
   onRetryMessage?: ((message: SupportMessage) => Promise<void>) | undefined;
+  onQuickReply?: ((quickReplyId: string) => Promise<void>) | undefined;
+  quickReplySending?: boolean;
   sending?: boolean;
   sendError?: string | null;
   onSendImage?: ((file: File) => Promise<void>) | undefined;
@@ -994,6 +1021,8 @@ export function MessagesWorkspace({
             LinkComponent={LinkComponent}
             onSendMessage={onSendMessage}
             onRetryMessage={onRetryMessage}
+            onQuickReply={onQuickReply}
+            quickReplySending={quickReplySending}
             sending={sending}
             sendError={sendError}
             onSendImage={onSendImage}

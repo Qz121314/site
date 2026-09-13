@@ -66,7 +66,13 @@ export type SupportConversationDetail = SupportConversationSummary & {
   createdAt: string;
   expiresAt: string;
   messages: SupportMessage[];
+  quickReplies: SupportQuickReply[];
   nextMessageCursor: string | null;
+};
+
+export type SupportQuickReply = {
+  id: string;
+  question: string;
 };
 
 export type StartSupportConversationInput = {
@@ -113,6 +119,12 @@ export interface SupportGateway {
     input: SendSupportMessageInput,
     signal?: AbortSignal,
   ): Promise<SupportMessage>;
+  sendQuickReply(
+    conversationRef: string,
+    quickReplyId: string,
+    clientMessageId: string,
+    signal?: AbortSignal,
+  ): Promise<SupportMessage[]>;
   sendImage(
     conversationRef: string,
     input: SendSupportImageInput,

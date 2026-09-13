@@ -540,6 +540,35 @@ export function MessagesPage({
     },
   });
 
+  const quickReplyMutation = useMutation({
+    mutationFn: async ({
+      conversationRef,
+      quickReplyId,
+    }: {
+      conversationRef: string;
+      quickReplyId: string;
+    }) =>
+      siteSupportGateway.sendQuickReply(
+        conversationRef,
+        quickReplyId,
+        `quick-reply:${crypto.randomUUID()}`,
+      ),
+    onSuccess: (messages, variables) => {
+      for (const message of messages) {
+        upsertOptimisticMessage(queryClient, variables.conversationRef, message);
+      }
+      const lastMessage = messages.at(-1);
+      if (lastMessage) {
+        updateConversationPreview(
+          queryClient,
+          variables.conversationRef,
+          lastMessage.body,
+          lastMessage.sentAt,
+        );
+      }
+    },
+  });
+
   const imageMutation = useMutation({
     mutationFn: async ({ file, conversationRef }: ImageMutationVariables) => {
       const image = await prepareSupportImage(file);
@@ -735,6 +764,17 @@ export function MessagesPage({
           onRetryMessage={
             supportAvailable && activeConversationRef ? retryMessage : undefined
           }
+          onQuickReply={
+            supportAvailable && activeConversationRef
+              ? async (quickReplyId) => {
+                  await quickReplyMutation.mutateAsync({
+                    conversationRef: activeConversationRef,
+                    quickReplyId,
+                  });
+                }
+              : undefined
+          }
+          quickReplySending={quickReplyMutation.isPending}
           sending={sendMutation.isPending}
           sendError={null}
           onSendImage={supportAvailable && activeConversationRef ? sendImage : undefined}

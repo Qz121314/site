@@ -65,6 +65,14 @@ const siteSettings = {
       shortcutSectionIds: [],
       recommendationSectionIds: [],
     },
+    storefrontLayout: {
+      home: 'current',
+      browse: 'current',
+      section: 'current',
+      product: 'current',
+      article: 'current',
+      messages: 'current',
+    },
     updatedAt: '2026-09-07T00:00:00.000Z',
   },
 };
@@ -154,19 +162,19 @@ async function installAdminFixture(page: Page, options: AdminFixtureOptions = {}
       body: JSON.stringify({ sections }),
     });
   });
-  await page.route('**/api/admin/publish/', async (route) => {
+  await page.route(/\/api\/admin\/publish\/?$/, async (route) => {
     await route.fulfill({
       contentType: 'application/json',
       body: JSON.stringify(publishStatus),
     });
   });
-  await page.route('**/api/admin/settings/', async (route) => {
+  await page.route(/\/api\/admin\/settings\/?$/, async (route) => {
     await route.fulfill({
       contentType: 'application/json',
       body: JSON.stringify(siteSettings),
     });
   });
-  await page.route('**/api/admin/theme/', async (route) => {
+  await page.route(/\/api\/admin\/theme\/?$/, async (route) => {
     if (route.request().method() === 'PUT') {
       const payload = route.request().postDataJSON() as {
         themeKey: string;
@@ -198,6 +206,21 @@ async function installAdminFixture(page: Page, options: AdminFixtureOptions = {}
     await route.fulfill({
       contentType: 'image/svg+xml',
       body: '<svg xmlns="http://www.w3.org/2000/svg" width="1" height="1" />',
+    });
+  });
+  await page.route('**/api/public/storefront/bootstrap', async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        mediaBaseUrl: '',
+        site: { site: { name: 'Admin shell test', locationLabel: '' } },
+        home: { allSections: [], featuredProducts: [] },
+        bottomNavigation: [
+          { href: '/', label: '首页' },
+          { href: '/browse/', label: '浏览' },
+          { href: '/messages/', label: 'Messages' },
+        ],
+      }),
     });
   });
 }
@@ -283,7 +306,7 @@ test('Admin shell exposes final IA, route compatibility, and current desktop geo
   );
 
   for (const [domain, secondaryItems] of [
-    ['设计中心', ['首页', '导航', '视觉系统']],
+    ['设计中心', ['首页', '布局中心', '导航', '视觉系统']],
     ['内容', ['文章中心', '素材库']],
     ['客户互动', ['Messages', '客服接入']],
     ['系统', ['系统设置', '应用安装']],

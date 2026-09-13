@@ -6,6 +6,7 @@ import type {
   SupportConversationSummary,
   SupportGateway,
   SupportMessage,
+  SupportQuickReply,
 } from './support-contract';
 import {
   getSupportVisitorIdentity,
@@ -68,6 +69,7 @@ type RemoteConversationDetail = RemoteConversationSummary & {
   createdAt: string;
   expiresAt: string;
   messages: Array<SupportMessage & { attachments?: unknown }>;
+  quickReplies?: SupportQuickReply[];
   nextMessageCursor: string | null;
 };
 
@@ -456,12 +458,29 @@ function parseRemoteDetail(
     }
     productHref = item.productHref;
   }
+  const quickReplies = item.quickReplies === undefined ? [] : item.quickReplies;
+  if (
+    !Array.isArray(quickReplies) ||
+    quickReplies.some(
+      (reply) =>
+        !isRecord(reply) ||
+        typeof reply.id !== 'string' ||
+        typeof reply.question !== 'string',
+    )
+  ) {
+    throw new SupportApiError(
+      500,
+      'INVALID_SUPPORT_RESPONSE',
+      'Messages returned invalid quick reply data.',
+    );
+  }
   return {
     ...parseRemoteSummary(item),
     ...(productHref !== undefined ? { productHref } : {}),
     createdAt: item.createdAt,
     expiresAt: item.expiresAt,
     messages: item.messages.map((message) => parseMessage(message, connection)),
+    quickReplies,
     nextMessageCursor: item.nextMessageCursor,
   };
 }
@@ -478,6 +497,7 @@ function normalizeDetail(
     createdAt: remote.createdAt,
     expiresAt: remote.expiresAt,
     messages: remote.messages,
+    quickReplies: remote.quickReplies ?? [],
     nextMessageCursor: remote.nextMessageCursor,
   };
 }
@@ -679,6 +699,33 @@ export const siteSupportGateway: SupportGateway = {
     );
     const envelope = isRecord(value) ? value : null;
     return parseMessage(envelope?.message);
+  },
+
+  async sendQuickReply(conversationRef, quickReplyId, clientMessageId, signal) {
+    const { connection, remoteConversationId } = await connectionForConversationRef(
+      conversationRef,
+      signal,
+    );
+    const value = await remoteRequestJson(
+      remoteUrl(
+        connection,
+        `/conversations/${encodeURIComponent(remoteConversationId)}/quick-replies/${encodeURIComponent(quickReplyId)}`,
+      ),
+      {
+        method: 'POST',
+        body: JSON.stringify(clientBody({ clientMessageId })),
+      },
+      signal,
+    );
+    const envelope = isRecord(value) ? value : null;
+    if (!envelope || !Array.isArray(envelope.messages)) {
+      throw new SupportApiError(
+        500,
+        'INVALID_SUPPORT_RESPONSE',
+        'Messages returned invalid quick reply data.',
+      );
+    }
+    return envelope.messages.map((message) => parseMessage(message, connection));
   },
 
   async sendImage(
