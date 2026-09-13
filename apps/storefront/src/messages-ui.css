@@ -117,10 +117,6 @@
     transform var(--app-motion-fast, 140ms) var(--app-ease-out, ease-out);
 }
 
-.conversation-row:last-child {
-  border-bottom: 0;
-}
-
 .conversation-row:focus-visible {
   outline: 2px solid color-mix(in srgb, var(--brand) 36%, transparent);
   outline-offset: -2px;
@@ -641,17 +637,27 @@
   }
 
   .conversation-list {
-    margin-inline: 0;
+    display: grid;
+    gap: 10px;
+    overflow: visible;
+    padding: 12px max(24px, env(safe-area-inset-right)) 20px
+      max(24px, env(safe-area-inset-left));
   }
 
   .conversation-row {
     min-height: 82px;
-    padding-right: max(var(--app-gutter, 16px), env(safe-area-inset-right));
-    padding-left: max(var(--app-gutter, 16px), env(safe-area-inset-left));
+    padding: 14px 16px;
+    border: 1px solid color-mix(in srgb, var(--line) 72%, transparent);
+    border-radius: var(--theme-radius-card, 16px);
+    background: color-mix(in srgb, var(--surface) 94%, transparent);
+    box-shadow: 0 6px 16px color-mix(in srgb, var(--text) 5%, transparent);
   }
 
   .messages-page-header {
+    margin-right: max(24px, env(safe-area-inset-right));
+    margin-left: max(24px, env(safe-area-inset-left));
     min-height: 54px;
+    padding: 0;
   }
 
   .conversation-row.is-active {

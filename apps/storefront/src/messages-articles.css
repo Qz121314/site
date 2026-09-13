@@ -141,6 +141,10 @@
     margin-inline: calc(var(--app-gutter, 16px) * -1);
   }
 
+  .messages-native-list > .messages-page > .conversation-list {
+    display: grid;
+  }
+
   .messages-article-row {
     padding-right: max(var(--app-gutter, 16px), env(safe-area-inset-right));
     padding-left: max(var(--app-gutter, 16px), env(safe-area-inset-left));

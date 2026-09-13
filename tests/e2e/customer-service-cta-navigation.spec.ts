@@ -198,9 +198,16 @@ test('Messages Articles stay title-only and mark read only on the reading page',
     const tolerance = 1;
 
     return {
-      rowsShareEdges:
-        Math.abs(articleRect.left - conversationRect.left) < tolerance &&
-        Math.abs(articleRect.right - conversationRect.right) < tolerance,
+      articleKeepsNativeFullBleed:
+        Math.abs(articleRect.left - listRect.left) < tolerance &&
+        Math.abs(articleRect.right - listRect.right) < tolerance,
+      conversationUsesContentRail:
+        conversationRect.left - articleRect.left > tolerance &&
+        articleRect.right - conversationRect.right > tolerance,
+      conversationListPadding: [
+        getComputedStyle(conversation.parentElement!).paddingLeft,
+        getComputedStyle(conversation.parentElement!).paddingRight,
+      ],
       listPreservesNativeFullBleed:
         Number.isFinite(appGutter) &&
         Math.abs(listRect.left - (sidebarRect.left - appGutter)) < tolerance &&
@@ -209,7 +216,9 @@ test('Messages Articles stay title-only and mark read only on the reading page',
     };
   });
   expect(nativeListGeometry).toEqual({
-    rowsShareEdges: true,
+    articleKeepsNativeFullBleed: true,
+    conversationUsesContentRail: true,
+    conversationListPadding: ['24px', '24px'],
     listPreservesNativeFullBleed: true,
     noHorizontalOverflow: true,
   });
