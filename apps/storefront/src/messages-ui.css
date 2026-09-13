@@ -544,12 +544,6 @@
   background: color-mix(in srgb, var(--surface) 96%, transparent);
 }
 
-.chat-quick-replies-label {
-  color: var(--muted);
-  font-size: 0.68rem;
-  font-weight: 650;
-}
-
 .chat-quick-replies-list {
   display: flex;
   gap: 7px;

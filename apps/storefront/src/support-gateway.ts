@@ -339,7 +339,9 @@ function parseMessage(
   if (
     !item ||
     typeof item.id !== 'string' ||
-    (item.direction !== 'customer' && item.direction !== 'agent') ||
+    (item.direction !== 'customer' &&
+      item.direction !== 'agent' &&
+      item.direction !== 'system') ||
     typeof item.body !== 'string' ||
     typeof item.sentAt !== 'string' ||
     (item.delivery !== 'sending' && item.delivery !== 'sent' && item.delivery !== 'read')
@@ -350,6 +352,7 @@ function parseMessage(
       'Messages returned invalid message data.',
     );
   }
+  const direction = item.direction === 'customer' ? 'customer' : 'agent';
   const attachments =
     connection && Array.isArray(item.attachments)
       ? item.attachments
@@ -376,7 +379,7 @@ function parseMessage(
   }
   return {
     id: item.id,
-    direction: item.direction,
+    direction,
     body: item.body,
     kind,
     productContext: kind === 'product_context' ? productContext : null,
