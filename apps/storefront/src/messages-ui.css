@@ -536,6 +536,54 @@
   text-align: center;
 }
 
+.chat-quick-replies {
+  display: grid;
+  gap: 7px;
+  padding: 9px 12px 8px;
+  border-top: 1px solid color-mix(in srgb, var(--line) 52%, transparent);
+  background: color-mix(in srgb, var(--surface) 96%, transparent);
+}
+
+.chat-quick-replies-label {
+  color: var(--muted);
+  font-size: 0.68rem;
+  font-weight: 650;
+}
+
+.chat-quick-replies-list {
+  display: flex;
+  gap: 7px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: thin;
+}
+
+.chat-quick-reply {
+  flex: 0 0 auto;
+  max-width: min(78vw, 300px);
+  padding: 8px 12px;
+  border: 1px solid color-mix(in srgb, var(--brand) 38%, var(--line));
+  border-radius: 999px;
+  color: var(--text);
+  background: color-mix(in srgb, var(--brand) 7%, var(--surface));
+  font: inherit;
+  font-size: 0.74rem;
+  line-height: 1.25;
+  text-align: left;
+  cursor: pointer;
+}
+
+.chat-quick-reply:hover:not(:disabled),
+.chat-quick-reply:focus-visible {
+  border-color: var(--brand);
+  background: color-mix(in srgb, var(--brand) 14%, var(--surface));
+}
+
+.chat-quick-reply:disabled {
+  cursor: wait;
+  opacity: 0.55;
+}
+
 .chat-composer {
   display: grid;
   grid-template-columns: 40px minmax(0, 1fr) 40px;
