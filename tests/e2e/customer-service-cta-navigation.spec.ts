@@ -60,6 +60,33 @@ test('customer-service CTA opens the chat shell before the Worker handoff resolv
   await expect(page.locator('.chat-product-card')).toBeVisible();
   await expect(page.locator('.chat-composer')).toBeVisible();
   await expect(page.locator('.chat-connection-state .loading-halo')).toBeVisible();
+  const chatViewportContract = await page.evaluate(() => {
+    const viewport = window.visualViewport;
+    const visualHeight = viewport?.height ?? window.innerHeight;
+    const chat = document.querySelector<HTMLElement>('.chat-page');
+    const timeline = document.querySelector<HTMLElement>('.chat-timeline');
+    const composer = document.querySelector<HTMLElement>('.chat-composer');
+    const routeView = document.querySelector<HTMLElement>('.storefront-route-view');
+    const chatRect = chat?.getBoundingClientRect();
+    const routeRect = routeView?.getBoundingClientRect();
+    const composerRect = composer?.getBoundingClientRect();
+    return {
+      chatHeight: chatRect?.height ?? 0,
+      routeHeight: routeRect?.height ?? 0,
+      visualHeight,
+      timelineHeight: timeline?.getBoundingClientRect().height ?? 0,
+      composerBottomGap: composerRect
+        ? Math.abs((routeRect?.bottom ?? visualHeight) - composerRect.bottom)
+        : Infinity,
+      mainPadding: getComputedStyle(document.querySelector('main')!).padding,
+    };
+  });
+  expect(chatViewportContract.chatHeight).toBeGreaterThanOrEqual(
+    chatViewportContract.routeHeight - 1.5,
+  );
+  expect(chatViewportContract.timelineHeight).toBeGreaterThan(300);
+  expect(chatViewportContract.composerBottomGap).toBeLessThanOrEqual(1.5);
+  expect(chatViewportContract.mainPadding).toBe('0px');
   await expect.poll(() => conversionRequestType).toBe('fetch');
   expect(conversionAcceptHeader).toContain('application/json');
   expect(conversionRequestCount).toBe(1);

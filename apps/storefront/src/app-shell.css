@@ -524,6 +524,20 @@ body::-webkit-scrollbar {
       height: 100%;
     }
 
+    html[data-storefront-presentation='push']
+      .app-shell:has(.messages-workspace.is-thread-open)
+      > main {
+      padding: 0;
+    }
+
+    .app-shell:has(.messages-workspace.is-thread-open) .storefront-page-layout,
+    .app-shell:has(.messages-workspace.is-thread-open) .messages-push-host,
+    .app-shell:has(.messages-workspace.is-thread-open) .messages-workspace,
+    .app-shell:has(.messages-workspace.is-thread-open) .messages-detail {
+      height: 100%;
+      min-height: 0;
+    }
+
     .app-shell:has(.messages-workspace.is-thread-open) .chat-header {
       min-height: calc(60px + env(safe-area-inset-top));
       padding-top: calc(6px + env(safe-area-inset-top));
