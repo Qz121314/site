@@ -657,7 +657,7 @@
     gap: 12px;
   }
 
-  .messages-native-list > .messages-page > .conversation-row {
+  .messages-native-list > .messages-page > .conversation-list > .conversation-row {
     min-height: 82px;
     width: calc(100% - 40px);
     margin-inline: 20px;
