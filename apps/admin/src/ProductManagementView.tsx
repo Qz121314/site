@@ -873,6 +873,7 @@ export function ProductManagementView({
             setErrorMessage('');
             setForm(nextForm);
           }}
+          onSessionExpired={onSessionExpired}
           onOpenMediaPicker={() => {
             setErrorMessage('');
             setMediaPickerOpen(true);

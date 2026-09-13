@@ -1,5 +1,7 @@
 import { X } from 'lucide-react';
 import { useMemo, useRef, useState, type FormEvent, type KeyboardEvent } from 'react';
+import { MediaLibraryPickerDialog } from '../asset-library/MediaLibraryPickerDialog';
+import type { ManagedMediaAsset } from '../asset-library/api';
 import { Button } from '../components/ui/button';
 import { AdminDialog } from '../components/ui/dialog';
 import { adminConfirm } from '../admin-dialog-service';
@@ -42,6 +44,7 @@ type ProductEditorDialogProps = {
   resumeNotice?: boolean;
   onFormChange: (next: ProductInput) => void;
   onOpenMediaPicker: () => void;
+  onSessionExpired: () => void;
   onRemoveMedia: (key: string) => void;
   onReorderMedia: (draggedKey: string, targetKey: string) => void;
   onSetCover: (key: string | null) => void;
@@ -248,6 +251,7 @@ export function ProductEditorDialog({
   resumeNotice = false,
   onFormChange,
   onOpenMediaPicker,
+  onSessionExpired,
   onRemoveMedia,
   onReorderMedia,
   onSetCover,
@@ -264,6 +268,7 @@ export function ProductEditorDialog({
   const [creatingInline, setCreatingInline] = useState<InlineCreateKind>(null);
   const [inlineError, setInlineError] = useState('');
   const [draggingMediaKey, setDraggingMediaKey] = useState<string | null>(null);
+  const [markdownMediaPickerOpen, setMarkdownMediaPickerOpen] = useState(false);
   const markdownTextareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   const baselineCategoryText = editingProduct?.categoryId
@@ -331,6 +336,28 @@ export function ProductEditorDialog({
       textarea.focus();
       const selectionStart = start + action.before.length;
       textarea.setSelectionRange(selectionStart, selectionStart + content.length);
+    });
+  }
+
+  function insertMarkdownImage(asset: ManagedMediaAsset) {
+    if (!asset.publicUrl) {
+      setInlineError('该素材暂无公开地址，请先配置媒体域名后再插入正文。');
+      return;
+    }
+    const textarea = markdownTextareaRef.current;
+    if (!textarea) return;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const altText = asset.fileName.replace(/\.[^.]+$/, '') || '图片';
+    const replacement = `![${altText}](${asset.publicUrl})`;
+    patch({
+      body: `${form.body.slice(0, start)}${replacement}${form.body.slice(end)}`,
+    });
+    setMarkdownMediaPickerOpen(false);
+    requestAnimationFrame(() => {
+      textarea.focus();
+      const cursor = start + replacement.length;
+      textarea.setSelectionRange(cursor, cursor);
     });
   }
 
@@ -717,6 +744,14 @@ export function ProductEditorDialog({
                     {action.label}
                   </button>
                 ))}
+                <button
+                  type="button"
+                  title="从素材中心插入图片"
+                  disabled={busy}
+                  onClick={() => setMarkdownMediaPickerOpen(true)}
+                >
+                  图片
+                </button>
               </div>
             </div>
             <div className="product-body-content">
@@ -871,6 +906,18 @@ export function ProductEditorDialog({
           </section>
         </div>
       </form>
+      {markdownMediaPickerOpen ? (
+        <MediaLibraryPickerDialog
+          title="插入正文图片"
+          role="content"
+          allowedKinds={['image', 'animated_image']}
+          maxSelections={1}
+          onSessionExpired={onSessionExpired}
+          onClose={() => setMarkdownMediaPickerOpen(false)}
+          onDone={() => setMarkdownMediaPickerOpen(false)}
+          onSelect={insertMarkdownImage}
+        />
+      ) : null}
     </AdminDialog>
   );
 }
