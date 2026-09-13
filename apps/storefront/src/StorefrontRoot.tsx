@@ -12,6 +12,7 @@ import {
   type ReactNode,
   lazy,
   Suspense,
+  useCallback,
   useEffect,
   useLayoutEffect,
   useRef,
@@ -49,6 +50,7 @@ import { captureStorefrontSharedElement } from './storefront-shared-transition';
 import { StorefrontRouteActionHostProvider } from './StorefrontRouteAction';
 import { observeStorefrontShellChrome } from './storefront-viewport-runtime';
 import { peekSupportVisitorIdentity } from './support-identity';
+import type { SupportMessage } from './support-contract';
 import { SYSTEM_UI } from './system-ui';
 import { applyStorefrontTheme } from './theme-runtime';
 
@@ -226,6 +228,40 @@ function StorefrontMessageButton({ unreadCount }: { unreadCount: number }) {
   );
 }
 
+type SupportPriorityAlert = {
+  body: string;
+  conversationRef: string;
+  messageId: string;
+};
+
+function SupportPriorityAlert({
+  alert,
+  onDismiss,
+}: {
+  alert: SupportPriorityAlert;
+  onDismiss: () => void;
+}) {
+  useEffect(() => {
+    const timeout = window.setTimeout(onDismiss, 8_000);
+    return () => window.clearTimeout(timeout);
+  }, [alert.messageId, onDismiss]);
+
+  return (
+    <div className="storefront-support-alert" role="alert" aria-live="assertive">
+      <StorefrontLink
+        className="storefront-support-alert-link"
+        href={`/messages/${encodeURIComponent(alert.conversationRef)}/`}
+      >
+        <strong>New message</strong>
+        <span>{alert.body || 'You have a new message from support.'}</span>
+      </StorefrontLink>
+      <button type="button" aria-label="Dismiss notification" onClick={onDismiss}>
+        ×
+      </button>
+    </div>
+  );
+}
+
 function PrimaryShell({
   activePath,
   bootstrap,
@@ -326,6 +362,17 @@ export function StorefrontRoot() {
     route.type === 'message' ||
     Boolean(peekSupportVisitorIdentity());
   const [supportUnread, setSupportUnread] = useState(0);
+  const [supportAlert, setSupportAlert] = useState<SupportPriorityAlert | null>(null);
+  const handleAgentMessage = useCallback(
+    (message: SupportMessage, conversationRef: string) => {
+      setSupportAlert({
+        body: message.body,
+        conversationRef,
+        messageId: message.id,
+      });
+    },
+    [],
+  );
   const bootstrapQuery = useQuery({
     queryKey: ['storefront-bootstrap'],
     queryFn: ({ signal }) => loadStorefrontBootstrap(undefined, signal),
@@ -472,6 +519,7 @@ export function StorefrontRoot() {
         <Suspense fallback={null}>
           <StorefrontSupportRuntime
             conversationListEnabled={route.type !== 'message-compose'}
+            onAgentMessage={handleAgentMessage}
             onUnreadMessages={setSupportUnread}
           />
         </Suspense>
@@ -484,6 +532,12 @@ export function StorefrontRoot() {
         routeKey={pathname}
         unreadMessages={messagesBadge}
       >
+        {supportAlert ? (
+          <SupportPriorityAlert
+            alert={supportAlert}
+            onDismiss={() => setSupportAlert(null)}
+          />
+        ) : null}
         <StorefrontPageLayout
           bootstrap={bootstrap}
           page={

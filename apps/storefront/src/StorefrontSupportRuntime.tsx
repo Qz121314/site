@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useMemo } from 'react';
-import type { SupportConversationSummary } from './support-contract';
+import type { SupportConversationSummary, SupportMessage } from './support-contract';
 import { siteSupportGateway } from './support-gateway';
 import { syncSupportAppBadge } from './support-push';
 import { subscribeSupportRealtime } from './support-realtime';
@@ -14,9 +14,11 @@ import {
 export function StorefrontSupportRuntime({
   conversationListEnabled,
   onUnreadMessages,
+  onAgentMessage,
 }: {
   conversationListEnabled: boolean;
   onUnreadMessages: (count: number) => void;
+  onAgentMessage: (message: SupportMessage, conversationRef: string) => void;
 }) {
   const queryClient = useQueryClient();
   const supportConversationsQuery = useQuery({
@@ -56,6 +58,13 @@ export function StorefrontSupportRuntime({
 
   useEffect(() => {
     return subscribeSupportRealtime((event) => {
+      if (
+        event.message?.direction === 'agent' &&
+        event.conversationRef &&
+        event.type !== 'message.read'
+      ) {
+        onAgentMessage(event.message, event.conversationRef);
+      }
       if (event.type === 'realtime.recovered') {
         void recoverSupport();
         return;
@@ -72,7 +81,7 @@ export function StorefrontSupportRuntime({
         );
       }
     });
-  }, [queryClient, recoverSupport]);
+  }, [onAgentMessage, queryClient, recoverSupport]);
 
   return null;
 }
