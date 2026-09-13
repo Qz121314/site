@@ -605,11 +605,14 @@
   }
 
   .messages-page {
-    min-height: calc(100dvh - 150px);
+    min-height: calc(
+      var(--app-viewport-height, 100dvh) - var(--app-header-height, 0px) -
+        var(--app-bottom-chrome-height, 0px)
+    );
   }
 
   .conversation-list {
-    margin-inline: calc(var(--app-gutter, 16px) * -1);
+    margin-inline: 0;
   }
 
   .conversation-row {

@@ -449,6 +449,15 @@ body::-webkit-scrollbar {
     padding-left: max(10px, env(safe-area-inset-left));
   }
 
+  html[data-storefront-presentation='push']
+    .app-shell[data-shell-route='messages']:not(:has(.messages-workspace.is-thread-open))
+    > main {
+    padding-top: calc(var(--app-viewport-top, 0px) + var(--app-header-height, 0px));
+    padding-right: 0;
+    padding-bottom: var(--app-bottom-chrome-height, 0px);
+    padding-left: 0;
+  }
+
   .mobile-edge-navigation {
     position: fixed;
     top: 50%;
