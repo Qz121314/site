@@ -341,15 +341,6 @@ export async function validateProductDependencies(
     }
   }
 
-  if (input.status === 'published' && input.mediaAssetIds.length === 0) {
-    return {
-      ok: false,
-      field: 'mediaAssetIds',
-      code: 'PRODUCT_IMAGE_REQUIRED',
-      message: '发布产品至少需要一张图片。',
-    };
-  }
-
   if (input.mediaAssetIds.length > 0) {
     const rows = await db
       .prepare(

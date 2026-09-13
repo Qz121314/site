@@ -276,6 +276,7 @@ export function ProductDetailPage({
   const ctaLoading = ctaQuery.isFetching || ctaQuery.isPending;
   const ctaMissing = !ctaLoading && !ctaQuery.error && ctaQuery.data === null;
   const ctaFailed = !ctaLoading && Boolean(ctaQuery.error);
+  const ctaVisible = ctaLoading || ctaFailed || Boolean(ctaQuery.data);
 
   function renderCtaButton() {
     const cta = ctaQuery.data;
@@ -350,114 +351,116 @@ export function ProductDetailPage({
     <>
       <article className="product-detail-page" aria-labelledby="product-detail-title">
         <div className="product-detail-hero">
-          <div className="detail-gallery">
-            <div
-              className="detail-mobile-gallery"
-              role="region"
-              aria-roledescription="carousel"
-              aria-label={product.title}
-            >
-              <div className="detail-mobile-media-stage">
-                {mobileGalleryItems.length > 0 ? (
-                  <div
-                    className="detail-mobile-media-track"
-                    ref={mobileMediaTrackRef}
-                    onScroll={handleMobileGalleryScroll}
-                    tabIndex={mobileGalleryItems.length > 1 ? 0 : undefined}
-                  >
-                    {mobileGalleryItems.map((item, index) => (
-                      <div
-                        className="detail-mobile-media-item"
-                        role="group"
-                        aria-label={`${index + 1} / ${mobileGalleryItems.length}`}
-                        key={item.id}
-                      >
-                        {renderMobileMedia(item, index === 0)}
-                      </div>
-                    ))}
+          {mobileGalleryItems.length > 0 ? (
+            <div className="detail-gallery">
+              <div
+                className="detail-mobile-gallery"
+                role="region"
+                aria-roledescription="carousel"
+                aria-label={product.title}
+              >
+                <div className="detail-mobile-media-stage">
+                  {mobileGalleryItems.length > 0 ? (
+                    <div
+                      className="detail-mobile-media-track"
+                      ref={mobileMediaTrackRef}
+                      onScroll={handleMobileGalleryScroll}
+                      tabIndex={mobileGalleryItems.length > 1 ? 0 : undefined}
+                    >
+                      {mobileGalleryItems.map((item, index) => (
+                        <div
+                          className="detail-mobile-media-item"
+                          role="group"
+                          aria-label={`${index + 1} / ${mobileGalleryItems.length}`}
+                          key={item.id}
+                        >
+                          {renderMobileMedia(item, index === 0)}
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    activeMediaFallback
+                  )}
+                  {mobileGalleryItems.length > 1 ? (
+                    <span className="detail-mobile-media-count" aria-hidden="true">
+                      {mobileMediaIndex + 1} / {mobileGalleryItems.length}
+                    </span>
+                  ) : null}
+                </div>
+              </div>
+
+              <div className="detail-desktop-gallery">
+                <div className="detail-media-stage" key={activeMedia?.id ?? 'cover'}>
+                  {activeMediaUrl ? (
+                    activeMediaIsVideo ? (
+                      <ResilientVideo
+                        aria-label={activeMedia?.altText || product.title}
+                        controls
+                        fallback={activeMediaFallback}
+                        playsInline
+                        preload="none"
+                        src={activeMediaUrl}
+                      />
+                    ) : (
+                      <ResilientImage
+                        alt={activeMedia?.altText || product.title}
+                        fallback={activeMediaFallback}
+                        src={activeMediaUrl}
+                      />
+                    )
+                  ) : (
+                    activeMediaFallback
+                  )}
+                </div>
+
+                {media.length > 1 ? (
+                  <div className="detail-media-thumbnails" role="list">
+                    {media.map((item, index) => {
+                      if (!item.url) return null;
+                      const selected = item.id === activeMedia?.id;
+                      const video = isVideoMediaUrl(item.url);
+                      return (
+                        <button
+                          className={`detail-media-thumbnail${selected ? ' is-active' : ''}`}
+                          type="button"
+                          aria-label={item.altText || `${product.title} ${index + 1}`}
+                          aria-pressed={selected}
+                          key={item.id}
+                          onClick={() => setActiveMediaId(item.id)}
+                        >
+                          {video ? (
+                            <>
+                              <ResilientVideo
+                                aria-hidden="true"
+                                fallback={<div className="detail-thumbnail-fallback" />}
+                                muted
+                                playsInline
+                                preload="none"
+                                src={item.url}
+                              />
+                              <span
+                                className="detail-thumbnail-video-mark"
+                                aria-hidden="true"
+                              >
+                                <Play />
+                              </span>
+                            </>
+                          ) : (
+                            <ResilientImage
+                              alt=""
+                              fallback={<div className="detail-thumbnail-fallback" />}
+                              loading="lazy"
+                              src={item.url}
+                            />
+                          )}
+                        </button>
+                      );
+                    })}
                   </div>
-                ) : (
-                  activeMediaFallback
-                )}
-                {mobileGalleryItems.length > 1 ? (
-                  <span className="detail-mobile-media-count" aria-hidden="true">
-                    {mobileMediaIndex + 1} / {mobileGalleryItems.length}
-                  </span>
                 ) : null}
               </div>
             </div>
-
-            <div className="detail-desktop-gallery">
-              <div className="detail-media-stage" key={activeMedia?.id ?? 'cover'}>
-                {activeMediaUrl ? (
-                  activeMediaIsVideo ? (
-                    <ResilientVideo
-                      aria-label={activeMedia?.altText || product.title}
-                      controls
-                      fallback={activeMediaFallback}
-                      playsInline
-                      preload="none"
-                      src={activeMediaUrl}
-                    />
-                  ) : (
-                    <ResilientImage
-                      alt={activeMedia?.altText || product.title}
-                      fallback={activeMediaFallback}
-                      src={activeMediaUrl}
-                    />
-                  )
-                ) : (
-                  activeMediaFallback
-                )}
-              </div>
-
-              {media.length > 1 ? (
-                <div className="detail-media-thumbnails" role="list">
-                  {media.map((item, index) => {
-                    if (!item.url) return null;
-                    const selected = item.id === activeMedia?.id;
-                    const video = isVideoMediaUrl(item.url);
-                    return (
-                      <button
-                        className={`detail-media-thumbnail${selected ? ' is-active' : ''}`}
-                        type="button"
-                        aria-label={item.altText || `${product.title} ${index + 1}`}
-                        aria-pressed={selected}
-                        key={item.id}
-                        onClick={() => setActiveMediaId(item.id)}
-                      >
-                        {video ? (
-                          <>
-                            <ResilientVideo
-                              aria-hidden="true"
-                              fallback={<div className="detail-thumbnail-fallback" />}
-                              muted
-                              playsInline
-                              preload="none"
-                              src={item.url}
-                            />
-                            <span
-                              className="detail-thumbnail-video-mark"
-                              aria-hidden="true"
-                            >
-                              <Play />
-                            </span>
-                          </>
-                        ) : (
-                          <ResilientImage
-                            alt=""
-                            fallback={<div className="detail-thumbnail-fallback" />}
-                            loading="lazy"
-                            src={item.url}
-                          />
-                        )}
-                      </button>
-                    );
-                  })}
-                </div>
-              ) : null}
-            </div>
-          </div>
+          ) : null}
 
           <div className="product-detail-info">
             <section className="product-detail-summary">
@@ -470,7 +473,9 @@ export function ProductDetailPage({
               ) : null}
             </section>
 
-            <div className="product-detail-inline-action">{renderCtaButton()}</div>
+            {ctaVisible ? (
+              <div className="product-detail-inline-action">{renderCtaButton()}</div>
+            ) : null}
 
             {body && !bodyIsAddress ? (
               <section className="product-detail-body">
@@ -480,9 +485,11 @@ export function ProductDetailPage({
           </div>
         </div>
       </article>
-      <StorefrontRouteAction>
-        <div className="product-detail-route-action">{renderCtaButton()}</div>
-      </StorefrontRouteAction>
+      {ctaVisible ? (
+        <StorefrontRouteAction>
+          <div className="product-detail-route-action">{renderCtaButton()}</div>
+        </StorefrontRouteAction>
+      ) : null}
     </>
   );
 }

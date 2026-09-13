@@ -477,7 +477,7 @@ test('published product dependency validation accepts a ready link product and r
   if (!mismatch.ok) assert.equal(mismatch.code, 'CONVERSION_MODE_MISMATCH');
 });
 
-test('published products reject missing media while offline products may omit an address', async () => {
+test('published products may omit media while offline products may omit an address', async () => {
   const noMedia = validateProductInput(
     baseProductInput({ mediaAssetIds: [], coverAssetId: null }),
   );
@@ -488,8 +488,7 @@ test('published products reject missing media while offline products may omit an
     'section-1',
     noMedia.value,
   );
-  assert.equal(missingMedia.ok, false);
-  if (!missingMedia.ok) assert.equal(missingMedia.code, 'PRODUCT_IMAGE_REQUIRED');
+  assert.equal(missingMedia.ok, true);
 
   const offline = validateProductInput(
     baseProductInput({

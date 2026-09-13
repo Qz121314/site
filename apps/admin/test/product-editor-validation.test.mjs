@@ -153,13 +153,10 @@ test('conversion groups must match the product mode and have an active target', 
   );
 });
 
-test('published products require cover-eligible media without requiring an offline address', () => {
+test('published products may omit media without requiring an offline address', () => {
   const publishedOnline = productForm({ status: 'published' });
-  assert.equal(validate(publishedOnline), '发布产品前至少需要一个产品媒体。');
-  assert.equal(
-    validate(publishedOnline, { media: [media('video/mp4')] }),
-    '发布产品前至少需要一张图片或 GIF 作为封面。',
-  );
+  assert.equal(validate(publishedOnline), null);
+  assert.equal(validate(publishedOnline, { media: [media('video/mp4')] }), null);
   assert.equal(
     validate(
       productForm({ serviceMode: 'offline', status: 'published', address: null }),

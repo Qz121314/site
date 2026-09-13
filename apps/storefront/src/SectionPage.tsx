@@ -15,6 +15,7 @@ import {
   readCurrentStorefrontViewState,
   writeCurrentStorefrontViewState,
 } from './storefront-history';
+import { pushStorefrontLocation } from './storefront-navigation-runtime';
 import { SYSTEM_UI } from './system-ui';
 import './section-ui.css';
 import '@site/storefront-ui/art-direction-primary-surfaces.css';
@@ -128,6 +129,12 @@ export function SectionCatalogPage({
 
   const hasFilters = Boolean(search.trim() || categoryId || selectedTags.size > 0);
 
+  useEffect(() => {
+    if (!query.data || hasFilters || query.data.products.length !== 1) return;
+    const [product] = query.data.products;
+    if (product) pushStorefrontLocation(productHref(product));
+  }, [hasFilters, query.data]);
+
   if (query.isLoading && !query.data) {
     return (
       <section className="section-catalog-state" aria-busy="true">
@@ -167,6 +174,14 @@ export function SectionCatalogPage({
   }
 
   if (!query.data) return null;
+
+  if (!hasFilters && query.data.products.length === 1) {
+    return (
+      <section className="section-catalog-state" aria-busy="true">
+        <SquareSkeletonGrid count={1} />
+      </section>
+    );
+  }
 
   const hasProducts = query.data.products.length > 0;
 

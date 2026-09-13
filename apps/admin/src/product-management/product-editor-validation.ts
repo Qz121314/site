@@ -2,10 +2,7 @@ import type { AdminCategory } from '../category-management/api';
 import type { AdminConversionGroup } from '../conversion-pool/api';
 import type { AdminProductTag } from '../tag-management/api';
 import type { ProductInput } from './api';
-import {
-  isEditorMediaCoverEligible,
-  type ProductEditorImage,
-} from './product-editor-media';
+import type { ProductEditorImage } from './product-editor-media';
 
 export function validateProductDraft(
   form: ProductInput,
@@ -39,8 +36,5 @@ export function validateProductDraft(
     if (group.activeTargetCount < 1) return '所选转化分组至少需要一个启用入口。';
   }
 
-  if (media.length < 1) return '发布产品前至少需要一个产品媒体。';
-  if (!media.some(isEditorMediaCoverEligible))
-    return '发布产品前至少需要一张图片或 GIF 作为封面。';
   return null;
 }
