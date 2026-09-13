@@ -8,15 +8,12 @@ const LIMITS: Record<HomePlacement, number | null> = {
   recommendationSectionIds: null,
 };
 
-function moveItem(items: string[], index: number, direction: -1 | 1): string[] {
-  const targetIndex = index + direction;
-  if (targetIndex < 0 || targetIndex >= items.length) return items;
+function moveItem(items: string[], fromIndex: number, toIndex: number): string[] {
+  if (fromIndex === toIndex || fromIndex < 0 || toIndex < 0) return items;
   const next = [...items];
-  const current = next[index];
-  const target = next[targetIndex];
-  if (current === undefined || target === undefined) return items;
-  next[index] = target;
-  next[targetIndex] = current;
+  const [moved] = next.splice(fromIndex, 1);
+  if (!moved) return items;
+  next.splice(Math.min(toIndex, next.length), 0, moved);
   return next;
 }
 
@@ -80,8 +77,35 @@ export function HomeLayoutSettingsSection({
             {ids.map((sectionId, index) => {
               const selected = sections.find((section) => section.id === sectionId);
               return (
-                <div className="admin-home-layout-row" key={`${placement}:${sectionId}`}>
+                <div
+                  className="admin-home-layout-row"
+                  key={`${placement}:${sectionId}`}
+                  draggable={!busy}
+                  onDragStart={(event) => {
+                    event.dataTransfer.effectAllowed = 'move';
+                    event.dataTransfer.setData('text/plain', String(index));
+                  }}
+                  onDragOver={(event) => {
+                    if (busy) return;
+                    event.preventDefault();
+                    event.dataTransfer.dropEffect = 'move';
+                  }}
+                  onDrop={(event) => {
+                    event.preventDefault();
+                    if (busy) return;
+                    const fromIndex = Number(event.dataTransfer.getData('text/plain'));
+                    if (!Number.isInteger(fromIndex)) return;
+                    updatePlacement(placement, moveItem(ids, fromIndex, index));
+                  }}
+                >
                   <span className="admin-home-layout-order">{index + 1}</span>
+                  <span
+                    className="admin-home-layout-drag-handle"
+                    title="拖拽调整顺序"
+                    aria-hidden="true"
+                  >
+                    ⋮⋮
+                  </span>
                   <label className="field-group">
                     <span>分区</span>
                     <select
@@ -106,22 +130,6 @@ export function HomeLayoutSettingsSection({
                     </select>
                   </label>
                   <div className="admin-home-layout-row-actions">
-                    <button
-                      type="button"
-                      className="admin-text-button"
-                      disabled={busy || index === 0}
-                      onClick={() => updatePlacement(placement, moveItem(ids, index, -1))}
-                    >
-                      上移
-                    </button>
-                    <button
-                      type="button"
-                      className="admin-text-button"
-                      disabled={busy || index === ids.length - 1}
-                      onClick={() => updatePlacement(placement, moveItem(ids, index, 1))}
-                    >
-                      下移
-                    </button>
                     <button
                       type="button"
                       className="admin-text-button is-danger"
@@ -161,13 +169,13 @@ export function HomeLayoutSettingsSection({
   const shortcutPanel = renderPlacement(
     'shortcutSectionIds',
     '快捷分区',
-    '最多手动固定 7 个。未选择时按当前已发布分区自动生成；自动入口不超过 8 个时全部展示，超过 8 个时第 8 格显示 More。',
+    '最多手动固定 7 个。拖拽卡片调整顺序；未选择时按当前已发布分区自动生成。',
     '添加快捷分区',
   );
   const recommendationPanel = renderPlacement(
     'recommendationSectionIds',
     '推荐分区',
-    '可按需要添加多个。未选择时自动从已发布且标记“首页推荐”的产品推导分区；选择后按这里的分区顺序展示。',
+    '可按需要添加多个。拖拽卡片调整顺序；未选择时自动从已发布且标记“首页推荐”的产品推导分区。',
     '添加推荐分区',
   );
 
