@@ -1,18 +1,9 @@
 import type { StorefrontNavigationItem } from '@site/storefront-ui';
-import {
-  Bell,
-  CircleHelp,
-  Compass,
-  Grid2X2,
-  Heart,
-  House,
-  Map,
-  Menu,
-  MessageCircle,
-  Search,
-  Star,
-  User,
-} from 'lucide-react';
+import type { IconComponent } from 'reicon-react/createIcon';
+import Home from 'reicon-react/icons/Home';
+import Message from 'reicon-react/icons/Message';
+import Search from 'reicon-react/icons/Search';
+import { Bell, CircleHelp, Grid2X2, Heart, Map, Menu, Star, User } from 'lucide-react';
 import type { ReactNode } from 'react';
 import type {
   BottomNavigationBuiltinIcon,
@@ -28,37 +19,41 @@ const HREFS: Record<BottomNavigationKey, string> = {
   faq: '/faq/',
 };
 
-function navigationIcon(Icon: typeof House): ReactNode {
+function navigationIcon(Icon: IconComponent): ReactNode {
+  return <Icon className="storefront-nav-svg" aria-hidden="true" weight="Outline" />;
+}
+
+function lucideNavigationIcon(Icon: typeof Bell): ReactNode {
   return <Icon className="storefront-nav-svg" aria-hidden="true" />;
 }
 
 function builtinIcon(name: BottomNavigationBuiltinIcon | string | null): ReactNode {
   switch (name) {
     case 'compass':
-      return navigationIcon(Compass);
+      return navigationIcon(Search);
     case 'messages':
-      return navigationIcon(MessageCircle);
+      return navigationIcon(Message);
     case 'help':
-      return navigationIcon(CircleHelp);
+      return lucideNavigationIcon(CircleHelp);
     case 'grid':
-      return navigationIcon(Grid2X2);
+      return lucideNavigationIcon(Grid2X2);
     case 'search':
       return navigationIcon(Search);
     case 'star':
-      return navigationIcon(Star);
+      return lucideNavigationIcon(Star);
     case 'heart':
-      return navigationIcon(Heart);
+      return lucideNavigationIcon(Heart);
     case 'user':
-      return navigationIcon(User);
+      return lucideNavigationIcon(User);
     case 'menu':
-      return navigationIcon(Menu);
+      return lucideNavigationIcon(Menu);
     case 'bell':
-      return navigationIcon(Bell);
+      return lucideNavigationIcon(Bell);
     case 'map':
-      return navigationIcon(Map);
+      return lucideNavigationIcon(Map);
     case 'home':
     default:
-      return navigationIcon(House);
+      return navigationIcon(Home);
   }
 }
 

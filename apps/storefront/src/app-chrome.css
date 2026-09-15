@@ -188,6 +188,7 @@
   transition:
     color var(--app-motion-fast, 140ms) ease,
     background var(--app-motion-fast, 140ms) ease,
+    box-shadow var(--app-motion-fast, 140ms) ease,
     transform var(--app-motion-fast, 140ms) var(--app-ease-out, ease-out);
 }
 
@@ -217,8 +218,8 @@
   }
 
   :is(html, .storefront-theme-root) .storefront-bottom-chrome > .bottom-nav {
-    padding: 5px max(8px, env(safe-area-inset-right))
-      calc(6px + env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+    padding: 4px max(8px, env(safe-area-inset-right))
+      calc(5px + env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
     border: 1px solid color-mix(in srgb, var(--brand-strong) 18%, var(--line));
     border-radius: 16px;
     background: color-mix(in srgb, var(--surface, #fff) 90%, var(--brand-strong) 10%);
@@ -234,8 +235,8 @@
   }
 
   :is(html, .storefront-theme-root) .storefront-bottom-chrome > .bottom-nav a {
-    min-height: 63px;
-    gap: 2px;
+    min-height: 56px;
+    gap: 1px;
     border-radius: 12px;
     -webkit-tap-highlight-color: transparent;
   }
@@ -244,8 +245,8 @@
     .storefront-bottom-chrome
     > .bottom-nav
     .bottom-nav-icon {
-    width: 40px;
-    height: 40px;
+    width: 34px;
+    height: 34px;
     box-sizing: border-box;
     border: 1px solid transparent;
     border-radius: 50%;
@@ -273,10 +274,13 @@
     > .bottom-nav
     a.is-active
     .bottom-nav-icon {
-    background: transparent;
+    background: color-mix(in srgb, var(--brand-strong) 6%, transparent);
     transform: none;
-    border-color: color-mix(in srgb, var(--brand-strong) 34%, transparent);
+    border-color: color-mix(in srgb, var(--brand-strong) 42%, transparent);
     border-radius: 50%;
+    box-shadow:
+      0 0 0 3px color-mix(in srgb, var(--brand-strong) 8%, transparent),
+      0 2px 8px color-mix(in srgb, var(--brand-strong) 12%, transparent);
   }
 
   :is(html, .storefront-theme-root) .storefront-bottom-chrome > .bottom-nav a:active {
