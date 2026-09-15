@@ -116,6 +116,9 @@ importers:
       react-dom:
         specifier: ^19.0.0
         version: 19.2.8(react@19.2.8)
+      reicon-react:
+        specifier: 1.2.5
+        version: 1.2.5(react@19.2.8)
     devDependencies:
       '@types/react':
         specifier: ^19.0.0
@@ -2626,6 +2629,14 @@ packages:
       }
     engines: { node: '>=0.10.0' }
 
+  reicon-react@1.2.5:
+    resolution:
+      {
+        integrity: sha512-+gAKb9k0y/c0t6/l8qiTspxf4RU3omXirr/4/io7Cwp+RCr4FnrxIWKhSSu367BpGyLP745nJ2CmusxWnpOu8g==,
+      }
+    peerDependencies:
+      react: '>=16.8.0'
+
   resolve-from@4.0.0:
     resolution:
       {
@@ -4285,6 +4296,10 @@ snapshots:
   react-refresh@0.17.0: {}
 
   react@19.2.8: {}
+
+  reicon-react@1.2.5(react@19.2.8):
+    dependencies:
+      react: 19.2.8
 
   resolve-from@4.0.0: {}
 
