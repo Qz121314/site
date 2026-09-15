@@ -64,11 +64,11 @@
 }
 
 :is(html, .storefront-theme-root)[data-font-pack='editorial'] {
-  --theme-art-heading-weight: 610;
+  --theme-art-heading-weight: 680;
   --theme-art-heading-tracking: -0.03em;
-  --theme-art-product-title-weight: 570;
+  --theme-art-product-title-weight: 620;
   --theme-art-product-title-tracking: -0.012em;
-  --theme-art-context-weight: 500;
+  --theme-art-context-weight: 540;
   --theme-art-context-tracking: 0.025em;
 }
 
