@@ -212,15 +212,17 @@
 }
 
 @media (max-width: 767px) {
+  :is(html, .storefront-theme-root) .storefront-bottom-chrome {
+    padding: 0 14px 12px;
+  }
+
   :is(html, .storefront-theme-root) .storefront-bottom-chrome > .bottom-nav {
-    padding: 4px max(8px, env(safe-area-inset-right))
-      calc(5px + env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
-    border-top-color: var(--theme-primary-navigation-border);
-    background: var(
-      --theme-navigation-material,
-      var(--theme-primary-navigation-background)
-    );
-    box-shadow: var(--theme-primary-navigation-shadow);
+    padding: 5px max(8px, env(safe-area-inset-right))
+      calc(6px + env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+    border: 1px solid color-mix(in srgb, var(--brand-strong) 18%, var(--line));
+    border-radius: 16px;
+    background: color-mix(in srgb, var(--surface, #fff) 90%, var(--brand-strong) 10%);
+    box-shadow: 0 14px 30px color-mix(in srgb, var(--brand-strong) 12%, transparent);
     backdrop-filter: var(
       --theme-navigation-backdrop,
       var(--theme-primary-navigation-backdrop)
@@ -232,9 +234,9 @@
   }
 
   :is(html, .storefront-theme-root) .storefront-bottom-chrome > .bottom-nav a {
-    min-height: 56px;
+    min-height: 63px;
     gap: 2px;
-    border-radius: var(--theme-radius-control, 12px);
+    border-radius: 12px;
     -webkit-tap-highlight-color: transparent;
   }
 
@@ -243,39 +245,27 @@
     > .bottom-nav
     .bottom-nav-icon {
     width: 40px;
-    height: 30px;
-    border-radius: 0;
+    height: 40px;
+    box-sizing: border-box;
+    border: 1px solid transparent;
+    border-radius: 50%;
     background: transparent;
   }
 
   :is(html, .storefront-theme-root) .storefront-bottom-chrome > .bottom-nav a::before {
-    position: absolute;
-    display: block;
-    top: 2px;
-    left: 50%;
-    width: 20px;
-    height: 3px;
-    border-radius: 999px;
-    background: var(--brand-strong, var(--brand));
-    content: '';
-    opacity: 0;
-    transform: translateX(-50%) scaleX(0.6);
-    transform-origin: center;
-    transition:
-      opacity var(--app-motion-fast, 160ms) ease,
-      transform var(--app-motion-fast, 160ms) var(--app-ease-out, ease-out);
+    display: none;
   }
 
   :is(html, .storefront-theme-root) .storefront-bottom-chrome > .bottom-nav a.is-active {
     color: var(--brand-strong, var(--brand));
+    background: transparent;
   }
 
   :is(html, .storefront-theme-root)
     .storefront-bottom-chrome
     > .bottom-nav
     a.is-active::before {
-    opacity: 1;
-    transform: translateX(-50%) scaleX(1);
+    display: none;
   }
 
   :is(html, .storefront-theme-root)
@@ -285,6 +275,8 @@
     .bottom-nav-icon {
     background: transparent;
     transform: none;
+    border-color: color-mix(in srgb, var(--brand-strong) 34%, transparent);
+    border-radius: 50%;
   }
 
   :is(html, .storefront-theme-root) .storefront-bottom-chrome > .bottom-nav a:active {
@@ -293,8 +285,10 @@
   }
 
   :is(html, .storefront-theme-root) .storefront-bottom-chrome > .bottom-nav small {
-    font-size: 0.6875rem;
+    font-size: 0.75rem;
+    font-weight: var(--storefront-weight-semibold, 650);
     line-height: 1.1;
+    letter-spacing: -0.01em;
   }
 }
 
