@@ -3,6 +3,7 @@ import { StorefrontIconButton } from '@site/storefront-ui/icon-button';
 import { LoadingHalo } from '@site/storefront-ui/loading';
 import '@site/storefront-ui/loading.css';
 import '@site/storefront-ui/no-agent.css';
+import MessageCircle from 'reicon-react/icons/MessageCircle';
 import {
   Check,
   CheckCheck,
@@ -10,7 +11,6 @@ import {
   ChevronRight,
   CircleAlert,
   Link,
-  MessageCircle,
   Plus,
   RotateCcw,
   SendHorizontal,
@@ -218,7 +218,7 @@ export function MessagesPageContent({
       {orderedConversations.length === 0 ? (
         <div className="messages-empty-state" role="status">
           <span className="messages-empty-icon" aria-hidden="true">
-            <MessageCircle />
+            <MessageCircle weight="Outline" />
           </span>
           <strong>
             {supportAvailable === false ? SYSTEM_UI.noSupport : 'No conversations yet'}

@@ -50,8 +50,13 @@
   height: 54px;
   place-items: center;
   margin-bottom: 4px;
-  border: 1px solid transparent;
+  border: 1px solid color-mix(in srgb, var(--brand) 22%, var(--line));
   border-radius: var(--theme-radius-icon, 17px);
+  color: var(--brand-strong, var(--brand));
+  background: color-mix(in srgb, var(--brand) 7%, var(--surface-soft));
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--brand-strong) 5%, transparent),
+    0 8px 20px color-mix(in srgb, var(--brand-strong) 9%, transparent);
 }
 
 .messages-empty-icon svg {
@@ -67,16 +72,18 @@
 
 .messages-empty-browse {
   display: inline-flex;
-  min-height: 42px;
+  min-height: 46px;
   align-items: center;
   justify-content: center;
   margin-top: 7px;
-  padding: 0 18px;
+  padding: 0 22px;
   border: 1px solid color-mix(in srgb, var(--brand) 42%, var(--line));
-  border-radius: var(--theme-radius-control, 12px);
+  border-radius: var(--theme-radius-control, 14px);
   color: var(--surface);
   background: var(--brand);
-  box-shadow: 0 7px 16px color-mix(in srgb, var(--brand) 18%, transparent);
+  box-shadow:
+    0 0 0 3px color-mix(in srgb, var(--brand-strong) 6%, transparent),
+    0 10px 20px color-mix(in srgb, var(--brand-strong) 18%, transparent);
   font-size: 0.8rem;
   font-weight: 700;
   text-decoration: none;
