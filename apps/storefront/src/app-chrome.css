@@ -218,12 +218,12 @@
 
 @media (max-width: 767px) {
   :is(html, .storefront-theme-root) .storefront-bottom-chrome {
-    padding: 0 14px 12px;
+    padding: 0 14px max(4px, env(safe-area-inset-bottom));
   }
 
   :is(html, .storefront-theme-root) .storefront-bottom-chrome > .bottom-nav {
-    padding: 4px max(8px, env(safe-area-inset-right))
-      calc(5px + env(safe-area-inset-bottom)) max(8px, env(safe-area-inset-left));
+    padding: 4px max(8px, env(safe-area-inset-right)) 4px
+      max(8px, env(safe-area-inset-left));
     border: 1px solid color-mix(in srgb, var(--brand-strong) 18%, var(--line));
     border-radius: 16px;
     background: color-mix(in srgb, var(--surface, #fff) 90%, var(--brand-strong) 10%);
@@ -239,8 +239,9 @@
   }
 
   :is(html, .storefront-theme-root) .storefront-bottom-chrome > .bottom-nav a {
-    min-height: 56px;
+    min-height: 48px;
     gap: 1px;
+    padding: 0 3px;
     border-radius: 12px;
     -webkit-tap-highlight-color: transparent;
   }
@@ -249,8 +250,8 @@
     .storefront-bottom-chrome
     > .bottom-nav
     .bottom-nav-icon {
-    width: 34px;
-    height: 34px;
+    width: 30px;
+    height: 30px;
     box-sizing: border-box;
     border: 1px solid transparent;
     border-radius: 50%;
