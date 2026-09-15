@@ -648,8 +648,9 @@
 .home-primary-directory-heading h2 {
   margin: 0;
   color: var(--text);
-  font-size: clamp(1.6rem, 4vw, 2.2rem);
+  font-size: clamp(1.75rem, 8vw, 2.35rem);
   font-weight: 760;
+  line-height: 0.98;
   letter-spacing: -0.045em;
 }
 
@@ -749,8 +750,9 @@
   box-shadow:
     0 5px 14px color-mix(in srgb, var(--brand-strong) 6%, transparent),
     inset 0 1px 0 rgb(255 255 255 / 68%);
-  font-size: 0.82rem;
-  line-height: 1.3;
+  font-size: 0.9375rem;
+  font-weight: var(--theme-art-product-title-weight, 620);
+  line-height: 1.24;
   text-decoration: none;
 }
 
