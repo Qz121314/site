@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import type { StorefrontLinkComponent } from '@site/storefront-ui';
 import { StorefrontIconButton } from '@site/storefront-ui/icon-button';
-import { ArrowRight, Search, X } from 'lucide-react';
+import Search from 'reicon-react/icons/Search';
+import { ArrowRight, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import {
   publicImageVariantUrl,
@@ -109,7 +110,7 @@ export function BrowsePage({
     <section className="browse-directory">
       <h1 className="sr-only">Browse · {bootstrap.site.site.name}</h1>
       <div className="browse-directory-search">
-        <Search aria-hidden="true" />
+        <Search aria-hidden="true" weight="Outline" />
         <input
           type="search"
           value={search}

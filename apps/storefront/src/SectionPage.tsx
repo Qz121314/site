@@ -1,7 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
 import type { StorefrontLinkComponent } from '@site/storefront-ui';
 import { StorefrontIconButton } from '@site/storefront-ui/icon-button';
-import { ChevronLeft, CircleAlert, Search, X } from 'lucide-react';
+import Search from 'reicon-react/icons/Search';
+import { ChevronLeft, CircleAlert, X } from 'lucide-react';
 import { useEffect, useMemo, useState, type MouseEvent as ReactMouseEvent } from 'react';
 import { publicImageVariantUrl, type StorefrontBootstrap } from './content';
 import { loadSectionSnapshot } from './content-route';
@@ -208,7 +209,7 @@ export function SectionCatalogPage({
       {hasProducts ? (
         <div className="section-catalog-controls">
           <div className="section-catalog-search">
-            <Search aria-hidden="true" />
+            <Search aria-hidden="true" weight="Outline" />
             <input
               type="search"
               value={search}
