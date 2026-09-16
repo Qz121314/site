@@ -53,6 +53,7 @@ test('fixed settings views resolve to intended domains', () => {
     ['system-advanced', 'system'],
     ['assets', 'content'],
     ['customer-service', 'engagement'],
+    ['phone-collection', 'engagement'],
     ['faq', 'content'],
     ['sections', 'catalog'],
   ]);
@@ -98,6 +99,7 @@ test('new hashes parse and legacy settings aliases normalize deterministically',
     'system-general',
     'assets',
     'customer-service',
+    'phone-collection',
     'faq',
     'sections',
     'products:alpha',
@@ -142,6 +144,7 @@ test('site, engagement, and system navigation match final P1 IA exactly', () => 
     [
       ['messages', 'Messages'],
       ['customer-service', '客服接入'],
+      ['phone-collection', '号码采集'],
     ],
   );
   assert.deepEqual(
