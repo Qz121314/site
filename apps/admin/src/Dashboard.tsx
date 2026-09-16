@@ -74,11 +74,6 @@ const CustomerServiceView = lazy(() =>
     default: module.CustomerServiceView,
   })),
 );
-const PhoneCollectionView = lazy(() =>
-  import('./PhoneCollectionView').then((module) => ({
-    default: module.PhoneCollectionView,
-  })),
-);
 const SectionManagementView = lazy(() =>
   import('./SectionManagementView').then((module) => ({
     default: module.SectionManagementView,
@@ -161,7 +156,6 @@ function workspaceWidthForView(view: AdminView): WorkspaceWidth {
     view === 'home' ||
     view === 'navigation' ||
     view === 'messages' ||
-    view === 'phone-collection' ||
     view === 'pwa' ||
     view === 'system-infrastructure'
   ) {
@@ -704,8 +698,6 @@ export function Dashboard({
             <AssetLibraryView key={activeView} onSessionExpired={onSessionExpired} />
           ) : activeView === 'customer-service' ? (
             <CustomerServiceView key={activeView} onSessionExpired={onSessionExpired} />
-          ) : activeView === 'phone-collection' ? (
-            <PhoneCollectionView key={activeView} onSessionExpired={onSessionExpired} />
           ) : activeView === 'sections' ? (
             <SectionManagementView
               key={activeView}

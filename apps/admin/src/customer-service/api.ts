@@ -151,80 +151,6 @@ function parseVerificationContext(value: unknown): CustomerServiceVerificationCo
   return { baseUrl: context.baseUrl, verifyToken: context.verifyToken };
 }
 
-async function requestCustomerServiceJson(
-  context: CustomerServiceVerificationContext,
-  path: string,
-): Promise<unknown> {
-  let response: Response;
-  try {
-    response = await fetch(`${context.baseUrl}${path}`, {
-      method: 'GET',
-      mode: 'cors',
-      credentials: 'omit',
-      cache: 'no-store',
-      redirect: 'error',
-      headers: {
-        Accept: 'application/json',
-        Authorization: `Bearer ${context.verifyToken}`,
-      },
-    });
-  } catch {
-    throw new AdminApiError(
-      503,
-      'CUSTOMER_SERVICE_UNREACHABLE',
-      '浏览器无法连接客服系统数据接口，请确认客服系统公网地址可访问。',
-    );
-  }
-
-  const body = await readJson(response);
-  if (!response.ok) {
-    const envelope = asRecord(body) as ErrorEnvelope | null;
-    throw new AdminApiError(
-      response.status,
-      envelope?.error?.code ?? 'CUSTOMER_SERVICE_REQUEST_FAILED',
-      envelope?.error?.message ?? `客服系统接口返回 HTTP ${response.status}。`,
-    );
-  }
-  return body;
-}
-
-async function requestCustomerServiceBlob(
-  context: CustomerServiceVerificationContext,
-  path: string,
-): Promise<Blob> {
-  let response: Response;
-  try {
-    response = await fetch(`${context.baseUrl}${path}`, {
-      method: 'GET',
-      mode: 'cors',
-      credentials: 'omit',
-      cache: 'no-store',
-      redirect: 'error',
-      headers: {
-        Accept: 'text/csv',
-        Authorization: `Bearer ${context.verifyToken}`,
-      },
-    });
-  } catch {
-    throw new AdminApiError(
-      503,
-      'CUSTOMER_SERVICE_UNREACHABLE',
-      '浏览器无法连接客服系统下载接口，请确认客服系统公网地址可访问。',
-    );
-  }
-
-  if (!response.ok) {
-    const body = await readJson(response);
-    const envelope = asRecord(body) as ErrorEnvelope | null;
-    throw new AdminApiError(
-      response.status,
-      envelope?.error?.code ?? 'CUSTOMER_SERVICE_REQUEST_FAILED',
-      envelope?.error?.message ?? `客服系统接口返回 HTTP ${response.status}。`,
-    );
-  }
-  return response.blob();
-}
-
 const basePath = '/api/admin/customer-service/connections';
 
 export function fetchCustomerServiceConnections(
@@ -241,51 +167,6 @@ export function fetchCustomerServiceVerificationContext(
   return requestJson(`${basePath}/${encodeURIComponent(id)}/verification-context`).then(
     parseVerificationContext,
   );
-}
-
-export async function fetchCustomerServicePhoneCollection(
-  id: string,
-): Promise<{ count: number; logs: CustomerServicePhoneDownloadLog[] }> {
-  const context = await fetchCustomerServiceVerificationContext(id);
-  const [summaryValue, logsValue] = await Promise.all([
-    requestCustomerServiceJson(context, '/integration/v1/phone-collection/summary'),
-    requestCustomerServiceJson(
-      context,
-      '/integration/v1/phone-collection/download-logs?limit=20',
-    ),
-  ]);
-  const summary = asRecord(summaryValue);
-  const logs = asRecord(logsValue)?.logs;
-  if (!summary || typeof summary.count !== 'number' || !Array.isArray(logs)) {
-    throw new AdminApiError(500, 'INVALID_RESPONSE', '号码采集返回数据无效。');
-  }
-  return {
-    count: summary.count,
-    logs: logs.map(parseCustomerServicePhoneDownloadLog),
-  };
-}
-
-export async function downloadCustomerServicePhoneCollection(id: string): Promise<Blob> {
-  const context = await fetchCustomerServiceVerificationContext(id);
-  return requestCustomerServiceBlob(context, '/integration/v1/phone-collection/export');
-}
-
-export type CustomerServicePhoneDownloadLog = {
-  downloadedAt: string;
-  rowCount: number;
-};
-
-function parseCustomerServicePhoneDownloadLog(
-  value: unknown,
-): CustomerServicePhoneDownloadLog {
-  const log = asRecord(value);
-  if (!log || typeof log.downloadedAt !== 'string' || typeof log.rowCount !== 'number') {
-    throw new AdminApiError(500, 'INVALID_RESPONSE', '号码下载日志返回数据无效。');
-  }
-  return {
-    downloadedAt: log.downloadedAt,
-    rowCount: log.rowCount,
-  };
 }
 
 export function createCustomerServiceConnection(
