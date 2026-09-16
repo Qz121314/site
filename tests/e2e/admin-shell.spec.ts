@@ -308,7 +308,7 @@ test('Admin shell exposes final IA, route compatibility, and current desktop geo
   for (const [domain, secondaryItems] of [
     ['设计中心', ['首页', '布局中心', '导航', '视觉系统']],
     ['内容', ['文章中心', '素材库']],
-    ['客户互动', ['Messages', '客服接入', '号码采集']],
+    ['客户互动', ['Messages', '客服接入']],
     ['系统', ['系统设置', '应用安装']],
   ] as const) {
     await primary.getByRole('button', { name: domain }).click();

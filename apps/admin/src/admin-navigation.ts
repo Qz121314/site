@@ -27,7 +27,6 @@ export type AdminView =
   | 'theme'
   | 'assets'
   | 'customer-service'
-  | 'phone-collection'
   | 'faq'
   | 'sections'
   | `${DynamicViewKind}:${string}`;
@@ -83,7 +82,6 @@ export const FIXED_ADMIN_VIEWS = new Set<AdminView>([
   'theme',
   'assets',
   'customer-service',
-  'phone-collection',
   'faq',
   'sections',
 ]);
@@ -209,7 +207,7 @@ export function getAdminDomainForView(view: AdminView): AdminDomain {
   ) {
     return view === 'messages' ? 'engagement' : view === 'pwa' ? 'system' : 'site';
   }
-  if (view === 'customer-service' || view === 'phone-collection') return 'engagement';
+  if (view === 'customer-service') return 'engagement';
   if (
     view === 'system-general' ||
     view === 'system-infrastructure' ||
@@ -282,7 +280,6 @@ export function getAdminSecondaryItems(
       return [
         { view: 'messages', label: 'Messages' },
         { view: 'customer-service', label: '客服接入' },
-        { view: 'phone-collection', label: '号码采集' },
       ];
     case 'system':
       return [
@@ -345,11 +342,6 @@ export function getAdminViewContext(
       eyebrow: domainLabel,
       title: '客服接入',
       description: '管理 Site 与 Customer Service 的连接配置。',
-    },
-    'phone-collection': {
-      eyebrow: domainLabel,
-      title: '号码采集',
-      description: '查看访客聊天中的手机号数量并下载 Excel。',
     },
     faq: {
       eyebrow: domainLabel,
