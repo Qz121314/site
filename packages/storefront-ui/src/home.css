@@ -1018,32 +1018,28 @@
   }
 
   .home-shortcuts {
-    display: flex;
-    gap: 6px;
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 8px;
     padding: 0;
-    overflow-x: auto;
-    scroll-padding-inline: 0;
-    scroll-snap-type: x proximity;
-    overscroll-behavior-inline: contain;
+    overflow: visible;
   }
 
   .home-shortcut {
-    flex: 0 0 54px;
-    width: 54px;
-    min-width: 54px;
-    min-height: 66px;
-    gap: 4px;
-    scroll-snap-align: start;
+    width: auto;
+    min-width: 0;
+    min-height: 72px;
+    gap: 5px;
   }
 
   .home-shortcut-icon {
-    width: 34px;
-    height: 34px;
+    width: 36px;
+    height: 36px;
   }
 
   .home-shortcut-label {
-    font-size: 0.62rem;
-    line-height: 1.16;
+    font-size: 0.68rem;
+    line-height: 1.18;
   }
 
   .home-recommendation-feed {
