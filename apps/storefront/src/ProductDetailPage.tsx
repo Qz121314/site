@@ -234,12 +234,14 @@ export function ProductDetailPage({
   function handleMobileGalleryScroll() {
     const track = mobileMediaTrackRef.current;
     if (!track || track.clientWidth <= 0 || mobileGalleryItems.length <= 1) return;
+    const firstItem = track.querySelector<HTMLElement>('.detail-mobile-media-item');
+    const gap = Number.parseFloat(getComputedStyle(track).columnGap) || 0;
+    const slideStep =
+      (firstItem?.getBoundingClientRect().width ?? track.clientWidth) + gap;
+    if (slideStep <= 0) return;
     const nextIndex = Math.max(
       0,
-      Math.min(
-        mobileGalleryItems.length - 1,
-        Math.round(track.scrollLeft / track.clientWidth),
-      ),
+      Math.min(mobileGalleryItems.length - 1, Math.round(track.scrollLeft / slideStep)),
     );
     setMobileMediaIndex((current) => (current === nextIndex ? current : nextIndex));
   }
@@ -362,7 +364,9 @@ export function ProductDetailPage({
                 <div className="detail-mobile-media-stage">
                   {mobileGalleryItems.length > 0 ? (
                     <div
-                      className="detail-mobile-media-track"
+                      className={`detail-mobile-media-track${
+                        mobileGalleryItems.length > 1 ? ' has-next-preview' : ''
+                      }`}
                       ref={mobileMediaTrackRef}
                       onScroll={handleMobileGalleryScroll}
                       tabIndex={mobileGalleryItems.length > 1 ? 0 : undefined}
