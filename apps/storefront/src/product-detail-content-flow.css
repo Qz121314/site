@@ -141,6 +141,19 @@
     box-shadow: var(--theme-primary-detail-media-shadow);
   }
 
+  .detail-mobile-media-track.has-next-preview {
+    gap: 10px;
+  }
+
+  .detail-mobile-media-track.has-next-preview .detail-mobile-media-item {
+    width: calc(100% - 42px);
+    flex-basis: calc(100% - 42px);
+  }
+
+  .detail-mobile-media-count {
+    right: 52px;
+  }
+
   .product-detail-info {
     padding: 16px 2px 0;
   }
