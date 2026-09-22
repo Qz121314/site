@@ -477,7 +477,13 @@ async function resolveSeoPage(
 
   if (pathname === '/') {
     return {
-      ...basicPage(origin, content, '/', site.name, site.locationLabel),
+      ...basicPage(
+        origin,
+        content,
+        '/',
+        `Escort Listings by City & Partner Platforms · ${site.name}`,
+        `Browse escort listings by city, review posted service details and rates, and explore partner dating, live cam, and creator platforms through ${site.name}.`,
+      ),
       preloadImageKey: await loadHomePreloadImageKey(bucket, content),
     };
   }

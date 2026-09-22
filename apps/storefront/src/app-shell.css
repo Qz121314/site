@@ -91,7 +91,6 @@ body::-webkit-scrollbar {
   padding-top: env(safe-area-inset-top);
   padding-right: max(var(--v2-gutter), env(safe-area-inset-right));
   padding-left: max(var(--v2-gutter), env(safe-area-inset-left));
-  border-bottom: 1px solid var(--theme-navigation-border, var(--v2-hairline));
   background: var(
     --theme-navigation-material,
     color-mix(in srgb, var(--page-bg, #f5f6f7) 92%, transparent)
