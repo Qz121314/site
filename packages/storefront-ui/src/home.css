@@ -531,7 +531,7 @@
 
 .home-primary-directory {
   position: relative;
-  overflow: hidden;
+  overflow: clip;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 0;
@@ -966,6 +966,12 @@
 }
 
 @media (max-width: 767px) {
+  .home-primary-directory-categories {
+    position: sticky;
+    top: calc(var(--app-viewport-top, 0px) + var(--app-header-height, 58px) + 4px);
+    z-index: 5;
+  }
+
   .home-shortcut-zone {
     padding: 10px 0 12px;
   }
