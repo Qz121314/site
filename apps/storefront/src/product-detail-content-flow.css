@@ -135,6 +135,28 @@
     gap: 0;
   }
 
+  .product-detail-page.is-escort-city .detail-mobile-media-stage {
+    height: clamp(220px, 34svh, 280px);
+  }
+
+  .product-detail-page.is-escort-city .detail-mobile-media-track,
+  .product-detail-page.is-escort-city .detail-mobile-media-item,
+  .product-detail-page.is-escort-city .detail-mobile-media-item > img,
+  .product-detail-page.is-escort-city .detail-mobile-media-item > video,
+  .product-detail-page.is-escort-city
+    .detail-mobile-media-stage
+    > .detail-media-fallback {
+    height: 100%;
+  }
+
+  .product-detail-page.is-escort-city .detail-mobile-media-item > img,
+  .product-detail-page.is-escort-city .detail-mobile-media-item > video,
+  .product-detail-page.is-escort-city
+    .detail-mobile-media-stage
+    > .detail-media-fallback {
+    aspect-ratio: auto;
+  }
+
   .detail-mobile-gallery {
     border: 1px solid var(--theme-art-media-frame);
     border-radius: var(--theme-detail-media-radius, var(--theme-radius-media, 14px));
