@@ -663,6 +663,7 @@
   font-weight: 720;
   cursor: pointer;
   text-align: center;
+  -webkit-tap-highlight-color: transparent;
   transition:
     color 160ms ease,
     background 160ms ease,
@@ -677,10 +678,23 @@
 }
 
 .home-primary-directory-categories button.is-active {
-  border-color: color-mix(in srgb, var(--brand-strong) 12%, var(--line));
+  border-color: color-mix(in srgb, var(--brand) 34%, var(--line));
   color: var(--brand-strong);
-  background: var(--surface);
-  box-shadow: 0 1px 3px color-mix(in srgb, var(--brand-strong) 8%, transparent);
+  background: color-mix(in srgb, var(--brand) 10%, var(--surface));
+  box-shadow: var(
+    --theme-control-shadow,
+    0 1px 3px color-mix(in srgb, var(--brand-strong) 8%, transparent)
+  );
+}
+
+.home-primary-directory-categories button:focus-visible,
+.home-primary-directory-link:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--brand) 54%, transparent);
+  outline-offset: 2px;
+}
+
+.home-primary-directory-categories button:active {
+  transform: scale(var(--theme-press-scale, 0.985));
 }
 
 .home-primary-directory-link svg {
@@ -717,6 +731,13 @@
   font-weight: var(--theme-art-product-title-weight, 620);
   line-height: 1.24;
   text-decoration: none;
+  -webkit-tap-highlight-color: transparent;
+  transition:
+    color var(--app-motion-fast, 160ms) ease,
+    background var(--app-motion-fast, 160ms) ease,
+    border-color var(--app-motion-fast, 160ms) ease,
+    box-shadow var(--app-motion-fast, 160ms) ease,
+    transform var(--app-motion-fast, 160ms) var(--app-ease-out, ease-out);
 }
 
 .home-primary-directory-link span {
@@ -734,6 +755,11 @@
   background: var(--surface);
   box-shadow: 0 4px 12px color-mix(in srgb, var(--brand-strong) 8%, transparent);
   transform: translateY(-1px);
+}
+
+.home-primary-directory-link:active {
+  background: color-mix(in srgb, var(--brand) 8%, var(--surface));
+  transform: scale(var(--theme-press-scale, 0.985));
 }
 
 .home-primary-directory-skeleton {
@@ -1131,8 +1157,15 @@
   .home-product-cover,
   .home-product-cover img,
   .home-product-skeleton,
-  .home-recommendation-heading > a {
+  .home-recommendation-heading > a,
+  .home-primary-directory-categories button,
+  .home-primary-directory-link {
     transition: none;
     animation: none;
+  }
+
+  .home-primary-directory-categories button:active,
+  .home-primary-directory-link:active {
+    transform: none;
   }
 }
