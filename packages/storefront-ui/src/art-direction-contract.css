@@ -477,14 +477,15 @@
 }
 
 :is(html, .storefront-theme-root) .home-recommendation.is-compact .home-product-meta {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  overflow: hidden;
-  clip: rect(0 0 0 0);
-  white-space: nowrap;
-  clip-path: inset(50%);
+  position: static;
+  width: auto;
+  height: auto;
+  padding: 8px 3px 0;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+  clip-path: none;
+  text-align: center;
 }
 
 :is(html, .storefront-theme-root) .home-recommendation.is-compact .home-product-title {
