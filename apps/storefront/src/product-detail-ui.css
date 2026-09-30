@@ -235,8 +235,8 @@
 .product-detail-route-action {
   display: flex;
   justify-content: center;
-  padding: 20px max(var(--app-gutter, 12px), env(safe-area-inset-right))
-    calc(12px + env(safe-area-inset-bottom))
+  padding: 12px max(var(--app-gutter, 12px), env(safe-area-inset-right))
+    calc(6px + env(safe-area-inset-bottom))
     max(var(--app-gutter, 12px), env(safe-area-inset-left));
   border: 0;
   background: var(--theme-primary-detail-cta-bar-background);
