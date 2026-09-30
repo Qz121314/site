@@ -73,10 +73,8 @@ function writeViewportMetrics(metrics = currentViewportMetrics()): void {
   root.style.setProperty('--app-viewport-right', roundedPixels(metrics.right));
   root.style.setProperty('--app-viewport-bottom', roundedPixels(metrics.bottom));
   root.style.setProperty('--app-viewport-left', roundedPixels(metrics.left));
-  root.style.setProperty(
-    '--app-bottom-chrome-inset',
-    roundedPixels(writeTextEntryState() ? metrics.bottom : 0),
-  );
+  writeTextEntryState();
+  root.style.setProperty('--app-bottom-chrome-inset', roundedPixels(metrics.bottom));
   root.dataset.visualViewport = window.visualViewport ? 'active' : 'fallback';
 }
 
