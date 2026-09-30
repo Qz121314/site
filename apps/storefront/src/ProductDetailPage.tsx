@@ -122,6 +122,11 @@ export function ProductDetailPage({
   const [activeMediaId, setActiveMediaId] = useState<string | null>(null);
   const [mobileMediaIndex, setMobileMediaIndex] = useState(0);
   const mobileMediaTrackRef = useRef<HTMLDivElement | null>(null);
+  const isEscortCityDetail = bootstrap.home.allSections.some(
+    (section) =>
+      section.slug === 'escorts' &&
+      (section.id === sectionRef || section.slug === sectionRef),
+  );
   const knownProduct = findKnownProductSummary(bootstrap, sectionRef, productRef);
   const query = useQuery<ProductSnapshot>({
     queryKey: [
@@ -351,7 +356,10 @@ export function ProductDetailPage({
 
   return (
     <>
-      <article className="product-detail-page" aria-labelledby="product-detail-title">
+      <article
+        className={`product-detail-page${isEscortCityDetail ? ' is-escort-city' : ''}`}
+        aria-labelledby="product-detail-title"
+      >
         <div className="product-detail-hero">
           {mobileGalleryItems.length > 0 ? (
             <div className="detail-gallery">
