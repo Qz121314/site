@@ -273,9 +273,7 @@
     inset 0 1px 0
       color-mix(in srgb, var(--theme-primary-detail-cta-color) 18%, transparent);
   font-size: 1rem;
-  font-weight: 700;
   line-height: 1.2;
-  letter-spacing: 0;
   text-align: center;
   text-decoration: none;
   -webkit-tap-highlight-color: transparent;
@@ -300,6 +298,8 @@
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
+  font-weight: 700;
+  letter-spacing: 0;
   white-space: nowrap;
 }
 
