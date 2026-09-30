@@ -769,6 +769,10 @@
   gap: 8px;
 }
 
+.home-recommendation.is-compact .home-recommendation-heading h2 {
+  flex: 0 0 auto;
+}
+
 .home-recommendation-heading h2 {
   min-width: 0;
   margin: 0;
