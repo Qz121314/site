@@ -491,7 +491,7 @@
 :is(html, .storefront-theme-root) .home-recommendation.is-compact .home-product-title {
   position: static;
   color: var(--theme-art-text-primary);
-  font-size: 0.75rem;
+  font-size: 0.6875rem;
   line-height: 1.2;
   text-shadow: none;
 }
