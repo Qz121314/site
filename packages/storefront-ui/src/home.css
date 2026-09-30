@@ -763,6 +763,12 @@
   gap: 5px;
 }
 
+.home-recommendation.is-compact .home-recommendation-heading-copy {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
 .home-recommendation-heading h2 {
   min-width: 0;
   margin: 0;
@@ -786,6 +792,13 @@
   line-height: 1.4;
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 1;
+}
+
+.home-recommendation.is-compact .home-recommendation-heading p {
+  display: block;
+  min-width: 0;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .home-recommendation-heading > a {
