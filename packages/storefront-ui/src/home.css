@@ -531,57 +531,19 @@
 
 .home-primary-directory {
   position: relative;
-  isolation: isolate;
   overflow: hidden;
   display: grid;
   grid-template-columns: minmax(0, 1fr);
   gap: 0;
   padding: 20px;
-  border: 1px solid color-mix(in srgb, var(--line) 64%, #fff 36%);
+  border: 1px solid color-mix(in srgb, var(--line) 78%, transparent);
   border-radius: var(--theme-radius-card, 16px);
-  background:
-    radial-gradient(
-      circle at 92% 0%,
-      color-mix(in srgb, var(--hero-glow) 70%, transparent),
-      transparent 34%
-    ),
-    linear-gradient(145deg, color-mix(in srgb, #fff 58%, transparent), transparent 44%),
-    color-mix(in srgb, var(--surface) 70%, var(--surface-soft));
-  box-shadow:
-    0 22px 48px color-mix(in srgb, var(--brand-strong) 10%, transparent),
-    inset 0 1px 0 rgb(255 255 255 / 86%),
-    inset 0 -1px 0 color-mix(in srgb, var(--brand-strong) 8%, transparent);
-  backdrop-filter: blur(26px) saturate(1.16);
-}
-
-.home-primary-directory::before {
-  position: absolute;
-  inset: 1px;
-  z-index: -1;
-  border: 1px solid rgb(255 255 255 / 42%);
-  border-radius: inherit;
-  content: '';
-  pointer-events: none;
-}
-
-.home-primary-directory::after {
-  position: absolute;
-  top: -72px;
-  right: 12%;
-  z-index: -1;
-  width: 180px;
-  height: 120px;
-  border-radius: 50%;
-  background: color-mix(in srgb, var(--brand) 10%, transparent);
-  filter: blur(28px);
-  content: '';
-  pointer-events: none;
+  background: color-mix(in srgb, var(--surface) 92%, var(--surface-soft));
+  box-shadow: 0 12px 30px color-mix(in srgb, var(--brand-strong) 6%, transparent);
 }
 
 .home-primary-directory-body {
   min-width: 0;
-  position: relative;
-  z-index: 1;
   padding: 2px 2px 4px;
 }
 
@@ -677,6 +639,11 @@
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(0, 1fr));
   overflow: visible;
+  gap: 2px;
+  padding: 3px;
+  border: 1px solid color-mix(in srgb, var(--line) 76%, transparent);
+  border-radius: var(--theme-radius-control, 12px);
+  background: color-mix(in srgb, var(--surface-soft) 78%, var(--surface));
 }
 
 .home-primary-directory-categories::-webkit-scrollbar {
@@ -686,11 +653,11 @@
 .home-primary-directory-categories button {
   min-height: 44px;
   flex: 0 0 auto;
-  padding: 7px 18px;
-  border: 1px solid color-mix(in srgb, var(--brand) 14%, var(--line));
-  border-radius: 999px;
+  padding: 7px 14px;
+  border: 1px solid transparent;
+  border-radius: 9px;
   color: color-mix(in srgb, var(--text) 72%, var(--muted));
-  background: color-mix(in srgb, var(--surface-soft) 82%, var(--surface));
+  background: transparent;
   font: inherit;
   font-size: 0.8rem;
   font-weight: 720;
@@ -710,12 +677,10 @@
 }
 
 .home-primary-directory-categories button.is-active {
-  border-color: color-mix(in srgb, var(--brand-strong) 48%, var(--line));
+  border-color: color-mix(in srgb, var(--brand-strong) 12%, var(--line));
   color: var(--brand-strong);
-  background: color-mix(in srgb, var(--brand) 8%, var(--surface));
-  box-shadow:
-    0 0 0 3px color-mix(in srgb, var(--brand-strong) 7%, transparent),
-    0 6px 14px color-mix(in srgb, var(--brand-strong) 12%, transparent);
+  background: var(--surface);
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--brand-strong) 8%, transparent);
 }
 
 .home-primary-directory-link svg {
@@ -743,15 +708,11 @@
   justify-content: space-between;
   gap: 8px;
   padding: 8px 12px;
-  border: 1px solid color-mix(in srgb, var(--line) 54%, #fff 46%);
+  border: 1px solid color-mix(in srgb, var(--line) 78%, transparent);
   border-radius: var(--theme-radius-control, 12px);
   color: var(--text);
-  background:
-    linear-gradient(135deg, color-mix(in srgb, #fff 64%, transparent), transparent 60%),
-    color-mix(in srgb, var(--surface) 54%, transparent);
-  box-shadow:
-    0 5px 14px color-mix(in srgb, var(--brand-strong) 6%, transparent),
-    inset 0 1px 0 rgb(255 255 255 / 68%);
+  background: color-mix(in srgb, var(--surface) 96%, var(--surface-soft));
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--brand-strong) 5%, transparent);
   font-size: 0.9375rem;
   font-weight: var(--theme-art-product-title-weight, 620);
   line-height: 1.24;
@@ -770,17 +731,9 @@
 .home-primary-directory-link:hover {
   color: var(--brand-strong, var(--brand));
   border-color: color-mix(in srgb, var(--brand) 46%, var(--line));
-  background:
-    linear-gradient(
-      135deg,
-      color-mix(in srgb, var(--hero-glow) 76%, #fff),
-      transparent 70%
-    ),
-    color-mix(in srgb, var(--surface) 78%, var(--hero-glow));
-  box-shadow:
-    0 9px 20px color-mix(in srgb, var(--brand-strong) 12%, transparent),
-    inset 0 1px 0 rgb(255 255 255 / 84%);
-  transform: translateY(-2px);
+  background: var(--surface);
+  box-shadow: 0 4px 12px color-mix(in srgb, var(--brand-strong) 8%, transparent);
+  transform: translateY(-1px);
 }
 
 .home-primary-directory-skeleton {
