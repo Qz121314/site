@@ -323,7 +323,7 @@
 
 .product-detail-route-action .cta-button.is-ready:is(:hover, :active),
 .product-detail-inline-action .cta-button.is-ready:is(:hover, :active) {
-  animation-play-state: paused;
+  animation: none;
 }
 
 .product-detail-route-action .cta-button:disabled:not(.is-unavailable),
@@ -391,19 +391,14 @@
 @keyframes product-detail-cta-breathe {
   0%,
   100% {
-    box-shadow:
-      var(--theme-primary-detail-cta-shadow),
-      inset 0 1px 0
-        color-mix(in srgb, var(--theme-primary-detail-cta-color) 18%, transparent);
+    filter: drop-shadow(0 0 0 transparent);
   }
 
   50% {
-    box-shadow:
-      var(--theme-primary-detail-cta-shadow),
-      0 0 16px
-        color-mix(in srgb, var(--theme-primary-detail-cta-background) 24%, transparent),
-      inset 0 1px 0
-        color-mix(in srgb, var(--theme-primary-detail-cta-color) 18%, transparent);
+    filter: drop-shadow(
+      0 0 14px
+        color-mix(in srgb, var(--theme-primary-detail-cta-background) 30%, transparent)
+    );
   }
 }
 
