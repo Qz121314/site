@@ -16,10 +16,15 @@
 .browse-directory-intro h1 {
   margin: 0;
   color: var(--text);
+  font-family: var(--storefront-font-display);
   font-size: clamp(1.05rem, 4.5vw, 1.2rem);
-  font-weight: 660;
+  font-weight: var(--theme-heading-weight, var(--storefront-weight-semibold, 650));
   line-height: 1.2;
   letter-spacing: -0.03em;
+}
+
+.browse-directory-intro h1 span {
+  color: var(--brand-strong, var(--brand));
 }
 
 .browse-directory-section {
