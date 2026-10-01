@@ -55,7 +55,7 @@ export function LegacyProductRoute({
         ) : null}
         <LinkComponent
           className={unavailable ? 'secondary-button' : 'primary-button'}
-          href="/browse/"
+          href="/"
         >
           {SYSTEM_UI.back}
         </LinkComponent>

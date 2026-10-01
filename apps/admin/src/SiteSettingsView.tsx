@@ -48,7 +48,7 @@ type SettingsPanel = 'general' | 'home' | 'pwa' | 'advanced';
 
 const SETTINGS_PANELS: Array<{ id: SettingsPanel; label: string }> = [
   { id: 'general', label: '常用设置' },
-  { id: 'home', label: '首页展示' },
+  { id: 'home', label: 'Home / Browse' },
   { id: 'pwa', label: 'PWA 安装' },
   { id: 'advanced', label: '高级设置' },
 ];

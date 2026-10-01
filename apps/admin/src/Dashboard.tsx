@@ -182,7 +182,7 @@ function DashboardLauncher({
   onNavigate: (view: AdminView) => void;
 }) {
   const entries = [
-    ['首页', '管理首页布局', 'home', PanelTop],
+    ['Browse 内容', '管理 Browse 页面内容', 'home', PanelTop],
     ['导航', '管理 Storefront 导航', 'navigation', LayoutDashboard],
     ['视觉系统', '管理前端主题与组件样式', 'theme', PenLine],
     ['文章中心', '管理 Markdown 内容', 'faq', FileText],

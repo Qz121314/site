@@ -19,7 +19,7 @@ test('mobile text controls keep a 16px font floor inside the live visual viewpor
   const publishedSection = await findPublishedSectionRoute(request);
   expect(publishedSection).toBeTruthy();
 
-  await page.goto('/browse/');
+  await page.goto('/');
   await expectNoFocusZoomFont(page.locator('.browse-directory-search input'));
 
   await page.goto(publishedSection!.sectionHref);

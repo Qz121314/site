@@ -57,7 +57,7 @@ export function HomeExperienceView({
   } | null>(null);
   const dirty = !settingsValueEqual(draft, createHomeDraft(settings));
 
-  useAdminDirtySource('homepage-settings', '首页设置', dirty);
+  useAdminDirtySource('homepage-settings', 'Browse 内容设置', dirty);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -83,12 +83,12 @@ export function HomeExperienceView({
         },
       });
       setDraft(createHomeDraft(updated));
-      setMessage({ type: 'success', text: '首页设置已保存。' });
+      setMessage({ type: 'success', text: 'Browse 内容设置已保存。' });
     } catch (error) {
       if (error instanceof Error && error.message.includes('SESSION')) onSessionExpired();
       setMessage({
         type: 'error',
-        text: error instanceof Error ? error.message : '首页设置保存失败。',
+        text: error instanceof Error ? error.message : 'Browse 内容设置保存失败。',
       });
     } finally {
       setSaving(false);
@@ -101,7 +101,7 @@ export function HomeExperienceView({
       onSubmit={handleSubmit}
     >
       <div className="home-experience-commandbar">
-        <AdminSegmentedControl ariaLabel="首页设置工作区">
+        <AdminSegmentedControl ariaLabel="Browse 内容工作区">
           <AdminSegmentedItem
             selected={activePanel === 'hero'}
             current={activePanel === 'hero'}
@@ -137,7 +137,7 @@ export function HomeExperienceView({
           </span>
         ) : null}
         <button className="primary-button" type="submit" disabled={saving || !dirty}>
-          {saving ? '保存中…' : '保存首页设置'}
+          {saving ? '保存中…' : '保存 Browse 内容'}
         </button>
       </div>
 

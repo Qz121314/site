@@ -143,17 +143,17 @@ function productBackHref(
   bootstrap: Awaited<ReturnType<typeof loadStorefrontBootstrap>>,
   route: Extract<StorefrontRoute, { type: 'product' }>,
 ): string {
-  if (!route.sectionRef) return '/browse/';
+  if (!route.sectionRef) return '/';
   const section = bootstrap.home.allSections.find(
     (item) => item.id === route.sectionRef || item.slug === route.sectionRef,
   );
-  if (!section) return '/browse/';
+  if (!section) return '/';
   const snapshot = bootstrap.sectionSnapshots[section.id];
-  if (!snapshot) return '/browse/';
+  if (!snapshot) return '/';
   const product = snapshot.products.find(
     (item) => item.id === route.productRef || item.slug === route.productRef,
   );
-  if (!product || snapshot.directProductId === product.id) return '/browse/';
+  if (!product || snapshot.directProductId === product.id) return '/';
   return sectionRefHref(route.sectionRef);
 }
 
@@ -420,20 +420,26 @@ export function StorefrontRoot() {
   const readArticleIds = new Set<string>(JSON.parse(articleReadSnapshot));
   const articleUnread = countUnreadMessageArticles(messageArticles, readArticleIds);
   const messagesBadge = composeMessagesBadge(supportUnread, articleUnread);
+  const pageDescription =
+    route.type === 'home'
+      ? `Browse escort listings by city, review posted service details and rates, and explore partner dating, live cam, and creator platforms through ${bootstrap.site.site.name}.`
+      : route.type === 'discover'
+        ? `Browse featured services, local cities, and partner platforms from ${bootstrap.site.site.name}.`
+        : bootstrap.site.site.locationLabel.trim();
   let page: ReactNode;
   let routeFallback: ReactNode = <RouteProgress />;
 
   switch (route.type) {
     case 'home':
-      page = <HomeFeed bootstrap={bootstrap} />;
-      break;
-    case 'discover':
       page = (
         <BrowsePage
           bootstrap={bootstrap}
           LinkComponent={StorefrontLink as StorefrontLinkComponent}
         />
       );
+      break;
+    case 'discover':
+      page = <HomeFeed bootstrap={bootstrap} />;
       break;
     case 'messages':
       page = (
@@ -532,7 +538,7 @@ export function StorefrontRoot() {
         measurementId={bootstrap.site.site.analytics.ga4MeasurementId}
         pathname={pathname}
       />
-      <StorefrontMetadata description={bootstrap.site.site.locationLabel.trim()} />
+      <StorefrontMetadata description={pageDescription} />
       {supportRuntimeEnabled ? (
         <Suspense fallback={null}>
           <StorefrontSupportRuntime

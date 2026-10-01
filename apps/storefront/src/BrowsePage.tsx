@@ -90,7 +90,7 @@ export function BrowsePage({
   }, [normalizedSearch, productSearchQuery.data]);
 
   useEffect(() => {
-    document.title = `Browse · ${bootstrap.site.site.name}`;
+    document.title = `Escort Listings by City & Partner Platforms · ${bootstrap.site.site.name}`;
   }, [bootstrap.site.site.name]);
 
   useEffect(() => {
@@ -108,7 +108,9 @@ export function BrowsePage({
 
   return (
     <section className="browse-directory">
-      <h1 className="sr-only">Browse · {bootstrap.site.site.name}</h1>
+      <h1 className="sr-only">
+        Escort Listings by City & Partner Platforms · {bootstrap.site.site.name}
+      </h1>
       <div className="browse-directory-search">
         <Search aria-hidden="true" weight="Outline" />
         <input

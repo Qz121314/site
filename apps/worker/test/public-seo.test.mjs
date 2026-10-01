@@ -164,8 +164,8 @@ test('Storefront HTML has route metadata, canonical URLs and structured data', a
   assert.match(html, /application\/ld\+json/u);
 });
 
-test('Home HTML preloads the responsive LCP image before client rendering', async () => {
-  const response = await app.request('https://example.com/', {}, env());
+test('Browse HTML preloads the responsive LCP image before client rendering', async () => {
+  const response = await app.request('https://example.com/browse/', {}, env());
   assert.equal(response.status, 200);
   const html = await response.text();
   assert.match(html, /rel="preload" as="image"/u);

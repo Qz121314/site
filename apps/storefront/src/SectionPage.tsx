@@ -167,11 +167,7 @@ export function SectionCatalogPage({
           >
             {SYSTEM_UI.retry}
           </button>
-          <LinkComponent
-            className="secondary-button"
-            href="/browse/"
-            onClick={handleBack}
-          >
+          <LinkComponent className="secondary-button" href="/" onClick={handleBack}>
             {SYSTEM_UI.back}
           </LinkComponent>
         </div>
@@ -196,7 +192,7 @@ export function SectionCatalogPage({
       <header className="section-catalog-header">
         <LinkComponent
           className="section-catalog-back"
-          href="/browse/"
+          href="/"
           aria-label={SYSTEM_UI.back}
           onClick={handleBack}
         >

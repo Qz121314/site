@@ -175,7 +175,7 @@ export function HomeLayoutSettingsSection({
   const recommendationPanel = renderPlacement(
     'recommendationSectionIds',
     '推荐分区',
-    '可按需要添加多个。拖拽卡片调整顺序；未选择时自动从已发布且标记“首页推荐”的产品推导分区。',
+    '可按需要添加多个。拖拽卡片调整顺序；未选择时自动从已发布且标记“Browse 推荐”的产品推导分区。',
     '添加推荐分区',
   );
 
@@ -187,7 +187,7 @@ export function HomeLayoutSettingsSection({
           ? '快捷分区设置'
           : placement === 'recommendationSectionIds'
             ? '推荐分区设置'
-            : '首页布局设置'
+            : 'Browse 内容布局设置'
       }
     >
       <div className={`admin-home-layout-grid${placement ? ' is-single-panel' : ''}`}>

@@ -128,7 +128,7 @@ test('site, engagement, and system navigation match final P1 IA exactly', () => 
   assert.deepEqual(
     getAdminSecondaryItems('site', sections).map(({ view, label }) => [view, label]),
     [
-      ['home', '首页'],
+      ['home', 'Browse 内容'],
       ['layout', '布局中心'],
       ['navigation', '导航'],
       ['theme', '视觉系统'],
