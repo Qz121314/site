@@ -20,7 +20,9 @@ test('mobile text controls keep a 16px font floor inside the live visual viewpor
   expect(publishedSection).toBeTruthy();
 
   await page.goto('/');
-  await expect(page.getByRole('heading', { name: 'Choose a category' })).toBeVisible();
+  await expect(
+    page.getByRole('heading', { name: 'Select the service you need' }),
+  ).toBeVisible();
   await expect(page.getByRole('searchbox')).toHaveCount(0);
 
   await page.goto(publishedSection!.sectionHref);
