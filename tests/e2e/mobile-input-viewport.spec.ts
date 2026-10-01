@@ -20,7 +20,8 @@ test('mobile text controls keep a 16px font floor inside the live visual viewpor
   expect(publishedSection).toBeTruthy();
 
   await page.goto('/');
-  await expectNoFocusZoomFont(page.locator('.browse-directory-search input'));
+  await expect(page.getByRole('heading', { name: 'Choose a category' })).toBeVisible();
+  await expect(page.getByRole('searchbox')).toHaveCount(0);
 
   await page.goto(publishedSection!.sectionHref);
   await expectNoFocusZoomFont(page.locator('.section-catalog-search input'));

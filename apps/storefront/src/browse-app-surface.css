@@ -17,20 +17,6 @@
     gap: 14px;
   }
 
-  .browse-directory-search {
-    position: sticky;
-    top: calc(var(--app-viewport-top, 0px) + var(--app-header-height, 0px));
-    z-index: 35;
-    min-height: 42px;
-    padding-inline: 13px 10px;
-    background: color-mix(
-      in srgb,
-      var(--v2-control-bg, var(--surface-soft)) 88%,
-      var(--surface)
-    );
-    box-shadow: 0 1px 0 color-mix(in srgb, var(--text) 3%, transparent) inset;
-  }
-
   .browse-section-list {
     gap: 12px;
   }
@@ -51,7 +37,7 @@
 
   .browse-section-list:not(.is-single) .browse-section-card:first-child {
     grid-column: 1 / -1;
-    min-height: clamp(220px, 30svh, 250px);
+    min-height: clamp(160px, 22svh, 180px);
     aspect-ratio: auto;
   }
 
