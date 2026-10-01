@@ -519,7 +519,7 @@ export function ProductEditorDialog({
                 checked={form.isFeatured}
                 onChange={(event) => patch({ isFeatured: event.target.checked })}
               />
-              <span>首页推荐</span>
+              <span>Browse 推荐</span>
             </label>
           </div>
           <div
@@ -540,7 +540,7 @@ export function ProductEditorDialog({
             <label className="product-header-setting product-header-order-setting">
               <span>推荐排序</span>
               <input
-                aria-label="首页推荐排序"
+                aria-label="Browse 推荐排序"
                 type="number"
                 min={0}
                 max={1_000_000}

@@ -223,7 +223,7 @@ export function MessagesPageContent({
           <strong>
             {supportAvailable === false ? SYSTEM_UI.noSupport : 'No conversations yet'}
           </strong>
-          <LinkComponent className="messages-empty-browse" href="/browse/">
+          <LinkComponent className="messages-empty-browse" href="/">
             {SYSTEM_UI.browse}
           </LinkComponent>
         </div>

@@ -56,9 +56,11 @@ for (const viewport of MOBILE_VIEWPORTS) {
 
     await page.goto('/');
     await expect(page.locator('.app-shell > .topbar')).toBeVisible();
-    await expect(page.locator('.home-shortcut-zone')).toBeVisible();
+    await expect(page.locator('.browse-directory')).toBeVisible();
     await expect(page.locator('.storefront-bottom-chrome > .bottom-nav')).toBeVisible();
-    const homeContract = await page.evaluate(() => {
+    await page.goto('/browse/');
+    await expect(page.locator('.home-shortcut-zone')).toBeVisible();
+    const browseContract = await page.evaluate(() => {
       const shortcuts = document.querySelector<HTMLElement>('.home-shortcuts');
       const firstShortcut = shortcuts?.querySelector<HTMLElement>('.home-shortcut');
       const bottomChrome = document.querySelector<HTMLElement>(
@@ -91,16 +93,16 @@ for (const viewport of MOBILE_VIEWPORTS) {
         shortcutTopGap: firstRect && bottomRect ? bottomRect.top - firstRect.top : -1,
       };
     });
-    expect(homeContract.display).toBe('grid');
-    expect(homeContract.columnCount).toBe(5);
-    expect(homeContract.hasHorizontalOverflow).toBe(false);
-    if (homeContract.fifthFullyVisible !== null) {
-      expect(homeContract.fifthFullyVisible).toBe(true);
+    expect(browseContract.display).toBe('grid');
+    expect(browseContract.columnCount).toBe(5);
+    expect(browseContract.hasHorizontalOverflow).toBe(false);
+    if (browseContract.fifthFullyVisible !== null) {
+      expect(browseContract.fifthFullyVisible).toBe(true);
     }
-    if (homeContract.sixthStartsNextRow !== null) {
-      expect(homeContract.sixthStartsNextRow).toBe(true);
+    if (browseContract.sixthStartsNextRow !== null) {
+      expect(browseContract.sixthStartsNextRow).toBe(true);
     }
-    expect(homeContract.shortcutTopGap).toBeGreaterThan(0);
+    expect(browseContract.shortcutTopGap).toBeGreaterThan(0);
     await expectFixedBottomChrome(page);
     await expectNoHorizontalOverflow(page);
 
@@ -231,7 +233,7 @@ test('storefront applies the current admin theme and keeps discovery routes heal
   await expect(page.locator('#root')).not.toBeEmpty();
   await expect(page.locator('.app-shell > .topbar .brand-lockup')).toBeVisible();
   await expect(page.locator('.storefront-bottom-chrome > .bottom-nav')).toBeVisible();
-  await expect(page.locator('.home-shortcut-zone')).toBeVisible();
+  await expect(page.locator('.browse-directory')).toBeVisible();
 
   await expect
     .poll(() =>
@@ -255,7 +257,7 @@ test('storefront applies the current admin theme and keeps discovery routes heal
   await page.goto('/browse/');
   await expect(page.locator('#root')).not.toBeEmpty();
   await expect(page.locator('.storefront-bottom-chrome > .bottom-nav')).toBeVisible();
-  await expect(page.locator('.browse-directory-search')).toBeVisible();
+  await expect(page.locator('.home-shortcut-zone')).toBeVisible();
   await expectNoHorizontalOverflow(page);
 
   await page.goto(publishedSection!.sectionHref);

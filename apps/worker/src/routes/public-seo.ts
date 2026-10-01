@@ -484,7 +484,6 @@ async function resolveSeoPage(
         `Escort Listings by City & Partner Platforms · ${site.name}`,
         `Browse escort listings by city, review posted service details and rates, and explore partner dating, live cam, and creator platforms through ${site.name}.`,
       ),
-      preloadImageKey: await loadHomePreloadImageKey(bucket, content),
     };
   }
   if (pathname === '/browse' || pathname === '/discover' || pathname === '/discover/') {
@@ -500,13 +499,16 @@ async function resolveSeoPage(
     };
   }
   if (pathname === '/browse/') {
-    return basicPage(
-      origin,
-      content,
-      '/browse/',
-      `Browse · ${site.name}`,
-      site.locationLabel,
-    );
+    return {
+      ...basicPage(
+        origin,
+        content,
+        '/browse/',
+        `Browse · ${site.name}`,
+        `Browse featured services, local cities, and partner platforms from ${site.name}.`,
+      ),
+      preloadImageKey: await loadHomePreloadImageKey(bucket, content),
+    };
   }
   if (pathname === '/messages' || pathname === '/messages/') {
     const page = basicPage(

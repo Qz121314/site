@@ -197,7 +197,7 @@ export function ProductDetailPage({
           ) : null}
           <LinkComponent
             className={missing ? 'primary-button' : 'secondary-button'}
-            href="/browse/"
+            href="/"
             onClick={handleInternalBack}
           >
             {SYSTEM_UI.back}

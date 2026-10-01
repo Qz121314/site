@@ -19,6 +19,7 @@ test('desktop shell keeps the left brand and primary navigation usable', async (
 
   await page.goto('/');
   await expect(page.locator('#root')).not.toBeEmpty();
+  await expect(page.locator('.browse-directory')).toBeVisible();
   await expect(page.locator('.app-shell > .topbar .brand-lockup')).toBeVisible();
   await expect(
     page.locator('.app-shell > .storefront-bottom-chrome > .bottom-nav'),
@@ -57,7 +58,7 @@ test('desktop shell keeps the left brand and primary navigation usable', async (
   await expectNoHorizontalOverflow(page);
 
   await page.goto('/browse/');
-  await expect(page.locator('.browse-directory')).toBeVisible();
+  await expect(page.locator('.home-shortcut-zone')).toBeVisible();
   await expect(
     page.locator('.app-shell > .storefront-bottom-chrome > .bottom-nav'),
   ).toBeVisible();

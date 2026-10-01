@@ -14,8 +14,8 @@ import { useSiteSettingsController } from '../settings/SiteSettingsProvider';
 import './experience-settings.css';
 
 const PAGES: Array<{ key: StorefrontLayoutPage; label: string; description: string }> = [
-  { key: 'home', label: '首页', description: '分区入口、推荐内容与首页首屏。' },
-  { key: 'browse', label: 'Browse', description: '全站产品浏览与筛选。' },
+  { key: 'home', label: 'Home', description: '服务类型目录与城市入口。' },
+  { key: 'browse', label: 'Browse', description: 'Hero、快捷分区与推荐内容。' },
   { key: 'section', label: '分区页', description: '单个服务分区的产品目录。' },
   { key: 'product', label: '产品详情', description: '产品信息、媒体与 CTA 转化。' },
   { key: 'article', label: '文章页', description: 'Article 与兼容 FAQ 内容。' },
@@ -122,7 +122,7 @@ export function LayoutCenterView({ onSessionExpired }: { onSessionExpired: () =>
                 }
               >
                 <option value="current">当前布局（默认）</option>
-                {page.key === 'home' ? (
+                {page.key === 'browse' ? (
                   <option value="template-a">模板 A · 主分区聚焦</option>
                 ) : null}
               </select>

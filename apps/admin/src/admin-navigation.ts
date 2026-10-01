@@ -260,7 +260,7 @@ export function getAdminSecondaryItems(
       ];
     case 'site':
       return [
-        { view: 'home', label: '首页' },
+        { view: 'home', label: 'Browse 内容' },
         { view: 'layout', label: '布局中心' },
         { view: 'navigation', label: '导航' },
         { view: 'theme', label: '视觉系统' },
@@ -305,8 +305,8 @@ export function getAdminViewContext(
     },
     home: {
       eyebrow: domainLabel,
-      title: '首页',
-      description: '管理仍在使用的首页 Hero 与分区布局。',
+      title: 'Browse 内容',
+      description: '管理 Browse 页面的 Hero、快捷分区与推荐内容。',
     },
     layout: {
       eyebrow: domainLabel,

@@ -80,7 +80,7 @@ export function SiteHeroSettingsSection({
       {slides.length === 0 ? (
         <div className="hero-settings-empty">
           <strong>未配置 Hero</strong>
-          <span>前端首页将直接从其他内容开始，不会保留 Hero 空白区域。</span>
+          <span>前端 Browse 页面将直接从其他内容开始，不会保留 Hero 空白区域。</span>
         </div>
       ) : (
         <div className="hero-slide-list">

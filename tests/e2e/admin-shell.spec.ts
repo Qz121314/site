@@ -306,12 +306,12 @@ test('Admin shell exposes final IA, route compatibility, and current desktop geo
   );
 
   for (const [domain, secondaryItems] of [
-    ['设计中心', ['首页', '布局中心', '导航', '视觉系统']],
+    ['设计中心', ['Browse 内容', '布局中心', '导航', '视觉系统']],
     ['内容', ['文章中心', '素材库']],
     ['客户互动', ['Messages', '客服接入']],
     ['系统', ['系统设置', '应用安装']],
   ] as const) {
-    await primary.getByRole('button', { name: domain }).click();
+    await primary.getByRole('button', { name: domain, exact: true }).click();
     const navigation = page
       .locator('.admin-primary-link.is-active')
       .locator('..')
@@ -386,7 +386,7 @@ test('narrow viewport uses the accessible drawer without horizontal overflow', a
   await drawer
     .locator('.admin-primary-link.is-active')
     .locator('..')
-    .getByRole('button', { name: '首页' })
+    .getByRole('button', { name: 'Browse 内容' })
     .click();
   await expect(drawer).toBeHidden();
   await expect(page).toHaveURL(/#home$/u);
@@ -509,7 +509,7 @@ test('Asset Library retains its empty state without adding a page overflow owner
   await page.goto('/admin/#home');
   await page
     .getByRole('navigation', { name: '管理业务域' })
-    .getByRole('button', { name: '内容' })
+    .getByRole('button', { name: '内容', exact: true })
     .click();
   await page
     .locator('.admin-primary-link.is-active')

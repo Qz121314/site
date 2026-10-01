@@ -68,12 +68,12 @@ test('bottom navigation keeps browsing, chat, article, and FAQ detail routes und
   assert.equal(bottomNavigationActiveHref('/'), '/');
   assert.equal(bottomNavigationActiveHref('/browse/'), '/browse/');
   assert.equal(bottomNavigationActiveHref('/discover/'), '/browse/');
-  assert.equal(bottomNavigationActiveHref('/sections/home-services/'), '/browse/');
+  assert.equal(bottomNavigationActiveHref('/sections/home-services/'), '/');
   assert.equal(
     bottomNavigationActiveHref('/sections/home-services/products/deep-clean/'),
-    '/browse/',
+    '/',
   );
-  assert.equal(bottomNavigationActiveHref('/products/product-1/'), '/browse/');
+  assert.equal(bottomNavigationActiveHref('/products/product-1/'), '/');
   assert.equal(bottomNavigationActiveHref('/messages/'), '/messages/');
   assert.equal(bottomNavigationActiveHref('/messages/conversation-1/'), '/messages/');
   assert.equal(bottomNavigationActiveHref('/articles/article-1/'), '/messages/');

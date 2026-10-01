@@ -149,7 +149,7 @@ function HomeShortcuts({
         ))}
         {showMore ? (
           <StorefrontHomeShortcut
-            href="/browse/"
+            href="/"
             icon={<Grid2X2 aria-hidden="true" />}
             isMore
             label={SYSTEM_UI.more}
@@ -426,7 +426,7 @@ export function HomeFeed({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
     )?.id ?? recommendationSections[0]?.id;
   const heroSlides = site.hero?.slides ?? [];
   const hasHero = heroSlides.some((slide) => slide.mediaUrl.trim());
-  const isTemplateA = layoutForPage(bootstrap, 'home') === 'template-a';
+  const isTemplateA = layoutForPage(bootstrap, 'browse') === 'template-a';
   const primarySection = availableSections[0];
   const secondarySections = recommendationSections.filter(
     (section) => section.id !== primarySection?.id,
@@ -434,7 +434,7 @@ export function HomeFeed({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
 
   useEffect(() => {
     document.documentElement.lang = 'en';
-    document.title = site.name;
+    document.title = `Browse · ${site.name}`;
   }, [site.name]);
 
   return (
@@ -443,7 +443,7 @@ export function HomeFeed({ bootstrap }: { bootstrap: StorefrontBootstrap }) {
         isTemplateA ? ' is-template-a' : ''
       }`}
     >
-      <h1 className="sr-only">{site.name}</h1>
+      <h1 className="sr-only">Browse · {site.name}</h1>
       <HomeHero siteName={site.name} slides={heroSlides} />
       <HomeShortcuts sections={shortcutSections} showMore={shortcutLayout.showMore} />
 

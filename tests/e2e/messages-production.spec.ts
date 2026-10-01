@@ -83,7 +83,7 @@ test('a published customer-service CTA reaches the product-scoped Messages compo
   );
 
   await page.route('**/go/**', (route) => route.abort('blockedbyclient'));
-  await page.goto('/browse/');
+  await page.goto('/');
 
   const sectionHrefs = await page
     .locator('a[href^="/sections/"]:not([href*="/products/"])')

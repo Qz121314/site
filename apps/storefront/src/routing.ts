@@ -64,9 +64,7 @@ export function bottomNavigationActiveHref(pathname: string): BottomNavigationHr
     pathname === '/browse' ||
     pathname.startsWith('/browse/') ||
     pathname === '/discover' ||
-    pathname.startsWith('/discover/') ||
-    pathname.startsWith('/sections/') ||
-    pathname.startsWith('/products/')
+    pathname.startsWith('/discover/')
   ) {
     return '/browse/';
   }
