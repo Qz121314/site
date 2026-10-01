@@ -22,13 +22,6 @@
   letter-spacing: -0.03em;
 }
 
-.browse-directory-intro p {
-  margin: 0;
-  color: var(--v2-muted, var(--muted));
-  font-size: 0.78rem;
-  line-height: 1.4;
-}
-
 .browse-directory-section {
   display: grid;
 }

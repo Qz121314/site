@@ -32,8 +32,7 @@ export function BrowsePage({
   return (
     <section className="browse-directory">
       <header className="browse-directory-intro">
-        <h1>Choose a category</h1>
-        <p>Explore local services and partner platforms.</p>
+        <h1>Select the service you need</h1>
       </header>
 
       {sections.length > 0 ? (
