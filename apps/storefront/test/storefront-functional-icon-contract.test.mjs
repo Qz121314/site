@@ -17,7 +17,7 @@ test('storefront functional controls keep shared icon dependencies instead of pa
   const root = source('../src/StorefrontRoot.tsx');
   const navigation = source('../src/storefront-navigation.tsx');
 
-  for (const content of [support, pwa, browse, filters]) {
+  for (const content of [support, pwa, filters]) {
     assert.match(content, /from '@site\/storefront-ui\/icon-button'/u);
   }
 
