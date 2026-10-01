@@ -32,7 +32,9 @@ export function BrowsePage({
   return (
     <section className="browse-directory">
       <header className="browse-directory-intro">
-        <h1>Select the service you need</h1>
+        <h1>
+          Choose a <span>service</span>
+        </h1>
       </header>
 
       {sections.length > 0 ? (
