@@ -1,4 +1,4 @@
-export type BottomNavigationKey = 'home' | 'browse' | 'messages' | 'faq';
+export type BottomNavigationKey = 'home' | 'browse' | 'messages' | 'reviews';
 export type BottomNavigationBuiltinIcon =
   | 'home'
   | 'compass'

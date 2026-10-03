@@ -210,7 +210,12 @@ function bottomNavigation() {
       enabled: true,
       icon: { type: 'builtin', value: 'messages' },
     },
-    { key: 'faq', label: 'FAQ', enabled: true, icon: { type: 'builtin', value: 'help' } },
+    {
+      key: 'reviews',
+      label: 'Reviews',
+      enabled: true,
+      icon: { type: 'builtin', value: 'star' },
+    },
   ];
 }
 

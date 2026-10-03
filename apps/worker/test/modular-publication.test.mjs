@@ -336,8 +336,8 @@ test('public storefront bootstrap consolidates the critical published snapshots'
       icon: { type: 'builtin', value: 'messages' },
     },
     {
-      key: 'faq',
-      label: 'FAQ',
+      key: 'reviews',
+      label: 'Reviews',
       enabled: false,
       icon: { type: 'emoji', value: '?' },
     },

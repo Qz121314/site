@@ -22,7 +22,7 @@ export type SiteHeroSlide = {
 
 export type SiteHeroSlideInput = Omit<SiteHeroSlide, 'mediaKind' | 'mediaUrl'>;
 
-export type BottomNavigationKey = 'home' | 'browse' | 'messages' | 'faq';
+export type BottomNavigationKey = 'home' | 'browse' | 'messages' | 'reviews';
 export type BottomNavigationIconType = 'builtin' | 'emoji' | 'asset';
 export type BottomNavigationItem = {
   key: BottomNavigationKey;
@@ -91,7 +91,7 @@ function parseBottomNavigationItem(value: unknown): BottomNavigationItem {
     (value.key === 'home' ||
       value.key === 'browse' ||
       value.key === 'messages' ||
-      value.key === 'faq') &&
+      value.key === 'reviews') &&
     typeof value.label === 'string' &&
     (value.iconType === 'builtin' ||
       value.iconType === 'emoji' ||

@@ -10,10 +10,10 @@ import '@site/storefront-ui/art-direction-primary-surfaces.css';
 
 function publishedSections(bootstrap: StorefrontBootstrap): PublicSection[] {
   const pointer = bootstrap.pointer;
-  if (pointer.schemaVersion !== 2) return bootstrap.home.allSections;
-  return bootstrap.home.allSections.filter((section) =>
-    Boolean(pointer.sections[section.id]),
-  );
+  return bootstrap.home.allSections.filter((section) => {
+    if (section.slug !== 'escorts' && section.slug !== 'dating') return false;
+    return pointer.schemaVersion !== 2 || Boolean(pointer.sections[section.id]);
+  });
 }
 
 export function BrowsePage({

@@ -64,7 +64,7 @@ test('routing accepts primary pages, FAQ articles, generic articles, canonical s
   });
 });
 
-test('bottom navigation keeps browsing, chat, article, and FAQ detail routes under their primary tabs', () => {
+test('bottom navigation selects Reviews on its section and leaves FAQ outside the fixed tabs', () => {
   assert.equal(bottomNavigationActiveHref('/'), '/');
   assert.equal(bottomNavigationActiveHref('/browse/'), '/browse/');
   assert.equal(bottomNavigationActiveHref('/discover/'), '/browse/');
@@ -77,8 +77,13 @@ test('bottom navigation keeps browsing, chat, article, and FAQ detail routes und
   assert.equal(bottomNavigationActiveHref('/messages/'), '/messages/');
   assert.equal(bottomNavigationActiveHref('/messages/conversation-1/'), '/messages/');
   assert.equal(bottomNavigationActiveHref('/articles/article-1/'), '/messages/');
-  assert.equal(bottomNavigationActiveHref('/faq/'), '/faq/');
-  assert.equal(bottomNavigationActiveHref('/faq/faq-1/'), '/faq/');
+  assert.equal(bottomNavigationActiveHref('/sections/reviews/'), '/sections/reviews/');
+  assert.equal(
+    bottomNavigationActiveHref('/sections/reviews/products/review-1/'),
+    '/sections/reviews/',
+  );
+  assert.equal(bottomNavigationActiveHref('/faq/'), '/');
+  assert.equal(bottomNavigationActiveHref('/faq/faq-1/'), '/');
 });
 
 test('messages routes use the app-style push presentation', () => {
