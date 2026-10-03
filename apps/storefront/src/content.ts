@@ -5,7 +5,7 @@ import {
 } from '@site/shared';
 
 export type BottomNavigationItemConfig = {
-  key: 'home' | 'browse' | 'messages' | 'faq';
+  key: 'home' | 'browse' | 'messages' | 'reviews';
   label: string;
   enabled: boolean;
   icon: {
@@ -449,7 +449,7 @@ function isBottomNavigationKey(
   value: unknown,
 ): value is BottomNavigationItemConfig['key'] {
   return (
-    value === 'home' || value === 'browse' || value === 'messages' || value === 'faq'
+    value === 'home' || value === 'browse' || value === 'messages' || value === 'reviews'
   );
 }
 

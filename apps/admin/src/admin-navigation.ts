@@ -27,6 +27,7 @@ export type AdminView =
   | 'theme'
   | 'assets'
   | 'customer-service'
+  | 'reviews'
   | 'faq'
   | 'sections'
   | `${DynamicViewKind}:${string}`;
@@ -61,7 +62,7 @@ export const ADMIN_DOMAINS: readonly AdminDomainDefinition[] = [
   { id: 'site', label: '设计中心', description: '管理前端页面展示、导航与视觉规则' },
   { id: 'content', label: '内容', description: '可复用文章与素材资产' },
   { id: 'operations', label: '运营', description: '转化运营工具' },
-  { id: 'engagement', label: '客户互动', description: '消息与客服接入' },
+  { id: 'engagement', label: '客户互动', description: '客户评价、消息与客服接入' },
   { id: 'system', label: '系统', description: '站点身份与技术配置' },
 ];
 
@@ -82,6 +83,7 @@ export const FIXED_ADMIN_VIEWS = new Set<AdminView>([
   'theme',
   'assets',
   'customer-service',
+  'reviews',
   'faq',
   'sections',
 ]);
@@ -196,6 +198,7 @@ export function writeAdminViewLocation(view: AdminView, mode: 'push' | 'replace'
 export function getAdminDomainForView(view: AdminView): AdminDomain {
   if (view === 'dashboard') return 'dashboard';
   if (view === 'faq' || view === 'assets') return 'content';
+  if (view === 'reviews') return 'engagement';
   if (view === 'sections') return 'catalog';
   if (
     view === 'home' ||
@@ -236,7 +239,9 @@ export function getAdminDefaultViewForDomain(
     case 'operations':
       return sections[0] ? `conversion-pool:${sections[0].id}` : null;
     case 'engagement':
-      return 'messages';
+      return sections.some((section) => section.slug.toLowerCase() === 'reviews')
+        ? 'reviews'
+        : 'messages';
     case 'system':
       return 'system-general';
   }
@@ -252,11 +257,13 @@ export function getAdminSecondaryItems(
     case 'catalog':
       return [
         { view: 'sections', label: '分区管理', group: '结构' },
-        ...sections.flatMap<AdminNavItem>((section) => [
-          { view: `products:${section.id}`, label: '商品', group: section.name },
-          { view: `categories:${section.id}`, label: '分类' },
-          { view: `tags:${section.id}`, label: '标签' },
-        ]),
+        ...sections
+          .filter((section) => section.slug.toLowerCase() !== 'reviews')
+          .flatMap<AdminNavItem>((section) => [
+            { view: `products:${section.id}`, label: '商品', group: section.name },
+            { view: `categories:${section.id}`, label: '分类' },
+            { view: `tags:${section.id}`, label: '标签' },
+          ]),
       ];
     case 'site':
       return [
@@ -278,6 +285,9 @@ export function getAdminSecondaryItems(
       }));
     case 'engagement':
       return [
+        ...(sections.some((section) => section.slug.toLowerCase() === 'reviews')
+          ? [{ view: 'reviews' as const, label: 'Reviews' }]
+          : []),
         { view: 'messages', label: 'Messages' },
         { view: 'customer-service', label: '客服接入' },
       ];
@@ -342,6 +352,11 @@ export function getAdminViewContext(
       eyebrow: domainLabel,
       title: '客服接入',
       description: '管理 Site 与 Customer Service 的连接配置。',
+    },
+    reviews: {
+      eyebrow: domainLabel,
+      title: 'Reviews',
+      description: '管理客户评价内容与前台展示。',
     },
     faq: {
       eyebrow: domainLabel,

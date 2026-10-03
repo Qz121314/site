@@ -8,9 +8,9 @@ import {
 } from '../src/admin-navigation.ts';
 
 const sections = [
-  { id: 'escorts', name: 'ESCORTS' },
-  { id: 'dating', name: 'DATING' },
-  { id: 'live-cam', name: 'LIVE CAM' },
+  { id: 'escorts', slug: 'escorts', name: 'ESCORTS' },
+  { id: 'dating', slug: 'dating', name: 'DATING' },
+  { id: 'live-cam', slug: 'live-cam', name: 'LIVE CAM' },
 ];
 
 async function source(relativePath) {

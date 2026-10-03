@@ -1,4 +1,4 @@
-export const BOTTOM_NAVIGATION_KEYS = ['home', 'browse', 'messages', 'faq'] as const;
+export const BOTTOM_NAVIGATION_KEYS = ['home', 'browse', 'messages', 'reviews'] as const;
 export type BottomNavigationKey = (typeof BOTTOM_NAVIGATION_KEYS)[number];
 
 export const BOTTOM_NAVIGATION_BUILTIN_ICONS = [
@@ -100,7 +100,7 @@ export function validateBottomNavigationInput(value: unknown): ValidationResult 
     return {
       ok: false,
       field: 'bottomNavigation',
-      message: '底部导航必须包含 Home、Browse、Messages、FAQ 四个固定入口。',
+      message: '底部导航必须包含 Home、Browse、Messages、Reviews 四个固定入口。',
     };
   }
 

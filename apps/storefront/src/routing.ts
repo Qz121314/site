@@ -13,7 +13,7 @@ export type StorefrontRoute =
   | { type: 'product'; productRef: string; sectionRef: string | null }
   | { type: 'not-found' };
 
-export type BottomNavigationHref = '/' | '/browse/' | '/messages/' | '/faq/';
+export type BottomNavigationHref = '/' | '/browse/' | '/messages/' | '/sections/reviews/';
 
 function decodeRoutePart(value: string): string | null {
   try {
@@ -59,7 +59,8 @@ export function bottomNavigationActiveHref(pathname: string): BottomNavigationHr
     pathname.startsWith('/articles/')
   )
     return '/messages/';
-  if (pathname === '/faq' || pathname.startsWith('/faq/')) return '/faq/';
+  if (pathname === '/sections/reviews' || pathname.startsWith('/sections/reviews/'))
+    return '/sections/reviews/';
   if (
     pathname === '/browse' ||
     pathname.startsWith('/browse/') ||

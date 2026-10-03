@@ -121,7 +121,12 @@ const bottomNavigation = [
     enabled: true,
     icon: { type: 'builtin', value: null },
   },
-  { key: 'faq', label: 'FAQ', enabled: true, icon: { type: 'builtin', value: null } },
+  {
+    key: 'reviews',
+    label: 'Reviews',
+    enabled: true,
+    icon: { type: 'builtin', value: null },
+  },
 ];
 
 const bootstrap = {

@@ -16,8 +16,8 @@ import {
 } from '../src/admin-navigation.ts';
 
 const sections = [
-  { id: 'alpha', name: 'Alpha' },
-  { id: 'beta', name: 'Beta' },
+  { id: 'alpha', slug: 'alpha', name: 'Alpha' },
+  { id: 'beta', slug: 'beta', name: 'Beta' },
 ];
 
 test('primary domains follow the final P1 information architecture', () => {
@@ -53,6 +53,7 @@ test('fixed settings views resolve to intended domains', () => {
     ['system-advanced', 'system'],
     ['assets', 'content'],
     ['customer-service', 'engagement'],
+    ['reviews', 'engagement'],
     ['faq', 'content'],
     ['sections', 'catalog'],
   ]);
@@ -98,6 +99,7 @@ test('new hashes parse and legacy settings aliases normalize deterministically',
     'system-general',
     'assets',
     'customer-service',
+    'reviews',
     'faq',
     'sections',
     'products:alpha',
@@ -196,6 +198,24 @@ test('secondary items are unique and legacy placeholders are retired', () => {
     getAdminSecondaryItems('operations', sections).map((item) => item.view),
     ['conversion-pool:alpha', 'conversion-pool:beta'],
   );
+});
+
+test('Reviews has its own customer interaction entry instead of a catalog section menu', () => {
+  const reviewsSection = { id: 'reviews', slug: 'reviews', name: 'Reviews' };
+  const allSections = [...sections, reviewsSection];
+  assert.equal(
+    getAdminSecondaryItems('catalog', allSections).some((item) =>
+      item.view.endsWith(':reviews'),
+    ),
+    false,
+  );
+  assert.equal(
+    getAdminSecondaryItems('engagement', allSections).some(
+      (item) => item.view === 'reviews',
+    ),
+    true,
+  );
+  assert.equal(getAdminDefaultViewForDomain('engagement', allSections), 'reviews');
 });
 
 test('domain defaults use the decomposed workspaces', () => {

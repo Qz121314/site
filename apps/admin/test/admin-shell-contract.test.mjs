@@ -113,7 +113,7 @@ test('publish, logout, and session state use local ownership', async () => {
 
   assert.match(
     dashboard,
-    /function publishKeyForView\(view: AdminView\): string \| null/,
+    /function publishKeyForView\(view: AdminView, sections: AdminSection\[\]\): string \| null/,
   );
   assert.match(dashboard, /return dynamic \? `section:\$\{dynamic\.sectionId\}` : null/);
   assert.match(dashboard, /const publishingActions = contextPublishKey \?/);

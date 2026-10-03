@@ -16,7 +16,7 @@ const HREFS: Record<BottomNavigationKey, string> = {
   home: '/',
   browse: '/browse/',
   messages: '/messages/',
-  faq: '/faq/',
+  reviews: '/sections/reviews/',
 };
 
 function navigationIcon(Icon: IconComponent): ReactNode {
@@ -72,7 +72,7 @@ function itemIcon(item: BottomNavigationItemConfig): ReactNode {
         alt=""
         className="storefront-nav-image"
         decoding="async"
-        fallback={builtinIcon(item.key === 'faq' ? 'help' : item.key)}
+        fallback={builtinIcon(item.key === 'reviews' ? 'star' : item.key)}
         fetchPriority="low"
         src={item.icon.value}
       />

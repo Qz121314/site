@@ -142,10 +142,14 @@ function isSettingsView(view: AdminView): view is SettingsAdminView {
   return SETTINGS_ADMIN_VIEWS.has(view as SettingsAdminView);
 }
 
-function publishKeyForView(view: AdminView): string | null {
+function publishKeyForView(view: AdminView, sections: AdminSection[]): string | null {
   if (isSettingsView(view) || view === 'theme') return 'site';
   if (view === 'faq') return 'faq';
   if (view === 'sections') return 'sections-index';
+  if (view === 'reviews') {
+    const section = sections.find((item) => item.slug.toLowerCase() === 'reviews');
+    return section ? `section:${section.id}` : null;
+  }
   const dynamic = parseDynamicView(view);
   return dynamic ? `section:${dynamic.sectionId}` : null;
 }
@@ -157,7 +161,8 @@ function workspaceWidthForView(view: AdminView): WorkspaceWidth {
     view === 'navigation' ||
     view === 'messages' ||
     view === 'pwa' ||
-    view === 'system-infrastructure'
+    view === 'system-infrastructure' ||
+    view === 'reviews'
   ) {
     return 'medium';
   }
@@ -573,9 +578,15 @@ export function Dashboard({
 
   const currentSection = useMemo(() => {
     const dynamic = parseDynamicView(activeView);
-    if (!dynamic) return null;
-    const section = sections.find((item) => item.id === dynamic.sectionId);
-    return section ? { kind: dynamic.kind, section } : null;
+    if (dynamic) {
+      const section = sections.find((item) => item.id === dynamic.sectionId);
+      return section ? { kind: dynamic.kind, section } : null;
+    }
+    if (activeView === 'reviews') {
+      const section = sections.find((item) => item.slug.toLowerCase() === 'reviews');
+      return section ? { kind: 'products' as const, section } : null;
+    }
+    return null;
   }, [activeView, sections]);
   const context = useMemo(
     () => getAdminViewContext(activeView, sections),
@@ -585,7 +596,7 @@ export function Dashboard({
     unsaved.labels.length > 0
       ? `未保存：${unsaved.labels.join('、')}`
       : '当前有未保存修改';
-  const contextPublishKey = publishKeyForView(activeView);
+  const contextPublishKey = publishKeyForView(activeView, sections);
   const currentSectionHandoff =
     currentSection && productHandoff?.sectionId === currentSection.section.id
       ? productHandoff

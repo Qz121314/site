@@ -29,7 +29,7 @@ const ROUTE_LABELS: Record<BottomNavigationKey, string> = {
   home: '/',
   browse: '/browse/',
   messages: '/messages/',
-  faq: '/faq/',
+  reviews: '/sections/reviews/',
 };
 
 function updateItem(
@@ -81,8 +81,8 @@ export function BottomNavigationSettingsSection({
             ? 'compass'
             : key === 'messages'
               ? 'messages'
-              : key === 'faq'
-                ? 'help'
+              : key === 'reviews'
+                ? 'star'
                 : 'home',
         iconAssetId: null,
       },
