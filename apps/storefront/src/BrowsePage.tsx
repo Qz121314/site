@@ -81,10 +81,12 @@ export function BrowsePage({
                     <strong>{section.name}</strong>
                     {section.description ? <p>{section.description}</p> : null}
                   </span>
-                  <span className="browse-section-card-action" aria-hidden="true">
-                    {section.slug === 'escorts' ? 'Browse Escorts' : 'Explore Dating'}
-                    <ArrowRight />
-                  </span>
+                  {section.browseButtonLabel ? (
+                    <span className="browse-section-card-action" aria-hidden="true">
+                      {section.browseButtonLabel}
+                      <ArrowRight />
+                    </span>
+                  ) : null}
                 </span>
               </LinkComponent>
             ))}

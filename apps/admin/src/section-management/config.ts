@@ -1,7 +1,6 @@
 import type { SectionInput } from '../api';
 
 export type SectionEditorInput = SectionInput & {
-  description: string;
   iconAssetId: string | null;
   browseBackgroundAssetId: string | null;
 };
@@ -9,6 +8,7 @@ export type SectionEditorInput = SectionInput & {
 export const emptySectionForm: SectionEditorInput = {
   name: '',
   description: '',
+  browseButtonLabel: '',
   iconValue: '',
   iconAssetId: null,
   browseBackgroundAssetId: null,

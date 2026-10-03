@@ -59,6 +59,7 @@ export type PublicSection = {
   slug: string;
   name: string;
   description: string | null;
+  browseButtonLabel: string | null;
   browseBackgroundUrl: string | null;
   icon: {
     type: 'image' | 'icon';
@@ -289,6 +290,7 @@ type V2SectionsIndexSnapshot = {
     slug: string;
     name: string;
     description?: string | null;
+    browseButtonLabel?: string | null;
     browseBackgroundObjectKey?: string | null;
     icon: {
       type: 'image' | 'icon';
@@ -736,11 +738,14 @@ function normalizeTags(value: unknown): PublicProductSummary['tags'] {
 function normalizeV1Section(section: PublicSection): PublicSection {
   const legacy = section as PublicSection & {
     description?: unknown;
+    browseButtonLabel?: unknown;
     browseBackgroundUrl?: unknown;
   };
   return {
     ...section,
     description: typeof legacy.description === 'string' ? legacy.description : null,
+    browseButtonLabel:
+      typeof legacy.browseButtonLabel === 'string' ? legacy.browseButtonLabel : null,
     browseBackgroundUrl:
       typeof legacy.browseBackgroundUrl === 'string' ? legacy.browseBackgroundUrl : null,
   };
@@ -1003,6 +1008,8 @@ function resolveV2Section(
     slug: section.slug,
     name: section.name,
     description: typeof section.description === 'string' ? section.description : null,
+    browseButtonLabel:
+      typeof section.browseButtonLabel === 'string' ? section.browseButtonLabel : null,
     browseBackgroundUrl: mediaUrl(
       mediaBaseUrl,
       typeof section.browseBackgroundObjectKey === 'string'

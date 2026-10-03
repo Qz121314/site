@@ -155,6 +155,7 @@ type SectionRow = {
   slug: string;
   name: string;
   description: string | null;
+  browse_button_label: string;
   icon_type: 'icon' | 'asset';
   icon_value: string | null;
   icon_asset_id: string | null;
@@ -557,6 +558,7 @@ async function loadSource(db: D1Database): Promise<Source> {
            s.slug,
            s.name,
            s.description,
+           s.browse_button_label,
            s.icon_type,
            s.icon_value,
            s.icon_asset_id,
@@ -826,6 +828,7 @@ function sectionsIndexModel(source: Source) {
     slug: section.slug,
     name: section.name,
     description: section.description,
+    browseButtonLabel: section.browse_button_label,
     icon:
       section.icon_type === 'asset'
         ? { type: 'image' as const, objectKey: section.icon_object_key, value: null }

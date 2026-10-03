@@ -44,6 +44,10 @@ export type AdminSection = {
   id: string;
   slug: string;
   name: string;
+  description: string | null;
+  browseButtonLabel: string;
+  browseBackgroundAssetId: string | null;
+  browseBackgroundUrl: string | null;
   iconType: 'icon' | 'asset';
   iconValue: string | null;
   iconAssetId: string | null;
@@ -59,7 +63,11 @@ export type AdminSection = {
 
 export type SectionInput = {
   name: string;
+  description: string;
+  browseButtonLabel: string;
   iconValue: string;
+  iconAssetId: string | null;
+  browseBackgroundAssetId: string | null;
   sortOrder: number;
   isEnabled: boolean;
   isVisible: boolean;
@@ -232,6 +240,12 @@ function parseSectionRecord(value: unknown): AdminSection {
     typeof section.id === 'string' &&
     typeof section.slug === 'string' &&
     typeof section.name === 'string' &&
+    (typeof section.description === 'string' || section.description === null) &&
+    typeof section.browseButtonLabel === 'string' &&
+    (typeof section.browseBackgroundAssetId === 'string' ||
+      section.browseBackgroundAssetId === null) &&
+    (typeof section.browseBackgroundUrl === 'string' ||
+      section.browseBackgroundUrl === null) &&
     (section.iconType === 'icon' || section.iconType === 'asset') &&
     (typeof section.iconValue === 'string' || section.iconValue === null) &&
     (typeof section.iconAssetId === 'string' || section.iconAssetId === null) &&
