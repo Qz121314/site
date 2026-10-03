@@ -171,6 +171,7 @@ export function ProductManagementView({
   onConfigureDependency,
   onSessionExpired,
 }: ProductManagementViewProps) {
+  const reviewMode = section.slug.toLowerCase() === 'reviews';
   const [scope, setScope] = useState<ProductScope>('active');
   const [activeProducts, setActiveProducts] = useState<AdminProduct[]>([]);
   const [trashProducts, setTrashProducts] = useState<AdminProduct[]>([]);
@@ -451,6 +452,7 @@ export function ProductManagementView({
       categories,
       tags,
       groups,
+      reviewMode,
     );
     if (localValidation) {
       setErrorMessage(localValidation);
@@ -512,7 +514,9 @@ export function ProductManagementView({
     const saved = await persistEditor(form);
     if (!saved) return;
 
-    setSuccessMessage(`产品“${saved.title}”已${wasEditing ? '更新' : '创建'}。`);
+    setSuccessMessage(
+      `${reviewMode ? 'Review' : '产品'}“${saved.title}”已${wasEditing ? '更新' : '创建'}。`,
+    );
     setMedia([]);
     setCoverKey(null);
     setResumeNotice(false);
@@ -524,7 +528,14 @@ export function ProductManagementView({
     if (!onConfigureDependency || handoffTarget || saving) return;
 
     const intendedStatus = form.status;
-    const currentValidation = validateProductDraft(form, media, categories, tags, groups);
+    const currentValidation = validateProductDraft(
+      form,
+      media,
+      categories,
+      tags,
+      groups,
+      reviewMode,
+    );
     const handoffForm =
       currentValidation && intendedStatus === 'published'
         ? { ...form, status: 'draft' as const }
@@ -535,6 +546,7 @@ export function ProductManagementView({
       categories,
       tags,
       groups,
+      reviewMode,
     );
     if (handoffValidation) {
       setErrorMessage(`暂存产品后才能切换配置：${handoffValidation}`);
@@ -858,6 +870,7 @@ export function ProductManagementView({
 
       {editorOpen ? (
         <ProductEditorDialog
+          reviewMode={reviewMode}
           editingProduct={editingProduct}
           form={form}
           media={media}

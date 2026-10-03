@@ -158,6 +158,19 @@
   background: linear-gradient(180deg, #fcfdff 0%, #f8fafc 100%);
 }
 
+.product-editor-form.is-review-editor .product-core-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.product-editor-form.is-review-editor .product-core-service-mode,
+.product-editor-form.is-review-editor .product-core-category,
+.product-editor-form.is-review-editor .product-core-conversion,
+.product-editor-form.is-review-editor .product-core-tags,
+.product-editor-form.is-review-editor .product-media-section,
+.product-editor-form.is-review-editor .is-review-hidden {
+  display: none;
+}
+
 .product-toolbar-actions {
   display: inline-flex;
   align-items: center;

@@ -31,6 +31,7 @@ import type {
 type ProductDependencyTarget = 'categories' | 'tags' | 'conversion-pool';
 
 type ProductEditorDialogProps = {
+  reviewMode?: boolean;
   editingProduct: AdminProduct | null;
   form: ProductInput;
   media: ProductEditorImage[];
@@ -173,8 +174,10 @@ function expectedConversionMode(mode: ProductServiceMode) {
 function saveButtonLabel(
   saveStage: ProductEditorDialogProps['saveStage'],
   editingProduct: AdminProduct | null,
+  reviewMode: boolean,
 ): string {
   if (saveStage === 'saving') return '正在保存…';
+  if (reviewMode) return editingProduct ? '保存 Review' : '创建 Review';
   return editingProduct ? '保存修改' : '创建产品';
 }
 
@@ -238,6 +241,7 @@ function mediaIds(media: ProductEditorImage[]): string[] {
 }
 
 export function ProductEditorDialog({
+  reviewMode = false,
   editingProduct,
   form,
   media,
@@ -261,6 +265,7 @@ export function ProductEditorDialog({
   onClose,
   onSubmit,
 }: ProductEditorDialogProps) {
+  const contentLabel = reviewMode ? 'Review' : '产品';
   const [categoryText, setCategoryText] = useState(
     () => categories.find((category) => category.id === form.categoryId)?.name ?? '',
   );
@@ -293,8 +298,8 @@ export function ProductEditorDialog({
   });
   const editorDirty = editorFingerprint !== baselineFingerprint;
   useAdminDirtySource(
-    'product-editor',
-    editingProduct ? `产品：${editingProduct.title}` : '新增产品',
+    reviewMode ? 'review-editor' : 'product-editor',
+    editingProduct ? `${contentLabel}：${editingProduct.title}` : `新增${contentLabel}`,
     editorDirty,
   );
 
@@ -366,8 +371,8 @@ export function ProductEditorDialog({
     if (editorDirty) {
       const confirmed = await adminConfirm({
         eyebrow: '未保存修改',
-        title: '放弃当前产品修改？',
-        message: '当前产品编辑内容尚未保存。关闭后，本次修改会被放弃。',
+        title: `放弃当前${contentLabel}修改？`,
+        message: `当前${contentLabel}编辑内容尚未保存。关闭后，本次修改会被放弃。`,
         confirmLabel: '放弃修改',
         danger: true,
       });
@@ -478,8 +483,8 @@ export function ProductEditorDialog({
   return (
     <AdminDialog
       open
-      title={editingProduct ? '编辑产品' : '新增产品'}
-      ariaLabel={`${editingProduct ? '编辑' : '新增'}产品`}
+      title={editingProduct ? `编辑${contentLabel}` : `新增${contentLabel}`}
+      ariaLabel={`${editingProduct ? '编辑' : '新增'}${contentLabel}`}
       showHeading={false}
       onClose={() => void requestClose()}
       closeDisabled={busy}
@@ -489,7 +494,7 @@ export function ProductEditorDialog({
         <div className="product-editor-header-actions">
           <div
             className="product-header-settings product-header-settings-left"
-            aria-label="产品状态设置"
+            aria-label={`${contentLabel}状态设置`}
           >
             <label className="product-header-setting">
               <span>发布状态</span>
@@ -513,7 +518,9 @@ export function ProductEditorDialog({
               />
               <span>前端展示</span>
             </label>
-            <label className="product-header-featured-setting">
+            <label
+              className={`product-header-featured-setting${reviewMode ? ' is-review-hidden' : ''}`}
+            >
               <input
                 type="checkbox"
                 checked={form.isFeatured}
@@ -524,12 +531,12 @@ export function ProductEditorDialog({
           </div>
           <div
             className="product-header-settings product-header-settings-right"
-            aria-label="产品排序设置"
+            aria-label={`${contentLabel}排序设置`}
           >
             <label className="product-header-setting product-header-order-setting">
               <span>排序</span>
               <input
-                aria-label="产品排序"
+                aria-label={`${contentLabel}排序`}
                 type="number"
                 min={0}
                 max={1_000_000}
@@ -537,7 +544,9 @@ export function ProductEditorDialog({
                 onChange={(event) => patch({ sortOrder: Number(event.target.value) })}
               />
             </label>
-            <label className="product-header-setting product-header-order-setting">
+            <label
+              className={`product-header-setting product-header-order-setting${reviewMode ? ' is-review-hidden' : ''}`}
+            >
               <span>推荐排序</span>
               <input
                 aria-label="Browse 推荐排序"
@@ -556,13 +565,17 @@ export function ProductEditorDialog({
               loading={saveStage === 'saving'}
               disabled={handoffBusy}
             >
-              {saveButtonLabel(saveStage, editingProduct)}
+              {saveButtonLabel(saveStage, editingProduct, reviewMode)}
             </Button>
           </div>
         </div>
       }
     >
-      <form id="product-editor-form" className="product-editor-form" onSubmit={onSubmit}>
+      <form
+        id="product-editor-form"
+        className={`product-editor-form${reviewMode ? ' is-review-editor' : ''}`}
+        onSubmit={onSubmit}
+      >
         {errorMessage ? (
           <div className="notice notice-error" role="alert">
             {errorMessage}
@@ -571,19 +584,19 @@ export function ProductEditorDialog({
 
         {resumeNotice ? (
           <div className="product-handoff-notice" role="status">
-            已返回当前产品草稿，可继续编辑后保存。
+            {`已返回当前${contentLabel}草稿，可继续编辑后保存。`}
           </div>
         ) : null}
 
         <div className="product-core-grid">
           <label className="product-field product-core-title">
-            <span>产品标题</span>
+            <span>{reviewMode ? 'Review标题' : '产品标题'}</span>
             <input
               type="text"
               value={form.title}
               autoFocus
               maxLength={200}
-              placeholder="输入产品名称"
+              placeholder={reviewMode ? '输入Review标题' : '输入产品名称'}
               onChange={(event) => patch({ title: event.target.value })}
             />
           </label>
@@ -729,21 +742,27 @@ export function ProductEditorDialog({
           <div className="product-body-field">
             <div className="product-body-heading">
               <div>
-                <strong>产品正文 · Markdown</strong>
-                <small>内容将按详情页样式实时渲染</small>
+                <strong>{reviewMode ? 'Review正文' : '产品正文'} · Markdown</strong>
+                <small>
+                  {reviewMode
+                    ? '正文会显示在 Reviews 页面，可插入客户评价截图。'
+                    : '内容将按详情页样式实时渲染'}
+                </small>
               </div>
               <div className="product-markdown-toolbar" aria-label="Markdown 快捷格式">
-                {markdownActions.map((action) => (
-                  <button
-                    key={action.label}
-                    type="button"
-                    title={action.title}
-                    disabled={busy}
-                    onClick={() => applyMarkdownAction(action)}
-                  >
-                    {action.label}
-                  </button>
-                ))}
+                {markdownActions
+                  .filter((action) => !reviewMode || action.label !== 'CTA')
+                  .map((action) => (
+                    <button
+                      key={action.label}
+                      type="button"
+                      title={action.title}
+                      disabled={busy}
+                      onClick={() => applyMarkdownAction(action)}
+                    >
+                      {action.label}
+                    </button>
+                  ))}
                 <button
                   type="button"
                   title="从素材中心插入图片"
@@ -759,7 +778,11 @@ export function ProductEditorDialog({
                 ref={markdownTextareaRef}
                 value={form.body}
                 maxLength={20_000}
-                placeholder={'输入产品介绍、服务内容和注意事项。可使用上方快捷格式。'}
+                placeholder={
+                  reviewMode
+                    ? '输入 Review 正文，可使用上方快捷格式。'
+                    : '输入产品介绍、服务内容和注意事项。可使用上方快捷格式。'
+                }
                 onChange={(event) => patch({ body: event.target.value })}
               />
               <div className="product-markdown-preview">
@@ -771,7 +794,11 @@ export function ProductEditorDialog({
               </div>
             </div>
             <div className="product-markdown-footer">
-              <span>支持主题色、高亮、标签、提示卡、说明卡和 CTA 卡片</span>
+              <span>
+                {reviewMode
+                  ? '支持主题色、高亮、标签、提示卡、说明卡和图片。'
+                  : '支持主题色、高亮、标签、提示卡、说明卡和 CTA 卡片'}
+              </span>
               <span>{form.body.length.toLocaleString()} / 20,000</span>
             </div>
           </div>
