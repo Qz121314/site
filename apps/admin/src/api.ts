@@ -240,12 +240,6 @@ function parseSectionRecord(value: unknown): AdminSection {
     typeof section.id === 'string' &&
     typeof section.slug === 'string' &&
     typeof section.name === 'string' &&
-    (typeof section.description === 'string' || section.description === null) &&
-    typeof section.browseButtonLabel === 'string' &&
-    (typeof section.browseBackgroundAssetId === 'string' ||
-      section.browseBackgroundAssetId === null) &&
-    (typeof section.browseBackgroundUrl === 'string' ||
-      section.browseBackgroundUrl === null) &&
     (section.iconType === 'icon' || section.iconType === 'asset') &&
     (typeof section.iconValue === 'string' || section.iconValue === null) &&
     (typeof section.iconAssetId === 'string' || section.iconAssetId === null) &&
@@ -262,7 +256,20 @@ function parseSectionRecord(value: unknown): AdminSection {
     throw new AdminApiError(500, 'INVALID_RESPONSE', '分区返回数据无效。');
   }
 
-  return section as AdminSection;
+  return {
+    ...section,
+    description: typeof section.description === 'string' ? section.description : null,
+    browseButtonLabel:
+      typeof section.browseButtonLabel === 'string' ? section.browseButtonLabel : '',
+    browseBackgroundAssetId:
+      typeof section.browseBackgroundAssetId === 'string'
+        ? section.browseBackgroundAssetId
+        : null,
+    browseBackgroundUrl:
+      typeof section.browseBackgroundUrl === 'string'
+        ? section.browseBackgroundUrl
+        : null,
+  } as AdminSection;
 }
 
 function parseSectionEnvelope(value: unknown): AdminSection {
