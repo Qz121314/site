@@ -723,3 +723,7 @@ export function isProductConflictError(error: unknown): boolean {
       ))
   );
 }
+
+export function isReviewsPageConflictError(error: unknown): boolean {
+  return error instanceof Error && error.message.includes('REVIEWS_PAGE_ALREADY_EXISTS');
+}

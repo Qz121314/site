@@ -16,6 +16,7 @@ import {
   getProduct,
   hydrateProduct,
   isProductConflictError,
+  isReviewsPageConflictError,
   listProducts,
   validateProductDependencies,
   validateProductInput,
@@ -163,6 +164,14 @@ adminProductRoutes.post('/:sectionId/products', async (context) => {
       }),
     ]);
   } catch (error) {
+    if (isReviewsPageConflictError(error)) {
+      return apiError(
+        context,
+        409,
+        'REVIEWS_PAGE_ALREADY_EXISTS',
+        'Reviews 只支持一个页面，请编辑当前 Review。',
+      );
+    }
     if (isProductConflictError(error)) {
       return apiError(
         context,
@@ -322,6 +331,14 @@ adminProductRoutes.post('/:sectionId/products/:id/restore', async (context) => {
       }),
     ]);
   } catch (error) {
+    if (isReviewsPageConflictError(error)) {
+      return apiError(
+        context,
+        409,
+        'REVIEWS_PAGE_ALREADY_EXISTS',
+        'Reviews 已有页面，请先删除当前页面再恢复。',
+      );
+    }
     if (isProductConflictError(error)) {
       return apiError(
         context,

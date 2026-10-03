@@ -29,7 +29,7 @@ const ROUTE_LABELS: Record<BottomNavigationKey, string> = {
   home: '/',
   browse: '/browse/',
   messages: '/messages/',
-  reviews: '/sections/reviews/',
+  reviews: '/reviews/',
 };
 
 function updateItem(

@@ -145,6 +145,7 @@ themeCenter.presets = [
 type AdminFixtureOptions = {
   expiresAt?: string | null;
   sections?: typeof sections;
+  settings?: unknown;
 };
 
 async function installAdminFixture(page: Page, options: AdminFixtureOptions = {}) {
@@ -172,7 +173,7 @@ async function installAdminFixture(page: Page, options: AdminFixtureOptions = {}
   await page.route(/\/api\/admin\/settings\/?$/, async (route) => {
     await route.fulfill({
       contentType: 'application/json',
-      body: JSON.stringify(siteSettings),
+      body: JSON.stringify(options.settings ?? siteSettings),
     });
   });
   await page.route(/\/api\/admin\/theme\/?$/, async (route) => {
@@ -398,6 +399,11 @@ test('Reviews workspace shows a Markdown page list without product controls', as
   await expect(table.getByRole('button', { name: /复制Review页面链接/u })).toBeVisible();
   await expect(table.getByRole('button', { name: /编辑Review/u })).toBeVisible();
   await expect(page.getByRole('button', { name: '新增 Review' })).toBeVisible();
+  await expect(page.getByRole('button', { name: '新增 Review' })).toBeDisabled();
+  await expect(page.getByRole('button', { name: '新增 Review' })).toHaveAttribute(
+    'title',
+    'Reviews 只支持一个页面，请编辑当前 Review。',
+  );
   await expect(page.getByLabel('搜索Review')).toHaveAttribute('placeholder', '搜索标题');
   await expect(page.getByLabel('Review状态')).toBeVisible();
   await expect(page.getByLabel('产品分类')).toHaveCount(0);
@@ -406,6 +412,58 @@ test('Reviews workspace shows a Markdown page list without product controls', as
   await expect(table.getByRole('columnheader', { name: '分类' })).toHaveCount(0);
   await expect(table.getByRole('button', { name: /拖拽调整产品/u })).toHaveCount(0);
   expect(productConfigRequests).toEqual([]);
+});
+
+test('bottom navigation settings show the canonical Reviews URL', async ({ page }) => {
+  const settings = {
+    ...siteSettings,
+    settings: {
+      ...siteSettings.settings,
+      bottomNavigation: [
+        {
+          key: 'home',
+          label: 'Home',
+          iconType: 'builtin',
+          iconValue: 'home',
+          iconAssetId: null,
+          enabled: true,
+          sortOrder: 0,
+        },
+        {
+          key: 'browse',
+          label: 'Browse',
+          iconType: 'builtin',
+          iconValue: 'compass',
+          iconAssetId: null,
+          enabled: true,
+          sortOrder: 1,
+        },
+        {
+          key: 'messages',
+          label: 'Messages',
+          iconType: 'builtin',
+          iconValue: 'messages',
+          iconAssetId: null,
+          enabled: true,
+          sortOrder: 2,
+        },
+        {
+          key: 'reviews',
+          label: 'Reviews',
+          iconType: 'builtin',
+          iconValue: 'star',
+          iconAssetId: null,
+          enabled: true,
+          sortOrder: 3,
+        },
+      ],
+    },
+  };
+  await installAdminFixture(page, { settings });
+  await page.goto('/admin/#navigation');
+
+  await expect(page.getByText('/reviews/', { exact: true })).toBeVisible();
+  await expect(page.getByText('/sections/reviews/', { exact: true })).toHaveCount(0);
 });
 
 test('publish status is shown only in publish-capable workspaces', async ({ page }) => {
