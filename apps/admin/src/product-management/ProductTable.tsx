@@ -15,6 +15,7 @@ import type { AdminProduct } from './api';
 type ProductDropPosition = 'before' | 'after';
 
 type ProductTableProps = {
+  reviewMode?: boolean;
   sectionId: string;
   scope: 'active' | 'trash';
   products: AdminProduct[];
@@ -87,7 +88,100 @@ function serviceModeLabel(mode: AdminProduct['serviceMode']): string {
   return mode === 'online' ? '线上服务' : '线下服务';
 }
 
+type ReviewTableProps = Pick<
+  ProductTableProps,
+  'scope' | 'products' | 'working' | 'onEdit' | 'onDelete' | 'onCopyLink' | 'onRestore'
+>;
+
+function ReviewTable({
+  scope,
+  products,
+  working,
+  onEdit,
+  onDelete,
+  onCopyLink,
+  onRestore,
+}: ReviewTableProps) {
+  return (
+    <div className="product-table-wrap ui-data-table-wrap">
+      <table className="product-table ui-data-table is-review-table">
+        <thead>
+          <tr>
+            <th>Review 页面</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody>
+          {products.map((product) => (
+            <tr className="ui-data-row" key={product.id}>
+              <td>
+                <div className="product-table-review">
+                  <div className="product-table-title-row">
+                    <strong>{product.title}</strong>
+                    <AdminStatusBadge tone={statusTone(product.status)}>
+                      {statusLabel(product.status)}
+                    </AdminStatusBadge>
+                  </div>
+                  <small>/reviews/</small>
+                  {!product.isVisible ? <b>前端隐藏</b> : null}
+                </div>
+              </td>
+              <td>
+                <div className="product-row-actions ui-row-actions">
+                  {scope === 'active' ? (
+                    <>
+                      <Button
+                        variant="ghost"
+                        size="compact"
+                        disabled={working}
+                        aria-label={`复制Review页面链接 ${product.title}`}
+                        onClick={() => onCopyLink(product)}
+                      >
+                        复制链接
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="compact"
+                        disabled={working}
+                        aria-label={`编辑Review ${product.title}`}
+                        onClick={() => onEdit(product)}
+                      >
+                        编辑
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="compact"
+                        className="ui-row-action-danger"
+                        disabled={working}
+                        aria-label={`删除Review 页面 ${product.title}`}
+                        onClick={() => onDelete(product)}
+                      >
+                        删除
+                      </Button>
+                    </>
+                  ) : (
+                    <Button
+                      variant="secondary"
+                      size="compact"
+                      disabled={working}
+                      aria-label={`恢复Review 页面 ${product.title}`}
+                      onClick={() => onRestore(product)}
+                    >
+                      恢复
+                    </Button>
+                  )}
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
 export function ProductTable({
+  reviewMode = false,
   sectionId,
   scope,
   products,
@@ -285,8 +379,12 @@ export function ProductTable({
     return (
       <AdminFeedbackState
         kind="loading"
-        title="正在读取产品…"
-        description="产品、分类、标签和转化配置会保持当前分区上下文。"
+        title={reviewMode ? '正在读取 Reviews…' : '正在读取产品…'}
+        description={
+          reviewMode
+            ? '正在读取 Markdown 页面内容。'
+            : '产品、分类、标签和转化配置会保持当前分区上下文。'
+        }
       />
     );
   }
@@ -295,10 +393,28 @@ export function ProductTable({
     return (
       <AdminFeedbackState
         kind="empty"
-        title={scope === 'active' ? '当前没有产品' : '回收站为空'}
-        description={
-          scope === 'active' ? '使用上方“新增产品”开始录入。' : '已删除产品会显示在这里。'
+        title={
+          scope === 'active' ? `当前没有${reviewMode ? 'Review' : '产品'}` : '回收站为空'
         }
+        description={
+          scope === 'active'
+            ? `使用上方“新增${reviewMode ? ' Review' : '产品'}”开始录入。`
+            : `已删除${reviewMode ? 'Review 页面' : '产品'}会显示在这里。`
+        }
+      />
+    );
+  }
+
+  if (reviewMode) {
+    return (
+      <ReviewTable
+        scope={scope}
+        products={products}
+        working={working}
+        onEdit={onEdit}
+        onDelete={onDelete}
+        onCopyLink={onCopyLink}
+        onRestore={onRestore}
       />
     );
   }

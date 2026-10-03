@@ -144,6 +144,7 @@ themeCenter.presets = [
 
 type AdminFixtureOptions = {
   expiresAt?: string | null;
+  sections?: typeof sections;
 };
 
 async function installAdminFixture(page: Page, options: AdminFixtureOptions = {}) {
@@ -159,7 +160,7 @@ async function installAdminFixture(page: Page, options: AdminFixtureOptions = {}
   await page.route('**/api/admin/sections/?scope=active', async (route) => {
     await route.fulfill({
       contentType: 'application/json',
-      body: JSON.stringify({ sections }),
+      body: JSON.stringify({ sections: options.sections ?? sections }),
     });
   });
   await page.route(/\/api\/admin\/publish\/?$/, async (route) => {
@@ -322,6 +323,89 @@ test('Admin shell exposes final IA, route compatibility, and current desktop geo
   for (const width of [1024, 1366, 1440, 1920]) {
     await expectShellGeometry(page, width);
   }
+});
+
+test('Reviews workspace shows a Markdown page list without product controls', async ({
+  page,
+}) => {
+  const reviewSection = {
+    ...sections[0],
+    id: 'reviews',
+    slug: 'reviews',
+    name: 'Reviews',
+  };
+  const productConfigRequests: string[] = [];
+  page.on('request', (request) => {
+    if (
+      /\/api\/admin\/sections\/reviews\/(categories|tags|conversion-groups)/u.test(
+        request.url(),
+      )
+    ) {
+      productConfigRequests.push(request.url());
+    }
+  });
+  await installAdminFixture(page, { sections: [...sections, reviewSection] });
+  await page.route(
+    /\/api\/admin\/sections\/reviews\/products\?scope=active$/u,
+    async (route) => {
+      await route.fulfill({
+        contentType: 'application/json',
+        body: JSON.stringify({
+          products: [
+            {
+              id: 'reviews-page',
+              sectionId: 'reviews',
+              slug: 'reviews-138d0ed9',
+              isVisible: true,
+              serviceMode: 'offline',
+              title: 'Reviews.',
+              body: '# Reviews',
+              address: null,
+              categoryId: null,
+              categoryName: null,
+              tags: [],
+              tagIds: [],
+              conversionGroupId: null,
+              conversionGroupName: null,
+              conversionMode: null,
+              buttonLabel: null,
+              coverAssetId: null,
+              effectiveCoverAssetId: null,
+              effectiveCoverUrl: null,
+              media: [],
+              isFeatured: false,
+              featuredOrder: 0,
+              sortOrder: 0,
+              status: 'published',
+              publishedAt: '2026-09-01T00:00:00.000Z',
+              createdAt: '2026-09-01T00:00:00.000Z',
+              updatedAt: '2026-09-01T00:00:00.000Z',
+              deletedAt: null,
+            },
+          ],
+        }),
+      });
+    },
+  );
+
+  await page.goto('/admin/#reviews');
+  const table = page.locator('.product-table');
+  await expect(table.getByRole('columnheader')).toHaveText(['Review 页面', '操作']);
+  await expect(table.getByText('Reviews.', { exact: true })).toBeVisible();
+  await expect(table.getByText('/reviews/', { exact: true })).toBeVisible();
+  await expect(table.locator('img')).toHaveCount(0);
+  await expect(table.getByRole('checkbox')).toHaveCount(0);
+  await expect(table.getByRole('button', { name: /复制Review页面链接/u })).toBeVisible();
+  await expect(table.getByRole('button', { name: /编辑Review/u })).toBeVisible();
+  await expect(page.getByRole('button', { name: '新增 Review' })).toBeVisible();
+  await expect(page.getByLabel('搜索Review')).toHaveAttribute('placeholder', '搜索标题');
+  await expect(page.getByLabel('Review状态')).toBeVisible();
+  await expect(page.getByLabel('产品分类')).toHaveCount(0);
+  await expect(page.getByLabel('产品标签')).toHaveCount(0);
+  await expect(table.getByRole('columnheader', { name: '服务与转化' })).toHaveCount(0);
+  await expect(table.getByRole('columnheader', { name: '分类' })).toHaveCount(0);
+  await expect(table.getByRole('button', { name: /拖拽调整产品/u })).toHaveCount(0);
+  expect(productConfigRequests).toEqual([]);
 });
 
 test('publish status is shown only in publish-capable workspaces', async ({ page }) => {

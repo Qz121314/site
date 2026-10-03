@@ -305,6 +305,45 @@ body.is-resizing-product-columns {
   height: 16px;
 }
 
+.product-table.is-review-table th:first-child,
+.product-table.is-review-table td:first-child {
+  width: 76%;
+}
+
+.product-table.is-review-table th:last-child,
+.product-table.is-review-table td:last-child {
+  width: 24%;
+}
+
+.product-table-review {
+  display: grid;
+  min-width: 0;
+  gap: 2px;
+}
+
+.product-table-review strong {
+  overflow: hidden;
+  max-width: 100%;
+  color: #172033;
+  font-size: 0.76rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.product-table-review small {
+  color: #667085;
+  font-size: 0.66rem;
+}
+
+.product-table-review b {
+  width: fit-content;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: #fff1e8;
+  color: #c2410c;
+  font-size: 0.61rem;
+}
+
 .product-table-identity {
   display: flex;
   min-width: 0;

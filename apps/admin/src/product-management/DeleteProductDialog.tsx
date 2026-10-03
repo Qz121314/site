@@ -2,6 +2,7 @@ import { Button } from '../components/ui/button';
 import { AdminDialog } from '../components/ui/dialog';
 
 type DeleteProductDialogProps = {
+  reviewMode?: boolean;
   count: number;
   working: boolean;
   onCancel: () => void;
@@ -9,6 +10,7 @@ type DeleteProductDialogProps = {
 };
 
 export function DeleteProductDialog({
+  reviewMode = false,
   count,
   working,
   onCancel,
@@ -17,7 +19,7 @@ export function DeleteProductDialog({
   return (
     <AdminDialog
       open
-      title={`将 ${count} 个产品移入回收站？`}
+      title={`将 ${count} 个${reviewMode ? 'Review 页面' : '产品'}移入回收站？`}
       eyebrow="删除确认"
       role="alertdialog"
       size="small"
@@ -35,7 +37,9 @@ export function DeleteProductDialog({
       }
     >
       <p>
-        产品图片不会立即从 R2 删除，仍会受到引用保护。恢复产品后会自动恢复为草稿状态。
+        {reviewMode
+          ? '恢复 Review 页面后会自动恢复为草稿状态。'
+          : '产品图片不会立即从 R2 删除，仍会受到引用保护。恢复产品后会自动恢复为草稿状态。'}
       </p>
     </AdminDialog>
   );
