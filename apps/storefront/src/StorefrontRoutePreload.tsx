@@ -5,7 +5,7 @@ import { parseStorefrontRoute, type StorefrontRoute } from './routing';
 
 type PreloadRouteType = Extract<
   StorefrontRoute['type'],
-  'article' | 'discover' | 'faq' | 'home' | 'messages' | 'section' | 'product'
+  'article' | 'discover' | 'faq' | 'home' | 'messages' | 'reviews' | 'section' | 'product'
 >;
 
 const routeLoaders: Record<PreloadRouteType, () => Promise<unknown>> = {
@@ -14,6 +14,7 @@ const routeLoaders: Record<PreloadRouteType, () => Promise<unknown>> = {
   discover: () => import('./HomeFeed'),
   faq: () => import('./FaqPage'),
   messages: () => import('./MessagesPage'),
+  reviews: () => import('./ReviewsPage'),
   section: () => import('./SectionPage'),
   product: () => import('./ProductDetailPage'),
 };
@@ -35,6 +36,8 @@ function preloadTypeForRoute(route: StorefrontRoute): PreloadRouteType | null {
     case 'message-compose':
     case 'message':
       return 'messages';
+    case 'reviews':
+      return 'reviews';
     case 'section':
       return 'section';
     case 'product':
