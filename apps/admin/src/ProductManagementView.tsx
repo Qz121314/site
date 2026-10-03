@@ -218,9 +218,9 @@ export function ProductManagementView({
     try {
       const [products, nextCategories, nextTags, nextGroups] = await Promise.all([
         fetchProducts(section.id, 'active'),
-        fetchCategories(section.id, 'active'),
-        fetchProductTags(section.id, 'active'),
-        fetchConversionGroups(section.id, 'active'),
+        reviewMode ? Promise.resolve([]) : fetchCategories(section.id, 'active'),
+        reviewMode ? Promise.resolve([]) : fetchProductTags(section.id, 'active'),
+        reviewMode ? Promise.resolve([]) : fetchConversionGroups(section.id, 'active'),
       ]);
       setActiveProducts(sortProducts(products));
       setCategories(nextCategories);
@@ -231,7 +231,7 @@ export function ProductManagementView({
     } finally {
       setLoading(false);
     }
-  }, [handleError, section.id]);
+  }, [handleError, reviewMode, section.id]);
 
   useEffect(() => {
     setMedia([]);
@@ -306,14 +306,21 @@ export function ProductManagementView({
     const keyword = search.trim().toLowerCase();
     return sourceProducts.filter((product) => {
       if (statusFilter !== 'all' && product.status !== statusFilter) return false;
-      if (categoryFilter !== 'all' && product.categoryId !== categoryFilter) return false;
-      if (tagFilter !== 'all' && !product.tagIds.includes(tagFilter)) return false;
+      if (
+        !reviewMode &&
+        categoryFilter !== 'all' &&
+        product.categoryId !== categoryFilter
+      )
+        return false;
+      if (!reviewMode && tagFilter !== 'all' && !product.tagIds.includes(tagFilter))
+        return false;
       if (!keyword) return true;
-      return `${product.title} ${product.categoryName ?? ''} ${product.tags.map((tag) => tag.name).join(' ')} ${product.conversionGroupName ?? ''}`
-        .toLowerCase()
-        .includes(keyword);
+      const searchableText = reviewMode
+        ? product.title
+        : `${product.title} ${product.categoryName ?? ''} ${product.tags.map((tag) => tag.name).join(' ')} ${product.conversionGroupName ?? ''}`;
+      return searchableText.toLowerCase().includes(keyword);
     });
-  }, [categoryFilter, search, sourceProducts, statusFilter, tagFilter]);
+  }, [categoryFilter, reviewMode, search, sourceProducts, statusFilter, tagFilter]);
 
   const allVisibleSelected =
     filteredProducts.length > 0 &&
@@ -395,16 +402,18 @@ export function ProductManagementView({
   }
 
   async function copyProductLink(product: AdminProduct) {
-    const link = new URL(
-      `/sections/${encodeURIComponent(section.slug)}/products/${encodeURIComponent(product.slug)}/`,
-      publicSiteOrigin(),
-    ).toString();
+    const path = reviewMode
+      ? '/reviews/'
+      : `/sections/${encodeURIComponent(section.slug)}/products/${encodeURIComponent(product.slug)}/`;
+    const link = new URL(path, publicSiteOrigin()).toString();
     try {
       await navigator.clipboard.writeText(link);
-      setSuccessMessage('产品链接已复制。');
+      setSuccessMessage(reviewMode ? 'Reviews 页面链接已复制。' : '产品链接已复制。');
       setErrorMessage('');
     } catch {
-      setErrorMessage(`复制失败，请手动复制：${link}`);
+      setErrorMessage(
+        `复制失败，请手动复制${reviewMode ? ' Reviews 页面' : ''}链接：${link}`,
+      );
     }
   }
 
@@ -750,14 +759,14 @@ export function ProductManagementView({
   return (
     <section className="product-management" aria-labelledby="product-management-title">
       <AdminToolbar
-        aria-label={`${section.name} 产品管理工具栏`}
+        aria-label={`${section.name} ${reviewMode ? '内容' : '产品'}管理工具栏`}
         leading={
-          <AdminSegmentedControl ariaLabel="产品范围">
+          <AdminSegmentedControl ariaLabel={reviewMode ? 'Review范围' : '产品范围'}>
             <AdminSegmentedItem
               selected={scope === 'active'}
               onClick={() => void changeScope('active')}
             >
-              当前产品 {activeProducts.length}
+              {reviewMode ? '当前 Review' : '当前产品'} {activeProducts.length}
             </AdminSegmentedItem>
             <AdminSegmentedItem
               selected={scope === 'trash'}
@@ -770,20 +779,20 @@ export function ProductManagementView({
         trailing={
           <div className="product-toolbar-actions">
             <Button variant="primary" onClick={openCreateEditor}>
-              新增产品
+              {reviewMode ? '新增 Review' : '新增产品'}
             </Button>
           </div>
         }
       >
         <AdminSearchField
-          label="搜索产品"
+          label={reviewMode ? '搜索Review' : '搜索产品'}
           value={search}
-          placeholder="标题、分类、标签或转化分组"
+          placeholder={reviewMode ? '搜索标题' : '标题、分类、标签或转化分组'}
           onChange={(event) => setSearch(event.target.value)}
         />
         <label className="ui-management-filter">
           <select
-            aria-label="产品状态"
+            aria-label={reviewMode ? 'Review状态' : '产品状态'}
             value={statusFilter}
             onChange={(event) => setStatusFilter(event.target.value as StatusFilter)}
           >
@@ -793,34 +802,38 @@ export function ProductManagementView({
             <option value="archived">已归档</option>
           </select>
         </label>
-        <label className="ui-management-filter">
-          <select
-            aria-label="产品分类"
-            value={categoryFilter}
-            onChange={(event) => setCategoryFilter(event.target.value)}
-          >
-            <option value="all">全部分类</option>
-            {categories.map((category) => (
-              <option key={category.id} value={category.id}>
-                {category.name}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="ui-management-filter">
-          <select
-            aria-label="产品标签"
-            value={tagFilter}
-            onChange={(event) => setTagFilter(event.target.value)}
-          >
-            <option value="all">全部标签</option>
-            {tags.map((tag) => (
-              <option key={tag.id} value={tag.id}>
-                {tag.name}
-              </option>
-            ))}
-          </select>
-        </label>
+        {!reviewMode ? (
+          <label className="ui-management-filter">
+            <select
+              aria-label="产品分类"
+              value={categoryFilter}
+              onChange={(event) => setCategoryFilter(event.target.value)}
+            >
+              <option value="all">全部分类</option>
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
+        {!reviewMode ? (
+          <label className="ui-management-filter">
+            <select
+              aria-label="产品标签"
+              value={tagFilter}
+              onChange={(event) => setTagFilter(event.target.value)}
+            >
+              <option value="all">全部标签</option>
+              {tags.map((tag) => (
+                <option key={tag.id} value={tag.id}>
+                  {tag.name}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
       </AdminToolbar>
 
       {!editorOpen && errorMessage ? (
@@ -834,7 +847,7 @@ export function ProductManagementView({
         </div>
       ) : null}
 
-      {scope === 'active' && selectedIds.size > 0 ? (
+      {!reviewMode && scope === 'active' && selectedIds.size > 0 ? (
         <AdminSelectionBar count={selectedIds.size} noun="产品">
           <Button
             variant="danger"
@@ -847,6 +860,7 @@ export function ProductManagementView({
       ) : null}
 
       <ProductTable
+        reviewMode={reviewMode}
         sectionId={section.id}
         scope={scope}
         products={filteredProducts}
@@ -927,6 +941,7 @@ export function ProductManagementView({
 
       {pendingDeleteIds.length > 0 ? (
         <DeleteProductDialog
+          reviewMode={reviewMode}
           count={pendingDeleteIds.length}
           working={working}
           onCancel={() => setPendingDeleteIds([])}
