@@ -778,7 +778,16 @@ export function ProductManagementView({
         }
         trailing={
           <div className="product-toolbar-actions">
-            <Button variant="primary" onClick={openCreateEditor}>
+            <Button
+              variant="primary"
+              disabled={reviewMode && activeProducts.length > 0}
+              title={
+                reviewMode && activeProducts.length > 0
+                  ? 'Reviews 只支持一个页面，请编辑当前 Review。'
+                  : undefined
+              }
+              onClick={openCreateEditor}
+            >
               {reviewMode ? '新增 Review' : '新增产品'}
             </Button>
           </div>
