@@ -176,6 +176,7 @@ export type CurrentPointerV2 = {
   site: ModuleReference;
   sectionsIndex: ModuleReference;
   faq: ModuleReference;
+  reviews?: ModuleReference;
   sections: Record<string, ModuleReference>;
 };
 
@@ -638,6 +639,7 @@ function parsePointer(value: unknown): CurrentPointer {
     !validModuleReference(value.site) ||
     !validModuleReference(value.sectionsIndex) ||
     !validModuleReference(value.faq) ||
+    (value.reviews !== undefined && !validModuleReference(value.reviews)) ||
     !isRecord(value.sections)
   ) {
     throw new PublicContentError(
@@ -663,6 +665,7 @@ function parsePointer(value: unknown): CurrentPointer {
     site: value.site,
     sectionsIndex: value.sectionsIndex,
     faq: value.faq,
+    ...(value.reviews ? { reviews: value.reviews } : {}),
     sections,
   };
 }
@@ -975,6 +978,9 @@ export function v2ModulePath(
   }
   if (moduleKey === 'faq') {
     return `public/modules/faq/${reference.contentVersion}/${relativePath}`;
+  }
+  if (moduleKey === 'reviews') {
+    return `public/modules/reviews/${reference.contentVersion}/${relativePath}`;
   }
   const sectionId = moduleKey.startsWith('section:')
     ? moduleKey.slice('section:'.length)

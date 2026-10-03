@@ -306,3 +306,59 @@ export async function loadArticleSnapshot(
   );
   return findPublishedArticle(snapshot, articleId);
 }
+
+export type PublicReviewsPage = Pick<PublicArticle, 'title' | 'body'>;
+
+export async function loadReviewsPageSnapshot(
+  bootstrap: StorefrontBootstrap,
+  signal?: AbortSignal,
+): Promise<PublicReviewsPage> {
+  if (bootstrap.pointer.schemaVersion === 2 && bootstrap.pointer.reviews) {
+    const reference = bootstrap.pointer.reviews;
+    const snapshot = await loadV2File<{
+      page: PublicReviewsPage | null;
+    }>(
+      bootstrap.origin,
+      'reviews',
+      reference,
+      v2ModulePath('reviews', reference, 'page.json'),
+      signal,
+    );
+    if (
+      !snapshot.page ||
+      typeof snapshot.page.title !== 'string' ||
+      typeof snapshot.page.body !== 'string'
+    ) {
+      throw new PublicContentError(
+        'CONTENT_NOT_PUBLISHED',
+        'The Reviews page has not been published.',
+      );
+    }
+    return snapshot.page;
+  }
+
+  const section = bootstrap.home.allSections.find((item) => item.slug === 'reviews');
+  if (!section) {
+    throw new PublicContentError(
+      'CONTENT_NOT_PUBLISHED',
+      'The Reviews page is unavailable.',
+    );
+  }
+  const sectionSnapshot = await loadSectionSnapshot(bootstrap, section.slug, signal);
+  const summary = sectionSnapshot.products.find(
+    (product) => product.id === sectionSnapshot.directProductId,
+  );
+  if (!summary) {
+    throw new PublicContentError(
+      'CONTENT_NOT_PUBLISHED',
+      'The Reviews page is unavailable.',
+    );
+  }
+  const snapshot = await loadProductSnapshot(
+    bootstrap,
+    summary.slug || summary.id,
+    signal,
+    section.slug,
+  );
+  return { title: snapshot.product.title, body: snapshot.product.body };
+}

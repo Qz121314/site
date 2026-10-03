@@ -739,6 +739,7 @@ export function MessagesPage({
           articles={messageArticles}
           conversations={conversations}
           LinkComponent={LinkComponent}
+          mediaBaseUrl={bootstrap.site.site.mediaBaseUrl}
           supportAvailable={workspaceSupportAvailable}
         />
       ) : (

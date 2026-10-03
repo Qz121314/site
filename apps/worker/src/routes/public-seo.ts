@@ -16,6 +16,7 @@ type PublicPointer = {
   site: ModuleReference;
   sectionsIndex: ModuleReference;
   faq: ModuleReference;
+  reviews?: ModuleReference;
   sections: Record<string, ModuleReference>;
 };
 
@@ -133,6 +134,7 @@ function parsePointer(value: unknown): PublicPointer | null {
     !validReference(value.site) ||
     !validReference(value.sectionsIndex) ||
     !validReference(value.faq) ||
+    (value.reviews !== undefined && !validReference(value.reviews)) ||
     !isRecord(value.sections)
   ) {
     return null;
@@ -149,6 +151,7 @@ function parsePointer(value: unknown): PublicPointer | null {
     site: value.site,
     sectionsIndex: value.sectionsIndex,
     faq: value.faq,
+    ...(value.reviews ? { reviews: value.reviews } : {}),
     sections,
   };
 }
@@ -510,6 +513,25 @@ async function resolveSeoPage(
       preloadImageKey: await loadHomePreloadImageKey(bucket, content),
     };
   }
+  if (pathname === '/reviews' || pathname === '/reviews/') {
+    const snapshot = content.pointer.reviews
+      ? await readJson(bucket, referenceFile(content.pointer.reviews, 'page.json'))
+      : null;
+    const page = isRecord(snapshot) && isRecord(snapshot.page) ? snapshot.page : null;
+    if (content.pointer.reviews && !page) return notFoundPage(origin, content);
+    const title = page ? cleanText(page.title, 300) : null;
+    const description = page ? cleanText(page.body, 160) : null;
+    const metadata = basicPage(
+      origin,
+      content,
+      '/reviews/',
+      `${title ?? 'Reviews'} · ${site.name}`,
+      description ?? site.locationLabel,
+    );
+    return pathname === '/reviews'
+      ? { ...metadata, redirectPath: '/reviews/' }
+      : metadata;
+  }
   if (pathname === '/messages' || pathname === '/messages/') {
     const page = basicPage(
       origin,
@@ -569,7 +591,10 @@ async function resolveSeoPage(
     if (!section || !content.pointer.sections[section.id]) {
       return notFoundPage(origin, content);
     }
-    const canonicalPath = `/sections/${routePart(section.slug || section.id)}/`;
+    const canonicalPath =
+      section.slug.toLowerCase() === 'reviews'
+        ? '/reviews/'
+        : `/sections/${routePart(section.slug || section.id)}/`;
     const page = basicPage(
       origin,
       content,

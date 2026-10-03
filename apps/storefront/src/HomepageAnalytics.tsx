@@ -88,6 +88,16 @@ function trackPageView(measurementId: string, pathname: string) {
   });
 }
 
+export function trackHomeServiceClick(measurementId: string | null, sectionSlug: string) {
+  const normalized = measurementId?.trim();
+  if (!normalized) return;
+  ensureGoogleTag(normalized);
+  gtag('event', 'select_content', {
+    content_type: 'service_section',
+    item_id: sectionSlug,
+  });
+}
+
 export function HomepageAnalytics({
   measurementId,
   pathname,

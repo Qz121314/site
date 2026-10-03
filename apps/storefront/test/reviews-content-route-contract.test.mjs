@@ -7,13 +7,18 @@ const reviewsPage = await readFile(
   'utf8',
 );
 
+const contentRoute = await readFile(
+  new URL('../src/content-route.ts', import.meta.url),
+  'utf8',
+);
+
 test('Reviews route renders its published content without product CTA or messaging actions', () => {
-  assert.match(reviewsPage, /loadSectionSnapshot/u);
-  assert.match(reviewsPage, /loadProductSnapshot/u);
-  assert.match(reviewsPage, /product\.body/u);
-  assert.match(reviewsPage, /product\.media/u);
+  assert.match(reviewsPage, /loadReviewsPageSnapshot/u);
+  assert.match(reviewsPage, /query\.data\.body/u);
+  assert.match(contentRoute, /bootstrap\.pointer\.reviews/u);
+  assert.match(contentRoute, /v2ModulePath\('reviews', reference, 'page\.json'\)/u);
   assert.doesNotMatch(
     reviewsPage,
-    /ProductDetailPage|loadPublicCta|StorefrontRouteAction|messages\/new/u,
+    /loadSectionSnapshot|loadProductSnapshot|product\.media|ProductDetailPage|loadPublicCta|StorefrontRouteAction|messages\/new/u,
   );
 });

@@ -87,6 +87,11 @@ const ProductManagementView = lazy(() =>
     default: module.ProductManagementView,
   })),
 );
+const ReviewsPageManagementView = lazy(() =>
+  import('./ReviewsPageManagementView').then((module) => ({
+    default: module.ReviewsPageManagementView,
+  })),
+);
 const CategoryManagementView = lazy(() =>
   import('./CategoryManagementView').then((module) => ({
     default: module.CategoryManagementView,
@@ -142,14 +147,11 @@ function isSettingsView(view: AdminView): view is SettingsAdminView {
   return SETTINGS_ADMIN_VIEWS.has(view as SettingsAdminView);
 }
 
-function publishKeyForView(view: AdminView, sections: AdminSection[]): string | null {
+function publishKeyForView(view: AdminView): string | null {
   if (isSettingsView(view) || view === 'theme') return 'site';
   if (view === 'faq') return 'faq';
   if (view === 'sections') return 'sections-index';
-  if (view === 'reviews') {
-    const section = sections.find((item) => item.slug.toLowerCase() === 'reviews');
-    return section ? `section:${section.id}` : null;
-  }
+  if (view === 'reviews') return 'reviews';
   const dynamic = parseDynamicView(view);
   return dynamic ? `section:${dynamic.sectionId}` : null;
 }
@@ -582,10 +584,6 @@ export function Dashboard({
       const section = sections.find((item) => item.id === dynamic.sectionId);
       return section ? { kind: dynamic.kind, section } : null;
     }
-    if (activeView === 'reviews') {
-      const section = sections.find((item) => item.slug.toLowerCase() === 'reviews');
-      return section ? { kind: 'products' as const, section } : null;
-    }
     return null;
   }, [activeView, sections]);
   const context = useMemo(
@@ -596,7 +594,7 @@ export function Dashboard({
     unsaved.labels.length > 0
       ? `未保存：${unsaved.labels.join('、')}`
       : '当前有未保存修改';
-  const contextPublishKey = publishKeyForView(activeView, sections);
+  const contextPublishKey = publishKeyForView(activeView);
   const currentSectionHandoff =
     currentSection && productHandoff?.sectionId === currentSection.section.id
       ? productHandoff
@@ -718,6 +716,11 @@ export function Dashboard({
             />
           ) : activeView === 'faq' ? (
             <FaqManagementView key={activeView} onSessionExpired={onSessionExpired} />
+          ) : activeView === 'reviews' ? (
+            <ReviewsPageManagementView
+              key={activeView}
+              onSessionExpired={onSessionExpired}
+            />
           ) : currentSection?.kind === 'products' ? (
             <ProductManagementView
               key={activeView}

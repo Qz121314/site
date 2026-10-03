@@ -277,12 +277,17 @@ test('Messages Article presentation remains bootstrap-only with no fetch owner',
     new URL('../src/MessagesArticleListWorkspace.tsx', import.meta.url),
     'utf8',
   );
+  const pageSource = readFileSync(
+    new URL('../src/MessagesPage.tsx', import.meta.url),
+    'utf8',
+  );
   const source = `${helperSource}\n${listSource}\n${workspaceSource}`;
 
   assert.doesNotMatch(source, /\bfetch\s*\(/u);
   assert.doesNotMatch(source, /\/api\/[^'"`]*(?:article|media)/iu);
   assert.doesNotMatch(source, /siteSupportGateway|loadPublicSupportConnections/u);
-  assert.match(workspaceSource, /getQueryData<StorefrontBootstrap>/u);
+  assert.match(workspaceSource, /mediaBaseUrl: string/u);
+  assert.match(pageSource, /mediaBaseUrl=\{bootstrap\.site\.site\.mediaBaseUrl\}/u);
   assert.match(listSource, /mediaUrl\(mediaBaseUrl, article\.backgroundObjectKey\)/u);
   assert.match(helperSource, /site:messages:read-articles/u);
 });

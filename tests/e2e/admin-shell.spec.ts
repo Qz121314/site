@@ -310,7 +310,7 @@ test('Admin shell exposes final IA, route compatibility, and current desktop geo
   for (const [domain, secondaryItems] of [
     ['设计中心', ['Browse 内容', '布局中心', '导航', '视觉系统']],
     ['内容', ['文章中心', '素材库']],
-    ['客户互动', ['Messages', '客服接入']],
+    ['客户互动', ['Reviews', 'Messages', '客服接入']],
     ['系统', ['系统设置', '应用安装']],
   ] as const) {
     await primary.getByRole('button', { name: domain, exact: true }).click();
@@ -326,91 +326,44 @@ test('Admin shell exposes final IA, route compatibility, and current desktop geo
   }
 });
 
-test('Reviews workspace shows a Markdown page list without product controls', async ({
+test('Reviews workspace edits one Markdown page without product controls', async ({
   page,
 }) => {
-  const reviewSection = {
-    ...sections[0],
-    id: 'reviews',
-    slug: 'reviews',
-    name: 'Reviews',
-  };
   const productConfigRequests: string[] = [];
   page.on('request', (request) => {
     if (
-      /\/api\/admin\/sections\/reviews\/(categories|tags|conversion-groups)/u.test(
+      /\/api\/admin\/sections\/[^/]+\/(categories|tags|conversion-groups|products)/u.test(
         request.url(),
       )
     ) {
       productConfigRequests.push(request.url());
     }
   });
-  await installAdminFixture(page, { sections: [...sections, reviewSection] });
-  await page.route(
-    /\/api\/admin\/sections\/reviews\/products\?scope=active$/u,
-    async (route) => {
-      await route.fulfill({
-        contentType: 'application/json',
-        body: JSON.stringify({
-          products: [
-            {
-              id: 'reviews-page',
-              sectionId: 'reviews',
-              slug: 'reviews-138d0ed9',
-              isVisible: true,
-              serviceMode: 'offline',
-              title: 'Reviews.',
-              body: '# Reviews',
-              address: null,
-              categoryId: null,
-              categoryName: null,
-              tags: [],
-              tagIds: [],
-              conversionGroupId: null,
-              conversionGroupName: null,
-              conversionMode: null,
-              buttonLabel: null,
-              coverAssetId: null,
-              effectiveCoverAssetId: null,
-              effectiveCoverUrl: null,
-              media: [],
-              isFeatured: false,
-              featuredOrder: 0,
-              sortOrder: 0,
-              status: 'published',
-              publishedAt: '2026-09-01T00:00:00.000Z',
-              createdAt: '2026-09-01T00:00:00.000Z',
-              updatedAt: '2026-09-01T00:00:00.000Z',
-              deletedAt: null,
-            },
-          ],
-        }),
-      });
-    },
-  );
+  await installAdminFixture(page);
+  await page.route(/\/api\/admin\/reviews-page\/?$/u, async (route) => {
+    await route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        page: {
+          title: 'Reviews.',
+          body: '# Reviews',
+          isPublished: true,
+          updatedAt: '2026-09-01T00:00:00.000Z',
+        },
+      }),
+    });
+  });
 
   await page.goto('/admin/#reviews');
-  const table = page.locator('.product-table');
-  await expect(table.getByRole('columnheader')).toHaveText(['Review 页面', '操作']);
-  await expect(table.getByText('Reviews.', { exact: true })).toBeVisible();
-  await expect(table.getByText('/reviews/', { exact: true })).toBeVisible();
-  await expect(table.locator('img')).toHaveCount(0);
-  await expect(table.getByRole('checkbox')).toHaveCount(0);
-  await expect(table.getByRole('button', { name: /复制Review页面链接/u })).toBeVisible();
-  await expect(table.getByRole('button', { name: /编辑Review/u })).toBeVisible();
-  await expect(page.getByRole('button', { name: '新增 Review' })).toBeVisible();
-  await expect(page.getByRole('button', { name: '新增 Review' })).toBeDisabled();
-  await expect(page.getByRole('button', { name: '新增 Review' })).toHaveAttribute(
-    'title',
-    'Reviews 只支持一个页面，请编辑当前 Review。',
+  const workspace = page.locator('.reviews-page-admin');
+  await expect(workspace.getByRole('heading', { name: 'Reviews 页面' })).toBeVisible();
+  await expect(workspace.getByLabel('页面标题')).toHaveValue('Reviews.');
+  await expect(workspace.getByLabel('页面状态')).toHaveValue('published');
+  await expect(workspace.getByLabel('Reviews 页面 Markdown 正文')).toHaveValue(
+    '# Reviews',
   );
-  await expect(page.getByLabel('搜索Review')).toHaveAttribute('placeholder', '搜索标题');
-  await expect(page.getByLabel('Review状态')).toBeVisible();
-  await expect(page.getByLabel('产品分类')).toHaveCount(0);
-  await expect(page.getByLabel('产品标签')).toHaveCount(0);
-  await expect(table.getByRole('columnheader', { name: '服务与转化' })).toHaveCount(0);
-  await expect(table.getByRole('columnheader', { name: '分类' })).toHaveCount(0);
-  await expect(table.getByRole('button', { name: /拖拽调整产品/u })).toHaveCount(0);
+  await expect(workspace.getByRole('button', { name: '预览' })).toBeVisible();
+  await expect(workspace.locator('.product-table')).toHaveCount(0);
   expect(productConfigRequests).toEqual([]);
 });
 
