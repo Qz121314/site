@@ -34,6 +34,7 @@ import { PwaInstallButton } from './PwaInstallButton';
 import { ProductDetailLoadingSurface } from './ProductDetailLoadingSurface';
 import { StorefrontPageLayout } from './layout-runtime';
 import { ResilientImage } from './ResilientMedia';
+import { StorefrontRoutePreload } from './StorefrontRoutePreload';
 import {
   bottomNavigationActiveHref,
   parseStorefrontRoute,
@@ -575,6 +576,7 @@ export function StorefrontRoot() {
 
   const application = (
     <>
+      <StorefrontRoutePreload bootstrap={bootstrap} />
       <HomepageAnalytics
         measurementId={bootstrap.site.site.analytics.ga4MeasurementId}
         pathname={pathname}

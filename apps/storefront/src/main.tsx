@@ -7,7 +7,6 @@ import { installPwaInstallEventCapture } from './pwa-install-runtime';
 import { installPublicContentFetchFallback } from './public-content-transport';
 import { StorefrontPresentation } from './StorefrontPresentation';
 import { StorefrontRoot } from './StorefrontRoot';
-import { StorefrontRoutePreload } from './StorefrontRoutePreload';
 import { installCachedStorefrontTheme } from './theme-runtime';
 import { installStorefrontViewportRuntime } from './storefront-viewport-runtime';
 import { installStorefrontScrollReveal } from './storefront-scroll-reveal';
@@ -60,7 +59,6 @@ if (!root) {
 createRoot(root).render(
   <StrictMode>
     <StorefrontPresentation />
-    <StorefrontRoutePreload />
     <MobileEdgeNavigation />
     <StorefrontRoot />
     <DeferredPwaInstallPrompt />

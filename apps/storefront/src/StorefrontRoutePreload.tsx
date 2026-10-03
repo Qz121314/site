@@ -1,4 +1,3 @@
-import { useQueryClient, type QueryClient } from '@tanstack/react-query';
 import { useEffect } from 'react';
 import type { StorefrontBootstrap } from './content';
 import { parseStorefrontRoute, type StorefrontRoute } from './routing';
@@ -55,23 +54,20 @@ function articleContentVersion(bootstrap: StorefrontBootstrap): string {
 
 function preloadArticleContent(
   route: Extract<StorefrontRoute, { type: 'article' }>,
-  queryClient: QueryClient,
+  bootstrap: StorefrontBootstrap,
 ): void {
-  const bootstrap = queryClient.getQueryData<StorefrontBootstrap>([
-    'storefront-bootstrap',
-  ]);
-  if (!bootstrap) return;
   const contentVersion = articleContentVersion(bootstrap);
-  void import('./content-route').then(({ loadArticleSnapshot }) =>
-    queryClient.prefetchQuery({
-      queryKey: ['storefront-article', contentVersion, route.articleId],
-      queryFn: ({ signal }) => loadArticleSnapshot(bootstrap, route.articleId, signal),
-      staleTime: Number.POSITIVE_INFINITY,
-    }),
+  void Promise.all([import('./content-route'), import('./storefront-query-client')]).then(
+    ([{ loadArticleSnapshot }, { storefrontQueryClient }]) =>
+      storefrontQueryClient.prefetchQuery({
+        queryKey: ['storefront-article', contentVersion, route.articleId],
+        queryFn: ({ signal }) => loadArticleSnapshot(bootstrap, route.articleId, signal),
+        staleTime: Number.POSITIVE_INFINITY,
+      }),
   );
 }
 
-function preloadStorefrontRoute(href: string, queryClient: QueryClient): void {
+function preloadStorefrontRoute(href: string, bootstrap: StorefrontBootstrap): void {
   if (!href.startsWith('/') || href.startsWith('/go/')) return;
   const pathname = href.split(/[?#]/u, 1)[0] || '/';
   const route = parseStorefrontRoute(pathname);
@@ -84,21 +80,23 @@ function preloadStorefrontRoute(href: string, queryClient: QueryClient): void {
       preloadedRoutes.delete(preloadType);
     });
   }
-  if (route.type === 'article') preloadArticleContent(route, queryClient);
+  if (route.type === 'article') preloadArticleContent(route, bootstrap);
 }
 
 function internalAnchor(target: EventTarget | null): HTMLAnchorElement | null {
   return target instanceof Element ? target.closest<HTMLAnchorElement>('a[href]') : null;
 }
 
-export function StorefrontRoutePreload() {
-  const queryClient = useQueryClient();
-
+export function StorefrontRoutePreload({
+  bootstrap,
+}: {
+  bootstrap: StorefrontBootstrap;
+}) {
   useEffect(() => {
     const handleNavigationIntent = (event: Event) => {
       const anchor = internalAnchor(event.target);
       if (!anchor) return;
-      preloadStorefrontRoute(anchor.getAttribute('href') ?? '', queryClient);
+      preloadStorefrontRoute(anchor.getAttribute('href') ?? '', bootstrap);
     };
 
     document.addEventListener('pointerover', handleNavigationIntent, true);
@@ -110,7 +108,7 @@ export function StorefrontRoutePreload() {
       document.removeEventListener('pointerdown', handleNavigationIntent, true);
       document.removeEventListener('focusin', handleNavigationIntent, true);
     };
-  }, [queryClient]);
+  }, [bootstrap]);
 
   return null;
 }

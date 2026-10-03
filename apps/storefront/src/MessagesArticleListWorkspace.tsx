@@ -1,7 +1,5 @@
 import type { StorefrontLinkComponent } from '@site/storefront-ui';
-import { useQueryClient } from '@tanstack/react-query';
 import { MessageCircle } from 'lucide-react';
-import type { StorefrontBootstrap } from './content';
 import { MessagesArticleList } from './MessagesArticleList';
 import type { MessageArticleMetadata } from './messages-articles';
 import { MessagesPageContent } from './support-ui';
@@ -10,20 +8,16 @@ import type { SupportConversationSummary } from './support-contract';
 export function MessagesArticleListWorkspace({
   articles,
   conversations,
+  mediaBaseUrl,
   supportAvailable,
   LinkComponent,
 }: {
   articles: MessageArticleMetadata[];
   conversations: SupportConversationSummary[];
+  mediaBaseUrl: string;
   supportAvailable: boolean | null;
   LinkComponent: StorefrontLinkComponent;
 }) {
-  const queryClient = useQueryClient();
-  const bootstrap = queryClient.getQueryData<StorefrontBootstrap>([
-    'storefront-bootstrap',
-  ]);
-  const mediaBaseUrl = bootstrap?.site.site.mediaBaseUrl ?? '';
-
   return (
     <section className="messages-workspace messages-article-workspace">
       <aside className="messages-sidebar">
