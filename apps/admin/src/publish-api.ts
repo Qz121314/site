@@ -1,7 +1,7 @@
 import { AdminApiError } from './api';
 import { adminFetch } from './admin-fetch';
 
-export type PublishModuleKind = 'site' | 'sections-index' | 'faq' | 'section';
+export type PublishModuleKind = 'site' | 'sections-index' | 'faq' | 'reviews' | 'section';
 
 export type PublishVersion = {
   moduleKey: string;
@@ -145,7 +145,9 @@ function parseModule(value: unknown): PublishModuleStatus {
   if (
     !module ||
     typeof module.key !== 'string' ||
-    !['site', 'sections-index', 'faq', 'section'].includes(String(module.kind)) ||
+    !['site', 'sections-index', 'faq', 'reviews', 'section'].includes(
+      String(module.kind),
+    ) ||
     (typeof module.sectionId !== 'string' && module.sectionId !== null) ||
     typeof module.label !== 'string' ||
     (typeof module.currentVersion !== 'string' && module.currentVersion !== null) ||

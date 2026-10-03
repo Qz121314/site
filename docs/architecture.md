@@ -36,7 +36,7 @@ Admin 使用两级业务导航：
 系统：系统设置、应用安装
 ```
 
-Reviews 是客户互动中的单篇 Markdown 页面。后台用 Reviews 工作区编辑这篇内容；公开规范路径为 `/reviews/`。为兼容现有发布模型，它仍存储在 slug 为 `reviews` 的分区产品记录中，但该分区最多只能有一个未软删除记录。旧 `/sections/reviews/` 路径仅作为兼容入口。
+Reviews 是客户互动中的单篇 Markdown 页面。后台用 Reviews 工作区编辑这篇内容；D1 使用 `reviews_page` 单例记录，发布到独立的 Reviews 模块，公开规范路径为 `/reviews/`。旧 Reviews 分区数据由迁移归档；旧 `/sections/reviews/` 路径仅作为兼容入口。
 
 回收站保留在各业务模块内部；审计作为内部能力，不增加独立审计工作区。
 
@@ -116,7 +116,7 @@ content
 
 产品正文使用 Markdown。产品结构化媒体最多 12 个，支持静态图片、GIF 和视频；媒体可以为空，提供封面时必须是图片或 GIF，视频不直接作为产品封面。
 
-Reviews 是分区模型上的单篇内容特例：最多一个未软删除记录，允许纯 Markdown 正文，不需要商品封面、分类、标签或转化配置。公开 Reviews 路由只渲染该记录，不进入产品 CTA 流程。
+Reviews 不属于产品管理或分区内容模型。它由客户互动下的独立单篇 Markdown 工作区维护，不需要商品封面、分类、标签或转化配置。公开 Reviews 路由只渲染页面正文，不进入产品 CTA 流程。
 
 ### 分类管理
 
@@ -148,13 +148,14 @@ media_assets                  R2 媒体元数据
 media_asset_roles             媒体用途多对多关系
 product_media                 产品结构化媒体关系
 faqs                          历史 FAQ 与文章中心内容存储
+reviews_page                  Reviews 单篇 Markdown 页面
 audit_logs                    内部审计
 idempotency_keys              批量写入防重
 publish_module_jobs           模块发布任务
 publish_module_versions       模块不可变发布版本
 ```
 
-所有分区业务必须通过 `section_id` 隔离。跨分区引用由 API 校验和数据库约束共同保护。
+所有分区业务必须通过 `section_id` 隔离。跨分区引用由 API 校验和数据库约束共同保护。`reviews_page` 是全站单例内容，不属于任何分区。
 
 ## 6. R2 访问模型
 
@@ -214,7 +215,7 @@ R2 “存储清理”继续作为底层维护能力，用于识别历史孤立�
 
 ## 10. 发布模型
 
-站点设置、分区导航、文章/历史 FAQ 和各业务分区使用模块化发布版本；R2 保存不可变公开内容，D1 保存当前指针、历史版本和任务状态。
+站点设置、分区导航、文章/历史 FAQ、Reviews 和各业务分区使用模块化发布版本；R2 保存不可变公开内容，D1 保存当前指针、历史版本和任务状态。Reviews 页面作为独立的 `reviews` 模块发布，当前指针只引用一个页面快照。
 
 主题配置当前由主题中心保存后直接供 Storefront 读取；主题只改变展示 token，不改变业务数据。若未来需要主题自身参与版本回滚，再将主题设置纳入站点发布快照，不为当前需求增加第二套主题版本系统。
 

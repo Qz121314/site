@@ -142,6 +142,7 @@ test('site, engagement, and system navigation match final P1 IA exactly', () => 
       label,
     ]),
     [
+      ['reviews', 'Reviews'],
       ['messages', 'Messages'],
       ['customer-service', '客服接入'],
     ],

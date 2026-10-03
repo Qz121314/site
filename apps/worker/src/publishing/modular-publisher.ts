@@ -18,7 +18,7 @@ const RETAINED_VERSION_COUNT = 3;
 const R2_DELETE_BATCH_SIZE = 1000;
 const SECTION_PREFIX = 'section:';
 
-export type PublishModuleKind = 'site' | 'sections-index' | 'faq' | 'section';
+export type PublishModuleKind = 'site' | 'sections-index' | 'faq' | 'reviews' | 'section';
 export type PublishModuleKey = string;
 export type PublishModuleJobState = 'building' | 'published' | 'failed' | 'cancelled';
 
@@ -36,6 +36,7 @@ export type ModularStorefrontPointer = {
   site: ModuleReference;
   sectionsIndex: ModuleReference;
   faq: ModuleReference;
+  reviews?: ModuleReference;
   sections: Record<string, ModuleReference>;
 };
 
@@ -206,6 +207,13 @@ type FaqRow = {
   is_enabled: number;
 };
 
+type ReviewsPageRow = {
+  title: string;
+  body: string;
+  is_published: number;
+  updated_at: string;
+};
+
 type MessageArticleRow = {
   id: string;
   title: string;
@@ -256,6 +264,7 @@ type Source = {
   products: ProductRow[];
   mediaByProduct: Map<string, ProductMediaRow[]>;
   faqs: FaqRow[];
+  reviewsPage: ReviewsPageRow | null;
   messageArticles: MessageArticleRow[];
   publicTags: PublicProductTag[];
   tagsByProduct: Map<string, BoundProductTag[]>;
@@ -340,7 +349,13 @@ function parseSectionModuleKey(moduleKey: string): string | null {
 export function normalizePublishModuleKey(value: unknown): string | null {
   if (value === undefined || value === null || value === '' || value === 'all')
     return 'all';
-  if (value === 'site' || value === 'sections-index' || value === 'faq') return value;
+  if (
+    value === 'site' ||
+    value === 'sections-index' ||
+    value === 'faq' ||
+    value === 'reviews'
+  )
+    return value;
   if (typeof value !== 'string' || value.length > 140) return null;
   const sectionId = parseSectionModuleKey(value);
   if (!sectionId || !/^[A-Za-z0-9-]+$/u.test(sectionId)) return null;
@@ -351,6 +366,7 @@ function moduleBasePrefix(moduleKey: string): string {
   if (moduleKey === 'site') return 'public/modules/site';
   if (moduleKey === 'sections-index') return 'public/modules/sections-index';
   if (moduleKey === 'faq') return 'public/modules/faq';
+  if (moduleKey === 'reviews') return 'public/modules/reviews';
   const sectionId = parseSectionModuleKey(moduleKey);
   if (!sectionId)
     throw new ModularPublicationError('INVALID_MODULE', '发布板块标识无效。', 400);
@@ -365,6 +381,7 @@ function moduleReference(
   if (moduleKey === 'site') return pointer.site;
   if (moduleKey === 'sections-index') return pointer.sectionsIndex;
   if (moduleKey === 'faq') return pointer.faq;
+  if (moduleKey === 'reviews') return pointer.reviews ?? null;
   const sectionId = parseSectionModuleKey(moduleKey);
   return sectionId ? (pointer.sections[sectionId] ?? null) : null;
 }
@@ -377,6 +394,7 @@ function pointerWithModule(
   if (moduleKey === 'site') return { ...pointer, site: reference };
   if (moduleKey === 'sections-index') return { ...pointer, sectionsIndex: reference };
   if (moduleKey === 'faq') return { ...pointer, faq: reference };
+  if (moduleKey === 'reviews') return { ...pointer, reviews: reference };
   const sectionId = parseSectionModuleKey(moduleKey);
   if (!sectionId) return pointer;
   return {
@@ -414,6 +432,7 @@ export async function readModularPointer(bucket: R2Bucket): Promise<{
       !validModuleReference(value.site) ||
       !validModuleReference(value.sectionsIndex) ||
       !validModuleReference(value.faq) ||
+      (value.reviews !== undefined && !validModuleReference(value.reviews)) ||
       !isRecord(value.sections)
     ) {
       return { pointer: null, body, legacyDetected: false };
@@ -433,6 +452,7 @@ export async function readModularPointer(bucket: R2Bucket): Promise<{
         site: value.site,
         sectionsIndex: value.sectionsIndex,
         faq: value.faq,
+        ...(value.reviews ? { reviews: value.reviews } : {}),
         sections,
       },
       body,
@@ -649,6 +669,13 @@ async function loadSource(db: D1Database): Promise<Source> {
       )
       .all<FaqRow>()
   ).results;
+  const reviewsPage = await db
+    .prepare(
+      `SELECT title, body, is_published, updated_at
+       FROM reviews_page
+       WHERE id = 1`,
+    )
+    .first<ReviewsPageRow>();
 
   const messageArticles = (
     await db
@@ -711,6 +738,7 @@ async function loadSource(db: D1Database): Promise<Source> {
     products,
     mediaByProduct,
     faqs,
+    reviewsPage,
     messageArticles,
     publicTags,
     tagsByProduct,
@@ -998,6 +1026,27 @@ function modulePayload(source: Source, moduleKey: string): ModulePayload {
     };
   }
 
+  if (moduleKey === 'reviews') {
+    const page =
+      source.reviewsPage?.is_published === 1
+        ? { title: source.reviewsPage.title, body: source.reviewsPage.body }
+        : null;
+    return {
+      moduleKey,
+      kind: 'reviews',
+      sectionId: null,
+      label: 'Reviews 页面',
+      stateModel: source.reviewsPage,
+      mediaKeys: [],
+      buildFiles: (contentVersion, publishedAt) => [
+        {
+          relativePath: 'page.json',
+          value: { schemaVersion: 2, moduleKey, contentVersion, publishedAt, page },
+        },
+      ],
+    };
+  }
+
   const sectionId = parseSectionModuleKey(moduleKey);
   if (!sectionId) {
     throw new ModularPublicationError('INVALID_MODULE', '发布板块标识无效。', 400);
@@ -1121,6 +1170,7 @@ function desiredModuleKeys(source: Source): string[] {
     'site',
     'sections-index',
     'faq',
+    'reviews',
     ...source.sections.map((section) => sectionModuleKey(section.id)),
   ];
 }
@@ -1133,7 +1183,8 @@ function blankPointer(
   const site = references.get('site');
   const sectionsIndex = references.get('sections-index');
   const faq = references.get('faq');
-  if (!site || !sectionsIndex || !faq) {
+  const reviews = references.get('reviews');
+  if (!site || !sectionsIndex || !faq || !reviews) {
     throw new ModularPublicationError(
       'PUBLISH_BOOTSTRAP_INCOMPLETE',
       '首次模块化发布缺少必要的全局板块。',
@@ -1157,6 +1208,7 @@ function blankPointer(
     site,
     sectionsIndex,
     faq,
+    reviews,
     sections,
   };
 }

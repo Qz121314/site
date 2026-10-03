@@ -41,6 +41,7 @@ function isPublishSourcePath(path: string): boolean {
   if (path.startsWith('/api/admin/settings')) return true;
   if (path.startsWith('/api/admin/media')) return true;
   if (path.startsWith('/api/admin/faqs')) return true;
+  if (path.startsWith('/api/admin/reviews-page')) return true;
   if (!SECTION_PUBLISH_SOURCE_PATH.test(path)) return false;
 
   // Conversion groups and targets are resolved live by the public CTA routes and are

@@ -4,16 +4,21 @@ import { useEffect } from 'react';
 import type { PublicSection, StorefrontBootstrap } from './content';
 import { ResilientImage } from './ResilientMedia';
 import { sectionHref } from './routing';
+import { trackHomeServiceClick } from './HomepageAnalytics';
 import './browse-ui.css';
 import './browse-app-surface.css';
 import '@site/storefront-ui/art-direction-primary-surfaces.css';
 
 function publishedSections(bootstrap: StorefrontBootstrap): PublicSection[] {
   const pointer = bootstrap.pointer;
-  return bootstrap.home.allSections.filter((section) => {
-    if (section.slug !== 'escorts' && section.slug !== 'dating') return false;
-    return pointer.schemaVersion !== 2 || Boolean(pointer.sections[section.id]);
-  });
+  return bootstrap.home.allSections
+    .filter((section) => {
+      if (section.slug !== 'escorts' && section.slug !== 'dating') return false;
+      return pointer.schemaVersion !== 2 || Boolean(pointer.sections[section.id]);
+    })
+    .sort(
+      (left, right) => Number(right.slug === 'escorts') - Number(left.slug === 'escorts'),
+    );
 }
 
 export function BrowsePage({
@@ -47,6 +52,12 @@ export function BrowsePage({
                 className={`browse-section-card${section.browseBackgroundUrl ? ' has-image' : ' is-fallback'}`}
                 href={sectionHref(section)}
                 key={section.id}
+                onClick={() =>
+                  trackHomeServiceClick(
+                    bootstrap.site.site.analytics.ga4MeasurementId,
+                    section.slug,
+                  )
+                }
               >
                 <span className="browse-section-card-media" aria-hidden="true">
                   {section.browseBackgroundUrl ? (
@@ -70,7 +81,8 @@ export function BrowsePage({
                     <strong>{section.name}</strong>
                     {section.description ? <p>{section.description}</p> : null}
                   </span>
-                  <span className="browse-section-card-arrow" aria-hidden="true">
+                  <span className="browse-section-card-action" aria-hidden="true">
+                    {section.slug === 'escorts' ? 'Browse Escorts' : 'Explore Dating'}
                     <ArrowRight />
                   </span>
                 </span>

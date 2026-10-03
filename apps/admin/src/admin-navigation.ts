@@ -285,9 +285,7 @@ export function getAdminSecondaryItems(
       }));
     case 'engagement':
       return [
-        ...(sections.some((section) => section.slug.toLowerCase() === 'reviews')
-          ? [{ view: 'reviews' as const, label: 'Reviews' }]
-          : []),
+        { view: 'reviews', label: 'Reviews' },
         { view: 'messages', label: 'Messages' },
         { view: 'customer-service', label: '客服接入' },
       ];

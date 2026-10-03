@@ -1,9 +1,17 @@
 import type { StorefrontNavigationItem } from '@site/storefront-ui';
-import type { IconComponent } from 'reicon-react/createIcon';
-import Home from 'reicon-react/icons/Home';
-import Message from 'reicon-react/icons/Message';
-import Search from 'reicon-react/icons/Search';
-import { Bell, CircleHelp, Grid2X2, Heart, Map, Menu, Star, User } from 'lucide-react';
+import {
+  Bell,
+  CircleHelp,
+  Grid2X2,
+  Heart,
+  House,
+  Map,
+  Menu,
+  MessageCircle,
+  Search,
+  Star,
+  User,
+} from 'lucide-react';
 import type { ReactNode } from 'react';
 import type {
   BottomNavigationBuiltinIcon,
@@ -19,10 +27,6 @@ const HREFS: Record<BottomNavigationKey, string> = {
   reviews: '/reviews/',
 };
 
-function navigationIcon(Icon: IconComponent): ReactNode {
-  return <Icon className="storefront-nav-svg" aria-hidden="true" weight="Outline" />;
-}
-
 function lucideNavigationIcon(Icon: typeof Bell): ReactNode {
   return <Icon className="storefront-nav-svg" aria-hidden="true" />;
 }
@@ -30,15 +34,15 @@ function lucideNavigationIcon(Icon: typeof Bell): ReactNode {
 function builtinIcon(name: BottomNavigationBuiltinIcon | string | null): ReactNode {
   switch (name) {
     case 'compass':
-      return navigationIcon(Search);
+      return lucideNavigationIcon(Search);
     case 'messages':
-      return navigationIcon(Message);
+      return lucideNavigationIcon(MessageCircle);
     case 'help':
       return lucideNavigationIcon(CircleHelp);
     case 'grid':
       return lucideNavigationIcon(Grid2X2);
     case 'search':
-      return navigationIcon(Search);
+      return lucideNavigationIcon(Search);
     case 'star':
       return lucideNavigationIcon(Star);
     case 'heart':
@@ -53,7 +57,7 @@ function builtinIcon(name: BottomNavigationBuiltinIcon | string | null): ReactNo
       return lucideNavigationIcon(Map);
     case 'home':
     default:
-      return navigationIcon(Home);
+      return lucideNavigationIcon(House);
   }
 }
 

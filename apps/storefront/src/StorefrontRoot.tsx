@@ -1,4 +1,3 @@
-import { useQuery } from '@tanstack/react-query';
 import {
   StorefrontBottomNavigation,
   StorefrontBrandBar,
@@ -93,6 +92,11 @@ const StorefrontSupportRuntime = lazy(() =>
     default: module.StorefrontSupportRuntime,
   })),
 );
+const StorefrontQueryProvider = lazy(() =>
+  import('./StorefrontQueryProvider').then((module) => ({
+    default: module.StorefrontQueryProvider,
+  })),
+);
 
 function subscribeLocation(callback: () => void) {
   window.addEventListener(STOREFRONT_LOCATION_EVENT, callback);
@@ -130,9 +134,9 @@ function handleShellBack(event: ReactMouseEvent<HTMLAnchorElement>) {
 
 function shellHeaderMode(route: StorefrontRoute): ShellHeaderMode {
   if (route.type === 'product') return 'detail';
-  if (route.type === 'reviews') return 'detail';
   switch (route.type) {
     case 'article':
+    case 'reviews':
     case 'section':
     case 'faq-article':
     case 'message':
@@ -304,7 +308,7 @@ function PrimaryShell({
   const [routeActionHost, setRouteActionHost] = useState<HTMLDivElement | null>(null);
   const site = bootstrap.site.site;
   const headerMode = shellHeaderMode(route);
-  const showBottomNavigation = route.type !== 'product' && route.type !== 'reviews';
+  const showBottomNavigation = route.type !== 'product';
 
   useLayoutEffect(() => {
     const shell = shellRef.current;
@@ -317,12 +321,12 @@ function PrimaryShell({
       <div
         className="app-shell"
         data-shell-header={headerMode}
-        data-shell-route={route.type === 'reviews' ? 'product' : route.type}
+        data-shell-route={route.type}
         ref={shellRef}
       >
-        {route.type === 'product' || route.type === 'reviews' ? (
+        {route.type === 'product' ? (
           <ProductShellHeader
-            backHref={route.type === 'product' ? productBackHref(bootstrap, route) : '/'}
+            backHref={productBackHref(bootstrap, route)}
             bootstrap={bootstrap}
           />
         ) : (
@@ -397,30 +401,53 @@ export function StorefrontRoot() {
     },
     [],
   );
-  const bootstrapQuery = useQuery({
-    queryKey: ['storefront-bootstrap'],
-    queryFn: ({ signal }) => loadStorefrontBootstrap(undefined, signal),
-    staleTime: 30_000,
-  });
+  const [bootstrap, setBootstrap] = useState<Awaited<
+    ReturnType<typeof loadStorefrontBootstrap>
+  > | null>(null);
+  const [bootstrapLoading, setBootstrapLoading] = useState(true);
+  const [bootstrapFailed, setBootstrapFailed] = useState(false);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    let attempts = 0;
+    let retryTimer: number | undefined;
+    const load = async () => {
+      try {
+        setBootstrap(await loadStorefrontBootstrap(undefined, controller.signal));
+        setBootstrapLoading(false);
+      } catch {
+        if (controller.signal.aborted) return;
+        if (attempts++ === 0) {
+          retryTimer = window.setTimeout(() => void load(), 1000);
+          return;
+        }
+        setBootstrapFailed(true);
+        setBootstrapLoading(false);
+      }
+    };
+    void load();
+    return () => {
+      controller.abort();
+      if (retryTimer !== undefined) window.clearTimeout(retryTimer);
+    };
+  }, []);
 
   useLayoutEffect(() => {
-    const bootstrap = bootstrapQuery.data;
     if (!bootstrap) return;
     applyStorefrontTheme(bootstrap.theme);
     publishPwaInstallRuntime({
       appName: bootstrap.site.site.name,
       config: bootstrap.theme.installPrompt,
     });
-  }, [bootstrapQuery.data]);
+  }, [bootstrap]);
 
   useEffect(() => {
     if (!supportRuntimeEnabled) setSupportUnread(0);
   }, [supportRuntimeEnabled]);
 
-  if (bootstrapQuery.isLoading) return <StartupLoader />;
-  if (bootstrapQuery.error || !bootstrapQuery.data) return <PrimaryError />;
+  if (bootstrapLoading) return <StartupLoader />;
+  if (bootstrapFailed || !bootstrap) return <PrimaryError />;
 
-  const bootstrap = bootstrapQuery.data;
   const navigationItems = bootstrap.bottomNavigation;
   const messageArticles = getMessageArticlesFromBootstrap(bootstrap);
   const readArticleIds = new Set<string>(JSON.parse(articleReadSnapshot));
@@ -504,7 +531,6 @@ export function StorefrontRoot() {
       );
       break;
     case 'reviews':
-      routeFallback = <ProductDetailLoadingSurface />;
       page = (
         <ReviewsPage
           bootstrap={bootstrap}
@@ -547,7 +573,7 @@ export function StorefrontRoot() {
       );
   }
 
-  return (
+  const application = (
     <>
       <HomepageAnalytics
         measurementId={bootstrap.site.site.analytics.ga4MeasurementId}
@@ -586,7 +612,9 @@ export function StorefrontRoot() {
                 ? 'section'
                 : route.type === 'product'
                   ? 'product'
-                  : route.type === 'article' || route.type === 'faq-article'
+                  : route.type === 'article' ||
+                      route.type === 'faq-article' ||
+                      route.type === 'reviews'
                     ? 'article'
                     : route.type === 'messages' ||
                         route.type === 'message' ||
@@ -599,5 +627,13 @@ export function StorefrontRoot() {
         </StorefrontPageLayout>
       </PrimaryShell>
     </>
+  );
+  const queryProviderRequired = route.type !== 'home' && route.type !== 'not-found';
+  return queryProviderRequired || supportRuntimeEnabled ? (
+    <Suspense fallback={routeFallback}>
+      <StorefrontQueryProvider>{application}</StorefrontQueryProvider>
+    </Suspense>
+  ) : (
+    application
   );
 }
