@@ -43,21 +43,6 @@ type SectionManagementViewProps = {
   onSessionExpired: () => void;
 };
 
-type BrowseSectionFields = {
-  description?: string | null;
-  browseBackgroundAssetId?: string | null;
-  browseBackgroundUrl?: string | null;
-};
-
-function browseFields(section: AdminSection): Required<BrowseSectionFields> {
-  const value = section as AdminSection & BrowseSectionFields;
-  return {
-    description: value.description ?? null,
-    browseBackgroundAssetId: value.browseBackgroundAssetId ?? null,
-    browseBackgroundUrl: value.browseBackgroundUrl ?? null,
-  };
-}
-
 function sortSections(sections: AdminSection[]): AdminSection[] {
   return [...sections].sort(
     (left, right) =>
@@ -112,8 +97,7 @@ export function SectionManagementView({
     const keyword = search.trim().toLowerCase();
     return keyword
       ? sourceSections.filter((section) => {
-          const presentation = browseFields(section);
-          return `${section.name} ${section.slug} ${presentation.description ?? ''}`
+          return `${section.name} ${section.slug} ${section.description ?? ''} ${section.browseButtonLabel}`
             .toLowerCase()
             .includes(keyword);
         })
@@ -176,14 +160,14 @@ export function SectionManagementView({
   }
 
   function openEditEditor(section: AdminSection) {
-    const presentation = browseFields(section);
     setEditingSection(section);
     setForm({
       name: section.name,
-      description: presentation.description ?? '',
+      description: section.description ?? '',
+      browseButtonLabel: section.browseButtonLabel,
       iconValue: section.iconValue ?? '',
       iconAssetId: section.iconAssetId,
-      browseBackgroundAssetId: presentation.browseBackgroundAssetId,
+      browseBackgroundAssetId: section.browseBackgroundAssetId,
       sortOrder: section.sortOrder,
       isEnabled: section.isEnabled,
       isVisible: section.isVisible,
@@ -273,13 +257,13 @@ export function SectionManagementView({
     setWorking(true);
     setErrorMessage('');
     try {
-      const presentation = browseFields(section);
       const input: SectionEditorInput = {
         name: section.name,
-        description: presentation.description ?? '',
+        description: section.description ?? '',
+        browseButtonLabel: section.browseButtonLabel,
         iconValue: section.iconValue ?? '',
         iconAssetId: section.iconAssetId,
-        browseBackgroundAssetId: presentation.browseBackgroundAssetId,
+        browseBackgroundAssetId: section.browseBackgroundAssetId,
         sortOrder: section.sortOrder,
         isEnabled: !section.isEnabled,
         isVisible: section.isVisible,

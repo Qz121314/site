@@ -176,6 +176,7 @@ adminSectionRoutes.put('/:id', async (context) => {
     ...current,
     name: validation.value.name,
     description: validation.value.description,
+    browseButtonLabel: validation.value.browseButtonLabel,
     iconType: validation.value.iconAssetId ? 'asset' : 'icon',
     iconValue: validation.value.iconAssetId ? null : validation.value.iconValue,
     iconAssetId: validation.value.iconAssetId,

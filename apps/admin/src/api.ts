@@ -44,6 +44,10 @@ export type AdminSection = {
   id: string;
   slug: string;
   name: string;
+  description: string | null;
+  browseButtonLabel: string;
+  browseBackgroundAssetId: string | null;
+  browseBackgroundUrl: string | null;
   iconType: 'icon' | 'asset';
   iconValue: string | null;
   iconAssetId: string | null;
@@ -59,7 +63,11 @@ export type AdminSection = {
 
 export type SectionInput = {
   name: string;
+  description: string;
+  browseButtonLabel: string;
   iconValue: string;
+  iconAssetId: string | null;
+  browseBackgroundAssetId: string | null;
   sortOrder: number;
   isEnabled: boolean;
   isVisible: boolean;
@@ -248,7 +256,20 @@ function parseSectionRecord(value: unknown): AdminSection {
     throw new AdminApiError(500, 'INVALID_RESPONSE', '分区返回数据无效。');
   }
 
-  return section as AdminSection;
+  return {
+    ...section,
+    description: typeof section.description === 'string' ? section.description : null,
+    browseButtonLabel:
+      typeof section.browseButtonLabel === 'string' ? section.browseButtonLabel : '',
+    browseBackgroundAssetId:
+      typeof section.browseBackgroundAssetId === 'string'
+        ? section.browseBackgroundAssetId
+        : null,
+    browseBackgroundUrl:
+      typeof section.browseBackgroundUrl === 'string'
+        ? section.browseBackgroundUrl
+        : null,
+  } as AdminSection;
 }
 
 function parseSectionEnvelope(value: unknown): AdminSection {

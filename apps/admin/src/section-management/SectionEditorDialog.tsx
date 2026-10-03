@@ -97,6 +97,21 @@ export function SectionEditorDialog({
                 }
               />
             </label>
+
+            <label>
+              <span>按钮文案</span>
+              <input
+                type="text"
+                value={form.browseButtonLabel}
+                placeholder="例如 Browse Escorts"
+                required
+                maxLength={40}
+                disabled={busy}
+                onChange={(event) =>
+                  onFormChange({ ...form, browseButtonLabel: event.target.value })
+                }
+              />
+            </label>
           </div>
         </section>
 

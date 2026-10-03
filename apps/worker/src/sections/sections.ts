@@ -5,6 +5,7 @@ export type SectionRecord = {
   slug: string;
   name: string;
   description: string | null;
+  browseButtonLabel: string;
   iconType: 'icon' | 'asset';
   iconValue: string | null;
   iconAssetId: string | null;
@@ -24,6 +25,7 @@ export type SectionRecord = {
 export type SectionInput = {
   name: string;
   description: string | null;
+  browseButtonLabel: string;
   iconValue: string | null;
   iconAssetId: string | null;
   browseBackgroundAssetId: string | null;
@@ -39,6 +41,7 @@ type SectionRow = {
   slug: string;
   name: string;
   description: string | null;
+  browse_button_label: string;
   icon_type: 'icon' | 'asset';
   icon_value: string | null;
   icon_asset_id: string | null;
@@ -115,6 +118,13 @@ export function validateSectionInput(value: unknown): ValidationResult {
   if (!name.ok) return name;
   const description = readOptionalText(value.description, 'description', '分区简介', 280);
   if (!description.ok) return description;
+  const browseButtonLabel = readText(
+    value.browseButtonLabel,
+    'browseButtonLabel',
+    '按钮文案',
+    40,
+  );
+  if (!browseButtonLabel.ok) return browseButtonLabel;
   const iconValue = readOptionalText(value.iconValue, 'iconValue', '分区字符图标', 80);
   if (!iconValue.ok) return iconValue;
   const iconAssetId = readOptionalText(
@@ -160,6 +170,7 @@ export function validateSectionInput(value: unknown): ValidationResult {
     value: {
       name: name.value,
       description: description.value,
+      browseButtonLabel: browseButtonLabel.value,
       iconValue: iconValue.value,
       iconAssetId: iconAssetId.value,
       browseBackgroundAssetId: browseBackgroundAssetId.value,
@@ -176,6 +187,7 @@ function mapSection(row: SectionRow): SectionRecord {
     slug: row.slug,
     name: row.name,
     description: row.description,
+    browseButtonLabel: row.browse_button_label,
     iconType: row.icon_type,
     iconValue: row.icon_value,
     iconAssetId: row.icon_asset_id,
@@ -201,6 +213,7 @@ const SECTION_SELECT = `SELECT
   s.slug,
   s.name,
   s.description,
+  s.browse_button_label,
   s.icon_type,
   s.icon_value,
   s.icon_asset_id,
@@ -298,6 +311,7 @@ export async function createSectionStatements(
     slug,
     name: input.name,
     description: input.description,
+    browseButtonLabel: input.browseButtonLabel,
     iconType,
     iconValue: input.iconAssetId ? null : input.iconValue,
     iconAssetId: input.iconAssetId,
@@ -320,16 +334,17 @@ export async function createSectionStatements(
       db
         .prepare(
           `INSERT INTO sections (
-             id, slug, name, description, icon_type, icon_value, icon_asset_id,
+             id, slug, name, description, browse_button_label, icon_type, icon_value, icon_asset_id,
              browse_background_asset_id, sort_order, is_enabled, is_visible,
              created_at, updated_at, deleted_at
-           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)`,
+           ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)`,
         )
         .bind(
           section.id,
           section.slug,
           section.name,
           section.description,
+          section.browseButtonLabel,
           section.iconType,
           section.iconValue,
           section.iconAssetId,
@@ -354,7 +369,7 @@ export function createUpdateSectionStatement(
   return db
     .prepare(
       `UPDATE sections
-       SET name = ?, description = ?, icon_type = ?, icon_value = ?, icon_asset_id = ?,
+       SET name = ?, description = ?, browse_button_label = ?, icon_type = ?, icon_value = ?, icon_asset_id = ?,
            browse_background_asset_id = ?, sort_order = ?, is_enabled = ?, is_visible = ?,
            updated_at = ?
        WHERE id = ? AND deleted_at IS NULL`,
@@ -362,6 +377,7 @@ export function createUpdateSectionStatement(
     .bind(
       input.name,
       input.description,
+      input.browseButtonLabel,
       iconType,
       input.iconAssetId ? null : input.iconValue,
       input.iconAssetId,
