@@ -6,6 +6,7 @@ import { Button } from '../components/ui/button';
 import { AdminDialog } from '../components/ui/dialog';
 import { adminConfirm } from '../admin-dialog-service';
 import { useAdminDirtySource } from '../admin-unsaved-state';
+import { MarkdownQuickToolbar } from '../MarkdownQuickToolbar';
 import type { AdminCategory } from '../category-management/api';
 import type { AdminConversionGroup } from '../conversion-pool/api';
 import { MarkdownPreview } from '../faq-management/MarkdownPreview';
@@ -57,111 +58,6 @@ type ProductEditorDialogProps = {
 };
 
 type InlineCreateKind = 'category' | 'tag' | null;
-
-type MarkdownAction = {
-  label: string;
-  title: string;
-  before: string;
-  after?: string;
-  placeholder: string;
-};
-
-const markdownActions: MarkdownAction[] = [
-  {
-    label: 'H2',
-    title: '插入二级标题',
-    before: '## ',
-    placeholder: '小标题',
-  },
-  {
-    label: '粗体',
-    title: '加粗选中文字',
-    before: '**',
-    after: '**',
-    placeholder: '重点文字',
-  },
-  {
-    label: '列表',
-    title: '插入列表项',
-    before: '- ',
-    placeholder: '列表内容',
-  },
-  {
-    label: '提示',
-    title: '插入提示引用块',
-    before: '> ',
-    placeholder: '提示内容',
-  },
-  {
-    label: '链接',
-    title: '插入安全链接',
-    before: '[',
-    after: '](https://example.com)',
-    placeholder: '链接文字',
-  },
-  {
-    label: '代码',
-    title: '插入行内代码',
-    before: '`',
-    after: '`',
-    placeholder: '代码内容',
-  },
-  {
-    label: '分隔线',
-    title: '插入分隔线',
-    before: '---',
-    placeholder: '',
-  },
-  {
-    label: '品牌色',
-    title: '插入跟随当前主题的品牌色文字',
-    before: '{accent}',
-    after: '{/accent}',
-    placeholder: '重点文字',
-  },
-  {
-    label: '高亮',
-    title: '插入带背景的高亮文字',
-    before: '{highlight}',
-    after: '{/highlight}',
-    placeholder: '高亮文字',
-  },
-  {
-    label: '弱化',
-    title: '插入辅助说明文字',
-    before: '{muted}',
-    after: '{/muted}',
-    placeholder: '辅助说明',
-  },
-  {
-    label: '标签',
-    title: '插入主题化小标签',
-    before: '{badge}',
-    after: '{/badge}',
-    placeholder: '标签文字',
-  },
-  {
-    label: '提示卡',
-    title: '插入重要提示卡片',
-    before: ':::notice Important Note\n',
-    after: '\n:::',
-    placeholder: '提示内容',
-  },
-  {
-    label: '说明卡',
-    title: '插入普通说明卡片',
-    before: ':::tip\n',
-    after: '\n:::',
-    placeholder: '说明内容',
-  },
-  {
-    label: 'CTA',
-    title: '插入正文转化卡片',
-    before: ':::cta Ready to continue?\n',
-    after: '\n:::',
-    placeholder: 'Use the product action button below to continue.',
-  },
-];
 
 function modeLabel(mode: ProductServiceMode): string {
   return mode === 'online' ? '线上服务' : '线下服务';
@@ -323,25 +219,6 @@ export function ProductEditorDialog({
 
   function patch(patchValue: Partial<ProductInput>) {
     onFormChange({ ...form, ...patchValue });
-  }
-
-  function applyMarkdownAction(action: MarkdownAction) {
-    const textarea = markdownTextareaRef.current;
-    if (!textarea) return;
-
-    const start = textarea.selectionStart;
-    const end = textarea.selectionEnd;
-    const selected = form.body.slice(start, end);
-    const content = selected || action.placeholder;
-    const replacement = `${action.before}${content}${action.after ?? ''}`;
-    const nextBody = `${form.body.slice(0, start)}${replacement}${form.body.slice(end)}`;
-    patch({ body: nextBody });
-
-    requestAnimationFrame(() => {
-      textarea.focus();
-      const selectionStart = start + action.before.length;
-      textarea.setSelectionRange(selectionStart, selectionStart + content.length);
-    });
   }
 
   function insertMarkdownImage(asset: ManagedMediaAsset) {
@@ -749,29 +626,14 @@ export function ProductEditorDialog({
                     : '内容将按详情页样式实时渲染'}
                 </small>
               </div>
-              <div className="product-markdown-toolbar" aria-label="Markdown 快捷格式">
-                {markdownActions
-                  .filter((action) => !reviewMode || action.label !== 'CTA')
-                  .map((action) => (
-                    <button
-                      key={action.label}
-                      type="button"
-                      title={action.title}
-                      disabled={busy}
-                      onClick={() => applyMarkdownAction(action)}
-                    >
-                      {action.label}
-                    </button>
-                  ))}
-                <button
-                  type="button"
-                  title="从素材中心插入图片"
-                  disabled={busy}
-                  onClick={() => setMarkdownMediaPickerOpen(true)}
-                >
-                  图片
-                </button>
-              </div>
+              <MarkdownQuickToolbar
+                value={form.body}
+                textareaRef={markdownTextareaRef}
+                disabled={busy}
+                showCta={!reviewMode}
+                onChange={(body) => patch({ body })}
+                onOpenImagePicker={() => setMarkdownMediaPickerOpen(true)}
+              />
             </div>
             <div className="product-body-content">
               <textarea
