@@ -1,10 +1,12 @@
-import { useCallback, useEffect, useMemo, useState, type FormEvent } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, type FormEvent } from 'react';
 import { AdminApiError } from './api';
 import { useAdminDirtySource } from './admin-unsaved-state';
+import { MediaLibraryPickerDialog } from './asset-library/MediaLibraryPickerDialog';
+import type { ManagedMediaAsset } from './asset-library/api';
 import { Button } from './components/ui/button';
 import { Input } from './components/ui/input';
-import { Textarea } from './components/ui/textarea';
 import { MarkdownPreview } from './faq-management/MarkdownPreview';
+import { MarkdownQuickToolbar } from './MarkdownQuickToolbar';
 import {
   fetchReviewsPage,
   saveReviewsPage,
@@ -44,6 +46,8 @@ export function ReviewsPageManagementView({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [markdownMediaPickerOpen, setMarkdownMediaPickerOpen] = useState(false);
+  const markdownTextareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   const dirty = useMemo(
     () =>
@@ -92,6 +96,29 @@ export function ReviewsPageManagementView({
     } finally {
       setSaving(false);
     }
+  }
+
+  function insertMarkdownImage(asset: ManagedMediaAsset) {
+    if (!asset.publicUrl) {
+      setError('该素材暂无公开地址，请先配置媒体域名后再插入正文。');
+      return;
+    }
+    const textarea = markdownTextareaRef.current;
+    if (!textarea) return;
+    const start = textarea.selectionStart;
+    const end = textarea.selectionEnd;
+    const altText = asset.fileName.replace(/\.[^.]+$/, '') || '图片';
+    const replacement = `![${altText}](${asset.publicUrl})`;
+    setForm({
+      ...form,
+      body: `${form.body.slice(0, start)}${replacement}${form.body.slice(end)}`,
+    });
+    setMarkdownMediaPickerOpen(false);
+    requestAnimationFrame(() => {
+      textarea.focus();
+      const cursor = start + replacement.length;
+      textarea.setSelectionRange(cursor, cursor);
+    });
   }
 
   if (loading) {
@@ -153,7 +180,7 @@ export function ReviewsPageManagementView({
         <div className="reviews-page-body-heading">
           <div>
             <strong>页面正文（Markdown）</strong>
-            <small>支持标题、段落、列表、链接和图片。</small>
+            <small>支持快捷格式、图片、提示卡和说明卡；右侧预览可查看渲染效果。</small>
           </div>
           <div className="reviews-page-mode">
             <Button
@@ -172,11 +199,22 @@ export function ReviewsPageManagementView({
             </Button>
           </div>
         </div>
+        {!previewing ? (
+          <MarkdownQuickToolbar
+            value={form.body}
+            textareaRef={markdownTextareaRef}
+            disabled={saving}
+            showCta={false}
+            onChange={(body) => setForm({ ...form, body })}
+            onOpenImagePicker={() => setMarkdownMediaPickerOpen(true)}
+          />
+        ) : null}
         {previewing ? (
           <MarkdownPreview source={form.body} />
         ) : (
-          <Textarea
-            className="reviews-page-markdown-input"
+          <textarea
+            ref={markdownTextareaRef}
+            className="ui-textarea reviews-page-markdown-input"
             value={form.body}
             maxLength={20_000}
             required
@@ -187,10 +225,22 @@ export function ReviewsPageManagementView({
           />
         )}
         <footer className="reviews-page-body-footer">
-          <span>正文上方标题单独管理；此处只编辑 Markdown 正文。</span>
+          <span>支持主题色、高亮、标签、提示卡、说明卡和图片。</span>
           <span>{form.body.length}/20000</span>
         </footer>
       </form>
+      {markdownMediaPickerOpen ? (
+        <MediaLibraryPickerDialog
+          title="插入 Reviews 图片"
+          role="content"
+          allowedKinds={['image', 'animated_image']}
+          maxSelections={1}
+          onSessionExpired={onSessionExpired}
+          onClose={() => setMarkdownMediaPickerOpen(false)}
+          onDone={() => setMarkdownMediaPickerOpen(false)}
+          onSelect={insertMarkdownImage}
+        />
+      ) : null}
     </section>
   );
 }

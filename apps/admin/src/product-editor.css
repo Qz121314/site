@@ -433,40 +433,6 @@
   line-height: 1.2;
 }
 
-.product-editor-dialog .product-markdown-toolbar {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  max-width: 100%;
-  overflow-x: auto;
-  padding: 2px;
-  border: 1px solid #e0e5ec;
-  border-radius: 7px;
-  background: #f1f3f6;
-}
-
-.product-editor-dialog .product-markdown-toolbar button {
-  min-height: 26px;
-  padding: 3px 7px;
-  border: 0;
-  border-radius: 5px;
-  color: #526070;
-  background: transparent;
-  cursor: pointer;
-  font-size: 0.66rem;
-  font-weight: 720;
-}
-
-.product-editor-dialog .product-markdown-toolbar button:not(:disabled):hover {
-  color: #243047;
-  background: #fff;
-}
-
-.product-editor-dialog .product-markdown-toolbar button:disabled {
-  cursor: not-allowed;
-  opacity: 0.5;
-}
-
 .product-editor-dialog .product-body-content {
   display: grid;
   grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
@@ -900,15 +866,6 @@
 
   .product-editor-dialog .product-body-heading {
     align-items: flex-start;
-  }
-
-  .product-editor-dialog .product-markdown-toolbar {
-    width: 100%;
-    justify-content: flex-start;
-  }
-
-  .product-editor-dialog .product-markdown-toolbar button {
-    flex: 0 0 auto;
   }
 
   .product-editor-dialog .product-media-grid {
