@@ -4,6 +4,7 @@ export type StorefrontRoute =
   | { type: 'home' }
   | { type: 'discover' }
   | { type: 'messages' }
+  | { type: 'reviews' }
   | { type: 'message-compose' }
   | { type: 'message'; conversationRef: string }
   | { type: 'faq' }
@@ -13,7 +14,7 @@ export type StorefrontRoute =
   | { type: 'product'; productRef: string; sectionRef: string | null }
   | { type: 'not-found' };
 
-export type BottomNavigationHref = '/' | '/browse/' | '/messages/' | '/sections/reviews/';
+export type BottomNavigationHref = '/' | '/browse/' | '/messages/' | '/reviews/';
 
 function decodeRoutePart(value: string): string | null {
   try {
@@ -59,8 +60,13 @@ export function bottomNavigationActiveHref(pathname: string): BottomNavigationHr
     pathname.startsWith('/articles/')
   )
     return '/messages/';
-  if (pathname === '/sections/reviews' || pathname.startsWith('/sections/reviews/'))
-    return '/sections/reviews/';
+  if (
+    pathname === '/reviews' ||
+    pathname.startsWith('/reviews/') ||
+    pathname === '/sections/reviews' ||
+    pathname.startsWith('/sections/reviews/')
+  )
+    return '/reviews/';
   if (
     pathname === '/browse' ||
     pathname.startsWith('/browse/') ||
@@ -85,6 +91,13 @@ export function parseStorefrontRoute(pathname: string): StorefrontRoute {
   if (pathname === '/messages/new' || pathname === '/messages/new/')
     return { type: 'message-compose' };
   if (pathname === '/faq' || pathname === '/faq/') return { type: 'faq' };
+  if (
+    pathname === '/reviews' ||
+    pathname === '/reviews/' ||
+    pathname === '/sections/reviews' ||
+    pathname === '/sections/reviews/'
+  )
+    return { type: 'reviews' };
 
   const messageMatch = /^\/messages\/([^/]+)\/?$/.exec(pathname);
   if (messageMatch) {

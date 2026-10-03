@@ -79,6 +79,9 @@ const ProductDetailPage = lazy(() =>
     default: module.ProductDetailPage,
   })),
 );
+const ReviewsPage = lazy(() =>
+  import('./ReviewsPage').then((module) => ({ default: module.ReviewsPage })),
+);
 const SectionCatalogPage = lazy(() =>
   import('./SectionPage').then((module) => ({ default: module.SectionCatalogPage })),
 );
@@ -127,6 +130,7 @@ function handleShellBack(event: ReactMouseEvent<HTMLAnchorElement>) {
 
 function shellHeaderMode(route: StorefrontRoute): ShellHeaderMode {
   if (route.type === 'product') return 'detail';
+  if (route.type === 'reviews') return 'detail';
   switch (route.type) {
     case 'article':
     case 'section':
@@ -159,13 +163,12 @@ function productBackHref(
 
 function ProductShellHeader({
   bootstrap,
-  route,
+  backHref,
 }: {
   bootstrap: Awaited<ReturnType<typeof loadStorefrontBootstrap>>;
-  route: Extract<StorefrontRoute, { type: 'product' }>;
+  backHref: string;
 }) {
   const site = bootstrap.site.site;
-  const backHref = productBackHref(bootstrap, route);
 
   return (
     <header className="topbar storefront-detail-topbar">
@@ -301,7 +304,7 @@ function PrimaryShell({
   const [routeActionHost, setRouteActionHost] = useState<HTMLDivElement | null>(null);
   const site = bootstrap.site.site;
   const headerMode = shellHeaderMode(route);
-  const showBottomNavigation = route.type !== 'product';
+  const showBottomNavigation = route.type !== 'product' && route.type !== 'reviews';
 
   useLayoutEffect(() => {
     const shell = shellRef.current;
@@ -314,11 +317,14 @@ function PrimaryShell({
       <div
         className="app-shell"
         data-shell-header={headerMode}
-        data-shell-route={route.type}
+        data-shell-route={route.type === 'reviews' ? 'product' : route.type}
         ref={shellRef}
       >
-        {route.type === 'product' ? (
-          <ProductShellHeader bootstrap={bootstrap} route={route} />
+        {route.type === 'product' || route.type === 'reviews' ? (
+          <ProductShellHeader
+            backHref={route.type === 'product' ? productBackHref(bootstrap, route) : '/'}
+            bootstrap={bootstrap}
+          />
         ) : (
           <StorefrontBrandBar
             LinkComponent={StorefrontLink as StorefrontLinkComponent}
@@ -492,6 +498,15 @@ export function StorefrontRoot() {
       page = (
         <ArticlePage
           articleId={route.articleId}
+          bootstrap={bootstrap}
+          LinkComponent={StorefrontLink as StorefrontLinkComponent}
+        />
+      );
+      break;
+    case 'reviews':
+      routeFallback = <ProductDetailLoadingSurface />;
+      page = (
+        <ReviewsPage
           bootstrap={bootstrap}
           LinkComponent={StorefrontLink as StorefrontLinkComponent}
         />

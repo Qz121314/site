@@ -7,6 +7,7 @@ export function storefrontPresentationMode(pathname: string): StorefrontPresenta
   switch (route.type) {
     case 'section':
     case 'product':
+    case 'reviews':
     case 'faq-article':
     case 'messages':
     case 'message':

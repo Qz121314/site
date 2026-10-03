@@ -40,6 +40,8 @@ test('routing accepts primary pages, FAQ articles, generic articles, canonical s
     conversationRef: 'conversation-1',
   });
   assert.deepEqual(parseStorefrontRoute('/faq/'), { type: 'faq' });
+  assert.deepEqual(parseStorefrontRoute('/reviews/'), { type: 'reviews' });
+  assert.deepEqual(parseStorefrontRoute('/sections/reviews/'), { type: 'reviews' });
   assert.deepEqual(parseStorefrontRoute('/faq/faq-1/'), {
     type: 'faq-article',
     articleRef: 'faq-1',
@@ -77,10 +79,11 @@ test('bottom navigation selects Reviews on its section and leaves FAQ outside th
   assert.equal(bottomNavigationActiveHref('/messages/'), '/messages/');
   assert.equal(bottomNavigationActiveHref('/messages/conversation-1/'), '/messages/');
   assert.equal(bottomNavigationActiveHref('/articles/article-1/'), '/messages/');
-  assert.equal(bottomNavigationActiveHref('/sections/reviews/'), '/sections/reviews/');
+  assert.equal(bottomNavigationActiveHref('/reviews/'), '/reviews/');
+  assert.equal(bottomNavigationActiveHref('/sections/reviews/'), '/reviews/');
   assert.equal(
     bottomNavigationActiveHref('/sections/reviews/products/review-1/'),
-    '/sections/reviews/',
+    '/reviews/',
   );
   assert.equal(bottomNavigationActiveHref('/faq/'), '/');
   assert.equal(bottomNavigationActiveHref('/faq/faq-1/'), '/');
@@ -89,6 +92,7 @@ test('bottom navigation selects Reviews on its section and leaves FAQ outside th
 test('messages routes use the app-style push presentation', () => {
   assert.equal(storefrontPresentationMode('/messages/'), 'push');
   assert.equal(storefrontPresentationMode('/messages/conversation-1/'), 'push');
+  assert.equal(storefrontPresentationMode('/reviews/'), 'push');
 });
 
 test('routing rejects malformed or oversized route parts', () => {

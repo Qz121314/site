@@ -16,7 +16,7 @@ const HREFS: Record<BottomNavigationKey, string> = {
   home: '/',
   browse: '/browse/',
   messages: '/messages/',
-  reviews: '/sections/reviews/',
+  reviews: '/reviews/',
 };
 
 function navigationIcon(Icon: IconComponent): ReactNode {
