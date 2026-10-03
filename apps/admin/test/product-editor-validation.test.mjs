@@ -54,6 +54,7 @@ function validate(form, options = {}) {
     options.categories ?? [],
     options.tags ?? [],
     options.groups ?? [],
+    options.reviewMode ?? false,
   );
 }
 
@@ -163,6 +164,29 @@ test('published products may omit media without requiring an offline address', (
       {
         media: [media('image/gif')],
       },
+    ),
+    null,
+  );
+});
+
+test('Reviews require review content and ignore hidden product dependencies', () => {
+  assert.equal(
+    validate(productForm({ title: '  ' }), { reviewMode: true }),
+    '请填写 Review 标题。',
+  );
+  assert.equal(
+    validate(productForm({ body: '  ' }), { reviewMode: true }),
+    '请填写 Review 正文。',
+  );
+  assert.equal(
+    validate(
+      productForm({
+        status: 'published',
+        categoryId: 'disabled-category',
+        tagIds: ['missing-tag'],
+        conversionGroupId: 'disabled-group',
+      }),
+      { reviewMode: true },
     ),
     null,
   );

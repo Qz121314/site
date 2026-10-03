@@ -10,9 +10,11 @@ export function validateProductDraft(
   categories: AdminCategory[],
   tags: AdminProductTag[],
   groups: AdminConversionGroup[],
+  reviewMode = false,
 ): string | null {
-  if (!form.title.trim()) return '请填写产品标题。';
-  if (!form.body.trim()) return '请填写产品正文。';
+  if (!form.title.trim()) return reviewMode ? '请填写 Review 标题。' : '请填写产品标题。';
+  if (!form.body.trim()) return reviewMode ? '请填写 Review 正文。' : '请填写产品正文。';
+  if (reviewMode) return null;
   if (form.tagIds.length > 12) return '每个产品最多选择 12 个标签。';
   if (form.status !== 'published') return null;
 
