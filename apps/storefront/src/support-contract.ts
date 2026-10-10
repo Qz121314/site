@@ -40,7 +40,7 @@ export type SupportMessageAttachment =
   SupportImageAttachment | SupportContactCardAttachment;
 
 export type SupportProductContextSnapshot = {
-  productId: string;
+  productId: string | null;
   title: string;
   coverUrl: string | null;
   href: string;
@@ -76,14 +76,23 @@ export type SupportGreetingCta = {
   greetingMessageId: string;
 };
 
-export type StartSupportConversationInput = {
-  handoffId: string;
-  productId: string;
-  sectionId: string;
-  productTitle: string;
-  productCoverUrl: string | null;
-  productHref: string;
-};
+export type StartSupportConversationInput =
+  | {
+      contextType: 'product';
+      handoffId: string;
+      productId: string;
+      sectionId: string;
+      productTitle: string;
+      productCoverUrl: string | null;
+      productHref: string;
+    }
+  | {
+      contextType: 'section';
+      handoffId: string;
+      sectionId: string;
+      sectionName: string;
+      sectionHref: string;
+    };
 
 export type SendSupportMessageInput = {
   clientMessageId: string;

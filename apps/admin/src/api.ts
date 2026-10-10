@@ -46,6 +46,7 @@ export type AdminSection = {
   name: string;
   description: string | null;
   browseButtonLabel: string;
+  conversionGroupId: string | null;
   browseBackgroundAssetId: string | null;
   browseBackgroundUrl: string | null;
   iconType: 'icon' | 'asset';
@@ -65,6 +66,7 @@ export type SectionInput = {
   name: string;
   description: string;
   browseButtonLabel: string;
+  conversionGroupId: string | null;
   iconValue: string;
   iconAssetId: string | null;
   browseBackgroundAssetId: string | null;
@@ -261,6 +263,8 @@ function parseSectionRecord(value: unknown): AdminSection {
     description: typeof section.description === 'string' ? section.description : null,
     browseButtonLabel:
       typeof section.browseButtonLabel === 'string' ? section.browseButtonLabel : '',
+    conversionGroupId:
+      typeof section.conversionGroupId === 'string' ? section.conversionGroupId : null,
     browseBackgroundAssetId:
       typeof section.browseBackgroundAssetId === 'string'
         ? section.browseBackgroundAssetId

@@ -120,14 +120,26 @@ function targetNotFound(context: Parameters<typeof apiError>[0]) {
 function groupDeleteError(
   context: Parameters<typeof apiError>[0],
   group: ConversionGroupRecord,
+  sectionCount = 0,
 ) {
   return apiError(
     context,
     409,
     'CONVERSION_GROUP_HAS_DEPENDENCIES',
-    `转化分组“${group.name}”仍有入口或产品引用，不能删除。`,
-    { targetCount: group.targetCount, productCount: group.productCount },
+    `转化分组“${group.name}”仍有入口、产品或分区卡片引用，不能删除。`,
+    { targetCount: group.targetCount, productCount: group.productCount, sectionCount },
   );
+}
+
+async function groupSectionReferenceCount(
+  db: D1Database,
+  groupId: string,
+): Promise<number> {
+  const row = await db
+    .prepare('SELECT COUNT(*) AS count FROM sections WHERE conversion_group_id = ?')
+    .bind(groupId)
+    .first<{ count: number }>();
+  return Number(row?.count ?? 0);
 }
 
 async function readBody(
@@ -215,6 +227,14 @@ adminConversionPoolRoutes.post(
       return groupNotFound(context);
     const blocked = active.find(hasGroupDeleteBlocker);
     if (blocked) return groupDeleteError(context, blocked);
+    const sectionCounts = await Promise.all(
+      active.map((group) => groupSectionReferenceCount(context.env.DB, group.id)),
+    );
+    const blockedIndex = sectionCounts.findIndex((count) => count > 0);
+    if (blockedIndex >= 0) {
+      const blocked = active[blockedIndex];
+      if (blocked) return groupDeleteError(context, blocked, sectionCounts[blockedIndex]);
+    }
 
     const responseBody = { deletedIds: ids };
     const statements: D1PreparedStatement[] = [];
@@ -449,6 +469,10 @@ adminConversionPoolRoutes.delete(
     );
     if (!current || current.deletedAt) return groupNotFound(context);
     if (hasGroupDeleteBlocker(current)) return groupDeleteError(context, current);
+    const sectionCount = await groupSectionReferenceCount(context.env.DB, current.id);
+    if (sectionCount > 0) {
+      return groupDeleteError(context, current, sectionCount);
+    }
     const now = new Date().toISOString();
     const deleted = { ...current, isEnabled: false, deletedAt: now, updatedAt: now };
     await context.env.DB.batch([

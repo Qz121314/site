@@ -156,6 +156,8 @@ type SectionRow = {
   name: string;
   description: string | null;
   browse_button_label: string;
+  conversion_group_id: string | null;
+  conversion_button_label: string | null;
   icon_type: 'icon' | 'asset';
   icon_value: string | null;
   icon_asset_id: string | null;
@@ -559,6 +561,8 @@ async function loadSource(db: D1Database): Promise<Source> {
            s.name,
            s.description,
            s.browse_button_label,
+           s.conversion_group_id,
+           conversion_group.button_label AS conversion_button_label,
            s.icon_type,
            s.icon_value,
            s.icon_asset_id,
@@ -567,6 +571,10 @@ async function loadSource(db: D1Database): Promise<Source> {
            background.object_key AS browse_background_object_key,
            s.sort_order
          FROM sections s
+         LEFT JOIN conversion_groups conversion_group
+           ON conversion_group.id = s.conversion_group_id
+          AND conversion_group.section_id = s.id
+          AND conversion_group.deleted_at IS NULL
          LEFT JOIN media_assets icon
            ON icon.id = s.icon_asset_id
           AND icon.status = 'ready'
@@ -829,6 +837,8 @@ function sectionsIndexModel(source: Source) {
     name: section.name,
     description: section.description,
     browseButtonLabel: section.browse_button_label,
+    conversionGroupId: section.conversion_group_id,
+    conversionButtonLabel: section.conversion_button_label,
     icon:
       section.icon_type === 'asset'
         ? { type: 'image' as const, objectKey: section.icon_object_key, value: null }

@@ -53,14 +53,26 @@ type ResolvedSupportProduct = {
   title: string;
 };
 
+type ResolvedSupportSection = {
+  id: string;
+  name: string;
+  href: string;
+};
+
 type ResolvedSupportRoute = {
   available: true;
   connection: PublicSupportConnection;
   product: ResolvedSupportProduct;
 };
 
+type ResolvedSectionSupportRoute = {
+  available: true;
+  connection: PublicSupportConnection;
+  section: ResolvedSupportSection;
+};
+
 type RemoteConversationSummary = SupportConversationSummary & {
-  productId: string;
+  productId: string | null;
   sectionId: string;
 };
 
@@ -221,6 +233,37 @@ async function resolveSupportRoute(
     available: true,
     connection: parseConnection(envelope.connection),
     product: parseResolvedProduct(envelope.product),
+  };
+}
+
+async function resolveSectionSupportRoute(
+  sectionId: string,
+  signal?: AbortSignal,
+): Promise<ResolvedSectionSupportRoute> {
+  const value = await siteRequestJson(
+    `/api/public/storefront/support/route/section/${encodeURIComponent(sectionId)}`,
+    signal,
+  );
+  const envelope = isRecord(value) ? value : null;
+  const section = isRecord(envelope?.section) ? envelope.section : null;
+  if (
+    !envelope ||
+    envelope.available !== true ||
+    !section ||
+    typeof section.id !== 'string' ||
+    typeof section.name !== 'string' ||
+    typeof section.href !== 'string'
+  ) {
+    throw new SupportApiError(
+      409,
+      'SUPPORT_UNAVAILABLE',
+      'Customer service is unavailable.',
+    );
+  }
+  return {
+    available: true,
+    connection: parseConnection(envelope.connection),
+    section: section as ResolvedSupportSection,
   };
 }
 
@@ -393,7 +436,7 @@ function parseRemoteSummary(value: unknown): RemoteConversationSummary {
     typeof item.id !== 'string' ||
     !nullableString(item.agentName) ||
     !nullableString(item.agentAvatarUrl) ||
-    typeof item.productId !== 'string' ||
+    (typeof item.productId !== 'string' && item.productId !== null) ||
     typeof item.sectionId !== 'string' ||
     typeof item.productTitle !== 'string' ||
     !nullableString(item.productCoverUrl) ||
@@ -494,7 +537,9 @@ function normalizeDetail(
     ...normalizeSummary(connection, remote),
     productHref:
       remote.productHref ??
-      `/sections/${encodeURIComponent(remote.sectionId)}/products/${encodeURIComponent(remote.productId)}/`,
+      (remote.productId
+        ? `/sections/${encodeURIComponent(remote.sectionId)}/products/${encodeURIComponent(remote.productId)}/`
+        : `/sections/${encodeURIComponent(remote.sectionId)}/`),
     createdAt: remote.createdAt,
     expiresAt: remote.expiresAt,
     messages: remote.messages,
@@ -647,7 +692,10 @@ export const siteSupportGateway: SupportGateway = {
   },
 
   async startConversation(input: StartSupportConversationInput, signal) {
-    const route = await resolveSupportRoute(input.productId, input.sectionId, signal);
+    const route =
+      input.contextType === 'product'
+        ? await resolveSupportRoute(input.productId, input.sectionId, signal)
+        : await resolveSectionSupportRoute(input.sectionId, signal);
     const value = await remoteRequestJson(
       remoteUrl(route.connection, '/conversations'),
       {
@@ -655,7 +703,9 @@ export const siteSupportGateway: SupportGateway = {
         body: JSON.stringify(
           clientBody({
             sourceHandoffId: input.handoffId,
-            product: { id: route.product.id },
+            ...('product' in route
+              ? { product: { id: route.product.id } }
+              : { section: { id: route.section.id } }),
           }),
         ),
       },

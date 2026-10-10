@@ -60,6 +60,8 @@ export type PublicSection = {
   name: string;
   description: string | null;
   browseButtonLabel: string | null;
+  conversionGroupId: string | null;
+  conversionButtonLabel: string | null;
   browseBackgroundUrl: string | null;
   icon: {
     type: 'image' | 'icon';
@@ -291,6 +293,8 @@ type V2SectionsIndexSnapshot = {
     name: string;
     description?: string | null;
     browseButtonLabel?: string | null;
+    conversionGroupId?: string | null;
+    conversionButtonLabel?: string | null;
     browseBackgroundObjectKey?: string | null;
     icon: {
       type: 'image' | 'icon';
@@ -739,6 +743,8 @@ function normalizeV1Section(section: PublicSection): PublicSection {
   const legacy = section as PublicSection & {
     description?: unknown;
     browseButtonLabel?: unknown;
+    conversionGroupId?: unknown;
+    conversionButtonLabel?: unknown;
     browseBackgroundUrl?: unknown;
   };
   return {
@@ -746,6 +752,12 @@ function normalizeV1Section(section: PublicSection): PublicSection {
     description: typeof legacy.description === 'string' ? legacy.description : null,
     browseButtonLabel:
       typeof legacy.browseButtonLabel === 'string' ? legacy.browseButtonLabel : null,
+    conversionGroupId:
+      typeof legacy.conversionGroupId === 'string' ? legacy.conversionGroupId : null,
+    conversionButtonLabel:
+      typeof legacy.conversionButtonLabel === 'string'
+        ? legacy.conversionButtonLabel
+        : null,
     browseBackgroundUrl:
       typeof legacy.browseBackgroundUrl === 'string' ? legacy.browseBackgroundUrl : null,
   };
@@ -1010,6 +1022,12 @@ function resolveV2Section(
     description: typeof section.description === 'string' ? section.description : null,
     browseButtonLabel:
       typeof section.browseButtonLabel === 'string' ? section.browseButtonLabel : null,
+    conversionGroupId:
+      typeof section.conversionGroupId === 'string' ? section.conversionGroupId : null,
+    conversionButtonLabel:
+      typeof section.conversionButtonLabel === 'string'
+        ? section.conversionButtonLabel
+        : null,
     browseBackgroundUrl: mediaUrl(
       mediaBaseUrl,
       typeof section.browseBackgroundObjectKey === 'string'
