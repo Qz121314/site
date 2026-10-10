@@ -3,7 +3,7 @@ import { ArrowRight } from 'lucide-react';
 import { useEffect } from 'react';
 import type { PublicSection, StorefrontBootstrap } from './content';
 import { ResilientImage } from './ResilientMedia';
-import { sectionHref } from './routing';
+import { sectionCtaHref, sectionHref } from './routing';
 import { trackHomeServiceClick } from './HomepageAnalytics';
 import './browse-ui.css';
 import './browse-app-surface.css';
@@ -48,47 +48,72 @@ export function BrowsePage({
             className={`browse-section-list${sections.length === 1 ? ' is-single' : ''}`}
           >
             {sections.map((section, index) => (
-              <LinkComponent
+              <article
                 className={`browse-section-card${section.browseBackgroundUrl ? ' has-image' : ' is-fallback'}`}
-                href={sectionHref(section)}
                 key={section.id}
-                onClick={() =>
-                  trackHomeServiceClick(
-                    bootstrap.site.site.analytics.ga4MeasurementId,
-                    section.slug,
-                  )
-                }
               >
-                <span className="browse-section-card-media" aria-hidden="true">
-                  {section.browseBackgroundUrl ? (
-                    <ResilientImage
-                      alt=""
-                      fallback={
-                        <span
-                          className="browse-section-card-media-fallback"
-                          aria-hidden="true"
-                        />
-                      }
-                      fetchPriority={index === 0 ? 'high' : 'auto'}
-                      loading={index === 0 ? 'eager' : 'lazy'}
-                      src={section.browseBackgroundUrl}
-                    />
-                  ) : null}
-                </span>
-                <span className="browse-section-card-scrim" aria-hidden="true" />
+                <LinkComponent
+                  aria-hidden="true"
+                  className="browse-section-card-main"
+                  href={sectionHref(section)}
+                  tabIndex={-1}
+                  onClick={() =>
+                    trackHomeServiceClick(
+                      bootstrap.site.site.analytics.ga4MeasurementId,
+                      section.slug,
+                    )
+                  }
+                >
+                  <span className="browse-section-card-media" aria-hidden="true">
+                    {section.browseBackgroundUrl ? (
+                      <ResilientImage
+                        alt=""
+                        fallback={
+                          <span
+                            className="browse-section-card-media-fallback"
+                            aria-hidden="true"
+                          />
+                        }
+                        fetchPriority={index === 0 ? 'high' : 'auto'}
+                        loading={index === 0 ? 'eager' : 'lazy'}
+                        src={section.browseBackgroundUrl}
+                      />
+                    ) : null}
+                  </span>
+                  <span className="browse-section-card-scrim" aria-hidden="true" />
+                </LinkComponent>
                 <span className="browse-section-card-content">
-                  <span className="browse-section-card-copy">
+                  <LinkComponent
+                    className="browse-section-card-copy"
+                    href={sectionHref(section)}
+                    onClick={() =>
+                      trackHomeServiceClick(
+                        bootstrap.site.site.analytics.ga4MeasurementId,
+                        section.slug,
+                      )
+                    }
+                  >
                     <strong>{section.name}</strong>
                     {section.description ? <p>{section.description}</p> : null}
-                  </span>
+                  </LinkComponent>
                   {section.browseButtonLabel ? (
-                    <span className="browse-section-card-action" aria-hidden="true">
+                    <LinkComponent
+                      aria-label={`${section.browseButtonLabel}: ${section.name}`}
+                      className="browse-section-card-action"
+                      href={sectionCtaHref(section)}
+                      onClick={() =>
+                        trackHomeServiceClick(
+                          bootstrap.site.site.analytics.ga4MeasurementId,
+                          section.slug,
+                        )
+                      }
+                    >
                       {section.browseButtonLabel}
-                      <ArrowRight />
-                    </span>
+                      <ArrowRight aria-hidden="true" />
+                    </LinkComponent>
                   ) : null}
                 </span>
-              </LinkComponent>
+              </article>
             ))}
           </div>
         </section>
