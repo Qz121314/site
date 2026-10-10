@@ -24,7 +24,7 @@ import {
 import { resolveHomeLayout, resolveHomeShortcuts } from './home-layout';
 import { layoutForPage } from './layout-config';
 import { ResilientImage, ResilientVideo } from './ResilientMedia';
-import { productHref, sectionCtaHref, sectionHref } from './routing';
+import { productHref, sectionHref } from './routing';
 import { handleStorefrontLinkClick } from './storefront-navigation-runtime';
 import { SYSTEM_UI } from './system-ui';
 
@@ -248,8 +248,8 @@ function HomeRecommendationRail({
           {section.description ? <p>{section.description}</p> : null}
         </span>
         <HomeLink
-          href={sectionCtaHref(section)}
-          aria-label={`${section.conversionButtonLabel ?? SYSTEM_UI.more}: ${section.name}`}
+          href={sectionHref(section)}
+          aria-label={`${SYSTEM_UI.more}: ${section.name}`}
         >
           <ChevronRight aria-hidden="true" />
         </HomeLink>

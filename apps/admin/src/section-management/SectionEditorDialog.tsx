@@ -137,7 +137,7 @@ export function SectionEditorDialog({
               </select>
               <small>
                 {editingSection
-                  ? '绑定后，前台分区卡片按钮直接进入此转化池，并使用该池的按钮文案。'
+                  ? '绑定后，首页分区卡片按钮直接进入此转化池；卡片其他区域仍进入分区页。'
                   : '创建分区后，可编辑分区并选择已创建的转化池。'}
               </small>
             </label>

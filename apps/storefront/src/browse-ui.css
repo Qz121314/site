@@ -68,6 +68,15 @@
   pointer-events: none;
 }
 
+.browse-section-card-main {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  display: block;
+  color: inherit;
+  text-decoration: none;
+}
+
 .browse-section-card-media,
 .browse-section-card-media img,
 .browse-section-card-media-fallback {
@@ -133,6 +142,8 @@
   display: grid;
   min-width: 0;
   gap: 5px;
+  color: inherit;
+  text-decoration: none;
 }
 
 .browse-section-card-content strong {
@@ -185,6 +196,7 @@
   transition:
     border-color var(--app-motion-fast, 160ms) ease,
     transform var(--app-motion-fast, 160ms) var(--app-ease-out, ease-out);
+  text-decoration: none;
   font-size: 0.75rem;
   font-weight: 620;
   line-height: 1;

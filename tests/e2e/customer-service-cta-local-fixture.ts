@@ -142,9 +142,12 @@ const bootstrap = {
     sections: [
       {
         id: SECTION_ID,
-        slug: SECTION_ID,
-        name: 'CTA Test Section',
+        slug: 'escorts',
+        name: 'Escorts',
         description: null,
+        browseButtonLabel: 'Browse Escorts',
+        conversionGroupId: 'cta-test-group',
+        conversionButtonLabel: 'Contact',
         browseBackgroundObjectKey: null,
         icon: { type: 'icon', objectKey: null, value: null },
         sortOrder: 0,
