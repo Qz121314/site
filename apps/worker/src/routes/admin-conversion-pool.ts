@@ -225,12 +225,12 @@ adminConversionPoolRoutes.post(
     );
     if (active.length !== ids.length || active.some((group) => group.deletedAt))
       return groupNotFound(context);
+    const blocked = active.find(hasGroupDeleteBlocker);
+    if (blocked) return groupDeleteError(context, blocked);
     const sectionCounts = await Promise.all(
       active.map((group) => groupSectionReferenceCount(context.env.DB, group.id)),
     );
-    const blockedIndex = active.findIndex(
-      (group, index) => hasGroupDeleteBlocker(group) || (sectionCounts[index] ?? 0) > 0,
-    );
+    const blockedIndex = sectionCounts.findIndex((count) => count > 0);
     if (blockedIndex >= 0) {
       const blocked = active[blockedIndex];
       if (blocked) return groupDeleteError(context, blocked, sectionCounts[blockedIndex]);
@@ -468,8 +468,9 @@ adminConversionPoolRoutes.delete(
       context.req.param('groupId'),
     );
     if (!current || current.deletedAt) return groupNotFound(context);
+    if (hasGroupDeleteBlocker(current)) return groupDeleteError(context, current);
     const sectionCount = await groupSectionReferenceCount(context.env.DB, current.id);
-    if (hasGroupDeleteBlocker(current) || sectionCount > 0) {
+    if (sectionCount > 0) {
       return groupDeleteError(context, current, sectionCount);
     }
     const now = new Date().toISOString();
