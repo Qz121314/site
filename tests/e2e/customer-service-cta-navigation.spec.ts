@@ -8,7 +8,7 @@ import { findPublishedProductRoute } from './published-storefront-fixtures';
 
 const useLocalFixture = process.env.E2E_LOCAL_SERVER === '1';
 
-test('homepage section CTA enters its conversion route while section links stay unchanged', async ({
+test('homepage section card and CTA enter the conversion route while Browse links stay unchanged', async ({
   page,
 }) => {
   test.skip(
@@ -16,16 +16,6 @@ test('homepage section CTA enters its conversion route while section links stay 
     'Homepage CTA acceptance uses the deterministic local fixture.',
   );
   await installLocalCustomerServiceCtaFixture(page);
-
-  await page.goto('/');
-  const card = page.locator('.browse-section-card').first();
-  const sectionLink = card.locator('.browse-section-card-copy');
-  const cta = card.getByRole('link', { name: 'Browse Escorts: Escorts' });
-  await expect(sectionLink).toHaveAttribute('href', '/sections/escorts/');
-  await expect(cta).toHaveAttribute('href', '/go/section/cta-section');
-
-  await sectionLink.click();
-  await expect(page).toHaveURL('/sections/escorts/');
 
   let conversionRequestType: string | null = null;
   await page.route('**/go/section/cta-section', async (route) => {
@@ -36,6 +26,24 @@ test('homepage section CTA enters its conversion route while section links stay 
       body: '<!doctype html><title>Conversion route</title>',
     });
   });
+
+  await page.goto('/');
+  const card = page.locator('.browse-section-card').first();
+  const sectionLink = card.locator('.browse-section-card-copy');
+  const cardImageLink = card.locator('.browse-section-card-main');
+  const cta = card.getByRole('link', { name: 'Browse Escorts: Escorts' });
+  await expect(cardImageLink).toHaveAttribute('href', '/go/section/cta-section');
+  await expect(sectionLink).toHaveAttribute('href', '/go/section/cta-section');
+  await expect(cta).toHaveAttribute('href', '/go/section/cta-section');
+
+  await cardImageLink.click();
+  await expect(page).toHaveURL('/go/section/cta-section');
+  expect(conversionRequestType).toBe('document');
+
+  await page.goto('/');
+  await sectionLink.click();
+  await expect(page).toHaveURL('/go/section/cta-section');
+
   await page.goto('/');
   await page
     .locator('.browse-section-card')

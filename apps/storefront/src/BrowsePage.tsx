@@ -3,7 +3,7 @@ import { ArrowRight } from 'lucide-react';
 import { useEffect } from 'react';
 import type { PublicSection, StorefrontBootstrap } from './content';
 import { ResilientImage } from './ResilientMedia';
-import { sectionCtaHref, sectionHref } from './routing';
+import { sectionCtaHref } from './routing';
 import { trackHomeServiceClick } from './HomepageAnalytics';
 import './browse-ui.css';
 import './browse-app-surface.css';
@@ -55,7 +55,7 @@ export function BrowsePage({
                 <LinkComponent
                   aria-hidden="true"
                   className="browse-section-card-main"
-                  href={sectionHref(section)}
+                  href={sectionCtaHref(section)}
                   tabIndex={-1}
                   onClick={() =>
                     trackHomeServiceClick(
@@ -85,7 +85,7 @@ export function BrowsePage({
                 <span className="browse-section-card-content">
                   <LinkComponent
                     className="browse-section-card-copy"
-                    href={sectionHref(section)}
+                    href={sectionCtaHref(section)}
                     onClick={() =>
                       trackHomeServiceClick(
                         bootstrap.site.site.analytics.ga4MeasurementId,
