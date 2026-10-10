@@ -26,8 +26,8 @@ test('critical CTA browser acceptance runs before merge without production data'
   assert.ok(acceptance.includes('installLocalCustomerServiceCtaFixture(page)'));
   assert.ok(acceptance.includes("toBe('fetch')"));
   assert.ok(acceptance.includes('conversionRequestCount).toBe(1)'));
-  assert.equal(acceptance.includes("toBe('document')"), false);
-  assert.equal(acceptance.includes('toHaveURL(/\\/go\\/'), false);
+  assert.ok(acceptance.includes("conversionRequestType).toBe('document')"));
+  assert.ok(acceptance.includes("toHaveURL('/go/section/cta-section')"));
 
   assert.ok(fixture.includes("'**/api/public/storefront/bootstrap'"));
   assert.ok(fixture.includes("'**/api/public/storefront/support/connections'"));
